@@ -43,8 +43,18 @@ class netclass_t : public ivl_type_s {
       bool set_property(perm_string pname, property_qualifier_t qual, ivl_type_s*ptype);
 
 	// Set the scope for the class. The scope has no parents and
-	// is used for the elaboration of methods (tasks/functions).
+	// is used for the elaboration of methods
+	// (tasks/functions). In other words, this is the class itself.
       void set_class_scope(NetScope*cscope);
+
+	// Set the scope for the class definition. This is the scope
+	// where the class definition was encountered, and may be used
+	// to locate symbols that the class definition may inherit
+	// from its context. This can be nil, or a package or module
+	// where a class is defined.
+      void set_definition_scope(NetScope*dscope);
+
+      NetScope*definition_scope(void);
 
 	// As an ivl_type_s object, the netclass is always an
 	// ivl_VT_CLASS object.
@@ -74,7 +84,8 @@ class netclass_t : public ivl_type_s {
 
       bool test_for_missing_initializers(void) const;
 
-	// Map the name of a property to its index.
+	// Map the name of a property to its index. Return <0 if the
+	// name is not a property in the class.
       int property_idx_from_name(perm_string pname) const;
 
 	// The task method scopes from the method name.
@@ -94,6 +105,7 @@ class netclass_t : public ivl_type_s {
       void elaborate(Design*des, PClass*pclass);
 
       void emit_scope(struct target_t*tgt) const;
+      bool emit_defs(struct target_t*tgt) const;
 
       void dump_scope(ostream&fd) const;
 
@@ -115,6 +127,14 @@ class netclass_t : public ivl_type_s {
 
 	// This holds task/function definitions for methods.
       NetScope*class_scope_;
+
+	// This holds the context for the class type definition.
+      NetScope*definition_scope_;
 };
+
+inline NetScope*netclass_t::definition_scope(void)
+{
+      return definition_scope_;
+}
 
 #endif /* IVL_netclass_H */

@@ -654,6 +654,13 @@ netclass_t*NetScope::find_class(perm_string name)
       if (type_==MODULE)
 	    return 0;
 
+      if (up_==0 && type_==CLASS) {
+	    assert(class_def_);
+
+	    NetScope*def_parent = class_def_->definition_scope();
+	    return def_parent->find_class(name);
+      }
+
 	// If there is no further to look, ...
       if (up_ == 0)
 	    return 0;

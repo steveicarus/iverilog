@@ -139,7 +139,7 @@ void NetForLoop::wrap_up()
       NetBlock*internal_block = new NetBlock(NetBlock::SEQU, 0);
       internal_block->set_line(*this);
 
-      internal_block->append(statement_);
+      if (statement_) internal_block->append(statement_);
       internal_block->append(step_statement_);
 
       NetWhile*wloop = new NetWhile(condition_, internal_block);

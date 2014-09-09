@@ -24,7 +24,7 @@
 using namespace std;
 
 netclass_t::netclass_t(perm_string name, netclass_t*sup)
-: name_(name), super_(sup), class_scope_(0)
+: name_(name), super_(sup), class_scope_(0), definition_scope_(0)
 {
 }
 
@@ -54,6 +54,12 @@ void netclass_t::set_class_scope(NetScope*class_scope)
 {
       assert(class_scope_ == 0);
       class_scope_ = class_scope;
+}
+
+void netclass_t::set_definition_scope(NetScope*definition_scope)
+{
+      assert(definition_scope_ == 0);
+      definition_scope_ = definition_scope;
 }
 
 ivl_variable_type_t netclass_t::base_type() const

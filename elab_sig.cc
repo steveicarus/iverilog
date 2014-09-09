@@ -836,48 +836,6 @@ void PWhile::elaborate_sig(Design*des, NetScope*scope) const
 	    statement_->elaborate_sig(des, scope);
 }
 
-static bool evaluate_ranges(Design*des, NetScope*scope,
-			    vector<netrange_t>&llist,
-			    const list<pform_range_t>&rlist)
-{
-      bool bad_msb = false, bad_lsb = false;
-
-      for (list<pform_range_t>::const_iterator cur = rlist.begin()
-		 ; cur != rlist.end() ; ++cur) {
-	    long use_msb, use_lsb;
-
-	    NetExpr*texpr = elab_and_eval(des, scope, cur->first, -1, true);
-	    if (! eval_as_long(use_msb, texpr)) {
-		  cerr << cur->first->get_fileline() << ": error: "
-			"Range expressions must be constant." << endl;
-		  cerr << cur->first->get_fileline() << "       : "
-			"This MSB expression violates the rule: "
-		       << *cur->first << endl;
-		  des->errors += 1;
-		  bad_msb = true;
-	    }
-
-	    delete texpr;
-
-	    texpr = elab_and_eval(des, scope, cur->second, -1, true);
-	    if (! eval_as_long(use_lsb, texpr)) {
-		  cerr << cur->second->get_fileline() << ": error: "
-			"Range expressions must be constant." << endl;
-		  cerr << cur->second->get_fileline() << "       : "
-			"This LSB expression violates the rule: "
-		       << *cur->second << endl;
-		  des->errors += 1;
-		  bad_lsb = true;
-	    }
-
-	    delete texpr;
-
-	    llist.push_back(netrange_t(use_msb, use_lsb));
-      }
-
-      return bad_msb | bad_lsb;
-}
-
 static netclass_t* locate_class_type(Design*, NetScope*scope,
 				     class_type_t*class_type)
 {
@@ -1222,13 +1180,12 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    }
 	    ivl_assert(*this, use_type);
 	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: "
+		  cerr << get_fileline() << ": PWire::elaborate_sig: "
 		       << "Create class instance signal " << wtype
-		       << " " << name_ << endl;
+		       << " " << packed_dimensions << name_ << unpacked_dimensions << endl;
 	    }
-	      // (No arrays of classes)
-	    list<netrange_t> use_unpacked;
-	    sig = new NetNet(scope, name_, wtype, use_unpacked, use_type);
+
+	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_type);
 
       } else if (struct_type_t*struct_type = dynamic_cast<struct_type_t*>(set_data_type_)) {
 	      // If this is a struct type, then build the net with the
@@ -1289,7 +1246,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype
-		       << " parray=" << use_type->packed_dimensions()
+		       << " parray=" << use_type->static_dimensions()
 		       << " " << name_ << unpacked_dimensions
 		       << " in scope " << scope_path(scope) << endl;
 	    }

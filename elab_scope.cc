@@ -434,17 +434,19 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       class_scope->set_line(pclass);
       class_scope->set_class_def(use_class);
       use_class->set_class_scope(class_scope);
+      use_class->set_definition_scope(scope);
 
 	// Collect the properties, elaborate them, and add them to the
 	// elaborated class definition.
       for (map<perm_string, class_type_t::prop_info_t>::iterator cur = use_type->properties.begin()
 		 ; cur != use_type->properties.end() ; ++ cur) {
-	    if (debug_scopes) {
-		  cerr << pclass->get_fileline() << ": elaborate_scope_class: "
-		       << "  Property " << cur->first << endl;
-	    }
 	    ivl_type_s*tmp = cur->second.type->elaborate_type(des, scope);
 	    ivl_assert(*pclass, tmp);
+	    if (debug_scopes) {
+		  cerr << pclass->get_fileline() << ": elaborate_scope_class: "
+		       << "  Property " << cur->first
+		       << " type=" << *tmp << endl;
+	    }
 	    use_class->set_property(cur->first, cur->second.qual, tmp);
       }
 

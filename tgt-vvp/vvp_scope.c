@@ -469,6 +469,10 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	    datatype_flag = "/str";
 	    vector_dims = 0;
 	    break;
+	  case IVL_VT_CLASS:
+	    datatype_flag = "/obj";
+	    vector_dims = 0;
+	    break;
 	  default:
 	    break;
       }

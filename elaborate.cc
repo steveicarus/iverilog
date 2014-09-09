@@ -40,6 +40,7 @@
 # include  "netlist.h"
 # include  "netvector.h"
 # include  "netdarray.h"
+# include  "netparray.h"
 # include  "netclass.h"
 # include  "netmisc.h"
 # include  "util.h"
@@ -2290,6 +2291,14 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
 	    NetAssign_*lv = new NetAssign_(tmp);
 	    return lv;
       }
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PAssign_::elaborate_lval: "
+		 << "lval_ = " << *lval_ << endl;
+	    cerr << get_fileline() << ": PAssign_::elaborate_lval: "
+		 << "lval_ expr type = " << typeid(*lval_).name() << endl;
+      }
+
       return lval_->elaborate_lval(des, scope, false, false);
 }
 
@@ -2517,6 +2526,22 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    ivl_type_t use_lv_type = lv_net_type;
 	    if (lv->word())
 		  use_lv_type = dtype->element_type();
+
+	    rv = elaborate_rval_(des, scope, use_lv_type);
+
+      } else if (const netuarray_t*utype = dynamic_cast<const netuarray_t*>(lv_net_type)) {
+	    ivl_assert(*this, lv->more==0);
+	    if (debug_elaborate) {
+		  if (lv->word())
+			cerr << get_fileline() << ": PAssign::elaborate: "
+			     << "lv->word() = " << *lv->word() << endl;
+		  else
+			cerr << get_fileline() << ": PAssign::elaborate: "
+			     << "lv->word() = <nil>" << endl;
+	    }
+	    ivl_type_t use_lv_type = lv_net_type;
+	    ivl_assert(*this, lv->word());
+	    use_lv_type = utype->element_type();
 
 	    rv = elaborate_rval_(des, scope, use_lv_type);
 
@@ -4580,6 +4605,20 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
       return dev;
 }
 
+static void find_property_in_class(const LineInfo&loc, const NetScope*scope, perm_string name, const netclass_t*&found_in, int&property)
+{
+      found_in = find_class_containing_scope(loc, scope);
+      property = -1;
+
+      if (found_in==0) return;
+
+      property = found_in->property_idx_from_name(name);
+      if (property < 0) {
+	    found_in = 0;
+	    return;
+      }
+}
+
 /*
  * The foreach statement can be written as a for statement like so:
  *
@@ -4591,23 +4630,103 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
 {
-	// Get the signal for the index variable.
-      pform_name_t index_name;
-      index_name.push_back(name_component_t(index_var_));
-      NetNet*idx_sig = des->find_signal(scope, index_name);
-      ivl_assert(*this, idx_sig);
-
-      NetESignal*idx_exp = new NetESignal(idx_sig);
-      idx_exp->set_line(*this);
-
-	// Get the signal for the array variable
+	// Locate the signal for the array variable
       pform_name_t array_name;
       array_name.push_back(name_component_t(array_var_));
       NetNet*array_sig = des->find_signal(scope, array_name);
+
+	// And if necessary, look for the class property that is
+	// referenced.
+      const netclass_t*class_scope = 0;
+      int class_property = -1;
+      if (array_sig == 0)
+	    find_property_in_class(*this, scope, array_var_, class_scope, class_property);
+
+      if (debug_elaborate && array_sig) {
+	    cerr << get_fileline() << ": PForeach::elaborate: "
+		 << "Found array_sig in " << scope_path(array_sig->scope()) << "." << endl;
+      }
+
+      if (debug_elaborate && class_scope) {
+	    cerr << get_fileline() << ": PForeach::elaborate: "
+		 << "Found array_sig property (" << class_property
+		 << ") in class " << class_scope->get_name()
+		 << " as " << *class_scope->get_prop_type(class_property) << "." << endl;
+      }
+
+      if (class_scope!=0 && class_property >= 0) {
+	    ivl_type_t ptype = class_scope->get_prop_type(class_property);
+	    const netsarray_t*atype = dynamic_cast<const netsarray_t*> (ptype);
+	    if (atype == 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "I can't handle the type of " << array_var_
+		       << " as a foreach loop." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    const std::vector<netrange_t>&dims = atype->static_dimensions();
+	    if (dims.size() < index_vars_.size()) {
+		  cerr << get_fileline() << ": error: "
+		       << "class " << class_scope->get_name()
+		       << " property " << array_var_
+		       << " has too few dimensions for foreach dimension list." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    return elaborate_static_array_(des, scope, dims);
+      }
+
+      if (array_sig == 0) {
+	    cerr << get_fileline() << ": error:"
+		 << " Unable to find foreach array " << array_name
+		 << " in scope " << scope_path(scope)
+		 << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       ivl_assert(*this, array_sig);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PForeach::elaborate: "
+		 << "Scan array " << array_sig->name()
+		 << " of " << array_sig->data_type()
+		 << " with " << array_sig->unpacked_dimensions() << " unpacked"
+		 << " and " << array_sig->packed_dimensions()
+		 << " packed dimensions." << endl;
+      }
+
+	// Classic arrays are processed this way.
+      if (array_sig->data_type()==IVL_VT_BOOL)
+	    return elaborate_static_array_(des, scope, array_sig->unpacked_dims());
+      if (array_sig->data_type()==IVL_VT_LOGIC)
+	    return elaborate_static_array_(des, scope, array_sig->unpacked_dims());
+      if (array_sig->unpacked_dimensions() >= index_vars_.size())
+	    return elaborate_static_array_(des, scope, array_sig->unpacked_dims());
+
+
+	// At this point, we know that the array is dynamic so we
+	// handle that slightly differently, using run-time tests.
+
+      if (index_vars_.size() != 1) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "Multi-index foreach loops not supported." << endl;
+	    des->errors += 1;
+      }
+
+	// Get the signal for the index variable.
+      pform_name_t index_name;
+      index_name.push_back(name_component_t(index_vars_[0]));
+      NetNet*idx_sig = des->find_signal(scope, index_name);
+      ivl_assert(*this, idx_sig);
 
       NetESignal*array_exp = new NetESignal(array_sig);
       array_exp->set_line(*this);
+
+      NetESignal*idx_exp = new NetESignal(idx_sig);
+      idx_exp->set_line(*this);
 
 	// Make an initialization expression for the index.
       NetESFunc*init_expr = new NetESFunc("$low", IVL_VT_BOOL, 32, 1);
@@ -4637,6 +4756,69 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
       stmt->wrap_up();
 
       return stmt;
+}
+
+/*
+ * This is a variant of the PForeach::elaborate() method that handles
+ * the case that the array has static dimensions. We can use constants
+ * and possibly do some optimizations.
+ */
+NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
+					   const vector<netrange_t>&dims) const
+{
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PForeach::elaborate_static_array_: "
+		 << "Handle as array with static dimensions." << endl;
+      }
+
+      ivl_assert(*this, index_vars_.size() > 0);
+      ivl_assert(*this, dims.size() == index_vars_.size());
+
+      NetProc*sub = statement_->elaborate(des, scope);
+      NetForLoop*stmt = 0;
+
+      for (int idx_idx = index_vars_.size()-1 ; idx_idx >= 0 ; idx_idx -= 1) {
+	    const netrange_t&idx_range = dims[idx_idx];
+
+	      // Get the $high and $low constant values for this slice
+	      // of the array.
+	    NetEConst*hig_expr = make_const_val_s(idx_range.get_msb());
+	    NetEConst*low_expr = make_const_val_s(idx_range.get_lsb());
+	    if (idx_range.get_msb() < idx_range.get_lsb()) {
+		  NetEConst*tmp = hig_expr;
+		  hig_expr = low_expr;
+		  low_expr = tmp;
+	    }
+
+	    hig_expr->set_line(*this);
+	    low_expr->set_line(*this);
+
+	    pform_name_t idx_name;
+	    idx_name.push_back(name_component_t(index_vars_[idx_idx]));
+	    NetNet*idx_sig = des->find_signal(scope, idx_name);
+	    ivl_assert(*this, idx_sig);
+
+	      // Make the condition expression <idx> <= $high(slice)
+	    NetESignal*idx_expr = new NetESignal(idx_sig);
+	    idx_expr->set_line(*this);
+
+	    NetEBComp*cond_expr = new NetEBComp('L', idx_expr, hig_expr);
+	    cond_expr->set_line(*this);
+
+	      // Make the step statement: <idx> += 1
+	    NetAssign_*idx_lv = new NetAssign_(idx_sig);
+	    NetEConst*step_val = make_const_val_s(1);
+	    NetAssign*step = new NetAssign(idx_lv, '+', step_val);
+	    step->set_line(*this);
+
+	    stmt = new NetForLoop(idx_sig, low_expr, cond_expr, sub, step);
+	    stmt->set_line(*this);
+	    stmt->wrap_up();
+
+	    sub = stmt;
+      }
+
+      return stmt? stmt : sub;
 }
 
 /*

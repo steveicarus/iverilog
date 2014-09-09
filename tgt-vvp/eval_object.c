@@ -195,10 +195,25 @@ static int eval_object_shallowcopy(ivl_expr_t ex)
       return 0;
 }
 
-static int eval_object_signal(ivl_expr_t ex)
+static int eval_object_signal(ivl_expr_t expr)
 {
-      ivl_signal_t sig = ivl_expr_signal(ex);
-      fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+      ivl_signal_t sig = ivl_expr_signal(expr);
+
+	/* Simple case: This is a simple variable. Generate a load
+	   statement to load the string into the stack. */
+      if (ivl_signal_dimensions(sig) == 0) {
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+	    return 0;
+      }
+
+	/* There is a word select expression, so load the index into a
+	   register and load from the array. */
+      ivl_expr_t word_ex = ivl_expr_oper1(expr);
+      int word_ix = allocate_word();
+      draw_eval_expr_into_integer(word_ex, word_ix);
+      fprintf(vvp_out, "    %%load/obja v%p, %d;\n", sig, word_ix);
+      clr_word(word_ix);
+
       return 0;
 }
 

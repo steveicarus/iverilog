@@ -22,6 +22,7 @@
 # include  "netclass.h"
 # include  "netdarray.h"
 # include  "netenum.h"
+# include  "netparray.h"
 # include  "netscalar.h"
 # include  "netstruct.h"
 # include  "netvector.h"
@@ -203,9 +204,21 @@ ivl_type_s* uarray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 
       ivl_type_t btype = base_type->elaborate_type(des, scope);
 
-      assert(dims->size() == 1);
+      assert(dims->size() >= 1);
       list<pform_range_t>::const_iterator cur = dims->begin();
-      assert(cur->first == 0 && cur->second==0);
-      ivl_type_s*res = new netdarray_t(btype);
+
+	// Special case: if the dimension is nil:nil, this is a
+	// dynamic array. Note that we only know how to handle dynamic
+	// arrays with 1 dimension at a time.
+      if (cur->first==0 && cur->second==0) {
+	    assert(dims->size()==1);
+	    ivl_type_s*res = new netdarray_t(btype);
+	    return res;
+      }
+
+      vector<netrange_t> dimensions;
+      bool bad_range = evaluate_ranges(des, scope, dimensions, *dims);
+
+      ivl_type_s*res = new netuarray_t(dimensions, btype);
       return res;
 }

@@ -27,6 +27,7 @@
 # include  "netstruct.h"
 # include  "netclass.h"
 # include  "netdarray.h"
+# include  "netparray.h"
 # include  "netvector.h"
 # include  "compiler.h"
 # include  <cstdlib>
@@ -259,6 +260,12 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       }
 
       ivl_assert(*this, reg);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_lval: "
+		 << "Lval reg = " << reg->name() << endl;
+      }
+
 	// We are processing the tail of a string of names. For
 	// example, the verilog may be "a.b.c", so we are processing
 	// "c" at this point. (Note that if method_name is not nil,
@@ -385,21 +392,66 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
       if (path_.size() != 1)
 	    return 0;
 
-      const netclass_t*class_type = scope->parent()->class_def();
+      const netclass_t*class_type = find_class_containing_scope(*this, scope);
       if (class_type == 0)
 	    return 0;
 
-      perm_string member_name = peek_tail_name(path_);
+      const name_component_t&name_comp = path_.back();
+
+      perm_string member_name = name_comp.name;
       int pidx = class_type->property_idx_from_name(member_name);
       if (pidx < 0)
 	    return 0;
 
-      NetNet*this_net = scope->find_signal(perm_string::literal("@"));
+      NetScope*scope_method = find_method_containing_scope(*this, scope);
+      ivl_assert(*this, scope_method);
+
+      NetNet*this_net = scope_method->find_signal(perm_string::literal("@"));
       if (this_net == 0) {
 	    cerr << get_fileline() << ": internal error: "
-		 << "Unable to find 'this' port of " << scope_path(scope)
+		 << "Unable to find 'this' port of " << scope_path(scope_method)
 		 << "." << endl;
 	    return 0;
+      }
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
+		 << "Ident " << member_name
+		 << " is a property of class " << class_type->get_name() << endl;
+      }
+
+      NetExpr*canon_index = 0;
+      if (name_comp.index.size() > 0) {
+	    ivl_type_t property_type = class_type->get_prop_type(pidx);
+
+	    if (const netsarray_t* stype = dynamic_cast<const netsarray_t*> (property_type)) {
+		  list<long> indices_const;
+		  list<NetExpr*> indices_expr;
+		  indices_flags flags;
+		  indices_to_expressions(des, scope, this,
+					 name_comp.index, name_comp.index.size(),
+					 false, flags,
+					 indices_expr, indices_const);
+
+		  if (flags.undefined) {
+			cerr << get_fileline() << ": warning: "
+			     << "ignoring undefined l-value array access "
+			     << member_name
+			     << " (" << path_ << ")"
+			     << "." << endl;
+		  } else if (flags.variable) {
+			canon_index = normalize_variable_unpacked(*this, stype, indices_expr);
+
+		  } else {
+			canon_index = normalize_variable_unpacked(stype, indices_const);
+		  }
+
+
+	    } else {
+		  cerr << get_fileline() << ": error: "
+		       << "Index expressions don't apply to this type of property." << endl;
+		  des->errors += 1;
+	    }
       }
 
 	// Detect assignment to constant properties. Note that the
@@ -436,8 +488,16 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
 	    }
       }
 
+      ivl_type_t tmp_type = class_type->get_prop_type(pidx);
+      if (const netuarray_t*tmp_ua = dynamic_cast<const netuarray_t*>(tmp_type)) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "Unpacked array properties (l-values) not supported yet." << endl;
+	    des->errors += 1;
+      }
+
       NetAssign_*this_lval = new NetAssign_(this_net);
       this_lval->set_property(member_name);
+      if (canon_index) this_lval->set_word(canon_index);
 
       return this_lval;
 }

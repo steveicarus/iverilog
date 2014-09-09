@@ -21,6 +21,8 @@
 
 # include  "netlist.h"
 
+class netsarray_t;
+
 /*
  * Search for a symbol using the "start" scope as the starting
  * point. If the path includes a scope part, then locate the
@@ -184,7 +186,10 @@ extern void indices_to_expressions(Design*des, NetScope*scope,
 				   list<NetExpr*>&indices,list<long>&indices_const);
 
 extern NetExpr*normalize_variable_unpacked(const NetNet*net, list<long>&indices);
+extern NetExpr*normalize_variable_unpacked(const netsarray_t*net, list<long>&indices);
+
 extern NetExpr*normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices);
+extern NetExpr*normalize_variable_unpacked(const LineInfo&loc, const netsarray_t*net, list<NetExpr*>&indices);
 
 /*
  * This function takes as input a NetNet signal and adds a constant
@@ -204,6 +209,7 @@ extern NetNet*sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig);
 extern NetEConst*make_const_x(unsigned long wid);
 extern NetEConst*make_const_0(unsigned long wid);
 extern NetEConst*make_const_val(unsigned long val);
+extern NetEConst*make_const_val_s(long val);
 
 /*
  * Make A const net
@@ -277,6 +283,9 @@ extern NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 				    unsigned lv_width, PExpr*expr,
                                     bool need_const =false);
 
+extern bool evaluate_ranges(Design*des, NetScope*scope,
+			    std::vector<netrange_t>&llist,
+			    const std::list<pform_range_t>&rlist);
 /*
  * This procedure evaluates an expression and if the evaluation is
  * successful the original expression is replaced with the new one.
@@ -299,6 +308,13 @@ extern std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 extern hname_t eval_path_component(Design*des, NetScope*scope,
 				   const name_component_t&comp,
 				   bool&error_flag);
+
+/*
+ * If this scope is contained within a class scope (i.e. a method of a
+ * class) then return the class definition that contains it.
+ */
+extern const netclass_t*find_class_containing_scope(const LineInfo&loc,const NetScope*scope);
+extern NetScope* find_method_containing_scope(const LineInfo&log, NetScope*scope);
 
 /*
  * Return true if the data type is a type that is normally available
