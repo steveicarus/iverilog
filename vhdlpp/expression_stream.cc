@@ -44,7 +44,8 @@ void ExpAggregate::element_t::write_to_stream(ostream&fd) const
 	    (*cur)->write_to_stream(fd);
       }
 
-      fd << "=>";
+      if(!fields_.empty())
+            fd << "=>";
       val_->write_to_stream(fd);
 }
 
