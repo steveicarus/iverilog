@@ -197,13 +197,14 @@ class VTypeArray : public VType {
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
 
-      size_t dimensions() const;
+      inline size_t dimensions() const { return ranges_.size(); };
       const range_t&dimension(size_t idx) const
       { return ranges_[idx]; }
 
-      bool signed_vector() const { return signed_flag_; }
+      inline bool signed_vector() const { return signed_flag_; }
 
-      const VType* element_type() const;
+	// returns the type of element held in the array
+      inline const VType* element_type() const { return etype_; }
 
       int emit_def(std::ostream&out, perm_string name) const;
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;

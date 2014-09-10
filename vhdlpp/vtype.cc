@@ -98,15 +98,6 @@ VTypeArray::~VTypeArray()
 {
 }
 
-size_t VTypeArray::dimensions() const
-{
-      return ranges_.size();
-}
-
-const VType* VTypeArray::element_type() const
-{
-      return etype_;
-}
 
 void VTypeArray::show(ostream&out) const
 {
