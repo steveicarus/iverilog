@@ -42,18 +42,7 @@ void VTypeArray::write_to_stream(ostream&fd) const
       if (etype_ == &primitive_STDLOGIC) {
 	    fd << "std_logic_vector";
 	    if (! ranges_.empty() && ! ranges_[0].is_box()) {
-		  assert(ranges_.size() < 2);
-		  fd << " (";
-		  if (ranges_[0].msb())
-			ranges_[0].msb()->write_to_stream(fd);
-		  else
-			fd << "<>";
-		  fd << " downto ";
-		  if (ranges_[0].lsb())
-			ranges_[0].lsb()->write_to_stream(fd);
-		  else
-			fd << "<>";
-		  fd << ") ";
+		  write_range_to_stream_(fd);
 	    }
 	    return;
       }
@@ -64,23 +53,32 @@ void VTypeArray::write_to_stream(ostream&fd) const
 	    if (ranges_[0].is_box()) {
 		  fd << "(INTEGER range <>) ";
 	    } else {
-		  assert(ranges_[0].msb() && ranges_[0].lsb());
-		  fd << "(";
-		  if (ranges_[0].msb())
-			ranges_[0].msb()->write_to_stream(fd);
-		  else
-			fd << "<>";
-		  fd << " downto ";
-		  if (ranges_[0].lsb())
-			ranges_[0].lsb()->write_to_stream(fd);
-		  else
-			fd << "<>";
-		  fd << ") ";
+		  write_range_to_stream_(fd);
 	    }
       }
 
       fd << "of ";
       etype_->write_to_stream(fd);
+}
+
+void VTypeArray::write_range_to_stream_(std::ostream&fd) const
+{
+    assert(ranges_.size() < 2);
+    assert(ranges_[0].msb() && ranges_[0].lsb());
+
+    fd << "(";
+    if (ranges_[0].msb())
+        ranges_[0].msb()->write_to_stream(fd);
+    else
+        fd << "<>";
+
+    fd << (ranges_[0].is_downto() ? " downto " : " to ");
+
+    if (ranges_[0].lsb())
+        ranges_[0].lsb()->write_to_stream(fd);
+    else
+        fd << "<>";
+    fd << ") ";
 }
 
 void VTypeDef::write_type_to_stream(ostream&fd) const

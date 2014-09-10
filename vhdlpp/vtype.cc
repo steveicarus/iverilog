@@ -88,7 +88,8 @@ VTypeArray::VTypeArray(const VType*element, std::list<prange_t*>*r, bool sv)
 	    r->pop_front();
 	    Expression*msb = curp->msb();
 	    Expression*lsb = curp->lsb();
-	    ranges_[idx] = range_t(msb, lsb);
+	    bool dir = curp->is_downto();
+	    ranges_[idx] = range_t(msb, lsb, dir);
       }
 }
 

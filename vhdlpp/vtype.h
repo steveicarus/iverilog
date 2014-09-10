@@ -173,17 +173,19 @@ class VTypeArray : public VType {
     public:
       class range_t {
 	  public:
-	    range_t() : msb_(0), lsb_(0) { }
-	    range_t(Expression*m, Expression*l) : msb_(m), lsb_(l) { }
+	    range_t(Expression*m = NULL, Expression*l = NULL, bool dir = true) :
+                msb_(m), lsb_(l), direction_(dir) { }
 
-	    bool is_box() const { return msb_==0 && lsb_==0; }
+	    inline bool is_box() const { return msb_==0 && lsb_==0; }
+	    inline bool is_downto() const { return direction_; }
 
-	    Expression* msb() const { return msb_; }
-	    Expression* lsb() const { return lsb_; }
+	    inline Expression* msb() const { return msb_; }
+	    inline Expression* lsb() const { return lsb_; }
 
 	  private:
 	    Expression* msb_;
 	    Expression* lsb_;
+	    bool direction_;
       };
 
     public:
@@ -210,6 +212,7 @@ class VTypeArray : public VType {
       bool can_be_packed() const { return etype_->can_be_packed(); }
 
     private:
+      void write_range_to_stream_(std::ostream&fd) const;
       const VType*etype_;
 
       std::vector<range_t> ranges_;
