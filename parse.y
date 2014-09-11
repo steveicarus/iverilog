@@ -831,6 +831,30 @@ class_item /* IEEE1800-2005: A.1.8 */
   | method_qualifier_opt function_declaration
       { /* The function_declaration rule puts this into the class */ }
 
+    /* External class method definitions... */
+
+  | K_extern method_qualifier_opt K_function K_new ';'
+      { yyerror(@1, "sorry: External constructors are not yet supported."); }
+  | K_extern method_qualifier_opt K_function K_new '(' tf_port_list_opt ')' ';'
+      { yyerror(@1, "sorry: External constructors are not yet supported."); }
+  | K_extern method_qualifier_opt K_function data_type_or_implicit_or_void
+    IDENTIFIER ';'
+      { yyerror(@1, "sorry: External methods are not yet supported.");
+	delete[] $5;
+      }
+  | K_extern method_qualifier_opt K_function data_type_or_implicit_or_void
+    IDENTIFIER '(' tf_port_list_opt ')' ';'
+      { yyerror(@1, "sorry: External methods are not yet supported.");
+	delete[] $5;
+      }
+  | K_extern method_qualifier_opt K_task IDENTIFIER ';'
+      { yyerror(@1, "sorry: External methods are not yet supported.");
+	delete[] $4;
+      }
+  | K_extern method_qualifier_opt K_task IDENTIFIER '(' tf_port_list_opt ')' ';'
+      { yyerror(@1, "sorry: External methods are not yet supported.");
+	delete[] $4;
+      }
 
     /* Class constraints... */
 
