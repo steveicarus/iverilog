@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -244,7 +244,7 @@ void vvp_queue_string::set_word(unsigned adr, const string&value)
 
       list<string>::iterator cur = array_.begin();
       while (adr > 0) {
-	    cur ++;
+	    ++ cur;
 	    adr -= 1;
       }
 
@@ -260,7 +260,7 @@ void vvp_queue_string::get_word(unsigned adr, string&value)
 
       list<string>::const_iterator cur = array_.begin();
       while (adr > 0) {
-	    cur ++;
+	    ++ cur;
 	    adr -= 1;
       }
 
@@ -293,7 +293,7 @@ void vvp_queue_vec4::set_word(unsigned adr, const vvp_vector4_t&value)
 
       list<vvp_vector4_t>::iterator cur = array_.begin();
       while (adr > 0) {
-	    cur ++;
+	    ++ cur;
 	    adr -= 1;
       }
 
@@ -309,7 +309,7 @@ void vvp_queue_vec4::get_word(unsigned adr, vvp_vector4_t&value)
 
       list<vvp_vector4_t>::const_iterator cur = array_.begin();
       while (adr > 0) {
-	    cur ++;
+	    ++ cur;
 	    adr -= 1;
       }
 

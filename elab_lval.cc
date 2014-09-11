@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -421,7 +421,7 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
       }
 
       NetExpr*canon_index = 0;
-      if (name_comp.index.size() > 0) {
+      if (! name_comp.index.empty()) {
 	    ivl_type_t property_type = class_type->get_prop_type(pidx);
 
 	    if (const netsarray_t* stype = dynamic_cast<const netsarray_t*> (property_type)) {
