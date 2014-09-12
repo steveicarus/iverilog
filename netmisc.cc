@@ -667,6 +667,36 @@ NetExpr* normalize_variable_unpacked(const LineInfo&loc, const netsarray_t*stype
       return normalize_variable_unpacked(loc, dims, indices);
 }
 
+NetExpr* make_canonical_index(Design*des, NetScope*scope,
+			      const LineInfo*loc,
+			      const std::list<index_component_t>&src,
+			      const netsarray_t*stype,
+			      bool need_const)
+{
+      NetExpr*canon_index = 0;
+
+      list<long> indices_const;
+      list<NetExpr*> indices_expr;
+      indices_flags flags;
+      indices_to_expressions(des, scope, loc,
+			     src, src.size(),
+			     need_const, flags,
+			     indices_expr, indices_const);
+
+      if (flags.undefined) {
+	    cerr << loc->get_fileline() << ": warning: "
+		 << "ignoring undefined value array access." << endl;
+
+      } else if (flags.variable) {
+	    canon_index = normalize_variable_unpacked(*loc, stype, indices_expr);
+
+      } else {
+	    canon_index = normalize_variable_unpacked(stype, indices_const);
+      }
+
+      return canon_index;
+}
+
 NetEConst* make_const_x(unsigned long wid)
 {
       verinum xxx (verinum::Vx, wid);

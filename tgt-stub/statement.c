@@ -73,6 +73,12 @@ static unsigned show_assign_lval_class(ivl_lval_t lval, unsigned ind)
       fprintf(out, "%*s{name=%s.<property-%d> l-value width=%u}\n",
 	      ind, "", ivl_signal_name(sig), sig_prop, ivl_lval_width(lval));
 
+      if (ivl_lval_idx(lval)) {
+	    ivl_expr_t mux = ivl_lval_idx(lval);
+	    fprintf(out, "%*sAddress-0 select expression:\n", ind+4, "");
+	    show_expression(mux, ind+6);
+      }
+
       return ivl_lval_width(lval);
 }
 

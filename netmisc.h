@@ -191,6 +191,16 @@ extern NetExpr*normalize_variable_unpacked(const netsarray_t*net, list<long>&ind
 extern NetExpr*normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices);
 extern NetExpr*normalize_variable_unpacked(const LineInfo&loc, const netsarray_t*net, list<NetExpr*>&indices);
 
+extern NetExpr*make_canonical_index(Design*des, NetScope*scope,
+				      // loc for error messages
+				    const LineInfo*loc,
+				      // src is the index list
+				    const std::list<index_component_t>&src,
+				      // This is the reference type
+				    const netsarray_t*stype,
+				      // True if the expression MUST be constant.
+				    bool need_const);
+
 /*
  * This function takes as input a NetNet signal and adds a constant
  * value to it. If the val is 0, then simply return sig. Otherwise,

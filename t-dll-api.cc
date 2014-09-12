@@ -485,6 +485,9 @@ extern "C" ivl_expr_t ivl_expr_oper1(ivl_expr_t net)
 	  case IVL_EX_BINARY:
 	    return net->u_.binary_.lef_;
 
+	  case IVL_EX_PROPERTY:
+	    return net->u_.property_.index;
+
 	  case IVL_EX_SELECT:
 	    return net->u_.select_.expr_;
 

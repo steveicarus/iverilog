@@ -832,6 +832,10 @@ extern unsigned ivl_event_lineno(ivl_event_t net);
  * table. That number can be passed to ivl_type_prop_*() functions to
  * get details about the property.
  *
+ * If the property is an array, then the ivl_expr_oper1() function
+ * returns the canonical expression for accessing the element of the
+ * property.
+ *
  * - IVL_EX_NEW
  * This expression takes one or two operands. The first operand,
  * returned by ivl_expr_oper1() is the number of elements to create
@@ -1499,6 +1503,11 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  * then the ivl_lval_idx expression must *not* be present.
  *
  * For array words, the ivl_lval_width is the width of the word.
+ *
+ * - Arrayed properties
+ * If the l-value is a class property, then the ivl_lval_idx function
+ * will return an expression if the property is in fact arrayed. The
+ * expression is the canonical index for elements in the property.
  */
 
 extern unsigned    ivl_lval_width(ivl_lval_t net);

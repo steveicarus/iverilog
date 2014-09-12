@@ -425,27 +425,8 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
 	    ivl_type_t property_type = class_type->get_prop_type(pidx);
 
 	    if (const netsarray_t* stype = dynamic_cast<const netsarray_t*> (property_type)) {
-		  list<long> indices_const;
-		  list<NetExpr*> indices_expr;
-		  indices_flags flags;
-		  indices_to_expressions(des, scope, this,
-					 name_comp.index, name_comp.index.size(),
-					 false, flags,
-					 indices_expr, indices_const);
-
-		  if (flags.undefined) {
-			cerr << get_fileline() << ": warning: "
-			     << "ignoring undefined l-value array access "
-			     << member_name
-			     << " (" << path_ << ")"
-			     << "." << endl;
-		  } else if (flags.variable) {
-			canon_index = normalize_variable_unpacked(*this, stype, indices_expr);
-
-		  } else {
-			canon_index = normalize_variable_unpacked(stype, indices_const);
-		  }
-
+		  canon_index = make_canonical_index(des, scope, this,
+						     name_comp.index, stype, false);
 
 	    } else {
 		  cerr << get_fileline() << ": error: "
@@ -490,9 +471,27 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
 
       ivl_type_t tmp_type = class_type->get_prop_type(pidx);
       if (const netuarray_t*tmp_ua = dynamic_cast<const netuarray_t*>(tmp_type)) {
-	    cerr << get_fileline() << ": sorry: "
-		 << "Unpacked array properties (l-values) not supported yet." << endl;
-	    des->errors += 1;
+
+	    const std::vector<netrange_t>&dims = tmp_ua->static_dimensions();
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
+		       << "Property " << class_type->get_prop_name(pidx)
+		       << " has " << dims.size() << " dimensions, "
+		       << " got " << name_comp.index.size() << " indices." << endl;
+		  if (canon_index) {
+			cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
+			     << "Canonical index is:" << *canon_index << endl;
+		  };
+	    }
+
+	    if (dims.size() != name_comp.index.size()) {
+		  cerr << get_fileline() << ": error: "
+		       << "Got " << name_comp.index.size() << " indices, "
+		       << "expecting " << dims.size()
+		       << " to index the property " << class_type->get_prop_name(pidx) << "." << endl;
+		  des->errors += 1;
+	    }
       }
 
       NetAssign_*this_lval = new NetAssign_(this_net);

@@ -3298,7 +3298,9 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
       if (class_type == 0)
 	    return 0;
 
-      perm_string member_name = peek_tail_name(path_);
+      const name_component_t&name_comp = path_.back();
+
+      perm_string member_name = name_comp.name;
       int pidx = class_type->property_idx_from_name(member_name);
       if (pidx < 0)
 	    return 0;
@@ -3336,14 +3338,40 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
 	    return class_static_property_expression(this, class_type, member_name);
       }
 
+      NetExpr*canon_index = 0;
       ivl_type_t tmp_type = class_type->get_prop_type(pidx);
-      if (/* const netuarray_t*tmp_ua =*/ dynamic_cast<const netuarray_t*>(tmp_type)) {
-	    cerr << get_fileline() << ": sorry: "
-		 << "Unpacked array properties not supported yet." << endl;
-	    des->errors += 1;
+      if (const netuarray_t*tmp_ua = dynamic_cast<const netuarray_t*>(tmp_type)) {
+
+	    const std::vector<netrange_t>&dims = tmp_ua->static_dimensions();
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_expr_class_member_: "
+		       << "Property " << class_type->get_prop_name(pidx)
+		       << " has " << dims.size() << " dimensions, "
+		       << " got " << name_comp.index.size() << " indices." << endl;
+	    }
+
+	    if (dims.size() != name_comp.index.size()) {
+		  cerr << get_fileline() << ": error: "
+		       << "Got " << name_comp.index.size() << " indices, "
+		       << "expecting " << dims.size()
+		       << " to index the property " << class_type->get_prop_name(pidx) << "." << endl;
+		  des->errors += 1;
+
+	    } else {
+
+		  canon_index = make_canonical_index(des, scope, this,
+						     name_comp.index, tmp_ua, false);
+	    }
       }
 
-      NetEProperty*tmp = new NetEProperty(this_net, member_name);
+      if (debug_elaborate && canon_index) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr_class_member_: "
+		 << "Property " << class_type->get_prop_name(pidx)
+		 << " canonical index: " << *canon_index << endl;
+      }
+
+      NetEProperty*tmp = new NetEProperty(this_net, member_name, canon_index);
       tmp->set_line(*this);
       return tmp;
 }

@@ -376,8 +376,8 @@ NetENull::~NetENull()
 {
 }
 
-NetEProperty::NetEProperty(NetNet*net, perm_string pnam)
-: net_(net)
+NetEProperty::NetEProperty(NetNet*net, perm_string pnam, NetExpr*idx)
+: net_(net), index_(idx)
 {
       const netclass_t*use_type = dynamic_cast<const netclass_t*>(net->net_type());
       assert(use_type);

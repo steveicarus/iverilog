@@ -232,6 +232,7 @@ static void show_property_expression(ivl_expr_t net, unsigned ind)
       ivl_signal_t sig = ivl_expr_signal(net);
       const char* pnam = ivl_expr_name(net);
       const char*signed_flag = ivl_expr_signed(net)? "signed" : "unsigned";
+      ivl_expr_t index;
 
       if (ivl_expr_value(net) == IVL_VT_REAL) {
 	    fprintf(out, "%*s<property base=%s, prop=%s, real>\n", ind, "",
@@ -242,6 +243,9 @@ static void show_property_expression(ivl_expr_t net, unsigned ind)
       } else {
 	    fprintf(out, "%*s<property base=%s, prop=%s, width=%u, %s>\n", ind, "",
 		    ivl_signal_basename(sig), pnam, ivl_expr_width(net), signed_flag);
+      }
+      if ( (index=ivl_expr_oper1(net)) ) {
+	    show_expression(index, ind+3);
       }
       if (ivl_signal_data_type(sig) != IVL_VT_CLASS) {
 	    fprintf(out, "%*sERROR: Property signal must be IVL_VT_CLASS, got %s.\n",

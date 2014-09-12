@@ -4293,14 +4293,18 @@ class NetENull : public NetExpr {
  * The NetEProperty represents a SystemVerilog property select of a
  * class object. In SV, the expression would look like "a.b", where
  * the "a" is the signal (the NetNet) and "b" is the property name.
+ *
+ * The canon_index is an optional expression to address an element for
+ * parameters that are arrays.
  */
 class NetEProperty : public NetExpr {
     public:
-      NetEProperty(NetNet*n, perm_string pname);
+      NetEProperty(NetNet*n, perm_string pname, NetExpr*canon_index =0);
       ~NetEProperty();
 
       inline const NetNet* get_sig() const { return net_; }
       inline size_t property_idx() const { return pidx_; }
+      inline const NetExpr*get_index() const { return index_; }
 
     public: // Overridden methods
       ivl_variable_type_t expr_type() const;
@@ -4313,6 +4317,7 @@ class NetEProperty : public NetExpr {
     private:
       NetNet*net_;
       size_t pidx_;
+      NetExpr*index_;
 };
 
 /*
