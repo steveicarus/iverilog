@@ -70,6 +70,8 @@ class netarray_t : public ivl_type_s {
 
     public:
 	// Some virtual methods have a common implementation for arrays.
+
+	// The base_type() for arrays is the base_Typeof the element.
       ivl_variable_type_t base_type() const;
 
     public:

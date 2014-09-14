@@ -94,6 +94,8 @@ using namespace std;
  * to reap the child immediately.
  */
 
+const size_t THR_MAX_WORDS = 16;
+
 struct vthread_s {
       vthread_s();
 
@@ -106,7 +108,7 @@ struct vthread_s {
       union {
 	    int64_t  w_int;
 	    uint64_t w_uint;
-      } words[16];
+      } words[THR_MAX_WORDS];
 
     private:
       vector<double> stack_real_;
@@ -4657,19 +4659,25 @@ bool of_POW_WR(vthread_t thr, vvp_code_t)
 }
 
 /*
- * %prop/obj <pid>
+ * %prop/obj <pid>, <idx>
  *
  * Load an object value from the cobject and push it onto the object stack.
  */
 bool of_PROP_OBJ(vthread_t thr, vvp_code_t cp)
 {
       unsigned pid = cp->number;
+      unsigned idx = cp->bit_idx[0];
+
+      if (idx != 0) {
+	    assert(idx < THR_MAX_WORDS);
+	    idx = thr->words[idx].w_uint;
+      }
 
       vvp_object_t&obj = thr->peek_object();
       vvp_cobject*cobj = obj.peek<vvp_cobject>();
 
       vvp_object_t val;
-      cobj->get_object(pid, val);
+      cobj->get_object(pid, val, idx);
 
       thr->push_object(val);
 
@@ -5479,7 +5487,7 @@ bool of_STORE_OBJA(vthread_t thr, vvp_code_t cp)
 
 
 /*
- * %store/prop/obj <id>
+ * %store/prop/obj <pid>, <idx>
  *
  * Pop an object value from the object stack, and store the value into
  * the property of the object references by the top of the stack. Do NOT
@@ -5488,6 +5496,13 @@ bool of_STORE_OBJA(vthread_t thr, vvp_code_t cp)
 bool of_STORE_PROP_OBJ(vthread_t thr, vvp_code_t cp)
 {
       size_t pid = cp->number;
+      unsigned idx = cp->bit_idx[0];
+
+      if (idx != 0) {
+	    assert(idx < THR_MAX_WORDS);
+	    idx = thr->words[idx].w_uint;
+      }
+
       vvp_object_t val;
       thr->pop_object(val);
 
@@ -5495,7 +5510,7 @@ bool of_STORE_PROP_OBJ(vthread_t thr, vvp_code_t cp)
       vvp_cobject*cobj = obj.peek<vvp_cobject>();
       assert(cobj);
 
-      cobj->set_object(pid, val);
+      cobj->set_object(pid, val, idx);
 
       return true;
 }

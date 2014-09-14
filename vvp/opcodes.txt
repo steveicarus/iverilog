@@ -892,7 +892,7 @@ This opcode raises the left operand by the right operand, and pushes
 the result.
 
 * %prop/v <pid>, <base>, <wid>
-* %prop/obj <pid>
+* %prop/obj <pid>, <idx>
 * %prop/r <pid>
 * %prop/str <pid>
 
@@ -900,6 +900,11 @@ Read a vector (/v) or real value (/r) or string (/str) or object from
 the property number <pid> of the class object on the top of the
 object stack. Push the resulting value to the appropriate stack. The
 class object that is the source is NOT popped from the object stack.
+
+The <idx> is the address of an index variable that selects the word of
+an arrayed property. If the <idx> value is 0, then use index value
+zero instead of reading index register zero. Use this form for
+non-arrayed properties.
 
 * %pushi/real <mant>, <exp>
 
@@ -1048,18 +1053,21 @@ variable given by the label.
 
 See also %load/obj.
 
-* %store/prop/obj <index>
-* %store/prop/r <index>
-* %store/prop/str <index>
-* %store/prop/v <index>, <bit>, <wid>
+* %store/prop/obj <pid>, <idx>
+* %store/prop/r <pid>
+* %store/prop/str <pid>
+* %store/prop/v <pid>, <bit>, <wid>
 
 The %store/prop/r pops a real value from the real stack and stores it
-into the the property number <index> of a cobject in the top of the
+into the the property number <pid> of a cobject in the top of the
 object stack. The cobject is NOT popped.
 
 The %store/prop/obj pops an object from the top of the object stack,
-then writes it to the property number <index> of the cobject now on
-top of the object stack. The cobject is NOT popped.
+then writes it to the property number <pid> of the cobject now on
+top of the object stack. The cobject is NOT popped. The <idx> argument
+is the index register to select an element. If the property is an
+array, this selects the element. If <idx> is 0, then use the value 0
+instead of index register zero. Use 0 for non-array properties.
 
 * %store/real <var-label>
 * %store/reala <var-label>, <index>

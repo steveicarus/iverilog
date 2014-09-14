@@ -203,6 +203,21 @@ ostream& ivl_type_s::debug_dump(ostream&o) const
       return o;
 }
 
+ostream& netclass_t::debug_dump(ostream&fd) const
+{
+      fd << "class " << name_ << "{";
+      for (size_t idx = 0 ; idx < property_table_.size() ; idx += 1) {
+	    if (idx != 0) fd << "; ";
+	    if (property_table_[idx].type)
+		  property_table_[idx].type->debug_dump(fd);
+	    else
+		  fd << "NO_TYPE";
+	    fd << " " << property_table_[idx].name;
+      }
+      fd << "}";
+      return fd;
+}
+
 ostream& netdarray_t::debug_dump(ostream&o) const
 {
       o << "dynamic array of " << *element_type();

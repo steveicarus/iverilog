@@ -115,6 +115,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %type <flag>  local_flag
 %type <vpi_enum> port_type
 %type <numb>  signed_t_number
+%type <numb>  dimension dimensions dimensions_opt
 %type <symb>  symbol symbol_opt
 %type <symbv> symbols symbols_net
 %type <numbv> numbers
@@ -898,8 +899,32 @@ class_properties
   ;
 
 class_property
-  : T_NUMBER ':' T_STRING ',' T_STRING
-      { compile_class_property($1, $3, $5); }
+  : T_NUMBER ':' T_STRING ',' T_STRING dimensions_opt
+      { compile_class_property($1, $3, $5, $6); }
+  ;
+
+/*
+ * The syntax for dimensions allows the code generator to give the
+ * accurate dimensions for for the property, but for now we are only
+ * interested in the total number of elements. So reduce the ranges
+ * to a simple number, and scale the number.
+ */
+dimensions_opt
+  : dimensions
+      { $$ = $1; }
+  |   { $$ = 0; }
+  ;
+
+dimensions
+  : dimensions dimension
+      { $$ = $1 * $2; }
+  | dimension
+      { $$ = $1; }
+  ;
+
+dimension
+  : '[' T_NUMBER ':' T_NUMBER ']'
+      { $$ = ($2 > $4? $2 - $4 : $4 - $2) + 1; }
   ;
 
   /* Enumeration types */

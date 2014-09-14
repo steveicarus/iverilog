@@ -65,3 +65,8 @@ vector<netrange_t> netparray_t::slice_dimensions() const
 netuarray_t::~netuarray_t()
 {
 }
+
+vector<netrange_t> netuarray_t::slice_dimensions() const
+{
+      return static_dimensions();
+}

@@ -41,8 +41,8 @@ class vvp_cobject : public vvp_object {
       void set_string(size_t pid, const std::string&val);
       std::string get_string(size_t pid);
 
-      void set_object(size_t pid, const vvp_object_t&val);
-      void get_object(size_t pid, vvp_object_t&val);
+      void set_object(size_t pid, const vvp_object_t&val, size_t idx);
+      void get_object(size_t pid, vvp_object_t&val, size_t idx);
 
       void shallow_copy(const vvp_object*that);
 

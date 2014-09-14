@@ -84,6 +84,10 @@ class netuarray_t : public netsarray_t {
       explicit netuarray_t(const std::vector<netrange_t>&packed,
 			   ivl_type_t etype);
       ~netuarray_t();
+
+    public:
+	// Virtual methods from the ivl_type_s type...
+      std::vector<netrange_t> slice_dimensions() const;
 };
 
 inline netuarray_t::netuarray_t(const std::vector<netrange_t>&pd,

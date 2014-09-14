@@ -334,7 +334,11 @@ static ivl_type_t draw_lval_expr(ivl_lval_t lval)
       }
 
       assert(ivl_type_base(sub_type) == IVL_VT_CLASS);
-      fprintf(vvp_out, "    %%prop/obj %d;\n", ivl_lval_property_idx(lval));
+      if (ivl_lval_idx(lval)) {
+	    fprintf(vvp_out, " ; XXXX Don't know how to handle ivl_lval_idx values here.\n");
+      }
+
+      fprintf(vvp_out, "    %%prop/obj %d, 0; draw_lval_expr\n", ivl_lval_property_idx(lval));
       fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
       return ivl_type_prop_type(sub_type, ivl_lval_property_idx(lval));
 }
@@ -1063,21 +1067,32 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_DARRAY) {
 
+		  int idx = 0;
+
 		    /* The property is a darray, and there is no mux
 		       expression to the assignment is of an entire
 		       array object. */
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 		  draw_eval_object(rval);
-		  fprintf(vvp_out, "    %%store/prop/obj %d;\n", prop_idx);
+		  fprintf(vvp_out, "    %%store/prop/obj %d, %d; IVL_VT_DARRAY\n", prop_idx, idx);
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_CLASS) {
 
+		  int idx = 0;
+		  ivl_expr_t idx_expr;
+		  if ( (idx_expr = ivl_lval_idx(lval)) ) {
+			idx = allocate_word();
+		  }
+
 		    /* The property is a class object. */
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 		  draw_eval_object(rval);
-		  fprintf(vvp_out, "    %%store/prop/obj %d;\n", prop_idx);
+		  if (idx_expr) draw_eval_expr_into_integer(idx_expr, idx);
+		  fprintf(vvp_out, "    %%store/prop/obj %d, %d; IVL_VT_CLASS\n", prop_idx, idx);
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+
+		  if (idx_expr) clr_word(idx);
 
 	    } else {
 		  fprintf(vvp_out, " ; ERROR: ivl_type_base(prop_type) = %d\n",

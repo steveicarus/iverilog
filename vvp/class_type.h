@@ -49,7 +49,7 @@ class class_type : public __vpiHandle {
 	// Set the details about the property. This is used during
 	// parse of the .vvp file to fill in the details of the
 	// property for the class definition.
-      void set_property(size_t idx, const std::string&name, const std::string&type);
+      void set_property(size_t idx, const std::string&name, const std::string&type, uint64_t array_size);
 
 	// This method is called after all the properties are
 	// defined. This calculates information about the definition.
@@ -66,8 +66,8 @@ class class_type : public __vpiHandle {
       double get_real(inst_t inst, size_t pid) const;
       void set_string(inst_t inst, size_t pid, const std::string&val) const;
       std::string get_string(inst_t inst, size_t pid) const;
-      void set_object(inst_t inst, size_t pid, const vvp_object_t&val) const;
-      void get_object(inst_t inst, size_t pid, vvp_object_t&val) const;
+      void set_object(inst_t inst, size_t pid, const vvp_object_t&val, size_t idx) const;
+      void get_object(inst_t inst, size_t pid, vvp_object_t&val, size_t idx) const;
 
       void copy_property(inst_t dst, size_t idx, inst_t src) const;
 

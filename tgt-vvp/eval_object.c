@@ -172,9 +172,22 @@ static int eval_object_property(ivl_expr_t expr)
       ivl_signal_t sig = ivl_expr_signal(expr);
       unsigned pidx = ivl_expr_property_idx(expr);
 
+      int idx = 0;
+      ivl_expr_t idx_expr = 0;
+
+	/* If there is an array index expression, then this is an
+	   array'ed property, and we need to calculate the index for
+	   the expression. */
+      if ( (idx_expr = ivl_expr_oper1(expr)) ) {
+	    idx = allocate_word();
+	    draw_eval_expr_into_integer(idx_expr, idx);
+      }
+
       fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
-      fprintf(vvp_out, "    %%prop/obj %u;\n", pidx);
+      fprintf(vvp_out, "    %%prop/obj %u, %d; eval_object_property\n", pidx, idx);
       fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
+
+      if (idx != 0) clr_word(idx);
       return 0;
 }
 
