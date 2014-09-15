@@ -47,7 +47,14 @@ void VTypeArray::write_to_stream(ostream&fd) const
 	    return;
       }
 
-      fd << "array ";
+      bool typedefed = false;
+      if(const VTypeDef*tdef = dynamic_cast<const VTypeDef*>(etype_)) {
+            tdef->write_to_stream(fd);
+            typedefed = true;
+      } else {
+            fd << "array ";
+      }
+
       if (! ranges_.empty()) {
 	    assert(ranges_.size() < 2);
 	    if (ranges_[0].is_box()) {
@@ -57,8 +64,10 @@ void VTypeArray::write_to_stream(ostream&fd) const
 	    }
       }
 
-      fd << "of ";
-      etype_->write_to_stream(fd);
+      if(!typedefed) {
+            fd << "of ";
+            etype_->write_to_stream(fd);
+      }
 }
 
 void VTypeArray::write_range_to_stream_(std::ostream&fd) const

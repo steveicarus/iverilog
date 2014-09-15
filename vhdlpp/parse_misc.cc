@@ -82,7 +82,8 @@ static const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_n
 
       assert(array_left==0 || array_right!=0);
 
-      // unfold typedef, if it is the case
+      // unfold typedef, there might be VTypeArray inside
+      const VType*origin_type = base_type;
       const VTypeDef*type_def = dynamic_cast<const VTypeDef*> (base_type);
       if (type_def) {
           base_type = type_def->peek_definition();
@@ -99,7 +100,11 @@ static const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_n
 
 	    range[0] = VTypeArray::range_t(array_left, array_right, downto);
 
-	    VTypeArray*subtype = new VTypeArray(base_array->element_type(), range, base_array->signed_vector());
+	      // use typedef as the element type if possible
+	    const VType*element = type_def ? origin_type : base_array->element_type();
+
+	    VTypeArray*subtype = new VTypeArray(element, range,
+                                                base_array->signed_vector());
 	    return subtype;
       }
 
