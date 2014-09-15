@@ -66,6 +66,11 @@ map<perm_string,PUdp*> pform_primitives;
 map<perm_string,data_type_t*>pform_typedefs;
 set<enum_type_t*>pform_enum_sets;
 
+/*
+ * Class definitions in the $root scope go here.
+ */
+map<perm_string,PClass*> pform_classes;
+
 std::string vlltype::get_fileline() const
 {
       ostringstream buf;
@@ -331,10 +336,7 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
 	/* If no scope was found then this is being defined in the
 	 * compilation unit scope. */
       if (scopex == 0) {
-	    cerr << class_scope->get_fileline() << ": sorry: class "
-	            "declarations in the compilation unit scope are not yet "
-	            "supported." << endl;
-	    error_count += 1;
+	    pform_classes[name] = class_scope;
 	    lexical_scope = class_scope;
 	    return class_scope;
       }

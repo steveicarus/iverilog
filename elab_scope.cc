@@ -416,6 +416,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
       netclass_t*use_base_class = 0;
       if (base_class) {
+	    ivl_assert(*pclass, scope);
 	    use_base_class = scope->find_class(base_class->name);
 	    if (use_base_class == 0) {
 		  cerr << pclass->get_fileline() << ": error: "
@@ -440,14 +441,22 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 	// elaborated class definition.
       for (map<perm_string, class_type_t::prop_info_t>::iterator cur = use_type->properties.begin()
 		 ; cur != use_type->properties.end() ; ++ cur) {
-	    ivl_type_s*tmp = cur->second.type->elaborate_type(des, scope);
-	    ivl_assert(*pclass, tmp);
-	    if (debug_scopes) {
-		  cerr << pclass->get_fileline() << ": elaborate_scope_class: "
-		       << "  Property " << cur->first
-		       << " type=" << *tmp << endl;
+
+	    if (scope) {
+		  ivl_type_s*tmp = cur->second.type->elaborate_type(des, scope);
+		  ivl_assert(*pclass, tmp);
+		  if (debug_scopes) {
+			cerr << pclass->get_fileline() << ": elaborate_scope_class: "
+			     << "  Property " << cur->first
+			     << " type=" << *tmp << endl;
+		  }
+		  use_class->set_property(cur->first, cur->second.qual, tmp);
+	    } else {
+		  cerr << pclass->get_fileline() << ": sorry: Don't know how to elaborate "
+		       << "property " << cur->first
+		       << " for class type in $root scope," << endl;
+		  des->errors += 1;
 	    }
-	    use_class->set_property(cur->first, cur->second.qual, tmp);
       }
 
       for (map<perm_string,PTask*>::iterator cur = pclass->tasks.begin()
@@ -486,7 +495,14 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 	    cur->second->elaborate_scope(des, method_scope);
       }
 
-      scope->add_class(use_class);
+      if (scope) {
+	    scope->add_class(use_class);
+
+      } else {
+	    cerr << pclass->get_fileline() << ": sorry: "
+		 << "Don't know how to elaborate class in $root scope." << endl;
+	    des->errors += 1;
+      }
 }
 
 static void elaborate_scope_classes(Design*des, NetScope*scope,
@@ -495,6 +511,18 @@ static void elaborate_scope_classes(Design*des, NetScope*scope,
       for (size_t idx = 0 ; idx < classes.size() ; idx += 1) {
 	    blend_class_constructors(classes[idx]);
 	    elaborate_scope_class(des, scope, classes[idx]);
+      }
+}
+
+void elaborate_rootscope_classes(Design*des)
+{
+      if (pform_classes.empty())
+	    return;
+
+      for (map<perm_string,PClass*>::iterator cur = pform_classes.begin()
+		 ; cur != pform_classes.end() ; ++ cur) {
+	    blend_class_constructors(cur->second);
+	    elaborate_scope_class(des, 0, cur->second);
       }
 }
 
