@@ -98,6 +98,29 @@ VTypeArray::~VTypeArray()
 {
 }
 
+const VType* VTypeArray::basic_type(bool typedef_allowed) const
+{
+    const VType*t = etype_;
+    const VTypeDef*tdef = NULL;
+    bool progress = false;
+
+    do {
+        progress = false;
+
+        if((tdef = dynamic_cast<const VTypeDef*>(t))) {
+            t = tdef->peek_definition();
+        }
+
+        if(const VTypeArray*arr = dynamic_cast<const VTypeArray*>(t)) {
+            t = arr->element_type();
+            progress = true;
+        } else if(tdef) { // return the typedef if it does not define an array
+            t = typedef_allowed ? tdef : tdef->peek_definition();
+        }
+    } while(progress);
+
+    return t;
+}
 
 void VTypeArray::show(ostream&out) const
 {

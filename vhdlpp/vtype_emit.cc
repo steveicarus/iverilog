@@ -60,12 +60,8 @@ int VTypeArray::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;
 
-      const VTypeArray*cur = this;
-      while (const VTypeArray*sub = dynamic_cast<const VTypeArray*> (cur->etype_)) {
-	    cur = sub;
-      }
+      const VType*raw_base = basic_type();
 
-      const VType*raw_base = cur->etype_;
       const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (raw_base);
 
       if (base) {

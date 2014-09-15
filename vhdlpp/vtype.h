@@ -206,6 +206,12 @@ class VTypeArray : public VType {
 	// returns the type of element held in the array
       inline const VType* element_type() const { return etype_; }
 
+	// returns the basic type of element held in the array
+	// (unfolds typedefs and multidimensional arrays)
+	// typedef_allowed decides if VTypeDef can be returned or should
+	// it be unfolded
+      const VType* basic_type(bool typedef_allowed = true) const;
+
       int emit_def(std::ostream&out, perm_string name) const;
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
       int emit_dimensions(std::ostream&out) const;
