@@ -37,21 +37,7 @@ SigVarBase::~SigVarBase()
 void SigVarBase::elaborate_init_expr(Entity*ent, Architecture*arc)
 {
     if(init_expr_) {
-      // convert the initializing string to bitstring if applicable
-      const ExpString*string = dynamic_cast<const ExpString*>(init_expr_);
-      if(string) {
-        const std::vector<char>& val = string->get_value();
-        char buf[val.size() + 1];
-        std::copy(val.begin(), val.end(), buf);
-        buf[val.size()] = 0;
-
-        ExpBitstring*bitstring = new ExpBitstring(buf);
-        delete init_expr_;
-        init_expr_ = bitstring;
-      }
-      else {
         init_expr_->elaborate_expr(ent, arc, peek_type());
-      }
     }
 }
 
