@@ -995,6 +995,9 @@ class NetScope : public Definitions, public Attrib {
       const NetScope* parent() const { return up_; }
       const NetScope* child(const hname_t&name) const;
 
+	/* A helper function to find the enclosing class scope. */
+      const NetScope* get_class_scope() const;
+
 	// Look for a child scope by name. This ignores the number
 	// part of the child scope name, so there may be multiple
 	// matches. Only return one. This function is only really

@@ -2064,10 +2064,23 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return 0;
       }
-      ivl_assert(*this, def);
 
+      ivl_assert(*this, def);
       NetScope*dscope = def->scope();
       ivl_assert(*this, dscope);
+
+       /* In SystemVerilog a method calling another method in the
+        * current class needs to be elaborated as a method with an
+        * implicit this added.  */
+      if (gn_system_verilog() && (path_.size() == 1)) {
+           const NetScope *c_scope = scope->get_class_scope();
+           if (c_scope && (c_scope == dscope->get_class_scope())) {
+                 NetExpr*tmp = elaborate_expr_method_(des, scope, expr_wid,
+		                                      true);
+                 assert(tmp);
+                 return tmp;
+           }
+      }
 
       bool need_const = NEED_CONST & flags;
 
@@ -2262,17 +2275,22 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
 }
 
 NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
-						unsigned expr_wid) const
+						unsigned expr_wid,
+						bool add_this_flag) const
 {
       pform_name_t use_path = path_;
       perm_string method_name = peek_tail_name(use_path);
       use_path.pop_back();
 
+	/* Add the implicit this reference when requested. */
+      if (add_this_flag) {
+	    assert(use_path.empty());
+	    use_path.push_front(name_component_t(perm_string::literal("@")));
+      }
+
 	// If there is no object to the left of the method name, then
 	// give up on the idea of looking for an object method.
-      if (use_path.empty()) {
-	    return 0;
-      }
+      if (use_path.empty()) return 0;
 
       NetNet *net = 0;
       const NetExpr *par;

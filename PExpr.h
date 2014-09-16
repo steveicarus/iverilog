@@ -936,7 +936,8 @@ class PECallFunction : public PExpr {
       NetExpr*elaborate_expr_pkg_(Design*des, NetScope*scope,
 				  unsigned expr_wid, unsigned flags)const;
       NetExpr*elaborate_expr_method_(Design*des, NetScope*scope,
-				     unsigned expr_wid) const;
+				     unsigned expr_wid,
+				     bool add_this_flag = false) const;
 #if 0
       NetExpr*elaborate_expr_string_method_(Design*des, NetScope*scope) const;
       NetExpr*elaborate_expr_enum_method_(Design*des, NetScope*scope,

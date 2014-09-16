@@ -3439,6 +3439,17 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       }
       assert(def);
 
+	/* In SystemVerilog a method calling another method in the
+	 * current class needs to be elaborated as a method with an
+	 * implicit this added.  */
+      if (gn_system_verilog() && (path_.size() == 1)) {
+	    const NetScope *c_scope = scope->get_class_scope();
+	    if (c_scope && (c_scope == task->get_class_scope())) {
+		  NetProc *tmp = elaborate_method_(des, scope, true);
+		  assert(tmp);
+		  return tmp;
+	    }
+      }
 
       unsigned parm_count = def->port_count();
 
@@ -3490,7 +3501,8 @@ NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
       return sys;
 }
 
-NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope) const
+NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
+                                      bool add_this_flag) const
 {
       pform_name_t use_path = path_;
       perm_string method_name = peek_tail_name(use_path);
@@ -3500,6 +3512,12 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope) const
       const NetExpr *par;
       NetEvent *eve;
       const NetExpr *ex1, *ex2;
+
+	/* Add the implicit this reference when requested. */
+      if (add_this_flag) {
+	    assert(use_path.empty());
+	    use_path.push_front(name_component_t(perm_string::literal("@")));
+      }
 
 	// There is no signal to search for so this cannot be a method.
       if (use_path.empty()) return 0;

@@ -691,6 +691,32 @@ const NetScope* NetScope::child(const hname_t&name) const
 	    return cur->second;
 }
 
+/* Helper function to see if the given scope is defined in a class and if
+ * so return the class scope. */
+const NetScope* NetScope::get_class_scope() const
+{
+      const NetScope*scope = this;
+      while (scope) {
+	    switch(scope->type()) {
+		case NetScope::CLASS:
+		  return scope;
+		case NetScope::TASK:
+		case NetScope::FUNC:
+		case NetScope::BEGIN_END:
+		case NetScope::FORK_JOIN:
+		  break;
+		case NetScope::MODULE:
+		case NetScope::GENBLOCK:
+		case NetScope::PACKAGE:
+		  return 0;
+		default:
+		  assert(0);
+	    }
+	    scope = scope->parent();
+      }
+      return scope;
+}
+
 const NetScope* NetScope::child_byname(perm_string name) const
 {
       hname_t hname (name);
