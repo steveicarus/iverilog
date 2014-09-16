@@ -38,8 +38,12 @@ using namespace std;
  */
 ivl_type_s* data_type_t::elaborate_type(Design*des, NetScope*scope)
 {
-      map<NetScope*,ivl_type_s*>::iterator pos = cache_type_elaborate_.lower_bound(scope);
-      if (pos->first == scope)
+      Definitions*use_definitions = scope;
+      if (use_definitions == 0)
+	    use_definitions = des;
+
+      map<Definitions*,ivl_type_s*>::iterator pos = cache_type_elaborate_.lower_bound(use_definitions);
+      if (pos->first == use_definitions)
 	    return pos->second;
 
       ivl_type_s*tmp = elaborate_type_raw(des, scope);
@@ -91,9 +95,13 @@ ivl_type_s* atom2_type_t::elaborate_type_raw(Design*des, NetScope*) const
       }
 }
 
-ivl_type_s* class_type_t::elaborate_type_raw(Design*, NetScope*scope) const
+ivl_type_s* class_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 {
-      return scope->find_class(name);
+      ivl_type_s* found_class = scope->find_class(name);
+      if (found_class == 0)
+	    found_class = des->find_class(name);
+
+      return found_class;
 }
 
 /*
@@ -219,6 +227,12 @@ ivl_type_s* uarray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
       vector<netrange_t> dimensions;
       bool bad_range = evaluate_ranges(des, scope, dimensions, *dims);
 
+      if (bad_range) {
+	    cerr << get_fileline() << " : warning: "
+		 << "Bad dimensions for type here." << endl;
+      }
+
+      ivl_assert(*this, btype);
       ivl_type_s*res = new netuarray_t(dimensions, btype);
       return res;
 }

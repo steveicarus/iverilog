@@ -96,6 +96,11 @@ const NetExpr* Definitions::enumeration_expr(perm_string key)
       }
 }
 
+void Definitions::add_class(netclass_t*net_class)
+{
+      classes_[net_class->get_name()] = net_class;
+}
+
 /*
  * The NetScope class keeps a scope tree organized. Each node of the
  * scope tree points to its parent, its right sibling and its leftmost
@@ -632,14 +637,9 @@ NetNet* NetScope::find_signal(perm_string key)
 	    return 0;
 }
 
-void NetScope::add_class(netclass_t*net_class)
-{
-      classes_[net_class->get_name()] = net_class;
-}
-
 netclass_t*NetScope::find_class(perm_string name)
 {
-	// Special class: The scope itself is the class that we are
+	// Special case: The scope itself is the class that we are
 	// looking for. This may happen for example when elaborating
 	// methods within the class.
       if (type_==CLASS && name_==hname_t(name))

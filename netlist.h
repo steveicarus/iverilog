@@ -74,6 +74,7 @@ class NetRamDq;
 class NetTaskDef;
 class NetEvTrig;
 class NetEvWait;
+class PClass;
 class PExpr;
 class PFunction;
 struct enum_type_t;
@@ -888,6 +889,9 @@ class Definitions {
 	// value.
       const NetExpr* enumeration_expr(perm_string key);
 
+	// Definitions scopes can also hold classes, by name.
+      void add_class(netclass_t*class_type);
+
     protected:
 	// Enumerations. The enum_sets_ is a list of all the
 	// enumerations present in this scope. The enum_names_ is a
@@ -895,6 +899,8 @@ class Definitions {
 	// contain them.
       std::map<const enum_type_t*,netenum_t*> enum_sets_;
       std::map<perm_string,NetEConstEnum*> enum_names_;
+
+      std::map<perm_string,netclass_t*> classes_;
 
 };
 
@@ -980,7 +986,6 @@ class NetScope : public Definitions, public Attrib {
       void rem_signal(NetNet*);
       NetNet* find_signal(perm_string name);
 
-      void add_class(netclass_t*class_type);
       netclass_t* find_class(perm_string name);
 
 	/* The parent and child() methods allow users of NetScope
@@ -1238,8 +1243,6 @@ class NetScope : public Definitions, public Attrib {
       };
       const PFunction*func_pform_;
       unsigned elab_stage_;
-
-      std::map<perm_string,netclass_t*> classes_;
 
       NetScope*up_;
       map<hname_t,NetScope*> children_;
@@ -4790,6 +4793,11 @@ class Design : public Definitions {
 	// Look for defparams that never matched, and print warnings.
       void residual_defparams();
 
+	// Do elaborate_sig for objects in $root scope.
+      void root_elaborate_sig(void);
+
+      void root_elaborate(void);
+
 	/* This method locates a signal, starting at a given
 	   scope. The name parameter may be partially hierarchical, so
 	   this method, unlike the NetScope::find_signal method,
@@ -4802,6 +4810,10 @@ class Design : public Definitions {
 
 	// Tasks
       NetScope* find_task(NetScope*scope, const pform_name_t&name);
+
+	// Find a class in the $root scope.
+      void add_class(netclass_t*cl, PClass*pclass);
+      netclass_t* find_class(perm_string name) const;
 
 	// NODES
       void add_node(NetNode*);
@@ -4836,6 +4848,9 @@ class Design : public Definitions {
 	// Keep a map of all the elaborated packages. Note that
 	// packages do not nest.
       std::map<perm_string,NetScope*>packages_;
+
+	// Need this for elaboration of $root scope pclass objects.
+      std::map<netclass_t*,PClass*> class_to_pclass_;
 
 	// List the nodes in the design.
       NetNode*nodes_;

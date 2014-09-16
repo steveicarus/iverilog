@@ -510,6 +510,14 @@ int Design::emit(struct target_t*tgt) const
 	    scope->second->emit_scope(tgt);
       }
 
+      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
+		 ; cur != classes_.end() ; ++cur) {
+	    const NetScope*use_scope = cur->second->class_scope();
+	    cur->second->emit_scope(tgt);
+	    tgt->class_type(use_scope, cur->second);
+	    cur->second->emit_defs(tgt);
+      }
+
 	// enumerate root scopes
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin()
 		 ; scope != root_scopes_.end(); ++ scope ) {

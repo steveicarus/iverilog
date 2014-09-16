@@ -2543,6 +2543,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    ivl_assert(*this, lv->word());
 	    use_lv_type = utype->element_type();
 
+	    ivl_assert(*this, use_lv_type);
 	    rv = elaborate_rval_(des, scope, use_lv_type);
 
       } else {
@@ -5962,6 +5963,16 @@ bool Design::check_proc_delay() const
       return result_flag;
 }
 
+void Design::root_elaborate(void)
+{
+      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
+		 ; cur != classes_.end() ; ++ cur) {
+	    netclass_t*cur_class = cur->second;
+	    PClass*cur_pclass = class_to_pclass_[cur_class];
+	    cur_class->elaborate(this, cur_pclass);
+      }
+}
+
 /*
  * This function is the root of all elaboration. The input is the list
  * of root module names. The function locates the Module definitions
@@ -6093,6 +6104,11 @@ Design* elaborate(list<perm_string>roots)
 	    }
       }
 
+      if (debug_elaborate) {
+	    cerr << "<toplevel>: elaborate: "
+		 << "elaboration work list done. Start processing residual defparams." << endl;
+      }
+
 	// Look for residual defparams (that point to a non-existent
 	// scope) and clean them out.
       des->residual_defparams();
@@ -6101,6 +6117,11 @@ Design* elaborate(list<perm_string>roots)
 	// now and return nothing.
       if (des->errors > 0)
 	    return des;
+
+      if (debug_elaborate) {
+	    cerr << "<toplevel>: elaborate: "
+		 << "Start calling Package elaborate_sig methods." << endl;
+      }
 
 	// With the parameters evaluated down to constants, we have
 	// what we need to elaborate signals and memories. This pass
@@ -6118,6 +6139,18 @@ Design* elaborate(list<perm_string>roots)
 		  delete des;
 		  return 0;
 	    }
+      }
+
+      if (debug_elaborate) {
+	    cerr << "<toplevel>: elaborate: "
+		 << "Start calling $root elaborate_sig methods." << endl;
+      }
+
+      des->root_elaborate_sig();
+
+      if (debug_elaborate) {
+	    cerr << "<toplevel>: elaborate: "
+		 << "Start calling root module elaborate_sig methods." << endl;
       }
 
       for (i = 0; i < root_elems.size(); i++) {
@@ -6175,6 +6208,8 @@ Design* elaborate(list<perm_string>roots)
 	    NetScope*scope = pack_elems[i].scope;
 	    rc &= pkg->elaborate(des, scope);
       }
+
+      des->root_elaborate();
 
       for (i = 0; i < root_elems.size(); i++) {
 	    Module *rmod = root_elems[i].mod;

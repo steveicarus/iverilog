@@ -56,10 +56,10 @@ void netclass_t::set_class_scope(NetScope*class_scope)
       class_scope_ = class_scope;
 }
 
-void netclass_t::set_definition_scope(NetScope*definition_scope)
+void netclass_t::set_definition_scope(NetScope*use_definition_scope)
 {
       assert(definition_scope_ == 0);
-      definition_scope_ = definition_scope;
+      definition_scope_ = use_definition_scope;
 }
 
 ivl_variable_type_t netclass_t::base_type() const

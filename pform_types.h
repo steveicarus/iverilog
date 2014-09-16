@@ -39,6 +39,7 @@
 
 class Design;
 class NetScope;
+class Definitions;
 class PExpr;
 class PWire;
 class Statement;
@@ -133,7 +134,7 @@ class data_type_t : public LineInfo {
       virtual ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
 
 	// Keep per-scope elaboration results cached.
-      std::map<NetScope*,ivl_type_s*> cache_type_elaborate_;
+      std::map<Definitions*,ivl_type_s*> cache_type_elaborate_;
 };
 
 struct void_type_t : public data_type_t {

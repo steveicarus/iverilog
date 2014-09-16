@@ -134,6 +134,21 @@ NetScope* Design::make_package_scope(perm_string name)
       return scope;
 }
 
+void Design::add_class(netclass_t*cl, PClass*pclass)
+{
+      Definitions::add_class(cl);
+      class_to_pclass_[cl] = pclass;
+}
+
+netclass_t* Design::find_class(perm_string name) const
+{
+      map<perm_string,netclass_t*>::const_iterator cur = classes_.find(name);
+      if (cur != classes_.end())
+	    return cur->second;
+
+      return 0;
+}
+
 NetScope* Design::find_package(perm_string name) const
 {
       map<perm_string,NetScope*>::const_iterator cur = packages_.find(name);

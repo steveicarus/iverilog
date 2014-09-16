@@ -836,10 +836,13 @@ void PWhile::elaborate_sig(Design*des, NetScope*scope) const
 	    statement_->elaborate_sig(des, scope);
 }
 
-static netclass_t* locate_class_type(Design*, NetScope*scope,
+static netclass_t* locate_class_type(Design*des, NetScope*scope,
 				     class_type_t*class_type)
 {
       netclass_t*use_class = scope->find_class(class_type->name);
+      if (use_class) return use_class;
+
+      use_class = des->find_class(class_type->name);
       return use_class;
 }
 
@@ -1300,4 +1303,17 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    sig->attribute(attrib_list[idx].key, attrib_list[idx].val);
 
       return sig;
+}
+
+
+void Design::root_elaborate_sig(void)
+{
+      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
+		 ; cur != classes_.end() ; ++ cur) {
+
+	    netclass_t*cur_class = cur->second;
+	    PClass*cur_pclass = class_to_pclass_[cur_class];
+
+	    cur_class->elaborate_sig(this, cur_pclass);
+      }
 }

@@ -5093,6 +5093,8 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 						 const netclass_t*ctype,
 						 NetExpr*obj, unsigned /*flags*/) const
 {
+      ivl_assert(*this, ctype);
+
 	// If there is an initializer function, then pass the object
 	// through that function first. Note that the initializer
 	// function has no arguments other than the object itself.
@@ -5130,6 +5132,12 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 
 
       NetFuncDef*def = new_scope->func_def();
+      if (def == 0) {
+	    cerr << get_fileline() << ": internal error: "
+		 << "Scope " << scope_path(new_scope)
+		 << " is missing constructor definition." << endl;
+	    des->errors += 1;
+      }
       ivl_assert(*this, def);
 
 	// Are there too many arguments passed to the function. If so,

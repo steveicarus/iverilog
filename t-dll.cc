@@ -2411,6 +2411,11 @@ void dll_target::scope(const NetScope*net)
 {
       if (net->parent()==0 && net->type()==NetScope::CLASS) {
 
+	    if (debug_emit) {
+		  cerr << "dll_target::scope: "
+		       << "Add class " << scope_path(net)
+		       << " as a root scope." << endl;
+	    }
 	    add_root(net);
 
       } if (net->parent() == 0) {

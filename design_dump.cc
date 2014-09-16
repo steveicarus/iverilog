@@ -1879,6 +1879,12 @@ void Design::dump(ostream&o) const
 	    cur->second->dump(o);
       }
 
+      o << "$ROOT CLASSESS:" << endl;
+      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
+		 ; cur != classes_.end() ; ++cur) {
+	    cur->second->dump_scope(o);
+      }
+
       o << "SCOPES:" << endl;
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
 	   scope != root_scopes_.end(); ++ scope ) {

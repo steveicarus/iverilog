@@ -442,21 +442,15 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       for (map<perm_string, class_type_t::prop_info_t>::iterator cur = use_type->properties.begin()
 		 ; cur != use_type->properties.end() ; ++ cur) {
 
-	    if (scope) {
-		  ivl_type_s*tmp = cur->second.type->elaborate_type(des, scope);
-		  ivl_assert(*pclass, tmp);
-		  if (debug_scopes) {
-			cerr << pclass->get_fileline() << ": elaborate_scope_class: "
-			     << "  Property " << cur->first
-			     << " type=" << *tmp << endl;
-		  }
-		  use_class->set_property(cur->first, cur->second.qual, tmp);
-	    } else {
-		  cerr << pclass->get_fileline() << ": sorry: Don't know how to elaborate "
-		       << "property " << cur->first
-		       << " for class type in $root scope," << endl;
-		  des->errors += 1;
+	    ivl_type_s*tmp = cur->second.type->elaborate_type(des, scope);
+	    ivl_assert(*pclass, tmp);
+	    if (debug_scopes) {
+		  cerr << pclass->get_fileline() << ": elaborate_scope_class: "
+		       << "  Property " << cur->first
+		       << " type=" << *tmp << endl;
 	    }
+	    use_class->set_property(cur->first, cur->second.qual, tmp);
+
       }
 
       for (map<perm_string,PTask*>::iterator cur = pclass->tasks.begin()
@@ -499,9 +493,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 	    scope->add_class(use_class);
 
       } else {
-	    cerr << pclass->get_fileline() << ": sorry: "
-		 << "Don't know how to elaborate class in $root scope." << endl;
-	    des->errors += 1;
+	    des->add_class(use_class, pclass);
       }
 }
 
