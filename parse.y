@@ -3220,13 +3220,26 @@ expr_primary
 
   /* An identifier followed by an expression list in parentheses is a
      function call. If a system identifier, then a system function
-     call. */
+     call. It can also be a call to a class method (functino). */
 
   | hierarchy_identifier '(' expression_list_with_nuls ')'
       { list<PExpr*>*expr_list = $3;
 	strip_tail_items(expr_list);
 	PECallFunction*tmp = pform_make_call_function(@1, *$1, *expr_list);
 	delete $1;
+	$$ = tmp;
+      }
+  | implicit_class_handle '.' hierarchy_identifier '(' expression_list_with_nuls ')'
+      { pform_name_t*t_name = $1;
+	while (! $3->empty()) {
+	      t_name->push_back($3->front());
+	      $3->pop_front();
+	}
+	list<PExpr*>*expr_list = $5;
+	strip_tail_items(expr_list);
+	PECallFunction*tmp = pform_make_call_function(@1, *t_name, *expr_list);
+	delete $1;
+	delete $3;
 	$$ = tmp;
       }
   | SYSTEM_IDENTIFIER '(' expression_list_proper ')'
@@ -3263,12 +3276,12 @@ expr_primary
       }
 
   | implicit_class_handle '.' hierarchy_identifier
-      { pform_name_t*nam = $1;
+      { pform_name_t*t_name = $1;
 	while (! $3->empty()) {
-	      nam->push_back($3->front());
+	      t_name->push_back($3->front());
 	      $3->pop_front();
 	}
-	PEIdent*tmp = new PEIdent(*nam);
+	PEIdent*tmp = new PEIdent(*t_name);
 	FILE_NAME(tmp,@1);
 	delete $1;
 	delete $3;
@@ -4075,15 +4088,15 @@ lpvalue
       }
 
   | implicit_class_handle '.' hierarchy_identifier
-      { pform_name_t*tmp1 = $1;
+      { pform_name_t*t_name = $1;
 	while (!$3->empty()) {
-	      tmp1->push_back($3->front());
+	      t_name->push_back($3->front());
 	      $3->pop_front();
 	}
-	PEIdent*tmp = new PEIdent(*tmp1);
+	PEIdent*tmp = new PEIdent(*t_name);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
-	delete tmp1;
+	delete $1;
 	delete $3;
       }
 
@@ -6054,12 +6067,12 @@ statement_item /* This is roughly statement_item in the LRM */
       }
 
   | implicit_class_handle '.' hierarchy_identifier '(' expression_list_with_nuls ')' ';'
-      { pform_name_t*nam = $1;
+      { pform_name_t*t_name = $1;
 	while (! $3->empty()) {
-	      nam->push_back($3->front());
+	      t_name->push_back($3->front());
 	      $3->pop_front();
 	}
-	PCallTask*tmp = new PCallTask(*nam, *$5);
+	PCallTask*tmp = new PCallTask(*t_name, *$5);
 	FILE_NAME(tmp, @1);
 	delete $1;
 	delete $3;
@@ -6084,6 +6097,7 @@ statement_item /* This is roughly statement_item in the LRM */
   | implicit_class_handle '.' K_new '(' expression_list_with_nuls ')' ';'
       { PChainConstructor*tmp = new PChainConstructor(*$5);
 	FILE_NAME(tmp, @3);
+	delete $1;
 	$$ = tmp;
       }
   | hierarchy_identifier '(' error ')' ';'
