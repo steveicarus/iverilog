@@ -56,6 +56,10 @@ const VType* Expression::fit_type(Entity*ent, Architecture*arc, const VTypeArray
 
 const VType*ExpName::elaborate_adjust_type_with_range_(Entity*, Architecture*arc, const VType*type)
 {
+	// Unfold typedefs
+      while (const VTypeDef*tdef = dynamic_cast<const VTypeDef*>(type)) {
+	    type = tdef->peek_definition();
+      }
 
       if (const VTypeArray*array = dynamic_cast<const VTypeArray*>(type)) {
 	    if (index_ && !lsb_) {
@@ -484,6 +488,8 @@ int ExpAggregate::elaborate_expr_record_(Entity*ent, Architecture*arc, const VTy
       int errors = 0;
 
       aggregate_.resize(elements_.size());
+      choice_element tmp;
+      int idx;
 
 	// Translate the elements_ array to the aggregate_ array. In
 	// the target array, each expression is attached to a single
@@ -494,24 +500,20 @@ int ExpAggregate::elaborate_expr_record_(Entity*ent, Architecture*arc, const VTy
             // it is invalid to have more than one choice in record assignment
             ivl_assert(*this, ecur->count_choices() == 1);
 
-            ecur->map_choices(&aggregate_[edx]);
-      }
+            ecur->map_choices(&tmp);
+            choice_t*ch = tmp.choice;
 
-	// Now run through the more convenient mapping and elaborate
-	// all the expressions that I find.
-      for (size_t idx = 0 ; idx < aggregate_.size() ; idx += 1) {
-            ivl_assert(*this, !aggregate_[idx].alias_flag);
-
-            choice_t*ch = aggregate_[idx].choice;
             ivl_assert(*this, !ch->others());
+            ivl_assert(*this, !tmp.alias_flag);
 
 	// Get the appropriate type for a field
             const ExpName*field = dynamic_cast<const ExpName*>(ch->simple_expression(false));
             ivl_assert(*this, field);
 
             perm_string field_name = field->peek_name();
-            const VTypeRecord::element_t*el = ltype->element_by_name(field_name);
+            const VTypeRecord::element_t*el = ltype->element_by_name(field_name, &idx);
 
+            aggregate_[idx] = tmp;
             errors += aggregate_[idx].expr->elaborate_expr(ent, arc, el->peek_type());
       }
 
