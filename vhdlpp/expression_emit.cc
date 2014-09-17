@@ -273,7 +273,7 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
       return errors;
 }
 
-int ExpAggregate::emit_record_(ostream&out, Entity*ent, Architecture*arc, const VTypeRecord*ltype)
+int ExpAggregate::emit_record_(ostream&out, Entity*ent, Architecture*arc, const VTypeRecord*)
 {
       int errors = 0;
 
@@ -283,12 +283,16 @@ int ExpAggregate::emit_record_(ostream&out, Entity*ent, Architecture*arc, const 
 	    ivl_assert(*this, !aggregate_[idx].choice->others());
 	    ivl_assert(*this, !aggregate_[idx].choice->range_expressions());
 
+	    //Expression*name = aggregate_[idx].choice->simple_expression(false);
+	    //ivl_assert(*this, name);
 	    Expression*val = aggregate_[idx].expr;
 	    ivl_assert(*this, val);
 
 	    if(idx != 0)
 	        out << ",";
 
+	    //errors += name->emit(out, ent, arc);
+	    //out << ": ";
 	    errors += val->emit(out, ent, arc);
       }
 
