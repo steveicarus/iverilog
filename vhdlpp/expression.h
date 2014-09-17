@@ -283,7 +283,9 @@ class ExpAggregate : public Expression {
 
     private:
       int elaborate_expr_array_(Entity*ent, Architecture*arc, const VTypeArray*ltype);
+      int elaborate_expr_record_(Entity*ent, Architecture*arc, const VTypeRecord*ltype);
       int emit_array_(ostream&out, Entity*ent, Architecture*arc, const VTypeArray*ltype);
+      int emit_record_(ostream&out, Entity*ent, Architecture*arc, const VTypeRecord*ltype);
 
     private:
 	// This is the elements as directly parsed.
@@ -575,6 +577,7 @@ class ExpName : public Expression {
       bool symbolic_compare(const Expression*that) const;
       void dump(ostream&out, int indent = 0) const;
       const char* name() const;
+      inline perm_string peek_name() const { return name_; }
 
       void set_range(Expression*msb, Expression*lsb);
 

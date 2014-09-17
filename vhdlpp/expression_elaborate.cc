@@ -411,6 +411,9 @@ int ExpAggregate::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype
       if (const VTypeArray*larray = dynamic_cast<const VTypeArray*>(ltype)) {
 	    return elaborate_expr_array_(ent, arc, larray);
       }
+      else if(const VTypeRecord*lrecord = dynamic_cast<const VTypeRecord*>(ltype)) {
+            return elaborate_expr_record_(ent, arc, lrecord);
+      }
 
       cerr << get_fileline() << ": internal error: I don't know how to elaborate aggregate expressions. type=" << typeid(*ltype).name() << endl;
       return 1;
@@ -468,6 +471,48 @@ int ExpAggregate::elaborate_expr_array_(Entity*ent, Architecture*arc, const VTyp
 		  continue;
 
 	    errors += aggregate_[idx].expr->elaborate_expr(ent, arc, element_type);
+      }
+
+	// done with the obsolete elements_ vector.
+      elements_.clear();
+
+      return errors;
+}
+
+int ExpAggregate::elaborate_expr_record_(Entity*ent, Architecture*arc, const VTypeRecord*ltype)
+{
+      int errors = 0;
+
+      aggregate_.resize(elements_.size());
+
+	// Translate the elements_ array to the aggregate_ array. In
+	// the target array, each expression is attached to a single
+	// choice.
+      for (size_t edx = 0 ; edx < elements_.size() ; edx += 1) {
+            element_t*ecur = elements_[edx];
+
+            // it is invalid to have more than one choice in record assignment
+            ivl_assert(*this, ecur->count_choices() == 1);
+
+            ecur->map_choices(&aggregate_[edx]);
+      }
+
+	// Now run through the more convenient mapping and elaborate
+	// all the expressions that I find.
+      for (size_t idx = 0 ; idx < aggregate_.size() ; idx += 1) {
+            ivl_assert(*this, !aggregate_[idx].alias_flag);
+
+            choice_t*ch = aggregate_[idx].choice;
+            ivl_assert(*this, !ch->others());
+
+	// Get the appropriate type for a field
+            const ExpName*field = dynamic_cast<const ExpName*>(ch->simple_expression(false));
+            ivl_assert(*this, field);
+
+            perm_string field_name = field->peek_name();
+            const VTypeRecord::element_t*el = ltype->element_by_name(field_name);
+
+            errors += aggregate_[idx].expr->elaborate_expr(ent, arc, el->peek_type());
       }
 
 	// done with the obsolete elements_ vector.

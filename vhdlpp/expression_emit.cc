@@ -95,6 +95,8 @@ int ExpAggregate::emit(ostream&out, Entity*ent, Architecture*arc)
 
       if (const VTypeArray*atype = dynamic_cast<const VTypeArray*> (use_type))
 	    return emit_array_(out, ent, arc, atype);
+      else if (const VTypeRecord*arecord = dynamic_cast<const VTypeRecord*> (use_type))
+	    return emit_record_(out, ent, arc, arecord);
 
       out << "/* " << get_fileline() << ": internal error: "
 	  << "I don't know how to elab/emit aggregate in " << typeid(use_type).name()
@@ -266,6 +268,30 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 		  errors += cur->expr->emit(out, ent, arc);
 	    }
       }
+      out << "}";
+
+      return errors;
+}
+
+int ExpAggregate::emit_record_(ostream&out, Entity*ent, Architecture*arc, const VTypeRecord*ltype)
+{
+      int errors = 0;
+
+      out << "{";
+
+      for (size_t idx = 0 ; idx < aggregate_.size() ; idx += 1) {
+	    ivl_assert(*this, !aggregate_[idx].choice->others());
+	    ivl_assert(*this, !aggregate_[idx].choice->range_expressions());
+
+	    Expression*val = aggregate_[idx].expr;
+	    ivl_assert(*this, val);
+
+	    if(idx != 0)
+	        out << ",";
+
+	    errors += val->emit(out, ent, arc);
+      }
+
       out << "}";
 
       return errors;
