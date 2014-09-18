@@ -288,8 +288,7 @@ class VTypeRecord : public VType {
       int emit_def(std::ostream&out, perm_string name) const;
 
       bool can_be_packed() const { return true; }
-
-      const element_t* element_by_name(perm_string name) const;
+      const element_t* element_by_name(perm_string name, int*index = NULL) const;
 
     private:
       std::vector<element_t*> elements_;
