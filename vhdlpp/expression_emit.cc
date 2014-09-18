@@ -767,7 +767,7 @@ int ExpString::emit_as_array_(ostream& out, Entity*, Architecture*, const VTypeA
       int errors = 0;
       assert(arr->dimensions() == 1);
 
-      const VTypePrimitive*etype = dynamic_cast<const VTypePrimitive*> (arr->element_type());
+      const VTypePrimitive*etype = dynamic_cast<const VTypePrimitive*> (arr->basic_type());
       assert(etype);
 
 	// Detect the special case that this is an array of

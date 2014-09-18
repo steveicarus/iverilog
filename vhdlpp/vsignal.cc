@@ -50,10 +50,7 @@ void SigVarBase::elaborate_init_expr(Entity*ent, Architecture*arc)
         init_expr_ = bitstring;
       }
       else {
-        ExpAggregate*aggr = dynamic_cast<ExpAggregate*>(init_expr_);
-        if(aggr) {
-          aggr->elaborate_expr(ent, arc, peek_type());
-        }
+        init_expr_->elaborate_expr(ent, arc, peek_type());
       }
     }
 }

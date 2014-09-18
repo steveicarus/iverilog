@@ -173,17 +173,19 @@ class VTypeArray : public VType {
     public:
       class range_t {
 	  public:
-	    range_t() : msb_(0), lsb_(0) { }
-	    range_t(Expression*m, Expression*l) : msb_(m), lsb_(l) { }
+	    range_t(Expression*m = NULL, Expression*l = NULL, bool dir = true) :
+                msb_(m), lsb_(l), direction_(dir) { }
 
-	    bool is_box() const { return msb_==0 && lsb_==0; }
+	    inline bool is_box() const { return msb_==0 && lsb_==0; }
+	    inline bool is_downto() const { return direction_; }
 
-	    Expression* msb() const { return msb_; }
-	    Expression* lsb() const { return lsb_; }
+	    inline Expression* msb() const { return msb_; }
+	    inline Expression* lsb() const { return lsb_; }
 
 	  private:
 	    Expression* msb_;
 	    Expression* lsb_;
+	    bool direction_;
       };
 
     public:
@@ -195,13 +197,20 @@ class VTypeArray : public VType {
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
 
-      size_t dimensions() const;
+      inline size_t dimensions() const { return ranges_.size(); };
       const range_t&dimension(size_t idx) const
       { return ranges_[idx]; }
 
-      bool signed_vector() const { return signed_flag_; }
+      inline bool signed_vector() const { return signed_flag_; }
 
-      const VType* element_type() const;
+	// returns the type of element held in the array
+      inline const VType* element_type() const { return etype_; }
+
+	// returns the basic type of element held in the array
+	// (unfolds typedefs and multidimensional arrays)
+	// typedef_allowed decides if VTypeDef can be returned or should
+	// it be unfolded
+      const VType* basic_type(bool typedef_allowed = true) const;
 
       int emit_def(std::ostream&out, perm_string name) const;
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
@@ -210,6 +219,7 @@ class VTypeArray : public VType {
       bool can_be_packed() const { return etype_->can_be_packed(); }
 
     private:
+      void write_range_to_stream_(std::ostream&fd) const;
       const VType*etype_;
 
       std::vector<range_t> ranges_;
@@ -240,6 +250,7 @@ class VTypeEnum : public VType {
       VTypeEnum(const std::list<perm_string>*names);
       ~VTypeEnum();
 
+      void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
       int emit_def(std::ostream&out, perm_string name) const;
 

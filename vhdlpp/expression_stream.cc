@@ -29,6 +29,9 @@ void ExpAggregate::write_to_stream(ostream&fd)
       fd << "(";
       for (vector<element_t*>::const_iterator cur = elements_.begin()
 		 ; cur != elements_.end() ; ++cur) {
+            if(cur != elements_.begin())
+                fd << ", ";
+
 	    (*cur)->write_to_stream(fd);
       }
       fd << ")";
@@ -41,7 +44,8 @@ void ExpAggregate::element_t::write_to_stream(ostream&fd) const
 	    (*cur)->write_to_stream(fd);
       }
 
-      fd << "=>";
+      if(!fields_.empty())
+            fd << "=>";
       val_->write_to_stream(fd);
 }
 
@@ -112,9 +116,14 @@ void ExpAttribute::write_to_stream(ostream&)
       ivl_assert(*this, !"Not supported");
 }
 
-void ExpBitstring::write_to_stream(ostream&)
+void ExpBitstring::write_to_stream(ostream&fd)
 {
-      ivl_assert(*this, !"Not supported");
+      fd << "\"";
+      for(vector<char>::const_iterator it = value_.begin();
+        it != value_.end(); ++it) {
+          fd << *it;
+      }
+      fd << "\"";
 }
 
 void ExpCharacter::write_to_stream(ostream&fd)
@@ -198,9 +207,14 @@ void ExpRelation::write_to_stream(ostream&)
       ivl_assert(*this, !"Not supported");
 }
 
-void ExpString::write_to_stream(ostream&)
+void ExpString::write_to_stream(ostream&fd)
 {
-      ivl_assert(*this, !"Not supported");
+    fd << "\"";
+    for(vector<char>::const_iterator it = value_.begin();
+      it != value_.end(); ++it) {
+        fd << *it;
+    }
+    fd << "\"";
 }
 
 void ExpUAbs::write_to_stream(ostream&fd)
