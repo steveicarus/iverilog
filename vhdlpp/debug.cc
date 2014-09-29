@@ -23,6 +23,7 @@
 # include  "architec.h"
 # include  "expression.h"
 # include  "parse_types.h"
+# include  "subprogram.h"
 # include  "sequential.h"
 # include  "vsignal.h"
 # include  "vtype.h"

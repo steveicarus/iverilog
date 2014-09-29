@@ -22,15 +22,15 @@
 
 # include  "StringHeap.h"
 # include  "LineInfo.h"
+# include  "scope.h"
 # include  <iostream>
 # include  <list>
 
 class InterfacePort;
-class ScopeBase;
 class SequentialStmt;
 class VType;
 
-class Subprogram : public LineInfo {
+class Subprogram : public LineInfo, public ScopeBase {
 
     public:
       Subprogram(perm_string name, std::list<InterfacePort*>*ports,
@@ -47,6 +47,8 @@ class Subprogram : public LineInfo {
 	// Return true if the specification (name, types, ports)
 	// matches this subprogram and that subprogram.
       bool compare_specification(Subprogram*that) const;
+
+      int emit(ostream&out, Entity*ent, Architecture*arc);
 
 	// Emit a definition as it would show up in a package.
       int emit_package(std::ostream&fd) const;

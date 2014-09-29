@@ -20,6 +20,7 @@
 
 # include  "scope.h"
 # include  "package.h"
+# include  "subprogram.h"
 # include  <algorithm>
 # include  <iostream>
 # include  <iterator>

@@ -26,7 +26,6 @@
 # include  "StringHeap.h"
 # include  "entity.h"
 # include  "expression.h"
-# include  "subprogram.h"
 # include  "vsignal.h"
 
 class ActiveScope;

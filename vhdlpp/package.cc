@@ -20,6 +20,7 @@
 
 # include  "package.h"
 # include  "entity.h"
+# include  "subprogram.h"
 # include  "parse_misc.h"
 # include  "ivl_assert.h"
 
