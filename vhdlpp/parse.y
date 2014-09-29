@@ -1813,16 +1813,7 @@ procedure_call_statement
   ;
 
 process_declarative_item
-  : K_variable identifier_list ':' subtype_indication ';'
-      { /* Save the signal declaration in the block_signals map. */
-	for (std::list<perm_string>::iterator cur = $2->begin()
-		   ; cur != $2->end() ; ++cur) {
-	      Variable*sig = new Variable(*cur, $4);
-	      FILE_NAME(sig, @1);
-	      active_scope->bind_name(*cur, sig);
-	}
-	delete $2;
-      }
+  : variable_declaration
   ;
 
 process_declarative_part
@@ -2186,6 +2177,7 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
 	} else if (tmp) {
 	      errormsg(@1, "Subprogram specification for %s doesn't match specification in package header.\n", prog->name().str());
 	}
+	prog->transfer_from(*active_scope);
 	prog->set_program_body($5);
 	active_scope->bind_name(prog->name(), prog);
       }
@@ -2410,8 +2402,15 @@ variable_assignment_statement /* IEEE 1076-2008 P10.6.1 */
 
 variable_declaration /* IEEE 1076-2008 P6.4.2.4 */
   : K_shared_opt K_variable identifier_list ':' subtype_indication ';'
-      { sorrymsg(@2, "variable_declaration not supported.\n"); }
-
+      { /* Save the signal declaration in the block_signals map. */
+	for (std::list<perm_string>::iterator cur = $3->begin()
+		   ; cur != $3->end() ; ++cur) {
+	      Variable*sig = new Variable(*cur, $5);
+	      FILE_NAME(sig, @2);
+	      active_scope->bind_name(*cur, sig);
+	}
+	delete $3;
+      }
   | K_shared_opt K_variable error ';'
       { errormsg(@2, "Syntax error in variable declaration.\n");
 	yyerrok;
