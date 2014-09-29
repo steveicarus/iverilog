@@ -21,6 +21,7 @@
 # include  "subprogram.h"
 # include  "entity.h"
 # include  "vtype.h"
+# include  "sequential.h"
 # include  "ivl_assert.h"
 
 using namespace std;
@@ -45,6 +46,7 @@ void Subprogram::set_program_body(list<SequentialStmt*>*stmt)
 {
       ivl_assert(*this, statements_==0);
       statements_ = stmt;
+      fix_return_type();
 }
 
 bool Subprogram::compare_specification(Subprogram*that) const
@@ -76,6 +78,32 @@ bool Subprogram::compare_specification(Subprogram*that) const
       }
 
       return true;
+}
+
+void Subprogram::fix_return_type(void)
+{
+    if(!statements_)
+        return;
+
+    const ReturnStmt*ret = NULL;
+    const VType*t = NULL;
+
+    for (std::list<SequentialStmt*>::const_iterator s = statements_->begin()
+	; s != statements_->end(); ++s) {
+      if((ret = dynamic_cast<const ReturnStmt*>(*s))) {
+            const Expression*expr = ret->peek_expr();
+
+            if(const ExpName*n = dynamic_cast<const ExpName*>(expr)) {
+                if(Variable*v = find_variable(n->peek_name()))
+                    t = v->peek_type();
+            } else {
+                t = expr->peek_type();
+            }
+
+            if(t)
+                return_type_ = t;
+        }
+    }
 }
 
 void Subprogram::write_to_stream(ostream&fd) const

@@ -120,6 +120,8 @@ class ReturnStmt  : public SequentialStmt {
       int emit(ostream&out, Entity*entity, Architecture*arc);
       void dump(ostream&out, int indent) const;
 
+      const Expression*peek_expr() const { return val_; };
+
     private:
       Expression*val_;
 };

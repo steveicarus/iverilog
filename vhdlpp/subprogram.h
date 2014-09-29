@@ -57,6 +57,10 @@ class Subprogram : public LineInfo, public ScopeBase {
       void dump(std::ostream&fd) const;
 
     private:
+	// Determines appropriate return type. Un case of std_logic_vector
+	// VHDL requires skipping its size in contrary to Verilog
+      void fix_return_type(void);
+
       perm_string name_;
       const ScopeBase*parent_;
       std::list<InterfacePort*>*ports_;
