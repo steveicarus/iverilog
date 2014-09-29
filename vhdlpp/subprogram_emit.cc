@@ -62,7 +62,8 @@ int Subprogram::emit_package(ostream&fd) const
 
       for (map<perm_string,Variable*>::const_iterator cur = new_variables_.begin()
          ; cur != new_variables_.end() ; ++cur) {
-
+        // Workaround to enable reg_flag for variables
+        cur->second->count_ref_sequ();
         errors += cur->second->emit(fd, NULL, NULL);
       }
 
