@@ -23,6 +23,7 @@
 # include  "architec.h"
 # include  "entity.h"
 # include  "vsignal.h"
+# include  "subprogram.h"
 # include  <iostream>
 # include  <typeinfo>
 # include  "parse_types.h"
@@ -715,6 +716,8 @@ int ExpFunc::elaborate_expr(Entity*ent, Architecture*arc, const VType*)
 
       for (size_t idx = 0 ; idx < argv_.size() ; idx += 1) {
 	    const VType*tmp = argv_[idx]->probe_type(ent, arc);
+	    if(!tmp && prog)
+	        tmp = prog->peek_param_type(idx);
 	    errors += argv_[idx]->elaborate_expr(ent, arc, tmp);
       }
 

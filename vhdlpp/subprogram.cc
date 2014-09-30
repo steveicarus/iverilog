@@ -80,7 +80,7 @@ bool Subprogram::compare_specification(Subprogram*that) const
       return true;
 }
 
-InterfacePort*Subprogram::find_param(perm_string nam)
+const InterfacePort*Subprogram::find_param(perm_string nam) const
 {
       if(!ports_)
         return NULL;
@@ -92,6 +92,17 @@ InterfacePort*Subprogram::find_param(perm_string nam)
       }
 
       return NULL;
+}
+
+const VType*Subprogram::peek_param_type(int idx) const
+{
+      if(!ports_ || idx >= ports_->size())
+        return NULL;
+
+      std::list<InterfacePort*>::const_iterator p = ports_->begin();
+      std::advance(p, idx);
+
+      return (*p)->type;
 }
 
 void Subprogram::fix_return_type(void)

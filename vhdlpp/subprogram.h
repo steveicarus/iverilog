@@ -48,7 +48,8 @@ class Subprogram : public LineInfo, public ScopeBase {
 	// matches this subprogram and that subprogram.
       bool compare_specification(Subprogram*that) const;
 
-      InterfacePort*find_param(perm_string nam);
+      const InterfacePort*find_param(perm_string nam) const;
+      const VType*peek_param_type(int idx) const;
 
       int emit(ostream&out, Entity*ent, Architecture*arc);
 
