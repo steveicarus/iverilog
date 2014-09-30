@@ -559,6 +559,25 @@ static void elaborate_scope_events_(Design*des, NetScope*scope,
       }
 }
 
+static void elaborate_scope_task(Design*des, NetScope*scope, PTask*task)
+{
+      hname_t use_name( task->pscope_name() );
+
+      NetScope*task_scope = new NetScope(scope, use_name, NetScope::TASK);
+      task_scope->is_auto(task->is_auto());
+      task_scope->set_line(task);
+
+      if (scope==0)
+	    des->add_root_task(task_scope, task);
+
+      if (debug_scopes) {
+	    cerr << task->get_fileline() << ": elaborate_scope_task: "
+		 << "Elaborate task scope " << scope_path(task_scope) << endl;
+      }
+
+      task->elaborate_scope(des, task_scope);
+}
+
 static void elaborate_scope_tasks(Design*des, NetScope*scope,
 				  const map<perm_string,PTask*>&tasks)
 {
@@ -600,17 +619,28 @@ static void elaborate_scope_tasks(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	    NetScope*task_scope = new NetScope(scope, use_name,
-					       NetScope::TASK);
-	    task_scope->is_auto((*cur).second->is_auto());
-	    task_scope->set_line((*cur).second);
-
-	    if (debug_scopes)
-		  cerr << cur->second->get_fileline() << ": debug: "
-		       << "Elaborate task scope " << scope_path(task_scope) << endl;
-	    (*cur).second->elaborate_scope(des, task_scope);
+	    elaborate_scope_task(des, scope, cur->second);
       }
 
+}
+
+static void elaborate_scope_func(Design*des, NetScope*scope, PFunction*task)
+{
+      hname_t use_name( task->pscope_name() );
+
+      NetScope*task_scope = new NetScope(scope, use_name, NetScope::FUNC);
+      task_scope->is_auto(task->is_auto());
+      task_scope->set_line(task);
+
+      if (scope==0)
+	    des->add_root_task(task_scope, task);
+
+      if (debug_scopes) {
+	    cerr << task->get_fileline() << ": elaborate_scope_func: "
+		 << "Elaborate task scope " << scope_path(task_scope) << endl;
+      }
+
+      task->elaborate_scope(des, task_scope);
 }
 
 static void elaborate_scope_funcs(Design*des, NetScope*scope,
@@ -655,17 +685,31 @@ static void elaborate_scope_funcs(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	    NetScope*func_scope = new NetScope(scope, use_name,
-					       NetScope::FUNC);
-	    func_scope->is_auto((*cur).second->is_auto());
-	    func_scope->set_line((*cur).second);
-
-	    if (debug_scopes)
-		  cerr << cur->second->get_fileline() << ": debug: "
-		       << "Elaborate function scope " << scope_path(func_scope) << endl;
-	    (*cur).second->elaborate_scope(des, func_scope);
+	    elaborate_scope_func(des, scope, cur->second);
       }
 
+}
+
+void elaborate_rootscope_tasks(Design*des)
+{
+      for (map<perm_string,PTaskFunc*>::iterator cur = pform_tasks.begin()
+		 ; cur != pform_tasks.end() ; ++ cur) {
+
+	    if (PTask*task = dynamic_cast<PTask*> (cur->second)) {
+		  elaborate_scope_task(des, 0, task);
+		  continue;
+	    }
+
+	    if (PFunction*func = dynamic_cast<PFunction*>(cur->second)) {
+		  elaborate_scope_func(des, 0, func);
+		  continue;
+	    }
+
+	    cerr << cur->second->get_fileline() << ": internal error: "
+		 << "elabortae_rootscope_tasks does not understand "
+		 << "this object," << endl;
+	    des->errors += 1;
+      }
 }
 
 class generate_schemes_work_item_t : public elaborator_work_item_t {

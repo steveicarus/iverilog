@@ -71,6 +71,11 @@ set<enum_type_t*>pform_enum_sets;
  */
 map<perm_string,PClass*> pform_classes;
 
+/*
+ * Task and function definitions in the $root scope go here.
+ */
+map<perm_string,PTaskFunc*> pform_tasks;
+
 std::string vlltype::get_fileline() const
 {
       ostringstream buf;
@@ -371,14 +376,9 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
       FILE_NAME(task, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-      if ((scopex == 0) && (generation_flag < GN_VER2005_SV)) {
+      if ((scopex == 0) && !gn_system_verilog()) {
 	    cerr << task->get_fileline() << ": error: task declarations "
 		  "must be contained within a module." << endl;
-	    error_count += 1;
-      }
-      if ((scopex == 0) && (generation_flag >= GN_VER2005_SV)) {
-	    cerr << task->get_fileline() << ": sorry: task declarations "
-		  "in the compilation unit scope are not yet supported." << endl;
 	    error_count += 1;
       }
 
@@ -402,6 +402,15 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 		  error_count += 1;
 	    }
 	    scopex->tasks[task->pscope_name()] = task;
+
+      } else {
+	    if (pform_tasks.find(task_name) != pform_tasks.end()) {
+		  cerr << task->get_fileline() << ": error: "
+		       << "Duplicate definition for task '" << name
+		       << "' in $root scope." << endl;
+		  error_count += 1;
+	    }
+	    pform_tasks[task_name] = task;
       }
 
       lexical_scope = task;

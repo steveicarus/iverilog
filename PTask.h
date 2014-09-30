@@ -49,6 +49,12 @@ class PTaskFunc : public PScope, public LineInfo {
 	// to the class type.
       inline class_type_t* method_of() const { return this_type_; }
 
+
+      virtual void elaborate_sig(Design*des, NetScope*scope) const =0;
+      virtual void elaborate(Design*des, NetScope*scope) const =0;
+
+      virtual void dump(std::ostream&, unsigned) const =0;
+
     protected:
 	// Elaborate the ports list. Write into the ports vector the
 	// NetNet pointers for the ports, and write into the pdefs the

@@ -135,7 +135,6 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest, bo
 	    time_unit_ = 0;
 	    time_prec_ = 0;
 	    time_from_timescale_ = false;
-	    assert(t==MODULE || t==PACKAGE || t==CLASS);
       }
 
       switch (t) {

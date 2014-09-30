@@ -1316,4 +1316,15 @@ void Design::root_elaborate_sig(void)
 
 	    cur_class->elaborate_sig(this, cur_pclass);
       }
+
+      for (map<NetScope*,PTaskFunc*>::iterator cur = root_tasks_.begin()
+		 ; cur != root_tasks_.end() ; ++ cur) {
+
+	    if (debug_elaborate) {
+		  cerr << cur->second->get_fileline() << ": root_elaborate_sig: "
+		       << "Elaborate_sig for root task/func " << scope_path(cur->first) << endl;
+	    }
+
+	    cur->second->elaborate_sig(this, cur->first);
+      }
 }

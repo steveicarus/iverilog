@@ -1019,6 +1019,16 @@ int main(int argc, char*argv[])
 		       ; cur != disciplines.end() ; ++ cur ) {
 		  pform_dump(out, (*cur).second);
 	    }
+	    out << "PFORM DUMP $ROOT TASKS/FUNCTIONS:" << endl;
+	    for (map<perm_string,PTaskFunc*>::iterator cur = pform_tasks.begin()
+		       ; cur != pform_tasks.end() ; ++ cur) {
+		  pform_dump(out, cur->second);
+	    }
+	    out << "PFORM DUMP $ROOT CLASSES:" << endl;
+	    for (map<perm_string,PClass*>::iterator cur = pform_classes.begin()
+		       ; cur != pform_classes.end() ; ++ cur) {
+		  pform_dump(out, cur->second);
+	    }
 	    out << "PFORM DUMP PACKAGES:" << endl;
 	    for (map<perm_string,PPackage*>::iterator pac = pform_packages.begin()
 		       ; pac != pform_packages.end() ; ++ pac) {

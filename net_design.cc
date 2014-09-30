@@ -197,7 +197,25 @@ NetScope* Design::find_scope(const std::list<hname_t>&path) const
 
 		  tmp.pop_front();
 	    }
+      }
 
+      for (map<NetScope*,PTaskFunc*>::const_iterator root = root_tasks_.begin()
+		 ; root != root_tasks_.end() ; ++ root) {
+
+	    NetScope*cur = root->first;
+	    if (path.front() != cur->fullname())
+		  continue;
+
+	    std::list<hname_t> tmp = path;
+	    tmp.pop_front();
+
+	    while (cur) {
+		  if (tmp.empty()) return cur;
+
+		  cur = cur->child( tmp.front() );
+
+		  tmp.pop_front();
+	    }
       }
 
       return 0;
@@ -829,6 +847,11 @@ NetScope* Design::find_task(NetScope*scope, const pform_name_t&name)
 	    return task;
 
       return 0;
+}
+
+void Design::add_root_task(NetScope*tscope, PTaskFunc*tf)
+{
+      root_tasks_[tscope] = tf;
 }
 
 void Design::add_node(NetNode*net)

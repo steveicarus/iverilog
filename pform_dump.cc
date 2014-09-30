@@ -31,6 +31,7 @@
 # include  "PGenerate.h"
 # include  "PPackage.h"
 # include  "PSpec.h"
+# include  "PTask.h"
 # include  "discipline.h"
 # include  "ivl_target_priv.h"
 # include  <iostream>
@@ -1011,20 +1012,20 @@ void PFunction::dump(ostream&out, unsigned ind) const
       else
 	    out << setw(ind+8) << "" << "<implicit type>" << endl;
 
-      dump_ports_(out, ind);
+      dump_ports_(out, ind+2);
 
-      dump_parameters_(out, ind);
+      dump_parameters_(out, ind+2);
 
-      dump_localparams_(out, ind);
+      dump_localparams_(out, ind+2);
 
-      dump_events_(out, ind);
+      dump_events_(out, ind+2);
 
-      dump_wires_(out, ind);
+      dump_wires_(out, ind+2);
 
       if (statement_)
-	    statement_->dump(out, ind);
+	    statement_->dump(out, ind+2);
       else
-	    out << setw(ind) << "" << "/* NOOP */" << endl;
+	    out << setw(ind+2) << "" << "/* NOOP */" << endl;
 }
 
 void PRelease::dump(ostream&out, unsigned ind) const
@@ -1053,20 +1054,20 @@ void PTask::dump(ostream&out, unsigned ind) const
       out << pscope_name() << ";" << endl;
       if (method_of())
 	    out << setw(ind) << "" << "method of " << method_of()->name << ";" << endl;
-      dump_ports_(out, ind);
+      dump_ports_(out, ind+2);
 
-      dump_parameters_(out, ind);
+      dump_parameters_(out, ind+2);
 
-      dump_localparams_(out, ind);
+      dump_localparams_(out, ind+2);
 
-      dump_events_(out, ind);
+      dump_events_(out, ind+2);
 
-      dump_wires_(out, ind);
+      dump_wires_(out, ind+2);
 
       if (statement_)
-	    statement_->dump(out, ind);
+	    statement_->dump(out, ind+2);
       else
-	    out << setw(ind) << "" << "/* NOOP */" << endl;
+	    out << setw(ind+2) << "" << "/* NOOP */" << endl;
 }
 
 void PTaskFunc::dump_ports_(std::ostream&out, unsigned ind) const
@@ -1639,6 +1640,11 @@ void pform_dump(std::ostream&out, const ivl_discipline_s*dis)
       out << "enddiscipline" << endl;
 }
 
+void pform_dump(std::ostream&fd, const PClass*cl)
+{
+      cl->dump(fd, 0);
+}
+
 void pform_dump(std::ostream&out, const PPackage*pac)
 {
       pac->pform_dump(out);
@@ -1653,4 +1659,9 @@ void PPackage::pform_dump(std::ostream&out) const
       dump_tasks_(out, 4);
       dump_funcs_(out, 4);
       out << "endpackage" << endl;
+}
+
+void pform_dump(std::ostream&fd, const PTaskFunc*obj)
+{
+      obj->dump(fd, 0);
 }

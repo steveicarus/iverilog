@@ -5989,6 +5989,18 @@ void Design::root_elaborate(void)
 	    PClass*cur_pclass = class_to_pclass_[cur_class];
 	    cur_class->elaborate(this, cur_pclass);
       }
+
+      for (map<NetScope*,PTaskFunc*>::iterator cur = root_tasks_.begin()
+		 ; cur != root_tasks_.end() ; ++ cur) {
+
+	    if (debug_elaborate) {
+		  cerr << cur->second->get_fileline() << ": Design::root_elaborate: "
+		       << "Elaborate for root task/func " << scope_path(cur->first) << endl;
+	    }
+
+	    cur->second->elaborate(this, cur->first);
+      }
+
 }
 
 /*
@@ -6021,6 +6033,9 @@ Design* elaborate(list<perm_string>roots)
 
 	// Elaborate enum sets in $root scope.
       elaborate_rootscope_enumerations(des);
+
+	// Elaborate tasks and functions in $root scope.
+      elaborate_rootscope_tasks(des);
 
 	// Elaborate classes in $root scope.
       elaborate_rootscope_classes(des);

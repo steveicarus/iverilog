@@ -30,6 +30,7 @@ class Design;
 class Module;
 class PClass;
 class PPackage;
+class PTaskFunc;
 class PUdp;
 class data_type_t;
 struct enum_type_t;
@@ -43,13 +44,17 @@ extern std::map<perm_string,Module*> pform_modules;
 extern std::map<perm_string,PUdp*>   pform_primitives;
 extern std::map<perm_string,data_type_t*> pform_typedefs;
 extern std::set<enum_type_t*> pform_enum_sets;
+extern std::map<perm_string,PTaskFunc*> pform_tasks;
 extern std::map<perm_string,PClass*> pform_classes;
 extern std::map<perm_string,PPackage*> pform_packages;
 
+extern void pform_dump(std::ostream&out, const PClass*pac);
 extern void pform_dump(std::ostream&out, const PPackage*pac);
+extern void pform_dump(std::ostream&out, const PTaskFunc*tf);
 
 extern void elaborate_rootscope_enumerations(Design*des);
 extern void elaborate_rootscope_classes(Design*des);
+extern void elaborate_rootscope_tasks(Design*des);
 
 /*
  * This code actually invokes the parser to make modules. The first

@@ -77,6 +77,7 @@ class NetEvWait;
 class PClass;
 class PExpr;
 class PFunction;
+class PTaskFunc;
 struct enum_type_t;
 class netclass_t;
 class netdarray_t;
@@ -4813,6 +4814,7 @@ class Design : public Definitions {
 
 	// Tasks
       NetScope* find_task(NetScope*scope, const pform_name_t&name);
+      void add_root_task(NetScope*tscope, PTaskFunc*tf);
 
 	// Find a class in the $root scope.
       void add_class(netclass_t*cl, PClass*pclass);
@@ -4851,6 +4853,9 @@ class Design : public Definitions {
 	// Keep a map of all the elaborated packages. Note that
 	// packages do not nest.
       std::map<perm_string,NetScope*>packages_;
+
+	// Tasks in the $root scope
+      std::map<NetScope*,PTaskFunc*>root_tasks_;
 
 	// Need this for elaboration of $root scope pclass objects.
       std::map<netclass_t*,PClass*> class_to_pclass_;

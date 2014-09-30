@@ -1885,6 +1885,12 @@ void Design::dump(ostream&o) const
 	    cur->second->dump_scope(o);
       }
 
+      o << "$ROOT TASKS/FUNCTIONS:" << endl;
+      for (map<NetScope*,PTaskFunc*>::const_iterator cur = root_tasks_.begin()
+		 ; cur != root_tasks_.end() ; ++ cur) {
+	    cur->first->dump(o);
+      }
+
       o << "SCOPES:" << endl;
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
 	   scope != root_scopes_.end(); ++ scope ) {
