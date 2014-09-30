@@ -80,6 +80,20 @@ bool Subprogram::compare_specification(Subprogram*that) const
       return true;
 }
 
+InterfacePort*Subprogram::find_param(perm_string nam)
+{
+      if(!ports_)
+        return NULL;
+
+      for (std::list<InterfacePort*>::const_iterator it = ports_->begin()
+                ; it != ports_->end(); ++it) {
+        if((*it)->name == nam)
+            return *it;
+      }
+
+      return NULL;
+}
+
 void Subprogram::fix_return_type(void)
 {
     if(!statements_)
