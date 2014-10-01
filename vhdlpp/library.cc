@@ -69,7 +69,25 @@ void library_add_directory(const char*directory)
 	    return;
       }
 
-      library_search_path .push_front(directory);
+      library_search_path.push_front(directory);
+}
+
+Subprogram*library_find_subprogram(perm_string name)
+{
+      Subprogram*subp = NULL;
+      map<perm_string,struct library_contents>::const_iterator lib_it;
+
+      for(lib_it = libraries.begin(); lib_it != libraries.end(); ++lib_it) {
+        const struct library_contents&lib = lib_it->second;
+        map<perm_string,Package*>::const_iterator pack_it;
+
+        for(pack_it = lib.packages.begin(); pack_it != lib.packages.end(); ++pack_it) {
+            if((subp = pack_it->second->find_subprogram(name)))
+                return subp;
+        }
+      }
+
+      return NULL;
 }
 
 static void store_package_in_work(const Package*pack);

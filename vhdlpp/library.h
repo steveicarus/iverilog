@@ -1,5 +1,5 @@
-#ifndef IVL_compiler_H
-#define IVL_compiler_H
+#ifndef IVL_library_H
+#define IVL_library_H
 /*
  * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  *
@@ -19,19 +19,14 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include  "StringHeap.h"
-# include  <fstream>
+class Subprogram;
 
-const int GN_KEYWORD_2008  = 0x0001;
+extern void library_set_work_path(const char*work_path);
+extern void library_add_directory(const char*directory);
 
-// TRUE if processing is supposed to dump progress to stderr.
-extern bool verbose_flag;
+extern Subprogram*library_find_subprogram(perm_string name);
 
-extern bool debug_elaboration;
-extern std::ofstream debug_log_file;
+extern int emit_packages(void);
 
-extern StringHeapLex lex_strings;
+#endif /* IVL_library_H */
 
-extern StringHeapLex filename_strings;
-
-#endif /* IVL_compiler_H */

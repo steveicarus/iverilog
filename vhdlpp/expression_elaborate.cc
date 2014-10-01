@@ -24,6 +24,7 @@
 # include  "entity.h"
 # include  "vsignal.h"
 # include  "subprogram.h"
+# include  "library.h"
 # include  <iostream>
 # include  <typeinfo>
 # include  "parse_types.h"
@@ -710,6 +711,9 @@ int ExpFunc::elaborate_expr(Entity*ent, Architecture*arc, const VType*)
 
       ivl_assert(*this, arc);
       Subprogram*prog = arc->find_subprogram(name_);
+
+      if(!prog)
+            prog = library_find_subprogram(name_);
 
       ivl_assert(*this, def_==0);
       def_ = prog;

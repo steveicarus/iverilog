@@ -75,6 +75,7 @@ const char NOTICE[] =
 ;
 
 # include  "compiler.h"
+# include  "library.h"
 # include  "parse_api.h"
 # include  "vtype.h"
 # include  <fstream>
