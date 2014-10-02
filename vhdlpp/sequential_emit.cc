@@ -203,35 +203,6 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
       int errors = 0;
       ivl_assert(*this, range_);
 
-      int64_t start_val;
-      bool start_rc = range_->msb()->evaluate(ent, arc, start_val);
-
-      int64_t finish_val;
-      bool finish_rc = range_->lsb()->evaluate(ent, arc, finish_val);
-
-      ivl_assert(*this, start_rc);
-      ivl_assert(*this, finish_rc);
-
-      if (! range_->is_downto()) {
-	    int64_t tmp = start_val;
-	    start_val = finish_val;
-	    finish_val = tmp;
-      }
-
-      if (range_->is_downto() && (start_val < finish_val)) {
-	    out << "begin /* Degenerate loop at " << get_fileline()
-		<< ": " << start_val
-		<< " downto " << finish_val << " */ end" << endl;
-	    return errors;
-      }
-
-      if (!range_->is_downto() && start_val > finish_val) {
-	    out << "begin /* Degenerate loop at " << get_fileline()
-		<< ": " << start_val
-		<< " to " << finish_val << " */ end" << endl;
-	    return errors;
-      }
-
       perm_string scope_name = loop_name();
       if (scope_name.nil()) {
 	    char buf[80];
@@ -241,11 +212,17 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 
       out << "begin : " << scope_name << endl;
       out << "longint \\" << it_ << " ;" << endl;
-      out << "for (\\" << it_ << " = " << start_val << " ; ";
-      if (range_->is_downto())
-	    out << "\\" << it_ << " >= " << finish_val;
-      else
-	    out << "\\" << it_ << " <= " << finish_val;
+      out << "for (\\" << it_ << " = ";
+      if (range_->is_downto()) {
+            range_->msb()->emit(out, ent, arc);
+            out << " ; \\" << it_ << " >= ";
+            range_->lsb()->emit(out, ent, arc);
+      } else {
+            range_->lsb()->emit(out, ent, arc);
+            out << " ; \\" << it_ << " <= ";
+            range_->msb()->emit(out, ent, arc);
+      }
+
       out << "; \\" << it_ << " = \\" << it_;
       if (range_->is_downto())
 	    out << " - 1";
