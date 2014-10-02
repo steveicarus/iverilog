@@ -86,7 +86,7 @@ class VType {
       virtual bool can_be_packed() const { return false; }
 
     private:
-      friend class decl_t;
+      friend struct decl_t;
 	// This virtual method is called to emit the declaration. This
 	// is used by the decl_t object to emit variable/wire/port declarations.
       virtual int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;

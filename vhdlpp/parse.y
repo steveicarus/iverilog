@@ -83,6 +83,7 @@ extern int yylex(union YYSTYPE*yylvalp,YYLTYPE*yyllocp,yyscan_t yyscanner);
  */
 static ActiveScope*active_scope = new ActiveScope;
 static stack<ActiveScope*> scope_stack;
+static Subprogram*active_sub = NULL;
 
 /*
  * When a scope boundary starts, call the push_scope function to push
@@ -106,6 +107,13 @@ static void pop_scope(void)
       scope_stack.pop();
 }
 
+static bool is_subprogram_param(perm_string name)
+{
+    if(!active_sub)
+        return false;
+
+    return (active_sub->find_param(name) != NULL);
+}
 
 void preload_global_types(void)
 {
@@ -1543,7 +1551,7 @@ name /* IEEE 1076-2008 P8.1 */
   | IDENTIFIER '(' expression_list ')'
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
-	if (active_scope->is_vector_name(name)) {
+	if (active_scope->is_vector_name(name) || is_subprogram_param(name)) {
 	      ExpName*tmp = new ExpName(name, $3);
 	      $$ = tmp;
 	} else {
@@ -1813,16 +1821,7 @@ procedure_call_statement
   ;
 
 process_declarative_item
-  : K_variable identifier_list ':' subtype_indication ';'
-      { /* Save the signal declaration in the block_signals map. */
-	for (std::list<perm_string>::iterator cur = $2->begin()
-		   ; cur != $2->end() ; ++cur) {
-	      Variable*sig = new Variable(*cur, $4);
-	      FILE_NAME(sig, @1);
-	      active_scope->bind_name(*cur, sig);
-	}
-	delete $2;
-      }
+  : variable_declaration
   ;
 
 process_declarative_part
@@ -2175,6 +2174,7 @@ signal_assignment_statement
 
 subprogram_body /* IEEE 1076-2008 P4.3 */
   : subprogram_specification K_is
+      { active_sub = $1; }
     subprogram_declarative_part
     K_begin subprogram_statement_part K_end
     subprogram_kind_opt identifier_opt ';'
@@ -2186,8 +2186,10 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
 	} else if (tmp) {
 	      errormsg(@1, "Subprogram specification for %s doesn't match specification in package header.\n", prog->name().str());
 	}
-	prog->set_program_body($5);
+	prog->transfer_from(*active_scope);
+	prog->set_program_body($6);
 	active_scope->bind_name(prog->name(), prog);
+	active_sub = NULL;
       }
 
   | subprogram_specification K_is
@@ -2410,8 +2412,15 @@ variable_assignment_statement /* IEEE 1076-2008 P10.6.1 */
 
 variable_declaration /* IEEE 1076-2008 P6.4.2.4 */
   : K_shared_opt K_variable identifier_list ':' subtype_indication ';'
-      { sorrymsg(@2, "variable_declaration not supported.\n"); }
-
+      { /* Save the signal declaration in the block_signals map. */
+	for (std::list<perm_string>::iterator cur = $3->begin()
+		   ; cur != $3->end() ; ++cur) {
+	      Variable*sig = new Variable(*cur, $5);
+	      FILE_NAME(sig, @2);
+	      active_scope->bind_name(*cur, sig);
+	}
+	delete $3;
+      }
   | K_shared_opt K_variable error ';'
       { errormsg(@2, "Syntax error in variable declaration.\n");
 	yyerrok;

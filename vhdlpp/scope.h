@@ -26,7 +26,6 @@
 # include  "StringHeap.h"
 # include  "entity.h"
 # include  "expression.h"
-# include  "subprogram.h"
 # include  "vsignal.h"
 
 class ActiveScope;
@@ -58,6 +57,9 @@ class ScopeBase {
       Signal* find_signal(perm_string by_name) const;
       Variable* find_variable(perm_string by_name) const;
       Subprogram* find_subprogram(perm_string by_name) const;
+	// Moves all signals, variables and components from another scope to
+	// this one. After the transfer new_* maps are emptied in the another scope.
+      void transfer_from(ScopeBase&ref);
 
     protected:
       void cleanup();
@@ -203,7 +205,7 @@ class ActiveScope : public ScopeBase {
       { map<perm_string, Subprogram*>::iterator it;
         if((it = use_subprograms_.find(name)) != use_subprograms_.end() )
             use_subprograms_.erase(it);
-        cur_subprograms_[name] = obj;;
+        cur_subprograms_[name] = obj;
       }
 
       void bind(Entity*ent)

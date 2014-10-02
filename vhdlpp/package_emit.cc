@@ -19,6 +19,7 @@
  */
 
 # include  "package.h"
+# include  "subprogram.h"
 # include  <iostream>
 # include  "ivl_assert.h"
 

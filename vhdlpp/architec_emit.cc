@@ -21,6 +21,7 @@
 # include  "entity.h"
 # include  "expression.h"
 # include  "sequential.h"
+# include  "subprogram.h"
 # include  "vsignal.h"
 # include  <iostream>
 # include  <typeinfo>

@@ -22,6 +22,7 @@
 # include  "vtype.h"
 # include  "architec.h"
 # include  "package.h"
+# include  "subprogram.h"
 # include  "parse_types.h"
 # include  <typeinfo>
 # include  <iostream>

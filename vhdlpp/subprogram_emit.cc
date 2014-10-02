@@ -60,6 +60,13 @@ int Subprogram::emit_package(ostream&fd) const
 
       fd << ");" << endl;
 
+      for (map<perm_string,Variable*>::const_iterator cur = new_variables_.begin()
+         ; cur != new_variables_.end() ; ++cur) {
+        // Workaround to enable reg_flag for variables
+        cur->second->count_ref_sequ();
+        errors += cur->second->emit(fd, NULL, NULL);
+      }
+
       if (statements_) {
 	    for (list<SequentialStmt*>::const_iterator cur = statements_->begin()
 		       ; cur != statements_->end() ; ++cur) {
