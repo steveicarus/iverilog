@@ -169,6 +169,17 @@ list<NetScope*> Design::find_package_scopes() const
       return res;
 }
 
+list<NetScope*> Design::find_roottask_scopes() const
+{
+      list<NetScope*>res;
+      for (map<NetScope*,PTaskFunc*>::const_iterator cur = root_tasks_.begin()
+		 ; cur != root_tasks_.end() ; ++ cur) {
+	    res.push_back (cur->first);
+      }
+
+      return res;
+}
+
 /*
  * This method locates a scope in the design, given its rooted
  * hierarchical name. Each component of the key is used to scan one

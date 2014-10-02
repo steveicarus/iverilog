@@ -1797,6 +1797,12 @@ int target_design(ivl_design_t des)
 
 	    ivl_scope_t cur = root_scopes[idx];
 	    switch (ivl_scope_type(cur)) {
+		case IVL_SCT_TASK:
+		  fprintf(out, "task = %s\n", ivl_scope_name(cur));
+		  break;
+		case IVL_SCT_FUNCTION:
+		  fprintf(out, "function = %s\n", ivl_scope_name(cur));
+		  break;
 		case IVL_SCT_CLASS:
 		  fprintf(out, "class = %s\n", ivl_scope_name(cur));
 		  break;

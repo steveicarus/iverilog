@@ -52,6 +52,7 @@ struct ivl_design_s {
 
 	// Keep arrays of root scopes.
       std::map<const NetScope*,ivl_scope_t> classes;
+      std::map<const NetScope*,ivl_scope_t> root_tasks;
       std::vector<ivl_scope_t> packages;
       std::vector<ivl_scope_t> roots;
 

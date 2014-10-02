@@ -84,7 +84,11 @@ extern "C" void ivl_design_roots(ivl_design_t des, ivl_scope_t **scopes,
       assert (nscopes && scopes);
       if (des->root_scope_list.size() == 0) {
 	    size_t fill = 0;
-	    des->root_scope_list.resize(des->packages.size() + des->roots.size() + des->classes.size());
+	    des->root_scope_list.resize(des->root_tasks.size() + des->packages.size() + des->roots.size() + des->classes.size());
+	    for (map<const NetScope*,ivl_scope_t>::iterator idx = des->root_tasks.begin()
+		       ; idx != des->root_tasks.end() ; ++ idx)
+		  des->root_scope_list[fill++] = idx->second;
+
 	    for (map<const NetScope*,ivl_scope_t>::iterator idx = des->classes.begin()
 		       ; idx != des->classes.end() ; ++ idx)
 		  des->root_scope_list[fill++] = idx->second;

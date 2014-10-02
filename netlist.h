@@ -4815,6 +4815,7 @@ class Design : public Definitions {
 	// Tasks
       NetScope* find_task(NetScope*scope, const pform_name_t&name);
       void add_root_task(NetScope*tscope, PTaskFunc*tf);
+      std::list<NetScope*> find_roottask_scopes(void) const;
 
 	// Find a class in the $root scope.
       void add_class(netclass_t*cl, PClass*pclass);

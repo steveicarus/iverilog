@@ -504,6 +504,12 @@ int Design::emit(struct target_t*tgt) const
       if (tgt->start_design(this) == false)
 	    return -2;
 
+      for (map<NetScope*,PTaskFunc*>::const_iterator scope = root_tasks_.begin()
+		 ; scope != root_tasks_.end() ; ++ scope) {
+	    scope->first->emit_scope(tgt);
+	    scope->first->emit_defs(tgt);
+      }
+
 	// enumerate package scopes
       for (map<perm_string,NetScope*>::const_iterator scope = packages_.begin()
 		 ; scope != packages_.end() ; ++ scope) {
