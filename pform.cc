@@ -432,11 +432,6 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 		  "must be contained within a module." << endl;
 	    error_count += 1;
       }
-      if ((scopex == 0) && (generation_flag >= GN_VER2005_SV)) {
-	    cerr << func->get_fileline() << ": sorry: function declarations "
-		  "in the compilation unit scope are not yet supported." << endl;
-	    error_count += 1;
-      }
 
       if (pform_cur_generate) {
 	      // Check if the function is already in the dictionary.
@@ -449,6 +444,7 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 		  error_count += 1;
 	    }
 	    pform_cur_generate->funcs[func->pscope_name()] = func;
+
       } else if (scopex != 0) {
 	      // Check if the function is already in the dictionary.
 	    if (scopex->funcs.find(func->pscope_name()) != scopex->funcs.end()) {
@@ -458,7 +454,17 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 		  error_count += 1;
 	    }
 	    scopex->funcs[func->pscope_name()] = func;
+
+      } else {
+	    if (pform_tasks.find(func_name) != pform_tasks.end()) {
+		  cerr << func->get_fileline() << ": error: "
+		       << "Duplicate definition for function '" << name
+		       << "' in $root scope." << endl;
+		  error_count += 1;
+	    }
+	    pform_tasks[func_name] = func;
       }
+
       lexical_scope = func;
 
       return func;
