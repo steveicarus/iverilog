@@ -232,13 +232,13 @@ unusedFunction:fastlz.c:150
 // lz4.c from GTKWave
 // These functions are not used by Icarus
 // LZ4_compress_continue()
-unusedFunction:lz4.c:817
+unusedFunction:lz4.c:818
 // LZ4_compress_forceExtDict()
-unusedFunction:lz4.c:829
+unusedFunction:lz4.c:830
 // LZ4_compress_limitedOutput()
-unusedFunction:lz4.c:664
+unusedFunction:lz4.c:665
 // LZ4_compress_limitedOutput_continue()
-unusedFunction:lz4.c:822
+unusedFunction:lz4.c:823
 // LZ4_compress_limitedOutput_withState()
 unusedFunction:lz4.c:1228
 // LZ4_compress_withState()
@@ -246,7 +246,7 @@ unusedFunction:lz4.c:1217
 // LZ4_create()
 unusedFunction:lz4.c:1197
 // LZ4_createStream()
-unusedFunction:lz4.c:699
+unusedFunction:lz4.c:700
 // LZ4_createStreamDecode()
 unusedFunction:lz4.c:1073
 // LZ4_decompress_fast_continue()
@@ -262,11 +262,11 @@ unusedFunction:lz4.c:1156
 // LZ4_decompress_safe_withPrefix64k()
 unusedFunction:lz4.c:1241
 // LZ4_freeStream()
-unusedFunction:lz4.c:706
+unusedFunction:lz4.c:707
 // LZ4_freeStreamDecode()
 unusedFunction:lz4.c:1080
 // LZ4_loadDict()
-unusedFunction:lz4.c:713
+unusedFunction:lz4.c:714
 // LZ4_resetStreamState()
 unusedFunction:lz4.c:1190
 // LZ4_setStreamDecode()
@@ -282,7 +282,7 @@ unusedFunction:lz4.c:1176
 // LZ4_uncompress_unknownOutputSize()
 unusedFunction:lz4.c:1177
 // LZ4_versionNumber()
-unusedFunction:lz4.c:370
+unusedFunction:lz4.c:371
 
 // The routines in sys_random.c are exact copies from IEEE1364-2005 and
 // they have scope warnings that we need to ignore.
