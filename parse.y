@@ -93,13 +93,26 @@ static list<named_pexpr_t>*attributes_in_context = 0;
 /* Recent version of bison expect that the user supply a
    YYLLOC_DEFAULT macro that makes up a yylloc value from existing
    values. I need to supply an explicit version to account for the
-   text field, that otherwise won't be copied. */
-# define YYLLOC_DEFAULT(Current, Rhs, N)  do {       \
-  (Current).first_line   = (Rhs)[1].first_line;      \
-  (Current).first_column = (Rhs)[1].first_column;    \
-  (Current).last_line    = (Rhs)[N].last_line;       \
-  (Current).last_column  = (Rhs)[N].last_column;     \
-  (Current).text         = (Rhs)[1].text;   } while (0)
+   text field, that otherwise won't be copied.
+
+   The YYLLOC_DEFAULT blends the file range for the tokens of Rhs
+   rule, which has N tokens.
+*/
+# define YYLLOC_DEFAULT(Current, Rhs, N)  do {				\
+      if (N) {							        \
+	    (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;	\
+	    (Current).first_column = YYRHSLOC (Rhs, 1).first_column;	\
+	    (Current).last_line    = YYRHSLOC (Rhs, N).last_line;	\
+	    (Current).last_column  = YYRHSLOC (Rhs, N).last_column;	\
+	    (Current).text         = YYRHSLOC (Rhs, 1).text;		\
+      } else {								\
+	    (Current).first_line   = YYRHSLOC (Rhs, 0).last_line;	\
+	    (Current).first_column = YYRHSLOC (Rhs, 0).last_column;	\
+	    (Current).last_line    = YYRHSLOC (Rhs, 0).last_line;	\
+	    (Current).last_column  = YYRHSLOC (Rhs, 0).last_column;	\
+	    (Current).text         = YYRHSLOC (Rhs, 0).text;		\
+      }									\
+   } while (0)
 
 /*
  * These are some common strength pairs that are used as defaults when
@@ -2096,9 +2109,11 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
      variety of different objects. The syntax inside the (* *) is a
      comma separated list of names or names with assigned values. */
 attribute_list_opt
-	: attribute_instance_list
-	| { $$ = 0; }
-	;
+  : attribute_instance_list
+      { $$ = $1; }
+  |
+      { $$ = 0; }
+  ;
 
 attribute_instance_list
   : K_PSTAR K_STARP { $$ = 0; }
