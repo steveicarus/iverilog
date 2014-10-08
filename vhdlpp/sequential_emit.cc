@@ -213,21 +213,37 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
       out << "begin : " << scope_name << endl;
       out << "longint \\" << it_ << " ;" << endl;
       out << "for (\\" << it_ << " = ";
-      if (range_->is_downto()) {
-            range_->msb()->emit(out, ent, arc);
-            out << " ; \\" << it_ << " >= ";
-            range_->lsb()->emit(out, ent, arc);
-      } else {
-            range_->lsb()->emit(out, ent, arc);
-            out << " ; \\" << it_ << " <= ";
-            range_->msb()->emit(out, ent, arc);
-      }
+      range_->expr_left()->emit(out, ent, arc);
 
-      out << "; \\" << it_ << " = \\" << it_;
-      if (range_->is_downto())
-	    out << " - 1";
-      else
-	    out << " + 1";
+        // Determining the loop direction at the runtime
+      if (range_->is_auto_dir() || true) {
+            out << " ;\n(";
+            range_->expr_left()->emit(out, ent, arc);
+            out << " < ";
+            range_->expr_right()->emit(out, ent, arc);
+            out << " ? \\" << it_ << " <= ";
+            range_->expr_right()->emit(out, ent, arc);
+            out << " : \\" << it_ << " >= ";
+            range_->expr_right()->emit(out, ent, arc);
+            out << ");\n\\" << it_ << " = \\" << it_ << " + (";
+            range_->expr_left()->emit(out, ent, arc);
+            out << " < ";
+            range_->expr_right()->emit(out, ent, arc);
+            out << " ? 1 : -1)";
+      } else {
+            if (range_->is_downto())
+                out << " ; \\" << it_ << " >= ";
+            else
+                out << " ; \\" << it_ << " <= ";
+            range_->expr_right()->emit(out, ent, arc);
+
+            out << "; \\" << it_ << " = \\" << it_;
+
+            if (range_->is_downto())
+                out << " - 1";
+            else
+                out << " + 1";
+      }
 
       out << ") begin" << endl;
 
