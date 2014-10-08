@@ -85,6 +85,10 @@ static ActiveScope*active_scope = new ActiveScope;
 static stack<ActiveScope*> scope_stack;
 static Subprogram*active_sub = NULL;
 
+// perm_strings for attributes
+const static perm_string left_attr = perm_string::literal("left");
+const static perm_string right_attr = perm_string::literal("right");
+
 /*
  * When a scope boundary starts, call the push_scope function to push
  * a scope context. Preload this scope context with the contents of
@@ -276,7 +280,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %token K_package K_parameter K_port K_postponed K_procedure K_process
 %token K_property K_protected K_pure
 %token K_range K_record K_register K_reject K_release K_rem K_report
-%token K_restrict K_restrict_guarantee K_return K_rol K_ror
+%token K_restrict K_restrict_guarantee K_return K_reverse_range K_rol K_ror
 %token K_select K_sequence K_severity K_signal K_shared
 %token K_sla K_sll K_sra K_srl K_strong K_subtype
 %token K_then K_to K_transport K_type
@@ -1903,6 +1907,32 @@ range
   : simple_expression direction simple_expression
       { prange_t* tmp = new prange_t($1, $3, $2);
 	$$ = tmp;
+      }
+  | name '\'' K_range
+      {
+        prange_t*tmp = NULL;
+        ExpName*name = NULL;
+        if((name = dynamic_cast<ExpName*>($1))) {
+            ExpAttribute*left = new ExpAttribute(name, left_attr);
+            ExpAttribute*right = new ExpAttribute(name, right_attr);
+            tmp = new prange_t(left, right, true);
+        } else {
+	    errormsg(@1, "'range attribute can be used with named expressions only");
+        }
+        $$ = tmp;
+      }
+  | name '\'' K_reverse_range
+      {
+        prange_t*tmp = NULL;
+        ExpName*name = NULL;
+        if((name = dynamic_cast<ExpName*>($1))) {
+            ExpAttribute*left = new ExpAttribute(name, left_attr);
+            ExpAttribute*right = new ExpAttribute(name, right_attr);
+            tmp = new prange_t(left, right, false);
+        } else {
+	    errormsg(@1, "'reverse_range attribute can be used with named expressions only");
+        }
+        $$ = tmp;
       }
   ;
 
