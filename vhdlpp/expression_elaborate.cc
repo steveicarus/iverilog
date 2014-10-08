@@ -567,7 +567,7 @@ const VType* ExpAttribute::probe_type(Entity*ent, Architecture*arc) const
 {
       base_->probe_type(ent, arc);
 
-      if (name_ == "length") {
+      if (name_ == "length" || name_ == "left" || name_ == "right") {
 	    return &primitive_INTEGER;
       }
 
