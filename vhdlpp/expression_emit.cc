@@ -391,16 +391,6 @@ int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*, Architecture*,
       switch (etype->type()) {
 	  case VTypePrimitive::BOOLEAN:
 	  case VTypePrimitive::BIT:
-	    switch (value_) {
-		case '0':
-		case '1':
-		      out << "1'b" << value_;
-		return 0;
-		default:
-		  break;
-	    }
-	    break;
-
 	  case VTypePrimitive::STDLOGIC:
 	    switch (value_) {
 		case '0':

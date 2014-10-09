@@ -879,11 +879,8 @@ const VType* ExpNameALL::probe_type(Entity*, Architecture*) const
       return 0;
 }
 
-const VType* ExpRelation::probe_type(Entity*ent, Architecture*arc) const
+const VType* ExpRelation::probe_type(Entity*, Architecture*) const
 {
-      /* const VType*type1 = */ peek_operand1()->probe_type(ent, arc);
-      /* const VType*type2 = */ peek_operand2()->probe_type(ent, arc);
-
       return &primitive_BOOLEAN;
 }
 

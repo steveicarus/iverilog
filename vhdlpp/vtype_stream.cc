@@ -146,6 +146,9 @@ void VTypePrimitive::write_to_stream(ostream&fd) const
 	  case STDLOGIC:
 	    fd << "std_logic";
 	    break;
+	  case CHARACTER:
+	    fd << "character";
+	    break;
 	  case BOOLEAN:
 	    fd << "boolean";
 	    break;
