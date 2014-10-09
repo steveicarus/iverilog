@@ -195,6 +195,7 @@ class VTypeArray : public VType {
 
       int elaborate(Entity*ent, Architecture*arc) const;
       void write_to_stream(std::ostream&fd) const;
+      void write_type_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
 
       inline size_t dimensions() const { return ranges_.size(); };
@@ -312,7 +313,7 @@ class VTypeDef : public VType {
       inline const VType* peek_definition(void) const { return type_; }
 
       void write_to_stream(std::ostream&fd) const;
-      void write_type_to_stream(ostream&fd) const;
+      void write_type_to_stream(std::ostream&fd) const;
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
 
       int emit_def(std::ostream&out, perm_string name) const;
