@@ -609,6 +609,39 @@ int ExpCharacter::elaborate_expr(Entity*, Architecture*, const VType*ltype)
       return 0;
 }
 
+const VType*ExpConcat::fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const
+{
+      Expression*operands[2] = {operand1_, operand2_};
+      const VType*types[2] = {NULL, NULL};
+      Expression*sizes[2] = {NULL, NULL};
+
+      // determine the type and size of concatenated expressions
+      for(int i = 0; i < 2; ++i) {
+	    types[i] = operands[i]->fit_type(ent, arc, atype);
+
+	    if(const VTypeArray*arr = dynamic_cast<const VTypeArray*>(types[i])) {
+		types[i] = arr->element_type();
+		ivl_assert(*this, arr->dimensions() == 1);
+		const VTypeArray::range_t&dim = arr->dimension(0);
+		sizes[i] = new ExpArithmetic(ExpArithmetic::MINUS, dim.msb(), dim.lsb());
+	    } else {
+		sizes[i] = new ExpInteger(0);
+	    }
+      }
+
+      // the range of the concatenated expression is (size1 + size2 + 1):0
+      // note that each of the sizes are already decreased by one,
+      // e.g. 3:0 <=> size == 3 even though there are 4 bits
+      Expression*size = new ExpArithmetic(ExpArithmetic::PLUS,
+                            new ExpArithmetic(ExpArithmetic::PLUS, sizes[0], sizes[1]),
+                            new ExpInteger(1));
+
+      std::list<prange_t*> ranges;
+      ranges.push_front(new prange_t(size, new ExpInteger(0), true));
+      const VType*array = new VTypeArray(types[1], &ranges);
+
+      return array;
+}
 /*
  * I don't know how to probe the type of a concatenation, quite yet.
  */
