@@ -1916,6 +1916,7 @@ range
             ExpAttribute*left = new ExpAttribute(name, left_attr);
             ExpAttribute*right = new ExpAttribute(name, right_attr);
             tmp = new prange_t(left, right, true);
+            tmp->set_auto_dir();
         } else {
 	    errormsg(@1, "'range attribute can be used with named expressions only");
         }
@@ -1929,6 +1930,7 @@ range
             ExpAttribute*left = new ExpAttribute(name, left_attr);
             ExpAttribute*right = new ExpAttribute(name, right_attr);
             tmp = new prange_t(left, right, false);
+            tmp->set_auto_dir();
         } else {
 	    errormsg(@1, "'reverse_range attribute can be used with named expressions only");
         }

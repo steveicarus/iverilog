@@ -203,6 +203,45 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
       int errors = 0;
       ivl_assert(*this, range_);
 
+      int64_t start_val;
+      bool start_rc = range_->msb()->evaluate(ent, arc, start_val);
+
+      int64_t finish_val;
+      bool finish_rc = range_->lsb()->evaluate(ent, arc, finish_val);
+
+      ivl_assert(*this, start_rc);
+      ivl_assert(*this, finish_rc);
+
+      bool dir = range_->is_downto();
+
+      if (!dir) {
+	    int64_t tmp = start_val;
+	    start_val = finish_val;
+	    finish_val = tmp;
+      }
+
+      if (dir && (start_val < finish_val)) {
+	    if(range_->is_auto_dir()) {
+		dir = false;
+	    } else {
+		out << "begin /* Degenerate loop at " << get_fileline()
+		    << ": " << start_val
+		    << " downto " << finish_val << " */ end" << endl;
+		return errors;
+	    }
+      }
+
+      else if (!dir && start_val > finish_val) {
+	    if(range_->is_auto_dir()) {
+		dir = true;
+	    } else {
+		out << "begin /* Degenerate loop at " << get_fileline()
+		    << ": " << start_val
+		    << " to " << finish_val << " */ end" << endl;
+		return errors;
+	    }
+      }
+
       perm_string scope_name = loop_name();
       if (scope_name.nil()) {
 	    char buf[80];
@@ -212,38 +251,16 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 
       out << "begin : " << scope_name << endl;
       out << "longint \\" << it_ << " ;" << endl;
-      out << "for (\\" << it_ << " = ";
-      range_->expr_left()->emit(out, ent, arc);
-
-        // Determining the loop direction at the runtime
-      if (range_->is_auto_dir() || true) {
-            out << " ;\n(";
-            range_->expr_left()->emit(out, ent, arc);
-            out << " < ";
-            range_->expr_right()->emit(out, ent, arc);
-            out << " ? \\" << it_ << " <= ";
-            range_->expr_right()->emit(out, ent, arc);
-            out << " : \\" << it_ << " >= ";
-            range_->expr_right()->emit(out, ent, arc);
-            out << ");\n\\" << it_ << " = \\" << it_ << " + (";
-            range_->expr_left()->emit(out, ent, arc);
-            out << " < ";
-            range_->expr_right()->emit(out, ent, arc);
-            out << " ? 1 : -1)";
-      } else {
-            if (range_->is_downto())
-                out << " ; \\" << it_ << " >= ";
-            else
-                out << " ; \\" << it_ << " <= ";
-            range_->expr_right()->emit(out, ent, arc);
-
-            out << "; \\" << it_ << " = \\" << it_;
-
-            if (range_->is_downto())
-                out << " - 1";
-            else
-                out << " + 1";
-      }
+      out << "for (\\" << it_ << " = " << start_val << " ; ";
+      if (dir)
+	    out << "\\" << it_ << " >= " << finish_val;
+      else
+	    out << "\\" << it_ << " <= " << finish_val;
+      out << "; \\" << it_ << " = \\" << it_;
+      if (dir)
+	    out << " - 1";
+      else
+	    out << " + 1";
 
       out << ") begin" << endl;
 
