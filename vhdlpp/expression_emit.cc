@@ -821,6 +821,10 @@ int ExpString::emit_as_array_(ostream& out, Entity*, Architecture*, const VTypeA
 		  assert(etype->type() == VTypePrimitive::STDLOGIC);
 		  out << "z";
 		  break;
+		case '-':
+		  assert(etype->type() == VTypePrimitive::STDLOGIC);
+		  out << "x";
+		  break;
 		default:
 		  cerr << get_fileline() << ": internal error: "
 		       << "Don't know how to handle bit " << value_[idx]
