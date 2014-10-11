@@ -207,6 +207,11 @@ bool PPackage::elaborate_sig(Design*des, NetScope*scope) const
 {
       bool flag = true;
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PPackage::elaborate_sig: "
+		 << "Start package scope=" << scope_path(scope) << endl;
+      }
+
       flag = elaborate_sig_wires_(des, scope) && flag;
 
 	// After all the wires are elaborated, we are free to
@@ -215,6 +220,13 @@ bool PPackage::elaborate_sig(Design*des, NetScope*scope) const
 
       elaborate_sig_funcs(des, scope, funcs);
       elaborate_sig_tasks(des, scope, tasks);
+      elaborate_sig_classes(des, scope, classes);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PPackage::elaborate_sig: "
+		 << "Done package scope=" << scope_path(scope)
+		 << ", flag=" << flag << endl;
+      }
 
       return flag;
 }
@@ -836,16 +848,6 @@ void PWhile::elaborate_sig(Design*des, NetScope*scope) const
 	    statement_->elaborate_sig(des, scope);
 }
 
-static netclass_t* locate_class_type(Design*des, NetScope*scope,
-				     class_type_t*class_type)
-{
-      netclass_t*use_class = scope->find_class(class_type->name);
-      if (use_class) return use_class;
-
-      use_class = des->find_class(class_type->name);
-      return use_class;
-}
-
 static ivl_type_s*elaborate_type(Design*des, NetScope*scope,
 				 data_type_t*pform_type)
 {
@@ -1174,19 +1176,9 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // should already have been elaborated. All we need to
 	      // do right now is locate the netclass_t object for the
 	      // class, and use that to build the net.
-	    netclass_t*use_type = locate_class_type(des, scope, class_type);
-	    if (use_type == 0) {
-		  cerr << get_fileline() << ": internal error: "
-		       << "Class " << class_type->name
-		       << " isn't elaborated in scope=" << scope_path(scope) << endl;
-		  des->errors += 1;
-	    }
-	    ivl_assert(*this, use_type);
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": PWire::elaborate_sig: "
-		       << "Create class instance signal " << wtype
-		       << " " << packed_dimensions << name_ << unpacked_dimensions << endl;
-	    }
+
+	    ivl_assert(*this, class_type->save_elaborated_type);
+	    netclass_t*use_type = class_type->save_elaborated_type;
 
 	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_type);
 

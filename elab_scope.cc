@@ -428,6 +428,9 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
       netclass_t*use_class = new netclass_t(use_type->name, use_base_class);
 
+      ivl_assert(*pclass, use_type->save_elaborated_type == 0);
+      use_type->save_elaborated_type = use_class;
+
 	// Class scopes have no parent scope, because references are
 	// not allowed to escape a class method.
       NetScope*class_scope = new NetScope(0, hname_t(pclass->pscope_name()),
@@ -747,13 +750,14 @@ class generate_schemes_work_item_t : public elaborator_work_item_t {
 bool PPackage::elaborate_scope(Design*des, NetScope*scope)
 {
       if (debug_scopes) {
-	    cerr << get_fileline() << ": debug: Elaborate package scope "
-		 << scope_path(scope) << "." << endl;
+	    cerr << get_fileline() << ": PPackage::elaborate_scope: "
+		 << "Elaborate package " << scope_path(scope) << "." << endl;
       }
 
       collect_scope_parameters_(des, scope, parameters);
       collect_scope_localparams_(des, scope, localparams);
       elaborate_scope_enumerations(des, scope, enum_sets);
+      elaborate_scope_classes(des, scope, classes_lexical);
       elaborate_scope_funcs(des, scope, funcs);
       elaborate_scope_tasks(des, scope, tasks);
       return true;
@@ -763,8 +767,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 			     const replace_t&replacements)
 {
       if (debug_scopes) {
-	    cerr << get_fileline() << ": debug: Elaborate scope "
-		 << scope_path(scope) << "." << endl;
+	    cerr << get_fileline() << ": Module::elaborate_scope: "
+		 << "Elaborate " << scope_path(scope) << "." << endl;
       }
 
 	// Add the genvars to the scope.

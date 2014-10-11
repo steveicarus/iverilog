@@ -44,6 +44,7 @@ class PExpr;
 class PWire;
 class Statement;
 class ivl_type_s;
+class netclass_t;
 class netenum_t;
 typedef named<verinum> named_number_t;
 typedef named<PExpr*> named_pexpr_t;
@@ -273,7 +274,7 @@ struct string_type_t : public data_type_t {
 struct class_type_t : public data_type_t {
 
       inline explicit class_type_t(perm_string n)
-      : name(n), base_type(0) { }
+      : name(n), base_type(0), save_elaborated_type(0) { }
 
       void pform_dump(std::ostream&out, unsigned indent) const;
       void pform_dump_init(std::ostream&out, unsigned indent) const;
@@ -308,6 +309,11 @@ struct class_type_t : public data_type_t {
       std::vector<Statement*> initialize_static;
 
       ivl_type_s* elaborate_type_raw(Design*, NetScope*) const;
+	// The save_elaborated_type member must be set to the pointer
+	// to the netclass_t object that is created to represent this
+	// type. The elaborate_type_raw() method uses this pointer,
+	// and it is used in some other situations as well.
+      netclass_t* save_elaborated_type;
 };
 
 /*

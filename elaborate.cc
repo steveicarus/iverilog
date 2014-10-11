@@ -5554,6 +5554,9 @@ bool PPackage::elaborate(Design*des, NetScope*scope) const
 	// Elaborate task methods.
       elaborate_tasks(des, scope, tasks);
 
+	// Elaborate class definitions.
+      elaborate_classes(des, scope, classes);
+
       return result_flag;
 }
 
@@ -6046,6 +6049,7 @@ Design* elaborate(list<perm_string>roots)
       for (map<perm_string,PPackage*>::iterator pac = pform_packages.begin()
 		 ; pac != pform_packages.end() ; ++ pac) {
 
+	    ivl_assert(*pac->second, pac->first == pac->second->pscope_name());
 	    NetScope*scope = des->make_package_scope(pac->first);
 	    scope->set_line(pac->second);
 

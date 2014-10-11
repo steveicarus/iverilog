@@ -80,6 +80,8 @@ void dll_target::task_def(const NetScope*net)
       ivl_scope_t scop = lookup_scope_(net);
       const NetTaskDef*def = net->task_def();
 
+      assert(def);
+      assert(def->proc());
       assert(stmt_cur_ == 0);
       stmt_cur_ = (struct ivl_statement_s*)calloc(1, sizeof*stmt_cur_);
       def->proc()->emit_proc(this);

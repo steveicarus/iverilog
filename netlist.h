@@ -901,6 +901,7 @@ class Definitions {
       std::map<const enum_type_t*,netenum_t*> enum_sets_;
       std::map<perm_string,NetEConstEnum*> enum_names_;
 
+	// This is a map of all the classes (by name) in this scope.
       std::map<perm_string,netclass_t*> classes_;
 
 };
