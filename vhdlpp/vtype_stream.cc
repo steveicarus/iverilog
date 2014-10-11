@@ -90,9 +90,40 @@ void VTypeArray::write_range_to_stream_(std::ostream&fd) const
     fd << ") ";
 }
 
+void VTypeArray::write_type_to_stream(ostream&fd) const
+{
+	// Special case: std_logic_vector
+      if (etype_ == &primitive_STDLOGIC) {
+	    fd << "std_logic_vector";
+	    if (! ranges_.empty() && ! ranges_[0].is_box()) {
+		  write_range_to_stream_(fd);
+	    }
+	    return;
+      }
+
+      fd << "array ";
+
+      if (! ranges_.empty()) {
+	    assert(ranges_.size() < 2);
+	    if (ranges_[0].is_box()) {
+		  fd << "(INTEGER range <>) ";
+	    } else {
+		  write_range_to_stream_(fd);
+	    }
+      }
+
+      fd << "of ";
+
+      if(const VTypeDef*tdef = dynamic_cast<const VTypeDef*>(etype_)) {
+          tdef->write_to_stream(fd);
+      } else {
+          etype_->write_to_stream(fd);
+      }
+}
+
 void VTypeDef::write_type_to_stream(ostream&fd) const
 {
-      type_->write_to_stream(fd);
+      type_->write_type_to_stream(fd);
 }
 
 void VTypeDef::write_to_stream(ostream&fd) const

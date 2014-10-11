@@ -75,6 +75,10 @@ void Package::write_to_stream(ostream&fd) const
 		  continue;
 	    if (cur->first == "std_logic_vector")
 		  continue;
+	    if (cur->first == "signed")
+		  continue;
+	    if (cur->first == "unsigned")
+		  continue;
 
 	    fd << "type " << cur->first << " is ";
 	    cur->second->write_type_to_stream(fd);

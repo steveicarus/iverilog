@@ -70,7 +70,7 @@ int Subprogram::emit_package(ostream&fd) const
       if (statements_) {
 	    for (list<SequentialStmt*>::const_iterator cur = statements_->begin()
 		       ; cur != statements_->end() ; ++cur) {
-		  errors += (*cur)->emit(fd, 0, 0);
+		  errors += (*cur)->emit(fd, NULL, NULL);
 	    }
       } else {
 	    fd << " begin /* empty body */ end" << endl;

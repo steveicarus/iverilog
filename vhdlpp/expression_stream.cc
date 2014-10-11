@@ -111,9 +111,10 @@ void ExpArithmetic::write_to_stream(ostream&out)
       out << ")";
 }
 
-void ExpAttribute::write_to_stream(ostream&)
+void ExpAttribute::write_to_stream(ostream&fd)
 {
-      ivl_assert(*this, !"Not supported");
+      base_->write_to_stream(fd);
+      fd << "'" << name_;
 }
 
 void ExpBitstring::write_to_stream(ostream&fd)

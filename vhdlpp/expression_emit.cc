@@ -313,8 +313,8 @@ int ExpAttribute::emit(ostream&out, Entity*ent, Architecture*arc)
 	    return errors;
       }
 
-	/* Special Case: The length attribute can be calculated all
-	   the down to a literal integer at compile time, and all it
+	/* Special Case: The length,left & right attributes can be calculated
+	   all the down to a literal integer at compile time, and all it
 	   needs is the type of the base expression. (The base
 	   expression doesn't even need to be evaluated.) */
       if (name_=="length") {
@@ -322,8 +322,12 @@ int ExpAttribute::emit(ostream&out, Entity*ent, Architecture*arc)
 	    errors += base_->emit(out, ent, arc);
 	    out << ")";
 	    return errors;
+      } else if (name_=="left" || name_=="right") {
+	    out << "$" << name_ << "(";
+	    errors += base_->emit(out, ent, arc);
+	    out << ")";
+	    return errors;
       }
-
 
       out << "$ivl_attribute(";
       errors += base_->emit(out, ent, arc);
