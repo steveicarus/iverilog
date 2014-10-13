@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -50,10 +50,10 @@ bool netclass_t::set_property(perm_string pname, property_qualifier_t qual, ivl_
       return true;
 }
 
-void netclass_t::set_class_scope(NetScope*class_scope)
+void netclass_t::set_class_scope(NetScope*class_scope__)
 {
       assert(class_scope_ == 0);
-      class_scope_ = class_scope;
+      class_scope_ = class_scope__;
 }
 
 void netclass_t::set_definition_scope(NetScope*use_definition_scope)

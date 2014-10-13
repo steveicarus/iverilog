@@ -5581,7 +5581,7 @@ bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
 /*
  * %store/qb/r <var-label>
  */
-bool of_STORE_QB_R(vthread_t thr, vvp_code_t cp)
+bool of_STORE_QB_R(vthread_t, vvp_code_t)
 {
       fprintf(stderr, "XXXX %%store/qb/r NOT IMPLEMENTED\n");
       return true;
@@ -5617,7 +5617,7 @@ bool of_STORE_QB_STR(vthread_t thr, vvp_code_t cp)
 /*
  * %store/qf/r <var-label>
  */
-bool of_STORE_QF_R(vthread_t thr, vvp_code_t cp)
+bool of_STORE_QF_R(vthread_t, vvp_code_t)
 {
       fprintf(stderr, "XXXX %%store/qf/r NOT IMPLEMENTED\n");
       return true;
@@ -5626,7 +5626,7 @@ bool of_STORE_QF_R(vthread_t thr, vvp_code_t cp)
 /*
  * %store/qf/str <var-label>
  */
-bool of_STORE_QF_STR(vthread_t thr, vvp_code_t cp)
+bool of_STORE_QF_STR(vthread_t, vvp_code_t)
 {
       fprintf(stderr, "XXXX %%store/qf/str NOT IMPLEMENTED\n");
       return true;
