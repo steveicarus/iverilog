@@ -1055,6 +1055,8 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    emit_module_ports(scope);
 	    break;
 	case IVL_SCT_FUNCTION:
+	      /* Root scope functions have already been emitted. */
+	    if (! parent) return 0;
 	    assert(indent != 0);
 	    fprintf(vlog_out, "\n%*cfunction", indent, ' ');
 	    if (ivl_scope_ports(scope) < 1) {
@@ -1077,6 +1079,8 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    }
 	    break;
 	case IVL_SCT_TASK:
+	      /* Root scope tasks have already been emitted. */
+	    if (! parent) return 0;
 	    assert(indent != 0);
 	    fprintf(vlog_out, "\n%*ctask ", indent, ' ');
 	    emit_id(ivl_scope_tname(scope));
