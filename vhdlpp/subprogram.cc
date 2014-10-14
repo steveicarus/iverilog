@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -96,7 +96,7 @@ const InterfacePort*Subprogram::find_param(perm_string nam) const
 
 const VType*Subprogram::peek_param_type(int idx) const
 {
-      if(!ports_ || idx >= ports_->size())
+      if(!ports_ || idx < 0 || (size_t)idx >= ports_->size())
         return NULL;
 
       std::list<InterfacePort*>::const_iterator p = ports_->begin();

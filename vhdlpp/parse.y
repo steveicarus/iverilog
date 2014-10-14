@@ -370,7 +370,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <exp_else> else_when_waveform
 %type <exp_else_list> else_when_waveforms
 
-%type <subprogram> function_specification subprogram_specification
+%type <subprogram> function_specification subprogram_specification subprogram_body_start
 
 %%
 
@@ -2201,13 +2201,18 @@ signal_assignment_statement
       }
   ;
 
+subprogram_body_start
+  : subprogram_specification K_is
+      { assert(!active_sub);
+        active_sub = $1;
+        $$ = $1; }
+  ;
+
   /* This is a function/task body. This may have a matching subprogram
      declaration, and if so it will be in the active scope. */
 
 subprogram_body /* IEEE 1076-2008 P4.3 */
-  : subprogram_specification K_is
-      { active_sub = $1; }
-    subprogram_declarative_part
+  : subprogram_body_start subprogram_declarative_part
     K_begin subprogram_statement_part K_end
     subprogram_kind_opt identifier_opt ';'
       { Subprogram*prog = $1;
@@ -2219,19 +2224,20 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
 	      errormsg(@1, "Subprogram specification for %s doesn't match specification in package header.\n", prog->name().str());
 	}
 	prog->transfer_from(*active_scope);
-	prog->set_program_body($6);
+	prog->set_program_body($4);
 	active_scope->bind_name(prog->name(), prog);
 	active_sub = NULL;
       }
 
-  | subprogram_specification K_is
+  | subprogram_body_start
     subprogram_declarative_part
     K_begin error K_end
     subprogram_kind_opt identifier_opt ';'
       { errormsg(@2, "Syntax errors in subprogram body.\n");
 	yyerrok;
+	active_sub = NULL;
 	if ($1) delete $1;
-	if ($8) delete[]$8;
+	if ($7) delete[]$7;
       }
   ;
 
