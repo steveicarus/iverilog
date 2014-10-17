@@ -561,6 +561,11 @@ int ExpFunc::emit(ostream&out, Entity*ent, Architecture*arc)
 	    errors += argv_[0]->emit(out, ent, arc);
 	    out << ")";
 
+      } else if (name_ == "integer" && argv_.size() == 1) {
+            // Simply skip the function name, SystemVerilog takes care of
+            // rounding real numbers
+	    errors += argv_[0]->emit(out, ent, arc);
+
       } else if (name_ == "std_logic_vector" && argv_.size() == 1) {
 	      // Special case: The std_logic_vector function casts its
 	      // argument to std_logic_vector. Internally, we don't
