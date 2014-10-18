@@ -838,12 +838,20 @@ static void modpath_src_put_delays (vpiHandle ref, p_vpi_delay delays)
       typedef unsigned char map_array_t[12];
 	// Only the first six entries are used for the less than twelve maps.
       static const map_array_t map_2 = {0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0};
+      static const map_array_t map_3 = {0, 1, 2, 0, 2, 1, 0, 0, 0, 0, 0, 0};
+      static const map_array_t map_6 = {0, 1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 0};
       static const map_array_t map12 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
       const map_array_t*use_map = 0;
       switch (delays->no_of_delays) {
 	  case 2:
 	    use_map = &map_2;
+	    break;
+	  case 3:
+	    use_map = &map_3;
+	    break;
+	  case 6:
+	    use_map = &map_6;
 	    break;
 	  case 12:
 	    use_map = &map12;
