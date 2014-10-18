@@ -532,10 +532,10 @@ static vvp_time64_t delay_from_edge(vvp_bit4_t a, vvp_bit4_t b,
 {
       typedef delay_edge_t bit4_table4[4];
       static const bit4_table4 edge_table[4] = {
-	    { DELAY_EDGE_01, DELAY_EDGE_01, DELAY_EDGE_0x, DELAY_EDGE_0z },
-	    { DELAY_EDGE_10, DELAY_EDGE_10, DELAY_EDGE_1x, DELAY_EDGE_1z },
-	    { DELAY_EDGE_x0, DELAY_EDGE_x1, DELAY_EDGE_x0, DELAY_EDGE_xz },
-	    { DELAY_EDGE_z0, DELAY_EDGE_z1, DELAY_EDGE_zx, DELAY_EDGE_z0 }
+	    { DELAY_EDGE_01, DELAY_EDGE_01, DELAY_EDGE_0z, DELAY_EDGE_0x },
+	    { DELAY_EDGE_10, DELAY_EDGE_10, DELAY_EDGE_1z, DELAY_EDGE_1x },
+	    { DELAY_EDGE_z0, DELAY_EDGE_z1, DELAY_EDGE_z0, DELAY_EDGE_zx },
+	    { DELAY_EDGE_x0, DELAY_EDGE_x1, DELAY_EDGE_xz, DELAY_EDGE_x0 }
       };
 
       return array[ edge_table[a][b] ];
@@ -836,7 +836,8 @@ static void modpath_src_put_delays (vpiHandle ref, p_vpi_delay delays)
       assert( fun );
 
       typedef unsigned char map_array_t[12];
-      static const map_array_t map_2 = {0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0};
+	// Only the first six entries are used for the less than twelve maps.
+      static const map_array_t map_2 = {0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0};
       static const map_array_t map12 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
       const map_array_t*use_map = 0;
@@ -868,22 +869,26 @@ static void modpath_src_put_delays (vpiHandle ref, p_vpi_delay delays)
 	    }
       }
 
-      /* Now clean up any to-from-x delays to me the min/max based on
-         the rules for selecting X delays. This only needs to happen
-         if the X delays are not already explicitly given. */
+      /* Now define the to-from-x delays if needed. */
       if (delays->no_of_delays <= 6) {
-	    vvp_time64_t t_max = tmp[0];
-	    vvp_time64_t t_min = tmp[1];
-	    for (idx = 1 ; idx < delays->no_of_delays ; idx += 1) {
-		  if (tmp[idx] > t_max) t_max = tmp[idx];
-		  if (tmp[idx] < t_min) t_min = tmp[idx];
-	    }
-	    tmp[DELAY_EDGE_0x] = t_min;
-	    tmp[DELAY_EDGE_x1] = t_max;
-	    tmp[DELAY_EDGE_1x] = t_min;
-	    tmp[DELAY_EDGE_x0] = t_max;
-	    tmp[DELAY_EDGE_xz] = t_max;
-	    tmp[DELAY_EDGE_zx] = t_min;
+	      /* 0->x is the minimum of 0->z and 0->1. */
+	    tmp[DELAY_EDGE_0x] = tmp[DELAY_EDGE_0z] < tmp[DELAY_EDGE_01] ?
+	                           tmp[DELAY_EDGE_0z] : tmp[DELAY_EDGE_01];
+	      /* x->1 is the maximum of z->1 and 0->1. */
+	    tmp[DELAY_EDGE_x1] = tmp[DELAY_EDGE_z1] > tmp[DELAY_EDGE_01] ?
+	                           tmp[DELAY_EDGE_z1] : tmp[DELAY_EDGE_01];
+	      /* 1->x is the minimum of 1->z and 1->0. */
+	    tmp[DELAY_EDGE_1x] = tmp[DELAY_EDGE_1z] < tmp[DELAY_EDGE_10] ?
+	                           tmp[DELAY_EDGE_1z] : tmp[DELAY_EDGE_10];
+	      /* x->0 is the maximum of z->0 and 1->0. */
+	    tmp[DELAY_EDGE_x0] = tmp[DELAY_EDGE_z0] > tmp[DELAY_EDGE_10] ?
+	                           tmp[DELAY_EDGE_z0] : tmp[DELAY_EDGE_10];
+	      /* x->z is the maximum of 1->z and 0->z. */
+	    tmp[DELAY_EDGE_xz] = tmp[DELAY_EDGE_1z] > tmp[DELAY_EDGE_0z] ?
+	                           tmp[DELAY_EDGE_1z] : tmp[DELAY_EDGE_0z];
+	      /* z->x is the minimum of z->1 and z->0. */
+	    tmp[DELAY_EDGE_zx] = tmp[DELAY_EDGE_z1] < tmp[DELAY_EDGE_z0] ?
+	                           tmp[DELAY_EDGE_z1] : tmp[DELAY_EDGE_z0];
       }
 
       fun->put_delay12(tmp);
