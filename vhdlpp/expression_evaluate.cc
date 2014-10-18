@@ -122,8 +122,8 @@ bool ExpAttribute::evaluate(Entity*ent, Architecture*arc, int64_t&val) const
 	    const VTypeArray*arr = dynamic_cast<const VTypeArray*>(base_type);
 	    if (arr == 0) {
 		  cerr << get_fileline() << ": error: "
-		       << "Cannot apply the 'left attribute to non-array objects"
-		       << endl;
+		       << "Cannot apply the '" << name_
+		       << " attribute to non-array objects" << endl;
 		  return false;
 	    }
 

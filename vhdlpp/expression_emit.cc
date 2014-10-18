@@ -391,16 +391,6 @@ int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*, Architecture*,
       switch (etype->type()) {
 	  case VTypePrimitive::BOOLEAN:
 	  case VTypePrimitive::BIT:
-	    switch (value_) {
-		case '0':
-		case '1':
-		      out << "1'b" << value_;
-		return 0;
-		default:
-		  break;
-	    }
-	    break;
-
 	  case VTypePrimitive::STDLOGIC:
 	    switch (value_) {
 		case '0':
@@ -570,6 +560,11 @@ int ExpFunc::emit(ostream&out, Entity*ent, Architecture*arc)
 	    out << "$unsigned(";
 	    errors += argv_[0]->emit(out, ent, arc);
 	    out << ")";
+
+      } else if (name_ == "integer" && argv_.size() == 1) {
+            // Simply skip the function name, SystemVerilog takes care of
+            // rounding real numbers
+	    errors += argv_[0]->emit(out, ent, arc);
 
       } else if (name_ == "std_logic_vector" && argv_.size() == 1) {
 	      // Special case: The std_logic_vector function casts its
@@ -830,6 +825,10 @@ int ExpString::emit_as_array_(ostream& out, Entity*, Architecture*, const VTypeA
 		case 'z': case 'Z':
 		  assert(etype->type() == VTypePrimitive::STDLOGIC);
 		  out << "z";
+		  break;
+		case '-':
+		  assert(etype->type() == VTypePrimitive::STDLOGIC);
+		  out << "x";
 		  break;
 		default:
 		  cerr << get_fileline() << ": internal error: "

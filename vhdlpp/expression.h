@@ -388,6 +388,7 @@ class ExpConcat : public Expression {
       ~ExpConcat();
 
       const VType*probe_type(Entity*ent, Architecture*arc) const;
+      const VType*fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
