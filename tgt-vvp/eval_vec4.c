@@ -193,7 +193,17 @@ static void draw_binary_vec4_compare_class(ivl_expr_t expr)
       }
 
       if (ivl_expr_type(re)==IVL_EX_NULL && ivl_expr_type(le)==IVL_EX_SIGNAL) {
-	    fprintf(vvp_out, "    %%test_nul v%p_0;\n", ivl_expr_signal(le));
+	    ivl_signal_t sig= ivl_expr_signal(le);
+
+	    if (ivl_signal_dimensions(sig) == 0) {
+		  fprintf(vvp_out, "    %%test_nul v%p_0;\n", sig);
+	    } else {
+		  ivl_expr_t word_ex = ivl_expr_oper1(le);
+		  int word_ix = allocate_word();
+		  draw_eval_expr_into_integer(word_ex, word_ix);
+		  fprintf(vvp_out, "    %%test_nul/a v%p, %d;\n", sig, word_ix);
+		  clr_word(word_ix);
+	    }
 	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
 	    if (ivl_expr_opcode(expr) == 'n')
 		  fprintf(vvp_out, "    %%inv;\n");
