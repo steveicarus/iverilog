@@ -2186,6 +2186,10 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t rval = thr->pop_vec4();
       vvp_vector4_t lval = thr->pop_vec4();
 
+      if (rval.size() != lval.size()) {
+	    cerr << "VVP ERROR: %cmp/u operand width mismatch: lval=" << lval
+		 << ", rval=" << rval << endl;
+      }
       assert(rval.size() == lval.size());
       unsigned wid = lval.size();
 
@@ -5256,7 +5260,7 @@ bool of_PROP_STR(vthread_t thr, vvp_code_t cp)
 /*
  * %prop/v <pid>
  *
- * Load a property <id> from the cobject on the top of the stack into
+ * Load a property <pid> from the cobject on the top of the stack into
  * the vector space at <base>.
  */
 bool of_PROP_V(vthread_t thr, vvp_code_t cp)
@@ -6181,14 +6185,20 @@ bool of_STORE_PROP_STR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %store/prop/v <id>
+ * %store/prop/v <pid>, <wid>
  *
- * Store vector value into property <id> of cobject in the top of the stack.
+ * Store vector value into property <id> of cobject in the top of the
+ * stack. Do NOT pop the object stack.
  */
 bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
 {
       size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
       vvp_vector4_t val = thr->pop_vec4();
+
+      assert(val.size() >= wid);
+      val.resize(wid);
 
       vvp_object_t&obj = thr->peek_object();
       vvp_cobject*cobj = obj.peek<vvp_cobject>();

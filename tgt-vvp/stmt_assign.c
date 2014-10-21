@@ -1015,6 +1015,7 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
       ivl_lval_t lval = ivl_stmt_lval(net, 0);
       ivl_expr_t rval = ivl_stmt_rval(net);
       ivl_signal_t sig= ivl_lval_sig(lval);
+      unsigned lwid = ivl_lval_width(lval);
 
       int prop_idx = ivl_lval_property_idx(lval);
 
@@ -1031,8 +1032,8 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 			fprintf(vvp_out, "    %%cast2;\n");
 
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
-		  fprintf(vvp_out, "    %%store/prop/v %d; Store in bool property %s\n",
-			  prop_idx, ivl_type_prop_name(sig_type, prop_idx));
+		  fprintf(vvp_out, "    %%store/prop/v %d, %u; Store in bool property %s\n",
+			  prop_idx, lwid, ivl_type_prop_name(sig_type, prop_idx));
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_LOGIC) {
@@ -1042,8 +1043,8 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  draw_eval_vec4(rval, STUFF_OK_XZ);
 
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
-		  fprintf(vvp_out, "    %%store/prop/v %d; Store in logic property %s\n",
-			  prop_idx, ivl_type_prop_name(sig_type, prop_idx));
+		  fprintf(vvp_out, "    %%store/prop/v %d, %u; Store in logic property %s\n",
+			  prop_idx, lwid, ivl_type_prop_name(sig_type, prop_idx));
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_REAL) {
