@@ -1,7 +1,7 @@
-#ifndef __netlist_H
-#define __netlist_H
+#ifndef IVL_netlist_H
+#define IVL_netlist_H
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -74,12 +74,15 @@ class NetRamDq;
 class NetTaskDef;
 class NetEvTrig;
 class NetEvWait;
+class PClass;
 class PExpr;
 class PFunction;
+class PTaskFunc;
 struct enum_type_t;
 class netclass_t;
 class netdarray_t;
 class netparray_t;
+class netqueue_t;
 class netenum_t;
 class netstruct_t;
 class netvector_t;
@@ -153,10 +156,15 @@ class Link {
       bool is_equal(const Link&that) const;
 
 	// Return information about the object that this link is
-	// a part of.
+	// a part of. Note that the get_obj() method can return NIL if
+	// this Link is part of a NexusSet. That should be OK, because
+	// they are collection variables, and not functional parts of
+	// a design.
       const NetPins*get_obj() const;
       NetPins*get_obj();
       unsigned get_pin() const;
+
+      void dump_link(ostream&fd, unsigned ind) const;
 
     private:
 	// The NetNode manages these. They point back to the
@@ -204,6 +212,10 @@ class NetPins : public LineInfo {
       bool is_linked();
       bool pins_are_virtual(void) const;
       void devirtualize_pins(void);
+
+	// This is for showing a brief description of the object to
+	// the stream. It is used for debug and diagnostics.
+      virtual void show_type(std::ostream&fd) const;
 
     private:
       Link*pins_;
@@ -254,6 +266,8 @@ class NetObj  : public NetPins, public Attrib {
       void decay_time(const NetExpr* d) { delay3_ = d; }
 
       void dump_obj_attr(ostream&, unsigned) const;
+
+      virtual void show_type(std::ostream&fd) const;
 
     private:
       NetScope*scope_;
@@ -382,6 +396,11 @@ class Nexus {
 	   the value that has been driven. */
       verinum::V driven_value() const;
       verinum driven_vector() const;
+
+	/* Return a mask of the bits of this vector that are
+	   driven. This is usually all false or all true, but in
+	   special cases it may be a blend. */
+      std::vector<bool> driven_mask(void)const;
 
 	/* The code generator sets an ivl_nexus_t to attach code
 	   generation details to the nexus. */
@@ -610,6 +629,7 @@ public:
     static Enum merged( Enum lhs, Enum rhs );
 };
 
+extern std::ostream& operator << (std::ostream&, PortType::Enum);
 
   /*
    * Information on actual ports (rather than port-connected signals) of
@@ -632,6 +652,8 @@ class NetNet  : public NetObj, public PortType {
 		  UNRESOLVED_WIRE };
 
       typedef PortType::Enum PortType;
+
+      static const std::list<netrange_t>not_an_array;
 
     public:
 	// This form is the more generic form of the constructor. For
@@ -676,6 +698,7 @@ class NetNet  : public NetObj, public PortType {
       const netenum_t*enumeration(void) const;
       const netstruct_t*struct_type(void) const;
       const netdarray_t*darray_type(void) const;
+      const netqueue_t*queue_type(void) const;
       const netclass_t*class_type(void) const;
 
 	/* Attach a discipline to the net. */
@@ -749,8 +772,10 @@ class NetNet  : public NetObj, public PortType {
 
 	// Treating this node as a uwire, this function tests whether
 	// any bits in the canonical part are already driven. This is
-	// only useful for UNRESOLVED_WIRE objects.
-      bool test_and_set_part_driver(unsigned msb, unsigned lsb);
+	// only useful for UNRESOLVED_WIRE objects. The msb and lsb
+	// are the part select of the signal, and the widx is the word
+	// index if this is an unpacked array.
+      bool test_and_set_part_driver(unsigned msb, unsigned lsb, int widx =0);
 
       unsigned get_refs() const;
 
@@ -865,6 +890,9 @@ class Definitions {
 	// value.
       const NetExpr* enumeration_expr(perm_string key);
 
+	// Definitions scopes can also hold classes, by name.
+      void add_class(netclass_t*class_type);
+
     protected:
 	// Enumerations. The enum_sets_ is a list of all the
 	// enumerations present in this scope. The enum_names_ is a
@@ -872,6 +900,9 @@ class Definitions {
 	// contain them.
       std::map<const enum_type_t*,netenum_t*> enum_sets_;
       std::map<perm_string,NetEConstEnum*> enum_names_;
+
+	// This is a map of all the classes (by name) in this scope.
+      std::map<perm_string,netclass_t*> classes_;
 
 };
 
@@ -895,6 +926,10 @@ class NetScope : public Definitions, public Attrib {
 	   to make the name unique in the parent scope. Return false
 	   if a unique name couldn't be generated. */
       bool auto_name(const char* prefix, char pad, const char* suffix);
+
+	/* Routine to search for the enumeration given a name. It basically
+	 * does what enumeration_for_name() does but searched the hierarchy. */
+      const netenum_t*find_enumeration_for_name(perm_string name);
 
 	/* Parameters exist within a scope, and these methods allow
 	   one to manipulate the set. In these cases, the name is the
@@ -953,7 +988,6 @@ class NetScope : public Definitions, public Attrib {
       void rem_signal(NetNet*);
       NetNet* find_signal(perm_string name);
 
-      void add_class(netclass_t*class_type);
       netclass_t* find_class(perm_string name);
 
 	/* The parent and child() methods allow users of NetScope
@@ -962,6 +996,15 @@ class NetScope : public Definitions, public Attrib {
       NetScope* child(const hname_t&name);
       const NetScope* parent() const { return up_; }
       const NetScope* child(const hname_t&name) const;
+
+	/* A helper function to find the enclosing class scope. */
+      const NetScope* get_class_scope() const;
+
+	// Look for a child scope by name. This ignores the number
+	// part of the child scope name, so there may be multiple
+	// matches. Only return one. This function is only really
+	// useful for some elaboration error checking.
+      const NetScope* child_byname(perm_string name) const;
 
 	// Nested modules have slightly different scope search rules.
       inline bool nested_module() const { return nested_module_; }
@@ -1163,6 +1206,8 @@ class NetScope : public Definitions, public Attrib {
       perm_string genvar_tmp;
       long genvar_tmp_val;
 
+      std::map<perm_string,LocalVar> loop_index_tmp;
+
     private:
       void evaluate_parameter_logic_(Design*des, param_ref_t cur);
       void evaluate_parameter_real_(Design*des, param_ref_t cur);
@@ -1203,8 +1248,6 @@ class NetScope : public Definitions, public Attrib {
       };
       const PFunction*func_pform_;
       unsigned elab_stage_;
-
-      std::map<perm_string,netclass_t*> classes_;
 
       NetScope*up_;
       map<hname_t,NetScope*> children_;
@@ -2164,6 +2207,40 @@ class NetPartSelect  : public NetNode {
 };
 
 /*
+ * This device supports simple substitution of a part within a wider
+ * vector. For example, this:
+ *
+ *      wire [7:0] foo = NetSubstitute(bar, bat, off);
+ *
+ * meaus that bar is a vector the same width as foo, bat is a narrower
+ * vector. The off is a constant offset into the bar vector. This
+ * looks something like this:
+ *
+ *      foo = bar;
+ *      foo[off +: <width_of_bat>] = bat;
+ *
+ * There is no direct way in Verilog to express this (as a single
+ * device), it instead turns up in certain synthesis situation,
+ * i.e. the example above.
+ */
+class NetSubstitute : public NetNode {
+
+    public:
+      NetSubstitute(NetNet*sig, NetNet*sub, unsigned wid, unsigned off);
+      ~NetSubstitute();
+
+      inline unsigned width() const { return wid_; }
+      inline unsigned base() const  { return off_; }
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*tgt) const;
+
+    private:
+      unsigned wid_;
+      unsigned off_;
+};
+
+/*
  * The NetBUFZ is a magic device that represents the continuous
  * assign, with the output being the target register and the input
  * the logic that feeds it. The netlist preserves the directional
@@ -2199,29 +2276,42 @@ class NetBUFZ  : public NetNode {
  * input. The elaboration, btw, needs to make sure the input widths
  * match.
  *
+ * The case compare can be generated to handle ===/!==, or also
+ * to test guards in the case/casez/casex statements.
+ *
  * This pins are assigned as:
  *
  *     0   -- Output (always returns 0 or 1)
  *     1   -- Input
- *     2   -- Input
+ *     2   -- Input (windcard input for EQX and EQZ variants)
  */
 class NetCaseCmp  : public NetNode {
 
     public:
-      explicit NetCaseCmp(NetScope*s, perm_string n, unsigned wid, bool eeq);
+      enum kind_t {
+	    EEQ, // ===
+	    NEQ, // !==
+	    XEQ, // casex guard tests
+	    ZEQ  // casez guard tests
+      };
+
+    public:
+      explicit NetCaseCmp(NetScope*s, perm_string n, unsigned wid, kind_t eeq);
       ~NetCaseCmp();
 
       unsigned width() const;
-	// true if this is ===, false if this is !==
-      bool eeq() const;
+	// What kind of case compare?
+      inline kind_t kind() const { return kind_; }
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
 
     private:
       unsigned width_;
-      bool eeq_;
+      const kind_t kind_;
 };
+
+extern ostream& operator << (ostream&fd, NetCaseCmp::kind_t that);
 
 /* NOTE: This class should be replaced with the NetLiteral class
  * below, that is more general in that it supports different types of
@@ -2524,7 +2614,8 @@ class NetProc : public virtual LineInfo {
 	// picked off by e.g. condit statements as set/reset inputs to
 	// the flipflop being generated.
       virtual bool synth_sync(Design*des, NetScope*scope,
-			      NetNet*ff_clock, NetNet*ff_ce,
+			      NetNet*ff_clock, NetBus&ff_ce,
+			      NetBus&ff_aclr,  NetBus&ff_aset,
 			      NexusSet&nex_map, NetBus&nex_out,
 			      const std::vector<NetEvProbe*>&events);
 
@@ -2533,6 +2624,11 @@ class NetProc : public virtual LineInfo {
 	// Recursively checks to see if there is delay in this element.
       virtual DelayType delay_type() const;
 
+    protected:
+      bool synth_async_block_substatement_(Design*des, NetScope*scope,
+					   NexusSet&nex_map,
+					   NetBus&accumulated_nex_out,
+					   NetProc*substmt);
     private:
       friend class NetBlock;
       NetProc*next_;
@@ -2799,7 +2895,8 @@ class NetBlock  : public NetProc {
 		       NetBus&accumulated_nex_out);
 
       bool synth_sync(Design*des, NetScope*scope,
-		      NetNet*ff_clk, NetNet*ff_ce,
+		      NetNet*ff_clk, NetBus&ff_ce,
+		      NetBus&ff_aclr,NetBus&ff_aset,
 		      NexusSet&nex_map, NetBus&nex_out,
 		      const std::vector<NetEvProbe*>&events);
 
@@ -2844,10 +2941,10 @@ class NetCase  : public NetProc {
 
       TYPE type() const;
       const NetExpr*expr() const { return expr_; }
-      unsigned nitems() const { return nitems_; }
+      inline unsigned nitems() const { return items_.size(); }
 
-      const NetExpr*expr(unsigned idx) const { return items_[idx].guard;}
-      const NetProc*stat(unsigned idx) const { return items_[idx].statement; }
+      inline const NetExpr*expr(unsigned idx) const { return items_[idx].guard;}
+      inline const NetProc*stat(unsigned idx) const { return items_[idx].statement; }
 
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual void nex_output(NexusSet&out);
@@ -2868,16 +2965,20 @@ class NetCase  : public NetProc {
       bool evaluate_function_real_(const LineInfo&loc,
 				   map<perm_string,LocalVar>&ctx) const;
 
+      bool synth_async_casez_(Design*des, NetScope*scope,
+			      NexusSet&nex_map, NetBus&nex_out,
+			      NetBus&accumulated_nex_out);
+
       TYPE type_;
 
       struct Item {
+	    inline Item() : guard(0), statement(0) { }
 	    NetExpr*guard;
 	    NetProc*statement;
       };
 
       NetExpr* expr_;
-      unsigned nitems_;
-      Item*items_;
+      std::vector<Item>items_;
 };
 
 /*
@@ -2933,7 +3034,8 @@ class NetCondit  : public NetProc {
 		       NetBus&accumulated_nex_out);
 
       bool synth_sync(Design*des, NetScope*scope,
-		      NetNet*ff_clk, NetNet*ff_ce,
+		      NetNet*ff_clk, NetBus&ff_ce,
+		      NetBus&ff_aclr,NetBus&ff_aset,
 		      NexusSet&nex_map, NetBus&nex_out,
 		      const std::vector<NetEvProbe*>&events);
 
@@ -3184,9 +3286,9 @@ class NetEvWait  : public NetProc {
       void add_event(NetEvent*tgt);
       void replace_event(NetEvent*orig, NetEvent*repl);
 
-      unsigned nevents() const;
-      const NetEvent*event(unsigned) const;
-      NetEvent*event(unsigned);
+      inline unsigned nevents() const { return events_.size(); }
+      inline const NetEvent*event(unsigned idx) const { return events_[idx]; }
+      inline NetEvent*event(unsigned idx) { return events_[idx]; }
 
       NetProc*statement();
 
@@ -3209,7 +3311,8 @@ class NetEvWait  : public NetProc {
 			       NetBus&accumulated_nex_out);
 
       virtual bool synth_sync(Design*des, NetScope*scope,
-			      NetNet*ff_clk, NetNet*ff_ce,
+			      NetNet*ff_clk, NetBus&ff_ce,
+			      NetBus&ff_aclr,NetBus&ff_aset,
 			      NexusSet&nex_map, NetBus&nex_out,
 			      const std::vector<NetEvProbe*>&events);
 
@@ -3220,9 +3323,8 @@ class NetEvWait  : public NetProc {
 
     private:
       NetProc*statement_;
-
-      unsigned nevents_;
-      NetEvent**events_;
+	// Events that I might wait for.
+      std::vector<NetEvent*>events_;
 };
 
 ostream& operator << (ostream&out, const NetEvWait&obj);
@@ -3292,6 +3394,44 @@ class NetForever : public NetProc {
 
     private:
       NetProc*statement_;
+};
+
+class NetForLoop : public NetProc {
+
+    public:
+      explicit NetForLoop(NetNet*index, NetExpr*initial_expr, NetExpr*cond,
+			  NetProc*sub, NetProc*step);
+      ~NetForLoop();
+
+      void wrap_up();
+
+      void emit_recurse(struct target_t*) const;
+
+      virtual NexusSet* nex_input(bool rem_out = true);
+      virtual void nex_output(NexusSet&);
+      virtual bool emit_proc(struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+      virtual DelayType delay_type() const;
+      virtual bool evaluate_function(const LineInfo&loc,
+				     map<perm_string,LocalVar>&ctx) const;
+
+	// synthesize as asynchronous logic, and return true.
+      bool synth_async(Design*des, NetScope*scope,
+		       NexusSet&nex_map, NetBus&nex_out,
+		       NetBus&accumulated_nex_out);
+
+    private:
+      NetNet*index_;
+      NetExpr*init_expr_;
+      NetExpr*condition_;
+      NetProc*statement_;
+      NetProc*step_statement_;
+
+	// The code generator needs to see this rewritten as a while
+	// loop with synthetic statements. This is a hack that I
+	// should probably take out later as the ivl_target learns
+	// about for loops.
+      NetBlock*as_block_;
 };
 
 class NetFree   : public NetProc {
@@ -3483,6 +3623,31 @@ class NetTaskDef : public NetBaseDef {
     private: // not implemented
       NetTaskDef(const NetTaskDef&);
       NetTaskDef& operator= (const NetTaskDef&);
+};
+
+/*
+ * The NetELast expression node takes as an argument a net, that is
+ * intended to be a queue or dynamic array object. The return value is
+ * the index of the last item in the node. This is intended to
+ * implement the '$' is the expression "foo[$]".
+ */
+class NetELast : public NetExpr {
+
+    public:
+      explicit NetELast(NetNet*sig);
+      ~NetELast();
+
+      inline const NetNet*sig() const { return sig_; }
+
+      virtual ivl_variable_type_t expr_type() const;
+      virtual void dump(std::ostream&) const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetELast*dup_expr() const;
+      virtual NexusSet* nex_input(bool rem_out = true);
+
+    private:
+      NetNet*sig_;
 };
 
 /*
@@ -4136,14 +4301,18 @@ class NetENull : public NetExpr {
  * The NetEProperty represents a SystemVerilog property select of a
  * class object. In SV, the expression would look like "a.b", where
  * the "a" is the signal (the NetNet) and "b" is the property name.
+ *
+ * The canon_index is an optional expression to address an element for
+ * parameters that are arrays.
  */
 class NetEProperty : public NetExpr {
     public:
-      NetEProperty(NetNet*n, perm_string pname);
+      NetEProperty(NetNet*n, perm_string pname, NetExpr*canon_index =0);
       ~NetEProperty();
 
       inline const NetNet* get_sig() const { return net_; }
       inline size_t property_idx() const { return pidx_; }
+      inline const NetExpr*get_index() const { return index_; }
 
     public: // Overridden methods
       ivl_variable_type_t expr_type() const;
@@ -4156,6 +4325,7 @@ class NetEProperty : public NetExpr {
     private:
       NetNet*net_;
       size_t pidx_;
+      NetExpr*index_;
 };
 
 /*
@@ -4628,6 +4798,11 @@ class Design : public Definitions {
 	// Look for defparams that never matched, and print warnings.
       void residual_defparams();
 
+	// Do elaborate_sig for objects in $root scope.
+      void root_elaborate_sig(void);
+
+      void root_elaborate(void);
+
 	/* This method locates a signal, starting at a given
 	   scope. The name parameter may be partially hierarchical, so
 	   this method, unlike the NetScope::find_signal method,
@@ -4640,6 +4815,12 @@ class Design : public Definitions {
 
 	// Tasks
       NetScope* find_task(NetScope*scope, const pform_name_t&name);
+      void add_root_task(NetScope*tscope, PTaskFunc*tf);
+      std::list<NetScope*> find_roottask_scopes(void) const;
+
+	// Find a class in the $root scope.
+      void add_class(netclass_t*cl, PClass*pclass);
+      netclass_t* find_class(perm_string name) const;
 
 	// NODES
       void add_node(NetNode*);
@@ -4674,6 +4855,12 @@ class Design : public Definitions {
 	// Keep a map of all the elaborated packages. Note that
 	// packages do not nest.
       std::map<perm_string,NetScope*>packages_;
+
+	// Tasks in the $root scope
+      std::map<NetScope*,PTaskFunc*>root_tasks_;
+
+	// Need this for elaboration of $root scope pclass objects.
+      std::map<netclass_t*,PClass*> class_to_pclass_;
 
 	// List the nodes in the design.
       NetNode*nodes_;
@@ -4800,4 +4987,4 @@ inline unsigned Link::get_pin() const
 	    return pin_;
 }
 
-#endif
+#endif /* IVL_netlist_H */

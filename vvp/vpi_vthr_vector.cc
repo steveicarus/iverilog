@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -99,7 +99,7 @@ static int vthr_word_get(int code, vpiHandle ref)
 static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       struct __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(ref);
-      char *rbuf = need_result_buf(66, RBUF_VAL);
+      char *rbuf = (char *) need_result_buf(66, RBUF_VAL);
 
       double val = 0.0;
 
@@ -266,7 +266,7 @@ void __vpiVThrStrStack::vpi_get_value(p_vpi_value vp)
 	  case vpiObjTypeVal:
 	    vp->format = vpiStringVal;
 	  case vpiStringVal:
-	    rbuf = need_result_buf(val.size()+1, RBUF_VAL);
+	    rbuf = (char *) need_result_buf(val.size()+1, RBUF_VAL);
 	    strcpy(rbuf, val.c_str());
 	    vp->value.str = rbuf;
 	    break;
@@ -386,7 +386,7 @@ void __vpiVThrVec4Stack::vpi_get_value(p_vpi_value vp)
 void __vpiVThrVec4Stack::vpi_get_value_binstr_(p_vpi_value vp, const vvp_vector4_t&val)
 {
       unsigned wid = val.size();
-      char*rbuf = need_result_buf(wid+1, RBUF_VAL);
+      char*rbuf = (char*) need_result_buf(wid+1, RBUF_VAL);
       for (unsigned idx = 0 ; idx < wid ; idx += 1) {
 	    rbuf[wid-idx-1] = vvp_bit4_to_ascii(val.value(idx));
       }
@@ -398,7 +398,7 @@ void __vpiVThrVec4Stack::vpi_get_value_decstr_(p_vpi_value vp, const vvp_vector4
 {
       unsigned wid = val.size();
       int nbuf = (wid+2)/3 + 1;
-      char *rbuf = need_result_buf(nbuf, RBUF_VAL);
+      char *rbuf = (char*) need_result_buf(nbuf, RBUF_VAL);
 
       vpip_vec4_to_dec_str(val, rbuf, nbuf, signed_flag_);
       vp->value.str = rbuf;
@@ -408,7 +408,7 @@ void __vpiVThrVec4Stack::vpi_get_value_hexstr_(p_vpi_value vp, const vvp_vector4
 {
       unsigned wid = val.size();
       unsigned hwid = (wid + 3) /4;
-      char*rbuf = need_result_buf(hwid+1, RBUF_VAL);
+      char*rbuf = (char*) need_result_buf(hwid+1, RBUF_VAL);
       rbuf[hwid] = 0;
 
       unsigned hval = 0;
@@ -467,7 +467,7 @@ void __vpiVThrVec4Stack::vpi_get_value_real_(p_vpi_value vp, const vvp_vector4_t
 
 void __vpiVThrVec4Stack::vpi_get_value_string_(p_vpi_value vp, const vvp_vector4_t&val)
 {
-      char*rbuf = need_result_buf((val.size() / 8) + 1, RBUF_VAL);
+      char*rbuf = (char*) need_result_buf((val.size() / 8) + 1, RBUF_VAL);
       char*cp = rbuf;
 
       char tmp = 0;

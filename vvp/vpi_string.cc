@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -63,7 +63,7 @@ void __vpiStringVar::vpi_get_value(p_vpi_value val)
       string str = fun->get_string();
 
       if (val->format == vpiStringVal || val->format == vpiObjTypeVal) {
-	    char*rbuf = need_result_buf(str.size()+1, RBUF_VAL);
+	    char*rbuf = (char *) need_result_buf(str.size()+1, RBUF_VAL);
 	    strcpy(rbuf, str.c_str());
 	    val->format = vpiStringVal;
 	    val->value.str = rbuf;

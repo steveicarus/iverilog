@@ -1,7 +1,7 @@
-#ifndef __PSpec_H
-#define __PSpec_H
+#ifndef IVL_PSpec_H
+#define IVL_PSpec_H
 /*
- * Copyright (c) 2006-2011 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2006-2014 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -84,4 +84,4 @@ class PSpecPath  : public LineInfo {
       std::vector<class PExpr*>delays;
 };
 
-#endif
+#endif /* IVL_PSpec_H */

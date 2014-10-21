@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -134,7 +134,7 @@ const char* vvp_signal_label(ivl_signal_t sig)
       return buf;
 }
 
-ivl_signal_t signal_of_nexus(ivl_nexus_t nex, unsigned*word)
+static ivl_signal_t signal_of_nexus(ivl_nexus_t nex, unsigned*word)
 {
       unsigned idx;
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
@@ -180,7 +180,7 @@ ivl_variable_type_t data_type_of_nexus(ivl_nexus_t nex)
 }
 
 
-ivl_nexus_ptr_t ivl_logic_pin_ptr(ivl_net_logic_t net, unsigned pin)
+static ivl_nexus_ptr_t ivl_logic_pin_ptr(ivl_net_logic_t net, unsigned pin)
 {
       ivl_nexus_t nex = ivl_logic_pin(net, pin);
       unsigned idx;
@@ -201,6 +201,7 @@ ivl_nexus_ptr_t ivl_logic_pin_ptr(ivl_net_logic_t net, unsigned pin)
       return 0;
 }
 
+#if 0
 const char*drive_string(ivl_drive_t drive)
 {
       switch (drive) {
@@ -224,6 +225,7 @@ const char*drive_string(ivl_drive_t drive)
 
       return "";
 }
+#endif
 
 
 /*
@@ -467,6 +469,10 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	    datatype_flag = "/str";
 	    vector_dims = 0;
 	    break;
+	  case IVL_VT_CLASS:
+	    datatype_flag = "/obj";
+	    vector_dims = 0;
+	    break;
 	  default:
 	    break;
       }
@@ -498,6 +504,11 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 
       } else if (ivl_signal_data_type(sig) == IVL_VT_DARRAY) {
 	    fprintf(vvp_out, "v%p_0 .var/darray \"%s\";%s\n", sig,
+		    vvp_mangle_name(ivl_signal_basename(sig)),
+		    ivl_signal_local(sig)? " Local signal" : "");
+
+      } else if (ivl_signal_data_type(sig) == IVL_VT_QUEUE) {
+	    fprintf(vvp_out, "v%p_0 .var/queue \"%s\";%s\n", sig,
 		    vvp_mangle_name(ivl_signal_basename(sig)),
 		    ivl_signal_local(sig)? " Local signal" : "");
 
@@ -784,14 +795,14 @@ static void draw_udp_def(ivl_udp_t udp)
 
   if (ivl_udp_sequ(udp))
 	fprintf(vvp_out,
-		"UDP_%s .udp/sequ \"%s\", %d, %u",
+		"UDP_%s .udp/sequ \"%s\", %u, %u",
 		vvp_mangle_id(ivl_udp_name(udp)),
 		vvp_mangle_name(ivl_udp_name(udp)),
 		ivl_udp_nin(udp),
 		init );
   else
 	fprintf(vvp_out,
-		"UDP_%s .udp/comb \"%s\", %d",
+		"UDP_%s .udp/comb \"%s\", %u",
 		vvp_mangle_id(ivl_udp_name(udp)),
 		vvp_mangle_name(ivl_udp_name(udp)),
 		ivl_udp_nin(udp));
@@ -1038,7 +1049,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    break;
 
 	  default:
-	    fprintf(stderr, "vvp.tgt: error: Unhandled logic type: %u\n",
+	    fprintf(stderr, "vvp.tgt: error: Unhandled logic type: %d\n",
 		    ivl_logic_type(lptr));
 	    ltype = "?";
 	    break;
@@ -1280,6 +1291,8 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net, ivl_variable_type_t dt)
       switch (ivl_lpm_type(net)) {
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_EQX:
+	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
@@ -1487,6 +1500,16 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 		  type = "eq.r";
 	    else
 		  type = "eq";
+	    signed_string = "";
+	    break;
+	  case IVL_LPM_CMP_EQX:
+	    assert(dtc != IVL_VT_REAL);
+	    type = "eqx";
+	    signed_string = "";
+	    break;
+	  case IVL_LPM_CMP_EQZ:
+	    assert(dtc != IVL_VT_REAL);
+	    type = "eqz";
 	    signed_string = "";
 	    break;
 	  case IVL_LPM_CMP_GE:
@@ -1712,10 +1735,16 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	 * generator in V0.10 and later for how this might be done. */
       assert(ivl_lpm_sync_clr(net) == 0);
       assert(ivl_lpm_sync_set(net) == 0);
-      assert(ivl_lpm_async_clr(net) == 0);
-      assert(ivl_lpm_async_set(net) == 0);
 
-      fprintf(vvp_out, "L_%p .dff ", net);
+      if (ivl_lpm_async_clr(net)) {
+	    assert(! ivl_lpm_async_set(net));
+	    fprintf(vvp_out, "L_%p .dff/aclr ", net);
+      } else if (ivl_lpm_async_set(net)) {
+	    assert(! ivl_lpm_async_clr(net));
+	    fprintf(vvp_out, "L_%p .dff/aset ", net);
+      } else {
+	    fprintf(vvp_out, "L_%p .dff ", net);
+      }
 
       nex = ivl_lpm_data(net,0);
       assert(nex);
@@ -1735,8 +1764,13 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	    fprintf(vvp_out, ", C4<1>");
       }
 
-	/* Stub asynchronous input for now. */
-      fprintf(vvp_out, ", C4<z>");
+      if ( (nex = ivl_lpm_async_clr(net)) ) {
+	    fprintf(vvp_out, ", %s", draw_net_input(nex));
+      }
+
+      if ( (nex = ivl_lpm_async_set(net)) ) {
+	    fprintf(vvp_out, ", %s", draw_net_input(nex));
+      }
 
       fprintf(vvp_out, ";\n");
 }
@@ -1768,7 +1802,7 @@ static void draw_type_string_of_nex(ivl_nexus_t nex)
 	    break;
 	  case IVL_VT_LOGIC:
           case IVL_VT_BOOL:
-	    fprintf(vvp_out, "v%d", width_of_nexus(nex));
+	    fprintf(vvp_out, "v%u", width_of_nexus(nex));
 	    break;
 	  default:
 	    assert(0);
@@ -1804,7 +1838,7 @@ static int sfunc_has_modpath_output(ivl_lpm_t lptr)
 static void draw_sfunc_output_def(ivl_lpm_t net, char type)
 {
       ivl_nexus_t nex = ivl_lpm_q(net);
-      char *suf = (type == 'd') ? "/d" : "";
+      const char *suf = (type == 'd') ? "/d" : "";
 
       switch (data_type_of_nexus(nex)) {
 	case IVL_VT_REAL:
@@ -2060,6 +2094,8 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_EQX:
+	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
@@ -2107,6 +2143,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	    draw_lpm_sfunc(net);
 	    return;
 
+	  case IVL_LPM_SUBSTITUTE:
+	    draw_lpm_substitute(net);
+	    return;
+
 	  case IVL_LPM_UFUNC:
 	    draw_lpm_ufunc(net);
 	    return;
@@ -2150,13 +2190,15 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       default:               type = "?";        assert(0);
       }
 
-      fprintf(vvp_out, "S_%p .scope %s%s, \"%s\" \"%s\" %d %d",
-	      net, prefix, type, vvp_mangle_name(ivl_scope_basename(net)),
-              ivl_scope_tname(net), ivl_file_table_index(ivl_scope_file(net)),
+      fprintf(vvp_out, "S_%p .scope %s%s, \"%s\" \"%s\" %u %u",
+	      net, prefix, type,
+	      vvp_mangle_name(ivl_scope_basename(net)),
+              vvp_mangle_name(ivl_scope_tname(net)),
+	      ivl_file_table_index(ivl_scope_file(net)),
               ivl_scope_lineno(net));
 
       if (parent) {
-	    fprintf(vvp_out, ", %d %d %u, S_%p;\n",
+	    fprintf(vvp_out, ", %u %u %u, S_%p;\n",
 	            ivl_file_table_index(ivl_scope_def_file(net)),
 	            ivl_scope_def_lineno(net), ivl_scope_is_cell(net), parent);
       } else {
@@ -2177,7 +2219,8 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
             if( name == 0 )
                 name = "";
             fprintf( vvp_out, "    .port_info %u %s %u \"%s\"\n",
-                    idx, vvp_port_info_type_str(ptype), width, name );
+                    idx, vvp_port_info_type_str(ptype), width,
+		    vvp_mangle_name(name) );
         }
       }
 
@@ -2186,16 +2229,16 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    ivl_expr_t pex = ivl_parameter_expr(par);
 	    switch (ivl_expr_type(pex)) {
 		case IVL_EX_STRING:
-		  fprintf(vvp_out, "P_%p .param/str \"%s\" %d %d %d, \"%s\";\n",
-			  par, ivl_parameter_basename(par),
+		  fprintf(vvp_out, "P_%p .param/str \"%s\" %d %u %u, \"%s\";\n",
+			  par, vvp_mangle_name(ivl_parameter_basename(par)),
 			  ivl_parameter_local(par),
 			  ivl_file_table_index(ivl_parameter_file(par)),
 			  ivl_parameter_lineno(par),
 			  ivl_expr_string(pex));
 		  break;
 		case IVL_EX_NUMBER:
-		  fprintf(vvp_out, "P_%p .param/l \"%s\" %d %d %d, %sC4<",
-			  par, ivl_parameter_basename(par),
+		  fprintf(vvp_out, "P_%p .param/l \"%s\" %d %u %u, %sC4<",
+			  par, vvp_mangle_name(ivl_parameter_basename(par)),
                           ivl_parameter_local(par),
 			  ivl_file_table_index(ivl_parameter_file(par)),
 			  ivl_parameter_lineno(par),
@@ -2210,9 +2253,10 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 		  break;
 		case IVL_EX_REALNUM:
 		  { char *res = draw_Cr_to_string(ivl_expr_dvalue(pex));
-		    fprintf(vvp_out, "P_%p .param/real \"%s\" %d %d %d, %s; "
-		            "value=%#g\n", par, ivl_parameter_basename(par),
-	                     ivl_parameter_local(par),
+		    fprintf(vvp_out, "P_%p .param/real \"%s\" %d %u %u, %s; "
+		            "value=%#g\n", par,
+			    vvp_mangle_name(ivl_parameter_basename(par)),
+	                    ivl_parameter_local(par),
 			    ivl_file_table_index(ivl_parameter_file(par)),
 			    ivl_parameter_lineno(par), res,
 			    ivl_expr_dvalue(pex));

@@ -1,7 +1,7 @@
-#ifndef __compile_H
-#define __compile_H
+#ifndef IVL_compile_H
+#define IVL_compile_H
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -124,6 +124,10 @@ extern void compile_concat8(char*label, unsigned w0, unsigned w1,
 			    unsigned w2, unsigned w3,
 			    unsigned argc, struct symb_s*argv);
 
+extern void compile_substitute(char*label, unsigned width,
+			       unsigned soff, unsigned swidth,
+			       unsigned argc, struct symb_s*argv);
+
 /*
  * Arrange for the system task/function call to have its compiletf
  * function called.
@@ -181,6 +185,10 @@ extern void compile_cmp_nee(char*label, long width,
 			   unsigned argc, struct symb_s*argv);
 extern void compile_cmp_eq(char*label, long width,
 			   unsigned argc, struct symb_s*argv);
+extern void compile_cmp_eqx(char*label, long width,
+			    unsigned argc, struct symb_s*argv);
+extern void compile_cmp_eqz(char*label, long width,
+			    unsigned argc, struct symb_s*argv);
 extern void compile_cmp_ne(char*label, long width,
 			   unsigned argc, struct symb_s*argv);
 extern void compile_cmp_ge(char*label, long width, bool signed_flag,
@@ -203,8 +211,18 @@ extern void compile_cmp_gt_r(char*label, unsigned argc, struct symb_s*argv);
 extern void compile_dff(char*label,
 			struct symb_s arg_d,
 			struct symb_s arg_c,
-			struct symb_s arg_e,
-			struct symb_s arg_a);
+			struct symb_s arg_e);
+
+extern void compile_dff_aclr(char*label,
+			     struct symb_s arg_d,
+			     struct symb_s arg_c,
+			     struct symb_s arg_e,
+			     struct symb_s arg_a);
+extern void compile_dff_aset(char*label,
+			     struct symb_s arg_d,
+			     struct symb_s arg_c,
+			     struct symb_s arg_e,
+			     struct symb_s arg_a);
 
 extern void compile_enum2_type(char*label, long width, bool signed_flag,
 			      std::list<struct enum_name_s>*names);
@@ -355,6 +373,8 @@ extern void compile_real_array(char*label, char*name,
 			       int last, int first);
 extern void compile_string_array(char*label, char*name,
 				 int last, int first);
+extern void compile_object_array(char*label, char*name,
+				 int last, int first);
 extern void compile_net_array(char*label, char*name,
 			      int last, int first);
 extern void compile_array_alias(char*label, char*name, char*src);
@@ -474,6 +494,7 @@ extern void compile_var_real(char*label, char*name);
 extern void compile_var_string(char*label, char*name);
 extern void compile_var_darray(char*label, char*name);
 extern void compile_var_cobject(char*label, char*name);
+extern void compile_var_queue(char*label, char*name);
 
 /*
  * This function is used to create a scope port
@@ -533,7 +554,7 @@ extern void compile_island_tranvp(char*island, char*ba, char*bb,
 extern void delete_udp_symbols(void);
 
 extern void compile_class_start(char*lab, char*nam, unsigned nprop);
-extern void compile_class_property(unsigned idx, char*nam, char*typ);
+extern void compile_class_property(unsigned idx, char*nam, char*typ, uint64_t array_size);
 extern void compile_class_done(void);
 
-#endif
+#endif /* IVL_compile_H */

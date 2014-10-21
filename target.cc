@@ -270,6 +270,13 @@ bool target_t::sign_extend(const NetSignExtend*)
       return false;
 }
 
+bool target_t::substitute(const NetSubstitute*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled NetSubstitute node." << endl;
+      return false;
+}
+
 bool target_t::process(const NetProcTop*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
@@ -462,6 +469,12 @@ void expr_scan_t::expr_const(const NetEConst*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
 	    "unhandled expr_const." << endl;
+}
+
+void expr_scan_t::expr_last(const NetELast*exp)
+{
+      cerr << exp->get_fileline() << ": expr_scan_t(" << typeid(*this).name() << "): "
+	   << "unhandled expr_last." << endl;
 }
 
 void expr_scan_t::expr_new(const NetENew*)

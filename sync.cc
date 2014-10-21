@@ -33,7 +33,7 @@ bool NetProc::is_synchronous()
 
 bool NetEvWait::is_synchronous()
 {
-      for (unsigned idx = 0 ;  idx < nevents_ ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < events_.size() ;  idx += 1) {
 	    NetEvent*ev = events_[idx];
 
 	    if (ev->nprobe() == 0)

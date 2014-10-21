@@ -416,8 +416,8 @@ bool NetCase::evaluate_function_vect_(const LineInfo&loc,
 
       NetProc*default_statement = 0;
 
-      for (unsigned cnt = 0 ; cnt < nitems_ ; cnt += 1) {
-            Item*item = &items_[cnt];
+      for (unsigned cnt = 0 ; cnt < items_.size() ; cnt += 1) {
+            const Item*item = &items_[cnt];
 
             if (item->guard == 0) {
                   default_statement = item->statement;
@@ -478,8 +478,8 @@ bool NetCase::evaluate_function_real_(const LineInfo&loc,
 
       NetProc*default_statement = 0;
 
-      for (unsigned cnt = 0 ; cnt < nitems_ ; cnt += 1) {
-            Item*item = &items_[cnt];
+      for (unsigned cnt = 0 ; cnt < items_.size() ; cnt += 1) {
+            const Item*item = &items_[cnt];
 
             if (item->guard == 0) {
                   default_statement = item->statement;
@@ -626,6 +626,16 @@ bool NetForever::evaluate_function(const LineInfo&loc,
       }
 
       return flag;
+}
+
+/*
+ * For now, resort to the block form of the statement until we learn
+ * to do this directly.
+ */
+bool NetForLoop::evaluate_function(const LineInfo&loc,
+				   map<perm_string,LocalVar>&context_map) const
+{
+      return as_block_->evaluate_function(loc, context_map);
 }
 
 bool NetRepeat::evaluate_function(const LineInfo&loc,

@@ -1,7 +1,7 @@
-#ifndef __netvector_H
-#define __netvector_H
+#ifndef IVL_netvector_H
+#define IVL_netvector_H
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -107,4 +107,4 @@ inline static std::ostream& operator << (std::ostream&out, const netvector_t&obj
       return obj.debug_dump(out);
 }
 
-#endif
+#endif /* IVL_netvector_H */

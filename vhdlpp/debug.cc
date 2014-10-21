@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2014 CERN / Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,6 +23,7 @@
 # include  "architec.h"
 # include  "expression.h"
 # include  "parse_types.h"
+# include  "subprogram.h"
 # include  "sequential.h"
 # include  "vsignal.h"
 # include  "vtype.h"
@@ -335,6 +337,12 @@ void ExpInteger::dump(ostream&out, int indent) const
 	  << " at " << get_fileline() << endl;
 }
 
+void ExpReal::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "Integer " << value_
+      << " at " << get_fileline() << endl;
+}
+
 void ExpLogical::dump(ostream&out, int indent) const
 {
       const char*fun_name = "?";
@@ -455,6 +463,12 @@ ostream& Expression::dump_inline(ostream&out) const
 }
 
 ostream& ExpInteger::dump_inline(ostream&out) const
+{
+      out << value_;
+      return out;
+}
+
+ostream& ExpReal::dump_inline(ostream&out) const
 {
       out << value_;
       return out;

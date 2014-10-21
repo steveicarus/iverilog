@@ -22,6 +22,7 @@
 # include  "netclass.h"
 # include  "netdarray.h"
 # include  "netenum.h"
+# include  "netparray.h"
 # include  "netscalar.h"
 # include  "netstruct.h"
 # include  "netvector.h"
@@ -30,6 +31,25 @@
 # include  "ivl_assert.h"
 
 using namespace std;
+
+/*
+ * Elaborations of types may vary depending on the scope that it is
+ * done in, so keep a per-scope cache of the results.
+ */
+ivl_type_s* data_type_t::elaborate_type(Design*des, NetScope*scope)
+{
+      Definitions*use_definitions = scope;
+      if (use_definitions == 0)
+	    use_definitions = des;
+
+      map<Definitions*,ivl_type_s*>::iterator pos = cache_type_elaborate_.lower_bound(use_definitions);
+      if (pos->first == use_definitions)
+	    return pos->second;
+
+      ivl_type_s*tmp = elaborate_type_raw(des, scope);
+      cache_type_elaborate_.insert(pos, pair<NetScope*,ivl_type_s*>(scope, tmp));
+      return tmp;
+}
 
 ivl_type_s* data_type_t::elaborate_type_raw(Design*des, NetScope*) const
 {
@@ -75,9 +95,10 @@ ivl_type_s* atom2_type_t::elaborate_type_raw(Design*des, NetScope*) const
       }
 }
 
-ivl_type_s* class_type_t::elaborate_type_raw(Design*, NetScope*scope) const
+ivl_type_s* class_type_t::elaborate_type_raw(Design*, NetScope*) const
 {
-      return scope->find_class(name);
+      ivl_assert(*this, save_elaborated_type);
+      return save_elaborated_type;
 }
 
 /*
@@ -188,9 +209,27 @@ ivl_type_s* uarray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 
       ivl_type_t btype = base_type->elaborate_type(des, scope);
 
-      assert(dims->size() == 1);
+      assert(dims->size() >= 1);
       list<pform_range_t>::const_iterator cur = dims->begin();
-      assert(cur->first == 0 && cur->second==0);
-      ivl_type_s*res = new netdarray_t(btype);
+
+	// Special case: if the dimension is nil:nil, this is a
+	// dynamic array. Note that we only know how to handle dynamic
+	// arrays with 1 dimension at a time.
+      if (cur->first==0 && cur->second==0) {
+	    assert(dims->size()==1);
+	    ivl_type_s*res = new netdarray_t(btype);
+	    return res;
+      }
+
+      vector<netrange_t> dimensions;
+      bool bad_range = evaluate_ranges(des, scope, dimensions, *dims);
+
+      if (bad_range) {
+	    cerr << get_fileline() << " : warning: "
+		 << "Bad dimensions for type here." << endl;
+      }
+
+      ivl_assert(*this, btype);
+      ivl_type_s*res = new netuarray_t(dimensions, btype);
       return res;
 }

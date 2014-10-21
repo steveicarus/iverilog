@@ -396,7 +396,7 @@ vpiHandle __vpiArray::vpi_iterate(int code)
 */
 vpiHandle __vpiArray::vpi_index(int index)
 {
-      index -= first_addr.value;
+      index -= first_addr.get_value();
       if (index >= (long)array_count)
 	    return 0;
       if (index < 0)
@@ -609,10 +609,10 @@ static int vpi_array_var_word_get(int code, vpiHandle ref)
 	    }
 
 	  case vpiLeftRange:
-	    return parent->msb.value;
+	    return parent->msb.get_value();
 
 	  case vpiRightRange:
-	    return parent->lsb.value;
+	    return parent->lsb.get_value();
 
 	  case vpiAutomatic:
 	    return (int) parent->scope->is_automatic;
@@ -640,7 +640,7 @@ static char*vpi_array_var_word_get_str(int code, vpiHandle ref)
       }
 
       char sidx [64];
-      snprintf(sidx, 63, "%d", (int)index + parent->first_addr.value);
+      snprintf(sidx, 63, "%d", (int)index + parent->first_addr.get_value());
       return generic_get_str(code, parent->scope, parent->name, sidx);
 }
 
@@ -756,13 +756,13 @@ static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 	    return get_array_word_size(parent);
 
 	  case vpiLeftRange:
-	    return parent->msb.value;
+	    return parent->msb.get_value();
 
 	  case vpiRightRange:
-	    return parent->lsb.value;
+	    return parent->lsb.get_value();
 
 	  case vpiIndex:
-	    return (int)obj->get_address() + parent->first_addr.value;
+	    return (int)obj->get_address() + parent->first_addr.get_value();
 
 	  case vpiAutomatic:
 	    return (int) parent->scope->is_automatic;
@@ -796,7 +796,7 @@ static char*vpi_array_vthr_A_get_str(int code, vpiHandle ref)
       }
 
       char sidx [64];
-      snprintf(sidx, 63, "%d", (int)obj->get_address() + parent->first_addr.value);
+      snprintf(sidx, 63, "%d", (int)obj->get_address() + parent->first_addr.get_value());
       return generic_get_str(code, parent->scope, parent->name, sidx);
 }
 
@@ -924,10 +924,10 @@ static int vpi_array_vthr_APV_get(int code, vpiHandle ref)
 	    return obj->part_wid;
 
 	  case vpiLeftRange:
-	    return parent->msb.value;
+	    return parent->msb.get_value();
 
 	  case vpiRightRange:
-	    return parent->lsb.value;
+	    return parent->lsb.get_value();
 
 	  case vpiIndex:
 	    return (int)obj->word_sel;
@@ -959,7 +959,7 @@ static char*vpi_array_vthr_APV_get_str(int code, vpiHandle ref)
       }
 
       char sidx [64];
-      snprintf(sidx, 63, "%u", obj->word_sel + parent->first_addr.value);
+      snprintf(sidx, 63, "%u", obj->word_sel + parent->first_addr.get_value());
       return generic_get_str(code, parent->scope, parent->name, sidx);
 }
 
@@ -1055,6 +1055,18 @@ void array_set_word(vvp_array_t arr, unsigned address, const string&val)
       array_word_change(arr, address);
 }
 
+void array_set_word(vvp_array_t arr, unsigned address, const vvp_object_t&val)
+{
+      assert(arr->vals != 0);
+      assert(arr->nets == 0);
+
+      if (address >= arr->vals->get_size())
+	    return;
+
+      arr->vals->set_word(address, val);
+      array_word_change(arr, address);
+}
+
 vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
 {
       if (arr->vals4) {
@@ -1129,6 +1141,28 @@ double array_get_word_r(vvp_array_t arr, unsigned address)
 
 }
 
+void array_get_word_obj(vvp_array_t arr, unsigned address, vvp_object_t&val)
+{
+      if (arr->vals) {
+	    assert(arr->vals4 == 0);
+	    assert(arr->nets  == 0);
+	      // In this context, address out of bounds returns 0.0
+	      // instead of an error.
+	    if (address >= arr->vals->get_size()) {
+		  val = vvp_object_t();
+		  return;
+	    }
+
+	    arr->vals->get_word(address, val);
+	    return;
+      }
+
+      assert(arr->nets);
+	// Arrays of string nets not implemented!
+      assert(0);
+      return;
+}
+
 string array_get_word_str(vvp_array_t arr, unsigned address)
 {
       if (arr->vals) {
@@ -1176,8 +1210,8 @@ static vpiHandle vpip_make_array(char*label, const char*name,
       obj->name  = vpip_name_string(name);
       obj->array_count = array_count;
 
-      obj->first_addr.value = first_addr;
-      obj->last_addr.value = last_addr;
+      obj->first_addr.set_value(first_addr);
+      obj->last_addr .set_value(last_addr);
 
 	// Start off now knowing if we are nets or variables.
       obj->nets = 0;
@@ -1211,8 +1245,8 @@ static vpiHandle vpip_make_array(char*label, const char*name,
 void array_alias_word(vvp_array_t array, unsigned long addr, vpiHandle word,
                       int msb, int lsb)
 {
-      assert(array->msb.value == msb);
-      assert(array->lsb.value == lsb);
+      assert(array->msb.get_value() == msb);
+      assert(array->lsb.get_value() == lsb);
       assert(addr < array->array_count);
       assert(array->nets);
       array->nets[addr] = word;
@@ -1232,7 +1266,7 @@ void array_attach_word(vvp_array_t array, unsigned addr, vpiHandle word)
 	    fun->attach_as_word(array, addr);
 	    sig->is_netarray = 1;
 	    sig->within.parent = array;
-	    sig->id.index = new __vpiDecConst(addr + array->first_addr.value);
+	    sig->id.index = new __vpiDecConst(addr + array->first_addr.get_value());
 	      // Now we know the data type, update the array signed_flag.
 	    array->signed_flag = sig->signed_flag;
 	    return;
@@ -1246,7 +1280,7 @@ void array_attach_word(vvp_array_t array, unsigned addr, vpiHandle word)
 	    fun->attach_as_word(array, addr);
 	    sig->is_netarray = 1;
 	    sig->within.parent = array;
-	    sig->id.index = new __vpiDecConst(addr + array->first_addr.value);
+	    sig->id.index = new __vpiDecConst(addr + array->first_addr.get_value());
 	      // Now we know the data type, update the array signed_flag.
 	    array->signed_flag = true;
 	    return;
@@ -1270,8 +1304,8 @@ void compile_var_array(char*label, char*name, int last, int first,
             arr->vals4 = new vvp_vector4array_sa(arr->vals_width,
 						 arr->array_count);
       }
-      arr->msb.value = msb;
-      arr->lsb.value = lsb;
+      arr->msb.set_value(msb);
+      arr->lsb.set_value(lsb);
 
       count_var_arrays += 1;
       count_var_array_words += arr->array_count;
@@ -1288,8 +1322,8 @@ void compile_var2_array(char*label, char*name, int last, int first,
       struct __vpiArray*arr = dynamic_cast<__vpiArray*>(obj);
 
 	/* Make the words. */
-      arr->msb.value = msb;
-      arr->lsb.value = lsb;
+      arr->msb.set_value(msb);
+      arr->lsb.set_value(lsb);
       arr->vals_width = labs(msb-lsb) + 1;
 
       assert(! arr->nets);
@@ -1345,6 +1379,23 @@ void compile_string_array(char*label, char*name, int last, int first)
 
 	/* Make the words. */
       arr->vals = new vvp_darray_string(arr->array_count);
+      arr->vals_width = 1;
+
+      count_real_arrays += 1;
+      count_real_array_words += arr->array_count;
+
+      free(label);
+      delete[] name;
+}
+
+void compile_object_array(char*label, char*name, int last, int first)
+{
+      vpiHandle obj = vpip_make_array(label, name, first, last, true);
+
+      struct __vpiArray*arr = dynamic_cast<__vpiArray*>(obj);
+
+	/* Make the words. */
+      arr->vals = new vvp_darray_object(arr->array_count);
       arr->vals_width = 1;
 
       count_real_arrays += 1;
@@ -1653,7 +1704,7 @@ void array_word_change(vvp_array_t array, unsigned long addr)
 	      // For whole array callbacks we need to set the index.
 	    if (cur->word_addr == -1) {
 		  cur->cb_data.index = (PLI_INT32) ((int)addr +
-		                       array->first_addr.value);
+						    array->first_addr.get_value());
 	    }
 
 	    if (cur->cb_data.cb_rtn != 0) {
@@ -1889,12 +1940,12 @@ void compile_array_alias(char*label, char*name, char*src)
       obj->signed_flag = mem->signed_flag;
 
 	// Need to set an accurate range of addresses.
-      obj->first_addr.value = mem->first_addr.value;
-      obj->last_addr.value  = mem->last_addr.value;
+      obj->first_addr = mem->first_addr;
+      obj->last_addr  = mem->last_addr;
       obj->swap_addr = mem->swap_addr;
 
-      obj->msb.value = mem->msb.value;
-      obj->lsb.value = mem->lsb.value;
+      obj->msb = mem->msb;
+      obj->lsb = mem->lsb;
 
 	// Share the words with the source array.
       obj->nets = mem->nets;

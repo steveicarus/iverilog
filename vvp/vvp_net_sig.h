@@ -1,7 +1,7 @@
-#ifndef __vvp_net_sig_H
-#define __vvp_net_sig_H
+#ifndef IVL_vvp_net_sig_H
+#define IVL_vvp_net_sig_H
 /*
- * Copyright (c) 2004-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -569,4 +569,4 @@ class vvp_wire_string : public vvp_wire_base {
 };
 #endif
 
-#endif
+#endif /* IVL_vvp_net_sig_H */

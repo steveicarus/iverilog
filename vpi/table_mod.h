@@ -1,7 +1,7 @@
-#ifndef __table_mod_H
-#define __table_mod_H
+#ifndef IVL_table_mod_H
+#define IVL_table_mod_H
 /*
- *  Copyright (C) 2011  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2011-2014  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -94,8 +94,8 @@ typedef struct t_table_mod {
 
 extern unsigned parse_table_model(FILE *fp, vpiHandle callh, p_table_mod table);
 
-extern int tblmodlex();
-extern void destroy_tblmod_lexor();
+extern int tblmodlex(void);
+extern void destroy_tblmod_lexor(void);
 extern void init_tblmod_lexor(FILE *fp);
 
-#endif
+#endif /* IVL_table_mod_H */

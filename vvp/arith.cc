@@ -670,6 +670,83 @@ void vvp_cmp_eq::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       net->send_vec4(res, 0);
 }
 
+vvp_cmp_eqx::vvp_cmp_eqx(unsigned wid)
+: vvp_arith_(wid)
+{
+}
+
+/*
+ * Compare Vector a and Vector b. If in any bit position the a and b
+ * bits are known and different, then the result is 0. Otherwise, if
+ * there are X/Z bits anywhere in A or B, the result is X. Finally,
+ * the result is 1.
+ */
+void vvp_cmp_eqx::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                           vvp_context_t)
+{
+      dispatch_operand_(ptr, bit);
+
+      if (op_a_.size() != op_b_.size()) {
+	    cerr << "COMPARISON size mismatch. "
+		 << "a=" << op_a_ << ", b=" << op_b_ << endl;
+	    assert(0);
+      }
+
+      vvp_vector4_t res (1);
+      res.set_bit(0, BIT4_1);
+
+      for (unsigned idx = 0 ;  idx < op_a_.size() ;  idx += 1) {
+	    vvp_bit4_t a = op_a_.value(idx);
+	    vvp_bit4_t b = op_b_.value(idx);
+
+	    if (b == BIT4_X)
+		  continue;
+	    if (b == BIT4_Z)
+		  continue;
+	    if (a != b) {
+		  res.set_bit(0, BIT4_0);
+		  break;
+	    }
+      }
+
+      vvp_net_t*net = ptr.ptr();
+      net->send_vec4(res, 0);
+}
+
+vvp_cmp_eqz::vvp_cmp_eqz(unsigned wid)
+: vvp_arith_(wid)
+{
+}
+
+void vvp_cmp_eqz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                           vvp_context_t)
+{
+      dispatch_operand_(ptr, bit);
+
+      if (op_a_.size() != op_b_.size()) {
+	    cerr << "COMPARISON size mismatch. "
+		 << "a=" << op_a_ << ", b=" << op_b_ << endl;
+	    assert(0);
+      }
+
+      vvp_vector4_t res (1);
+      res.set_bit(0, BIT4_1);
+
+      for (unsigned idx = 0 ;  idx < op_a_.size() ;  idx += 1) {
+	    vvp_bit4_t a = op_a_.value(idx);
+	    vvp_bit4_t b = op_b_.value(idx);
+
+	    if (b == BIT4_Z)
+		  continue;
+	    if (a != b) {
+		  res.set_bit(0, BIT4_0);
+		  break;
+	    }
+      }
+
+      vvp_net_t*net = ptr.ptr();
+      net->send_vec4(res, 0);
+}
 
 vvp_cmp_ne::vvp_cmp_ne(unsigned wid)
 : vvp_arith_(wid)

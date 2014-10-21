@@ -30,6 +30,7 @@
 # include  "netlist.h"
 # include  "netclass.h"
 # include  "netenum.h"
+# include  "netparray.h"
 # include  "netvector.h"
 # include  "discipline.h"
 # include  "netmisc.h"
@@ -106,6 +107,7 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
       int context_wid = -1;
       switch (lv_type) {
 	  case IVL_VT_DARRAY:
+	  case IVL_VT_QUEUE:
 	      // For these types, use a different elab_and_eval that
 	      // uses the lv_net_type. We should eventually transition
 	      // all the types to this new form.
@@ -309,7 +311,7 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
                 case '%':
                 case '/':
-                  min_width_ = max(min_width_, expr_width_);
+                  min_width_ = UINT_MAX; // disable width pruning
                   break;
 
                 case 'l': // <<  Should be handled by PEBShift
@@ -530,7 +532,7 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*,
       if (NetEConst*rp_const = dynamic_cast<NetEConst*> (rp)) {
 	    verinum rp_val = rp_const->value();
 
-	    if (! rp_val.is_defined()) {
+	    if (!rp_val.is_defined() && (lp->expr_type() == IVL_VT_LOGIC)) {
 		  NetEConst*tmp = make_const_x(expr_wid);
                   tmp->cast_signed(signed_flag_);
                   tmp->set_line(*this);
@@ -538,7 +540,7 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*,
 		  return tmp;
 	    }
 
-	    if (rp_val.is_zero() && (lp->expr_type() != IVL_VT_LOGIC)) {
+	    if (rp_val.is_zero() && (lp->expr_type() == IVL_VT_BOOL)) {
 		  NetEConst*tmp = make_const_0(expr_wid);
                   tmp->cast_signed(signed_flag_);
                   tmp->set_line(*this);
@@ -815,7 +817,7 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       if (op_ == 'l')
             min_width_ = left_->min_width();
       else
-            min_width_ = expr_width_;
+            min_width_ = UINT_MAX; // disable width pruning
 
       return fix_width_(mode);
 }
@@ -1296,10 +1298,27 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 	    return expr_width_;
       }
 
+      if (use_darray && (method_name == "pop_back" || method_name=="pop_front")) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PECallFunction::test_width_method_: "
+		       << "Detected " << method_name << " method"
+		       << " of dynamic arrays." << endl;
+	    }
+
+	    expr_type_  = use_darray->element_base_type();
+	    expr_width_ = use_darray->element_width();
+	    min_width_  = expr_width_;
+	    signed_flag_= false;
+
+	    return expr_width_;
+      }
+
       if (const netclass_t*class_type = net->class_type()) {
-	    cerr << get_fileline() << ": PECallFunction::test_width_method_: "
-		 << "Try to find method " << method_name
-		 << " of class " << class_type->get_name() << endl;
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PECallFunction::test_width_method_: "
+		       << "Try to find method " << method_name
+		       << " of class " << class_type->get_name() << endl;
+	    }
 
 	    NetScope*func = class_type->method_from_name(method_name);
 	    if (func == 0) {
@@ -1768,6 +1787,14 @@ static const netstruct_t::member_t*get_struct_member(const LineInfo*li,
 bool calculate_part(const LineInfo*li, Design*des, NetScope*scope,
 		    const index_component_t&index, long&off, unsigned long&wid)
 {
+      if (index.sel == index_component_t::SEL_BIT_LAST) {
+	    cerr << li->get_fileline() << ": sorry: "
+		 << "Last element select expression "
+		 << "not supported." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
 	// Evaluate the last index expression into a constant long.
       NetExpr*texpr = elab_and_eval(des, scope, index.msb, -1, true);
       long msb;
@@ -1808,6 +1835,11 @@ bool calculate_part(const LineInfo*li, Design*des, NetScope*scope,
 		  wid = lsb - msb + 1;
 	    }
 	    return true;
+
+	  case index_component_t::SEL_IDX_UP:
+	    wid = lsb;
+	    off = msb;
+	    break;
 
 	  default:
 	    ivl_assert(*li, 0);
@@ -2051,10 +2083,23 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return 0;
       }
-      ivl_assert(*this, def);
 
+      ivl_assert(*this, def);
       NetScope*dscope = def->scope();
       ivl_assert(*this, dscope);
+
+       /* In SystemVerilog a method calling another method in the
+        * current class needs to be elaborated as a method with an
+        * implicit this added.  */
+      if (gn_system_verilog() && (path_.size() == 1)) {
+           const NetScope *c_scope = scope->get_class_scope();
+           if (c_scope && (c_scope == dscope->get_class_scope())) {
+                 NetExpr*tmp = elaborate_expr_method_(des, scope, expr_wid,
+		                                      true);
+                 assert(tmp);
+                 return tmp;
+           }
+      }
 
       bool need_const = NEED_CONST & flags;
 
@@ -2249,17 +2294,22 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
 }
 
 NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
-						unsigned expr_wid) const
+						unsigned expr_wid,
+						bool add_this_flag) const
 {
       pform_name_t use_path = path_;
       perm_string method_name = peek_tail_name(use_path);
       use_path.pop_back();
 
+	/* Add the implicit this reference when requested. */
+      if (add_this_flag) {
+	    assert(use_path.empty());
+	    use_path.push_front(name_component_t(perm_string::literal("@")));
+      }
+
 	// If there is no object to the left of the method name, then
 	// give up on the idea of looking for an object method.
-      if (use_path.empty()) {
-	    return 0;
-      }
+      if (use_path.empty()) return 0;
 
       NetNet *net = 0;
       const NetExpr *par;
@@ -2323,12 +2373,31 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
       if (net->darray_type()) {
 
 	    if (method_name == "size") {
-		  NetESFunc*sys_expr = new NetESFunc("$ivl_darray_method$size",
+		  NetESFunc*sys_expr = new NetESFunc("$size",
 						     IVL_VT_BOOL, 32, 1);
 		  sys_expr->parm(0, new NetESignal(net));
 		  sys_expr->set_line(*this);
 		  return sys_expr;
 	    }
+
+	    if (method_name == "pop_back") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_darray_method$pop_back",
+						     expr_type_,
+						     expr_width_, 1);
+		  sys_expr->parm(0, new NetESignal(net));
+		  sys_expr->set_line(*this);
+		  return sys_expr;
+	    }
+
+	    if (method_name == "pop_front") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_darray_method$pop_front",
+						     expr_type_,
+						     expr_width_, 1);
+		  sys_expr->parm(0, new NetESignal(net));
+		  sys_expr->set_line(*this);
+		  return sys_expr;
+	    }
+
       }
 
       if (const netclass_t*class_type = net->class_type()) {
@@ -2465,6 +2534,24 @@ unsigned PEConcat::test_width(Design*des, NetScope*scope, width_mode_t&)
 
 // Keep track of the concatenation/repeat depth.
 static int concat_depth = 0;
+
+NetExpr* PEConcat::elaborate_expr(Design*, NetScope*,
+				  ivl_type_t type, unsigned /*flags*/) const
+{
+      switch (type->base_type()) {
+	  case IVL_VT_QUEUE:
+	    if (parms_.size() == 0) {
+		  NetENull*tmp = new NetENull;
+		  tmp->set_line(*this);
+		  return tmp;
+	    }
+	  default:
+	    cerr << get_fileline() << ": internal error: "
+		 << "I don't know how to elaborate(ivl_type_t)"
+		 << " this expression: " << *this << endl;
+	    return 0;
+      }
+}
 
 NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 				  unsigned expr_wid, unsigned flags) const
@@ -2604,6 +2691,7 @@ bool PEIdent::calculate_packed_indices_(Design*des, NetScope*scope, NetNet*net,
 {
       list<index_component_t> index;
       index = path_.back().index;
+      ivl_assert(*this, index.size() >= net->unpacked_dimensions());
       for (size_t idx = 0 ; idx < net->unpacked_dimensions() ; idx += 1)
 	    index.pop_front();
 
@@ -2787,6 +2875,48 @@ bool PEIdent::calculate_param_range_(Design*, NetScope*,
       return true;
 }
 
+unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
+{
+      if (!gn_system_verilog())
+	    return 0;
+      if (path_.size() < 2)
+	    return 0;
+
+      pform_name_t use_path = path_;
+      perm_string member_name = peek_tail_name(path_);
+      use_path.pop_back();
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::test_width_method_: "
+		 << "Try to find method=" << member_name
+		 << " of signal " << use_path << endl;
+      }
+
+      NetNet*net = 0;
+      const NetExpr*par = 0;
+      NetEvent*eve = 0;
+      const NetExpr*ex1 = 0, *ex2 = 0;
+      symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
+      if (net == 0) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": PEIdent::test_width_method_: "
+		       << "Only nets can have methods, so give up here." << endl;
+	    return 0;
+      }
+
+      if (/*const netdarray_t*dtype =*/ net->darray_type()) {
+	    if (member_name == "size") {
+		  expr_type_  = IVL_VT_BOOL;
+		  expr_width_ = 32;
+		  min_width_  = 32;
+		  signed_flag_= true;
+		  return 32;
+	    }
+      }
+
+      return 0;
+}
+
 unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
       NetNet*       net = 0;
@@ -2799,6 +2929,10 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       if (package_) {
 	    use_scope = des->find_package(package_->pscope_name());
 	    ivl_assert(*this, use_scope);
+      }
+
+      if (unsigned tmp = test_width_method_(des, scope, mode)) {
+	    return tmp;
       }
 
       NetScope*found_in = symbol_search(this, des, use_scope, path_,
@@ -2845,23 +2979,38 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 		const index_component_t&index_tail = name_tail.index.back();
 		ivl_assert(*this, index_tail.msb);
 	      }
-	      use_width = 1;
+		// If we have a net in hand, then we can predict what the
+		// slice width will be. If not, then assume it will be a
+		// simple bit select. If the net only has a single dimension
+		// then this is still a simple bit select.
+	      if ((net == 0) || (net->packed_dimensions() <= 1))
+		    use_width = 1;
 	      break;
+	  case index_component_t::SEL_BIT_LAST:
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::test_width: "
+		       << "Queue/Darray last index ($)" << endl;
+	    }
+	    break;
 	  default:
 	    ivl_assert(*this, 0);
       }
 
       if (const netdarray_t*darray = net? net->darray_type() : 0) {
-	    if (use_sel == index_component_t::SEL_BIT) {
+	    switch (use_sel) {
+		case index_component_t::SEL_BIT:
+		case index_component_t::SEL_BIT_LAST:
 		  expr_type_   = darray->element_base_type();
 		  expr_width_  = darray->element_width();
 		  min_width_   = expr_width_;
 		  signed_flag_ = net->get_signed();
-	    } else {
+		  break;
+		default:
 		  expr_type_   = net->data_type();
 		  expr_width_  = net->vector_width();
 		  min_width_   = expr_width_;
 		  signed_flag_ = net->get_signed();
+		  break;
 	    }
 	    return expr_width_;
       }
@@ -2877,15 +3026,35 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
 	// The width of a signal expression is the width of the signal.
       if (net != 0) {
+	    size_t use_depth = name_tail.index.size();
+	      // Account for unpacked dimensions by assuming that the
+	      // unpacked dimensions are consumed first, so subtract
+	      // the unpacked dimensions from the dimension depth
+	      // useable for making the slice.
+	    if (use_depth >= net->unpacked_dimensions()) {
+		  use_depth -= net->unpacked_dimensions();
+
+	    } else {
+		    // In this case, we have a slice of an unpacked
+		    // array. This likely handled as an array instead
+		    // of a slice. Hmm...
+		  use_depth = 0;
+	    }
+
 	    expr_type_   = net->data_type();
-	    expr_width_  = net->vector_width();
+	    expr_width_  = net->slice_width(use_depth);
 	    min_width_   = expr_width_;
 	    signed_flag_ = net->get_signed();
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": PEIdent::test_width: "
 		       << net->name() << " is a net, "
 		       << "type=" << expr_type_
-		       << ", width=" << expr_width_ << endl;
+		       << ", width=" << expr_width_
+		       << ", signed_=" << (signed_flag_?"true":"false")
+		       << ", use_depth=" << use_depth
+		       << ", packed_dimensions=" << net->packed_dimensions()
+		       << ", unpacked_dimensions=" << net->unpacked_dimensions()
+		       << endl;
 	    }
 	    return expr_width_;
       }
@@ -3000,8 +3169,10 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
 
 NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
-				 ivl_type_t ntype, unsigned) const
+				 ivl_type_t ntype, unsigned flags) const
 {
+      bool need_const = NEED_CONST & flags;
+
       NetNet*       net = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
@@ -3011,6 +3182,10 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       if (package_) {
 	    use_scope = des->find_package(package_->pscope_name());
 	    ivl_assert(*this, use_scope);
+      }
+
+      if (NetExpr* tmp = elaborate_expr_class_member_(des, scope, 0, flags)) {
+	    return tmp;
       }
 
       /* NetScope*found_in = */ symbol_search(this, des, use_scope, path_,
@@ -3072,7 +3247,69 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       }
       ivl_assert(*this, ntype->type_compatible(net->net_type()));
 
-      NetESignal*tmp = new NetESignal(net);
+      const name_component_t&use_comp = path_.back();
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+		 << "Typed ident " << net->name()
+		 << " with " << use_comp.index.size() << " indices"
+		 << " and " << net->unpacked_dimensions() << " expected."
+		 << endl;
+      }
+
+      if (net->unpacked_dimensions() != use_comp.index.size()) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "Net " << net->name()
+		 << " expects " << net->unpacked_dimensions()
+		 << ", but got " << use_comp.index.size() << "."
+		 << endl;
+	    des->errors += 1;
+
+	    NetESignal*tmp = new NetESignal(net);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
+      if (net->unpacked_dimensions() == 0) {
+	    NetESignal*tmp = new NetESignal(net);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
+	// Convert a set of index expressions to a single expression
+	// that addresses the canonical element.
+      list<NetExpr*>unpacked_indices;
+      list<long> unpacked_indices_const;
+      indices_flags idx_flags;
+      indices_to_expressions(des, scope, this,
+			     use_comp.index, net->unpacked_dimensions(),
+			     need_const, net->unpacked_count(),
+			     idx_flags,
+			     unpacked_indices,
+			     unpacked_indices_const);
+
+      NetExpr*canon_index = 0;
+
+      if (idx_flags.invalid) {
+	      // Nothing to do
+
+      } else if (idx_flags.undefined) {
+	    cerr << get_fileline() << ": warning: "
+		 << "returning 'bx for undefined array access "
+		 << net->name() << as_indices(unpacked_indices)
+		 << "." << endl;
+
+      } else if (idx_flags.variable) {
+	    ivl_assert(*this, unpacked_indices.size() == net->unpacked_dimensions());
+	    canon_index = normalize_variable_unpacked(net, unpacked_indices);
+
+      } else {
+	    ivl_assert(*this, unpacked_indices_const.size() == net->unpacked_dimensions());
+	    canon_index = normalize_variable_unpacked(net, unpacked_indices_const);
+      }
+
+      ivl_assert(*this, canon_index);
+      NetESignal*tmp = new NetESignal(net, canon_index);
       tmp->set_line(*this);
 
       return tmp;
@@ -3094,19 +3331,24 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
       if (path_.size() != 1)
 	    return 0;
 
-      const netclass_t*class_type = scope->parent()->class_def();
+      const netclass_t*class_type = find_class_containing_scope(*this, scope);
       if (class_type == 0)
 	    return 0;
 
-      perm_string member_name = peek_tail_name(path_);
+      const name_component_t&name_comp = path_.back();
+
+      perm_string member_name = name_comp.name;
       int pidx = class_type->property_idx_from_name(member_name);
       if (pidx < 0)
 	    return 0;
 
-      NetNet*this_net = scope->find_signal(perm_string::literal("@"));
+      NetScope*scope_method = find_method_containing_scope(*this, scope);
+      ivl_assert(*this, scope_method);
+
+      NetNet*this_net = scope_method->find_signal(perm_string::literal("@"));
       if (this_net == 0) {
 	    cerr << get_fileline() << ": internal error: "
-		 << "Unable to find 'this' port of " << scope_path(scope)
+		 << "Unable to find 'this' port of " << scope_path(scope_method)
 		 << "." << endl;
 	    return 0;
       }
@@ -3116,7 +3358,8 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
 		 << "Found member " << member_name
 		 << " is a member of class " << class_type->get_name()
 		 << ", context scope=" << scope_path(scope)
-		 << ", so synthesizing a NetEProperty." << endl;
+		 << ", type=" << *class_type->get_prop_type(pidx)
+		 << ", so making a NetEProperty." << endl;
       }
 
       property_qualifier_t qual = class_type->get_prop_qual(pidx);
@@ -3132,9 +3375,96 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
 	    return class_static_property_expression(this, class_type, member_name);
       }
 
-      NetEProperty*tmp = new NetEProperty(this_net, member_name);
+      NetExpr*canon_index = 0;
+      ivl_type_t tmp_type = class_type->get_prop_type(pidx);
+      if (const netuarray_t*tmp_ua = dynamic_cast<const netuarray_t*>(tmp_type)) {
+
+	    const std::vector<netrange_t>&dims = tmp_ua->static_dimensions();
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_expr_class_member_: "
+		       << "Property " << class_type->get_prop_name(pidx)
+		       << " has " << dims.size() << " dimensions, "
+		       << " got " << name_comp.index.size() << " indices." << endl;
+	    }
+
+	    if (dims.size() != name_comp.index.size()) {
+		  cerr << get_fileline() << ": error: "
+		       << "Got " << name_comp.index.size() << " indices, "
+		       << "expecting " << dims.size()
+		       << " to index the property " << class_type->get_prop_name(pidx) << "." << endl;
+		  des->errors += 1;
+
+	    } else {
+
+		  canon_index = make_canonical_index(des, scope, this,
+						     name_comp.index, tmp_ua, false);
+	    }
+      }
+
+      if (debug_elaborate && canon_index) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr_class_member_: "
+		 << "Property " << class_type->get_prop_name(pidx)
+		 << " canonical index: " << *canon_index << endl;
+      }
+
+      NetEProperty*tmp = new NetEProperty(this_net, member_name, canon_index);
       tmp->set_line(*this);
       return tmp;
+}
+
+NetExpr* PEIdent::elaborate_expr_method_(Design*des, NetScope*scope,
+					 unsigned, unsigned) const
+{
+      if (!gn_system_verilog())
+	    return 0;
+      if (path_.size() < 2)
+	    return 0;
+
+      pform_name_t use_path = path_;
+      perm_string member_name = peek_tail_name(path_);
+      use_path.pop_back();
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr_method_: "
+		 << "Try to find method=" << member_name
+		 << " of signal " << use_path << endl;
+      }
+
+      NetNet*net = 0;
+      const NetExpr*par = 0;
+      NetEvent*eve = 0;
+      const NetExpr*ex1 = 0, *ex2 = 0;
+      symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
+      if (net == 0) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": PEIdent::elaborate_expr_method_: "
+		       << "Only nets can have methods, so give up here." << endl;
+	    return 0;
+      }
+
+      if (net->darray_type()) {
+	    if (member_name == "size") {
+		  NetESFunc*fun = new NetESFunc("$size", IVL_VT_BOOL, 32, 1);
+		  fun->set_line(*this);
+
+		  NetESignal*arg = new NetESignal(net);
+		  arg->set_line(*net);
+
+		  fun->parm(0, arg);
+		  return fun;
+	    }
+
+	    return 0;
+      }
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr_method_: "
+		 << "Give up trying to find method " << member_name
+		 << " of " << path_ << "." << endl;
+      }
+
+      return 0;
 }
 
 /*
@@ -3197,6 +3527,14 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    ivl_assert(*this, use_scope);
       }
 
+	// Special case: Detect the special situation that the name is
+	// a method of an object (including built-in methods) that has
+	// no arguments. For example, "foo.size" is the call to the
+	// size() method if foo is an array type.
+      if (NetExpr*tmp = elaborate_expr_method_(des, scope, expr_wid, flags)) {
+	    return tmp;
+      }
+
       NetScope*found_in = symbol_search(this, des, use_scope, path_,
 					net, par, eve,
 					ex1, ex2);
@@ -3240,6 +3578,13 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
                                              expr_wid, flags);
 
             if (!tmp) return 0;
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+		       << "Expression as net. expr_wid=" << expr_wid
+		       << ", tmp->expr_width()=" << tmp->expr_width()
+		       << ", tmp=" << *tmp << endl;
+	    }
 
             tmp = pad_to_width(tmp, expr_wid, *this);
             tmp->cast_signed(signed_flag_);
@@ -3898,6 +4243,8 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	    return 0;
       }
 
+      ivl_assert(*this, use_sel != index_component_t::SEL_BIT_LAST);
+
       if (use_sel == index_component_t::SEL_BIT)
 	    return elaborate_expr_param_bit_(des, scope, par, found_in,
 					     par_msb, par_lsb, need_const);
@@ -3988,7 +4335,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 
       if (name_tail.index.empty()) {
 	    cerr << get_fileline() << ": error: Array " << path()
-		 << " Needs an array index here." << endl;
+		 << " needs an array index here." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -4458,6 +4805,15 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	// making a mux part in the netlist.
       if (NetEConst*msc = dynamic_cast<NetEConst*> (mux)) {
 
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_expr_net_bit_: "
+		       << "mux is constant=" << *msc
+		       << ", packed_dims()=" << net->sig()->packed_dims()
+		       << ", packed_dims().size()=" << net->sig()->packed_dims().size()
+		       << ", prefix_indices.size()=" << prefix_indices.size()
+		       << endl;
+	    }
+
 	      // Special case: The bit select expression is constant
 	      // x/z. The result of the expression is 1'bx.
 	    if (! msc->value().is_defined()) {
@@ -4475,6 +4831,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 			     << endl;
 		  }
 
+		    // FIXME: Should I be using slice_width() here?
 		  NetEConst*tmp = make_const_x(1);
 		  tmp->set_line(*this);
 		  delete mux;
@@ -4566,6 +4923,12 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	    if (net->vector_width() == 1)
 		  return net;
 
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_expr_net_bit_: "
+		       << "Make bit select idx=" << idx
+		       << endl;
+	    }
+
 	      // Make an expression out of the index
 	    NetEConst*idx_c = new NetEConst(verinum(idx));
 	    idx_c->set_line(*net);
@@ -4606,6 +4969,29 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
       mux = normalize_variable_bit_base(prefix_indices, mux, net->sig());
 
       NetESelect*ss = new NetESelect(net, mux, 1);
+      ss->set_line(*this);
+      return ss;
+}
+
+NetExpr* PEIdent::elaborate_expr_net_bit_last_(Design*, NetScope*,
+					       NetESignal*net,
+					       NetScope* /* found_in */,
+					       bool need_const) const
+{
+      if (need_const) {
+	    cerr << get_fileline() << ": error: "
+		 << "Expression with \"[$]\" is not constant." << endl;
+	    return 0;
+      }
+
+      unsigned use_width = 1;
+      if (const netdarray_t*darray = net->sig()->darray_type()) {
+	    use_width = darray->element_width();
+      }
+
+      NetELast*mux = new NetELast(net->sig());
+      mux->set_line(*this);
+      NetESelect*ss = new NetESelect(net, mux, use_width);
       ss->set_line(*this);
       return ss;
 }
@@ -4661,6 +5047,10 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       if (use_sel == index_component_t::SEL_BIT)
 	    return elaborate_expr_net_bit_(des, scope, node, found_in,
                                            need_const);
+
+      if (use_sel == index_component_t::SEL_BIT_LAST)
+	    return elaborate_expr_net_bit_last_(des, scope, node, found_in,
+						need_const);
 
 	// It's not anything else, so this must be a simple identifier
 	// expression with no part or bit select. Return the signal
@@ -4740,6 +5130,8 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 						 const netclass_t*ctype,
 						 NetExpr*obj, unsigned /*flags*/) const
 {
+      ivl_assert(*this, ctype);
+
 	// If there is an initializer function, then pass the object
 	// through that function first. Note that the initializer
 	// function has no arguments other than the object itself.
@@ -4777,6 +5169,12 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 
 
       NetFuncDef*def = new_scope->func_def();
+      if (def == 0) {
+	    cerr << get_fileline() << ": internal error: "
+		 << "Scope " << scope_path(new_scope)
+		 << " is missing constructor definition." << endl;
+	    des->errors += 1;
+      }
       ivl_assert(*this, def);
 
 	// Are there too many arguments passed to the function. If so,

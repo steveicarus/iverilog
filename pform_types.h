@@ -1,7 +1,7 @@
-#ifndef __pform_types_H
-#define __pform_types_H
+#ifndef IVL_pform_types_H
+#define IVL_pform_types_H
 /*
- * Copyright (c) 2007-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -39,17 +39,49 @@
 
 class Design;
 class NetScope;
+class Definitions;
 class PExpr;
 class PWire;
 class Statement;
 class ivl_type_s;
+class netclass_t;
 class netenum_t;
 typedef named<verinum> named_number_t;
 typedef named<PExpr*> named_pexpr_t;
+
+/*
+ * The pform_range_t holds variable diimensions for type
+ * declarations. The two expressions are interpreted as the first and
+ * last values of the range. For example:
+ *
+ *   [<expr1> : <expr2>]  -- Normal array range
+ *       first == <expr1>
+ *       second = <expr2>
+ *
+ *   [<expr>] -- SystemVerilog canonical range
+ *       first = PENumber(0)
+ *       second = <expr> - 1;
+ *
+ *   [ ] -- Dynamic array
+ *       first = 0
+ *       second = 0
+ *
+ *   [ $ ] -- Queue type
+ *       first = PENull
+ *       second = 0
+ */
 typedef std::pair<PExpr*,PExpr*> pform_range_t;
 
+/*
+ * Semantic NOTES:
+ * - The SEL_BIT is a single expression. This might me a bit select
+ * of a vector, or a word select of an array.
+ *
+ * - The SEL_BIT_LAST index component is an array/queue [$] index,
+ * that is the last item in the variable.
+ */
 struct index_component_t {
-      enum ctype_t { SEL_NONE, SEL_BIT, SEL_PART, SEL_IDX_UP, SEL_IDX_DO };
+      enum ctype_t { SEL_NONE, SEL_BIT, SEL_BIT_LAST, SEL_PART, SEL_IDX_UP, SEL_IDX_DO };
 
       index_component_t() : sel(SEL_NONE), msb(0), lsb(0) { };
       ~index_component_t() { }
@@ -88,7 +120,7 @@ struct pform_tf_port_t {
  */
 class data_type_t : public LineInfo {
     public:
-      inline explicit data_type_t() : cache_type_elaborate_(0) { }
+      inline explicit data_type_t() { }
       virtual ~data_type_t() = 0;
 	// This method is used to figure out the base type of a packed
 	// compound object. Return IVL_VT_NO_TYPE if the type is not packed.
@@ -102,7 +134,8 @@ class data_type_t : public LineInfo {
 	// Elaborate the type to an ivl_type_s type.
       virtual ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
 
-      ivl_type_s*cache_type_elaborate_;
+	// Keep per-scope elaboration results cached.
+      std::map<Definitions*,ivl_type_s*> cache_type_elaborate_;
 };
 
 struct void_type_t : public data_type_t {
@@ -151,6 +184,8 @@ struct atom2_type_t : public data_type_t {
       ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
 };
 
+extern atom2_type_t size_type;
+
 /*
  * The vector_type_t class represents types in the old Verilog
  * way. Some typical examples:
@@ -175,6 +210,7 @@ struct vector_type_t : public data_type_t {
 				    std::list<pform_range_t>*pd)
       : base_type(bt), signed_flag(sf), reg_flag(false), integer_flag(false), implicit_flag(false), pdims(pd) { }
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
+      virtual void pform_dump(std::ostream&out, unsigned indent) const;
       ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
 
       ivl_variable_type_t base_type;
@@ -238,7 +274,7 @@ struct string_type_t : public data_type_t {
 struct class_type_t : public data_type_t {
 
       inline explicit class_type_t(perm_string n)
-      : name(n), base_type(0) { }
+      : name(n), base_type(0), save_elaborated_type(0) { }
 
       void pform_dump(std::ostream&out, unsigned indent) const;
       void pform_dump_init(std::ostream&out, unsigned indent) const;
@@ -273,6 +309,11 @@ struct class_type_t : public data_type_t {
       std::vector<Statement*> initialize_static;
 
       ivl_type_s* elaborate_type_raw(Design*, NetScope*) const;
+	// The save_elaborated_type member must be set to the pointer
+	// to the netclass_t object that is created to represent this
+	// type. The elaborate_type_raw() method uses this pointer,
+	// and it is used in some other situations as well.
+      netclass_t* save_elaborated_type;
 };
 
 /*
@@ -318,4 +359,4 @@ extern std::ostream& operator<< (std::ostream&out, const pform_name_t&);
 extern std::ostream& operator<< (std::ostream&out, const name_component_t&that);
 extern std::ostream& operator<< (std::ostream&out, const index_component_t&that);
 
-#endif
+#endif /* IVL_pform_types_H */

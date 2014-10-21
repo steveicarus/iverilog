@@ -212,24 +212,34 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
       ivl_assert(*this, start_rc);
       ivl_assert(*this, finish_rc);
 
-      if (! range_->is_downto()) {
+      bool dir = range_->is_downto();
+
+      if (!dir) {
 	    int64_t tmp = start_val;
 	    start_val = finish_val;
 	    finish_val = tmp;
       }
 
-      if (range_->is_downto() && (start_val < finish_val)) {
-	    out << "begin /* Degenerate loop at " << get_fileline()
-		<< ": " << start_val
-		<< " downto " << finish_val << " */ end" << endl;
-	    return errors;
+      if (dir && (start_val < finish_val)) {
+	    if(range_->is_auto_dir()) {
+		dir = false;
+	    } else {
+		out << "begin /* Degenerate loop at " << get_fileline()
+		    << ": " << start_val
+		    << " downto " << finish_val << " */ end" << endl;
+		return errors;
+	    }
       }
 
-      if (!range_->is_downto() && start_val > finish_val) {
-	    out << "begin /* Degenerate loop at " << get_fileline()
-		<< ": " << start_val
-		<< " to " << finish_val << " */ end" << endl;
-	    return errors;
+      else if (!dir && start_val > finish_val) {
+	    if(range_->is_auto_dir()) {
+		dir = true;
+	    } else {
+		out << "begin /* Degenerate loop at " << get_fileline()
+		    << ": " << start_val
+		    << " to " << finish_val << " */ end" << endl;
+		return errors;
+	    }
       }
 
       perm_string scope_name = loop_name();
@@ -242,12 +252,12 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
       out << "begin : " << scope_name << endl;
       out << "longint \\" << it_ << " ;" << endl;
       out << "for (\\" << it_ << " = " << start_val << " ; ";
-      if (range_->is_downto())
+      if (dir)
 	    out << "\\" << it_ << " >= " << finish_val;
       else
 	    out << "\\" << it_ << " <= " << finish_val;
       out << "; \\" << it_ << " = \\" << it_;
-      if (range_->is_downto())
+      if (dir)
 	    out << " - 1";
       else
 	    out << " + 1";

@@ -274,7 +274,7 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       if (op_ == 'E' || op_ == 'N') {
 	    NetCaseCmp*gate = new NetCaseCmp(scope, scope->local_symbol(),
-					     width, op_=='E'?true:false);
+					     width, op_=='E'?NetCaseCmp::EEQ:NetCaseCmp::NEQ);
 	    gate->set_line(*this);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
@@ -1271,6 +1271,22 @@ NetNet* NetETernary::synthesize(Design *des, NetScope*scope, NetExpr*root)
  */
 NetNet* NetESignal::synthesize(Design*des, NetScope*scope, NetExpr*root)
 {
+	// If this is a synthesis with a specific value for the
+	// signal, then replace it (here) with a constant value.
+      if (net_->scope()==scope && net_->name()==scope->genvar_tmp) {
+	    netvector_t*tmp_vec = new netvector_t(net_->data_type(),
+						  net_->vector_width()-1, 0);
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::IMPLICIT, tmp_vec);
+	    verinum tmp_val ((uint64_t)scope->genvar_tmp_val, net_->vector_width());
+	    NetConst*tmp_const = new NetConst(scope, scope->local_symbol(), tmp_val);
+	    tmp_const->set_line(*this);
+	    des->add_node(tmp_const);
+
+	    connect(tmp->pin(0), tmp_const->pin(0));
+	    return tmp;
+      }
+
       if (word_ == 0)
 	    return net_;
 
@@ -1439,6 +1455,12 @@ NetNet* NetEUFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
       osig->set_line(*this);
       osig->local_flag(true);
       connect(net->pin(0), osig->pin(0));
+
+      if (debug_synth2) {
+	    cerr << get_fileline() << ": NetEUFunc::synthesize: "
+		 << "result_sig_->vector_width()=" << result_sig_->vector_width()
+		 << ", osig->vector_width()=" << osig->vector_width() << endl;
+      }
 
         /* Connect the pins to the arguments. */
       NetFuncDef*def = func_->func_def();

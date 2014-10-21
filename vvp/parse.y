@@ -77,12 +77,13 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_ARITH_MOD_R K_ARITH_MOD_S
 %token K_ARITH_MULT K_ARITH_MULT_R K_ARITH_SUB K_ARITH_SUB_R
 %token K_ARITH_SUM K_ARITH_SUM_R K_ARITH_POW K_ARITH_POW_R K_ARITH_POW_S
-%token K_ARRAY K_ARRAY_2U K_ARRAY_2S K_ARRAY_I K_ARRAY_R K_ARRAY_S K_ARRAY_STR K_ARRAY_PORT
+%token K_ARRAY K_ARRAY_2U K_ARRAY_2S K_ARRAY_I K_ARRAY_OBJ K_ARRAY_R K_ARRAY_S K_ARRAY_STR K_ARRAY_PORT
 %token K_CAST_INT K_CAST_REAL K_CAST_REAL_S K_CAST_2
 %token K_CLASS
-%token K_CMP_EEQ K_CMP_EQ K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
+%token K_CMP_EEQ K_CMP_EQ K_CMP_EQX K_CMP_EQZ
+%token K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
 %token K_CMP_GE K_CMP_GE_R K_CMP_GE_S K_CMP_GT K_CMP_GT_R K_CMP_GT_S
-%token K_CONCAT K_CONCAT8 K_DEBUG K_DELAY K_DFF
+%token K_CONCAT K_CONCAT8 K_DEBUG K_DELAY K_DFF K_DFF_ACLR K_DFF_ASET
 %token K_ENUM2 K_ENUM2_S K_ENUM4 K_ENUM4_S K_EVENT K_EVENT_OR
 %token K_EXPORT K_EXTEND_S K_FUNCTOR K_IMPORT K_ISLAND K_MODPATH
 %token K_NET K_NET_S K_NET_R K_NET_2S K_NET_2U
@@ -91,9 +92,11 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_PART_V K_PART_V_S K_PORT K_PORT_INFO K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
 %token K_RESOLV K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
+%token K_SUBSTITUTE
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
 %token K_UFUNC K_UFUNC_E K_UDP K_UDP_C K_UDP_S
 %token K_VAR K_VAR_COBJECT K_VAR_DARRAY
+%token K_VAR_QUEUE
 %token K_VAR_S K_VAR_STR K_VAR_I K_VAR_R K_VAR_2S K_VAR_2U
 %token K_vpi_call K_vpi_call_w K_vpi_call_i
 %token K_vpi_func K_vpi_func_r
@@ -112,6 +115,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %type <flag>  local_flag
 %type <vpi_enum> port_type
 %type <numb>  signed_t_number
+%type <numb>  dimension dimensions dimensions_opt
 %type <symb>  symbol symbol_opt
 %type <symbv> symbols symbols_net
 %type <numbv> numbers
@@ -231,6 +235,9 @@ statement
         | T_LABEL K_ARRAY_STR T_STRING ',' signed_t_number signed_t_number ';'
                 { compile_string_array($1, $3, $5, $6); }
 
+        | T_LABEL K_ARRAY_OBJ T_STRING ',' signed_t_number signed_t_number ';'
+                { compile_object_array($1, $3, $5, $6); }
+
         | T_LABEL K_ARRAY T_STRING ',' signed_t_number signed_t_number ';'
                 { compile_net_array($1, $3, $5, $6); }
 
@@ -292,6 +299,10 @@ statement
   | T_LABEL K_CONCAT8 '[' T_NUMBER T_NUMBER T_NUMBER T_NUMBER ']' ','
     symbols ';'
       { compile_concat8($1, $4, $5, $6, $7, $10.cnt, $10.vect); }
+
+  /* Substitutions (similar to concatenations) */
+  | T_LABEL K_SUBSTITUTE T_NUMBER ',' T_NUMBER T_NUMBER ',' symbols ';'
+      { compile_substitute($1, $3, $5, $6, $8.cnt, $8.vect); }
 
   /* The ABS statement is a special arithmetic node that takes 1
      input. Re-use the symbols rule. */
@@ -414,6 +425,16 @@ statement
 		  compile_cmp_eq($1, $3, obj.cnt, obj.vect);
 		}
 
+	| T_LABEL K_CMP_EQX T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_eqx($1, $3, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_CMP_EQZ T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_eqz($1, $3, obj.cnt, obj.vect);
+		}
+
 	| T_LABEL K_CMP_EQ_R T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_cmp_eq_r($1, obj.cnt, obj.vect);
@@ -480,10 +501,16 @@ statement
    modpath_src_list ';'
     { modpath_dst = 0; }
 
-  /* DFF nodes have an output and take exactly 4 inputs. */
+  /* DFF nodes have an output and take up to 4 inputs. */
 
-        | T_LABEL K_DFF symbol ',' symbol ',' symbol ',' symbol ';'
-                { compile_dff($1, $3, $5, $7, $9); }
+  | T_LABEL K_DFF symbol ',' symbol ',' symbol ';'
+      { compile_dff($1, $3, $5, $7); }
+
+  | T_LABEL K_DFF_ACLR symbol ',' symbol ',' symbol ',' symbol ';'
+      { compile_dff_aclr($1, $3, $5, $7, $9); }
+
+  | T_LABEL K_DFF_ASET symbol ',' symbol ',' symbol ',' symbol ';'
+      { compile_dff_aset($1, $3, $5, $7, $9); }
 
   /* The various reduction operator nodes take a single input. */
 
@@ -726,6 +753,9 @@ statement
   | T_LABEL K_VAR_DARRAY T_STRING ';'
       { compile_var_darray($1, $3); }
 
+  | T_LABEL K_VAR_QUEUE T_STRING ';'
+      { compile_var_queue($1, $3); }
+
   | T_LABEL K_VAR_COBJECT T_STRING ';'
       { compile_var_cobject($1, $3); }
 
@@ -777,6 +807,10 @@ statement
   | T_LABEL K_NET_S T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
     symbols_net ';'
       { compile_netw($1, $3, $4, $6, $7, vpiLogicVar, true, $9.cnt, $9.vect); }
+
+  | T_LABEL K_NET_2S T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
+    symbols_net ';'
+      { compile_netw($1, $3, $4, $6, $7, vpiIntVar, true, $9.cnt, $9.vect); }
 
   | T_LABEL K_NET8 T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
     symbols_net ';'
@@ -869,8 +903,32 @@ class_properties
   ;
 
 class_property
-  : T_NUMBER ':' T_STRING ',' T_STRING
-      { compile_class_property($1, $3, $5); }
+  : T_NUMBER ':' T_STRING ',' T_STRING dimensions_opt
+      { compile_class_property($1, $3, $5, $6); }
+  ;
+
+/*
+ * The syntax for dimensions allows the code generator to give the
+ * accurate dimensions for for the property, but for now we are only
+ * interested in the total number of elements. So reduce the ranges
+ * to a simple number, and scale the number.
+ */
+dimensions_opt
+  : dimensions
+      { $$ = $1; }
+  |   { $$ = 0; }
+  ;
+
+dimensions
+  : dimensions dimension
+      { $$ = $1 * $2; }
+  | dimension
+      { $$ = $1; }
+  ;
+
+dimension
+  : '[' T_NUMBER ':' T_NUMBER ']'
+      { $$ = ($2 > $4? $2 - $4 : $4 - $2) + 1; }
   ;
 
   /* Enumeration types */

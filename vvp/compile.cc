@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -193,6 +193,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%load/dar/str",of_LOAD_DAR_STR,  1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%load/dar/vec4",of_LOAD_DAR_VEC4,1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%load/obj",   of_LOAD_OBJ,  1,{OA_FUNC_PTR,OA_NONE, OA_NONE} },
+      { "%load/obja",  of_LOAD_OBJA, 2,{OA_ARR_PTR, OA_BIT1, OA_NONE} },
       { "%load/real",  of_LOAD_REAL, 1,{OA_VPI_PTR, OA_NONE, OA_NONE} },
       { "%load/str",   of_LOAD_STR,  1,{OA_FUNC_PTR,OA_NONE, OA_NONE} },
       { "%load/stra",  of_LOAD_STRA, 2,{OA_ARR_PTR, OA_BIT1, OA_NONE} },
@@ -242,6 +243,10 @@ static const struct opcode_table_s opcode_table[] = {
       { "%pushi/vec4",of_PUSHI_VEC4,3,{OA_BIT1,   OA_BIT2,   OA_NUMBER} },
       { "%pushv/str", of_PUSHV_STR, 2, {OA_BIT1,OA_BIT2,     OA_NONE} },
       { "%putc/str/vec4",of_PUTC_STR_VEC4,2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
+      { "%qpop/b",    of_QPOP_B,    3,{OA_FUNC_PTR,OA_BIT1,  OA_BIT2} },
+      { "%qpop/b/str",of_QPOP_B_STR,1,{OA_FUNC_PTR,OA_NONE,  OA_NONE} },
+      { "%qpop/f",    of_QPOP_F,    3,{OA_FUNC_PTR,OA_BIT1,  OA_BIT2} },
+      { "%qpop/f/str",of_QPOP_F_STR,1,{OA_FUNC_PTR,OA_NONE,  OA_NONE} },
       { "%release/net",of_RELEASE_NET,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/reg",of_RELEASE_REG,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/wr", of_RELEASE_WR, 2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
@@ -253,6 +258,8 @@ static const struct opcode_table_s opcode_table[] = {
       { "%set/dar/obj/real",of_SET_DAR_OBJ_REAL,1,{OA_NUMBER,OA_NONE,OA_NONE} },
       { "%set/dar/obj/str", of_SET_DAR_OBJ_STR, 1,{OA_NUMBER,OA_NONE,OA_NONE} },
       { "%set/dar/obj/vec4",of_SET_DAR_OBJ_VEC4,1,{OA_NUMBER,OA_NONE,OA_NONE} },
+      { "%set/qb", of_SET_QB, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
+      { "%set/qf", of_SET_QF, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%set/x0", of_SET_X0, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%shiftl",   of_SHIFTL,   1, {OA_NUMBER, OA_NONE,   OA_NONE} },
       { "%shiftr",   of_SHIFTR,   1, {OA_NUMBER, OA_NONE,   OA_NONE} },
@@ -261,11 +268,16 @@ static const struct opcode_table_s opcode_table[] = {
       { "%store/dar/r",   of_STORE_DAR_R,   1,{OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%store/dar/str", of_STORE_DAR_STR, 1,{OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%store/dar/vec4",of_STORE_DAR_VEC4,1,{OA_FUNC_PTR, OA_NONE, OA_NONE} },
-      { "%store/obj",     of_STORE_OBJ,     1,{OA_FUNC_PTR, OA_NONE, OA_NONE} },
+      { "%store/obj",   of_STORE_OBJ,   1, {OA_FUNC_PTR,OA_NONE, OA_NONE} },
+      { "%store/obja",  of_STORE_OBJA,  2, {OA_ARR_PTR, OA_BIT1, OA_NONE} },
       { "%store/prop/obj",of_STORE_PROP_OBJ,1, {OA_NUMBER,  OA_NONE, OA_NONE} },
       { "%store/prop/r",  of_STORE_PROP_R,  1, {OA_NUMBER,  OA_NONE, OA_NONE} },
       { "%store/prop/str",of_STORE_PROP_STR,1, {OA_NUMBER,  OA_NONE, OA_NONE} },
       { "%store/prop/v",  of_STORE_PROP_V,  1, {OA_NUMBER,  OA_NONE, OA_NONE} },
+      { "%store/qb/r",   of_STORE_QB_R,    1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
+      { "%store/qb/str", of_STORE_QB_STR,  1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
+      { "%store/qf/r",   of_STORE_QF_R,    1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
+      { "%store/qf/str", of_STORE_QF_STR,  1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%store/real",    of_STORE_REAL,    1, {OA_FUNC_PTR,OA_NONE, OA_NONE} },
       { "%store/reala",   of_STORE_REALA,   2, {OA_ARR_PTR, OA_BIT1, OA_NONE} },
       { "%store/str",     of_STORE_STR,     1, {OA_FUNC_PTR,OA_NONE, OA_NONE} },
@@ -277,7 +289,9 @@ static const struct opcode_table_s opcode_table[] = {
       { "%subi",   of_SUBI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%substr",     of_SUBSTR,     2,{OA_BIT1,    OA_BIT2, OA_NONE} },
       { "%substr/vec4",of_SUBSTR_VEC4,2,{OA_BIT1,    OA_BIT2, OA_NONE} },
-      { "%test_nul",  of_TEST_NUL,    1,{OA_FUNC_PTR,OA_NONE, OA_NONE} },
+      { "%test_nul",    of_TEST_NUL,    1,{OA_FUNC_PTR,OA_NONE,     OA_NONE} },
+      { "%test_nul/a",  of_TEST_NUL_A,  2,{OA_ARR_PTR, OA_BIT1,     OA_NONE} },
+      { "%test_nul/obj",of_TEST_NUL_OBJ,0,{OA_NONE,    OA_NONE,     OA_NONE} },
       { "%wait",   of_WAIT,   1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
       { "%wait/fork",of_WAIT_FORK,0,{OA_NONE,   OA_NONE,     OA_NONE} },
       { "%xnor",   of_XNOR,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
@@ -539,7 +553,7 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
       if (!val.ptr) {
 	    // check for thread vector  T<base,wid>
 	    unsigned base, wid;
-	    unsigned n = 0;
+	    int n = 0;
 	    char ss[32];
 	    if (2 == sscanf(label(), "W<%u,%[r]>%n", &base, ss, &n)
 		       && n == strlen(label())) {
@@ -555,7 +569,7 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 
 	    } else if (3 <= sscanf(label(), "T<%u,%u,%[su]>%n", &base,
 				   &wid, ss, &n)
-		       && n == strlen(label())) {
+		       && n == (int)strlen(label())) {
 
 		  bool signed_flag = false;
 		  for (char*fp = ss ;  *fp ;  fp += 1) switch (*fp) {
@@ -1284,6 +1298,34 @@ void compile_cmp_eq(char*label, long wid, unsigned argc, struct symb_s*argv)
       }
 
       vvp_arith_ *arith = new vvp_cmp_eq(wid);
+      make_arith(arith, label, argc, argv);
+}
+
+void compile_cmp_eqx(char*label, long wid, unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if (argc != 2) {
+	    fprintf(stderr, "%s .cmp/eqx has wrong number of symbols\n",label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_ *arith = new vvp_cmp_eqx(wid);
+      make_arith(arith, label, argc, argv);
+}
+
+void compile_cmp_eqz(char*label, long wid, unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if (argc != 2) {
+	    fprintf(stderr, "%s .cmp/eqz has wrong number of symbols\n",label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_ *arith = new vvp_cmp_eqz(wid);
       make_arith(arith, label, argc, argv);
 }
 

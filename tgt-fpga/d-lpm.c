@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -396,7 +396,7 @@ static void lpm_logic(ivl_net_logic_t net)
 	    break;
 
 	  default:
-	    fprintf(stderr, "UNSUPPORTED LOGIC TYPE: %u\n",
+	    fprintf(stderr, "UNSUPPORTED LOGIC TYPE: %d\n",
 		    ivl_logic_type(net));
 	    break;
       }
@@ -735,7 +735,6 @@ static void lpm_show_mult(ivl_lpm_t net)
 
       edif_cell_t cell;
       edif_cellref_t ref;
-      edif_joint_t jnt;
 
       sprintf(name, "mult%u", ivl_lpm_width(net));
       cell = edif_xlibrary_findcell(xlib, name);
@@ -773,6 +772,7 @@ static void lpm_show_mult(ivl_lpm_t net)
       for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
 	    unsigned pin;
 	    ivl_nexus_t nex;
+	    edif_joint_t jnt;
 
 	    sprintf(name, "Result%u", idx);
 	    pin = edif_cell_port_byname(cell, name);

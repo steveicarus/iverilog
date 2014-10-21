@@ -30,7 +30,7 @@ static void show_prop_type_vector(ivl_type_t ptype)
       unsigned packed_dimensions = ivl_type_packed_dimensions(ptype);
       assert(packed_dimensions < 2);
 
-      char*signed_flag = ivl_type_signed(ptype)? "s" : "";
+      const char*signed_flag = ivl_type_signed(ptype)? "s" : "";
       char code = data_type==IVL_VT_BOOL? 'b' : 'L';
 
       if (packed_dimensions == 0) {
@@ -49,6 +49,7 @@ static void show_prop_type_vector(ivl_type_t ptype)
 static void show_prop_type(ivl_type_t ptype)
 {
       ivl_variable_type_t data_type = ivl_type_base(ptype);
+      unsigned packed_dimensions = ivl_type_packed_dimensions(ptype);
 
       switch (data_type) {
 	  case IVL_VT_REAL:
@@ -64,6 +65,15 @@ static void show_prop_type(ivl_type_t ptype)
 	  case IVL_VT_DARRAY:
 	  case IVL_VT_CLASS:
 	    fprintf(vvp_out, "\"o\"");
+	    if (packed_dimensions > 0) {
+		  unsigned idx;
+		  fprintf(vvp_out, " ");
+		  for (idx = 0 ; idx < packed_dimensions ; idx += 1) {
+			fprintf(vvp_out, "[%d:%d]",
+				ivl_type_packed_msb(ptype,idx),
+				ivl_type_packed_lsb(ptype,idx));
+		  }
+	    }
 	    break;
 	  default:
 	    fprintf(vvp_out, "\"<ERROR-no-type>\"");

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2012  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2011-2014  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@
 /*
  * Routine to add the given time to the the total time (high/low).
  */
-void add_to_wait_time(uint64_t *high, uint64_t *low, uint64_t c_time)
+static void add_to_wait_time(uint64_t *high, uint64_t *low, uint64_t c_time)
 {
       uint64_t carry = 0U;
 
@@ -71,7 +71,7 @@ void add_to_wait_time(uint64_t *high, uint64_t *low, uint64_t c_time)
  * Routine to divide the given total time (high/low) by the number of
  * items to get the average.
  */
-uint64_t calc_average_wait_time(uint64_t high, uint64_t low, uint64_t total)
+static uint64_t calc_average_wait_time(uint64_t high, uint64_t low, uint64_t total)
 {
       int bit = 64;
       uint64_t result = 0U;
@@ -433,7 +433,7 @@ static uint64_t get_average_wait_time(int64_t idx)
       uint64_t high = base[idx].wait_time_high;
       uint64_t low = base[idx].wait_time_low;
       s_vpi_time cur_time;
-      uint64_t c_time, add_time;
+      uint64_t c_time;
 
 	/* Get the current simulation time. */
       cur_time.type = vpiSimTime;
@@ -445,7 +445,7 @@ static uint64_t get_average_wait_time(int64_t idx)
 	/* For each element still in the queue, add its wait time to the
 	 * total wait time. */
       for (count = 0; count < elems; count += 1) {
-	    add_time = base[idx].queue[loc].time;
+	    uint64_t add_time = base[idx].queue[loc].time;
 	    assert(c_time >= add_time);
 	    add_to_wait_time(&high, &low, c_time-add_time);
 
@@ -587,7 +587,7 @@ static unsigned check_numeric_args(vpiHandle argv, unsigned count,
 	/* Check that the first count arguments are numeric. Currently
 	 * only three are needed/supported. */
       for (idx = 0; idx < count; idx += 1) {
-	    char *loc = NULL;
+	    const char *loc = NULL;
 	    vpiHandle arg = vpi_scan(argv);
 
 	      /* Get the name for this argument. */
@@ -720,7 +720,7 @@ static PLI_INT32 fill_variable_with_scaled_time(vpiHandle var, uint64_t c_time)
       uint64_t max_val = 0;
       uint64_t scale = 1;
       uint64_t frac;
-      PLI_INT32 rtn, idx, units, prec;
+      PLI_INT32 rtn, units, prec;
       p_vpi_vecval val_ptr = (p_vpi_vecval) malloc(words*sizeof(s_vpi_vecval));
 
       assert(val_ptr);
@@ -773,7 +773,7 @@ static PLI_INT32 fill_variable_with_scaled_time(vpiHandle var, uint64_t c_time)
 	    rtn = IVL_QUEUE_VALUE_OVERFLOWED;
       } else {
 	      /* Fill the vector with 0. */
-	    for (idx = 0; idx < words; idx += 1) {
+	    for (PLI_INT32 idx = 0; idx < words; idx += 1) {
 		  val_ptr[idx].aval = 0x00000000;
 		  val_ptr[idx].bval = 0x00000000;
 	    }
@@ -847,6 +847,8 @@ static PLI_INT32 sys_q_initialize_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       PLI_INT32 id, type, length;
       s_vpi_value val;
       unsigned invalid_id, invalid_type, invalid_length;
+
+      (void)name; /* Parameter is not used. */
 
 	/* Get the id. */
       invalid_id = get_valid_32(vpi_scan(argv), &id);
@@ -964,6 +966,8 @@ static PLI_INT32 sys_q_add_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_vecval job, inform;
       s_vpi_value val;
       unsigned invalid_id;
+
+      (void)name; /* Parameter is not used. */
 
 	/* Get the id. */
       invalid_id = get_valid_32(vpi_scan(argv), &id);
@@ -1086,6 +1090,8 @@ static PLI_INT32 sys_q_remove_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_value val;
       unsigned invalid_id;
 
+      (void)name; /* Parameter is not used. */
+
 	/* Get the id. */
       invalid_id = get_valid_32(vpi_scan(argv), &id);
 
@@ -1193,6 +1199,8 @@ static PLI_INT32 sys_q_full_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_value val;
       unsigned invalid_id;
 
+      (void)name; /* Parameter is not used. */
+
 	/* Get the id. */
       invalid_id = get_valid_32(vpi_scan(argv), &id);
 
@@ -1288,6 +1296,8 @@ static PLI_INT32 sys_q_exam_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       PLI_INT32 id, code, idx, rtn;
       s_vpi_value val;
       unsigned invalid_id, invalid_code;
+
+      (void)name; /* Parameter is not used. */
 
 	/* Get the id. */
       invalid_id = get_valid_32(vpi_scan(argv), &id);
@@ -1393,7 +1403,7 @@ static PLI_INT32 sys_q_exam_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 /*
  * Routine to register the system tasks/functions provided in this file.
  */
-void sys_queue_register()
+void sys_queue_register(void)
 {
       s_vpi_systf_data tf_data;
       s_cb_data cb;

@@ -1,7 +1,7 @@
-#ifndef __vlog95_priv_H
-#define __vlog95_priv_H
+#ifndef IVL_vlog95_priv_H
+#define IVL_vlog95_priv_H
 /*
- * Copyright (C) 2010-2013 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2014 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -106,10 +106,10 @@ extern void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex,
 extern void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex);
 extern void emit_const_nexus(ivl_scope_t scope, ivl_net_const_t const_net);
 extern void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig);
-extern void emit_icarus_generated_udps();
+extern void emit_icarus_generated_udps(void);
 
 extern void add_udp_to_list(ivl_udp_t udp);
-extern void emit_udp_list();
+extern void emit_udp_list(void);
 extern void emit_sig_file_line(ivl_signal_t sig);
 
 extern void emit_id(const char *id);
@@ -148,11 +148,11 @@ extern void get_sig_msb_lsb(ivl_signal_t sig, int *msb, int *lsb);
 /*
  * Cleanup functions.
  */
-extern void free_emitted_scope_list();
+extern void free_emitted_scope_list(void);
 
 /*
  * Debug routine to dump the various pieces of nexus information.
 */
 extern void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex);
 
-#endif /* __vlog95_priv_H */
+#endif /* IVL_vlog95_priv_H */

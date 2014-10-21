@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,7 +33,7 @@ static struct allocation_score_s {
       unsigned  exp_bit : 24;
       unsigned  sig_bit : 24;
       unsigned alloc    :  8;
-} allocation_map[MAX_VEC] = { {0} };
+} allocation_map[MAX_VEC] = { {0, 0, 0, 0, 0, 0} };
 
 /* This is the largest bit to have lookaside values. */
 static unsigned lookaside_top = 0;

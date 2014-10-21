@@ -19,6 +19,7 @@
  */
 
 # include  "package.h"
+# include  "subprogram.h"
 # include  <iostream>
 # include  "ivl_assert.h"
 
@@ -48,22 +49,22 @@ int Package::emit_package(ostream&fd) const
       for (map<perm_string,const VType*>::const_iterator cur = cur_types_.begin()
 		 ; cur != cur_types_.end() ; ++ cur) {
 	    fd << "typedef ";
-	    errors += cur->second->emit_def(fd);
-	    fd << " \\" << cur->first << " ;" << endl;
+	    errors += cur->second->emit_def(fd, cur->first);
+	    fd << " ;" << endl;
       }
 
-      for (map<perm_string,struct const_t*>::const_iterator cur = use_constants_.begin()
-		 ; cur != use_constants_.end() ; ++cur) {
-	    fd << "localparam \\" << cur->first << " = ";
-	    errors += cur->second->val->emit_package(fd);
-	    fd << ";" << endl;
-      }
-      for (map<perm_string,struct const_t*>::const_iterator cur = cur_constants_.begin()
-		 ; cur != cur_constants_.end() ; ++cur) {
-	    fd << "localparam " << cur->first << " = ";
-	    errors += cur->second->val->emit_package(fd);
-	    fd << ";" << endl;
-      }
+      //for (map<perm_string,struct const_t*>::const_iterator cur = use_constants_.begin()
+		 //; cur != use_constants_.end() ; ++cur) {
+	    //fd << "localparam \\" << cur->first << " = ";
+	    //errors += cur->second->val->emit_package(fd);
+	    //fd << ";" << endl;
+      //}
+      //for (map<perm_string,struct const_t*>::const_iterator cur = cur_constants_.begin()
+		 //; cur != cur_constants_.end() ; ++cur) {
+	    //fd << "localparam " << cur->first << " = ";
+	    //errors += cur->second->val->emit_package(fd);
+	    //fd << ";" << endl;
+      //}
 
       for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++ cur) {

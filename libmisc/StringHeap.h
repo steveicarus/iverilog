@@ -1,7 +1,7 @@
-#ifndef __StringHeap_H
-#define __StringHeap_H
+#ifndef IVL_StringHeap_H
+#define IVL_StringHeap_H
 /*
- * Copyright (c) 2002-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -52,6 +52,7 @@ class perm_string {
       const char*text_;
 };
 
+extern const perm_string empty_perm_string;
 extern bool operator == (perm_string a, perm_string b);
 extern bool operator == (perm_string a, const char* b);
 extern bool operator != (perm_string a, perm_string b);
@@ -120,4 +121,4 @@ class StringHeapLex  : private StringHeap {
       StringHeapLex& operator= (const StringHeapLex&);
 };
 
-#endif
+#endif /* IVL_StringHeap_H */

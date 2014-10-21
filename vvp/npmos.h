@@ -1,7 +1,7 @@
-#ifndef __npmos_H
-#define __npmos_H
+#ifndef IVL_npmos_H
+#define IVL_npmos_H
 /*
- * Copyright (c) 2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -130,4 +130,4 @@ class vvp_fun_rcmos : public vvp_fun_cmos_ {
       void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 };
 
-#endif
+#endif /* IVL_npmos_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,6 +22,7 @@
 
 int acc_fetch_location(p_location loc, handle obj)
 {
+      (void)obj; /* Parameter is not used. */
       loc->line_no = 0;
       loc->filename = "<filename>";
       return 1;

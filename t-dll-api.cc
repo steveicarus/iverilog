@@ -84,7 +84,11 @@ extern "C" void ivl_design_roots(ivl_design_t des, ivl_scope_t **scopes,
       assert (nscopes && scopes);
       if (des->root_scope_list.size() == 0) {
 	    size_t fill = 0;
-	    des->root_scope_list.resize(des->packages.size() + des->roots.size() + des->classes.size());
+	    des->root_scope_list.resize(des->root_tasks.size() + des->packages.size() + des->roots.size() + des->classes.size());
+	    for (map<const NetScope*,ivl_scope_t>::iterator idx = des->root_tasks.begin()
+		       ; idx != des->root_tasks.end() ; ++ idx)
+		  des->root_scope_list[fill++] = idx->second;
+
 	    for (map<const NetScope*,ivl_scope_t>::iterator idx = des->classes.begin()
 		       ; idx != des->classes.end() ; ++ idx)
 		  des->root_scope_list[fill++] = idx->second;
@@ -484,6 +488,9 @@ extern "C" ivl_expr_t ivl_expr_oper1(ivl_expr_t net)
       switch (net->type_) {
 	  case IVL_EX_BINARY:
 	    return net->u_.binary_.lef_;
+
+	  case IVL_EX_PROPERTY:
+	    return net->u_.property_.index;
 
 	  case IVL_EX_SELECT:
 	    return net->u_.select_.expr_;
@@ -1075,6 +1082,8 @@ extern "C" unsigned ivl_lpm_base(ivl_lpm_t net)
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
 	    return net->u_.part.base;
+	  case IVL_LPM_SUBSTITUTE:
+	    return net->u_.substitute.base;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1164,6 +1173,8 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_EQX:
+	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
@@ -1226,6 +1237,13 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	      // Skip the return port.
 	    assert(idx < (net->u_.sfunc.ports-1));
 	    return net->u_.sfunc.pins[idx+1];
+
+	  case IVL_LPM_SUBSTITUTE:
+	    assert(idx <= 1);
+	    if (idx == 0)
+		  return net->u_.substitute.a;
+	    else
+		  return net->u_.substitute.s;
 
 	  case IVL_LPM_UFUNC:
 	      // Skip the return port.
@@ -1309,6 +1327,8 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net)
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_CMP_EEQ:
+	  case IVL_LPM_CMP_EQX:
+	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_NEE:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
@@ -1352,6 +1372,9 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net)
 
 	  case IVL_LPM_REPEAT:
 	    return net->u_.repeat.q;
+
+	  case IVL_LPM_SUBSTITUTE:
+	    return net->u_.substitute.q;
 
 	  case IVL_LPM_ARRAY:
 	    return net->u_.array.q;
@@ -1447,6 +1470,8 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_CAST_REAL:
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_EQX:
+	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
@@ -1482,6 +1507,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_PART_PV:
 	    return net->u_.part.signed_flag;
 	  case IVL_LPM_REPEAT:
+	  case IVL_LPM_SUBSTITUTE:
 	    return 0;
 	  case IVL_LPM_ARRAY: // Array ports take the signedness of the array.
 	    return net->u_.array.sig->net_type->get_signed()? 1 : 0;
@@ -1521,6 +1547,8 @@ extern "C" unsigned ivl_lpm_size(ivl_lpm_t net)
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_EQX:
+	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
@@ -1648,7 +1676,7 @@ extern "C" const char* ivl_nexus_name(ivl_nexus_t net)
       assert(net);
       if (net->name_ == 0) {
 	    char tmp[2 * sizeof(net) + 5];
-	    snprintf(tmp, sizeof tmp, "n%p", net);
+	    snprintf(tmp, sizeof tmp, "n%p", (void *)net);
 	    net->name_ = api_strings.add(tmp);
       }
       return net->name_;

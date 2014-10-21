@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,6 +51,8 @@ int __vpiDarrayVar::vpi_get(int code)
       vvp_darray*aval = val.peek<vvp_darray>();
 
       switch (code) {
+	  case vpiArrayType:
+	    return vpiDynamicArray;
 	  case vpiSize:
 	    if (aval == 0)
 		  return 0;
@@ -77,10 +79,62 @@ vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net)
       return obj;
 }
 
+__vpiQueueVar::__vpiQueueVar(__vpiScope*sc, const char*na, vvp_net_t*ne)
+: __vpiBaseVar(sc, na, ne)
+{
+}
+
+int __vpiQueueVar::get_type_code(void) const
+{ return vpiArrayVar; }
+
+
+int __vpiQueueVar::vpi_get(int code)
+{
+      vvp_fun_signal_object*fun = dynamic_cast<vvp_fun_signal_object*> (get_net()->fun);
+      assert(fun);
+      vvp_object_t val = fun->get_object();
+      vvp_queue*aval = val.peek<vvp_queue>();
+
+      switch (code) {
+	  case vpiArrayType:
+	    return vpiQueueArray;
+	  case vpiSize:
+	    if (aval == 0)
+		  return 0;
+	    else
+		  return aval->get_size();
+
+	  default:
+	    return 0;
+      }
+}
+
+void __vpiQueueVar::vpi_get_value(p_vpi_value val)
+{
+      val->format = vpiSuppressVal;
+}
+
+
+vpiHandle vpip_make_queue_var(const char*name, vvp_net_t*net)
+{
+      struct __vpiScope*scope = vpip_peek_current_scope();
+      const char*use_name = name ? vpip_name_string(name) : 0;
+
+      class __vpiQueueVar*obj = new __vpiQueueVar(scope, use_name, net);
+
+      return obj;
+}
+
 #ifdef CHECK_WITH_VALGRIND
 void darray_delete(vpiHandle item)
 {
       class __vpiDarrayVar*obj = dynamic_cast<__vpiDarrayVar*>(item);
+      delete obj;
+}
+
+void queue_delete(vpiHandle item)
+{
+      class __vpiQueueVar*obj = dynamic_cast<__vpiQueueVar*>(item);
       delete obj;
 }
 #endif

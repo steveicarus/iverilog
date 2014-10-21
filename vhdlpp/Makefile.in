@@ -51,7 +51,6 @@ INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/.. -I$(srcdir)/../libmisc
 endif
 
 CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@
-CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@
@@ -86,7 +85,11 @@ distclean: clean
 	rm -f stamp-vhdlpp_config-h vhdlpp_config.h
 
 cppcheck: $(O:.o=.cc)
-	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+	cppcheck --enable=all -f \
+	         -UYY_USER_INIT \
+	         -UYYPARSE_PARAM -UYYPRINT -Ushort -Usize_t -Uyyoverflow \
+	         -UYYTYPE_INT8 -UYYTYPE_INT16 -UYYTYPE_UINT8 -UYYTYPE_UINT16 \
+	         $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in
 	cd ..; ./config.status --file=vhdlpp/$@

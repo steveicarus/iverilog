@@ -1,7 +1,7 @@
-#ifndef __codes_H
-#define __codes_H
+#ifndef IVL_codes_H
+#define IVL_codes_H
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -146,6 +146,7 @@ extern bool of_LOAD_DAR_R(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_DAR_STR(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_DAR_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_OBJ(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_OBJA(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_STR(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_STRA(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VEC4(vthread_t thr, vvp_code_t code);
@@ -185,6 +186,10 @@ extern bool of_POP_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_POW(vthread_t thr, vvp_code_t code);
 extern bool of_POW_S(vthread_t thr, vvp_code_t code);
 extern bool of_POW_WR(vthread_t thr, vvp_code_t code);
+extern bool of_QPOP_B(vthread_t thr, vvp_code_t code);
+extern bool of_QPOP_F(vthread_t thr, vvp_code_t code);
+extern bool of_QPOP_B_STR(vthread_t thr, vvp_code_t code);
+extern bool of_QPOP_F_STR(vthread_t thr, vvp_code_t code);
 extern bool of_PROP_OBJ(vthread_t thr, vvp_code_t code);
 extern bool of_PROP_R(vthread_t thr, vvp_code_t code);
 extern bool of_PROP_STR(vthread_t thr, vvp_code_t code);
@@ -201,6 +206,8 @@ extern bool of_REPLICATE(vthread_t thr, vvp_code_t code);
 extern bool of_SCOPY(vthread_t thr, vvp_code_t code);
 extern bool of_SET_AV(vthread_t thr, vvp_code_t code);
 extern bool of_SET_DAR(vthread_t thr, vvp_code_t code);
+extern bool of_SET_QB(vthread_t thr, vvp_code_t code);
+extern bool of_SET_QF(vthread_t thr, vvp_code_t code);
 extern bool of_SET_DAR_OBJ(vthread_t thr, vvp_code_t code);
 extern bool of_SET_DAR_OBJ_REAL(vthread_t thr, vvp_code_t code);
 extern bool of_SET_DAR_OBJ_STR(vthread_t thr, vvp_code_t code);
@@ -214,7 +221,12 @@ extern bool of_SPLIT_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_STORE_DAR_R(vthread_t thr, vvp_code_t code);
 extern bool of_STORE_DAR_STR(vthread_t thr, vvp_code_t code);
 extern bool of_STORE_DAR_VEC4(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_QB_R(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_QB_STR(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_QF_R(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_QF_STR(vthread_t thr, vvp_code_t code);
 extern bool of_STORE_OBJ(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_OBJA(vthread_t thr, vvp_code_t code);
 extern bool of_STORE_PROP_OBJ(vthread_t thr, vvp_code_t code);
 extern bool of_STORE_PROP_R(vthread_t thr, vvp_code_t code);
 extern bool of_STORE_PROP_STR(vthread_t thr, vvp_code_t code);
@@ -231,6 +243,8 @@ extern bool of_SUBI(vthread_t thr, vvp_code_t code);
 extern bool of_SUBSTR(vthread_t thr, vvp_code_t code);
 extern bool of_SUBSTR_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_TEST_NUL(vthread_t thr, vvp_code_t code);
+extern bool of_TEST_NUL_A(vthread_t thr, vvp_code_t code);
+extern bool of_TEST_NUL_OBJ(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
 extern bool of_WAIT(vthread_t thr, vvp_code_t code);
 extern bool of_WAIT_FORK(vthread_t thr, vvp_code_t code);
@@ -288,4 +302,4 @@ extern vvp_code_t codespace_allocate(void);
 extern vvp_code_t codespace_next(void);
 extern vvp_code_t codespace_null(void);
 
-#endif
+#endif /* IVL_codes_H */

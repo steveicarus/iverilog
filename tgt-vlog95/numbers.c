@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2014 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+# include <math.h>
 # include <stdlib.h>
 # include <string.h>
 # include "config.h"
@@ -75,11 +76,10 @@ static int32_t get_int32_from_bits(const char *bits, unsigned nbits,
  * otherwise emit them as a hex constant. */
 static void emit_bits(const char *bits, unsigned nbits, unsigned is_signed)
 {
-      int idx;
       unsigned has_undef = 0;
 
 	/* Check for an undefined bit. */
-      for (idx = (int)nbits-1; idx >= 0; idx -= 1) {
+      for (int idx = (int)nbits-1; idx >= 0; idx -= 1) {
 	    if ((bits[idx] != '0') && (bits[idx] != '1')) {
 		  has_undef = 1;
 		  break;
@@ -92,23 +92,23 @@ static void emit_bits(const char *bits, unsigned nbits, unsigned is_signed)
 	/* Emit as a binary constant. */
       if (has_undef || (nbits < 2)) {
 	    fprintf(vlog_out, "b");
-	    for (idx = (int)nbits-1; idx >= 0; idx -= 1) {
+	    for (int idx = (int)nbits-1; idx >= 0; idx -= 1) {
 		  fprintf(vlog_out, "%c", bits[idx]);
 	    }
 	/* Emit as a hex constant. */
       } else {
-	    int start = 4*(nbits/4);
+	    unsigned start = 4*(nbits/4);
 	    unsigned result = 0;
 	    fprintf(vlog_out, "h");
 	    /* The first digit may not be a full hex digit. */
 	    if (start < nbits) {
-		  for (idx = start; idx < nbits; idx += 1) {
+		  for (unsigned idx = start; idx < nbits; idx += 1) {
 			if (bits[idx] == '1') result |= 1U << (idx%4);
 		  }
 		  fprintf(vlog_out, "%1x", result);
 	    }
 	    /* Now print the full hex digits. */
-	    for (idx = start-1; idx >= 0; idx -= 4) {
+	    for (int idx = start-1; idx >= 0; idx -= 4) {
 		  result = 0;
 		  if (bits[idx] == '1') result |= 0x8;
 		  if (bits[idx-1] == '1') result |= 0x4;
@@ -169,18 +169,19 @@ void emit_number(const char *bits, unsigned nbits, unsigned is_signed,
 void emit_real_number(double value)
 {
 	/* Check for NaN. */
-      if (value != value) {
+      if (isnan(value)) {
 	    fprintf(vlog_out, "(0.0/0.0)");
 	    return;
       }
 	/* Check for the infinities. */
-      if (value && value == 0.5*value) {
-	    if (value > 0) fprintf(vlog_out, "(1.0/0.0)");
-	    else fprintf(vlog_out, "(-1.0/0.0)");
+      if (isinf(value)) {
+	    if (signbit(value)) fprintf(vlog_out, "(-1.0/0.0)");
+	    else fprintf(vlog_out, "(1.0/0.0)");
 	    return;
       }
+	/* Check for +/- zero. */
       if (value == 0.0) {
-	    if (1.0/value < 0.0) fprintf(vlog_out, "-0.0");
+	    if (signbit(value)) fprintf(vlog_out, "-0.0");
 	    else fprintf(vlog_out, "0.0");
       } else {
 	    char buffer[32];

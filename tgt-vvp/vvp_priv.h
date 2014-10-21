@@ -1,7 +1,7 @@
-#ifndef __vvp_priv_H
-#define __vvp_priv_H
+#ifndef IVL_vvp_priv_H
+#define IVL_vvp_priv_H
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -103,6 +103,7 @@ extern int draw_func_definition(ivl_scope_t scope);
 extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
 
 extern void draw_lpm_mux(ivl_lpm_t net);
+extern void draw_lpm_substitute(ivl_lpm_t net);
 
 extern void draw_ufunc_vec4(ivl_expr_t expr);
 extern void draw_ufunc_real(ivl_expr_t expr);
@@ -177,7 +178,7 @@ struct vvp_nexus_data {
  * cache it.
  */
 extern const char* draw_net_input(ivl_nexus_t nex);
-void EOC_cleanup_drivers();
+void EOC_cleanup_drivers(void);
 
 /*
  * This is different from draw_net_input in that it is intended to be
@@ -362,4 +363,4 @@ extern void clr_flag(int idx);
 extern unsigned local_count;
 extern unsigned thread_count;
 
-#endif
+#endif /* IVL_vvp_priv_H */

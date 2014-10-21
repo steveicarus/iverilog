@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,6 +31,7 @@
 # include  "PGenerate.h"
 # include  "PPackage.h"
 # include  "PSpec.h"
+# include  "PTask.h"
 # include  "discipline.h"
 # include  "ivl_target_priv.h"
 # include  <iostream>
@@ -61,6 +62,9 @@ ostream& operator<< (ostream&out, const index_component_t&that)
       switch (that.sel) {
 	  case index_component_t::SEL_BIT:
 	    out << *that.msb;
+	    break;
+	  case index_component_t::SEL_BIT_LAST:
+	    out << "$";
 	    break;
 	  case index_component_t::SEL_PART:
 	    out << *that.msb << ":" << *that.lsb;
@@ -160,13 +164,6 @@ void parray_type_t::pform_dump(ostream&out, unsigned indent) const
       base_type->pform_dump(out, indent+4);
 }
 
-void uarray_type_t::pform_dump(ostream&out, unsigned indent) const
-{
-      out << setw(indent) << "" << "Unpacked array " << "[...]"
-	  << " of:" << endl;
-      base_type->pform_dump(out, indent+4);
-}
-
 void struct_type_t::pform_dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "Struct " << (packed_flag?"packed":"unpacked")
@@ -181,12 +178,31 @@ void struct_type_t::pform_dump(ostream&out, unsigned indent) const
       }
 }
 
+void uarray_type_t::pform_dump(ostream&out, unsigned indent) const
+{
+      out << setw(indent) << "" << "Unpacked array " << "[...]"
+	  << " of:" << endl;
+      base_type->pform_dump(out, indent+4);
+}
+
+void vector_type_t::pform_dump(ostream&fd, unsigned indent) const
+{
+      fd << setw(indent) << "" << "vector of " << base_type;
+      if (pdims.get()) {
+	    for (list<pform_range_t>::iterator cur = pdims->begin()
+		       ; cur != pdims->end() ; ++cur) {
+		  fd << "[" << *(cur->first) << ":" << *(cur->second) << "]";
+	    }
+      }
+      fd << endl;
+}
+
 void class_type_t::pform_dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "class " << name;
 
       if (base_type) out << " extends <type>";
-      if (base_args.size() > 0) {
+      if (! base_args.empty()) {
 	    out << " (";
 	    for (list<PExpr*>::const_iterator cur = base_args.begin()
 		       ; cur != base_args.end() ; ++cur) {
@@ -954,6 +970,20 @@ void PForce::dump(ostream&out, unsigned ind) const
 	  << "; /* " << get_fileline() << " */" << endl;
 }
 
+void PForeach::dump(ostream&fd, unsigned ind) const
+{
+      fd << setw(ind) << "" << "foreach "
+	 << "variable=" << array_var_
+	 << ", indices=[";
+      for (size_t idx = 0 ; idx < index_vars_.size() ; idx += 1) {
+	    if (idx > 0) fd << ",";
+	    fd << index_vars_[idx];
+      }
+
+      fd << "] /* " << get_fileline() << " */" << endl;
+      statement_->dump(fd, ind+3);
+}
+
 void PForever::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "forever /* " << get_fileline() << " */" << endl;
@@ -982,20 +1012,20 @@ void PFunction::dump(ostream&out, unsigned ind) const
       else
 	    out << setw(ind+8) << "" << "<implicit type>" << endl;
 
-      dump_ports_(out, ind);
+      dump_ports_(out, ind+2);
 
-      dump_parameters_(out, ind);
+      dump_parameters_(out, ind+2);
 
-      dump_localparams_(out, ind);
+      dump_localparams_(out, ind+2);
 
-      dump_events_(out, ind);
+      dump_events_(out, ind+2);
 
-      dump_wires_(out, ind);
+      dump_wires_(out, ind+2);
 
       if (statement_)
-	    statement_->dump(out, ind);
+	    statement_->dump(out, ind+2);
       else
-	    out << setw(ind) << "" << "/* NOOP */" << endl;
+	    out << setw(ind+2) << "" << "/* NOOP */" << endl;
 }
 
 void PRelease::dump(ostream&out, unsigned ind) const
@@ -1024,20 +1054,20 @@ void PTask::dump(ostream&out, unsigned ind) const
       out << pscope_name() << ";" << endl;
       if (method_of())
 	    out << setw(ind) << "" << "method of " << method_of()->name << ";" << endl;
-      dump_ports_(out, ind);
+      dump_ports_(out, ind+2);
 
-      dump_parameters_(out, ind);
+      dump_parameters_(out, ind+2);
 
-      dump_localparams_(out, ind);
+      dump_localparams_(out, ind+2);
 
-      dump_events_(out, ind);
+      dump_events_(out, ind+2);
 
-      dump_wires_(out, ind);
+      dump_wires_(out, ind+2);
 
       if (statement_)
-	    statement_->dump(out, ind);
+	    statement_->dump(out, ind+2);
       else
-	    out << setw(ind) << "" << "/* NOOP */" << endl;
+	    out << setw(ind+2) << "" << "/* NOOP */" << endl;
 }
 
 void PTaskFunc::dump_ports_(std::ostream&out, unsigned ind) const
@@ -1610,6 +1640,11 @@ void pform_dump(std::ostream&out, const ivl_discipline_s*dis)
       out << "enddiscipline" << endl;
 }
 
+void pform_dump(std::ostream&fd, const PClass*cl)
+{
+      cl->dump(fd, 0);
+}
+
 void pform_dump(std::ostream&out, const PPackage*pac)
 {
       pac->pform_dump(out);
@@ -1620,7 +1655,13 @@ void PPackage::pform_dump(std::ostream&out) const
       out << "package " << pscope_name() << endl;
       dump_localparams_(out, 4);
       dump_parameters_(out, 4);
+      dump_enumerations_(out, 4);
       dump_tasks_(out, 4);
       dump_funcs_(out, 4);
       out << "endpackage" << endl;
+}
+
+void pform_dump(std::ostream&fd, const PTaskFunc*obj)
+{
+      obj->dump(fd, 0);
 }

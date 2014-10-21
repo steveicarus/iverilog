@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2014 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -369,6 +369,7 @@ void emit_scaled_range(ivl_scope_t scope, ivl_expr_t expr, unsigned width,
       int rtype;
       int64_t value = get_in_range_int64_from_number(expr, &rtype,
                                                      "range value");
+      (void)scope;  /* Parameter is not used. */
       if (rtype < 0) fprintf(vlog_out, "[1'bx:1'bx]");
       if (rtype) return;
 
@@ -689,6 +690,7 @@ static unsigned is_local_input(ivl_scope_t scope, ivl_nexus_t nex)
       ivl_signal_t sig = 0;
       unsigned idx, count = ivl_nexus_ptrs(nex);
 
+      (void)scope;  /* Parameter is not used. */
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
 	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
@@ -814,8 +816,12 @@ void emit_scope_module_path(ivl_scope_t scope, ivl_scope_t call_scope)
  * references for variables, etc. */
 void emit_scope_call_path(ivl_scope_t scope, ivl_scope_t call_scope)
 {
-      ivl_scope_t mod_scope = get_module_scope(scope);
-      ivl_scope_t call_mod_scope = get_module_scope(call_scope);
+      ivl_scope_t mod_scope, call_mod_scope;
+
+      if (scope == call_scope) return;
+
+      mod_scope = get_module_scope(scope);
+      call_mod_scope = get_module_scope(call_scope);
 
       if (mod_scope != call_mod_scope) {
 	    emit_scope_piece(mod_scope, call_mod_scope);
@@ -862,8 +868,17 @@ static void emit_scope_path_piece(ivl_scope_t scope, ivl_scope_t call_scope)
  */
 void emit_scope_path(ivl_scope_t scope, ivl_scope_t call_scope)
 {
-      ivl_scope_t mod_scope = get_module_scope(scope);
-      ivl_scope_t call_mod_scope = get_module_scope(call_scope);
+      ivl_scope_t mod_scope, call_mod_scope;
+
+	/* Check to see if this is a root scope task or function. */
+      if (ivl_scope_parent(call_scope) == 0) {
+	    fprintf(vlog_out, "ivl_root_scope.");
+	    mod_scope = 0;
+	    call_mod_scope = 0;
+      } else {
+	    mod_scope = get_module_scope(scope);
+	    call_mod_scope = get_module_scope(call_scope);
+      }
 
       if (mod_scope == call_mod_scope) {
 	    emit_id(ivl_scope_basename(call_scope));

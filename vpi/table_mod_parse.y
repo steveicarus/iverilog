@@ -1,7 +1,7 @@
 
 %{
 /*
- *  Copyright (C) 2011  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2011-2014  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ static p_table_mod table_def;
 extern int tblmodlex(void);
 static void yyerror(const char *fmt, ...);
 
-static void process_point()
+static void process_point(void)
 {
       assert(cur_value == indep_values);
   #if 0
@@ -231,6 +231,7 @@ void yyerror(const char *fmt, ...)
       fprintf(stderr, "%s:%u: TABLE ERROR: ", in_file_name,
               yylloc.first_line-1);
       vfprintf(stderr, fmt, ap);
+      va_end(ap);
       fprintf(stderr, "\n");
       errors += 1;
 }

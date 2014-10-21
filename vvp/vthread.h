@@ -1,7 +1,7 @@
-#ifndef __vthread_H
-#define __vthread_H
+#ifndef IVL_vthread_H
+#define IVL_vthread_H
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -134,4 +134,4 @@ extern const vvp_vector4_t& vthread_get_vec4_stack(struct vthread_s*thr, unsigne
 /* This is used to actually delete a thread once we are done with it. */
 extern void vthread_delete(vthread_t thr);
 
-#endif
+#endif /* IVL_vthread_H */

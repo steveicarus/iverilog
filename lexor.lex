@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -134,9 +134,17 @@ TU [munpf]
 \n { yylloc.first_line += 1; }
 
   /* C++ style comments start with / / and run to the end of the
-     current line. These are very easy to handle. */
+     current line. These are very easy to handle. The meta-comments
+     format is a little more tricky to handle, but do what we can. */
 
-"//".* { comment_enter = YY_START; BEGIN(LCOMMENT); }
+  /* The lexor detects "// synthesis translate_on/off" meta-comments,
+     we handle them here by turning on/off a flag. The pform uses
+     that flag to attach implicit attributes to "initial" and
+     "always" statements. */
+
+"//"{W}*"synthesis"{W}+"translate_on"{W}*\n { pform_mc_translate_on(true); }
+"//"{W}*"synthesis"{W}+"translate_off"{W}*\n { pform_mc_translate_on(false); }
+"//" { comment_enter = YY_START; BEGIN(LCOMMENT); }
 <LCOMMENT>.    { yymore(); }
 <LCOMMENT>\n   { yylloc.first_line += 1; BEGIN(comment_enter); }
 
@@ -325,8 +333,8 @@ TU [munpf]
       if (in_package_scope) {
 	    if (rc == IDENTIFIER) {
 		  if (data_type_t*type = pform_test_type_identifier(in_package_scope, yylval.text)) {
-			delete[]yylval.text;
-			yylval.data_type = type;
+			yylval.type_identifier.text = yylval.text;
+			yylval.type_identifier.type = type;
 			rc = TYPE_IDENTIFIER;
 		  }
 	    }
@@ -361,8 +369,8 @@ TU [munpf]
 	   return this as a TYPE_IDENTIFIER instead. */
       if (rc == IDENTIFIER && gn_system_verilog()) {
 	    if (data_type_t*type = pform_test_type_identifier(yylval.text)) {
-		  delete[]yylval.text;
-		  yylval.data_type = type;
+		  yylval.type_identifier.text = yylval.text;
+		  yylval.type_identifier.type = type;
 		  rc = TYPE_IDENTIFIER;
 	    }
       }
@@ -382,8 +390,8 @@ TU [munpf]
       }
       if (gn_system_verilog()) {
 	    if (data_type_t*type = pform_test_type_identifier(yylval.text)) {
-		  delete[]yylval.text;
-		  yylval.data_type = type;
+		  yylval.type_identifier.text = yylval.text;
+		  yylval.type_identifier.type = type;
 		  return TYPE_IDENTIFIER;
 	    }
       }
@@ -649,14 +657,14 @@ TU [munpf]
 		                |GN_KEYWORDS_1364_2005
 		                |GN_KEYWORDS_VAMS_2_3;
       } else {
-	    fprintf(stderr, "%s:%u: Ignoring unknown keywords string: %s\n",
+	    fprintf(stderr, "%s:%d: Ignoring unknown keywords string: %s\n",
 		    yylloc.text, yylloc.first_line, word);
       }
       BEGIN(0);
  }
 
 <PPBEGIN_KEYWORDS>.* {
-      fprintf(stderr, "%s:%u: Malformed keywords specification: %s\n",
+      fprintf(stderr, "%s:%d: Malformed keywords specification: %s\n",
 	      yylloc.text, yylloc.first_line, yytext);
       BEGIN(0);
  }
@@ -666,7 +674,7 @@ TU [munpf]
 	    lexor_keyword_mask = keyword_mask_stack.front();
 	    keyword_mask_stack.pop_front();
       } else {
-	    fprintf(stderr, "%s:%u: Mismatched end_keywords directive\n",
+	    fprintf(stderr, "%s:%d: Mismatched end_keywords directive\n",
 		    yylloc.text, yylloc.first_line);
       }
  }

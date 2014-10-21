@@ -1,7 +1,7 @@
-#ifndef __subprogram_H
-#define __subprogram_H
+#ifndef IVL_subprogram_H
+#define IVL_subprogram_H
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -22,15 +22,15 @@
 
 # include  "StringHeap.h"
 # include  "LineInfo.h"
+# include  "scope.h"
 # include  <iostream>
 # include  <list>
 
 class InterfacePort;
-class ScopeBase;
 class SequentialStmt;
 class VType;
 
-class Subprogram : public LineInfo {
+class Subprogram : public LineInfo, public ScopeBase {
 
     public:
       Subprogram(perm_string name, std::list<InterfacePort*>*ports,
@@ -48,6 +48,11 @@ class Subprogram : public LineInfo {
 	// matches this subprogram and that subprogram.
       bool compare_specification(Subprogram*that) const;
 
+      const InterfacePort*find_param(perm_string nam) const;
+      const VType*peek_param_type(int idx) const;
+
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+
 	// Emit a definition as it would show up in a package.
       int emit_package(std::ostream&fd) const;
 
@@ -55,6 +60,10 @@ class Subprogram : public LineInfo {
       void dump(std::ostream&fd) const;
 
     private:
+	// Determines appropriate return type. Un case of std_logic_vector
+	// VHDL requires skipping its size in contrary to Verilog
+      void fix_return_type(void);
+
       perm_string name_;
       const ScopeBase*parent_;
       std::list<InterfacePort*>*ports_;
@@ -62,4 +71,4 @@ class Subprogram : public LineInfo {
       std::list<SequentialStmt*>*statements_;
 };
 
-#endif
+#endif /* IVL_subprogram_H */

@@ -1,8 +1,9 @@
-#ifndef __expression_H
-#define __expression_H
+#ifndef IVL_expression_H
+#define IVL_expression_H
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2014 / Stephen Williams (steve@icarus.com),
+ *                       Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -282,7 +283,9 @@ class ExpAggregate : public Expression {
 
     private:
       int elaborate_expr_array_(Entity*ent, Architecture*arc, const VTypeArray*ltype);
+      int elaborate_expr_record_(Entity*ent, Architecture*arc, const VTypeRecord*ltype);
       int emit_array_(ostream&out, Entity*ent, Architecture*arc, const VTypeArray*ltype);
+      int emit_record_(ostream&out, Entity*ent, Architecture*arc, const VTypeRecord*ltype);
 
     private:
 	// This is the elements as directly parsed.
@@ -385,6 +388,7 @@ class ExpConcat : public Expression {
       ~ExpConcat();
 
       const VType*probe_type(Entity*ent, Architecture*arc) const;
+      const VType*fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
@@ -462,6 +466,7 @@ class ExpEdge : public ExpUnary {
     private:
       fun_t fun_;
 };
+
 class ExpFunc : public Expression {
 
     public:
@@ -503,6 +508,25 @@ class ExpInteger : public Expression {
 
     private:
       int64_t value_;
+};
+
+class ExpReal : public Expression {
+
+    public:
+      ExpReal(double val);
+      ~ExpReal();
+
+      const VType*probe_type(Entity*ent, Architecture*arc) const;
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      int emit_package(std::ostream&out);
+      bool is_primary(void) const;
+      void dump(ostream&out, int indent = 0) const;
+      virtual ostream& dump_inline(ostream&out) const;
+
+    private:
+      double value_;
 };
 
 class ExpLogical : public ExpBinary {
@@ -554,6 +578,7 @@ class ExpName : public Expression {
       bool symbolic_compare(const Expression*that) const;
       void dump(ostream&out, int indent = 0) const;
       const char* name() const;
+      inline perm_string peek_name() const { return name_; }
 
       void set_range(Expression*msb, Expression*lsb);
 
@@ -617,6 +642,7 @@ class ExpString : public Expression {
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
+      const std::vector<char>& get_value() const { return value_; }
 
     private:
       int emit_as_array_(ostream&out, Entity*ent, Architecture*arc, const VTypeArray*arr);
@@ -648,4 +674,4 @@ class ExpUNot : public ExpUnary {
       void dump(ostream&out, int indent = 0) const;
 };
 
-#endif
+#endif /* IVL_expression_H */

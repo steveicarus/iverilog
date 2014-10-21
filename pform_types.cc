@@ -24,15 +24,6 @@ data_type_t::~data_type_t()
 {
 }
 
-ivl_type_s* data_type_t::elaborate_type(Design*des, NetScope*scope)
-{
-      if (cache_type_elaborate_)
-	    return cache_type_elaborate_;
-
-      cache_type_elaborate_ = elaborate_type_raw(des, scope);
-      return cache_type_elaborate_;
-}
-
 string_type_t::~string_type_t()
 {
 }
@@ -51,3 +42,5 @@ ivl_variable_type_t vector_type_t::figure_packed_base_type(void) const
 {
       return base_type;
 }
+
+atom2_type_t size_type (32, true);

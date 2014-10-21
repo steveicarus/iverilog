@@ -1,7 +1,7 @@
-#ifndef __parse_api_H
-#define __parse_api_H
+#ifndef IVL_parse_api_H
+#define IVL_parse_api_H
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -68,4 +68,4 @@ extern int yydebug;
 extern int parse_errors;
 extern int parse_sorrys;
 
-#endif
+#endif /* IVL_parse_api_H */

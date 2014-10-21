@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,7 +36,7 @@
 
 static const char*version_string =
 "Icarus Verilog STUB Code Generator " VERSION " (" VERSION_TAG ")\n\n"
-"Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)\n\n"
+"Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)\n\n"
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"
 "  the Free Software Foundation; either version 2 of the License, or\n"
@@ -175,6 +175,9 @@ const char*data_type_string(ivl_variable_type_t vtype)
 	  case IVL_VT_CLASS:
 	    vt = "class";
 	    break;
+	  case IVL_VT_QUEUE:
+	    vt = "queue";
+	    break;
       }
 
       return vt;
@@ -264,7 +267,7 @@ static void show_lpm_abs(ivl_lpm_t net)
       }
 
       if (width_of_nexus(nex) != width) {
-	    fprintf(out, "    ERROR: D width (%d) is wrong\n",
+	    fprintf(out, "    ERROR: D width (%u) is wrong\n",
 		    width_of_nexus(nex));
 	    stub_errors += 1;
       }
@@ -371,13 +374,31 @@ static void show_lpm_divide(ivl_lpm_t net)
       show_lpm_arithmetic_pins(net);
 }
 
-/* IVL_LPM_CMP_EEQ/NEE
+/* IVL_LPM_CMP_EEQ/EQX/EQZ/NEE
  * This LPM node supports two-input compare. The output width is
  * actually always 1, the lpm_width is the expected width of the inputs.
  */
 static void show_lpm_cmp_eeq(ivl_lpm_t net)
 {
-      const char*str = (ivl_lpm_type(net) == IVL_LPM_CMP_EEQ)? "EEQ" : "NEE";
+      const char*str;
+      switch (ivl_lpm_type(net)) {
+	  case IVL_LPM_CMP_EEQ:
+	    str = "EEQ";
+	    break;
+	  case IVL_LPM_CMP_EQX:
+	    str = "EQX";
+	    break;
+	  case IVL_LPM_CMP_EQZ:
+	    str = "EQZ";
+	    break;
+	  case IVL_LPM_CMP_NEE:
+	    str = "NEE";
+	    break;
+	  default:
+	    assert(0);
+	    break;
+      }
+
       unsigned width = ivl_lpm_width(net);
 
       fprintf(out, "  LPM_CMP_%s %s: <width=%u>\n", str,
@@ -499,8 +520,28 @@ static void show_lpm_ff(ivl_lpm_t net)
 	    }
       }
 
+      if (ivl_lpm_async_clr(net)) {
+	    nex = ivl_lpm_async_clr(net);
+	    fprintf(out, "   Aclr: %p\n", nex);
+	    if (width_of_nexus(nex) != 1) {
+		  fprintf(out, "  Aclr: ERROR: Nexus width is %u\n",
+			  width_of_nexus(nex));
+		  stub_errors += 1;
+	    }
+      }
+
+      if (ivl_lpm_async_set(net)) {
+	    nex = ivl_lpm_async_set(net);
+	    fprintf(out, "   Aset: %p\n", nex);
+	    if (width_of_nexus(nex) != 1) {
+		  fprintf(out, "  Aset: ERROR: Nexus width is %u\n",
+			  width_of_nexus(nex));
+		  stub_errors += 1;
+	    }
+      }
+
       nex = ivl_lpm_data(net,0);
-      fprintf(out, "    D: %p\n", nex);
+      fprintf(out, "      D: %p\n", nex);
       if (width_of_nexus(nex) != width) {
 	    fprintf(out, "    D: ERROR: Nexus width is %u\n",
 		    width_of_nexus(nex));
@@ -508,7 +549,7 @@ static void show_lpm_ff(ivl_lpm_t net)
       }
 
       nex = ivl_lpm_q(net);
-      fprintf(out, "    Q: %p\n", nex);
+      fprintf(out, "      Q: %p\n", nex);
       if (width_of_nexus(nex) != width) {
 	    fprintf(out, "    Q: ERROR: Nexus width is %u\n",
 		    width_of_nexus(nex));
@@ -822,6 +863,37 @@ static void show_lpm_sub(ivl_lpm_t net)
       show_lpm_arithmetic_pins(net);
 }
 
+static void show_lpm_substitute(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+      ivl_nexus_t nex_q = ivl_lpm_q(net);
+      ivl_nexus_t nex_a = ivl_lpm_data(net,0);
+      ivl_nexus_t nex_s = ivl_lpm_data(net,1);
+
+      unsigned sbase  = ivl_lpm_base(net);
+      unsigned swidth = width_of_nexus(nex_s);
+
+      fprintf(out, "  LPM_SUBSTITUTE %s: <width=%u, sbase=%u, swidth=%u>\n",
+	      ivl_lpm_basename(net), width, sbase, swidth);
+      fprintf(out, "    Q: %p\n", nex_q);
+      if (width != width_of_nexus(nex_q)) {
+	    fprintf(out, "    ERROR: Width of Q is %u, expecting %u\n",
+		    width_of_nexus(nex_q), width);
+	    stub_errors += 1;
+      }
+      fprintf(out, "    A: %p\n", nex_a);
+      if (width != width_of_nexus(nex_a)) {
+	    fprintf(out, "    ERROR: Width of A is %u, expecting %u\n",
+		    width_of_nexus(nex_a), width);
+	    stub_errors += 1;
+      }
+      fprintf(out, "    S: %p\n", nex_s);
+      if (sbase + swidth > width) {
+	    fprintf(out, "    ERROR: S part is out of bounds\n");
+	    stub_errors += 1;
+      }
+}
+
 static void show_lpm_sfunc(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
@@ -934,6 +1006,8 @@ static void show_lpm(ivl_lpm_t net)
 	    break;
 
 	  case IVL_LPM_CMP_EEQ:
+	  case IVL_LPM_CMP_EQX:
+	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_NEE:
 	    show_lpm_cmp_eeq(net);
 	    break;
@@ -984,6 +1058,10 @@ static void show_lpm(ivl_lpm_t net)
 	    show_lpm_sub(net);
 	    break;
 
+	  case IVL_LPM_SUBSTITUTE:
+	    show_lpm_substitute(net);
+	    break;
+
 	  case IVL_LPM_MOD:
 	    show_lpm_mod(net);
 	    break;
@@ -1026,6 +1104,8 @@ static void show_lpm(ivl_lpm_t net)
 static int show_process(ivl_process_t net, void*x)
 {
       unsigned idx;
+
+      (void)x; /* Parameter is not used. */
 
       switch (ivl_process_type(net)) {
 	  case IVL_PR_INITIAL:
@@ -1551,6 +1631,8 @@ static int show_scope(ivl_scope_t net, void*x)
       unsigned idx;
       const char *is_auto;
 
+      (void)x; /* Parameter is not used. */
+
       fprintf(out, "scope: %s (%u parameters, %u signals, %u logic)",
 	      ivl_scope_name(net), ivl_scope_params(net),
 	      ivl_scope_sigs(net), ivl_scope_logs(net));
@@ -1577,7 +1659,7 @@ static int show_scope(ivl_scope_t net, void*x)
 	    fprintf(out, " class %s", ivl_scope_tname(net));
 	    break;
 	  default:
-	    fprintf(out, " type(%u) %s", ivl_scope_type(net),
+	    fprintf(out, " type(%d) %s", ivl_scope_type(net),
 		    ivl_scope_tname(net));
 	    break;
       }
@@ -1715,6 +1797,12 @@ int target_design(ivl_design_t des)
 
 	    ivl_scope_t cur = root_scopes[idx];
 	    switch (ivl_scope_type(cur)) {
+		case IVL_SCT_TASK:
+		  fprintf(out, "task = %s\n", ivl_scope_name(cur));
+		  break;
+		case IVL_SCT_FUNCTION:
+		  fprintf(out, "function = %s\n", ivl_scope_name(cur));
+		  break;
 		case IVL_SCT_CLASS:
 		  fprintf(out, "class = %s\n", ivl_scope_name(cur));
 		  break;

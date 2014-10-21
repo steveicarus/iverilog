@@ -1,7 +1,7 @@
-#ifndef __ivl_dlfcn_H
-#define __ivl_dlfcn_H
+#ifndef IVL_ivl_dlfcn_H
+#define IVL_ivl_dlfcn_H
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -99,4 +99,4 @@ inline const char*dlerror(void)
 { return strerror( errno ); }
 #endif
 
-#endif
+#endif /* IVL_ivl_dlfcn_H */

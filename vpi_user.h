@@ -1,7 +1,7 @@
-#ifndef __vpi_user_H
-#define __vpi_user_H
+#ifndef VPI_USER_H
+#define VPI_USER_H
 /*
- * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -334,6 +334,8 @@ typedef struct t_vpi_delay  {
 #define vpiTimePrecision 12
 #define vpiDefFile       15
 #define vpiDefLineNo     16
+#define vpiScalar        17
+#define vpiVector        18
 
 #define vpiDirection 20 /* direction of port: */
 #   define vpiInput 1
@@ -655,4 +657,4 @@ extern void vpip_count_drivers(vpiHandle ref, unsigned idx,
 
 EXTERN_C_END
 
-#endif
+#endif /* VPI_USER_H */

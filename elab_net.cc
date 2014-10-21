@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -501,6 +501,10 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       unsigned midx = sig->vector_width()-1, lidx = 0;
 	// The default word select is the first.
       long widx = 0;
+	// Set this to true if we calculate the word index. This is
+	// used to distinguish between unpacked array assignment and
+	// array word assignment.
+      bool widx_flag = false;
 
       list<long> unpacked_indices_const;
 
@@ -555,8 +559,9 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  packed_base = collapse_array_indices(des, scope, sig, tmp_index);
 
 		  if (debug_elaborate) {
-			cerr << get_fileline() << ": debug: "
-			     << "packed_base expression = " << *packed_base << endl;
+			cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
+			     << "packed_base=" << *packed_base
+			     << ", member_off=" << member_off << endl;
 		  }
 	    }
 
@@ -590,13 +595,31 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  midx = lidx + tmp_wid - 1;
 	    }
 
+      } else if (gn_system_verilog() && sig->unpacked_dimensions() > 0 && path_tail.index.empty()) {
+
+	      // In this case, we are doing a continuous assignment to
+	      // an unpacked array. The NetNet representation is a
+	      // NetNet with a pin for each array element, so there is
+	      // nothing more needed here.
+	      //
+	      // This can come up from code like this:
+	      //   logic [...] data [0:3];
+	      //   assign data = ...;
+	      // In this case, "sig" is "data", and sig->pin_count()
+	      // is 4 to account for the unpacked size.
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
+		       << "Net assign to unpacked array \"" << sig->name()
+		       << "\" with " << sig->pin_count() << " elements." << endl;
+	    }
+
       } else if (sig->unpacked_dimensions() > 0) {
 
 	      // Make sure there are enough indices to address an array element.
 	    if (path_tail.index.size() < sig->unpacked_dimensions()) {
 		  cerr << get_fileline() << ": error: Array " << path()
 		       << " needs " << sig->unpacked_dimensions() << " indices,"
-		       << " but got only " << path_tail.index.size() << "." << endl;
+		       << " but got only " << path_tail.index.size() << ". (net)" << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
@@ -627,6 +650,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		       << sig->name() << as_indices(unpacked_indices)
 		       << "." << endl;
 		  widx = -1;
+		  widx_flag = true;
 
 	    } else {
 		  NetExpr*canon_index = 0;
@@ -639,12 +663,14 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 			     << sig->name() << as_indices(unpacked_indices_const)
 			     << "." << endl;
 			widx = -1;
+			widx_flag = true;
 
 		  } else {
 			NetEConst*canon_const = dynamic_cast<NetEConst*>(canon_index);
 			ivl_assert(*this, canon_const);
 
 			widx = canon_const->value().as_long();
+			widx_flag = true;
 			delete canon_index;
 		  }
 	    }
@@ -682,6 +708,16 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    }
 
       } else if (!path_tail.index.empty()) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
+		       << "path_tail.index.size()=" << path_tail.index.size()
+		       << endl;
+	    }
+
+	      // There are index expressions on the name, so this is a
+	      // bit/slice select of the name. Calculate a canonical
+	      // part select.
+
 	    if (sig->get_scalar()) {
 		  cerr << get_fileline() << ": error: "
 		       << "can not select part of ";
@@ -710,14 +746,21 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       unsigned subnet_wid = midx-lidx+1;
 
 	/* Check if the l-value bits are double-driven. */
-      if (sig->type() == NetNet::UNRESOLVED_WIRE && sig->test_and_set_part_driver(midx,lidx)) {
+      if (sig->type() == NetNet::UNRESOLVED_WIRE && sig->test_and_set_part_driver(midx,lidx, widx_flag? widx : 0)) {
 	    cerr << get_fileline() << ": error: Unresolved net/uwire "
 	         << sig->name() << " cannot have multiple drivers." << endl;
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ":      : Overlap in "
+		       << "[" << midx << ":" << lidx << "] (canonical)"
+		       << ", widx=" << (widx_flag? widx : 0)
+		       << ", vector width=" << sig->vector_width()
+		       << endl;
+	    }
 	    des->errors += 1;
 	    return 0;
       }
 
-      if (sig->pin_count() > 1) {
+      if (sig->pin_count() > 1 && widx_flag) {
 	    if (widx < 0 || widx >= (long) sig->pin_count())
 		  return 0;
 
@@ -729,6 +772,13 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    tmp->local_flag(true);
 	    connect(sig->pin(widx), tmp->pin(0));
 	    sig = tmp;
+
+      } else if (sig->pin_count() > 1) {
+
+	      // If this turns out to be an l-value unpacked array,
+	      // then let the caller handle it. It will probably be
+	      // converted into an array of assignments.
+	    return sig;
       }
 
 	/* If the desired l-value vector is narrower than the
@@ -851,6 +901,33 @@ NetNet* PEIdent::elaborate_subport(Design*des, NetScope*scope) const
       long midx;
       long lidx;
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_subport: "
+		 << "path_ = \"" << path_
+		 << "\", unpacked_dimensions=" << sig->unpacked_dimensions()
+		 << ", port_type()=" << sig->port_type() << endl;
+      }
+
+      if (sig->unpacked_dimensions() && !gn_system_verilog()) {
+	    cerr << get_fileline() << ": error: "
+		 << "Ports cannot be unpacked arrays. Try enabling SystemVerilog support." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+	// There cannot be parts to an unpacked array, so process this
+	// simply as an unpacked array.
+      if (sig->unpacked_dimensions()) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_subport: "
+		       << "path_=\"" << path_
+		       << "\" is an unpacked array with " << sig->pin_count()
+		       << " elements." << endl;
+	    }
+	    scope->add_module_port_net(sig);
+	    return sig;
+      }
+
 	/* Evaluate the part/bit select expressions, to get the part
 	   select of the signal that attaches to the port. Also handle
 	   range and direction checking here. */
@@ -909,6 +986,20 @@ NetNet* PEIdent::elaborate_subport(Design*des, NetScope*scope) const
       des->add_node(ps);
 
       scope->add_module_port_net(sig);
+      return sig;
+}
+
+NetNet*PEIdent::elaborate_unpacked_net(Design*des, NetScope*scope) const
+{
+      NetNet*       sig = 0;
+      const NetExpr*par = 0;
+      NetEvent*     eve = 0;
+      perm_string method_name;
+
+      symbol_search(this, des, scope, path_, sig, par, eve);
+
+      ivl_assert(*this, sig);
+
       return sig;
 }
 

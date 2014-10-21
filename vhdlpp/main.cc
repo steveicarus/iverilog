@@ -75,6 +75,7 @@ const char NOTICE[] =
 ;
 
 # include  "compiler.h"
+# include  "library.h"
 # include  "parse_api.h"
 # include  "vtype.h"
 # include  <fstream>
@@ -82,6 +83,7 @@ const char NOTICE[] =
 # include  <cstdlib>
 # include  <cstring>
 # include  <cerrno>
+# include  <limits>
 #if defined(HAVE_GETOPT_H)
 # include  <getopt.h>
 #endif
@@ -178,6 +180,7 @@ int main(int argc, char*argv[])
 	    }
       }
 
+      std::cout.precision(std::numeric_limits<double>::digits10);
       library_set_work_path(work_path);
 
       preload_global_types();

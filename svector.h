@@ -1,7 +1,7 @@
-#ifndef __svector_H
-#define __svector_H
+#ifndef IVL_svector_H
+#define IVL_svector_H
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -118,4 +118,4 @@ template <class T> inline std::vector<T> vector_from_svector(const svector<T>&th
       return res;
 }
 
-#endif
+#endif /* IVL_svector_H */

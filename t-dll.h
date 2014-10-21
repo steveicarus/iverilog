@@ -1,7 +1,7 @@
-#ifndef __t_dll_H
-#define __t_dll_H
+#ifndef IVL_t_dll_H
+#define IVL_t_dll_H
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -90,6 +90,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool net_literal(const NetLiteral*);
       void net_probe(const NetEvProbe*);
       bool sign_extend(const NetSignExtend*);
+      bool substitute(const NetSubstitute*);
 
       bool process(const NetProcTop*);
       bool process(const NetAnalogTop*);
@@ -140,6 +141,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_concat(const NetEConcat*);
       void expr_const(const NetEConst*);
       void expr_creal(const NetECReal*);
+      void expr_last(const NetELast*);
       void expr_new(const NetENew*);
       void expr_null(const NetENull*);
       void expr_param(const NetEConstParam*);
@@ -344,6 +346,7 @@ struct ivl_expr_s {
 	    struct {
 		  ivl_signal_t sig;
 		  unsigned prop_idx;
+		  ivl_expr_t index;
 	    } property_;
       } u_;
 };
@@ -437,6 +440,11 @@ struct ivl_lpm_s {
 		  ivl_event_t trigger;
 	    } sfunc;
 
+	    struct ivl_lpm_substitute {
+		  unsigned base;
+		  ivl_nexus_t q, a, s;
+	    } substitute;
+
 	    struct ivl_lpm_ufunc_s {
 		  ivl_scope_t def;
 		  unsigned ports;
@@ -476,7 +484,7 @@ struct ivl_lval_s {
  * structural context.
  */
 struct ivl_net_const_s {
-      ivl_variable_type_t type :  3;
+      ivl_variable_type_t type :  4;
       unsigned width_          : 24;
       unsigned signed_         :  1;
       perm_string file;
@@ -625,7 +633,7 @@ struct ivl_parameter_s {
  */
 struct ivl_process_s {
       ivl_process_type_t type_ : 2;
-      int analog_flag          : 1;
+      unsigned int analog_flag : 1;
       ivl_scope_t scope_;
       ivl_statement_t stmt_;
       perm_string file;
@@ -923,4 +931,4 @@ static inline void FILE_NAME(ivl_signal_t net, const LineInfo*info)
       net->lineno = info->get_lineno();
 }
 
-#endif
+#endif /* IVL_t_dll_H */

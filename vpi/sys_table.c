@@ -23,42 +23,42 @@
 # include <stdlib.h>
 # include <string.h>
 
-extern void sys_convert_register();
-extern void sys_countdrivers_register();
-extern void sys_darray_register();
-extern void sys_fileio_register();
-extern void sys_finish_register();
-extern void sys_deposit_register();
-extern void sys_display_register();
-extern void sys_plusargs_register();
-extern void sys_queue_register();
-extern void sys_random_register();
-extern void sys_random_mti_register();
-extern void sys_readmem_register();
-extern void sys_scanf_register();
-extern void sys_sdf_register();
-extern void sys_time_register();
-extern void sys_vcd_register();
-extern void sys_vcdoff_register();
-extern void sys_special_register();
-extern void table_model_register();
-extern void vams_simparam_register();
+extern void sys_convert_register(void);
+extern void sys_countdrivers_register(void);
+extern void sys_darray_register(void);
+extern void sys_fileio_register(void);
+extern void sys_finish_register(void);
+extern void sys_deposit_register(void);
+extern void sys_display_register(void);
+extern void sys_plusargs_register(void);
+extern void sys_queue_register(void);
+extern void sys_random_register(void);
+extern void sys_random_mti_register(void);
+extern void sys_readmem_register(void);
+extern void sys_scanf_register(void);
+extern void sys_sdf_register(void);
+extern void sys_time_register(void);
+extern void sys_vcd_register(void);
+extern void sys_vcdoff_register(void);
+extern void sys_special_register(void);
+extern void table_model_register(void);
+extern void vams_simparam_register(void);
 
 #ifdef HAVE_LIBZ
 #ifdef HAVE_LIBBZ2
-extern void sys_lxt_register();
+extern void sys_lxt_register(void);
 #else
-static void sys_lxt_register() { fputs("LXT support disabled since libbzip2 not available\n",stderr); exit(1); }
+static void sys_lxt_register(void) { fputs("LXT support disabled since libbzip2 not available\n",stderr); exit(1); }
 #endif
-extern void sys_lxt2_register();
-extern void sys_fst_register();
+extern void sys_lxt2_register(void);
+extern void sys_fst_register(void);
 #else
-static void sys_lxt_register() { fputs("LXT support disabled since zlib not available\n",stderr); exit(1); }
-static void sys_lxt2_register() { fputs("LXT2 support disabled since zlib not available\n",stderr); exit(1); }
-static void sys_fst_register() { fputs("FST support disabled since zlib not available\n",stderr); exit(1); }
+static void sys_lxt_register(void) { fputs("LXT support disabled since zlib not available\n",stderr); exit(1); }
+static void sys_lxt2_register(void) { fputs("LXT2 support disabled since zlib not available\n",stderr); exit(1); }
+static void sys_fst_register(void) { fputs("FST support disabled since zlib not available\n",stderr); exit(1); }
 #endif
 
-static void sys_lxt_or_vcd_register()
+static void sys_lxt_or_vcd_register(void)
 {
       int idx;
       struct t_vpi_vlog_info vlog_info;
@@ -195,7 +195,7 @@ static void sys_lxt_or_vcd_register()
       }
 }
 
-void (*vlog_startup_routines[])() = {
+void (*vlog_startup_routines[])(void) = {
       sys_convert_register,
       sys_countdrivers_register,
       sys_darray_register,

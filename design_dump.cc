@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,6 +30,7 @@
 # include  "discipline.h"
 # include  "netclass.h"
 # include  "netdarray.h"
+# include  "netqueue.h"
 # include  "netvector.h"
 # include  "ivl_assert.h"
 # include  "PExpr.h"
@@ -113,6 +114,9 @@ ostream& operator << (ostream&o, ivl_variable_type_t val)
 	  case IVL_VT_CLASS:
 	    o << "class";
 	    break;
+	  case IVL_VT_QUEUE:
+	    o << "queue";
+	    break;
       }
       return o;
 }
@@ -145,16 +149,85 @@ ostream& operator << (ostream&o, ivl_switch_type_t val)
       return o;
 }
 
+ostream& operator << (ostream&fd, PortType::Enum val)
+{
+      switch (val) {
+	  case PortType::NOT_A_PORT:
+	    fd << "NOT_A_PORT";
+	    break;
+	  case PortType::PIMPLICIT:
+	    fd << "PIMPLICIT";
+	    break;
+	  case PortType::PINPUT:
+	    fd << "PINPUT";
+	    break;
+	  case PortType::POUTPUT:
+	    fd << "POUTPUT";
+	    break;
+	  case PortType::PINOUT:
+	    fd << "PINOUT";
+	    break;
+	  case PortType::PREF:
+	    fd << "PREF";
+	    break;
+	  default:
+	    fd << "PortType::Enum::?";
+	    break;
+      }
+
+      return fd;
+}
+
+ostream& operator << (ostream&fd, NetCaseCmp::kind_t that)
+{
+      switch (that) {
+	  case NetCaseCmp::EEQ:
+	    fd << "===";
+	    break;
+	  case NetCaseCmp::NEQ:
+	    fd << "!==";
+	    break;
+	  case NetCaseCmp::XEQ:
+	    fd << "==?";
+	    break;
+	  case NetCaseCmp::ZEQ:
+	    fd << "==z?";
+	    break;
+      }
+      return fd;
+}
+
 ostream& ivl_type_s::debug_dump(ostream&o) const
 {
       o << typeid(*this).name();
       return o;
 }
 
+ostream& netclass_t::debug_dump(ostream&fd) const
+{
+      fd << "class " << name_ << "{";
+      for (size_t idx = 0 ; idx < property_table_.size() ; idx += 1) {
+	    if (idx != 0) fd << "; ";
+	    if (property_table_[idx].type)
+		  property_table_[idx].type->debug_dump(fd);
+	    else
+		  fd << "NO_TYPE";
+	    fd << " " << property_table_[idx].name;
+      }
+      fd << "}";
+      return fd;
+}
+
 ostream& netdarray_t::debug_dump(ostream&o) const
 {
       o << "dynamic array of " << *element_type();
       return o;
+}
+
+ostream& netqueue_t::debug_dump(ostream&fd) const
+{
+      fd << "queue of " << *element_type();
+      return fd;
 }
 
 ostream& netvector_t::debug_dump(ostream&o) const
@@ -170,10 +243,7 @@ static inline void dump_scope_path(ostream&o, const NetScope*scope)
 	    dump_scope_path(o, parent);
 	    o << ".";
       }
-      const hname_t name = scope->fullname();
-      o << name.peek_name();
-      if (name.has_number())
-	    o << "[" << name.peek_number() << "]";
+      o << scope->fullname();
 }
 
 ostream& operator <<(ostream&o, struct __ScopePathManip marg)
@@ -190,6 +260,68 @@ ostream& operator <<(ostream&o, struct __ObjectPathManip marg)
 	    o << "." << marg.obj->name();
       }
       return o;
+}
+
+ostream& operator <<(ostream&fd, Link::DIR dir)
+{
+      switch (dir) {
+	  case Link::PASSIVE:
+	    fd << "PASSIVE";
+	    break;
+	  case Link::INPUT:
+	    fd << "INPUT";
+	    break;
+	  case Link::OUTPUT:
+	    fd << "OUTPUT";
+	    break;
+	  default:
+	    fd << "<" << (int)dir << ">";
+	    break;
+      }
+      return fd;
+}
+
+void NetPins::show_type(ostream&fd) const
+{
+      fd << typeid(*this).name();
+}
+
+void NetObj::show_type(ostream&fd) const
+{
+      fd << typeid(*this).name() << "[" << scope_path(scope_) << "." << name_ << "]";
+}
+
+struct __ShowTypeManip { const NetPins*pins; };
+inline __ShowTypeManip show_type(const NetPins*pins)
+{ __ShowTypeManip tmp; tmp.pins = pins; return tmp; }
+
+inline ostream& operator << (ostream&fd, __ShowTypeManip man)
+{
+      if (man.pins == 0)
+	    fd << "NexusSet";
+      else
+	    man.pins->show_type(fd);
+      return fd;
+}
+
+
+void Link::dump_link(ostream&fd, unsigned ind) const
+{
+      const Link*cur;
+      const Nexus*nex = nexus();
+
+      if (nex == 0) {
+	    fd << setw(ind) << "" << "<unlinked>" << endl;
+	    return;
+      }
+
+      for (cur = nex->first_nlink() ; cur; cur = cur->next_nlink()) {
+	    const NetPins*obj = cur->get_obj();
+	    unsigned pin = cur->get_pin();
+	    fd << setw(ind) << "" << "Pin " << pin
+	       << " of " << show_type(obj)
+	       << ", dir=" << cur->dir_ << endl;
+      }
 }
 
 void NetBranch::dump(ostream&o, unsigned ind) const
@@ -523,10 +655,7 @@ void NetBUFZ::dump_node(ostream&o, unsigned ind) const
 
 void NetCaseCmp::dump_node(ostream&o, unsigned ind) const
 {
-      if (eeq_)
-	    o << setw(ind) << "" << "case compare === : " << name() << endl;
-      else
-	    o << setw(ind) << "" << "case compare !== : " << name() << endl;
+      o << setw(ind) << "" << "case compare " << kind_ << ": " << name() << endl;
 
       dump_node_pins(o, ind+4);
 }
@@ -672,6 +801,21 @@ void NetPartSelect::dump_node(ostream&o, unsigned ind) const
       o << " off=" << off_ << " wid=" << wid_ <<endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
+}
+
+void NetSubstitute::dump_node(ostream&fd, unsigned ind) const
+{
+      fd << setw(ind) << "" << "NetSubstitute: "
+	 << name();
+      if (rise_time())
+	    fd << " #(" << *rise_time()
+	       << "," << *fall_time()
+	       << "," << *decay_time() << ")";
+      else
+	    fd << " #(.,.,.)";
+      fd << " width=" << wid_ << " base=" << off_ <<endl;
+      dump_node_pins(fd, ind+4);
+      dump_obj_attr(fd, ind+4);
 }
 
 void NetReplicate::dump_node(ostream&o, unsigned ind) const
@@ -977,7 +1121,7 @@ void NetCase::dump(ostream&o, unsigned ind) const
 	    break;
       }
 
-      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < items_.size() ;  idx += 1) {
 	    o << setw(ind+2) << "";
 	    if (items_[idx].guard)
 		  o << *items_[idx].guard << ":";
@@ -1136,6 +1280,13 @@ void NetForever::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "forever" << endl;
       statement_->dump(o, ind+2);
+}
+
+void NetForLoop::dump(ostream&fd, unsigned ind) const
+{
+      fd << setw(ind) << "" << "FOR LOOP index=" << index_->name() << endl;
+      statement_->dump(fd, ind+4);
+      step_statement_->dump(fd, ind+4);
 }
 
 void NetFree::dump(ostream&o, unsigned ind) const
@@ -1568,6 +1719,11 @@ void NetEEvent::dump(ostream&o) const
       o << "<event=" << event_->name() << ">";
 }
 
+void NetELast::dump(ostream&fd) const
+{
+      fd << "<last of " << sig_->name() << ">";
+}
+
 void NetENetenum::dump(ostream&o) const
 {
       o << "<netenum=" << netenum_ << ">";
@@ -1593,6 +1749,8 @@ void NetENull::dump(ostream&o) const
 void NetEProperty::dump(ostream&o) const
 {
       o << net_->name() << ".<" << pidx_ << ">";
+      if (index_)
+	    o << "[" << *index_ << "]";
 }
 
 void NetEScope::dump(ostream&o) const
@@ -1719,6 +1877,18 @@ void Design::dump(ostream&o) const
       for (map<perm_string,NetScope*>::const_iterator cur = packages_.begin()
 		 ; cur != packages_.end() ; ++cur) {
 	    cur->second->dump(o);
+      }
+
+      o << "$ROOT CLASSESS:" << endl;
+      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
+		 ; cur != classes_.end() ; ++cur) {
+	    cur->second->dump_scope(o);
+      }
+
+      o << "$ROOT TASKS/FUNCTIONS:" << endl;
+      for (map<NetScope*,PTaskFunc*>::const_iterator cur = root_tasks_.begin()
+		 ; cur != root_tasks_.end() ; ++ cur) {
+	    cur->first->dump(o);
       }
 
       o << "SCOPES:" << endl;

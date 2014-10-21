@@ -1,7 +1,7 @@
-#ifndef PLI_TYPES
-#define PLI_TYPES
+#ifndef PLI_TYPES_H
+#define PLI_TYPES_H
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -85,4 +85,4 @@ typedef char           PLI_BYTE8;
 typedef unsigned char  PLI_UBYTE8;
 #endif
 
-#endif
+#endif /* PLI_TYPES_H */

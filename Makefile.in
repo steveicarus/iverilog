@@ -68,7 +68,7 @@ dllib=@DLLIB@
 
 # For a cross compile these defines will need to be set accordingly.
 HOSTCC = @CC@
-HOSTCFLAGS = @WARNING_FLAGS@ @CFLAGS@
+HOSTCFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 
 CC = @CC@
 CXX = @CXX@
@@ -90,7 +90,7 @@ INCLUDE_PATH = -I. -I$(srcdir) -I$(srcdir)/libmisc
 endif
 
 CPPFLAGS = @DEFS@ $(INCLUDE_PATH) @CPPFLAGS@
-CFLAGS = @WARNING_FLAGS@ @CFLAGS@
+CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 PICFLAGS = @PICFLAG@
 LDFLAGS = @rdynamic@ @LDFLAGS@
@@ -109,7 +109,7 @@ O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
     eval_tree.o expr_synth.o functor.o lexor.o lexor_keyword.o link_const.o \
     load_module.o netlist.o netmisc.o nettypes.o net_analog.o net_assign.o \
     net_design.o netclass.o netdarray.o \
-    netenum.o netparray.o netscalar.o netstruct.o netvector.o \
+    netenum.o netparray.o netqueue.o netscalar.o netstruct.o netvector.o \
     net_event.o net_expr.o net_func.o \
     net_func_eval.o net_link.o net_modulo.o \
     net_nex_input.o net_nex_output.o net_proc.o net_scope.o net_tran.o \
@@ -175,6 +175,8 @@ endif
 
 cppcheck: $(O:.o=.cc) $(srcdir)/dosify.c $(srcdir)/version.c
 	cppcheck --enable=all -f --suppressions-list=$(srcdir)/cppcheck.sup \
+	         -UYYPARSE_PARAM -UYYPRINT -Ushort -Usize_t -Uyyoverflow \
+	         -UYYTYPE_INT8 -UYYTYPE_INT16 -UYYTYPE_UINT8 -UYYTYPE_UINT16 \
 	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 
 cppcheck-all:

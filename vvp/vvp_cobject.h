@@ -1,7 +1,7 @@
-#ifndef __vvp_cobject_H
-#define __vvp_cobject_H
+#ifndef IVL_vvp_cobject_H
+#define IVL_vvp_cobject_H
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,8 +41,8 @@ class vvp_cobject : public vvp_object {
       void set_string(size_t pid, const std::string&val);
       std::string get_string(size_t pid);
 
-      void set_object(size_t pid, const vvp_object_t&val);
-      void get_object(size_t pid, vvp_object_t&val);
+      void set_object(size_t pid, const vvp_object_t&val, size_t idx);
+      void get_object(size_t pid, vvp_object_t&val, size_t idx);
 
       void shallow_copy(const vvp_object*that);
 
@@ -52,4 +52,4 @@ class vvp_cobject : public vvp_object {
       class_type::inst_t properties_;
 };
 
-#endif
+#endif /* IVL_vvp_cobject_H */

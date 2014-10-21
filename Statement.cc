@@ -336,6 +336,20 @@ PForce::~PForce()
       delete expr_;
 }
 
+PForeach::PForeach(perm_string av, const list<perm_string>&ix, Statement*s)
+: array_var_(av), index_vars_(ix.size()), statement_(s)
+{
+      size_t idx = 0;
+      for (list<perm_string>::const_iterator cur = ix.begin()
+		 ; cur != ix.end() ; ++cur)
+	    index_vars_[idx++] = *cur;
+}
+
+PForeach::~PForeach()
+{
+      delete statement_;
+}
+
 PForever::PForever(Statement*s)
 : statement_(s)
 {

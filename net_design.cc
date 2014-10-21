@@ -134,6 +134,21 @@ NetScope* Design::make_package_scope(perm_string name)
       return scope;
 }
 
+void Design::add_class(netclass_t*cl, PClass*pclass)
+{
+      Definitions::add_class(cl);
+      class_to_pclass_[cl] = pclass;
+}
+
+netclass_t* Design::find_class(perm_string name) const
+{
+      map<perm_string,netclass_t*>::const_iterator cur = classes_.find(name);
+      if (cur != classes_.end())
+	    return cur->second;
+
+      return 0;
+}
+
 NetScope* Design::find_package(perm_string name) const
 {
       map<perm_string,NetScope*>::const_iterator cur = packages_.find(name);
@@ -149,6 +164,17 @@ list<NetScope*> Design::find_package_scopes() const
       for (map<perm_string,NetScope*>::const_iterator cur = packages_.begin()
 		 ; cur != packages_.end() ; ++cur) {
 	    res.push_back (cur->second);
+      }
+
+      return res;
+}
+
+list<NetScope*> Design::find_roottask_scopes() const
+{
+      list<NetScope*>res;
+      for (map<NetScope*,PTaskFunc*>::const_iterator cur = root_tasks_.begin()
+		 ; cur != root_tasks_.end() ; ++ cur) {
+	    res.push_back (cur->first);
       }
 
       return res;
@@ -182,7 +208,25 @@ NetScope* Design::find_scope(const std::list<hname_t>&path) const
 
 		  tmp.pop_front();
 	    }
+      }
 
+      for (map<NetScope*,PTaskFunc*>::const_iterator root = root_tasks_.begin()
+		 ; root != root_tasks_.end() ; ++ root) {
+
+	    NetScope*cur = root->first;
+	    if (path.front() != cur->fullname())
+		  continue;
+
+	    std::list<hname_t> tmp = path;
+	    tmp.pop_front();
+
+	    while (cur) {
+		  if (tmp.empty()) return cur;
+
+		  cur = cur->child( tmp.front() );
+
+		  tmp.pop_front();
+	    }
       }
 
       return 0;
@@ -819,6 +863,11 @@ NetScope* Design::find_task(NetScope*scope, const pform_name_t&name)
 	    return task;
 
       return 0;
+}
+
+void Design::add_root_task(NetScope*tscope, PTaskFunc*tf)
+{
+      root_tasks_[tscope] = tf;
 }
 
 void Design::add_node(NetNode*net)

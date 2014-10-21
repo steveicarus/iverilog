@@ -2,7 +2,7 @@
  *  Verilog-2005 math library for Icarus Verilog
  *  http://www.icarus.com/eda/verilog/
  *
- *  Copyright (C) 2007-2011  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2007-2014  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -101,6 +101,8 @@ static PLI_INT32 sys_end_of_simulation(p_cb_data cb_data)
 {
     unsigned idx;
 
+    (void)cb_data; /* Parameter is not used. */
+
     for (idx = 0; idx < single_funcs_count; idx += 1) {
         free(single_funcs[idx]);
     }
@@ -135,7 +137,7 @@ static void va_error_message(vpiHandle callh, const char *format,
 /*
  * Process an argument.
  */
-vpiHandle va_process_argument(vpiHandle callh, const char *name,
+static vpiHandle va_process_argument(vpiHandle callh, const char *name,
                               vpiHandle arg, const char *post) {
     PLI_INT32 type;
 
@@ -217,7 +219,7 @@ static PLI_INT32 va_single_argument_calltf(ICARUS_VPI_CONST PLI_BYTE8 *ud)
     s_vpi_value val;
     va_single_t* fun_data;
 
-    (void) ud;  /* Not used! */
+    (void)ud; /* Parameter is not used. */
 
     /* Retrieve the function and argument data. */
     fun_data = vpi_get_userdata(callh);
@@ -302,7 +304,7 @@ static PLI_INT32 va_double_argument_calltf(ICARUS_VPI_CONST PLI_BYTE8 *ud)
     double first_arg;
     va_double_t* fun_data;
 
-    (void) ud;  /* Not used! */
+    (void)ud; /* Parameter is not used. */
 
     /* Retrieve the function and argument data. */
     fun_data = vpi_get_userdata(callh);
@@ -371,7 +373,7 @@ static void sys_v2005_math_register(void)
 /*
  * Hook to get Icarus Verilog to find the registration function.
  */
-extern void sys_clog2_register();
+extern void sys_clog2_register(void);
 
 void (*vlog_startup_routines[])(void) = {
     sys_v2005_math_register,

@@ -1,7 +1,7 @@
-#ifndef __PClass_H
-#define __PClass_H
+#ifndef IVL_PClass_H
+#define IVL_PClass_H
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -44,4 +44,4 @@ class PClass : public PScopeExtra, public LineInfo {
       class_type_t*type;
 };
 
-#endif
+#endif /* IVL_PClass_H */

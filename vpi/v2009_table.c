@@ -21,7 +21,7 @@ extern void v2009_array_register(void);
 extern void v2009_enum_register(void);
 extern void v2009_string_register(void);
 
-void (*vlog_startup_routines[])() = {
+void (*vlog_startup_routines[])(void) = {
       v2009_array_register,
       v2009_enum_register,
       v2009_string_register,

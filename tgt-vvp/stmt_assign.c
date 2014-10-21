@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -314,7 +314,11 @@ static ivl_type_t draw_lval_expr(ivl_lval_t lval)
       }
 
       assert(ivl_type_base(sub_type) == IVL_VT_CLASS);
-      fprintf(vvp_out, "    %%prop/obj %d;\n", ivl_lval_property_idx(lval));
+      if (ivl_lval_idx(lval)) {
+	    fprintf(vvp_out, " ; XXXX Don't know how to handle ivl_lval_idx values here.\n");
+      }
+
+      fprintf(vvp_out, "    %%prop/obj %d, 0; draw_lval_expr\n", ivl_lval_property_idx(lval));
       fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
       return ivl_type_prop_type(sub_type, ivl_lval_property_idx(lval));
 }
@@ -401,7 +405,7 @@ static void set_vec_to_lval_slice(ivl_lval_t lval, unsigned bit, unsigned wid)
 		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
 		  draw_eval_expr_into_integer(word_ix, 3);
 		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
-		  fprintf(vvp_out, "    %%ix/mov 1, %u;\n", part_off_reg);
+		  fprintf(vvp_out, "    %%ix/mov 1, %d;\n", part_off_reg);
 		  clr_word(part_off_reg);
 	    } else {
 		  draw_eval_expr_into_integer(part_off_ex, 1);
@@ -981,6 +985,30 @@ static int show_stmt_assign_sig_darray(ivl_statement_t net)
       return errors;
 }
 
+static int show_stmt_assign_sig_queue(ivl_statement_t net)
+{
+      int errors = 0;
+      ivl_lval_t lval = ivl_stmt_lval(net, 0);
+      ivl_expr_t rval = ivl_stmt_rval(net);
+      ivl_signal_t var= ivl_lval_sig(lval);
+      ivl_type_t var_type= ivl_signal_net_type(var);
+      assert(ivl_type_base(var_type) == IVL_VT_QUEUE);
+
+      switch (ivl_expr_type(rval)) {
+	  case IVL_EX_NULL:
+	    errors += draw_eval_object(rval);
+	    break;
+	  default:
+	    fprintf(stderr, "XXXX: I don't know how to handle expr_type=%d here\n", ivl_expr_type(rval));
+	    fprintf(vvp_out, " ; XXXX expr_type=%d\n", ivl_expr_type(rval));
+	    errors += 1;
+	    break;
+      }
+
+      fprintf(vvp_out, "    %%store/obj v%p_0;\n", var);
+      return errors;
+}
+
 static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 {
       int errors = 0;
@@ -1040,21 +1068,32 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_DARRAY) {
 
+		  int idx = 0;
+
 		    /* The property is a darray, and there is no mux
 		       expression to the assignment is of an entire
 		       array object. */
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 		  draw_eval_object(rval);
-		  fprintf(vvp_out, "    %%store/prop/obj %d;\n", prop_idx);
+		  fprintf(vvp_out, "    %%store/prop/obj %d, %d; IVL_VT_DARRAY\n", prop_idx, idx);
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_CLASS) {
 
+		  int idx = 0;
+		  ivl_expr_t idx_expr;
+		  if ( (idx_expr = ivl_lval_idx(lval)) ) {
+			idx = allocate_word();
+		  }
+
 		    /* The property is a class object. */
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 		  draw_eval_object(rval);
-		  fprintf(vvp_out, "    %%store/prop/obj %d;\n", prop_idx);
+		  if (idx_expr) draw_eval_expr_into_integer(idx_expr, idx);
+		  fprintf(vvp_out, "    %%store/prop/obj %d, %d; IVL_VT_CLASS\n", prop_idx, idx);
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+
+		  if (idx_expr) clr_word(idx);
 
 	    } else {
 		  fprintf(vvp_out, " ; ERROR: ivl_type_base(prop_type) = %d\n",
@@ -1067,7 +1106,19 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		 as an object and assign the entire object to the
 		 variable. */
 	    errors += draw_eval_object(rval);
-	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", sig);
+
+	    if (ivl_signal_array_count(sig) > 1) {
+		  unsigned ix;
+		  ivl_expr_t aidx = ivl_lval_idx(lval);
+
+		  draw_eval_expr_into_integer(aidx, (ix = allocate_word()));
+		  fprintf(vvp_out, "    %%store/obja v%p, %u;\n", sig, ix);
+		  clr_word(ix);
+
+	    } else {
+		    /* Not an array, so no index expression */
+		  fprintf(vvp_out, "    %%store/obj v%p_0;\n", sig);
+	    }
       }
 
       return errors;
@@ -1093,6 +1144,10 @@ int show_stmt_assign(ivl_statement_t net)
 
       if (sig && (ivl_signal_data_type(sig) == IVL_VT_DARRAY)) {
 	    return show_stmt_assign_sig_darray(net);
+      }
+
+      if (sig && (ivl_signal_data_type(sig) == IVL_VT_QUEUE)) {
+	    return show_stmt_assign_sig_queue(net);
       }
 
       if (sig && (ivl_signal_data_type(sig) == IVL_VT_CLASS)) {

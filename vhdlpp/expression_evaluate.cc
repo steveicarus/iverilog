@@ -110,8 +110,32 @@ bool ExpAttribute::evaluate(ScopeBase*, int64_t&val) const
       return false;
 }
 
-bool ExpAttribute::evaluate(Entity*, Architecture*arc, int64_t&val) const
+bool ExpAttribute::evaluate(Entity*ent, Architecture*arc, int64_t&val) const
 {
+      if (name_ == "left" || name_ == "right") {
+	    const VType*base_type = base_->peek_type();
+	    if (base_type == 0)
+		  base_type = base_->probe_type(ent,arc);
+
+	    ivl_assert(*this, base_type);
+
+	    const VTypeArray*arr = dynamic_cast<const VTypeArray*>(base_type);
+	    if (arr == 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Cannot apply the '" << name_
+		       << " attribute to non-array objects" << endl;
+		  return false;
+	    }
+
+	    ivl_assert(*this, arr->dimensions() == 1);
+	    if(name_ == "left")
+		  arr->dimension(0).msb()->evaluate(ent, arc, val);
+	    else
+		  arr->dimension(0).lsb()->evaluate(ent, arc, val);
+
+	    return true;
+      }
+
       return evaluate(arc, val);
 }
 

@@ -41,6 +41,24 @@ int Architecture::elaborate(Entity*entity)
 	    cur->second->val->elaborate_expr(entity, this, cur->second->typ);
       }
 
+        // Elaborate initializer expressions for signals & variables
+      for (map<perm_string,Signal*>::iterator cur = old_signals_.begin()
+		 ; cur != old_signals_.end() ; ++cur) {
+	    cur->second->elaborate_init_expr(entity, this);
+      }
+      for (map<perm_string,Signal*>::iterator cur = new_signals_.begin()
+		 ; cur != new_signals_.end() ; ++cur) {
+	    cur->second->elaborate_init_expr(entity, this);
+      }
+      for (map<perm_string,Variable*>::iterator cur = old_variables_.begin()
+		 ; cur != old_variables_.end() ; ++cur) {
+	    cur->second->elaborate_init_expr(entity, this);
+      }
+      for (map<perm_string,Variable*>::iterator cur = new_variables_.begin()
+		 ; cur != new_variables_.end() ; ++cur) {
+	    cur->second->elaborate_init_expr(entity, this);
+      }
+
       for (list<Architecture::Statement*>::iterator cur = statements_.begin()
 		 ; cur != statements_.end() ; ++cur) {
 

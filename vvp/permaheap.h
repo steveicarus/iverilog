@@ -1,7 +1,7 @@
-#ifndef __permaheap_H
-#define __permaheap_H
+#ifndef IVL_permaheap_H
+#define IVL_permaheap_H
 /*
- * Copyright (c) 2009-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2009-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -49,4 +49,4 @@ class permaheap {
       size_t heap_total_;
 };
 
-#endif
+#endif /* IVL_permaheap_H */

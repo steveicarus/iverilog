@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2014 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -332,6 +332,8 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 	case IVL_LPM_CAST_REAL:
 	case IVL_LPM_CMP_EEQ:
 	case IVL_LPM_CMP_EQ:
+	case IVL_LPM_CMP_EQX:
+	case IVL_LPM_CMP_EQZ:
 	case IVL_LPM_CMP_GE:
 	case IVL_LPM_CMP_GT:
 	case IVL_LPM_CMP_NE:
@@ -358,6 +360,7 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 	case IVL_LPM_SHIFTR:
 	case IVL_LPM_SIGN_EXT:
 	case IVL_LPM_SUB:
+	case IVL_LPM_SUBSTITUTE:
 	case IVL_LPM_UFUNC:
 	      /* If the output of this LPM is a local signal then something
 	       * else will request that this be emitted. */
@@ -736,6 +739,7 @@ static ivl_signal_t find_output_signal(ivl_scope_t scope, ivl_nexus_t nex,
                                        unsigned*array_word)
 {
       unsigned idx, count = ivl_nexus_ptrs(nex);
+      (void)array_word;  /* Parameter is not used. */
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
 	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
@@ -992,6 +996,30 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
+	case IVL_LPM_CMP_EQX:
+// HERE: Need to heck that this is not a real nexus.
+	    fprintf(vlog_out, "(");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
+	    fprintf(vlog_out, " ==? ");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
+	    fprintf(vlog_out, ")");
+	    fprintf(stderr, "%s:%u: vlog95 error: Compare wildcard equal "
+	                    "operator is not supported.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
+	    break;
+	case IVL_LPM_CMP_EQZ:
+// HERE: Need to heck that this is not a real nexus.
+	    fprintf(vlog_out, "(");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
+	    fprintf(vlog_out, " == ");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
+	    fprintf(vlog_out, ")");
+	    fprintf(stderr, "%s:%u: vlog95 error: Compare equal Z (caseZ) "
+	                    "operator is not supported.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
+	    break;
 	case IVL_LPM_CMP_GE:
 	    fprintf(vlog_out, "(");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
@@ -1159,6 +1187,13 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
+	case IVL_LPM_SUBSTITUTE:
+	    fprintf(vlog_out, "<unknown>");
+	    fprintf(stderr, "%s:%u: vlog95 sorry: Substitute LPMs are "
+	                    "not currently translated.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
+	    break;
 	case IVL_LPM_UFUNC:
 	    emit_scope_path(scope, ivl_lpm_define(lpm));
 	    emit_lpm_func(scope, lpm);
@@ -1175,7 +1210,7 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
       if (sign_type != NO_SIGN) fprintf(vlog_out, ")");
 }
 
-static void emit_posedge_dff_prim()
+static void emit_posedge_dff_prim(void)
 {
       fprintf(vlog_out, "\n");
       fprintf(vlog_out, "/* Icarus generated UDP to represent a synthesized "
@@ -1459,7 +1494,7 @@ static void emit_lpm_part_pv(ivl_scope_t scope, ivl_lpm_t lpm)
       fprintf(vlog_out, "]");
 }
 
-unsigned  output_is_module_instantiation_input(ivl_scope_t scope,
+static unsigned  output_is_module_instantiation_input(ivl_scope_t scope,
                                                ivl_nexus_t nex)
 {
       unsigned idx, count = ivl_nexus_ptrs(nex);
@@ -1944,7 +1979,7 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		  assert(! nlogic);
 		  assert(! sig);
 		  fprintf(stderr, "LPM: ");
-		  fprintf(stderr, "{%s:%d} ", ivl_lpm_file(lpm),
+		  fprintf(stderr, "{%s:%u} ", ivl_lpm_file(lpm),
 		          ivl_lpm_lineno(lpm));
 		  if (scope != lpm_scope) fprintf(stderr, "(%s) ",
 		                                  ivl_scope_name(lpm_scope));
@@ -2003,7 +2038,7 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		  ivl_logic_t logic_type = ivl_logic_type(nlogic);
 		  assert(! sig);
 		  fprintf(stderr, "Logic: ");
-		  fprintf(stderr, "{%s:%d} ", ivl_logic_file(nlogic),
+		  fprintf(stderr, "{%s:%u} ", ivl_logic_file(nlogic),
 		          ivl_logic_lineno(nlogic));
 		  if (scope != logic_scope) {
 			fprintf(stderr, "(%s) ", ivl_scope_name(logic_scope));
@@ -2065,7 +2100,7 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		  fprintf(stderr, "\"");
 // HERE: Do we need to add support for an array word or is that an LPM.
 		  if (ivl_signal_local(sig)) fprintf(stderr, " {local}");
-		  else fprintf(stderr, " {%s:%d}", ivl_signal_file(sig),
+		  else fprintf(stderr, " {%s:%u}", ivl_signal_file(sig),
 		               ivl_signal_lineno(sig));
 		  switch (ivl_signal_port(sig)) {
 		      case IVL_SIP_INPUT:  fprintf(stderr, " input"); break;
@@ -2092,6 +2127,7 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		      case IVL_VT_STRING:  fprintf(stderr, " string"); break;
 		      case IVL_VT_DARRAY:  fprintf(stderr, " dynamic array");
 		      case IVL_VT_CLASS:   fprintf(stderr, " class");
+		      case IVL_VT_QUEUE:   fprintf(stderr, " queue");
 		                           break;
 		  }
 		  if (ivl_signal_signed(sig)) fprintf(stderr, " <signed>");

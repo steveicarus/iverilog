@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2012 Stephen Williams (steve at icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve at icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -505,8 +505,7 @@ static void edif_cellref_logic(ivl_net_logic_t net, const char*def)
       char*pins;
       edif_cell_t cell;
       edif_cellref_t ref;
-      edif_joint_t jnt;
-      unsigned idx, port;
+      unsigned idx;
 
       pins = strchr(str, ':');
       assert(pins);
@@ -520,6 +519,8 @@ static void edif_cellref_logic(ivl_net_logic_t net, const char*def)
 
       for (idx = 0 ;  idx < ivl_logic_pins(net) ;  idx += 1) {
 	    char*tmp;
+	    edif_joint_t jnt;
+	    unsigned port;
 
 	    assert(pins);
 	    tmp = strchr(pins,',');
@@ -693,7 +694,7 @@ void xilinx_logic(ivl_net_logic_t net)
 	    break;
 
 	  default:
-	    fprintf(stderr, "UNSUPPORTED LOGIC TYPE: %u\n",
+	    fprintf(stderr, "UNSUPPORTED LOGIC TYPE: %d\n",
 		    ivl_logic_type(net));
 	    break;
       }
@@ -706,9 +707,6 @@ void xilinx_logic(ivl_net_logic_t net)
 void xilinx_mux(ivl_lpm_t net)
 {
       unsigned idx;
-
-      edif_cellref_t lut;
-      edif_joint_t jnt;
 
       assert(ivl_lpm_selects(net) == 1);
 
@@ -730,6 +728,8 @@ void xilinx_mux(ivl_lpm_t net)
 	   INIT = "CA" */
 
       for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
+	    edif_cellref_t lut;
+	    edif_joint_t jnt;
 
 	    lut = edif_cellref_create(edf, xilinx_cell_lut3(xlib));
 
@@ -756,8 +756,6 @@ void xilinx_mux(ivl_lpm_t net)
 void xilinx_add(ivl_lpm_t net)
 {
       const char*ha_init = 0;
-      edif_cellref_t lut;
-      edif_joint_t jnt;
 
       switch (ivl_lpm_type(net)) {
 	    case IVL_LPM_ADD:
@@ -774,6 +772,8 @@ void xilinx_add(ivl_lpm_t net)
 	   half-adder. Normally this is an XOR, but if this is a SUB
 	   then it is an XNOR. */
       if (ivl_lpm_width(net) == 1) {
+	    edif_cellref_t lut;
+	    edif_joint_t jnt;
 
 	    lut = edif_cellref_create(edf, xilinx_cell_lut2(xlib));
 
@@ -801,7 +801,7 @@ void xilinx_add(ivl_lpm_t net)
 void xilinx_shiftl(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
-      unsigned nsel = 0, swid = 0;
+      unsigned nsel = 0;
       unsigned sdx, qdx;
 
       edif_cellref_t* cells;
@@ -818,6 +818,7 @@ void xilinx_shiftl(ivl_lpm_t net)
 	   emits zeros. */
 
       while (nsel < ivl_lpm_selects(net)) {
+	    unsigned swid;
 
 	    nsel += 1;
 

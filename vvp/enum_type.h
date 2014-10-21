@@ -1,7 +1,7 @@
-#ifndef __enum_type_H
-#define __enum_type_H
+#ifndef IVL_enum_type_H
+#define IVL_enum_type_H
 /*
- * Copyright (c) 2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,4 +19,4 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#endif
+#endif /* IVL_enum_type_H */

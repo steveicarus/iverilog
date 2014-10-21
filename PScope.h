@@ -1,7 +1,7 @@
-#ifndef __PScope_H
-#define __PScope_H
+#ifndef IVL_PScope_H
+#define IVL_PScope_H
 /*
- * Copyright (c) 2008,2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -187,4 +187,4 @@ class PScopeExtra : public PScope {
       void dump_funcs_(ostream&out, unsigned indent) const;
 };
 
-#endif
+#endif /* IVL_PScope_H */

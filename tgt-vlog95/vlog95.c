@@ -60,6 +60,7 @@ int target_design(ivl_design_t des)
 {
       ivl_scope_t *roots;
       unsigned nroots, idx;
+      unsigned has_root_scope = 0;
       const char*path = ivl_design_flag(des, "-o");
 	/* Set the indent spacing with the -pspacing flag passed to iverilog
 	 * (e.g. -pspacing=4). The default is 2 spaces. */
@@ -184,6 +185,30 @@ int target_design(ivl_design_t des)
 
 	/* Get all the root modules and then convert each one. */
       ivl_design_roots(des, &roots, &nroots);
+	/* Emit any root scope tasks or functions first. */
+      for (idx = 0; idx < nroots; idx += 1) {
+	    switch(ivl_scope_type(roots[idx])) {
+		  case IVL_SCT_FUNCTION:
+		  case IVL_SCT_TASK:
+			if (! has_root_scope) {
+			      fprintf(vlog_out, "module ivl_root_scope;\n");
+			      indent += indent_incr;
+			      has_root_scope = 1;
+			}
+			  /* Say this task/function has a parent so the
+			   * definition is emitted correctly. */
+			emit_scope(roots[idx], roots[idx]);
+			break;
+		  default:
+			break;
+	    }
+      }
+      if (has_root_scope) {
+	    indent -= indent_incr;
+	    assert(indent == 0);
+	    fprintf(vlog_out, "endmodule /* ivl_root_scope */\n");
+      }
+	/* Emit the rest of the scope objets. */
       for (idx = 0; idx < nroots; idx += 1) emit_scope(roots[idx], 0);
 
       free_emitted_scope_list();

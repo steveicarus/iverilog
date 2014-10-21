@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -41,6 +41,7 @@
 # include  "netvector.h"
 # include  "netdarray.h"
 # include  "netparray.h"
+# include  "netqueue.h"
 # include  "util.h"
 # include  "ivl_assert.h"
 
@@ -206,6 +207,11 @@ bool PPackage::elaborate_sig(Design*des, NetScope*scope) const
 {
       bool flag = true;
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PPackage::elaborate_sig: "
+		 << "Start package scope=" << scope_path(scope) << endl;
+      }
+
       flag = elaborate_sig_wires_(des, scope) && flag;
 
 	// After all the wires are elaborated, we are free to
@@ -214,6 +220,13 @@ bool PPackage::elaborate_sig(Design*des, NetScope*scope) const
 
       elaborate_sig_funcs(des, scope, funcs);
       elaborate_sig_tasks(des, scope, tasks);
+      elaborate_sig_classes(des, scope, classes);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PPackage::elaborate_sig: "
+		 << "Done package scope=" << scope_path(scope)
+		 << ", flag=" << flag << endl;
+      }
 
       return flag;
 }
@@ -563,7 +576,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	      // Special case: this is a constructor, so the return
 	      // signal is also the first argument. For example, the
 	      // source code for the definition may be:
- //   function new(...);
+	      //   function new(...);
 	      //   endfunction
 	      // In this case, the "@" port is the synthetic "this"
 	      // argument and we also use it as a return value at the
@@ -594,6 +607,11 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    }
 
 	    if (ret_type) {
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PFunction::elaborate_sig: "
+			     << "return type: " << *ret_type << endl;
+			return_type_->pform_dump(cerr, 8);
+		  }
 		  list<netrange_t> ret_unpacked;
 		  ret_sig = new NetNet(scope, fname, NetNet::REG, ret_unpacked, ret_type);
 
@@ -615,9 +633,10 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
       NetFuncDef*def = new NetFuncDef(scope, ret_sig, ports, pdef);
 
       if (debug_elaborate)
-	    cerr << get_fileline() << ": debug: "
-		 << "Attach function definition to scope "
-		 << scope_path(scope) << "." << endl;
+	    cerr << get_fileline() << ": PFunction::elaborate_sig: "
+		 << "Attach function definition " << scope_path(scope)
+		 << " with ret_sig width=" << (ret_sig? ret_sig->vector_width() : 0)
+		 << "." << endl;
 
       scope->set_func_def(def);
 
@@ -799,6 +818,12 @@ void PEventStatement::elaborate_sig(Design*des, NetScope*scope) const
 	    statement_->elaborate_sig(des, scope);
 }
 
+void PForeach::elaborate_sig(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_->elaborate_sig(des, scope);
+}
+
 void PForever::elaborate_sig(Design*des, NetScope*scope) const
 {
       if (statement_)
@@ -821,55 +846,6 @@ void PWhile::elaborate_sig(Design*des, NetScope*scope) const
 {
       if (statement_)
 	    statement_->elaborate_sig(des, scope);
-}
-
-static bool evaluate_ranges(Design*des, NetScope*scope,
-			    vector<netrange_t>&llist,
-			    const list<pform_range_t>&rlist)
-{
-      bool bad_msb = false, bad_lsb = false;
-
-      for (list<pform_range_t>::const_iterator cur = rlist.begin()
-		 ; cur != rlist.end() ; ++cur) {
-	    long use_msb, use_lsb;
-
-	    NetExpr*texpr = elab_and_eval(des, scope, cur->first, -1, true);
-	    if (! eval_as_long(use_msb, texpr)) {
-		  cerr << cur->first->get_fileline() << ": error: "
-			"Range expressions must be constant." << endl;
-		  cerr << cur->first->get_fileline() << "       : "
-			"This MSB expression violates the rule: "
-		       << *cur->first << endl;
-		  des->errors += 1;
-		  bad_msb = true;
-	    }
-
-	    delete texpr;
-
-	    texpr = elab_and_eval(des, scope, cur->second, -1, true);
-	    if (! eval_as_long(use_lsb, texpr)) {
-		  cerr << cur->second->get_fileline() << ": error: "
-			"Range expressions must be constant." << endl;
-		  cerr << cur->second->get_fileline() << "       : "
-			"This LSB expression violates the rule: "
-		       << *cur->second << endl;
-		  des->errors += 1;
-		  bad_lsb = true;
-	    }
-
-	    delete texpr;
-
-	    llist.push_back(netrange_t(use_msb, use_lsb));
-      }
-
-      return bad_msb | bad_lsb;
-}
-
-static netclass_t* locate_class_type(Design*, NetScope*scope,
-				     class_type_t*class_type)
-{
-      netclass_t*use_class = scope->find_class(class_type->name);
-      return use_class;
 }
 
 static ivl_type_s*elaborate_type(Design*des, NetScope*scope,
@@ -949,7 +925,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       des->errors += error_cnt_;
 
 	// A signal can not have the same name as a scope object.
-      const NetScope *child = scope->child(hname_t(name_));
+      const NetScope *child = scope->child_byname(name_);
       if (child) {
 	    cerr << get_fileline() << ": error: signal and ";
 	    child->print_type(cerr);
@@ -1078,7 +1054,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 
       list<netrange_t>unpacked_dimensions;
-      netdarray_t*netarray = 0;
+      netdarray_t*netdarray = 0;
 
       for (list<pform_range_t>::const_iterator cur = unpacked_.begin()
 		 ; cur != unpacked_.end() ; ++cur) {
@@ -1091,13 +1067,23 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    if (use_lidx==0 && use_ridx==0) {
 		  netvector_t*vec = new netvector_t(packed_dimensions, data_type_);
 		  packed_dimensions.clear();
-		  ivl_assert(*this, netarray==0);
-		  netarray = new netdarray_t(vec);
+		  ivl_assert(*this, netdarray==0);
+		  netdarray = new netdarray_t(vec);
+		  continue;
+	    }
+
+	      // Special case: Detect the mark for a QUEUE
+	      // declaration, which is the dimensions [null:<nil>].
+	    if (use_ridx==0 && dynamic_cast<PENull*>(use_lidx)) {
+		  netvector_t*vec = new netvector_t(packed_dimensions, data_type_);
+		  packed_dimensions.clear();
+		  ivl_assert(*this, netdarray==0);
+		  netdarray = new netqueue_t(vec);
 		  continue;
 	    }
 
 	      // Cannot handle dynamic arrays of arrays yet.
-	    ivl_assert(*this, netarray==0);
+	    ivl_assert(*this, netdarray==0);
 	    ivl_assert(*this, use_lidx && use_ridx);
 
 	    NetExpr*lexp = elab_and_eval(des, scope, use_lidx, -1, true);
@@ -1190,22 +1176,11 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // should already have been elaborated. All we need to
 	      // do right now is locate the netclass_t object for the
 	      // class, and use that to build the net.
-	    netclass_t*use_type = locate_class_type(des, scope, class_type);
-	    if (use_type == 0) {
-		  cerr << get_fileline() << ": internal error: "
-		       << "Class " << class_type->name
-		       << " isn't elaborated in scope=" << scope_path(scope) << endl;
-		  des->errors += 1;
-	    }
-	    ivl_assert(*this, use_type);
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: "
-		       << "Create class instance signal " << wtype
-		       << " " << name_ << endl;
-	    }
-	      // (No arrays of classes)
-	    list<netrange_t> use_unpacked;
-	    sig = new NetNet(scope, name_, wtype, use_unpacked, use_type);
+
+	    ivl_assert(*this, class_type->save_elaborated_type);
+	    netclass_t*use_type = class_type->save_elaborated_type;
+
+	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_type);
 
       } else if (struct_type_t*struct_type = dynamic_cast<struct_type_t*>(set_data_type_)) {
 	      // If this is a struct type, then build the net with the
@@ -1226,7 +1201,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       } else if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(set_data_type_)) {
 	    list<named_pexpr_t>::const_iterator sample_name = enum_type->names->begin();
-	    const netenum_t*use_enum = scope->enumeration_for_name(sample_name->name);
+	    const netenum_t*use_enum = scope->find_enumeration_for_name(sample_name->name);
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype
@@ -1240,7 +1215,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_enum);
 
 
-      } else if (netarray) {
+      } else if (netdarray) {
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype
@@ -1250,7 +1225,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    ivl_assert(*this, packed_dimensions.empty());
 	    ivl_assert(*this, unpacked_dimensions.empty());
-	    sig = new NetNet(scope, name_, wtype, netarray);
+	    sig = new NetNet(scope, name_, wtype, netdarray);
 
       } else if (parray_type_t*parray_type = dynamic_cast<parray_type_t*>(set_data_type_)) {
 	      // The pform gives us a parray_type_t for packed arrays
@@ -1266,7 +1241,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype
-		       << " parray=" << use_type->packed_dimensions()
+		       << " parray=" << use_type->static_dimensions()
 		       << " " << name_ << unpacked_dimensions
 		       << " in scope " << scope_path(scope) << endl;
 	    }
@@ -1320,4 +1295,28 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    sig->attribute(attrib_list[idx].key, attrib_list[idx].val);
 
       return sig;
+}
+
+
+void Design::root_elaborate_sig(void)
+{
+      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
+		 ; cur != classes_.end() ; ++ cur) {
+
+	    netclass_t*cur_class = cur->second;
+	    PClass*cur_pclass = class_to_pclass_[cur_class];
+
+	    cur_class->elaborate_sig(this, cur_pclass);
+      }
+
+      for (map<NetScope*,PTaskFunc*>::iterator cur = root_tasks_.begin()
+		 ; cur != root_tasks_.end() ; ++ cur) {
+
+	    if (debug_elaborate) {
+		  cerr << cur->second->get_fileline() << ": root_elaborate_sig: "
+		       << "Elaborate_sig for root task/func " << scope_path(cur->first) << endl;
+	    }
+
+	    cur->second->elaborate_sig(this, cur->first);
+      }
 }

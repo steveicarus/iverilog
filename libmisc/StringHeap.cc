@@ -210,3 +210,5 @@ ostream& operator << (ostream&out, perm_string that)
 	    out << that.str();
       return out;
 }
+
+const perm_string empty_perm_string = perm_string::literal("");

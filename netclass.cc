@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,7 +24,7 @@
 using namespace std;
 
 netclass_t::netclass_t(perm_string name, netclass_t*sup)
-: name_(name), super_(sup), class_scope_(0)
+: name_(name), super_(sup), class_scope_(0), definition_scope_(0)
 {
 }
 
@@ -50,10 +50,16 @@ bool netclass_t::set_property(perm_string pname, property_qualifier_t qual, ivl_
       return true;
 }
 
-void netclass_t::set_class_scope(NetScope*class_scope)
+void netclass_t::set_class_scope(NetScope*class_scope__)
 {
       assert(class_scope_ == 0);
-      class_scope_ = class_scope;
+      class_scope_ = class_scope__;
+}
+
+void netclass_t::set_definition_scope(NetScope*use_definition_scope)
+{
+      assert(definition_scope_ == 0);
+      definition_scope_ = use_definition_scope;
 }
 
 ivl_variable_type_t netclass_t::base_type() const

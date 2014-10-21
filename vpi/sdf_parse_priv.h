@@ -1,7 +1,7 @@
-#ifndef _sdf_parse_priv_h
-#define _sdf_parse_priv_h
+#ifndef IVL_sdf_parse_priv_h
+#define IVL_sdf_parse_priv_h
 /*
- * Copyright (c) 2007-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -38,4 +38,4 @@ extern char sdf_use_hchar;
 extern void start_edge_id(unsigned cond);
 extern void stop_edge_id(void);
 
-#endif
+#endif /* IVL_sdf_parse_priv_h */

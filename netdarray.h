@@ -1,7 +1,7 @@
-#ifndef __netdarray_H
-#define __netdarray_H
+#ifndef IVL_netdarray_H
+#define IVL_netdarray_H
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -48,4 +48,4 @@ class netdarray_t : public netarray_t {
       bool test_compatibility(ivl_type_t that) const;
 };
 
-#endif
+#endif /* IVL_netdarray_H */

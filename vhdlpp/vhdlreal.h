@@ -1,7 +1,7 @@
-#ifndef __vhdlreal_h
-#define __vhdlreal_h
+#ifndef IVL_vhdlreal_h
+#define IVL_vhdlreal_h
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -54,4 +54,4 @@ class vhdlreal
       double value_;
 };
 
-#endif
+#endif /* IVL_vhdlreal_h */

@@ -1,7 +1,7 @@
-#ifndef __target_H
-#define __target_H
+#ifndef IVL_target_H
+#define IVL_target_H
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -116,6 +116,7 @@ struct target_t {
       virtual bool net_literal(const NetLiteral*);
       virtual void net_probe(const NetEvProbe*);
       virtual bool sign_extend(const NetSignExtend*);
+      virtual bool substitute(const NetSubstitute*);
 
 	/* Output a process (called for each process). It is up to the
 	   target to recurse if desired. */
@@ -158,6 +159,7 @@ struct expr_scan_t {
       virtual void expr_access_func(const NetEAccess*);
       virtual void expr_array_pattern(const NetEArrayPattern*);
       virtual void expr_const(const NetEConst*);
+      virtual void expr_last(const NetELast*);
       virtual void expr_new(const NetENew*);
       virtual void expr_null(const NetENull*);
       virtual void expr_param(const NetEConstParam*);
@@ -188,4 +190,4 @@ extern string mangle(const string&str);
    used inside a string constant for a C++ compiler. */
 extern string stresc(const string&str);
 
-#endif
+#endif /* IVL_target_H */

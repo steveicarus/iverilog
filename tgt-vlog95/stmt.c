@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2014 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 
 static unsigned single_indent = 0;
 
-static unsigned get_indent()
+static unsigned get_indent(void)
 {
       if (single_indent) {
 	    single_indent = 0;
@@ -408,7 +408,8 @@ static void emit_assign_and_opt_opcode(ivl_scope_t scope, ivl_statement_t stmt,
                                        unsigned allow_opcode)
 {
       unsigned wid;
-      char opcode, *opcode_str;
+      char opcode;
+      const char *opcode_str;
 
       assert (ivl_statement_type(stmt) == IVL_ST_ASSIGN);
 // HERE: Do we need to calculate the width? The compiler should have already
@@ -941,7 +942,7 @@ static void emit_stmt_block_named(ivl_scope_t scope, ivl_statement_t stmt)
 
 static void emit_stmt_case(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      char *case_type;
+      const char *case_type;
       unsigned idx, default_case, count = ivl_stmt_case_count(stmt);
       switch (ivl_statement_type(stmt)) {
 	case IVL_ST_CASE:
@@ -1383,14 +1384,16 @@ static void emit_stmt_stask(ivl_scope_t scope, ivl_statement_t stmt)
       fprintf(vlog_out, "%*c%s", get_indent(), ' ', ivl_stmt_name(stmt));
       if (count != 0) {
 	    unsigned idx;
+	    ivl_expr_t expr;
 	    fprintf(vlog_out, "(");
 	    count -= 1;
 	    for (idx = 0; idx < count; idx += 1) {
-		  ivl_expr_t expr = ivl_stmt_parm(stmt, idx);
+		  expr = ivl_stmt_parm(stmt, idx);
 		  if (expr) emit_expr(scope, expr, 0, 0, 0, 0);
 		  fprintf(vlog_out, ", ");
 	    }
-	    emit_expr(scope, ivl_stmt_parm(stmt, count), 0, 0, 0, 0);
+	    expr = ivl_stmt_parm(stmt, count);
+	    if (expr) emit_expr(scope, expr, 0, 0, 0, 0);
 	    fprintf(vlog_out, ")");
       }
       fprintf(vlog_out, ";");
@@ -1428,6 +1431,7 @@ static void emit_stmt_utask(ivl_scope_t scope, ivl_statement_t stmt)
 /* Look to see if this is a SystemVerilog wait fork statement. */
 static unsigned is_wait_fork(ivl_scope_t scope, ivl_statement_t stmt)
 {
+      (void)scope;  /* Parameter is not used. */
       if (ivl_stmt_nevent(stmt) != 1) return 0;
       if (ivl_stmt_events(stmt, 0) != 0) return 0;
       assert(ivl_statement_type(ivl_stmt_sub_stmt(stmt)) == IVL_ST_NOOP);

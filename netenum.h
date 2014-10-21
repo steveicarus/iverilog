@@ -1,7 +1,7 @@
-#ifndef __netenum_H
-#define __netenum_H
+#ifndef IVL_netenum_H
+#define IVL_netenum_H
 /*
- * Copyright (c) 2010-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -80,4 +80,4 @@ inline ivl_variable_type_t netenum_t::base_type() const
 
 inline size_t netenum_t::size() const { return names_.size(); }
 
-#endif
+#endif /* IVL_netenum_H */

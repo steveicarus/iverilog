@@ -1,7 +1,7 @@
-#ifndef __config_H
-#define __config_H
+#ifndef IVL_config_H
+#define IVL_config_H
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -96,7 +96,7 @@ typedef uint64_t vvp_time64_t;
 # define TIME_FMT_X PRIx64
 #endif
 
-# if UINT64_T_AND_ULONG_SAME
+# ifdef UINT64_T_AND_ULONG_SAME
 #  define UL_AND_TIME64_SAME
 # endif
 
@@ -201,4 +201,4 @@ inline int64_t i64round(double x)
 #define TU ""
 #endif
 
-#endif
+#endif /* IVL_config_H */

@@ -35,8 +35,8 @@ void VType::show(ostream&out) const
       write_to_stream(out);
 }
 
-VTypePrimitive::VTypePrimitive(VTypePrimitive::type_t tt)
-: type_(tt)
+VTypePrimitive::VTypePrimitive(VTypePrimitive::type_t tt, bool packed)
+: type_(tt), packed_(packed)
 {
 }
 
@@ -58,6 +58,9 @@ void VTypePrimitive::show(ostream&out) const
 	    break;
 	  case INTEGER:
 	    out << "INTEGER";
+	    break;
+	  case REAL:
+	    out << "REAL";
 	    break;
 	  case STDLOGIC:
 	    out << "std_logic";
@@ -85,7 +88,8 @@ VTypeArray::VTypeArray(const VType*element, std::list<prange_t*>*r, bool sv)
 	    r->pop_front();
 	    Expression*msb = curp->msb();
 	    Expression*lsb = curp->lsb();
-	    ranges_[idx] = range_t(msb, lsb);
+	    bool dir = curp->is_downto();
+	    ranges_[idx] = range_t(msb, lsb, dir);
       }
 }
 
@@ -94,14 +98,28 @@ VTypeArray::~VTypeArray()
 {
 }
 
-size_t VTypeArray::dimensions() const
+const VType* VTypeArray::basic_type(bool typedef_allowed) const
 {
-      return ranges_.size();
-}
+    const VType*t = etype_;
+    const VTypeDef*tdef = NULL;
+    bool progress = false;
 
-const VType* VTypeArray::element_type() const
-{
-      return etype_;
+    do {
+        progress = false;
+
+        if((tdef = dynamic_cast<const VTypeDef*>(t))) {
+            t = tdef->peek_definition();
+        }
+
+        if(const VTypeArray*arr = dynamic_cast<const VTypeArray*>(t)) {
+            t = arr->element_type();
+            progress = true;
+        } else if(tdef) { // return the typedef if it does not define an array
+            t = typedef_allowed ? tdef : tdef->peek_definition();
+        }
+    } while(progress);
+
+    return t;
 }
 
 void VTypeArray::show(ostream&out) const
@@ -187,13 +205,17 @@ void VTypeRecord::show(ostream&out) const
       write_to_stream(out);
 }
 
-const VTypeRecord::element_t* VTypeRecord::element_by_name(perm_string name) const
+const VTypeRecord::element_t* VTypeRecord::element_by_name(perm_string name, int*index) const
 {
       for (vector<element_t*>::const_iterator cur = elements_.begin()
 		 ; cur != elements_.end() ; ++cur) {
 	    element_t*curp = *cur;
-	    if (curp->peek_name() == name)
+	    if (curp->peek_name() == name) {
+		  if (index)
+		      *index = std::distance(elements_.begin(), cur);
+
 		  return curp;
+	    }
       }
 
       return 0;

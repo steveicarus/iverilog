@@ -1,7 +1,7 @@
-#ifndef __vvp_darray_H
-#define __vvp_darray_H
+#ifndef IVL_vvp_darray_H
+#define IVL_vvp_darray_H
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,7 @@
  */
 
 # include  "vvp_object.h"
+# include  <list>
 # include  <string>
 # include  <vector>
 
@@ -28,10 +29,10 @@ class vvp_vector4_t;
 class vvp_darray : public vvp_object {
 
     public:
-      inline vvp_darray(size_t siz) : size_(siz) { }
+      inline vvp_darray() { }
       virtual ~vvp_darray();
 
-      inline size_t get_size(void) const { return size_; }
+      virtual size_t get_size(void) const =0;
 
       virtual void set_word(unsigned adr, const vvp_vector4_t&value);
       virtual void get_word(unsigned adr, vvp_vector4_t&value);
@@ -42,16 +43,17 @@ class vvp_darray : public vvp_object {
       virtual void set_word(unsigned adr, const std::string&value);
       virtual void get_word(unsigned adr, std::string&value);
 
-    private:
-      size_t size_;
+      virtual void set_word(unsigned adr, const vvp_object_t&value);
+      virtual void get_word(unsigned adr, vvp_object_t&value);
 };
 
 template <class TYPE> class vvp_darray_atom : public vvp_darray {
 
     public:
-      inline vvp_darray_atom(size_t siz) : vvp_darray(siz), array_(siz) { }
+      inline vvp_darray_atom(size_t siz) : array_(siz) { }
       ~vvp_darray_atom();
 
+      size_t get_size(void) const;
       void set_word(unsigned adr, const vvp_vector4_t&value);
       void get_word(unsigned adr, vvp_vector4_t&value);
 
@@ -62,9 +64,10 @@ template <class TYPE> class vvp_darray_atom : public vvp_darray {
 class vvp_darray_real : public vvp_darray {
 
     public:
-      inline vvp_darray_real(size_t siz) : vvp_darray(siz), array_(siz) { }
+      inline vvp_darray_real(size_t siz) : array_(siz) { }
       ~vvp_darray_real();
 
+      size_t get_size(void) const;
       void set_word(unsigned adr, double value);
       void get_word(unsigned adr, double&value);
 
@@ -75,9 +78,10 @@ class vvp_darray_real : public vvp_darray {
 class vvp_darray_string : public vvp_darray {
 
     public:
-      inline vvp_darray_string(size_t siz) : vvp_darray(siz), array_(siz) { }
+      inline vvp_darray_string(size_t siz) : array_(siz) { }
       ~vvp_darray_string();
 
+      size_t get_size(void) const;
       void set_word(unsigned adr, const std::string&value);
       void get_word(unsigned adr, std::string&value);
 
@@ -85,5 +89,72 @@ class vvp_darray_string : public vvp_darray {
       std::vector<std::string> array_;
 };
 
+class vvp_darray_object : public vvp_darray {
 
-#endif
+    public:
+      inline vvp_darray_object(size_t siz) : array_(siz) { }
+      ~vvp_darray_object();
+
+      size_t get_size(void) const;
+      void set_word(unsigned adr, const vvp_object_t&value);
+      void get_word(unsigned adr, vvp_object_t&value);
+
+    private:
+      std::vector<vvp_object_t> array_;
+};
+
+class vvp_queue : public vvp_darray {
+
+    public:
+      inline vvp_queue(void) { }
+      ~vvp_queue();
+
+      virtual void push_back(const vvp_vector4_t&value);
+      virtual void push_front(const vvp_vector4_t&value);
+
+      virtual void push_back(double value);
+      virtual void push_front(double value);
+
+      virtual void push_back(const std::string&value);
+      virtual void push_front(const std::string&value);
+
+      virtual void pop_back(void) =0;
+      virtual void pop_front(void)=0;
+};
+
+class vvp_queue_vec4 : public vvp_queue {
+
+    public:
+      ~vvp_queue_vec4();
+
+      size_t get_size(void) const;
+      void set_word(unsigned adr, const vvp_vector4_t&value);
+      void get_word(unsigned adr, vvp_vector4_t&value);
+      void push_back(const vvp_vector4_t&value);
+      void push_front(const vvp_vector4_t&value);
+      void pop_back(void);
+      void pop_front(void);
+
+    private:
+      std::list<vvp_vector4_t> array_;
+};
+
+
+class vvp_queue_string : public vvp_queue {
+
+    public:
+      ~vvp_queue_string();
+
+      size_t get_size(void) const;
+      void set_word(unsigned adr, const std::string&value);
+      void get_word(unsigned adr, std::string&value);
+      void push_back(const std::string&value);
+	//void push_front(const std::string&value);
+      void pop_back(void);
+      void pop_front(void);
+
+    private:
+      std::list<std::string> array_;
+};
+
+#endif /* IVL_vvp_darray_H */

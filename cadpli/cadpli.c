@@ -79,7 +79,7 @@ static void thunker_register(void)
       }
 }
 
-void (*vlog_startup_routines[])() = {
+void (*vlog_startup_routines[])(void) = {
       thunker_register,
       0
 };

@@ -106,6 +106,11 @@ NexusSet* NetEEvent::nex_input(bool)
       return new NexusSet;
 }
 
+NexusSet* NetELast::nex_input(bool)
+{
+      return new NexusSet;
+}
+
 NexusSet* NetENetenum::nex_input(bool)
 {
       return new NexusSet;
@@ -340,7 +345,7 @@ NexusSet* NetCase::nex_input(bool rem_out)
       if (result == 0)
 	    return 0;
 
-      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+      for (size_t idx = 0 ;  idx < items_.size() ;  idx += 1) {
 
 	      /* Skip cases that have empty statements. */
 	    if (items_[idx].statement == 0)
@@ -404,6 +409,25 @@ NexusSet* NetForce::nex_input(bool)
       cerr << get_fileline() << ": internal warning: NetForce::nex_input()"
 	   << " not implemented." << endl;
       return new NexusSet;
+}
+
+NexusSet* NetForLoop::nex_input(bool rem_out)
+{
+      NexusSet*result = init_expr_->nex_input(rem_out);
+
+      NexusSet*tmp = condition_->nex_input(rem_out);
+      result->add(*tmp);
+      delete tmp;
+
+      tmp = statement_->nex_input(rem_out);
+      result->add(*tmp);
+      delete tmp;
+
+      tmp = step_statement_->nex_input(rem_out);
+      result->add(*tmp);
+      delete tmp;
+
+      return result;
 }
 
 NexusSet* NetForever::nex_input(bool rem_out)

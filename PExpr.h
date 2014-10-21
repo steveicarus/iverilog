@@ -1,7 +1,7 @@
-#ifndef __PExpr_H
-#define __PExpr_H
+#ifndef IVL_PExpr_H
+#define IVL_PExpr_H
 /*
- * Copyright (c) 1998-2013 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2014 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -245,6 +245,10 @@ class PEConcat : public PExpr {
 
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
       virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
+
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     ivl_type_t type, unsigned flags) const;
+
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     unsigned expr_wid,
                                      unsigned flags) const;
@@ -365,6 +369,11 @@ class PEIdent : public PExpr {
 	// Elaborate the PEIdent as a port to a module. This method
 	// only applies to Ident expressions.
       NetNet* elaborate_subport(Design*des, NetScope*sc) const;
+
+	// Elaborate the identifier allowing for unpacked arrays. This
+	// method only applies to Ident expressions because only Ident
+	// expressions can can be unpacked arrays.
+      NetNet* elaborate_unpacked_net(Design*des, NetScope*sc) const;
 
       verinum* eval_const(Design*des, NetScope*sc) const;
 
@@ -500,11 +509,22 @@ class PEIdent : public PExpr {
 				      NetESignal*net,
 				      NetScope*found,
                                       bool need_const) const;
+      NetExpr*elaborate_expr_net_bit_last_(Design*des,
+					   NetScope*scope,
+					   NetESignal*net,
+					   NetScope*found,
+					   bool need_const) const;
 
       NetExpr*elaborate_expr_class_member_(Design*des,
 					   NetScope*scope,
 					   unsigned expr_wid,
 					   unsigned flags) const;
+
+      unsigned test_width_method_(Design*des, NetScope*scope, width_mode_t&mode);
+      NetExpr*elaborate_expr_method_(Design*des,
+				     NetScope*scope,
+				     unsigned expr_wid,
+				     unsigned flags) const;
 
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
@@ -916,7 +936,8 @@ class PECallFunction : public PExpr {
       NetExpr*elaborate_expr_pkg_(Design*des, NetScope*scope,
 				  unsigned expr_wid, unsigned flags)const;
       NetExpr*elaborate_expr_method_(Design*des, NetScope*scope,
-				     unsigned expr_wid) const;
+				     unsigned expr_wid,
+				     bool add_this_flag = false) const;
 #if 0
       NetExpr*elaborate_expr_string_method_(Design*des, NetScope*scope) const;
       NetExpr*elaborate_expr_enum_method_(Design*des, NetScope*scope,
@@ -980,4 +1001,4 @@ class PEVoid : public PExpr {
                                      unsigned flags) const;
 };
 
-#endif
+#endif /* IVL_PExpr_H */

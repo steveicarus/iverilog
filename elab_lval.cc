@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -27,6 +27,7 @@
 # include  "netstruct.h"
 # include  "netclass.h"
 # include  "netdarray.h"
+# include  "netparray.h"
 # include  "netvector.h"
 # include  "compiler.h"
 # include  <cstdlib>
@@ -397,21 +398,47 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
       if (path_.size() != 1)
 	    return 0;
 
-      const netclass_t*class_type = scope->parent()->class_def();
+      const netclass_t*class_type = find_class_containing_scope(*this, scope);
       if (class_type == 0)
 	    return 0;
 
-      perm_string member_name = peek_tail_name(path_);
+      const name_component_t&name_comp = path_.back();
+
+      perm_string member_name = name_comp.name;
       int pidx = class_type->property_idx_from_name(member_name);
       if (pidx < 0)
 	    return 0;
 
-      NetNet*this_net = scope->find_signal(perm_string::literal("@"));
+      NetScope*scope_method = find_method_containing_scope(*this, scope);
+      ivl_assert(*this, scope_method);
+
+      NetNet*this_net = scope_method->find_signal(perm_string::literal("@"));
       if (this_net == 0) {
 	    cerr << get_fileline() << ": internal error: "
-		 << "Unable to find 'this' port of " << scope_path(scope)
+		 << "Unable to find 'this' port of " << scope_path(scope_method)
 		 << "." << endl;
 	    return 0;
+      }
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
+		 << "Ident " << member_name
+		 << " is a property of class " << class_type->get_name() << endl;
+      }
+
+      NetExpr*canon_index = 0;
+      if (! name_comp.index.empty()) {
+	    ivl_type_t property_type = class_type->get_prop_type(pidx);
+
+	    if (const netsarray_t* stype = dynamic_cast<const netsarray_t*> (property_type)) {
+		  canon_index = make_canonical_index(des, scope, this,
+						     name_comp.index, stype, false);
+
+	    } else {
+		  cerr << get_fileline() << ": error: "
+		       << "Index expressions don't apply to this type of property." << endl;
+		  des->errors += 1;
+	    }
       }
 
 	// Detect assignment to constant properties. Note that the
@@ -448,8 +475,34 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
 	    }
       }
 
+      ivl_type_t tmp_type = class_type->get_prop_type(pidx);
+      if (const netuarray_t*tmp_ua = dynamic_cast<const netuarray_t*>(tmp_type)) {
+
+	    const std::vector<netrange_t>&dims = tmp_ua->static_dimensions();
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
+		       << "Property " << class_type->get_prop_name(pidx)
+		       << " has " << dims.size() << " dimensions, "
+		       << " got " << name_comp.index.size() << " indices." << endl;
+		  if (canon_index) {
+			cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
+			     << "Canonical index is:" << *canon_index << endl;
+		  };
+	    }
+
+	    if (dims.size() != name_comp.index.size()) {
+		  cerr << get_fileline() << ": error: "
+		       << "Got " << name_comp.index.size() << " indices, "
+		       << "expecting " << dims.size()
+		       << " to index the property " << class_type->get_prop_name(pidx) << "." << endl;
+		  des->errors += 1;
+	    }
+      }
+
       NetAssign_*this_lval = new NetAssign_(this_net);
       this_lval->set_property(member_name);
+      if (canon_index) this_lval->set_word(canon_index);
 
       return this_lval;
 }

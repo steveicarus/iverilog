@@ -1,7 +1,7 @@
-#ifndef __device_H
-#define __device_H
+#ifndef IVL_device_H
+#define IVL_device_H
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -74,4 +74,4 @@ struct device_s {
  */
 extern device_t device_from_arch(const char*arch);
 
-#endif
+#endif /* IVL_device_H */

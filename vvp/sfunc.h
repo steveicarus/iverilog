@@ -1,7 +1,7 @@
-#ifndef __sfunc_H
-#define __sfunc_H
+#ifndef IVL_sfunc_H
+#define IVL_sfunc_H
 /*
- * Copyright (c) 2006-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -43,4 +43,4 @@ class sfunc_core : public vvp_wide_fun_core, protected vvp_gen_event_s {
       vpiHandle*argv_;
 };
 
-#endif
+#endif /* IVL_sfunc_H */

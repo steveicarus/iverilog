@@ -32,6 +32,11 @@ void scan_logs(ivl_scope_t scope, struct sizer_statistics&stats)
       for (unsigned idx = 0 ; idx < ivl_scope_logs(scope) ; idx += 1) {
 	    ivl_net_logic_t log = ivl_scope_log(scope, idx);
 	    switch (ivl_logic_type(log)) {
+		    // These logic gate types don't really exist in a
+		    // mapped design.
+		case IVL_LO_BUFZ:
+		  break;
+
 		case IVL_LO_AND:
 		case IVL_LO_OR:
 		case IVL_LO_XOR:

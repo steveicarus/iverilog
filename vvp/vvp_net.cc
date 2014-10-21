@@ -183,8 +183,8 @@ void vvp_net_t::operator delete(void*)
 }
 
 vvp_net_t::vvp_net_t()
+: out_(vvp_net_ptr_t(0,0))
 {
-      out_ = vvp_net_ptr_t(0,0);
       fun = 0;
       fil = 0;
 }
@@ -1707,13 +1707,16 @@ template <class T> bool vector4_to_value(const vvp_vector4_t&vec, T&val)
       T msk = 1;
 
       unsigned size = vec.size();
-      if (size > 8*sizeof(val)) size = 8*sizeof(val);
       for (unsigned idx = 0 ;  idx < size ;  idx += 1) {
 	    switch (vec.value(idx)) {
 		case BIT4_0:
 		  break;
 		case BIT4_1:
-		  res |= msk;
+		    // On overflow, return the maximum value of type T
+		  if (msk == 0)
+			res = ~msk;
+		  else
+			res |= msk;
 		  break;
 		default:
 		  return false;

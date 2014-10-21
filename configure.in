@@ -14,10 +14,6 @@ AC_CANONICAL_HOST
 dnl Checks for programs.
 AC_PROG_CC
 # AC_PROG_CC_C99 is only available in autoconf version 2.60 and later.
-# If you must use an older version then comment out the following two
-# lines, but be warned that there could be issues with finding the
-# nan(), etc. functions. It is really best to upgrade to a supported
-# version of autoconf.
 AC_PREREQ([2.60])
 AC_PROG_CC_C99
 AC_PROG_CXX
@@ -85,8 +81,9 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
 CFLAGS="$iverilog_temp_cflags"
 
 AC_SUBST(DEPENDENCY_FLAG, [-MD])
-AC_SUBST(WARNING_FLAGS, ["-Wall -Wshadow"])
-AC_SUBST(WARNING_FLAGS_CXX, ["$iverilog_wextra_flag"])
+AC_SUBST(WARNING_FLAGS, ["-Wall $iverilog_wextra_flag -Wshadow"])
+AC_SUBST(WARNING_FLAGS_CC, [""])
+AC_SUBST(WARNING_FLAGS_CXX, [""])
 fi
 
 AC_LANG(C++)
@@ -216,9 +213,6 @@ AX_LD_EXTRALIBS
 # Compiler option for position independent code, needed when making shared objects.
 # CFLAGS inherited by cadpli/Makefile?
 AX_C_PICFLAG
-
-# may modify CPPFLAGS and CFLAGS
-AX_CPP_PRECOMP
 
 # may modify LDFLAGS
 AX_C99_STRTOD

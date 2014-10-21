@@ -1,7 +1,7 @@
-#ifndef __Statement_H
-#define __Statement_H
+#ifndef IVL_Statement_H
+#define IVL_Statement_H
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -224,12 +224,16 @@ class PCallTask  : public Statement {
       NetProc* elaborate_sys(Design*des, NetScope*scope) const;
       NetProc* elaborate_usr(Design*des, NetScope*scope) const;
 
-      NetProc*elaborate_method_(Design*des, NetScope*scope) const;
+      NetProc*elaborate_method_(Design*des, NetScope*scope,
+                                bool add_this_flag = false) const;
       NetProc*elaborate_function_(Design*des, NetScope*scope) const;
 
       NetProc*elaborate_build_call_(Design*des, NetScope*scope,
 				    NetScope*task, NetExpr*use_this) const;
-
+      NetProc*elaborate_sys_task_method_(Design*des, NetScope*scope,
+					 NetNet*net,
+					 perm_string method_name,
+					 const char*sys_task_name) const;
       bool test_task_calls_ok_(Design*des, NetScope*scope) const;
 
       PPackage*package_;
@@ -440,6 +444,26 @@ class PForce  : public Statement {
       PExpr*expr_;
 };
 
+class PForeach : public Statement {
+    public:
+      explicit PForeach(perm_string var, const std::list<perm_string>&ix, Statement*stmt);
+      ~PForeach();
+
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      NetProc* elaborate_static_array_(Design*des, NetScope*scope,
+				       const std::vector<netrange_t>&dims) const;
+
+    private:
+      perm_string array_var_;
+      std::vector<perm_string> index_vars_;
+      Statement*statement_;
+};
+
 class PForever : public Statement {
     public:
       explicit PForever(Statement*s);
@@ -558,4 +582,4 @@ class PWhile  : public Statement {
       Statement*statement_;
 };
 
-#endif
+#endif /* IVL_Statement_H */

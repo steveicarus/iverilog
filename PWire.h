@@ -1,7 +1,7 @@
-#ifndef __PWire_H
-#define __PWire_H
+#ifndef IVL_PWire_H
+#define IVL_PWire_H
 /*
- * Copyright (c) 1998-2009,2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -129,4 +129,4 @@ class PWire : public LineInfo {
       PWire& operator= (const PWire&);
 };
 
-#endif
+#endif /* IVL_PWire_H */

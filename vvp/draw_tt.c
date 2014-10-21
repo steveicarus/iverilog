@@ -25,7 +25,7 @@
  * map of a 4-vbit value to a hex digit. The table handles the display
  * of x, X, z, Z, etc.
  */
-static void draw_hex_table()
+static void draw_hex_table(void)
 {
       unsigned idx;
 
@@ -71,7 +71,7 @@ static void draw_hex_table()
       printf("};\n");
 }
 
-static void draw_oct_table()
+static void draw_oct_table(void)
 {
       unsigned idx;
 
@@ -117,7 +117,7 @@ static void draw_oct_table()
       printf("};\n");
 }
 
-int main()
+int main(void)
 {
       draw_hex_table();
       draw_oct_table();

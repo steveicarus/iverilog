@@ -1,7 +1,7 @@
-#ifndef __scope_H
-#define __scope_H
+#ifndef IVL_scope_H
+#define IVL_scope_H
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -26,7 +26,6 @@
 # include  "StringHeap.h"
 # include  "entity.h"
 # include  "expression.h"
-# include  "subprogram.h"
 # include  "vsignal.h"
 
 class ActiveScope;
@@ -58,6 +57,9 @@ class ScopeBase {
       Signal* find_signal(perm_string by_name) const;
       Variable* find_variable(perm_string by_name) const;
       Subprogram* find_subprogram(perm_string by_name) const;
+	// Moves all signals, variables and components from another scope to
+	// this one. After the transfer new_* maps are emptied in the another scope.
+      void transfer_from(ScopeBase&ref);
 
     protected:
       void cleanup();
@@ -92,7 +94,7 @@ class ScopeBase {
       std::map<perm_string,const VType*> cur_types_; //current types
 	// Constant declarations...
       struct const_t {
-        ~const_t() {delete typ; delete val;}
+        ~const_t() {delete val;}
         const_t(const VType*t, Expression* v) : typ(t), val(v) {};
 
 	    const VType*typ;
@@ -203,7 +205,7 @@ class ActiveScope : public ScopeBase {
       { map<perm_string, Subprogram*>::iterator it;
         if((it = use_subprograms_.find(name)) != use_subprograms_.end() )
             use_subprograms_.erase(it);
-        cur_subprograms_[name] = obj;;
+        cur_subprograms_[name] = obj;
       }
 
       void bind(Entity*ent)
@@ -226,4 +228,4 @@ class ActiveScope : public ScopeBase {
       Entity*context_entity_;
 };
 
-#endif
+#endif /* IVL_scope_H */

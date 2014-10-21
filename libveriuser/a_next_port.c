@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,6 +25,8 @@
 
 handle acc_next_port(handle ref, handle bit)
 {
+      (void)ref; /* Parameter is not used. */
+      (void)bit; /* Parameter is not used. */
       if (pli_trace) {
 	    fprintf(pli_trace, "acc_next_port: enter.\n");
 	    fflush(pli_trace);

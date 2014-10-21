@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -62,9 +62,9 @@ extern const char oct_digits[64];
  * buffer can be reused for that purpose. Whenever I have a need, the
  * need_result_buf function makes sure that need can be met.
  */
-char *need_result_buf(unsigned cnt, vpi_rbuf_t type)
+void *need_result_buf(unsigned cnt, vpi_rbuf_t type)
 {
-      static char*result_buf[2] = {0, 0};
+      static void*result_buf[2] = {0, 0};
       static size_t result_buf_size[2] = {0, 0};
 
       if (type == RBUF_DEL) {
@@ -82,10 +82,10 @@ char *need_result_buf(unsigned cnt, vpi_rbuf_t type)
       cnt = (cnt + 0x0fff) & ~0x0fff;
 
       if (result_buf_size[type] == 0) {
-	    result_buf[type] = (char*)malloc(cnt);
+	    result_buf[type] = malloc(cnt);
 	    result_buf_size[type] = cnt;
       } else if (result_buf_size[type] < cnt) {
-	    result_buf[type] = (char*)realloc(result_buf[type], cnt);
+	    result_buf[type] = realloc(result_buf[type], cnt);
 	    result_buf_size[type] = cnt;
       }
 
@@ -94,7 +94,7 @@ char *need_result_buf(unsigned cnt, vpi_rbuf_t type)
 
 char *simple_set_rbuf_str(const char *s1)
 {
-      char *res = need_result_buf(strlen(s1)+1, RBUF_STR);
+      char *res = (char *) need_result_buf(strlen(s1)+1, RBUF_STR);
       if (res) strcpy(res,s1);
       return res;
 }
@@ -109,7 +109,7 @@ char *generic_get_str(int code, vpiHandle ref, const char *name, const char *ind
       }
       if (index != NULL) len += strlen(index) + 2;  /* include space for brackets */
 
-      char *res = need_result_buf(len, RBUF_STR);
+      char *res = (char *) need_result_buf(len, RBUF_STR);
       if (!res) {
 	    free(bn);
 	    return NULL;
@@ -143,7 +143,7 @@ static vpiHandle fill_in_net4(struct __vpiSignal*obj,
 static void format_vpiBinStrVal(vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
-      char *rbuf = need_result_buf(wid+1, RBUF_VAL);
+      char *rbuf = (char *) need_result_buf(wid+1, RBUF_VAL);
       long end = base + (signed)wid;
       long offset = end - 1;
       long ssize = (signed)sig->value_size();
@@ -164,7 +164,7 @@ static void format_vpiOctStrVal(vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       unsigned dwid = (wid + 2) / 3;
-      char *rbuf = need_result_buf(dwid+1, RBUF_VAL);
+      char *rbuf = (char *) need_result_buf(dwid+1, RBUF_VAL);
       long end = base + (signed)wid;
       long ssize = (signed)sig->value_size();
       unsigned val = 0;
@@ -220,7 +220,7 @@ static void format_vpiHexStrVal(vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       unsigned dwid = (wid + 3) / 4;
-      char *rbuf = need_result_buf(dwid+1, RBUF_VAL);
+      char *rbuf = (char *) need_result_buf(dwid+1, RBUF_VAL);
       long end = base + (signed)wid;
       long ssize = (signed)sig->value_size();
       unsigned val = 0;
@@ -280,7 +280,7 @@ static void format_vpiDecStrVal(vvp_signal_value*sig, int base, unsigned wid,
                                 int signed_flag, s_vpi_value*vp)
 {
       unsigned hwid = (sig->value_size()+2) / 3 + 1;
-      char *rbuf = need_result_buf(hwid, RBUF_VAL);
+      char *rbuf = (char *) need_result_buf(hwid, RBUF_VAL);
       long ssize = (signed)sig->value_size();
       long end = base + (signed)wid;
 
@@ -366,7 +366,7 @@ static void format_vpiStringVal(vvp_signal_value*sig, int base, unsigned wid,
       /* The result will use a character for each 8 bits of the
 	 vector. Add one extra character for the highest bits that
 	 don't form an 8 bit group. */
-      char *rbuf = need_result_buf(wid/8 + ((wid&7)!=0) + 1, RBUF_VAL);
+      char *rbuf = (char *) need_result_buf(wid/8 + ((wid&7)!=0) + 1, RBUF_VAL);
       char *cp = rbuf;
 
       char tmp = 0;
@@ -550,10 +550,7 @@ static int signal_get(int code, vpiHandle ref)
 	    }
 
 	  case vpiSize:
-	    if (rfp->msb >= rfp->lsb)
-		  return rfp->msb - rfp->lsb + 1;
-	    else
-		  return rfp->lsb - rfp->msb + 1;
+	    return rfp->width();
 
 	  case vpiNetType:
 	    if (ref->get_type_code()==vpiNet)
@@ -562,10 +559,15 @@ static int signal_get(int code, vpiHandle ref)
 		  return vpiUndefined;
 
 	  case vpiLeftRange:
-            return rfp->msb;
+            return rfp->msb.get_value();
 
 	  case vpiRightRange:
-            return rfp->lsb;
+            return rfp->lsb.get_value();
+
+	  case vpiScalar:
+	    return (rfp->msb.get_value() == 0 && rfp->lsb.get_value() == 0);
+	  case vpiVector:
+	    return (rfp->msb.get_value() != rfp->lsb.get_value());
 
           case vpiAutomatic:
             return (int) vpip_scope(rfp)->is_automatic;
@@ -577,7 +579,7 @@ static int signal_get(int code, vpiHandle ref)
 
 	    // This private property must return zero when undefined.
 	  case _vpiNexusId:
-	    if (rfp->msb == rfp->lsb)
+	    if (rfp->msb.get_value() == rfp->lsb.get_value())
 		  return (int) (unsigned long) rfp->node;
 	    else
 		  return 0;
@@ -631,6 +633,11 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
 	  case vpiIndex:
 	    return rfp->is_netarray? rfp->id.index : 0;
 
+	  case vpiLeftRange:
+	    return &rfp->msb;
+	  case vpiRightRange:
+	    return &rfp->lsb;
+
 	  case vpiScope:
 	    return vpip_scope(rfp);
 
@@ -658,10 +665,10 @@ static vpiHandle signal_index(int idx, vpiHandle ref)
       struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
       assert(rfp);
 	/* Check to see if the index is in range. */
-      if (rfp->msb >= rfp->lsb) {
-	    if ((idx > rfp->msb) || (idx < rfp->lsb)) return 0;
+      if (rfp->msb.get_value() >= rfp->lsb.get_value()) {
+	    if ((idx > rfp->msb.get_value()) || (idx < rfp->lsb.get_value())) return 0;
       } else {
-	    if ((idx < rfp->msb) || (idx > rfp->lsb)) return 0;
+	    if ((idx < rfp->msb.get_value()) || (idx > rfp->lsb.get_value())) return 0;
       }
 	/* Return a handle for the individual bit. */
       cerr << "Sorry: Icarus does not currently support "
@@ -671,11 +678,11 @@ static vpiHandle signal_index(int idx, vpiHandle ref)
       return 0;
 }
 
-static unsigned signal_width(const struct __vpiSignal*rfp)
+unsigned __vpiSignal::width(void) const
 {
-      unsigned wid = (rfp->msb >= rfp->lsb)
-	    ? (rfp->msb - rfp->lsb + 1)
-	    : (rfp->lsb - rfp->msb + 1);
+      unsigned wid = (msb.get_value() >= lsb.get_value())
+	    ? (msb.get_value() - lsb.get_value() + 1)
+	    : (lsb.get_value() - msb.get_value() + 1);
 
       return wid;
 }
@@ -690,7 +697,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
       struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
       assert(rfp);
 
-      unsigned wid = signal_width(rfp);
+      unsigned wid = rfp->width();
 
       vvp_signal_value*vsig = dynamic_cast<vvp_signal_value*>(rfp->node->fil);
       assert(vsig);
@@ -812,9 +819,9 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 	/* Make a vvp_vector4_t vector to receive the translated value
 	   that we are going to poke. This will get populated
 	   differently depending on the format. */
-      wid = (rfp->msb >= rfp->lsb)
-	    ? (rfp->msb - rfp->lsb + 1)
-	    : (rfp->lsb - rfp->msb + 1);
+      wid = (rfp->msb.get_value() >= rfp->lsb.get_value())
+	    ? (rfp->msb.get_value() - rfp->lsb.get_value() + 1)
+	    : (rfp->lsb.get_value() - rfp->msb.get_value() + 1);
 
 
       vvp_vector4_t val = vec4_from_vpi_value(vp, wid);

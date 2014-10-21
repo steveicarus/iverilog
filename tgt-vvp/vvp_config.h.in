@@ -1,7 +1,7 @@
-#ifndef __vvp_config_H
-#define __vvp_config_H
+#ifndef IVL_vvp_config_H
+#define IVL_vvp_config_H
 /*
- * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,4 +33,4 @@
 # undef _LARGEFILE_SOURCE
 # undef _LARGEFILE64_SOURCE
 
-#endif /* __vvp_config_H */
+#endif /* IVL_vvp_config_H */

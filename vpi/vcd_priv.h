@@ -1,7 +1,7 @@
-#ifndef __vcd_priv_H
-#define __vcd_priv_H
+#ifndef IVL_vcd_priv_H
+#define IVL_vcd_priv_H
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -45,7 +45,7 @@ EXTERN const char *vcd_names_search(struct vcd_names_list_s*tab,
 
 EXTERN void vcd_names_sort(struct vcd_names_list_s*tab);
 
-EXTERN void vcd_names_delete();
+EXTERN void vcd_names_delete(struct vcd_names_list_s*tab);
 
 /*
  * Keep a map of nexus ident's to help with alias detection.
@@ -53,7 +53,7 @@ EXTERN void vcd_names_delete();
 EXTERN const char*find_nexus_ident(int nex);
 EXTERN void       set_nexus_ident(int nex, const char *id);
 
-EXTERN void nexus_ident_delete();
+EXTERN void nexus_ident_delete(void);
 
 /*
  * Keep a set of scope names to help with duplicate detection.
@@ -131,4 +131,4 @@ EXTERN PLI_INT32 sys_dumpvars_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name);
 
 #undef EXTERN
 
-#endif
+#endif /* IVL_vcd_priv_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,7 +57,7 @@ static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	/* This code is common to all the different types of array delays. */
       if (number_is_immediate(word_ix, IMM_WID, 0) &&
 	  !number_is_unknown(word_ix)) {
-	    fprintf(vvp_out, "    %%ix/load %u, %lu, 0; address\n",
+	    fprintf(vvp_out, "    %%ix/load %d, %ld, 0; address\n",
 		    word_ix_reg, get_number_immediate(word_ix));
       } else {
 	      /* Calculate array word index into index register 3 */
@@ -74,7 +74,7 @@ static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	      /* Calculated delay... */
 	    int delay_index = allocate_word();
 	    draw_eval_expr_into_integer(dexp, delay_index);
-	    fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
+	    fprintf(vvp_out, "    %%ix/mov 3, %d;\n", word_ix_reg);
 	    fprintf(vvp_out, "    %%assign/ar/d v%p, %d;\n", lsig,
 	                     delay_index);
 	    clr_word(word_ix_reg);
@@ -152,6 +152,7 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	    fprintf(vvp_out, "    %%flag_or %d, 4;\n", error_flag);
 
       } else if (part_off != 0) {
+
 	      /* Store word part select into part_off_reg */
 	    part_off_reg = allocate_word();
 	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0; part off\n",
@@ -169,6 +170,7 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	    }
 	    fprintf(vvp_out, "    %%assign/vec4/a/d v%p, %d, %d;\n",
 		    lsig, part_off_reg, delay_index);
+
 	    clr_word(delay_index);
 
       } else if (nevents != 0) {
@@ -411,7 +413,7 @@ void show_stmt_file_line(ivl_statement_t net, const char* desc)
 	       * should be reported/fixed. */
 	    unsigned lineno = ivl_stmt_lineno(net);
 	    assert(lineno);
-	    fprintf(vvp_out, "    %%file_line %d %u \"%s\";\n",
+	    fprintf(vvp_out, "    %%file_line %u %u \"%s\";\n",
 	            ivl_file_table_index(ivl_stmt_file(net)), lineno, desc);
       }
 }
@@ -1367,6 +1369,8 @@ static int show_stmt_disable(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
       ivl_scope_t target = ivl_stmt_call(net);
 
+      (void)sscope; /* Parameter is not used. */
+
 	/* A normal disable statement. */
       if (target) {
 	    show_stmt_file_line(net, "Disable statement.");
@@ -1544,6 +1548,7 @@ static int show_stmt_free(ivl_statement_t net)
  */
 static int show_stmt_noop(ivl_statement_t net)
 {
+      (void)net; /* Parameter is not used. */
       return 0;
 }
 
@@ -1791,12 +1796,66 @@ static int show_delete_method(ivl_statement_t net)
       return 0;
 }
 
+static int show_push_frontback_method(ivl_statement_t net)
+{
+      const char*stmt_name = ivl_stmt_name(net);
+
+      show_stmt_file_line(net, "queue: push_back");
+
+      const char*type_code = "?";
+      if (strcmp(stmt_name,"$ivl_queue_method$push_front") == 0)
+	    type_code = "qf";
+      else if (strcmp(stmt_name,"$ivl_queue_method$push_back") == 0)
+	    type_code = "qb";
+      else
+	    type_code = "??";
+
+      unsigned parm_count = ivl_stmt_parm_count(net);
+      if (parm_count != 2)
+	    return 1;
+
+      ivl_expr_t parm0 = ivl_stmt_parm(net,0);
+      assert(ivl_expr_type(parm0) == IVL_EX_SIGNAL);
+      ivl_signal_t var = ivl_expr_signal(parm0);
+      ivl_type_t var_type = ivl_signal_net_type(var);
+      assert(ivl_type_base(var_type)== IVL_VT_QUEUE);
+
+      ivl_type_t element_type = ivl_type_element(var_type);
+
+      ivl_expr_t parm1 = ivl_stmt_parm(net,1);
+      struct vector_info vec;
+      switch (ivl_type_base(element_type)) {
+	  case IVL_VT_REAL:
+	    draw_eval_real(parm1);
+	    fprintf(vvp_out, "    %%store/%s/r v%p_0;\n", type_code, var);
+	    break;
+	  case IVL_VT_STRING:
+	    draw_eval_string(parm1);
+	    fprintf(vvp_out, "    %%store/%s/str v%p_0;\n", type_code, var);
+	    break;
+	  default:
+	    vec = draw_eval_expr_wid(parm1, width_of_packed_type(element_type), STUFF_OK_RO);
+	    fprintf(vvp_out, "    %%set/%s v%p_0, %u, %u;\n",
+		    type_code, var, vec.base, vec.wid);
+	    if (vec.base >= 4) clr_vector(vec);
+	    break;
+      }
+
+      return 0;
+}
+
 static int show_system_task_call(ivl_statement_t net)
 {
       const char*stmt_name = ivl_stmt_name(net);
 
       if (strcmp(stmt_name,"$ivl_darray_method$delete") == 0)
 	    return show_delete_method(net);
+
+      if (strcmp(stmt_name,"$ivl_queue_method$push_front") == 0)
+	    return show_push_frontback_method(net);
+
+      if (strcmp(stmt_name,"$ivl_queue_method$push_back") == 0)
+	    return show_push_frontback_method(net);
 
       show_stmt_file_line(net, "System task call.");
 
@@ -1826,6 +1885,8 @@ static unsigned is_delayed_or_event_assign(ivl_scope_t scope,
       ivl_lval_t lval;
       ivl_expr_t rval;
       ivl_signal_t lsig, rsig;
+
+      (void)scope; /* Parameter is not used. */
 
 	/* We must have two block elements. */
       if (ivl_stmt_block_count(stmt) != 2) return 0;
@@ -1892,6 +1953,8 @@ static unsigned is_repeat_event_assign(ivl_scope_t scope,
       ivl_expr_t rval;
       ivl_signal_t lsig, rsig;
 
+      (void)scope; /* Parameter is not used. */
+
 	/* We must have three block elements. */
       if (ivl_stmt_block_count(stmt) != 3) return 0;
 	/* The first must be an assign. */
@@ -1953,6 +2016,9 @@ static unsigned is_wait(ivl_scope_t scope, ivl_statement_t stmt)
       ivl_statement_t while_wait, wait_x, wait_stmt;
       ivl_expr_t while_expr, expr;
       const char *bits;
+
+      (void)scope; /* Parameter is not used. */
+
 	/* We must have two block elements. */
       if (ivl_stmt_block_count(stmt) != 2) return 0;
 	/* The first must be a while. */
@@ -2093,6 +2159,9 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
       unsigned lineno = ivl_stmt_lineno(stmt);
       ivl_scope_t task_scope = 0;
       port_expr_t port_exprs;
+
+      (void)scope; /* Parameter is not used. */
+
 	/* Check to see if the block is of the basic form first.  */
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_statement_t tmp = ivl_stmt_block_stmt(stmt, idx);
@@ -2323,6 +2392,8 @@ int draw_process(ivl_process_t net, void*x)
       ivl_statement_t stmt = ivl_process_stmt(net);
 
       int push_flag = 0;
+
+      (void)x; /* Parameter is not used. */
 
       for (idx = 0 ;  idx < ivl_process_attr_cnt(net) ;  idx += 1) {
 

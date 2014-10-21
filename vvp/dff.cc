@@ -65,28 +65,121 @@ void vvp_dff::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	    break;
 
 	  case 3: // Asynch-D
-	      // FIXME! The code generator is writing an input C4<z>
-	      // no matter what the intent of this device. This is
-	      // almost certainly NOT correct, nor do we want to
-	      // propagate that. But that needs to be fixed later.
-	    if (bit.size() == 1 && bit.value(0)==BIT4_Z)
-		  break;
-	    if (d_.size() > bit.size())
-		  d_ .copy_bits(bit);
-	    else
-		  d_ = bit;
-	    port.ptr()->send_vec4(d_, 0);
+	    assert(0);
 	    break;
+      }
+}
+
+/*
+ * The recv_clear and recv_set function respond to asynchronout
+ * clear/set input by propagating the desired output.
+ *
+ * NOTE: Don't touch the d_ value, because that tracks the D input,
+ * which may be needed when the device is clocked afterwards.
+ */
+void vvp_dff::recv_clear(vvp_net_ptr_t port)
+{
+      vvp_vector4_t tmp = d_;
+      for (unsigned idx = 0 ; idx < d_.size() ; idx += 1)
+	    tmp.set_bit(idx, BIT4_0);
+
+      port.ptr()->send_vec4(tmp, 0);
+}
+
+void vvp_dff::recv_set(vvp_net_ptr_t port)
+{
+      vvp_vector4_t tmp = d_;
+      for (unsigned idx = 0 ; idx < d_.size() ; idx += 1)
+	    tmp.set_bit(idx, BIT4_1);
+
+      port.ptr()->send_vec4(tmp, 0);
+}
+
+vvp_dff_aclr::vvp_dff_aclr(bool invert_clk, bool invert_ce)
+: vvp_dff(invert_clk, invert_ce)
+{
+      a_ = BIT4_X;
+}
+
+void vvp_dff_aclr::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+			     vvp_context_t ctx)
+{
+      if (port.port() == 3) {
+
+	    assert(bit.size()==1);
+	    if (a_ == bit.value(0))
+		  return;
+
+	    a_ = bit.value(0);
+	    recv_clear(port);
+
+      } else {
+	    vvp_dff::recv_vec4(port, bit, ctx);
+      }
+}
+
+vvp_dff_aset::vvp_dff_aset(bool invert_clk, bool invert_ce)
+: vvp_dff(invert_clk, invert_ce)
+{
+      a_ = BIT4_X;
+}
+
+void vvp_dff_aset::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+			     vvp_context_t ctx)
+{
+      if (port.port() == 3) {
+
+	    assert(bit.size()==1);
+	    if (a_ == bit.value(0))
+		  return;
+
+	    a_ = bit.value(0);
+	    recv_set(port);
+
+      } else {
+	    vvp_dff::recv_vec4(port, bit, ctx);
       }
 }
 
 void compile_dff(char*label, struct symb_s arg_d,
 		 struct symb_s arg_c,
-		 struct symb_s arg_e,
-		 struct symb_s arg_a)
+		 struct symb_s arg_e)
 {
       vvp_net_t*ptr = new vvp_net_t;
       vvp_dff*fun = new vvp_dff(false, false);
+
+      ptr->fun = fun;
+      define_functor_symbol(label, ptr);
+      free(label);
+      input_connect(ptr, 0, arg_d.text);
+      input_connect(ptr, 1, arg_c.text);
+      input_connect(ptr, 2, arg_e.text);
+}
+
+void compile_dff_aclr(char*label, struct symb_s arg_d,
+		      struct symb_s arg_c,
+		      struct symb_s arg_e,
+		      struct symb_s arg_a)
+{
+      vvp_net_t*ptr = new vvp_net_t;
+      vvp_dff*fun = new vvp_dff_aclr(false, false);
+
+      ptr->fun = fun;
+      define_functor_symbol(label, ptr);
+      free(label);
+      input_connect(ptr, 0, arg_d.text);
+      input_connect(ptr, 1, arg_c.text);
+      input_connect(ptr, 2, arg_e.text);
+      input_connect(ptr, 3, arg_a.text);
+}
+
+void compile_dff_aset(char*label, struct symb_s arg_d,
+		      struct symb_s arg_c,
+		      struct symb_s arg_e,
+		      struct symb_s arg_a)
+{
+      vvp_net_t*ptr = new vvp_net_t;
+      vvp_dff*fun = new vvp_dff_aset(false, false);
 
       ptr->fun = fun;
       define_functor_symbol(label, ptr);

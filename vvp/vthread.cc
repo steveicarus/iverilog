@@ -140,6 +140,7 @@ struct vthread_s {
 	    }
       }
 
+
     private:
       vector<double> stack_real_;
     public:
@@ -300,11 +301,11 @@ struct __vpiScope* vthread_scope(struct vthread_s*thr)
 
 struct vthread_s*running_thread = 0;
 
+#if 0
 // this table maps the thread special index bit addresses to
 // vvp_bit4_t bit values.
 static vvp_bit4_t thr_index_to_bit4[4] = { BIT4_0, BIT4_1, BIT4_X, BIT4_Z };
 
-#if 0
 static inline void thr_check_addr(struct vthread_s*thr, unsigned addr)
 {
       if (thr->bits4.size() <= addr)
@@ -3741,7 +3742,13 @@ bool of_LOAD_DAR(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t word;
       darray->get_word(adr, word);
-      assert(word.size() == wid);
+
+      if (word.size() != wid) {
+	    cerr << __FILE__ << ":" << __LINE__
+		 << ": %load/dar element word.size()=" << word.size()
+		 << ", expecting wid=" << wid << "." << endl;
+	    abort();
+      }
 
       thr_check_addr(thr, bit+word.size());
       thr->bits4.set_vec(bit, word);
@@ -3974,6 +3981,29 @@ bool of_LOAD_OBJ(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %load/obja <index>
+ *    Loads the object from array, using index <index> as the index
+ *    value. If flags[4] == 1, the calculation of <index> may have
+ *    failed, so push nil.
+ */
+bool of_LOAD_OBJA(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx = cp->bit_idx[0];
+      unsigned adr = thr->words[idx].w_int;
+      vvp_object_t word;
+
+	/* The result is 0.0 if the address is undefined. */
+      if (thr->flags[4] == BIT4_1) {
+	    ; // Return nil
+      } else {
+	    array_get_word_obj(cp->array, adr, word);
+      }
+
+      thr->push_object(word);
+      return true;
+}
+
+/*
  * %load/real <var-label>
  */
 bool of_LOAD_REAL(vthread_t thr, vvp_code_t cp)
@@ -3989,7 +4019,9 @@ bool of_LOAD_REAL(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-
+/*
+ * %load/str <var-label>
+ */
 bool of_LOAD_STR(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
@@ -4828,7 +4860,8 @@ bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
       } else if (strcmp(text,"S") == 0) {
 	    obj = new vvp_darray_string(size);
       } else {
-	    obj = new vvp_darray (size);
+	      // XXXX This should not happen.
+	    obj = new vvp_darray_atom<uint8_t> (size);
       }
 
       thr->push_object(obj);
@@ -5157,19 +5190,25 @@ bool of_POW_WR(vthread_t thr, vvp_code_t)
 }
 
 /*
- * %prop/obj <pid>
+ * %prop/obj <pid>, <idx>
  *
  * Load an object value from the cobject and push it onto the object stack.
  */
 bool of_PROP_OBJ(vthread_t thr, vvp_code_t cp)
 {
       unsigned pid = cp->number;
+      unsigned idx = cp->bit_idx[0];
+
+      if (idx != 0) {
+	    assert(idx < vthread_s::WORDS_COUNT);
+	    idx = thr->words[idx].w_uint;
+      }
 
       vvp_object_t&obj = thr->peek_object();
       vvp_cobject*cobj = obj.peek<vvp_cobject>();
 
       vvp_object_t val;
-      cobj->get_object(pid, val);
+      cobj->get_object(pid, val, idx);
 
       thr->push_object(val);
 
@@ -5396,6 +5435,104 @@ bool of_PUTC_STR_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %qpop/b <var-label>, <bit>, <wid>
+ */
+bool of_QPOP_B(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      assert(dqueue);
+
+      size_t size = dqueue->get_size();
+      assert(size > 0);
+
+      vvp_vector4_t value;
+      dqueue->get_word(size-1, value);
+      dqueue->pop_back();
+
+      assert(value.size() == wid);
+#if 0
+      thr->bits4.set_vec(bit, value);
+#else
+      fprintf(stderr, "%%qpop/b <label>, %u, %u; NOT IMPLEMENTED\n", bit, wid);
+#endif
+      return true;
+}
+
+/*
+ * %qpop/f <var-label>, <bit>, <wid>
+ */
+bool of_QPOP_F(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      assert(dqueue);
+
+      size_t size = dqueue->get_size();
+      assert(size > 0);
+
+      vvp_vector4_t value;
+      dqueue->get_word(0, value);
+      dqueue->pop_front();
+
+      assert(value.size() == wid);
+#if 0
+      thr->bits4.set_vec(bit, value);
+#else
+      fprintf(stderr, "%%qpop/f <label>, %u, %u; NOT IMPLEMENTED\n", bit, wid);
+#endif
+      return true;
+}
+
+bool of_QPOP_B_STR(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      assert(dqueue);
+
+      size_t size = dqueue->get_size();
+      assert(size > 0);
+
+      string value;
+      dqueue->get_word(size-1, value);
+      dqueue->pop_back();
+
+      thr->push_str(value);
+      return true;
+}
+
+bool of_QPOP_F_STR(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      assert(dqueue);
+
+      string value;
+      dqueue->get_word(0, value);
+      dqueue->pop_front();
+
+      thr->push_str(value);
+      return true;
+}
 
 /*
  * These implement the %release/net and %release/reg instructions. The
@@ -5590,6 +5727,70 @@ bool of_SET_DAR_OBJ_VEC4(vthread_t thr, vvp_code_t cp)
       assert(darray);
 
       darray->set_word(adr, value);
+      return true;
+}
+
+/*
+ * %set/qb <var-label> <bit>, <wid>
+ */
+bool of_SET_QB(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+#if 0
+	/* Make a vector of the desired width. */
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      if (dqueue == 0) {
+	    assert(obj->get_object().test_nil());
+	    dqueue = new vvp_queue_vec4;
+	    vvp_object_t val (dqueue);
+	    vvp_net_ptr_t ptr (cp->net, 0);
+	    vvp_send_object(ptr, val, thr->wt_context);
+      }
+
+      assert(dqueue);
+      dqueue->push_back(value);
+#else
+      fprintf(stderr, "XXXX FORGOT TO IMPLEMENT %%set/qb\n");
+#endif
+      return true;
+}
+
+/*
+ * %set/qf <var-label> <bit>, <wid>
+ */
+bool of_SET_QF(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+#if 0
+	/* Make a vector of the desired width. */
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      if (dqueue == 0) {
+	    assert(obj->get_object().test_nil());
+	    dqueue = new vvp_queue_vec4;
+	    vvp_object_t val (dqueue);
+	    vvp_net_ptr_t ptr (cp->net, 0);
+	    vvp_send_object(ptr, val, thr->wt_context);
+      }
+
+      assert(dqueue);
+      dqueue->push_front(value);
+#else
+      fprintf(stderr, "XXXX FORGOT TO IMPLEMENT %%set/qf\n");
+#endif
       return true;
 }
 
@@ -5892,7 +6093,24 @@ bool of_STORE_OBJ(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %store/prop/obj <id>
+ * %store/obja <array-label> <index>
+ */
+bool of_STORE_OBJA(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx = cp->bit_idx[0];
+      unsigned adr = thr->words[idx].w_int;
+
+      vvp_object_t val;
+      thr->pop_object(val);
+
+      array_set_word(cp->array, adr, val);
+
+      return true;
+}
+
+
+/*
+ * %store/prop/obj <pid>, <idx>
  *
  * Pop an object value from the object stack, and store the value into
  * the property of the object references by the top of the stack. Do NOT
@@ -5901,6 +6119,13 @@ bool of_STORE_OBJ(vthread_t thr, vvp_code_t cp)
 bool of_STORE_PROP_OBJ(vthread_t thr, vvp_code_t cp)
 {
       size_t pid = cp->number;
+      unsigned idx = cp->bit_idx[0];
+
+      if (idx != 0) {
+	    assert(idx < vthread_s::WORDS_COUNT);
+	    idx = thr->words[idx].w_uint;
+      }
+
       vvp_object_t val;
       thr->pop_object(val);
 
@@ -5908,7 +6133,7 @@ bool of_STORE_PROP_OBJ(vthread_t thr, vvp_code_t cp)
       vvp_cobject*cobj = obj.peek<vvp_cobject>();
       assert(cobj);
 
-      cobj->set_object(pid, val);
+      cobj->set_object(pid, val, idx);
 
       return true;
 }
@@ -5970,6 +6195,60 @@ bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
       assert(cobj);
 
       cobj->set_vec4(pid, val);
+      return true;
+}
+
+/*
+ * %store/qb/r <var-label>
+ */
+bool of_STORE_QB_R(vthread_t, vvp_code_t)
+{
+      fprintf(stderr, "XXXX %%store/qb/r NOT IMPLEMENTED\n");
+      return true;
+}
+
+/*
+ * %store/qb/str <var-label>
+ */
+bool of_STORE_QB_STR(vthread_t thr, vvp_code_t cp)
+{
+	// Pop the string to be stored...
+      string value = thr->pop_str();
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      if (dqueue == 0) {
+	    assert(obj->get_object().test_nil());
+	    dqueue = new vvp_queue_string;
+	    vvp_object_t val (dqueue);
+	    vvp_net_ptr_t ptr (cp->net, 0);
+	    vvp_send_object(ptr, val, thr->wt_context);
+
+      }
+
+      assert(dqueue);
+      dqueue->push_back(value);
+      return true;
+}
+
+/*
+ * %store/qf/r <var-label>
+ */
+bool of_STORE_QF_R(vthread_t, vvp_code_t)
+{
+      fprintf(stderr, "XXXX %%store/qf/r NOT IMPLEMENTED\n");
+      return true;
+}
+
+/*
+ * %store/qf/str <var-label>
+ */
+bool of_STORE_QF_STR(vthread_t, vvp_code_t)
+{
+      fprintf(stderr, "XXXX %%store/qf/str NOT IMPLEMENTED\n");
       return true;
 }
 
@@ -6321,6 +6600,35 @@ bool of_TEST_NUL(vthread_t thr, vvp_code_t cp)
       else
 	    thr->flags[4] = BIT4_0;
 
+      return true;
+}
+
+bool of_TEST_NUL_A(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx = cp->bit_idx[0];
+      unsigned adr = thr->words[idx].w_int;
+      vvp_object_t word;
+
+	/* If the address is undefined, return true. */
+      if (thr->flags[4] == BIT4_1) {
+	    return true;
+      }
+
+      array_get_word_obj(cp->array, adr, word);
+      if (word.test_nil())
+	    thr->flags[4] = BIT4_1;
+      else
+	    thr->flags[4] = BIT4_0;
+
+      return true;
+}
+
+bool of_TEST_NUL_OBJ(vthread_t thr, vvp_code_t)
+{
+      if (thr->peek_object().test_nil())
+	    thr->flags[4] = BIT4_1;
+      else
+	    thr->flags[4] = BIT4_0;
       return true;
 }
 

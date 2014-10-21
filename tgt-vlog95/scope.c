@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2014 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 
 const char *func_rtn_name = 0;
 
-static char*get_time_const(int time_value)
+static const char*get_time_const(int time_value)
 {
       switch (time_value) {
 	case   2: return "100s";
@@ -51,7 +51,7 @@ static char*get_time_const(int time_value)
       }
 }
 
-void emit_func_return(ivl_signal_t sig)
+static void emit_func_return(ivl_signal_t sig)
 {
       if (ivl_signal_dimensions(sig) > 0) {
 	    fprintf(stderr, "%s:%u: vlog95 error: A function cannot return "
@@ -86,7 +86,7 @@ static void emit_sig_id(ivl_signal_t sig)
       fprintf(vlog_out, "\n");
 }
 
-void emit_var_def(ivl_signal_t sig)
+static void emit_var_def(ivl_signal_t sig)
 {
       if (ivl_signal_local(sig)) return;
       fprintf(vlog_out, "%*c", indent, ' ');
@@ -122,6 +122,14 @@ void emit_var_def(ivl_signal_t sig)
 	    emit_sig_id(sig);
 	    fprintf(stderr, "%s:%u: vlog95 error: SystemVerilog dynamic "
 	                    "arrays (%s) are not supported.\n",
+	                    ivl_signal_file(sig),
+	                    ivl_signal_lineno(sig), ivl_signal_basename(sig));
+	    vlog_errors += 1;
+      } else if (ivl_signal_data_type(sig) == IVL_VT_QUEUE) {
+	    fprintf(vlog_out, "<queue> ");
+	    emit_sig_id(sig);
+	    fprintf(stderr, "%s:%u: vlog95 error: SystemVerilog queues "
+	                    "(%s) are not supported.\n",
 	                    ivl_signal_file(sig),
 	                    ivl_signal_lineno(sig), ivl_signal_basename(sig));
 	    vlog_errors += 1;
@@ -199,7 +207,7 @@ static void save_net_constants(ivl_scope_t scope, ivl_signal_t sig)
       }
 }
 
-void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
+static void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
 {
       int msb, lsb;
       get_sig_msb_lsb(sig, &msb, &lsb);
@@ -414,7 +422,14 @@ static ivl_signal_t get_port_from_nexus(ivl_scope_t scope, ivl_nexus_t nex,
 static void emit_sig_type(ivl_signal_t sig)
 {
       ivl_signal_type_t type = ivl_signal_type(sig);
-      assert(ivl_signal_dimensions(sig) == 0);
+      if (ivl_signal_dimensions(sig) != 0) {
+	    fprintf(stderr, "%s:%u: vlog95 error: Array ports (%s) are not "
+	                    "supported.\n",
+	                    ivl_signal_file(sig),
+	                    ivl_signal_lineno(sig),
+	                    ivl_signal_basename(sig));
+	    vlog_errors += 1;
+      }
 	/* Check to see if we have a variable (reg) or a net. */
       if (type == IVL_SIT_REG) {
 	    if (ivl_signal_integer(sig)) {
@@ -718,6 +733,7 @@ static int find_tf_process(ivl_process_t proc, ivl_scope_t scope)
 static int emit_tf_process(ivl_scope_t scope, ivl_scope_t parent)
 {
       ivl_scope_type_t sc_type = ivl_scope_type(scope);
+      (void)parent;  /* Parameter is not used. */
       if ((sc_type == IVL_SCT_FUNCTION) || (sc_type == IVL_SCT_TASK)) {
 	/* Output the initial/always blocks for this module. */
 	    ivl_design_process(design, (ivl_process_f)find_tf_process, scope);
@@ -1039,6 +1055,8 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    emit_module_ports(scope);
 	    break;
 	case IVL_SCT_FUNCTION:
+	      /* Root scope functions have already been emitted. */
+	    if (! parent) return 0;
 	    assert(indent != 0);
 	    fprintf(vlog_out, "\n%*cfunction", indent, ' ');
 	    if (ivl_scope_ports(scope) < 1) {
@@ -1061,6 +1079,8 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    }
 	    break;
 	case IVL_SCT_TASK:
+	      /* Root scope tasks have already been emitted. */
+	    if (! parent) return 0;
 	    assert(indent != 0);
 	    fprintf(vlog_out, "\n%*ctask ", indent, ' ');
 	    emit_id(ivl_scope_tname(scope));

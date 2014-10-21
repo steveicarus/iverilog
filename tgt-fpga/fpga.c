@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -39,11 +39,10 @@ device_t device = 0;
 int scope_has_attribute(ivl_scope_t s, const char *name)
 {
       int i;
-      const struct ivl_attribute_s *a;
       for (i=0; i<ivl_scope_attr_cnt(s); i++) {
-	      a = ivl_scope_attr_val(s, i);
-	      if (strcmp(a->key,name) == 0)
-		    return 1;
+	    const struct ivl_attribute_s *a;
+	    a = ivl_scope_attr_val(s, i);
+	    if (strcmp(a->key,name) == 0) return 1;
       }
       return 0;
 }

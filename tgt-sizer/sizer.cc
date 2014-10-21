@@ -156,7 +156,27 @@ static void show_stats(struct sizer_statistics&stats)
 
       for (map<unsigned,unsigned>::const_iterator cur = stats.adder_count.begin()
 		 ; cur != stats.adder_count.end() ; ++ cur) {
-	    fprintf(sizer_out, "     ADDER[%u]: %u\n", cur->first, cur->second);
+	    fprintf(sizer_out, "     ADDER[%u]: %u units\n", cur->first, cur->second);
+      }
+
+      for (map<unsigned,unsigned>::const_iterator cur = stats.equality_count.begin()
+		 ; cur != stats.equality_count.end() ; ++ cur) {
+	    fprintf(sizer_out, "     EQUALITY[%u]: %u units\n", cur->first, cur->second);
+      }
+
+      for (map<unsigned,unsigned>::const_iterator cur = stats.equality_wc_count.begin()
+		 ; cur != stats.equality_wc_count.end() ; ++ cur) {
+	    fprintf(sizer_out, "     EQUALITY_WC[%u]: %u units\n", cur->first, cur->second);
+      }
+
+      for (map<unsigned,unsigned>::const_iterator cur = stats.magnitude_count.begin()
+		 ; cur != stats.magnitude_count.end() ; ++ cur) {
+	    fprintf(sizer_out, "     MAGNITUDE[%u]: %u units\n", cur->first, cur->second);
+      }
+
+      for (map<unsigned,unsigned>::const_iterator cur = stats.mux_count.begin()
+		 ; cur != stats.mux_count.end() ; ++ cur) {
+	    fprintf(sizer_out, "     MUX[%u]: %u slices\n", cur->first, cur->second);
       }
 
 	// These are diagnostic outputs for when more detail is needed.
@@ -173,11 +193,9 @@ static void show_stats(struct sizer_statistics&stats)
 
 unsigned get_nexus_width(ivl_nexus_t nex)
 {
-      ivl_signal_t sig = 0;
-
       for (unsigned idx = 0 ; idx < ivl_nexus_ptrs(nex) ; idx += 1) {
 	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex,idx);
-	    sig = ivl_nexus_ptr_sig(ptr);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
 	    if (sig) return ivl_signal_width(sig);
       }
 
@@ -194,6 +212,23 @@ struct sizer_statistics& sizer_statistics::operator += (const sizer_statistics&t
       for (map<unsigned,unsigned>::const_iterator cur = that.adder_count.begin()
 		 ; cur != that.adder_count.end() ; ++ cur)
 	    adder_count[cur->first] += cur->second;
+
+      for (map<unsigned,unsigned>::const_iterator cur = that.equality_count.begin()
+		 ; cur != that.equality_count.end() ; ++ cur)
+	    equality_count[cur->first] += cur->second;
+
+      for (map<unsigned,unsigned>::const_iterator cur = that.equality_wc_count.begin()
+		 ; cur != that.equality_wc_count.end() ; ++ cur)
+	    equality_wc_count[cur->first] += cur->second;
+
+      for (map<unsigned,unsigned>::const_iterator cur = that.magnitude_count.begin()
+		 ; cur != that.magnitude_count.end() ; ++ cur)
+	    magnitude_count[cur->first] += cur->second;
+
+
+      for (map<unsigned,unsigned>::const_iterator cur = that.mux_count.begin()
+		 ; cur != that.mux_count.end() ; ++ cur)
+	    mux_count[cur->first] += cur->second;
 
 
       for (map<ivl_lpm_type_t,unsigned>::const_iterator cur = that.lpm_bytype.begin()

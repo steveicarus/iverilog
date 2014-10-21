@@ -1,7 +1,7 @@
-#ifndef __PTask_H
-#define __PTask_H
+#ifndef IVL_PTask_H
+#define IVL_PTask_H
 /*
- * Copyright (c) 1999-2008,2010,2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -48,6 +48,12 @@ class PTaskFunc : public PScope, public LineInfo {
 	// If this task is a method of a class, this returns a pointer
 	// to the class type.
       inline class_type_t* method_of() const { return this_type_; }
+
+
+      virtual void elaborate_sig(Design*des, NetScope*scope) const =0;
+      virtual void elaborate(Design*des, NetScope*scope) const =0;
+
+      virtual void dump(std::ostream&, unsigned) const =0;
 
     protected:
 	// Elaborate the ports list. Write into the ports vector the
@@ -146,4 +152,4 @@ class PFunction : public PTaskFunc {
       bool is_auto_;
 };
 
-#endif
+#endif /* IVL_PTask_H */

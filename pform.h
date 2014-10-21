@@ -1,7 +1,7 @@
-#ifndef __pform_H
-#define __pform_H
+#ifndef IVL_pform_H
+#define IVL_pform_H
 /*
- * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -168,10 +168,7 @@ extern void pform_module_define_port(const struct vlltype&li,
 				     perm_string name,
 				     NetNet::PortType,
 				     NetNet::Type type,
-				     ivl_variable_type_t data_type,
-				     bool signed_flag,
 				     data_type_t*vtype,
-				     list<pform_range_t>*range,
 				     list<named_pexpr_t>*attr);
 
 extern Module::port_t* pform_module_port_reference(perm_string name,
@@ -288,6 +285,12 @@ extern PCallTask* pform_make_call_task(const struct vlltype&loc,
 				       const pform_name_t&name,
 				       const std::list<PExpr*>&parms);
 
+extern void pform_make_foreach_declarations(const struct vlltype&loc,
+					    std::list<perm_string>*loop_vars);
+extern PForeach* pform_make_foreach(const struct vlltype&loc,
+				    char*ident,
+				    std::list<perm_string>*loop_vars,
+				    Statement*stmt);
 
 /*
  * The makewire functions announce to the pform code new wires. These
@@ -352,7 +355,7 @@ extern void pform_set_data_type(const struct vlltype&li, data_type_t*, list<perm
 
 extern void pform_set_struct_type(struct_type_t*struct_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
 
-extern void pform_set_string_type(string_type_t*string_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
+extern void pform_set_string_type(const string_type_t*string_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
 
 extern void pform_set_class_type(class_type_t*class_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*addr);
 
@@ -409,6 +412,7 @@ extern void pform_module_specify_path(PSpecPath*obj);
  */
 extern PProcess*  pform_make_behavior(ivl_process_type_t, Statement*,
 				      list<named_pexpr_t>*attr);
+extern void pform_mc_translate_on(bool flag);
 
 extern std::vector<PWire*>* pform_make_udp_input_ports(list<perm_string>*);
 
@@ -526,4 +530,4 @@ extern void pform_set_timeunit(const char*txt, bool in_module, bool only_check);
 extern void pform_set_timeprecision(const char*txt, bool in_module,
                                     bool only_check);
 
-#endif
+#endif /* IVL_pform_H */

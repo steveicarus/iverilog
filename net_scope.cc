@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -96,6 +96,11 @@ const NetExpr* Definitions::enumeration_expr(perm_string key)
       }
 }
 
+void Definitions::add_class(netclass_t*net_class)
+{
+      classes_[net_class->get_name()] = net_class;
+}
+
 /*
  * The NetScope class keeps a scope tree organized. Each node of the
  * scope tree points to its parent, its right sibling and its leftmost
@@ -130,7 +135,6 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest, bo
 	    time_unit_ = 0;
 	    time_prec_ = 0;
 	    time_from_timescale_ = false;
-	    assert(t==MODULE || t==PACKAGE || t==CLASS);
       }
 
       switch (t) {
@@ -187,6 +191,22 @@ void NetScope::set_line(perm_string file, perm_string def_file,
       def_file_ = def_file;
       lineno_ = lineno;
       def_lineno_ = def_lineno;
+}
+
+/*
+ * Look for the enumeration in the current scope and any parent scopes.
+ */
+const netenum_t*NetScope::find_enumeration_for_name(perm_string name)
+{
+      NetScope *cur_scope = this;
+      while (cur_scope) {
+	    NetEConstEnum*tmp = cur_scope->enum_names_[name];
+	    if (tmp) break;
+	    cur_scope = cur_scope->parent();
+      }
+
+      assert(cur_scope);
+      return cur_scope->enum_names_[name]->enumeration();
 }
 
 void NetScope::set_parameter(perm_string key, bool is_annotatable,
@@ -616,14 +636,9 @@ NetNet* NetScope::find_signal(perm_string key)
 	    return 0;
 }
 
-void NetScope::add_class(netclass_t*net_class)
-{
-      classes_[net_class->get_name()] = net_class;
-}
-
 netclass_t*NetScope::find_class(perm_string name)
 {
-	// Special class: The scope itself is the class that we are
+	// Special case: The scope itself is the class that we are
 	// looking for. This may happen for example when elaborating
 	// methods within the class.
       if (type_==CLASS && name_==hname_t(name))
@@ -637,6 +652,13 @@ netclass_t*NetScope::find_class(perm_string name)
 	// If this is a module scope, then look no further.
       if (type_==MODULE)
 	    return 0;
+
+      if (up_==0 && type_==CLASS) {
+	    assert(class_def_);
+
+	    NetScope*def_parent = class_def_->definition_scope();
+	    return def_parent->find_class(name);
+      }
 
 	// If there is no further to look, ...
       if (up_ == 0)
@@ -667,6 +689,47 @@ const NetScope* NetScope::child(const hname_t&name) const
       else
 	    return cur->second;
 }
+
+/* Helper function to see if the given scope is defined in a class and if
+ * so return the class scope. */
+const NetScope* NetScope::get_class_scope() const
+{
+      const NetScope*scope = this;
+      while (scope) {
+	    switch(scope->type()) {
+		case NetScope::CLASS:
+		  return scope;
+		case NetScope::TASK:
+		case NetScope::FUNC:
+		case NetScope::BEGIN_END:
+		case NetScope::FORK_JOIN:
+		  break;
+		case NetScope::MODULE:
+		case NetScope::GENBLOCK:
+		case NetScope::PACKAGE:
+		  return 0;
+		default:
+		  assert(0);
+	    }
+	    scope = scope->parent();
+      }
+      return scope;
+}
+
+const NetScope* NetScope::child_byname(perm_string name) const
+{
+      hname_t hname (name);
+      map<hname_t,NetScope*>::const_iterator cur = children_.lower_bound(hname);
+
+      if (cur == children_.end())
+	    return 0;
+
+      if (cur->first.peek_name() == name)
+	    return cur->second;
+
+      return 0;
+}
+
 
 perm_string NetScope::local_symbol()
 {

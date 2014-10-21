@@ -182,6 +182,14 @@ NetEEvent* NetEEvent::dup_expr() const
       return 0;
 }
 
+NetELast* NetELast::dup_expr() const
+{
+      NetELast*tmp = new NetELast(sig_);
+      ivl_assert(*this, tmp);
+      tmp->set_line(*this);
+      return tmp;
+}
+
 NetENetenum* NetENetenum::dup_expr() const
 {
       ivl_assert(*this, 0);
@@ -249,6 +257,7 @@ NetESignal* NetESignal::dup_expr() const
       NetESignal*tmp = new NetESignal(net_, word_);
       ivl_assert(*this, tmp);
       tmp->expr_width(expr_width());
+      tmp->cast_signed(has_sign());
       tmp->set_line(*this);
       return tmp;
 }

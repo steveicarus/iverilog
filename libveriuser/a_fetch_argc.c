@@ -19,6 +19,7 @@
 
 # include  <vpi_user.h>
 # include  <veriuser.h>
+# include  <acc_user.h>
 
 /*
  * acc_fetch_argc implemented using VPI interface

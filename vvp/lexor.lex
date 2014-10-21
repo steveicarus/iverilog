@@ -124,6 +124,7 @@ static char* strdupnew(char const *str)
 ".array/2s" { return K_ARRAY_2S; }
 ".array/2u"  { return K_ARRAY_2U; }
 ".array/i"  { return K_ARRAY_I; }
+".array/obj" { return K_ARRAY_OBJ; }
 ".array/real" { return K_ARRAY_R; }
 ".array/s" { return K_ARRAY_S; }
 ".array/str" { return K_ARRAY_STR; }
@@ -134,6 +135,8 @@ static char* strdupnew(char const *str)
 ".cast/real.s" { return K_CAST_REAL_S; }
 ".class" { return K_CLASS; }
 ".cmp/eeq"  { return K_CMP_EEQ; }
+".cmp/eqx"  { return K_CMP_EQX; }
+".cmp/eqz"  { return K_CMP_EQZ; }
 ".cmp/eq"   { return K_CMP_EQ; }
 ".cmp/eq.r" { return K_CMP_EQ_R; }
 ".cmp/nee"  { return K_CMP_NEE; }
@@ -149,6 +152,8 @@ static char* strdupnew(char const *str)
 ".concat8"  { return K_CONCAT8; }
 ".delay"    { return K_DELAY; }
 ".dff"      { return K_DFF; }
+".dff/aclr" { return K_DFF_ACLR; }
+".dff/aset" { return K_DFF_ASET; }
 ".enum2"    { return K_ENUM2; }
 ".enum2/s"  { return K_ENUM2_S; }
 ".enum4"    { return K_ENUM4; }
@@ -193,6 +198,7 @@ static char* strdupnew(char const *str)
 ".shift/l"  { return K_SHIFTL; }
 ".shift/r"  { return K_SHIFTR; }
 ".shift/rs" { return K_SHIFTRS; }
+".substitute" { return K_SUBSTITUTE; }
 ".thread"   { return K_THREAD; }
 ".timescale" { return K_TIMESCALE; }
 ".tran"     { return K_TRAN; }
@@ -204,6 +210,7 @@ static char* strdupnew(char const *str)
 ".var"      { return K_VAR; }
 ".var/cobj" { return K_VAR_COBJECT; }
 ".var/darray" { return K_VAR_DARRAY; }
+".var/queue"  { return K_VAR_QUEUE; }
 ".var/real" { return K_VAR_R; }
 ".var/s"    { return K_VAR_S; }
 ".var/str"  { return K_VAR_STR; }

@@ -167,6 +167,11 @@ bool NetSignExtend::emit_node(struct target_t*tgt) const
       return tgt->sign_extend(this);
 }
 
+bool NetSubstitute::emit_node(struct target_t*tgt) const
+{
+      return tgt->substitute(this);
+}
+
 bool NetUReduce::emit_node(struct target_t*tgt) const
 {
       return tgt->ureduce(this);
@@ -281,6 +286,11 @@ bool NetForever::emit_proc(struct target_t*tgt) const
 {
       tgt->proc_forever(this);
       return true;
+}
+
+bool NetForLoop::emit_proc(struct target_t*tgt) const
+{
+      return tgt->proc_block(as_block_);
 }
 
 bool NetFree::emit_proc(struct target_t*tgt) const
@@ -399,14 +409,13 @@ void NetRepeat::emit_recurse(struct target_t*tgt) const
 void netclass_t::emit_scope(struct target_t*tgt) const
 {
       class_scope_->emit_scope(tgt);
-      class_scope_->emit_defs(tgt);
 }
 
 void NetScope::emit_scope(struct target_t*tgt) const
 {
       if (debug_emit) {
 	    cerr << "NetScope::emit_scope: "
-		 << "Emit scope basename=" << basename() << endl;
+		 << "Emit scope " << scope_path(this) << endl;
       }
 
       tgt->scope(this);
@@ -451,11 +460,19 @@ bool NetScope::emit_defs(struct target_t*tgt) const
 {
       bool flag = true;
 
+      if (debug_emit) {
+	    cerr << "NetScope::emit_defs: "
+		 << "Emit definitions for " << scope_path(this) << endl;
+      }
+
       switch (type_) {
 	  case PACKAGE:
 	  case MODULE:
 	    for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
 		       ; cur != children_.end() ; ++ cur )
+		  flag &= cur->second->emit_defs(tgt);
+	    for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
+		       ; cur != classes_.end() ; ++ cur)
 		  flag &= cur->second->emit_defs(tgt);
 	    break;
 
@@ -475,6 +492,11 @@ bool NetScope::emit_defs(struct target_t*tgt) const
       return flag;
 }
 
+bool netclass_t::emit_defs(struct target_t*tgt) const
+{
+      return class_scope_->emit_defs(tgt);
+}
+
 int Design::emit(struct target_t*tgt) const
 {
       int rc = 0;
@@ -482,10 +504,24 @@ int Design::emit(struct target_t*tgt) const
       if (tgt->start_design(this) == false)
 	    return -2;
 
+      for (map<NetScope*,PTaskFunc*>::const_iterator scope = root_tasks_.begin()
+		 ; scope != root_tasks_.end() ; ++ scope) {
+	    scope->first->emit_scope(tgt);
+	    scope->first->emit_defs(tgt);
+      }
+
 	// enumerate package scopes
       for (map<perm_string,NetScope*>::const_iterator scope = packages_.begin()
 		 ; scope != packages_.end() ; ++ scope) {
 	    scope->second->emit_scope(tgt);
+      }
+
+      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
+		 ; cur != classes_.end() ; ++cur) {
+	    const NetScope*use_scope = cur->second->class_scope();
+	    cur->second->emit_scope(tgt);
+	    tgt->class_type(use_scope, cur->second);
+	    cur->second->emit_defs(tgt);
       }
 
 	// enumerate root scopes
@@ -598,6 +634,11 @@ void NetECRealParam::expr_scan(struct expr_scan_t*tgt) const
 void NetEEvent::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_event(this);
+}
+
+void NetELast::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_last(this);
 }
 
 void NetENetenum::expr_scan(struct expr_scan_t*tgt) const

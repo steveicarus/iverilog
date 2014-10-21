@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2000 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -74,6 +74,8 @@ static PLI_INT32 sys_deposit_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpiHandle callh, argv, target, value;
       s_vpi_value val;
 
+      (void)name; /* Parameter is not used. */
+
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
       target = vpi_scan(argv);
@@ -90,7 +92,7 @@ static PLI_INT32 sys_deposit_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-void sys_deposit_register()
+void sys_deposit_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;

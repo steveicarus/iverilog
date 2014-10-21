@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -144,8 +144,8 @@ static void show_this_item_x(struct vcd_info*info)
  * managed qsorted list of scope names/variables for duplicates bsearching
  */
 
-struct vcd_names_list_s vcd_tab = { 0 };
-struct vcd_names_list_s vcd_var = { 0 };
+struct vcd_names_list_s vcd_tab = { 0, 0, 0, 0 };
+struct vcd_names_list_s vcd_var = { 0, 0, 0, 0 };
 
 
 static int dumpvars_status = 0; /* 0:fresh 1:cb installed, 2:callback done */
@@ -159,7 +159,7 @@ __inline__ static int dump_header_pending(void)
  * This function writes out all the traced variables, whether they
  * changed or not.
  */
-static void vcd_checkpoint()
+static void vcd_checkpoint(void)
 {
       struct vcd_info*cur;
 
@@ -167,7 +167,7 @@ static void vcd_checkpoint()
 	    show_this_item(cur);
 }
 
-static void vcd_checkpoint_x()
+static void vcd_checkpoint_x(void)
 {
       struct vcd_info*cur;
 
@@ -317,6 +317,8 @@ static PLI_INT32 sys_dumpoff_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       s_vpi_time now;
       PLI_UINT64 now64;
 
+      (void)name; /* Parameter is not used. */
+
       if (dump_is_off) return 0;
 
       dump_is_off = 1;
@@ -345,6 +347,8 @@ static PLI_INT32 sys_dumpon_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       s_vpi_time now;
       PLI_UINT64 now64;
 
+      (void)name; /* Parameter is not used. */
+
       if (!dump_is_off) return 0;
 
       dump_is_off = 0;
@@ -372,6 +376,8 @@ static PLI_INT32 sys_dumpall_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       s_vpi_time now;
       PLI_UINT64 now64;
+
+      (void)name; /* Parameter is not used. */
 
       if (dump_is_off) return 0;
       if (dump_file == 0) return 0;
@@ -475,6 +481,7 @@ static PLI_INT32 sys_dumpfile_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 static PLI_INT32 sys_dumpflush_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
+      (void)name; /* Parameter is not used. */
       if (dump_file) fflush(dump_file);
 
       return 0;
@@ -485,6 +492,8 @@ static PLI_INT32 sys_dumplimit_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       s_vpi_value val;
+
+      (void)name; /* Parameter is not used. */
 
       /* Get the value and set the dump limit. */
       val.format = vpiIntVal;
@@ -763,6 +772,8 @@ static PLI_INT32 sys_dumpvars_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       s_vpi_value value;
       unsigned depth = 0;
 
+      (void)name; /* Parameter is not used. */
+
       if (dump_file == 0) {
 	    open_dumpfile(callh);
 	    if (dump_file == 0) {
@@ -855,7 +866,7 @@ static PLI_INT32 sys_dumpvars_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-void sys_vcd_register()
+void sys_vcd_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;

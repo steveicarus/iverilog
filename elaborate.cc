@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -40,6 +40,7 @@
 # include  "netlist.h"
 # include  "netvector.h"
 # include  "netdarray.h"
+# include  "netparray.h"
 # include  "netclass.h"
 # include  "netmisc.h"
 # include  "util.h"
@@ -77,11 +78,19 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    return;
       }
 
+	// If this turns out to be an assignment to an unpacked array,
+	// then handle that special case elsewhere.
+      if (lval->pin_count() > 1) {
+	    elaborate_unpacked_array_(des, scope, lval);
+	    return;
+      }
+
       ivl_assert(*this, lval->pin_count() == 1);
 
       if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: PGAssign: elaborated l-value"
-		 << " width=" << lval->vector_width() << endl;
+	    cerr << get_fileline() << ": PGAssign::elaborate: elaborated l-value"
+		 << " width=" << lval->vector_width()
+		 << ", pin_count=" << lval->pin_count() << endl;
       }
 
       NetExpr*rval_expr = elaborate_rval_expr(des, scope, lval->net_type(),
@@ -209,6 +218,18 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       if (lval->local_flag())
 	    delete lval;
 
+}
+
+void PGAssign::elaborate_unpacked_array_(Design*des, NetScope*scope, NetNet*lval) const
+{
+      PEIdent*rval_pident = dynamic_cast<PEIdent*> (pin(1));
+      ivl_assert(*this, rval_pident);
+
+      NetNet*rval_net = rval_pident->elaborate_unpacked_net(des, scope);
+
+      ivl_assert(*this, rval_net->pin_count() == lval->pin_count());
+
+      assign_unpacked_with_bufz(des, scope, this, lval, rval_net);
 }
 
 unsigned PGBuiltin::calculate_array_count_(Design*des, NetScope*scope,
@@ -1287,6 +1308,10 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  perm_string pname = peek_tail_name(mport[0]->path());
 
 		  NetNet*tmp = instance[0]->find_signal(pname);
+
+		    // Handle the error case where there is no internal
+		    // signal connected to the port.
+		  if (!tmp) continue;
 		  assert(tmp);
 
 		  if (tmp->port_type() == NetNet::PINPUT) {
@@ -1350,18 +1375,22 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  unsigned int prt_vector_width = 0;
 		  PortType::Enum ptype = PortType::PIMPLICIT;
 		    // Scan the module sub-ports for this instance...
+		    // (Sub-ports are concatenated ports that form the
+		    // single port for the instance. This is not a
+		    // commonly used feature.)
 		  for (unsigned ldx = 0 ;  ldx < mport.size() ;  ldx += 1) {
 			unsigned lbase = inst * mport.size();
 			PEIdent*pport = mport[ldx];
-			assert(pport);
+			ivl_assert(*this, pport);
 			NetNet *netnet = pport->elaborate_subport(des, inst_scope);
 			prts[lbase + ldx] = netnet;
 			if (netnet == 0)
 			      continue;
 
-			assert(netnet);
-			prts_vector_width += netnet->vector_width();
-			prt_vector_width += netnet->vector_width();
+			ivl_assert(*this, netnet);
+			unsigned port_width = netnet->vector_width() * netnet->pin_count();
+			prts_vector_width += port_width;
+			prt_vector_width += port_width;
 			ptype = PortType::merged(netnet->port_type(), ptype);
 		  }
 		  inst_scope->add_module_port_info(idx, rmod->get_port_name(idx), ptype, prt_vector_width );
@@ -1392,8 +1421,24 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // module[s] port. sig is the thing outside the module
 	      // that connects to the port.
 
-	    NetNet*sig;
+	    NetNet*sig = 0;
 	    if (prts.empty() || (prts[0]->port_type() == NetNet::PINPUT)) {
+
+		    // Special case: If the input port is an unpacked
+		    // array, then there should be no sub-ports and
+		    // the r-value expression is processed
+		    // differently.
+		  if (prts.size() >= 1 && prts[0]->pin_count()>1) {
+			ivl_assert(*this, prts.size()==1);
+
+			PEIdent*rval_pident = dynamic_cast<PEIdent*> (pins[idx]);
+			ivl_assert(*this, rval_pident);
+
+			NetNet*rval_net = rval_pident->elaborate_unpacked_net(des, scope);
+			ivl_assert(*this, rval_net->pin_count() == prts[0]->pin_count());
+			assign_unpacked_with_bufz(des, scope, this, prts[0], rval_net);
+			continue;
+		  }
 
 		    /* Input to module. elaborate the expression to
 		       the desired width. If this in an instance
@@ -1471,6 +1516,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	    } else if (prts[0]->port_type() == NetNet::PINOUT) {
 
+		    // For now, do not support unpacked array outputs.
+		  ivl_assert(*this, prts[0]->unpacked_dimensions()==0);
+
 		    /* Inout to/from module. This is a more
 		       complicated case, where the expression must be
 		       an lnet, but also an r-value net.
@@ -1529,6 +1577,28 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 		    /* Port type must be OUTPUT here. */
 		  ivl_assert(*this, prts[0]->port_type() == NetNet::POUTPUT);
+
+		    // Special case: If the output port is an unpacked
+		    // array, then there should be no sub-ports and
+		    // the passed pexxpression is processed
+		    // differently. Note that we are calling it the
+		    // "r-value" expression, but since this is an
+		    // output port, we assign to it from the internal object.
+		  if (prts[0]->pin_count() > 1) {
+			ivl_assert(*this, prts.size()==1);
+
+			PEIdent*rval_pident = dynamic_cast<PEIdent*>(pins[idx]);
+			ivl_assert(*this, rval_pident);
+
+			NetNet*rval_net = rval_pident->elaborate_unpacked_net(des, scope);
+			ivl_assert(*this, rval_net->pin_count() == prts[0]->pin_count());
+
+			assign_unpacked_with_bufz(des, scope, this, rval_net, prts[0]);
+			continue;
+		  }
+
+		    // At this point, arrays are handled.
+		  ivl_assert(*this, prts[0]->unpacked_dimensions()==0);
 
 		    /* Output from module. Elaborate the port
 		       expression as the l-value of a continuous
@@ -2221,6 +2291,14 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
 	    NetAssign_*lv = new NetAssign_(tmp);
 	    return lv;
       }
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PAssign_::elaborate_lval: "
+		 << "lval_ = " << *lval_ << endl;
+	    cerr << get_fileline() << ": PAssign_::elaborate_lval: "
+		 << "lval_ expr type = " << typeid(*lval_).name() << endl;
+      }
+
       return lval_->elaborate_lval(des, scope, false, false);
 }
 
@@ -2449,6 +2527,23 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    if (lv->word())
 		  use_lv_type = dtype->element_type();
 
+	    rv = elaborate_rval_(des, scope, use_lv_type);
+
+      } else if (const netuarray_t*utype = dynamic_cast<const netuarray_t*>(lv_net_type)) {
+	    ivl_assert(*this, lv->more==0);
+	    if (debug_elaborate) {
+		  if (lv->word())
+			cerr << get_fileline() << ": PAssign::elaborate: "
+			     << "lv->word() = " << *lv->word() << endl;
+		  else
+			cerr << get_fileline() << ": PAssign::elaborate: "
+			     << "lv->word() = <nil>" << endl;
+	    }
+	    ivl_type_t use_lv_type = lv_net_type;
+	    ivl_assert(*this, lv->word());
+	    use_lv_type = utype->element_type();
+
+	    ivl_assert(*this, use_lv_type);
 	    rv = elaborate_rval_(des, scope, use_lv_type);
 
       } else {
@@ -3118,7 +3213,6 @@ NetProc* PChainConstructor::elaborate(Design*des, NetScope*scope) const
       NetBlock*tmp = new NetBlock(NetBlock::SEQU, 0);
       tmp->set_line(*this);
       return tmp;
-      return 0;
 }
 
 NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
@@ -3345,6 +3439,17 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       }
       assert(def);
 
+	/* In SystemVerilog a method calling another method in the
+	 * current class needs to be elaborated as a method with an
+	 * implicit this added.  */
+      if (gn_system_verilog() && (path_.size() == 1)) {
+	    const NetScope *c_scope = scope->get_class_scope();
+	    if (c_scope && (c_scope == task->get_class_scope())) {
+		  NetProc *tmp = elaborate_method_(des, scope, true);
+		  assert(tmp);
+		  return tmp;
+	    }
+      }
 
       unsigned parm_count = def->port_count();
 
@@ -3359,7 +3464,45 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       return elaborate_build_call_(des, scope, task, 0);
 }
 
-NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope) const
+/*
+ * This private method is called to elaborate built-in methods. The
+ * method_name is the detected name of the built-in method, and the
+ * sys_task_name is the internal system-task name to use.
+ */
+NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
+					       NetNet*net,
+					       perm_string method_name,
+					       const char*sys_task_name) const
+{
+      NetESignal*sig = new NetESignal(net);
+      sig->set_line(*this);
+
+	/* If there is a single NULL argument then ignore it since it is
+	 * left over from the parser and is not needed by the method. */
+      unsigned nparms = parms_.size();
+      if ((nparms == 1) && (parms_[0] == 0)) nparms = 0;
+
+      vector<NetExpr*>argv (1 + nparms);
+      argv[0] = sig;
+
+      for (unsigned idx = 0 ; idx < nparms ; idx += 1) {
+	    PExpr*ex = parms_[idx];
+	    if (ex != 0) {
+		  argv[idx+1] = elab_sys_task_arg(des, scope,
+						  method_name,
+						  idx, ex);
+	    } else {
+		  argv[idx+1] = 0;
+	    }
+      }
+
+      NetSTask*sys = new NetSTask(sys_task_name, IVL_SFUNC_AS_TASK_IGNORE, argv);
+      sys->set_line(*this);
+      return sys;
+}
+
+NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
+                                      bool add_this_flag) const
 {
       pform_name_t use_path = path_;
       perm_string method_name = peek_tail_name(use_path);
@@ -3369,6 +3512,12 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope) const
       const NetExpr *par;
       NetEvent *eve;
       const NetExpr *ex1, *ex2;
+
+	/* Add the implicit this reference when requested. */
+      if (add_this_flag) {
+	    assert(use_path.empty());
+	    use_path.push_front(name_component_t(perm_string::literal("@")));
+      }
 
 	// There is no signal to search for so this cannot be a method.
       if (use_path.empty()) return 0;
@@ -3385,15 +3534,20 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope) const
 
 	// Is this a delete method for dynamic arrays?
       if (net->darray_type() && method_name=="delete") {
-	    NetESignal*sig = new NetESignal(net);
+	    return elaborate_sys_task_method_(des, scope, net,
+					      method_name,
+					      "$ivl_darray_method$delete");
+      }
 
-	    vector<NetExpr*> argv (1);
-	    argv[0] = sig;
-
-	    NetSTask*sys = new NetSTask("$ivl_darray_method$delete",
-					IVL_SFUNC_AS_TASK_IGNORE, argv);
-	    sys->set_line(*this);
-	    return sys;
+      if (net->queue_type()) {
+	    if (method_name=="push_back")
+		  return elaborate_sys_task_method_(des, scope, net,
+						    method_name,
+						    "$ivl_queue_method$push_back");
+	    if (method_name=="push_front")
+		  return elaborate_sys_task_method_(des, scope, net,
+						    method_name,
+						    "$ivl_queue_method$push_front");
       }
 
       if (const netclass_t*class_type = net->class_type()) {
@@ -4470,6 +4624,222 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
       return dev;
 }
 
+static void find_property_in_class(const LineInfo&loc, const NetScope*scope, perm_string name, const netclass_t*&found_in, int&property)
+{
+      found_in = find_class_containing_scope(loc, scope);
+      property = -1;
+
+      if (found_in==0) return;
+
+      property = found_in->property_idx_from_name(name);
+      if (property < 0) {
+	    found_in = 0;
+	    return;
+      }
+}
+
+/*
+ * The foreach statement can be written as a for statement like so:
+ *
+ *     for (<idx> = $low(<array>) ; <idx> <= $high(<array>) ; <idx> += 1)
+ *          <statement_>
+ *
+ * The <idx> variable is already known to be in the containing named
+ * block scope, which was created by the parser.
+ */
+NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
+{
+	// Locate the signal for the array variable
+      pform_name_t array_name;
+      array_name.push_back(name_component_t(array_var_));
+      NetNet*array_sig = des->find_signal(scope, array_name);
+
+	// And if necessary, look for the class property that is
+	// referenced.
+      const netclass_t*class_scope = 0;
+      int class_property = -1;
+      if (array_sig == 0)
+	    find_property_in_class(*this, scope, array_var_, class_scope, class_property);
+
+      if (debug_elaborate && array_sig) {
+	    cerr << get_fileline() << ": PForeach::elaborate: "
+		 << "Found array_sig in " << scope_path(array_sig->scope()) << "." << endl;
+      }
+
+      if (debug_elaborate && class_scope) {
+	    cerr << get_fileline() << ": PForeach::elaborate: "
+		 << "Found array_sig property (" << class_property
+		 << ") in class " << class_scope->get_name()
+		 << " as " << *class_scope->get_prop_type(class_property) << "." << endl;
+      }
+
+      if (class_scope!=0 && class_property >= 0) {
+	    ivl_type_t ptype = class_scope->get_prop_type(class_property);
+	    const netsarray_t*atype = dynamic_cast<const netsarray_t*> (ptype);
+	    if (atype == 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "I can't handle the type of " << array_var_
+		       << " as a foreach loop." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    const std::vector<netrange_t>&dims = atype->static_dimensions();
+	    if (dims.size() < index_vars_.size()) {
+		  cerr << get_fileline() << ": error: "
+		       << "class " << class_scope->get_name()
+		       << " property " << array_var_
+		       << " has too few dimensions for foreach dimension list." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    return elaborate_static_array_(des, scope, dims);
+      }
+
+      if (array_sig == 0) {
+	    cerr << get_fileline() << ": error:"
+		 << " Unable to find foreach array " << array_name
+		 << " in scope " << scope_path(scope)
+		 << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      ivl_assert(*this, array_sig);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PForeach::elaborate: "
+		 << "Scan array " << array_sig->name()
+		 << " of " << array_sig->data_type()
+		 << " with " << array_sig->unpacked_dimensions() << " unpacked"
+		 << " and " << array_sig->packed_dimensions()
+		 << " packed dimensions." << endl;
+      }
+
+	// Classic arrays are processed this way.
+      if (array_sig->data_type()==IVL_VT_BOOL)
+	    return elaborate_static_array_(des, scope, array_sig->unpacked_dims());
+      if (array_sig->data_type()==IVL_VT_LOGIC)
+	    return elaborate_static_array_(des, scope, array_sig->unpacked_dims());
+      if (array_sig->unpacked_dimensions() >= index_vars_.size())
+	    return elaborate_static_array_(des, scope, array_sig->unpacked_dims());
+
+
+	// At this point, we know that the array is dynamic so we
+	// handle that slightly differently, using run-time tests.
+
+      if (index_vars_.size() != 1) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "Multi-index foreach loops not supported." << endl;
+	    des->errors += 1;
+      }
+
+	// Get the signal for the index variable.
+      pform_name_t index_name;
+      index_name.push_back(name_component_t(index_vars_[0]));
+      NetNet*idx_sig = des->find_signal(scope, index_name);
+      ivl_assert(*this, idx_sig);
+
+      NetESignal*array_exp = new NetESignal(array_sig);
+      array_exp->set_line(*this);
+
+      NetESignal*idx_exp = new NetESignal(idx_sig);
+      idx_exp->set_line(*this);
+
+	// Make an initialization expression for the index.
+      NetESFunc*init_expr = new NetESFunc("$low", IVL_VT_BOOL, 32, 1);
+      init_expr->set_line(*this);
+      init_expr->parm(0, array_exp);
+
+	// Make a condition expression: idx <= $high(array)
+      NetESFunc*high_exp = new NetESFunc("$high", IVL_VT_BOOL, 32, 1);
+      high_exp->set_line(*this);
+      high_exp->parm(0, array_exp);
+
+      NetEBComp*cond_expr = new NetEBComp('L', idx_exp, high_exp);
+      cond_expr->set_line(*this);
+
+	/* Elaborate the statement that is contained in the foreach
+	   loop. */
+      NetProc*sub = statement_->elaborate(des, scope);
+
+	/* Make a step statement: idx += 1 */
+      NetAssign_*idx_lv = new NetAssign_(idx_sig);
+      NetEConst*step_val = make_const_val(1);
+      NetAssign*step = new NetAssign(idx_lv, '+', step_val);
+      step->set_line(*this);
+
+      NetForLoop*stmt = new NetForLoop(idx_sig, init_expr, cond_expr, sub, step);
+      stmt->set_line(*this);
+      stmt->wrap_up();
+
+      return stmt;
+}
+
+/*
+ * This is a variant of the PForeach::elaborate() method that handles
+ * the case that the array has static dimensions. We can use constants
+ * and possibly do some optimizations.
+ */
+NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
+					   const vector<netrange_t>&dims) const
+{
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PForeach::elaborate_static_array_: "
+		 << "Handle as array with static dimensions." << endl;
+      }
+
+      ivl_assert(*this, index_vars_.size() > 0);
+      ivl_assert(*this, dims.size() == index_vars_.size());
+
+      NetProc*sub = statement_->elaborate(des, scope);
+      NetForLoop*stmt = 0;
+
+      for (int idx_idx = index_vars_.size()-1 ; idx_idx >= 0 ; idx_idx -= 1) {
+	    const netrange_t&idx_range = dims[idx_idx];
+
+	      // Get the $high and $low constant values for this slice
+	      // of the array.
+	    NetEConst*hig_expr = make_const_val_s(idx_range.get_msb());
+	    NetEConst*low_expr = make_const_val_s(idx_range.get_lsb());
+	    if (idx_range.get_msb() < idx_range.get_lsb()) {
+		  NetEConst*tmp = hig_expr;
+		  hig_expr = low_expr;
+		  low_expr = tmp;
+	    }
+
+	    hig_expr->set_line(*this);
+	    low_expr->set_line(*this);
+
+	    pform_name_t idx_name;
+	    idx_name.push_back(name_component_t(index_vars_[idx_idx]));
+	    NetNet*idx_sig = des->find_signal(scope, idx_name);
+	    ivl_assert(*this, idx_sig);
+
+	      // Make the condition expression <idx> <= $high(slice)
+	    NetESignal*idx_expr = new NetESignal(idx_sig);
+	    idx_expr->set_line(*this);
+
+	    NetEBComp*cond_expr = new NetEBComp('L', idx_expr, hig_expr);
+	    cond_expr->set_line(*this);
+
+	      // Make the step statement: <idx> += 1
+	    NetAssign_*idx_lv = new NetAssign_(idx_sig);
+	    NetEConst*step_val = make_const_val_s(1);
+	    NetAssign*step = new NetAssign(idx_lv, '+', step_val);
+	    step->set_line(*this);
+
+	    stmt = new NetForLoop(idx_sig, low_expr, cond_expr, sub, step);
+	    stmt->set_line(*this);
+	    stmt->wrap_up();
+
+	    sub = stmt;
+      }
+
+      return stmt? stmt : sub;
+}
+
 /*
  * elaborate the for loop as the equivalent while loop. This eases the
  * task for the target code generator. The structure is:
@@ -4484,14 +4854,11 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 {
-      NetExpr*etmp;
+      NetExpr*initial_expr;
       assert(scope);
 
       const PEIdent*id1 = dynamic_cast<const PEIdent*>(name1_);
       assert(id1);
-
-      NetBlock*top = new NetBlock(NetBlock::SEQU, 0);
-      top->set_line(*this);
 
 	/* make the expression, and later the initial assignment to
 	   the condition variable. The statement in the for loop is
@@ -4504,34 +4871,23 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
       assert(sig);
-      NetAssign_*lv = new NetAssign_(sig);
 
 	/* Make the r-value of the initial assignment, and size it
 	   properly. Then use it to build the assignment statement. */
-      etmp = elaborate_rval_expr(des, scope, sig->net_type(),
-				 lv->expr_type(), lv->lwidth(),
-                                 expr1_);
+      initial_expr = elaborate_rval_expr(des, scope, sig->net_type(),
+					 sig->data_type(), sig->vector_width(),
+					 expr1_);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: FOR initial assign: "
-		 << sig->name() << " = " << *etmp << endl;
+		 << sig->name() << " = " << *initial_expr << endl;
       }
-
-      NetAssign*init = new NetAssign(lv, etmp);
-      init->set_line(*this);
-
-      top->append(init);
-
-      NetBlock*body = new NetBlock(NetBlock::SEQU, 0);
-      body->set_line(*this);
 
 	/* Elaborate the statement that is contained in the for
 	   loop. If there is an error, this will return 0 and I should
 	   skip the append. No need to worry, the error has been
 	   reported so it's OK that the netlist is bogus. */
-      NetProc*tmp = statement_->elaborate(des, scope);
-      if (tmp)
-	    body->append(tmp);
+      NetProc*sub = statement_->elaborate(des, scope);
 
 
 	/* Now elaborate the for_step statement. I really should do
@@ -4539,12 +4895,10 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	   really does step the variable. */
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: Elaborate for_step statement "
-		 << sig->name() << " = " << *etmp << endl;
+		 << sig->name() << " = " << *initial_expr << endl;
       }
 
       NetProc*step = step_->elaborate(des, scope);
-
-      body->append(step);
 
 
 	/* Elaborate the condition expression. Try to evaluate it too,
@@ -4552,7 +4906,8 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	   worthy of a warning. */
       NetExpr*ce = elab_and_eval(des, scope, cond_, -1);
       if (ce == 0) {
-	    delete top;
+	    delete sub;
+	    delete step;
 	    return 0;
       }
 
@@ -4564,10 +4919,10 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 
 	/* All done, build up the loop. */
 
-      NetWhile*loop = new NetWhile(ce, body);
+      NetForLoop*loop = new NetForLoop(sig, initial_expr, ce, sub, step);
       loop->set_line(*this);
-      top->append(loop);
-      return top;
+      loop->wrap_up();
+      return loop;
 }
 
 /*
@@ -5199,6 +5554,9 @@ bool PPackage::elaborate(Design*des, NetScope*scope) const
 	// Elaborate task methods.
       elaborate_tasks(des, scope, tasks);
 
+	// Elaborate class definitions.
+      elaborate_classes(des, scope, classes);
+
       return result_flag;
 }
 
@@ -5626,6 +5984,28 @@ bool Design::check_proc_delay() const
       return result_flag;
 }
 
+void Design::root_elaborate(void)
+{
+      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
+		 ; cur != classes_.end() ; ++ cur) {
+	    netclass_t*cur_class = cur->second;
+	    PClass*cur_pclass = class_to_pclass_[cur_class];
+	    cur_class->elaborate(this, cur_pclass);
+      }
+
+      for (map<NetScope*,PTaskFunc*>::iterator cur = root_tasks_.begin()
+		 ; cur != root_tasks_.end() ; ++ cur) {
+
+	    if (debug_elaborate) {
+		  cerr << cur->second->get_fileline() << ": Design::root_elaborate: "
+		       << "Elaborate for root task/func " << scope_path(cur->first) << endl;
+	    }
+
+	    cur->second->elaborate(this, cur->first);
+      }
+
+}
+
 /*
  * This function is the root of all elaboration. The input is the list
  * of root module names. The function locates the Module definitions
@@ -5657,12 +6037,19 @@ Design* elaborate(list<perm_string>roots)
 	// Elaborate enum sets in $root scope.
       elaborate_rootscope_enumerations(des);
 
+	// Elaborate tasks and functions in $root scope.
+      elaborate_rootscope_tasks(des);
+
+	// Elaborate classes in $root scope.
+      elaborate_rootscope_classes(des);
+
 	// Elaborate the packages. Package elaboration is simpler
 	// because there are fewer sub-scopes involved.
       i = 0;
       for (map<perm_string,PPackage*>::iterator pac = pform_packages.begin()
 		 ; pac != pform_packages.end() ; ++ pac) {
 
+	    ivl_assert(*pac->second, pac->first == pac->second->pscope_name());
 	    NetScope*scope = des->make_package_scope(pac->first);
 	    scope->set_line(pac->second);
 
@@ -5754,6 +6141,11 @@ Design* elaborate(list<perm_string>roots)
 	    }
       }
 
+      if (debug_elaborate) {
+	    cerr << "<toplevel>: elaborate: "
+		 << "elaboration work list done. Start processing residual defparams." << endl;
+      }
+
 	// Look for residual defparams (that point to a non-existent
 	// scope) and clean them out.
       des->residual_defparams();
@@ -5762,6 +6154,11 @@ Design* elaborate(list<perm_string>roots)
 	// now and return nothing.
       if (des->errors > 0)
 	    return des;
+
+      if (debug_elaborate) {
+	    cerr << "<toplevel>: elaborate: "
+		 << "Start calling Package elaborate_sig methods." << endl;
+      }
 
 	// With the parameters evaluated down to constants, we have
 	// what we need to elaborate signals and memories. This pass
@@ -5779,6 +6176,18 @@ Design* elaborate(list<perm_string>roots)
 		  delete des;
 		  return 0;
 	    }
+      }
+
+      if (debug_elaborate) {
+	    cerr << "<toplevel>: elaborate: "
+		 << "Start calling $root elaborate_sig methods." << endl;
+      }
+
+      des->root_elaborate_sig();
+
+      if (debug_elaborate) {
+	    cerr << "<toplevel>: elaborate: "
+		 << "Start calling root module elaborate_sig methods." << endl;
       }
 
       for (i = 0; i < root_elems.size(); i++) {
@@ -5812,7 +6221,9 @@ Design* elaborate(list<perm_string>roots)
 			  // stuff to the design that should be cleaned later.
 			NetNet *netnet = mport[pin]->elaborate_subport(des, scope);
 			if (netnet != 0) {
-			  // Elaboration may actually fail with erroneous input source
+			  // Elaboration may actually fail with
+			  // erroneous input source
+			  ivl_assert(*mport[pin], netnet->pin_count()==1);
                           prt_vector_width += netnet->vector_width();
                           ptype = PortType::merged(netnet->port_type(), ptype);
 			}
@@ -5834,6 +6245,8 @@ Design* elaborate(list<perm_string>roots)
 	    NetScope*scope = pack_elems[i].scope;
 	    rc &= pkg->elaborate(des, scope);
       }
+
+      des->root_elaborate();
 
       for (i = 0; i < root_elems.size(); i++) {
 	    Module *rmod = root_elems[i].mod;

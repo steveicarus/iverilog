@@ -1,7 +1,7 @@
-#ifndef __arith_H
-#define __arith_H
+#ifndef IVL_arith_H
+#define IVL_arith_H
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -152,6 +152,24 @@ class vvp_cmp_eq  : public vvp_arith_ {
 
     public:
       explicit vvp_cmp_eq(unsigned wid);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
+
+};
+
+class vvp_cmp_eqx  : public vvp_arith_ {
+
+    public:
+      explicit vvp_cmp_eqx(unsigned wid);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
+
+};
+
+class vvp_cmp_eqz  : public vvp_arith_ {
+
+    public:
+      explicit vvp_cmp_eqz(unsigned wid);
       void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
                      vvp_context_t);
 
@@ -376,4 +394,4 @@ class vvp_cmp_gt_real  : public vvp_arith_real_ {
                      vvp_context_t);
 };
 
-#endif
+#endif /* IVL_arith_H */

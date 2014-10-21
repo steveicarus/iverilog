@@ -822,6 +822,7 @@ static int scan_format_two_state(vpiHandle callh, vpiHandle argv,
 		  bits |= (ch & 0xff) << byte*8;
 	    }
 	      /* Only save the words that are in range. */
+	    assert(varlen>=0);
 	    if (word < (unsigned)varlen) {
 		  val_ptr[word].aval = bits;
 		  val_ptr[word].bval = 0;
@@ -836,8 +837,9 @@ static int scan_format_two_state(vpiHandle callh, vpiHandle argv,
 
 	/* Not enough words were read to fill the variable so zero fill the
 	 * upper words. */
+      assert(varlen>=0);
       if (words < (unsigned)varlen) {
-	    for (word = words; word < varlen ; word += 1) {
+	    for (word = words; word < (unsigned)varlen ; word += 1) {
 		  val_ptr[word].aval = 0;
 		  val_ptr[word].bval = 0;
 	    }
@@ -978,8 +980,9 @@ static int scan_format_four_state(vpiHandle callh, vpiHandle argv,
 
 	/* Not enough words were read to fill the variable so zero fill the
 	 * upper words. */
+      assert(varlen>=0);
       if (words < (unsigned)varlen) {
-	    for (word = words; word < varlen ; word += 1) {
+	    for (word = words; word < (unsigned)varlen ; word += 1) {
 		  val_ptr[word].aval = 0;
 		  val_ptr[word].bval = 0;
 	    }
@@ -1114,7 +1117,7 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv,
 
 			  /* Read a '%' character from the input. */
 		      case '%':
-			assert(max_width == -1);
+			assert(max_width == -1U);
 			assert(suppress_flag == 0);
 			ch = byte_getc(src);
 			if (ch != '%') {
@@ -1432,7 +1435,7 @@ static PLI_INT32 sys_sscanf_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-void sys_scanf_register()
+void sys_scanf_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;

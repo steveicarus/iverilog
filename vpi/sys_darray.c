@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,6 +57,8 @@ static PLI_INT32 size_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpiHandle argv;
       vpiHandle arg;
 
+      (void)name; /* Parameter is not used. */
+
       argv = vpi_iterate(vpiArgument, callh);
       assert(argv);
       arg = vpi_scan(argv);
@@ -81,11 +83,11 @@ void sys_darray_register(void)
 
       tf_data.type      = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
-      tf_data.tfname    = "$ivl_darray_method$size";
+      tf_data.tfname    = "$size";
       tf_data.calltf    = size_calltf;
       tf_data.compiletf = one_darray_arg_compiletf;
       tf_data.sizetf    = 0;
-      tf_data.user_data = "$ivl_darray_method$size";
+      tf_data.user_data = "$size";
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 }

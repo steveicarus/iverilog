@@ -60,19 +60,18 @@ void NetAssign_::nex_output(NexusSet&out)
       }
       Nexus*nex = sig_->pin(use_word).nexus();
       if (base_) {
-	    long tmp = 0;
-	    bool flag = eval_as_long(tmp, base_);
-	    if (!flag) {
-		    // Unable to evaluate the bit/part select of
-		    // the l-value, so this is a mux. Pretty
-		    // sure I don't know how to handle this yet
-		    // in synthesis, so punt for now.
-		  use_base = 0;
-		  use_wid = nex->vector_width();
 
-	    } else {
-		  use_base = tmp;
-	    }
+	      // Unable to evaluate the bit/part select of
+	      // the l-value, so this is a mux. Pretty
+	      // sure I don't know how to handle this yet
+	      // in synthesis, so punt for now.
+
+	      // Even with constant bit/part select, we want to
+	      // return the entire signal as an output. The
+	      // context will need to sort out which bits are
+	      // actually assigned.
+	    use_base = 0;
+	    use_wid = nex->vector_width();
       }
       out.add(nex, use_base, use_wid);
 }
@@ -102,7 +101,7 @@ void NetBlock::nex_output(NexusSet&out)
 
 void NetCase::nex_output(NexusSet&out)
 {
-      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+      for (size_t idx = 0 ;  idx < items_.size() ;  idx += 1) {
 
 	      // Empty statements clearly have no output.
 	    if (items_[idx].statement == 0)
@@ -132,6 +131,11 @@ void NetEvWait::nex_output(NexusSet&out)
 {
       assert(statement_);
       statement_->nex_output(out);
+}
+
+void NetForLoop::nex_output(NexusSet&out)
+{
+      if (statement_) statement_->nex_output(out);
 }
 
 void NetPDelay::nex_output(NexusSet&out)

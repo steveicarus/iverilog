@@ -90,13 +90,19 @@ void Nexus::connect(Link&r)
 
 void connect(Link&l, Link&r)
 {
+      Nexus*tmp;
       assert(&l != &r);
-      if (l.nexus_ != 0) {
-	    connect(l.nexus_, r);
-      } else if (r.nexus_ != 0) {
-	    connect(r.nexus_, l);
+	// If either the l or r link already are part of a Nexus, then
+	// re-use that nexus. Go through some effort so that we are
+	// not gratuitously creating Nexus object.
+      if (l.next_ && (tmp=l.find_nexus_())) {
+	    connect(tmp, r);
+      } else if (r.next_ && (tmp=r.find_nexus_())) {
+	    connect(tmp, l);
       } else {
-	    Nexus*tmp = new Nexus(l);
+	      // No existing Nexus (both links are so far unconnected)
+	      // so start one.
+	    tmp = new Nexus(l);
 	    tmp->connect(r);
       }
 }
@@ -105,6 +111,8 @@ Link::Link()
 : dir_(PASSIVE), drive0_(IVL_DR_STRONG), drive1_(IVL_DR_STRONG),
   next_(0), nexus_(0)
 {
+      node_ = 0;
+      pin_zero_ = true;
 }
 
 Link::~Link()
@@ -222,9 +230,11 @@ bool Link::is_linked() const
 
 bool Link::is_linked(const Link&that) const
 {
-      if (next_ == 0)
+	// If this or that link is linked to nothing, then they cannot
+	// be linked to each other.
+      if (! this->is_linked())
 	    return false;
-      if (that.next_ == 0)
+      if (! that.is_linked())
 	    return false;
 
       const Link*cur = next_;
@@ -504,16 +514,24 @@ const char* Nexus::name() const
 		 << obj->name() << " pin " << pin
 		 << " type=" << typeid(*obj).name() << "?" << endl;
 
-      }
-      assert(sig);
-      ostringstream tmp;
-      tmp << scope_path(sig->scope()) << "." << sig->name();
-      if (sig->pin_count() > 1)
-	    tmp << "<" << pin << ">";
+	    ostringstream tmp;
+	    tmp << "nex=" << this << ends;
+	    const string tmps = tmp.str();
+	    name_ = new char[strlen(tmps.c_str()) + 1];
+	    strcpy(name_, tmps.c_str());
+      } else {
+	    assert(sig);
+	    ostringstream tmp;
+	    tmp << scope_path(sig->scope()) << "." << sig->name();
+	    if (sig->pin_count() > 1)
+		  tmp << "<" << pin << ">";
+	    tmp << ends;
 
-      const string tmps = tmp.str();
-      name_ = new char[strlen(tmps.c_str()) + 1];
-      strcpy(name_, tmps.c_str());
+	    const string tmps = tmp.str();
+	    name_ = new char[strlen(tmps.c_str()) + 1];
+	    strcpy(name_, tmps.c_str());
+      }
+
       return name_;
 }
 

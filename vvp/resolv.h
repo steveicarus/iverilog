@@ -1,7 +1,7 @@
-#ifndef __resolv_H
-#define __resolv_H
+#ifndef IVL_resolv_H
+#define IVL_resolv_H
 /*
- * Copyright (c) 2001-2008,2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -179,4 +179,4 @@ class resolv_trior : public resolv_wired_logic {
       virtual vvp_vector4_t wired_logic_math_(vvp_vector4_t&a, vvp_vector4_t&b);
 };
 
-#endif
+#endif /* IVL_resolv_H */

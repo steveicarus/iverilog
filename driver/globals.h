@@ -1,5 +1,5 @@
-#ifndef __globals_H
-#define __globals_H
+#ifndef IVL_globals_H
+#define IVL_globals_H
 /*
  * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
@@ -54,4 +54,4 @@ extern void process_parameter(const char*name);
   /* Set the default timescale for the simulator. */
 extern void process_timescale(const char*ts_string);
 
-#endif
+#endif /* IVL_globals_H */

@@ -7,7 +7,8 @@
 %{
 /*
  * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012-2014 / Stephen Williams (steve@icarus.com),
+ *                            Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -82,6 +83,11 @@ extern int yylex(union YYSTYPE*yylvalp,YYLTYPE*yyllocp,yyscan_t yyscanner);
  */
 static ActiveScope*active_scope = new ActiveScope;
 static stack<ActiveScope*> scope_stack;
+static Subprogram*active_sub = NULL;
+
+// perm_strings for attributes
+const static perm_string left_attr = perm_string::literal("left");
+const static perm_string right_attr = perm_string::literal("right");
 
 /*
  * When a scope boundary starts, call the push_scope function to push
@@ -105,6 +111,13 @@ static void pop_scope(void)
       scope_stack.pop();
 }
 
+static bool is_subprogram_param(perm_string name)
+{
+    if(!active_sub)
+        return false;
+
+    return (active_sub->find_param(name) != NULL);
+}
 
 void preload_global_types(void)
 {
@@ -267,7 +280,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %token K_package K_parameter K_port K_postponed K_procedure K_process
 %token K_property K_protected K_pure
 %token K_range K_record K_register K_reject K_release K_rem K_report
-%token K_restrict K_restrict_guarantee K_return K_rol K_ror
+%token K_restrict K_restrict_guarantee K_return K_reverse_range K_rol K_ror
 %token K_select K_sequence K_severity K_signal K_shared
 %token K_sla K_sll K_sra K_srl K_strong K_subtype
 %token K_then K_to K_transport K_type
@@ -357,7 +370,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <exp_else> else_when_waveform
 %type <exp_else_list> else_when_waveforms
 
-%type <subprogram> function_specification subprogram_specification
+%type <subprogram> function_specification subprogram_specification subprogram_body_start
 
 %%
 
@@ -683,8 +696,8 @@ composite_type_definition
 
   /* unbounded_array_definition IEEE 1076-2008 P5.3.2.1 */
   | K_array '(' index_subtype_definition_list ')' K_of subtype_indication
-      { sorrymsg(@1, "unbounded_array_definition not supported.\n");
-	std::list<prange_t*> r;
+      { std::list<prange_t*> r;
+	r.push_back(new prange_t(NULL, NULL, true));   // NULL boundaries indicate unbounded array type
 	VTypeArray*tmp = new VTypeArray($6, &r);
 	$$ = tmp;
       }
@@ -1542,7 +1555,7 @@ name /* IEEE 1076-2008 P8.1 */
   | IDENTIFIER '(' expression_list ')'
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
-	if (active_scope->is_vector_name(name)) {
+	if (active_scope->is_vector_name(name) || is_subprogram_param(name)) {
 	      ExpName*tmp = new ExpName(name, $3);
 	      $$ = tmp;
 	} else {
@@ -1741,6 +1754,11 @@ primary
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  | REAL_LITERAL
+      { ExpReal*tmp = new ExpReal($1);
+    FILE_NAME(tmp, @1);
+    $$ = tmp;
+      }
   | STRING_LITERAL
       { ExpString*tmp = new ExpString($1);
 	FILE_NAME(tmp,@1);
@@ -1807,16 +1825,7 @@ procedure_call_statement
   ;
 
 process_declarative_item
-  : K_variable identifier_list ':' subtype_indication ';'
-      { /* Save the signal declaration in the block_signals map. */
-	for (std::list<perm_string>::iterator cur = $2->begin()
-		   ; cur != $2->end() ; ++cur) {
-	      Variable*sig = new Variable(*cur, $4);
-	      FILE_NAME(sig, @1);
-	      active_scope->bind_name(*cur, sig);
-	}
-	delete $2;
-      }
+  : variable_declaration
   ;
 
 process_declarative_part
@@ -1898,6 +1907,34 @@ range
   : simple_expression direction simple_expression
       { prange_t* tmp = new prange_t($1, $3, $2);
 	$$ = tmp;
+      }
+  | name '\'' K_range
+      {
+        prange_t*tmp = NULL;
+        ExpName*name = NULL;
+        if((name = dynamic_cast<ExpName*>($1))) {
+            ExpAttribute*left = new ExpAttribute(name, left_attr);
+            ExpAttribute*right = new ExpAttribute(name, right_attr);
+            tmp = new prange_t(left, right, true);
+            tmp->set_auto_dir();
+        } else {
+	    errormsg(@1, "'range attribute can be used with named expressions only");
+        }
+        $$ = tmp;
+      }
+  | name '\'' K_reverse_range
+      {
+        prange_t*tmp = NULL;
+        ExpName*name = NULL;
+        if((name = dynamic_cast<ExpName*>($1))) {
+            ExpAttribute*left = new ExpAttribute(name, left_attr);
+            ExpAttribute*right = new ExpAttribute(name, right_attr);
+            tmp = new prange_t(left, right, false);
+            tmp->set_auto_dir();
+        } else {
+	    errormsg(@1, "'reverse_range attribute can be used with named expressions only");
+        }
+        $$ = tmp;
       }
   ;
 
@@ -2164,12 +2201,18 @@ signal_assignment_statement
       }
   ;
 
+subprogram_body_start
+  : subprogram_specification K_is
+      { assert(!active_sub);
+        active_sub = $1;
+        $$ = $1; }
+  ;
+
   /* This is a function/task body. This may have a matching subprogram
      declaration, and if so it will be in the active scope. */
 
 subprogram_body /* IEEE 1076-2008 P4.3 */
-  : subprogram_specification K_is
-    subprogram_declarative_part
+  : subprogram_body_start subprogram_declarative_part
     K_begin subprogram_statement_part K_end
     subprogram_kind_opt identifier_opt ';'
       { Subprogram*prog = $1;
@@ -2180,18 +2223,21 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
 	} else if (tmp) {
 	      errormsg(@1, "Subprogram specification for %s doesn't match specification in package header.\n", prog->name().str());
 	}
-	prog->set_program_body($5);
+	prog->transfer_from(*active_scope);
+	prog->set_program_body($4);
 	active_scope->bind_name(prog->name(), prog);
+	active_sub = NULL;
       }
 
-  | subprogram_specification K_is
+  | subprogram_body_start
     subprogram_declarative_part
     K_begin error K_end
     subprogram_kind_opt identifier_opt ';'
       { errormsg(@2, "Syntax errors in subprogram body.\n");
 	yyerrok;
+	active_sub = NULL;
 	if ($1) delete $1;
-	if ($8) delete[]$8;
+	if ($7) delete[]$7;
       }
   ;
 
@@ -2404,8 +2450,15 @@ variable_assignment_statement /* IEEE 1076-2008 P10.6.1 */
 
 variable_declaration /* IEEE 1076-2008 P6.4.2.4 */
   : K_shared_opt K_variable identifier_list ':' subtype_indication ';'
-      { sorrymsg(@2, "variable_declaration not supported.\n"); }
-
+      { /* Save the signal declaration in the block_signals map. */
+	for (std::list<perm_string>::iterator cur = $3->begin()
+		   ; cur != $3->end() ; ++cur) {
+	      Variable*sig = new Variable(*cur, $5);
+	      FILE_NAME(sig, @2);
+	      active_scope->bind_name(*cur, sig);
+	}
+	delete $3;
+      }
   | K_shared_opt K_variable error ';'
       { errormsg(@2, "Syntax error in variable declaration.\n");
 	yyerrok;

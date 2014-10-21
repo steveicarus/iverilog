@@ -20,7 +20,9 @@
 # include "config.h"
 
 # include  <cstdlib>
+# include  <climits>
 # include  "netlist.h"
+# include  "netparray.h"
 # include  "netvector.h"
 # include  "netmisc.h"
 # include  "PExpr.h"
@@ -319,7 +321,7 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
 	    if (min_wid < base->expr_width()) min_wid = base->expr_width();
 	      /* Now that we have the minimum needed width increase it by
 	       * one to make room for the normalization calculation. */
-	    min_wid += 1;
+	    min_wid += 2;
 	      /* Pad the base expression to the correct width. */
 	    base = pad_to_width(base, min_wid, *base);
 	      /* If the base expression is unsigned and either the lsb
@@ -354,7 +356,7 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
 	    if (min_wid < base->expr_width()) min_wid = base->expr_width();
 	      /* Now that we have the minimum needed width increase it by
 	       * one to make room for the normalization calculation. */
-	    min_wid += 1;
+	    min_wid += 2;
 	      /* Pad the base expression to the correct width. */
 	    base = pad_to_width(base, min_wid, *base);
 	      /* If the offset is greater than zero then we need to do
@@ -537,10 +539,8 @@ static void make_strides(const vector<netrange_t>&dims,
  * word. If any of the indices are out of bounds, return nil instead
  * of an expression.
  */
-NetExpr* normalize_variable_unpacked(const NetNet*net, list<long>&indices)
+static NetExpr* normalize_variable_unpacked(const vector<netrange_t>&dims, list<long>&indices)
 {
-      const vector<netrange_t>&dims = net->unpacked_dims();
-
 	// Make strides for each index. The stride is the distance (in
 	// words) to the next element in the canonical array.
       vector<long> stride (dims.size());
@@ -570,10 +570,20 @@ NetExpr* normalize_variable_unpacked(const NetNet*net, list<long>&indices)
       return canonical_expr;
 }
 
-NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
+NetExpr* normalize_variable_unpacked(const NetNet*net, list<long>&indices)
 {
       const vector<netrange_t>&dims = net->unpacked_dims();
+      return normalize_variable_unpacked(dims, indices);
+}
 
+NetExpr* normalize_variable_unpacked(const netsarray_t*stype, list<long>&indices)
+{
+      const vector<netrange_t>&dims = stype->static_dimensions();
+      return normalize_variable_unpacked(dims, indices);
+}
+
+NetExpr* normalize_variable_unpacked(const LineInfo&loc, const vector<netrange_t>&dims, list<NetExpr*>&indices)
+{
 	// Make strides for each index. The stride is the distance (in
 	// words) to the next element in the canonical array.
       vector<long> stride (dims.size());
@@ -606,14 +616,14 @@ NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
 	      // losses. So calculate a min_wid width.
 	    unsigned tmp_wid;
 	    unsigned min_wid = tmp->expr_width();
-	    if (use_stride != 1 && ((tmp_wid = num_bits(use_stride)) >= min_wid))
-		  min_wid = tmp_wid + 1;
 	    if (use_base != 0 && ((tmp_wid = num_bits(use_base)) >= min_wid))
 		  min_wid = tmp_wid + 1;
 	    if ((tmp_wid = num_bits(dims[idx].width()+1)) >= min_wid)
 		  min_wid = tmp_wid + 1;
+	    if (use_stride != 1)
+		  min_wid += num_bits(use_stride);
 
-	    tmp = pad_to_width(tmp, min_wid, *net);
+	    tmp = pad_to_width(tmp, min_wid, loc);
 
 	      // Now generate the math to calculate the canonical address.
 	    NetExpr*tmp_scaled = 0;
@@ -652,9 +662,52 @@ NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
 	// If we don't have an expression at this point, all the indices were
 	// constant zero. But this variant of normalize_variable_unpacked()
 	// is only used when at least one index is not a constant.
-	ivl_assert(*net, canonical_expr);
+	ivl_assert(loc, canonical_expr);
 
       return canonical_expr;
+}
+
+NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
+{
+      const vector<netrange_t>&dims = net->unpacked_dims();
+      return normalize_variable_unpacked(*net, dims, indices);
+}
+
+NetExpr* normalize_variable_unpacked(const LineInfo&loc, const netsarray_t*stype, list<NetExpr*>&indices)
+{
+      const vector<netrange_t>&dims = stype->static_dimensions();
+      return normalize_variable_unpacked(loc, dims, indices);
+}
+
+NetExpr* make_canonical_index(Design*des, NetScope*scope,
+			      const LineInfo*loc,
+			      const std::list<index_component_t>&src,
+			      const netsarray_t*stype,
+			      bool need_const)
+{
+      NetExpr*canon_index = 0;
+
+      list<long> indices_const;
+      list<NetExpr*> indices_expr;
+      indices_flags flags;
+      indices_to_expressions(des, scope, loc,
+			     src, src.size(),
+			     need_const, stype->static_dimensions().size(),
+			     flags,
+			     indices_expr, indices_const);
+
+      if (flags.undefined) {
+	    cerr << loc->get_fileline() << ": warning: "
+		 << "ignoring undefined value array access." << endl;
+
+      } else if (flags.variable) {
+	    canon_index = normalize_variable_unpacked(*loc, stype, indices_expr);
+
+      } else {
+	    canon_index = normalize_variable_unpacked(stype, indices_const);
+      }
+
+      return canon_index;
 }
 
 NetEConst* make_const_x(unsigned long wid)
@@ -674,6 +727,14 @@ NetEConst* make_const_0(unsigned long wid)
 NetEConst* make_const_val(unsigned long value)
 {
       verinum tmp (value, integer_width);
+      NetEConst*res = new NetEConst(tmp);
+      return res;
+}
+
+NetEConst* make_const_val_s(long value)
+{
+      verinum tmp (value, integer_width);
+      tmp.has_sign(true);
       NetEConst*res = new NetEConst(tmp);
       return res;
 }
@@ -781,13 +842,14 @@ static NetExpr* do_elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 
         // If we can get the same result using a smaller expression
         // width, do so.
-      if ((context_width > 0) && (!force_expand)
-	  && (pe->expr_type() != IVL_VT_REAL)
-          && (expr_width > pos_context_width)) {
-            expr_width = max(pe->min_width(), pos_context_width);
+
+      unsigned min_width = pe->min_width();
+      if ((min_width != UINT_MAX) && (pe->expr_type() != IVL_VT_REAL)
+          && (pos_context_width > 0) && (expr_width > pos_context_width)) {
+            expr_width = max(min_width, pos_context_width);
 
             if (debug_elaborate) {
-                  cerr << pe->get_fileline() << ":        "
+                  cerr << pe->get_fileline() << ":              : "
                        << "pruned to width=" << expr_width << endl;
             }
       }
@@ -926,6 +988,48 @@ NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
       return tmp;
 }
 
+bool evaluate_ranges(Design*des, NetScope*scope,
+		     vector<netrange_t>&llist,
+		     const list<pform_range_t>&rlist)
+{
+      bool bad_msb = false, bad_lsb = false;
+
+      for (list<pform_range_t>::const_iterator cur = rlist.begin()
+		 ; cur != rlist.end() ; ++cur) {
+	    long use_msb, use_lsb;
+
+	    NetExpr*texpr = elab_and_eval(des, scope, cur->first, -1, true);
+	    if (! eval_as_long(use_msb, texpr)) {
+		  cerr << cur->first->get_fileline() << ": error: "
+			"Range expressions must be constant." << endl;
+		  cerr << cur->first->get_fileline() << "       : "
+			"This MSB expression violates the rule: "
+		       << *cur->first << endl;
+		  des->errors += 1;
+		  bad_msb = true;
+	    }
+
+	    delete texpr;
+
+	    texpr = elab_and_eval(des, scope, cur->second, -1, true);
+	    if (! eval_as_long(use_lsb, texpr)) {
+		  cerr << cur->second->get_fileline() << ": error: "
+			"Range expressions must be constant." << endl;
+		  cerr << cur->second->get_fileline() << "       : "
+			"This LSB expression violates the rule: "
+		       << *cur->second << endl;
+		  des->errors += 1;
+		  bad_lsb = true;
+	    }
+
+	    delete texpr;
+
+	    llist.push_back(netrange_t(use_msb, use_lsb));
+      }
+
+      return bad_msb | bad_lsb;
+}
+
 void eval_expr(NetExpr*&expr, int context_width)
 {
       assert(expr);
@@ -1001,50 +1105,48 @@ hname_t eval_path_component(Design*des, NetScope*scope,
       if (comp.index.empty())
 	    return hname_t(comp.name);
 
-	// The parser will assure that path components will have only
-	// one index. For example, foo[N] is one index, foo[n][m] is two.
-      assert(comp.index.size() == 1);
+      vector<int> index_values;
 
-      const index_component_t&index = comp.index.front();
+      for (list<index_component_t>::const_iterator cur = comp.index.begin()
+		 ; cur != comp.index.end() ; ++cur) {
+	    const index_component_t&index = *cur;
 
-      if (index.sel != index_component_t::SEL_BIT) {
-	    cerr << index.msb->get_fileline() << ": error: "
-		 << "Part select is not valid for this kind of object." << endl;
-	    des->errors += 1;
-	    return hname_t(comp.name, 0);
-      }
+	    if (index.sel != index_component_t::SEL_BIT) {
+		  cerr << index.msb->get_fileline() << ": error: "
+		       << "Part select is not valid for this kind of object." << endl;
+		  des->errors += 1;
+		  return hname_t(comp.name, 0);
+	    }
 
-	// The parser will assure that path components will have only
-	// bit select index expressions. For example, "foo[n]" is OK,
-	// but "foo[n:m]" is not.
-      assert(index.sel == index_component_t::SEL_BIT);
+	      // The parser will assure that path components will have only
+	      // bit select index expressions. For example, "foo[n]" is OK,
+	      // but "foo[n:m]" is not.
+	    assert(index.sel == index_component_t::SEL_BIT);
 
-	// Evaluate the bit select to get a number.
-      NetExpr*tmp = elab_and_eval(des, scope, index.msb, -1);
-      ivl_assert(*index.msb, tmp);
+	      // Evaluate the bit select to get a number.
+	    NetExpr*tmp = elab_and_eval(des, scope, index.msb, -1);
+	    ivl_assert(*index.msb, tmp);
 
-	// Now we should have a constant value for the bit select
-	// expression, and we can use it to make the final hname_t
-	// value, for example "foo[5]".
-      if (NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp)) {
-	    hname_t res(comp.name, ctmp->value().as_long());
-	    delete ctmp;
-	    return res;
-      }
-
+	    if (NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp)) {
+		  index_values.push_back(ctmp->value().as_long());
+		  delete ctmp;
+		  continue;
+	    }
 #if 1
-	// Darn, the expression doesn't evaluate to a constant. That's
-	// an error to be reported. And make up a fake index value to
-	// return to the caller.
-      cerr << index.msb->get_fileline() << ": error: "
-	   << "Scope index expression is not constant: "
-	   << *index.msb << endl;
-      des->errors += 1;
+	      // Darn, the expression doesn't evaluate to a constant. That's
+	      // an error to be reported. And make up a fake index value to
+	      // return to the caller.
+	    cerr << index.msb->get_fileline() << ": error: "
+		 << "Scope index expression is not constant: "
+		 << *index.msb << endl;
+	    des->errors += 1;
 #endif
-      error_flag = true;
+	    error_flag = true;
 
-      delete tmp;
-      return hname_t (comp.name, 0);
+	    delete tmp;
+      }
+
+      return hname_t(comp.name, index_values);
 }
 
 std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
@@ -1388,4 +1490,124 @@ NetExpr*collapse_array_indices(Design*des, NetScope*scope, NetNet*net,
 
       eval_expr(res, -1);
       return res;
+}
+
+void assign_unpacked_with_bufz(Design*des, NetScope*scope,
+			       const LineInfo*loc,
+			       NetNet*lval, NetNet*rval)
+{
+      ivl_assert(*loc, lval->pin_count()==rval->pin_count());
+
+      for (unsigned idx = 0 ; idx < lval->pin_count() ; idx += 1) {
+	    NetBUFZ*driver = new NetBUFZ(scope, scope->local_symbol(),
+					 lval->vector_width(), false);
+	    driver->set_line(*loc);
+	    des->add_node(driver);
+
+	    connect(lval->pin(idx), driver->pin(0));
+	    connect(driver->pin(1), rval->pin(idx));
+      }
+}
+
+/*
+ * synthesis sometimes needs to unpack assignment to a part
+ * select. That looks like this:
+ *
+ *    foo[N] <= <expr> ;
+ *
+ * The NetAssignBase::synth_async() method will turn that into a
+ * netlist like this:
+ *
+ *   NetAssignBase(PV) --> base()==<N>
+ *    (0)      (1)
+ *     |        |
+ *     v        v
+ *   <expr>    foo
+ *
+ * This search will return a pointer to the NetAssignBase(PV) object,
+ * but only if it matches this pattern.
+ */
+NetPartSelect* detect_partselect_lval(Link&pin)
+{
+      NetPartSelect*found_ps = 0;
+
+      Nexus*nex = pin.nexus();
+      for (Link*cur = nex->first_nlink() ; cur ; cur = cur->next_nlink()) {
+	    NetPins*obj;
+	    unsigned obj_pin;
+	    cur->cur_link(obj, obj_pin);
+
+	      // Skip NexusSet objects.
+	    if (obj == 0)
+		  continue;
+
+	      // NetNet pins have no effect on this search.
+	    if (dynamic_cast<NetNet*> (obj))
+		  continue;
+
+	    if (NetPartSelect*ps = dynamic_cast<NetPartSelect*> (obj)) {
+
+		    // If this is the input side of a NetPartSelect, skip.
+		  if (ps->pin(obj_pin).get_dir()==Link::INPUT)
+			continue;
+
+		    // Oops, driven by the wrong size of a
+		    // NetPartSelect, so this is not going to work out.
+		  if (ps->dir()==NetPartSelect::VP)
+			return 0;
+
+		    // So now we know this is a NetPartSelect::PV. It
+		    // is a candidate for our part-select assign. If
+		    // we already have a candidate, then give up.
+		  if (found_ps)
+			return 0;
+
+		    // This is our candidate. Carry on.
+		  found_ps = ps;
+		  continue;
+
+	    }
+
+	      // If this is a driver to the Nexus that is not a
+	      // NetPartSelect device. This cannot happen to
+	      // part selected lval nets, so quit now.
+	    if (obj->pin(obj_pin).get_dir() == Link::OUTPUT)
+		  return 0;
+
+      }
+
+      return found_ps;
+}
+
+const netclass_t* find_class_containing_scope(const LineInfo&loc, const NetScope*scope)
+{
+      while (scope && scope->type() != NetScope::CLASS)
+	    scope = scope->parent();
+
+      if (scope == 0)
+	    return 0;
+
+      const netclass_t*found_in = scope->class_def();
+      ivl_assert(loc, found_in);
+      return found_in;
+}
+/*
+ * Find the scope that contains this scope, that is the method for a
+ * class scope. Look for the scope whose PARENT is the scope for a
+ * class. This is going to be a method.
+ */
+NetScope* find_method_containing_scope(const LineInfo&, NetScope*scope)
+{
+      NetScope*up = scope->parent();
+
+      while (up && up->type() != NetScope::CLASS) {
+	    scope = up;
+	    up = up->parent();
+      }
+
+      if (up == 0) return 0;
+
+	// Should I check if this scope is a TASK or FUNC?
+
+      return scope;
 }

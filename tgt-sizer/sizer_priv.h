@@ -1,5 +1,5 @@
-#ifndef __sizer_priv_H
-#define __sizer_priv_H
+#ifndef IVL_sizer_priv_H
+#define IVL_sizer_priv_H
 /*
  * Copyright (c) 2014 Stephen Williams (steve@icarus.com)
  *
@@ -31,6 +31,14 @@ struct sizer_statistics {
       unsigned gate_count;
 	// Count adders of various dimension
       std::map<unsigned,unsigned> adder_count;
+	// count equality comparators
+      std::map<unsigned,unsigned> equality_count;
+	// count equality (with wildcard) comparators
+      std::map<unsigned,unsigned> equality_wc_count;
+	// Count magnitude comparators
+      std::map<unsigned,unsigned> magnitude_count;
+	// Count mux's of various dimension
+      std::map<unsigned,unsigned> mux_count;
 	// Different kinds of nodes that we have not accounted for
       std::map<ivl_lpm_type_t,unsigned> lpm_bytype;
       std::map<ivl_logic_t,unsigned>    log_bytype;
@@ -53,4 +61,4 @@ extern void scan_lpms(ivl_scope_t scope, struct sizer_statistics&stats);
 
 extern unsigned get_nexus_width(ivl_nexus_t nex);
 
-#endif
+#endif /* IVL_sizer_priv_H */

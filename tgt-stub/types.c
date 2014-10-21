@@ -30,6 +30,15 @@ static void show_net_type_darray(ivl_type_t net_type)
       show_net_type(element_type);
 }
 
+static void show_net_type_queue(ivl_type_t net_type)
+{
+	/* Dynamic arrays have a single element type. */
+      ivl_type_t element_type = ivl_type_element(net_type);
+
+      fprintf(out, "queue of ");
+      show_net_type(element_type);
+}
+
 void show_net_type(ivl_type_t net_type)
 {
       ivl_variable_type_t data_type = ivl_type_base(net_type);
@@ -56,6 +65,9 @@ void show_net_type(ivl_type_t net_type)
 	    break;
 	  case IVL_VT_CLASS:
 	    fprintf(out, "class");
+	    break;
+	  case IVL_VT_QUEUE:
+	    show_net_type_queue(net_type);
 	    break;
 	  case IVL_VT_VOID:
 	    fprintf(out, "void");
@@ -110,6 +122,12 @@ void show_type_of_signal(ivl_signal_t net)
 	      /* The DARRAY type MUST be described by an
 		 ivl_signal_net_type object. */
 	    fprintf(out, "ERROR-DARRAY");
+	    stub_errors += 1;
+	    break;
+	  case IVL_VT_QUEUE:
+	      /* The QUEUE type MUST be described by an
+		 ivl_signal_net_type object. */
+	    fprintf(out, "ERROR-QUEUE");
 	    stub_errors += 1;
 	    break;
 	  case IVL_VT_VOID:

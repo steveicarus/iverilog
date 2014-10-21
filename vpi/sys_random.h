@@ -1,7 +1,7 @@
-#ifndef __vpi_sys_rand_H
-#define __vpi_sys_rand_H
+#ifndef IVL_sys_random_H
+#define IVL_sys_random_H
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -27,4 +27,4 @@
 extern PLI_INT32 sys_rand_three_args_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name);
 extern PLI_INT32 sys_random_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name);
 
-#endif
+#endif /* IVL_sys_random_H */

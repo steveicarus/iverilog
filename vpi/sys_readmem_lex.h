@@ -1,7 +1,7 @@
-#ifndef __sys_readmem_lex_H
-#define __sys_readmem_lex_H
+#ifndef IVL_sys_readmem_lex_H
+#define IVL_sys_readmem_lex_H
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,8 +30,8 @@ extern char *readmem_error_token;
 
 extern void sys_readmem_start_file(FILE*in, int bin_flag,
 				   unsigned width, struct t_vpi_vecval*val);
-extern int readmemlex();
+extern int readmemlex(void);
 
-extern void destroy_readmem_lexor();
+extern void destroy_readmem_lexor(void);
 
-#endif
+#endif /* IVL_sys_readmem_lex_H */

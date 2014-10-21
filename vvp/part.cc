@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -254,7 +254,7 @@ bool vvp_fun_part_var::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	    base = tmp;
 	    break;
 	  default:
-	    fprintf(stderr, "Unsupported port type %d.\n", port.port());
+	    fprintf(stderr, "Unsupported port type %u.\n", port.port());
 	    assert(0);
 	    break;
       }

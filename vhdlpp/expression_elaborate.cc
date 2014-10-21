@@ -23,6 +23,8 @@
 # include  "architec.h"
 # include  "entity.h"
 # include  "vsignal.h"
+# include  "subprogram.h"
+# include  "library.h"
 # include  <iostream>
 # include  <typeinfo>
 # include  "parse_types.h"
@@ -56,6 +58,10 @@ const VType* Expression::fit_type(Entity*ent, Architecture*arc, const VTypeArray
 
 const VType*ExpName::elaborate_adjust_type_with_range_(Entity*, Architecture*arc, const VType*type)
 {
+	// Unfold typedefs
+      while (const VTypeDef*tdef = dynamic_cast<const VTypeDef*>(type)) {
+	    type = tdef->peek_definition();
+      }
 
       if (const VTypeArray*array = dynamic_cast<const VTypeArray*>(type)) {
 	    if (index_ && !lsb_) {
@@ -411,6 +417,9 @@ int ExpAggregate::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype
       if (const VTypeArray*larray = dynamic_cast<const VTypeArray*>(ltype)) {
 	    return elaborate_expr_array_(ent, arc, larray);
       }
+      else if(const VTypeRecord*lrecord = dynamic_cast<const VTypeRecord*>(ltype)) {
+            return elaborate_expr_record_(ent, arc, lrecord);
+      }
 
       cerr << get_fileline() << ": internal error: I don't know how to elaborate aggregate expressions. type=" << typeid(*ltype).name() << endl;
       return 1;
@@ -476,6 +485,46 @@ int ExpAggregate::elaborate_expr_array_(Entity*ent, Architecture*arc, const VTyp
       return errors;
 }
 
+int ExpAggregate::elaborate_expr_record_(Entity*ent, Architecture*arc, const VTypeRecord*ltype)
+{
+      int errors = 0;
+
+      aggregate_.resize(elements_.size());
+      choice_element tmp;
+      int idx;
+
+	// Translate the elements_ array to the aggregate_ array. In
+	// the target array, each expression is attached to a single
+	// choice.
+      for (size_t edx = 0 ; edx < elements_.size() ; edx += 1) {
+            element_t*ecur = elements_[edx];
+
+            // it is invalid to have more than one choice in record assignment
+            ivl_assert(*this, ecur->count_choices() == 1);
+
+            ecur->map_choices(&tmp);
+            choice_t*ch = tmp.choice;
+
+            ivl_assert(*this, !ch->others());
+            ivl_assert(*this, !tmp.alias_flag);
+
+	// Get the appropriate type for a field
+            const ExpName*field = dynamic_cast<const ExpName*>(ch->simple_expression(false));
+            ivl_assert(*this, field);
+
+            perm_string field_name = field->peek_name();
+            const VTypeRecord::element_t*el = ltype->element_by_name(field_name, &idx);
+
+            aggregate_[idx] = tmp;
+            errors += aggregate_[idx].expr->elaborate_expr(ent, arc, el->peek_type());
+      }
+
+	// done with the obsolete elements_ vector.
+      elements_.clear();
+
+      return errors;
+}
+
 void ExpAggregate::element_t::map_choices(ExpAggregate::choice_element*dst)
 {
       for (size_t idx = 0 ; idx < fields_.size() ; idx += 1) {
@@ -518,8 +567,8 @@ const VType* ExpAttribute::probe_type(Entity*ent, Architecture*arc) const
 {
       base_->probe_type(ent, arc);
 
-      if (name_ == "length") {
-	    return primitive_INTEGER;
+      if (name_ == "length" || name_ == "left" || name_ == "right") {
+	    return &primitive_INTEGER;
       }
 
       return 0;
@@ -560,6 +609,39 @@ int ExpCharacter::elaborate_expr(Entity*, Architecture*, const VType*ltype)
       return 0;
 }
 
+const VType*ExpConcat::fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const
+{
+      Expression*operands[2] = {operand1_, operand2_};
+      const VType*types[2] = {NULL, NULL};
+      Expression*sizes[2] = {NULL, NULL};
+
+      // determine the type and size of concatenated expressions
+      for(int i = 0; i < 2; ++i) {
+	    types[i] = operands[i]->fit_type(ent, arc, atype);
+
+	    if(const VTypeArray*arr = dynamic_cast<const VTypeArray*>(types[i])) {
+		types[i] = arr->element_type();
+		ivl_assert(*this, arr->dimensions() == 1);
+		const VTypeArray::range_t&dim = arr->dimension(0);
+		sizes[i] = new ExpArithmetic(ExpArithmetic::MINUS, dim.msb(), dim.lsb());
+	    } else {
+		sizes[i] = new ExpInteger(0);
+	    }
+      }
+
+      // the range of the concatenated expression is (size1 + size2 + 1):0
+      // note that each of the sizes are already decreased by one,
+      // e.g. 3:0 <=> size == 3 even though there are 4 bits
+      Expression*size = new ExpArithmetic(ExpArithmetic::PLUS,
+                            new ExpArithmetic(ExpArithmetic::PLUS, sizes[0], sizes[1]),
+                            new ExpInteger(1));
+
+      std::list<prange_t*> ranges;
+      ranges.push_front(new prange_t(size, new ExpInteger(0), true));
+      const VType*array = new VTypeArray(types[1], &ranges);
+
+      return array;
+}
 /*
  * I don't know how to probe the type of a concatenation, quite yet.
  */
@@ -663,11 +745,16 @@ int ExpFunc::elaborate_expr(Entity*ent, Architecture*arc, const VType*)
       ivl_assert(*this, arc);
       Subprogram*prog = arc->find_subprogram(name_);
 
+      if(!prog)
+            prog = library_find_subprogram(name_);
+
       ivl_assert(*this, def_==0);
       def_ = prog;
 
       for (size_t idx = 0 ; idx < argv_.size() ; idx += 1) {
 	    const VType*tmp = argv_[idx]->probe_type(ent, arc);
+	    if(!tmp && prog)
+	        tmp = prog->peek_param_type(idx);
 	    errors += argv_[idx]->elaborate_expr(ent, arc, tmp);
       }
 
@@ -676,7 +763,7 @@ int ExpFunc::elaborate_expr(Entity*ent, Architecture*arc, const VType*)
 
 const VType* ExpInteger::probe_type(Entity*, Architecture*) const
 {
-      return primitive_INTEGER;
+      return &primitive_INTEGER;
 }
 
 int ExpInteger::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
@@ -685,6 +772,24 @@ int ExpInteger::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
 
       if (ltype == 0) {
 	    ltype = probe_type(ent, arc);
+      }
+
+      ivl_assert(*this, ltype != 0);
+
+      return errors;
+}
+
+const VType* ExpReal::probe_type(Entity*, Architecture*) const
+{
+      return &primitive_REAL;
+}
+
+int ExpReal::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
+{
+      int errors = 0;
+
+      if (ltype == 0) {
+        ltype = probe_type(ent, arc);
       }
 
       ivl_assert(*this, ltype != 0);
@@ -807,12 +912,9 @@ const VType* ExpNameALL::probe_type(Entity*, Architecture*) const
       return 0;
 }
 
-const VType* ExpRelation::probe_type(Entity*ent, Architecture*arc) const
+const VType* ExpRelation::probe_type(Entity*, Architecture*) const
 {
-      /* const VType*type1 = */ peek_operand1()->probe_type(ent, arc);
-      /* const VType*type2 = */ peek_operand2()->probe_type(ent, arc);
-
-      return primitive_BOOLEAN;
+      return &primitive_BOOLEAN;
 }
 
 int ExpRelation::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)

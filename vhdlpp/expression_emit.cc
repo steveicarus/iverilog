@@ -22,6 +22,7 @@
 # include  "vtype.h"
 # include  "architec.h"
 # include  "package.h"
+# include  "subprogram.h"
 # include  "parse_types.h"
 # include  <typeinfo>
 # include  <iostream>
@@ -95,6 +96,8 @@ int ExpAggregate::emit(ostream&out, Entity*ent, Architecture*arc)
 
       if (const VTypeArray*atype = dynamic_cast<const VTypeArray*> (use_type))
 	    return emit_array_(out, ent, arc, atype);
+      else if (const VTypeRecord*arecord = dynamic_cast<const VTypeRecord*> (use_type))
+	    return emit_record_(out, ent, arc, arecord);
 
       out << "/* " << get_fileline() << ": internal error: "
 	  << "I don't know how to elab/emit aggregate in " << typeid(use_type).name()
@@ -159,7 +162,8 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
       ivl_assert(*this, rc);
       rc = rang.lsb()->evaluate(ent, arc, use_lsb);
       ivl_assert(*this, rc);
-      ivl_assert(*this, use_msb >= use_lsb);
+      if(use_msb < use_lsb)
+        swap(use_msb, use_lsb);
 
       map<int64_t,choice_element*> element_map;
       choice_element*element_other = 0;
@@ -244,6 +248,10 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 	// Emit the elements as a concatenation. This works great for
 	// vectors of bits. We implement VHDL arrays as packed arrays,
 	// so this should be generally correct.
+      // TODO uncomment this once ivl supports assignments of '{}
+      /*if(!peek_type()->can_be_packed())
+        out << "'";*/
+
       out << "{";
       for (int64_t idx = use_msb ; idx >= use_lsb ; idx -= 1) {
 	    choice_element*cur = element_map[idx];
@@ -266,6 +274,34 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
       return errors;
 }
 
+int ExpAggregate::emit_record_(ostream&out, Entity*ent, Architecture*arc, const VTypeRecord*)
+{
+      int errors = 0;
+
+      out << "{";
+
+      for (size_t idx = 0 ; idx < aggregate_.size() ; idx += 1) {
+	    ivl_assert(*this, !aggregate_[idx].choice->others());
+	    ivl_assert(*this, !aggregate_[idx].choice->range_expressions());
+
+	    //Expression*name = aggregate_[idx].choice->simple_expression(false);
+	    //ivl_assert(*this, name);
+	    Expression*val = aggregate_[idx].expr;
+	    ivl_assert(*this, val);
+
+	    if(idx != 0)
+	        out << ",";
+
+	    //errors += name->emit(out, ent, arc);
+	    //out << ": ";
+	    errors += val->emit(out, ent, arc);
+      }
+
+      out << "}";
+
+      return errors;
+}
+
 int ExpAttribute::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
@@ -277,8 +313,8 @@ int ExpAttribute::emit(ostream&out, Entity*ent, Architecture*arc)
 	    return errors;
       }
 
-	/* Special Case: The length attribute can be calculated all
-	   the down to a literal integer at compile time, and all it
+	/* Special Case: The length,left & right attributes can be calculated
+	   all the down to a literal integer at compile time, and all it
 	   needs is the type of the base expression. (The base
 	   expression doesn't even need to be evaluated.) */
       if (name_=="length") {
@@ -286,8 +322,12 @@ int ExpAttribute::emit(ostream&out, Entity*ent, Architecture*arc)
 	    errors += base_->emit(out, ent, arc);
 	    out << ")";
 	    return errors;
+      } else if (name_=="left" || name_=="right") {
+	    out << "$" << name_ << "(";
+	    errors += base_->emit(out, ent, arc);
+	    out << ")";
+	    return errors;
       }
-
 
       out << "$ivl_attribute(";
       errors += base_->emit(out, ent, arc);
@@ -351,16 +391,6 @@ int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*, Architecture*,
       switch (etype->type()) {
 	  case VTypePrimitive::BOOLEAN:
 	  case VTypePrimitive::BIT:
-	    switch (value_) {
-		case '0':
-		case '1':
-		      out << "1'b" << value_;
-		return 0;
-		default:
-		  break;
-	    }
-	    break;
-
 	  case VTypePrimitive::STDLOGIC:
 	    switch (value_) {
 		case '0':
@@ -531,6 +561,11 @@ int ExpFunc::emit(ostream&out, Entity*ent, Architecture*arc)
 	    errors += argv_[0]->emit(out, ent, arc);
 	    out << ")";
 
+      } else if (name_ == "integer" && argv_.size() == 1) {
+            // Simply skip the function name, SystemVerilog takes care of
+            // rounding real numbers
+	    errors += argv_[0]->emit(out, ent, arc);
+
       } else if (name_ == "std_logic_vector" && argv_.size() == 1) {
 	      // Special case: The std_logic_vector function casts its
 	      // argument to std_logic_vector. Internally, we don't
@@ -601,6 +636,23 @@ int ExpInteger::emit_package(ostream&out)
 }
 
 bool ExpInteger::is_primary(void) const
+{
+      return true;
+}
+
+int ExpReal::emit(ostream&out, Entity*, Architecture*)
+{
+      out << value_;
+      return 0;
+}
+
+int ExpReal::emit_package(ostream&out)
+{
+      out << value_;
+      return 0;
+}
+
+bool ExpReal::is_primary(void) const
 {
       return true;
 }
@@ -745,7 +797,7 @@ int ExpString::emit_as_array_(ostream& out, Entity*, Architecture*, const VTypeA
       int errors = 0;
       assert(arr->dimensions() == 1);
 
-      const VTypePrimitive*etype = dynamic_cast<const VTypePrimitive*> (arr->element_type());
+      const VTypePrimitive*etype = dynamic_cast<const VTypePrimitive*> (arr->basic_type());
       assert(etype);
 
 	// Detect the special case that this is an array of
@@ -773,6 +825,10 @@ int ExpString::emit_as_array_(ostream& out, Entity*, Architecture*, const VTypeA
 		case 'z': case 'Z':
 		  assert(etype->type() == VTypePrimitive::STDLOGIC);
 		  out << "z";
+		  break;
+		case '-':
+		  assert(etype->type() == VTypePrimitive::STDLOGIC);
+		  out << "x";
 		  break;
 		default:
 		  cerr << get_fileline() << ": internal error: "

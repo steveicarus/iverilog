@@ -425,6 +425,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
       netclass_t*use_base_class = 0;
       if (base_class) {
+	    ivl_assert(*pclass, scope);
 	    use_base_class = scope->find_class(base_class->name);
 	    if (use_base_class == 0) {
 		  cerr << pclass->get_fileline() << ": error: "
@@ -436,6 +437,9 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
       netclass_t*use_class = new netclass_t(use_type->name, use_base_class);
 
+      ivl_assert(*pclass, use_type->save_elaborated_type == 0);
+      use_type->save_elaborated_type = use_class;
+
 	// Class scopes have no parent scope, because references are
 	// not allowed to escape a class method.
       NetScope*class_scope = new NetScope(0, hname_t(pclass->pscope_name()),
@@ -443,18 +447,22 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       class_scope->set_line(pclass);
       class_scope->set_class_def(use_class);
       use_class->set_class_scope(class_scope);
+      use_class->set_definition_scope(scope);
 
 	// Collect the properties, elaborate them, and add them to the
 	// elaborated class definition.
       for (map<perm_string, class_type_t::prop_info_t>::iterator cur = use_type->properties.begin()
 		 ; cur != use_type->properties.end() ; ++ cur) {
-	    if (debug_scopes) {
-		  cerr << pclass->get_fileline() << ": elaborate_scope_class: "
-		       << "  Property " << cur->first << endl;
-	    }
+
 	    ivl_type_s*tmp = cur->second.type->elaborate_type(des, scope);
 	    ivl_assert(*pclass, tmp);
+	    if (debug_scopes) {
+		  cerr << pclass->get_fileline() << ": elaborate_scope_class: "
+		       << "  Property " << cur->first
+		       << " type=" << *tmp << endl;
+	    }
 	    use_class->set_property(cur->first, cur->second.qual, tmp);
+
       }
 
       for (map<perm_string,PTask*>::iterator cur = pclass->tasks.begin()
@@ -493,7 +501,12 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 	    cur->second->elaborate_scope(des, method_scope);
       }
 
-      scope->add_class(use_class);
+      if (scope) {
+	    scope->add_class(use_class);
+
+      } else {
+	    des->add_class(use_class, pclass);
+      }
 }
 
 static void elaborate_scope_classes(Design*des, NetScope*scope,
@@ -502,6 +515,18 @@ static void elaborate_scope_classes(Design*des, NetScope*scope,
       for (size_t idx = 0 ; idx < classes.size() ; idx += 1) {
 	    blend_class_constructors(classes[idx]);
 	    elaborate_scope_class(des, scope, classes[idx]);
+      }
+}
+
+void elaborate_rootscope_classes(Design*des)
+{
+      if (pform_classes.empty())
+	    return;
+
+      for (map<perm_string,PClass*>::iterator cur = pform_classes.begin()
+		 ; cur != pform_classes.end() ; ++ cur) {
+	    blend_class_constructors(cur->second);
+	    elaborate_scope_class(des, 0, cur->second);
       }
 }
 
@@ -546,6 +571,25 @@ static void elaborate_scope_events_(Design*des, NetScope*scope,
       }
 }
 
+static void elaborate_scope_task(Design*des, NetScope*scope, PTask*task)
+{
+      hname_t use_name( task->pscope_name() );
+
+      NetScope*task_scope = new NetScope(scope, use_name, NetScope::TASK);
+      task_scope->is_auto(task->is_auto());
+      task_scope->set_line(task);
+
+      if (scope==0)
+	    des->add_root_task(task_scope, task);
+
+      if (debug_scopes) {
+	    cerr << task->get_fileline() << ": elaborate_scope_task: "
+		 << "Elaborate task scope " << scope_path(task_scope) << endl;
+      }
+
+      task->elaborate_scope(des, task_scope);
+}
+
 static void elaborate_scope_tasks(Design*des, NetScope*scope,
 				  const map<perm_string,PTask*>&tasks)
 {
@@ -587,17 +631,28 @@ static void elaborate_scope_tasks(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	    NetScope*task_scope = new NetScope(scope, use_name,
-					       NetScope::TASK);
-	    task_scope->is_auto((*cur).second->is_auto());
-	    task_scope->set_line((*cur).second);
-
-	    if (debug_scopes)
-		  cerr << cur->second->get_fileline() << ": debug: "
-		       << "Elaborate task scope " << scope_path(task_scope) << endl;
-	    (*cur).second->elaborate_scope(des, task_scope);
+	    elaborate_scope_task(des, scope, cur->second);
       }
 
+}
+
+static void elaborate_scope_func(Design*des, NetScope*scope, PFunction*task)
+{
+      hname_t use_name( task->pscope_name() );
+
+      NetScope*task_scope = new NetScope(scope, use_name, NetScope::FUNC);
+      task_scope->is_auto(task->is_auto());
+      task_scope->set_line(task);
+
+      if (scope==0)
+	    des->add_root_task(task_scope, task);
+
+      if (debug_scopes) {
+	    cerr << task->get_fileline() << ": elaborate_scope_func: "
+		 << "Elaborate task scope " << scope_path(task_scope) << endl;
+      }
+
+      task->elaborate_scope(des, task_scope);
 }
 
 static void elaborate_scope_funcs(Design*des, NetScope*scope,
@@ -642,17 +697,31 @@ static void elaborate_scope_funcs(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	    NetScope*func_scope = new NetScope(scope, use_name,
-					       NetScope::FUNC);
-	    func_scope->is_auto((*cur).second->is_auto());
-	    func_scope->set_line((*cur).second);
-
-	    if (debug_scopes)
-		  cerr << cur->second->get_fileline() << ": debug: "
-		       << "Elaborate function scope " << scope_path(func_scope) << endl;
-	    (*cur).second->elaborate_scope(des, func_scope);
+	    elaborate_scope_func(des, scope, cur->second);
       }
 
+}
+
+void elaborate_rootscope_tasks(Design*des)
+{
+      for (map<perm_string,PTaskFunc*>::iterator cur = pform_tasks.begin()
+		 ; cur != pform_tasks.end() ; ++ cur) {
+
+	    if (PTask*task = dynamic_cast<PTask*> (cur->second)) {
+		  elaborate_scope_task(des, 0, task);
+		  continue;
+	    }
+
+	    if (PFunction*func = dynamic_cast<PFunction*>(cur->second)) {
+		  elaborate_scope_func(des, 0, func);
+		  continue;
+	    }
+
+	    cerr << cur->second->get_fileline() << ": internal error: "
+		 << "elabortae_rootscope_tasks does not understand "
+		 << "this object," << endl;
+	    des->errors += 1;
+      }
 }
 
 class generate_schemes_work_item_t : public elaborator_work_item_t {
@@ -690,12 +759,14 @@ class generate_schemes_work_item_t : public elaborator_work_item_t {
 bool PPackage::elaborate_scope(Design*des, NetScope*scope)
 {
       if (debug_scopes) {
-	    cerr << get_fileline() << ": debug: Elaborate package scope "
-		 << scope_path(scope) << "." << endl;
+	    cerr << get_fileline() << ": PPackage::elaborate_scope: "
+		 << "Elaborate package " << scope_path(scope) << "." << endl;
       }
 
       collect_scope_parameters_(des, scope, parameters);
       collect_scope_localparams_(des, scope, localparams);
+      elaborate_scope_enumerations(des, scope, enum_sets);
+      elaborate_scope_classes(des, scope, classes_lexical);
       elaborate_scope_funcs(des, scope, funcs);
       elaborate_scope_tasks(des, scope, tasks);
       return true;
@@ -705,8 +776,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 			     const replace_t&replacements)
 {
       if (debug_scopes) {
-	    cerr << get_fileline() << ": debug: Elaborate scope "
-		 << scope_path(scope) << "." << endl;
+	    cerr << get_fileline() << ": Module::elaborate_scope: "
+		 << "Elaborate " << scope_path(scope) << "." << endl;
       }
 
 	// Add the genvars to the scope.
@@ -892,8 +963,10 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 
 	// Check the generate block name.
 
-	// A generate "loop" can not have the same name as another scope object.
-      const NetScope *child = container->child(hname_t(scope_name));
+	// A generate "loop" can not have the same name as another
+	// scope object. Find any scope with this name, not just an
+	// exact match scope.
+      const NetScope *child = container->child_byname(scope_name);
       if (child) {
 	    cerr << get_fileline() << ": error: generate \"loop\" and ";
 	    child->print_type(cerr);
@@ -1892,6 +1965,18 @@ void PDoWhile::elaborate_scope(Design*des, NetScope*scope) const
  * statement.
  */
 void PEventStatement::elaborate_scope(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_ -> elaborate_scope(des, scope);
+}
+
+/*
+ * The standard says that we create an implicit scope for foreach
+ * loops, but that is just to hold the index variables, and we'll
+ * handle them by creating unique names. So just jump into the
+ * contained statement for scope elaboration.
+ */
+void PForeach::elaborate_scope(Design*des, NetScope*scope) const
 {
       if (statement_)
 	    statement_ -> elaborate_scope(des, scope);

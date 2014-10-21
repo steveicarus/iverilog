@@ -24,9 +24,9 @@
 
 # include "sys_readmem_lex.h"
 # include  <string.h>
-static void make_addr();
-static void make_hex_value();
-static void make_bin_value();
+static void make_addr(void);
+static void make_hex_value(void);
+static void make_bin_value(void);
 
 static int save_state;
 
@@ -60,12 +60,12 @@ char *readmem_error_token = 0;
 static unsigned word_width = 0;
 static struct t_vpi_vecval*vecval = 0;
 
-static void make_addr()
+static void make_addr(void)
 {
       sscanf(yytext+1, "%x", (unsigned int*)&vecval->aval);
 }
 
-static void make_hex_value()
+static void make_hex_value(void)
 {
       char*beg = yytext;
       char*end = beg + strlen(beg);
@@ -136,7 +136,7 @@ static void make_hex_value()
       }
 }
 
-static void make_bin_value()
+static void make_bin_value(void)
 {
       char*beg = yytext;
       char*end = beg + strlen(beg);
@@ -195,7 +195,7 @@ void sys_readmem_start_file(FILE*in, int bin_flag,
 /*
  * Modern version of flex (>=2.5.9) can clean up the scanner data.
  */
-void destroy_readmem_lexor()
+void destroy_readmem_lexor(void)
 {
 # ifdef FLEX_SCANNER
 #   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5

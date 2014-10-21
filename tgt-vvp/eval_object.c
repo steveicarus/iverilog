@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -67,7 +67,7 @@ static int eval_darray_new(ivl_expr_t ex)
       }
 
       if (init_expr && ivl_expr_type(init_expr)==IVL_EX_ARRAY_PATTERN) {
-	    int idx;
+	    unsigned idx;
 	    switch (ivl_type_base(element_type)) {
 		case IVL_VT_BOOL:
 		  for (idx = 0 ; idx < ivl_expr_parms(init_expr) ; idx += 1) {
@@ -157,6 +157,7 @@ static int eval_class_new(ivl_expr_t ex)
 
 static int eval_object_null(ivl_expr_t ex)
 {
+      (void)ex; /* Parameter is not used. */
       fprintf(vvp_out, "    %%null;\n");
       return 0;
 }
@@ -166,9 +167,22 @@ static int eval_object_property(ivl_expr_t expr)
       ivl_signal_t sig = ivl_expr_signal(expr);
       unsigned pidx = ivl_expr_property_idx(expr);
 
+      int idx = 0;
+      ivl_expr_t idx_expr = 0;
+
+	/* If there is an array index expression, then this is an
+	   array'ed property, and we need to calculate the index for
+	   the expression. */
+      if ( (idx_expr = ivl_expr_oper1(expr)) ) {
+	    idx = allocate_word();
+	    draw_eval_expr_into_integer(idx_expr, idx);
+      }
+
       fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
-      fprintf(vvp_out, "    %%prop/obj %u;\n", pidx);
+      fprintf(vvp_out, "    %%prop/obj %u, %d; eval_object_property\n", pidx, idx);
       fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
+
+      if (idx != 0) clr_word(idx);
       return 0;
 }
 
@@ -189,10 +203,25 @@ static int eval_object_shallowcopy(ivl_expr_t ex)
       return 0;
 }
 
-static int eval_object_signal(ivl_expr_t ex)
+static int eval_object_signal(ivl_expr_t expr)
 {
-      ivl_signal_t sig = ivl_expr_signal(ex);
-      fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+      ivl_signal_t sig = ivl_expr_signal(expr);
+
+	/* Simple case: This is a simple variable. Generate a load
+	   statement to load the string into the stack. */
+      if (ivl_signal_dimensions(sig) == 0) {
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+	    return 0;
+      }
+
+	/* There is a word select expression, so load the index into a
+	   register and load from the array. */
+      ivl_expr_t word_ex = ivl_expr_oper1(expr);
+      int word_ix = allocate_word();
+      draw_eval_expr_into_integer(word_ex, word_ix);
+      fprintf(vvp_out, "    %%load/obja v%p, %d;\n", sig, word_ix);
+      clr_word(word_ix);
+
       return 0;
 }
 
@@ -234,7 +263,7 @@ int draw_eval_object(ivl_expr_t ex)
 	    return eval_object_ufunc(ex);
 
 	  default:
-	    fprintf(vvp_out, "; ERROR: draw_eval_object: Invalid expression type %u\n", ivl_expr_type(ex));
+	    fprintf(vvp_out, "; ERROR: draw_eval_object: Invalid expression type %d\n", ivl_expr_type(ex));
 	    return 1;
 
       }

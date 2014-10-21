@@ -1,7 +1,7 @@
-#ifndef __ivl_target_H
-#define __ivl_target_H
+#ifndef IVL_ivl_target_H
+#define IVL_ivl_target_H
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -300,6 +300,8 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_CONCAT = 16,
       IVL_LPM_CONCATZ = 36, /* Transparent concat */
       IVL_LPM_CMP_EEQ= 18, /* Case EQ (===) */
+      IVL_LPM_CMP_EQX= 37, /* Windcard EQ (==?) */
+      IVL_LPM_CMP_EQZ= 38, /* casez EQ */
       IVL_LPM_CMP_EQ = 10,
       IVL_LPM_CMP_GE =  1,
       IVL_LPM_CMP_GT =  2,
@@ -326,6 +328,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_SHIFTR =  7,
       IVL_LPM_SIGN_EXT=27,
       IVL_LPM_SUB    =  8,
+      IVL_LPM_SUBSTITUTE=39,
       /* IVL_LPM_RAM =  9, / obsolete */
       IVL_LPM_UFUNC  = 14
 } ivl_lpm_type_t;
@@ -437,6 +440,7 @@ typedef enum ivl_variable_type_e {
       IVL_VT_STRING  = 5,
       IVL_VT_DARRAY  = 6,  /* Array (esp. dynamic array) */
       IVL_VT_CLASS   = 7,  /* SystemVerilog class instances */
+      IVL_VT_QUEUE   = 8,  /* SystemVerilog queue instances */
       IVL_VT_VECTOR = IVL_VT_LOGIC /* For compatibility */
 } ivl_variable_type_t;
 
@@ -827,6 +831,10 @@ extern unsigned ivl_event_lineno(ivl_event_t net);
  * function gets the index of the selected property into the property
  * table. That number can be passed to ivl_type_prop_*() functions to
  * get details about the property.
+ *
+ * If the property is an array, then the ivl_expr_oper1() function
+ * returns the canonical expression for accessing the element of the
+ * property.
  *
  * - IVL_EX_NEW
  * This expression takes one or two operands. The first operand,
@@ -1265,7 +1273,7 @@ extern unsigned    ivl_lpm_lineno(ivl_lpm_t net);
  * width of the part. The ivl_lpm_q is the part end, and the
  * ivl_lpm_data(0) is the non-part end.
  *
- * - Comparisons (IVL_LPM_CMP_GT/GE/EQ/NE/EEQ/NEE)
+ * - Comparisons (IVL_LPM_CMP_GT/GE/EQ/NE/EEQ/NEE/EQX/EQZ)
  * These devices have two inputs, available by the ivl_lpm_data()
  * function, and one output available by the ivl_lpm_q function. The
  * output width is always 1, but the ivl_lpm_width() returns the width
@@ -1276,6 +1284,11 @@ extern unsigned    ivl_lpm_lineno(ivl_lpm_t net);
  * (so the target need not worry about sign extension) but when doing
  * magnitude compare, the signedness does matter. In any case, the
  * result of the compare is always unsigned.
+ *
+ * The EQX and EQZ nodes are windcard compares, where xz bits (EQX) or
+ * z bits (EQZ) in the data(1) operand are treated as windcards. no
+ * bits in the data(0) operand are wild. This matches the
+ * SystemVerilog convention for the ==? operator.
  *
  * - Mux Device (IVL_LPM_MUX)
  * The MUX device has a q output, a select input, and a number of data
@@ -1402,7 +1415,7 @@ extern ivl_nexus_t ivl_lpm_sync_set(ivl_lpm_t net);
 extern ivl_expr_t  ivl_lpm_sset_value(ivl_lpm_t net);
   /* IVL_LPM_ARRAY */
 extern ivl_signal_t ivl_lpm_array(ivl_lpm_t net);
-  /* IVL_LPM_PART */
+  /* IVL_LPM_PART IVL_LPM_SUBSTITUTE */
 extern unsigned ivl_lpm_base(ivl_lpm_t net);
   /* IVL_LPM_FF */
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
@@ -1412,12 +1425,14 @@ extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
   /* IVL_LPM_ADD IVL_LPM_CONCAT IVL_LPM_FF IVL_LPM_PART IVL_LPM_MULT
      IVL_LPM_MUX IVL_LPM_POW IVL_LPM_SHIFTL IVL_LPM_SHIFTR IVL_LPM_SUB
-     IVL_LPM_UFUNC */
+     IVL_LPM_UFUNC IVL_LPM_SUBSTITUTE */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_POW IVL_LPM_SUB */
+  /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_POW IVL_LPM_SUB IVL_LPM_CMP_EQ
+     IVL_LPM_CMP_EEQ IVL_LPM_CMP_EQX IVL_LPM_CMP_EQZ IVL_LPM_CMP_NEE */
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_PART IVL_LPM_POW
-     IVL_LPM_SUB IVL_LPM_UFUNC */
+     IVL_LPM_SUB IVL_LPM_UFUNC IVL_LPM_CMP_EEQ IVL_LPM_CMP_EQX
+     IVL_LPM_CMP_EQZ IVL_LPM_CMP_NEE IVL_LPM_SUBSTITUTE */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net);
 extern ivl_drive_t ivl_lpm_drive0(ivl_lpm_t net);
 extern ivl_drive_t ivl_lpm_drive1(ivl_lpm_t net);
@@ -1488,6 +1503,11 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  * then the ivl_lval_idx expression must *not* be present.
  *
  * For array words, the ivl_lval_width is the width of the word.
+ *
+ * - Arrayed properties
+ * If the l-value is a class property, then the ivl_lval_idx function
+ * will return an expression if the property is in fact arrayed. The
+ * expression is the canonical index for elements in the property.
  */
 
 extern unsigned    ivl_lval_width(ivl_lval_t net);
@@ -2322,4 +2342,4 @@ typedef const char* (*target_query_f) (const char*key);
 
 _END_DECL
 
-#endif
+#endif /* IVL_ivl_target_H */

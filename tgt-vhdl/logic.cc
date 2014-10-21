@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for logic devices.
  *
- *  Copyright (C) 2008-2011  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2014  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -117,8 +117,7 @@ static void comb_udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
    ss << ivl_logic_basename(log) << "_Tmp";
    int msb = ivl_udp_nin(udp) - 1;
    vhdl_type *tmp_type = vhdl_type::std_logic_vector(msb, 0);
-   vhdl_signal_decl *tmp_decl =
-      new vhdl_signal_decl(ss.str().c_str(), tmp_type);
+   vhdl_signal_decl *tmp_decl = new vhdl_signal_decl(ss.str(), tmp_type);
    arch->get_scope()->add_decl(tmp_decl);
 
    int nin = ivl_udp_nin(udp);

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2013  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2011-2014  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,7 +40,8 @@ static unsigned table_count = 0;
 static PLI_INT32 cleanup_table_mod(p_cb_data cause)
 {
       unsigned idx;
-      (void) cause;  /* Unused argument. */
+
+      (void)cause; /* Parameter is not used. */
 
       for (idx = 0; idx < table_count; idx += 1) {
 	    free(tables[idx]->indep);
@@ -64,7 +65,7 @@ static PLI_INT32 cleanup_table_mod(p_cb_data cause)
  * Create an empty table model object and add it to the list of table
  * model objects.
  */
-static p_table_mod create_table()
+static p_table_mod create_table(void)
 {
 	/* Create an empty table model object. */
       p_table_mod obj = (p_table_mod) malloc(sizeof(s_table_mod));
@@ -91,7 +92,7 @@ static p_table_mod create_table()
  * Check to see if this is a constant string. It returns 1 if the argument
  * is a constant string otherwise it returns 0.
  */
-unsigned is_const_string_obj(vpiHandle arg)
+static unsigned is_const_string_obj(vpiHandle arg)
 {
       unsigned rtn = 0;
 
@@ -110,10 +111,9 @@ unsigned is_const_string_obj(vpiHandle arg)
 /*
  * Get any command line flags. For now we only have a debug flag.
  */
-static void check_command_line_flags()
+static void check_command_line_flags(void)
 {
       struct t_vpi_vlog_info vlog_info;
-      unsigned idx;
       static unsigned command_line_processed = 0;
 
 	/* If we have already processed the arguments then just return. */
@@ -121,7 +121,7 @@ static void check_command_line_flags()
 
       vpi_get_vlog_info(&vlog_info);
 
-      for (idx = 0; idx < vlog_info.argc; idx += 1) {
+      for (int idx = 0; idx < vlog_info.argc; idx += 1) {
 	    if (strcmp(vlog_info.argv[idx], "-table-model-debug") == 0) {
 		  table_model_debug = 1;
 	    }
@@ -634,6 +634,8 @@ static unsigned initialize_table_model(vpiHandle callh, const char *name,
 static double eval_table_model(vpiHandle callh, p_table_mod table)
 {
       unsigned idx;
+
+      (void)callh; /* Parameter is not used. */
 fprintf(stderr, "Evaluating table \"%s\" with %u variables\n",
         table->file.name, table->dims);
       for (idx = 0; idx < table->dims; idx += 1) {
@@ -685,7 +687,7 @@ static PLI_INT32 sys_table_model_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 /*
  * Routine to register the system function provided in this file.
  */
-void table_model_register()
+void table_model_register(void)
 {
       s_vpi_systf_data tf_data;
       s_cb_data cb;

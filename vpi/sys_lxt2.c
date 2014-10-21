@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -254,12 +254,12 @@ __inline__ static int dump_header_pending(void)
  * This function writes out all the traced variables, whether they
  * changed or not.
  */
-static void vcd_checkpoint()
+static void vcd_checkpoint(void)
 {
       functor_all_vcd_info( show_this_item );
 }
 
-static void vcd_checkpoint_x()
+static void vcd_checkpoint_x(void)
 {
       functor_all_vcd_info( show_this_item_x );
 }
@@ -392,6 +392,8 @@ static PLI_INT32 sys_dumpoff_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       s_vpi_time now;
       PLI_UINT64 now64;
 
+      (void)name; /* Parameter is not used. */
+
       if (dump_is_off) return 0;
 
       dump_is_off = 1;
@@ -419,6 +421,8 @@ static PLI_INT32 sys_dumpon_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       s_vpi_time now;
       PLI_UINT64 now64;
 
+      (void)name; /* Parameter is not used. */
+
       if (!dump_is_off) return 0;
 
       dump_is_off = 0;
@@ -445,6 +449,8 @@ static PLI_INT32 sys_dumpall_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       s_vpi_time now;
       PLI_UINT64 now64;
+
+      (void)name; /* Parameter is not used. */
 
       if (dump_is_off) return 0;
       if (dump_file == 0) return 0;
@@ -561,6 +567,7 @@ static PLI_INT32 sys_dumpfile_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
  */
 static PLI_INT32 sys_dumpflush_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
+      (void)name; /* Parameter is not used. */
       if (dump_file) vcd_work_flush();
 
       return 0;
@@ -571,6 +578,8 @@ static PLI_INT32 sys_dumplimit_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       s_vpi_value val;
+
+      (void)name; /* Parameter is not used. */
 
       /* Get the value and set the dump limit. */
       assert(argv);
@@ -782,6 +791,8 @@ static PLI_INT32 sys_dumpvars_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       s_vpi_value value;
       unsigned depth = 0;
 
+      (void)name; /* Parameter is not used. */
+
       if (dump_file == 0) {
 	    open_dumpfile(callh);
 	    if (dump_file == 0) {
@@ -834,6 +845,9 @@ static void* lxt2_thread(void*arg)
 	   function when the time changes. */
       uint64_t cur_time = 0;
       int run_flag = 1;
+
+      (void)arg; /* Parameter is not used. */
+
       while (run_flag) {
 	    struct vcd_work_item_s*cell = vcd_work_thread_peek();
 
@@ -873,7 +887,7 @@ static void* lxt2_thread(void*arg)
       return 0;
 }
 
-void sys_lxt2_register()
+void sys_lxt2_register(void)
 {
       int idx;
       struct t_vpi_vlog_info vlog_info;

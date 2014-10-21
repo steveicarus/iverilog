@@ -21,6 +21,7 @@
 # include  "entity.h"
 # include  "expression.h"
 # include  "sequential.h"
+# include  "subprogram.h"
 # include  "vsignal.h"
 # include  <iostream>
 # include  <typeinfo>
@@ -69,14 +70,17 @@ int Architecture::emit(ostream&out, Entity*entity)
 	// of the full definition.
 
       typedef_context_t typedef_ctx;
+      for (map<perm_string,const VType*>::iterator cur = use_types_.begin()
+		 ; cur != use_types_.end() ; ++cur) {
+
+	    if(const VTypeDef*def = dynamic_cast<const VTypeDef*>(cur->second))
+		errors += def->emit_typedef(out, typedef_ctx);
+      }
       for (map<perm_string,const VType*>::iterator cur = cur_types_.begin()
 		 ; cur != cur_types_.end() ; ++cur) {
 
-	    const VTypeDef*def = dynamic_cast<const VTypeDef*>(cur->second);
-	    if (def == 0)
-		  continue;
-
-	    errors += def->emit_typedef(out, typedef_ctx);
+	    if(const VTypeDef*def = dynamic_cast<const VTypeDef*>(cur->second))
+		errors += def->emit_typedef(out, typedef_ctx);
       }
 
       for (map<perm_string,struct const_t*>::iterator cur = use_constants_.begin()

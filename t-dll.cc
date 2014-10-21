@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -160,12 +160,21 @@ inline static const char *basename(ivl_scope_t scope, const char *inst)
 
 static perm_string make_scope_name(const hname_t&name)
 {
-      if (! name.has_number())
+      if (! name.has_numbers())
 	    return name.peek_name();
 
       char buf[1024];
-      snprintf(buf, sizeof buf, "%s[%d]",
-	       name.peek_name().str(), name.peek_number());
+      snprintf(buf, sizeof buf, "%s", name.peek_name().str());
+
+      char*cp = buf + strlen(buf);
+      size_t ncp = sizeof buf - (cp-buf);
+
+      for (size_t idx = 0 ; idx < name.has_numbers() ; idx += 1) {
+	    int len = snprintf(cp, ncp, "[%d]", name.peek_number(idx));
+	    cp += len;
+	    ncp -= len;
+      }
+
       return lex_strings.make(buf);
 }
 
@@ -250,6 +259,12 @@ ivl_scope_t dll_target::find_scope(ivl_design_s &des, const NetScope*cur)
       if (cur->type() == NetScope::CLASS) {
 	    ivl_scope_t tmp = des.classes[cur];
 	    return tmp;
+      }
+
+      if (cur->type()==NetScope::TASK || cur->type()==NetScope::FUNC) {
+	    map<const NetScope*,ivl_scope_t>::const_iterator idx = des.root_tasks.find(cur);
+	    if (idx != des.root_tasks.end())
+		  return idx->second;
       }
 
       for (unsigned idx = 0; idx < des.roots.size(); idx += 1) {
@@ -596,6 +611,13 @@ void dll_target::add_root(const NetScope *s)
       root_->lpm_ = 0;
       root_->def = 0;
       make_scope_parameters(root_, s);
+      root_->tname_ = root_->name_;
+      root_->time_precision = s->time_precision();
+      root_->time_units = s->time_unit();
+      root_->nattr = s->attr_cnt();
+      root_->attr  = fill_in_attributes(s);
+      root_->is_auto = 0;
+      root_->is_cell = s->is_cell();
       switch (s->type()) {
 	  case NetScope::PACKAGE:
 	    root_->type_ = IVL_SCT_PACKAGE;
@@ -606,16 +628,25 @@ void dll_target::add_root(const NetScope *s)
 	  case NetScope::CLASS:
 	    root_->type_ = IVL_SCT_CLASS;
 	    break;
+	  case NetScope::TASK: {
+		const NetTaskDef*def = s->task_def();
+		if (def == 0) {
+		      cerr << "?:?" << ": internal error: "
+			   << "task " << root_->name_
+			   << " has no definition." << endl;
+		}
+		assert(def);
+		root_->type_ = IVL_SCT_TASK;
+		root_->tname_ = def->scope()->basename();
+		break;
+	  }
+	    break;
+	  case NetScope::FUNC:
+	    root_->type_ = IVL_SCT_FUNCTION;
+	    break;
 	  default:
 	    assert(0);
       }
-      root_->tname_ = root_->name_;
-      root_->time_precision = s->time_precision();
-      root_->time_units = s->time_unit();
-      root_->nattr = s->attr_cnt();
-      root_->attr  = fill_in_attributes(s);
-      root_->is_auto = 0;
-      root_->is_cell = s->is_cell();
 
       switch (s->type()) {
 	  case NetScope::MODULE:
@@ -639,6 +670,11 @@ void dll_target::add_root(const NetScope *s)
 	  case NetScope::CLASS:
 	    root_->ports = 0;
 	    des_.classes[s] = root_;
+	    break;
+
+	  case NetScope::TASK:
+	  case NetScope::FUNC:
+	    des_.root_tasks[s] = root_;
 	    break;
 
 	  default:
@@ -682,16 +718,22 @@ bool dll_target::start_design(const Design*des)
       }
       assert(idx == des_.disciplines.size());
 
-      list<NetScope *> package_scopes = des->find_package_scopes();
-      for (list<NetScope*>::const_iterator scop = package_scopes.begin()
-		 ; scop != package_scopes.end(); ++ scop ) {
-	    add_root(*scop);
+      list<NetScope *> scope_list = des->find_roottask_scopes();
+      for (list<NetScope*>::const_iterator cur = scope_list.begin()
+		 ; cur != scope_list.end() ; ++ cur) {
+	    add_root(*cur);
       }
 
-      list<NetScope *> root_scopes = des->find_root_scopes();
-      for (list<NetScope*>::const_iterator scop = root_scopes.begin()
-		 ; scop != root_scopes.end(); ++ scop ) {
-	    add_root(*scop);
+      scope_list = des->find_package_scopes();
+      for (list<NetScope*>::const_iterator cur = scope_list.begin()
+		 ; cur != scope_list.end(); ++ cur ) {
+	    add_root(*cur);
+      }
+
+      scope_list = des->find_root_scopes();
+      for (list<NetScope*>::const_iterator cur = scope_list.begin()
+		 ; cur != scope_list.end(); ++ cur ) {
+	    add_root(*cur);
       }
 
       target_ = (target_design_f)ivl_dlsym(dll_, LU "target_design" TU);
@@ -1091,6 +1133,32 @@ bool dll_target::tran(const NetTran*net)
       return true;
 }
 
+bool dll_target::substitute(const NetSubstitute*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type = IVL_LPM_SUBSTITUTE;
+      obj->name = net->name();
+      assert(net->scope());
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+      FILE_NAME(obj, net);
+
+      obj->width = net->width();
+      obj->u_.substitute.base = net->base();
+
+      obj->u_.substitute.q = net->pin(0).nexus()->t_cookie();
+      obj->u_.substitute.a = net->pin(1).nexus()->t_cookie();
+      obj->u_.substitute.s = net->pin(2).nexus()->t_cookie();
+      nexus_lpm_add(obj->u_.substitute.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+      nexus_lpm_add(obj->u_.substitute.a, obj, 0, IVL_DR_HiZ,    IVL_DR_HiZ);
+      nexus_lpm_add(obj->u_.substitute.s, obj, 0, IVL_DR_HiZ,    IVL_DR_HiZ);
+
+      make_lpm_delays_(obj, net);
+      scope_add_lpm(obj->scope, obj);
+
+      return true;
+}
+
 bool dll_target::sign_extend(const NetSignExtend*net)
 {
       struct ivl_lpm_s*obj = new struct ivl_lpm_s;
@@ -1181,7 +1249,20 @@ bool dll_target::ureduce(const NetUReduce*net)
 void dll_target::net_case_cmp(const NetCaseCmp*net)
 {
       struct ivl_lpm_s*obj = new struct ivl_lpm_s;
-      obj->type  = net->eeq()? IVL_LPM_CMP_EEQ : IVL_LPM_CMP_NEE;
+      switch (net->kind()) {
+	  case NetCaseCmp::EEQ:
+	    obj->type = IVL_LPM_CMP_EEQ;
+	    break;
+	  case NetCaseCmp::NEQ:
+	    obj->type = IVL_LPM_CMP_NEE;
+	    break;
+	  case NetCaseCmp::XEQ:
+	      obj->type = IVL_LPM_CMP_EQX;
+	    break;
+	  case NetCaseCmp::ZEQ:
+	    obj->type = IVL_LPM_CMP_EQZ;
+	    break;
+      }
       obj->name  = net->name();
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -2031,6 +2112,13 @@ void dll_target::lpm_mux(const NetMux*net)
 	    nex = net->pin_Data(sdx).nexus();
 	    ivl_nexus_t tmp = nex->t_cookie();
 	    obj->u_.mux.d[sdx] = tmp;
+	    if (tmp == 0) {
+		  cerr << net->get_fileline() << ": internal error: "
+		       << "dll_target::lpm_mux: "
+		       << "Missing data port " << sdx
+		       << " of mux " << obj->name << "." << endl;
+	    }
+	    ivl_assert(*net, tmp);
 	    nexus_lpm_add(tmp, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
       }
 
@@ -2356,6 +2444,11 @@ void dll_target::scope(const NetScope*net)
 {
       if (net->parent()==0 && net->type()==NetScope::CLASS) {
 
+	    if (debug_emit) {
+		  cerr << "dll_target::scope: "
+		       << "Add class " << scope_path(net)
+		       << " as a root scope." << endl;
+	    }
 	    add_root(net);
 
       } if (net->parent() == 0) {

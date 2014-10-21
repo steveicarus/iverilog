@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,7 +41,7 @@ static double chi_square(long *seed, long deg_of_free);
 static double t(long *seed, long deg_of_free);
 static double erlangian(long *seed, long k, long mean);
 
-long rtl_dist_chi_square(long *seed, long df)
+static long rtl_dist_chi_square(long *seed, long df)
 {
       double r;
       long i;
@@ -64,7 +64,7 @@ long rtl_dist_chi_square(long *seed, long df)
       return i;
 }
 
-long rtl_dist_erlang(long *seed, long k, long mean)
+static long rtl_dist_erlang(long *seed, long k, long mean)
 {
       double r;
       long i;
@@ -87,7 +87,7 @@ long rtl_dist_erlang(long *seed, long k, long mean)
       return i;
 }
 
-long rtl_dist_exponential(long *seed, long mean)
+static long rtl_dist_exponential(long *seed, long mean)
 {
       double r;
       long i;
@@ -110,7 +110,7 @@ long rtl_dist_exponential(long *seed, long mean)
       return i;
 }
 
-long rtl_dist_normal(long *seed, long mean, long sd)
+static long rtl_dist_normal(long *seed, long mean, long sd)
 {
       double r;
       long i;
@@ -127,7 +127,7 @@ long rtl_dist_normal(long *seed, long mean, long sd)
       return i;
 }
 
-long rtl_dist_poisson(long *seed, long mean)
+static long rtl_dist_poisson(long *seed, long mean)
 {
       long i;
 
@@ -142,7 +142,7 @@ long rtl_dist_poisson(long *seed, long mean)
       return i;
 }
 
-long rtl_dist_t(long *seed, long df)
+static long rtl_dist_t(long *seed, long df)
 {
       double r;
       long i;
@@ -166,7 +166,7 @@ long rtl_dist_t(long *seed, long df)
 }
 
 /* copied from IEEE1364-2001, with slight modifications for 64bit machines. */
-long rtl_dist_uniform(long *seed, long start, long end)
+static long rtl_dist_uniform(long *seed, long start, long end)
 {
       double r;
       long i;
@@ -527,6 +527,8 @@ static PLI_INT32 sys_random_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       static long i_seed = 0;
       long a_seed;
 
+      (void)name; /* Parameter is not used. */
+
       /* Get the argument list and look for a seed. If it is there,
          get the value and reseed the random number generator. */
       callh = vpi_handle(vpiSysTfCall, 0);
@@ -552,7 +554,7 @@ static PLI_INT32 sys_random_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-/* From System Verilog 3.1a. */
+/* From SystemVerilog. */
 static PLI_INT32 sys_urandom_range_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
@@ -561,20 +563,17 @@ static PLI_INT32 sys_urandom_range_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 
       /* Check that there are arguments. */
       if (argv == 0) {
-            vpi_printf("ERROR: %s requires two arguments.\n", name);
+            vpi_printf("ERROR: %s requires one or two arguments.\n", name);
             vpi_control(vpiFinish, 1);
             return 0;
       }
 
-      /* Check that there are at least two arguments. */
+      /* Check that there is at least one argument. */
       arg = vpi_scan(argv);  /* This should never be zero. */
       assert(arg);
       arg = vpi_scan(argv);
-      if (arg == 0) {
-            vpi_printf("ERROR: %s requires two arguments.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
-      }
+      /* Is this a single argument function call? */
+      if (arg == 0) return 0;
 
       /* These functions takes at most two argument. */
       arg = vpi_scan(argv);
@@ -588,7 +587,7 @@ static PLI_INT32 sys_urandom_range_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-/* From System Verilog 3.1a. */
+/* From SystemVerilog. */
 static unsigned long urandom(long *seed, unsigned long max, unsigned long min)
 {
       static long i_seed = 0;
@@ -603,12 +602,14 @@ static unsigned long urandom(long *seed, unsigned long max, unsigned long min)
       return result;
 }
 
-/* From System Verilog 3.1a. */
+/* From SystemVerilog. */
 static PLI_INT32 sys_urandom_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed = 0;
       s_vpi_value val;
       long i_seed;
+
+      (void)name; /* Parameter is not used. */
 
       /* Get the argument list and look for a seed. If it is there,
          get the value and reseed the random number generator. */
@@ -639,12 +640,14 @@ static PLI_INT32 sys_urandom_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-/* From System Verilog 3.1a. */
+/* From SystemVerilog. */
 static PLI_INT32 sys_urandom_range_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, maxval, minval;
       s_vpi_value val;
       unsigned long i_maxval, i_minval;
+
+      (void)name; /* Parameter is not used. */
 
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
@@ -656,8 +659,14 @@ static PLI_INT32 sys_urandom_range_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpi_get_value(maxval, &val);
       i_maxval = val.value.integer;
 
-      vpi_get_value(minval, &val);
-      i_minval = val.value.integer;
+      /* Is this a two or one argument function call? */
+      if (minval) {
+	    vpi_get_value(minval, &val);
+	    i_minval = val.value.integer;
+	    vpi_free_object(argv);
+      } else {
+	    i_minval = 0;
+      }
 
       /* Swap the two arguments if they are out of order. */
       if (i_minval > i_maxval) {
@@ -669,7 +678,6 @@ static PLI_INT32 sys_urandom_range_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       /* Calculate and return the result. */
       val.value.integer = urandom(0, i_maxval, i_minval);
       vpi_put_value(callh, &val, 0, vpiNoDelay);
-      vpi_free_object(argv);
       return 0;
 }
 
@@ -678,6 +686,8 @@ static PLI_INT32 sys_dist_uniform_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpiHandle callh, argv, seed, start, end;
       s_vpi_value val;
       long i_seed, i_start, i_end;
+
+      (void)name; /* Parameter is not used. */
 
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
@@ -714,6 +724,8 @@ static PLI_INT32 sys_dist_normal_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_value val;
       long i_seed, i_mean, i_sd;
 
+      (void)name; /* Parameter is not used. */
+
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
@@ -749,6 +761,8 @@ static PLI_INT32 sys_dist_exponential_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_value val;
       long i_seed, i_mean;
 
+      (void)name; /* Parameter is not used. */
+
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
@@ -779,6 +793,8 @@ static PLI_INT32 sys_dist_poisson_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpiHandle callh, argv, seed, mean;
       s_vpi_value val;
       long i_seed, i_mean;
+
+      (void)name; /* Parameter is not used. */
 
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
@@ -811,6 +827,8 @@ static PLI_INT32 sys_dist_chi_square_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_value val;
       long i_seed, i_df;
 
+      (void)name; /* Parameter is not used. */
+
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
@@ -841,6 +859,8 @@ static PLI_INT32 sys_dist_t_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpiHandle callh, argv, seed, df;
       s_vpi_value val;
       long i_seed, i_df;
+
+      (void)name; /* Parameter is not used. */
 
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
@@ -873,6 +893,8 @@ static PLI_INT32 sys_dist_erlang_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_value val;
       long i_seed, i_k, i_mean;
 
+      (void)name; /* Parameter is not used. */
+
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
@@ -902,12 +924,13 @@ static PLI_INT32 sys_dist_erlang_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_rand_func_sizetf(PLI_BYTE8 *x)
+static PLI_INT32 sys_rand_func_sizetf(PLI_BYTE8 *name)
 {
+      (void)name; /* Parameter is not used. */
       return 32;
 }
 
-void sys_random_register()
+void sys_random_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;
@@ -922,7 +945,7 @@ void sys_random_register()
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
-      /* From System Verilog 3.1a. */
+      /* From SystemVerilog. */
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncSized;
       tf_data.tfname = "$urandom";
@@ -933,7 +956,7 @@ void sys_random_register()
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
-      /* From System Verilog 3.1a. */
+      /* From SystemVerilog. */
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncSized;
       tf_data.tfname = "$urandom_range";

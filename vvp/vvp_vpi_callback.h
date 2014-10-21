@@ -1,7 +1,7 @@
-#ifndef __vvp_vpi_callback_H
-#define __vvp_vpi_callback_H
+#ifndef IVL_vvp_vpi_callback_H
+#define IVL_vvp_vpi_callback_H
 /*
- * Copyright (c) 2009-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2009-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -62,4 +62,4 @@ class vvp_vpi_callback {
 };
 
 
-#endif
+#endif /* IVL_vvp_vpi_callback_H */

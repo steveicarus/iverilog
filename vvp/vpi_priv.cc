@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,6 +23,7 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
+# include  <vector>
 # include  <cstdio>
 # include  <cstdarg>
 # include  <cstring>
@@ -31,6 +32,7 @@
 # include  <cmath>
 # include  <iostream>
 
+using namespace std;
 vpi_mode_t vpi_mode_flag = VPI_MODE_NONE;
 FILE*vpi_trace = 0;
 
@@ -103,7 +105,7 @@ struct vpip_string_chunk {
 
 unsigned vpip_size(__vpiSignal *sig)
 {
-      return abs(sig->msb - sig->lsb) + 1;
+      return abs(sig->msb.get_value() - sig->lsb.get_value()) + 1;
 }
 
 struct __vpiScope* vpip_scope(__vpiSignal*sig)
@@ -582,7 +584,7 @@ static void vec4_get_value_string(const vvp_vector4_t&word_val, unsigned width,
       unsigned nchar = width / 8;
       unsigned tail = width % 8;
 
-      char*rbuf = need_result_buf(nchar + 1, RBUF_VAL);
+      char*rbuf = (char *) need_result_buf(nchar + 1, RBUF_VAL);
       char*cp = rbuf;
 
       if (tail > 0) {
@@ -634,7 +636,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 	    break;
 
 	  case vpiBinStrVal:
-	    rbuf = need_result_buf(width+1, RBUF_VAL);
+	    rbuf = (char *) need_result_buf(width+1, RBUF_VAL);
 	    for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
 		  vvp_bit4_t bit = word_val.value(idx);
 		  rbuf[width-idx-1] = vvp_bit4_to_ascii(bit);
@@ -645,7 +647,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 
 	  case vpiOctStrVal: {
 		unsigned hwid = ((width+2) / 3) + 1;
-		rbuf = need_result_buf(hwid, RBUF_VAL);
+		rbuf = (char *) need_result_buf(hwid, RBUF_VAL);
 		vpip_vec4_to_oct_str(word_val, rbuf, hwid);
 		vp->value.str = rbuf;
 		break;
@@ -653,7 +655,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 
 	  case vpiDecStrVal: {
 // HERE need a better estimate.
-		rbuf = need_result_buf(width+1, RBUF_VAL);
+		rbuf = (char *) need_result_buf(width+1, RBUF_VAL);
 		vpip_vec4_to_dec_str(word_val, rbuf, width+1, signed_flag);
 		vp->value.str = rbuf;
 		break;
@@ -661,7 +663,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 
 	  case vpiHexStrVal: {
 		unsigned  hwid = ((width + 3) / 4) + 1;
-		rbuf = need_result_buf(hwid, RBUF_VAL);
+		rbuf = (char *) need_result_buf(hwid, RBUF_VAL);
 		vpip_vec4_to_hex_str(word_val, rbuf, hwid);
 		vp->value.str = rbuf;
 		break;
@@ -712,8 +714,8 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 	  case vpiVectorVal: {
 		unsigned hwid = (width + 31)/32;
 
-		rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
-		s_vpi_vecval *op = (p_vpi_vecval)rbuf;
+		s_vpi_vecval *op = (p_vpi_vecval)
+			need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
 		vp->value.vector = op;
 
 		op->aval = op->bval = 0;
@@ -757,8 +759,6 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 void vpip_vec2_get_value(const vvp_vector2_t&word_val, unsigned width,
 			 bool signed_flag, s_vpi_value*vp)
 {
-      char *rbuf = 0;
-
       switch (vp->format) {
 	  default:
 	    fprintf(stderr, "sorry: Format %d not implemented for "
@@ -777,8 +777,8 @@ void vpip_vec2_get_value(const vvp_vector2_t&word_val, unsigned width,
 	  case vpiVectorVal: {
 		unsigned hwid = (width + 31)/32;
 
-		rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
-		s_vpi_vecval *op = (p_vpi_vecval)rbuf;
+		s_vpi_vecval *op = (p_vpi_vecval)
+			need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
 		vp->value.vector = op;
 
 		op->aval = op->bval = 0;
@@ -858,7 +858,7 @@ void vpip_real_get_value(double real, s_vpi_value*vp)
 	    break;
 
 	  case vpiDecStrVal:
-	    rbuf = need_result_buf(1025, RBUF_VAL);
+	    rbuf = (char *) need_result_buf(1025, RBUF_VAL);
 	    vpip_vec4_to_dec_str(vvp_vector4_t(1024, real), rbuf, 1025, true);
 	    vp->value.str = rbuf;
 	    break;
@@ -932,7 +932,7 @@ void vpip_string_get_value(const string&val, s_vpi_value*vp)
 	    vp->format = vpiStringVal;
 
 	  case vpiStringVal:
-	    rbuf = need_result_buf(val.size() + 1, RBUF_VAL);
+	    rbuf = (char *) need_result_buf(val.size() + 1, RBUF_VAL);
 	    strcpy(rbuf, val.c_str());
 	    vp->value.str = rbuf;
 	    break;
@@ -1131,33 +1131,54 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 
 vpiHandle vpi_handle(PLI_INT32 type, vpiHandle ref)
 {
-      if (type == vpiSysTfCall) {
-	    if (ref != 0) {
+      vpiHandle res = 0;
+
+      if (ref == 0) {
+	      // A few types can apply to a nil handle. These are ways
+	      // that the current function can get started finding things.
+	    switch (type) {
+
+		case vpiScope:
+		    // The IEEE1364-2005 doesn't seem to allow this,
+		    // but some users seem to think it's handy, so
+		    // return the scope that contains this SysTfCall.
+		  assert(vpip_cur_task);
+		  res = vpip_cur_task->vpi_handle(vpiScope);
+		  break;
+
+		case vpiSysTfCall:
+		    // This is how VPI users get a first handle into
+		    // the system. This is the handle of the system
+		    // task/function call currently being executed.
+		  if (vpi_trace) {
+			fprintf(vpi_trace, "vpi_handle(vpiSysTfCall, 0) "
+				"-> %p (%s)\n", vpip_cur_task,
+				vpip_cur_task->defn->info.tfname);
+		  }
+		  return vpip_cur_task;
+
+		default:
+		  fprintf(stderr, "VPI error: vpi_handle(type=%d, ref=0).\n",
+			  (int)type);
+		  res = 0;
+		  break;
+	    }
+
+      } else {
+
+	    if (type == vpiSysTfCall) {
 		  fprintf(stderr, "VPI error: vpi_handle(vpiSysTfCall, "
-		                  "ref!=0).\n");
+			  "ref!=0).\n");
 		  return 0;
 	    }
 
-	    if (vpi_trace) {
-		  fprintf(vpi_trace, "vpi_handle(vpiSysTfCall, 0) "
-			  "-> %p (%s)\n", vpip_cur_task,
-			  vpip_cur_task->defn->info.tfname);
-	    }
-
-	    return vpip_cur_task;
+	    res = ref->vpi_handle(type);
       }
 
-      if (ref == 0) {
-	    fprintf(stderr, "VPI error: vpi_handle(type=%d, ref=0).\n",
-		    (int)type);
-	    return 0;
-      }
-
-      vpiHandle res = ref->vpi_handle(type);
 
       if (vpi_trace) {
-	    fprintf(vpi_trace, "vpi_handle(%d, %p) -> %p\n",
-		    (int)type, ref, res);
+	    fprintf(vpi_trace, "vpi_handle(vpiScope, ref=%p) "
+		    "-> %p\n", vpip_cur_task, ref);
       }
 
       return res;
@@ -1262,22 +1283,30 @@ static vpiHandle find_name(const char *name, vpiHandle handle)
 
 static vpiHandle find_scope(const char *name, vpiHandle handle, int depth)
 {
-      vpiHandle iter, hand, rtn = 0;
 
-      iter = !handle ? vpi_iterate(vpiModule, NULL) :
-		       vpi_iterate(vpiInternalScope, handle);
+      vpiHandle iter = handle==0
+	    ? vpi_iterate(vpiModule, NULL)
+	    : vpi_iterate(vpiInternalScope, handle);
 
+      vector<char> name_buf (strlen(name)+1);
+      strcpy(&name_buf[0], name);
+      char*nm_first = &name_buf[0];
+      char*nm_rest = strchr(nm_first, '.');
+      if (nm_rest) {
+	    *nm_rest++ = 0;
+      }
+
+      vpiHandle rtn = 0;
+      vpiHandle hand;
       while (iter && (hand = vpi_scan(iter))) {
 	    char *nm = vpi_get_str(vpiName, hand);
-	    int len = strlen(nm);
-	    const char *cp = name + len;	/* hier separator */
 
-	    if (!handle && !strcmp(name, nm)) {
-		  /* root module */
-		  rtn = hand;
-	    } else if (!strncmp(name, nm, len) && *(cp) == '.')
-		  /* recurse deeper */
-		  rtn = find_scope(cp+1, hand, depth + 1);
+	    if (strcmp(nm_first,nm)==0) {
+		  if (nm_rest)
+			rtn=find_scope(nm_rest, hand, depth+1);
+		  else
+			rtn = hand;
+	    }
 
 	    /* found it yet ? */
 	    if (rtn) {
@@ -1285,9 +1314,6 @@ static vpiHandle find_scope(const char *name, vpiHandle handle, int depth)
 		  break;
 	    }
       }
-
-      /* matched up to here */
-      if (!rtn) rtn = handle;
 
       return rtn;
 }
@@ -1299,6 +1325,20 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
       if (vpi_trace) {
 	    fprintf(vpi_trace, "vpi_handle_by_name(%s, %p) -->\n",
 		    name, scope);
+      }
+
+	// Chop the name into path and base. For example, if the name
+	// is "a.b.c", then nm_path becomes "a.b" and nm_base becomes
+	// "c". If the name is "c" then nm_path is nil and nm_base is "c".
+      vector<char> name_buf (strlen(name)+1);
+      strcpy(&name_buf[0], name);
+      char*nm_path = &name_buf[0];
+      char*nm_base = strrchr(nm_path, '.');
+      if (nm_base) {
+	    *nm_base++ = 0;
+      } else {
+	    nm_base = nm_path;
+	    nm_path = 0;
       }
 
       /* If scope provided, look in corresponding module; otherwise
@@ -1315,26 +1355,60 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
 	          hand = scope;
 	          break;
 		default:
+		  if (vpi_trace) {
+			fprintf(vpi_trace, "vpi_handle_by_name: "
+				"Scope is not a vpiScope or vpiModule\n");
+		  }
 	          // Use vpi_chk_error() here when it is implemented.
 	          return 0;
 	    }
+
+      } else if (nm_path) {
+	      // The name has a path, and no other scope handle was
+	      // passed in. That suggests we are looking for "a.b.c"
+	      // in the root scope. So convert "a.b" to a scope and
+	      // start there to look for "c".
+	    hand = find_scope(nm_path, NULL, 0);
+	    nm_path = 0;
+
       } else {
-	    hand = find_scope(name, NULL, 0);
+	      // Special case: scope==<nil>, meaning we are looking in
+	      // the root, and there is no path to the name, i.e. the
+	      // string is "c" instead of "top.c". Try to find "c" as
+	      // a scope and return that.
+	    hand = find_scope(nm_base, NULL, 0);
       }
 
-      if (hand) {
-	    /* remove hierarchical portion of name */
-	    const char *nm = vpi_get_str(vpiFullName, hand);
-	    int len = strlen(nm);
-	    const char *cp = name + len;
-	    if (!strncmp(name, nm, len) && *cp == '.') name = cp + 1;
+      if (hand == 0) {
+	    if (vpi_trace) {
+		  fprintf(vpi_trace, "vpi_handle_by_name: "
+			  "Scope does not exist. Giving up.\n");
+	    }
 
-	    /* Ok, time to burn some cycles */
-	    vpiHandle out = find_name(name, hand);
-	    return out;
+	    return 0;
       }
 
-      return 0;
+	// If there is a path part, then use it to find the
+	// scope. For example, if the full name is a.b.c, then
+	// the nm_path string is a.b and we search for that
+	// scope. If we find it, then set hand to that scope.
+      if (nm_path) {
+	    vpiHandle tmp = find_scope(nm_path, hand, 0);
+	    while (tmp == 0 && hand != 0) {
+		  hand = vpi_handle(vpiScope, hand);
+		  tmp = find_scope(nm_path, hand, 0);
+	    }
+	    hand = tmp;
+      }
+
+	// Now we have the correct scope, look for the item.
+      vpiHandle out = find_name(nm_base, hand);
+
+      if (vpi_trace) {
+	    fprintf(vpi_trace, "vpi_handle_by_name: DONE\n");
+      }
+
+      return out;
 }
 
 

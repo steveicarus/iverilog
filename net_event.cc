@@ -20,6 +20,7 @@
 # include  "config.h"
 # include  "compiler.h"
 # include  "netlist.h"
+# include  "ivl_assert.h"
 
 /*
  * NOTE: The name_ is perm-allocated by the caller.
@@ -316,6 +317,10 @@ void NetEvProbe::find_similar_probes(list<NetEvProbe*>&plist)
 
       for (Link*lcur = nex->first_nlink(); lcur; lcur = lcur->next_nlink()) {
 	    NetPins*obj = lcur->get_obj();
+	      // Skip NexusSet objects
+	    if (obj == 0)
+		  continue;
+
 	    if (obj->pin_count() != pin_count())
 		  continue;
 
@@ -340,14 +345,14 @@ void NetEvProbe::find_similar_probes(list<NetEvProbe*>&plist)
 }
 
 NetEvWait::NetEvWait(NetProc*pr)
-: statement_(pr), nevents_(0), events_(0)
+: statement_(pr)
 {
 }
 
 NetEvWait::~NetEvWait()
 {
-      if (events_) {
-	    for (unsigned idx = 0 ;  idx < nevents_ ;  idx += 1) {
+      if (! events_.empty()) {
+	    for (unsigned idx = 0 ;  idx < events_.size() ;  idx += 1) {
 		  NetEvent*tgt = events_[idx];
 		  tgt->waitref_ -= 1;
 
@@ -365,7 +370,7 @@ NetEvWait::~NetEvWait()
 			delete tmp;
 		  }
 	    }
-	    delete[]events_;
+	    events_.clear();
       }
       delete statement_;
 }
@@ -374,29 +379,12 @@ void NetEvWait::add_event(NetEvent*tgt)
 {
 	/* A wait fork is an empty event. */
       if (! tgt) {
-	    assert(nevents_ == 0);
-	    nevents_ = 1;
-	    events_ = new NetEvent*[1];
-	    events_[0] = 0;
+	    assert(events_.empty());
+	    events_.push_back(0);
 	    return;
       }
 
-      if (nevents_ == 0) {
-	    events_ = new NetEvent*[1];
-
-      } else {
-	    assert(events_[0]);
-	    NetEvent**tmp = new NetEvent*[nevents_+1];
-	    for (unsigned idx = 0 ;  idx < nevents_ ;  idx += 1) {
-		  tmp[idx] = events_[idx];
-		  assert(tmp[idx] != tgt);
-	    }
-	    delete[]events_;
-	    events_ = tmp;
-      }
-
-      events_[nevents_] = tgt;
-      nevents_ += 1;
+      events_.push_back(tgt);
 
 	// Remember to tell the NetEvent that there is someone
 	// pointing to it.
@@ -411,14 +399,14 @@ void NetEvWait::add_event(NetEvent*tgt)
 void NetEvWait::replace_event(NetEvent*src, NetEvent*repl)
 {
       unsigned idx;
-      for (idx = 0 ;  idx < nevents_ ;  idx += 1) {
+      for (idx = 0 ;  idx < events_.size() ;  idx += 1) {
 	    if (events_[idx] == src)
 		  break;
       }
 
-      assert(idx < nevents_);
+      assert(idx < events_.size());
 
-	/* First, remove me from the list held by the src NetEvent. */
+	// First, remove me from the list held by the src NetEvent.
       assert(src->waitref_ > 0);
       src->waitref_ -= 1;
       struct NetEvent::wcell_*tmp = src->wlist_;
@@ -435,6 +423,7 @@ void NetEvWait::replace_event(NetEvent*src, NetEvent*repl)
 	    delete tmp;
       }
 
+	// Replace the src pointer with the repl pointer.
       events_[idx] = repl;
 
 	// Remember to tell the replacement NetEvent that there is
@@ -446,23 +435,6 @@ void NetEvWait::replace_event(NetEvent*src, NetEvent*repl)
       tmp->next = repl->wlist_;
       repl->wlist_ = tmp;
 
-}
-
-unsigned NetEvWait::nevents() const
-{
-      return nevents_;
-}
-
-const NetEvent* NetEvWait::event(unsigned idx) const
-{
-      assert(idx < nevents_);
-      return events_[idx];
-}
-
-NetEvent* NetEvWait::event(unsigned idx)
-{
-      assert(idx < nevents_);
-      return events_[idx];
 }
 
 NetProc* NetEvWait::statement()

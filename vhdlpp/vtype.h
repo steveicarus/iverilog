@@ -1,8 +1,9 @@
-#ifndef __vtype_H
-#define __vtype_H
+#ifndef IVL_vtype_H
+#define IVL_vtype_H
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2014 / Stephen Williams (steve@icarus.com),
+ *                       Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -73,7 +74,7 @@ class VType {
 
 	// This virtual method emits a definition for the specific
 	// type. It is used to emit typedef's.
-      virtual int emit_def(std::ostream&out) const =0;
+      virtual int emit_def(std::ostream&out, perm_string name) const =0;
 
 	// This virtual method causes VTypeDef types to emit typedefs
 	// of themselves. The VTypeDef implementation of this method
@@ -81,8 +82,11 @@ class VType {
 	// all the types that it emits.
       virtual int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
 
+	// Determines if a type can be used in Verilog packed array.
+      virtual bool can_be_packed() const { return false; }
+
     private:
-      friend class decl_t;
+      friend struct decl_t;
 	// This virtual method is called to emit the declaration. This
 	// is used by the decl_t object to emit variable/wire/port declarations.
       virtual int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
@@ -99,6 +103,12 @@ class VType {
 	    bool reg_flag;
       };
 
+    protected:
+      inline void emit_name(std::ostream&out, perm_string name) const
+      {
+        if(name != empty_perm_string)
+            out << " \\" << name << " ";
+      }
 };
 
 inline std::ostream&operator << (std::ostream&out, const VType&item)
@@ -114,7 +124,7 @@ extern void preload_global_types(void);
  */
 class VTypeERROR : public VType {
     public:
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
 };
 
 /*
@@ -124,10 +134,10 @@ class VTypeERROR : public VType {
 class VTypePrimitive : public VType {
 
     public:
-      enum type_t { BOOLEAN, BIT, INTEGER, STDLOGIC, CHARACTER };
+      enum type_t { BOOLEAN, BIT, INTEGER, REAL, STDLOGIC, CHARACTER };
 
     public:
-      VTypePrimitive(type_t);
+      VTypePrimitive(type_t tt, bool packed = false);
       ~VTypePrimitive();
 
       void write_to_stream(std::ostream&fd) const;
@@ -136,17 +146,21 @@ class VTypePrimitive : public VType {
       type_t type() const { return type_; }
 
       int emit_primitive_type(std::ostream&fd) const;
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
+
+      bool can_be_packed() const { return packed_; }
 
     private:
       type_t type_;
+      bool packed_;
 };
 
-extern const VTypePrimitive* primitive_BOOLEAN;
-extern const VTypePrimitive* primitive_BIT;
-extern const VTypePrimitive* primitive_INTEGER;
-extern const VTypePrimitive* primitive_STDLOGIC;
-extern const VTypePrimitive* primitive_CHARACTER;
+extern const VTypePrimitive primitive_BOOLEAN;
+extern const VTypePrimitive primitive_BIT;
+extern const VTypePrimitive primitive_INTEGER;
+extern const VTypePrimitive primitive_REAL;
+extern const VTypePrimitive primitive_STDLOGIC;
+extern const VTypePrimitive primitive_CHARACTER;
 
 /*
  * An array is a compound N-dimensional array of element type. The
@@ -159,17 +173,19 @@ class VTypeArray : public VType {
     public:
       class range_t {
 	  public:
-	    range_t() : msb_(0), lsb_(0) { }
-	    range_t(Expression*m, Expression*l) : msb_(m), lsb_(l) { }
+	    range_t(Expression*m = NULL, Expression*l = NULL, bool dir = true) :
+                msb_(m), lsb_(l), direction_(dir) { }
 
-	    bool is_box() const { return msb_==0 && lsb_==0; }
+	    inline bool is_box() const { return msb_==0 && lsb_==0; }
+	    inline bool is_downto() const { return direction_; }
 
-	    Expression* msb() const { return msb_; }
-	    Expression* lsb() const { return lsb_; }
+	    inline Expression* msb() const { return msb_; }
+	    inline Expression* lsb() const { return lsb_; }
 
 	  private:
 	    Expression* msb_;
 	    Expression* lsb_;
+	    bool direction_;
       };
 
     public:
@@ -179,20 +195,32 @@ class VTypeArray : public VType {
 
       int elaborate(Entity*ent, Architecture*arc) const;
       void write_to_stream(std::ostream&fd) const;
+      void write_type_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
 
-      size_t dimensions() const;
+      inline size_t dimensions() const { return ranges_.size(); };
       const range_t&dimension(size_t idx) const
       { return ranges_[idx]; }
 
-      bool signed_vector() const { return signed_flag_; }
+      inline bool signed_vector() const { return signed_flag_; }
 
-      const VType* element_type() const;
+	// returns the type of element held in the array
+      inline const VType* element_type() const { return etype_; }
 
-      int emit_def(std::ostream&out) const;
+	// returns the basic type of element held in the array
+	// (unfolds typedefs and multidimensional arrays)
+	// typedef_allowed decides if VTypeDef can be returned or should
+	// it be unfolded
+      const VType* basic_type(bool typedef_allowed = true) const;
+
+      int emit_def(std::ostream&out, perm_string name) const;
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
+      int emit_dimensions(std::ostream&out) const;
+
+      bool can_be_packed() const { return etype_->can_be_packed(); }
 
     private:
+      void write_range_to_stream_(std::ostream&fd) const;
       const VType*etype_;
 
       std::vector<range_t> ranges_;
@@ -210,7 +238,7 @@ class VTypeRange : public VType {
 
     public: // Virtual methods
       void write_to_stream(std::ostream&fd) const;
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
 
     private:
       const VType*base_;
@@ -223,8 +251,9 @@ class VTypeEnum : public VType {
       VTypeEnum(const std::list<perm_string>*names);
       ~VTypeEnum();
 
+      void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
 
     private:
       std::vector<perm_string>names_;
@@ -257,9 +286,10 @@ class VTypeRecord : public VType {
 
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
 
-      const element_t* element_by_name(perm_string name) const;
+      bool can_be_packed() const { return true; }
+      const element_t* element_by_name(perm_string name, int*index = NULL) const;
 
     private:
       std::vector<element_t*> elements_;
@@ -283,10 +313,12 @@ class VTypeDef : public VType {
       inline const VType* peek_definition(void) const { return type_; }
 
       void write_to_stream(std::ostream&fd) const;
-      void write_type_to_stream(ostream&fd) const;
+      void write_type_to_stream(std::ostream&fd) const;
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
 
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
+
+      bool can_be_packed() const { return type_->can_be_packed(); }
     private:
       int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 
@@ -295,4 +327,4 @@ class VTypeDef : public VType {
       const VType*type_;
 };
 
-#endif
+#endif /* IVL_vtype_H */

@@ -221,7 +221,7 @@ item
 		}
 
 	| error
-		{ fprintf(stderr, "Error: unable to parse line %d in "
+		{ fprintf(stderr, "Error: unable to parse line %u in "
 		          "%s.\n", cflloc.first_line, current_file);
 		  return 1;
 		}
@@ -270,5 +270,6 @@ skip_arg : TOK_PLUSARG
 
 int yyerror(const char*msg)
 {
+	(void)msg; /* Parameter is not used. */
 	return 0;
 }

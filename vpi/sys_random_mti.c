@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,16 +37,11 @@
 /* Icarus seed cookie */
 #define COOKIE	0x1ca1ca1c
 
-static struct context_s global_context = {
-#if defined(__GCC__)
-    .mti =
-#else
-    /* For MSVC simply use the fact that mti is located first */
-#endif
-        NP1 };
+static struct context_s global_context = {NP1, {0} };
 
 static long mti_dist_uniform(long*seed, long start, long end)
 {
+      (void)seed; /* Parameter is not used. */
       if (start >= end) return start;
 
       if ((start > LONG_MIN) || (end < LONG_MAX)) {
@@ -62,6 +57,8 @@ static PLI_INT32 sys_mti_dist_uniform_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpiHandle callh, argv, seed, start, end;
       s_vpi_value val;
       long i_seed, i_start, i_end;
+
+      (void)name; /* Parameter is not used. */
 
 	/* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
@@ -98,6 +95,8 @@ static PLI_INT32 sys_mti_random_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       s_vpi_value val;
       int i_seed = COOKIE;
       struct context_s *context;
+
+      (void)name; /* Parameter is not used. */
 
 	/* Get the argument list and look for a seed. If it is there,
 	   get the value and reseed the random number generator. */
@@ -142,7 +141,7 @@ static PLI_INT32 sys_mti_random_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-void sys_random_mti_register()
+void sys_random_mti_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;

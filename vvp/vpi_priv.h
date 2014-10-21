@@ -1,7 +1,7 @@
-#ifndef __vpi_priv_H
-#define __vpi_priv_H
+#ifndef IVL_vpi_priv_H
+#define IVL_vpi_priv_H
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -146,6 +146,22 @@ struct __vpiIterator : public __vpiHandle {
 extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
 				    bool free_args_flag);
 
+class __vpiDecConst : public __vpiHandle {
+    public:
+      __vpiDecConst(int val =0);
+      __vpiDecConst(const __vpiDecConst&that);
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+
+    public:
+      inline int get_value() const { return value; }
+      inline void set_value(int val) { value = val; }
+
+    private:
+      int value;
+};
+
 /*
  * This represents callback handles. There are some private types that
  * are defined and used in vpi_callback.cc. The __vpiCallback are
@@ -281,6 +297,10 @@ struct __vpiSignal : public __vpiHandle {
       vpiHandle vpi_iterate(int code);
       vpiHandle vpi_index(int idx);
 
+    public:
+      unsigned width() const;
+
+    public:
       union { // The scope or parent array that contains me.
 	    vpiHandle parent;
 	    struct __vpiScope* scope;
@@ -290,7 +310,7 @@ struct __vpiSignal : public __vpiHandle {
             vpiHandle index;
       } id;
 	/* The indices that define the width and access offset. */
-      int msb, lsb;
+      __vpiDecConst msb, lsb;
 	/* Flags */
       unsigned signed_flag  : 1;
       unsigned is_netarray  : 1; // This is word of a net array
@@ -524,6 +544,18 @@ class __vpiDarrayVar : public __vpiBaseVar {
 
 extern vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net);
 
+class __vpiQueueVar : public __vpiBaseVar {
+
+    public:
+      __vpiQueueVar(__vpiScope*scope, const char*name, vvp_net_t*net);
+
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+};
+
+extern vpiHandle vpip_make_queue_var(const char*name, vvp_net_t*net);
+
 class __vpiCobjectVar : public __vpiBaseVar {
 
     public:
@@ -625,16 +657,6 @@ vpiHandle vpip_make_binary_const(unsigned wid, const char*bits);
 vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
 				 bool signed_flag, bool local_flag,
 				 long file_idx, long lineno);
-
-class __vpiDecConst : public __vpiHandle {
-    public:
-      __vpiDecConst(int val =0);
-      int get_type_code(void) const;
-      int vpi_get(int code);
-      void vpi_get_value(p_vpi_value val);
-
-      int value;
-};
 
 class __vpiRealConst : public __vpiHandle {
     public:
@@ -790,7 +812,7 @@ enum vpi_rbuf_t {
       RBUF_DEL
 	/* Delete the storage for both buffers. */
 };
-extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
+extern void *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 /* following two routines use need_result_buf(, RBUF_STR) */
 extern char *simple_set_rbuf_str(const char *s1);
 extern char *generic_get_str(int code, vpiHandle ref, const char *name, const char *index);
@@ -800,4 +822,4 @@ extern vpiHandle vpip_module(struct __vpiScope*scope);
 
 extern int vpip_delay_selection;
 
-#endif
+#endif /* IVL_vpi_priv_H */

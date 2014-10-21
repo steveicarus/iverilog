@@ -521,7 +521,27 @@ static struct vector_info draw_binary_expr_eq_class(ivl_expr_t expr)
       }
 
       if (ivl_expr_type(re) == IVL_EX_NULL && ivl_expr_type(le)==IVL_EX_SIGNAL) {
-	    fprintf(vvp_out, "    %%test_nul v%p_0;\n", ivl_expr_signal(le));
+	    ivl_signal_t sig = ivl_expr_signal(le);
+
+	    if (ivl_signal_dimensions(sig) == 0) {
+		  fprintf(vvp_out, "    %%test_nul v%p_0;\n", sig);
+	    } else {
+		  ivl_expr_t word_ex = ivl_expr_oper1(le);
+		  int word_ix = allocate_word();
+		  draw_eval_expr_into_integer(word_ex, word_ix);
+		  fprintf(vvp_out, "    %%test_nul/a v%p, %d;\n", sig, word_ix);
+		  clr_word(word_ix);
+	    }
+	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n", res.base);
+	    if (ivl_expr_opcode(expr) == 'n')
+		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
+	    return res;
+      }
+
+      if (ivl_expr_type(re) == IVL_EX_NULL && ivl_expr_value(le)==IVL_VT_CLASS) {
+	    draw_eval_object(le);
+	    fprintf(vvp_out, "    %%test_nul/obj;\n");
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n", res.base);
 	    if (ivl_expr_opcode(expr) == 'n')
 		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
@@ -1794,6 +1814,8 @@ static struct vector_info draw_select_array(ivl_expr_t sube,
       struct vector_info shiv;
       struct vector_info res;
 
+      (void)bit_width; /* Parameter is not used. */
+
       shiv = draw_eval_expr(bit_idx, STUFF_OK_XZ|STUFF_OK_RO);
       draw_eval_expr_into_integer(ix, 3);
       label = local_count++;
@@ -1841,9 +1863,10 @@ static struct vector_info draw_select_signal(ivl_expr_t expr,
       unsigned use_word = 0;
       unsigned use_wid, lab_x, lab_end;
 
-	/* Special case: the sub expression is a DARRAY variable, so
-	   do a dynamic array word load. */
-      if (ivl_signal_data_type(sig) == IVL_VT_DARRAY) {
+	/* Special case: the sub expression is a DARRAY or QUEUE
+	   variable, so do a dynamic array word load. */
+      if ((ivl_signal_data_type(sig) == IVL_VT_DARRAY)
+	  || (ivl_signal_data_type(sig) == IVL_VT_QUEUE)) {
 	    res.base = allocate_vector(wid);
 	    res.wid = wid;
 	    draw_eval_expr_into_integer(bit_idx, 3);
@@ -1933,6 +1956,8 @@ static void draw_select_signal_dest(ivl_expr_t expr,
       struct vector_info tmp;
       ivl_signal_t sig = ivl_expr_signal(sube);
 
+      (void)stuff_ok_flag; /* Parameter is not used. */
+
 	/* Special case: If the operand is a signal (not an array) and
 	   the part select is coming from the LSB, and the part select
 	   is no larger than the signal itself, then we can load the
@@ -1970,6 +1995,8 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
       struct vector_info subv, shiv, res;
       ivl_expr_t sube  = ivl_expr_oper1(expr);
       ivl_expr_t shift = ivl_expr_oper2(expr);
+
+      (void)stuff_ok_flag; /* Parameter is not used. */
 
       assert(!ivl_expr_sized(sube));
       res.wid = wid;
@@ -2429,6 +2456,29 @@ static struct vector_info draw_ternary_expr(ivl_expr_t expr, unsigned wid)
       return res;
 }
 
+static struct vector_info draw_darray_pop(ivl_expr_t expr, unsigned wid)
+{
+      struct vector_info res;
+      ivl_expr_t arg;
+      const char*fb;
+
+      if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_back")==0)
+	    fb = "b";
+      else
+	    fb = "f";
+
+      res.base = allocate_vector(wid);
+      res.wid = wid;
+
+      arg = ivl_expr_parm(expr, 0);
+      assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
+
+      fprintf(vvp_out, "    %%qpop/%s v%p_0, %u, %u;\n", fb,
+	      ivl_expr_signal(arg), res.base, res.wid);
+
+      return res;
+}
+
 static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
 {
 #if 0
@@ -2450,6 +2500,11 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
 	    return res;
 
       }
+
+      if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_back")==0)
+	    return draw_darray_pop(expr, wid);
+      if (strcmp(ivl_expr_name(expr),"$ivl_darray_method$pop_front")==0)
+	    return draw_darray_pop(expr, wid);
 
       res = draw_vpi_func_call(expr, wid);
 
@@ -2938,11 +2993,9 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t expr, unsigned wid,
 	  default:
 	  case IVL_EX_NONE:
 	    fprintf(stderr, "%s:%u:  vvp.tgt error: unhandled expr. type: "
-	            "%u at %s:%d\n", ivl_expr_file(expr), ivl_expr_lineno(expr),
+	            "%d at %s:%d\n", ivl_expr_file(expr), ivl_expr_lineno(expr),
                     ivl_expr_type(expr), __FILE__, __LINE__);
 	    exit(1);
-	    res.base = 0;
-	    res.wid = 0;
 	    break;
 	  case IVL_EX_EVENT:
 	    fprintf(stderr, "%s:%u: vvp.tgt error: A named event is not "

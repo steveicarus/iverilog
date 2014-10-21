@@ -1,7 +1,7 @@
-#ifndef __fpga_priv_H
-#define __fpga_priv_H
+#ifndef IVL_fpga_priv_H
+#define IVL_fpga_priv_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -47,4 +47,4 @@ extern void xnf_mangle_lpm_name(ivl_lpm_t net, char*buf, size_t nbuf);
 
 extern const char*xnf_mangle_nexus_name(ivl_nexus_t net);
 
-#endif
+#endif /* IVL_fpga_priv_H */

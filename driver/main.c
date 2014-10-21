@@ -71,7 +71,7 @@ const char HELP[] =
 #endif
 #include  <fcntl.h>
 
-#if HAVE_GETOPT_H
+#ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
 
@@ -188,7 +188,7 @@ static const char** defparm_base = 0;
 static int defparm_size = 0;
 
 /* Function to add a command file name to the FIFO. */
-void add_cmd_file(const char* filename)
+static void add_cmd_file(const char* filename)
 {
       p_command_file new;
 
@@ -205,7 +205,7 @@ void add_cmd_file(const char* filename)
 }
 
 /* Function to return the top command file name from the FIFO. */
-char *get_cmd_file()
+static char *get_cmd_file(void)
 {
       char *filename;
 
@@ -402,7 +402,7 @@ static int t_preprocess_only(void)
  * needed to run the command from the configuration file (which is
  * already parsed for us) so we can handle must of the generic cases.
  */
-static int t_compile()
+static int t_compile(void)
 {
       unsigned rc;
 
@@ -625,7 +625,7 @@ void process_file_name(const char*name, int lib_flag)
       }
 }
 
-int process_generation(const char*name)
+static int process_generation(const char*name)
 {
       if (strcmp(name,"1995") == 0)
 	    generation = "1995";
@@ -750,7 +750,7 @@ int process_generation(const char*name)
       return 0;
 }
 
-int process_depfile(const char*name)
+static int process_depfile(const char*name)
 {
       const char*cp = strchr(name, '=');
       if (cp) {
@@ -784,7 +784,7 @@ int process_depfile(const char*name)
 /*
  * If it exists add the SFT file for the given module.
  */
-void add_sft_file(const char *module)
+static void add_sft_file(const char *module)
 {
       char *file;
 
@@ -799,7 +799,7 @@ int main(int argc, char **argv)
 {
       int e_flag = 0;
       int version_flag = 0;
-      int opt, idx;
+      int opt;
 
 #ifdef __MINGW32__
 	/* Calculate the ivl_root from the path to the command. This
@@ -907,7 +907,7 @@ int main(int argc, char **argv)
 	}
       }
 
-      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hI:M:m:N::o:P:p:Ss:T:t:vVW:y:Y:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hI:M:m:N:o:P:p:Ss:T:t:vVW:y:Y:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -1142,7 +1142,7 @@ int main(int argc, char **argv)
 	    vhdlpp_work = "ivl_vhdl_work";
       fprintf(defines_file, "vhdlpp:%s%cvhdlpp\n", vhdlpp_dir, sep);
       fprintf(defines_file, "vhdlpp-work:%s\n", vhdlpp_work);
-      for (idx = 0 ; idx < vhdlpp_libdir_cnt ; idx += 1)
+      for (unsigned idx = 0 ; idx < vhdlpp_libdir_cnt ; idx += 1)
 	    fprintf(defines_file, "vhdlpp-libdir:%s\n", vhdlpp_libdir[idx]);
 
     /* Process parameter definition from command line. The last
@@ -1156,7 +1156,7 @@ int main(int argc, char **argv)
 
 	/* Finally, process all the remaining words on the command
 	   line as file names. */
-      for (idx = optind ;  idx < argc ;  idx += 1)
+      for (int idx = optind ;  idx < argc ;  idx += 1)
 	    process_file_name(argv[idx], 0);
 
 	/* If the use of a default include directory is not

@@ -69,9 +69,13 @@ int acc_configure(PLI_INT32 config_param, const char*value)
 		  fprintf(pli_trace, "acc_configure(config=%d, %s)\n",
 			  (int)config_param, value);
 	    }
-
+#if 0
 	    vpi_printf("XXXX acc_configure(%d, %s)\n", (int)config_param,
 	               value);
+#else
+	      /* Parameter is not necessarily a string. */
+	    vpi_printf("XXXX acc_configure(%d, ...)\n", (int)config_param);
+#endif
 	    rc = 0;
 	    break;
       }

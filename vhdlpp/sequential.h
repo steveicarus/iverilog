@@ -1,7 +1,7 @@
-#ifndef __sequential_H
-#define __sequential_H
+#ifndef IVL_sequential_H
+#define IVL_sequential_H
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -119,6 +119,8 @@ class ReturnStmt  : public SequentialStmt {
     public:
       int emit(ostream&out, Entity*entity, Architecture*arc);
       void dump(ostream&out, int indent) const;
+
+      const Expression*peek_expr() const { return val_; };
 
     private:
       Expression*val_;
@@ -241,4 +243,4 @@ class BasicLoopStatement : public LoopStatement {
       void dump(ostream&out, int indent) const;
 };
 
-#endif
+#endif /* IVL_sequential_H */

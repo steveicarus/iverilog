@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -44,6 +44,15 @@
 # include  "ivl_alloc.h"
 
 /*
+ * The "// synthesis translate_on/off" meta-comments cause this flag
+ * to be turned off or on. The pform_make_behavior and similar
+ * functions look at this flag and may choose to add implicit ivl
+ * synthesis flags.
+ */
+static bool pform_mc_translate_flag = true;
+void pform_mc_translate_on(bool flag) { pform_mc_translate_flag = flag; }
+
+/*
  * The pform_modules is a map of the modules that have been defined in
  * the top level. This should not contain nested modules/programs.
  * pform_primitives is similar, but for UDP primitives.
@@ -56,6 +65,16 @@ map<perm_string,PUdp*> pform_primitives;
  */
 map<perm_string,data_type_t*>pform_typedefs;
 set<enum_type_t*>pform_enum_sets;
+
+/*
+ * Class definitions in the $root scope go here.
+ */
+map<perm_string,PClass*> pform_classes;
+
+/*
+ * Task and function definitions in the $root scope go here.
+ */
+map<perm_string,PTaskFunc*> pform_tasks;
 
 std::string vlltype::get_fileline() const
 {
@@ -233,6 +252,11 @@ static list<Module*>pform_cur_module;
 
 bool pform_library_flag = false;
 
+/*
+ * Give each unnamed block that has a variable declaration a unique name.
+ */
+static unsigned scope_unnamed_block_with_decl = 1;
+
   /* increment this for generate schemes within a module, and set it
      to zero when a new module starts. */
 static unsigned scope_generate_counter = 1;
@@ -314,9 +338,17 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
 
       assert(!pform_cur_generate);
 
+	/* If no scope was found then this is being defined in the
+	 * compilation unit scope. */
+      if (scopex == 0) {
+	    pform_classes[name] = class_scope;
+	    lexical_scope = class_scope;
+	    return class_scope;
+      }
+
       if (scopex->classes.find(name) != scopex->classes.end()) {
 	    cerr << class_scope->get_fileline() << ": error: duplicate "
-		  " definition for class '" << name << "' in '"
+		  "definition for class '" << name << "' in '"
 		 << scopex->pscope_name() << "'." << endl;
 	    error_count += 1;
       }
@@ -344,7 +376,11 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
       FILE_NAME(task, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-      assert(scopex);
+      if ((scopex == 0) && !gn_system_verilog()) {
+	    cerr << task->get_fileline() << ": error: task declarations "
+		  "must be contained within a module." << endl;
+	    error_count += 1;
+      }
 
       if (pform_cur_generate) {
 	      // Check if the task is already in the dictionary.
@@ -357,7 +393,7 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 		  error_count += 1;
 	    }
 	    pform_cur_generate->tasks[task->pscope_name()] = task;
-      } else {
+      } else if (scopex) {
 	      // Check if the task is already in the dictionary.
 	    if (scopex->tasks.find(task->pscope_name()) != scopex->tasks.end()) {
 		  cerr << task->get_fileline() << ": error: duplicate "
@@ -366,6 +402,15 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 		  error_count += 1;
 	    }
 	    scopex->tasks[task->pscope_name()] = task;
+
+      } else {
+	    if (pform_tasks.find(task_name) != pform_tasks.end()) {
+		  cerr << task->get_fileline() << ": error: "
+		       << "Duplicate definition for task '" << name
+		       << "' in $root scope." << endl;
+		  error_count += 1;
+	    }
+	    pform_tasks[task_name] = task;
       }
 
       lexical_scope = task;
@@ -381,13 +426,12 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
       PFunction*func = new PFunction(func_name, lexical_scope, is_auto);
       FILE_NAME(func, loc);
 
-      LexicalScope*scope = lexical_scope;
-      PScopeExtra*scopex = dynamic_cast<PScopeExtra*> (scope);
-      while (scope && !scopex) {
-	    scope = scope->parent_scope();
-	    scopex = dynamic_cast<PScopeExtra*> (scope);
+      PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
+      if ((scopex == 0) && (generation_flag < GN_VER2005_SV)) {
+	    cerr << func->get_fileline() << ": error: function declarations "
+		  "must be contained within a module." << endl;
+	    error_count += 1;
       }
-      assert(scopex);
 
       if (pform_cur_generate) {
 	      // Check if the function is already in the dictionary.
@@ -400,7 +444,8 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 		  error_count += 1;
 	    }
 	    pform_cur_generate->funcs[func->pscope_name()] = func;
-      } else {
+
+      } else if (scopex != 0) {
 	      // Check if the function is already in the dictionary.
 	    if (scopex->funcs.find(func->pscope_name()) != scopex->funcs.end()) {
 		  cerr << func->get_fileline() << ": error: duplicate "
@@ -409,7 +454,17 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 		  error_count += 1;
 	    }
 	    scopex->funcs[func->pscope_name()] = func;
+
+      } else {
+	    if (pform_tasks.find(func_name) != pform_tasks.end()) {
+		  cerr << func->get_fileline() << ": error: "
+		       << "Duplicate definition for function '" << name
+		       << "' in $root scope." << endl;
+		  error_count += 1;
+	    }
+	    pform_tasks[func_name] = func;
       }
+
       lexical_scope = func;
 
       return func;
@@ -417,7 +472,16 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 
 PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
 {
-      perm_string block_name = lex_strings.make(name);
+      perm_string block_name;
+      if (name) block_name = lex_strings.make(name);
+      else {
+	      // Create a unique name for this unnamed block.
+	    char tmp[32];
+	    snprintf(tmp, sizeof tmp, "$unm_blk_%u",
+	             scope_unnamed_block_with_decl);
+	    block_name = lex_strings.make(tmp);
+	    scope_unnamed_block_with_decl += 1;
+      }
 
       PBlock*block = new PBlock(block_name, lexical_scope, bt);
       lexical_scope = block;
@@ -584,6 +648,31 @@ data_type_t* pform_test_type_identifier(const char*txt)
       return 0;
 }
 
+/*
+ * The parser uses this function to test if the name is a typedef in
+ * the current scope. We use this to know if we can override the
+ * definition because it shadows a containing scope.
+ */
+bool pform_test_type_identifier_local(perm_string name)
+{
+      if (lexical_scope == 0) {
+	    if (test_type_identifier_in_root(name))
+		  return true;
+	    else
+		  return false;
+      }
+
+      LexicalScope*cur_scope = lexical_scope;
+
+      map<perm_string,data_type_t*>::iterator cur;
+
+      cur = cur_scope->typedefs.find(name);
+      if (cur != cur_scope->typedefs.end())
+	    return true;
+
+      return false;
+}
+
 PECallFunction* pform_make_call_function(const struct vlltype&loc,
 					 const pform_name_t&name,
 					 const list<PExpr*>&parms)
@@ -641,6 +730,45 @@ PCallTask* pform_make_call_task(const struct vlltype&loc,
 
       FILE_NAME(tmp, loc);
       return tmp;
+}
+
+void pform_make_foreach_declarations(const struct vlltype&loc,
+				     std::list<perm_string>*loop_vars)
+{
+      static const struct str_pair_t str = { IVL_DR_STRONG, IVL_DR_STRONG };
+
+      list<decl_assignment_t*>assign_list;
+      for (list<perm_string>::const_iterator cur = loop_vars->begin()
+		 ; cur != loop_vars->end() ; ++ cur) {
+	    decl_assignment_t*tmp_assign = new decl_assignment_t;
+	    tmp_assign->name = lex_strings.make(*cur);
+	    assign_list.push_back(tmp_assign);
+      }
+
+      pform_makewire(loc, 0, str, &assign_list, NetNet::REG, &size_type);
+}
+
+PForeach* pform_make_foreach(const struct vlltype&loc,
+			     char*name,
+			     list<perm_string>*loop_vars,
+			     Statement*stmt)
+{
+      perm_string use_name = lex_strings.make(name);
+      delete[]name;
+
+      if (loop_vars==0 || loop_vars->empty()) {
+	    cerr << loc.get_fileline() << ": error: "
+		 << "No loop variables at all in foreach index." << endl;
+	    error_count += 1;
+      }
+
+      ivl_assert(loc, loop_vars);
+      PForeach*fe = new PForeach(use_name, *loop_vars, stmt);
+      FILE_NAME(fe, loc);
+
+      delete loop_vars;
+
+      return fe;
 }
 
 static void pform_put_behavior_in_scope(PProcess*pp)
@@ -1496,7 +1624,7 @@ void pform_make_udp(perm_string name, list<perm_string>*parms,
         unsigned idx;
         for (cur = parms->begin(), idx = 0
 		   ; cur != parms->end()
-		   ; idx++, cur++) {
+		   ; ++ idx, ++ cur) {
 	      pins[idx] = defs[*cur];
 	      pin_names[idx] = *cur;
 	}
@@ -1662,7 +1790,7 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
         unsigned idx;
         for (cur = parms->begin(), idx = 1
 		   ;  cur != parms->end()
-		   ;  idx += 1, cur++) {
+		   ;  idx += 1, ++ cur) {
 	      assert(idx < pins.count());
 	      pins[idx] = new PWire(*cur, NetNet::WIRE,
 				    NetNet::PINPUT, IVL_VT_LOGIC);
@@ -1784,7 +1912,6 @@ static void pform_set_net_range(list<perm_string>*names,
       }
 
       delete names;
-      delete range;
 }
 
 /*
@@ -2129,15 +2256,14 @@ void pform_make_reginit(const struct vlltype&li,
  */
 void pform_module_define_port(const struct vlltype&li,
 			      perm_string name,
-			      NetNet::PortType port_type,
+			      NetNet::PortType port_kind,
 			      NetNet::Type type,
-			      ivl_variable_type_t data_type,
-			      bool signed_flag,
 			      data_type_t*vtype,
-			      list<pform_range_t>*range,
 			      list<named_pexpr_t>*attr)
 {
       struct_type_t*struct_type = 0;
+      ivl_variable_type_t data_type = IVL_VT_NO_TYPE;
+      bool signed_flag = false;
 
       PWire*cur = pform_get_wire_in_scope(name);
       if (cur) {
@@ -2149,27 +2275,34 @@ void pform_module_define_port(const struct vlltype&li,
 	    return;
       }
 
-      if (vtype) {
-	    ivl_assert(li, data_type == IVL_VT_NO_TYPE);
-	    ivl_assert(li, range == 0);
+	// Packed ranges
+      list<pform_range_t>*prange = 0;
+	// Unpacked dimensions
+      list<pform_range_t>*urange = 0;
+
+	// If this is an unpacked array, then split out the parts that
+	// we can send to the PWire object that we create.
+      if (uarray_type_t*uarr_type = dynamic_cast<uarray_type_t*> (vtype)) {
+	    urange = uarr_type->dims.get();
+	    vtype = uarr_type->base_type;
       }
 
       if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype)) {
 	    data_type = vec_type->base_type;
 	    signed_flag = vec_type->signed_flag;
-	    range = vec_type->pdims.get();
+	    prange = vec_type->pdims.get();
 	    if (vec_type->reg_flag)
 		  type = NetNet::REG;
 
       } else if (atom2_type_t*atype = dynamic_cast<atom2_type_t*>(vtype)) {
 	    data_type = IVL_VT_BOOL;
 	    signed_flag = atype->signed_flag;
-	    range = make_range_from_width(atype->type_code);
+	    prange = make_range_from_width(atype->type_code);
 
       } else if (real_type_t*rtype = dynamic_cast<real_type_t*>(vtype)) {
 	    data_type = IVL_VT_REAL;
 	    signed_flag = true;
-	    range = 0;
+	    prange = 0;
 
 	    if (rtype->type_code != real_type_t::REAL) {
 		  VLerror(li, "sorry: Only real (not shortreal) supported here (%s:%d).",
@@ -2179,7 +2312,7 @@ void pform_module_define_port(const struct vlltype&li,
       } else if ((struct_type = dynamic_cast<struct_type_t*>(vtype))) {
 	    data_type = struct_type->figure_packed_base_type();
 	    signed_flag = false;
-	    range = 0;
+	    prange = 0;
 
       } else if (vtype) {
 	    VLerror(li, "sorry: Given type %s not supported here (%s:%d).",
@@ -2191,7 +2324,7 @@ void pform_module_define_port(const struct vlltype&li,
       if (data_type == IVL_VT_NO_TYPE)
 	    data_type = IVL_VT_LOGIC;
 
-      cur = new PWire(name, type, port_type, data_type);
+      cur = new PWire(name, type, port_kind, data_type);
       FILE_NAME(cur, li);
 
       cur->set_signed(signed_flag);
@@ -2199,11 +2332,15 @@ void pform_module_define_port(const struct vlltype&li,
       if (struct_type) {
 	    cur->set_data_type(struct_type);
 
-      } else if (range == 0) {
+      } else if (prange == 0) {
 	    cur->set_range_scalar((type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
 
       } else {
-	    cur->set_range(*range, (type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
+	    cur->set_range(*prange, (type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
+      }
+
+      if (urange) {
+	    cur->set_unpacked_idx(*urange);
       }
 
       pform_bind_attributes(cur->attributes, attr);
@@ -2864,13 +3001,13 @@ extern PSpecPath* pform_make_specify_path(const struct vlltype&li,
       list<perm_string>::const_iterator cur;
 
       idx = 0;
-      for (idx = 0, cur = src->begin() ;  cur != src->end() ;  idx++, cur++) {
+      for (idx = 0, cur = src->begin() ;  cur != src->end() ;  ++ idx, ++ cur) {
 	    path->src[idx] = *cur;
       }
       assert(idx == path->src.size());
       delete src;
 
-      for (idx = 0, cur = dst->begin() ;  cur != dst->end() ;  idx++, cur++) {
+      for (idx = 0, cur = dst->begin() ;  cur != dst->end() ;  ++ idx, ++ cur) {
 	    path->dst[idx] = *cur;
       }
       assert(idx == path->dst.size());
@@ -3148,6 +3285,18 @@ PProcess* pform_make_behavior(ivl_process_type_t type, Statement*st,
 			      list<named_pexpr_t>*attr)
 {
       PProcess*pp = new PProcess(type, st);
+
+	// If we are in a part of the code where the meta-comment
+	// synthesis translate_off is in effect, then implicitly add
+	// the ivl_synthesis_off attribute to any behavioral code that
+	// we run into.
+      if (pform_mc_translate_flag == false) {
+	    if (attr == 0) attr = new list<named_pexpr_t>;
+	    named_pexpr_t tmp;
+	    tmp.name = perm_string::literal("ivl_synthesis_off");
+	    tmp.parm = 0;
+	    attr->push_back(tmp);
+      }
 
       pform_bind_attributes(pp->attributes, attr);
 

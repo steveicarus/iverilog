@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,7 +40,8 @@ static unsigned mdata_count = 0;
 static PLI_INT32 cleanup_mdata(p_cb_data cause)
 {
       unsigned idx;
-      (void) cause;  /* Unused argument. */
+
+      (void) cause;  /* Parameter is not used. */
 
       for (idx= 0; idx < mdata_count; idx += 1) {
 	    free(mdata[idx]);
@@ -123,7 +124,8 @@ static PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       struct t_vpi_value rval;
       struct monitor_data*mon;
-      (void) name;
+
+      (void) name;  /* Parameter is not used. */
 
       rval.format = vpiScalarVal;
 
@@ -151,7 +153,7 @@ static PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 static PLI_INT32 ivlh_attribute_event_sizetf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
-      (void) name;
+      (void) name;  /* Parameter is not used. */
       return 1;
 }
 
@@ -182,7 +184,7 @@ static void vhdl_register(void)
       vpi_register_cb(&cb);
 }
 
-void (*vlog_startup_routines[])() = {
+void (*vlog_startup_routines[])(void) = {
       vhdl_register,
       0
 };

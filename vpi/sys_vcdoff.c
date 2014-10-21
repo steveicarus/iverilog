@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,11 +35,13 @@ static int dump_flag = 0;
 
 static PLI_INT32 sys_dummy_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
+      (void)name; /* Parameter is not used. */
       return 0;
 }
 
 static PLI_INT32 sys_dumpvars_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
+      (void)name; /* Parameter is not used. */
       if (dump_flag == 0) {
 	    vpi_printf("VCD info: dumping is suppressed.\n");
 	    dump_flag = 1;
@@ -48,7 +50,7 @@ static PLI_INT32 sys_dumpvars_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-void sys_vcdoff_register()
+void sys_vcdoff_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;

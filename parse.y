@@ -46,12 +46,8 @@ static ivl_variable_type_t param_active_type = IVL_VT_LOGIC;
 static struct {
       NetNet::Type port_net_type;
       NetNet::PortType port_type;
-      ivl_variable_type_t var_type;
-      bool sign_flag;
       data_type_t* data_type;
-      list<pform_range_t>* range;
-} port_declaration_context = {NetNet::NONE, NetNet::NOT_A_PORT,
-                              IVL_VT_NO_TYPE, false, 0, 0};
+} port_declaration_context = {NetNet::NONE, NetNet::NOT_A_PORT, 0};
 
 /* The task and function rules need to briefly hold the pointer to the
    task/function that is currently in progress. */
@@ -97,13 +93,26 @@ static list<named_pexpr_t>*attributes_in_context = 0;
 /* Recent version of bison expect that the user supply a
    YYLLOC_DEFAULT macro that makes up a yylloc value from existing
    values. I need to supply an explicit version to account for the
-   text field, that otherwise won't be copied. */
-# define YYLLOC_DEFAULT(Current, Rhs, N)  do {       \
-  (Current).first_line   = (Rhs)[1].first_line;      \
-  (Current).first_column = (Rhs)[1].first_column;    \
-  (Current).last_line    = (Rhs)[N].last_line;       \
-  (Current).last_column  = (Rhs)[N].last_column;     \
-  (Current).text         = (Rhs)[1].text;   } while (0)
+   text field, that otherwise won't be copied.
+
+   The YYLLOC_DEFAULT blends the file range for the tokens of Rhs
+   rule, which has N tokens.
+*/
+# define YYLLOC_DEFAULT(Current, Rhs, N)  do {				\
+      if (N) {							        \
+	    (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;	\
+	    (Current).first_column = YYRHSLOC (Rhs, 1).first_column;	\
+	    (Current).last_line    = YYRHSLOC (Rhs, N).last_line;	\
+	    (Current).last_column  = YYRHSLOC (Rhs, N).last_column;	\
+	    (Current).text         = YYRHSLOC (Rhs, 1).text;		\
+      } else {								\
+	    (Current).first_line   = YYRHSLOC (Rhs, 0).last_line;	\
+	    (Current).first_column = YYRHSLOC (Rhs, 0).last_column;	\
+	    (Current).last_line    = YYRHSLOC (Rhs, 0).last_line;	\
+	    (Current).last_column  = YYRHSLOC (Rhs, 0).last_column;	\
+	    (Current).text         = YYRHSLOC (Rhs, 0).text;		\
+      }									\
+   } while (0)
 
 /*
  * These are some common strength pairs that are used as defaults when
@@ -174,7 +183,7 @@ template <class T> void append(vector<T>&out, const vector<T>&in)
  */
 static void strip_tail_items(list<PExpr*>*lst)
 {
-      while (lst->size() > 0) {
+      while (! lst->empty()) {
 	    if (lst->back() != 0)
 		  return;
 	    lst->pop_back();
@@ -267,7 +276,7 @@ static void current_task_set_statement(const YYLTYPE&loc, vector<Statement*>*s)
       if (s == 0) {
 	      /* if the statement list is null, then the parser
 		 detected the case that there are no statements in the
-		 task. If this is System Verilog, handle it as an
+		 task. If this is SystemVerilog, handle it as an
 		 an empty block. */
 	    if (!gn_system_verilog()) {
 		  yyerror(loc, "error: Support for empty tasks requires SystemVerilog.");
@@ -305,7 +314,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       if (s == 0) {
 	      /* if the statement list is null, then the parser
 		 detected the case that there are no statements in the
-		 task. If this is System Verilog, handle it as an
+		 task. If this is SystemVerilog, handle it as an
 		 an empty block. */
 	    if (!gn_system_verilog()) {
 		  yyerror(loc, "error: Support for empty functions requires SystemVerilog.");
@@ -418,6 +427,11 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       PPackage*package;
 
       struct {
+	    char*text;
+	    data_type_t*type;
+      } type_identifier;
+
+      struct {
 	    data_type_t*type;
 	    list<PExpr*>*exprs;
       } class_declaration_extends;
@@ -431,7 +445,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 };
 
 %token <text>      IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
-%token <data_type> TYPE_IDENTIFIER
+%token <type_identifier> TYPE_IDENTIFIER
 %token <package>   PACKAGE_IDENTIFIER
 %token <discipline> DISCIPLINE_IDENTIFIER
 %token <text>   PATHPULSE_IDENTIFIER
@@ -532,7 +546,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %token K_timer K_transition K_units K_white_noise K_wreal
 %token K_zi_nd K_zi_np K_zi_zd K_zi_zp
 
-%type <flag>    from_exclude
+%type <flag>    from_exclude block_item_decls_opt
 %type <number>  number pos_neg_number
 %type <flag>    signing unsigned_signed_opt signed_unsigned_opt
 %type <flag>    K_automatic_opt K_packed_opt K_reg_opt K_static_opt K_virtual_opt
@@ -730,10 +744,11 @@ class_identifier
 	$$ = tmp;
       }
   | TYPE_IDENTIFIER
-      { class_type_t*tmp = dynamic_cast<class_type_t*>($1);
+      { class_type_t*tmp = dynamic_cast<class_type_t*>($1.type);
 	if (tmp == 0) {
-	      yyerror(@1, "Type name is not a predeclared class name.");
+	      yyerror(@1, "Type name \"%s\"is not a predeclared class name.", $1.text);
 	}
+	delete[]$1.text;
 	$$ = tmp;
       }
   ;
@@ -743,13 +758,14 @@ class_identifier
      does indeed match a name. */
 class_declaration_endlabel_opt
   : ':' TYPE_IDENTIFIER
-      { class_type_t*tmp = dynamic_cast<class_type_t*> ($2);
+      { class_type_t*tmp = dynamic_cast<class_type_t*> ($2.type);
 	if (tmp == 0) {
-	      yyerror(@2, "error: class declaration endlabel is not a class name\n");
+	      yyerror(@2, "error: class declaration endlabel \"%s\" is not a class name\n", $2.text);
 	      $$ = 0;
 	} else {
 	      $$ = strdupnew(tmp->name.str());
 	}
+	delete[]$2.text;
       }
   | ':' IDENTIFIER
       { $$ = $2; }
@@ -767,12 +783,14 @@ class_declaration_endlabel_opt
 
 class_declaration_extends_opt /* IEEE1800-2005: A.1.2 */
   : K_extends TYPE_IDENTIFIER
-      { $$.type = $2;
+      { $$.type = $2.type;
 	$$.exprs= 0;
+	delete[]$2.text;
       }
   | K_extends TYPE_IDENTIFIER '(' expression_list_with_nuls ')'
-      { $$.type  = $2;
+      { $$.type  = $2.type;
 	$$.exprs = $4;
+	delete[]$2.text;
       }
   |
       { $$.type = 0; $$.exprs = 0; }
@@ -826,6 +844,30 @@ class_item /* IEEE1800-2005: A.1.8 */
   | method_qualifier_opt function_declaration
       { /* The function_declaration rule puts this into the class */ }
 
+    /* External class method definitions... */
+
+  | K_extern method_qualifier_opt K_function K_new ';'
+      { yyerror(@1, "sorry: External constructors are not yet supported."); }
+  | K_extern method_qualifier_opt K_function K_new '(' tf_port_list_opt ')' ';'
+      { yyerror(@1, "sorry: External constructors are not yet supported."); }
+  | K_extern method_qualifier_opt K_function data_type_or_implicit_or_void
+    IDENTIFIER ';'
+      { yyerror(@1, "sorry: External methods are not yet supported.");
+	delete[] $5;
+      }
+  | K_extern method_qualifier_opt K_function data_type_or_implicit_or_void
+    IDENTIFIER '(' tf_port_list_opt ')' ';'
+      { yyerror(@1, "sorry: External methods are not yet supported.");
+	delete[] $5;
+      }
+  | K_extern method_qualifier_opt K_task IDENTIFIER ';'
+      { yyerror(@1, "sorry: External methods are not yet supported.");
+	delete[] $4;
+      }
+  | K_extern method_qualifier_opt K_task IDENTIFIER '(' tf_port_list_opt ')' ';'
+      { yyerror(@1, "sorry: External methods are not yet supported.");
+	delete[] $4;
+      }
 
     /* Class constraints... */
 
@@ -1013,14 +1055,16 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	$$ = tmp;
       }
   | TYPE_IDENTIFIER dimensions_opt
-      { if ($2) $$ = new parray_type_t($1, $2);
-	else $$ = $1;
+      { if ($2) $$ = new parray_type_t($1.type, $2);
+	else $$ = $1.type;
+	delete[]$1.text;
       }
   | PACKAGE_IDENTIFIER K_SCOPE_RES
       { lex_in_package_scope($1); }
     TYPE_IDENTIFIER
       { lex_in_package_scope(0);
-	$$ = $4;
+	$$ = $4.type;
+	delete[]$4.text;
       }
   | K_string
       { string_type_t*tmp = new string_type_t;
@@ -1153,7 +1197,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@11, "error: Function end label require "
-		                 "System Verilog.");
+		                 "SystemVerilog.");
 	      }
 	      delete[]$11;
 	}
@@ -1187,7 +1231,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@14, "error: Function end labels require "
-		                 "System Verilog.");
+		                 "SystemVerilog.");
 	      }
 	      delete[]$14;
 	}
@@ -1214,7 +1258,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@8, "error: Function end labels require "
-		                 "System Verilog.");
+		                 "SystemVerilog.");
 	      }
 	      delete[]$8;
 	}
@@ -1307,10 +1351,42 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	$$ = tmp;
       }
 
+      // Handle for_variable_declaration syntax by wrapping the for(...)
+      // statement in a synthetic named block. We can name the block
+      // after the variable that we are creating, that identifier is
+      // safe in the controlling scope.
   | K_for '(' data_type IDENTIFIER '=' expression ';' expression ';' for_step ')'
+      { static unsigned for_counter = 0;
+	char for_block_name [64];
+	snprintf(for_block_name, sizeof for_block_name, "$ivl_for_loop%u", for_counter);
+	for_counter += 1;
+	PBlock*tmp = pform_push_block_scope(for_block_name, PBlock::BL_SEQ);
+	FILE_NAME(tmp, @1);
+	current_block_stack.push(tmp);
+
+	list<decl_assignment_t*>assign_list;
+	decl_assignment_t*tmp_assign = new decl_assignment_t;
+	tmp_assign->name = lex_strings.make($4);
+	assign_list.push_back(tmp_assign);
+	pform_makewire(@4, 0, str_strength, &assign_list, NetNet::REG, $3);
+      }
     statement_or_null
-      { $$ = 0;
-	yyerror(@3, "sorry: for_variable_declaration not supported");
+      { pform_name_t tmp_hident;
+	tmp_hident.push_back(name_component_t(lex_strings.make($4)));
+
+	PEIdent*tmp_ident = pform_new_ident(tmp_hident);
+	FILE_NAME(tmp_ident, @4);
+
+	PForStatement*tmp_for = new PForStatement(tmp_ident, $6, $8, $10, $13);
+	FILE_NAME(tmp_for, @1);
+
+	pform_pop_scope();
+	vector<Statement*>tmp_for_list (1);
+	tmp_for_list[0] = tmp_for;
+	PBlock*tmp_blk = current_block_stack.top();
+	tmp_blk->set_statement(tmp_for_list);
+	$$ = tmp_blk;
+	delete[]$4;
       }
 
   | K_forever statement_or_null
@@ -1337,12 +1413,29 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	$$ = tmp;
       }
 
-  | K_foreach '(' IDENTIFIER '[' loop_variables ']' ')' statement_or_null
-      { yyerror(@1, "sorry: foreach loops not supported");
-	delete[]$3;
-	delete $5;
-	delete $8;
-	$$ = 0;
+      // When matching a foreach loop, implicitly create a named block
+      // to hold the definitions for the index variables.
+  | K_foreach '(' IDENTIFIER '[' loop_variables ']' ')'
+      { static unsigned foreach_counter = 0;
+	char for_block_name[64];
+	snprintf(for_block_name, sizeof for_block_name, "$ivl_foreach%u", foreach_counter);
+	foreach_counter += 1;
+
+	PBlock*tmp = pform_push_block_scope(for_block_name, PBlock::BL_SEQ);
+	FILE_NAME(tmp, @1);
+	current_block_stack.push(tmp);
+
+	pform_make_foreach_declarations(@1, $5);
+      }
+    statement_or_null
+      { PForeach*tmp_for = pform_make_foreach(@1, $3, $5, $9);
+
+	pform_pop_scope();
+	vector<Statement*>tmp_for_list(1);
+	tmp_for_list[0] = tmp_for;
+	PBlock*tmp_blk = current_block_stack.top();
+	tmp_blk->set_statement(tmp_for_list);
+	$$ = tmp_blk;
       }
 
   /* Error forms for loop statements. */
@@ -1495,6 +1588,16 @@ package_declaration /* IEEE1800-2005 A.1.2 */
       }
   ;
 
+module_package_import_list_opt
+  :
+  | package_import_list
+  ;
+
+package_import_list
+  : package_import_declaration
+  | package_import_list package_import_declaration
+  ;
+
 package_import_declaration /* IEEE1800-2005 A.2.1.3 */
   : K_import package_import_item_list ';'
       { }
@@ -1523,6 +1626,7 @@ package_item /* IEEE1800-2005 A.1.10 */
   | function_declaration
   | task_declaration
   | data_declaration
+  | class_declaration
   ;
 
 package_item_list
@@ -1688,7 +1792,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@10, "error: Task end labels require "
-		                 "System Verilog.");
+		                 "SystemVerilog.");
 	      }
 	      delete[]$10;
 	}
@@ -1722,7 +1826,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@13, "error: Task end labels require "
-		                 "System Verilog.");
+		                 "SystemVerilog.");
 	      }
 	      delete[]$13;
 	}
@@ -1762,7 +1866,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@12, "error: Task end labels require "
-		                 "System Verilog.");
+		                 "SystemVerilog.");
 	      }
 	      delete[]$12;
 	}
@@ -1785,7 +1889,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@7, "error: Task end labels require "
-		                 "System Verilog.");
+		                 "SystemVerilog.");
 	      }
 	      delete[]$7;
 	}
@@ -1857,27 +1961,16 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	      if ($4 != 0) {
 		    yyerror(@4, "internal error: How can there be an unpacked range here?\n");
 	      }
-	      if (port_declaration_context.var_type == IVL_VT_NO_TYPE) {
-		    tmp = pform_make_task_ports(@3, use_port_type,
-					 port_declaration_context.data_type,
-					 ilist);
-	      } else {
-		    tmp = pform_make_task_ports(@3, use_port_type,
-					 port_declaration_context.var_type,
-					 port_declaration_context.sign_flag,
-					 copy_range(port_declaration_context.range),
-					 ilist);
-	      }
+	      tmp = pform_make_task_ports(@3, use_port_type,
+					  port_declaration_context.data_type,
+					  ilist);
+
 
 	} else {
 		// Otherwise, the decorations for this identifier
 		// indicate the type. Save the type for any right
 		// context thta may come later.
 	      port_declaration_context.port_type = use_port_type;
-	      port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	      port_declaration_context.sign_flag = false;
-	      delete port_declaration_context.range;
-	      port_declaration_context.range = 0;
 	      if ($2 == 0) {
 		    $2 = new vector_type_t(IVL_VT_LOGIC, false, 0);
 		    FILE_NAME($2, @3);
@@ -2003,11 +2096,9 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
   | '[' '$' ']'
       { // SystemVerilog queue
 	list<pform_range_t> *tmp = new list<pform_range_t>;
-	pform_range_t index (0,0);
-	if (gn_system_verilog()) {
-	      yyerror("sorry: Dynamic array ranges not supported.");
-	} else {
-	      yyerror("error: Queue declarations require System Verilog.");
+	pform_range_t index (new PENull,0);
+	if (!gn_system_verilog()) {
+	      yyerror("error: Queue declarations require SystemVerilog.");
 	}
 	tmp->push_back(index);
 	$$ = tmp;
@@ -2018,9 +2109,11 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
      variety of different objects. The syntax inside the (* *) is a
      comma separated list of names or names with assigned values. */
 attribute_list_opt
-	: attribute_instance_list
-	| { $$ = 0; }
-	;
+  : attribute_instance_list
+      { $$ = $1; }
+  |
+      { $$ = 0; }
+  ;
 
 attribute_instance_list
   : K_PSTAR K_STARP { $$ = 0; }
@@ -2130,8 +2223,8 @@ block_item_decls
 	;
 
 block_item_decls_opt
-	: block_item_decls
-	|
+	: block_item_decls { $$ = true; }
+	| { $$ = false; }
 	;
 
   /* Type declarations are parsed here. The rule actions call pform
@@ -2141,6 +2234,20 @@ type_declaration
       { perm_string name = lex_strings.make($3);
 	pform_set_typedef(name, $2);
 	delete[]$3;
+      }
+
+  /* If the IDENTIFIER already is a typedef, it is possible for this
+     code to override the definition, but only if the typedef is
+     inherited from a different scope. */
+  | K_typedef data_type TYPE_IDENTIFIER ';'
+      { perm_string name = lex_strings.make($3.text);
+	if (pform_test_type_identifier_local(name)) {
+	      yyerror(@3, "error: Typedef identifier \"%s\" is already a type name.", $3.text);
+
+	} else {
+	      pform_set_typedef(name, $2);
+	}
+	delete[]$3.text;
       }
 
   /* These are forward declarations... */
@@ -2169,9 +2276,6 @@ type_declaration
 	pform_set_typedef(name, tmp);
 	delete[]$2;
       }
-
-  | K_typedef data_type TYPE_IDENTIFIER ';'
-      { yyerror(@3, "error: Typedef identifier is already a type name."); }
 
   | K_typedef error ';'
       { yyerror(@2, "error: Syntax error in typedef clause.");
@@ -3108,9 +3212,10 @@ expr_primary
   /* There are a few special cases (notably $bits argument) where the
      expression may be a type name. Let the elaborator sort this out. */
   | TYPE_IDENTIFIER
-  { PETypename*tmp = new PETypename($1);
+      { PETypename*tmp = new PETypename($1.type);
 	FILE_NAME(tmp,@1);
 	$$ = tmp;
+	delete[]$1.text;
       }
 
   /* The hierarchy_identifier rule matches simple identifiers as well as
@@ -3130,13 +3235,26 @@ expr_primary
 
   /* An identifier followed by an expression list in parentheses is a
      function call. If a system identifier, then a system function
-     call. */
+     call. It can also be a call to a class method (functino). */
 
   | hierarchy_identifier '(' expression_list_with_nuls ')'
       { list<PExpr*>*expr_list = $3;
 	strip_tail_items(expr_list);
 	PECallFunction*tmp = pform_make_call_function(@1, *$1, *expr_list);
 	delete $1;
+	$$ = tmp;
+      }
+  | implicit_class_handle '.' hierarchy_identifier '(' expression_list_with_nuls ')'
+      { pform_name_t*t_name = $1;
+	while (! $3->empty()) {
+	      t_name->push_back($3->front());
+	      $3->pop_front();
+	}
+	list<PExpr*>*expr_list = $5;
+	strip_tail_items(expr_list);
+	PECallFunction*tmp = pform_make_call_function(@1, *t_name, *expr_list);
+	delete $1;
+	delete $3;
 	$$ = tmp;
       }
   | SYSTEM_IDENTIFIER '(' expression_list_proper ')'
@@ -3173,12 +3291,12 @@ expr_primary
       }
 
   | implicit_class_handle '.' hierarchy_identifier
-      { pform_name_t*nam = $1;
+      { pform_name_t*t_name = $1;
 	while (! $3->empty()) {
-	      nam->push_back($3->front());
+	      t_name->push_back($3->front());
 	      $3->pop_front();
 	}
-	PEIdent*tmp = new PEIdent(*nam);
+	PEIdent*tmp = new PEIdent(*t_name);
 	FILE_NAME(tmp,@1);
 	delete $1;
 	delete $3;
@@ -3391,11 +3509,14 @@ expr_primary
   | '{' '}'
       { // This is the empty queue syntax.
 	if (gn_system_verilog()) {
-	      yyerror(@1, "sorry: Expty queue expressions not supported.");
+	      list<PExpr*> empty_list;
+	      PEConcat*tmp = new PEConcat(empty_list);
+	      FILE_NAME(tmp, @1);
+	      $$ = tmp;
 	} else {
 	      yyerror(@1, "error: Concatenations are not allowed to be empty.");
+	      $$ = 0;
 	}
-	$$ = 0;
       }
 
   /* Cast expressions are primaries */
@@ -3652,6 +3773,20 @@ hierarchy_identifier
 	  tail.index.push_back(itmp);
 	  $$ = tmp;
 	}
+    | hierarchy_identifier '[' '$' ']'
+        { pform_name_t * tmp = $1;
+	  name_component_t&tail = tmp->back();
+	  if (! gn_system_verilog()) {
+		yyerror(@3, "error: Last element expression ($) "
+			"requires SystemVerilog. Try enabling SystemVerilog.");
+	  }
+	  index_component_t itmp;
+	  itmp.sel = index_component_t::SEL_BIT_LAST;
+	  itmp.msb = 0;
+	  itmp.lsb = 0;
+	  tail.index.push_back(itmp);
+	  $$ = tmp;
+	}
     | hierarchy_identifier '[' expression ':' expression ']'
         { pform_name_t * tmp = $1;
 	  name_component_t&tail = tmp->back();
@@ -3762,10 +3897,7 @@ list_of_port_declarations
 		  pform_module_define_port(@3, name,
 					port_declaration_context.port_type,
 					port_declaration_context.port_net_type,
-					port_declaration_context.var_type,
-					port_declaration_context.sign_flag,
-					port_declaration_context.data_type,
-					port_declaration_context.range, 0);
+					port_declaration_context.data_type, 0);
 		  delete[]$3;
 		  $$ = tmp;
 		}
@@ -3785,21 +3917,14 @@ port_declaration
   : attribute_list_opt K_input net_type_opt data_type_or_implicit IDENTIFIER dimensions_opt
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
+	data_type_t*use_type = $4;
+	if ($6) use_type = new uarray_type_t(use_type, $6);
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
-	pform_module_define_port(@2, name, NetNet::PINPUT, $3, IVL_VT_NO_TYPE,
-				false, $4, 0, $1);
+	pform_module_define_port(@2, name, NetNet::PINPUT, $3, use_type, $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
 	port_declaration_context.port_net_type = $3;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
 	port_declaration_context.data_type = $4;
 	delete[]$5;
-	if ($6) {
-	      yyerror(@6, "sorry: Input ports with unpacked dimensions not supported.");
-	      delete $6;
-	}
 	$$ = ptmp;
       }
   | attribute_list_opt
@@ -3808,15 +3933,13 @@ port_declaration
 	perm_string name = lex_strings.make($4);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
+	real_type_t*real_type = new real_type_t(real_type_t::REAL);
+	FILE_NAME(real_type, @3);
 	pform_module_define_port(@2, name, NetNet::PINPUT,
-				 NetNet::WIRE, IVL_VT_REAL, true, 0, 0, $1);
+				 NetNet::WIRE, real_type, $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
-	port_declaration_context.var_type = IVL_VT_REAL;
-	port_declaration_context.sign_flag = true;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	port_declaration_context.data_type = 0;
+	port_declaration_context.data_type = real_type;
 	delete[]$4;
 	$$ = ptmp;
       }
@@ -3824,14 +3947,9 @@ port_declaration
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
-	pform_module_define_port(@2, name, NetNet::PINOUT, $3, IVL_VT_NO_TYPE,
-				false, $4, 0, $1);
+	pform_module_define_port(@2, name, NetNet::PINOUT, $3, $4, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = $3;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
 	port_declaration_context.data_type = $4;
 	delete[]$5;
 	if ($6) {
@@ -3846,21 +3964,21 @@ port_declaration
 	perm_string name = lex_strings.make($4);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
+	real_type_t*real_type = new real_type_t(real_type_t::REAL);
+	FILE_NAME(real_type, @3);
 	pform_module_define_port(@2, name, NetNet::PINOUT,
-				 NetNet::WIRE, IVL_VT_REAL, true, 0, 0, $1);
+				 NetNet::WIRE, real_type, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
-	port_declaration_context.var_type = IVL_VT_REAL;
-	port_declaration_context.sign_flag = true;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	port_declaration_context.data_type = 0;
+	port_declaration_context.data_type = real_type;
 	delete[]$4;
 	$$ = ptmp;
       }
   | attribute_list_opt K_output net_type_opt data_type_or_implicit IDENTIFIER dimensions_opt
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
+	data_type_t*use_dtype = $4;
+	if ($6) use_dtype = new uarray_type_t(use_dtype, $6);
 	NetNet::Type use_type = $3;
 	if (use_type == NetNet::IMPLICIT) {
 	      if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($4)) {
@@ -3882,20 +4000,11 @@ port_declaration
 	      }
 	}
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
-	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, IVL_VT_NO_TYPE,
-				false, $4, 0, $1);
+	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, use_dtype, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = use_type;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
 	port_declaration_context.data_type = $4;
 	delete[]$5;
-	if ($6) {
-	      yyerror(@6, "sorry: Output ports with unpacked dimensions not supported.");
-	      delete $6;
-	}
 	$$ = ptmp;
       }
   | attribute_list_opt
@@ -3904,15 +4013,13 @@ port_declaration
 	perm_string name = lex_strings.make($4);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
+	real_type_t*real_type = new real_type_t(real_type_t::REAL);
+	FILE_NAME(real_type, @3);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 NetNet::WIRE, IVL_VT_REAL, true, 0, 0, $1);
+				 NetNet::WIRE, real_type, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
-	port_declaration_context.var_type = IVL_VT_REAL;
-	port_declaration_context.sign_flag = true;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	port_declaration_context.data_type = 0;
+	port_declaration_context.data_type = real_type;
 	delete[]$4;
 	$$ = ptmp;
       }
@@ -3931,14 +4038,9 @@ port_declaration
 	      }
 	}
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
-	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, IVL_VT_NO_TYPE,
-				false, $4, 0, $1);
+	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, $4, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = use_type;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
 	port_declaration_context.data_type = $4;
 
 	pform_make_reginit(@5, name, $7);
@@ -4001,15 +4103,15 @@ lpvalue
       }
 
   | implicit_class_handle '.' hierarchy_identifier
-      { pform_name_t*tmp1 = $1;
+      { pform_name_t*t_name = $1;
 	while (!$3->empty()) {
-	      tmp1->push_back($3->front());
+	      t_name->push_back($3->front());
 	      $3->pop_front();
 	}
-	PEIdent*tmp = new PEIdent(*tmp1);
+	PEIdent*tmp = new PEIdent(*t_name);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
-	delete tmp1;
+	delete $1;
 	delete $3;
       }
 
@@ -4097,10 +4199,11 @@ local_timeunit_prec_decl2
 module
   : attribute_list_opt module_start IDENTIFIER
       { pform_startmodule(@2, $3, $2==K_program, $1); }
+    module_package_import_list_opt
     module_parameter_port_list_opt
     module_port_list_opt
     module_attribute_foreign ';'
-      { pform_module_set_ports($6); }
+      { pform_module_set_ports($7); }
     local_timeunit_prec_decl_opt
       { have_timeunit_decl = true; // Every thing past here is
 	have_timeprec_decl = true; // a check!
@@ -4126,13 +4229,13 @@ module
 	}
 	  // Check that program/endprogram and module/endmodule
 	  // keywords match.
-	if ($2 != $13) {
+	if ($2 != $14) {
 	      switch ($2) {
 		  case K_module:
-		    yyerror(@13, "error: module not closed by endmodule.");
+		    yyerror(@14, "error: module not closed by endmodule.");
 		    break;
 		  case K_program:
-		    yyerror(@13, "error: program not closed by endprogram.");
+		    yyerror(@14, "error: program not closed by endprogram.");
 		    break;
 		  default:
 		    break;
@@ -4148,15 +4251,15 @@ module
 	// endlabel_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	if ($15) {
-	      if (strcmp($3,$15) != 0) {
+	if ($16) {
+	      if (strcmp($3,$16) != 0) {
 		    switch ($2) {
 			case K_module:
-			  yyerror(@15, "error: End label doesn't match "
+			  yyerror(@16, "error: End label doesn't match "
 			               "module name.");
 			  break;
 			case K_program:
-			  yyerror(@15, "error: End label doesn't match "
+			  yyerror(@16, "error: End label doesn't match "
 			               "program name.");
 			  break;
 			default:
@@ -4164,10 +4267,10 @@ module
 		    }
 	      }
 	      if (($2 == K_module) && (! gn_system_verilog())) {
-		    yyerror(@7, "error: Module end labels require "
-		                 "System Verilog.");
+		    yyerror(@8, "error: Module end labels require "
+		                 "SystemVerilog.");
 	      }
-	      delete[]$15;
+	      delete[]$16;
 	}
 	delete[]$3;
       }
@@ -4593,7 +4696,7 @@ module_item
 		  if ($4) {
 			if (!gn_system_verilog()) {
 			      yyerror(@4, "error: Function end names require "
-			                  "System Verilog.");
+			                  "SystemVerilog.");
 			}
 			delete[]$4;
 		  }
@@ -4665,7 +4768,7 @@ generate_block
                      }
                      if (! gn_system_verilog()) {
                            yyerror(@6, "error: Begin end labels require "
-                                       "System Verilog.");
+                                       "SystemVerilog.");
                      }
                      delete[]$6;
                }
@@ -5602,11 +5705,40 @@ statement_item /* This is roughly statement_item in the LRM */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | K_begin statement_or_null_list K_end
-      { PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+  /* In SystemVerilog an unnamed block can contain variable declarations. */
+  | K_begin
+      { PBlock*tmp = pform_push_block_scope(0, PBlock::BL_SEQ);
 	FILE_NAME(tmp, @1);
-	tmp->set_statement(*$2);
-	delete $2;
+	current_block_stack.push(tmp);
+      }
+    block_item_decls_opt
+      { if ($3) {
+	    if (! gn_system_verilog()) {
+		  yyerror("error: Variable declaration in unnamed block "
+		          "requires SystemVerilog.");
+	    }
+	} else {
+	    /* If there are no declarations in the scope then just delete it. */
+	    pform_pop_scope();
+	    assert(! current_block_stack.empty());
+	    PBlock*tmp = current_block_stack.top();
+	    current_block_stack.pop();
+	    delete tmp;
+	}
+      }
+    statement_or_null_list K_end
+      { PBlock*tmp;
+	if ($3) {
+	    pform_pop_scope();
+	    assert(! current_block_stack.empty());
+	    tmp = current_block_stack.top();
+	    current_block_stack.pop();
+	} else {
+	    tmp = new PBlock(PBlock::BL_SEQ);
+	    FILE_NAME(tmp, @1);
+	}
+	if ($5) tmp->set_statement(*$5);
+	delete $5;
 	$$ = tmp;
       }
   | K_begin ':' IDENTIFIER
@@ -5628,7 +5760,7 @@ statement_item /* This is roughly statement_item in the LRM */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@8, "error: Begin end labels require "
-		                "System Verilog.");
+		                "SystemVerilog.");
 	      }
 	      delete[]$8;
 	}
@@ -5646,11 +5778,41 @@ statement_item /* This is roughly statement_item in the LRM */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | K_fork statement_or_null_list join_keyword
-      { PBlock*tmp = new PBlock($3);
+  /* In SystemVerilog an unnamed block can contain variable declarations. */
+  | K_fork
+      { PBlock*tmp = pform_push_block_scope(0, PBlock::BL_PAR);
 	FILE_NAME(tmp, @1);
-	tmp->set_statement(*$2);
-	delete $2;
+	current_block_stack.push(tmp);
+      }
+    block_item_decls_opt
+      { if ($3) {
+	    if (! gn_system_verilog()) {
+		  yyerror("error: Variable declaration in unnamed block "
+		          "requires SystemVerilog.");
+	    }
+	} else {
+	    /* If there are no declarations in the scope then just delete it. */
+	    pform_pop_scope();
+	    assert(! current_block_stack.empty());
+	    PBlock*tmp = current_block_stack.top();
+	    current_block_stack.pop();
+	    delete tmp;
+	}
+      }
+    statement_or_null_list join_keyword
+      { PBlock*tmp;
+	if ($3) {
+	    pform_pop_scope();
+	    assert(! current_block_stack.empty());
+	    tmp = current_block_stack.top();
+	    current_block_stack.pop();
+	    tmp->set_join_type($6);
+	} else {
+	    tmp = new PBlock($6);
+	    FILE_NAME(tmp, @1);
+	}
+	if ($5) tmp->set_statement(*$5);
+	delete $5;
 	$$ = tmp;
       }
   | K_fork ':' IDENTIFIER
@@ -5673,7 +5835,7 @@ statement_item /* This is roughly statement_item in the LRM */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@8, "error: Fork end labels require "
-		                "System Verilog.");
+		                "SystemVerilog.");
 	      }
 	      delete[]$8;
 	}
@@ -5920,12 +6082,12 @@ statement_item /* This is roughly statement_item in the LRM */
       }
 
   | implicit_class_handle '.' hierarchy_identifier '(' expression_list_with_nuls ')' ';'
-      { pform_name_t*nam = $1;
+      { pform_name_t*t_name = $1;
 	while (! $3->empty()) {
-	      nam->push_back($3->front());
+	      t_name->push_back($3->front());
 	      $3->pop_front();
 	}
-	PCallTask*tmp = new PCallTask(*nam, *$5);
+	PCallTask*tmp = new PCallTask(*t_name, *$5);
 	FILE_NAME(tmp, @1);
 	delete $1;
 	delete $3;
@@ -5950,6 +6112,7 @@ statement_item /* This is roughly statement_item in the LRM */
   | implicit_class_handle '.' K_new '(' expression_list_with_nuls ')' ';'
       { PChainConstructor*tmp = new PChainConstructor(*$5);
 	FILE_NAME(tmp, @3);
+	delete $1;
 	$$ = tmp;
       }
   | hierarchy_identifier '(' error ')' ';'
@@ -6342,7 +6505,7 @@ udp_primitive
 			}
 			if (! gn_system_verilog()) {
 			      yyerror(@11, "error: Primitive end labels "
-			                   "require System Verilog.");
+			                   "require SystemVerilog.");
 			}
 			delete[]$11;
 		  }
@@ -6369,7 +6532,7 @@ udp_primitive
 			}
 			if (! gn_system_verilog()) {
 			      yyerror(@14, "error: Primitive end labels "
-			                   "require System Verilog.");
+			                   "require SystemVerilog.");
 			}
 			delete[]$14;
 		  }

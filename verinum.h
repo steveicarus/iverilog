@@ -1,5 +1,5 @@
-#ifndef __verinum_H
-#define __verinum_H
+#ifndef IVL_verinum_H
+#define IVL_verinum_H
 /*
  * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
@@ -199,4 +199,4 @@ extern verinum concat(const verinum&left, const verinum&right);
 /* Bitwise not returns the ones complement. */
 extern verinum operator ~ (const verinum&left);
 
-#endif
+#endif /* IVL_verinum_H */

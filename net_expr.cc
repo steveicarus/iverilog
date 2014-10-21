@@ -321,6 +321,20 @@ const NetScope* NetECRealParam::scope() const
 }
 
 
+NetELast::NetELast(NetNet*s)
+: sig_(s)
+{
+}
+
+NetELast::~NetELast()
+{
+}
+
+ivl_variable_type_t NetELast::expr_type() const
+{
+      return IVL_VT_BOOL;
+}
+
 NetENetenum::NetENetenum(const netenum_t*s)
 : netenum_(s)
 {
@@ -362,8 +376,8 @@ NetENull::~NetENull()
 {
 }
 
-NetEProperty::NetEProperty(NetNet*net, perm_string pnam)
-: net_(net)
+NetEProperty::NetEProperty(NetNet*net, perm_string pnam, NetExpr*idx)
+: net_(net), index_(idx)
 {
       const netclass_t*use_type = dynamic_cast<const netclass_t*>(net->net_type());
       assert(use_type);

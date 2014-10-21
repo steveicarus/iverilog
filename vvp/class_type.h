@@ -1,7 +1,7 @@
-#ifndef __class_type_H
-#define __class_type_H
+#ifndef IVL_class_type_H
+#define IVL_class_type_H
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -49,7 +49,7 @@ class class_type : public __vpiHandle {
 	// Set the details about the property. This is used during
 	// parse of the .vvp file to fill in the details of the
 	// property for the class definition.
-      void set_property(size_t idx, const std::string&name, const std::string&type);
+      void set_property(size_t idx, const std::string&name, const std::string&type, uint64_t array_size);
 
 	// This method is called after all the properties are
 	// defined. This calculates information about the definition.
@@ -66,8 +66,8 @@ class class_type : public __vpiHandle {
       double get_real(inst_t inst, size_t pid) const;
       void set_string(inst_t inst, size_t pid, const std::string&val) const;
       std::string get_string(inst_t inst, size_t pid) const;
-      void set_object(inst_t inst, size_t pid, const vvp_object_t&val) const;
-      void get_object(inst_t inst, size_t pid, vvp_object_t&val) const;
+      void set_object(inst_t inst, size_t pid, const vvp_object_t&val, size_t idx) const;
+      void get_object(inst_t inst, size_t pid, vvp_object_t&val, size_t idx) const;
 
       void copy_property(inst_t dst, size_t idx, inst_t src) const;
 
@@ -85,4 +85,4 @@ class class_type : public __vpiHandle {
       size_t instance_size_;
 };
 
-#endif
+#endif /* IVL_class_type_H */

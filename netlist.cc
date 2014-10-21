@@ -31,6 +31,7 @@
 # include  "netdarray.h"
 # include  "netenum.h"
 # include  "netparray.h"
+# include  "netqueue.h"
 # include  "netstruct.h"
 # include  "netvector.h"
 # include  "ivl_assert.h"
@@ -180,7 +181,11 @@ NetPins::NetPins(unsigned npins)
 
 NetPins::~NetPins()
 {
-      delete[] pins_;
+      if (pins_) {
+	    assert(pins_[0].node_ == this);
+	    assert(pins_[0].pin_zero_);
+	    delete[] pins_;
+      }
 }
 
 Link& NetPins::pin(unsigned idx)
@@ -194,7 +199,7 @@ Link& NetPins::pin(unsigned idx)
       }
 
       assert(idx < npins_);
-      assert(idx == 0? pins_[0].pin_zero_ : pins_[idx].pin_==idx);
+      assert(idx == 0? (pins_[0].pin_zero_ && pins_[0].node_==this) : pins_[idx].pin_==idx);
 
       return pins_[idx];
 }
@@ -208,7 +213,7 @@ const Link& NetPins::pin(unsigned idx) const
       }
       assert(pins_);
       assert(idx < npins_);
-      assert(idx == 0? pins_[0].pin_zero_ : pins_[idx].pin_==idx);
+      assert(idx == 0? (pins_[0].pin_zero_ && pins_[0].node_==this) : pins_[idx].pin_==idx);
       return pins_[idx];
 }
 
@@ -557,6 +562,8 @@ void NetNet::calculate_slice_widths_from_packed_dims_(void)
       }
 }
 
+const list<netrange_t> NetNet::not_an_array;
+
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	       const list<netrange_t>&unpacked, ivl_type_t use_net_type)
 : NetObj(s, n, calculate_count(unpacked)),
@@ -748,6 +755,11 @@ const netdarray_t* NetNet::darray_type(void) const
       return dynamic_cast<const netdarray_t*> (net_type_);
 }
 
+const netqueue_t* NetNet::queue_type(void) const
+{
+      return dynamic_cast<const netqueue_t*> (net_type_);
+}
+
 const netclass_t* NetNet::class_type(void) const
 {
       return dynamic_cast<const netclass_t*> (net_type_);
@@ -762,6 +774,9 @@ const netclass_t* NetNet::class_type(void) const
  * In this case, slice_width(2) == 1  (slice_width(N) where N is the
  * number of dimensions will always be 1.) and represents
  * $bits(foo[a][b]). Then, slice_width(1)==4 ($bits(foo[a]) and slice_width(0)==24.
+ *
+ * NOTE: The caller should already have accounted for unpacked
+ * dimensions. The "depth" is only for the packed dimensions.
  */
 unsigned long NetNet::slice_width(size_t depth) const
 {
@@ -868,17 +883,25 @@ unsigned NetNet::peek_eref() const
  * Test each of the bits in the range, and set them. If any bits are
  * already set then return true.
  */
-bool NetNet::test_and_set_part_driver(unsigned pmsb, unsigned plsb)
+bool NetNet::test_and_set_part_driver(unsigned pmsb, unsigned plsb, int widx)
 {
       if (lref_mask_.empty())
-	    lref_mask_.resize(vector_width());
+	    lref_mask_.resize(vector_width() * pin_count());
+
+	// If indexing a word that doesn't exist, then pretend this is
+	// never driven.
+      if (widx < 0)
+	    return false;
+      if (widx >= (int)pin_count())
+	    return false;
 
       bool rc = false;
+      unsigned word_base = vector_width() * widx;
       for (unsigned idx = plsb ; idx <= pmsb ; idx += 1) {
-	    if (lref_mask_[idx])
+	    if (lref_mask_[idx+word_base])
 		  rc = true;
 	    else
-		  lref_mask_[idx] = true;
+		  lref_mask_[idx+word_base] = true;
       }
 
       return rc;
@@ -970,6 +993,20 @@ unsigned NetPartSelect::width() const
 unsigned NetPartSelect::base() const
 {
       return off_;
+}
+
+NetSubstitute::NetSubstitute(NetNet*sig, NetNet*sub, unsigned wid, unsigned off)
+: NetNode(sig->scope(), sig->scope()->local_symbol(), 3), wid_(wid), off_(off)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(1).set_dir(Link::INPUT);
+      pin(2).set_dir(Link::INPUT);
+      connect(pin(1), sig->pin(0));
+      connect(pin(2), sub->pin(0));
+}
+
+NetSubstitute::~NetSubstitute()
+{
 }
 
 NetProc::NetProc()
@@ -1888,8 +1925,8 @@ unsigned NetBUFZ::width() const
       return width_;
 }
 
-NetCaseCmp::NetCaseCmp(NetScope*s, perm_string n, unsigned wid, bool eeq__)
-: NetNode(s, n, 3), width_(wid), eeq_(eeq__)
+NetCaseCmp::NetCaseCmp(NetScope*s, perm_string n, unsigned wid, kind_t k)
+: NetNode(s, n, 3), width_(wid), kind_(k)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(1).set_dir(Link::INPUT);
@@ -1903,11 +1940,6 @@ NetCaseCmp::~NetCaseCmp()
 unsigned NetCaseCmp::width() const
 {
       return width_;
-}
-
-bool NetCaseCmp::eeq() const
-{
-      return eeq_;
 }
 
 NetCondit::NetCondit(NetExpr*ex, NetProc*i, NetProc*e)
@@ -2743,6 +2775,11 @@ DelayType NetEvWait::delay_type() const
 DelayType NetForever::delay_type() const
 {
       return statement_->delay_type();
+}
+
+DelayType NetForLoop::delay_type() const
+{
+      return get_loop_delay_type(condition_, statement_);
 }
 
 DelayType NetPDelay::delay_type() const

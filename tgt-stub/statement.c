@@ -73,6 +73,12 @@ static unsigned show_assign_lval_class(ivl_lval_t lval, unsigned ind)
       fprintf(out, "%*s{name=%s.<property-%d> l-value width=%u}\n",
 	      ind, "", ivl_signal_name(sig), sig_prop, ivl_lval_width(lval));
 
+      if (ivl_lval_idx(lval)) {
+	    ivl_expr_t mux = ivl_lval_idx(lval);
+	    fprintf(out, "%*sAddress-0 select expression:\n", ind+4, "");
+	    show_expression(mux, ind+6);
+      }
+
       return ivl_lval_width(lval);
 }
 
@@ -269,7 +275,7 @@ static void show_stmt_trigger(ivl_statement_t net, unsigned ind)
  * The wait statement contains simply an array of events to wait on,
  * and a sub-statement to execute when an event triggers.
  */
-void show_stmt_wait(ivl_statement_t net, unsigned ind)
+static void show_stmt_wait(ivl_statement_t net, unsigned ind)
 {
       unsigned idx;
       const char*comma = "";

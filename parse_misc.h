@@ -1,7 +1,7 @@
-#ifndef __parse_misc_H
-#define __parse_misc_H
+#ifndef IVL_parse_misc_H
+#define IVL_parse_misc_H
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,10 +30,10 @@
  * YYLTYPE compels the lexor to use this type and not something other.
  */
 struct vlltype {
-      unsigned first_line;
-      unsigned first_column;
-      unsigned last_line;
-      unsigned last_column;
+      int first_line;
+      int first_column;
+      int last_line;
+      int last_column;
       const char*text;
       std::string get_fileline() const;
 };
@@ -96,6 +96,8 @@ extern void lex_in_package_scope(PPackage*pkg);
 extern data_type_t* pform_test_type_identifier(const char*txt);
 extern data_type_t* pform_test_type_identifier(PPackage*pkg, const char*txt);
 
+extern bool pform_test_type_identifier_local(perm_string txt);
+
 /*
  * Test if this identifier is a package name. The pform needs to help
  * the lexor here because the parser detects packages and saves them.
@@ -114,4 +116,4 @@ extern verinum*make_unsized_hex(const char*txt);
 
 extern char* strdupnew(char const *str);
 
-#endif
+#endif /* IVL_parse_misc_H */

@@ -1,7 +1,7 @@
-#ifndef __acc_user_H
-#define __acc_user_H
+#ifndef ACC_USER_H
+#define ACC_USER_H
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -228,6 +228,7 @@ extern PLI_INT32 acc_fetch_size(handle obj);
 
 extern PLI_INT32 acc_fetch_type(handle obj);
 extern PLI_INT32 acc_fetch_fulltype(handle obj);
+extern PLI_INT32 acc_fetch_paramtype(handle obj);
 extern PLI_INT32 acc_fetch_range(handle object, int *msb, int *lsb);
 extern const char* acc_fetch_type_str(PLI_INT32 type);
 
@@ -270,4 +271,4 @@ extern char* acc_version(void);
 
 EXTERN_C_END
 
-#endif
+#endif /* ACC_USER_H */

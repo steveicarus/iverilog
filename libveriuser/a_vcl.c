@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -162,6 +162,7 @@ void acc_vcl_add(handle obj, PLI_INT32(*consumer)(p_vc_record),
 
       switch (vpi_get(vpiType, obj)) {
 	  case vpiNet:
+	  case vpiReg:
 	    cur = malloc(sizeof (struct vcl_record));
 	    cur->obj = obj;
 	    cur->consumer = consumer;
@@ -195,5 +196,9 @@ void acc_vcl_add(handle obj, PLI_INT32(*consumer)(p_vc_record),
 void acc_vcl_delete(handle obj, PLI_INT32(*consumer)(p_vc_record),
 		    void*data, PLI_INT32 vcl_flag)
 {
+      (void)obj; /* Parameter is not used. */
+      (void)consumer; /* Parameter is not used. */
+      (void)data; /* Parameter is not used. */
+      (void)vcl_flag; /* Parameter is not used. */
       vpi_printf("XXXX acc_vcl_delete(...)\n");
 }

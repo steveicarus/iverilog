@@ -96,6 +96,7 @@ rem,		GN_KEYWORD_2008,	K_rem
 report,		GN_KEYWORD_2008,	K_report
 restrict,	GN_KEYWORD_2008,	K_restrict
 return,		GN_KEYWORD_2008,	K_return
+reverse_range,	GN_KEYWORD_2008,	K_reverse_range
 rol,		GN_KEYWORD_2008,	K_rol
 ror,		GN_KEYWORD_2008,	K_ror
 select,		GN_KEYWORD_2008,	K_select

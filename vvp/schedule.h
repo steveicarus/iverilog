@@ -1,7 +1,7 @@
-#ifndef __schedule_H
-#define __schedule_H
+#ifndef IVL_schedule_H
+#define IVL_schedule_H
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -189,4 +189,4 @@ extern unsigned long count_prop_events;
 extern unsigned long count_thread_events;
 extern unsigned long count_event_pool;
 
-#endif
+#endif /* IVL_schedule_H */

@@ -1055,6 +1055,11 @@ the property number <pid> of the class object on the top of the
 object stack. Push the resulting value to the appropriate stack. The
 class object that is the source is NOT popped from the object stack.
 
+The <idx> is the address of an index variable that selects the word of
+an arrayed property. If the <idx> value is 0, then use index value
+zero instead of reading index register zero. Use this form for
+non-arrayed properties.
+
 * %pushi/real <mant>, <exp>
 
 This opcode loads an immediate value, floating point, into the real
@@ -1174,6 +1179,12 @@ width is implied from the <wid> that is the argument. This is the part
 The address (in canonical form) is precalculated and loaded into index
 register 3. This is the address of the word within the array.
 
+* %set/qb <var-label>, <bit>, <wid>
+* %set/qf <var-label>, <bit>, <wid>
+
+This sets the vector value into the back (qb) or front (qf) of a queue
+variable.
+
 * %set/x0 <var-label>, <bit>, <wid>
 
 This sets the part of a signal vector, the address calculated by
@@ -1225,12 +1236,15 @@ See also %load/obj.
 * %store/prop/v <index>
 
 The %store/prop/r pops a real value from the real stack and stores it
-into the the property number <index> of a cobject in the top of the
+into the the property number <pid> of a cobject in the top of the
 object stack. The cobject is NOT popped.
 
 The %store/prop/obj pops an object from the top of the object stack,
-then writes it to the property number <index> of the cobject now on
-top of the object stack. The cobject is NOT popped.
+then writes it to the property number <pid> of the cobject now on
+top of the object stack. The cobject is NOT popped. The <idx> argument
+is the index register to select an element. If the property is an
+array, this selects the element. If <idx> is 0, then use the value 0
+instead of index register zero. Use 0 for non-array properties.
 
 * %store/real <var-label>
 * %store/reala <var-label>, <index>
@@ -1246,6 +1260,10 @@ index in the index register <index>
 * %store/dar/r <var-label>
 * %store/dar/str <var-label>
 * %store/dar/vec4 <var-label>
+* %store/qf/r <var-label>
+* %store/qf/str <var-label>
+* %store/qb/r <var-label>
+* %store/qb/str <var-label>
 
 The %store/str instruction pops the top of the string stack and writes
 it to the string variable.
@@ -1282,6 +1300,11 @@ non-zero index register. A 0 index is a fixed constant and cannot
 fail.
 
 NOTE: The <wid> is not necessary, and should be removed.
+
+The %store/qf/* and %store/qb/* instructions are queue manipulations,
+which implement the push_back (qb) and push_front (qf)
+functions. These only apply to queue object, and are distinct from the
+dar versions because the begin/front don't exist, by definition.
 
 * %sub <bit-l>, <bit-r>, <wid> (XXXX Old version)
 
@@ -1334,10 +1357,14 @@ The string value is NOT popped.
 
 
 * %test_nul <var-label>
+* %test_nul/obj
 
 This instruction tests the contents of the addressed variable to see
 if it is null. If it is, set flag bit 4 to 1. Otherwise, set flag bit
 4 to 0.
+
+The %test_null/obj tests the object on the top of the stack, instead
+of any variable. The value in the stack is NOT popped.
 
 This is intended to implement the SystemVerilog expression
 (<var>==null), where <var> is a class variable.

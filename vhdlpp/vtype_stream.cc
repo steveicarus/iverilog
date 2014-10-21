@@ -39,53 +39,91 @@ void VType::write_type_to_stream(ostream&fd) const
 void VTypeArray::write_to_stream(ostream&fd) const
 {
 	// Special case: std_logic_vector
-      if (etype_ == primitive_STDLOGIC) {
+      if (etype_ == &primitive_STDLOGIC) {
 	    fd << "std_logic_vector";
 	    if (! ranges_.empty() && ! ranges_[0].is_box()) {
-		  assert(ranges_.size() < 2);
-		  fd << " (";
-		  if (ranges_[0].msb())
-			ranges_[0].msb()->write_to_stream(fd);
-		  else
-			fd << "<>";
-		  fd << " downto ";
-		  if (ranges_[0].lsb())
-			ranges_[0].lsb()->write_to_stream(fd);
-		  else
-			fd << "<>";
-		  fd << ") ";
+		  write_range_to_stream_(fd);
 	    }
 	    return;
       }
 
-      fd << "array ";
+      bool typedefed = false;
+      if(const VTypeDef*tdef = dynamic_cast<const VTypeDef*>(etype_)) {
+            tdef->write_to_stream(fd);
+            typedefed = true;
+      } else {
+            fd << "array ";
+      }
+
       if (! ranges_.empty()) {
 	    assert(ranges_.size() < 2);
 	    if (ranges_[0].is_box()) {
 		  fd << "(INTEGER range <>) ";
 	    } else {
-		  assert(ranges_[0].msb() && ranges_[0].lsb());
-		  fd << "(";
-		  if (ranges_[0].msb())
-			ranges_[0].msb()->write_to_stream(fd);
-		  else
-			fd << "<>";
-		  fd << " downto ";
-		  if (ranges_[0].lsb())
-			ranges_[0].lsb()->write_to_stream(fd);
-		  else
-			fd << "<>";
-		  fd << ") ";
+		  write_range_to_stream_(fd);
+	    }
+      }
+
+      if(!typedefed) {
+            fd << "of ";
+            etype_->write_to_stream(fd);
+      }
+}
+
+void VTypeArray::write_range_to_stream_(std::ostream&fd) const
+{
+    assert(ranges_.size() < 2);
+    assert(ranges_[0].msb() && ranges_[0].lsb());
+
+    fd << "(";
+    if (ranges_[0].msb())
+        ranges_[0].msb()->write_to_stream(fd);
+    else
+        fd << "<>";
+
+    fd << (ranges_[0].is_downto() ? " downto " : " to ");
+
+    if (ranges_[0].lsb())
+        ranges_[0].lsb()->write_to_stream(fd);
+    else
+        fd << "<>";
+    fd << ") ";
+}
+
+void VTypeArray::write_type_to_stream(ostream&fd) const
+{
+	// Special case: std_logic_vector
+      if (etype_ == &primitive_STDLOGIC) {
+	    fd << "std_logic_vector";
+	    if (! ranges_.empty() && ! ranges_[0].is_box()) {
+		  write_range_to_stream_(fd);
+	    }
+	    return;
+      }
+
+      fd << "array ";
+
+      if (! ranges_.empty()) {
+	    assert(ranges_.size() < 2);
+	    if (ranges_[0].is_box()) {
+		  fd << "(INTEGER range <>) ";
+	    } else {
+		  write_range_to_stream_(fd);
 	    }
       }
 
       fd << "of ";
-      etype_->write_to_stream(fd);
+
+      if(const VTypeDef*tdef = dynamic_cast<const VTypeDef*>(etype_)) {
+          tdef->write_to_stream(fd);
+      } else {
+          etype_->write_to_stream(fd);
+      }
 }
 
 void VTypeDef::write_type_to_stream(ostream&fd) const
 {
-      type_->write_to_stream(fd);
+      type_->write_type_to_stream(fd);
 }
 
 void VTypeDef::write_to_stream(ostream&fd) const
@@ -102,8 +140,14 @@ void VTypePrimitive::write_to_stream(ostream&fd) const
 	  case INTEGER:
 	    fd << "integer";
 	    break;
+	  case REAL:
+	    fd << "real";
+	    break;
 	  case STDLOGIC:
 	    fd << "std_logic";
+	    break;
+	  case CHARACTER:
+	    fd << "character";
 	    break;
 	  case BOOLEAN:
 	    fd << "boolean";
@@ -145,3 +189,18 @@ void VTypeRecord::element_t::write_to_stream(ostream&fd) const
       fd << name_ << ": ";
       type_->write_to_stream(fd);
 }
+
+void VTypeEnum::write_to_stream(std::ostream&fd) const
+{
+      fd << "(";
+      for (vector<perm_string>::const_iterator it = names_.begin();
+        it != names_.end(); ++it) {
+            if(it != names_.begin())
+                fd << ",";
+
+            fd << *it;
+
+      }
+      fd << ")";
+}
+

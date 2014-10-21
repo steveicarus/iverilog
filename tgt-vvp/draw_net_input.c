@@ -158,7 +158,7 @@ static char* draw_C8_to_string(ivl_net_const_t cptr,
       return result;
 }
 
-static struct vvp_nexus_data*new_nexus_data()
+static struct vvp_nexus_data*new_nexus_data(void)
 {
       struct vvp_nexus_data*data = calloc(1, sizeof(struct vvp_nexus_data));
       return data;
@@ -230,7 +230,7 @@ static void str_repeat(char*buf, const char*str, unsigned rpt)
  * If the drive strength is strong we can draw a C4<> constant as the
  * pull value, otherwise we need to draw a C8<> constant.
  */
-static char* draw_net_pull(ivl_net_logic_t lptr, ivl_drive_t drive, char*level)
+static char* draw_net_pull(ivl_net_logic_t lptr, ivl_drive_t drive, const char*level)
 {
       char*result;
       char tmp[32];
@@ -450,6 +450,8 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_CONCATZ:
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_EQX:
+	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
@@ -474,6 +476,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV: /* NOTE: This is only a partial driver. */
 	  case IVL_LPM_REPEAT:
+	  case IVL_LPM_SUBSTITUTE:
 	    if (ivl_lpm_q(lpm) == nex) {
 		  char tmp[128];
 		  snprintf(tmp, sizeof tmp, "L_%p", lpm);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -443,6 +443,8 @@ static PLI_INT32 ivl_enum_method_name_calltf(PLI_BYTE8*name)
       PLI_INT32 var_width = vpi_get(vpiSize, arg_var);
 
       s_vpi_value cur_val, var_val;
+
+      (void)name; /* Parameter is not used. */
 
 	/* Free the argument iterator. */
       vpi_free_object(argv);

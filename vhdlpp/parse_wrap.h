@@ -1,7 +1,7 @@
-#ifndef __parse_wrap_H
-#define __parse_wrap_H
+#ifndef IVL_parse_wrap_H
+#define IVL_parse_wrap_H
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -38,4 +38,4 @@ class VType;
 
 # include  "parse.h"
 
-#endif
+#endif /* IVL_parse_wrap_H */

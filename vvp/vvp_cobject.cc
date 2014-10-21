@@ -65,14 +65,14 @@ string vvp_cobject::get_string(size_t pid)
       return defn_->get_string(properties_, pid);
 }
 
-void vvp_cobject::set_object(size_t pid, const vvp_object_t&val)
+void vvp_cobject::set_object(size_t pid, const vvp_object_t&val, size_t idx)
 {
-      defn_->set_object(properties_, pid, val);
+      defn_->set_object(properties_, pid, val, idx);
 }
 
-void vvp_cobject::get_object(size_t pid, vvp_object_t&val)
+void vvp_cobject::get_object(size_t pid, vvp_object_t&val, size_t idx)
 {
-      return defn_->get_object(properties_, pid, val);
+      return defn_->get_object(properties_, pid, val, idx);
 }
 
 void vvp_cobject::shallow_copy(const vvp_object*obj)

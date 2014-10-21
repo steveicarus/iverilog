@@ -1,5 +1,5 @@
-#ifndef __vhdlnum_H
-#define __vhdlnum_H
+#ifndef IVL_vhdlnum_H
+#define IVL_vhdlnum_H
 
 #include "config.h"
 
@@ -10,4 +10,4 @@ class vhdlnum {
         vhdlnum(char* text) {}
 };
 
-#endif
+#endif /* IVL_vhdlnum_H */

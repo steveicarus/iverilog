@@ -1,7 +1,7 @@
-#ifndef __PGate_H
-#define __PGate_H
+#ifndef IVL_PGate_H
+#define IVL_PGate_H
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -124,6 +124,7 @@ class PGAssign  : public PGate {
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
     private:
+      void elaborate_unpacked_array_(Design*des, NetScope*scope, NetNet*lval) const;
 };
 
 
@@ -259,4 +260,4 @@ class PGModule  : public PGate {
 				 NetNet::PortType dir, bool as_signed) const;
 };
 
-#endif
+#endif /* IVL_PGate_H */

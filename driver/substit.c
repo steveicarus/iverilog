@@ -21,6 +21,7 @@
 # include  <stdlib.h>
 # include  <stdio.h>
 # include  "ivl_alloc.h"
+# include  "globals.h"
 
 
 char* substitutions(const char*str)

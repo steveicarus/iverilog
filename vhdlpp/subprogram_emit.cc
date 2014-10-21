@@ -31,7 +31,7 @@ int Subprogram::emit_package(ostream&fd) const
 
       if (return_type_) {
 	    fd << "function ";
-	    return_type_->emit_def(fd);
+	    return_type_->emit_def(fd, empty_perm_string);
 	    fd << " " << name_;
 	    fd << "(";
       } else {
@@ -55,16 +55,22 @@ int Subprogram::emit_package(ostream&fd) const
 		  break;
 	    }
 
-	    errors += curp->type->emit_def(fd);
-	    fd << " \\" << curp->name << " ";
+	    errors += curp->type->emit_def(fd, curp->name);
       }
 
       fd << ");" << endl;
 
+      for (map<perm_string,Variable*>::const_iterator cur = new_variables_.begin()
+         ; cur != new_variables_.end() ; ++cur) {
+        // Workaround to enable reg_flag for variables
+        cur->second->count_ref_sequ();
+        errors += cur->second->emit(fd, NULL, NULL);
+      }
+
       if (statements_) {
 	    for (list<SequentialStmt*>::const_iterator cur = statements_->begin()
 		       ; cur != statements_->end() ; ++cur) {
-		  errors += (*cur)->emit(fd, 0, 0);
+		  errors += (*cur)->emit(fd, NULL, NULL);
 	    }
       } else {
 	    fd << " begin /* empty body */ end" << endl;

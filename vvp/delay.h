@@ -1,7 +1,7 @@
-#ifndef __delay_H
-#define __delay_H
+#ifndef IVL_delay_H
+#define IVL_delay_H
 /*
- * Copyright 2005-2010 Stephen Williams
+ * Copyright 2005-2014 Stephen Williams
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -230,4 +230,4 @@ class vvp_fun_modpath_edge  : public vvp_fun_modpath_src {
       bool negedge_;
 };
 
-#endif // __delay_H
+#endif /* IVL_delay_H */

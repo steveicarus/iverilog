@@ -56,8 +56,8 @@ class class_property_t {
       virtual void set_string(char*buf, const std::string&val);
       virtual string get_string(char*buf);
 
-      virtual void set_object(char*buf, const vvp_object_t&val);
-      virtual void get_object(char*buf, vvp_object_t&val);
+      virtual void set_object(char*buf, const vvp_object_t&val, uint64_t element);
+      virtual void get_object(char*buf, vvp_object_t&val, uint64_t element);
 
 	// Implement polymorphic shallow copy.
       virtual void copy(char*buf, char*src) = 0;
@@ -110,12 +110,12 @@ string class_property_t::get_string(char*)
       return "";
 }
 
-void class_property_t::set_object(char*, const vvp_object_t&)
+void class_property_t::set_object(char*, const vvp_object_t&, uint64_t)
 {
       assert(0);
 }
 
-void class_property_t::get_object(char*, vvp_object_t&)
+void class_property_t::get_object(char*, vvp_object_t&, uint64_t)
 {
       assert(0);
 }
@@ -234,24 +234,23 @@ class property_string : public class_property_t {
 
 class property_object : public class_property_t {
     public:
-      inline explicit property_object(void) { }
+      inline explicit property_object(uint64_t as): array_size_(as==0? 1 : as) { }
       ~property_object() { }
 
-      size_t instance_size() const { return sizeof(vvp_object_t); }
+      size_t instance_size() const { return array_size_ * sizeof(vvp_object_t); }
 
     public:
-      void construct(char*buf) const
-      { /* vvp_object_t*tmp = */ new (buf+offset_) vvp_object_t; }
+      void construct(char*buf) const;
 
-      void destruct(char*buf) const
-      { vvp_object_t*tmp = reinterpret_cast<vvp_object_t*> (buf+offset_);
-	tmp->~vvp_object_t();
-      }
+      void destruct(char*buf) const;
 
-      void set_object(char*buf, const vvp_object_t&);
-      void get_object(char*buf, vvp_object_t&);
+      void set_object(char*buf, const vvp_object_t&, uint64_t);
+      void get_object(char*buf, vvp_object_t&, uint64_t);
 
       void copy(char*dst, char*src);
+
+    private:
+      size_t array_size_;
 };
 
 template <class T> void property_atom<T>::set_vec4(char*buf, const vvp_vector4_t&val)
@@ -360,23 +359,39 @@ void property_string::copy(char*dst, char*src)
       *dst_obj = *src_obj;
 }
 
-void property_object::set_object(char*buf, const vvp_object_t&val)
+void property_object::construct(char*buf) const
 {
-      vvp_object_t*tmp = reinterpret_cast<vvp_object_t*>(buf+offset_);
-      *tmp = val;
+      for (size_t idx = 0 ; idx < array_size_ ; idx += 1)
+	    new (buf+offset_ + idx*sizeof(vvp_object_t)) vvp_object_t;
 }
 
-void property_object::get_object(char*buf, vvp_object_t&val)
+void property_object::destruct(char*buf) const
 {
+      vvp_object_t*tmp = reinterpret_cast<vvp_object_t*> (buf+offset_);
+      for (size_t idx = 0 ; idx < array_size_ ; idx += 1)
+	    (tmp+idx)->~vvp_object_t();
+}
+
+void property_object::set_object(char*buf, const vvp_object_t&val, uint64_t idx)
+{
+      assert(idx < array_size_);
       vvp_object_t*tmp = reinterpret_cast<vvp_object_t*>(buf+offset_);
-      val = *tmp;
+      tmp[idx] = val;
+}
+
+void property_object::get_object(char*buf, vvp_object_t&val, uint64_t idx)
+{
+      assert(idx < array_size_);
+      vvp_object_t*tmp = reinterpret_cast<vvp_object_t*>(buf+offset_);
+      val = tmp[idx];
 }
 
 void property_object::copy(char*dst, char*src)
 {
       vvp_object_t*dst_obj = reinterpret_cast<vvp_object_t*>(dst);
       vvp_object_t*src_obj = reinterpret_cast<vvp_object_t*>(src);
-      *dst_obj = *src_obj;
+      for (size_t idx = 0 ; idx < array_size_ ; idx += 1)
+	    dst_obj[idx] = src_obj[idx];
 }
 
 /* **** */
@@ -393,7 +408,7 @@ class_type::~class_type()
 	    delete properties_[idx].type;
 }
 
-void class_type::set_property(size_t idx, const string&name, const string&type)
+void class_type::set_property(size_t idx, const string&name, const string&type, uint64_t array_size)
 {
       assert(idx < properties_.size());
       properties_[idx].name = name;
@@ -419,7 +434,7 @@ void class_type::set_property(size_t idx, const string&name, const string&type)
       else if (type == "S")
 	    properties_[idx].type = new property_string;
       else if (type == "o")
-	    properties_[idx].type = new property_object;
+	    properties_[idx].type = new property_object(array_size);
       else if (type[0] == 'b') {
 	    size_t wid = strtoul(type.c_str()+1, 0, 0);
 	    properties_[idx].type = new property_bit(wid);
@@ -529,18 +544,19 @@ string class_type::get_string(class_type::inst_t obj, size_t pid) const
 }
 
 void class_type::set_object(class_type::inst_t obj, size_t pid,
-			    const vvp_object_t&val) const
+			    const vvp_object_t&val, size_t idx) const
 {
       char*buf = reinterpret_cast<char*> (obj);
       assert(pid < properties_.size());
-      properties_[pid].type->set_object(buf, val);
+      properties_[pid].type->set_object(buf, val, idx);
 }
 
-void class_type::get_object(class_type::inst_t obj, size_t pid, vvp_object_t&val) const
+void class_type::get_object(class_type::inst_t obj, size_t pid,
+			    vvp_object_t&val, size_t idx) const
 {
       char*buf = reinterpret_cast<char*> (obj);
       assert(pid < properties_.size());
-      properties_[pid].type->get_object(buf, val);
+      properties_[pid].type->get_object(buf, val, idx);
 }
 
 void class_type::copy_property(class_type::inst_t dst, size_t pid, class_type::inst_t src) const
@@ -569,10 +585,10 @@ void compile_class_start(char*lab, char*nam, unsigned ntype)
       delete[]nam;
 }
 
-void compile_class_property(unsigned idx, char*nam, char*typ)
+void compile_class_property(unsigned idx, char*nam, char*typ, uint64_t array_size)
 {
       assert(compile_class);
-      compile_class->set_property(idx, nam, typ);
+      compile_class->set_property(idx, nam, typ, array_size);
       delete[]nam;
       delete[]typ;
 }
