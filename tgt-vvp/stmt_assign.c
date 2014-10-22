@@ -613,7 +613,8 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		  assert(!lsig);
 		  ivl_type_t sub_type = draw_lval_expr(nest);
 		  assert(ivl_type_base(sub_type) == IVL_VT_CLASS);
-		  fprintf(vvp_out, "    %%store/prop/v %u;\n", ivl_lval_property_idx(lval));
+		  fprintf(vvp_out, "    %%store/prop/v %u, %u;\n",
+			  ivl_lval_property_idx(lval), lwid);
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
 	    } else {
