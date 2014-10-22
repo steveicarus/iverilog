@@ -312,7 +312,7 @@ static void draw_binary_vec4_compare(ivl_expr_t expr, int stuff_ok_flag)
       }
 }
 
-static void draw_binary_vec4_land(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_binary_vec4_land(ivl_expr_t expr)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
@@ -503,7 +503,7 @@ static void draw_binary_vec4_le(ivl_expr_t expr, int stuff_ok_flag)
       }
 }
 
-static void draw_binary_vec4_lor(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_binary_vec4_lor(ivl_expr_t expr)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
@@ -566,7 +566,7 @@ static void draw_binary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 {
       switch (ivl_expr_opcode(expr)) {
 	  case 'a': /* Logical && */
-	    draw_binary_vec4_land(expr, stuff_ok_flag);
+	    draw_binary_vec4_land(expr);
 	    break;
 
 	  case '+':
@@ -608,7 +608,7 @@ static void draw_binary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	    break;
 
 	  case 'o': /* || (logical or) */
-	    draw_binary_vec4_lor(expr, stuff_ok_flag);
+	    draw_binary_vec4_lor(expr);
 	    break;
 
 	  default:
@@ -651,7 +651,7 @@ static void draw_number_vec4(ivl_expr_t expr)
       unsigned wid = ivl_expr_width(expr);
       const char*bits = ivl_expr_bits(expr);
 
-      int idx;
+      unsigned idx;
       int accum = 0;
       int count_pushi = 0;
 
@@ -773,7 +773,7 @@ static void draw_select_pad_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	    fprintf(vvp_out, "    %%pad/u %u;\n", wid);
 }
 
-static void draw_sfunc_vec4(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_sfunc_vec4(ivl_expr_t expr)
 {
       unsigned parm_count = ivl_expr_parms(expr);
 
@@ -812,7 +812,7 @@ static void draw_signal_vec4(ivl_expr_t expr)
       clr_word(addr_index);
 }
 
-static void draw_string_vec4(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_string_vec4(ivl_expr_t expr)
 {
       unsigned wid = ivl_expr_width(expr);
       char*fp = process_octal_codes(ivl_expr_string(expr), wid);
@@ -1077,7 +1077,7 @@ void draw_eval_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	    return;
 
 	  case IVL_EX_SFUNC:
-	    draw_sfunc_vec4(expr, stuff_ok_flag);
+	    draw_sfunc_vec4(expr);
 	    return;
 
 	  case IVL_EX_SIGNAL:
@@ -1085,7 +1085,7 @@ void draw_eval_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	    return;
 
 	  case IVL_EX_STRING:
-	    draw_string_vec4(expr, stuff_ok_flag);
+	    draw_string_vec4(expr);
 	    return;
 
 	  case IVL_EX_TERNARY:
