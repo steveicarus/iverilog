@@ -192,6 +192,9 @@ static void draw_binary_vec4_compare_class(ivl_expr_t expr)
 	    return;
       }
 
+	/* A signal/variable is compared to null. Implement this with
+	   the %test_nul statement, which peeks at the variable
+	   contents directly. */
       if (ivl_expr_type(re)==IVL_EX_NULL && ivl_expr_type(le)==IVL_EX_SIGNAL) {
 	    ivl_signal_t sig= ivl_expr_signal(le);
 
@@ -210,8 +213,33 @@ static void draw_binary_vec4_compare_class(ivl_expr_t expr)
 	    return;
       }
 
+      if (ivl_expr_type(re)==IVL_EX_NULL && ivl_expr_type(le)==IVL_EX_PROPERTY) {
+	    ivl_signal_t sig = ivl_expr_signal(le);
+	    unsigned pidx = ivl_expr_property_idx(le);
+	    ivl_expr_t idx_expr = ivl_expr_oper1(le);
+	    int idx = 0;
+
+	      /* If the property has an array index, then evaluate it
+		 into an index register. */
+	    if ( idx_expr ) {
+		  idx = allocate_word();
+		  draw_eval_expr_into_integer(idx_expr, idx);
+	    }
+
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+	    fprintf(vvp_out, "    %%test_nul/prop %u, %d;\n", pidx, idx);
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
+	    if (ivl_expr_opcode(expr) == 'n')
+		  fprintf(vvp_out, "    %%inv;\n");
+
+	    if (idx != 0) clr_word(idx);
+	    return;
+      }
+
       fprintf(stderr, "SORRY: Compare class handles not implemented\n");
-      fprintf(vvp_out, " ; XXXX compare class handles.\n");
+      fprintf(vvp_out, " ; XXXX compare class handles. re-type=%d, le-type=%d\n",
+	      ivl_expr_type(re), ivl_expr_type(le));
       vvp_errors += 1;
 }
 

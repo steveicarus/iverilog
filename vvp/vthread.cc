@@ -288,6 +288,8 @@ void vthread_s::debug_dump(ostream&fd, const char*label)
       fd << "**** vec4 stack..." << endl;
       for (size_t idx = stack_vec4_.size() ; idx > 0 ; idx -= 1)
 	    fd << "    " << (stack_vec4_.size()-idx) << ": " << stack_vec4_[idx-1] << endl;
+      fd << "**** str stack (" << stack_str_.size() << ")..." << endl;
+      fd << "**** obj stack (" << stack_obj_size_ << ")..." << endl;
       fd << "**** Done ****" << endl;
 }
 
@@ -6639,6 +6641,33 @@ bool of_TEST_NUL_OBJ(vthread_t thr, vvp_code_t)
 	    thr->flags[4] = BIT4_1;
       else
 	    thr->flags[4] = BIT4_0;
+      return true;
+}
+
+/*
+ * %test_nul/prop <pid>, <idx>
+ */
+bool of_TEST_NUL_PROP(vthread_t thr, vvp_code_t cp)
+{
+      unsigned pid = cp->number;
+      unsigned idx = cp->bit_idx[0];
+
+      if (idx != 0) {
+	    assert(idx < vthread_s::WORDS_COUNT);
+	    idx = thr->words[idx].w_uint;
+      }
+
+      vvp_object_t&obj = thr->peek_object();
+      vvp_cobject*cobj  = obj.peek<vvp_cobject>();
+
+      vvp_object_t val;
+      cobj->get_object(pid, val, idx);
+
+      if (val.test_nil())
+	    thr->flags[4] = BIT4_1;
+      else
+	    thr->flags[4] = BIT4_0;
+
       return true;
 }
 

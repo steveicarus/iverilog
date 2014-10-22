@@ -1046,7 +1046,7 @@ This opcode raises the left operand by the right operand, and pushes
 the result.
 
 * %prop/v <pid>
-* %prop/obj <pid>
+* %prop/obj <pid>, <idx>
 * %prop/r <pid>
 * %prop/str <pid>
 
@@ -1362,6 +1362,7 @@ The string value is NOT popped.
 
 * %test_nul <var-label>
 * %test_nul/obj
+* %test_nul/prop <pid>, <idx>
 
 This instruction tests the contents of the addressed variable to see
 if it is null. If it is, set flag bit 4 to 1. Otherwise, set flag bit
@@ -1369,6 +1370,10 @@ if it is null. If it is, set flag bit 4 to 1. Otherwise, set flag bit
 
 The %test_null/obj tests the object on the top of the stack, instead
 of any variable. The value in the stack is NOT popped.
+
+The %test_nul/prop instruction tests an object property for nul. The
+object with the property is peeked from the top of the object stack,
+and the <idx> is the array index if the property is an array of objects.
 
 This is intended to implement the SystemVerilog expression
 (<var>==null), where <var> is a class variable.
