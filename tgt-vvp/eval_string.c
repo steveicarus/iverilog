@@ -23,11 +23,8 @@
 
 static void fallback_eval(ivl_expr_t expr)
 {
-      struct vector_info res = draw_eval_expr(expr, 0);
-      fprintf(vvp_out, "    %%pushv/str %u, %u; Cast BOOL/LOGIC to string\n",
-	      res.base, res.wid);
-      if (res.base > 0)
-	    clr_vector(res);
+      draw_eval_vec4(expr);
+      fprintf(vvp_out, "    %%pushv/str; Cast BOOL/LOGIC to string\n");
 }
 
 static void string_ex_concat(ivl_expr_t expr)

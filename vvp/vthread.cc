@@ -5385,13 +5385,14 @@ bool of_PUSHI_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_PUSHV_STR(vthread_t thr, vvp_code_t cp)
+/*
+ * %pushv/str
+ *   Pops a vec4 value, and pushes a string.
+ */
+bool of_PUSHV_STR(vthread_t thr, vvp_code_t)
 {
-#if 0
-      unsigned src = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
+      vvp_vector4_t vec = thr->pop_vec4();
 
-      vvp_vector4_t vec = vthread_bits_to_vector(thr, src, wid);
       size_t slen = (vec.size() + 7)/8;
       vector<char>buf;
       buf.reserve(slen);
@@ -5418,9 +5419,7 @@ bool of_PUSHV_STR(vthread_t thr, vvp_code_t cp)
       }
 
       thr->push_str(val);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%push/str ...\n");
-#endif
+
       return true;
 }
 

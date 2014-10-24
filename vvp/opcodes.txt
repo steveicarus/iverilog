@@ -1091,9 +1091,11 @@ possible logic values are:
 
 This opcode is limited to 32bit numbers.
 
-* %pushv/str <src>, <wid>
+* %pushv/str
 
-Convert a vector to a string and push the string to the string stack.
+Convert a vector to a string and push the string to the string
+stack. The single argument is popped from the vec4 stack and the
+result pushed to the string stack.
 
 * %putc/str/v <functor-label>, <muxr>
 
