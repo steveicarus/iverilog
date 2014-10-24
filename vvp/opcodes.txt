@@ -1102,6 +1102,11 @@ character of the string variable at <functtor-label>. This is
 basically an implementation of <string>.putc(<muxr>, <val>) where
 <val> is the 8bit vector popped from the stack.
 
+* %qpop/b/v <functor-label>
+* %qpop/f/v <functor-label>
+
+Pop values from a dynamic queue object.
+
 * %release/net <functor-label>, <base>, <width>
 * %release/reg <functor-label>, <base>, <width>
 
@@ -1266,8 +1271,10 @@ index in the index register <index>
 * %store/dar/vec4 <var-label>
 * %store/qf/r <var-label>
 * %store/qf/str <var-label>
+* %store/qf/v <var-label>, <wid>
 * %store/qb/r <var-label>
 * %store/qb/str <var-label>
+* %store/qf/v <var-label>, <wid>
 
 The %store/str instruction pops the top of the string stack and writes
 it to the string variable.

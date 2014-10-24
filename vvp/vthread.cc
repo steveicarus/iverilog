@@ -388,6 +388,30 @@ const vvp_vector4_t& vthread_get_vec4_stack(struct vthread_s*thr, unsigned depth
       return thr->peek_vec4(depth);
 }
 
+/*
+ * This is a function to get a vvp_queue handle from the variable
+ * referenced by "net". If the queue is nil, then allocated it and
+ * assign the value to the net. Note that this function is
+ * parameterized by the queue type so that we can create the right
+ * derived type of queue object.
+ */
+template <class VVP_QUEUE> static vvp_queue*get_queue_object(vthread_t thr, vvp_net_t*net)
+{
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      if (dqueue == 0) {
+	    assert(obj->get_object().test_nil());
+	    dqueue = new VVP_QUEUE;
+	    vvp_object_t val (dqueue);
+	    vvp_net_ptr_t ptr (net, 0);
+	    vvp_send_object(ptr, val, thr->wt_context);
+      }
+
+      return dqueue;
+}
+
 template <class T> T coerce_to_width(const T&that, unsigned width)
 {
       if (that.size() == width)
@@ -5441,75 +5465,11 @@ bool of_PUTC_STR_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-/*
- * %qpop/b <var-label>, <bit>, <wid>
- */
-bool of_QPOP_B(vthread_t thr, vvp_code_t cp)
-{
-      unsigned bit = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-
-      vvp_net_t*net = cp->net;
-      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
-      assert(obj);
-
-      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
-      assert(dqueue);
-
-      size_t size = dqueue->get_size();
-      assert(size > 0);
-
-      vvp_vector4_t value;
-      dqueue->get_word(size-1, value);
-      dqueue->pop_back();
-
-      assert(value.size() == wid);
-#if 0
-      thr->bits4.set_vec(bit, value);
-#else
-      fprintf(stderr, "%%qpop/b <label>, %u, %u; NOT IMPLEMENTED\n", bit, wid);
-#endif
-      return true;
-}
-
-/*
- * %qpop/f <var-label>, <bit>, <wid>
- */
-bool of_QPOP_F(vthread_t thr, vvp_code_t cp)
-{
-      unsigned bit = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-
-      vvp_net_t*net = cp->net;
-      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
-      assert(obj);
-
-      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
-      assert(dqueue);
-
-      size_t size = dqueue->get_size();
-      assert(size > 0);
-
-      vvp_vector4_t value;
-      dqueue->get_word(0, value);
-      dqueue->pop_front();
-
-      assert(value.size() == wid);
-#if 0
-      thr->bits4.set_vec(bit, value);
-#else
-      fprintf(stderr, "%%qpop/f <label>, %u, %u; NOT IMPLEMENTED\n", bit, wid);
-#endif
-      return true;
-}
-
 bool of_QPOP_B_STR(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
-      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
-      assert(obj);
 
-      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
       assert(dqueue);
 
       size_t size = dqueue->get_size();
@@ -5520,16 +5480,35 @@ bool of_QPOP_B_STR(vthread_t thr, vvp_code_t cp)
       dqueue->pop_back();
 
       thr->push_str(value);
+      return true;
+}
+
+/*
+ * %qpop/b/v <var-label>
+ */
+bool of_QPOP_B_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
+      assert(dqueue);
+
+      size_t size = dqueue->get_size();
+      assert(size > 0);
+
+      vvp_vector4_t value;
+      dqueue->get_word(size-1, value);
+      dqueue->pop_back();
+
+      thr->push_vec4(value);
       return true;
 }
 
 bool of_QPOP_F_STR(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
-      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
-      assert(obj);
 
-      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
       assert(dqueue);
 
       string value;
@@ -5537,6 +5516,27 @@ bool of_QPOP_F_STR(vthread_t thr, vvp_code_t cp)
       dqueue->pop_front();
 
       thr->push_str(value);
+      return true;
+}
+
+/*
+ * %qpop/f/v <var-label>
+ */
+bool of_QPOP_F_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
+      assert(dqueue);
+
+      size_t size = dqueue->get_size();
+      assert(size > 0);
+
+      vvp_vector4_t value;
+      dqueue->get_word(0, value);
+      dqueue->pop_front();
+
+      thr->push_vec4(value);
       return true;
 }
 
@@ -5739,11 +5739,11 @@ bool of_SET_DAR_OBJ_VEC4(vthread_t thr, vvp_code_t cp)
 /*
  * %set/qb <var-label> <bit>, <wid>
  */
-bool of_SET_QB(vthread_t thr, vvp_code_t cp)
+bool of_SET_QB(vthread_t /*thr*/, vvp_code_t /*cp*/)
 {
+#if 0
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
-#if 0
 	/* Make a vector of the desired width. */
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
@@ -5771,11 +5771,11 @@ bool of_SET_QB(vthread_t thr, vvp_code_t cp)
 /*
  * %set/qf <var-label> <bit>, <wid>
  */
-bool of_SET_QF(vthread_t thr, vvp_code_t cp)
+bool of_SET_QF(vthread_t /*thr*/, vvp_code_t /*cp*/)
 {
+#if 0
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
-#if 0
 	/* Make a vector of the desired width. */
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
@@ -6228,23 +6228,33 @@ bool of_STORE_QB_STR(vthread_t thr, vvp_code_t cp)
       string value = thr->pop_str();
 
       vvp_net_t*net = cp->net;
-      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
-      assert(obj);
-
-      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
-      if (dqueue == 0) {
-	    assert(obj->get_object().test_nil());
-	    dqueue = new vvp_queue_string;
-	    vvp_object_t val (dqueue);
-	    vvp_net_ptr_t ptr (cp->net, 0);
-	    vvp_send_object(ptr, val, thr->wt_context);
-
-      }
+      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
 
       assert(dqueue);
       dqueue->push_back(value);
       return true;
 }
+
+/*
+ * %store/qb/v <var-label>, <wid>
+ */
+bool of_STORE_QB_V(vthread_t thr, vvp_code_t cp)
+{
+	// Pop the vec4 value to be stored...
+      vvp_vector4_t value = thr->pop_vec4();
+
+      vvp_net_t*net = cp->net;
+      unsigned wid = cp->bit_idx[0];
+
+      assert(value.size() == wid);
+
+      vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
+
+      assert(dqueue);
+      dqueue->push_back(value);
+      return true;
+}
+
 
 /*
  * %store/qf/r <var-label>
@@ -6261,6 +6271,25 @@ bool of_STORE_QF_R(vthread_t, vvp_code_t)
 bool of_STORE_QF_STR(vthread_t, vvp_code_t)
 {
       fprintf(stderr, "XXXX %%store/qf/str NOT IMPLEMENTED\n");
+      return true;
+}
+
+/*
+ * %store/qb/v <var-label>, <wid>
+ */
+bool of_STORE_QF_V(vthread_t thr, vvp_code_t cp)
+{
+	// Pop the vec4 value to be stored...
+      vvp_vector4_t value = thr->pop_vec4();
+
+      vvp_net_t*net = cp->net;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
+
+      assert(value.size() == wid);
+      assert(dqueue);
+      dqueue->push_front(value);
       return true;
 }
 

@@ -1823,7 +1823,6 @@ static int show_push_frontback_method(ivl_statement_t net)
       ivl_type_t element_type = ivl_type_element(var_type);
 
       ivl_expr_t parm1 = ivl_stmt_parm(net,1);
-      struct vector_info vec;
       switch (ivl_type_base(element_type)) {
 	  case IVL_VT_REAL:
 	    draw_eval_real(parm1);
@@ -1834,10 +1833,9 @@ static int show_push_frontback_method(ivl_statement_t net)
 	    fprintf(vvp_out, "    %%store/%s/str v%p_0;\n", type_code, var);
 	    break;
 	  default:
-	    vec = draw_eval_expr_wid(parm1, width_of_packed_type(element_type), STUFF_OK_RO);
-	    fprintf(vvp_out, "    %%set/%s v%p_0, %u, %u;\n",
-		    type_code, var, vec.base, vec.wid);
-	    if (vec.base >= 4) clr_vector(vec);
+	    draw_eval_vec4(parm1, STUFF_OK_XZ);
+	    fprintf(vvp_out, "    %%store/%s/v v%p_0, %u;\n",
+		    type_code, var, width_of_packed_type(element_type));
 	    break;
       }
 

@@ -738,7 +738,8 @@ static void draw_select_vec4(ivl_expr_t expr)
       if (ivl_expr_value(subexpr)==IVL_VT_DARRAY) {
 	    ivl_signal_t sig = ivl_expr_signal(subexpr);
 	    assert(sig);
-	    assert(ivl_signal_data_type(sig)==IVL_VT_DARRAY);
+	    assert( (ivl_signal_data_type(sig)==IVL_VT_DARRAY)
+		    || (ivl_signal_data_type(sig)==IVL_VT_QUEUE) );
 
 	    assert(base);
 	    draw_eval_expr_into_integer(base, 3);
@@ -773,6 +774,27 @@ static void draw_select_pad_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	    fprintf(vvp_out, "    %%pad/u %u;\n", wid);
 }
 
+/*
+ * This function handles the speical case of a call to the internal
+ * functions $ivl_darray_method$pop_back et al. The first (and only)
+ * argument is the signal that represents a dynamic queue. Generate a
+ * %qpop instruction to pop a value and push it to the vec4 stack.
+ */
+static void draw_darray_pop(ivl_expr_t expr)
+{
+      const char*fb;
+
+      if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_back")==0)
+	    fb = "b";
+      else
+	    fb = "f";
+
+      ivl_expr_t arg = ivl_expr_parm(expr, 0);
+      assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
+
+      fprintf(vvp_out, "    %%qpop/%s/v v%p_0;\n", fb, ivl_expr_signal(arg));
+}
+
 static void draw_sfunc_vec4(ivl_expr_t expr)
 {
       unsigned parm_count = ivl_expr_parms(expr);
@@ -787,6 +809,15 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 		    ivl_file_table_index(ivl_expr_file(expr)),
 		    ivl_expr_lineno(expr), ivl_expr_name(expr),
 		    ivl_expr_width(expr));
+	    return;
+      }
+
+      if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_back")==0) {
+	    draw_darray_pop(expr);
+	    return;
+      }
+      if (strcmp(ivl_expr_name(expr),"$ivl_darray_method$pop_front")==0) {
+	    draw_darray_pop(expr);
 	    return;
       }
 
