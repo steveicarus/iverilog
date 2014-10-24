@@ -48,7 +48,7 @@ static int eval_bool64_logic(ivl_expr_t expr)
       int res;
       const char*s_flag = "";
 
-      draw_eval_vec4(expr, STUFF_OK_XZ);
+      draw_eval_vec4(expr);
       res = allocate_word();
       if (ivl_expr_signed(expr))
 	    s_flag = "/s";

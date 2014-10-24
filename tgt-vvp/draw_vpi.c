@@ -387,7 +387,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 	    switch (ivl_expr_value(expr)) {
 		case IVL_VT_LOGIC:
 		case IVL_VT_BOOL:
-		  draw_eval_vec4(expr, 0);
+		  draw_eval_vec4(expr);
 		  args[idx].vec_flag = ivl_expr_signed(expr)? 's' : 'u';
 		  args[idx].str_flag = 0;
 		  args[idx].real_flag = 0;

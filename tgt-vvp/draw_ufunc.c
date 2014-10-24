@@ -32,7 +32,7 @@ static void function_argument_logic(ivl_signal_t port, ivl_expr_t expr)
       ewidth = ivl_expr_width(expr);
       pwidth = ivl_signal_width(port);
 
-      draw_eval_vec4(expr, 0);
+      draw_eval_vec4(expr);
       if (ewidth < pwidth)
 	    fprintf(vvp_out, "    %%pad/u %u;\n", pwidth);
 

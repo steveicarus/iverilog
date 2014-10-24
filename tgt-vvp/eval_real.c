@@ -243,9 +243,9 @@ static void draw_realnum_real(ivl_expr_t expr)
  * The real value of a logic expression is the integer value of the
  * expression converted to real.
  */
-static void draw_real_logic_expr(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_real_logic_expr(ivl_expr_t expr)
 {
-      draw_eval_vec4(expr, stuff_ok_flag);
+      draw_eval_vec4(expr);
       const char*sign_flag = ivl_expr_signed(expr)? "/s" : "";
 
       if (ivl_expr_width(expr) > 64) {
@@ -296,7 +296,7 @@ static void draw_sfunc_real(ivl_expr_t expr)
 	      /* If the value of the sfunc is a vector, then evaluate
 		 it as a vector, then convert the result to a real
 		 (via an index register) for the result. */
-	    draw_real_logic_expr(expr, 0);
+	    draw_real_logic_expr(expr);
 	    break;
 
 	  default:
@@ -326,7 +326,7 @@ static void draw_signal_real(ivl_expr_t expr)
       ivl_signal_t sig = ivl_expr_signal(expr);
       switch (ivl_signal_data_type(sig)) {
 	  case IVL_VT_LOGIC:
-	    draw_real_logic_expr(expr, 0);
+	    draw_real_logic_expr(expr);
 	    return;
 	  case IVL_VT_REAL:
 	    draw_signal_real_real(expr);
@@ -354,7 +354,7 @@ static void draw_ternary_real(ivl_expr_t expr)
       int cond_flag = allocate_flag();
 
 	/* Evaluate the ternary condition. */
-      draw_eval_vec4(cond, STUFF_OK_XZ|STUFF_OK_RO);
+      draw_eval_vec4(cond);
       if (ivl_expr_width(cond) > 1)
 	    fprintf(vvp_out, "    %%or/r;\n");
 
@@ -416,7 +416,7 @@ static void draw_unary_real(ivl_expr_t expr)
 	 * a real expression, so use vector evaluation and then convert
 	 * that result to a real value. */
       if ((ivl_expr_opcode(expr) == '~') || (ivl_expr_opcode(expr) == '!')) {
-	    draw_real_logic_expr(expr, STUFF_OK_XZ);
+	    draw_real_logic_expr(expr);
 	    return;
       }
 
@@ -425,7 +425,7 @@ static void draw_unary_real(ivl_expr_t expr)
       if (ivl_expr_opcode(expr) == 'r') { /* Cast an integer value to a real. */
 	    const char *suffix = "";
 	    assert(ivl_expr_value(sube) != IVL_VT_REAL);
-	    draw_eval_vec4(sube, STUFF_OK_XZ);
+	    draw_eval_vec4(sube);
 	    if (ivl_expr_signed(sube)) suffix = "/s";
 	    fprintf(vvp_out, "    %%cvt/rv%s;\n", suffix);
 	    return;
@@ -485,7 +485,7 @@ void draw_eval_real(ivl_expr_t expr)
 	 * result to a real value. This is required to get integer
 	 * division to work correctly. */
       if (ivl_expr_value(expr) != IVL_VT_REAL) {
-	    draw_real_logic_expr(expr, STUFF_OK_XZ);
+	    draw_real_logic_expr(expr);
 	    return;
       }
 
@@ -533,7 +533,7 @@ void draw_eval_real(ivl_expr_t expr)
 
 	  default:
 	    if (ivl_expr_value(expr) == IVL_VT_VECTOR) {
-		  draw_eval_vec4(expr, 0);
+		  draw_eval_vec4(expr);
 		  const char*sign_flag = ivl_expr_signed(expr)? "/s" : "";
 
 		  int res = allocate_word();

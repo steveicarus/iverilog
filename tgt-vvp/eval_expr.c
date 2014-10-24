@@ -230,7 +230,7 @@ void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 			   variable array. In this case, the ix/getv
 			   will not work, so do it the hard way. */
 		      if (ivl_signal_type(sig) == IVL_SIT_REG) {
-			    draw_eval_vec4(expr, 0);
+			    draw_eval_vec4(expr);
 			    fprintf(vvp_out, "    %%ix/vec4%s %u;\n", type, ix);
 			    break;
 		      }
@@ -240,7 +240,7 @@ void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		            assert(! number_is_unknown(ixe));
 		            word = get_number_immediate(ixe);
 		      } else {
-		            draw_eval_vec4(expr, 0);
+		            draw_eval_vec4(expr);
 		            fprintf(vvp_out, "    %%ix/vec4%s %u;\n", type, ix);
 		            break;
 		      }
@@ -252,7 +252,7 @@ void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 	  }
 
 	  default:
-	    draw_eval_vec4(expr, 0);
+	    draw_eval_vec4(expr);
 	      /* Is this a signed expression? */
 	    if (ivl_expr_signed(expr)) {
 		  fprintf(vvp_out, "    %%ix/vec4/s %u;\n", ix);
@@ -2456,29 +2456,6 @@ static struct vector_info draw_ternary_expr(ivl_expr_t expr, unsigned wid)
       return res;
 }
 
-static struct vector_info draw_darray_pop(ivl_expr_t expr, unsigned wid)
-{
-      struct vector_info res;
-      ivl_expr_t arg;
-      const char*fb;
-
-      if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_back")==0)
-	    fb = "b";
-      else
-	    fb = "f";
-
-      res.base = allocate_vector(wid);
-      res.wid = wid;
-
-      arg = ivl_expr_parm(expr, 0);
-      assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
-
-      fprintf(vvp_out, "    %%qpop/%s v%p_0, %u, %u;\n", fb,
-	      ivl_expr_signal(arg), res.base, res.wid);
-
-      return res;
-}
-
 static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
 {
 #if 0
@@ -2517,6 +2494,7 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
       struct vector_info res;
       res.base = 0;
       res.wid = 0;
+      vvp_errors += 1;
       return res;
 #endif
 }

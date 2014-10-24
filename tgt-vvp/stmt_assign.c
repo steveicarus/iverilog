@@ -140,7 +140,7 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    slice->u_.part_select_dynamic.x_flag = allocate_flag();
 
 	    fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
-	    draw_eval_vec4(part_off_ex, STUFF_OK_XZ);
+	    draw_eval_vec4(part_off_ex);
 	    fprintf(vvp_out, "    %%flag_mov %u, 4;\n", slice->u_.part_select_dynamic.x_flag);
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
 	    fprintf(vvp_out, "    %%ix/vec4 %u;\n", slice->u_.part_select_dynamic.word_idx_reg);
@@ -661,7 +661,7 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 
       } else {
 	    unsigned wid = ivl_stmt_lwidth(net);
-	    draw_eval_vec4(rval, 0);
+	    draw_eval_vec4(rval);
 	    resize_vec4_wid(rval, wid);
       }
 
@@ -840,7 +840,7 @@ static int show_stmt_assign_sig_string(ivl_statement_t net)
       }
 
       assert(ivl_expr_width(rval)==8);
-      draw_eval_vec4(rval, STUFF_OK_XZ);
+      draw_eval_vec4(rval);
 
 	/* Calculate the character select for the word. */
       int mux_word = allocate_word();
@@ -896,7 +896,7 @@ static int show_stmt_assign_darray_pattern(ivl_statement_t net)
 	    switch (ivl_type_base(element_type)) {
 		case IVL_VT_BOOL:
 		case IVL_VT_LOGIC:
-		  draw_eval_vec4(ivl_expr_parm(rval,idx), STUFF_OK_XZ);
+		  draw_eval_vec4(ivl_expr_parm(rval,idx));
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
 		  fprintf(vvp_out, "    %%store/dar/vec4 v%p_0;\n", var);
 		  break;
@@ -961,7 +961,7 @@ static int show_stmt_assign_sig_darray(ivl_statement_t net)
 	    fprintf(vvp_out, "    %%store/dar/str v%p_0;\n", var);
 
       } else if (mux) {
-	    draw_eval_vec4(rval, STUFF_OK_XZ);
+	    draw_eval_vec4(rval);
 
 	      /* The %store/dar/vec4 expects the array index to be in index
 		 register 3. Calculate the index in place. */
@@ -1028,7 +1028,7 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  assert(ivl_type_packed_dimensions(prop_type) == 1);
 		  assert(ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0));
 
-		  draw_eval_vec4(rval, STUFF_OK_XZ);
+		  draw_eval_vec4(rval);
 		  if (ivl_expr_value(rval)!=IVL_VT_BOOL)
 			fprintf(vvp_out, "    %%cast2;\n");
 
@@ -1041,7 +1041,7 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  assert(ivl_type_packed_dimensions(prop_type) == 1);
 		  assert(ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0));
 
-		  draw_eval_vec4(rval, STUFF_OK_XZ);
+		  draw_eval_vec4(rval);
 
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 		  fprintf(vvp_out, "    %%store/prop/v %d, %u; Store in logic property %s\n",

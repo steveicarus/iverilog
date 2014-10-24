@@ -38,7 +38,7 @@ void resize_vec4_wid(ivl_expr_t expr, unsigned wid)
 	    fprintf(vvp_out, "    %%pad/u %u;\n", wid);
 }
 
-static void draw_binary_vec4_arith(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_binary_vec4_arith(ivl_expr_t expr)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
@@ -54,11 +54,11 @@ static void draw_binary_vec4_arith(ivl_expr_t expr, int stuff_ok_flag)
 	   operands (and the result) be the same width. We further
 	   assume that the core has not given us an operand wider then
 	   the expression width. So padd operands as needed. */
-      draw_eval_vec4(le, stuff_ok_flag);
+      draw_eval_vec4(le);
       if (lwid != ewid) {
 	    fprintf(vvp_out, "    %%pad/%c %u;\n", ivl_expr_signed(le)? 's' : 'u', ewid);
       }
-      draw_eval_vec4(re, stuff_ok_flag);
+      draw_eval_vec4(re);
       if (rwid != ewid) {
 	    fprintf(vvp_out, "    %%pad/%c %u;\n", ivl_expr_signed(re)? 's' : 'u', ewid);
       }
@@ -94,10 +94,10 @@ static void draw_binary_vec4_arith(ivl_expr_t expr, int stuff_ok_flag)
       }
 }
 
-static void draw_binary_vec4_bitwise(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_binary_vec4_bitwise(ivl_expr_t expr)
 {
-      draw_eval_vec4(ivl_expr_oper1(expr), stuff_ok_flag);
-      draw_eval_vec4(ivl_expr_oper2(expr), stuff_ok_flag);
+      draw_eval_vec4(ivl_expr_oper1(expr));
+      draw_eval_vec4(ivl_expr_oper2(expr));
 
       switch (ivl_expr_opcode(expr)) {
 	  case '&':
@@ -243,7 +243,7 @@ static void draw_binary_vec4_compare_class(ivl_expr_t expr)
       vvp_errors += 1;
 }
 
-static void draw_binary_vec4_compare(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_binary_vec4_compare(ivl_expr_t expr)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
@@ -282,10 +282,10 @@ static void draw_binary_vec4_compare(ivl_expr_t expr, int stuff_ok_flag)
       if (ivl_expr_width(re) > use_wid)
 	    use_wid = ivl_expr_width(re);
 
-      draw_eval_vec4(le, stuff_ok_flag);
+      draw_eval_vec4(le);
       resize_vec4_wid(le, use_wid);
 
-      draw_eval_vec4(re, stuff_ok_flag);
+      draw_eval_vec4(re);
       resize_vec4_wid(re, use_wid);
 
       switch (ivl_expr_opcode(expr)) {
@@ -319,13 +319,13 @@ static void draw_binary_vec4_land(ivl_expr_t expr)
 
 	/* Push the left expression. Reduce it to a single bit if
 	   necessary. */
-      draw_eval_vec4(le, STUFF_OK_XZ);
+      draw_eval_vec4(le);
       if (ivl_expr_width(le) > 1)
 	    fprintf(vvp_out, "    %%or/r;\n");
 
 	/* Now push the right expression. Again, reduce to a single
 	   bit if necessasry. */
-      draw_eval_vec4(re, STUFF_OK_XZ);
+      draw_eval_vec4(re);
       if (ivl_expr_width(re) > 1)
 	    fprintf(vvp_out, "    %%or/r;\n");
 
@@ -423,7 +423,7 @@ static void draw_binary_vec4_le_string(ivl_expr_t expr)
       }
 }
 
-static void draw_binary_vec4_le(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_binary_vec4_le(ivl_expr_t expr)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
@@ -480,10 +480,10 @@ static void draw_binary_vec4_le(ivl_expr_t expr, int stuff_ok_flag)
       if (ivl_expr_width(re) > use_wid)
 	    use_wid = ivl_expr_width(re);
 
-      draw_eval_vec4(le, stuff_ok_flag);
+      draw_eval_vec4(le);
       resize_vec4_wid(le, use_wid);
 
-      draw_eval_vec4(re, stuff_ok_flag);
+      draw_eval_vec4(re);
       resize_vec4_wid(re, use_wid);
 
       switch (use_opcode) {
@@ -510,13 +510,13 @@ static void draw_binary_vec4_lor(ivl_expr_t expr)
 
 	/* Push the left expression. Reduce it to a single bit if
 	   necessary. */
-      draw_eval_vec4(le, STUFF_OK_XZ);
+      draw_eval_vec4(le);
       if (ivl_expr_width(le) > 1)
 	    fprintf(vvp_out, "    %%or/r;\n");
 
 	/* Now push the right expression. Again, reduce to a single
 	   bit if necessasry. */
-      draw_eval_vec4(re, STUFF_OK_XZ);
+      draw_eval_vec4(re);
       if (ivl_expr_width(re) > 1)
 	    fprintf(vvp_out, "    %%or/r;\n");
 
@@ -526,13 +526,13 @@ static void draw_binary_vec4_lor(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%pad/u %u;\n", ivl_expr_width(expr));
 }
 
-static void draw_binary_vec4_lrs(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_binary_vec4_lrs(ivl_expr_t expr)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
 
 	// Push the left expression onto the stack.
-      draw_eval_vec4(le, stuff_ok_flag);
+      draw_eval_vec4(le);
 
 	// Calculate the shift amount into an index register.
       int use_index_reg = allocate_word();
@@ -562,7 +562,7 @@ static void draw_binary_vec4_lrs(ivl_expr_t expr, int stuff_ok_flag)
       clr_word(use_index_reg);
 }
 
-static void draw_binary_vec4(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_binary_vec4(ivl_expr_t expr)
 {
       switch (ivl_expr_opcode(expr)) {
 	  case 'a': /* Logical && */
@@ -575,7 +575,7 @@ static void draw_binary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	  case '/':
 	  case '%':
 	  case 'p': /* ** (power) */
-	    draw_binary_vec4_arith(expr, stuff_ok_flag);
+	    draw_binary_vec4_arith(expr);
 	    break;
 
 	  case '&':
@@ -584,27 +584,27 @@ static void draw_binary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	  case 'A': /* NAND (~&) */
 	  case 'O': /* NOR  (~|) */
 	  case 'X': /* exclusive nor (~^) */
-	    draw_binary_vec4_bitwise(expr, stuff_ok_flag);
+	    draw_binary_vec4_bitwise(expr);
 	    break;
 
 	  case 'e': /* == */
 	  case 'E': /* === */
 	  case 'n': /* !== */
 	  case 'N': /* !== */
-	    draw_binary_vec4_compare(expr, stuff_ok_flag);
+	    draw_binary_vec4_compare(expr);
 	    break;
 
 	  case 'G': /* >= */
 	  case 'L': /* <= */
 	  case '>':
 	  case '<':
-	    draw_binary_vec4_le(expr, stuff_ok_flag);
+	    draw_binary_vec4_le(expr);
 	    break;
 
 	  case 'l': /* << */
 	  case 'r': /* >> */
 	  case 'R': /* >>> */
-	    draw_binary_vec4_lrs(expr, stuff_ok_flag);
+	    draw_binary_vec4_lrs(expr);
 	    break;
 
 	  case 'o': /* || (logical or) */
@@ -618,7 +618,7 @@ static void draw_binary_vec4(ivl_expr_t expr, int stuff_ok_flag)
       }
 }
 
-static void draw_concat_vec4(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_concat_vec4(ivl_expr_t expr)
 {
 	/* Repeat the concatenation this many times to make a
 	   super-concatenation. */
@@ -631,11 +631,11 @@ static void draw_concat_vec4(ivl_expr_t expr, int stuff_ok_flag)
       assert(num_sube > 0);
 
 	/* Start with the least-significant bits. */
-      draw_eval_vec4(ivl_expr_parm(expr, 0), stuff_ok_flag);
+      draw_eval_vec4(ivl_expr_parm(expr, 0));
 
       for (sub_idx = 1 ; sub_idx < num_sube ; sub_idx += 1) {
 	      /* Concatenate progressively higher parts. */
-	    draw_eval_vec4(ivl_expr_parm(expr, sub_idx), stuff_ok_flag);
+	    draw_eval_vec4(ivl_expr_parm(expr, sub_idx));
 	    fprintf(vvp_out, "    %%concat/vec4;\n");
       }
 
@@ -748,12 +748,12 @@ static void draw_select_vec4(ivl_expr_t expr)
 	    return;
       }
 
-      draw_eval_vec4(subexpr, 0);
-      draw_eval_vec4(base, 0);
+      draw_eval_vec4(subexpr);
+      draw_eval_vec4(base);
       fprintf(vvp_out, "    %%part/%c %u;\n", sign_suff, wid);
 }
 
-static void draw_select_pad_vec4(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_select_pad_vec4(ivl_expr_t expr)
 {
 	// This is the sub-expression to pad/truncate
       ivl_expr_t subexpr = ivl_expr_oper1(expr);
@@ -761,7 +761,7 @@ static void draw_select_pad_vec4(ivl_expr_t expr, int stuff_ok_flag)
       unsigned wid = ivl_expr_width(expr);
 
 	// Push the sub-expression onto the stack.
-      draw_eval_vec4(subexpr, stuff_ok_flag);
+      draw_eval_vec4(subexpr);
 
 	// Special case: The expression is already the correct width,
 	// so there is nothing to be done.
@@ -878,7 +878,7 @@ static void draw_string_vec4(ivl_expr_t expr)
       free(fp);
 }
 
-static void draw_ternary_vec4(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_ternary_vec4(ivl_expr_t expr)
 {
       ivl_expr_t cond = ivl_expr_oper1(expr);
       ivl_expr_t true_ex = ivl_expr_oper2(expr);
@@ -892,7 +892,7 @@ static void draw_ternary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	/* Evaluate the condition expression, including optionally
 	   reducing it to a single bit. Put the result into a flag bit
 	   for use by all the tests. */
-      draw_eval_vec4(cond, STUFF_OK_XZ);
+      draw_eval_vec4(cond);
       if (ivl_expr_width(cond) > 1)
 	    fprintf(vvp_out, "    %%or/r;\n");
       fprintf(vvp_out, "    %%flag_set/vec4 %d;\n", use_flag);
@@ -902,14 +902,14 @@ static void draw_ternary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	/* If the condition is true or xz (not false), we need the true
 	   expression. If the condition is true, then we ONLY need the
 	   true expression. */
-      draw_eval_vec4(true_ex, stuff_ok_flag);
+      draw_eval_vec4(true_ex);
       fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
       fprintf(vvp_out, "T_%u.%u ; End of true expr.\n", thread_count, lab_true);
 
 	/* If the condition is false or xz (not true), we need the false
 	   expression. If the condition is false, then we ONLY need
 	   the false expression. */
-      draw_eval_vec4(false_ex, stuff_ok_flag);
+      draw_eval_vec4(false_ex);
       fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
       fprintf(vvp_out, " ; End of false expr.\n");
 
@@ -945,7 +945,7 @@ static void draw_unary_inc_dec(ivl_expr_t sub, bool incr, bool pre)
 	    break;
       }
 
-      draw_eval_vec4(sub, STUFF_OK_XZ);
+      draw_eval_vec4(sub);
 
       const char*cmd = incr? "%add" : "%sub";
 
@@ -967,45 +967,45 @@ static void draw_unary_inc_dec(ivl_expr_t sub, bool incr, bool pre)
       }
 }
 
-static void draw_unary_vec4(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_unary_vec4(ivl_expr_t expr)
 {
       ivl_expr_t sub = ivl_expr_oper1(expr);
 
       switch (ivl_expr_opcode(expr)) {
 	  case '&':
-	    draw_eval_vec4(sub, stuff_ok_flag);
+	    draw_eval_vec4(sub);
 	    fprintf(vvp_out, "    %%and/r;\n");
 	    break;
 
 	  case '|':
-	    draw_eval_vec4(sub, stuff_ok_flag);
+	    draw_eval_vec4(sub);
 	    fprintf(vvp_out, "    %%or/r;\n");
 	    break;
 
 	  case '^':
-	    draw_eval_vec4(sub, stuff_ok_flag);
+	    draw_eval_vec4(sub);
 	    fprintf(vvp_out, "    %%xor/r;\n");
 	    break;
 
 	  case '~':
-	    draw_eval_vec4(sub, stuff_ok_flag);
+	    draw_eval_vec4(sub);
 	    fprintf(vvp_out, "    %%inv;\n");
 	    break;
 
 	  case '!':
-	    draw_eval_vec4(sub, STUFF_OK_XZ);
+	    draw_eval_vec4(sub);
 	    fprintf(vvp_out, "    %%nor/r;\n");
 	    break;
 
 	  case '-':
-	    draw_eval_vec4(sub, stuff_ok_flag);
+	    draw_eval_vec4(sub);
 	    fprintf(vvp_out, "    %%inv;\n");
 	    fprintf(vvp_out, "    %%pushi/vec4 1, 0, %u;\n", ivl_expr_width(sub));
 	    fprintf(vvp_out, "    %%add;\n");
 	    break;
 
 	  case 'A': /* nand (~&) */
-	    draw_eval_vec4(sub, stuff_ok_flag);
+	    draw_eval_vec4(sub);
 	    fprintf(vvp_out, "    %%nand/r;\n");
 	    break;
 
@@ -1026,17 +1026,17 @@ static void draw_unary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	    break;
 
 	  case 'N': /* nor (~|) */
-	    draw_eval_vec4(sub, stuff_ok_flag);
+	    draw_eval_vec4(sub);
 	    fprintf(vvp_out, "    %%nor/r;\n");
 	    break;
 
 	  case 'X': /* xnor (~^) */
-	    draw_eval_vec4(sub, stuff_ok_flag);
+	    draw_eval_vec4(sub);
 	    fprintf(vvp_out, "    %%xnor/r;\n");
 	    break;
 
 	  case 'm': /* abs(m) */
-	    draw_eval_vec4(sub, stuff_ok_flag);
+	    draw_eval_vec4(sub);
 	    if (! ivl_expr_signed(sub))
 		  break;
 
@@ -1062,12 +1062,12 @@ static void draw_unary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	  case '2': /* Cast expression to bool */
 	    switch (ivl_expr_value(sub)) {
 		case IVL_VT_LOGIC:
-		  draw_eval_vec4(sub, STUFF_OK_XZ);
+		  draw_eval_vec4(sub);
 		  fprintf(vvp_out, "    %%cast2;\n");
 		  resize_vec4_wid(sub, ivl_expr_width(expr));
 		  break;
 		case IVL_VT_BOOL:
-		  draw_eval_vec4(sub, 0);
+		  draw_eval_vec4(sub);
 		  break;
 		case IVL_VT_REAL:
 		  draw_eval_real(sub);
@@ -1085,15 +1085,15 @@ static void draw_unary_vec4(ivl_expr_t expr, int stuff_ok_flag)
       }
 }
 
-void draw_eval_vec4(ivl_expr_t expr, int stuff_ok_flag)
+void draw_eval_vec4(ivl_expr_t expr)
 {
       switch (ivl_expr_type(expr)) {
 	  case IVL_EX_BINARY:
-	    draw_binary_vec4(expr, stuff_ok_flag);
+	    draw_binary_vec4(expr);
 	    return;
 
 	  case IVL_EX_CONCAT:
-	    draw_concat_vec4(expr, stuff_ok_flag);
+	    draw_concat_vec4(expr);
 	    return;
 
 	  case IVL_EX_NUMBER:
@@ -1102,7 +1102,7 @@ void draw_eval_vec4(ivl_expr_t expr, int stuff_ok_flag)
 
 	  case IVL_EX_SELECT:
 	    if (ivl_expr_oper2(expr)==0)
-		  draw_select_pad_vec4(expr, stuff_ok_flag);
+		  draw_select_pad_vec4(expr);
 	    else
 		  draw_select_vec4(expr);
 	    return;
@@ -1120,7 +1120,7 @@ void draw_eval_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	    return;
 
 	  case IVL_EX_TERNARY:
-	    draw_ternary_vec4(expr, stuff_ok_flag);
+	    draw_ternary_vec4(expr);
 	    return;
 
 	  case IVL_EX_UFUNC:
@@ -1128,7 +1128,7 @@ void draw_eval_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	    return;
 
 	  case IVL_EX_UNARY:
-	    draw_unary_vec4(expr, stuff_ok_flag);
+	    draw_unary_vec4(expr);
 	    return;
 
 	  case IVL_EX_PROPERTY:

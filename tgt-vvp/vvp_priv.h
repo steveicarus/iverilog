@@ -312,7 +312,7 @@ extern uint64_t get_number_immediate64(ivl_expr_t ex);
  * draw_eval_vec4 evaluates vec4 expressions. The result of the
  * evaluation is the vec4 result in the top of the vec4 expression stack.
  */
-extern void draw_eval_vec4(ivl_expr_t ex, int stuff_ok_flag);
+extern void draw_eval_vec4(ivl_expr_t ex);
 extern void resize_vec4_wid(ivl_expr_t expr, unsigned wid);
 
 /*

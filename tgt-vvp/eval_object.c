@@ -71,7 +71,7 @@ static int eval_darray_new(ivl_expr_t ex)
 	    switch (ivl_type_base(element_type)) {
 		case IVL_VT_BOOL:
 		  for (idx = 0 ; idx < ivl_expr_parms(init_expr) ; idx += 1) {
-			draw_eval_vec4(ivl_expr_parm(init_expr,idx), STUFF_OK_XZ);
+			draw_eval_vec4(ivl_expr_parm(init_expr,idx));
 			fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
 			fprintf(vvp_out, "    %%set/dar/obj/vec4 3;\n");
 			fprintf(vvp_out, "    %%pop/vec4 1;\n");

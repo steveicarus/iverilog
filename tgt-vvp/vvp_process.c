@@ -609,7 +609,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 
 	} else {
 	      wid = ivl_stmt_lwidth(net);
-	      draw_eval_vec4(rval, 0);
+	      draw_eval_vec4(rval);
 	      if (ivl_expr_width(rval) != wid) {
 		    if (ivl_expr_signed(rval))
 			  fprintf(vvp_out, "    %%pad/s %u;\n", wid);
@@ -712,7 +712,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 	/* Evaluate the case condition to the top of the vec4
 	   stack. This expression will be compared multiple times to
 	   each case guard. */
-      draw_eval_vec4(expr,0);
+      draw_eval_vec4(expr);
 
 	/* First draw the branch table.  All the non-default cases
 	   generate a branch out of here, to the code that implements
@@ -731,7 +731,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 		 instructions below do not completely erase the
 		 value. Do this in fromt of each compare. */
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
-	    draw_eval_vec4(cex, STUFF_OK_RO);
+	    draw_eval_vec4(cex);
 
 	    switch (ivl_statement_type(net)) {
 
@@ -1161,7 +1161,7 @@ static int show_stmt_cassign(ivl_statement_t net)
 
       } else {
 
-	    draw_eval_vec4(rval, STUFF_OK_47);
+	    draw_eval_vec4(rval);
 	    resize_vec4_wid(rval, ivl_stmt_lwidth(net));
 
 	      /* Write out initial continuous assign instructions to assign
@@ -1258,7 +1258,7 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
 
       show_stmt_file_line(net, "If statement.");
 
-      draw_eval_vec4(expr, STUFF_OK_XZ|STUFF_OK_47|STUFF_OK_RO);
+      draw_eval_vec4(expr);
 
       lab_false = local_count++;
       lab_out = local_count++;
@@ -1339,7 +1339,7 @@ static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
 
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC: {
-		draw_eval_vec4(expr, 0);
+		draw_eval_vec4(expr);
 		fprintf(vvp_out, "    %%ix/vec4 %d;\n", use_idx);
 		break;
 	  }
@@ -1404,7 +1404,7 @@ static int show_stmt_do_while(ivl_statement_t net, ivl_scope_t sscope)
 	/* Draw the evaluation of the condition expression, and test
 	   the result. If the expression evaluates to true, then
 	   branch to the top label. */
-      draw_eval_vec4(ivl_stmt_cond_expr(net), STUFF_OK_XZ|STUFF_OK_47);
+      draw_eval_vec4(ivl_stmt_cond_expr(net));
       if (ivl_expr_width(ivl_stmt_cond_expr(net)) > 1)
 	    fprintf(vvp_out, "    %%or/r;\n");
 
@@ -1435,7 +1435,7 @@ static int show_stmt_force(ivl_statement_t net)
 
       } else {
 
-            draw_eval_vec4(rval, STUFF_OK_47);
+            draw_eval_vec4(rval);
 
               /* Write out initial continuous assign instructions to assign
                  the expression value to the l-value. */
@@ -1651,7 +1651,7 @@ static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
       show_stmt_file_line(net, "Repeat statement.");
 
 	/* Calculate the repeat count onto the top of the vec4 stack. */
-      draw_eval_vec4(expr, STUFF_OK_XZ);
+      draw_eval_vec4(expr);
 
 	/* Test that 0 < expr, escape if expr <= 0. If the expr is
 	   unsigned, then we only need to try to escape if expr==0 as
@@ -1758,7 +1758,7 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 	/* Draw the evaluation of the condition expression, and test
 	   the result. If the expression evaluates to false, then
 	   branch to the out label. */
-      draw_eval_vec4(ivl_stmt_cond_expr(net), STUFF_OK_XZ|STUFF_OK_47);
+      draw_eval_vec4(ivl_stmt_cond_expr(net));
       if (ivl_expr_width(ivl_stmt_cond_expr(net)) > 1) {
 	    fprintf(vvp_out, "    %%or/r;\n");
       }
@@ -1833,7 +1833,7 @@ static int show_push_frontback_method(ivl_statement_t net)
 	    fprintf(vvp_out, "    %%store/%s/str v%p_0;\n", type_code, var);
 	    break;
 	  default:
-	    draw_eval_vec4(parm1, STUFF_OK_XZ);
+	    draw_eval_vec4(parm1);
 	    fprintf(vvp_out, "    %%store/%s/v v%p_0, %u;\n",
 		    type_code, var, width_of_packed_type(element_type));
 	    break;
