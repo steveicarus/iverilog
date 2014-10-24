@@ -290,50 +290,7 @@ static void assign_to_lvector(ivl_lval_t lval,
 	    }
 
       } else if (part_off>0 || ivl_lval_width(lval)!=ivl_signal_width(sig)) {
-#if 0
-	      /* There is no mux expression, but a constant part
-		 offset. Load that into index x1 and generate a
-		 single-bit set instruction. */
-	    assert(ivl_lval_width(lval) == width);
 
-	    if (dexp != 0) {
-		    /* Calculated delay... */
-		  int delay_index = allocate_word();
-		  draw_eval_expr_into_integer(dexp, delay_index);
-		  fprintf(vvp_out, "    %%ix/load 0, %u, 0;\n", width);
-		  fprintf(vvp_out, "    %%ix/load 1, %lu, 0;\n", part_off);
-		  fprintf(vvp_out, "    %%assign/v0/x1/d v%p_%lu, %d, %u;\n",
-			  sig, use_word, delay_index, bit);
-		  clr_word(delay_index);
-	    } else if (nevents != 0) {
-		    /* Event control delay... */
-		  fprintf(vvp_out, "    %%ix/load 0, %u, 0;\n", width);
-		  fprintf(vvp_out, "    %%ix/load 1, %lu, 0;\n", part_off);
-		  fprintf(vvp_out, "    %%assign/v0/x1/e v%p_%lu, %u;\n",
-			  sig, use_word, bit);
-	    } else {
-		    /* Constant delay... */
-		  fprintf(vvp_out, "    %%ix/load 0, %u, 0;\n", width);
-		  fprintf(vvp_out, "    %%ix/load 1, %lu, 0;\n", part_off);
-		    /*
-		     * The %assign can only take a 32 bit delay. For a larger
-		     * delay we need to put it into an index register.
-		     */
-		  if (hig_d != 0) {
-			int delay_index = allocate_word();
-			fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
-			        delay_index, low_d, hig_d);
-			fprintf(vvp_out,
-			        "    %%assign/v0/x1/d v%p_%lu, %d, %u;\n",
-			        sig, use_word, delay_index, bit);
-			clr_word(delay_index);
-		  } else {
-			fprintf(vvp_out,
-			        "    %%assign/v0/x1 v%p_%lu, %lu, %u;\n",
-			        sig, use_word, low_d, bit);
-		  }
-	    }
-#else
 	    if (nevents != 0) {
 		  assert(dexp==0);
 		  int offset_index = allocate_word();
@@ -364,7 +321,6 @@ static void assign_to_lvector(ivl_lval_t lval,
 		  clr_word(offset_index);
 		  clr_word(delay_index);
 	    }
-#endif
 
       } else if (dexp != 0) {
 	      /* Calculated delay... */

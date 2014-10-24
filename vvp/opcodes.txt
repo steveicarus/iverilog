@@ -69,13 +69,6 @@ pushed in place
 
 See also the %sub/wr instruction.
 
-
-* %addi <bit-l>, <imm>, <wid>
-
-This instruction adds the immediate value (no x or z bits) into the
-left vector. The imm value is limited to 16 significant bits, but it
-is zero extended to match any width.
-
 * %alloc <scope-label>
 
 This instruction allocates the storage for a new instance of an
@@ -120,31 +113,6 @@ The %assign/ar/e variation uses the information in the thread
 event control registers to determine when to perform the assign.
 %evctl is used to set the event control information.
 
-* %assign/av <array-label>, <delay>, <bit> (XXXX Old definition)
-* %assign/av/d <array-label>, <delayx>, <bit> (XXXX Old definition)
-* %assign/av/e <array-label>, <bit> (XXXX Old definition)
-
-The %assign/av instruction assigns a vector value to a word in the
-labeled array. The <delay> is the delay in simulation time to the
-assignment (0 for non-blocking assignment) and the <bit> is the base
-of the vector to write.
-
-The width of the vector is retrieved from index register 0.
-
-The base of a part select is retrieved from index register 1.
-
-The address of the word in the memory is from index register 3. The
-address is canonical form.
-
-The %assign/av/d variation reads the delay from an integer register that
-is given by the <delayx> value. This should not be 0, 1 or 3, of course,
-since these registers contain the vector width, base part select and
-word address.
-
-The %assign/av/e variation uses the information in the thread
-event control registers to determine when to perform the assign.
-%evctl is used to set the event control information.
-
 * %assign/v0 <var-label>, <delay>, <bit> (XXXX Old description)
 * %assign/v0/d <var-label>, <delayx>, <bit> (XXXX Old description
 * %assign/v0/e <var-label>, <bit> (XXXX Old description)
@@ -165,14 +133,6 @@ event control registers to determine when to perform the assign.
 
 The <var-label> references a .var object that can receive non-blocking
 assignments. For blocking assignments, see %set/v.
-
-* %assign/v0/x1 <var-label>, <delay>, <bit>
-* %assign/v0/x1/d <var-label>, <delayx>, <bit>
-* %assign/v0/x1/e <var-label>, <bit>
-
-This is similar to the %assign/v0 instruction, but adds the index-1
-index register with the canonical index of the destination where the
-vector is to be written. This allows for part writes into the vector.
 
 * %assign/vec4 <var-label>, <delay>
 * %assign/vec4/d <var-label>, <delayx>
@@ -229,19 +189,6 @@ The %assign/wr/d variation gets the delay from integer register
 The %assign/wr/e variation uses the information in the thread
 event control registers to determine when to perform the assign.
 %evctl is used to set the event control information.
-
-* %assign/x0 <var-label>, <delay>, <bit> (OBSOLETE -- See %assign/v0x)
-
-This does a non-blocking assignment to a functor, similar to the
-%assign instruction. The <var-label> identifies the base functor of
-the affected variable, and the <delay> gives the delay when the
-assignment takes place. The delay may be 0. The actual functor used is
-calculated by using <var-label> as a base, and indexing with the
-index[0] index register. This supports indexed assignment.
-
-The <bit> is the address of the thread register that contains the bit
-value to assign.
-
 
 * %blend
 
@@ -343,13 +290,6 @@ The results of the comparison go into flags 4, 5, 6 and 7:
 	4: eq  (equal)
 	5: lt  (less than)
 	6: eeq (case equal)
-
-* %cmpi/s <bit-l>, <immr>, <wid>
-* %cmpi/u <bit-l>, <immr>, <wid>
-
-These instructions are similar to the %cmp instructions above, except
-that the right hand operand is an immediate value. This is a positive
-number that the vector is compared with.
 
 * %cmp/wr
 
@@ -715,43 +655,6 @@ the children, and none of those children may be automatic. This
 instruction is used to implement join_none and join_any from the
 Verilog source.
 
-* %load/av <bit>, <array-label>, <wid>
-
-This instruction loads a word from the specified array. The word
-address is in index register 3. Like %load/v below the width does
-not have to match the width of the array word. See the %load/v
-description for more information.
-
-* %load/avp0 <bit>, <array-label>, <wid>
-* %load/avp0/s <bit>, <array-label>, <wid>
-
-This instruction is a mix of %load/av and %load/vp0. It loads an array
-value like %load/av and then adds a value from index register 0 to the
-result like %load/vp0. The loaded value is zero-extended to <wid>,
-then added arithmetically to the signed index register 0. The result
-is then stored in <bit>.
-
-The %load/avp0/s instruction is the same, except that the loaded
-vector is sign extended (instead of 0-extended) before the addition.
-
-* %load/avx.p <bit>, <array-label>, <index>
-
-This instruction is similar to %load/av, but it loads only a single
-bit, and the <index> is the selector for the bit to use. If <index> is
-out of range, then x is loaded. The index value is incremented by one
-if it is defined (bit 4 is not 1).
-
-* %load/dar <bit>, <functor-label>, <wid> (XXXX Old implementation)
-
-This instruction loads an array word from a dynamic array. The
-<label> refers to the variable object, and the <bit>/<wid> are the
-location in local vector space where the extracted word goes. The
-index is implicitly extracted from index register 3.
-
-The dar/r variant reads a real-value into a real-valued register.
-
-(See also %set/dar)
-
 * %load/obj <var-label>
 
 This instruction loads an object handle and pushes it to the top of
@@ -824,23 +727,6 @@ The %load/ar instruction reads a real value from an array. The <index>
 is the index register that contains the canonical word address into
 the array.
 
-* %load/x1p <bit>, <functor-label>, <wid>
-
-This is an indexed load. It uses the contents of index register 1 to
-select a part from a vector functor at <functor-label>. The
-part is pulled from the indexed bit of the addressed functor and loaded
-into the destination thread bit. The <wid> is the width of the
-part. If any bit of the desired value is outside the vector, then that
-bit is set to X.
-
-The index register 1 is interpreted as a signed value. Even though the
-address is canonical (from 0 to the width of the signal) the value in
-index register 1 may be <0 or >=wid. The load instruction handles
-filling in the out-of-bounds bits with x.
-
-When the operation is done, the <wid> is added to index register 1, to
-provide a basic auto-increment behavior.
-
 * %loadi/wr <bit>, <mant>, <exp>
 
 This opcode loads an immediate value, floating point, into the word
@@ -874,19 +760,7 @@ The /s form does signed %.
 
 This opcode is the real-valued modulus of the two real values.
 
-* %mov <dst>, <src>, <wid>
 * %mov/wu <dst>, <src>
-* %movi <dst>, <value>, <wid>
-
-This instruction copies a vector from one place in register space to
-another. The destination and source vectors are assumed to be the same
-width and non-overlapping. The <dst> may not be 0-3, but if the <src>
-is one of the 4 constant bits, the effect is to replicate the value
-into the destination vector. This is useful for filling a vector.
-
-The %movi variant moves a binary value, LSB first, into the
-destination vector. The immediate value is up to 32bits, padded with
-zeros to fill out the width.
 
 * %mul
 
@@ -900,13 +774,6 @@ result is pushed back on the vec4 stack.
 * %mul/wr
 
 This opcode multiplies two real words together.
-
-
-* %muli <bit-l>, <imm>, <wid>
-
-This instruction is the same as %mul, but the second operand is an
-immediate value that is padded to the width of the result.
-
 
 * %nand
 
@@ -1161,40 +1028,11 @@ register that contains the LSB of the vector, and the <wid> is the
 size of the vector. The width must exactly match the width of the
 signal.
 
-* %set/av <array-label>, <bit>, <wid> (XXXX Old definition)
-
-This sets a thread vector to an array word. The <array-label>
-addresses an array device, and the <bit>,<wid> describe a vector to be
-written. Index register 3 contains the address of the word within the
-array.
-
-The base of a part select is retrieved from index register 1. The
-width is implied from the <wid> that is the argument. This is the part
-*within* the word.
-
-The address (in canonical form) is precalculated and loaded into index
-register 3. This is the address of the word within the array.
-
 * %set/qb <var-label>, <bit>, <wid>
 * %set/qf <var-label>, <bit>, <wid>
 
 This sets the vector value into the back (qb) or front (qf) of a queue
 variable.
-
-* %set/x0 <var-label>, <bit>, <wid>
-
-This sets the part of a signal vector, the address calculated by
-using the index register 0 to index the base within the vector of
-<var-label>. The destination must be a signal of some sort. Otherwise,
-the instruction will fail.
-
-The addressing is canonical (0-based) so the compiler must figure out
-non-zero offsets, if any. The width is the width of the part being
-written. The other bits of the vector are not touched.
-
-The index may be signed, and if less than 0, the beginning bits are
-not assigned. Also, if the bits go beyond the end of the signal, those
-bits are not written anywhere.
 
 * %shiftl <idx>
 * %shiftr <idx>
@@ -1326,15 +1164,6 @@ the vec4 stack, then the left value is popped. The right is subtracted
 from the left, and the result pushed.
 
 See also the %add instruction.
-
-* %subi <bit-l>, <imm>, <wid>
-
-This instruction arithmetically subtracts the immediate value from the
-left vector. The <imm> value is a 16bit unsigned value zero-extended to
-the <wid> of the left vector. The result replaces the left vector.
-
-See also the %addi instruction.
-
 
 * %sub/wr
 
