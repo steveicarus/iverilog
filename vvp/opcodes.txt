@@ -1136,17 +1136,6 @@ Pop the vec4 value, replicate it <count> times, then push the
 result. In other words, push the concatenation of <count> copies.
 See also the %concat instruction.
 
-* %set/dar <var-label>, <bit>, <wid>
-* %set/dar/obj <index>, <bit>, <wid>
-
-The "%set/dar" opcode sets a vector to a word of the dynamic
-array. Index register 3 contains the word address within the dynamic
-array, and <bit>,<wid> specifies the thread vector to be written.
-
-The "%set/dar/obj" opcode is similar, except that it sets elements of
-a dynamic array that is in the top of the object stack. Instead of
-using a fixed index register, use the register addressed by <index>.
-
 * %set/dar/obj/real <index>
 * %set/dar/obj/str <index>
 * %set/dar/obj/vec4 <index>

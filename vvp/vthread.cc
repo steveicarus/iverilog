@@ -5653,56 +5653,6 @@ bool of_SET_AV(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %set/dar  <label>, <bit>, <wid>
- */
-bool of_SET_DAR(vthread_t thr, vvp_code_t cp)
-{
-#if 0
-      unsigned bit = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-      unsigned adr = thr->words[3].w_int;
-
-	/* Make a vector of the desired width. */
-      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
-
-      vvp_net_t*net = cp->net;
-      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
-      assert(obj);
-
-      vvp_darray*darray = obj->get_object().peek<vvp_darray>();
-      assert(darray);
-
-      darray->set_word(adr, value);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%set/dar ...\n");
-#endif
-      return true;
-}
-
-/*
- * %set/dar/obj <index>, <bit>, <wid>
- */
-bool of_SET_DAR_OBJ(vthread_t thr, vvp_code_t cp)
-{
-#if 0
-      unsigned adr = thr->words[cp->number].w_int;
-      unsigned bit = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-
-      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
-
-      vvp_object_t&top = thr->peek_object();
-      vvp_darray*darray = top.peek<vvp_darray>();
-      assert(darray);
-
-      darray->set_word(adr, value);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%set/dar/obj ...\n");
-#endif
-      return true;
-}
-
-/*
  * %set/dar/obj/real <index>
  */
 bool of_SET_DAR_OBJ_REAL(vthread_t thr, vvp_code_t cp)

@@ -105,18 +105,16 @@ static int eval_darray_new(ivl_expr_t ex)
 		 a constant. Generate an unrolled set of assignments. */
 	    long idx;
 	    long cnt = get_number_immediate(size_expr);
-	    struct vector_info rvec;
 	    unsigned wid;
 	    switch (ivl_type_base(element_type)) {
 		case IVL_VT_BOOL:
 		  wid = width_of_packed_type(element_type);
-		  rvec = draw_eval_expr_wid(init_expr, wid, STUFF_OK_XZ);
+		  draw_eval_vec4(init_expr);
+		  resize_vec4_wid(init_expr, wid);
 		  for (idx = 0 ; idx < cnt ; idx += 1) {
 			fprintf(vvp_out, "    %%ix/load 3, %ld, 0;\n", idx);
-			fprintf(vvp_out, "    %%set/dar/obj 3, %u, %u;\n",
-				rvec.base, rvec.wid);
+			fprintf(vvp_out, "    %%set/dar/obj/vec4 3;\n");
 		  }
-		  if (rvec.base >= 4) clr_vector(rvec);
 		  break;
 		case IVL_VT_REAL:
 		  draw_eval_real(init_expr);
