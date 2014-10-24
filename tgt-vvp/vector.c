@@ -83,6 +83,7 @@ void clr_vector(struct vector_info vec)
       }
 }
 
+#if 0
 static unsigned allocate_vector_no_lookaside(unsigned wid, int skip_lookaside)
 {
       unsigned base = 8;
@@ -111,6 +112,7 @@ static unsigned allocate_vector_no_lookaside(unsigned wid, int skip_lookaside)
 
       return base;
 }
+#endif
 
 /*
  * This unconditionally allocates a stretch of bits from the register
@@ -157,44 +159,6 @@ void clear_expression_lookaside(void)
       lookaside_top = 0;
 }
 
-static int test_expression_savable(ivl_expr_t expr)
-{
-      switch (ivl_expr_type(expr)) {
-
-	  case IVL_EX_NUMBER:
-	  case IVL_EX_STRING:
-	    return 1;
-
-	  default:
-	    return 0;
-      }
-}
-
-void save_expression_lookaside(unsigned addr, ivl_expr_t expr, unsigned wid)
-{
-      unsigned idx;
-      assert(addr >= 8);
-      assert((addr+wid) <= MAX_VEC);
-
-	/* When saving an expression to the lookaside, also clear the
-	   signal saved in the lookaside for these bits. The reason is
-	   that an expression calculation will replace any signal
-	   bits. */
-      for (idx = 0 ;  idx < wid ;  idx += 1)
-	    set_sig(addr+idx, 0, 0, 0);
-
-	/* Only certain types of expressions are savable. */
-      if ( ! test_expression_savable(expr))
-	    return;
-
-      for (idx = 0 ;  idx < wid ;  idx += 1) {
-	    set_exp(addr+idx, expr, idx);
-      }
-
-      if ((addr+wid) > lookaside_top)
-	    lookaside_top = addr+wid;
-}
-
 static void clear_signal_lookaside_bit(unsigned idx, ivl_signal_t sig, unsigned sig_word)
 {
       if (allocation_map[idx].alloc > 0)
@@ -229,151 +193,3 @@ void save_signal_lookaside(unsigned addr, ivl_signal_t sig, unsigned sig_word, u
 	    clear_signal_lookaside_bit(idx, sig, sig_word);
 }
 
-static int compare_exp(ivl_expr_t l, ivl_expr_t r)
-{
-      if (! (l && r))
-	    return 0;
-      if (l == r)
-	    return 1;
-
-      if (ivl_expr_type(l) != ivl_expr_type(r))
-	    return 0;
-
-      switch (ivl_expr_type(l)) {
-
-	  case IVL_EX_NUMBER:
-	    if (ivl_expr_width(l) != ivl_expr_width(r))
-		  return 0;
-	    { const char*bitl = ivl_expr_bits(l);
-	      const char*bitr = ivl_expr_bits(r);
-	      unsigned idx;
-	      for (idx = 0 ;  idx < ivl_expr_width(l) ;  idx += 1) {
-		    if (bitl[idx] != bitr[idx])
-			  return 0;
-	      }
-	    }
-	    return 1;
-
-	  case IVL_EX_SELECT:
-	    if (! compare_exp(ivl_expr_oper1(l), ivl_expr_oper1(r)))
-		  return 0;
-
-	    if (ivl_expr_oper2(l) == 0 && ivl_expr_oper1(r) == 0)
-		  return 1;
-
-	    if (! compare_exp(ivl_expr_oper2(l), ivl_expr_oper2(r)))
-		  return 0;
-
-	    return 1;
-
-	  case IVL_EX_SIGNAL:
-	    if (ivl_expr_signal(l) != ivl_expr_signal(r))
-		  return 0;
-
-	    if (ivl_expr_width(l) != ivl_expr_width(r))
-		  return 0;
-
-	      /* Don't match array words. */
-	    if (ivl_expr_oper1(l) || ivl_expr_oper1(r))
-		  return 0;
-
-	    return 1;
-
-	  default:
-	    break;
-      }
-
-      return 0;
-}
-
-static unsigned find_expression_lookaside(ivl_expr_t expr, unsigned wid)
-{
-      unsigned idx, match;
-      ivl_signal_t sig;
-
-      if (lookaside_top <= wid)
-	    return 0;
-
-	/* Look in the expression lookaside for this expression. */
-      assert(expr);
-      match = 0;
-      for (idx = 8 ;  idx < lookaside_top ;  idx += 1) {
-	    if (! compare_exp(allocation_map[idx].exp, expr)) {
-		  match = 0;
-		  continue;
-	    }
-
-	    if (allocation_map[idx].exp_bit != match) {
-		  match = 0;
-		  continue;
-	    }
-
-	    match += 1;
-	    if (match == wid)
-		  return idx-match+1;
-      }
-
-	/* The general expression lookup failed. If this is an
-	   IVL_EX_SIGNAL, then look again in the variable lookaside
-	   (which is saved l-values) for the expression. */
-      if (ivl_expr_type(expr) != IVL_EX_SIGNAL)
-	    return 0;
-
-      sig = ivl_expr_signal(expr);
-
-	/* Only reg signals (variables) will be in the signal
-	   lookaside, because only blocking assigned values are in the
-	   signal lookaside. */
-      if (ivl_signal_type(sig) != IVL_SIT_REG)
-	    return 0;
-
-	/* Now look for signal value matches in the signal lookaside. */
-      match = 0;
-      for (idx = 8 ;  idx < lookaside_top ;  idx += 1) {
-	    if (sig != allocation_map[idx].sig) {
-		  match = 0;
-		  continue;
-	    }
-
-	    if (allocation_map[idx].sig_bit != match) {
-		  match = 0;
-		  continue;
-	    }
-
-	    match += 1;
-	    if (match == wid)
-		  return idx-match+1;
-
-      }
-
-      return 0;
-}
-
-/*
- * Look for the expression in the expression lookaside table. If it is
- * there, then allocate it and return the base. In this case the
- * caller will not need to evaluate the expression. If this function
- * returns 0, then the expression is not found and nothing is allocated.
- */
-unsigned allocate_vector_exp(ivl_expr_t expr, unsigned wid,
-			     int exclusive_flag)
-{
-      unsigned idx;
-      unsigned la = find_expression_lookaside(expr, wid);
-      if (la == 0)
-	    return 0;
-
-      if (exclusive_flag) {
-	      /* If the caller is requesting exclusive allocation of
-	         the expression, then return not-found if a lookup
-	         already matched the expression. */
-	    for (idx = 0 ;  idx < wid ;  idx += 1)
-		  if (allocation_map[la+idx].alloc)
-			return 0;
-      }
-
-      for (idx = 0 ;  idx < wid ;  idx += 1)
-	    allocation_map[la+idx].alloc += 1;
-
-      return la;
-}

@@ -109,10 +109,10 @@ extern void draw_ufunc_vec4(ivl_expr_t expr);
 extern void draw_ufunc_real(ivl_expr_t expr);
 extern void draw_ufunc_string(ivl_expr_t expr);
 extern void draw_ufunc_object(ivl_expr_t expr);
-
+#if 0
 extern void pad_expr_in_place(ivl_expr_t expr, struct vector_info res,
                               unsigned swid);
-
+#endif
 extern char* process_octal_codes(const char*txt, unsigned wid);
 
 /*
@@ -201,41 +201,6 @@ extern const char* draw_island_net_input(ivl_island_t island, ivl_nexus_t nex);
 extern const char*draw_input_from_net(ivl_nexus_t nex);
 
 /*
- * The draw_eval_expr function writes out the code to evaluate a
- * behavioral expression.
- *
- * Expression results are placed into a vector allocated in the bit
- * space of the thread. The vector_info structure represents that
- * allocation. When the caller is done with the bits, it must release
- * the vector with clr_vector so that the code generator can reuse
- * those bits.
- *
- * The stuff_ok_flag is normally empty. Bits in the bitmask are set
- * true in cases where certain special situations are allows. This
- * might allow deeper expressions to make assumptions about the
- * caller.
- *
- *   STUFF_OK_XZ -- This bit is set if the code processing the result
- *        doesn't distinguish between x and z values.
- *
- *   STUFF_OK_47 -- This bit is set if the node is allowed to leave a
- *        result in any of the 4-7 vthread bits.
- *
- *   STUFF_OK_RO -- This bit is set if the node is allowed to nest its
- *        allocation from vector. It is only true if the client is not
- *        planning to use this vector as an output. This matters only
- *        if the expression might be found in the lookaside table, and
- *        therefore might be multiply allocated if allowed.
- */
-
-extern struct vector_info draw_eval_expr(ivl_expr_t expr, int stuff_ok_flag);
-extern struct vector_info draw_eval_expr_wid(ivl_expr_t expr, unsigned w,
-					     int stuff_ok_flag);
-#define STUFF_OK_XZ 0x0001
-#define STUFF_OK_47 0x0002
-#define STUFF_OK_RO 0x0004
-
-/*
  * This evaluates an expression and leaves the result in the numbered
  * integer index register. It also will set bit-4 to 1 if the value is
  * not fully defined (i.e. contains x or z).
@@ -293,15 +258,6 @@ extern unsigned allocate_vector(unsigned wid);
 extern void clr_vector(struct vector_info vec);
 
 extern void clear_expression_lookaside(void);
-extern void save_expression_lookaside(unsigned addr,
-				      ivl_expr_t expr,
-				      unsigned wid);
-extern void save_signal_lookaside(unsigned addr,
-				  ivl_signal_t sig, unsigned use_word,
-				  unsigned wid);
-
-extern unsigned allocate_vector_exp(ivl_expr_t expr, unsigned wid,
-				    int exclusive_flag);
 
 extern int number_is_unknown(ivl_expr_t ex);
 extern int number_is_immediate(ivl_expr_t ex, unsigned lim_wid, int negative_is_ok);
