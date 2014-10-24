@@ -207,57 +207,6 @@ extern const char*draw_input_from_net(ivl_nexus_t nex);
  */
 extern void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix);
 
-/*
- * These functions manage vector allocation in the thread register
- * space. They presume that we work on one thread at a time, to
- * completion.
- *
- *  allocate_vector
- *    Return the base of an allocated vector in the thread. The bits
- *    are marked allocated in the process.
- *
- *  clr_vector
- *    Clear a vector previously allocated.
- *
- * The thread vector allocator also keeps a lookaside of expression
- * results that are stored in register bit. This lookaside can be used
- * by the code generator to notice that certain expression bits are
- * already calculated, and can be reused.
- *
- *  clear_expression_lookaside
- *    Clear the lookaside tables for the current thread. This must be
- *    called before starting a new thread, and around basic blocks
- *    that are entered from unknown places.
- *
- *  save_expression_lookaside
- *    Mark the given expression as available in the given register
- *    bits. This remains until the lookaside is cleared. This does not
- *    clear the allocation, it is still necessary to call clr_vector.
- *
- *  save_signal_lookaside
- *    Mark the given signal as available in the given register bits.
- *    This is different from a given expression, in that the signal
- *    lookaside is in addition to the expression lookaside. The signal
- *    lookaside is specifically to save on unnecessary loads of a
- *    signal recently written.
- *
- *  allocate_vector_exp
- *    This function attempts to locate the expression in the
- *    lookaside. If it finds it, return a reallocated base for the
- *    expression. Otherwise, return 0.
- *
- * The allocate_vector and allocate_vector_exp calls must have
- * matching call to clr_vector. Although the allocate_vector will
- * never reallocate a vector already allocated, the allocate_vector_exp
- * might, so it is possible for allocations to nest in that
- * manner. The exclusive_flag to allocate_vector_exp will prevent
- * nested allocations. This is needed where the expression result is
- * expected to be overwritten.
- */
-extern unsigned allocate_vector(unsigned wid);
-extern void clr_vector(struct vector_info vec);
-
-extern void clear_expression_lookaside(void);
 
 extern int number_is_unknown(ivl_expr_t ex);
 extern int number_is_immediate(ivl_expr_t ex, unsigned lim_wid, int negative_is_ok);

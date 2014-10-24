@@ -107,7 +107,6 @@ static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
       fprintf(vvp_out, "t_%u ;\n", end_assign);
       if (nevents != 0) fprintf(vvp_out, "    %%evctl/c;\n");
 
-      clear_expression_lookaside();
 }
 
 static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
@@ -200,7 +199,6 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
       clr_flag(error_flag);
       if (part_off_reg)
 	    clr_word(part_off_reg);
-      clear_expression_lookaside();
 }
 
 /*
@@ -580,8 +578,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       }
 
 
-      { struct vector_info res = {0,0};
-	unsigned wid;
+      { unsigned wid;
 	unsigned lidx;
 	unsigned cur_rbit = 0;
 	  /* Handle the special case that the expression is a real
@@ -593,19 +590,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 		   assignment. */
 	      wid = ivl_stmt_lwidth(net);
 
-	      res.base = allocate_vector(wid);
-	      res.wid = wid;
-
-	      if (res.base == 0) {
-		    fprintf(stderr, "%s:%u: vvp.tgt error: "
-			    "Unable to allocate %u thread bits for "
-			    "r-value expression.\n", ivl_expr_file(rval),
-			    ivl_expr_lineno(rval), wid);
-		    vvp_errors += 1;
-	      }
-
-	      fprintf(vvp_out, "    %%cvt/vr %u, %u;\n",
-		      res.base, res.wid);
+	      fprintf(vvp_out, "    %%cvt/vr %u;\n", wid);
 
 	} else {
 	      wid = ivl_stmt_lwidth(net);
@@ -637,9 +622,6 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	      cur_rbit += bit_limit;
 
 	}
-
-	if (res.base > 3)
-	      clr_vector(res);
       }
 
       return 0;
@@ -679,17 +661,12 @@ static int show_stmt_block_named(ivl_statement_t net, ivl_scope_t scope)
       fprintf(vvp_out, "    .scope S_%p;\n", subscope);
       fprintf(vvp_out, "t_%u ;\n", sub_id);
 
-	/* The statement within the fork is in a new thread, so no
-	  expression lookaside is valid. */
-      clear_expression_lookaside();
-
       rc = show_stmt_block(net, subscope);
       fprintf(vvp_out, "    %%end;\n");
 	/* Return to the previous scope. */
       fprintf(vvp_out, "    .scope S_%p;\n", scope);
 
       fprintf(vvp_out, "t_%u %%join;\n", out_id);
-      clear_expression_lookaside();
 
       return rc;
 }
@@ -775,7 +752,6 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 		  continue;
 
 	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_base+idx);
-	    clear_expression_lookaside();
 	    rc += show_statement(cst, sscope);
 
 	      /* Statement is done, jump to the out of the case. */
@@ -790,8 +766,6 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 	/* The case tests will leave the case expression on the top of
 	   the stack, but we are done with it now. Pop it. */
       fprintf(vvp_out, "    %%pop/vec4 1;\n");
-
-      clear_expression_lookaside();
 
       return rc;
 }
@@ -857,7 +831,6 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 		  continue;
 
 	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_base+idx);
-	    clear_expression_lookaside();
 	    rc += show_statement(cst, sscope);
 
 	    fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count,
@@ -1277,16 +1250,13 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
       if (ivl_stmt_cond_false(net)) {
 	    fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_out);
 	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_false);
-	    clear_expression_lookaside();
 
 	    rc += show_statement(ivl_stmt_cond_false(net), sscope);
 
 	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
-	    clear_expression_lookaside();
 
       } else {
 	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_false);
-	    clear_expression_lookaside();
       }
 
       return rc;
@@ -1312,8 +1282,6 @@ static int show_stmt_delay(ivl_statement_t net, ivl_scope_t sscope)
       show_stmt_file_line(net, "Delay statement.");
 
       fprintf(vvp_out, "    %%delay %lu, %lu;\n", low, hig);
-	/* Lots of things can happen during a delay. */
-      clear_expression_lookaside();
 
       rc += show_statement(stmt, sscope);
 
@@ -1357,9 +1325,6 @@ static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
       fprintf(vvp_out, "    %%delayx %d;\n", use_idx);
       clr_word(use_idx);
 
-	/* Lots of things can happen during a delay. */
-      clear_expression_lookaside();
-
       rc += show_statement(stmt, sscope);
       return rc;
 }
@@ -1396,7 +1361,6 @@ static int show_stmt_do_while(ivl_statement_t net, ivl_scope_t sscope)
 	   because it can be entered from above or from the bottom of
 	   the loop. */
       fprintf(vvp_out, "T_%u.%u ;\n", thread_count, top_label);
-      clear_expression_lookaside();
 
 	/* Draw the body of the loop. */
       rc += show_statement(ivl_stmt_sub_stmt(net), sscope);
@@ -1520,7 +1484,6 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 	/* Generate the sub-threads themselves. */
       for (idx = 0 ;  idx < (join_count + join_detach_count) ;  idx += 1) {
 	    fprintf(vvp_out, "t_%u ;\n", id_base+idx);
-	    clear_expression_lookaside();
 	    rc += show_statement(ivl_stmt_block_stmt(net, idx), scope);
 	    fprintf(vvp_out, "    %%end;\n");
       }
@@ -1529,7 +1492,6 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 
 	/* This is the label for the out. Use this to branch around
 	   the implementations of all the child threads. */
-      clear_expression_lookaside();
       fprintf(vvp_out, "t_%u ;\n", out);
 
       return rc;
@@ -1700,7 +1662,7 @@ static int show_stmt_utask(ivl_statement_t net)
 	      vvp_mangle_id(ivl_scope_name(task)));
       fprintf(vvp_out, ", S_%p;\n", task);
       fprintf(vvp_out, "    %%join;\n");
-      clear_expression_lookaside();
+
       return 0;
 }
 
@@ -1733,9 +1695,6 @@ static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
 	    fprintf(vvp_out, ";\n    %%wait Ewait_%u;\n", cascade_counter);
 	    cascade_counter += 1;
       }
-	/* Always clear the expression lookaside after a
-	   %wait. Anything can happen while the thread is waiting. */
-      clear_expression_lookaside();
 
       return show_statement(ivl_stmt_sub_stmt(net), sscope);
 }
@@ -1753,7 +1712,7 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 	   because it can be entered from above or from the bottom of
 	   the loop. */
       fprintf(vvp_out, "T_%u.%u ;\n", thread_count, top_label);
-      clear_expression_lookaside();
+
 
 	/* Draw the evaluation of the condition expression, and test
 	   the result. If the expression evaluates to false, then
@@ -1776,7 +1735,7 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 	   test is repeated, and also draw the out label. */
       fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, top_label);
       fprintf(vvp_out, "T_%u.%u ;\n", thread_count, out_label);
-      clear_expression_lookaside();
+
       return rc;
 }
 
@@ -1858,10 +1817,6 @@ static int show_system_task_call(ivl_statement_t net)
       show_stmt_file_line(net, "System task call.");
 
       draw_vpi_task_call(net);
-
-	/* VPI calls can manipulate anything, so clear the expression
-	   lookahead table after the call. */
-      clear_expression_lookaside();
 
       return 0;
 }
@@ -2414,7 +2369,6 @@ int draw_process(ivl_process_t net, void*x)
 	/* Generate the entry label. Just give the thread a number so
 	   that we ar certain the label is unique. */
       fprintf(vvp_out, "T_%u ;\n", thread_count);
-      clear_expression_lookaside();
 
 	/* Draw the contents of the thread. */
       rc += show_statement(stmt, scope);
@@ -2463,7 +2417,6 @@ int draw_task_definition(ivl_scope_t scope)
       ivl_statement_t def = ivl_scope_def(scope);
 
       fprintf(vvp_out, "TD_%s ;\n", vvp_mangle_id(ivl_scope_name(scope)));
-      clear_expression_lookaside();
 
       assert(def);
       rc += show_statement(def, scope);
@@ -2480,7 +2433,6 @@ int draw_func_definition(ivl_scope_t scope)
       ivl_statement_t def = ivl_scope_def(scope);
 
       fprintf(vvp_out, "TD_%s ;\n", vvp_mangle_id(ivl_scope_name(scope)));
-      clear_expression_lookaside();
 
       assert(def);
       rc += show_statement(def, scope);

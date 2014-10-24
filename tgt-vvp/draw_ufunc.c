@@ -156,9 +156,6 @@ void draw_ufunc_vec4(ivl_expr_t expr)
 	/* Take in arguments to function and call function code. */
       draw_ufunc_preamble(expr);
 
-	/* Fresh basic block starts after the join. */
-      clear_expression_lookaside();
-
       assert(ivl_signal_dimensions(retval) == 0);
       fprintf(vvp_out, "    %%load/vec4  v%p_0;\n", retval);
 
