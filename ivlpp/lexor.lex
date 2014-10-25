@@ -2066,51 +2066,66 @@ void dump_precompiled_defines(FILE* out)
 
 void load_precompiled_defines(FILE* src)
 {
-    char buf[4096];
+    char*buf = malloc(4096);
+    size_t buf_len = 4096;
     int ch;
 
     while ((ch = fgetc(src)) != EOF)
     {
         char* cp = buf;
         char* name = 0;
-        char* value = 0;
 
         int argc = 0;
         size_t len = 0;
 
-        name = cp;
 
 	*cp++ = ch;
 
-        while ((ch = fgetc(src)) != EOF && ch != ':')
+        while ((ch = fgetc(src)) != EOF && ch != ':') {
             *cp++ = ch;
+	    assert( (size_t)(cp-buf) < buf_len );
+	}
 
         if (ch != ':')
             return;
 
         /* Terminate the name string. */
         *cp++ = 0;
+	assert( (size_t)(cp-buf) < buf_len );
 
-        /* Read the argc number */
+        /* Read the argc number. (this doesn't need buffer space) */
         while (isdigit(ch = fgetc(src)))
             argc = 10*argc + ch-'0';
 
         if (ch != ':')
-            return;
+	    return;
 
+	  /* Read the value len (this doesn't need buffer space) */
         while (isdigit(ch = fgetc(src)))
             len = 10*len + ch-'0';
 
         if (ch != ':')
-            return;
+	    return;
 
-        value = cp;
+	  /* Save the name, and start the buffer over. */
+	name = strdup(buf);
+
+	  /* We now know how big the value should be, so if necessary,
+	     reallocate the buffer to be sure we can hold it. */
+	if ((len+4) >= buf_len) {
+	      buf = realloc(buf, len+8);
+	      assert(buf);
+	}
+
+	cp = buf;
 
         while (len > 0)
         {
             ch = fgetc(src);
-            if (ch == EOF)
-                return;
+            if (ch == EOF) {
+		  free(name);
+		  return;
+	    }
 
             *cp++ = ch;
             len -= 1;
@@ -2119,10 +2134,14 @@ void load_precompiled_defines(FILE* src)
         *cp++ = 0;
 
         ch = fgetc(src);
-        if (ch != '\n')
-            return;
+        if (ch != '\n') {
+	      free(name);
+	      free(buf);
+	      return;
+	}
 
-        define_macro(name, value, 0, argc);
+        define_macro(name, buf, 0, argc);
+	free(name);
     }
 }
 
