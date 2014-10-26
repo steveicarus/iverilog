@@ -348,8 +348,10 @@ char*__vpiVThrVec4Stack::vpi_get_str(int code)
 
 void __vpiVThrVec4Stack::vpi_get_value(p_vpi_value vp)
 {
-      assert(vpip_current_vthread);
-      vvp_vector4_t val = vthread_get_vec4_stack(vpip_current_vthread, depth_);
+      vvp_vector4_t val;
+
+      if (vpip_current_vthread)
+	    val = vthread_get_vec4_stack(vpip_current_vthread, depth_);
 
       switch (vp->format) {
 
@@ -371,6 +373,8 @@ void __vpiVThrVec4Stack::vpi_get_value(p_vpi_value vp)
 	  case vpiStringVal:
 	    vpi_get_value_string_(vp, val);
 	    break;
+	  case vpiObjTypeVal:
+	    vp->format = vpiVectorVal;
 	  case vpiVectorVal:
 	    vpi_get_value_vector_(vp, val);
 	    break;
