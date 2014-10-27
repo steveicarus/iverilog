@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -67,16 +67,26 @@ double vpip_time_to_scaled_real(vvp_time64_t ti, struct __vpiScope*scope)
 
 vvp_time64_t vpip_scaled_real_to_time64(double val, struct __vpiScope*scope)
 {
-      int units;
-      if (scope)
-	    units = scope->time_units;
-      else
-	    units = vpi_time_precision;
+      int shift = 0;
+      if (scope) shift = scope->time_units - scope->time_precision;
+      assert(shift >= 0);
 
-      double scale = pow(10.0L, units - vpi_time_precision);
+      assert(val >= 0);
+
+	// Scale to the local precision and then round away from zero.
+      double scale = pow(10.0L, shift);
       val *= scale;
 
-      return (vvp_time64_t) val;
+      vvp_time64_t delay = (vvp_time64_t) (val + 0.5);
+
+	// If needed now scale the value to the simulator precision.
+      if (scope) {
+	    shift = scope->time_precision - vpi_time_precision;
+	    assert(shift >= 0);
+	    for (int lp = 0; lp <  shift; lp += 1) delay *= 10;
+      }
+
+      return delay;
 }
 
 static int timevar_time_get(int code, vpiHandle ref)
