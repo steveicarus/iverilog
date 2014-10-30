@@ -126,18 +126,20 @@ ivl_type_s* vector_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 		       ; cur != pdims->end() ; ++ cur) {
 
 		  NetExpr*me = elab_and_eval(des, scope, cur->first, 0, true);
-		  assert(me);
 
 		  NetExpr*le = elab_and_eval(des, scope, cur->second, 0, true);
-		  assert(le);
+
+		    /* If elaboration failed for either expression, we
+		       should have already reported the error, so just
+		       skip the following evaluation to recover. */
 
 		  long mnum = 0, lnum = 0;
-		  if ( ! eval_as_long(mnum, me) ) {
+		  if ( me && ! eval_as_long(mnum, me) ) {
 			assert(0);
 			des->errors += 1;
 		  }
 
-		  if ( ! eval_as_long(lnum, le) ) {
+		  if ( le && ! eval_as_long(lnum, le) ) {
 			assert(0);
 			des->errors += 1;
 		  }
