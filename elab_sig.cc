@@ -597,7 +597,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		  if (dynamic_cast<const struct void_type_t*> (return_type_)) {
 			ret_type = 0;
 		  } else {
-			ret_type = return_type_->elaborate_type(des, scope);
+			ret_type = return_type_->elaborate_type(des, scope->parent());
 			ivl_assert(*this, ret_type);
 		  }
 	    } else {
