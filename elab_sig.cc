@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -579,14 +579,16 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	  case PTF_REG:
 	  case PTF_REG_S:
 	    if (return_type_.range) {
-		  probe_expr_width(des, scope, (*return_type_.range)[0]);
-		  probe_expr_width(des, scope, (*return_type_.range)[1]);
+		  NetScope*parent = scope->parent();
+
+		  probe_expr_width(des, parent, (*return_type_.range)[0]);
+		  probe_expr_width(des, parent, (*return_type_.range)[1]);
 
 		  need_constant_expr = true;
-		  NetExpr*me = elab_and_eval(des, scope,
+		  NetExpr*me = elab_and_eval(des, parent,
 					     (*return_type_.range)[0], -1);
 		  assert(me);
-		  NetExpr*le = elab_and_eval(des, scope,
+		  NetExpr*le = elab_and_eval(des, parent,
 					     (*return_type_.range)[1], -1);
 		  assert(le);
 		  need_constant_expr = false;
