@@ -610,7 +610,8 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PFunction::elaborate_sig: "
 			     << "return type: " << *ret_type << endl;
-			return_type_->pform_dump(cerr, 8);
+			if (return_type_)
+			      return_type_->pform_dump(cerr, 8);
 		  }
 		  list<netrange_t> ret_unpacked;
 		  ret_sig = new NetNet(scope, fname, NetNet::REG, ret_unpacked, ret_type);
