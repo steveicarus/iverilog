@@ -238,8 +238,12 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	    }
 
 	      // The enumeration value must fit into the enumeration bits.
-	    if ((cur_value > max_value) ||
-                (cur_value.has_sign() && (cur_value < min_value))) {
+	      // Cast any undefined bits to zero so the comparisons below
+	      // return just true (1) or false (0).
+	    verinum two_state_value = cur_value;
+	    two_state_value.cast_to_int2();
+	    if ((two_state_value > max_value) ||
+                (cur_value.has_sign() && (two_state_value < min_value))) {
 		  cerr << use_enum->get_fileline()
 		       << ": error: Enumeration name " << cur->name
 		       << " cannot have a value equal to " << cur_value
