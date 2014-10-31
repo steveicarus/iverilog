@@ -36,6 +36,7 @@
 # include  "netmisc.h"
 # include  "netdarray.h"
 # include  "netstruct.h"
+# include  "netscalar.h"
 # include  "util.h"
 # include  "ivl_assert.h"
 
@@ -2429,6 +2430,60 @@ NetExpr* PECastSize::elaborate_expr(Design*des, NetScope*scope,
       sel->set_line(*this);
 
       return sel;
+}
+
+unsigned PECastType::test_width(Design*des, NetScope*scope, width_mode_t&wid)
+{
+      ivl_type_t t = target_->elaborate_type(des, scope);
+      base_->test_width(des, scope, wid);
+
+      if(const netdarray_t*use_darray = dynamic_cast<const netdarray_t*> (t)) {
+	    expr_type_  = use_darray->element_base_type();
+	    expr_width_ = use_darray->element_width();
+	    signed_flag_= false;
+      }
+
+      else if(const netstring_t*use_string = dynamic_cast<const netstring_t*> (t)) {
+	    expr_type_  = use_string->base_type();
+	    expr_width_ = 1;
+	    signed_flag_= false;
+      }
+
+      else if(const netstruct_t*use_struct = dynamic_cast<const netstruct_t*> (t)) {
+	    ivl_assert(*this, use_struct->packed());
+	    expr_type_  = use_struct->base_type();
+	    expr_width_ = use_struct->packed_width();
+	    signed_flag_= false;
+      }
+
+      else if(const netvector_t*use_vector = dynamic_cast<const netvector_t*> (t)) {
+	    ivl_assert(*this, use_vector->packed());
+	    expr_type_  = use_vector->base_type();
+	    expr_width_ = use_vector->packed_width();
+	    signed_flag_= false;
+      }
+
+      else {
+            expr_width_ = t->packed_width();
+      }
+
+      min_width_ = expr_width_;
+      return expr_width_;
+}
+
+NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
+				    unsigned, unsigned) const
+{
+    if(dynamic_cast<const real_type_t*>(target_))
+    {
+        NetExpr*expr = base_->elaborate_expr(des, scope, base_->expr_width(), NO_FLAGS);
+        return cast_to_real(expr);
+    }
+
+    cerr << get_fileline() << "sorry: I don't know how to cast expression." << endl;
+    ivl_assert(*this, false);
+
+    return expr;
 }
 
 unsigned PEConcat::test_width(Design*des, NetScope*scope, width_mode_t&)
