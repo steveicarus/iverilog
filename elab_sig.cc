@@ -996,10 +996,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		       << ". Now check for consistency." << endl;
 	    }
 
-	    /* If we find errors here, then give up on this signal. */
-	    if (bad_range)
-		  return 0;
-
 	    /* We have a port size error */
             if (port_set_ && net_set_ && !test_ranges_eeq(plist, nlist)) {
 
