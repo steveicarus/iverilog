@@ -567,6 +567,9 @@ PWire*pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_type, NetN
 	    cur = new PWire(name, net_type, port_type, vt_type);
 	    pform_put_wire_in_scope(name, cur);
       } else {
+	      // If this is a duplicate wire, the data type has already
+	      // been set, then return NULL.
+	    if (cur->get_data_type() != IVL_VT_NO_TYPE) return 0;
 	    bool rc = cur->set_wire_type(net_type);
 	    assert(rc);
 	    rc = cur->set_data_type(vt_type);
@@ -3144,6 +3147,7 @@ template <class T> static void pform_set2_data_type(const struct vlltype&li, T*d
       }
 
       PWire*net = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, base_type);
+      assert(net);
       net->set_data_type(data_type);
       pform_bind_attributes(net->attributes, attr, true);
 }
@@ -3160,9 +3164,14 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
 			   perm_string name, NetNet::Type net_type,
 			   std::list<named_pexpr_t>*attr)
 {
-      (void) li; // The line information is not currently needed.
       PWire*cur = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, enum_type->base_type);
-      assert(cur);
+	// A NULL is returned for a duplicate enumeration.
+      if (! cur) {
+	    cerr << li.get_fileline() << ": error: Found duplicate "
+		 << "enumeration named " << name << "." << endl;
+	    error_count += 1;
+	    return;
+      }
 
       cur->set_signed(enum_type->signed_flag);
 

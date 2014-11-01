@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Picture Elements, Inc.
+ * Copyright (c) 2012-2014 Picture Elements, Inc.
  *    Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -25,6 +25,7 @@
 static void pform_set_class_type(class_type_t*class_type, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
       PWire*net = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, IVL_VT_CLASS);
+      assert(net);
       net->set_data_type(class_type);
       pform_bind_attributes(net->attributes, attr, true);
 }
