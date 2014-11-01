@@ -3170,6 +3170,11 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
       assert(enum_type->range->size() == 1);
 	//XXXXcur->set_range(*enum_type->range, SR_NET);
       cur->set_data_type(enum_type);
+	// If this is an integer enumeration switch the wire to an integer.
+      if (enum_type->integer_flag) {
+	    bool res = cur->set_wire_type(NetNet::INTEGER);
+	    assert(res);
+      }
       pform_bind_attributes(cur->attributes, attr, true);
 }
 

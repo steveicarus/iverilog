@@ -154,6 +154,7 @@ struct enum_type_t : public data_type_t {
 
       ivl_variable_type_t base_type;
       bool signed_flag;
+      bool integer_flag; // True if "integer" was used
       std::auto_ptr< list<pform_range_t> > range;
       std::auto_ptr< list<named_pexpr_t> > names;
       LineInfo li;

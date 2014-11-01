@@ -2296,6 +2296,7 @@ enum_data_type
 	enum_type->names .reset($3);
 	enum_type->base_type = IVL_VT_BOOL;
 	enum_type->signed_flag = true;
+	enum_type->integer_flag = false;
 	enum_type->range.reset(make_range_from_width(32));
 	$$ = enum_type;
       }
@@ -2305,6 +2306,7 @@ enum_data_type
 	enum_type->names .reset($5);
 	enum_type->base_type = IVL_VT_BOOL;
 	enum_type->signed_flag = $3;
+	enum_type->integer_flag = false;
 	enum_type->range.reset(make_range_from_width($2));
 	$$ = enum_type;
       }
@@ -2314,6 +2316,7 @@ enum_data_type
 	enum_type->names .reset($5);
 	enum_type->base_type = IVL_VT_LOGIC;
 	enum_type->signed_flag = $3;
+	enum_type->integer_flag = true;
 	enum_type->range.reset(make_range_from_width(integer_width));
 	$$ = enum_type;
       }
@@ -2323,6 +2326,7 @@ enum_data_type
 	enum_type->names .reset($6);
 	enum_type->base_type = IVL_VT_LOGIC;
 	enum_type->signed_flag = $3;
+	enum_type->integer_flag = false;
 	enum_type->range.reset($4);
 	$$ = enum_type;
       }
@@ -2332,6 +2336,7 @@ enum_data_type
 	enum_type->names .reset($6);
 	enum_type->base_type = IVL_VT_LOGIC;
 	enum_type->signed_flag = $3;
+	enum_type->integer_flag = false;
 	enum_type->range.reset($4);
 	$$ = enum_type;
       }
@@ -2341,6 +2346,7 @@ enum_data_type
 	enum_type->names .reset($6);
 	enum_type->base_type = IVL_VT_BOOL;
 	enum_type->signed_flag = $3;
+	enum_type->integer_flag = false;
 	enum_type->range.reset($4);
 	$$ = enum_type;
       }

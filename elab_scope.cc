@@ -177,8 +177,10 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       rc_flag = eval_as_long(lsb, lsb_ex);
       assert(rc_flag);
 
-      netenum_t*use_enum = new netenum_t(enum_type->base_type, enum_type->signed_flag,
-					 msb, lsb, enum_type->names->size());
+      netenum_t*use_enum = new netenum_t(enum_type->base_type,
+					 enum_type->signed_flag,
+					 enum_type->integer_flag, msb, lsb,
+					 enum_type->names->size());
 
       use_enum->set_line(enum_type->li);
       if (scope)
