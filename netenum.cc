@@ -89,6 +89,9 @@ bool netenum_t::insert_name(size_t name_idx, perm_string name, const verinum&val
 void netenum_t::insert_name_close(void)
 {
       for (size_t idx = 0 ; idx < names_.size() ; idx += 1) {
+	      // If we failed to elaborate the name then skip this step.
+	    if (names_[idx].nil()) continue;
+
 	    netenum_t::iterator cur = names_map_.find(names_[idx]);
 
 	    vector<char>str (cur->second.len() + 1);
