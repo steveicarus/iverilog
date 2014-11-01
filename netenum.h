@@ -33,7 +33,8 @@ class netenum_t : public LineInfo, public ivl_type_s {
 
     public:
       explicit netenum_t(ivl_variable_type_t base_type, bool signed_flag,
-			 long msb, long lsb, size_t name_count);
+			 bool isint_flag, long msb, long lsb,
+			 size_t name_count);
       ~netenum_t();
 
       virtual ivl_variable_type_t base_type() const;
@@ -41,6 +42,7 @@ class netenum_t : public LineInfo, public ivl_type_s {
       virtual long packed_width() const;
       std::vector<netrange_t> slice_dimensions() const;
       bool get_signed() const;
+      bool get_isint() const;
 
 	// The size() is the number of enumeration literals.
       size_t size() const;
@@ -68,6 +70,7 @@ class netenum_t : public LineInfo, public ivl_type_s {
     private:
       ivl_variable_type_t base_type_;
       bool signed_flag_;
+      bool integer_flag_;
       long msb_, lsb_;
 
       std::map<perm_string,verinum> names_map_;

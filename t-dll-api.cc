@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2433,6 +2433,8 @@ extern "C" int ivl_signal_integer(ivl_signal_t net)
 {
       if (const netvector_t*vec = dynamic_cast<const netvector_t*> (net->net_type))
 	    return vec->get_isint()? 1 : 0;
+      else if (const netenum_t*enm = dynamic_cast<const netenum_t*> (net->net_type))
+	    return enm->get_isint()? 1 : 0;
       else
 	    return 0;
 }

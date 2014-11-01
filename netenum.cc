@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,9 +24,9 @@
 using namespace std;
 
 netenum_t::netenum_t(ivl_variable_type_t btype, bool signed_flag,
-		     long msb, long lsb, size_t name_count)
-: base_type_(btype), signed_flag_(signed_flag), msb_(msb), lsb_(lsb),
-  names_(name_count), bits_(name_count)
+		     bool integer_flag, long msb, long lsb, size_t name_count)
+: base_type_(btype), signed_flag_(signed_flag), integer_flag_(integer_flag),
+  msb_(msb), lsb_(lsb), names_(name_count), bits_(name_count)
 {
 }
 
@@ -37,6 +37,11 @@ netenum_t::~netenum_t()
 bool netenum_t::get_signed() const
 {
       return signed_flag_;
+}
+
+bool netenum_t::get_isint() const
+{
+      return integer_flag_;
 }
 
 /*
@@ -84,6 +89,9 @@ bool netenum_t::insert_name(size_t name_idx, perm_string name, const verinum&val
 void netenum_t::insert_name_close(void)
 {
       for (size_t idx = 0 ; idx < names_.size() ; idx += 1) {
+	      // If we failed to elaborate the name then skip this step.
+	    if (names_[idx].nil()) continue;
+
 	    netenum_t::iterator cur = names_map_.find(names_[idx]);
 
 	    vector<char>str (cur->second.len() + 1);

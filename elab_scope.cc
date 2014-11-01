@@ -177,8 +177,10 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       rc_flag = eval_as_long(lsb, lsb_ex);
       assert(rc_flag);
 
-      netenum_t*use_enum = new netenum_t(enum_type->base_type, enum_type->signed_flag,
-					 msb, lsb, enum_type->names->size());
+      netenum_t*use_enum = new netenum_t(enum_type->base_type,
+					 enum_type->signed_flag,
+					 enum_type->integer_flag, msb, lsb,
+					 enum_type->names->size());
 
       use_enum->set_line(enum_type->li);
       if (scope)
@@ -189,16 +191,18 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       verinum cur_value (0);
       verinum one_value (1);
       size_t name_idx = 0;
+	// Find the enumeration width.
+      long raw_width = use_enum->packed_width();
+      assert(raw_width > 0);
+      unsigned enum_width = (unsigned)raw_width;
 	// Find the minimum and maximum allowed enumeration values.
       verinum min_value (0);
       verinum max_value (0);
       if (enum_type->signed_flag) {
-	    min_value = -pow(verinum(2), verinum(use_enum->packed_width()-1));
-	    max_value = pow(verinum(2), verinum(use_enum->packed_width()-1)) -
-	                one_value;
+	    min_value = -pow(verinum(2), verinum(enum_width-1));
+	    max_value = pow(verinum(2), verinum(enum_width-1)) - one_value;
       } else {
-	    max_value = pow(verinum(2), verinum(use_enum->packed_width())) -
-	                one_value;
+	    max_value = pow(verinum(2), verinum(enum_width)) - one_value;
       }
       min_value.has_sign(true);
       max_value.has_sign(enum_type->signed_flag);
@@ -237,6 +241,11 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		  continue;
 	    }
 
+	      // Cast any undefined bits to zero so the comparisons below
+	      // return just true (1) or false (0).
+	    verinum two_state_value = cur_value;
+	    two_state_value.cast_to_int2();
+
 	      // The enumeration value must fit into the enumeration bits.
 	    if (!cur_value.is_defined()) {
 		  if (cur_value.len() > (unsigned long)use_enum->packed_width()) {
@@ -247,11 +256,11 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 			des->errors += 1;
 		  }
 
-	    } else if ((cur_value > max_value) ||
-                (cur_value.has_sign() && (cur_value < min_value))) {
+	    } else if ((two_state_value > max_value) ||
+                (cur_value.has_sign() && (two_state_value < min_value))) {
 		  cerr << use_enum->get_fileline()
 		       << ": error: Enumeration name " << cur->name
-		       << " cannot have a value equal to " << cur_value
+		       << " cannot have an out of range value " << cur_value
 		       << "." << endl;
 		  des->errors += 1;
 	    }
@@ -269,15 +278,31 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	      // The values are explicitly sized to the width of the
 	      // base type of the enumeration.
 	    verinum tmp_val (0);
-	    if (cur_value.len() < (unsigned long)use_enum->packed_width()) {
+	    if (cur_value.len() < enum_width) {
 		    // Pad the current value if it is narrower than the final
 		    // width of the enum.
-		  tmp_val = pad_to_width (cur_value, use_enum->packed_width());
+		  tmp_val = pad_to_width (cur_value, enum_width);
 		  tmp_val.has_len(true);
 	    } else {
 		    // Truncate an oversized value. We report out of bound
-		    // values above. This may create duplicates.
-		  tmp_val = verinum(cur_value, use_enum->packed_width());
+		    // defined values above. Undefined values need to be
+		    // checked here. This may create duplicates.
+		  tmp_val = verinum(cur_value, enum_width);
+		    // For an undefined value verify that all the trimmed bits
+		    // match the MSB of the final enumeration value.
+		  if (! cur_value.is_defined()) for (unsigned idx = enum_width;
+			                             idx < cur_value.len();
+			                             idx += 1) {
+			if (cur_value[idx] != tmp_val[enum_width-1]) {
+			      cerr << use_enum->get_fileline()
+			           << ": error: Enumeration name " << cur->name
+			           << " cannot have trimmed bits that do not "
+			           << "match the enumeration MSB " << cur_value
+			           << "." << endl;
+			      des->errors += 1;
+			      break;
+			}
+		  }
 	    }
 	    tmp_val.has_sign(enum_type->signed_flag);
 

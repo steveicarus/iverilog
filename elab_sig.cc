@@ -597,7 +597,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		  if (dynamic_cast<const struct void_type_t*> (return_type_)) {
 			ret_type = 0;
 		  } else {
-			ret_type = return_type_->elaborate_type(des, scope);
+			ret_type = return_type_->elaborate_type(des, scope->parent());
 			ivl_assert(*this, ret_type);
 		  }
 	    } else {
@@ -610,7 +610,8 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PFunction::elaborate_sig: "
 			     << "return type: " << *ret_type << endl;
-			return_type_->pform_dump(cerr, 8);
+			if (return_type_)
+			      return_type_->pform_dump(cerr, 8);
 		  }
 		  list<netrange_t> ret_unpacked;
 		  ret_sig = new NetNet(scope, fname, NetNet::REG, ret_unpacked, ret_type);
@@ -994,10 +995,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		       << "Calculated ranges for " << basename()
 		       << ". Now check for consistency." << endl;
 	    }
-
-	    /* If we find errors here, then give up on this signal. */
-	    if (bad_range)
-		  return 0;
 
 	    /* We have a port size error */
             if (port_set_ && net_set_ && !test_ranges_eeq(plist, nlist)) {
