@@ -972,6 +972,10 @@ bool evaluate_ranges(Design*des, NetScope*scope,
 
 	    delete texpr;
 
+	      /* Error recovery */
+	    if (bad_lsb) use_lsb = 0;
+	    if (bad_msb) use_msb = use_lsb;
+
 	    llist.push_back(netrange_t(use_msb, use_lsb));
       }
 
