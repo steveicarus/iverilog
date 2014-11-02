@@ -4879,6 +4879,7 @@ bool of_QPOP_B(vthread_t thr, vvp_code_t cp)
 {
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
+      thr_check_addr(thr, bit+wid-1);
 
       vvp_net_t*net = cp->net;
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
@@ -4903,6 +4904,7 @@ bool of_QPOP_F(vthread_t thr, vvp_code_t cp)
 {
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
+      thr_check_addr(thr, bit+wid-1);
 
       vvp_net_t*net = cp->net;
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
