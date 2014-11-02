@@ -3003,10 +3003,10 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 	    context_width = 1;
 	    context_unsigned = false;
 
-      } else if (context_mode > PExpr::SIZED) {
+      } else if (context_mode >= PExpr::LOSSLESS) {
 
 	      /* Expressions may choose a different size if they are
-		 in an unsized context, so we need to run through the
+		 in a lossless context, so we need to run through the
 		 process again to get the final expression width. */
 
 	    context_width = test_case_width(des, scope, expr_, context_mode);
@@ -3069,7 +3069,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 
 	/* Iterate over all the case items (guard/statement pairs)
 	   elaborating them. If the guard has no expression, then this
-	   is a "default" cause. Otherwise, the guard has one or more
+	   is a "default" case. Otherwise, the guard has one or more
 	   expressions, and each guard is a case. */
       unsigned inum = 0;
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
