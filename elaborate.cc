@@ -3110,6 +3110,8 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 	    }
       }
 
+      res->prune();
+
       return res;
 }
 

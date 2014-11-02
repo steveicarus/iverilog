@@ -2939,6 +2939,8 @@ class NetCase  : public NetProc {
 
       void set_case(unsigned idx, NetExpr*ex, NetProc*st);
 
+      void prune();
+
       TYPE type() const;
       const NetExpr*expr() const { return expr_; }
       inline unsigned nitems() const { return items_.size(); }

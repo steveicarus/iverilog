@@ -59,7 +59,7 @@ class verinum {
       ~verinum();
       verinum& operator= (const verinum&);
 
-	// Number of significant bits in this number.
+	// Number of stored bits in this number.
       unsigned len() const { return nbits_; }
 
 	// A number "has a length" if the length was specified fixed
@@ -85,6 +85,9 @@ class verinum {
 
 	// Comparison for use in sorting algorithms.
       bool is_before(const verinum&that) const;
+
+	// Number of significant bits in this number.
+      unsigned significant_bits() const;
 
 	// Convert 4-state to 2-state
       void cast_to_int2();
