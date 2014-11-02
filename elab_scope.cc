@@ -188,28 +188,31 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       else
 	    des->add_enumeration_set(enum_type, use_enum);
 
-      verinum cur_value (0);
-      verinum one_value (1);
       size_t name_idx = 0;
 	// Find the enumeration width.
       long raw_width = use_enum->packed_width();
       assert(raw_width > 0);
       unsigned enum_width = (unsigned)raw_width;
-	// Find the minimum and maximum allowed enumeration values.
-      verinum min_value (0);
+	// Define the default start value and the increment value to be the
+	// correct type for this enumeration.
+      verinum cur_value ((uint64_t)0, enum_width);
+      cur_value.has_sign(enum_type->signed_flag);
+      verinum one_value ((uint64_t)1, enum_width);
+      one_value.has_sign(enum_type->signed_flag);
+	// Find the maximum allowed enumeration value.
       verinum max_value (0);
       if (enum_type->signed_flag) {
-	    min_value = -pow(verinum(2), verinum(enum_width-1));
 	    max_value = pow(verinum(2), verinum(enum_width-1)) - one_value;
       } else {
 	    max_value = pow(verinum(2), verinum(enum_width)) - one_value;
       }
-      min_value.has_sign(true);
       max_value.has_sign(enum_type->signed_flag);
+	// Variable to indicate when a defined value wraps.
+      bool implicit_wrapped = false;
+	// Process the enumeration definition.
       for (list<named_pexpr_t>::const_iterator cur = enum_type->names->begin()
 		 ; cur != enum_type->names->end() ;  ++ cur, name_idx += 1) {
-
-
+	      // Check to see if the enumeration name has a value given.
 	    if (cur->parm) {
 		    // There is an explicit value. elaborate/evaluate
 		    // the value and assign it to the enumeration name.
@@ -217,41 +220,125 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		  NetEConst*val_const = dynamic_cast<NetEConst*> (val);
 		  if (val_const == 0) {
 			cerr << use_enum->get_fileline()
-			     << ": error: Enumeration expression is not "
-			        "constant." << endl;
+			     << ": error: Enumeration expression for "
+			     << cur->name <<" is not constant." << endl;
 			des->errors += 1;
 			continue;
 		  }
 		  cur_value = val_const->value();
+		    // Clear the implicit wrapped flag if a parameter is given.
+		  implicit_wrapped = false;
 
+		    // A 2-state value can not have a constant with X/Z bits.
 		  if (enum_type->base_type==IVL_VT_BOOL &&
 		      ! cur_value.is_defined()) {
 			cerr << use_enum->get_fileline()
 			     << ": error: Enumeration name " << cur->name
-			     << " cannot have an undefined value." << endl;
+			     << " can not have an undefined value." << endl;
 			des->errors += 1;
-			continue;
 		  }
+		    // If the constant has a defined width then it must match
+		    // the enumeration width. In strict mode unsized integers
+		    // are incorrectly given a defined size of integer width so
+		    // handle that. Unfortunately this allows 32'd0 to work
+		    // just like 0 which is wrong.
+		  if (cur_value.has_len() &&
+		     (cur_value.len() != enum_width) &&
+		     (! gn_strict_expr_width_flag ||
+		      (cur_value.len() != integer_width))) {
+			cerr << use_enum->get_fileline()
+			     << ": error: Enumeration name " << cur->name
+			     << " has an incorrectly sized value." << endl;
+			des->errors += 1;
+		  }
+
+		    // If we are padding/truncating a negative value for an
+		    // unsigned enumeration that is an error.
+		  if ((cur_value.len() != enum_width) &&
+		      ! enum_type->signed_flag && cur_value.is_negative()) {
+			cerr << use_enum->get_fileline()
+			     << ": error: Enumeration name " << cur->name
+			     << " has a negative value." << endl;
+			des->errors += 1;
+		  }
+
+		    // Narrower values need to be padded to the width of the
+		    // enumeration and defined to have the specified width.
+		  if (cur_value.len() < enum_width) {
+			cur_value = pad_to_width(cur_value, enum_width);
+		  }
+
+		    // Some wider values can be truncated.
+		  if (cur_value.len() > enum_width) {
+			unsigned check_width = enum_width - 1;
+			  // Check that the upper bits match the MSB
+			for (unsigned idx = enum_width;
+			     idx < cur_value.len();
+			     idx += 1) {
+			      if (cur_value[idx] != cur_value[check_width]) {
+				      // If this is an unsigned enumeration
+				      // then zero padding is okay.
+				    if (! enum_type->signed_flag &&
+				        (idx == enum_width) &&
+				        (cur_value[idx] == verinum::V0)) {
+					  check_width += 1;
+					  continue;
+				    }
+				    if (cur_value.is_defined()) {
+					  cerr << use_enum->get_fileline()
+					       << ": error: Enumeration name "
+					       << cur->name
+					       << " has a value that is too "
+					       << ((cur_value > max_value) ?
+					           "large" : "small")
+					       << " " << cur_value << "."
+					       << endl;
+				    } else {
+					  cerr << use_enum->get_fileline()
+					       << ": error: Enumeration name "
+					       << cur->name
+					       << " has trimmed bits that do "
+					       << "not match the enumeration "
+					       << "MSB: " << cur_value << "."
+					       << endl;
+				    }
+				    des->errors += 1;
+				    break;
+			      }
+			}
+			  // If this is an unsigned value then make sure
+			  // The upper bits are not 1.
+			if (! cur_value.has_sign() &&
+			    (cur_value[enum_width] == verinum::V1)) {
+			      cerr << use_enum->get_fileline()
+			           << ": error: Enumeration name "
+			           << cur->name
+			           << " has a value that is too large: "
+			           << cur_value << "." << endl;
+			      des->errors += 1;
+			      break;
+			}
+			cur_value = verinum(cur_value, enum_width);
+		  }
+
+		    // At this point the value has the correct size and needs
+		    // to have the correct sign attribute set.
+		  cur_value.has_len(true);
+		  cur_value.has_sign(enum_type->signed_flag);
 
 	    } else if (! cur_value.is_defined()) {
 		  cerr << use_enum->get_fileline()
 		       << ": error: Enumeration name " << cur->name
-		       << " cannot have an undefined inferred value." << endl;
+		       << " has an undefined inferred value." << endl;
 		  des->errors += 1;
 		  continue;
 	    }
 
-	      // The enumeration value must fit into the enumeration bits.
-	      // Cast any undefined bits to zero so the comparisons below
-	      // return just true (1) or false (0).
-	    verinum two_state_value = cur_value;
-	    two_state_value.cast_to_int2();
-	    if ((two_state_value > max_value) ||
-                (cur_value.has_sign() && (two_state_value < min_value))) {
+	      // Check to see if an implicitly wrapped value is used.
+	    if (implicit_wrapped) {
 		  cerr << use_enum->get_fileline()
 		       << ": error: Enumeration name " << cur->name
-		       << " cannot have an out of range value " << cur_value
-		       << "." << endl;
+		       << " has an inferred value that overflowed." << endl;
 		  des->errors += 1;
 	    }
 
@@ -265,38 +352,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	      // The values are explicitly sized to the width of the
-	      // base type of the enumeration.
-	    verinum tmp_val (0);
-	    if (cur_value.len() < enum_width) {
-		    // Pad the current value if it is narrower than the final
-		    // width of the enum.
-		  tmp_val = pad_to_width (cur_value, enum_width);
-		  tmp_val.has_len(true);
-	    } else {
-		    // Truncate an oversized value. We report out of bound
-		    // defined values above. Undefined values need to be
-		    // checked here. This may create duplicates.
-		  tmp_val = verinum(cur_value, enum_width);
-		    // For an undefined value verify that all the trimmed bits
-		    // match the MSB of the final enumeration value.
-		  if (! cur_value.is_defined()) for (unsigned idx = enum_width;
-			                             idx < cur_value.len();
-			                             idx += 1) {
-			if (cur_value[idx] != tmp_val[enum_width-1]) {
-			      cerr << use_enum->get_fileline()
-			           << ": error: Enumeration name " << cur->name
-			           << " cannot have trimmed bits that do not "
-			           << "match the enumeration MSB " << cur_value
-			           << "." << endl;
-			      des->errors += 1;
-			      break;
-			}
-		  }
-	    }
-	    tmp_val.has_sign(enum_type->signed_flag);
-
-	    rc_flag = use_enum->insert_name(name_idx, cur->name, tmp_val);
+	    rc_flag = use_enum->insert_name(name_idx, cur->name, cur_value);
 	    if (scope)
 		  rc_flag &= scope->add_enumeration_name(use_enum, cur->name);
 	    else
@@ -311,8 +367,10 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 
 	      // In case the next name has an implicit value,
 	      // increment the current value by one.
-	    if (cur_value.is_defined())
+	    if (cur_value.is_defined()) {
+		  if (cur_value == max_value) implicit_wrapped = true;
 		  cur_value = cur_value + one_value;
+	    }
       }
 
       use_enum->insert_name_close();
@@ -842,7 +900,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       delete[]attr;
 
 	// Generate schemes need to have their scopes elaborated, but
-	// we cannot do that until defparams are run, so push it off
+	// we can not do that until defparams are run, so push it off
 	// into an elaborate work item.
       if (debug_scopes)
 	    cerr << get_fileline() << ": debug: "
@@ -1584,7 +1642,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 		  continue;
 	    }
 
-	    cerr << get_fileline() << ": error: You cannot instantiate "
+	    cerr << get_fileline() << ": error: You can not instantiate "
 		 << "module " << mod->mod_name() << " within itself." << endl;
 	    cerr << get_fileline() << ":      : The offending instance is "
 		 << get_name() << " within " << scope_path(scn) << "." << endl;
