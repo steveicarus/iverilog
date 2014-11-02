@@ -3148,6 +3148,8 @@ static struct vector_info draw_ternary_expr(ivl_expr_t expr, unsigned wid)
 
 static struct vector_info draw_darray_pop(ivl_expr_t expr, unsigned wid)
 {
+      unsigned swid = ivl_expr_width(expr);
+
       struct vector_info res;
       ivl_expr_t arg;
       const char*fb;
@@ -3160,11 +3162,16 @@ static struct vector_info draw_darray_pop(ivl_expr_t expr, unsigned wid)
       res.base = allocate_vector(wid);
       res.wid = wid;
 
+      if (swid > res.wid)
+	    swid = res.wid;
+
       arg = ivl_expr_parm(expr, 0);
       assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
 
       fprintf(vvp_out, "    %%qpop/%s v%p_0, %u, %u;\n", fb,
-	      ivl_expr_signal(arg), res.base, res.wid);
+	      ivl_expr_signal(arg), res.base, swid);
+
+      pad_expr_in_place(expr, res, swid);
 
       return res;
 }
