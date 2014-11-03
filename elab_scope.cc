@@ -253,8 +253,10 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		  }
 
 		    // If we are padding/truncating a negative value for an
-		    // unsigned enumeration that is an error.
-		  if ((cur_value.len() != enum_width) &&
+		    // unsigned enumeration that is an error or if the new
+		    // value does not have a defined width.
+		  if (((cur_value.len() != enum_width) ||
+		       ! cur_value.has_len()) &&
 		      ! enum_type->signed_flag && cur_value.is_negative()) {
 			cerr << use_enum->get_fileline()
 			     << ": error: Enumeration name " << cur->name
