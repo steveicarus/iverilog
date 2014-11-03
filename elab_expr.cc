@@ -2464,7 +2464,8 @@ unsigned PECastType::test_width(Design*des, NetScope*scope, width_mode_t&wid)
       }
 
       else {
-            expr_width_ = t->packed_width();
+	    expr_width_ = t->packed_width();
+	    signed_flag_= false;
       }
 
       min_width_ = expr_width_;
@@ -2474,10 +2475,16 @@ unsigned PECastType::test_width(Design*des, NetScope*scope, width_mode_t&wid)
 NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
 				    unsigned, unsigned) const
 {
+    NetExpr*expr = base_->elaborate_expr(des, scope, base_->expr_width(), NO_FLAGS);
+
     if(dynamic_cast<const real_type_t*>(target_))
     {
-        NetExpr*expr = base_->elaborate_expr(des, scope, base_->expr_width(), NO_FLAGS);
         return cast_to_real(expr);
+    }
+
+    if(dynamic_cast<const atom2_type_t*>(target_))
+    {
+        return cast_to_int2(expr, expr_width_);
     }
 
     cerr << get_fileline() << "sorry: I don't know how to cast expression." << endl;
