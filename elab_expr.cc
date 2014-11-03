@@ -5004,6 +5004,18 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	    return res;
       }
 
+      if (net->sig()->data_type() == IVL_VT_STRING) {
+	      // Special case: This is a select of a string.
+	      // This should be interpreted as a byte select.
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Bit select of a string becomes NetESelect." << endl;
+	    }
+	    NetESelect*res = new NetESelect(net, mux, 8);
+	    res->set_line(*net);
+	    return res;
+      }
+
 	// Non-constant bit select? punt and make a subsignal
 	// device to mux the bit in the net. This is a fairly
 	// complicated task because we need to generate
