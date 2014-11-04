@@ -168,7 +168,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       assert(enum_type->range->size() == 1);
       pform_range_t&range = enum_type->range->front();
       NetExpr*msb_ex = elab_and_eval(des, scope, range.first, -1);
-      NetExpr*lsb_ex = elab_and_eval(des, scope, range.second,  -1);
+      NetExpr*lsb_ex = elab_and_eval(des, scope, range.second, -1);
 
       long msb = 0;
       rc_flag = eval_as_long(msb, msb_ex);
@@ -221,7 +221,8 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		  if (val_const == 0) {
 			cerr << use_enum->get_fileline()
 			     << ": error: Enumeration expression for "
-			     << cur->name <<" is not constant." << endl;
+			     << cur->name <<" is not an integral constant."
+			     << endl;
 			des->errors += 1;
 			continue;
 		  }
@@ -237,18 +238,19 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 			     << " can not have an undefined value." << endl;
 			des->errors += 1;
 		  }
-		    // If the constant has a defined width then it must match
-		    // the enumeration width. In strict mode unsized integers
-		    // are incorrectly given a defined size of integer width so
-		    // handle that. Unfortunately this allows 32'd0 to work
-		    // just like 0 which is wrong.
-		  if (cur_value.has_len() &&
-		     (cur_value.len() != enum_width) &&
-		     (! gn_strict_expr_width_flag ||
-		      (cur_value.len() != integer_width))) {
+		    // If the literal constant has a defined width then it
+		    // must match the enumeration width. In strict mode
+		    // unsized integers are incorrectly given a defined size
+		    // of integer width so handle that. Unfortunately this
+		    // allows 32'd0 to work just like 0 which is wrong.
+		  if (dynamic_cast<PENumber*>(cur->parm) &&
+		      cur_value.has_len() &&
+		      (cur_value.len() != enum_width) &&
+		      (! gn_strict_expr_width_flag ||
+		       (cur_value.len() != integer_width))) {
 			cerr << use_enum->get_fileline()
 			     << ": error: Enumeration name " << cur->name
-			     << " has an incorrectly sized value." << endl;
+			     << " has an incorrectly sized constant." << endl;
 			des->errors += 1;
 		  }
 
