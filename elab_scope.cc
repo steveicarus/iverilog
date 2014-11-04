@@ -221,7 +221,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		  if (val_const == 0) {
 			cerr << use_enum->get_fileline()
 			     << ": error: Enumeration expression for "
-			     << cur->name <<" is not an integral constant."
+			     << cur->name <<" is not an integer constant."
 			     << endl;
 			des->errors += 1;
 			continue;
@@ -238,20 +238,17 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 			     << " can not have an undefined value." << endl;
 			des->errors += 1;
 		  }
-		    // If the literal constant has a defined width then it
-		    // must match the enumeration width. In strict mode
-		    // unsized integers are incorrectly given a defined size
-		    // of integer width so handle that. Unfortunately this
-		    // allows 32'd0 to work just like 0 which is wrong.
-		  if (dynamic_cast<PENumber*>(cur->parm) &&
-		      cur_value.has_len() &&
-		      (cur_value.len() != enum_width) &&
-		      (! gn_strict_expr_width_flag ||
-		       (cur_value.len() != integer_width))) {
-			cerr << use_enum->get_fileline()
-			     << ": error: Enumeration name " << cur->name
-			     << " has an incorrectly sized constant." << endl;
-			des->errors += 1;
+		    // If this is a literal constant and it has a defined
+		    // width then the width must match the enumeration width.
+		  if (PENumber *tmp = dynamic_cast<PENumber*>(cur->parm)) {
+			if (tmp->value().has_len() &&
+			    (tmp->value().len() != enum_width)) {
+			      cerr << use_enum->get_fileline()
+			           << ": error: Enumeration name " << cur->name
+			           << " has an incorrectly sized constant."
+			           << endl;
+			      des->errors += 1;
+			}
 		  }
 
 		    // If we are padding/truncating a negative value for an
