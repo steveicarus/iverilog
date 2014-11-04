@@ -180,7 +180,8 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       netenum_t*use_enum = new netenum_t(enum_type->base_type,
 					 enum_type->signed_flag,
 					 enum_type->integer_flag, msb, lsb,
-					 enum_type->names->size());
+					 enum_type->names->size(),
+					 enum_type);
 
       use_enum->set_line(enum_type->li);
       if (scope)

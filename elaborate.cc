@@ -38,6 +38,7 @@
 # include  "PPackage.h"
 # include  "PSpec.h"
 # include  "netlist.h"
+# include  "netenum.h"
 # include  "netvector.h"
 # include  "netdarray.h"
 # include  "netparray.h"
@@ -2668,7 +2669,8 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    return bl;
       }
 
-      if (lv->enumeration() && (lv->enumeration() != rv->enumeration())) {
+      if (lv->enumeration() &&
+          ! lv->enumeration()->matches(rv->enumeration())) {
 	    cerr << get_fileline() << ": error: "
 		 << "Enumeration type mismatch in assignment." << endl;
 	    des->errors += 1;
