@@ -1,5 +1,8 @@
+%language=C++
+%define class-name Lkwd
+
 %{
-/* Command-line: gperf -o -i 1 -C -k 1-3,$ -L C -H keyword_hash -N check_identifier -tT lexor_keyword.gperf */
+/* Command-line: gperf -o -i 7 -C -k 1-4,$ -H keyword_hash -N check_identifier -t lexor_keyword.gperf */
 
 #include "config.h"
 #include "parse_misc.h"
@@ -194,7 +197,7 @@ int lexor_keyword_mask = 0;
 
 int lexor_keyword_code(const char*str, unsigned nstr)
 {
-      const struct lexor_keyword*rc = check_identifier(str, nstr);
+      const struct lexor_keyword*rc = Lkwd::check_identifier(str, nstr);
       if (rc == 0)
 	  return IDENTIFIER;
       else if ((rc->mask & lexor_keyword_mask) == 0)

@@ -10,4 +10,4 @@ echo "Autoconf in root..."
 autoconf -f
 
 echo "Precompiling lexor_keyword.gperf"
-gperf -o -i 7 -C -k 1-4,\$ -L ANSI-C -H keyword_hash -N check_identifier -t ./lexor_keyword.gperf > lexor_keyword.cc
+gperf -o -i 7 -C -k 1-4,\$ -H keyword_hash -N check_identifier -t ./lexor_keyword.gperf > lexor_keyword.cc
