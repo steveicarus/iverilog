@@ -22,4 +22,5 @@ $simparam      vpiSysFuncReal
 $simparam$str  vpiSysFuncSized 1024 unsigned
 $table_model   vpiSysFuncReal
 
-$ivl_string_method$len	vpiSysFuncInt
+$ivl_string_method$len      vpiSysFuncInt
+$ivl_string_method$to_vec   vpiSysFuncVoid
