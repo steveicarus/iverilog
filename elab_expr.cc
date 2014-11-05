@@ -2475,22 +2475,22 @@ unsigned PECastType::test_width(Design*des, NetScope*scope, width_mode_t&wid)
 NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
 				    unsigned, unsigned) const
 {
-    NetExpr*expr = base_->elaborate_expr(des, scope, base_->expr_width(), NO_FLAGS);
+      NetExpr*expr = base_->elaborate_expr(des, scope, base_->expr_width(), NO_FLAGS);
 
-    if(dynamic_cast<const real_type_t*>(target_))
-    {
-        return cast_to_real(expr);
-    }
+      if(dynamic_cast<const real_type_t*>(target_))
+      {
+          return cast_to_real(expr);
+      }
 
-    if(dynamic_cast<const atom2_type_t*>(target_))
-    {
-        return cast_to_int2(expr, expr_width_);
-    }
+      if(dynamic_cast<const atom2_type_t*>(target_))
+      {
+          return cast_to_int2(expr, expr_width_);
+      }
 
-    cerr << get_fileline() << "sorry: I don't know how to cast expression." << endl;
-    ivl_assert(*this, false);
+      cerr << get_fileline() << "sorry: I don't know how to cast expression." << endl;
+      ivl_assert(*this, false);
 
-    return expr;
+      return expr;
 }
 
 unsigned PEConcat::test_width(Design*des, NetScope*scope, width_mode_t&)
