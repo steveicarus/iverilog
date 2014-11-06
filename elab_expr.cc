@@ -2445,7 +2445,7 @@ unsigned PECastType::test_width(Design*des, NetScope*scope, width_mode_t&wid)
 
       else if(const netstring_t*use_string = dynamic_cast<const netstring_t*> (t)) {
 	    expr_type_  = use_string->base_type();
-	    expr_width_ = 1;
+	    expr_width_ = 8;
 	    signed_flag_= false;
       }
 
@@ -2485,6 +2485,20 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
       if(dynamic_cast<const atom2_type_t*>(target_))
       {
           return cast_to_int2(expr, expr_width_);
+      }
+
+      if(const vector_type_t*vec = dynamic_cast<const vector_type_t*>(target_))
+      {
+          switch(vec->base_type) {
+              case IVL_VT_BOOL:
+                  return cast_to_int2(expr, expr_width_);
+
+              case IVL_VT_LOGIC:
+                  return cast_to_int4(expr, expr_width_);
+
+              default:
+                  break;  /* Suppress warnings */
+          }
       }
 
       cerr << get_fileline() << "sorry: I don't know how to cast expression." << endl;
