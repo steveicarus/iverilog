@@ -2440,34 +2440,19 @@ unsigned PECastType::test_width(Design*des, NetScope*scope, width_mode_t&wid)
       if(const netdarray_t*use_darray = dynamic_cast<const netdarray_t*> (t)) {
 	    expr_type_  = use_darray->element_base_type();
 	    expr_width_ = use_darray->element_width();
-	    signed_flag_= false;
       }
 
       else if(const netstring_t*use_string = dynamic_cast<const netstring_t*> (t)) {
 	    expr_type_  = use_string->base_type();
 	    expr_width_ = 8;
-	    signed_flag_= false;
-      }
-
-      else if(const netstruct_t*use_struct = dynamic_cast<const netstruct_t*> (t)) {
-	    ivl_assert(*this, use_struct->packed());
-	    expr_type_  = use_struct->base_type();
-	    expr_width_ = use_struct->packed_width();
-	    signed_flag_= false;
-      }
-
-      else if(const netvector_t*use_vector = dynamic_cast<const netvector_t*> (t)) {
-	    ivl_assert(*this, use_vector->packed());
-	    expr_type_  = use_vector->base_type();
-	    expr_width_ = use_vector->packed_width();
-	    signed_flag_= false;
       }
 
       else {
+	    expr_type_  = t->base_type();
 	    expr_width_ = t->packed_width();
-	    signed_flag_= false;
       }
 
+      signed_flag_= t->get_signed();
       min_width_ = expr_width_;
       return expr_width_;
 }
@@ -2482,9 +2467,12 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
           return cast_to_real(expr);
       }
 
-      if(dynamic_cast<const atom2_type_t*>(target_))
+      if(const atom2_type_t*atom = dynamic_cast<const atom2_type_t*>(target_))
       {
-          return cast_to_int2(expr, expr_width_);
+          // That is how you both resize & cast to integers
+          ivl_assert(*this, base_->expr_width() <= expr_width_);
+          ivl_assert(*this, base_->has_sign() == atom->signed_flag); // no sign casting here
+          return new NetECast('2', expr, expr_width_, expr->has_sign());
       }
 
       if(const vector_type_t*vec = dynamic_cast<const vector_type_t*>(target_))
