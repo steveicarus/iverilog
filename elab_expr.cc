@@ -2494,6 +2494,19 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
           }
       }
 
+      else if(dynamic_cast<const string_type_t*>(target_)) {
+          if(base_->expr_type() == IVL_VT_STRING)
+            return expr;        // no conversion
+
+          if((base_->expr_type() != IVL_VT_BOOL) &&
+                (base_->expr_type() != IVL_VT_LOGIC)) {
+              cerr << get_fileline() << ": cannot be casted to string." << endl;
+              ivl_assert(*this, false);
+          }
+
+          return expr;
+      }
+
       cerr << get_fileline() << ": sorry: I don't know how to cast expression." << endl;
       ivl_assert(*this, false);
 
