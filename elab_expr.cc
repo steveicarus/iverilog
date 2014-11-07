@@ -2462,21 +2462,26 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
 {
       NetExpr*expr = base_->elaborate_expr(des, scope, base_->expr_width(), NO_FLAGS);
 
-      if(dynamic_cast<const real_type_t*>(target_))
-      {
+      if(dynamic_cast<const real_type_t*>(target_)) {
           return cast_to_real(expr);
       }
 
-      if(const atom2_type_t*atom = dynamic_cast<const atom2_type_t*>(target_))
-      {
+      if(const atom2_type_t*atom = dynamic_cast<const atom2_type_t*>(target_)) {
+          if(base_->expr_width() > expr_width_) {
+              cerr << get_fileline() << ": cast type is not wide enough to store the result." << endl;
+              ivl_assert(*this, 0);
+          }
+
+          if(base_->has_sign() != atom->signed_flag) {
+              cerr << get_fileline() << ": cast type and subject differ in signedness." << endl;
+              ivl_assert(*this, 0);
+          }
+
           // That is how you both resize & cast to integers
-          ivl_assert(*this, base_->expr_width() <= expr_width_);
-          ivl_assert(*this, base_->has_sign() == atom->signed_flag); // no sign casting here
           return new NetECast('2', expr, expr_width_, expr->has_sign());
       }
 
-      if(const vector_type_t*vec = dynamic_cast<const vector_type_t*>(target_))
-      {
+      if(const vector_type_t*vec = dynamic_cast<const vector_type_t*>(target_)) {
           switch(vec->base_type) {
               case IVL_VT_BOOL:
                   return cast_to_int2(expr, expr_width_);
@@ -2489,7 +2494,7 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
           }
       }
 
-      cerr << get_fileline() << "sorry: I don't know how to cast expression." << endl;
+      cerr << get_fileline() << ": sorry: I don't know how to cast expression." << endl;
       ivl_assert(*this, false);
 
       return expr;
