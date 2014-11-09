@@ -384,7 +384,6 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	   index of the mux value, and the statement is bound to that
 	   index. */
 
-      unsigned long max_guard_value = 0;
       map<unsigned long,NetProc*>statement_map;
       NetProc*statement_default = 0;
 
@@ -395,28 +394,48 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    }
 
 	    NetEConst*ge = dynamic_cast<NetEConst*>(items_[item].guard);
+	    if (ge == 0) {
+		  cerr << items_[item].guard->get_fileline() << ": sorry: "
+		       << "variable case item expressions with a variable "
+		       << "case select expression are not supported in "
+		       << "synthesis. " << endl;
+		  des->errors += 1;
+		  return false;
+	    }
 	    ivl_assert(*this, ge);
 	    verinum gval = ge->value();
 
-	    unsigned sel_idx = gval.as_ulong();
+	    unsigned long sel_idx = gval.as_ulong();
 
-	    assert(items_[item].statement);
+	    if (statement_map[sel_idx]) {
+		  cerr << ge->get_fileline() << ": warning: duplicate case "
+		       << "value '" << sel_idx << "' detected. This case is "
+		       << "unreachable." << endl;
+		  delete items_[item].statement;
+		  items_[item].statement = 0;
+		  continue;
+	    }
+
+	    ivl_assert(*this, items_[item].statement);
 	    statement_map[sel_idx] = items_[item].statement;
-
-	    if (sel_idx > max_guard_value)
-		  max_guard_value = sel_idx;
       }
 
-	// The mux_size is the number of inputs that are selected.
-      unsigned mux_size = max_guard_value + 1;
-
-	// If the sel_width can select more than just the explicit
-	// guard values, and there is a default statement, then adjust
-	// the mux size to allow for the implicit selections.
-      if (statement_default && ((1U<<sel_width) > mux_size)) {
-	    mux_size = 1<<sel_width;
+      if (!statement_default && (statement_map.size() != ((size_t)1 << sel_width))) {
+	    cerr << get_fileline() << ": sorry: Latch inferred from "
+		 << "incomplete case statement. This is not supported "
+		 << "in synthesis." << endl;
+	    des->errors += 1;
+	    return false;
       }
 
+      if (sel_width >= 8*sizeof(unsigned)) {
+	    cerr << get_fileline() << ": sorry: mux select width of "
+		 << sel_width << " bits is too large for synthesis." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      unsigned mux_size = 1U << sel_width;
 
 	/* If there is a default clause, synthesize it once and we'll
 	   link it in wherever it is needed. */
@@ -481,12 +500,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 
 		  continue;
 	    }
-	    if (stmt == 0) {
-		  cerr << get_fileline() << ": error: case " << idx
-		       << " is not accounted for in asynchronous mux." << endl;
-		  des->errors += 1;
-		  continue;
-	    }
+	    ivl_assert(*this, stmt);
 
 	    NetBus accumulated_tmp (scope, nex_map.size());
 	    for (unsigned pin = 0 ; pin < nex_map.size() ; pin += 1)
@@ -1785,9 +1799,9 @@ void synth2_f::process(Design*des, NetProcTop*top)
       }
 
       if (! top->synth_async(des)) {
-	    cerr << top->get_fileline() << ": internal error: "
-		 << "is_asynchronous does not match "
-		 << "sync_async results." << endl;
+	    cerr << top->get_fileline() << ": error: "
+		 << "failed to synthesize asynchronous "
+		 << "logic for this process." << endl;
 	    des->errors += 1;
 	    return;
       }
