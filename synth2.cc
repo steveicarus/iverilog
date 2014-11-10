@@ -338,6 +338,103 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
       return flag;
 }
 
+/*
+ * This function is used to fix up a MUX selector to be no longer than
+ * it needs to be. The general idea is that if the selector needs to
+ * be only N bits, but is actually M bits, we translate it to this:
+ *
+ *     osig = { |esig[M-1:N-1], esig[N-2:0] }
+ *
+ * This obviously implies that (N >= 2) and (M >= N). In the code
+ * below, N is sel_need, and M is sel_got (= esig->vector_width()).
+ */
+static NetNet* mux_selector_reduce_width(Design*des, NetScope*scope,
+					 const LineInfo&loc,
+					 NetNet*esig, unsigned sel_need)
+{
+      const unsigned sel_got = esig->vector_width();
+
+      ivl_assert(*esig, sel_got >= sel_need);
+
+	// If the actual width matches the desired width (M==N) then
+	// osig is esig itself. We're done.
+      if (sel_got == sel_need)
+	    return esig;
+
+      if (debug_synth2) {
+	    cerr << loc.get_fileline() << ": mux_selector_reduce_width: "
+		 << "Reduce selector width=" << sel_got
+		 << " to " << sel_need << " bits." << endl;
+      }
+
+      ivl_assert(*esig, sel_need >= 2);
+
+	// This is the output signal, osig.
+      ivl_variable_type_t osig_data_type = IVL_VT_LOGIC;
+      netvector_t*osig_vec = new netvector_t(osig_data_type, sel_need-1, 0);
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::TRI, osig_vec);
+      osig->local_flag(true);
+      osig->set_line(loc);
+
+	// Create the concat: osig = {...,...}
+      NetConcat*osig_cat = new NetConcat(scope, scope->local_symbol(),
+					 sel_need, 2, true);
+      osig_cat->set_line(loc);
+      des->add_node(osig_cat);
+      connect(osig_cat->pin(0), osig->pin(0));
+
+	// Create the part select esig[N-2:0]...
+      NetPartSelect*ps0 = new NetPartSelect(esig, 0, sel_need-1,
+					    NetPartSelect::VP);
+      ps0->set_line(loc);
+      des->add_node(ps0);
+      connect(ps0->pin(1), esig->pin(0));
+
+      netvector_t*ps0_vec = new netvector_t(osig_data_type, sel_need-2, 0);
+      NetNet*ps0_sig = new NetNet(scope, scope->local_symbol(),
+				  NetNet::TRI, ps0_vec);
+      ps0_sig->local_flag(true);
+      ps0_sig->set_line(loc);
+      connect(ps0_sig->pin(0), ps0->pin(0));
+
+	// osig = {..., esig[N-2:0]}
+      connect(osig_cat->pin(1), ps0_sig->pin(0));
+
+	// Create the part select esig[M-1:N-1]
+      NetPartSelect*ps1 = new NetPartSelect(esig, sel_need-1,
+					    sel_got-sel_need,
+					    NetPartSelect::VP);
+      ps1->set_line(loc);
+      des->add_node(ps1);
+      connect(ps1->pin(1), esig->pin(0));
+
+      netvector_t*ps1_vec = new netvector_t(osig_data_type, sel_got-sel_need-1, 0);
+      NetNet*ps1_sig = new NetNet(scope, scope->local_symbol(),
+				  NetNet::TRI, ps1_vec);
+      ps1_sig->local_flag(true);
+      ps1_sig->set_line(loc);
+      connect(ps1_sig->pin(0), ps1->pin(0));
+
+	// Create the reduction OR: | esig[M-1:N-1]
+      NetUReduce*ered = new NetUReduce(scope, scope->local_symbol(),
+				       NetUReduce::OR, sel_got-sel_need);
+      ered->set_line(loc);
+      des->add_node(ered);
+      connect(ered->pin(1), ps1_sig->pin(0));
+
+      NetNet*ered_sig = new NetNet(scope, scope->local_symbol(),
+				   NetNet::TRI, &netvector_t::scalar_logic);
+      ered_sig->local_flag(true);
+      ered_sig->set_line(loc);
+      connect(ered->pin(0), ered_sig->pin(0));
+
+	// osig = { |esig[M-1:N-1], esig[N-2:0] }
+      connect(osig_cat->pin(2), ered_sig->pin(0));
+
+      return osig;
+}
+
 bool NetCase::synth_async(Design*des, NetScope*scope,
 			  NexusSet&nex_map, NetBus&nex_out,
 			  NetBus&accumulated_nex_out)
@@ -352,11 +449,21 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       if (dynamic_cast<NetEConst*> (expr_))
 	    return synth_async_casez_(des, scope, nex_map, nex_out, accumulated_nex_out);
 
+      if (debug_synth2) {
+	    cerr << get_fileline() << ": NetCase::synth_async: "
+		 << "Selector expression: " << *expr_ << endl;
+      }
+
 	/* Synthesize the select expression. */
       NetNet*esig = expr_->synthesize(des, scope, expr_);
 
       unsigned sel_width = esig->vector_width();
       ivl_assert(*this, sel_width > 0);
+
+      if (debug_synth2) {
+	    cerr << get_fileline() << ": NetCase::synth_async: "
+		 << "selector width (sel_width) = " << sel_width << endl;
+      }
 
       ivl_assert(*this, nex_map.size() == nex_out.pin_count());
 
@@ -409,14 +516,33 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 
 	// The mux_size is the number of inputs that are selected.
       unsigned mux_size = max_guard_value + 1;
+      unsigned sel_need = ceil(log2(mux_size));
 
 	// If the sel_width can select more than just the explicit
 	// guard values, and there is a default statement, then adjust
 	// the mux size to allow for the implicit selections.
-      if (statement_default && ((1U<<sel_width) > mux_size)) {
-	    mux_size = 1<<sel_width;
+      if (statement_default && (sel_width > sel_need)) {
+	    sel_need += 1;
+	    ivl_assert(*this, sel_need < sizeof mux_size);
+	    mux_size = 1<<sel_need;
       }
 
+      if (debug_synth2) {
+	    cerr << get_fileline() << ": NetCase::synth_async: "
+		 << "Adjusted mux_size is " << mux_size
+		 << " (max_guard_value=" << max_guard_value
+		 << ", sel_need=" << sel_need
+		 << ", sel_width=" << sel_width << ")." << endl;
+      }
+
+      if (sel_width > sel_need) {
+	    if (debug_synth2) {
+		  cerr << get_fileline() << ": NetCase::synth_async: "
+		       << "Selector is " << sel_width << " bits, "
+		       << "need only " << sel_need << " bits." << endl;
+	    }
+	    esig = mux_selector_reduce_width(des, scope, *this, esig, sel_need);
+      }
 
 	/* If there is a default clause, synthesize it once and we'll
 	   link it in wherever it is needed. */
@@ -445,7 +571,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       vector<NetMux*> mux (mux_width.size());
       for (size_t mdx = 0 ; mdx < mux_width.size() ; mdx += 1) {
 	    mux[mdx] = new NetMux(scope, scope->local_symbol(),
-				  mux_width[mdx], mux_size, sel_width);
+				  mux_width[mdx], mux_size, sel_need);
 	    des->add_node(mux[mdx]);
 
 	      // The select signal is already synthesized, and is
