@@ -644,6 +644,42 @@ static char*vpi_array_var_word_get_str(int code, vpiHandle ref)
       return generic_get_str(code, parent->scope, parent->name, sidx);
 }
 
+// This function return true if the underlying array words are real.
+static bool vpi_array_is_real(vvp_array_t arr)
+{
+	// Check to see if this is a variable/register array.
+      if (arr->vals4 != 0)  // A bit based variable/register array.
+	    return false;
+
+      if (dynamic_cast<vvp_darray_real*> (arr->vals))
+	    return true;
+
+      if (arr->vals != 0)
+	    return false;
+
+	// This must be a net array so look at element 0 to find the type.
+      assert(arr->nets != 0);
+      assert(arr->array_count > 0);
+      struct __vpiRealVar*rsig = dynamic_cast<__vpiRealVar*>(arr->nets[0]);
+      if (rsig) {
+	    return true;
+      }
+
+      return false;
+}
+
+static bool vpi_array_is_string(vvp_array_t arr)
+{
+	// Check to see if this is a variable/register array.
+      if (arr->vals4 != 0)  // A bit based variable/register array.
+	    return false;
+
+      if (dynamic_cast<vvp_darray_string*> (arr->vals))
+	    return true;
+
+      return false;
+}
+
 static void vpi_array_var_word_get_value(vpiHandle ref, p_vpi_value vp)
 {
       struct __vpiArrayWord*obj = array_var_word_from_handle(ref);
@@ -651,10 +687,54 @@ static void vpi_array_var_word_get_value(vpiHandle ref, p_vpi_value vp)
 
       assert(obj);
       unsigned index = decode_array_word_pointer(obj, parent);
-      unsigned width = parent->vals4->width();
 
-      vpip_vec4_get_value(parent->vals4->get_word(index), width,
-                          parent->signed_flag, vp);
+    // Determine the appropriate format (The Verilog PLI Handbook 5.2.10)
+      if(vp->format == vpiObjTypeVal) {
+          if(vpi_array_is_real(parent))
+              vp->format = vpiRealVal;
+          else if(vpi_array_is_string(parent))
+              vp->format = vpiStringVal;
+          else
+              vp->format = vpiIntVal;
+      }
+
+      if(parent->vals4) {
+          vpip_vec4_get_value(parent->vals4->get_word(index),
+                              parent->vals4->width(), parent->signed_flag, vp);
+      } else if(parent->vals) {
+          switch(vp->format) {
+            case vpiIntVal:
+            case vpiVectorVal:
+            {
+                vvp_vector4_t v;
+                parent->vals->get_word(index, v);
+                vpip_vec2_get_value(v, parent->vals_width, parent->signed_flag, vp);
+            }
+            break;
+
+            case vpiRealVal:
+            {
+                double d;
+                parent->vals->get_word(index, d);
+                vpip_real_get_value(d, vp);
+            }
+            break;
+
+            case vpiStringVal:
+            {
+                string s;
+                parent->vals->get_word(index, s);
+                vpip_string_get_value(s, vp);
+            }
+            break;
+
+            // TODO *StrVal variants
+
+            default:
+                fprintf(stderr, "vpi sorry: format is not implemented");
+                assert(false);
+          }
+      }
 }
 
 static vpiHandle vpi_array_var_word_put_value(vpiHandle ref, p_vpi_value vp, int)
@@ -798,42 +878,6 @@ static char*vpi_array_vthr_A_get_str(int code, vpiHandle ref)
       char sidx [64];
       snprintf(sidx, 63, "%d", (int)obj->get_address() + parent->first_addr.get_value());
       return generic_get_str(code, parent->scope, parent->name, sidx);
-}
-
-// This function return true if the underlying array words are real.
-static bool vpi_array_is_real(vvp_array_t arr)
-{
-	// Check to see if this is a variable/register array.
-      if (arr->vals4 != 0)  // A bit based variable/register array.
-	    return false;
-
-      if (dynamic_cast<vvp_darray_real*> (arr->vals))
-	    return true;
-
-      if (arr->vals != 0)
-	    return false;
-
-	// This must be a net array so look at element 0 to find the type.
-      assert(arr->nets != 0);
-      assert(arr->array_count > 0);
-      struct __vpiRealVar*rsig = dynamic_cast<__vpiRealVar*>(arr->nets[0]);
-      if (rsig) {
-	    return true;
-      }
-
-      return false;
-}
-
-static bool vpi_array_is_string(vvp_array_t arr)
-{
-	// Check to see if this is a variable/register array.
-      if (arr->vals4 != 0)  // A bit based variable/register array.
-	    return false;
-
-      if (dynamic_cast<vvp_darray_string*> (arr->vals))
-	    return true;
-
-      return false;
 }
 
 static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value vp)
