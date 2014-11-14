@@ -587,6 +587,21 @@ bool verinum::is_negative() const
       return (bits_[nbits_-1] == V1) && has_sign();
 }
 
+unsigned verinum::significant_bits() const
+{
+      unsigned sbits = nbits_;
+
+      if (has_sign_) {
+	    V sign_bit = bits_[sbits-1];
+	    while ((sbits > 1) && (bits_[sbits-2] == sign_bit))
+		  sbits -= 1;
+      } else {
+	    while ((sbits > 1) && (bits_[sbits-1] == verinum::V0))
+		  sbits -= 1;
+      }
+      return sbits;
+}
+
 void verinum::cast_to_int2()
 {
       for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1) {
@@ -765,7 +780,7 @@ ostream& operator<< (ostream&o, const verinum&v)
 
 	/* If the number is fully defined (no x or z) then print it
 	   out as a decimal number. */
-      if (v.is_defined() && v.len() < 8*sizeof(long)) {
+      if (v.is_defined() && v.len() <= 8*sizeof(long)) {
 	    if (v.has_sign())
 		  o << "'sd" << v.as_long();
 	    else

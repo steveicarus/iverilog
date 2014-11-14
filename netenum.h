@@ -29,12 +29,14 @@
 
 class NetScope;
 
+struct enum_type_t;
+
 class netenum_t : public LineInfo, public ivl_type_s {
 
     public:
       explicit netenum_t(ivl_variable_type_t base_type, bool signed_flag,
 			 bool isint_flag, long msb, long lsb,
-			 size_t name_count);
+			 size_t name_count, enum_type_t*enum_type);
       ~netenum_t();
 
       virtual ivl_variable_type_t base_type() const;
@@ -67,8 +69,12 @@ class netenum_t : public LineInfo, public ivl_type_s {
       perm_string name_at(size_t idx) const;
       perm_string bits_at(size_t idx) const;
 
+	// Check if two enumerations have the same definition.
+      bool matches(const netenum_t*other) const;
+
     private:
       ivl_variable_type_t base_type_;
+      enum_type_t*enum_type_;
       bool signed_flag_;
       bool integer_flag_;
       long msb_, lsb_;

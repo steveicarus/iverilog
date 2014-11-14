@@ -502,16 +502,33 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    }
 
 	    NetEConst*ge = dynamic_cast<NetEConst*>(items_[item].guard);
+	    if (ge == 0) {
+		  cerr << items_[item].guard->get_fileline() << ": sorry: "
+		       << "variable case item expressions with a variable "
+		       << "case select expression are not supported in "
+		       << "synthesis. " << endl;
+		  des->errors += 1;
+		  return false;
+	    }
 	    ivl_assert(*this, ge);
 	    verinum gval = ge->value();
 
-	    unsigned sel_idx = gval.as_ulong();
+	    unsigned long sel_idx = gval.as_ulong();
 
-	    assert(items_[item].statement);
-	    statement_map[sel_idx] = items_[item].statement;
+	    if (statement_map[sel_idx]) {
+		  cerr << ge->get_fileline() << ": warning: duplicate case "
+		       << "value '" << sel_idx << "' detected. This case is "
+		       << "unreachable." << endl;
+		  delete items_[item].statement;
+		  items_[item].statement = 0;
+		  continue;
+	    }
 
 	    if (sel_idx > max_guard_value)
 		  max_guard_value = sel_idx;
+
+	    ivl_assert(*this, items_[item].statement);
+	    statement_map[sel_idx] = items_[item].statement;
       }
 
 	// The mux_size is the number of inputs that are selected.
@@ -542,6 +559,14 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 		       << "need only " << sel_need << " bits." << endl;
 	    }
 	    esig = mux_selector_reduce_width(des, scope, *this, esig, sel_need);
+      }
+
+      if (!statement_default && (statement_map.size() != ((size_t)1 << sel_width))) {
+	    cerr << get_fileline() << ": sorry: Latch inferred from "
+		 << "incomplete case statement. This is not supported "
+		 << "in synthesis." << endl;
+	    des->errors += 1;
+	    return false;
       }
 
 	/* If there is a default clause, synthesize it once and we'll
@@ -607,12 +632,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 
 		  continue;
 	    }
-	    if (stmt == 0) {
-		  cerr << get_fileline() << ": error: case " << idx
-		       << " is not accounted for in asynchronous mux." << endl;
-		  des->errors += 1;
-		  continue;
-	    }
+	    ivl_assert(*this, stmt);
 
 	    NetBus accumulated_tmp (scope, nex_map.size());
 	    for (unsigned pin = 0 ; pin < nex_map.size() ; pin += 1)
@@ -1911,9 +1931,9 @@ void synth2_f::process(Design*des, NetProcTop*top)
       }
 
       if (! top->synth_async(des)) {
-	    cerr << top->get_fileline() << ": internal error: "
-		 << "is_asynchronous does not match "
-		 << "sync_async results." << endl;
+	    cerr << top->get_fileline() << ": error: "
+		 << "failed to synthesize asynchronous "
+		 << "logic for this process." << endl;
 	    des->errors += 1;
 	    return;
       }

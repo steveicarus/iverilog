@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,8 +19,10 @@
 
 # include "config.h"
 
+# include  "compiler.h"
 # include  "netlist.h"
-# include  <cassert>
+# include  "netmisc.h"
+# include  "ivl_assert.h"
 
 NetBlock::NetBlock(Type t, NetScope*ss)
 : type_(t), subscope_(ss), last_(0)
@@ -73,7 +75,7 @@ const NetProc* NetBlock::proc_next(const NetProc*cur) const
 NetCase::NetCase(NetCase::TYPE c, NetExpr*ex, unsigned cnt)
 : type_(c), expr_(ex), items_(cnt)
 {
-      assert(expr_);
+      ivl_assert(*this, expr_);
 }
 
 NetCase::~NetCase()
@@ -92,9 +94,71 @@ NetCase::TYPE NetCase::type() const
 
 void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
 {
-      assert(idx < items_.size());
+      ivl_assert(*this, idx < items_.size());
       items_[idx].guard = e;
       items_[idx].statement = p;
+}
+
+void NetCase::prune()
+{
+	// Test whether the case expression has been padded out
+      NetESelect*padded_expr = dynamic_cast<NetESelect*>(expr_);
+      if ((padded_expr == 0) || (padded_expr->select() != 0))
+	    return;
+
+	// If so, run through the case item expressions to find
+	// the minimum number of bits needed to unambiguously
+	// select the correct case item.
+      const NetExpr*unpadded_expr = padded_expr->sub_expr();
+      unsigned padded_width = padded_expr->expr_width();
+      unsigned prune_width = unpadded_expr->expr_width();
+      for (unsigned idx = 0; idx < items_.size(); idx += 1) {
+	      // If there is no guard expression, this is the default
+	      // case, so skip it.
+	    if (items_[idx].guard == 0)
+		  continue;
+
+	      // If the guard expression is not constant, assume
+	      // all bits are needed, so no pruning can be done.
+	    NetEConst*gc = dynamic_cast<NetEConst*>(items_[idx].guard);
+	    if (gc == 0)
+		  return;
+
+	    unsigned sig_bits = gc->value().significant_bits();
+	    if (sig_bits > prune_width)
+		  prune_width = sig_bits;
+
+	      // If all the padding bits are needed, no pruning
+	      // can be done.
+	    if (prune_width >= padded_width)
+		  return;
+      }
+      ivl_assert(*this, prune_width < padded_width);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: pruning case expressions to "
+		 << prune_width << " bits." << endl;
+      }
+
+	// Prune the case expression
+      expr_ = pad_to_width(unpadded_expr->dup_expr(), prune_width, *expr_);
+      delete padded_expr;
+
+	// Prune the case item expressions
+      for (unsigned idx = 0; idx < items_.size(); idx += 1) {
+	    if (items_[idx].guard == 0)
+		  continue;
+
+	    NetEConst*gc = dynamic_cast<NetEConst*>(items_[idx].guard);
+	    ivl_assert(*this, gc);
+
+	    verinum value(gc->value(), prune_width);
+	    NetEConst*tmp = new NetEConst(value);
+	    tmp->set_line(*gc);
+	    delete gc;
+
+	    items_[idx].guard = tmp;
+      }
 }
 
 NetDisable::NetDisable(NetScope*tgt)
@@ -175,7 +239,7 @@ NetPDelay::~NetPDelay()
 
 uint64_t NetPDelay::delay() const
 {
-      assert(expr_ == 0);
+      ivl_assert(*this, expr_ == 0);
       return delay_;
 }
 
