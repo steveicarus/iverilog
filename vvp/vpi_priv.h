@@ -35,6 +35,7 @@
 
 
 class class_type;
+typedef struct __vpiArray* vvp_array_t;
 
 /*
  * This header file contains the internal definitions that the vvp
@@ -514,8 +515,10 @@ class __vpiBaseVar : public __vpiHandle {
 
       inline vvp_net_t* get_net() const { return net_; }
 
-    private:
+    protected:
       struct __vpiScope* scope_;
+
+    private:
       const char*name_;
       vvp_net_t*net_;
 };
@@ -532,13 +535,37 @@ class __vpiStringVar : public __vpiBaseVar {
 
 extern vpiHandle vpip_make_string_var(const char*name, vvp_net_t*net);
 
-class __vpiDarrayVar : public __vpiBaseVar {
+struct __vpiArrayBase {
+      __vpiArrayBase() : vals_words(NULL) {}
 
+      virtual unsigned get_size(void) const = 0;
+      virtual int get_word_size() const = 0;
+      virtual int get_left_range() const = 0;
+      virtual int get_right_range() const = 0;
+      virtual struct __vpiScope*get_scope() const = 0;
+
+      virtual vpiHandle vpi_iterate(int code);
+      virtual void make_vals_words();
+
+      struct __vpiArrayWord*vals_words;
+};
+
+class __vpiDarrayVar : public __vpiBaseVar, public __vpiArrayBase {
     public:
       __vpiDarrayVar(__vpiScope*scope, const char*name, vvp_net_t*net);
 
-      int get_type_code(void) const;
+      int get_type_code() const { return vpiArrayVar; }
+      unsigned get_size() const;
+      int get_word_size() const { return 0; } // TODO
+      int get_left_range() const { return 0; }
+      int get_right_range() const { return 0; }
+      struct __vpiScope*get_scope() const { return scope_; }
+
       int vpi_get(int code);
+      char* vpi_get_str(int code);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_index(int index);
+
       void vpi_get_value(p_vpi_value val);
 };
 

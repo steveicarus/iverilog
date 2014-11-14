@@ -22,6 +22,7 @@
 # include  "vpi_priv.h"
 # include  "vvp_net_sig.h"
 # include  "vvp_darray.h"
+# include  "array_common.h"
 # include  "schedule.h"
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
@@ -39,29 +40,65 @@ __vpiDarrayVar::__vpiDarrayVar(__vpiScope*sc, const char*na, vvp_net_t*ne)
 {
 }
 
-int __vpiDarrayVar::get_type_code(void) const
-{ return vpiArrayVar; }
-
-
-int __vpiDarrayVar::vpi_get(int code)
+unsigned __vpiDarrayVar::get_size() const
 {
       vvp_fun_signal_object*fun = dynamic_cast<vvp_fun_signal_object*> (get_net()->fun);
-      assert(fun);
+      if(!fun)
+        return 0;
+
       vvp_object_t val = fun->get_object();
       vvp_darray*aval = val.peek<vvp_darray>();
 
+      if(!aval)
+        return 0;
+
+      return aval->get_size();
+}
+
+int __vpiDarrayVar::vpi_get(int code)
+{
       switch (code) {
 	  case vpiArrayType:
 	    return vpiDynamicArray;
 	  case vpiSize:
-	    if (aval == 0)
-		  return 0;
-	    else
-		  return aval->get_size();
+            return get_size();
 
 	  default:
 	    return 0;
       }
+}
+
+char* __vpiDarrayVar::vpi_get_str(int code)
+{
+    // TODO orson
+    return NULL;
+}
+
+vpiHandle __vpiDarrayVar::vpi_handle(int code)
+{
+    // TODO orson
+      //switch (code) {
+	  //case vpiScope:
+	    //return scope_;
+
+	  //case vpiModule:
+	    //return vpip_module(scope_);
+      //}
+
+      return 0;
+}
+
+vpiHandle __vpiDarrayVar::vpi_index(int index)
+{
+      if (index >= (long) get_size())
+	    return 0;
+      if (index < 0)
+	    return 0;
+
+      if (vals_words == 0)
+	    make_vals_words();
+
+      return &(vals_words[index].as_word);
 }
 
 void __vpiDarrayVar::vpi_get_value(p_vpi_value val)
