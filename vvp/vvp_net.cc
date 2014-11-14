@@ -643,23 +643,20 @@ void vvp_vector4_t::copy_bits(const vvp_vector4_t&that)
       }
 }
 
-void vvp_vector4_t::copy_from_(const vvp_vector4_t&that)
+/*
+ * This function should ONLY BE CALLED FROM vvp_vector4_t::copy_from_,
+ * as it performs part of that functions tasks.
+ */
+void vvp_vector4_t::copy_from_big_(const vvp_vector4_t&that)
 {
-      size_ = that.size_;
-      if (size_ > BITS_PER_WORD) {
-	    unsigned words = (size_+BITS_PER_WORD-1) / BITS_PER_WORD;
-	    abits_ptr_ = new unsigned long[2*words];
-	    bbits_ptr_ = abits_ptr_ + words;
+      unsigned words = (size_+BITS_PER_WORD-1) / BITS_PER_WORD;
+      abits_ptr_ = new unsigned long[2*words];
+      bbits_ptr_ = abits_ptr_ + words;
 
-	    for (unsigned idx = 0 ;  idx < words ;  idx += 1)
-		  abits_ptr_[idx] = that.abits_ptr_[idx];
-	    for (unsigned idx = 0 ;  idx < words ;  idx += 1)
-		  bbits_ptr_[idx] = that.bbits_ptr_[idx];
-
-      } else {
-	    abits_val_ = that.abits_val_;
-	    bbits_val_ = that.bbits_val_;
-      }
+      for (unsigned idx = 0 ;  idx < words ;  idx += 1)
+	    abits_ptr_[idx] = that.abits_ptr_[idx];
+      for (unsigned idx = 0 ;  idx < words ;  idx += 1)
+	    bbits_ptr_[idx] = that.bbits_ptr_[idx];
 }
 
 /*

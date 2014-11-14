@@ -3345,34 +3345,6 @@ static void load_base(vvp_code_t cp, vvp_vector4_t&dst)
       sig->vec4_value(dst);
 }
 
-#if 0
-bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
-{
-      unsigned bit = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-
-      vvp_vector4_t sig_value;
-      load_base(cp, sig_value);
-
-	/* Check the address once, before we scan the vector. */
-      thr_check_addr(thr, bit+wid-1);
-
-      if (sig_value.size() > wid)
-	    sig_value.resize(wid);
-
-	/* Copy the vector bits into the bits4 vector. Do the copy
-	   directly to skip the excess calls to thr_check_addr. */
-      thr->bits4.set_vec(bit, sig_value);
-
-	/* If the source is shorter than the desired width, then pad
-	   with BIT4_X values. */
-      for (unsigned idx = sig_value.size() ; idx < wid ; idx += 1)
-	    thr->bits4.set_bit(bit+idx, BIT4_X);
-
-      return true;
-}
-#endif
-
 /*
  * %load/vec4 <net>
  */
@@ -4423,35 +4395,57 @@ bool of_PUSHI_VEC4(vthread_t thr, vvp_code_t cp)
       uint32_t valb = cp->bit_idx[1];
       unsigned wid  = cp->number;
 
+	// I expect that most of the bits of an immediate value are
+	// going to be zero, so start the result vector with all zero
+	// bits. Then we only need to replace the bits that are different.
       vvp_vector4_t val (wid, BIT4_0);
+
+	// Special case: Immediate zero is super easy.
+      if (vala==0 && valb==0) {
+	    thr->push_vec4(val);
+	    return true;
+      }
+
+	// Special case: If the value is defined (no X or Z) and fits
+	// in an unsigned long, then use the setarray method to write
+	// the value all in one shot.
+      if ((valb==0) && (wid <= 8*sizeof(unsigned long))) {
+	    unsigned long tmp = vala;
+	    val.setarray(0, wid, &tmp);
+	    thr->push_vec4(val);
+	    return true;
+      }
+
+	// The %pushi/vec4 can create values bigger then 32 bits, but
+	// only if the high bits are zero. So at most we need to run
+	// through the loop below 32 times. Maybe less, if the target
+	// width is less. We don't have to do anything special on that
+	// because vala/valb bits will shift away so (vala|valb) will
+	// turn to zero at or before 32 shifts.
+
       for (unsigned idx = 0 ; idx < wid && (vala|valb) ; idx += 1) {
 	    uint32_t ba = 0;
-	      // If the requested width is /32, then there are no
-	      // actual immediate bits, but we can pad with zero. So
-	      // here we test if we are still working on he LSB, and
-	      // process them if so.
-	    if (idx < 32) {
-		  ba = (valb & 1) << 1;
-		  ba |= vala & 1;
-	    }
-	    vala >>= 1;
-	    valb >>= 1;
-	    if (ba == 0) continue;
-	    vvp_bit4_t use_bit = BIT4_0;
+	      // Convert the vala/valb bits to a ba number that can be
+	      // used to select what goes into the value.
+	    ba = (valb & 1) << 1;
+	    ba |= vala & 1;
+
 	    switch (ba) {
 		case 1:
-		  use_bit = BIT4_1;
+		  val.set_bit(idx, BIT4_1);
 		  break;
 		case 2:
-		  use_bit = BIT4_Z;
+		  val.set_bit(idx, BIT4_Z);
 		  break;
 		case 3:
-		  use_bit = BIT4_X;
+		  val.set_bit(idx, BIT4_X);
 		  break;
 		default:
 		  break;
 	    }
-	    val.set_bit(idx, use_bit);
+
+	    vala >>= 1;
+	    valb >>= 1;
       }
 
       thr->push_vec4(val);
@@ -5281,6 +5275,17 @@ bool of_STORE_STRA(vthread_t thr, vvp_code_t cp)
 /*
  * %store/vec4 <var-label>, <offset>, <wid>
  *
+ * <offset> is the index register that contains the base offset into
+ * the destination. If zero, the offset of 0 is used instead of index
+ * register zero. The offset value is SIGNED, and can be negative.
+ *
+ * <wid> is the actual width, an unsigned number.
+ *
+ * This function tests flag bit 4. If that flag is set, and <offset>
+ * is an actual index register (not zero) then this assumes that the
+ * calculation of the <offset> contents failed, and the store is
+ * aborted.
+ *
  * NOTE: This instruction may loose the <wid> argument because it is
  * not consistent with the %store/vec4/<etc> instructions which have
  * no <wid>.
@@ -5290,18 +5295,19 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
       vvp_net_ptr_t ptr(cp->net, 0);
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
       unsigned off_index = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
+      int wid = cp->bit_idx[1];
 
       int off = off_index? thr->words[off_index].w_int : 0;
+      const int sig_value_size = sig->value_size();
 
       vvp_vector4_t val = thr->pop_vec4();
 
-      if (val.size() < wid) {
+      if (val.size() < (unsigned)wid) {
 	    cerr << "XXXX Internal error: val.size()=" << val.size()
 		 << ", expecting >= " << wid << endl;
       }
-      assert(val.size() >= wid);
-      if (val.size() > wid)
+      assert(val.size() >= (unsigned)wid);
+      if (val.size() > (unsigned)wid)
 	    val.resize(wid);
 
 	// If there is a problem loading the index register, flags-4
@@ -5309,9 +5315,9 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
       if (off_index!=0 && thr->flags[4] == BIT4_1)
 	    return true;
 
-      if (off <= -(int)wid)
+      if (off <= -wid)
 	    return true;
-      if (off >= (int)sig->value_size())
+      if (off >= sig_value_size)
 	    return true;
 
 	// If the index is below the vector, then only assign the high
@@ -5325,17 +5331,17 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
 
 	// If the value is partly above the target, then only assign
 	// the bits that overlap.
-      if ((off+wid) > sig->value_size()) {
-	    wid = sig->value_size()-off;
+      if ((off+wid) > sig_value_size) {
+	    wid = sig_value_size - off;
 	    val = val.subvalue(0, wid);
 	    val.resize(wid);
       }
 
 
-      if (off==0 && val.size()==sig->value_size())
+      if (off==0 && val.size()==(unsigned)sig_value_size)
 	    vvp_send_vec4(ptr, val, thr->wt_context);
       else
-	    vvp_send_vec4_pv(ptr, val, off, wid, sig->value_size(), thr->wt_context);
+	    vvp_send_vec4_pv(ptr, val, off, wid, sig_value_size, thr->wt_context);
 
       return true;
 }

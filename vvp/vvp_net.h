@@ -244,7 +244,7 @@ class vvp_vector4_t {
 
       ~vvp_vector4_t();
 
-      unsigned size() const { return size_; }
+      inline unsigned size() const { return size_; }
       void resize(unsigned new_size);
 
 	// Get the bit at the specified address
@@ -317,6 +317,7 @@ class vvp_vector4_t {
 	// Initialize and operator= use this private method to copy
 	// the data from that object into this object.
       void copy_from_(const vvp_vector4_t&that);
+      void copy_from_big_(const vvp_vector4_t&that);
       void copy_inverted_from_(const vvp_vector4_t&that);
 
       void allocate_words_(unsigned long inita, unsigned long initb);
@@ -396,6 +397,16 @@ inline vvp_vector4_t& vvp_vector4_t::operator= (const vvp_vector4_t&that)
       return *this;
 }
 
+inline void vvp_vector4_t::copy_from_(const vvp_vector4_t&that)
+{
+      size_ = that.size_;
+      if (size_ <= BITS_PER_WORD) {
+	    abits_val_ = that.abits_val_;
+	    bbits_val_ = that.bbits_val_;
+      } else {
+	    copy_from_big_(that);
+      }
+}
 
 inline vvp_bit4_t vvp_vector4_t::value(unsigned idx) const
 {
