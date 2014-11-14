@@ -246,16 +246,16 @@ value stack.
 Pop a value from the vec4 stack, convert it using Verilog rules to a
 vector2 (binary) value, and push the result.
 
-* %cmp/u <bit-l>, <bit-r>, <wid> (XXXX Old meaning)
-* %cmp/s <bit-l>, <bit-r>, <wid> (XXXX Old meaning)
+* %cmp/s
+* %cmp/u
 
-These instructions perform a generic comparison of two vectors of equal
-size. The <bit-l> and <bit-r> numbers address the least-significant
-bit of each vector, and <wid> is the width. If either operand is 0,
-1, 2 or 3 then it is taken to be a constant replicated to the selected
-width.
+These instructions perform a generic comparison of two vectors of
+equal size. Two values are pulled from the top of the stack, and not
+replaced. The results are written into flag bits 4,5,6. The
+expressions (a<b), (a==b) and (a===b) are calculated, with (b) popped
+from the stack first, then (a).
 
-The results of the comparison go into bits 4, 5, 6 and 7:
+The results of the comparison go into flags 4, 5, 6 and 7:
 
 	4: eq  (equal)
 	5: lt  (less than)
@@ -275,21 +275,6 @@ The %cmp/u and %cmp/s differ only in the handling of the lt bit. The
 %cmp/u does an unsigned compare, whereas the %cmp/s does a signed
 compare. In either case, if either operand contains x or z, then lt
 bit gets the x value.
-
-* %cmp/s
-* %cmp/u
-
-These instructions perform a generic comparison of two vectors of
-equal size. Two values are pulled from the top of the stack, and not
-replaced. The results are written into flag bits 4,5,6. The
-expressions (a<b), (a==b) and (a===b) are calculated, with (b) popped
-from the stack first, then (a).
-
-The results of the comparison go into flags 4, 5, 6 and 7:
-
-	4: eq  (equal)
-	5: lt  (less than)
-	6: eeq (case equal)
 
 * %cmp/wr
 

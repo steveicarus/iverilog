@@ -1488,6 +1488,16 @@ bool of_CAST2(vthread_t thr, vvp_code_t)
       return true;
 }
 
+/*
+ *  %cmp/s
+ *
+ * Pop the operands from the stack, and do not replace them. The
+ * results are written to flag bits:
+ *
+ *	4: eq  (equal)
+ *	5: lt  (less than)
+ *	6: eeq (case equal)
+ */
 bool of_CMPS(vthread_t thr, vvp_code_t)
 {
       vvp_bit4_t eq  = BIT4_1;
@@ -1498,50 +1508,51 @@ bool of_CMPS(vthread_t thr, vvp_code_t)
       vvp_vector4_t lval = thr->pop_vec4();
 
       assert(rval.size() == lval.size());
+
+	// If either value has XZ bits, then the eq and lt values are
+	// known already to be X. Just calculate the eeq result as a
+	// special case and short circuit the rest of the compare.
+      if (lval.has_xz() || rval.has_xz()) {
+	    thr->flags[4] = BIT4_X; // eq
+	    thr->flags[5] = BIT4_X; // lt
+	    thr->flags[6] = lval.eeq(rval)? BIT4_1 : BIT4_0;
+	    return true;
+      }
+
+	// Past this point, we know we are dealing only with fully
+	// defined values.
       unsigned wid = lval.size();
 
       const vvp_bit4_t sig1 = lval.value(wid-1);
       const vvp_bit4_t sig2 = rval.value(wid-1);
 
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < (wid-1) ;  idx += 1) {
 	    vvp_bit4_t lv = lval.value(idx);
 	    vvp_bit4_t rv = rval.value(idx);
 
-	    if (lv > rv) {
-		  lt  = BIT4_0;
-		  eeq = BIT4_0;
-	    } else if (lv < rv) {
-		  lt  = BIT4_1;
-		  eeq = BIT4_0;
-	    }
-	    if (eq != BIT4_X) {
-		  if ((lv == BIT4_0) && (rv != BIT4_0))
-			eq = BIT4_0;
-		  if ((lv == BIT4_1) && (rv != BIT4_1))
-			eq = BIT4_0;
-		  if (bit4_is_xz(lv) || bit4_is_xz(rv))
-			eq = BIT4_X;
+	    if (lv==BIT4_0 && rv==BIT4_1) {
+		  eeq = eq = BIT4_0;
+		  lt = BIT4_1;
+	    } else if (lv==BIT4_1 && rv==BIT4_0) {
+		  eeq = eq = BIT4_0;
+		  lt = BIT4_0;
 	    }
       }
 
-      if (eq == BIT4_X)
-	    lt = BIT4_X;
-      else if ((sig1 == BIT4_1) && (sig2 == BIT4_0))
-	    lt = BIT4_1;
-      else if ((sig1 == BIT4_0) && (sig2 == BIT4_1))
-	    lt = BIT4_0;
-
 	/* Correct the lt bit to account for the sign of the parameters. */
-      if (lt != BIT4_X) {
-	      /* If the first is negative and the last positive, then
-		 a < b for certain. */
-	    if ((sig1 == BIT4_1) && (sig2 == BIT4_0))
-		  lt = BIT4_1;
 
-	      /* If the first is positive and the last negative, then
-		 a > b for certain. */
-	    if ((sig1 == BIT4_0) && (sig2 == BIT4_1))
-		  lt = BIT4_0;
+	// If the first is negative and the last positive, then
+	//    a < b for certain.
+      if ((sig1 == BIT4_1) && (sig2 == BIT4_0)) {
+	    lt = BIT4_1;
+	    eeq = eq = BIT4_0;
+      }
+
+	// If the first is positive and the last negative, then
+	//    a > b for certain.
+      if ((sig1 == BIT4_0) && (sig2 == BIT4_1)) {
+	    lt = BIT4_0;
+	    eeq = eq = BIT4_0;
       }
 
       thr->flags[4] = eq;
@@ -4413,16 +4424,19 @@ bool of_PUSHI_VEC4(vthread_t thr, vvp_code_t cp)
       unsigned wid  = cp->number;
 
       vvp_vector4_t val (wid, BIT4_0);
-      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+      for (unsigned idx = 0 ; idx < wid && (vala|valb) ; idx += 1) {
 	    uint32_t ba = 0;
 	      // If the requested width is /32, then there are no
 	      // actual immediate bits, but we can pad with zero. So
 	      // here we test if we are still working on he LSB, and
 	      // process them if so.
 	    if (idx < 32) {
-		  ba = ((valb >> idx) & 1) << 1;
-		  ba |= (vala >> idx) & 1;
+		  ba = (valb & 1) << 1;
+		  ba |= vala & 1;
 	    }
+	    vala >>= 1;
+	    valb >>= 1;
+	    if (ba == 0) continue;
 	    vvp_bit4_t use_bit = BIT4_0;
 	    switch (ba) {
 		case 1:
@@ -4437,8 +4451,6 @@ bool of_PUSHI_VEC4(vthread_t thr, vvp_code_t cp)
 		default:
 		  break;
 	    }
-	    if (use_bit == BIT4_0)
-		  continue;
 	    val.set_bit(idx, use_bit);
       }
 

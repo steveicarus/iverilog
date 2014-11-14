@@ -230,7 +230,11 @@ class vvp_vector4_t {
 
       explicit vvp_vector4_t(unsigned size, double val);
 
-	// Construct a vector4 from the subvalue of another vector4.
+	// Construct a vector4 from the subvalue of another
+	// vector4. The width of the result is 'wid', and the bits are
+	// pulled from 'that' to implement the Verilog part select
+	// semantics. This means that part select beyond 'that'
+	// returns X bits.
       explicit vvp_vector4_t(const vvp_vector4_t&that,
 			     unsigned adr, unsigned wid);
 
@@ -398,14 +402,16 @@ inline vvp_bit4_t vvp_vector4_t::value(unsigned idx) const
       if (idx >= size_)
 	    return BIT4_X;
 
-      unsigned wdx = idx / BITS_PER_WORD;
-      unsigned long off = idx % BITS_PER_WORD;
+      unsigned long off;
 
       unsigned long abits, bbits;
       if (size_ > BITS_PER_WORD) {
+	    unsigned wdx = idx / BITS_PER_WORD;
+	    off = idx % BITS_PER_WORD;
 	    abits = abits_ptr_[wdx];
 	    bbits = bbits_ptr_[wdx];
       } else {
+	    off = idx;
 	    abits = abits_val_;
 	    bbits = bbits_val_;
       }
@@ -420,8 +426,7 @@ inline vvp_bit4_t vvp_vector4_t::value(unsigned idx) const
 	    BIT4_X  // bbit==1, abit==1
       };
 
-	/* Casting is evil, but this cast matches the un-cast done
-	   when the vvp_bit4_t value is put into the vector. */
+	// This map converts the bit-pattern to a vvp_bit4_t value.
       return bits_bit4_map[tmp];
 }
 

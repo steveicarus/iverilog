@@ -57,11 +57,7 @@ void vvp_fun_part_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 {
       assert(port.port() == 0);
 
-      vvp_vector4_t tmp (wid_, BIT4_X);
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    if (idx + base_ < bit.size())
-		  tmp.set_bit(idx, bit.value(base_+idx));
-      }
+      vvp_vector4_t tmp (bit, base_, wid_);
       if (val_ .eeq( tmp ))
 	    return;
 

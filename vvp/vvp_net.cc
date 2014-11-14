@@ -793,10 +793,29 @@ vvp_vector4_t::vvp_vector4_t(unsigned size__, double val)
 vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that,
 			    unsigned adr, unsigned wid)
 {
+	// Set up and initialize the destination.
       size_ = wid;
-      assert((adr + wid) <= that.size_);
-
       allocate_words_(WORD_X_ABITS, WORD_X_BBITS);
+
+	// Special case: selecting from far beyond the source vector,
+	// to the result is all X bits. We're done.
+      if (adr >= that.size_)
+	    return;
+
+	// Special case: The source is not quite big enough to supply
+	// all bits, so get the bits that we can. The remainder will
+	// be left at BIT4_X.
+      if ((adr + wid) > that.size_) {
+	    unsigned use_wid = that.size_ - adr;
+	    for (unsigned idx = 0 ; idx < use_wid ; idx += 1)
+		  set_bit(idx, that.value(adr+idx));
+
+	    return;
+      }
+
+	// At the point, we know that the source part is entirely
+	// contained in the source vector.
+	// assert((adr + wid) <= that.size_);
 
       if (wid > BITS_PER_WORD) {
 	      /* In this case, the subvector and the source vector are
