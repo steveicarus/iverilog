@@ -644,6 +644,13 @@ static void draw_concat_vec4(ivl_expr_t expr)
       }
 }
 
+/*
+ * Push a number into the vec4 stack using %pushi/vec4
+ * instructions. The %pushi/vec4 instruction can only handle up to 32
+ * non-zero bits, so if there are more than that, then generate
+ * multiple %pushi/vec4 statements, and use %concat/vec4 statements to
+ * concatenate the vectors into the desired result.
+ */
 static void draw_number_vec4(ivl_expr_t expr)
 {
       unsigned long val0 = 0;
@@ -678,8 +685,15 @@ static void draw_number_vec4(ivl_expr_t expr)
 		  break;
 	    }
 	    accum += 1;
-	    if (accum == 32) {
-		  fprintf(vvp_out, "    %%pushi/vec4 %lu, %lu, 32;\n", val0, valx);
+
+	      /* Collect as many bits as can be written by a single
+		 %pushi/vec4 instruction. This may be more than 32 if
+		 the higher bits are zero, but if the currently
+		 accumulated value fills what a %pushi/vec4 can do,
+		 then write it out, generate a %concat/vec4, and set
+		 up to handle more bits. */
+	    if ( (val0|valx) & 0x80000000UL ) {
+		  fprintf(vvp_out, "    %%pushi/vec4 %lu, %lu, %d;\n", val0, valx, accum);
 		  accum = 0;
 		  val0 = 0;
 		  valx = 0;
