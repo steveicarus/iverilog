@@ -132,6 +132,12 @@ struct vthread_s {
 	    unsigned use_index = stack_vec4_.size()-1-depth;
 	    return stack_vec4_[use_index];
       }
+      inline vvp_vector4_t& peek_vec4(void)
+      {
+	    assert(! stack_vec4_.empty());
+	    unsigned use_index = stack_vec4_.size()-1;
+	    return stack_vec4_[use_index];
+      }
       inline void pop_vec4(unsigned cnt)
       {
 	    while (cnt > 0) {
@@ -894,10 +900,23 @@ bool of_AND(vthread_t thr, vvp_code_t)
       return true;
 }
 
+/*
+ * %add
+ *
+ * Pop r,
+ * Pop l,
+ * Push l+r
+ *
+ * Pop 2 and push 1 is the same as pop 1 and replace the remaining top
+ * of the stack with a new value. That is what we will do.
+ */
 bool of_ADD(vthread_t thr, vvp_code_t)
 {
       vvp_vector4_t r = thr->pop_vec4();
-      vvp_vector4_t l = thr->pop_vec4();
+	// Rather then pop l, use it directly from the stack. When we
+	// assign to 'l', that will edit the top of the stack, which
+	// replaces a pop and a pull.
+      vvp_vector4_t&l = thr->peek_vec4();
 
       unsigned wid = l.size();
       assert(wid == r.size());
@@ -914,8 +933,6 @@ bool of_ADD(vthread_t thr, vvp_code_t)
 
       l.setarray(0,wid,lva);
 
-      thr->push_vec4(l);
-
       delete[]lva;
       delete[]lvb;
       return true;
@@ -925,7 +942,7 @@ bool of_ADD(vthread_t thr, vvp_code_t)
       delete[]lvb;
 
       vvp_vector4_t tmp (wid, BIT4_X);
-      thr->push_vec4(tmp);
+      l = tmp;
       return true;
 }
 
@@ -1504,8 +1521,11 @@ bool of_CMPS(vthread_t thr, vvp_code_t)
       vvp_bit4_t eeq = BIT4_1;
       vvp_bit4_t lt  = BIT4_0;
 
-      vvp_vector4_t rval = thr->pop_vec4();
-      vvp_vector4_t lval = thr->pop_vec4();
+	// We are going to pop these and push nothing in their
+	// place, but for now it is more efficient to use a constant
+	// reference. When we finish, pop the stack without copies.
+      const vvp_vector4_t&rval = thr->peek_vec4(0);
+      const vvp_vector4_t&lval = thr->peek_vec4(1);
 
       assert(rval.size() == lval.size());
 
@@ -1516,6 +1536,7 @@ bool of_CMPS(vthread_t thr, vvp_code_t)
 	    thr->flags[4] = BIT4_X; // eq
 	    thr->flags[5] = BIT4_X; // lt
 	    thr->flags[6] = lval.eeq(rval)? BIT4_1 : BIT4_0;
+	    thr->pop_vec4(2);
 	    return true;
       }
 
@@ -1559,6 +1580,7 @@ bool of_CMPS(vthread_t thr, vvp_code_t)
       thr->flags[5] = lt;
       thr->flags[6] = eeq;
 
+      thr->pop_vec4(2);
       return true;
 }
 
@@ -2736,10 +2758,17 @@ bool of_FREE(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %inv
+ *
+ * Logically, this pops a value, inverts is (Verilog style, with Z and
+ * X converted to X) and pushes the result. We can more efficiently
+ * just to the invert in place.
+ */
 bool of_INV(vthread_t thr, vvp_code_t)
 {
-      vvp_vector4_t val = thr->pop_vec4();
-      thr->push_vec4(~val);
+      vvp_vector4_t&val = thr->peek_vec4();
+      val.invert();
       return true;
 }
 
@@ -3419,7 +3448,7 @@ bool of_LOAD_VP0_S(vthread_t thr, vvp_code_t cp)
 }
 
 static void do_verylong_mod(vthread_t thr,
-			    const vvp_vector4_t&vala, const vvp_vector4_t&valb,
+			    vvp_vector4_t&vala, const vvp_vector4_t&valb,
 			    bool left_is_neg, bool right_is_neg)
 {
       bool out_is_neg = left_is_neg;
@@ -3447,7 +3476,7 @@ static void do_verylong_mod(vthread_t thr,
 		  delete []z;
 		  delete []a;
 		  vvp_vector4_t tmp(len, BIT4_X);
-		  thr->push_vec4(tmp);
+		  vala = tmp;
 		  return;
 	    }
 
@@ -3489,7 +3518,7 @@ static void do_verylong_mod(vthread_t thr,
 		  delete []z;
 		  delete []a;
 		  vvp_vector4_t tmpx (len, BIT4_X);
-		  thr->push_vec4(tmpx);
+		  vala = tmpx;
 		  return;
 	    }
 
@@ -3529,7 +3558,7 @@ static void do_verylong_mod(vthread_t thr,
 	    }
 	    tmp.set_bit(idx, ob?BIT4_1:BIT4_0);
       }
-      thr->push_vec4(tmp);
+      vala = tmp;
       delete []t;
       delete []z;
       delete []a;
@@ -3568,7 +3597,7 @@ bool of_MIN_WR(vthread_t thr, vvp_code_t)
 bool of_MOD(vthread_t thr, vvp_code_t)
 {
       vvp_vector4_t valb = thr->pop_vec4();
-      vvp_vector4_t vala = thr->pop_vec4();
+      vvp_vector4_t&vala = thr->peek_vec4();
 
       assert(vala.size()==valb.size());
       unsigned wid = vala.size();
@@ -3596,7 +3625,6 @@ bool of_MOD(vthread_t thr, vvp_code_t)
 		  vala.set_bit(idx, (lv&1)?BIT4_1 : BIT4_0);
 		  lv >>= 1;
 	    }
-	    thr->push_vec4(vala);
 
 	    return true;
 
@@ -3606,8 +3634,7 @@ bool of_MOD(vthread_t thr, vvp_code_t)
       }
 
  x_out:
-      vvp_vector4_t tmp (wid, BIT4_X);
-      thr->push_vec4(tmp);
+      vala = vvp_vector4_t(wid, BIT4_X);
       return true;
 }
 
@@ -3617,7 +3644,7 @@ bool of_MOD(vthread_t thr, vvp_code_t)
 bool of_MOD_S(vthread_t thr, vvp_code_t)
 {
       vvp_vector4_t valb = thr->pop_vec4();
-      vvp_vector4_t vala = thr->pop_vec4();
+      vvp_vector4_t&vala = thr->peek_vec4();
 
       assert(vala.size()==valb.size());
       unsigned wid = vala.size();
@@ -3655,7 +3682,9 @@ bool of_MOD_S(vthread_t thr, vvp_code_t)
 		  vala.set_bit(idx, (lv&1)? BIT4_1 : BIT4_0);
 		  lv >>= 1;
 	    }
-	    thr->push_vec4(vala);
+
+	      // vala is the top of the stack, edited in place, so we
+	      // do not need to push the result.
 
 	    return true;
 
@@ -3668,8 +3697,7 @@ bool of_MOD_S(vthread_t thr, vvp_code_t)
       }
 
  x_out:
-      vvp_vector4_t tmp (wid, BIT4_X);
-      thr->push_vec4(tmp);
+      vala = vvp_vector4_t(wid, BIT4_X);
       return true;
 }
 
