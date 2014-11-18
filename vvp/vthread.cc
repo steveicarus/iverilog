@@ -1808,13 +1808,13 @@ bool of_CONCATI_STR(vthread_t thr, vvp_code_t cp)
 bool of_CONCAT_VEC4(vthread_t thr, vvp_code_t)
 {
       vvp_vector4_t lsb = thr->pop_vec4();
-      vvp_vector4_t msb = thr->pop_vec4();
+      vvp_vector4_t&msb = thr->peek_vec4();
 
       vvp_vector4_t res (msb.size()+lsb.size(), BIT4_X);
       res.set_vec(0, lsb);
       res.set_vec(lsb.size(), msb);
 
-      thr->push_vec4(res);
+      msb = res;
       return true;
 }
 
@@ -3743,7 +3743,7 @@ bool of_PAD_U(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = cp->number;
 
-      vvp_vector4_t val = thr->pop_vec4();
+      vvp_vector4_t&val = thr->peek_vec4();
       unsigned old_size = val.size();
       val.resize(wid);
 
@@ -3752,8 +3752,6 @@ bool of_PAD_U(vthread_t thr, vvp_code_t cp)
 	    for (unsigned idx = old_size ; idx < wid ; idx += 1)
 		  val.set_bit(idx,pad);
       }
-
-      thr->push_vec4(val);
 
       return true;
 }
@@ -4841,13 +4839,15 @@ bool of_SET_DAR_OBJ_STR(vthread_t thr, vvp_code_t cp)
 
 /*
  * %shiftl <idx>
+ *
+ * Pop the operand, then push the result.
  */
 bool of_SHIFTL(vthread_t thr, vvp_code_t cp)
 {
       int use_index = cp->number;
       int shift = thr->words[use_index].w_int;
 
-      vvp_vector4_t val = thr->pop_vec4();
+      vvp_vector4_t&val = thr->peek_vec4();
       int wid  = val.size();
 
       if (thr->flags[4] == BIT4_1) {
@@ -4878,7 +4878,6 @@ bool of_SHIFTL(vthread_t thr, vvp_code_t cp)
 	    val.set_vec(wid-use_shift, tmp);
       }
 
-      thr->push_vec4(val);
       return true;
 }
 
