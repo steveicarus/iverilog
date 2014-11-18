@@ -334,7 +334,7 @@ static inline void thr_put_bit(struct vthread_s*thr,
 }
 #endif
 
-vvp_bit4_t vthread_get_bit(struct vthread_s*thr, unsigned addr)
+vvp_bit4_t vthread_get_bit(struct vthread_s* /*thr*/, unsigned addr)
 {
 #if 0
       if (vpi_mode_flag == VPI_MODE_COMPILETF) return BIT4_X;
@@ -345,7 +345,7 @@ vvp_bit4_t vthread_get_bit(struct vthread_s*thr, unsigned addr)
 #endif
 }
 
-void vthread_put_bit(struct vthread_s*thr, unsigned addr, vvp_bit4_t bit)
+void vthread_put_bit(struct vthread_s* /*thr*/, unsigned addr, vvp_bit4_t bit)
 {
 #if 0
       thr_put_bit(thr, addr, bit);
@@ -900,24 +900,47 @@ bool of_AND(vthread_t thr, vvp_code_t)
       return true;
 }
 
-/*
- * %add
- *
- * Pop r,
- * Pop l,
- * Push l+r
- *
- * Pop 2 and push 1 is the same as pop 1 and replace the remaining top
- * of the stack with a new value. That is what we will do.
- */
-bool of_ADD(vthread_t thr, vvp_code_t)
+static void get_immediate_rval(vvp_code_t cp, vvp_vector4_t&val)
 {
-      vvp_vector4_t r = thr->pop_vec4();
-	// Rather then pop l, use it directly from the stack. When we
-	// assign to 'l', that will edit the top of the stack, which
-	// replaces a pop and a pull.
-      vvp_vector4_t&l = thr->peek_vec4();
+      uint32_t vala = cp->bit_idx[0];
+      uint32_t valb = cp->bit_idx[1];
+      unsigned wid  = cp->number;
 
+	// The immediate value can be values bigger then 32 bits, but
+	// only if the high bits are zero. So at most we need to run
+	// through the loop below 32 times. Maybe less, if the target
+	// width is less. We don't have to do anything special on that
+	// because vala/valb bits will shift away so (vala|valb) will
+	// turn to zero at or before 32 shifts.
+
+      for (unsigned idx = 0 ; idx < wid && (vala|valb) ; idx += 1) {
+	    uint32_t ba = 0;
+	      // Convert the vala/valb bits to a ba number that can be
+	      // used to select what goes into the value.
+	    ba = (valb & 1) << 1;
+	    ba |= vala & 1;
+
+	    switch (ba) {
+		case 1:
+		  val.set_bit(idx, BIT4_1);
+		  break;
+		case 2:
+		  val.set_bit(idx, BIT4_Z);
+		  break;
+		case 3:
+		  val.set_bit(idx, BIT4_X);
+		  break;
+		default:
+		  break;
+	    }
+
+	    vala >>= 1;
+	    valb >>= 1;
+      }
+}
+
+static bool do_ADD(vvp_vector4_t&l, const vvp_vector4_t&r)
+{
       unsigned wid = l.size();
       assert(wid == r.size());
 
@@ -944,6 +967,48 @@ bool of_ADD(vthread_t thr, vvp_code_t)
       vvp_vector4_t tmp (wid, BIT4_X);
       l = tmp;
       return true;
+}
+
+/*
+ * %add
+ *
+ * Pop r,
+ * Pop l,
+ * Push l+r
+ *
+ * Pop 2 and push 1 is the same as pop 1 and replace the remaining top
+ * of the stack with a new value. That is what we will do.
+ */
+bool of_ADD(vthread_t thr, vvp_code_t)
+{
+      vvp_vector4_t r = thr->pop_vec4();
+	// Rather then pop l, use it directly from the stack. When we
+	// assign to 'l', that will edit the top of the stack, which
+	// replaces a pop and a pull.
+      vvp_vector4_t&l = thr->peek_vec4();
+
+      return do_ADD(l, r);
+}
+
+/*
+ * %addi <vala>, <valb>, <wid>
+ *
+ * Pop1 operand, get the other operand from the arguments, and push
+ * the result.
+ */
+bool of_ADDI(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->number;
+
+      vvp_vector4_t&l = thr->peek_vec4();
+
+	// I expect that most of the bits of an immediate value are
+	// going to be zero, so start the result vector with all zero
+	// bits. Then we only need to replace the bits that are different.
+      vvp_vector4_t r (wid, BIT4_0);
+      get_immediate_rval (cp, r);
+
+      return do_ADD(l, r);
 }
 
 bool of_ADD_WR(vthread_t thr, vvp_code_t)
@@ -1057,7 +1122,7 @@ bool of_ASSIGN_VEC4_A_D(vthread_t thr, vvp_code_t cp)
 		  return true;
 
 	    int use_off = -off;
-	    assert(wid > use_off);
+	    assert(wid > (unsigned)use_off);
 	    unsigned use_wid = wid - use_off;
 	    val = val.subvalue(use_off, use_wid);
 	    off = 0;
@@ -1149,7 +1214,7 @@ bool of_ASSIGN_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
 		  return true;
 
 	    int use_off = -off;
-	    assert(wid > use_off);
+	    assert(wid > (unsigned)use_off);
 	    unsigned use_wid = wid - use_off;
 	    val = val.subvalue(use_off, use_wid);
 	    off = 0;
@@ -1488,20 +1553,20 @@ bool of_CASSIGN_WR(vthread_t thr, vvp_code_t cp)
  */
 bool of_CAST2(vthread_t thr, vvp_code_t)
 {
-      vvp_vector4_t val = thr->pop_vec4();
+      vvp_vector4_t&val = thr->peek_vec4();
       unsigned wid = val.size();
 
       for (unsigned idx = 0 ; idx < wid ; idx += 1) {
 	    switch (val.value(idx)) {
+		case BIT4_0:
 		case BIT4_1:
-		  val.set_bit(idx, BIT4_1);
 		  break;
 		default:
 		  val.set_bit(idx, BIT4_0);
 		  break;
 	    }
       }
-      thr->push_vec4(val);
+
       return true;
 }
 
@@ -1809,6 +1874,65 @@ bool of_CONCAT_VEC4(vthread_t thr, vvp_code_t)
 {
       vvp_vector4_t lsb = thr->pop_vec4();
       vvp_vector4_t&msb = thr->peek_vec4();
+
+      vvp_vector4_t res (msb.size()+lsb.size(), BIT4_X);
+      res.set_vec(0, lsb);
+      res.set_vec(lsb.size(), msb);
+
+      msb = res;
+      return true;
+}
+
+/*
+ * %concati/vec4 <vala>, <valb>, <wid>
+ *
+ * Concat the immediate value to the LOW bits of the concatenation.
+ * Get the HIGH bits from the top of the vec4 stack.
+ */
+bool of_CONCATI_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      uint32_t vala = cp->bit_idx[0];
+      uint32_t valb = cp->bit_idx[1];
+      unsigned wid  = cp->number;
+
+      vvp_vector4_t&msb = thr->peek_vec4();
+
+	// I expect that most of the bits of an immediate value are
+	// going to be zero, so start the result vector with all zero
+	// bits. Then we only need to replace the bits that are different.
+      vvp_vector4_t lsb (wid, BIT4_0);
+
+	// The %concati/vec4 can create values bigger then 32 bits, but
+	// only if the high bits are zero. So at most we need to run
+	// through the loop below 32 times. Maybe less, if the target
+	// width is less. We don't have to do anything special on that
+	// because vala/valb bits will shift away so (vala|valb) will
+	// turn to zero at or before 32 shifts.
+
+      for (unsigned idx = 0 ; idx < wid && (vala|valb) ; idx += 1) {
+	    uint32_t ba = 0;
+	      // Convert the vala/valb bits to a ba number that can be
+	      // used to select what goes into the value.
+	    ba = (valb & 1) << 1;
+	    ba |= vala & 1;
+
+	    switch (ba) {
+		case 1:
+		  lsb.set_bit(idx, BIT4_1);
+		  break;
+		case 2:
+		  lsb.set_bit(idx, BIT4_Z);
+		  break;
+		case 3:
+		  lsb.set_bit(idx, BIT4_X);
+		  break;
+		default:
+		  break;
+	    }
+
+	    vala >>= 1;
+	    valb >>= 1;
+      }
 
       vvp_vector4_t res (msb.size()+lsb.size(), BIT4_X);
       res.set_vec(0, lsb);
@@ -4136,12 +4260,14 @@ bool of_XNORR(vthread_t thr, vvp_code_t)
       return true;
 }
 
+/*
+ * %or
+ */
 bool of_OR(vthread_t thr, vvp_code_t)
 {
-      vvp_vector4_t vala = thr->pop_vec4();
       vvp_vector4_t valb = thr->pop_vec4();
+      vvp_vector4_t&vala = thr->peek_vec4();
       vala |= valb;
-      thr->push_vec4(vala);
       return true;
 }
 

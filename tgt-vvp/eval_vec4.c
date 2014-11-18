@@ -38,6 +38,66 @@ void resize_vec4_wid(ivl_expr_t expr, unsigned wid)
 	    fprintf(vvp_out, "    %%pad/u %u;\n", wid);
 }
 
+/*
+ * Test if the draw_immediate_vec4 instruction can be used.
+ */
+static int test_immediate_vec4_ok(ivl_expr_t re)
+{
+      const char*bits;
+      unsigned idx;
+
+      if (ivl_expr_type(re) != IVL_EX_NUMBER)
+	    return 0;
+
+      if (ivl_expr_width(re) <= 32)
+	    return 1;
+
+      bits = ivl_expr_bits(re);
+
+      for (idx = 32 ; idx < ivl_expr_width(re) ; idx += 1) {
+	    if (bits[idx] != '0')
+		  return 0;
+      }
+
+      return 1;
+}
+
+static void draw_immediate_vec4(ivl_expr_t re, const char*opcode)
+{
+      unsigned long val0 = 0;
+      unsigned long valx = 0;
+      unsigned wid = ivl_expr_width(re);
+      const char*bits = ivl_expr_bits(re);
+
+      unsigned idx;
+
+      for (idx = 0 ; idx < wid ; idx += 1) {
+	    assert( ((val0|valx)&0x80000000UL) == 0UL );
+	    val0 <<= 1;
+	    valx <<= 1;
+	    switch (bits[wid-idx-1]) {
+		case '0':
+		  break;
+		case '1':
+		  val0 |= 1;
+		  break;
+		case 'x':
+		  val0 |= 1;
+		  valx |= 1;
+		  break;
+		case 'z':
+		  val0 |= 0;
+		  valx |= 1;
+		  break;
+		default:
+		  assert(0);
+		  break;
+	    }
+      }
+
+      fprintf(vvp_out, "    %s %lu, %lu, %u;\n", opcode, val0, valx, wid);
+}
+
 static void draw_binary_vec4_arith(ivl_expr_t expr)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
@@ -58,6 +118,21 @@ static void draw_binary_vec4_arith(ivl_expr_t expr)
       if (lwid != ewid) {
 	    fprintf(vvp_out, "    %%pad/%c %u;\n", ivl_expr_signed(le)? 's' : 'u', ewid);
       }
+
+	/* Special case: If the re expression can be collected into an
+	   immediate operand, and the instruction supports it, then
+	   generate an immediate instruction instead of the generic
+	   version. */
+      if (rwid==ewid && test_immediate_vec4_ok(re)) {
+	    switch (ivl_expr_opcode(expr)) {
+		case '+':
+		  draw_immediate_vec4(re, "%addi");
+		  return;
+		default:
+		  break;
+	    }
+      }
+
       draw_eval_vec4(re);
       if (rwid != ewid) {
 	    fprintf(vvp_out, "    %%pad/%c %u;\n", ivl_expr_signed(re)? 's' : 'u', ewid);
@@ -618,40 +693,18 @@ static void draw_binary_vec4(ivl_expr_t expr)
       }
 }
 
-static void draw_concat_vec4(ivl_expr_t expr)
-{
-	/* Repeat the concatenation this many times to make a
-	   super-concatenation. */
-      unsigned repeat = ivl_expr_repeat(expr);
-	/* This is the number of expressions that go into the
-	   concatenation. */
-      unsigned num_sube = ivl_expr_parms(expr);
-      unsigned sub_idx;
-
-      assert(num_sube > 0);
-
-	/* Start with the least-significant bits. */
-      draw_eval_vec4(ivl_expr_parm(expr, 0));
-
-      for (sub_idx = 1 ; sub_idx < num_sube ; sub_idx += 1) {
-	      /* Concatenate progressively higher parts. */
-	    draw_eval_vec4(ivl_expr_parm(expr, sub_idx));
-	    fprintf(vvp_out, "    %%concat/vec4;\n");
-      }
-
-      if (repeat > 1) {
-	    fprintf(vvp_out, "    %%replicate %u;\n", repeat);
-      }
-}
-
 /*
- * Push a number into the vec4 stack using %pushi/vec4
- * instructions. The %pushi/vec4 instruction can only handle up to 32
- * non-zero bits, so if there are more than that, then generate
- * multiple %pushi/vec4 statements, and use %concat/vec4 statements to
- * concatenate the vectors into the desired result.
+ * This handles two special cases:
+ *   1) Making a large IVL_EX_NUMBER as an immediate value. In this
+ *   case, start with a %pushi/vec4 to get the stack started, then
+ *   continue with %concati/vec4 instructions to build that number
+ *   up.
+ *
+ *   2) Concatenating a large IVL_EX_NUMBER to the current top of the
+ *   stack. In this case, start with %concati/vec4 and continue
+ *   generating %concati/vec4 instructions to finish up the large number.
  */
-static void draw_number_vec4(ivl_expr_t expr)
+static void draw_concat_number_vec4(ivl_expr_t expr, int as_concati)
 {
       unsigned long val0 = 0;
       unsigned long valx = 0;
@@ -660,7 +713,7 @@ static void draw_number_vec4(ivl_expr_t expr)
 
       unsigned idx;
       int accum = 0;
-      int count_pushi = 0;
+      int count_pushi = as_concati? 1 : 0;
 
 	/* Scan the literal bits, MSB first. */
       for (idx = 0 ; idx < wid ; idx += 1) {
@@ -693,25 +746,80 @@ static void draw_number_vec4(ivl_expr_t expr)
 		 then write it out, generate a %concat/vec4, and set
 		 up to handle more bits. */
 	    if ( (val0|valx) & 0x80000000UL ) {
-		  fprintf(vvp_out, "    %%pushi/vec4 %lu, %lu, %d;\n", val0, valx, accum);
+		  if (count_pushi) {
+			fprintf(vvp_out, "    %%concati/vec4 %lu, %lu, %d;\n",
+				val0, valx, accum);
+
+		  } else {
+			fprintf(vvp_out, "    %%pushi/vec4 %lu, %lu, %d;\n",
+				val0, valx, accum);
+		  }
+
 		  accum = 0;
 		  val0 = 0;
 		  valx = 0;
-		    /* If there is already at least 1 pushi, then
-		       concatenate this result to what we've done
-		       already. */
-		  if (count_pushi)
-			fprintf(vvp_out, "    %%concat/vec4;\n");
+
 		  count_pushi += 1;
 	    }
       }
 
       if (accum) {
-	    fprintf(vvp_out, "    %%pushi/vec4 %lu, %lu, %u;\n", val0, valx, accum);
-	    if (count_pushi)
-		  fprintf(vvp_out, "    %%concat/vec4;\n");
-	    count_pushi += 1;
+	    if (count_pushi) {
+		  fprintf(vvp_out, "    %%concati/vec4 %lu, %lu, %u;\n",
+			  val0, valx, accum);
+	    } else {
+		  fprintf(vvp_out, "    %%pushi/vec4 %lu, %lu, %u;\n",
+			  val0, valx, accum);
+	    }
       }
+}
+
+static void draw_concat_vec4(ivl_expr_t expr)
+{
+	/* Repeat the concatenation this many times to make a
+	   super-concatenation. */
+      unsigned repeat = ivl_expr_repeat(expr);
+	/* This is the number of expressions that go into the
+	   concatenation. */
+      unsigned num_sube = ivl_expr_parms(expr);
+      unsigned sub_idx;
+
+      assert(num_sube > 0);
+
+	/* Start with the most-significant bits. */
+      draw_eval_vec4(ivl_expr_parm(expr, 0));
+
+      for (sub_idx = 1 ; sub_idx < num_sube ; sub_idx += 1) {
+	      /* Concatenate progressively lower parts. */
+	    ivl_expr_t sube = ivl_expr_parm(expr, sub_idx);
+
+	      /* Special case: The next expression is a NUMBER that
+		 can be concatenated using %concati/vec4
+		 instructions. */
+	    if (ivl_expr_type(sube) == IVL_EX_NUMBER) {
+		  draw_concat_number_vec4(sube, 1);
+		  continue;
+	    }
+
+	    draw_eval_vec4(sube);
+	    fprintf(vvp_out, "    %%concat/vec4; draw_concat_vec4\n");
+      }
+
+      if (repeat > 1) {
+	    fprintf(vvp_out, "    %%replicate %u;\n", repeat);
+      }
+}
+
+/*
+ * Push a number into the vec4 stack using %pushi/vec4
+ * instructions. The %pushi/vec4 instruction can only handle up to 32
+ * non-zero bits, so if there are more than that, then generate
+ * multiple %pushi/vec4 statements, and use %concat/vec4 statements to
+ * concatenate the vectors into the desired result.
+ */
+static void draw_number_vec4(ivl_expr_t expr)
+{
+      draw_concat_number_vec4(expr, 0);
 }
 
 static void draw_property_vec4(ivl_expr_t expr)
@@ -873,20 +981,20 @@ static void draw_string_vec4(ivl_expr_t expr)
 	    p += 1;
 	    tmp_wid += 8;
 	    if (tmp_wid == 32) {
-		  fprintf(vvp_out, "    %%pushi/vec4 %lu, 0, 32;\n", tmp);
+		  fprintf(vvp_out, "    %%pushi/vec4 %lu, 0, 32; draw_string_vec4\n", tmp);
 		  tmp = 0;
 		  tmp_wid = 0;
 		  if (push_flag == 0)
 			push_flag += 1;
 		  else
-			fprintf(vvp_out, "    %%concat/vec4;\n");
+			fprintf(vvp_out, "    %%concat/vec4; draw_string_vec4\n");
 	    }
       }
 
       if (tmp_wid > 0) {
-	    fprintf(vvp_out, "    %%pushi/vec4 %lu, 0, %u;\n", tmp, tmp_wid);
+	    fprintf(vvp_out, "    %%pushi/vec4 %lu, 0, %u; draw_string_vec4\n", tmp, tmp_wid);
 	    if (push_flag != 0)
-		  fprintf(vvp_out, "    %%concat/vec4;\n");
+		  fprintf(vvp_out, "    %%concat/vec4; draw_string_vec4\n");
       }
 
       free(fp);
