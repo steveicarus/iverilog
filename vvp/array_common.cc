@@ -119,6 +119,73 @@ static int array_index_free_object(vpiHandle ref)
 __vpiHandle::free_object_fun_t __vpiArrayIndex::free_object_fun(void)
 { return &array_index_free_object; }
 
+char* __vpiArrayWord::as_word_t::vpi_get_str(int code)
+{
+      struct __vpiArrayWord*obj = array_var_word_from_handle(this);
+      assert(obj);
+      struct __vpiArrayBase*parent = obj->get_parent();
+      return parent->get_word_str(obj, code);
+}
+
+void __vpiArrayWord::as_word_t::vpi_get_value(p_vpi_value vp)
+{
+      struct __vpiArrayWord*obj = array_var_word_from_handle(this);
+      assert(obj);
+      struct __vpiArrayBase*parent = obj->get_parent();
+      return parent->get_word_value(obj, vp);
+}
+
+vpiHandle __vpiArrayWord::as_word_t::vpi_put_value(p_vpi_value vp, int flags)
+{
+      struct __vpiArrayWord*obj = array_var_word_from_handle(this);
+      assert(obj);
+      struct __vpiArrayBase*parent = obj->get_parent();
+      parent->put_word_value(obj, vp, flags);
+      return this;
+}
+
+vpiHandle __vpiArrayWord::as_word_t::vpi_handle(int code)
+{
+      struct __vpiArrayWord*obj = array_var_word_from_handle(this);
+      assert(obj);
+      struct __vpiArrayBase*parent = obj->get_parent();
+
+      switch (code) {
+
+	  case vpiIndex:
+	    return &(obj->as_index);
+
+	  case vpiLeftRange:
+	    return parent->get_left_range();
+
+	  case vpiRightRange:
+	    return parent->get_right_range();
+
+	  case vpiParent:
+	    return dynamic_cast<vpiHandle>(parent);
+
+	  case vpiScope:
+	    return parent->get_scope();
+
+	  case vpiModule:
+	    return vpip_module(parent->get_scope());
+      }
+
+      return 0;
+}
+
+void __vpiArrayWord::as_index_t::vpi_get_value(p_vpi_value vp)
+{
+      struct __vpiArrayWord*obj = array_var_index_from_handle(this);
+      assert(obj);
+      unsigned index = obj->get_index();
+
+      assert(vp->format == vpiIntVal);
+      vp->value.integer = index;
+}
+
+
+
 struct __vpiArrayWord*array_var_word_from_handle(vpiHandle ref)
 {
       if (ref == 0)
@@ -142,3 +209,4 @@ struct __vpiArrayWord* array_var_index_from_handle(vpiHandle ref)
       assert(sizeof(__vpiHandle) == sizeof(__vpiArrayWord::as_word_t));
       return (struct __vpiArrayWord*) (ref-1);
 }
+

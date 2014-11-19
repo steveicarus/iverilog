@@ -85,10 +85,14 @@ vvp_array_t array_find(const char*label)
 struct __vpiArray : public __vpiArrayBase, public __vpiHandle {
       int get_type_code(void) const { return vpiMemory; }
       unsigned get_size() const { return array_count; }
-      int get_word_size() const;
-      int get_left_range() const { assert(nets == 0); return msb.get_value(); }
-      int get_right_range() const { assert(nets == 0); return lsb.get_value(); }
+      vpiHandle get_left_range() { assert(nets == 0); return &msb; }
+      vpiHandle get_right_range() { assert(nets == 0); return &lsb; }
       struct __vpiScope*get_scope() const { return scope; }
+
+      int get_word_size() const;
+      char*get_word_str(struct __vpiArrayWord*word, int code);
+      void get_word_value(struct __vpiArrayWord*word, p_vpi_value vp);
+      void put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, int flags);
 
       int vpi_get(int code);
       char* vpi_get_str(int code);
@@ -252,7 +256,7 @@ static void vpi_array_vthr_APV_get_value(vpiHandle ref, p_vpi_value vp);
 
 
 // This function return true if the underlying array words are real.
-static bool vpi_array_is_real(vvp_array_t arr)
+static bool vpi_array_is_real(const vvp_array_t arr)
 {
 	// Check to see if this is a variable/register array.
       if (arr->vals4 != 0)  // A bit based variable/register array.
@@ -275,7 +279,7 @@ static bool vpi_array_is_real(vvp_array_t arr)
       return false;
 }
 
-static bool vpi_array_is_string(vvp_array_t arr)
+static bool vpi_array_is_string(const vvp_array_t arr)
 {
 	// Check to see if this is a variable/register array.
       if (arr->vals4 != 0)  // A bit based variable/register array.
@@ -301,6 +305,79 @@ int __vpiArray::get_word_size() const
 
     assert(false);
     return 0;
+}
+
+char*__vpiArray::get_word_str(struct __vpiArrayWord*word, int code)
+{
+      unsigned index = word->get_index();
+
+      if (code == vpiFile) {  // Not implemented for now!
+	    return simple_set_rbuf_str(file_names[0]);
+      }
+
+      char sidx [64];
+      snprintf(sidx, 63, "%d", (int)index + first_addr.get_value());
+      return generic_get_str(code, get_scope(), name, sidx);
+}
+
+void __vpiArray::get_word_value(struct __vpiArrayWord*word, p_vpi_value vp)
+{
+      unsigned index = word->get_index();
+
+    // Determine the appropriate format (The Verilog PLI Handbook 5.2.10)
+      if(vp->format == vpiObjTypeVal) {
+          if(vpi_array_is_real(this))
+              vp->format = vpiRealVal;
+          else if(vpi_array_is_string(this))
+              vp->format = vpiStringVal;
+          else
+              vp->format = vpiIntVal;
+      }
+
+      if(vals4) {
+          vpip_vec4_get_value(vals4->get_word(index),
+                              vals4->width(), signed_flag, vp);
+      } else if(vals) {
+          switch(vp->format) {
+            case vpiIntVal:
+            case vpiVectorVal:
+            {
+                vvp_vector4_t v;
+                vals->get_word(index, v);
+                vpip_vec2_get_value(v, vals_width, signed_flag, vp);
+            }
+            break;
+
+            case vpiRealVal:
+            {
+                double d;
+                vals->get_word(index, d);
+                vpip_real_get_value(d, vp);
+            }
+            break;
+
+            case vpiStringVal:
+            {
+                string s;
+                vals->get_word(index, s);
+                vpip_string_get_value(s, vp);
+            }
+            break;
+
+            // TODO *StrVal variants
+
+            default:
+                fprintf(stderr, "vpi sorry: format is not implemented");
+                assert(false);
+          }
+      }
+}
+
+void __vpiArray::put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, int)
+{
+      unsigned index = word->get_index();
+      vvp_vector4_t val = vec4_from_vpi_value(vp, vals_width);
+      array_set_word(this, index, 0, val);
 }
 
 int __vpiArray::vpi_get(int code)
@@ -377,6 +454,7 @@ int __vpiArrayWord::as_word_t::vpi_get(int code)
       struct __vpiArrayWord*obj = array_var_word_from_handle(this);
       assert(obj);
       struct __vpiArrayBase*parent = obj->get_parent();
+      t_vpi_value val;
 
       switch (code) {
 	  case vpiLineNo:
@@ -386,10 +464,16 @@ int __vpiArrayWord::as_word_t::vpi_get(int code)
 	    return parent->get_word_size();
 
 	  case vpiLeftRange:
-	    return parent->get_left_range();
+            val.format = vpiIntVal;
+	    parent->get_left_range()->vpi_get_value(&val);
+            assert(val.format == vpiIntVal);
+            return val.value.integer;
 
 	  case vpiRightRange:
-	    return parent->get_right_range();
+            val.format = vpiIntVal;
+	    parent->get_right_range()->vpi_get_value(&val);
+            assert(val.format == vpiIntVal);
+            return val.value.integer;
 
 	  case vpiAutomatic:
 	    return (int) parent->get_scope()->is_automatic;
@@ -402,131 +486,6 @@ int __vpiArrayWord::as_word_t::vpi_get(int code)
 	  default:
 	    return 0;
       }
-}
-
-// TODO make generic version of the following methods and move them to array_common
-char* __vpiArrayWord::as_word_t::vpi_get_str(int code)
-{
-      struct __vpiArrayWord*obj = array_var_word_from_handle(this);
-      assert(obj);
-      struct __vpiArray*parent = (__vpiArray*) obj->get_parent();
-      unsigned index = obj->get_index();
-
-      if (code == vpiFile) {  // Not implemented for now!
-	    return simple_set_rbuf_str(file_names[0]);
-      }
-
-      char sidx [64];
-      snprintf(sidx, 63, "%d", (int)index + parent->first_addr.get_value());
-      return generic_get_str(code, parent->get_scope(), parent->name, sidx);
-}
-
-void __vpiArrayWord::as_word_t::vpi_get_value(p_vpi_value vp)
-{
-      struct __vpiArrayWord*obj = array_var_word_from_handle(this);
-      assert(obj);
-      struct __vpiArray*parent = (__vpiArray*) obj->get_parent();
-      unsigned index = obj->get_index();
-
-    // Determine the appropriate format (The Verilog PLI Handbook 5.2.10)
-      if(vp->format == vpiObjTypeVal) {
-          if(vpi_array_is_real(parent))
-              vp->format = vpiRealVal;
-          else if(vpi_array_is_string(parent))
-              vp->format = vpiStringVal;
-          else
-              vp->format = vpiIntVal;
-      }
-
-      if(parent->vals4) {
-          vpip_vec4_get_value(parent->vals4->get_word(index),
-                              parent->vals4->width(), parent->signed_flag, vp);
-      } else if(parent->vals) {
-          switch(vp->format) {
-            case vpiIntVal:
-            case vpiVectorVal:
-            {
-                vvp_vector4_t v;
-                parent->vals->get_word(index, v);
-                vpip_vec2_get_value(v, parent->vals_width, parent->signed_flag, vp);
-            }
-            break;
-
-            case vpiRealVal:
-            {
-                double d;
-                parent->vals->get_word(index, d);
-                vpip_real_get_value(d, vp);
-            }
-            break;
-
-            case vpiStringVal:
-            {
-                string s;
-                parent->vals->get_word(index, s);
-                vpip_string_get_value(s, vp);
-            }
-            break;
-
-            // TODO *StrVal variants
-
-            default:
-                fprintf(stderr, "vpi sorry: format is not implemented");
-                assert(false);
-          }
-      }
-}
-
-vpiHandle __vpiArrayWord::as_word_t::vpi_put_value(p_vpi_value vp, int)
-{
-      struct __vpiArrayWord*obj = array_var_word_from_handle(this);
-      assert(obj);
-      struct __vpiArray*parent = (__vpiArray*) obj->get_parent();
-      unsigned index = obj->get_index();
-
-      vvp_vector4_t val = vec4_from_vpi_value(vp, parent->vals_width);
-      array_set_word(parent, index, 0, val);
-      return this;
-}
-
-vpiHandle __vpiArrayWord::as_word_t::vpi_handle(int code)
-{
-      struct __vpiArrayWord*obj = array_var_word_from_handle(this);
-      assert(obj);
-      struct __vpiArray*parent = (__vpiArray*) obj->get_parent();
-
-      switch (code) {
-
-	  case vpiIndex:
-	    return &(obj->as_index);
-
-	  case vpiLeftRange:
-	    return &parent->msb;
-
-	  case vpiRightRange:
-	    return &parent->lsb;
-
-	  case vpiParent:
-	    return parent;
-
-	  case vpiScope:
-	    return parent->get_scope();
-
-	  case vpiModule:
-	    return vpip_module(parent->get_scope());
-      }
-
-      return 0;
-}
-
-void __vpiArrayWord::as_index_t::vpi_get_value(p_vpi_value vp)
-{
-      struct __vpiArrayWord*obj = array_var_index_from_handle(this);
-      assert(obj);
-      unsigned index = obj->get_index();
-
-      assert(vp->format == vpiIntVal);
-      vp->value.integer = index;
 }
 
 

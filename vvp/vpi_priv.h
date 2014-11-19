@@ -539,10 +539,15 @@ struct __vpiArrayBase {
       __vpiArrayBase() : vals_words(NULL) {}
 
       virtual unsigned get_size(void) const = 0;
-      virtual int get_word_size() const = 0;
-      virtual int get_left_range() const = 0;
-      virtual int get_right_range() const = 0;
+      virtual vpiHandle get_left_range() = 0;
+      virtual vpiHandle get_right_range() = 0;
       virtual struct __vpiScope*get_scope() const = 0;
+
+      virtual int get_word_size() const = 0;
+      virtual char*get_word_str(struct __vpiArrayWord*word, int code) = 0;
+      virtual void get_word_value(struct __vpiArrayWord*word, p_vpi_value vp) = 0;
+      virtual void put_word_value(struct __vpiArrayWord*word, p_vpi_value vp,
+                                    int flags) = 0;
 
       virtual vpiHandle vpi_iterate(int code);
       virtual void make_vals_words();
@@ -556,10 +561,14 @@ class __vpiDarrayVar : public __vpiBaseVar, public __vpiArrayBase {
 
       int get_type_code() const { return vpiArrayVar; }
       unsigned get_size() const;
-      int get_word_size() const { return 0; } // TODO
-      int get_left_range() const { return 0; }
-      int get_right_range() const { return 0; }
+      vpiHandle get_left_range() { return NULL; }
+      vpiHandle get_right_range() { return NULL; }
       struct __vpiScope*get_scope() const { return scope_; }
+
+      int get_word_size() const { return 0; } // TODO
+      char*get_word_str(struct __vpiArrayWord*word, int code) { return NULL; }
+      void get_word_value(struct __vpiArrayWord*word, p_vpi_value vp) {}
+      void put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, int flags) {}
 
       int vpi_get(int code);
       char* vpi_get_str(int code);
