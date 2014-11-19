@@ -237,8 +237,6 @@ static const struct opcode_table_s opcode_table[] = {
       { "%set/dar/obj/real",of_SET_DAR_OBJ_REAL,1,{OA_NUMBER,OA_NONE,OA_NONE} },
       { "%set/dar/obj/str", of_SET_DAR_OBJ_STR, 1,{OA_NUMBER,OA_NONE,OA_NONE} },
       { "%set/dar/obj/vec4",of_SET_DAR_OBJ_VEC4,1,{OA_NUMBER,OA_NONE,OA_NONE} },
-      { "%set/qb", of_SET_QB, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
-      { "%set/qf", of_SET_QF, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%shiftl",   of_SHIFTL,   1, {OA_NUMBER, OA_NONE,   OA_NONE} },
       { "%shiftr",   of_SHIFTR,   1, {OA_NUMBER, OA_NONE,   OA_NONE} },
       { "%shiftr/s", of_SHIFTR_S, 1, {OA_NUMBER, OA_NONE,   OA_NONE} },
@@ -531,48 +529,23 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 {
       symbol_value_t val = sym_get_value(sym_vpi, label());
       if (!val.ptr) {
-	    // check for thread vector  T<base,wid>
+	    // check for thread access symbols
 	    unsigned base, wid;
-	    int n = 0;
+	    size_t n = 0;
 	    char ss[32];
-	    if (2 == sscanf(label(), "W<%u,%[r]>%n", &base, ss, &n)
+	    if (2 == sscanf(label(), "W<%u,%[r]>%zn", &base, ss, &n)
 		       && n == strlen(label())) {
 
 		  val.ptr = vpip_make_vthr_word(base, ss);
 		  sym_set_value(sym_vpi, label(), val);
-#if 0
-		    // The T<...> forms are obsolete.
-	    } else if (2 <= sscanf(label(), "T<%u,%u>%n", &base, &wid, &n)
-		&& n == strlen(label())) {
-		  val.ptr = vpip_make_vthr_vector(base, wid, false);
-		  sym_set_value(sym_vpi, label(), val);
 
-	    } else if (3 <= sscanf(label(), "T<%u,%u,%[su]>%n", &base,
-				   &wid, ss, &n)
-		       && n == (int)strlen(label())) {
-
-		  bool signed_flag = false;
-		  for (char*fp = ss ;  *fp ;  fp += 1) switch (*fp) {
-		      case 's':
-			signed_flag = true;
-			break;
-		      case 'u':
-			signed_flag = false;
-			break;
-		      default:
-			break;
-		  }
-
-		  val.ptr = vpip_make_vthr_vector(base, wid, signed_flag);
-		  sym_set_value(sym_vpi, label(), val);
-#endif
-	    } else if (1 == sscanf(label(), "S<%u,str>%n", &base, &n)
+	    } else if (1 == sscanf(label(), "S<%u,str>%zn", &base, &n)
 		       && n == strlen(label())) {
 
 		  val.ptr = vpip_make_vthr_str_stack(base);
 		  sym_set_value(sym_vpi, label(), val);
 
-	    } else if (3 == sscanf(label(), "S<%u,vec4,%[su]%u>%n", &base, ss, &wid, &n)
+	    } else if (3 == sscanf(label(), "S<%u,vec4,%[su]%u>%zn", &base, ss, &wid, &n)
 		       && n == strlen(label())) {
 
 		  bool signed_flag = false;

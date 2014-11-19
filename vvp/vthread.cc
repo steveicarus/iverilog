@@ -308,11 +308,6 @@ struct __vpiScope* vthread_scope(struct vthread_s*thr)
 
 struct vthread_s*running_thread = 0;
 
-#if 0
-// this table maps the thread special index bit addresses to
-// vvp_bit4_t bit values.
-static vvp_bit4_t thr_index_to_bit4[4] = { BIT4_0, BIT4_1, BIT4_X, BIT4_Z };
-#endif
 
 void vthread_push_vec4(struct vthread_s*thr, const vvp_vector4_t&val)
 {
@@ -394,55 +389,6 @@ template <class T> T coerce_to_width(const T&that, unsigned width)
 /* Explicitly define the vvp_vector4_t version of coerce_to_width(). */
 template vvp_vector4_t coerce_to_width(const vvp_vector4_t&that,
                                        unsigned width);
-#if 0
-static unsigned long* vector_to_array(struct vthread_s*thr,
-				      unsigned addr, unsigned wid)
-{
-      if (addr == 0) {
-	    unsigned awid = (wid + CPU_WORD_BITS - 1) / (CPU_WORD_BITS);
-	    unsigned long*val = new unsigned long[awid];
-	    for (unsigned idx = 0 ;  idx < awid ;  idx += 1)
-		  val[idx] = 0;
-	    return val;
-      }
-      if (addr == 1) {
-	    unsigned awid = (wid + CPU_WORD_BITS - 1) / (CPU_WORD_BITS);
-	    unsigned long*val = new unsigned long[awid];
-	    for (unsigned idx = 0 ;  idx < awid ;  idx += 1)
-		  val[idx] = -1UL;
-
-	    wid -= (awid-1) * CPU_WORD_BITS;
-	    if (wid < CPU_WORD_BITS)
-		  val[awid-1] &= (-1UL) >> (CPU_WORD_BITS-wid);
-
-	    return val;
-      }
-
-      if (addr < 4)
-	    return 0;
-
-      return thr->bits4.subarray(addr, wid);
-}
-#endif
-
-#if 0
-/*
- * This function gets from the thread a vector of bits starting from
- * the addressed location and for the specified width.
- */
-static vvp_vector4_t vthread_bits_to_vector(struct vthread_s*thr,
-					    unsigned bit, unsigned wid)
-{
-	/* Make a vector of the desired width. */
-
-      if (bit >= 4) {
-	    return vvp_vector4_t(thr->bits4, bit, wid);
-
-      } else {
-	    return vvp_vector4_t(wid, thr_index_to_bit4[bit]);
-      }
-}
-#endif
 
 /*
  * Some of the instructions do wide addition to arrays of long. They
@@ -4759,70 +4705,6 @@ bool of_SET_DAR_OBJ_VEC4(vthread_t thr, vvp_code_t cp)
       assert(darray);
 
       darray->set_word(adr, value);
-      return true;
-}
-
-/*
- * %set/qb <var-label> <bit>, <wid>
- */
-bool of_SET_QB(vthread_t /*thr*/, vvp_code_t /*cp*/)
-{
-#if 0
-      unsigned bit = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-	/* Make a vector of the desired width. */
-      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
-
-      vvp_net_t*net = cp->net;
-      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
-      assert(obj);
-
-      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
-      if (dqueue == 0) {
-	    assert(obj->get_object().test_nil());
-	    dqueue = new vvp_queue_vec4;
-	    vvp_object_t val (dqueue);
-	    vvp_net_ptr_t ptr (cp->net, 0);
-	    vvp_send_object(ptr, val, thr->wt_context);
-      }
-
-      assert(dqueue);
-      dqueue->push_back(value);
-#else
-      fprintf(stderr, "XXXX FORGOT TO IMPLEMENT %%set/qb\n");
-#endif
-      return true;
-}
-
-/*
- * %set/qf <var-label> <bit>, <wid>
- */
-bool of_SET_QF(vthread_t /*thr*/, vvp_code_t /*cp*/)
-{
-#if 0
-      unsigned bit = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-	/* Make a vector of the desired width. */
-      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
-
-      vvp_net_t*net = cp->net;
-      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
-      assert(obj);
-
-      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
-      if (dqueue == 0) {
-	    assert(obj->get_object().test_nil());
-	    dqueue = new vvp_queue_vec4;
-	    vvp_object_t val (dqueue);
-	    vvp_net_ptr_t ptr (cp->net, 0);
-	    vvp_send_object(ptr, val, thr->wt_context);
-      }
-
-      assert(dqueue);
-      dqueue->push_front(value);
-#else
-      fprintf(stderr, "XXXX FORGOT TO IMPLEMENT %%set/qf\n");
-#endif
       return true;
 }
 
