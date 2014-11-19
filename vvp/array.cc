@@ -94,6 +94,8 @@ struct __vpiArray : public __vpiArrayBase, public __vpiHandle {
       void get_word_value(struct __vpiArrayWord*word, p_vpi_value vp);
       void put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, int flags);
 
+      vpiHandle get_iter_index(struct __vpiArrayIterator*iter, int idx);
+
       int vpi_get(int code);
       char* vpi_get_str(int code);
       vpiHandle vpi_handle(int code);
@@ -379,6 +381,17 @@ void __vpiArray::put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, int)
       unsigned index = word->get_index();
       vvp_vector4_t val = vec4_from_vpi_value(vp, vals_width);
       array_set_word(this, index, 0, val);
+}
+
+vpiHandle __vpiArray::get_iter_index(struct __vpiArrayIterator*iter, int idx)
+{
+      if (nets) return nets[idx];
+
+      assert(vals4 || vals);
+
+      if (vals_words == 0) make_vals_words();
+
+      return &(vals_words[idx].as_word);
 }
 
 int __vpiArray::vpi_get(int code)

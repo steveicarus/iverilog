@@ -28,7 +28,7 @@ struct __vpiArrayIterator : public __vpiHandle {
       int get_type_code(void) const
       { return vpiIterator; }
 
-      virtual vpiHandle vpi_index(int idx);
+      vpiHandle vpi_index(int idx);
       free_object_fun_t free_object_fun(void);
 
       struct __vpiArrayBase*array;

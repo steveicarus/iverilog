@@ -36,7 +36,6 @@ vpiHandle __vpiArrayBase::vpi_array_base_iterate(int code)
     return 0;
 }
 
-// TODO template
 void __vpiArrayBase::make_vals_words()
 {
     assert(vals_words == 0);
@@ -63,14 +62,7 @@ vpiHandle __vpiArrayIterator::vpi_index(int)
       unsigned use_index = next;
       next += 1;
 
-// TODO ArrayBase::iterate(int)?
-      //if (array->nets) return array->nets[use_index];
-
-      //assert(array->vals4 || array->vals);
-
-      if (array->vals_words == 0) array->make_vals_words();
-
-      return &(array->vals_words[use_index].as_word);
+      return array->get_iter_index(this, use_index);
 }
 
 static int array_iterator_free_object(vpiHandle ref)
@@ -183,8 +175,6 @@ void __vpiArrayWord::as_index_t::vpi_get_value(p_vpi_value vp)
       assert(vp->format == vpiIntVal);
       vp->value.integer = index;
 }
-
-
 
 struct __vpiArrayWord*array_var_word_from_handle(vpiHandle ref)
 {
