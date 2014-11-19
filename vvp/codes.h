@@ -139,8 +139,6 @@ extern bool of_LOAD_STR(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_STRA(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VEC4A(vthread_t thr, vvp_code_t code);
-extern bool of_LOAD_VP0(vthread_t thr, vvp_code_t code);
-extern bool of_LOAD_VP0_S(vthread_t thr, vvp_code_t code);
 extern bool of_MAX_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MIN_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MOD(vthread_t thr, vvp_code_t code);

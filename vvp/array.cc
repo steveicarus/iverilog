@@ -147,10 +147,6 @@ struct __vpiArrayVthrA : public __vpiHandle {
       vpiHandle address_handle;
 	// If wid==0, then address is the address into the array.
       unsigned address;
-	// If wid >0, then the address is the base and wid the vector
-	// width of the index to pull from the thread.
-      unsigned wid;
-      bool is_signed;
 
       unsigned get_address() const
       {
@@ -170,39 +166,7 @@ struct __vpiArrayVthrA : public __vpiHandle {
 		  return vp.value.integer;
 	    }
 
-	    if (wid == 0)
-		  return address;
-
-	      /* Get the value from thread space. */
-	    int tval = 0;
-	    for (unsigned idx = 0 ; (idx < wid) && (idx < 8*sizeof(tval));
-	         idx += 1) {
-		  vvp_bit4_t bit = vthread_get_bit(vpip_current_vthread,
-		                                   address + idx);
-		  switch (bit) {
-		      case BIT4_X:
-		      case BIT4_Z:
-			  /* Return UINT_MAX to indicate an X base. */
-			return UINT_MAX;
-
-		      case BIT4_1:
-			tval |= 1<<idx;
-			break;
-
-		      case BIT4_0:
-			break;  // Do nothing!
-		  }
-	    }
-
-	    if (is_signed && (wid < 8*sizeof(tval))) {
-		  vvp_bit4_t msb = vthread_get_bit(vpip_current_vthread,
-		                                   address + wid - 1);
-		  if (msb == BIT4_1) {
-			tval |= ~((1 << wid) - 1);
-		  }
-	    }
-
-	    return tval;
+	    return address;
       }
 };
 
@@ -773,12 +737,9 @@ static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 #endif
 
 	  // If address_handle is not zero we definitely have a
-	  // variable. If the wid is not zero we have a calculation
-	  // from thread space which probably includes a variable.
-	  // This assumes that the compiler is squashing all the
-	  // constant expressions down to a single value.
+	  // variable.
 	  case vpiConstantSelect:
-	    return obj->address_handle == 0 && obj->wid == 0;
+	    return obj->address_handle == 0;
 
 	  default:
 	    return 0;
@@ -1987,35 +1948,6 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned addr)
 
       obj->address_handle = 0;
       obj->address = addr;
-      obj->wid = 0;
-
-      return obj;
-}
-
-/*
- * &A<label,tbase,twid,s>
- * This represents a VPI handle for an addressed word, where the word
- * address in thread vector space. The tbase/twod/is_signed variables
- * are the location and interpretation of the bits. This comes from
- * source expressions that look like label[<expr>].
- */
-vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid,
-                           char*is_signed)
-{
-      struct __vpiArrayVthrA*obj = new __vpiArrayVthrA;
-
-      array_resolv_list_t*resolv_mem
-	    = new array_resolv_list_t(label);
-
-      resolv_mem->array = &obj->array;
-      resolv_submit(resolv_mem);
-
-      obj->address_handle = 0;
-      obj->address = tbase;
-      obj->wid = twid;
-      obj->is_signed = strcmp(is_signed, "s") == 0;
-
-      delete [] is_signed;
 
       return obj;
 }
@@ -2039,7 +1971,6 @@ vpiHandle vpip_make_vthr_A(char*label, char*symbol)
       obj->address_handle = 0;
       compile_vpi_lookup(&obj->address_handle, symbol);
       obj->address = 0;
-      obj->wid = 0;
 
       return obj;
 }
@@ -2056,7 +1987,6 @@ vpiHandle vpip_make_vthr_A(char*label, vpiHandle handle)
 
       obj->address_handle = handle;
       obj->address = 0;
-      obj->wid = 0;
 
       return obj;
 }

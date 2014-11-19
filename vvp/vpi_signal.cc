@@ -1164,39 +1164,7 @@ static int PV_get_base(struct __vpiPV*rfp)
       }
 
 	/* If the width is zero then tbase is the constant. */
-      if (rfp->twid == 0) return rfp->tbase;
-
-	/* Get the value from thread space. */
-      int tval = 0;
-      for (unsigned idx = 0 ;  (idx < rfp->twid) && (idx < 8*sizeof(tval));
-           idx += 1) {
-	    vvp_bit4_t bit = vthread_get_bit(vpip_current_vthread,
-                                             rfp->tbase + idx);
-	    switch (bit) {
-		case BIT4_X:
-		case BIT4_Z:
-		    /* We use INT_MIN to indicate an X base. */
-		  return INT_MIN;
-
-		case BIT4_1:
-		  tval |= 1<<idx;
-		  break;
-
-		case BIT4_0:
-		  break; // Do nothing!
-	    }
-      }
-
-	/* Check to see if we need to sign extend the result. */
-      if (rfp->is_signed && (rfp->twid < 8*sizeof(tval))) {
-	    vvp_bit4_t msb = vthread_get_bit(vpip_current_vthread,
-	                                     rfp->tbase + rfp->twid - 1);
-	    if (msb == BIT4_1) {
-		  tval |= ~((1 << rfp->twid) - 1);
-	    }
-      }
-
-      return tval;
+      return rfp->tbase;
 }
 
 static int PV_get(int code, vpiHandle ref)
@@ -1217,7 +1185,7 @@ static int PV_get(int code, vpiHandle ref)
 
 	  /* This is like the &A<> in array.cc. */
 	case vpiConstantSelect:
-	    return rfp->sbase == 0 && rfp->twid == 0;
+	    return rfp->sbase == 0;
 
 	case vpiLeftRange:
             rval += rfp->width - 1;
@@ -1419,7 +1387,6 @@ vpiHandle vpip_make_PV(char*var, int base, int width)
       obj->parent = vvp_lookup_handle(var);
       obj->sbase = 0;
       obj->tbase = base;
-      obj->twid = 0;
       obj->width = (unsigned) width;
       obj->net = 0;
       functor_ref_lookup(&obj->net, var);
@@ -1433,7 +1400,6 @@ vpiHandle vpip_make_PV(char*var, char*symbol, int width)
       obj->parent = vvp_lookup_handle(var);
       compile_vpi_lookup(&obj->sbase, symbol);
       obj->tbase = 0;
-      obj->twid = 0;
       obj->width = (unsigned) width;
       obj->net = 0;
       functor_ref_lookup(&obj->net, var);
@@ -1447,27 +1413,9 @@ vpiHandle vpip_make_PV(char*var, vpiHandle handle, int width)
       obj->parent = vvp_lookup_handle(var);
       obj->sbase = handle;
       obj->tbase = 0;
-      obj->twid = 0;
       obj->width = (unsigned) width;
       obj->net = 0;
       functor_ref_lookup(&obj->net, var);
-
-      return obj;
-}
-
-vpiHandle vpip_make_PV(char*var, int tbase, int twid, char*is_signed, int width)
-{
-      struct __vpiPV*obj = new __vpiPV;
-      obj->parent = vvp_lookup_handle(var);
-      obj->sbase = 0;
-      obj->tbase = tbase;
-      obj->twid = (unsigned) twid;
-      obj->is_signed = strcmp(is_signed, "s") == 0;
-      obj->width = (unsigned) width;
-      obj->net = 0;
-      functor_ref_lookup(&obj->net, var);
-
-      delete [] is_signed;
 
       return obj;
 }

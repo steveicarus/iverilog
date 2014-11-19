@@ -705,19 +705,6 @@ holds the canonical array index.
 The load checks flag bit 4. If it is 1, then the load it cancelled and
 replaced with a load of all X bits. See %ix/vec4.
 
-* %load/vp0 <bit>, <functor-label>, <wid>
-* %load/vp0/s <bit>, <functor-label>, <wid>
-
-This instruction is the similar %load/v above, except that it also
-adds the signed integer value in index register 0 into the loaded
-value. The addition is a Verilog-style add, which means that if any of
-the input bits are X or Z, the entire result is turned into a vector
-of X bits.
-
-The <wid> is, line the %load/v, the result width. But unlike the
-%load/v, the vector is padded with 0s (%load/vp0) or sign extended
-(%load/vp0/s) to the desired width.
-
 * %load/ar <array-label>, <index>
 
 The %load/ar instruction reads a real value from an array. The <index>

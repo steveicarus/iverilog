@@ -355,14 +355,11 @@ struct __vpiPV : public __vpiHandle {
       vvp_net_t*net;
       vpiHandle sbase;
       int tbase;
-      unsigned twid, width;
-      bool is_signed;
+      unsigned width;
 };
 extern vpiHandle vpip_make_PV(char*name, int base, int width);
 extern vpiHandle vpip_make_PV(char*name, char*symbol, int width);
 extern vpiHandle vpip_make_PV(char*name, vpiHandle handle, int width);
-extern vpiHandle vpip_make_PV(char*name, int tbase, int twid, char*is_signed,
-                              int width);
 
 struct __vpiModPathTerm : public __vpiHandle {
       __vpiModPathTerm();
@@ -683,8 +680,6 @@ vpiHandle vpip_make_vthr_vec4_stack(unsigned depth, bool signed_flag, unsigned w
 
 vpiHandle vpip_make_vthr_A(char*label, unsigned index);
 vpiHandle vpip_make_vthr_A(char*label, char*symbol);
-vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid,
-                           char*is_signed);
 vpiHandle vpip_make_vthr_A(char*label, vpiHandle handle);
 vpiHandle vpip_make_vthr_APV(char*label, unsigned index, unsigned bit, unsigned wid);
 

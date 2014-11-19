@@ -102,7 +102,6 @@ struct vthread_s {
 	/* This is the program counter. */
       vvp_code_t pc;
 	/* These hold the private thread bits. */
-	//vvp_vector4_t bits4;
       enum { FLAGS_COUNT = 256, WORDS_COUNT = 16 };
       vvp_bit4_t flags[FLAGS_COUNT];
 
@@ -313,46 +312,7 @@ struct vthread_s*running_thread = 0;
 // this table maps the thread special index bit addresses to
 // vvp_bit4_t bit values.
 static vvp_bit4_t thr_index_to_bit4[4] = { BIT4_0, BIT4_1, BIT4_X, BIT4_Z };
-
-static inline void thr_check_addr(struct vthread_s*thr, unsigned addr)
-{
-      if (thr->bits4.size() <= addr)
-	    thr->bits4.resize(addr+1);
-}
-
-static inline vvp_bit4_t thr_get_bit(struct vthread_s*thr, unsigned addr)
-{
-      assert(addr < thr->bits4.size());
-      return thr->bits4.value(addr);
-}
-
-static inline void thr_put_bit(struct vthread_s*thr,
-			       unsigned addr, vvp_bit4_t val)
-{
-      thr_check_addr(thr, addr);
-      thr->bits4.set_bit(addr, val);
-}
 #endif
-
-vvp_bit4_t vthread_get_bit(struct vthread_s* /*thr*/, unsigned addr)
-{
-#if 0
-      if (vpi_mode_flag == VPI_MODE_COMPILETF) return BIT4_X;
-      else return thr_get_bit(thr, addr);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: vthread_get_bit(..., %u)\n", addr);
-      return BIT4_X;
-#endif
-}
-
-void vthread_put_bit(struct vthread_s* /*thr*/, unsigned addr, vvp_bit4_t bit)
-{
-#if 0
-      thr_put_bit(thr, addr, bit);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: vthread_put_bit(..., %u, %u)\n", addr, bit);
-#endif
-}
 
 void vthread_push_vec4(struct vthread_s*thr, const vvp_vector4_t&val)
 {
@@ -3338,49 +3298,6 @@ bool of_LOAD_DAR_VEC4(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %load/vp0, %load/vp0/s, %load/avp0 and %load/avp0/s share this function.
- */
-#if (SIZEOF_UNSIGNED_LONG >= 8)
-# define CPU_WORD_STRIDE CPU_WORD_BITS - 1  // avoid a warning
-#else
-# define CPU_WORD_STRIDE CPU_WORD_BITS
-#endif
-static void load_vp0_common(vthread_t thr, vvp_code_t cp, const vvp_vector4_t&sig_value)
-{
-#if 0
-      unsigned bit = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-      int64_t addend = thr->words[0].w_int;
-
-	/* Check the address once, before we scan the vector. */
-      thr_check_addr(thr, bit+wid-1);
-
-      unsigned long*val = sig_value.subarray(0, wid);
-      if (val == 0) {
-	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->bits4.set_vec(bit, tmp);
-	    return;
-      }
-
-      unsigned words = (wid + CPU_WORD_BITS - 1) / CPU_WORD_BITS;
-      unsigned long carry = 0;
-      unsigned long imm = addend;
-      for (unsigned idx = 0 ; idx < words ; idx += 1) {
-            val[idx] = add_with_carry(val[idx], imm, carry);
-            addend >>= CPU_WORD_STRIDE;
-            imm = addend;
-      }
-
-	/* Copy the vector bits into the bits4 vector. Do the copy
-	   directly to skip the excess calls to thr_check_addr. */
-      thr->bits4.setarray(bit, wid, val);
-      delete[]val;
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: load_vp0_common()\n");
-#endif
-}
-
-/*
  * %load/obj <var-label>
  */
 bool of_LOAD_OBJ(vthread_t thr, vvp_code_t cp)
@@ -3531,43 +3448,6 @@ bool of_LOAD_VEC4A(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t tmp (array_get_word(cp->array, adr));
       thr->push_vec4(tmp);
-      return true;
-}
-
-/*
- * This is like of_LOAD_VEC, but includes an add of an integer value from
- * index 0. The <wid> is the expected result width not the vector width.
- */
-
-bool of_LOAD_VP0(vthread_t thr, vvp_code_t cp)
-{
-      unsigned wid = cp->bit_idx[1];
-
-        /* We need a vector this wide to make the math work correctly.
-         * Copy the base bits into the vector, but keep the width. */
-      vvp_vector4_t sig_value(wid, BIT4_0);
-
-      vvp_vector4_t tmp;
-      load_base(cp, tmp);
-      sig_value.copy_bits(tmp);
-
-      load_vp0_common(thr, cp, sig_value);
-      return true;
-}
-
-bool of_LOAD_VP0_S(vthread_t thr, vvp_code_t cp)
-{
-      unsigned wid = cp->bit_idx[1];
-
-      vvp_vector4_t tmp;
-      load_base(cp, tmp);
-
-        /* We need a vector this wide to make the math work correctly.
-         * Copy the base bits into the vector, but keep the width. */
-      vvp_vector4_t sig_value(wid, tmp.value(tmp.size()-1));
-      sig_value.copy_bits(tmp);
-
-      load_vp0_common(thr, cp, sig_value);
       return true;
 }
 

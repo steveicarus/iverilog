@@ -109,13 +109,8 @@ extern vvp_context_item_t vthread_get_wt_context_item(unsigned context_idx);
 extern vvp_context_item_t vthread_get_rd_context_item(unsigned context_idx);
 
 /*
- * Return a bit from the thread's bit space. These are used, for
- * example, when a VPI implementation function needs to access the bit
- * space of the thread.
+ * Access value stacks from thread space.
  */
-extern vvp_bit4_t vthread_get_bit(struct vthread_s*thr, unsigned addr);
-extern void vthread_put_bit(struct vthread_s*thr, unsigned addr, vvp_bit4_t bit);
-
 extern void vthread_push_vec4(struct vthread_s*thr, const vvp_vector4_t&val);
 extern void vthread_push_real(struct vthread_s*thr, double val);
 
