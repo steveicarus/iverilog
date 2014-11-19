@@ -119,19 +119,6 @@ static int array_index_free_object(vpiHandle ref)
 __vpiHandle::free_object_fun_t __vpiArrayIndex::free_object_fun(void)
 { return &array_index_free_object; }
 
-// TODO orson it should be a method
-unsigned get_word_index(struct __vpiArrayWord*word)
-{
-      return word - word->word0;
-}
-
-// TODO orson it should be a method
-struct __vpiArrayBase*get_word_parent(struct __vpiArrayWord*word)
-{
-      struct __vpiArrayWord*word0 = word->word0;
-      return (word0 - 1)->parent;
-}
-
 struct __vpiArrayWord*array_var_word_from_handle(vpiHandle ref)
 {
       if (ref == 0)

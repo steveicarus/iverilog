@@ -87,10 +87,10 @@ struct __vpiArrayWord {
 	    struct __vpiArrayBase*parent;
 	    struct __vpiArrayWord*word0;
       };
-};
 
-unsigned get_word_index(struct __vpiArrayWord*word);
-struct __vpiArrayBase*get_word_parent(struct __vpiArrayWord*word);
+      inline unsigned get_index() const { return this - word0; }
+      inline struct __vpiArrayBase*get_parent() const { return (word0 - 1)->parent; }
+};
 
 struct __vpiArrayWord*array_var_word_from_handle(vpiHandle ref);
 struct __vpiArrayWord*array_var_index_from_handle(vpiHandle ref);

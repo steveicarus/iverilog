@@ -376,7 +376,7 @@ int __vpiArrayWord::as_word_t::vpi_get(int code)
 {
       struct __vpiArrayWord*obj = array_var_word_from_handle(this);
       assert(obj);
-      struct __vpiArrayBase*parent = get_word_parent(obj);
+      struct __vpiArrayBase*parent = obj->get_parent();
 
       switch (code) {
 	  case vpiLineNo:
@@ -409,8 +409,8 @@ char* __vpiArrayWord::as_word_t::vpi_get_str(int code)
 {
       struct __vpiArrayWord*obj = array_var_word_from_handle(this);
       assert(obj);
-      struct __vpiArray*parent = (__vpiArray*) get_word_parent(obj);
-      unsigned index = get_word_index(obj);
+      struct __vpiArray*parent = (__vpiArray*) obj->get_parent();
+      unsigned index = obj->get_index();
 
       if (code == vpiFile) {  // Not implemented for now!
 	    return simple_set_rbuf_str(file_names[0]);
@@ -425,8 +425,8 @@ void __vpiArrayWord::as_word_t::vpi_get_value(p_vpi_value vp)
 {
       struct __vpiArrayWord*obj = array_var_word_from_handle(this);
       assert(obj);
-      struct __vpiArray*parent = (__vpiArray*) get_word_parent(obj);
-      unsigned index = get_word_index(obj);
+      struct __vpiArray*parent = (__vpiArray*) obj->get_parent();
+      unsigned index = obj->get_index();
 
     // Determine the appropriate format (The Verilog PLI Handbook 5.2.10)
       if(vp->format == vpiObjTypeVal) {
@@ -481,8 +481,8 @@ vpiHandle __vpiArrayWord::as_word_t::vpi_put_value(p_vpi_value vp, int)
 {
       struct __vpiArrayWord*obj = array_var_word_from_handle(this);
       assert(obj);
-      struct __vpiArray*parent = (__vpiArray*) get_word_parent(obj);
-      unsigned index = get_word_index(obj);
+      struct __vpiArray*parent = (__vpiArray*) obj->get_parent();
+      unsigned index = obj->get_index();
 
       vvp_vector4_t val = vec4_from_vpi_value(vp, parent->vals_width);
       array_set_word(parent, index, 0, val);
@@ -493,7 +493,7 @@ vpiHandle __vpiArrayWord::as_word_t::vpi_handle(int code)
 {
       struct __vpiArrayWord*obj = array_var_word_from_handle(this);
       assert(obj);
-      struct __vpiArray*parent = (__vpiArray*) get_word_parent(obj);
+      struct __vpiArray*parent = (__vpiArray*) obj->get_parent();
 
       switch (code) {
 
@@ -523,7 +523,7 @@ void __vpiArrayWord::as_index_t::vpi_get_value(p_vpi_value vp)
 {
       struct __vpiArrayWord*obj = array_var_index_from_handle(this);
       assert(obj);
-      unsigned index = get_word_index(obj);
+      unsigned index = obj->get_index();
 
       assert(vp->format == vpiIntVal);
       vp->value.integer = index;
@@ -1657,8 +1657,8 @@ value_callback*vpip_array_word_change(p_cb_data data)
       struct __vpiArray*parent = 0;
       array_word_value_callback*cbh = 0;
       if (struct __vpiArrayWord*word = array_var_word_from_handle(data->obj)) {
-	    parent = (__vpiArray*) get_word_parent(word);
-	    unsigned addr = get_word_index(word);
+	    parent = (__vpiArray*) word->get_parent();
+	    unsigned addr = word->get_index();
 	    cbh = new array_word_value_callback(data);
 	    cbh->word_addr = addr;
 
