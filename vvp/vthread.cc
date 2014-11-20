@@ -1476,27 +1476,12 @@ bool of_CAST2(vthread_t thr, vvp_code_t)
       return true;
 }
 
-/*
- *  %cmp/s
- *
- * Pop the operands from the stack, and do not replace them. The
- * results are written to flag bits:
- *
- *	4: eq  (equal)
- *	5: lt  (less than)
- *	6: eeq (case equal)
- */
-bool of_CMPS(vthread_t thr, vvp_code_t)
+static void do_CMPS(vthread_t thr, const vvp_vector4_t&lval, const vvp_vector4_t&rval)
 {
       vvp_bit4_t eq  = BIT4_1;
       vvp_bit4_t eeq = BIT4_1;
       vvp_bit4_t lt  = BIT4_0;
 
-	// We are going to pop these and push nothing in their
-	// place, but for now it is more efficient to use a constant
-	// reference. When we finish, pop the stack without copies.
-      const vvp_vector4_t&rval = thr->peek_vec4(0);
-      const vvp_vector4_t&lval = thr->peek_vec4(1);
 
       assert(rval.size() == lval.size());
 
@@ -1507,8 +1492,7 @@ bool of_CMPS(vthread_t thr, vvp_code_t)
 	    thr->flags[4] = BIT4_X; // eq
 	    thr->flags[5] = BIT4_X; // lt
 	    thr->flags[6] = lval.eeq(rval)? BIT4_1 : BIT4_0;
-	    thr->pop_vec4(2);
-	    return true;
+	    return;
       }
 
 	// Past this point, we know we are dealing only with fully
@@ -1550,8 +1534,52 @@ bool of_CMPS(vthread_t thr, vvp_code_t)
       thr->flags[4] = eq;
       thr->flags[5] = lt;
       thr->flags[6] = eeq;
+}
+
+/*
+ *  %cmp/s
+ *
+ * Pop the operands from the stack, and do not replace them. The
+ * results are written to flag bits:
+ *
+ *	4: eq  (equal)
+ *	5: lt  (less than)
+ *	6: eeq (case equal)
+ */
+bool of_CMPS(vthread_t thr, vvp_code_t)
+{
+	// We are going to pop these and push nothing in their
+	// place, but for now it is more efficient to use a constant
+	// reference. When we finish, pop the stack without copies.
+      const vvp_vector4_t&rval = thr->peek_vec4(0);
+      const vvp_vector4_t&lval = thr->peek_vec4(1);
+
+      do_CMPS(thr, lval, rval);
 
       thr->pop_vec4(2);
+      return true;
+}
+
+/*
+ * %cmpi/s <vala>, <valb>, <wid>
+ *
+ * Pop1 operand, get the other operand from the arguments.
+ */
+bool of_CMPIS(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->number;
+
+      vvp_vector4_t&lval = thr->peek_vec4();
+
+	// I expect that most of the bits of an immediate value are
+	// going to be zero, so start the result vector with all zero
+	// bits. Then we only need to replace the bits that are different.
+      vvp_vector4_t rval (wid, BIT4_0);
+      get_immediate_rval (cp, rval);
+
+      do_CMPS(thr, lval, rval);
+
+      thr->pop_vec4(1);
       return true;
 }
 
@@ -1582,8 +1610,9 @@ bool of_CMPSTR(vthread_t thr, vvp_code_t)
       return true;
 }
 
-bool of_CMPU_the_hard_way(vthread_t thr, vvp_code_t, unsigned wid,
-			  const vvp_vector4_t&lval, const vvp_vector4_t&rval)
+static void of_CMPU_the_hard_way(vthread_t thr, unsigned wid,
+				 const vvp_vector4_t&lval,
+				 const vvp_vector4_t&rval)
 {
       vvp_bit4_t eq = BIT4_1;
       vvp_bit4_t eeq = BIT4_1;
@@ -1610,17 +1639,12 @@ bool of_CMPU_the_hard_way(vthread_t thr, vvp_code_t, unsigned wid,
       thr->flags[4] = eq;
       thr->flags[5] = BIT4_X;
       thr->flags[6] = eeq;
-
-      return true;
 }
 
-bool of_CMPU(vthread_t thr, vvp_code_t cp)
+static void do_CMPU(vthread_t thr, const vvp_vector4_t&lval, const vvp_vector4_t&rval)
 {
       vvp_bit4_t eq = BIT4_1;
       vvp_bit4_t lt = BIT4_0;
-
-      vvp_vector4_t rval = thr->pop_vec4();
-      vvp_vector4_t lval = thr->pop_vec4();
 
       if (rval.size() != lval.size()) {
 	    cerr << "VVP ERROR: %cmp/u operand width mismatch: lval=" << lval
@@ -1630,12 +1654,12 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
       unsigned wid = lval.size();
 
       unsigned long*larray = lval.subarray(0,wid);
-      if (larray == 0) return of_CMPU_the_hard_way(thr, cp, wid, lval, rval);
+      if (larray == 0) return of_CMPU_the_hard_way(thr, wid, lval, rval);
 
       unsigned long*rarray = rval.subarray(0,wid);
       if (rarray == 0) {
 	    delete[]larray;
-	    return of_CMPU_the_hard_way(thr, cp, wid, lval, rval);
+	    return of_CMPU_the_hard_way(thr, wid, lval, rval);
       }
 
       unsigned words = (wid+CPU_WORD_BITS-1) / CPU_WORD_BITS;
@@ -1657,9 +1681,42 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
       thr->flags[4] = eq;
       thr->flags[5] = lt;
       thr->flags[6] = eq;
+}
+
+bool of_CMPU(vthread_t thr, vvp_code_t)
+{
+
+      vvp_vector4_t rval = thr->pop_vec4();
+      vvp_vector4_t lval = thr->pop_vec4();
+
+      do_CMPU(thr, lval, rval);
 
       return true;
 }
+
+/*
+ * %cmpi/u <vala>, <valb>, <wid>
+ *
+ * Pop1 operand, get the other operand from the arguments.
+ */
+bool of_CMPIU(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->number;
+
+      vvp_vector4_t&lval = thr->peek_vec4();
+
+	// I expect that most of the bits of an immediate value are
+	// going to be zero, so start the result vector with all zero
+	// bits. Then we only need to replace the bits that are different.
+      vvp_vector4_t rval (wid, BIT4_0);
+      get_immediate_rval (cp, rval);
+
+      do_CMPU(thr, lval, rval);
+
+      thr->pop_vec4(1);
+      return true;
+}
+
 
 /*
  * %cmp/x
@@ -2632,8 +2689,9 @@ bool of_FLAG_SET_VEC4(vthread_t thr, vvp_code_t cp)
       int flag = cp->number;
       assert(flag < vthread_s::FLAGS_COUNT);
 
-      vvp_vector4_t val = thr->pop_vec4();
+      const vvp_vector4_t&val = thr->peek_vec4();
       thr->flags[flag] = val.value(0);
+      thr->pop_vec4(1);
 
       return true;
 }
@@ -3397,8 +3455,7 @@ bool of_LOAD_VEC4A(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-static void do_verylong_mod(vthread_t thr,
-			    vvp_vector4_t&vala, const vvp_vector4_t&valb,
+static void do_verylong_mod(vvp_vector4_t&vala, const vvp_vector4_t&valb,
 			    bool left_is_neg, bool right_is_neg)
 {
       bool out_is_neg = left_is_neg;
@@ -3579,7 +3636,7 @@ bool of_MOD(vthread_t thr, vvp_code_t)
 	    return true;
 
       } else {
-	    do_verylong_mod(thr, vala, valb, false, false);
+	    do_verylong_mod(vala, valb, false, false);
 	    return true;
       }
 
@@ -3642,7 +3699,7 @@ bool of_MOD_S(vthread_t thr, vvp_code_t)
 
 	    bool left_is_neg  = vala.value(vala.size()-1) == BIT4_1;
 	    bool right_is_neg = valb.value(valb.size()-1) == BIT4_1;
-	    do_verylong_mod(thr, vala, valb, left_is_neg, right_is_neg);
+	    do_verylong_mod(vala, valb, left_is_neg, right_is_neg);
 	    return true;
       }
 

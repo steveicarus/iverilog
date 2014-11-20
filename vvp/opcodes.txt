@@ -252,6 +252,8 @@ vector2 (binary) value, and push the result.
 
 * %cmp/s
 * %cmp/u
+* %cmpi/s <vala>, <valb>, <wid>
+* %cmpi/u <vala>, <valb>, <wid>
 
 These instructions perform a generic comparison of two vectors of
 equal size. Two values are pulled from the top of the stack, and not

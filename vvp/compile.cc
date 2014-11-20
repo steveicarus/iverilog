@@ -120,6 +120,8 @@ static const struct opcode_table_s opcode_table[] = {
       { "%cmp/wu", of_CMPWU,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%cmp/x",  of_CMPX,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%cmp/z",  of_CMPZ,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%cmpi/s", of_CMPIS,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%cmpi/u", of_CMPIU,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%concat/str",  of_CONCAT_STR,  0,{OA_NONE,  OA_NONE,  OA_NONE} },
       { "%concat/vec4", of_CONCAT_VEC4, 0,{OA_NONE,  OA_NONE,  OA_NONE} },
       { "%concati/str", of_CONCATI_STR, 1,{OA_STRING,OA_NONE,  OA_NONE} },

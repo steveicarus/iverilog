@@ -558,18 +558,27 @@ static void draw_binary_vec4_le(ivl_expr_t expr)
       draw_eval_vec4(le);
       resize_vec4_wid(le, use_wid);
 
-      draw_eval_vec4(re);
-      resize_vec4_wid(re, use_wid);
+      if (ivl_expr_width(re)==use_wid && test_immediate_vec4_ok(re)) {
+	      /* Special case: If the right operand can be handled as
+		 an immediate operand, then use that instead. */
+	    char opcode[8];
+	    snprintf(opcode, sizeof opcode, "%%cmpi/%c", s_flag);
+	    draw_immediate_vec4(re, opcode);
+
+      } else {
+	    draw_eval_vec4(re);
+	    resize_vec4_wid(re, use_wid);
+
+	    fprintf(vvp_out, "    %%cmp/%c;\n", s_flag);
+      }
 
       switch (use_opcode) {
 	  case 'L':
-	    fprintf(vvp_out, "    %%cmp/%c;\n", s_flag);
 	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
 	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
 	    fprintf(vvp_out, "    %%or;\n");
 	    break;
 	  case '<':
-	    fprintf(vvp_out, "    %%cmp/%c;\n", s_flag);
 	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
 	    break;
 	  default:
