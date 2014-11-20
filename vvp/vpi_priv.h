@@ -548,8 +548,10 @@ struct __vpiArrayBase {
       virtual void get_word_value(struct __vpiArrayWord*word, p_vpi_value vp) = 0;
       virtual void put_word_value(struct __vpiArrayWord*word, p_vpi_value vp,
                                     int flags) = 0;
-
-      virtual vpiHandle vpi_iterate(int code);
+    // vpi_iterate is already defined by vpiHandle, so to avoid problems with
+    // classes inheriting from vpiHandle and vpiArrayBase just share the common
+    // code in the following function
+      vpiHandle vpi_array_base_iterate(int code);
       virtual void make_vals_words();
 
       struct __vpiArrayWord*vals_words;

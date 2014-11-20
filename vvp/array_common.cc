@@ -21,7 +21,7 @@
 
 #include "array_common.h"
 
-vpiHandle __vpiArrayBase::vpi_iterate(int code)
+vpiHandle __vpiArrayBase::vpi_array_base_iterate(int code)
 {
     switch (code) {
         case vpiMemoryWord: {

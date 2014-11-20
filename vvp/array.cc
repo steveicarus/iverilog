@@ -97,6 +97,7 @@ struct __vpiArray : public __vpiArrayBase, public __vpiHandle {
       int vpi_get(int code);
       char* vpi_get_str(int code);
       vpiHandle vpi_handle(int code);
+      inline vpiHandle vpi_iterate(int code) { return vpi_array_base_iterate(code); }
       vpiHandle vpi_index(int idx);
 
       const char*name; /* Permanently allocated string */
