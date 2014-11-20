@@ -49,7 +49,9 @@ LDFLAGS = @LDFLAGS@
 
 O = vvp.o draw_class.o draw_enum.o draw_mux.o draw_substitute.o draw_net_input.o \
     draw_switch.o draw_ufunc.o draw_vpi.o \
-    eval_bool.o eval_expr.o eval_object.o eval_real.o eval_string.o \
+    eval_bool.o \
+    eval_condit.o \
+    eval_expr.o eval_object.o eval_real.o eval_string.o \
     eval_vec4.o \
     modpath.o stmt_assign.o vector.o \
     vvp_process.o vvp_scope.o

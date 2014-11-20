@@ -207,6 +207,13 @@ extern const char*draw_input_from_net(ivl_nexus_t nex);
  */
 extern void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix);
 
+/*
+ * This evaluates an expression as a condition flag and leaves the
+ * result in a flag that is returned. This result may be used as an
+ * operand for conditional jump instructions.
+ */
+extern int draw_eval_condition(ivl_expr_t expr);
+
 
 extern int number_is_unknown(ivl_expr_t ex);
 extern int number_is_immediate(ivl_expr_t ex, unsigned lim_wid, int negative_is_ok);
@@ -249,6 +256,11 @@ extern int draw_eval_object(ivl_expr_t ex);
 
 extern int show_stmt_assign(ivl_statement_t net);
 extern void show_stmt_file_line(ivl_statement_t net, const char*desc);
+
+/*
+ */
+extern int test_immediate_vec4_ok(ivl_expr_t expr);
+extern void draw_immediate_vec4(ivl_expr_t expr, const char*opcode);
 
 /*
  * These functions manage word register allocation.

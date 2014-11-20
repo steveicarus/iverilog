@@ -108,6 +108,7 @@ int allocate_flag(void)
 
 void clr_flag(int idx)
 {
+      if (idx < 8) return;
       assert(idx < FLAGS_COUNT);
       int word = idx / 32;
       uint32_t mask = 1 << (idx%32);

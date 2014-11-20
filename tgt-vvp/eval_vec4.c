@@ -41,7 +41,7 @@ void resize_vec4_wid(ivl_expr_t expr, unsigned wid)
 /*
  * Test if the draw_immediate_vec4 instruction can be used.
  */
-static int test_immediate_vec4_ok(ivl_expr_t re)
+int test_immediate_vec4_ok(ivl_expr_t re)
 {
       const char*bits;
       unsigned idx;
@@ -62,7 +62,7 @@ static int test_immediate_vec4_ok(ivl_expr_t re)
       return 1;
 }
 
-static void draw_immediate_vec4(ivl_expr_t re, const char*opcode)
+void draw_immediate_vec4(ivl_expr_t re, const char*opcode)
 {
       unsigned long val0 = 0;
       unsigned long valx = 0;
@@ -1018,15 +1018,17 @@ static void draw_ternary_vec4(ivl_expr_t expr)
       unsigned lab_true  = local_count++;
       unsigned lab_out   = local_count++;
 
-      int use_flag = allocate_flag();
+      int use_flag = draw_eval_condition(cond);
 
-	/* Evaluate the condition expression, including optionally
-	   reducing it to a single bit. Put the result into a flag bit
-	   for use by all the tests. */
-      draw_eval_vec4(cond);
-      if (ivl_expr_width(cond) > 1)
-	    fprintf(vvp_out, "    %%or/r;\n");
-      fprintf(vvp_out, "    %%flag_set/vec4 %d;\n", use_flag);
+	/* The condition flag is used after possibly other statements,
+	   so we need to put it into a non-common place. Allocate a
+	   safe flag bit and move the condition to the flag position. */
+      if (use_flag < 8) {
+	    int tmp_flag = allocate_flag();
+	    assert(tmp_flag >= 8);
+	    fprintf(vvp_out, "    %%flag_mov %d, %d;\n", tmp_flag, use_flag);
+	    use_flag = tmp_flag;
+      }
 
       fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_true, use_flag);
 

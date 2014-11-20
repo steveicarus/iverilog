@@ -1187,14 +1187,10 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
 
       show_stmt_file_line(net, "If statement.");
 
-      draw_eval_vec4(expr);
-
       lab_false = local_count++;
       lab_out = local_count++;
 
-      int use_flag = allocate_flag();
-	/* The %flag/vec4 pops the vec4 bit and puts it to the flag. */
-      fprintf(vvp_out, "    %%flag_set/vec4 %d;\n", use_flag);
+      int use_flag = draw_eval_condition(expr);
       fprintf(vvp_out, "    %%jmp/0xz  T_%u.%u, %d;\n",
 	      thread_count, lab_false, use_flag);
       clr_flag(use_flag);
@@ -1324,12 +1320,7 @@ static int show_stmt_do_while(ivl_statement_t net, ivl_scope_t sscope)
 	/* Draw the evaluation of the condition expression, and test
 	   the result. If the expression evaluates to true, then
 	   branch to the top label. */
-      draw_eval_vec4(ivl_stmt_cond_expr(net));
-      if (ivl_expr_width(ivl_stmt_cond_expr(net)) > 1)
-	    fprintf(vvp_out, "    %%or/r;\n");
-
-      int use_flag = allocate_flag();
-      fprintf(vvp_out, "    %%flag_set/vec4 %d;\n", use_flag);
+      int use_flag = draw_eval_condition(ivl_stmt_cond_expr(net));
       fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %u;\n",
 	      thread_count, top_label, use_flag);
       clr_flag(use_flag);
@@ -1673,13 +1664,7 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 	/* Draw the evaluation of the condition expression, and test
 	   the result. If the expression evaluates to false, then
 	   branch to the out label. */
-      draw_eval_vec4(ivl_stmt_cond_expr(net));
-      if (ivl_expr_width(ivl_stmt_cond_expr(net)) > 1) {
-	    fprintf(vvp_out, "    %%or/r;\n");
-      }
-
-      int use_flag = allocate_flag();
-      fprintf(vvp_out, "    %%flag_set/vec4 %d;\n", use_flag);
+      int use_flag = draw_eval_condition(ivl_stmt_cond_expr(net));
       fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, %u;\n",
 	      thread_count, out_label, use_flag);
       clr_flag(use_flag);
