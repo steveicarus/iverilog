@@ -71,19 +71,39 @@ static int draw_condition_binary_compare(ivl_expr_t expr)
       if (ivl_expr_width(re) > use_wid)
 	    use_wid = ivl_expr_width(re);
 
+	/* If the le is constant, then swap the operands so that we
+	   can possibly take advantage of the immediate version of the
+	   %cmp instruction. */
+      if (ivl_expr_width(le)==use_wid && test_immediate_vec4_ok(le)) {
+	    ivl_expr_t tmp = le;
+	    re = le;
+	    le = tmp;
+      }
+
       draw_eval_vec4(le);
       resize_vec4_wid(le, use_wid);
 
-      draw_eval_vec4(re);
-      resize_vec4_wid(re, use_wid);
+      if (ivl_expr_width(re)==use_wid && test_immediate_vec4_ok(re)) {
+	      /* Special case: If the right operand can be handled as
+		 an immediate operand, then use that instead. */
+	    draw_immediate_vec4(re, "%cmpi/u");
+      } else {
+	    draw_eval_vec4(re);
+	    resize_vec4_wid(re, use_wid);
+	    fprintf(vvp_out, "    %%cmp/u;\n");
+      }
 
       switch (ivl_expr_opcode(expr)) {
+	  case 'n': /* != */
+	    fprintf(vvp_out, "    %%flag_inv 4;\n");
+	    ; /* fall through.. */
 	  case 'e': /* == */
-	    fprintf(vvp_out, "    %%cmp/u;\n");
 	    return 4;
 	    break;
+	  case 'N': /* !== */
+	    fprintf(vvp_out, "    %%flag_inv 6;\n");
+	    ; /* fall through.. */
 	  case 'E': /* === */
-	    fprintf(vvp_out, "    %%cmp/u;\n");
 	    return 6;
 	  default:
 	    assert(0);
@@ -174,17 +194,41 @@ static int draw_condition_binary_le(ivl_expr_t expr)
       }
 }
 
+static int draw_condition_binary_lor(ivl_expr_t expr)
+{
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+
+      int lx = draw_eval_condition(le);
+
+      if (lx < 8) {
+	    int tmp = allocate_flag();
+	    fprintf(vvp_out, "    %%flag_mov %d, %d;\n", tmp, lx);
+	    lx = tmp;
+      }
+
+      int rx = draw_eval_condition(re);
+
+      fprintf(vvp_out, "    %%flag_or %d, %d;\n", rx, lx);
+      clr_flag(lx);
+      return rx;
+}
+
 static int draw_condition_binary(ivl_expr_t expr)
 {
       switch (ivl_expr_opcode(expr)) {
 	  case 'e': /* == */
 	  case 'E': /* === */
+	  case 'n': /* != */
+	  case 'N': /* !== */
 	    return draw_condition_binary_compare(expr);
 	  case '<':
 	  case '>':
 	  case 'L': /* <= */
 	  case 'G': /* >= */
 	    return draw_condition_binary_le(expr);
+	  case 'o': /* Logical or (||) */
+	    return draw_condition_binary_lor(expr);
 	  default:
 	    return draw_condition_fallback(expr);
       }

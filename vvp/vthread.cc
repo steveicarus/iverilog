@@ -2648,7 +2648,18 @@ bool of_FLAG_GET_VEC4(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %flag_mov <flag1>, <flag2)
+ * %flag_inv <flag1>
+ */
+bool of_FLAG_INV(vthread_t thr, vvp_code_t cp)
+{
+      int flag1 = cp->bit_idx[0];
+
+      thr->flags[flag1] = ~ thr->flags[flag1];
+      return true;
+}
+
+/*
+ * %flag_mov <flag1>, <flag2>
  */
 bool of_FLAG_MOV(vthread_t thr, vvp_code_t cp)
 {
@@ -2971,7 +2982,7 @@ bool of_IX_GETV_S(vthread_t thr, vvp_code_t cp)
 
 static uint64_t vec4_to_index(vthread_t thr, bool signed_flag)
 {
-      vvp_vector4_t val = thr->pop_vec4();
+      const vvp_vector4_t&val = thr->peek_vec4();
       uint64_t v = 0;
       bool unknown_flag = false;
 
@@ -2995,6 +3006,7 @@ static uint64_t vec4_to_index(vthread_t thr, bool signed_flag)
       }
 
       thr->flags[4] = unknown_flag? BIT4_1 : BIT4_0;
+      thr->pop_vec4(1);
       return v;
 }
 
