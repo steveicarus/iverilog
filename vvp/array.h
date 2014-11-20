@@ -31,7 +31,6 @@ class value_callback;
  */
 extern vvp_array_t array_find(const char*label);
 extern unsigned get_array_word_size(vvp_array_t array);
-extern vpiHandle array_index_iterate(int code, vpiHandle ref);
 
 extern void array_word_change(vvp_array_t array, unsigned long addr);
 

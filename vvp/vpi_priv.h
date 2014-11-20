@@ -35,6 +35,8 @@
 
 
 class class_type;
+class vvp_darray;
+
 typedef struct __vpiArray* vvp_array_t;
 
 /*
@@ -566,16 +568,16 @@ class __vpiDarrayVar : public __vpiBaseVar, public __vpiArrayBase {
 
       int get_type_code() const { return vpiArrayVar; }
       unsigned get_size() const;
-      vpiHandle get_left_range() { return NULL; }
-      vpiHandle get_right_range() { return NULL; }
+      vpiHandle get_left_range();
+      vpiHandle get_right_range();
       struct __vpiScope*get_scope() const { return scope_; }
 
-      int get_word_size() const { return 0; } // TODO
-      char*get_word_str(struct __vpiArrayWord*word, int code) { return NULL; }
-      void get_word_value(struct __vpiArrayWord*word, p_vpi_value vp) {}
-      void put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, int flags) {}
+      int get_word_size() const;
+      char*get_word_str(struct __vpiArrayWord*word, int code);
+      void get_word_value(struct __vpiArrayWord*word, p_vpi_value vp);
+      void put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, int flags);
 
-      vpiHandle get_iter_index(struct __vpiArrayIterator*iter, int idx) {};
+      vpiHandle get_iter_index(struct __vpiArrayIterator*iter, int idx);
 
       int vpi_get(int code);
       char* vpi_get_str(int code);
@@ -583,6 +585,9 @@ class __vpiDarrayVar : public __vpiBaseVar, public __vpiArrayBase {
       vpiHandle vpi_index(int index);
 
       void vpi_get_value(p_vpi_value val);
+
+    protected:
+      vvp_darray*get_vvp_darray() const;
 };
 
 extern vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net);

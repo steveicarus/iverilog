@@ -55,6 +55,72 @@ unsigned __vpiDarrayVar::get_size() const
       return aval->get_size();
 }
 
+vpiHandle __vpiDarrayVar::get_left_range()
+{
+      return NULL;
+}
+
+vpiHandle __vpiDarrayVar::get_right_range()
+{
+      return NULL;
+}
+
+int __vpiDarrayVar::get_word_size() const
+{
+      return get_vvp_darray()->get_size();
+}
+
+char*__vpiDarrayVar::get_word_str(struct __vpiArrayWord*word, int code)
+{
+      return NULL;
+}
+
+void __vpiDarrayVar::get_word_value(struct __vpiArrayWord*word, p_vpi_value vp)
+{
+      unsigned index = word->get_index();
+      vvp_darray*aobj = get_vvp_darray();
+
+      switch(vp->format) {
+      case vpiIntVal:
+      case vpiVectorVal:
+      {
+          vvp_vector4_t v;
+          aobj->get_word(index, v);
+          vpip_vec2_get_value(v, get_word_size(), true, vp);
+      }
+      break;
+
+      case vpiRealVal:
+      {
+          double d;
+          aobj->get_word(index, d);
+          vpip_real_get_value(d, vp);
+      }
+      break;
+
+      case vpiStringVal:
+      {
+          string s;
+          aobj->get_word(index, s);
+          vpip_string_get_value(s, vp);
+      }
+      break;
+
+      default:
+          fprintf(stderr, "vpi sorry: format is not implemented");
+          assert(false);
+      }
+}
+
+void __vpiDarrayVar::put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, int flags)
+{
+}
+
+vpiHandle __vpiDarrayVar::get_iter_index(struct __vpiArrayIterator*iter, int idx)
+{
+    return NULL;
+}
+
 int __vpiDarrayVar::vpi_get(int code)
 {
       switch (code) {
@@ -70,21 +136,11 @@ int __vpiDarrayVar::vpi_get(int code)
 
 char* __vpiDarrayVar::vpi_get_str(int code)
 {
-    // TODO orson
     return NULL;
 }
 
 vpiHandle __vpiDarrayVar::vpi_handle(int code)
 {
-    // TODO orson
-      //switch (code) {
-	  //case vpiScope:
-	    //return scope_;
-
-	  //case vpiModule:
-	    //return vpip_module(scope_);
-      //}
-
       return 0;
 }
 
@@ -104,6 +160,15 @@ vpiHandle __vpiDarrayVar::vpi_index(int index)
 void __vpiDarrayVar::vpi_get_value(p_vpi_value val)
 {
       val->format = vpiSuppressVal;
+}
+
+vvp_darray*__vpiDarrayVar::get_vvp_darray() const
+{
+      vvp_fun_signal_object*fun = dynamic_cast<vvp_fun_signal_object*> (get_net()->fun);
+      assert(fun);
+      vvp_object_t obj = fun->get_object();
+
+      return obj.peek<vvp_darray>();
 }
 
 vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net)

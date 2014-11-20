@@ -95,6 +95,4 @@ struct __vpiArrayWord {
 struct __vpiArrayWord*array_var_word_from_handle(vpiHandle ref);
 struct __vpiArrayWord*array_var_index_from_handle(vpiHandle ref);
 
-vpiHandle array_index_iterate(int code, vpiHandle ref);
-
 #endif /* ARRAY_COMMON_H */

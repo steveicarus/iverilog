@@ -367,8 +367,6 @@ void __vpiArray::get_word_value(struct __vpiArrayWord*word, p_vpi_value vp)
             }
             break;
 
-            // TODO *StrVal variants
-
             default:
                 fprintf(stderr, "vpi sorry: format is not implemented");
                 assert(false);
@@ -383,7 +381,7 @@ void __vpiArray::put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, int)
       array_set_word(this, index, 0, val);
 }
 
-vpiHandle __vpiArray::get_iter_index(struct __vpiArrayIterator*iter, int idx)
+vpiHandle __vpiArray::get_iter_index(struct __vpiArrayIterator*, int idx)
 {
       if (nets) return nets[idx];
 
