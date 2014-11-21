@@ -2406,7 +2406,7 @@ static void negate_words(unsigned long*val, unsigned words)
 bool of_DIV_S(vthread_t thr, vvp_code_t)
 {
       vvp_vector4_t valb = thr->pop_vec4();
-      vvp_vector4_t vala = thr->pop_vec4();
+      vvp_vector4_t&vala = thr->peek_vec4();
 
       assert(vala.size()== valb.size());
       unsigned wid = vala.size();
@@ -2418,7 +2418,7 @@ bool of_DIV_S(vthread_t thr, vvp_code_t)
       unsigned long*ap = vala.subarray(0, wid);
       if (ap == 0) {
 	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->push_vec4(tmp);
+	    vala = tmp;
 	    return true;
       }
 
@@ -2426,7 +2426,7 @@ bool of_DIV_S(vthread_t thr, vvp_code_t)
       if (bp == 0) {
 	    delete[]ap;
 	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->push_vec4(tmp);
+	    vala = tmp;
 	    return true;
       }
 
@@ -2444,14 +2444,13 @@ bool of_DIV_S(vthread_t thr, vvp_code_t)
       if (wid <= CPU_WORD_BITS) {
 	    if (bp[0] == 0) {
 		  vvp_vector4_t tmp(wid, BIT4_X);
-		  thr->push_vec4(tmp);
+		  vala = tmp;
 	    } else {
 		  long tmpa = (long) ap[0];
 		  long tmpb = (long) bp[0];
 		  long res = tmpa / tmpb;
 		  ap[0] = ((unsigned long)res) & ~sign_mask;
 		  vala.setarray(0, wid, ap);
-		  thr->push_vec4(vala);
 	    }
 	    delete[]ap;
 	    delete[]bp;
@@ -2475,7 +2474,7 @@ bool of_DIV_S(vthread_t thr, vvp_code_t)
 	    delete[]ap;
 	    delete[]bp;
 	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->push_vec4(tmp);
+	    vala = tmp;
 	    return true;
       }
 
@@ -2486,7 +2485,6 @@ bool of_DIV_S(vthread_t thr, vvp_code_t)
       result[words-1] &= ~sign_mask;
 
       vala.setarray(0, wid, result);
-      thr->push_vec4(vala);
       delete[]ap;
       delete[]bp;
       delete[]result;
@@ -3787,7 +3785,7 @@ static bool of_PART_base(vthread_t thr, vvp_code_t cp, bool signed_flag)
       unsigned wid = cp->number;
 
       vvp_vector4_t base4 = thr->pop_vec4();
-      vvp_vector4_t value = thr->pop_vec4();
+      vvp_vector4_t&value = thr->peek_vec4();
 
       vvp_vector4_t res (wid, BIT4_X);
 
@@ -3795,17 +3793,17 @@ static bool of_PART_base(vthread_t thr, vvp_code_t cp, bool signed_flag)
       int32_t base;
       bool value_ok = vector4_to_value(base4, base, signed_flag);
       if (! value_ok) {
-	    thr->push_vec4(res);
+	    value = res;
 	    return true;
       }
 
       if (base >= (int32_t)value.size()) {
-	    thr->push_vec4(res);
+	    value = res;
 	    return true;
       }
 
       if ((base+(int)wid) <= 0) {
-	    thr->push_vec4(res);
+	    value = res;
 	    return true;
       }
 
@@ -3821,7 +3819,7 @@ static bool of_PART_base(vthread_t thr, vvp_code_t cp, bool signed_flag)
       }
 
       res .set_vec(vbase, value.subvalue(base, wid));
-      thr->push_vec4(res);
+      value = res;
 
       return true;
 }
@@ -3834,6 +3832,65 @@ bool of_PART_S(vthread_t thr, vvp_code_t cp)
 bool of_PART_U(vthread_t thr, vvp_code_t cp)
 {
       return of_PART_base(thr, cp, false);
+}
+
+/*
+ * %parti/s <wid>, <basei>, <base_wid>
+ * %parti/u <wid>, <basei>, <base_wid>
+ *
+ * Pop the value to be selected. The result is pushed back to the stack.
+ */
+static bool of_PARTI_base(vthread_t thr, vvp_code_t cp, bool signed_flag)
+{
+      unsigned wid = cp->number;
+      uint32_t base = cp->bit_idx[0];
+      uint32_t bwid = cp->bit_idx[1];
+
+      vvp_vector4_t&value = thr->peek_vec4();
+
+      vvp_vector4_t res (wid, BIT4_X);
+
+	// NOTE: This is treating the vector as signed. Is that correct?
+      int32_t use_base = base;
+      if (signed_flag && bwid < 32 && (base&(1<<(bwid-1)))) {
+	    use_base |= (-1) << bwid;
+      }
+
+      if (use_base >= (int32_t)value.size()) {
+	    value = res;
+	    return true;
+      }
+
+      if ((use_base+(int32_t)wid) <= 0) {
+	    value = res;
+	    return true;
+      }
+
+      long vbase = 0;
+      if (use_base < 0) {
+	    vbase = -use_base;
+	    wid -= vbase;
+	    use_base = 0;
+      }
+
+      if ((use_base+wid) > value.size()) {
+	    wid = value.size() - use_base;
+      }
+
+      res .set_vec(vbase, value.subvalue(use_base, wid));
+      value = res;
+
+      return true;
+}
+
+bool of_PARTI_S(vthread_t thr, vvp_code_t cp)
+{
+      return of_PARTI_base(thr, cp, true);
+}
+
+bool of_PARTI_U(vthread_t thr, vvp_code_t cp)
+{
+      return of_PARTI_base(thr, cp, false);
 }
 
 /*
@@ -3853,15 +3910,15 @@ bool of_MOV_WU(vthread_t thr, vvp_code_t cp)
  */
 bool of_MUL(vthread_t thr, vvp_code_t)
 {
-      vvp_vector4_t vala = thr->pop_vec4();
       vvp_vector4_t valb = thr->pop_vec4();
+      vvp_vector4_t&vala = thr->peek_vec4();
       assert(vala.size() == valb.size());
       unsigned wid = vala.size();
 
       unsigned long*ap = vala.subarray(0, wid);
       if (ap == 0) {
 	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->push_vec4(tmp);
+	    vala = tmp;
 	    return true;
       }
 
@@ -3869,7 +3926,7 @@ bool of_MUL(vthread_t thr, vvp_code_t)
       if (bp == 0) {
 	    delete[]ap;
 	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->push_vec4(tmp);
+	    vala = tmp;
 	    return true;
       }
 
@@ -3877,7 +3934,6 @@ bool of_MUL(vthread_t thr, vvp_code_t)
       if (wid <= CPU_WORD_BITS) {
 	    ap[0] *= bp[0];
 	    vala.setarray(0, wid, ap);
-	    thr->push_vec4(vala);
 	    delete[]ap;
 	    delete[]bp;
 	    return true;
@@ -3903,7 +3959,6 @@ bool of_MUL(vthread_t thr, vvp_code_t)
       }
 
       vala.setarray(0, wid, res);
-      thr->push_vec4(vala);
       delete[]ap;
       delete[]bp;
       delete[]res;
@@ -5284,7 +5339,7 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
       int off = off_index? thr->words[off_index].w_int : 0;
       const int sig_value_size = sig->value_size();
 
-      vvp_vector4_t val = thr->pop_vec4();
+      vvp_vector4_t&val = thr->peek_vec4();
 
       if (val.size() < (unsigned)wid) {
 	    cerr << "XXXX Internal error: val.size()=" << val.size()
@@ -5296,13 +5351,19 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
 
 	// If there is a problem loading the index register, flags-4
 	// will be set to 1, and we know here to skip the actual assignment.
-      if (off_index!=0 && thr->flags[4] == BIT4_1)
+      if (off_index!=0 && thr->flags[4] == BIT4_1) {
+	    thr->pop_vec4(1);
 	    return true;
+      }
 
-      if (off <= -wid)
+      if (off <= -wid) {
+	    thr->pop_vec4(1);
 	    return true;
-      if (off >= sig_value_size)
+      }
+      if (off >= sig_value_size) {
+	    thr->pop_vec4(1);
 	    return true;
+      }
 
 	// If the index is below the vector, then only assign the high
 	// bits that overlap with the target.
@@ -5327,6 +5388,7 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
       else
 	    vvp_send_vec4_pv(ptr, val, off, wid, sig_value_size, thr->wt_context);
 
+      thr->pop_vec4(1);
       return true;
 }
 

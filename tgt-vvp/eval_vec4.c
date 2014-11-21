@@ -62,7 +62,7 @@ int test_immediate_vec4_ok(ivl_expr_t re)
       return 1;
 }
 
-void draw_immediate_vec4(ivl_expr_t re, const char*opcode)
+static void make_immediate_vec4_words(ivl_expr_t re, unsigned long*val0p, unsigned long*valxp, unsigned*widp)
 {
       unsigned long val0 = 0;
       unsigned long valx = 0;
@@ -95,6 +95,16 @@ void draw_immediate_vec4(ivl_expr_t re, const char*opcode)
 	    }
       }
 
+      *val0p = val0;
+      *valxp = valx;
+      *widp = wid;
+}
+
+void draw_immediate_vec4(ivl_expr_t re, const char*opcode)
+{
+      unsigned long val0, valx;
+      unsigned wid;
+      make_immediate_vec4_words(re, &val0, &valx, &wid);
       fprintf(vvp_out, "    %s %lu, %lu, %u;\n", opcode, val0, valx, wid);
 }
 
@@ -879,9 +889,21 @@ static void draw_select_vec4(ivl_expr_t expr)
 	    return;
       }
 
-      draw_eval_vec4(subexpr);
-      draw_eval_vec4(base);
-      fprintf(vvp_out, "    %%part/%c %u;\n", sign_suff, wid);
+      if (test_immediate_vec4_ok(base)) {
+	    unsigned long val0, valx;
+	    unsigned base_wid;
+	    make_immediate_vec4_words(base, &val0, &valx, &base_wid);
+	    assert(valx == 0);
+
+	    draw_eval_vec4(subexpr);
+	    fprintf(vvp_out, "    %%parti/%c %u, %lu, %u;\n",
+		    sign_suff, wid, val0, base_wid);
+
+      } else {
+	    draw_eval_vec4(subexpr);
+	    draw_eval_vec4(base);
+	    fprintf(vvp_out, "    %%part/%c %u;\n", sign_suff, wid);
+      }
 }
 
 static void draw_select_pad_vec4(ivl_expr_t expr)

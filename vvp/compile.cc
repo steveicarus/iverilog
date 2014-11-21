@@ -212,6 +212,8 @@ static const struct opcode_table_s opcode_table[] = {
       { "%pad/u",  of_PAD_U,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%part/s", of_PART_S, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%part/u", of_PART_U, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
+      { "%parti/s",of_PARTI_S,3,  {OA_NUMBER,   OA_BIT1,     OA_BIT2} },
+      { "%parti/u",of_PARTI_U,3,  {OA_NUMBER,   OA_BIT1,     OA_BIT2} },
       { "%pop/obj", of_POP_OBJ, 2, {OA_BIT1,    OA_BIT2,     OA_NONE} },
       { "%pop/real",of_POP_REAL,1, {OA_NUMBER,  OA_NONE,     OA_NONE} },
       { "%pop/str", of_POP_STR, 1, {OA_NUMBER,  OA_NONE,     OA_NONE} },
