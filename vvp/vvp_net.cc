@@ -3042,7 +3042,7 @@ void vvp_wide_fun_core::propagate_vec4(const vvp_vector4_t&bit,
 				       vvp_time64_t delay)
 {
       if (delay)
-	    schedule_propagate_plucked_vector(ptr_, delay, bit, 0, bit.size());
+	    schedule_propagate_vector(ptr_, delay, bit);
       else
 	    ptr_->send_vec4(bit, 0);
 }

@@ -993,9 +993,10 @@ bool of_ASSIGN_VEC4(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_ptr_t ptr (cp->net, 0);
       unsigned delay = cp->bit_idx[0];
-      vvp_vector4_t val = thr->pop_vec4();
+      vvp_vector4_t&val = thr->peek_vec4();
 
-      schedule_assign_plucked_vector(ptr, delay, val, 0, val.size());
+      schedule_assign_vector(ptr, 0, 0, val, delay);
+      thr->pop_vec4(1);
       return true;
 }
 
@@ -1686,11 +1687,12 @@ static void do_CMPU(vthread_t thr, const vvp_vector4_t&lval, const vvp_vector4_t
 bool of_CMPU(vthread_t thr, vvp_code_t)
 {
 
-      vvp_vector4_t rval = thr->pop_vec4();
-      vvp_vector4_t lval = thr->pop_vec4();
+      const vvp_vector4_t&rval = thr->peek_vec4(0);
+      const vvp_vector4_t&lval = thr->peek_vec4(1);
 
       do_CMPU(thr, lval, rval);
 
+      thr->pop_vec4(2);
       return true;
 }
 
@@ -3737,7 +3739,7 @@ bool of_PAD_S(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = cp->number;
 
-      vvp_vector4_t val = thr->pop_vec4();
+      vvp_vector4_t&val = thr->peek_vec4();
       unsigned old_size = val.size();
       val.resize(wid);
 
@@ -3747,8 +3749,6 @@ bool of_PAD_S(vthread_t thr, vvp_code_t cp)
 	    for (unsigned idx = old_size ; idx < wid ; idx += 1)
 		  val.set_bit(idx, sb);
       }
-
-      thr->push_vec4(val);
 
       return true;
 }
@@ -5400,17 +5400,20 @@ bool of_STORE_VEC4A(vthread_t thr, vvp_code_t cp)
       unsigned adr_index = cp->bit_idx[0];
       unsigned off_index = cp->bit_idx[1];
 
-      vvp_vector4_t value = thr->pop_vec4();
+      vvp_vector4_t&value = thr->peek_vec4();
 
       long adr = adr_index? thr->words[adr_index].w_int : 0;
       long off = off_index? thr->words[off_index].w_int : 0;
 
 	// Suppress action if flags-4 is true.
-      if (thr->flags[4] == BIT4_1)
+      if (thr->flags[4] == BIT4_1) {
+	    thr->pop_vec4(1);
 	    return true;
+      }
 
       array_set_word(cp->array, adr, off, value);
 
+      thr->pop_vec4(1);
       return true;
 }
 

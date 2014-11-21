@@ -165,12 +165,14 @@ struct assign_vector4_event_s  : public event_s {
 	    base = 0;
 	    vwid = 0;
       }
+#if 0
 	/* A constructor that makes the val directly. */
       assign_vector4_event_s(const vvp_vector4_t&that, unsigned adr, unsigned wid)
       : val(that,adr,wid) {
 	    base = 0;
 	    vwid = 0;
       }
+#endif
 
 	/* Where to do the assign. */
       vvp_net_ptr_t ptr;
@@ -782,26 +784,12 @@ void schedule_assign_vector(vvp_net_ptr_t ptr,
       schedule_event_(cur, delay, SEQ_NBASSIGN);
 }
 
-void schedule_assign_plucked_vector(vvp_net_ptr_t ptr,
-				    vvp_time64_t delay,
-				    const vvp_vector4_t&src,
-				    unsigned adr, unsigned wid)
-{
-      struct assign_vector4_event_s*cur
-	    = new struct assign_vector4_event_s(src,adr,wid);
-      cur->ptr = ptr;
-      cur->vwid = 0;
-      cur->base = 0;
-      schedule_event_(cur, delay, SEQ_NBASSIGN);
-}
-
-void schedule_propagate_plucked_vector(vvp_net_t*net,
-				       vvp_time64_t delay,
-				       const vvp_vector4_t&src,
-				       unsigned adr, unsigned wid)
+void schedule_propagate_vector(vvp_net_t*net,
+			       vvp_time64_t delay,
+			       const vvp_vector4_t&src)
 {
       struct propagate_vector4_event_s*cur
-	    = new struct propagate_vector4_event_s(src,adr,wid);
+	    = new struct propagate_vector4_event_s(src);
       cur->net = net;
       schedule_event_(cur, delay, SEQ_NBASSIGN);
 }
