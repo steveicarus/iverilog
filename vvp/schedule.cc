@@ -165,14 +165,6 @@ struct assign_vector4_event_s  : public event_s {
 	    base = 0;
 	    vwid = 0;
       }
-#if 0
-	/* A constructor that makes the val directly. */
-      assign_vector4_event_s(const vvp_vector4_t&that, unsigned adr, unsigned wid)
-      : val(that,adr,wid) {
-	    base = 0;
-	    vwid = 0;
-      }
-#endif
 
 	/* Where to do the assign. */
       vvp_net_ptr_t ptr;
