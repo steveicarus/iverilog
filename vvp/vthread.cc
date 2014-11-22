@@ -5065,18 +5065,21 @@ bool of_SHIFTR_S(vthread_t thr, vvp_code_t cp)
 
 /*
  * %split/vec4 <wid>
+ *   Pop 1 value,
+ *   Take <wid> bits from the lsb,
+ *   Push the remaining msb,
+ *   Push the lsb.
  */
 bool of_SPLIT_VEC4(vthread_t thr, vvp_code_t cp)
 {
       unsigned lsb_wid = cp->number;
 
-      vvp_vector4_t val = thr->pop_vec4();
+      vvp_vector4_t&val = thr->peek_vec4();
       assert(lsb_wid < val.size());
 
       vvp_vector4_t lsb = val.subvalue(0, lsb_wid);
-      vvp_vector4_t msb = val.subvalue(lsb_wid, val.size()-lsb_wid);
+      val = val.subvalue(lsb_wid, val.size()-lsb_wid);
 
-      thr->push_vec4(msb);
       thr->push_vec4(lsb);
       return true;
 }
