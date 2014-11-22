@@ -806,11 +806,32 @@ bool of_AND(vthread_t thr, vvp_code_t)
       return true;
 }
 
+/*
+ * This function must ALWAYS be called with the val set to the right
+ * size, and initialized with BIT4_0 bits. Certain optimizations rely
+ * on that.
+ */
 static void get_immediate_rval(vvp_code_t cp, vvp_vector4_t&val)
 {
       uint32_t vala = cp->bit_idx[0];
       uint32_t valb = cp->bit_idx[1];
       unsigned wid  = cp->number;
+
+      if (valb == 0) {
+	      // Special case: if the value is zero, we are done
+	      // before we start.
+	    if (vala == 0) return;
+
+	      // Special case: The value has no X/Z bits, so we can
+	      // use the setarray method to write the value all at once.
+	    unsigned use_wid = 8*sizeof(unsigned long);
+	    if (wid < use_wid)
+		  use_wid = wid;
+	    unsigned long tmp[1];
+	    tmp[0] = vala;
+	    val.setarray(0, use_wid, tmp);
+	    return;
+      }
 
 	// The immediate value can be values bigger then 32 bits, but
 	// only if the high bits are zero. So at most we need to run
