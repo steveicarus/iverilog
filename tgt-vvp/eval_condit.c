@@ -86,11 +86,11 @@ static int draw_condition_binary_compare(ivl_expr_t expr)
       if (ivl_expr_width(re)==use_wid && test_immediate_vec4_ok(re)) {
 	      /* Special case: If the right operand can be handled as
 		 an immediate operand, then use that instead. */
-	    draw_immediate_vec4(re, "%cmpi/u");
+	    draw_immediate_vec4(re, "%cmpi/e");
       } else {
 	    draw_eval_vec4(re);
 	    resize_vec4_wid(re, use_wid);
-	    fprintf(vvp_out, "    %%cmp/u;\n");
+	    fprintf(vvp_out, "    %%cmp/e;\n");
       }
 
       switch (ivl_expr_opcode(expr)) {

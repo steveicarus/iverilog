@@ -252,8 +252,10 @@ vector2 (binary) value, and push the result.
 
 * %cmp/s
 * %cmp/u
+* %cmp/e
 * %cmpi/s <vala>, <valb>, <wid>
 * %cmpi/u <vala>, <valb>, <wid>
+* %cmpi/e <vala>, <valb>, <wid>
 
 These instructions perform a generic comparison of two vectors of
 equal size. Two values are pulled from the top of the stack, and not
@@ -281,6 +283,9 @@ The %cmp/u and %cmp/s differ only in the handling of the lt bit. The
 %cmp/u does an unsigned compare, whereas the %cmp/s does a signed
 compare. In either case, if either operand contains x or z, then lt
 bit gets the x value.
+
+Thje %cmp/e and %cmpi/e variants are the same, but they do not bother
+to calculate the lt flag. These are faster if the lt flag is not needed.
 
 * %cmp/wr
 

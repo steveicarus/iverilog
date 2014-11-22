@@ -375,20 +375,20 @@ static void draw_binary_vec4_compare(ivl_expr_t expr)
 
       switch (ivl_expr_opcode(expr)) {
 	  case 'e': /* == */
-	    fprintf(vvp_out, "    %%cmp/u;\n");
+	    fprintf(vvp_out, "    %%cmp/e;\n");
 	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
 	    break;
 	  case 'n': /* != */
-	    fprintf(vvp_out, "    %%cmp/u;\n");
+	    fprintf(vvp_out, "    %%cmp/e;\n");
 	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
 	    fprintf(vvp_out, "    %%inv;\n");
 	    break;
 	  case 'E': /* === */
-	    fprintf(vvp_out, "    %%cmp/u;\n");
+	    fprintf(vvp_out, "    %%cmp/e;\n");
 	    fprintf(vvp_out, "    %%flag_get/vec4 6;\n");
 	    break;
 	  case 'N': /* !== */
-	    fprintf(vvp_out, "    %%cmp/u;\n");
+	    fprintf(vvp_out, "    %%cmp/e;\n");
 	    fprintf(vvp_out, "    %%flag_get/vec4 6;\n");
 	    fprintf(vvp_out, "    %%inv;\n");
 	    break;

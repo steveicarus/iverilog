@@ -1477,6 +1477,93 @@ bool of_CAST2(vthread_t thr, vvp_code_t)
       return true;
 }
 
+static void do_CMPE(vthread_t thr, const vvp_vector4_t&lval, const vvp_vector4_t&rval)
+{
+      assert(rval.size() == lval.size());
+
+      if (lval.has_xz() || rval.has_xz()) {
+
+	    unsigned wid = lval.size();
+	    vvp_bit4_t eq  = BIT4_1;
+	    vvp_bit4_t eeq = BIT4_1;
+
+	    for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+		  vvp_bit4_t lv = lval.value(idx);
+		  vvp_bit4_t rv = rval.value(idx);
+
+		  if (lv != rv)
+			eeq = BIT4_0;
+
+		  if (eq==BIT4_1 && (bit4_is_xz(lv) || bit4_is_xz(rv)))
+			eq = BIT4_X;
+		  if ((lv == BIT4_0) && (rv==BIT4_1))
+			eq = BIT4_0;
+		  if ((lv == BIT4_1) && (rv==BIT4_0))
+			eq = BIT4_0;
+
+		  if (eq == BIT4_0)
+			break;
+	    }
+
+	    thr->flags[4] = eq;
+	    thr->flags[6] = eeq;
+
+      } else {
+	      // If there are no XZ bits anywhere, then the results of
+	      // == match the === test.
+	    thr->flags[4] = thr->flags[6] = (lval.eeq(rval)? BIT4_1 : BIT4_0);
+      }
+}
+
+/*
+ *  %cmp/e
+ *
+ * Pop the operands from the stack, and do not replace them. The
+ * results are written to flag bits:
+ *
+ *	4: eq  (equal)
+ *
+ *	6: eeq (case equal)
+ */
+bool of_CMPE(vthread_t thr, vvp_code_t)
+{
+	// We are going to pop these and push nothing in their
+	// place, but for now it is more efficient to use a constant
+	// reference. When we finish, pop the stack without copies.
+      const vvp_vector4_t&rval = thr->peek_vec4(0);
+      const vvp_vector4_t&lval = thr->peek_vec4(1);
+
+      do_CMPE(thr, lval, rval);
+
+      thr->pop_vec4(2);
+      return true;
+}
+
+/*
+ * %cmpi/e <vala>, <valb>, <wid>
+ *
+ * Pop1 operand, get the other operand from the arguments.
+ */
+bool of_CMPIE(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->number;
+
+      vvp_vector4_t&lval = thr->peek_vec4();
+
+	// I expect that most of the bits of an immediate value are
+	// going to be zero, so start the result vector with all zero
+	// bits. Then we only need to replace the bits that are different.
+      vvp_vector4_t rval (wid, BIT4_0);
+      get_immediate_rval (cp, rval);
+
+      do_CMPE(thr, lval, rval);
+
+      thr->pop_vec4(1);
+      return true;
+}
+
+
+
 static void do_CMPS(vthread_t thr, const vvp_vector4_t&lval, const vvp_vector4_t&rval)
 {
       vvp_bit4_t eq  = BIT4_1;
