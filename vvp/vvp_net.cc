@@ -905,18 +905,46 @@ vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that,
  * Change the size of the vvp_vector4_t vector to the new size. Copy
  * the old values, as many as well fit, into the new vector.
  */
-void vvp_vector4_t::resize(unsigned newsize)
+void vvp_vector4_t::resize(unsigned newsize, vvp_bit4_t pad_bit)
 {
       if (size_ == newsize)
 	    return;
 
       unsigned cnt = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
+      unsigned long word_pad_abits = 0;
+      unsigned long word_pad_bbits = 0;
+      switch (pad_bit) {
+	  case BIT4_0:
+	    word_pad_abits = WORD_0_ABITS;
+	    word_pad_bbits = WORD_0_BBITS;
+	    break;
+	  case BIT4_1:
+	    word_pad_abits = WORD_1_ABITS;
+	    word_pad_bbits = WORD_1_BBITS;
+	    break;
+	  case BIT4_X:
+	    word_pad_abits = WORD_X_ABITS;
+	    word_pad_bbits = WORD_X_BBITS;
+	    break;
+	  case BIT4_Z:
+	    word_pad_abits = WORD_Z_ABITS;
+	    word_pad_bbits = WORD_Z_BBITS;
+	    break;
+      }
 
       if (newsize > BITS_PER_WORD) {
 	    unsigned newcnt = (newsize + BITS_PER_WORD - 1) / BITS_PER_WORD;
 	    if (newcnt == cnt) {
 		    // If the word count doesn't change, then there is
 		    // no need for re-allocation so we are done now.
+		  if (newsize > size_) {
+			if (unsigned fill = size_ % BITS_PER_WORD) {
+			      abits_ptr_[cnt-1] &= ~((-1L) << fill);
+			      bbits_ptr_[cnt-1] &= ~((-1L) << fill);
+			      abits_ptr_[cnt-1] |= word_pad_abits << fill;
+			      bbits_ptr_[cnt-1] |= word_pad_bbits << fill;
+			}
+		  }
 		  size_ = newsize;
 		  return;
 	    }
@@ -940,10 +968,18 @@ void vvp_vector4_t::resize(unsigned newsize)
 		  newbits[newcnt] = bbits_val_;
 	    }
 
-	    for (unsigned idx = cnt ;  idx < newcnt ;  idx += 1)
-		  newbits[idx] = WORD_X_ABITS;
-	    for (unsigned idx = cnt ;  idx < newcnt ;  idx += 1)
-		  newbits[newcnt+idx] = WORD_X_BBITS;
+	    if (newsize > size_) {
+		  if (unsigned fill = size_ % BITS_PER_WORD) {
+			newbits[cnt-1] &= ~((-1L) << fill);
+			newbits[cnt-1] |= word_pad_abits << fill;
+			newbits[newcnt+cnt-1] &= ~((-1L) << fill);
+			newbits[newcnt+cnt-1] |= word_pad_bbits << fill;
+		  }
+		  for (unsigned idx = cnt ;  idx < newcnt ;  idx += 1)
+			newbits[idx] = word_pad_abits;
+		  for (unsigned idx = cnt ;  idx < newcnt ;  idx += 1)
+			newbits[newcnt+idx] = word_pad_bbits;
+	    }
 
 	    size_ = newsize;
 	    abits_ptr_ = newbits;
@@ -956,6 +992,13 @@ void vvp_vector4_t::resize(unsigned newsize)
 		  delete[]abits_ptr_;
 		  abits_val_ = newvala;
 		  bbits_val_ = newvalb;
+	    }
+
+	    if (newsize > size_) {
+		  abits_val_ &= ~((-1L) << size_);
+		  bbits_val_ &= ~((-1L) << size_);
+		  abits_val_ |= word_pad_abits << size_;
+		  bbits_val_ |= word_pad_bbits << size_;
 	    }
 
 	    size_ = newsize;

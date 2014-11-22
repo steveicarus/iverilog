@@ -245,7 +245,7 @@ class vvp_vector4_t {
       ~vvp_vector4_t();
 
       inline unsigned size() const { return size_; }
-      void resize(unsigned new_size);
+      void resize(unsigned new_size, vvp_bit4_t pad_bit = BIT4_X);
 
 	// Get the bit at the specified address
       vvp_bit4_t value(unsigned idx) const;

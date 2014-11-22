@@ -3828,14 +3828,12 @@ bool of_PAD_S(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t&val = thr->peek_vec4();
       unsigned old_size = val.size();
-      val.resize(wid);
 
 	// Sign-extend.
-      if (old_size < wid) {
-	    vvp_bit4_t sb = val.value(old_size-1);
-	    for (unsigned idx = old_size ; idx < wid ; idx += 1)
-		  val.set_bit(idx, sb);
-      }
+      if (old_size < wid)
+	    val.resize(wid, val.value(old_size-1));
+      else
+	    val.resize(wid);
 
       return true;
 }
@@ -3848,14 +3846,7 @@ bool of_PAD_U(vthread_t thr, vvp_code_t cp)
       unsigned wid = cp->number;
 
       vvp_vector4_t&val = thr->peek_vec4();
-      unsigned old_size = val.size();
-      val.resize(wid);
-
-      if (old_size < wid) {
-	    vvp_bit4_t pad = BIT4_0;
-	    for (unsigned idx = old_size ; idx < wid ; idx += 1)
-		  val.set_bit(idx,pad);
-      }
+      val.resize(wid, BIT4_0);
 
       return true;
 }
