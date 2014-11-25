@@ -24,6 +24,7 @@
 vpiHandle __vpiArrayBase::vpi_array_base_iterate(int code)
 {
     switch (code) {
+        case vpiReg:
         case vpiMemoryWord: {
                 struct __vpiArrayIterator*res;
                 res = new __vpiArrayIterator;

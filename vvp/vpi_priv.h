@@ -578,6 +578,7 @@ class __vpiDarrayVar : public __vpiBaseVar, public __vpiArrayBase {
       void put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, int flags);
 
       vpiHandle get_iter_index(struct __vpiArrayIterator*iter, int idx);
+      inline vpiHandle vpi_iterate(int code) { return vpi_array_base_iterate(code); }
 
       int vpi_get(int code);
       char* vpi_get_str(int code);
