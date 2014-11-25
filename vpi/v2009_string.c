@@ -149,12 +149,14 @@ static PLI_INT32 to_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       int vec_size = vpi_get(vpiSize, vec);
       if(str_size <= 0) {
 	    vpi_printf("ERROR: Cannot cast empty string");
-            assert(0);
+            vpi_control(vpiFinish, 0);
+            return 0;
       }
 
       if(vec_size != str_size * 8) {
 	    vpi_printf("ERROR: String and vector size do not match");
-            assert(0);
+            vpi_control(vpiFinish, 0);
+            return 0;
       }
 
       str_val.format = vpiStringVal;
