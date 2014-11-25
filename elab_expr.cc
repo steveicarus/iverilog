@@ -266,6 +266,13 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
       unsigned l_width = left_->test_width(des, scope, mode);
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEBinary::test_width: "
+		 << "op_=" << op_ << ", l_width=" << l_width
+		 << ", r_width=" << r_width
+		 << ", saved_mode=" << saved_mode << endl;
+      }
+
         // If the width mode changed, retest the right operand, as it
         // may choose a different width if it is in a lossless context.
       if ((mode >= LOSSLESS) && (saved_mode < LOSSLESS))
@@ -716,6 +723,14 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       ivl_assert(*this, left_);
       ivl_assert(*this, right_);
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEBLeftWidth::test_width: "
+		 << "op_=" << op_
+		 << ", left_=" << *left_
+		 << ", right_=" << *right_
+		 << ", mode=" << width_mode_name(mode) << endl;
+      }
+
         // The right operand is self determined. Test its type and
         // width for use later. We only need to know its width now
         // if the left operand is unsized and we need to calculate
@@ -723,11 +738,26 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       width_mode_t r_mode = SIZED;
       unsigned r_width = right_->test_width(des, scope, r_mode);
 
-      expr_width_  = left_->test_width(des, scope, mode);
+	// The left operand is what will determine the size of the
+	// expression. The l_mode will be converted to UNSIZED if the
+	// expression does not have a well-determined size.
+      width_mode_t l_mode = SIZED;
+      expr_width_  = left_->test_width(des, scope, l_mode);
       expr_type_   = left_->expr_type();
       signed_flag_ = left_->has_sign();
 
+      if (mode==SIZED)
+	    mode = l_mode;
+
+	// The left operand width defines the size of the
+	// expression. If the expression has a well-defined size, the
+	// left_->test_width() above would have set mode==SIZED and we
+	// can skip a lot of stuff. But if the mode is an undetermined
+	// size, we need to figure out what we really want to keep a
+	// lossless value. That's what the following if(...) {...} is
+	// all about.
       if ((mode >= EXPAND) && type_is_vectorable(expr_type_)) {
+
               // We need to make our best guess at the right operand
               // value, to minimize the calculated width. This is
               // particularly important for the power operator...
@@ -757,6 +787,13 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
             if (rc && (r_width < sizeof(long)*8))
                   r_val = rc->value().as_long();
 
+	    if (debug_elaborate && rc) {
+		  cerr << get_fileline() << ": PEBLeftWidth::test_width: "
+		       << "Evaluated rc=" << *rc
+		       << ", r_val=" << r_val
+		       << ", width_cap=" << width_cap << endl;
+	    }
+
               // Clip to a sensible range to avoid underflow/overflow
               // in the following calculations.
             if (r_val < 0)
@@ -773,7 +810,8 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
             unsigned use_width = expr_width_;
             switch (op_) {
                 case 'l': // <<
-                  use_width += (unsigned)r_val;
+		  if (l_mode != SIZED)
+			use_width += (unsigned)r_val;
                   break;
 
                 case 'r': // >>
@@ -811,6 +849,12 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
             if ((rc == 0) && (use_width > expr_width_) && (use_width > integer_width))
                   use_width = integer_width;
 
+	    if (use_width >= width_cap) {
+		  cerr << get_fileline() << ": warning: "
+		       << "Unsized expression (" << *this << ")"
+		       << " expanded beyond and was clipped to " << use_width
+		       << " bits. Try using sized operands." << endl;
+	    }
             expr_width_ = use_width;
       }
 
@@ -818,6 +862,13 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
             min_width_ = left_->min_width();
       else
             min_width_ = UINT_MAX; // disable width pruning
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEBLeftWidth::test_width: "
+		 << "Done calculating expr_width_=" << expr_width_
+		 << ", min_width_=" << min_width_
+		 << ", mode=" << width_mode_name(mode) << endl;
+      }
 
       return fix_width_(mode);
 }
