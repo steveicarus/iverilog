@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -169,6 +169,15 @@ ivl_type_s* real_type_t::elaborate_type_raw(Design*, NetScope*) const
 ivl_type_s* string_type_t::elaborate_type_raw(Design*, NetScope*) const
 {
       return &netstring_t::type_string;
+}
+
+ivl_type_s* parray_type_t::elaborate_type_raw(Design*des, NetScope*) const
+{
+      cerr << get_fileline() << " : sorry: "
+           << "Packed arrays are not currently supported in this context."
+           << endl;
+      des->errors += 1;
+      return 0;
 }
 
 netstruct_t* struct_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
