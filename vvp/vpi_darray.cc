@@ -57,12 +57,14 @@ unsigned __vpiDarrayVar::get_size() const
 
 vpiHandle __vpiDarrayVar::get_left_range()
 {
-      return NULL;
+      left_range_.set_value(0);
+      return &left_range_;
 }
 
 vpiHandle __vpiDarrayVar::get_right_range()
 {
-      return NULL;
+      right_range_.set_value(get_size() - 1);
+      return &right_range_;
 }
 
 int __vpiDarrayVar::get_word_size() const
@@ -141,7 +143,18 @@ char* __vpiDarrayVar::vpi_get_str(int code)
 
 vpiHandle __vpiDarrayVar::vpi_handle(int code)
 {
-      return 0;
+      switch (code) {
+          case vpiLeftRange:
+            return get_left_range();
+
+          case vpiRightRange:
+            return get_right_range();
+
+	  //case vpiModule:
+	    //return vpip_module(scope_);
+     }
+
+     return 0;
 }
 
 vpiHandle __vpiDarrayVar::vpi_index(int index)

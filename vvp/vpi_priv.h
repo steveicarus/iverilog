@@ -589,6 +589,7 @@ class __vpiDarrayVar : public __vpiBaseVar, public __vpiArrayBase {
 
     protected:
       vvp_darray*get_vvp_darray() const;
+      __vpiDecConst left_range_, right_range_;
 };
 
 extern vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net);
