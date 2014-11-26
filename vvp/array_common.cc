@@ -84,7 +84,7 @@ vpiHandle __vpiArrayIndex::vpi_iterate(int code)
       if (code == vpiIndex) {
 	    struct __vpiArrayIndex*res;
 	    res = new __vpiArrayIndex;
-	    res->index = index;         // TODO ? see above comment
+	    res->index = index;         // see the comment above
 	    res->done = 0;
 	    return res;
       }

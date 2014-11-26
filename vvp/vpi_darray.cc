@@ -109,16 +109,16 @@ void __vpiDarrayVar::get_word_value(struct __vpiArrayWord*word, p_vpi_value vp)
       break;
 
       default:
-          fprintf(stderr, "vpi sorry: format is not implemented");
+          fprintf(stderr, "vpi sorry: format is not implemented\n");
           assert(false);
       }
 }
 
-void __vpiDarrayVar::put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, int flags)
+void __vpiDarrayVar::put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, int)
 {
 }
 
-vpiHandle __vpiDarrayVar::get_iter_index(struct __vpiArrayIterator*iter, int idx)
+vpiHandle __vpiDarrayVar::get_iter_index(struct __vpiArrayIterator*, int idx)
 {
     return NULL;
 }
@@ -189,7 +189,7 @@ vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net)
       struct __vpiScope*scope = vpip_peek_current_scope();
       const char*use_name = name ? vpip_name_string(name) : 0;
 
-      class __vpiDarrayVar*obj = new __vpiDarrayVar(scope, use_name, net);
+      __vpiDarrayVar*obj = new __vpiDarrayVar(scope, use_name, net);
 
       return obj;
 }

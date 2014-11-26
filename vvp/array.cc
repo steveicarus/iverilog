@@ -368,7 +368,7 @@ void __vpiArray::get_word_value(struct __vpiArrayWord*word, p_vpi_value vp)
             break;
 
             default:
-                fprintf(stderr, "vpi sorry: format is not implemented");
+                fprintf(stderr, "vpi sorry: format is not implemented\n");
                 assert(false);
           }
       }
