@@ -342,7 +342,19 @@ void __vpiArray::get_word_value(struct __vpiArrayWord*word, p_vpi_value vp)
                               vals4->width(), signed_flag, vp);
       } else if(vals) {
           switch(vp->format) {
+            case vpiBinStrVal:
+            case vpiOctStrVal:
+            case vpiDecStrVal:
+            case vpiHexStrVal:
+            case vpiScalarVal:
             case vpiIntVal:
+            {
+                vvp_vector4_t v;
+                vals->get_word(index, v);
+                vpip_vec4_get_value(v, vals_width, signed_flag, vp);
+            }
+            break;
+
             case vpiVectorVal:
             {
                 vvp_vector4_t v;
