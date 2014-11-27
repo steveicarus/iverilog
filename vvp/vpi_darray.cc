@@ -69,12 +69,23 @@ vpiHandle __vpiDarrayVar::get_right_range()
 
 int __vpiDarrayVar::get_word_size() const
 {
-      return get_vvp_darray()->get_size();
+      vvp_vector4_t new_vec;
+      vvp_darray*aobj = get_vvp_darray();
+      aobj->get_word(0, new_vec);
+      return new_vec.size();
 }
 
 char*__vpiDarrayVar::get_word_str(struct __vpiArrayWord*word, int code)
 {
-      return NULL;
+      unsigned index = word->get_index();
+
+      if (code == vpiFile) {  // Not implemented for now!
+	    return simple_set_rbuf_str(file_names[0]);
+      }
+
+      char sidx [64];
+      snprintf(sidx, 63, "%d", (int)index);
+      return generic_get_str(code, scope_, name_, sidx);
 }
 
 void __vpiDarrayVar::get_word_value(struct __vpiArrayWord*word, p_vpi_value vp)
@@ -82,13 +93,34 @@ void __vpiDarrayVar::get_word_value(struct __vpiArrayWord*word, p_vpi_value vp)
       unsigned index = word->get_index();
       vvp_darray*aobj = get_vvp_darray();
 
+      if(vp->format == vpiObjTypeVal) {
+          if(dynamic_cast<vvp_darray_real*>(aobj))
+              vp->format = vpiRealVal;
+          else if(dynamic_cast<vvp_darray_string*>(aobj))
+              vp->format = vpiStringVal;
+          else
+              vp->format = vpiVectorVal;
+      }
+
       switch(vp->format) {
+      case vpiBinStrVal:
+      case vpiOctStrVal:
+      case vpiDecStrVal:
+      case vpiHexStrVal:
+      case vpiScalarVal:
       case vpiIntVal:
-      case vpiVectorVal:
+      {
+          vvp_vector4_t v;
+          aobj->get_word(index, v);             // width == 1?
+          vpip_vec4_get_value(v, 1, false, vp);                 // TODO sign?
+      }
+      break;
+
+      case vpiVectorVal:        // TODO vpip_vec2_ or vpip_vec4_?
       {
           vvp_vector4_t v;
           aobj->get_word(index, v);
-          vpip_vec2_get_value(v, get_word_size(), true, vp);
+          vpip_vec2_get_value(v, v.size(), false, vp);   // TODO sign?
       }
       break;
 
@@ -116,11 +148,71 @@ void __vpiDarrayVar::get_word_value(struct __vpiArrayWord*word, p_vpi_value vp)
 
 void __vpiDarrayVar::put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, int)
 {
+      unsigned index = word->get_index();
+      vvp_darray*aobj = get_vvp_darray();
+
+      switch(vp->format) {
+      case vpiScalarVal:
+      {
+          vvp_vector4_t vec(1, vp->value.scalar);
+          aobj->set_word(index, vec);
+      }
+      break;
+
+      case vpiIntVal:
+      {
+          vvp_vector4_t vec;
+          vec.setarray(0, 8 * sizeof(vp->value.integer), (unsigned long*)(&vp->value.integer));
+          aobj->set_word(index, vec);
+      }
+      break;
+
+      case vpiVectorVal:        // 2 vs 4 state logic?
+      {
+          int new_bit;
+          int size = get_word_size();
+          PLI_INT32 a = 0, b = 0;
+          vvp_vector4_t new_vec(size);
+          p_vpi_vecval vec = vp->value.vector;
+          vec--; // it will be increased in the first loop iteration
+
+          for(int i = 0; i < size; ++i) {
+            if(i % (8 * sizeof(vec->aval)) == 0) {
+                ++vec;
+                a = vec->aval;
+                b = vec->bval;
+            }
+
+            // convert to vvp_bit4_t
+            new_bit = ((b & 1) << 2) | (a & 1);
+            new_vec.set_bit(i, (vvp_bit4_t) new_bit);
+
+            a >>= 1;
+            b >>= 1;
+          }
+          aobj->set_word(index, new_vec);
+      }
+      break;
+
+      case vpiRealVal:
+        aobj->set_word(index, vp->value.real);
+        break;
+
+      case vpiStringVal:
+        aobj->set_word(index, std::string(vp->value.str));
+        break;
+
+      default:
+          fprintf(stderr, "vpi sorry: format is not implemented");
+          assert(false);
+      }
 }
 
 vpiHandle __vpiDarrayVar::get_iter_index(struct __vpiArrayIterator*, int idx)
 {
-    return NULL;
+      if (vals_words == 0) make_vals_words();
+
+      return &(vals_words[idx].as_word);
 }
 
 int __vpiDarrayVar::vpi_get(int code)
@@ -138,7 +230,11 @@ int __vpiDarrayVar::vpi_get(int code)
 
 char* __vpiDarrayVar::vpi_get_str(int code)
 {
-    return NULL;
+      if (code == vpiFile) {  // Not implemented for now!
+            return simple_set_rbuf_str(file_names[0]);
+      }
+
+      return generic_get_str(code, scope_, name_, NULL);
 }
 
 vpiHandle __vpiDarrayVar::vpi_handle(int code)
@@ -150,11 +246,14 @@ vpiHandle __vpiDarrayVar::vpi_handle(int code)
           case vpiRightRange:
             return get_right_range();
 
-	  //case vpiModule:
-	    //return vpip_module(scope_);
-     }
+          case vpiScope:
+            return scope_;
 
-     return 0;
+          case vpiModule:
+            return vpip_module(scope_);
+      }
+
+      return 0;
 }
 
 vpiHandle __vpiDarrayVar::vpi_index(int index)

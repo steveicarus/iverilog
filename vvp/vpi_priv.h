@@ -519,9 +519,9 @@ class __vpiBaseVar : public __vpiHandle {
 
     protected:
       struct __vpiScope* scope_;
+      const char*name_;
 
     private:
-      const char*name_;
       vvp_net_t*net_;
 };
 
