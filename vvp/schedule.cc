@@ -306,7 +306,7 @@ struct assign_array_word_s  : public event_s {
 void assign_array_word_s::run_run(void)
 {
       count_assign_events += 1;
-      array_set_word(mem, adr, off, val);
+      mem->set_word(adr, off, val);
 }
 
 static const size_t ARRAY_W_CHUNK_COUNT = 8192 / sizeof(struct assign_array_word_s);
@@ -396,7 +396,7 @@ struct assign_array_r_word_s  : public event_s {
 void assign_array_r_word_s::run_run(void)
 {
       count_assign_events += 1;
-      array_set_word(mem, adr, val);
+      mem->set_word(adr, val);
 }
 static const size_t ARRAY_R_W_CHUNK_COUNT = 8192 / sizeof(struct assign_array_r_word_s);
 static slab_t<sizeof(assign_array_r_word_s),ARRAY_R_W_CHUNK_COUNT> array_r_w_heap;

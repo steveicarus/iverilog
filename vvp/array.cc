@@ -301,7 +301,7 @@ void __vpiArray::put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, int)
 {
       unsigned index = word->get_index();
       vvp_vector4_t val = vec4_from_vpi_value(vp, vals_width);
-      array_set_word(this, index, 0, val);
+      set_word(index, 0, val);
 }
 
 vpiHandle __vpiArray::get_iter_index(struct __vpiArrayIterator*, int idx)
@@ -529,13 +529,13 @@ static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value vp)
 
       unsigned index = obj->get_address();
       if (vpi_array_is_real(parent)) {
-	    double tmp = array_get_word_r(parent, index);
+	    double tmp = parent->get_word_r(index);
 	    vpip_real_get_value(tmp, vp);
       } else if (vpi_array_is_string(parent)) {
-	    string tmp = array_get_word_str(parent, index);
+	    string tmp = parent->get_word_str(index);
 	    vpip_string_get_value(tmp, vp);
       } else {
-	    vvp_vector4_t tmp = array_get_word(parent, index);
+	    vvp_vector4_t tmp = parent->get_word(index);
 	    unsigned width = parent->get_word_size();
 	    vpip_vec4_get_value(tmp, width, parent->signed_flag, vp);
       }
@@ -554,11 +554,11 @@ static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int)
 
       if (vpi_array_is_real(parent)) {
 	    double val = real_from_vpi_value(vp);
-	    array_set_word(parent, index, val);
+	    parent->set_word(index, val);
       } else {
 	    unsigned width = parent->get_word_size();
 	    vvp_vector4_t val = vec4_from_vpi_value(vp, width);
-	    array_set_word(parent, index, 0, val);
+	    parent->set_word(index, 0, val);
       }
 
       return ref;
@@ -656,128 +656,125 @@ static void vpi_array_vthr_APV_get_value(vpiHandle ref, p_vpi_value vp)
 
       unsigned index = obj->word_sel;
       if (vpi_array_is_real(parent)) {
-	    double tmp = array_get_word_r(parent, index);
+	    double tmp = parent->get_word_r(index);
 	    vpip_real_get_value(tmp, vp);
       } else {
-	    vvp_vector4_t tmp = array_get_word(parent, index);
+	    vvp_vector4_t tmp = parent->get_word(index);
 	    tmp = tmp.subvalue(obj->part_bit, obj->part_wid);
 	    vpip_vec4_get_value(tmp, obj->part_wid, parent->signed_flag, vp);
       }
 }
 
-void array_set_word(vvp_array_t arr,
-		    unsigned address,
-		    unsigned part_off,
-		    vvp_vector4_t val)
+void __vpiArray::set_word(unsigned address, unsigned part_off, vvp_vector4_t val)
 {
-      if (address >= arr->get_size())
+      if (address >= get_size())
 	    return;
 
-      if (arr->vals4) {
-	    assert(arr->nets == 0);
-	    if (part_off != 0 || val.size() != arr->vals_width) {
-		  vvp_vector4_t tmp = arr->vals4->get_word(address);
+      if (vals4) {
+	    assert(nets == 0);
+	    if (part_off != 0 || val.size() != vals_width) {
+		  vvp_vector4_t tmp = vals4->get_word(address);
 		  if ((part_off + val.size()) > tmp.size()) {
 			cerr << "part_off=" << part_off
 			     << " val.size()=" << val.size()
-			     << " arr->vals[address].size()=" << tmp.size()
-			     << " arr->vals_width=" << arr->vals_width << endl;
+			     << " vals[address].size()=" << tmp.size()
+			     << " vals_width=" << vals_width << endl;
 			assert(0);
 		  }
 		  tmp.set_vec(part_off, val);
-		  arr->vals4->set_word(address, tmp);
+		  vals4->set_word(address, tmp);
 	    } else {
-		  arr->vals4->set_word(address, val);
+		  vals4->set_word(address, val);
 	    }
-	    array_word_change(arr, address);
+	    array_word_change(this, address);
 	    return;
       }
 
-      if (arr->vals) {
-	    assert(arr->nets == 0);
+      if (vals) {
+	    assert(nets == 0);
 	      // FIXME: For now, assume no part select of word?
 	    assert(part_off==0);
-	    assert(val.size() == arr->vals_width);
-	    arr->vals->set_word(address, val);
-	    array_word_change(arr, address);
+	    assert(val.size() == vals_width);
+	    vals->set_word(address, val);
+	    array_word_change(this, address);
 	    return;
       }
 
-      assert(arr->nets != 0);
+      assert(nets != 0);
 
 	// Select the word of the array that we affect.
-      vpiHandle word = arr->nets[address];
+      vpiHandle word = nets[address];
       struct __vpiSignal*vsig = dynamic_cast<__vpiSignal*>(word);
       assert(vsig);
 
       vsig->node->send_vec4_pv(val, part_off, val.size(), vpip_size(vsig), 0);
-      array_word_change(arr, address);
+      array_word_change(this, address);
 }
 
-void array_set_word(vvp_array_t arr, unsigned address, double val)
+void __vpiArray::set_word(unsigned address, double val)
 {
-      assert(arr->vals != 0);
-      assert(arr->nets == 0);
+      assert(vals != 0);
+      assert(nets == 0);
 
-      if (address >= arr->vals->get_size())
+      if (address >= vals->get_size())
 	    return;
 
-      arr->vals->set_word(address, val);
-      array_word_change(arr, address);
+      vals->set_word(address, val);
+      array_word_change(this, address);
 }
 
-void array_set_word(vvp_array_t arr, unsigned address, const string&val)
+void __vpiArray::set_word(unsigned address, const string&val)
 {
-      assert(arr->vals != 0);
-      assert(arr->nets == 0);
+      assert(vals != 0);
+      assert(nets == 0);
 
-      if (address >= arr->vals->get_size())
+      if (address >= vals->get_size())
 	    return;
 
-      arr->vals->set_word(address, val);
-      array_word_change(arr, address);
+      vals->set_word(address, val);
+      array_word_change(this, address);
 }
 
-void array_set_word(vvp_array_t arr, unsigned address, const vvp_object_t&val)
+void __vpiArray::set_word(unsigned address, const vvp_object_t&val)
 {
-      assert(arr->vals != 0);
-      assert(arr->nets == 0);
+      assert(vals != 0);
+      assert(nets == 0);
 
-      if (address >= arr->vals->get_size())
+      if (address >= vals->get_size())
 	    return;
 
-      arr->vals->set_word(address, val);
-      array_word_change(arr, address);
+      vals->set_word(address, val);
+      array_word_change(this, address);
 }
 
-vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
+vvp_vector4_t __vpiArray::get_word(unsigned address)
 {
-      if (arr->vals4) {
-	    assert(arr->nets == 0);
-	    assert(arr->vals == 0);
-	    return arr->vals4->get_word(address);
+      if (vals4) {
+	    assert(nets == 0);
+	    assert(vals == 0);
+	    return vals4->get_word(address);
       }
 
-      if (arr->vals) {
-	    assert(arr->nets == 0);
-	    assert(arr->vals4== 0);
-	    if (address >= arr->vals->get_size())
-		  return vvp_vector4_t(arr->vals_width, BIT4_X);
+      if (vals) {
+	    assert(nets == 0);
+	    assert(vals4== 0);
+	    if (address >= vals->get_size())
+		  return vvp_vector4_t(vals_width, BIT4_X);
 
 	    vvp_vector4_t val;
-	    arr->vals->get_word(address, val);
+	    vals->get_word(address, val);
 	    return val;
       }
 
-      assert(arr->vals4 == 0);
-      assert(arr->vals == 0);
-      assert(arr->nets != 0);
+      assert(vals4 == 0);
+      assert(vals == 0);
+      assert(nets != 0);
 
-      if (address >= arr->get_size()) {
+      if (address >= get_size()) {
 	      // Reading outside the array. Return X's but get the
 	      // width by looking at a word that we know is present.
-	    assert(arr->get_size() > 0);
-	    vpiHandle word = arr->nets[0];
+	    assert(get_size() > 0);
+	    vpiHandle word = nets[0];
 	    assert(word);
 	    struct __vpiSignal*vsig = dynamic_cast<__vpiSignal*>(word);
 	    assert(vsig);
@@ -786,7 +783,7 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
 	    return vvp_vector4_t(sig->value_size(), BIT4_X);
       }
 
-      vpiHandle word = arr->nets[address];
+      vpiHandle word = nets[address];
       struct __vpiSignal*vsig = dynamic_cast<__vpiSignal*>(word);
       assert(vsig);
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (vsig->node->fil);
@@ -797,23 +794,23 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
       return val;
 }
 
-double array_get_word_r(vvp_array_t arr, unsigned address)
+double __vpiArray::get_word_r(unsigned address)
 {
-      if (arr->vals) {
-	    assert(arr->vals4 == 0);
-	    assert(arr->nets  == 0);
+      if (vals) {
+	    assert(vals4 == 0);
+	    assert(nets  == 0);
 	      // In this context, address out of bounds returns 0.0
 	      // instead of an error.
-	    if (address >= arr->vals->get_size())
+	    if (address >= vals->get_size())
 		  return 0.0;
 
 	    double val;
-	    arr->vals->get_word(address, val);
+	    vals->get_word(address, val);
 	    return val;
       }
 
-      assert(arr->nets);
-      vpiHandle word = arr->nets[address];
+      assert(nets);
+      vpiHandle word = nets[address];
       struct __vpiRealVar*vsig = dynamic_cast<__vpiRealVar*>(word);
       assert(vsig);
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (vsig->net->fil);
@@ -821,47 +818,46 @@ double array_get_word_r(vvp_array_t arr, unsigned address)
 
       double val = sig->real_value();
       return val;
-
 }
 
-void array_get_word_obj(vvp_array_t arr, unsigned address, vvp_object_t&val)
+void __vpiArray::get_word_obj(unsigned address, vvp_object_t&val)
 {
-      if (arr->vals) {
-	    assert(arr->vals4 == 0);
-	    assert(arr->nets  == 0);
+      if (vals) {
+	    assert(vals4 == 0);
+	    assert(nets  == 0);
 	      // In this context, address out of bounds returns 0.0
 	      // instead of an error.
-	    if (address >= arr->vals->get_size()) {
+	    if (address >= vals->get_size()) {
 		  val = vvp_object_t();
 		  return;
 	    }
 
-	    arr->vals->get_word(address, val);
+	    vals->get_word(address, val);
 	    return;
       }
 
-      assert(arr->nets);
+      assert(nets);
 	// Arrays of string nets not implemented!
       assert(0);
       return;
 }
 
-string array_get_word_str(vvp_array_t arr, unsigned address)
+string __vpiArray::get_word_str(unsigned address)
 {
-      if (arr->vals) {
-	    assert(arr->vals4 == 0);
-	    assert(arr->nets  == 0);
+      if (vals) {
+	    assert(vals4 == 0);
+	    assert(nets  == 0);
 	      // In this context, address out of bounds returns 0.0
 	      // instead of an error.
-	    if (address >= arr->vals->get_size())
+	    if (address >= vals->get_size())
 		  return "";
 
 	    string val;
-	    arr->vals->get_word(address, val);
+	    vals->get_word(address, val);
 	    return val;
       }
 
-      assert(arr->nets);
+      assert(nets);
 	// Arrays of string nets not implemented!
       assert(0);
       return "";
@@ -1181,9 +1177,9 @@ void vvp_fun_arrayport_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit
 	    if (! addr_valid_flag)
 		  addr_ = arr_->get_size();
 	    if (vpi_array_is_real(arr_))
-		  port.ptr()->send_real(array_get_word_r(arr_, addr_), 0);
+		  port.ptr()->send_real(arr_->get_word_r(addr_), 0);
 	    else
-		  port.ptr()->send_vec4(array_get_word(arr_,addr_), 0);
+		  port.ptr()->send_vec4(arr_->get_word(addr_), 0);
 
 	    break;
 
@@ -1198,9 +1194,9 @@ void vvp_fun_arrayport_sa::check_word_change(unsigned long addr)
       if (addr != addr_) return;
 
       if (vpi_array_is_real(arr_)) {
-	    net_->send_real(array_get_word_r(arr_, addr_), 0);
+	    net_->send_real(arr_->get_word_r(addr_), 0);
       } else {
-	    net_->send_vec4(array_get_word(arr_, addr_), 0);
+	    net_->send_vec4(arr_->get_word(addr_), 0);
       }
 }
 
@@ -1287,10 +1283,10 @@ void vvp_fun_arrayport_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit
                   addr_valid_flag = vector4_to_value(bit, *addr);
                   if (! addr_valid_flag) *addr = arr_->get_size();
                   if (vpi_array_is_real(arr_)) {
-			port.ptr()->send_real(array_get_word_r(arr_, *addr),
+			port.ptr()->send_real(arr_->get_word_r(*addr),
 					      context);
                   } else {
-			port.ptr()->send_vec4(array_get_word(arr_, *addr),
+			port.ptr()->send_vec4(arr_->get_word(*addr),
 					      context);
                   }
                   break;
@@ -1318,9 +1314,9 @@ void vvp_fun_arrayport_aa::check_word_change_(unsigned long addr,
 	    return;
 
       if (vpi_array_is_real(arr_)) {
-	    net_->send_real(array_get_word_r(arr_, addr), context);
+	    net_->send_real(arr_->get_word_r(addr), context);
       } else {
-	    net_->send_vec4(array_get_word(arr_, addr), context);
+	    net_->send_vec4(arr_->get_word(addr), context);
       }
 }
 

@@ -3262,7 +3262,7 @@ bool of_LOAD_AR(vthread_t thr, vvp_code_t cp)
       if (thr_get_bit(thr, 4) == BIT4_1) {
 	    word = 0.0;
       } else {
-	    word = array_get_word_r(cp->array, adr);
+	    word = cp->array->get_word_r(adr);
       }
 
       thr->push_real(word);
@@ -3294,7 +3294,7 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
 	    return true;
       }
 
-      vvp_vector4_t word = array_get_word(cp->array, adr);
+      vvp_vector4_t word = cp->array->get_word(adr);
 
       if (word.size() > wid)
 	    word.resize(wid);
@@ -3451,7 +3451,7 @@ bool of_LOAD_AVP0(vthread_t thr, vvp_code_t cp)
         /* We need a vector this wide to make the math work correctly.
          * Copy the base bits into the vector, but keep the width. */
       vvp_vector4_t sig_value(wid, BIT4_0);
-      sig_value.copy_bits(array_get_word(cp->array, adr));
+      sig_value.copy_bits(cp->array->get_word(adr));
 
       load_vp0_common(thr, cp, sig_value);
       return true;
@@ -3471,7 +3471,7 @@ bool of_LOAD_AVP0_S(vthread_t thr, vvp_code_t cp)
 	    return true;
       }
 
-      vvp_vector4_t tmp (array_get_word(cp->array, adr));
+      vvp_vector4_t tmp (cp->array->get_word(adr));
 
         /* We need a vector this wide to make the math work correctly.
          * Copy the base bits into the vector, but keep the width. */
@@ -3505,7 +3505,7 @@ bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
 
       long use_index = thr->words[index].w_int;
 
-      vvp_vector4_t word = array_get_word(cp->array, adr);
+      vvp_vector4_t word = cp->array->get_word(adr);
 
       if ((use_index >= (long)word.size()) || (use_index < 0)) {
 	    thr_put_bit(thr, bit, BIT4_X);
@@ -3543,7 +3543,7 @@ bool of_LOAD_OBJA(vthread_t thr, vvp_code_t cp)
       if (thr_get_bit(thr, 4) == BIT4_1) {
 	    ; // Return nil
       } else {
-	    array_get_word_obj(cp->array, adr, word);
+	    cp->array->get_word_obj(adr, word);
       }
 
       thr->push_object(word);
@@ -3591,7 +3591,7 @@ bool of_LOAD_STRA(vthread_t thr, vvp_code_t cp)
       if (thr_get_bit(thr, 4) == BIT4_1) {
 	    word = "";
       } else {
-	    word = array_get_word_str(cp->array, adr);
+	    word = cp->array->get_word_str(adr);
       }
 
       thr->push_str(word);
@@ -5051,7 +5051,7 @@ bool of_SET_AV(vthread_t thr, vvp_code_t cp)
 	/* Make a vector of the desired width. */
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
-      array_set_word(cp->array, adr, off, value);
+      cp->array->set_word(adr, off, value);
       return true;
 }
 
@@ -5482,7 +5482,7 @@ bool of_STORE_OBJA(vthread_t thr, vvp_code_t cp)
       vvp_object_t val;
       thr->pop_object(val);
 
-      array_set_word(cp->array, adr, val);
+      cp->array->set_word(adr, val);
 
       return true;
 }
@@ -5653,7 +5653,7 @@ bool of_STORE_REALA(vthread_t thr, vvp_code_t cp)
       unsigned adr = thr->words[idx].w_int;
 
       double val = thr->pop_real();
-      array_set_word(cp->array, adr, val);
+      cp->array->set_word(adr, val);
 
       return true;
 }
@@ -5678,7 +5678,7 @@ bool of_STORE_STRA(vthread_t thr, vvp_code_t cp)
       unsigned adr = thr->words[idx].w_int;
 
       string val = thr->pop_str();
-      array_set_word(cp->array, adr, val);
+      cp->array->set_word(adr, val);
 
       return true;
 }
@@ -5861,7 +5861,7 @@ bool of_TEST_NUL_A(vthread_t thr, vvp_code_t cp)
 	    return true;
       }
 
-      array_get_word_obj(cp->array, adr, word);
+      cp->array->get_word_obj(adr, word);
       if (word.test_nil())
 	    thr_put_bit(thr, 4, BIT4_1);
       else
