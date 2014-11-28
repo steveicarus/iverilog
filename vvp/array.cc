@@ -58,9 +58,7 @@ vvp_array_t array_find(const char*label)
 }
 
 struct __vpiArrayVthrA : public __vpiHandle {
-
-      __vpiArrayVthrA();
-      int get_type_code(void) const;
+      int get_type_code(void) const { return vpiMemoryWord; }
       int vpi_get(int code);
       char* vpi_get_str(int code);
       void vpi_get_value(p_vpi_value val);
@@ -133,8 +131,7 @@ struct __vpiArrayVthrA : public __vpiHandle {
 
 
 struct __vpiArrayVthrAPV : public __vpiHandle {
-      __vpiArrayVthrAPV();
-      int get_type_code(void) const;
+      int get_type_code(void) const { return vpiMemoryWord; }
       int vpi_get(int code);
       char* vpi_get_str(int code);
       void vpi_get_value(p_vpi_value val);
@@ -153,17 +150,6 @@ bool is_net_array(vpiHandle obj)
       if (rfp->nets != 0) return true;
       return false;
 }
-
-static int vpi_array_vthr_A_get(int code, vpiHandle);
-static char*vpi_array_vthr_A_get_str(int code, vpiHandle);
-static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value vp);
-static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int);
-static vpiHandle vpi_array_vthr_A_get_handle(int code, vpiHandle ref);
-
-static int vpi_array_vthr_APV_get(int code, vpiHandle);
-static char*vpi_array_vthr_APV_get_str(int code, vpiHandle);
-static void vpi_array_vthr_APV_get_value(vpiHandle ref, p_vpi_value vp);
-
 
 // This function return true if the underlying array words are real.
 static bool vpi_array_is_real(const vvp_array_t arr)
@@ -424,67 +410,26 @@ int __vpiArrayWord::as_word_t::vpi_get(int code)
 }
 
 
-inline __vpiArrayVthrA::__vpiArrayVthrA()
-{ }
-
-int __vpiArrayVthrA::get_type_code(void) const
-{ return vpiMemoryWord; }
-
 int __vpiArrayVthrA::vpi_get(int code)
-{ return vpi_array_vthr_A_get(code, this); }
-
-char* __vpiArrayVthrA::vpi_get_str(int code)
-{ return vpi_array_vthr_A_get_str(code, this); }
-
-void __vpiArrayVthrA::vpi_get_value(p_vpi_value val)
-{ vpi_array_vthr_A_get_value(this, val); }
-
-vpiHandle __vpiArrayVthrA::vpi_put_value(p_vpi_value val, int flags)
-{ return vpi_array_vthr_A_put_value(this, val, flags); }
-
-vpiHandle __vpiArrayVthrA::vpi_handle(int code)
-{ return vpi_array_vthr_A_get_handle(code, this); }
-
-
-inline __vpiArrayVthrAPV::__vpiArrayVthrAPV()
-{ }
-
-int __vpiArrayVthrAPV::get_type_code(void) const
-{ return vpiMemoryWord; }
-
-int __vpiArrayVthrAPV::vpi_get(int code)
-{ return vpi_array_vthr_APV_get(code, this); }
-
-char* __vpiArrayVthrAPV::vpi_get_str(int code)
-{ return vpi_array_vthr_APV_get_str(code, this); }
-
-void __vpiArrayVthrAPV::vpi_get_value(p_vpi_value val)
-{ vpi_array_vthr_APV_get_value(this, val); }
-
-static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 {
-      struct __vpiArrayVthrA*obj = dynamic_cast<__vpiArrayVthrA*>(ref);
-      assert(obj);
-      struct __vpiArray*parent = obj->array;
-
       switch (code) {
 	  case vpiLineNo:
 	    return 0; // Not implemented for now!
 
 	  case vpiSize:
-	    return parent->get_word_size();
+	    return array->get_word_size();
 
 	  case vpiLeftRange:
-	    return parent->msb.get_value();
+	    return array->msb.get_value();
 
 	  case vpiRightRange:
-	    return parent->lsb.get_value();
+	    return array->lsb.get_value();
 
 	  case vpiIndex:
-	    return (int)obj->get_address() + parent->first_addr.get_value();
+	    return (int)get_address() + array->first_addr.get_value();
 
 	  case vpiAutomatic:
-	    return (int) parent->get_scope()->is_automatic;
+	    return (int) array->get_scope()->is_automatic;
 
 #if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
 	  case _vpiFromThr:
@@ -497,126 +442,108 @@ static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 	  // This assumes that the compiler is squashing all the
 	  // constant expressions down to a single value.
 	  case vpiConstantSelect:
-	    return obj->address_handle == 0 && obj->wid == 0;
+	    return address_handle == 0 && wid == 0;
 
 	  default:
 	    return 0;
       }
 }
 
-static char*vpi_array_vthr_A_get_str(int code, vpiHandle ref)
+char* __vpiArrayVthrA::vpi_get_str(int code)
 {
-      struct __vpiArrayVthrA*obj = dynamic_cast<__vpiArrayVthrA*>(ref);
-      assert(obj);
-      struct __vpiArray*parent = obj->array;
-
       if (code == vpiFile) {  // Not implemented for now!
             return simple_set_rbuf_str(file_names[0]);
       }
 
       char sidx [64];
-      snprintf(sidx, 63, "%d", (int)obj->get_address() + parent->first_addr.get_value());
-      return generic_get_str(code, parent->get_scope(), parent->name, sidx);
+      snprintf(sidx, 63, "%d", (int)get_address() + array->first_addr.get_value());
+      return generic_get_str(code, array->get_scope(), array->name, sidx);
 }
 
-static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value vp)
+void __vpiArrayVthrA::vpi_get_value(p_vpi_value vp)
 {
-      struct __vpiArrayVthrA*obj = dynamic_cast<__vpiArrayVthrA*>(ref);
-      assert(obj);
-      struct __vpiArray*parent = obj->array;
+      assert(array);
 
-      assert(parent);
-
-      unsigned index = obj->get_address();
-      if (vpi_array_is_real(parent)) {
-	    double tmp = parent->get_word_r(index);
+      unsigned index = get_address();
+      if (vpi_array_is_real(array)) {
+	    double tmp = array->get_word_r(index);
 	    vpip_real_get_value(tmp, vp);
-      } else if (vpi_array_is_string(parent)) {
-	    string tmp = parent->get_word_str(index);
+      } else if (vpi_array_is_string(array)) {
+	    string tmp = array->get_word_str(index);
 	    vpip_string_get_value(tmp, vp);
       } else {
-	    vvp_vector4_t tmp = parent->get_word(index);
-	    unsigned width = parent->get_word_size();
-	    vpip_vec4_get_value(tmp, width, parent->signed_flag, vp);
+	    vvp_vector4_t tmp = array->get_word(index);
+	    unsigned width = array->get_word_size();
+	    vpip_vec4_get_value(tmp, width, array->signed_flag, vp);
       }
 }
 
-static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int)
+vpiHandle __vpiArrayVthrA::vpi_put_value(p_vpi_value vp, int)
 {
-      struct __vpiArrayVthrA*obj = dynamic_cast<__vpiArrayVthrA*>(ref);
-      assert(obj);
-      struct __vpiArray*parent = obj->array;
+      unsigned index = get_address();
 
-      unsigned index = obj->get_address();
+      assert(array);
+      assert(index < array->get_size());
 
-      assert(parent);
-      assert(index < parent->get_size());
-
-      if (vpi_array_is_real(parent)) {
+      if (vpi_array_is_real(array)) {
 	    double val = real_from_vpi_value(vp);
-	    parent->set_word(index, val);
+	    array->set_word(index, val);
       } else {
-	    unsigned width = parent->get_word_size();
+	    unsigned width = array->get_word_size();
 	    vvp_vector4_t val = vec4_from_vpi_value(vp, width);
-	    parent->set_word(index, 0, val);
+	    array->set_word(index, 0, val);
       }
 
-      return ref;
+      return this;
 }
 
-static vpiHandle vpi_array_vthr_A_get_handle(int code, vpiHandle ref)
+vpiHandle __vpiArrayVthrA::vpi_handle(int code)
 {
-      struct __vpiArrayVthrA*obj = dynamic_cast<__vpiArrayVthrA*>(ref);
-      assert(obj);
-      struct __vpiArray*parent = obj->array;
-
       switch (code) {
-
 	  case vpiIndex:
 	    break;  // Not implemented!
 
 	  case vpiLeftRange:
-	    return &parent->msb;
+	    return &array->msb;
 
 	  case vpiRightRange:
-	    return &parent->lsb;
+	    return &array->lsb;
 
 	  case vpiParent:
-	    return parent;
+	  case vpiArray:
+	    return array;
 
 	  case vpiScope:
-	    return parent->get_scope();
+	    return array->get_scope();
 
 	  case vpiModule:
-	    return vpip_module(parent->get_scope());
+	    return vpip_module(array->get_scope());
       }
 
       return 0;
 }
 
-static int vpi_array_vthr_APV_get(int code, vpiHandle ref)
-{
-      struct __vpiArrayVthrAPV*obj = dynamic_cast<__vpiArrayVthrAPV*>(ref);
-      struct __vpiArray*parent = obj->array;
 
+int __vpiArrayVthrAPV::vpi_get(int code)
+{
       switch (code) {
 	  case vpiLineNo:
 	    return 0; // Not implemented for now!
 
 	  case vpiSize:
-	    return obj->part_wid;
+	    return part_wid;
 
 	  case vpiLeftRange:
-	    return parent->msb.get_value();
+	    return array->msb.get_value();
 
 	  case vpiRightRange:
-	    return parent->lsb.get_value();
+	    return array->lsb.get_value();
 
 	  case vpiIndex:
-	    return (int)obj->word_sel;
+	    return (int)word_sel;
 
 	  case vpiAutomatic:
-	    return (int) parent->get_scope()->is_automatic;
+	    return (int) array->get_scope()->is_automatic;
 
 #if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
 	  case _vpiFromThr:
@@ -631,37 +558,29 @@ static int vpi_array_vthr_APV_get(int code, vpiHandle ref)
       }
 }
 
-static char*vpi_array_vthr_APV_get_str(int code, vpiHandle ref)
+char* __vpiArrayVthrAPV::vpi_get_str(int code)
 {
-      struct __vpiArrayVthrAPV*obj = dynamic_cast<__vpiArrayVthrAPV*>(ref);
-      assert(obj);
-      struct __vpiArray*parent = obj->array;
-
       if (code == vpiFile) {  // Not implemented for now!
             return simple_set_rbuf_str(file_names[0]);
       }
 
       char sidx [64];
-      snprintf(sidx, 63, "%u", obj->word_sel + parent->first_addr.get_value());
-      return generic_get_str(code, parent->get_scope(), parent->name, sidx);
+      snprintf(sidx, 63, "%u", word_sel + array->first_addr.get_value());
+      return generic_get_str(code, array->get_scope(), array->name, sidx);
 }
 
-static void vpi_array_vthr_APV_get_value(vpiHandle ref, p_vpi_value vp)
+void __vpiArrayVthrAPV::vpi_get_value(p_vpi_value vp)
 {
-      struct __vpiArrayVthrAPV*obj = dynamic_cast<__vpiArrayVthrAPV*>(ref);
-      assert(obj);
-      struct __vpiArray*parent = obj->array;
+      assert(array);
 
-      assert(parent);
-
-      unsigned index = obj->word_sel;
-      if (vpi_array_is_real(parent)) {
-	    double tmp = parent->get_word_r(index);
+      unsigned index = word_sel;
+      if (vpi_array_is_real(array)) {
+	    double tmp = array->get_word_r(index);
 	    vpip_real_get_value(tmp, vp);
       } else {
-	    vvp_vector4_t tmp = parent->get_word(index);
-	    tmp = tmp.subvalue(obj->part_bit, obj->part_wid);
-	    vpip_vec4_get_value(tmp, obj->part_wid, parent->signed_flag, vp);
+	    vvp_vector4_t tmp = array->get_word(index);
+	    tmp = tmp.subvalue(part_bit, part_wid);
+	    vpip_vec4_get_value(tmp, part_wid, array->signed_flag, vp);
       }
 }
 
