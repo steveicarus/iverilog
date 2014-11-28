@@ -36,6 +36,7 @@
 
 class class_type;
 class vvp_darray;
+class vvp_fun_arrayport;
 
 typedef struct __vpiArray* vvp_array_t;
 
@@ -560,6 +561,78 @@ struct __vpiArrayBase {
       virtual void make_vals_words();
 
       struct __vpiArrayWord*vals_words;
+};
+
+/*
+* The vpiArray object holds an array of vpi objects that themselves
+* represent the words of the array. The vpi_array_t is a pointer to
+* a struct __vpiArray.
+*
+* The details of the implementation depends on what this is an array
+* of. The easiest case is if this is an array of nets.
+*
+* - Array of Nets:
+* If this represents an array of nets, then the nets member points to
+* an array of vpiHandle objects. Each vpiHandle is a word. This is
+* done because typically each word of a net array is simultaneously
+* driven and accessed by other means, so there is no advantage to
+* compacting the array in any other way.
+*
+* - Array of vector4 words.
+* In this case, the nets pointer is nil, and the vals4 member points
+* to a vvl_vector4array_t object that is a compact representation of
+* an array of vvp_vector4_t vectors.
+*
+* - Array of real variables
+* The vals member points to a dynamic array objects that has an
+* array of double variables. This is very much like the way the
+* vector4 array works.
+*/
+struct __vpiArray : public __vpiArrayBase, public __vpiHandle {
+      int get_type_code(void) const { return vpiMemory; }
+      unsigned get_size() const { return array_count; }
+      vpiHandle get_left_range() { assert(nets == 0); return &msb; }
+      vpiHandle get_right_range() { assert(nets == 0); return &lsb; }
+      struct __vpiScope*get_scope() const { return scope; }
+
+      int get_word_size() const;
+      char*get_word_str(struct __vpiArrayWord*word, int code);
+      void get_word_value(struct __vpiArrayWord*word, p_vpi_value vp);
+      void put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, int flags);
+
+      vpiHandle get_iter_index(struct __vpiArrayIterator*iter, int idx);
+
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      vpiHandle vpi_handle(int code);
+      inline vpiHandle vpi_iterate(int code) { return vpi_array_base_iterate(code); }
+      vpiHandle vpi_index(int idx);
+
+      const char*name; /* Permanently allocated string */
+      __vpiDecConst first_addr;
+      __vpiDecConst last_addr;
+      __vpiDecConst msb;
+      __vpiDecConst lsb;
+      unsigned vals_width;
+	// If this is a net array, nets lists the handles.
+      vpiHandle*nets;
+	// If this is a var array, then these are used instead of nets.
+      vvp_vector4array_t*vals4;
+      vvp_darray        *vals;
+
+      vvp_fun_arrayport*ports_;
+      struct __vpiCallback *vpi_callbacks;
+      bool signed_flag;
+      bool swap_addr;
+
+private:
+      unsigned array_count;
+      struct __vpiScope*scope;
+
+friend vpiHandle vpip_make_array(char*label, const char*name,
+                                        int first_addr, int last_addr,
+                                        bool signed_flag);
+friend void compile_array_alias(char*label, char*name, char*src);
 };
 
 class __vpiDarrayVar : public __vpiBaseVar, public __vpiArrayBase {

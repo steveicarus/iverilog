@@ -30,7 +30,6 @@ class value_callback;
  * table of all the arrays in the design.
  */
 extern vvp_array_t array_find(const char*label);
-extern unsigned get_array_word_size(vvp_array_t array);
 
 extern void array_word_change(vvp_array_t array, unsigned long addr);
 

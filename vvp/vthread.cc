@@ -1020,7 +1020,7 @@ bool of_ASSIGN_AV(vthread_t thr, vvp_code_t cp)
 
       if (adr < 0) return true;
 
-      long vwidth = get_array_word_size(cp->array);
+      long vwidth = cp->array->get_word_size();
 	// We fell off the MSB end.
       if (off >= vwidth) return true;
 	// Trim the bits after the MSB
@@ -1059,7 +1059,7 @@ bool of_ASSIGN_AVD(vthread_t thr, vvp_code_t cp)
 
       if (adr < 0) return true;
 
-      long vwidth = get_array_word_size(cp->array);
+      long vwidth = cp->array->get_word_size();
 	// We fell off the MSB end.
       if (off >= vwidth) return true;
 	// Trim the bits after the MSB
@@ -1091,7 +1091,7 @@ bool of_ASSIGN_AVE(vthread_t thr, vvp_code_t cp)
 
       if (adr < 0) return true;
 
-      long vwidth = get_array_word_size(cp->array);
+      long vwidth = cp->array->get_word_size();
 	// We fell off the MSB end.
       if (off >= vwidth) return true;
 	// Trim the bits after the MSB
