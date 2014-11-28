@@ -688,7 +688,7 @@ void vvp_vpi_callback::clear_all_callbacks()
  */
 void vvp_vpi_callback::run_vpi_callbacks()
 {
-      if (array_) array_word_change(array_, array_word_);
+      if (array_) array_->word_change(array_word_);
 
       value_callback *next = vpi_callbacks_;
       value_callback *prev = 0;

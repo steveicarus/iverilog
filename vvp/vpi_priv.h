@@ -618,6 +618,10 @@ struct __vpiArray : public __vpiArrayBase, public __vpiHandle {
       void get_word_obj(unsigned address, vvp_object_t&val);
       std::string get_word_str(unsigned address);
 
+      void alias_word(unsigned long addr, vpiHandle word, int msb, int lsb);
+      void attach_word(unsigned addr, vpiHandle word);
+      void word_change(unsigned long addr);
+
       const char*name; /* Permanently allocated string */
       __vpiDecConst first_addr;
       __vpiDecConst last_addr;

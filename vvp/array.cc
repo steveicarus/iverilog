@@ -686,7 +686,7 @@ void __vpiArray::set_word(unsigned address, unsigned part_off, vvp_vector4_t val
 	    } else {
 		  vals4->set_word(address, val);
 	    }
-	    array_word_change(this, address);
+	    word_change(address);
 	    return;
       }
 
@@ -696,7 +696,7 @@ void __vpiArray::set_word(unsigned address, unsigned part_off, vvp_vector4_t val
 	    assert(part_off==0);
 	    assert(val.size() == vals_width);
 	    vals->set_word(address, val);
-	    array_word_change(this, address);
+	    word_change(address);
 	    return;
       }
 
@@ -708,7 +708,7 @@ void __vpiArray::set_word(unsigned address, unsigned part_off, vvp_vector4_t val
       assert(vsig);
 
       vsig->node->send_vec4_pv(val, part_off, val.size(), vpip_size(vsig), 0);
-      array_word_change(this, address);
+      word_change(address);
 }
 
 void __vpiArray::set_word(unsigned address, double val)
@@ -720,7 +720,7 @@ void __vpiArray::set_word(unsigned address, double val)
 	    return;
 
       vals->set_word(address, val);
-      array_word_change(this, address);
+      word_change(address);
 }
 
 void __vpiArray::set_word(unsigned address, const string&val)
@@ -732,7 +732,7 @@ void __vpiArray::set_word(unsigned address, const string&val)
 	    return;
 
       vals->set_word(address, val);
-      array_word_change(this, address);
+      word_change(address);
 }
 
 void __vpiArray::set_word(unsigned address, const vvp_object_t&val)
@@ -744,7 +744,7 @@ void __vpiArray::set_word(unsigned address, const vvp_object_t&val)
 	    return;
 
       vals->set_word(address, val);
-      array_word_change(this, address);
+      word_change(address);
 }
 
 vvp_vector4_t __vpiArray::get_word(unsigned address)
@@ -921,33 +921,32 @@ vpiHandle vpip_make_array(char*label, const char*name,
       return obj;
 }
 
-void array_alias_word(vvp_array_t array, unsigned long addr, vpiHandle word,
-                      int msb, int lsb)
+void __vpiArray::alias_word(unsigned long addr, vpiHandle word, int msb_, int lsb_)
 {
-      assert(array->msb.get_value() == msb);
-      assert(array->lsb.get_value() == lsb);
-      assert(addr < array->get_size());
-      assert(array->nets);
-      array->nets[addr] = word;
+      assert(msb.get_value() == msb_);
+      assert(lsb.get_value() == lsb_);
+      assert(addr < get_size());
+      assert(nets);
+      nets[addr] = word;
 }
 
-void array_attach_word(vvp_array_t array, unsigned addr, vpiHandle word)
+void __vpiArray::attach_word(unsigned addr, vpiHandle word)
 {
-      assert(addr < array->get_size());
-      assert(array->nets);
-      array->nets[addr] = word;
+      assert(addr < get_size());
+      assert(nets);
+      nets[addr] = word;
 
       if (struct __vpiSignal*sig = dynamic_cast<__vpiSignal*>(word)) {
 	    vvp_net_t*net = sig->node;
 	    assert(net);
 	    vvp_vpi_callback*fun = dynamic_cast<vvp_vpi_callback*>(net->fil);
 	    assert(fun);
-	    fun->attach_as_word(array, addr);
+	    fun->attach_as_word(this, addr);
 	    sig->is_netarray = 1;
-	    sig->within.parent = array;
-	    sig->id.index = new __vpiDecConst(addr + array->first_addr.get_value());
+	    sig->within.parent = this;
+	    sig->id.index = new __vpiDecConst(addr + first_addr.get_value());
 	      // Now we know the data type, update the array signed_flag.
-	    array->signed_flag = sig->signed_flag;
+	    signed_flag = sig->signed_flag;
 	    return;
       }
 
@@ -956,12 +955,12 @@ void array_attach_word(vvp_array_t array, unsigned addr, vpiHandle word)
 	    assert(net);
 	    vvp_vpi_callback*fun = dynamic_cast<vvp_vpi_callback*>(net->fil);
 	    assert(fun);
-	    fun->attach_as_word(array, addr);
+	    fun->attach_as_word(this, addr);
 	    sig->is_netarray = 1;
-	    sig->within.parent = array;
-	    sig->id.index = new __vpiDecConst(addr + array->first_addr.get_value());
+	    sig->within.parent = this;
+	    sig->id.index = new __vpiDecConst(addr + first_addr.get_value());
 	      // Now we know the data type, update the array signed_flag.
-	    array->signed_flag = true;
+	    signed_flag = true;
 	    return;
       }
 }
@@ -1116,7 +1115,7 @@ class vvp_fun_arrayport  : public vvp_net_fun_t {
       unsigned long addr_;
 
       friend void array_attach_port(vvp_array_t, vvp_fun_arrayport*);
-      friend void array_word_change(vvp_array_t, unsigned long);
+      friend void __vpiArray::word_change(unsigned long);
       vvp_fun_arrayport*next_;
 };
 
@@ -1361,13 +1360,13 @@ class array_word_value_callback : public value_callback {
       long word_addr;
 };
 
-void array_word_change(vvp_array_t array, unsigned long addr)
+void __vpiArray::word_change(unsigned long addr)
 {
-      for (vvp_fun_arrayport*cur = array->ports_; cur; cur = cur->next_)
+      for (vvp_fun_arrayport*cur = ports_; cur; cur = cur->next_)
 	    cur->check_word_change(addr);
 
 	// Run callbacks attached to the array itself.
-      struct __vpiCallback *next = array->vpi_callbacks;
+      struct __vpiCallback *next = vpi_callbacks;
       struct __vpiCallback *prev = 0;
 
       while (next) {
@@ -1383,21 +1382,21 @@ void array_word_change(vvp_array_t array, unsigned long addr)
 	      // For whole array callbacks we need to set the index.
 	    if (cur->word_addr == -1) {
 		  cur->cb_data.index = (PLI_INT32) ((int)addr +
-						    array->first_addr.get_value());
+						    first_addr.get_value());
 	    }
 
 	    if (cur->cb_data.cb_rtn != 0) {
 		  if (cur->test_value_callback_ready()) {
 			if (cur->cb_data.value) {
-			      if (vpi_array_is_real(array)) {
+			      if (vpi_array_is_real(this)) {
 				    double val = 0.0;
-				    if (addr < array->vals->get_size())
-					  array->vals->get_word(addr, val);
+				    if (addr < vals->get_size())
+					  vals->get_word(addr, val);
 				    vpip_real_get_value(val, cur->cb_data.value);
 			      } else {
-				    vpip_vec4_get_value(array->vals4->get_word(addr),
-							array->vals_width,
-							array->signed_flag,
+				    vpip_vec4_get_value(vals4->get_word(addr),
+							vals_width,
+							signed_flag,
 							cur->cb_data.value);
 			      }
 			}
@@ -1409,7 +1408,7 @@ void array_word_change(vvp_array_t array, unsigned long addr)
 
 	    } else if (prev == 0) {
 
-		  array->vpi_callbacks = next;
+		  vpi_callbacks = next;
 		  cur->next = 0;
 		  delete cur;
 
