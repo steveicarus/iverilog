@@ -240,49 +240,49 @@ unusedFunction:lz4.c:666
 // LZ4_compress_limitedOutput_continue()
 unusedFunction:lz4.c:824
 // LZ4_compress_limitedOutput_withState()
-unusedFunction:lz4.c:1246
+unusedFunction:lz4.c:1273
 // LZ4_compress_withState()
-unusedFunction:lz4.c:1235
+unusedFunction:lz4.c:1262
 // LZ4_create()
-unusedFunction:lz4.c:1215
+unusedFunction:lz4.c:1242
 // LZ4_createStream()
 unusedFunction:lz4.c:701
 // LZ4_createStreamDecode()
-unusedFunction:lz4.c:1074
+unusedFunction:lz4.c:1080
 // LZ4_decompress_fast_continue()
-unusedFunction:lz4.c:1129
+unusedFunction:lz4.c:1145
 // LZ4_decompress_fast_usingDict()
-unusedFunction:lz4.c:1172
-// LZ4_decompress_fast_withPrefix64k()
-unusedFunction:lz4.c:1264
-// LZ4_decompress_safe_continue()
-unusedFunction:lz4.c:1109
-// LZ4_decompress_safe_forceExtDict()
-unusedFunction:lz4.c:1179
-// LZ4_decompress_safe_usingDict()
-unusedFunction:lz4.c:1166
-// LZ4_decompress_safe_withPrefix64k()
-unusedFunction:lz4.c:1259
-// LZ4_freeStream()
-unusedFunction:lz4.c:708
-// LZ4_freeStreamDecode()
-unusedFunction:lz4.c:1081
-// LZ4_loadDict()
-unusedFunction:lz4.c:715
-// LZ4_resetStreamState()
-unusedFunction:lz4.c:1208
-// LZ4_setStreamDecode()
-unusedFunction:lz4.c:1094
-// LZ4_sizeofState()
-unusedFunction:lz4.c:1233
-// LZ4_sizeofStreamState()
 unusedFunction:lz4.c:1200
-// LZ4_slideInputBuffer()
-unusedFunction:lz4.c:1222
-// LZ4_uncompress()
-unusedFunction:lz4.c:1194
-// LZ4_uncompress_unknownOutputSize()
+// LZ4_decompress_fast_withPrefix64k()
+unusedFunction:lz4.c:1291
+// LZ4_decompress_safe_continue()
+unusedFunction:lz4.c:1116
+// LZ4_decompress_safe_forceExtDict()
+unusedFunction:lz4.c:1206
+// LZ4_decompress_safe_usingDict()
 unusedFunction:lz4.c:1195
+// LZ4_decompress_safe_withPrefix64k()
+unusedFunction:lz4.c:1286
+// LZ4_freeStream()
+unusedFunction:lz4.c:709
+// LZ4_freeStreamDecode()
+unusedFunction:lz4.c:1086
+// LZ4_loadDict()
+unusedFunction:lz4.c:716
+// LZ4_resetStreamState()
+unusedFunction:lz4.c:1235
+// LZ4_setStreamDecode()
+unusedFunction:lz4.c:1099
+// LZ4_sizeofState()
+unusedFunction:lz4.c:1260
+// LZ4_sizeofStreamState()
+unusedFunction:lz4.c:1227
+// LZ4_slideInputBuffer()
+unusedFunction:lz4.c:1249
+// LZ4_uncompress()
+unusedFunction:lz4.c:1221
+// LZ4_uncompress_unknownOutputSize()
+unusedFunction:lz4.c:1222
 // LZ4_versionNumber()
 unusedFunction:lz4.c:372
 
