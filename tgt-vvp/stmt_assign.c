@@ -443,6 +443,14 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 		 value pushed. */
 	    fprintf(vvp_out, "    %%cvt/vr %u;\n", wid);
 
+      } else if (ivl_expr_value(rval) == IVL_VT_STRING) {
+	    /* Special case: vector to string casting */
+	    ivl_lval_t lval = ivl_stmt_lval(net, 0);
+	    fprintf(vvp_out, "    %%vpi_call %u %u \"$ivl_string_method$to_vec\", v%p_0, v%p_0 {0 0};\n",
+		ivl_file_table_index(ivl_stmt_file(net)), ivl_stmt_lineno(net),
+		ivl_expr_signal(rval), ivl_lval_sig(lval));
+            return 0;
+
       } else {
 	    unsigned wid = ivl_stmt_lwidth(net);
 	    draw_eval_vec4(rval);

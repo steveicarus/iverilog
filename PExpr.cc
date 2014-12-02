@@ -146,6 +146,15 @@ PECastSize::~PECastSize()
 {
 }
 
+PECastType::PECastType(data_type_t*t, PExpr*b)
+: target_(t), base_(b)
+{
+}
+
+PECastType::~PECastType()
+{
+}
+
 PEBComp::PEBComp(char op, PExpr*l, PExpr*r)
 : PEBinary(op, l, r)
 {

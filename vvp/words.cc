@@ -59,7 +59,7 @@ static void __compile_var_real(char*label, char*name,
       }
       if (array) {
 	    assert(!name);
-	    array_attach_word(array, array_addr, obj);
+	    array->attach_word(array_addr, obj);
       }
       free(label);
       delete[] name;
@@ -365,7 +365,7 @@ static void do_compile_net(vvp_net_t*node, vvp_array_t array,
       define_functor_symbol(my_label, node);
 
       if (array)
-	    array_attach_word(array, array_addr, obj);
+	    array->attach_word(array_addr, obj);
       else if (obj)
 	    vpip_attach_to_scope(scope,obj);
 
@@ -495,7 +495,7 @@ static void __compile_real_net2(vvp_net_t*node, vvp_array_t array,
       define_functor_symbol(my_label, node);
 
      if (array)
-	    array_attach_word(array, array_addr, obj);
+	    array->attach_word(array_addr, obj);
       else if (obj)
 	    vpip_attach_to_scope(scope, obj);
 
@@ -583,7 +583,7 @@ void compile_aliasw(char*label, char*array_label, unsigned long array_addr,
 
       vpiHandle obj = vvp_lookup_handle(argv[0].text);
       assert(obj);
-      array_alias_word(array, array_addr, obj, msb, lsb);
+      array->alias_word(array_addr, obj, msb, lsb);
 
       free(label);
       free(array_label);

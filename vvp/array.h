@@ -30,31 +30,8 @@ class value_callback;
  * table of all the arrays in the design.
  */
 extern vvp_array_t array_find(const char*label);
-extern unsigned get_array_word_size(vvp_array_t array);
-extern vpiHandle array_index_iterate(int code, vpiHandle ref);
-
-extern void array_word_change(vvp_array_t array, unsigned long addr);
-
-extern void array_attach_word(vvp_array_t array, unsigned addr, vpiHandle word);
-extern void array_alias_word(vvp_array_t array, unsigned long addr,
-                             vpiHandle word, int msb, int lsb);
-
-extern void array_set_word(vvp_array_t arr, unsigned idx,
-			    unsigned off, vvp_vector4_t val);
-extern void array_set_word(vvp_array_t arr, unsigned idx,
-			   double val);
-extern void array_set_word(vvp_array_t arr, unsigned idx,
-			   const std::string&val);
-extern void array_set_word(vvp_array_t arr, unsigned idx,
-			   const vvp_object_t&val);
-
-extern vvp_vector4_t array_get_word(vvp_array_t array, unsigned address);
-extern double array_get_word_r(vvp_array_t array, unsigned address);
-extern void array_get_word_obj(vvp_array_t array, unsigned address, vvp_object_t&val);
-extern std::string array_get_word_str(vvp_array_t array, unsigned address);
 
 /* VPI hooks */
-
 extern value_callback* vpip_array_word_change(p_cb_data data);
 extern value_callback* vpip_array_change(p_cb_data data);
 

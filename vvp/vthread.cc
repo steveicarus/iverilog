@@ -1036,7 +1036,7 @@ bool of_ASSIGN_VEC4_A_D(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t val = thr->pop_vec4();
       unsigned wid = val.size();
-      const unsigned array_wid = get_array_word_size(cp->array);
+      const unsigned array_wid = cp->array->get_word_size();
 
 	// Abort if flags[4] is set. This can happen if the calulation
 	// into an index register failed.
@@ -1079,7 +1079,7 @@ bool of_ASSIGN_VEC4_A_E(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t val = thr->pop_vec4();
       unsigned wid = val.size();
-      const unsigned array_wid = get_array_word_size(cp->array);
+      const unsigned array_wid = cp->array->get_word_size();
 
 	// Abort if flags[4] is set. This can happen if the calulation
 	// into an index register failed.
@@ -3354,7 +3354,7 @@ bool of_LOAD_AR(vthread_t thr, vvp_code_t cp)
       if (thr->flags[4] == BIT4_1) {
 	    word = 0.0;
       } else {
-	    word = array_get_word_r(cp->array, adr);
+	    word = cp->array->get_word_r(adr);
       }
 
       thr->push_real(word);
@@ -3452,7 +3452,7 @@ bool of_LOAD_OBJA(vthread_t thr, vvp_code_t cp)
       if (thr->flags[4] == BIT4_1) {
 	    ; // Return nil
       } else {
-	    array_get_word_obj(cp->array, adr, word);
+	    cp->array->get_word_obj(adr, word);
       }
 
       thr->push_object(word);
@@ -3501,7 +3501,7 @@ bool of_LOAD_STRA(vthread_t thr, vvp_code_t cp)
       if (thr->flags[4] == BIT4_1) {
 	    word = "";
       } else {
-	    word = array_get_word_str(cp->array, adr);
+	    word = cp->array->get_word_str(adr);
       }
 
       thr->push_str(word);
@@ -3565,12 +3565,12 @@ bool of_LOAD_VEC4A(vthread_t thr, vvp_code_t cp)
 	// failed, and this load should return X instead of the actual
 	// value.
       if (thr->flags[4] == BIT4_1) {
-	    vvp_vector4_t tmp (get_array_word_size(cp->array), BIT4_X);
+	    vvp_vector4_t tmp (cp->array->get_word_size(), BIT4_X);
 	    thr->push_vec4(tmp);
 	    return true;
       }
 
-      vvp_vector4_t tmp (array_get_word(cp->array, adr));
+      vvp_vector4_t tmp (cp->array->get_word(adr));
       thr->push_vec4(tmp);
       return true;
 }
@@ -5180,7 +5180,7 @@ bool of_STORE_OBJA(vthread_t thr, vvp_code_t cp)
       vvp_object_t val;
       thr->pop_object(val);
 
-      array_set_word(cp->array, adr, val);
+      cp->array->set_word(adr, val);
 
       return true;
 }
@@ -5383,7 +5383,7 @@ bool of_STORE_REALA(vthread_t thr, vvp_code_t cp)
       unsigned adr = thr->words[idx].w_int;
 
       double val = thr->pop_real();
-      array_set_word(cp->array, adr, val);
+      cp->array->set_word(adr, val);
 
       return true;
 }
@@ -5408,7 +5408,7 @@ bool of_STORE_STRA(vthread_t thr, vvp_code_t cp)
       unsigned adr = thr->words[idx].w_int;
 
       string val = thr->pop_str();
-      array_set_word(cp->array, adr, val);
+      cp->array->set_word(adr, val);
 
       return true;
 }
@@ -5513,7 +5513,7 @@ bool of_STORE_VEC4A(vthread_t thr, vvp_code_t cp)
 	    return true;
       }
 
-      array_set_word(cp->array, adr, off, value);
+      cp->array->set_word(adr, off, value);
 
       thr->pop_vec4(1);
       return true;
@@ -5671,7 +5671,7 @@ bool of_TEST_NUL_A(vthread_t thr, vvp_code_t cp)
 	    return true;
       }
 
-      array_get_word_obj(cp->array, adr, word);
+      cp->array->get_word_obj(adr, word);
       if (word.test_nil())
 	    thr->flags[4] = BIT4_1;
       else

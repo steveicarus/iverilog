@@ -987,6 +987,28 @@ class PECastSize  : public PExpr {
 };
 
 /*
+ * Support the SystemVerilog cast to a different type.
+ */
+class PECastType  : public PExpr {
+
+    public:
+      explicit PECastType(data_type_t*target, PExpr*base);
+      ~PECastType();
+
+      void dump(ostream &out) const;
+
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     unsigned expr_wid, unsigned flags) const;
+
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  width_mode_t&mode);
+
+    private:
+      data_type_t* target_;
+      PExpr* base_;
+};
+
+/*
  * This class is used for error recovery. All methods do nothing and return
  * null or default values.
  */

@@ -654,7 +654,7 @@ static vpiHandle signal_iterate(int code, vpiHandle ref)
       assert(rfp);
 
       if (code == vpiIndex) {
-	    return rfp->is_netarray? array_index_iterate(code, rfp->id.index) : 0;
+	    return rfp->is_netarray ? rfp->id.index->vpi_iterate(code) : 0;
       }
 
       return 0;
