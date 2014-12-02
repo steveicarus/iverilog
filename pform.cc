@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1449,7 +1449,7 @@ void pform_make_reginit(const struct vlltype&li,
 
       PEIdent*lval = new PEIdent(name);
       FILE_NAME(lval, li);
-      PAssign*ass = new PAssign(lval, expr, true);
+      PAssign*ass = new PAssign(lval, expr, generation_flag < GN_VER2001);
       FILE_NAME(ass, li);
       PProcess*top = new PProcess(IVL_PR_INITIAL, ass);
       FILE_NAME(top, li);
