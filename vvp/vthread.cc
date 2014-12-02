@@ -3676,7 +3676,7 @@ static void do_verylong_mod(vvp_vector4_t&vala, const vvp_vector4_t&valb,
 
       vvp_vector4_t tmp (len, BIT4_X);
       carry = out_is_neg? 1 : 0;
-      for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
+      for (int idx = 0 ;  idx < len ;  idx += 1) {
 	    unsigned ob = z[idx];
 	    if (out_is_neg) {
 		  ob = (1-ob) + carry;
@@ -4004,13 +4004,8 @@ bool of_MOV_WU(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-/*
- * %mul
- */
-bool of_MUL(vthread_t thr, vvp_code_t)
+static bool do_MUL(vvp_vector4_t&vala, const vvp_vector4_t&valb)
 {
-      vvp_vector4_t valb = thr->pop_vec4();
-      vvp_vector4_t&vala = thr->peek_vec4();
       assert(vala.size() == valb.size());
       unsigned wid = vala.size();
 
@@ -4063,6 +4058,41 @@ bool of_MUL(vthread_t thr, vvp_code_t)
       delete[]res;
 
       return true;
+}
+
+/*
+ * %mul
+ */
+bool of_MUL(vthread_t thr, vvp_code_t)
+{
+      vvp_vector4_t r = thr->pop_vec4();
+	// Rather then pop l, use it directly from the stack. When we
+	// assign to 'l', that will edit the top of the stack, which
+	// replaces a pop and a pull.
+      vvp_vector4_t&l = thr->peek_vec4();
+
+      return do_MUL(l, r);
+}
+
+/*
+ * %muli <vala>, <valb>, <wid>
+ *
+ * Pop1 operand, get the other operand from the arguments, and push
+ * the result.
+ */
+bool of_MULI(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->number;
+
+      vvp_vector4_t&l = thr->peek_vec4();
+
+	// I expect that most of the bits of an immediate value are
+	// going to be zero, so start the result vector with all zero
+	// bits. Then we only need to replace the bits that are different.
+      vvp_vector4_t r (wid, BIT4_0);
+      get_immediate_rval (cp, r);
+
+      return do_MUL(l, r);
 }
 
 bool of_MUL_WR(vthread_t thr, vvp_code_t)

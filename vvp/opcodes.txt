@@ -754,6 +754,7 @@ This opcode is the real-valued modulus of the two real values.
 * %mov/wu <dst>, <src>
 
 * %mul
+* %muli <vala>, <valb>, <wid>
 
 This instruction multiplies the left vector by the right vector, the
 vectors pare popped from the vec4 stack and have the same width. If
