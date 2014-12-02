@@ -545,7 +545,7 @@ void __vpiArrayVthrAPV::vpi_get_value(p_vpi_value vp)
       }
 }
 
-void __vpiArray::set_word(unsigned address, unsigned part_off, vvp_vector4_t val)
+void __vpiArray::set_word(unsigned address, unsigned part_off, const vvp_vector4_t&val)
 {
       if (address >= get_size())
 	    return;

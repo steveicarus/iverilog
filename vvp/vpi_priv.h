@@ -605,7 +605,7 @@ struct __vpiArray : public __vpiArrayBase, public __vpiHandle {
       inline vpiHandle vpi_iterate(int code) { return vpi_array_base_iterate(code); }
       vpiHandle vpi_index(int idx);
 
-      void set_word(unsigned idx, unsigned off, vvp_vector4_t val);
+      void set_word(unsigned idx, unsigned off, const vvp_vector4_t&val);
       void set_word(unsigned idx, double val);
       void set_word(unsigned idx, const std::string&val);
       void set_word(unsigned idx, const vvp_object_t&val);
