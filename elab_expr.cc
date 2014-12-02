@@ -36,6 +36,7 @@
 # include  "netmisc.h"
 # include  "netdarray.h"
 # include  "netstruct.h"
+# include  "netscalar.h"
 # include  "util.h"
 # include  "ivl_assert.h"
 
@@ -2429,6 +2430,87 @@ NetExpr* PECastSize::elaborate_expr(Design*des, NetScope*scope,
       sel->set_line(*this);
 
       return sel;
+}
+
+unsigned PECastType::test_width(Design*des, NetScope*scope, width_mode_t&wid)
+{
+      ivl_type_t t = target_->elaborate_type(des, scope);
+      base_->test_width(des, scope, wid);
+
+      if(const netdarray_t*use_darray = dynamic_cast<const netdarray_t*> (t)) {
+	    expr_type_  = use_darray->element_base_type();
+	    expr_width_ = use_darray->element_width();
+      }
+
+      else if(const netstring_t*use_string = dynamic_cast<const netstring_t*> (t)) {
+	    expr_type_  = use_string->base_type();
+	    expr_width_ = 8;
+      }
+
+      else {
+	    expr_type_  = t->base_type();
+	    expr_width_ = t->packed_width();
+      }
+
+      signed_flag_= t->get_signed();
+      min_width_ = expr_width_;
+      return expr_width_;
+}
+
+NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
+				    unsigned, unsigned) const
+{
+      NetExpr*expr = base_->elaborate_expr(des, scope, base_->expr_width(), NO_FLAGS);
+
+      if(dynamic_cast<const real_type_t*>(target_)) {
+          return cast_to_real(expr);
+      }
+
+      if(const atom2_type_t*atom = dynamic_cast<const atom2_type_t*>(target_)) {
+          if(base_->expr_width() > expr_width_) {
+              cerr << get_fileline() << ": cast type is not wide enough to store the result." << endl;
+              ivl_assert(*this, 0);
+          }
+
+          if(base_->has_sign() != atom->signed_flag) {
+              cerr << get_fileline() << ": cast type and subject differ in signedness." << endl;
+              ivl_assert(*this, 0);
+          }
+
+          // That is how you both resize & cast to integers
+          return new NetECast('2', expr, expr_width_, expr->has_sign());
+      }
+
+      if(const vector_type_t*vec = dynamic_cast<const vector_type_t*>(target_)) {
+          switch(vec->base_type) {
+              case IVL_VT_BOOL:
+                  return cast_to_int2(expr, expr_width_);
+
+              case IVL_VT_LOGIC:
+                  return cast_to_int4(expr, expr_width_);
+
+              default:
+                  break;  /* Suppress warnings */
+          }
+      }
+
+      else if(dynamic_cast<const string_type_t*>(target_)) {
+          if(base_->expr_type() == IVL_VT_STRING)
+            return expr;        // no conversion
+
+          if((base_->expr_type() != IVL_VT_BOOL) &&
+                (base_->expr_type() != IVL_VT_LOGIC)) {
+              cerr << get_fileline() << ": cannot be casted to string." << endl;
+              ivl_assert(*this, false);
+          }
+
+          return expr;
+      }
+
+      cerr << get_fileline() << ": sorry: I don't know how to cast expression." << endl;
+      ivl_assert(*this, false);
+
+      return expr;
 }
 
 unsigned PEConcat::test_width(Design*des, NetScope*scope, width_mode_t&)
@@ -4939,6 +5021,18 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	    NetESelect*res = new NetESelect(net, mux, lwid);
 	    res->set_line(*net);
 
+	    return res;
+      }
+
+      if (net->sig()->data_type() == IVL_VT_STRING) {
+	      // Special case: This is a select of a string.
+	      // This should be interpreted as a byte select.
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Bit select of a string becomes NetESelect." << endl;
+	    }
+	    NetESelect*res = new NetESelect(net, mux, 8);
+	    res->set_line(*net);
 	    return res;
       }
 

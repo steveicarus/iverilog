@@ -3543,6 +3543,18 @@ expr_primary
 	}
       }
 
+  | data_type '\'' '(' expression ')'
+      { PExpr*base = $4;
+	if (gn_system_verilog()) {
+	      PECastType*tmp = new PECastType($1, base);
+	      FILE_NAME(tmp, @1);
+	      $$ = tmp;
+	} else {
+	      yyerror(@1, "error: Type cast requires SystemVerilog.");
+	      $$ = base;
+	}
+      }
+
   /* Aggregate literals are primaries. */
 
   | assignment_pattern

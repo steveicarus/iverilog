@@ -323,6 +323,14 @@ void PECastSize::dump(ostream &out) const
       out << ")";
 }
 
+void PECastType::dump(ostream &out) const
+{
+      target_->pform_dump(out, 0);
+      out << "'(";
+      base_->dump(out);
+      out << ")";
+}
+
 void PEEvent::dump(ostream&out) const
 {
       switch (type_) {

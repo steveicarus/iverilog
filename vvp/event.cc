@@ -137,7 +137,7 @@ evctl_array::evctl_array(vvp_array_t memory, unsigned index,
 
 void evctl_array::run_run()
 {
-      array_set_word(mem_, idx_, off_, value_);
+      mem_->set_word(idx_, off_, value_);
 }
 
 void schedule_evctl(vvp_array_t memory, unsigned index,
@@ -163,7 +163,7 @@ evctl_array_r::evctl_array_r(vvp_array_t memory, unsigned index,
 
 void evctl_array_r::run_run()
 {
-      array_set_word(mem_, idx_, value_);
+      mem_->set_word(idx_, value_);
 }
 
 void schedule_evctl(vvp_array_t memory, unsigned index,
