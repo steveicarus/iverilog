@@ -112,6 +112,49 @@ static int draw_condition_binary_compare(ivl_expr_t expr)
 
 }
 
+static int draw_condition_binary_real_le(ivl_expr_t expr)
+{
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+      ivl_expr_t tmp;
+
+      char use_opcode = ivl_expr_opcode(expr);
+
+	/* If this is a > or >=, then convert it to < or <= by
+	   swapping the operands. Adjust the opcode to match. */
+      switch (use_opcode) {
+	  case 'G':
+	    tmp = le;
+	    le = re;
+	    re = tmp;
+	    use_opcode = 'L';
+	    break;
+	  case '>':
+	    tmp = le;
+	    le = re;
+	    re = tmp;
+	    use_opcode = '<';
+	    break;
+      }
+
+      draw_eval_real(le);
+      draw_eval_real(re);
+
+      fprintf(vvp_out, "    %%cmp/wr;\n");
+
+      switch (use_opcode) {
+	  case '<':
+	    return 5;
+	  case 'L':
+	    fprintf(vvp_out, "    %%flag_or 5, 4;\n");
+	    return 5;
+	  default:
+	    assert(0);
+	    return -1;
+      }
+
+}
+
 static int draw_condition_binary_le(ivl_expr_t expr)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
@@ -120,7 +163,7 @@ static int draw_condition_binary_le(ivl_expr_t expr)
 
       if ((ivl_expr_value(le) == IVL_VT_REAL)
 	  || (ivl_expr_value(re) == IVL_VT_REAL)) {
-	    return draw_condition_fallback(expr);
+	    return draw_condition_binary_real_le(expr);
       }
 
       if ((ivl_expr_value(le)==IVL_VT_STRING)
