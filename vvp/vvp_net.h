@@ -254,7 +254,7 @@ class vvp_vector4_t {
 	// Get the 2-value bits for the subvector. This returns a new
 	// array of longs, or a nil pointer if an XZ bit was detected
 	// in the array.
-      unsigned long*subarray(unsigned idx, unsigned size) const;
+      unsigned long*subarray(unsigned idx, unsigned size, bool xz_to_0 =false) const;
       void setarray(unsigned idx, unsigned size, const unsigned long*val);
 
 	// Set a 4-value bit or subvector into the vector. Return true

@@ -1006,7 +1006,7 @@ void vvp_vector4_t::resize(unsigned newsize, vvp_bit4_t pad_bit)
 }
 
 
-unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid) const
+unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid, bool xz_to_0) const
 {
       const unsigned BIT2_PER_WORD = 8*sizeof(unsigned long);
       unsigned awid = (wid + BIT2_PER_WORD - 1) / (BIT2_PER_WORD);
@@ -1027,7 +1027,12 @@ unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid) const
 		  atmp &= (1UL << wid) - 1;
 		  btmp &= (1UL << wid) - 1;
 	    }
-	    if (btmp) goto x_out;
+	    if (btmp) {
+		  if (xz_to_0)
+			atmp &= ~btmp;
+		  else
+			goto x_out;
+	    }
 
 	    val[0] = atmp;
 
@@ -1054,7 +1059,12 @@ unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid) const
 			atmp &= (1UL << trans) - 1;
 			btmp &= (1UL << trans) - 1;
 		  }
-		  if (btmp) goto x_out;
+		  if (btmp) {
+			if (xz_to_0)
+			      atmp &= ~btmp;
+			else
+			      goto x_out;
+		  }
 
 		  val[val_ptr] |= atmp << val_off;
 		  adr += trans;
@@ -2109,24 +2119,9 @@ void vvp_vector2_t::copy_from_that_(const vvp_vector4_t&that)
 	    return;
       }
 
-      vec_ = new unsigned long[words];
-      for (unsigned idx = 0 ;  idx < words ;  idx += 1)
-	    vec_[idx] = 0;
-
-      for (unsigned idx = 0 ;  idx < that.size() ;  idx += 1) {
-	    unsigned addr = idx / BITS_PER_WORD;
-	    unsigned shift = idx % BITS_PER_WORD;
-
-	    switch (that.value(idx)) {
-		case BIT4_0:
-		case BIT4_X:
-		case BIT4_Z:
-		  break;
-		case BIT4_1:
-		  vec_[addr] |= 1UL << shift;
-		  break;
-	    }
-      }
+	// Use the subarray method with the xz_to_0 flag set so that
+	// we get values even when there are xz bits.
+      vec_ = that.subarray(0, wid_, true);
 }
 
 void vvp_vector2_t::copy_from_that_(const vvp_vector2_t&that)
