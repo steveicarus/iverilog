@@ -1055,8 +1055,11 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	$$ = tmp;
       }
   | TYPE_IDENTIFIER dimensions_opt
-      { if ($2) $$ = new parray_type_t($1.type, $2);
-	else $$ = $1.type;
+      { if ($2) {
+	      parray_type_t*tmp = new parray_type_t($1.type, $2);
+	      FILE_NAME(tmp, @1);
+	      $$ = tmp;
+	} else $$ = $1.type;
 	delete[]$1.text;
       }
   | PACKAGE_IDENTIFIER K_SCOPE_RES

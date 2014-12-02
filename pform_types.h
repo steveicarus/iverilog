@@ -243,6 +243,7 @@ struct parray_type_t : public array_base_t {
 
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
+      virtual ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
 };
 
 /*
