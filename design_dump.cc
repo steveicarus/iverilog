@@ -1661,6 +1661,16 @@ void NetEBinary::dump(ostream&o) const
       o << ")";
 }
 
+void NetECast::dump(ostream&fd) const
+{
+      if (op_=='2')
+	    fd << "bool<" << expr_width() << ">(" << *expr_ << ")";
+      else if (op_=='4')
+	    fd << "logic<" << expr_width() << ">(" << *expr_ << ")";
+      else
+	    NetEUnary::dump(fd);
+}
+
 void NetEConcat::dump(ostream&o) const
 {
       if (repeat_ != 1)
