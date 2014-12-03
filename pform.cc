@@ -2239,7 +2239,7 @@ void pform_make_reginit(const struct vlltype&li,
 
       PEIdent*lval = new PEIdent(name);
       FILE_NAME(lval, li);
-      PAssign*ass = new PAssign(lval, expr, generation_flag < GN_VER2001);
+      PAssign*ass = new PAssign(lval, expr, true);
       FILE_NAME(ass, li);
       PProcess*top = new PProcess(IVL_PR_INITIAL, ass);
       FILE_NAME(top, li);
