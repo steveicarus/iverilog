@@ -1983,14 +1983,22 @@ bool of_CONCATI_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_CONCAT_VEC4(vthread_t thr, vvp_code_t)
 {
-      vvp_vector4_t lsb = thr->pop_vec4();
-      vvp_vector4_t&msb = thr->peek_vec4();
+      const vvp_vector4_t&lsb = thr->peek_vec4(0);
+      const vvp_vector4_t&msb = thr->peek_vec4(1);
 
-      vvp_vector4_t res (msb.size()+lsb.size(), BIT4_X);
+	// The result is the size of the top two vectors in the stack.
+      vvp_vector4_t res (msb.size() + lsb.size(), BIT4_X);
+
+	// Build up the result.
       res.set_vec(0, lsb);
       res.set_vec(lsb.size(), msb);
 
-      msb = res;
+	// Rearrange the stack to pop the inputs and push the
+	// result. Do that by actually popping only 1 stack position
+	// and replacing the new top with the new value.
+      thr->pop_vec4(1);
+      thr->peek_vec4() = res;
+
       return true;
 }
 
@@ -3546,27 +3554,22 @@ bool of_LOAD_STRA(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-/* %load/v <bit>, <label>, <wid>
- *
- * Implement the %load/v instruction. Load the vector value of the
- * requested width from the <label> functor starting in the thread bit
- * <bit>.
- *
- * The <bit> value is the destination in the thread vector store, and
- * is in cp->bit_idx[0].
- *
- * The <wid> value is the expected with of the vector, and is in
- * cp->bit_idx[1].
- *
- * The functor to read from is the vvp_net_t object pointed to by the
- * cp->net pointer.
+
+/*
+ * %load/vec4 <net>
  */
-static void load_base(vvp_code_t cp, vvp_vector4_t&dst)
+bool of_LOAD_VEC4(vthread_t thr, vvp_code_t cp)
 {
+	// Push a placeholder onto the stack in order to reserve the
+	// stack space. Use a reference for the stack top as a target
+	// for the load.
+      thr->push_vec4(vvp_vector4_t());
+      vvp_vector4_t&sig_value = thr->peek_vec4();
+
       vvp_net_t*net = cp->net;
 
-	/* For the %load to work, the functor must actually be a
-	   signal functor. Only signals save their vector value. */
+	// For the %load to work, the functor must actually be a
+	// signal functor. Only signals save their vector value.
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
       if (sig == 0) {
 	    cerr << "%load/v error: Net arg not a signal? "
@@ -3574,18 +3577,9 @@ static void load_base(vvp_code_t cp, vvp_vector4_t&dst)
 	    assert(sig);
       }
 
-      sig->vec4_value(dst);
-}
-
-/*
- * %load/vec4 <net>
- */
-bool of_LOAD_VEC4(vthread_t thr, vvp_code_t cp)
-{
-      vvp_vector4_t sig_value;
-      load_base(cp, sig_value);
-
-      thr->push_vec4(sig_value);
+	// Extract the value from the signal and directly into the
+	// target stack position.
+      sig->vec4_value(sig_value);
 
       return true;
 }
