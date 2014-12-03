@@ -1560,6 +1560,23 @@ bool of_CMPE(vthread_t thr, vvp_code_t)
       return true;
 }
 
+bool of_CMPNE(vthread_t thr, vvp_code_t)
+{
+	// We are going to pop these and push nothing in their
+	// place, but for now it is more efficient to use a constant
+	// reference. When we finish, pop the stack without copies.
+      const vvp_vector4_t&rval = thr->peek_vec4(0);
+      const vvp_vector4_t&lval = thr->peek_vec4(1);
+
+      do_CMPE(thr, lval, rval);
+
+      thr->flags[4] =  ~thr->flags[4];
+      thr->flags[6] =  ~thr->flags[6];
+
+      thr->pop_vec4(2);
+      return true;
+}
+
 /*
  * %cmpi/e <vala>, <valb>, <wid>
  *
@@ -1578,6 +1595,27 @@ bool of_CMPIE(vthread_t thr, vvp_code_t cp)
       get_immediate_rval (cp, rval);
 
       do_CMPE(thr, lval, rval);
+
+      thr->pop_vec4(1);
+      return true;
+}
+
+bool of_CMPINE(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->number;
+
+      vvp_vector4_t&lval = thr->peek_vec4();
+
+	// I expect that most of the bits of an immediate value are
+	// going to be zero, so start the result vector with all zero
+	// bits. Then we only need to replace the bits that are different.
+      vvp_vector4_t rval (wid, BIT4_0);
+      get_immediate_rval (cp, rval);
+
+      do_CMPE(thr, lval, rval);
+
+      thr->flags[4] =  ~thr->flags[4];
+      thr->flags[6] =  ~thr->flags[6];
 
       thr->pop_vec4(1);
       return true;

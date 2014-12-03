@@ -83,26 +83,31 @@ static int draw_condition_binary_compare(ivl_expr_t expr)
       draw_eval_vec4(le);
       resize_vec4_wid(le, use_wid);
 
+      char use_opcode = ivl_expr_opcode(expr);
+
+
       if (ivl_expr_width(re)==use_wid && test_immediate_vec4_ok(re)) {
 	      /* Special case: If the right operand can be handled as
 		 an immediate operand, then use that instead. */
-	    draw_immediate_vec4(re, "%cmpi/e");
+	    if (use_opcode=='n' || use_opcode=='N')
+		  draw_immediate_vec4(re, "%cmpi/ne");
+	    else
+		  draw_immediate_vec4(re, "%cmpi/e");
       } else {
 	    draw_eval_vec4(re);
 	    resize_vec4_wid(re, use_wid);
-	    fprintf(vvp_out, "    %%cmp/e;\n");
+	    if (use_opcode=='n' || use_opcode=='N')
+		  fprintf(vvp_out, "    %%cmp/ne;\n");
+	    else
+		  fprintf(vvp_out, "    %%cmp/e;\n");
       }
 
       switch (ivl_expr_opcode(expr)) {
 	  case 'n': /* != */
-	    fprintf(vvp_out, "    %%flag_inv 4;\n");
-	    ; /* fall through.. */
 	  case 'e': /* == */
 	    return 4;
 	    break;
 	  case 'N': /* !== */
-	    fprintf(vvp_out, "    %%flag_inv 6;\n");
-	    ; /* fall through.. */
 	  case 'E': /* === */
 	    return 6;
 	  default:
