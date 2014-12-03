@@ -48,6 +48,8 @@ FILE*vvp_out = 0;
 int vvp_errors = 0;
 unsigned show_file_line = 0;
 
+int debug_draw = 0;
+
 # define FLAGS_COUNT 256
 
 static uint32_t allocate_flag_mask[FLAGS_COUNT / 32] = { 0x000000ff, 0 };
@@ -118,6 +120,28 @@ void clr_flag(int idx)
       allocate_flag_mask[word] &= ~mask;
 }
 
+static void process_debug_string(const char*debug_string)
+{
+      const char*cp = debug_string;
+      debug_draw = 0;
+
+      while (*cp) {
+	    const char*tail = strchr(cp, ',');
+	    if (tail == 0)
+		  tail = cp + strlen(cp);
+
+	    size_t len = tail - cp;
+	    if (len == 4 && strncmp(cp,"draw", 4)==0) {
+		  debug_draw = 1;
+	    }
+
+	    while (*tail == ',')
+		  tail += 1;
+
+	    cp = tail;
+      }
+}
+
 int target_design(ivl_design_t des)
 
 {
@@ -131,6 +155,9 @@ int target_design(ivl_design_t des)
 	 * printed for procedural statements. (e.g. -pfileline=1).
 	 * The default is no file/line information will be included. */
       const char*fileline = ivl_design_flag(des, "fileline");
+
+      const char*debug_flags = ivl_design_flag(des, "debug_flags");
+      process_debug_string(debug_flags);
 
       assert(path);
 

@@ -28,6 +28,8 @@
 #endif
 
 
+extern int debug_draw;
+
 /*
  * The target_design entry opens the output file that receives the
  * compiled design, and sets the vvp_out to the descriptor.
@@ -109,10 +111,7 @@ extern void draw_ufunc_vec4(ivl_expr_t expr);
 extern void draw_ufunc_real(ivl_expr_t expr);
 extern void draw_ufunc_string(ivl_expr_t expr);
 extern void draw_ufunc_object(ivl_expr_t expr);
-#if 0
-extern void pad_expr_in_place(ivl_expr_t expr, struct vector_info res,
-                              unsigned swid);
-#endif
+
 extern char* process_octal_codes(const char*txt, unsigned wid);
 
 /*

@@ -1129,6 +1129,12 @@ static void draw_unary_vec4(ivl_expr_t expr)
 {
       ivl_expr_t sub = ivl_expr_oper1(expr);
 
+      if (debug_draw) {
+	    fprintf(vvp_out, " ; %s:%u:draw_unary_vec4: opcode=%c\n",
+		    ivl_expr_file(expr), ivl_expr_lineno(expr),
+		    ivl_expr_opcode(expr));
+      }
+
       switch (ivl_expr_opcode(expr)) {
 	  case '&':
 	    draw_eval_vec4(sub);
@@ -1226,6 +1232,7 @@ static void draw_unary_vec4(ivl_expr_t expr)
 		  break;
 		case IVL_VT_BOOL:
 		  draw_eval_vec4(sub);
+		  resize_vec4_wid(sub, ivl_expr_width(expr));
 		  break;
 		case IVL_VT_REAL:
 		  draw_eval_real(sub);
@@ -1245,6 +1252,12 @@ static void draw_unary_vec4(ivl_expr_t expr)
 
 void draw_eval_vec4(ivl_expr_t expr)
 {
+      if (debug_draw) {
+	    fprintf(vvp_out, " ; %s:%u:draw_eval_vec4: expr_type=%d\n",
+		    ivl_expr_file(expr), ivl_expr_lineno(expr),
+		    ivl_expr_type(expr));
+      }
+
       switch (ivl_expr_type(expr)) {
 	  case IVL_EX_BINARY:
 	    draw_binary_vec4(expr);
