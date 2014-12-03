@@ -11,3 +11,5 @@ $low			vpiSysFuncInt
 $high			vpiSysFuncInt
 $increment		vpiSysFuncInt
 $size			vpiSysFuncInt
+
+$ivl_array_method$to_vec	vpiSysFuncVoid
