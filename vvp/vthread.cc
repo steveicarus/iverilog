@@ -1625,11 +1625,6 @@ bool of_CMPINE(vthread_t thr, vvp_code_t cp)
 
 static void do_CMPS(vthread_t thr, const vvp_vector4_t&lval, const vvp_vector4_t&rval)
 {
-      vvp_bit4_t eq  = BIT4_1;
-      vvp_bit4_t eeq = BIT4_1;
-      vvp_bit4_t lt  = BIT4_0;
-
-
       assert(rval.size() == lval.size());
 
 	// If either value has XZ bits, then the eq and lt values are
@@ -1649,38 +1644,48 @@ static void do_CMPS(vthread_t thr, const vvp_vector4_t&lval, const vvp_vector4_t
       const vvp_bit4_t sig1 = lval.value(wid-1);
       const vvp_bit4_t sig2 = rval.value(wid-1);
 
-      for (unsigned idx = 0 ;  idx < (wid-1) ;  idx += 1) {
-	    vvp_bit4_t lv = lval.value(idx);
-	    vvp_bit4_t rv = rval.value(idx);
-
-	    if (lv==BIT4_0 && rv==BIT4_1) {
-		  eeq = eq = BIT4_0;
-		  lt = BIT4_1;
-	    } else if (lv==BIT4_1 && rv==BIT4_0) {
-		  eeq = eq = BIT4_0;
-		  lt = BIT4_0;
-	    }
-      }
-
-	/* Correct the lt bit to account for the sign of the parameters. */
-
-	// If the first is negative and the last positive, then
-	//    a < b for certain.
+	// If the lval is <0 and the rval is >=0, then we know the result.
       if ((sig1 == BIT4_1) && (sig2 == BIT4_0)) {
-	    lt = BIT4_1;
-	    eeq = eq = BIT4_0;
+	    thr->flags[4] = BIT4_0; // eq;
+	    thr->flags[5] = BIT4_1; // lt;
+	    thr->flags[6] = BIT4_0; // eeq
+	    return;
       }
 
-	// If the first is positive and the last negative, then
-	//    a > b for certain.
+	// If the lval is >=0 and the rval is <0, then we know the result.
       if ((sig1 == BIT4_0) && (sig2 == BIT4_1)) {
-	    lt = BIT4_0;
-	    eeq = eq = BIT4_0;
+	    thr->flags[4] = BIT4_0; // eq;
+	    thr->flags[5] = BIT4_0; // lt;
+	    thr->flags[6] = BIT4_0; // eeq
+	    return;
       }
 
-      thr->flags[4] = eq;
-      thr->flags[5] = lt;
-      thr->flags[6] = eeq;
+	// The values have the same sign, so we have to look at the
+	// actual value. Scan from the MSB down. As soon as we find a
+	// bit that differs, we know the result.
+
+      for (unsigned idx = 1 ;  idx < wid ;  idx += 1) {
+	    vvp_bit4_t lv = lval.value(wid-1-idx);
+	    vvp_bit4_t rv = rval.value(wid-1-idx);
+
+	    if (lv == rv)
+		  continue;
+
+	    thr->flags[4] = BIT4_0; // eq
+	    thr->flags[6] = BIT4_0; // eeq
+
+	    if (lv==BIT4_0) {
+		  thr->flags[5] = BIT4_1; // lt
+	    } else {
+		  thr->flags[5] = BIT4_0; // lt
+	    }
+	    return;
+      }
+
+	// If we survive the loop above, then the values must be equal.
+      thr->flags[4] = BIT4_1;
+      thr->flags[5] = BIT4_0;
+      thr->flags[6] = BIT4_1;
 }
 
 /*

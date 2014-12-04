@@ -413,7 +413,7 @@ inline vvp_bit4_t vvp_vector4_t::value(unsigned idx) const
       if (idx >= size_)
 	    return BIT4_X;
 
-      unsigned long off;
+      unsigned off;
 
       unsigned long abits, bbits;
       if (size_ > BITS_PER_WORD) {
@@ -430,15 +430,8 @@ inline vvp_bit4_t vvp_vector4_t::value(unsigned idx) const
       abits >>= off;
       bbits >>= off;
       int tmp = ((bbits&1) << 1) + (abits&1);
-      static const vvp_bit4_t bits_bit4_map[4] = {
-	    BIT4_0, // bbit==0, abit==0
-	    BIT4_1, // bbit==0, abit==1
-	    BIT4_Z, // bbit==1, abit==0
-	    BIT4_X  // bbit==1, abit==1
-      };
-
-	// This map converts the bit-pattern to a vvp_bit4_t value.
-      return bits_bit4_map[tmp];
+	// This cast works since b==1,a==1 is X and b==1,a==0 is Z.
+      return (vvp_bit4_t)tmp;
 }
 
 inline vvp_vector4_t vvp_vector4_t::subvalue(unsigned adr, unsigned wid) const
