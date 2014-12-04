@@ -3136,31 +3136,47 @@ bool of_IX_GETV_S(vthread_t thr, vvp_code_t cp)
 
 static uint64_t vec4_to_index(vthread_t thr, bool signed_flag)
 {
+	// Get all the information we need about the vec4 vector, then
+	// pop it away. We only need the bool bits and the length.
       const vvp_vector4_t&val = thr->peek_vec4();
-      uint64_t v = 0;
-      bool unknown_flag = false;
-
-      vvp_bit4_t vv = BIT4_0;
-      for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
-	    vv = val.value(idx);
-	    if (bit4_is_xz(vv)) {
-		  v = 0UL;
-		  unknown_flag = true;
-		  break;
-	    }
-
-	    v |= (uint64_t) vv << idx;
-      }
-
-      if (signed_flag && !unknown_flag) {
-	    uint64_t pad = vv;
-	    for (unsigned idx = val.size() ; idx < 8*sizeof(v) ; idx += 1) {
-		  v |= pad << idx;
-	    }
-      }
-
-      thr->flags[4] = unknown_flag? BIT4_1 : BIT4_0;
+      unsigned val_size = val.size();
+      unsigned long*bits = val.subarray(0, val_size, false);
       thr->pop_vec4(1);
+
+	// If there are X/Z bits, then the subarray will give us a nil
+	// pointer. Set a flag to indicate the error, and give up.
+      if (bits == 0) {
+	    thr->flags[4] = BIT4_1;
+	    return 0;
+      }
+
+      uint64_t v = 0;
+      thr->flags[4] = BIT4_0;
+
+      assert(sizeof(bits[0]) <= sizeof(v));
+	//assert(val_size <= 8*sizeof(v));
+
+      v = 0;
+      for (unsigned idx = 0 ; idx < val_size ; idx += 8*sizeof(bits[0])) {
+	    uint64_t tmp = bits[idx/8/sizeof(bits[0])];
+	    v |= tmp << idx;
+      }
+
+	// Set the high bits that are not necessarily filled in by the
+	// subarray function.
+      if (val_size < 8*sizeof(v)) {
+	    if (signed_flag && (v & (1UL<<(val_size-1)))) {
+		    // Propagate the sign bit...
+		  v |= -1UL << val_size;
+
+	    } else {
+		    // Fill with zeros.
+		  v &= ~(-1UL << val_size);
+	    }
+
+      }
+
+      delete[]bits;
       return v;
 }
 
