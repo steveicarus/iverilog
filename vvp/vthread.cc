@@ -842,58 +842,18 @@ static void get_immediate_rval(vvp_code_t cp, vvp_vector4_t&val)
 
       for (unsigned idx = 0 ; idx < wid && (vala|valb) ; idx += 1) {
 	    uint32_t ba = 0;
-	      // Convert the vala/valb bits to a ba number that can be
-	      // used to select what goes into the value.
+	      // Convert the vala/valb bits to a ba number that
+	      // matches the encoding of the vvp_bit4_t enumeration.
 	    ba = (valb & 1) << 1;
 	    ba |= vala & 1;
 
-	    switch (ba) {
-		case 1:
-		  val.set_bit(idx, BIT4_1);
-		  break;
-		case 2:
-		  val.set_bit(idx, BIT4_Z);
-		  break;
-		case 3:
-		  val.set_bit(idx, BIT4_X);
-		  break;
-		default:
-		  break;
-	    }
+	      // Note that the val is already pre-filled with BIT4_0
+	      // bits, os we only need to set non-zero bit values.
+	    if (ba) val.set_bit(idx, (vvp_bit4_t)ba);
 
 	    vala >>= 1;
 	    valb >>= 1;
       }
-}
-
-static bool do_ADD(vvp_vector4_t&l, const vvp_vector4_t&r)
-{
-      unsigned wid = l.size();
-      assert(wid == r.size());
-
-      unsigned long*lva = l.subarray(0,wid);
-      unsigned long*lvb = r.subarray(0,wid);
-      if (lva==0 || lvb==0)
-	    goto x_out;
-
-      unsigned long carry;
-      carry = 0;
-      for (unsigned idx = 0 ; (idx*CPU_WORD_BITS) < wid ; idx += 1)
-	    lva[idx] = add_with_carry(lva[idx], lvb[idx], carry);
-
-      l.setarray(0,wid,lva);
-
-      delete[]lva;
-      delete[]lvb;
-      return true;
-
- x_out:
-      delete[]lva;
-      delete[]lvb;
-
-      vvp_vector4_t tmp (wid, BIT4_X);
-      l = tmp;
-      return true;
 }
 
 /*
@@ -914,7 +874,9 @@ bool of_ADD(vthread_t thr, vvp_code_t)
 	// replaces a pop and a pull.
       vvp_vector4_t&l = thr->peek_vec4();
 
-      return do_ADD(l, r);
+      l.add(r);
+
+      return true;
 }
 
 /*
@@ -935,7 +897,9 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t r (wid, BIT4_0);
       get_immediate_rval (cp, r);
 
-      return do_ADD(l, r);
+      l.add(r);
+
+      return true;
 }
 
 bool of_ADD_WR(vthread_t thr, vvp_code_t)
@@ -1184,7 +1148,7 @@ bool of_ASSIGN_VEC4_OFF_E(vthread_t thr, vvp_code_t cp)
 		  return true;
 
 	    int use_off = -off;
-	    assert(wid > use_off);
+	    assert((int)wid > use_off);
 	    unsigned use_wid = wid - use_off;
 	    val = val.subvalue(use_off, use_wid);
 	    off = 0;

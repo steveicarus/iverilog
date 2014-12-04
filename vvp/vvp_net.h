@@ -130,6 +130,9 @@ struct automatic_hooks_s {
  * values. The enumeration has fixed numeric values that can be
  * expressed in 2 real bits, so that some of the internal classes can
  * pack them tightly.
+ *
+ * WARNING: Many things rely on this encoding for the BIT4_* enumeration
+ * values, so accept that these values are cast in stone.
  */
 enum vvp_bit4_t {
       BIT4_0 = 0,
@@ -267,6 +270,9 @@ class vvp_vector4_t {
 
 	// Move bits within this vector.
       void mov(unsigned dst, unsigned src, unsigned cnt);
+
+	// Add that to this in the Verilog way.
+      void add(const vvp_vector4_t&that);
 
 	// Test that the vectors are exactly equal
       bool eeq(const vvp_vector4_t&that) const;

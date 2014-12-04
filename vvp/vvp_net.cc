@@ -510,6 +510,25 @@ int edge(vvp_bit4_t from, vvp_bit4_t to)
       return 0;
 }
 
+/*
+ * Some of the instructions do wide addition to arrays of long. They
+ * use this add_with_carry function to help.
+ */
+static inline unsigned long add_with_carry(unsigned long a, unsigned long b,
+					   unsigned long&carry)
+{
+      unsigned long tmp = b + carry;
+      unsigned long sum = a + tmp;
+      carry = 0;
+      if (tmp < b)
+	    carry = 1;
+      if (sum < tmp)
+	    carry = 1;
+      if (sum < a)
+	    carry = 1;
+      return sum;
+}
+
 void vvp_send_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&val)
 {
       while (vvp_net_t*cur = ptr.ptr()) {
@@ -1364,6 +1383,72 @@ bool vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
       }
 
       return diff_flag;
+}
+
+/*
+ * Add that vector to this vector. Do it in the Verilog way, which
+ * means if we detect any X or Z bits, change the entire results to
+ * all X.
+ *
+ * Assume both vectors are the same size.
+ */
+void vvp_vector4_t::add(const vvp_vector4_t&that)
+{
+      assert(size_ == that.size_);
+
+      if (size_ < BITS_PER_WORD) {
+	    unsigned long mask = ~(-1UL << size_);
+	    if ((bbits_val_|that.bbits_val_) & mask) {
+		  abits_val_ |= mask;
+		  bbits_val_ |= mask;
+		  return;
+	    }
+
+	    abits_val_ += that.abits_val_;
+	    abits_val_ &= mask;
+	    return;
+      }
+
+      if (size_ == BITS_PER_WORD) {
+	    if (bbits_val_ | that.bbits_val_) {
+		  abits_val_ = WORD_X_ABITS;
+		  bbits_val_ = WORD_X_BBITS;
+	    } else {
+		  abits_val_ += that.abits_val_;
+	    }
+	    return;
+      }
+
+      int cnt = size_ / BITS_PER_WORD;
+      unsigned long carry = 0;
+      for (int idx = 0 ; idx < cnt ; idx += 1) {
+	    if (bbits_ptr_[idx] | that.bbits_ptr_[idx])
+		  goto x_out;
+
+	    abits_ptr_[idx] = add_with_carry(abits_ptr_[idx], that.abits_ptr_[idx], carry);
+      }
+
+      if (unsigned tail = size_ % BITS_PER_WORD) {
+	    unsigned long mask = ~( -1UL << tail );
+	    if ((bbits_ptr_[cnt] | that.bbits_ptr_[cnt])&mask)
+		  goto x_out;
+
+	    abits_ptr_[cnt] = add_with_carry(abits_ptr_[cnt], that.abits_ptr_[cnt], carry);
+	    abits_ptr_[cnt] &= mask;
+      }
+
+      return;
+
+ x_out:
+      for (int idx = 0 ; idx < cnt ; idx += 1) {
+	    abits_ptr_[idx] = WORD_X_ABITS;
+	    bbits_ptr_[idx] = WORD_X_BBITS;
+      }
+      if (unsigned tail = size_%BITS_PER_WORD) {
+	    unsigned long mask = ~( -1UL << tail );
+	    abits_ptr_[cnt] = WORD_X_ABITS&mask;
+	    bbits_ptr_[cnt] = WORD_X_BBITS&mask;
+      }
 }
 
 void vvp_vector4_t::mov(unsigned dst, unsigned src, unsigned cnt)
