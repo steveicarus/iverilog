@@ -296,6 +296,9 @@ class vvp_vector4_t {
 	// Add that to this in the Verilog way.
       void add(const vvp_vector4_t&that);
 
+	// Subtract that from this in the Verilog way.
+      void sub(const vvp_vector4_t&that);
+
 	// Multiply this by that in the Verilog way.
       void mul(const vvp_vector4_t&that);
 

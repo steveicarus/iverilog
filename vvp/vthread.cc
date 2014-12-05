@@ -5461,41 +5461,9 @@ bool of_STORE_VEC4A(vthread_t thr, vvp_code_t cp)
 bool of_SUB(vthread_t thr, vvp_code_t)
 {
       vvp_vector4_t r = thr->pop_vec4();
-      vvp_vector4_t l = thr->pop_vec4();
+      vvp_vector4_t&l = thr->peek_vec4();
 
-      unsigned wid = l.size();
-      assert(wid == r.size());
-
-      unsigned long*lva = l.subarray(0,wid);
-      unsigned long*lvb = r.subarray(0,wid);
-      if (lva == 0 || lvb == 0)
-	    goto x_out;
-
-
-      unsigned long carry;
-      carry = 1;
-      for (unsigned idx = 0 ;  (idx*CPU_WORD_BITS) < wid ;  idx += 1)
-	    lva[idx] = add_with_carry(lva[idx], ~lvb[idx], carry);
-
-
-	/* We know from the vector_to_array that the address is valid
-	   in the thr->bitr4 vector, so just do the set bit. */
-
-      l.setarray(0,wid,lva);
-      thr->push_vec4(l);
-
-      delete[]lva;
-      delete[]lvb;
-
-      return true;
-
- x_out:
-      delete[]lva;
-      delete[]lvb;
-
-      vvp_vector4_t tmp(wid, BIT4_X);
-      thr->push_vec4(tmp);
-
+      l.sub(r);
       return true;
 }
 
