@@ -210,6 +210,28 @@ inline void update_driver_counts(vvp_bit4_t bit, unsigned counts[3])
 }
 
 /*
+ * Some of the instructions do wide addition to arrays of long. They
+ * use this add_with_carry function to help.
+ */
+static inline unsigned long add_with_carry(unsigned long a, unsigned long b,
+					   unsigned long&carry)
+{
+      unsigned long tmp = b + carry;
+      unsigned long sum = a + tmp;
+      carry = 0;
+      if (tmp < b)
+	    carry = 1;
+      if (sum < tmp)
+	    carry = 1;
+      if (sum < a)
+	    carry = 1;
+      return sum;
+}
+
+extern unsigned long multiply_with_carry(unsigned long a, unsigned long b,
+					 unsigned long&carry);
+
+/*
  * This class represents scalar values collected into vectors. The
  * vector values can be accessed individually, or treated as a
  * unit. in any case, the elements of the vector are addressed from
@@ -273,6 +295,9 @@ class vvp_vector4_t {
 
 	// Add that to this in the Verilog way.
       void add(const vvp_vector4_t&that);
+
+	// Multiply this by that in the Verilog way.
+      void mul(const vvp_vector4_t&that);
 
 	// Test that the vectors are exactly equal
       bool eeq(const vvp_vector4_t&that) const;

@@ -390,66 +390,6 @@ template <class T> T coerce_to_width(const T&that, unsigned width)
 template vvp_vector4_t coerce_to_width(const vvp_vector4_t&that,
                                        unsigned width);
 
-/*
- * Some of the instructions do wide addition to arrays of long. They
- * use this add_with_carry function to help.
- */
-static inline unsigned long add_with_carry(unsigned long a, unsigned long b,
-					   unsigned long&carry)
-{
-      unsigned long tmp = b + carry;
-      unsigned long sum = a + tmp;
-      carry = 0;
-      if (tmp < b)
-	    carry = 1;
-      if (sum < tmp)
-	    carry = 1;
-      if (sum < a)
-	    carry = 1;
-      return sum;
-}
-
-static unsigned long multiply_with_carry(unsigned long a, unsigned long b,
-					 unsigned long&carry)
-{
-      const unsigned long mask = (1UL << (CPU_WORD_BITS/2)) - 1;
-      unsigned long a0 = a & mask;
-      unsigned long a1 = (a >> (CPU_WORD_BITS/2)) & mask;
-      unsigned long b0 = b & mask;
-      unsigned long b1 = (b >> (CPU_WORD_BITS/2)) & mask;
-
-      unsigned long tmp = a0 * b0;
-
-      unsigned long r00 = tmp & mask;
-      unsigned long c00 = (tmp >> (CPU_WORD_BITS/2)) & mask;
-
-      tmp = a0 * b1;
-
-      unsigned long r01 = tmp & mask;
-      unsigned long c01 = (tmp >> (CPU_WORD_BITS/2)) & mask;
-
-      tmp = a1 * b0;
-
-      unsigned long r10 = tmp & mask;
-      unsigned long c10 = (tmp >> (CPU_WORD_BITS/2)) & mask;
-
-      tmp = a1 * b1;
-
-      unsigned long r11 = tmp & mask;
-      unsigned long c11 = (tmp >> (CPU_WORD_BITS/2)) & mask;
-
-      unsigned long r1 = c00 + r01 + r10;
-      unsigned long r2 = (r1 >> (CPU_WORD_BITS/2)) & mask;
-      r1 &= mask;
-      r2 += c01 + c10 + r11;
-      unsigned long r3 = (r2 >> (CPU_WORD_BITS/2)) & mask;
-      r2 &= mask;
-      r3 += c11;
-      r3 &= mask;
-
-      carry = (r3 << (CPU_WORD_BITS/2)) + r2;
-      return (r1 << (CPU_WORD_BITS/2)) + r00;
-}
 
 static void multiply_array_imm(unsigned long*res, unsigned long*val,
 			       unsigned words, unsigned long imm)
@@ -4021,62 +3961,6 @@ bool of_MOV_WU(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-static bool do_MUL(vvp_vector4_t&vala, const vvp_vector4_t&valb)
-{
-      assert(vala.size() == valb.size());
-      unsigned wid = vala.size();
-
-      unsigned long*ap = vala.subarray(0, wid);
-      if (ap == 0) {
-	    vvp_vector4_t tmp(wid, BIT4_X);
-	    vala = tmp;
-	    return true;
-      }
-
-      unsigned long*bp = valb.subarray(0, wid);
-      if (bp == 0) {
-	    delete[]ap;
-	    vvp_vector4_t tmp(wid, BIT4_X);
-	    vala = tmp;
-	    return true;
-      }
-
-	// If the value fits in a single CPU word, then do it the easy way.
-      if (wid <= CPU_WORD_BITS) {
-	    ap[0] *= bp[0];
-	    vala.setarray(0, wid, ap);
-	    delete[]ap;
-	    delete[]bp;
-	    return true;
-      }
-
-      unsigned words = (wid+CPU_WORD_BITS-1) / CPU_WORD_BITS;
-      unsigned long*res = new unsigned long[words];
-      for (unsigned idx = 0 ; idx < words ; idx += 1)
-	    res[idx] = 0;
-
-      for (unsigned mul_a = 0 ; mul_a < words ; mul_a += 1) {
-	    for (unsigned mul_b = 0 ; mul_b < (words-mul_a) ; mul_b += 1) {
-		  unsigned long sum;
-		  unsigned long tmp = multiply_with_carry(ap[mul_a], bp[mul_b], sum);
-		  unsigned base = mul_a + mul_b;
-		  unsigned long carry = 0;
-		  res[base] = add_with_carry(res[base], tmp, carry);
-		  for (unsigned add_idx = base+1; add_idx < words; add_idx += 1) {
-			res[add_idx] = add_with_carry(res[add_idx], sum, carry);
-			sum = 0;
-		  }
-	    }
-      }
-
-      vala.setarray(0, wid, res);
-      delete[]ap;
-      delete[]bp;
-      delete[]res;
-
-      return true;
-}
-
 /*
  * %mul
  */
@@ -4088,7 +3972,8 @@ bool of_MUL(vthread_t thr, vvp_code_t)
 	// replaces a pop and a pull.
       vvp_vector4_t&l = thr->peek_vec4();
 
-      return do_MUL(l, r);
+      l.mul(r);
+      return true;
 }
 
 /*
@@ -4109,7 +3994,8 @@ bool of_MULI(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t r (wid, BIT4_0);
       get_immediate_rval (cp, r);
 
-      return do_MUL(l, r);
+      l.mul(r);
+      return true;
 }
 
 bool of_MUL_WR(vthread_t thr, vvp_code_t)

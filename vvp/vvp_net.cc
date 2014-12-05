@@ -41,6 +41,11 @@
 # include  "ivl_alloc.h"
 #endif
 
+/* This is the size of an unsigned long in bits. This is just a
+   convenience macro. */
+# define CPU_WORD_BITS (8*sizeof(unsigned long))
+# define TOP_BIT (1UL << (CPU_WORD_BITS-1))
+
 permaheap vvp_net_fun_t::heap_;
 permaheap vvp_net_fil_t::heap_;
 
@@ -510,24 +515,48 @@ int edge(vvp_bit4_t from, vvp_bit4_t to)
       return 0;
 }
 
-/*
- * Some of the instructions do wide addition to arrays of long. They
- * use this add_with_carry function to help.
- */
-static inline unsigned long add_with_carry(unsigned long a, unsigned long b,
-					   unsigned long&carry)
+unsigned long multiply_with_carry(unsigned long a, unsigned long b,
+				  unsigned long&carry)
 {
-      unsigned long tmp = b + carry;
-      unsigned long sum = a + tmp;
-      carry = 0;
-      if (tmp < b)
-	    carry = 1;
-      if (sum < tmp)
-	    carry = 1;
-      if (sum < a)
-	    carry = 1;
-      return sum;
+      const unsigned long mask = (1UL << (CPU_WORD_BITS/2)) - 1;
+      unsigned long a0 = a & mask;
+      unsigned long a1 = (a >> (CPU_WORD_BITS/2)) & mask;
+      unsigned long b0 = b & mask;
+      unsigned long b1 = (b >> (CPU_WORD_BITS/2)) & mask;
+
+      unsigned long tmp = a0 * b0;
+
+      unsigned long r00 = tmp & mask;
+      unsigned long c00 = (tmp >> (CPU_WORD_BITS/2)) & mask;
+
+      tmp = a0 * b1;
+
+      unsigned long r01 = tmp & mask;
+      unsigned long c01 = (tmp >> (CPU_WORD_BITS/2)) & mask;
+
+      tmp = a1 * b0;
+
+      unsigned long r10 = tmp & mask;
+      unsigned long c10 = (tmp >> (CPU_WORD_BITS/2)) & mask;
+
+      tmp = a1 * b1;
+
+      unsigned long r11 = tmp & mask;
+      unsigned long c11 = (tmp >> (CPU_WORD_BITS/2)) & mask;
+
+      unsigned long r1 = c00 + r01 + r10;
+      unsigned long r2 = (r1 >> (CPU_WORD_BITS/2)) & mask;
+      r1 &= mask;
+      r2 += c01 + c10 + r11;
+      unsigned long r3 = (r2 >> (CPU_WORD_BITS/2)) & mask;
+      r2 &= mask;
+      r3 += c11;
+      r3 &= mask;
+
+      carry = (r3 << (CPU_WORD_BITS/2)) + r2;
+      return (r1 << (CPU_WORD_BITS/2)) + r00;
 }
+
 
 void vvp_send_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&val)
 {
@@ -1522,6 +1551,104 @@ void vvp_vector4_t::mov(unsigned dst, unsigned src, unsigned cnt)
 		  }
 	    }
       }
+}
+
+void vvp_vector4_t::mul(const vvp_vector4_t&that)
+{
+      assert(size_ == that.size_);
+
+      if (size_ < BITS_PER_WORD) {
+	    unsigned long mask = ~(-1UL << size_);
+	    if ((bbits_val_|that.bbits_val_) & mask) {
+		  abits_val_ |= mask;
+		  bbits_val_ |= mask;
+		  return;
+	    }
+
+	    abits_val_ *= that.abits_val_;
+	    abits_val_ &= mask;
+	    return;
+      }
+
+      if (size_ == BITS_PER_WORD) {
+	    if (bbits_val_ || that.bbits_val_) {
+		  abits_val_ = WORD_X_ABITS;
+		  bbits_val_ = WORD_X_BBITS;
+	    } else {
+		  abits_val_ *= that.abits_val_;
+	    }
+	    return;
+      }
+
+      const int cnt = (size_+BITS_PER_WORD-1) / BITS_PER_WORD;
+
+      unsigned long mask;
+      if (unsigned tail = size_%BITS_PER_WORD) {
+	    mask = ~( -1UL << tail );
+      } else {
+	    mask = ~0UL;
+      }
+
+	// Check for any XZ values ahead of time in a first pass. If
+	// we find any, then force the entire result to be X and be
+	// done.
+      for (int idx = 0 ; idx < cnt ; idx += 1) {
+	    unsigned long lval = bbits_ptr_[idx];
+	    unsigned long rval = that.bbits_ptr_[idx];
+	    if (idx == (cnt-1)) {
+		  lval &= mask;
+		  rval &= mask;
+	    }
+	    if (lval || rval) {
+		  for (int xdx = 0 ; xdx < cnt-1 ; xdx += 1) {
+			abits_ptr_[xdx] = WORD_X_ABITS;
+			bbits_ptr_[xdx] = WORD_X_BBITS;
+		  }
+		  abits_ptr_[cnt-1] = WORD_X_ABITS & mask;
+		  bbits_ptr_[cnt-1] = WORD_X_BBITS & mask;
+		  return;
+	    }
+      }
+
+	// Calculate the result into a res array. We need to keep is
+	// separate from the "this" array because we are making
+	// multiple passes.
+      unsigned long*res = new unsigned long[cnt];
+      for (int idx = 0 ; idx < cnt ; idx += 1)
+	    res[idx] = 0;
+
+      for (int mul_a = 0 ; mul_a < cnt ; mul_a += 1) {
+	    unsigned long lval = abits_ptr_[mul_a];
+	    if (mul_a == (cnt-1))
+		  lval &= mask;
+
+	    for (int mul_b = 0 ; mul_b < (cnt-mul_a) ; mul_b += 1) {
+		  unsigned long rval = that.abits_ptr_[mul_b];
+		  if (mul_b == (cnt-1))
+			rval &= mask;
+
+		  unsigned long sum;
+		  unsigned long tmp = multiply_with_carry(lval, rval, sum);
+		  int base = mul_a + mul_b;
+		  unsigned long carry = 0;
+		  res[base] = add_with_carry(res[base], tmp, carry);
+		  for (int add_idx = base+1 ; add_idx < cnt ; add_idx += 1) {
+			res[add_idx] = add_with_carry(res[add_idx], sum, carry);
+			sum = 0;
+		  }
+	    }
+      }
+
+	// Replace the "this" value with the calculated result. We
+	// know a-priori that the bbits are zero and unchanged.
+      res[cnt-1] &= mask;
+      for (int idx = 0 ; idx < cnt ; idx += 1)
+	    abits_ptr_[idx] = res[idx];
+
+      delete[]res;
+      return;
+
+
 }
 
 bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
