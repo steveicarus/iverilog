@@ -5464,6 +5464,30 @@ bool of_SUB(vthread_t thr, vvp_code_t)
       return true;
 }
 
+/*
+ * %subi <vala>, <valb>, <wid>
+ *
+ * Pop1 operand, get the other operand from the arguments, and push
+ * the result.
+ */
+bool of_SUBI(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->number;
+
+      vvp_vector4_t&l = thr->peek_vec4();
+
+	// I expect that most of the bits of an immediate value are
+	// going to be zero, so start the result vector with all zero
+	// bits. Then we only need to replace the bits that are different.
+      vvp_vector4_t r (wid, BIT4_0);
+      get_immediate_rval (cp, r);
+
+      l.sub(r);
+
+      return true;
+
+}
+
 bool of_SUB_WR(vthread_t thr, vvp_code_t)
 {
       double r = thr->pop_real();

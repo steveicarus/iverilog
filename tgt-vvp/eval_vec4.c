@@ -138,6 +138,9 @@ static void draw_binary_vec4_arith(ivl_expr_t expr)
 		case '+':
 		  draw_immediate_vec4(re, "%addi");
 		  return;
+		case '-':
+		  draw_immediate_vec4(re, "%subi");
+		  return;
 		case '*':
 		  draw_immediate_vec4(re, "%muli");
 		  return;
