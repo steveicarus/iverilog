@@ -738,11 +738,10 @@ bool of_ALLOC(vthread_t thr, vvp_code_t cp)
 
 bool of_AND(vthread_t thr, vvp_code_t)
 {
-      vvp_vector4_t vala = thr->pop_vec4();
       vvp_vector4_t valb = thr->pop_vec4();
+      vvp_vector4_t&vala = thr->peek_vec4();
       assert(vala.size() == valb.size());
       vala &= valb;
-      thr->push_vec4(vala);
       return true;
 }
 
@@ -4010,7 +4009,7 @@ bool of_MUL_WR(vthread_t thr, vvp_code_t)
 bool of_NAND(vthread_t thr, vvp_code_t)
 {
       vvp_vector4_t valr = thr->pop_vec4();
-      vvp_vector4_t vall = thr->pop_vec4();
+      vvp_vector4_t&vall = thr->peek_vec4();
       assert(vall.size() == valr.size());
       unsigned wid = vall.size();
 
@@ -4020,7 +4019,6 @@ bool of_NAND(vthread_t thr, vvp_code_t)
 	    vall.set_bit(idx, ~(lb&rb));
       }
 
-      thr->push_vec4(vall);
       return true;
 }
 
@@ -4259,7 +4257,7 @@ bool of_OR(vthread_t thr, vvp_code_t)
 bool of_NOR(vthread_t thr, vvp_code_t)
 {
       vvp_vector4_t valr = thr->pop_vec4();
-      vvp_vector4_t vall = thr->pop_vec4();
+      vvp_vector4_t&vall = thr->peek_vec4();
       assert(vall.size() == valr.size());
       unsigned wid = vall.size();
 
@@ -4269,7 +4267,6 @@ bool of_NOR(vthread_t thr, vvp_code_t)
 	    vall.set_bit(idx, ~(lb|rb));
       }
 
-      thr->push_vec4(vall);
       return true;
 }
 
@@ -5681,7 +5678,7 @@ bool of_WAIT_FORK(vthread_t thr, vvp_code_t)
 bool of_XNOR(vthread_t thr, vvp_code_t)
 {
       vvp_vector4_t valr = thr->pop_vec4();
-      vvp_vector4_t vall = thr->pop_vec4();
+      vvp_vector4_t&vall = thr->peek_vec4();
       assert(vall.size() == valr.size());
       unsigned wid = vall.size();
 
@@ -5692,7 +5689,6 @@ bool of_XNOR(vthread_t thr, vvp_code_t)
 	    vall.set_bit(idx, ~(lb ^ rb));
       }
 
-      thr->push_vec4(vall);
       return true;
 }
 
@@ -5702,7 +5698,7 @@ bool of_XNOR(vthread_t thr, vvp_code_t)
 bool of_XOR(vthread_t thr, vvp_code_t)
 {
       vvp_vector4_t valr = thr->pop_vec4();
-      vvp_vector4_t vall = thr->pop_vec4();
+      vvp_vector4_t&vall = thr->peek_vec4();
       assert(vall.size() == valr.size());
       unsigned wid = vall.size();
 
@@ -5713,7 +5709,6 @@ bool of_XOR(vthread_t thr, vvp_code_t)
 	    vall.set_bit(idx, lb ^ rb);
       }
 
-      thr->push_vec4(vall);
       return true;
 }
 
