@@ -1392,11 +1392,12 @@ NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
       NetExpr* base = 0;
       for (size_t idx = 0 ; idx < net->packed_dimensions() ; idx += 1, ++pcur, ++ecur) {
 	    unsigned cur_slice_width = net->slice_width(idx+1);
+	    long lsb = pcur->get_lsb();
+	    long msb = pcur->get_msb();
 	      // This normalizes the expression of this index based on
 	      // the msb/lsb values.
-	    NetExpr*tmp = normalize_variable_base(*ecur, pcur->get_msb(),
-						  pcur->get_lsb(),
-						  cur_slice_width, true);
+	    NetExpr*tmp = normalize_variable_base(*ecur, msb, lsb,
+						  cur_slice_width, msb > lsb);
 
 	      // If this slice has width, then scale it.
 	    if (net->slice_width(idx+1) != 1) {
