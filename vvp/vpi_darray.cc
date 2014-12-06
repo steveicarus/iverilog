@@ -162,7 +162,8 @@ void __vpiDarrayVar::put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, 
       case vpiIntVal:
       {
           vvp_vector4_t vec;
-          vec.setarray(0, 8 * sizeof(vp->value.integer), (unsigned long*)(&vp->value.integer));
+	  unsigned long val = vp->value.integer;
+          vec.setarray(0, 8 * sizeof(vp->value.integer), &val);
           aobj->set_word(index, vec);
       }
       break;

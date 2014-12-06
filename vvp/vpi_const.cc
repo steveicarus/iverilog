@@ -538,7 +538,7 @@ __vpiDecConst::__vpiDecConst(int val)
 }
 
 __vpiDecConst::__vpiDecConst(const __vpiDecConst&that)
-: value(that.value)
+: __vpiHandle(), value(that.value)
 {
 }
 
