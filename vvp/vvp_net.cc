@@ -1993,8 +1993,8 @@ ostream& operator<< (ostream&out, const vvp_vector4_t&that)
 template <class INT>bool vector4_to_value(const vvp_vector4_t&vec, INT&val,
 					  bool is_signed, bool is_arithmetic)
 {
-      long res = 0;
-      INT  msk = 1;
+      INT res = 0;
+      INT msk = 1;
       bool rc_flag = true;
 
       unsigned size = vec.size();
@@ -2013,12 +2013,12 @@ template <class INT>bool vector4_to_value(const vvp_vector4_t&vec, INT&val,
 			rc_flag = false;
 	    }
 
-	    msk <<= 1L;
+	    msk <<= 1;
       }
 
       if (is_signed && vec.value(vec.size()-1) == BIT4_1) {
 	    if (vec.size() < 8*sizeof(val))
-		  res |= (INT)(-1L) << vec.size();
+		  res |= (~static_cast<INT>(0)) << vec.size();
       }
 
       val = res;

@@ -58,7 +58,8 @@ static int eval_darray_new(ivl_expr_t ex)
 	    int wid = msb>=lsb? msb - lsb : lsb - msb;
 	    wid += 1;
 
-	    fprintf(vvp_out, "    %%new/darray %u, \"sb%d\";\n", size_reg, wid);
+	    fprintf(vvp_out, "    %%new/darray %u, \"%sb%d\";\n", size_reg,
+	                     ivl_type_signed(element_type) ? "s" : "", wid);
 	    break;
 
 	  default:

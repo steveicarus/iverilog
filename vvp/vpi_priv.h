@@ -537,6 +537,7 @@ extern vpiHandle vpip_make_string_var(const char*name, vvp_net_t*net);
 
 struct __vpiArrayBase {
       __vpiArrayBase() : vals_words(NULL) {}
+      virtual ~__vpiArrayBase() {}
 
       virtual unsigned get_size(void) const = 0;
       virtual vpiHandle get_left_range() = 0;
