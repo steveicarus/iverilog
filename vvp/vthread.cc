@@ -5785,7 +5785,6 @@ bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
       child->wt_context = child_context;
       child->rd_context = child_context;
 
-      child->parent = thr;
       child->is_scheduled = 1;
       vthread_run(child);
       running_thread = thr;
@@ -5793,6 +5792,7 @@ bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
       if (child->i_have_ended)
             return true;
 
+      child->parent = thr;
       thr->children.insert(child);
       thr->i_am_joining = 1;
       return false;
