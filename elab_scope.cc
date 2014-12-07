@@ -201,16 +201,15 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       verinum one_value ((uint64_t)1, enum_width);
       one_value.has_sign(enum_type->signed_flag);
 	// Find the maximum allowed enumeration value.
-      verinum min_value (0);
       verinum max_value (0);
       if (enum_type->signed_flag) {
-	    min_value = -pow(verinum(2), verinum(enum_width-1));
 	    max_value = pow(verinum(2), verinum(enum_width-1)) - one_value;
       } else {
 	    max_value = pow(verinum(2), verinum(enum_width)) - one_value;
       }
-      min_value.has_sign(true);
       max_value.has_sign(enum_type->signed_flag);
+	// Variable to indicate when a defined value wraps.
+      bool implicit_wrapped = false;
 	// Process the enumeration definition.
       for (list<named_pexpr_t>::const_iterator cur = enum_type->names->begin()
 		 ; cur != enum_type->names->end() ;  ++ cur, name_idx += 1) {
@@ -229,6 +228,8 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 			continue;
 		  }
 		  cur_value = val_const->value();
+		    // Clear the implicit wrapped flag if a parameter is given.
+		  implicit_wrapped = false;
 
 		    // A 2-state value can not have a constant with X/Z bits.
 		  if (enum_type->base_type==IVL_VT_BOOL &&
@@ -335,24 +336,8 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		  continue;
 	    }
 
-	      // Cast any undefined bits to zero so the comparisons below
-	      // return just true (1) or false (0).
-	    verinum two_state_value = cur_value;
-	    two_state_value.cast_to_int2();
-
-	      // The enumeration value must fit into the enumeration bits.
-	    if (!cur_value.is_defined()) {
-		  if (cur_value.len() > (unsigned long)use_enum->packed_width()) {
-			cerr << use_enum->get_fileline()
-			     << ": error: Enumeration name " << cur->name
-			     << " value=" << cur_value
-			     << " is too wide for enumeration base type." << endl;
-			des->errors += 1;
-		  }
-
-	    } else if ((two_state_value > max_value) ||
-                (cur_value.has_sign() && (two_state_value < min_value))) {
-
+	      // Check to see if an implicitly wrapped value is used.
+	    if (implicit_wrapped) {
 		  cerr << use_enum->get_fileline()
 		       << ": error: Enumeration name " << cur->name
 		       << " has an inferred value that overflowed." << endl;
@@ -385,6 +370,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	      // In case the next name has an implicit value,
 	      // increment the current value by one.
 	    if (cur_value.is_defined()) {
+		  if (cur_value == max_value) implicit_wrapped = true;
 		  cur_value = cur_value + one_value;
 	    }
       }

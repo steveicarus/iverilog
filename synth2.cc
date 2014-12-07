@@ -531,18 +531,24 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    statement_map[sel_idx] = items_[item].statement;
       }
 
-	// The mux_size is the number of inputs that are selected.
-      unsigned mux_size = max_guard_value + 1;
-      unsigned sel_need = ceil(log2(mux_size));
+	// The minimum selector width is the number of inputs that
+	// are selected, rounded up to the nearest power of 2.
+      unsigned sel_need = ceil(log2(max_guard_value + 1));
 
 	// If the sel_width can select more than just the explicit
 	// guard values, and there is a default statement, then adjust
-	// the mux size to allow for the implicit selections.
-      if (statement_default && (sel_width > sel_need)) {
+	// the sel_need to allow for the implicit selections.
+      if (statement_default && (sel_width > sel_need))
 	    sel_need += 1;
-	    ivl_assert(*this, sel_need < sizeof mux_size);
-	    mux_size = 1<<sel_need;
+
+	// The mux size is always an exact power of 2.
+      if (sel_need >= 8*sizeof(unsigned)) {
+	   cerr << get_fileline() << ": sorry: mux select width of "
+		<< sel_need << " bits is too large for synthesis." << endl;
+	   des->errors += 1;
+	   return false;
       }
+      unsigned mux_size = 1U << sel_need;
 
       if (debug_synth2) {
 	    cerr << get_fileline() << ": NetCase::synth_async: "
