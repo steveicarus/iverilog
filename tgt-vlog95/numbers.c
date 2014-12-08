@@ -78,6 +78,7 @@ static void emit_bits(const char *bits, unsigned nbits, unsigned is_signed)
 {
       unsigned has_undef = 0;
 
+      assert(nbits > 0);
 	/* Check for an undefined bit. */
       for (int idx = (int)nbits-1; idx >= 0; idx -= 1) {
 	    if ((bits[idx] != '0') && (bits[idx] != '1')) {
@@ -91,8 +92,14 @@ static void emit_bits(const char *bits, unsigned nbits, unsigned is_signed)
 
 	/* Emit as a binary constant. */
       if (has_undef || (nbits < 2)) {
+	    int start = nbits - 1;
+	    char sbit = bits[start];
+	      /* Trim extra leading bits. */
+	    if (! is_signed && (sbit == '1')) sbit = ' ';
+	    while (start && (sbit == bits[start-1])) start -= 1;
+	      /* Print the trimmed value. */
 	    fprintf(vlog_out, "b");
-	    for (int idx = (int)nbits-1; idx >= 0; idx -= 1) {
+	    for (int idx = start; idx >= 0; idx -= 1) {
 		  fprintf(vlog_out, "%c", bits[idx]);
 	    }
 	/* Emit as a hex constant. */
@@ -152,9 +159,9 @@ void emit_number(const char *bits, unsigned nbits, unsigned is_signed,
 		  vlog_errors += 1;
 		  return;
 	    } else if (rtype == -2) {
-		  fprintf(vlog_out, "'bz");
+		  fprintf(vlog_out, "%u'bz", nbits);
 	    } else if (rtype == -3) {
-		  fprintf(vlog_out, "'bx");
+		  fprintf(vlog_out, "%u'bx", nbits);
 	    } else  {
 		  fprintf(vlog_out, "%"PRId32, value);
 	    }
