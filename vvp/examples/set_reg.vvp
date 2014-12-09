@@ -1,35 +1,72 @@
+:ivl_version "0.10.0" "vec4-stack";
 :vpi_module "system";
 
+; Copyright (c) 2001-2014  Stephen Williams (steve@icarus.com)
+;
+;    This program is free software; you can redistribute it and/or modify
+;    it under the terms of the GNU General Public License as published by
+;    the Free Software Foundation; either version 2 of the License, or
+;    (at your option) any later version.
+;
+;    This program is distributed in the hope that it will be useful,
+;    but WITHOUT ANY WARRANTY; without even the implied warranty of
+;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;    GNU General Public License for more details.
+;
+;    You should have received a copy of the GNU General Public License along
+;    with this program; if not, write to the Free Software Foundation, Inc.,
+;    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+
+; This example is similar to the code that the following Verilog program
+; would generate:
+;
+;    module main;
+;       reg [7:0] test;
+;
+;       initial begin
+;          test = 8'h00;
+;          $display("test = %b", test);
+;          test = 8'hff;
+;          $display("test = %b", test);
+;          test = 8'hzz;
+;          $display("test = %b", test);
+;          test = 8'hxx;
+;          $display("test = %b", test);
+;       end
+;    endmodule
 ;
 ; This example demonstrates a simple blocking assignment to a
 ; reg vector within a module.
-;
 
 
-main    .scope module, "main" "main";
+main    .scope module, "main" "main" 0 0;
 
 ; This declares a "reg" data type named "test" in the current scope.
 ; The bit range is given for the purposes of VPI access. The range
 ; corresponds to the declaration "reg [7:0] test", so leads to an 8
 ; bit wide vector.
+
 test	.var	"test", 7 0;
 
-; The %set/v opcode writes a value to the target .var vector. The
-; first operand is the label of the .var object. The second and
-; third operands are the base and width of the bit set that is to
-; be made into the vector to write.
+; Push various 8 bit values to the stack, save them to the variable and
+; then print the value of the variable.
 
-T0	%set/v	test, 0, 8 ;
-	%vpi_call 0 0 "$display", "test = %b", test;
+T0	%pushi/vec4 0, 0, 8;  Push 8 bits of 0
+	%store/vec4 test, 0, 8;
+	%vpi_call 0 0 "$display", "test = %b", test {0 0 0};
 
-	%set/v	test, 1, 8 ;
-	%vpi_call 0 0 "$display", "test = %b", test;
+	%pushi/vec4 255, 0, 8;  Push 8 bits of 1
+	%store/vec4 test, 0, 8;
+	%vpi_call 0 0 "$display", "test = %b", test {0 0 0};
 
-	%set/v	test, 2, 8 ;
-	%vpi_call 0 0 "$display", "test = %b", test;
+	%pushi/vec4 0, 255, 8;  Push 8 bits of z
+	%store/vec4 test, 0, 8;
+	%vpi_call 0 0 "$display", "test = %b", test {0 0 0};
 
-	%set/v	test, 3, 8 ;
-	%vpi_call 0 0 "$display", "test = %b", test;
+	%pushi/vec4 255, 255, 8;  Push 8 bits of x
+	%store/vec4 test, 0, 8;
+	%vpi_call 0 0 "$display", "test = %b", test {0 0 0};
 
 	%end;
 	.thread T0;

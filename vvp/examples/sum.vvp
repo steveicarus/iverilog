@@ -1,34 +1,35 @@
+:ivl_version "0.10.0" "vec4-stack";
 :vpi_module "system";
 
-; Copyright (c) 2001-2008  Stephen Williams (steve@icarus.com)
+; Copyright (c) 2001-2014  Stephen Williams (steve@icarus.com)
 ;
-;    This source code is free software; you can redistribute it
-;    and/or modify it in source code form under the terms of the GNU
-;    General Public License as published by the Free Software
-;    Foundation; either version 2 of the License, or (at your option)
-;    any later version.
+;    This program is free software; you can redistribute it and/or modify
+;    it under the terms of the GNU General Public License as published by
+;    the Free Software Foundation; either version 2 of the License, or
+;    (at your option) any later version.
 ;
 ;    This program is distributed in the hope that it will be useful,
 ;    but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;    GNU General Public License for more details.
 ;
-;    You should have received a copy of the GNU General Public License
-;    along with this program; if not, write to the Free Software
-;    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+;    You should have received a copy of the GNU General Public License along
+;    with this program; if not, write to the Free Software Foundation, Inc.,
+;    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-; This example shows how to wire up a simple adder. The code below is
-; like what might be generated from the Verilog:
+
+; This example shows how to wire a simple adder. The code below is like what
+; would be generated from the following Verilog program:
 ;
 ;    module main;
-;      reg [3:0] A, B;
-;      wire [3:0] Q = A + B;
+;       reg [3:0] A, B;
+;       wire [3:0] Q = A + B;
 ;
-;      initial begin
-;        A = 2;
-;        B = 3;
-;        #1 $display("%b  %b = %b", A, B, Q);
-;      end
+;       initial begin
+;          A = 2;
+;          B = 3;
+;          #1 $display("%b + %b = %b", A, B, Q);
+;       end
 ;    endmodule
 ;
 ; Notice the use of the .arith/sum statement, including the specification
@@ -36,7 +37,7 @@
 ; passed to the statement.
 
 
-S_main .scope module, "main";
+S_main .scope module, "main" "main" 0 0;
 
 A    .var	"A", 3 0;
 B    .var	"B", 3 0;
@@ -44,15 +45,14 @@ Q    .net	"Q", 3 0, add;
 
 add  .arith/sum	4, A, B;
 
-
-start	%movi 8, 2, 4; Load a 4 bit value (2) into location 8
-	%set/v	A, 8, 4;
-	%movi 8, 3, 4; Ditto except the value is 3
-	%set/v	B, 8, 4;
+start	%pushi/vec4 2, 0, 4;  Push a 4 bit value (2) on the stack
+	%store/vec4 A, 0, 4;
+	%pushi/vec4 3, 0, 4;  Ditto except the value is 3
+	%store/vec4 B, 0, 4;
 
 	%delay	1, 0;
 
-	%vpi_call 0 0 "$display", "%b + %b == %b", A, B, Q;
+	%vpi_call 0 0 "$display", "%b + %b == %b", A, B, Q {0 0 0};
 	%end;
 	.thread start;
 :file_names 2;

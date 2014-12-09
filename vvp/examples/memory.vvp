@@ -1,40 +1,33 @@
+:ivl_version "0.10.0" "vec4-stack";
 :vpi_module "system";
 
-
-; IMPORTANT NOTE:
-;
-; This example uses constructs that are no longer supported. It will
-; not run with the current vvp implementation!
-
-
-; Copyright (c) 2001-2008  Stephen Williams (steve@icarus.com)
+; Copyright (c) 2001-2014  Stephen Williams (steve@icarus.com)
 ; Copyright (c) 2001  Stephan Boettcher <stephan@nevis.columbia.edu>
 ;
-;    This source code is free software; you can redistribute it
-;    and/or modify it in source code form under the terms of the GNU
-;    General Public License as published by the Free Software
-;    Foundation; either version 2 of the License, or (at your option)
-;    any later version.
+;    This program is free software; you can redistribute it and/or modify
+;    it under the terms of the GNU General Public License as published by
+;    the Free Software Foundation; either version 2 of the License, or
+;    (at your option) any later version.
 ;
 ;    This program is distributed in the hope that it will be useful,
 ;    but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;    GNU General Public License for more details.
 ;
-;    You should have received a copy of the GNU General Public License
-;    along with this program; if not, write to the Free Software
-;    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+;    You should have received a copy of the GNU General Public License along
+;    with this program; if not, write to the Free Software Foundation, Inc.,
+;    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ; This sample demonstrates memory,  also including index register
 ; arithmetic.  And a memory write port
 
-main	.scope	"example";
+main	.scope module, "example" "example" 0 0;
 
 ;;; Make a memory.
 ;
 ;   reg [8:2] memory[5:27];
 
-memory	.mem	"memory", 8,2, 27,5 ;
+memory	.array	"memory", 27 5, 8 2;
 
 ;;; The word width is 7 bits [8:2].
 ;;; The memory size is 23 words, 5..27.
@@ -49,42 +42,159 @@ memory	.mem	"memory", 8,2, 27,5 ;
 ;   wire [5:0] d = memory[a][8:3];
 ;   reg [6:0]  m;
 
-a	.var	"a", 4,0;
-we	.var	"we", 0,0;
+a	.var	"a", 4 0;
+we	.var	"we", 0 0;
 wclk	.event	"wclk";
-di	.var	"di", 5,0;
-d	.net	"d", 5,0, mem[0],mem[1],mem[2],mem[3],mem[4],mem[5];
-mem	.mem/port memory, 6,1,
-		5, a[0],a[1],a[2],a[3],a[4],
-		wclk, we, di[0],di[1],di[2],di[3],di[4],di[5];
-m	.var	"m", 6,0;
+di	.var	"di", 5 0;
+d	.net	"d", 5 0, m_part;
+mem_prt	.array/port memory, mem_idx;
+; The memory index is normalized (a-5) using one extra bit to allow negative
+; (wrapped) values to be out of range.
+mem_idx	.arith/sub 6, a_pad, C4<000101>;
+a_pad	.concat [5 1 0 0], a, C4<0>;
+; Select 6 bits from the memory port starting at the second bit.
+m_part	.part mem_prt, 1, 6;
+m	.var	"m", 6 0;
 
 ;;; The data port mem[] does not connect to the LSB of the memory.
 
-;;; Initialize some part of the memory.	 Starting at memory bit [20],
-;;; which is in the middle of the third memory word, memory[7].	 The
-;;; memory words occupy 8 bits each, that is 7 rounded up to the next
-;;; multiple of 4.
+;;; Initialize the last part of the memory. Starting at the middle of the
+;;; the third memory word, memory[7] bit 6.
+;
+;   initial begin
+;      memory[7][8:6] = 8'h55;
+;      memory[8] = 8'h00;
+;      memory[9] = 8'h00;
+;      memory[10] = 8'h50;
+;      memory[11] = 8'h05;
+;      memory[12] = 8'h05;
+;      memory[13] = 8'h50;
+;      memory[14] = 8'h05;
+;      memory[15] = 8'h05;
+;      memory[16] = 8'h00;
+;      memory[17] = 8'h00;
+;      memory[18] = 8'h00;
+;      memory[19] = 8'h01;
+;      memory[20] = 8'h00;
+;      memory[21] = 8'h04;
+;      memory[22] = 8'h00;
+;      memory[23] = 8'h10;
+;      memory[24] = 8'h00;
+;      memory[25] = 8'h40;
+;      memory[26] = 8'h01;
+;      memory[27] = 8'h00;
+;   end
 
-;;; Four bits per byte.	 Word fill bits are included.  Commas are
-;;; optional, there may be a comma after the last byte.
+	.scope main;
+mem_init ;
+	%pushi/vec4 5, 0, 3; value to store
+	%ix/load 4, 2, 0; word index (7 -> zero based)
+	%ix/load 5, 4, 0; bit index (6 -> zero based)
+        %flag_set/imm 4, 0; the index values are defined
+	%store/vec4a memory, 4, 5;
 
-	.mem/init memory[20],
-		     0x55
-		0x00 0x00
-		0x50 0x05
-		0x05 0x50
-		0x05 0x05
-		0x00 0x00
-		0x00 0x01
-		0x00 0x04
-		0x00 0x10
-		0x00 0x40
-		0x01 0x00
-		0x04,0x00,
-		0x10,0x00,
-		0x40,0x00,
-		;
+	%pushi/vec4 0, 0, 7; value to store
+	%ix/load 4, 3, 0; word index (8 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 0, 0, 7; value to store
+	%ix/load 4, 4, 0; word index (9 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 80, 0, 7; value to store
+	%ix/load 4, 5, 0; word index (10 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 5, 0, 7; value to store
+	%ix/load 4, 6, 0; word index (11 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 5, 0, 7; value to store
+	%ix/load 4, 7, 0; word index (12 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 80, 0, 7; value to store
+	%ix/load 4, 8, 0; word index (13 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 5, 0, 7; value to store
+	%ix/load 4, 9, 0; word index (14 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 5, 0, 7; value to store
+	%ix/load 4, 10, 0; word index (15 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 0, 0, 7; value to store
+	%ix/load 4, 11, 0; word index (16 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 0, 0, 7; value to store
+	%ix/load 4, 12, 0; word index (17 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 0, 0, 7; value to store
+	%ix/load 4, 13, 0; word index (18 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 1, 0, 7; value to store
+	%ix/load 4, 14, 0; word index (19 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 0, 0, 7; value to store
+	%ix/load 4, 15, 0; word index (20 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 4, 0, 7; value to store
+	%ix/load 4, 16, 0; word index (21 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 0, 0, 7; value to store
+	%ix/load 4, 17, 0; word index (22 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 16, 0, 7; value to store
+	%ix/load 4, 18, 0; word index (23 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 0, 0, 7; value to store
+	%ix/load 4, 19, 0; word index (24 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 64, 0, 7; value to store
+	%ix/load 4, 20, 0; word index (25 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 1, 0, 7; value to store
+	%ix/load 4, 21, 0; word index (26 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%pushi/vec4 0, 0, 7; value to store
+	%ix/load 4, 22, 0; word index (27 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%store/vec4a memory, 4, 0;
+
+	%end;
+	.thread mem_init;
 
 ;;; Run through the addresses and display the data output.
 ;
@@ -97,33 +207,23 @@ m	.var	"m", 6,0;
 
 	.scope main;
 always ;
-	%delay	5;
+	%delay	5, 0;
 
-	%vpi_call "$display", "a:%b d:%b", a, d;
+	%vpi_call 0 0 "$display", "a:%b d:%b", a, d {0 0 0};
 
-	%set	wclk, 0;
+	%event	wclk;
 
-	%delay	5;
+	%delay	5, 0;
 
-	%load	10, a[0];
-	%load	11, a[1];
-	%load	12, a[2];
-	%load	13, a[3];
-	%load	14, a[4];
-	%mov	20, 1, 1;
-	%mov	21, 0, 4;
-	%add	10, 20, 5;
-	%assign	a[0], 0, 10;
-	%assign a[1], 0, 11;
-	%assign a[2], 0, 12;
-	%assign a[3], 0, 13;
-	%assign a[4], 0, 14;
+	%load/vec4 a;
+	%addi 1, 0, 5;
+	%assign/vec4 a, 0;
 
 	%jmp	always;
 	.thread	always;
 
-;;; Initialize a[], run some cycles, overwrite a memory word, run a
-;;; bit more, read a memory word, finish.
+;;; Initialize the variables, run some cycles, overwrite a memory word, run
+;;; a bit more, read a memory word, finish.
 ;
 ;   initial
 ;     begin
@@ -149,78 +249,58 @@ always ;
 
 	.scope	main;
 initial ;
-	%set	we, 0;
-	%set	di[0], 0;
-	%set	di[1], 1;
-	%set	di[2], 2;
-	%set	di[3], 3;
-	%set	di[4], 0;
-	%set	di[5], 1;
-	%set	a[0], 0;
-	%set	a[1], 0;
-	%set	a[2], 0;
-	%set	a[3], 0;
-	%set	a[4], 0;
+	%pushi/vec4 0, 0, 1;
+	%store/vec4 we, 0, 1;
 
-	%delay	220;
-	%vpi_call "$readmemh", "memory.hex", memory;
-	%delay	30;
-	%set	we, 1;
-	%delay	5;
-	%vpi_call "$display", "write to a=%b", a;
-	%delay	5;
-	%set	we, 0;
-	%delay	60;
+	%pushi/vec4 38, 12, 6;
+	%store/vec4 di, 0, 6;
+
+	%pushi/vec4 0, 0, 5;
+	%store/vec4 a, 0, 5;
+
+	%delay	220, 0;
+
+	%vpi_call 0 0 "$readmemh", "memory.hex", memory {0 0 0};
+
+	%delay	30, 0;
+
+	%pushi/vec4 1, 0, 1;
+	%store/vec4 we, 0, 1;
+
+	%delay	5, 0;
+
+	%vpi_call 0 0 "$display", "write to a=%b", a {0 0 0};
+
+	%delay	5, 0;
+
+	%pushi/vec4 0, 0, 1;
+	%store/vec4 we, 0, 1;
+
+	%delay	60, 0;
 
 ;;; Memories are indexed by index register 3.  The index register
-;;; points to the bit position in the memory.  Each memory word
-;;; occupies a multiple of 4 bits.  Bit position zero is the LSB of
-;;; the first memory word, here: memory[5][2].
+;;; points to the zero based word position in the memory.
 
-	%ix/load 3, 23 ;	memory word index
-	%ix/sub	 3,  5 ;	minus memory root index
-	%ix/mul	 3,  8 ;	times memory word size (rounded up)
-	%assign/m memory, 0, 1;
-	%ix/add	 3, 1 ;		next bit
-	%assign/m memory, 0, 0;
-	%ix/add	 3, 1 ;
-	%assign/m memory, 0, 3;
-	%ix/add	 3, 1 ;
-	%assign/m memory, 0, 2;
-	%ix/add	 3, 1 ;
-	%assign/m memory, 0, 1;
-	%ix/add	 3, 1 ;
-	%assign/m memory, 0, 0;
-	%ix/add	 3, 1 ;
-	%assign/m memory, 0, 0;
+        %pushi/vec4 25, 12, 7;
+	%ix/load 3, 18, 0; memory word index (23 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%assign/vec4/a/d memory, 0, 0;
 
-	%delay	320;
+	%delay	320, 0;
 
-	%ix/load 3,  32 ;	precomputed memory bit index
-	%load/m	 10, memory;
-	%set	 m[0], 10;
-	%ix/add	 3, 1 ;
-	%load/m	 10, memory;
-	%set	 m[1], 10;
-	%ix/add	 3, 1 ;
-	%load/m	 10, memory;
-	%set	 m[2], 10;
-	%ix/add	 3, 1 ;
-	%load/m	 10, memory;
-	%set	 m[3], 10;
-	%ix/add	 3, 1 ;
-	%load/m	 10, memory;
-	%set	 m[4], 10;
-	%ix/add	 3, 1 ;
-	%load/m	 10, memory;
-	%set	 m[5], 10;
-	%ix/add	 3, 1 ;
-	%load/m	 10, memory;
-	%set	 m[6], 10;
-	%vpi_call "$display", "memory[9]=%b", m;
+	%ix/load 4, 4, 0; memory word index (9 -> zero based)
+        %flag_set/imm 4, 0; the index value is defined
+	%load/vec4a memory, 4;
+	%store/vec4 m, 0, 7;
 
-	#1;
-	%vpi_call "$finish";
+	%vpi_call 0 0 "$display", "memory[9]=%b", m {0 0 0};
+
+	%delay 1, 0;
+
+	%vpi_call 0 0 "$finish" {0 0 0};
 
 	%end;
 	.thread initial;
+:file_names 2;
+    "N/A";
+    "<interactive>";

@@ -1,25 +1,24 @@
+:ivl_version "0.10.0" "vec4-stack";
 :vpi_module "system";
 
-; Copyright (c) 2001-2008  Stephen Williams (steve@icarus.com)
+; Copyright (c) 2001-2014  Stephen Williams (steve@icarus.com)
 ;
-;    This source code is free software; you can redistribute it
-;    and/or modify it in source code form under the terms of the GNU
-;    General Public License as published by the Free Software
-;    Foundation; either version 2 of the License, or (at your option)
-;    any later version.
+;    This program is free software; you can redistribute it and/or modify
+;    it under the terms of the GNU General Public License as published by
+;    the Free Software Foundation; either version 2 of the License, or
+;    (at your option) any later version.
 ;
 ;    This program is distributed in the hope that it will be useful,
 ;    but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;    GNU General Public License for more details.
 ;
-;    You should have received a copy of the GNU General Public License
-;    along with this program; if not, write to the Free Software
-;    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-
+;    You should have received a copy of the GNU General Public License along
+;    with this program; if not, write to the Free Software Foundation, Inc.,
+;    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ; This example is similar to the code that the following Verilog program
-; would make:
+; would generate:
 ;
 ;    module main;
 ;       reg a;
@@ -36,18 +35,20 @@
 ; properly. This is a very trivial functor propagation that is initiated
 ; by the %set instruction.
 
-main	.scope module, "main";
+
+main	.scope module, "main" "main" 0 0;
 
 V_main.a	.var "a", 0 0;
 V_main.b	.net "b", 0 0, V_main.a;
 
-code
-	%set/v V_main.a, 0, 1;
+code	%pushi/vec4 0, 0, 1;
+	%store/vec4 V_main.a, 0, 1;
 	%delay 1, 0;
-	%vpi_call 0 0 "$display", "a=%b, b=%b", V_main.a, V_main.b;
-	%set/v V_main.a, 1, 1;
+	%vpi_call 0 0 "$display", "a=%b, b=%b", V_main.a, V_main.b {0 0 0};
+	%pushi/vec4 1, 0, 1;
+	%store/vec4 V_main.a, 0, 1;
 	%delay 1, 0;
-	%vpi_call 0 0 "$display", "a=%b, b=%b", V_main.a, V_main.b;
+	%vpi_call 0 0 "$display", "a=%b, b=%b", V_main.a, V_main.b {0 0 0};
 	%end;
 
 	.thread	code;

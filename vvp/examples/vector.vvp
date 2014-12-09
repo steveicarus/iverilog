@@ -1,8 +1,31 @@
+:ivl_version "0.10.0" "vec4-stack";
 :vpi_module "system";
 
-main	.scope module, "main";
+;    This program is free software; you can redistribute it and/or modify
+;    it under the terms of the GNU General Public License as published by
+;    the Free Software Foundation; either version 2 of the License, or
+;    (at your option) any later version.
+;
+;    This program is distributed in the hope that it will be useful,
+;    but WITHOUT ANY WARRANTY; without even the implied warranty of
+;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;    GNU General Public License for more details.
+;
+;    You should have received a copy of the GNU General Public License along
+;    with this program; if not, write to the Free Software Foundation, Inc.,
+;    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-T0	%vpi_call 0 0 "$display", "Display the number: %b", 5'b0zx1;
+; This example is similar to the code that the following Verilog program
+; would generate:
+;
+;    module main;
+;       initial $display("Display the number: %b", 5'b0zx1);
+;    endmodule
+
+
+main	.scope module, "main" "main" 0 0;
+
+T0	%vpi_call 0 0 "$display", "Display the number: %b", 5'b0zx1 {0 0 0};
 	%end;
 	.thread T0;
 :file_names 2;

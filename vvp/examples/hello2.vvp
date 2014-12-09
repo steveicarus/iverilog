@@ -1,32 +1,32 @@
+:ivl_version "0.10.0" "vec4-stack";
 :vpi_module "system";
 
-; Copyright (c) 2001-2008  Stephen Williams (steve@icarus.com)
+; Copyright (c) 2001-2014  Stephen Williams (steve@icarus.com)
 ;
-;    This source code is free software; you can redistribute it
-;    and/or modify it in source code form under the terms of the GNU
-;    General Public License as published by the Free Software
-;    Foundation; either version 2 of the License, or (at your option)
-;    any later version.
+;    This program is free software; you can redistribute it and/or modify
+;    it under the terms of the GNU General Public License as published by
+;    the Free Software Foundation; either version 2 of the License, or
+;    (at your option) any later version.
 ;
 ;    This program is distributed in the hope that it will be useful,
 ;    but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;    GNU General Public License for more details.
 ;
-;    You should have received a copy of the GNU General Public License
-;    along with this program; if not, write to the Free Software
-;    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+;    You should have received a copy of the GNU General Public License along
+;    with this program; if not, write to the Free Software Foundation, Inc.,
+;    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ; This example slightly extends the hello.vvp example by adding the
 ; set and display of a reg variable. The Verilog source that would
 ; make this might be:
 ;
 ;    module main;
-;        reg [3:0] value1;
-;        initial begin
-;           value1 = 1;
-;           $display("value = %b", value1);
-;        end
+;       reg [3:0] value1;
+;       initial begin
+;          value1 = 1;
+;          $display("value = %b", value1);
+;       end
 ;    endmodule
 ;
 ; Notice that the var "value1" is placed into the "main" scope simply
@@ -34,14 +34,15 @@
 ; notice that the Vmain.value1 label is automatically converted to a
 ; vpiHandle by the compiler when the %vpi_call statement is compiled.
 
-Smain    .scope module, "main";
+
+Smain    .scope module, "main" "main" 0 0;
 
 Vmain.value1	.var "value1", 3 0;
 
-T00	%movi 8, 1, 4; Load a 4 bit value (1) into location 8.
-	%set/v Vmain.value1, 8, 4;
+T00	%pushi/vec4 1, 0, 4;  Push a 4 bit value (1) on the stack
+        %store/vec4 Vmain.value1, 0, 4;
 
-	%vpi_call 0 0 "$display", "value = %b", Vmain.value1;
+	%vpi_call 0 0 "$display", "value = %b", Vmain.value1 {0 0 0};
 
 	%end;
 
@@ -49,4 +50,3 @@ T00	%movi 8, 1, 4; Load a 4 bit value (1) into location 8.
 :file_names 2;
     "N/A";
     "<interactive>";
-

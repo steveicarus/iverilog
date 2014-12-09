@@ -1,12 +1,49 @@
+:ivl_version "0.10.0" "vec4-stack";
 :vpi_module "system";
 
+; Copyright (c) 2001-2014  Stephen Williams (steve@icarus.com)
 ;
-; This example demonstrates a simple blocking assignment to a
-; reg vector within a module.
+;    This program is free software; you can redistribute it and/or modify
+;    it under the terms of the GNU General Public License as published by
+;    the Free Software Foundation; either version 2 of the License, or
+;    (at your option) any later version.
 ;
+;    This program is distributed in the hope that it will be useful,
+;    but WITHOUT ANY WARRANTY; without even the implied warranty of
+;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;    GNU General Public License for more details.
+;
+;    You should have received a copy of the GNU General Public License along
+;    with this program; if not, write to the Free Software Foundation, Inc.,
+;    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;
+; This example demonstrates a simple non-blocking assignment to a
+; reg vector within a module. It is similar to the code that the
+; following Verilog program would generate:
+;
+;    module main;
+;
+;       reg [7:0] test;
+;
+;       initial begin
+;          test <= #2 0;
+;          #3 $display("test = %b", test);
+;
+;          test <= #2 1;
+;          #1 $display("test = %b", test);
+;          #2 $display("test = %b", test);
+;
+;          test <= #2 2;
+;          #3 $display("test = %b", test);
+;
+;          test <= #2 3;
+;          #3 $display("test = %b", test);
+;       end
+;
+;    endmodule
 
 
-main    .scope module, "main" "main";
+main    .scope module, "main" "main" 0 0;
 
 ; This declares a "reg" data type named "test" in the current scope.
 ; The bit range is given for the purposes of VPI access. The range
@@ -14,28 +51,30 @@ main    .scope module, "main" "main";
 ; bit wide vector.
 test	.var	"test", 7 0;
 
-; The %assign/v0 opcode assigns a vector to the .var at the label,
-; with the given delay. The width of the vector from index register0.
+; The %assign/vec4 opcode assigns a vector to the .var at the label,
+; with the given absolute delay.
 
-T0	%ix/load 0, 8 ;  Set the width of the vector to 8.
-
-	%assign/v0	test, 2, 0 ;
+T0	%pushi/vec4 0, 0, 8;
+	%assign/vec4 test, 2;
 	%delay 3, 0;
-	%vpi_call 0 0 "$display", "test = %b", test;
+	%vpi_call 0 0 "$display", "test = %b", test {0 0 0};
 
-	%assign/v0	test, 2, 1 ;
+	%pushi/vec4 1, 0, 8;
+	%assign/vec4 test, 2;
 	%delay 1, 0;
-	%vpi_call 0 0 "$display", "test = %b", test;
+	%vpi_call 0 0 "$display", "test = %b", test {0 0 0};
 	%delay 2, 0;
-	%vpi_call 0 0 "$display", "test = %b", test;
+	%vpi_call 0 0 "$display", "test = %b", test {0 0 0};
 
-	%assign/v0	test, 2, 2 ;
+	%pushi/vec4 2, 0, 8;
+	%assign/vec4 test, 2;
 	%delay 3, 0;
-	%vpi_call 0 0 "$display", "test = %b", test;
+	%vpi_call 0 0 "$display", "test = %b", test {0 0 0};
 
-	%assign/v0	test, 2, 3 ;
+	%pushi/vec4 3, 0, 8;
+	%assign/vec4 test, 2;
 	%delay 3, 0;
-	%vpi_call 0 0 "$display", "test = %b", test;
+	%vpi_call 0 0 "$display", "test = %b", test {0 0 0};
 
 	%end;
 	.thread T0;
