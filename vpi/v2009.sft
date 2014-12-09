@@ -13,3 +13,4 @@ $increment		vpiSysFuncInt
 $size			vpiSysFuncInt
 
 $ivl_array_method$to_vec	vpiSysFuncVoid
+$ivl_array_method$from_vec	vpiSysFuncVoid
