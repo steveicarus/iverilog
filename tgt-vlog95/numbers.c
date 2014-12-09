@@ -161,7 +161,10 @@ void emit_number(const char *bits, unsigned nbits, unsigned is_signed,
 	    } else if (rtype == -2) {
 		  fprintf(vlog_out, "%u'bz", nbits);
 	    } else if (rtype == -3) {
-		  fprintf(vlog_out, "%u'bx", nbits);
+		    /* If this is a 32-bit wide constant then generate the
+		     * undefined with integers to get a signed value. */
+		  if (nbits == 32) fprintf(vlog_out, "1/0");
+		  else fprintf(vlog_out, "%u'bx", nbits);
 	    } else  {
 		  fprintf(vlog_out, "%"PRId32, value);
 	    }
