@@ -114,14 +114,12 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 				 ivl_expr_t part_off_ex,
 				 unsigned nevents)
 {
-      unsigned skip_assign = transient_id++;
       int word_ix_reg = 3;
       int part_off_reg = 0;
       int delay_index;
       unsigned long part_off = 0;
 
       int error_flag = allocate_flag();
-      fprintf(vvp_out, "    %%flag_set/imm %d, 0;\n", error_flag);
 
 	/* Figure the constant part offset, if possible. If we can do
 	   so, then forget about the expression and use the calculated
@@ -143,11 +141,13 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 
 	/* Calculate array word index into word index register */
       draw_eval_expr_into_integer(word_ix, word_ix_reg);
-      fprintf(vvp_out, "    %%flag_or %d, 4;\n", error_flag);
 
       if (part_off_ex) {
 	    part_off_reg = allocate_word();
+	      /* Save the index calculation error flag to a global. */
+	    fprintf(vvp_out, "    %%flag_mov %d, 4;\n", error_flag);
 	    draw_eval_expr_into_integer(part_off_ex, part_off_reg);
+	      /* Add the error state of the part select to the global. */
 	    fprintf(vvp_out, "    %%flag_or %d, 4;\n", error_flag);
 
       } else if (part_off != 0) {
@@ -158,26 +158,35 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 		             part_off_reg, part_off);
       }
 
+	/* Calculated delay... */
       if (dexp != 0) {
-	      /* Calculated delay... */
 	    delay_index = allocate_word();
+	      /* If needed save the index calculation error flag. */
+	    if (! part_off_ex) {
+		  fprintf(vvp_out, "    %%flag_mov %d, 4;\n", error_flag);
+	    }
 	    draw_eval_expr_into_integer(dexp, delay_index);
-	    fprintf(vvp_out, "    %%flag_mov 4, %d;\n", error_flag);
 	    if (word_ix_reg != 3) {
 		  fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
 		  clr_word(word_ix_reg);
 	    }
+	      /* Restore the error state since an undefined delay is okay. */
+	    fprintf(vvp_out, "    %%flag_mov 4, %d;\n", error_flag);
 	    fprintf(vvp_out, "    %%assign/vec4/a/d v%p, %d, %d;\n",
 		    lsig, part_off_reg, delay_index);
 
 	    clr_word(delay_index);
 
+	/* Event control delay... */
       } else if (nevents != 0) {
-	      /* Event control delay... */
+	      /* If needed use the global error state. */
+	    if (part_off_ex) {
+		  fprintf(vvp_out, "    %%flag_mov 4, %d;\n", error_flag);
+	    }
 	    fprintf(vvp_out, "    %%assign/vec4/a/e v%p, %d;\n", lsig, part_off_reg);
 
+	/* Constant delay... */
       } else {
-	      /* Constant delay... */
 	    unsigned long low_d = delay % UINT64_C(0x100000000);
 	    unsigned long hig_d = delay / UINT64_C(0x100000000);
 
@@ -188,12 +197,15 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 		  fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
 		  clr_word(word_ix_reg);
 	    }
+	      /* If needed use the global error state. */
+	    if (part_off_ex) {
+		  fprintf(vvp_out, "    %%flag_mov 4, %d;\n", error_flag);
+	    }
 	    fprintf(vvp_out, "    %%assign/vec4/a/d v%p, %d, %u;\n",
 		    lsig, part_off_reg, delay_index);
 	    clr_word(delay_index);
       }
 
-      fprintf(vvp_out, "t_%u ;\n", skip_assign);
       if (nevents != 0) fprintf(vvp_out, "    %%evctl/c;\n");
 
       clr_flag(error_flag);
