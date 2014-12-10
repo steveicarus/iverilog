@@ -780,7 +780,9 @@ ostream& operator<< (ostream&o, const verinum&v)
 
 	/* If the number is fully defined (no x or z) then print it
 	   out as a decimal number. */
-      if (v.is_defined() && v.len() <= 8*sizeof(long)) {
+      unsigned dec_len = 8*sizeof(int);  /* avoid 32/64 bit differences. */
+      if (! v.has_sign()) dec_len -= 1;  /* an unsigned number. */
+      if (v.is_defined() && v.len() <= dec_len) {
 	    if (v.has_sign())
 		  o << "'sd" << v.as_long();
 	    else
