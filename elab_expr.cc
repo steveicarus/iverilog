@@ -785,8 +785,11 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
                   right_ = tmp;
             }
             NetEConst*rc = dynamic_cast<NetEConst*> (rp);
-            if (rc && (r_width < sizeof(long)*8))
-                  r_val = rc->value().as_long();
+	      // Adjust the expression width that can be converter depending
+	      // on if the R-value is signed or not.
+	    unsigned c_width = sizeof(long)*8;
+	    if (! right_->has_sign()) c_width -= 1;
+	    if (rc && (r_width <= c_width)) r_val = rc->value().as_long();
 
 	    if (debug_elaborate && rc) {
 		  cerr << get_fileline() << ": PEBLeftWidth::test_width: "
