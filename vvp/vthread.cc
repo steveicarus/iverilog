@@ -3073,13 +3073,13 @@ static uint64_t vec4_to_index(vthread_t thr, bool signed_flag)
 	// Set the high bits that are not necessarily filled in by the
 	// subarray function.
       if (val_size < 8*sizeof(v)) {
-	    if (signed_flag && (v & (1UL<<(val_size-1)))) {
+	    if (signed_flag && (v & (static_cast<uint64_t>(1)<<(val_size-1)))) {
 		    // Propagate the sign bit...
-		  v |= -1UL << val_size;
+		  v |= (~static_cast<uint64_t>(0)) << val_size;
 
 	    } else {
 		    // Fill with zeros.
-		  v &= ~(-1UL << val_size);
+		  v &= ~((~static_cast<uint64_t>(0)) << val_size);
 	    }
 
       }
