@@ -221,10 +221,16 @@ int __vpiDarrayVar::vpi_get(int code)
       switch (code) {
 	  case vpiArrayType:
 	    return vpiDynamicArray;
+	  case vpiLeftRange:
+	    return 0;
+	  case vpiRightRange:
+	    return get_size() - 1;
 	  case vpiSize:
             return get_size();
 
 	  default:
+	    fprintf(stderr, "vpi sorry: property is not implemented");
+	    assert(false);
 	    return 0;
       }
 }

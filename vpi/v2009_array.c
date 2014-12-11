@@ -52,6 +52,47 @@ static PLI_INT32 one_array_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
+// Checks if a function is passed an array and optionally an integer.
+static PLI_INT32 array_int_opt_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
+{
+      const int MAX_ARGC = 3;   // one more is to verify there are at most 2 args
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv, arg[MAX_ARGC];
+      PLI_INT32 arg_type[MAX_ARGC];
+      int argc;
+
+      argv = vpi_iterate(vpiArgument, callh);
+      argc = 0;
+
+      if(argv) {
+          for(int i = 0; i < MAX_ARGC; ++i) {
+              arg[i] = vpi_scan(argv);
+              if(arg[i]) {
+                  arg_type[i] = vpi_get(vpiType, arg[i]);
+                  ++argc;
+              } else {
+                  break;
+              }
+          }
+      }
+
+      if (!argv || argc == MAX_ARGC || (arg_type[0] != vpiRegArray && arg_type[0] != vpiStringVar) ||
+          (argc == 2 && arg_type[1] != vpiIntegerVar &&
+          !(arg_type[1] == vpiConstant && vpi_get(vpiConstType, arg[1]) == vpiBinaryConst))) {
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+                      (int)vpi_get(vpiLineNo, callh));
+            vpi_printf("%s expects an array and optionally an integer.\n", name);
+
+            if(argc == MAX_ARGC)
+                vpi_free_object(argv);
+
+            vpi_control(vpiFinish, 0);
+            return 0;
+      }
+
+      return 0;
+}
+
 static PLI_INT32 func_not_implemented_compiletf(ICARUS_VPI_CONST PLI_BYTE8* name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
@@ -61,6 +102,47 @@ static PLI_INT32 func_not_implemented_compiletf(ICARUS_VPI_CONST PLI_BYTE8* name
                  name);
       vpi_control(vpiFinish, 1);
       return 0;
+}
+
+static PLI_INT32 array_get_property(int property, ICARUS_VPI_CONST PLI_BYTE8*name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv, array, dim;
+      s_vpi_value value;
+
+      argv = vpi_iterate(vpiArgument, callh);
+      if (argv == 0) {
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+                       (int)vpi_get(vpiLineNo, callh));
+            vpi_printf("%s requires an array argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      array = vpi_scan(argv);
+      dim = vpi_scan(argv);
+
+      if(dim != 0) {
+          vpi_printf("SORRY: %s:%d: multiple dimensions are not handled yet.\n",
+                   vpi_get_str(vpiFile, callh), (int)vpi_get(vpiLineNo, callh));
+          vpi_control(vpiFinish, 1);
+      }
+
+      value.format = vpiIntVal;
+      value.value.integer = vpi_get(property, array);
+      vpi_put_value(callh, &value, 0, vpiNoDelay);
+
+      return 0;
+}
+
+static PLI_INT32 left_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
+{
+    return array_get_property(vpiLeftRange, name);
+}
+
+static PLI_INT32 right_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
+{
+    return array_get_property(vpiRightRange, name);
 }
 
 static void high_array(const char*name, vpiHandle callh, vpiHandle arg)
@@ -178,32 +260,6 @@ void v2009_array_register(void)
       tf_data.compiletf   = func_not_implemented_compiletf;;
       tf_data.sizetf      = 0;
 
-	/* These functions are not currently implemented. */
-      tf_data.tfname      = "$dimensions";
-      tf_data.user_data   = "$dimensions";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$unpacked_dimensions";
-      tf_data.user_data   = "$unpacked_dimensions";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$left";
-      tf_data.user_data   = "$left";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$right";
-      tf_data.user_data   = "$right";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$increment";
-      tf_data.user_data   = "$increment";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
       tf_data.tfname      = "$high";
       tf_data.user_data   = "$high";
       tf_data.compiletf   = one_array_arg_compiletf;
@@ -215,6 +271,36 @@ void v2009_array_register(void)
       tf_data.user_data   = "$low";
       tf_data.compiletf   = one_array_arg_compiletf;
       tf_data.calltf      = low_calltf;
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.tfname      = "$left";
+      tf_data.user_data   = "$left";
+      tf_data.compiletf   = array_int_opt_arg_compiletf;
+      tf_data.calltf      = left_calltf;
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.tfname      = "$right";
+      tf_data.user_data   = "$right";
+      tf_data.compiletf   = array_int_opt_arg_compiletf;
+      tf_data.calltf      = right_calltf;
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+	/* These functions are not currently implemented. */
+      tf_data.tfname      = "$dimensions";
+      tf_data.user_data   = "$dimensions";
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.tfname      = "$unpacked_dimensions";
+      tf_data.user_data   = "$unpacked_dimensions";
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.tfname      = "$increment";
+      tf_data.user_data   = "$increment";
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 }
