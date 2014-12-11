@@ -143,7 +143,7 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    draw_eval_vec4(part_off_ex);
 	    fprintf(vvp_out, "    %%flag_mov %u, 4;\n", slice->u_.part_select_dynamic.x_flag);
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
-	    fprintf(vvp_out, "    %%ix/vec4 %u;\n", slice->u_.part_select_dynamic.word_idx_reg);
+	    fprintf(vvp_out, "    %%ix/vec4 %d;\n", slice->u_.part_select_dynamic.word_idx_reg);
 	    fprintf(vvp_out, "    %%part/u %u;\n", wid);
 
       } else if (ivl_signal_dimensions(sig) > 0 && word_ix == 0) {
@@ -167,7 +167,7 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    slice->u_.memory_word_dynamic.x_flag = allocate_flag();
 
 	    draw_eval_expr_into_integer(word_ix, slice->u_.memory_word_dynamic.word_idx_reg);
-	    fprintf(vvp_out, "    %%flag_mov %d, 4;\n", slice->u_.memory_word_dynamic.x_flag);
+	    fprintf(vvp_out, "    %%flag_mov %u, 4;\n", slice->u_.memory_word_dynamic.x_flag);
 	    fprintf(vvp_out, "    %%load/vec4a v%p, %d;\n", sig, slice->u_.memory_word_dynamic.word_idx_reg);
 
       } else {
@@ -263,7 +263,7 @@ static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
 	    break;
 
 	  case SLICE_MEMORY_WORD_DYNAMIC:
-	    fprintf(vvp_out, "    %%flag_mov 4, %d;\n", slice->u_.memory_word_dynamic.x_flag);
+	    fprintf(vvp_out, "    %%flag_mov 4, %u;\n", slice->u_.memory_word_dynamic.x_flag);
 	    fprintf(vvp_out, "    %%store/vec4a v%p, %d, 0;\n", sig, slice->u_.memory_word_dynamic.word_idx_reg);
 	    clr_word(slice->u_.memory_word_dynamic.word_idx_reg);
 	    clr_flag(slice->u_.memory_word_dynamic.x_flag);
@@ -381,7 +381,7 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		    /* Note that flag4 is set by the eval above. */
 		  assert(lsig);
 		  if (ivl_signal_type(lsig)==IVL_SIT_UWIRE) {
-			fprintf(vvp_out, "    %%force/vec4/off v%p_0, %u;\n",
+			fprintf(vvp_out, "    %%force/vec4/off v%p_0, %d;\n",
 				lsig, offset_index);
 		  } else {
 			fprintf(vvp_out, "    %%store/vec4 v%p_0, %d, %u;\n",
@@ -397,7 +397,7 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		  assert(!lsig);
 		  ivl_type_t sub_type = draw_lval_expr(nest);
 		  assert(ivl_type_base(sub_type) == IVL_VT_CLASS);
-		  fprintf(vvp_out, "    %%store/prop/v %u, %u;\n",
+		  fprintf(vvp_out, "    %%store/prop/v %d, %u;\n",
 			  ivl_lval_property_idx(lval), lwid);
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
@@ -449,6 +449,7 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    fprintf(vvp_out, "    %%vpi_call %u %u \"$ivl_string_method$to_vec\", v%p_0, v%p_0 {0 0 0};\n",
 		ivl_file_table_index(ivl_stmt_file(net)), ivl_stmt_lineno(net),
 		ivl_expr_signal(rval), ivl_lval_sig(lval));
+	    if (slices) free(slices);
             return 0;
 
       } else {
@@ -532,8 +533,7 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    break;
       }
 
-      if (slices)
-	    free(slices);
+      if (slices) free(slices);
 
       return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -643,16 +643,16 @@ static void draw_binary_vec4_lrs(ivl_expr_t expr)
 	// the stack and replace it with the result of the shift.
       switch (ivl_expr_opcode(expr)) {
 	  case 'l': /* << */
-	    fprintf(vvp_out, "    %%shiftl %u;\n", use_index_reg);
+	    fprintf(vvp_out, "    %%shiftl %d;\n", use_index_reg);
 	    break;
 	  case 'r': /* >> */
-	    fprintf(vvp_out, "    %%shiftr %u;\n", use_index_reg);
+	    fprintf(vvp_out, "    %%shiftr %d;\n", use_index_reg);
 	    break;
 	  case 'R': /* >>> */
 	    if (ivl_expr_signed(le))
-		  fprintf(vvp_out, "    %%shiftr/s %u;\n", use_index_reg);
+		  fprintf(vvp_out, "    %%shiftr/s %d;\n", use_index_reg);
 	    else
-		  fprintf(vvp_out, "    %%shiftr %u;\n", use_index_reg);
+		  fprintf(vvp_out, "    %%shiftr %d;\n", use_index_reg);
 	    break;
 	  default:
 	    assert(0);
@@ -790,10 +790,10 @@ static void draw_concat_number_vec4(ivl_expr_t expr, int as_concati)
 
       if (accum) {
 	    if (count_pushi) {
-		  fprintf(vvp_out, "    %%concati/vec4 %lu, %lu, %u;\n",
+		  fprintf(vvp_out, "    %%concati/vec4 %lu, %lu, %d;\n",
 			  val0, valx, accum);
 	    } else {
-		  fprintf(vvp_out, "    %%pushi/vec4 %lu, %lu, %u;\n",
+		  fprintf(vvp_out, "    %%pushi/vec4 %lu, %lu, %d;\n",
 			  val0, valx, accum);
 	    }
       }

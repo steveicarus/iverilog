@@ -167,7 +167,7 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	    }
 	    draw_eval_expr_into_integer(dexp, delay_index);
 	    if (word_ix_reg != 3) {
-		  fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
+		  fprintf(vvp_out, "    %%ix/mov 3, %d;\n", word_ix_reg);
 		  clr_word(word_ix_reg);
 	    }
 	      /* Restore the error state since an undefined delay is okay. */
@@ -194,14 +194,14 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	    fprintf(vvp_out, "    %%ix/load %d, %lu, %lu; Constant delay\n",
 		    delay_index, low_d, hig_d);
 	    if (word_ix_reg != 3) {
-		  fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
+		  fprintf(vvp_out, "    %%ix/mov 3, %d;\n", word_ix_reg);
 		  clr_word(word_ix_reg);
 	    }
 	      /* If needed use the global error state. */
 	    if (part_off_ex) {
 		  fprintf(vvp_out, "    %%flag_mov 4, %d;\n", error_flag);
 	    }
-	    fprintf(vvp_out, "    %%assign/vec4/a/d v%p, %d, %u;\n",
+	    fprintf(vvp_out, "    %%assign/vec4/a/d v%p, %d, %d;\n",
 		    lsig, part_off_reg, delay_index);
 	    clr_word(delay_index);
       }
@@ -1333,7 +1333,7 @@ static int show_stmt_do_while(ivl_statement_t net, ivl_scope_t sscope)
 	   the result. If the expression evaluates to true, then
 	   branch to the top label. */
       int use_flag = draw_eval_condition(ivl_stmt_cond_expr(net));
-      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %u;\n",
+      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %d;\n",
 	      thread_count, top_label, use_flag);
       clr_flag(use_flag);
 
@@ -1677,7 +1677,7 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 	   the result. If the expression evaluates to false, then
 	   branch to the out label. */
       int use_flag = draw_eval_condition(ivl_stmt_cond_expr(net));
-      fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, %u;\n",
+      fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, %d;\n",
 	      thread_count, out_label, use_flag);
       clr_flag(use_flag);
 
