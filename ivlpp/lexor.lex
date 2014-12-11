@@ -136,21 +136,11 @@ static void ifdef_leave(void)
      * we assume that the non-file part is from this file. */
     if (istack->path != NULL && cur->path != NULL &&
         strcmp(istack->path,cur->path) != 0) {
-        fprintf
-        (
-            stderr,
-            "%s:%u: warning: This `endif matches an ifdef in another file.\n",
-            istack->path,
-            istack->lineno+1
-        );
+        fprintf(stderr, "%s:%u: warning: This `endif matches an ifdef "
+                "in another file.\n", istack->path, istack->lineno+1);
 
-        fprintf
-        (
-            stderr,
-            "%s:%u: This is the odd matched `ifdef.\n",
-            cur->path,
-            cur->lineno+1
-        );
+        fprintf(stderr, "%s:%u: This is the odd matched `ifdef.\n",
+                cur->path, cur->lineno+1);
     }
 
     free(cur->path);
@@ -243,12 +233,8 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <PCOMENT>`{keywords} {
     emit_pathline(istack);
     error_count += 1;
-    fprintf
-    (
-        stderr,
-        "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n",
-        yytext
-    );
+    fprintf(stderr, "error: macro names cannot be directive keywords "
+            "('%s'); replaced with nothing.\n", yytext);
 }
 
 <PCOMENT>`[a-zA-Z][a-zA-Z0-9_$]* {
@@ -285,12 +271,8 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <PPINCLUDE>`{keywords} {
     emit_pathline(istack);
     error_count += 1;
-    fprintf
-    (
-        stderr,
-        "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n",
-        yytext
-    );
+    fprintf(stderr, "error: macro names cannot be directive keywords "
+            "('%s'); replaced with nothing.\n", yytext);
 }
 
 <PPINCLUDE>`[a-zA-Z][a-zA-Z0-9_]* {
@@ -342,11 +324,8 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
     emit_pathline(istack);
     error_count += 1;
     BEGIN(ERROR_LINE);
-    fprintf
-    (
-        stderr,
-        "error: malformed `define directive: macro names cannot be directive keywords\n"
-    );
+    fprintf(stderr, "error: malformed `define directive: macro names "
+            "cannot be directive keywords\n");
 }
 
 <DEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]*"("{W}? { BEGIN(DEF_ARG); def_start(); }
@@ -483,73 +462,45 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 `ifdef {
     error_count += 1;
-    fprintf
-    (
-        stderr,
-        "%s:%u: `ifdef without a macro name - ignored.\n",
-        istack->path, istack->lineno+1
-    );
+    fprintf(stderr, "%s:%u: `ifdef without a macro name - ignored.\n",
+            istack->path, istack->lineno+1);
 }
 
 `ifndef {
     error_count += 1;
-    fprintf
-    (
-        stderr,
-        "%s:%u: `ifndef without a macro name - ignored.\n",
-        istack->path, istack->lineno+1
-    );
+    fprintf(stderr, "%s:%u: `ifndef without a macro name - ignored.\n",
+            istack->path, istack->lineno+1);
 }
 
 `elsif {
     error_count += 1;
-    fprintf
-    (
-        stderr,
-        "%s:%u: `elsif without a macro name - ignored.\n",
-        istack->path, istack->lineno+1
-    );
+    fprintf(stderr, "%s:%u: `elsif without a macro name - ignored.\n",
+            istack->path, istack->lineno+1);
 }
 
 `elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
     error_count += 1;
-    fprintf
-    (
-        stderr,
-        "%s:%u: `elsif without a matching `ifdef - ignored.\n",
-        istack->path, istack->lineno+1
-    );
+    fprintf(stderr, "%s:%u: `elsif without a matching `ifdef - ignored.\n",
+            istack->path, istack->lineno+1);
 }
 
 `else {
     error_count += 1;
-    fprintf
-    (
-        stderr,
-        "%s:%u: `else without a matching `ifdef - ignored.\n",
-        istack->path, istack->lineno+1
-    );
+    fprintf(stderr, "%s:%u: `else without a matching `ifdef - ignored.\n",
+            istack->path, istack->lineno+1);
 }
 
 `endif {
     error_count += 1;
-    fprintf
-    (
-        stderr,
-        "%s:%u: `endif without a matching `ifdef - ignored.\n",
-        istack->path, istack->lineno+1
-    );
+    fprintf(stderr, "%s:%u: `endif without a matching `ifdef - ignored.\n",
+            istack->path, istack->lineno+1);
 }
 
 `{keywords} {
     emit_pathline(istack);
     error_count += 1;
-    fprintf
-    (
-        stderr,
-        "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n",
-        yytext
-    );
+    fprintf(stderr, "error: macro names cannot be directive keywords "
+            "('%s'); replaced with nothing.\n", yytext);
 }
 
  /* This pattern notices macros and arranges for them to be replaced. */
@@ -722,17 +673,14 @@ static struct define_t* magic_table = &def_LINE;
  */
 static struct define_t* def_lookup_internal(const char*name, struct define_t*cur)
 {
-    if (cur == 0)
-        return 0;
+    if (cur == 0) return 0;
 
     assert(cur->up == 0);
 
-    while (cur)
-    {
+    while (cur) {
         int cmp = strcmp(name, cur->name);
 
-        if (cmp == 0)
-            return cur;
+        if (cmp == 0) return cur;
 
         cur = (cmp < 0) ? cur->left : cur->right;
     }
@@ -743,11 +691,9 @@ static struct define_t* def_lookup_internal(const char*name, struct define_t*cur
 static struct define_t* def_lookup(const char*name)
 {
     // first, try a magic macro
-    if(name[0] == '_' && name[1] == '_' && name[2] != '\0')
-    {
+    if(name[0] == '_' && name[1] == '_' && name[2] != '\0') {
         struct define_t* result = def_lookup_internal(name, magic_table);
-        if(result)
-        {
+        if(result) {
             return result;
         }
     }
@@ -806,8 +752,7 @@ static /* inline */ char* def_argv(int arg)
 
 static void check_for_max_args(void)
 {
-    if (def_argc == MAX_DEF_ARG)
-    {
+    if (def_argc == MAX_DEF_ARG) {
         emit_pathline(istack);
         fprintf(stderr, "error: too many macro arguments - aborting\n");
         exit(1);
@@ -839,14 +784,12 @@ static void def_add_arg(void)
     check_for_max_args();
 
     /* Remove trailing white space and, if necessary, opening brace. */
-    while (isspace((int)yytext[length - 1]))
-        length--;
+    while (isspace((int)yytext[length - 1])) length--;
 
       /* This can happen because we are also processing "argv[0]", the
 	 macro name, as a pseudo-argument. The lexor will match that
 	 as name(, so chop off the ( here. */
-    if (yytext[length - 1] == '(')
-        length--;
+    if (yytext[length -  1] == '(') length--;
 
     yytext[length] = 0;
 
@@ -921,41 +864,32 @@ void define_macro(const char* name, const char* value, int keyword, int argc)
 	  }
     }
 
-    if (def_table == 0)
+    if (def_table == 0) {
         def_table = def;
-    else
-    {
+    } else {
         struct define_t* cur = def_table;
 
-        while (1)
-        {
+        while (1) {
             int cmp = strcmp(def->name, cur->name);
 
-            if (cmp == 0)
-            {
+            if (cmp == 0) {
                 free(cur->value);
                 cur->value = def->value;
                 free(def->name);
                 free(def);
                 break;
-            }
-            else if (cmp < 0)
-            {
-                if (cur->left != 0)
+            } else if (cmp < 0) {
+                if (cur->left != 0) {
                     cur = cur->left;
-                else
-                {
+                } else {
                     cur->left = def;
                     def->up = cur;
                     break;
                 }
-            }
-            else
-            {
-                if (cur->right != 0)
+            } else {
+                if (cur->right != 0) {
                     cur = cur->right;
-                else
-                {
+                } else {
                     cur->right = def;
                     def->up = cur;
                     break;
@@ -973,8 +907,7 @@ static void free_macro(struct define_t* def)
     free_macro(def->right);
     free(def->name);
     free(def->value);
-    for (idx = 0 ; idx < def->argc ; idx += 1)
-	  free(def->defaults[idx]);
+    for (idx = 0 ; idx < def->argc ; idx += 1) free(def->defaults[idx]);
     free(def->defaults);
     free(def);
 }
@@ -1069,25 +1002,19 @@ static void do_define(void)
      */
     cp = strchr(yytext, '/');
 
-    while (cp && *cp)
-    {
+    while (cp && *cp) {
         if (cp[1] == '/') {
             *cp = 0;
             break;
         }
 
-        if (cp[1] == '*')
-        {
+        if (cp[1] == '*') {
             tail = strstr(cp+2, "*/");
 
-            if (tail == 0)
-            {
+            if (tail == 0) {
                 *cp = 0;
-                fprintf
-                (
-                    stderr,
-                    "%s:%u: Unterminated comment in define\n",
-                    istack->path, istack->lineno+1
+                fprintf(stderr, "%s:%u: Unterminated comment in define\n",
+		        istack->path, istack->lineno+1
                 );
                 break;
             }
@@ -1101,10 +1028,8 @@ static void do_define(void)
 
     /* Trim trailing white space. */
     cp = yytext + strlen(yytext);
-    while (cp > yytext)
-    {
-        if (!isspace((int)cp[-1]))
-            break;
+    while (cp > yytext) {
+        if (!isspace((int)cp[-1])) break;
 
         cp -= 1;
         *cp = 0;
@@ -1114,8 +1039,7 @@ static void do_define(void)
      * and the white space that precedes it, then replace all that
      * with a single newline.
      */
-    if ((cp > yytext) && (cp[-1] == '\\'))
-    {
+    if ((cp > yytext) && (cp[-1] == '\\')) {
         cp -= 1;
         cp[0] = 0;
 
@@ -1143,18 +1067,13 @@ static void do_define(void)
     /* If the text for a macro with arguments contains occurrences
      * of ARG_MARK, issue an error message and suppress the macro.
      */
-    if ((def_argc > 1) && strchr(head, ARG_MARK))
-    {
+    if ((def_argc > 1) && strchr(head, ARG_MARK)) {
         emit_pathline(istack);
         error_count += 1;
         def_argc = 0;
 
-        fprintf
-        (
-            stderr,
-            "error: implementation restriction - macro text may not contain a %s character\n",
-            _STR2(ARG_MARK)
-        );
+        fprintf(stderr, "error: implementation restriction - "
+	        "macro text may not contain a %s character\n", _STR2(ARG_MARK));
     }
 
     /* Look for formal argument names in the definition, and replace
@@ -1162,18 +1081,15 @@ static void do_define(void)
      * the  formal argument index number.
      */
     added_cnt = 0;
-    for (arg = 1; arg < def_argc; arg++)
-    {
+    for (arg = 1; arg < def_argc; arg++) {
         int argl = def_argl[arg];
 
         cp = find_arg(head, head, def_argv(arg));
 
-        while (cp && *cp)
-        {
+        while (cp && *cp) {
             added_cnt += 2 - argl;
 
-            if (added_cnt > 0)
-            {
+            if (added_cnt > 0) {
                 char* base = define_text;
 
                 define_cnt += added_cnt;
@@ -1216,13 +1132,11 @@ static void def_finish(void)
 {
     define_continue_flag = 0;
 
-    if (def_argc <= 0)
-        return;
+    if (def_argc <= 0) return;
 
-    if (!define_text)
+    if (!define_text) {
         define_macro(def_argv(0), "", 0, def_argc);
-    else
-    {
+    } else {
         define_macro(def_argv(0), define_text, 0, def_argc);
 
         free(define_text);
@@ -1251,24 +1165,18 @@ static void def_undefine(void)
     if (cur == 0) return;
     if (cur->magic) return;
 
-    if (cur->up == 0)
-    {
-        if ((cur->left == 0) && (cur->right == 0))
+    if (cur->up == 0) {
+        if ((cur->left == 0) && (cur->right == 0)) {
             def_table = 0;
-        else if (cur->left == 0)
-        {
+        } else if (cur->left == 0) {
             def_table = cur->right;
             if (cur->right)
             cur->right->up = 0;
-        }
-        else if (cur->right == 0)
-        {
+        } else if (cur->right == 0) {
             assert(cur->left);
             def_table = cur->left;
             def_table->up = 0;
-        }
-        else
-        {
+        } else {
             tail = cur->left;
             while (tail->right)
                 tail = tail->right;
@@ -1279,50 +1187,40 @@ static void def_undefine(void)
             def_table = cur->left;
             def_table->up = 0;
         }
-    }
-    else if (cur->left == 0)
-    {
-        if (cur->up->left == cur)
+    } else if (cur->left == 0) {
+        if (cur->up->left == cur) {
             cur->up->left = cur->right;
-        else
-        {
+        } else {
             assert(cur->up->right == cur);
             cur->up->right = cur->right;
         }
 
-        if (cur->right)
-            cur->right->up = cur->up;
+        if (cur->right) cur->right->up = cur->up;
     }
-    else if (cur->right == 0)
-    {
+    else if (cur->right == 0) {
         assert(cur->left);
 
-        if (cur->up->left == cur)
+        if (cur->up->left == cur) {
             cur->up->left = cur->left;
-        else
-        {
+        } else {
             assert(cur->up->right == cur);
             cur->up->right = cur->left;
         }
 
         cur->left->up = cur->up;
-    }
-    else
-    {
+    } else {
         tail = cur->left;
 
         assert(cur->left && cur->right);
 
-        while (tail->right)
-            tail = tail->right;
+        while (tail->right) tail = tail->right;
 
         tail->right = cur->right;
         tail->right->up = tail;
 
-        if (cur->up->left == cur)
+        if (cur->up->left == cur) {
             cur->up->left = cur->left;
-        else
-        {
+        } else {
             assert(cur->up->right == cur);
             cur->up->right = cur->left;
         }
@@ -1332,8 +1230,7 @@ static void def_undefine(void)
 
     free(cur->name);
     free(cur->value);
-    for (idx = 0 ; idx < cur->argc ; idx += 1)
-	  free(cur->defaults[idx]);
+    for (idx = 0 ; idx < cur->argc ; idx += 1) free(cur->defaults[idx]);
     free(cur->defaults);
     free(cur);
 }
@@ -1350,10 +1247,9 @@ static int macro_needs_args(const char*text)
 {
     cur_macro = def_lookup(text);
 
-    if (cur_macro)
+    if (cur_macro) {
         return (cur_macro->argc > 1);
-    else
-    {
+    } else {
         emit_pathline(istack);
         fprintf(stderr, "warning: macro %s undefined (and assumed null) at this point.\n", text);
         return 0;
@@ -1386,8 +1282,7 @@ static void macro_add_to_arg(int is_white_space)
     check_for_max_args();
 
     /* Replace any run of white space with a single space */
-    if (is_white_space)
-    {
+    if (is_white_space) {
         yytext[0] = ' ';
         yytext[1] = 0;
         length = 1;
@@ -1435,8 +1330,7 @@ static int  exp_buf_free = 0;
 
 static void exp_buf_grow_to_fit(int length)
 {
-    while (length >= exp_buf_free)
-    {
+    while (length >= exp_buf_free) {
         exp_buf_size += EXP_BUF_CHUNK;
         exp_buf_free += EXP_BUF_CHUNK;
         exp_buf = realloc(exp_buf, exp_buf_size);
@@ -1451,8 +1345,7 @@ static void expand_using_args(void)
     int arg;
     int length;
 
-    if (def_argc != cur_macro->argc)
-    {
+    if (def_argc != cur_macro->argc) {
         emit_pathline(istack);
         fprintf(stderr, "error: wrong number of arguments for `%s\n", cur_macro->name);
         return;
@@ -1461,12 +1354,10 @@ static void expand_using_args(void)
     head = cur_macro->value;
     tail = head;
 
-    while (*tail)
-    {
-        if (*tail != ARG_MARK)
+    while (*tail) {
+        if (*tail != ARG_MARK) {
             tail++;
-        else
-        {
+        } else {
             arg = tail[1]; assert(arg < def_argc);
 
             char*use_argv;
@@ -1508,17 +1399,14 @@ static void expand_using_args(void)
  */
 static void do_expand(int use_args)
 {
-    if (cur_macro)
-    {
+    if (cur_macro) {
         struct include_stack_t*isp;
         int head = 0;
-        int tail = 0;
         const char *cp;
         unsigned escapes = 0;
         char *str_buf = 0;
 
-        if (cur_macro->keyword)
-        {
+        if (cur_macro->keyword) {
             fprintf(yyout, "%s", cur_macro->value);
 	    if (do_expand_stringify_flag) {
 		do_expand_stringify_flag = 0;
@@ -1527,33 +1415,27 @@ static void do_expand(int use_args)
             return;
         }
 
-        if (use_args)
-        {
+        if (use_args) {
+	    int tail = 0;
             head = exp_buf_size - exp_buf_free;
             expand_using_args();
             tail = exp_buf_size - exp_buf_free;
             exp_buf_free += tail - head;
 
-            if (tail == head)
-                return;
+            if (tail == head) return;
         }
 
         isp = (struct include_stack_t*) calloc(1, sizeof(struct include_stack_t));
 
 	isp->stringify_flag = do_expand_stringify_flag;
 	do_expand_stringify_flag = 0;
-        if (use_args)
-        {
+        if (use_args) {
             isp->str = &exp_buf[head];
-        }
-        else if(cur_macro->magic)
-        {
+        } else if(cur_macro->magic) {
             // cast const char * to char * to suppress warning, since we won't
             // be modifying isp->str in place.
             isp->str = (char*)do_magic(cur_macro->name);
-        }
-        else
-        {
+        } else {
             isp->str = cur_macro->value;
         }
 
@@ -1588,8 +1470,7 @@ static void do_expand(int use_args)
             exp_buf_free -= idx;
 
             isp->str = str_buf;
-        } else
-            isp->str = strdup(isp->str);
+        } else isp->str = strdup(isp->str);
 
         isp->orig_str = isp->str;
         isp->next = istack;
@@ -1612,21 +1493,16 @@ static const char* do_magic(const char*name)
 {
     size_t desired_cnt = 0;
 
-    if(!magic_text)
-    {
-        magic_text = malloc(24); // unimportant initial size
-    }
+    if(!magic_text) magic_text = malloc(24); // unimportant initial size
 
-    if(!strcmp(name, "__LINE__"))
-    {
+    if(!strcmp(name, "__LINE__")) {
         // istack->lineno is unsigned. the largest it could be is 64 bits.
         // 2^64 is between 10^19 and 10^20. So the decimal representation of
         // lineno can't possibly be longer than 23 bytes. I'm generous but
         // bytes are cheap and this is nobody's critical path.
         desired_cnt = 24;
 
-        if(magic_cnt < desired_cnt)
-        {
+        if(magic_cnt < desired_cnt) {
             magic_text = realloc(magic_text, desired_cnt);
             assert(magic_text);
             magic_cnt = desired_cnt;
@@ -1637,17 +1513,12 @@ static const char* do_magic(const char*name)
         assert(actual_len >= 0);
         assert((unsigned) actual_len < desired_cnt);
         return magic_text;
-    }
-    else if(!strcmp(name, "__FILE__"))
-    {
+    } else if(!strcmp(name, "__FILE__")) {
         const char *path = get_path(istack);
-        if(path)
-        {
-
+        if(path) {
             desired_cnt = strlen(path)+2+1; // two quotes and a null
 
-            if(magic_cnt < desired_cnt)
-            {
+            if(magic_cnt < desired_cnt) {
                 magic_text = realloc(magic_text, desired_cnt);
                 assert(magic_text);
                 magic_cnt = desired_cnt;
@@ -1689,19 +1560,17 @@ static const char* do_magic(const char*name)
 
 static void output_init(void)
 {
-    if (line_direct_flag)
+    if (line_direct_flag) {
         fprintf(yyout, "`line 1 \"%s\" 0\n", istack->path);
+    }
 }
 
 static void include_filename(void)
 {
     if(standby) {
         emit_pathline(istack);
-        fprintf
-        (
-            stderr,
-            "error: malformed `include directive. Extra junk on line?\n"
-        );
+        fprintf(stderr,
+                "error: malformed `include directive. Extra junk on line?\n");
         exit(1);
     }
 
@@ -1728,8 +1597,7 @@ static void do_include(void)
 
         /* Add the current path to the start of the include_dir list. */
         isp = istack;
-        while(isp && (isp->path == NULL))
-	    isp = isp->next;
+        while(isp && (isp->path == NULL)) isp = isp->next;
 
         assert(isp);
 
@@ -1775,8 +1643,9 @@ code_that_switches_buffers:
         }
     }
 
-    if (line_direct_flag)
+    if (line_direct_flag) {
         fprintf(yyout, "\n`line 1 \"%s\" 1\n", standby->path);
+    }
 
     standby->next = istack;
     standby->stringify_flag = 0;
@@ -1796,8 +1665,7 @@ code_that_switches_buffers:
  */
 static unsigned get_line(struct include_stack_t* isp)
 {
-    while(isp && (isp->path == NULL))
-        isp = isp->next;
+    while(isp && (isp->path == NULL)) isp = isp->next;
 
     assert(isp);
 
@@ -1811,8 +1679,7 @@ static unsigned get_line(struct include_stack_t* isp)
  */
 static const char* get_path(struct include_stack_t* isp)
 {
-    while(isp && (isp->path == NULL))
-        isp = isp->next;
+    while(isp && (isp->path == NULL)) isp = isp->next;
 
     assert(isp);
 
@@ -1827,8 +1694,7 @@ static const char* get_path(struct include_stack_t* isp)
  */
 static void emit_pathline(struct include_stack_t* isp)
 {
-    while(isp && (isp->path == NULL))
-        isp = isp->next;
+    while(isp && (isp->path == NULL)) isp = isp->next;
 
     assert(isp);
 
@@ -1837,17 +1703,12 @@ static void emit_pathline(struct include_stack_t* isp)
 
 static void lexor_done(void)
 {
-    while (ifdef_stack)
-    {
+    while (ifdef_stack) {
         struct ifdef_stack_t*cur = ifdef_stack;
         ifdef_stack = cur->next;
 
-        fprintf
-        (
-            stderr,
-            "%s:%u: error: This `ifdef lacks an `endif.\n",
-            cur->path, cur->lineno+1
-        );
+        fprintf(stderr, "%s:%u: error: This `ifdef lacks an `endif.\n",
+                cur->path, cur->lineno+1);
 
         free(cur->path);
         free(cur);
@@ -1904,8 +1765,7 @@ static void open_input_file(struct include_stack_t*isp)
       char*cmd = malloc(cmdlen);
       snprintf(cmd, cmdlen, "%s -w\"%s\"%s %s", vhdlpp_path, vhdlpp_work, libs, isp->path);
 
-      if (verbose_flag)
-	    fprintf(stderr, "Invoke vhdlpp: %s\n", cmd);
+      if (verbose_flag) fprintf(stderr, "Invoke vhdlpp: %s\n", cmd);
 
       isp->file = popen(cmd, "r");
       isp->file_close = pclose;
@@ -1943,29 +1803,23 @@ static int load_next_input(void)
         isp->comment = NULL;
     }
 
-    if (isp->file)
-    {
+    if (isp->file) {
         free(isp->path);
 	assert(isp->file_close);
         isp->file_close(isp->file);
-    }
-    else
-    {
+    } else {
         /* If I am printing line directives and I just finished
          * macro substitution, I should terminate the line and
          * arrange for a new directive to be printed.
          */
-        if (line_direct_flag && istack && istack->path && isp->lineno)
+        if (line_direct_flag && istack && istack->path && isp->lineno) {
             fprintf(yyout, "\n");
-        else
-            line_mask_flag = 1;
+        } else line_mask_flag = 1;
 
         free(isp->orig_str);
     }
 
-    if (isp->stringify_flag) {
-	  fputc('"', yyout);
-    }
+    if (isp->stringify_flag) fputc('"', yyout);
 
     free(isp);
 
@@ -1974,10 +1828,8 @@ static int load_next_input(void)
      * queue. If none are there, give up. Otherwise, open the file
      * and continue parsing.
      */
-    if (istack == 0)
-    {
-        if (file_queue == 0)
-        {
+    if (istack == 0) {
+        if (file_queue == 0) {
             lexor_done();
             return 0;
         }
@@ -1989,15 +1841,15 @@ static int load_next_input(void)
         istack->lineno = 0;
         open_input_file(istack);
 
-        if (istack->file == 0)
-        {
+        if (istack->file == 0) {
             perror(istack->path);
             error_count += 1;
             return 0;
         }
 
-        if (line_direct_flag)
+        if (line_direct_flag) {
             fprintf(yyout, "\n`line 1 \"%s\" 0\n", istack->path);
+	}
 
         if (depend_file) {
             if (dep_mode == 'p') {
@@ -2022,8 +1874,9 @@ static int load_next_input(void)
      */
     yy_switch_to_buffer(istack->yybs);
 
-    if (line_direct_flag && istack->path && !line_mask_flag)
+    if (line_direct_flag && istack->path && !line_mask_flag) {
         fprintf(yyout, "\n`line %u \"%s\" 2\n", istack->lineno+1, istack->path);
+    }
 
     return 1;
 }
@@ -2051,17 +1904,14 @@ static void do_dump_precompiled_defines(FILE* out, struct define_t* table)
         fprintf(out, "%s:%d:%zd:%s\n", table->name, table->argc, strlen(table->value), table->value);
 #endif
 
-    if (table->left)
-        do_dump_precompiled_defines(out, table->left);
+    if (table->left) do_dump_precompiled_defines(out, table->left);
 
-    if (table->right)
-        do_dump_precompiled_defines(out, table->right);
+    if (table->right) do_dump_precompiled_defines(out, table->right);
 }
 
 void dump_precompiled_defines(FILE* out)
 {
-    if (def_table)
-        do_dump_precompiled_defines(out, def_table);
+    if (def_table) do_dump_precompiled_defines(out, def_table);
 }
 
 void load_precompiled_defines(FILE* src)
@@ -2070,8 +1920,7 @@ void load_precompiled_defines(FILE* src)
     size_t buf_len = 4096;
     int ch;
 
-    while ((ch = fgetc(src)) != EOF)
-    {
+    while ((ch = fgetc(src)) != EOF) {
         char* cp = buf;
         char* name = 0;
 
@@ -2086,26 +1935,21 @@ void load_precompiled_defines(FILE* src)
 	    assert( (size_t)(cp-buf) < buf_len );
 	}
 
-        if (ch != ':')
-            return;
+        if (ch != ':') return;
 
         /* Terminate the name string. */
         *cp++ = 0;
 	assert( (size_t)(cp-buf) < buf_len );
 
         /* Read the argc number. (this doesn't need buffer space) */
-        while (isdigit(ch = fgetc(src)))
-            argc = 10*argc + ch-'0';
+        while (isdigit(ch = fgetc(src))) argc = 10*argc + ch-'0';
 
-        if (ch != ':')
-	    return;
+        if (ch != ':') return;
 
 	  /* Read the value len (this doesn't need buffer space) */
-        while (isdigit(ch = fgetc(src)))
-            len = 10*len + ch-'0';
+        while (isdigit(ch = fgetc(src))) len = 10*len + ch-'0';
 
-        if (ch != ':')
-	    return;
+        if (ch != ':') return;
 
 	  /* Save the name, and start the buffer over. */
 	name = strdup(buf);
@@ -2119,8 +1963,7 @@ void load_precompiled_defines(FILE* src)
 
 	cp = buf;
 
-        while (len > 0)
-        {
+        while (len > 0) {
             ch = fgetc(src);
             if (ch == EOF) {
 		  free(name);
@@ -2165,8 +2008,7 @@ void reset_lexor(FILE* out, char* paths[])
     isp->stringify_flag = 0;
     isp->comment = NULL;
 
-    if (isp->file == 0)
-    {
+    if (isp->file == 0) {
         perror(paths[0]);
         exit(1);
     }
@@ -2189,8 +2031,7 @@ void reset_lexor(FILE* out, char* paths[])
     /* Now build up a queue of all the remaining file names, so
      * that load_next_input() can pull them when needed.
      */
-    for (idx = 1 ; paths[idx] ; idx += 1)
-    {
+    for (idx = 1 ; paths[idx] ; idx += 1) {
         isp = malloc(sizeof(struct include_stack_t));
         isp->path = strdup(paths[idx]);
         isp->file = 0;
@@ -2200,10 +2041,8 @@ void reset_lexor(FILE* out, char* paths[])
         isp->stringify_flag = 0;
         isp->comment = NULL;
 
-        if (tail)
-            tail->next = isp;
-        else
-            file_queue = isp;
+        if (tail) tail->next = isp;
+        else file_queue = isp;
 
         tail = isp;
     }
