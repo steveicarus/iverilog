@@ -248,6 +248,7 @@ struct vthread_s {
       unsigned i_am_detached     :1;
       unsigned i_am_waiting      :1;
       unsigned i_have_ended      :1;
+      unsigned i_was_disabled    :1;
       unsigned waiting_for_event :1;
       unsigned is_scheduled      :1;
       unsigned delay_delete      :1;
@@ -271,6 +272,12 @@ struct vthread_s {
 
       inline void cleanup()
       {
+	    if (i_was_disabled) {
+		  stack_vec4_.clear();
+		  stack_real_.clear();
+		  stack_str_.clear();
+		  pop_object(stack_obj_size_);
+	    }
 	    assert(stack_vec4_.empty());
 	    assert(stack_real_.empty());
 	    assert(stack_str_.empty());
@@ -499,6 +506,7 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       thr->i_am_waiting  = 0;
       thr->is_scheduled  = 0;
       thr->i_have_ended  = 0;
+      thr->i_was_disabled = 0;
       thr->delay_delete  = 0;
       thr->waiting_for_event = 0;
       thr->event  = 0;
@@ -2173,6 +2181,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
 	/* Turn the thread off by setting is program counter to
 	   zero and setting an OFF bit. */
       thr->pc = codespace_null();
+      thr->i_was_disabled = 1;
       thr->i_have_ended = 1;
 
 	/* Turn off all the children of the thread. Simulate a %join
