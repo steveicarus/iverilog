@@ -50,22 +50,6 @@ extern const char hex_digits[256];
 extern const char oct_digits[64];
 
 
-
-#ifdef CHECK_WITH_VALGRIND
-static map<vpiHandle, bool> handle_map;
-
-void thread_vthr_delete(vpiHandle item)
-{
-      handle_map[item] = true;
-}
-
-static void thread_vthr_delete_real(vpiHandle item)
-{
-      struct __vpiVThrVec*obj = dynamic_cast<__vpiVThrVec*>(item);
-      delete obj;
-}
-#endif
-
 struct __vpiVThrWord : public __vpiHandle {
       __vpiVThrWord();
       int get_type_code(void) const;
@@ -200,6 +184,8 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 }
 
 #ifdef CHECK_WITH_VALGRIND
+static map<vpiHandle, bool> handle_map;
+
 void thread_word_delete(vpiHandle item)
 {
       handle_map[item] = false;
@@ -209,15 +195,6 @@ static void thread_word_delete_real(vpiHandle item)
 {
       struct __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(item);
       delete obj;
-}
-
-void vpi_handle_delete()
-{
-      map<vpiHandle, bool>::iterator iter;
-      for (iter = handle_map.begin(); iter != handle_map.end(); ++ iter ) {
-	    if (iter->second) thread_vthr_delete_real(iter->first);
-	    else thread_word_delete_real(iter->first);
-      }
 }
 #endif
 
@@ -546,6 +523,29 @@ vpiHandle __vpiVThrVec4Stack::vpi_put_value(p_vpi_value vp, int /*flags*/)
 	    return 0;
       }
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void thread_vthr_delete(vpiHandle item)
+{
+      handle_map[item] = true;
+}
+
+static void thread_vthr_delete_real(vpiHandle item)
+{
+      class __vpiVThrVec4Stack*obj = dynamic_cast<__vpiVThrVec4Stack*>(item);
+      delete obj;
+}
+
+void vpi_handle_delete()
+{
+      map<vpiHandle, bool>::iterator iter;
+      for (iter = handle_map.begin(); iter != handle_map.end(); ++ iter ) {
+	    if (iter->second) thread_vthr_delete_real(iter->first);
+	    else thread_word_delete_real(iter->first);
+      }
+}
+#endif
+
 
 vpiHandle vpip_make_vthr_str_stack(unsigned depth)
 {
