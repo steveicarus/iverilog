@@ -562,8 +562,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <statement> udp_initial udp_init_opt
 %type <expr>    udp_initial_expr_opt
 
-%type <text> register_variable net_variable endlabel_opt class_declaration_endlabel_opt
-%type <perm_strings> register_variable_list net_variable_list
+%type <text> register_variable net_variable event_variable endlabel_opt class_declaration_endlabel_opt
+%type <perm_strings> register_variable_list net_variable_list event_variable_list
 %type <perm_strings> list_of_identifiers loop_variables
 %type <port_list> list_of_port_identifiers
 
@@ -2186,8 +2186,8 @@ block_item_decl
       { if ($2) pform_set_data_type(@2, $2, $3, NetNet::REG, attributes_in_context);
       }
 
-  | K_event list_of_identifiers ';'
-      { pform_make_events($2, @1.text, @1.first_line);
+  | K_event event_variable_list ';'
+      { if ($2) pform_make_events($2, @1.text, @1.first_line);
       }
 
   | K_parameter param_type parameter_assign_list ';'
@@ -5337,6 +5337,23 @@ net_variable_list
 		  delete[]$3;
 		}
 	;
+
+event_variable
+  : IDENTIFIER dimensions_opt
+      { if ($2) {
+	      yyerror(@2, "sorry: event arrays are not supported.");
+	      delete $2;
+	}
+	$$ = $1;
+      }
+  ;
+
+event_variable_list
+  : event_variable
+      { $$ = list_from_identifier($1); }
+  | event_variable_list ',' event_variable
+      { $$ = list_from_identifier($1, $3); }
+  ;
 
 specify_item
 	: K_specparam specparam_decl ';'
