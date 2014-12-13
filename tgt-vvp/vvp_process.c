@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1683,7 +1683,28 @@ static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
       unsigned lab_top = local_count++, lab_out = local_count++;
       ivl_expr_t expr = ivl_stmt_cond_expr(net);
-      struct vector_info cnt = draw_eval_expr(expr, 0);
+      struct vector_info cnt;
+      if (ivl_expr_value(expr) == IVL_VT_REAL) {
+	    int word = draw_eval_real(expr);
+	      // 64 bit should be enough for any real use case.
+	    cnt.base = allocate_vector(64);
+	    cnt.wid = 64;
+
+	    if (cnt.base == 0) {
+		  fprintf(stderr, "%s:%u: vvp.tgt error: "
+			  "Unable to allocate %u thread bits for "
+			  "repeat expression.\n", ivl_expr_file(expr),
+			  ivl_expr_lineno(expr), cnt.wid);
+		  vvp_errors += 1;
+	    }
+
+	    fprintf(vvp_out, "    %%cvt/vr %u, %d, %u;\n",
+		    cnt.base, word, cnt.wid);
+
+	    clr_word(word);
+      } else {
+	    cnt = draw_eval_expr(expr, 0);
+      }
       const char *sign = ivl_expr_signed(expr) ? "s" : "u";
 
 	/* Test that 0 < expr */
