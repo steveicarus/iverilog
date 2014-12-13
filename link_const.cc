@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,6 +41,14 @@ bool Nexus::drivers_constant() const
 		 can't be treated as constant. */
 	    const NetNet*sig = dynamic_cast<const NetNet*>(cur->get_obj());
 	    if (sig && (sig->peek_lref() > 0)) {
+		  driven_ = VAR;
+		  return false;
+	    }
+
+	      /* If we are connected to a tran, there may be a driver
+		 on the other side of the tran. We could try checking
+		 for this, but for now, be pessimistic. */
+	    if (dynamic_cast<const NetTran*>(cur->get_obj())) {
 		  driven_ = VAR;
 		  return false;
 	    }
