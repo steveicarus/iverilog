@@ -5013,6 +5013,10 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return 0;
       }
+	// If the expression is real, convert to an integer. 64 bits
+	// should be more enough for any real use case.
+      if (expr->expr_type() == IVL_VT_REAL)
+	    expr = cast_to_int4(expr, 64);
 
       NetProc*stat = statement_->elaborate(des, scope);
       if (stat == 0) return 0;
