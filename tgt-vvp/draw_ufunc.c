@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,7 +36,6 @@ static void function_argument_logic(ivl_signal_t port, ivl_expr_t expr)
       if (ewidth < pwidth)
 	    fprintf(vvp_out, "    %%pad/u %u;\n", pwidth);
 
-      fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", port, pwidth);
 }
 
 static void function_argument_real(ivl_signal_t port, ivl_expr_t expr)
@@ -45,54 +44,57 @@ static void function_argument_real(ivl_signal_t port, ivl_expr_t expr)
       assert(ivl_signal_dimensions(port) == 0);
 
       draw_eval_real(expr);
-      fprintf(vvp_out, "    %%store/real v%p_0;\n", port);
 }
 
-static void function_argument_bool(ivl_signal_t port, ivl_expr_t expr)
-{
-	/* For now, treat bit2 variables as bit4 variables. */
-      function_argument_logic(port, expr);
-}
-
-static void function_argument_class(ivl_signal_t port, ivl_expr_t expr)
-{
-      draw_eval_object(expr);
-      fprintf(vvp_out, "    %%store/obj v%p_0;\n", port);
-}
-
-static void function_argument_darray(ivl_signal_t port, ivl_expr_t expr)
-{
-      draw_eval_object(expr);
-      fprintf(vvp_out, "    %%store/obj v%p_0;\n", port);
-}
-
-static void function_argument_string(ivl_signal_t port, ivl_expr_t expr)
-{
-      draw_eval_string(expr);
-      fprintf(vvp_out, "    %%store/str v%p_0;\n", port);
-}
-
-static void draw_function_argument(ivl_signal_t port, ivl_expr_t expr)
+static void draw_eval_function_argument(ivl_signal_t port, ivl_expr_t expr)
 {
       ivl_variable_type_t dtype = ivl_signal_data_type(port);
       switch (dtype) {
+	  case IVL_VT_BOOL:
+	      /* For now, treat bit2 variables as bit4 variables. */
 	  case IVL_VT_LOGIC:
 	    function_argument_logic(port, expr);
 	    break;
 	  case IVL_VT_REAL:
 	    function_argument_real(port, expr);
 	    break;
-	  case IVL_VT_BOOL:
-	    function_argument_bool(port, expr);
-	    break;
 	  case IVL_VT_CLASS:
-	    function_argument_class(port, expr);
+	    draw_eval_object(expr);
 	    break;
 	  case IVL_VT_STRING:
-	    function_argument_string(port, expr);
+	    draw_eval_string(expr);
 	    break;
 	  case IVL_VT_DARRAY:
-	    function_argument_darray(port, expr);
+	    draw_eval_object(expr);
+	    break;
+	  default:
+	    fprintf(stderr, "XXXX function argument %s type=%d?!\n",
+		    ivl_signal_basename(port), dtype);
+	    assert(0);
+      }
+}
+
+static void draw_send_function_argument(ivl_signal_t port)
+{
+      ivl_variable_type_t dtype = ivl_signal_data_type(port);
+      switch (dtype) {
+	  case IVL_VT_BOOL:
+	      /* For now, treat bit2 variables as bit4 variables. */
+	  case IVL_VT_LOGIC:
+	    fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n",
+				      port, ivl_signal_width(port));
+	    break;
+	  case IVL_VT_REAL:
+	    fprintf(vvp_out, "    %%store/real v%p_0;\n", port);
+	    break;
+	  case IVL_VT_CLASS:
+	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", port);
+	    break;
+	  case IVL_VT_STRING:
+	    fprintf(vvp_out, "    %%store/str v%p_0;\n", port);
+	    break;
+	  case IVL_VT_DARRAY:
+	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", port);
 	    break;
 	  default:
 	    fprintf(stderr, "XXXX function argument %s type=%d?!\n",
@@ -111,13 +113,20 @@ static void draw_ufunc_preamble(ivl_expr_t expr)
             fprintf(vvp_out, "    %%alloc S_%p;\n", def);
       }
 
-	/* evaluate the expressions and send the results to the
-	   function ports. */
+	/* Evaluate the expressions and send the results to the
+	   function ports. Do this in two passes - evaluate,
+	   then send - this avoids the function input variables
+	   being overwritten if the same (non-automatic) function
+	   is called in one of the exressions. */
 
       assert(ivl_expr_parms(expr) == (ivl_scope_ports(def)-1));
       for (idx = 0 ;  idx < ivl_expr_parms(expr) ;  idx += 1) {
 	    ivl_signal_t port = ivl_scope_port(def, idx+1);
-	    draw_function_argument(port, ivl_expr_parm(expr, idx));
+	    draw_eval_function_argument(port, ivl_expr_parm(expr, idx));
+      }
+      for (idx = ivl_expr_parms(expr) ;  idx > 0 ;  idx -= 1) {
+	    ivl_signal_t port = ivl_scope_port(def, idx);
+	    draw_send_function_argument(port);
       }
 
 	/* Call the function */
