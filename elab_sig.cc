@@ -1194,7 +1194,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  cerr << " in scope " << scope_path(scope) << endl;
 	    }
 
-	    sig = new NetNet(scope, name_, wtype, use_type);
+	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_type);
 
       } else if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(set_data_type_)) {
 	    list<named_pexpr_t>::const_iterator sample_name = enum_type->names->begin();
