@@ -593,8 +593,11 @@ PWire*pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_type, NetN
       return cur;
 }
 
-void pform_set_typedef(perm_string name, data_type_t*data_type)
+void pform_set_typedef(perm_string name, data_type_t*data_type, std::list<pform_range_t>*unp_ranges)
 {
+      if(unp_ranges)
+	    data_type = new uarray_type_t(data_type, unp_ranges);
+
 	// If we are in a lexical scope (i.e. a package or module)
 	// then put the typedef into that scope. Otherwise, put it
 	// into the $root scope.
@@ -1939,7 +1942,6 @@ static void pform_set_net_range(list<perm_string>*names,
 	    pform_set_net_range(txt, net_type, range, signed_flag, dt, SR_NET, attr);
       }
 
-      delete names;
 }
 
 /*
@@ -3171,7 +3173,6 @@ static void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_
 	    perm_string txt = *cur;
 	    pform_set_integer_2atom(width, signed_flag, txt, net_type, attr);
       }
-      delete names;
 }
 
 template <class T> static void pform_set2_data_type(const struct vlltype&li, T*data_type, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
@@ -3247,7 +3248,6 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
 	    pform_set_enum(li, enum_type, txt, net_type, attr);
       }
 
-      delete names;
 }
 
 /*
@@ -3256,58 +3256,68 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
  */
 void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
+      const std::list<pform_range_t>*unpacked_dims = NULL;
+
       if (data_type == 0) {
 	    VLerror(li, "internal error: data_type==0.");
 	    assert(0);
       }
 
+      if(uarray_type_t*uarray_type = dynamic_cast<uarray_type_t*> (data_type)) {
+            unpacked_dims = uarray_type->dims.get();
+            data_type = uarray_type->base_type;
+      }
+
       if (atom2_type_t*atom2_type = dynamic_cast<atom2_type_t*> (data_type)) {
 	    pform_set_integer_2atom(atom2_type->type_code, atom2_type->signed_flag, names, net_type, attr);
-	    return;
       }
 
-      if (struct_type_t*struct_type = dynamic_cast<struct_type_t*> (data_type)) {
+      else if (struct_type_t*struct_type = dynamic_cast<struct_type_t*> (data_type)) {
 	    pform_set_struct_type(struct_type, names, net_type, attr);
-	    return;
       }
 
-      if (enum_type_t*enum_type = dynamic_cast<enum_type_t*> (data_type)) {
+      else if (enum_type_t*enum_type = dynamic_cast<enum_type_t*> (data_type)) {
 	    pform_set_enum(li, enum_type, names, net_type, attr);
-	    return;
       }
 
-      if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (data_type)) {
+      else if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (data_type)) {
 	    if (net_type==NetNet::REG && vec_type->integer_flag)
 		  net_type=NetNet::INTEGER;
 
 	    pform_set_net_range(names, vec_type->pdims.get(),
 				vec_type->signed_flag,
 				vec_type->base_type, net_type, attr);
-	    return;
       }
 
-      if (/*real_type_t*real_type =*/ dynamic_cast<real_type_t*> (data_type)) {
+      else if (/*real_type_t*real_type =*/ dynamic_cast<real_type_t*> (data_type)) {
 	    pform_set_net_range(names, 0, true, IVL_VT_REAL, net_type, attr);
-	    return;
       }
 
-      if (class_type_t*class_type = dynamic_cast<class_type_t*> (data_type)) {
+      else if (class_type_t*class_type = dynamic_cast<class_type_t*> (data_type)) {
 	    pform_set_class_type(class_type, names, net_type, attr);
-	    return;
       }
 
-      if (parray_type_t*array_type = dynamic_cast<parray_type_t*> (data_type)) {
+      else if (parray_type_t*array_type = dynamic_cast<parray_type_t*> (data_type)) {
 	    pform_set2_data_type(li, array_type, names, net_type, attr);
-	    return;
       }
 
-      if (string_type_t*string_type = dynamic_cast<string_type_t*> (data_type)) {
+      else if (string_type_t*string_type = dynamic_cast<string_type_t*> (data_type)) {
 	    pform_set_string_type(string_type, names, net_type, attr);
-	    return;
+
+      } else {
+	    VLerror(li, "internal error: Unexpected data_type.");
+	    assert(0);
       }
 
-      VLerror(li, "internal error: Unexpected data_type.");
-      assert(0);
+      if(unpacked_dims) {
+	    for (list<perm_string>::iterator cur = names->begin()
+                    ; cur != names->end() ; ++ cur ) {
+		PWire*wire = pform_get_wire_in_scope(*cur);
+		wire->set_unpacked_idx(*unpacked_dims);
+	    }
+      }
+
+      delete names;
 }
 
 vector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)

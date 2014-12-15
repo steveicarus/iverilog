@@ -287,7 +287,8 @@ extern void pform_endgenerate();
  */
 extern PGenerate* pform_parent_generate(void);
 
-extern void pform_set_typedef(perm_string name, data_type_t*data_type);
+extern void pform_set_typedef(perm_string name, data_type_t*data_type,
+			      std::list<pform_range_t>*unp_ranges);
 
 /*
  * This function makes a PECallFunction of the named function. Decide
