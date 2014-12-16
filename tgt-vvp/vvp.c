@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -59,7 +59,10 @@ __inline__ static void draw_execute_header(ivl_design_t des)
 {
       const char*cp = ivl_design_flag(des, "VVP_EXECUTABLE");
       if (cp) {
-	    fprintf(vvp_out, "#! %s\n", cp);
+	    const char *extra_args = ivl_design_flag(des, "VVP_EXTRA_ARGS");
+	    if (!extra_args)
+		  extra_args = "";
+	    fprintf(vvp_out, "#! %s%s\n", cp, extra_args);
 #if !defined(__MINGW32__)
 	    fchmod(fileno(vvp_out), 0755);
 #endif

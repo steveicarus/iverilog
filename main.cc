@@ -859,6 +859,7 @@ int main(int argc, char*argv[])
 #          if defined(HAVE_TIMES)
 	    times_flag = true;
 #          endif
+	    flags["VVP_EXTRA_ARGS"] = strdup(" -v");
 	    break;
 	  case 'V':
 	    version_flag = true;

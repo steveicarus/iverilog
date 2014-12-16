@@ -1,4 +1,4 @@
-.TH iverilog 1 "February 26th, 2014" "" "Version %M.%m.%n %E"
+.TH iverilog 1 "December 16th, 2014" "" "Version %M.%m.%n %E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -213,6 +213,12 @@ a reference to a key temporary file that passes information to the
 compiler proper.  To keep that file from being deleted at the end
 of the process, provide a file name of your own in the environment
 variable \fBIVERILOG_ICONFIG\fP.
+
+If the selected target is \fIvvp\fP, the \fB\-v\fP switch is appended
+to the shebang line in the compiler output file, so directly executing
+the compiler output file will turn on verbose messages in \fIvvp\fP.
+This extra verbosity can be avoided by using the \fIvvp\fP command to
+indirectly execute the compiler output file.
 .TP 8
 .B -V
 Print the version of the compiler, and exit.
