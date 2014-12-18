@@ -108,6 +108,7 @@ static string make_library_package_path(perm_string lib_name, perm_string name)
 
 static void import_ieee(void);
 static void import_ieee_use(ActiveScope*res, perm_string package, perm_string name);
+static void import_std_use(const YYLTYPE&loc, ActiveScope*res, perm_string package, perm_string name);
 
 static void dump_library_package(ostream&file, perm_string lname, perm_string pname, Package*pack)
 {
@@ -211,6 +212,9 @@ void library_import(const YYLTYPE&loc, const std::list<perm_string>*names)
 		    // The ieee library is special and handled by an
 		    // internal function.
 		  import_ieee();
+	    } else if (*cur == "std") {
+		    // The std library is always implicitly imported.
+
 	    } else if (*cur == "work") {
 		    // The work library is always implicitly imported.
 
@@ -236,6 +240,11 @@ void library_use(const YYLTYPE&loc, ActiveScope*res,
 	// Special case handling for the IEEE library.
       if (use_library == "ieee") {
 	    import_ieee_use(res, use_package, use_name);
+	    return;
+      }
+	// Special case handling for the STD library.
+      if (use_library == "std") {
+	    import_std_use(loc, res, use_package, use_name);
 	    return;
       }
 
@@ -357,6 +366,20 @@ static void import_ieee_use(ActiveScope*res, perm_string package, perm_string na
 
       if (package == "numeric_std") {
 	    import_ieee_use_numeric_std(res, name);
+	    return;
+      }
+}
+
+static void import_std_use(const YYLTYPE&loc, ActiveScope*/*res*/, perm_string package, perm_string name)
+{
+      if (package == "standard") {
+	    // do nothing
+	    return;
+      } else if (package == "textio") {
+	    cerr << "warning: textio package not really supported" << endl;
+	    return;
+      } else {
+	    sorrymsg(loc, "package %s of library %s not yet supported", package.str(), name.str());
 	    return;
       }
 }
