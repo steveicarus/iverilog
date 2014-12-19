@@ -1742,7 +1742,8 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // scope searches will continue into the parent scope.
 	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE,
 					     bound_type_? true : false,
-					     mod->program_block);
+					     mod->program_block,
+					     mod->is_interface);
 	    my_scope->set_line(get_file(), mod->get_file(),
 	                       get_lineno(), mod->get_lineno());
 	    my_scope->set_module_name(mod->mod_name());

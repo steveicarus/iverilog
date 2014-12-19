@@ -1117,8 +1117,8 @@ data_type_or_implicit_or_void
      statements may go. This may be a bad idea, but it is legacy now. */
 
   /* NOTE 2: The "module" rule of the description combines the
-     module_declaration and program_declaration rules from the
-     standard description. */
+     module_declaration, program_declaration, and interface_declaration
+     rules from the standard description. */
 
 description /* IEEE1800-2005: A.1.2 */
   : module
@@ -4213,13 +4213,13 @@ local_timeunit_prec_decl2
 		}
 	;
 
-  /* This is the global structure of a module. A module in a start
+  /* This is the global structure of a module. A module is a start
      section, with optional ports, then an optional list of module
      items, and finally an end marker. */
 
 module
   : attribute_list_opt module_start IDENTIFIER
-      { pform_startmodule(@2, $3, $2==K_program, $1); }
+      { pform_startmodule(@2, $3, $2==K_program, $2==K_interface, $1); }
     module_package_import_list_opt
     module_parameter_port_list_opt
     module_port_list_opt
@@ -4258,6 +4258,9 @@ module
 		  case K_program:
 		    yyerror(@14, "error: program not closed by endprogram.");
 		    break;
+		  case K_interface:
+		    yyerror(@14, "error: interface not closed by endinterface.");
+		    break;
 		  default:
 		    break;
 	      }
@@ -4283,6 +4286,10 @@ module
 			  yyerror(@16, "error: End label doesn't match "
 			               "program name.");
 			  break;
+			case K_interface:
+			  yyerror(@16, "error: End label doesn't match "
+			               "interface name.");
+			  break;
 			default:
 			  break;
 		    }
@@ -4297,19 +4304,21 @@ module
       }
   ;
 
-  /* Modules start with module/macromodule or program keyword, and end
-     with the endmodule or endprogram keyword. The syntax for modules
-     and programs is almost identical, so let semantics sort out the
-     differences. */
+  /* Modules start with a module/macromodule, program, or interface
+     keyword, and end with a endmodule, endprogram, or endinterface
+     keyword. The syntax for modules programs, and interfaces is
+     almost identical, so let semantics sort out the differences. */
 module_start
   : K_module      { $$ = K_module; }
   | K_macromodule { $$ = K_module; }
   | K_program     { $$ = K_program; }
+  | K_interface   { $$ = K_interface; }
   ;
 
 module_end
-  : K_endmodule   { $$ = K_module; }
-  | K_endprogram  { $$ = K_program; }
+  : K_endmodule    { $$ = K_module; }
+  | K_endprogram   { $$ = K_program; }
+  | K_endinterface { $$ = K_interface; }
   ;
 
 endlabel_opt
@@ -4505,7 +4514,12 @@ module_item
 
   /* */
 
-	| K_defparam defparam_assign_list ';'
+  | K_defparam
+      { if (pform_in_interface())
+	      yyerror(@1, "error: Parameter overrides are not allowed "
+			  "in interfaces.");
+      }
+    defparam_assign_list ';'
 
   /* Most gate types have an optional drive strength and optional
      two/three-value delay. These rules handle the different cases.
@@ -4674,21 +4688,26 @@ module_item
 
   /* 1364-2001 and later allow specparam declarations outside specify blocks. */
 
-  | attribute_list_opt K_specparam specparam_decl ';'
+  | attribute_list_opt K_specparam
+      { if (pform_in_interface())
+	      yyerror(@1, "error: specparam declarations are not allowed "
+			  "in interfaces.");
+      }
+    specparam_decl ';'
 
   /* specify blocks are parsed but ignored. */
 
-	| K_specify K_endspecify
-		{ /* empty lists are legal syntax. */ }
+  | K_specify
+      { if (pform_in_interface())
+	      yyerror(@1, "error: specify blocks are not allowed "
+			  "in interfaces.");
+      }
+    specify_item_list_opt K_endspecify
 
-	| K_specify specify_item_list K_endspecify
-		{
-		}
-
-	| K_specify error K_endspecify
-		{ yyerror(@1, "error: syntax error in specify block");
-		  yyerrok;
-		}
+  | K_specify error K_endspecify
+      { yyerror(@1, "error: syntax error in specify block");
+	yyerrok;
+      }
 
   /* These rules match various errors that the user can type into
      module items. These rules try to catch them at a point where a
@@ -5466,6 +5485,12 @@ specify_item_list
 	: specify_item
 	| specify_item_list specify_item
 	;
+
+specify_item_list_opt
+	: /* empty */
+		{  }
+	| specify_item_list
+		{  }
 
 specify_edge_path_decl
 	: specify_edge_path '=' '(' delay_value_list ')'

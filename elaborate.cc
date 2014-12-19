@@ -6090,7 +6090,8 @@ Design* elaborate(list<perm_string>roots)
 
 	      // Make the root scope. This makes a NetScope object and
 	      // pushes it into the list of root scopes in the Design.
-	    NetScope*scope = des->make_root_scope(*root, rmod->program_block);
+	    NetScope*scope = des->make_root_scope(*root, rmod->program_block,
+						  rmod->is_interface);
 
 	      // Collect some basic properties of this scope from the
 	      // Module definition.

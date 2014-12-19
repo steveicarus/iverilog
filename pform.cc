@@ -534,6 +534,15 @@ bool pform_in_program_block()
       return false;
 }
 
+bool pform_in_interface()
+{
+      if (pform_cur_module.empty())
+	    return false;
+      if (pform_cur_module.front()->is_interface)
+	    return true;
+      return false;
+}
+
 static bool pform_at_module_level()
 {
       return (lexical_scope == pform_cur_module.front())
@@ -1107,7 +1116,8 @@ verinum* pform_verinum_with_size(verinum*siz, verinum*val,
 }
 
 void pform_startmodule(const struct vlltype&loc, const char*name,
-		       bool program_block, list<named_pexpr_t>*attr)
+		       bool program_block, bool is_interface,
+		       list<named_pexpr_t>*attr)
 {
       if (! pform_cur_module.empty() && !gn_system_verilog()) {
 	    cerr << loc << ": error: Module definition " << name
@@ -1115,15 +1125,25 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
 	    error_count += 1;
       }
 
-      if (gn_system_verilog() && ! pform_cur_module.empty() &&
-          pform_cur_module.front()->program_block) {
-	    cerr << loc << ": error: Program blocks cannot contain nested modules/program blocks." << endl;
-	    error_count += 1;
+      if (gn_system_verilog() && ! pform_cur_module.empty()) {
+	    if (pform_cur_module.front()->program_block) {
+		  cerr << loc << ": error: module, program, or interface "
+				 "declarations are not allowed in program "
+				 "blocks." << endl;
+		  error_count += 1;
+	    }
+	    if (pform_cur_module.front()->is_interface
+		&& !(program_block || is_interface)) {
+		  cerr << loc << ": error: module declarations are not "
+				 "allowed in interfaces." << endl;
+		  error_count += 1;
+	    }
       }
 
       perm_string lex_name = lex_strings.make(name);
       Module*cur_module = new Module(lexical_scope, lex_name);
       cur_module->program_block = program_block;
+      cur_module->is_interface = is_interface;
 	/* Set the local time unit/precision to the global value. */
       cur_module->time_unit = pform_time_unit;
       cur_module->time_precision = pform_time_prec;
@@ -2001,8 +2021,13 @@ void pform_makegates(const struct vlltype&loc,
 {
       assert(! pform_cur_module.empty());
       if (pform_cur_module.front()->program_block) {
-	    cerr << loc << ": error: Gates and switches may not be instantiated"
-		 << " in program blocks." << endl;
+	    cerr << loc << ": error: Gates and switches may not be instantiated in "
+		 << "program blocks." << endl;
+	    error_count += 1;
+      }
+      if (pform_cur_module.front()->is_interface) {
+	    cerr << loc << ": error: Gates and switches may not be instantiated in "
+		 << "interfaces." << endl;
 	    error_count += 1;
       }
 
@@ -2117,8 +2142,13 @@ void pform_make_modgates(const struct vlltype&loc,
 {
       assert(! pform_cur_module.empty());
       if (pform_cur_module.front()->program_block) {
-	    cerr << loc << ": error: Module instantiations are not allowed"
-		 << " in program blocks." << endl;
+	    cerr << loc << ": error: Module instantiations are not allowed in "
+		 << "program blocks." << endl;
+	    error_count += 1;
+      }
+      if (pform_cur_module.front()->is_interface) {
+	    cerr << loc << ": error: Module instantiations are not allowed in "
+		 << "interfaces." << endl;
 	    error_count += 1;
       }
 

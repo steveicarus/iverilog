@@ -101,11 +101,12 @@ uint64_t Design::scale_to_precision(uint64_t val,
       return val;
 }
 
-NetScope* Design::make_root_scope(perm_string root, bool program_block)
+NetScope* Design::make_root_scope(perm_string root, bool program_block,
+				  bool is_interface)
 {
       NetScope *root_scope_;
       root_scope_ = new NetScope(0, hname_t(root), NetScope::MODULE,
-				 false, program_block);
+				 false, program_block, is_interface);
 	/* This relies on the fact that the basename return value is
 	   permallocated. */
       root_scope_->set_module_name(root_scope_->basename());
