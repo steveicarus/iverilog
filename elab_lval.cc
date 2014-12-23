@@ -157,7 +157,7 @@ NetAssign_*PEIdent::scan_lname_for_nested_members_(Design*des, NetScope*scope,
 	    return 0;
 
       pform_name_t use_path = cur_path;
-      perm_string tmp_name = peek_tail_name(use_path);
+      name_component_t tail = use_path.back();
       use_path.pop_back();
 
       NetNet*       reg = 0;
@@ -171,18 +171,19 @@ NetAssign_*PEIdent::scan_lname_for_nested_members_(Design*des, NetScope*scope,
 		  return 0;
 
 	    tmp = new NetAssign_(tmp);
-	    tmp->set_property(tmp_name);
+	    tmp->set_property(tail.name);
 	    return tmp;
       }
 
       if (reg->struct_type()) {
 	    cerr << get_fileline() << ": sorry: "
-		 << "I don't know what to do with struct " << use_path << endl;
+		 << "I don't know what to do with struct " << use_path
+		 << " with member " << tail << "." << endl;
 	    return 0;
       }
 
       if (reg->class_type()) {
-	    return elaborate_lval_net_class_member_(des, scope, reg, tmp_name);
+	    return elaborate_lval_net_class_member_(des, scope, reg, tail.name);
       }
 
       return 0;

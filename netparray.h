@@ -64,6 +64,7 @@ class netparray_t : public netsarray_t {
 
     public:
 	// Virtual methods from the ivl_type_s type...
+      bool packed(void) const;
       long packed_width(void) const;
       std::vector<netrange_t> slice_dimensions() const;
 

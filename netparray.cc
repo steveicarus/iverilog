@@ -34,6 +34,12 @@ netparray_t::~netparray_t()
  * The packed width of a packed array is the packed width of the
  * element times the dimension width of the array itself.
  */
+
+bool netparray_t::packed(void) const
+{
+      return true;
+}
+
 long netparray_t::packed_width(void) const
 {
       long cur_width = element_type()->packed_width();
