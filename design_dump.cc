@@ -1375,6 +1375,7 @@ void NetScope::dump(ostream&o) const
       if (is_cell()) o << " (cell)";
       if (nested_module()) o << " (nested)";
       if (program_block()) o << " (program)";
+      if (is_interface()) o << " (interface)";
       o << " " << children_.size() << " children, "
 	<< classes_.size() << " classes" << endl;
 

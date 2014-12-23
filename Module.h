@@ -47,6 +47,10 @@ class NetScope;
  * A module is a named container and scope. A module holds a bunch of
  * semantic quantities such as wires and gates. The module is
  * therefore the handle for grasping the described circuit.
+ *
+ * SystemVerilog introduces program blocks and interfaces. These have
+ * much in common with modules, so the Module class is used to represent
+ * these containers as well.
  */
 
 class Module : public PScopeExtra, public LineInfo {
@@ -80,6 +84,11 @@ class Module : public PScopeExtra, public LineInfo {
 	   instead of a module/cell. Program blocks have content
 	   restrictions and slightly modify scheduling semantics. */
       bool program_block;
+
+	/* This is true if the module represents a interface
+	   instead of a module/cell. Interfaces have different
+	   content restrictions and some extra allowed items. */
+      bool is_interface;
 
       enum UCDriveType { UCD_NONE, UCD_PULL0, UCD_PULL1 };
       UCDriveType uc_drive;
