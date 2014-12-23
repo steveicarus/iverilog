@@ -271,6 +271,7 @@ class __vpiVThrVec4Stack : public __vpiHandle {
       void vpi_get_value_decstr_(p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_int_   (p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_real_  (p_vpi_value vp, const vvp_vector4_t&val);
+      void vpi_get_value_strength_(p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_hexstr_(p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_vector_(p_vpi_value vp, const vvp_vector4_t&val);
     private:
@@ -349,6 +350,9 @@ void __vpiVThrVec4Stack::vpi_get_value(p_vpi_value vp)
 	    break;
 	  case vpiStringVal:
 	    vpi_get_value_string_(vp, val);
+	    break;
+	  case vpiStrengthVal:
+	    vpi_get_value_strength_(vp, val);
 	    break;
 	  case vpiObjTypeVal:
 	    vp->format = vpiVectorVal;
@@ -508,6 +512,40 @@ void __vpiVThrVec4Stack::vpi_get_value_vector_(p_vpi_value vp, const vvp_vector4
 		  break;
 	    }
       }
+}
+
+void __vpiVThrVec4Stack::vpi_get_value_strength_(p_vpi_value vp, const vvp_vector4_t&val)
+{
+      s_vpi_strengthval*op = (s_vpi_strengthval*)
+	    need_result_buf(val.size() * sizeof(s_vpi_strengthval), RBUF_VAL);
+
+      for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
+	    switch (val.value(idx)) {
+		case BIT4_0:
+		  op[idx].logic = vpi0;
+		  op[idx].s0 = vpiStrongDrive;
+		  op[idx].s1 = 0;
+		  break;
+		case BIT4_1:
+		  op[idx].logic = vpi1;
+		  op[idx].s0 = 0;
+		  op[idx].s1 = vpiStrongDrive;
+		  break;
+		case BIT4_X:
+		  op[idx].logic = vpiX;
+		  op[idx].s0 = vpiStrongDrive;
+		  op[idx].s1 = vpiStrongDrive;
+		  break;
+		case BIT4_Z:
+		  op[idx].logic = vpiZ;
+		  op[idx].s0 = vpiHiZ;
+		  op[idx].s1 = vpiHiZ;
+		  break;
+	    }
+      }
+
+      vp->format = vpiStrengthVal;
+      vp->value.strength = op;
 }
 
 vpiHandle __vpiVThrVec4Stack::vpi_put_value(p_vpi_value vp, int /*flags*/)
