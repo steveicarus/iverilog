@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -364,6 +364,7 @@ void dll_target::expr_last(const NetELast*net)
       esig->value_  = IVL_VT_DARRAY;
       esig->net_type= sig->net_type;
       esig->width_  = 1;
+      esig->signed_ = sig->net_type->get_signed()? 1 : 0;
       FILE_NAME(esig, net);
       esig->u_.signal_.word = 0;
       esig->u_.signal_.sig = sig;
