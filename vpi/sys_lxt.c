@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -450,6 +450,8 @@ static void open_dumpfile(vpiHandle callh)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("Unable to open %s for output.\n", dump_path);
 	    vpi_control(vpiFinish, 1);
+	    free(dump_path);
+	    dump_path = 0;
 	    return;
       } else {
 	    int prec = vpi_get(vpiTimePrecision, 0);
