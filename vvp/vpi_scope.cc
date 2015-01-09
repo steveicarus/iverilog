@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -54,9 +54,9 @@ void port_delete(__vpiHandle*handle);
 static void delete_sub_scopes(struct __vpiScope *scope)
 {
       for (unsigned idx = 0; idx < scope->nintern; idx += 1) {
-	    struct __vpiScope*lscope = static_cast<__vpiScope*>
-	          ((scope->intern)[idx]);
-	    switch(scope->intern[idx]->get_type_code()) {
+	    vpiHandle item = (scope->intern)[idx];
+	    struct __vpiScope*lscope = static_cast<__vpiScope*>(item);
+	    switch(item->get_type_code()) {
 		case vpiFunction:
 		case vpiTask:
 		  contexts_delete(lscope);
@@ -66,18 +66,18 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		case vpiNamedFork:
 		  delete_sub_scopes(lscope);
 		  vthreads_delete(lscope);
-		  delete (scope->intern)[idx];
+		  delete item;
 		  break;
 		case vpiMemory:
 		case vpiNetArray:
-		  memory_delete((scope->intern)[idx]);
+		  memory_delete(item);
 		  break;
 		case vpiModPath:
 		    /* The destination ModPath is cleaned up later. */
-		  delete (scope->intern)[idx];
+		  delete item;
 		  break;
 		case vpiNamedEvent:
-		  named_event_delete((scope->intern)[idx]);
+		  named_event_delete(item);
 		  break;
 		case vpiNet:
 		case vpiReg:
@@ -87,32 +87,44 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		case vpiIntVar:
 		case vpiByteVar:
 		case vpiBitVar:
-		  signal_delete((scope->intern)[idx]);
+		  signal_delete(item);
 		  break;
 		case vpiParameter:
-		  parameter_delete((scope->intern)[idx]);
+		  parameter_delete(item);
 		  break;
 		case vpiRealVar:
-		  real_delete((scope->intern)[idx]);
+		  real_delete(item);
 		  break;
 		case vpiEnumTypespec:
-		  enum_delete((scope->intern)[idx]);
+		  enum_delete(item);
 		  break;
 		case vpiPort:
-		  port_delete((scope->intern)[idx]);
+		  port_delete(item);
 		  break;
 		case vpiStringVar:
-		  string_delete((scope->intern)[idx]);
+		  string_delete(item);
 		  break;
 		case vpiClassVar:
-		  class_delete((scope->intern)[idx]);
+		  class_delete(item);
 		  break;
-		case vpiRegArray:
-		  darray_delete((scope->intern)[idx]);
+		case vpiArrayVar:
+		  switch(item->vpi_get(vpiArrayType)) {
+		      case vpiQueueArray:
+			queue_delete(item);
+			break;
+		      case vpiDynamicArray:
+			darray_delete(item);
+			break;
+		      default:
+			fprintf(stderr, "Need support for array type: %d\n",
+			                item->vpi_get(vpiArrayType));
+			assert(0);
+			break;
+		  }
 		  break;
 		default:
 		  fprintf(stderr, "Need support for type: %d\n",
-		          scope->intern[idx]->get_type_code());
+		          item->get_type_code());
 		  assert(0);
 		  break;
 	    }
