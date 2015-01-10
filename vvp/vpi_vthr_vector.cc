@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -297,6 +297,9 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 			break;
 		  }
 	    }
+	    long sign_bit = (1 << wid) >> 1;
+	    if (rfp->signed_flag && (ival & sign_bit))
+		  ival |= (~0) << wid;
 	    vp->value.integer = ival;
 	    }
 	    break;
