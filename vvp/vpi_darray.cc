@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -344,6 +344,7 @@ vpiHandle vpip_make_queue_var(const char*name, vvp_net_t*net)
 void darray_delete(vpiHandle item)
 {
       class __vpiDarrayVar*obj = dynamic_cast<__vpiDarrayVar*>(item);
+      if (obj->vals_words) delete [] (obj->vals_words-1);
       delete obj;
 }
 
