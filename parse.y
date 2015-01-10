@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -48,6 +48,16 @@ static struct {
       NetNet::PortType port_type;
       data_type_t* data_type;
 } port_declaration_context = {NetNet::NONE, NetNet::NOT_A_PORT, 0};
+
+/* Modport port declaration lists use this structure for context. */
+enum modport_port_type_t { MP_NONE, MP_SIMPLE, MP_TF, MP_CLOCKING };
+static struct {
+      modport_port_type_t type;
+      union {
+	    NetNet::PortType direction;
+	    bool is_import;
+      };
+} last_modport_port = { MP_NONE, NetNet::NOT_A_PORT};
 
 /* The task and function rules need to briefly hold the pointer to the
    task/function that is currently in progress. */
@@ -549,6 +559,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <flag>    from_exclude block_item_decls_opt
 %type <number>  number pos_neg_number
 %type <flag>    signing unsigned_signed_opt signed_unsigned_opt
+%type <flag>    import_export
 %type <flag>    K_automatic_opt K_packed_opt K_reg_opt K_static_opt K_virtual_opt
 %type <flag>    udp_reg_opt edge_operator
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
@@ -583,7 +594,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <tf_ports> task_item task_item_list task_item_list_opt
 %type <tf_ports> tf_port_declaration tf_port_item tf_port_list tf_port_list_opt
 
-%type <named_pexpr> port_name parameter_value_byname
+%type <named_pexpr> modport_simple_port port_name parameter_value_byname
 %type <named_pexprs> port_name_list parameter_value_byname_list
 
 %type <named_pexpr> attribute
@@ -1270,6 +1281,11 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 
   ;
 
+import_export /* IEEE1800-2012: A.2.9 */
+  : K_import { $$ = true; }
+  | K_export { $$ = false; }
+  ;
+
 implicit_class_handle /* IEEE1800-2005: A.8.4 */
   : K_this  { $$ = pform_create_this(); }
   | K_super { $$ = pform_create_super(); }
@@ -1546,6 +1562,115 @@ method_qualifier_opt
   |
   ;
 
+modport_declaration /* IEEE1800-2012: A.2.9 */
+  : K_modport 
+      { if (!pform_in_interface())
+	      yyerror(@1, "error: modport declarations are only allowed "
+			  "in interfaces.");
+      }
+    modport_item_list ';'
+
+modport_item_list
+  : modport_item
+  | modport_item_list ',' modport_item
+  ;
+
+modport_item
+  : IDENTIFIER
+      { pform_start_modport_item(@1, $1); }
+    '(' modport_ports_list ')'
+      { pform_end_modport_item(@1); }
+  ;
+
+  /* The modport_ports_list is a LALR(2) grammar. When the parser sees a
+     ',' it needs to look ahead to the next token to decide whether it is
+     a continuation of the preceeding modport_ports_declaration, or the
+     start of a new modport_ports_declaration. bison only supports LALR(1),
+     so we have to handcraft a mini parser for this part of the syntax.
+     last_modport_port holds the state for this mini parser.*/
+
+modport_ports_list
+  : modport_ports_declaration
+  | modport_ports_list ',' modport_ports_declaration
+  | modport_ports_list ',' modport_simple_port
+      { if (last_modport_port.type == MP_SIMPLE) {
+	      pform_add_modport_port(@3, last_modport_port.direction,
+				     $3->name, $3->parm);
+	} else {
+	      yyerror(@3, "error: modport expression not allowed here.");
+	}
+	delete $3;
+      }
+  | modport_ports_list ',' modport_tf_port
+      { if (last_modport_port.type != MP_TF)
+	      yyerror(@3, "error: task/function declaration not allowed here.");
+      }
+  | modport_ports_list ',' IDENTIFIER
+      { if (last_modport_port.type == MP_SIMPLE) {
+	      pform_add_modport_port(@3, last_modport_port.direction,
+				     lex_strings.make($3), 0);
+	} else if (last_modport_port.type != MP_TF) {
+	      yyerror(@3, "error: list of identifiers not allowed here.");
+	}
+	delete[] $3;
+      }
+  | modport_ports_list ','
+      { yyerror(@2, "error: NULL port declarations are not allowed"); }
+  ;
+
+modport_ports_declaration
+  : attribute_list_opt port_direction IDENTIFIER
+      { last_modport_port.type = MP_SIMPLE;
+	last_modport_port.direction = $2;
+	pform_add_modport_port(@3, $2, lex_strings.make($3), 0);
+	delete[] $3;
+	delete $1;
+      }
+  | attribute_list_opt port_direction modport_simple_port
+      { last_modport_port.type = MP_SIMPLE;
+	last_modport_port.direction = $2;
+	pform_add_modport_port(@3, $2, $3->name, $3->parm);
+	delete $3;
+	delete $1;
+      }
+  | attribute_list_opt import_export IDENTIFIER
+      { last_modport_port.type = MP_TF;
+	last_modport_port.is_import = $2;
+	yyerror(@3, "sorry: modport task/function ports are not yet supported.");
+	delete[] $3;
+	delete $1;
+      }
+  | attribute_list_opt import_export modport_tf_port
+      { last_modport_port.type = MP_TF;
+	last_modport_port.is_import = $2;
+	yyerror(@3, "sorry: modport task/function ports are not yet supported.");
+	delete $1;
+      }
+  | attribute_list_opt K_clocking IDENTIFIER
+      { last_modport_port.type = MP_CLOCKING;
+	last_modport_port.direction = NetNet::NOT_A_PORT;
+	yyerror(@3, "sorry: modport clocking declaration is not yet supported.");
+	delete[] $3;
+	delete $1;
+      }
+  ;
+
+modport_simple_port
+  : '.' IDENTIFIER '(' expression ')'
+      { named_pexpr_t*tmp = new named_pexpr_t;
+	tmp->name = lex_strings.make($2);
+	tmp->parm = $4;
+	delete[]$2;
+	$$ = tmp;
+      }
+  ;
+
+modport_tf_port
+  : K_task IDENTIFIER
+  | K_task IDENTIFIER '(' tf_port_list_opt ')'
+  | K_function data_type_or_implicit_or_void IDENTIFIER
+  | K_function data_type_or_implicit_or_void IDENTIFIER '(' tf_port_list_opt ')'
+  ;
 
 non_integer_type /* IEEE1800-2005: A.2.2.1 */
   : K_real { $$ = real_type_t::REAL; }
@@ -4684,6 +4809,8 @@ module_item
 	pform_endgenerate();
       }
 
+  | modport_declaration
+
   | package_import_declaration
 
   /* 1364-2001 and later allow specparam declarations outside specify blocks. */
@@ -6608,7 +6735,7 @@ udp_primitive
      presence is significant. This is a fairly common pattern so
      collect those rules here. */
 
-K_automatic_opt: K_automatic { $$ = true; } | { $$ = false;} ;
+K_automatic_opt: K_automatic { $$ = true; } | { $$ = false; } ;
 K_packed_opt   : K_packed    { $$ = true; } | { $$ = false; } ;
 K_reg_opt      : K_reg       { $$ = true; } | { $$ = false; } ;
 K_static_opt   : K_static    { $$ = true; } | { $$ = false; } ;

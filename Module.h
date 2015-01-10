@@ -1,7 +1,7 @@
 #ifndef IVL_Module_H
 #define IVL_Module_H
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,6 +35,7 @@ class PExpr;
 class PEIdent;
 class PGate;
 class PGenerate;
+class PModport;
 class PSpecPath;
 class PTask;
 class PFunction;
@@ -68,7 +69,7 @@ class Module : public PScopeExtra, public LineInfo {
 
     public:
 	/* The name passed here is the module name, not the instance
-	   name. This make must be a permallocated string. */
+	   name. This name must be a permallocated string. */
       explicit Module(LexicalScope*parent, perm_string name);
       ~Module();
 
@@ -133,6 +134,11 @@ class Module : public PScopeExtra, public LineInfo {
 	/* Nested modules are placed here, and are not elaborated
 	   unless they are instantiated, implicitly or explicitly. */
       std::map<perm_string,Module*> nested_modules;
+
+	/* An interface can contain one or more named modport lists.
+           The parser will ensure these don't appear in modules or
+           program blocks. */
+      map<perm_string,PModport*> modports;
 
       list<PSpecPath*> specify_paths;
 
