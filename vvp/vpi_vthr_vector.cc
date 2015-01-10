@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -433,8 +433,7 @@ void __vpiVThrVec4Stack::vpi_get_value_hexstr_(p_vpi_value vp, const vvp_vector4
 void __vpiVThrVec4Stack::vpi_get_value_int_(p_vpi_value vp, const vvp_vector4_t&val)
 {
       int32_t vali = 0;
-      int signed_flag = 0;
-      vector4_to_value(val, vali, signed_flag, false);
+      vector4_to_value(val, vali, signed_flag_, false);
       vp->value.integer = vali;
 }
 
