@@ -51,6 +51,10 @@ void vpip_make_root_iterator(__vpiHandle**&table, unsigned&ntable)
 #ifdef CHECK_WITH_VALGRIND
 void port_delete(__vpiHandle*handle);
 
+/* Class definitions need to be cleaned up at the end. */
+static class_type **class_list = 0;
+static unsigned class_list_count = 0;
+
 static void delete_sub_scopes(struct __vpiScope *scope)
 {
       for (unsigned idx = 0; idx < scope->nintern; idx += 1) {
@@ -131,11 +135,14 @@ static void delete_sub_scopes(struct __vpiScope *scope)
       }
       free(scope->intern);
 
-	/* Clean up any class definitions. */
+	/* Save any class definitions to clean up later. */
       map<std::string, class_type*>::iterator citer;
       for (citer = scope->classes.begin();
            citer != scope->classes.end(); ++ citer ) {
-            class_def_delete(citer->second);
+	    class_list_count += 1;
+	    class_list = (class_type **) realloc(class_list,
+	                 class_list_count*sizeof(class_type **));
+	    class_list[class_list_count-1] = citer->second;
       }
 }
 
@@ -151,6 +158,14 @@ void root_table_delete(void)
       free(vpip_root_table_ptr);
       vpip_root_table_ptr = 0;
       vpip_root_table_cnt = 0;
+
+	/* Clean up all the class definitions. */
+      for (unsigned idx = 0; idx < class_list_count; idx += 1) {
+            class_def_delete(class_list[idx]);
+      }
+      free(class_list);
+      class_list = 0;
+      class_list_count = 0;
 }
 #endif
 
