@@ -57,7 +57,7 @@ static struct {
 	    NetNet::PortType direction;
 	    bool is_import;
       };
-} last_modport_port = { MP_NONE, NetNet::NOT_A_PORT};
+} last_modport_port = { MP_NONE, {NetNet::NOT_A_PORT}};
 
 /* The task and function rules need to briefly hold the pointer to the
    task/function that is currently in progress. */
