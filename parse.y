@@ -750,7 +750,7 @@ class_identifier
 	perm_string name = lex_strings.make($1);
 	class_type_t*tmp = new class_type_t(name);
 	FILE_NAME(tmp, @1);
-	pform_set_typedef(name, tmp);
+	pform_set_typedef(name, tmp, NULL);
 	delete[]$1;
 	$$ = tmp;
       }
@@ -2358,9 +2358,9 @@ block_item_decls_opt
   /* Type declarations are parsed here. The rule actions call pform
      functions that add the declaration to the current lexical scope. */
 type_declaration
-  : K_typedef data_type IDENTIFIER ';'
+  : K_typedef data_type IDENTIFIER dimensions_opt ';'
       { perm_string name = lex_strings.make($3);
-	pform_set_typedef(name, $2);
+	pform_set_typedef(name, $2, $4);
 	delete[]$3;
       }
 
@@ -2373,7 +2373,7 @@ type_declaration
 	      yyerror(@3, "error: Typedef identifier \"%s\" is already a type name.", $3.text);
 
 	} else {
-	      pform_set_typedef(name, $2);
+	      pform_set_typedef(name, $2, NULL);
 	}
 	delete[]$3.text;
       }
@@ -2386,7 +2386,7 @@ type_declaration
 	perm_string name = lex_strings.make($3);
 	class_type_t*tmp = new class_type_t(name);
 	FILE_NAME(tmp, @3);
-	pform_set_typedef(name, tmp);
+	pform_set_typedef(name, tmp, NULL);
 	delete[]$3;
       }
   | K_typedef K_enum   IDENTIFIER ';'
@@ -2401,7 +2401,7 @@ type_declaration
 	perm_string name = lex_strings.make($2);
 	class_type_t*tmp = new class_type_t(name);
 	FILE_NAME(tmp, @2);
-	pform_set_typedef(name, tmp);
+	pform_set_typedef(name, tmp, NULL);
 	delete[]$2;
       }
 

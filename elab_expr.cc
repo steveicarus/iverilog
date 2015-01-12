@@ -2181,6 +2181,14 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       return elaborate_base_(des, scope, dscope, expr_wid, flags);
 }
 
+NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
+					ivl_type_t type, unsigned flags) const
+{
+      const netdarray_t*darray = dynamic_cast<const netdarray_t*>(type);
+      assert(darray);
+      return elaborate_expr(des, scope, darray->element_type()->packed_width(), flags);
+}
+
 NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*dscope,
 					 unsigned expr_wid, unsigned flags) const
 {
@@ -2261,6 +2269,9 @@ NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*ds
 	    NetESignal*eres = new NetESignal(res);
 	    NetEUFunc*func = new NetEUFunc(scope, dscope, eres, parms, need_const);
 	    func->set_line(*this);
+
+	    if(res->darray_type())
+	        return func;
 
             NetExpr*tmp = pad_to_width(func, expr_wid, *this);
             tmp->cast_signed(signed_flag_);

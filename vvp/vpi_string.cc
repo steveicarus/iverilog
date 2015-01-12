@@ -51,7 +51,13 @@ int __vpiStringVar::vpi_get(int code)
 	      // The vpiSize of a string variable is the number of
 	      // bytes (characters) in that string.
 	    return str.size();
+	  case vpiLeftRange:
+	    return 0;
+	  case vpiRightRange:
+            return str.size() - 1;
 	  default:
+	    fprintf(stderr, "vpi sorry: property is not implemented");
+	    assert(false);
 	    return 0;
       }
 }

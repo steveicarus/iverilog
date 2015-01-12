@@ -50,6 +50,7 @@ static int eval_darray_new(ivl_expr_t ex)
 	    fprintf(vvp_out, "    %%new/darray %u, \"S\";\n", size_reg);
 	    break;
 	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
 	      // bool objects are vectorable, but for now only support
 	      // a single dimensions.
 	    assert(ivl_type_packed_dimensions(element_type) == 1);

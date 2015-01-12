@@ -917,8 +917,10 @@ class PECallFunction : public PExpr {
       virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
-				     unsigned expr_wid,
-                                     unsigned flags) const;
+				     ivl_type_t type, unsigned flags) const;
+
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     unsigned expr_wid, unsigned flags) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);

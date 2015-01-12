@@ -2282,11 +2282,18 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
 	    PExpr::width_mode_t mode = PExpr::SIZED;
 	    rval_->test_width(des, scope, mode);
 	      // Create a L-value that matches the function return type.
+	    NetNet*tmp;
 	    netvector_t*tmp_vec = new netvector_t(rval_->expr_type(),
 	                                          rval_->expr_width()-1, 0,
 	                                          rval_->has_sign());
-	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::REG, tmp_vec);
+
+	    if(rval_->expr_type() == IVL_VT_DARRAY) {
+		netdarray_t*darray = new netdarray_t(tmp_vec);
+		tmp = new NetNet(scope, scope->local_symbol(), NetNet::REG, darray);
+	    } else {
+		tmp = new NetNet(scope, scope->local_symbol(), NetNet::REG, tmp_vec);
+	    }
+
 	    tmp->set_file(rval_->get_file());
 	    tmp->set_lineno(rval_->get_lineno());
 	    NetAssign_*lv = new NetAssign_(tmp);
