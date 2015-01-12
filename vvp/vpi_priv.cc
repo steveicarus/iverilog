@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1270,6 +1270,7 @@ static vpiHandle find_name(const char *name, vpiHandle handle)
 			nm = vpi_get_str(vpiName, word_h);
 			if (!strcmp(name, nm)) {
 			      rtn = word_h;
+			      vpi_free_object(word_i);
 			      break;
 			}
 		  }

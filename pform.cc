@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -29,6 +29,7 @@
 # include  "PPackage.h"
 # include  "PUdp.h"
 # include  "PGenerate.h"
+# include  "PModport.h"
 # include  "PSpec.h"
 # include  "discipline.h"
 # include  <list>
@@ -264,6 +265,10 @@ static unsigned scope_generate_counter = 1;
   /* This tracks the current generate scheme being processed. This is
      always within a module. */
 static PGenerate*pform_cur_generate = 0;
+
+  /* This tracks the current modport list being processed. This is
+     always within an interface. */
+static PModport*pform_cur_modport = 0;
 
 static NetNet::Type pform_default_nettype = NetNet::WIRE;
 
@@ -3354,6 +3359,46 @@ PProcess* pform_make_behavior(ivl_process_type_t type, Statement*st,
       }
 
       return pp;
+}
+
+void pform_start_modport_item(const struct vlltype&loc, const char*name)
+{
+      Module*scope = pform_cur_module.front();
+      ivl_assert(loc, scope && scope->is_interface);
+      ivl_assert(loc, pform_cur_modport == 0);
+
+      perm_string use_name = lex_strings.make(name);
+      pform_cur_modport = new PModport(use_name);
+      FILE_NAME(pform_cur_modport, loc);
+      if (scope->modports.find(use_name) != scope->modports.end()) {
+	    cerr << loc << ": error: duplicate declaration for modport '"
+		 << name << "' in '" << scope->mod_name() << "'." << endl;
+	    error_count += 1;
+      }
+      scope->modports[use_name] = pform_cur_modport;
+      delete[] name;
+}
+
+void pform_end_modport_item(const struct vlltype&loc)
+{
+      ivl_assert(loc, pform_cur_modport);
+      pform_cur_modport = 0;
+}
+
+void pform_add_modport_port(const struct vlltype&loc,
+                            NetNet::PortType port_type,
+                            perm_string name, PExpr*expr)
+{
+      ivl_assert(loc, pform_cur_modport);
+
+      if (pform_cur_modport->simple_ports.find(name)
+	  != pform_cur_modport->simple_ports.end()) {
+	    cerr << loc << ": error: duplicate declaration of port '"
+		 << name << "' in modport list '"
+		 << pform_cur_modport->name() << "'." << endl;
+	    error_count += 1;
+      }
+      pform_cur_modport->simple_ports[name] = make_pair(port_type, expr);
 }
 
 

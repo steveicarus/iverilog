@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,12 +51,16 @@ void vpip_make_root_iterator(__vpiHandle**&table, unsigned&ntable)
 #ifdef CHECK_WITH_VALGRIND
 void port_delete(__vpiHandle*handle);
 
+/* Class definitions need to be cleaned up at the end. */
+static class_type **class_list = 0;
+static unsigned class_list_count = 0;
+
 static void delete_sub_scopes(struct __vpiScope *scope)
 {
       for (unsigned idx = 0; idx < scope->nintern; idx += 1) {
-	    struct __vpiScope*lscope = static_cast<__vpiScope*>
-	          ((scope->intern)[idx]);
-	    switch(scope->intern[idx]->get_type_code()) {
+	    vpiHandle item = (scope->intern)[idx];
+	    struct __vpiScope*lscope = static_cast<__vpiScope*>(item);
+	    switch(item->get_type_code()) {
 		case vpiFunction:
 		case vpiTask:
 		  contexts_delete(lscope);
@@ -66,18 +70,18 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		case vpiNamedFork:
 		  delete_sub_scopes(lscope);
 		  vthreads_delete(lscope);
-		  delete (scope->intern)[idx];
+		  delete item;
 		  break;
 		case vpiMemory:
 		case vpiNetArray:
-		  memory_delete((scope->intern)[idx]);
+		  memory_delete(item);
 		  break;
 		case vpiModPath:
 		    /* The destination ModPath is cleaned up later. */
-		  delete (scope->intern)[idx];
+		  delete item;
 		  break;
 		case vpiNamedEvent:
-		  named_event_delete((scope->intern)[idx]);
+		  named_event_delete(item);
 		  break;
 		case vpiNet:
 		case vpiReg:
@@ -87,43 +91,58 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		case vpiIntVar:
 		case vpiByteVar:
 		case vpiBitVar:
-		  signal_delete((scope->intern)[idx]);
+		  signal_delete(item);
 		  break;
 		case vpiParameter:
-		  parameter_delete((scope->intern)[idx]);
+		  parameter_delete(item);
 		  break;
 		case vpiRealVar:
-		  real_delete((scope->intern)[idx]);
+		  real_delete(item);
 		  break;
 		case vpiEnumTypespec:
-		  enum_delete((scope->intern)[idx]);
+		  enum_delete(item);
 		  break;
 		case vpiPort:
-		  port_delete((scope->intern)[idx]);
+		  port_delete(item);
 		  break;
 		case vpiStringVar:
-		  string_delete((scope->intern)[idx]);
+		  string_delete(item);
 		  break;
 		case vpiClassVar:
-		  class_delete((scope->intern)[idx]);
+		  class_delete(item);
 		  break;
-		case vpiRegArray:
-		  darray_delete((scope->intern)[idx]);
+		case vpiArrayVar:
+		  switch(item->vpi_get(vpiArrayType)) {
+		      case vpiQueueArray:
+			queue_delete(item);
+			break;
+		      case vpiDynamicArray:
+			darray_delete(item);
+			break;
+		      default:
+			fprintf(stderr, "Need support for array type: %d\n",
+			                item->vpi_get(vpiArrayType));
+			assert(0);
+			break;
+		  }
 		  break;
 		default:
 		  fprintf(stderr, "Need support for type: %d\n",
-		          scope->intern[idx]->get_type_code());
+		          item->get_type_code());
 		  assert(0);
 		  break;
 	    }
       }
       free(scope->intern);
 
-	/* Clean up any class definitions. */
+	/* Save any class definitions to clean up later. */
       map<std::string, class_type*>::iterator citer;
       for (citer = scope->classes.begin();
            citer != scope->classes.end(); ++ citer ) {
-            class_def_delete(citer->second);
+	    class_list_count += 1;
+	    class_list = (class_type **) realloc(class_list,
+	                 class_list_count*sizeof(class_type **));
+	    class_list[class_list_count-1] = citer->second;
       }
 }
 
@@ -139,6 +158,14 @@ void root_table_delete(void)
       free(vpip_root_table_ptr);
       vpip_root_table_ptr = 0;
       vpip_root_table_cnt = 0;
+
+	/* Clean up all the class definitions. */
+      for (unsigned idx = 0; idx < class_list_count; idx += 1) {
+            class_def_delete(class_list[idx]);
+      }
+      free(class_list);
+      class_list = 0;
+      class_list_count = 0;
 }
 #endif
 

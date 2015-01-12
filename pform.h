@@ -1,7 +1,7 @@
 #ifndef IVL_pform_H
 #define IVL_pform_H
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -218,6 +218,15 @@ extern void pform_package_import(const struct vlltype&loc,
 
 extern PExpr* pform_package_ident(const struct vlltype&loc,
 				  PPackage*pkg, pform_name_t*ident);
+
+/*
+ * Interface related functions.
+ */
+extern void pform_start_modport_item(const struct vlltype&loc, const char*name);
+extern void pform_end_modport_item(const struct vlltype&loc);
+extern void pform_add_modport_port(const struct vlltype&loc,
+	                           NetNet::PortType port_type,
+        	                   perm_string name, PExpr*expr);
 
 /*
  * This creates an identifier aware of names that may have been
