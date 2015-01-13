@@ -4053,29 +4053,42 @@ bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
       size_t size = thr->words[cp->bit_idx[0]].w_int;
 
       vvp_object_t obj;
-      if (strcmp(text,"b8") == 0) {
-	    obj = new vvp_darray_atom<uint8_t>(size);
-      } else if (strcmp(text,"b16") == 0) {
-	    obj = new vvp_darray_atom<uint16_t>(size);
-      } else if (strcmp(text,"b32") == 0) {
-	    obj = new vvp_darray_atom<uint32_t>(size);
-      } else if (strcmp(text,"b64") == 0) {
-	    obj = new vvp_darray_atom<uint64_t>(size);
-      } else if (strcmp(text,"sb8") == 0) {
-	    obj = new vvp_darray_atom<int8_t>(size);
-      } else if (strcmp(text,"sb16") == 0) {
-	    obj = new vvp_darray_atom<int16_t>(size);
-      } else if (strcmp(text,"sb32") == 0) {
-	    obj = new vvp_darray_atom<int32_t>(size);
-      } else if (strcmp(text,"sb64") == 0) {
-	    obj = new vvp_darray_atom<int64_t>(size);
-      } else if (strcmp(text,"r") == 0) {
+      if (strcmp(text, "r") == 0) {
 	    obj = new vvp_darray_real(size);
-      } else if (strcmp(text,"S") == 0) {
+      } else if (strcmp(text, "S") == 0) {
 	    obj = new vvp_darray_string(size);
-      } else {
-	      // XXXX This should not happen.
-	    obj = new vvp_darray_atom<uint8_t> (size);
+      } else {      // Determine vector type
+            bool sign = false;
+            int width = 0;
+
+            if (!strncmp(text, "sb", 2)) {
+                sign = true;
+                width = atoi(&text[2]);
+            } else {
+                if(text[0] != 'b') {    // Make sure it's correct type
+                    fprintf(stderr, "Error: unknown type (%s).\n", text);
+                    assert(false);
+                }
+
+                width = atoi(&text[1]);
+            }
+
+            if(width > 0 && width <= 8) {
+                if(sign) obj = new vvp_darray_atom<int8_t> (size); else
+                         obj = new vvp_darray_atom<uint8_t> (size);
+            } else if(width <= 16) {
+                if(sign) obj = new vvp_darray_atom<int16_t> (size); else
+                         obj = new vvp_darray_atom<uint16_t> (size);
+            } else if(width <= 32) {
+                if(sign) obj = new vvp_darray_atom<int32_t> (size); else
+                         obj = new vvp_darray_atom<uint32_t> (size);
+            } else if(width <= 64) {
+                if(sign) obj = new vvp_darray_atom<int64_t> (size); else
+                         obj = new vvp_darray_atom<uint64_t> (size);
+            } else {
+                fprintf(stderr, "Sorry: cannot handle such wide (%d) vectors.\n", width);
+                assert(false);
+            }
       }
 
       thr->push_object(obj);
