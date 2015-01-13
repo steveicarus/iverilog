@@ -2661,7 +2661,6 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
       }
 
       delete range;
-      delete names;
       return res;
 }
 
@@ -2690,7 +2689,6 @@ static vector<pform_tf_port_t>*do_make_task_ports(const struct vlltype&loc,
 
 	    res->push_back(pform_tf_port_t(curw));
       }
-      delete names;
       return res;
 }
 
@@ -2699,35 +2697,54 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 				      data_type_t*vtype,
 				      list<perm_string>*names)
 {
+      vector<pform_tf_port_t>*ret = NULL;
+      std::list<pform_range_t>*unpacked_dims = NULL;
+
+      if (uarray_type_t*uarray = dynamic_cast<uarray_type_t*> (vtype)) {
+            unpacked_dims = uarray->dims.get();
+            vtype = uarray->base_type;
+      }
+
       if (atom2_type_t*atype = dynamic_cast<atom2_type_t*> (vtype)) {
 	    list<pform_range_t>*range_tmp = make_range_from_width(atype->type_code);
-	    return pform_make_task_ports(loc, pt, IVL_VT_BOOL,
+	    ret = pform_make_task_ports(loc, pt, IVL_VT_BOOL,
 					 atype->signed_flag,
 					 range_tmp, names);
       }
 
       if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype)) {
-	    return pform_make_task_ports(loc, pt, vec_type->base_type,
+	    ret = pform_make_task_ports(loc, pt, vec_type->base_type,
 					 vec_type->signed_flag,
 					 copy_range(vec_type->pdims.get()),
 					 names, vec_type->integer_flag);
       }
 
       if (/*real_type_t*real_type = */ dynamic_cast<real_type_t*> (vtype)) {
-	    return pform_make_task_ports(loc, pt, IVL_VT_REAL,
+	    ret = pform_make_task_ports(loc, pt, IVL_VT_REAL,
 					 true, 0, names);
       }
 
       if (dynamic_cast<string_type_t*> (vtype)) {
-	    return pform_make_task_ports(loc, pt, IVL_VT_STRING,
+	    ret = pform_make_task_ports(loc, pt, IVL_VT_STRING,
 					 false, 0, names);
       }
 
       if (class_type_t*class_type = dynamic_cast<class_type_t*> (vtype)) {
-	    return do_make_task_ports(loc, pt, IVL_VT_CLASS, class_type, names);
+	    ret = do_make_task_ports(loc, pt, IVL_VT_CLASS, class_type, names);
       }
 
-      return do_make_task_ports(loc, pt, IVL_VT_NO_TYPE, vtype, names);
+      ret = do_make_task_ports(loc, pt, IVL_VT_NO_TYPE, vtype, names);
+
+      if (unpacked_dims) {
+	    for (list<perm_string>::iterator cur = names->begin()
+                    ; cur != names->end() ; ++ cur ) {
+		PWire*wire = pform_get_wire_in_scope(*cur);
+		wire->set_unpacked_idx(*unpacked_dims);
+	    }
+      }
+
+      delete names;
+      return ret;
 }
 
 /*
