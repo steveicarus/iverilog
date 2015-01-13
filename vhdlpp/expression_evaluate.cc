@@ -112,10 +112,14 @@ bool ExpAttribute::evaluate(ScopeBase*, int64_t&val) const
 
 bool ExpAttribute::evaluate(Entity*ent, Architecture*arc, int64_t&val) const
 {
+      if (!ent || !arc) {   // it's impossible to evaluate, probably it is inside a subprogram
+            return false;
+      }
+
       if (name_ == "left" || name_ == "right") {
 	    const VType*base_type = base_->peek_type();
 	    if (base_type == 0)
-		  base_type = base_->probe_type(ent,arc);
+		  base_type = base_->probe_type(ent, arc);
 
 	    ivl_assert(*this, base_type);
 
@@ -130,7 +134,7 @@ bool ExpAttribute::evaluate(Entity*ent, Architecture*arc, int64_t&val) const
 	    ivl_assert(*this, arr->dimensions() == 1);
 	    if(name_ == "left")
 		  arr->dimension(0).msb()->evaluate(ent, arc, val);
-	    else
+	    else    // "right"
 		  arr->dimension(0).lsb()->evaluate(ent, arc, val);
 
 	    return true;
