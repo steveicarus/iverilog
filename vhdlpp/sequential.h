@@ -225,10 +225,14 @@ class ForLoopStatement : public LoopStatement {
       ~ForLoopStatement();
 
       int elaborate(Entity*ent, Architecture*arc);
-      int emit(ostream&out, Entity*entity, Architecture*arc);
+      int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent) const;
 
     private:
+      // Emits for-loop which direction is determined at run-time.
+      // It is used for 'range & 'reverse_range attributes.
+      int emit_runtime_(ostream&out, Entity*ent, Architecture*arc);
+
       perm_string it_;
       prange_t* range_;
 };

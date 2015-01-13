@@ -200,76 +200,108 @@ int CaseSeqStmt::CaseStmtAlternative::emit(ostream&out, Entity*ent, Architecture
 
 int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 {
-      int errors = 0;
-      ivl_assert(*this, range_);
+    int errors = 0;
+    ivl_assert(*this, range_);
 
-      int64_t start_val;
-      bool start_rc = range_->msb()->evaluate(ent, arc, start_val);
+    int64_t start_val;
+    bool start_rc = range_->msb()->evaluate(ent, arc, start_val);
 
-      int64_t finish_val;
-      bool finish_rc = range_->lsb()->evaluate(ent, arc, finish_val);
+    int64_t finish_val;
+    bool finish_rc = range_->lsb()->evaluate(ent, arc, finish_val);
 
-      ivl_assert(*this, start_rc);
-      ivl_assert(*this, finish_rc);
+    perm_string scope_name = loop_name();
+    if (scope_name.nil()) {
+        char buf[80];
+        snprintf(buf, sizeof buf, "__%p", this);
+        scope_name = lex_strings.make(buf);
+    }
 
-      bool dir = range_->is_downto();
+    out << "begin : " << scope_name << endl;
+    out << "longint \\" << it_ << " ;" << endl;
 
-      if (!dir) {
-	    int64_t tmp = start_val;
-	    start_val = finish_val;
-	    finish_val = tmp;
-      }
+    if(!start_rc || !finish_rc) {
+        // Could not evaluate one of the loop boundaries, it has to be
+        // determined during the run-time
+        errors += emit_runtime_(out, ent, arc);
+    } else {
+        bool dir = range_->is_downto();
 
-      if (dir && (start_val < finish_val)) {
-	    if(range_->is_auto_dir()) {
-		dir = false;
-	    } else {
-		out << "begin /* Degenerate loop at " << get_fileline()
-		    << ": " << start_val
-		    << " downto " << finish_val << " */ end" << endl;
-		return errors;
-	    }
-      }
+        if (!dir) {
+            int64_t tmp = start_val;
+            start_val = finish_val;
+            finish_val = tmp;
+        }
 
-      else if (!dir && start_val > finish_val) {
-	    if(range_->is_auto_dir()) {
-		dir = true;
-	    } else {
-		out << "begin /* Degenerate loop at " << get_fileline()
-		    << ": " << start_val
-		    << " to " << finish_val << " */ end" << endl;
-		return errors;
-	    }
-      }
+        if (dir && (start_val < finish_val)) {
+           if(range_->is_auto_dir()) {
+               dir = false;
+           } else {
+               out << "begin /* Degenerate loop at " << get_fileline()
+                   << ": " << start_val
+                   << " downto " << finish_val << " */ end" << endl;
+               return errors;
+           }
+        }
 
-      perm_string scope_name = loop_name();
-      if (scope_name.nil()) {
-	    char buf[80];
-	    snprintf(buf, sizeof buf, "__%p", this);
-	    scope_name = lex_strings.make(buf);
-      }
+        else if (!dir && start_val > finish_val) {
+           if(range_->is_auto_dir()) {
+               dir = true;
+           } else {
+               out << "begin /* Degenerate loop at " << get_fileline()
+                   << ": " << start_val
+                   << " to " << finish_val << " */ end" << endl;
+               return errors;
+           }
+        }
 
-      out << "begin : " << scope_name << endl;
-      out << "longint \\" << it_ << " ;" << endl;
-      out << "for (\\" << it_ << " = " << start_val << " ; ";
-      if (dir)
-	    out << "\\" << it_ << " >= " << finish_val;
-      else
-	    out << "\\" << it_ << " <= " << finish_val;
-      out << "; \\" << it_ << " = \\" << it_;
-      if (dir)
-	    out << " - 1";
-      else
-	    out << " + 1";
+        out << "for (\\" << it_ << " = " << start_val << " ; ";
 
-      out << ") begin" << endl;
+        if (dir)
+            out << "\\" << it_ << " >= " << finish_val;
+        else
+            out << "\\" << it_ << " <= " << finish_val;
 
-      errors += emit_substatements(out, ent, arc);
+        out << "; \\" << it_ << " = \\" << it_;
 
-      out << "end" << endl;
-      out << "end /* " << scope_name << " */" << endl;
+        if (dir)
+            out << " - 1)";
+        else
+            out << " + 1)";
+    }
 
-      return errors;
+    out << " begin" << endl;
+
+    errors += emit_substatements(out, ent, arc);
+
+    out << "end" << endl;
+    out << "end /* " << scope_name << " */" << endl;
+
+    return errors;
+}
+
+int ForLoopStatement::emit_runtime_(ostream&out, Entity*ent, Architecture*arc)
+{
+    int errors = 0;
+
+    out << "for (\\" << it_ << " = ";
+    errors += range_->expr_left()->emit(out, ent, arc);
+
+    // Twisted way of determining the loop direction at runtime
+    out << " ;\n(";
+    errors += range_->expr_left()->emit(out, ent, arc);
+    out << " < ";
+    errors += range_->expr_right()->emit(out, ent, arc);
+    out << " ? \\" << it_ << " <= ";
+    errors += range_->expr_right()->emit(out, ent, arc);
+    out << " : \\" << it_ << " >= ";
+    errors += range_->expr_right()->emit(out, ent, arc);
+    out << ");\n\\" << it_ << " = \\" << it_ << " + (";
+    errors += range_->expr_left()->emit(out, ent, arc);
+    out << " < ";
+    errors += range_->expr_right()->emit(out, ent, arc);
+    out << " ? 1 : -1))";
+
+    return errors;
 }
 
 int WhileLoopStatement::emit(ostream&out, Entity*, Architecture*)
