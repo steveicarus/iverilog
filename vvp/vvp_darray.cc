@@ -89,12 +89,12 @@ template <class TYPE> void vvp_darray_atom<TYPE>::set_word(unsigned adr, const v
 template <class TYPE> void vvp_darray_atom<TYPE>::get_word(unsigned adr, vvp_vector4_t&value)
 {
       if (adr >= array_.size()) {
-	    value = vvp_vector4_t(8*sizeof(TYPE), BIT4_X);
+	    value = vvp_vector4_t(width_, BIT4_X);
 	    return;
       }
 
       TYPE word = array_[adr];
-      vvp_vector4_t tmp (8*sizeof(TYPE), BIT4_0);
+      vvp_vector4_t tmp (width_, BIT4_0);
       for (unsigned idx = 0 ; idx < tmp.size() ; idx += 1) {
 	    if (word&1) tmp.set_bit(idx, BIT4_1);
 	    word >>= 1;

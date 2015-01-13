@@ -4074,17 +4074,17 @@ bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
             }
 
             if(width > 0 && width <= 8) {
-                if(sign) obj = new vvp_darray_atom<int8_t> (size); else
-                         obj = new vvp_darray_atom<uint8_t> (size);
+                if(sign) obj = new vvp_darray_atom<int8_t> (size, width); else
+                         obj = new vvp_darray_atom<uint8_t> (size, width);
             } else if(width <= 16) {
-                if(sign) obj = new vvp_darray_atom<int16_t> (size); else
-                         obj = new vvp_darray_atom<uint16_t> (size);
+                if(sign) obj = new vvp_darray_atom<int16_t> (size, width); else
+                         obj = new vvp_darray_atom<uint16_t> (size, width);
             } else if(width <= 32) {
-                if(sign) obj = new vvp_darray_atom<int32_t> (size); else
-                         obj = new vvp_darray_atom<uint32_t> (size);
+                if(sign) obj = new vvp_darray_atom<int32_t> (size, width); else
+                         obj = new vvp_darray_atom<uint32_t> (size, width);
             } else if(width <= 64) {
-                if(sign) obj = new vvp_darray_atom<int64_t> (size); else
-                         obj = new vvp_darray_atom<uint64_t> (size);
+                if(sign) obj = new vvp_darray_atom<int64_t> (size, width); else
+                         obj = new vvp_darray_atom<uint64_t> (size, width);
             } else {
                 fprintf(stderr, "Sorry: cannot handle such wide (%d) vectors.\n", width);
                 assert(false);
