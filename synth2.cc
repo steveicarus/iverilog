@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1165,8 +1165,14 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 			     << endl;
 		  }
 		  vector<bool>mask = statement_input.pin(idx).nexus()->driven_mask();
-		  for (size_t bit = mux_off ; bit < mux_off+mux_width ; bit += 1) {
-			ivl_assert(*this, mask[bit]==false);
+		    // If the mask is empty then there are no bits in the
+		    // nexus to check yet.
+		  if (! mask.empty()) {
+			for (size_t bit = mux_off;
+			     bit < mux_off+mux_width;
+			     bit += 1) {
+			      ivl_assert(*this, mask[bit]==false);
+			}
 		  }
 		  connect(nex_out.pin(idx), statement_input.pin(idx));
 	    }
