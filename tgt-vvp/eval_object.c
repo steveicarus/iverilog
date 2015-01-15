@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,7 +28,6 @@ static int eval_darray_new(ivl_expr_t ex)
       ivl_expr_t size_expr = ivl_expr_oper1(ex);
       ivl_expr_t init_expr = ivl_expr_oper2(ex);
       draw_eval_expr_into_integer(size_expr, size_reg);
-      clr_word(size_reg);
 
 	// The new function has a net_type that contains the details
 	// of the type.
@@ -67,6 +66,7 @@ static int eval_darray_new(ivl_expr_t ex)
 	    assert(0);
 	    break;
       }
+      clr_word(size_reg);
 
       if (init_expr && ivl_expr_type(init_expr)==IVL_EX_ARRAY_PATTERN) {
 	    unsigned idx;
