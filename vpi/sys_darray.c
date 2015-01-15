@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -340,11 +340,11 @@ static PLI_INT32 from_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
                 PLI_INT32 bval = vec_val.value.vector[offset / PLI_INT32_bits].bval;
 
                 if(offset % PLI_INT32_bits != 0) {
-                    unsigned int remainder = offset % 32;
-                    aval >>= remainder;
-                    aval |= vec_val.value.vector[offset / PLI_INT32_bits + 1].aval << (PLI_INT32_bits - remainder);
-                    bval >>= remainder;
-                    bval |= vec_val.value.vector[offset / PLI_INT32_bits + 1].bval << (PLI_INT32_bits - remainder);
+                    unsigned int rem_bits = offset % 32;
+                    aval >>= rem_bits;
+                    aval |= vec_val.value.vector[offset / PLI_INT32_bits + 1].aval << (PLI_INT32_bits - rem_bits);
+                    bval >>= rem_bits;
+                    bval |= vec_val.value.vector[offset / PLI_INT32_bits + 1].bval << (PLI_INT32_bits - rem_bits);
                 }
 
                 offset += copied_bits;
