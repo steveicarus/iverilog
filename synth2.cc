@@ -136,6 +136,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, NetNet::not_an_array, tmp_type);
 	    tmp->local_flag(true);
+	    tmp->set_line(*this);
 
 	    NetPartSelect*ps = new NetPartSelect(tmp, base_off, lval_->lwidth(), NetPartSelect::PV);
 	    ps->set_line(*this);
@@ -166,7 +167,8 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, NetNet::not_an_array, tmp_type);
-	      //tmp->local_flag(true);
+	    tmp->local_flag(true);
+	    tmp->set_line(*this);
 
 	    ivl_assert(*this, accumulated_nex_out.pin_count()==1);
 	    NetNet*use_lsig = lsig;
@@ -835,6 +837,7 @@ bool NetCase::synth_async_casez_(Design*des, NetScope*scope,
 		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 					  NetNet::TRI, tmp_vec);
 		  tmp->local_flag(true);
+		  tmp->set_line(*this);
 		  ivl_assert(*this, tmp->vector_width() != 0);
 		  connect(mux_cur->pin_Result(), tmp->pin(0));
 
@@ -1111,6 +1114,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    NetNet*otmp = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, NetNet::not_an_array, tmp_type);
 	    otmp->local_flag(true);
+	    otmp->set_line(*this);
 	    connect(mux->pin_Result(),otmp->pin(0));
 
 	    connect(mux->pin_Sel(),   ssig->pin(0));
@@ -1121,6 +1125,8 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  tmp_type = new netvector_t(mux_data_type, mux_width-1,0);
 		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 					  NetNet::WIRE, NetNet::not_an_array, tmp_type);
+		  tmp->local_flag(true);
+		  tmp->set_line(*this);
 		  connect(mux->pin_Data(1), tmp->pin(0));
 	    }
 
@@ -1128,6 +1134,8 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  tmp_type = new netvector_t(mux_data_type, mux_width-1,0);
 		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 					  NetNet::WIRE, NetNet::not_an_array, tmp_type);
+		  tmp->local_flag(true);
+		  tmp->set_line(*this);
 		  connect(mux->pin_Data(0), tmp->pin(0));
 	    }
 
@@ -1138,6 +1146,8 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  tmp_type = new netvector_t(mux_data_type, mux_lwidth-1,0);
 		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 					  NetNet::WIRE, NetNet::not_an_array, tmp_type);
+		  tmp->local_flag(true);
+		  tmp->set_line(*this);
 		  NetPartSelect*ps = new NetPartSelect(tmp, mux_off, mux_width, NetPartSelect::PV);
 		  des->add_node(ps);
 		  connect(ps->pin(0), otmp->pin(0));
@@ -1320,6 +1330,7 @@ bool NetProcTop::synth_async(Design*des)
 		  NetNet*tmp_sig = new NetNet(scope(), scope()->local_symbol(),
 					      NetNet::WIRE, NetNet::not_an_array, tmp_type);
 		  tmp_sig->local_flag(true);
+		  tmp_sig->set_line(*this);
 
 		  NetPartSelect*tmp = new NetPartSelect(tmp_sig, item.base,
 							item.wid, NetPartSelect::PV);
@@ -1801,6 +1812,7 @@ bool NetProcTop::synth_sync(Design*des)
       NetNet*clock = new NetNet(scope(), scope()->local_symbol(),
 				NetNet::TRI, &netvector_t::scalar_logic);
       clock->local_flag(true);
+      clock->set_line(*this);
 
 #if 0
       NetNet*ce = new NetNet(scope(), scope()->local_symbol(),

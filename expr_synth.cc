@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1278,6 +1278,8 @@ NetNet* NetESignal::synthesize(Design*des, NetScope*scope, NetExpr*root)
 						  net_->vector_width()-1, 0);
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, tmp_vec);
+	    tmp->set_line(*this);
+	    tmp->local_flag(true);
 	    verinum tmp_val ((uint64_t)scope->genvar_tmp_val, net_->vector_width());
 	    NetConst*tmp_const = new NetConst(scope, scope->local_symbol(), tmp_val);
 	    tmp_const->set_line(*this);
