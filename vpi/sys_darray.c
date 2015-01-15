@@ -81,19 +81,16 @@ static PLI_INT32 dobject_size_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 static PLI_INT32 dobject_size_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv, arg;
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle arg = vpi_scan(argv);
 
       (void)name; /* Parameter is not used. */
 
-      argv = vpi_iterate(vpiArgument, callh);
-      arg = vpi_scan(argv);
       vpi_free_object(argv);
-
-      int res = vpi_get(vpiSize, arg);
 
       s_vpi_value value;
       value.format = vpiIntVal;
-      value.value.integer = res;
+      value.value.integer = vpi_get(vpiSize, arg);
 
       vpi_put_value(callh, &value, 0, vpiNoDelay);
 
@@ -165,45 +162,48 @@ static PLI_INT32 to_from_vec_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
+static const size_t BPW = 8 * sizeof(PLI_INT32);
+static const size_t BPWM1 = 8 * sizeof(PLI_INT32) - 1;
+
 static PLI_INT32 to_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
-      (void)name; /* Parameter is not used. */
-      const unsigned int PLI_INT32_bits = sizeof(PLI_INT32) * 8;
-
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv, darr, darr_word, vec;
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle darr = vpi_scan(argv);
+      vpiHandle vec = vpi_scan(argv);
       s_vpi_value darr_val;
       s_vpi_vecval*vec_val;
 
-      /* Fetch arguments */
-      argv = vpi_iterate(vpiArgument, callh);
-      darr = vpi_scan(argv);
-      vec = vpi_scan(argv);
       vpi_free_object(argv);
 
-      int darr_length = vpi_get(vpiSize, darr);
-      darr_word = vpi_handle_by_index(darr, 0);
-      int darr_word_bit_size = vpi_get(vpiSize, darr_word);
-      int darr_bit_size = darr_length * darr_word_bit_size;
+      int darr_size = vpi_get(vpiSize, darr);
+      int darr_word_size = vpi_get(vpiSize, vpi_handle_by_index(darr, 0));
+      int darr_bit_size = darr_size * darr_word_size;
 
       int vec_size = vpi_get(vpiSize, vec);
-      if(darr_length <= 0) {
-	    vpi_printf("ERROR: Cannot cast empty dynamic array");
-            vpi_control(vpiFinish, 0);
+
+      if (darr_size <= 0) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s cannot cast an empty dynamic array.\n", name);
+            vpi_control(vpiFinish, 1);
             return 0;
       }
 
-      if(vec_size != darr_bit_size) {
-	    vpi_printf("ERROR: Dynamic array and vector size do not match");
-            vpi_control(vpiFinish, 0);
+      if (darr_bit_size != vec_size) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s dynamic array and vector size do not match "
+	               "(%d != %d).\n", name, darr_bit_size, vec_size);
+            vpi_control(vpiFinish, 1);
             return 0;
       }
 
       /* Conversion part */
-      int vec_number = ceil((double)darr_bit_size / PLI_INT32_bits);
+      int vec_number = (darr_bit_size + BPWM1) / BPW;
       vec_val = calloc(vec_number, sizeof(s_vpi_vecval));
 
-      int darr_number = ceil((double)darr_word_bit_size / PLI_INT32_bits);
+      int darr_number = (darr_word_size + BPWM1) / BPW;
 
       darr_val.format = vpiVectorVal;
       unsigned int offset = 0;
@@ -212,9 +212,9 @@ static PLI_INT32 to_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vec_val_ptr->bval = 0;
 
       /* We have to reverse the order of the dynamic array, no memcpy here */
-      for(int i = darr_length - 1; i >= 0; --i) {
-            unsigned int bits_to_copy = darr_word_bit_size;
-            darr_word = vpi_handle_by_index(darr, i);
+      for(int i = darr_size - 1; i >= 0; --i) {
+            unsigned int bits_to_copy = darr_word_size;
+            vpiHandle darr_word = vpi_handle_by_index(darr, i);
             vpi_get_value(darr_word, &darr_val);
             assert(darr_val.value.vector);
 
@@ -222,20 +222,20 @@ static PLI_INT32 to_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
                 PLI_INT32 aval = darr_val.value.vector->aval;
                 PLI_INT32 bval = darr_val.value.vector->bval;
 
-                if(offset < PLI_INT32_bits) {
+                if(offset < BPW) {
                     vec_val_ptr->aval |= (aval << offset);
                     vec_val_ptr->bval |= (bval << offset);
                 }
 
-                offset += bits_to_copy > PLI_INT32_bits ? PLI_INT32_bits : bits_to_copy;
+                offset += bits_to_copy > BPW ? BPW : bits_to_copy;
 
-                if(offset >= PLI_INT32_bits) {
+                if(offset >= BPW) {
                     ++vec_val_ptr;
                     vec_val_ptr->aval = 0;
                     vec_val_ptr->bval = 0;
 
                     // is the current word crossing the s_vpi_vecval boundary?
-                    if(offset > PLI_INT32_bits) {
+                    if(offset > BPW) {
                         // this assert is to warn you, that the following
                         // part could not be tested at the moment of writing
                         // (dynamic arrays work with vectors of 8, 16, 32, 64
@@ -245,15 +245,15 @@ static PLI_INT32 to_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
                         assert(0);
 
                         // copy the remainder that did not fit in the previous s_vpi_vecval
-                        offset -= PLI_INT32_bits;
-                        vec_val_ptr->aval |= (aval >> (darr_word_bit_size - offset));
-                        vec_val_ptr->bval |= (bval >> (darr_word_bit_size - offset));
+                        offset -= BPW;
+                        vec_val_ptr->aval |= (aval >> (darr_word_size - offset));
+                        vec_val_ptr->bval |= (bval >> (darr_word_size - offset));
                     } else {
                         offset = 0;
                     }
                 }
 
-                bits_to_copy -= PLI_INT32_bits;
+                bits_to_copy -= BPW;
                 darr_val.value.vector++;
             }
       }
@@ -269,40 +269,39 @@ static PLI_INT32 to_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 static PLI_INT32 from_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
-      (void)name; /* Parameter is not used. */
-      const int PLI_INT32_bits = sizeof(PLI_INT32) * 8;
-
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv, darr, darr_word, vec;
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle darr = vpi_scan(argv);
+      vpiHandle vec = vpi_scan(argv);
       s_vpi_value darr_val, vec_val;
       s_vpi_vecval*vector;
 
-      /* Fetch arguments */
-      argv = vpi_iterate(vpiArgument, callh);
-      darr = vpi_scan(argv);
-      vec = vpi_scan(argv);
       vpi_free_object(argv);
 
-      int darr_length = vpi_get(vpiSize, darr);
-      darr_word = vpi_handle_by_index(darr, 0);
-      int darr_word_bit_size = vpi_get(vpiSize, darr_word);
-      int darr_bit_size = darr_length * darr_word_bit_size;
+      int darr_size = vpi_get(vpiSize, darr);
+      int darr_word_size = vpi_get(vpiSize, vpi_handle_by_index(darr, 0));
+      int darr_bit_size = darr_size * darr_word_size;
 
       int vec_size = vpi_get(vpiSize, vec);
-      if(vec_size <= 0) {
-	    vpi_printf("ERROR: Cannot cast empty vector");
-            vpi_control(vpiFinish, 0);
+      if (vec_size <= 0) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s cannot cast an empty vector array.\n", name);
+            vpi_control(vpiFinish, 1);
             return 0;
       }
 
-      if(vec_size != darr_bit_size) {
-	    vpi_printf("ERROR: Dynamic array and vector size do not match");
-            vpi_control(vpiFinish, 0);
+      if (darr_bit_size != vec_size) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s dynamic array and vector size do not match "
+	               "(%d != %d).\n", name, darr_bit_size, vec_size);
+            vpi_control(vpiFinish, 1);
             return 0;
       }
 
       /* Conversion part */
-      int darr_number = ceil((double)darr_word_bit_size / PLI_INT32_bits);
+      int darr_number = (darr_word_size + BPWM1) / BPW;
       vector = calloc(darr_number, sizeof(s_vpi_vecval));
 
       vec_val.format = vpiVectorVal;
@@ -311,23 +310,23 @@ static PLI_INT32 from_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       int offset = 0;       // offset in bits
 
       /* We have to reverse the order of the dynamic array, no memcpy here */
-      for(int i = darr_length - 1; i >= 0; --i) {
-            int bits_to_copy = darr_word_bit_size;
-            darr_word = vpi_handle_by_index(darr, i);
+      for(int i = darr_size - 1; i >= 0; --i) {
+            int bits_to_copy = darr_word_size;
+            vpiHandle darr_word = vpi_handle_by_index(darr, i);
             assert(darr_val.value.vector);
             darr_val_ptr = vector;
 
             while(bits_to_copy > 0) {
-                int copied_bits = bits_to_copy > PLI_INT32_bits ? PLI_INT32_bits : bits_to_copy;
-                PLI_INT32 aval = vec_val.value.vector[offset / PLI_INT32_bits].aval;
-                PLI_INT32 bval = vec_val.value.vector[offset / PLI_INT32_bits].bval;
+                int copied_bits = bits_to_copy > (int)BPW ? (int)BPW : bits_to_copy;
+                PLI_INT32 aval = vec_val.value.vector[offset / BPW].aval;
+                PLI_INT32 bval = vec_val.value.vector[offset / BPW].bval;
 
-                if(offset % PLI_INT32_bits != 0) {
+                if(offset % BPW != 0) {
                     unsigned int rem_bits = offset % 32;
                     aval >>= rem_bits;
-                    aval |= vec_val.value.vector[offset / PLI_INT32_bits + 1].aval << (PLI_INT32_bits - rem_bits);
+                    aval |= vec_val.value.vector[offset / BPW + 1].aval << (BPW - rem_bits);
                     bval >>= rem_bits;
-                    bval |= vec_val.value.vector[offset / PLI_INT32_bits + 1].bval << (PLI_INT32_bits - rem_bits);
+                    bval |= vec_val.value.vector[offset / BPW + 1].bval << (BPW - rem_bits);
                 }
 
                 offset += copied_bits;
