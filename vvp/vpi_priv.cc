@@ -309,10 +309,14 @@ static const char* vpi_type_values(PLI_INT32 code)
 {
       static char buf[32];
       switch (code) {
+	  case vpiArrayType:
+	    return "vpiArrayType";
 	  case vpiBitVar:
 	    return "vpiBitVar";
 	  case vpiByteVar:
 	    return "vpiByteVar";
+	  case vpiClassVar:
+	    return "vpiClassVar";
 	  case vpiConstant:
 	    return "vpiConstant";
 	  case vpiEnumTypespec:
@@ -341,6 +345,8 @@ static const char* vpi_type_values(PLI_INT32 code)
 	    return "vpiNamedEvent";
 	  case vpiNamedFork:
 	    return "vpiNamedFork";
+	  case vpiPackage:
+	    return "vpiPackage";
 	  case vpiPathTerm:
 	    return "vpiPathTerm";
 	  case vpiPort:
@@ -359,6 +365,8 @@ static const char* vpi_type_values(PLI_INT32 code)
 	    return "vpiReg";
 	  case vpiShortIntVar:
 	    return "vpiShortIntVar";
+	  case vpiStringVar:
+	    return "vpiStringVar";
 	  case vpiSysFuncCall:
 	    return "vpiSysFuncCall";
 	  case vpiSysTaskCall:
