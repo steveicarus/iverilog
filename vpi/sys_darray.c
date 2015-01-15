@@ -23,24 +23,48 @@
 # include  <math.h>
 # include  <stdlib.h>
 # include  <string.h>
-
-static PLI_INT32 one_darray_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
+static PLI_INT32 dobject_size_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv;
-      vpiHandle arg;
+      vpiHandle argv, arg;
 
       argv = vpi_iterate(vpiArgument, callh);
       if (argv == 0) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s requires a string argument.\n", name);
+	    vpi_printf("%s requires a dynamic array, queue or string "
+	               "argument.\n", name);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
-      arg =  vpi_scan(argv);
-      if (arg == 0) return 0;
+      arg =  vpi_scan(argv);  /* This should never be zero. */
+      assert(arg);
+
+	/* The argument must be a dynamic array, queue or string. */
+      switch (vpi_get(vpiType, arg)) {
+	case vpiStringVar:
+	    break;
+	case vpiArrayVar:
+	    switch(vpi_get(vpiArrayType, arg)) {
+	      case vpiDynamicArray:
+	      case vpiQueueArray:
+		  break;
+	      default:
+		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s argument must be a dynamic array, queue or "
+		             "string.\n", name);
+		  vpi_control(vpiFinish, 1);
+	    }
+	    break;
+	default:
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s argument must be a dynamic array, queue or string, "
+	               "given a %s.\n", name, vpi_get_str(vpiType, arg));
+	    vpi_control(vpiFinish, 1);
+      }
 
       arg = vpi_scan(argv);
       if (arg != 0) {
@@ -48,24 +72,21 @@ static PLI_INT32 one_darray_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s has too many arguments.\n", name);
 	    vpi_control(vpiFinish, 1);
-	    return 0;
+	    vpi_free_object(argv);
       }
 
       return 0;
 }
 
-static PLI_INT32 size_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
+static PLI_INT32 dobject_size_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv;
-      vpiHandle arg;
+      vpiHandle argv, arg;
 
       (void)name; /* Parameter is not used. */
 
       argv = vpi_iterate(vpiArgument, callh);
-      assert(argv);
       arg = vpi_scan(argv);
-      assert(arg);
       vpi_free_object(argv);
 
       int res = vpi_get(vpiSize, arg);
@@ -79,49 +100,66 @@ static PLI_INT32 size_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 to_vec_compiletf(ICARUS_VPI_CONST PLI_BYTE8*user_data)
+static PLI_INT32 to_from_vec_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
-      (void) user_data; /* Parameter is not used. */
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv, arg;
 
-      vpiHandle systf_handle, arg_iterator, arg_handle;
-      PLI_INT32 arg_type[2];
-
-      /* obtain a handle to the system task instance */
-      systf_handle = vpi_handle(vpiSysTfCall, NULL);
-      if (systf_handle == NULL) {
-          vpi_printf("ERROR: $ivl_darray_method$to_vec failed to obtain systf handle\n");
-          vpi_control(vpiFinish,0); /* abort simulation */
-          return 0;
+      argv = vpi_iterate(vpiArgument, callh);
+      if (argv == 0) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires two arguments.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
       }
 
-      /* obtain handles to system task arguments */
-      arg_iterator = vpi_iterate(vpiArgument, systf_handle);
-      if (arg_iterator == NULL) {
-          vpi_printf("ERROR: $ivl_darray_method$to_vec requires 2 arguments\n");
-          vpi_control(vpiFinish, 0);
-          return 0;
+	/* The first argument must be a dynamic array. */
+      arg =  vpi_scan(argv);  /* This should never be zero. */
+      assert(arg);
+      if (vpi_get(vpiType, arg) != vpiArrayVar) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s first argument must be a dynamic array, "
+	               "given a %s.\n", name, vpi_get_str(vpiType, arg));
+	    vpi_control(vpiFinish, 1);
+      }
+      if (vpi_get(vpiArrayType, arg) != vpiDynamicArray) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s first argument must be a dynamic array.\n", name);
+	    vpi_control(vpiFinish, 1);
       }
 
-      /* check the type of object in system task arguments */
-      arg_handle = vpi_scan(arg_iterator);
-      for(int i = 0; i < 2; ++i) {
-          arg_type[i] = vpi_get(vpiType, arg_handle);
-          arg_handle = vpi_scan(arg_iterator);
+	/* The second argument must be a net, reg or bit variable. */
+      arg =  vpi_scan(argv);
+      if (arg == 0) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires a second argument.\n", name);
+	    vpi_control(vpiFinish, 1);
+      }
+      switch(vpi_get(vpiType, arg)) {
+	case vpiNet:
+	case vpiReg:
+	case vpiBitVar:
+	case vpiIntegerVar:
+	    break;
+	default:
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s second argument must be a logical net or "
+	               "variable.\n", name);
+	    vpi_control(vpiFinish, 1);
       }
 
-      if (arg_handle != NULL) {       /* are there more arguments? */
-          vpi_printf("ERROR: $ivl_darray_method$to_vec can only have 2 arguments\n");
-          vpi_free_object(arg_iterator);
-          vpi_control(vpiFinish, 0);
-          return 0;
-      }
-
-      if ((arg_type[0] != vpiRegArray) ||
-          (arg_type[1] != vpiNet && arg_type[1] != vpiReg && arg_type[1] != vpiBitVar)) {
-          vpi_printf("ERROR: $ivl_darray_method$to_vec value arguments must be a dynamic array and a net or reg\n");
-          vpi_free_object(arg_iterator);
-          vpi_control(vpiFinish, 0);
-          return 0;
+      arg = vpi_scan(argv);
+      if (arg != 0) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s has too many arguments.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    vpi_free_object(argv);
       }
 
       return 0;
@@ -139,11 +177,8 @@ static PLI_INT32 to_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
       /* Fetch arguments */
       argv = vpi_iterate(vpiArgument, callh);
-      assert(argv);
       darr = vpi_scan(argv);
-      assert(darr);
       vec = vpi_scan(argv);
-      assert(vec);
       vpi_free_object(argv);
 
       int darr_length = vpi_get(vpiSize, darr);
@@ -232,55 +267,6 @@ static PLI_INT32 to_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 from_vec_compiletf(ICARUS_VPI_CONST PLI_BYTE8*user_data)
-{
-      (void) user_data; /* Parameter is not used. */
-
-      vpiHandle systf_handle, arg_iterator, arg_handle;
-      PLI_INT32 arg_type[2];
-
-      /* obtain a handle to the system task instance */
-      systf_handle = vpi_handle(vpiSysTfCall, NULL);
-      if (systf_handle == NULL) {
-          vpi_printf("ERROR: $ivl_darray_method$from_vec failed to obtain systf handle\n");
-          vpi_control(vpiFinish,0); /* abort simulation */
-          return 0;
-      }
-
-      /* obtain handles to system task arguments */
-      arg_iterator = vpi_iterate(vpiArgument, systf_handle);
-      if (arg_iterator == NULL) {
-          vpi_printf("ERROR: $ivl_darray_method$from_vec requires 2 arguments\n");
-          vpi_control(vpiFinish, 0);
-          return 0;
-      }
-
-      /* check the type of object in system task arguments */
-      arg_handle = vpi_scan(arg_iterator);
-      for(int i = 0; i < 2; ++i) {
-          arg_type[i] = vpi_get(vpiType, arg_handle);
-          arg_handle = vpi_scan(arg_iterator);
-      }
-
-      if (arg_handle != NULL) {       /* are there more arguments? */
-          vpi_printf("ERROR: $ivl_darray_method$from_vec can only have 2 arguments\n");
-          vpi_free_object(arg_iterator);
-          vpi_control(vpiFinish, 0);
-          return 0;
-      }
-
-      if ((arg_type[1] != vpiNet && arg_type[1] != vpiReg && arg_type[1] != vpiBitVar) ||
-              (arg_type[0] != vpiRegArray)) {
-          vpi_printf("ERROR: $ivl_darray_method$from_vec value arguments must be "\
-                      "a net or reg and a dynamic array\n");
-          vpi_free_object(arg_iterator);
-          vpi_control(vpiFinish, 0);
-          return 0;
-      }
-
-      return 0;
-}
-
 static PLI_INT32 from_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       (void)name; /* Parameter is not used. */
@@ -293,11 +279,8 @@ static PLI_INT32 from_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
       /* Fetch arguments */
       argv = vpi_iterate(vpiArgument, callh);
-      assert(argv);
       darr = vpi_scan(argv);
-      assert(darr);
       vec = vpi_scan(argv);
-      assert(vec);
       vpi_free_object(argv);
 
       int darr_length = vpi_get(vpiSize, darr);
@@ -372,8 +355,8 @@ void sys_darray_register(void)
       tf_data.type      = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname    = "$size";
-      tf_data.calltf    = size_calltf;
-      tf_data.compiletf = one_darray_arg_compiletf;
+      tf_data.calltf    = dobject_size_calltf;
+      tf_data.compiletf = dobject_size_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$size";
       res = vpi_register_systf(&tf_data);
@@ -383,7 +366,7 @@ void sys_darray_register(void)
       tf_data.sysfunctype = 0;
       tf_data.tfname    = "$ivl_darray_method$to_vec";
       tf_data.calltf    = to_vec_calltf;
-      tf_data.compiletf = to_vec_compiletf;
+      tf_data.compiletf = to_from_vec_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$ivl_darray_method$to_vec";
       res = vpi_register_systf(&tf_data);
@@ -393,7 +376,7 @@ void sys_darray_register(void)
       tf_data.sysfunctype = 0;
       tf_data.tfname    = "$ivl_darray_method$from_vec";
       tf_data.calltf    = from_vec_calltf;
-      tf_data.compiletf = from_vec_compiletf;
+      tf_data.compiletf = to_from_vec_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$ivl_darray_method$from_vec";
       res = vpi_register_systf(&tf_data);
