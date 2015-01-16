@@ -50,7 +50,8 @@ class vvp_darray : public vvp_object {
 template <class TYPE> class vvp_darray_atom : public vvp_darray {
 
     public:
-      inline vvp_darray_atom(size_t siz) : array_(siz) { }
+      inline vvp_darray_atom(size_t siz, size_t wid = sizeof(TYPE) * 8) :
+          array_(siz), width_(wid) {}
       ~vvp_darray_atom();
 
       size_t get_size(void) const;
@@ -59,6 +60,7 @@ template <class TYPE> class vvp_darray_atom : public vvp_darray {
 
     private:
       std::vector<TYPE> array_;
+      size_t width_;        // Actual width, independent from the used type
 };
 
 class vvp_darray_real : public vvp_darray {

@@ -884,26 +884,25 @@ void compile_var2_array(char*label, char*name, int last, int first,
       arr->lsb.set_value(lsb);
       arr->vals_width = labs(msb-lsb) + 1;
 
+      int width = arr->vals_width;
+      int size = arr->get_size();
+
       assert(! arr->nets);
-      if (lsb == 0 && msb == 7 && signed_flag) {
-	    arr->vals = new vvp_darray_atom<int8_t>(arr->get_size());
-      } else if (lsb == 0 && msb == 7 && !signed_flag) {
-	    arr->vals = new vvp_darray_atom<uint8_t>(arr->get_size());
-      } else if (lsb == 0 && msb == 15 && signed_flag) {
-	    arr->vals = new vvp_darray_atom<int16_t>(arr->get_size());
-      } else if (lsb == 0 && msb == 15 && !signed_flag) {
-	    arr->vals = new vvp_darray_atom<uint16_t>(arr->get_size());
-      } else if (lsb == 0 && msb == 31 && signed_flag) {
-	    arr->vals = new vvp_darray_atom<int32_t>(arr->get_size());
-      } else if (lsb == 0 && msb == 31 && !signed_flag) {
-	    arr->vals = new vvp_darray_atom<uint32_t>(arr->get_size());
-      } else if (lsb == 0 && msb == 63 && signed_flag) {
-	    arr->vals = new vvp_darray_atom<int64_t>(arr->get_size());
-      } else if (lsb == 0 && msb == 63 && !signed_flag) {
-	    arr->vals = new vvp_darray_atom<uint64_t>(arr->get_size());
+      if(width > 0 && width <= 8) {
+          if(signed_flag) arr->vals = new vvp_darray_atom<int8_t> (size, width); else
+                          arr->vals = new vvp_darray_atom<uint8_t> (size, width);
+      } else if(width <= 16) {
+          if(signed_flag) arr->vals = new vvp_darray_atom<int16_t> (size, width); else
+                          arr->vals = new vvp_darray_atom<uint16_t> (size, width);
+      } else if(width <= 32) {
+          if(signed_flag) arr->vals = new vvp_darray_atom<int32_t> (size, width); else
+                          arr->vals = new vvp_darray_atom<uint32_t> (size, width);
+      } else if(width <= 64) {
+          if(signed_flag) arr->vals = new vvp_darray_atom<int64_t> (size, width); else
+                          arr->vals = new vvp_darray_atom<uint64_t> (size, width);
       } else {
-	      // For now, only support the atom sizes.
-	    assert(0);
+          fprintf(stderr, "Sorry: cannot handle such wide (%d) vectors.\n", width);
+          assert(false);
       }
       count_var_arrays += 1;
       count_var_array_words += arr->get_size();
