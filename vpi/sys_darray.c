@@ -127,6 +127,8 @@ static PLI_INT32 to_from_vec_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("%s first argument must be a dynamic array.\n", name);
 	    vpi_control(vpiFinish, 1);
       }
+// HERE: Still need to verify that this is not a real or string array.
+//       That will require adding TypeSpec support to the VPI.
 
 	/* The second argument must be a net, reg or bit variable. */
       arg =  vpi_scan(argv);
@@ -171,15 +173,14 @@ static PLI_INT32 to_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       vpiHandle darr = vpi_scan(argv);
       vpiHandle vec = vpi_scan(argv);
-      s_vpi_value darr_val;
-      s_vpi_vecval*vec_val;
 
       vpi_free_object(argv);
 
+	/* Calculate and check the basic array and vector information. */
       int darr_size = vpi_get(vpiSize, darr);
       int darr_word_size = vpi_get(vpiSize, vpi_handle_by_index(darr, 0));
+      assert(darr_word_size > 0);
       int darr_bit_size = darr_size * darr_word_size;
-
       int vec_size = vpi_get(vpiSize, vec);
 
       if (darr_size <= 0) {
@@ -199,65 +200,81 @@ static PLI_INT32 to_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
             return 0;
       }
 
-      /* Conversion part */
-      int vec_number = (darr_bit_size + BPWM1) / BPW;
-      vec_val = calloc(vec_number, sizeof(s_vpi_vecval));
+	/* Calculate the number of words needed to hold the dynamic array
+	 * bits and allocate enough space for them. */
+      size_t vec_words = (darr_bit_size + BPWM1) / BPW;
+      s_vpi_vecval *vec_val = calloc(vec_words, sizeof(s_vpi_vecval));
+      s_vpi_vecval *vec_ptr = vec_val;
 
-      int darr_number = (darr_word_size + BPWM1) / BPW;
+	/* The number of words in each array element. */
+      unsigned darr_words = (darr_word_size + BPWM1) / BPW;
 
+	/* The offset in bits into the current vector value. */
+      unsigned offset = 0;
+
+	/* We want to get each array word as a vector. */
+      s_vpi_value darr_val;
       darr_val.format = vpiVectorVal;
-      unsigned int offset = 0;
-      s_vpi_vecval*vec_val_ptr = vec_val;
-      vec_val_ptr->aval = 0;
-      vec_val_ptr->bval = 0;
 
-      /* We have to reverse the order of the dynamic array, no memcpy here */
-      for(int i = darr_size - 1; i >= 0; --i) {
-            unsigned int bits_to_copy = darr_word_size;
+	/* We have to reverse the order of the dynamic array words. */
+      for (PLI_INT32 i = darr_size - 1; i >= 0; --i) {
+	      /* Get the vector value for the current array word. */
             vpiHandle darr_word = vpi_handle_by_index(darr, i);
             vpi_get_value(darr_word, &darr_val);
-            assert(darr_val.value.vector);
+            assert(darr_val.format == vpiVectorVal);
+	      /* The number of bits to copy for this array word. */
+            unsigned bits_to_copy = (unsigned)darr_word_size;
 
-            for(int j = 0; j < darr_number; ++j) {
-                PLI_INT32 aval = darr_val.value.vector->aval;
-                PLI_INT32 bval = darr_val.value.vector->bval;
+	      /* Copy the current array bits to the vector and update the
+	       * the vector pointer accordingly. */
+            for (unsigned j = 0; j < darr_words; ++j) {
+		    /* Get the current array part and copy it into the
+		     * correct place. */
+		  PLI_UINT32 aval = darr_val.value.vector->aval;
+		  PLI_UINT32 bval = darr_val.value.vector->bval;
+		  assert(offset < BPW);
+		  vec_ptr->aval |= (aval << offset);
+		  vec_ptr->bval |= (bval << offset);
 
-                if(offset < BPW) {
-                    vec_val_ptr->aval |= (aval << offset);
-                    vec_val_ptr->bval |= (bval << offset);
-                }
+		    /* Calculate the new offset into the vector. */
+ 		  offset += (bits_to_copy > BPW) ? BPW : bits_to_copy;
 
-                offset += bits_to_copy > BPW ? BPW : bits_to_copy;
+		    /* If the new offset is past the end of the vector part
+		     * then the next vector part also needs to be used. */
+		  if (offset >= BPW) {
+			++vec_ptr;
 
-                if(offset >= BPW) {
-                    ++vec_val_ptr;
-                    vec_val_ptr->aval = 0;
-                    vec_val_ptr->bval = 0;
+			  /* Does the current array part also go into the
+			   * next vector part? */
+			if (offset > BPW) {
+				/* This code has not been tested since the
+				 * current implementation only supports dynamic
+				 * array elements of size 8, 16, 32 or 64 bits
+				 * so currently this code is never run. For
+				 * now assert since it has not been checked. */
+			      assert(0);
 
-                    // is the current word crossing the s_vpi_vecval boundary?
-                    if(offset > BPW) {
-                        // this assert is to warn you, that the following
-                        // part could not be tested at the moment of writing
-                        // (dynamic arrays work with vectors of 8, 16, 32, 64
-                        // bits, so there is no chance that one of the vectors
-                        // will cross the s_vpi_vecval boundary)
-                        // it *may* work, but it is better to check first
-                        assert(0);
+				/* Copy the rest of the array part that did not
+				 * fit in the previous vector part to the next
+				 * vector part. */
+			      offset -= BPW;
+			      vec_ptr->aval |= (aval >> (darr_word_size -
+			                                 offset));
+			      vec_ptr->bval |= (bval >> (darr_word_size -
+			                                 offset));
+			  /* Start at the begining of the next vector part. */
+			} else {
+			      offset = 0;
+			}
+		  }
 
-                        // copy the remainder that did not fit in the previous s_vpi_vecval
-                        offset -= BPW;
-                        vec_val_ptr->aval |= (aval >> (darr_word_size - offset));
-                        vec_val_ptr->bval |= (bval >> (darr_word_size - offset));
-                    } else {
-                        offset = 0;
-                    }
-                }
-
-                bits_to_copy -= BPW;
-                darr_val.value.vector++;
+		    /* Advance to the next part of the array. */
+		  bits_to_copy -= BPW;
+		  darr_val.value.vector++;
             }
       }
 
+	/* Put the result to the vector and free the allocated space. */
       darr_val.format = vpiVectorVal;
       darr_val.value.vector = vec_val;
       vpi_put_value(vec, &darr_val, 0, vpiNoDelay);
@@ -273,16 +290,17 @@ static PLI_INT32 from_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       vpiHandle darr = vpi_scan(argv);
       vpiHandle vec = vpi_scan(argv);
-      s_vpi_value darr_val, vec_val;
-      s_vpi_vecval*vector;
 
       vpi_free_object(argv);
 
+	/* Calculate and check the basic array and vector information. */
       int darr_size = vpi_get(vpiSize, darr);
       int darr_word_size = vpi_get(vpiSize, vpi_handle_by_index(darr, 0));
+      assert(darr_word_size > 0);
       int darr_bit_size = darr_size * darr_word_size;
 
       int vec_size = vpi_get(vpiSize, vec);
+
       if (vec_size <= 0) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
@@ -300,48 +318,61 @@ static PLI_INT32 from_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
             return 0;
       }
 
-      /* Conversion part */
-      int darr_number = (darr_word_size + BPWM1) / BPW;
-      vector = calloc(darr_number, sizeof(s_vpi_vecval));
+	/* Calculate the number of words needed to hold the dynamic array
+	 * word bits and allocate enough space for them. */
+      size_t darr_words = (darr_word_size + BPWM1) / BPW;
+      s_vpi_vecval *darr_val = calloc(darr_words, sizeof(s_vpi_vecval));
 
+	/* Get the vector value. */
+      s_vpi_value vec_val;
       vec_val.format = vpiVectorVal;
       vpi_get_value(vec, &vec_val);
-      s_vpi_vecval*darr_val_ptr;
-      int offset = 0;       // offset in bits
 
-      /* We have to reverse the order of the dynamic array, no memcpy here */
-      for(int i = darr_size - 1; i >= 0; --i) {
-            int bits_to_copy = darr_word_size;
-            vpiHandle darr_word = vpi_handle_by_index(darr, i);
-            assert(darr_val.value.vector);
-            darr_val_ptr = vector;
+	/* The offset in bits into the vector value. */
+      unsigned offset = 0;
 
-            while(bits_to_copy > 0) {
-                int copied_bits = bits_to_copy > (int)BPW ? (int)BPW : bits_to_copy;
-                PLI_INT32 aval = vec_val.value.vector[offset / BPW].aval;
-                PLI_INT32 bval = vec_val.value.vector[offset / BPW].bval;
+	/* We have to reverse the order of the dynamic array words. */
+      for (int i = darr_size - 1; i >= 0; --i) {
+            unsigned bits_to_copy = darr_word_size;
+	    s_vpi_vecval *darr_ptr = darr_val;
 
-                if(offset % BPW != 0) {
-                    unsigned int rem_bits = offset % 32;
-                    aval >>= rem_bits;
-                    aval |= vec_val.value.vector[offset / BPW + 1].aval << (BPW - rem_bits);
-                    bval >>= rem_bits;
-                    bval |= vec_val.value.vector[offset / BPW + 1].bval << (BPW - rem_bits);
-                }
+	      /* Copy some of the vector bits to the current array word. */
+            while (bits_to_copy > 0) {
+		  unsigned copied_bits = (bits_to_copy > BPW) ? BPW :
+		                                                bits_to_copy;
+		    /* Start with the current vector part. */
+		  PLI_UINT32 aval = vec_val.value.vector[offset / BPW].aval;
+		  PLI_UINT32 bval = vec_val.value.vector[offset / BPW].bval;
 
-                offset += copied_bits;
-                darr_val_ptr->aval = aval;
-                darr_val_ptr->bval = bval;
-                darr_val_ptr++;
-                bits_to_copy -= copied_bits;
+		    /* If this isn't aligned then we may need to get bits
+		     * from the next part as well. */
+		  unsigned rem_bits = offset % BPW;
+		  if (rem_bits) {
+			aval >>= rem_bits;
+			aval |= vec_val.value.vector[offset / BPW + 1].aval <<
+			        (BPW - rem_bits);
+			bval >>= rem_bits;
+			bval |= vec_val.value.vector[offset / BPW + 1].bval <<
+			        (BPW - rem_bits);
+		  }
+
+		    /* Advance to the next part of the array and vector. */
+		  darr_ptr->aval = aval;
+		  darr_ptr->bval = bval;
+		  darr_ptr++;
+		  offset += copied_bits;
+		  bits_to_copy -= copied_bits;
             }
 
-            darr_val.format = vpiVectorVal;
-            darr_val.value.vector = vector;
-            vpi_put_value(darr_word, &darr_val, 0, vpiNoDelay);
+	      /* Put part of the vector to the current dynamic array word. */
+	    s_vpi_value result;
+            result.format = vpiVectorVal;
+            result.value.vector = darr_val;
+            vpiHandle darr_word = vpi_handle_by_index(darr, i);
+            vpi_put_value(darr_word, &result, 0, vpiNoDelay);
       }
 
-      free(vector);
+      free(darr_val);
 
       return 0;
 }
