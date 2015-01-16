@@ -57,6 +57,20 @@ static int eval_darray_new(ivl_expr_t ex)
 	    int lsb = ivl_type_packed_lsb(element_type, 0);
 	    int wid = msb>=lsb? msb - lsb : lsb - msb;
 	    wid += 1;
+	      // At the moment vvp only supports widths of 8, 16, 32 or 64
+	    switch (wid) {
+	      case 8:
+	      case 16:
+	      case 32:
+	      case 64:
+		  break;
+	      default:
+                  fprintf(stderr, "%s:%u: tgt-vvp sorry: vvp currently only "
+		          "supports dynamic array widths of 8, 16, 32 or 64 "
+		          "bits, given (%d)\n",
+                          ivl_expr_file(ex), ivl_expr_lineno(ex), wid);
+		  errors += 1;;
+	    }
 
 	    fprintf(vvp_out, "    %%new/darray %u, \"%sb%d\";\n", size_reg,
 	                     ivl_type_signed(element_type) ? "s" : "", wid);
