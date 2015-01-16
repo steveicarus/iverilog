@@ -1563,7 +1563,7 @@ method_qualifier_opt
   ;
 
 modport_declaration /* IEEE1800-2012: A.2.9 */
-  : K_modport 
+  : K_modport
       { if (!pform_in_interface())
 	      yyerror(@1, "error: modport declarations are only allowed "
 			  "in interfaces.");

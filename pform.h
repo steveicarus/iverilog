@@ -226,7 +226,7 @@ extern void pform_start_modport_item(const struct vlltype&loc, const char*name);
 extern void pform_end_modport_item(const struct vlltype&loc);
 extern void pform_add_modport_port(const struct vlltype&loc,
 	                           NetNet::PortType port_type,
-        	                   perm_string name, PExpr*expr);
+	                           perm_string name, PExpr*expr);
 
 /*
  * This creates an identifier aware of names that may have been

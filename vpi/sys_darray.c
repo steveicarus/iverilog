@@ -237,7 +237,7 @@ static PLI_INT32 to_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 		  vec_ptr->bval |= (bval << offset);
 
 		    /* Calculate the new offset into the vector. */
- 		  offset += (bits_to_copy > BPW) ? BPW : bits_to_copy;
+		  offset += (bits_to_copy > BPW) ? BPW : bits_to_copy;
 
 		    /* If the new offset is past the end of the vector part
 		     * then the next vector part also needs to be used. */
