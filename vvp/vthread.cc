@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -4074,8 +4074,9 @@ bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
       } else if (strcmp(text,"S") == 0) {
 	    obj = new vvp_darray_string(size);
       } else {
-	      // XXXX This should not happen.
-	    obj = new vvp_darray_atom<uint8_t> (size);
+	    cerr << "Internal error: Unsupported dynamic array type: "
+	         << text << "." << endl;
+	    assert(0);
       }
 
       thr->push_object(obj);
