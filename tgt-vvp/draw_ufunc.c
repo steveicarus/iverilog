@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -59,13 +59,13 @@ static void draw_eval_function_argument(ivl_signal_t port, ivl_expr_t expr)
 	    function_argument_real(port, expr);
 	    break;
 	  case IVL_VT_CLASS:
-	    draw_eval_object(expr);
+	    vvp_errors += draw_eval_object(expr);
 	    break;
 	  case IVL_VT_STRING:
 	    draw_eval_string(expr);
 	    break;
 	  case IVL_VT_DARRAY:
-	    draw_eval_object(expr);
+	    vvp_errors += draw_eval_object(expr);
 	    break;
 	  default:
 	    fprintf(stderr, "XXXX function argument %s type=%d?!\n",

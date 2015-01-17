@@ -49,7 +49,6 @@ static int eval_darray_new(ivl_expr_t ex)
 	    fprintf(vvp_out, "    %%new/darray %u, \"S\";\n", size_reg);
 	    break;
 	  case IVL_VT_BOOL:
-	  case IVL_VT_LOGIC:
 	      // bool objects are vectorable, but for now only support
 	      // a single dimensions.
 	    assert(ivl_type_packed_dimensions(element_type) == 1);
@@ -67,13 +66,19 @@ static int eval_darray_new(ivl_expr_t ex)
 	      default:
                   fprintf(stderr, "%s:%u: tgt-vvp sorry: vvp currently only "
 		          "supports dynamic array widths of 8, 16, 32 or 64 "
-		          "bits, given (%d)\n",
+		          "bits, given (%d).\n",
                           ivl_expr_file(ex), ivl_expr_lineno(ex), wid);
 		  errors += 1;;
 	    }
 
 	    fprintf(vvp_out, "    %%new/darray %u, \"%sb%d\";\n", size_reg,
 	                     ivl_type_signed(element_type) ? "s" : "", wid);
+	    break;
+	  case IVL_VT_LOGIC:
+	    fprintf(stderr, "%s:%u: tgt-vvp sorry: vvp does not currently "
+	            "supports 4-state dynamic arrays.\n",
+	            ivl_expr_file(ex), ivl_expr_lineno(ex));
+	    errors += 1;;
 	    break;
 
 	  default:
@@ -202,11 +207,12 @@ static int eval_object_property(ivl_expr_t expr)
 
 static int eval_object_shallowcopy(ivl_expr_t ex)
 {
+      int errors = 0;
       ivl_expr_t dest = ivl_expr_oper1(ex);
       ivl_expr_t src  = ivl_expr_oper2(ex);
 
-      draw_eval_object(dest);
-      draw_eval_object(src);
+      errors += draw_eval_object(dest);
+      errors += draw_eval_object(src);
 
 	/* The %scopy opcode pops the top of the object stack as the
 	   source object, and shallow-copies it to the new top, the
@@ -214,7 +220,7 @@ static int eval_object_shallowcopy(ivl_expr_t ex)
 	   the stack. */
       fprintf(vvp_out, "    %%scopy;\n");
 
-      return 0;
+      return errors;
 }
 
 static int eval_object_signal(ivl_expr_t expr)

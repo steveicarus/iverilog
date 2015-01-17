@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -868,7 +868,7 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		       expression to the assignment is of an entire
 		       array object. */
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
-		  draw_eval_object(rval);
+		  errors += draw_eval_object(rval);
 		  fprintf(vvp_out, "    %%store/prop/obj %d, %d; IVL_VT_DARRAY\n", prop_idx, idx);
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
@@ -882,7 +882,7 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 
 		    /* The property is a class object. */
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
-		  draw_eval_object(rval);
+		  errors += draw_eval_object(rval);
 		  if (idx_expr) draw_eval_expr_into_integer(idx_expr, idx);
 		  fprintf(vvp_out, "    %%store/prop/obj %d, %d; IVL_VT_CLASS\n", prop_idx, idx);
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");

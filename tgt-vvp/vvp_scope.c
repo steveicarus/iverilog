@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2328,7 +2328,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    draw_task_definition(net);
 
       if (ivl_scope_type(net) == IVL_SCT_FUNCTION)
-	    draw_func_definition(net);
+	    vvp_errors += draw_func_definition(net);
 
       ivl_scope_children(net, (ivl_scope_f*) draw_scope, net);
       return 0;
