@@ -215,11 +215,12 @@ class VTypeArray : public VType {
 
       int emit_def(std::ostream&out, perm_string name) const;
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
-      int emit_dimensions(std::ostream&out) const;
 
       bool can_be_packed() const { return etype_->can_be_packed(); }
 
     private:
+      int emit_with_dims_(std::ostream&out, bool packed, perm_string name) const;
+
       void write_range_to_stream_(std::ostream&fd) const;
       const VType*etype_;
 

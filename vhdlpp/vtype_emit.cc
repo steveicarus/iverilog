@@ -59,9 +59,7 @@ int VTypeERROR::emit_def(ostream&out, perm_string) const
 int VTypeArray::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;
-
       const VType*raw_base = basic_type();
-
       const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (raw_base);
 
       if (base) {
@@ -74,13 +72,7 @@ int VTypeArray::emit_def(ostream&out, perm_string name) const
 	    raw_base->emit_def(out, empty_perm_string);
       }
 
-      if(raw_base->can_be_packed()) {
-        errors += emit_dimensions(out);
-        emit_name(out, name);
-      } else {
-        emit_name(out, name);
-        errors += emit_dimensions(out);
-      }
+      errors += emit_with_dims_(out, raw_base->can_be_packed(), name);
 
       return errors;
 }
@@ -90,7 +82,7 @@ int VTypeArray::emit_typedef(std::ostream&out, typedef_context_t&ctx) const
       return etype_->emit_typedef(out, ctx);
 }
 
-int VTypeArray::emit_dimensions(std::ostream&out) const
+int VTypeArray::emit_with_dims_(std::ostream&out, bool packed, perm_string name) const
 {
       int errors = 0;
 
@@ -102,18 +94,35 @@ int VTypeArray::emit_dimensions(std::ostream&out) const
       }
       dims.push_back(cur);
 
+      bool name_emitted = false;
+
       while (! dims.empty()) {
 	    cur = dims.front();
 	    dims.pop_front();
 
-	    out << "[";
-	    if (cur->dimension(0).msb() && cur->dimension(0).lsb()) {
-	      // bounded array, unbounded arrays have msb() & lsb() nullified
-		  errors += cur->dimension(0).msb()->emit(out, 0, 0);
-	      out << ":";
-		  errors += cur->dimension(0).lsb()->emit(out, 0, 0);
+	    if(!packed) {
+	        emit_name(out, name);
+	        name_emitted = true;
 	    }
-	    out << "]";
+
+	    for(unsigned i = 0; i < cur->dimensions(); ++i) {
+	        if(cur->dimension(i).is_box() && !name_emitted) {
+	            emit_name(out, name);
+	            name_emitted = true;
+	        }
+
+	        out << "[";
+	        if (!cur->dimension(i).is_box()) {  // if not unbounded {
+	            errors += cur->dimension(i).msb()->emit(out, 0, 0);
+	        out << ":";
+	            errors += cur->dimension(i).lsb()->emit(out, 0, 0);
+	        }
+	        out << "]";
+	    }
+      }
+
+      if(!name_emitted) {
+	    emit_name(out, name);
       }
 
       return errors;
