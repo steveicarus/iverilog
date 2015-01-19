@@ -20,6 +20,14 @@
 # include  "sequential.h"
 # include  "expression.h"
 
+template<typename T>
+inline static void visit_stmt_list(std::list<T*>& stmts, void((*func))(SequentialStmt*))
+{
+    for(typename std::list<T*>::iterator it = stmts.begin(); it != stmts.end(); ++it) {
+        (*it)->visit(func);
+    }
+}
+
 SequentialStmt::SequentialStmt()
 {
 }
@@ -75,6 +83,14 @@ void IfSequential::extract_false(std::list<SequentialStmt*>&that)
       }
 }
 
+void IfSequential::visit(void((*func))(SequentialStmt*))
+{
+    visit_stmt_list(if_, func);
+    visit_stmt_list(elsif_, func);
+    visit_stmt_list(else_, func);
+    ((*func))(this);
+}
+
 IfSequential::Elsif::Elsif(Expression*cond, std::list<SequentialStmt*>*tr)
 : cond_(cond)
 {
@@ -89,6 +105,11 @@ IfSequential::Elsif::~Elsif()
 	    if_.pop_front();
 	    delete cur;
       }
+}
+
+void IfSequential::Elsif::visit(void((*func))(SequentialStmt*))
+{
+    visit_stmt_list(if_, func);
 }
 
 SignalSeqAssignment::SignalSeqAssignment(Expression*sig, std::list<Expression*>*wav)
@@ -118,6 +139,12 @@ CaseSeqStmt::~CaseSeqStmt()
       }
 }
 
+void CaseSeqStmt::visit(void((*func))(SequentialStmt*))
+{
+    visit_stmt_list(alt_, func);
+    ((*func))(this);
+}
+
 CaseSeqStmt::CaseStmtAlternative::CaseStmtAlternative(Expression* exp, list<SequentialStmt*>* stmts)
 : exp_(exp)
 {
@@ -132,6 +159,11 @@ CaseSeqStmt::CaseStmtAlternative::~CaseStmtAlternative()
 	    stmts_.pop_front();
 	    delete cur;
       }
+}
+
+void CaseSeqStmt::CaseStmtAlternative::visit(void((*func))(SequentialStmt*))
+{
+    visit_stmt_list(stmts_, func);
 }
 
 ProcedureCall::ProcedureCall(perm_string name)
@@ -176,6 +208,12 @@ LoopStatement::~LoopStatement()
         stmts_.pop_front();
         delete cur;
     }
+}
+
+void LoopStatement::visit(void((*func))(SequentialStmt*))
+{
+    visit_stmt_list(stmts_, func);
+    (*func)(this);
 }
 
 ForLoopStatement::ForLoopStatement(perm_string scope_name, perm_string it, prange_t* range, list<SequentialStmt*>* stmts)
