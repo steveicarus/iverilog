@@ -38,6 +38,7 @@ class SequentialStmt  : public LineInfo {
       virtual int elaborate(Entity*ent, Architecture*arc);
       virtual int emit(ostream&out, Entity*entity, Architecture*arc);
       virtual void dump(ostream&out, int indent) const;
+      virtual void visit(void(*func)(SequentialStmt*)) { (*func)(this); }
 };
 
 /*
@@ -52,6 +53,7 @@ class LoopStatement : public SequentialStmt {
       inline perm_string loop_name() const { return name_; }
 
       void dump(ostream&out, int indent)  const;
+      void visit(void(*func)(SequentialStmt*));
 
     protected:
       int elaborate_substatements(Entity*ent, Architecture*arc);
@@ -75,6 +77,7 @@ class IfSequential  : public SequentialStmt {
 	    int statement_emit(ostream&out, Entity*entity, Architecture*arc);
 
 	    void dump(ostream&out, int indent) const;
+	    void visit(void(*func)(SequentialStmt*));
 
 	  private:
 	    Expression*cond_;
@@ -94,6 +97,7 @@ class IfSequential  : public SequentialStmt {
       int elaborate(Entity*ent, Architecture*arc);
       int emit(ostream&out, Entity*entity, Architecture*arc);
       void dump(ostream&out, int indent) const;
+      void visit(void(*func)(SequentialStmt*));
 
       const Expression*peek_condition() const { return cond_; }
 
@@ -151,6 +155,7 @@ class CaseSeqStmt : public SequentialStmt {
 	    int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
 	    int elaborate(Entity*ent, Architecture*arc);
 	    int emit(ostream&out, Entity*entity, Architecture*arc);
+	    void visit(void(*func)(SequentialStmt*));
 
         private:
             Expression* exp_;
@@ -168,6 +173,7 @@ class CaseSeqStmt : public SequentialStmt {
       void dump(ostream&out, int indent) const;
       int elaborate(Entity*ent, Architecture*arc);
       int emit(ostream&out, Entity*entity, Architecture*arc);
+      void visit(void(*func)(SequentialStmt*));
 
     private:
       Expression* cond_;
