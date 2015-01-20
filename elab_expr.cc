@@ -2536,7 +2536,7 @@ unsigned PECastType::test_width(Design*des, NetScope*scope, width_mode_t&wid)
 	    expr_width_ = t->packed_width();
       }
 
-      signed_flag_= t->get_signed();
+      signed_flag_ = t->get_signed();
       min_width_ = expr_width_;
       return expr_width_;
 }
