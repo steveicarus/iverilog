@@ -21,7 +21,7 @@
 # include  "expression.h"
 
 template<typename T>
-inline static void visit_stmt_list(std::list<T*>& stmts, void((*func))(SequentialStmt*))
+inline static void visit_stmt_list(std::list<T*>& stmts, SeqStmtVisitor& func)
 {
     for(typename std::list<T*>::iterator it = stmts.begin(); it != stmts.end(); ++it) {
         (*it)->visit(func);
@@ -83,12 +83,12 @@ void IfSequential::extract_false(std::list<SequentialStmt*>&that)
       }
 }
 
-void IfSequential::visit(void((*func))(SequentialStmt*))
+void IfSequential::visit(SeqStmtVisitor& func)
 {
     visit_stmt_list(if_, func);
     visit_stmt_list(elsif_, func);
     visit_stmt_list(else_, func);
-    ((*func))(this);
+    func(this);
 }
 
 IfSequential::Elsif::Elsif(Expression*cond, std::list<SequentialStmt*>*tr)
@@ -107,7 +107,7 @@ IfSequential::Elsif::~Elsif()
       }
 }
 
-void IfSequential::Elsif::visit(void((*func))(SequentialStmt*))
+void IfSequential::Elsif::visit(SeqStmtVisitor& func)
 {
     visit_stmt_list(if_, func);
 }
@@ -139,10 +139,10 @@ CaseSeqStmt::~CaseSeqStmt()
       }
 }
 
-void CaseSeqStmt::visit(void((*func))(SequentialStmt*))
+void CaseSeqStmt::visit(SeqStmtVisitor& func)
 {
     visit_stmt_list(alt_, func);
-    ((*func))(this);
+    func(this);
 }
 
 CaseSeqStmt::CaseStmtAlternative::CaseStmtAlternative(Expression* exp, list<SequentialStmt*>* stmts)
@@ -161,7 +161,7 @@ CaseSeqStmt::CaseStmtAlternative::~CaseStmtAlternative()
       }
 }
 
-void CaseSeqStmt::CaseStmtAlternative::visit(void((*func))(SequentialStmt*))
+void CaseSeqStmt::CaseStmtAlternative::visit(SeqStmtVisitor& func)
 {
     visit_stmt_list(stmts_, func);
 }
@@ -210,10 +210,10 @@ LoopStatement::~LoopStatement()
     }
 }
 
-void LoopStatement::visit(void((*func))(SequentialStmt*))
+void LoopStatement::visit(SeqStmtVisitor& func)
 {
     visit_stmt_list(stmts_, func);
-    (*func)(this);
+    func(this);
 }
 
 ForLoopStatement::ForLoopStatement(perm_string scope_name, perm_string it, prange_t* range, list<SequentialStmt*>* stmts)
