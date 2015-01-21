@@ -20,6 +20,7 @@
 
 # include  "package.h"
 # include  "subprogram.h"
+# include  "entity.h"
 # include  <iostream>
 # include  "ivl_assert.h"
 
@@ -40,9 +41,9 @@ int Package::emit_package(ostream&fd) const
 	    return 0;
       }
 
-      int errors = 0;
-
       fd << "package \\" << name() << " ;" << endl;
+
+      int errors = emit_global_types(fd);
 
 	// Only emit types that were defined within this package. Skip
 	// the types that were imported from elsewhere.

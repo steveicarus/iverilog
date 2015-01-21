@@ -104,3 +104,41 @@ void Entity::set_declaration_l_value(perm_string nam, bool flag)
       assert(cur != declarations_.end());
       cur->second.reg_flag = flag;
 }
+
+static map<const VType*, const VTypeDef*> global_types;
+
+int emit_global_types(ostream&fd) {
+    int errors = 0;
+
+    for (map<const VType*, const VTypeDef*>::const_iterator cur = global_types.begin()
+            ; cur != global_types.end() ; ++ cur) {
+        fd << "typedef ";
+        const VTypeDef*td = cur->second;
+        errors += td->peek_definition()->emit_def(fd, td->peek_name());
+        fd << " ;" << endl;
+    }
+
+    return errors;
+}
+
+const VTypeDef*get_global_typedef(const VType*t) {
+    map<const VType*, const VTypeDef*>::iterator it;
+
+    // Check if it is already defined global typedef
+    if(const VTypeDef*tdef = dynamic_cast<const VTypeDef*>(t)) {
+        for(it = global_types.begin(); it != global_types.end(); ++it) {
+            if(it->second == tdef)
+                return tdef;
+        }
+    }
+
+    it = global_types.find(t);
+
+    if(it != global_types.end())
+        return it->second;
+
+    const VTypeDef*td = new VTypeDef(t->get_generic_typename(), t);
+    global_types[t] = td;
+
+    return td;
+}

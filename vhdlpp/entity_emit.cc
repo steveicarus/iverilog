@@ -89,6 +89,7 @@ int Entity::emit(ostream&out)
 
       out << ";" << endl;
 
+      errors += emit_global_types(out);
       errors += bind_arch_->emit(out, this);
 
       out << "endmodule" << endl;

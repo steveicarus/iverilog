@@ -141,6 +141,9 @@ extern int elaborate_entities(void);
 
 extern int emit_entities(void);
 
+extern int emit_global_types(std::ostream&fd);
+extern const VTypeDef*get_global_typedef(const VType*t);
+
 /*
  * Use this function to dump a description of the design entities to a
  * file. This is for debug, not for any useful purpose.

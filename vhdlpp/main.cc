@@ -242,8 +242,8 @@ int main(int argc, char*argv[])
       errors = emit_entities();
       if (errors > 0) {
 	    fprintf(stderr, "%d errors emitting design.\n", errors);
-        parser_cleanup();
-	    return 4;
+	    parser_cleanup();
+	    return 5;
       }
 
       parser_cleanup();
