@@ -109,12 +109,15 @@ static int eval_darray_new(ivl_expr_t ex)
 	    unsigned wid;
 	    switch (ivl_type_base(element_type)) {
 		case IVL_VT_BOOL:
+		case IVL_VT_LOGIC:
 		  wid = width_of_packed_type(element_type);
-		  draw_eval_vec4(init_expr);
-		  resize_vec4_wid(init_expr, wid);
 		  for (idx = 0 ; idx < cnt ; idx += 1) {
-			fprintf(vvp_out, "    %%ix/load 3, %ld, 0;\n", idx);
+			draw_eval_vec4(init_expr);
+			fprintf(vvp_out, "    %%parti/%c %d, %ld, 6;\n",
+                                ivl_expr_signed(init_expr) ? 's' : 'u', wid, idx * wid);
+			fprintf(vvp_out, "    %%ix/load 3, %ld, 0;\n", cnt - idx - 1);
 			fprintf(vvp_out, "    %%set/dar/obj/vec4 3;\n");
+			fprintf(vvp_out, "    %%pop/vec4 1;\n");
 		  }
 		  break;
 		case IVL_VT_REAL:

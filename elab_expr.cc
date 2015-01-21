@@ -2542,6 +2542,39 @@ unsigned PECastType::test_width(Design*des, NetScope*scope, width_mode_t&wid)
 }
 
 NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
+                                    ivl_type_t type, unsigned) const
+{
+    const netdarray_t*darray = NULL;
+    const netvector_t*vector = NULL;
+
+    // Casting array of vectors to dynamic array type
+    if((darray = dynamic_cast<const netdarray_t*>(type)) &&
+            (vector = dynamic_cast<const netvector_t*>(darray->element_type()))) {
+        PExpr::width_mode_t mode = PExpr::SIZED;
+        unsigned use_wid = base_->test_width(des, scope, mode);
+        NetExpr*base = base_->elaborate_expr(des, scope, use_wid, NO_FLAGS);
+
+        assert(vector->packed_width() > 0);
+        assert(base->expr_width() > 0);
+
+        // Find rounded up length that can fit the whole casted array of vectors
+        int len = base->expr_width() + vector->packed_width() - 1;
+        if(base->expr_width() > vector->packed_width()) {
+            len /= vector->packed_width();
+        } else {
+            len /= base->expr_width();
+        }
+
+        // Number of words in the created dynamic array
+        NetEConst*len_expr = new NetEConst(verinum(len));
+        return new NetENew(type, len_expr, base);
+    }
+
+    // Fallback
+    return elaborate_expr(des, scope, (unsigned) 0, 0);
+}
+
+NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
 				    unsigned, unsigned) const
 {
       NetExpr*expr = base_->elaborate_expr(des, scope, base_->expr_width(), NO_FLAGS);
