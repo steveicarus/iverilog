@@ -20,6 +20,7 @@
  */
 
 # include  "expression.h"
+# include  "subprogram.h"
 # include  "parse_types.h"
 # include  "scope.h"
 # include  <iostream>
@@ -281,6 +282,11 @@ ExpFunc::~ExpFunc()
 {
       for (size_t idx = 0 ; idx < argv_.size() ; idx += 1)
 	    delete argv_[idx];
+}
+
+const VType* ExpFunc::func_ret_type() const
+{
+    return def_->peek_return_type();
 }
 
 ExpInteger::ExpInteger(int64_t val)
