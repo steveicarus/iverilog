@@ -477,6 +477,7 @@ class ExpFunc : public Expression {
       inline perm_string func_name() const { return name_; }
       inline size_t func_args() const { return argv_.size(); }
       inline const Expression*func_arg(size_t idx) const { return argv_[idx]; }
+      const VType*func_ret_type() const;
 
     public: // Base methods
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
