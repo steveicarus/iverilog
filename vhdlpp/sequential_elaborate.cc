@@ -80,7 +80,6 @@ int CaseSeqStmt::CaseStmtAlternative::elaborate(Entity*ent, Architecture*arc)
       return errors;
 }
 
-
 int ForLoopStatement::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
@@ -175,6 +174,13 @@ int VariableSeqAssignment::elaborate(Entity*ent, Architecture*arc)
 
 	// Elaborate the r-value expression.
       errors += rval_->elaborate_expr(ent, arc, lval_type);
+
+	// Handle functions that return unbounded arrays
+      if(ExpFunc*call = dynamic_cast<ExpFunc*>(rval_)) {
+	    const VType*ret_type = call->func_ret_type();
+            if(ret_type && ret_type->is_unbounded())
+                rval_ = new ExpCast(rval_, get_global_typedef(lval_type));
+      }
 
       return errors;
 }

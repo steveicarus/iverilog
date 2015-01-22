@@ -751,11 +751,20 @@ int ExpFunc::elaborate_expr(Entity*ent, Architecture*arc, const VType*)
       ivl_assert(*this, def_==0);
       def_ = prog;
 
+	// Elaborate arguments
       for (size_t idx = 0 ; idx < argv_.size() ; idx += 1) {
 	    const VType*tmp = argv_[idx]->probe_type(ent, arc);
-	    if(!tmp && prog)
-	        tmp = prog->peek_param_type(idx);
+	    const VType*param_type = prog ? prog->peek_param_type(idx) : NULL;
+
+	    if(!tmp && param_type)
+	        tmp = param_type;
+
 	    errors += argv_[idx]->elaborate_expr(ent, arc, tmp);
+
+            // Type casting for unbounded arrays
+            if(param_type && param_type->is_unbounded() /*&& !param_type->type_match(tmp)*/) {
+                argv_[idx] = new ExpCast(argv_[idx], get_global_typedef(param_type));
+            }
       }
 
       return errors;

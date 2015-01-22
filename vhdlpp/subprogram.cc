@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2015
+ * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,6 +25,7 @@
 # include  "vtype.h"
 # include  "sequential.h"
 # include  "ivl_assert.h"
+# include  "compiler.h"
 
 using namespace std;
 
@@ -46,7 +49,71 @@ void Subprogram::set_program_body(list<SequentialStmt*>*stmt)
 {
       ivl_assert(*this, statements_==0);
       statements_ = stmt;
-      fix_return_type();
+      fix_port_types();
+}
+
+// Functor used to add type casting to each return statement.
+struct cast_return_type : public SeqStmtVisitor {
+    cast_return_type(const VType*ret_type) : ret_(ret_type) {}
+
+    void operator() (SequentialStmt*s)
+    {
+        ReturnStmt*ret;
+        if((ret = dynamic_cast<ReturnStmt*>(s))) {
+            ret->cast_to(ret_);
+        }
+    }
+
+private:
+    const VType*ret_;
+};
+
+void Subprogram::fix_port_types()
+{
+	// Check function parameters for unbounded vectors and possibly fix it.
+      if(ports_) {
+          for(std::list<InterfacePort*>::iterator it = ports_->begin();
+                    it != ports_->end(); ++it) {
+              check_unb_vector((*it)->type);
+          }
+      }
+
+	// Check if the returned type is an unbounded vector.
+      if(check_unb_vector(return_type_)) {
+          if(!statements_)
+              return;
+
+          // Go through the statement list and add type casting to return
+          // statements to comply with the modified return type.
+          for (std::list<SequentialStmt*>::iterator s = statements_->begin()
+                ; s != statements_->end(); ++s) {
+              cast_return_type r(return_type_) ;
+              (*s)->visit(r);
+          }
+      }
+
+      //fix_return_type();
+}
+
+bool Subprogram::check_unb_vector(const VType*&type)
+{
+    if(const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type)) {
+        if(arr->dimensions() == 1 && arr->dimension(0).is_box() ) {
+            // For the time being, dynamic arrays work exclusively with vectors.
+            // To emulate simple 'logic'/'bit' type, we need to create a vector
+            // of width == 1, to be used as the array element type.
+            // Effectively 'logic name []' becomes 'logic [0:0] name []'.
+            Expression*zero = new ExpInteger(0);
+            std::vector<VTypeArray::range_t> sub_range;
+            sub_range.push_back(VTypeArray::range_t(zero, zero));
+            VTypeArray*new_arr = new VTypeArray(arr, sub_range);
+            type = get_global_typedef(new_arr);
+
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool Subprogram::compare_specification(Subprogram*that) const
