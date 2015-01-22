@@ -88,6 +88,10 @@ class VType {
 	// Returns true if the type has an undefined dimension.
       virtual bool is_unbounded() const { return false; }
 
+	// Returns a perm_string that can be used in automatically created
+	// typedefs (i.e. not ones defined by the user).
+      perm_string get_generic_typename() const;
+
     private:
       friend struct decl_t;
 	// This virtual method is called to emit the declaration. This
