@@ -674,4 +674,25 @@ class ExpUNot : public ExpUnary {
       void dump(ostream&out, int indent = 0) const;
 };
 
+/*
+ * Class that wraps other expressions to cast them to other types.
+ */
+class ExpCast : public Expression {
+
+    public:
+      ExpCast(Expression*base, const VType*type);
+      ~ExpCast();
+
+      inline int elaborate_expr(Entity*ent, Architecture*arc, const VType*) {
+            return base_->elaborate_expr(ent, arc, type_);
+      }
+      void write_to_stream(std::ostream&fd);
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      void dump(ostream&out, int indent = 0) const;
+
+    private:
+      Expression*base_;
+      const VType*type_;
+};
+
 #endif /* IVL_expression_H */

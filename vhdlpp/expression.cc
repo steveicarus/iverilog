@@ -423,3 +423,13 @@ ExpUNot::ExpUNot(Expression*op1)
 ExpUNot::~ExpUNot()
 {
 }
+
+ExpCast::ExpCast(Expression*base, const VType*type) :
+    base_(base), type_(type)
+{
+}
+
+ExpCast::~ExpCast()
+{
+}
+
