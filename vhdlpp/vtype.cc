@@ -19,6 +19,7 @@
 
 # include  "vtype.h"
 # include  "parse_types.h"
+# include  "compiler.h"
 # include  <map>
 # include  <typeinfo>
 # include  <cassert>
@@ -33,6 +34,13 @@ VType::~VType()
 void VType::show(ostream&out) const
 {
       write_to_stream(out);
+}
+
+perm_string VType::get_generic_typename() const
+{
+    char buf[16] = {0,};
+    snprintf(buf, 16, "type_%p", this);
+    return lex_strings.make(buf);
 }
 
 VTypePrimitive::VTypePrimitive(VTypePrimitive::type_t tt, bool packed)
