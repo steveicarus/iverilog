@@ -286,7 +286,7 @@ ExpFunc::~ExpFunc()
 
 const VType* ExpFunc::func_ret_type() const
 {
-    return def_->peek_return_type();
+    return def_ ? def_->peek_return_type() : NULL;
 }
 
 ExpInteger::ExpInteger(int64_t val)

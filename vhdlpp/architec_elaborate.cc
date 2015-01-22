@@ -368,9 +368,16 @@ int SignalAssignment::elaborate(Entity*ent, Architecture*arc)
 	    return errors;
       }
 
-      for (list<Expression*>::const_iterator cur = rval_.begin()
+      for (list<Expression*>::iterator cur = rval_.begin()
 		 ; cur != rval_.end() ; ++cur) {
 	    (*cur)->elaborate_expr(ent, arc, lval_type);
+
+            // Handle functions that return unbounded arrays
+        if(ExpFunc*call = dynamic_cast<ExpFunc*>(*cur)) {
+                const VType*ret_type = call->func_ret_type();
+                if(ret_type && ret_type->is_unbounded())
+                    *cur = new ExpCast(*cur, get_global_typedef(lval_type));
+        }
       }
 
       return errors;

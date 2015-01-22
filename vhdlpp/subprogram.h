@@ -3,6 +3,8 @@
 /*
  * Copyright (c) 2013-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2015
+ * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -50,6 +52,7 @@ class Subprogram : public LineInfo, public ScopeBase {
 
       const InterfacePort*find_param(perm_string nam) const;
       const VType*peek_param_type(int idx) const;
+      const VType*peek_return_type() const { return return_type_; }
 
       int emit(ostream&out, Entity*ent, Architecture*arc);
 
@@ -60,9 +63,17 @@ class Subprogram : public LineInfo, public ScopeBase {
       void dump(std::ostream&fd) const;
 
     private:
-	// Determines appropriate return type. Un case of std_logic_vector
-	// VHDL requires skipping its size in contrary to Verilog
+	// Determines appropriate return type, basing on the *first* return
+	// statement found in the function body. In case of std_logic_vector
+	// VHDL requires skipping its size, contrary to Verilog.
       void fix_return_type(void);
+
+	// Iterates through the list of function ports to fix all quirks related
+        // to translation between VHDL and SystemVerilog.
+      void fix_port_types();
+
+	// Creates a typedef for an unbounded vector and updates the given type.
+      bool check_unb_vector(const VType*&type);
 
       perm_string name_;
       const ScopeBase*parent_;
