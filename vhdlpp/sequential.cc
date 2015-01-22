@@ -19,6 +19,7 @@
 
 # include  "sequential.h"
 # include  "expression.h"
+# include  <cassert>
 
 template<typename T>
 inline static void visit_stmt_list(std::list<T*>& stmts, SeqStmtVisitor& func)
@@ -193,6 +194,12 @@ ReturnStmt::ReturnStmt(Expression*val)
 ReturnStmt::~ReturnStmt()
 {
       delete val_;
+}
+
+void ReturnStmt::cast_to(const VType*type)
+{
+    assert(val_);
+    val_ = new ExpCast(val_, type);
 }
 
 LoopStatement::LoopStatement(perm_string name, list<SequentialStmt*>* stmts)

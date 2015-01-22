@@ -134,6 +134,7 @@ class ReturnStmt  : public SequentialStmt {
       void dump(ostream&out, int indent) const;
 
       const Expression*peek_expr() const { return val_; };
+      void cast_to(const VType*type);
 
     private:
       Expression*val_;
