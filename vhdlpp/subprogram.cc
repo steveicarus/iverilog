@@ -78,6 +78,10 @@ void Subprogram::fix_port_types()
           }
       }
 
+	// Try to settle at a fixed width return type.
+      if(fixed_return_type())
+          return;
+
 	// Check if the returned type is an unbounded vector.
       if(check_unb_vector(return_type_)) {
           if(!statements_)
@@ -87,12 +91,10 @@ void Subprogram::fix_port_types()
           // statements to comply with the modified return type.
           for (std::list<SequentialStmt*>::iterator s = statements_->begin()
                 ; s != statements_->end(); ++s) {
-              cast_return_type r(return_type_) ;
+              cast_return_type r(return_type_);
               (*s)->visit(r);
           }
       }
-
-      //fix_return_type();
 }
 
 bool Subprogram::check_unb_vector(const VType*&type)
@@ -172,29 +174,64 @@ const VType*Subprogram::peek_param_type(int idx) const
       return (*p)->type;
 }
 
-void Subprogram::fix_return_type(void)
-{
-    if(!statements_)
-        return;
+struct check_return_type : public SeqStmtVisitor {
+    check_return_type(const Subprogram*subp) : subp_(subp), ret_type_(NULL) {}
 
-    const ReturnStmt*ret = NULL;
-    const VType*t = NULL;
-
-    for (std::list<SequentialStmt*>::const_iterator s = statements_->begin()
-	; s != statements_->end(); ++s) {
-      if((ret = dynamic_cast<const ReturnStmt*>(*s))) {
+    void operator() (SequentialStmt*s)
+    {
+        ReturnStmt*ret;
+        if((ret = dynamic_cast<ReturnStmt*>(s))) {
             const Expression*expr = ret->peek_expr();
+            const VType*t = NULL;
 
             if(const ExpName*n = dynamic_cast<const ExpName*>(expr)) {
-                if(Variable*v = find_variable(n->peek_name()))
+                if(Variable*v = subp_->find_variable(n->peek_name()))
                     t = v->peek_type();
             } else {
                 t = expr->peek_type();
             }
 
-            if(t)
-                return_type_ = t;
+            if(!t) { // cannot determine the type at least in one case
+                ret_type_ = NULL;
+                return;
+            }
+
+            if(!ret_type_) { // this is first processed return statement
+                ret_type_ = t;
+            } else if(!t->type_match(ret_type_)) {
+                // the function can return different types,
+                // we cannot have fixed width
+                ret_type_ = NULL;
+                return;
+            }
         }
+    }
+
+    const VType*get_type() const { return ret_type_; }
+
+private:
+    const Subprogram*subp_;
+    const VType*ret_type_;
+};
+
+bool Subprogram::fixed_return_type(void)
+{
+    if(!statements_)
+        return false;
+
+    check_return_type r(this);
+
+    for (std::list<SequentialStmt*>::iterator s = statements_->begin()
+        ; s != statements_->end(); ++s) {
+        (*s)->visit(r);
+    }
+
+    const VType*return_type = r.get_type();
+    if(return_type && !return_type->is_unbounded()) {
+        return_type_ = return_type;
+        return true;
+    } else {
+        return false;
     }
 }
 

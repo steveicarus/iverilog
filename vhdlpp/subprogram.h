@@ -63,13 +63,17 @@ class Subprogram : public LineInfo, public ScopeBase {
       void dump(std::ostream&fd) const;
 
     private:
-	// Determines appropriate return type, basing on the *first* return
-	// statement found in the function body. In case of std_logic_vector
-	// VHDL requires skipping its size, contrary to Verilog.
-      void fix_return_type(void);
+	// Tries to set the return type to a fixed type. VHDL functions that
+	// return std_logic_vectors do not specify its length, as SystemVerilog
+	// demands.
+	// The function goes through the function body looking for return
+	// statments and probes the returned type. If it is the same for every
+	// statemnt then we can assume that the function returns vector of a
+	// fixed size.
+      bool fixed_return_type();
 
 	// Iterates through the list of function ports to fix all quirks related
-        // to translation between VHDL and SystemVerilog.
+	// to translation between VHDL and SystemVerilog.
       void fix_port_types();
 
 	// Creates a typedef for an unbounded vector and updates the given type.
