@@ -85,6 +85,9 @@ class VType {
 	// Determines if a type can be used in Verilog packed array.
       virtual bool can_be_packed() const { return false; }
 
+	// Returns true if the type has an undefined dimension.
+      virtual bool is_unbounded() const { return false; }
+
     private:
       friend struct decl_t;
 	// This virtual method is called to emit the declaration. This
@@ -218,6 +221,8 @@ class VTypeArray : public VType {
 
       bool can_be_packed() const { return etype_->can_be_packed(); }
 
+      bool is_unbounded() const;
+
     private:
       int emit_with_dims_(std::ostream&out, bool packed, perm_string name) const;
 
@@ -320,6 +325,8 @@ class VTypeDef : public VType {
       int emit_def(std::ostream&out, perm_string name) const;
 
       bool can_be_packed() const { return type_->can_be_packed(); }
+
+      bool is_unbounded() const { return type_->is_unbounded(); }
     private:
       int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 

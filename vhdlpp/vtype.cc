@@ -148,6 +148,17 @@ void VTypeArray::show(ostream&out) const
 	    out << "<nil>";
 }
 
+bool VTypeArray::is_unbounded() const {
+    for(std::vector<range_t>::const_iterator it = ranges_.begin();
+            it != ranges_.end(); ++it)
+    {
+        if(it->is_box())
+            return true;
+    }
+
+    return etype_->is_unbounded();
+}
+
 VTypeRange::VTypeRange(const VType*base, int64_t max_val, int64_t min_val)
 : base_(base)
 {
