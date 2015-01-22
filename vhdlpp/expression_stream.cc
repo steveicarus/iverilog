@@ -230,3 +230,9 @@ void ExpUNot::write_to_stream(ostream&fd)
       write_to_stream_operand1(fd);
 }
 
+void ExpCast::write_to_stream(ostream&fd)
+{
+      // Type casting is introduced only for a few specific cases in
+      // SystemVerilog, so no need to use it here
+      base_->write_to_stream(fd);
+}

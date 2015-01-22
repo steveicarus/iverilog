@@ -860,3 +860,13 @@ int ExpUNot::emit(ostream&out, Entity*ent, Architecture*arc)
       out << ")";
       return errors;
 }
+
+int ExpCast::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      errors += type_->emit_def(out, empty_perm_string);
+      out << "'(";
+      errors += base_->emit(out, ent, arc);
+      out << ")";
+      return errors;
+}
