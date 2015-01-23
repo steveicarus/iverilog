@@ -50,7 +50,8 @@ int Package::emit_package(ostream&fd) const
       for (map<perm_string,const VType*>::const_iterator cur = cur_types_.begin()
 		 ; cur != cur_types_.end() ; ++ cur) {
 	    fd << "typedef ";
-	    errors += cur->second->emit_def(fd, cur->first);
+	    errors += cur->second->emit_def(fd,
+                    dynamic_cast<const VTypeDef*>(cur->second) ? empty_perm_string : cur->first);
 	    fd << " ;" << endl;
       }
 

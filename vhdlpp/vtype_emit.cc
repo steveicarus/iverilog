@@ -209,10 +209,11 @@ int VTypeRecord::emit_def(ostream&out, perm_string name) const
  * type. (We are defining a variable here, not the type itself.) The
  * emit_typedef() method was presumably called to define type already.
  */
-int VTypeDef::emit_def(ostream&out, perm_string) const
+int VTypeDef::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;
       emit_name(out, name_);
+      emit_name(out, name);
       return errors;
 }
 
