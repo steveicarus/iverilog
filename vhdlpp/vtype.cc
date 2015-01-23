@@ -77,7 +77,7 @@ void VTypePrimitive::show(ostream&out) const
 }
 
 VTypeArray::VTypeArray(const VType*element, const vector<VTypeArray::range_t>&r, bool sv)
-: etype_(element), ranges_(r), signed_flag_(sv)
+: etype_(element), ranges_(r), signed_flag_(sv), parent_(NULL)
 {
 }
 
@@ -89,7 +89,7 @@ VTypeArray::VTypeArray(const VType*element, const vector<VTypeArray::range_t>&r,
  * this is a memory leak. Something to fix.
  */
 VTypeArray::VTypeArray(const VType*element, std::list<prange_t*>*r, bool sv)
-: etype_(element), ranges_(r->size()), signed_flag_(sv)
+: etype_(element), ranges_(r->size()), signed_flag_(sv), parent_(NULL)
 {
       for (size_t idx = 0 ; idx < ranges_.size() ; idx += 1) {
 	    prange_t*curp = r->front();

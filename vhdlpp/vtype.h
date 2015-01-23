@@ -212,7 +212,7 @@ class VTypeArray : public VType {
       inline bool signed_vector() const { return signed_flag_; }
 
 	// returns the type of element held in the array
-      inline const VType* element_type() const { return etype_; }
+      inline const VType* element_type() const { return parent_ ? parent_->element_type() : etype_; }
 
 	// returns the basic type of element held in the array
 	// (unfolds typedefs and multidimensional arrays)
@@ -227,6 +227,9 @@ class VTypeArray : public VType {
 
       bool is_unbounded() const;
 
+	// To handle subtypes
+      inline void set_parent_type(const VTypeArray*parent) { parent_ = parent; }
+
     private:
       int emit_with_dims_(std::ostream&out, bool packed, perm_string name) const;
 
@@ -235,6 +238,7 @@ class VTypeArray : public VType {
 
       std::vector<range_t> ranges_;
       bool signed_flag_;
+      const VTypeArray*parent_;
 };
 
 class VTypeRange : public VType {
