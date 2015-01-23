@@ -76,3 +76,9 @@ void ExpCast::dump(ostream&out, int indent) const
       out << " to ";
       type_->emit_def(out, empty_perm_string);
 }
+
+void ExpNew::dump(ostream&out, int indent) const
+{
+      out << "New dynamic array size: ";
+      size_->dump(out, indent);
+}

@@ -439,3 +439,12 @@ ExpCast::~ExpCast()
 {
 }
 
+ExpNew::ExpNew(Expression*size) :
+    size_(size)
+{
+}
+
+ExpNew::~ExpNew()
+{
+    delete size_;
+}

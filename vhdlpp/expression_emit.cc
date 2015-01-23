@@ -870,3 +870,12 @@ int ExpCast::emit(ostream&out, Entity*ent, Architecture*arc)
       out << ")";
       return errors;
 }
+
+int ExpNew::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      out << "new[";
+      errors += size_->emit(out, ent, arc);
+      out << "]";
+      return errors;
+}
