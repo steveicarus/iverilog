@@ -44,8 +44,9 @@ class SigVarBase : public LineInfo {
 	// Elaborates initializer expressions if needed.
       void elaborate_init_expr(Entity*ent, Architecture*arc);
 
+      perm_string peek_name() const { return name_; }
+
     protected:
-      perm_string peek_name_() const { return name_; }
       unsigned peek_refcnt_sequ_() const { return refcnt_sequ_; }
 
       void type_elaborate_(VType::decl_t&decl);
