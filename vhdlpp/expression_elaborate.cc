@@ -513,7 +513,9 @@ int ExpAggregate::elaborate_expr_record_(Entity*ent, Architecture*arc, const VTy
             ivl_assert(*this, field);
 
             perm_string field_name = field->peek_name();
+            idx = -1;
             const VTypeRecord::element_t*el = ltype->element_by_name(field_name, &idx);
+            ivl_assert(*this, idx >= 0);
 
             aggregate_[idx] = tmp;
             errors += aggregate_[idx].expr->elaborate_expr(ent, arc, el->peek_type());
