@@ -167,6 +167,22 @@ bool VTypeArray::is_unbounded() const {
     return etype_->is_unbounded();
 }
 
+bool VTypeArray::is_variable_length() const {
+    int64_t dummy;
+
+    for(std::vector<range_t>::const_iterator it = ranges_.begin();
+            it != ranges_.end(); ++it)
+    {
+        if(!it->lsb()->evaluate(NULL, dummy))
+            return true;
+
+        if(!it->msb()->evaluate(NULL, dummy))
+            return true;
+    }
+
+    return etype_->is_variable_length();
+}
+
 VTypeRange::VTypeRange(const VType*base, int64_t max_val, int64_t min_val)
 : base_(base)
 {
