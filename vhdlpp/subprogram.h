@@ -76,6 +76,12 @@ class Subprogram : public LineInfo, public ScopeBase {
 	// to translation between VHDL and SystemVerilog.
       void fix_port_types();
 
+	// For the time being, dynamic arrays work exclusively with vectors.
+	// To emulate dynamic array of 'logic'/'bit' type, we need to create a vector
+	// of width == 1, to be used as the array element type.
+	// Effectively 'logic name []' becomes 'logic [0:0] name []'.
+      VTypeArray*fix_logic_darray(const VTypeArray*type);
+
 	// Creates a typedef for an unbounded vector and updates the given type.
       bool check_unb_vector(const VType*&type);
 
