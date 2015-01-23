@@ -76,6 +76,12 @@ class Subprogram : public LineInfo, public ScopeBase {
 	// to translation between VHDL and SystemVerilog.
       void fix_port_types();
 
+	// SystemVerilog does not allow to have signals/variables which size is
+	// evaluated at runtime. This function finds such variables and modifies
+	// their type to dynamic array and adds appropriate 'new' statement in
+	// the program body.
+      void fix_variables();
+
 	// For the time being, dynamic arrays work exclusively with vectors.
 	// To emulate dynamic array of 'logic'/'bit' type, we need to create a vector
 	// of width == 1, to be used as the array element type.
