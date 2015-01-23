@@ -97,20 +97,19 @@ void Subprogram::fix_port_types()
       }
 }
 
+VTypeArray*Subprogram::fix_logic_darray(const VTypeArray*type)
+{
+    Expression*zero = new ExpInteger(0);
+    std::vector<VTypeArray::range_t> sub_range;
+    sub_range.push_back(VTypeArray::range_t(zero, zero));
+    return new VTypeArray(type, sub_range);
+}
+
 bool Subprogram::check_unb_vector(const VType*&type)
 {
     if(const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type)) {
         if(arr->dimensions() == 1 && arr->dimension(0).is_box() ) {
-            // For the time being, dynamic arrays work exclusively with vectors.
-            // To emulate simple 'logic'/'bit' type, we need to create a vector
-            // of width == 1, to be used as the array element type.
-            // Effectively 'logic name []' becomes 'logic [0:0] name []'.
-            Expression*zero = new ExpInteger(0);
-            std::vector<VTypeArray::range_t> sub_range;
-            sub_range.push_back(VTypeArray::range_t(zero, zero));
-            VTypeArray*new_arr = new VTypeArray(arr, sub_range);
-            type = get_global_typedef(new_arr);
-
+            type = get_global_typedef(fix_logic_darray(arr));
             return true;
         }
     }
