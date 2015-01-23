@@ -696,4 +696,23 @@ class ExpCast : public Expression {
       const VType*type_;
 };
 
+/*
+ * Class that handles 'new' statement. VHDL is not capable of dynamic memory
+ * allocation, but it is useful for emitting some cases.
+ */
+class ExpNew : public Expression {
+
+    public:
+      ExpNew(Expression*size);
+      ~ExpNew();
+
+      // There is no 'new' in VHDL - do not emit anything
+      void write_to_stream(std::ostream&) {};
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      void dump(ostream&out, int indent = 0) const;
+
+    private:
+      Expression*size_;
+};
+
 #endif /* IVL_expression_H */
