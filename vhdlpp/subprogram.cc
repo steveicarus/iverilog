@@ -26,6 +26,7 @@
 # include  "sequential.h"
 # include  "ivl_assert.h"
 # include  "compiler.h"
+# include  <cassert>
 
 using namespace std;
 
@@ -49,6 +50,7 @@ void Subprogram::set_program_body(list<SequentialStmt*>*stmt)
 {
       ivl_assert(*this, statements_==0);
       statements_ = stmt;
+      fix_variables();
       fix_port_types();
 }
 
@@ -95,6 +97,47 @@ void Subprogram::fix_port_types()
               (*s)->visit(r);
           }
       }
+}
+
+void Subprogram::fix_variables() {
+    for(std::map<perm_string, Variable*>::iterator it = new_variables_.begin(); it != new_variables_.end(); ++it) {
+        Variable*var = it->second;
+        const VType*type = var->peek_type();
+
+        // SystemVerilog does not handle variables that have length dependendent
+        // on other variables. We have to convert it to a dynamic array and
+        // construct it.
+        if(type->is_variable_length()) {
+            const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
+
+            // Currently we handle only one dimensional variables
+            assert(arr->dimensions() == 1);
+
+            Expression*lsb = arr->dimension(0).lsb();
+            Expression*msb = arr->dimension(0).msb();
+
+            // We cannot have dynamic arrays with custom range,
+            // it has to be [size-1:0]
+            int64_t lsb_val;
+            assert(lsb->evaluate(NULL, lsb_val) && lsb_val == 0);
+            //ExpArithmetic*size = new ExpArithmetic(ExpArithmetic::MINUS, msb, lsb);
+            // Because lsb_val == 0, we may simplify the size expression:
+            Expression*size = msb;
+
+            // Prepare the construction statement
+            assert(statements_);
+            VariableSeqAssignment*init = new VariableSeqAssignment(new ExpName(var->peek_name()),
+                                                                   new ExpNew(size));
+            statements_->push_front(init);
+
+            // Now substitute the variable type
+            std::vector<VTypeArray::range_t> new_range;
+            new_range.push_back(VTypeArray::range_t());
+            VTypeArray*new_array = new VTypeArray(arr->element_type(), new_range);
+            it->second = new Variable(var->peek_name(), fix_logic_darray(new_array));
+            delete var;
+        }
+    }
 }
 
 VTypeArray*Subprogram::fix_logic_darray(const VTypeArray*type)
