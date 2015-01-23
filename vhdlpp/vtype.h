@@ -88,6 +88,10 @@ class VType {
 	// Returns true if the type has an undefined dimension.
       virtual bool is_unbounded() const { return false; }
 
+	// Checks if the variable length is dependent on other expressions, that
+	// cannot be evaluated (e.g. 'length, 'left, 'right).
+      virtual bool is_variable_length() const { return false; }
+
 	// Returns a perm_string that can be used in automatically created
 	// typedefs (i.e. not ones defined by the user).
       perm_string get_generic_typename() const;
@@ -226,6 +230,8 @@ class VTypeArray : public VType {
       bool can_be_packed() const { return etype_->can_be_packed(); }
 
       bool is_unbounded() const;
+
+      bool is_variable_length() const;
 
 	// To handle subtypes
       inline void set_parent_type(const VTypeArray*parent) { parent_ = parent; }
