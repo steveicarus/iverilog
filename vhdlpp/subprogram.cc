@@ -268,8 +268,14 @@ bool Subprogram::fixed_return_type(void)
         (*s)->visit(r);
     }
 
-    const VType*return_type = r.get_type();
+    VType*return_type = const_cast<VType*>(r.get_type());
     if(return_type && !return_type->is_unbounded()) {
+        // Let's check if the variable length can be evaluated without any scope.
+        // If not, then it is depends on information about e.g. function params
+        if(return_type->is_variable_length(NULL)) {
+            if(VTypeArray*arr = dynamic_cast<VTypeArray*>(return_type))
+                arr->evaluate_ranges(this);
+        }
         return_type_ = return_type;
         return true;
     } else {
