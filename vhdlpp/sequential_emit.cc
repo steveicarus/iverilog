@@ -27,7 +27,7 @@
 # include  <typeinfo>
 # include  <ivl_assert.h>
 
-int SequentialStmt::emit(ostream&out, Entity*, Architecture*)
+int SequentialStmt::emit(ostream&out, Entity*, ScopeBase*)
 {
       out << " // " << get_fileline() << ": internal error: "
 	  << "I don't know how to emit this sequential statement! "
@@ -35,23 +35,23 @@ int SequentialStmt::emit(ostream&out, Entity*, Architecture*)
       return 1;
 }
 
-int IfSequential::emit(ostream&out, Entity*ent, Architecture*arc)
+int IfSequential::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       out << "if (";
-      errors += cond_->emit(out, ent, arc);
+      errors += cond_->emit(out, ent, scope);
       out << ") begin" << endl;
 
       for (list<SequentialStmt*>::iterator cur = if_.begin()
 		 ; cur != if_.end() ; ++cur)
-	    errors += (*cur)->emit(out, ent, arc);
+	    errors += (*cur)->emit(out, ent, scope);
 
       for (list<IfSequential::Elsif*>::iterator cur = elsif_.begin()
 		 ; cur != elsif_.end() ; ++cur) {
 	    out << "end else if (";
-	    errors += (*cur)->condition_emit(out, ent, arc);
+	    errors += (*cur)->condition_emit(out, ent, scope);
 	    out << ") begin" << endl;
-	    errors += (*cur)->statement_emit(out, ent, arc);
+	    errors += (*cur)->statement_emit(out, ent, scope);
       }
 
       if (! else_.empty()) {
@@ -59,7 +59,7 @@ int IfSequential::emit(ostream&out, Entity*ent, Architecture*arc)
 
 	    for (list<SequentialStmt*>::iterator cur = else_.begin()
 		       ; cur != else_.end() ; ++cur)
-		  errors += (*cur)->emit(out, ent, arc);
+		  errors += (*cur)->emit(out, ent, scope);
 
       }
 
@@ -67,36 +67,36 @@ int IfSequential::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
-int IfSequential::Elsif::condition_emit(ostream&out, Entity*ent, Architecture*arc)
+int IfSequential::Elsif::condition_emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
-      return cond_->emit(out, ent, arc);
+      return cond_->emit(out, ent, scope);
 }
 
-int IfSequential::Elsif::statement_emit(ostream&out, Entity*ent, Architecture*arc)
+int IfSequential::Elsif::statement_emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
       for (list<SequentialStmt*>::iterator cur = if_.begin()
 		 ; cur != if_.end() ; ++cur)
-	    errors += (*cur)->emit(out, ent, arc);
+	    errors += (*cur)->emit(out, ent, scope);
 
       return errors;
 }
 
-int ReturnStmt::emit(ostream&out, Entity*ent, Architecture*arc)
+int ReturnStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       out << "return ";
-      errors += val_->emit(out, ent, arc);
+      errors += val_->emit(out, ent, scope);
       out << ";" << endl;
       return errors;
 }
 
-int SignalSeqAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
+int SignalSeqAssignment::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      errors += lval_->emit(out, ent, arc);
+      errors += lval_->emit(out, ent, scope);
 
       if (waveform_.size() != 1) {
 	    out << "/* Confusing waveform? */;" << endl;
@@ -105,27 +105,27 @@ int SignalSeqAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
       } else {
 	    Expression*tmp = waveform_.front();
 	    out << " <= ";
-	    errors += tmp->emit(out, ent, arc);
+	    errors += tmp->emit(out, ent, scope);
 	    out << ";" << endl;
       }
 
       return errors;
 }
 
-int VariableSeqAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
+int VariableSeqAssignment::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      errors += lval_->emit(out, ent, arc);
+      errors += lval_->emit(out, ent, scope);
 
       out << " = ";
-      errors += rval_->emit(out, ent, arc);
+      errors += rval_->emit(out, ent, scope);
       out << ";" << endl;
 
       return errors;
 }
 
-int ProcedureCall::emit(ostream&out, Entity*, Architecture*)
+int ProcedureCall::emit(ostream&out, Entity*, ScopeBase*)
 {
       out << " // " << get_fileline() << ": internal error: "
       << "I don't know how to emit this sequential statement! "
@@ -133,29 +133,29 @@ int ProcedureCall::emit(ostream&out, Entity*, Architecture*)
       return 1;
 }
 
-int LoopStatement::emit_substatements(ostream&out, Entity*ent, Architecture*arc)
+int LoopStatement::emit_substatements(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       for (list<SequentialStmt*>::iterator cur = stmts_.begin()
 		 ; cur != stmts_.end() ; ++cur) {
 	    SequentialStmt*tmp = *cur;
-	    errors += tmp->emit(out, ent, arc);
+	    errors += tmp->emit(out, ent, scope);
       }
       return errors;
 }
 
-int CaseSeqStmt::emit(ostream&out, Entity*ent, Architecture*arc)
+int CaseSeqStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
       out << "case (";
-      errors += cond_->emit(out, ent, arc);
+      errors += cond_->emit(out, ent, scope);
       out << ")" << endl;
 
       for (list<CaseStmtAlternative*>::iterator cur = alt_.begin()
 		 ; cur != alt_.end() ; ++cur) {
 	    CaseStmtAlternative*curp = *cur;
-	    errors += curp ->emit(out, ent, arc);
+	    errors += curp ->emit(out, ent, scope);
       }
 
       out << "endcase" << endl;
@@ -163,12 +163,12 @@ int CaseSeqStmt::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
-int CaseSeqStmt::CaseStmtAlternative::emit(ostream&out, Entity*ent, Architecture*arc)
+int CaseSeqStmt::CaseStmtAlternative::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
       if (exp_) {
-	    errors += exp_->emit(out, ent, arc);
+	    errors += exp_->emit(out, ent, scope);
 	    out << ":" << endl;
       } else {
 	    out << "default:" << endl;
@@ -182,14 +182,14 @@ int CaseSeqStmt::CaseStmtAlternative::emit(ostream&out, Entity*ent, Architecture
 	    break;
 	  case 1:
 	    curp = stmts_.front();
-	    errors += curp->emit(out, ent, arc);
+	    errors += curp->emit(out, ent, scope);
 	    break;
 	  default:
 	    out << "begin" << endl;
 	    for (list<SequentialStmt*>::iterator cur = stmts_.begin()
 		       ; cur != stmts_.end() ; ++cur) {
 		  curp = *cur;
-		  errors += curp->emit(out, ent, arc);
+		  errors += curp->emit(out, ent, scope);
 	    }
 	    out << "end" << endl;
 	    break;
@@ -198,16 +198,16 @@ int CaseSeqStmt::CaseStmtAlternative::emit(ostream&out, Entity*ent, Architecture
       return errors;
 }
 
-int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
+int ForLoopStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
     int errors = 0;
     ivl_assert(*this, range_);
 
     int64_t start_val;
-    bool start_rc = range_->msb()->evaluate(ent, arc, start_val);
+    bool start_rc = range_->msb()->evaluate(ent, scope, start_val);
 
     int64_t finish_val;
-    bool finish_rc = range_->lsb()->evaluate(ent, arc, finish_val);
+    bool finish_rc = range_->lsb()->evaluate(ent, scope, finish_val);
 
     perm_string scope_name = loop_name();
     if (scope_name.nil()) {
@@ -222,7 +222,7 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
     if(!start_rc || !finish_rc) {
         // Could not evaluate one of the loop boundaries, it has to be
         // determined during the run-time
-        errors += emit_runtime_(out, ent, arc);
+        errors += emit_runtime_(out, ent, scope);
     } else {
         bool dir = range_->is_downto();
 
@@ -271,7 +271,7 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 
     out << " begin" << endl;
 
-    errors += emit_substatements(out, ent, arc);
+    errors += emit_substatements(out, ent, scope);
 
     out << "end" << endl;
     out << "end /* " << scope_name << " */" << endl;
@@ -279,32 +279,32 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
     return errors;
 }
 
-int ForLoopStatement::emit_runtime_(ostream&out, Entity*ent, Architecture*arc)
+int ForLoopStatement::emit_runtime_(ostream&out, Entity*ent, ScopeBase*scope)
 {
     int errors = 0;
 
     out << "for (\\" << it_ << " = ";
-    errors += range_->expr_left()->emit(out, ent, arc);
+    errors += range_->expr_left()->emit(out, ent, scope);
 
     // Twisted way of determining the loop direction at runtime
     out << " ;\n(";
-    errors += range_->expr_left()->emit(out, ent, arc);
+    errors += range_->expr_left()->emit(out, ent, scope);
     out << " < ";
-    errors += range_->expr_right()->emit(out, ent, arc);
+    errors += range_->expr_right()->emit(out, ent, scope);
     out << " ? \\" << it_ << " <= ";
-    errors += range_->expr_right()->emit(out, ent, arc);
+    errors += range_->expr_right()->emit(out, ent, scope);
     out << " : \\" << it_ << " >= ";
-    errors += range_->expr_right()->emit(out, ent, arc);
+    errors += range_->expr_right()->emit(out, ent, scope);
     out << ");\n\\" << it_ << " = \\" << it_ << " + (";
-    errors += range_->expr_left()->emit(out, ent, arc);
+    errors += range_->expr_left()->emit(out, ent, scope);
     out << " < ";
-    errors += range_->expr_right()->emit(out, ent, arc);
+    errors += range_->expr_right()->emit(out, ent, scope);
     out << " ? 1 : -1))";
 
     return errors;
 }
 
-int WhileLoopStatement::emit(ostream&out, Entity*, Architecture*)
+int WhileLoopStatement::emit(ostream&out, Entity*, ScopeBase*)
 {
     out << " // " << get_fileline() << ": internal error: "
     << "I don't know how to emit this sequential statement! "
@@ -312,7 +312,7 @@ int WhileLoopStatement::emit(ostream&out, Entity*, Architecture*)
     return 1;
 }
 
-int BasicLoopStatement::emit(ostream&out, Entity*, Architecture*)
+int BasicLoopStatement::emit(ostream&out, Entity*, ScopeBase*)
 {
     out << " // " << get_fileline() << ": internal error: "
     << "I don't know how to emit this sequential statement! "

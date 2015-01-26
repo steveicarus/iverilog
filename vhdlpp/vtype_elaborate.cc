@@ -21,24 +21,24 @@
 # include  "vtype.h"
 # include  "expression.h"
 
-int VType::elaborate(Entity*, Architecture*) const
+int VType::elaborate(Entity*, ScopeBase*) const
 {
       return 0;
 }
 
-int VTypeArray::elaborate(Entity*ent, Architecture*arc) const
+int VTypeArray::elaborate(Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
-      etype_->elaborate(ent, arc);
+      etype_->elaborate(ent, scope);
 
       for (vector<range_t>::const_iterator cur = ranges_.begin()
 		 ; cur != ranges_.end() ; ++ cur) {
 
 	    Expression*tmp = cur->msb();
-	    if (tmp) errors += tmp->elaborate_expr(ent, arc, 0);
+	    if (tmp) errors += tmp->elaborate_expr(ent, scope, 0);
 
 	    tmp = cur->lsb();
-	    if (tmp) errors += tmp->elaborate_expr(ent, arc, 0);
+	    if (tmp) errors += tmp->elaborate_expr(ent, scope, 0);
       }
 
       return errors;

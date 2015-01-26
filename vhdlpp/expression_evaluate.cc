@@ -26,9 +26,9 @@ bool Expression::evaluate(ScopeBase*, int64_t&) const
       return false;
 }
 
-bool Expression::evaluate(Entity*, Architecture*arc, int64_t&val) const
+bool Expression::evaluate(Entity*, ScopeBase*scope, int64_t&val) const
 {
-      return evaluate(arc, val);
+      return evaluate(scope, val);
 }
 
 
@@ -110,16 +110,16 @@ bool ExpAttribute::evaluate(ScopeBase*, int64_t&val) const
       return false;
 }
 
-bool ExpAttribute::evaluate(Entity*ent, Architecture*arc, int64_t&val) const
+bool ExpAttribute::evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const
 {
-      if (!ent || !arc) {   // it's impossible to evaluate, probably it is inside a subprogram
+      if (!ent || !scope) {   // it's impossible to evaluate, probably it is inside a subprogram
             return false;
       }
 
       if (name_ == "left" || name_ == "right") {
 	    const VType*base_type = base_->peek_type();
 	    if (base_type == 0)
-		  base_type = base_->probe_type(ent, arc);
+		  base_type = base_->probe_type(ent, scope);
 
 	    ivl_assert(*this, base_type);
 
@@ -133,14 +133,14 @@ bool ExpAttribute::evaluate(Entity*ent, Architecture*arc, int64_t&val) const
 
 	    ivl_assert(*this, arr->dimensions() == 1);
 	    if(name_ == "left")
-		  arr->dimension(0).msb()->evaluate(ent, arc, val);
+		  arr->dimension(0).msb()->evaluate(ent, scope, val);
 	    else    // "right"
-		  arr->dimension(0).lsb()->evaluate(ent, arc, val);
+		  arr->dimension(0).lsb()->evaluate(ent, scope, val);
 
 	    return true;
       }
 
-      return evaluate(arc, val);
+      return evaluate(scope, val);
 }
 
 /*
@@ -169,7 +169,7 @@ bool ExpName::evaluate(ScopeBase*scope, int64_t&val) const
       return exp->evaluate(scope, val);
 }
 
-bool ExpName::evaluate(Entity*ent, Architecture*arc, int64_t&val) const
+bool ExpName::evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const
 {
       if (prefix_.get()) {
 	    cerr << get_fileline() << ": sorry: I don't know how to evaluate ExpName prefix parts." << endl;
@@ -182,8 +182,8 @@ bool ExpName::evaluate(Entity*ent, Architecture*arc, int64_t&val) const
 
 	      // Evaluate the default expression and use that.
 	    if (gen->expr)
-		  return gen->expr->evaluate(ent, arc, val);
+		  return gen->expr->evaluate(ent, scope, val);
       }
 
-      return evaluate(arc, val);
+      return evaluate(scope, val);
 }

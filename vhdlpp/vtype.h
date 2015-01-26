@@ -30,6 +30,7 @@
 # include  "StringHeap.h"
 
 class Architecture;
+class ScopeBase;
 class Entity;
 class Expression;
 class prange_t;
@@ -52,7 +53,7 @@ class VType {
 
 	// This is rarely used, but some types may have expressions
 	// that need to be elaborated.
-      virtual int elaborate(Entity*end, Architecture*arc) const;
+      virtual int elaborate(Entity*end, ScopeBase*scope) const;
 
 	// This virtual method returns true if that is equivalent to
 	// this type. This method is used for example to compare
@@ -205,7 +206,7 @@ class VTypeArray : public VType {
       VTypeArray(const VType*etype, std::list<prange_t*>*r, bool signed_vector =false);
       ~VTypeArray();
 
-      int elaborate(Entity*ent, Architecture*arc) const;
+      int elaborate(Entity*ent, ScopeBase*scope) const;
       void write_to_stream(std::ostream&fd) const;
       void write_type_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;

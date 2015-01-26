@@ -34,10 +34,10 @@ SigVarBase::~SigVarBase()
 {
 }
 
-void SigVarBase::elaborate_init_expr(Entity*ent, Architecture*arc)
+void SigVarBase::elaborate_init_expr(Entity*ent, ScopeBase*scope)
 {
     if(init_expr_) {
-        init_expr_->elaborate_expr(ent, arc, peek_type());
+        init_expr_->elaborate_expr(ent, scope, peek_type());
     }
 }
 
@@ -46,7 +46,7 @@ void SigVarBase::type_elaborate_(VType::decl_t&decl)
       decl.type = type_;
 }
 
-int Signal::emit(ostream&out, Entity*ent, Architecture*arc)
+int Signal::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
@@ -59,13 +59,13 @@ int Signal::emit(ostream&out, Entity*ent, Architecture*arc)
       Expression*init_expr = peek_init_expr();
       if (init_expr) {
 	    out << " = ";
-	    init_expr->emit(out, ent, arc);
+	    init_expr->emit(out, ent, scope);
       }
       out << ";" << endl;
       return errors;
 }
 
-int Variable::emit(ostream&out, Entity*, Architecture*)
+int Variable::emit(ostream&out, Entity*, ScopeBase*)
 {
       int errors = 0;
 
