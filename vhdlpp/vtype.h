@@ -34,6 +34,7 @@ class Entity;
 class Expression;
 class prange_t;
 class VTypeDef;
+class ScopeBase;
 
 typedef enum typedef_topo_e { NONE=0, PENDING, MARKED } typedef_topo_t;
 typedef std::map<const VTypeDef*, typedef_topo_t> typedef_context_t;
@@ -90,7 +91,7 @@ class VType {
 
 	// Checks if the variable length is dependent on other expressions, that
 	// cannot be evaluated (e.g. 'length, 'left, 'right).
-      virtual bool is_variable_length() const { return false; }
+      virtual bool is_variable_length(ScopeBase*) const { return false; }
 
 	// Returns a perm_string that can be used in automatically created
 	// typedefs (i.e. not ones defined by the user).
@@ -231,7 +232,7 @@ class VTypeArray : public VType {
 
       bool is_unbounded() const;
 
-      bool is_variable_length() const;
+      bool is_variable_length(ScopeBase*scope) const;
 
 	// To handle subtypes
       inline void set_parent_type(const VTypeArray*parent) { parent_ = parent; }

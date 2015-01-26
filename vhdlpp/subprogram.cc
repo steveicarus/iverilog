@@ -107,7 +107,7 @@ void Subprogram::fix_variables() {
         // SystemVerilog does not handle variables that have length dependendent
         // on other variables. We have to convert it to a dynamic array and
         // construct it.
-        if(type->is_variable_length()) {
+        if(type->is_variable_length(this)) {
             const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
 
             // Currently we handle only one dimensional variables
