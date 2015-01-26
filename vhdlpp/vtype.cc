@@ -183,6 +183,19 @@ bool VTypeArray::is_variable_length(ScopeBase*scope) const {
     return etype_->is_variable_length(scope);
 }
 
+void VTypeArray::evaluate_ranges(ScopeBase*scope) {
+    for(std::vector<range_t>::iterator it = ranges_.begin(); it != ranges_.end(); ++it ) {
+        int64_t lsb_val = -1, msb_val = -1;
+        bool dir = it->is_downto();
+
+        if(it->msb()->evaluate(scope, msb_val) && it->lsb()->evaluate(scope, lsb_val)) {
+            assert(lsb_val >= 0);
+            assert(msb_val >= 0);
+            *it = range_t(new ExpInteger(msb_val), new ExpInteger(lsb_val), dir);
+        }
+    }
+}
+
 VTypeRange::VTypeRange(const VType*base, int64_t max_val, int64_t min_val)
 : base_(base)
 {

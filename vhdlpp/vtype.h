@@ -238,6 +238,10 @@ class VTypeArray : public VType {
 	// To handle subtypes
       inline void set_parent_type(const VTypeArray*parent) { parent_ = parent; }
 
+	// Wherever it is possible, replaces range lsb & msb expressions with
+	// constant integers.
+      void evaluate_ranges(ScopeBase*scope);
+
     private:
       int emit_with_dims_(std::ostream&out, bool packed, perm_string name) const;
 
