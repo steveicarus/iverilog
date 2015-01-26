@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2015
+ * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -76,18 +78,31 @@ bool ExpArithmetic::evaluate(ScopeBase*scope, int64_t&val) const
       return true;
 }
 
-bool ExpAttribute::evaluate(ScopeBase*, int64_t&val) const
+bool ExpAttribute::evaluate(ScopeBase*scope, int64_t&val) const
 {
-	/* Special Case: The length attribute can be calculated all
+	/* Special Case: The array attributes can sometimes be calculated all
 	   the down to a literal integer at compile time, and all it
 	   needs is the type of the base expression. (The base
 	   expression doesn't even need to be evaluated.) */
-      if (name_ == "length") {
+      if (name_ == "length" || name_ == "right" || name_ == "left") {
 	    const VType*base_type = base_->peek_type();
-	      //if (base_type == 0)
-	      //	  base_type = base_->probe_type(ent,arc);
 
-	    ivl_assert(*this, base_type);
+            if(!base_type) {
+                const ExpName*name = NULL;
+
+                if(scope && (name = dynamic_cast<const ExpName*>(base_))) {
+                    const perm_string& n = name->peek_name();
+                    if(const Variable*var = scope->find_variable(n))
+                        base_type = var->peek_type();
+                    else if(const Signal*sig = scope->find_signal(n))
+                        base_type = sig->peek_type();
+                    else if(const InterfacePort*port = scope->find_param(n))
+                        base_type = port->type;
+                }
+            }
+
+            if(!base_type)
+                return false;      // I tried really hard, sorry
 
 	    const VTypeArray*arr = dynamic_cast<const VTypeArray*>(base_type);
 	    if (arr == 0) {
@@ -97,13 +112,27 @@ bool ExpAttribute::evaluate(ScopeBase*, int64_t&val) const
 		  return false;
 	    }
 
-	    int64_t size = 1;
-	    for (size_t idx = 0 ; idx < arr->dimensions() ; idx += 1) {
-		  const VTypeArray::range_t&dim = arr->dimension(idx);
-		  ivl_assert(*this, ! dim.is_box());
-		  size *= 1 + labs(dim.msb() - dim.lsb());
-	    }
-	    val = size;
+            if(name_ == "length") {
+                int64_t size = 1;
+                for (size_t idx = 0 ; idx < arr->dimensions() ; idx += 1) {
+                    const VTypeArray::range_t&dim = arr->dimension(idx);
+                    int64_t msb_val, lsb_val;
+
+                    if(dim.is_box())
+                        return false;
+
+                    dim.msb()->evaluate(scope, msb_val);
+                    dim.lsb()->evaluate(scope, lsb_val);
+
+                    size *= 1 + labs(msb_val - lsb_val);
+                }
+                val = size;
+            } else if(name_ == "left") {
+		  arr->dimension(0).msb()->evaluate(scope, val);
+            } else if(name_ == "right") {
+		  arr->dimension(0).lsb()->evaluate(scope, val);
+            } else ivl_assert(*this, false);
+
 	    return true;
       }
 
