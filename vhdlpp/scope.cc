@@ -21,6 +21,7 @@
 # include  "scope.h"
 # include  "package.h"
 # include  "subprogram.h"
+# include  "entity.h"
 # include  <algorithm>
 # include  <iostream>
 # include  <iterator>
@@ -146,6 +147,23 @@ Variable* ScopeBase::find_variable(perm_string by_name) const
       } else {
 	    return cur->second;
       }
+}
+
+const InterfacePort* ScopeBase::find_param(perm_string by_name) const
+{
+      for(map<perm_string,Subprogram*>::const_iterator it = use_subprograms_.begin();
+              it != use_subprograms_.end(); ++it) {
+          if(const InterfacePort*port = it->second->find_param(by_name))
+              return port;
+      }
+
+      for(map<perm_string,Subprogram*>::const_iterator it = cur_subprograms_.begin();
+              it != cur_subprograms_.end(); ++it) {
+          if(const InterfacePort*port = it->second->find_param(by_name))
+              return port;
+      }
+
+      return NULL;
 }
 
 Subprogram* ScopeBase::find_subprogram(perm_string name) const
