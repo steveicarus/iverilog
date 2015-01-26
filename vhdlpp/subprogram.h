@@ -54,7 +54,7 @@ class Subprogram : public LineInfo, public ScopeBase {
       const VType*peek_param_type(int idx) const;
       const VType*peek_return_type() const { return return_type_; }
 
-      int emit(ostream&out, Entity*ent, Architecture*arc);
+      int emit(ostream&out, Entity*ent, ScopeBase*arc);
 
 	// Emit a definition as it would show up in a package.
       int emit_package(std::ostream&fd) const;

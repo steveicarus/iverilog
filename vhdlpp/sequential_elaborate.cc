@@ -20,12 +20,12 @@
 # include  "sequential.h"
 # include  "expression.h"
 
-int SequentialStmt::elaborate(Entity*, Architecture*)
+int SequentialStmt::elaborate(Entity*, ScopeBase*)
 {
       return 0;
 }
 
-int LoopStatement::elaborate_substatements(Entity*ent, Architecture*arc)
+int LoopStatement::elaborate_substatements(Entity*ent, ScopeBase*arc)
 {
       int errors = 0;
 
@@ -37,7 +37,7 @@ int LoopStatement::elaborate_substatements(Entity*ent, Architecture*arc)
       return errors;
 }
 
-int CaseSeqStmt::elaborate(Entity*ent, Architecture*arc)
+int CaseSeqStmt::elaborate(Entity*ent, ScopeBase*arc)
 {
       int errors = 0;
 
@@ -59,7 +59,7 @@ int CaseSeqStmt::elaborate(Entity*ent, Architecture*arc)
  * ltype is the probed type for the main case condition. The
  * expression needs to elaborate itself in that context.
  */
-int CaseSeqStmt::CaseStmtAlternative::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
+int CaseSeqStmt::CaseStmtAlternative::elaborate_expr(Entity*ent, ScopeBase*arc, const VType*ltype)
 {
       int errors = 0;
       if (exp_)
@@ -67,7 +67,7 @@ int CaseSeqStmt::CaseStmtAlternative::elaborate_expr(Entity*ent, Architecture*ar
       return errors;
 }
 
-int CaseSeqStmt::CaseStmtAlternative::elaborate(Entity*ent, Architecture*arc)
+int CaseSeqStmt::CaseStmtAlternative::elaborate(Entity*ent, ScopeBase*arc)
 {
       int errors = 0;
 
@@ -80,14 +80,14 @@ int CaseSeqStmt::CaseStmtAlternative::elaborate(Entity*ent, Architecture*arc)
       return errors;
 }
 
-int ForLoopStatement::elaborate(Entity*ent, Architecture*arc)
+int ForLoopStatement::elaborate(Entity*ent, ScopeBase*arc)
 {
       int errors = 0;
       errors += elaborate_substatements(ent, arc);
       return errors;
 }
 
-int IfSequential::elaborate(Entity*ent, Architecture*arc)
+int IfSequential::elaborate(Entity*ent, ScopeBase*arc)
 {
       int errors = 0;
 
@@ -111,7 +111,7 @@ int IfSequential::elaborate(Entity*ent, Architecture*arc)
       return errors;
 }
 
-int IfSequential::Elsif::elaborate(Entity*ent, Architecture*arc)
+int IfSequential::Elsif::elaborate(Entity*ent, ScopeBase*arc)
 {
       int errors = 0;
 
@@ -125,7 +125,7 @@ int IfSequential::Elsif::elaborate(Entity*ent, Architecture*arc)
       return errors;
 }
 
-int SignalSeqAssignment::elaborate(Entity*ent, Architecture*arc)
+int SignalSeqAssignment::elaborate(Entity*ent, ScopeBase*arc)
 {
       int errors = 0;
 
@@ -151,12 +151,12 @@ int SignalSeqAssignment::elaborate(Entity*ent, Architecture*arc)
       return errors;
 }
 
-int ProcedureCall::elaborate(Entity*, Architecture*)
+int ProcedureCall::elaborate(Entity*, ScopeBase*)
 {
       return 0;
 }
 
-int VariableSeqAssignment::elaborate(Entity*ent, Architecture*arc)
+int VariableSeqAssignment::elaborate(Entity*ent, ScopeBase*arc)
 {
       int errors = 0;
 
@@ -185,13 +185,13 @@ int VariableSeqAssignment::elaborate(Entity*ent, Architecture*arc)
       return errors;
 }
 
-int WhileLoopStatement::elaborate(Entity*, Architecture*)
+int WhileLoopStatement::elaborate(Entity*, ScopeBase*)
 {
     //TODO:check whether there is any wait statement in the statements (there should be)
     return 0;
 }
 
-int BasicLoopStatement::elaborate(Entity*, Architecture*)
+int BasicLoopStatement::elaborate(Entity*, ScopeBase*)
 {
     return 0;
 }

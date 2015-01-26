@@ -21,12 +21,12 @@
 # include  "vtype.h"
 # include  "expression.h"
 
-int VType::elaborate(Entity*, Architecture*) const
+int VType::elaborate(Entity*, ScopeBase*) const
 {
       return 0;
 }
 
-int VTypeArray::elaborate(Entity*ent, Architecture*arc) const
+int VTypeArray::elaborate(Entity*ent, ScopeBase*arc) const
 {
       int errors = 0;
       etype_->elaborate(ent, arc);
