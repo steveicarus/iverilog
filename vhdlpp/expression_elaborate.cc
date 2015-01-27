@@ -594,6 +594,10 @@ const VType*ExpBitstring::fit_type(Entity*, ScopeBase*, const VTypeArray*atype) 
 int ExpBitstring::elaborate_expr(Entity*, ScopeBase*, const VType*)
 {
       int errors = 0;
+      std::vector<VTypeArray::range_t> range;
+      range.push_back(VTypeArray::range_t(new ExpInteger(value_.size() - 1), new ExpInteger(0)));
+      const VTypeArray*type = new VTypeArray(&primitive_STDLOGIC, range);
+      set_type(type);
       return errors;
 }
 
