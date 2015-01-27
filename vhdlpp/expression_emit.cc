@@ -562,9 +562,9 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
 	    out << ")";
 
       } else if (name_ == "integer" && argv_.size() == 1) {
-            // Simply skip the function name, SystemVerilog takes care of
-            // rounding real numbers
+	    out << "$signed(";
 	    errors += argv_[0]->emit(out, ent, scope);
+	    out << ")";
 
       } else if (name_ == "std_logic_vector" && argv_.size() == 1) {
 	      // Special case: The std_logic_vector function casts its
@@ -633,11 +633,6 @@ int ExpInteger::emit_package(ostream&out)
 {
       out << value_;
       return 0;
-}
-
-bool ExpInteger::is_primary(void) const
-{
-      return true;
 }
 
 int ExpReal::emit(ostream&out, Entity*, ScopeBase*)
