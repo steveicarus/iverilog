@@ -820,7 +820,7 @@ static void draw_concat_vec4(ivl_expr_t expr)
 	    sub_idx += 1;
 	    draw_eval_vec4(ivl_expr_parm(expr, sub_idx));
       }
-      
+
       for ( sub_idx += 1 ; sub_idx < num_sube ; sub_idx += 1) {
 	      /* Concatenate progressively lower parts. */
 	    ivl_expr_t sube = ivl_expr_parm(expr, sub_idx);
