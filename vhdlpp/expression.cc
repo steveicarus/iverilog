@@ -64,6 +64,11 @@ ExpAttribute::~ExpAttribute()
       delete base_;
 }
 
+Expression*ExpAttribute::clone() const
+{
+      return new ExpAttribute(static_cast<ExpName*>(base_->clone()), name_);
+}
+
 ExpBinary::ExpBinary(Expression*op1, Expression*op2)
 : operand1_(op1), operand2_(op2)
 {
@@ -113,6 +118,23 @@ ExpAggregate::~ExpAggregate()
 	    delete elements_[idx];
 }
 
+Expression* ExpAggregate::clone() const
+{
+      std::list<element_t*>*new_elements = NULL;
+
+      if(!elements_.empty()) {
+          new_elements = new std::list<element_t*>();
+          for(std::vector<element_t*>::const_iterator it = elements_.begin();
+                  it != elements_.end(); ++it) {
+              new_elements->push_back(new element_t(**it));
+          }
+      }
+
+      assert(aggregate_.empty());   // cloning should not happen after elab
+
+      return new ExpAggregate(new_elements);
+}
+
 ExpAggregate::choice_t::choice_t(Expression*exp)
 : expr_(exp)
 {
@@ -125,6 +147,15 @@ ExpAggregate::choice_t::choice_t()
 ExpAggregate::choice_t::choice_t(prange_t*rang)
 : range_(rang)
 {
+}
+
+ExpAggregate::choice_t::choice_t(const choice_t&other)
+{
+    if(Expression*e = other.expr_.get())
+        expr_.reset(e->clone());
+
+    if(other.range_.get())
+        range_.reset(new prange_t(*other.range_.get()));
 }
 
 ExpAggregate::choice_t::~choice_t()
@@ -158,6 +189,18 @@ ExpAggregate::element_t::element_t(list<choice_t*>*fields, Expression*val)
 		  fields->pop_front();
 	    }
       }
+}
+
+ExpAggregate::element_t::element_t(const ExpAggregate::element_t&other)
+{
+      fields_.reserve(other.fields_.size());
+
+      for(std::vector<choice_t*>::const_iterator it = other.fields_.begin();
+              it != other.fields_.end(); ++it) {
+          fields_.push_back(*it);
+      }
+
+      val_ = other.val_->clone();
 }
 
 ExpAggregate::element_t::~element_t()
@@ -236,10 +279,44 @@ ExpConditional::~ExpConditional()
       }
 }
 
+Expression*ExpConditional::clone() const
+{
+      std::list<Expression*>*new_true_clause = NULL;
+      if(!true_clause_.empty()) {
+          new_true_clause = new std::list<Expression*>();
+
+          for(std::list<Expression*>::const_iterator it = true_clause_.begin();
+                  it != true_clause_.end(); ++it) {
+              new_true_clause->push_back((*it)->clone());
+          }
+      }
+
+      std::list<else_t*>*new_else_clause = NULL;
+      if(!else_clause_.empty()) {
+          new_else_clause = new std::list<else_t*>();
+
+          for(std::list<else_t*>::const_iterator it = else_clause_.begin();
+                  it != else_clause_.end(); ++it) {
+              new_else_clause->push_back(new else_t(**it));
+          }
+      }
+
+      return new ExpConditional(cond_->clone(), new_true_clause, new_else_clause);
+}
+
 ExpConditional::else_t::else_t(Expression*cond, std::list<Expression*>*tru)
 : cond_(cond)
 {
       if (tru) true_clause_.splice(true_clause_.end(), *tru);
+}
+
+ExpConditional::else_t::else_t(const else_t&other)
+{
+      cond_ = other.cond_->clone();
+      for(std::list<Expression*>::const_iterator it = other.true_clause_.begin();
+            it != other.true_clause_.end(); ++it) {
+          true_clause_.push_back((*it)->clone());
+      }
 }
 
 ExpConditional::else_t::~else_t()
@@ -282,6 +359,22 @@ ExpFunc::~ExpFunc()
 {
       for (size_t idx = 0 ; idx < argv_.size() ; idx += 1)
 	    delete argv_[idx];
+}
+
+Expression*ExpFunc::clone() const {
+    std::list<Expression*>*new_args = NULL;
+
+    if(!argv_.empty()) {
+        new_args = new std::list<Expression*>();
+        for(std::vector<Expression*>::const_iterator it = argv_.begin();
+                it != argv_.end(); ++it)
+            new_args->push_back((*it)->clone());
+    }
+
+    ExpFunc*f = new ExpFunc(name_, new_args);
+    f->def_ = def_;
+
+    return f;
 }
 
 const VType* ExpFunc::func_ret_type() const

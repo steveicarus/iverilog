@@ -51,6 +51,8 @@ class VType {
       VType() { }
       virtual ~VType() =0;
 
+      virtual VType*clone() const =0;
+
 	// This is rarely used, but some types may have expressions
 	// that need to be elaborated.
       virtual int elaborate(Entity*end, ScopeBase*scope) const;
@@ -136,6 +138,8 @@ extern void preload_global_types(void);
  * This type is a placeholder for ERROR types.
  */
 class VTypeERROR : public VType {
+    VType*clone() const { return NULL; }
+
     public:
       int emit_def(std::ostream&out, perm_string name) const;
 };
@@ -152,6 +156,8 @@ class VTypePrimitive : public VType {
     public:
       VTypePrimitive(type_t tt, bool packed = false);
       ~VTypePrimitive();
+
+      VType*clone() const { return new VTypePrimitive(*this); }
 
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
@@ -189,6 +195,8 @@ class VTypeArray : public VType {
 	    range_t(Expression*m = NULL, Expression*l = NULL, bool dir = true) :
                 msb_(m), lsb_(l), direction_(dir) { }
 
+	    range_t*clone() const;
+
 	    inline bool is_box() const { return msb_==0 && lsb_==0; }
 	    inline bool is_downto() const { return direction_; }
 
@@ -205,6 +213,8 @@ class VTypeArray : public VType {
       VTypeArray(const VType*etype, const std::vector<range_t>&r, bool signed_vector =false);
       VTypeArray(const VType*etype, std::list<prange_t*>*r, bool signed_vector =false);
       ~VTypeArray();
+
+      VType*clone() const;
 
       int elaborate(Entity*ent, ScopeBase*scope) const;
       void write_to_stream(std::ostream&fd) const;
@@ -246,8 +256,8 @@ class VTypeArray : public VType {
       int emit_with_dims_(std::ostream&out, bool packed, perm_string name) const;
 
       void write_range_to_stream_(std::ostream&fd) const;
-      const VType*etype_;
 
+      const VType*etype_;
       std::vector<range_t> ranges_;
       bool signed_flag_;
       const VTypeArray*parent_;
@@ -258,6 +268,8 @@ class VTypeRange : public VType {
     public:
       VTypeRange(const VType*base, int64_t max_val, int64_t min_val);
       ~VTypeRange();
+
+      VType*clone() const { return new VTypeRange(base_->clone(), max_, min_); }
 
 	// Get the type that is limited by the range.
       inline const VType* base_type() const { return base_; }
@@ -276,6 +288,8 @@ class VTypeEnum : public VType {
     public:
       VTypeEnum(const std::list<perm_string>*names);
       ~VTypeEnum();
+
+      VType*clone() const { return new VTypeEnum(*this); }
 
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
@@ -310,6 +324,8 @@ class VTypeRecord : public VType {
       explicit VTypeRecord(std::list<element_t*>*elements);
       ~VTypeRecord();
 
+      VType*clone() const { return new VTypeRecord(*this); }
+
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
       int emit_def(std::ostream&out, perm_string name) const;
@@ -327,6 +343,8 @@ class VTypeDef : public VType {
       explicit VTypeDef(perm_string name);
       explicit VTypeDef(perm_string name, const VType*is);
       ~VTypeDef();
+
+      VType*clone() const { return new VTypeDef(*this); }
 
       inline perm_string peek_name() const { return name_; }
 

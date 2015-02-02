@@ -26,7 +26,6 @@
 
 using namespace std;
 
-
 VType::~VType()
 {
 }
@@ -76,6 +75,11 @@ void VTypePrimitive::show(ostream&out) const
       }
 }
 
+VTypeArray::range_t*VTypeArray::range_t::clone() const
+{
+    return new VTypeArray::range_t(safe_clone(msb_), safe_clone(lsb_), direction_);
+}
+
 VTypeArray::VTypeArray(const VType*element, const vector<VTypeArray::range_t>&r, bool sv)
 : etype_(element), ranges_(r), signed_flag_(sv), parent_(NULL)
 {
@@ -104,6 +108,18 @@ VTypeArray::VTypeArray(const VType*element, std::list<prange_t*>*r, bool sv)
 
 VTypeArray::~VTypeArray()
 {
+}
+
+VType*VTypeArray::clone() const {
+    std::vector<range_t> new_ranges;
+    new_ranges.reserve(ranges_.size());
+    for(std::vector<range_t>::const_iterator it = ranges_.begin();
+            it != ranges_.end(); ++it) {
+        new_ranges.push_back(*(it->clone()));
+    }
+    VTypeArray*a = new VTypeArray(etype_->clone(), new_ranges, signed_flag_);
+    a->set_parent_type(parent_);
+    return a;
 }
 
 const VType* VTypeArray::basic_type(bool typedef_allowed) const
