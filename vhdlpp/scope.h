@@ -62,6 +62,13 @@ class ScopeBase {
 	// this one. After the transfer new_* maps are emptied in the another scope.
       void transfer_from(ScopeBase&ref);
 
+      inline void bind_subprogram(perm_string name, Subprogram*obj)
+      { map<perm_string, Subprogram*>::iterator it;
+        if((it = use_subprograms_.find(name)) != use_subprograms_.end() )
+            use_subprograms_.erase(it);
+        cur_subprograms_[name] = obj;
+      }
+
     protected:
       void cleanup();
 

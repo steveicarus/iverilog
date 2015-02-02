@@ -50,7 +50,6 @@ void Subprogram::set_program_body(list<SequentialStmt*>*stmt)
 {
       ivl_assert(*this, statements_==0);
       statements_ = stmt;
-      fix_variables();
       fix_port_types();
 }
 
@@ -73,12 +72,6 @@ private:
 void Subprogram::fix_port_types()
 {
 	// Check function parameters for unbounded vectors and possibly fix it.
-      if(ports_) {
-          for(std::list<InterfacePort*>::iterator it = ports_->begin();
-                    it != ports_->end(); ++it) {
-              check_unb_vector((*it)->type);
-          }
-      }
 
 	// Try to settle at a fixed width return type.
       if(fixed_return_type())
@@ -104,37 +97,16 @@ void Subprogram::fix_variables() {
         Variable*var = it->second;
         const VType*type = var->peek_type();
 
-        // SystemVerilog does not handle variables that have length dependendent
-        // on other variables. We have to convert it to a dynamic array and
-        // construct it.
         if(type->is_variable_length(this)) {
             const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
 
             // Currently we handle only one dimensional variables
             assert(arr->dimensions() == 1);
 
-            Expression*lsb = arr->dimension(0).lsb();
-            Expression*msb = arr->dimension(0).msb();
-
-            // We cannot have dynamic arrays with custom range,
-            // it has to be [size-1:0]
-            int64_t lsb_val;
-            assert(lsb->evaluate(NULL, lsb_val) && lsb_val == 0);
-            //ExpArithmetic*size = new ExpArithmetic(ExpArithmetic::MINUS, msb, lsb);
-            // Because lsb_val == 0, we may simplify the size expression:
-            Expression*size = msb;
-
-            // Prepare the construction statement
-            assert(statements_);
-            VariableSeqAssignment*init = new VariableSeqAssignment(new ExpName(var->peek_name()),
-                                                                   new ExpNew(size));
-            statements_->push_front(init);
-
             // Now substitute the variable type
-            std::vector<VTypeArray::range_t> new_range;
-            new_range.push_back(VTypeArray::range_t());
-            VTypeArray*new_array = new VTypeArray(arr->element_type(), new_range);
-            it->second = new Variable(var->peek_name(), fix_logic_darray(new_array));
+            VTypeArray*new_array = static_cast<VTypeArray*>(arr->clone());
+            new_array->evaluate_ranges(this);
+            it->second = new Variable(var->peek_name(), new_array);
             delete var;
         }
     }
@@ -214,6 +186,41 @@ const VType*Subprogram::peek_param_type(int idx) const
       std::advance(p, idx);
 
       return (*p)->type;
+}
+
+Subprogram*Subprogram::make_instance(std::vector<Expression*> arguments, ScopeBase*scope) {
+    assert(arguments.size() == ports_->size());
+
+    std::list<InterfacePort*>*ports = new std::list<InterfacePort*>;
+    int i = 0;
+
+    // Change the argument types to match the ones that were used during
+    // the function call
+    for(std::list<InterfacePort*>::iterator it = ports_->begin();
+            it != ports_->end(); ++it) {
+        InterfacePort*p = new InterfacePort(**it);
+        p->type = arguments[i++]->peek_type()->clone();
+        assert(p->type);
+        ports->push_back(p);
+    }
+
+    char buf[80];
+    snprintf(buf, sizeof(buf), "__%s_%p", name_.str(), ports);
+    perm_string new_name = lex_strings.make(buf);
+    Subprogram*instance = new Subprogram(new_name, ports, return_type_);
+
+    // Copy variables
+    for(std::map<perm_string,Variable*>::iterator it = new_variables_.begin();
+            it != new_variables_.end(); ++it) {
+        Variable*v = new Variable(it->first, it->second->peek_type()->clone());
+        instance->new_variables_[it->first] = v;
+    }
+
+    instance->set_parent(scope);
+    instance->set_program_body(statements_);
+    scope->bind_subprogram(new_name, instance);
+
+    return instance;
 }
 
 struct check_return_type : public SeqStmtVisitor {

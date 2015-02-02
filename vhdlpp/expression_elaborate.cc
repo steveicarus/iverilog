@@ -757,6 +757,8 @@ int ExpFunc::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
       ivl_assert(*this, def_==0);
       def_ = prog;
 
+      bool new_instance = false;
+
 	// Elaborate arguments
       for (size_t idx = 0 ; idx < argv_.size() ; idx += 1) {
 	    const VType*tmp = argv_[idx]->probe_type(ent, scope);
@@ -769,8 +771,13 @@ int ExpFunc::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
 
             // Type casting for unbounded arrays
             if(param_type && param_type->is_unbounded() /*&& !param_type->type_match(tmp)*/) {
-                argv_[idx] = new ExpCast(argv_[idx], get_global_typedef(param_type));
+                new_instance = true;    // we need a new instance
             }
+      }
+
+      if(new_instance) {
+            def_ = prog->make_instance(argv_, scope);
+            name_ = def_->name();
       }
 
       return errors;

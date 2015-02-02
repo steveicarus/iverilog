@@ -45,6 +45,7 @@ class Subprogram : public LineInfo, public ScopeBase {
       inline const perm_string&name() const { return name_; }
 
       void set_program_body(std::list<SequentialStmt*>*statements);
+      inline bool empty_program_body() const { return !statements_ || statements_->empty(); }
 
 	// Return true if the specification (name, types, ports)
 	// matches this subprogram and that subprogram.
@@ -61,6 +62,12 @@ class Subprogram : public LineInfo, public ScopeBase {
 
       void write_to_stream(std::ostream&fd) const;
       void dump(std::ostream&fd) const;
+
+	// Creates a new instance of the function that takes arguments of
+	// a different type. It is used to allow VHDL functions that work with
+	// unbounded std_logic_vectors, so there can be a separate instance
+	// for limited length logic vector.
+      Subprogram*make_instance(std::vector<Expression*> arguments, ScopeBase*scope);
 
     private:
 	// Tries to set the return type to a fixed type. VHDL functions that
