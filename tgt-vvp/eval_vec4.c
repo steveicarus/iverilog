@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -807,14 +807,21 @@ static void draw_concat_vec4(ivl_expr_t expr)
 	/* This is the number of expressions that go into the
 	   concatenation. */
       unsigned num_sube = ivl_expr_parms(expr);
-      unsigned sub_idx;
+      unsigned sub_idx = 0;
 
       assert(num_sube > 0);
 
 	/* Start with the most-significant bits. */
-      draw_eval_vec4(ivl_expr_parm(expr, 0));
-
-      for (sub_idx = 1 ; sub_idx < num_sube ; sub_idx += 1) {
+      draw_eval_vec4(ivl_expr_parm(expr, sub_idx));
+	/* Evaluate, but skip any zero width elements at the head of the
+	 * concatenation since they are (zero replications). */
+      while (ivl_expr_width(ivl_expr_parm(expr, sub_idx)) == 0) {
+	    fprintf(vvp_out, "    %%pop/vec4 1; skip zero replication\n");
+	    sub_idx += 1;
+	    draw_eval_vec4(ivl_expr_parm(expr, sub_idx));
+      }
+      
+      for ( sub_idx += 1 ; sub_idx < num_sube ; sub_idx += 1) {
 	      /* Concatenate progressively lower parts. */
 	    ivl_expr_t sube = ivl_expr_parm(expr, sub_idx);
 
@@ -827,6 +834,12 @@ static void draw_concat_vec4(ivl_expr_t expr)
 	    }
 
 	    draw_eval_vec4(sube);
+	      /* Evaluate, but skip any zero width elements in the rest of the
+	       * concatenation since they are also (zero replications). */
+	    if (ivl_expr_width(sube) == 0) {
+		  fprintf(vvp_out, "    %%pop/vec4 1; skip zero replication\n");
+		  continue;
+	    }
 	    fprintf(vvp_out, "    %%concat/vec4; draw_concat_vec4\n");
       }
 
