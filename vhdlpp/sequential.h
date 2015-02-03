@@ -167,7 +167,7 @@ class CaseSeqStmt : public SequentialStmt {
     public:
       class CaseStmtAlternative : public LineInfo {
         public:
-            CaseStmtAlternative(Expression* exp, std::list<SequentialStmt*>* stmts);
+            CaseStmtAlternative(std::list<Expression*>*exp, std::list<SequentialStmt*>*stmts);
             ~CaseStmtAlternative();
             void dump(std::ostream& out, int indent) const;
 	    int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
@@ -177,7 +177,7 @@ class CaseSeqStmt : public SequentialStmt {
 	    void visit(SeqStmtVisitor& func);
 
         private:
-            Expression* exp_;
+            std::list<Expression*>*exp_;
 	    std::list<SequentialStmt*> stmts_;
         private: // not implemented
             CaseStmtAlternative(const CaseStmtAlternative&);

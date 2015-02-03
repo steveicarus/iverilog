@@ -62,8 +62,12 @@ int CaseSeqStmt::elaborate(Entity*ent, ScopeBase*scope)
 int CaseSeqStmt::CaseStmtAlternative::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
 {
       int errors = 0;
-      if (exp_)
-	    errors += exp_->elaborate_expr(ent, scope, ltype);
+      if (exp_) {
+            for (list<Expression*>::iterator it = exp_->begin(); it != exp_->end();
+                    ++it) {
+                errors += (*it)->elaborate_expr(ent, scope, ltype);
+            }
+      }
       return errors;
 }
 

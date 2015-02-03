@@ -146,7 +146,8 @@ void CaseSeqStmt::visit(SeqStmtVisitor& func)
     func(this);
 }
 
-CaseSeqStmt::CaseStmtAlternative::CaseStmtAlternative(Expression* exp, list<SequentialStmt*>* stmts)
+CaseSeqStmt::CaseStmtAlternative::CaseStmtAlternative(std::list<Expression*>*exp,
+        list<SequentialStmt*>*stmts)
 : exp_(exp)
 {
       if (stmts) stmts_.splice(stmts_.end(), *stmts);

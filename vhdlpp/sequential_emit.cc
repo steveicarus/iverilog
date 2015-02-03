@@ -271,12 +271,19 @@ int CaseSeqStmt::CaseStmtAlternative::emit(ostream&out, Entity*ent, ScopeBase*sc
 {
       int errors = 0;
 
+      bool first = true;
       if (exp_) {
-	    errors += exp_->emit(out, ent, scope);
-	    out << ":" << endl;
+            for (list<Expression*>::iterator it = exp_->begin(); it != exp_->end(); ++it) {
+		  if(first)
+		    first = false;
+		  else
+		    out << ",";
+		  errors += (*it)->emit(out, ent, scope);
+            }
       } else {
-	    out << "default:" << endl;
+		  out << "default";
       }
+      out << ":" << endl;
 
       SequentialStmt*curp;
 
@@ -306,7 +313,15 @@ void CaseSeqStmt::CaseStmtAlternative::write_to_stream(ostream&fd)
 {
       fd << "when ";
       if (exp_) {
-	    exp_->write_to_stream(fd);
+          bool first = true;
+	  for (list<Expression*>::iterator it = exp_->begin(); it != exp_->end(); ++it) {
+              if(first)
+                  first = false;
+              else
+                  fd << "|";
+
+              (*it)->write_to_stream(fd);
+	  }
       } else {
 	  fd << "others" << endl;
       }
