@@ -119,9 +119,9 @@ void ExpAttribute::write_to_stream(ostream&fd) const
 
 void ExpBitstring::write_to_stream(ostream&fd) const
 {
-      fd << "\"";
-      for(vector<char>::const_iterator it = value_.begin();
-        it != value_.end(); ++it) {
+      fd << "B\"";
+      for(vector<char>::const_reverse_iterator it = value_.rbegin();
+        it != value_.rend(); ++it) {
           fd << *it;
       }
       fd << "\"";
@@ -203,9 +203,37 @@ void ExpName::write_to_stream(ostream&fd) const
       }
 }
 
-void ExpRelation::write_to_stream(ostream&) const
+void ExpRelation::write_to_stream(ostream&fd) const
 {
-      ivl_assert(*this, !"Not supported");
+      peek_operand1()->write_to_stream(fd);
+
+      switch(fun_) {
+        case EQ:
+            fd << " = ";
+            break;
+
+        case LT:
+            fd << " < ";
+            break;
+
+        case GT:
+            fd << " > ";
+            break;
+
+        case NEQ:
+            fd << " != ";
+            break;
+
+        case LE:
+            fd << " <= ";
+            break;
+
+        case GE:
+            fd << " >= ";
+            break;
+      }
+
+      peek_operand2()->write_to_stream(fd);
 }
 
 void ExpString::write_to_stream(ostream&fd) const
