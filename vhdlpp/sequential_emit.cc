@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2015
+ * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,6 +37,13 @@ int SequentialStmt::emit(ostream&out, Entity*, ScopeBase*)
       return 1;
 }
 
+void SequentialStmt::write_to_stream(std::ostream&fd)
+{
+      fd << " // " << get_fileline() << ": internal error: "
+	  << "I don't know how to write_to_stream this sequential statement! "
+	  << "type=" << typeid(*this).name() << endl;
+}
+
 int IfSequential::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
@@ -67,6 +76,35 @@ int IfSequential::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
+void IfSequential::write_to_stream(std::ostream&fd)
+{
+      fd << "if ";
+      cond_->write_to_stream(fd);
+      fd << " then " << endl;
+
+      for (list<SequentialStmt*>::iterator cur = if_.begin()
+		 ; cur != if_.end() ; ++cur)
+	    (*cur)->write_to_stream(fd);
+
+      for (list<IfSequential::Elsif*>::iterator cur = elsif_.begin()
+		 ; cur != elsif_.end() ; ++cur) {
+	    fd << "elsif ";
+	    (*cur)->condition_write_to_stream(fd);
+	    fd << " " << endl;
+	    (*cur)->statement_write_to_stream(fd);
+      }
+
+      if (! else_.empty()) {
+	    fd << " else " << endl;
+
+	    for (list<SequentialStmt*>::iterator cur = else_.begin()
+		       ; cur != else_.end() ; ++cur)
+		  (*cur)->write_to_stream(fd);
+      }
+
+      fd << "end if;" << endl;
+}
+
 int IfSequential::Elsif::condition_emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       return cond_->emit(out, ent, scope);
@@ -83,6 +121,18 @@ int IfSequential::Elsif::statement_emit(ostream&out, Entity*ent, ScopeBase*scope
       return errors;
 }
 
+void IfSequential::Elsif::condition_write_to_stream(ostream&fd)
+{
+      cond_->write_to_stream(fd);
+}
+
+void IfSequential::Elsif::statement_write_to_stream(ostream&fd)
+{
+      for (list<SequentialStmt*>::iterator cur = if_.begin()
+		 ; cur != if_.end() ; ++cur)
+	    (*cur)->write_to_stream(fd);
+}
+
 int ReturnStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
@@ -90,6 +140,13 @@ int ReturnStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
       errors += val_->emit(out, ent, scope);
       out << ";" << endl;
       return errors;
+}
+
+void ReturnStmt::write_to_stream(ostream&fd)
+{
+      fd << "return ";
+      val_->write_to_stream(fd);
+      fd << ";" << endl;
 }
 
 int SignalSeqAssignment::emit(ostream&out, Entity*ent, ScopeBase*scope)
@@ -112,6 +169,21 @@ int SignalSeqAssignment::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
+void SignalSeqAssignment::write_to_stream(ostream&fd)
+{
+      lval_->write_to_stream(fd);
+
+      if (waveform_.size() != 1) {
+	    fd << "-- Confusing waveform?" << endl;
+
+      } else {
+	    Expression*tmp = waveform_.front();
+	    fd << " <= ";
+	    tmp->write_to_stream(fd);
+	    fd << ";" << endl;
+      }
+}
+
 int VariableSeqAssignment::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
@@ -123,6 +195,14 @@ int VariableSeqAssignment::emit(ostream&out, Entity*ent, ScopeBase*scope)
       out << ";" << endl;
 
       return errors;
+}
+
+void VariableSeqAssignment::write_to_stream(ostream&fd)
+{
+      lval_->write_to_stream(fd);
+      fd << " := ";
+      rval_->write_to_stream(fd);
+      fd << ";" << endl;
 }
 
 int ProcedureCall::emit(ostream&out, Entity*, ScopeBase*)
@@ -144,6 +224,15 @@ int LoopStatement::emit_substatements(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
+void LoopStatement::write_to_stream_substatements(ostream&fd)
+{
+      for (list<SequentialStmt*>::iterator cur = stmts_.begin()
+		 ; cur != stmts_.end() ; ++cur) {
+	    SequentialStmt*tmp = *cur;
+	    tmp->write_to_stream(fd);
+      }
+}
+
 int CaseSeqStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
@@ -161,6 +250,21 @@ int CaseSeqStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
       out << "endcase" << endl;
 
       return errors;
+}
+
+void CaseSeqStmt::write_to_stream(ostream&fd)
+{
+      fd << "case ";
+      cond_->write_to_stream(fd);
+      fd << " is" << endl;
+
+      for (list<CaseStmtAlternative*>::iterator cur = alt_.begin()
+		 ; cur != alt_.end() ; ++cur) {
+	    CaseStmtAlternative*curp = *cur;
+	    curp ->write_to_stream(fd);
+      }
+
+      fd << "end case;" << endl;
 }
 
 int CaseSeqStmt::CaseStmtAlternative::emit(ostream&out, Entity*ent, ScopeBase*scope)
@@ -196,6 +300,22 @@ int CaseSeqStmt::CaseStmtAlternative::emit(ostream&out, Entity*ent, ScopeBase*sc
       }
 
       return errors;
+}
+
+void CaseSeqStmt::CaseStmtAlternative::write_to_stream(ostream&fd)
+{
+      fd << "when ";
+      if (exp_) {
+	    exp_->write_to_stream(fd);
+      } else {
+	  fd << "others" << endl;
+      }
+      fd << "=>" << endl;
+
+      for (list<SequentialStmt*>::iterator cur = stmts_.begin()
+                  ; cur != stmts_.end() ; ++cur) {
+              (*cur)->write_to_stream(fd);
+      }
 }
 
 int ForLoopStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
@@ -238,7 +358,8 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
            } else {
                out << "begin /* Degenerate loop at " << get_fileline()
                    << ": " << start_val
-                   << " downto " << finish_val << " */ end" << endl;
+                   << " downto " << finish_val << " */ end" << endl
+                   << "end" << endl;
                return errors;
            }
         }
@@ -249,7 +370,8 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
            } else {
                out << "begin /* Degenerate loop at " << get_fileline()
                    << ": " << start_val
-                   << " to " << finish_val << " */ end" << endl;
+                   << " to " << finish_val << " */ end" << endl
+                   << "end" << endl;
                return errors;
            }
         }
@@ -279,6 +401,17 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
     return errors;
 }
 
+void ForLoopStatement::write_to_stream(ostream&fd)
+{
+    fd << "for " << it_ << " in ";
+    range_->expr_left()->write_to_stream(fd);
+    fd << " to ";
+    range_->expr_right()->write_to_stream(fd);
+    fd << " loop" << endl;
+    write_to_stream_substatements(fd);
+    fd << "end loop;" << endl;
+}
+
 int ForLoopStatement::emit_runtime_(ostream&out, Entity*ent, ScopeBase*scope)
 {
     int errors = 0;
@@ -302,20 +435,4 @@ int ForLoopStatement::emit_runtime_(ostream&out, Entity*ent, ScopeBase*scope)
     out << " ? 1 : -1))";
 
     return errors;
-}
-
-int WhileLoopStatement::emit(ostream&out, Entity*, ScopeBase*)
-{
-    out << " // " << get_fileline() << ": internal error: "
-    << "I don't know how to emit this sequential statement! "
-    << "type=" << typeid(*this).name() << endl;
-    return 1;
-}
-
-int BasicLoopStatement::emit(ostream&out, Entity*, ScopeBase*)
-{
-    out << " // " << get_fileline() << ": internal error: "
-    << "I don't know how to emit this sequential statement! "
-    << "type=" << typeid(*this).name() << endl;
-    return 1;
 }
