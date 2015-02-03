@@ -77,3 +77,10 @@ int Variable::emit(ostream&out, Entity*, ScopeBase*)
       out << ";" << endl;
       return errors;
 }
+
+void Variable::write_to_stream(std::ostream&fd)
+{
+      fd << "variable " << peek_name() << " : ";
+      peek_type()->write_to_stream(fd);
+      fd << ";" << endl;
+}

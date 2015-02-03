@@ -80,6 +80,7 @@ class Variable : public SigVarBase {
       Variable(perm_string name, const VType*type);
 
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      void write_to_stream(std::ostream&fd);
 };
 
 inline void SigVarBase::count_ref_sequ()
