@@ -2504,9 +2504,9 @@ K_postponed_opt    : K_postponed    | ;
 K_shared_opt       : K_shared       | ;
 %%
 
-static void yyerror(YYLTYPE*, yyscan_t, const char*, bool, const char* /*msg*/)
+static void yyerror(YYLTYPE*loc, yyscan_t, const char*, bool, const char*msg)
 {
-	//fprintf(stderr, "%s\n", msg);
+      fprintf(stderr, "%s:%u: %s\n", loc->text, loc->first_line, msg);
       parse_errors += 1;
 }
 
