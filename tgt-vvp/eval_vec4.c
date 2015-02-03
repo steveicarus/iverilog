@@ -808,22 +808,26 @@ static void draw_concat_vec4(ivl_expr_t expr)
 	   concatenation. */
       unsigned num_sube = ivl_expr_parms(expr);
       unsigned sub_idx = 0;
+      ivl_expr_t sube;
 
       assert(num_sube > 0);
 
 	/* Start with the most-significant bits. */
-      draw_eval_vec4(ivl_expr_parm(expr, sub_idx));
-	/* Evaluate, but skip any zero width elements at the head of the
-	 * concatenation since they are (zero replications). */
-      while (ivl_expr_width(ivl_expr_parm(expr, sub_idx)) == 0) {
+      sube = ivl_expr_parm(expr, sub_idx);
+      draw_eval_vec4(sube);
+	/* Evaluate, but skip any zero replication expressions at the
+	 * head of this concatenation. */
+      while ((ivl_expr_type(sube) == IVL_EX_CONCAT) &&
+             (ivl_expr_repeat(sube) == 0)) {
 	    fprintf(vvp_out, "    %%pop/vec4 1; skip zero replication\n");
 	    sub_idx += 1;
-	    draw_eval_vec4(ivl_expr_parm(expr, sub_idx));
+	    sube = ivl_expr_parm(expr, sub_idx);
+	    draw_eval_vec4(sube);
       }
 
       for ( sub_idx += 1 ; sub_idx < num_sube ; sub_idx += 1) {
 	      /* Concatenate progressively lower parts. */
-	    ivl_expr_t sube = ivl_expr_parm(expr, sub_idx);
+	    sube = ivl_expr_parm(expr, sub_idx);
 
 	      /* Special case: The next expression is a NUMBER that
 		 can be concatenated using %concati/vec4
@@ -834,9 +838,10 @@ static void draw_concat_vec4(ivl_expr_t expr)
 	    }
 
 	    draw_eval_vec4(sube);
-	      /* Evaluate, but skip any zero width elements in the rest of the
-	       * concatenation since they are also (zero replications). */
-	    if (ivl_expr_width(sube) == 0) {
+	      /* Evaluate, but skip any zero replication expressions in the
+	       * rest of this concatenation. */
+	    if ((ivl_expr_type(sube) == IVL_EX_CONCAT) &&
+	        (ivl_expr_repeat(sube) == 0)) {
 		  fprintf(vvp_out, "    %%pop/vec4 1; skip zero replication\n");
 		  continue;
 	    }
