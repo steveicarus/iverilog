@@ -24,7 +24,7 @@
 
 using namespace std;
 
-void ExpAggregate::write_to_stream(ostream&fd)
+void ExpAggregate::write_to_stream(ostream&fd) const
 {
       fd << "(";
       for (vector<element_t*>::const_iterator cur = elements_.begin()
@@ -73,7 +73,7 @@ void ExpAggregate::choice_t::write_to_stream(ostream&fd)
       fd << "/* ERROR */";
 }
 
-void ExpArithmetic::write_to_stream(ostream&out)
+void ExpArithmetic::write_to_stream(ostream&out) const
 {
       out << "(";
       write_to_stream_operand1(out);
@@ -111,13 +111,13 @@ void ExpArithmetic::write_to_stream(ostream&out)
       out << ")";
 }
 
-void ExpAttribute::write_to_stream(ostream&fd)
+void ExpAttribute::write_to_stream(ostream&fd) const
 {
       base_->write_to_stream(fd);
       fd << "'" << name_;
 }
 
-void ExpBitstring::write_to_stream(ostream&fd)
+void ExpBitstring::write_to_stream(ostream&fd) const
 {
       fd << "\"";
       for(vector<char>::const_iterator it = value_.begin();
@@ -127,7 +127,7 @@ void ExpBitstring::write_to_stream(ostream&fd)
       fd << "\"";
 }
 
-void ExpCharacter::write_to_stream(ostream&fd)
+void ExpCharacter::write_to_stream(ostream&fd) const
 {
       char buf[4];
       buf[0] = '\'';
@@ -137,7 +137,7 @@ void ExpCharacter::write_to_stream(ostream&fd)
       fd << buf;
 }
 
-void ExpConcat::write_to_stream(ostream&fd)
+void ExpConcat::write_to_stream(ostream&fd) const
 {
       fd << "(";
       operand1_->write_to_stream(fd);
@@ -146,21 +146,21 @@ void ExpConcat::write_to_stream(ostream&fd)
       fd << ")";
 }
 
-void ExpConditional::write_to_stream(ostream&)
+void ExpConditional::write_to_stream(ostream&) const
 {
       ivl_assert(*this, !"Not supported");
 }
 
-void ExpEdge::write_to_stream(ostream&)
+void ExpEdge::write_to_stream(ostream&) const
 {
       ivl_assert(*this, !"Not supported");
 }
 
-void ExpFunc::write_to_stream(ostream&fd)
+void ExpFunc::write_to_stream(ostream&fd) const
 {
       const char*comma = "";
       fd << name_ << "(";
-      for (vector<Expression*>::iterator cur = argv_.begin()
+      for (vector<Expression*>::const_iterator cur = argv_.begin()
 		 ; cur != argv_.end() ; ++cur) {
 	    fd << comma;
 	    (*cur)->write_to_stream(fd);
@@ -169,22 +169,22 @@ void ExpFunc::write_to_stream(ostream&fd)
       fd << ")";
 }
 
-void ExpInteger::write_to_stream(ostream&fd)
+void ExpInteger::write_to_stream(ostream&fd) const
 {
       fd << value_;
 }
 
-void ExpReal::write_to_stream(ostream&fd)
+void ExpReal::write_to_stream(ostream&fd) const
 {
       fd << value_;
 }
 
-void ExpLogical::write_to_stream(ostream&)
+void ExpLogical::write_to_stream(ostream&) const
 {
       ivl_assert(*this, !"Not supported");
 }
 
-void ExpName::write_to_stream(ostream&fd)
+void ExpName::write_to_stream(ostream&fd) const
 {
       if (prefix_.get()) {
 	    prefix_->write_to_stream(fd);
@@ -203,12 +203,12 @@ void ExpName::write_to_stream(ostream&fd)
       }
 }
 
-void ExpRelation::write_to_stream(ostream&)
+void ExpRelation::write_to_stream(ostream&) const
 {
       ivl_assert(*this, !"Not supported");
 }
 
-void ExpString::write_to_stream(ostream&fd)
+void ExpString::write_to_stream(ostream&fd) const
 {
     fd << "\"";
     for(vector<char>::const_iterator it = value_.begin();
@@ -218,19 +218,19 @@ void ExpString::write_to_stream(ostream&fd)
     fd << "\"";
 }
 
-void ExpUAbs::write_to_stream(ostream&fd)
+void ExpUAbs::write_to_stream(ostream&fd) const
 {
       fd << "abs ";
       write_to_stream_operand1(fd);
 }
 
-void ExpUNot::write_to_stream(ostream&fd)
+void ExpUNot::write_to_stream(ostream&fd) const
 {
       fd << "not ";
       write_to_stream_operand1(fd);
 }
 
-void ExpCast::write_to_stream(ostream&fd)
+void ExpCast::write_to_stream(ostream&fd) const
 {
       // Type casting is introduced only for a few specific cases in
       // SystemVerilog, so no need to use it here
