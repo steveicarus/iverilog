@@ -61,6 +61,7 @@ class Subprogram : public LineInfo, public ScopeBase {
       int emit_package(std::ostream&fd) const;
 
       void write_to_stream(std::ostream&fd) const;
+      void write_to_stream_body(std::ostream&fd) const;
       void dump(std::ostream&fd) const;
 
 	// Creates a new instance of the function that takes arguments of

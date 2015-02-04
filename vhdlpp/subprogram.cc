@@ -308,3 +308,39 @@ void Subprogram::write_to_stream(ostream&fd) const
       return_type_->write_to_stream(fd);
       fd << ";" << endl;
 }
+
+void Subprogram::write_to_stream_body(ostream&fd) const
+{
+      fd << "function " << name_ << "(";
+      if (ports_ && ! ports_->empty()) {
+	    list<InterfacePort*>::const_iterator cur = ports_->begin();
+	    InterfacePort*curp = *cur;
+	    fd << curp->name << " : ";
+	    curp->type->write_to_stream(fd);
+	    for (++cur ; cur != ports_->end() ; ++cur) {
+		  curp = *cur;
+		  fd << "; " << curp->name << " : ";
+		  curp->type->write_to_stream(fd);
+	    }
+      }
+      fd << ") return ";
+      return_type_->write_to_stream(fd);
+      fd << " is" << endl;
+
+      for (map<perm_string,Variable*>::const_iterator cur = new_variables_.begin()
+         ; cur != new_variables_.end() ; ++cur) {
+            cur->second->write_to_stream(fd);
+      }
+
+      fd << "begin" << endl;
+
+      if (statements_) {
+            for (list<SequentialStmt*>::const_iterator cur = statements_->begin()
+                       ; cur != statements_->end() ; ++cur) {
+                  (*cur)->write_to_stream(fd);
+            }
+      } else {
+	    fd << "--empty body" << endl;
+      }
+	    fd << "end function;" << endl;
+}
