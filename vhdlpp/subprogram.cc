@@ -50,82 +50,17 @@ void Subprogram::set_program_body(list<SequentialStmt*>*stmt)
 {
       ivl_assert(*this, statements_==0);
       statements_ = stmt;
-      fix_port_types();
 }
 
-// Functor used to add type casting to each return statement.
-struct cast_return_type : public SeqStmtVisitor {
-    cast_return_type(const VType*ret_type) : ret_(ret_type) {}
+bool Subprogram::unbounded() const {
+    if(return_type_->is_unbounded())
+       return true;
 
-    void operator() (SequentialStmt*s)
-    {
-        ReturnStmt*ret;
-        if((ret = dynamic_cast<ReturnStmt*>(s))) {
-            ret->cast_to(ret_);
-        }
-    }
-
-private:
-    const VType*ret_;
-};
-
-void Subprogram::fix_port_types()
-{
-	// Check function parameters for unbounded vectors and possibly fix it.
-
-	// Try to settle at a fixed width return type.
-      if(fixed_return_type())
-          return;
-
-	// Check if the returned type is an unbounded vector.
-      if(check_unb_vector(return_type_)) {
-          if(!statements_)
-              return;
-
-          // Go through the statement list and add type casting to return
-          // statements to comply with the modified return type.
-          for (std::list<SequentialStmt*>::iterator s = statements_->begin()
-                ; s != statements_->end(); ++s) {
-              cast_return_type r(return_type_);
-              (*s)->visit(r);
-          }
-      }
-}
-
-void Subprogram::fix_variables() {
-    for(std::map<perm_string, Variable*>::iterator it = new_variables_.begin(); it != new_variables_.end(); ++it) {
-        Variable*var = it->second;
-        const VType*type = var->peek_type();
-
-        if(type->is_variable_length(this)) {
-            const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
-
-            // Currently we handle only one dimensional variables
-            assert(arr->dimensions() == 1);
-
-            // Now substitute the variable type
-            VTypeArray*new_array = static_cast<VTypeArray*>(arr->clone());
-            new_array->evaluate_ranges(this);
-            it->second = new Variable(var->peek_name(), new_array);
-            delete var;
-        }
-    }
-}
-
-VTypeArray*Subprogram::fix_logic_darray(const VTypeArray*type)
-{
-    Expression*zero = new ExpInteger(0);
-    std::vector<VTypeArray::range_t> sub_range;
-    sub_range.push_back(VTypeArray::range_t(zero, zero));
-    return new VTypeArray(type, sub_range);
-}
-
-bool Subprogram::check_unb_vector(const VType*&type)
-{
-    if(const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type)) {
-        if(arr->dimensions() == 1 && arr->dimension(0).is_box() ) {
-            type = get_global_typedef(fix_logic_darray(arr));
-            return true;
+    if(ports_) {
+        for(std::list<InterfacePort*>::const_iterator it = ports_->begin();
+                it != ports_->end(); ++it) {
+            if((*it)->type->is_unbounded())
+                return true;
         }
     }
 
@@ -218,6 +153,7 @@ Subprogram*Subprogram::make_instance(std::vector<Expression*> arguments, ScopeBa
 
     instance->set_parent(scope);
     instance->set_program_body(statements_);
+    instance->fix_return_type();
     scope->bind_subprogram(new_name, instance);
 
     return instance;
@@ -263,10 +199,10 @@ private:
     const VType*ret_type_;
 };
 
-bool Subprogram::fixed_return_type(void)
+void Subprogram::fix_return_type()
 {
     if(!statements_)
-        return false;
+        return;
 
     check_return_type r(this);
 
@@ -284,9 +220,6 @@ bool Subprogram::fixed_return_type(void)
                 arr->evaluate_ranges(this);
         }
         return_type_ = return_type;
-        return true;
-    } else {
-        return false;
     }
 }
 

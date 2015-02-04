@@ -130,4 +130,11 @@ void Package::write_to_stream(ostream&fd) const
       }
 
       fd << "end package " << name_ << ";" << endl;
+
+      fd << "package body " << name_ << " is" << endl;
+        for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
+		 ; cur != cur_subprograms_.end() ; ++cur) {
+	    cur->second->write_to_stream_body(fd);
+        }
+      fd << "end " << name_ << ";" << endl;
 }

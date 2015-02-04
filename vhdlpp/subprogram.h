@@ -70,34 +70,14 @@ class Subprogram : public LineInfo, public ScopeBase {
 	// for limited length logic vector.
       Subprogram*make_instance(std::vector<Expression*> arguments, ScopeBase*scope);
 
+	// Checks if either return type or parameters are unbounded vectors.
+      bool unbounded() const;
+
     private:
 	// Tries to set the return type to a fixed type. VHDL functions that
 	// return std_logic_vectors do not specify its length, as SystemVerilog
 	// demands.
-	// The function goes through the function body looking for return
-	// statments and probes the returned type. If it is the same for every
-	// statemnt then we can assume that the function returns vector of a
-	// fixed size.
-      bool fixed_return_type();
-
-	// Iterates through the list of function ports to fix all quirks related
-	// to translation between VHDL and SystemVerilog.
-      void fix_port_types();
-
-	// SystemVerilog does not allow to have signals/variables which size is
-	// evaluated at runtime. This function finds such variables and modifies
-	// their type to dynamic array and adds appropriate 'new' statement in
-	// the program body.
-      void fix_variables();
-
-	// For the time being, dynamic arrays work exclusively with vectors.
-	// To emulate dynamic array of 'logic'/'bit' type, we need to create a vector
-	// of width == 1, to be used as the array element type.
-	// Effectively 'logic name []' becomes 'logic [0:0] name []'.
-      VTypeArray*fix_logic_darray(const VTypeArray*type);
-
-	// Creates a typedef for an unbounded vector and updates the given type.
-      bool check_unb_vector(const VType*&type);
+      void fix_return_type();
 
       perm_string name_;
       const ScopeBase*parent_;
