@@ -23,6 +23,7 @@
 # include  <map>
 # include  <typeinfo>
 # include  <cassert>
+# include  <algorithm>
 
 using namespace std;
 
@@ -249,6 +250,11 @@ void VTypeEnum::show(ostream&out) const
       for (size_t idx = 1 ; idx < names_.size() ; idx += 1)
 	    out << ", " << names_[idx];
       out << ")";
+}
+
+bool VTypeEnum::has_name(perm_string name) const
+{
+      return std::find(names_.begin(), names_.end(), name) != names_.end();
 }
 
 VTypeRecord::VTypeRecord(std::list<element_t*>*elements)

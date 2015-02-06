@@ -295,6 +295,9 @@ class VTypeEnum : public VType {
       void show(std::ostream&) const;
       int emit_def(std::ostream&out, perm_string name) const;
 
+	// Checks if the name is stored in the enum.
+      bool has_name(perm_string name) const;
+
     private:
       std::vector<perm_string>names_;
 };

@@ -906,6 +906,10 @@ const VType* ExpName::probe_type(Entity*ent, ScopeBase*scope) const
         if (arc && (gtype = arc->probe_genvar_type(name_))) {
                 return gtype;
         }
+
+        if (scope->is_enum_name(name_)) {
+            return &primitive_INTEGER;
+        }
       }
 
       cerr << get_fileline() << ": error: Signal/variable " << name_

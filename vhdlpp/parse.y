@@ -2393,6 +2393,9 @@ type_declaration
 		    tmp->set_definition($4);
 		    active_scope->incomplete_types.erase(cur);
 	      }
+	      if(const VTypeEnum*enum_type = dynamic_cast<const VTypeEnum*>($4)) {
+		    active_scope->use_enum(enum_type);
+	      }
 	}
 	delete[]$2;
       }
