@@ -314,7 +314,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 
 %type <arch_statement> concurrent_statement component_instantiation_statement
 %type <arch_statement> concurrent_conditional_signal_assignment
-%type <arch_statement> concurrent_signal_assignment_statement
+%type <arch_statement> concurrent_signal_assignment_statement concurrent_simple_signal_assignment
 %type <arch_statement> for_generate_statement generate_statement if_generate_statement
 %type <arch_statement> process_statement
 %type <arch_statement_list> architecture_statement_part generate_statement_body
@@ -348,14 +348,14 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 
 %type <text> architecture_body_start package_declaration_start
 %type <text> package_body_start
-%type <text> identifier_opt identifier_colon_opt logical_name suffix
+%type <text> identifier_opt identifier_colon_opt logical_name suffix instantiated_unit
 %type <name_list> logical_name_list identifier_list
 %type <name_list> enumeration_literal_list enumeration_literal
 
 %type <sequ_list> if_statement_else sequence_of_statements subprogram_statement_part
-%type <sequ> sequential_statement if_statement signal_assignment_statement
+%type <sequ> sequential_statement if_statement signal_assignment signal_assignment_statement
 %type <sequ> case_statement procedure_call procedure_call_statement
-%type <sequ> loop_statement variable_assignment_statement
+%type <sequ> loop_statement variable_assignment variable_assignment_statement
 %type <sequ> return_statement
 
 %type <range> range
@@ -677,22 +677,27 @@ component_declaration
       }
   ;
 
+instantiated_unit
+  : IDENTIFIER
+  | K_component IDENTIFIER { $$ = $2; }
+  ;
+
 component_instantiation_statement
-  : IDENTIFIER ':' K_component_opt IDENTIFIER generic_map_aspect_opt port_map_aspect_opt ';'
+  : IDENTIFIER ':' instantiated_unit generic_map_aspect_opt port_map_aspect_opt ';'
       { perm_string iname = lex_strings.make($1);
-	perm_string cname = lex_strings.make($4);
-	ComponentInstantiation*tmp = new ComponentInstantiation(iname, cname, $5, $6);
+	perm_string cname = lex_strings.make($3);
+	ComponentInstantiation*tmp = new ComponentInstantiation(iname, cname, $4, $5);
+	delete $4;
 	delete $5;
-	delete $6;
 	FILE_NAME(tmp, @1);
 	delete[]$1;
-	delete[]$4;
+	delete[]$3;
 	$$ = tmp;
       }
-  | IDENTIFIER ':' K_component_opt IDENTIFIER error ';'
+  | IDENTIFIER ':' instantiated_unit error ';'
       { errormsg(@4, "Errors in component instantiation.\n");
 	delete[]$1;
-	delete[]$4;
+	delete[]$3;
 	$$ = 0;
       }
   ;
@@ -725,7 +730,6 @@ composite_type_definition
   | record_type_definition
       { $$ = $1; }
   ;
-
 
   /* The when...else..when...else syntax is not a general expression
      in VHDL but a specific sort of assignment statement model. We
@@ -763,6 +767,17 @@ concurrent_conditional_signal_assignment /* IEEE 1076-2008 P11.6 */
       }
   ;
 
+concurrent_simple_signal_assignment
+  : name LEQ waveform ';'
+      { ExpName*name = dynamic_cast<ExpName*> ($1);
+	assert(name);
+	SignalAssignment*tmp = new SignalAssignment(name, *$3);
+	FILE_NAME(tmp, @1);
+
+	$$ = tmp;
+	delete $3;
+      }
+
 else_when_waveforms
   : else_when_waveforms else_when_waveform
       { list<ExpConditional::else_t*>*tmp = $1;
@@ -790,17 +805,13 @@ else_when_waveform
   ;
 
 concurrent_signal_assignment_statement /* IEEE 1076-2008 P11.6 */
-  : name LEQ waveform ';'
-      { ExpName*name = dynamic_cast<ExpName*> ($1);
-	assert(name);
-	SignalAssignment*tmp = new SignalAssignment(name, *$3);
-	FILE_NAME(tmp, @1);
+  : concurrent_simple_signal_assignment
 
-	$$ = tmp;
-	delete $3;
-      }
+  | IDENTIFIER ':' concurrent_simple_signal_assignment { $$ = $3; }
 
   | concurrent_conditional_signal_assignment
+
+  | IDENTIFIER ':' concurrent_conditional_signal_assignment { $$ = $3; }
 
   | name LEQ error ';'
       { errormsg(@2, "Syntax error in signal assignment waveform.\n");
@@ -2206,7 +2217,7 @@ simple_expression_terms
       }
   ;
 
-signal_assignment_statement
+signal_assignment
   : name LEQ waveform ';'
       { SignalSeqAssignment*tmp = new SignalSeqAssignment($1, $3);
 	FILE_NAME(tmp, @1);
@@ -2220,6 +2231,10 @@ signal_assignment_statement
 	$$ = tmp;
       }
   ;
+
+signal_assignment_statement
+  : signal_assignment
+  | IDENTIFIER ':' signal_assignment { $$ = $3; }
 
 subprogram_body_start
   : subprogram_specification K_is
@@ -2452,6 +2467,10 @@ use_clauses_opt
   ;
 
 variable_assignment_statement /* IEEE 1076-2008 P10.6.1 */
+  : variable_assignment
+  | IDENTIFIER ':' variable_assignment { $$ = $3; }
+
+variable_assignment
   : name VASSIGN expression ';'
       { VariableSeqAssignment*tmp = new VariableSeqAssignment($1, $3);
 	FILE_NAME(tmp, @1);
@@ -2518,7 +2537,6 @@ waveform_element
   /* Some keywords are optional in some contexts. In all such cases, a
      similar rule is used, as described here. */
 K_architecture_opt : K_architecture | ;
-K_component_opt    : K_component    | ;
 K_configuration_opt: K_configuration| ;
 K_entity_opt       : K_entity       | ;
 K_is_opt           : K_is           | ;
