@@ -216,3 +216,37 @@ bool ExpName::evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const
 
       return evaluate(scope, val);
 }
+
+bool ExpShift::evaluate(ScopeBase*scope, int64_t&val) const
+{
+      int64_t val1, val2;
+      bool rc;
+
+      rc = eval_operand1(scope, val1);
+      if (rc == false)
+	    return false;
+
+      rc = eval_operand2(scope, val2);
+      if (rc == false)
+	    return false;
+
+      switch (shift_) {
+	  case SRL:
+	    val = (uint64_t)val1 >> (uint64_t)val2;
+	    break;
+	  case SLL:
+	    val = (uint64_t)val1 << (uint64_t)val2;
+	    break;
+	  case SRA:
+	    val = (int64_t)val1 >> (int64_t)val2;
+	    break;
+	  case SLA:
+	    val = (int64_t)val1 << (int64_t)val2;
+	    break;
+	  case ROR:
+	  case ROL:
+	    return false;
+      }
+
+      return true;
+}

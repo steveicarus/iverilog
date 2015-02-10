@@ -2139,7 +2139,41 @@ sequential_statement
       }
   ;
 
-shift_expression : simple_expression { $$ = $1; } ;
+shift_expression
+  : simple_expression
+  | simple_expression K_srl simple_expression
+      { ExpShift*tmp = new ExpShift(ExpShift::SRL, $1, $3);
+        FILE_NAME(tmp, @2);
+        $$ = tmp;
+      }
+  | simple_expression K_sll simple_expression
+      { ExpShift*tmp = new ExpShift(ExpShift::SLL, $1, $3);
+        FILE_NAME(tmp, @2);
+        $$ = tmp;
+      }
+  | simple_expression K_sra simple_expression
+      { ExpShift*tmp = new ExpShift(ExpShift::SRA, $1, $3);
+        FILE_NAME(tmp, @2);
+        $$ = tmp;
+      }
+  | simple_expression K_sla simple_expression
+      { ExpShift*tmp = new ExpShift(ExpShift::SLA, $1, $3);
+        FILE_NAME(tmp, @2);
+        $$ = tmp;
+      }
+  | simple_expression K_ror simple_expression
+      { sorrymsg(@2, "ROR is not supported.\n");
+        ExpShift*tmp = new ExpShift(ExpShift::ROR, $1, $3);
+        FILE_NAME(tmp, @2);
+        $$ = tmp;
+      }
+  | simple_expression K_rol simple_expression
+      { sorrymsg(@2, "ROL is not supported.\n");
+        ExpShift*tmp = new ExpShift(ExpShift::ROL, $1, $3);
+        FILE_NAME(tmp, @2);
+        $$ = tmp;
+      }
+  ;
 
 sign
   : '+'

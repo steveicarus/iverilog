@@ -692,6 +692,27 @@ class ExpRelation : public ExpBinary {
       fun_t fun_;
 };
 
+class ExpShift : public ExpBinary {
+    public:
+      enum shift_t { SRL, SLL, SRA, SLA, ROL, ROR };
+
+    public:
+      ExpShift(ExpShift::shift_t op, Expression*op1, Expression*op2);
+
+      Expression*clone() const {
+          return new ExpShift(shift_, peek_operand1()->clone(), peek_operand2()->clone());
+      }
+
+      int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
+      void write_to_stream(std::ostream&fd) const;
+      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
+      void dump(ostream&out, int indent = 0) const;
+
+    private:
+      shift_t shift_;
+};
+
 class ExpString : public Expression {
 
     public:

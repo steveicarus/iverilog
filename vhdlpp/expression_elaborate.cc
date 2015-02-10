@@ -961,6 +961,19 @@ int ExpRelation::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
       return errors;
 }
 
+int ExpShift::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
+{
+      int errors = 0;
+
+      if (ltype == 0) {
+	    ltype = probe_type(ent, scope);
+      }
+
+      ivl_assert(*this, ltype != 0);
+      errors += elaborate_exprs(ent, scope, ltype);
+      return errors;
+}
+
 /*
  * When a string appears in a concatenation, then the type of the
  * string is an array with the same element type of the concatenation,

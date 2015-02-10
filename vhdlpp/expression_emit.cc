@@ -766,6 +766,36 @@ int ExpRelation::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
+int ExpShift::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+      int errors = 0;
+
+      errors += emit_operand1(out, ent, scope);
+
+      switch (shift_) {
+	  case SRL:
+	    out << " >> ";
+	    break;
+	  case SLL:
+	    out << " << ";
+	    break;
+	  case SRA:
+	    out << " >>> ";
+	    break;
+	  case SLA:
+	    out << " <<< ";
+	    break;
+	  case ROR:
+	  case ROL:
+	    out << " /* ?ror/rol? */ ";
+	    break;
+      }
+
+      errors += emit_operand2(out, ent, scope);
+
+      return errors;
+}
+
 bool ExpString::is_primary(void) const
 {
       return true;
