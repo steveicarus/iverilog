@@ -98,9 +98,8 @@ int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
 	      // exists in the component declaration
 	    const InterfacePort*iparm = base->find_generic(cur->first);
 	    if (iparm == 0) {
-		  cerr << get_fileline() << ": error: No generic " << cur->first
+		  cerr << get_fileline() << ": warning: No generic " << cur->first
 		       << " in component " << cname_ << "." << endl;
-		  errors += 1;
 		  continue;
 	    }
 
