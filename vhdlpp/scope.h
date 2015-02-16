@@ -53,7 +53,7 @@ class ScopeBase {
       virtual ~ScopeBase() =0;
 
       const VType* find_type(perm_string by_name);
-      bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp);
+      bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp) const;
       Signal* find_signal(perm_string by_name) const;
       Variable* find_variable(perm_string by_name) const;
       virtual const InterfacePort* find_param(perm_string by_name) const;

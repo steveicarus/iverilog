@@ -104,7 +104,7 @@ const VType*ScopeBase::find_type(perm_string by_name)
 	    return cur->second;
 }
 
-bool ScopeBase::find_constant(perm_string by_name, const VType*&typ, Expression*&exp)
+bool ScopeBase::find_constant(perm_string by_name, const VType*&typ, Expression*&exp) const
 {
       map<perm_string,struct const_t*>::const_iterator cur = cur_constants_.find(by_name);
       if (cur == cur_constants_.end()) {
@@ -279,6 +279,11 @@ bool ActiveScope::is_vector_name(perm_string name) const
       if (find_signal(name))
 	    return true;
       if (find_variable(name))
+	    return true;
+
+      const VType*dummy_type;
+      Expression*dummy_exp;
+      if (find_constant(name, dummy_type, dummy_exp))
 	    return true;
 
       if (context_entity_ && context_entity_->find_port(name))
