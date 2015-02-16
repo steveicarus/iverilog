@@ -417,10 +417,13 @@ bool is_global_type(perm_string name)
       if (name == "integer") return true;
       if (name == "real") return true;
       if (name == "std_logic") return true;
+      if (name == "std_logic_vector") return true;
       if (name == "character") return true;
       if (name == "bit_vector") return true;
       if (name == "string") return true;
       if (name == "natural") return true;
+      if (name == "signed") return true;
+      if (name == "unsigned") return true;
       return false;
 }
 
