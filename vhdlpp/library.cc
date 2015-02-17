@@ -387,11 +387,10 @@ static void import_std_use(const YYLTYPE&loc, ActiveScope*/*res*/, perm_string p
 const VTypePrimitive primitive_BOOLEAN(VTypePrimitive::BOOLEAN, true);
 const VTypePrimitive primitive_BIT(VTypePrimitive::BIT, true);
 const VTypePrimitive primitive_INTEGER(VTypePrimitive::INTEGER);
+const VTypePrimitive primitive_NATURAL(VTypePrimitive::NATURAL);
 const VTypePrimitive primitive_REAL(VTypePrimitive::REAL);
 const VTypePrimitive primitive_STDLOGIC(VTypePrimitive::STDLOGIC, true);
 const VTypePrimitive primitive_CHARACTER(VTypePrimitive::CHARACTER);
-
-const VTypeRange primitive_NATURAL(&primitive_INTEGER, INT64_MAX, 0);
 
 static const VTypeArray primitive_BIT_VECTOR(&primitive_BIT,      vector<VTypeArray::range_t> (1));
 static const VTypeArray primitive_BOOL_VECTOR(&primitive_BOOLEAN, vector<VTypeArray::range_t> (1));

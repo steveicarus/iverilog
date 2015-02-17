@@ -570,7 +570,7 @@ const VType* ExpAttribute::probe_type(Entity*ent, ScopeBase*scope) const
       base_->probe_type(ent, scope);
 
       if (name_ == "length" || name_ == "left" || name_ == "right") {
-	    return &primitive_INTEGER;
+	    return &primitive_NATURAL;
       }
 
       return 0;

@@ -140,6 +140,9 @@ void VTypePrimitive::write_to_stream(ostream&fd) const
 	  case INTEGER:
 	    fd << "integer";
 	    break;
+	  case NATURAL:
+	    fd << "natural";
+	    break;
 	  case REAL:
 	    fd << "real";
 	    break;

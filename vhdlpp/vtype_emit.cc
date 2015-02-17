@@ -154,6 +154,9 @@ int VTypePrimitive::emit_primitive_type(ostream&out) const
 	  case STDLOGIC:
 	    out << "logic";
 	    break;
+	  case NATURAL:
+	    out << "int unsigned";
+	    break;
 	  case INTEGER:
 	    out << "int";
 	    break;

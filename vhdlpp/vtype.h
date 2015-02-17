@@ -151,7 +151,7 @@ class VTypeERROR : public VType {
 class VTypePrimitive : public VType {
 
     public:
-      enum type_t { BOOLEAN, BIT, INTEGER, REAL, STDLOGIC, CHARACTER };
+      enum type_t { BOOLEAN, BIT, INTEGER, NATURAL, REAL, STDLOGIC, CHARACTER };
 
     public:
       VTypePrimitive(type_t tt, bool packed = false);
@@ -177,6 +177,7 @@ class VTypePrimitive : public VType {
 extern const VTypePrimitive primitive_BOOLEAN;
 extern const VTypePrimitive primitive_BIT;
 extern const VTypePrimitive primitive_INTEGER;
+extern const VTypePrimitive primitive_NATURAL;
 extern const VTypePrimitive primitive_REAL;
 extern const VTypePrimitive primitive_STDLOGIC;
 extern const VTypePrimitive primitive_CHARACTER;
