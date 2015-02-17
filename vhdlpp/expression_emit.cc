@@ -552,7 +552,12 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      if (name_ == "unsigned" && argv_.size()==1) {
+      // SystemVerilog takes care of signs, depending on the lvalue
+      if (name_ == "to_integer" && argv_.size()==1) {
+	    errors += argv_[0]->emit(out, ent, scope);
+      }
+
+      else if (name_ == "unsigned" && argv_.size()==1) {
 	      // Handle the special case that this is a cast to
 	      // unsigned. This function is brought in as part of the
 	      // std numeric library, but we interpret it as the same
