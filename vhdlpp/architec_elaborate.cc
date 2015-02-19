@@ -369,7 +369,7 @@ int SignalAssignment::elaborate(Entity*ent, Architecture*arc)
 
       for (list<Expression*>::iterator cur = rval_.begin()
 		 ; cur != rval_.end() ; ++cur) {
-	    (*cur)->elaborate_expr(ent, arc, lval_type);
+	    errors += (*cur)->elaborate_expr(ent, arc, lval_type);
       }
 
       return errors;
