@@ -106,6 +106,9 @@ const VType*ScopeBase::find_type(perm_string by_name)
 
 bool ScopeBase::find_constant(perm_string by_name, const VType*&typ, Expression*&exp) const
 {
+      typ = NULL;
+      exp = NULL;
+
       map<perm_string,struct const_t*>::const_iterator cur = cur_constants_.find(by_name);
       if (cur == cur_constants_.end()) {
         cur = use_constants_.find(by_name);
@@ -121,6 +124,8 @@ bool ScopeBase::find_constant(perm_string by_name, const VType*&typ, Expression*
         exp = cur->second->val;
         return true;
       }
+
+      return false;
 }
 
 Signal* ScopeBase::find_signal(perm_string by_name) const
