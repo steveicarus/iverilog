@@ -175,9 +175,22 @@ NetAssign_*PEIdent::scan_lname_for_nested_members_(Design*des, NetScope*scope,
 	    return tmp;
       }
 
-      if (reg->struct_type()) {
+      if (reg->struct_type() && reg->struct_type()->packed()) {
+	    NetAssign_*tmp = new NetAssign_(reg);
+	    elaborate_lval_net_packed_member_(des, scope, tmp, tail);
+	    return tmp;
+      }
+#if 0
+      if (reg->struct_type() && reg->struct_type()->packed()) {
 	    cerr << get_fileline() << ": sorry: "
-		 << "I don't know what to do with struct " << use_path
+		 << "I don't know what to do with packed struct " << use_path
+		 << " with member " << tail << "." << endl;
+	    return 0;
+      }
+#endif
+      if (reg->struct_type() && !reg->struct_type()->packed()) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "I don't know what to do with unpacked struct " << use_path
 		 << " with member " << tail << "." << endl;
 	    return 0;
       }
@@ -317,7 +330,8 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
       if (reg->struct_type() && !method_name.nil()) {
 	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_packed_member_(des, use_scope, lv, method_name);
+	    name_component_t tmp_name (method_name);
+	    elaborate_lval_net_packed_member_(des, use_scope, lv, tmp_name);
 	    return lv;
       }
 
@@ -1118,8 +1132,9 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 
 bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 						NetAssign_*lv,
-						const perm_string&member_name) const
+						const name_component_t&member_comp) const
 {
+      const perm_string&member_name = member_comp.name;
       NetNet*reg = lv->sig();
       ivl_assert(*this, reg);
 
