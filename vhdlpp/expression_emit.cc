@@ -715,6 +715,9 @@ int ExpName::emit(ostream&out, Entity*ent, ScopeBase*scope)
 	    errors += prefix_->emit_as_prefix_(out, ent, scope);
       }
 
+      if(index_ && emit_const_array_workaround_(out, ent, scope))
+          return errors;
+
       const GenerateStatement*gs = 0;
       Architecture*arc = dynamic_cast<Architecture*>(scope);
       if (arc && (gs = arc->probe_genvar_emit(name_)))
@@ -734,6 +737,62 @@ int ExpName::emit(ostream&out, Entity*ent, ScopeBase*scope)
       }
 
       return errors;
+}
+
+bool ExpName::emit_const_array_workaround_(ostream&out, Entity*ent, ScopeBase*scope) const
+{
+    const VType*type = NULL;
+    Expression*exp = NULL;
+
+    if(!scope)
+        return false;
+
+    if(!scope->find_constant(name_, type, exp))
+        return false;
+
+    const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
+    ivl_assert(*this, arr);    // if there is an index, it should be an array, right?
+
+    const VType*element = arr->element_type();
+    const VTypeArray*arr_element = dynamic_cast<const VTypeArray*>(element);
+    if(!arr_element) {
+        // index adjustments are not necessary, it is not an array of vectors
+        return false;
+    }
+
+    ivl_assert(*this, arr_element->dimensions() == 1);
+    if(arr_element->dimensions() != 1) {
+        cerr << get_fileline() << ": Sorry, only one-dimensional constant arrays are handled." << endl;
+        return false;
+    }
+
+    int64_t start_val;
+    bool start_rc = arr_element->dimension(0).msb()->evaluate(ent, scope, start_val);
+
+    int64_t finish_val;
+    bool finish_rc = arr_element->dimension(0).lsb()->evaluate(ent, scope, finish_val);
+
+    if(!start_rc || !finish_rc) {
+        cerr << get_fileline() << ": Could not evaluate the word size." << endl;
+        return false;
+    }
+
+    int word_size = abs(start_val - finish_val) + 1;
+    if(start_val > finish_val)
+        swap(start_val, finish_val);
+
+    out << "{";
+    for(int i = finish_val; i >= start_val; --i) {
+        if(i != finish_val)
+            out << ",";
+
+        out << "\\" << name_ << " [" << word_size << "*";
+        index_->emit(out, ent, scope);
+        out << "+" << i << "]";
+    }
+    out << "}";
+
+    return true;
 }
 
 bool ExpName::is_primary(void) const

@@ -649,6 +649,12 @@ class ExpName : public Expression {
 
       int emit_as_prefix_(ostream&out, Entity*ent, ScopeBase*scope);
 
+	// Constant arrays of vectors are flattened into a single localparam,
+	// therefore indices of such localparam point to a bit, not a word.
+	// The following workaround expands expressions to a concatenation of
+	// bits making the requested word.
+      bool emit_const_array_workaround_(ostream&out, Entity*ent, ScopeBase*scope) const;
+
     private:
       std::auto_ptr<ExpName> prefix_;
       perm_string name_;
