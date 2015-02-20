@@ -105,6 +105,7 @@ static const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_n
 
 	    VTypeArray*subtype = new VTypeArray(element, range,
                                                 base_array->signed_vector());
+	    subtype->set_parent_type(base_array);
 	    return subtype;
       }
 

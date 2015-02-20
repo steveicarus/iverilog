@@ -444,11 +444,33 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    fprintf(vvp_out, "    %%cvt/vr %u;\n", wid);
 
       } else if (ivl_expr_value(rval) == IVL_VT_STRING) {
-	    /* Special case: vector to string casting */
+	    /* Special case: string to vector casting */
 	    ivl_lval_t lval = ivl_stmt_lval(net, 0);
 	    fprintf(vvp_out, "    %%vpi_call %u %u \"$ivl_string_method$to_vec\", v%p_0, v%p_0 {0 0 0};\n",
 		ivl_file_table_index(ivl_stmt_file(net)), ivl_stmt_lineno(net),
 		ivl_expr_signal(rval), ivl_lval_sig(lval));
+	    if (slices) free(slices);
+            return 0;
+
+      } else if (ivl_expr_value(rval) == IVL_VT_DARRAY) {
+	    /* Special case: dynamic array to vector casting */
+	    ivl_lval_t lval = ivl_stmt_lval(net, 0);
+            void*rval_addr = NULL;
+
+            /* Even more special case: function call returning dynamic array */
+            if(ivl_expr_type(rval) == IVL_EX_UFUNC) {
+                rval_addr = ivl_scope_port(ivl_expr_def(rval), 0);
+                draw_ufunc_object(rval);
+                /* We do not need to store the result, it is going to be
+                   converted to vector quite soon. */
+                fprintf(vvp_out, "    %%pop/obj 1, 0; drop the result\n");
+            } else {
+                rval_addr = ivl_expr_signal(rval);
+            }
+
+	    fprintf(vvp_out, "    %%vpi_call %u %u \"$ivl_darray_method$to_vec\", v%p_0, v%p_0 {0 0 0};\n",
+		ivl_file_table_index(ivl_stmt_file(net)), ivl_stmt_lineno(net),
+		rval_addr, ivl_lval_sig(lval));
 	    if (slices) free(slices);
             return 0;
 

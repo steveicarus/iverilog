@@ -33,7 +33,7 @@
 
 using namespace std;
 
-int Expression::emit(ostream&out, Entity*, Architecture*)
+int Expression::emit(ostream&out, Entity*, ScopeBase*)
 {
       out << " /* " << get_fileline() << ": internal error: "
 	  << "I don't know how to emit this expression! "
@@ -54,34 +54,34 @@ bool Expression::is_primary(void) const
       return false;
 }
 
-int ExpBinary::emit_operand1(ostream&out, Entity*ent, Architecture*arc)
+int ExpBinary::emit_operand1(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       bool oper_primary = operand1_->is_primary();
       if (! oper_primary) out << "(";
-      errors += operand1_->emit(out, ent, arc);
+      errors += operand1_->emit(out, ent, scope);
       if (! oper_primary) out << ")";
       return errors;
 }
 
-int ExpBinary::emit_operand2(ostream&out, Entity*ent, Architecture*arc)
+int ExpBinary::emit_operand2(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       bool oper_primary = operand2_->is_primary();
       if (! oper_primary) out << "(";
-      errors += operand2_->emit(out, ent, arc);
+      errors += operand2_->emit(out, ent, scope);
       if (! oper_primary) out << ")";
       return errors;
 }
 
-int ExpUnary::emit_operand1(ostream&out, Entity*ent, Architecture*arc)
+int ExpUnary::emit_operand1(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
-      errors += operand1_->emit(out, ent, arc);
+      errors += operand1_->emit(out, ent, scope);
       return errors;
 }
 
-int ExpAggregate::emit(ostream&out, Entity*ent, Architecture*arc)
+int ExpAggregate::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       if (peek_type() == 0) {
 	    out << "/* " << get_fileline() << ": internal error: "
@@ -95,9 +95,9 @@ int ExpAggregate::emit(ostream&out, Entity*ent, Architecture*arc)
       }
 
       if (const VTypeArray*atype = dynamic_cast<const VTypeArray*> (use_type))
-	    return emit_array_(out, ent, arc, atype);
+	    return emit_array_(out, ent, scope, atype);
       else if (const VTypeRecord*arecord = dynamic_cast<const VTypeRecord*> (use_type))
-	    return emit_record_(out, ent, arc, arecord);
+	    return emit_record_(out, ent, scope, arecord);
 
       out << "/* " << get_fileline() << ": internal error: "
 	  << "I don't know how to elab/emit aggregate in " << typeid(use_type).name()
@@ -105,7 +105,7 @@ int ExpAggregate::emit(ostream&out, Entity*ent, Architecture*arc)
       return 1;
 }
 
-int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const VTypeArray*atype)
+int ExpAggregate::emit_array_(ostream&out, Entity*ent, ScopeBase*scope, const VTypeArray*atype)
 {
       int errors = 0;
 
@@ -119,14 +119,14 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 	    int64_t use_msb;
 	    int64_t use_lsb;
 	    bool rc_msb, rc_lsb;
-	    rc_msb = rang.msb()->evaluate(ent, arc, use_msb);
-	    rc_lsb = rang.lsb()->evaluate(ent, arc, use_lsb);
+	    rc_msb = rang.msb()->evaluate(ent, scope, use_msb);
+	    rc_lsb = rang.lsb()->evaluate(ent, scope, use_lsb);
 
 	    if (rc_msb && rc_lsb) {
 		  int asize = (use_msb >= use_lsb) ? (use_msb - use_lsb) + 1 :
 		                                     (use_lsb - use_msb) + 1;
 		  out << "{" << asize << "{";
-		  errors += aggregate_[0].expr->emit(out, ent, arc);
+		  errors += aggregate_[0].expr->emit(out, ent, scope);
 		  out << "}}";
 	    } else {
 		  out << "{(";
@@ -134,7 +134,7 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 			out << use_msb;
 		  } else {
 			out << "(";
-			errors += rang.msb()->emit(out, ent, arc);
+			errors += rang.msb()->emit(out, ent, scope);
 			out << ")";
 		  }
 		  if (rc_lsb && use_lsb==0) {
@@ -142,11 +142,11 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 			out << "-" << use_lsb;
 		  } else {
 			out << "-(";
-			errors += rang.lsb()->emit(out, ent, arc);
+			errors += rang.lsb()->emit(out, ent, scope);
 			out << ")";
 		  }
 		  out << "+1){";
-		  errors += aggregate_[0].expr->emit(out, ent, arc);
+		  errors += aggregate_[0].expr->emit(out, ent, scope);
 		  out << "}}";
 	    }
 	    return errors;
@@ -158,9 +158,9 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 	// Fully calculate the range numbers.
       int64_t use_msb, use_lsb;
       bool rc;
-      rc = rang.msb()->evaluate(ent, arc, use_msb);
+      rc = rang.msb()->evaluate(ent, scope, use_msb);
       ivl_assert(*this, rc);
-      rc = rang.lsb()->evaluate(ent, arc, use_lsb);
+      rc = rang.lsb()->evaluate(ent, scope, use_lsb);
       ivl_assert(*this, rc);
       if(use_msb < use_lsb)
         swap(use_msb, use_lsb);
@@ -198,14 +198,14 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 	    if (prange_t*range = aggregate_[idx].choice->range_expressions()) {
 		  int64_t begin_val, end_val;
 
-		  if (! range->msb()->evaluate(ent, arc, begin_val)) {
+		  if (! range->msb()->evaluate(ent, scope, begin_val)) {
 			cerr << range->msb()->get_fileline() << ": error: "
 			     << "Unable to evaluate aggregate choice expression." << endl;
 			errors += 1;
 			continue;
 		  }
 
-		  if (! range->lsb()->evaluate(ent, arc, end_val)) {
+		  if (! range->lsb()->evaluate(ent, scope, end_val)) {
 			cerr << range->msb()->get_fileline() << ": error: "
 			     << "Unable to evaluate aggregate choice expression." << endl;
 			errors += 1;
@@ -235,7 +235,7 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 	      // elements so disable further positional
 	      // processing.
 	    positional_section = false;
-	    if (! tmp->evaluate(ent, arc, tmp_val)) {
+	    if (! tmp->evaluate(ent, scope, tmp_val)) {
 		  cerr << tmp->get_fileline() << ": error: "
 		       << "Unable to evaluate aggregate choice expression." << endl;
 		  errors += 1;
@@ -266,7 +266,7 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 		       << "Missing element " << idx << "." << endl;
 		  errors += 1;
 	    } else {
-		  errors += cur->expr->emit(out, ent, arc);
+		  errors += cur->expr->emit(out, ent, scope);
 	    }
       }
       out << "}";
@@ -274,7 +274,7 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
       return errors;
 }
 
-int ExpAggregate::emit_record_(ostream&out, Entity*ent, Architecture*arc, const VTypeRecord*)
+int ExpAggregate::emit_record_(ostream&out, Entity*ent, ScopeBase*scope, const VTypeRecord*)
 {
       int errors = 0;
 
@@ -292,9 +292,9 @@ int ExpAggregate::emit_record_(ostream&out, Entity*ent, Architecture*arc, const 
 	    if(idx != 0)
 	        out << ",";
 
-	    //errors += name->emit(out, ent, arc);
+	    //errors += name->emit(out, ent, scope);
 	    //out << ": ";
-	    errors += val->emit(out, ent, arc);
+	    errors += val->emit(out, ent, scope);
       }
 
       out << "}";
@@ -302,13 +302,13 @@ int ExpAggregate::emit_record_(ostream&out, Entity*ent, Architecture*arc, const 
       return errors;
 }
 
-int ExpAttribute::emit(ostream&out, Entity*ent, Architecture*arc)
+int ExpAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
       if (name_ == "event") {
 	    out << "$ivlh_attribute_event(";
-	    errors += base_->emit(out, ent, arc);
+	    errors += base_->emit(out, ent, scope);
 	    out << ")";
 	    return errors;
       }
@@ -319,27 +319,27 @@ int ExpAttribute::emit(ostream&out, Entity*ent, Architecture*arc)
 	   expression doesn't even need to be evaluated.) */
       if (name_=="length") {
 	    out << "$bits(";
-	    errors += base_->emit(out, ent, arc);
+	    errors += base_->emit(out, ent, scope);
 	    out << ")";
 	    return errors;
       } else if (name_=="left" || name_=="right") {
 	    out << "$" << name_ << "(";
-	    errors += base_->emit(out, ent, arc);
+	    errors += base_->emit(out, ent, scope);
 	    out << ")";
 	    return errors;
       }
 
       out << "$ivl_attribute(";
-      errors += base_->emit(out, ent, arc);
+      errors += base_->emit(out, ent, scope);
       out << ", \"" << name_ << "\")";
       return errors;
 }
 
-int ExpArithmetic::emit(ostream&out, Entity*ent, Architecture*arc)
+int ExpArithmetic::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      errors += emit_operand1(out, ent, arc);
+      errors += emit_operand1(out, ent, scope);
 
       switch (fun_) {
 	  case PLUS:
@@ -369,12 +369,12 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, Architecture*arc)
 	    break;
       }
 
-      errors += emit_operand2(out, ent, arc);
+      errors += emit_operand2(out, ent, scope);
 
       return errors;
 }
 
-int ExpBitstring::emit(ostream&out, Entity*, Architecture*)
+int ExpBitstring::emit(ostream&out, Entity*, ScopeBase*)
 {
       int errors = 0;
 
@@ -385,7 +385,7 @@ int ExpBitstring::emit(ostream&out, Entity*, Architecture*)
       return errors;
 }
 
-int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*, Architecture*,
+int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*, ScopeBase*,
 				      const VTypePrimitive*etype)
 {
       switch (etype->type()) {
@@ -407,17 +407,17 @@ int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*, Architecture*,
       return 1;
 }
 
-int ExpCharacter::emit(ostream&out, Entity*ent, Architecture*arc)
+int ExpCharacter::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       const VType*etype = peek_type();
 
       if (const VTypePrimitive*use_type = dynamic_cast<const VTypePrimitive*>(etype)) {
-	    return emit_primitive_bit_(out, ent, arc, use_type);
+	    return emit_primitive_bit_(out, ent, scope, use_type);
       }
 
       if (const VTypeArray*array = dynamic_cast<const VTypeArray*>(etype)) {
 	    if (const VTypePrimitive*use_type = dynamic_cast<const VTypePrimitive*>(array->element_type())) {
-		  return emit_primitive_bit_(out, ent, arc, use_type);
+		  return emit_primitive_bit_(out, ent, scope, use_type);
 	    }
       }
 
@@ -439,22 +439,22 @@ bool ExpConcat::is_primary(void) const
       return true;
 }
 
-int ExpConcat::emit(ostream&out, Entity*ent, Architecture*arc)
+int ExpConcat::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       out << "{";
-      errors += operand1_->emit(out, ent, arc);
+      errors += operand1_->emit(out, ent, scope);
       out << ", ";
-      errors += operand2_->emit(out, ent, arc);
+      errors += operand2_->emit(out, ent, scope);
       out << "}";
       return errors;
 }
 
-int ExpConditional::emit(ostream&out, Entity*ent, Architecture*arc)
+int ExpConditional::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       out << "(";
-      errors += cond_->emit(out, ent, arc);
+      errors += cond_->emit(out, ent, scope);
       out << ")? (";
 
       if (true_clause_.size() > 1) {
@@ -463,7 +463,7 @@ int ExpConditional::emit(ostream&out, Entity*ent, Architecture*arc)
       }
 
       Expression*tmp = true_clause_.front();
-      errors += tmp->emit(out, ent, arc);
+      errors += tmp->emit(out, ent, scope);
 
       out << ") : (";
 
@@ -475,11 +475,11 @@ int ExpConditional::emit(ostream&out, Entity*ent, Architecture*arc)
 
 	    for (list<else_t*>::iterator cur = else_clause_.begin()
 		       ; cur != last ; ++cur) {
-		  errors += (*cur) ->emit_when_else(out, ent, arc);
+		  errors += (*cur) ->emit_when_else(out, ent, scope);
 	    }
      }
 
-      errors += else_clause_.back()->emit_else(out, ent, arc);
+      errors += else_clause_.back()->emit_else(out, ent, scope);
       out << ")";
 
 	// The emit_when_else() functions do not close the last
@@ -492,13 +492,13 @@ int ExpConditional::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
-int ExpConditional::else_t::emit_when_else(ostream&out, Entity*ent, Architecture*arc)
+int ExpConditional::else_t::emit_when_else(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       assert(cond_ != 0);
 
       out << "(";
-      errors += cond_->emit(out, ent, arc);
+      errors += cond_->emit(out, ent, scope);
       out << ")? (";
 
       if (true_clause_.size() > 1) {
@@ -507,14 +507,14 @@ int ExpConditional::else_t::emit_when_else(ostream&out, Entity*ent, Architecture
       }
 
       Expression*tmp = true_clause_.front();
-      errors += tmp->emit(out, ent, arc);
+      errors += tmp->emit(out, ent, scope);
 
       out << ") : (";
 
       return errors;
 }
 
-int ExpConditional::else_t::emit_else(ostream&out, Entity*ent, Architecture*arc)
+int ExpConditional::else_t::emit_else(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 	// Trailing else must have no condition.
@@ -526,12 +526,12 @@ int ExpConditional::else_t::emit_else(ostream&out, Entity*ent, Architecture*arc)
       }
 
       Expression*tmp = true_clause_.front();
-      errors += tmp->emit(out, ent, arc);
+      errors += tmp->emit(out, ent, scope);
 
       return errors;
 }
 
-int ExpEdge::emit(ostream&out, Entity*ent, Architecture*arc)
+int ExpEdge::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       switch (fun_) {
@@ -544,11 +544,11 @@ int ExpEdge::emit(ostream&out, Entity*ent, Architecture*arc)
 	  case ANYEDGE:
 	    break;
       }
-      errors += emit_operand1(out, ent, arc);
+      errors += emit_operand1(out, ent, scope);
       return errors;
 }
 
-int ExpFunc::emit(ostream&out, Entity*ent, Architecture*arc)
+int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
@@ -558,46 +558,46 @@ int ExpFunc::emit(ostream&out, Entity*ent, Architecture*arc)
 	      // std numeric library, but we interpret it as the same
 	      // as the $unsigned function.
 	    out << "$unsigned(";
-	    errors += argv_[0]->emit(out, ent, arc);
+	    errors += argv_[0]->emit(out, ent, scope);
 	    out << ")";
 
       } else if (name_ == "integer" && argv_.size() == 1) {
-            // Simply skip the function name, SystemVerilog takes care of
-            // rounding real numbers
-	    errors += argv_[0]->emit(out, ent, arc);
+	    out << "$signed(";
+	    errors += argv_[0]->emit(out, ent, scope);
+	    out << ")";
 
       } else if (name_ == "std_logic_vector" && argv_.size() == 1) {
 	      // Special case: The std_logic_vector function casts its
 	      // argument to std_logic_vector. Internally, we don't
 	      // have to do anything for that to work.
 	    out << "(";
-	    errors += argv_[0]->emit(out, ent, arc);
+	    errors += argv_[0]->emit(out, ent, scope);
 	    out << ")";
 
       } else if (name_ == "to_unsigned" && argv_.size() == 2) {
 
 	    out << "$ivlh_to_unsigned(";
-	    errors += argv_[0]->emit(out, ent, arc);
+	    errors += argv_[0]->emit(out, ent, scope);
 	    out << ", ";
-	    errors += argv_[1]->emit(out, ent, arc);
+	    errors += argv_[1]->emit(out, ent, scope);
 	    out << ")";
 
       } else if (name_ == "conv_std_logic_vector" && argv_.size() == 2) {
 	    int64_t use_size;
-	    bool rc = argv_[1]->evaluate(ent, arc, use_size);
+	    bool rc = argv_[1]->evaluate(ent, scope, use_size);
 	    ivl_assert(*this, rc);
 	    out << use_size << "'(";
-	    errors += argv_[0]->emit(out, ent, arc);
+	    errors += argv_[0]->emit(out, ent, scope);
 	    out << ")";
 
       } else if (name_ == "rising_edge" && argv_.size()==1) {
 	    out << "$ivlh_rising_edge(";
-	    errors += argv_[0]->emit(out, ent, arc);
+	    errors += argv_[0]->emit(out, ent, scope);
 	    out << ")";
 
       } else if (name_ == "falling_edge" && argv_.size()==1) {
 	    out << "$ivlh_falling_edge(";
-	    errors += argv_[0]->emit(out, ent, arc);
+	    errors += argv_[0]->emit(out, ent, scope);
 	    out << ")";
 
       } else {
@@ -615,7 +615,7 @@ int ExpFunc::emit(ostream&out, Entity*ent, Architecture*arc)
 	    out << "\\" << name_ << " (";
 	    for (size_t idx = 0; idx < argv_.size() ; idx += 1) {
 		  if (idx > 0) out << ", ";
-		  errors += argv_[idx]->emit(out, ent, arc);
+		  errors += argv_[idx]->emit(out, ent, scope);
 	    }
 	    out << ")";
       }
@@ -623,7 +623,7 @@ int ExpFunc::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
-int ExpInteger::emit(ostream&out, Entity*, Architecture*)
+int ExpInteger::emit(ostream&out, Entity*, ScopeBase*)
 {
       out << value_;
       return 0;
@@ -635,12 +635,7 @@ int ExpInteger::emit_package(ostream&out)
       return 0;
 }
 
-bool ExpInteger::is_primary(void) const
-{
-      return true;
-}
-
-int ExpReal::emit(ostream&out, Entity*, Architecture*)
+int ExpReal::emit(ostream&out, Entity*, ScopeBase*)
 {
       out << value_;
       return 0;
@@ -657,11 +652,11 @@ bool ExpReal::is_primary(void) const
       return true;
 }
 
-int ExpLogical::emit(ostream&out, Entity*ent, Architecture*arc)
+int ExpLogical::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      errors += emit_operand1(out, ent, arc);
+      errors += emit_operand1(out, ent, scope);
 
       switch (fun_) {
 	  case AND:
@@ -684,22 +679,22 @@ int ExpLogical::emit(ostream&out, Entity*ent, Architecture*arc)
 	    break;
       }
 
-      errors += emit_operand2(out, ent, arc);
+      errors += emit_operand2(out, ent, scope);
 
       return errors;
 }
 
-int ExpName::emit_as_prefix_(ostream&out, Entity*ent, Architecture*arc)
+int ExpName::emit_as_prefix_(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       if (prefix_.get()) {
-	    errors += prefix_->emit_as_prefix_(out, ent, arc);
+	    errors += prefix_->emit_as_prefix_(out, ent, scope);
       }
 
       out << "\\" << name_ << " ";
       if (index_) {
 	    out << "[";
-	    errors += index_->emit(out, ent, arc);
+	    errors += index_->emit(out, ent, scope);
 	    out << "]";
 	    ivl_assert(*this, lsb_ == 0);
       }
@@ -707,27 +702,28 @@ int ExpName::emit_as_prefix_(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
-int ExpName::emit(ostream&out, Entity*ent, Architecture*arc)
+int ExpName::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
       if (prefix_.get()) {
-	    errors += prefix_->emit_as_prefix_(out, ent, arc);
+	    errors += prefix_->emit_as_prefix_(out, ent, scope);
       }
 
       const GenerateStatement*gs = 0;
+      Architecture*arc = dynamic_cast<Architecture*>(scope);
       if (arc && (gs = arc->probe_genvar_emit(name_)))
-	    out << "\\" << gs->get_name() << ":" << name_ << " ";
+            out << "\\" << gs->get_name() << ":" << name_ << " ";
       else
 	    out << "\\" << name_ << " ";
 
       if (index_) {
 	    out << "[";
-	    errors += index_->emit(out, ent, arc);
+	    errors += index_->emit(out, ent, scope);
 
 	    if (lsb_) {
 		  out << ":";
-		  errors += lsb_->emit(out, ent, arc);
+		  errors += lsb_->emit(out, ent, scope);
 	    }
 	    out << "]";
       }
@@ -740,10 +736,10 @@ bool ExpName::is_primary(void) const
       return true;
 }
 
-int ExpRelation::emit(ostream&out, Entity*ent, Architecture*arc)
+int ExpRelation::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
-      errors += emit_operand1(out, ent, arc);
+      errors += emit_operand1(out, ent, scope);
 
       switch (fun_) {
 	  case EQ:
@@ -766,7 +762,7 @@ int ExpRelation::emit(ostream&out, Entity*ent, Architecture*arc)
 	    break;
       }
 
-      errors += emit_operand2(out, ent, arc);
+      errors += emit_operand2(out, ent, scope);
       return errors;
 }
 
@@ -775,13 +771,13 @@ bool ExpString::is_primary(void) const
       return true;
 }
 
-int ExpString::emit(ostream& out, Entity*ent, Architecture*arc)
+int ExpString::emit(ostream& out, Entity*ent, ScopeBase*scope)
 {
       const VType*type = peek_type();
       assert(type != 0);
 
       if (const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type)) {
-	    return emit_as_array_(out, ent, arc, arr);
+	    return emit_as_array_(out, ent, scope, arr);
       }
 
       out << "\"";
@@ -792,7 +788,7 @@ int ExpString::emit(ostream& out, Entity*ent, Architecture*arc)
       return 0;
 }
 
-int ExpString::emit_as_array_(ostream& out, Entity*, Architecture*, const VTypeArray*arr)
+int ExpString::emit_as_array_(ostream& out, Entity*, ScopeBase*, const VTypeArray*arr)
 {
       int errors = 0;
       assert(arr->dimensions() == 1);
@@ -843,20 +839,39 @@ int ExpString::emit_as_array_(ostream& out, Entity*, Architecture*, const VTypeA
       return errors;
 }
 
-int ExpUAbs::emit(ostream&out, Entity*ent, Architecture*arc)
+int ExpUAbs::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       out << "abs(";
-      errors += emit_operand1(out, ent, arc);
+      errors += emit_operand1(out, ent, scope);
       out << ")";
       return errors;
 }
 
-int ExpUNot::emit(ostream&out, Entity*ent, Architecture*arc)
+int ExpUNot::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       out << "~(";
-      errors += emit_operand1(out, ent, arc);
+      errors += emit_operand1(out, ent, scope);
       out << ")";
+      return errors;
+}
+
+int ExpCast::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+      int errors = 0;
+      errors += type_->emit_def(out, empty_perm_string);
+      out << "'(";
+      errors += base_->emit(out, ent, scope);
+      out << ")";
+      return errors;
+}
+
+int ExpNew::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+      int errors = 0;
+      out << "new[";
+      errors += size_->emit(out, ent, scope);
+      out << "]";
       return errors;
 }

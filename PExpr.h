@@ -1000,6 +1000,9 @@ class PECastType  : public PExpr {
       void dump(ostream &out) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     ivl_type_t type, unsigned flags) const;
+
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     unsigned expr_wid, unsigned flags) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,

@@ -105,7 +105,9 @@ void CaseSeqStmt::CaseStmtAlternative::dump(ostream& out, int indent) const
 
       out << setw(indent) << "" << "when ";
       if (exp_)
-	    exp_->dump(out, 0);
+	    for (list<Expression*>::iterator it = exp_->begin(); it != exp_->end(); ++it) {
+	        (*it)->dump(out, 0);
+	    }
       else
 	    out << "others" << endl;
 

@@ -430,13 +430,10 @@ void library_set_work_path(const char*path)
       library_work_path = path;
 }
 
+list<const Package*> work_packages;
 static void store_package_in_work(const Package*pack)
 {
-      string path = make_work_package_path(pack->name());
-
-      ofstream file (path.c_str(), ios_base::out);
-
-      pack->write_to_stream(file);
+      work_packages.push_back(pack);
 }
 
 static int emit_packages(perm_string, const map<perm_string,Package*>&packages)
@@ -445,6 +442,13 @@ static int emit_packages(perm_string, const map<perm_string,Package*>&packages)
       for (map<perm_string,Package*>::const_iterator cur = packages.begin()
 		 ; cur != packages.end() ; ++cur) {
 	    errors += cur->second->emit_package(cout);
+      }
+
+      for (list<const Package*>::const_iterator cur = work_packages.begin()
+		 ; cur != work_packages.end(); ++cur) {
+	    string path = make_work_package_path((*cur)->name());
+	    ofstream file (path.c_str(), ios_base::out);
+	    (*cur)->write_to_stream(file);
       }
 
       return errors;

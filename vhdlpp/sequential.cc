@@ -19,6 +19,15 @@
 
 # include  "sequential.h"
 # include  "expression.h"
+# include  <cassert>
+
+template<typename T>
+inline static void visit_stmt_list(std::list<T*>& stmts, SeqStmtVisitor& func)
+{
+    for(typename std::list<T*>::iterator it = stmts.begin(); it != stmts.end(); ++it) {
+        (*it)->visit(func);
+    }
+}
 
 SequentialStmt::SequentialStmt()
 {
@@ -75,6 +84,14 @@ void IfSequential::extract_false(std::list<SequentialStmt*>&that)
       }
 }
 
+void IfSequential::visit(SeqStmtVisitor& func)
+{
+    visit_stmt_list(if_, func);
+    visit_stmt_list(elsif_, func);
+    visit_stmt_list(else_, func);
+    func(this);
+}
+
 IfSequential::Elsif::Elsif(Expression*cond, std::list<SequentialStmt*>*tr)
 : cond_(cond)
 {
@@ -89,6 +106,11 @@ IfSequential::Elsif::~Elsif()
 	    if_.pop_front();
 	    delete cur;
       }
+}
+
+void IfSequential::Elsif::visit(SeqStmtVisitor& func)
+{
+    visit_stmt_list(if_, func);
 }
 
 SignalSeqAssignment::SignalSeqAssignment(Expression*sig, std::list<Expression*>*wav)
@@ -118,7 +140,14 @@ CaseSeqStmt::~CaseSeqStmt()
       }
 }
 
-CaseSeqStmt::CaseStmtAlternative::CaseStmtAlternative(Expression* exp, list<SequentialStmt*>* stmts)
+void CaseSeqStmt::visit(SeqStmtVisitor& func)
+{
+    visit_stmt_list(alt_, func);
+    func(this);
+}
+
+CaseSeqStmt::CaseStmtAlternative::CaseStmtAlternative(std::list<Expression*>*exp,
+        list<SequentialStmt*>*stmts)
 : exp_(exp)
 {
       if (stmts) stmts_.splice(stmts_.end(), *stmts);
@@ -132,6 +161,11 @@ CaseSeqStmt::CaseStmtAlternative::~CaseStmtAlternative()
 	    stmts_.pop_front();
 	    delete cur;
       }
+}
+
+void CaseSeqStmt::CaseStmtAlternative::visit(SeqStmtVisitor& func)
+{
+    visit_stmt_list(stmts_, func);
 }
 
 ProcedureCall::ProcedureCall(perm_string name)
@@ -163,6 +197,12 @@ ReturnStmt::~ReturnStmt()
       delete val_;
 }
 
+void ReturnStmt::cast_to(const VType*type)
+{
+    assert(val_);
+    val_ = new ExpCast(val_, type);
+}
+
 LoopStatement::LoopStatement(perm_string name, list<SequentialStmt*>* stmts)
 : name_(name)
 {
@@ -176,6 +216,12 @@ LoopStatement::~LoopStatement()
         stmts_.pop_front();
         delete cur;
     }
+}
+
+void LoopStatement::visit(SeqStmtVisitor& func)
+{
+    visit_stmt_list(stmts_, func);
+    func(this);
 }
 
 ForLoopStatement::ForLoopStatement(perm_string scope_name, perm_string it, prange_t* range, list<SequentialStmt*>* stmts)

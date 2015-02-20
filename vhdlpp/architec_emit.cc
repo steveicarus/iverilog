@@ -103,7 +103,9 @@ int Architecture::emit(ostream&out, Entity*entity)
 
       for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++ cur) {
-	    errors += cur->second->emit_package(out);
+	    // Do not emit unbounded functions, we will just need fixed instances later
+	    if(!cur->second->unbounded())
+                errors += cur->second->emit_package(out);
       }
 
       for (list<Architecture::Statement*>::iterator cur = statements_.begin()

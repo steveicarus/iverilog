@@ -56,10 +56,18 @@ class ScopeBase {
       bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp);
       Signal* find_signal(perm_string by_name) const;
       Variable* find_variable(perm_string by_name) const;
+      virtual const InterfacePort* find_param(perm_string by_name) const;
       Subprogram* find_subprogram(perm_string by_name) const;
 	// Moves all signals, variables and components from another scope to
 	// this one. After the transfer new_* maps are emptied in the another scope.
       void transfer_from(ScopeBase&ref);
+
+      inline void bind_subprogram(perm_string name, Subprogram*obj)
+      { map<perm_string, Subprogram*>::iterator it;
+        if((it = use_subprograms_.find(name)) != use_subprograms_.end() )
+            use_subprograms_.erase(it);
+        cur_subprograms_[name] = obj;
+      }
 
     protected:
       void cleanup();

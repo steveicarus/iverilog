@@ -30,10 +30,12 @@
 # include  "StringHeap.h"
 
 class Architecture;
+class ScopeBase;
 class Entity;
 class Expression;
 class prange_t;
 class VTypeDef;
+class ScopeBase;
 
 typedef enum typedef_topo_e { NONE=0, PENDING, MARKED } typedef_topo_t;
 typedef std::map<const VTypeDef*, typedef_topo_t> typedef_context_t;
@@ -49,9 +51,11 @@ class VType {
       VType() { }
       virtual ~VType() =0;
 
+      virtual VType*clone() const =0;
+
 	// This is rarely used, but some types may have expressions
 	// that need to be elaborated.
-      virtual int elaborate(Entity*end, Architecture*arc) const;
+      virtual int elaborate(Entity*end, ScopeBase*scope) const;
 
 	// This virtual method returns true if that is equivalent to
 	// this type. This method is used for example to compare
@@ -84,6 +88,17 @@ class VType {
 
 	// Determines if a type can be used in Verilog packed array.
       virtual bool can_be_packed() const { return false; }
+
+	// Returns true if the type has an undefined dimension.
+      virtual bool is_unbounded() const { return false; }
+
+	// Checks if the variable length is dependent on other expressions, that
+	// cannot be evaluated (e.g. 'length, 'left, 'right).
+      virtual bool is_variable_length(ScopeBase*) const { return false; }
+
+	// Returns a perm_string that can be used in automatically created
+	// typedefs (i.e. not ones defined by the user).
+      perm_string get_generic_typename() const;
 
     private:
       friend struct decl_t;
@@ -123,6 +138,8 @@ extern void preload_global_types(void);
  * This type is a placeholder for ERROR types.
  */
 class VTypeERROR : public VType {
+    VType*clone() const { return NULL; }
+
     public:
       int emit_def(std::ostream&out, perm_string name) const;
 };
@@ -139,6 +156,8 @@ class VTypePrimitive : public VType {
     public:
       VTypePrimitive(type_t tt, bool packed = false);
       ~VTypePrimitive();
+
+      VType*clone() const { return new VTypePrimitive(*this); }
 
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
@@ -176,6 +195,8 @@ class VTypeArray : public VType {
 	    range_t(Expression*m = NULL, Expression*l = NULL, bool dir = true) :
                 msb_(m), lsb_(l), direction_(dir) { }
 
+	    range_t*clone() const;
+
 	    inline bool is_box() const { return msb_==0 && lsb_==0; }
 	    inline bool is_downto() const { return direction_; }
 
@@ -193,7 +214,9 @@ class VTypeArray : public VType {
       VTypeArray(const VType*etype, std::list<prange_t*>*r, bool signed_vector =false);
       ~VTypeArray();
 
-      int elaborate(Entity*ent, Architecture*arc) const;
+      VType*clone() const;
+
+      int elaborate(Entity*ent, ScopeBase*scope) const;
       void write_to_stream(std::ostream&fd) const;
       void write_type_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
@@ -205,7 +228,7 @@ class VTypeArray : public VType {
       inline bool signed_vector() const { return signed_flag_; }
 
 	// returns the type of element held in the array
-      inline const VType* element_type() const { return etype_; }
+      inline const VType* element_type() const { return parent_ ? parent_->element_type() : etype_; }
 
 	// returns the basic type of element held in the array
 	// (unfolds typedefs and multidimensional arrays)
@@ -215,16 +238,29 @@ class VTypeArray : public VType {
 
       int emit_def(std::ostream&out, perm_string name) const;
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
-      int emit_dimensions(std::ostream&out) const;
 
       bool can_be_packed() const { return etype_->can_be_packed(); }
 
-    private:
-      void write_range_to_stream_(std::ostream&fd) const;
-      const VType*etype_;
+      bool is_unbounded() const;
 
+      bool is_variable_length(ScopeBase*scope) const;
+
+	// To handle subtypes
+      inline void set_parent_type(const VTypeArray*parent) { parent_ = parent; }
+
+	// Wherever it is possible, replaces range lsb & msb expressions with
+	// constant integers.
+      void evaluate_ranges(ScopeBase*scope);
+
+    private:
+      int emit_with_dims_(std::ostream&out, bool packed, perm_string name) const;
+
+      void write_range_to_stream_(std::ostream&fd) const;
+
+      const VType*etype_;
       std::vector<range_t> ranges_;
       bool signed_flag_;
+      const VTypeArray*parent_;
 };
 
 class VTypeRange : public VType {
@@ -232,6 +268,8 @@ class VTypeRange : public VType {
     public:
       VTypeRange(const VType*base, int64_t max_val, int64_t min_val);
       ~VTypeRange();
+
+      VType*clone() const { return new VTypeRange(base_->clone(), max_, min_); }
 
 	// Get the type that is limited by the range.
       inline const VType* base_type() const { return base_; }
@@ -250,6 +288,8 @@ class VTypeEnum : public VType {
     public:
       VTypeEnum(const std::list<perm_string>*names);
       ~VTypeEnum();
+
+      VType*clone() const { return new VTypeEnum(*this); }
 
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
@@ -284,6 +324,8 @@ class VTypeRecord : public VType {
       explicit VTypeRecord(std::list<element_t*>*elements);
       ~VTypeRecord();
 
+      VType*clone() const { return new VTypeRecord(*this); }
+
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
       int emit_def(std::ostream&out, perm_string name) const;
@@ -302,6 +344,8 @@ class VTypeDef : public VType {
       explicit VTypeDef(perm_string name, const VType*is);
       ~VTypeDef();
 
+      VType*clone() const { return new VTypeDef(*this); }
+
       inline perm_string peek_name() const { return name_; }
 
 	// If the type is not given a definition in the constructor,
@@ -319,6 +363,8 @@ class VTypeDef : public VType {
       int emit_def(std::ostream&out, perm_string name) const;
 
       bool can_be_packed() const { return type_->can_be_packed(); }
+
+      bool is_unbounded() const { return type_->is_unbounded(); }
     private:
       int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 

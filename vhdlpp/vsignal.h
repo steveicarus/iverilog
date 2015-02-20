@@ -24,6 +24,7 @@
 # include  "vtype.h"
 
 class Architecture;
+class ScopeBase;
 class Entity;
 class Expression;
 
@@ -42,10 +43,11 @@ class SigVarBase : public LineInfo {
       void dump(ostream&out, int indent = 0) const;
 
 	// Elaborates initializer expressions if needed.
-      void elaborate_init_expr(Entity*ent, Architecture*arc);
+      void elaborate_init_expr(Entity*ent, ScopeBase*scope);
+
+      perm_string peek_name() const { return name_; }
 
     protected:
-      perm_string peek_name_() const { return name_; }
       unsigned peek_refcnt_sequ_() const { return refcnt_sequ_; }
 
       void type_elaborate_(VType::decl_t&decl);
@@ -69,7 +71,7 @@ class Signal : public SigVarBase {
     public:
       Signal(perm_string name, const VType*type, Expression*init_expr);
 
-      int emit(ostream&out, Entity*ent, Architecture*arc);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope);
 };
 
 class Variable : public SigVarBase {
@@ -77,7 +79,8 @@ class Variable : public SigVarBase {
     public:
       Variable(perm_string name, const VType*type);
 
-      int emit(ostream&out, Entity*ent, Architecture*arc);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      void write_to_stream(std::ostream&fd);
 };
 
 inline void SigVarBase::count_ref_sequ()

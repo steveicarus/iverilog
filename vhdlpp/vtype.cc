@@ -19,12 +19,12 @@
 
 # include  "vtype.h"
 # include  "parse_types.h"
+# include  "compiler.h"
 # include  <map>
 # include  <typeinfo>
 # include  <cassert>
 
 using namespace std;
-
 
 VType::~VType()
 {
@@ -33,6 +33,13 @@ VType::~VType()
 void VType::show(ostream&out) const
 {
       write_to_stream(out);
+}
+
+perm_string VType::get_generic_typename() const
+{
+    char buf[16] = {0,};
+    snprintf(buf, 16, "type_%p", this);
+    return lex_strings.make(buf);
 }
 
 VTypePrimitive::VTypePrimitive(VTypePrimitive::type_t tt, bool packed)
@@ -68,8 +75,13 @@ void VTypePrimitive::show(ostream&out) const
       }
 }
 
+VTypeArray::range_t*VTypeArray::range_t::clone() const
+{
+    return new VTypeArray::range_t(safe_clone(msb_), safe_clone(lsb_), direction_);
+}
+
 VTypeArray::VTypeArray(const VType*element, const vector<VTypeArray::range_t>&r, bool sv)
-: etype_(element), ranges_(r), signed_flag_(sv)
+: etype_(element), ranges_(r), signed_flag_(sv), parent_(NULL)
 {
 }
 
@@ -81,7 +93,7 @@ VTypeArray::VTypeArray(const VType*element, const vector<VTypeArray::range_t>&r,
  * this is a memory leak. Something to fix.
  */
 VTypeArray::VTypeArray(const VType*element, std::list<prange_t*>*r, bool sv)
-: etype_(element), ranges_(r->size()), signed_flag_(sv)
+: etype_(element), ranges_(r->size()), signed_flag_(sv), parent_(NULL)
 {
       for (size_t idx = 0 ; idx < ranges_.size() ; idx += 1) {
 	    prange_t*curp = r->front();
@@ -96,6 +108,18 @@ VTypeArray::VTypeArray(const VType*element, std::list<prange_t*>*r, bool sv)
 
 VTypeArray::~VTypeArray()
 {
+}
+
+VType*VTypeArray::clone() const {
+    std::vector<range_t> new_ranges;
+    new_ranges.reserve(ranges_.size());
+    for(std::vector<range_t>::const_iterator it = ranges_.begin();
+            it != ranges_.end(); ++it) {
+        new_ranges.push_back(*(it->clone()));
+    }
+    VTypeArray*a = new VTypeArray(etype_->clone(), new_ranges, signed_flag_);
+    a->set_parent_type(parent_);
+    return a;
 }
 
 const VType* VTypeArray::basic_type(bool typedef_allowed) const
@@ -146,6 +170,49 @@ void VTypeArray::show(ostream&out) const
 	    etype_->show(out);
       else
 	    out << "<nil>";
+}
+
+bool VTypeArray::is_unbounded() const {
+    for(std::vector<range_t>::const_iterator it = ranges_.begin();
+            it != ranges_.end(); ++it)
+    {
+        if(it->is_box())
+            return true;
+    }
+
+    return etype_->is_unbounded();
+}
+
+bool VTypeArray::is_variable_length(ScopeBase*scope) const {
+    int64_t dummy;
+
+    if(is_unbounded())
+        return true;
+
+    for(std::vector<range_t>::const_iterator it = ranges_.begin();
+            it != ranges_.end(); ++it)
+    {
+        if(!it->lsb()->evaluate(scope, dummy))
+            return true;
+
+        if(!it->msb()->evaluate(scope, dummy))
+            return true;
+    }
+
+    return etype_->is_variable_length(scope);
+}
+
+void VTypeArray::evaluate_ranges(ScopeBase*scope) {
+    for(std::vector<range_t>::iterator it = ranges_.begin(); it != ranges_.end(); ++it ) {
+        int64_t lsb_val = -1, msb_val = -1;
+        bool dir = it->is_downto();
+
+        if(it->msb()->evaluate(scope, msb_val) && it->lsb()->evaluate(scope, lsb_val)) {
+            assert(lsb_val >= 0);
+            assert(msb_val >= 0);
+            *it = range_t(new ExpInteger(msb_val), new ExpInteger(lsb_val), dir);
+        }
+    }
 }
 
 VTypeRange::VTypeRange(const VType*base, int64_t max_val, int64_t min_val)

@@ -68,3 +68,17 @@ void ExpConcat::dump(ostream&out, int indent) const
       operand1_->dump(out, indent);
       operand2_->dump(out, indent);
 }
+
+void ExpCast::dump(ostream&out, int indent) const
+{
+      out << "Casting ";
+      base_->dump(out, indent+4);
+      out << " to ";
+      type_->emit_def(out, empty_perm_string);
+}
+
+void ExpNew::dump(ostream&out, int indent) const
+{
+      out << "New dynamic array size: ";
+      size_->dump(out, indent);
+}

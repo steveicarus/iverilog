@@ -3,6 +3,8 @@
 /*
  * Copyright (c) 2013-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2015
+ * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -43,6 +45,7 @@ class Subprogram : public LineInfo, public ScopeBase {
       inline const perm_string&name() const { return name_; }
 
       void set_program_body(std::list<SequentialStmt*>*statements);
+      inline bool empty_program_body() const { return !statements_ || statements_->empty(); }
 
 	// Return true if the specification (name, types, ports)
 	// matches this subprogram and that subprogram.
@@ -50,19 +53,31 @@ class Subprogram : public LineInfo, public ScopeBase {
 
       const InterfacePort*find_param(perm_string nam) const;
       const VType*peek_param_type(int idx) const;
+      const VType*peek_return_type() const { return return_type_; }
 
-      int emit(ostream&out, Entity*ent, Architecture*arc);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope);
 
 	// Emit a definition as it would show up in a package.
       int emit_package(std::ostream&fd) const;
 
       void write_to_stream(std::ostream&fd) const;
+      void write_to_stream_body(std::ostream&fd) const;
       void dump(std::ostream&fd) const;
 
+	// Creates a new instance of the function that takes arguments of
+	// a different type. It is used to allow VHDL functions that work with
+	// unbounded std_logic_vectors, so there can be a separate instance
+	// for limited length logic vector.
+      Subprogram*make_instance(std::vector<Expression*> arguments, ScopeBase*scope);
+
+	// Checks if either return type or parameters are unbounded vectors.
+      bool unbounded() const;
+
     private:
-	// Determines appropriate return type. Un case of std_logic_vector
-	// VHDL requires skipping its size in contrary to Verilog
-      void fix_return_type(void);
+	// Tries to set the return type to a fixed type. VHDL functions that
+	// return std_logic_vectors do not specify its length, as SystemVerilog
+	// demands.
+      void fix_return_type();
 
       perm_string name_;
       const ScopeBase*parent_;

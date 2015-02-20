@@ -143,6 +143,7 @@ static PLI_INT32 to_from_vec_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	case vpiReg:
 	case vpiBitVar:
 	case vpiIntegerVar:
+	case vpiConstant:
 	    break;
 	default:
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),

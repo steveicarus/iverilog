@@ -573,20 +573,40 @@ case_statement_alternative_list
  * statement alternative and pass that up instead.
  */
 case_statement_alternative
-  : K_when choice ARROW sequence_of_statements
+  : K_when choices ARROW sequence_of_statements
       { CaseSeqStmt::CaseStmtAlternative* tmp;
-        if ($2->others()) {
-	      tmp = new CaseSeqStmt::CaseStmtAlternative(0, $4);
-	} else if (Expression*ex = $2->simple_expression()) {
-	      tmp = new CaseSeqStmt::CaseStmtAlternative(ex, $4);
-	} else {
-	      errormsg(@2, "I don't know what to make of the case choice\n");
-	      tmp = 0;
-	}
-	if (tmp) FILE_NAME(tmp, @1);
-	delete $2;
-	delete $4;
-	$$ = tmp;
+        std::list<ExpAggregate::choice_t*>*choices = $2;
+        std::list<Expression*>*exp_list = new std::list<Expression*>;
+        bool others = false;
+
+        for(std::list<ExpAggregate::choice_t*>::iterator it = choices->begin();
+                it != choices->end(); ++it) {
+            if((*it)->others() || others)
+                // If there is one "others", then it also covers all other alternatives
+                // Continue the loop to delete every choice_t, but do not
+                // bother to add the expressions to the exp_list (we are going to
+                // delete them very soon)
+                others = true;
+            else
+                exp_list->push_back((*it)->simple_expression());
+
+            delete (*it);
+        }
+
+        if(others) {
+            tmp = new CaseSeqStmt::CaseStmtAlternative(0, $4);
+            for(std::list<Expression*>::iterator it = exp_list->begin();
+                    it != exp_list->end(); ++it) {
+                delete (*it);
+            }
+        } else {
+            tmp = new CaseSeqStmt::CaseStmtAlternative(exp_list, $4);
+        }
+        if (tmp) FILE_NAME(tmp, @1);
+
+        delete choices;
+        delete $4;
+        $$ = tmp;
       }
    ;
 
@@ -2504,9 +2524,9 @@ K_postponed_opt    : K_postponed    | ;
 K_shared_opt       : K_shared       | ;
 %%
 
-static void yyerror(YYLTYPE*, yyscan_t, const char*, bool, const char* /*msg*/)
+static void yyerror(YYLTYPE*loc, yyscan_t, const char*, bool, const char*msg)
 {
-	//fprintf(stderr, "%s\n", msg);
+      fprintf(stderr, "%s:%u: %s\n", loc->text, loc->first_line, msg);
       parse_errors += 1;
 }
 

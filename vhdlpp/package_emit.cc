@@ -49,7 +49,8 @@ int Package::emit_package(ostream&fd) const
       for (map<perm_string,const VType*>::const_iterator cur = cur_types_.begin()
 		 ; cur != cur_types_.end() ; ++ cur) {
 	    fd << "typedef ";
-	    errors += cur->second->emit_def(fd, cur->first);
+	    errors += cur->second->emit_def(fd,
+                    dynamic_cast<const VTypeDef*>(cur->second) ? empty_perm_string : cur->first);
 	    fd << " ;" << endl;
       }
 
@@ -68,7 +69,9 @@ int Package::emit_package(ostream&fd) const
 
       for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++ cur) {
-	    errors += cur->second->emit_package(fd);
+	    // Do not emit unbounded functions, we will just need fixed instances later
+	    if(!cur->second->unbounded())
+		errors += cur->second->emit_package(fd);
       }
 
       fd << "endpackage" << endl;
