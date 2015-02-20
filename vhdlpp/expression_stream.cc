@@ -236,6 +236,39 @@ void ExpRelation::write_to_stream(ostream&fd) const
       peek_operand2()->write_to_stream(fd);
 }
 
+void ExpShift::write_to_stream(ostream&out) const
+{
+      out << "(";
+      write_to_stream_operand1(out);
+      out << ")";
+
+      switch (shift_) {
+	  case SRL:
+	    out << "srl";
+	    break;
+	  case SLL:
+	    out << "sll";
+	    break;
+	  case SLA:
+	    out << "sla";
+	    break;
+	  case SRA:
+	    out << "sra";
+	    break;
+	  case ROR:
+	    out << "ror";
+	    break;
+	  case ROL:
+	    out << "rol";
+	    break;
+      }
+
+      out << "(";
+      write_to_stream_operand2(out);
+      out << ")";
+}
+
+
 void ExpString::write_to_stream(ostream&fd) const
 {
     fd << "\"";

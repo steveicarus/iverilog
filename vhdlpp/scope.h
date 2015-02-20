@@ -53,11 +53,12 @@ class ScopeBase {
       virtual ~ScopeBase() =0;
 
       const VType* find_type(perm_string by_name);
-      bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp);
+      bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp) const;
       Signal* find_signal(perm_string by_name) const;
       Variable* find_variable(perm_string by_name) const;
       virtual const InterfacePort* find_param(perm_string by_name) const;
       Subprogram* find_subprogram(perm_string by_name) const;
+      bool is_enum_name(perm_string name) const;
 	// Moves all signals, variables and components from another scope to
 	// this one. After the transfer new_* maps are emptied in the another scope.
       void transfer_from(ScopeBase&ref);
@@ -113,6 +114,8 @@ class ScopeBase {
 
       std::map<perm_string, Subprogram*> use_subprograms_; //imported
       std::map<perm_string, Subprogram*> cur_subprograms_; //current
+
+      std::list<const VTypeEnum*> use_enums_;
 
       void do_use_from(const ScopeBase*that);
 };
@@ -198,6 +201,9 @@ class ActiveScope : public ScopeBase {
             use_types_.erase(it);
         cur_types_[name] = t;
       }
+
+      inline void use_enum(const VTypeEnum* t)
+      { use_enums_.push_back(t); }
 
       inline void use_name(perm_string name, const VType* t)
       { use_types_[name] = t; }

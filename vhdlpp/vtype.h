@@ -151,7 +151,7 @@ class VTypeERROR : public VType {
 class VTypePrimitive : public VType {
 
     public:
-      enum type_t { BOOLEAN, BIT, INTEGER, REAL, STDLOGIC, CHARACTER };
+      enum type_t { BOOLEAN, BIT, INTEGER, NATURAL, REAL, STDLOGIC, CHARACTER };
 
     public:
       VTypePrimitive(type_t tt, bool packed = false);
@@ -177,6 +177,7 @@ class VTypePrimitive : public VType {
 extern const VTypePrimitive primitive_BOOLEAN;
 extern const VTypePrimitive primitive_BIT;
 extern const VTypePrimitive primitive_INTEGER;
+extern const VTypePrimitive primitive_NATURAL;
 extern const VTypePrimitive primitive_REAL;
 extern const VTypePrimitive primitive_STDLOGIC;
 extern const VTypePrimitive primitive_CHARACTER;
@@ -294,6 +295,9 @@ class VTypeEnum : public VType {
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
       int emit_def(std::ostream&out, perm_string name) const;
+
+	// Checks if the name is stored in the enum.
+      bool has_name(perm_string name) const;
 
     private:
       std::vector<perm_string>names_;

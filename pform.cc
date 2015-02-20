@@ -2354,6 +2354,11 @@ void pform_module_define_port(const struct vlltype&li,
 	    signed_flag = false;
 	    prange = 0;
 
+      } else if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(vtype)) {
+	    data_type = enum_type->base_type;
+	    signed_flag = enum_type->signed_flag;
+	    prange = enum_type->range.get();
+
       } else if (vtype) {
 	    VLerror(li, "sorry: Given type %s not supported here (%s:%d).",
 		    typeid(*vtype).name(), __FILE__, __LINE__);

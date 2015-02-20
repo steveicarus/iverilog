@@ -73,12 +73,6 @@ void Package::write_to_stream(ostream&fd) const
 	      // Do not include global types in types dump
 	    if (is_global_type(cur->first))
 		  continue;
-	    if (cur->first == "std_logic_vector")
-		  continue;
-	    if (cur->first == "signed")
-		  continue;
-	    if (cur->first == "unsigned")
-		  continue;
 
 	    fd << "type " << cur->first << " is ";
 	    cur->second->write_type_to_stream(fd);
@@ -89,8 +83,6 @@ void Package::write_to_stream(ostream&fd) const
 
 	      // Do not include global types in types dump
 	    if (is_global_type(cur->first))
-		  continue;
-	    if (cur->first == "std_logic_vector")
 		  continue;
 
 	    fd << "type " << cur->first << " is ";

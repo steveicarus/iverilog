@@ -82,3 +82,33 @@ void ExpNew::dump(ostream&out, int indent) const
       out << "New dynamic array size: ";
       size_->dump(out, indent);
 }
+
+void ExpShift::dump(ostream&out, int indent) const
+{
+      const char*fun_name = "?";
+      switch (shift_) {
+	  case SRL:
+	    fun_name = "srl";
+	    break;
+	  case SLL:
+	    fun_name = "sll";
+	    break;
+	  case SLA:
+	    fun_name = "sla";
+	    break;
+	  case SRA:
+	    fun_name = "sra";
+	    break;
+	  case ROR:
+	    fun_name = "ror";
+	    break;
+	  case ROL:
+	    fun_name = "rol";
+	    break;
+      }
+
+      out << setw(indent) << "" << "Shift " << fun_name
+	  << " at " << get_fileline() << endl;
+      dump_operands(out, indent+4);
+}
+

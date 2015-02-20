@@ -59,6 +59,8 @@ ScopeBase::ScopeBase(const ActiveScope&ref)
     use_subprograms_ = ref.use_subprograms_;
     cur_subprograms_ = ref.cur_subprograms_;
 
+    use_enums_ = ref.use_enums_;
+
       // This constructor is invoked when the parser is finished with
       // an active scope and is making the actual scope. At this point
       // we know that "this" is the parent scope for the subprograms,
@@ -102,8 +104,11 @@ const VType*ScopeBase::find_type(perm_string by_name)
 	    return cur->second;
 }
 
-bool ScopeBase::find_constant(perm_string by_name, const VType*&typ, Expression*&exp)
+bool ScopeBase::find_constant(perm_string by_name, const VType*&typ, Expression*&exp) const
 {
+      typ = NULL;
+      exp = NULL;
+
       map<perm_string,struct const_t*>::const_iterator cur = cur_constants_.find(by_name);
       if (cur == cur_constants_.end()) {
         cur = use_constants_.find(by_name);
@@ -119,6 +124,8 @@ bool ScopeBase::find_constant(perm_string by_name, const VType*&typ, Expression*
         exp = cur->second->val;
         return true;
       }
+
+      return false;
 }
 
 Signal* ScopeBase::find_signal(perm_string by_name) const
@@ -181,6 +188,17 @@ Subprogram* ScopeBase::find_subprogram(perm_string name) const
       return 0;
 }
 
+bool ScopeBase::is_enum_name(perm_string name) const
+{
+    for(list<const VTypeEnum*>::const_iterator it = use_enums_.begin();
+            it != use_enums_.end(); ++it) {
+        if((*it)->has_name(name))
+            return true;
+    }
+
+    return false;
+}
+
 /*
  * This method is only used by the ActiveScope derived class to import
  * definition from another scope.
@@ -219,6 +237,8 @@ void ScopeBase::do_use_from(const ScopeBase*that)
 		 ; cur != that->cur_constants_.end() ; ++ cur) {
 	    use_constants_[cur->first] = cur->second;
       }
+
+      use_enums_ = that->use_enums_;
 }
 
 void ScopeBase::transfer_from(ScopeBase&ref)
@@ -264,6 +284,11 @@ bool ActiveScope::is_vector_name(perm_string name) const
       if (find_signal(name))
 	    return true;
       if (find_variable(name))
+	    return true;
+
+      const VType*dummy_type;
+      Expression*dummy_exp;
+      if (find_constant(name, dummy_type, dummy_exp))
 	    return true;
 
       if (context_entity_ && context_entity_->find_port(name))

@@ -494,6 +494,11 @@ ExpRelation::~ExpRelation()
 {
 }
 
+ExpShift::ExpShift(ExpShift::shift_t op, Expression*op1, Expression*op2)
+: ExpBinary(op1, op2), shift_(op)
+{
+}
+
 ExpString::ExpString(const char* value)
 : value_(strlen(value))
 {

@@ -32,26 +32,22 @@ int Package::emit_package(ostream&fd) const
       if (cur_types_.empty() && cur_constants_.empty() && cur_subprograms_.empty())
 	    return 0;
 
-	// If this package was imported from a library, then do not
-	// emit it again.
-      if (from_library_.str() != 0) {
-	    fd << "/* Suppress package " << name()
-	       << " from library " << from_library_ << " */" << endl;
-	    return 0;
-      }
-
       int errors = 0;
 
-      fd << "package \\" << name() << " ;" << endl;
+      fd << "`ifndef package_" << name() << endl;
+      fd << "`define package_" << name() << endl;
 
 	// Only emit types that were defined within this package. Skip
 	// the types that were imported from elsewhere.
+      typedef_context_t typedef_ctx;
       for (map<perm_string,const VType*>::const_iterator cur = cur_types_.begin()
 		 ; cur != cur_types_.end() ; ++ cur) {
-	    fd << "typedef ";
-	    errors += cur->second->emit_def(fd,
-                    dynamic_cast<const VTypeDef*>(cur->second) ? empty_perm_string : cur->first);
-	    fd << " ;" << endl;
+	    if(const VTypeDef*def = dynamic_cast<const VTypeDef*>(cur->second))
+		errors += def->emit_typedef(fd, typedef_ctx);
+	    //fd << "typedef ";
+	    //errors += cur->second->emit_def(fd,
+                    //dynamic_cast<const VTypeDef*>(cur->second) ? empty_perm_string : cur->first);
+	    //fd << " ;" << endl;
       }
 
       //for (map<perm_string,struct const_t*>::const_iterator cur = use_constants_.begin()
@@ -67,14 +63,19 @@ int Package::emit_package(ostream&fd) const
 	    //fd << ";" << endl;
       //}
 
+      fd << "package \\" << name() << " ;" << endl;
       for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++ cur) {
 	    // Do not emit unbounded functions, we will just need fixed instances later
 	    if(!cur->second->unbounded())
 		errors += cur->second->emit_package(fd);
+	    else
+		fd << "/* function " << cur->second->name() <<
+		      " has to be instantiated, skipping */" << endl;
       }
 
-      fd << "endpackage" << endl;
+      fd << "endpackage /* " << name() << " */" << endl;
+      fd << "`endif" << endl;
 
       return errors;
 }

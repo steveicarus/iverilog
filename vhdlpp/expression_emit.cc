@@ -552,7 +552,12 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      if (name_ == "unsigned" && argv_.size()==1) {
+      // SystemVerilog takes care of signs, depending on the lvalue
+      if (name_ == "to_integer" && argv_.size()==1) {
+	    errors += argv_[0]->emit(out, ent, scope);
+      }
+
+      else if (name_ == "unsigned" && argv_.size()==1) {
 	      // Handle the special case that this is a cast to
 	      // unsigned. This function is brought in as part of the
 	      // std numeric library, but we interpret it as the same
@@ -625,7 +630,7 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
 int ExpInteger::emit(ostream&out, Entity*, ScopeBase*)
 {
-      out << value_;
+      out << "32'd" << value_;
       return 0;
 }
 
@@ -763,6 +768,36 @@ int ExpRelation::emit(ostream&out, Entity*ent, ScopeBase*scope)
       }
 
       errors += emit_operand2(out, ent, scope);
+      return errors;
+}
+
+int ExpShift::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+      int errors = 0;
+
+      errors += emit_operand1(out, ent, scope);
+
+      switch (shift_) {
+	  case SRL:
+	    out << " >> ";
+	    break;
+	  case SLL:
+	    out << " << ";
+	    break;
+	  case SRA:
+	    out << " >>> ";
+	    break;
+	  case SLA:
+	    out << " <<< ";
+	    break;
+	  case ROR:
+	  case ROL:
+	    out << " /* ?ror/rol? */ ";
+	    break;
+      }
+
+      errors += emit_operand2(out, ent, scope);
+
       return errors;
 }
 
