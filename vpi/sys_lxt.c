@@ -206,7 +206,7 @@ __inline__ static int dump_header_pending(void)
  * This function writes out all the traced variables, whether they
  * changed or not.
  */
-static void vcd_checkpoint()
+static void vcd_checkpoint(void)
 {
       struct vcd_info*cur;
 
@@ -214,7 +214,7 @@ static void vcd_checkpoint()
 	    show_this_item(cur);
 }
 
-static void vcd_checkpoint_x()
+static void vcd_checkpoint_x(void)
 {
       struct vcd_info*cur;
 
@@ -787,7 +787,7 @@ static PLI_INT32 sys_dumpvars_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-void sys_lxt_register()
+void sys_lxt_register(void)
 {
       int idx;
       struct t_vpi_vlog_info vlog_info;
