@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012-2015 / Stephen Williams (steve@icarus.com)
+ *                            Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -710,13 +711,17 @@ int ExpName::emit_as_prefix_(ostream&out, Entity*ent, ScopeBase*scope)
 int ExpName::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
+      int field_size = 0;
+      list<index_t*> indices;
+
+      if(try_workarounds_(out, ent, scope, indices, field_size)) {
+            emit_workaround_(out, ent, scope, indices, field_size);
+            return 0;
+      }
 
       if (prefix_.get()) {
 	    errors += prefix_->emit_as_prefix_(out, ent, scope);
       }
-
-      if(index_ && emit_const_array_workaround_(out, ent, scope))
-          return errors;
 
       const GenerateStatement*gs = 0;
       Architecture*arc = dynamic_cast<Architecture*>(scope);
@@ -739,60 +744,123 @@ int ExpName::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-bool ExpName::emit_const_array_workaround_(ostream&out, Entity*ent, ScopeBase*scope) const
+bool ExpName::try_workarounds_(ostream&out, Entity*ent, ScopeBase*scope,
+        list<index_t*>& indices, int& data_size)
 {
-    const VType*type = NULL;
     Expression*exp = NULL;
+    bool wrkand_required = false;
+    const VType*type = NULL;
 
     if(!scope)
         return false;
 
-    if(!scope->find_constant(name_, type, exp))
-        return false;
+    if(prefix_.get())
+        prefix_->try_workarounds_(out, ent, scope, indices, data_size);
 
-    const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
-    ivl_assert(*this, arr);    // if there is an index, it should be an array, right?
+    if(index_ && !lsb_ && scope->find_constant(name_, type, exp)) {
+        while(const VTypeDef*type_def = dynamic_cast<const VTypeDef*>(type)) {
+            type = type_def->peek_definition();
+        }
 
+        const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
+        assert(arr);
+        wrkand_required |= check_const_array_workaround_(arr, indices, data_size);
+    }
+
+    if(prefix_.get() && scope->find_constant(prefix_->name_, type, exp)) {
+        // Handle the case of array of records
+        if(prefix_->index_) {
+            const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
+            assert(arr);
+            type = arr->element_type();
+            data_size = type->get_width();
+        }
+
+        while(const VTypeDef*type_def = dynamic_cast<const VTypeDef*>(type)) {
+            type = type_def->peek_definition();
+        }
+
+        const VTypeRecord*rec = dynamic_cast<const VTypeRecord*>(type);
+        assert(rec);
+
+        wrkand_required |= check_const_record_workaround_(rec, indices, data_size);
+    }
+
+    return wrkand_required;
+}
+
+bool ExpName::check_const_array_workaround_(const VTypeArray*arr,
+        list<index_t*>&indices, int&data_size) const
+{
     const VType*element = arr->element_type();
-    const VTypeArray*arr_element = dynamic_cast<const VTypeArray*>(element);
-    if(!arr_element) {
-        // index adjustments are not necessary, it is not an array of vectors
-        return false;
+    data_size = element->get_width();
+    indices.push_back(new index_t(index_, new ExpInteger(data_size)));
+    return true;
+}
+
+bool ExpName::check_const_record_workaround_(const VTypeRecord*rec,
+        list<index_t*>&indices, int&data_size) const
+{
+    int tmp_offset = 0;
+    const vector<VTypeRecord::element_t*>& elements = rec->get_elements();
+
+    for(vector<VTypeRecord::element_t*>::const_reverse_iterator it = elements.rbegin();
+            it != elements.rend(); ++it) {
+        VTypeRecord::element_t* el = (*it);
+
+        if(el->peek_name() == name_) {
+            const VType*type = el->peek_type();
+
+            int tmp_field = type->get_width();
+            if(tmp_field < 0)
+                return false;
+
+            data_size = tmp_field;
+            indices.push_back(new index_t(NULL, NULL, new ExpInteger(tmp_offset)));
+
+            if(index_) {
+                const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
+                assert(arr);
+                return check_const_array_workaround_(arr, indices, data_size);
+            }
+
+            return true;
+        }
+
+        int w = el->peek_type()->get_width();
+
+        if(w < 0)
+            return false;
+
+        tmp_offset += w;
     }
 
-    ivl_assert(*this, arr_element->dimensions() == 1);
-    if(arr_element->dimensions() != 1) {
-        cerr << get_fileline() << ": Sorry, only one-dimensional constant arrays are handled." << endl;
-        return false;
-    }
+    return false;
+}
 
-    int64_t start_val;
-    bool start_rc = arr_element->dimension(0).msb()->evaluate(ent, scope, start_val);
-
-    int64_t finish_val;
-    bool finish_rc = arr_element->dimension(0).lsb()->evaluate(ent, scope, finish_val);
-
-    if(!start_rc || !finish_rc) {
-        cerr << get_fileline() << ": Could not evaluate the word size." << endl;
-        return false;
-    }
-
-    int word_size = abs(start_val - finish_val) + 1;
-    if(start_val > finish_val)
-        swap(start_val, finish_val);
+int ExpName::emit_workaround_(ostream&out, Entity*ent, ScopeBase*scope,
+        const list<index_t*>& indices, int field_size)
+{
+    int errors = 0;
 
     out << "{";
-    for(int i = finish_val; i >= start_val; --i) {
-        if(i != finish_val)
+    for(int i = field_size - 1; i >= 0; --i) {
+        if(i != field_size - 1)
             out << ",";
 
-        out << "\\" << name_ << " [" << word_size << "*";
-        index_->emit(out, ent, scope);
-        out << "+" << i << "]";
+        out << "\\" << (prefix_.get() ? prefix_->name_ : name_) << " [";
+
+        for(list<index_t*>::const_iterator it = indices.begin();
+                it != indices.end(); ++it) {
+            errors += (*it)->emit(out, ent, scope);
+            out << " + ";
+        }
+
+        out << i << "]";
     }
     out << "}";
 
-    return true;
+    return errors;
 }
 
 bool ExpName::is_primary(void) const

@@ -206,7 +206,7 @@ int VTypeArray::get_width() const
           int64_t msb_val, lsb_val;
 
           if(dim.is_box())
-              return false;
+              return -1;
 
           if(!dim.msb()->evaluate(NULL, msb_val))
               return -1;
@@ -217,7 +217,7 @@ int VTypeArray::get_width() const
           size *= 1 + labs(msb_val - lsb_val);
       }
 
-      return etype_->get_width() * size;
+      return element_type()->get_width() * size;
 }
 
 bool VTypeArray::is_unbounded() const {

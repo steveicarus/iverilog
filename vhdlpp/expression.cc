@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2012-2014 / Stephen Williams (steve@icarus.com),
+ * Copyright CERN 2012-2015 / Stephen Williams (steve@icarus.com),
  *                            Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -450,11 +450,6 @@ ExpName::~ExpName()
       delete index_;
 }
 
-const char* ExpName::name() const
-{
-      return name_;
-}
-
 bool ExpName::symbolic_compare(const Expression*that) const
 {
       const ExpName*that_name = dynamic_cast<const ExpName*> (that);
@@ -483,6 +478,28 @@ void ExpName::set_range(Expression*msb, Expression*lsb)
       index_ = msb;
       assert(lsb_==0);
       lsb_ = lsb;
+}
+
+int ExpName::index_t::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+      int errors = 0;
+
+      out << "(";
+
+      if(idx_ && size_) {
+        errors += idx_->emit(out, ent, scope);
+        out << "*";
+        errors += size_->emit(out, ent, scope);
+      }
+
+      if(offset_) {
+        if(idx_ && size_)
+          out << "+";
+        errors += offset_->emit(out, ent, scope);
+      }
+
+      out << ")";
+      return errors;
 }
 
 ExpRelation::ExpRelation(ExpRelation::fun_t ty, Expression*op1, Expression*op2)

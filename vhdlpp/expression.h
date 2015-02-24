@@ -2,7 +2,7 @@
 #define IVL_expression_H
 /*
  * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2014 / Stephen Williams (steve@icarus.com),
+ * Copyright CERN 2015 / Stephen Williams (steve@icarus.com),
  *                       Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -104,7 +104,6 @@ class Expression : public LineInfo {
 	// cannot be done.
       virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
       virtual bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
-
 
 	// The symbolic compare returns true if the two expressions
 	// are equal without actually calculating the value.
@@ -635,12 +634,25 @@ class ExpName : public Expression {
       bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       bool symbolic_compare(const Expression*that) const;
       void dump(ostream&out, int indent = 0) const;
-      const char* name() const;
+      inline const char* name() const { return name_; }
       inline const perm_string& peek_name() const { return name_; }
 
       void set_range(Expression*msb, Expression*lsb);
 
     private:
+      class index_t {
+      public:
+          index_t(Expression*idx, Expression*size, Expression*offset = NULL) :
+            idx_(idx), size_(size), offset_(offset) {}
+
+          int emit(ostream&out, Entity*ent, ScopeBase*scope);
+
+      private:
+          Expression*idx_;
+          Expression*size_;
+          Expression*offset_;
+      };
+
       const VType* elaborate_adjust_type_with_range_(Entity*ent, ScopeBase*scope, const VType*type);
 
       int elaborate_lval_(Entity*ent, ScopeBase*scope, bool, ExpName*suffix);
@@ -649,11 +661,21 @@ class ExpName : public Expression {
 
       int emit_as_prefix_(ostream&out, Entity*ent, ScopeBase*scope);
 
-	// Constant arrays of vectors are flattened into a single localparam,
-	// therefore indices of such localparam point to a bit, not a word.
-	// The following workaround expands expressions to a concatenation of
-	// bits making the requested word.
-      bool emit_const_array_workaround_(ostream&out, Entity*ent, ScopeBase*scope) const;
+	// There are some workarounds required for constant arrays/records, as
+	// they are currently emitted as flat localparams (without any type
+	// information). The following workarounds adjust the access indices
+	// to select appropriate parts of the localparam.
+      bool try_workarounds_(ostream&out, Entity*ent, ScopeBase*scope,
+                            list<index_t*>&indices, int&data_size);
+
+      bool check_const_array_workaround_(const VTypeArray*arr, list<index_t*>&indices,
+                                         int&data_size) const;
+
+      bool check_const_record_workaround_(const VTypeRecord*rec, list<index_t*>&indices,
+                                          int&data_size) const;
+
+      int emit_workaround_(ostream&out, Entity*ent, ScopeBase*scope,
+                           const list<index_t*>&indices, int field_size);
 
     private:
       std::auto_ptr<ExpName> prefix_;
