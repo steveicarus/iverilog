@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -77,6 +77,16 @@ void __vpiStringVar::vpi_get_value(p_vpi_value val)
       }
 
       val->format = vpiSuppressVal;
+}
+
+vpiHandle __vpiStringVar::vpi_put_value(p_vpi_value val, int)
+{
+      vvp_fun_signal_string*fun = dynamic_cast<vvp_fun_signal_string*> (get_net()->fun);
+      assert(fun);
+      assert(val->format == vpiStringVal);
+      vvp_net_ptr_t dest (get_net(), 0);
+      vvp_send_string(dest, val->value.str, vthread_get_wt_context());
+      return 0;
 }
 
 vpiHandle vpip_make_string_var(const char*name, vvp_net_t*net)

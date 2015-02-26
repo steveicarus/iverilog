@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -118,6 +118,7 @@ static PLI_INT32 sys_value_plusargs_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	  case vpiLongIntVar:
 	  case vpiRealVar:
 	  case vpiTimeVar:
+	  case vpiStringVar:
 	    break;
 
 	  default:
