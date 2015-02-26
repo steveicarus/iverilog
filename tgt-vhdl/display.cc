@@ -1,7 +1,7 @@
 /*
  *  VHDL implementation of $display.
  *
- *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2015  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -82,7 +82,7 @@ static void display_line(stmt_container *container)
 static char parse_octal(const char *p)
 {
    assert(*p && *(p+1) && *(p+2));
-   assert(isdigit(*p) && isdigit(*(p+1)) && isdigit(*(p+1)));
+   assert(isdigit(*p) && isdigit(*(p+1)) && isdigit(*(p+2)));
 
    return (*p - '0') * 64
       + (*(p+1) - '0') * 8
