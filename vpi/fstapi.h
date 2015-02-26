@@ -246,7 +246,7 @@ enum fstSupplementalVarType {
     FST_SVT_VHDL_FILE              = 4,
     FST_SVT_VHDL_MEMORY            = 5,
 
-    FST_SVT_MAX                    = 5,
+    FST_SVT_MAX                    = 5
 };
 
 enum fstSupplementalDataType {
