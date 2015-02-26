@@ -79,6 +79,26 @@ void VTypePrimitive::show(ostream&out) const
       }
 }
 
+int VTypePrimitive::get_width() const
+{
+    switch(type_) {
+        case BOOLEAN:
+        case BIT:
+        case STDLOGIC:
+        case REAL:
+            return 1;
+
+        case INTEGER:
+        case NATURAL:
+            return 32;
+
+        case CHARACTER:
+            return 8;
+    }
+
+    return -1;
+}
+
 VTypeArray::range_t*VTypeArray::range_t::clone() const
 {
     return new VTypeArray::range_t(safe_clone(msb_), safe_clone(lsb_), direction_);
@@ -174,6 +194,30 @@ void VTypeArray::show(ostream&out) const
 	    etype_->show(out);
       else
 	    out << "<nil>";
+}
+
+int VTypeArray::get_width() const
+{
+      int64_t size = 1;
+
+      for(vector<range_t>::const_iterator it = ranges_.begin();
+              it != ranges_.end(); ++it) {
+          const VTypeArray::range_t&dim = *it;
+          int64_t msb_val, lsb_val;
+
+          if(dim.is_box())
+              return false;
+
+          if(!dim.msb()->evaluate(NULL, msb_val))
+              return -1;
+
+          if(!dim.lsb()->evaluate(NULL, lsb_val))
+              return -1;
+
+          size *= 1 + labs(msb_val - lsb_val);
+      }
+
+      return etype_->get_width() * size;
 }
 
 bool VTypeArray::is_unbounded() const {
@@ -279,6 +323,23 @@ VTypeRecord::~VTypeRecord()
 void VTypeRecord::show(ostream&out) const
 {
       write_to_stream(out);
+}
+
+int VTypeRecord::get_width() const
+{
+    int width = 0;
+
+    for(vector<element_t*>::const_iterator it = elements_.begin();
+            it != elements_.end(); ++it) {
+        int w = (*it)->peek_type()->get_width();
+
+        if(w < 0)
+            return -1;
+
+        width += w;
+    }
+
+    return width;
 }
 
 const VTypeRecord::element_t* VTypeRecord::element_by_name(perm_string name, int*index) const

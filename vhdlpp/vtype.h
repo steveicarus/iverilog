@@ -66,6 +66,7 @@ class VType {
 	// of this type to the designated stream. This is used for
 	// writing parsed types to library files.
       virtual void write_to_stream(std::ostream&fd) const;
+
 	// This is like the above, but is the root function called
 	// directly after the "type <name> is..." when writing type
 	// definitions. Most types accept the default definition of this.
@@ -99,6 +100,10 @@ class VType {
 	// Returns a perm_string that can be used in automatically created
 	// typedefs (i.e. not ones defined by the user).
       perm_string get_generic_typename() const;
+
+	// Returns the type width in bits or negative number if it is impossible
+	// to evaluate.
+      virtual int get_width() const { return -1; }
 
     private:
       friend struct decl_t;
@@ -161,6 +166,7 @@ class VTypePrimitive : public VType {
 
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
+      int get_width() const;
 
       type_t type() const { return type_; }
 
@@ -221,6 +227,7 @@ class VTypeArray : public VType {
       void write_to_stream(std::ostream&fd) const;
       void write_type_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
+      int get_width() const;
 
       inline size_t dimensions() const { return ranges_.size(); };
       const range_t&dimension(size_t idx) const
@@ -294,6 +301,8 @@ class VTypeEnum : public VType {
 
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
+      int get_width() const { return 32; }
+
       int emit_def(std::ostream&out, perm_string name) const;
 
 	// Checks if the name is stored in the enum.
@@ -332,6 +341,7 @@ class VTypeRecord : public VType {
 
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
+      int get_width() const;
       int emit_def(std::ostream&out, perm_string name) const;
 
       bool can_be_packed() const { return true; }
@@ -362,6 +372,7 @@ class VTypeDef : public VType {
 
       void write_to_stream(std::ostream&fd) const;
       void write_type_to_stream(std::ostream&fd) const;
+      int get_width() const { return type_->get_width(); }
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
 
       int emit_def(std::ostream&out, perm_string name) const;
