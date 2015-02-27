@@ -140,6 +140,40 @@ void vvp_darray_vec4::get_word(unsigned adr, vvp_vector4_t&value)
       assert(value.size() == word_wid_);
 }
 
+vvp_darray_vec2::~vvp_darray_vec2()
+{
+}
+
+size_t vvp_darray_vec2::get_size(void) const
+{
+      return array_.size();
+}
+
+void vvp_darray_vec2::set_word(unsigned adr, const vvp_vector4_t&value)
+{
+      if (adr >= array_.size()) return;
+      assert(value.size() == word_wid_);
+      array_[adr] = value;
+}
+
+void vvp_darray_vec2::get_word(unsigned adr, vvp_vector4_t&value)
+{
+	/*
+	 * Return a zero value for an out of range address or if the
+	 * value has not been written yet (has a size of zero).
+	 */
+      if ((adr >= array_.size()) || (array_[adr].size() == 0)) {
+	    value = vvp_vector4_t(word_wid_, BIT4_0);
+	    return;
+      }
+      assert(array_[adr].size() == word_wid_);
+      value.resize(word_wid_);
+      for (unsigned idx = 0; idx < word_wid_; idx += 1) {
+	    value.set_bit(idx, array_[adr].value4(idx));
+      }
+}
+
+
 vvp_darray_object::~vvp_darray_object()
 {
 }

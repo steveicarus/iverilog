@@ -4071,6 +4071,12 @@ bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
 	    obj = new vvp_darray_atom<int32_t>(size);
       } else if (strcmp(text,"sb64") == 0) {
 	    obj = new vvp_darray_atom<int64_t>(size);
+      } else if ((1 == sscanf(text, "b%u%zn", &word_wid, &n)) &&
+                 (n == strlen(text))) {
+	    obj = new vvp_darray_vec2(size, word_wid);
+      } else if ((1 == sscanf(text, "sb%u%zn", &word_wid, &n)) &&
+                 (n == strlen(text))) {
+	    obj = new vvp_darray_vec2(size, word_wid);
       } else if ((1 == sscanf(text, "v%u%zn", &word_wid, &n)) &&
                  (n == strlen(text))) {
 	    obj = new vvp_darray_vec4(size, word_wid);

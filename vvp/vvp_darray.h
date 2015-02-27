@@ -76,6 +76,22 @@ class vvp_darray_vec4 : public vvp_darray {
       unsigned word_wid_;
 };
 
+class vvp_darray_vec2 : public vvp_darray {
+
+    public:
+      inline vvp_darray_vec2(size_t siz, unsigned word_wid) :
+                             array_(siz), word_wid_(word_wid) { }
+      ~vvp_darray_vec2();
+
+      size_t get_size(void) const;
+      void set_word(unsigned adr, const vvp_vector4_t&value);
+      void get_word(unsigned adr, vvp_vector4_t&value);
+
+    private:
+      std::vector<vvp_vector2_t> array_;
+      unsigned word_wid_;
+};
+
 class vvp_darray_real : public vvp_darray {
 
     public:
