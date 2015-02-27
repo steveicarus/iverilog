@@ -4051,6 +4051,8 @@ bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
 {
       const char*text = cp->text;
       size_t size = thr->words[cp->bit_idx[0]].w_int;
+      unsigned word_wid;
+      size_t n;
 
       vvp_object_t obj;
       if (strcmp(text,"b8") == 0) {
@@ -4069,6 +4071,12 @@ bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
 	    obj = new vvp_darray_atom<int32_t>(size);
       } else if (strcmp(text,"sb64") == 0) {
 	    obj = new vvp_darray_atom<int64_t>(size);
+      } else if ((1 == sscanf(text, "v%u%zn", &word_wid, &n)) &&
+                 (n == strlen(text))) {
+	    obj = new vvp_darray_vec4(size, word_wid);
+      } else if ((1 == sscanf(text, "sv%u%zn", &word_wid, &n)) &&
+                 (n == strlen(text))) {
+	    obj = new vvp_darray_vec4(size, word_wid);
       } else if (strcmp(text,"r") == 0) {
 	    obj = new vvp_darray_real(size);
       } else if (strcmp(text,"S") == 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,7 +18,6 @@
  */
 
 # include  "vvp_darray.h"
-# include  "vvp_net.h"
 # include  <iostream>
 # include  <typeinfo>
 
@@ -110,6 +109,36 @@ template class vvp_darray_atom<int8_t>;
 template class vvp_darray_atom<int16_t>;
 template class vvp_darray_atom<int32_t>;
 template class vvp_darray_atom<int64_t>;
+
+vvp_darray_vec4::~vvp_darray_vec4()
+{
+}
+
+size_t vvp_darray_vec4::get_size(void) const
+{
+      return array_.size();
+}
+
+void vvp_darray_vec4::set_word(unsigned adr, const vvp_vector4_t&value)
+{
+      if (adr >= array_.size()) return;
+      assert(value.size() == word_wid_);
+      array_[adr] = value;
+}
+
+void vvp_darray_vec4::get_word(unsigned adr, vvp_vector4_t&value)
+{
+	/*
+	 * Return an undefined value for an out of range address or if the
+	 * value has not been written yet (has a size of zero).
+	 */
+      if ((adr >= array_.size()) || (array_[adr].size() == 0)) {
+	    value = vvp_vector4_t(word_wid_, BIT4_X);
+	    return;
+      }
+      value = array_[adr];
+      assert(value.size() == word_wid_);
+}
 
 vvp_darray_object::~vvp_darray_object()
 {

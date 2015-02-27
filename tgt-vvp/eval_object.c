@@ -38,6 +38,7 @@ static int eval_darray_new(ivl_expr_t ex)
       assert(element_type);
 
       switch (ivl_type_base(element_type)) {
+	    int msb, lsb, wid;
 	  case IVL_VT_REAL:
 	      // REAL objects are not packable.
 	    assert(ivl_type_packed_dimensions(element_type) == 0);
@@ -52,9 +53,9 @@ static int eval_darray_new(ivl_expr_t ex)
 	      // bool objects are vectorable, but for now only support
 	      // a single dimensions.
 	    assert(ivl_type_packed_dimensions(element_type) == 1);
-	    int msb = ivl_type_packed_msb(element_type, 0);
-	    int lsb = ivl_type_packed_lsb(element_type, 0);
-	    int wid = msb>=lsb? msb - lsb : lsb - msb;
+	    msb = ivl_type_packed_msb(element_type, 0);
+	    lsb = ivl_type_packed_lsb(element_type, 0);
+	    wid = msb>=lsb? msb - lsb : lsb - msb;
 	    wid += 1;
 	      // At the moment vvp only supports widths of 8, 16, 32 or 64
 	    switch (wid) {
@@ -75,10 +76,15 @@ static int eval_darray_new(ivl_expr_t ex)
 	                     ivl_type_signed(element_type) ? "s" : "", wid);
 	    break;
 	  case IVL_VT_LOGIC:
-	    fprintf(stderr, "%s:%u: tgt-vvp sorry: vvp does not currently "
-	            "supports 4-state dynamic arrays.\n",
-	            ivl_expr_file(ex), ivl_expr_lineno(ex));
-	    errors += 1;;
+	      // logic objects are vectorable, but for now only support
+	      // a single dimensions.
+	    assert(ivl_type_packed_dimensions(element_type) == 1);
+	    msb = ivl_type_packed_msb(element_type, 0);
+	    lsb = ivl_type_packed_lsb(element_type, 0);
+	    wid = msb>=lsb? msb - lsb : lsb - msb;
+	    wid += 1;
+	    fprintf(vvp_out, "    %%new/darray %u, \"%sv%d\";\n", size_reg,
+	                     ivl_type_signed(element_type) ? "s" : "", wid);
 	    break;
 
 	  default:

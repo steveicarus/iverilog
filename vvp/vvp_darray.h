@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_darray_H
 #define IVL_vvp_darray_H
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,11 +20,10 @@
  */
 
 # include  "vvp_object.h"
+# include  "vvp_net.h"
 # include  <list>
 # include  <string>
 # include  <vector>
-
-class vvp_vector4_t;
 
 class vvp_darray : public vvp_object {
 
@@ -59,6 +58,22 @@ template <class TYPE> class vvp_darray_atom : public vvp_darray {
 
     private:
       std::vector<TYPE> array_;
+};
+
+class vvp_darray_vec4 : public vvp_darray {
+
+    public:
+      inline vvp_darray_vec4(size_t siz, unsigned word_wid) :
+                             array_(siz), word_wid_(word_wid) { }
+      ~vvp_darray_vec4();
+
+      size_t get_size(void) const;
+      void set_word(unsigned adr, const vvp_vector4_t&value);
+      void get_word(unsigned adr, vvp_vector4_t&value);
+
+    private:
+      std::vector<vvp_vector4_t> array_;
+      unsigned word_wid_;
 };
 
 class vvp_darray_real : public vvp_darray {
