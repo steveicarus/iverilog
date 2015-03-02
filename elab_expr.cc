@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2015 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -657,7 +657,18 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 	  case 'E': /* === */
 	  case 'N': /* !== */
 	    if (lp->expr_type() == IVL_VT_REAL ||
-		rp->expr_type() == IVL_VT_REAL) {
+		lp->expr_type() == IVL_VT_STRING ||
+		rp->expr_type() == IVL_VT_REAL ||
+		rp->expr_type() == IVL_VT_STRING) {
+		  cerr << get_fileline() << ": error: "
+		       << human_readable_op(op_)
+		       << " operator may not have REAL or STRING operands."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    if (lp->expr_type() == IVL_VT_STRING ||
+		rp->expr_type() == IVL_VT_STRING) {
 		  cerr << get_fileline() << ": error: "
 		       << human_readable_op(op_)
 		       << " operator may not have REAL operands." << endl;
