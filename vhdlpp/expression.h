@@ -668,11 +668,11 @@ class ExpName : public Expression {
       bool try_workarounds_(ostream&out, Entity*ent, ScopeBase*scope,
                             list<index_t*>&indices, int&data_size);
 
-      bool check_const_array_workaround_(const VTypeArray*arr, list<index_t*>&indices,
-                                         int&data_size) const;
+      bool check_const_array_workaround_(const VTypeArray*arr, ScopeBase*scope,
+                                         list<index_t*>&indices, int&data_size) const;
 
-      bool check_const_record_workaround_(const VTypeRecord*rec, list<index_t*>&indices,
-                                          int&data_size) const;
+      bool check_const_record_workaround_(const VTypeRecord*rec, ScopeBase*scope,
+                                          list<index_t*>&indices, int&data_size) const;
 
       int emit_workaround_(ostream&out, Entity*ent, ScopeBase*scope,
                            const list<index_t*>&indices, int field_size);

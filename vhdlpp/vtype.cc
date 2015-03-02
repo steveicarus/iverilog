@@ -79,13 +79,12 @@ void VTypePrimitive::show(ostream&out) const
       }
 }
 
-int VTypePrimitive::get_width() const
+int VTypePrimitive::get_width(ScopeBase*) const
 {
     switch(type_) {
         case BOOLEAN:
         case BIT:
         case STDLOGIC:
-        case REAL:
             return 1;
 
         case INTEGER:
@@ -196,7 +195,7 @@ void VTypeArray::show(ostream&out) const
 	    out << "<nil>";
 }
 
-int VTypeArray::get_width() const
+int VTypeArray::get_width(ScopeBase*scope) const
 {
       int64_t size = 1;
 
@@ -208,16 +207,16 @@ int VTypeArray::get_width() const
           if(dim.is_box())
               return -1;
 
-          if(!dim.msb()->evaluate(NULL, msb_val))
+          if(!dim.msb()->evaluate(scope, msb_val))
               return -1;
 
-          if(!dim.lsb()->evaluate(NULL, lsb_val))
+          if(!dim.lsb()->evaluate(scope, lsb_val))
               return -1;
 
           size *= 1 + labs(msb_val - lsb_val);
       }
 
-      return element_type()->get_width() * size;
+      return element_type()->get_width(scope) * size;
 }
 
 bool VTypeArray::is_unbounded() const {
@@ -325,13 +324,13 @@ void VTypeRecord::show(ostream&out) const
       write_to_stream(out);
 }
 
-int VTypeRecord::get_width() const
+int VTypeRecord::get_width(ScopeBase*scope) const
 {
     int width = 0;
 
     for(vector<element_t*>::const_iterator it = elements_.begin();
             it != elements_.end(); ++it) {
-        int w = (*it)->peek_type()->get_width();
+        int w = (*it)->peek_type()->get_width(scope);
 
         if(w < 0)
             return -1;

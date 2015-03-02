@@ -771,7 +771,7 @@ bool ExpName::try_workarounds_(ostream&out, Entity*ent, ScopeBase*scope,
 
         const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
         assert(arr);
-        wrkand_required |= check_const_array_workaround_(arr, indices, data_size);
+        wrkand_required |= check_const_array_workaround_(arr, scope, indices, data_size);
     }
 
     if(prefix_.get() && scope->find_constant(prefix_->name_, type, exp)) {
@@ -780,7 +780,7 @@ bool ExpName::try_workarounds_(ostream&out, Entity*ent, ScopeBase*scope,
             const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
             assert(arr);
             type = arr->element_type();
-            data_size = type->get_width();
+            data_size = type->get_width(scope);
         }
 
         while(const VTypeDef*type_def = dynamic_cast<const VTypeDef*>(type)) {
@@ -790,23 +790,26 @@ bool ExpName::try_workarounds_(ostream&out, Entity*ent, ScopeBase*scope,
         const VTypeRecord*rec = dynamic_cast<const VTypeRecord*>(type);
         assert(rec);
 
-        wrkand_required |= check_const_record_workaround_(rec, indices, data_size);
+        wrkand_required |= check_const_record_workaround_(rec, scope, indices, data_size);
     }
 
     return wrkand_required;
 }
 
 bool ExpName::check_const_array_workaround_(const VTypeArray*arr,
-        list<index_t*>&indices, int&data_size) const
+        ScopeBase*scope, list<index_t*>&indices, int&data_size) const
 {
     const VType*element = arr->element_type();
-    data_size = element->get_width();
+    data_size = element->get_width(scope);
+    if(data_size < 0)
+        return false;
     indices.push_back(new index_t(index_, new ExpInteger(data_size)));
+
     return true;
 }
 
 bool ExpName::check_const_record_workaround_(const VTypeRecord*rec,
-        list<index_t*>&indices, int&data_size) const
+        ScopeBase*scope, list<index_t*>&indices, int&data_size) const
 {
     int tmp_offset = 0;
     const vector<VTypeRecord::element_t*>& elements = rec->get_elements();
@@ -818,7 +821,7 @@ bool ExpName::check_const_record_workaround_(const VTypeRecord*rec,
         if(el->peek_name() == name_) {
             const VType*type = el->peek_type();
 
-            int tmp_field = type->get_width();
+            int tmp_field = type->get_width(scope);
             if(tmp_field < 0)
                 return false;
 
@@ -828,13 +831,13 @@ bool ExpName::check_const_record_workaround_(const VTypeRecord*rec,
             if(index_) {
                 const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
                 assert(arr);
-                return check_const_array_workaround_(arr, indices, data_size);
+                return check_const_array_workaround_(arr, scope, indices, data_size);
             }
 
             return true;
         }
 
-        int w = el->peek_type()->get_width();
+        int w = el->peek_type()->get_width(scope);
 
         if(w < 0)
             return false;

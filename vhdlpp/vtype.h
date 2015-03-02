@@ -103,7 +103,7 @@ class VType {
 
 	// Returns the type width in bits or negative number if it is impossible
 	// to evaluate.
-      virtual int get_width() const { return -1; }
+      virtual int get_width(ScopeBase*) const { return -1; }
 
     private:
       friend struct decl_t;
@@ -166,7 +166,7 @@ class VTypePrimitive : public VType {
 
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
-      int get_width() const;
+      int get_width(ScopeBase*scope) const;
 
       type_t type() const { return type_; }
 
@@ -227,7 +227,7 @@ class VTypeArray : public VType {
       void write_to_stream(std::ostream&fd) const;
       void write_type_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
-      int get_width() const;
+      int get_width(ScopeBase*scope) const;
 
       inline size_t dimensions() const { return ranges_.size(); };
       const range_t&dimension(size_t idx) const
@@ -301,7 +301,7 @@ class VTypeEnum : public VType {
 
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
-      int get_width() const { return 32; }
+      int get_width(ScopeBase*) const { return 32; }
 
       int emit_def(std::ostream&out, perm_string name) const;
 
@@ -341,7 +341,7 @@ class VTypeRecord : public VType {
 
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
-      int get_width() const;
+      int get_width(ScopeBase*scope) const;
       int emit_def(std::ostream&out, perm_string name) const;
 
       bool can_be_packed() const { return true; }
@@ -373,7 +373,7 @@ class VTypeDef : public VType {
 
       void write_to_stream(std::ostream&fd) const;
       void write_type_to_stream(std::ostream&fd) const;
-      int get_width() const { return type_->get_width(); }
+      int get_width(ScopeBase*scope) const { return type_->get_width(scope); }
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
 
       int emit_def(std::ostream&out, perm_string name) const;
