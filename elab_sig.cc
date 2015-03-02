@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1063,6 +1063,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // put all the packed dimensions there.
 	    if (use_lidx==0 && use_ridx==0) {
 		  netvector_t*vec = new netvector_t(packed_dimensions, data_type_);
+		  vec->set_signed(get_signed());
 		  packed_dimensions.clear();
 		  ivl_assert(*this, netdarray==0);
 		  netdarray = new netdarray_t(vec);
