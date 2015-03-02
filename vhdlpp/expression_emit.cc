@@ -307,6 +307,13 @@ int ExpAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
+	// Try to evaluate first
+      int64_t val;
+      if(evaluate(scope, val)) {
+            out << val;
+            return 0;
+      }
+
       if (name_ == "event") {
 	    out << "$ivlh_attribute_event(";
 	    errors += base_->emit(out, ent, scope);
