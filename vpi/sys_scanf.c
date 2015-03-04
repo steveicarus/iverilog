@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1266,6 +1266,7 @@ static int is_assignable_obj(vpiHandle obj)
 	case vpiRealVar:
 	case vpiReg:
 	case vpiTimeVar:
+	case vpiStringVar:
 	    rtn = 1;
 	    break;
       }
@@ -1392,10 +1393,11 @@ static PLI_INT32 sys_sscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    return 0;
       }
 
-	/* The first argument must be a register or constant string. */
+	/* The first argument must be a register or a string. */
       reg = vpi_scan(argv);  /* This should never be zero. */
       switch(vpi_get(vpiType, reg)) {
 	  case vpiReg:
+	  case vpiStringVar:
 	    break;
 	  case vpiConstant:
 	  case vpiParameter:
@@ -1404,8 +1406,8 @@ static PLI_INT32 sys_sscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	  default:
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s's first argument must be a register or constant "
-	               "string.\n", name);
+	    vpi_printf("%s's first argument must be a register or a string.\n",
+	               name);
 	    vpi_control(vpiFinish, 1);
 	    vpi_free_object(argv);
 	    return 0;
