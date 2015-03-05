@@ -28,13 +28,24 @@
  * operand, and noting the time. If the $ivlh_attribute_event is
  * called at the same simulation time as a value-change, then the
  * function returns logic true. Otherwise it returns false.
+ *
+ * $ivlh_{rising,falling}_edge implement the VHDL rising_edge() and
+ * falling_edge() system functions.
  */
 struct monitor_data {
       struct t_vpi_time last_event;
+      struct t_vpi_value last_value;
 };
 
 static struct monitor_data **mdata = 0;
 static unsigned mdata_count = 0;
+
+typedef enum { EVENT = 0, RISING_EDGE = 1, FALLING_EDGE = 2 } event_type_t;
+static const char* func_names[] = {
+      "$ivlh_attribute_event",
+      "$ivlh_rising_edge",
+      "$ivlh_falling_edge"
+};
 
 /* To keep valgrind happy free the allocated memory. */
 static PLI_INT32 cleanup_mdata(p_cb_data cause)
@@ -59,26 +70,30 @@ static PLI_INT32 monitor_events(struct t_cb_data*cb)
 
       assert(cb->time);
       assert(cb->time->type == vpiSimTime);
+
       mon->last_event = *(cb->time);
+      mon->last_value = *(cb->value);
 
       return 0;
 }
 
-static PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
+static PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*data)
 {
+      event_type_t type = (event_type_t) data;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
       vpiHandle arg;
       struct monitor_data*mon;
       struct t_cb_data cb;
       struct t_vpi_time tb;
+      struct t_vpi_value vb;
 
 	/* Check that there are arguments. */
       if (argv == 0) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, sys),
 	               (int)vpi_get(vpiLineNo, sys));
 	    vpi_printf("(compiler error) %s requires a single argument.\n",
-	               name);
+	               func_names[type]);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -96,11 +111,12 @@ static PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       mdata[mdata_count-1] = mon;
 
       tb.type = vpiSimTime;
+      vb.format = vpiScalarVal;
       cb.reason = cbValueChange;
       cb.cb_rtn = monitor_events;
       cb.obj = arg;
       cb.time = &tb;
-      cb.value = 0;
+      cb.value = &vb;
       cb.user_data = (char*) (mon);
       vpi_register_cb(&cb);
       vpi_put_userdata(sys, mon);
@@ -111,7 +127,7 @@ static PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, sys),
 	               (int)vpi_get(vpiLineNo, sys));
 	    vpi_printf("(compiler error) %s only takes a single argument.\n",
-	               name);
+	               func_names[type]);
 	    vpi_free_object(argv);
 	    vpi_control(vpiFinish, 1);
       }
@@ -119,13 +135,12 @@ static PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
+static PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*data)
 {
+      event_type_t type = (event_type_t) data;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       struct t_vpi_value rval;
       struct monitor_data*mon;
-
-      (void) name;  /* Parameter is not used. */
 
       rval.format = vpiScalarVal;
 
@@ -140,9 +155,17 @@ static PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_get_time(0, &tnow);
 
 	    rval.value.scalar = vpi1;
+
+	    // Detect if there was any change
 	    if (mon->last_event.high != tnow.high)
 		  rval.value.scalar = vpi0;
 	    if (mon->last_event.low != tnow.low)
+		  rval.value.scalar = vpi0;
+
+	    // Determine the edge, if required
+	    if (type == RISING_EDGE && mon->last_value.value.scalar == vpi0)
+		  rval.value.scalar = vpi0;
+	    else if (type == FALLING_EDGE && mon->last_value.value.scalar == vpi1)
 		  rval.value.scalar = vpi0;
       }
 
@@ -151,9 +174,9 @@ static PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 ivlh_attribute_event_sizetf(ICARUS_VPI_CONST PLI_BYTE8*name)
+static PLI_INT32 ivlh_attribute_event_sizetf(ICARUS_VPI_CONST PLI_BYTE8*type)
 {
-      (void) name;  /* Parameter is not used. */
+      (void) type;  /* Parameter is not used. */
       return 1;
 }
 
@@ -168,8 +191,28 @@ static void vhdl_register(void)
       tf_data.calltf       = ivlh_attribute_event_calltf;
       tf_data.compiletf    = ivlh_attribute_event_compiletf;
       tf_data.sizetf       = ivlh_attribute_event_sizetf;
-      tf_data.tfname       = "$ivlh_attribute_event";
-      tf_data.user_data    = (PLI_BYTE8 *) "$ivlh_attribute_event";
+      tf_data.tfname       = func_names[EVENT];
+      tf_data.user_data    = (PLI_BYTE8*) EVENT;
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.type         = vpiSysFunc;
+      tf_data.sysfunctype  = vpiSizedFunc;
+      tf_data.calltf       = ivlh_attribute_event_calltf;
+      tf_data.compiletf    = ivlh_attribute_event_compiletf;
+      tf_data.sizetf       = ivlh_attribute_event_sizetf;
+      tf_data.tfname       = func_names[RISING_EDGE];
+      tf_data.user_data    = (PLI_BYTE8*) RISING_EDGE;
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.type         = vpiSysFunc;
+      tf_data.sysfunctype  = vpiSizedFunc;
+      tf_data.calltf       = ivlh_attribute_event_calltf;
+      tf_data.compiletf    = ivlh_attribute_event_compiletf;
+      tf_data.sizetf       = ivlh_attribute_event_sizetf;
+      tf_data.tfname       = func_names[FALLING_EDGE];
+      tf_data.user_data    = (PLI_BYTE8*) FALLING_EDGE;
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
