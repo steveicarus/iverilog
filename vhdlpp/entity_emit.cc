@@ -50,9 +50,11 @@ int Entity::emit(ostream&out)
 		  const InterfacePort*curp = *cur;
 		  if (cur != parms_.begin())
 			out << ", ";
-		  out << "parameter \\" << curp->name << " = ";
-		  ivl_assert(*this, curp->expr);
-		  errors += curp->expr->emit(out, this, 0);
+		  out << "parameter \\" << curp->name << " ";
+		  if(curp->expr) {
+			out << "= ";
+			errors += curp->expr->emit(out, this, 0);
+                  }
 	    }
 	    out << ") ";
       }

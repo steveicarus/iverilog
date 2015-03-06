@@ -92,7 +92,8 @@ int Entity::elaborate_generic_exprs_()
       for (vector<InterfacePort*>::const_iterator cur = parms_.begin()
 		 ; cur != parms_.end() ; ++cur) {
 	    InterfacePort*curp = *cur;
-	    curp->expr->elaborate_expr(this, 0, curp->type);
+	    if(curp->expr)
+		curp->expr->elaborate_expr(this, 0, curp->type);
       }
       return errors;
 }
