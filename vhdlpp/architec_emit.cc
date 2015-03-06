@@ -148,6 +148,8 @@ int ComponentInstantiation::emit(ostream&out, Entity*ent, Architecture*arc)
       const char*comma = "";
       int errors = 0;
 
+      arc->set_cur_component(this);
+
       out << cname_;
       if (! generic_map_.empty()) {
 	    out << " #(";
@@ -176,6 +178,8 @@ int ComponentInstantiation::emit(ostream&out, Entity*ent, Architecture*arc)
 	    comma = ", ";
       }
       out << ");" << endl;
+
+      arc->set_cur_component(NULL);
 
       return errors;
 }

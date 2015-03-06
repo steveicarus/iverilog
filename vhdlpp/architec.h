@@ -25,7 +25,7 @@
 # include  <list>
 # include  <map>
 
-class ComponentBase;
+class ComponentInstantiation;
 class Entity;
 class Expression;
 class ExpName;
@@ -54,10 +54,6 @@ class Architecture : public Scope, public LineInfo {
 	    virtual int elaborate(Entity*ent, Architecture*arc);
 	    virtual int emit(ostream&out, Entity*ent, Architecture*arc);
 	    virtual void dump(ostream&out, int indent = 0) const;
-
-	  private:
-
-	  private: // Not implemented
       };
 
     public:
@@ -68,6 +64,10 @@ class Architecture : public Scope, public LineInfo {
       ~Architecture();
 
       perm_string get_name() const { return name_; }
+
+	// Sets the currently processed component (to be able to reach its parameters).
+      void set_cur_component(ComponentInstantiation*component) { cur_component_ = component; }
+      bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp) const;
 
 	// Elaborate this architecture in the context of the given entity.
       int elaborate(Entity*entity);
@@ -109,6 +109,9 @@ class Architecture : public Scope, public LineInfo {
 	    const GenerateStatement*gen;
       };
       std::list<genvar_emit_t> genvar_emit_stack_;
+
+      // Currently processed component (or NULL if none).
+      ComponentInstantiation*cur_component_;
 
     private: // Not implemented
 };
@@ -197,6 +200,12 @@ class ComponentInstantiation  : public Architecture::Statement {
       virtual int elaborate(Entity*ent, Architecture*arc);
       virtual int emit(ostream&out, Entity*entity, Architecture*arc);
       virtual void dump(ostream&out, int indent =0) const;
+
+	// Returns the expression that initalizes a generic (or NULL if not found).
+      Expression*find_generic_map(perm_string by_name) const;
+
+      inline perm_string instance_name() const { return iname_; }
+      inline perm_string component_name() const { return cname_; }
 
     private:
       perm_string iname_;

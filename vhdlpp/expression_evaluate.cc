@@ -182,11 +182,10 @@ bool ExpName::evaluate(ScopeBase*scope, int64_t&val) const
 	    return false;
       }
 
-      if(!scope)
+      if (!scope)
 	    return false;
 
-      bool rc = scope->find_constant(name_, type, exp);
-      if (rc == false)
+      if (!scope->find_constant(name_, type, exp))
 	    return false;
 
       return exp->evaluate(scope, val);

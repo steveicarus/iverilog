@@ -273,6 +273,9 @@ int ExpName::elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*lva
 	    errors += 1;
       }
 
+      const VType*dummy_type;
+      Expression*dummy_expr;
+
       if (const InterfacePort*cur = ent->find_port(name_)) {
         /* IEEE 1076-2008, p.80:
         * For a formal port IN, associated port should be IN, OUT, INOUT or BUFFER
@@ -301,8 +304,11 @@ int ExpName::elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*lva
       } else if (ent->find_generic(name_)) {
 	      /* OK */
 
+      } else if (scope->find_constant(name_, dummy_type, dummy_expr)) {
+	      /* OK */
+
       } else {
-            cerr << get_fileline() << ": error: No port or signal " << name_
+            cerr << get_fileline() << ": error: No port, signal or constant " << name_
 		 << " to be used as r-value." << endl;
             errors += 1;
       }
