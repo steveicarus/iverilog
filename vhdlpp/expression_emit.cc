@@ -854,22 +854,15 @@ int ExpName::emit_workaround_(ostream&out, Entity*ent, ScopeBase*scope,
 {
     int errors = 0;
 
-    out << "{";
-    for(int i = field_size - 1; i >= 0; --i) {
-        if(i != field_size - 1)
-            out << ",";
+    out << "\\" << (prefix_.get() ? prefix_->name_ : name_) << " [";
 
-        out << "\\" << (prefix_.get() ? prefix_->name_ : name_) << " [";
-
-        for(list<index_t*>::const_iterator it = indices.begin();
-                it != indices.end(); ++it) {
-            errors += (*it)->emit(out, ent, scope);
-            out << " + ";
-        }
-
-        out << i << "]";
+    for(list<index_t*>::const_iterator it = indices.begin();
+            it != indices.end(); ++it) {
+        errors += (*it)->emit(out, ent, scope);
+        out << "+";
     }
-    out << "}";
+
+    out << ":" << field_size << "]";
 
     return errors;
 }
