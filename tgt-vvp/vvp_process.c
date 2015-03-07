@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,6 +21,7 @@
 # include  <string.h>
 # include  <assert.h>
 # include  <stdlib.h>
+# include  <stdbool.h>
 
 #ifdef __MINGW32__ /* MinGW has inconsistent %p output. */
 #define snprintf _snprintf
@@ -1708,19 +1709,16 @@ static int show_delete_method(ivl_statement_t net)
       return 0;
 }
 
-static int show_push_frontback_method(ivl_statement_t net)
+static int show_push_frontback_method(ivl_statement_t net, bool is_front)
 {
-      const char*stmt_name = ivl_stmt_name(net);
-
-      show_stmt_file_line(net, "queue: push_back");
-
-      const char*type_code = "?";
-      if (strcmp(stmt_name,"$ivl_queue_method$push_front") == 0)
+      const char*type_code;
+      if (is_front) {
+	    show_stmt_file_line(net, "queue: push_front");
 	    type_code = "qf";
-      else if (strcmp(stmt_name,"$ivl_queue_method$push_back") == 0)
+      } else {
+	    show_stmt_file_line(net, "queue: push_back");
 	    type_code = "qb";
-      else
-	    type_code = "??";
+      }
 
       unsigned parm_count = ivl_stmt_parm_count(net);
       if (parm_count != 2)
@@ -1762,10 +1760,10 @@ static int show_system_task_call(ivl_statement_t net)
 	    return show_delete_method(net);
 
       if (strcmp(stmt_name,"$ivl_queue_method$push_front") == 0)
-	    return show_push_frontback_method(net);
+	    return show_push_frontback_method(net, true);
 
       if (strcmp(stmt_name,"$ivl_queue_method$push_back") == 0)
-	    return show_push_frontback_method(net);
+	    return show_push_frontback_method(net, false);
 
       show_stmt_file_line(net, "System task call.");
 
