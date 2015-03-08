@@ -1074,6 +1074,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // declaration, which is the dimensions [null:<nil>].
 	    if (use_ridx==0 && dynamic_cast<PENull*>(use_lidx)) {
 		  netvector_t*vec = new netvector_t(packed_dimensions, data_type_);
+		  vec->set_signed(get_signed());
 		  packed_dimensions.clear();
 		  ivl_assert(*this, netdarray==0);
 		  netdarray = new netqueue_t(vec);

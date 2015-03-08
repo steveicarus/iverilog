@@ -1,7 +1,7 @@
 #ifndef IVL__netqueue_H
 #define IVL__netqueue_H
 /*
- * Copyright (c) 2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2014-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,6 +37,9 @@ class netqueue_t : public netdarray_t {
 	// nettype_base_t. The ivl_target api expects this to return
 	// IVL_VT_QUEUE for queues.
       ivl_variable_type_t base_type() const;
+
+	// A queue may have a type that is signed.
+      inline bool get_signed() const { return element_type()->get_signed(); }
 
       std::ostream& debug_dump(std::ostream&) const;
 
