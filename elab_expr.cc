@@ -667,14 +667,6 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 		  des->errors += 1;
 		  return 0;
 	    }
-	    if (lp->expr_type() == IVL_VT_STRING ||
-		rp->expr_type() == IVL_VT_STRING) {
-		  cerr << get_fileline() << ": error: "
-		       << human_readable_op(op_)
-		       << " operator may not have REAL operands." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
 	    break;
 	  default:
 	    break;
