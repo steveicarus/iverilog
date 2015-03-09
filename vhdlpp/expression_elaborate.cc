@@ -871,6 +871,13 @@ const VType* ExpName::probe_prefixed_type_(Entity*ent, ScopeBase*scope) const
 	    return element_type;
       }
 
+      if (const VTypeArray*pref_array = dynamic_cast<const VTypeArray*> (prefix_type)) {
+            const VType*element_type = pref_array->element_type();
+            ivl_assert(*this, element_type);
+
+            return element_type;
+      }
+
       cerr << get_fileline() << ": sorry: I don't know how to probe "
 	   << "prefix type " << typeid(*prefix_type).name()
 	   << " of " << name_ << "." << endl;
