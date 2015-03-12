@@ -33,7 +33,6 @@ bool Expression::evaluate(Entity*, ScopeBase*scope, int64_t&val) const
       return evaluate(scope, val);
 }
 
-
 bool ExpArithmetic::evaluate(ScopeBase*scope, int64_t&val) const
 {
       int64_t val1, val2;
@@ -113,20 +112,12 @@ bool ExpAttribute::evaluate(ScopeBase*scope, int64_t&val) const
 	    }
 
             if(name_ == "length") {
-                int64_t size = 1;
-                for (size_t idx = 0 ; idx < arr->dimensions() ; idx += 1) {
-                    const VTypeArray::range_t&dim = arr->dimension(idx);
-                    int64_t msb_val, lsb_val;
+                int64_t size = arr->get_width(scope);
 
-                    if(dim.is_box())
-                        return false;
-
-                    dim.msb()->evaluate(scope, msb_val);
-                    dim.lsb()->evaluate(scope, lsb_val);
-
-                    size *= 1 + labs(msb_val - lsb_val);
-                }
-                val = size;
+                if(size > 0)
+                    val = size;
+                else
+                    return false;
             } else if(name_ == "left") {
 		  arr->dimension(0).msb()->evaluate(scope, val);
             } else if(name_ == "right") {
@@ -191,8 +182,10 @@ bool ExpName::evaluate(ScopeBase*scope, int64_t&val) const
 	    return false;
       }
 
-      bool rc = scope->find_constant(name_, type, exp);
-      if (rc == false)
+      if (!scope)
+	    return false;
+
+      if (!scope->find_constant(name_, type, exp))
 	    return false;
 
       return exp->evaluate(scope, val);

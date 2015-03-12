@@ -273,6 +273,9 @@ int ExpName::elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*lva
 	    errors += 1;
       }
 
+      const VType*dummy_type;
+      Expression*dummy_expr;
+
       if (const InterfacePort*cur = ent->find_port(name_)) {
         /* IEEE 1076-2008, p.80:
         * For a formal port IN, associated port should be IN, OUT, INOUT or BUFFER
@@ -301,8 +304,11 @@ int ExpName::elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*lva
       } else if (ent->find_generic(name_)) {
 	      /* OK */
 
+      } else if (scope->find_constant(name_, dummy_type, dummy_expr)) {
+	      /* OK */
+
       } else {
-            cerr << get_fileline() << ": error: No port or signal " << name_
+            cerr << get_fileline() << ": error: No port, signal or constant " << name_
 		 << " to be used as r-value." << endl;
             errors += 1;
       }
@@ -922,85 +928,11 @@ const VType* ExpName::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*)co
       return probe_type(ent, scope);
 }
 
-int ExpName::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
+int ExpName::elaborate_expr(Entity*, ScopeBase*, const VType*ltype)
 {
-      const VType*type = NULL;
-      Expression*exp = NULL;
-
       if (ltype) {
 	    ivl_assert(*this, ltype != 0);
 	    set_type(ltype);
-      }
-
-      // Currently constant arrays of vectors are flattened to single one-dimensional
-      // localparams. If the user wants to access a particular word, then it is
-      // necessary to extract the adequate part of the localparam.
-      // e.g.
-      // declarations:
-      // == VHDL ==
-      // type uns_array is array (natural range <>) of unsigned(7 downto 0);
-      // constant const_array : uns_array(2 downto 0) :=
-      //        (0 => "00110011", 1 => "101010101", 2=> "00001111");
-      // == SystemVerilog ==
-      // localparam const_array = { 8'b00110011, 8'b10101010, 8'b00001111 };
-      //
-      // access:
-      // == VHDL ==
-      // target_var := const_array(1);
-      // == SystemVerilog ==
-      // target_var = const_array[15:8];    // <- indices adjusted to pick the word
-
-      if(index_ && scope) {
-          if(!scope->find_constant(name_, type, exp))
-              return 0;
-
-          const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
-          ivl_assert(*this, arr);    // if there is an index, it should be an array, right?
-
-          const VType*element = arr->element_type();
-          const VTypeArray*arr_element = dynamic_cast<const VTypeArray*>(element);
-          if(!arr_element) {
-              // index adjustments are not necessary, it is not an array of vectors
-              return 0;
-          }
-
-          ivl_assert(*this, arr_element->dimensions() == 1);
-          if(arr_element->dimensions() != 1) {
-              cerr << get_fileline() << ": Sorry, only one-dimensional constant arrays are handled." << endl;
-              return 1;
-          }
-
-          int64_t start_val;
-          bool start_rc = arr_element->dimension(0).msb()->evaluate(ent, scope, start_val);
-
-          int64_t finish_val;
-          bool finish_rc = arr_element->dimension(0).lsb()->evaluate(ent, scope, finish_val);
-
-          if(!start_rc || !finish_rc) {
-              cerr << get_fileline() << ": Could not evaluate the word size." << endl;
-              return 1;
-          }
-
-          int word_size = abs(start_val - finish_val) + 1;
-
-          ExpInteger*size = new ExpInteger(word_size);
-          Expression*new_index, *new_lsb;
-
-          // new indices = [index_ * word_size + word_size : lsb_ * word_size]
-          if(lsb_) {
-              ExpArithmetic*tmp = new ExpArithmetic(ExpArithmetic::MULT, index_->clone(), size->clone());
-              new_index = new ExpArithmetic(ExpArithmetic::PLUS, tmp, size->clone());
-              new_lsb = new ExpArithmetic(ExpArithmetic::MULT, lsb_->clone(), size->clone());
-          } else {
-              new_lsb = new ExpArithmetic(ExpArithmetic::MULT, index_->clone(), size->clone());
-              new_index = new ExpArithmetic(ExpArithmetic::PLUS, new_lsb->clone(), size->clone());
-          }
-          delete index_;
-          delete lsb_;
-          delete size;
-
-          index_ = new_index;
-          lsb_ = new_lsb;
       }
 
       return 0;

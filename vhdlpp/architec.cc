@@ -28,7 +28,7 @@ using namespace std;
 
 Architecture::Architecture(perm_string name, const ActiveScope&ref,
 			   list<Architecture::Statement*>&s)
-: Scope(ref), name_(name)
+: Scope(ref), name_(name), cur_component_(NULL)
 {
       statements_.splice(statements_.end(), s);
 }
@@ -37,6 +37,34 @@ Architecture::~Architecture()
 {
     delete_all(statements_);
     ScopeBase::cleanup();
+}
+
+bool Architecture::find_constant(perm_string by_name, const VType*&typ, Expression*&exp) const
+{
+    if(Scope::find_constant(by_name, typ, exp))
+        return true;
+
+    // Check generics in components
+    if(cur_component_) {
+        std::map<perm_string,ComponentBase*>::const_iterator c = new_components_.find(cur_component_->component_name());
+        if(c == new_components_.end())
+            c = old_components_.find(cur_component_->component_name());
+
+        assert(c != old_components_.end());
+        ComponentBase*base = c->second;
+
+        const InterfacePort*generic = base->find_generic(by_name);
+        if(!generic)
+            return false;   // apparently there is no such generic in the component
+
+        Expression*e = cur_component_->find_generic_map(by_name);
+
+        typ = generic->type;
+        exp = e ? e : generic->expr;
+        return true;
+    }
+
+    return false;
 }
 
 void Architecture::push_genvar_type(perm_string gname, const VType*gtype)
@@ -190,6 +218,17 @@ ComponentInstantiation::~ComponentInstantiation()
 	    delete it->second;
       }
 }
+
+Expression*ComponentInstantiation::find_generic_map(perm_string by_name) const
+{
+    map<perm_string,Expression*>::const_iterator p = generic_map_.find(by_name);
+
+    if(p == generic_map_.end())
+        return NULL;
+
+    return p->second;
+}
+
 
 ProcessStatement::ProcessStatement(perm_string iname,
 				   std::list<Expression*>*sensitivity_list,

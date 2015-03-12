@@ -38,13 +38,17 @@ void VType::write_type_to_stream(ostream&fd) const
 
 void VTypeArray::write_to_stream(ostream&fd) const
 {
-	// Special case: std_logic_vector
+	// Special cases: std_logic_vector & string
       if (etype_ == &primitive_STDLOGIC) {
 	    fd << "std_logic_vector";
 	    if (! ranges_.empty() && ! ranges_[0].is_box()) {
 		  write_range_to_stream_(fd);
 	    }
 	    return;
+      } else if (etype_ == &primitive_CHARACTER &&
+                 ranges_.size() == 1 && ranges_[0].is_box()) {
+            fd << "string";
+            return;
       }
 
       bool typedefed = false;

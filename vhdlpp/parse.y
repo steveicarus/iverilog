@@ -1601,9 +1601,14 @@ name /* IEEE 1076-2008 P8.1 */
 	delete[]$1;
 	$$ = tmp;
       }
-  | selected_name '('  range ')'
+  | selected_name '(' range ')'
       { ExpName*tmp = dynamic_cast<ExpName*> ($1);
 	tmp->set_range($3->msb(), $3->lsb());
+	$$ = tmp;
+      }
+  | selected_name '(' expression ')'
+      { ExpName*tmp = dynamic_cast<ExpName*> ($1);
+	tmp->set_range($3, NULL);
 	$$ = tmp;
       }
   ;

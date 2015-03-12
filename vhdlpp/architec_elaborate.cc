@@ -92,6 +92,8 @@ int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
 	    return 1;
       }
 
+      arc->set_cur_component(this);
+
       for (map<perm_string,Expression*>::const_iterator cur = generic_map_.begin()
 		 ; cur != generic_map_.end() ; ++cur) {
 	      // check if generic from component instantiation
@@ -132,6 +134,8 @@ int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
 	    if (cur->second)
 		  cur->second->elaborate_expr(ent, arc, iport->type);
       }
+
+      arc->set_cur_component(NULL);
 
       return errors;
 }

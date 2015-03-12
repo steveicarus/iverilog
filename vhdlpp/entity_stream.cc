@@ -18,40 +18,68 @@
  */
 
 # include  "entity.h"
+# include  "expression.h"
 
 using namespace std;
 
 void ComponentBase::write_to_stream(ostream&fd) const
 {
       fd << "  component " << name_ << " is" << endl;
-      fd << "   port(" << endl;
 
-      vector<InterfacePort*>::const_iterator cur = ports_.begin();
-      while (cur != ports_.end()) {
-	    InterfacePort*item = *cur;
-	    ++cur;
+      if(!parms_.empty()) {
+        fd << "   generic(" << endl;
 
-	    fd << "     " << item->name << " : ";
-	    switch (item->mode) {
-		case PORT_NONE:
-		  fd << "???? ";
-		  break;
-		case PORT_IN:
-		  fd << "in ";
-		  break;
-		case PORT_OUT:
-		  fd << "out ";
-		  break;
-	    }
+        for(vector<InterfacePort*>::const_iterator it = parms_.begin();
+                it != parms_.end(); ++it) {
+            const InterfacePort*parm = *it;
 
-	    item->type->write_to_stream(fd);
+            if(it != parms_.begin())
+                fd << ";";
 
-	    if (cur != ports_.end())
-		  fd << ";" << endl;
-	    else
-		  fd << endl;
+            fd << "     " << parm->name << " : ";
+            parm->type->write_to_stream(fd);
+
+            if(parm->expr) {
+                fd << " := ";
+                parm->expr->write_to_stream(fd);
+            }
+
+            fd << endl;
+        }
+
+        fd << "   );" << endl;
       }
 
-      fd << "   );" << endl;
+      if(!ports_.empty()) {
+        fd << "   port(" << endl;
+
+        vector<InterfacePort*>::const_iterator cur = ports_.begin();
+        while (cur != ports_.end()) {
+                InterfacePort*item = *cur;
+                ++cur;
+
+                fd << "     " << item->name << " : ";
+                switch (item->mode) {
+                    case PORT_NONE:
+                    fd << "???? ";
+                    break;
+                    case PORT_IN:
+                    fd << "in ";
+                    break;
+                    case PORT_OUT:
+                    fd << "out ";
+                    break;
+                }
+
+                item->type->write_to_stream(fd);
+
+                if (cur != ports_.end())
+                    fd << ";" << endl;
+                else
+                    fd << endl;
+        }
+
+        fd << "   );" << endl;
+      }
       fd << "  end component;" << endl;
 }
