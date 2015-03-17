@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1384,7 +1384,7 @@ vpiHandle __vpiPV::vpi_handle(int code)
 vpiHandle vpip_make_PV(char*var, int base, int width)
 {
       struct __vpiPV*obj = new __vpiPV;
-      obj->parent = vvp_lookup_handle(var);
+      compile_vpi_lookup(&obj->parent, strdup(var));
       obj->sbase = 0;
       obj->tbase = base;
       obj->width = (unsigned) width;
@@ -1397,7 +1397,7 @@ vpiHandle vpip_make_PV(char*var, int base, int width)
 vpiHandle vpip_make_PV(char*var, char*symbol, int width)
 {
       struct __vpiPV*obj = new __vpiPV;
-      obj->parent = vvp_lookup_handle(var);
+      compile_vpi_lookup(&obj->parent, strdup(var));
       compile_vpi_lookup(&obj->sbase, symbol);
       obj->tbase = 0;
       obj->width = (unsigned) width;
@@ -1410,7 +1410,7 @@ vpiHandle vpip_make_PV(char*var, char*symbol, int width)
 vpiHandle vpip_make_PV(char*var, vpiHandle handle, int width)
 {
       struct __vpiPV*obj = new __vpiPV;
-      obj->parent = vvp_lookup_handle(var);
+      compile_vpi_lookup(&obj->parent, strdup(var));
       obj->sbase = handle;
       obj->tbase = 0;
       obj->width = (unsigned) width;
