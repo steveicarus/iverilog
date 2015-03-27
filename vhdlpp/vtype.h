@@ -199,8 +199,8 @@ class VTypeArray : public VType {
     public:
       class range_t {
 	  public:
-	    range_t(Expression*m = NULL, Expression*l = NULL, bool dir = true) :
-                msb_(m), lsb_(l), direction_(dir) { }
+	    range_t(Expression*m = NULL, Expression*l = NULL, bool down_to = true) :
+                msb_(m), lsb_(l), direction_(down_to) { }
 
 	    range_t*clone() const;
 
