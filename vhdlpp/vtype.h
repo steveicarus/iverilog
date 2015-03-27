@@ -217,8 +217,9 @@ class VTypeArray : public VType {
       };
 
     public:
-      VTypeArray(const VType*etype, const std::vector<range_t>&r, bool signed_vector =false);
-      VTypeArray(const VType*etype, std::list<prange_t*>*r, bool signed_vector =false);
+      VTypeArray(const VType*etype, const std::vector<range_t>&r, bool signed_vector = false);
+      VTypeArray(const VType*etype, std::list<prange_t*>*r, bool signed_vector = false);
+      VTypeArray(const VType*etype, int msb, int lsb, bool signed_vector = false);
       ~VTypeArray();
 
       VType*clone() const;

@@ -133,6 +133,12 @@ VTypeArray::VTypeArray(const VType*element, std::list<prange_t*>*r, bool sv)
       }
 }
 
+VTypeArray::VTypeArray(const VType*element, int msb, int lsb, bool sv)
+: etype_(element), ranges_(1), signed_flag_(sv), parent_(NULL)
+{
+      bool down_to = msb > lsb;
+      ranges_[0] = range_t(new ExpInteger(msb), new ExpInteger(lsb), down_to);
+}
 
 VTypeArray::~VTypeArray()
 {

@@ -80,11 +80,7 @@ const VType*ExpName::elaborate_adjust_type_with_range_(Entity*, ScopeBase*scope,
 		  flag = lsb_->evaluate(scope, use_lsb);
 		  ivl_assert(*this, flag);
 
-		  Expression*exp_msb = new ExpInteger(use_msb);
-		  Expression*exp_lsb = new ExpInteger(use_lsb);
-		  vector<VTypeArray::range_t> use_dims (1);
-		  use_dims[0] = VTypeArray::range_t(exp_msb, exp_lsb);
-		  type = new VTypeArray(array->element_type(), use_dims);
+		  type = new VTypeArray(array->element_type(), use_msb, use_lsb);
 	    }
       }
 
@@ -600,9 +596,7 @@ const VType*ExpBitstring::fit_type(Entity*, ScopeBase*, const VTypeArray*atype) 
 int ExpBitstring::elaborate_expr(Entity*, ScopeBase*, const VType*)
 {
       int errors = 0;
-      std::vector<VTypeArray::range_t> range;
-      range.push_back(VTypeArray::range_t(new ExpInteger(value_.size() - 1), new ExpInteger(0)));
-      const VTypeArray*type = new VTypeArray(&primitive_STDLOGIC, range);
+      const VTypeArray*type = new VTypeArray(&primitive_STDLOGIC, value_.size() - 1, 0);
       set_type(type);
       return errors;
 }
@@ -998,13 +992,8 @@ const VType*ExpString::fit_type(Entity*, ScopeBase*, const VTypeArray*atype) con
 
 	// Generate an array range for this string
       ivl_assert(*this, range.size() == 1);
-      ExpInteger*use_msb = new ExpInteger(value_.size());
-      ExpInteger*use_lsb = new ExpInteger(0);
-      FILE_NAME(use_msb, this);
-      FILE_NAME(use_lsb, this);
-      range[0] = VTypeArray::range_t(use_msb, use_lsb);
 
-      VTypeArray*type = new VTypeArray(atype->element_type(), range);
+      VTypeArray*type = new VTypeArray(atype->element_type(), value_.size(), 0);
       return type;
 }
 
