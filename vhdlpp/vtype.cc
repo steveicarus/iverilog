@@ -93,6 +93,11 @@ int VTypePrimitive::get_width(ScopeBase*) const
 
         case CHARACTER:
             return 8;
+
+        default:
+            std::cerr << "sorry: primitive type " << type_ <<
+                " has no get_width() implementation." << std::endl;
+            break;
     }
 
     return -1;
