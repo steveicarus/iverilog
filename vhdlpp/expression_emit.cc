@@ -560,13 +560,7 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      // SystemVerilog takes care of sign & width, depending on the lvalue type
-      if ((name_ == "to_integer" && argv_.size() == 1) ||
-         (name_ == "resize" && argv_.size() == 2)) {
-	    errors += argv_[0]->emit(out, ent, scope);
-      }
-
-      else if (name_ == "unsigned" && argv_.size() == 1) {
+      if (name_ == "unsigned" && argv_.size() == 1) {
 	      // Handle the special case that this is a cast to
 	      // unsigned. This function is brought in as part of the
 	      // std numeric library, but we interpret it as the same
@@ -577,6 +571,25 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
       } else if (name_ == "integer" && argv_.size() == 1) {
 	    out << "$signed(";
+	    errors += argv_[0]->emit(out, ent, scope);
+	    out << ")";
+
+      } else if (name_ == "to_integer" && argv_.size() == 1) {
+	    bool signed_flag = false;
+
+	    // to_integer converts unsigned to natural
+	    //                     signed   to integer
+	    // try to determine the converted type
+	    const VType*type = argv_[0]->probe_type(ent, scope);
+	    const VTypeArray*array = dynamic_cast<const VTypeArray*>(type);
+
+	    if(array)
+	        signed_flag = array->signed_vector();
+	    else
+	        cerr << get_fileline() << ": sorry: Could not determine the "
+                     << "expression sign. Output may be erroneous." << endl;
+
+	    out << (signed_flag ? "$signed(" : "$unsigned(");
 	    errors += argv_[0]->emit(out, ent, scope);
 	    out << ")";
 
@@ -596,7 +609,8 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
 	    errors += argv_[1]->emit(out, ent, scope);
 	    out << ")";
 
-      } else if (name_ == "conv_std_logic_vector" && argv_.size() == 2) {
+      } else if ((name_ == "conv_std_logic_vector" || name_ == "resize") &&
+              argv_.size() == 2) {
 	    int64_t use_size;
 	    bool rc = argv_[1]->evaluate(ent, scope, use_size);
 	    ivl_assert(*this, rc);
@@ -604,12 +618,12 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
 	    errors += argv_[0]->emit(out, ent, scope);
 	    out << ")";
 
-      } else if (name_ == "rising_edge" && argv_.size()==1) {
+      } else if (name_ == "rising_edge" && argv_.size() == 1) {
 	    out << "$ivlh_rising_edge(";
 	    errors += argv_[0]->emit(out, ent, scope);
 	    out << ")";
 
-      } else if (name_ == "falling_edge" && argv_.size()==1) {
+      } else if (name_ == "falling_edge" && argv_.size() == 1) {
 	    out << "$ivlh_falling_edge(";
 	    errors += argv_[0]->emit(out, ent, scope);
 	    out << ")";
