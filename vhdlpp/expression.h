@@ -3,7 +3,7 @@
 /*
  * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2015 / Stephen Williams (steve@icarus.com),
- *                       Maciej Suminski (maciej.suminski@cern.ch)
+ * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -516,12 +516,14 @@ class ExpFunc : public Expression {
 
       Expression*clone() const;
 
+      const VType*fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*atype) const;
       inline perm_string func_name() const { return name_; }
       inline size_t func_args() const { return argv_.size(); }
       inline const Expression*func_arg(size_t idx) const { return argv_[idx]; }
       const VType*func_ret_type() const;
 
     public: // Base methods
+      const VType*probe_type(Entity*ent, ScopeBase*scope) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope);

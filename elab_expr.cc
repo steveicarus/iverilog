@@ -1078,7 +1078,7 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 
       if (name=="$ivlh_to_unsigned") {
 	    ivl_assert(*this, parms_.size() == 2);
-	      // The Icarus Verilog specific $ivl_unsigned() system
+	      // The Icarus Verilog specific $ivlh_to_unsigned() system
 	      // task takes a second argument which is the output
 	      // size. This can be an arbitrary constant function.
 	    PExpr*pexpr = parms_[1];
@@ -1099,6 +1099,8 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 	    long value = 0;
 	    bool rc = eval_as_long(value, nexpr);
 	    ivl_assert(*this, rc && value>=0);
+
+	    parms_[0]->test_width(des, scope, mode);
 
 	    expr_width_ = value;
 	    signed_flag_= false;

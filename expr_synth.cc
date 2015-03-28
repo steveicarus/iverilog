@@ -1138,18 +1138,29 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
       if (sub->vector_width() == expr_width())
 	    return sub;
 
-	// The vector_width is not exactly right, so the source is
-	// probably asking for padding. Create nodes to do sign
-	// extension or 0 extension, depending on the has_sign() mode
-	// of the expression.
-
       netvector_t*net_vec = new netvector_t(expr_type(), expr_width()-1, 0);
       net_vec->set_signed(has_sign());
       NetNet*net = new NetNet(scope, scope->local_symbol(),
 			      NetNet::IMPLICIT, net_vec);
       net->set_line(*this);
       net->local_flag(true);
-      if (has_sign()) {
+
+	// It may still happen that the expression is wider than the selection,
+	// and there was no part select created earlier (size casting).
+      if(expr_width() < sub->vector_width()) {
+	    NetPartSelect*sel = new NetPartSelect(sub, 0, expr_width(),
+                                                  NetPartSelect::VP, has_sign());
+	    sel->set_line(*this);
+	    des->add_node(sel);
+
+	    connect(net->pin(0), sel->pin(0));
+
+	// The vector_width is not exactly right, so the source is
+	// probably asking for padding. Create nodes to do sign
+	// extension or 0 extension, depending on the has_sign() mode
+	// of the expression.
+
+      } else if (has_sign()) {
 	    NetSignExtend*pad = new NetSignExtend(scope,
 						  scope->local_symbol(),
 						  expr_width());
@@ -1166,7 +1177,6 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 	    cat->set_line(*this);
 	    des->add_node(cat);
 
-	    assert(expr_width() > sub->vector_width());
 	    unsigned pad_width = expr_width() - sub->vector_width();
 	    verinum pad((uint64_t)0, pad_width);
 	    NetConst*con = new NetConst(scope, scope->local_symbol(),
