@@ -59,9 +59,11 @@ class ScopeBase {
       virtual const InterfacePort* find_param(perm_string by_name) const;
       Subprogram* find_subprogram(perm_string by_name) const;
       bool is_enum_name(perm_string name) const;
-	// Moves all signals, variables and components from another scope to
-	// this one. After the transfer new_* maps are emptied in the another scope.
-      void transfer_from(ScopeBase&ref);
+
+	// Moves signals, variables and components from another scope to
+	// this one. After the transfer new_* maps are cleared in the source scope.
+      enum transfer_type_t { SIGNALS = 1, VARIABLES = 2, COMPONENTS = 4, ALL = 0xffff };
+      void transfer_from(ScopeBase&ref, transfer_type_t what = ALL);
 
       inline void bind_subprogram(perm_string name, Subprogram*obj)
       { map<perm_string, Subprogram*>::iterator it;

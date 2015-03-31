@@ -241,25 +241,31 @@ void ScopeBase::do_use_from(const ScopeBase*that)
       use_enums_ = that->use_enums_;
 }
 
-void ScopeBase::transfer_from(ScopeBase&ref)
+void ScopeBase::transfer_from(ScopeBase&ref, transfer_type_t what)
 {
-    std::copy(ref.new_signals_.begin(), ref.new_signals_.end(),
-          insert_iterator<map<perm_string, Signal*> >(
-              new_signals_, new_signals_.end())
-    );
-    ref.new_signals_.clear();
+    if(what & SIGNALS) {
+        std::copy(ref.new_signals_.begin(), ref.new_signals_.end(),
+            insert_iterator<map<perm_string, Signal*> >(
+                new_signals_, new_signals_.end())
+        );
+        ref.new_signals_.clear();
+    }
 
-    std::copy(ref.new_variables_.begin(), ref.new_variables_.end(),
-          insert_iterator<map<perm_string, Variable*> >(
-              new_variables_, new_variables_.end())
-    );
-    ref.new_variables_.clear();
+    if(what & VARIABLES) {
+        std::copy(ref.new_variables_.begin(), ref.new_variables_.end(),
+            insert_iterator<map<perm_string, Variable*> >(
+                new_variables_, new_variables_.end())
+        );
+        ref.new_variables_.clear();
+    }
 
-    std::copy(ref.new_components_.begin(), ref.new_components_.end(),
-          insert_iterator<map<perm_string, ComponentBase*> >(
-              new_components_, new_components_.end())
-    );
-    ref.new_components_.clear();
+    if(what & COMPONENTS) {
+        std::copy(ref.new_components_.begin(), ref.new_components_.end(),
+            insert_iterator<map<perm_string, ComponentBase*> >(
+                new_components_, new_components_.end())
+        );
+        ref.new_components_.clear();
+    }
 }
 
 void ActiveScope::set_package_header(Package*pkg)

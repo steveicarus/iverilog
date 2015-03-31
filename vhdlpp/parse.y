@@ -2297,7 +2297,7 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
 	} else if (tmp) {
 	      errormsg(@1, "Subprogram specification for %s doesn't match specification in package header.\n", prog->name().str());
 	}
-	prog->transfer_from(*active_scope);
+	prog->transfer_from(*active_scope, ScopeBase::VARIABLES);
 	prog->set_program_body($4);
 	active_scope->bind_name(prog->name(), prog);
 	active_sub = NULL;
