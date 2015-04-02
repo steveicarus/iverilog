@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2014 Tony Bybell.
+ * Copyright (c) 2009-2015 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -191,9 +191,10 @@ enum fstMiscType {
     FST_MT_PATHNAME    = 3,     /* reserved for fstWriterSetSourceStem() string -> number management */
     FST_MT_SOURCESTEM  = 4,     /* use fstWriterSetSourceStem() to emit */
     FST_MT_SOURCEISTEM = 5,     /* use fstWriterSetSourceInstantiationStem() to emit */
-    FST_MT_UNKNOWN     = 6,
+    FST_MT_VALUELIST   = 6,	/* use fstWriterSetValueList() to emit, followed by fstWriterCreateVar*() */
+    FST_MT_UNKNOWN     = 7,
 
-    FST_MT_MAX         = 6
+    FST_MT_MAX         = 7
 };
 
 enum fstArrayType {
@@ -358,6 +359,7 @@ void            fstWriterSetTimescale(void *ctx, int ts);
 void            fstWriterSetTimescaleFromString(void *ctx, const char *s);
 void            fstWriterSetTimezero(void *ctx, int64_t tim);
 void            fstWriterSetUpscope(void *ctx);
+void		fstWriterSetValueList(void *ctx, const char *vl);
 void            fstWriterSetVersion(void *ctx, const char *vers);
 
 
