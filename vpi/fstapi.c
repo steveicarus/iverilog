@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2014 Tony Bybell.
+ * Copyright (c) 2009-2015 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2357,6 +2357,12 @@ fstWriterSetSourceStem_2(ctx, path, line, use_realpath, FST_MT_SOURCEISTEM);
 void fstWriterSetComment(void *ctx, const char *comm)
 {
 fstWriterSetAttrGeneric(ctx, comm, FST_MT_COMMENT, 0);
+}
+
+
+void fstWriterSetValueList(void *ctx, const char *vl)
+{
+fstWriterSetAttrGeneric(ctx, vl, FST_MT_VALUELIST, 0);
 }
 
 
