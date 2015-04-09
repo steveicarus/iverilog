@@ -124,7 +124,7 @@ static int eval_darray_new(ivl_expr_t ex)
 		  wid = width_of_packed_type(element_type);
 		  for (idx = 0 ; idx < cnt ; idx += 1) {
 			draw_eval_vec4(init_expr);
-			fprintf(vvp_out, "    %%parti/%c %d, %ld, 6;\n",
+			fprintf(vvp_out, "    %%parti/%c %u, %ld, 6;\n",
                                 ivl_expr_signed(init_expr) ? 's' : 'u', wid, idx * wid);
 			fprintf(vvp_out, "    %%ix/load 3, %ld, 0;\n", cnt - idx - 1);
 			fprintf(vvp_out, "    %%set/dar/obj/vec4 3;\n");
