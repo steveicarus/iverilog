@@ -275,11 +275,18 @@ vector<bool> Nexus::driven_mask(void) const
 	    }
 
 	    const NetPartSelect*obj_ps = dynamic_cast<const NetPartSelect*>(obj);
-	    if (obj_ps && obj_ps->dir()==NetPartSelect::VP)
-		  continue;
-	    if (obj_ps && cur->get_pin()!=1)
-		  continue;
-	    if (obj_ps) {
+	    if(obj_ps) {
+		  if (obj_ps->dir()==NetPartSelect::VP) {
+			if(cur->get_pin()!=0)
+			      continue;
+			for (size_t idx = 0 ; idx < mask.size() ; idx += 1)
+			      mask[idx] = true;
+			return mask;
+		  }
+		  else {
+			if (cur->get_pin()!=1)
+			      continue;
+		  }
 		  for (unsigned idx = 0 ; idx < obj_ps->width() ; idx += 1) {
 			size_t bit = idx + obj_ps->base();
 			ivl_assert(*obj, bit < mask.size());
