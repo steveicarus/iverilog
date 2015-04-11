@@ -82,15 +82,6 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return false;
       }
-      if (lval_->more) {
-	    cerr << get_fileline() << ": sorry: "
-		 << "NetAssignBase::synth_async does not support an "
-	         << "L-value concatenation ";
-	    dump_lval(cerr);
-	    cerr << endl;
-	    des->errors += 1;
-	    return false;
-      }
 
       if (debug_synth2) {
 	    cerr << get_fileline() << ": NetAssignBase::synth_async: "
@@ -107,6 +98,34 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    cerr << get_fileline() << ": NetAssignBase::synth_async: "
 		 << "nex_map.size()==" << nex_map.size()
 		 << ", nex_out.pin_count()==" << nex_out.pin_count() << endl;
+      }
+
+      if(lval_->more ) {
+	    unsigned base=0,width=1;
+	    unsigned i=0;
+	    NetAssign_ *lval=lval_;
+	    while(lval) {
+		  NetNet *llsig = lval->sig();
+		  width=lval->lwidth();
+		  ivl_variable_type_t tmp_data_type = llsig->data_type();
+		  netvector_t *tmp_type = new netvector_t(tmp_data_type, llsig->vector_width()-1,0);
+
+		  NetNet *tmp = new NetNet(scope, scope->local_symbol(),
+		  NetNet::WIRE, NetNet::not_an_array, tmp_type);
+		  tmp->local_flag(true);
+		  NetPartSelect *ps = new NetPartSelect(rsig, base, width, NetPartSelect::VP);
+		  ps->set_line(*this);
+		  des->add_node(ps);
+
+		  connect(tmp->pin(0),ps->pin(0));
+		  connect(nex_out.pin(i), tmp->pin(0));
+
+		  base+=width;
+		  i++;
+		  lval->turn_sig_to_wire_on_release();
+		  lval=lval->more;
+	    }
+	    return true;
       }
 
 	// Here we note if the l-value is actually a bit/part
@@ -187,7 +206,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 			     << " Found no use_sig, resorting to lsig." << endl;
 		  }
 	    }
-
+//this substitutes the part of the use_lsig with rsig..
 	    NetSubstitute*ps = new NetSubstitute(use_lsig, rsig,
 						 tmp->vector_width(),
 						 base_off);
@@ -1531,9 +1550,44 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 			connect(ff_aset.pin(pin), rst->pin(0));
 
 		  } else {
-			cerr << get_fileline() << ": sorry: "
-			     << "Forgot how to implement asynchronous scramble (set to x/z)." << endl;
-			return false;
+			NetConcat * set_cc=new NetConcat(scope, scope->local_symbol(),
+			      rst_nex->vector_width(), rst_drv.len(), true);
+			NetConcat * rst_cc=new NetConcat(scope, scope->local_symbol(),
+			      rst_nex->vector_width(), rst_drv.len(), true);
+			ivl_variable_type_t oosig_data_type = IVL_VT_LOGIC;
+			netvector_t*oosig_vec = new netvector_t(oosig_data_type, 0, 0);
+			NetNet*oosig[2] = {new NetNet(scope, scope->local_symbol(),
+			      NetNet::TRI, oosig_vec),new NetNet(scope, scope->local_symbol(),
+			      NetNet::TRI, oosig_vec)};
+			int i;
+			set_cc->set_line(*this);
+			des->add_node(set_cc);
+			connect(set_cc->pin(0),oosig[0]->pin(0));
+			rst_cc->set_line(*this);
+			des->add_node(rst_cc);
+			connect(rst_cc->pin(0),oosig[1]->pin(0));
+			for(i=0;i<(int)rst_drv.len();i++) {
+			// This is the output signal f const, osig.
+			      ivl_variable_type_t osig_data_type = IVL_VT_LOGIC;
+			      netvector_t*osig_vec = new netvector_t(osig_data_type, 0, 0);
+			      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+				    NetNet::TRI, osig_vec);
+			      NetConst * nc	= new NetConst(scope, scope->local_symbol(), 
+				    verinum(verinum::V0, 1));
+			      connect(nc->pin(0),osig->pin(0));
+			      nc->set_line(*this);
+			      des->add_node(nc);
+			      if(rst_drv[i]==verinum::V1) {
+				    connect(set_cc->pin(i+1), rst->pin(0));
+				    connect(rst_cc->pin(i+1), nc->pin(0));
+			      }
+			      else {
+				    connect(set_cc->pin(i+1), nc->pin(0));
+				    connect(rst_cc->pin(i+1), rst->pin(0));
+			      }
+			}
+			connect(ff_aset.pin(pin),set_cc->pin(0));
+			connect(ff_aclr.pin(pin),rst_cc->pin(0));
 		  }
 	    }
 
@@ -1724,6 +1778,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 
       assert(ev->nprobe() >= 1);
       vector<NetEvProbe*>events (ev->nprobe() - 1);
+//      vector<NetEvProbe*>events (ev->nprobe());
 
 	/* Get the input set from the substatement. This will be used
 	   to figure out which of the probes is the clock. */
@@ -1751,6 +1806,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 		  pclk = tmp;
 
 	    } else {
+//		  assert(events.size() > event_idx);
 		  events[event_idx++] = tmp;
 	    }
       }
