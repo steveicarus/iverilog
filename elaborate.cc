@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -4916,18 +4916,20 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	   in case it is a constant. This is an interesting case
 	   worthy of a warning. */
       NetExpr*ce = elab_and_eval(des, scope, cond_, -1);
-      if (ce == 0) {
-	    delete sub;
-	    delete step;
-	    return 0;
-      }
-
       if (dynamic_cast<NetEConst*>(ce)) {
 	    cerr << get_fileline() << ": warning: condition expression "
 		  "of for-loop is constant." << endl;
       }
 
-
+	/* Error recovery - if we failed to elaborate any of the loop
+	   expressions, give up now. */
+      if (initial_expr == 0 || ce == 0 || step == 0 || sub == 0) {
+	    delete initial_expr;
+	    delete ce;
+	    delete step;
+	    delete sub;
+	    return 0;
+      }
 	/* All done, build up the loop. */
 
       NetForLoop*loop = new NetForLoop(sig, initial_expr, ce, sub, step);
@@ -5204,9 +5206,14 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PWhile::elaborate(Design*des, NetScope*scope) const
 {
-      NetExpr*tmp = elab_and_eval(des, scope, cond_, -1);
-      tmp->set_line(*this);
-      NetWhile*loop = new NetWhile(tmp, statement_->elaborate(des, scope));
+      NetExpr*ce = elab_and_eval(des, scope, cond_, -1);
+      NetProc*sub = statement_->elaborate(des, scope);
+      if (ce == 0 || sub == 0) {
+	    delete ce;
+	    delete sub;
+	    return 0;
+      }
+      NetWhile*loop = new NetWhile(ce, sub);
       loop->set_line(*this);
       return loop;
 }
