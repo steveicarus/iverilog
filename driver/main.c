@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -568,6 +568,9 @@ static void process_warning_switch(const char*name)
 		  cp[0] = cp[1];
 		  cp += 1;
 	    }
+      } else {
+	    fprintf(stderr, "Ignoring unknown warning class "
+		    "%s\n", name);
       }
 }
 
