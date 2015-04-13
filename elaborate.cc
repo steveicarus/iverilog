@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -3615,6 +3615,8 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	/* Make the r-value of the initial assignment, and size it
 	   properly. Then use it to build the assignment statement. */
       etmp = elab_and_eval(des, scope, expr1_, use_width);
+      if (etmp == 0)
+	    return 0;
       etmp->set_width(use_width);
       etmp = pad_to_width(etmp, use_width, *this);
 
@@ -3667,6 +3669,8 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	/* Make the rvalue of the increment expression, and size it
 	   for the lvalue. */
       etmp = elab_and_eval(des, scope, expr2_, lv->lwidth());
+      if (etmp == 0)
+	    return 0;
       NetAssign*step = new NetAssign(lv, etmp);
       step->set_line(*this);
 
@@ -3891,8 +3895,14 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 NetProc* PWhile::elaborate(Design*des, NetScope*scope) const
 {
       probe_expr_width(des, scope, cond_);
-      NetExpr*tmp = elab_and_eval(des, scope, cond_, -1);
-      NetWhile*loop = new NetWhile(tmp, statement_->elaborate(des, scope));
+      NetExpr*ce = elab_and_eval(des, scope, cond_, -1);
+      NetProc*sub = statement_->elaborate(des, scope);
+      if (ce == 0 || sub == 0) {
+	    delete ce;
+	    delete sub;
+	    return 0;
+      }
+      NetWhile*loop = new NetWhile(ce, sub);
       return loop;
 }
 
