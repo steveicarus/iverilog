@@ -4889,7 +4889,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 					 sig->data_type(), sig->vector_width(),
 					 expr1_);
 
-      if (debug_elaborate) {
+      if (debug_elaborate && initial_expr) {
 	    cerr << get_fileline() << ": debug: FOR initial assign: "
 		 << sig->name() << " = " << *initial_expr << endl;
       }
@@ -4900,17 +4900,10 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	   reported so it's OK that the netlist is bogus. */
       NetProc*sub = statement_->elaborate(des, scope);
 
-
 	/* Now elaborate the for_step statement. I really should do
 	   some error checking here to make sure the step statement
 	   really does step the variable. */
-      if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: Elaborate for_step statement "
-		 << sig->name() << " = " << *initial_expr << endl;
-      }
-
       NetProc*step = step_->elaborate(des, scope);
-
 
 	/* Elaborate the condition expression. Try to evaluate it too,
 	   in case it is a constant. This is an interesting case
