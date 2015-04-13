@@ -117,7 +117,7 @@ static void draw_ufunc_preamble(ivl_expr_t expr)
 	   function ports. Do this in two passes - evaluate,
 	   then send - this avoids the function input variables
 	   being overwritten if the same (non-automatic) function
-	   is called in one of the exressions. */
+	   is called in one of the expressions. */
 
       assert(ivl_expr_parms(expr) == (ivl_scope_ports(def)-1));
       for (idx = 0 ;  idx < ivl_expr_parms(expr) ;  idx += 1) {

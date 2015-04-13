@@ -201,7 +201,7 @@ class ComponentInstantiation  : public Architecture::Statement {
       virtual int emit(ostream&out, Entity*entity, Architecture*arc);
       virtual void dump(ostream&out, int indent =0) const;
 
-	// Returns the expression that initalizes a generic (or NULL if not found).
+	// Returns the expression that initializes a generic (or NULL if not found).
       Expression*find_generic_map(perm_string by_name) const;
 
       inline perm_string instance_name() const { return iname_; }

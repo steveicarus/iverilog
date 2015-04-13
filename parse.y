@@ -1153,7 +1153,7 @@ description_list
   ;
 
 
-   /* This implements the [ : INDENTIFIER ] part of the constructure
+   /* This implements the [ : IDENTIFIER ] part of the constructor
       rule documented in IEEE1800-2005: A.1.8 */
 endnew_opt : ':' K_new | ;
 
@@ -1584,7 +1584,7 @@ modport_item
 
   /* The modport_ports_list is a LALR(2) grammar. When the parser sees a
      ',' it needs to look ahead to the next token to decide whether it is
-     a continuation of the preceeding modport_ports_declaration, or the
+     a continuation of the preceding modport_ports_declaration, or the
      start of a new modport_ports_declaration. bison only supports LALR(1),
      so we have to handcraft a mini parser for this part of the syntax.
      last_modport_port holds the state for this mini parser.*/

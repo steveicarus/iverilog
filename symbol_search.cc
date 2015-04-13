@@ -88,7 +88,7 @@ static bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  return false;
 
 	      // The prefix is found to be a scope, so switch to that
-	      // scope, set the hier_path to turn of upwards searches,
+	      // scope, set the hier_path to turn off upwards searches,
 	      // and continue our search for the tail.
 	    if (recurse.is_scope()) {
 		  scope = recurse.scope;

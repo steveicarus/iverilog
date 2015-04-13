@@ -94,7 +94,7 @@ class netrange_t {
       inline netrange_t() : msb_(LONG_MAX), lsb_(LONG_MAX) { }
 	// Create a properly defined netrange
       inline netrange_t(long m, long l) : msb_(m), lsb_(l) { }
-	// Copy constructure.
+	// Copy constructor.
       inline netrange_t(const netrange_t&that)
       : msb_(that.msb_), lsb_(that.lsb_) { }
 

@@ -199,7 +199,7 @@ event control registers to determine when to perform the assign.
 This instruction blends the bits of two vectors into a result in a
 manner line the expressions ('bx ? <a> : <b>). The two source vectors
 are popped from the vec4 stack (and must have the same width) and the
-result poshed in their place. The truth table for each bit is:
+result pushed in their place. The truth table for each bit is:
 
 	1  1 --> 1
 	0  0 --> 0
@@ -510,7 +510,7 @@ This instruction copies the flag bit from <flag2> to <flag1>.
 
 * %flag_or <flag1>, <flag2>
 
-This instruction calculates the verilog OR of the flag bits in <flag1>
+This instruction calculates the Verilog OR of the flag bits in <flag1>
 and <flag2>, and leaves the result in <flag1>.
 
 * %flag_set/imm <flag>, <value>
@@ -529,11 +529,11 @@ writes the LSB to the selected flag.
 * %force/vec4 <label>
 * %force/vec4/off <label>, <off>
 
-Perform a "force" assign of a values to the tarvet variable. The value
+Perform a "force" assign of a values to the target variable. The value
 to be forced is popped from the vec4 stack and forced to the target
 variable. The /off variant forces a part of a vector. The width of the
 part comes from the width of the popped value, and the <off> is an
-index register that contains the cannonical offset where the value
+index register that contains the canonical offset where the value
 sets written.
 
 The %foce/vec4/off instruction will test the value if flags[4], and if
@@ -806,7 +806,7 @@ The supported types are:
 
 * %nor
 
-Perform the bitwise nor of vec4 vectors, and push the result. Eack bit
+Perform the bitwise nor of vec4 vectors, and push the result. Each bit
 in the source vectors is combined to make a result bit according to the
 truth table.
 
@@ -841,7 +841,7 @@ can be used with any class or darray object, so it is not typed.
 
 * %or
 
-Perform the bitwise or of twp vectors. Pop two values from the vec4
+Perform the bitwise or of two vectors. Pop two values from the vec4
 stack to get the input arguments. Each bit in the result is combined
 with the corresponding bit in the input arguments, according to the
 truth table:
@@ -893,7 +893,7 @@ includes an implicit pop, but sometimes it is necessary to pop
 explicitly.
 
 The <skip> is the number of top positions on the stack to keep,
-beforing starting to pop. This allows for popping positions other than
+before starting to pop. This allows for popping positions other than
 the top of the stack.
 
 * %pow <bit-l>, <bit-r>, <wid>
@@ -966,7 +966,7 @@ result pushed to the string stack.
 * %putc/str/v <functor-label>, <muxr>
 
 Pop a vector byte from the thread vec4 stack and write it to a
-character of the string variable at <functtor-label>. This is
+character of the string variable at <functor-label>. This is
 basically an implementation of <string>.putc(<muxr>, <val>) where
 <val> is the 8bit vector popped from the stack.
 
@@ -1045,7 +1045,7 @@ The instruction also checks flag bit 4. If it is true, the result is
 replaced with X instead of a shifted result. This is intended to
 detect that the index contents were not valid.
 
-For a negative shift, %shiftr will pad the vlaue with 'bx.
+For a negative shift, %shiftr will pad the value with 'bx.
 
 * %split/vec4 <wid>
 
@@ -1054,7 +1054,7 @@ parts. Split off <wid> bits from the LSB, then push the remaining bits
 of the original (the MSB) back to the stack. Then push the split off
 LSB vector.
 
-The <wid> must be less then the width of the original, unsplit vector.
+The <wid> must be less than the width of the original, unsplit vector.
 
 * %store/obj <var-label>
 
