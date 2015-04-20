@@ -1737,10 +1737,14 @@ static void draw_lpm_ff(ivl_lpm_t net)
       assert(ivl_lpm_sync_set(net) == 0);
 
       if (ivl_lpm_async_clr(net)) {
-	    assert(! ivl_lpm_async_set(net));
+	    if (ivl_lpm_async_set(net)) {
+		  fprintf(stderr, "%s:%u:vvp.tgt: sorry: No support for a D-ff "
+		                  "with both an async. set and clear.\n",
+		                  ivl_lpm_file(net), ivl_lpm_lineno(net));
+		  vvp_errors += 1;
+	    }
 	    fprintf(vvp_out, "L_%p .dff/aclr ", net);
       } else if (ivl_lpm_async_set(net)) {
-	    assert(! ivl_lpm_async_clr(net));
 	    fprintf(vvp_out, "L_%p .dff/aset ", net);
       } else {
 	    fprintf(vvp_out, "L_%p .dff ", net);

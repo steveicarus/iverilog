@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -277,14 +277,13 @@ vector<bool> Nexus::driven_mask(void) const
 	    const NetPartSelect*obj_ps = dynamic_cast<const NetPartSelect*>(obj);
 	    if(obj_ps) {
 		  if (obj_ps->dir()==NetPartSelect::VP) {
-			if(cur->get_pin()!=0)
+			if(cur->get_pin() != 0)
 			      continue;
 			for (size_t idx = 0 ; idx < mask.size() ; idx += 1)
 			      mask[idx] = true;
 			return mask;
-		  }
-		  else {
-			if (cur->get_pin()!=1)
+		  } else {
+			if (cur->get_pin() != 1)
 			      continue;
 		  }
 		  for (unsigned idx = 0 ; idx < obj_ps->width() ; idx += 1) {
