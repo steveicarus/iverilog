@@ -1533,21 +1533,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 		  verinum zero (verinum::V0, rst_drv.len());
 		  verinum ones (verinum::V1, rst_drv.len());
 
-		  if (rst_drv==zero) {
-			  // Don't yet support multiple asynchronous reset inputs.
-			ivl_assert(*this, ! ff_aclr.pin(pin).is_linked());
-
-			ivl_assert(*this, rst->pin_count()==1);
-			connect(ff_aclr.pin(pin), rst->pin(0));
-
-		  } else if (rst_drv==ones) {
-			  // Don't yet support multiple asynchronous set inputs.
-			ivl_assert(*this, ! ff_aset.pin(pin).is_linked());
-
-			ivl_assert(*this, rst->pin_count()==1);
-			connect(ff_aset.pin(pin), rst->pin(0));
-
-		  } else {
+		  if(rst_drv.len() != 1) {
 			NetConcat *set_cc = new NetConcat(scope,
 			                                  scope->local_symbol(),
 			                                  rst_nex->vector_width(),
@@ -1585,12 +1571,34 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 				    connect(set_cc->pin(i+1), rst->pin(0));
 				    connect(rst_cc->pin(i+1), nc->pin(0));
 			      } else {
+				    if(rst_drv[i] != verinum::V0)
+				    {
+					cerr << get_fileline() << ": error: Async initialisation not constant"
+					 << " for FlipFlop reset: " << i << rst_drv << endl;
+					des->errors += 1;
+				    }
 				    connect(set_cc->pin(i+1), nc->pin(0));
 				    connect(rst_cc->pin(i+1), rst->pin(0));
 			      }
 			}
 			connect(ff_aset.pin(pin), set_cc->pin(0));
 			connect(ff_aclr.pin(pin), rst_cc->pin(0));
+		  }
+		  else {
+			if (rst_drv==zero) {
+			      // Don't yet support multiple asynchronous reset inputs.
+			      ivl_assert(*this, ! ff_aclr.pin(pin).is_linked());
+
+			      ivl_assert(*this, rst->pin_count()==1);
+			      connect(ff_aclr.pin(pin), rst->pin(0));
+
+			} else if (rst_drv==ones) {
+			  // Don't yet support multiple asynchronous set inputs.
+			      ivl_assert(*this, ! ff_aset.pin(pin).is_linked());
+
+			      ivl_assert(*this, rst->pin_count()==1);
+			      connect(ff_aset.pin(pin), rst->pin(0));
+			}
 		  }
 	    }
 
