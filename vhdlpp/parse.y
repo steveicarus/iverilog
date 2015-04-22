@@ -260,6 +260,8 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
       Architecture::Statement* arch_statement;
       std::list<Architecture::Statement*>* arch_statement_list;
 
+      ReportStmt::severity_t severity;
+
       Subprogram*subprogram;
 };
 
@@ -269,13 +271,13 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %token K_begin K_block K_body K_buffer K_bus
 %token K_case K_component K_configuration K_constant K_context K_cover
 %token K_default K_disconnect K_downto
-%token K_else K_elsif K_end K_entity K_exit
-%token K_fairness K_file K_for K_force K_function
+%token K_else K_elsif K_end K_entity K_error K_exit
+%token K_failure K_fairness K_file K_for K_force K_function
 %token K_generate K_generic K_group K_guarded
 %token K_if K_impure K_in K_inertial K_inout K_is
 %token K_label K_library K_linkage K_literal K_loop
 %token K_map K_mod
-%token K_nand K_new K_next K_nor K_not K_null
+%token K_nand K_new K_next K_nor K_not K_note K_null
 %token K_of K_on K_open K_or K_others K_out
 %token K_package K_parameter K_port K_postponed K_procedure K_process
 %token K_property K_protected K_pure
@@ -286,7 +288,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %token K_then K_to K_transport K_type
 %token K_unaffected K_units K_until K_use
 %token K_variable K_vmode K_vprop K_vunit
-%token K_wait K_when K_while K_with
+%token K_wait K_warning K_when K_while K_with
 %token K_xnor K_xor
  /* Identifiers that are not keywords are identifiers. */
 %token <text> IDENTIFIER
@@ -349,6 +351,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <text> architecture_body_start package_declaration_start
 %type <text> package_body_start
 %type <text> identifier_opt identifier_colon_opt logical_name suffix instantiated_unit
+
 %type <name_list> logical_name_list identifier_list
 %type <name_list> enumeration_literal_list enumeration_literal
 
@@ -356,7 +359,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <sequ> sequential_statement if_statement signal_assignment signal_assignment_statement
 %type <sequ> case_statement procedure_call procedure_call_statement
 %type <sequ> loop_statement variable_assignment variable_assignment_statement
-%type <sequ> return_statement
+%type <sequ> assertion_statement report_statement return_statement
 
 %type <range> range
 %type <range_list> range_list index_constraint
@@ -371,6 +374,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <exp_else_list> else_when_waveforms
 
 %type <subprogram> function_specification subprogram_specification subprogram_body_start
+%type <severity> severity severity_opt
 
 %%
 
@@ -430,6 +434,22 @@ architecture_statement_part
       { $$ = 0;
 	errormsg(@1, "Syntax error in architecture statement.\n");
 	yyerrok;
+      }
+  ;
+
+assertion_statement
+  : K_assert expression report_statement
+      { ReportStmt*report = dynamic_cast<ReportStmt*>($3);
+        assert(report);
+	AssertStmt*tmp = new AssertStmt($2, report->message().c_str(), report->severity());
+        delete report;
+	FILE_NAME(tmp,@2);
+	$$ = tmp;
+      }
+  | K_assert expression severity_opt ';'
+      { AssertStmt*tmp = new AssertStmt($2, NULL, $3);
+	FILE_NAME(tmp,@2);
+	$$ = tmp;
       }
   ;
 
@@ -2029,6 +2049,14 @@ relation
       }
   ;
 
+report_statement
+  : K_report STRING_LITERAL severity_opt ';'
+      { ReportStmt*tmp = new ReportStmt($2, $3);
+	FILE_NAME(tmp,@2);
+	delete[]$2;
+	$$ = tmp;
+      }
+
 return_statement
   : K_return expression ';'
       { ReturnStmt*tmp = new ReturnStmt($2);
@@ -2136,6 +2164,8 @@ sequential_statement
   | procedure_call_statement { $$ = $1; }
   | loop_statement { $$ = $1; }
   | return_statement { $$ = $1; }
+  | report_statement { $$ = $1; }
+  | assertion_statement { $$ = $1; }
   | K_null ';' { $$ = 0; }
   | error ';'
       { errormsg(@1, "Syntax error in sequential statement.\n");
@@ -2143,6 +2173,17 @@ sequential_statement
 	yyerrok;
       }
   ;
+
+severity
+  : K_severity K_note     { $$ = ReportStmt::NOTE; }
+  | K_severity K_warning  { $$ = ReportStmt::WARNING; }
+  | K_severity K_error    { $$ = ReportStmt::ERROR; }
+  | K_severity K_failure  { $$ = ReportStmt::FAILURE; }
+  ;
+
+severity_opt
+  : severity { $$ = $1; }
+  | { $$ = ReportStmt::UNSPECIFIED; }
 
 shift_expression
   : simple_expression

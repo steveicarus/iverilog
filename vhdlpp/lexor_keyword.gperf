@@ -45,7 +45,9 @@ else,		GN_KEYWORD_2008,	K_else
 elsif,		GN_KEYWORD_2008,	K_elsif
 end,		GN_KEYWORD_2008,	K_end
 entity,		GN_KEYWORD_2008,	K_entity
+error,		GN_KEYWORD_2008,	K_error
 exit,		GN_KEYWORD_2008,	K_exit
+failure,	GN_KEYWORD_2008,	K_failure
 fairness,	GN_KEYWORD_2008,	K_fairness
 file,		GN_KEYWORD_2008,	K_file
 for,		GN_KEYWORD_2008,	K_for
@@ -73,6 +75,7 @@ new,		GN_KEYWORD_2008,	K_new
 next,		GN_KEYWORD_2008,	K_next
 nor,		GN_KEYWORD_2008,	K_nor
 not,		GN_KEYWORD_2008,	K_not
+note,		GN_KEYWORD_2008,	K_note
 null,		GN_KEYWORD_2008,	K_null
 of,		GN_KEYWORD_2008,	K_of
 on,		GN_KEYWORD_2008,	K_on
@@ -124,6 +127,7 @@ vmode,		GN_KEYWORD_2008,	K_vmode
 vprop,		GN_KEYWORD_2008,	K_vprop
 vunit,		GN_KEYWORD_2008,	K_vunit
 wait,		GN_KEYWORD_2008,	K_wait
+warning,	GN_KEYWORD_2008,	K_warning
 when,		GN_KEYWORD_2008,	K_when
 while,		GN_KEYWORD_2008,	K_while
 with,		GN_KEYWORD_2008,	K_with

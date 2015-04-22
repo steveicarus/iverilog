@@ -263,3 +263,24 @@ BasicLoopStatement::BasicLoopStatement(perm_string lname, list<SequentialStmt*>*
 BasicLoopStatement::~BasicLoopStatement()
 {
 }
+
+ReportStmt::ReportStmt(const char*msg, severity_t sev)
+: msg_(msg), severity_(sev)
+{
+    if(sev == ReportStmt::UNSPECIFIED)
+        severity_ = ReportStmt::NOTE;
+}
+
+AssertStmt::AssertStmt(Expression*condition, const char*msg, ReportStmt::severity_t sev)
+: ReportStmt("", sev), cond_(condition)
+{
+    if(msg == NULL)
+        msg_ = default_msg_;
+    else
+        msg_ = std::string(msg);
+
+    if(sev == ReportStmt::UNSPECIFIED)
+        severity_ = ReportStmt::ERROR;
+}
+
+const std::string AssertStmt::default_msg_ = std::string("Assertion violation.");
