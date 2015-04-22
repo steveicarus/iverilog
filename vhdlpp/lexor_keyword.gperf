@@ -49,6 +49,7 @@ error,		GN_KEYWORD_2008,	K_error
 exit,		GN_KEYWORD_2008,	K_exit
 failure,	GN_KEYWORD_2008,	K_failure
 fairness,	GN_KEYWORD_2008,	K_fairness
+false,		GN_KEYWORD_2008,	K_false
 file,		GN_KEYWORD_2008,	K_file
 for,		GN_KEYWORD_2008,	K_for
 force,		GN_KEYWORD_2008,	K_force
@@ -117,6 +118,7 @@ subtype,	GN_KEYWORD_2008,	K_subtype
 then,		GN_KEYWORD_2008,	K_then
 to,		GN_KEYWORD_2008,	K_to
 transport,	GN_KEYWORD_2008,	K_transport
+true,		GN_KEYWORD_2008,	K_true
 type,		GN_KEYWORD_2008,	K_type
 unaffected,	GN_KEYWORD_2008,	K_unaffected
 units,		GN_KEYWORD_2008,	K_units

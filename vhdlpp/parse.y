@@ -272,7 +272,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %token K_case K_component K_configuration K_constant K_context K_cover
 %token K_default K_disconnect K_downto
 %token K_else K_elsif K_end K_entity K_error K_exit
-%token K_failure K_fairness K_file K_for K_force K_function
+%token K_failure K_fairness K_false K_file K_for K_force K_function
 %token K_generate K_generic K_group K_guarded
 %token K_if K_impure K_in K_inertial K_inout K_is
 %token K_label K_library K_linkage K_literal K_loop
@@ -285,7 +285,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %token K_restrict K_restrict_guarantee K_return K_reverse_range K_rol K_ror
 %token K_select K_sequence K_severity K_signal K_shared
 %token K_sla K_sll K_sra K_srl K_strong K_subtype
-%token K_then K_to K_transport K_type
+%token K_then K_to K_transport K_true K_type
 %token K_unaffected K_units K_until K_use
 %token K_variable K_vmode K_vprop K_vunit
 %token K_wait K_warning K_when K_while K_with
@@ -1827,6 +1827,17 @@ primary
 	delete[]$1;
 	$$ = tmp;
       }
+  | K_true
+      { ExpBitstring*tmp = new ExpBitstring("1");
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_false
+      { ExpBitstring*tmp = new ExpBitstring("0");
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+
 /*XXXX Caught up in element_association_list?
   | '(' expression ')'
       { $$ = $2; }
