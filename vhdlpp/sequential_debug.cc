@@ -165,3 +165,18 @@ void BasicLoopStatement::dump(ostream&out, int indent) const
     out << setw(indent) << "" << "BasicLoopStatement at file=" << get_fileline() << endl;
     LoopStatement::dump(out, indent+2);
 }
+
+void ReportStmt::dump(ostream&out, int indent) const
+{
+    out << setw(indent) << "" << "ReportStmt at file=" << get_fileline() << endl;
+    out << setw(indent+3) << "" << "severity: " << severity_ << endl;
+    out << setw(indent+3) << "" << "message: " << msg_ << endl;
+}
+
+void AssertStmt::dump(ostream&out, int indent) const
+{
+    out << setw(indent) << "" << "AssertStmt at file=" << get_fileline() << endl;
+    out << setw(indent+3) << "" << "condition: ";
+    cond_->dump(out, indent+3);
+    ReportStmt::dump(out, indent+3);
+}
