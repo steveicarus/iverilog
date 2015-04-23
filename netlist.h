@@ -2620,6 +2620,7 @@ class NetProc : public virtual LineInfo {
       virtual bool synth_sync(Design*des, NetScope*scope,
 			      NetNet*ff_clock, NetBus&ff_ce,
 			      NetBus&ff_aclr,  NetBus&ff_aset,
+			      vector<verinum>&aset_value,
 			      NexusSet&nex_map, NetBus&nex_out,
 			      const std::vector<NetEvProbe*>&events);
 
@@ -2901,6 +2902,7 @@ class NetBlock  : public NetProc {
       bool synth_sync(Design*des, NetScope*scope,
 		      NetNet*ff_clk, NetBus&ff_ce,
 		      NetBus&ff_aclr,NetBus&ff_aset,
+		      vector<verinum>&aset_value,
 		      NexusSet&nex_map, NetBus&nex_out,
 		      const std::vector<NetEvProbe*>&events);
 
@@ -3042,6 +3044,7 @@ class NetCondit  : public NetProc {
       bool synth_sync(Design*des, NetScope*scope,
 		      NetNet*ff_clk, NetBus&ff_ce,
 		      NetBus&ff_aclr,NetBus&ff_aset,
+		      vector<verinum>&aset_value,
 		      NexusSet&nex_map, NetBus&nex_out,
 		      const std::vector<NetEvProbe*>&events);
 
@@ -3319,6 +3322,7 @@ class NetEvWait  : public NetProc {
       virtual bool synth_sync(Design*des, NetScope*scope,
 			      NetNet*ff_clk, NetBus&ff_ce,
 			      NetBus&ff_aclr,NetBus&ff_aset,
+			      vector<verinum>&aset_value,
 			      NexusSet&nex_map, NetBus&nex_out,
 			      const std::vector<NetEvProbe*>&events);
 

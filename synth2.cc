@@ -36,6 +36,7 @@ bool NetProc::synth_async(Design*, NetScope*, NexusSet&, NetBus&, NetBus&)
 bool NetProc::synth_sync(Design*des, NetScope*scope,
 			 NetNet* /* ff_clk */, NetBus& /* ff_ce */,
 			 NetBus& /* ff_aclr*/, NetBus& /* ff_aset*/,
+			 vector<verinum> &aset_value,
 			 NexusSet&nex_map, NetBus&nex_out,
 			 const vector<NetEvProbe*>&events)
 {
@@ -1383,6 +1384,7 @@ bool NetProcTop::synth_async(Design*des)
 bool NetBlock::synth_sync(Design*des, NetScope*scope,
 			  NetNet*ff_clk, NetBus&ff_ce,
 			  NetBus&ff_aclr,NetBus&ff_aset,
+			  vector<verinum> &aset_value,
 			  NexusSet&nex_map, NetBus&nex_out,
 			  const vector<NetEvProbe*>&events_in)
 {
@@ -1426,7 +1428,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 		 nexa that we expect, and the tmp_out is where we want
 		 those outputs connected. */
 	    bool ok_flag = cur->synth_sync(des, scope, ff_clk, tmp_ce,
-					   ff_aclr, ff_aset,
+					   ff_aclr, ff_aset, aset_value,
 					   tmp_set, tmp_out, events_in);
 	    flag = flag && ok_flag;
 
@@ -1464,6 +1466,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 bool NetCondit::synth_sync(Design*des, NetScope*scope,
 			   NetNet*ff_clk, NetBus&ff_ce,
 			   NetBus&ff_aclr,NetBus&ff_aset,
+			   vector<verinum> &aset_value,
 			   NexusSet&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
 {
@@ -1533,77 +1536,31 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 		  verinum zero (verinum::V0, rst_drv.len());
 		  verinum ones (verinum::V1, rst_drv.len());
 
-		  if(rst_drv.len() != 1) {
-			NetConcat *set_cc = new NetConcat(scope,
-			                                  scope->local_symbol(),
-			                                  rst_nex->vector_width(),
-			                                  rst_drv.len(), true);
-			NetConcat *rst_cc = new NetConcat(scope,
-			                                  scope->local_symbol(),
-			                                  rst_nex->vector_width(),
-			                                  rst_drv.len(), true);
-			ivl_variable_type_t oosig_data_type = IVL_VT_LOGIC;
-			netvector_t *oosig_vec = new netvector_t(oosig_data_type, 0, 0);
-			NetNet *oosig[2] = {new NetNet(scope,
-			                               scope->local_symbol(),
-			                               NetNet::TRI, oosig_vec),
-			                    new NetNet(scope,
-			                               scope->local_symbol(),
-			                               NetNet::TRI, oosig_vec)};
-			set_cc->set_line(*this);
-			des->add_node(set_cc);
-			connect(set_cc->pin(0), oosig[0]->pin(0));
-			rst_cc->set_line(*this);
-			des->add_node(rst_cc);
-			connect(rst_cc->pin(0), oosig[1]->pin(0));
-			for (int i = 0; i < (int)rst_drv.len(); i += 1) {
-			// This is the output signal f const, osig.
-			      ivl_variable_type_t osig_data_type = IVL_VT_LOGIC;
-			      netvector_t*osig_vec = new netvector_t(osig_data_type, 0, 0);
-			      NetNet *osig = new NetNet(scope, scope->local_symbol(),
-				    NetNet::TRI, osig_vec);
-			      NetConst *nc = new NetConst(scope, scope->local_symbol(),
-				    verinum(verinum::V0, 1));
-			      connect(nc->pin(0), osig->pin(0));
-			      nc->set_line(*this);
-			      des->add_node(nc);
-			      if (rst_drv[i] == verinum::V1) {
-				    connect(set_cc->pin(i+1), rst->pin(0));
-				    connect(rst_cc->pin(i+1), nc->pin(0));
-			      } else {
-				    if(rst_drv[i] != verinum::V0)
-				    {
-					cerr << get_fileline() << ": error: Async initialisation not constant"
-					 << " for FlipFlop reset: " << i << rst_drv << endl;
-					des->errors += 1;
-				    }
-				    connect(set_cc->pin(i+1), nc->pin(0));
-				    connect(rst_cc->pin(i+1), rst->pin(0));
-			      }
-			}
-			connect(ff_aset.pin(pin), set_cc->pin(0));
-			connect(ff_aclr.pin(pin), rst_cc->pin(0));
-		  }
-		  else {
-			if (rst_drv==zero) {
-			      // Don't yet support multiple asynchronous reset inputs.
-			      ivl_assert(*this, ! ff_aclr.pin(pin).is_linked());
+		  if (rst_drv==zero) {
+		  // Don't yet support multiple asynchronous reset inputs.
+			ivl_assert(*this, ! ff_aclr.pin(pin).is_linked());
 
-			      ivl_assert(*this, rst->pin_count()==1);
-			      connect(ff_aclr.pin(pin), rst->pin(0));
+			ivl_assert(*this, rst->pin_count()==1);
+			connect(ff_aclr.pin(pin), rst->pin(0));
+			aset_value[pin] = rst_drv;
 
-			} else if (rst_drv==ones) {
-			  // Don't yet support multiple asynchronous set inputs.
-			      ivl_assert(*this, ! ff_aset.pin(pin).is_linked());
+		  } else if (rst_drv==ones) {
+		  // Don't yet support multiple asynchronous set inputs.
+			ivl_assert(*this, ! ff_aset.pin(pin).is_linked());
 
-			      ivl_assert(*this, rst->pin_count()==1);
-			      connect(ff_aset.pin(pin), rst->pin(0));
-			}
+			ivl_assert(*this, rst->pin_count()==1);
+			connect(ff_aset.pin(pin), rst->pin(0));
+			aset_value[pin] = rst_drv;
+		  } else {
+			ivl_assert(*this, ! ff_aset.pin(pin).is_linked());
+			ivl_assert(*this, rst->pin_count()==1);
+			connect(ff_aset.pin(pin), rst->pin(0));
+			aset_value[pin] = rst_drv;
 		  }
 	    }
 
 	    return else_->synth_sync(des, scope, ff_clk, ff_ce,
-				     ff_aclr, ff_aset,
+				     ff_aclr, ff_aset, aset_value,
 				     nex_map, nex_out, vector<NetEvProbe*>(0));
       }
 
@@ -1758,7 +1715,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	    }
       }
 
-      bool flag = if_->synth_sync(des, scope, ff_clk, ff_ce, ff_aclr, ff_aset, nex_map, nex_out, events_in);
+      bool flag = if_->synth_sync(des, scope, ff_clk, ff_ce, ff_aclr, ff_aset, aset_value, nex_map, nex_out, events_in);
 
       return flag;
 }
@@ -1766,6 +1723,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 			   NetNet*ff_clk, NetBus&ff_ce,
 			   NetBus&ff_aclr,NetBus&ff_aset,
+			  vector<verinum> &aset_value,
 			   NexusSet&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
 {
@@ -1847,7 +1805,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 
 	/* Synthesize the input to the DFF. */
       bool flag = statement_->synth_sync(des, scope, ff_clk, ff_ce,
-					 ff_aclr, ff_aset,
+					 ff_aclr, ff_aset, aset_value,
 					 nex_map, nex_out, events);
 
       return flag;
@@ -1867,7 +1825,9 @@ bool NetProcTop::synth_sync(Design*des)
       }
 
       NexusSet nex_set;
+
       statement_->nex_output(nex_set);
+      vector<verinum> aset_value(nex_set.size());
 
 	/* Make a model FF that will connect to the first item in the
 	   set, and will also take the initial connection of clocks
@@ -1902,7 +1862,7 @@ bool NetProcTop::synth_sync(Design*des)
 	// Connect the input later.
 
 	/* Synthesize the input to the DFF. */
-      bool flag = statement_->synth_sync(des, scope(), clock, ce, aclr, aset,
+      bool flag = statement_->synth_sync(des, scope(), clock, ce, aclr, aset, aset_value,
 					 nex_set, nex_d,
 					 vector<NetEvProbe*>());
       if (! flag) {
@@ -1924,6 +1884,7 @@ bool NetProcTop::synth_sync(Design*des)
 				  nex_set[idx].wid);
 	    des->add_node(ff2);
 	    ff2->set_line(*this);
+	    ff2->aset_value(aset_value[idx]);
 
 	    NetNet*tmp = nex_d.pin(idx).nexus()->pick_any_net();
 	    tmp->set_line(*this);
