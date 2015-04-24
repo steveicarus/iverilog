@@ -275,10 +275,10 @@ class VTypeArray : public VType {
 class VTypeRange : public VType {
 
     public:
-      VTypeRange(const VType*base, int64_t max_val, int64_t min_val);
+      VTypeRange(const VType*base, int64_t end, int64_t start);
       ~VTypeRange();
 
-      VType*clone() const { return new VTypeRange(base_->clone(), max_, min_); }
+      VType*clone() const { return new VTypeRange(base_->clone(), start_, end_); }
 
 	// Get the type that is limited by the range.
       inline const VType* base_type() const { return base_; }
@@ -289,7 +289,7 @@ class VTypeRange : public VType {
 
     private:
       const VType*base_;
-      int64_t max_, min_;
+      int64_t end_, start_;
 };
 
 class VTypeEnum : public VType {

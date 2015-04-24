@@ -171,14 +171,16 @@ void VTypeRange::write_to_stream(ostream&fd) const
 	// Detect some special cases that can be written as ieee or
 	// standard types.
       if (const VTypePrimitive*tmp = dynamic_cast<const VTypePrimitive*> (base_)) {
-	    if (min_==0 && max_==INT64_MAX && tmp->type()==VTypePrimitive::INTEGER) {
+	    if (start_==0 && end_==INT64_MAX && tmp->type()==VTypePrimitive::INTEGER) {
 		  fd << "natural";
 		  return;
 	    }
       }
 
       base_->write_to_stream(fd);
-      fd << " range " << min_ << " to " << max_;
+      fd << " range " << start_;
+      fd << (start_ < end_ ? " to " : " downto ");
+      fd << end_;
 }
 
 void VTypeRecord::write_to_stream(ostream&fd) const
