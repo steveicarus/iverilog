@@ -647,6 +647,16 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
 	    errors += argv_[0]->emit(out, ent, scope);
 	    out << ")";
 
+      } else if (name_ == "and_reduce" && argv_.size() == 1) {
+            out << "&(";
+	    errors += argv_[0]->emit(out, ent, scope);
+	    out << ")";
+
+      } else if (name_ == "or_reduce" && argv_.size() == 1) {
+            out << "|(";
+	    errors += argv_[0]->emit(out, ent, scope);
+	    out << ")";
+
       } else {
 	      // If this function has an elaborated definition, and if
 	      // that definition is in a package, then include the
