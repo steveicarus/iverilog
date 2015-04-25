@@ -2877,6 +2877,25 @@ NetExpr* PEFNumber::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
 bool PEIdent::calculate_packed_indices_(Design*des, NetScope*scope, NetNet*net,
 					list<long>&prefix_indices) const
 {
+      unsigned dimensions = net->unpacked_dimensions() + net->packed_dimensions();
+      switch (net->data_type()) {
+	  case IVL_VT_STRING:
+	  case IVL_VT_DARRAY:
+	  case IVL_VT_QUEUE:
+	    dimensions += 1;
+	  default:
+	    break;
+      }
+      if (path_.back().index.size() > dimensions) {
+	    cerr << get_fileline() << ": error: the number of indices ("
+		 << path_.back().index.size()
+		 << ") is greater than the number of dimensions ("
+		 << dimensions
+		 << ")." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
       list<index_component_t> index;
       index = path_.back().index;
       ivl_assert(*this, index.size() >= net->unpacked_dimensions());
@@ -4633,7 +4652,8 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 {
       list<long> prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
-      ivl_assert(*this, rc);
+      if (!rc)
+	    return 0;
 
       long msv, lsv;
       bool parts_defined_flag;
@@ -4773,7 +4793,8 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 {
       list<long>prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
-      ivl_assert(*this, rc);
+      if (!rc)
+	    return 0;
 
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
 
@@ -4875,7 +4896,8 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 {
       list<long>prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
-      ivl_assert(*this, rc);
+      if (!rc)
+	    return 0;
 
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
 
@@ -4963,7 +4985,8 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 {
       list<long>prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
-      ivl_assert(*this, rc);
+      if (!rc)
+	    return 0;
 
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
