@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1005,51 +1005,48 @@ void dll_target::logic(const NetLogic*net)
       obj->npins_ = net->pin_count();
       obj->pins_ = new ivl_nexus_t[obj->npins_];
 
-      ivl_nexus_ptr_t out_ptr = 0;
-
       for (unsigned idx = 0 ;  idx < obj->npins_ ;  idx += 1) {
 	    const Nexus*nex = net->pin(idx).nexus();
 	    assert(nex->t_cookie());
 	    obj->pins_[idx] = nex->t_cookie();
 	    ivl_nexus_ptr_t tmp = nexus_log_add(obj->pins_[idx], obj, idx);
-	    if (idx == 0)
-		  out_ptr = tmp;
-      }
+	    if (idx == 0) {
+		  switch (net->pin(0).drive0()) {
+		      case Link::HIGHZ:
+			tmp->drive0 = IVL_DR_HiZ;
+			break;
+		      case Link::WEAK:
+			tmp->drive0 = IVL_DR_WEAK;
+			break;
+		      case Link::PULL:
+			tmp->drive0 = IVL_DR_PULL;
+			break;
+		      case Link::STRONG:
+			tmp->drive0 = IVL_DR_STRONG;
+			break;
+		      case Link::SUPPLY:
+			tmp->drive0 = IVL_DR_SUPPLY;
+			break;
+		  }
 
-      switch (net->pin(0).drive0()) {
-	  case Link::HIGHZ:
-	    out_ptr->drive0 = IVL_DR_HiZ;
-	    break;
-	  case Link::WEAK:
-	    out_ptr->drive0 = IVL_DR_WEAK;
-	    break;
-	  case Link::PULL:
-	    out_ptr->drive0 = IVL_DR_PULL;
-	    break;
-	  case Link::STRONG:
-	    out_ptr->drive0 = IVL_DR_STRONG;
-	    break;
-	  case Link::SUPPLY:
-	    out_ptr->drive0 = IVL_DR_SUPPLY;
-	    break;
-      }
-
-      switch (net->pin(0).drive1()) {
-	  case Link::HIGHZ:
-	    out_ptr->drive1 = IVL_DR_HiZ;
-	    break;
-	  case Link::WEAK:
-	    out_ptr->drive1 = IVL_DR_WEAK;
-	    break;
-	  case Link::PULL:
-	    out_ptr->drive1 = IVL_DR_PULL;
-	    break;
-	  case Link::STRONG:
-	    out_ptr->drive1 = IVL_DR_STRONG;
-	    break;
-	  case Link::SUPPLY:
-	    out_ptr->drive1 = IVL_DR_SUPPLY;
-	    break;
+		  switch (net->pin(0).drive1()) {
+		      case Link::HIGHZ:
+			tmp->drive1 = IVL_DR_HiZ;
+			break;
+		      case Link::WEAK:
+			tmp->drive1 = IVL_DR_WEAK;
+			break;
+		      case Link::PULL:
+			tmp->drive1 = IVL_DR_PULL;
+			break;
+		      case Link::STRONG:
+			tmp->drive1 = IVL_DR_STRONG;
+			break;
+		      case Link::SUPPLY:
+			tmp->drive1 = IVL_DR_SUPPLY;
+			break;
+		  }
+	    }
       }
 
       assert(net->scope());
