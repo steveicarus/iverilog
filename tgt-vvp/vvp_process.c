@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1169,8 +1169,18 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
       ivl_expr_t lword_idx, rword_idx;
       unsigned long use_lword = 0, use_rword = 0;
 
-      if (ivl_expr_type(rval) != IVL_EX_SIGNAL)
+      if (ivl_expr_type(rval) != IVL_EX_SIGNAL) {
+	    if (ivl_expr_type(rval) == IVL_EX_NUMBER ||
+	        ivl_expr_type(rval) == IVL_EX_REALNUM)
+		  return;
+
+	    fprintf(stderr, "%s:%u: tgt-vvp sorry: procedural continuous "
+		    "assignments are not yet fully supported. The RHS of "
+		    "this assignment will only be evaluated once, at the "
+		    "time the assignment statement is executed.\n",
+		    ivl_stmt_file(net), ivl_stmt_lineno(net));
 	    return;
+      }
 
       switch (ivl_statement_type(net)) {
 	  case IVL_ST_CASSIGN:
@@ -1253,7 +1263,14 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 
       if ((rword_idx = ivl_expr_oper1(rval)) != 0) {
 	    assert(ivl_signal_dimensions(rsig) != 0);
-	    assert(number_is_immediate(rword_idx, IMM_WID, 0));
+	    if (!number_is_immediate(rword_idx, IMM_WID, 0)) {
+		  fprintf(stderr, "%s:%u: tgt-vvp sorry: procedural continuous "
+			  "assignments are not yet fully supported. The RHS of "
+			  "this assignment will only be evaluated once, at the "
+			  "time the assignment statement is executed.\n",
+			  ivl_stmt_file(net), ivl_stmt_lineno(net));
+		  return;
+	    }
 	    assert(! number_is_unknown(rword_idx));
 	    use_rword = get_number_immediate(rword_idx);
 	      /* We do not currently support using a word from a variable
