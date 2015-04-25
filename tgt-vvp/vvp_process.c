@@ -1056,7 +1056,14 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 
       if ((rword_idx = ivl_expr_oper1(rval)) != 0) {
 	    assert(ivl_signal_dimensions(rsig) != 0);
-	    assert(number_is_immediate(rword_idx, IMM_WID, 0));
+	    if (!number_is_immediate(rword_idx, IMM_WID, 0)) {
+		  fprintf(stderr, "%s:%u: tgt-vvp sorry: procedural continuous "
+			  "assignments are not yet fully supported. The RHS of "
+			  "this assignment will only be evaluated once, at the "
+			  "time the assignment statement is executed.\n",
+			  ivl_stmt_file(net), ivl_stmt_lineno(net));
+		  return;
+	    }
 	      /* An out-of-range or undefined index will have been
 		 converted to a canonical offset of 1'bx. Skip the
 		 assignment in this case. */
