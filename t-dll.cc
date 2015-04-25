@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1057,19 +1057,16 @@ void dll_target::logic(const NetLogic*net)
       obj->npins_ = net->pin_count();
       obj->pins_ = new ivl_nexus_t[obj->npins_];
 
-      ivl_nexus_ptr_t out_ptr = 0;
-
       for (unsigned idx = 0 ;  idx < obj->npins_ ;  idx += 1) {
 	    const Nexus*nex = net->pin(idx).nexus();
 	    assert(nex->t_cookie());
 	    obj->pins_[idx] = nex->t_cookie();
 	    ivl_nexus_ptr_t tmp = nexus_log_add(obj->pins_[idx], obj, idx);
-	    if (idx == 0)
-		  out_ptr = tmp;
+	    if (idx == 0) {
+		  tmp->drive0 = net->pin(0).drive0();
+		  tmp->drive1 = net->pin(0).drive1();
+	    }
       }
-
-      out_ptr->drive0 = net->pin(0).drive0();
-      out_ptr->drive1 = net->pin(0).drive1();
 
       assert(net->scope());
       ivl_scope_t scop = find_scope(des_, net->scope());
