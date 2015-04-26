@@ -1079,6 +1079,12 @@ verinum* pform_verinum_with_size(verinum*siz, verinum*val,
       assert(siz->is_defined());
       unsigned long size = siz->as_ulong();
 
+      if (size == 0) {
+	    cerr << file << ":" << lineno << ": error: Sized numeric constant "
+		    "must have a size greater than zero." << endl;
+	    error_count += 1;
+      }
+
       verinum::V pad;
 
       switch (val->get(val->len()-1)) {
