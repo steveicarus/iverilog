@@ -2448,34 +2448,34 @@ enum_data_type
 	enum_type->range.reset(make_range_from_width(integer_width));
 	$$ = enum_type;
       }
-  | K_enum K_logic unsigned_signed_opt dimensions '{' enum_name_list '}'
+  | K_enum K_logic unsigned_signed_opt dimensions_opt '{' enum_name_list '}'
       { enum_type_t*enum_type = new enum_type_t;
 	FILE_NAME(enum_type, @1);
 	enum_type->names .reset($6);
 	enum_type->base_type = IVL_VT_LOGIC;
 	enum_type->signed_flag = $3;
 	enum_type->integer_flag = false;
-	enum_type->range.reset($4);
+	enum_type->range.reset($4 ? $4 : make_range_from_width(1));
 	$$ = enum_type;
       }
-  | K_enum K_reg unsigned_signed_opt dimensions '{' enum_name_list '}'
+  | K_enum K_reg unsigned_signed_opt dimensions_opt '{' enum_name_list '}'
       { enum_type_t*enum_type = new enum_type_t;
 	FILE_NAME(enum_type, @1);
 	enum_type->names .reset($6);
 	enum_type->base_type = IVL_VT_LOGIC;
 	enum_type->signed_flag = $3;
 	enum_type->integer_flag = false;
-	enum_type->range.reset($4);
+	enum_type->range.reset($4 ? $4 : make_range_from_width(1));
 	$$ = enum_type;
       }
-  | K_enum K_bit unsigned_signed_opt dimensions '{' enum_name_list '}'
+  | K_enum K_bit unsigned_signed_opt dimensions_opt '{' enum_name_list '}'
       { enum_type_t*enum_type = new enum_type_t;
 	FILE_NAME(enum_type, @1);
 	enum_type->names .reset($6);
 	enum_type->base_type = IVL_VT_BOOL;
 	enum_type->signed_flag = $3;
 	enum_type->integer_flag = false;
-	enum_type->range.reset($4);
+	enum_type->range.reset($4 ? $4 : make_range_from_width(1));
 	$$ = enum_type;
       }
   ;
