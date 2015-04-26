@@ -909,6 +909,11 @@ bool test_ranges_eeq(const vector<netrange_t>&lef, const vector<netrange_t>&rig)
  */
 NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 {
+	// This sets the vector or array dimension size that will
+	// cause a warning. For now, these warnings are permanently
+	// enabled.
+      const long warn_dimension_size = 1 << 30;
+
       NetNet::Type wtype = type_;
       bool is_implicit_scalar = false;
       if (wtype == NetNet::IMPLICIT) {
@@ -1042,7 +1047,11 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    packed_dimensions = nlist;
 	    wid = netrange_width(packed_dimensions);
-
+	    if (wid > warn_dimension_size) {
+		  cerr << get_fileline() << ": warning: Vector size "
+		          "is greater than " << warn_dimension_size
+		       << "." << endl;
+	    }
       }
 
       unsigned nattrib = 0;
@@ -1115,6 +1124,11 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    } else {
 		  index_l = lval.as_long();
 		  index_r = rval.as_long();
+	    }
+	    if (abs(index_r - index_l) > warn_dimension_size) {
+		  cerr << get_fileline() << ": warning: Array dimension "
+		          "is greater than " << warn_dimension_size
+		       << "." << endl;
 	    }
 
 	    unpacked_dimensions.push_back(netrange_t(index_l, index_r));
