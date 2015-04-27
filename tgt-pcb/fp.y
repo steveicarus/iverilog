@@ -1,5 +1,4 @@
 
-%name-prefix="fp"
 %pure-parser
 %parse-param {const char*file_path}
 

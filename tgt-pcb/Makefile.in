@@ -85,9 +85,10 @@ pcb_config.h: stamp-pcb_config-h
 fp_lex.cc: $(srcdir)/fp.lex
 	$(LEX) -s -ofp_lex.cc $(srcdir)/fp.lex
 
-fp.cc fp.h: $(srcdir)/fp.y
-	$(YACC) --verbose -t -d -o fp.cc $(srcdir)/fp.y
-	mv fp.cc.h fp.h 2>/dev/null || mv fp.hh fp.h
+fp.cc: $(srcdir)/fp.y
+	$(YACC) --verbose -t -p fp -d -o $@ $<
+fp.h: fp.cc
+	mv fp.cc.h $@ 2>/dev/null || mv fp.hh $@
 
 ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl
