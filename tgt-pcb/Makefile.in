@@ -82,6 +82,8 @@ pcb_config.h: stamp-pcb_config-h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 
+fp_lex.o: fp_lex.cc fp.h
+
 fp_lex.cc: $(srcdir)/fp.lex
 	$(LEX) -s -ofp_lex.cc $(srcdir)/fp.lex
 
