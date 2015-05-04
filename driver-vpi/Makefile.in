@@ -49,6 +49,7 @@ endif
 
 CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@
 CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
+CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
 O = main.o res.o
@@ -80,6 +81,7 @@ config.h: $(srcdir)/config.h.in Makefile
 	sed -e 's;@IVLCC@;@CC@;' -e 's;@IVLCXX@;@CXX@;' \
 	    -e 's;@SUFFIX@;$(suffix);g' \
 	    -e 's;@IVLCFLAGS@;$(CFLAGS);' \
+	    -e 's;@IVLCXXFLAGS@;$(CXXFLAGS);' \
 	    -e 's;@SHARED@;@shared@;' $< > $@
 
 # Windows specific...

@@ -32,7 +32,7 @@
 
 #include <windows.h>
 
-static void setup_ivl_environment();
+static void setup_ivl_environment(void);
 static void assign(char **ptr, char *str);
 
 /* The compile options: compiler, flags, etc. are in here */
@@ -87,7 +87,7 @@ static void myExit(int exitVal)
 
 /* display usage summary and exit */
 
-static void usage()
+static void usage(void)
 {
 	fprintf(stderr,"usage: iverilog-vpi" IVERILOG_SUFFIX " [src and obj files]...\n");
 	fprintf(stderr,"   or  iverilog-vpi" IVERILOG_SUFFIX " -mingw=dir\n");
@@ -109,7 +109,7 @@ static void initDynString(char **str)
 
 /* initialize dynamic memory buffers */
 
-static void init()
+static void init(void)
 {
 	initDynString(&gstr.pCCSRC);
 	initDynString(&gstr.pCXSRC);
@@ -155,7 +155,7 @@ static int startsWith (char *prefix, char *str)
 /* append "app" to "ptr", allocating memory as needed    */
 /*   if count is zero, then copy all characters of "app" */
 
-static void appendn (char **ptr, char *app, int count)
+static void appendn (char **ptr, char *app, size_t count)
 {
 	char *nptr = (char *) realloc(*ptr, strlen(*ptr) +
                                             (count?count:strlen(app)) + 1);
@@ -191,7 +191,7 @@ static void appendBackSlash(char **str)
 /* copy count characters of "str" to "ptr", allocating memory as needed */
 /*   if count is zero, then copy all characters of "str"                */
 
-static void assignn (char **ptr, char *str, int count)
+static void assignn (char **ptr, char *str, size_t count)
 {
 	char *nptr = (char *) realloc(*ptr, (count?count:strlen(str)) + 1);
 
@@ -483,7 +483,7 @@ static void checkIvlDir(char *root)
 
 #define IVL_REGKEY_MINGW "MingwDir"
 
-static void setup_mingw_environment()
+static void setup_mingw_environment(void)
 {
 	char *pOldPATH = getenv("PATH");		/* get current path */
 
@@ -515,7 +515,7 @@ static void setup_mingw_environment()
 
 #define IVL_REGKEY_IVL   "InstallDir"
 
-static void setup_ivl_environment()
+static void setup_ivl_environment(void)
 {
 	if (*gstr.pIVL) {
 		checkIvlDir(gstr.pIVL);
@@ -602,7 +602,7 @@ static void compile(char *pSource, char *pFlags, char **pObject, int *compile_er
 
 /* using the global strings, compile and link */
 
-static void compile_and_link()
+static void compile_and_link(void)
 {
 	char *buf=0;
 	int iRet, compile_errors = 0;
@@ -617,9 +617,9 @@ static void compile_and_link()
 	checkIvlDir(gstr.pIVL);
 
 	  /* compile the C source files (*.c) */
-	compile(gstr.pCCSRC, gstr.CCFLAGS, &gstr.pOBJ, &compile_errors, IVERILOG_VPI_CC );
+	compile(gstr.pCCSRC, gstr.pCCFLAGS, &gstr.pOBJ, &compile_errors, IVERILOG_VPI_CC );
 	  /* compile the C++ source files (*.cc, *.cpp) */
-	compile(gstr.pCXSRC, gstr.CXFLAGS, &gstr.pOBJ, &compile_errors, IVERILOG_VPI_CXX);
+	compile(gstr.pCXSRC, gstr.pCXFLAGS, &gstr.pOBJ, &compile_errors, IVERILOG_VPI_CXX);
 
 	if (compile_errors) {
 		fprintf(stderr,"iverilog-vpi: %d file(s) failed to compile.\n",
