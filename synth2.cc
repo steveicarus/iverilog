@@ -772,7 +772,7 @@ bool NetCase::synth_async_casez_(Design*des, NetScope*scope,
 
       netvector_t*condit_type = new netvector_t(IVL_VT_LOGIC, 0, 0);
 
-      NetCaseCmp::kind_t case_kind;
+      NetCaseCmp::kind_t case_kind = NetCaseCmp::EEQ;
       switch (type()) {
 	  case NetCase::EQ:
 	    case_kind = NetCaseCmp::EEQ;

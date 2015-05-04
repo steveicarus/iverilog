@@ -380,7 +380,7 @@ static void show_lpm_divide(ivl_lpm_t net)
  */
 static void show_lpm_cmp_eeq(ivl_lpm_t net)
 {
-      const char*str;
+      const char*str = 0;
       switch (ivl_lpm_type(net)) {
 	  case IVL_LPM_CMP_EEQ:
 	    str = "EEQ";

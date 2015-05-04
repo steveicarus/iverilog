@@ -942,7 +942,7 @@ static void emit_stmt_block_named(ivl_scope_t scope, ivl_statement_t stmt)
 
 static void emit_stmt_case(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      const char *case_type;
+      const char *case_type = 0;
       unsigned idx, default_case, count = ivl_stmt_case_count(stmt);
       switch (ivl_statement_type(stmt)) {
 	case IVL_ST_CASE:

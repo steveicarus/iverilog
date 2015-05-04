@@ -374,6 +374,8 @@ NetScope::param_ref_t NetScope::find_parameter(perm_string key)
 	// To get here the parameter must already exist, so we should
 	// never get here.
       assert(0);
+	// But return something to avoid a compiler warning.
+      return idx;
 }
 
 NetScope::TYPE NetScope::type() const
