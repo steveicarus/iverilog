@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Gus Baldauf (gus@picturel.com)
+ * Copyright (c) 2002-2015 Gus Baldauf (gus@picturel.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -43,14 +43,15 @@ static void assign(char **ptr, char *str);
 static struct global_strings {
 	char *pCCSRC;		/* list of C source files (*.c) */
 	char *pCXSRC;		/* list of C++ source files (*.cc, *.cpp) */
-	char *pOBJ;			/* list of object files */
-	char *pLIB;			/* list of library files */
-	char *pINCS;			/* list of include directories */
-	char *pDEFS;			/* list of definitions */
-	char *pOUT;			/* output file name (.vpi extension), if 0 length then no source files specified */
+	char *pOBJ;		/* list of object files */
+	char *pLIB;		/* list of library files */
+	char *pINCS;		/* list of include directories */
+	char *pDEFS;		/* list of definitions */
+	char *pOUT;		/* output file name (.vpi extension), if 0 length then no source files specified */
 	char *pMINGW;		/* path to MinGW directory */
-	char *pIVL;			/* path to IVL directory */
-	char *pCFLAGS;		/* CFLAGS option */
+	char *pIVL;		/* path to IVL directory */
+	char *pCCFLAGS;		/* compiler flags for compiling C source files */
+	char *pCXFLAGS;		/* compiler flags for compiling C++ source files */
 	char *pLDLIBS;		/* LDLIBS option */
 	char *pNewPath;		/* new PATH environment variable setting */
 	char *pLD;		/* what to use for a linker */
@@ -75,7 +76,8 @@ static void myExit(int exitVal)
 	deInitDynString(gstr.pOUT);
 	deInitDynString(gstr.pMINGW);
 	deInitDynString(gstr.pIVL);
-	deInitDynString(gstr.pCFLAGS);
+	deInitDynString(gstr.pCCFLAGS);
+	deInitDynString(gstr.pCXFLAGS);
 	deInitDynString(gstr.pLDLIBS);
 	deInitDynString(gstr.pNewPath);
 	free(gstr.pLD);
@@ -118,7 +120,8 @@ static void init()
 	initDynString(&gstr.pOUT);
 	initDynString(&gstr.pMINGW);
 	initDynString(&gstr.pIVL);
-	initDynString(&gstr.pCFLAGS);
+	initDynString(&gstr.pCCFLAGS);
+	initDynString(&gstr.pCXFLAGS);
 	initDynString(&gstr.pLDLIBS);
 	initDynString(&gstr.pNewPath);
 	  /* By default use the C compiler to link the programs. */
@@ -376,7 +379,7 @@ static int parse(int argc, char *argv[])
 		  /* Check for the --cflags option */
 		else if (stricmp("--cflags", argv[idx]) == 0) {
 			setup_ivl_environment();
-			printf("%s\n", gstr.pCFLAGS);
+			printf("%s\n", gstr.pCCFLAGS);
 			myExit(0);
 		}
 		  /* Check for the --ldflags option */
@@ -526,11 +529,17 @@ static void setup_ivl_environment()
 			myExit(6);
 		}
 
-	  /* Build up the CFLAGS option string */
-	assign(&gstr.pCFLAGS,IVERILOG_VPI_CFLAGS " -I\"");
-	append(&gstr.pCFLAGS,gstr.pIVL);
-	appendBackSlash(&gstr.pCFLAGS);
-	append(&gstr.pCFLAGS,"\\include\\\\iverilog\"" IVERILOG_SUFFIX);
+	  /* Build up the CCFLAGS option string */
+	assign(&gstr.pCCFLAGS,IVERILOG_VPI_CFLAGS " -I\"");
+	append(&gstr.pCCFLAGS,gstr.pIVL);
+	appendBackSlash(&gstr.pCCFLAGS);
+	append(&gstr.pCCFLAGS,"\\include\\\\iverilog\"" IVERILOG_SUFFIX);
+
+	  /* Build up the CXFLAGS option string */
+	assign(&gstr.pCXFLAGS,IVERILOG_VPI_CXXFLAGS " -I\"");
+	append(&gstr.pCXFLAGS,gstr.pIVL);
+	appendBackSlash(&gstr.pCXFLAGS);
+	append(&gstr.pCXFLAGS,"\\include\\\\iverilog\"" IVERILOG_SUFFIX);
 
 	  /* Build up the LDFLAGS option string */
 	assign(&gstr.pLDLIBS,"-L\"");
@@ -541,7 +550,7 @@ static void setup_ivl_environment()
 
 /* compile source modules */
 
-static void compile(char *pSource, char **pObject, int *compile_errors, char *compiler)
+static void compile(char *pSource, char *pFlags, char **pObject, int *compile_errors, char *compiler)
 {
 	char *ptr1 = pSource;
 	char *ptr2 = strchr(ptr1, ' ');
@@ -568,7 +577,7 @@ static void compile(char *pSource, char **pObject, int *compile_errors, char *co
 		append(&buf, " ");
 		append(&buf, gstr.pDEFS);
 		append(&buf, " ");
-		append(&buf, gstr.pCFLAGS);
+		append(&buf, pFlags);
 		append(&buf, " ");
 		append(&buf, gstr.pINCS);
 		append(&buf, " ");
@@ -608,9 +617,9 @@ static void compile_and_link()
 	checkIvlDir(gstr.pIVL);
 
 	  /* compile the C source files (*.c) */
-	compile(gstr.pCCSRC, &gstr.pOBJ, &compile_errors, IVERILOG_VPI_CC );
+	compile(gstr.pCCSRC, gstr.CCFLAGS, &gstr.pOBJ, &compile_errors, IVERILOG_VPI_CC );
 	  /* compile the C++ source files (*.cc, *.cpp) */
-	compile(gstr.pCXSRC, &gstr.pOBJ, &compile_errors, IVERILOG_VPI_CXX);
+	compile(gstr.pCXSRC, gstr.CXFLAGS, &gstr.pOBJ, &compile_errors, IVERILOG_VPI_CXX);
 
 	if (compile_errors) {
 		fprintf(stderr,"iverilog-vpi: %d file(s) failed to compile.\n",
