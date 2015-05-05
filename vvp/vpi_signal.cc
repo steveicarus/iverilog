@@ -580,7 +580,7 @@ static int signal_get(int code, vpiHandle ref)
 	    // This private property must return zero when undefined.
 	  case _vpiNexusId:
 	    if (rfp->msb.get_value() == rfp->lsb.get_value())
-		  return (int) (unsigned long) rfp->node;
+		  return (int) (uintptr_t) rfp->node;
 	    else
 		  return 0;
 

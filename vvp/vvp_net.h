@@ -1039,7 +1039,7 @@ template <class T> class vvp_sub_pointer_t {
 
       vvp_sub_pointer_t(T*ptr__, unsigned port__)
       {
-	    bits_ = reinterpret_cast<unsigned long> (ptr__);
+	    bits_ = reinterpret_cast<uintptr_t> (ptr__);
 	    assert( (bits_  &  3) == 0 );
 	    assert( (port__ & ~3) == 0 );
 	    bits_ |= port__;
@@ -1061,7 +1061,7 @@ template <class T> class vvp_sub_pointer_t {
       bool operator != (vvp_sub_pointer_t that) const { return bits_ != that.bits_; }
 
     private:
-      unsigned long bits_;
+      uintptr_t bits_;
 };
 
 typedef vvp_sub_pointer_t<vvp_net_t> vvp_net_ptr_t;
