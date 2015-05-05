@@ -1,0 +1,24 @@
+language: python
+
+addons:
+  apt:
+    packages:
+    - gperf
+
+sudo: true
+
+notifications:
+  email: false
+  
+install:
+ - git clone https://github.com/steveicarus/ivtest.git
+ - export PATH=$HOME/bin:$PATH
+ - sudo apt-get install gperf
+ 
+before_script:
+  -  autoconf
+  - ./configure --prefix=$HOME
+
+script:
+  - make; make install
+  - cd ivtest; perl vvp_reg.pl
