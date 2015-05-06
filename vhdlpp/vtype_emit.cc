@@ -152,7 +152,7 @@ int VTypePrimitive::emit_primitive_type(ostream&out) const
 	    out << "boolean";
 	    break;
 	  case BIT:
-	    out << "bool";
+	    out << "bit";
 	    break;
 	  case STDLOGIC:
 	    out << "logic";
