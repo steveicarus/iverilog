@@ -409,6 +409,14 @@ void generate_global_types(ActiveScope*res)
       res->use_name(perm_string::literal("natural"),   &primitive_NATURAL);
 }
 
+void emit_std_types(ostream&out)
+{
+    out << "`ifndef __VHDL_STD_TYPES" << endl;
+    out << "`define __VHDL_STD_TYPES" << endl;
+    out << "typedef enum bit { \\false , \\true } boolean ;" << endl;
+    out << "`endif" << endl;
+}
+
 bool is_global_type(perm_string name)
 {
       if (name == "boolean") return true;

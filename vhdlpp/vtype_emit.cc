@@ -149,6 +149,8 @@ int VTypePrimitive::emit_primitive_type(ostream&out) const
       int errors = 0;
       switch (type_) {
 	  case BOOLEAN:
+	    out << "boolean";
+	    break;
 	  case BIT:
 	    out << "bool";
 	    break;
