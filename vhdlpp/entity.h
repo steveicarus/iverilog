@@ -27,7 +27,7 @@
 # include  "StringHeap.h"
 # include  "LineInfo.h"
 
-typedef enum { PORT_NONE=0, PORT_IN, PORT_OUT } port_mode_t;
+typedef enum { PORT_NONE=0, PORT_IN, PORT_OUT, PORT_INOUT } port_mode_t;
 
 class Architecture;
 class Expression;

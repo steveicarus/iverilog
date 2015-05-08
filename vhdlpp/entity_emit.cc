@@ -74,17 +74,21 @@ int Entity::emit(ostream&out)
 
 		  switch (port->mode) {
 		      case PORT_NONE: // Should not happen
+			cerr << get_fileline() << ": error: Undefined port direction." << endl;
 			out << "NO_PORT " << port->name;
 			break;
 		      case PORT_IN:
 			out << "input ";
-			errors += decl.emit(out, port->name);
 			break;
 		      case PORT_OUT:
 			out << "output ";
-			errors += decl.emit(out, port->name);
+			break;
+		      case PORT_INOUT:
+			out << "inout ";
 			break;
 		  }
+
+		  errors += decl.emit(out, port->name);
 	    }
 	    cout << ")";
       }
