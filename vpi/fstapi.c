@@ -1449,12 +1449,12 @@ for(i=0;i<xc->maxhandle;i++)
                                         PPvoid_t pv = JudyHSIns(&PJHSArray, dmem, destlen, NULL);
                                         if(*pv)
                                                 {
-                                                uint32_t pvi = (long)(*pv);
+                                                uint32_t pvi = (intptr_t)(*pv);
                                                 vm4ip[2] = -pvi;
                                                 }
                                                 else
                                                 {
-                                                *pv = (void *)(long)(i+1);
+                                                *pv = (void *)(intptr_t)(i+1);
 #endif
                                                 fpos += fstWriterVarint(f, wrlen);
                                                 fpos += destlen;
@@ -1469,12 +1469,12 @@ for(i=0;i<xc->maxhandle;i++)
                                         PPvoid_t pv = JudyHSIns(&PJHSArray, scratchpnt, wrlen, NULL);
                                         if(*pv)
                                                 {
-                                                uint32_t pvi = (long)(*pv);
+                                                uint32_t pvi = (intptr_t)(*pv);
                                                 vm4ip[2] = -pvi;
                                                 }
                                                 else
                                                 {
-                                                *pv = (void *)(long)(i+1);
+                                                *pv = (void *)(intptr_t)(i+1);
 #endif
                                                 fpos += fstWriterVarint(f, 0);
                                                 fpos += wrlen;
@@ -1504,12 +1504,12 @@ for(i=0;i<xc->maxhandle;i++)
                                         PPvoid_t pv = JudyHSIns(&PJHSArray, dmem, rc, NULL);
                                         if(*pv)
                                                 {
-                                                uint32_t pvi = (long)(*pv);
+                                                uint32_t pvi = (intptr_t)(*pv);
                                                 vm4ip[2] = -pvi;
                                                 }
                                                 else
                                                 {
-                                                *pv = (void *)(long)(i+1);
+                                                *pv = (void *)(intptr_t)(i+1);
 #endif
                                                 fpos += fstWriterVarint(f, wrlen);
                                                 fpos += rc;
@@ -1524,12 +1524,12 @@ for(i=0;i<xc->maxhandle;i++)
                                         PPvoid_t pv = JudyHSIns(&PJHSArray, scratchpnt, wrlen, NULL);
                                         if(*pv)
                                                 {
-                                                uint32_t pvi = (long)(*pv);
+                                                uint32_t pvi = (intptr_t)(*pv);
                                                 vm4ip[2] = -pvi;
                                                 }
                                                 else
                                                 {
-                                                *pv = (void *)(long)(i+1);
+                                                *pv = (void *)(intptr_t)(i+1);
 #endif
                                                 fpos += fstWriterVarint(f, 0);
                                                 fpos += wrlen;
@@ -1546,12 +1546,12 @@ for(i=0;i<xc->maxhandle;i++)
                         PPvoid_t pv = JudyHSIns(&PJHSArray, scratchpnt, wrlen, NULL);
                         if(*pv)
                                 {
-                                uint32_t pvi = (long)(*pv);
+                                uint32_t pvi = (intptr_t)(*pv);
                                 vm4ip[2] = -pvi;
                                 }
                                 else
                                 {
-                                *pv = (void *)(long)(i+1);
+                                *pv = (void *)(intptr_t)(i+1);
 #endif
                                 fpos += fstWriterVarint(f, 0);
                                 fpos += wrlen;
@@ -2299,22 +2299,24 @@ if(xc && path && path[0])
 #ifndef _WAVE_HAVE_JUDY
         const uint32_t hashmask = FST_PATH_HASHMASK;
         const unsigned char *path2 = (const unsigned char *)path;
+	PPvoid_t pv;
 #else
         char *path2 = alloca(slen + 1); /* judy lacks const qualifier in its JudyHSIns definition */
+	PPvoid_t pv;
         strcpy(path2, path);
 #endif
 
-        PPvoid_t pv = JudyHSIns(&(xc->path_array), path2, slen, NULL);
+        pv = JudyHSIns(&(xc->path_array), path2, slen, NULL);
         if(*pv)
                 {
-                sidx = (long)(*pv);
+                sidx = (intptr_t)(*pv);
                 }
                 else
                 {
                 char *rp = NULL;
 
                 sidx = ++xc->path_array_count;
-                *pv = (void *)(long)(xc->path_array_count);
+                *pv = (void *)(intptr_t)(xc->path_array_count);
 
                 if(use_realpath)
                         {
