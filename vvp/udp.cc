@@ -266,11 +266,7 @@ void vvp_udp_comb_s::compile_table(char**tab)
 	    cur.maskx = 0;
 	    if (port_count() > 8*sizeof(cur.mask0)) {
 		  fprintf(stderr, "internal error: primitive port count=%u "
-#ifdef __MINGW32__  /* MinGW does not know about z. */
-			  " > %u\n", port_count(), sizeof(cur.mask0));
-#else
-			  " > %zu\n", port_count(), sizeof(cur.mask0));
-#endif
+			  " > %" SIZE_FMT_U "\n", port_count(), sizeof(cur.mask0));
 		  assert(port_count() <= 8*sizeof(cur.mask0));
 	    }
 	    for (unsigned pp = 0 ;  pp < port_count() ;  pp += 1) {

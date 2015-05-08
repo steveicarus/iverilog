@@ -27,6 +27,10 @@
 #  endif
 #endif
 
+# define SIZEOF_UNSIGNED_LONG_LONG 0
+
+# define SIZEOF_SIZE_T 0
+
 # undef NEED_LU
 # undef NEED_TU
 # undef WLU
@@ -61,5 +65,15 @@
  * special valgrind hooks for the memory pools.
  */
 # undef CHECK_WITH_VALGRIND
+
+#ifdef __MINGW32__
+# if SIZEOF_SIZE_T == SIZEOF_UNSIGNED_LONG_LONG
+#  define SIZE_FMT_D "llu"
+# else
+#  define SIZE_FMT_D "u"
+# endif
+#else
+# define SIZE_FMT_D "zu"
+#endif
 
 #endif /* IVL_config_H */

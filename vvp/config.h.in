@@ -33,6 +33,8 @@
 #endif
 # define SIZEOF_UNSIGNED 0
 
+# define SIZEOF_SIZE_T 0
+
 # undef NEED_LU
 # undef NEED_TU
 # undef WLU
@@ -132,6 +134,16 @@ typedef unsigned long vvp_time64_t;
 #endif
 
 #endif /* HAVE_INTTYPES_H */
+
+#ifdef __MINGW32__
+# if SIZEOF_SIZE_T == SIZEOF_UNSIGNED_LONG_LONG
+#  define SIZE_FMT_U "llu"
+# else
+#  define SIZE_FMT_U "u"
+# endif
+#else
+# define SIZE_FMT_U "zu"
+#endif
 
 # include  <cmath>
 
