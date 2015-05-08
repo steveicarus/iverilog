@@ -2299,12 +2299,14 @@ if(xc && path && path[0])
 #ifndef _WAVE_HAVE_JUDY
         const uint32_t hashmask = FST_PATH_HASHMASK;
         const unsigned char *path2 = (const unsigned char *)path;
+	PPvoid_t pv;
 #else
         char *path2 = alloca(slen + 1); /* judy lacks const qualifier in its JudyHSIns definition */
+	PPvoid_t pv;
         strcpy(path2, path);
 #endif
 
-        PPvoid_t pv = JudyHSIns(&(xc->path_array), path2, slen, NULL);
+        pv = JudyHSIns(&(xc->path_array), path2, slen, NULL);
         if(*pv)
                 {
                 sidx = (intptr_t)(*pv);
