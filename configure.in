@@ -131,7 +131,6 @@ CXXFLAGS="$iverilog_temp_cxxflags"
 AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(unsigned long)
 AC_CHECK_SIZEOF(unsigned)
-AC_CHECK_SIZEOF(size_t)
 
 # vvp uses these...
 AC_CHECK_LIB(termcap, tputs)
@@ -223,6 +222,10 @@ case "${host}" in
     alpha*-*-linux*)
 	CPPFLAGS="-mieee $CPPFLAGS"
 	CFLAGS="-mieee $CFLAGS"
+	;;
+    *-*-mingw*)
+	CXXFLAGS="-D__USE_MINGW_ANSI_STDIO=1 $CXXFLAGS"
+	CFLAGS="-D__USE_MINGW_ANSI_STDIO=1 $CFLAGS"
 	;;
 esac
 

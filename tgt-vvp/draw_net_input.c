@@ -26,10 +26,6 @@
 # include  <assert.h>
 # include  "ivl_alloc.h"
 
-#ifdef __MINGW32__  /* MinGW has inconsistent %p output. */
-#define snprintf _snprintf
-#endif
-
 static ivl_signal_type_t signal_type_of_nexus(ivl_nexus_t nex)
 {
       unsigned idx;

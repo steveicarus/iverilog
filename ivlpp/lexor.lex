@@ -1898,7 +1898,7 @@ static int load_next_input(void)
 static void do_dump_precompiled_defines(FILE* out, struct define_t* table)
 {
     if (!table->keyword)
-        fprintf(out, "%s:%d:%" SIZE_FMT_D ":%s\n", table->name, table->argc, strlen(table->value), table->value);
+        fprintf(out, "%s:%d:%zd:%s\n", table->name, table->argc, strlen(table->value), table->value);
 
     if (table->left) do_dump_precompiled_defines(out, table->left);
 

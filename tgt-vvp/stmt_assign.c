@@ -22,11 +22,6 @@
 # include  <assert.h>
 # include  <stdlib.h>
 
-#ifdef __MINGW32__ /* MinGW has inconsistent %p output. */
-#define snprintf _snprintf
-#endif
-
-
 /*
  * These functions handle the blocking assignment. Use the %set
  * instruction to perform the actual assignment, and calculate any

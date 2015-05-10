@@ -421,10 +421,17 @@ extern PLI_UINT32 vpi_mcd_open(char *name);
 extern PLI_UINT32 vpi_mcd_close(PLI_UINT32 mcd);
 extern char      *vpi_mcd_name(PLI_UINT32 mcd);
 extern PLI_INT32  vpi_mcd_printf(PLI_UINT32 mcd, const char*fmt, ...)
+#ifdef __MINGW32__
+      __attribute__((format (gnu_printf,2,3)));
+#else
       __attribute__((format (printf,2,3)));
-
+#endif
 extern PLI_INT32  vpi_printf(const char*fmt, ...)
+#ifdef __MINGW32__
+      __attribute__((format (gnu_printf,1,2)));
+#else
       __attribute__((format (printf,1,2)));
+#endif
 
 extern PLI_INT32  vpi_vprintf(const char*fmt, va_list ap);
 extern PLI_INT32  vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap);

@@ -464,18 +464,18 @@ int main(int argc, char*argv[])
       }
 
       if (verbose_flag) {
-	    vpi_mcd_printf(1, " ... %8lu functors (net_fun pool=%" SIZE_FMT_U " bytes)\n",
+	    vpi_mcd_printf(1, " ... %8lu functors (net_fun pool=%zu bytes)\n",
 			   count_functors, vvp_net_fun_t::heap_total());
 	    vpi_mcd_printf(1, "           %8lu logic\n",  count_functors_logic);
 	    vpi_mcd_printf(1, "           %8lu bufif\n",  count_functors_bufif);
 	    vpi_mcd_printf(1, "           %8lu resolv\n",count_functors_resolv);
 	    vpi_mcd_printf(1, "           %8lu signals\n", count_functors_sig);
-	    vpi_mcd_printf(1, " ... %8lu filters (net_fil pool=%" SIZE_FMT_U " bytes)\n",
+	    vpi_mcd_printf(1, " ... %8lu filters (net_fil pool=%zu bytes)\n",
 			   count_filters, vvp_net_fil_t::heap_total());
-	    vpi_mcd_printf(1, " ... %8lu opcodes (%" SIZE_FMT_U " bytes)\n",
+	    vpi_mcd_printf(1, " ... %8lu opcodes (%zu bytes)\n",
 	                   count_opcodes, size_opcodes);
 	    vpi_mcd_printf(1, " ... %8lu nets\n",     count_vpi_nets);
-	    vpi_mcd_printf(1, " ... %8lu vvp_nets (%" SIZE_FMT_U " bytes)\n",
+	    vpi_mcd_printf(1, " ... %8lu vvp_nets (%zu bytes)\n",
 			   count_vvp_nets, size_vvp_nets);
 	    vpi_mcd_printf(1, " ... %8lu arrays (%lu words)\n",
 			   count_net_arrays, count_net_array_words);

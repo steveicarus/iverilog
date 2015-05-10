@@ -23,10 +23,6 @@
 # include  <stdlib.h>
 # include  <stdbool.h>
 
-#ifdef __MINGW32__ /* MinGW has inconsistent %p output. */
-#define snprintf _snprintf
-#endif
-
 static int show_statement(ivl_statement_t net, ivl_scope_t sscope);
 
 unsigned local_count = 0;

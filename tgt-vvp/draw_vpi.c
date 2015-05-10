@@ -23,10 +23,6 @@
 # include  <assert.h>
 # include  "ivl_alloc.h"
 
-#ifdef __MINGW32__  /* MinGW has inconsistent %p output. */
-#define snprintf _snprintf
-#endif
-
 struct args_info {
       char*text;
 	/* True ('s' or 'u' if this argument is a calculated vec4. */

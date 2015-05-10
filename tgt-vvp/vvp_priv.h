@@ -23,11 +23,6 @@
 # include  "ivl_target.h"
 # include  <stdio.h>
 
-#ifdef __MINGW32__  /* MinGW has inconsistent %p output. */
-#define snprintf _snprintf
-#endif
-
-
 extern int debug_draw;
 
 /*
