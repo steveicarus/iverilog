@@ -1,10 +1,10 @@
-.TH iverilog-vpi 1 "April 17th, 2009" "" "Version %M.%m.%n %E"
+.TH iverilog-vpi 1 "May 10th, 2015" "" "Version %M.%m.%n %E"
 .SH NAME
 iverilog-vpi - Compile front end for VPI modules
 
 .SH SYNOPSIS
 .B iverilog-vpi
-[\-\-name=\fIname\fP]
+[options]
 \fIsourcefile\fP...
 
 .SH DESCRIPTION
@@ -15,9 +15,9 @@ list of C or C++ source files, and generates as output a linked VPI
 module. See the \fBvvp\fP(1) man page for a description of how the
 linked module is loaded by a simulation.
 
-The output is named after the first source file. For example, if the
-first source file is named \fIfoo.c\fP, the output becomes
-\fIfoo.vpi\fP.
+By default the output is named after the first source file. For
+example, if the first source file is named \fIfoo.c\fP, the output
+becomes \fIfoo.vpi\fP.
 
 .SH OPTIONS
 \fIiverilog\-vpi\fP accepts the following options:
@@ -28,8 +28,8 @@ VPI modules to further reference external libraries.
 
 .TP 8
 .B -I\fIdirectory\fP
-Add \fIdirectory\fP to the list of directories that will be search for
-header files.
+Add \fIdirectory\fP to the list of directories that will be searched
+for header files.
 
 .TP 8
 .B -D\fIdefine\fP
@@ -41,46 +41,38 @@ Normally, the output VPI module will be named after the first source
 file passed to the command. This flag sets the name (without the .vpi
 suffix) of the output vpi module.
 
-.TP 8
-.B --install-dir
-This flag causes the program to print the install directory for VPI
-modules, then exit. It is a convenience for makefiles or automated
-plug-in installers.
-
-.TP 8
-.B --cflags, --ldflags and --ldlibs
-These flags provide compile time information.
-
 .SH "PC-ONLY OPTIONS"
 
-The PC port of \fIiverilog\-vpi\fP includes two special flags needed to
-support the more intractable development environment. These flags help
-the program locate parts that it needs.
+When built as a native Windows program (using the MinGW toolchain),
+by default \fIiverilog\-vpi\fP will attempt to locate the MinGW tools
+needed to compile a VPI module on the system path (as set by the PATH
+environment variable). As an alternative, the user may specify the
+location of the MinGW tools via the following option.
 
 .TP 8
 .B -mingw=\fIpath\fP
-Tell the program the root of the Mingw compiler tool suite. The
+Tell the program the root of the MinGW compiler tool suite. The
 \fBvvp\fP runtime is compiled with this compiler, and this is the
-compiler that \fIiverilog\-vpi\fP expects to use to compile your source
-code. This is normally not needed, and if you do use it, it is only
-needed once. The compiler will save the \fIpath\fP in the registry for
-use later.
+compiler that \fIiverilog\-vpi\fP expects to use to compile your
+source code. If this option accompanies a list of files, it will
+apply to the current build only. If this option is provided on its
+own, \fIiverilog\-vpi\fP will save the \fIpath\fP in the registry
+and use that path in preference to the system path for subsequent
+operations, avoiding the need to specify it on the command line
+every time.
+
+.SH "INFORMATIONAL OPTIONS"
+
+\fIiverilog\-vpi\fP includes additional flags to let Makefile gurus
+peek at the configuration of the \fIiverilog\fP installation.  This way,
+Makefiles can be written that handle complex VPI builds natively, and
+without hard-coding values that depend on the system and installation.
+If used at all, these options must be used one at a time, and without
+any other options or directives.
 
 .TP 8
-.B -ivl=\fIpath\fP
-Set for the use during compilation the root if the Icarus Verilog
-install. This is the place where you installed Icarus Verilog when you
-ran the installer. This flag is also only needed once, and the path is
-stored in the registry for future use.
-
-.SH "UNIX-ONLY OPTIONS"
-
-The UNIX version of \fIiverilog\-vpi\fP includes additional flags to
-let Makefile gurus peek at the configuration of the \fIiverilog\fP
-installation.  This way, Makefiles can be written that handle complex VPI
-builds natively, and without hard-coding values that depend on the
-system and installation.  If used at all, these options must be
-used one at a time, and without any other options or directives.
+.B --install-dir
+Print the install directory for VPI modules.
 
 .TP 8
 .B --cflags
@@ -94,11 +86,6 @@ Print the linker flags (LDFLAGS) needed to link a VPI module.
 .TP 8
 .B --ldlibs
 Print the libraries (LDLIBS) needed to link a VPI module.
-
-.TP 8
-.B -m32
-On 64bit systems that support it (and support vvp32) this flag
-requests a 32bit vpi binary instead of the default 64bit binary.
 
 .P
 Example GNU makefile that takes advantage of these flags:
@@ -123,12 +110,12 @@ Steve Williams (steve@icarus.com)
 
 .SH SEE ALSO
 iverilog(1), vvp(1),
-.BR "<http://www.icarus.com/eda/verilog/>",
-.BR "<http://www.mingw.org>",
+.BR "<http://iverilog.icarus.com/>",
+.BR "<http://mingw-w64.yaxm.org/>",
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002\-2009 Stephen Williams
+Copyright \(co  2002\-2015 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

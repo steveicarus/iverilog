@@ -1,4 +1,4 @@
-.TH vvp 1 "May 23rd, 2010" "" "Version %M.%m.%n %E"
+.TH vvp 1 "May 10th, 2015" "" "Version %M.%m.%n %E"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
@@ -182,11 +182,11 @@ Steve Williams (steve@icarus.com)
 .SH SEE ALSO
 iverilog(1),
 iverilog\-vpi(1),
-.BR "<http://www.icarus.com/eda/verilog/>"
+.BR "<http://iverilog.icarus.com/>"
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2001\-2010 Stephen Williams
+Copyright \(co  2001\-2015 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

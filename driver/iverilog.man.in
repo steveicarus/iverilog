@@ -1,4 +1,4 @@
-.TH iverilog 1 "December 16th, 2014" "" "Version %M.%m.%n %E"
+.TH iverilog 1 "May 10th, 2015" "" "Version %M.%m.%n %E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -520,14 +520,14 @@ Steve Williams (steve@icarus.com)
 
 .SH SEE ALSO
 vvp(1),
-.BR "<http://www.icarus.com/eda/verilog/>"
+.BR "<http://iverilog.icarus.com/>"
 
 Tips on using, debugging, and developing the compiler can be found at
 .BR "<http://iverilog.wikia.com/>"
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002\-2014 Stephen Williams
+Copyright \(co  2002\-2015 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0
