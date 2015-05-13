@@ -451,3 +451,64 @@ int ForLoopStatement::emit_runtime_(ostream&out, Entity*ent, ScopeBase*scope)
 
     return errors;
 }
+
+int ReportStmt::emit(ostream&out, Entity*, ScopeBase*)
+{
+    out << "$display(\"";
+
+    switch(severity_)
+    {
+        case NOTE:          out << "** Note: "; break;
+        case WARNING:       out << "** Warning: "; break;
+        case ERROR:         out << "** Error: "; break;
+        case FAILURE:       out << "** Failure: "; break;
+        case UNSPECIFIED:   ivl_assert(*this, false); break;
+    }
+
+    out << msg_;
+    out << " (" << get_fileline() << ")\");";
+
+    if(severity_ == FAILURE)
+        out << "$finish();";
+
+    out << std::endl;
+
+    return 0;
+}
+
+void ReportStmt::write_to_stream(std::ostream&fd)
+{
+    fd << "report \"" << msg_ << "\"" << std::endl;
+
+    fd << "severity ";
+    switch(severity_)
+    {
+        case NOTE:          fd << "NOTE"; break;
+        case WARNING:       fd << "WARNING"; break;
+        case ERROR:         fd << "ERROR"; break;
+        case FAILURE:       fd << "FAILURE"; break;
+        case UNSPECIFIED:   break;
+    }
+    fd << ";" << std::endl;
+}
+
+int AssertStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+    int errors = 0;
+
+    out << "if(!(";
+    errors += cond_->emit(out, ent, scope);
+    out << ")) begin" << std::endl;
+    errors += ReportStmt::emit(out, ent, scope);
+    out << "end" << std::endl;
+
+    return errors;
+}
+
+void AssertStmt::write_to_stream(std::ostream&fd)
+{
+    fd << "assert ";
+    cond_->write_to_stream(fd);
+    fd << std::endl;
+    ReportStmt::write_to_stream(fd);
+}

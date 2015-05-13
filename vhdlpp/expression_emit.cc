@@ -34,6 +34,33 @@
 
 using namespace std;
 
+inline static int emit_logic(char val, ostream& out, const VTypePrimitive::type_t type)
+{
+// TODO case 'W': case 'L': case 'H':
+
+    switch (val) {
+	case '-': case 'U':
+	  val = 'x';
+	  /* fall through */
+
+	case 'X': case 'Z':
+	  assert(type == VTypePrimitive::STDLOGIC);
+	  /* fall through */
+
+	case '0':
+	case '1':
+	  out << (char) tolower(val);
+	  break;
+
+	default:
+	  assert(false);
+	  out << "x";
+          return 1;
+    }
+
+    return 0;
+}
+
 int Expression::emit(ostream&out, Entity*, ScopeBase*)
 {
       out << " /* " << get_fileline() << ": internal error: "
@@ -396,23 +423,15 @@ int ExpBitstring::emit(ostream&out, Entity*, ScopeBase*)
 int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*, ScopeBase*,
 				      const VTypePrimitive*etype)
 {
-      switch (etype->type()) {
-	  case VTypePrimitive::BOOLEAN:
-	  case VTypePrimitive::BIT:
-	  case VTypePrimitive::STDLOGIC:
-	    switch (value_) {
-		case '0':
-		case '1':
-		      out << "1'b" << value_;
-		return 0;
-		default:
-		  break;
-	    }
+      out << "1'b";
+      int res = emit_logic(value_, out, etype->type());
 
-	  default:
-	    return 1;
-      }
-      return 1;
+      if(res)
+	  cerr << get_fileline() << ": internal error: "
+	       << "Don't know how to handle bit " << value_
+	       << " with etype==" << etype->type() << endl;
+
+      return res;
 }
 
 int ExpCharacter::emit(ostream&out, Entity*ent, ScopeBase*scope)
@@ -625,6 +644,16 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
       } else if (name_ == "falling_edge" && argv_.size() == 1) {
 	    out << "$ivlh_falling_edge(";
+	    errors += argv_[0]->emit(out, ent, scope);
+	    out << ")";
+
+      } else if (name_ == "and_reduce" && argv_.size() == 1) {
+            out << "&(";
+	    errors += argv_[0]->emit(out, ent, scope);
+	    out << ")";
+
+      } else if (name_ == "or_reduce" && argv_.size() == 1) {
+            out << "|(";
 	    errors += argv_[0]->emit(out, ent, scope);
 	    out << ")";
 
@@ -991,29 +1020,13 @@ int ExpString::emit_as_array_(ostream& out, Entity*, ScopeBase*, const VTypeArra
       assert(etype->type() != VTypePrimitive::INTEGER);
       out << value_.size() << "'b";
       for (size_t idx = 0 ; idx < value_.size() ; idx += 1) {
-	    switch (value_[idx]) {
-		case '0':
-		  out << "0";
-		  break;
-		case '1':
-		  out << "1";
-		  break;
-		case 'z': case 'Z':
-		  assert(etype->type() == VTypePrimitive::STDLOGIC);
-		  out << "z";
-		  break;
-		case '-':
-		  assert(etype->type() == VTypePrimitive::STDLOGIC);
-		  out << "x";
-		  break;
-		default:
-		  cerr << get_fileline() << ": internal error: "
-		       << "Don't know how to handle bit " << value_[idx]
-		       << " with etype==" << etype->type() << endl;
-		  assert(etype->type() == VTypePrimitive::STDLOGIC);
-		  out << "x";
-		  break;
-	    }
+          int res = emit_logic(value_[idx], out, etype->type());
+          errors += res;
+
+          if(res)
+              cerr << get_fileline() << ": internal error: "
+                  << "Don't know how to handle bit " << value_[idx]
+                  << " with etype==" << etype->type() << endl;
       }
 
       return errors;

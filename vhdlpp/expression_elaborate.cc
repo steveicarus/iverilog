@@ -877,6 +877,12 @@ const VType* ExpFunc::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*) c
           return new VTypeArray(element, width, 0, sign);
       }
 
+      if(name_ == "and_reduce" || name_ == "or_reduce") {
+          ivl_assert(*this, argv_.size() == 1);
+          const VType*element = &primitive_STDLOGIC;
+          return new VTypeArray(element, 0, 0, false);
+      }
+
       // Other cases
       Subprogram*prog = def_;
 
@@ -888,6 +894,7 @@ const VType* ExpFunc::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*) c
       if(!prog)
           prog = library_find_subprogram(name_);
 
+      cerr << get_fileline() << ": sorry: VHDL function " << name_ << " not yet implemented" << endl;
       ivl_assert(*this, prog);
 
       return def_->peek_return_type();

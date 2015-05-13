@@ -273,4 +273,39 @@ class BasicLoopStatement : public LoopStatement {
       void dump(ostream&out, int indent) const;
 };
 
+class ReportStmt : public SequentialStmt {
+    public:
+      typedef enum { UNSPECIFIED, NOTE, WARNING, ERROR, FAILURE } severity_t;
+
+      ReportStmt(const char*message, severity_t severity = NOTE);
+      virtual ~ReportStmt() {}
+
+      void dump(ostream&out, int indent) const;
+      int emit(ostream&out, Entity*entity, ScopeBase*scope);
+      void write_to_stream(std::ostream&fd);
+
+      inline const std::string& message() const { return msg_; }
+      inline severity_t severity() const { return severity_; }
+
+    protected:
+      std::string msg_;
+      severity_t severity_;
+};
+
+class AssertStmt : public ReportStmt {
+    public:
+      AssertStmt(Expression*condition, const char*message, ReportStmt::severity_t severity = ReportStmt::ERROR);
+
+      void dump(ostream&out, int indent) const;
+      int elaborate(Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*entity, ScopeBase*scope);
+      void write_to_stream(std::ostream&fd);
+
+    private:
+      Expression*cond_;
+
+      // Message displayed when there is no report assigned.
+      static const std::string default_msg_;
+};
+
 #endif /* IVL_sequential_H */

@@ -260,6 +260,8 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
       Architecture::Statement* arch_statement;
       std::list<Architecture::Statement*>* arch_statement_list;
 
+      ReportStmt::severity_t severity;
+
       Subprogram*subprogram;
 };
 
@@ -349,6 +351,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <text> architecture_body_start package_declaration_start
 %type <text> package_body_start
 %type <text> identifier_opt identifier_colon_opt logical_name suffix instantiated_unit
+
 %type <name_list> logical_name_list identifier_list
 %type <name_list> enumeration_literal_list enumeration_literal
 
@@ -356,7 +359,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <sequ> sequential_statement if_statement signal_assignment signal_assignment_statement
 %type <sequ> case_statement procedure_call procedure_call_statement
 %type <sequ> loop_statement variable_assignment variable_assignment_statement
-%type <sequ> return_statement
+%type <sequ> assertion_statement report_statement return_statement
 
 %type <range> range
 %type <range_list> range_list index_constraint
@@ -371,6 +374,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <exp_else_list> else_when_waveforms
 
 %type <subprogram> function_specification subprogram_specification subprogram_body_start
+%type <severity> severity severity_opt
 
 %%
 
@@ -430,6 +434,22 @@ architecture_statement_part
       { $$ = 0;
 	errormsg(@1, "Syntax error in architecture statement.\n");
 	yyerrok;
+      }
+  ;
+
+assertion_statement
+  : K_assert expression report_statement
+      { ReportStmt*report = dynamic_cast<ReportStmt*>($3);
+        assert(report);
+	AssertStmt*tmp = new AssertStmt($2, report->message().c_str(), report->severity());
+        delete report;
+	FILE_NAME(tmp,@2);
+	$$ = tmp;
+      }
+  | K_assert expression severity_opt ';'
+      { AssertStmt*tmp = new AssertStmt($2, NULL, $3);
+	FILE_NAME(tmp,@2);
+	$$ = tmp;
       }
   ;
 
@@ -1570,10 +1590,17 @@ mode_opt : mode {$$ = $1;} | {$$ = PORT_NONE;} ;
 
 name /* IEEE 1076-2008 P8.1 */
   : IDENTIFIER /* simple_name (IEEE 1076-2008 P8.2) */
-      { ExpName*tmp = new ExpName(lex_strings.make($1));
-	FILE_NAME(tmp, @1);
-	delete[]$1;
-	$$ = tmp;
+      { Expression*tmp;
+        if(!strcasecmp($1, "true"))
+            tmp = new ExpBitstring("1");
+        else if(!strcasecmp($1, "false"))
+            tmp = new ExpBitstring("0");
+        else
+            tmp = new ExpName(lex_strings.make($1));
+
+        FILE_NAME(tmp, @1);
+        delete[]$1;
+        $$ = tmp;
       }
 
   | selected_name
@@ -1807,6 +1834,7 @@ primary
 	delete[]$1;
 	$$ = tmp;
       }
+
 /*XXXX Caught up in element_association_list?
   | '(' expression ')'
       { $$ = $2; }
@@ -2029,6 +2057,14 @@ relation
       }
   ;
 
+report_statement
+  : K_report STRING_LITERAL severity_opt ';'
+      { ReportStmt*tmp = new ReportStmt($2, $3);
+	FILE_NAME(tmp,@2);
+	delete[]$2;
+	$$ = tmp;
+      }
+
 return_statement
   : K_return expression ';'
       { ReturnStmt*tmp = new ReturnStmt($2);
@@ -2136,6 +2172,8 @@ sequential_statement
   | procedure_call_statement { $$ = $1; }
   | loop_statement { $$ = $1; }
   | return_statement { $$ = $1; }
+  | report_statement { $$ = $1; }
+  | assertion_statement { $$ = $1; }
   | K_null ';' { $$ = 0; }
   | error ';'
       { errormsg(@1, "Syntax error in sequential statement.\n");
@@ -2143,6 +2181,26 @@ sequential_statement
 	yyerrok;
       }
   ;
+
+severity
+  : K_severity IDENTIFIER
+  { if(!strcasecmp($2, "NOTE"))
+        $$ = ReportStmt::NOTE;
+    else if(!strcasecmp($2, "WARNING"))
+        $$ = ReportStmt::WARNING;
+    else if(!strcasecmp($2, "ERROR"))
+        $$ = ReportStmt::ERROR;
+    else if(!strcasecmp($2, "FAILURE"))
+        $$ = ReportStmt::FAILURE;
+    else {
+        errormsg(@1, "Invalid severity level (possible values: NOTE, WARNING, ERROR, FAILURE).\n");
+        $$ = ReportStmt::UNSPECIFIED;
+    }
+  }
+
+severity_opt
+  : severity { $$ = $1; }
+  | { $$ = ReportStmt::UNSPECIFIED; }
 
 shift_expression
   : simple_expression
