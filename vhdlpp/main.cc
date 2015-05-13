@@ -232,6 +232,8 @@ int main(int argc, char*argv[])
 	    return 3;
       }
 
+      emit_std_types(cout);
+
       errors = emit_packages();
       if (errors > 0) {
 	    fprintf(stderr, "%d errors emitting packages.\n", errors);

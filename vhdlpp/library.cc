@@ -404,9 +404,17 @@ void generate_global_types(ActiveScope*res)
       res->use_name(perm_string::literal("real"),      &primitive_REAL);
       res->use_name(perm_string::literal("std_logic"), &primitive_STDLOGIC);
       res->use_name(perm_string::literal("character"), &primitive_CHARACTER);
-      res->use_name(perm_string::literal("bit_vector"),&primitive_BOOL_VECTOR);
+      res->use_name(perm_string::literal("bit_vector"),&primitive_BIT_VECTOR);
       res->use_name(perm_string::literal("string"),    &primitive_STRING);
       res->use_name(perm_string::literal("natural"),   &primitive_NATURAL);
+}
+
+void emit_std_types(ostream&out)
+{
+    out << "`ifndef __VHDL_STD_TYPES" << endl;
+    out << "`define __VHDL_STD_TYPES" << endl;
+    out << "typedef enum bit { \\false , \\true } boolean ;" << endl;
+    out << "`endif" << endl;
 }
 
 bool is_global_type(perm_string name)

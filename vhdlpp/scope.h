@@ -58,7 +58,9 @@ class ScopeBase {
       Variable* find_variable(perm_string by_name) const;
       virtual const InterfacePort* find_param(perm_string by_name) const;
       Subprogram* find_subprogram(perm_string by_name) const;
-      bool is_enum_name(perm_string name) const;
+	// Checks if a string is one of possible enum values. If so, the enum
+	// type is returned, otherwise NULL.
+      const VTypeEnum* is_enum_name(perm_string name) const;
 
 	// Moves signals, variables and components from another scope to
 	// this one. After the transfer new_* maps are cleared in the source scope.

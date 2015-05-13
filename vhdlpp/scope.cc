@@ -188,15 +188,15 @@ Subprogram* ScopeBase::find_subprogram(perm_string name) const
       return 0;
 }
 
-bool ScopeBase::is_enum_name(perm_string name) const
+const VTypeEnum* ScopeBase::is_enum_name(perm_string name) const
 {
     for(list<const VTypeEnum*>::const_iterator it = use_enums_.begin();
             it != use_enums_.end(); ++it) {
         if((*it)->has_name(name))
-            return true;
+            return *it;
     }
 
-    return false;
+    return NULL;
 }
 
 /*

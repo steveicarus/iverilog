@@ -1027,19 +1027,18 @@ const VType* ExpName::probe_type(Entity*ent, ScopeBase*scope) const
         if (Variable*var = scope->find_variable(name_))
                 return var->peek_type();
 
-        const VType*ctype = 0;
+        const VType*type = 0;
         Expression*cval = 0;
-        if (scope->find_constant(name_, ctype, cval))
-                return ctype;
+        if (scope->find_constant(name_, type, cval))
+                return type;
 
-        const VType*gtype = 0;
         Architecture*arc = dynamic_cast<Architecture*>(scope);
-        if (arc && (gtype = arc->probe_genvar_type(name_))) {
-                return gtype;
+        if (arc && (type = arc->probe_genvar_type(name_))) {
+                return type;
         }
 
-        if (scope->is_enum_name(name_)) {
-            return &primitive_INTEGER;
+        if ((type = scope->is_enum_name(name_))) {
+            return type;
         }
       }
 
