@@ -1,4 +1,8 @@
-language: python
+language: cpp
+
+compiler:
+  - clang
+  - gcc
 
 addons:
   apt:
