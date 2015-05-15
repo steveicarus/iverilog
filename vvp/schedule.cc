@@ -531,6 +531,12 @@ bool schedule_stopped(void)
  */
 extern "C" void signals_handler(int)
 {
+#ifdef __MINGW32__
+	// Windows implements the original UNIX semantics for signal,
+	// so we have to re-establish the signal handler each time a
+	// signal is caught.
+      signal(SIGINT, &signals_handler);
+#endif
       schedule_stopped_flag = true;
 }
 
