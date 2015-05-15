@@ -50,11 +50,14 @@ int Entity::emit(ostream&out)
 		  const InterfacePort*curp = *cur;
 		  if (cur != parms_.begin())
 			out << ", ";
-		  out << "parameter \\" << curp->name << " ";
+		  out << "parameter \\" << curp->name << " = ";
 		  if(curp->expr) {
-			out << "= ";
 			errors += curp->expr->emit(out, this, 0);
-                  }
+                  } else {
+			// Unlike VHDL, Verilog module parameter port list
+			// elements are always assignments.  Fill in the blank.
+			out << "1'bx";
+		  }
 	    }
 	    out << ") ";
       }
