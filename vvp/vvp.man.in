@@ -4,7 +4,7 @@ vvp - Icarus Verilog vvp runtime engine
 
 .SH SYNOPSIS
 .B vvp
-[\-nNsvV] [\-Mpath] [\-mmodule] [\-llogfile] inputfile [extended-args...]
+[\-inNsvV] [\-Mpath] [\-mmodule] [\-llogfile] inputfile [extended-args...]
 
 .SH DESCRIPTION
 .PP
@@ -15,6 +15,9 @@ command is not by itself executable on any platform. Instead, the
 
 .SH OPTIONS
 \fIvvp\fP accepts the following options:
+.TP 8
+.B -i
+This flag causes all output to <stdout> to be unbuffered.
 .TP 8
 .B -l\fIlogfile\fP
 This flag specifies a logfile where all MCI <stdlog> output goes.
