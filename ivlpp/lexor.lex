@@ -863,6 +863,11 @@ static int define_continue_flag = 0;
 #define _STR1(x) #x
 #define _STR2(x) _STR1(x)
 
+static int is_id_char(char c)
+{
+    return isalnum((int)c) || c == '_' || c == '$';
+}
+
 /*
  * Find an argument, but only if it is not directly preceded by something
  * that would make it part of another simple identifier ([a-zA-Z0-9_$]).
@@ -877,12 +882,8 @@ static char *find_arg(char*ptr, char*head, char*arg)
         cp = strstr(cp, arg);
         if (!cp) break;
 
-        /* If we are not at the start of the string verify that this
-         * match is not in the middle of another identifier.
-         */
-        if (cp != head &&
-            (isalnum((int)*(cp-1)) || *(cp-1) == '_' || *(cp-1) == '$' ||
-             isalnum((int)*(cp+len)) || *(cp+len) == '_' || *(cp+len) == '$')) {
+        /* Verify that this match is not in the middle of another identifier. */
+        if ((cp != head && is_id_char(cp[-1])) || is_id_char(cp[len])) {
             cp++;
             continue;
         }
