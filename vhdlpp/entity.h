@@ -63,6 +63,7 @@ class ComponentBase : public LineInfo {
 
       const InterfacePort* find_port(perm_string by_name) const;
       const InterfacePort* find_generic(perm_string by_name) const;
+      const std::vector<InterfacePort*>& get_generics() const { return parms_; }
 
 	// Declare the ports for the entity. The parser calls this
 	// method with a list of interface elements that were parsed
