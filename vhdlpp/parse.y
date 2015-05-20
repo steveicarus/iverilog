@@ -1835,6 +1835,32 @@ primary
 	delete[]$1;
 	$$ = tmp;
       }
+  | INT_LITERAL IDENTIFIER
+      { ExpTime::timeunit_t unit = ExpTime::FS;
+
+        if(!strcasecmp($2, "us"))
+            unit = ExpTime::US;
+        else if(!strcasecmp($2, "ms"))
+            unit = ExpTime::MS;
+        else if(!strcasecmp($2, "ns"))
+            unit = ExpTime::NS;
+        else if(!strcasecmp($2, "s"))
+            unit = ExpTime::S;
+        else if(!strcasecmp($2, "ps"))
+            unit = ExpTime::PS;
+        else if(!strcasecmp($2, "fs"))
+            unit = ExpTime::FS;
+        else
+            errormsg(@2, "Invalid time unit (accepted are fs, ps, ns, us, ms, s).");
+
+        if($1 < 0)
+            errormsg(@1, "Time cannot be negative.");
+
+        ExpTime*tmp = new ExpTime($1, unit);
+        FILE_NAME(tmp, @1);
+        delete[] $2;
+        $$ = tmp;
+      }
 
 /*XXXX Caught up in element_association_list?
   | '(' expression ')'

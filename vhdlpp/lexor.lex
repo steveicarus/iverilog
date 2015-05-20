@@ -84,6 +84,7 @@ exponent			[eE][-+]?{integer}
 
 based_literal		{integer}#{based_integer}(\.{based_integer})?#{exponent}?
 based_integer		[0-9a-fA-F](_?[0-9a-fA-F])*
+time			{integer}{W}*([fFpPnNuUmM]?[sS])
 %%
 
 [ \t\b\f\r] { ; }

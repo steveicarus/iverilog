@@ -838,4 +838,26 @@ class ExpNew : public Expression {
       Expression*size_;
 };
 
+class ExpTime : public Expression {
+    public:
+        typedef enum { FS, PS, NS, US, MS, S } timeunit_t;
+
+        ExpTime(uint64_t amount, timeunit_t unit);
+
+        Expression*clone() const { return new ExpTime(amount_, unit_); }
+
+        int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
+        void write_to_stream(std::ostream&) const;
+        int emit(ostream&out, Entity*ent, ScopeBase*scope);
+        bool evaluate(ScopeBase*scope, int64_t&val) const;
+        bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
+        void dump(ostream&out, int indent = 0) const;
+
+    private:
+        // Returns the time value expressed in femtoseconds
+        double to_fs() const;
+        uint64_t amount_;
+        timeunit_t unit_;
+};
+
 #endif /* IVL_expression_H */

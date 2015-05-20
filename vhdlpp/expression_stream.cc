@@ -297,3 +297,17 @@ void ExpCast::write_to_stream(ostream&fd) const
       // SystemVerilog, so no need to use it here
       base_->write_to_stream(fd);
 }
+
+void ExpTime::write_to_stream(ostream&fd) const
+{
+      fd << amount_;
+
+      switch(unit_) {
+          case FS: fd << " fs"; break;
+          case PS: fd << " ps"; break;
+          case NS: fd << " ns"; break;
+          case US: fd << " us"; break;
+          case MS: fd << " ms"; break;
+          case S:  fd << " s"; break;
+      }
+}

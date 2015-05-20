@@ -168,6 +168,9 @@ void VTypePrimitive::write_to_stream(ostream&fd) const
 	  case BOOLEAN:
 	    fd << "boolean";
 	    break;
+	  case TIME:
+	    fd << "time";
+	    break;
 	  default:
 	    assert(0);
 	    fd << "/* PRIMITIVE: " << type_ << " */";

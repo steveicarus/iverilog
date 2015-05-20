@@ -564,3 +564,25 @@ ExpNew::~ExpNew()
 {
     delete size_;
 }
+
+ExpTime::ExpTime(uint64_t amount, timeunit_t unit)
+: amount_(amount), unit_(unit)
+{
+}
+
+double ExpTime::to_fs() const
+{
+    double val = amount_;
+
+    switch(unit_) {
+        case FS: break;
+        case PS: val *= 1e3; break;
+        case NS: val *= 1e6; break;
+        case US: val *= 1e9; break;
+        case MS: val *= 1e12; break;
+        case S:  val *= 1e15; break;
+        default: ivl_assert(*this, false); break;
+    }
+
+    return val;
+}

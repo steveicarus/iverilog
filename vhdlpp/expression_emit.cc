@@ -1068,3 +1068,19 @@ int ExpNew::emit(ostream&out, Entity*ent, ScopeBase*scope)
       out << "]";
       return errors;
 }
+
+int ExpTime::emit(ostream&out, Entity*, ScopeBase*)
+{
+      out << amount_;
+
+      switch(unit_) {
+          case FS: out << "fs"; break;
+          case PS: out << "ps"; break;
+          case NS: out << "ns"; break;
+          case US: out << "us"; break;
+          case MS: out << "ms"; break;
+          case S:  out << "s"; break;
+      }
+
+      return 0;
+}
