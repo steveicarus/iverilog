@@ -118,7 +118,7 @@ event control registers to determine when to perform the assign.
 %evctl is used to set the event control information.
 
 * %assign/v0 <var-label>, <delay>, <bit> (XXXX Old description)
-* %assign/v0/d <var-label>, <delayx>, <bit> (XXXX Old description
+* %assign/v0/d <var-label>, <delayx>, <bit> (XXXX Old description)
 * %assign/v0/e <var-label>, <bit> (XXXX Old description)
 
 The %assign/v0 instruction is a vector version of non-blocking
@@ -142,8 +142,8 @@ assignments. For blocking assignments, see %set/v.
 * %assign/vec4/d <var-label>, <delayx>
 * %assign/vec4/e <var-label>
 
-The %assign/vec4 instruction if a vec4 version of non-blocking
-assignment, The <delay> is the number lf clock ticks in the future
+The %assign/vec4 instruction is a vec4 version of non-blocking
+assignment. The <delay> is the number of clock ticks in the future
 where the assignment should schedule, and the value to assign is
 pulled from the vec4 stack.
 
@@ -536,7 +536,7 @@ part comes from the width of the popped value, and the <off> is an
 index register that contains the canonical offset where the value
 sets written.
 
-The %foce/vec4/off instruction will test the value if flags[4], and if
+The %force/vec4/off instruction will test the value of flags[4], and if
 it is 1, will suppress the actual assignment. This is intended to help
 with detection of invalid index expressions.
 

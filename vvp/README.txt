@@ -218,8 +218,8 @@ only.
 
 The function of a UDP is defined via a table.  The rows of the table
 are strings which describe input states or edges, and the new output
-state.	Combinatorial UDPs require one character for each input, and
-one character at the end for the output state.	Sequential UDPs need
+state.  Combinatorial UDPs require one character for each input, and
+one character at the end for the output state.  Sequential UDPs need
 an additional char for the current state, which is the first char of
 the row.
 
@@ -227,7 +227,7 @@ Any input transition or the new state must match at most one row (or
 all matches must provide the same output state).  If no row matches,
 the output becomes 1'bx.
 
-The output state can be specified as "0", "1", or "x".	Sequential
+The output state can be specified as "0", "1", or "x".  Sequential
 UDPs may also have "-": no change.
 
 An input or current output state can be
@@ -256,7 +256,7 @@ A combinatorial UDP is defined like this:
 	<type> .udp/comb "<name>", <number>, "<row0>", "<row1>", ... ;
 
 <type> is a label that identifies the UDP.  <number> is the number of
-inputs.	 "<name>" is there for public identification.  Sequential UDPs
+inputs.  "<name>" is there for public identification.  Sequential UDPs
 need an additional initialization value:
 
 	<type> .udp/sequ "<name>", <number>, <init>, "<row0>", "<row1>", ... ;
@@ -535,8 +535,8 @@ implicit from these numbers. The <symbol> is then the input source.
 
 SUBSTITUTION STATEMENTS:
 
-The substition statement doesn't have a direct analog in Verilog, it
-only turns up in synthesis. It is a sorthand for forms like this:
+The substitution statement doesn't have a direct analog in Verilog, it
+only turns up in synthesis. It is a shorthand for forms like this:
 
    foo = <a>;
    foo[n] = <s>;
