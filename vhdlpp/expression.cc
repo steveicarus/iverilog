@@ -301,7 +301,7 @@ void ExpConcat::visit(ExprVisitor& func)
 }
 
 ExpConditional::ExpConditional(Expression*co, list<Expression*>*tru,
-			       list<ExpConditional::else_t*>*fal)
+			       list<ExpConditional::option_t*>*fal)
 : cond_(co)
 {
       if (tru) true_clause_.splice(true_clause_.end(), *tru);
@@ -317,7 +317,7 @@ ExpConditional::~ExpConditional()
 	    delete tmp;
       }
       while (! else_clause_.empty()) {
-	    else_t*tmp = else_clause_.front();
+	    option_t*tmp = else_clause_.front();
 	    else_clause_.pop_front();
 	    delete tmp;
       }
@@ -335,13 +335,13 @@ Expression*ExpConditional::clone() const
           }
       }
 
-      std::list<else_t*>*new_else_clause = NULL;
+      std::list<option_t*>*new_else_clause = NULL;
       if(!else_clause_.empty()) {
-          new_else_clause = new std::list<else_t*>();
+          new_else_clause = new std::list<option_t*>();
 
-          for(std::list<else_t*>::const_iterator it = else_clause_.begin();
+          for(std::list<option_t*>::const_iterator it = else_clause_.begin();
                   it != else_clause_.end(); ++it) {
-              new_else_clause->push_back(new else_t(**it));
+              new_else_clause->push_back(new option_t(**it));
           }
       }
 
@@ -350,35 +350,26 @@ Expression*ExpConditional::clone() const
 
 void ExpConditional::visit(ExprVisitor& func)
 {
-      if(!true_clause_.empty()) {
-          for(std::list<Expression*>::iterator it = true_clause_.begin();
-                  it != true_clause_.end(); ++it) {
-              (*it)->visit(func);
-          }
+      for(std::list<Expression*>::iterator it = true_clause_.begin();
+              it != true_clause_.end(); ++it) {
+          (*it)->visit(func);
       }
 
-      if(!else_clause_.empty()) {
-          for(std::list<else_t*>::iterator it = else_clause_.begin();
-                  it != else_clause_.end(); ++it) {
-              std::list<Expression*>& else_clause = (*it)->extract_true_clause();
-
-              for(std::list<Expression*>::iterator jt = else_clause.begin();
-                      jt != else_clause.end(); ++jt) {
-                  (*jt)->visit(func);
-              }
-          }
+      for(std::list<option_t*>::iterator it = else_clause_.begin();
+              it != else_clause_.end(); ++it) {
+          (*it)->visit(func);
       }
 
       func(this);
 }
 
-ExpConditional::else_t::else_t(Expression*cond, std::list<Expression*>*tru)
+ExpConditional::option_t::option_t(Expression*cond, std::list<Expression*>*tru)
 : cond_(cond)
 {
       if (tru) true_clause_.splice(true_clause_.end(), *tru);
 }
 
-ExpConditional::else_t::else_t(const else_t&other)
+ExpConditional::option_t::option_t(const option_t&other)
 : LineInfo(other)
 {
       cond_ = other.cond_->clone();
@@ -388,7 +379,7 @@ ExpConditional::else_t::else_t(const else_t&other)
       }
 }
 
-ExpConditional::else_t::~else_t()
+ExpConditional::option_t::~option_t()
 {
       delete cond_;
       while (! true_clause_.empty()) {
@@ -398,6 +389,17 @@ ExpConditional::else_t::~else_t()
       }
 }
 
+
+void ExpConditional::option_t::visit(ExprVisitor& func)
+{
+      if(cond_)
+          func(cond_);
+
+      for(std::list<Expression*>::iterator it = true_clause_.begin();
+              it != true_clause_.end(); ++it) {
+          func(*it);
+      }
+}
 
 ExpEdge::ExpEdge(ExpEdge::fun_t typ, Expression*op)
 : ExpUnary(op), fun_(typ)

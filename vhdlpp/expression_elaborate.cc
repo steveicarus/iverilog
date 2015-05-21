@@ -721,7 +721,7 @@ int ExpConditional::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltyp
 	    errors += (*cur)->elaborate_expr(ent, scope, ltype);
       }
 
-      for (list<else_t*>::const_iterator cur = else_clause_.begin()
+      for (list<option_t*>::const_iterator cur = else_clause_.begin()
 		 ; cur != else_clause_.end() ; ++cur) {
 	    errors += (*cur)->elaborate_expr(ent, scope, ltype);
       }
@@ -729,7 +729,7 @@ int ExpConditional::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltyp
       return errors;
 }
 
-int ExpConditional::else_t::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
+int ExpConditional::option_t::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
 {
       int errors = 0;
 

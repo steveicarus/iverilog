@@ -228,8 +228,8 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
       IfSequential::Elsif*elsif;
       std::list<IfSequential::Elsif*>*elsif_list;
 
-      ExpConditional::else_t*exp_else;
-      std::list<ExpConditional::else_t*>*exp_else_list;
+      ExpConditional::option_t*exp_else;
+      std::list<ExpConditional::option_t*>*exp_else_list;
 
       CaseSeqStmt::CaseStmtAlternative* case_alt;
       std::list<CaseSeqStmt::CaseStmtAlternative*>* case_alt_list;
@@ -800,12 +800,12 @@ concurrent_simple_signal_assignment
 
 else_when_waveforms
   : else_when_waveforms else_when_waveform
-      { list<ExpConditional::else_t*>*tmp = $1;
+      { list<ExpConditional::option_t*>*tmp = $1;
 	tmp ->push_back($2);
 	$$ = tmp;
       }
   | else_when_waveform
-      { list<ExpConditional::else_t*>*tmp = new list<ExpConditional::else_t*>;
+      { list<ExpConditional::option_t*>*tmp = new list<ExpConditional::option_t*>;
 	tmp->push_back($1);
 	$$ = tmp;
       }
@@ -813,12 +813,12 @@ else_when_waveforms
 
 else_when_waveform
   : K_else waveform K_when expression
-      { ExpConditional::else_t*tmp = new ExpConditional::else_t($4, $2);
+      { ExpConditional::option_t*tmp = new ExpConditional::option_t($4, $2);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   | K_else waveform
-      { ExpConditional::else_t*tmp = new ExpConditional::else_t(0,  $2);
+      { ExpConditional::option_t*tmp = new ExpConditional::option_t(0,  $2);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }

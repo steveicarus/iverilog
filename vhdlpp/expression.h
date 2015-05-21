@@ -460,17 +460,18 @@ class ExpConcat : public Expression {
 class ExpConditional : public Expression {
 
     public:
-      class else_t : public LineInfo {
+      class option_t : public LineInfo {
 	  public:
-	    else_t(Expression*cond, std::list<Expression*>*tru);
-	    else_t(const else_t&other);
-	    ~else_t();
+	    option_t(Expression*cond, std::list<Expression*>*tru);
+	    option_t(const option_t&other);
+	    ~option_t();
 
 	    int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*lt);
 	    int emit_when_else(ostream&out, Entity*ent, ScopeBase*scope);
 	    int emit_else(ostream&out, Entity*ent, ScopeBase*scope);
 	    void dump(ostream&out, int indent = 0) const;
             std::list<Expression*>& extract_true_clause() { return true_clause_; }
+            void visit(ExprVisitor& func);
 
 	  private:
 	    Expression*cond_;
@@ -479,7 +480,7 @@ class ExpConditional : public Expression {
 
     public:
       ExpConditional(Expression*cond, std::list<Expression*>*tru,
-		     std::list<else_t*>*fal);
+		     std::list<option_t*>*fal);
       ~ExpConditional();
 
       Expression*clone() const;
@@ -494,7 +495,7 @@ class ExpConditional : public Expression {
     private:
       Expression*cond_;
       std::list<Expression*> true_clause_;
-      std::list<else_t*> else_clause_;
+      std::list<option_t*> else_clause_;
 };
 
 /*

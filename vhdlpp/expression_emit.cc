@@ -497,10 +497,10 @@ int ExpConditional::emit(ostream&out, Entity*ent, ScopeBase*scope)
 	// Draw out any when-else expressions. These are all the else_
 	// clauses besides the last.
       if (else_clause_.size() > 1) {
-	    list<else_t*>::iterator last = else_clause_.end();
+	    list<option_t*>::iterator last = else_clause_.end();
 	    -- last;
 
-	    for (list<else_t*>::iterator cur = else_clause_.begin()
+	    for (list<option_t*>::iterator cur = else_clause_.begin()
 		       ; cur != last ; ++cur) {
 		  errors += (*cur) ->emit_when_else(out, ent, scope);
 	    }
@@ -519,7 +519,7 @@ int ExpConditional::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpConditional::else_t::emit_when_else(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpConditional::option_t::emit_when_else(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       assert(cond_ != 0);
@@ -541,7 +541,7 @@ int ExpConditional::else_t::emit_when_else(ostream&out, Entity*ent, ScopeBase*sc
       return errors;
 }
 
-int ExpConditional::else_t::emit_else(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpConditional::option_t::emit_else(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 	// Trailing else must have no condition.
