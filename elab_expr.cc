@@ -1418,7 +1418,7 @@ NetExpr*PECallFunction::cast_to_width_(NetExpr*expr, unsigned wid) const
            const. This is a more efficient result. */
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
             tmp->cast_signed(signed_flag_);
-            if (wid > tmp->expr_width()) {
+            if (wid != tmp->expr_width()) {
                   tmp = new NetEConst(verinum(tmp->value(), wid));
                   tmp->set_line(*this);
                   delete expr;
