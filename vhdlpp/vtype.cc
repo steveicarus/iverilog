@@ -273,11 +273,9 @@ void VTypeArray::evaluate_ranges(ScopeBase*scope) {
     }
 }
 
-VTypeRange::VTypeRange(const VType*base, int64_t max_val, int64_t min_val)
-: base_(base)
+VTypeRange::VTypeRange(const VType*base, int64_t end_val, int64_t start_val)
+: base_(base), end_(end_val), start_(start_val)
 {
-      max_ = max_val;
-      min_ = min_val;
 }
 
 VTypeRange::~VTypeRange()

@@ -50,6 +50,9 @@ int Subprogram::emit_package(ostream&fd) const
 		case PORT_OUT:
 		  fd << "output ";
 		  break;
+		case PORT_INOUT:
+		  fd << "inout ";
+		  break;
 		case PORT_NONE:
 		  fd << "inout /* PORT_NONE? */ ";
 		  break;

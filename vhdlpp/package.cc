@@ -74,6 +74,9 @@ void Package::write_to_stream(ostream&fd) const
 	    if (is_global_type(cur->first))
 		  continue;
 
+	    if(!dynamic_cast<const VTypeDef*>(cur->second))
+		  fd << "sub";
+
 	    fd << "type " << cur->first << " is ";
 	    cur->second->write_type_to_stream(fd);
 	    fd << "; -- imported" << endl;
@@ -84,6 +87,9 @@ void Package::write_to_stream(ostream&fd) const
 	      // Do not include global types in types dump
 	    if (is_global_type(cur->first))
 		  continue;
+
+	    if(!dynamic_cast<const VTypeDef*>(cur->second))
+		  fd << "sub";
 
 	    fd << "type " << cur->first << " is ";
 	    cur->second->write_type_to_stream(fd);

@@ -41,14 +41,16 @@ void VTypeArray::write_to_stream(ostream&fd) const
 	// Special cases: std_logic_vector & string
       if (etype_ == &primitive_STDLOGIC) {
 	    fd << "std_logic_vector";
-	    if (! ranges_.empty() && ! ranges_[0].is_box()) {
+	    if (!ranges_.empty() && !ranges_[0].is_box()) {
 		  write_range_to_stream_(fd);
 	    }
 	    return;
-      } else if (etype_ == &primitive_CHARACTER &&
-                 ranges_.size() == 1 && ranges_[0].is_box()) {
-            fd << "string";
-            return;
+      } else if (etype_ == &primitive_CHARACTER) {
+	    fd << "string";
+	    if (!ranges_.empty() && !ranges_[0].is_box()) {
+		  write_range_to_stream_(fd);
+	    }
+	    return;
       }
 
       bool typedefed = false;
@@ -99,6 +101,13 @@ void VTypeArray::write_type_to_stream(ostream&fd) const
 	// Special case: std_logic_vector
       if (etype_ == &primitive_STDLOGIC) {
 	    fd << "std_logic_vector";
+	    if (! ranges_.empty() && ! ranges_[0].is_box()) {
+		  write_range_to_stream_(fd);
+	    }
+	    return;
+      }
+      else if (etype_ == &primitive_CHARACTER) {
+	    fd << "string";
 	    if (! ranges_.empty() && ! ranges_[0].is_box()) {
 		  write_range_to_stream_(fd);
 	    }
@@ -171,14 +180,16 @@ void VTypeRange::write_to_stream(ostream&fd) const
 	// Detect some special cases that can be written as ieee or
 	// standard types.
       if (const VTypePrimitive*tmp = dynamic_cast<const VTypePrimitive*> (base_)) {
-	    if (min_==0 && max_==INT64_MAX && tmp->type()==VTypePrimitive::INTEGER) {
+	    if (start_==0 && end_==INT64_MAX && tmp->type()==VTypePrimitive::INTEGER) {
 		  fd << "natural";
 		  return;
 	    }
       }
 
       base_->write_to_stream(fd);
-      fd << " range " << min_ << " to " << max_;
+      fd << " range " << start_;
+      fd << (start_ < end_ ? " to " : " downto ");
+      fd << end_;
 }
 
 void VTypeRecord::write_to_stream(ostream&fd) const
