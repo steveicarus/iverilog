@@ -481,39 +481,27 @@ int ExpConditional::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       out << "(";
-      errors += cond_->emit(out, ent, scope);
-      out << ")? (";
-
-      if (true_clause_.size() > 1) {
-	    cerr << get_fileline() << ": sorry: Multiple expression waveforms not supported here." << endl;
-	    errors += 1;
-      }
-
-      Expression*tmp = true_clause_.front();
-      errors += tmp->emit(out, ent, scope);
-
-      out << ") : (";
 
 	// Draw out any when-else expressions. These are all the else_
 	// clauses besides the last.
-      if (else_clause_.size() > 1) {
-	    list<option_t*>::iterator last = else_clause_.end();
-	    -- last;
+      if (options_.size() > 1) {
+	    list<option_t*>::iterator last = options_.end();
+	    --last;
 
-	    for (list<option_t*>::iterator cur = else_clause_.begin()
+	    for (list<option_t*>::iterator cur = options_.begin()
 		       ; cur != last ; ++cur) {
 		  errors += (*cur) ->emit_when_else(out, ent, scope);
 	    }
      }
 
-      errors += else_clause_.back()->emit_else(out, ent, scope);
+      errors += options_.back()->emit_else(out, ent, scope);
       out << ")";
 
 	// The emit_when_else() functions do not close the last
 	// parentheses so that the following expression can be
 	// nested. But that means come the end, we have some
 	// expressions to close.
-      for (size_t idx = 1 ; idx < else_clause_.size() ; idx += 1)
+      for (size_t idx = 1 ; idx < options_.size() ; idx += 1)
 	    out << ")";
 
       return errors;

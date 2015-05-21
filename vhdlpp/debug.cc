@@ -279,17 +279,9 @@ void ExpCharacter::dump(ostream&out, int indent) const
 void ExpConditional::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "Conditional expression at "<< get_fileline() << endl;
-      out << setw(indent) << "" << "  when:" << endl;
-      cond_->dump(out, indent+4);
 
-      out << setw(indent) << "" << "  do:" << endl;
-      for (list<Expression*>::const_iterator cur = true_clause_.begin()
-		 ; cur != true_clause_.end() ; ++cur) {
-	    (*cur)->dump(out, indent+4);
-      }
-
-      for (list<option_t*>::const_iterator cur = else_clause_.begin()
-		 ; cur != else_clause_.end() ; ++cur) {
+      for (list<option_t*>::const_iterator cur = options_.begin()
+		 ; cur != options_.end() ; ++cur) {
 	    (*cur)->dump(out, indent);
       }
 }

@@ -480,7 +480,7 @@ class ExpConditional : public Expression {
 
     public:
       ExpConditional(Expression*cond, std::list<Expression*>*tru,
-		     std::list<option_t*>*fal);
+		     std::list<option_t*>*options);
       ~ExpConditional();
 
       Expression*clone() const;
@@ -493,9 +493,7 @@ class ExpConditional : public Expression {
       void visit(ExprVisitor& func);
 
     private:
-      Expression*cond_;
-      std::list<Expression*> true_clause_;
-      std::list<option_t*> else_clause_;
+      std::list<option_t*> options_;
 };
 
 /*

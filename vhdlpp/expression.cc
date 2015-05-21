@@ -301,51 +301,34 @@ void ExpConcat::visit(ExprVisitor& func)
 }
 
 ExpConditional::ExpConditional(Expression*co, list<Expression*>*tru,
-			       list<ExpConditional::option_t*>*fal)
-: cond_(co)
+			       list<ExpConditional::option_t*>*options)
 {
-      if (tru) true_clause_.splice(true_clause_.end(), *tru);
-      if (fal) else_clause_.splice(else_clause_.end(), *fal);
+      if(co && tru) options_.push_back(new option_t(co, tru));
+      if(options) options_.splice(options_.end(), *options);
 }
 
 ExpConditional::~ExpConditional()
 {
-      delete cond_;
-      while (! true_clause_.empty()) {
-	    Expression*tmp = true_clause_.front();
-	    true_clause_.pop_front();
-	    delete tmp;
-      }
-      while (! else_clause_.empty()) {
-	    option_t*tmp = else_clause_.front();
-	    else_clause_.pop_front();
+      while (!options_.empty()) {
+	    option_t*tmp = options_.front();
+	    options_.pop_front();
 	    delete tmp;
       }
 }
 
 Expression*ExpConditional::clone() const
 {
-      std::list<Expression*>*new_true_clause = NULL;
-      if(!true_clause_.empty()) {
-          new_true_clause = new std::list<Expression*>();
+      std::list<option_t*>*new_options = NULL;
+      if(!options_.empty()) {
+          new_options = new std::list<option_t*>();
 
-          for(std::list<Expression*>::const_iterator it = true_clause_.begin();
-                  it != true_clause_.end(); ++it) {
-              new_true_clause->push_back((*it)->clone());
+          for(std::list<option_t*>::const_iterator it = options_.begin();
+                  it != options_.end(); ++it) {
+              new_options->push_back(new option_t(**it));
           }
       }
 
-      std::list<option_t*>*new_else_clause = NULL;
-      if(!else_clause_.empty()) {
-          new_else_clause = new std::list<option_t*>();
-
-          for(std::list<option_t*>::const_iterator it = else_clause_.begin();
-                  it != else_clause_.end(); ++it) {
-              new_else_clause->push_back(new option_t(**it));
-          }
-      }
-
-      return new ExpConditional(cond_->clone(), new_true_clause, new_else_clause);
+      return new ExpConditional(NULL, NULL, new_options);
 }
 
 void ExpConditional::visit(ExprVisitor& func)
