@@ -1044,7 +1044,11 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	$$ = tmp;
       }
   | struct_data_type
-      { $$ = $1; }
+      { if (!$1->packed_flag) {
+	      yyerror(@1, "sorry: Unpacked structs not supported.");
+	}
+	$$ = $1;
+      }
   | enum_data_type
       { $$ = $1; }
   | atom2_type signed_unsigned_opt

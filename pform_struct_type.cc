@@ -79,8 +79,8 @@ static void pform_set_struct_type(struct_type_t*struct_type, perm_string name, N
 	    return;
       }
 
-	// For now, can only handle packed structs.
-      ivl_assert(*struct_type, 0);
+	// For now, can only handle packed structs. The parser generates
+	// a "sorry" message, so no need to do anything here.
 }
 
 void pform_set_struct_type(struct_type_t*struct_type, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)

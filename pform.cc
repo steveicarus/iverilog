@@ -2422,7 +2422,10 @@ static PWire* pform_get_or_make_wire(const vlltype&li, perm_string name,
 			      ivl_variable_type_t dtype)
 {
       PWire*cur = pform_get_wire_in_scope(name);
-      if (cur) {
+
+	// If the wire already exists but isn't yet fully defined,
+	// carry on adding details.
+      if (cur && cur->get_data_type() == IVL_VT_NO_TYPE) {
 	      // If this is not implicit ("implicit" meaning we don't
 	      // know what the type is yet) then set the type now.
 	    if (type != NetNet::IMPLICIT) {
@@ -2438,6 +2441,18 @@ static PWire* pform_get_or_make_wire(const vlltype&li, perm_string name,
 		  FILE_NAME(cur, li.text, li.first_line);
 	    }
 	    return cur;
+      }
+
+	// If the wire already exists and is fully defined, this
+	// must be a redeclaration. Start again with a new wire.
+      if (cur) {
+	    LineInfo tloc;
+	    FILE_NAME(&tloc, li);
+	    cerr << tloc.get_fileline() << ": error: duplicate declaration "
+	            "for net or variable '" << name << "' in '"
+	         << pform_cur_module.front()->mod_name() << "'." << endl;
+	    error_count += 1;
+	    delete cur;
       }
 
       cur = new PWire(name, type, ptype, dtype);
@@ -3224,18 +3239,12 @@ template <class T> static void pform_set2_data_type(const struct vlltype&li, T*d
       }
 }
 
-static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
+static void pform_set_enum(enum_type_t*enum_type,
 			   perm_string name, NetNet::Type net_type,
 			   std::list<named_pexpr_t>*attr)
 {
       PWire*cur = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, enum_type->base_type);
-	// A NULL is returned for a duplicate enumeration.
-      if (! cur) {
-	    cerr << li.get_fileline() << ": error: Found duplicate "
-		 << "enumeration named " << name << "." << endl;
-	    error_count += 1;
-	    return;
-      }
+      assert(cur);
 
       cur->set_signed(enum_type->signed_flag);
 
@@ -3273,7 +3282,7 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur) {
 	    perm_string txt = *cur;
-	    pform_set_enum(li, enum_type, txt, net_type, attr);
+	    pform_set_enum(enum_type, txt, net_type, attr);
       }
 
 }

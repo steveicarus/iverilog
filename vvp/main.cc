@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -316,12 +316,13 @@ int main(int argc, char*argv[])
         /* For non-interactive runs we do not want to run the interactive
          * debugger, so make $stop just execute a $finish. */
       stop_is_finish = false;
-      while ((opt = getopt(argc, argv, "+hl:M:m:nNsvV")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "+hil:M:m:nNsvV")) != EOF) switch (opt) {
          case 'h':
            fprintf(stderr,
                    "Usage: vvp [options] input-file [+plusargs...]\n"
                    "Options:\n"
                    " -h             Print this help message.\n"
+                   " -i             Interactive mode (unbuffered stdio).\n"
                    " -l file        Logfile, '-' for <stderr>\n"
                    " -M path        VPI module directory\n"
 		   " -M -           Clear VPI module path\n"
@@ -332,6 +333,9 @@ int main(int argc, char*argv[])
                    " -v             Verbose progress messages.\n"
                    " -V             Print the version information.\n" );
            exit(0);
+	  case 'i':
+	    setvbuf(stdout, 0, _IONBF, 0);
+	    break;
 	  case 'l':
 	    logfile_name = optarg;
 	    break;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2014 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2015 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -432,10 +432,13 @@ static void emit_sig_type(ivl_signal_t sig)
       }
 	/* Check to see if we have a variable (reg) or a net. */
       if (type == IVL_SIT_REG) {
+	      /* The variable data type will be declared later, so here
+		 we just want to declare the range and whether or not it
+		 is signed. */
 	    if (ivl_signal_integer(sig)) {
-		  fprintf(vlog_out, " integer");
+		  /* nothing to do */
 	    } else if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
-		  fprintf(vlog_out, " real");
+		  /* nothing to do */
 	    } else {
 		  int msb, lsb;
 		  get_sig_msb_lsb(sig, &msb, &lsb);
