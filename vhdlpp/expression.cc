@@ -311,6 +311,7 @@ ExpConditional::else_t::else_t(Expression*cond, std::list<Expression*>*tru)
 }
 
 ExpConditional::else_t::else_t(const else_t&other)
+: LineInfo(other)
 {
       cond_ = other.cond_->clone();
       for(std::list<Expression*>::const_iterator it = other.true_clause_.begin();

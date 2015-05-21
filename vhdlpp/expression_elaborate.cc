@@ -112,7 +112,7 @@ int ExpName::elaborate_lval_(Entity*ent, ScopeBase*scope, bool is_sequ, ExpName*
       const VType*found_type = 0;
 
       if (const InterfacePort*cur = ent->find_port(name_)) {
-	    if (cur->mode != PORT_OUT) {
+	    if (cur->mode != PORT_OUT && cur->mode != PORT_INOUT) {
 		  cerr << get_fileline() << ": error: Assignment to "
 			"input port " << name_ << "." << endl;
 		  return errors + 1;
@@ -216,7 +216,7 @@ int ExpName::elaborate_lval(Entity*ent, ScopeBase*scope, bool is_sequ)
       const VType*found_type = 0;
 
       if (const InterfacePort*cur = ent->find_port(name_)) {
-	    if (cur->mode != PORT_OUT) {
+	    if (cur->mode != PORT_OUT && cur->mode != PORT_INOUT) {
 		  cerr << get_fileline() << ": error: Assignment to "
 			"input port " << name_ << "." << endl;
 		  return errors += 1;

@@ -1584,6 +1584,7 @@ loop_statement
 mode
   : K_in  { $$ = PORT_IN; }
   | K_out { $$ = PORT_OUT; }
+  | K_inout { $$ = PORT_INOUT; }
   ;
 
 mode_opt : mode {$$ = $1;} | {$$ = PORT_NONE;} ;

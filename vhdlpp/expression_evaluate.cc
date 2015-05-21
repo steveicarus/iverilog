@@ -106,7 +106,7 @@ bool ExpAttribute::evaluate(ScopeBase*scope, int64_t&val) const
 	    const VTypeArray*arr = dynamic_cast<const VTypeArray*>(base_type);
 	    if (arr == 0) {
 		  cerr << endl << get_fileline() << ": error: "
-		       << "Cannot apply the 'length attribute to non-array objects"
+		       << "Cannot apply the '" << name_ << " attribute to non-array objects"
 		       << endl;
                   ivl_assert(*this, false);
 		  return false;

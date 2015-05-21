@@ -36,6 +36,7 @@ using namespace std;
 class LineInfo {
     public:
       LineInfo();
+      LineInfo(const LineInfo&that);
       virtual ~LineInfo();
 
 	// Get a fully formatted file/lineno
