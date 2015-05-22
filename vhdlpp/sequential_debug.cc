@@ -180,3 +180,10 @@ void AssertStmt::dump(ostream&out, int indent) const
     cond_->dump(out, indent+3);
     ReportStmt::dump(out, indent+3);
 }
+
+void WaitForStmt::dump(ostream&out, int indent) const
+{
+    out << setw(indent) << "" << "WaitForStmt at file=" << get_fileline() << endl;
+    out << setw(indent+3) << "" << "delay: ";
+    delay_->dump(out, indent+3);
+}

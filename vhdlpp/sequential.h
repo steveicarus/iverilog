@@ -308,4 +308,17 @@ class AssertStmt : public ReportStmt {
       static const std::string default_msg_;
 };
 
+class WaitForStmt : public SequentialStmt {
+    public:
+      WaitForStmt(Expression*delay);
+
+      void dump(ostream&out, int indent) const;
+      int elaborate(Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*entity, ScopeBase*scope);
+      void write_to_stream(std::ostream&fd);
+
+    private:
+      Expression*delay_;
+};
+
 #endif /* IVL_sequential_H */

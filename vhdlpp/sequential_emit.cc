@@ -512,3 +512,20 @@ void AssertStmt::write_to_stream(std::ostream&fd)
     fd << std::endl;
     ReportStmt::write_to_stream(fd);
 }
+
+int WaitForStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+    int errors = 0;
+
+    out << "#(";
+    errors += delay_->emit(out, ent, scope);
+    out << ")";
+
+    return errors;
+}
+
+void WaitForStmt::write_to_stream(std::ostream&fd)
+{
+    fd << "wait for ";
+    delay_->write_to_stream(fd);
+}
