@@ -318,7 +318,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <arch_statement> concurrent_conditional_signal_assignment
 %type <arch_statement> concurrent_signal_assignment_statement concurrent_simple_signal_assignment
 %type <arch_statement> for_generate_statement generate_statement if_generate_statement
-%type <arch_statement> process_statement
+%type <arch_statement> process_statement selected_signal_assignment
 %type <arch_statement_list> architecture_statement_part generate_statement_body
 
 %type <choice> choice
@@ -370,8 +370,8 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <elsif> if_statement_elsif
 %type <elsif_list> if_statement_elsif_list if_statement_elsif_list_opt
 
-%type <exp_options> else_when_waveform
-%type <exp_options_list> else_when_waveforms
+%type <exp_options> else_when_waveform selected_waveform
+%type <exp_options_list> else_when_waveforms selected_waveform_list
 
 %type <subprogram> function_specification subprogram_specification subprogram_body_start
 %type <severity> severity severity_opt
@@ -832,6 +832,10 @@ concurrent_signal_assignment_statement /* IEEE 1076-2008 P11.6 */
   | concurrent_conditional_signal_assignment
 
   | IDENTIFIER ':' concurrent_conditional_signal_assignment { $$ = $3; }
+
+  | selected_signal_assignment
+
+  | IDENTIFIER ':' selected_signal_assignment { $$ = $3; }
 
   | name LEQ error ';'
       { errormsg(@2, "Syntax error in signal assignment waveform.\n");
@@ -2175,6 +2179,47 @@ selected_names_lib
   | selected_name_lib
   ;
 
+selected_signal_assignment
+  : K_with expression K_select name LEQ selected_waveform_list ';'
+      { ExpSelected*tmp = new ExpSelected($2, $6);
+	FILE_NAME(tmp, @3);
+        delete $2;
+	delete $6;
+
+	ExpName*name = dynamic_cast<ExpName*>($4);
+	assert(name);
+	SignalAssignment*tmpa = new SignalAssignment(name, tmp);
+	FILE_NAME(tmpa, @1);
+
+	$$ = tmpa;
+      }
+  ;
+
+selected_waveform
+  : waveform K_when expression
+      { ExpConditional::case_t*tmp = new ExpConditional::case_t($3, $1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | waveform K_when K_others
+      { ExpConditional::case_t*tmp = new ExpConditional::case_t(0,  $1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  ;
+
+selected_waveform_list
+  : selected_waveform_list ',' selected_waveform
+      { list<ExpConditional::case_t*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
+  | selected_waveform
+      { list<ExpConditional::case_t*>*tmp = new list<ExpConditional::case_t*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
+  ;
 
 sequence_of_statements
   : sequence_of_statements sequential_statement

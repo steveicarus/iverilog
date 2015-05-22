@@ -367,6 +367,38 @@ ExpConditional::case_t::~case_t()
       }
 }
 
+ExpSelected::ExpSelected(Expression*selector, std::list<case_t*>*options)
+: ExpConditional(NULL, NULL, options), selector_(selector)
+{
+    // Currently condition field contains only value,
+    // so substitute it with a comparison to create a valid condition
+    for(std::list<case_t*>::iterator it = options_.begin();
+            it != options_.end(); ++it) {
+        Expression*cond = (*it)->condition();
+
+        if(cond)
+            (*it)->set_condition(new ExpRelation(ExpRelation::EQ, selector_->clone(), cond));
+    }
+}
+
+ExpSelected::~ExpSelected()
+{
+}
+
+Expression*ExpSelected::clone() const
+{
+      std::list<case_t*>*new_options = NULL;
+      if(!options_.empty()) {
+          new_options = new std::list<case_t*>();
+
+          for(std::list<case_t*>::const_iterator it = options_.begin();
+                  it != options_.end(); ++it) {
+              new_options->push_back(new case_t(**it));
+          }
+      }
+
+      return new ExpSelected(selector_->clone(), new_options);
+}
 
 void ExpConditional::case_t::visit(ExprVisitor& func)
 {

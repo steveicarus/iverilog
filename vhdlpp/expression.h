@@ -466,6 +466,9 @@ class ExpConditional : public Expression {
 	    case_t(const case_t&other);
 	    ~case_t();
 
+	    inline Expression*condition() { return cond_; }
+	    inline void set_condition(Expression*cond) { cond_ = cond; }
+
 	    int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*lt);
 	    int emit_option(ostream&out, Entity*ent, ScopeBase*scope);
 	    int emit_default(ostream&out, Entity*ent, ScopeBase*scope);
@@ -481,9 +484,9 @@ class ExpConditional : public Expression {
     public:
       ExpConditional(Expression*cond, std::list<Expression*>*tru,
 		     std::list<case_t*>*options);
-      ~ExpConditional();
+      virtual ~ExpConditional();
 
-      Expression*clone() const;
+      virtual Expression*clone() const;
 
       const VType*probe_type(Entity*ent, ScopeBase*scope) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
@@ -492,8 +495,22 @@ class ExpConditional : public Expression {
       void dump(ostream&out, int indent = 0) const;
       void visit(ExprVisitor& func);
 
-    private:
+    protected:
       std::list<case_t*> options_;
+};
+
+/*
+ * Expression to handle selected assignments (with .. select target <= value when ..)
+ */
+class ExpSelected : public ExpConditional {
+    public:
+      ExpSelected(Expression*selector, std::list<case_t*>*options);
+      ~ExpSelected();
+
+      Expression*clone() const;
+
+    private:
+      Expression*selector_;
 };
 
 /*
