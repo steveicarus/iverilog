@@ -39,6 +39,7 @@ static void  def_finish(void);
 static void  def_undefine(void);
 static void  do_define(void);
 static int   def_is_done(void);
+static void  def_continue(void);
 static int   is_defined(const char*name);
 
 static int   macro_needs_args(const char*name);
@@ -358,6 +359,8 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
     if (def_is_done()) {
         def_finish();
         yy_pop_state();
+    } else {
+	def_continue();
     }
 
     istack->lineno += 1;
@@ -1128,6 +1131,14 @@ static void do_define(void)
 static int def_is_done(void)
 {
     return !define_continue_flag;
+}
+
+/*
+ * Reset the define_continue_flag.
+ */
+static void def_continue(void)
+{
+    define_continue_flag = 0;
 }
 
 /*
