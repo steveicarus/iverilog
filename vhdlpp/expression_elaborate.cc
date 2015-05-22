@@ -715,7 +715,7 @@ int ExpConditional::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltyp
 	/* Note that the type for the condition expression need not
 	   have anything to do with the type of this expression. */
 
-      for (list<option_t*>::const_iterator cur = options_.begin()
+      for (list<case_t*>::const_iterator cur = options_.begin()
 		 ; cur != options_.end() ; ++cur) {
 	    errors += (*cur)->elaborate_expr(ent, scope, ltype);
       }
@@ -723,7 +723,7 @@ int ExpConditional::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltyp
       return errors;
 }
 
-int ExpConditional::option_t::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
+int ExpConditional::case_t::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
 {
       int errors = 0;
 

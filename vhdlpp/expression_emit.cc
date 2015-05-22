@@ -485,19 +485,19 @@ int ExpConditional::emit(ostream&out, Entity*ent, ScopeBase*scope)
 	// Draw out any when-else expressions. These are all the else_
 	// clauses besides the last.
       if (options_.size() > 1) {
-	    list<option_t*>::iterator last = options_.end();
+	    list<case_t*>::iterator last = options_.end();
 	    --last;
 
-	    for (list<option_t*>::iterator cur = options_.begin()
+	    for (list<case_t*>::iterator cur = options_.begin()
 		       ; cur != last ; ++cur) {
-		  errors += (*cur) ->emit_when_else(out, ent, scope);
+		  errors += (*cur)->emit_option(out, ent, scope);
 	    }
-     }
+      }
 
-      errors += options_.back()->emit_else(out, ent, scope);
+      errors += options_.back()->emit_default(out, ent, scope);
       out << ")";
 
-	// The emit_when_else() functions do not close the last
+	// The emit_option() functions do not close the last
 	// parentheses so that the following expression can be
 	// nested. But that means come the end, we have some
 	// expressions to close.
@@ -507,7 +507,7 @@ int ExpConditional::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpConditional::option_t::emit_when_else(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpConditional::case_t::emit_option(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       assert(cond_ != 0);
@@ -529,7 +529,7 @@ int ExpConditional::option_t::emit_when_else(ostream&out, Entity*ent, ScopeBase*
       return errors;
 }
 
-int ExpConditional::option_t::emit_else(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpConditional::case_t::emit_default(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 	// Trailing else must have no condition.

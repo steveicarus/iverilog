@@ -301,16 +301,16 @@ void ExpConcat::visit(ExprVisitor& func)
 }
 
 ExpConditional::ExpConditional(Expression*co, list<Expression*>*tru,
-			       list<ExpConditional::option_t*>*options)
+			       list<ExpConditional::case_t*>*options)
 {
-      if(co && tru) options_.push_back(new option_t(co, tru));
+      if(co && tru) options_.push_back(new case_t(co, tru));
       if(options) options_.splice(options_.end(), *options);
 }
 
 ExpConditional::~ExpConditional()
 {
       while (!options_.empty()) {
-	    option_t*tmp = options_.front();
+	    case_t*tmp = options_.front();
 	    options_.pop_front();
 	    delete tmp;
       }
@@ -318,13 +318,13 @@ ExpConditional::~ExpConditional()
 
 Expression*ExpConditional::clone() const
 {
-      std::list<option_t*>*new_options = NULL;
+      std::list<case_t*>*new_options = NULL;
       if(!options_.empty()) {
-          new_options = new std::list<option_t*>();
+          new_options = new std::list<case_t*>();
 
-          for(std::list<option_t*>::const_iterator it = options_.begin();
+          for(std::list<case_t*>::const_iterator it = options_.begin();
                   it != options_.end(); ++it) {
-              new_options->push_back(new option_t(**it));
+              new_options->push_back(new case_t(**it));
           }
       }
 
@@ -333,26 +333,21 @@ Expression*ExpConditional::clone() const
 
 void ExpConditional::visit(ExprVisitor& func)
 {
-      for(std::list<Expression*>::iterator it = true_clause_.begin();
-              it != true_clause_.end(); ++it) {
-          (*it)->visit(func);
-      }
-
-      for(std::list<option_t*>::iterator it = else_clause_.begin();
-              it != else_clause_.end(); ++it) {
+      for(std::list<case_t*>::iterator it = options_.begin();
+              it != options_.end(); ++it) {
           (*it)->visit(func);
       }
 
       func(this);
 }
 
-ExpConditional::option_t::option_t(Expression*cond, std::list<Expression*>*tru)
+ExpConditional::case_t::case_t(Expression*cond, std::list<Expression*>*tru)
 : cond_(cond)
 {
       if (tru) true_clause_.splice(true_clause_.end(), *tru);
 }
 
-ExpConditional::option_t::option_t(const option_t&other)
+ExpConditional::case_t::case_t(const case_t&other)
 : LineInfo(other)
 {
       cond_ = other.cond_->clone();
@@ -362,7 +357,7 @@ ExpConditional::option_t::option_t(const option_t&other)
       }
 }
 
-ExpConditional::option_t::~option_t()
+ExpConditional::case_t::~case_t()
 {
       delete cond_;
       while (! true_clause_.empty()) {
@@ -373,7 +368,7 @@ ExpConditional::option_t::~option_t()
 }
 
 
-void ExpConditional::option_t::visit(ExprVisitor& func)
+void ExpConditional::case_t::visit(ExprVisitor& func)
 {
       if(cond_)
           func(cond_);

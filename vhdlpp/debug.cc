@@ -280,13 +280,13 @@ void ExpConditional::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "Conditional expression at "<< get_fileline() << endl;
 
-      for (list<option_t*>::const_iterator cur = options_.begin()
+      for (list<case_t*>::const_iterator cur = options_.begin()
 		 ; cur != options_.end() ; ++cur) {
 	    (*cur)->dump(out, indent);
       }
 }
 
-void ExpConditional::option_t::dump(ostream&out, int indent) const
+void ExpConditional::case_t::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "when:" << endl;
       if (cond_) cond_->dump(out, indent+4);
