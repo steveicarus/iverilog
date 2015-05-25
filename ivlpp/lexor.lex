@@ -1,7 +1,7 @@
 %option prefix="yy"
 %{
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -39,6 +39,7 @@ static void  def_finish(void);
 static void  def_undefine(void);
 static void  do_define(void);
 static int   def_is_done(void);
+static void  def_continue(void);
 static int   is_defined(const char*name);
 
 static int   macro_needs_args(const char*name);
@@ -358,6 +359,8 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
     if (def_is_done()) {
         def_finish();
         yy_pop_state();
+    } else {
+	def_continue();
     }
 
     istack->lineno += 1;
@@ -532,6 +535,8 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
       }
 }
 
+`` { if (istack->file != NULL) ECHO; }
+
 <MA_START>\(  { BEGIN(MA_ADD); macro_start_args(); }
 
 <MA_START>{W} {}
@@ -568,8 +573,12 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <MA_ADD>"(" { macro_add_to_arg(0); ma_parenthesis_level++; }
 
-<MA_ADD>"," { if (ma_parenthesis_level > 0) macro_add_to_arg(0);
-              else macro_finish_arg(); }
+<MA_ADD>"," {
+    if (ma_parenthesis_level > 0)
+	macro_add_to_arg(0);
+    else
+	macro_finish_arg();
+}
 
 <MA_ADD>")" {
     if (ma_parenthesis_level > 0) {
@@ -1125,6 +1134,14 @@ static int def_is_done(void)
 }
 
 /*
+ * Reset the define_continue_flag.
+ */
+static void def_continue(void)
+{
+    define_continue_flag = 0;
+}
+
+/*
  * After some number of calls to do_define, this function is called to
  * assigned value to the parsed name. If there is no value, then
  * assign the string "" (empty string.)
@@ -1300,14 +1317,30 @@ static void macro_add_to_arg(int is_white_space)
 
 static void macro_finish_arg(void)
 {
-    char* tail = &def_buf[def_buf_size - def_buf_free];
+    int   offs;
+    char* head;
+    char* tail;
 
     check_for_max_args();
 
+    offs = def_argo[def_argc-1] + def_argl[def_argc-1] + 1;
+    head = &def_buf[offs];
+    tail = &def_buf[def_buf_size - def_buf_free];
+
+    /* Eat any leading and trailing white space. */
+    if ((head < tail) && (*head == ' ')) {
+	offs++;
+	head++;
+    }
+    if ((tail > head) && (*(tail-1) == ' ')) {
+	def_buf_free++;
+	tail--;
+    }
+
     *tail = 0;
 
-    def_argo[def_argc] = def_argo[def_argc-1] + def_argl[def_argc-1] + 1;
-    def_argl[def_argc] = tail - def_argv(def_argc);
+    def_argo[def_argc] = offs;
+    def_argl[def_argc] = tail - head;
 
     def_buf_free -= 1;
     def_argc++;
