@@ -3339,6 +3339,22 @@ expr_primary
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  | TIME_LITERAL
+      { int unit;
+
+          based_size = 0;
+          $$         = 0;
+          if ($1 == 0 || !get_time_unit($1, unit))
+              yyerror(@1, "internal error: delay.");
+          else {
+              double p = pow(10.0, (double)(unit - pform_get_timeunit()));
+              double time = atof($1) * p;
+
+              verireal *v = new verireal(time);
+              $$ = new PEFNumber(v);
+              FILE_NAME($$, @1);
+          }
+      }
   | SYSTEM_IDENTIFIER
       { perm_string tn = lex_strings.make($1);
 	PECallFunction*tmp = new PECallFunction(tn);
