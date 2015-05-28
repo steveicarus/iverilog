@@ -38,6 +38,11 @@ class VTypeArray;
 class VTypePrimitive;
 class ExpName;
 
+struct ExprVisitor {
+    virtual ~ExprVisitor() {};
+    virtual void operator() (Expression*s) = 0;
+};
+
 /*
  * The Expression class represents parsed expressions from the parsed
  * VHDL input. The Expression class is a virtual class that holds more
@@ -120,6 +125,9 @@ class Expression : public LineInfo {
       virtual void dump(ostream&out, int indent = 0) const =0;
       virtual ostream& dump_inline(ostream&out) const;
 
+	// Recursively visits a tree of expressions (useful of complex expressions).
+      virtual void visit(ExprVisitor& func) { func(this); }
+
     protected:
 	// This function is called by the derived class during
 	// elaboration to set the type of the current expression that
@@ -160,6 +168,7 @@ class ExpUnary : public Expression {
       inline const Expression*peek_operand() const { return operand1_; }
 
       const VType*fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*atype) const;
+      void visit(ExprVisitor& func);
 
     protected:
       inline void write_to_stream_operand1(std::ostream&fd) const
@@ -186,6 +195,7 @@ class ExpBinary : public Expression {
       inline const Expression* peek_operand2(void) const { return operand2_; }
 
       const VType*probe_type(Entity*ent, ScopeBase*scope) const;
+      void visit(ExprVisitor& func);
 
     protected:
 
@@ -299,6 +309,7 @@ class ExpAggregate : public Expression {
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
       void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
 
     private:
       int elaborate_expr_array_(Entity*ent, ScopeBase*scope, const VTypeArray*ltype);
@@ -360,6 +371,7 @@ class ExpAttribute : public Expression {
       bool evaluate(ScopeBase*scope, int64_t&val) const;
       bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
 
     private:
       ExpName*base_;
@@ -430,6 +442,7 @@ class ExpConcat : public Expression {
       virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
       bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
 
     private:
       int elaborate_expr_array_(Entity*ent, ScopeBase*scope, const VTypeArray*ltype);
@@ -457,6 +470,7 @@ class ExpConditional : public Expression {
 	    int emit_when_else(ostream&out, Entity*ent, ScopeBase*scope);
 	    int emit_else(ostream&out, Entity*ent, ScopeBase*scope);
 	    void dump(ostream&out, int indent = 0) const;
+            std::list<Expression*>& extract_true_clause() { return true_clause_; }
 
 	  private:
 	    Expression*cond_;
@@ -475,6 +489,7 @@ class ExpConditional : public Expression {
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
       void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
 
     private:
       Expression*cond_;
@@ -528,6 +543,7 @@ class ExpFunc : public Expression {
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
       void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func); // NOTE: does not handle expressions in subprogram
 
     private:
       perm_string name_;
@@ -638,8 +654,8 @@ class ExpName : public Expression {
       void dump(ostream&out, int indent = 0) const;
       inline const char* name() const { return name_; }
       inline const perm_string& peek_name() const { return name_; }
-
       void set_range(Expression*msb, Expression*lsb);
+      void visit(ExprVisitor& func);
 
     private:
       class index_t {
@@ -811,6 +827,7 @@ class ExpCast : public Expression {
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
       void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
 
     private:
       Expression*base_;
@@ -833,6 +850,7 @@ class ExpNew : public Expression {
       void write_to_stream(std::ostream&) const {};
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
       void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
 
     private:
       Expression*size_;
