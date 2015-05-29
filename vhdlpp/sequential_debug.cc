@@ -187,3 +187,10 @@ void WaitForStmt::dump(ostream&out, int indent) const
     out << setw(indent+3) << "" << "delay: ";
     delay_->dump(out, indent+3);
 }
+
+void WaitStmt::dump(ostream&out, int indent) const
+{
+    out << setw(indent) << "" << "WaitStmt at file=" << get_fileline() << endl;
+    out << setw(indent+3) << "" << "expression: ";
+    expr_->dump(out, indent+3);
+}

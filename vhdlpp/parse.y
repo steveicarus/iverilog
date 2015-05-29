@@ -359,7 +359,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <sequ> sequential_statement if_statement signal_assignment signal_assignment_statement
 %type <sequ> case_statement procedure_call procedure_call_statement
 %type <sequ> loop_statement variable_assignment variable_assignment_statement
-%type <sequ> assertion_statement report_statement return_statement wait_for_statement
+%type <sequ> assertion_statement report_statement return_statement wait_statement
 
 %type <range> range
 %type <range_list> range_list index_constraint
@@ -2201,7 +2201,7 @@ sequential_statement
   | return_statement { $$ = $1; }
   | report_statement { $$ = $1; }
   | assertion_statement { $$ = $1; }
-  | wait_for_statement { $$ = $1; }
+  | wait_statement { $$ = $1; }
   | K_null ';' { $$ = 0; }
   | error ';'
       { errormsg(@1, "Syntax error in sequential statement.\n");
@@ -2632,11 +2632,21 @@ variable_declaration /* IEEE 1076-2008 P6.4.2.4 */
       }
   ;
 
-wait_for_statement
+wait_statement
   : K_wait K_for expression ';'
       { WaitForStmt*tmp = new WaitForStmt($3);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
+      }
+  | K_wait K_on expression ';'
+      { WaitStmt*tmp = new WaitStmt(WaitStmt::ON, $3);
+        FILE_NAME(tmp, @1);
+        $$ = tmp;
+      }
+  | K_wait K_until expression ';'
+      { WaitStmt*tmp = new WaitStmt(WaitStmt::UNTIL, $3);
+        FILE_NAME(tmp, @1);
+        $$ = tmp;
       }
   ;
 

@@ -22,8 +22,7 @@
 
 # include  "LineInfo.h"
 # include "parse_types.h"
-# include  <list>
-# include  <functional>
+# include  <set>
 
 class ScopeBase;
 class Entity;
@@ -319,6 +318,23 @@ class WaitForStmt : public SequentialStmt {
 
     private:
       Expression*delay_;
+};
+
+class WaitStmt : public SequentialStmt {
+    public:
+      typedef enum { ON, UNTIL } wait_type_t;
+      WaitStmt(wait_type_t type, Expression*expression);
+
+      void dump(ostream&out, int indent) const;
+      int elaborate(Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*entity, ScopeBase*scope);
+      void write_to_stream(std::ostream&fd);
+
+    private:
+      wait_type_t type_;
+      Expression*expr_;
+      // Sensitivity list for 'wait until' statement
+      std::set<ExpName*> sens_list_;
 };
 
 #endif /* IVL_sequential_H */

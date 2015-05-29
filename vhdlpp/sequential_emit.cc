@@ -529,3 +529,51 @@ void WaitForStmt::write_to_stream(std::ostream&fd)
     fd << "wait for ";
     delay_->write_to_stream(fd);
 }
+
+int WaitStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+    int errors = 0;
+
+    switch(type_) {
+        case ON:
+            out << "@(";
+            break;
+
+        case UNTIL:
+            if(!sens_list_.empty()) {
+                out << "@(";
+                for(std::set<ExpName*>::iterator it = sens_list_.begin();
+                        it != sens_list_.end(); ++it) {
+                    if(it != sens_list_.begin())
+                        out << ",";
+
+                    (*it)->emit(out, ent, scope);
+                }
+
+                out << ");";
+            }
+
+            out << "wait(";
+            break;
+    }
+
+    errors += expr_->emit(out, ent, scope);
+    out << ");" << endl;
+
+    return errors;
+}
+
+void WaitStmt::write_to_stream(std::ostream&fd)
+{
+    switch(type_) {
+        case ON:
+            fd << "wait on ";
+            break;
+
+        case UNTIL:
+            fd << "wait until ";
+            break;
+    }
+
+    expr_->write_to_stream(fd);
+}

@@ -19,6 +19,7 @@
 
 # include  "sequential.h"
 # include  "expression.h"
+# include  "scope.h"
 
 int SequentialStmt::elaborate(Entity*, ScopeBase*)
 {
@@ -201,4 +202,27 @@ int AssertStmt::elaborate(Entity*ent, ScopeBase*scope)
 int WaitForStmt::elaborate(Entity*ent, ScopeBase*scope)
 {
     return delay_->elaborate_expr(ent, scope, 0);
+}
+
+int WaitStmt::elaborate(Entity*ent, ScopeBase*scope)
+{
+    if(type_ == UNTIL) {
+        struct fill_sens_list_t : public ExprVisitor {
+            fill_sens_list_t(set<ExpName*>& sig_list)
+            : sig_list_(sig_list) {};
+
+            void operator() (Expression*s) {
+                if(ExpName*name = dynamic_cast<ExpName*>(s))
+                    sig_list_.insert(name);
+            }
+
+            private:
+                set<ExpName*>& sig_list_;
+        } fill_sens_list(sens_list_);
+
+        // Fill the sensitivity list
+        expr_->visit(fill_sens_list);
+    }
+
+    return expr_->elaborate_expr(ent, scope, 0);
 }
