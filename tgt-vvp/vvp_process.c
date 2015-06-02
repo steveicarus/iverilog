@@ -671,7 +671,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 
 	      /* Duplicate the case expression so that the cmp
 		 instructions below do not completely erase the
-		 value. Do this in fromt of each compare. */
+		 value. Do this in front of each compare. */
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
 	    draw_eval_vec4(cex);
 
@@ -767,7 +767,7 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 		  continue;
 	    }
 
-	      /* The referene value... */
+	      /* The reference value... */
 	    fprintf(vvp_out, "    %%dup/real;\n");
 	      /* The guard value... */
 	    draw_eval_real(cex);
@@ -2321,7 +2321,7 @@ int draw_process(ivl_process_t net, void*x)
       fprintf(vvp_out, "    .scope S_%p;\n", scope);
 
 	/* Generate the entry label. Just give the thread a number so
-	   that we ar certain the label is unique. */
+	   that we are certain the label is unique. */
       fprintf(vvp_out, "T_%u ;\n", thread_count);
 
 	/* Draw the contents of the thread. */

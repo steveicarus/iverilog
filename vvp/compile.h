@@ -512,7 +512,7 @@ extern void compile_port_info( unsigned index, int vpi_port_type, unsigned width
  * given name.
  *
  * The vpi_type_code argument of compile_net() is one of the vpi
- * object codes for the equivelent variable types. The supported codes
+ * object codes for the equivalent variable types. The supported codes
  * are:
  *   vpiLogic  -- 4-value logic
  *   vpiIntVar -- 2-value logic

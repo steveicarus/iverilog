@@ -415,7 +415,7 @@ static void draw_binary_vec4_land(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%or/r;\n");
 
 	/* Now push the right expression. Again, reduce to a single
-	   bit if necessasry. */
+	   bit if necessary. */
       draw_eval_vec4(re);
       if (ivl_expr_width(re) > 1)
 	    fprintf(vvp_out, "    %%or/r;\n");
@@ -615,7 +615,7 @@ static void draw_binary_vec4_lor(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%or/r;\n");
 
 	/* Now push the right expression. Again, reduce to a single
-	   bit if necessasry. */
+	   bit if necessary. */
       draw_eval_vec4(re);
       if (ivl_expr_width(re) > 1)
 	    fprintf(vvp_out, "    %%or/r;\n");
@@ -952,7 +952,7 @@ static void draw_select_pad_vec4(ivl_expr_t expr)
 }
 
 /*
- * This function handles the speical case of a call to the internal
+ * This function handles the special case of a call to the internal
  * functions $ivl_darray_method$pop_back et al. The first (and only)
  * argument is the signal that represents a dynamic queue. Generate a
  * %qpop instruction to pop a value and push it to the vec4 stack.

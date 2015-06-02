@@ -263,7 +263,7 @@ static PLI_INT32 to_vec_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 			                                 offset));
 			      vec_ptr->bval |= (bval >> (darr_word_size -
 			                                 offset));
-			  /* Start at the begining of the next vector part. */
+			  /* Start at the beginning of the next vector part. */
 			} else {
 			      offset = 0;
 			}

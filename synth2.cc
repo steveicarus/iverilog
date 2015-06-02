@@ -808,8 +808,8 @@ bool NetCase::synth_async_casez_(Design*des, NetScope*scope,
 						   sel_width, case_kind);
 	    des->add_node(condit_dev);
 	    condit_dev->set_line(*this);
-	      // Note that the expression that may have windcards must
-	      // go in the pin(2) input. This is the definiton of the
+	      // Note that the expression that may have wildcards must
+	      // go in the pin(2) input. This is the definition of the
 	      // NetCaseCmp statement.
 	    connect(condit_dev->pin(1), esig->pin(0));
 	    connect(condit_dev->pin(2), guard->pin(0));

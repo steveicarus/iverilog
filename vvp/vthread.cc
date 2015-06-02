@@ -949,7 +949,7 @@ bool of_ASSIGN_VEC4_A_D(vthread_t thr, vvp_code_t cp)
       unsigned wid = val.size();
       const unsigned array_wid = cp->array->get_word_size();
 
-	// Abort if flags[4] is set. This can happen if the calulation
+	// Abort if flags[4] is set. This can happen if the calculation
 	// into an index register failed.
       if (thr->flags[4] == BIT4_1)
 	    return true;
@@ -992,7 +992,7 @@ bool of_ASSIGN_VEC4_A_E(vthread_t thr, vvp_code_t cp)
       unsigned wid = val.size();
       const unsigned array_wid = cp->array->get_word_size();
 
-	// Abort if flags[4] is set. This can happen if the calulation
+	// Abort if flags[4] is set. This can happen if the calculation
 	// into an index register failed.
       if (thr->flags[4] == BIT4_1)
 	    return true;
@@ -1038,7 +1038,7 @@ bool of_ASSIGN_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
       int off = thr->words[off_index].w_int;
       vvp_time64_t del = thr->words[del_index].w_uint;
 
-	// Abort if flags[4] is set. This can happen if the calulation
+	// Abort if flags[4] is set. This can happen if the calculation
 	// into an index register failed.
       if (thr->flags[4] == BIT4_1)
 	    return true;
@@ -1080,7 +1080,7 @@ bool of_ASSIGN_VEC4_OFF_E(vthread_t thr, vvp_code_t cp)
 
       int off = thr->words[off_index].w_int;
 
-	// Abort if flags[4] is set. This can happen if the calulation
+	// Abort if flags[4] is set. This can happen if the calculation
 	// into an index register failed.
       if (thr->flags[4] == BIT4_1)
 	    return true;

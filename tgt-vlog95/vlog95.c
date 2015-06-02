@@ -208,7 +208,7 @@ int target_design(ivl_design_t des)
 	    assert(indent == 0);
 	    fprintf(vlog_out, "endmodule /* ivl_root_scope */\n");
       }
-	/* Emit the rest of the scope objets. */
+	/* Emit the rest of the scope objects. */
       for (idx = 0; idx < nroots; idx += 1) emit_scope(roots[idx], 0);
 
       free_emitted_scope_list();

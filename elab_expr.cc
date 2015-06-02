@@ -1335,7 +1335,7 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
       if (net == 0)
 	    return 0;
 
-	// Look fonr built in string attributes.
+	// Look for built in string attributes.
       if (net->data_type()==IVL_VT_STRING) {
 
 	    if (method_name == "len") {
@@ -3843,7 +3843,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       }
 
 	// Maybe this is a method attached to an enumeration name? If
-	// this is system verilog, then test to see if the name is
+	// this is SystemVerilog, then test to see if the name is
 	// really a method attached to an object.
       if (gn_system_verilog() && found_in==0 && path_.size() >= 2) {
 	    pform_name_t use_path = path_;

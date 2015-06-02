@@ -765,7 +765,7 @@ class NetNet  : public NetObj, public PortType {
       unsigned peek_eref() const;
 
 	// Assignment statements count their lrefs here. And by
-	// asignment statements, we mean BEHAVIORAL assignments.
+	// assignment statements, we mean BEHAVIORAL assignments.
       void incr_lref();
       void decr_lref();
       unsigned peek_lref() const { return lref_count_; }
@@ -2216,7 +2216,7 @@ class NetPartSelect  : public NetNode {
  *
  *      wire [7:0] foo = NetSubstitute(bar, bat, off);
  *
- * meaus that bar is a vector the same width as foo, bat is a narrower
+ * means that bar is a vector the same width as foo, bat is a narrower
  * vector. The off is a constant offset into the bar vector. This
  * looks something like this:
  *
@@ -2287,7 +2287,7 @@ class NetBUFZ  : public NetNode {
  *
  *     0   -- Output (always returns 0 or 1)
  *     1   -- Input
- *     2   -- Input (windcard input for EQX and EQZ variants)
+ *     2   -- Input (wildcard input for EQX and EQZ variants)
  */
 class NetCaseCmp  : public NetNode {
 

@@ -1581,7 +1581,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 		    // Special case: If the output port is an unpacked
 		    // array, then there should be no sub-ports and
-		    // the passed pexxpression is processed
+		    // the passed port expression is processed
 		    // differently. Note that we are calling it the
 		    // "r-value" expression, but since this is an
 		    // output port, we assign to it from the internal object.

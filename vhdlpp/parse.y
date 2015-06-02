@@ -753,7 +753,7 @@ composite_type_definition
 
   /* The when...else..when...else syntax is not a general expression
      in VHDL but a specific sort of assignment statement model. We
-     create Exppression objects for it, but the parser will only
+     create Expression objects for it, but the parser will only
      recognize it it in specific situations. */
 concurrent_conditional_signal_assignment /* IEEE 1076-2008 P11.6 */
   : name LEQ waveform K_when expression else_when_waveforms ';'

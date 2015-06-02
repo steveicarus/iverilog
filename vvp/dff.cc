@@ -71,7 +71,7 @@ void vvp_dff::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 }
 
 /*
- * The recv_clear and recv_set function respond to asynchronout
+ * The recv_clear and recv_set function respond to asynchronous
  * clear/set input by propagating the desired output.
  *
  * NOTE: Don't touch the d_ value, because that tracks the D input,

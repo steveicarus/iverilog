@@ -1962,7 +1962,7 @@ void compile_param_string(char*label, char*name, char*value,
                           bool local_flag,
                           long file_idx, long lineno)
 {
-	// name and value become owned bi vpip_make_string_param
+	// name and value become owned by vpip_make_string_param
       vpiHandle obj = vpip_make_string_param(name, value, local_flag, file_idx, lineno);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);

@@ -893,7 +893,7 @@ static NetExpr* do_elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
             }
       }
 
-	// If the context_width sent is is actually the minimim width,
+	// If the context_width sent is is actually the minimum width,
 	// then raise the context_width to be big enough for the
 	// lossless expression.
       if (force_expand && context_width > 0) {

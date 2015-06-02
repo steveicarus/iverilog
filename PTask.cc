@@ -41,7 +41,7 @@ void PTaskFunc::set_this(class_type_t*type, PWire*this_wire)
       assert(this_type_ == 0);
       this_type_ = type;
 
-	// Push a synthethis argument that is the "this" value.
+	// Push a synthesis argument that is the "this" value.
       if (ports_==0)
 	    ports_ = new vector<pform_tf_port_t>;
 

@@ -141,7 +141,7 @@ bool prefix_to_slice(const std::vector<netrange_t>&dims,
 
 	// Now similarly go through the prefix numbers, working
 	// through the dimensions until we run out. Accumulate a
-	// growing slice width (acc_wid) that is used to caculate the
+	// growing slice width (acc_wid) that is used to calculate the
 	// growing offset (acc_off).
       list<long>::const_iterator icur = prefix.end();
       do {

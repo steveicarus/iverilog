@@ -136,7 +136,7 @@ static vpiHandle fill_in_net4(struct __vpiSignal*obj,
 			      bool signed_flag, vvp_net_t*node);
 
 /*
- * The standard formating/conversion routines.
+ * The standard formatting/conversion routines.
  * They work with full or partial signals.
  */
 

@@ -50,7 +50,7 @@ typedef named<verinum> named_number_t;
 typedef named<PExpr*> named_pexpr_t;
 
 /*
- * The pform_range_t holds variable diimensions for type
+ * The pform_range_t holds variable dimensions for type
  * declarations. The two expressions are interpreted as the first and
  * last values of the range. For example:
  *

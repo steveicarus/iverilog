@@ -300,7 +300,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_CONCAT = 16,
       IVL_LPM_CONCATZ = 36, /* Transparent concat */
       IVL_LPM_CMP_EEQ= 18, /* Case EQ (===) */
-      IVL_LPM_CMP_EQX= 37, /* Windcard EQ (==?) */
+      IVL_LPM_CMP_EQX= 37, /* Wildcard EQ (==?) */
       IVL_LPM_CMP_EQZ= 38, /* casez EQ */
       IVL_LPM_CMP_EQ = 10,
       IVL_LPM_CMP_GE =  1,
@@ -1285,8 +1285,8 @@ extern unsigned    ivl_lpm_lineno(ivl_lpm_t net);
  * magnitude compare, the signedness does matter. In any case, the
  * result of the compare is always unsigned.
  *
- * The EQX and EQZ nodes are windcard compares, where xz bits (EQX) or
- * z bits (EQZ) in the data(1) operand are treated as windcards. no
+ * The EQX and EQZ nodes are wildcard compares, where xz bits (EQX) or
+ * z bits (EQZ) in the data(1) operand are treated as wildcards. no
  * bits in the data(0) operand are wild. This matches the
  * SystemVerilog convention for the ==? operator.
  *
