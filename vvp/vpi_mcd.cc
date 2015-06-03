@@ -243,7 +243,7 @@ extern "C" void vpip_mcd_rawwrite(PLI_UINT32 mcd, const char*buf, size_t cnt)
 
 	    fwrite(buf, 1, cnt, mcd_table[idx].fp);
 	    if (idx == 0 && logfile)
-		  fwrite(buf, 1, cnt, mcd_table[idx].fp);
+		  fwrite(buf, 1, cnt, logfile);
 
       }
 }
