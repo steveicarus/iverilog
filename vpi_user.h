@@ -632,6 +632,10 @@ extern void vpip_set_return_value(int value);
 extern s_vpi_vecval vpip_calc_clog2(vpiHandle arg);
 extern void vpip_make_systf_system_defined(vpiHandle ref);
 
+  /* Perform fwrite to mcd files. This is used to write raw data,
+     which may include nulls. */
+extern void vpip_mcd_rawwrite(PLI_UINT32 mcd, const char*buf, size_t count);
+
   /* Return driver information for a net bit. The information is returned
      in the 'counts' array as follows:
        counts[0] - number of drivers driving '0' onto the net

@@ -65,6 +65,23 @@ static PLI_INT32 my_mcd_printf(PLI_UINT32 mcd, const char *fmt, ...)
       return r;
 }
 
+static void my_mcd_rawwrite(PLI_UINT32 mcd, const char*buf, size_t count)
+{
+      if (IS_MCD(mcd)) {
+	    vpip_mcd_rawwrite(mcd, buf, count);
+      } else {
+	    FILE*fp = vpi_get_file(mcd);
+	    if (fp) {
+		  while (count > 0) {
+			size_t rc = fwrite(buf, 1, count, fp);
+			if (rc <= 0) break;
+			count -= rc;
+			buf += rc;
+		  }
+	    }
+      }
+}
+
 struct timeformat_info_s timeformat_info = { 0, 0, 0, 20 };
 
 struct strobe_cb_info {
@@ -1198,7 +1215,7 @@ static PLI_INT32 sys_display_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpiHandle callh, argv, scope;
       struct strobe_cb_info info;
       char* result;
-      unsigned int size, location=0;
+      unsigned int size;
       PLI_UINT32 fd_mcd;
 
       callh = vpi_handle(vpiSysTfCall, 0);
@@ -1247,17 +1264,9 @@ static PLI_INT32 sys_display_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	/* Because %u and %z may put embedded NULL characters into the
 	 * returned string strlen() may not match the real size! */
       result = get_display(&size, &info);
-      while (location < size) {
-	    if (result[location] == '\0') {
-		  my_mcd_printf(fd_mcd, "%c", '\0');
-		  location += 1;
-	    } else {
-		  my_mcd_printf(fd_mcd, "%s", &result[location]);
-		  location += strlen(&result[location]);
-	    }
-      }
+      my_mcd_rawwrite(fd_mcd, result, size);
       if ((strncmp(name,"$display",8) == 0) ||
-          (strncmp(name,"$fdisplay",9) == 0)) my_mcd_printf(fd_mcd, "\n");
+          (strncmp(name,"$fdisplay",9) == 0)) my_mcd_rawwrite(fd_mcd, "\n", 1);
 
       free(info.filename);
       free(info.items);
@@ -1282,20 +1291,12 @@ static PLI_INT32 strobe_cb(p_cb_data cb)
       if ((! IS_MCD(info->fd_mcd) && vpi_get_file(info->fd_mcd) != NULL) ||
           ( IS_MCD(info->fd_mcd) && my_mcd_printf(info->fd_mcd, "") != EOF)) {
 	    char* result;
-	    unsigned int size, location=0;
+	    unsigned int size;
 	      /* Because %u and %z may put embedded NULL characters into the
 	       * returned string strlen() may not match the real size! */
 	    result = get_display(&size, info);
-	    while (location < size) {
-		  if (result[location] == '\0') {
-			my_mcd_printf(info->fd_mcd, "%c", '\0');
-			location += 1;
-		  } else {
-			my_mcd_printf(info->fd_mcd, "%s", &result[location]);
-			location += strlen(&result[location]);
-		  }
-	    }
-	    my_mcd_printf(info->fd_mcd, "\n");
+	    my_mcd_rawwrite(info->fd_mcd, result, size);
+	    my_mcd_rawwrite(info->fd_mcd, "\n", 1);
 	    free(result);
       }
 
@@ -1397,23 +1398,15 @@ static int monitor_enabled = 1;
 static PLI_INT32 monitor_cb_2(p_cb_data cb)
 {
       char* result;
-      unsigned int size, location=0;
+      unsigned int size;
 
       (void)cb; /* Parameter is not used. */
 
 	/* Because %u and %z may put embedded NULL characters into the
 	 * returned string strlen() may not match the real size! */
       result = get_display(&size, &monitor_info);
-      while (location < size) {
-	    if (result[location] == '\0') {
-		  my_mcd_printf(monitor_info.fd_mcd, "%c", '\0');
-		  location += 1;
-	    } else {
-		  my_mcd_printf(monitor_info.fd_mcd, "%s", &result[location]);
-		  location += strlen(&result[location]);
-	    }
-      }
-      my_mcd_printf(monitor_info.fd_mcd, "\n");
+      my_mcd_rawwrite(monitor_info.fd_mcd, result, size);
+      my_mcd_rawwrite(monitor_info.fd_mcd, "\n", 1);
       monitor_scheduled = 0;
       free(result);
       return 0;

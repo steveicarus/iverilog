@@ -230,6 +230,24 @@ extern "C" PLI_INT32 vpi_mcd_printf(PLI_UINT32 mcd, const char *fmt, ...)
       return r;
 }
 
+extern "C" void vpip_mcd_rawwrite(PLI_UINT32 mcd, const char*buf, size_t cnt)
+{
+      if (!IS_MCD(mcd)) return;
+
+      for(int idx = 0; idx < 31; idx += 1) {
+	    if (((mcd>>idx) & 1) == 0)
+		  continue;
+
+	    if (mcd_table[idx].fp == 0)
+		  continue;
+
+	    fwrite(buf, 1, cnt, mcd_table[idx].fp);
+	    if (idx == 0 && logfile)
+		  fwrite(buf, 1, cnt, mcd_table[idx].fp);
+
+      }
+}
+
 extern "C" PLI_INT32 vpi_mcd_flush(PLI_UINT32 mcd)
 {
 	int rc = 0;
