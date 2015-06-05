@@ -163,7 +163,7 @@ its behavior. These can be used to make semi-permanent changes.
 This selects the output format for the waveform output. Normally,
 waveforms are dumped in vcd format, but this variable can be used to
 select lxt format, which is far more compact, though limited to
-gtkwave or compatible viewers. It can also be used to suppress VCD
+GTKWave or compatible viewers. It can also be used to suppress VCD
 output, a time-saver for regression tests.
 
 .SH INTERACTIVE MODE

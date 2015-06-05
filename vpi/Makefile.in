@@ -95,7 +95,7 @@ distclean: clean
 	rm -f vpi_config.h stamp-vpi_config-h
 
 # The -U flag is used to skip checking paths that depend on that define having
-# an explict value (i.e. the define is expected to be real code).
+# an explicit value (i.e. the define is expected to be real code).
 cppcheck: $(O:.o=.c) $(OPP:.o=.cc) $(M:.o=.c) $(V:.o=.c)
 	cppcheck --enable=all -f --suppressions-list=$(srcdir)/cppcheck.sup \
 	         -UYY_USER_INIT \

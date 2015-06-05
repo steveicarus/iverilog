@@ -2924,7 +2924,7 @@ bool PEIdent::calculate_bits_(Design*des, NetScope*scope,
       NetEConst*msb_c = dynamic_cast<NetEConst*>(msb_ex);
       if (msb_c == 0) {
 	    cerr << index_tail.msb->get_fileline() << ": error: "
-		  "Bit select expressionsmust be constant."
+		  "Bit select expressions must be constant."
 		 << endl;
 	    cerr << index_tail.msb->get_fileline() << ":      : "
                   "This msb expression violates the rule: "

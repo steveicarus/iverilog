@@ -485,7 +485,7 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
 
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
-			     << "Found initialzers for property " << class_type->get_prop_name(pidx) << endl;
+			     << "Found initializers for property " << class_type->get_prop_name(pidx) << endl;
 		  }
 	    }
       }

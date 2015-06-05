@@ -738,7 +738,7 @@ static int is_defined(const char*name)
  * particular, keep the names and name lengths in a compact stretch of
  * memory. Note that we do not keep the argument names once the
  * definition is fully processed, because arguments are always
- * positional and the definition string hs replaced with position
+ * positional and the definition string is replaced with position
  * tokens.
  */
 static char* def_buf = 0;
@@ -820,7 +820,7 @@ static void def_add_arg(void)
 		val[val_length] = 0;
 	  }
 
-	    /* Strip white space from betwen arg and "=". */
+	    /* Strip white space from between arg and "=". */
 	  length = strlen(arg);
 	  while (length>0 && isspace(arg[length-1])) {
 		length -= 1;

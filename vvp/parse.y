@@ -893,7 +893,7 @@ statement
   | K_TRANVP T_NUMBER T_NUMBER T_NUMBER ',' T_SYMBOL ',' T_SYMBOL T_SYMBOL ';'
       { compile_island_tranvp($6, $8, $9, $2, $3, $4); }
 
-  /* Other statemehts */
+  /* Other statements */
 
   | T_LABEL K_CLASS T_STRING '[' T_NUMBER ']'
       { compile_class_start($1, $3, $5); }

@@ -1796,7 +1796,7 @@ property_expr /* IEEE1800-2012 A.2.10 */
 
   /* The property_qualifier rule is as literally described in the LRM,
      but the use is usually as { property_qualifier }, which is
-     implemented bt the property_qualifier_opt rule below. */
+     implemented by the property_qualifier_opt rule below. */
 
 property_qualifier /* IEEE1800-2005 A.1.8 */
   : class_item_qualifier
@@ -2101,7 +2101,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	} else {
 		// Otherwise, the decorations for this identifier
 		// indicate the type. Save the type for any right
-		// context thta may come later.
+		// context that may come later.
 	      port_declaration_context.port_type = use_port_type;
 	      if ($2 == 0) {
 		    $2 = new vector_type_t(IVL_VT_LOGIC, false, 0);
@@ -3389,7 +3389,7 @@ expr_primary
 
   /* An identifier followed by an expression list in parentheses is a
      function call. If a system identifier, then a system function
-     call. It can also be a call to a class method (functino). */
+     call. It can also be a call to a class method (function). */
 
   | hierarchy_identifier '(' expression_list_with_nuls ')'
       { list<PExpr*>*expr_list = $3;
@@ -6115,7 +6115,7 @@ statement_item /* This is roughly statement_item in the LRM */
 		{ yyerror(@1, "error: Malformed conditional expression.");
 		  $$ = $5;
 		}
-  /* SytemVerilog adds the compressed_statement */
+  /* SystemVerilog adds the compressed_statement */
 
   | compressed_statement ';'
       { $$ = $1; }

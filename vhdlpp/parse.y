@@ -903,7 +903,7 @@ configuration_items_opt
 
 constant_declaration
   : K_constant identifier_list ':' subtype_indication VASSIGN expression ';'
-      { // The syntax allows mutliple names to have the same type/value.
+      { // The syntax allows multiple names to have the same type/value.
 	for (std::list<perm_string>::iterator cur = $2->begin()
 		   ; cur != $2->end() ; ++cur) {
 	      active_scope->bind_name(*cur, $4, $6);
@@ -918,7 +918,7 @@ constant_declaration
   /* Some error handling... */
 
   | K_constant identifier_list ':' subtype_indication VASSIGN error ';'
-      { // The syntax allows mutliple names to have the same type/value.
+      { // The syntax allows multiple names to have the same type/value.
 	errormsg(@6, "Error in value expression for constants.\n");
 	yyerrok;
 	for (std::list<perm_string>::iterator cur = $2->begin()
@@ -1966,7 +1966,7 @@ process_statement
   ;
 
 /*
- * A process_sentitivity_list is:
+ * A process_sensitivity_list is:
  *     <nil>  if the list is not present, or
  *     or a non-empty list of actual expressions.
  */
@@ -2282,9 +2282,9 @@ signal_declaration_assign_opt
  *
  * This is functionally a list of terms, with the adding_operator used
  * as a list element separator instead of a ','. The LRM rule,
- * however, is right-recursive, which is not to nice is real LALR
+ * however, is right-recursive, which is not too nice in real LALR
  * parsers. The solution is to rewrite it as below, to make it
- * left-recursive. This is must more effecient use of the parse stack.
+ * left-recursive. This is much more efficient use of the parse stack.
  *
  * Note that although the concatenation operator '&' is syntactically
  * an addition operator, it is handled differently during elaboration
