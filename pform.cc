@@ -2425,7 +2425,8 @@ static PWire* pform_get_or_make_wire(const vlltype&li, perm_string name,
 
 	// If the wire already exists but isn't yet fully defined,
 	// carry on adding details.
-      if (cur && cur->get_data_type() == IVL_VT_NO_TYPE) {
+      if (cur && (cur->get_data_type() == IVL_VT_NO_TYPE ||
+                  cur->get_wire_type() == NetNet::IMPLICIT) ) {
 	      // If this is not implicit ("implicit" meaning we don't
 	      // know what the type is yet) then set the type now.
 	    if (type != NetNet::IMPLICIT) {
