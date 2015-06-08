@@ -70,6 +70,33 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 				NexusSet&nex_map, NetBus&nex_out,
 				NetBus&accumulated_nex_out)
 {
+	/* If the lval is a concatenation, synthesise each part
+	   separately. */
+      if (lval_->more ) {
+	      /* Temporarily set the lval_ and rval_ fields for each
+		 part in turn and recurse. Restore them when done. */
+	    NetAssign_*full_lval = lval_;
+	    NetExpr*full_rval = rval_;
+	    unsigned offset = 0;
+	    while (lval_) {
+		  unsigned width = lval_->lwidth();
+		  NetEConst*base = new NetEConst(verinum(offset));
+		  base->set_line(*this);
+		  rval_ = new NetESelect(full_rval->dup_expr(), base, width);
+		  rval_->set_line(*this);
+		  eval_expr(rval_, width);
+		  NetAssign_*more = lval_->more;
+		  lval_->more = 0;
+		  synth_async(des, scope, nex_map, nex_out,
+			      accumulated_nex_out);
+		  lval_ = lval_->more = more;
+		  offset += width;
+	    }
+	    lval_ = full_lval;
+	    rval_ = full_rval;
+	    return true;
+      }
+
       NetNet*rsig = rval_->synthesize(des, scope, rval_);
       assert(rsig);
 
@@ -98,34 +125,6 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    cerr << get_fileline() << ": NetAssignBase::synth_async: "
 		 << "nex_map.size()==" << nex_map.size()
 		 << ", nex_out.pin_count()==" << nex_out.pin_count() << endl;
-      }
-
-      if (lval_->more ) {
-	    unsigned base = 0, width = 1;
-	    unsigned i = 0;
-	    NetAssign_ *lval = lval_;
-	    while (lval) {
-		  NetNet *llsig = lval->sig();
-		  width = lval->lwidth();
-		  ivl_variable_type_t tmp_data_type = llsig->data_type();
-		  netvector_t *tmp_type = new netvector_t(tmp_data_type, llsig->vector_width()-1, 0);
-
-		  NetNet *tmp = new NetNet(scope, scope->local_symbol(),
-		  NetNet::WIRE, NetNet::not_an_array, tmp_type);
-		  tmp->local_flag(true);
-		  NetPartSelect *ps = new NetPartSelect(rsig, base, width, NetPartSelect::VP);
-		  ps->set_line(*this);
-		  des->add_node(ps);
-
-		  connect(tmp->pin(0), ps->pin(0));
-		  connect(nex_out.pin(i), tmp->pin(0));
-
-		  base += width;
-		  i++;
-		  lval->turn_sig_to_wire_on_release();
-		  lval = lval->more;
-	    }
-	    return true;
       }
 
 	// Here we note if the l-value is actually a bit/part
