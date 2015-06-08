@@ -69,6 +69,12 @@ Expression*ExpAttribute::clone() const
       return new ExpAttribute(static_cast<ExpName*>(base_->clone()), name_);
 }
 
+void ExpAttribute::visit(ExprVisitor& func)
+{
+      base_->visit(func);
+      func(this);
+}
+
 ExpBinary::ExpBinary(Expression*op1, Expression*op2)
 : operand1_(op1), operand2_(op2)
 {
@@ -90,6 +96,13 @@ bool ExpBinary::eval_operand2(ScopeBase*scope, int64_t&val) const
       return operand2_->evaluate(scope, val);
 }
 
+void ExpBinary::visit(ExprVisitor& func)
+{
+      operand1_->visit(func);
+      operand2_->visit(func);
+      func(this);
+}
+
 ExpUnary::ExpUnary(Expression*op1)
 : operand1_(op1)
 {
@@ -98,6 +111,12 @@ ExpUnary::ExpUnary(Expression*op1)
 ExpUnary::~ExpUnary()
 {
       delete operand1_;
+}
+
+void ExpUnary::visit(ExprVisitor& func)
+{
+    operand1_->visit(func);
+    func(this);
 }
 
 ExpAggregate::ExpAggregate(std::list<element_t*>*el)
@@ -133,6 +152,24 @@ Expression* ExpAggregate::clone() const
       assert(aggregate_.empty());   // cloning should not happen after elab
 
       return new ExpAggregate(new_elements);
+}
+
+void ExpAggregate::visit(ExprVisitor& func)
+{
+    for(std::vector<element_t*>::iterator it = elements_.begin();
+            it != elements_.end(); ++it) {
+        (*it)->extract_expression()->visit(func);
+    }
+
+    for(std::vector<choice_element>::iterator it = aggregate_.begin();
+            it != aggregate_.end(); ++it) {
+        if(Expression*choice_expr = it->choice->simple_expression(false))
+            choice_expr->visit(func);
+
+        it->expr->visit(func);
+    }
+
+    func(this);
 }
 
 ExpAggregate::choice_t::choice_t(Expression*exp)
@@ -256,6 +293,13 @@ ExpConcat::~ExpConcat()
       delete operand2_;
 }
 
+void ExpConcat::visit(ExprVisitor& func)
+{
+    operand1_->visit(func);
+    operand2_->visit(func);
+    func(this);
+}
+
 ExpConditional::ExpConditional(Expression*co, list<Expression*>*tru,
 			       list<ExpConditional::else_t*>*fal)
 : cond_(co)
@@ -302,6 +346,30 @@ Expression*ExpConditional::clone() const
       }
 
       return new ExpConditional(cond_->clone(), new_true_clause, new_else_clause);
+}
+
+void ExpConditional::visit(ExprVisitor& func)
+{
+      if(!true_clause_.empty()) {
+          for(std::list<Expression*>::iterator it = true_clause_.begin();
+                  it != true_clause_.end(); ++it) {
+              (*it)->visit(func);
+          }
+      }
+
+      if(!else_clause_.empty()) {
+          for(std::list<else_t*>::iterator it = else_clause_.begin();
+                  it != else_clause_.end(); ++it) {
+              std::list<Expression*>& else_clause = (*it)->extract_true_clause();
+
+              for(std::list<Expression*>::iterator jt = else_clause.begin();
+                      jt != else_clause.end(); ++jt) {
+                  (*jt)->visit(func);
+              }
+          }
+      }
+
+      func(this);
 }
 
 ExpConditional::else_t::else_t(Expression*cond, std::list<Expression*>*tru)
@@ -376,6 +444,16 @@ Expression*ExpFunc::clone() const {
     f->def_ = def_;
 
     return f;
+}
+
+void ExpFunc::visit(ExprVisitor& func) {
+    if(!argv_.empty()) {
+        for(std::vector<Expression*>::iterator it = argv_.begin();
+                it != argv_.end(); ++it)
+            (*it)->visit(func);
+    }
+
+    func(this);
 }
 
 const VType* ExpFunc::func_ret_type() const
@@ -481,6 +559,20 @@ void ExpName::set_range(Expression*msb, Expression*lsb)
       lsb_ = lsb;
 }
 
+void ExpName::visit(ExprVisitor& func)
+{
+      if(prefix_.get())
+          prefix_.get()->visit(func);
+
+      if(index_)
+          index_->visit(func);
+
+      if(lsb_)
+          lsb_->visit(func);
+
+      func(this);
+}
+
 int ExpName::index_t::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
@@ -555,6 +647,12 @@ ExpCast::~ExpCast()
 {
 }
 
+void ExpCast::visit(ExprVisitor& func)
+{
+    base_->visit(func);
+    func(this);
+}
+
 ExpNew::ExpNew(Expression*size) :
     size_(size)
 {
@@ -563,4 +661,32 @@ ExpNew::ExpNew(Expression*size) :
 ExpNew::~ExpNew()
 {
     delete size_;
+}
+
+void ExpNew::visit(ExprVisitor& func)
+{
+    size_->visit(func);
+    func(this);
+}
+
+ExpTime::ExpTime(uint64_t amount, timeunit_t unit)
+: amount_(amount), unit_(unit)
+{
+}
+
+double ExpTime::to_fs() const
+{
+    double val = amount_;
+
+    switch(unit_) {
+        case FS: break;
+        case PS: val *= 1e3; break;
+        case NS: val *= 1e6; break;
+        case US: val *= 1e9; break;
+        case MS: val *= 1e12; break;
+        case S:  val *= 1e15; break;
+        default: ivl_assert(*this, false); break;
+    }
+
+    return val;
 }

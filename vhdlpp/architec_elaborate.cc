@@ -338,10 +338,7 @@ int ProcessStatement::elaborate(Entity*ent, Architecture*arc)
       int errors = 0;
 
       if (rewrite_as_always_edge_(ent, arc) >= 0) {
-
-      } else if (extract_anyedge_(ent, arc) >= 0) {
-
-      } else {
+	    extract_anyedge_(ent, arc);
       }
 
       for (list<SequentialStmt*>::iterator cur = statements_list_.begin()

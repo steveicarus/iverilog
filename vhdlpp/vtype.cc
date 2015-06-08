@@ -76,6 +76,9 @@ void VTypePrimitive::show(ostream&out) const
 	  case STDLOGIC:
 	    out << "STD_LOGIC";
 	    break;
+	  case TIME:
+	    out << "TIME";
+	    break;
       }
 }
 

@@ -284,3 +284,13 @@ AssertStmt::AssertStmt(Expression*condition, const char*msg, ReportStmt::severit
 }
 
 const std::string AssertStmt::default_msg_ = std::string("Assertion violation.");
+
+WaitForStmt::WaitForStmt(Expression*delay)
+: delay_(delay)
+{
+}
+
+WaitStmt::WaitStmt(wait_type_t type, Expression*expr)
+: type_(type), expr_(expr)
+{
+}

@@ -22,6 +22,7 @@
 # include  "expression.h"
 # include  "architec.h"
 # include  <ivl_assert.h>
+# include  <limits>
 
 bool Expression::evaluate(ScopeBase*, int64_t&) const
 {
@@ -244,4 +245,23 @@ bool ExpShift::evaluate(ScopeBase*scope, int64_t&val) const
       }
 
       return true;
+}
+
+bool ExpTime::evaluate(ScopeBase*, int64_t&val) const
+{
+    double v = to_fs();
+
+    if(v > std::numeric_limits<int64_t>::max()) {
+        val = std::numeric_limits<int64_t>::max();
+        cerr << get_fileline() << ": sorry: Time value is higher than the "
+             << "handled limit, reduced to " << val << " fs." << endl;
+    }
+
+    val = v;
+    return true;
+}
+
+bool ExpTime::evaluate(Entity*, ScopeBase*, int64_t&val) const
+{
+    return evaluate(NULL, NULL, val);
 }

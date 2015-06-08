@@ -391,6 +391,7 @@ const VTypePrimitive primitive_NATURAL(VTypePrimitive::NATURAL);
 const VTypePrimitive primitive_REAL(VTypePrimitive::REAL);
 const VTypePrimitive primitive_STDLOGIC(VTypePrimitive::STDLOGIC, true);
 const VTypePrimitive primitive_CHARACTER(VTypePrimitive::CHARACTER);
+const VTypePrimitive primitive_TIME(VTypePrimitive::TIME);
 
 static const VTypeArray primitive_BIT_VECTOR(&primitive_BIT,      vector<VTypeArray::range_t> (1));
 static const VTypeArray primitive_BOOL_VECTOR(&primitive_BOOLEAN, vector<VTypeArray::range_t> (1));
@@ -407,6 +408,7 @@ void generate_global_types(ActiveScope*res)
       res->use_name(perm_string::literal("bit_vector"),&primitive_BIT_VECTOR);
       res->use_name(perm_string::literal("string"),    &primitive_STRING);
       res->use_name(perm_string::literal("natural"),   &primitive_NATURAL);
+      res->use_name(perm_string::literal("time"),      &primitive_TIME);
 }
 
 void emit_std_types(ostream&out)
@@ -431,6 +433,7 @@ bool is_global_type(perm_string name)
       if (name == "natural") return true;
       if (name == "signed") return true;
       if (name == "unsigned") return true;
+      if (name == "time") return true;
       return false;
 }
 

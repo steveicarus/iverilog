@@ -359,7 +359,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <sequ> sequential_statement if_statement signal_assignment signal_assignment_statement
 %type <sequ> case_statement procedure_call procedure_call_statement
 %type <sequ> loop_statement variable_assignment variable_assignment_statement
-%type <sequ> assertion_statement report_statement return_statement
+%type <sequ> assertion_statement report_statement return_statement wait_statement
 
 %type <range> range
 %type <range_list> range_list index_constraint
@@ -1835,6 +1835,32 @@ primary
 	delete[]$1;
 	$$ = tmp;
       }
+  | INT_LITERAL IDENTIFIER
+      { ExpTime::timeunit_t unit = ExpTime::FS;
+
+        if(!strcasecmp($2, "us"))
+            unit = ExpTime::US;
+        else if(!strcasecmp($2, "ms"))
+            unit = ExpTime::MS;
+        else if(!strcasecmp($2, "ns"))
+            unit = ExpTime::NS;
+        else if(!strcasecmp($2, "s"))
+            unit = ExpTime::S;
+        else if(!strcasecmp($2, "ps"))
+            unit = ExpTime::PS;
+        else if(!strcasecmp($2, "fs"))
+            unit = ExpTime::FS;
+        else
+            errormsg(@2, "Invalid time unit (accepted are fs, ps, ns, us, ms, s).");
+
+        if($1 < 0)
+            errormsg(@1, "Time cannot be negative.");
+
+        ExpTime*tmp = new ExpTime($1, unit);
+        FILE_NAME(tmp, @1);
+        delete[] $2;
+        $$ = tmp;
+      }
 
 /*XXXX Caught up in element_association_list?
   | '(' expression ')'
@@ -2175,6 +2201,7 @@ sequential_statement
   | return_statement { $$ = $1; }
   | report_statement { $$ = $1; }
   | assertion_statement { $$ = $1; }
+  | wait_statement { $$ = $1; }
   | K_null ';' { $$ = 0; }
   | error ';'
       { errormsg(@1, "Syntax error in sequential statement.\n");
@@ -2602,6 +2629,24 @@ variable_declaration /* IEEE 1076-2008 P6.4.2.4 */
   | K_shared_opt K_variable error ';'
       { errormsg(@2, "Syntax error in variable declaration.\n");
 	yyerrok;
+      }
+  ;
+
+wait_statement
+  : K_wait K_for expression ';'
+      { WaitForStmt*tmp = new WaitForStmt($3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_wait K_on expression ';'
+      { WaitStmt*tmp = new WaitStmt(WaitStmt::ON, $3);
+        FILE_NAME(tmp, @1);
+        $$ = tmp;
+      }
+  | K_wait K_until expression ';'
+      { WaitStmt*tmp = new WaitStmt(WaitStmt::UNTIL, $3);
+        FILE_NAME(tmp, @1);
+        $$ = tmp;
       }
   ;
 

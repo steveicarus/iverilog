@@ -1133,3 +1133,10 @@ int ExpUNot::elaborate_expr(Entity*, ScopeBase*, const VType*ltype)
       set_type(ltype);
       return 0;
 }
+
+
+int ExpTime::elaborate_expr(Entity*, ScopeBase*, const VType*)
+{
+      set_type(&primitive_INTEGER);
+      return 0;
+}

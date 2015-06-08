@@ -169,6 +169,9 @@ int VTypePrimitive::emit_primitive_type(ostream&out) const
 	  case CHARACTER:
 	    out << "char";
 	    break;
+	  case TIME:
+	    out << "time";
+	    break;
 	  default:
 	    assert(0);
 	    break;

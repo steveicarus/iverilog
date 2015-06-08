@@ -112,3 +112,8 @@ void ExpShift::dump(ostream&out, int indent) const
       dump_operands(out, indent+4);
 }
 
+void ExpTime::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "Time ";
+      write_to_stream(out);
+}

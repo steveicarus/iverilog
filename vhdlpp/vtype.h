@@ -156,7 +156,7 @@ class VTypeERROR : public VType {
 class VTypePrimitive : public VType {
 
     public:
-      enum type_t { BOOLEAN, BIT, INTEGER, NATURAL, REAL, STDLOGIC, CHARACTER };
+      enum type_t { BOOLEAN, BIT, INTEGER, NATURAL, REAL, STDLOGIC, CHARACTER, TIME };
 
     public:
       VTypePrimitive(type_t tt, bool packed = false);
@@ -187,6 +187,7 @@ extern const VTypePrimitive primitive_NATURAL;
 extern const VTypePrimitive primitive_REAL;
 extern const VTypePrimitive primitive_STDLOGIC;
 extern const VTypePrimitive primitive_CHARACTER;
+extern const VTypePrimitive primitive_TIME;
 
 /*
  * An array is a compound N-dimensional array of element type. The
