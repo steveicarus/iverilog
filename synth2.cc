@@ -36,7 +36,7 @@ bool NetProc::synth_async(Design*, NetScope*, NexusSet&, NetBus&, NetBus&)
 bool NetProc::synth_sync(Design*des, NetScope*scope,
 			 NetNet* /* ff_clk */, NetBus& /* ff_ce */,
 			 NetBus& /* ff_aclr*/, NetBus& /* ff_aset*/,
-			 vector<verinum> &aset_value,
+			 vector<verinum>& /*aset_value*/,
 			 NexusSet&nex_map, NetBus&nex_out,
 			 const vector<NetEvProbe*>&events)
 {
@@ -1384,7 +1384,7 @@ bool NetProcTop::synth_async(Design*des)
 bool NetBlock::synth_sync(Design*des, NetScope*scope,
 			  NetNet*ff_clk, NetBus&ff_ce,
 			  NetBus&ff_aclr,NetBus&ff_aset,
-			  vector<verinum> &aset_value,
+			  vector<verinum>&aset_value,
 			  NexusSet&nex_map, NetBus&nex_out,
 			  const vector<NetEvProbe*>&events_in)
 {
@@ -1466,7 +1466,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 bool NetCondit::synth_sync(Design*des, NetScope*scope,
 			   NetNet*ff_clk, NetBus&ff_ce,
 			   NetBus&ff_aclr,NetBus&ff_aset,
-			   vector<verinum> &aset_value,
+			   vector<verinum>&aset_value,
 			   NexusSet&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
 {
@@ -1537,25 +1537,20 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 		  verinum ones (verinum::V1, rst_drv.len());
 
 		  if (rst_drv==zero) {
-		  // Don't yet support multiple asynchronous reset inputs.
+			  // Don't yet support multiple asynchronous reset inputs.
 			ivl_assert(*this, ! ff_aclr.pin(pin).is_linked());
 
 			ivl_assert(*this, rst->pin_count()==1);
 			connect(ff_aclr.pin(pin), rst->pin(0));
-			aset_value[pin] = rst_drv;
 
-		  } else if (rst_drv==ones) {
-		  // Don't yet support multiple asynchronous set inputs.
-			ivl_assert(*this, ! ff_aset.pin(pin).is_linked());
-
-			ivl_assert(*this, rst->pin_count()==1);
-			connect(ff_aset.pin(pin), rst->pin(0));
-			aset_value[pin] = rst_drv;
 		  } else {
+			  // Don't yet support multiple asynchronous set inputs.
 			ivl_assert(*this, ! ff_aset.pin(pin).is_linked());
+
 			ivl_assert(*this, rst->pin_count()==1);
 			connect(ff_aset.pin(pin), rst->pin(0));
-			aset_value[pin] = rst_drv;
+			if (rst_drv!=ones)
+			      aset_value[pin] = rst_drv;
 		  }
 	    }
 
@@ -1723,7 +1718,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 			   NetNet*ff_clk, NetBus&ff_ce,
 			   NetBus&ff_aclr,NetBus&ff_aset,
-			  vector<verinum> &aset_value,
+			   vector<verinum>&aset_value,
 			   NexusSet&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
 {
@@ -1825,7 +1820,6 @@ bool NetProcTop::synth_sync(Design*des)
       }
 
       NexusSet nex_set;
-
       statement_->nex_output(nex_set);
       vector<verinum> aset_value(nex_set.size());
 
