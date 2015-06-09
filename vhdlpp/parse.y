@@ -331,8 +331,8 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <expr> expression_logical_xnor expression_logical_xor
 %type <expr> name prefix selected_name
 %type <expr> shift_expression signal_declaration_assign_opt
-%type <expr> simple_expression simple_expression_2 term waveform_element
-%type <expr> interface_element_expression
+%type <expr> simple_expression simple_expression_2 term
+%type <expr> variable_declaration_assign_opt waveform_element interface_element_expression
 
 %type <expr_list> waveform waveform_elements
 %type <expr_list> name_list expression_list
@@ -2661,11 +2661,12 @@ variable_assignment
   ;
 
 variable_declaration /* IEEE 1076-2008 P6.4.2.4 */
-  : K_shared_opt K_variable identifier_list ':' subtype_indication ';'
+  : K_shared_opt K_variable identifier_list ':' subtype_indication
+    variable_declaration_assign_opt ';'
       { /* Save the signal declaration in the block_signals map. */
 	for (std::list<perm_string>::iterator cur = $3->begin()
 		   ; cur != $3->end() ; ++cur) {
-	      Variable*sig = new Variable(*cur, $5);
+	      Variable*sig = new Variable(*cur, $5, $6);
 	      FILE_NAME(sig, @2);
 	      active_scope->bind_name(*cur, sig);
 	}
@@ -2675,6 +2676,11 @@ variable_declaration /* IEEE 1076-2008 P6.4.2.4 */
       { errormsg(@2, "Syntax error in variable declaration.\n");
 	yyerrok;
       }
+  ;
+
+variable_declaration_assign_opt
+  : VASSIGN expression { $$ = $2; }
+  |                    { $$ = 0;  }
   ;
 
 wait_statement
