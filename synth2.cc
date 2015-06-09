@@ -79,6 +79,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    NetAssign_*full_lval = lval_;
 	    NetExpr*full_rval = rval_;
 	    unsigned offset = 0;
+	    bool flag = true;
 	    while (lval_) {
 		  unsigned width = lval_->lwidth();
 		  NetEConst*base = new NetEConst(verinum(offset));
@@ -88,14 +89,14 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 		  eval_expr(rval_, width);
 		  NetAssign_*more = lval_->more;
 		  lval_->more = 0;
-		  synth_async(des, scope, nex_map, nex_out,
-			      accumulated_nex_out);
+		  if (!synth_async(des, scope, nex_map, nex_out, accumulated_nex_out))
+			flag = false;
 		  lval_ = lval_->more = more;
 		  offset += width;
 	    }
 	    lval_ = full_lval;
 	    rval_ = full_rval;
-	    return true;
+	    return flag;
       }
 
       NetNet*rsig = rval_->synthesize(des, scope, rval_);
