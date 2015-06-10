@@ -72,9 +72,9 @@ void library_add_directory(const char*directory)
       library_search_path.push_front(directory);
 }
 
-Subprogram*library_find_subprogram(perm_string name)
+SubprogramHeader*library_find_subprogram(perm_string name)
 {
-      Subprogram*subp = NULL;
+      SubprogramHeader*subp = NULL;
       map<perm_string,struct library_contents>::const_iterator lib_it;
 
       for(lib_it = libraries.begin(); lib_it != libraries.end(); ++lib_it) {

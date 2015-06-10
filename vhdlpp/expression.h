@@ -32,7 +32,7 @@
 class prange_t;
 class Entity;
 class ScopeBase;
-class Subprogram;
+class SubprogramHeader;
 class VType;
 class VTypeArray;
 class VTypePrimitive;
@@ -564,7 +564,7 @@ class ExpFunc : public Expression {
     private:
       perm_string name_;
       std::vector<Expression*> argv_;
-      Subprogram*def_;
+      SubprogramHeader*def_;
 };
 
 class ExpInteger : public Expression {

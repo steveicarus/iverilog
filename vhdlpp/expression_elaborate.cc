@@ -777,7 +777,7 @@ const VType*ExpFunc::probe_type(Entity*ent, ScopeBase*scope) const
           return new VTypeArray(&primitive_STDLOGIC, msb, 0);
       }
 
-      Subprogram*prog = scope->find_subprogram(name_);
+      SubprogramHeader*prog = scope->find_subprogram(name_);
 
       if(!prog)
             prog = library_find_subprogram(name_);
@@ -793,7 +793,7 @@ int ExpFunc::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
       int errors = 0;
 
       ivl_assert(*this, scope);
-      Subprogram*prog = scope->find_subprogram(name_);
+      SubprogramHeader*prog = scope->find_subprogram(name_);
 
       if(!prog)
             prog = library_find_subprogram(name_);
@@ -878,7 +878,7 @@ const VType* ExpFunc::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*) c
       }
 
       // Other cases
-      Subprogram*prog = def_;
+      SubprogramHeader*prog = def_;
 
       if(!prog) {
           ivl_assert(*this, scope);

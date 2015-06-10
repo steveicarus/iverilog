@@ -111,9 +111,10 @@ void Package::write_to_stream(ostream&fd) const
 	    fd << ";" << endl;
       }
 
-      for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
+      for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++cur) {
 	    cur->second->write_to_stream(fd);
+	    fd << ";" << endl;
       }
 
       for (map<perm_string,ComponentBase*>::const_iterator cur = old_components_.begin()
@@ -130,9 +131,14 @@ void Package::write_to_stream(ostream&fd) const
       fd << "end package " << name_ << ";" << endl;
 
       fd << "package body " << name_ << " is" << endl;
-        for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
+        for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++cur) {
-	    cur->second->write_to_stream_body(fd);
+            SubprogramHeader*subp = cur->second;
+            if(subp->body()) {
+                subp->write_to_stream(fd);
+                fd << " is" << endl;
+                subp->body()->write_to_stream(fd);
+            }
         }
       fd << "end " << name_ << ";" << endl;
 }

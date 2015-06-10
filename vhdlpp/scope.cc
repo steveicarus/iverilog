@@ -65,9 +65,9 @@ ScopeBase::ScopeBase(const ActiveScope&ref)
       // an active scope and is making the actual scope. At this point
       // we know that "this" is the parent scope for the subprograms,
       // so set it now.
-    for (map<perm_string,Subprogram*>::iterator cur = cur_subprograms_.begin()
-	       ; cur != cur_subprograms_.end() ;  ++ cur) {
-	  cur->second->set_parent(this);
+    for (map<perm_string,SubprogramHeader*>::iterator cur = cur_subprograms_.begin()
+	       ; cur != cur_subprograms_.end(); ++cur) {
+	cur->second->set_parent(this);
     }
 }
 
@@ -158,13 +158,13 @@ Variable* ScopeBase::find_variable(perm_string by_name) const
 
 const InterfacePort* ScopeBase::find_param(perm_string by_name) const
 {
-      for(map<perm_string,Subprogram*>::const_iterator it = use_subprograms_.begin();
+      for(map<perm_string,SubprogramHeader*>::const_iterator it = use_subprograms_.begin();
               it != use_subprograms_.end(); ++it) {
           if(const InterfacePort*port = it->second->find_param(by_name))
               return port;
       }
 
-      for(map<perm_string,Subprogram*>::const_iterator it = cur_subprograms_.begin();
+      for(map<perm_string,SubprogramHeader*>::const_iterator it = cur_subprograms_.begin();
               it != cur_subprograms_.end(); ++it) {
           if(const InterfacePort*port = it->second->find_param(by_name))
               return port;
@@ -173,9 +173,9 @@ const InterfacePort* ScopeBase::find_param(perm_string by_name) const
       return NULL;
 }
 
-Subprogram* ScopeBase::find_subprogram(perm_string name) const
+SubprogramHeader* ScopeBase::find_subprogram(perm_string name) const
 {
-      map<perm_string,Subprogram*>::const_iterator cur;
+      map<perm_string,SubprogramHeader*>::const_iterator cur;
 
       cur = cur_subprograms_.find(name);
       if (cur != cur_subprograms_.end())
@@ -218,7 +218,7 @@ void ScopeBase::do_use_from(const ScopeBase*that)
         old_components_[cur->first] = cur->second;
       }
 
-      for (map<perm_string,Subprogram*>::const_iterator cur = that->cur_subprograms_.begin()
+      for (map<perm_string,SubprogramHeader*>::const_iterator cur = that->cur_subprograms_.begin()
 		 ; cur != that->cur_subprograms_.end() ; ++ cur) {
 	    if (cur->second == 0)
 		  continue;
@@ -274,9 +274,9 @@ void ActiveScope::set_package_header(Package*pkg)
       package_header_ = pkg;
 }
 
-Subprogram* ActiveScope::recall_subprogram(perm_string name) const
+SubprogramHeader* ActiveScope::recall_subprogram(perm_string name) const
 {
-      if (Subprogram*tmp = find_subprogram(name))
+      if (SubprogramHeader*tmp = find_subprogram(name))
 	    return tmp;
 
       if (package_header_)

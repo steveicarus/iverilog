@@ -30,44 +30,61 @@
 
 using namespace std;
 
-Subprogram::Subprogram(perm_string nam, list<InterfacePort*>*ports,
-		       const VType*return_type)
-: name_(nam), parent_(0), ports_(ports), return_type_(return_type), statements_(0)
+SubprogramBody::SubprogramBody()
+    : statements_(NULL), header_(NULL)
 {
 }
 
-Subprogram::~Subprogram()
+SubprogramBody::~SubprogramBody()
 {
 }
 
-void Subprogram::set_parent(const ScopeBase*par)
+const InterfacePort*SubprogramBody::find_param(perm_string nam) const
 {
-      ivl_assert(*this, parent_ == 0);
-      parent_ = par;
+      if(!header_)
+          return NULL;
+
+      return header_->find_param(nam);
 }
 
-void Subprogram::set_program_body(list<SequentialStmt*>*stmt)
+void SubprogramBody::set_statements(list<SequentialStmt*>*stmt)
 {
       ivl_assert(*this, statements_==0);
       statements_ = stmt;
 }
 
-bool Subprogram::unbounded() const {
-    if(return_type_->is_unbounded())
-       return true;
+void SubprogramBody::write_to_stream(ostream&fd) const
+{
+      for (map<perm_string,Variable*>::const_iterator cur = new_variables_.begin()
+         ; cur != new_variables_.end() ; ++cur) {
+            cur->second->write_to_stream(fd);
+      }
 
-    if(ports_) {
-        for(std::list<InterfacePort*>::const_iterator it = ports_->begin();
-                it != ports_->end(); ++it) {
-            if((*it)->type->is_unbounded())
-                return true;
-        }
-    }
+      fd << "begin" << endl;
 
-    return false;
+      if (statements_) {
+            for (list<SequentialStmt*>::const_iterator cur = statements_->begin()
+                       ; cur != statements_->end() ; ++cur) {
+                  (*cur)->write_to_stream(fd);
+            }
+      } else {
+	    fd << "--empty body" << endl;
+      }
+	    fd << "end function;" << endl;
 }
 
-bool Subprogram::compare_specification(Subprogram*that) const
+SubprogramHeader::SubprogramHeader(perm_string nam, list<InterfacePort*>*ports,
+		       const VType*return_type)
+: name_(nam), ports_(ports), return_type_(return_type), body_(NULL), parent_(NULL)
+{
+}
+
+SubprogramHeader::~SubprogramHeader()
+{
+    delete body_;
+}
+
+bool SubprogramHeader::compare_specification(SubprogramHeader*that) const
 {
       if (name_ != that->name_)
 	    return false;
@@ -98,7 +115,7 @@ bool Subprogram::compare_specification(Subprogram*that) const
       return true;
 }
 
-const InterfacePort*Subprogram::find_param(perm_string nam) const
+const InterfacePort*SubprogramHeader::find_param(perm_string nam) const
 {
       if(!ports_)
         return NULL;
@@ -112,7 +129,7 @@ const InterfacePort*Subprogram::find_param(perm_string nam) const
       return NULL;
 }
 
-const VType*Subprogram::peek_param_type(int idx) const
+const VType*SubprogramHeader::peek_param_type(int idx) const
 {
       if(!ports_ || idx < 0 || (size_t)idx >= ports_->size())
         return NULL;
@@ -123,7 +140,37 @@ const VType*Subprogram::peek_param_type(int idx) const
       return (*p)->type;
 }
 
-Subprogram*Subprogram::make_instance(std::vector<Expression*> arguments, ScopeBase*scope) {
+void SubprogramHeader::set_parent(const ScopeBase*par)
+{
+      ivl_assert(*this, !parent_);
+      parent_ = par;
+}
+
+bool SubprogramHeader::unbounded() const {
+    if(return_type_->is_unbounded())
+       return true;
+
+    if(ports_) {
+        for(std::list<InterfacePort*>::const_iterator it = ports_->begin();
+                it != ports_->end(); ++it) {
+            if((*it)->type->is_unbounded())
+                return true;
+        }
+    }
+
+    return false;
+}
+
+void SubprogramHeader::set_body(SubprogramBody*bdy)
+{
+    ivl_assert(*this, !body_);
+    body_ = bdy;
+    ivl_assert(*this, !bdy->header_);
+    bdy->header_ = this;
+}
+
+SubprogramHeader*SubprogramHeader::make_instance(std::vector<Expression*> arguments,
+                                                 ScopeBase*scope) {
     assert(arguments.size() == ports_->size());
 
     std::list<InterfacePort*>*ports = new std::list<InterfacePort*>;
@@ -142,25 +189,31 @@ Subprogram*Subprogram::make_instance(std::vector<Expression*> arguments, ScopeBa
     char buf[80];
     snprintf(buf, sizeof(buf), "__%s_%p", name_.str(), ports);
     perm_string new_name = lex_strings.make(buf);
-    Subprogram*instance = new Subprogram(new_name, ports, return_type_);
+    SubprogramHeader*instance = new SubprogramHeader(new_name, ports, return_type_);
 
-    // Copy variables
-    for(std::map<perm_string,Variable*>::iterator it = new_variables_.begin();
-            it != new_variables_.end(); ++it) {
-        Variable*v = new Variable(it->first, it->second->peek_type()->clone());
-        instance->new_variables_[it->first] = v;
+    if(body_) {
+        SubprogramBody*body_inst = new SubprogramBody();
+
+        // Copy variables
+        for(std::map<perm_string,Variable*>::iterator it = body_->new_variables_.begin();
+                it != body_->new_variables_.end(); ++it) {
+            Variable*v = new Variable(it->first, it->second->peek_type()->clone());
+            body_inst->new_variables_[it->first] = v;
+        }
+
+        body_inst->set_statements(body_->statements_);
+        instance->set_parent(scope);
+        instance->set_body(body_inst);
+        instance->fix_return_type();
     }
 
-    instance->set_parent(scope);
-    instance->set_program_body(statements_);
-    instance->fix_return_type();
     scope->bind_subprogram(new_name, instance);
 
     return instance;
 }
 
 struct check_return_type : public SeqStmtVisitor {
-    check_return_type(const Subprogram*subp) : subp_(subp), ret_type_(NULL) {}
+    check_return_type(const SubprogramBody*subp) : subp_(subp), ret_type_(NULL) {}
 
     void operator() (SequentialStmt*s)
     {
@@ -195,54 +248,35 @@ struct check_return_type : public SeqStmtVisitor {
     const VType*get_type() const { return ret_type_; }
 
 private:
-    const Subprogram*subp_;
+    const SubprogramBody*subp_;
     const VType*ret_type_;
 };
 
-void Subprogram::fix_return_type()
+void SubprogramHeader::fix_return_type()
 {
-    if(!statements_)
+    if(!body_ || !body_->statements_)
         return;
 
-    check_return_type r(this);
+    check_return_type r(body_);
 
-    for (std::list<SequentialStmt*>::iterator s = statements_->begin()
-        ; s != statements_->end(); ++s) {
+    for (std::list<SequentialStmt*>::iterator s = body_->statements_->begin()
+        ; s != body_->statements_->end(); ++s) {
         (*s)->visit(r);
     }
 
     VType*return_type = const_cast<VType*>(r.get_type());
     if(return_type && !return_type->is_unbounded()) {
         // Let's check if the variable length can be evaluated without any scope.
-        // If not, then it is depends on information about e.g. function params
+        // If not, then it depends on information about e.g. function params
         if(return_type->is_variable_length(NULL)) {
             if(VTypeArray*arr = dynamic_cast<VTypeArray*>(return_type))
-                arr->evaluate_ranges(this);
+                arr->evaluate_ranges(body_);
         }
         return_type_ = return_type;
     }
 }
 
-void Subprogram::write_to_stream(ostream&fd) const
-{
-      fd << "  function " << name_ << "(";
-      if (ports_ && ! ports_->empty()) {
-	    list<InterfacePort*>::const_iterator cur = ports_->begin();
-	    InterfacePort*curp = *cur;
-	    fd << curp->name << " : ";
-	    curp->type->write_to_stream(fd);
-	    for (++cur ; cur != ports_->end() ; ++cur) {
-		  curp = *cur;
-		  fd << "; " << curp->name << " : ";
-		  curp->type->write_to_stream(fd);
-	    }
-      }
-      fd << ") return ";
-      return_type_->write_to_stream(fd);
-      fd << ";" << endl;
-}
-
-void Subprogram::write_to_stream_body(ostream&fd) const
+void SubprogramHeader::write_to_stream(ostream&fd) const
 {
       fd << "function " << name_ << "(";
       if (ports_ && ! ports_->empty()) {
@@ -258,22 +292,4 @@ void Subprogram::write_to_stream_body(ostream&fd) const
       }
       fd << ") return ";
       return_type_->write_to_stream(fd);
-      fd << " is" << endl;
-
-      for (map<perm_string,Variable*>::const_iterator cur = new_variables_.begin()
-         ; cur != new_variables_.end() ; ++cur) {
-            cur->second->write_to_stream(fd);
-      }
-
-      fd << "begin" << endl;
-
-      if (statements_) {
-            for (list<SequentialStmt*>::const_iterator cur = statements_->begin()
-                       ; cur != statements_->end() ; ++cur) {
-                  (*cur)->write_to_stream(fd);
-            }
-      } else {
-	    fd << "--empty body" << endl;
-      }
-	    fd << "end function;" << endl;
 }

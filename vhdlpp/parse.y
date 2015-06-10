@@ -83,7 +83,7 @@ extern int yylex(union YYSTYPE*yylvalp,YYLTYPE*yyllocp,yyscan_t yyscanner);
  */
 static ActiveScope*active_scope = new ActiveScope;
 static stack<ActiveScope*> scope_stack;
-static Subprogram*active_sub = NULL;
+static SubprogramHeader*active_sub = NULL;
 
 // perm_strings for attributes
 const static perm_string left_attr = perm_string::literal("left");
@@ -262,7 +262,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 
       ReportStmt::severity_t severity;
 
-      Subprogram*subprogram;
+      SubprogramHeader*subprogram;
 };
 
   /* The keywords are all tokens. */
@@ -374,6 +374,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <exp_options_list> else_when_waveforms selected_waveform_list
 
 %type <subprogram> function_specification subprogram_specification subprogram_body_start
+
 %type <severity> severity severity_opt
 
 %%
@@ -1246,8 +1247,8 @@ function_specification /* IEEE 1076-2008 P4.2.1 */
 	perm_string name = lex_strings.make($2);
 	const VType*type_mark = active_scope->find_type(type_name);
 	touchup_interface_for_functions($4);
-	Subprogram*tmp = new Subprogram(name, $4, type_mark);
-	FILE_NAME(tmp,@1);
+	SubprogramHeader*tmp = new SubprogramHeader(name, $4, type_mark);
+	FILE_NAME(tmp, @1);
 	delete[]$2;
 	delete[]$7;
 	$$ = tmp;
@@ -2420,16 +2421,20 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
   : subprogram_body_start subprogram_declarative_part
     K_begin subprogram_statement_part K_end
     subprogram_kind_opt identifier_opt ';'
-      { Subprogram*prog = $1;
-	Subprogram*tmp = active_scope->recall_subprogram(prog->name());
+      { SubprogramHeader*prog = $1;
+	SubprogramHeader*tmp = active_scope->recall_subprogram(prog->name());
 	if (tmp && prog->compare_specification(tmp)) {
 	      delete prog;
 	      prog = tmp;
 	} else if (tmp) {
 	      errormsg(@1, "Subprogram specification for %s doesn't match specification in package header.\n", prog->name().str());
 	}
-	prog->transfer_from(*active_scope, ScopeBase::VARIABLES);
-	prog->set_program_body($4);
+
+	SubprogramBody*body = new SubprogramBody();
+	body->transfer_from(*active_scope, ScopeBase::VARIABLES);
+	body->set_statements($4);
+
+	prog->set_body(body);
 	active_scope->bind_name(prog->name(), prog);
 	active_sub = NULL;
       }
