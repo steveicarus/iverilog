@@ -23,7 +23,7 @@
 # include  "vtype.h"
 # include  "architec.h"
 # include  "package.h"
-# include  "subprogram.h"
+# include  "std_funcs.h"
 # include  "parse_types.h"
 # include  <typeinfo>
 # include  <iostream>
@@ -567,103 +567,21 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      if (name_ == "unsigned" && argv_.size() == 1) {
-	      // Handle the special case that this is a cast to
-	      // unsigned. This function is brought in as part of the
-	      // std numeric library, but we interpret it as the same
-	      // as the $unsigned function.
-	    out << "$unsigned(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
+      ivl_assert(*this, def_);
 
-      } else if (name_ == "integer" && argv_.size() == 1) {
-	    out << "$signed(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
+      // If this function has an elaborated definition, and if
+      // that definition is in a package, then include the
+      // package name as a scope qualifier. This assures that
+      // the SV elaborator finds the correct VHDL elaborated
+      // definition.
+      const Package*pkg = dynamic_cast<const Package*> (def_->get_parent());
+      if (pkg != 0)
+          out << "\\" << pkg->name() << " ::";
 
-      } else if (name_ == "to_integer" && argv_.size() == 1) {
-	    bool signed_flag = false;
-
-	    // to_integer converts unsigned to natural
-	    //                     signed   to integer
-	    // try to determine the converted type
-	    const VType*type = argv_[0]->probe_type(ent, scope);
-	    const VTypeArray*array = dynamic_cast<const VTypeArray*>(type);
-
-	    if(array)
-	        signed_flag = array->signed_vector();
-	    else
-	        cerr << get_fileline() << ": sorry: Could not determine the "
-                     << "expression sign. Output may be erroneous." << endl;
-
-	    out << (signed_flag ? "$signed(" : "$unsigned(");
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
-
-      } else if (name_ == "std_logic_vector" && argv_.size() == 1) {
-	      // Special case: The std_logic_vector function casts its
-	      // argument to std_logic_vector. Internally, we don't
-	      // have to do anything for that to work.
-	    out << "(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
-
-      } else if (name_ == "to_unsigned" && argv_.size() == 2) {
-
-	    out << "$ivlh_to_unsigned(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ", ";
-	    errors += argv_[1]->emit(out, ent, scope);
-	    out << ")";
-
-      } else if ((name_ == "conv_std_logic_vector" || name_ == "resize") &&
-              argv_.size() == 2) {
-	    int64_t use_size;
-	    bool rc = argv_[1]->evaluate(ent, scope, use_size);
-	    ivl_assert(*this, rc);
-	    out << use_size << "'(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
-
-      } else if (name_ == "rising_edge" && argv_.size() == 1) {
-	    out << "$ivlh_rising_edge(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
-
-      } else if (name_ == "falling_edge" && argv_.size() == 1) {
-	    out << "$ivlh_falling_edge(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
-
-      } else if (name_ == "and_reduce" && argv_.size() == 1) {
-            out << "&(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
-
-      } else if (name_ == "or_reduce" && argv_.size() == 1) {
-            out << "|(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
-
-      } else {
-	      // If this function has an elaborated definition, and if
-	      // that definition is in a package, then include the
-	      // package name as a scope qualifier. This assures that
-	      // the SV elaborator finds the correct VHDL elaborated
-	      // definition.
-	    if (def_) {
-		  const Package*pkg = dynamic_cast<const Package*> (def_->get_parent());
-		  if (pkg != 0)
-			out << "\\" << pkg->name() << " ::";
-	    }
-
-	    out << "\\" << name_ << " (";
-	    for (size_t idx = 0; idx < argv_.size() ; idx += 1) {
-		  if (idx > 0) out << ", ";
-		  errors += argv_[idx]->emit(out, ent, scope);
-	    }
-	    out << ")";
-      }
+      errors += def_->emit_name(argv_, out, ent, scope);
+      out << " (";
+      def_->emit_args(argv_, out, ent, scope);
+      out << ")";
 
       return errors;
 }

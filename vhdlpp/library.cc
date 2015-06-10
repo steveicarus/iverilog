@@ -305,9 +305,7 @@ static void import_ieee_use_std_logic_1164(ActiveScope*res, perm_string name)
       bool all_flag = name=="all";
 
       if (all_flag || name == "std_logic_vector") {
-	    vector<VTypeArray::range_t> dims (1);
-	    res->use_name(perm_string::literal("std_logic_vector"),
-			   new VTypeArray(&primitive_STDLOGIC, dims, false));
+	    res->use_name(perm_string::literal("std_logic_vector"), &primitive_STDLOGIC_VECTOR);
       }
 }
 
@@ -393,22 +391,23 @@ const VTypePrimitive primitive_STDLOGIC(VTypePrimitive::STDLOGIC, true);
 const VTypePrimitive primitive_CHARACTER(VTypePrimitive::CHARACTER);
 const VTypePrimitive primitive_TIME(VTypePrimitive::TIME);
 
-static const VTypeArray primitive_BIT_VECTOR(&primitive_BIT,      vector<VTypeArray::range_t> (1));
-static const VTypeArray primitive_BOOL_VECTOR(&primitive_BOOLEAN, vector<VTypeArray::range_t> (1));
-static const VTypeArray primitive_STRING(&primitive_CHARACTER,    vector<VTypeArray::range_t> (1));
+const VTypeArray primitive_BIT_VECTOR(&primitive_BIT,           vector<VTypeArray::range_t> (1));
+const VTypeArray primitive_BOOL_VECTOR(&primitive_BOOLEAN,      vector<VTypeArray::range_t> (1));
+const VTypeArray primitive_STDLOGIC_VECTOR(&primitive_STDLOGIC, vector<VTypeArray::range_t> (1));
+const VTypeArray primitive_STRING(&primitive_CHARACTER,         vector<VTypeArray::range_t> (1));
 
 void generate_global_types(ActiveScope*res)
 {
-      res->use_name(perm_string::literal("boolean"),   &primitive_BOOLEAN);
-      res->use_name(perm_string::literal("bit"),       &primitive_BIT);
-      res->use_name(perm_string::literal("integer"),   &primitive_INTEGER);
-      res->use_name(perm_string::literal("real"),      &primitive_REAL);
-      res->use_name(perm_string::literal("std_logic"), &primitive_STDLOGIC);
-      res->use_name(perm_string::literal("character"), &primitive_CHARACTER);
-      res->use_name(perm_string::literal("bit_vector"),&primitive_BIT_VECTOR);
-      res->use_name(perm_string::literal("string"),    &primitive_STRING);
-      res->use_name(perm_string::literal("natural"),   &primitive_NATURAL);
-      res->use_name(perm_string::literal("time"),      &primitive_TIME);
+      res->use_name(perm_string::literal("boolean"),          &primitive_BOOLEAN);
+      res->use_name(perm_string::literal("bit"),              &primitive_BIT);
+      res->use_name(perm_string::literal("bit_vector"),       &primitive_BIT_VECTOR);
+      res->use_name(perm_string::literal("integer"),          &primitive_INTEGER);
+      res->use_name(perm_string::literal("real"),             &primitive_REAL);
+      res->use_name(perm_string::literal("std_logic"),        &primitive_STDLOGIC);
+      res->use_name(perm_string::literal("character"),        &primitive_CHARACTER);
+      res->use_name(perm_string::literal("string"),           &primitive_STRING);
+      res->use_name(perm_string::literal("natural"),          &primitive_NATURAL);
+      res->use_name(perm_string::literal("time"),             &primitive_TIME);
 }
 
 void emit_std_types(ostream&out)
@@ -423,12 +422,12 @@ bool is_global_type(perm_string name)
 {
       if (name == "boolean") return true;
       if (name == "bit") return true;
+      if (name == "bit_vector") return true;
       if (name == "integer") return true;
       if (name == "real") return true;
       if (name == "std_logic") return true;
       if (name == "std_logic_vector") return true;
       if (name == "character") return true;
-      if (name == "bit_vector") return true;
       if (name == "string") return true;
       if (name == "natural") return true;
       if (name == "signed") return true;

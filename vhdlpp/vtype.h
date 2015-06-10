@@ -180,15 +180,6 @@ class VTypePrimitive : public VType {
       bool packed_;
 };
 
-extern const VTypePrimitive primitive_BOOLEAN;
-extern const VTypePrimitive primitive_BIT;
-extern const VTypePrimitive primitive_INTEGER;
-extern const VTypePrimitive primitive_NATURAL;
-extern const VTypePrimitive primitive_REAL;
-extern const VTypePrimitive primitive_STDLOGIC;
-extern const VTypePrimitive primitive_CHARACTER;
-extern const VTypePrimitive primitive_TIME;
-
 /*
  * An array is a compound N-dimensional array of element type. The
  * construction of the array is from an element type and a vector of
@@ -390,5 +381,19 @@ class VTypeDef : public VType {
       perm_string name_;
       const VType*type_;
 };
+
+extern const VTypePrimitive primitive_BOOLEAN;
+extern const VTypePrimitive primitive_BIT;
+extern const VTypePrimitive primitive_INTEGER;
+extern const VTypePrimitive primitive_NATURAL;
+extern const VTypePrimitive primitive_REAL;
+extern const VTypePrimitive primitive_STDLOGIC;
+extern const VTypePrimitive primitive_CHARACTER;
+extern const VTypePrimitive primitive_TIME;
+
+extern const VTypeArray primitive_BIT_VECTOR;
+extern const VTypeArray primitive_BOOL_VECTOR;
+extern const VTypeArray primitive_STDLOGIC_VECTOR;
+extern const VTypeArray primitive_STRING;
 
 #endif /* IVL_vtype_H */

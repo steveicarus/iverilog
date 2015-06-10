@@ -39,6 +39,7 @@
 # include "package.h"
 # include "vsignal.h"
 # include "vtype.h"
+# include "std_funcs.h"
 # include  <cstdarg>
 # include  <cstring>
 # include  <list>
@@ -146,6 +147,7 @@ void parser_cleanup(void)
 {
     delete_design_entities();
     delete_global_scope();
+    delete_std_funcs();
     lex_strings.cleanup();
 }
 

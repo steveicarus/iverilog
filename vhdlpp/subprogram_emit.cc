@@ -116,3 +116,11 @@ int SubprogramHeader::emit_args(const std::vector<Expression*>&argv,
 
       return errors;
 }
+
+int SubprogramBuiltin::emit_name(const std::vector<Expression*>&,
+                                 std::ostream&out, Entity*, ScopeBase*) const
+{
+    // do not escape the names for builtin functions
+    out << sv_name_;
+    return 0;
+}

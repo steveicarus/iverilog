@@ -82,6 +82,7 @@ SubprogramHeader::SubprogramHeader(perm_string nam, list<InterfacePort*>*ports,
 SubprogramHeader::~SubprogramHeader()
 {
     delete body_;
+    delete ports_;
 }
 
 bool SubprogramHeader::compare_specification(SubprogramHeader*that) const
@@ -170,7 +171,7 @@ void SubprogramHeader::set_body(SubprogramBody*bdy)
 }
 
 SubprogramHeader*SubprogramHeader::make_instance(std::vector<Expression*> arguments,
-                                                 ScopeBase*scope) {
+                                                 ScopeBase*scope) const {
     assert(arguments.size() == ports_->size());
 
     std::list<InterfacePort*>*ports = new std::list<InterfacePort*>;
@@ -292,4 +293,14 @@ void SubprogramHeader::write_to_stream(ostream&fd) const
       }
       fd << ") return ";
       return_type_->write_to_stream(fd);
+}
+
+SubprogramBuiltin::SubprogramBuiltin(perm_string vhdl_name, perm_string sv_name,
+        std::list<InterfacePort*>*ports, const VType*return_type)
+    : SubprogramHeader(vhdl_name, ports, return_type), sv_name_(sv_name)
+{
+}
+
+SubprogramBuiltin::~SubprogramBuiltin()
+{
 }

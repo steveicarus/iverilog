@@ -64,7 +64,7 @@ class SubprogramHeader : public LineInfo {
     public:
       SubprogramHeader(perm_string name, std::list<InterfacePort*>*ports,
 		 const VType*return_type);
-      ~SubprogramHeader();
+      virtual ~SubprogramHeader();
 
 	// Return true if the specification (name, types, ports)
 	// matches this subprogram and that subprogram.
@@ -80,16 +80,32 @@ class SubprogramHeader : public LineInfo {
 	// Checks if either return type or parameters are unbounded vectors.
       bool unbounded() const;
 
-      inline SubprogramBody*body() { return body_; }
+	// Is the subprogram coming from the standard library?
+      virtual bool is_std() const { return false; }
+
+      inline SubprogramBody*body() const { return body_; }
       void set_body(SubprogramBody*bdy);
 
-      inline perm_string name() { return name_; }
+      inline perm_string name() const { return name_; }
+
+	// Function name used in the emission step. The main purpose of this
+	// method is to handle functions offered by standard VHDL libraries.
+	// Allows to return different function names depending on the arguments
+	// (think of size casting or signed/unsigned functions).
+      virtual int emit_name(const std::vector<Expression*>&,
+                            std::ostream&out, Entity*, ScopeBase*) const;
+
+	// Emit arguments for a specific call. It allows to reorder or skip
+	// some of the arguments if function signature is different in
+	// SystemVerilog compared to VHDL.
+      virtual int emit_args(const std::vector<Expression*>&argv,
+                            std::ostream&out, Entity*, ScopeBase*) const;
 
 	// Creates a new instance of the function that takes arguments of
 	// a different type. It is used to allow VHDL functions that work with
 	// unbounded std_logic_vectors, so there can be a separate instance
 	// for limited length logic vector.
-      SubprogramHeader*make_instance(std::vector<Expression*> arguments, ScopeBase*scope);
+      SubprogramHeader*make_instance(std::vector<Expression*> arguments, ScopeBase*scope) const;
 
 	// Emit header as it would show up in a package.
       int emit_package(std::ostream&fd) const;
@@ -97,7 +113,7 @@ class SubprogramHeader : public LineInfo {
       void write_to_stream(std::ostream&fd) const;
       void dump(std::ostream&fd) const;
 
-    private:
+    protected:
 	// Tries to set the return type to a fixed type. VHDL functions that
 	// return std_logic_vectors do not specify its length, as SystemVerilog
 	// demands.
@@ -110,6 +126,23 @@ class SubprogramHeader : public LineInfo {
       const VType*return_type_;
       SubprogramBody*body_;
       const ScopeBase*parent_;
+};
+
+// Class to define functions headers defined in the standard VHDL libraries.
+class SubprogramBuiltin : public SubprogramHeader
+{
+    public:
+      SubprogramBuiltin(perm_string vhdl_name, perm_string sv_name,
+              std::list<InterfacePort*>*ports, const VType*return_type);
+      ~SubprogramBuiltin();
+
+      bool is_std() const { return true; }
+
+      int emit_name(const std::vector<Expression*>&, std::ostream&out, Entity*, ScopeBase*) const;
+
+    private:
+	// SystemVerilog counterpart function name
+      perm_string sv_name_;
 };
 
 #endif /* IVL_subprogram_H */

@@ -22,6 +22,7 @@
 # include  "package.h"
 # include  "subprogram.h"
 # include  "entity.h"
+# include  "std_funcs.h"
 # include  <algorithm>
 # include  <iostream>
 # include  <iterator>
@@ -185,7 +186,7 @@ SubprogramHeader* ScopeBase::find_subprogram(perm_string name) const
       if (cur != use_subprograms_.end())
 	  return cur->second;
 
-      return 0;
+      return find_std_subprogram(name);
 }
 
 const VTypeEnum* ScopeBase::is_enum_name(perm_string name) const

@@ -149,7 +149,6 @@ int SignalSeqAssignment::elaborate(Entity*ent, ScopeBase*scope)
 	// Elaborate the r-value expressions.
       for (list<Expression*>::iterator cur = waveform_.begin()
 		 ; cur != waveform_.end() ; ++cur) {
-
 	    errors += (*cur)->elaborate_expr(ent, scope, lval_type);
       }
 

@@ -34,7 +34,16 @@ class Expression;
 
 class InterfacePort : public LineInfo {
     public:
-      InterfacePort() { mode = PORT_NONE; type=0; expr=0; }
+      InterfacePort(port_mode_t mod = PORT_NONE,
+                    perm_string nam = empty_perm_string,
+                    const VType*typ = NULL,
+                    Expression*exp = NULL)
+          : mode(mod), name(nam), type(typ), expr(exp)
+      {}
+
+      InterfacePort(const VType*typ)
+          : mode(PORT_NONE), type(typ), expr(NULL)
+      {}
 
 	// Port direction from the source code.
       port_mode_t mode;
