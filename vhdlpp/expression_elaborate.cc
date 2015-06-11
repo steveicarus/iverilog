@@ -954,12 +954,21 @@ const VType* ExpName::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*)co
       return probe_type(ent, scope);
 }
 
-int ExpName::elaborate_expr(Entity*, ScopeBase*, const VType*ltype)
+int ExpName::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
 {
       if (ltype) {
 	    ivl_assert(*this, ltype != 0);
 	    set_type(ltype);
       }
+
+      if(prefix_.get())
+	    prefix_.get()->elaborate_expr(ent, scope, NULL);
+
+      if(index_)
+	    index_->elaborate_expr(ent, scope, &primitive_INTEGER);
+
+      if(lsb_)
+	    lsb_->elaborate_expr(ent, scope, &primitive_INTEGER);
 
       return 0;
 }
