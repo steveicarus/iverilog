@@ -55,9 +55,6 @@ VTypePrimitive::~VTypePrimitive()
 void VTypePrimitive::show(ostream&out) const
 {
       switch (type_) {
-	  case BOOLEAN:
-	    out << "BOOLEAN";
-	    break;
 	  case BIT:
 	    out << "BIT";
 	    break;
@@ -85,7 +82,6 @@ void VTypePrimitive::show(ostream&out) const
 int VTypePrimitive::get_width(ScopeBase*) const
 {
     switch(type_) {
-        case BOOLEAN:
         case BIT:
         case STDLOGIC:
             return 1;

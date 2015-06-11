@@ -156,7 +156,7 @@ class VTypeERROR : public VType {
 class VTypePrimitive : public VType {
 
     public:
-      enum type_t { BOOLEAN, BIT, INTEGER, NATURAL, REAL, STDLOGIC, CHARACTER, TIME };
+      enum type_t { BIT, INTEGER, NATURAL, REAL, STDLOGIC, CHARACTER, TIME };
 
     public:
       VTypePrimitive(type_t tt, bool packed = false);
@@ -256,6 +256,8 @@ class VTypeArray : public VType {
     private:
       int emit_with_dims_(std::ostream&out, bool packed, perm_string name) const;
 
+	// Handles a few special types of array (*_vector, string types).
+      bool write_special_case(std::ostream&out) const;
       void write_range_to_stream_(std::ostream&fd) const;
 
       const VType*etype_;
@@ -381,19 +383,5 @@ class VTypeDef : public VType {
       perm_string name_;
       const VType*type_;
 };
-
-extern const VTypePrimitive primitive_BOOLEAN;
-extern const VTypePrimitive primitive_BIT;
-extern const VTypePrimitive primitive_INTEGER;
-extern const VTypePrimitive primitive_NATURAL;
-extern const VTypePrimitive primitive_REAL;
-extern const VTypePrimitive primitive_STDLOGIC;
-extern const VTypePrimitive primitive_CHARACTER;
-extern const VTypePrimitive primitive_TIME;
-
-extern const VTypeArray primitive_BIT_VECTOR;
-extern const VTypeArray primitive_BOOL_VECTOR;
-extern const VTypeArray primitive_STDLOGIC_VECTOR;
-extern const VTypeArray primitive_STRING;
 
 #endif /* IVL_vtype_H */

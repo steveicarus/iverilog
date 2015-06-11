@@ -25,6 +25,7 @@
 # include  "vsignal.h"
 # include  "subprogram.h"
 # include  "library.h"
+# include  "std_types.h"
 # include  <iostream>
 # include  <typeinfo>
 # include  "parse_types.h"
@@ -980,7 +981,7 @@ const VType* ExpNameALL::probe_type(Entity*, ScopeBase*) const
 
 const VType* ExpRelation::probe_type(Entity*, ScopeBase*) const
 {
-      return &primitive_BOOLEAN;
+      return &type_BOOLEAN;
 }
 
 int ExpRelation::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)

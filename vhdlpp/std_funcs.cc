@@ -19,7 +19,7 @@
  */
 
 #include "std_funcs.h"
-#include "vtype.h"
+#include "std_types.h"
 #include "scope.h"
 
 static std::map<perm_string,SubprogramHeader*> std_subprograms;
@@ -160,7 +160,7 @@ void preload_std_funcs(void)
     fn_rising_edge_args->push_back(new InterfacePort(&primitive_STDLOGIC));
     fn_rising_edge = new SubprogramBuiltin(perm_string::literal("rising_edge"),
                                            perm_string::literal("$ivlh_rising_edge"),
-                                           fn_rising_edge_args, &primitive_BOOLEAN);
+                                           fn_rising_edge_args, &type_BOOLEAN);
     std_subprograms[fn_rising_edge->name()] = fn_rising_edge;
 
     /* std_logic_1164 library
@@ -170,7 +170,7 @@ void preload_std_funcs(void)
     fn_falling_edge_args->push_back(new InterfacePort(&primitive_STDLOGIC));
     fn_falling_edge = new SubprogramBuiltin(perm_string::literal("falling_edge"),
                                            perm_string::literal("$ivlh_falling_edge"),
-                                           fn_falling_edge_args, &primitive_BOOLEAN);
+                                           fn_falling_edge_args, &type_BOOLEAN);
     std_subprograms[fn_falling_edge->name()] = fn_falling_edge;
 
     /* reduce_pack library

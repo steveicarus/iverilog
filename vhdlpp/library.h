@@ -26,8 +26,5 @@ extern void library_add_directory(const char*directory);
 
 extern SubprogramHeader*library_find_subprogram(perm_string name);
 
-extern void emit_std_types(ostream&out);
-extern int emit_packages(void);
-
 #endif /* IVL_library_H */
 

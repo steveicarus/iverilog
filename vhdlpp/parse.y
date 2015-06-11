@@ -40,6 +40,7 @@
 # include "vsignal.h"
 # include "vtype.h"
 # include "std_funcs.h"
+# include "std_types.h"
 # include  <cstdarg>
 # include  <cstring>
 # include  <list>
@@ -1607,14 +1608,7 @@ mode_opt : mode {$$ = $1;} | {$$ = PORT_NONE;} ;
 
 name /* IEEE 1076-2008 P8.1 */
   : IDENTIFIER /* simple_name (IEEE 1076-2008 P8.2) */
-      { Expression*tmp;
-        if(!strcasecmp($1, "true"))
-            tmp = new ExpBitstring("1");
-        else if(!strcasecmp($1, "false"))
-            tmp = new ExpBitstring("0");
-        else
-            tmp = new ExpName(lex_strings.make($1));
-
+      { Expression*tmp = new ExpName(lex_strings.make($1));
         FILE_NAME(tmp, @1);
         delete[]$1;
         $$ = tmp;
