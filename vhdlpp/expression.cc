@@ -129,12 +129,21 @@ ExpAggregate::ExpAggregate(std::list<element_t*>*el)
 	    elements_[idx++] = el->front();
 	    el->pop_front();
       }
+      delete el;
 }
 
 ExpAggregate::~ExpAggregate()
 {
-      for (size_t idx = 0 ; idx < elements_.size() ; idx += 1)
-	    delete elements_[idx];
+      for(std::vector<element_t*>::iterator it = elements_.begin();
+              it != elements_.end(); ++it) {
+        delete *it;
+      }
+
+      for(std::vector<choice_element>::iterator it = aggregate_.begin();
+              it != aggregate_.end(); ++it) {
+        delete it->choice;
+        delete it->expr;
+      }
 }
 
 Expression* ExpAggregate::clone() const
@@ -539,6 +548,7 @@ ExpName::ExpName(ExpName*prefix, perm_string nn, Expression*msb, Expression*lsb)
 ExpName::~ExpName()
 {
       delete index_;
+      delete lsb_;
 }
 
 bool ExpName::symbolic_compare(const Expression*that) const

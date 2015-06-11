@@ -82,7 +82,15 @@ SubprogramHeader::SubprogramHeader(perm_string nam, list<InterfacePort*>*ports,
 SubprogramHeader::~SubprogramHeader()
 {
     delete body_;
-    delete ports_;
+
+    if(ports_) {
+        for(list<InterfacePort*>::iterator it = ports_->begin();
+                it != ports_->end(); ++it)
+        {
+            delete *it;
+        }
+        delete ports_;
+    }
 }
 
 bool SubprogramHeader::compare_specification(SubprogramHeader*that) const

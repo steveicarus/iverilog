@@ -678,6 +678,11 @@ class ExpName : public Expression {
       public:
           index_t(Expression*idx, Expression*size, Expression*offset = NULL) :
             idx_(idx), size_(size), offset_(offset) {}
+          ~index_t() {
+                delete idx_;
+                delete size_;
+                delete offset_;
+          }
 
           int emit(ostream&out, Entity*ent, ScopeBase*scope);
 

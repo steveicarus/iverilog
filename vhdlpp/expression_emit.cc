@@ -673,6 +673,11 @@ int ExpName::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
       if(try_workarounds_(out, ent, scope, indices, field_size)) {
             emit_workaround_(out, ent, scope, indices, field_size);
+            for(list<index_t*>::iterator it = indices.begin();
+                    it != indices.end(); ++it)
+            {
+                delete *it;
+            }
             return 0;
       }
 
@@ -753,7 +758,7 @@ bool ExpName::check_const_array_workaround_(const VTypeArray*arr,
     data_size = element->get_width(scope);
     if(data_size < 0)
         return false;
-    indices.push_back(new index_t(index_, new ExpInteger(data_size)));
+    indices.push_back(new index_t(index_->clone(), new ExpInteger(data_size)));
 
     return true;
 }

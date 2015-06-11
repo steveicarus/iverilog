@@ -830,11 +830,17 @@ else_when_waveform
 concurrent_signal_assignment_statement /* IEEE 1076-2008 P11.6 */
   : concurrent_simple_signal_assignment
 
-  | IDENTIFIER ':' concurrent_simple_signal_assignment { $$ = $3; }
+  | IDENTIFIER ':' concurrent_simple_signal_assignment 
+      { delete[] $1;
+	$$ = $3;
+      }
 
   | concurrent_conditional_signal_assignment
 
-  | IDENTIFIER ':' concurrent_conditional_signal_assignment { $$ = $3; }
+  | IDENTIFIER ':' concurrent_conditional_signal_assignment 
+      { delete[] $1;
+	$$ = $3;
+      }
 
   | selected_signal_assignment
 
@@ -975,6 +981,7 @@ direction : K_to { $$ = false; } | K_downto { $$ = true; } ;
 element_association
   : choices ARROW expression
       { ExpAggregate::element_t*tmp = new ExpAggregate::element_t($1, $3);
+	delete $1;
 	$$ = tmp;
       }
   | expression
@@ -998,7 +1005,9 @@ element_association_list
 
 element_declaration
   : identifier_list ':' subtype_indication ';'
-      { $$ = record_elements($1, $3); }
+      { $$ = record_elements($1, $3);
+        delete $1;
+      }
   ;
 
 element_declaration_list
@@ -1313,7 +1322,7 @@ identifier_list
       }
   ;
 
-identifier_opt : IDENTIFIER { $$ = $1; } |  { $$ = 0; } ;
+identifier_opt : IDENTIFIER { $$ = $1; } | { $$ = 0; } ;
 
 identifier_colon_opt : IDENTIFIER ':' { $$ = $1; } | { $$ = 0; };
 
@@ -1879,6 +1888,7 @@ primary
      VHDL syntax). */
   | IDENTIFIER '(' association_list ')'
       { sorrymsg(@1, "Function calls not supported\n");
+	delete[] $1;
 	$$ = 0;
       }
 
@@ -1901,12 +1911,14 @@ procedure_call
       {
     ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1));
     sorrymsg(@1, "Procedure calls are not supported.\n");
+    delete[] $1;
     $$ = tmp;
       }
   | IDENTIFIER '(' association_list ')'
       {
     ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1), $3);
     sorrymsg(@1, "Procedure calls are not supported.\n");
+    delete[] $1;
     $$ = tmp;
       }
   | IDENTIFIER '(' error ')'
@@ -1918,7 +1930,10 @@ procedure_call
   ;
 
 procedure_call_statement
-  : IDENTIFIER ':' procedure_call { $$ = $3; }
+  : IDENTIFIER ':' procedure_call
+      { delete[] $1;
+	$$ = $3;
+      }
   | procedure_call { $$ = $1; }
   ;
 
@@ -2272,6 +2287,7 @@ severity
         errormsg(@1, "Invalid severity level (possible values: NOTE, WARNING, ERROR, FAILURE).\n");
         $$ = ReportStmt::UNSPECIFIED;
     }
+    delete[] $2;
   }
 
 severity_opt
@@ -2407,7 +2423,10 @@ signal_assignment
 
 signal_assignment_statement
   : signal_assignment
-  | IDENTIFIER ':' signal_assignment { $$ = $3; }
+  | IDENTIFIER ':' signal_assignment
+      { delete[] $1;
+	$$ = $3;
+      }
 
 subprogram_body_start
   : subprogram_specification K_is
@@ -2496,6 +2515,7 @@ subprogram_statement_part
 subtype_declaration
   : K_subtype IDENTIFIER K_is subtype_indication ';'
       { perm_string name = lex_strings.make($2);
+	delete[] $2;
 	if ($4 == 0) {
 	      errormsg(@1, "Failed to declare type name %s.\n", name.str());
 	} else {
@@ -2645,7 +2665,10 @@ use_clauses_opt
 
 variable_assignment_statement /* IEEE 1076-2008 P10.6.1 */
   : variable_assignment
-  | IDENTIFIER ':' variable_assignment { $$ = $3; }
+  | IDENTIFIER ':' variable_assignment
+      { delete[] $1;
+	$$ = $3;
+      }
 
 variable_assignment
   : name VASSIGN expression ';'
