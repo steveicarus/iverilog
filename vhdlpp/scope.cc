@@ -23,6 +23,7 @@
 # include  "subprogram.h"
 # include  "entity.h"
 # include  "std_funcs.h"
+# include  "std_types.h"
 # include  <algorithm>
 # include  <iostream>
 # include  <iterator>
@@ -197,7 +198,7 @@ const VTypeEnum* ScopeBase::is_enum_name(perm_string name) const
             return *it;
     }
 
-    return NULL;
+    return find_std_enum_name(name);
 }
 
 /*

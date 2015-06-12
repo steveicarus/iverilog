@@ -51,6 +51,7 @@ void generate_global_types(ActiveScope*res)
       VTypeEnum*enum_BOOLEAN = new VTypeEnum(enum_BOOLEAN_vals);
       type_BOOLEAN.set_definition(enum_BOOLEAN);
       std_types[type_BOOLEAN.peek_name()] = &type_BOOLEAN;
+      std_enums.push_back(enum_BOOLEAN);
 
       res->use_name(type_BOOLEAN.peek_name(),           &type_BOOLEAN);
       res->use_name(perm_string::literal("bit"),        &primitive_BIT);
@@ -76,7 +77,7 @@ void delete_global_types()
 
 const VTypeEnum*find_std_enum_name(perm_string name)
 {
-    for(list<const VTypeEnum*>::iterator it = std_enums.begin();
+    for(list<const VTypeEnum*>::const_iterator it = std_enums.begin();
             it != std_enums.end(); ++it) {
         if((*it)->has_name(name))
             return *it;
