@@ -20,6 +20,8 @@
 # include  "sequential.h"
 # include  "expression.h"
 # include  "scope.h"
+# include  "library.h"
+# include  "subprogram.h"
 
 int SequentialStmt::elaborate(Entity*, ScopeBase*)
 {
@@ -155,9 +157,33 @@ int SignalSeqAssignment::elaborate(Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ProcedureCall::elaborate(Entity*, ScopeBase*)
+int ProcedureCall::elaborate(Entity*ent, ScopeBase*scope)
 {
-      return 0;
+      int errors = 0;
+
+      def_ = scope->find_subprogram(name_);
+
+      if(!def_)
+            def_ = library_find_subprogram(name_);
+
+      assert(def_);
+
+	// Elaborate arguments
+      size_t idx = 0;
+      if(param_list_) {
+	    for(list<named_expr_t*>::iterator cur = param_list_->begin()
+		 ; cur != param_list_->end() ; ++cur) {
+                const VType*tmp = (*cur)->expr()->probe_type(ent, scope);
+                const VType*param_type = def_ ? def_->peek_param_type(idx) : NULL;
+
+                if(!tmp && param_type)
+                    tmp = param_type;
+
+                errors += (*cur)->expr()->elaborate_expr(ent, scope, tmp);
+            }
+      }
+
+      return errors;
 }
 
 int VariableSeqAssignment::elaborate(Entity*ent, ScopeBase*scope)

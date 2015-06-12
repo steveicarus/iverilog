@@ -156,7 +156,7 @@ void SubprogramHeader::set_parent(const ScopeBase*par)
 }
 
 bool SubprogramHeader::unbounded() const {
-    if(return_type_->is_unbounded())
+    if(return_type_ && return_type_->is_unbounded())
        return true;
 
     if(ports_) {
@@ -287,8 +287,14 @@ void SubprogramHeader::fix_return_type()
 
 void SubprogramHeader::write_to_stream(ostream&fd) const
 {
-      fd << "function " << name_ << "(";
+      if(return_type_)
+	    fd << "function ";
+      else
+	    fd << "procedure ";
+
+      fd << name_;
       if (ports_ && ! ports_->empty()) {
+	    fd << "(";
 	    list<InterfacePort*>::const_iterator cur = ports_->begin();
 	    InterfacePort*curp = *cur;
 	    fd << curp->name << " : ";
@@ -298,9 +304,13 @@ void SubprogramHeader::write_to_stream(ostream&fd) const
 		  fd << "; " << curp->name << " : ";
 		  curp->type->write_to_stream(fd);
 	    }
+	    fd << ")";
       }
-      fd << ") return ";
-      return_type_->write_to_stream(fd);
+
+      if( return_type_) {
+	    fd << " return ";
+	    return_type_->write_to_stream(fd);
+      }
 }
 
 SubprogramBuiltin::SubprogramBuiltin(perm_string vhdl_name, perm_string sv_name,

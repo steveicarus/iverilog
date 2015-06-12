@@ -203,6 +203,7 @@ class ProcedureCall : public SequentialStmt {
     public:
       ProcedureCall(perm_string name);
       ProcedureCall(perm_string name, std::list<named_expr_t*>* param_list);
+      ProcedureCall(perm_string name, std::list<Expression*>* param_list);
       ~ProcedureCall();
 
       int elaborate(Entity*ent, ScopeBase*scope);
@@ -212,6 +213,7 @@ class ProcedureCall : public SequentialStmt {
     private:
       perm_string name_;
       std::list<named_expr_t*>* param_list_;
+      SubprogramHeader*def_;
 };
 
 class VariableSeqAssignment  : public SequentialStmt {

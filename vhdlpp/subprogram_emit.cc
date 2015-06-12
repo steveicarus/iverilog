@@ -55,11 +55,11 @@ int SubprogramHeader::emit_package(ostream&fd) const
       if (return_type_) {
 	    fd << "function ";
 	    return_type_->emit_def(fd, empty_perm_string);
-	    fd << " " << name_;
-	    fd << "(";
       } else {
-	    fd << "task " << name_ << ";" << endl;
+	    fd << "task";
       }
+
+	    fd << " \\" << name_ << " (";
 
       for (list<InterfacePort*>::const_iterator cur = ports_->begin()
 		 ; cur != ports_->end() ; ++cur) {

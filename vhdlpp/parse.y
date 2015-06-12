@@ -311,6 +311,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <interface_list> interface_element interface_list
 %type <interface_list> port_clause port_clause_opt
 %type <interface_list> generic_clause generic_clause_opt
+%type <interface_list> parameter_list parameter_list_opt
 %type <port_mode>  mode mode_opt
 
 %type <entity_aspect> entity_aspect entity_aspect_opt binding_indication binding_indication_semicolon_opt
@@ -376,7 +377,8 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <exp_options> else_when_waveform selected_waveform
 %type <exp_options_list> else_when_waveforms selected_waveform_list
 
-%type <subprogram> function_specification subprogram_specification subprogram_body_start
+%type <subprogram> function_specification procedure_specification
+%type <subprogram> subprogram_specification subprogram_body_start
 
 %type <severity> severity severity_opt
 
@@ -1254,15 +1256,15 @@ for_generate_statement
   ;
 
 function_specification /* IEEE 1076-2008 P4.2.1 */
-  : K_function IDENTIFIER '(' interface_list ')' K_return IDENTIFIER
-      { perm_string type_name = lex_strings.make($7);
+  : K_function IDENTIFIER parameter_list K_return IDENTIFIER
+      { perm_string type_name = lex_strings.make($5);
 	perm_string name = lex_strings.make($2);
 	const VType*type_mark = active_scope->find_type(type_name);
-	touchup_interface_for_functions($4);
-	SubprogramHeader*tmp = new SubprogramHeader(name, $4, type_mark);
+	touchup_interface_for_functions($3);
+	SubprogramHeader*tmp = new SubprogramHeader(name, $3, type_mark);
 	FILE_NAME(tmp, @1);
 	delete[]$2;
-	delete[]$7;
+	delete[]$5;
 	$$ = tmp;
       }
   ;
@@ -1284,8 +1286,8 @@ generic_clause_opt
   ;
 
 generic_clause
-  : K_generic '(' interface_list ')' ';'
-      { $$ = $3; }
+  : K_generic parameter_list ';'
+      { $$ = $2; }
   | K_generic '(' error ')' ';'
       { errormsg(@3, "Error in interface list for generic.\n");
 	yyerrok;
@@ -1774,9 +1776,18 @@ package_body_start
       }
   ;
 
+parameter_list
+  : '(' interface_list ')' { $$ = $2; }
+  ;
+
+parameter_list_opt
+  : parameter_list  { $$ = $1; }
+  |                 { $$ = 0; }
+  ;
+
 port_clause
-  : K_port '(' interface_list ')' ';'
-      { $$ = $3; }
+  : K_port parameter_list ';'
+      { $$ = $2; }
   | K_port '(' error ')' ';'
       { errormsg(@1, "Syntax error in port list.\n");
 	yyerrok;
@@ -1901,21 +1912,26 @@ primary_unit
   ;
 
 procedure_call
-  : IDENTIFIER
+  : IDENTIFIER ';'
       {
     ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1));
-    sorrymsg(@1, "Procedure calls are not supported.\n");
     delete[] $1;
     $$ = tmp;
       }
-  | IDENTIFIER '(' association_list ')'
+  | IDENTIFIER '(' association_list ')' ';'
       {
     ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1), $3);
-    sorrymsg(@1, "Procedure calls are not supported.\n");
     delete[] $1;
     $$ = tmp;
       }
-  | IDENTIFIER '(' error ')'
+  | IDENTIFIER '(' expression_list ')' ';'
+      {
+    ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1), $3);
+    delete[] $1;
+    delete $3; // parameters are copied in this variant
+    $$ = tmp;
+      }
+  | IDENTIFIER '(' error ')' ';'
       { errormsg(@1, "Errors in procedure call.\n");
 	yyerrok;
 	delete[]$1;
@@ -1929,6 +1945,17 @@ procedure_call_statement
 	$$ = $3;
       }
   | procedure_call { $$ = $1; }
+  ;
+
+procedure_specification /* IEEE 1076-2008 P4.2.1 */
+  : K_procedure IDENTIFIER parameter_list_opt
+      { perm_string name = lex_strings.make($2);
+	touchup_interface_for_functions($3);
+	SubprogramHeader*tmp = new SubprogramHeader(name, $3, NULL);
+	FILE_NAME(tmp, @1);
+	delete[]$2;
+	$$ = tmp;
+      }
   ;
 
 process_declarative_item
@@ -2494,6 +2521,7 @@ subprogram_kind_opt : subprogram_kind | ;
 
 subprogram_specification
   : function_specification { $$ = $1; }
+  | procedure_specification { $$ = $1; }
   ;
 
   /* This is an implementation of the rule:

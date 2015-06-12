@@ -23,7 +23,9 @@
 # include  "sequential.h"
 # include  "expression.h"
 # include  "architec.h"
+# include  "package.h"
 # include  "compiler.h"
+# include  "subprogram.h"
 # include  <iostream>
 # include  <cstdio>
 # include  <typeinfo>
@@ -205,12 +207,29 @@ void VariableSeqAssignment::write_to_stream(ostream&fd)
       fd << ";" << endl;
 }
 
-int ProcedureCall::emit(ostream&out, Entity*, ScopeBase*)
+int ProcedureCall::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
-      out << " // " << get_fileline() << ": internal error: "
-      << "I don't know how to emit this sequential statement! "
-      << "type=" << typeid(*this).name() << endl;
-      return 1;
+      int errors = 0;
+
+      std::vector<Expression*>params(param_list_->size());
+      int i = 0;
+      for(std::list<named_expr_t*>::iterator it = param_list_->begin();
+              it != param_list_->end(); ++it)
+          params[i++] = (*it)->expr();
+
+      const Package*pkg = dynamic_cast<const Package*> (def_->get_parent());
+      if (pkg != 0)
+          out << "\\" << pkg->name() << " ::";
+
+      errors += def_->emit_name(params, out, ent, scope);
+
+      out << " (";
+      if(param_list_) {
+	    errors += def_->emit_args(params, out, ent, scope);
+      }
+
+      out << ");" << endl;
+      return errors;
 }
 
 int LoopStatement::emit_substatements(ostream&out, Entity*ent, ScopeBase*scope)
