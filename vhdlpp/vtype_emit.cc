@@ -164,7 +164,7 @@ int VTypePrimitive::emit_primitive_type(ostream&out) const
 	    out << "real";
 	    break;
 	  case CHARACTER:
-	    out << "char";
+	    out << "byte";
 	    break;
 	  case TIME:
 	    out << "time";
