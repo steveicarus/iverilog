@@ -1,7 +1,7 @@
 #ifndef IVL_ivl_target_H
 #define IVL_ivl_target_H
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1418,6 +1418,7 @@ extern ivl_signal_t ivl_lpm_array(ivl_lpm_t net);
   /* IVL_LPM_PART IVL_LPM_SUBSTITUTE */
 extern unsigned ivl_lpm_base(ivl_lpm_t net);
   /* IVL_LPM_FF */
+extern unsigned    ivl_lpm_negedge(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
   /* IVL_LPM_UFUNC */
 extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);

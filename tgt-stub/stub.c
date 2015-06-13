@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -497,10 +497,11 @@ static void show_lpm_concat(ivl_lpm_t net)
 static void show_lpm_ff(ivl_lpm_t net)
 {
       ivl_nexus_t nex;
+      char*edge = ivl_lpm_negedge(net) ? "negedge" : "posedge";
       unsigned width = ivl_lpm_width(net);
 
-      fprintf(out, "  LPM_FF %s: <width=%u>\n",
-	      ivl_lpm_basename(net), width);
+      fprintf(out, "  LPM_FF %s: <polarity=%s> <width=%u>\n",
+	      ivl_lpm_basename(net), edge, width);
 
       nex = ivl_lpm_clk(net);
       fprintf(out, "    clk: %p\n", nex);

@@ -1938,6 +1938,9 @@ void dll_target::lpm_ff(const NetFF*net)
 
       const Nexus*nex;
 
+	/* Set the clock polarity. */
+      obj->u_.ff.negedge_flag = net->is_negedge();
+
 	/* Set the clk signal to point to the nexus, and the nexus to
 	   point back to this device. */
       nex = net->pin_Clock().nexus();
@@ -1976,7 +1979,10 @@ void dll_target::lpm_ff(const NetFF*net)
 	    nexus_lpm_add(obj->u_.ff.aset, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
 	    verinum tmp = net->aset_value();
-	    obj->u_.ff.aset_value = expr_from_value_(tmp);
+	    if (tmp.len() > 0)
+		  obj->u_.ff.aset_value = expr_from_value_(tmp);
+	    else
+		  obj->u_.ff.aset_value = 0;
 
       } else {
 	    obj->u_.ff.aset = 0;
@@ -2001,7 +2007,10 @@ void dll_target::lpm_ff(const NetFF*net)
 	    nexus_lpm_add(obj->u_.ff.sset, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
 	    verinum tmp = net->sset_value();
-	    obj->u_.ff.sset_value = expr_from_value_(tmp);
+	    if (tmp.len() > 0)
+		  obj->u_.ff.sset_value = expr_from_value_(tmp);
+	    else
+		  obj->u_.ff.sset_value = 0;
 
       } else {
 	    obj->u_.ff.sset = 0;

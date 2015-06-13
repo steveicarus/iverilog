@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1084,6 +1084,18 @@ extern "C" unsigned ivl_lpm_base(ivl_lpm_t net)
 	    return net->u_.part.base;
 	  case IVL_LPM_SUBSTITUTE:
 	    return net->u_.substitute.base;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+extern "C" unsigned ivl_lpm_negedge(ivl_lpm_t net)
+{
+      assert(net);
+      switch (net->type) {
+	  case IVL_LPM_FF:
+	    return net->u_.ff.negedge_flag;
 	  default:
 	    assert(0);
 	    return 0;

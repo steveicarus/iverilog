@@ -34,9 +34,10 @@ bool NetProc::synth_async(Design*, NetScope*, NexusSet&, NetBus&, NetBus&)
 }
 
 bool NetProc::synth_sync(Design*des, NetScope*scope,
+			 bool& /* ff_negedge */,
 			 NetNet* /* ff_clk */, NetBus& /* ff_ce */,
 			 NetBus& /* ff_aclr*/, NetBus& /* ff_aset*/,
-			 vector<verinum>& /*aset_value*/,
+			 vector<verinum>& /*ff_aset_value*/,
 			 NexusSet&nex_map, NetBus&nex_out,
 			 const vector<NetEvProbe*>&events)
 {
@@ -1383,9 +1384,10 @@ bool NetProcTop::synth_async(Design*des)
  * the statements may each infer different reset and enable signals.
  */
 bool NetBlock::synth_sync(Design*des, NetScope*scope,
+			  bool&ff_negedge,
 			  NetNet*ff_clk, NetBus&ff_ce,
 			  NetBus&ff_aclr,NetBus&ff_aset,
-			  vector<verinum>&aset_value,
+			  vector<verinum>&ff_aset_value,
 			  NexusSet&nex_map, NetBus&nex_out,
 			  const vector<NetEvProbe*>&events_in)
 {
@@ -1428,8 +1430,9 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 		 subset of the statement. The tmp_map is the output
 		 nexa that we expect, and the tmp_out is where we want
 		 those outputs connected. */
-	    bool ok_flag = cur->synth_sync(des, scope, ff_clk, tmp_ce,
-					   ff_aclr, ff_aset, aset_value,
+	    bool ok_flag = cur->synth_sync(des, scope,
+					   ff_negedge, ff_clk, tmp_ce,
+					   ff_aclr, ff_aset, ff_aset_value,
 					   tmp_set, tmp_out, events_in);
 	    flag = flag && ok_flag;
 
@@ -1465,9 +1468,10 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
  * expression is connected to an event, or not.
  */
 bool NetCondit::synth_sync(Design*des, NetScope*scope,
+			   bool&ff_negedge,
 			   NetNet*ff_clk, NetBus&ff_ce,
 			   NetBus&ff_aclr,NetBus&ff_aset,
-			   vector<verinum>&aset_value,
+			   vector<verinum>&ff_aset_value,
 			   NexusSet&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
 {
@@ -1514,25 +1518,13 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	    for (unsigned pin = 0 ; pin < tmp_out.pin_count() ; pin += 1) {
 		  Nexus*rst_nex = tmp_out.pin(pin).nexus();
 
-		  vector<bool> rst_mask = rst_nex->driven_mask();
-		  if (debug_synth2) {
-			cerr << get_fileline() << ": NetCondit::synth_sync: "
-			     << "nex_out pin=" << pin
-			     << ", rst_mask.size()==" << rst_mask.size()
-			     << ", rst_nex->vector_width()=" << rst_nex->vector_width()
-			     << endl;
-		  }
-
-		  for (size_t bit = 0 ; bit < rst_mask.size() ; bit += 1) {
-			if (rst_mask[bit]==false) {
-			      cerr << get_fileline() << ": sorry: "
-				   << "Asynchronous LOAD not implemented." << endl;
-			      return false;
-			}
+		  if (! rst_nex->drivers_constant()) {
+		        cerr << get_fileline() << ": sorry: "
+			     << "Asynchronous LOAD not implemented." << endl;
+		        return false;
 		  }
 
 		  verinum rst_drv = rst_nex->driven_vector();
-		  ivl_assert(*this, rst_drv.len()==rst_mask.size());
 
 		  verinum zero (verinum::V0, rst_drv.len());
 		  verinum ones (verinum::V1, rst_drv.len());
@@ -1551,12 +1543,13 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 			ivl_assert(*this, rst->pin_count()==1);
 			connect(ff_aset.pin(pin), rst->pin(0));
 			if (rst_drv!=ones)
-			      aset_value[pin] = rst_drv;
+			      ff_aset_value[pin] = rst_drv;
 		  }
 	    }
 
-	    return else_->synth_sync(des, scope, ff_clk, ff_ce,
-				     ff_aclr, ff_aset, aset_value,
+	    return else_->synth_sync(des, scope,
+				     ff_negedge, ff_clk, ff_ce,
+				     ff_aclr, ff_aset, ff_aset_value,
 				     nex_map, nex_out, vector<NetEvProbe*>(0));
       }
 
@@ -1711,15 +1704,19 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	    }
       }
 
-      bool flag = if_->synth_sync(des, scope, ff_clk, ff_ce, ff_aclr, ff_aset, aset_value, nex_map, nex_out, events_in);
+      bool flag = if_->synth_sync(des, scope,
+				  ff_negedge, ff_clk, ff_ce,
+				  ff_aclr, ff_aset, ff_aset_value,
+				  nex_map, nex_out, events_in);
 
       return flag;
 }
 
 bool NetEvWait::synth_sync(Design*des, NetScope*scope,
+			   bool&ff_negedge,
 			   NetNet*ff_clk, NetBus&ff_ce,
 			   NetBus&ff_aclr,NetBus&ff_aset,
-			   vector<verinum>&aset_value,
+			   vector<verinum>&ff_aset_value,
 			   NexusSet&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
 {
@@ -1789,8 +1786,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 
       connect(ff_clk->pin(0), pclk->pin(0));
       if (pclk->edge() == NetEvProbe::NEGEDGE) {
-	    perm_string polarity = perm_string::literal("Clock:LPM_Polarity");
-	    ff_clk->attribute(polarity, verinum("INVERT"));
+	    ff_negedge = true;
 
 	    if (debug_synth2) {
 		  cerr << get_fileline() << ": debug: "
@@ -1800,8 +1796,9 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
       }
 
 	/* Synthesize the input to the DFF. */
-      bool flag = statement_->synth_sync(des, scope, ff_clk, ff_ce,
-					 ff_aclr, ff_aset, aset_value,
+      bool flag = statement_->synth_sync(des, scope,
+					 ff_negedge, ff_clk, ff_ce,
+					 ff_aclr, ff_aset, ff_aset_value,
 					 nex_map, nex_out, events);
 
       return flag;
@@ -1857,7 +1854,10 @@ bool NetProcTop::synth_sync(Design*des)
 	// Connect the input later.
 
 	/* Synthesize the input to the DFF. */
-      bool flag = statement_->synth_sync(des, scope(), clock, ce, aclr, aset, aset_value,
+      bool negedge = false;
+      bool flag = statement_->synth_sync(des, scope(),
+					 negedge, clock, ce,
+					 aclr, aset, aset_value,
 					 nex_set, nex_d,
 					 vector<NetEvProbe*>());
       if (! flag) {
@@ -1876,7 +1876,7 @@ bool NetProcTop::synth_sync(Design*des)
 	    }
 
 	    NetFF*ff2 = new NetFF(scope(), scope()->local_symbol(),
-				  nex_set[idx].wid);
+				  negedge, nex_set[idx].wid);
 	    des->add_node(ff2);
 	    ff2->set_line(*this);
 	    ff2->aset_value(aset_value[idx]);

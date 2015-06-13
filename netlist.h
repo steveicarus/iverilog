@@ -1,7 +1,7 @@
 #ifndef IVL_netlist_H
 #define IVL_netlist_H
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1622,9 +1622,10 @@ class NetModulo  : public NetNode {
 class NetFF  : public NetNode {
 
     public:
-      NetFF(NetScope*s, perm_string n, unsigned vector_width);
+      NetFF(NetScope*s, perm_string n, bool negedge, unsigned vector_width);
       ~NetFF();
 
+      bool is_negedge() const;
       unsigned width() const;
 
       Link& pin_Clock();
@@ -1656,6 +1657,7 @@ class NetFF  : public NetNode {
       virtual void functor_node(Design*des, functor_t*fun);
 
     private:
+      bool negedge_;
       unsigned width_;
       verinum aset_value_;
       verinum sset_value_;
@@ -2618,9 +2620,10 @@ class NetProc : public virtual LineInfo {
 	// picked off by e.g. condit statements as set/reset inputs to
 	// the flipflop being generated.
       virtual bool synth_sync(Design*des, NetScope*scope,
+			      bool&ff_negedge,
 			      NetNet*ff_clock, NetBus&ff_ce,
 			      NetBus&ff_aclr,  NetBus&ff_aset,
-			      vector<verinum>&aset_value,
+			      vector<verinum>&ff_aset_value,
 			      NexusSet&nex_map, NetBus&nex_out,
 			      const std::vector<NetEvProbe*>&events);
 
@@ -2900,9 +2903,10 @@ class NetBlock  : public NetProc {
 		       NetBus&accumulated_nex_out);
 
       bool synth_sync(Design*des, NetScope*scope,
+		      bool&ff_negedge,
 		      NetNet*ff_clk, NetBus&ff_ce,
 		      NetBus&ff_aclr,NetBus&ff_aset,
-		      vector<verinum>&aset_value,
+		      vector<verinum>&ff_aset_value,
 		      NexusSet&nex_map, NetBus&nex_out,
 		      const std::vector<NetEvProbe*>&events);
 
@@ -3042,9 +3046,10 @@ class NetCondit  : public NetProc {
 		       NetBus&accumulated_nex_out);
 
       bool synth_sync(Design*des, NetScope*scope,
+		      bool&ff_negedge,
 		      NetNet*ff_clk, NetBus&ff_ce,
 		      NetBus&ff_aclr,NetBus&ff_aset,
-		      vector<verinum>&aset_value,
+		      vector<verinum>&ff_aset_value,
 		      NexusSet&nex_map, NetBus&nex_out,
 		      const std::vector<NetEvProbe*>&events);
 
@@ -3320,9 +3325,10 @@ class NetEvWait  : public NetProc {
 			       NetBus&accumulated_nex_out);
 
       virtual bool synth_sync(Design*des, NetScope*scope,
+			      bool&ff_negedge,
 			      NetNet*ff_clk, NetBus&ff_ce,
 			      NetBus&ff_aclr,NetBus&ff_aset,
-			      vector<verinum>&aset_value,
+			      vector<verinum>&ff_aset_value,
 			      NexusSet&nex_map, NetBus&nex_out,
 			      const std::vector<NetEvProbe*>&events);
 

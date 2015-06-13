@@ -151,9 +151,12 @@ static char* strdupnew(char const *str)
 ".concat"   { return K_CONCAT; }
 ".concat8"  { return K_CONCAT8; }
 ".delay"    { return K_DELAY; }
-".dff"      { return K_DFF; }
-".dff/aclr" { return K_DFF_ACLR; }
-".dff/aset" { return K_DFF_ASET; }
+".dff/n"      { return K_DFF_N; }
+".dff/n/aclr" { return K_DFF_N_ACLR; }
+".dff/n/aset" { return K_DFF_N_ASET; }
+".dff/p"      { return K_DFF_P; }
+".dff/p/aclr" { return K_DFF_P_ACLR; }
+".dff/p/aset" { return K_DFF_P_ASET; }
 ".enum2"    { return K_ENUM2; }
 ".enum2/s"  { return K_ENUM2_S; }
 ".enum4"    { return K_ENUM4; }

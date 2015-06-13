@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1153,8 +1153,8 @@ unsigned NetReplicate::repeat() const
  *     ...
  */
 
-NetFF::NetFF(NetScope*s, perm_string n, unsigned width__)
-: NetNode(s, n, 8), width_(width__)
+NetFF::NetFF(NetScope*s, perm_string n, bool negedge__, unsigned width__)
+: NetNode(s, n, 8), negedge_(negedge__), width_(width__)
 {
       pin_Clock().set_dir(Link::INPUT);
       pin_Enable().set_dir(Link::INPUT);
@@ -1168,6 +1168,11 @@ NetFF::NetFF(NetScope*s, perm_string n, unsigned width__)
 
 NetFF::~NetFF()
 {
+}
+
+bool NetFF::is_negedge() const
+{
+      return negedge_;
 }
 
 unsigned NetFF::width() const

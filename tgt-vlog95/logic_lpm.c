@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2015 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1245,7 +1245,43 @@ static void emit_posedge_dff_prim(void)
       fprintf(vlog_out, "endprimitive\n");
 }
 
+static void emit_negedge_dff_prim(void)
+{
+      fprintf(vlog_out, "\n");
+      fprintf(vlog_out, "/* Icarus generated UDP to represent a synthesized "
+                        "negative edge D-FF. */\n");
+      fprintf(vlog_out, "primitive IVL_negedge_DFF "
+                        "(q, clk, en, d, clr, set);\n");
+      fprintf(vlog_out, "%*coutput q;\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*cinput clk, en, d, clr, set;\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*creg q;\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*ctable\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*cf 1 0 0 0 : ? : 0 ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cf 1 1 0 0 : ? : 1 ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cn 1 0 0 0 : 0 : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cn 1 1 0 0 : 1 : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cn x 0 0 0 : 0 : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cn x 1 0 0 : 1 : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cp ? ? 0 0 : ? : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c* 0 ? 0 0 : ? : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? * ? ? ? : ? : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? * ? ? : ? : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? * ? : ? : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? ? * : ? : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? 0 1 : ? : 1 ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? 0 x : 1 : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? 0 x : 0 : x ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? 1 ? : ? : 0 ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? x 0 : 0 : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? x 0 : 1 : x ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? x x : ? : x ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? x 1 : ? : x ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cendtable\n", indent_incr, ' ');
+      fprintf(vlog_out, "endprimitive\n");
+}
+
 static unsigned need_posedge_dff_prim = 0;
+static unsigned need_negedge_dff_prim = 0;
 
 /*
  * Synthesis creates a D-FF LPM object. To allow this to be simulated as
@@ -1263,14 +1299,14 @@ void emit_icarus_generated_udps()
 {
 	/* Emit the copyright information and LGPL note and then emit any
 	 * needed primitives. */
-      if (need_posedge_dff_prim) {
+      if (need_posedge_dff_prim || need_negedge_dff_prim) {
 	    fprintf(vlog_out,
 "\n"
 "/*\n"
 " * This is the copyright information for the following primitive(s)\n"
 " * (library elements).\n"
 " *\n"
-" * Copyright (C) 2011 Cary R. (cygcary@yahoo.com)\n"
+" * Copyright (C) 2011-2015 Cary R. (cygcary@yahoo.com)\n"
 " *\n"
 " * This library is free software; you can redistribute it and/or\n"
 " * modify it under the terms of the GNU Lesser General Public\n"
@@ -1290,13 +1326,12 @@ void emit_icarus_generated_udps()
 "NOTE: vlog95: Adding LGPL 2.1 primitive(s) at the end of the output file.\n");
       }
       if (need_posedge_dff_prim) emit_posedge_dff_prim();
+      if (need_negedge_dff_prim) emit_negedge_dff_prim();
 }
 
 static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
 {
-// HERE: No support for lpm attributes and hence polarity information.
-//      ivl_attribute_t clock_pol = find_lpm_attr(lpm, "Clock:LPM_Polarity");
-      ivl_attribute_t clock_pol = 0;
+      unsigned negedge = ivl_lpm_negedge(lpm);
       ivl_expr_t aset_expr = ivl_lpm_aset_value(lpm);
       ivl_expr_t sset_expr = ivl_lpm_sset_value(lpm);
       ivl_nexus_t nex;
@@ -1305,7 +1340,13 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
       const char *sset_bits = 0;
 	/* For now we only support a width of 1 for these bits. */
       if (aset_expr) {
-	    assert(ivl_expr_width(aset_expr) == 1);
+	    if (ivl_expr_width(aset_expr) != 1) {
+		  fprintf(stderr, "%s:%u: vlog95 sorry: FF LPMs with "
+			  "multi-bit asynchronous set values are not "
+			  "currently translated.\n",
+			  ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+		  vlog_errors += 1;
+	    }
 	    aset_bits = ivl_expr_bits(aset_expr);
       }
       if (sset_expr) {
@@ -1314,9 +1355,7 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
       }
 
       fprintf(vlog_out, "%*c", indent, ' ');
-	/* If there is a clock polarity attribute then we have a negative
-	 * edge D-FF. */
-      if (clock_pol) {
+      if (negedge) {
 	    fprintf(vlog_out, "IVL_negedge_DFF");
       } else {
 	    fprintf(vlog_out, "IVL_posedge_DFF");
@@ -1404,7 +1443,10 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
       else fprintf(vlog_out, "1'b0");
       fprintf(vlog_out, ");\n");
 	/* We need to emit a primitive for this instance. */
-      need_posedge_dff_prim = 1;
+      if (negedge)
+	    need_negedge_dff_prim = 1;
+      else
+	    need_posedge_dff_prim = 1;
 }
 
 static ivl_signal_t get_output_from_nexus(ivl_scope_t scope, ivl_nexus_t nex,

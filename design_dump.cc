@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -677,8 +677,12 @@ void NetConst::dump_node(ostream&o, unsigned ind) const
 void NetFF::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_FF: " << name()
-	<< " scope=" << scope_path(scope())
-	<< " aset_value=" << aset_value_ << endl;
+	<< " scope=" << scope_path(scope());
+      if (negedge_)
+	    o << " negedge";
+      else
+	    o << " posedge";
+      o << " aset_value=" << aset_value_ << endl;
 
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
