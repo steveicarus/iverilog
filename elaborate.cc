@@ -3740,9 +3740,9 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
 	    } else if (def->port_defe(idx)) {
 		  if (! gn_system_verilog()) {
-			cerr << get_fileline() << ": internal error: "
+			cerr << get_fileline() << ": error: "
 			     << "Found (and using) default task expression "
-			     << " requires SystemVerilog." << endl;
+			        "requires SystemVerilog." << endl;
 			des->errors += 1;
 		  }
 		  rv = def->port_defe(idx);

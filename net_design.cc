@@ -847,6 +847,7 @@ NetFuncDef* Design::find_function(NetScope*scope, const pform_name_t&name)
               // the function's signals have been elaborated. If this is
               // the case, elaborate them now.
             if (func->elab_stage() < 2) {
+		  func->need_const_func(true);
                   const PFunction*pfunc = func->func_pform();
                   assert(pfunc);
                   pfunc->elaborate_sig(this, func);

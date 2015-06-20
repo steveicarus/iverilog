@@ -715,16 +715,23 @@ void PTaskFunc::elaborate_sig_ports_(Design*des, NetScope*scope,
 		  continue;
 	    }
 
-	      // If the port has a default expression that can be used
-	      // as a value when the caller doesn't bind, then
-	      // elaborate that expression here. This expression
-	      // should evaluate down do a constant.
+	      // If the port has a default expression, elaborate
+	      // that expression here.
 	    if (ports_->at(idx).defe != 0) {
-		  tmp_def = elab_and_eval(des, scope, ports_->at(idx).defe, -1, true);
-		  if (tmp_def==0) {
-			cerr << get_fileline() << ": error: Unable to evaluate "
-			     << *ports_->at(idx).defe
-			     << " as a port default (constant) expression." << endl;
+		  if (tmp->port_type() == NetNet::PINPUT) {
+			tmp_def = elab_and_eval(des, scope, ports_->at(idx).defe,
+						-1, scope->need_const_func());
+			if (tmp_def == 0) {
+			      cerr << get_fileline()
+				   << ": error: Unable to evaluate "
+				   << *ports_->at(idx).defe
+				   << " as a port default expression." << endl;
+			      des->errors += 1;
+			}
+		  } else {
+			cerr << get_fileline() << ": sorry: Default arguments "
+			        "for subroutine output or inout ports are not "
+			        "yet supported." << endl;
 			des->errors += 1;
 		  }
 	    }
