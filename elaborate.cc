@@ -3727,7 +3727,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
 	    NetExpr*rv = 0;
 
-	    if (parms_idx<parms_.size() && parms_[parms_idx]) {
+	    if (parms_idx < parms_.size() && parms_[parms_idx]) {
 		  rv = elaborate_rval_expr(des, scope, port->net_type(),
 					   lv_type, wid, parms_ [parms_idx]);
 		  if (NetEEvent*evt = dynamic_cast<NetEEvent*> (rv)) {
@@ -3789,20 +3789,24 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
 	      /* Elaborate an l-value version of the port expression
 		 for output and inout ports. If the expression does
-		 not exist then quietly skip it, but if the expression
-		 is not a valid l-value print an error message. Note
-		 that the elaborate_lval method already printed a
-		 detailed message. */
-	    NetAssign_*lv;
-	    if (parms_[idx]) {
+		 not exist or is not a valid l-value print an error
+		 message. Note that the elaborate_lval method already
+		 printed a detailed message for the latter case. */
+	    NetAssign_*lv = 0;
+	    if (idx < parms_.size() && parms_[idx]) {
 		  lv = parms_[idx]->elaborate_lval(des, scope, false, false);
 		  if (lv == 0) {
 			cerr << parms_[idx]->get_fileline() << ": error: "
 			     << "I give up on task port " << (idx+1)
 			     << " expression: " << *parms_[idx] << endl;
 		  }
-	    } else {
-		  lv = 0;
+	    } else if (port->port_type() == NetNet::POUTPUT) {
+		    // Output ports were skipped earlier, so
+		    // report the error now.
+		  cerr << get_fileline() << ": error: "
+		       << "Missing argument " << (idx+1)
+		       << " of call to task." << endl;
+		  des->errors += 1;
 	    }
 
 	    if (lv == 0)
