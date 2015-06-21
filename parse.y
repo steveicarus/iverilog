@@ -2119,7 +2119,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	      assert(tmp->size()==1);
 	      tmp->front().defe = $5;
 	}
-     }
+      }
 
   /* Rules to match error cases... */
 
@@ -2133,8 +2133,14 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
   /* This rule matches the [ = <expression> ] part of the tf_port_item rules. */
 
 tf_port_item_expr_opt
-  : '=' expression { $$ = $2; }
-  |                { $$ = 0; }
+  : '=' expression
+      { if (! gn_system_verilog()) {
+	      yyerror(@1, "error: Task/function default arguments require "
+	                  "SystemVerilog.");
+	}
+	$$ = $2;
+      }
+  |   { $$ = 0; }
   ;
 
 tf_port_list /* IEEE1800-2005: A.2.7 */
