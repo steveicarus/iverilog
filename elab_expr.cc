@@ -1597,7 +1597,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 
       if (missing_parms > 0) {
 	    cerr << get_fileline() << ": error: The function " << name
-		 << " has been called with empty parameters." << endl;
+		 << " has been called with missing/empty parameters." << endl;
 	    cerr << get_fileline() << ":      : Verilog doesn't allow "
 		 << "passing empty parameters to functions." << endl;
 	    des->errors += 1;
@@ -2313,6 +2313,21 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
       const unsigned parm_count = parms.size() - parm_off;
       const unsigned actual_count = parms_.size();
 
+	/* The parser can't distinguish between a function call with
+	   no arguments and a function call with one empty argument,
+	   and always supplies one empty argument. Handle the no
+	   argument case here. */
+      if ((parm_count == 0) && (actual_count == 1) && (parms_[0] == 0))
+	    return 0;
+
+      if (actual_count > parm_count) {
+	    cerr << get_fileline() << ": error: "
+		 << "Too many arguments (" << actual_count
+		 << ", expecting " << parm_count << ")"
+		 << " in call to function." << endl;
+	    des->errors += 1;
+      }
+
       for (unsigned idx = 0 ; idx < parm_count ; idx += 1) {
 	    unsigned pidx = idx + parm_off;
 	    PExpr*tmp = (idx < actual_count) ? parms_[idx] : 0;
@@ -2343,7 +2358,7 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
 	    } else if (def->port_defe(pidx)) {
 		  if (! gn_system_verilog()) {
 			cerr << get_fileline() << ": internal error: "
-			     <<"Found (and using) default function argument "
+			     << "Found (and using) default function argument "
 			     << "requires SystemVerilog." << endl;
 			des->errors += 1;
 		  }
@@ -2357,7 +2372,7 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
 
       if (missing_parms > 0) {
 	    cerr << get_fileline() << ": error: The function " << path_
-		 << " has been called with empty parameters." << endl;
+		 << " has been called with missing/empty parameters." << endl;
 	    cerr << get_fileline() << ":      : Verilog doesn't allow "
 		 << "passing empty parameters to functions." << endl;
 	    parm_errors += 1;
