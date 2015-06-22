@@ -24,6 +24,7 @@
 # include  "architec.h"
 # include  "package.h"
 # include  "std_funcs.h"
+# include  "std_types.h"
 # include  "parse_types.h"
 # include  <typeinfo>
 # include  <iostream>
@@ -955,7 +956,14 @@ int ExpUAbs::emit(ostream&out, Entity*ent, ScopeBase*scope)
 int ExpUNot::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
-      out << "~(";
+
+      const VType*op_type = peek_operand()->probe_type(ent, scope);
+
+      if(op_type && op_type->type_match(&type_BOOLEAN))
+          out << "!(";
+      else
+          out << "~(";
+
       errors += emit_operand1(out, ent, scope);
       out << ")";
       return errors;
