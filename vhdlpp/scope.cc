@@ -158,7 +158,12 @@ Variable* ScopeBase::find_variable(perm_string by_name) const
       }
 }
 
-const InterfacePort* ScopeBase::find_param(perm_string by_name) const
+const InterfacePort* ScopeBase::find_param(perm_string) const
+{
+      return NULL;
+}
+
+const InterfacePort* ScopeBase::find_param_all(perm_string by_name) const
 {
       for(map<perm_string,SubprogramHeader*>::const_iterator it = use_subprograms_.begin();
               it != use_subprograms_.end(); ++it) {

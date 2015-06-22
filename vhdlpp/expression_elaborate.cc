@@ -940,6 +940,10 @@ const VType* ExpName::probe_type(Entity*ent, ScopeBase*scope) const
                 return type;
         }
 
+        if (const InterfacePort*port = scope->find_param(name_)) {
+            return port->type;
+        }
+
         if ((type = scope->is_enum_name(name_))) {
             return type;
         }

@@ -57,6 +57,7 @@ class ScopeBase {
       Signal* find_signal(perm_string by_name) const;
       Variable* find_variable(perm_string by_name) const;
       virtual const InterfacePort* find_param(perm_string by_name) const;
+      const InterfacePort* find_param_all(perm_string by_name) const;
       SubprogramHeader* find_subprogram(perm_string by_name) const;
 	// Checks if a string is one of possible enum values. If so, the enum
 	// type is returned, otherwise NULL.
