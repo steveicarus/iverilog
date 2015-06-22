@@ -356,6 +356,8 @@ class VTypeDef : public VType {
 
       VType*clone() const { return new VTypeDef(*this); }
 
+      bool type_match(const VType*that) const;
+
       inline perm_string peek_name() const { return name_; }
 
 	// If the type is not given a definition in the constructor,
