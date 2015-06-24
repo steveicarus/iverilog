@@ -2859,6 +2859,14 @@ bool of_FORCE_VEC4_OFF(vthread_t thr, vvp_code_t cp)
 	    mask.set_bit(base+idx, 1);
 
       vvp_vector4_t tmp (use_size, BIT4_Z);
+
+	// vvp_net_t::force_vec4 propagates all the bits of the
+	// forced vector value, regardless of the mask. This
+	// ensures the unforced bits retain their current value.
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(net->fil);
+      assert(sig);
+      sig->vec4_value(tmp);
+
       tmp.set_vec(base, value);
 
       net->force_vec4(tmp, mask);
