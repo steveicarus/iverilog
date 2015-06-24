@@ -156,16 +156,16 @@ static PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*data)
 
 	    rval.value.scalar = vpi1;
 
-	    // Detect if there was any change
+	    // Detect if change occured in this moment
 	    if (mon->last_event.high != tnow.high)
 		  rval.value.scalar = vpi0;
 	    if (mon->last_event.low != tnow.low)
 		  rval.value.scalar = vpi0;
 
 	    // Determine the edge, if required
-	    if (type == RISING_EDGE && mon->last_value.value.scalar == vpi0)
+	    if (type == RISING_EDGE && mon->last_value.value.scalar != vpi1)
 		  rval.value.scalar = vpi0;
-	    else if (type == FALLING_EDGE && mon->last_value.value.scalar == vpi1)
+	    else if (type == FALLING_EDGE && mon->last_value.value.scalar != vpi0)
 		  rval.value.scalar = vpi0;
       }
 
