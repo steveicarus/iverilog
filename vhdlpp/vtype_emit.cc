@@ -226,10 +226,9 @@ int VTypeDef::emit_def(ostream&out, perm_string name) const
 int VTypeDef::emit_decl(ostream&out, perm_string name, bool reg_flag) const
 {
       int errors = 0;
-      if (reg_flag)
-	    out << "reg ";
-      else
-	    out << "wire ";
+
+      if (!dynamic_cast<const VTypeEnum*>(type_))
+	    out << (reg_flag ? "reg " : "wire ");
 
       if(dynamic_cast<const VTypeArray*>(type_)) {
           errors += type_->emit_def(out, name);
