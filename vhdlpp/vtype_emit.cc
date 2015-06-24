@@ -132,7 +132,7 @@ int VTypeArray::emit_with_dims_(std::ostream&out, bool packed, perm_string name)
 int VTypeEnum::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;
-      out << "enum {";
+      out << "enum integer {";
       assert(names_.size() >= 1);
       out << "\\" << names_[0] << " ";
       for (size_t idx = 1 ; idx < names_.size() ; idx += 1)
