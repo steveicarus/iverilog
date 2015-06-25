@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -699,11 +699,12 @@ static void draw_net_input_x(ivl_nexus_t nex,
 	/* If the nexus has no drivers, then send a constant HiZ or
 	   0.0 into the net. */
       if (ndrivers == 0) {
+	    unsigned wid = width_of_nexus(nex);
 	      /* For real nets put 0.0. */
 	    if (signal_data_type_of_nexus(nex) == IVL_VT_REAL) {
 		  nex_private = draw_Cr_to_string(0.0);
 	    } else {
-		  unsigned jdx, wid = width_of_nexus(nex);
+		  unsigned jdx;
 		  char*tmp = malloc(wid + 5);
 		  nex_private = tmp;
 		  strcpy(tmp, "C4<");
@@ -727,17 +728,16 @@ static void draw_net_input_x(ivl_nexus_t nex,
 		  }
 		  *tmp++ = '>';
 		  *tmp = 0;
-
-		    /* Create an "open" driver to hold the HiZ. We
-		       need to do this so that .nets have something to
-		       hang onto. */
-		  char buf[64];
-		  snprintf(buf, sizeof buf, "o%p", nex);
-		  fprintf(vvp_out, "%s .functor BUFZ %u, %s; HiZ drive\n",
-			  buf, wid, nex_private);
-		  nex_private = realloc(nex_private, strlen(buf)+1);
-		  strcpy(nex_private, buf);
 	    }
+
+	      /* Create an "open" driver to hold the HiZ or 0.0. We need
+	         to do this so that .nets have something to hang onto. */
+	    char buf[64];
+	    snprintf(buf, sizeof buf, "o%p", nex);
+	    fprintf(vvp_out, "%s .functor BUFZ %u, %s; HiZ drive\n",
+		    buf, wid, nex_private);
+	    nex_private = realloc(nex_private, strlen(buf)+1);
+	    strcpy(nex_private, buf);
 
 	    if (island) {
 		  char*tmp2 = draw_island_port(island, island_input_flag, nex, nex_data, nex_private);
