@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,13 +25,27 @@
 
 void show_constant(ivl_net_const_t net)
 {
-      unsigned idx;
-      const char*bits = ivl_const_bits(net);
       assert(net);
 
       fprintf(out, "constant ");
-      for (idx = 0 ; idx < ivl_const_width(net) ; idx += 1)
-	    fprintf(out, "%c", bits[idx]);
-
+      switch (ivl_const_type(net)) {
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    {
+	    const char*bits = ivl_const_bits(net);
+	    unsigned idx;
+	    assert(bits);
+	    for (idx = 0 ; idx < ivl_const_width(net) ; idx += 1)
+		  fprintf(out, "%c", bits[idx]);
+	    }
+	    break;
+	  case IVL_VT_REAL:
+	    fprintf(out, "%f", ivl_const_real(net));
+	    break;
+	    break;
+	  default:
+	    fprintf(out, "<unsupported type>");
+	    break;
+      }
       fprintf(out, " at %s:%u\n", ivl_const_file(net), ivl_const_lineno(net));
 }
