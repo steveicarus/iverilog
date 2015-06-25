@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -48,7 +48,7 @@ static void __compile_var_real(char*label, char*name,
 
       define_functor_symbol(label, net);
 
-      vpiHandle obj = vpip_make_real_var(name, net);
+      vpiHandle obj = vpip_make_real_var(name, net, false);
       compile_vpi_symbol(label, obj);
 
       if (name) {
@@ -481,7 +481,7 @@ static void __compile_real_net2(vvp_net_t*node, vvp_array_t array,
 
       vpiHandle obj = 0;
       if (!local_flag) {
-	    obj = vpip_make_real_var(name, node);
+	    obj = vpip_make_real_var(name, node, true);
 	    compile_vpi_symbol(my_label, obj);
       }
 #ifdef CHECK_WITH_VALGRIND

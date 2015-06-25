@@ -499,11 +499,12 @@ struct __vpiRealVar : public __vpiHandle {
             vpiHandle index;
       } id;
       unsigned is_netarray  : 1; // This is word of a net array
+      unsigned is_wire      : 1; // This is a wire, not a variable
       vvp_net_t*net;
 };
 
 extern struct __vpiScope* vpip_scope(__vpiRealVar*sig);
-extern vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net);
+extern vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net, bool is_wire);
 
 class __vpiBaseVar : public __vpiHandle {
 

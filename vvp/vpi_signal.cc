@@ -802,17 +802,19 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
       unsigned wid;
       struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
       assert(rfp);
+      vvp_net_ptr_t dest(rfp->node, 0);
+
+      bool net_flag = ref->get_type_code()==vpiNet;
 
 	/* If this is a release, then we are not really putting a
 	   value. Instead, issue a release "command" to the signal
 	   node to cause it to release a forced value. */
       if (flags == vpiReleaseFlag) {
-	    vvp_net_fil_t*sig
-		  = reinterpret_cast<vvp_net_fil_t*>(rfp->node->fil);
-	    assert(sig);
-
-	    vvp_net_ptr_t ptr(rfp->node, 0);
-	    sig->release(ptr, false);
+	    assert(rfp->node->fil);
+	    rfp->node->fil->force_unlink();
+	    rfp->node->fil->release(dest, net_flag);
+	    rfp->node->fun->force_flag();
+	    signal_get_value(ref, vp);
 	    return ref;
       }
 
@@ -823,22 +825,16 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 	    ? (rfp->msb.get_value() - rfp->lsb.get_value() + 1)
 	    : (rfp->lsb.get_value() - rfp->msb.get_value() + 1);
 
-
       vvp_vector4_t val = vec4_from_vpi_value(vp, wid);
 
-	/* If this is a vpiForce, then instead of writing to the
-	   signal input port, we write to the special "force" port. */
-      int dest_port = 0;
-      if (flags == vpiForceFlag)
-	    dest_port = 2;
-
-	/* This is the destination that I'm going to poke into. Make
-	   it from the vvp_net_t pointer, and assume a write to
-	   port-0. This is the port where signals receive input. */
-      vvp_net_ptr_t destination (rfp->node, dest_port);
-
-      vvp_send_vec4(destination, val, vthread_get_wt_context());
-
+      if (flags == vpiForceFlag) {
+	    vvp_vector2_t mask (vvp_vector2_t::FILL1, wid);
+	    rfp->node->force_vec4(val, mask);
+      } else if (net_flag) {
+	    rfp->node->send_vec4(val, vthread_get_wt_context());
+      } else {
+	    vvp_send_vec4(dest, val, vthread_get_wt_context());
+      }
       return ref;
 }
 
@@ -1296,7 +1292,7 @@ static void PV_get_value(vpiHandle ref, p_vpi_value vp)
       }
 }
 
-static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
+static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int flags)
 {
       struct __vpiPV*rfp = dynamic_cast<__vpiPV*>(ref);
       assert(rfp);
@@ -1309,7 +1305,10 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
       if (base >= (signed) sig_size) return 0;
       if (base + (signed) width < 0) return 0;
 
-      vvp_vector4_t val = vec4_from_vpi_value(vp, width);
+      vvp_vector4_t val;
+      if (flags != vpiReleaseFlag) {
+	    val = vec4_from_vpi_value(vp, width);
+      }
 
 	/*
 	 * If the base is less than zero then trim off any unneeded
@@ -1317,7 +1316,9 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
 	 */
       if (base < 0) {
 	    width += base;
-	    val = val.subvalue(-base, width);
+	    if (flags != vpiReleaseFlag) {
+		  val = val.subvalue(-base, width);
+	    }
 	    base = 0;
       }
 
@@ -1327,20 +1328,68 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
 	 */
       if (base+width > sig_size) {
 	    width = sig_size - base;
-	    val = val.subvalue(0, width);
+	    if (flags != vpiReleaseFlag) {
+		  val = val.subvalue(0, width);
+	    }
       }
 
+      assert(rfp->parent);
+      bool net_flag = rfp->parent->get_type_code()==vpiNet;
       bool full_sig = base == 0 && width == sig_size;
 
       vvp_net_ptr_t dest(rfp->net, 0);
 
-      if (full_sig) {
-	    vvp_send_vec4(dest, val, vthread_get_wt_context());
-      } else {
-	    vvp_send_vec4_pv(dest, val, base, width, sig_size,
-                             vthread_get_wt_context());
+	/* If this is a release, then we are not really putting a
+	   value. Instead, issue a release "command" to the signal
+	   node to cause it to release a forced value. */
+      if (flags == vpiReleaseFlag) {
+	    assert(rfp->net->fil);
+	      // XXXX Can't really do this if this is a partial release?
+	    rfp->net->fil->force_unlink();
+	    if (full_sig) {
+		  rfp->net->fil->release(dest, net_flag);
+	    } else {
+		  rfp->net->fil->release_pv(dest, base, width, net_flag);
+	    }
+	    rfp->net->fun->force_flag();
+	    PV_get_value(ref, vp);
+	    return ref;
       }
 
+      if (flags == vpiForceFlag) {
+	    if (full_sig) {
+		  vvp_vector2_t mask (vvp_vector2_t::FILL1, sig_size);
+		  rfp->net->force_vec4(val, mask);
+	    } else {
+		  vvp_vector2_t mask (vvp_vector2_t::FILL0, sig_size);
+		  for (unsigned idx = 0 ; idx < width ; idx += 1)
+		        mask.set_bit(base+idx, 1);
+
+		  vvp_vector4_t tmp (sig_size, BIT4_Z);
+
+		    // vvp_net_t::force_vec4 propagates all the bits of the
+		    // forced vector value, regardless of the mask. This
+		    // ensures the unforced bits retain their current value.
+		  sig->vec4_value(tmp);
+
+		  tmp.set_vec(base, val);
+		  rfp->net->force_vec4(tmp, mask);
+	    }
+      } else if (net_flag) {
+	    if (full_sig) {
+		  rfp->net->send_vec4(val, vthread_get_wt_context());
+	    } else {
+		  rfp->net->send_vec4_pv(val, base, width, sig_size,
+		                         vthread_get_wt_context());
+	    }
+      } else {
+	    if (full_sig) {
+		  vvp_send_vec4(dest, val, vthread_get_wt_context());
+	    } else {
+		  vvp_send_vec4_pv(dest, val, base, width, sig_size,
+	                           vthread_get_wt_context());
+	    }
+      }
       return 0;
 }
 
