@@ -1379,11 +1379,22 @@ static void expand_using_args(void)
     int arg;
     int length;
 
-    if (def_argc != cur_macro->argc) {
+    if (def_argc > cur_macro->argc) {
         emit_pathline(istack);
-        fprintf(stderr, "error: wrong number of arguments for `%s\n", cur_macro->name);
+        fprintf(stderr, "error: too many arguments for `%s\n", cur_macro->name);
         return;
     }
+    while (def_argc < cur_macro->argc) {
+	if (cur_macro->defaults[def_argc]) {
+	    def_argl[def_argc] = 0;
+	    def_argc += 1;
+	    continue;
+	}
+        emit_pathline(istack);
+        fprintf(stderr, "error: too few arguments for `%s\n", cur_macro->name);
+        return;
+    }
+    assert(def_argc == cur_macro->argc);
 
     head = cur_macro->value;
     tail = head;
