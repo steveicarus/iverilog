@@ -25,6 +25,7 @@
 # include  "compile.h"
 # include  "vpi_priv.h"
 # include  "vvp_net_sig.h"
+# include  "vvp_island.h"
 # include  "schedule.h"
 # include  "statistics.h"
 # include  "config.h"
@@ -830,7 +831,7 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
       if (flags == vpiForceFlag) {
 	    vvp_vector2_t mask (vvp_vector2_t::FILL1, wid);
 	    rfp->node->force_vec4(val, mask);
-      } else if (net_flag) {
+      } else if (net_flag && !dynamic_cast<vvp_island_port*>(rfp->node->fun)) {
 	    rfp->node->send_vec4(val, vthread_get_wt_context());
       } else {
 	    vvp_send_vec4(dest, val, vthread_get_wt_context());
