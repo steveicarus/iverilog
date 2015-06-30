@@ -1376,7 +1376,7 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int flags)
 		  tmp.set_vec(base, val);
 		  rfp->net->force_vec4(tmp, mask);
 	    }
-      } else if (net_flag) {
+      } else if (net_flag && !dynamic_cast<vvp_island_port*>(rfp->net->fun)) {
 	    if (full_sig) {
 		  rfp->net->send_vec4(val, vthread_get_wt_context());
 	    } else {
