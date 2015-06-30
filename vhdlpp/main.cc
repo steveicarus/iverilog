@@ -76,6 +76,8 @@ const char NOTICE[] =
 
 # include  "compiler.h"
 # include  "library.h"
+# include  "std_funcs.h"
+# include  "std_types.h"
 # include  "parse_api.h"
 # include  "vtype.h"
 # include  <fstream>
@@ -184,6 +186,8 @@ int main(int argc, char*argv[])
       library_set_work_path(work_path);
 
       preload_global_types();
+      preload_std_funcs();
+
       int errors = 0;
 
       for (int idx = optind ; idx < argc ; idx += 1) {

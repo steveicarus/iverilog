@@ -55,9 +55,6 @@ VTypePrimitive::~VTypePrimitive()
 void VTypePrimitive::show(ostream&out) const
 {
       switch (type_) {
-	  case BOOLEAN:
-	    out << "BOOLEAN";
-	    break;
 	  case BIT:
 	    out << "BIT";
 	    break;
@@ -85,7 +82,6 @@ void VTypePrimitive::show(ostream&out) const
 int VTypePrimitive::get_width(ScopeBase*) const
 {
     switch(type_) {
-        case BOOLEAN:
         case BIT:
         case STDLOGIC:
             return 1;
@@ -266,12 +262,11 @@ bool VTypeArray::is_variable_length(ScopeBase*scope) const {
 void VTypeArray::evaluate_ranges(ScopeBase*scope) {
     for(std::vector<range_t>::iterator it = ranges_.begin(); it != ranges_.end(); ++it ) {
         int64_t lsb_val = -1, msb_val = -1;
-        bool dir = it->is_downto();
 
         if(it->msb()->evaluate(scope, msb_val) && it->lsb()->evaluate(scope, lsb_val)) {
             assert(lsb_val >= 0);
             assert(msb_val >= 0);
-            *it = range_t(new ExpInteger(msb_val), new ExpInteger(lsb_val), dir);
+            *it = range_t(new ExpInteger(msb_val), new ExpInteger(lsb_val), msb_val > lsb_val);
         }
     }
 }

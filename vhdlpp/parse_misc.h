@@ -63,8 +63,4 @@ extern void library_import(const YYLTYPE&loc, const std::list<perm_string>*names
 
 extern void library_use(const YYLTYPE&loc, ActiveScope*res, const char*libname, const char*pack, const char*ident);
 
-extern void generate_global_types(ActiveScope*res);
-
-extern bool is_global_type(perm_string type_name);
-
 #endif /* IVL_parse_misc_H */

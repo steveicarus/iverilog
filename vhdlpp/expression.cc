@@ -129,12 +129,21 @@ ExpAggregate::ExpAggregate(std::list<element_t*>*el)
 	    elements_[idx++] = el->front();
 	    el->pop_front();
       }
+      delete el;
 }
 
 ExpAggregate::~ExpAggregate()
 {
-      for (size_t idx = 0 ; idx < elements_.size() ; idx += 1)
-	    delete elements_[idx];
+      for(std::vector<element_t*>::iterator it = elements_.begin();
+              it != elements_.end(); ++it) {
+        delete *it;
+      }
+
+      for(std::vector<choice_element>::iterator it = aggregate_.begin();
+              it != aggregate_.end(); ++it) {
+        delete it->choice;
+        delete it->expr;
+      }
 }
 
 Expression* ExpAggregate::clone() const
@@ -301,84 +310,53 @@ void ExpConcat::visit(ExprVisitor& func)
 }
 
 ExpConditional::ExpConditional(Expression*co, list<Expression*>*tru,
-			       list<ExpConditional::else_t*>*fal)
-: cond_(co)
+			       list<ExpConditional::case_t*>*options)
 {
-      if (tru) true_clause_.splice(true_clause_.end(), *tru);
-      if (fal) else_clause_.splice(else_clause_.end(), *fal);
+      if(co && tru) options_.push_back(new case_t(co, tru));
+      if(options) options_.splice(options_.end(), *options);
 }
 
 ExpConditional::~ExpConditional()
 {
-      delete cond_;
-      while (! true_clause_.empty()) {
-	    Expression*tmp = true_clause_.front();
-	    true_clause_.pop_front();
-	    delete tmp;
-      }
-      while (! else_clause_.empty()) {
-	    else_t*tmp = else_clause_.front();
-	    else_clause_.pop_front();
+      while (!options_.empty()) {
+	    case_t*tmp = options_.front();
+	    options_.pop_front();
 	    delete tmp;
       }
 }
 
 Expression*ExpConditional::clone() const
 {
-      std::list<Expression*>*new_true_clause = NULL;
-      if(!true_clause_.empty()) {
-          new_true_clause = new std::list<Expression*>();
+      std::list<case_t*>*new_options = NULL;
+      if(!options_.empty()) {
+          new_options = new std::list<case_t*>();
 
-          for(std::list<Expression*>::const_iterator it = true_clause_.begin();
-                  it != true_clause_.end(); ++it) {
-              new_true_clause->push_back((*it)->clone());
+          for(std::list<case_t*>::const_iterator it = options_.begin();
+                  it != options_.end(); ++it) {
+              new_options->push_back(new case_t(**it));
           }
       }
 
-      std::list<else_t*>*new_else_clause = NULL;
-      if(!else_clause_.empty()) {
-          new_else_clause = new std::list<else_t*>();
-
-          for(std::list<else_t*>::const_iterator it = else_clause_.begin();
-                  it != else_clause_.end(); ++it) {
-              new_else_clause->push_back(new else_t(**it));
-          }
-      }
-
-      return new ExpConditional(cond_->clone(), new_true_clause, new_else_clause);
+      return new ExpConditional(NULL, NULL, new_options);
 }
 
 void ExpConditional::visit(ExprVisitor& func)
 {
-      if(!true_clause_.empty()) {
-          for(std::list<Expression*>::iterator it = true_clause_.begin();
-                  it != true_clause_.end(); ++it) {
-              (*it)->visit(func);
-          }
-      }
-
-      if(!else_clause_.empty()) {
-          for(std::list<else_t*>::iterator it = else_clause_.begin();
-                  it != else_clause_.end(); ++it) {
-              std::list<Expression*>& else_clause = (*it)->extract_true_clause();
-
-              for(std::list<Expression*>::iterator jt = else_clause.begin();
-                      jt != else_clause.end(); ++jt) {
-                  (*jt)->visit(func);
-              }
-          }
+      for(std::list<case_t*>::iterator it = options_.begin();
+              it != options_.end(); ++it) {
+          (*it)->visit(func);
       }
 
       func(this);
 }
 
-ExpConditional::else_t::else_t(Expression*cond, std::list<Expression*>*tru)
+ExpConditional::case_t::case_t(Expression*cond, std::list<Expression*>*tru)
 : cond_(cond)
 {
       if (tru) true_clause_.splice(true_clause_.end(), *tru);
 }
 
-ExpConditional::else_t::else_t(const else_t&other)
+ExpConditional::case_t::case_t(const case_t&other)
 : LineInfo(other)
 {
       cond_ = other.cond_->clone();
@@ -388,7 +366,7 @@ ExpConditional::else_t::else_t(const else_t&other)
       }
 }
 
-ExpConditional::else_t::~else_t()
+ExpConditional::case_t::~case_t()
 {
       delete cond_;
       while (! true_clause_.empty()) {
@@ -398,6 +376,49 @@ ExpConditional::else_t::~else_t()
       }
 }
 
+ExpSelected::ExpSelected(Expression*selector, std::list<case_t*>*options)
+: ExpConditional(NULL, NULL, options), selector_(selector)
+{
+    // Currently condition field contains only value,
+    // so substitute it with a comparison to create a valid condition
+    for(std::list<case_t*>::iterator it = options_.begin();
+            it != options_.end(); ++it) {
+        Expression*cond = (*it)->condition();
+
+        if(cond)
+            (*it)->set_condition(new ExpRelation(ExpRelation::EQ, selector_->clone(), cond));
+    }
+}
+
+ExpSelected::~ExpSelected()
+{
+}
+
+Expression*ExpSelected::clone() const
+{
+      std::list<case_t*>*new_options = NULL;
+      if(!options_.empty()) {
+          new_options = new std::list<case_t*>();
+
+          for(std::list<case_t*>::const_iterator it = options_.begin();
+                  it != options_.end(); ++it) {
+              new_options->push_back(new case_t(**it));
+          }
+      }
+
+      return new ExpSelected(selector_->clone(), new_options);
+}
+
+void ExpConditional::case_t::visit(ExprVisitor& func)
+{
+      if(cond_)
+          func(cond_);
+
+      for(std::list<Expression*>::iterator it = true_clause_.begin();
+              it != true_clause_.end(); ++it) {
+          func(*it);
+      }
+}
 
 ExpEdge::ExpEdge(ExpEdge::fun_t typ, Expression*op)
 : ExpUnary(op), fun_(typ)
@@ -527,6 +548,7 @@ ExpName::ExpName(ExpName*prefix, perm_string nn, Expression*msb, Expression*lsb)
 ExpName::~ExpName()
 {
       delete index_;
+      delete lsb_;
 }
 
 bool ExpName::symbolic_compare(const Expression*that) const

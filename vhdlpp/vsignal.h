@@ -77,7 +77,7 @@ class Signal : public SigVarBase {
 class Variable : public SigVarBase {
 
     public:
-      Variable(perm_string name, const VType*type);
+      Variable(perm_string name, const VType*type, Expression*init_expr = NULL);
 
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
@@ -93,8 +93,8 @@ inline Signal::Signal(perm_string name, const VType*type, Expression*init_expr)
 {
 }
 
-inline Variable::Variable(perm_string name, const VType*type)
-: SigVarBase(name, type, 0)
+inline Variable::Variable(perm_string name, const VType*type, Expression*init_expr)
+: SigVarBase(name, type, init_expr)
 {
 }
 

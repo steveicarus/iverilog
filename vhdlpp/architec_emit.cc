@@ -101,7 +101,7 @@ int Architecture::emit(ostream&out, Entity*entity)
       errors += emit_signals(out, entity, this);
       errors += emit_variables(out, entity, this);
 
-      for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
+      for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++ cur) {
 	    // Do not emit unbounded functions, we will just need fixed instances later
 	    if(!cur->second->unbounded())

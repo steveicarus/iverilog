@@ -169,17 +169,31 @@ void CaseSeqStmt::CaseStmtAlternative::visit(SeqStmtVisitor& func)
 }
 
 ProcedureCall::ProcedureCall(perm_string name)
-: name_(name), param_list_(0)
+: name_(name), param_list_(NULL), def_(NULL)
 {
 }
 
 ProcedureCall::ProcedureCall(perm_string name, std::list<named_expr_t*>* param_list)
-: name_(name), param_list_(param_list)
+: name_(name), param_list_(param_list), def_(NULL)
 {
+}
+
+ProcedureCall::ProcedureCall(perm_string name, std::list<Expression*>* param_list)
+: name_(name), def_(NULL)
+{
+    param_list_ = new std::list<named_expr_t*>;
+    for(std::list<Expression*>::const_iterator it = param_list->begin();
+            it != param_list->end(); ++it)
+    {
+        param_list_->push_back(new named_expr_t(empty_perm_string, (*it)->clone()));
+    }
 }
 
 ProcedureCall::~ProcedureCall()
 {
+    if(!param_list_)
+        return;
+
     while(param_list_->size() > 0) {
         named_expr_t* cur = param_list_->front();
         param_list_->pop_front();

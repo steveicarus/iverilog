@@ -22,6 +22,7 @@
 # include  "entity.h"
 # include  "subprogram.h"
 # include  "parse_misc.h"
+# include  "std_types.h"
 # include  "ivl_assert.h"
 
 Package::Package(perm_string n, const ActiveScope&ref)
@@ -57,6 +58,11 @@ void Package::write_to_stream(ostream&fd) const
 	    const VTypeDef*def = dynamic_cast<const VTypeDef*> (cur->second);
 	    if (def == 0)
 		  continue;
+
+	      // Do not include global types in types dump
+	    if (is_global_type(cur->first))
+		  continue;
+
 	    fd << "type " << cur->first << ";" << endl;
       }
       for (map<perm_string,const VType*>::const_iterator cur = cur_types_.begin()
@@ -64,6 +70,11 @@ void Package::write_to_stream(ostream&fd) const
 	    const VTypeDef*def = dynamic_cast<const VTypeDef*> (cur->second);
 	    if (def == 0)
 		  continue;
+
+	      // Do not include global types in types dump
+	    if (is_global_type(cur->first))
+		  continue;
+
 	    fd << "type " << cur->first << ";" << endl;
       }
 
@@ -111,9 +122,10 @@ void Package::write_to_stream(ostream&fd) const
 	    fd << ";" << endl;
       }
 
-      for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
+      for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++cur) {
 	    cur->second->write_to_stream(fd);
+	    fd << ";" << endl;
       }
 
       for (map<perm_string,ComponentBase*>::const_iterator cur = old_components_.begin()
@@ -130,9 +142,14 @@ void Package::write_to_stream(ostream&fd) const
       fd << "end package " << name_ << ";" << endl;
 
       fd << "package body " << name_ << " is" << endl;
-        for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
+        for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++cur) {
-	    cur->second->write_to_stream_body(fd);
+            SubprogramHeader*subp = cur->second;
+            if(subp->body()) {
+                subp->write_to_stream(fd);
+                fd << " is" << endl;
+                subp->body()->write_to_stream(fd);
+            }
         }
       fd << "end " << name_ << ";" << endl;
 }

@@ -39,6 +39,8 @@
 # include "package.h"
 # include "vsignal.h"
 # include "vtype.h"
+# include "std_funcs.h"
+# include "std_types.h"
 # include  <cstdarg>
 # include  <cstring>
 # include  <list>
@@ -83,7 +85,7 @@ extern int yylex(union YYSTYPE*yylvalp,YYLTYPE*yyllocp,yyscan_t yyscanner);
  */
 static ActiveScope*active_scope = new ActiveScope;
 static stack<ActiveScope*> scope_stack;
-static Subprogram*active_sub = NULL;
+static SubprogramHeader*active_sub = NULL;
 
 // perm_strings for attributes
 const static perm_string left_attr = perm_string::literal("left");
@@ -146,6 +148,7 @@ void parser_cleanup(void)
 {
     delete_design_entities();
     delete_global_scope();
+    delete_std_funcs();
     lex_strings.cleanup();
 }
 
@@ -228,8 +231,8 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
       IfSequential::Elsif*elsif;
       std::list<IfSequential::Elsif*>*elsif_list;
 
-      ExpConditional::else_t*exp_else;
-      std::list<ExpConditional::else_t*>*exp_else_list;
+      ExpConditional::case_t*exp_options;
+      std::list<ExpConditional::case_t*>*exp_options_list;
 
       CaseSeqStmt::CaseStmtAlternative* case_alt;
       std::list<CaseSeqStmt::CaseStmtAlternative*>* case_alt_list;
@@ -262,7 +265,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 
       ReportStmt::severity_t severity;
 
-      Subprogram*subprogram;
+      SubprogramHeader*subprogram;
 };
 
   /* The keywords are all tokens. */
@@ -308,6 +311,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <interface_list> interface_element interface_list
 %type <interface_list> port_clause port_clause_opt
 %type <interface_list> generic_clause generic_clause_opt
+%type <interface_list> parameter_list parameter_list_opt
 %type <port_mode>  mode mode_opt
 
 %type <entity_aspect> entity_aspect entity_aspect_opt binding_indication binding_indication_semicolon_opt
@@ -318,7 +322,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <arch_statement> concurrent_conditional_signal_assignment
 %type <arch_statement> concurrent_signal_assignment_statement concurrent_simple_signal_assignment
 %type <arch_statement> for_generate_statement generate_statement if_generate_statement
-%type <arch_statement> process_statement
+%type <arch_statement> process_statement selected_signal_assignment
 %type <arch_statement_list> architecture_statement_part generate_statement_body
 
 %type <choice> choice
@@ -331,8 +335,8 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <expr> expression_logical_xnor expression_logical_xor
 %type <expr> name prefix selected_name
 %type <expr> shift_expression signal_declaration_assign_opt
-%type <expr> simple_expression simple_expression_2 term waveform_element
-%type <expr> interface_element_expression
+%type <expr> simple_expression simple_expression_2 term
+%type <expr> variable_declaration_assign_opt waveform_element interface_element_expression
 
 %type <expr_list> waveform waveform_elements
 %type <expr_list> name_list expression_list
@@ -370,10 +374,12 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <elsif> if_statement_elsif
 %type <elsif_list> if_statement_elsif_list if_statement_elsif_list_opt
 
-%type <exp_else> else_when_waveform
-%type <exp_else_list> else_when_waveforms
+%type <exp_options> else_when_waveform selected_waveform
+%type <exp_options_list> else_when_waveforms selected_waveform_list
 
-%type <subprogram> function_specification subprogram_specification subprogram_body_start
+%type <subprogram> function_specification procedure_specification
+%type <subprogram> subprogram_specification subprogram_body_start
+
 %type <severity> severity severity_opt
 
 %%
@@ -800,12 +806,12 @@ concurrent_simple_signal_assignment
 
 else_when_waveforms
   : else_when_waveforms else_when_waveform
-      { list<ExpConditional::else_t*>*tmp = $1;
+      { list<ExpConditional::case_t*>*tmp = $1;
 	tmp ->push_back($2);
 	$$ = tmp;
       }
   | else_when_waveform
-      { list<ExpConditional::else_t*>*tmp = new list<ExpConditional::else_t*>;
+      { list<ExpConditional::case_t*>*tmp = new list<ExpConditional::case_t*>;
 	tmp->push_back($1);
 	$$ = tmp;
       }
@@ -813,12 +819,12 @@ else_when_waveforms
 
 else_when_waveform
   : K_else waveform K_when expression
-      { ExpConditional::else_t*tmp = new ExpConditional::else_t($4, $2);
+      { ExpConditional::case_t*tmp = new ExpConditional::case_t($4, $2);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   | K_else waveform
-      { ExpConditional::else_t*tmp = new ExpConditional::else_t(0,  $2);
+      { ExpConditional::case_t*tmp = new ExpConditional::case_t(0,  $2);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
@@ -827,11 +833,21 @@ else_when_waveform
 concurrent_signal_assignment_statement /* IEEE 1076-2008 P11.6 */
   : concurrent_simple_signal_assignment
 
-  | IDENTIFIER ':' concurrent_simple_signal_assignment { $$ = $3; }
+  | IDENTIFIER ':' concurrent_simple_signal_assignment 
+      { delete[] $1;
+	$$ = $3;
+      }
 
   | concurrent_conditional_signal_assignment
 
-  | IDENTIFIER ':' concurrent_conditional_signal_assignment { $$ = $3; }
+  | IDENTIFIER ':' concurrent_conditional_signal_assignment 
+      { delete[] $1;
+	$$ = $3;
+      }
+
+  | selected_signal_assignment
+
+  | IDENTIFIER ':' selected_signal_assignment { $$ = $3; }
 
   | name LEQ error ';'
       { errormsg(@2, "Syntax error in signal assignment waveform.\n");
@@ -968,6 +984,7 @@ direction : K_to { $$ = false; } | K_downto { $$ = true; } ;
 element_association
   : choices ARROW expression
       { ExpAggregate::element_t*tmp = new ExpAggregate::element_t($1, $3);
+	delete $1;
 	$$ = tmp;
       }
   | expression
@@ -991,7 +1008,9 @@ element_association_list
 
 element_declaration
   : identifier_list ':' subtype_indication ';'
-      { $$ = record_elements($1, $3); }
+      { $$ = record_elements($1, $3);
+        delete $1;
+      }
   ;
 
 element_declaration_list
@@ -1237,15 +1256,15 @@ for_generate_statement
   ;
 
 function_specification /* IEEE 1076-2008 P4.2.1 */
-  : K_function IDENTIFIER '(' interface_list ')' K_return IDENTIFIER
-      { perm_string type_name = lex_strings.make($7);
+  : K_function IDENTIFIER parameter_list K_return IDENTIFIER
+      { perm_string type_name = lex_strings.make($5);
 	perm_string name = lex_strings.make($2);
 	const VType*type_mark = active_scope->find_type(type_name);
-	touchup_interface_for_functions($4);
-	Subprogram*tmp = new Subprogram(name, $4, type_mark);
-	FILE_NAME(tmp,@1);
+	touchup_interface_for_functions($3);
+	SubprogramHeader*tmp = new SubprogramHeader(name, $3, type_mark);
+	FILE_NAME(tmp, @1);
 	delete[]$2;
-	delete[]$7;
+	delete[]$5;
 	$$ = tmp;
       }
   ;
@@ -1267,8 +1286,8 @@ generic_clause_opt
   ;
 
 generic_clause
-  : K_generic '(' interface_list ')' ';'
-      { $$ = $3; }
+  : K_generic parameter_list ';'
+      { $$ = $2; }
   | K_generic '(' error ')' ';'
       { errormsg(@3, "Error in interface list for generic.\n");
 	yyerrok;
@@ -1306,7 +1325,7 @@ identifier_list
       }
   ;
 
-identifier_opt : IDENTIFIER { $$ = $1; } |  { $$ = 0; } ;
+identifier_opt : IDENTIFIER { $$ = $1; } | { $$ = 0; } ;
 
 identifier_colon_opt : IDENTIFIER ':' { $$ = $1; } | { $$ = 0; };
 
@@ -1591,14 +1610,7 @@ mode_opt : mode {$$ = $1;} | {$$ = PORT_NONE;} ;
 
 name /* IEEE 1076-2008 P8.1 */
   : IDENTIFIER /* simple_name (IEEE 1076-2008 P8.2) */
-      { Expression*tmp;
-        if(!strcasecmp($1, "true"))
-            tmp = new ExpBitstring("1");
-        else if(!strcasecmp($1, "false"))
-            tmp = new ExpBitstring("0");
-        else
-            tmp = new ExpName(lex_strings.make($1));
-
+      { Expression*tmp = new ExpName(lex_strings.make($1));
         FILE_NAME(tmp, @1);
         delete[]$1;
         $$ = tmp;
@@ -1764,9 +1776,18 @@ package_body_start
       }
   ;
 
+parameter_list
+  : '(' interface_list ')' { $$ = $2; }
+  ;
+
+parameter_list_opt
+  : parameter_list  { $$ = $1; }
+  |                 { $$ = 0; }
+  ;
+
 port_clause
-  : K_port '(' interface_list ')' ';'
-      { $$ = $3; }
+  : K_port parameter_list ';'
+      { $$ = $2; }
   | K_port '(' error ')' ';'
       { errormsg(@1, "Syntax error in port list.\n");
 	yyerrok;
@@ -1872,6 +1893,7 @@ primary
      VHDL syntax). */
   | IDENTIFIER '(' association_list ')'
       { sorrymsg(@1, "Function calls not supported\n");
+	delete[] $1;
 	$$ = 0;
       }
 
@@ -1890,19 +1912,26 @@ primary_unit
   ;
 
 procedure_call
-  : IDENTIFIER
+  : IDENTIFIER ';'
       {
     ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1));
-    sorrymsg(@1, "Procedure calls are not supported.\n");
+    delete[] $1;
     $$ = tmp;
       }
-  | IDENTIFIER '(' association_list ')'
+  | IDENTIFIER '(' association_list ')' ';'
       {
     ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1), $3);
-    sorrymsg(@1, "Procedure calls are not supported.\n");
+    delete[] $1;
     $$ = tmp;
       }
-  | IDENTIFIER '(' error ')'
+  | IDENTIFIER '(' expression_list ')' ';'
+      {
+    ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1), $3);
+    delete[] $1;
+    delete $3; // parameters are copied in this variant
+    $$ = tmp;
+      }
+  | IDENTIFIER '(' error ')' ';'
       { errormsg(@1, "Errors in procedure call.\n");
 	yyerrok;
 	delete[]$1;
@@ -1911,8 +1940,22 @@ procedure_call
   ;
 
 procedure_call_statement
-  : IDENTIFIER ':' procedure_call { $$ = $3; }
+  : IDENTIFIER ':' procedure_call
+      { delete[] $1;
+	$$ = $3;
+      }
   | procedure_call { $$ = $1; }
+  ;
+
+procedure_specification /* IEEE 1076-2008 P4.2.1 */
+  : K_procedure IDENTIFIER parameter_list_opt
+      { perm_string name = lex_strings.make($2);
+	touchup_interface_for_functions($3);
+	SubprogramHeader*tmp = new SubprogramHeader(name, $3, NULL);
+	FILE_NAME(tmp, @1);
+	delete[]$2;
+	$$ = tmp;
+      }
   ;
 
 process_declarative_item
@@ -2175,6 +2218,47 @@ selected_names_lib
   | selected_name_lib
   ;
 
+selected_signal_assignment
+  : K_with expression K_select name LEQ selected_waveform_list ';'
+      { ExpSelected*tmp = new ExpSelected($2, $6);
+	FILE_NAME(tmp, @3);
+        delete $2;
+	delete $6;
+
+	ExpName*name = dynamic_cast<ExpName*>($4);
+	assert(name);
+	SignalAssignment*tmpa = new SignalAssignment(name, tmp);
+	FILE_NAME(tmpa, @1);
+
+	$$ = tmpa;
+      }
+  ;
+
+selected_waveform
+  : waveform K_when expression
+      { ExpConditional::case_t*tmp = new ExpConditional::case_t($3, $1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | waveform K_when K_others
+      { ExpConditional::case_t*tmp = new ExpConditional::case_t(0,  $1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  ;
+
+selected_waveform_list
+  : selected_waveform_list ',' selected_waveform
+      { list<ExpConditional::case_t*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
+  | selected_waveform
+      { list<ExpConditional::case_t*>*tmp = new list<ExpConditional::case_t*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
+  ;
 
 sequence_of_statements
   : sequence_of_statements sequential_statement
@@ -2224,6 +2308,7 @@ severity
         errormsg(@1, "Invalid severity level (possible values: NOTE, WARNING, ERROR, FAILURE).\n");
         $$ = ReportStmt::UNSPECIFIED;
     }
+    delete[] $2;
   }
 
 severity_opt
@@ -2359,7 +2444,10 @@ signal_assignment
 
 signal_assignment_statement
   : signal_assignment
-  | IDENTIFIER ':' signal_assignment { $$ = $3; }
+  | IDENTIFIER ':' signal_assignment
+      { delete[] $1;
+	$$ = $3;
+      }
 
 subprogram_body_start
   : subprogram_specification K_is
@@ -2375,16 +2463,20 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
   : subprogram_body_start subprogram_declarative_part
     K_begin subprogram_statement_part K_end
     subprogram_kind_opt identifier_opt ';'
-      { Subprogram*prog = $1;
-	Subprogram*tmp = active_scope->recall_subprogram(prog->name());
+      { SubprogramHeader*prog = $1;
+	SubprogramHeader*tmp = active_scope->recall_subprogram(prog->name());
 	if (tmp && prog->compare_specification(tmp)) {
 	      delete prog;
 	      prog = tmp;
 	} else if (tmp) {
 	      errormsg(@1, "Subprogram specification for %s doesn't match specification in package header.\n", prog->name().str());
 	}
-	prog->transfer_from(*active_scope, ScopeBase::VARIABLES);
-	prog->set_program_body($4);
+
+	SubprogramBody*body = new SubprogramBody();
+	body->transfer_from(*active_scope, ScopeBase::VARIABLES);
+	body->set_statements($4);
+
+	prog->set_body(body);
 	active_scope->bind_name(prog->name(), prog);
 	active_sub = NULL;
       }
@@ -2429,6 +2521,7 @@ subprogram_kind_opt : subprogram_kind | ;
 
 subprogram_specification
   : function_specification { $$ = $1; }
+  | procedure_specification { $$ = $1; }
   ;
 
   /* This is an implementation of the rule:
@@ -2444,6 +2537,7 @@ subprogram_statement_part
 subtype_declaration
   : K_subtype IDENTIFIER K_is subtype_indication ';'
       { perm_string name = lex_strings.make($2);
+	delete[] $2;
 	if ($4 == 0) {
 	      errormsg(@1, "Failed to declare type name %s.\n", name.str());
 	} else {
@@ -2593,7 +2687,10 @@ use_clauses_opt
 
 variable_assignment_statement /* IEEE 1076-2008 P10.6.1 */
   : variable_assignment
-  | IDENTIFIER ':' variable_assignment { $$ = $3; }
+  | IDENTIFIER ':' variable_assignment
+      { delete[] $1;
+	$$ = $3;
+      }
 
 variable_assignment
   : name VASSIGN expression ';'
@@ -2616,11 +2713,12 @@ variable_assignment
   ;
 
 variable_declaration /* IEEE 1076-2008 P6.4.2.4 */
-  : K_shared_opt K_variable identifier_list ':' subtype_indication ';'
+  : K_shared_opt K_variable identifier_list ':' subtype_indication
+    variable_declaration_assign_opt ';'
       { /* Save the signal declaration in the block_signals map. */
 	for (std::list<perm_string>::iterator cur = $3->begin()
 		   ; cur != $3->end() ; ++cur) {
-	      Variable*sig = new Variable(*cur, $5);
+	      Variable*sig = new Variable(*cur, $5, $6);
 	      FILE_NAME(sig, @2);
 	      active_scope->bind_name(*cur, sig);
 	}
@@ -2630,6 +2728,11 @@ variable_declaration /* IEEE 1076-2008 P6.4.2.4 */
       { errormsg(@2, "Syntax error in variable declaration.\n");
 	yyerrok;
       }
+  ;
+
+variable_declaration_assign_opt
+  : VASSIGN expression { $$ = $2; }
+  |                    { $$ = 0;  }
   ;
 
 wait_statement

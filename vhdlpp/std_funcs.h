@@ -1,7 +1,8 @@
-#ifndef IVL_library_H
-#define IVL_library_H
+#ifndef IVL_std_funcs_H
+#define IVL_std_funcs_H
 /*
- * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2015
+ * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,12 +20,15 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-class SubprogramHeader;
+#include "subprogram.h"
 
-extern void library_set_work_path(const char*work_path);
-extern void library_add_directory(const char*directory);
+// Generates subprogram headers for standard VHDL library functions.
+void preload_std_funcs();
 
-extern SubprogramHeader*library_find_subprogram(perm_string name);
+// Destroys subprogram headers for standard VHDL library functions.
+void delete_std_funcs();
 
-#endif /* IVL_library_H */
+// Returns subprogram header for a requested function or NULL if it does not exist.
+SubprogramHeader*find_std_subprogram(perm_string name);
 
+#endif /* IVL_std_funcs_H */

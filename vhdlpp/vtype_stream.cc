@@ -18,7 +18,7 @@
  */
 
 # define __STDC_LIMIT_MACROS
-# include  "vtype.h"
+# include  "std_types.h"
 # include  "expression.h"
 # include  <typeinfo>
 # include  <stdint.h>
@@ -38,20 +38,8 @@ void VType::write_type_to_stream(ostream&fd) const
 
 void VTypeArray::write_to_stream(ostream&fd) const
 {
-	// Special cases: std_logic_vector & string
-      if (etype_ == &primitive_STDLOGIC) {
-	    fd << "std_logic_vector";
-	    if (!ranges_.empty() && !ranges_[0].is_box()) {
-		  write_range_to_stream_(fd);
-	    }
-	    return;
-      } else if (etype_ == &primitive_CHARACTER) {
-	    fd << "string";
-	    if (!ranges_.empty() && !ranges_[0].is_box()) {
-		  write_range_to_stream_(fd);
-	    }
-	    return;
-      }
+      if(write_special_case(fd))
+          return;
 
       bool typedefed = false;
       if(const VTypeDef*tdef = dynamic_cast<const VTypeDef*>(etype_)) {
@@ -96,26 +84,37 @@ void VTypeArray::write_range_to_stream_(std::ostream&fd) const
     fd << ") ";
 }
 
+bool VTypeArray::write_special_case(std::ostream&fd) const
+{
+    if(this == &primitive_SIGNED) {
+        fd << "signed";
+    } else if(this == &primitive_UNSIGNED) {
+        fd << "unsigned";
+    } else if(etype_ == &primitive_STDLOGIC) {
+        fd << "std_logic_vector";
+    } else if(etype_ == &primitive_BIT) {
+        fd << "bit_vector";
+    } else if(etype_ == &primitive_CHARACTER) {
+        fd << "string";
+    } else {
+        return false;
+    }
+
+    if(!ranges_.empty() && !ranges_[0].is_box()) {
+        write_range_to_stream_(fd);
+    }
+
+    return true;
+}
+
 void VTypeArray::write_type_to_stream(ostream&fd) const
 {
-	// Special case: std_logic_vector
-      if (etype_ == &primitive_STDLOGIC) {
-	    fd << "std_logic_vector";
-	    if (! ranges_.empty() && ! ranges_[0].is_box()) {
-		  write_range_to_stream_(fd);
-	    }
-	    return;
-      }
-      else if (etype_ == &primitive_CHARACTER) {
-	    fd << "string";
-	    if (! ranges_.empty() && ! ranges_[0].is_box()) {
-		  write_range_to_stream_(fd);
-	    }
-	    return;
-      }
+      if(write_special_case(fd))
+          return;
 
       fd << "array ";
 
+      // Unbounded array
       if (! ranges_.empty()) {
 	    assert(ranges_.size() < 2);
 	    if (ranges_[0].is_box()) {
@@ -165,9 +164,6 @@ void VTypePrimitive::write_to_stream(ostream&fd) const
 	  case CHARACTER:
 	    fd << "character";
 	    break;
-	  case BOOLEAN:
-	    fd << "boolean";
-	    break;
 	  case TIME:
 	    fd << "time";
 	    break;
@@ -183,7 +179,7 @@ void VTypeRange::write_to_stream(ostream&fd) const
 	// Detect some special cases that can be written as ieee or
 	// standard types.
       if (const VTypePrimitive*tmp = dynamic_cast<const VTypePrimitive*> (base_)) {
-	    if (start_==0 && end_==INT64_MAX && tmp->type()==VTypePrimitive::INTEGER) {
+	    if (tmp->type()==VTypePrimitive::NATURAL) {
 		  fd << "natural";
 		  return;
 	    }

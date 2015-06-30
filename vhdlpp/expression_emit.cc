@@ -23,7 +23,8 @@
 # include  "vtype.h"
 # include  "architec.h"
 # include  "package.h"
-# include  "subprogram.h"
+# include  "std_funcs.h"
+# include  "std_types.h"
 # include  "parse_types.h"
 # include  <typeinfo>
 # include  <iostream>
@@ -481,45 +482,33 @@ int ExpConditional::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       out << "(";
-      errors += cond_->emit(out, ent, scope);
-      out << ")? (";
-
-      if (true_clause_.size() > 1) {
-	    cerr << get_fileline() << ": sorry: Multiple expression waveforms not supported here." << endl;
-	    errors += 1;
-      }
-
-      Expression*tmp = true_clause_.front();
-      errors += tmp->emit(out, ent, scope);
-
-      out << ") : (";
 
 	// Draw out any when-else expressions. These are all the else_
 	// clauses besides the last.
-      if (else_clause_.size() > 1) {
-	    list<else_t*>::iterator last = else_clause_.end();
-	    -- last;
+      if (options_.size() > 1) {
+	    list<case_t*>::iterator last = options_.end();
+	    --last;
 
-	    for (list<else_t*>::iterator cur = else_clause_.begin()
+	    for (list<case_t*>::iterator cur = options_.begin()
 		       ; cur != last ; ++cur) {
-		  errors += (*cur) ->emit_when_else(out, ent, scope);
+		  errors += (*cur)->emit_option(out, ent, scope);
 	    }
-     }
+      }
 
-      errors += else_clause_.back()->emit_else(out, ent, scope);
+      errors += options_.back()->emit_default(out, ent, scope);
       out << ")";
 
-	// The emit_when_else() functions do not close the last
+	// The emit_option() functions do not close the last
 	// parentheses so that the following expression can be
 	// nested. But that means come the end, we have some
 	// expressions to close.
-      for (size_t idx = 1 ; idx < else_clause_.size() ; idx += 1)
+      for (size_t idx = 1 ; idx < options_.size() ; idx += 1)
 	    out << ")";
 
       return errors;
 }
 
-int ExpConditional::else_t::emit_when_else(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpConditional::case_t::emit_option(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
       assert(cond_ != 0);
@@ -541,7 +530,7 @@ int ExpConditional::else_t::emit_when_else(ostream&out, Entity*ent, ScopeBase*sc
       return errors;
 }
 
-int ExpConditional::else_t::emit_else(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpConditional::case_t::emit_default(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 	// Trailing else must have no condition.
@@ -579,103 +568,21 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      if (name_ == "unsigned" && argv_.size() == 1) {
-	      // Handle the special case that this is a cast to
-	      // unsigned. This function is brought in as part of the
-	      // std numeric library, but we interpret it as the same
-	      // as the $unsigned function.
-	    out << "$unsigned(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
+      ivl_assert(*this, def_);
 
-      } else if (name_ == "integer" && argv_.size() == 1) {
-	    out << "$signed(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
+      // If this function has an elaborated definition, and if
+      // that definition is in a package, then include the
+      // package name as a scope qualifier. This assures that
+      // the SV elaborator finds the correct VHDL elaborated
+      // definition.
+      const Package*pkg = dynamic_cast<const Package*> (def_->get_parent());
+      if (pkg != 0)
+          out << "\\" << pkg->name() << " ::";
 
-      } else if (name_ == "to_integer" && argv_.size() == 1) {
-	    bool signed_flag = false;
-
-	    // to_integer converts unsigned to natural
-	    //                     signed   to integer
-	    // try to determine the converted type
-	    const VType*type = argv_[0]->probe_type(ent, scope);
-	    const VTypeArray*array = dynamic_cast<const VTypeArray*>(type);
-
-	    if(array)
-	        signed_flag = array->signed_vector();
-	    else
-	        cerr << get_fileline() << ": sorry: Could not determine the "
-                     << "expression sign. Output may be erroneous." << endl;
-
-	    out << (signed_flag ? "$signed(" : "$unsigned(");
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
-
-      } else if (name_ == "std_logic_vector" && argv_.size() == 1) {
-	      // Special case: The std_logic_vector function casts its
-	      // argument to std_logic_vector. Internally, we don't
-	      // have to do anything for that to work.
-	    out << "(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
-
-      } else if (name_ == "to_unsigned" && argv_.size() == 2) {
-
-	    out << "$ivlh_to_unsigned(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ", ";
-	    errors += argv_[1]->emit(out, ent, scope);
-	    out << ")";
-
-      } else if ((name_ == "conv_std_logic_vector" || name_ == "resize") &&
-              argv_.size() == 2) {
-	    int64_t use_size;
-	    bool rc = argv_[1]->evaluate(ent, scope, use_size);
-	    ivl_assert(*this, rc);
-	    out << use_size << "'(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
-
-      } else if (name_ == "rising_edge" && argv_.size() == 1) {
-	    out << "$ivlh_rising_edge(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
-
-      } else if (name_ == "falling_edge" && argv_.size() == 1) {
-	    out << "$ivlh_falling_edge(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
-
-      } else if (name_ == "and_reduce" && argv_.size() == 1) {
-            out << "&(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
-
-      } else if (name_ == "or_reduce" && argv_.size() == 1) {
-            out << "|(";
-	    errors += argv_[0]->emit(out, ent, scope);
-	    out << ")";
-
-      } else {
-	      // If this function has an elaborated definition, and if
-	      // that definition is in a package, then include the
-	      // package name as a scope qualifier. This assures that
-	      // the SV elaborator finds the correct VHDL elaborated
-	      // definition.
-	    if (def_) {
-		  const Package*pkg = dynamic_cast<const Package*> (def_->get_parent());
-		  if (pkg != 0)
-			out << "\\" << pkg->name() << " ::";
-	    }
-
-	    out << "\\" << name_ << " (";
-	    for (size_t idx = 0; idx < argv_.size() ; idx += 1) {
-		  if (idx > 0) out << ", ";
-		  errors += argv_[idx]->emit(out, ent, scope);
-	    }
-	    out << ")";
-      }
+      errors += def_->emit_name(argv_, out, ent, scope);
+      out << " (";
+      def_->emit_args(argv_, out, ent, scope);
+      out << ")";
 
       return errors;
 }
@@ -767,6 +674,11 @@ int ExpName::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
       if(try_workarounds_(out, ent, scope, indices, field_size)) {
             emit_workaround_(out, ent, scope, indices, field_size);
+            for(list<index_t*>::iterator it = indices.begin();
+                    it != indices.end(); ++it)
+            {
+                delete *it;
+            }
             return 0;
       }
 
@@ -847,7 +759,7 @@ bool ExpName::check_const_array_workaround_(const VTypeArray*arr,
     data_size = element->get_width(scope);
     if(data_size < 0)
         return false;
-    indices.push_back(new index_t(index_, new ExpInteger(data_size)));
+    indices.push_back(new index_t(index_->clone(), new ExpInteger(data_size)));
 
     return true;
 }
@@ -1044,7 +956,14 @@ int ExpUAbs::emit(ostream&out, Entity*ent, ScopeBase*scope)
 int ExpUNot::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
-      out << "~(";
+
+      const VType*op_type = peek_operand()->probe_type(ent, scope);
+
+      if(op_type && op_type->type_match(&type_BOOLEAN))
+          out << "!(";
+      else
+          out << "~(";
+
       errors += emit_operand1(out, ent, scope);
       out << ")";
       return errors;

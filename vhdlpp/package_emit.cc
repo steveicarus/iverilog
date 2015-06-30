@@ -64,7 +64,7 @@ int Package::emit_package(ostream&fd) const
       //}
 
       fd << "package \\" << name() << " ;" << endl;
-      for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
+      for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++ cur) {
 	    // Do not emit unbounded functions, we will just need fixed instances later
 	    if(!cur->second->unbounded())

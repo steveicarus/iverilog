@@ -4169,6 +4169,9 @@ port_declaration
 		    use_type = NetNet::IMPLICIT_REG;
 	      } else if (dynamic_cast<struct_type_t*> ($4)) {
 		    use_type = NetNet::IMPLICIT_REG;
+	      } else if (enum_type_t*etype = dynamic_cast<enum_type_t*> ($4)) {
+		    if(etype->base_type == IVL_VT_LOGIC)
+			use_type = NetNet::IMPLICIT_REG;
 	      }
 	}
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);

@@ -27,63 +27,122 @@
 # include  "scope.h"
 # include  <iostream>
 # include  <list>
+# include  <cassert>
 
 class InterfacePort;
 class SequentialStmt;
 class VType;
+class SubprogramHeader;
 
-class Subprogram : public LineInfo, public ScopeBase {
+class SubprogramBody : public LineInfo, public ScopeBase {
 
     public:
-      Subprogram(perm_string name, std::list<InterfacePort*>*ports,
+      SubprogramBody();
+      ~SubprogramBody();
+
+      const InterfacePort*find_param(perm_string nam) const;
+
+      void set_statements(std::list<SequentialStmt*>*statements);
+      inline bool empty_statements() const { return !statements_ || statements_->empty(); }
+
+      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+
+	// Emit body as it would show up in a package.
+      int emit_package(std::ostream&fd) const;
+
+      void write_to_stream(std::ostream&fd) const;
+      void dump(std::ostream&fd) const;
+
+    private:
+      std::list<SequentialStmt*>*statements_;
+      SubprogramHeader*header_;
+
+    friend class SubprogramHeader;
+};
+
+class SubprogramHeader : public LineInfo {
+    public:
+      SubprogramHeader(perm_string name, std::list<InterfacePort*>*ports,
 		 const VType*return_type);
-      ~Subprogram();
-
-      void set_parent(const ScopeBase*par);
-      inline const ScopeBase*get_parent() const { return parent_; }
-
-      inline const perm_string&name() const { return name_; }
-
-      void set_program_body(std::list<SequentialStmt*>*statements);
-      inline bool empty_program_body() const { return !statements_ || statements_->empty(); }
+      virtual ~SubprogramHeader();
 
 	// Return true if the specification (name, types, ports)
 	// matches this subprogram and that subprogram.
-      bool compare_specification(Subprogram*that) const;
+      bool compare_specification(SubprogramHeader*that) const;
 
       const InterfacePort*find_param(perm_string nam) const;
       const VType*peek_param_type(int idx) const;
       const VType*peek_return_type() const { return return_type_; }
 
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      void set_parent(const ScopeBase*par);
+      inline const ScopeBase*get_parent() const { return parent_; }
 
-	// Emit a definition as it would show up in a package.
-      int emit_package(std::ostream&fd) const;
+	// Checks if either return type or parameters are unbounded vectors.
+      bool unbounded() const;
 
-      void write_to_stream(std::ostream&fd) const;
-      void write_to_stream_body(std::ostream&fd) const;
-      void dump(std::ostream&fd) const;
+	// Is the subprogram coming from the standard library?
+      virtual bool is_std() const { return false; }
+
+      inline SubprogramBody*body() const { return body_; }
+      void set_body(SubprogramBody*bdy);
+
+      inline perm_string name() const { return name_; }
+
+	// Function name used in the emission step. The main purpose of this
+	// method is to handle functions offered by standard VHDL libraries.
+	// Allows to return different function names depending on the arguments
+	// (think of size casting or signed/unsigned functions).
+      virtual int emit_name(const std::vector<Expression*>&,
+                            std::ostream&out, Entity*, ScopeBase*) const;
+
+	// Emit arguments for a specific call. It allows to reorder or skip
+	// some of the arguments if function signature is different in
+	// SystemVerilog compared to VHDL.
+      virtual int emit_args(const std::vector<Expression*>&argv,
+                            std::ostream&out, Entity*, ScopeBase*) const;
 
 	// Creates a new instance of the function that takes arguments of
 	// a different type. It is used to allow VHDL functions that work with
 	// unbounded std_logic_vectors, so there can be a separate instance
 	// for limited length logic vector.
-      Subprogram*make_instance(std::vector<Expression*> arguments, ScopeBase*scope);
+      SubprogramHeader*make_instance(std::vector<Expression*> arguments, ScopeBase*scope) const;
 
-	// Checks if either return type or parameters are unbounded vectors.
-      bool unbounded() const;
+	// Emit header as it would show up in a package.
+      int emit_package(std::ostream&fd) const;
 
-    private:
+      void write_to_stream(std::ostream&fd) const;
+      void dump(std::ostream&fd) const;
+
+    protected:
 	// Tries to set the return type to a fixed type. VHDL functions that
 	// return std_logic_vectors do not specify its length, as SystemVerilog
 	// demands.
       void fix_return_type();
 
+	// Procedure/function name
       perm_string name_;
-      const ScopeBase*parent_;
+
       std::list<InterfacePort*>*ports_;
       const VType*return_type_;
-      std::list<SequentialStmt*>*statements_;
+      SubprogramBody*body_;
+      const ScopeBase*parent_;
+};
+
+// Class to define functions headers defined in the standard VHDL libraries.
+class SubprogramBuiltin : public SubprogramHeader
+{
+    public:
+      SubprogramBuiltin(perm_string vhdl_name, perm_string sv_name,
+              std::list<InterfacePort*>*ports, const VType*return_type);
+      ~SubprogramBuiltin();
+
+      bool is_std() const { return true; }
+
+      int emit_name(const std::vector<Expression*>&, std::ostream&out, Entity*, ScopeBase*) const;
+
+    private:
+	// SystemVerilog counterpart function name
+      perm_string sv_name_;
 };
 
 #endif /* IVL_subprogram_H */

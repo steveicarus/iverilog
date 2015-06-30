@@ -22,5 +22,21 @@
 
 bool VType::type_match(const VType*that) const
 {
-      return this == that;
+      if(this == that)
+          return true;
+
+      if(const VTypeDef*tdef = dynamic_cast<const VTypeDef*>(that)) {
+          if(type_match(tdef->peek_definition()))
+              return true;
+      }
+
+      return false;
+}
+
+bool VTypeDef::type_match(const VType*that) const
+{
+      if(VType::type_match(that))
+          return true;
+
+      return VType::type_match(type_);
 }

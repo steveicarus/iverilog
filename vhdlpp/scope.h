@@ -32,7 +32,7 @@ class ActiveScope;
 class Architecture;
 class ComponentBase;
 class Package;
-class Subprogram;
+class SubprogramHeader;
 class VType;
 
 template<typename T>
@@ -57,7 +57,8 @@ class ScopeBase {
       Signal* find_signal(perm_string by_name) const;
       Variable* find_variable(perm_string by_name) const;
       virtual const InterfacePort* find_param(perm_string by_name) const;
-      Subprogram* find_subprogram(perm_string by_name) const;
+      const InterfacePort* find_param_all(perm_string by_name) const;
+      SubprogramHeader* find_subprogram(perm_string by_name) const;
 	// Checks if a string is one of possible enum values. If so, the enum
 	// type is returned, otherwise NULL.
       const VTypeEnum* is_enum_name(perm_string name) const;
@@ -67,8 +68,8 @@ class ScopeBase {
       enum transfer_type_t { SIGNALS = 1, VARIABLES = 2, COMPONENTS = 4, ALL = 0xffff };
       void transfer_from(ScopeBase&ref, transfer_type_t what = ALL);
 
-      inline void bind_subprogram(perm_string name, Subprogram*obj)
-      { map<perm_string, Subprogram*>::iterator it;
+      inline void bind_subprogram(perm_string name, SubprogramHeader*obj)
+      { map<perm_string, SubprogramHeader*>::iterator it;
         if((it = use_subprograms_.find(name)) != use_subprograms_.end() )
             use_subprograms_.erase(it);
         cur_subprograms_[name] = obj;
@@ -116,8 +117,8 @@ class ScopeBase {
       std::map<perm_string, struct const_t*> use_constants_; //imported constants
       std::map<perm_string, struct const_t*> cur_constants_; //current constants
 
-      std::map<perm_string, Subprogram*> use_subprograms_; //imported
-      std::map<perm_string, Subprogram*> cur_subprograms_; //current
+      std::map<perm_string, SubprogramHeader*> use_subprograms_; //imported
+      std::map<perm_string, SubprogramHeader*> cur_subprograms_; //current
 
       std::list<const VTypeEnum*> use_enums_;
 
@@ -170,7 +171,7 @@ class ActiveScope : public ScopeBase {
 	// Locate the subprogram by name. The subprogram body uses
 	// this to locate the sobprogram declaration. Note that the
 	// subprogram may be in a package header.
-      Subprogram* recall_subprogram(perm_string name) const;
+      SubprogramHeader* recall_subprogram(perm_string name) const;
 
       /* All bind_name function check if the given name was present
        * in previous scopes. If it is found, it is erased (but the pointer
@@ -219,8 +220,8 @@ class ActiveScope : public ScopeBase {
         cur_constants_[name] = new const_t(obj, val);
       }
 
-      inline void bind_name(perm_string name, Subprogram*obj)
-      { map<perm_string, Subprogram*>::iterator it;
+      inline void bind_name(perm_string name, SubprogramHeader*obj)
+      { map<perm_string, SubprogramHeader*>::iterator it;
         if((it = use_subprograms_.find(name)) != use_subprograms_.end() )
             use_subprograms_.erase(it);
         cur_subprograms_[name] = obj;

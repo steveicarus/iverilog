@@ -25,18 +25,41 @@
 
 using namespace std;
 
-int Subprogram::emit_package(ostream&fd) const
+int SubprogramBody::emit_package(ostream&fd) const
+{
+      int errors = 0;
+
+      for (map<perm_string,Variable*>::const_iterator cur = new_variables_.begin()
+         ; cur != new_variables_.end() ; ++cur) {
+        // Workaround to enable reg_flag for variables
+        cur->second->count_ref_sequ();
+        errors += cur->second->emit(fd, NULL, NULL);
+      }
+
+      if (statements_) {
+	    for (list<SequentialStmt*>::const_iterator cur = statements_->begin()
+		       ; cur != statements_->end() ; ++cur) {
+		  errors += (*cur)->emit(fd, NULL, const_cast<SubprogramBody*>(this));
+	    }
+      } else {
+	    fd << " begin /* empty body */ end" << endl;
+      }
+
+      return errors;
+}
+
+int SubprogramHeader::emit_package(ostream&fd) const
 {
       int errors = 0;
 
       if (return_type_) {
 	    fd << "function ";
 	    return_type_->emit_def(fd, empty_perm_string);
-	    fd << " " << name_;
-	    fd << "(";
       } else {
-	    fd << "task " << name_ << ";" << endl;
+	    fd << "task";
       }
+
+	    fd << " \\" << name_ << " (";
 
       for (list<InterfacePort*>::const_iterator cur = ports_->begin()
 		 ; cur != ports_->end() ; ++cur) {
@@ -63,21 +86,8 @@ int Subprogram::emit_package(ostream&fd) const
 
       fd << ");" << endl;
 
-      for (map<perm_string,Variable*>::const_iterator cur = new_variables_.begin()
-         ; cur != new_variables_.end() ; ++cur) {
-        // Workaround to enable reg_flag for variables
-        cur->second->count_ref_sequ();
-        errors += cur->second->emit(fd, NULL, NULL);
-      }
-
-      if (statements_) {
-	    for (list<SequentialStmt*>::const_iterator cur = statements_->begin()
-		       ; cur != statements_->end() ; ++cur) {
-		  errors += (*cur)->emit(fd, NULL, const_cast<Subprogram*>(this));
-	    }
-      } else {
-	    fd << " begin /* empty body */ end" << endl;
-      }
+      if (body_)
+          body_->emit_package(fd);
 
       if (return_type_)
 	    fd << "endfunction" << endl;
@@ -85,4 +95,32 @@ int Subprogram::emit_package(ostream&fd) const
 	    fd << "endtask" << endl;
 
       return errors;
+}
+
+int SubprogramHeader::emit_name(const std::vector<Expression*>&,
+                                std::ostream&out, Entity*, ScopeBase*) const
+{
+    out << "\\" << name_;
+    return 0;
+}
+
+int SubprogramHeader::emit_args(const std::vector<Expression*>&argv,
+                                std::ostream&out, Entity*ent, ScopeBase*scope) const
+{
+      int errors = 0;
+
+      for (size_t idx = 0; idx < argv.size() ; idx += 1) {
+          if (idx > 0) out << ", ";
+          errors += argv[idx]->emit(out, ent, scope);
+      }
+
+      return errors;
+}
+
+int SubprogramBuiltin::emit_name(const std::vector<Expression*>&,
+                                 std::ostream&out, Entity*, ScopeBase*) const
+{
+    // do not escape the names for builtin functions
+    out << sv_name_;
+    return 0;
 }

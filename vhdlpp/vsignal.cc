@@ -66,7 +66,7 @@ int Signal::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int Variable::emit(ostream&out, Entity*, ScopeBase*)
+int Variable::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
@@ -75,6 +75,12 @@ int Variable::emit(ostream&out, Entity*, ScopeBase*)
       if (peek_refcnt_sequ_() > 0 || !peek_type()->can_be_packed())
 	    decl.reg_flag = true;
       errors += decl.emit(out, peek_name());
+
+      Expression*init_expr = peek_init_expr();
+      if (init_expr) {
+	    out << " = ";
+	    init_expr->emit(out, ent, scope);
+      }
       out << ";" << endl;
       return errors;
 }

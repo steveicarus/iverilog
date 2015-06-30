@@ -22,6 +22,7 @@
 # include  "parse_misc.h"
 # include  "compiler.h"
 # include  "package.h"
+# include  "std_types.h"
 # include  <fstream>
 # include  <list>
 # include  <map>
@@ -72,9 +73,9 @@ void library_add_directory(const char*directory)
       library_search_path.push_front(directory);
 }
 
-Subprogram*library_find_subprogram(perm_string name)
+SubprogramHeader*library_find_subprogram(perm_string name)
 {
-      Subprogram*subp = NULL;
+      SubprogramHeader*subp = NULL;
       map<perm_string,struct library_contents>::const_iterator lib_it;
 
       for(lib_it = libraries.begin(); lib_it != libraries.end(); ++lib_it) {
@@ -305,9 +306,7 @@ static void import_ieee_use_std_logic_1164(ActiveScope*res, perm_string name)
       bool all_flag = name=="all";
 
       if (all_flag || name == "std_logic_vector") {
-	    vector<VTypeArray::range_t> dims (1);
-	    res->use_name(perm_string::literal("std_logic_vector"),
-			   new VTypeArray(&primitive_STDLOGIC, dims, false));
+	    res->use_name(perm_string::literal("std_logic_vector"), &primitive_STDLOGIC_VECTOR);
       }
 }
 
@@ -320,14 +319,10 @@ static void import_ieee_use_numeric_bit(ActiveScope*res, perm_string name)
       bool all_flag = name=="all";
 
       if (all_flag || name == "signed") {
-	    vector<VTypeArray::range_t> dims (1);
-	    res->use_name(perm_string::literal("signed"),
-			   new VTypeArray(&primitive_STDLOGIC, dims, true));
+	    res->use_name(perm_string::literal("signed"), &primitive_SIGNED);
       }
       if (all_flag || name == "unsigned") {
-	    vector<VTypeArray::range_t> dims (1);
-	    res->use_name(perm_string::literal("unsigned"),
-			   new VTypeArray(&primitive_BIT, dims, false));
+	    res->use_name(perm_string::literal("unsigned"), &primitive_UNSIGNED);
       }
 }
 
@@ -336,14 +331,10 @@ static void import_ieee_use_numeric_std(ActiveScope*res, perm_string name)
       bool all_flag = name=="all";
 
       if (all_flag || name == "signed") {
-	    vector<VTypeArray::range_t> dims (1);
-	    res->use_name(perm_string::literal("signed"),
-			   new VTypeArray(&primitive_STDLOGIC, dims, true));
+	    res->use_name(perm_string::literal("signed"), &primitive_SIGNED);
       }
       if (all_flag || name == "unsigned") {
-	    vector<VTypeArray::range_t> dims (1);
-	    res->use_name(perm_string::literal("unsigned"),
-			   new VTypeArray(&primitive_STDLOGIC, dims, false));
+	    res->use_name(perm_string::literal("unsigned"), &primitive_UNSIGNED);
       }
 }
 
@@ -382,59 +373,6 @@ static void import_std_use(const YYLTYPE&loc, ActiveScope*/*res*/, perm_string p
 	    sorrymsg(loc, "package %s of library %s not yet supported", package.str(), name.str());
 	    return;
       }
-}
-
-const VTypePrimitive primitive_BOOLEAN(VTypePrimitive::BOOLEAN, true);
-const VTypePrimitive primitive_BIT(VTypePrimitive::BIT, true);
-const VTypePrimitive primitive_INTEGER(VTypePrimitive::INTEGER);
-const VTypePrimitive primitive_NATURAL(VTypePrimitive::NATURAL);
-const VTypePrimitive primitive_REAL(VTypePrimitive::REAL);
-const VTypePrimitive primitive_STDLOGIC(VTypePrimitive::STDLOGIC, true);
-const VTypePrimitive primitive_CHARACTER(VTypePrimitive::CHARACTER);
-const VTypePrimitive primitive_TIME(VTypePrimitive::TIME);
-
-static const VTypeArray primitive_BIT_VECTOR(&primitive_BIT,      vector<VTypeArray::range_t> (1));
-static const VTypeArray primitive_BOOL_VECTOR(&primitive_BOOLEAN, vector<VTypeArray::range_t> (1));
-static const VTypeArray primitive_STRING(&primitive_CHARACTER,    vector<VTypeArray::range_t> (1));
-
-void generate_global_types(ActiveScope*res)
-{
-      res->use_name(perm_string::literal("boolean"),   &primitive_BOOLEAN);
-      res->use_name(perm_string::literal("bit"),       &primitive_BIT);
-      res->use_name(perm_string::literal("integer"),   &primitive_INTEGER);
-      res->use_name(perm_string::literal("real"),      &primitive_REAL);
-      res->use_name(perm_string::literal("std_logic"), &primitive_STDLOGIC);
-      res->use_name(perm_string::literal("character"), &primitive_CHARACTER);
-      res->use_name(perm_string::literal("bit_vector"),&primitive_BIT_VECTOR);
-      res->use_name(perm_string::literal("string"),    &primitive_STRING);
-      res->use_name(perm_string::literal("natural"),   &primitive_NATURAL);
-      res->use_name(perm_string::literal("time"),      &primitive_TIME);
-}
-
-void emit_std_types(ostream&out)
-{
-    out << "`ifndef __VHDL_STD_TYPES" << endl;
-    out << "`define __VHDL_STD_TYPES" << endl;
-    out << "typedef enum bit { \\false , \\true } boolean ;" << endl;
-    out << "`endif" << endl;
-}
-
-bool is_global_type(perm_string name)
-{
-      if (name == "boolean") return true;
-      if (name == "bit") return true;
-      if (name == "integer") return true;
-      if (name == "real") return true;
-      if (name == "std_logic") return true;
-      if (name == "std_logic_vector") return true;
-      if (name == "character") return true;
-      if (name == "bit_vector") return true;
-      if (name == "string") return true;
-      if (name == "natural") return true;
-      if (name == "signed") return true;
-      if (name == "unsigned") return true;
-      if (name == "time") return true;
-      return false;
 }
 
 void library_set_work_path(const char*path)
