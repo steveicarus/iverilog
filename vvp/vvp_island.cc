@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010,2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -217,9 +217,12 @@ void vvp_island_port::recv_vec8_pv(vvp_net_ptr_t, const vvp_vector8_t&bit,
       island_->flag_island();
 }
 
-void vvp_island_port::force_flag(void)
+void vvp_island_port::force_flag(bool run_now)
 {
-      island_->flag_island();
+      if (run_now)
+	    island_->run_island();
+      else
+	    island_->flag_island();
 }
 
 vvp_island_branch::~vvp_island_branch()

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -3305,7 +3305,7 @@ void vvp_net_fun_t::recv_object(vvp_net_ptr_t, vvp_object_t, vvp_context_t)
       assert(0);
 }
 
-void vvp_net_fun_t::force_flag(void)
+void vvp_net_fun_t::force_flag(bool)
 {
 }
 

@@ -4802,7 +4802,7 @@ static bool do_release_vec(vvp_code_t cp, bool net_flag)
       } else {
 	    net->fil->release_pv(ptr, base, width, net_flag);
       }
-      net->fun->force_flag();
+      net->fun->force_flag(false);
 
       return true;
 }

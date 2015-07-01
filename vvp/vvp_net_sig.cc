@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -121,7 +121,7 @@ void vvp_net_t::force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
 {
       assert(fil);
       fil->force_fil_vec4(val, mask);
-      fun->force_flag();
+      fun->force_flag(false);
       vvp_send_vec4(out_, val, 0);
 }
 
@@ -129,7 +129,7 @@ void vvp_net_t::force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
 {
       assert(fil);
       fil->force_fil_vec8(val, mask);
-      fun->force_flag();
+      fun->force_flag(false);
       vvp_send_vec8(out_, val);
 }
 
@@ -137,7 +137,7 @@ void vvp_net_t::force_real(double val, vvp_vector2_t mask)
 {
       assert(fil);
       fil->force_fil_real(val, mask);
-      fun->force_flag();
+      fun->force_flag(false);
       vvp_send_real(out_, val, 0);
 }
 

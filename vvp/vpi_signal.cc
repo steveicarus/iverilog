@@ -809,12 +809,15 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 
 	/* If this is a release, then we are not really putting a
 	   value. Instead, issue a release "command" to the signal
-	   node to cause it to release a forced value. */
+	   node to cause it to release a forced value. Note that
+	   if this net is attached to an island, we need to rerun
+	   the calculations immediately so we can return the
+	   released value. */
       if (flags == vpiReleaseFlag) {
 	    assert(rfp->node->fil);
 	    rfp->node->fil->force_unlink();
 	    rfp->node->fil->release(dest, net_flag);
-	    rfp->node->fun->force_flag();
+	    rfp->node->fun->force_flag(true);
 	    signal_get_value(ref, vp);
 	    return ref;
       }
@@ -1342,7 +1345,10 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int flags)
 
 	/* If this is a release, then we are not really putting a
 	   value. Instead, issue a release "command" to the signal
-	   node to cause it to release a forced value. */
+	   node to cause it to release a forced value.  Note that
+	   if this net is attached to an island, we need to rerun
+	   the calculations immediately so we can return the
+	   released value.*/
       if (flags == vpiReleaseFlag) {
 	    assert(rfp->net->fil);
 	      // XXXX Can't really do this if this is a partial release?
@@ -1352,7 +1358,7 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int flags)
 	    } else {
 		  rfp->net->fil->release_pv(dest, base, width, net_flag);
 	    }
-	    rfp->net->fun->force_flag();
+	    rfp->net->fun->force_flag(true);
 	    PV_get_value(ref, vp);
 	    return ref;
       }
