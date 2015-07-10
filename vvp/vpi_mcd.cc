@@ -161,7 +161,14 @@ extern "C" PLI_UINT32 vpi_mcd_open(char *name)
 	return 0;  /* too many open mcd's */
 
 got_entry:
+#if defined(__GNUC__)
 	mcd_table[i].fp = fopen(name, "w");
+#else
+	if (strcmp(name, "/dev/null") != 0)
+		mcd_table[i].fp = fopen(name, "w");
+	else
+		mcd_table[i].fp = fopen("nul", "w");
+#endif
 	if(mcd_table[i].fp == NULL)
 		return 0;
 	mcd_table[i].filename = strdup(name);
@@ -298,7 +305,14 @@ extern "C" PLI_INT32 vpi_fopen(const char*name, const char*mode)
       }
 
 got_entry:
-      fd_table[i].fp = fopen(name, mode);
+#ifndef _MSC_VER
+	  fd_table[i].fp = fopen(name, mode);
+#else // Changed for MSVC++ so vpi/pr723.v will pass.
+	  if(strcmp(name, "/dev/null") != 0)
+		fd_table[i].fp = fopen(name, mode);
+	  else
+		fd_table[i].fp = fopen("nul", mode);
+#endif
       if (fd_table[i].fp == NULL) return 0;
       fd_table[i].filename = strdup(name);
       return ((1U<<31)|i);
