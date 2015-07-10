@@ -539,7 +539,14 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           if (size < 320) size = 320;
           size += prec;
           if (size > ini_size) result = realloc(result, size*sizeof(char));
+#if !defined(__GNUC__)
+		  if (isnan(value.value.real))
+			  sprintf(result, "%s", "nan");
+		  else
+			  sprintf(result, fmtb+1, value.value.real);
+#else
           sprintf(result, fmtb+1, value.value.real);
+#endif
           size = strlen(result) + 1;
         }
       }
@@ -947,7 +954,18 @@ static char *get_display(unsigned int *rtnsz, const struct strobe_cb_info *info)
         } else if (vpi_get(vpiConstType, item) == vpiRealConst) {
           value.format = vpiRealVal;
           vpi_get_value(item, &value);
+#if !defined(__GNUC__)
+		  if(compatible_flag)
+			  sprintf(buf, "%g", value.value.real);
+		  else {
+			  if(value.value.real == 0.0 || value.value.real == -0.0)
+				  sprintf(buf, "%.05f", value.value.real);
+			  else
+				  sprintf(buf, "%#g", value.value.real);
+		  }
+#else
           sprintf(buf, compatible_flag ? "%g" : "%#g", value.value.real);
+#endif
           result = strdup(buf);
           width = strlen(result);
         } else {
@@ -992,7 +1010,18 @@ static char *get_display(unsigned int *rtnsz, const struct strobe_cb_info *info)
       case vpiRealVar:
         value.format = vpiRealVal;
         vpi_get_value(item, &value);
+#if !defined(__GNUC__)
+		if (compatible_flag)
+			sprintf(buf, "%g", value.value.real);
+		else {
+			if (value.value.real == 0.0 || value.value.real == -0.0)
+				sprintf(buf, "%.05f", value.value.real);
+			else
+				sprintf(buf, "%#g", value.value.real);
+		}
+#else
         sprintf(buf, compatible_flag ? "%g" : "%#g", value.value.real);
+#endif
         width = strlen(buf);
         rtn = realloc(rtn, (size+width)*sizeof(char));
         memcpy(rtn+size-1, buf, width);
