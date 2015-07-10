@@ -5818,6 +5818,7 @@ bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
       child->rd_context = child_context;
 
       child->is_scheduled = 1;
+	  child->delay_delete = 1;
       vthread_run(child);
       running_thread = thr;
 
