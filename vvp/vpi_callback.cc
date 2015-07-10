@@ -782,7 +782,14 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 	    break;
 
 	  case vpiDecStrVal:
+#if !defined(__GNUC__)
+		  if (isnan(rval))
+			  sprintf(rbuf, "%s", "nan");
+		  else
+			  sprintf(rbuf, "%0.0f", rval);
+#else
 	    sprintf(rbuf, "%0.0f", rval);
+#endif
 	    vp->value.str = rbuf;
 	    break;
 
