@@ -55,7 +55,11 @@ static PLI_INT32 one_array_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 // Checks if a function is passed an array and optionally an integer.
 static PLI_INT32 array_int_opt_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
+#if defined(__GNUC__)
       const int MAX_ARGC = 3;   // one more is to verify there are at most 2 args
+#else
+#define MAX_ARGC 3
+#endif
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv, arg[MAX_ARGC];
       PLI_INT32 arg_type[MAX_ARGC];
