@@ -102,7 +102,11 @@ class Link {
       friend class NexusSet;
 
     public:
+#if defined(__cplusplus) && !defined(__GNUC__)
+      enum DIR : unsigned int { PASSIVE, INPUT, OUTPUT };
+#else
       enum DIR { PASSIVE, INPUT, OUTPUT };
+#endif
 
     private: // Only NetPins can create/delete Link objects
       Link();
@@ -619,7 +623,11 @@ class NetDelaySrc  : public NetObj {
 class PortType
 {
 public:
+#if defined(__cplusplus) && !defined(__GNUC__)
+	enum Enum : unsigned int { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT, PREF };
+#else
     enum Enum { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT, PREF };
+#endif
 
     /*
      * Merge Port types (used to construct a sane combined port-type
@@ -647,7 +655,11 @@ struct PortInfo
 class NetNet  : public NetObj, public PortType {
 
     public:
+#if defined(__cplusplus) && !defined(__GNUC__)
+		enum Type : unsigned int { NONE, IMPLICIT, IMPLICIT_REG, INTEGER, WIRE, TRI, TRI1,
+#else
       enum Type { NONE, IMPLICIT, IMPLICIT_REG, INTEGER, WIRE, TRI, TRI1,
+#endif
 		  SUPPLY0, SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG,
 		  UNRESOLVED_WIRE };
 
