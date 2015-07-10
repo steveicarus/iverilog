@@ -94,13 +94,15 @@ perm_string Module::get_port_name(unsigned idx) const
 {
 
       assert(idx < ports.size());
-      if (ports[idx] == 0) {
+      if (ports[idx] == 0 || ports[idx]->name.str() == 0) {
               /* It is possible to have undeclared ports. These
                  are ports that are skipped in the declaration,
                  for example like so: module foo(x ,, y); The
                  port between x and y is unnamed and thus
-                 inaccessible to binding by name. */
-            return perm_string::literal("");
+                 inaccessible to binding by name. Port references
+		 that aren't simple or escaped identifiers are
+		 also inaccessible to binding by name. */
+            return perm_string::literal("unnamed");
       }
       return ports[idx]->name;
 }

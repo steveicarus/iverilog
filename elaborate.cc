@@ -1287,15 +1287,18 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
       for (unsigned idx = 0 ;  idx < pins.size() ;  idx += 1) {
 	    bool unconnected_port = false;
 
+	    perm_string port_name = rmod->get_port_name(idx);
+
 	      // Skip unconnected module ports. This happens when a
 	      // null parameter is passed in.
 
 	    if (pins[idx] == 0) {
 
 		  if (pins_fromwc[idx]) {
-			cerr << get_fileline() << ": error: Wildcard named port " <<
-			      "connection (.*) did not find a matching identifier " <<
-			      "for port '" << rmod->ports[idx]->name << "'." << endl;
+			cerr << get_fileline() << ": error: Wildcard named "
+			        "port connection (.*) did not find a matching "
+			        "identifier for port " << (idx+1) << " ("
+			     << port_name << ")." << endl;
 			des->errors += 1;
 			return;
 		  }
@@ -1330,22 +1333,22 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			      break;
 			}
 
-			  // Print a waring for an unconnected input.
+			  // Print a warning for an unconnected input.
 			if (warn_portbinding) {
 			      cerr << get_fileline() << ": warning: "
 				   << "Instantiating module "
 				   << rmod->mod_name()
-				   << " with dangling input port '"
-				   << rmod->ports[idx]->name;
+				   << " with dangling input port "
+				   << (idx+1) << " (" << port_name;
 			      switch (rmod->uc_drive) {
 				  case Module::UCD_PULL0:
-				    cerr << "' (pulled low)." << endl;
+				    cerr << ") pulled low." << endl;
 				    break;
 				  case Module::UCD_PULL1:
-				    cerr << "' (pulled high)." << endl;
+				    cerr << ") pulled high." << endl;
 				    break;
 				  case Module::UCD_NONE:
-				    cerr << "' (floating)." << endl;
+				    cerr << ") floating." << endl;
 				    break;
 			      }
 			}
@@ -1361,8 +1364,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: " << get_name()
-		       << ": Port " << (idx+1) << " has " << prts.size()
-		       << " sub-ports." << endl;
+		       << ": Port " << (idx+1) << " (" << port_name
+		       << ") has " << prts.size() << " sub-ports." << endl;
 	    }
 
 	      // Count the internal vector bits of the port.
@@ -1394,7 +1397,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			prt_vector_width += port_width;
 			ptype = PortType::merged(netnet->port_type(), ptype);
 		  }
-		  inst_scope->add_module_port_info(idx, rmod->get_port_name(idx), ptype, prt_vector_width );
+		  inst_scope->add_module_port_info(idx, port_name, ptype, prt_vector_width );
 	    }
 
 	      // If I find that the port is unconnected inside the
@@ -1454,8 +1457,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  NetExpr*tmp_expr = elab_and_eval(des, scope, pins[idx], -1);
 		  if (tmp_expr == 0) {
 			cerr << pins[idx]->get_fileline()
-			     << ": internal error: Port expression "
-			     << "too complicated for elaboration." << endl;
+			     << ": error: Failed to elaborate port expression."
+			     << endl;
+			des->errors += 1;
 			continue;
 		  }
 
@@ -1541,8 +1545,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			cerr << pins[idx]->get_fileline() << ": error: "
 			     << "Inout port expression must support "
 			     << "continuous assignment." << endl;
-			cerr << pins[idx]->get_fileline() << ":      : "
-			     << "Port " << rmod->ports[idx]->name << " of "
+			cerr << pins[idx]->get_fileline() << ":      : Port "
+			     << (idx+1) << " (" << port_name << ") of "
 			     << rmod->mod_name() << " is connected to "
 			     << *pins[idx] << endl;
 			des->errors += 1;
@@ -1555,9 +1559,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		      !prts.empty() && (prts[0]->data_type() != IVL_VT_REAL )) {
 			cerr << pins[idx]->get_fileline() << ": error: "
 			     << "Cannot automatically connect bit based "
-			        "inout port " << rmod->ports[idx]->name
-			     << " of module " << rmod->mod_name() << " to real "
-			        "signal " << sig->name() << "." << endl;
+			        "inout port " << (idx+1) << " (" << port_name
+			     << ") of module " << rmod->mod_name()
+			     << " to real signal " << sig->name() << "." << endl;
 			des->errors += 1;
 			continue;
 		  }
@@ -1566,9 +1570,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  if (!prts.empty() && (prts[0]->data_type() == IVL_VT_REAL )) {
 			cerr << pins[idx]->get_fileline() << ": error: "
 			     << "No support for connecting real inout ports ("
-			        "port "
-			     << rmod->ports[idx]->name << " of module "
-			     << rmod->mod_name() << ")." << endl;
+			        "port " << (idx+1) << " (" << port_name
+			     << ") of module " << rmod->mod_name() << ")." << endl;
 			des->errors += 1;
 			continue;
 		  }
@@ -1611,8 +1614,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			cerr << pins[idx]->get_fileline() << ": error: "
 			     << "Output port expression must support "
 			     << "continuous assignment." << endl;
-			cerr << pins[idx]->get_fileline() << ":      : "
-			     << "Port " << rmod->ports[idx]->name << " of "
+			cerr << pins[idx]->get_fileline() << ":      : Port "
+			     << (idx+1) << " (" << port_name << ") of "
 			     << rmod->mod_name() << " is connected to "
 			     << *pins[idx] << endl;
 			des->errors += 1;
@@ -1687,8 +1690,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		      instance.size() != 1) {
 			cerr << pins[idx]->get_fileline() << ": error: "
 			     << "An arrayed instance of " << rmod->mod_name()
-			     << " cannot have a real port ("
-			     << rmod->ports[idx]->name << ") connected to a "
+			     << " cannot have a real port (port " << (idx+1)
+			     << " : " << port_name << ") connected to a "
 			        "real signal (" << sig->name() << ")." << endl;
 			des->errors += 1;
 			continue;
@@ -1721,8 +1724,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: " << get_name()
-		       << ": Port " << (idx+1) << " has vector width of "
-		       << prts_vector_width << "." << endl;
+		       << ": Port " << (idx+1) << " (" << port_name
+		       << ") has vector width of " << prts_vector_width
+		       << "." << endl;
 	    }
 
 	      // Check that the parts have matching pin counts. If
@@ -1730,10 +1734,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // based, but users count parameter positions from 1.
 	    if ((instance.size() == 1)
 		&& (prts_vector_width != sig->vector_width())) {
-		  const char *tmp3 = rmod->ports[idx]->name.str();
 		  bool as_signed = false;
-
-		  if (tmp3 == 0) tmp3 = "???";
 
 		  switch (prts[0]->port_type()) {
 		    case NetNet::POUTPUT:
@@ -1754,7 +1755,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  }
 
 		  cerr << get_fileline() << ": warning: Port " << (idx+1)
-		       << " (" << tmp3 << ") of "
+		       << " (" << port_name << ") of "
 		       << type_ << " expects " << prts_vector_width <<
 			" bits, got " << sig->vector_width() << "." << endl;
 
