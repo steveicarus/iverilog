@@ -26,6 +26,7 @@
 #  include <stdio.h>
 #endif
 
+#if defined(__GNUC__)
 /*
  * Define a safer version of malloc().
  */
@@ -82,5 +83,6 @@
       } \
       __ivl_rtn; \
 })
+#endif
 
 #endif /* IVL_ivl_alloc_H */
