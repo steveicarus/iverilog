@@ -880,7 +880,16 @@ static PLI_INT32 sys_fseek_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       val.format = vpiIntVal;
+#if defined(__GNUC__)
       val.value.integer = fseek(fp, offset, oper);
+#else
+      if(oper < 0) {
+           val.value.integer = EOF;
+           errno = EINVAL;
+      }
+      else
+           val.value.integer = fseek(fp, offset, oper);
+#endif
       vpi_put_value(callh, &val, 0 , vpiNoDelay);
 
       return 0;
