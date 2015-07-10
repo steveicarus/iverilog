@@ -27,6 +27,7 @@
 # include  <cstddef>
 # include  <cstdlib>
 # include  <cstring>
+# include  <string>
 # include  <new>
 # include  <cassert>
 
@@ -1159,7 +1160,9 @@ class vvp_net_t {
       static void operator delete(void*); // not implemented
     private: // not implemented
       static void* operator new[](std::size_t size);
+#if defined(__GNUC__)
       static void operator delete[](void*);
+#endif
 };
 
 /*
