@@ -2677,7 +2677,10 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 	    }
 
 	    curw->set_signed(signed_flag);
-	    if (isint) assert(curw->set_wire_type(NetNet::INTEGER));
+		if (isint) {
+			bool res = curw->set_wire_type(NetNet::INTEGER);
+			assert(res);
+		}
 
 	      /* If there is a range involved, it needs to be set. */
 	    if (range) {
@@ -2907,8 +2910,8 @@ void pform_set_parameter(const struct vlltype&loc,
 	    error_count += 1;
       }
 	// Only a Module scope has specparams.
-      if ((scope == pform_cur_module.front()) &&
-          (dynamic_cast<Module*> (scope)) &&
+	  if ((dynamic_cast<Module*> (scope)) &&     
+		  (scope == pform_cur_module.front()) &&
           (pform_cur_module.front()->specparams.find(name) !=
            pform_cur_module.front()->specparams.end())) {
 	    LineInfo tloc;
@@ -2941,8 +2944,8 @@ void pform_set_parameter(const struct vlltype&loc,
       parm.range = value_range;
 
 	// Only a Module keeps the position of the parameter.
-      if ((scope == pform_cur_module.front()) &&
-          (dynamic_cast<Module*> (scope)))
+	  if ((dynamic_cast<Module*> (scope)) &&
+		  (scope == pform_cur_module.front()))
             pform_cur_module.front()->param_names.push_back(name);
 }
 
