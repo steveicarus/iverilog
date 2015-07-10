@@ -1040,11 +1040,11 @@ struct vpiSignal_plug {
 
 void* __vpiSignal::operator new(size_t siz)
 {
-      assert(siz == sizeof(struct vpiSignal_plug)
 #ifdef CHECK_WITH_VALGRIND
-                    - sizeof(struct vpiSignal_plug *)
+      assert(siz == sizeof(struct vpiSignal_plug) - sizeof(struct vpiSignal_plug *));
+#else
+      assert(siz == sizeof(struct vpiSignal_plug));
 #endif
-            );
       static struct vpiSignal_plug*alloc_array = 0;
       static unsigned alloc_index = 0;
       const unsigned alloc_count = 512;
