@@ -81,8 +81,8 @@ ivl_type_s* data_type_t::elaborate_type(Design*des, NetScope*scope)
 	    use_definitions = des;
 
       map<Definitions*,ivl_type_s*>::iterator pos = cache_type_elaborate_.lower_bound(use_definitions);
-      if (pos->first == use_definitions)
-	    return pos->second;
+	  if (pos != cache_type_elaborate_.end() && pos->first == use_definitions)
+	     return pos->second;
 
       ivl_type_s*tmp = elaborate_type_raw(des, scope);
       cache_type_elaborate_.insert(pos, pair<NetScope*,ivl_type_s*>(scope, tmp));
