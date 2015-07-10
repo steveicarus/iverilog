@@ -388,8 +388,8 @@ void property_object::get_object(char*buf, vvp_object_t&val, uint64_t idx)
 
 void property_object::copy(char*dst, char*src)
 {
-      vvp_object_t*dst_obj = reinterpret_cast<vvp_object_t*>(dst);
-      vvp_object_t*src_obj = reinterpret_cast<vvp_object_t*>(src);
+      vvp_object_t*dst_obj = reinterpret_cast<vvp_object_t*>(dst+offset_);
+      vvp_object_t*src_obj = reinterpret_cast<vvp_object_t*>(src+offset_);
       for (size_t idx = 0 ; idx < array_size_ ; idx += 1)
 	    dst_obj[idx] = src_obj[idx];
 }
