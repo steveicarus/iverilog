@@ -142,7 +142,7 @@ ExpAggregate::~ExpAggregate()
       for(std::vector<choice_element>::iterator it = aggregate_.begin();
               it != aggregate_.end(); ++it) {
         delete it->choice;
-        delete it->expr;
+        if(!it->alias_flag) delete it->expr;
       }
 }
 
