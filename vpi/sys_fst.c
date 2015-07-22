@@ -83,7 +83,7 @@ static void show_this_item(struct vcd_info*info)
       } else {
 	    value.format = vpiBinStrVal;
 	    vpi_get_value(info->item, &value);
-	    fstWriterEmitValueChange(dump_file, info->handle, value.value.str);
+	    fstWriterEmitValueChange(dump_file, info->handle, (type != vpiNamedEvent) ? value.value.str : "1");
       }
 }
 
