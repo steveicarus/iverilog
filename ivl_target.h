@@ -41,6 +41,12 @@
 # define __attribute__(x)
 #endif
 
+#if defined(__cplusplus) && defined(_MSC_VER)
+# define ENUM_UNSIGNED_INT : unsigned int
+#else
+# define ENUM_UNSIGNED_INT
+#endif
+
 _BEGIN_DECL
 
 /*
@@ -201,11 +207,7 @@ typedef enum ivl_dis_domain_e {
       IVL_DIS_CONTINUOUS = 2
 } ivl_dis_domain_t;
 
-#if defined(__cplusplus) && !defined(__GNUC__)
-typedef enum ivl_drive_e : unsigned int {
-#else
-typedef enum ivl_drive_e {
-#endif
+typedef enum ivl_drive_e ENUM_UNSIGNED_INT {
       IVL_DR_HiZ    = 0,
       IVL_DR_SMALL  = 1,
       IVL_DR_MEDIUM = 2,
@@ -247,11 +249,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_UNARY = 14
 } ivl_expr_type_t;
 
-#if defined(__cplusplus) && !defined(__GNUC__)
-typedef enum ivl_select_type_e : unsigned int {
-#else
-typedef enum ivl_select_type_e {
-#endif
+typedef enum ivl_select_type_e ENUM_UNSIGNED_INT {
       IVL_SEL_OTHER = 0,
       IVL_SEL_IDX_UP = 1,
       IVL_SEL_IDX_DOWN = 2
@@ -353,11 +351,7 @@ typedef enum ivl_path_edge_e {
 
 /* Processes are initial, always, or final blocks with a statement. This is
    the type of the ivl_process_t object. */
-#if defined(__cplusplus) && !defined(__GNUC__)
-typedef enum ivl_process_type_e : unsigned int {
-#else
-typedef enum ivl_process_type_e {
-#endif
+typedef enum ivl_process_type_e ENUM_UNSIGNED_INT {
       IVL_PR_INITIAL = 0,
       IVL_PR_ALWAYS  = 1,
       IVL_PR_FINAL   = 2
@@ -443,11 +437,7 @@ typedef enum ivl_sfunc_as_task_e {
 
 /* This is the type of a variable, and also used as the type for an
    expression. */
-#if defined(__cplusplus) && !defined(__GNUC__)
-typedef enum ivl_variable_type_e : unsigned int {
-#else
-typedef enum ivl_variable_type_e {
-#endif
+typedef enum ivl_variable_type_e ENUM_UNSIGNED_INT {
       IVL_VT_VOID    = 0,  /* Not used */
       IVL_VT_NO_TYPE = 1,  /* Place holder for missing/unknown type. */
       IVL_VT_REAL    = 2,
@@ -2358,5 +2348,7 @@ typedef const char* (*target_query_f) (const char*key);
 
 
 _END_DECL
+
+#undef ENUM_UNSIGNED_INT
 
 #endif /* IVL_ivl_target_H */

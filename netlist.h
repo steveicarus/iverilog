@@ -90,6 +90,12 @@ class netvector_t;
 struct target;
 struct functor_t;
 
+#if defined(__cplusplus) && defined(_MSC_VER)
+# define ENUM_UNSIGNED_INT : unsigned int
+#else
+# define ENUM_UNSIGNED_INT
+#endif
+
 ostream& operator << (ostream&o, ivl_variable_type_t val);
 
 extern void join_island(NetPins*obj);
@@ -102,12 +108,7 @@ class Link {
       friend class NexusSet;
 
     public:
-#if defined(__cplusplus) && !defined(__GNUC__)
-      enum DIR : unsigned int { PASSIVE, INPUT, OUTPUT };
-#else
-      enum DIR { PASSIVE, INPUT, OUTPUT };
-#endif
-
+      enum DIR ENUM_UNSIGNED_INT { PASSIVE, INPUT, OUTPUT };
     private: // Only NetPins can create/delete Link objects
       Link();
       ~Link();
@@ -623,11 +624,7 @@ class NetDelaySrc  : public NetObj {
 class PortType
 {
 public:
-#if defined(__cplusplus) && !defined(__GNUC__)
-	enum Enum : unsigned int { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT, PREF };
-#else
-    enum Enum { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT, PREF };
-#endif
+	enum Enum ENUM_UNSIGNED_INT { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT, PREF };
 
     /*
      * Merge Port types (used to construct a sane combined port-type
@@ -655,11 +652,7 @@ struct PortInfo
 class NetNet  : public NetObj, public PortType {
 
     public:
-#if defined(__cplusplus) && !defined(__GNUC__)
-		enum Type : unsigned int { NONE, IMPLICIT, IMPLICIT_REG, INTEGER, WIRE, TRI, TRI1,
-#else
-      enum Type { NONE, IMPLICIT, IMPLICIT_REG, INTEGER, WIRE, TRI, TRI1,
-#endif
+      enum Type ENUM_UNSIGNED_INT { NONE, IMPLICIT, IMPLICIT_REG, INTEGER, WIRE, TRI, TRI1,
 		  SUPPLY0, SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG,
 		  UNRESOLVED_WIRE };
 
@@ -5017,4 +5010,5 @@ inline unsigned Link::get_pin() const
 	    return pin_;
 }
 
+#undef ENUM_UNSIGNED_INT
 #endif /* IVL_netlist_H */
