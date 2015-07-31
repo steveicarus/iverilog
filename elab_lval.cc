@@ -543,8 +543,6 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 	    return 0;
       }
 
-      unsigned array_need_words = reg->unpacked_count();
-
 	// Make sure there are enough indices to address an array element.
       const index_component_t&index_head = name_tail.index.front();
       if (index_head.sel == index_component_t::SEL_PART) {
@@ -562,7 +560,7 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       indices_flags flags;
       indices_to_expressions(des, scope, this,
 			     name_tail.index, reg->unpacked_dimensions(),
-			     false, array_need_words,
+			     false,
 			     flags,
 			     unpacked_indices,
 			     unpacked_indices_const);

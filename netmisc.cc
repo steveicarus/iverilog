@@ -480,8 +480,6 @@ void indices_to_expressions(Design*des, NetScope*scope,
 			    const list<index_component_t>&src, unsigned count,
 			      // True if the expression MUST be constant.
 			    bool need_const,
-			      // Total words in target array
-			    unsigned need_addr,
 			      // These are the outputs.
 			    indices_flags&flags,
 			    list<NetExpr*>&indices, list<long>&indices_const)
@@ -692,7 +690,7 @@ NetExpr* make_canonical_index(Design*des, NetScope*scope,
       indices_flags flags;
       indices_to_expressions(des, scope, loc,
 			     src, src.size(),
-			     need_const, stype->static_dimensions().size(),
+			     need_const,
 			     flags,
 			     indices_expr, indices_const);
 
@@ -1428,7 +1426,7 @@ NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
       indices_flags flags;
       indices_to_expressions(des, scope, loc, indices,
                              net->packed_dimensions(),
-                             false, net->unpacked_count(), flags, exprs, exprs_const);
+                             false, flags, exprs, exprs_const);
       ivl_assert(*loc, exprs.size() == net->packed_dimensions());
 
 	// Special Case: there is only 1 packed dimension, so the

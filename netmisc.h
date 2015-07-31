@@ -181,8 +181,6 @@ extern void indices_to_expressions(Design*des, NetScope*scope,
 				   const list<index_component_t>&src, unsigned count,
 				     // True if the expression MUST be constant.
 				   bool need_const,
-				     // Total array size, for sizing expressions
-				   unsigned need_addr,
 				     // These are the outputs.
 				   indices_flags&flags,
 				   list<NetExpr*>&indices,list<long>&indices_const);
