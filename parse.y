@@ -4558,8 +4558,8 @@ module_item
 	}
 	pform_makewire(@2, $4, str_strength, $5, $2, data_type);
 	if ($1) {
-	      yyerror(@2, "sorry: Attributes not supported "
-		      "on net declaration assignments.");
+	      yywarn(@2, "Attributes are not supported on net declaration "
+		     "assignments and will be discarded.");
 	      delete $1;
 	}
       }
@@ -4575,8 +4575,8 @@ module_item
 	}
 	pform_makewire(@2, 0, $4, $5, $2, data_type);
 	if ($1) {
-	      yyerror(@2, "sorry: Attributes not supported "
-		      "on net declaration assignments.");
+	      yywarn(@2, "Attributes are not supported on net declaration "
+		     "assignments and will be discarded.");
 	      delete $1;
 	}
       }
@@ -4585,8 +4585,8 @@ module_item
       { real_type_t*data_type = new real_type_t(real_type_t::REAL);
         pform_makewire(@2, 0, str_strength, $3, NetNet::WIRE, data_type);
 	if ($1) {
-	      yyerror(@2, "sorry: Attributes not supported "
-		      "on net declaration assignments.");
+	      yywarn(@2, "Attributes are not supported on net declaration "
+		     "assignments and will be discarded.");
 	      delete $1;
 	}
       }
