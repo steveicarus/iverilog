@@ -4782,7 +4782,7 @@ module_item
      generate/endgenerate regions do not nest. Generate schemes nest,
      but generate regions do not. */
 
-  | K_generate module_item_list_opt K_endgenerate
+  | K_generate generate_item_list_opt K_endgenerate
      { // Test for bad nesting. I understand it, but it is illegal.
        if (pform_parent_generate()) {
 	     cerr << @1 << ": error: Generate/endgenerate regions cannot nest." << endl;
@@ -4818,25 +4818,6 @@ module_item
     generate_case_items
     K_endcase
       { pform_endgenerate(); }
-
-  /* Handle some anachronistic syntax cases. */
-  | K_generate K_begin module_item_list_opt K_end K_endgenerate
-      { /* Detect and warn about anachronistic begin/end use */
-	if (generation_flag > GN_VER2001 && warn_anachronisms) {
-	      warn_count += 1;
-	      cerr << @2 << ": warning: Anachronistic use of begin/end to surround generate schemes." << endl;
-	}
-      }
-  | K_generate K_begin ':' IDENTIFIER {
-	pform_start_generate_nblock(@2, $4);
-      } module_item_list_opt K_end K_endgenerate
-      { /* Detect and warn about anachronistic named begin/end use */
-	if (generation_flag > GN_VER2001 && warn_anachronisms) {
-	      warn_count += 1;
-	      cerr << @2 << ": warning: Anachronistic use of named begin/end to surround generate schemes." << endl;
-	}
-	pform_endgenerate();
-      }
 
   | modport_declaration
 
@@ -4922,6 +4903,16 @@ module_item
 		{ pform_set_timeprecision($2, true, true); }
 	;
 
+module_item_list
+  : module_item_list module_item
+  | module_item
+  ;
+
+module_item_list_opt
+  : module_item_list
+  |
+  ;
+
 generate_if : K_if '(' expression ')' { pform_start_generate_if(@1, $3); } ;
 
 generate_case_items
@@ -4936,15 +4927,37 @@ generate_case_item
       { pform_endgenerate(); }
   ;
 
-module_item_list
-	: module_item_list module_item
-	| module_item
-	;
+generate_item
+  : module_item
+  /* Handle some anachronistic syntax cases. */
+  | K_begin generate_item_list_opt K_end
+      { /* Detect and warn about anachronistic begin/end use */
+	if (generation_flag > GN_VER2001 && warn_anachronisms) {
+	      warn_count += 1;
+	      cerr << @1 << ": warning: Anachronistic use of begin/end to surround generate schemes." << endl;
+	}
+      }
+  | K_begin ':' IDENTIFIER {
+	pform_start_generate_nblock(@1, $3);
+      } generate_item_list_opt K_end
+      { /* Detect and warn about anachronistic named begin/end use */
+	if (generation_flag > GN_VER2001 && warn_anachronisms) {
+	      warn_count += 1;
+	      cerr << @1 << ": warning: Anachronistic use of named begin/end to surround generate schemes." << endl;
+	}
+	pform_endgenerate();
+      }
+  ;
 
-module_item_list_opt
-	: module_item_list
-	|
-	;
+generate_item_list
+  : generate_item_list generate_item
+  | generate_item
+  ;
+
+generate_item_list_opt
+  : generate_item_list
+  |
+  ;
 
   /* A generate block is the thing within a generate scheme. It may be
      a single module item, an anonymous block of module items, or a
@@ -4953,24 +4966,24 @@ module_item_list_opt
      only need to take note here of the scope name, if any. */
 
 generate_block
-        : module_item
-        | K_begin module_item_list_opt K_end
-        | K_begin ':' IDENTIFIER module_item_list_opt K_end endlabel_opt
-             { pform_generate_block_name($3);
-               if ($6) {
-                     if (strcmp($3,$6) != 0) {
-                           yyerror(@6, "error: End label doesn't match "
-                                       "begin name");
-                     }
-                     if (! gn_system_verilog()) {
-                           yyerror(@6, "error: Begin end labels require "
-                                       "SystemVerilog.");
-                     }
-                     delete[]$6;
-               }
-               delete[]$3;
-             }
-        ;
+  : module_item
+  | K_begin generate_item_list_opt K_end
+  | K_begin ':' IDENTIFIER generate_item_list_opt K_end endlabel_opt
+      { pform_generate_block_name($3);
+	if ($6) {
+	      if (strcmp($3,$6) != 0) {
+		    yyerror(@6, "error: End label doesn't match "
+				"begin name");
+	      }
+	      if (! gn_system_verilog()) {
+		    yyerror(@6, "error: Begin end labels require "
+				"SystemVerilog.");
+	      }
+	      delete[]$6;
+	}
+	delete[]$3;
+      }
+  ;
 
 generate_block_opt : generate_block | ';' ;
 

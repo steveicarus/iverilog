@@ -1,4 +1,4 @@
-.TH iverilog 1 "May 10th, 2015" "" "Version %M.%m.%n %E"
+.TH iverilog 1 "Aug 7th, 2015" "" "Version %M.%m.%n %E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -292,8 +292,13 @@ after a \fB\-Wall\fP argument to suppress isolated warning types.
 
 .TP 8
 .B all
-This enables the implicit, portbind, select\-range, timescale, and
-sensitivity\-entire\-array warning categories.
+This enables the anachronisms, implicit, portbind, select\-range,
+timescale, and sensitivity\-entire\-array warning categories.
+
+.TP 8
+.B anachronisms
+This enables warnings for use of features that have been deprecated
+or removed in the selected generation of the Verilog language.
 
 .TP 8
 .B implicit
