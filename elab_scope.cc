@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1793,8 +1793,12 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // so the mapping into the replace list is much easier.
 	    if (parms_) {
 		  assert(overrides_ == 0);
-		  for (unsigned jdx = 0 ;  jdx < nparms_ ;  jdx += 1)
-			replace[parms_[jdx].name] = parms_[jdx].parm;
+		  for (unsigned jdx = 0 ;  jdx < nparms_ ;  jdx += 1) {
+		          // No expression means that the parameter is not
+		          // replaced.
+			if (parms_[jdx].parm)
+			      replace[parms_[jdx].name] = parms_[jdx].parm;
+		  }
 
 	    }
 
