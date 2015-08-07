@@ -2678,8 +2678,8 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 
 	    curw->set_signed(signed_flag);
 		if (isint) {
-			bool res = curw->set_wire_type(NetNet::INTEGER);
-			assert(res);
+			bool flag = curw->set_wire_type(NetNet::INTEGER);
+			assert(flag);
 		}
 
 	      /* If there is a range involved, it needs to be set. */
