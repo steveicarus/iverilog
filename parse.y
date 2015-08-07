@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2415,7 +2415,7 @@ module_item
      is supposed to be limited to certain kinds of module items, but
      the semantic tests will check that for us. */
 
-  | K_generate module_item_list_opt K_endgenerate
+  | K_generate generate_item_list_opt K_endgenerate
 
   | K_genvar list_of_identifiers ';'
       { pform_genvars(@1, $2); }
@@ -2443,25 +2443,6 @@ module_item
     generate_case_items
     K_endcase
       { pform_endgenerate(); }
-
-  /* Handle some anachronistic syntax cases. */
-  | K_generate K_begin module_item_list_opt K_end K_endgenerate
-      { /* Detect and warn about anachronistic begin/end use */
-	if (generation_flag > GN_VER2001) {
-	      warn_count += 1;
-	      cerr << @2 << ": warning: Anachronistic use of begin/end to surround generate schemes." << endl;
-	}
-      }
-  | K_generate K_begin ':' IDENTIFIER {
-	pform_start_generate_nblock(@2, $4);
-      } module_item_list_opt K_end K_endgenerate
-      { /* Detect and warn about anachronistic named begin/end use */
-	if (generation_flag > GN_VER2001) {
-	      warn_count += 1;
-	      cerr << @2 << ": warning: Anachronistic use of named begin/end to surround generate schemes." << endl;
-	}
-	pform_endgenerate();
-      }
 
   /* specify blocks are parsed but ignored. */
 
@@ -2525,6 +2506,16 @@ module_item
 		{ yyerror(@1, "error: Malformed $attribute parameter list."); }
 	;
 
+module_item_list
+  : module_item_list module_item
+  | module_item
+  ;
+
+module_item_list_opt
+  : module_item_list
+  |
+  ;
+
 automatic_opt
 	: K_automatic { $$ = true; }
 	| { $$ = false;}
@@ -2544,15 +2535,37 @@ generate_case_item
       { pform_endgenerate(); }
   ;
 
-module_item_list
-	: module_item_list module_item
-	| module_item
-	;
+generate_item
+  : module_item
+  /* Handle some anachronistic syntax cases. */
+  | K_begin generate_item_list_opt K_end
+      { /* Detect and warn about anachronistic begin/end use */
+	if (generation_flag > GN_VER2001) {
+	      warn_count += 1;
+	      cerr << @1 << ": warning: Anachronistic use of begin/end to surround generate schemes." << endl;
+	}
+      }
+  | K_begin ':' IDENTIFIER {
+	pform_start_generate_nblock(@1, $3);
+      } generate_item_list_opt K_end
+      { /* Detect and warn about anachronistic named begin/end use */
+	if (generation_flag > GN_VER2001) {
+	      warn_count += 1;
+	      cerr << @1 << ": warning: Anachronistic use of named begin/end to surround generate schemes." << endl;
+	}
+	pform_endgenerate();
+      }
+  ;
 
-module_item_list_opt
-	: module_item_list
-	|
-	;
+generate_item_list
+  : generate_item_list generate_item
+  | generate_item
+  ;
+
+generate_item_list_opt
+  : generate_item_list
+  |
+  ;
 
   /* A generate block is the thing within a generate scheme. It may be
      a single module item, an anonymous block of module items, or a
@@ -2562,8 +2575,8 @@ module_item_list_opt
 
 generate_block
         : module_item
-        | K_begin module_item_list_opt K_end
-        | K_begin ':' IDENTIFIER module_item_list_opt K_end
+        | K_begin generate_item_list_opt K_end
+        | K_begin ':' IDENTIFIER generate_item_list_opt K_end
              { pform_generate_block_name($3); }
         ;
 
