@@ -304,6 +304,9 @@ int ExpName::elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*lva
       } else if (scope->find_constant(name_, dummy_type, dummy_expr)) {
 	      /* OK */
 
+      } else if (scope->is_enum_name(name_)) {
+	      /* OK */
+
       } else {
             cerr << get_fileline() << ": error: No port, signal or constant " << name_
 		 << " to be used as r-value." << endl;
