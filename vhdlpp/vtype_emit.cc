@@ -89,7 +89,7 @@ int VTypeArray::emit_with_dims_(std::ostream&out, bool packed, perm_string name)
 
       list<const VTypeArray*> dims;
       const VTypeArray*cur = this;
-      while (const VTypeArray*sub = dynamic_cast<const VTypeArray*> (cur->etype_)) {
+      while (const VTypeArray*sub = dynamic_cast<const VTypeArray*> (cur->element_type())) {
 	    dims.push_back(cur);
 	    cur = sub;
       }
