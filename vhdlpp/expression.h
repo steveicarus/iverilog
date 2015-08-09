@@ -168,6 +168,7 @@ class ExpUnary : public Expression {
       inline const Expression*peek_operand() const { return operand1_; }
 
       const VType*fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*atype) const;
+      int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void visit(ExprVisitor& func);
 
     protected:
@@ -825,7 +826,6 @@ class ExpUNot : public ExpUnary {
 
       Expression*clone() const { return new ExpUNot(peek_operand()->clone()); }
 
-      int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
       void dump(ostream&out, int indent = 0) const;

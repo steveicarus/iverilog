@@ -373,6 +373,13 @@ const VType*ExpUnary::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*aty
       return operand1_->fit_type(ent, scope, atype);
 }
 
+int ExpUnary::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
+{
+      ivl_assert(*this, ltype != 0);
+      set_type(ltype);
+      return operand1_->elaborate_expr(ent, scope, ltype);
+}
+
 const VType*ExpAggregate::probe_type(Entity*ent, ScopeBase*scope) const
 {
       return Expression::probe_type(ent, scope);
@@ -1042,14 +1049,6 @@ int ExpString::elaborate_expr(Entity*, ScopeBase*, const VType*ltype)
       set_type(ltype);
       return 0;
 }
-
-int ExpUNot::elaborate_expr(Entity*, ScopeBase*, const VType*ltype)
-{
-      ivl_assert(*this, ltype != 0);
-      set_type(ltype);
-      return 0;
-}
-
 
 int ExpTime::elaborate_expr(Entity*, ScopeBase*, const VType*)
 {
