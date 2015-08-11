@@ -304,6 +304,9 @@ int ExpName::elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*lva
       } else if (scope->find_constant(name_, dummy_type, dummy_expr)) {
 	      /* OK */
 
+      } else if (scope->is_enum_name(name_)) {
+	      /* OK */
+
       } else {
             cerr << get_fileline() << ": error: No port, signal or constant " << name_
 		 << " to be used as r-value." << endl;
@@ -371,6 +374,13 @@ int ExpBinary::elaborate_exprs(Entity*ent, ScopeBase*scope, const VType*ltype)
 const VType*ExpUnary::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*atype) const
 {
       return operand1_->fit_type(ent, scope, atype);
+}
+
+int ExpUnary::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
+{
+      ivl_assert(*this, ltype != 0);
+      set_type(ltype);
+      return operand1_->elaborate_expr(ent, scope, ltype);
 }
 
 const VType*ExpAggregate::probe_type(Entity*ent, ScopeBase*scope) const
@@ -1042,14 +1052,6 @@ int ExpString::elaborate_expr(Entity*, ScopeBase*, const VType*ltype)
       set_type(ltype);
       return 0;
 }
-
-int ExpUNot::elaborate_expr(Entity*, ScopeBase*, const VType*ltype)
-{
-      ivl_assert(*this, ltype != 0);
-      set_type(ltype);
-      return 0;
-}
-
 
 int ExpTime::elaborate_expr(Entity*, ScopeBase*, const VType*)
 {

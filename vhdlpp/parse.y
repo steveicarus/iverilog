@@ -2273,6 +2273,7 @@ sequence_of_statements
         tmp->push_back($1);
 	$$ = tmp;
       }
+  | { $$ = NULL; }
   ;
 
 sequential_statement
@@ -2531,7 +2532,6 @@ subprogram_specification
      list here. */
 subprogram_statement_part
   : sequence_of_statements { $$ = $1; }
-  |                        { $$ = 0; }
   ;
 
 subtype_declaration
