@@ -359,7 +359,8 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <name_list> logical_name_list identifier_list
 %type <name_list> enumeration_literal_list enumeration_literal
 
-%type <sequ_list> if_statement_else sequence_of_statements subprogram_statement_part
+%type <sequ_list> if_statement_else list_of_statements
+%type <sequ_list> sequence_of_statements subprogram_statement_part
 %type <sequ> sequential_statement if_statement signal_assignment signal_assignment_statement
 %type <sequ> case_statement procedure_call procedure_call_statement
 %type <sequ> loop_statement variable_assignment variable_assignment_statement
@@ -2260,8 +2261,8 @@ selected_waveform_list
       }
   ;
 
-sequence_of_statements
-  : sequence_of_statements sequential_statement
+list_of_statements
+  : list_of_statements sequential_statement
       { std::list<SequentialStmt*>*tmp = $1;
     if($2)
         tmp->push_back($2);
@@ -2273,6 +2274,10 @@ sequence_of_statements
         tmp->push_back($1);
 	$$ = tmp;
       }
+  ;
+
+sequence_of_statements
+  : list_of_statements { $1 = $$; }
   | { $$ = NULL; }
   ;
 
@@ -2528,8 +2533,7 @@ subprogram_specification
   /* This is an implementation of the rule:
      subprogram_statement_part ::= { sequential_statement }
      where the sequence_of_statements rule is a list of
-     sequential_statement. Also handle the special case of an empty
-     list here. */
+     sequential_statement. */
 subprogram_statement_part
   : sequence_of_statements { $$ = $1; }
   ;
