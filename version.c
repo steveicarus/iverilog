@@ -29,10 +29,7 @@ static void run_string(const char*txt)
 	    if (cp[0] == '%' && cp[1] != 0) {
 		  switch (cp[1]) {
 		      case 'M':
-			fprintf(stdout, "%u", VERSION_MAJOR1);
-			break;
-		      case 'm':
-			fprintf(stdout, "%u", VERSION_MAJOR2);
+			fprintf(stdout, "%u", VERSION_MAJOR);
 			break;
 		      case 'n':
 			fprintf(stdout, "%u", VERSION_MINOR);

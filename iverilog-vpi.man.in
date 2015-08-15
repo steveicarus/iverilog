@@ -1,4 +1,4 @@
-.TH iverilog-vpi 1 "May 10th, 2015" "" "Version %M.%m.%n %E"
+.TH iverilog-vpi 1 "May 10th, 2015" "" "Version %M.%n%E"
 .SH NAME
 iverilog-vpi - Compile front end for VPI modules
 

@@ -1,4 +1,4 @@
-.TH iverilog 1 "Aug 7th, 2015" "" "Version %M.%m.%n %E"
+.TH iverilog 1 "Aug 7th, 2015" "" "Version %M.%n%E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 

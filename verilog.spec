@@ -10,7 +10,7 @@
 #
 Summary: Icarus Verilog
 Name: verilog%{suff}
-Version: 0.10.0.%{rev_date}
+Version: 10.0.%{rev_date}
 Release: 0
 License: GPL
 Group: Productivity/Scientific/Electronics
