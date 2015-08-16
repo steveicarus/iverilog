@@ -1,4 +1,4 @@
-.TH vvp 1 "May 10th, 2015" "" "Version %M.%m.%n %E"
+.TH vvp 1 "May 10th, 2015" "" "Version %M.%n %E"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
