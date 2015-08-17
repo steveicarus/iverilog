@@ -376,7 +376,7 @@ int main(int argc, char*argv[])
       if (version_flag) {
 	    fprintf(stderr, "Icarus Verilog runtime version " VERSION " ("
 	                    VERSION_TAG ")\n\n");
-	    fprintf(stderr, "Copyright 1998-2012 Stephen Williams\n\n");
+	    fprintf(stderr, "Copyright 1998-2015 Stephen Williams\n\n");
 	    fprintf(stderr,
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"

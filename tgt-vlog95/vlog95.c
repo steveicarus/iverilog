@@ -30,7 +30,7 @@
 
 static const char*version_string =
 "Icarus Verilog VLOG95 Code Generator " VERSION " (" VERSION_TAG ")\n\n"
-"Copyright (C) 2010-2013 Cary R. (cygcary@yahoo.com)\n\n"
+"Copyright (C) 2010-2015 Cary R. (cygcary@yahoo.com)\n\n"
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"
 "  the Free Software Foundation; either version 2 of the License, or\n"
