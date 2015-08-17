@@ -1047,7 +1047,7 @@ int main(int argc, char **argv)
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
-	    printf("Copyright 1998-2013 Stephen Williams\n\n");
+	    printf("Copyright 1998-2015 Stephen Williams\n\n");
 	    puts(NOTICE);
       }
 
