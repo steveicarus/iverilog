@@ -33,7 +33,7 @@
  *   port-2:  Clock Enable input
  *   port-3:  Asynchronous Set/Clear input.
  *
- * The base vvp_dff does not implement an asychronous set/clear.
+ * The base vvp_dff does not implement an asynchronous set/clear.
  */
 class vvp_dff : public vvp_net_fun_t {
 

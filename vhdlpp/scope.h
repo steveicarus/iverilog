@@ -169,7 +169,7 @@ class ActiveScope : public ScopeBase {
       bool is_vector_name(perm_string name) const;
 
 	// Locate the subprogram by name. The subprogram body uses
-	// this to locate the sobprogram declaration. Note that the
+	// this to locate the subprogram declaration. Note that the
 	// subprogram may be in a package header.
       SubprogramHeader* recall_subprogram(perm_string name) const;
 

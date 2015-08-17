@@ -874,7 +874,7 @@ const VType* ExpName::probe_prefix_type_(Entity*ent, ScopeBase*scope) const
 }
 
 /*
- * This method is the probe_type() imlementation for ExpName objects
+ * This method is the probe_type() implementation for ExpName objects
  * that have prefix parts. In this case we try to get the type of the
  * prefix and interpret the name in that context.
  */

@@ -30,7 +30,7 @@ different set of programs. The path given is used to locate
 \fIivlpp\fP, \fIivl\fP, code generators and the VPI modules.
 .TP 8
 .B -c\fIfile\fP -f\fIfile\fP
-These flags specifies an input file that contains a list of Verilog
+These flags specify an input file that contains a list of Verilog
 source files. This is similar to the \fIcommand file\fP of other
 Verilog simulators, in that it is a file that contains the file names
 instead of taking them on the command line. See \fBCommand Files\fP below.
