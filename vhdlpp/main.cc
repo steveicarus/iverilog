@@ -38,7 +38,7 @@ const char COPYRIGHT[] =
  *        information to the file named <path>.
  *
  *     elaboration=<path>
- *        Enable debugging of elaboratin by dumping elaboration
+ *        Enable debugging of elaboration by dumping elaboration
  *        process information to the file named <path>.
  *
  *     entities=<path>

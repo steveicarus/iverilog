@@ -156,7 +156,7 @@ static PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*data)
 
 	    rval.value.scalar = vpi1;
 
-	    // Detect if change occured in this moment
+	    // Detect if change occurred in this moment
 	    if (mon->last_event.high != tnow.high)
 		  rval.value.scalar = vpi0;
 	    if (mon->last_event.low != tnow.low)

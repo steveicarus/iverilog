@@ -793,7 +793,7 @@ void elaborate_rootscope_tasks(Design*des)
 	    }
 
 	    cerr << cur->second->get_fileline() << ": internal error: "
-		 << "elabortae_rootscope_tasks does not understand "
+		 << "elaborate_rootscope_tasks does not understand "
 		 << "this object," << endl;
 	    des->errors += 1;
       }
