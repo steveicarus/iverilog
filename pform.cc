@@ -2910,7 +2910,7 @@ void pform_set_parameter(const struct vlltype&loc,
 	    error_count += 1;
       }
 	// Only a Module scope has specparams.
-	  if ((dynamic_cast<Module*> (scope)) &&     
+	  if ((dynamic_cast<Module*> (scope)) &&
 		  (scope == pform_cur_module.front()) &&
           (pform_cur_module.front()->specparams.find(name) !=
            pform_cur_module.front()->specparams.end())) {

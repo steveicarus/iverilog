@@ -834,14 +834,14 @@ else_when_waveform
 concurrent_signal_assignment_statement /* IEEE 1076-2008 P11.6 */
   : concurrent_simple_signal_assignment
 
-  | IDENTIFIER ':' concurrent_simple_signal_assignment 
+  | IDENTIFIER ':' concurrent_simple_signal_assignment
       { delete[] $1;
 	$$ = $3;
       }
 
   | concurrent_conditional_signal_assignment
 
-  | IDENTIFIER ':' concurrent_conditional_signal_assignment 
+  | IDENTIFIER ':' concurrent_conditional_signal_assignment
       { delete[] $1;
 	$$ = $3;
       }
