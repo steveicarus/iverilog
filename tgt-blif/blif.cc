@@ -35,7 +35,7 @@ using namespace std;
 
 static const char*version_string =
 "Icarus Verilog BLIF Code Generator " VERSION " (" VERSION_TAG ")\n\n"
-"Copyright (c) 2013 Stephen Williams (steve@icarus.com)\n\n"
+"Copyright (c) 2013,2015 Stephen Williams (steve@icarus.com)\n\n"
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"
 "  the Free Software Foundation; either version 2 of the License, or\n"
