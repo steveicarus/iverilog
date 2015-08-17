@@ -4039,9 +4039,18 @@ NetProc* PDisable::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PDoWhile::elaborate(Design*des, NetScope*scope) const
 {
-      NetExpr*tmp = elab_and_eval(des, scope, cond_, -1);
-      tmp->set_line(*this);
-      NetDoWhile*loop = new NetDoWhile(tmp, statement_->elaborate(des, scope));
+      NetExpr*ce = elab_and_eval(des, scope, cond_, -1);
+      NetProc*sub;
+      if (statement_)
+	    sub = statement_->elaborate(des, scope);
+      else
+	    sub = new NetBlock(NetBlock::SEQU, 0);
+      if (ce == 0 || sub == 0) {
+	    delete ce;
+	    delete sub;
+	    return 0;
+      }
+      NetDoWhile*loop = new NetDoWhile(ce, sub);
       loop->set_line(*this);
       return loop;
 }
@@ -4572,7 +4581,11 @@ NetProc* PEventStatement::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PForever::elaborate(Design*des, NetScope*scope) const
 {
-      NetProc*stat = statement_->elaborate(des, scope);
+      NetProc*stat;
+      if (statement_)
+	    stat = statement_->elaborate(des, scope);
+      else
+	    stat = new NetBlock(NetBlock::SEQU, 0);
       if (stat == 0) return 0;
 
       NetForever*proc = new NetForever(stat);
@@ -4778,7 +4791,11 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
 
 	/* Elaborate the statement that is contained in the foreach
 	   loop. */
-      NetProc*sub = statement_->elaborate(des, scope);
+      NetProc*sub;
+      if (statement_)
+	    sub = statement_->elaborate(des, scope);
+      else
+	    sub = new NetBlock(NetBlock::SEQU, 0);
 
 	/* Make a step statement: idx += 1 */
       NetAssign_*idx_lv = new NetAssign_(idx_sig);
@@ -4809,7 +4826,11 @@ NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
       ivl_assert(*this, index_vars_.size() > 0);
       ivl_assert(*this, dims.size() == index_vars_.size());
 
-      NetProc*sub = statement_->elaborate(des, scope);
+      NetProc*sub;
+      if (statement_)
+	    sub = statement_->elaborate(des, scope);
+      else
+	    sub = new NetBlock(NetBlock::SEQU, 0);
       NetForLoop*stmt = 0;
 
       for (int idx_idx = index_vars_.size()-1 ; idx_idx >= 0 ; idx_idx -= 1) {
@@ -4903,7 +4924,11 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	   loop. If there is an error, this will return 0 and I should
 	   skip the append. No need to worry, the error has been
 	   reported so it's OK that the netlist is bogus. */
-      NetProc*sub = statement_->elaborate(des, scope);
+      NetProc*sub;
+      if (statement_)
+	    sub = statement_->elaborate(des, scope);
+      else
+	    sub = new NetBlock(NetBlock::SEQU, 0);
 
 	/* Now elaborate the for_step statement. I really should do
 	   some error checking here to make sure the step statement
@@ -5025,7 +5050,11 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
       if (expr->expr_type() == IVL_VT_REAL)
 	    expr = cast_to_int4(expr, 64);
 
-      NetProc*stat = statement_->elaborate(des, scope);
+      NetProc*stat;
+      if (statement_)
+	    stat = statement_->elaborate(des, scope);
+      else
+	    stat = new NetBlock(NetBlock::SEQU, 0);
       if (stat == 0) return 0;
 
 	// If the expression is a constant, handle certain special
@@ -5205,7 +5234,11 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 NetProc* PWhile::elaborate(Design*des, NetScope*scope) const
 {
       NetExpr*ce = elab_and_eval(des, scope, cond_, -1);
-      NetProc*sub = statement_->elaborate(des, scope);
+      NetProc*sub;
+      if (statement_)
+	    sub = statement_->elaborate(des, scope);
+      else
+	    sub = new NetBlock(NetBlock::SEQU, 0);
       if (ce == 0 || sub == 0) {
 	    delete ce;
 	    delete sub;
