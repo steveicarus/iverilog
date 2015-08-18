@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1808,9 +1808,9 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 
       tmp->set_width(wid_sum * tmp->repeat());
 
-      if (wid_sum == 0 && concat_depth < 2) {
-	    cerr << get_fileline() << ": error: Concatenation may not "
-	         << "have zero width in this context." << endl;
+      if (wid_sum == 0) {
+	    cerr << get_fileline() << ": error: Concatenation/replication "
+	         << "may not have zero width in this context." << endl;
 	    des->errors += 1;
 	    concat_depth -= 1;
 	    delete tmp;
