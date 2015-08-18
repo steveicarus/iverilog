@@ -141,46 +141,44 @@ void verify_version(char*ivl_ver, char*commit)
       }
       delete[] commit;
 
-      char*vvp_ver = strdup(VERSION);
-      char *vp, *ip;
+      int file_major, file_minor, file_minor2;
+      char file_extra[128];
 
-	/* Check the major/minor version. */
-      ip = strrchr(ivl_ver, '.');
-      *ip = '\0';
-      vp = strrchr(vvp_ver, '.');
-      *vp = '\0';
-      if (strcmp(ivl_ver, vvp_ver) != 0) {
-	    vpi_mcd_printf(1, "Error: VVP input file version %s can not "
-	                      "be run with run time version %s!\n",
-	                      ivl_ver, vvp_ver);
+	// Old style format: 0.<major>.<minor> <extra>
+	// This also catches a potential new-new format that has
+	// another sub-minor number.
+      file_extra[0] = 0;
+      int rc = sscanf(ivl_ver, "%d.%d.%d %128s", &file_major, &file_minor, &file_minor2, file_extra);
+
+	// If it wasn't the old style format, try the new format:
+	// <major>.<minor> <extra>
+      if (rc == 2) {
+	    file_extra[0] = 0;
+	    rc = sscanf(ivl_ver, "%d.%d %128s", &file_major, &file_minor, file_extra);
+	    file_minor2 = 0;
+      }
+
+	// If this was the old format, the file_major will be 0. In
+	// this case it is not really what we meant, so convert to the
+	// new format.
+      if (file_major == 0) {
+	    file_major = file_minor;
+	    file_minor = file_minor2;
+	    file_minor2 = 0;
+      }
+
+      if (VERSION_MAJOR != file_major) {
+	    vpi_mcd_printf(1, "Error: VVP input file %d.%d can not "
+			   "be run with run time version %s\n",
+			   file_major, file_minor, VERSION);
 	    exit(1);
       }
 
-	/* Check that the sub-version is compatible. */
-      ip += 1;
-      vp += 1;
-      int ivl_sv, vvp_sv;
-      if (strcmp(ip, "devel") == 0) {
-	    ivl_sv = -1;
-      } else {
-	    int res = sscanf(ip, "%d", &ivl_sv);
-	    assert(res == 1);
+      if (VERSION_MINOR < file_minor) {
+	    vpi_mcd_printf(1, "Warning: VVP input file sub version %d.%d"
+			   " is greater than the run time version %s.\n",
+			   file_major, file_minor, VERSION);
       }
-      if (strcmp(vp, "devel") == 0) {
-	    vvp_sv = -1;
-      } else {
-	    int res = sscanf(vp, "%d", &vvp_sv);
-	    assert(res == 1);
-      }
-      if (ivl_sv > vvp_sv) {
-	    if (verbose_flag) vpi_mcd_printf(1, " ... ");
-	    vpi_mcd_printf(1, "Warning: VVP input file sub-version %s is "
-	                      "greater than the run time sub-version %s!\n",
-	                      ip, vp);
-      }
-
-      delete[] ivl_ver;
-      free(vvp_ver);
 }
 
 int vpip_delay_selection = _vpiDelaySelTypical;
