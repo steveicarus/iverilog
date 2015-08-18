@@ -2842,9 +2842,9 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	    concat->set(idx, parms[off+idx]);
       }
 
-      if (wid_sum == 0 && concat_depth < 2) {
-	    cerr << get_fileline() << ": error: Concatenation may not "
-	         << "have zero width in this context." << endl;
+      if (wid_sum == 0) {
+	    cerr << get_fileline() << ": error: Concatenation/replication "
+	         << "may not have zero width in this context." << endl;
 	    des->errors += 1;
 	    concat_depth -= 1;
 	    delete concat;
