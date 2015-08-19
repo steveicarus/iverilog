@@ -27,6 +27,9 @@
 # include  "parse.h"
 # include  <string.h>
 # include  <assert.h>
+
+# define YY_NO_INPUT
+
 %}
 
 %%

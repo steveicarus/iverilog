@@ -727,7 +727,7 @@ static void draw_oct_table()
       printf("};\n");
 }
 
-main()
+int main()
 {
       printf("# include  \"logic.h\"\n");
       draw_AND();

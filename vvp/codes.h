@@ -142,7 +142,7 @@ struct vvp_code_s {
 	    unsigned bit_idx[2];
 	    vvp_ipoint_t iptr2;
 	    vvp_code_t   cptr2;
-	    struct ufunc_core*ufunc_core_ptr;
+	    class ufunc_core*ufunc_core_ptr;
       };
 };
 

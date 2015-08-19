@@ -108,7 +108,7 @@ static inline int write_digits(unsigned long v, char **buf,
 unsigned vpip_bits_to_dec_str(const unsigned char *bits, unsigned int nbits,
 			      char *buf, unsigned int nbuf, int signed_flag)
 {
-	unsigned int idx, len, vlen;
+	unsigned int idx, vlen;
 	unsigned int mbits=nbits;   /* number of non-sign bits */
 	unsigned count_x = 0, count_z = 0;
 	/* Jump through some hoops so we don't have to malloc/free valv
@@ -156,19 +156,15 @@ unsigned vpip_bits_to_dec_str(const unsigned char *bits, unsigned int nbits,
 	}
 
 	if (count_x == nbits) {
-		len = 1;
 		buf[0] = 'x';
 		buf[1] = 0;
 	} else if (count_x > 0) {
-		len = 1;
 		buf[0] = 'X';
 		buf[1] = 0;
 	} else if (count_z == nbits) {
-		len = 1;
 		buf[0] = 'z';
 		buf[1] = 0;
 	} else if (count_z > 0) {
-		len = 1;
 		buf[0] = 'Z';
 		buf[1] = 0;
 	} else {

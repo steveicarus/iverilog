@@ -1005,8 +1005,10 @@ for(cnt = 0; cnt < lt->break_header_size; cnt += sizeof(buf))
 		seg = sizeof(buf);
 		}
 
-	fread(buf, seg, 1, clone);
-	fwrite(buf, seg, 1, f2);
+        if(fread(buf, seg, 1, clone))
+		{
+		if(!fwrite(buf, seg, 1, f2)) break; /* write error! */
+		}
 	}
 
 fclose(clone);

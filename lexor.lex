@@ -39,6 +39,8 @@
 # define YY_USER_INIT reset_lexor();
 # define yylval VLlval
 
+#define YY_NO_INPUT
+
 /*
  * Lexical location information is passed in the yylloc variable to th
  * parser. The file names, strings, are kept in a list so that I can

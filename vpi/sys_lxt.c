@@ -476,7 +476,6 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       struct t_cb_data cb;
       struct vcd_info* info;
 
-      const char* type;
       const char* name;
       const char* ident;
       int nexus_id;
@@ -507,10 +506,10 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	      /* There is nothing in named events to dump. */
 	    break;
 
-	  case vpiNet:  type = "wire";    if(0){
+	  case vpiNet:
 	  case vpiIntegerVar:
 	  case vpiTimeVar:
-	  case vpiReg:  type = "reg";    }
+	  case vpiReg:
 
 	    if (skip)
 		  break;
@@ -590,11 +589,11 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	    break;
 
-	  case vpiModule:      type = "module";      if(0){
-	  case vpiNamedBegin:  type = "begin";      }if(0){
-	  case vpiTask:        type = "task";       }if(0){
-	  case vpiFunction:    type = "function";   }if(0){
-	  case vpiNamedFork:   type = "fork";       }
+	  case vpiModule:
+	  case vpiNamedBegin:
+	  case vpiTask:
+	  case vpiFunction:
+	  case vpiNamedFork:
 
 	    if (depth > 0) {
 		  int nskip;
@@ -648,7 +647,6 @@ static int draw_scope(vpiHandle item)
 {
       int depth;
       const char *name;
-      char *type;
 
       vpiHandle scope = vpi_handle(vpiScope, item);
       if (!scope)
@@ -657,15 +655,7 @@ static int draw_scope(vpiHandle item)
       depth = 1 + draw_scope(scope);
       name = vpi_get_str(vpiName, scope);
 
-      switch (vpi_get(vpiType, item)) {
-	  case vpiNamedBegin:  type = "begin";      break;
-	  case vpiTask:        type = "task";       break;
-	  case vpiFunction:    type = "function";   break;
-	  case vpiNamedFork:   type = "fork";       break;
-	  default:             type = "module";     break;
-      }
-
-      push_scope(name);	/* keep in type info determination for possible future usage */
+      push_scope(name);
 
       return depth;
 }

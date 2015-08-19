@@ -49,7 +49,7 @@ long rtl_dist_poisson(long*seed, long mean)
 	    i = 0;
       }
 
-      return 0;
+      return i;
 }
 
 /* copied from IEEE1364-2001, with slight modifications for 64bit machines. */

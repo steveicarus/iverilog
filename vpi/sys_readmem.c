@@ -354,14 +354,12 @@ static PLI_INT32 sys_readmem_calltf(char*name)
 
 static PLI_INT32 sys_writemem_calltf(char*name)
 {
-      int wwid;
       char*path;
       char*mem_name;
       FILE*file;
       unsigned addr = 0;
       unsigned cnt = 0;
       s_vpi_value value;
-      vpiHandle words;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
       vpiHandle item = vpi_scan(argv);
@@ -374,7 +372,6 @@ static PLI_INT32 sys_writemem_calltf(char*name)
 
       int left_addr, right_addr;
       int start_addr, stop_addr, addr_incr;
-      int min_addr, max_addr;
 
       /*======================================== Get parameters */
 
@@ -493,9 +490,6 @@ static PLI_INT32 sys_writemem_calltf(char*name)
 	  }
       }
 
-      min_addr = start_addr<stop_addr ? start_addr : stop_addr ;
-      max_addr = start_addr<stop_addr ? stop_addr  : start_addr;
-
       /* Check that start_addr and stop_addr are within the memory
 	 range */
       if (left_addr<right_addr){
@@ -520,13 +514,6 @@ static PLI_INT32 sys_writemem_calltf(char*name)
 	      return 0;
 	  }
       }
-
-
-      words = vpi_iterate(vpiMemoryWord, mitem);
-      assert(words);
-
-      item = vpi_scan(words);
-      wwid = vpi_get(vpiSize, item);
 
       if (strcmp(name,"$writememb")==0){
 	  value.format = vpiBinStrVal;
