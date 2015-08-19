@@ -2702,10 +2702,11 @@ DelayType NetCase::delay_type() const
 
       for (unsigned idx = 0; idx < nstmts; idx += 1) {
 	    if (!expr(idx)) def_stmt = true;
+	    DelayType dt = stat(idx) ? stat(idx)->delay_type() : NO_DELAY;
             if (idx == 0) {
-		  result = stat(idx)->delay_type();
+		  result = dt;
             } else {
-		  result = combine_delays(result, stat(idx)->delay_type());
+		  result = combine_delays(result, dt);
             }
       }
 
@@ -2742,6 +2743,7 @@ DelayType NetEvWait::delay_type() const
 
 DelayType NetForever::delay_type() const
 {
+      ivl_assert(*this, statement_);
       return statement_->delay_type();
 }
 
@@ -2764,6 +2766,7 @@ DelayType NetPDelay::delay_type() const
 
 DelayType NetRepeat::delay_type() const
 {
+      ivl_assert(*this, statement_);
       return get_loop_delay_type(expr_, statement_);
 }
 
@@ -2779,5 +2782,6 @@ DelayType NetUTask::delay_type() const
 
 DelayType NetWhile::delay_type() const
 {
+      ivl_assert(*this, proc_);
       return get_loop_delay_type(cond_, proc_);
 }
