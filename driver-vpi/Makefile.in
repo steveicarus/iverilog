@@ -86,7 +86,7 @@ config.h: $(srcdir)/config.h.in Makefile
 
 # Windows specific...
 res.rc: $(srcdir)/res.rc.in ../version.exe
-	sed -e 's;@PRODUCTVERSION@;'`../version.exe '%M,%m,%n,0'`';' \
+	sed -e 's;@PRODUCTVERSION@;'`../version.exe '%M,%n,0,0'`';' \
 	$(srcdir)/res.rc.in > $@
 
 res.o: res.rc
