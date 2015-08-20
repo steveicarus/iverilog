@@ -2591,6 +2591,15 @@ void pform_makewire(const struct vlltype&li,
 		    NetNet::Type type,
 		    data_type_t*data_type)
 {
+      if ((lexical_scope == 0) && (generation_flag < GN_VER2005_SV)) {
+	    VLerror(li, "error: variable declarations must be contained within a module.");
+	    return;
+      }
+      if (lexical_scope == 0) {
+	    VLerror(li, "sorry: variable declarations in the $root scope are not yet supported.");
+	    return;
+      }
+
       list<perm_string>*names = new list<perm_string>;
 
       for (list<decl_assignment_t*>::iterator cur = assign_list->begin()
@@ -2887,6 +2896,14 @@ void pform_set_parameter(const struct vlltype&loc,
 			 LexicalScope::range_t*value_range)
 {
       LexicalScope*scope = lexical_scope;
+      if ((scope == 0) && (generation_flag < GN_VER2005_SV)) {
+	    VLerror(loc, "error: parameter declarations must be contained within a module.");
+	    return;
+      }
+      if (scope == 0) {
+	    VLerror(loc, "sorry: parameter declarations in the $root scope are not yet supported.");
+	    return;
+      }
       if (scope == pform_cur_generate) {
             VLerror("parameter declarations are not permitted in generate blocks");
             return;
@@ -2954,7 +2971,14 @@ void pform_set_localparam(const struct vlltype&loc,
 			  bool signed_flag, list<pform_range_t>*range, PExpr*expr)
 {
       LexicalScope*scope = lexical_scope;
-      ivl_assert(loc, scope);
+      if ((scope == 0) && (generation_flag < GN_VER2005_SV)) {
+	    VLerror(loc, "error: localparam declarations must be contained within a module.");
+	    return;
+      }
+      if (scope == 0) {
+	    VLerror(loc, "sorry: localparam declarations in the $root scope are not yet supported.");
+	    return;
+      }
 
 	// Check if the localparam name is already in the dictionary.
       if (scope->localparams.find(name) != scope->localparams.end()) {
