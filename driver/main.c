@@ -1051,15 +1051,6 @@ int main(int argc, char **argv)
 	    puts(NOTICE);
       }
 
-      if (synth_flag) {
-	    fprintf(stderr, "Warning: Synthesis is not currently being "
-	                    "maintained and may not\n");
-	    fprintf(stderr, "         function correctly. V0.8 was the "
-	                    "last release branch to\n");
-	    fprintf(stderr, "         have active synthesis development "
-	                    "and support!\n");
-      }
-
 	/* Make a common conf file path to reflect the target. */
       snprintf(iconfig_common_path, sizeof iconfig_common_path, "%s%c%s%s.conf",
 	      base, sep, targ, synth_flag? "-s" : "");
