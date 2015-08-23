@@ -32,7 +32,7 @@ engineering formats, including simulation. It strives to be true
 to the IEEE-1364 standard.
 
 %prep
-%setup -n verilog%{suff}-%{rev_date}
+%setup -n verilog-%{version}
 
 %build
 if test X%{suff} != X
