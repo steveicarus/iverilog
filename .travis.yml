@@ -9,7 +9,7 @@ addons:
     packages:
     - gperf
 
-sudo: true
+sudo: false
 
 notifications:
   email: false
