@@ -17,7 +17,6 @@ notifications:
 install:
  - git clone https://github.com/steveicarus/ivtest.git
  - export PATH=$HOME/bin:$PATH
- - sudo apt-get install gperf
  
 before_script:
   -  autoconf
