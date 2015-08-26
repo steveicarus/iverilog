@@ -375,6 +375,22 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
+      if(fun_ == REM) {
+          // Special case: division remainder, defined in the VHDL standard 1076-2008/9.2.7
+          // there is no direct counterpart, therefore output the formula to
+          // compute a remainder: A rem B = A - (A/B) * B;
+          out << "((";
+          errors += emit_operand1(out, ent, scope);
+          out << ")-((";
+          errors += emit_operand1(out, ent, scope);
+          out << ")/(";
+          errors += emit_operand2(out, ent, scope);
+          out << "))*(";
+          errors += emit_operand2(out, ent, scope);
+          out << "))";
+          return errors;
+      }
+
       errors += emit_operand1(out, ent, scope);
 
       switch (fun_) {
@@ -396,9 +412,8 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, ScopeBase*scope)
 	  case POW:
 	    out << " ** ";
 	    break;
-	  case REM:
-	    out << " /* ?remainder? */ ";
-	    break;
+	  case REM: // should not happen as it is handled above, suppress warnings
+            ivl_assert(*this, 0);
 	  case xCONCAT:
 	    ivl_assert(*this, 0);
 	    out << " /* ?concat? */ ";
