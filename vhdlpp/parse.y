@@ -2586,7 +2586,7 @@ suffix
       { $$ = $1; }
   | K_all
       { //do not have now better idea than using char constant
-	$$ = strcpy(new char[strlen("all"+1)], "all");
+	$$ = strdup("all");
       }
   ;
 
