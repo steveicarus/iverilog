@@ -484,7 +484,7 @@ int ReportStmt::emit(ostream&out, Entity*, ScopeBase*)
         case UNSPECIFIED:   ivl_assert(*this, false); break;
     }
 
-    out << msg_;
+    out << ExpString::escape_quot(msg_);
     out << " (" << get_fileline() << ")\");";
 
     if(severity_ == FAILURE)
@@ -497,7 +497,7 @@ int ReportStmt::emit(ostream&out, Entity*, ScopeBase*)
 
 void ReportStmt::write_to_stream(std::ostream&fd)
 {
-    fd << "report \"" << msg_ << "\"" << std::endl;
+    fd << "report \"" << ExpString::escape_quot(msg_) << "\"" << std::endl;
 
     fd << "severity ";
     switch(severity_)

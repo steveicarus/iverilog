@@ -916,11 +916,8 @@ int ExpString::emit(ostream& out, Entity*ent, ScopeBase*scope)
 	    return emit_as_array_(out, ent, scope, arr);
       }
 
-      out << "\"";
-      for(vector<char>::const_iterator it = value_.begin()
-	  ; it != value_.end(); ++it)
-	    out << *it;
-      out << "\"";
+      out << "\"" << escape_quot(value_) << "\"";
+
       return 0;
 }
 
@@ -957,6 +954,19 @@ int ExpString::emit_as_array_(ostream& out, Entity*, ScopeBase*, const VTypeArra
       }
 
       return errors;
+}
+
+std::string ExpString::escape_quot(const std::string& str)
+{
+      size_t idx = 0;
+      string result(str);
+
+      while((idx = result.find('"', idx)) != string::npos) {
+         result.replace(idx, 1, "\\\"");
+         idx += 2;
+      }
+
+      return result;
 }
 
 int ExpUAbs::emit(ostream&out, Entity*ent, ScopeBase*scope)

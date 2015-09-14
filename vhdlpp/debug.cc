@@ -415,12 +415,8 @@ void ExpRelation::dump(ostream&out, int indent) const
 
 void ExpString::dump(ostream&out, int indent) const
 {
-    out << setw(indent) << "" << "String \"";
-    for(vector<char>::const_iterator it = value_.begin();
-        it != value_.end(); ++it)
-        out << *it;
-    out << "\""
-    << " at " << get_fileline() << endl;
+    out << setw(indent) << "" << "String \"" << value_;
+    out << "\"" << " at " << get_fileline() << endl;
 }
 
 void ExpUAbs::dump(ostream&out, int indent) const

@@ -796,13 +796,17 @@ class ExpString : public Expression {
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
       bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
-      const std::vector<char>& get_value() const { return value_; }
+      const std::string& get_value() const { return value_; }
+
+	// Converts quotation marks (") to its escaped
+	// counterpart in SystemVerilog (\")
+      static std::string escape_quot(const std::string& str);
 
     private:
       int emit_as_array_(ostream&out, Entity*ent, ScopeBase*scope, const VTypeArray*arr);
 
     private:
-      std::vector<char> value_;
+      std::string value_;
 };
 
 class ExpUAbs : public ExpUnary {

@@ -272,10 +272,15 @@ void ExpShift::write_to_stream(ostream&out) const
 void ExpString::write_to_stream(ostream&fd) const
 {
     fd << "\"";
-    for(vector<char>::const_iterator it = value_.begin();
-      it != value_.end(); ++it) {
-        fd << *it;
+
+    // Restore double quotation marks
+    for(string::const_iterator it = value_.begin(); it != value_.end(); ++it) {
+        if(*it == '"')
+            fd << "\"\"";
+        else
+            fd << *it;
     }
+
     fd << "\"";
 }
 
