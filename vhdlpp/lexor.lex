@@ -111,9 +111,7 @@ time			{integer}{W}*([fFpPnNuUmM]?[sS])
     return CHARACTER_LITERAL;
 }
 
-(\"([^\"]|(\"\"))*?\")|(\"[^\"]*\")  {
-/* first pattern: string literals with doubled quotation mark */
-/* second pattern: string literals without doubled quotation */
+(\"([^\"]|(\"\"))*?\") {
     yylval.text = escape_quot_and_dup(yytext);
     assert(yylval.text);
     return STRING_LITERAL;
