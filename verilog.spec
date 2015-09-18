@@ -102,6 +102,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) %{_libdir}/ivl%{suff}/v2009.vpi
 %attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl_sys.sft
 %attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl_sys.vpi
+%attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl_textio.sft
+%attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl_textio.vpi
 %attr(-,root,root) %{_libdir}/ivl%{suff}/vpi_debug.vpi
 %attr(-,root,root) %{_libdir}/ivl%{suff}/cadpli.vpl
 %attr(-,root,root) %{_libdir}/libvpi%{suff}.a

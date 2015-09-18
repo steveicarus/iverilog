@@ -832,6 +832,7 @@ int main(int argc, char*argv[])
 	// Start the module list with the base system module.
       add_vpi_module("system");
       add_vpi_module("vhdl_sys");
+      add_vpi_module("vhdl_textio");
 
       flags["-o"] = strdup("a.out");
       min_typ_max_flag = TYP;
