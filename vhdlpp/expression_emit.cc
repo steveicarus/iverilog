@@ -931,7 +931,7 @@ int ExpString::emit_as_array_(ostream& out, Entity*, ScopeBase*, const VTypeArra
 
 	// Detect the special case that this is an array of
 	// CHARACTER. In this case, emit at a Verilog string.
-      if (etype->type()==VTypePrimitive::CHARACTER) {
+      if (arr->element_type() == &primitive_CHARACTER) {
 	    vector<char> tmp (value_.size() + 3);
 	    tmp[0] = '"';
 	    memcpy(&tmp[1], &value_[0], value_.size());

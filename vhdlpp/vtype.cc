@@ -58,9 +58,6 @@ void VTypePrimitive::show(ostream&out) const
 	  case BIT:
 	    out << "BIT";
 	    break;
-	  case CHARACTER:
-	    out << "CHARACTER";
-	    break;
 	  case INTEGER:
 	    out << "INTEGER";
 	    break;
@@ -89,9 +86,6 @@ int VTypePrimitive::get_width(ScopeBase*) const
         case INTEGER:
         case NATURAL:
             return 32;
-
-        case CHARACTER:
-            return 8;
 
         default:
             std::cerr << "sorry: primitive type " << type_ <<

@@ -156,7 +156,7 @@ class VTypeERROR : public VType {
 class VTypePrimitive : public VType {
 
     public:
-      enum type_t { BIT, INTEGER, NATURAL, REAL, STDLOGIC, CHARACTER, TIME };
+      enum type_t { BIT, INTEGER, NATURAL, REAL, STDLOGIC, TIME };
 
     public:
       VTypePrimitive(type_t tt, bool packed = false);

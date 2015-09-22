@@ -30,11 +30,11 @@ const VTypePrimitive primitive_INTEGER(VTypePrimitive::INTEGER);
 const VTypePrimitive primitive_NATURAL(VTypePrimitive::NATURAL);
 const VTypePrimitive primitive_REAL(VTypePrimitive::REAL);
 const VTypePrimitive primitive_STDLOGIC(VTypePrimitive::STDLOGIC, true);
-const VTypePrimitive primitive_CHARACTER(VTypePrimitive::CHARACTER);
 const VTypePrimitive primitive_TIME(VTypePrimitive::TIME);
 
 VTypeDef type_BOOLEAN(perm_string::literal("boolean"));
 
+const VTypeArray primitive_CHARACTER(&primitive_BIT,            7, 0);
 const VTypeArray primitive_BIT_VECTOR(&primitive_BIT,           vector<VTypeArray::range_t> (1));
 const VTypeArray primitive_BOOL_VECTOR(&type_BOOLEAN,           vector<VTypeArray::range_t> (1));
 const VTypeArray primitive_STDLOGIC_VECTOR(&primitive_STDLOGIC, vector<VTypeArray::range_t> (1));

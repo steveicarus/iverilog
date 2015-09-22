@@ -35,11 +35,11 @@ extern const VTypePrimitive primitive_INTEGER;
 extern const VTypePrimitive primitive_NATURAL;
 extern const VTypePrimitive primitive_REAL;
 extern const VTypePrimitive primitive_STDLOGIC;
-extern const VTypePrimitive primitive_CHARACTER;
 extern const VTypePrimitive primitive_TIME;
 
 extern VTypeDef type_BOOLEAN;
 
+extern const VTypeArray primitive_CHARACTER;
 extern const VTypeArray primitive_BIT_VECTOR;
 extern const VTypeArray primitive_BOOL_VECTOR;
 extern const VTypeArray primitive_STDLOGIC_VECTOR;
