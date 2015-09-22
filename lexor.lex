@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -432,16 +432,26 @@ TU [munpf]
       return SYSTEM_IDENTIFIER; }
 
 
-\'[sS]?[dD][ \t]*[0-9][0-9_]*  { yylval.number = make_unsized_dec(yytext);
-                            return BASED_NUMBER; }
-\'[sS]?[dD][ \t]*[xzXZ?]_* { yylval.number = make_undef_highz_dec(yytext);
-                             return BASED_NUMBER; }
-\'[sS]?[bB][ \t]*[0-1xzXZ_\?]+ { yylval.number = make_unsized_binary(yytext);
-                        return BASED_NUMBER; }
-\'[sS]?[oO][ \t]*[0-7xzXZ_\?]+ { yylval.number = make_unsized_octal(yytext);
-                        return BASED_NUMBER; }
-\'[sS]?[hH][ \t]*[0-9a-fA-FxzXZ_\?]+ { yylval.number = make_unsized_hex(yytext);
-                              return BASED_NUMBER; }
+\'[sS]?[dD][ \t]*[0-9][0-9_]* {
+      yylval.number = make_unsized_dec(yytext);
+      return BASED_NUMBER;
+}
+\'[sS]?[dD][ \t]*[xzXZ?]_* {
+      yylval.number = make_undef_highz_dec(yytext);
+      return BASED_NUMBER;
+}
+\'[sS]?[bB][ \t]*[0-1xzXZ?][0-1xzXZ?_]* {
+      yylval.number = make_unsized_binary(yytext);
+      return BASED_NUMBER;
+}
+\'[sS]?[oO][ \t]*[0-7xzXZ?][0-7xzXZ?_]* {
+      yylval.number = make_unsized_octal(yytext);
+      return BASED_NUMBER;
+}
+\'[sS]?[hH][ \t]*[0-9a-fA-FxzXZ?][0-9a-fA-FxzXZ?_]* {
+      yylval.number = make_unsized_hex(yytext);
+      return BASED_NUMBER;
+}
 \'[01xzXZ] {
       if (generation_flag < GN_VER2005_SV) {
 	    cerr << yylloc.text << ":" << yylloc.first_line << ": warning: "
