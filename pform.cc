@@ -1087,16 +1087,21 @@ verinum* pform_verinum_with_size(verinum*siz, verinum*val,
 
       verinum::V pad;
 
-      switch (val->get(val->len()-1)) {
-	  case verinum::Vz:
-	    pad = verinum::Vz;
-	    break;
-	  case verinum::Vx:
+      if (val->len() == 0) {
 	    pad = verinum::Vx;
-	    break;
-	  default:
-	    pad = verinum::V0;
-	    break;
+      } else {
+
+	    switch (val->get(val->len()-1)) {
+		case verinum::Vz:
+		  pad = verinum::Vz;
+		  break;
+		case verinum::Vx:
+		  pad = verinum::Vx;
+		  break;
+		default:
+		  pad = verinum::V0;
+		  break;
+	    }
       }
 
       verinum*res = new verinum(pad, size, true);

@@ -862,6 +862,14 @@ verinum*make_unsized_binary(const char*txt)
       for (const char*idx = ptr ;  *idx ;  idx += 1)
 	    if (*idx != '_') size += 1;
 
+      if (size == 0) {
+	    VLerror(yylloc, "Numeric literal has no digits in it.");
+	    verinum*out = new verinum();
+	    out->has_sign(sign_flag);
+	    out->is_single(single_flag);
+	    return out;
+      }
+
       if ((based_size > 0) && (size > based_size)) yywarn(yylloc,
           "extra digits given for sized binary constant.");
 
