@@ -22,6 +22,7 @@
 
 # include  "vtype.h"
 # include  "expression.h"
+# include  "std_types.h"
 # include  <iostream>
 # include  <typeinfo>
 # include  <cassert>
@@ -65,6 +66,14 @@ int VTypeArray::emit_def(ostream&out, perm_string name) const
 
       if (base) {
 	    assert(dimensions() == 1);
+
+	    // If this is a string type without any boundaries specified, then
+	    // there is a direct counterpart in SV called.. 'string'
+	    if(this == &primitive_STRING) {
+		  out << "string";
+		  emit_name(out, name);
+		  return errors;
+	    }
 
 	    base->emit_def(out, empty_perm_string);
 	    if (signed_flag_)
