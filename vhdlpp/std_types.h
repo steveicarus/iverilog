@@ -29,7 +29,6 @@ bool is_global_type(perm_string type_name);
 void delete_global_types();
 const VTypeEnum*find_std_enum_name(perm_string name);
 
-extern const VTypePrimitive primitive_BOOLEAN;
 extern const VTypePrimitive primitive_BIT;
 extern const VTypePrimitive primitive_INTEGER;
 extern const VTypePrimitive primitive_NATURAL;

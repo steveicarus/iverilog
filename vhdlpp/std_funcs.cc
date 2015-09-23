@@ -141,7 +141,8 @@ void preload_std_funcs(void)
     fn_resize = new SubprogramSizeCast(perm_string::literal("resize"));
     std_subprograms[fn_resize->name()] = fn_resize;
 
-    /* function conv_std_logic_vector
+    /* std_logic_arith library
+     * function conv_std_logic_vector(arg: integer; size: integer) return std_logic_vector;
      */
     fn_conv_std_logic_vector = new SubprogramSizeCast(perm_string::literal("conv_std_logic_vector"));
     std_subprograms[fn_conv_std_logic_vector->name()] = fn_conv_std_logic_vector;

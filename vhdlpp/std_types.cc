@@ -21,9 +21,9 @@
 #include "std_types.h"
 #include "scope.h"
 
-static std::map<perm_string, VTypeDef*> std_types;
+static map<perm_string, VTypeDef*> std_types;
 // this list contains enums used by typedefs in the std_types map
-static std::list<const VTypeEnum*> std_enums;
+static list<const VTypeEnum*> std_enums;
 
 const VTypePrimitive primitive_BIT(VTypePrimitive::BIT, true);
 const VTypePrimitive primitive_INTEGER(VTypePrimitive::INTEGER);
@@ -45,7 +45,7 @@ const VTypeArray primitive_UNSIGNED(&primitive_STDLOGIC,        vector<VTypeArra
 void generate_global_types(ActiveScope*res)
 {
     // boolean
-      std::list<perm_string>*enum_BOOLEAN_vals = new std::list<perm_string>;
+      list<perm_string>*enum_BOOLEAN_vals = new list<perm_string>;
       enum_BOOLEAN_vals->push_back(perm_string::literal("false"));
       enum_BOOLEAN_vals->push_back(perm_string::literal("true"));
       VTypeEnum*enum_BOOLEAN = new VTypeEnum(enum_BOOLEAN_vals);
