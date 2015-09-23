@@ -92,6 +92,78 @@ static class SubprogramSizeCast : public SubprogramHeader {
       }
 }*fn_conv_std_logic_vector, *fn_resize;
 
+static class SubprogramReadWrite : public SubprogramBuiltin {
+    public:
+      SubprogramReadWrite(perm_string nam, perm_string newnam)
+          : SubprogramBuiltin(nam, newnam, NULL, NULL) {
+            ports_ = new std::list<InterfacePort*>();
+            ports_->push_back(new InterfacePort(&primitive_STRING, PORT_INOUT));
+            ports_->push_back(new InterfacePort(&primitive_STDLOGIC_VECTOR, PORT_INOUT));
+            ports_->push_back(new InterfacePort(&primitive_INTEGER, PORT_IN));
+          }
+
+      bool is_std() const { return true; }
+
+      // Format types handled by $ivlh_read/write (see vpi/vhdl_textio.c)
+      enum format_t { FORMAT_STD, FORMAT_BOOL, FORMAT_TIME, FORMAT_HEX, FORMAT_STRING };
+
+      int emit_args(const std::vector<Expression*>&argv,
+                    std::ostream&out, Entity*ent, ScopeBase*scope) const {
+
+          int errors = 0;
+
+          for(int i = 0; i < 2; ++i) {
+            errors += argv[i]->emit(out, ent, scope);
+            out << ", ";
+          }
+
+          const VType*arg_type = argv[1]->probe_type(ent, scope);
+          const VTypeArray*arr = dynamic_cast<const VTypeArray*>(arg_type);
+          const VTypePrimitive*prim = dynamic_cast<const VTypePrimitive*>(arg_type);
+
+          // Pick the right format
+          if(prim && prim->type() == VTypePrimitive::TIME)
+              out << FORMAT_TIME;
+          else if(arg_type && arg_type->type_match(&type_BOOLEAN))
+              out << FORMAT_BOOL;
+          else if((arg_type && arg_type->type_match(&primitive_CHARACTER)) ||
+                 (arr && arr->element_type() == &primitive_CHARACTER))
+              out << FORMAT_STRING;
+          else
+              out << FORMAT_STD;
+
+          return errors;
+      }
+}*fn_read, *fn_write;
+
+static class SubprogramHexReadWrite : public SubprogramBuiltin {
+    public:
+      SubprogramHexReadWrite(perm_string nam, perm_string newnam)
+          : SubprogramBuiltin(nam, newnam, NULL, NULL) {
+            ports_ = new std::list<InterfacePort*>();
+            ports_->push_back(new InterfacePort(&primitive_STRING, PORT_INOUT));
+            ports_->push_back(new InterfacePort(&primitive_STDLOGIC_VECTOR, PORT_INOUT));
+            ports_->push_back(new InterfacePort(&primitive_INTEGER, PORT_IN));
+          }
+
+      bool is_std() const { return true; }
+
+      int emit_args(const std::vector<Expression*>&argv,
+                    std::ostream&out, Entity*ent, ScopeBase*scope) const {
+
+          int errors = 0;
+
+          for(int i = 0; i < 2; ++i) {
+            errors += argv[i]->emit(out, ent, scope);
+            out << ", ";
+          }
+
+          out << SubprogramReadWrite::FORMAT_HEX;
+
+          return errors;
+      }
+}*fn_hread, *fn_hwrite;
+
 static SubprogramBuiltin*fn_std_logic_vector;
 static SubprogramBuiltin*fn_to_unsigned;
 static SubprogramBuiltin*fn_unsigned;
@@ -102,6 +174,13 @@ static SubprogramBuiltin*fn_falling_edge;
 
 static SubprogramBuiltin*fn_and_reduce;
 static SubprogramBuiltin*fn_or_reduce;
+
+static SubprogramBuiltin*fn_file_open;
+static SubprogramBuiltin*fn_file_close;
+static SubprogramBuiltin*fn_endfile;
+
+static SubprogramBuiltin*fn_readline;
+static SubprogramBuiltin*fn_writeline;
 
 void preload_std_funcs(void)
 {
@@ -207,6 +286,86 @@ void preload_std_funcs(void)
                                            perm_string::literal("$ivlh_to_unsigned"),
                                            fn_to_unsigned_args, &primitive_UNSIGNED);
     std_subprograms[fn_to_unsigned->name()] = fn_to_unsigned;
+
+    /* procedure file_open (file f: text; filename: in string, file_open_kind: in mode);
+     */
+    std::list<InterfacePort*>*fn_file_open_args = new std::list<InterfacePort*>();
+    fn_file_open_args->push_back(new InterfacePort(&primitive_INTEGER, PORT_IN));
+    fn_file_open_args->push_back(new InterfacePort(&primitive_STRING, PORT_IN));
+    fn_file_open_args->push_back(new InterfacePort(&type_FILE_OPEN_KIND, PORT_IN));
+    fn_file_open = new SubprogramBuiltin(perm_string::literal("file_open"),
+                                          perm_string::literal("$ivlh_file_open"),
+                                          fn_file_open_args, NULL);
+    std_subprograms[fn_file_open->name()] = fn_file_open;
+
+    /* std.textio library
+     * procedure file_close (file f: text);
+     */
+    std::list<InterfacePort*>*fn_file_close_args = new std::list<InterfacePort*>();
+    fn_file_close_args->push_back(new InterfacePort(&primitive_INTEGER, PORT_IN));
+    fn_file_close = new SubprogramBuiltin(perm_string::literal("file_close"),
+                                          perm_string::literal("$fclose"),
+                                          fn_file_close_args, NULL);
+    std_subprograms[fn_file_close->name()] = fn_file_close;
+
+    /* std.textio library
+     * procedure read (l: inout line; value: out bit/bit_vector/boolean/character/integer/real/string/time);
+     */
+    fn_read = new SubprogramReadWrite(perm_string::literal("read"),
+                                      perm_string::literal("$ivlh_read"));
+    std_subprograms[fn_read->name()] = fn_read;
+
+    /* std.textio library
+     * procedure write (l: inout line; value: out bit/bit_vector/boolean/character/integer/real/string/time);
+     */
+    fn_write = new SubprogramReadWrite(perm_string::literal("write"),
+                                      perm_string::literal("$ivlh_write"));
+    std_subprograms[fn_write->name()] = fn_write;
+
+    /* std.textio library
+     * procedure hread (l: inout line; value: out bit/bit_vector/boolean/character/integer/real/string/time);
+     */
+    fn_hread = new SubprogramHexReadWrite(perm_string::literal("hread"),
+                                          perm_string::literal("$ivlh_read"));
+    std_subprograms[fn_hread->name()] = fn_hread;
+
+    /* std.textio library
+     * procedure hwrite (l: inout line; value: out bit/bit_vector/boolean/character/integer/real/string/time);
+     */
+    fn_hwrite = new SubprogramHexReadWrite(perm_string::literal("hwrite"),
+                                           perm_string::literal("$ivlh_write"));
+    std_subprograms[fn_hwrite->name()] = fn_hwrite;
+
+    /* std.textio library
+     * procedure readline (file f: text; l: inout line);
+     */
+    std::list<InterfacePort*>*fn_readline_args = new std::list<InterfacePort*>();
+    fn_readline_args->push_back(new InterfacePort(&primitive_INTEGER, PORT_IN));
+    fn_readline_args->push_back(new InterfacePort(&primitive_STRING, PORT_OUT));
+    fn_readline = new SubprogramBuiltin(perm_string::literal("readline"),
+                                       perm_string::literal("$ivlh_readline"),
+                                       fn_readline_args, NULL);
+    std_subprograms[fn_readline->name()] = fn_readline;
+
+    /* std.textio library
+     * procedure writeline (file f: text; l: inout line);
+     */
+    std::list<InterfacePort*>*fn_writeline_args = new std::list<InterfacePort*>();
+    fn_writeline_args->push_back(new InterfacePort(&primitive_INTEGER, PORT_IN));
+    fn_writeline_args->push_back(new InterfacePort(&primitive_STRING, PORT_IN));
+    fn_writeline = new SubprogramBuiltin(perm_string::literal("writeline"),
+                                       perm_string::literal("$ivlh_writeline"),
+                                       fn_writeline_args, NULL);
+    std_subprograms[fn_writeline->name()] = fn_writeline;
+
+    /* function endline (file f: text) return boolean;
+     */
+    std::list<InterfacePort*>*fn_endfile_args = new std::list<InterfacePort*>();
+    fn_endfile_args->push_back(new InterfacePort(&primitive_INTEGER, PORT_IN));
+    fn_endfile = new SubprogramBuiltin(perm_string::literal("endfile"),
+                                       perm_string::literal("$feof"),
+                                       fn_endfile_args, &type_BOOLEAN);
+    std_subprograms[fn_endfile->name()] = fn_endfile;
 }
 
 void delete_std_funcs()

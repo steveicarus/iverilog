@@ -361,13 +361,15 @@ static void import_ieee_use(ActiveScope*res, perm_string package, perm_string na
       }
 }
 
-static void import_std_use(const YYLTYPE&loc, ActiveScope*/*res*/, perm_string package, perm_string name)
+static void import_std_use(const YYLTYPE&loc, ActiveScope*res, perm_string package, perm_string name)
 {
       if (package == "standard") {
 	    // do nothing
 	    return;
       } else if (package == "textio") {
-	    cerr << "warning: textio package not really supported" << endl;
+            res->use_name(perm_string::literal("text"),     &primitive_INTEGER);
+            res->use_name(perm_string::literal("line"),     &primitive_STRING);
+            res->use_name(type_FILE_OPEN_KIND.peek_name(),  &type_FILE_OPEN_KIND);
 	    return;
       } else {
 	    sorrymsg(loc, "package %s of library %s not yet supported", package.str(), name.str());

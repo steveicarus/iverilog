@@ -1235,6 +1235,26 @@ factor
       }
   ;
 
+file_declaration
+  : K_file identifier_list ':' IDENTIFIER ';'
+      {
+	if (strcasecmp($4, "TEXT"))
+	      errormsg(@1, "file declaration expected TEXT type\n");
+
+	for (std::list<perm_string>::iterator cur = $2->begin()
+		   ; cur != $2->end() ; ++cur) {
+	      Variable*var = new Variable(*cur, &primitive_INTEGER);
+	      FILE_NAME(var, @1);
+	      active_scope->bind_name(*cur, var);
+	}
+	delete $2;
+      }
+  | K_file error ';'
+      { errormsg(@2, "Syntax error in file declaration.\n");
+	yyerrok;
+      }
+  ;
+
 for_generate_statement
   : IDENTIFIER ':' K_for IDENTIFIER K_in range
     K_generate generate_statement_body
@@ -1961,6 +1981,7 @@ procedure_specification /* IEEE 1076-2008 P4.2.1 */
 
 process_declarative_item
   : variable_declaration
+  | file_declaration
   ;
 
 process_declarative_part
@@ -2506,6 +2527,7 @@ subprogram_declaration
 
 subprogram_declarative_item /* IEEE 1079-2008 P4.3 */
   : variable_declaration
+  | file_declaration
   ;
 
 subprogram_declarative_item_list
