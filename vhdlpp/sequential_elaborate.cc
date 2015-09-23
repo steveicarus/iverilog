@@ -173,13 +173,8 @@ int ProcedureCall::elaborate(Entity*ent, ScopeBase*scope)
       if(param_list_) {
 	    for(list<named_expr_t*>::iterator cur = param_list_->begin()
 		 ; cur != param_list_->end() ; ++cur) {
-                const VType*tmp = (*cur)->expr()->probe_type(ent, scope);
-                const VType*param_type = def_ ? def_->peek_param_type(idx) : NULL;
-
-                if(!tmp && param_type)
-                    tmp = param_type;
-
-                errors += (*cur)->expr()->elaborate_expr(ent, scope, tmp);
+		errors += elaborate_argument((*cur)->expr(), def_, idx, ent, scope);
+		++idx;
             }
       }
 
