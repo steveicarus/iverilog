@@ -1977,22 +1977,6 @@ bool of_CONCATI_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_CVT_RS(vthread_t thr, vvp_code_t cp)
-{
-      int64_t r = thr->words[cp->bit_idx[0]].w_int;
-      thr->push_real( (double)(r) );
-
-      return true;
-}
-
-bool of_CVT_RU(vthread_t thr, vvp_code_t cp)
-{
-      uint64_t r = thr->words[cp->bit_idx[0]].w_uint;
-      thr->push_real( (double)(r) );
-
-      return true;
-}
-
 /*
  * %cvt/rv
  */
@@ -2030,6 +2014,9 @@ bool of_CVT_SR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %cvt/ur <idx>
+ */
 bool of_CVT_UR(vthread_t thr, vvp_code_t cp)
 {
       double r = thr->pop_real();
@@ -4348,6 +4335,7 @@ bool of_POP_VEC4(vthread_t thr, vvp_code_t cp)
 
 /*
  * %pow
+ * %pow/s
  */
 static bool of_POW_base(vthread_t thr, bool signed_flag)
 {

@@ -79,8 +79,6 @@ extern bool of_CONCAT_STR(vthread_t thr, vvp_code_t code);
 extern bool of_CONCATI_STR(vthread_t thr, vvp_code_t code);
 extern bool of_CONCAT_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_CONCATI_VEC4(vthread_t thr, vvp_code_t code);
-extern bool of_CVT_RS(vthread_t thr, vvp_code_t code);
-extern bool of_CVT_RU(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_RV(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_RV_S(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_SR(vthread_t thr, vvp_code_t code);

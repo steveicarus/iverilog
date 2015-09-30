@@ -247,19 +247,7 @@ static void draw_real_logic_expr(ivl_expr_t expr)
 {
       draw_eval_vec4(expr);
       const char*sign_flag = ivl_expr_signed(expr)? "/s" : "";
-
-      if (ivl_expr_width(expr) > 64) {
-            fprintf(vvp_out, "    %%cvt/rv%s;\n", sign_flag);
-      } else {
-	    int res = allocate_word();
-            fprintf(vvp_out, "    %%ix/vec4%s %d;\n", sign_flag, res);
-
-            if (ivl_expr_signed(expr))
-                  fprintf(vvp_out, "    %%cvt/rs %d;\n", res);
-            else
-                  fprintf(vvp_out, "    %%cvt/ru %d;\n", res);
-	    clr_word(res);
-      }
+      fprintf(vvp_out, "    %%cvt/rv%s;\n", sign_flag);
 }
 
 static void draw_select_real(ivl_expr_t expr)
@@ -535,13 +523,7 @@ void draw_eval_real(ivl_expr_t expr)
 	    if (ivl_expr_value(expr) == IVL_VT_VECTOR) {
 		  draw_eval_vec4(expr);
 		  const char*sign_flag = ivl_expr_signed(expr)? "/s" : "";
-
-		  int res = allocate_word();
-
-		  fprintf(vvp_out, "    %%ix/vec4%s %d;\n", sign_flag, res);
-		  fprintf(vvp_out, "    %%cvt/rs %d;\n", res);
-
-		  clr_word(res);
+		  fprintf(vvp_out, "    %%cvt/rv%s;\n", sign_flag);
 
 	    } else {
 		  fprintf(stderr, "XXXX Evaluate real expression (%d)\n",

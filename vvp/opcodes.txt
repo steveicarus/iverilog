@@ -351,31 +351,19 @@ The %concati/vec4 form takes an immediate value and appends it (lsb)
 to the value on the top of the stack. See the %pushi/vec4 instruction
 for how to describe the immediate value.
 
-* %cvt/sr <bit-l>
-* %cvt/rs <bit-l>
-
-Copy a word from r to l, converting it from real to signed integer (sr)
-or signed integer to real (rs) in the process. The source and destination
-may be the same word address, leading to a convert in place. Precision
-may be lost in the conversion.
-
-The %cvt/sr <bit-l> gets the real value from the top of the real value
-stack (and pops the value) and writes it to the indexed register.
-
+* %cvt/sr <index>
 * %cvt/ur <bit-l>
-* %cvt/ru <bit-r>
 
-Copy a word from r to l, converting it from real to unsigned integer (ur)
-or signed integer to real (ru) in the process. The source and destination
-may be the same word address, leading to a convert in place. Precision
-may be lost in the conversion.
+Pop a word from the real-value stack, convert it to a signed or
+unsigned integer, and write it to the <index> index
+register. Precision may be lost in the conversion.
 
-* %cvt/rv <bit-r>, <wid>
-* %cvt/rv/s <bit-r>, <wid>
+* %cvt/rv
+* %cvt/rv/s
 
-The %cvt/rv instruction converts a thread vector starting at <bit-r>
-and with the width <wid> to a real word. Push the result onto the real
-value stack. Precision may be lost in the conversion.
+The %cvt/rv instruction pops a value from the thread vec4 stack and
+converts it to a real word. Push the result onto the real value
+stack. Precision may be lost in the conversion.
 
 The %cvt/rv/s instruction is the same as %cvt/rv, but treats the thread
 vector as a signed value.
@@ -896,15 +884,15 @@ The <skip> is the number of top positions on the stack to keep,
 before starting to pop. This allows for popping positions other than
 the top of the stack.
 
-* %pow <bit-l>, <bit-r>, <wid>
-* %pow/s <bit-l>, <bit-r>, <wid>
+* %pow
+* %pow/s
 
-The %pow opcode raises <bit-l> (unsigned) to the power of <bit-r>
-(unsigned) giving an exact integer result. The %pow/s opcode does
-the same for signed values, except it uses the double pow() function
-to calculate the result so may not produce exact results. The result
-replaces the left operand.
+The %pow opcode pops the "B" value from the stack, then pops the "A"
+value from the stack, then pushes A**B back onto the stack. Of there
+are any X or Z bits in A or B, then an X value is pushed onto the
+stack instead of a calculated values.
 
+The %pow/s opcode does the same for signed values.
 
 * %pow/wr
 
@@ -1145,17 +1133,6 @@ which implement the push_back (qb) and push_front (qf)
 functions. These only apply to queue object, and are distinct from the
 dar versions because the begin/front don't exist, by definition.
 
-* %sub <bit-l>, <bit-r>, <wid> (XXXX Old version)
-
-This instruction arithmetically subtracts the right vector out of the
-left vector. It accomplishes this by adding to the left vector 1 plus
-the 1s complement of the right vector. The carry value is dropped, and
-the result, placed in <bit-l>, is the subtraction of <bit-r> from the
-input <bit-l>. Both vectors have the same width. If any bits in either
-operand are x, then the entire result is x.
-
-See also the %add instruction.
-
 * %sub
 
 This instruction subtracts vec4 values. The right value is popped from
@@ -1163,6 +1140,13 @@ the vec4 stack, then the left value is popped. The right is subtracted
 from the left, and the result pushed.
 
 See also the %add instruction.
+
+* %subi <vala>, <valb>, <wid>
+
+This instruction pops a value "A" from the vec4 stack, generates a
+values "B" from the immediate argument, and pushes A-B.
+
+See also the %addi instruction.
 
 * %sub/wr
 
