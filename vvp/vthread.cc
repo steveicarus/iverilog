@@ -726,6 +726,9 @@ vvp_context_item_t vthread_get_rd_context_item(unsigned context_idx)
       return vvp_get_context_item(running_thread->rd_context, context_idx);
 }
 
+/*
+ * %abs/wr
+ */
 bool of_ABS_WR(vthread_t thr, vvp_code_t)
 {
       thr->push_real( fabs(thr->pop_real()) );
@@ -849,6 +852,9 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %add/wr
+ */
 bool of_ADD_WR(vthread_t thr, vvp_code_t)
 {
       double r = thr->pop_real();

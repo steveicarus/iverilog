@@ -39,19 +39,11 @@ flags. These are used as destinations for operations that return
 boolean values, for example comparisons. They are also used as inputs
 for test and branch opcodes.
 
-* %abs/wr <bit-o>, <bit-i>
+* %abs/wr
 
 This instruction calculates the absolute value of a real value. It uses
-the fabs() function in the run-time to do the work.
-
-* %add <bit-l>, <bit-r>, <wid> (XXXX Old version)
-
-This instruction adds the right vector into the left vector, the
-vectors having the width <wid>. If any of the bits of either vector
-are x or z, the result is x. Otherwise, the result is the arithmetic
-sum.
-
-See also the %sub instruction.
+the fabs() function in the run-time to do the work, and manipulates
+the top of the real-value stack.
 
 * %add
 * %addi <vala>, <valb>, <wid>
@@ -65,7 +57,7 @@ immediate value (See %pushi/vec4).
 
 See also the %sub instruction.
 
-* %add/wr <bit-l>, <bit-r>
+* %add/wr
 
 This is the real valued version of the %add instruction. The arguments
 are popped from the stack, right operand then left, and the result
@@ -491,6 +483,10 @@ the format of the output is:
 <line> is the unsigned line number.
 <description> is a string, if string is 0 then the following default
 message is used: "Procedural tracing.".
+
+* %flag_inv <flag>
+
+This instruct inverts a flag bit.
 
 * %flag_mov <flag1>, <flag2>
 
