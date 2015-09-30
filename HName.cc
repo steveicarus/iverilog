@@ -40,7 +40,7 @@ hname_t::hname_t(perm_string text, int num)
       number_[0] = num;
 }
 
-hname_t::hname_t(perm_string text, vector<int>&nums)
+hname_t::hname_t(perm_string text, const vector<int>&nums)
 : name_(text), number_(nums)
 {
 }

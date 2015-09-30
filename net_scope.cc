@@ -264,19 +264,20 @@ bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
       assert(self != up_->children_.end());
       assert(self->second == this);
 
-      char tmp[32];
-      int pad_pos = strlen(prefix);
-      int max_pos = sizeof(tmp) - strlen(suffix) - 1;
-      strncpy(tmp, prefix, sizeof(tmp));
-      tmp[31] = 0;
+	// This is to keep the pad attempts from being stuck in some
+	// sort of infinite loop. This should not be a practical
+	// limit, but an extreme one.
+      const size_t max_pad_attempts = 32 + strlen(prefix);
+
+      string use_prefix = prefix;
 
 	// Try a variety of potential new names. Make sure the new
 	// name is not in the parent scope. Keep looking until we are
 	// sure we have a unique name, or we run out of names to try.
-      while (pad_pos <= max_pos) {
+      while (use_prefix.size() <= max_pad_attempts) {
 	      // Try this name...
-	    strcat(tmp + pad_pos, suffix);
-	    hname_t new_name(lex_strings.make(tmp));
+	    string tmp = use_prefix + suffix;
+	    hname_t new_name(lex_strings.make(tmp.c_str()), name_.peek_numbers());
 	    if (!up_->child(new_name)) {
 		    // Ah, this name is unique. Rename myself, and
 		    // change my name in the parent scope.
@@ -285,7 +286,9 @@ bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
 		  up_->children_[name_] = this;
 		  return true;
 	    }
-	    tmp[pad_pos++] = pad;
+
+	      // Name collides, so try a different name.
+	    use_prefix = use_prefix + pad;
       }
       return false;
 }

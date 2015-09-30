@@ -5728,6 +5728,9 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 		  "generate " << scheme_type
 		 << " elaborating in scope " << scope_path(container)
 		 << "." << endl;
+	    cerr << get_fileline() << ": PGenerate::elaborate: "
+		  "generate scope_name=" << scope_name
+		 << ", id_number=" << id_number << endl;
       }
 
 	// Handle the special case that this is a CASE scheme. In this
@@ -5762,6 +5765,7 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 	      // scheme defined in the Verilog-2005 standard.
 	    const char*name = scope_name.str();
 	    if (name[0] == '$') {
+
 		  if (!scope->auto_name("genblk", '0', name + 4)) {
 			cerr << get_fileline() << ": warning: Couldn't build"
 			     << " unique name for unnamed generate block"
