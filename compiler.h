@@ -100,6 +100,9 @@ extern bool warn_sens_entire_arr;
 /* Warn about level-appropriate anachronisms. */
 extern bool warn_anachronisms;
 
+/* Warn about nets that are references but not driven. */
+extern bool warn_floating_nets;
+
 /* This is true if verbose output is requested. */
 extern bool verbose_flag;
 

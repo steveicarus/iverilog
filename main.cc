@@ -160,6 +160,7 @@ bool warn_ob_select = false;
 bool warn_sens_entire_vec = false;
 bool warn_sens_entire_arr = false;
 bool warn_anachronisms = false;
+bool warn_floating_nets = false;
 
 /*
  * Debug message class flags.
@@ -675,6 +676,9 @@ static void read_iconfig_file(const char*ipath)
 	    } else if (strcmp(buf,"warnings") == 0) {
 		    /* Scan the warnings enable string for warning flags. */
 		  for ( ;  *cp ;  cp += 1) switch (*cp) {
+		      case 'f':
+			warn_floating_nets = true;
+			break;
 		      case 'i':
 			warn_implicit = true;
 			break;

@@ -122,9 +122,60 @@ void nodangle_f::event(Design*, NetEvent*ev)
       }
 }
 
+static bool floating_net_tested(NetNet*sig)
+{
+      static set<NetNet*> tested_set;
+
+      pair< set<NetNet*>::iterator, bool > cur = tested_set.insert(sig);
+      return !cur.second;
+}
+
+static void check_is_floating(NetNet*sig)
+{
+      if (sig->type() == NetNet::SUPPLY0) return;
+      if (sig->type() == NetNet::SUPPLY1) return;
+      if (sig->type() == NetNet::TRI0) return;
+      if (sig->type() == NetNet::TRI1) return;
+      if (sig->type() == NetNet::IMPLICIT_REG) return;
+      if (sig->type() == NetNet::REG) return ;
+
+      if (sig->peek_lref() > 0) return;
+
+      for (unsigned idx = 0 ; idx < sig->pin_count() ; idx += 1) {
+	    if (sig->pin(idx).get_dir() == Link::OUTPUT)
+		  continue;
+
+	    if (sig->pin(idx).nexus()->drivers_present())
+		  continue;
+
+	    if (sig->port_type() == PortType::NOT_A_PORT && sig->pin_count()==1) {
+		  cerr << sig->get_fileline() << ": warning: "
+		       << "Signal " << scope_path(sig->scope())
+		       << "." << sig->name()
+		       << " has no drivers." << endl;
+	    } else if (sig->port_type()==PortType::NOT_A_PORT) {
+		  cerr << sig->get_fileline() << ": warning: "
+		       << "Signal " << scope_path(sig->scope())
+		       << "." << sig->name()
+		       << "[" << idx << "]"
+		       << " has no drivers." << endl;
+	    } else {
+		  cerr << sig->get_fileline() << ": warning: "
+		       << "Port " << sig->name()
+		       << " of " << scope_path(sig->scope())
+		       << " has no drivers." << endl;
+	    }
+      }
+
+}
+
 void nodangle_f::signal(Design*, NetNet*sig)
 {
       if (scomplete) return;
+
+      if (warn_floating_nets && !floating_net_tested(sig)) {
+	    check_is_floating(sig);
+      }
 
 	/* Cannot delete signals referenced in an expression
 	   or an l-value. */

@@ -503,6 +503,9 @@ static void process_warning_switch(const char*name)
       } else if (strcmp(name,"anachronisms") == 0) {
 	    if (! strchr(warning_flags, 'n'))
 		  strcat(warning_flags, "n");
+      } else if (strcmp(name,"floating-nets") == 0) {
+	    if (! strchr(warning_flags, 'f'))
+		  strcat(warning_flags, "f");
       } else if (strcmp(name,"implicit") == 0) {
 	    if (! strchr(warning_flags, 'i'))
 		  strcat(warning_flags, "i");
@@ -528,6 +531,12 @@ static void process_warning_switch(const char*name)
 		  strcat(warning_flags, "a");
       } else if (strcmp(name,"no-anachronisms") == 0) {
 	    char*cp = strchr(warning_flags, 'n');
+	    if (cp) while (*cp) {
+		  cp[0] = cp[1];
+		  cp += 1;
+	    }
+      } else if (strcmp(name,"no-floating-nets") == 0) {
+	    char*cp = strchr(warning_flags, 'f');
 	    if (cp) while (*cp) {
 		  cp[0] = cp[1];
 		  cp += 1;
