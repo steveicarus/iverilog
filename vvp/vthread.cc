@@ -127,15 +127,16 @@ struct vthread_s {
       }
       inline const vvp_vector4_t& peek_vec4(unsigned depth)
       {
-	    assert(depth < stack_vec4_.size());
-	    unsigned use_index = stack_vec4_.size()-1-depth;
+	    unsigned size = stack_vec4_.size();
+	    assert(depth < size);
+	    unsigned use_index = size-1-depth;
 	    return stack_vec4_[use_index];
       }
       inline vvp_vector4_t& peek_vec4(void)
       {
-	    assert(! stack_vec4_.empty());
-	    unsigned use_index = stack_vec4_.size()-1;
-	    return stack_vec4_[use_index];
+	    unsigned use_index = stack_vec4_.size();
+	    assert(use_index >= 1);
+	    return stack_vec4_[use_index-1];
       }
       inline void pop_vec4(unsigned cnt)
       {
@@ -5398,14 +5399,17 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
       const int sig_value_size = sig->value_size();
 
       vvp_vector4_t&val = thr->peek_vec4();
+      unsigned val_size = val.size();
 
-      if (val.size() < (unsigned)wid) {
-	    cerr << "XXXX Internal error: val.size()=" << val.size()
+      if ((int)val_size < wid) {
+	    cerr << "XXXX Internal error: val.size()=" << val_size
 		 << ", expecting >= " << wid << endl;
       }
-      assert(val.size() >= (unsigned)wid);
-      if (val.size() > (unsigned)wid)
+      assert((int)val_size >= wid);
+      if ((int)val_size > wid) {
 	    val.resize(wid);
+	    val_size = wid;
+      }
 
 	// If there is a problem loading the index register, flags-4
 	// will be set to 1, and we know here to skip the actual assignment.
@@ -5429,6 +5433,7 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
 	    int use_off = -off;
 	    wid -= use_off;
 	    val = val.subvalue(use_off, wid);
+	    val_size = wid;
 	    off = 0;
       }
 
@@ -5438,10 +5443,11 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
 	    wid = sig_value_size - off;
 	    val = val.subvalue(0, wid);
 	    val.resize(wid);
+	    val_size = wid;
       }
 
 
-      if (off==0 && val.size()==(unsigned)sig_value_size)
+      if (off==0 && val_size==(unsigned)sig_value_size)
 	    vvp_send_vec4(ptr, val, thr->wt_context);
       else
 	    vvp_send_vec4_pv(ptr, val, off, wid, sig_value_size, thr->wt_context);
