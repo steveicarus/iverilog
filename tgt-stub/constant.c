@@ -42,7 +42,6 @@ void show_constant(ivl_net_const_t net)
 	  case IVL_VT_REAL:
 	    fprintf(out, "%f", ivl_const_real(net));
 	    break;
-	    break;
 	  default:
 	    fprintf(out, "<unsupported type>");
 	    break;

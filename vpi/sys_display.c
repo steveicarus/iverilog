@@ -74,7 +74,7 @@ static void my_mcd_rawwrite(PLI_UINT32 mcd, const char*buf, size_t count)
 	    if (fp) {
 		  while (count > 0) {
 			size_t rc = fwrite(buf, 1, count, fp);
-			if (rc <= 0) break;
+			if (rc == 0) break;
 			count -= rc;
 			buf += rc;
 		  }

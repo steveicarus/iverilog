@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -63,7 +63,7 @@ static void draw_hex_table(void)
 		  printf(" 'X',");
 
 	    else
-		  printf(" '%c',", "0123456789abcdef"[bv]);
+		  printf(" '%c',", (unsigned)"0123456789abcdef"[bv]);
 
 	    if (((idx+1) % 8) == 0)
 		  printf("\n");
@@ -109,7 +109,7 @@ static void draw_oct_table(void)
 		  printf(" 'X',");
 
 	    else
-		  printf(" '%c',", "01234567"[bv]);
+		  printf(" '%c',", (unsigned)"01234567"[bv]);
 
 	    if (((idx+1) % 8) == 0)
 		  printf("\n");

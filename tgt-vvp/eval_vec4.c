@@ -1032,7 +1032,7 @@ static void draw_string_vec4(ivl_expr_t expr)
 
       for (unsigned idx = 0 ; idx < wid ; idx += 8) {
 	    tmp <<= 8;
-	    tmp |= *p;
+	    tmp |= (unsigned long)*p;
 	    p += 1;
 	    tmp_wid += 8;
 	    if (tmp_wid == 32) {

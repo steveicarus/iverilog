@@ -851,7 +851,7 @@ vvp_vector4_t vec4_from_vpi_value(s_vpi_value*vp, unsigned wid)
 	  case vpiIntVal: {
 		long vpi_val = vp->value.integer;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      vvp_bit4_t bit = vpi_val&1 ? BIT4_1 : BIT4_0;
+		      vvp_bit4_t bit = (vpi_val & 1) ? BIT4_1 : BIT4_0;
 		      val.set_bit(idx, bit);
 		      vpi_val >>= 1;
 		}

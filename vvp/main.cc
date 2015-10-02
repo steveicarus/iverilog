@@ -148,13 +148,13 @@ void verify_version(char*ivl_ver, char*commit)
 	// This also catches a potential new-new format that has
 	// another sub-minor number.
       file_extra[0] = 0;
-      int rc = sscanf(ivl_ver, "%d.%d.%d %128s", &file_major, &file_minor, &file_minor2, file_extra);
+      int rc = sscanf(ivl_ver, "%d.%d.%d %127s", &file_major, &file_minor, &file_minor2, file_extra);
 
 	// If it wasn't the old style format, try the new format:
 	// <major>.<minor> <extra>
       if (rc == 2) {
 	    file_extra[0] = 0;
-	    rc = sscanf(ivl_ver, "%d.%d %128s", &file_major, &file_minor, file_extra);
+	    rc = sscanf(ivl_ver, "%d.%d %127s", &file_major, &file_minor, file_extra);
 	    file_minor2 = 0;
       }
 
