@@ -3585,10 +3585,10 @@ vvp_scalar_t fully_featured_resolv_(vvp_scalar_t a, vvp_scalar_t b)
 	   has an even wider ambiguity. */
 
       unsigned tmp = 0;
-      int sv1a = a.value_&0x80 ? STREN1(a.value_) : - STREN1(a.value_);
-      int sv0a = a.value_&0x08 ? STREN0(a.value_) : - STREN0(a.value_);
-      int sv1b = b.value_&0x80 ? STREN1(b.value_) : - STREN1(b.value_);
-      int sv0b = b.value_&0x08 ? STREN0(b.value_) : - STREN0(b.value_);
+      int sv1a = (a.value_ & 0x80) ? STREN1(a.value_) : - STREN1(a.value_);
+      int sv0a = (a.value_ & 0x08) ? STREN0(a.value_) : - STREN0(a.value_);
+      int sv1b = (b.value_ & 0x80) ? STREN1(b.value_) : - STREN1(b.value_);
+      int sv0b = (b.value_ & 0x08) ? STREN0(b.value_) : - STREN0(b.value_);
 
       int sv1 = sv1a;
       int sv0 = sv0a;

@@ -170,7 +170,6 @@ void __vpiDarrayVar::put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, 
 
       case vpiVectorVal:        // 2 vs 4 state logic?
       {
-          int new_bit;
           int size = get_word_size();
           PLI_INT32 a = 0, b = 0;
           vvp_vector4_t new_vec(size);
@@ -178,6 +177,7 @@ void __vpiDarrayVar::put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, 
           vec--; // it will be increased in the first loop iteration
 
           for(int i = 0; i < size; ++i) {
+            int new_bit;
             if(i % (8 * sizeof(vec->aval)) == 0) {
                 ++vec;
                 a = vec->aval;

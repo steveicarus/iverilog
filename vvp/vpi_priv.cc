@@ -161,7 +161,7 @@ static unsigned hash_string(const char*text)
       unsigned h = 0;
 
       while (*text) {
-	    h = (h << 4) ^ (h >> 28) ^ *text;
+	    h = (h << 4) ^ (h >> 28) ^ (unsigned)*text;
 	    text += 1;
       }
       return h;

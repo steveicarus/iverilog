@@ -153,7 +153,7 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func,
 
 	    rbuf[num_bits] = 0;
 	    for (unsigned i = 1; i <= num_bits; i++) {
-	      rbuf[num_bits-i] = x  & 1 ? '1' : '0';
+	      rbuf[num_bits-i] = (x  & 1) ? '1' : '0';
 	      x = x >> 1;
 	    }
 

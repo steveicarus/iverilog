@@ -1407,7 +1407,7 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
       }
       nex = ivl_lpm_sync_set(lpm);
       if (nex) {
-	    if (! sset_bits || (sset_bits && (sset_bits[0] == '1'))) {
+	    if (! sset_bits || (sset_bits[0] == '1')) {
 		  emit_nexus_as_ca(scope, nex, 0, 0);
 		  if (have_data) fprintf(vlog_out, " | ");
 	    } else {
