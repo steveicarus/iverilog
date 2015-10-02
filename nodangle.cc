@@ -132,6 +132,7 @@ static bool floating_net_tested(NetNet*sig)
 
 static void check_is_floating(NetNet*sig)
 {
+	// Some signal types are implicitly driven if nothing else.
       if (sig->type() == NetNet::SUPPLY0) return;
       if (sig->type() == NetNet::SUPPLY1) return;
       if (sig->type() == NetNet::TRI0) return;
@@ -139,6 +140,7 @@ static void check_is_floating(NetNet*sig)
       if (sig->type() == NetNet::IMPLICIT_REG) return;
       if (sig->type() == NetNet::REG) return ;
 
+	// Asignments drive a signal.
       if (sig->peek_lref() > 0) return;
 
       for (unsigned idx = 0 ; idx < sig->pin_count() ; idx += 1) {
@@ -173,7 +175,7 @@ void nodangle_f::signal(Design*, NetNet*sig)
 {
       if (scomplete) return;
 
-      if (warn_floating_nets && !floating_net_tested(sig)) {
+      if (warn_floating_nets && !sig->local_flag() && !floating_net_tested(sig)) {
 	    check_is_floating(sig);
       }
 
