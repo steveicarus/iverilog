@@ -175,6 +175,7 @@ bool NetPins::pins_are_virtual(void) const
 NetPins::NetPins(unsigned npins)
 : npins_(npins)
 {
+      default_dir_ = Link::PASSIVE;
       pins_ = NULL;  // Wait until someone asks.
       if (disable_virtual_pins) devirtualize_pins();  // Ask.  Bummer.
 }
