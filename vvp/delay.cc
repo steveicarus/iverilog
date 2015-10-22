@@ -645,8 +645,11 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	   and schedule an event for each partial change. Hard! */
       for (unsigned idx = 1 ;  idx < bit.size() ;  idx += 1) {
 	    vvp_time64_t tmp = delay_from_edge(cur_vec4_.value(idx),
-					       bit.value(0),
+					       bit.value(idx),
 					       out_at);
+	      /* If the current and new bit values match then no delay
+	       * is needed for this bit. */
+	    if (cur_vec4_.value(idx) == bit.value(idx)) continue;
 	    assert(tmp == use_delay);
       }
 
