@@ -76,7 +76,7 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
 
       enum delay_type_t {UNKNOWN_DELAY, VEC4_DELAY, VEC8_DELAY, REAL_DELAY};
       struct event_ {
-	    event_(vvp_time64_t s) : sim_time(s) {
+	    explicit event_(vvp_time64_t s) : sim_time(s) {
 		  ptr_real = 0.0;
 		  next = NULL;
 	    }
@@ -191,7 +191,7 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
       friend class vvp_fun_modpath;
 
     public:
-      vvp_fun_modpath_src(vvp_time64_t d[12]);
+      explicit vvp_fun_modpath_src(vvp_time64_t d[12]);
     protected:
       ~vvp_fun_modpath_src();
 

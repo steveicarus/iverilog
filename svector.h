@@ -39,7 +39,7 @@ template <class TYPE> class svector {
 
       explicit svector(unsigned size) : nitems_(size), items_(new TYPE[size])
 	    { for (unsigned idx = 0 ;  idx < size ;  idx += 1)
-		  items_[idx] = 0;
+		  items_[idx] = TYPE(0);
 	    }
 
       svector(const svector<TYPE>&that)

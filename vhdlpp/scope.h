@@ -152,7 +152,7 @@ class ActiveScope : public ScopeBase {
 
     public:
       ActiveScope() : package_header_(0), context_entity_(0) { }
-      ActiveScope(ActiveScope*par) : ScopeBase(*par), package_header_(0), context_entity_(0) { }
+      explicit ActiveScope(ActiveScope*par) : ScopeBase(*par), package_header_(0), context_entity_(0) { }
 
       ~ActiveScope() { }
 

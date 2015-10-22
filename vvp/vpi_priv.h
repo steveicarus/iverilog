@@ -152,7 +152,7 @@ extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
 
 class __vpiDecConst : public __vpiHandle {
     public:
-      __vpiDecConst(int val =0);
+      explicit __vpiDecConst(int val =0);
       __vpiDecConst(const __vpiDecConst&that);
       int get_type_code(void) const;
       int vpi_get(int code);
@@ -797,7 +797,7 @@ vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
 
 class __vpiRealConst : public __vpiHandle {
     public:
-      __vpiRealConst(double);
+      explicit __vpiRealConst(double);
       int get_type_code(void) const;
       int vpi_get(int code);
       void vpi_get_value(p_vpi_value val);

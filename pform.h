@@ -104,7 +104,7 @@ struct net_decl_assign_t {
 
 /* The lgate is gate instantiation information. */
 struct lgate {
-      inline lgate(int =0)
+      explicit inline lgate(int =0)
       : parms(0), parms_by_name(0), file(NULL), lineno(0)
       { }
 

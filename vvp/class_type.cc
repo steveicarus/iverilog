@@ -36,7 +36,7 @@ using namespace std;
  */
 class class_property_t {
     public:
-      explicit inline class_property_t() { }
+      inline class_property_t() { }
       virtual ~class_property_t() =0;
 	// How much space does an instance of this property require?
       virtual size_t instance_size() const =0;
@@ -143,7 +143,7 @@ template <class T> class property_atom : public class_property_t {
 
 class property_bit : public class_property_t {
     public:
-      inline property_bit(size_t wid): wid_(wid) { }
+      explicit inline property_bit(size_t wid): wid_(wid) { }
       ~property_bit() { }
 
       size_t instance_size() const { return sizeof(vvp_vector2_t); }
@@ -168,7 +168,7 @@ class property_bit : public class_property_t {
 
 class property_logic : public class_property_t {
     public:
-      inline property_logic(size_t wid): wid_(wid) { }
+      explicit inline property_logic(size_t wid): wid_(wid) { }
       ~property_logic() { }
 
       size_t instance_size() const { return sizeof(vvp_vector4_t); }

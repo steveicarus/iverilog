@@ -463,7 +463,7 @@ class vvp_wire_vec4 : public vvp_wire_base {
 class vvp_wire_vec8 : public vvp_wire_base {
 
     public:
-      vvp_wire_vec8(unsigned wid);
+      explicit vvp_wire_vec8(unsigned wid);
 
 	// The main filter behavior for this class
       prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,

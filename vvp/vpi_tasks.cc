@@ -213,7 +213,7 @@ vpiHandle sysfunc_real::vpi_put_value(p_vpi_value vp, int)
 
 class sysfunc_vec4 : public __vpiSysTaskCall {
     public:
-      inline sysfunc_vec4(unsigned wid): return_value_(wid, BIT4_X) { }
+      explicit inline sysfunc_vec4(unsigned wid): return_value_(wid, BIT4_X) { }
       int get_type_code(void) const { return vpiSysFuncCall; }
       int vpi_get(int code);
       char* vpi_get_str(int code)   { return systask_get_str(code, this); }
@@ -389,7 +389,7 @@ vpiHandle sysfunc_vec4::vpi_put_value(p_vpi_value vp, int)
 }
 
 struct sysfunc_4net : public __vpiSysTaskCall {
-      inline sysfunc_4net(unsigned wid) : vwid_(wid) { }
+      explicit inline sysfunc_4net(unsigned wid) : vwid_(wid) { }
       int get_type_code(void) const { return vpiSysFuncCall; }
       int vpi_get(int code);
       char* vpi_get_str(int code)   { return systask_get_str(code, this); }

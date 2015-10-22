@@ -41,7 +41,7 @@ class InterfacePort : public LineInfo {
           : mode(mod), name(nam), type(typ), expr(exp)
       {}
 
-      InterfacePort(const VType*typ)
+      explicit InterfacePort(const VType*typ)
           : mode(PORT_NONE), type(typ), expr(NULL)
       {}
 
@@ -64,7 +64,7 @@ class InterfacePort : public LineInfo {
 class ComponentBase : public LineInfo {
 
     public:
-      ComponentBase(perm_string name);
+      explicit ComponentBase(perm_string name);
       ~ComponentBase();
 
 	// Entities have names.
@@ -101,7 +101,7 @@ class ComponentBase : public LineInfo {
 class Entity : public ComponentBase {
 
     public:
-      Entity(perm_string name);
+      explicit Entity(perm_string name);
       ~Entity();
 
 	// bind an architecture to the entity, and return the

@@ -207,7 +207,7 @@ static void thread_word_delete_real(vpiHandle item)
 
 class __vpiVThrStrStack : public __vpiHandle {
     public:
-      __vpiVThrStrStack(unsigned depth);
+      explicit __vpiVThrStrStack(unsigned depth);
       int get_type_code(void) const;
       int vpi_get(int code);
       void vpi_get_value(p_vpi_value val);

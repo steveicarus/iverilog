@@ -41,7 +41,7 @@ enum support_function_t {
 
 class support_function : public vhdl_function {
 public:
-   support_function(support_function_t type)
+   explicit support_function(support_function_t type)
       : vhdl_function(function_name(type), function_type(type)),
         type_(type) {}
    void emit(std::ostream &of, int level) const;

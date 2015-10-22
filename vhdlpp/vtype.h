@@ -289,7 +289,7 @@ class VTypeRange : public VType {
 class VTypeEnum : public VType {
 
     public:
-      VTypeEnum(const std::list<perm_string>*names);
+      explicit VTypeEnum(const std::list<perm_string>*names);
       ~VTypeEnum();
 
       VType*clone() const { return new VTypeEnum(*this); }

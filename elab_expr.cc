@@ -4030,7 +4030,7 @@ static verinum param_part_select_bits(const verinum&par_val, long wid,
 	// If the input is a string, and the part select is working on
 	// byte boundaries, then make the result into a string.
       if (par_val.is_string() && (labs(lsv)%8 == 0) && (wid%8 == 0))
-	    return result.as_string();
+	    return verinum(result.as_string());
 
       return result;
 }

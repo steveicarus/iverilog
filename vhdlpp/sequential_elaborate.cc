@@ -233,7 +233,7 @@ int WaitStmt::elaborate(Entity*ent, ScopeBase*scope)
 {
     if(type_ == UNTIL) {
         struct fill_sens_list_t : public ExprVisitor {
-            fill_sens_list_t(set<ExpName*>& sig_list)
+            explicit fill_sens_list_t(set<ExpName*>& sig_list)
             : sig_list_(sig_list) {};
 
             void operator() (Expression*s) {

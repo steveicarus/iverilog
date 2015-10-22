@@ -289,7 +289,7 @@ class PCAssign  : public Statement {
  */
 class PChainConstructor : public Statement {
     public:
-      PChainConstructor(const list<PExpr*>&parms);
+      explicit PChainConstructor(const list<PExpr*>&parms);
       ~PChainConstructor();
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;

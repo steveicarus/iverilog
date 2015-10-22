@@ -155,7 +155,7 @@ extern NetExpr*normalize_variable_slice_base(const list<long>&indices, NetExpr *
  * index values in the form [<>][<>]....
  */
 template <class TYPE> struct __IndicesManip {
-      inline __IndicesManip(const std::list<TYPE>&v) : val(v) { }
+      explicit inline __IndicesManip(const std::list<TYPE>&v) : val(v) { }
       const std::list<TYPE>&val;
 };
 template <class TYPE> inline __IndicesManip<TYPE> as_indices(const std::list<TYPE>&indices)
