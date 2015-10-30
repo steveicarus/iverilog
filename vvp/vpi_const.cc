@@ -31,7 +31,7 @@
 
 class __vpiStringConst : public __vpiHandle {
     public:
-      __vpiStringConst(char*val);
+      explicit __vpiStringConst(char*val);
       ~__vpiStringConst();
       int get_type_code(void) const;
       int vpi_get(int code);
@@ -224,7 +224,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 
 
 struct __vpiStringConstTEMP : public __vpiStringConst {
-      inline __vpiStringConstTEMP(char*v) : __vpiStringConst(v) { }
+      explicit inline __vpiStringConstTEMP(char*v) : __vpiStringConst(v) { }
       free_object_fun_t free_object_fun(void);
 };
 

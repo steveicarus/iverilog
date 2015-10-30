@@ -290,7 +290,7 @@ class NetObj  : public NetPins, public Attrib {
 
 class IslandBranch {
     public:
-      IslandBranch(ivl_discipline_t dis =0) : island_(0), discipline_(dis) { }
+      explicit IslandBranch(ivl_discipline_t dis =0) : island_(0), discipline_(dis) { }
 
       ivl_island_t get_island() const { return island_; }
 
@@ -2654,7 +2654,7 @@ class NetProc : public virtual LineInfo {
 class NetAlloc  : public NetProc {
 
     public:
-      NetAlloc(NetScope*);
+      explicit NetAlloc(NetScope*);
       ~NetAlloc();
 
       const string name() const;
@@ -3458,7 +3458,7 @@ class NetForLoop : public NetProc {
 class NetFree   : public NetProc {
 
     public:
-      NetFree(NetScope*);
+      explicit NetFree(NetScope*);
       ~NetFree();
 
       const string name() const;
@@ -3745,7 +3745,7 @@ class NetEAccess : public NetExpr {
 class NetUTask  : public NetProc {
 
     public:
-      NetUTask(NetScope*);
+      explicit NetUTask(NetScope*);
       ~NetUTask();
 
       const string name() const;
@@ -4237,7 +4237,7 @@ class NetESelect  : public NetExpr {
 class NetEEvent : public NetExpr {
 
     public:
-      NetEEvent(NetEvent*);
+      explicit NetEEvent(NetEvent*);
       ~NetEEvent();
 
       const NetEvent* event() const;
@@ -4260,7 +4260,7 @@ class NetEEvent : public NetExpr {
 class NetENetenum  : public NetExpr {
 
     public:
-      NetENetenum(const netenum_t*);
+      explicit NetENetenum(const netenum_t*);
       ~NetENetenum();
 
       const netenum_t* netenum() const;
@@ -4357,7 +4357,7 @@ class NetEProperty : public NetExpr {
 class NetEScope  : public NetExpr {
 
     public:
-      NetEScope(NetScope*);
+      explicit NetEScope(NetScope*);
       ~NetEScope();
 
       const NetScope* scope() const;
@@ -4688,7 +4688,7 @@ class NetECast : public NetEUnary {
 class NetESignal  : public NetExpr {
 
     public:
-      NetESignal(NetNet*n);
+      explicit NetESignal(NetNet*n);
       NetESignal(NetNet*n, NetExpr*word_index);
       ~NetESignal();
 

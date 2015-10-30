@@ -1121,8 +1121,8 @@ static vpiHandle fill_in_net4(struct __vpiSignal*obj,
 			      bool signed_flag, vvp_net_t*node)
 {
       obj->id.name = name? vpip_name_string(name) : 0;
-      obj->msb = msb;
-      obj->lsb = lsb;
+      obj->msb = __vpiDecConst(msb);
+      obj->lsb = __vpiDecConst(lsb);
       obj->signed_flag = signed_flag? 1 : 0;
       obj->is_netarray = 0;
       obj->node = node;

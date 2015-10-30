@@ -49,7 +49,7 @@ class vvp_darray : public vvp_object {
 template <class TYPE> class vvp_darray_atom : public vvp_darray {
 
     public:
-      inline vvp_darray_atom(size_t siz) : array_(siz) { }
+      explicit inline vvp_darray_atom(size_t siz) : array_(siz) { }
       ~vvp_darray_atom();
 
       size_t get_size(void) const;
@@ -95,7 +95,7 @@ class vvp_darray_vec2 : public vvp_darray {
 class vvp_darray_real : public vvp_darray {
 
     public:
-      inline vvp_darray_real(size_t siz) : array_(siz) { }
+      explicit inline vvp_darray_real(size_t siz) : array_(siz) { }
       ~vvp_darray_real();
 
       size_t get_size(void) const;
@@ -109,7 +109,7 @@ class vvp_darray_real : public vvp_darray {
 class vvp_darray_string : public vvp_darray {
 
     public:
-      inline vvp_darray_string(size_t siz) : array_(siz) { }
+      explicit inline vvp_darray_string(size_t siz) : array_(siz) { }
       ~vvp_darray_string();
 
       size_t get_size(void) const;
@@ -123,7 +123,7 @@ class vvp_darray_string : public vvp_darray {
 class vvp_darray_object : public vvp_darray {
 
     public:
-      inline vvp_darray_object(size_t siz) : array_(siz) { }
+      explicit inline vvp_darray_object(size_t siz) : array_(siz) { }
       ~vvp_darray_object();
 
       size_t get_size(void) const;

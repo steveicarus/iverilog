@@ -5931,7 +5931,7 @@ class elaborate_root_scope_t : public elaborator_work_item_t {
 
 class top_defparams : public elaborator_work_item_t {
     public:
-      top_defparams(Design*des__)
+      explicit top_defparams(Design*des__)
       : elaborator_work_item_t(des__)
       { }
 
@@ -5962,7 +5962,7 @@ class top_defparams : public elaborator_work_item_t {
 
 class later_defparams : public elaborator_work_item_t {
     public:
-      later_defparams(Design*des__)
+      explicit later_defparams(Design*des__)
       : elaborator_work_item_t(des__)
       { }
 

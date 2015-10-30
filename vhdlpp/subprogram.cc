@@ -222,7 +222,7 @@ SubprogramHeader*SubprogramHeader::make_instance(std::vector<Expression*> argume
 }
 
 struct check_return_type : public SeqStmtVisitor {
-    check_return_type(const SubprogramBody*subp) : subp_(subp), ret_type_(NULL) {}
+    explicit check_return_type(const SubprogramBody*subp) : subp_(subp), ret_type_(NULL) {}
 
     void operator() (SequentialStmt*s)
     {

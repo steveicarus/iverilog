@@ -162,7 +162,7 @@ static inline ostream& operator <<(ostream&out, const Expression&exp)
 class ExpUnary : public Expression {
 
     public:
-      ExpUnary(Expression*op1);
+      explicit ExpUnary(Expression*op1);
       virtual ~ExpUnary() =0;
 
       inline const Expression*peek_operand() const { return operand1_; }
@@ -299,7 +299,7 @@ class ExpAggregate : public Expression {
       };
 
     public:
-      ExpAggregate(std::list<element_t*>*el);
+      explicit ExpAggregate(std::list<element_t*>*el);
       ~ExpAggregate();
 
       Expression*clone() const;
@@ -402,7 +402,7 @@ class ExpBitstring : public Expression {
 class ExpCharacter : public Expression {
 
     public:
-      ExpCharacter(char val);
+      explicit ExpCharacter(char val);
       ExpCharacter(const ExpCharacter&other) : Expression() { value_ = other.value_; }
       ~ExpCharacter();
 
@@ -571,7 +571,7 @@ class ExpFunc : public Expression {
 class ExpInteger : public Expression {
 
     public:
-      ExpInteger(int64_t val);
+      explicit ExpInteger(int64_t val);
       ExpInteger(const ExpInteger&other) : Expression(), value_(other.value_) {}
       ~ExpInteger();
 
@@ -594,7 +594,7 @@ class ExpInteger : public Expression {
 class ExpReal : public Expression {
 
     public:
-      ExpReal(double val);
+      explicit ExpReal(double val);
       ExpReal(const ExpReal&other) : Expression(), value_(other.value_) {}
       ~ExpReal();
 
@@ -808,7 +808,7 @@ class ExpString : public Expression {
 class ExpUAbs : public ExpUnary {
 
     public:
-      ExpUAbs(Expression*op1);
+      explicit ExpUAbs(Expression*op1);
       ~ExpUAbs();
 
       Expression*clone() const { return new ExpUAbs(peek_operand()->clone()); }
@@ -821,7 +821,7 @@ class ExpUAbs : public ExpUnary {
 class ExpUNot : public ExpUnary {
 
     public:
-      ExpUNot(Expression*op1);
+      explicit ExpUNot(Expression*op1);
       ~ExpUNot();
 
       Expression*clone() const { return new ExpUNot(peek_operand()->clone()); }
@@ -862,7 +862,7 @@ class ExpCast : public Expression {
 class ExpNew : public Expression {
 
     public:
-      ExpNew(Expression*size);
+      explicit ExpNew(Expression*size);
       ~ExpNew();
 
       Expression*clone() const { return new ExpNew(size_->clone()); }

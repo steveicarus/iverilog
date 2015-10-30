@@ -161,7 +161,7 @@ void del_thr_event_s::single_step_display(void)
 
 struct assign_vector4_event_s  : public event_s {
 	/* The default constructor. */
-      assign_vector4_event_s(const vvp_vector4_t&that) : val(that) {
+      explicit assign_vector4_event_s(const vvp_vector4_t&that) : val(that) {
 	    base = 0;
 	    vwid = 0;
       }
@@ -325,7 +325,7 @@ unsigned long count_assign_aword_pool(void) { return array_w_heap.pool; }
  */
 struct propagate_vector4_event_s : public event_s {
 	/* The default constructor. */
-      propagate_vector4_event_s(const vvp_vector4_t&that) : val(that) {
+      explicit propagate_vector4_event_s(const vvp_vector4_t&that) : val(that) {
 	    net = NULL;
       }
 	/* A constructor that makes the val directly. */

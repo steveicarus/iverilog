@@ -131,7 +131,7 @@ class IfSequential  : public SequentialStmt {
 
 class ReturnStmt  : public SequentialStmt {
     public:
-      ReturnStmt(Expression*val);
+      explicit ReturnStmt(Expression*val);
       ~ReturnStmt();
 
     public:
@@ -201,7 +201,7 @@ class CaseSeqStmt : public SequentialStmt {
 
 class ProcedureCall : public SequentialStmt {
     public:
-      ProcedureCall(perm_string name);
+      explicit ProcedureCall(perm_string name);
       ProcedureCall(perm_string name, std::list<named_expr_t*>* param_list);
       ProcedureCall(perm_string name, std::list<Expression*>* param_list);
       ~ProcedureCall();
@@ -311,7 +311,7 @@ class AssertStmt : public ReportStmt {
 
 class WaitForStmt : public SequentialStmt {
     public:
-      WaitForStmt(Expression*delay);
+      explicit WaitForStmt(Expression*delay);
 
       void dump(ostream&out, int indent) const;
       int elaborate(Entity*ent, ScopeBase*scope);

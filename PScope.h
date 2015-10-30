@@ -146,7 +146,7 @@ class PScope : public LexicalScope {
 	// modules. Scopes for tasks and functions point to their
 	// containing module.
       PScope(perm_string name, LexicalScope*parent);
-      PScope(perm_string name);
+      explicit PScope(perm_string name);
       virtual ~PScope();
 
       perm_string pscope_name() const { return name_; }
@@ -169,7 +169,7 @@ class PScopeExtra : public PScope {
 
     public:
       PScopeExtra(perm_string, LexicalScope*parent);
-      PScopeExtra(perm_string);
+      explicit PScopeExtra(perm_string);
       ~PScopeExtra();
 
 	/* Task definitions within this module */

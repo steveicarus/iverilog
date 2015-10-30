@@ -453,7 +453,7 @@ void resolv_submit(resolv_list_s*cur)
  */
 struct vvp_net_resolv_list_s: public resolv_list_s {
 
-      vvp_net_resolv_list_s(char*l) : resolv_list_s(l) { }
+      explicit vvp_net_resolv_list_s(char*l) : resolv_list_s(l) { }
 	// port to be driven by the located node.
       vvp_net_ptr_t port;
       virtual bool resolve(bool mes);
@@ -627,7 +627,7 @@ void compile_vpi_lookup(vpiHandle *handle, char*label)
  */
 
 struct code_label_resolv_list_s: public resolv_list_s {
-      code_label_resolv_list_s(char*lab) : resolv_list_s(lab) {
+      explicit code_label_resolv_list_s(char*lab) : resolv_list_s(lab) {
 	    code = NULL;
       }
       struct vvp_code_s *code;
@@ -662,7 +662,7 @@ void code_label_lookup(struct vvp_code_s *code, char *label)
 }
 
 struct code_array_resolv_list_s: public resolv_list_s {
-      code_array_resolv_list_s(char*lab) : resolv_list_s(lab) {
+      explicit code_array_resolv_list_s(char*lab) : resolv_list_s(lab) {
 	    code = NULL;
       }
       struct vvp_code_s *code;

@@ -46,7 +46,7 @@ class perm_string {
     private:
       friend class StringHeap;
       friend class StringHeapLex;
-      perm_string(const char*t) : text_(t) { };
+      explicit perm_string(const char*t) : text_(t) { };
 
     private:
       const char*text_;

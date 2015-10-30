@@ -32,7 +32,7 @@ class blif_nex_data_t {
     private:
 	// The constructors are private. Only the get_nex_data()
 	// function can create these objects.
-      blif_nex_data_t(ivl_nexus_t nex);
+      explicit blif_nex_data_t(ivl_nexus_t nex);
       ~blif_nex_data_t();
 
     public:

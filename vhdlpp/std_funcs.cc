@@ -61,7 +61,7 @@ static class SubprogramToInteger : public SubprogramHeader {
 // Special case: size casting (e.g. conv_std_logic_vector() / resize()).
 static class SubprogramSizeCast : public SubprogramHeader {
     public:
-      SubprogramSizeCast(perm_string nam)
+      explicit SubprogramSizeCast(perm_string nam)
           : SubprogramHeader(nam, NULL, &primitive_STDLOGIC_VECTOR) {
           ports_ = new std::list<InterfacePort*>();
           ports_->push_back(new InterfacePort(&primitive_STDLOGIC_VECTOR));
