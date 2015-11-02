@@ -1084,7 +1084,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		  }
 		  for (pdx = inst; pdx < (unsigned)ninp && pdx < inst+4 ; pdx += 1) {
 			if (level) {
-			      fprintf(vvp_out, ", L_%p/%d/%d",
+			      fprintf(vvp_out, ", L_%p/%d/%u",
 				      lptr, level - 1, pdx*4);
 			} else {
 			      fprintf(vvp_out, ", %s", input_strings[pdx]);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -119,7 +119,7 @@ static void draw_lpm_mux_nest(ivl_lpm_t net, const char*muxz)
 	      net, select_input);
 
       for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 2) {
-	    fprintf(vvp_out, "L_%p/0/%d .functor %s %u",
+	    fprintf(vvp_out, "L_%p/0/%u .functor %s %u",
 		    net, idx/2, muxz, width);
 	    fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,idx+0)));
 	    fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,idx+1)));
@@ -131,10 +131,10 @@ static void draw_lpm_mux_nest(ivl_lpm_t net, const char*muxz)
 		    net, level, select_input, level, level);
 
 	    for (idx = 0 ;  idx < (ivl_lpm_size(net) >> level); idx += 2) {
-		  fprintf(vvp_out, "L_%p/%u/%d .functor %s %u",
+		  fprintf(vvp_out, "L_%p/%u/%u .functor %s %u",
 			  net, level, idx/2, muxz, width);
-		  fprintf(vvp_out, ", L_%p/%d/%d", net, level-1, idx+0);
-		  fprintf(vvp_out, ", L_%p/%d/%d", net, level-1, idx+1);
+		  fprintf(vvp_out, ", L_%p/%u/%u", net, level-1, idx+0);
+		  fprintf(vvp_out, ", L_%p/%u/%u", net, level-1, idx+1);
 		  fprintf(vvp_out, ", L_%p/%us",   net, level);
 		  fprintf(vvp_out, ", C4<>;\n");
 	    }
@@ -142,14 +142,14 @@ static void draw_lpm_mux_nest(ivl_lpm_t net, const char*muxz)
       }
 
 
-      fprintf(vvp_out, "L_%p/%ds .part %s, %d, 1; Bit %d of the select\n",
+      fprintf(vvp_out, "L_%p/%us .part %s, %u, 1; Bit %u of the select\n",
 	      net, swidth-1, select_input, swidth-1, swidth-1);
 
 
       fprintf(vvp_out, "L_%p .functor %s %u", net, muxz, width);
-      fprintf(vvp_out, ", L_%p/%d/0", net, swidth-2);
-      fprintf(vvp_out, ", L_%p/%d/1", net, swidth-2);
-      fprintf(vvp_out, ", L_%p/%ds",  net, swidth-1);
+      fprintf(vvp_out, ", L_%p/%u/0", net, swidth-2);
+      fprintf(vvp_out, ", L_%p/%u/1", net, swidth-2);
+      fprintf(vvp_out, ", L_%p/%us",  net, swidth-1);
       fprintf(vvp_out, ", C4<>;\n");
 
       free(select_input);
