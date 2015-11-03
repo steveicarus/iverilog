@@ -151,13 +151,6 @@ void ivl_net_const_s::operator delete(void*, size_t)
 
 static StringHeapLex net_const_strings;
 
-inline static const char *basename(ivl_scope_t scope, const char *inst)
-{
-      inst += strlen(ivl_scope_name(scope));
-      assert(*inst == '.');
-      return inst+1;
-}
-
 static perm_string make_scope_name(const hname_t&name)
 {
       if (! name.has_numbers())

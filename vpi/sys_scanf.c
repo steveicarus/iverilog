@@ -20,6 +20,7 @@
 /* round() is ISO C99 from math.h. This define should enable it. */
 # define _ISOC99_SOURCE 1
 # define _SVID_SOURCE 1
+# define _DEFAULT_SOURCE 1
 
 # include  "sys_priv.h"
 # include  <ctype.h>
