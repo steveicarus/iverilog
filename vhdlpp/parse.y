@@ -1239,7 +1239,7 @@ file_declaration
   : K_file identifier_list ':' IDENTIFIER ';'
       {
 	if (strcasecmp($4, "TEXT"))
-	      errormsg(@1, "file declaration expected TEXT type\n");
+	      sorrymsg(@1, "file declaration currently handles only TEXT type.\n");
 
 	for (std::list<perm_string>::iterator cur = $2->begin()
 		   ; cur != $2->end() ; ++cur) {
@@ -1893,10 +1893,10 @@ primary
         else if(!strcasecmp($2, "fs"))
             unit = ExpTime::FS;
         else
-            errormsg(@2, "Invalid time unit (accepted are fs, ps, ns, us, ms, s).");
+            errormsg(@2, "Invalid time unit (accepted are fs, ps, ns, us, ms, s).\n");
 
         if($1 < 0)
-            errormsg(@1, "Time cannot be negative.");
+            errormsg(@1, "Time cannot be negative.\n");
 
         ExpTime*tmp = new ExpTime($1, unit);
         FILE_NAME(tmp, @1);
