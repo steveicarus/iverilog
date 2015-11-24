@@ -210,12 +210,15 @@ void VariableSeqAssignment::write_to_stream(ostream&fd)
 int ProcedureCall::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
+      std::vector<Expression*>params;
 
-      std::vector<Expression*>params(param_list_->size());
-      int i = 0;
-      for(std::list<named_expr_t*>::iterator it = param_list_->begin();
-              it != param_list_->end(); ++it)
-          params[i++] = (*it)->expr();
+      if(param_list_) {
+          params.reserve(param_list_->size());
+
+          for(std::list<named_expr_t*>::iterator it = param_list_->begin();
+                  it != param_list_->end(); ++it)
+              params.push_back((*it)->expr());
+      }
 
       const Package*pkg = dynamic_cast<const Package*> (def_->get_parent());
       if (pkg != 0)
