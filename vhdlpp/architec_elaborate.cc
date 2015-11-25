@@ -179,11 +179,11 @@ int ProcessStatement::rewrite_as_always_edge_(Entity*, Architecture*)
 	    return -1;
 
 	// If there are multiple statements, I give up.
-      if (statements_list_.size() != 1)
+      if (stmt_list().size() != 1)
 	    return -1;
 
       Expression*se = sensitivity_list_.front();
-      SequentialStmt*stmt_raw = statements_list_.front();
+      SequentialStmt*stmt_raw = stmt_list().front();
 
 	// If the statement is not an if-statement, I give up.
       IfSequential*stmt = dynamic_cast<IfSequential*> (stmt_raw);
@@ -258,14 +258,26 @@ int ProcessStatement::rewrite_as_always_edge_(Entity*, Architecture*)
 	// Replace the statement with the body of the always
 	// statement, which is the true clause of the top "if"
 	// statement. There should be no "else" clause.
-      assert(statements_list_.size() == 1);
-      statements_list_.pop_front();
+      assert(stmt_list().size() == 1);
+      stmt_list().pop_front();
 
-      stmt->extract_true(statements_list_);
+      stmt->extract_true(stmt_list());
 
       delete stmt;
 
       return 0;
+}
+
+int StatementList::elaborate(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      for (std::list<SequentialStmt*>::iterator it = statements_.begin();
+              it != statements_.end(); ++it) {
+            errors += (*it)->elaborate(ent, arc);
+      }
+
+      return errors;
 }
 
 /*
@@ -273,7 +285,6 @@ int ProcessStatement::rewrite_as_always_edge_(Entity*, Architecture*)
  */
 int ProcessStatement::extract_anyedge_(Entity*, Architecture*)
 {
-
       vector<Expression*> se;
       while (! sensitivity_list_.empty()) {
 	    se.push_back(sensitivity_list_.front());
@@ -297,10 +308,7 @@ int ProcessStatement::elaborate(Entity*ent, Architecture*arc)
 	    extract_anyedge_(ent, arc);
       }
 
-      for (list<SequentialStmt*>::iterator cur = statements_list_.begin()
-		 ; cur != statements_list_.end() ; ++cur) {
-	    errors += (*cur)->elaborate(ent, arc);
-      }
+      StatementList::elaborate(ent, arc);
 
       return errors;
 }

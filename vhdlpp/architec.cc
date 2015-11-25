@@ -20,6 +20,7 @@
 # include  "architec.h"
 # include  "expression.h"
 # include  "parse_types.h"
+# include  "sequential.h"
 // Need this for parse_errors?
 # include  "parse_api.h"
 # include  <cassert>
@@ -229,18 +230,33 @@ Expression*ComponentInstantiation::find_generic_map(perm_string by_name) const
     return p->second;
 }
 
+StatementList::StatementList(std::list<SequentialStmt*>*statement_list)
+{
+    if(statement_list)
+	  statements_.splice(statements_.end(), *statement_list);
+}
+
+StatementList::~StatementList()
+{
+    for(std::list<SequentialStmt*>::iterator it = statements_.begin();
+            it != statements_.end(); ++it) {
+        delete *it;
+    }
+}
 
 ProcessStatement::ProcessStatement(perm_string iname,
 				   std::list<Expression*>*sensitivity_list,
 				   std::list<SequentialStmt*>*statements_list)
-: iname_(iname)
+: StatementList(statements_list), iname_(iname)
 {
       if (sensitivity_list)
 	    sensitivity_list_.splice(sensitivity_list_.end(), *sensitivity_list);
-      if (statements_list)
-	    statements_list_.splice(statements_list_.end(), *statements_list);
 }
 
 ProcessStatement::~ProcessStatement()
 {
+    for(std::list<Expression*>::iterator it = sensitivity_list_.begin();
+            it != sensitivity_list_.end(); ++it) {
+        delete *it;
+    }
 }

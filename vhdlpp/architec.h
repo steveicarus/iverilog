@@ -215,7 +215,44 @@ class ComponentInstantiation  : public Architecture::Statement {
       std::map<perm_string,Expression*> port_map_;
 };
 
-class ProcessStatement : public Architecture::Statement {
+class StatementList : public Architecture::Statement {
+    public:
+      StatementList(std::list<SequentialStmt*>*statement_list);
+      virtual ~StatementList();
+
+      virtual int elaborate(Entity*ent, Architecture*arc);
+      virtual int emit(ostream&out, Entity*entity, Architecture*arc);
+      virtual void dump(ostream&out, int indent =0) const;
+
+      std::list<SequentialStmt*>& stmt_list() { return statements_; }
+
+    private:
+      std::list<SequentialStmt*> statements_;
+};
+
+// There is no direct VHDL countepart to SV 'initial' statement,
+// but we can still use it during the translation process.
+class InitialStatement : public StatementList {
+    public:
+      InitialStatement(std::list<SequentialStmt*>*statement_list)
+          : StatementList(statement_list) {}
+
+      int emit(ostream&out, Entity*entity, Architecture*arc);
+      void dump(ostream&out, int indent =0) const;
+};
+
+// There is no direct VHDL countepart to SV 'final' statement,
+// but we can still use it during the translation process.
+class FinalStatement : public StatementList {
+    public:
+      FinalStatement(std::list<SequentialStmt*>*statement_list)
+          : StatementList(statement_list) {}
+
+      int emit(ostream&out, Entity*entity, Architecture*arc);
+      void dump(ostream&out, int indent =0) const;
+};
+
+class ProcessStatement : public StatementList {
 
     public:
       ProcessStatement(perm_string iname,
@@ -223,20 +260,16 @@ class ProcessStatement : public Architecture::Statement {
 		       std::list<SequentialStmt*>*statement_list);
       ~ProcessStatement();
 
-      virtual int elaborate(Entity*ent, Architecture*arc);
-      virtual int emit(ostream&out, Entity*entity, Architecture*arc);
-      virtual void dump(ostream&out, int indent =0) const;
+      int elaborate(Entity*ent, Architecture*arc);
+      int emit(ostream&out, Entity*entity, Architecture*arc);
+      void dump(ostream&out, int indent =0) const;
 
     private:
       int rewrite_as_always_edge_(Entity*ent, Architecture*arc);
       int extract_anyedge_(Entity*ent, Architecture*arc);
 
-    private:
       perm_string iname_;
-
       std::list<Expression*> sensitivity_list_;
-      std::list<SequentialStmt*> statements_list_;
-
 };
 
 #endif /* IVL_architec_H */

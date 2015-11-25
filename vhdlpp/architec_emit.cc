@@ -246,6 +246,36 @@ int IfGenerate::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
+int StatementList::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      for (std::list<SequentialStmt*>::iterator it = statements_.begin();
+              it != statements_.end(); ++it) {
+            errors += (*it)->emit(out, ent, arc);
+      }
+
+      return errors;
+}
+
+int InitialStatement::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      out << "initial begin" << endl;
+      int errors = StatementList::emit(out, ent, arc);
+      out << "end" << endl;
+
+      return errors;
+}
+
+int FinalStatement::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      out << "final begin" << endl;
+      int errors = StatementList::emit(out, ent, arc);
+      out << "end" << endl;
+
+      return errors;
+}
+
 /*
  * Emit a process statement using "always" syntax.
  *
@@ -256,14 +286,9 @@ int IfGenerate::emit(ostream&out, Entity*ent, Architecture*arc)
  */
 int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 {
-      int errors = 0;
-
       out << "always begin" << endl;
 
-      for (list<SequentialStmt*>::iterator cur = statements_list_.begin()
-		 ; cur != statements_list_.end() ; ++cur) {
-	    errors += (*cur)->emit(out, ent, arc);
-      }
+      int errors = StatementList::emit(out, ent, arc);
 
       if (! sensitivity_list_.empty()) {
 	    out << "@(";
