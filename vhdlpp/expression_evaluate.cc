@@ -268,5 +268,5 @@ bool ExpTime::evaluate(ScopeBase*, int64_t&val) const
 
 bool ExpTime::evaluate(Entity*, ScopeBase*, int64_t&val) const
 {
-    return evaluate(NULL, NULL, val);
+    return evaluate(NULL, val);
 }
