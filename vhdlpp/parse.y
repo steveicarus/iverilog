@@ -266,6 +266,8 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
       ReportStmt::severity_t severity;
 
       SubprogramHeader*subprogram;
+
+      file_open_info_t*file_info;
 };
 
   /* The keywords are all tokens. */
@@ -342,6 +344,8 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <expr_list> name_list expression_list
 %type <expr_list> process_sensitivity_list process_sensitivity_list_opt
 %type <expr_list> selected_names use_clause
+
+%type <file_info> file_open_information file_open_information_opt
 
 %type <named_expr> association_element
 %type <named_expr_list> association_list port_map_aspect port_map_aspect_opt
@@ -1236,7 +1240,7 @@ factor
   ;
 
 file_declaration
-  : K_file identifier_list ':' IDENTIFIER ';'
+  : K_file identifier_list ':' IDENTIFIER file_open_information_opt ';'
       {
 	if (strcasecmp($4, "TEXT"))
 	      sorrymsg(@1, "file declaration currently handles only TEXT type.\n");
@@ -1246,13 +1250,50 @@ file_declaration
 	      Variable*var = new Variable(*cur, &primitive_INTEGER);
 	      FILE_NAME(var, @1);
 	      active_scope->bind_name(*cur, var);
+
+	      // there was a file name specified, so it needs an implicit call
+	      // to open it at the beginning of simulation and close it at the end
+	      if($5) {
+		std::list<Expression*> params;
+
+		// add file_open() call in 'initial' block
+		params.push_back(new ExpName(*cur));
+		params.push_back($5->filename());
+		params.push_back($5->kind());
+		ProcedureCall*fopen_call = new ProcedureCall(perm_string::literal("file_open"), &params);
+		active_scope->add_initializer(fopen_call);
+
+		// add file_close() call in 'final' block
+		params.clear();
+		params.push_back(new ExpName(*cur));
+		ProcedureCall*fclose_call = new ProcedureCall(perm_string::literal("file_close"), &params);
+		active_scope->add_finalizer(fclose_call);
+	      }
 	}
+
 	delete $2;
       }
   | K_file error ';'
       { errormsg(@2, "Syntax error in file declaration.\n");
 	yyerrok;
       }
+  ;
+
+file_open_information
+  : K_open IDENTIFIER K_is STRING_LITERAL
+     {
+        ExpName*mode = new ExpName(lex_strings.make($2));
+        delete[]$2;
+        $$ = new file_open_info_t(new ExpString($4), mode);
+     }
+  | K_is STRING_LITERAL
+     {
+        $$ = new file_open_info_t(new ExpString($2));
+     }
+
+file_open_information_opt
+  : file_open_information { $$ = $1; }
+  | { $$ = 0; }
   ;
 
 for_generate_statement
