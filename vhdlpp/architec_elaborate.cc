@@ -59,6 +59,14 @@ int Architecture::elaborate(Entity*entity)
 	    cur->second->elaborate_init_expr(entity, this);
       }
 
+	// Create 'initial' and 'final' blocks for implicit
+	// initalization and clean-up actions
+      if(!initializers_.empty())
+	    statements_.push_front(new InitialStatement(&initializers_));
+
+      if(!finalizers_.empty())
+	    statements_.push_front(new FinalStatement(&finalizers_));
+
       for (list<Architecture::Statement*>::iterator cur = statements_.begin()
 		 ; cur != statements_.end() ; ++cur) {
 

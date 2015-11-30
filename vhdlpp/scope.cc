@@ -63,6 +63,9 @@ ScopeBase::ScopeBase(const ActiveScope&ref)
 
     use_enums_ = ref.use_enums_;
 
+    initializers_ = ref.initializers_;
+    finalizers_ = ref.finalizers_;
+
       // This constructor is invoked when the parser is finished with
       // an active scope and is making the actual scope. At this point
       // we know that "this" is the parent scope for the subprograms,
