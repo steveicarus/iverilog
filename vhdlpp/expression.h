@@ -305,7 +305,6 @@ class ExpAggregate : public Expression {
 
       Expression*clone() const;
 
-      const VType*probe_type(Entity*ent, ScopeBase*scope) const;
       const VType*fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
@@ -731,7 +730,6 @@ class ExpNameALL : public ExpName {
       ExpNameALL() : ExpName(perm_string()) { }
 
     public:
-      int elaborate_lval(Entity*ent, ScopeBase*scope, bool);
       const VType* probe_type(Entity*ent, ScopeBase*scope) const;
       void dump(ostream&out, int indent =0) const;
 };

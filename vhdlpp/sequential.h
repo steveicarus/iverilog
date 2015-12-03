@@ -297,7 +297,8 @@ class ReportStmt : public SequentialStmt {
 
 class AssertStmt : public ReportStmt {
     public:
-      AssertStmt(Expression*condition, const char*message, ReportStmt::severity_t severity = ReportStmt::ERROR);
+      AssertStmt(Expression*condition, const char*message,
+                 ReportStmt::severity_t severity = ReportStmt::ERROR);
 
       void dump(ostream&out, int indent) const;
       int elaborate(Entity*ent, ScopeBase*scope);

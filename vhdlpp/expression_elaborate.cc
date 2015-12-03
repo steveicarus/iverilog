@@ -316,11 +316,6 @@ int ExpName::elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*lva
       return errors;
 }
 
-int ExpNameALL::elaborate_lval(Entity*ent, ScopeBase*scope, bool is_sequ)
-{
-      return Expression::elaborate_lval(ent, scope, is_sequ);
-}
-
 int Expression::elaborate_expr(Entity*, ScopeBase*, const VType*)
 {
       cerr << get_fileline() << ": internal error: I don't know how to elaborate expression type=" << typeid(*this).name() << endl;
@@ -386,11 +381,6 @@ int ExpUnary::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
       ivl_assert(*this, ltype != 0);
       set_type(ltype);
       return operand1_->elaborate_expr(ent, scope, ltype);
-}
-
-const VType*ExpAggregate::probe_type(Entity*ent, ScopeBase*scope) const
-{
-      return Expression::probe_type(ent, scope);
 }
 
 const VType*ExpAggregate::fit_type(Entity*, ScopeBase*, const VTypeArray*host) const
