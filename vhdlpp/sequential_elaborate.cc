@@ -219,7 +219,7 @@ int BasicLoopStatement::elaborate(Entity*, ScopeBase*)
 
 int AssertStmt::elaborate(Entity*ent, ScopeBase*scope)
 {
-    return cond_->elaborate_expr(ent, scope, 0);
+    return cond_->elaborate_expr(ent, scope, cond_->probe_type(ent, scope));
 }
 
 int WaitForStmt::elaborate(Entity*ent, ScopeBase*scope)
