@@ -259,7 +259,7 @@ VariableSeqAssignment::~VariableSeqAssignment()
       delete rval_;
 }
 
-WhileLoopStatement::WhileLoopStatement(perm_string lname, ExpLogical* cond, list<SequentialStmt*>* stmts)
+WhileLoopStatement::WhileLoopStatement(perm_string lname, Expression* cond, list<SequentialStmt*>* stmts)
 : LoopStatement(lname, stmts), cond_(cond)
 {
 }

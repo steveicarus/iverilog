@@ -355,6 +355,28 @@ void CaseSeqStmt::CaseStmtAlternative::write_to_stream(ostream&fd)
       }
 }
 
+int WhileLoopStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+    int errors = 0;
+
+    out << "while(";
+    errors += cond_->emit(out, ent, scope);
+    out << ") begin" << endl;
+    errors += emit_substatements(out, ent, scope);
+    out << "end" << endl;
+
+    return errors;
+}
+
+void WhileLoopStatement::write_to_stream(ostream&out)
+{
+    out << "while(";
+    cond_->write_to_stream(out);
+    out << ") loop" << endl;
+    write_to_stream_substatements(out);
+    out << "end loop;" << endl;
+}
+
 int ForLoopStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
     int errors = 0;

@@ -22,6 +22,7 @@
 # include  "scope.h"
 # include  "library.h"
 # include  "subprogram.h"
+# include  "std_types.h"
 
 int SequentialStmt::elaborate(Entity*, ScopeBase*)
 {
@@ -203,10 +204,12 @@ int VariableSeqAssignment::elaborate(Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int WhileLoopStatement::elaborate(Entity*, ScopeBase*)
+int WhileLoopStatement::elaborate(Entity*ent, ScopeBase*scope)
 {
-    //TODO:check whether there is any wait statement in the statements (there should be)
-    return 0;
+      int errors = 0;
+      errors += elaborate_substatements(ent, scope);
+      errors += cond_->elaborate_expr(ent, scope, cond_->probe_type(ent, scope));
+      return errors;
 }
 
 int BasicLoopStatement::elaborate(Entity*, ScopeBase*)

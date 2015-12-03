@@ -1614,14 +1614,8 @@ loop_statement
 	if($1) delete[]$1;
 	if($8) delete[]$8;
 
-	ExpLogical* cond = dynamic_cast<ExpLogical*>($3);
-	if(!cond) {
-	      errormsg(@3, "Iteration condition is not a correct logical expression.\n");
-	}
-	WhileLoopStatement* tmp = new WhileLoopStatement(loop_name, cond, $5);
+	WhileLoopStatement* tmp = new WhileLoopStatement(loop_name, $3, $5);
 	FILE_NAME(tmp, @1);
-
-	sorrymsg(@1, "Loop statements are not supported.\n");
 	$$ = tmp;
       }
 
