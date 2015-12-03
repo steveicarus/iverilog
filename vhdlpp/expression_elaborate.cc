@@ -376,6 +376,11 @@ const VType*ExpUnary::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*aty
       return operand1_->fit_type(ent, scope, atype);
 }
 
+const VType*ExpUnary::probe_type(Entity*ent, ScopeBase*scope) const
+{
+      return operand1_->probe_type(ent, scope);
+}
+
 int ExpUnary::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
 {
       ivl_assert(*this, ltype != 0);

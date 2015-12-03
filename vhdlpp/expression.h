@@ -168,6 +168,7 @@ class ExpUnary : public Expression {
       inline const Expression*peek_operand() const { return operand1_; }
 
       const VType*fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*atype) const;
+      const VType*probe_type(Entity*ent, ScopeBase*scope) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void visit(ExprVisitor& func);
 
