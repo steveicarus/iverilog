@@ -583,7 +583,10 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      ivl_assert(*this, def_);
+      if(!def_) {
+          cerr << get_fileline() << ": error: unknown function: " << name_ << endl;
+          return 1;
+      }
 
       // If this function has an elaborated definition, and if
       // that definition is in a package, then include the
