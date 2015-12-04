@@ -265,13 +265,35 @@ void VTypeArray::evaluate_ranges(ScopeBase*scope) {
     }
 }
 
-VTypeRange::VTypeRange(const VType*base, int64_t start_val, int64_t end_val)
-: base_(base), start_(start_val), end_(end_val)
+VTypeRange::VTypeRange(const VType*base)
+: base_(base)
 {
 }
 
 VTypeRange::~VTypeRange()
 {
+}
+
+VTypeRangeConst::VTypeRangeConst(const VType*base, int64_t start_val, int64_t end_val)
+: VTypeRange(base), start_(start_val), end_(end_val)
+{
+}
+
+VTypeRangeExpr::VTypeRangeExpr(const VType*base, Expression*start_expr,
+                               Expression*end_expr, bool downto)
+: VTypeRange(base), start_(start_expr), end_(end_expr), downto_(downto)
+{
+}
+
+VTypeRangeExpr::~VTypeRangeExpr()
+{
+    delete start_;
+    delete end_;
+}
+
+VType*VTypeRangeExpr::clone() const {
+    return new VTypeRangeExpr(base_type()->clone(), start_->clone(),
+                              end_->clone(), downto_);
 }
 
 VTypeEnum::VTypeEnum(const std::list<perm_string>*names)

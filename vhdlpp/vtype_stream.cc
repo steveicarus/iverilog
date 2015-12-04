@@ -171,21 +171,41 @@ void VTypePrimitive::write_to_stream(ostream&fd) const
       }
 }
 
-void VTypeRange::write_to_stream(ostream&fd) const
+bool VTypeRange::write_std_types(ostream&fd) const
 {
-	// Detect some special cases that can be written as ieee or
-	// standard types.
-      if (const VTypePrimitive*tmp = dynamic_cast<const VTypePrimitive*> (base_)) {
-	    if (tmp->type()==VTypePrimitive::NATURAL) {
-		  fd << "natural";
-		  return;
-	    }
-      }
+    // Detect some special cases that can be written as ieee or
+    // standard types.
+    if (const VTypePrimitive*tmp = dynamic_cast<const VTypePrimitive*>(base_)) {
+        if (tmp->type()==VTypePrimitive::NATURAL) {
+            fd << "natural";
+            return true;
+        }
+    }
 
-      base_->write_to_stream(fd);
-      fd << " range " << start_;
-      fd << (start_ < end_ ? " to " : " downto ");
-      fd << end_;
+    return false;
+}
+
+void VTypeRangeConst::write_to_stream(ostream&fd) const
+{
+    if(write_std_types(fd))
+        return;
+
+    base_type()->write_to_stream(fd);
+    fd << " range " << start_;
+    fd << (start_ < end_ ? " to " : " downto ");
+    fd << end_;
+}
+
+void VTypeRangeExpr::write_to_stream(ostream&fd) const
+{
+    if(write_std_types(fd))
+        return;
+
+    base_type()->write_to_stream(fd);
+    fd << " range ";
+    start_->write_to_stream(fd);
+    fd << (downto_ ? " downto " : " to ");
+    end_->write_to_stream(fd);
 }
 
 void VTypeRecord::write_to_stream(ostream&fd) const

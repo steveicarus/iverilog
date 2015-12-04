@@ -269,21 +269,52 @@ class VTypeArray : public VType {
 class VTypeRange : public VType {
 
     public:
-      VTypeRange(const VType*base, int64_t end, int64_t start);
-      ~VTypeRange();
+      VTypeRange(const VType*base);
+      virtual ~VTypeRange() = 0;
 
-      VType*clone() const { return new VTypeRange(base_->clone(), start_, end_); }
+      bool write_std_types(std::ostream&fd) const;
+      int emit_def(std::ostream&out, perm_string name) const;
 
 	// Get the type that is limited by the range.
-      inline const VType* base_type() const { return base_; }
-
-    public: // Virtual methods
-      void write_to_stream(std::ostream&fd) const;
-      int emit_def(std::ostream&out, perm_string name) const;
+      inline const VType*base_type() const { return base_; }
 
     private:
       const VType*base_;
-      int64_t start_, end_;
+};
+
+class VTypeRangeConst : public VTypeRange {
+
+    public:
+      VTypeRangeConst(const VType*base, int64_t end, int64_t start);
+
+      VType*clone() const {
+          return new VTypeRangeConst(base_type()->clone(), start_, end_);
+      }
+
+    public: // Virtual methods
+      void write_to_stream(std::ostream&fd) const;
+
+    private:
+      const int64_t start_, end_;
+};
+
+class VTypeRangeExpr : public VTypeRange {
+
+    public:
+      VTypeRangeExpr(const VType*base, Expression*end, Expression*start, bool downto);
+      ~VTypeRangeExpr();
+
+      VType*clone() const;
+
+    public: // Virtual methods
+      void write_to_stream(std::ostream&fd) const;
+
+    private:
+      // Boundaries
+      Expression*start_, *end_;
+
+      // Range direction (downto/to)
+      bool downto_;
 };
 
 class VTypeEnum : public VType {
