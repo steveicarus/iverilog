@@ -912,10 +912,11 @@ bool ExpString::is_primary(void) const
 
 int ExpString::emit(ostream& out, Entity*ent, ScopeBase*scope)
 {
+      const VTypeArray*arr;
       const VType*type = peek_type();
       assert(type != 0);
 
-      if (const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type)) {
+      if (type != &primitive_STRING && (arr = dynamic_cast<const VTypeArray*>(type))) {
 	    return emit_as_array_(out, ent, scope, arr);
       }
 
