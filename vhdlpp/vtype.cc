@@ -265,8 +265,8 @@ void VTypeArray::evaluate_ranges(ScopeBase*scope) {
     }
 }
 
-VTypeRange::VTypeRange(const VType*base, int64_t end_val, int64_t start_val)
-: base_(base), end_(end_val), start_(start_val)
+VTypeRange::VTypeRange(const VType*base, int64_t start_val, int64_t end_val)
+: base_(base), start_(start_val), end_(end_val)
 {
 }
 

@@ -283,7 +283,7 @@ class VTypeRange : public VType {
 
     private:
       const VType*base_;
-      int64_t end_, start_;
+      int64_t start_, end_;
 };
 
 class VTypeEnum : public VType {
