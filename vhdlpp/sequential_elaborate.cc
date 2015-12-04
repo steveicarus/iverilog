@@ -217,9 +217,17 @@ int BasicLoopStatement::elaborate(Entity*, ScopeBase*)
     return 0;
 }
 
+int ReportStmt::elaborate(Entity*ent, ScopeBase*scope)
+{
+    return msg_->elaborate_expr(ent, scope, &primitive_STRING);
+}
+
 int AssertStmt::elaborate(Entity*ent, ScopeBase*scope)
 {
-    return cond_->elaborate_expr(ent, scope, cond_->probe_type(ent, scope));
+    int errors = 0;
+    errors += ReportStmt::elaborate(ent, scope);
+    errors += cond_->elaborate_expr(ent, scope, cond_->probe_type(ent, scope));
+    return errors;
 }
 
 int WaitForStmt::elaborate(Entity*ent, ScopeBase*scope)

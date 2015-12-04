@@ -452,7 +452,7 @@ assertion_statement
   : K_assert expression report_statement
       { ReportStmt*report = dynamic_cast<ReportStmt*>($3);
         assert(report);
-	AssertStmt*tmp = new AssertStmt($2, report->message().c_str(), report->severity());
+	AssertStmt*tmp = new AssertStmt($2, report->message(), report->severity());
         delete report;
 	FILE_NAME(tmp,@2);
 	$$ = tmp;
@@ -2185,10 +2185,9 @@ relation
   ;
 
 report_statement
-  : K_report STRING_LITERAL severity_opt ';'
+  : K_report expression severity_opt ';'
       { ReportStmt*tmp = new ReportStmt($2, $3);
 	FILE_NAME(tmp,@2);
-	delete[]$2;
 	$$ = tmp;
       }
 

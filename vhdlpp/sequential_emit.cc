@@ -496,21 +496,23 @@ int ForLoopStatement::emit_runtime_(ostream&out, Entity*ent, ScopeBase*scope)
     return errors;
 }
 
-int ReportStmt::emit(ostream&out, Entity*, ScopeBase*)
+int ReportStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
-    out << "$display(\"";
+    out << "$display(\"** ";
 
     switch(severity_)
     {
-        case NOTE:          out << "** Note: "; break;
-        case WARNING:       out << "** Warning: "; break;
-        case ERROR:         out << "** Error: "; break;
-        case FAILURE:       out << "** Failure: "; break;
+        case NOTE:          out << "Note"; break;
+        case WARNING:       out << "Warning"; break;
+        case ERROR:         out << "Error"; break;
+        case FAILURE:       out << "Failure"; break;
         case UNSPECIFIED:   ivl_assert(*this, false); break;
     }
 
-    out << ExpString::escape_quot(msg_);
-    out << " (" << get_fileline() << ")\");";
+    out << ": \",";
+
+    msg_->emit(out, ent, scope);
+    out << ",\" (" << get_fileline() << ")\");";
 
     if(severity_ == FAILURE)
         out << "$finish();";
@@ -522,7 +524,9 @@ int ReportStmt::emit(ostream&out, Entity*, ScopeBase*)
 
 void ReportStmt::write_to_stream(std::ostream&fd)
 {
-    fd << "report \"" << ExpString::escape_quot(msg_) << "\"" << std::endl;
+    fd << "report \"";
+    msg_->write_to_stream(fd);
+    fd << "\"" << std::endl;
 
     fd << "severity ";
     switch(severity_)
