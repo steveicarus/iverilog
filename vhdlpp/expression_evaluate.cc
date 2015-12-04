@@ -252,7 +252,7 @@ bool ExpShift::evaluate(ScopeBase*scope, int64_t&val) const
       return true;
 }
 
-bool ExpTime::evaluate(ScopeBase*, int64_t&val) const
+/*bool ExpTime::evaluate(ScopeBase*, int64_t&val) const
 {
     double v = to_fs();
 
@@ -269,4 +269,4 @@ bool ExpTime::evaluate(ScopeBase*, int64_t&val) const
 bool ExpTime::evaluate(Entity*, ScopeBase*, int64_t&val) const
 {
     return evaluate(NULL, val);
-}
+}*/

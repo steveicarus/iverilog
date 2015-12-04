@@ -891,8 +891,8 @@ class ExpTime : public Expression {
         int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
         void write_to_stream(std::ostream&) const;
         int emit(ostream&out, Entity*ent, ScopeBase*scope);
-        bool evaluate(ScopeBase*scope, int64_t&val) const;
-        bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
+        //bool evaluate(ScopeBase*scope, int64_t&val) const;
+        //bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
         void dump(ostream&out, int indent = 0) const;
 
     private:
