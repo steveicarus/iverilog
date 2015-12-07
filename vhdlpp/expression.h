@@ -168,6 +168,7 @@ class ExpUnary : public Expression {
       inline const Expression*peek_operand() const { return operand1_; }
 
       const VType*fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*atype) const;
+      const VType*probe_type(Entity*ent, ScopeBase*scope) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void visit(ExprVisitor& func);
 
@@ -304,7 +305,6 @@ class ExpAggregate : public Expression {
 
       Expression*clone() const;
 
-      const VType*probe_type(Entity*ent, ScopeBase*scope) const;
       const VType*fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
@@ -730,7 +730,6 @@ class ExpNameALL : public ExpName {
       ExpNameALL() : ExpName(perm_string()) { }
 
     public:
-      int elaborate_lval(Entity*ent, ScopeBase*scope, bool);
       const VType* probe_type(Entity*ent, ScopeBase*scope) const;
       void dump(ostream&out, int indent =0) const;
 };
@@ -796,13 +795,17 @@ class ExpString : public Expression {
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
       bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
-      const std::vector<char>& get_value() const { return value_; }
+      const std::string& get_value() const { return value_; }
+
+	// Converts quotation marks (") to its escaped
+	// counterpart in SystemVerilog (\")
+      static std::string escape_quot(const std::string& str);
 
     private:
       int emit_as_array_(ostream&out, Entity*ent, ScopeBase*scope, const VTypeArray*arr);
 
     private:
-      std::vector<char> value_;
+      std::string value_;
 };
 
 class ExpUAbs : public ExpUnary {
@@ -888,8 +891,8 @@ class ExpTime : public Expression {
         int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
         void write_to_stream(std::ostream&) const;
         int emit(ostream&out, Entity*ent, ScopeBase*scope);
-        bool evaluate(ScopeBase*scope, int64_t&val) const;
-        bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
+        //bool evaluate(ScopeBase*scope, int64_t&val) const;
+        //bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
         void dump(ostream&out, int indent = 0) const;
 
     private:
@@ -898,5 +901,9 @@ class ExpTime : public Expression {
         uint64_t amount_;
         timeunit_t unit_;
 };
+
+// Elaborates an expression used as an argument in a procedure/function call.
+int elaborate_argument(Expression*expr, const SubprogramHeader*subp,
+                       int idx, Entity*ent, ScopeBase*scope);
 
 #endif /* IVL_expression_H */

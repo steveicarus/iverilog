@@ -29,17 +29,19 @@ bool is_global_type(perm_string type_name);
 void delete_global_types();
 const VTypeEnum*find_std_enum_name(perm_string name);
 
-extern const VTypePrimitive primitive_BOOLEAN;
 extern const VTypePrimitive primitive_BIT;
 extern const VTypePrimitive primitive_INTEGER;
 extern const VTypePrimitive primitive_NATURAL;
 extern const VTypePrimitive primitive_REAL;
 extern const VTypePrimitive primitive_STDLOGIC;
-extern const VTypePrimitive primitive_CHARACTER;
 extern const VTypePrimitive primitive_TIME;
+extern const VTypePrimitive primitive_TEXT;
+extern const VTypePrimitive primitive_LINE;
 
 extern VTypeDef type_BOOLEAN;
+extern VTypeDef type_FILE_OPEN_KIND;
 
+extern const VTypeArray primitive_CHARACTER;
 extern const VTypeArray primitive_BIT_VECTOR;
 extern const VTypeArray primitive_BOOL_VECTOR;
 extern const VTypeArray primitive_STDLOGIC_VECTOR;

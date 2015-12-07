@@ -375,6 +375,22 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
+      if(fun_ == REM) {
+          // Special case: division remainder, defined in the VHDL standard 1076-2008/9.2.7
+          // there is no direct counterpart, therefore output the formula to
+          // compute a remainder: A rem B = A - (A/B) * B;
+          out << "((";
+          errors += emit_operand1(out, ent, scope);
+          out << ")-((";
+          errors += emit_operand1(out, ent, scope);
+          out << ")/(";
+          errors += emit_operand2(out, ent, scope);
+          out << "))*(";
+          errors += emit_operand2(out, ent, scope);
+          out << "))";
+          return errors;
+      }
+
       errors += emit_operand1(out, ent, scope);
 
       switch (fun_) {
@@ -396,9 +412,8 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, ScopeBase*scope)
 	  case POW:
 	    out << " ** ";
 	    break;
-	  case REM:
-	    out << " /* ?remainder? */ ";
-	    break;
+	  case REM: // should not happen as it is handled above, suppress warnings
+            ivl_assert(*this, 0);
 	  case xCONCAT:
 	    ivl_assert(*this, 0);
 	    out << " /* ?concat? */ ";
@@ -901,11 +916,8 @@ int ExpString::emit(ostream& out, Entity*ent, ScopeBase*scope)
 	    return emit_as_array_(out, ent, scope, arr);
       }
 
-      out << "\"";
-      for(vector<char>::const_iterator it = value_.begin()
-	  ; it != value_.end(); ++it)
-	    out << *it;
-      out << "\"";
+      out << "\"" << escape_quot(value_) << "\"";
+
       return 0;
 }
 
@@ -919,7 +931,7 @@ int ExpString::emit_as_array_(ostream& out, Entity*, ScopeBase*, const VTypeArra
 
 	// Detect the special case that this is an array of
 	// CHARACTER. In this case, emit at a Verilog string.
-      if (etype->type()==VTypePrimitive::CHARACTER) {
+      if (arr->element_type() == &primitive_CHARACTER) {
 	    vector<char> tmp (value_.size() + 3);
 	    tmp[0] = '"';
 	    memcpy(&tmp[1], &value_[0], value_.size());
@@ -942,6 +954,19 @@ int ExpString::emit_as_array_(ostream& out, Entity*, ScopeBase*, const VTypeArra
       }
 
       return errors;
+}
+
+std::string ExpString::escape_quot(const std::string& str)
+{
+      size_t idx = 0;
+      string result(str);
+
+      while((idx = result.find('"', idx)) != string::npos) {
+         result.replace(idx, 1, "\\\"");
+         idx += 2;
+      }
+
+      return result;
 }
 
 int ExpUAbs::emit(ostream&out, Entity*ent, ScopeBase*scope)

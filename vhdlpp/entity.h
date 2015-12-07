@@ -45,6 +45,10 @@ class InterfacePort : public LineInfo {
           : mode(PORT_NONE), type(typ), expr(NULL)
       {}
 
+      InterfacePort(const VType*typ, port_mode_t mod)
+          : mode(mod), type(typ), expr(NULL)
+      {}
+
 	// Port direction from the source code.
       port_mode_t mode;
 	// Name of the port from the source code

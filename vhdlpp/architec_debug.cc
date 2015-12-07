@@ -95,6 +95,30 @@ void SignalAssignment::dump(ostream&out, int indent) const
       }
 }
 
+void StatementList::dump(ostream&out, int indent) const
+{
+      out << setw(indent+3) << "" << "sequence of statements:" << endl;
+
+      for (list<SequentialStmt*>::const_iterator cur = statements_.begin()
+		 ; cur != statements_.end() ; ++cur) {
+	    (*cur)->dump(out, indent+4);
+      }
+}
+
+void InitialStatement::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "InitialStatement file=" << get_fileline() << endl;
+
+      StatementList::dump(out, indent);
+}
+
+void FinalStatement::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "FinalStatment file=" << get_fileline() << endl;
+
+      StatementList::dump(out, indent);
+}
+
 void ProcessStatement::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "ProcessStatement name_=" << iname_
@@ -107,10 +131,5 @@ void ProcessStatement::dump(ostream&out, int indent) const
 	    (*cur)->dump(out, indent+4);
       }
 
-      out << setw(indent+3) << "" << "sequence of statements:" << endl;
-
-      for (list<SequentialStmt*>::const_iterator cur = statements_list_.begin()
-		 ; cur != statements_list_.end() ; ++cur) {
-	    (*cur)->dump(out, indent+4);
-      }
+      StatementList::dump(out, indent);
 }

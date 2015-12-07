@@ -63,6 +63,9 @@ ScopeBase::ScopeBase(const ActiveScope&ref)
 
     use_enums_ = ref.use_enums_;
 
+    initializers_ = ref.initializers_;
+    finalizers_ = ref.finalizers_;
+
       // This constructor is invoked when the parser is finished with
       // an active scope and is making the actual scope. At this point
       // we know that "this" is the parent scope for the subprograms,
@@ -99,11 +102,10 @@ const VType*ScopeBase::find_type(perm_string by_name)
       if (cur == cur_types_.end()) {
         cur = use_types_.find(by_name);
         if (cur == use_types_.end())
-          return 0;
-        else
-          return cur->second;
-      } else
-	    return cur->second;
+          return NULL;     // nothing found
+      }
+
+      return cur->second;
 }
 
 bool ScopeBase::find_constant(perm_string by_name, const VType*&typ, Expression*&exp) const
@@ -115,19 +117,12 @@ bool ScopeBase::find_constant(perm_string by_name, const VType*&typ, Expression*
       if (cur == cur_constants_.end()) {
         cur = use_constants_.find(by_name);
         if (cur == use_constants_.end())
-          return false;
-        else {
-          typ = cur->second->typ;
-          exp = cur->second->val;
-          return true;
-        }
-      } else {
-        typ = cur->second->typ;
-        exp = cur->second->val;
-        return true;
+          return false;     // nothing found
       }
 
-      return false;
+      typ = cur->second->typ;
+      exp = cur->second->val;
+      return true;
 }
 
 Signal* ScopeBase::find_signal(perm_string by_name) const
@@ -136,12 +131,10 @@ Signal* ScopeBase::find_signal(perm_string by_name) const
       if (cur == new_signals_.end()) {
         cur = old_signals_.find(by_name);
         if (cur == old_signals_.end())
-            return 0;
-        else
-            return cur->second;
-      } else {
-	    return cur->second;
+            return NULL;        // nothing found
       }
+
+      return cur->second;
 }
 
 Variable* ScopeBase::find_variable(perm_string by_name) const
@@ -150,12 +143,10 @@ Variable* ScopeBase::find_variable(perm_string by_name) const
       if (cur == new_variables_.end()) {
 	    cur = old_variables_.find(by_name);
 	    if (cur == old_variables_.end())
-		  return 0;
-	    else
-		  return cur->second;
-      } else {
-	    return cur->second;
+		return 0;     // nothing found
       }
+
+      return cur->second;
 }
 
 const InterfacePort* ScopeBase::find_param(perm_string) const
@@ -231,7 +222,6 @@ void ScopeBase::do_use_from(const ScopeBase*that)
 		  continue;
 	    use_subprograms_[cur->first] = cur->second;
       }
-
 
       for (map<perm_string,const VType*>::const_iterator cur = that->cur_types_.begin()
 		 ; cur != that->cur_types_.end() ; ++ cur) {

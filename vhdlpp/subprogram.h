@@ -71,6 +71,7 @@ class SubprogramHeader : public LineInfo {
       bool compare_specification(SubprogramHeader*that) const;
 
       const InterfacePort*find_param(perm_string nam) const;
+      const InterfacePort*peek_param(int idx) const;
       const VType*peek_param_type(int idx) const;
       const VType*peek_return_type() const { return return_type_; }
 

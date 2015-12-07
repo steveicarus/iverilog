@@ -130,7 +130,7 @@ const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
 const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_name,
 				     ScopeBase*scope,
 				     Expression*range_left,
-				     bool /* downto*/ ,
+				     bool downto,
 				     Expression*range_right)
 {
       const VType*base_type = parse_type_by_name(lex_strings.make(base_name));
@@ -143,15 +143,13 @@ const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_name,
       assert(range_left && range_right);
 
       int64_t left_val, right_val;
-      bool rc = range_left->evaluate(scope, left_val);
-      if (rc == false)
-	    return 0;
+      VTypeRange*subtype;
 
-      rc = range_right->evaluate(scope, right_val);
-      if (rc == false)
-	    return 0;
+      if(range_left->evaluate(scope, left_val) && range_right->evaluate(scope, right_val)) {
+	    subtype = new VTypeRangeConst(base_type, left_val, right_val);
+      } else {
+	    subtype = new VTypeRangeExpr(base_type, range_left, range_right, downto);
+      }
 
-      VTypeRange*sub_type = new VTypeRange(base_type, left_val, right_val);
-
-      return sub_type;
+      return subtype;
 }

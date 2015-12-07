@@ -632,10 +632,8 @@ ExpShift::ExpShift(ExpShift::shift_t op, Expression*op1, Expression*op2)
 }
 
 ExpString::ExpString(const char* value)
-: value_(strlen(value))
+: value_(value)
 {
-      for(size_t idx = 0; idx < value_.size(); idx += 1)
-	    value_[idx] = value[idx];
 }
 
 ExpString::~ExpString()

@@ -102,4 +102,23 @@ struct adding_term {
       Expression*term;
 };
 
+// Stores information for file declarations containing a file name and open mode
+// (VHDL-2008 6.4.2.5)
+class file_open_info_t {
+    public:
+      file_open_info_t(ExpString*filename, ExpName*kind = NULL)
+        : kind_(kind), filename_(filename) {
+          // By default files are opened in read-only mode
+          if(!kind_) kind_ = new ExpName(perm_string::literal("read_mode"));
+      }
+      ~file_open_info_t() { delete kind_; delete filename_; }
+
+      ExpName*kind() { return kind_; }
+      ExpString*filename() { return filename_; }
+
+    private:
+      ExpName*kind_;
+      ExpString*filename_;
+};
+
 #endif /* IVL_parse_types_H */

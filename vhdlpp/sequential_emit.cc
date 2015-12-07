@@ -210,12 +210,15 @@ void VariableSeqAssignment::write_to_stream(ostream&fd)
 int ProcedureCall::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
+      std::vector<Expression*>params;
 
-      std::vector<Expression*>params(param_list_->size());
-      int i = 0;
-      for(std::list<named_expr_t*>::iterator it = param_list_->begin();
-              it != param_list_->end(); ++it)
-          params[i++] = (*it)->expr();
+      if(param_list_) {
+          params.reserve(param_list_->size());
+
+          for(std::list<named_expr_t*>::iterator it = param_list_->begin();
+                  it != param_list_->end(); ++it)
+              params.push_back((*it)->expr());
+      }
 
       const Package*pkg = dynamic_cast<const Package*> (def_->get_parent());
       if (pkg != 0)
@@ -352,6 +355,28 @@ void CaseSeqStmt::CaseStmtAlternative::write_to_stream(ostream&fd)
       }
 }
 
+int WhileLoopStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+    int errors = 0;
+
+    out << "while(";
+    errors += cond_->emit(out, ent, scope);
+    out << ") begin" << endl;
+    errors += emit_substatements(out, ent, scope);
+    out << "end" << endl;
+
+    return errors;
+}
+
+void WhileLoopStatement::write_to_stream(ostream&out)
+{
+    out << "while(";
+    cond_->write_to_stream(out);
+    out << ") loop" << endl;
+    write_to_stream_substatements(out);
+    out << "end loop;" << endl;
+}
+
 int ForLoopStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
     int errors = 0;
@@ -484,7 +509,7 @@ int ReportStmt::emit(ostream&out, Entity*, ScopeBase*)
         case UNSPECIFIED:   ivl_assert(*this, false); break;
     }
 
-    out << msg_;
+    out << ExpString::escape_quot(msg_);
     out << " (" << get_fileline() << ")\");";
 
     if(severity_ == FAILURE)
@@ -497,7 +522,7 @@ int ReportStmt::emit(ostream&out, Entity*, ScopeBase*)
 
 void ReportStmt::write_to_stream(std::ostream&fd)
 {
-    fd << "report \"" << msg_ << "\"" << std::endl;
+    fd << "report \"" << ExpString::escape_quot(msg_) << "\"" << std::endl;
 
     fd << "severity ";
     switch(severity_)

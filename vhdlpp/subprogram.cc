@@ -138,7 +138,7 @@ const InterfacePort*SubprogramHeader::find_param(perm_string nam) const
       return NULL;
 }
 
-const VType*SubprogramHeader::peek_param_type(int idx) const
+const InterfacePort*SubprogramHeader::peek_param(int idx) const
 {
       if(!ports_ || idx < 0 || (size_t)idx >= ports_->size())
         return NULL;
@@ -146,7 +146,17 @@ const VType*SubprogramHeader::peek_param_type(int idx) const
       std::list<InterfacePort*>::const_iterator p = ports_->begin();
       std::advance(p, idx);
 
-      return (*p)->type;
+      return *p;
+}
+
+const VType*SubprogramHeader::peek_param_type(int idx) const
+{
+      const InterfacePort*port = peek_param(idx);
+
+      if(port)
+        return port->type;
+
+      return NULL;
 }
 
 void SubprogramHeader::set_parent(const ScopeBase*par)

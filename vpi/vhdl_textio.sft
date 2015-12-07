@@ -1,0 +1,9 @@
+$ivlh_file_open         vpiSysFuncVoid
+
+$ivlh_readline          vpiSysFuncVoid
+$ivlh_writeline         vpiSysFuncVoid
+
+$ivlh_read              vpiSysFuncVoid
+$ivlh_write             vpiSysFuncVoid
+$ivlh_hread             vpiSysFuncVoid
+$ivlh_hwrite            vpiSysFuncVoid

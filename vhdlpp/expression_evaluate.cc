@@ -23,6 +23,7 @@
 # include  "architec.h"
 # include  <ivl_assert.h>
 # include  <limits>
+# include  <cmath>
 
 bool Expression::evaluate(ScopeBase*, int64_t&) const
 {
@@ -68,9 +69,13 @@ bool ExpArithmetic::evaluate(ScopeBase*scope, int64_t&val) const
 	    val = val1 % val2;
 	    break;
 	  case REM:
+	    if (val2 == 0)
+		  return false;
+	    val = val1 - (val1 / val2) * val2;
 	    return false;
 	  case POW:
-	    return false;
+	    val = (int64_t) pow(val1, val2);
+	    break;
 	  case xCONCAT: // not possible
 	    return false;
       }
@@ -247,7 +252,7 @@ bool ExpShift::evaluate(ScopeBase*scope, int64_t&val) const
       return true;
 }
 
-bool ExpTime::evaluate(ScopeBase*, int64_t&val) const
+/*bool ExpTime::evaluate(ScopeBase*, int64_t&val) const
 {
     double v = to_fs();
 
@@ -263,5 +268,5 @@ bool ExpTime::evaluate(ScopeBase*, int64_t&val) const
 
 bool ExpTime::evaluate(Entity*, ScopeBase*, int64_t&val) const
 {
-    return evaluate(NULL, NULL, val);
-}
+    return evaluate(NULL, val);
+}*/

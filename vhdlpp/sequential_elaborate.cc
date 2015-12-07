@@ -22,6 +22,7 @@
 # include  "scope.h"
 # include  "library.h"
 # include  "subprogram.h"
+# include  "std_types.h"
 
 int SequentialStmt::elaborate(Entity*, ScopeBase*)
 {
@@ -173,13 +174,8 @@ int ProcedureCall::elaborate(Entity*ent, ScopeBase*scope)
       if(param_list_) {
 	    for(list<named_expr_t*>::iterator cur = param_list_->begin()
 		 ; cur != param_list_->end() ; ++cur) {
-                const VType*tmp = (*cur)->expr()->probe_type(ent, scope);
-                const VType*param_type = def_ ? def_->peek_param_type(idx) : NULL;
-
-                if(!tmp && param_type)
-                    tmp = param_type;
-
-                errors += (*cur)->expr()->elaborate_expr(ent, scope, tmp);
+		errors += elaborate_argument((*cur)->expr(), def_, idx, ent, scope);
+		++idx;
             }
       }
 
@@ -208,10 +204,12 @@ int VariableSeqAssignment::elaborate(Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int WhileLoopStatement::elaborate(Entity*, ScopeBase*)
+int WhileLoopStatement::elaborate(Entity*ent, ScopeBase*scope)
 {
-    //TODO:check whether there is any wait statement in the statements (there should be)
-    return 0;
+      int errors = 0;
+      errors += elaborate_substatements(ent, scope);
+      errors += cond_->elaborate_expr(ent, scope, cond_->probe_type(ent, scope));
+      return errors;
 }
 
 int BasicLoopStatement::elaborate(Entity*, ScopeBase*)
@@ -221,7 +219,7 @@ int BasicLoopStatement::elaborate(Entity*, ScopeBase*)
 
 int AssertStmt::elaborate(Entity*ent, ScopeBase*scope)
 {
-    return cond_->elaborate_expr(ent, scope, 0);
+    return cond_->elaborate_expr(ent, scope, cond_->probe_type(ent, scope));
 }
 
 int WaitForStmt::elaborate(Entity*ent, ScopeBase*scope)

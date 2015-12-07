@@ -316,11 +316,6 @@ int ExpName::elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*lva
       return errors;
 }
 
-int ExpNameALL::elaborate_lval(Entity*ent, ScopeBase*scope, bool is_sequ)
-{
-      return Expression::elaborate_lval(ent, scope, is_sequ);
-}
-
 int Expression::elaborate_expr(Entity*, ScopeBase*, const VType*)
 {
       cerr << get_fileline() << ": internal error: I don't know how to elaborate expression type=" << typeid(*this).name() << endl;
@@ -376,16 +371,16 @@ const VType*ExpUnary::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*aty
       return operand1_->fit_type(ent, scope, atype);
 }
 
+const VType*ExpUnary::probe_type(Entity*ent, ScopeBase*scope) const
+{
+      return operand1_->probe_type(ent, scope);
+}
+
 int ExpUnary::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
 {
       ivl_assert(*this, ltype != 0);
       set_type(ltype);
       return operand1_->elaborate_expr(ent, scope, ltype);
-}
-
-const VType*ExpAggregate::probe_type(Entity*ent, ScopeBase*scope) const
-{
-      return Expression::probe_type(ent, scope);
 }
 
 const VType*ExpAggregate::fit_type(Entity*, ScopeBase*, const VTypeArray*host) const
@@ -782,14 +777,8 @@ int ExpFunc::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
       def_ = prog;
 
 	// Elaborate arguments
-      for (size_t idx = 0 ; idx < argv_.size() ; idx += 1) {
-	    const VType*tmp = argv_[idx]->probe_type(ent, scope);
-	    const VType*param_type = prog ? prog->peek_param_type(idx) : NULL;
-
-	    if(!tmp && param_type)
-	        tmp = param_type;
-
-	    errors += argv_[idx]->elaborate_expr(ent, scope, tmp);
+      for (size_t idx = 0; idx < argv_.size(); ++idx) {
+	    errors += elaborate_argument(argv_[idx], prog, idx, ent, scope);
       }
 
 	// SystemVerilog functions work only with defined size data types, therefore
@@ -1057,4 +1046,29 @@ int ExpTime::elaborate_expr(Entity*, ScopeBase*, const VType*)
 {
       set_type(&primitive_INTEGER);
       return 0;
+}
+
+int elaborate_argument(Expression*expr, const SubprogramHeader*subp,
+                       int idx, Entity*ent, ScopeBase*scope)
+{
+    const VType*type = expr->probe_type(ent, scope);
+
+    if(subp) {
+        const InterfacePort*param = subp->peek_param(idx);
+
+        // Enable reg_flag for variables that might be modified in subprograms
+        if(param->mode == PORT_OUT || param->mode == PORT_INOUT) {
+            if(const ExpName*e = dynamic_cast<const ExpName*>(expr)) {
+                if(Signal*sig = scope->find_signal(e->peek_name()))
+                    sig->count_ref_sequ();
+                else if(Variable*var = scope->find_variable(e->peek_name()))
+                    var->count_ref_sequ();
+            }
+        }
+
+        if(!type)
+            type = param->type;
+    }
+
+    return expr->elaborate_expr(ent, scope, type);
 }

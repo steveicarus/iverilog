@@ -21,20 +21,21 @@
 #include "std_types.h"
 #include "scope.h"
 
-static std::map<perm_string, VTypeDef*> std_types;
+static map<perm_string, VTypeDef*> std_types;
 // this list contains enums used by typedefs in the std_types map
-static std::list<const VTypeEnum*> std_enums;
+static list<const VTypeEnum*> std_enums;
 
 const VTypePrimitive primitive_BIT(VTypePrimitive::BIT, true);
 const VTypePrimitive primitive_INTEGER(VTypePrimitive::INTEGER);
 const VTypePrimitive primitive_NATURAL(VTypePrimitive::NATURAL);
 const VTypePrimitive primitive_REAL(VTypePrimitive::REAL);
 const VTypePrimitive primitive_STDLOGIC(VTypePrimitive::STDLOGIC, true);
-const VTypePrimitive primitive_CHARACTER(VTypePrimitive::CHARACTER);
 const VTypePrimitive primitive_TIME(VTypePrimitive::TIME);
 
 VTypeDef type_BOOLEAN(perm_string::literal("boolean"));
+VTypeDef type_FILE_OPEN_KIND(perm_string::literal("file_open_kind"));
 
+const VTypeArray primitive_CHARACTER(&primitive_BIT,            7, 0);
 const VTypeArray primitive_BIT_VECTOR(&primitive_BIT,           vector<VTypeArray::range_t> (1));
 const VTypeArray primitive_BOOL_VECTOR(&type_BOOLEAN,           vector<VTypeArray::range_t> (1));
 const VTypeArray primitive_STDLOGIC_VECTOR(&primitive_STDLOGIC, vector<VTypeArray::range_t> (1));
@@ -45,13 +46,23 @@ const VTypeArray primitive_UNSIGNED(&primitive_STDLOGIC,        vector<VTypeArra
 void generate_global_types(ActiveScope*res)
 {
     // boolean
-      std::list<perm_string>*enum_BOOLEAN_vals = new std::list<perm_string>;
+      list<perm_string>*enum_BOOLEAN_vals = new list<perm_string>;
       enum_BOOLEAN_vals->push_back(perm_string::literal("false"));
       enum_BOOLEAN_vals->push_back(perm_string::literal("true"));
       VTypeEnum*enum_BOOLEAN = new VTypeEnum(enum_BOOLEAN_vals);
       type_BOOLEAN.set_definition(enum_BOOLEAN);
       std_types[type_BOOLEAN.peek_name()] = &type_BOOLEAN;
       std_enums.push_back(enum_BOOLEAN);
+
+    // file_open_kind
+      list<perm_string>*enum_FILE_OPEN_KIND_vals = new list<perm_string>;
+      enum_FILE_OPEN_KIND_vals->push_back(perm_string::literal("read_mode"));
+      enum_FILE_OPEN_KIND_vals->push_back(perm_string::literal("write_mode"));
+      enum_FILE_OPEN_KIND_vals->push_back(perm_string::literal("append_mode"));
+      VTypeEnum*enum_FILE_OPEN_KIND = new VTypeEnum(enum_FILE_OPEN_KIND_vals);
+      type_FILE_OPEN_KIND.set_definition(enum_FILE_OPEN_KIND);
+      std_types[type_FILE_OPEN_KIND.peek_name()] = &type_FILE_OPEN_KIND;
+      std_enums.push_back(enum_FILE_OPEN_KIND);
 
       res->use_name(type_BOOLEAN.peek_name(),           &type_BOOLEAN);
       res->use_name(perm_string::literal("bit"),        &primitive_BIT);

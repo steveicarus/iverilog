@@ -235,14 +235,16 @@ class VariableSeqAssignment  : public SequentialStmt {
 class WhileLoopStatement : public LoopStatement {
     public:
       WhileLoopStatement(perm_string loop_name,
-			 ExpLogical*, list<SequentialStmt*>*);
+			 Expression*, list<SequentialStmt*>*);
       ~WhileLoopStatement();
 
       int elaborate(Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      void write_to_stream(std::ostream&fd);
       void dump(ostream&out, int indent) const;
 
     private:
-      ExpLogical* cond_;
+      Expression* cond_;
 };
 
 class ForLoopStatement : public LoopStatement {
@@ -295,7 +297,8 @@ class ReportStmt : public SequentialStmt {
 
 class AssertStmt : public ReportStmt {
     public:
-      AssertStmt(Expression*condition, const char*message, ReportStmt::severity_t severity = ReportStmt::ERROR);
+      AssertStmt(Expression*condition, const char*message,
+                 ReportStmt::severity_t severity = ReportStmt::ERROR);
 
       void dump(ostream&out, int indent) const;
       int elaborate(Entity*ent, ScopeBase*scope);

@@ -34,6 +34,7 @@ class ComponentBase;
 class Package;
 class SubprogramHeader;
 class VType;
+class SequentialStmt;
 
 template<typename T>
 struct delete_object{
@@ -73,6 +74,20 @@ class ScopeBase {
         if((it = use_subprograms_.find(name)) != use_subprograms_.end() )
             use_subprograms_.erase(it);
         cur_subprograms_[name] = obj;
+      }
+
+	// Adds a statement to implicit initializers list
+	// (emitted in a 'initial block).
+      void add_initializer(SequentialStmt* s)
+      {
+        initializers_.push_back(s);
+      }
+
+	// Adds a statement to implicit finalizers list
+	// (emitted in a 'final' block).
+      void add_finalizer(SequentialStmt* s)
+      {
+        finalizers_.push_back(s);
       }
 
     protected:
@@ -121,6 +136,12 @@ class ScopeBase {
       std::map<perm_string, SubprogramHeader*> cur_subprograms_; //current
 
       std::list<const VTypeEnum*> use_enums_;
+
+	// List of statements that should be emitted in a 'initial' block
+      std::list<SequentialStmt*> initializers_;
+
+	// List of statements that should be emitted in a 'final' block
+      std::list<SequentialStmt*> finalizers_;
 
       void do_use_from(const ScopeBase*that);
 };

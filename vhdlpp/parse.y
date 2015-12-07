@@ -266,6 +266,8 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
       ReportStmt::severity_t severity;
 
       SubprogramHeader*subprogram;
+
+      file_open_info_t*file_info;
 };
 
   /* The keywords are all tokens. */
@@ -342,6 +344,8 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <expr_list> name_list expression_list
 %type <expr_list> process_sensitivity_list process_sensitivity_list_opt
 %type <expr_list> selected_names use_clause
+
+%type <file_info> file_open_information file_open_information_opt
 
 %type <named_expr> association_element
 %type <named_expr_list> association_list port_map_aspect port_map_aspect_opt
@@ -1235,6 +1239,63 @@ factor
       }
   ;
 
+file_declaration
+  : K_file identifier_list ':' IDENTIFIER file_open_information_opt ';'
+      {
+	if (strcasecmp($4, "TEXT"))
+	      sorrymsg(@1, "file declaration currently handles only TEXT type.\n");
+
+	for (std::list<perm_string>::iterator cur = $2->begin()
+		   ; cur != $2->end() ; ++cur) {
+	      Variable*var = new Variable(*cur, &primitive_INTEGER);
+	      FILE_NAME(var, @1);
+	      active_scope->bind_name(*cur, var);
+
+	      // there was a file name specified, so it needs an implicit call
+	      // to open it at the beginning of simulation and close it at the end
+	      if($5) {
+		std::list<Expression*> params;
+
+		// add file_open() call in 'initial' block
+		params.push_back(new ExpName(*cur));
+		params.push_back($5->filename());
+		params.push_back($5->kind());
+		ProcedureCall*fopen_call = new ProcedureCall(perm_string::literal("file_open"), &params);
+		active_scope->add_initializer(fopen_call);
+
+		// add file_close() call in 'final' block
+		params.clear();
+		params.push_back(new ExpName(*cur));
+		ProcedureCall*fclose_call = new ProcedureCall(perm_string::literal("file_close"), &params);
+		active_scope->add_finalizer(fclose_call);
+	      }
+	}
+
+	delete $2;
+      }
+  | K_file error ';'
+      { errormsg(@2, "Syntax error in file declaration.\n");
+	yyerrok;
+      }
+  ;
+
+file_open_information
+  : K_open IDENTIFIER K_is STRING_LITERAL
+     {
+        ExpName*mode = new ExpName(lex_strings.make($2));
+        delete[]$2;
+        $$ = new file_open_info_t(new ExpString($4), mode);
+     }
+  | K_is STRING_LITERAL
+     {
+        $$ = new file_open_info_t(new ExpString($2));
+     }
+
+file_open_information_opt
+  : file_open_information { $$ = $1; }
+  | { $$ = 0; }
+  ;
+
 for_generate_statement
   : IDENTIFIER ':' K_for IDENTIFIER K_in range
     K_generate generate_statement_body
@@ -1553,14 +1614,8 @@ loop_statement
 	if($1) delete[]$1;
 	if($8) delete[]$8;
 
-	ExpLogical* cond = dynamic_cast<ExpLogical*>($3);
-	if(!cond) {
-	      errormsg(@3, "Iteration condition is not a correct logical expression.\n");
-	}
-	WhileLoopStatement* tmp = new WhileLoopStatement(loop_name, cond, $5);
+	WhileLoopStatement* tmp = new WhileLoopStatement(loop_name, $3, $5);
 	FILE_NAME(tmp, @1);
-
-	sorrymsg(@1, "Loop statements are not supported.\n");
 	$$ = tmp;
       }
 
@@ -1873,10 +1928,10 @@ primary
         else if(!strcasecmp($2, "fs"))
             unit = ExpTime::FS;
         else
-            errormsg(@2, "Invalid time unit (accepted are fs, ps, ns, us, ms, s).");
+            errormsg(@2, "Invalid time unit (accepted are fs, ps, ns, us, ms, s).\n");
 
         if($1 < 0)
-            errormsg(@1, "Time cannot be negative.");
+            errormsg(@1, "Time cannot be negative.\n");
 
         ExpTime*tmp = new ExpTime($1, unit);
         FILE_NAME(tmp, @1);
@@ -1961,6 +2016,7 @@ procedure_specification /* IEEE 1076-2008 P4.2.1 */
 
 process_declarative_item
   : variable_declaration
+  | file_declaration
   ;
 
 process_declarative_part
@@ -2506,6 +2562,7 @@ subprogram_declaration
 
 subprogram_declarative_item /* IEEE 1079-2008 P4.3 */
   : variable_declaration
+  | file_declaration
   ;
 
 subprogram_declarative_item_list
@@ -2586,7 +2643,7 @@ suffix
       { $$ = $1; }
   | K_all
       { //do not have now better idea than using char constant
-	$$ = strcpy(new char[strlen("all"+1)], "all");
+	$$ = strdup("all");
       }
   ;
 
