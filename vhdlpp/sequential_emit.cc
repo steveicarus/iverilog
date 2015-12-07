@@ -567,7 +567,7 @@ int WaitForStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
     out << "#(";
     errors += delay_->emit(out, ent, scope);
-    out << ")";
+    out << ");" << std::endl;
 
     return errors;
 }
@@ -590,6 +590,7 @@ int WaitStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
         case UNTIL:
             if(!sens_list_.empty()) {
                 out << "@(";
+
                 for(std::set<ExpName*>::iterator it = sens_list_.begin();
                         it != sens_list_.end(); ++it) {
                     if(it != sens_list_.begin())
@@ -598,7 +599,7 @@ int WaitStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
                     (*it)->emit(out, ent, scope);
                 }
 
-                out << ");";
+                out << "); ";
             }
 
             out << "wait(";
