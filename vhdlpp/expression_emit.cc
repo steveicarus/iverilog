@@ -453,15 +453,14 @@ int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*, ScopeBase*,
 int ExpCharacter::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       const VType*etype = peek_type();
+      const VTypeArray*array;
+
+      if (etype != &primitive_CHARACTER && (array = dynamic_cast<const VTypeArray*>(etype))) {
+	    etype = array->element_type();
+      }
 
       if (const VTypePrimitive*use_type = dynamic_cast<const VTypePrimitive*>(etype)) {
 	    return emit_primitive_bit_(out, ent, scope, use_type);
-      }
-
-      if (const VTypeArray*array = dynamic_cast<const VTypeArray*>(etype)) {
-	    if (const VTypePrimitive*use_type = dynamic_cast<const VTypePrimitive*>(array->element_type())) {
-		  return emit_primitive_bit_(out, ent, scope, use_type);
-	    }
       }
 
       out << "\"" << value_ << "\"";
