@@ -513,3 +513,14 @@ void draw_vpi_rfunc_call(ivl_expr_t fnet)
 
       draw_vpi_taskfunc_args(call_string, 0, fnet);
 }
+
+void draw_vpi_sfunc_call(ivl_expr_t fnet)
+{
+      char call_string[1024];
+
+      sprintf(call_string, "    %%vpi_func/s %u %u \"%s\"",
+              ivl_file_table_index(ivl_expr_file(fnet)),
+	      ivl_expr_lineno(fnet), ivl_expr_name(fnet));
+
+      draw_vpi_taskfunc_args(call_string, 0, fnet);
+}

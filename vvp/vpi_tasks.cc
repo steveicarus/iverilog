@@ -211,6 +211,51 @@ vpiHandle sysfunc_real::vpi_put_value(p_vpi_value vp, int)
       return 0;
 }
 
+struct sysfunc_string : public __vpiSysTaskCall {
+      inline sysfunc_string() { }
+      int get_type_code(void) const { return vpiSysFuncCall; }
+      int vpi_get(int code);
+      char* vpi_get_str(int code)   { return systask_get_str(code, this); }
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code) { return systask_handle(code, this); }
+      vpiHandle vpi_iterate(int code) { return systask_iter(code, this); }
+
+      std::string return_value_;
+};
+
+int sysfunc_string::vpi_get(int code)
+{
+      switch (code) {
+	  case vpiSize:
+	    return return_value_.size();
+
+	  case vpiLineNo:
+	    return lineno;
+
+	  case vpiUserDefn:
+	    return defn->is_user_defn;
+
+	  default:
+	    return vpiUndefined;
+      }
+}
+
+vpiHandle sysfunc_string::vpi_put_value(p_vpi_value vp, int)
+{
+      put_value = true;
+
+      switch (vp->format) {
+	  case vpiStringVal:
+	    return_value_ = std::string(vp->value.str);
+	    break;
+	  default:
+	    fprintf(stderr, "Unsupported format %d.\n", (int)vp->format);
+	    assert(0);
+      }
+
+      return 0;
+}
+
 class sysfunc_vec4 : public __vpiSysTaskCall {
     public:
       explicit inline sysfunc_vec4(unsigned wid): return_value_(wid, BIT4_X) { }
@@ -845,6 +890,9 @@ vpiHandle vpip_build_vpi_call(const char*name, int val_code, unsigned return_wid
 	    } else if (val_code == -vpiVectorVal) {
 		  obj = new sysfunc_vec4(return_width);
 
+	    } else if (val_code == -vpiStringVal) {
+		  obj = new sysfunc_string;
+
            } else if (val_code == 0 && fnet == 0) {
 		  obj = new sysfunc_no;
 
@@ -957,10 +1005,13 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
       if (vpip_cur_task->string_stack > 0)
 	    vthread_pop_str(thr, vpip_cur_task->string_stack);
 
-	/* If the function has a real value, then push the value
-	   to the thread stack. */
+	/* If the function returns a value, then push the value
+	   to the appropriate thread stack. */
       if (sysfunc_real*func_real = dynamic_cast<sysfunc_real*>(ref)) {
 	    vthread_push_real(thr, func_real->return_value_);
+      }
+      if (sysfunc_string*func_string = dynamic_cast<sysfunc_string*>(ref)) {
+	    vthread_push_str(thr, func_string->return_value_);
       }
       if (sysfunc_vec4*func_vec4 = dynamic_cast<sysfunc_vec4*>(ref)) {
 	    vthread_push_vec4(thr, func_vec4->return_value());
