@@ -524,9 +524,8 @@ int ReportStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
 void ReportStmt::write_to_stream(std::ostream&fd)
 {
-    fd << "report \"";
+    fd << "report ";
     msg_->write_to_stream(fd);
-    fd << "\"" << std::endl;
 
     fd << "severity ";
     switch(severity_)
