@@ -24,6 +24,9 @@ class SubprogramHeader;
 extern void library_set_work_path(const char*work_path);
 extern void library_add_directory(const char*directory);
 
+int elaborate_libraries(void);
+int emit_packages(void);
+
 extern SubprogramHeader*library_find_subprogram(perm_string name);
 
 #endif /* IVL_library_H */

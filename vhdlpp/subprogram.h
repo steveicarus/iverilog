@@ -45,6 +45,7 @@ class SubprogramBody : public LineInfo, public ScopeBase {
       void set_statements(std::list<SequentialStmt*>*statements);
       inline bool empty_statements() const { return !statements_ || statements_->empty(); }
 
+      int elaborate();
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
 
 	// Emit body as it would show up in a package.
@@ -88,6 +89,8 @@ class SubprogramHeader : public LineInfo {
       void set_body(SubprogramBody*bdy);
 
       inline perm_string name() const { return name_; }
+
+      int elaborate() { return (body_ ? body_->elaborate() : 0); }
 
 	// Function name used in the emission step. The main purpose of this
 	// method is to handle functions offered by standard VHDL libraries.

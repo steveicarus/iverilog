@@ -41,6 +41,18 @@ void Package::set_library(perm_string lname)
       from_library_ = lname;
 }
 
+int Package::elaborate()
+{
+      int errors = 0;
+
+      for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
+		 ; cur != cur_subprograms_.end() ; ++cur) {
+	    errors += cur->second->elaborate();
+      }
+
+      return errors;
+}
+
 /*
  * The Package::write_to_stream is used to write the package to the
  * work space (or library) so writes proper VHDL that the library

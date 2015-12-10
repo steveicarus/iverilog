@@ -417,3 +417,27 @@ int emit_packages(void)
 
       return 0;
 }
+
+static int elaborate_library_packages(map<perm_string,Package*>packages)
+{
+      int errors = 0;
+
+      for (map<perm_string,Package*>::iterator cur = packages.begin()
+		 ; cur != packages.end() ;  ++cur) {
+	    errors += cur->second->elaborate();
+      }
+
+      return errors;
+}
+
+int elaborate_libraries()
+{
+      int errors = 0;
+
+      for (map<perm_string,struct library_contents>::iterator cur = libraries.begin()
+		 ; cur != libraries.end() ;  ++cur) {
+	    errors += elaborate_library_packages(cur->second.packages);
+      }
+
+      return errors;
+}

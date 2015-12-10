@@ -21,6 +21,7 @@
 # include  "entity.h"
 # include  "expression.h"
 # include  "sequential.h"
+# include  "subprogram.h"
 # include  <typeinfo>
 # include  <cassert>
 
@@ -59,6 +60,11 @@ int Architecture::elaborate(Entity*entity)
 	    cur->second->elaborate_init_expr(entity, this);
       }
 
+	// Elaborate subprograms
+      for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
+		 ; cur != cur_subprograms_.end() ; ++cur) {
+	    errors += cur->second->elaborate();
+      }
 	// Create 'initial' and 'final' blocks for implicit
 	// initalization and clean-up actions
       if(!initializers_.empty())

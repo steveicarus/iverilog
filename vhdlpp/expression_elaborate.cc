@@ -216,36 +216,44 @@ int ExpName::elaborate_lval(Entity*ent, ScopeBase*scope, bool is_sequ)
 
       const VType*found_type = 0;
 
-      if (const InterfacePort*cur = ent->find_port(name_)) {
-	    if (cur->mode != PORT_OUT && cur->mode != PORT_INOUT) {
-		  cerr << get_fileline() << ": error: Assignment to "
-			"input port " << name_ << "." << endl;
-		  return errors += 1;
-	    }
+      if (ent) {
+          if (const InterfacePort*cur = ent->find_port(name_)) {
+                  if (cur->mode != PORT_OUT && cur->mode != PORT_INOUT) {
+                      cerr << get_fileline() << ": error: Assignment to "
+                              "input port " << name_ << "." << endl;
+                      return errors += 1;
+                  }
 
-	    if (is_sequ)
-		  ent->set_declaration_l_value(name_, is_sequ);
+                  if (is_sequ)
+                      ent->set_declaration_l_value(name_, is_sequ);
 
-	    found_type = cur->type;
+                  found_type = cur->type;
 
-      } else if (ent->find_generic(name_)) {
+          } else if (ent->find_generic(name_)) {
 
-	    cerr << get_fileline() << ": error: Assignment to generic "
-		 << name_ << " from entity "
-		 << ent->get_name() << "." << endl;
-	    return 1;
+                  cerr << get_fileline() << ": error: Assignment to generic "
+                      << name_ << " from entity "
+                      << ent->get_name() << "." << endl;
+                  return 1;
+          }
+      }
 
-      } else if (Signal*sig = scope->find_signal(name_)) {
-	      // Tell the target signal that this may be a sequential l-value.
-	    if (is_sequ) sig->count_ref_sequ();
+      if (!found_type && scope) {
+        if (Signal*sig = scope->find_signal(name_)) {
+            // Tell the target signal that this may be a sequential l-value.
+            if (is_sequ) sig->count_ref_sequ();
 
-	    found_type = sig->peek_type();
+            found_type = sig->peek_type();
 
-      } else if (Variable*var = scope->find_variable(name_)) {
-	      // Tell the target signal that this may be a sequential l-value.
-	    if (is_sequ) var->count_ref_sequ();
+        } else if (Variable*var = scope->find_variable(name_)) {
+                // Tell the target signal that this may be a sequential l-value.
+                if (is_sequ) var->count_ref_sequ();
 
-	    found_type = var->peek_type();
+                found_type = var->peek_type();
+
+        } else if (const InterfacePort*port = scope->find_param(name_)) {
+                found_type = port->type;
+        }
       }
 
       if (found_type == 0) {
