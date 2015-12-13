@@ -157,6 +157,7 @@ void verify_version(char*ivl_ver, char*commit)
 	    rc = sscanf(ivl_ver, "%d.%d %127s", &file_major, &file_minor, file_extra);
 	    file_minor2 = 0;
       }
+      delete[] ivl_ver;
 
 	// If this was the old format, the file_major will be 0. In
 	// this case it is not really what we meant, so convert to the
