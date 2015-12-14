@@ -61,7 +61,9 @@ ExpAttribute::ExpAttribute(ExpName*bas, perm_string nam)
 
 ExpAttribute::~ExpAttribute()
 {
-      delete base_;
+	/* Different attributes can point to the same base so we cannot delete this here.
+	 * Look at the vhdl_range test with valgrind to see this issue. */
+//      delete base_;
 }
 
 Expression*ExpAttribute::clone() const
