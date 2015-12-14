@@ -57,7 +57,8 @@ const VType* Expression::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*
       return res;
 }
 
-const VType*ExpName::elaborate_adjust_type_with_range_(Entity*, ScopeBase*scope, const VType*type)
+const VType*ExpName::elaborate_adjust_type_with_range_(Entity*ent, ScopeBase*scope,
+                                                       const VType*type)
 {
 	// Unfold typedefs
       while (const VTypeDef*tdef = dynamic_cast<const VTypeDef*>(type)) {
@@ -76,9 +77,9 @@ const VType*ExpName::elaborate_adjust_type_with_range_(Entity*, ScopeBase*scope,
 		  int64_t use_msb, use_lsb;
 		  bool flag;
 
-		  flag = index_->evaluate(scope, use_msb);
+		  flag = index_->evaluate(ent, scope, use_msb);
 		  ivl_assert(*this, flag);
-		  flag = lsb_->evaluate(scope, use_lsb);
+		  flag = lsb_->evaluate(ent, scope, use_lsb);
 		  ivl_assert(*this, flag);
 
 		  type = new VTypeArray(array->element_type(), use_msb, use_lsb);

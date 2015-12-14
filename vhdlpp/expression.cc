@@ -88,14 +88,14 @@ ExpBinary::~ExpBinary()
       delete operand2_;
 }
 
-bool ExpBinary::eval_operand1(ScopeBase*scope, int64_t&val) const
+bool ExpBinary::eval_operand1(Entity*ent, ScopeBase*scope, int64_t&val) const
 {
-      return operand1_->evaluate(scope, val);
+      return operand1_->evaluate(ent, scope, val);
 }
 
-bool ExpBinary::eval_operand2(ScopeBase*scope, int64_t&val) const
+bool ExpBinary::eval_operand2(Entity*ent, ScopeBase*scope, int64_t&val) const
 {
-      return operand2_->evaluate(scope, val);
+      return operand2_->evaluate(ent, scope, val);
 }
 
 void ExpBinary::visit(ExprVisitor& func)
@@ -493,7 +493,7 @@ ExpInteger::~ExpInteger()
 {
 }
 
-bool ExpInteger::evaluate(ScopeBase*, int64_t&val) const
+bool ExpInteger::evaluate(Entity*, ScopeBase*, int64_t&val) const
 {
       val = value_;
       return true;

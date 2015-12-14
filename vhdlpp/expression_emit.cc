@@ -337,7 +337,7 @@ int ExpAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
 	// Try to evaluate first
       int64_t val;
-      if(evaluate(scope, val)) {
+      if(evaluate(ent, scope, val)) {
             out << val;
             return 0;
       }

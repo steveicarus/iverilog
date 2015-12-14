@@ -107,8 +107,8 @@ class Expression : public LineInfo {
 	// to constant literal values. Return true and set the val
 	// argument if the evaluation works, or return false if it
 	// cannot be done.
-      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
-      virtual bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
+      virtual bool evaluate(Entity*, ScopeBase*, int64_t&) const { return false; }
+      bool evaluate(ScopeBase*scope, int64_t&val) const { return evaluate(NULL, scope, val); }
 
 	// The symbolic compare returns true if the two expressions
 	// are equal without actually calculating the value.
@@ -205,8 +205,8 @@ class ExpBinary : public Expression {
       int emit_operand1(ostream&out, Entity*ent, ScopeBase*scope);
       int emit_operand2(ostream&out, Entity*ent, ScopeBase*scope);
 
-      bool eval_operand1(ScopeBase*scope, int64_t&val) const;
-      bool eval_operand2(ScopeBase*scope, int64_t&val) const;
+      bool eval_operand1(Entity*ent, ScopeBase*scope, int64_t&val) const;
+      bool eval_operand2(Entity*ent, ScopeBase*scope, int64_t&val) const;
 
       inline void write_to_stream_operand1(std::ostream&out) const
           { operand1_->write_to_stream(out); }
@@ -343,7 +343,7 @@ class ExpArithmetic : public ExpBinary {
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
-      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
+      virtual bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
 
     private:
@@ -369,7 +369,6 @@ class ExpAttribute : public Expression {
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
 	// Some attributes can be evaluated at compile time
-      bool evaluate(ScopeBase*scope, int64_t&val) const;
       bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
       void visit(ExprVisitor& func);
@@ -440,7 +439,6 @@ class ExpConcat : public Expression {
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
-      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
       bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
       void visit(ExprVisitor& func);
@@ -583,7 +581,7 @@ class ExpInteger : public Expression {
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
       int emit_package(std::ostream&out);
       bool is_primary(void) const { return true; }
-      bool evaluate(ScopeBase*scope, int64_t&val) const;
+      bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
       virtual ostream& dump_inline(ostream&out) const;
 
@@ -665,7 +663,6 @@ class ExpName : public Expression {
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
       bool is_primary(void) const;
-      bool evaluate(ScopeBase*scope, int64_t&val) const;
       bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       bool symbolic_compare(const Expression*that) const;
       void dump(ostream&out, int indent = 0) const;
@@ -773,7 +770,7 @@ class ExpShift : public ExpBinary {
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
-      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
+      bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
 
     private:
@@ -891,7 +888,6 @@ class ExpTime : public Expression {
         int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
         void write_to_stream(std::ostream&) const;
         int emit(ostream&out, Entity*ent, ScopeBase*scope);
-        //bool evaluate(ScopeBase*scope, int64_t&val) const;
         //bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
         void dump(ostream&out, int indent = 0) const;
 
