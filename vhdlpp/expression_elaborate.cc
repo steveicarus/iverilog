@@ -920,31 +920,31 @@ const VType* ExpName::probe_type(Entity*ent, ScopeBase*scope) const
 
       if(ent) {
         if (const InterfacePort*cur = ent->find_port(name_)) {
-                ivl_assert(*this, cur->type);
-                return cur->type;
+            ivl_assert(*this, cur->type);
+            return cur->type;
         }
 
         if (const InterfacePort*cur = ent->find_generic(name_)) {
-                ivl_assert(*this, cur->type);
-                return cur->type;
+            ivl_assert(*this, cur->type);
+            return cur->type;
         }
       }
 
       if(scope) {
         if (Signal*sig = scope->find_signal(name_))
-                return sig->peek_type();
+            return sig->peek_type();
 
         if (Variable*var = scope->find_variable(name_))
-                return var->peek_type();
+            return var->peek_type();
 
         const VType*type = 0;
         Expression*cval = 0;
         if (scope->find_constant(name_, type, cval))
-                return type;
+            return type;
 
         Architecture*arc = dynamic_cast<Architecture*>(scope);
         if (arc && (type = arc->probe_genvar_type(name_))) {
-                return type;
+            return type;
         }
 
         if (const InterfacePort*port = scope->find_param(name_)) {
