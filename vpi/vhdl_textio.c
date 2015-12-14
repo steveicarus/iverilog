@@ -684,7 +684,7 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
         vpi_put_value(varh, &val, 0, vpiNoDelay);
 
         /* Clean up */
-        if(val.format == vpiStringVar)
+        if(val.format == vpiStringVal)
             free(val.value.str);
         else if(val.format == vpiVectorVal)
             free(val.value.vector);
