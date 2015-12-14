@@ -101,7 +101,7 @@ void ComponentBase::dump_ports(ostream&out, int indent) const
       }
 }
 
-void Scope::dump_scope(ostream&out) const
+void ScopeBase::dump_scope(ostream&out) const
 {
 	// Dump types
       out << "   -- imported types" << endl;
