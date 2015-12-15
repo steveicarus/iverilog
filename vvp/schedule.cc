@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,6 +17,7 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+# include  "config.h"
 # include  "schedule.h"
 # include  "vthread.h"
 # include  "vpi_priv.h"
@@ -27,8 +28,11 @@
 # include  <csignal>
 # include  <cstdlib>
 # include  <cassert>
-
 # include  <iostream>
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+# include  "ivl_alloc.h"
+#endif
 
 unsigned long count_assign_events = 0;
 unsigned long count_gen_events = 0;
@@ -1137,4 +1141,21 @@ void schedule_simulate(void)
 
       // Execute post-simulation callbacks
       vpiPostsim();
+#ifdef CHECK_WITH_VALGRIND
+      schedule_delete();
+#endif
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void schedule_delete(void)
+{
+      vthread_event_heap.delete_pool();
+      assign4_heap.delete_pool();
+      assign8_heap.delete_pool();
+      assignr_heap.delete_pool();
+      array_w_heap.delete_pool();
+      array_r_w_heap.delete_pool();
+      generic_event_heap.delete_pool();
+      event_time_heap.delete_pool();
+}
+#endif
