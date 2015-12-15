@@ -224,7 +224,7 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, ScopeBase*scope, const VT
 	      // If this is a range choice, then calculate the bounds
 	      // of the range and scan through the values, mapping the
 	      // value to the aggregate_[idx] element.
-	    if (prange_t*range = aggregate_[idx].choice->range_expressions()) {
+	    if (ExpRange*range = aggregate_[idx].choice->range_expressions()) {
 		  int64_t begin_val, end_val;
 
 		  if (! range->msb()->evaluate(ent, scope, begin_val)) {
@@ -1027,6 +1027,28 @@ int ExpTime::emit(ostream&out, Entity*, ScopeBase*)
           case US: out << "us"; break;
           case MS: out << "ms"; break;
           case S:  out << "s"; break;
+      }
+
+      return 0;
+}
+
+int ExpRange::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+      int errors = 0;
+
+      if(range_expr_) {
+          out << "$left(";
+          errors += range_base_->emit(out, ent, scope);
+          out << "):$right(";
+          errors += range_base_->emit(out, ent, scope);
+          out << ")";
+      } else if(direction_ == AUTO) {
+          ivl_assert(*this, false);
+          out << "/* auto dir */";
+      } else {
+          errors += left_->emit(out, ent, scope);
+          out << ":";
+          errors += right_->emit(out, ent, scope);
       }
 
       return 0;

@@ -402,7 +402,7 @@ const VType*ExpAggregate::fit_type(Entity*, ScopeBase*, const VTypeArray*host) c
       elements_[0]->map_choices(&ce[0]);
 
       ivl_assert(*this, ce.size() == 1);
-      prange_t*prange = ce[0].choice->range_expressions();
+      ExpRange*prange = ce[0].choice->range_expressions();
       ivl_assert(*this, prange);
 
       Expression*use_msb = prange->msb();
@@ -657,8 +657,8 @@ const VType*ExpConcat::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*at
                             new ExpArithmetic(ExpArithmetic::PLUS, sizes[0], sizes[1]),
                             new ExpInteger(1));
 
-      std::list<prange_t*> ranges;
-      ranges.push_front(new prange_t(size, new ExpInteger(0), true));
+      std::list<ExpRange*> ranges;
+      ranges.push_front(new ExpRange(size, new ExpInteger(0), ExpRange::DOWNTO));
       const VType*array = new VTypeArray(types[1], &ranges);
 
       return array;
@@ -1055,6 +1055,19 @@ int ExpTime::elaborate_expr(Entity*, ScopeBase*, const VType*)
 {
       set_type(&primitive_INTEGER);
       return 0;
+}
+
+int ExpRange::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
+{
+    int errors = 0;
+
+    if(left_)
+        errors += left_->elaborate_expr(ent, scope, &primitive_INTEGER);
+
+    if(right_)
+        errors += right_->elaborate_expr(ent, scope, &primitive_INTEGER);
+
+    return errors;
 }
 
 int elaborate_argument(Expression*expr, const SubprogramHeader*subp,

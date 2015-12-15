@@ -68,35 +68,6 @@ class instant_list_t {
       std::list<perm_string>* labels_;
 };
 
-class prange_t {
-    public:
-      prange_t(Expression* left, Expression* right, bool dir)
-        : left_(left), right_(right), direction_(dir), auto_dir_(false) {}
-      prange_t(const prange_t&other) :
-          left_(other.left_->clone()), right_(other.right_->clone()),
-          direction_(other.direction_), auto_dir_(other.auto_dir_) {}
-      ~prange_t() { delete left_; delete right_; }
-      void dump(ostream&out, int indent) const;
-
-      inline Expression*msb() { return direction_? left_ : right_; }
-      inline Expression*lsb() { return direction_? right_: left_;  }
-
-      inline bool is_downto() const { return direction_; }
-      inline void set_auto_dir(bool enabled = true) { auto_dir_ = enabled; };
-      inline bool is_auto_dir() const { return auto_dir_; }
-
-      inline Expression*expr_left() { return left_; }
-      inline Expression*expr_right() { return right_; }
-
-    private:
-      Expression *left_, *right_;
-      bool direction_;
-      bool auto_dir_;
-
-    private: //not implemented
-      prange_t operator=(const prange_t&);
-};
-
 struct adding_term {
       ExpArithmetic::fun_t op;
       Expression*term;

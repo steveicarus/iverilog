@@ -77,6 +77,9 @@ void ExpAttribute::visit(ExprVisitor& func)
       func(this);
 }
 
+const perm_string ExpAttribute::LEFT = perm_string::literal("left");
+const perm_string ExpAttribute::RIGHT = perm_string::literal("right");
+
 ExpBinary::ExpBinary(Expression*op1, Expression*op2)
 : operand1_(op1), operand2_(op2)
 {
@@ -192,7 +195,7 @@ ExpAggregate::choice_t::choice_t()
 {
 }
 
-ExpAggregate::choice_t::choice_t(prange_t*rang)
+ExpAggregate::choice_t::choice_t(ExpRange*rang)
 : range_(rang)
 {
 }
@@ -203,7 +206,7 @@ ExpAggregate::choice_t::choice_t(const choice_t&other)
         expr_.reset(e->clone());
 
     if(other.range_.get())
-        range_.reset(new prange_t(*other.range_.get()));
+        range_.reset(static_cast<ExpRange*>(other.range_.get()->clone()));
 }
 
 ExpAggregate::choice_t::~choice_t()
@@ -221,7 +224,7 @@ Expression*ExpAggregate::choice_t::simple_expression(bool detach_flag)
       return res;
 }
 
-prange_t*ExpAggregate::choice_t::range_expressions(void)
+ExpRange*ExpAggregate::choice_t::range_expressions(void)
 {
       return range_.get();
 }
@@ -535,6 +538,7 @@ ExpName::ExpName(perm_string nn, list<Expression*>*indices)
 ExpName::ExpName(perm_string nn, Expression*msb, Expression*lsb)
 : name_(nn), index_(msb), lsb_(lsb)
 {
+    ivl_assert(*this, !msb || msb != lsb);
 }
 
 ExpName::ExpName(ExpName*prefix, perm_string nn)
@@ -545,6 +549,7 @@ ExpName::ExpName(ExpName*prefix, perm_string nn)
 ExpName::ExpName(ExpName*prefix, perm_string nn, Expression*msb, Expression*lsb)
 : prefix_(prefix), name_(nn), index_(msb), lsb_(lsb)
 {
+    ivl_assert(*this, !msb || msb != lsb);
 }
 
 ExpName::~ExpName()
@@ -711,4 +716,71 @@ double ExpTime::to_fs() const
     }
 
     return val;
+}
+
+ExpRange::ExpRange(Expression*left, Expression*right, range_dir_t direction)
+: left_(left), right_(right), direction_(direction), range_expr_(false)
+{
+}
+
+ExpRange::ExpRange(ExpName*base, bool reverse_range)
+: direction_(AUTO), range_expr_(true), range_base_(base), range_reverse_(reverse_range)
+{
+}
+
+ExpRange::~ExpRange()
+{
+    delete left_;
+    delete right_;
+    delete range_base_;
+}
+
+Expression*ExpRange::clone() const
+{
+    if(range_expr_)
+        return new ExpRange(static_cast<ExpName*>(range_base_->clone()), range_reverse_);
+    else
+        return new ExpRange(left_->clone(), right_->clone(), direction_);
+}
+
+Expression* ExpRange::msb()
+{
+    ivl_assert(*this, direction() != AUTO);
+
+    switch(direction()) {
+        case DOWNTO: return left_;
+        case TO: return right_;
+        default: return NULL;
+    }
+
+    return NULL;
+}
+
+Expression* ExpRange::lsb()
+{
+    ivl_assert(*this, direction() != AUTO);
+
+    switch(direction()) {
+        case DOWNTO: return right_;
+        case TO: return left_;
+        default: return NULL;
+    }
+
+    return NULL;
+}
+
+Expression*ExpRange::left()
+{
+    if(range_expr_ && !left_)
+        left_ = new ExpAttribute(range_base_, ExpAttribute::LEFT);
+
+    return left_;
+}
+
+Expression*ExpRange::right()
+{
+    if(range_expr_ && !right_)
+        right_ = new ExpAttribute(range_base_, ExpAttribute::RIGHT);
+
+    return right_;
 }

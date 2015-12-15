@@ -29,8 +29,7 @@
 # include  <memory>
 # include  <vector>
 
-class prange_t;
-class Entity;
+class ExpRange;
 class ScopeBase;
 class SubprogramHeader;
 class VType;
@@ -239,7 +238,7 @@ class ExpAggregate : public Expression {
 	      // Create a named choice
 	    explicit choice_t(perm_string name);
 	      // discreate_range choice
-	    explicit choice_t(prange_t*ran);
+	    explicit choice_t(ExpRange*ran);
 
 	    choice_t(const choice_t&other);
 
@@ -249,15 +248,15 @@ class ExpAggregate : public Expression {
 	    bool others() const;
 	      // Return expression if this represents a simple_expression.
 	    Expression*simple_expression(bool detach_flag =true);
-	      // Return prange_t if this represents a range_expression
-	    prange_t*range_expressions(void);
+	      // Return ExpRange if this represents a range_expression
+	    ExpRange*range_expressions(void);
 
 	    void write_to_stream(std::ostream&fd);
 	    void dump(ostream&out, int indent) const;
 
 	  private:
 	    std::auto_ptr<Expression>expr_;
-	    std::auto_ptr<prange_t>  range_;
+	    std::auto_ptr<ExpRange>  range_;
 	  private: // not implemented
 	    choice_t& operator= (const choice_t&);
       };
@@ -372,6 +371,10 @@ class ExpAttribute : public Expression {
       bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
       void visit(ExprVisitor& func);
+
+      // Constants for the standard attributes
+      static const perm_string LEFT;
+      static const perm_string RIGHT;
 
     private:
       ExpName*base_;
@@ -896,6 +899,46 @@ class ExpTime : public Expression {
         double to_fs() const;
         uint64_t amount_;
         timeunit_t unit_;
+};
+
+class ExpRange : public Expression {
+    public:
+        typedef enum { DOWNTO, TO, AUTO } range_dir_t;
+
+        // Regular range
+        ExpRange(Expression*left, Expression*right, range_dir_t direction);
+        // 'range/'reverse range attribute
+        ExpRange(ExpName*base, bool reverse_range);
+        ~ExpRange();
+
+        Expression*clone() const;
+
+        // Returns the upper boundary
+        Expression*msb();
+        // Returns the lower boundary
+        Expression*lsb();
+
+        Expression*left();
+        Expression*right();
+
+        range_dir_t direction() const { return direction_; }
+
+        int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
+        void write_to_stream(std::ostream&) const;
+        int emit(ostream&out, Entity*ent, ScopeBase*scope);
+        void dump(ostream&out, int indent = 0) const;
+    private:
+        // Regular range related fields
+        Expression*left_, *right_;
+        range_dir_t direction_;
+
+        // 'range/'reverse_range attribute related fields
+        // Flag to indicate it is a 'range/'reverse_range expression
+        bool range_expr_;
+        // Object name to which the attribute is applied
+        ExpName*range_base_;
+        // Flag to distinguish between 'range & 'reverse_range
+        bool range_reverse_;
 };
 
 // Elaborates an expression used as an argument in a procedure/function call.

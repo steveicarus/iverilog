@@ -250,7 +250,7 @@ class WhileLoopStatement : public LoopStatement {
 class ForLoopStatement : public LoopStatement {
     public:
       ForLoopStatement(perm_string loop_name,
-		       perm_string index, prange_t*, list<SequentialStmt*>*);
+		       perm_string index, ExpRange*, list<SequentialStmt*>*);
       ~ForLoopStatement();
 
       int elaborate(Entity*ent, ScopeBase*scope);
@@ -264,7 +264,7 @@ class ForLoopStatement : public LoopStatement {
       int emit_runtime_(ostream&out, Entity*ent, ScopeBase*scope);
 
       perm_string it_;
-      prange_t* range_;
+      ExpRange* range_;
 };
 
 class BasicLoopStatement : public LoopStatement {

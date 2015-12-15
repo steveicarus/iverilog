@@ -113,14 +113,14 @@ static const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_n
 }
 
 const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
-				     ScopeBase*scope, list<prange_t*>*ranges)
+				     ScopeBase*scope, list<ExpRange*>*ranges)
 {
       if (ranges->size() == 1) {
-	    prange_t*tmpr = ranges->front();
-	    Expression*lef = tmpr->expr_left();
-	    Expression*rig = tmpr->expr_right();
+	    ExpRange*tmpr = ranges->front();
+	    Expression*lef = tmpr->left();
+	    Expression*rig = tmpr->right();
 	    return calculate_subtype_array(loc, base_name, scope,
-					   lef, tmpr->is_downto(), rig);
+					   lef, tmpr->direction(), rig);
       }
 
       sorrymsg(loc, "Don't know how to handle multiple ranges here.\n");
@@ -130,7 +130,7 @@ const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
 const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_name,
 				     ScopeBase*scope,
 				     Expression*range_left,
-				     bool downto,
+				     int direction,
 				     Expression*range_right)
 {
       const VType*base_type = parse_type_by_name(lex_strings.make(base_name));
@@ -148,7 +148,7 @@ const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_name,
       if(range_left->evaluate(scope, left_val) && range_right->evaluate(scope, right_val)) {
 	    subtype = new VTypeRangeConst(base_type, left_val, right_val);
       } else {
-	    subtype = new VTypeRangeExpr(base_type, range_left, range_right, downto);
+	    subtype = new VTypeRangeExpr(base_type, range_left, range_right, direction);
       }
 
       return subtype;

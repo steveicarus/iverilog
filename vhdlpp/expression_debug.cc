@@ -117,3 +117,9 @@ void ExpTime::dump(ostream&out, int indent) const
       out << setw(indent) << "" << "Time ";
       write_to_stream(out);
 }
+
+void ExpRange::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "Range ";
+      write_to_stream(out);
+}

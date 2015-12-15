@@ -87,10 +87,6 @@ static ActiveScope*active_scope = new ActiveScope;
 static stack<ActiveScope*> scope_stack;
 static SubprogramHeader*active_sub = NULL;
 
-// perm_strings for attributes
-const static perm_string left_attr = perm_string::literal("left");
-const static perm_string right_attr = perm_string::literal("right");
-
 /*
  * When a scope boundary starts, call the push_scope function to push
  * a scope context. Preload this scope context with the contents of
@@ -245,8 +241,9 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 
       const VType* vtype;
 
-      prange_t* range;
-      std::list<prange_t*>*range_list;
+      ExpRange*range;
+      std::list<ExpRange*>*range_list;
+      ExpRange::range_dir_t range_dir;
 
       ExpArithmetic::fun_t arithmetic_op;
       std::list<struct adding_term>*adding_terms;
@@ -304,8 +301,6 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %token LEQ GEQ VASSIGN NE BOX EXP ARROW DLT DGT CC M_EQ M_NE M_LT M_LEQ M_GT M_GEQ
 
  /* The rules may have types. */
-
-%type <flag> direction
 
 %type <arithmetic_op> adding_operator
 %type <adding_terms> simple_expression_terms
@@ -372,6 +367,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 
 %type <range> range
 %type <range_list> range_list index_constraint
+%type <range_dir> direction
 
 %type <case_alt> case_statement_alternative
 %type <case_alt_list> case_statement_alternative_list
@@ -752,8 +748,9 @@ composite_type_definition
 
   /* unbounded_array_definition IEEE 1076-2008 P5.3.2.1 */
   | K_array '(' index_subtype_definition_list ')' K_of subtype_indication
-      { std::list<prange_t*> r;
-	r.push_back(new prange_t(NULL, NULL, true));   // NULL boundaries indicate unbounded array type
+      { std::list<ExpRange*> r;
+	// NULL boundaries indicate unbounded array type
+	r.push_back(new ExpRange(NULL, NULL, ExpRange::DOWNTO));
 	VTypeArray*tmp = new VTypeArray($6, &r);
 	$$ = tmp;
       }
@@ -983,8 +980,10 @@ design_units
   | design_unit
   ;
 
-  /* Indicate the direction as a flag, with "downto" being TRUE. */
-direction : K_to { $$ = false; } | K_downto { $$ = true; } ;
+direction
+  : K_to { $$ = ExpRange::TO; }
+  | K_downto { $$ = ExpRange::DOWNTO; }
+  ;
 
 element_association
   : choices ARROW expression
@@ -1498,7 +1497,7 @@ index_constraint
   | '(' error ')'
       { errormsg(@2, "Errors in the index constraint.\n");
 	yyerrok;
-	$$ = new list<prange_t*>;
+	$$ = new list<ExpRange*>;
       }
   ;
 
@@ -2096,18 +2095,15 @@ process_sensitivity_list
 
 range
   : simple_expression direction simple_expression
-      { prange_t* tmp = new prange_t($1, $3, $2);
+      { ExpRange* tmp = new ExpRange($1, $3, $2);
 	$$ = tmp;
       }
   | name '\'' K_range
       {
-        prange_t*tmp = NULL;
+        ExpRange*tmp = NULL;
         ExpName*name = NULL;
         if((name = dynamic_cast<ExpName*>($1))) {
-            ExpAttribute*left = new ExpAttribute(name, left_attr);
-            ExpAttribute*right = new ExpAttribute(name, right_attr);
-            tmp = new prange_t(left, right, true);
-            tmp->set_auto_dir();
+            tmp = new ExpRange(name, false);
         } else {
 	    errormsg(@1, "'range attribute can be used with named expressions only");
         }
@@ -2115,13 +2111,10 @@ range
       }
   | name '\'' K_reverse_range
       {
-        prange_t*tmp = NULL;
+        ExpRange*tmp = NULL;
         ExpName*name = NULL;
         if((name = dynamic_cast<ExpName*>($1))) {
-            ExpAttribute*left = new ExpAttribute(name, left_attr);
-            ExpAttribute*right = new ExpAttribute(name, right_attr);
-            tmp = new prange_t(left, right, false);
-            tmp->set_auto_dir();
+            tmp = new ExpRange(name, true);
         } else {
 	    errormsg(@1, "'reverse_range attribute can be used with named expressions only");
         }
@@ -2131,12 +2124,12 @@ range
 
 range_list
   : range
-      { list<prange_t*>*tmp = new list<prange_t*>;
+      { list<ExpRange*>*tmp = new list<ExpRange*>;
 	tmp->push_back($1);
 	$$ = tmp;
       }
   | range_list ',' range
-      { list<prange_t*>*tmp = $1;
+      { list<ExpRange*>*tmp = $1;
 	tmp->push_back($3);
 	$$ = tmp;
       }
