@@ -665,7 +665,7 @@ component_configuration
     block_configuration_opt
     K_end K_for ';'
       {
-    sorrymsg(@1, "Component configuration in not yet supported");
+    sorrymsg(@1, "Component configuration in not yet supported\n");
     if($3) delete $3;
     delete $2;
       }
@@ -878,7 +878,7 @@ configuration_declaration
   K_end K_configuration_opt identifier_opt ';'
      {
   if(design_entities.find(lex_strings.make($4)) == design_entities.end())
-      errormsg(@4, "Couldn't find entity %s used in configuration declaration", $4);
+      errormsg(@4, "Couldn't find entity %s used in configuration declaration\n", $4);
   //choose_architecture_for_entity();
   sorrymsg(@1, "Configuration declaration is not yet supported.\n");
      }
@@ -1873,10 +1873,10 @@ primary
         else if(!strcasecmp($2, "fs"))
             unit = ExpTime::FS;
         else
-            errormsg(@2, "Invalid time unit (accepted are fs, ps, ns, us, ms, s).");
+            errormsg(@2, "Invalid time unit (accepted are fs, ps, ns, us, ms, s).\n");
 
         if($1 < 0)
-            errormsg(@1, "Time cannot be negative.");
+            errormsg(@1, "Time cannot be negative.\n");
 
         ExpTime*tmp = new ExpTime($1, unit);
         FILE_NAME(tmp, @1);
@@ -2586,7 +2586,7 @@ suffix
       { $$ = $1; }
   | K_all
       { //do not have now better idea than using char constant
-	$$ = strcpy(new char[strlen("all"+1)], "all");
+	$$ = strdup("all");
       }
   ;
 
