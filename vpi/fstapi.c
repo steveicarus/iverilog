@@ -279,7 +279,6 @@ return(ftruncate(fd, length));
 static char *fstRealpath(const char *path, char *resolved_path)
 {
 #if defined __USE_BSD || defined __USE_XOPEN_EXTENDED || defined __CYGWIN__ || defined HAVE_REALPATH
-
 #if (defined(__MACH__) && defined(__APPLE__))
 if(!resolved_path)
         {
@@ -297,6 +296,8 @@ if(!resolved_path)
         }
 return(_fullpath(resolved_path, path, PATH_MAX));
 #else
+(void)path;
+(void)resolved_path;
 return(NULL);
 #endif
 #endif
