@@ -171,13 +171,6 @@ extern "C" unsigned ivl_expr_lineno(ivl_expr_t net)
       return net->lineno;
 }
 
-inline static const char *basename(ivl_scope_t scope, const char *inst)
-{
-      inst += strlen(ivl_scope_name(scope));
-      assert(*inst == '.');
-      return inst+1;
-}
-
 extern "C" ivl_variable_type_t ivl_const_type(ivl_net_const_t net)
 {
       assert(net);

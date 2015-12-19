@@ -1,7 +1,7 @@
 
 %{
 /*
- *  Copyright (C) 2011-2014  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2011-2015  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -228,7 +228,7 @@ void yyerror(const char *fmt, ...)
 {
       va_list ap;
       va_start(ap, fmt);
-      fprintf(stderr, "%s:%u: TABLE ERROR: ", in_file_name,
+      fprintf(stderr, "%s:%d: TABLE ERROR: ", in_file_name,
               yylloc.first_line-1);
       vfprintf(stderr, fmt, ap);
       va_end(ap);
