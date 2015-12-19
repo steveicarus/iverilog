@@ -242,6 +242,9 @@ case "${host}" in
 esac
 AC_SUBST(file64_support)
 
+# fstapi.c (from GTKWave) needs this define.
+AC_CHECK_FUNCS(realpath)
+
 # Check that these functions exist. They are mostly C99
 # functions that older compilers may not yet support.
 AC_CHECK_FUNCS(fopen64)
