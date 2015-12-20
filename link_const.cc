@@ -162,13 +162,13 @@ verinum::V Nexus::driven_value() const
 		  if ((sig->type() == NetNet::SUPPLY0) ||
 		      (sig->type() == NetNet::TRI0)) {
 			  // Multiple drivers are not currently supported.
-			ivl_assert(*obj, val == verinum::Vz);
+			ivl_assert(*sig, val == verinum::Vz);
 			val = verinum::V0;
 		  }
 		  if ((sig->type() == NetNet::SUPPLY1) ||
 		      (sig->type() == NetNet::TRI1)) {
 			  // Multiple drivers are not currently supported.
-			ivl_assert(*obj, val == verinum::Vz);
+			ivl_assert(*sig, val == verinum::Vz);
 			val = verinum::V1;
 		  }
 	    }
@@ -222,13 +222,13 @@ verinum Nexus::driven_vector() const
 		  if ((sig->type() == NetNet::SUPPLY0) ||
 		      (sig->type() == NetNet::TRI0)) {
 			  // Multiple drivers are not currently supported.
-			ivl_assert(*obj, val.len() == 0);
+			ivl_assert(*sig, val.len() == 0);
 			val = verinum(verinum::V0, width);
 		  }
 		  if ((sig->type() == NetNet::SUPPLY1) ||
 		      (sig->type() == NetNet::TRI1)) {
 			  // Multiple drivers are not currently supported.
-			ivl_assert(*obj, val.len() == 0);
+			ivl_assert(*sig, val.len() == 0);
 			val = verinum(verinum::V1, width);
 		  }
 	    }

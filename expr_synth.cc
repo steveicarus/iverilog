@@ -733,12 +733,18 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    }
       }
 
-      if (flag == false) return 0;
+      if (flag == false) {
+	    delete[]tmp;
+	    return 0;
+      }
 
       ivl_assert(*this, data_type != IVL_VT_NO_TYPE);
 
 	/* If this is a replication of zero just return 0. */
-      if (expr_width() == 0) return 0;
+      if (expr_width() == 0) {
+	    delete[]tmp;
+	    return 0;
+      }
 
 	/* Make a NetNet object to carry the output vector. */
       perm_string path = scope->local_symbol();

@@ -1277,7 +1277,6 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 	    return 0;
 
       perm_string member_name;
-      ivl_type_t  member_type = 0;
       pform_name_t use_path = path_;
       perm_string method_name = peek_tail_name(use_path);
       use_path.pop_back();
@@ -1317,11 +1316,8 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 
 		  const netclass_t* class_type = net->class_type();
 		  int midx = class_type->property_idx_from_name(member_name);
-		  if (midx >= 0)
-			member_type = class_type->get_prop_type(midx);
-		  else
-			member_type = 0;
-		  use_path = tmp_path;
+		  ivl_type_t  member_type = 0;
+		  if (midx >= 0) member_type = class_type->get_prop_type(midx);
 
 		  use_darray = dynamic_cast<const netdarray_t*> (member_type);
 
@@ -1410,7 +1406,7 @@ NetExpr*PECallFunction::cast_to_width_(NetExpr*expr, unsigned wid) const
       if (debug_elaborate) {
             cerr << get_fileline() << ": PECallFunction::cast_to_width_: "
 		 << "cast to " << wid
-                 << " bits " << (signed_flag_?"signed":"unsigned")
+                 << " bits " << (signed_flag_ ? "signed" : "unsigned")
 		 << " from expr_width()=" << expr->expr_width() << endl;
       }
 
@@ -1535,7 +1531,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 
 	    PExpr*expr = parms_[0];
 
-	    verinum val (expr->has_sign()? verinum::V1 : verinum::V0, 1);
+	    verinum val (expr->has_sign() ? verinum::V1 : verinum::V0, 1);
 	    NetEConst*sub = new NetEConst(val);
 	    sub->set_line(*this);
 
@@ -2017,7 +2013,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
       }
 
       NetESignal*sig = new NetESignal(net);
-      NetExpr  *base = packed_base? packed_base : make_const_val(off);
+      NetExpr  *base = packed_base ? packed_base : make_const_val(off);
 
       if (debug_elaborate) {
 	    cerr << li->get_fileline() << ": debug: check_for_struct_members: "
@@ -2681,7 +2677,7 @@ unsigned PEConcat::test_width(Design*des, NetScope*scope, width_mode_t&)
 	    expr_is_string = NO;
       }
 
-      expr_type_   = (expr_is_string==YES)? IVL_VT_STRING : IVL_VT_LOGIC;
+      expr_type_   = (expr_is_string==YES) ? IVL_VT_STRING : IVL_VT_LOGIC;
       signed_flag_ = false;
 
 	// If there is a repeat expression, then evaluate the constant
@@ -3035,7 +3031,7 @@ bool PEIdent::calculate_up_do_width_(Design*des, NetScope*scope,
       NetExpr*wid_ex = elab_and_eval(des, scope, index_tail.lsb, -1, true);
       NetEConst*wid_c = dynamic_cast<NetEConst*>(wid_ex);
 
-      wid = wid_c? wid_c->value().as_ulong() : 0;
+      wid = wid_c ? wid_c->value().as_ulong() : 0;
       if (wid == 0) {
 	    cerr << index_tail.lsb->get_fileline() << ": error: "
 		  "Indexed part widths must be constant and greater than zero."
@@ -3184,7 +3180,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 		bool parts_defined;
 		calculate_parts_(des, scope, msb, lsb, parts_defined);
 		if (parts_defined)
-		      use_width = 1 + ((msb>lsb)? (msb-lsb) : (lsb-msb));
+		      use_width = 1 + ((msb>lsb) ? (msb-lsb) : (lsb-msb));
 		else
 		      use_width = UINT_MAX;
 		break;
@@ -3218,7 +3214,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    ivl_assert(*this, 0);
       }
 
-      if (const netdarray_t*darray = net? net->darray_type() : 0) {
+      if (const netdarray_t*darray = net ? net->darray_type() : 0) {
 	    switch (use_sel) {
 		case index_component_t::SEL_BIT:
 		case index_component_t::SEL_BIT_LAST:
@@ -3272,7 +3268,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 		       << net->name() << " is a net, "
 		       << "type=" << expr_type_
 		       << ", width=" << expr_width_
-		       << ", signed_=" << (signed_flag_?"true":"false")
+		       << ", signed_=" << (signed_flag_ ? "true" : "false")
 		       << ", use_depth=" << use_depth
 		       << ", packed_dimensions=" << net->packed_dimensions()
 		       << ", unpacked_dimensions=" << net->unpacked_dimensions()
@@ -3936,7 +3932,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       if ( !(SYS_TASK_ARG & flags) ) {
 	      // I cannot interpret this identifier. Error message.
             cerr << get_fileline() << ": error: Unable to bind "
-                 << (NEED_CONST & flags ? "parameter" : "wire/reg/memory")
+                 << ((NEED_CONST & flags) ? "parameter" : "wire/reg/memory")
                  << " `" << path_ << "' in `" << scope_path(scope) << "'"
                  << endl;
             if (scope->need_const_func()) {
@@ -5626,7 +5622,7 @@ NetEConst* PENumber::elaborate_expr(Design*, NetScope*,
 unsigned PEString::test_width(Design*, NetScope*, width_mode_t&)
 {
       expr_type_   = IVL_VT_BOOL;
-      expr_width_  = text_? verinum(text_).len() : 0;
+      expr_width_  = text_ ? verinum(text_).len() : 0;
       min_width_   = expr_width_;
       signed_flag_ = false;
 
