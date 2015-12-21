@@ -2777,7 +2777,9 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 	    ret = do_make_task_ports(loc, pt, IVL_VT_CLASS, class_type, names);
       }
 
-      ret = do_make_task_ports(loc, pt, IVL_VT_NO_TYPE, vtype, names);
+      if (! ret) {
+	    ret = do_make_task_ports(loc, pt, IVL_VT_NO_TYPE, vtype, names);
+      }
 
       if (unpacked_dims) {
 	    for (list<perm_string>::iterator cur = names->begin()
