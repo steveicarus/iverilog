@@ -275,7 +275,7 @@ int __vpiArray::vpi_get(int code)
 	    return get_size();
 
 	  case vpiAutomatic:
-	    return (int) scope->is_automatic;
+	    return scope->is_automatic()? 1 : 0;
 
 	  default:
 	    return 0;
@@ -361,7 +361,7 @@ int __vpiArrayWord::as_word_t::vpi_get(int code)
             return val.value.integer;
 
 	  case vpiAutomatic:
-	    return (int) parent->get_scope()->is_automatic;
+	    return parent->get_scope()->is_automatic()? 1 : 0;
 
 #if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
 	  case _vpiFromThr:
@@ -393,7 +393,7 @@ int __vpiArrayVthrA::vpi_get(int code)
 	    return (int)get_address() + array->first_addr.get_value();
 
 	  case vpiAutomatic:
-	    return (int) array->get_scope()->is_automatic;
+	    return array->get_scope()->is_automatic() ? 1 : 0;
 
 #if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
 	  case _vpiFromThr:
@@ -504,7 +504,7 @@ int __vpiArrayVthrAPV::vpi_get(int code)
 	    return (int)word_sel;
 
 	  case vpiAutomatic:
-	    return (int) array->get_scope()->is_automatic;
+	    return array->get_scope()->is_automatic() ? 1 : 0;
 
 #if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
 	  case _vpiFromThr:
@@ -855,7 +855,7 @@ void compile_var_array(char*label, char*name, int last, int first,
 
 	/* Make the words. */
       arr->vals_width = labs(msb-lsb) + 1;
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
             arr->vals4 = new vvp_vector4array_aa(arr->vals_width,
 						 arr->get_size());
       } else {
@@ -1201,7 +1201,7 @@ void vvp_fun_arrayport_aa::check_word_change_(unsigned long addr,
 
 void vvp_fun_arrayport_aa::check_word_change(unsigned long addr)
 {
-      if (arr_->get_scope()->is_automatic) {
+      if (arr_->get_scope()->is_automatic()) {
             assert(vthread_get_wt_context());
             check_word_change_(addr, vthread_get_wt_context());
       } else {
@@ -1218,7 +1218,7 @@ static void array_attach_port(vvp_array_t array, vvp_fun_arrayport*fun)
       assert(fun->next_ == 0);
       fun->next_ = array->ports_;
       array->ports_ = fun;
-      if (!array->get_scope()->is_automatic) {
+      if (!array->get_scope()->is_automatic()) {
               /* propagate initial values for variable arrays */
             if (array->vals4) {
                   vvp_vector4_t tmp(array->vals_width, BIT4_X);
@@ -1355,12 +1355,12 @@ bool array_port_resolv_list_t::resolve(bool mes)
 
       vvp_fun_arrayport*fun;
       if (use_addr)
-            if (vpip_peek_current_scope()->is_automatic)
+            if (vpip_peek_current_scope()->is_automatic())
                   fun = new vvp_fun_arrayport_aa(mem, ptr, addr);
             else
                   fun = new vvp_fun_arrayport_sa(mem, ptr, addr);
       else
-            if (vpip_peek_current_scope()->is_automatic)
+            if (vpip_peek_current_scope()->is_automatic())
                   fun = new vvp_fun_arrayport_aa(mem, ptr);
             else
                   fun = new vvp_fun_arrayport_sa(mem, ptr);

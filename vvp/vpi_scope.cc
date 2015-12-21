@@ -169,37 +169,6 @@ void root_table_delete(void)
 }
 #endif
 
-static int scope_get(int code, vpiHandle obj)
-{
-      struct __vpiScope*ref = dynamic_cast<__vpiScope*>(obj);
-      assert(obj);
-
-      switch (code) {
-	  case vpiCellInstance:
-	    return (int) ref->is_cell;
-
-	  case vpiDefLineNo:
-	    return ref->def_lineno;
-
-	  case vpiLineNo:
-	    return ref->lineno;
-
-	  case vpiTimeUnit:
-	    return ref->time_units;
-
-	  case vpiTimePrecision:
-	    return ref->time_precision;
-
-	  case vpiTopModule:
-	    return 0x0 == ref->scope;
-
-          case vpiAutomatic:
-	    return (int) ref->is_automatic;
-      }
-
-      return vpiUndefined;
-}
-
 static void construct_scope_fullname(struct __vpiScope*ref, char*buf)
 {
       if (ref->scope) {
@@ -207,7 +176,7 @@ static void construct_scope_fullname(struct __vpiScope*ref, char*buf)
 	    strcat(buf, ".");
       }
 
-      strcat(buf, ref->name);
+      strcat(buf, ref->scope_name());
 }
 
 static const char* scope_get_type(int code)
@@ -254,11 +223,11 @@ static char* scope_get_str(int code, vpiHandle obj)
 	    break;
 
 	  case vpiName:
-	    p = ref->name;
+	    p = ref->scope_name();
 	    break;
 
 	  case vpiDefName:
-	    p = ref->tname;
+	    p = ref->scope_def_name();
 	    break;
 
 	  case vpiType:
@@ -361,8 +330,41 @@ static vpiHandle module_iter(int code, vpiHandle obj)
 }
 
 
+__vpiScope::__vpiScope(const char*nam, const char*tnam)
+: is_automatic_(false)
+{
+      name_ = vpip_name_string(nam);
+      tname_ = vpip_name_string(tnam? tnam : "");
+}
+
 int __vpiScope::vpi_get(int code)
-{ return scope_get(code, this); }
+{
+      switch (code) {
+	  case vpiCellInstance:
+	    return is_cell? 1 : 0;
+
+	  case vpiDefLineNo:
+	    return def_lineno;
+
+	  case vpiLineNo:
+	    return lineno;
+
+	  case vpiTimeUnit:
+	    return time_units;
+
+	  case vpiTimePrecision:
+	    return time_precision;
+
+	  case vpiTopModule:
+	    return 0x0 == scope;
+
+          case vpiAutomatic:
+	    return is_automatic_? 1 : 0;
+      }
+
+      return vpiUndefined;
+}
+
 
 char*__vpiScope::vpi_get_str(int code)
 { return scope_get_str(code, this); }
@@ -374,43 +376,80 @@ vpiHandle __vpiScope::vpi_iterate(int code)
 { return module_iter(code, this); }
 
 
-struct vpiScopeModule  : public __vpiScope {
-      inline vpiScopeModule() { }
+class vpiScopeModule  : public __vpiScope {
+    public:
+      inline vpiScopeModule(const char*nam, const char*tnam)
+      : __vpiScope(nam,tnam) { }
       int get_type_code(void) const { return vpiModule; }
 };
 
 struct vpiScopePackage  : public __vpiScope {
-      inline vpiScopePackage() { }
+      inline vpiScopePackage(const char*nam, const char*tnam)
+      : __vpiScope(nam,tnam) { }
       int get_type_code(void) const { return vpiPackage; }
 };
 
 struct vpiScopeTask  : public __vpiScope {
-      inline vpiScopeTask() { }
+      inline vpiScopeTask(const char*nam, const char*tnam)
+      : __vpiScope(nam,tnam) { }
       int get_type_code(void) const { return vpiTask; }
 };
 
-struct vpiScopeFunction  : public __vpiScope {
-      inline vpiScopeFunction() { }
+struct vpiScopeTaskAuto  : public __vpiScope {
+      inline vpiScopeTaskAuto(const char*nam, const char*tnam)
+      : __vpiScope(nam,tnam) { is_automatic_=true; }
+      int get_type_code(void) const { return vpiTask; }
+};
+
+class vpiScopeFunction  : public __vpiScope {
+    public:
+      inline vpiScopeFunction(const char*nam, const char*tnam)
+      : __vpiScope(nam,tnam) { }
+      int get_type_code(void) const { return vpiFunction; }
+};
+
+class vpiScopeFunctionAuto  : public __vpiScope {
+    public:
+      inline vpiScopeFunctionAuto(const char*nam, const char*tnam)
+      : __vpiScope(nam,tnam) { is_automatic_=true; }
       int get_type_code(void) const { return vpiFunction; }
 };
 
 struct vpiScopeBegin  : public __vpiScope {
-      inline vpiScopeBegin() { }
+      inline vpiScopeBegin(const char*nam, const char*tnam)
+      : __vpiScope(nam,tnam) { }
+      int get_type_code(void) const { return vpiNamedBegin; }
+};
+
+class vpiScopeBeginAuto  : public __vpiScope {
+    public:
+      inline vpiScopeBeginAuto(const char*nam, const char*tnam)
+      : __vpiScope(nam,tnam) { is_automatic_=true; }
       int get_type_code(void) const { return vpiNamedBegin; }
 };
 
 struct vpiScopeGenerate  : public __vpiScope {
-      inline vpiScopeGenerate() { }
+      inline vpiScopeGenerate(const char*nam, const char*tnam)
+      : __vpiScope(nam,tnam) { }
       int get_type_code(void) const { return vpiGenScope; }
 };
 
 struct vpiScopeFork  : public __vpiScope {
-      inline vpiScopeFork() { }
+      inline vpiScopeFork(const char*nam, const char*tnam)
+      : __vpiScope(nam,tnam) { }
+      int get_type_code(void) const { return vpiNamedFork; }
+};
+
+class vpiScopeForkAuto  : public __vpiScope {
+    public:
+      inline vpiScopeForkAuto(const char*nam, const char*tnam)
+      : __vpiScope(nam,tnam) { is_automatic_=true; }
       int get_type_code(void) const { return vpiNamedFork; }
 };
 
 struct vpiScopeClass  : public __vpiScope {
-      inline vpiScopeClass() { }
+      inline vpiScopeClass(const char*nam, const char*tnam)
+      : __vpiScope(nam,tnam) { }
       int get_type_code(void) const { return vpiClassTypespec; }
 };
 
@@ -449,50 +488,40 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
 {
       count_vpi_scopes += 1;
 
-      bool is_automatic = false;
-
       struct __vpiScope*scope;
       if (strcmp(type,"module") == 0) {
-	    scope = new vpiScopeModule;
+	    scope = new vpiScopeModule(name, tname);
       } else if (strcmp(type,"function") == 0) {
-	    scope = new vpiScopeFunction;
+	    scope = new vpiScopeFunction(name, tname);
       } else if (strcmp(type,"autofunction") == 0) {
-	    scope = new vpiScopeFunction;
-	    is_automatic = true;
+	    scope = new vpiScopeFunctionAuto(name, tname);
       } else if (strcmp(type,"task") == 0) {
-	    scope = new vpiScopeTask;
+	    scope = new vpiScopeTask(name, tname);
       } else if (strcmp(type,"autotask") == 0) {
-	    scope = new vpiScopeTask;
-	    is_automatic = true;
+	    scope = new vpiScopeTaskAuto(name, tname);
       } else if (strcmp(type,"fork") == 0) {
-	    scope = new vpiScopeFork;
+	    scope = new vpiScopeFork(name, tname);
       } else if (strcmp(type,"autofork") == 0) {
-	    scope = new vpiScopeFork;
-	    is_automatic = true;
+	    scope = new vpiScopeForkAuto(name, tname);
       } else if (strcmp(type,"begin") == 0) {
-	    scope = new vpiScopeBegin;
+	    scope = new vpiScopeBegin(name, tname);
       } else if (strcmp(type,"autobegin") == 0) {
-	    scope = new vpiScopeBegin;
-	    is_automatic = true;
+	    scope = new vpiScopeBeginAuto(name, tname);
       } else if (strcmp(type,"generate") == 0) {
-	    scope = new vpiScopeGenerate;
+	    scope = new vpiScopeGenerate(name, tname);
       } else if (strcmp(type,"package") == 0) {
-	    scope = new vpiScopePackage;
+	    scope = new vpiScopePackage(name, tname);
       } else if (strcmp(type,"class") == 0) {
-	    scope = new vpiScopeClass;
+	    scope = new vpiScopeClass(name, tname);
       } else {
-	    scope = new vpiScopeModule;
+	    scope = new vpiScopeModule(name, tname);
 	    assert(0);
       }
 
-      scope->name = vpip_name_string(name);
-      if (tname) scope->tname = vpip_name_string(tname);
-      else scope->tname = vpip_name_string("");
       scope->file_idx = (unsigned) file_idx;
       scope->lineno  = (unsigned) lineno;
       scope->def_file_idx = (unsigned) def_file_idx;
       scope->def_lineno  = (unsigned) def_lineno;
-      scope->is_automatic = is_automatic;
       scope->intern = 0;
       scope->nintern = 0;
       scope->item = 0;
@@ -577,7 +606,7 @@ struct __vpiScope* vpip_peek_context_scope(void)
         /* A context is allocated for each automatic task or function.
            Storage for nested scopes (named blocks) is allocated in
            the parent context. */
-      while (scope->scope && scope->scope->is_automatic)
+      while (scope->scope && scope->scope->is_automatic())
             scope = scope->scope;
 
       return scope;
@@ -587,7 +616,7 @@ unsigned vpip_add_item_to_context(automatic_hooks_s*item,
                                   struct __vpiScope*scope)
 {
       assert(scope);
-      assert(scope->is_automatic);
+      assert(scope->is_automatic());
 
       unsigned idx = scope->nitem++;
 

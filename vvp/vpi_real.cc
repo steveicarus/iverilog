@@ -46,7 +46,7 @@ static int real_var_get(int code, vpiHandle ref)
 	    return 0; // Not implemented for now!
 
 	case vpiAutomatic:
-	    return (int) vpip_scope(rfp)->is_automatic;
+	  return vpip_scope(rfp)->is_automatic()? 1 : 0;
       }
 
       return 0;

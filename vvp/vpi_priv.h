@@ -236,21 +236,29 @@ struct __vpiPortInfo : public __vpiHandle {
  * objects hold the items and properties that are knowingly bound to a
  * scope.
  */
-struct __vpiScope : public __vpiHandle {
+class __vpiScope : public __vpiHandle {
+
+    public:
       int vpi_get(int code);
       char* vpi_get_str(int code);
       vpiHandle vpi_handle(int code);
       vpiHandle vpi_iterate(int code);
 
+    public:
+	// Return the BASE name of the scope. This does not include
+	// any of the parent hierarchy.
+      inline const char*scope_name() const { return name_; }
+
+      inline const char*scope_def_name() const { return tname_; }
+	// TRUE if this is an automatic func/task/block
+      inline bool is_automatic() const { return is_automatic_; }
+
+    public:
       struct __vpiScope *scope;
-	/* The scope has a name. */
-      const char*name;
-      const char*tname;
       unsigned file_idx;
       unsigned lineno;
       unsigned def_file_idx;
       unsigned def_lineno;
-      bool is_automatic;
       bool is_cell;
 	/* The scope has a system time of its own. */
       struct __vpiScopedTime scoped_time;
@@ -274,7 +282,15 @@ struct __vpiScope : public __vpiHandle {
       signed int time_precision :8;
 
     protected:
-      inline __vpiScope() { }
+      __vpiScope(const char*nam, const char*tnam);
+
+    private:
+	/* The scope has a name. */
+      const char*name_;
+      const char*tname_;
+    protected:
+	/* the scope may be "automatic" */
+      bool is_automatic_;
 };
 
 extern struct __vpiScope* vpip_peek_current_scope(void);

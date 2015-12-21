@@ -425,7 +425,7 @@ static void multiply_array_imm(unsigned long*res, unsigned long*val,
  */
 static vvp_context_t vthread_alloc_context(struct __vpiScope*scope)
 {
-      assert(scope->is_automatic);
+      assert(scope->is_automatic());
 
       vvp_context_t context = scope->free_contexts;
       if (context) {
@@ -453,7 +453,7 @@ static vvp_context_t vthread_alloc_context(struct __vpiScope*scope)
  */
 static void vthread_free_context(vvp_context_t context, struct __vpiScope*scope)
 {
-      assert(scope->is_automatic);
+      assert(scope->is_automatic());
       assert(context);
 
       if (context == scope->live_contexts) {
@@ -2887,7 +2887,7 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
 {
       vthread_t child = vthread_new(cp->cptr2, cp->scope);
 
-      if (cp->scope->is_automatic) {
+      if (cp->scope->is_automatic()) {
               /* The context allocated for this child is the top entry
                  on the write context stack. */
             child->wt_context = thr->wt_context;
@@ -5802,7 +5802,7 @@ bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
 
         /* If an automatic function, allocate a context for this call. */
       vvp_context_t child_context = 0;
-      if (child_scope->is_automatic) {
+      if (child_scope->is_automatic()) {
             child_context = vthread_alloc_context(child_scope);
             thr->wt_context = child_context;
             thr->rd_context = child_context;
@@ -5845,7 +5845,7 @@ bool of_REAP_UFUNC(vthread_t thr, vvp_code_t cp)
       cp->ufunc_core_ptr->finish_thread();
 
         /* If an automatic function, free the context for this call. */
-      if (child_scope->is_automatic) {
+      if (child_scope->is_automatic()) {
             vthread_free_context(thr->rd_context, child_scope);
             thr->wt_context = 0;
             thr->rd_context = 0;

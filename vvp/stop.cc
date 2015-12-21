@@ -139,7 +139,7 @@ static void cmd_call(unsigned argc, char*argv[])
 		      case vpiNamedBegin:
 		      case vpiNamedFork:
 			scope = dynamic_cast<__vpiScope*>(table[idx]);
-			if (strcmp(scope->name, argv[idx+1]) == 0)
+			if (strcmp(scope->scope_name(), argv[idx+1]) == 0)
 			      handle = table[tmp];
 			break;
 
@@ -234,32 +234,32 @@ static void cmd_list(unsigned, char*[])
 	    switch (table[idx]->get_type_code()) {
 		case vpiModule:
 		  scope = dynamic_cast<__vpiScope*>(table[idx]);
-		  printf("module  : %s\n", scope->name);
+		  printf("module  : %s\n", scope->scope_name());
 		  break;
 
 		case vpiGenScope:
 		  scope = dynamic_cast<__vpiScope*>(table[idx]);
-		  printf("generate: %s\n", scope->name);
+		  printf("generate: %s\n", scope->scope_name());
 		  break;
 
 		case vpiTask:
 		  scope = dynamic_cast<__vpiScope*>(table[idx]);
-		  printf("task    : %s\n", scope->name);
+		  printf("task    : %s\n", scope->scope_name());
 		  break;
 
 		case vpiFunction:
 		  scope = dynamic_cast<__vpiScope*>(table[idx]);
-		  printf("function: %s\n", scope->name);
+		  printf("function: %s\n", scope->scope_name());
 		  break;
 
 		case vpiNamedBegin:
 		  scope = dynamic_cast<__vpiScope*>(table[idx]);
-		  printf("block   : %s\n", scope->name);
+		  printf("block   : %s\n", scope->scope_name());
 		  break;
 
 		case vpiNamedFork:
 		  scope = dynamic_cast<__vpiScope*>(table[idx]);
-		  printf("fork    : %s\n", scope->name);
+		  printf("fork    : %s\n", scope->scope_name());
 		  break;
 
 		case vpiParameter:
@@ -343,7 +343,7 @@ static void cmd_push(unsigned argc, char* argv[])
 
 		    /* This is a scope, and the name matches, then
 		       report that I found the child. */
-		  if (strcmp(cp->name, argv[idx]) == 0) {
+		  if (strcmp(cp->scope_name(), argv[idx]) == 0) {
 			child = cp;
 			break;
 		  }
@@ -401,10 +401,10 @@ static void cmd_where(unsigned, char*[])
       while (cur) {
 	    switch (cur->get_type_code()) {
 		case vpiModule:
-		  printf("module %s\n", cur->name);
+		  printf("module %s\n", cur->scope_name());
 		  break;
 		default:
-		  printf("scope (%d) %s;\n", cur->get_type_code(), cur->name);
+		  printf("scope (%d) %s;\n", cur->get_type_code(), cur->scope_name());
 		  break;
 	    }
 

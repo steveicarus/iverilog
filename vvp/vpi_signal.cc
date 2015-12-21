@@ -571,7 +571,7 @@ static int signal_get(int code, vpiHandle ref)
 	    return (rfp->msb.get_value() != rfp->lsb.get_value());
 
           case vpiAutomatic:
-            return (int) vpip_scope(rfp)->is_automatic;
+            return vpip_scope(rfp)->is_automatic() ? 1  : 0;
 
 #ifdef BR916_STOPGAP_FIX
           case _vpiFromThr:
@@ -760,7 +760,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		    "value type %d not implemented."
 		    " Signal is %s in scope %s\n",
 		    (int)vp->format, vpi_get_str(vpiName, ref),
-		    vpip_scope(rfp)->name);
+		    vpip_scope(rfp)->scope_name());
 	    assert(0);
       }
 }

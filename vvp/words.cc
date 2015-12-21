@@ -37,7 +37,7 @@ static void __compile_var_real(char*label, char*name,
 {
       vvp_net_t*net = new vvp_net_t;
 
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
 	    vvp_fun_signal_real_aa*tmp = new vvp_fun_signal_real_aa;
 	    net->fil = tmp;
 	    net->fun = tmp;
@@ -54,7 +54,7 @@ static void __compile_var_real(char*label, char*name,
       if (name) {
 	    assert(!array);
 	    vpip_attach_to_current_scope(obj);
-            if (!vpip_peek_current_scope()->is_automatic)
+            if (!vpip_peek_current_scope()->is_automatic())
                   schedule_init_vector(vvp_net_ptr_t(net,0), 0.0);
       }
       if (array) {
@@ -82,7 +82,7 @@ void compile_var_string(char*label, char*name)
 {
       vvp_net_t*net = new vvp_net_t;
 
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
 	    vvp_fun_signal_string_aa*tmp = new vvp_fun_signal_string_aa;
 	    net->fil = tmp;
 	    net->fun = tmp;
@@ -105,7 +105,7 @@ void compile_var_darray(char*label, char*name)
 {
       vvp_net_t*net = new vvp_net_t;
 
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
 	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa;
 	    net->fil = tmp;
 	    net->fun = tmp;
@@ -128,7 +128,7 @@ void compile_var_queue(char*label, char*name)
 {
       vvp_net_t*net = new vvp_net_t;
 
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
 	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa;
 	    net->fil = tmp;
 	    net->fun = tmp;
@@ -151,7 +151,7 @@ void compile_var_cobject(char*label, char*name)
 {
       vvp_net_t*net = new vvp_net_t;
 
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
 	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa;
 	    net->fil = tmp;
 	    net->fun = tmp;
@@ -182,7 +182,7 @@ void compile_variable(char*label, char*name,
 
       vvp_net_t*net = new vvp_net_t;
 
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
 	    vvp_fun_signal4_aa*tmp = new vvp_fun_signal4_aa(wid);
 	    net->fil = tmp;
             net->fun = tmp;
@@ -221,7 +221,7 @@ void compile_variable(char*label, char*name,
 	// scope as a signal.
       if (name) {
 	    if (obj) vpip_attach_to_current_scope(obj);
-            if (!vpip_peek_current_scope()->is_automatic) {
+            if (!vpip_peek_current_scope()->is_automatic()) {
 		  vvp_vector4_t tmp;
 		  vfil->vec4_value(tmp);
 	          schedule_init_vector(vvp_net_ptr_t(net,0), tmp);

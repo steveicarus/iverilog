@@ -49,7 +49,7 @@ int __vpiNamedEvent::vpi_get(int code)
       switch (code) {
 
 	  case vpiAutomatic:
-	    return (int) scope_->is_automatic;
+	    return scope_->is_automatic()? 1 : 0;
       }
 
       return 0;
