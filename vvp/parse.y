@@ -696,20 +696,6 @@ statement
 	  T_NUMBER T_NUMBER T_NUMBER ',' T_SYMBOL ';'
 		{ compile_scope_decl($1, $3, $5, $6, $14, $7, $8, $10, $11, $12); }
 
-  /* Legacy declaration that does not have `celldefine information. */
-
-	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING T_STRING T_NUMBER T_NUMBER ','
-	  T_NUMBER T_NUMBER ',' T_SYMBOL ';'
-		{ compile_scope_decl($1, $3, $5, $6, $13, $7, $8, $10, $11, 0); }
-
-  /* XXXX Legacy declaration has no type name. */
-
-	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING ';'
-		{ compile_scope_decl($1, $3, $5, 0, 0, 0, 0, 0, 0, 0); }
-
-	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING ',' T_SYMBOL ';'
-		{ compile_scope_decl($1, $3, $5, 0, $7, 0, 0, 0, 0, 0); }
-
   /* Scope recall has no label of its own, but refers by label to a
      declared scope. */
 

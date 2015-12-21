@@ -97,24 +97,33 @@ SCOPE STATEMENTS:
 
 The syntax of a scope statement is:
 
-        <label> .scope <type>, <instance>, <declaration>, <parent> ;
+    	<label> .scope <type>, <name> <type-name> <file> <lineno> ;
+
+	<label> .scope <type>, <name> <type-name> <file> <lineno>, \
+		       <def-file> <def-lineno> <is-cell>, <parent> ;
 
 The <type> is the general type of the scope: module, autofunction,
-function, autotask, task, begin, fork or generate.
+function, autotask, task, begin, fork, autobegin, autofork, or generate.
 
-The <instance> is a string that is the base name of the instance. For
-modules, this is the instance name. For tasks, this is the task name.
+The <name> is a string that is the base name of the instance. For
+modules, this is the instance name. For tasks and functions, this is
+the task or function name.
 
-The <declaration> is a string that represents the declaration. For
-modules, this is the name of the module given in the module
-declaration, and *not* the instantiation. For tasks and functions,
-this is the hierarchical name of the path to the declaration. This is
-because the declaration can be different within different module
-instances.
+The <type-name> is the name of the type. For most scope types, this is
+the name as the <name>, but for module and class scopes, this is the
+name of the definition, and not the instance.
 
-Finally, the <parent> is the label for the parent scope for this
-one. Root scopes leave this out. Otherwise, this label references
-another .scope record.
+The <file> and <lineno> are the location of the instantiation of this
+scope. For a module, it is the location of the instance.
+
+The <def-file> and <def-lineno> is the source file and line number for
+the defintion of the scope. For modules, this is where the module is
+defined instead of where it is instantiated.
+
+The <is-cell> flag is only useful for module instances. It is true
+(not zero) if the module is a celltype instead of a regular module.
+
+The short form of the scope statement is only used for root scopes.
 
 PARAMETER STATEMENTS:
 

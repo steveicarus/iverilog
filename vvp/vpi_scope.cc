@@ -449,32 +449,36 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
 {
       count_vpi_scopes += 1;
 
-      char*base_type;
-      bool is_automatic;
-      if (strncmp(type,"auto",4) == 0) {
-	    is_automatic = true;
-            base_type = &type[4];
-      } else {
-	    is_automatic = false;
-            base_type = &type[0];
-      }
+      bool is_automatic = false;
 
       struct __vpiScope*scope;
-      if (strcmp(base_type,"module") == 0) {
+      if (strcmp(type,"module") == 0) {
 	    scope = new vpiScopeModule;
-      } else if (strcmp(base_type,"function") == 0) {
+      } else if (strcmp(type,"function") == 0) {
 	    scope = new vpiScopeFunction;
-      } else if (strcmp(base_type,"task") == 0) {
+      } else if (strcmp(type,"autofunction") == 0) {
+	    scope = new vpiScopeFunction;
+	    is_automatic = true;
+      } else if (strcmp(type,"task") == 0) {
 	    scope = new vpiScopeTask;
-      } else if (strcmp(base_type,"fork") == 0) {
+      } else if (strcmp(type,"autotask") == 0) {
+	    scope = new vpiScopeTask;
+	    is_automatic = true;
+      } else if (strcmp(type,"fork") == 0) {
 	    scope = new vpiScopeFork;
-      } else if (strcmp(base_type,"begin") == 0) {
+      } else if (strcmp(type,"autofork") == 0) {
+	    scope = new vpiScopeFork;
+	    is_automatic = true;
+      } else if (strcmp(type,"begin") == 0) {
 	    scope = new vpiScopeBegin;
-      } else if (strcmp(base_type,"generate") == 0) {
+      } else if (strcmp(type,"autobegin") == 0) {
+	    scope = new vpiScopeBegin;
+	    is_automatic = true;
+      } else if (strcmp(type,"generate") == 0) {
 	    scope = new vpiScopeGenerate;
-      } else if (strcmp(base_type,"package") == 0) {
+      } else if (strcmp(type,"package") == 0) {
 	    scope = new vpiScopePackage;
-      } else if (strcmp(base_type,"class") == 0) {
+      } else if (strcmp(type,"class") == 0) {
 	    scope = new vpiScopeClass;
       } else {
 	    scope = new vpiScopeModule;
