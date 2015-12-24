@@ -25,27 +25,26 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
+# include  <vector>
 # include  <cstring>
 # include  <cstdlib>
 # include  <cassert>
 # include  "ivl_alloc.h"
 
+using namespace std;
 
-static vpiHandle *vpip_root_table_ptr = 0;
-static unsigned   vpip_root_table_cnt = 0;
+static vector<vpiHandle> vpip_root_table;
 
 vpiHandle vpip_make_root_iterator(void)
 {
-      assert(vpip_root_table_ptr);
-      assert(vpip_root_table_cnt);
-      return vpip_make_iterator(vpip_root_table_cnt,
-				vpip_root_table_ptr, false);
+      return vpip_make_iterator(vpip_root_table.size(),
+				&vpip_root_table[0], false);
 }
 
 void vpip_make_root_iterator(__vpiHandle**&table, unsigned&ntable)
 {
-      table = vpip_root_table_ptr;
-      ntable = vpip_root_table_cnt;
+      table = &vpip_root_table[0];
+      ntable = vpip_root_table.size();
 }
 
 #ifdef CHECK_WITH_VALGRIND
@@ -148,16 +147,14 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 
 void root_table_delete(void)
 {
-      for (unsigned idx = 0; idx < vpip_root_table_cnt; idx += 1) {
+      for (unsigned idx = 0; idx < vpip_root_table.size(); idx += 1) {
 	    struct __vpiScope *scope = static_cast<__vpiScope *>
-	          (vpip_root_table_ptr[idx]);
+	          (vpip_root_table[idx]);
 	    vthreads_delete(scope);
 	    delete_sub_scopes(scope);
 	    delete scope;
       }
-      free(vpip_root_table_ptr);
-      vpip_root_table_ptr = 0;
-      vpip_root_table_cnt = 0;
+      vpip_root_table.clear();
 
 	/* Clean up all the class definitions. */
       for (unsigned idx = 0; idx < class_list_count; idx += 1) {
@@ -298,7 +295,7 @@ static vpiHandle module_iter_subset(int code, struct __vpiScope*ref)
       unsigned mcnt = 0, ncnt = 0;
       vpiHandle*args;
 
-      for (unsigned idx = 0 ;  idx < ref->nintern ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < ref->intern.size() ;  idx += 1)
 	    if (compare_types(code, ref->intern[idx]->get_type_code()))
 		  mcnt += 1;
 
@@ -306,7 +303,7 @@ static vpiHandle module_iter_subset(int code, struct __vpiScope*ref)
 	    return 0;
 
       args = (vpiHandle*)calloc(mcnt, sizeof(vpiHandle));
-      for (unsigned idx = 0 ;  idx < ref->nintern ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < ref->intern.size() ;  idx += 1)
 	    if (compare_types(code, ref->intern[idx]->get_type_code()))
 		  args[ncnt++] = ref->intern[idx];
 
@@ -463,16 +460,7 @@ static struct __vpiScope*current_scope = 0;
 void vpip_attach_to_scope(struct __vpiScope*scope, vpiHandle obj)
 {
       assert(scope);
-      unsigned idx = scope->nintern++;
-
-      if (scope->intern == 0)
-	    scope->intern = (vpiHandle*)
-		  malloc(sizeof(vpiHandle));
-      else
-	    scope->intern = (vpiHandle*)
-		  realloc(scope->intern, sizeof(vpiHandle)*scope->nintern);
-
-      scope->intern[idx] = obj;
+      scope->intern.push_back(obj);
 }
 
 /*
@@ -522,8 +510,6 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
       scope->lineno  = (unsigned) lineno;
       scope->def_file_idx = (unsigned) def_file_idx;
       scope->def_lineno  = (unsigned) def_lineno;
-      scope->intern = 0;
-      scope->nintern = 0;
       scope->item = 0;
       scope->nitem = 0;
       scope->live_contexts = 0;
@@ -556,11 +542,7 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
       } else {
 	    scope->scope = 0x0;
 
-	    unsigned cnt = vpip_root_table_cnt + 1;
-	    vpip_root_table_ptr = (vpiHandle*)
-		  realloc(vpip_root_table_ptr, cnt * sizeof(vpiHandle));
-	    vpip_root_table_ptr[vpip_root_table_cnt] = scope;
-	    vpip_root_table_cnt = cnt;
+	    vpip_root_table.push_back(scope);
 
 	      /* Root scopes inherit time_units and precision from the
 	         system precision. */

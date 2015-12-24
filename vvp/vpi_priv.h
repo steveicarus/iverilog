@@ -26,6 +26,7 @@
 # include  <map>
 # include  <set>
 # include  <string>
+# include  <vector>
 
 /*
  * Added to use some "vvp_fun_modpath_src"
@@ -265,8 +266,7 @@ class __vpiScope : public __vpiHandle {
       struct __vpiScopedSTime scoped_stime;
       struct __vpiScopedRealtime scoped_realtime;
 	/* Keep an array of internal scope items. */
-      class __vpiHandle**intern;
-      unsigned nintern;
+      std::vector<class __vpiHandle*> intern;
 	/* Set of types */
       std::map<std::string,class_type*> classes;
         /* Keep an array of items to be automatically allocated */

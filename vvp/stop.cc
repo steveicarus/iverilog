@@ -81,8 +81,8 @@ static void cmd_call(unsigned argc, char*argv[])
 	    vpip_make_root_iterator(table, ntable);
 
       } else {
-	    table = stop_current_scope->intern;
-	    ntable = stop_current_scope->nintern;
+	    table = &stop_current_scope->intern[0];
+	    ntable = stop_current_scope->intern.size();
       }
 
 	/* This is an array of vpiHandles, for passing to the created
@@ -221,8 +221,8 @@ static void cmd_list(unsigned, char*[])
 	    vpip_make_root_iterator(table, ntable);
 
       } else {
-	    table = stop_current_scope->intern;
-	    ntable = stop_current_scope->nintern;
+	    table = &stop_current_scope->intern[0];
+	    ntable = stop_current_scope->intern.size();
       }
 
       printf("%u items in this scope:\n", ntable);
@@ -327,8 +327,8 @@ static void cmd_push(unsigned argc, char* argv[])
 	    struct __vpiScope*child = 0;
 
 	    if (stop_current_scope) {
-		  table = stop_current_scope->intern;
-		  ntable = stop_current_scope->nintern;
+		  table = &stop_current_scope->intern[0];
+		  ntable = stop_current_scope->intern.size();
 	    } else {
 		  vpip_make_root_iterator(table, ntable);
 	    }

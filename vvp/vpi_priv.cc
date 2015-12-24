@@ -1260,7 +1260,7 @@ static vpiHandle find_name(const char *name, vpiHandle handle)
 	    rtn = handle;
 
       /* brute force search for the name in all objects in this scope */
-      for (unsigned i = 0 ;  i < ref->nintern ;  i += 1) {
+      for (unsigned i = 0 ;  i < ref->intern.size() ;  i += 1) {
 	      /* The standard says that since a port does not have a full
 	       * name it cannot be found by name. Because of this we need
 	       * to skip ports here so the correct handle can be located. */
