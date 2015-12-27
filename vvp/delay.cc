@@ -164,7 +164,7 @@ vvp_fun_delay::vvp_fun_delay(vvp_net_t*n, unsigned width, const vvp_delay_t&d)
       initial_ = true;
 	// Calculate the values used when converting variable delays
 	// to simulation time units.
-      struct __vpiScope*scope = vpip_peek_current_scope();
+      __vpiScope*scope = vpip_peek_current_scope();
 
       int pow = scope->time_units - scope->time_precision;
       round_ = 1;
@@ -770,7 +770,7 @@ static vpiHandle modpath_src_get_handle(int code, vpiHandle ref)
 	  return rfp->dest->scope;
 
 	  case vpiModule:
-	      { struct __vpiScope*scope = rfp->dest->scope;
+	      { __vpiScope*scope = rfp->dest->scope;
 		while (scope && scope->get_type_code() != vpiModule)
 		      scope = scope->scope;
 		assert(scope);

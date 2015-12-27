@@ -206,7 +206,7 @@ struct __vpiSystemTime : public __vpiHandle {
       void vpi_get_value(p_vpi_value val);
       vpiHandle vpi_handle(int code);
 
-      struct __vpiScope*scope;
+      __vpiScope*scope;
 };
 
 struct __vpiScopedTime : public __vpiSystemTime {
@@ -255,14 +255,14 @@ class __vpiScope : public __vpiHandle {
       inline bool is_automatic() const { return is_automatic_; }
 
     public:
-      struct __vpiScope *scope;
+      __vpiScope *scope;
       unsigned file_idx;
       unsigned lineno;
       unsigned def_file_idx;
       unsigned def_lineno;
       bool is_cell;
 	/* The scope has a system time of its own. */
-      struct __vpiScopedTime scoped_time;
+      __vpiScopedTime scoped_time;
       struct __vpiScopedSTime scoped_stime;
       struct __vpiScopedRealtime scoped_realtime;
 	/* Keep an array of internal scope items. */
@@ -293,12 +293,12 @@ class __vpiScope : public __vpiHandle {
       bool is_automatic_;
 };
 
-extern struct __vpiScope* vpip_peek_current_scope(void);
-extern void vpip_attach_to_scope(struct __vpiScope*scope, vpiHandle obj);
+extern __vpiScope* vpip_peek_current_scope(void);
+extern void vpip_attach_to_scope(__vpiScope*scope, vpiHandle obj);
 extern void vpip_attach_to_current_scope(vpiHandle obj);
-extern struct __vpiScope* vpip_peek_context_scope(void);
+extern __vpiScope* vpip_peek_context_scope(void);
 extern unsigned vpip_add_item_to_context(automatic_hooks_s*item,
-                                         struct __vpiScope*scope);
+                                         __vpiScope*scope);
 extern vpiHandle vpip_make_root_iterator(void);
 extern void vpip_make_root_iterator(class __vpiHandle**&table,
 				    unsigned&ntable);
@@ -323,7 +323,7 @@ struct __vpiSignal : public __vpiHandle {
     public:
       union { // The scope or parent array that contains me.
 	    vpiHandle parent;
-	    struct __vpiScope* scope;
+	    __vpiScope* scope;
       } within;
       union { // The name of this reg/net, or the index for array words.
             const char*name;
@@ -347,7 +347,7 @@ struct __vpiSignal : public __vpiHandle {
       static void operator delete[](void*);
 };
 extern unsigned vpip_size(__vpiSignal *sig);
-extern struct __vpiScope* vpip_scope(__vpiSignal*sig);
+extern __vpiScope* vpip_scope(__vpiSignal*sig);
 
 extern vpiHandle vpip_make_int2(const char*name, int msb, int lsb,
 			       bool signed_flag, vvp_net_t*vec);
@@ -427,7 +427,7 @@ struct __vpiModPathSrc : public __vpiHandle {
  */
 
 struct __vpiModPath {
-      struct __vpiScope   *scope ;
+      __vpiScope   *scope ;
 
       class vvp_fun_modpath*modpath;
 
@@ -476,7 +476,7 @@ class __vpiNamedEvent : public __vpiHandle {
 	/* base name of the event object */
       const char*name_;
 	/* Parent scope of this object. */
-      struct __vpiScope*scope_;
+      __vpiScope*scope_;
 	/* List of callbacks interested in this event. */
       __vpiCallback*callbacks_;
 };
@@ -507,7 +507,7 @@ struct __vpiRealVar : public __vpiHandle {
 
       union { // The scope or parent array that contains me.
 	    vpiHandle parent;
-	    struct __vpiScope* scope;
+	    __vpiScope* scope;
       } within;
 	/* The name of this variable, or the index for array words. */
       union {
@@ -519,7 +519,7 @@ struct __vpiRealVar : public __vpiHandle {
       vvp_net_t*net;
 };
 
-extern struct __vpiScope* vpip_scope(__vpiRealVar*sig);
+extern __vpiScope* vpip_scope(__vpiRealVar*sig);
 extern vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net, bool is_wire);
 
 class __vpiBaseVar : public __vpiHandle {
@@ -533,7 +533,7 @@ class __vpiBaseVar : public __vpiHandle {
       inline vvp_net_t* get_net() const { return net_; }
 
     protected:
-      struct __vpiScope* scope_;
+      __vpiScope* scope_;
       const char*name_;
 
     private:
@@ -560,7 +560,7 @@ struct __vpiArrayBase {
       virtual unsigned get_size(void) const = 0;
       virtual vpiHandle get_left_range() = 0;
       virtual vpiHandle get_right_range() = 0;
-      virtual struct __vpiScope*get_scope() const = 0;
+      virtual __vpiScope*get_scope() const = 0;
 
       virtual int get_word_size() const = 0;
       virtual char*get_word_str(struct __vpiArrayWord*word, int code) = 0;
@@ -609,7 +609,7 @@ struct __vpiArray : public __vpiArrayBase, public __vpiHandle {
       unsigned get_size() const { return array_count; }
       vpiHandle get_left_range() { assert(nets == 0); return &msb; }
       vpiHandle get_right_range() { assert(nets == 0); return &lsb; }
-      struct __vpiScope*get_scope() const { return scope; }
+      __vpiScope*get_scope() const { return scope; }
 
       int get_word_size() const;
       char*get_word_str(struct __vpiArrayWord*word, int code);
@@ -657,7 +657,7 @@ struct __vpiArray : public __vpiArrayBase, public __vpiHandle {
 
 private:
       unsigned array_count;
-      struct __vpiScope*scope;
+      __vpiScope*scope;
 
 friend vpiHandle vpip_make_array(char*label, const char*name,
                                         int first_addr, int last_addr,
@@ -673,7 +673,7 @@ class __vpiDarrayVar : public __vpiBaseVar, public __vpiArrayBase {
       unsigned get_size() const;
       vpiHandle get_left_range();
       vpiHandle get_right_range();
-      struct __vpiScope*get_scope() const { return scope_; }
+      __vpiScope*get_scope() const { return scope_; }
 
       int get_word_size() const;
       char*get_word_str(struct __vpiArrayWord*word, int code);
@@ -754,7 +754,7 @@ extern struct __vpiUserSystf* vpip_find_systf(const char*name);
 
 struct __vpiSysTaskCall : public __vpiHandle {
 
-      struct __vpiScope* scope;
+      __vpiScope* scope;
       struct __vpiUserSystf*defn;
       unsigned nargs;
       vpiHandle*args;
@@ -893,8 +893,8 @@ extern void vpip_execute_vpi_call(vthread_t thr, vpiHandle obj);
  * and to finish compilation in preparation for execution.
  */
 
-vpiHandle vpip_sim_time(struct __vpiScope*scope, bool is_stime);
-vpiHandle vpip_sim_realtime(struct __vpiScope*scope);
+vpiHandle vpip_sim_time(__vpiScope*scope, bool is_stime);
+vpiHandle vpip_sim_realtime(__vpiScope*scope);
 
 extern int vpip_get_time_precision(void);
 extern void vpip_set_time_precision(int pres);
@@ -905,8 +905,8 @@ extern int vpip_time_precision_from_handle(vpiHandle obj);
 extern void vpip_time_to_timestruct(struct t_vpi_time*ts, vvp_time64_t ti);
 extern vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts);
 
-extern double vpip_time_to_scaled_real(vvp_time64_t ti, struct __vpiScope*sc);
-extern vvp_time64_t vpip_scaled_real_to_time64(double val, struct __vpiScope*sc);
+extern double vpip_time_to_scaled_real(vvp_time64_t ti, __vpiScope*sc);
+extern vvp_time64_t vpip_scaled_real_to_time64(double val, __vpiScope*sc);
 
 /*
  * These functions are used mostly as compile time to strings into
@@ -969,7 +969,7 @@ extern char *simple_set_rbuf_str(const char *s1);
 extern char *generic_get_str(int code, vpiHandle ref, const char *name, const char *index);
 
 /* A routine to find the enclosing module. */
-extern vpiHandle vpip_module(struct __vpiScope*scope);
+extern vpiHandle vpip_module(__vpiScope*scope);
 
 extern int vpip_delay_selection;
 

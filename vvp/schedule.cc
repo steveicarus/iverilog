@@ -125,7 +125,7 @@ void vthread_event_s::run_run(void)
 
 void vthread_event_s::single_step_display(void)
 {
-      struct __vpiScope*scope = vthread_scope(thr);
+      __vpiScope*scope = vthread_scope(thr);
       cerr << "vthread_event: Resume thread"
 	   << " scope=" << scope->vpi_get_str(vpiFullName)
 	   << endl;
@@ -158,7 +158,7 @@ void del_thr_event_s::run_run(void)
 
 void del_thr_event_s::single_step_display(void)
 {
-      struct __vpiScope*scope = vthread_scope(thr);
+      __vpiScope*scope = vthread_scope(thr);
       cerr << "del_thr_event: Reap completed thread"
 	   << " scope=" << scope->vpi_get_str(vpiFullName) << endl;
 }

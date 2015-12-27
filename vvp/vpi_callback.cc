@@ -625,8 +625,7 @@ void callback_execute(struct __vpiCallback*cur)
 	  case vpiScaledRealTime: {
 	    cur->cb_data.time->real =
 	         vpip_time_to_scaled_real(schedule_simtime(),
-	             (struct __vpiScope *) vpi_handle(vpiScope,
-	                                              cur->cb_data.obj));
+	             (__vpiScope *) vpi_handle(vpiScope, cur->cb_data.obj));
 	    break;
 	  }
 	  case vpiSuppressTime:

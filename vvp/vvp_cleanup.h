@@ -48,7 +48,7 @@ extern void PV_delete(class __vpiHandle *item);
 extern void class_delete(class __vpiHandle *item);
 extern void class_def_delete(class_type *item);
 extern void constant_delete(class __vpiHandle *item);
-extern void contexts_delete(struct __vpiScope *scope);
+extern void contexts_delete(__vpiScope *scope);
 extern void darray_delete(class __vpiHandle *item);
 extern void queue_delete(class __vpiHandle *item);
 extern void enum_delete(class __vpiHandle *item);
@@ -63,7 +63,7 @@ extern void thread_vthr_delete(class __vpiHandle *item);
 extern void thread_word_delete(class __vpiHandle *item);
 extern void vpi_call_delete(class __vpiHandle *item);
 extern void exec_ufunc_delete(vvp_code_t euf_code);
-extern void vthreads_delete(struct __vpiScope*scope);
+extern void vthreads_delete(__vpiScope*scope);
 extern void vvp_net_delete(vvp_net_t *item);
 
 

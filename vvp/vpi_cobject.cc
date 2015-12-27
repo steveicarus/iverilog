@@ -45,7 +45,7 @@ void __vpiCobjectVar::vpi_get_value(p_vpi_value val)
 
 vpiHandle vpip_make_cobject_var(const char*name, vvp_net_t*net)
 {
-      struct __vpiScope*scope = vpip_peek_current_scope();
+      __vpiScope*scope = vpip_peek_current_scope();
       const char*use_name = name ? vpip_name_string(name) : 0;
 
       class __vpiCobjectVar*obj = new __vpiCobjectVar(scope, use_name, net);

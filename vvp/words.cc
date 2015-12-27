@@ -262,7 +262,7 @@ vvp_net_t* create_constant_node(const char*val_str)
 class base_net_resolv : public resolv_list_s {
     public:
       explicit base_net_resolv(char*ref_label, vvp_array_t array,
-			       struct __vpiScope*scope,
+			       __vpiScope*scope,
 			       char*my_label, char*name,
 			       unsigned array_addr, bool local_flag)
       : resolv_list_s(ref_label)
@@ -278,7 +278,7 @@ class base_net_resolv : public resolv_list_s {
       char*my_label_;
       vvp_array_t array_;
       char*name_;
-      struct __vpiScope*scope_;
+      __vpiScope*scope_;
       unsigned array_addr_;
       bool local_flag_;
 };
@@ -287,7 +287,7 @@ class __compile_net_resolv : public base_net_resolv {
 
     public:
       explicit __compile_net_resolv(char*ref_label, vvp_array_t array,
-				    struct __vpiScope*scope,
+				    __vpiScope*scope,
 				    char*my_label, char*name,
 				    int msb, int lsb, unsigned array_addr,
 				    int vpi_type_code, bool signed_flag, bool local_flag)
@@ -321,7 +321,7 @@ class __compile_net_resolv : public base_net_resolv {
  */
 
 static void do_compile_net(vvp_net_t*node, vvp_array_t array,
-			   struct __vpiScope*scope,
+			   __vpiScope*scope,
 			   char*my_label, char*name,
 			   int msb, int lsb, unsigned array_addr,
 			   int vpi_type_code, bool signed_flag, bool local_flag)
@@ -398,7 +398,7 @@ static void __compile_net(char*label,
       }
 #endif
       if (node == 0) {
-	    struct __vpiScope*scope = vpip_peek_current_scope();
+	    __vpiScope*scope = vpip_peek_current_scope();
 	    __compile_net_resolv*res
 		  = new __compile_net_resolv(argv[0].text,
 					     array, scope, label, name,
@@ -410,7 +410,7 @@ static void __compile_net(char*label,
       }
       assert(node);
 
-      struct __vpiScope*scope = vpip_peek_current_scope();
+      __vpiScope*scope = vpip_peek_current_scope();
       do_compile_net(node, array, scope, label, name, msb, lsb, array_addr,
 		     vpi_type_code, signed_flag, local_flag);
 
@@ -453,7 +453,7 @@ class __compile_real_net_resolv : public base_net_resolv {
 
     public:
       explicit __compile_real_net_resolv(char*ref_label, vvp_array_t array,
-					 struct __vpiScope*scope,
+					 __vpiScope*scope,
 					 char*my_label, char*name,
 					 unsigned array_addr, bool local_flag)
       : base_net_resolv(ref_label, array, scope, my_label, name, array_addr, local_flag)
@@ -468,7 +468,7 @@ class __compile_real_net_resolv : public base_net_resolv {
 };
 
 static void __compile_real_net2(vvp_net_t*node, vvp_array_t array,
-				struct __vpiScope*scope,
+				__vpiScope*scope,
 				char*my_label, char*name,
 				unsigned array_addr, bool local_flag)
 {
@@ -522,7 +522,7 @@ static void __compile_real(char*label, char*name,
 		 bufz node that can carry the constant value. */
 	    node = create_constant_node(argv[0].text);
       }
-      struct __vpiScope*scope = vpip_peek_current_scope();
+      __vpiScope*scope = vpip_peek_current_scope();
       if (node == 0) {
 	    __compile_real_net_resolv*res
 		  = new __compile_real_net_resolv(argv[0].text, array,

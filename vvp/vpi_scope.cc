@@ -54,11 +54,11 @@ void port_delete(__vpiHandle*handle);
 static class_type **class_list = 0;
 static unsigned class_list_count = 0;
 
-static void delete_sub_scopes(struct __vpiScope *scope)
+static void delete_sub_scopes(__vpiScope *scope)
 {
       for (unsigned idx = 0; idx < scope->nintern; idx += 1) {
 	    vpiHandle item = (scope->intern)[idx];
-	    struct __vpiScope*lscope = static_cast<__vpiScope*>(item);
+	    __vpiScope*lscope = static_cast<__vpiScope*>(item);
 	    switch(item->get_type_code()) {
 		case vpiFunction:
 		case vpiTask:
@@ -148,7 +148,7 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 void root_table_delete(void)
 {
       for (unsigned idx = 0; idx < vpip_root_table.size(); idx += 1) {
-	    struct __vpiScope *scope = static_cast<__vpiScope *>
+	    __vpiScope *scope = static_cast<__vpiScope *>
 	          (vpip_root_table[idx]);
 	    vthreads_delete(scope);
 	    delete_sub_scopes(scope);
@@ -166,7 +166,7 @@ void root_table_delete(void)
 }
 #endif
 
-static void construct_scope_fullname(struct __vpiScope*ref, char*buf)
+static void construct_scope_fullname(__vpiScope*ref, char*buf)
 {
       if (ref->scope) {
 	    construct_scope_fullname(ref->scope, buf);
@@ -199,7 +199,7 @@ static const char* scope_get_type(int code)
 
 static char* scope_get_str(int code, vpiHandle obj)
 {
-      struct __vpiScope*ref = dynamic_cast<__vpiScope*>(obj);
+      __vpiScope*ref = dynamic_cast<__vpiScope*>(obj);
       assert(ref);
 
       char buf[4096];  // XXX is a fixed buffer size really reliable?
@@ -240,7 +240,7 @@ static char* scope_get_str(int code, vpiHandle obj)
 
 static vpiHandle scope_get_handle(int code, vpiHandle obj)
 {
-      struct __vpiScope*rfp = dynamic_cast<__vpiScope*>(obj);
+      __vpiScope*rfp = dynamic_cast<__vpiScope*>(obj);
       assert(rfp);
 
       switch (code) {
@@ -290,7 +290,7 @@ static int compare_types(int code, int type)
       return 0;
 }
 
-static vpiHandle module_iter_subset(int code, struct __vpiScope*ref)
+static vpiHandle module_iter_subset(int code, __vpiScope*ref)
 {
       unsigned mcnt = 0, ncnt = 0;
       vpiHandle*args;
@@ -320,7 +320,7 @@ static vpiHandle module_iter_subset(int code, struct __vpiScope*ref)
  */
 static vpiHandle module_iter(int code, vpiHandle obj)
 {
-      struct __vpiScope*ref = dynamic_cast<__vpiScope*>(obj);
+      __vpiScope*ref = dynamic_cast<__vpiScope*>(obj);
       assert(ref);
 
       return module_iter_subset(code, ref);
@@ -455,9 +455,9 @@ struct vpiScopeClass  : public __vpiScope {
  * compiled, items that have scope are placed in the current
  * scope. The ".scope" directives select the scope that is current.
  */
-static struct __vpiScope*current_scope = 0;
+static __vpiScope*current_scope = 0;
 
-void vpip_attach_to_scope(struct __vpiScope*scope, vpiHandle obj)
+void vpip_attach_to_scope(__vpiScope*scope, vpiHandle obj)
 {
       assert(scope);
       scope->intern.push_back(obj);
@@ -476,7 +476,7 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
 {
       count_vpi_scopes += 1;
 
-      struct __vpiScope*scope;
+      __vpiScope*scope;
       if (strcmp(type,"module") == 0) {
 	    scope = new vpiScopeModule(name, tname);
       } else if (strcmp(type,"function") == 0) {
@@ -531,7 +531,7 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
 	    static vpiHandle obj;
 	    compile_vpi_lookup(&obj, parent);
 	    assert(obj);
-	    struct __vpiScope*sp = dynamic_cast<__vpiScope*>(obj);
+	    __vpiScope*sp = dynamic_cast<__vpiScope*>(obj);
 	    vpip_attach_to_scope(sp, scope);
 	    scope->scope = dynamic_cast<__vpiScope*>(obj);
 
@@ -571,7 +571,7 @@ void compile_timescale(long units, long precision)
       current_scope->time_precision = precision;
 }
 
-struct __vpiScope* vpip_peek_current_scope(void)
+__vpiScope* vpip_peek_current_scope(void)
 {
       return current_scope;
 }
@@ -581,9 +581,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
       vpip_attach_to_scope(current_scope, obj);
 }
 
-struct __vpiScope* vpip_peek_context_scope(void)
+__vpiScope* vpip_peek_context_scope(void)
 {
-      struct __vpiScope*scope = current_scope;
+      __vpiScope*scope = current_scope;
 
         /* A context is allocated for each automatic task or function.
            Storage for nested scopes (named blocks) is allocated in
@@ -595,7 +595,7 @@ struct __vpiScope* vpip_peek_context_scope(void)
 }
 
 unsigned vpip_add_item_to_context(automatic_hooks_s*item,
-                                  struct __vpiScope*scope)
+                                  __vpiScope*scope)
 {
       assert(scope);
       assert(scope->is_automatic());

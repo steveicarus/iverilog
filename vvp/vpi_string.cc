@@ -91,7 +91,7 @@ vpiHandle __vpiStringVar::vpi_put_value(p_vpi_value val, int)
 
 vpiHandle vpip_make_string_var(const char*name, vvp_net_t*net)
 {
-      struct __vpiScope*scope = vpip_peek_current_scope();
+      __vpiScope*scope = vpip_peek_current_scope();
       const char*use_name = name ? vpip_name_string(name) : 0;
 
       class __vpiStringVar*obj = new __vpiStringVar(scope, use_name, net);

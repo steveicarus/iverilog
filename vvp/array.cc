@@ -1100,7 +1100,7 @@ class vvp_fun_arrayport_aa  : public vvp_fun_arrayport, public automatic_hooks_s
     private:
       void check_word_change_(unsigned long addr, vvp_context_t context);
 
-      struct __vpiScope*context_scope_;
+      __vpiScope*context_scope_;
       unsigned context_idx_;
 };
 

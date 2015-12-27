@@ -53,7 +53,7 @@ vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts)
       return ti;
 }
 
-double vpip_time_to_scaled_real(vvp_time64_t ti, struct __vpiScope*scope)
+double vpip_time_to_scaled_real(vvp_time64_t ti, __vpiScope*scope)
 {
       double val;
       int scale = 0;
@@ -70,7 +70,7 @@ double vpip_time_to_scaled_real(vvp_time64_t ti, struct __vpiScope*scope)
  * does not check for overflow. It is only used for modpath delays and
  * they are required to be non-negative.
  */
-vvp_time64_t vpip_scaled_real_to_time64(double val, struct __vpiScope*scope)
+vvp_time64_t vpip_scaled_real_to_time64(double val, __vpiScope*scope)
 {
       int shift = 0;
       if (scope) shift = scope->time_units - scope->time_precision;
@@ -352,7 +352,7 @@ void __vpiScopedRealtime::vpi_get_value(p_vpi_value val)
  * $time and $stime system functions return a value scaled to a scope,
  * and the $simtime returns the unscaled time.
  */
-vpiHandle vpip_sim_time(struct __vpiScope*scope, bool is_stime)
+vpiHandle vpip_sim_time(__vpiScope*scope, bool is_stime)
 {
       if (scope) {
 	    if (is_stime) {
@@ -367,7 +367,7 @@ vpiHandle vpip_sim_time(struct __vpiScope*scope, bool is_stime)
       }
 }
 
-vpiHandle vpip_sim_realtime(struct __vpiScope*scope)
+vpiHandle vpip_sim_realtime(__vpiScope*scope)
 {
       scope->scoped_realtime.scope = scope;
       return &scope->scoped_realtime;

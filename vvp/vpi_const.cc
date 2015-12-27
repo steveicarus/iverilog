@@ -257,7 +257,7 @@ class __vpiStringParam  : public __vpiStringConst {
       char*vpi_get_str(int code);
       vpiHandle vpi_handle(int code);
 
-      struct __vpiScope* scope;
+      __vpiScope* scope;
       bool     local_flag;
       unsigned file_idx;
       unsigned lineno;
@@ -454,7 +454,7 @@ struct __vpiBinaryParam  : public __vpiBinaryConst {
       char*vpi_get_str(int code);
       vpiHandle vpi_handle(int code);
 
-      struct __vpiScope*scope;
+      __vpiScope*scope;
       unsigned file_idx;
       unsigned lineno;
       bool     local_flag;
@@ -683,7 +683,7 @@ struct __vpiRealParam  : public __vpiRealConst {
       char*vpi_get_str(int code);
       vpiHandle vpi_handle(int code);
 
-      struct __vpiScope* scope;
+      __vpiScope* scope;
       bool local_flag;
       unsigned file_idx;
       unsigned lineno;

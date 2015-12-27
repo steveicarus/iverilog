@@ -108,23 +108,23 @@ unsigned vpip_size(__vpiSignal *sig)
       return abs(sig->msb.get_value() - sig->lsb.get_value()) + 1;
 }
 
-struct __vpiScope* vpip_scope(__vpiSignal*sig)
+__vpiScope* vpip_scope(__vpiSignal*sig)
 {
       if (sig->is_netarray)
-	    return  (struct __vpiScope*) vpi_handle(vpiScope, sig->within.parent);
+	    return  (__vpiScope*) vpi_handle(vpiScope, sig->within.parent);
       else
 	    return sig->within.scope;
 }
 
-struct __vpiScope* vpip_scope(__vpiRealVar*sig)
+__vpiScope* vpip_scope(__vpiRealVar*sig)
 {
       if (sig->is_netarray)
-	    return  (struct __vpiScope*) vpi_handle(vpiScope, sig->within.parent);
+	    return  (__vpiScope*) vpi_handle(vpiScope, sig->within.parent);
       else
 	    return sig->within.scope;
 }
 
-vpiHandle vpip_module(struct __vpiScope*scope)
+vpiHandle vpip_module(__vpiScope*scope)
 {
       while(scope && scope->get_type_code() != vpiModule) {
 	    scope = scope->scope;
@@ -462,7 +462,7 @@ char* vpi_get_str(PLI_INT32 property, vpiHandle ref)
 int vpip_time_units_from_handle(vpiHandle obj)
 {
       struct __vpiSysTaskCall*task;
-      struct __vpiScope*scope;
+      __vpiScope*scope;
       struct __vpiSignal*signal;
 
       if (obj == 0)
@@ -494,7 +494,7 @@ int vpip_time_units_from_handle(vpiHandle obj)
 int vpip_time_precision_from_handle(vpiHandle obj)
 {
       struct __vpiSysTaskCall*task;
-      struct __vpiScope*scope;
+      __vpiScope*scope;
       struct __vpiSignal*signal;
 
       if (obj == 0)
@@ -1253,7 +1253,7 @@ vpiHandle vpi_handle_by_index(vpiHandle ref, PLI_INT32 idx)
 static vpiHandle find_name(const char *name, vpiHandle handle)
 {
       vpiHandle rtn = 0;
-      struct __vpiScope*ref = dynamic_cast<__vpiScope*>(handle);
+      __vpiScope*ref = dynamic_cast<__vpiScope*>(handle);
 
       /* check module names */
       if (!strcmp(name, vpi_get_str(vpiName, handle)))

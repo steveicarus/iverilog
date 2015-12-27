@@ -292,7 +292,7 @@ vvp_darray*__vpiDarrayVar::get_vvp_darray() const
 
 vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net)
 {
-      struct __vpiScope*scope = vpip_peek_current_scope();
+      __vpiScope*scope = vpip_peek_current_scope();
       const char*use_name = name ? vpip_name_string(name) : 0;
 
       __vpiDarrayVar*obj = new __vpiDarrayVar(scope, use_name, net);
@@ -338,7 +338,7 @@ void __vpiQueueVar::vpi_get_value(p_vpi_value val)
 
 vpiHandle vpip_make_queue_var(const char*name, vvp_net_t*net)
 {
-      struct __vpiScope*scope = vpip_peek_current_scope();
+      __vpiScope*scope = vpip_peek_current_scope();
       const char*use_name = name ? vpip_name_string(name) : 0;
 
       class __vpiQueueVar*obj = new __vpiQueueVar(scope, use_name, net);
