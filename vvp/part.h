@@ -88,7 +88,7 @@ class vvp_fun_part_aa  : public vvp_fun_part, public automatic_hooks_s {
                         vvp_context_t context);
 
     private:
-      struct __vpiScope*context_scope_;
+      __vpiScope*context_scope_;
       unsigned context_idx_;
 };
 
@@ -185,7 +185,7 @@ class vvp_fun_part_var_aa  : public vvp_fun_part_var, public automatic_hooks_s {
                         vvp_context_t context);
 
     private:
-      struct __vpiScope*context_scope_;
+      __vpiScope*context_scope_;
       unsigned context_idx_;
 };
 

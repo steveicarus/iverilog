@@ -40,7 +40,7 @@
 
 ufunc_core::ufunc_core(unsigned owid, vvp_net_t*ptr,
 		       unsigned nports, vvp_net_t**ports,
-		       vvp_code_t sa, struct __vpiScope*call_scope__,
+		       vvp_code_t sa, __vpiScope*call_scope__,
 		       char*result_label, char*scope_label)
 : vvp_wide_fun_core(ptr, nports)
 {
@@ -168,7 +168,7 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 	   to the ports list. */
       assert(argc == portc);
 
-      struct __vpiScope*call_scope = vpip_peek_current_scope();
+      __vpiScope*call_scope = vpip_peek_current_scope();
       assert(call_scope);
 
 	/* Construct some phantom code that is the thread of the
@@ -188,7 +188,7 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 
       vvp_code_t exec_code = codespace_allocate();
       exec_code->opcode = of_EXEC_UFUNC;
-      code_label_lookup(exec_code, code);
+      code_label_lookup(exec_code, code, false);
 
       vvp_code_t reap_code = codespace_allocate();
       reap_code->opcode = of_REAP_UFUNC;

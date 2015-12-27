@@ -234,8 +234,6 @@ static char* strdupnew(char const *str)
 "%vpi_call/i" { return K_vpi_call_i; }
 "%vpi_func"   { return K_vpi_func; }
 "%vpi_func/r" { return K_vpi_func_r; }
-"%disable"    { return K_disable; }
-"%fork"       { return K_fork; }
 "%file_line"  { return K_file_line; }
 
   /* Handle the specialized variable access functions. */

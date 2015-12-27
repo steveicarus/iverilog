@@ -65,6 +65,7 @@ enum operand_e {
       OA_BIT2,
 	/* The operand is a pointer to code space */
       OA_CODE_PTR,
+      OA_CODE_PTR2,
 	/* The operand is a variable or net pointer */
       OA_FUNC_PTR,
 	/* The operand is a second functor pointer */
@@ -141,6 +142,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%delay",  of_DELAY,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%delayx", of_DELAYX, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%delete/obj",of_DELETE_OBJ,1,{OA_FUNC_PTR,OA_NONE,  OA_NONE} },
+      { "%disable",  of_DISABLE, 1, {OA_VPI_PTR,OA_NONE,     OA_NONE} },
       { "%disable/fork",of_DISABLE_FORK,0,{OA_NONE,OA_NONE,  OA_NONE} },
       { "%div",      of_DIV,     0, {OA_NONE,   OA_NONE,     OA_NONE} },
       { "%div/s",    of_DIV_S,   0, {OA_NONE,   OA_NONE,     OA_NONE} },
@@ -163,6 +165,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%force/vec4",    of_FORCE_VEC4,    1,{OA_FUNC_PTR, OA_NONE,      OA_NONE} },
       { "%force/vec4/off",of_FORCE_VEC4_OFF,2,{OA_FUNC_PTR, OA_BIT1,      OA_NONE} },
       { "%force/wr",      of_FORCE_WR,      1,{OA_FUNC_PTR, OA_NONE,      OA_NONE} },
+      { "%fork",   of_FORK,   2,  {OA_CODE_PTR2,OA_VPI_PTR,  OA_NONE} },
       { "%free",   of_FREE,   1,  {OA_VPI_PTR,  OA_NONE,     OA_NONE} },
       { "%inv",    of_INV,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%ix/add", of_IX_ADD, 3,  {OA_NUMBER,   OA_BIT1,     OA_BIT2} },
@@ -627,10 +630,12 @@ void compile_vpi_lookup(vpiHandle *handle, char*label)
  */
 
 struct code_label_resolv_list_s: public resolv_list_s {
-      explicit code_label_resolv_list_s(char*lab) : resolv_list_s(lab) {
+      explicit code_label_resolv_list_s(char*lab, bool cptr2) : resolv_list_s(lab) {
 	    code = NULL;
+	    cptr2_flag = cptr2;
       }
       struct vvp_code_s *code;
+      bool cptr2_flag;
       virtual bool resolve(bool mes);
 };
 
@@ -638,7 +643,7 @@ bool code_label_resolv_list_s::resolve(bool mes)
 {
       symbol_value_t val = sym_get_value(sym_codespace, label());
       if (val.num) {
-	    if (code->opcode == of_FORK)
+	    if (cptr2_flag)
 		  code->cptr2 = reinterpret_cast<vvp_code_t>(val.ptr);
 	    else
 		  code->cptr = reinterpret_cast<vvp_code_t>(val.ptr);
@@ -651,10 +656,10 @@ bool code_label_resolv_list_s::resolve(bool mes)
       return false;
 }
 
-void code_label_lookup(struct vvp_code_s *code, char *label)
+void code_label_lookup(struct vvp_code_s *code, char *label, bool cptr2)
 {
       struct code_label_resolv_list_s *res
-	    = new struct code_label_resolv_list_s(label);
+	    = new struct code_label_resolv_list_s(label, cptr2);
 
       res->code  = code;
 
@@ -1724,13 +1729,15 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  break;
 
 		case OA_CODE_PTR:
+		case OA_CODE_PTR2:
 		  if (opa->argv[idx].ltype != L_SYMB) {
 			yyerror("operand format");
 			break;
 		  }
 
 		  assert(opa->argv[idx].symb.idx == 0);
-		  code_label_lookup(code, opa->argv[idx].symb.text);
+		  code_label_lookup(code, opa->argv[idx].symb.text,
+				    op->argt[idx]==OA_CODE_PTR2);
 		  break;
 
 		case OA_FUNC_PTR:
@@ -1803,42 +1810,6 @@ void compile_codelabel(char*label)
       sym_set_value(sym_codespace, label, val);
 
       free(label);
-}
-
-
-void compile_disable(char*label, struct symb_s symb)
-{
-      if (label)
-	    compile_codelabel(label);
-
-	/* Fill in the basics of the %disable in the instruction. */
-      vvp_code_t code = codespace_allocate();
-      code->opcode = of_DISABLE;
-
-      compile_vpi_lookup(&code->handle, symb.text);
-}
-
-/*
- * The %fork instruction is a little different from other instructions
- * in that it has an extended field that holds the information needed
- * to create the new thread. This includes the target PC and scope.
- * I get these from the parser in the form of symbols.
- */
-void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
-{
-      if (label)
-	    compile_codelabel(label);
-
-
-	/* Fill in the basics of the %fork in the instruction. */
-      vvp_code_t code = codespace_allocate();
-      code->opcode = of_FORK;
-
-	/* Figure out the target PC. */
-      code_label_lookup(code, dest.text);
-
-	/* Figure out the target SCOPE. */
-      compile_vpi_lookup(&code->handle, scope.text);
 }
 
 void compile_file_line(char*label, long file_idx, long lineno,

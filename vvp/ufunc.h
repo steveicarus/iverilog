@@ -21,6 +21,8 @@
 
 # include  "config.h"
 
+class __vpiScope;
+
 /*
  * The .ufunc statement creates functors to represent user defined
  * functions within the netlist (as opposed to within behavioral
@@ -53,13 +55,13 @@ class ufunc_core : public vvp_wide_fun_core {
       ufunc_core(unsigned ow, vvp_net_t*ptr,
 		 unsigned nports, vvp_net_t**ports,
 		 vvp_code_t start_address,
-		 struct __vpiScope*call_scope,
+		 __vpiScope*call_scope,
 		 char*result_label,
 		 char*scope_label);
       ~ufunc_core();
 
-      struct __vpiScope*call_scope() { return call_scope_; }
-      struct __vpiScope*func_scope() { return func_scope_; }
+      __vpiScope*call_scope() { return call_scope_; }
+      __vpiScope*func_scope() { return func_scope_; }
 
       void assign_bits_to_ports(vvp_context_t context);
       void finish_thread();
@@ -85,8 +87,8 @@ class ufunc_core : public vvp_wide_fun_core {
 	// This is a thread to execute the behavioral portion of the
 	// function.
       vthread_t thread_;
-      struct __vpiScope*call_scope_;
-      struct __vpiScope*func_scope_;
+      __vpiScope*call_scope_;
+      __vpiScope*func_scope_;
       vvp_code_t code_;
 
 	// Where the result will be.

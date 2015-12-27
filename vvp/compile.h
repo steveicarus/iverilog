@@ -339,8 +339,11 @@ extern void functor_ref_lookup(vvp_net_t**ref, char*lab);
  * code points to a code structure that points to the instruction
  * field that receives the result, and the label is the name to
  * lookup. The lookup will free the label text when it is done.
+ *
+ * The cptr2 flag tells the lookup to write the code pointer into the
+ * cptr2 member of the code, instead of the cptr member.
  */
-extern void code_label_lookup(struct vvp_code_s *code, char *label);
+extern void code_label_lookup(struct vvp_code_s *code, char *label, bool cptr2);
 
 /*
  * The `compile_udp_def' function creates a UDP.  The `table' is a
@@ -434,7 +437,6 @@ struct comp_operands_s {
 typedef struct comp_operands_s*comp_operands_t;
 
 extern void compile_code(char*label, char*mnem, comp_operands_t opa);
-extern void compile_disable(char*label, struct symb_s symb);
 
 extern void compile_file_line(char*label, long file_idx, long lineno,
                               char*description);
@@ -460,8 +462,6 @@ extern void compile_vpi_func_call(char*label, char*name,
 				  unsigned string_stack);
 extern void print_vpi_call_errors();
 
-extern void compile_fork(char*label, struct symb_s targ_s,
-			 struct symb_s scope_s);
 extern void compile_codelabel(char*label);
 
 /*

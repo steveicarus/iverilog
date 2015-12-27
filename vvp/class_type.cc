@@ -595,7 +595,7 @@ void compile_class_property(unsigned idx, char*nam, char*typ, uint64_t array_siz
 
 void compile_class_done(void)
 {
-      struct __vpiScope*scope = vpip_peek_current_scope();
+      __vpiScope*scope = vpip_peek_current_scope();
       assert(scope);
       assert(compile_class);
       compile_class->finish_setup();
