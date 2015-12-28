@@ -56,6 +56,11 @@ extern bool of_ASSIGN_WRE(vthread_t thr, vvp_code_t code);
 extern bool of_BLEND(vthread_t thr, vvp_code_t code);
 extern bool of_BLEND_WR(vthread_t thr, vvp_code_t code);
 extern bool of_BREAKPOINT(vthread_t thr, vvp_code_t code);
+extern bool of_CALLF_OBJ(vthread_t thr, vvp_code_t code);
+extern bool of_CALLF_REAL(vthread_t thr, vvp_code_t code);
+extern bool of_CALLF_STR(vthread_t thr, vvp_code_t code);
+extern bool of_CALLF_VEC4(vthread_t thr, vvp_code_t code);
+extern bool of_CALLF_VOID(vthread_t thr, vvp_code_t code);
 extern bool of_CASSIGN_LINK(vthread_t thr, vvp_code_t code);
 extern bool of_CASSIGN_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_CASSIGN_VEC4_OFF(vthread_t thr, vvp_code_t code);
@@ -259,7 +264,7 @@ struct vvp_code_s {
 	    vvp_code_t   cptr;
 	    vvp_array_t array;
 	    class __vpiHandle*handle;
-	    struct __vpiScope*scope;
+	    __vpiScope*scope;
 	    const char*text;
       };
 

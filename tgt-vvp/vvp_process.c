@@ -1621,10 +1621,18 @@ static int show_stmt_utask(ivl_statement_t net)
 
       show_stmt_file_line(net, "User task call.");
 
-      fprintf(vvp_out, "    %%fork TD_%s",
-	      vvp_mangle_id(ivl_scope_name(task)));
-      fprintf(vvp_out, ", S_%p;\n", task);
-      fprintf(vvp_out, "    %%join;\n");
+      if (ivl_scope_type(task) == IVL_SCT_FUNCTION) {
+	      // A function called as a task is (presumably) a void function.
+	      // Use the %callf/void instruction to call it.
+	    fprintf(vvp_out, "    %%callf/void TD_%s",
+		    vvp_mangle_id(ivl_scope_name(task)));
+	    fprintf(vvp_out, ", S_%p;\n", task);
+      } else {
+	    fprintf(vvp_out, "    %%fork TD_%s",
+		    vvp_mangle_id(ivl_scope_name(task)));
+	    fprintf(vvp_out, ", S_%p;\n", task);
+	    fprintf(vvp_out, "    %%join;\n");
+      }
 
       return 0;
 }

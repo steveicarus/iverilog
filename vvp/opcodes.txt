@@ -218,6 +218,22 @@ debugger commands.
 This may not work on all platforms. If run-time debugging is compiled
 out, then this function is a no-op.
 
+* %callf/obj <code-label>, <scope-label>
+* %callf/real <code-label>, <scope-label>
+* %callf/str <code-label>, <scope-label>
+* %callf/vec4 <code-label>, <scope-label>
+* %callf/void <code-label>, <scope-label>
+
+More directly implement function calling. This subsumes the %fork and
+%join of the mroe general task and block calling, but is optimized for
+functions, which are threads of a special, constrained sort.
+
+The different variants reflect the different return types for the
+called function. For example, if the function returns a string, the
+%callf/str opcode is used, and will push the string return value into
+the caller's string stack. The %callf/void function is special in that
+is pushes no value onto any stack.
+
 * %cassign/vec4 <var-label>
 * %cassign/vec4/off <var-label>, <off-index>
 

@@ -248,6 +248,7 @@ struct vthread_s {
       unsigned i_am_joining      :1;
       unsigned i_am_detached     :1;
       unsigned i_am_waiting      :1;
+      unsigned i_am_in_function  :1; // True if running function code
       unsigned i_have_ended      :1;
       unsigned i_was_disabled    :1;
       unsigned waiting_for_event :1;
@@ -262,7 +263,7 @@ struct vthread_s {
 	/* This points to my parent, if I have one. */
       struct vthread_s*parent;
 	/* This points to the containing scope. */
-      struct __vpiScope*parent_scope;
+      __vpiScope*parent_scope;
 	/* This is used for keeping wait queues. */
       struct vthread_s*wait_next;
 	/* These are used to access automatically allocated items. */
@@ -309,7 +310,7 @@ void vthread_s::debug_dump(ostream&fd, const char*label)
 static bool test_joinable(vthread_t thr, vthread_t child);
 static void do_join(vthread_t thr, vthread_t child);
 
-struct __vpiScope* vthread_scope(struct vthread_s*thr)
+__vpiScope* vthread_scope(struct vthread_s*thr)
 {
       return thr->parent_scope;
 }
@@ -357,6 +358,9 @@ const vvp_vector4_t& vthread_get_vec4_stack(struct vthread_s*thr, unsigned depth
       return thr->peek_vec4(depth);
 }
 
+/*
+ * Some thread management functions
+ */
 /*
  * This is a function to get a vvp_queue handle from the variable
  * referenced by "net". If the queue is nil, then allocated it and
@@ -423,7 +427,7 @@ static void multiply_array_imm(unsigned long*res, unsigned long*val,
  * the last freed context. If none available, create a new one. Add
  * it to the list of live contexts in that scope.
  */
-static vvp_context_t vthread_alloc_context(struct __vpiScope*scope)
+static vvp_context_t vthread_alloc_context(__vpiScope*scope)
 {
       assert(scope->is_automatic());
 
@@ -451,7 +455,7 @@ static vvp_context_t vthread_alloc_context(struct __vpiScope*scope)
  * onto the freed context stack. Remove it from the list of live contexts
  * in that scope.
  */
-static void vthread_free_context(vvp_context_t context, struct __vpiScope*scope)
+static void vthread_free_context(vvp_context_t context, __vpiScope*scope)
 {
       assert(scope->is_automatic());
       assert(context);
@@ -491,7 +495,7 @@ void contexts_delete(struct __vpiScope*scope)
 /*
  * Create a new thread with the given start address.
  */
-vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
+vthread_t vthread_new(vvp_code_t pc, __vpiScope*scope)
 {
       vthread_t thr = new struct vthread_s;
       thr->pc     = pc;
@@ -505,6 +509,7 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       thr->i_am_joining  = 0;
       thr->i_am_detached = 0;
       thr->i_am_waiting  = 0;
+      thr->i_am_in_function = 0;
       thr->is_scheduled  = 0;
       thr->i_have_ended  = 0;
       thr->i_was_disabled = 0;
@@ -1259,6 +1264,81 @@ bool of_BLEND_WR(vthread_t thr, vvp_code_t)
 bool of_BREAKPOINT(vthread_t, vvp_code_t)
 {
       return true;
+}
+
+/*
+ * %callf/void <code-label>, <scope-label>
+ * Combine the %fork and %join steps for invoking a function.
+ */
+static bool do_callf_void(vthread_t thr, vvp_code_t cp)
+{
+      vthread_t child = vthread_new(cp->cptr2, cp->scope);
+
+      if (cp->scope->is_automatic()) {
+	      /* The context allocated for this child is the top entry
+		 on the write context stack */
+	    child->wt_context = thr->wt_context;
+	    child->rd_context = thr->wt_context;
+      }
+
+        // Mark the function thread as a direct child of the current thread.
+      child->parent = thr;
+      thr->children.insert(child);
+        // This should be the only child
+      assert(thr->children.size()==1);
+
+        // Execute the function. This SHOULD run the function to completion,
+        // but there are some exceptional situations where it won't.
+      assert(cp->scope->get_type_code() == vpiFunction);
+      thr->task_func_children.insert(child);
+      child->is_scheduled = 1;
+      child->i_am_in_function = 1;
+      vthread_run(child);
+      running_thread = thr;
+
+      assert(test_joinable(thr, child));
+
+      if (child->i_have_ended) {
+	    do_join(thr, child);
+	    return true;
+      } else {
+	    thr->i_am_joining = 1;
+	    return false;
+      }
+}
+
+bool of_CALLF_OBJ(vthread_t thr, vvp_code_t cp)
+{
+      return do_callf_void(thr, cp);
+
+      // XXXX NOT IMPLEMENTED
+}
+
+bool of_CALLF_REAL(vthread_t thr, vvp_code_t cp)
+{
+      // XXXX Here, I should arrange for a reference to the destination variable
+      // XXXX as a place in my stack. The function will write to that place in
+      // XXXX my stack for me.
+      return do_callf_void(thr, cp);
+}
+
+bool of_CALLF_STR(vthread_t thr, vvp_code_t cp)
+{
+      return do_callf_void(thr, cp);
+
+      // XXXX NOT IMPLEMENTED
+}
+
+bool of_CALLF_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      return do_callf_void(thr, cp);
+
+      // XXXX NOT IMPLEMENTED
+}
+
+bool of_CALLF_VOID(vthread_t thr, vvp_code_t cp)
+{
+      return do_callf_void(thr, cp);
 }
 
 /*
@@ -2227,7 +2307,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
  */
 bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 {
-      struct __vpiScope*scope = (struct __vpiScope*)cp->handle;
+      __vpiScope*scope = (__vpiScope*)cp->handle;
 
       bool disabled_myself_flag = false;
 
@@ -2897,24 +2977,26 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
       child->parent = thr;
       thr->children.insert(child);
 
-	/* If the child scope is not the same as the current scope,
-	   infer that this is a task or function call. */
       switch (cp->scope->get_type_code()) {
-	  case vpiFunction:
+          case vpiFunction:
+	      // Functions should be started by the %callf opcodes, and
+	      // NOT by the %fork instruction
+	    assert(0);
+          case vpiTask:
 	    thr->task_func_children.insert(child);
-	    child->is_scheduled = 1;
-	    vthread_run(child);
-	    running_thread = thr;
 	    break;
-	  case vpiTask:
-	    thr->task_func_children.insert(child);
-	    schedule_vthread(child, 0, true);
-	    break;
-	  default:
-	    schedule_vthread(child, 0, true);
+          default:
 	    break;
       }
 
+      if (thr->i_am_in_function) {
+	    child->is_scheduled = 1;
+	    child->i_am_in_function = 1;
+	    vthread_run(child);
+	    running_thread = thr;
+      } else {
+	    schedule_vthread(child, 0, true);
+      }
       return true;
 }
 
@@ -3260,7 +3342,7 @@ static void do_join(vthread_t thr, vthread_t child)
       vthread_reap(child);
 }
 
-bool of_JOIN(vthread_t thr, vvp_code_t)
+static bool do_join_opcode(vthread_t thr)
 {
       assert( !thr->i_am_joining );
       assert( !thr->children.empty());
@@ -3285,6 +3367,11 @@ bool of_JOIN(vthread_t thr, vvp_code_t)
 	// then pause.
       thr->i_am_joining = 1;
       return false;
+}
+
+bool of_JOIN(vthread_t thr, vvp_code_t)
+{
+      return do_join_opcode(thr);
 }
 
 /*
@@ -5692,6 +5779,7 @@ bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
  */
 bool of_WAIT(vthread_t thr, vvp_code_t cp)
 {
+      assert(! thr->i_am_in_function);
       assert(! thr->waiting_for_event);
       thr->waiting_for_event = 1;
 
@@ -5712,6 +5800,7 @@ bool of_WAIT_FORK(vthread_t thr, vvp_code_t)
 {
 	/* If a %wait/fork is being executed then the parent thread
 	 * cannot be waiting in a join or already waiting. */
+      assert(! thr->i_am_in_function);
       assert(! thr->i_am_joining);
       assert(! thr->i_am_waiting);
 
@@ -5790,7 +5879,7 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
  */
 bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
 {
-      struct __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
+      __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
       assert(child_scope);
 
       assert(thr->children.empty());
@@ -5837,7 +5926,7 @@ bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
  */
 bool of_REAP_UFUNC(vthread_t thr, vvp_code_t cp)
 {
-      struct __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
+      __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
       assert(child_scope);
 
 	/* Copy the output from the result variable to the output

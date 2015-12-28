@@ -130,10 +130,36 @@ static void draw_ufunc_preamble(ivl_expr_t expr)
       }
 
 	/* Call the function */
-      fprintf(vvp_out, "    %%fork TD_%s", vvp_mangle_id(ivl_scope_name(def)));
-      fprintf(vvp_out, ", S_%p;\n", def);
-      fprintf(vvp_out, "    %%join;\n");
-
+      switch (ivl_expr_value(expr)) {
+	  case IVL_VT_VOID:
+	    fprintf(vvp_out, "    %%callf/void TD_%s", vvp_mangle_id(ivl_scope_name(def)));
+	    fprintf(vvp_out, ", S_%p;\n", def);
+	    break;
+	  case IVL_VT_REAL:
+	    fprintf(vvp_out, "    %%callf/real TD_%s", vvp_mangle_id(ivl_scope_name(def)));
+	    fprintf(vvp_out, ", S_%p;\n", def);
+	    break;
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    fprintf(vvp_out, "    %%callf/vec4 TD_%s", vvp_mangle_id(ivl_scope_name(def)));
+	    fprintf(vvp_out, ", S_%p;\n", def);
+	    break;
+	  case IVL_VT_STRING:
+	    fprintf(vvp_out, "    %%callf/str TD_%s", vvp_mangle_id(ivl_scope_name(def)));
+	    fprintf(vvp_out, ", S_%p;\n", def);
+	    break;
+	  case IVL_VT_CLASS:
+	  case IVL_VT_DARRAY:
+	  case IVL_VT_QUEUE:
+	    fprintf(vvp_out, "    %%callf/obj TD_%s", vvp_mangle_id(ivl_scope_name(def)));
+	    fprintf(vvp_out, ", S_%p;\n", def);
+	    break;
+	  default:
+	    fprintf(vvp_out, "    %%fork TD_%s", vvp_mangle_id(ivl_scope_name(def)));
+	    fprintf(vvp_out, ", S_%p;\n", def);
+	    fprintf(vvp_out, "    %%join;\n");
+	    break;
+      }
 }
 
 static void draw_ufunc_epilogue(ivl_expr_t expr)
