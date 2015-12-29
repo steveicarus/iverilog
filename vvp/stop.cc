@@ -40,7 +40,7 @@
 # include  <cstdlib>
 # include  "ivl_alloc.h"
 
-class __vpiScope*stop_current_scope = 0;
+__vpiScope*stop_current_scope = 0;
 bool stop_is_finish;  /* When set, $stop acts like $finish (set in main.cc). */
 int  stop_is_finish_exit_code = 0;
 
@@ -127,7 +127,7 @@ static void cmd_call(unsigned argc, char*argv[])
 		 the name in argv[idx+2]. Look in the current scope. */
 
 	    for (unsigned tmp = 0 ;  (tmp < ntable)&& !handle ;  tmp += 1) {
-		  class __vpiScope*scope;
+		  __vpiScope*scope;
 		  const char*name;
 
 		  switch (table[tmp]->get_type_code()) {
@@ -228,7 +228,7 @@ static void cmd_list(unsigned, char*[])
       printf("%u items in this scope:\n", ntable);
       for (unsigned idx = 0 ;  idx < ntable ;  idx += 1) {
 
-	    class __vpiScope*scope;
+	    __vpiScope*scope;
 	    struct __vpiSignal*sig;
 
 	    switch (table[idx]->get_type_code()) {
@@ -324,7 +324,7 @@ static void cmd_push(unsigned argc, char* argv[])
 	    __vpiHandle**table;
 	    unsigned ntable;
 
-	    class __vpiScope*child = 0;
+	    __vpiScope*child = 0;
 
 	    if (stop_current_scope) {
 		  table = &stop_current_scope->intern[0];
@@ -339,7 +339,7 @@ static void cmd_push(unsigned argc, char* argv[])
 		  if (table[tmp]->get_type_code() != vpiModule)
 			continue;
 
-		  class __vpiScope*cp = dynamic_cast<__vpiScope*>(table[tmp]);
+		  __vpiScope*cp = dynamic_cast<__vpiScope*>(table[tmp]);
 
 		    /* This is a scope, and the name matches, then
 		       report that I found the child. */
@@ -396,7 +396,7 @@ static void cmd_trace(unsigned argc, char*argv[])
 
 static void cmd_where(unsigned, char*[])
 {
-      class __vpiScope*cur = stop_current_scope;
+      __vpiScope*cur = stop_current_scope;
 
       while (cur) {
 	    switch (cur->get_type_code()) {

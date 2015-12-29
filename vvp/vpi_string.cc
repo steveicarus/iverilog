@@ -94,7 +94,7 @@ vpiHandle vpip_make_string_var(const char*name, vvp_net_t*net)
       __vpiScope*scope = vpip_peek_current_scope();
       const char*use_name = name ? vpip_name_string(name) : 0;
 
-      class __vpiStringVar*obj = new __vpiStringVar(scope, use_name, net);
+      __vpiStringVar*obj = new __vpiStringVar(scope, use_name, net);
 
       return obj;
 }
@@ -102,7 +102,7 @@ vpiHandle vpip_make_string_var(const char*name, vvp_net_t*net)
 #ifdef CHECK_WITH_VALGRIND
 void string_delete(vpiHandle item)
 {
-      class __vpiStringVar*obj = dynamic_cast<__vpiStringVar*>(item);
+      __vpiStringVar*obj = dynamic_cast<__vpiStringVar*>(item);
       delete obj;
 }
 #endif

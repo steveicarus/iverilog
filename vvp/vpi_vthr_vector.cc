@@ -576,7 +576,7 @@ void thread_vthr_delete(vpiHandle item)
 
 static void thread_vthr_delete_real(vpiHandle item)
 {
-      class __vpiVThrVec4Stack*obj = dynamic_cast<__vpiVThrVec4Stack*>(item);
+      __vpiVThrVec4Stack*obj = dynamic_cast<__vpiVThrVec4Stack*>(item);
       delete obj;
 }
 
@@ -593,13 +593,13 @@ void vpi_handle_delete()
 
 vpiHandle vpip_make_vthr_str_stack(unsigned depth)
 {
-      class __vpiVThrStrStack*obj = new __vpiVThrStrStack(depth);
+      __vpiVThrStrStack*obj = new __vpiVThrStrStack(depth);
       return obj;
 }
 
 vpiHandle vpip_make_vthr_vec4_stack(unsigned depth, bool signed_flag, unsigned wid)
 {
-      class __vpiVThrVec4Stack*obj = new __vpiVThrVec4Stack(depth, signed_flag, wid);
+      __vpiVThrVec4Stack*obj = new __vpiVThrVec4Stack(depth, signed_flag, wid);
       return obj;
 }
 
@@ -613,7 +613,7 @@ void thread_string_delete(vpiHandle item)
 
 static void thread_string_delete_real(vpiHandle item)
 {
-      class __vpiVThrStrStack*obj = dynamic_cast<__vpiVThrStrStack*>(item);
+      __vpiVThrStrStack*obj = dynamic_cast<__vpiVThrStrStack*>(item);
       delete obj;
 }
 

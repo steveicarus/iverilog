@@ -341,7 +341,7 @@ vpiHandle vpip_make_queue_var(const char*name, vvp_net_t*net)
       __vpiScope*scope = vpip_peek_current_scope();
       const char*use_name = name ? vpip_name_string(name) : 0;
 
-      class __vpiQueueVar*obj = new __vpiQueueVar(scope, use_name, net);
+      __vpiQueueVar*obj = new __vpiQueueVar(scope, use_name, net);
 
       return obj;
 }
@@ -349,14 +349,14 @@ vpiHandle vpip_make_queue_var(const char*name, vvp_net_t*net)
 #ifdef CHECK_WITH_VALGRIND
 void darray_delete(vpiHandle item)
 {
-      class __vpiDarrayVar*obj = dynamic_cast<__vpiDarrayVar*>(item);
+      __vpiDarrayVar*obj = dynamic_cast<__vpiDarrayVar*>(item);
       if (obj->vals_words) delete [] (obj->vals_words-1);
       delete obj;
 }
 
 void queue_delete(vpiHandle item)
 {
-      class __vpiQueueVar*obj = dynamic_cast<__vpiQueueVar*>(item);
+      __vpiQueueVar*obj = dynamic_cast<__vpiQueueVar*>(item);
       delete obj;
 }
 #endif
