@@ -56,7 +56,7 @@ static unsigned class_list_count = 0;
 
 static void delete_sub_scopes(__vpiScope *scope)
 {
-      for (unsigned idx = 0; idx < scope->nintern; idx += 1) {
+      for (unsigned idx = 0; idx < scope->intern.size(); idx += 1) {
 	    vpiHandle item = (scope->intern)[idx];
 	    __vpiScope*lscope = static_cast<__vpiScope*>(item);
 	    switch(item->get_type_code()) {
@@ -132,7 +132,7 @@ static void delete_sub_scopes(__vpiScope *scope)
 		  break;
 	    }
       }
-      free(scope->intern);
+      scope->intern.clear();
 
 	/* Save any class definitions to clean up later. */
       map<std::string, class_type*>::iterator citer;
