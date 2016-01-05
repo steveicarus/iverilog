@@ -327,7 +327,8 @@ int ExpName::elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*lva
 
 int Expression::elaborate_expr(Entity*, ScopeBase*, const VType*)
 {
-      cerr << get_fileline() << ": internal error: I don't know how to elaborate expression type=" << typeid(*this).name() << endl;
+      cerr << get_fileline() << ": internal error: I don't know how to "
+           << "elaborate expression type=" << typeid(*this).name() << endl;
       return 1;
 }
 
@@ -582,23 +583,29 @@ const VType* ExpArithmetic::resolve_operand_types_(const VType*t1, const VType*t
       return 0;
 }
 
-const VType* ExpAttribute::probe_type(Entity*ent, ScopeBase*scope) const
+int ExpObjAttribute::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
 {
-      base_->probe_type(ent, scope);
+      const VType*sub_type = base_->probe_type(ent, scope);
+      return base_->elaborate_expr(ent, scope, sub_type);
+}
 
-      if (name_ == "length" || name_ == "left" || name_ == "right") {
+const VType* ExpObjAttribute::probe_type(Entity*, ScopeBase*) const
+{
+      if (name_ == "length" || name_ == "left" || name_ == "right")
 	    return &primitive_NATURAL;
-      }
 
+      return NULL;
+}
+
+int ExpTypeAttribute::elaborate_expr(Entity*, ScopeBase*, const VType*)
+{
+      // This is just to mute warnings, there is nothing to elaborate here
       return 0;
 }
 
-int ExpAttribute::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
+const VType* ExpTypeAttribute::probe_type(Entity*, ScopeBase*) const
 {
-      int errors = 0;
-      const VType*sub_type = base_->probe_type(ent, scope);
-      errors += base_->elaborate_expr(ent, scope, sub_type);
-      return errors;
+      return NULL;
 }
 
 const VType*ExpBitstring::fit_type(Entity*, ScopeBase*, const VTypeArray*atype) const

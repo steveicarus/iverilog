@@ -107,7 +107,13 @@ void ExpArithmetic::write_to_stream(ostream&out) const
       out << ")";
 }
 
-void ExpAttribute::write_to_stream(ostream&fd) const
+void ExpObjAttribute::write_to_stream(ostream&fd) const
+{
+      base_->write_to_stream(fd);
+      fd << "'" << name_;
+}
+
+void ExpTypeAttribute::write_to_stream(ostream&fd) const
 {
       base_->write_to_stream(fd);
       fd << "'" << name_;

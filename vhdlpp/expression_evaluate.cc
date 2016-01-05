@@ -73,54 +73,67 @@ bool ExpArithmetic::evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const
       return true;
 }
 
-bool ExpAttribute::evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const
+bool ExpAttribute::test_array_type(const VType*type) const
+{
+      const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
+
+      if (arr == 0) {
+          cerr << endl << get_fileline() << ": error: "
+              << "Cannot apply the '" << name_ << " attribute to non-array objects"
+              << endl;
+          ivl_assert(*this, false);
+          return false;
+      }
+
+      if (arr->dimensions() > 1) {
+          cerr << endl << get_fileline() << ": error: "
+              << "Cannot apply the '" << name_
+              << " attribute to multidimensional arrays" << endl;
+          return false;
+      }
+
+      if (arr->dimension(0).is_box())
+          return false;
+
+      return true;
+}
+
+bool ExpAttribute::evaluate_type_attr(const VType*type, Entity*ent, ScopeBase*scope, int64_t&val) const
+{
+      if (name_ == "length" && test_array_type(type)) {
+          int64_t size = type->get_width(scope);
+
+          if(size > 0) {
+              val = size;
+              return true;
+          }
+      } else if (name_ == "left" && test_array_type(type)) {
+          const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
+          return arr->dimension(0).msb()->evaluate(ent, scope, val);
+      } else if (name_ == "right" && test_array_type(type)) {
+          const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
+          return arr->dimension(0).lsb()->evaluate(ent, scope, val);
+      }
+
+      return false;
+}
+
+bool ExpObjAttribute::evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const
 {
       const VType*base_type = base_->peek_type();
 
       if (base_type == NULL)
-	    base_type = base_->probe_type(ent, scope);
+          base_type = base_->probe_type(ent, scope);
 
-      if (base_type == NULL)
-	    return false;
-
-      if (name_ == "left" || name_ == "right") {
-	    const VTypeArray*arr = dynamic_cast<const VTypeArray*>(base_type);
-	    if (arr == NULL) {
-		  cerr << endl << get_fileline() << ": error: "
-		       << "Cannot apply the '" << name_
-		       << " attribute to non-array objects" << endl;
-		  return false;
-	    }
-
-	    if (arr->dimensions() != 1) {
-		  cerr << endl << get_fileline() << ": error: "
-		       << "Cannot apply the '" << name_
-		       << " attribute to multidimensional arrays" << endl;
-		  return false;
-            }
-
-	    if (arr->dimension(0).is_box())
-		  return false;
-
-	    if (name_ == "left") {
-		  return arr->dimension(0).msb()->evaluate(ent, scope, val);
-	    } else if (name_ == "right") {
-		  return arr->dimension(0).lsb()->evaluate(ent, scope, val);
-	    } else {
-		  ivl_assert(*this, false);
-	    }
-      }
-
-      else if (name_ == "length") {
-	    int64_t size = base_type->get_width(scope);
-
-	    if (size > 0) {
-		val = size;
-		return true;
-            }
-      }
+      if (base_type)
+          return evaluate_type_attr(base_type, ent, scope, val);
 
       return false;
+}
+
+bool ExpTypeAttribute::evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const
+{
+      return evaluate_type_attr(base_, ent, scope, val);
 }
 
 bool ExpName::evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const

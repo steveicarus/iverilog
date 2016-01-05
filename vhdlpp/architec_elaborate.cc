@@ -228,7 +228,7 @@ int ProcessStatement::rewrite_as_always_edge_(Entity*, Architecture*)
       }
 
 	// If operand1 is not an 'event attribute, I give up.
-      const ExpAttribute*op1 = dynamic_cast<const ExpAttribute*>(op1_raw);
+      const ExpObjAttribute*op1 = dynamic_cast<const ExpObjAttribute*>(op1_raw);
       if (op1 == 0)
 	    return -1;
       if (op1->peek_attribute() != "event")

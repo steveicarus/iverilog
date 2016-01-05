@@ -251,9 +251,16 @@ void ExpAggregate::choice_t::dump(ostream&out, int indent) const
       out << setw(indent) << "" << "?choice_t?" << endl;
 }
 
-void ExpAttribute::dump(ostream&out, int indent) const
+void ExpTypeAttribute::dump(ostream&out, int indent) const
 {
-      out << setw(indent) << "" << "Attribute " << name_
+      out << setw(indent) << "" << "Attribute (type-related) " << name_
+	  << " at " << get_fileline() << endl;
+      base_->show(out);
+}
+
+void ExpObjAttribute::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "Attribute (object-related) " << name_
 	  << " at " << get_fileline() << endl;
       base_->dump(out, indent+4);
 }

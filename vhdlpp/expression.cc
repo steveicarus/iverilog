@@ -54,26 +54,85 @@ bool Expression::symbolic_compare(const Expression*) const
       return false;
 }
 
-ExpAttribute::ExpAttribute(ExpName*bas, perm_string nam)
-: base_(bas), name_(nam)
+ExpAttribute::ExpAttribute(perm_string nam, list<Expression*>*args)
+: name_(nam), args_(args)
 {
 }
 
 ExpAttribute::~ExpAttribute()
 {
-	/* Different attributes can point to the same base so we cannot delete this here.
-	 * Look at the vhdl_range test with valgrind to see this issue. */
-//      delete base_;
+      if(args_) {
+	    for(list<Expression*>::iterator it = args_->begin();
+                    it != args_->end(); ++it) {
+		delete *it;
+            }
+      }
+
+      delete args_;
 }
 
-Expression*ExpAttribute::clone() const
-{
-      return new ExpAttribute(static_cast<ExpName*>(base_->clone()), name_);
+list<Expression*>*ExpAttribute::clone_args() const {
+      list<Expression*>*new_args = NULL;
+
+      if(args_) {
+	    for(list<Expression*>::iterator it = args_->begin();
+                    it != args_->end(); ++it) {
+		new_args->push_back((*it)->clone());
+            }
+      }
+
+      return new_args;
 }
 
-void ExpAttribute::visit(ExprVisitor& func)
+void ExpAttribute::visit_args(ExprVisitor& func)
 {
+      if(args_) {
+	    for(list<Expression*>::iterator it = args_->begin();
+                    it != args_->end(); ++it) {
+		func(*it);
+            }
+      }
+}
+
+ExpObjAttribute::ExpObjAttribute(ExpName*base, perm_string name, list<Expression*>*args)
+: ExpAttribute(name, args), base_(base)
+{
+}
+
+ExpObjAttribute::~ExpObjAttribute()
+{
+}
+
+Expression*ExpObjAttribute::clone() const
+{
+      return new ExpObjAttribute(static_cast<ExpName*>(base_->clone()),
+                                 name_, clone_args());
+}
+
+void ExpObjAttribute::visit(ExprVisitor& func)
+{
+      visit_args(func);
       base_->visit(func);
+      func(this);
+}
+
+ExpTypeAttribute::ExpTypeAttribute(const VType*base, perm_string name, list<Expression*>*args)
+: ExpAttribute(name, args), base_(base)
+{
+}
+
+ExpTypeAttribute::~ExpTypeAttribute()
+{
+}
+
+Expression*ExpTypeAttribute::clone() const
+{
+      return new ExpTypeAttribute(base_, name_, clone_args());
+}
+
+void ExpTypeAttribute::visit(ExprVisitor& func)
+{
+      visit_args(func);
       func(this);
 }
 
@@ -772,7 +831,8 @@ Expression* ExpRange::lsb()
 Expression*ExpRange::left()
 {
     if(range_expr_ && !left_)
-        left_ = new ExpAttribute(range_base_, ExpAttribute::LEFT);
+        // TODO check if it is an object or type
+        left_ = new ExpObjAttribute(range_base_, ExpAttribute::LEFT, NULL);
 
     return left_;
 }
@@ -780,7 +840,8 @@ Expression*ExpRange::left()
 Expression*ExpRange::right()
 {
     if(range_expr_ && !right_)
-        right_ = new ExpAttribute(range_base_, ExpAttribute::RIGHT);
+        // TODO check if it is an object or type
+        right_ = new ExpObjAttribute(range_base_, ExpAttribute::RIGHT, NULL);
 
     return right_;
 }

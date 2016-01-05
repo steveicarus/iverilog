@@ -124,7 +124,7 @@ class Expression : public LineInfo {
       virtual void dump(ostream&out, int indent = 0) const =0;
       virtual ostream& dump_inline(ostream&out) const;
 
-	// Recursively visits a tree of expressions (useful of complex expressions).
+	// Recursively visits a tree of expressions (useful for complex expressions).
       virtual void visit(ExprVisitor& func) { func(this); }
 
     protected:
@@ -355,30 +355,68 @@ class ExpArithmetic : public ExpBinary {
 class ExpAttribute : public Expression {
 
     public:
-      ExpAttribute(ExpName*base, perm_string name);
-      ~ExpAttribute();
-
-      Expression*clone() const;
+      ExpAttribute(perm_string name,std::list<Expression*>*args);
+      virtual ~ExpAttribute();
 
       inline perm_string peek_attribute() const { return name_; }
-      inline const ExpName* peek_base() const { return base_; }
-
-      const VType*probe_type(Entity*ent, ScopeBase*scope) const;
-      int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
-      void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
-	// Some attributes can be evaluated at compile time
-      bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
-      void dump(ostream&out, int indent = 0) const;
-      void visit(ExprVisitor& func);
 
       // Constants for the standard attributes
       static const perm_string LEFT;
       static const perm_string RIGHT;
 
+    protected:
+      std::list<Expression*>*clone_args() const;
+      void visit_args(ExprVisitor& func);
+      bool evaluate_type_attr(const VType*type, Entity*ent, ScopeBase*scope, int64_t&val) const;
+      bool test_array_type(const VType*type) const;
+
+      perm_string name_;
+      std::list<Expression*>*args_;
+};
+
+class ExpObjAttribute : public ExpAttribute {
+    public:
+      ExpObjAttribute(ExpName*base, perm_string name, std::list<Expression*>*args);
+      ~ExpObjAttribute();
+
+      Expression*clone() const;
+
+      inline const ExpName* peek_base() const { return base_; }
+
+      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      const VType*probe_type(Entity*ent, ScopeBase*scope) const;
+      int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
+      void write_to_stream(std::ostream&fd) const;
+	// Some attributes can be evaluated at compile time
+      bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
+      void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
+
     private:
       ExpName*base_;
-      perm_string name_;
+};
+
+class ExpTypeAttribute : public ExpAttribute {
+    public:
+      ExpTypeAttribute(const VType*base, perm_string name, std::list<Expression*>*args);
+      ~ExpTypeAttribute();
+
+      Expression*clone() const;
+
+      inline const VType* peek_base() const { return base_; }
+
+      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      const VType*probe_type(Entity*ent, ScopeBase*scope) const;
+      int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
+      void write_to_stream(std::ostream&fd) const;
+	// Some attributes can be evaluated at compile time
+      bool evaluate(ScopeBase*scope, int64_t&val) const;
+      bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
+      void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
+
+    private:
+      const VType*base_;
 };
 
 class ExpBitstring : public Expression {

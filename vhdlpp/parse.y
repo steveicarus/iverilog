@@ -1882,10 +1882,18 @@ prefix /* IEEE 1076-2008 P8.1 */
 primary
   : name
       { $$ = $1; }
-  | name '\'' IDENTIFIER
-      { perm_string name = lex_strings.make($3);
-	ExpName*base = dynamic_cast<ExpName*> ($1);
-	ExpAttribute*tmp = new ExpAttribute(base, name);
+  | name '\'' IDENTIFIER argument_list_opt
+      { ExpAttribute*tmp = NULL;
+	perm_string attr = lex_strings.make($3);
+        ExpName*base = dynamic_cast<ExpName*>($1);
+	const VType*type = parse_type_by_name(base->peek_name());
+
+	if(type) {
+	    tmp = new ExpTypeAttribute(type, attr, $4);
+	} else {
+	    tmp = new ExpObjAttribute(base, attr, $4);
+	}
+
 	FILE_NAME(tmp, @3);
 	delete[]$3;
 	$$ = tmp;

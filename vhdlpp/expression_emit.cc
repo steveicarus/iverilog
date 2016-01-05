@@ -331,7 +331,7 @@ int ExpAggregate::emit_record_(ostream&out, Entity*ent, ScopeBase*scope, const V
       return errors;
 }
 
-int ExpAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpObjAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
@@ -365,8 +365,20 @@ int ExpAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
 	    return errors;
       }
 
+      // Fallback
       out << "$ivl_attribute(";
       errors += base_->emit(out, ent, scope);
+      out << ", \"" << name_ << "\")";
+      return errors;
+}
+
+int ExpTypeAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+      int errors = 0;
+
+      // Fallback
+      out << "$ivl_attribute(";
+      errors += base_->emit_def(out, empty_perm_string);
       out << ", \"" << name_ << "\")";
       return errors;
 }
