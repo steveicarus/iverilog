@@ -336,7 +336,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <expr> variable_declaration_assign_opt waveform_element interface_element_expression
 
 %type <expr_list> waveform waveform_elements
-%type <expr_list> name_list expression_list
+%type <expr_list> name_list expression_list argument_list argument_list_opt
 %type <expr_list> process_sensitivity_list process_sensitivity_list_opt
 %type <expr_list> selected_names use_clause
 
@@ -442,6 +442,13 @@ architecture_statement_part
 	errormsg(@1, "Syntax error in architecture statement.\n");
 	yyerrok;
       }
+  ;
+
+argument_list : '(' expression_list ')' { $$ = $2; };
+
+argument_list_opt
+  : argument_list { $$ = $1; }
+  | { $$ = 0; }
   ;
 
 assertion_statement
@@ -1678,14 +1685,14 @@ name /* IEEE 1076-2008 P8.1 */
      function calls. The only way we can tell the difference is from
      left context, namely whether the name is a type name or function
      name. If none of the above, treat it as a array element select. */
-  | IDENTIFIER '(' expression_list ')'
+  | IDENTIFIER argument_list
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
 	if (active_scope->is_vector_name(name) || is_subprogram_param(name)) {
-	      ExpName*tmp = new ExpName(name, $3);
+	      ExpName*tmp = new ExpName(name, $2);
 	      $$ = tmp;
 	} else {
-	      ExpFunc*tmp = new ExpFunc(name, $3);
+	      ExpFunc*tmp = new ExpFunc(name, $2);
 	      $$ = tmp;
 	}
 	FILE_NAME($$, @1);
@@ -1979,11 +1986,11 @@ procedure_call
     delete[] $1;
     $$ = tmp;
       }
-  | IDENTIFIER '(' expression_list ')' ';'
+  | IDENTIFIER argument_list ';'
       {
-    ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1), $3);
+    ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1), $2);
     delete[] $1;
-    delete $3; // parameters are copied in this variant
+    delete $2; // parameters are copied in this variant
     $$ = tmp;
       }
   | IDENTIFIER '(' error ')' ';'
