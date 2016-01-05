@@ -605,6 +605,9 @@ int ExpTypeAttribute::elaborate_expr(Entity*, ScopeBase*, const VType*)
 
 const VType* ExpTypeAttribute::probe_type(Entity*, ScopeBase*) const
 {
+      if(name_ == "image")
+	    return &primitive_STRING;
+
       return NULL;
 }
 

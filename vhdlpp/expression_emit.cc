@@ -376,6 +376,30 @@ int ExpTypeAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
+      // Special case: The image attribute
+      if (name_=="image") {
+            if(!args_ || args_->size() != 1) {
+                out << "/* Invalid 'image attribute */" << endl;
+                cerr << get_fileline() << ": error: 'image attribute takes "
+                        << "exactly one argument." << endl;
+                ++errors;
+            } else {
+                out << "$sformatf(\"";
+
+                if(base_->type_match(&primitive_INTEGER))
+                    out << "%0d";
+                else if(base_->type_match(&primitive_REAL))
+                    out << "%f";
+                else if(base_->type_match(&primitive_CHARACTER))
+                    out << "'%c'";
+
+                out << "\",";
+                args_->front()->emit(out, ent, scope);
+                out << ")";
+            }
+            return errors;
+      }
+
       // Fallback
       out << "$ivl_attribute(";
       errors += base_->emit_def(out, empty_perm_string);
