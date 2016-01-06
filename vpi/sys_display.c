@@ -621,10 +621,6 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
     case 't':
     case 'T':
       *idx += 1;
-      if (plus != 0) {
-        vpi_printf("WARNING: %s:%d: invalid format %s%s.\n",
-                   info->filename, info->lineno, info->name, fmtb);
-      }
       if (*idx >= info->nitems) {
         vpi_printf("WARNING: %s:%d: missing argument for %s%s.\n",
                    info->filename, info->lineno, info->name, fmtb);
@@ -648,6 +644,29 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
         } else {
           char *tbuf;
           PLI_INT32 time_units = vpi_get(vpiTimeUnit, info->scope);
+
+          if (plus != 0) {
+              /* Icarus-specific extension to print out time units.
+               * It is needed by vhdlpp to correctly implement time'image(). */
+              PLI_INT32 time_prec = vpi_get(vpiTimePrecision, info->scope);
+
+              if(time_units < -12)
+                  timeformat_info.suff = strdup(" fs");
+              else if(time_units < -9)
+                  timeformat_info.suff = strdup(" ps");
+              else if(time_units < -6)
+                  timeformat_info.suff = strdup(" ns");
+              else if(time_units < -3)
+                  timeformat_info.suff = strdup(" us");
+              else if(time_units < 0)
+                  timeformat_info.suff = strdup(" ms");
+              else
+                  timeformat_info.suff = strdup(" s");
+
+              /* Adjust shift for get_time(), so the number indeed matches the unit */
+              time_units += (3 + (time_units % 3)) % 3 + (time_prec - time_units);
+          }
+
           unsigned swidth, free_flag = 0;
           unsigned suff_len = strlen(timeformat_info.suff);
           char *cp;

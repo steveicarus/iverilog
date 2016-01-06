@@ -392,6 +392,8 @@ int ExpTypeAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
                     out << "%f";
                 else if(base_->type_match(&primitive_CHARACTER))
                     out << "'%c'";
+                else if(base_->type_match(&primitive_TIME))
+                    out << "%+0t";
 
                 out << "\",";
                 args_->front()->emit(out, ent, scope);
