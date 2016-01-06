@@ -185,7 +185,7 @@ ProcedureCall::ProcedureCall(perm_string name, std::list<Expression*>* param_lis
     for(std::list<Expression*>::const_iterator it = param_list->begin();
             it != param_list->end(); ++it)
     {
-        param_list_->push_back(new named_expr_t(empty_perm_string, (*it)->clone()));
+        param_list_->push_back(new named_expr_t(empty_perm_string, *it));
     }
 }
 
@@ -199,6 +199,8 @@ ProcedureCall::~ProcedureCall()
         param_list_->pop_front();
         delete cur;
     }
+
+    delete param_list_;
 }
 
 ReturnStmt::ReturnStmt(Expression*val)

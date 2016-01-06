@@ -1264,8 +1264,8 @@ file_declaration
 
 		// add file_open() call in 'initial' block
 		params.push_back(new ExpName(*cur));
-		params.push_back($5->filename());
-		params.push_back($5->kind());
+		params.push_back($5->filename()->clone());
+		params.push_back($5->kind()->clone());
 		ProcedureCall*fopen_call = new ProcedureCall(perm_string::literal("file_open"), &params);
 		active_scope->add_initializer(fopen_call);
 
@@ -1274,6 +1274,8 @@ file_declaration
 		params.push_back(new ExpName(*cur));
 		ProcedureCall*fclose_call = new ProcedureCall(perm_string::literal("file_close"), &params);
 		active_scope->add_finalizer(fclose_call);
+
+		delete $5;
 	      }
 	}
 

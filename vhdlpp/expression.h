@@ -399,7 +399,7 @@ class ExpObjAttribute : public ExpAttribute {
 class ExpTypeAttribute : public ExpAttribute {
     public:
       ExpTypeAttribute(const VType*base, perm_string name, std::list<Expression*>*args);
-      ~ExpTypeAttribute();
+      // no destructor - VType objects (base_) are shared between many expressions
 
       Expression*clone() const;
 

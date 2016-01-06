@@ -90,6 +90,7 @@ void ScopeBase::cleanup()
      * objects from the other scopes untouched.
      */
     delete_all(new_signals_);
+    delete_all(new_variables_);
     delete_all(new_components_);
     delete_all(cur_types_);
     delete_all(cur_constants_);

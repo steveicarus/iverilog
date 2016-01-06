@@ -26,7 +26,8 @@
 class named_expr_t {
 
     public:
-      named_expr_t (perm_string n, Expression*e) : name_(n), expr_(e) { }
+      named_expr_t(perm_string n, Expression*e) : name_(n), expr_(e) { }
+      ~named_expr_t() { delete expr_; }
 
       perm_string name() const { return name_; }
       Expression* expr() const { return expr_; }

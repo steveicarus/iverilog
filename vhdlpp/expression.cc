@@ -101,6 +101,7 @@ ExpObjAttribute::ExpObjAttribute(ExpName*base, perm_string name, list<Expression
 
 ExpObjAttribute::~ExpObjAttribute()
 {
+    delete base_;
 }
 
 Expression*ExpObjAttribute::clone() const
@@ -118,10 +119,6 @@ void ExpObjAttribute::visit(ExprVisitor& func)
 
 ExpTypeAttribute::ExpTypeAttribute(const VType*base, perm_string name, list<Expression*>*args)
 : ExpAttribute(name, args), base_(base)
-{
-}
-
-ExpTypeAttribute::~ExpTypeAttribute()
 {
 }
 
@@ -778,12 +775,14 @@ double ExpTime::to_fs() const
 }
 
 ExpRange::ExpRange(Expression*left, Expression*right, range_dir_t direction)
-: left_(left), right_(right), direction_(direction), range_expr_(false)
+: left_(left), right_(right), direction_(direction), range_expr_(false),
+    range_base_(NULL)
 {
 }
 
 ExpRange::ExpRange(ExpName*base, bool reverse_range)
-: direction_(AUTO), range_expr_(true), range_base_(base), range_reverse_(reverse_range)
+: left_(NULL), right_(NULL), direction_(AUTO), range_expr_(true),
+    range_base_(base), range_reverse_(reverse_range)
 {
 }
 
@@ -832,7 +831,8 @@ Expression*ExpRange::left()
 {
     if(range_expr_ && !left_)
         // TODO check if it is an object or type
-        left_ = new ExpObjAttribute(range_base_, ExpAttribute::LEFT, NULL);
+        left_ = new ExpObjAttribute(static_cast<ExpName*>(range_base_->clone()),
+                                    ExpAttribute::LEFT, NULL);
 
     return left_;
 }
@@ -841,7 +841,7 @@ Expression*ExpRange::right()
 {
     if(range_expr_ && !right_)
         // TODO check if it is an object or type
-        right_ = new ExpObjAttribute(range_base_, ExpAttribute::RIGHT, NULL);
-
+        right_ = new ExpObjAttribute(static_cast<ExpName*>(range_base_->clone()),
+                                    ExpAttribute::RIGHT, NULL);
     return right_;
 }

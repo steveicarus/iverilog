@@ -46,20 +46,20 @@ const VTypeArray primitive_UNSIGNED(&primitive_STDLOGIC,        vector<VTypeArra
 void generate_global_types(ActiveScope*res)
 {
     // boolean
-      list<perm_string>*enum_BOOLEAN_vals = new list<perm_string>;
-      enum_BOOLEAN_vals->push_back(perm_string::literal("false"));
-      enum_BOOLEAN_vals->push_back(perm_string::literal("true"));
-      VTypeEnum*enum_BOOLEAN = new VTypeEnum(enum_BOOLEAN_vals);
+      list<perm_string> enum_BOOLEAN_vals;
+      enum_BOOLEAN_vals.push_back(perm_string::literal("false"));
+      enum_BOOLEAN_vals.push_back(perm_string::literal("true"));
+      VTypeEnum*enum_BOOLEAN = new VTypeEnum(&enum_BOOLEAN_vals);
       type_BOOLEAN.set_definition(enum_BOOLEAN);
       std_types[type_BOOLEAN.peek_name()] = &type_BOOLEAN;
       std_enums.push_back(enum_BOOLEAN);
 
     // file_open_kind
-      list<perm_string>*enum_FILE_OPEN_KIND_vals = new list<perm_string>;
-      enum_FILE_OPEN_KIND_vals->push_back(perm_string::literal("read_mode"));
-      enum_FILE_OPEN_KIND_vals->push_back(perm_string::literal("write_mode"));
-      enum_FILE_OPEN_KIND_vals->push_back(perm_string::literal("append_mode"));
-      VTypeEnum*enum_FILE_OPEN_KIND = new VTypeEnum(enum_FILE_OPEN_KIND_vals);
+      list<perm_string> enum_FILE_OPEN_KIND_vals;
+      enum_FILE_OPEN_KIND_vals.push_back(perm_string::literal("read_mode"));
+      enum_FILE_OPEN_KIND_vals.push_back(perm_string::literal("write_mode"));
+      enum_FILE_OPEN_KIND_vals.push_back(perm_string::literal("append_mode"));
+      VTypeEnum*enum_FILE_OPEN_KIND = new VTypeEnum(&enum_FILE_OPEN_KIND_vals);
       type_FILE_OPEN_KIND.set_definition(enum_FILE_OPEN_KIND);
       std_types[type_FILE_OPEN_KIND.peek_name()] = &type_FILE_OPEN_KIND;
       std_enums.push_back(enum_FILE_OPEN_KIND);
@@ -80,10 +80,12 @@ void delete_global_types()
 {
     typedef_context_t typedef_ctx;
     for(map<perm_string, VTypeDef*>::iterator cur = std_types.begin();
-            cur != std_types.end() ; ++ cur) {
+            cur != std_types.end(); ++cur) {
         delete cur->second->peek_definition();
         delete cur->second;
     }
+
+    // std_enums are destroyed above
 }
 
 const VTypeEnum*find_std_enum_name(perm_string name)
