@@ -273,6 +273,8 @@ class BasicLoopStatement : public LoopStatement {
       ~BasicLoopStatement();
 
       int elaborate(Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      void write_to_stream(std::ostream&fd);
       void dump(ostream&out, int indent) const;
 };
 

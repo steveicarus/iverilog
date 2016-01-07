@@ -477,6 +477,24 @@ int ForLoopStatement::emit_runtime_(ostream&out, Entity*ent, ScopeBase*scope)
     return errors;
 }
 
+int BasicLoopStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+    int errors = 0;
+
+    out << "forever begin" << endl;
+    errors += emit_substatements(out, ent, scope);
+    out << "end" << endl;
+
+    return errors;
+}
+
+void BasicLoopStatement::write_to_stream(std::ostream&fd)
+{
+    fd << "loop" << endl;
+    write_to_stream_substatements(fd);
+    fd << "end loop;" << endl;
+}
+
 int ReportStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
     out << "$display(\"** ";

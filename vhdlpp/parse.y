@@ -1660,7 +1660,6 @@ loop_statement
 	BasicLoopStatement* tmp = new BasicLoopStatement(loop_name, $3);
 	FILE_NAME(tmp, @2);
 
-	sorrymsg(@1, "Loop statements are not supported.\n");
 	$$ = tmp;
       };
 
