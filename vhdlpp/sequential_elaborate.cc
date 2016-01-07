@@ -212,9 +212,9 @@ int WhileLoopStatement::elaborate(Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int BasicLoopStatement::elaborate(Entity*, ScopeBase*)
+int BasicLoopStatement::elaborate(Entity*ent, ScopeBase*scope)
 {
-    return 0;
+    return elaborate_substatements(ent, scope);
 }
 
 int ReportStmt::elaborate(Entity*ent, ScopeBase*scope)
