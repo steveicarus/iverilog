@@ -67,9 +67,6 @@ void Package::write_to_stream(ostream&fd) const
 	// and identifiers.
       for (map<perm_string,const VType*>::const_iterator cur = use_types_.begin()
 		 ; cur != use_types_.end() ; ++cur) {
-	    const VTypeDef*def = dynamic_cast<const VTypeDef*> (cur->second);
-	    if (def == 0)
-		  continue;
 
 	      // Do not include global types in types dump
 	    if (is_global_type(cur->first))
@@ -79,9 +76,6 @@ void Package::write_to_stream(ostream&fd) const
       }
       for (map<perm_string,const VType*>::const_iterator cur = cur_types_.begin()
 		 ; cur != cur_types_.end() ; ++cur) {
-	    const VTypeDef*def = dynamic_cast<const VTypeDef*> (cur->second);
-	    if (def == 0)
-		  continue;
 
 	      // Do not include global types in types dump
 	    if (is_global_type(cur->first))
@@ -92,31 +86,11 @@ void Package::write_to_stream(ostream&fd) const
 
       for (map<perm_string,const VType*>::const_iterator cur = use_types_.begin()
 		 ; cur != use_types_.end() ; ++cur) {
-
-	      // Do not include global types in types dump
-	    if (is_global_type(cur->first))
-		  continue;
-
-	    if(!dynamic_cast<const VTypeDef*>(cur->second))
-		  fd << "sub";
-
-	    fd << "type " << cur->first << " is ";
-	    cur->second->write_type_to_stream(fd);
-	    fd << "; -- imported" << endl;
+	    cur->second->write_typedef_to_stream(fd, cur->first);
       }
       for (map<perm_string,const VType*>::const_iterator cur = cur_types_.begin()
 		 ; cur != cur_types_.end() ; ++cur) {
-
-	      // Do not include global types in types dump
-	    if (is_global_type(cur->first))
-		  continue;
-
-	    if(!dynamic_cast<const VTypeDef*>(cur->second))
-		  fd << "sub";
-
-	    fd << "type " << cur->first << " is ";
-	    cur->second->write_type_to_stream(fd);
-	    fd << ";" << endl;
+	    cur->second->write_typedef_to_stream(fd, cur->first);
       }
 
       for (map<perm_string,struct const_t*>::const_iterator cur = cur_constants_.begin()

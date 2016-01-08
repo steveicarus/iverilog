@@ -72,6 +72,10 @@ class VType {
 	// definitions. Most types accept the default definition of this.
       virtual void write_type_to_stream(std::ostream&fd) const;
 
+	// Emits a type definition. This is used to distinguish types and
+	// subtypes.
+      virtual void write_typedef_to_stream(std::ostream&fd, perm_string name) const;
+
 	// This virtual method writes a human-readable version of the
 	// type to a given file for debug purposes. (Question: is this
 	// really necessary given the write_to_stream method?)
@@ -383,7 +387,7 @@ class VTypeDef : public VType {
     public:
       explicit VTypeDef(perm_string name);
       explicit VTypeDef(perm_string name, const VType*is);
-      ~VTypeDef();
+      virtual ~VTypeDef();
 
       VType*clone() const { return new VTypeDef(*this); }
 
@@ -399,7 +403,7 @@ class VTypeDef : public VType {
 	// type, and this method gets it for us.
       inline const VType* peek_definition(void) const { return type_; }
 
-      void write_to_stream(std::ostream&fd) const;
+      virtual void write_to_stream(std::ostream&fd) const;
       void write_type_to_stream(std::ostream&fd) const;
       int get_width(ScopeBase*scope) const { return type_->get_width(scope); }
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
@@ -409,12 +413,20 @@ class VTypeDef : public VType {
       bool can_be_packed() const { return type_->can_be_packed(); }
 
       bool is_unbounded() const { return type_->is_unbounded(); }
-    private:
-      int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 
-    private:
+    protected:
       perm_string name_;
       const VType*type_;
+
+    private:
+      int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
+};
+
+class VSubTypeDef : public VTypeDef {
+    public:
+      explicit VSubTypeDef(perm_string name) : VTypeDef(name) {}
+      explicit VSubTypeDef(perm_string name, const VType*is) : VTypeDef(name, is) {}
+      void write_typedef_to_stream(std::ostream&fd, perm_string name) const;
 };
 
 #endif /* IVL_vtype_H */
