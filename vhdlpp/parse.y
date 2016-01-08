@@ -547,6 +547,8 @@ block_declarative_item
 
   | subprogram_body
 
+  | subtype_declaration
+
   | type_declaration
 
   | use_clause_lib
@@ -2606,12 +2608,24 @@ subprogram_statement_part
 subtype_declaration
   : K_subtype IDENTIFIER K_is subtype_indication ';'
       { perm_string name = lex_strings.make($2);
-	delete[] $2;
 	if ($4 == 0) {
 	      errormsg(@1, "Failed to declare type name %s.\n", name.str());
 	} else {
-	      active_scope->bind_name(name, $4);
+	      VTypeDef*tmp;
+	      map<perm_string,VTypeDef*>::iterator cur = active_scope->incomplete_types.find(name);
+	      if (cur == active_scope->incomplete_types.end()) {
+		    tmp = new VSubTypeDef(name, $4);
+		    active_scope->bind_name(name, tmp);
+	      } else {
+		    tmp = cur->second;
+		    tmp->set_definition($4);
+		    active_scope->incomplete_types.erase(cur);
+	      }
+	      if(const VTypeEnum*enum_type = dynamic_cast<const VTypeEnum*>($4)) {
+		    active_scope->use_enum(enum_type);
+	      }
 	}
+	delete[]$2;
       }
   ;
 
