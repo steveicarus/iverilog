@@ -99,7 +99,7 @@ int IfSequential::elaborate(Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      errors += cond_->elaborate_expr(ent, scope, 0);
+      errors += cond_->elaborate_expr(ent, scope, &type_BOOLEAN);
 
       for (list<SequentialStmt*>::iterator cur = if_.begin()
 		 ; cur != if_.end() ; ++cur) {
@@ -123,7 +123,7 @@ int IfSequential::Elsif::elaborate(Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      errors += cond_->elaborate_expr(ent, scope, 0);
+      errors += cond_->elaborate_expr(ent, scope, &type_BOOLEAN);
 
       for (list<SequentialStmt*>::iterator cur = if_.begin()
 		 ; cur != if_.end() ; ++cur) {
