@@ -1675,7 +1675,11 @@ mode_opt : mode {$$ = $1;} | {$$ = PORT_NONE;} ;
 
 name /* IEEE 1076-2008 P8.1 */
   : IDENTIFIER /* simple_name (IEEE 1076-2008 P8.2) */
-      { Expression*tmp = new ExpName(lex_strings.make($1));
+      { Expression*tmp;
+        /* Check if the IDENTIFIER is one of CHARACTER enums (LF, CR, etc.) */
+        tmp = parse_char_enums($1);
+        if(!tmp)
+            tmp = new ExpName(lex_strings.make($1));
         FILE_NAME(tmp, @1);
         delete[]$1;
         $$ = tmp;

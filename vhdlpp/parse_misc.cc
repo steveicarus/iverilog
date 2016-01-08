@@ -29,6 +29,7 @@
 # include  "compiler.h"
 # include  <iostream>
 # include  <cassert>
+# include  <cstring>
 
 using namespace std;
 
@@ -152,4 +153,15 @@ const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_name,
       }
 
       return subtype;
+}
+
+ExpString*parse_char_enums(const char*str)
+{
+      if(!strcasecmp(str, "LF"))
+	    return new ExpString("\\n");
+
+      if(!strcasecmp(str, "CR"))
+	    return new ExpString("\\r");
+
+      return NULL;
 }
