@@ -24,3 +24,5 @@ $table_model   vpiSysFuncReal
 
 $ivl_string_method$len      vpiSysFuncInt
 $ivl_string_method$to_vec   vpiSysFuncVoid
+
+$sformatf           vpiSysFuncString

@@ -87,10 +87,6 @@ static ActiveScope*active_scope = new ActiveScope;
 static stack<ActiveScope*> scope_stack;
 static SubprogramHeader*active_sub = NULL;
 
-// perm_strings for attributes
-const static perm_string left_attr = perm_string::literal("left");
-const static perm_string right_attr = perm_string::literal("right");
-
 /*
  * When a scope boundary starts, call the push_scope function to push
  * a scope context. Preload this scope context with the contents of
@@ -245,8 +241,9 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 
       const VType* vtype;
 
-      prange_t* range;
-      std::list<prange_t*>*range_list;
+      ExpRange*range;
+      std::list<ExpRange*>*range_list;
+      ExpRange::range_dir_t range_dir;
 
       ExpArithmetic::fun_t arithmetic_op;
       std::list<struct adding_term>*adding_terms;
@@ -305,8 +302,6 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 
  /* The rules may have types. */
 
-%type <flag> direction
-
 %type <arithmetic_op> adding_operator
 %type <adding_terms> simple_expression_terms
 
@@ -341,7 +336,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <expr> variable_declaration_assign_opt waveform_element interface_element_expression
 
 %type <expr_list> waveform waveform_elements
-%type <expr_list> name_list expression_list
+%type <expr_list> name_list expression_list argument_list argument_list_opt
 %type <expr_list> process_sensitivity_list process_sensitivity_list_opt
 %type <expr_list> selected_names use_clause
 
@@ -372,6 +367,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 
 %type <range> range
 %type <range_list> range_list index_constraint
+%type <range_dir> direction
 
 %type <case_alt> case_statement_alternative
 %type <case_alt_list> case_statement_alternative_list
@@ -448,11 +444,18 @@ architecture_statement_part
       }
   ;
 
+argument_list : '(' expression_list ')' { $$ = $2; };
+
+argument_list_opt
+  : argument_list { $$ = $1; }
+  | { $$ = 0; }
+  ;
+
 assertion_statement
   : K_assert expression report_statement
       { ReportStmt*report = dynamic_cast<ReportStmt*>($3);
         assert(report);
-	AssertStmt*tmp = new AssertStmt($2, report->message().c_str(), report->severity());
+	AssertStmt*tmp = new AssertStmt($2, report->message(), report->severity());
         delete report;
 	FILE_NAME(tmp,@2);
 	$$ = tmp;
@@ -752,8 +755,9 @@ composite_type_definition
 
   /* unbounded_array_definition IEEE 1076-2008 P5.3.2.1 */
   | K_array '(' index_subtype_definition_list ')' K_of subtype_indication
-      { std::list<prange_t*> r;
-	r.push_back(new prange_t(NULL, NULL, true));   // NULL boundaries indicate unbounded array type
+      { std::list<ExpRange*> r;
+	// NULL boundaries indicate unbounded array type
+	r.push_back(new ExpRange(NULL, NULL, ExpRange::DOWNTO));
 	VTypeArray*tmp = new VTypeArray($6, &r);
 	$$ = tmp;
       }
@@ -983,8 +987,10 @@ design_units
   | design_unit
   ;
 
-  /* Indicate the direction as a flag, with "downto" being TRUE. */
-direction : K_to { $$ = false; } | K_downto { $$ = true; } ;
+direction
+  : K_to { $$ = ExpRange::TO; }
+  | K_downto { $$ = ExpRange::DOWNTO; }
+  ;
 
 element_association
   : choices ARROW expression
@@ -1258,8 +1264,8 @@ file_declaration
 
 		// add file_open() call in 'initial' block
 		params.push_back(new ExpName(*cur));
-		params.push_back($5->filename());
-		params.push_back($5->kind());
+		params.push_back($5->filename()->clone());
+		params.push_back($5->kind()->clone());
 		ProcedureCall*fopen_call = new ProcedureCall(perm_string::literal("file_open"), &params);
 		active_scope->add_initializer(fopen_call);
 
@@ -1268,6 +1274,8 @@ file_declaration
 		params.push_back(new ExpName(*cur));
 		ProcedureCall*fclose_call = new ProcedureCall(perm_string::literal("file_close"), &params);
 		active_scope->add_finalizer(fclose_call);
+
+		delete $5;
 	      }
 	}
 
@@ -1498,7 +1506,7 @@ index_constraint
   | '(' error ')'
       { errormsg(@2, "Errors in the index constraint.\n");
 	yyerrok;
-	$$ = new list<prange_t*>;
+	$$ = new list<ExpRange*>;
       }
   ;
 
@@ -1679,14 +1687,14 @@ name /* IEEE 1076-2008 P8.1 */
      function calls. The only way we can tell the difference is from
      left context, namely whether the name is a type name or function
      name. If none of the above, treat it as a array element select. */
-  | IDENTIFIER '(' expression_list ')'
+  | IDENTIFIER argument_list
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
 	if (active_scope->is_vector_name(name) || is_subprogram_param(name)) {
-	      ExpName*tmp = new ExpName(name, $3);
+	      ExpName*tmp = new ExpName(name, $2);
 	      $$ = tmp;
 	} else {
-	      ExpFunc*tmp = new ExpFunc(name, $3);
+	      ExpFunc*tmp = new ExpFunc(name, $2);
 	      $$ = tmp;
 	}
 	FILE_NAME($$, @1);
@@ -1876,10 +1884,18 @@ prefix /* IEEE 1076-2008 P8.1 */
 primary
   : name
       { $$ = $1; }
-  | name '\'' IDENTIFIER
-      { perm_string name = lex_strings.make($3);
-	ExpName*base = dynamic_cast<ExpName*> ($1);
-	ExpAttribute*tmp = new ExpAttribute(base, name);
+  | name '\'' IDENTIFIER argument_list_opt
+      { ExpAttribute*tmp = NULL;
+	perm_string attr = lex_strings.make($3);
+        ExpName*base = dynamic_cast<ExpName*>($1);
+	const VType*type = parse_type_by_name(base->peek_name());
+
+	if(type) {
+	    tmp = new ExpTypeAttribute(type, attr, $4);
+	} else {
+	    tmp = new ExpObjAttribute(base, attr, $4);
+	}
+
 	FILE_NAME(tmp, @3);
 	delete[]$3;
 	$$ = tmp;
@@ -1980,11 +1996,11 @@ procedure_call
     delete[] $1;
     $$ = tmp;
       }
-  | IDENTIFIER '(' expression_list ')' ';'
+  | IDENTIFIER argument_list ';'
       {
-    ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1), $3);
+    ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1), $2);
     delete[] $1;
-    delete $3; // parameters are copied in this variant
+    delete $2; // parameters are copied in this variant
     $$ = tmp;
       }
   | IDENTIFIER '(' error ')' ';'
@@ -2096,18 +2112,15 @@ process_sensitivity_list
 
 range
   : simple_expression direction simple_expression
-      { prange_t* tmp = new prange_t($1, $3, $2);
+      { ExpRange* tmp = new ExpRange($1, $3, $2);
 	$$ = tmp;
       }
   | name '\'' K_range
       {
-        prange_t*tmp = NULL;
+        ExpRange*tmp = NULL;
         ExpName*name = NULL;
         if((name = dynamic_cast<ExpName*>($1))) {
-            ExpAttribute*left = new ExpAttribute(name, left_attr);
-            ExpAttribute*right = new ExpAttribute(name, right_attr);
-            tmp = new prange_t(left, right, true);
-            tmp->set_auto_dir();
+            tmp = new ExpRange(name, false);
         } else {
 	    errormsg(@1, "'range attribute can be used with named expressions only");
         }
@@ -2115,13 +2128,10 @@ range
       }
   | name '\'' K_reverse_range
       {
-        prange_t*tmp = NULL;
+        ExpRange*tmp = NULL;
         ExpName*name = NULL;
         if((name = dynamic_cast<ExpName*>($1))) {
-            ExpAttribute*left = new ExpAttribute(name, left_attr);
-            ExpAttribute*right = new ExpAttribute(name, right_attr);
-            tmp = new prange_t(left, right, false);
-            tmp->set_auto_dir();
+            tmp = new ExpRange(name, true);
         } else {
 	    errormsg(@1, "'reverse_range attribute can be used with named expressions only");
         }
@@ -2131,12 +2141,12 @@ range
 
 range_list
   : range
-      { list<prange_t*>*tmp = new list<prange_t*>;
+      { list<ExpRange*>*tmp = new list<ExpRange*>;
 	tmp->push_back($1);
 	$$ = tmp;
       }
   | range_list ',' range
-      { list<prange_t*>*tmp = $1;
+      { list<ExpRange*>*tmp = $1;
 	tmp->push_back($3);
 	$$ = tmp;
       }
@@ -2185,10 +2195,9 @@ relation
   ;
 
 report_statement
-  : K_report STRING_LITERAL severity_opt ';'
+  : K_report expression severity_opt ';'
       { ReportStmt*tmp = new ReportStmt($2, $3);
 	FILE_NAME(tmp,@2);
-	delete[]$2;
 	$$ = tmp;
       }
 

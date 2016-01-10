@@ -185,7 +185,7 @@ ProcedureCall::ProcedureCall(perm_string name, std::list<Expression*>* param_lis
     for(std::list<Expression*>::const_iterator it = param_list->begin();
             it != param_list->end(); ++it)
     {
-        param_list_->push_back(new named_expr_t(empty_perm_string, (*it)->clone()));
+        param_list_->push_back(new named_expr_t(empty_perm_string, *it));
     }
 }
 
@@ -199,6 +199,8 @@ ProcedureCall::~ProcedureCall()
         param_list_->pop_front();
         delete cur;
     }
+
+    delete param_list_;
 }
 
 ReturnStmt::ReturnStmt(Expression*val)
@@ -238,7 +240,7 @@ void LoopStatement::visit(SeqStmtVisitor& func)
     func(this);
 }
 
-ForLoopStatement::ForLoopStatement(perm_string scope_name, perm_string it, prange_t* range, list<SequentialStmt*>* stmts)
+ForLoopStatement::ForLoopStatement(perm_string scope_name, perm_string it, ExpRange* range, list<SequentialStmt*>* stmts)
 : LoopStatement(scope_name, stmts), it_(it), range_(range)
 {
 }
@@ -278,26 +280,24 @@ BasicLoopStatement::~BasicLoopStatement()
 {
 }
 
-ReportStmt::ReportStmt(const char*msg, severity_t sev)
+ReportStmt::ReportStmt(Expression*msg, severity_t sev)
 : msg_(msg), severity_(sev)
 {
     if(sev == ReportStmt::UNSPECIFIED)
         severity_ = ReportStmt::NOTE;
 }
 
-AssertStmt::AssertStmt(Expression*condition, const char*msg, ReportStmt::severity_t sev)
-: ReportStmt("", sev), cond_(condition)
+AssertStmt::AssertStmt(Expression*condition, Expression*msg, ReportStmt::severity_t sev)
+: ReportStmt(msg, sev), cond_(condition)
 {
     if(msg == NULL)
-        msg_ = default_msg_;
-    else
-        msg_ = std::string(msg);
+        msg_ = new ExpString(default_msg_);
 
     if(sev == ReportStmt::UNSPECIFIED)
         severity_ = ReportStmt::ERROR;
 }
 
-const std::string AssertStmt::default_msg_ = std::string("Assertion violation.");
+const char*AssertStmt::default_msg_ = "Assertion violation.";
 
 WaitForStmt::WaitForStmt(Expression*delay)
 : delay_(delay)

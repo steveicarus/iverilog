@@ -61,13 +61,9 @@ void ExpAggregate::choice_t::write_to_stream(ostream&fd)
 	    return;
       }
 
-      if (prange_t*rp = range_expressions()) {
-	    rp->msb()->write_to_stream(fd);
-	    if (rp->is_downto())
-		  fd << " downto ";
-	    else
-		  fd << " to ";
-	    rp->msb()->write_to_stream(fd);
+      if (ExpRange*rp = range_expressions()) {
+	    rp->write_to_stream(fd);
+	    return;
       }
 
       fd << "/* ERROR */";
@@ -111,7 +107,13 @@ void ExpArithmetic::write_to_stream(ostream&out) const
       out << ")";
 }
 
-void ExpAttribute::write_to_stream(ostream&fd) const
+void ExpObjAttribute::write_to_stream(ostream&fd) const
+{
+      base_->write_to_stream(fd);
+      fd << "'" << name_;
+}
+
+void ExpTypeAttribute::write_to_stream(ostream&fd) const
 {
       base_->write_to_stream(fd);
       fd << "'" << name_;
@@ -314,5 +316,21 @@ void ExpTime::write_to_stream(ostream&fd) const
           case US: fd << " us"; break;
           case MS: fd << " ms"; break;
           case S:  fd << " s"; break;
+      }
+}
+
+void ExpRange::write_to_stream(ostream&fd) const
+{
+      if(range_expr_) {
+          range_base_->write_to_stream(fd);
+          fd << (range_reverse_ ? "'reverse_range" : "'range");
+      } else {
+          left_->write_to_stream(fd);
+          switch(direction_) {
+              case DOWNTO: fd << " downto "; break;
+              case TO: fd << " to "; break;
+              default: ivl_assert(*this, false); break;
+          }
+          right_->write_to_stream(fd);
       }
 }

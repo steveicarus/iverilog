@@ -108,21 +108,18 @@ VTypeArray::VTypeArray(const VType*element, const vector<VTypeArray::range_t>&r,
 
 /*
  * Create a VTypeArray range set from a list of parsed ranges.
- * FIXME: We are copying pointers from the prange_t object into the
- * range_t. This means that we cannot delete the prange_t object
+ * FIXME: We are copying pointers from the ExpRange object into the
+ * range_t. This means that we cannot delete the ExpRange object
  * unless we invent a way to remove the pointers from that object. So
  * this is a memory leak. Something to fix.
  */
-VTypeArray::VTypeArray(const VType*element, std::list<prange_t*>*r, bool sv)
+VTypeArray::VTypeArray(const VType*element, std::list<ExpRange*>*r, bool sv)
 : etype_(element), ranges_(r->size()), signed_flag_(sv), parent_(NULL)
 {
       for (size_t idx = 0 ; idx < ranges_.size() ; idx += 1) {
-	    prange_t*curp = r->front();
+	    ExpRange*curp = r->front();
 	    r->pop_front();
-	    Expression*msb = curp->msb();
-	    Expression*lsb = curp->lsb();
-	    bool dir = curp->is_downto();
-	    ranges_[idx] = range_t(msb, lsb, dir);
+	    ranges_[idx] = range_t(curp->msb(), curp->lsb(), curp->direction());
       }
 }
 

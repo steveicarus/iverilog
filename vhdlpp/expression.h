@@ -29,8 +29,7 @@
 # include  <memory>
 # include  <vector>
 
-class prange_t;
-class Entity;
+class ExpRange;
 class ScopeBase;
 class SubprogramHeader;
 class VType;
@@ -107,8 +106,8 @@ class Expression : public LineInfo {
 	// to constant literal values. Return true and set the val
 	// argument if the evaluation works, or return false if it
 	// cannot be done.
-      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
-      virtual bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
+      virtual bool evaluate(Entity*, ScopeBase*, int64_t&) const { return false; }
+      bool evaluate(ScopeBase*scope, int64_t&val) const { return evaluate(NULL, scope, val); }
 
 	// The symbolic compare returns true if the two expressions
 	// are equal without actually calculating the value.
@@ -125,7 +124,7 @@ class Expression : public LineInfo {
       virtual void dump(ostream&out, int indent = 0) const =0;
       virtual ostream& dump_inline(ostream&out) const;
 
-	// Recursively visits a tree of expressions (useful of complex expressions).
+	// Recursively visits a tree of expressions (useful for complex expressions).
       virtual void visit(ExprVisitor& func) { func(this); }
 
     protected:
@@ -205,8 +204,8 @@ class ExpBinary : public Expression {
       int emit_operand1(ostream&out, Entity*ent, ScopeBase*scope);
       int emit_operand2(ostream&out, Entity*ent, ScopeBase*scope);
 
-      bool eval_operand1(ScopeBase*scope, int64_t&val) const;
-      bool eval_operand2(ScopeBase*scope, int64_t&val) const;
+      bool eval_operand1(Entity*ent, ScopeBase*scope, int64_t&val) const;
+      bool eval_operand2(Entity*ent, ScopeBase*scope, int64_t&val) const;
 
       inline void write_to_stream_operand1(std::ostream&out) const
           { operand1_->write_to_stream(out); }
@@ -239,7 +238,7 @@ class ExpAggregate : public Expression {
 	      // Create a named choice
 	    explicit choice_t(perm_string name);
 	      // discreate_range choice
-	    explicit choice_t(prange_t*ran);
+	    explicit choice_t(ExpRange*ran);
 
 	    choice_t(const choice_t&other);
 
@@ -249,15 +248,15 @@ class ExpAggregate : public Expression {
 	    bool others() const;
 	      // Return expression if this represents a simple_expression.
 	    Expression*simple_expression(bool detach_flag =true);
-	      // Return prange_t if this represents a range_expression
-	    prange_t*range_expressions(void);
+	      // Return ExpRange if this represents a range_expression
+	    ExpRange*range_expressions(void);
 
 	    void write_to_stream(std::ostream&fd);
 	    void dump(ostream&out, int indent) const;
 
 	  private:
 	    std::auto_ptr<Expression>expr_;
-	    std::auto_ptr<prange_t>  range_;
+	    std::auto_ptr<ExpRange>  range_;
 	  private: // not implemented
 	    choice_t& operator= (const choice_t&);
       };
@@ -343,7 +342,7 @@ class ExpArithmetic : public ExpBinary {
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
-      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
+      virtual bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
 
     private:
@@ -356,18 +355,60 @@ class ExpArithmetic : public ExpBinary {
 class ExpAttribute : public Expression {
 
     public:
-      ExpAttribute(ExpName*base, perm_string name);
-      ~ExpAttribute();
+      ExpAttribute(perm_string name,std::list<Expression*>*args);
+      virtual ~ExpAttribute();
+
+      inline perm_string peek_attribute() const { return name_; }
+
+      // Constants for the standard attributes
+      static const perm_string LEFT;
+      static const perm_string RIGHT;
+
+    protected:
+      std::list<Expression*>*clone_args() const;
+      void visit_args(ExprVisitor& func);
+      bool evaluate_type_attr(const VType*type, Entity*ent, ScopeBase*scope, int64_t&val) const;
+      bool test_array_type(const VType*type) const;
+
+      perm_string name_;
+      std::list<Expression*>*args_;
+};
+
+class ExpObjAttribute : public ExpAttribute {
+    public:
+      ExpObjAttribute(ExpName*base, perm_string name, std::list<Expression*>*args);
+      ~ExpObjAttribute();
 
       Expression*clone() const;
 
-      inline perm_string peek_attribute() const { return name_; }
       inline const ExpName* peek_base() const { return base_; }
 
+      int emit(ostream&out, Entity*ent, ScopeBase*scope);
       const VType*probe_type(Entity*ent, ScopeBase*scope) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
+	// Some attributes can be evaluated at compile time
+      bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
+      void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
+
+    private:
+      ExpName*base_;
+};
+
+class ExpTypeAttribute : public ExpAttribute {
+    public:
+      ExpTypeAttribute(const VType*base, perm_string name, std::list<Expression*>*args);
+      // no destructor - VType objects (base_) are shared between many expressions
+
+      Expression*clone() const;
+
+      inline const VType* peek_base() const { return base_; }
+
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      const VType*probe_type(Entity*ent, ScopeBase*scope) const;
+      int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
+      void write_to_stream(std::ostream&fd) const;
 	// Some attributes can be evaluated at compile time
       bool evaluate(ScopeBase*scope, int64_t&val) const;
       bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
@@ -375,8 +416,7 @@ class ExpAttribute : public Expression {
       void visit(ExprVisitor& func);
 
     private:
-      ExpName*base_;
-      perm_string name_;
+      const VType*base_;
 };
 
 class ExpBitstring : public Expression {
@@ -440,7 +480,6 @@ class ExpConcat : public Expression {
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
-      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
       bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
       void visit(ExprVisitor& func);
@@ -583,7 +622,7 @@ class ExpInteger : public Expression {
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
       int emit_package(std::ostream&out);
       bool is_primary(void) const { return true; }
-      bool evaluate(ScopeBase*scope, int64_t&val) const;
+      bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
       virtual ostream& dump_inline(ostream&out) const;
 
@@ -665,7 +704,6 @@ class ExpName : public Expression {
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
       bool is_primary(void) const;
-      bool evaluate(ScopeBase*scope, int64_t&val) const;
       bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       bool symbolic_compare(const Expression*that) const;
       void dump(ostream&out, int indent = 0) const;
@@ -773,7 +811,7 @@ class ExpShift : public ExpBinary {
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
-      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
+      bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
 
     private:
@@ -891,7 +929,6 @@ class ExpTime : public Expression {
         int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
         void write_to_stream(std::ostream&) const;
         int emit(ostream&out, Entity*ent, ScopeBase*scope);
-        //bool evaluate(ScopeBase*scope, int64_t&val) const;
         //bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
         void dump(ostream&out, int indent = 0) const;
 
@@ -900,6 +937,46 @@ class ExpTime : public Expression {
         double to_fs() const;
         uint64_t amount_;
         timeunit_t unit_;
+};
+
+class ExpRange : public Expression {
+    public:
+        typedef enum { DOWNTO, TO, AUTO } range_dir_t;
+
+        // Regular range
+        ExpRange(Expression*left, Expression*right, range_dir_t direction);
+        // 'range/'reverse range attribute
+        ExpRange(ExpName*base, bool reverse_range);
+        ~ExpRange();
+
+        Expression*clone() const;
+
+        // Returns the upper boundary
+        Expression*msb();
+        // Returns the lower boundary
+        Expression*lsb();
+
+        Expression*left();
+        Expression*right();
+
+        range_dir_t direction() const { return direction_; }
+
+        int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
+        void write_to_stream(std::ostream&) const;
+        int emit(ostream&out, Entity*ent, ScopeBase*scope);
+        void dump(ostream&out, int indent = 0) const;
+    private:
+        // Regular range related fields
+        Expression*left_, *right_;
+        range_dir_t direction_;
+
+        // 'range/'reverse_range attribute related fields
+        // Flag to indicate it is a 'range/'reverse_range expression
+        bool range_expr_;
+        // Object name to which the attribute is applied
+        ExpName*range_base_;
+        // Flag to distinguish between 'range & 'reverse_range
+        bool range_reverse_;
 };
 
 // Elaborates an expression used as an argument in a procedure/function call.

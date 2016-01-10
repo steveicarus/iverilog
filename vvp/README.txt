@@ -841,6 +841,7 @@ instructions. The formats are:
    %vpi_call/i <file-index> <lineno> <name>, <args>... ;
    %vpi_func <file-index> <lineno> <name>, <args>... ;
    %vpi_func/r <file-index> <lineno> <name>, <args>... ;
+   %vpi_func/s <file-index> <lineno> <name>, <args>... ;
 
 The <file-index> is an index into the string table. The indexed string
 is the source code file name where this call appears. The <lineno> is

@@ -250,7 +250,7 @@ class WhileLoopStatement : public LoopStatement {
 class ForLoopStatement : public LoopStatement {
     public:
       ForLoopStatement(perm_string loop_name,
-		       perm_string index, prange_t*, list<SequentialStmt*>*);
+		       perm_string index, ExpRange*, list<SequentialStmt*>*);
       ~ForLoopStatement();
 
       int elaborate(Entity*ent, ScopeBase*scope);
@@ -264,7 +264,7 @@ class ForLoopStatement : public LoopStatement {
       int emit_runtime_(ostream&out, Entity*ent, ScopeBase*scope);
 
       perm_string it_;
-      prange_t* range_;
+      ExpRange* range_;
 };
 
 class BasicLoopStatement : public LoopStatement {
@@ -280,24 +280,27 @@ class ReportStmt : public SequentialStmt {
     public:
       typedef enum { UNSPECIFIED, NOTE, WARNING, ERROR, FAILURE } severity_t;
 
-      ReportStmt(const char*message, severity_t severity = NOTE);
+      ReportStmt(Expression*message, severity_t severity);
       virtual ~ReportStmt() {}
 
       void dump(ostream&out, int indent) const;
+      int elaborate(Entity*ent, ScopeBase*scope);
       int emit(ostream&out, Entity*entity, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
 
-      inline const std::string& message() const { return msg_; }
+      inline Expression*message() const { return msg_; }
       inline severity_t severity() const { return severity_; }
 
     protected:
-      std::string msg_;
+      void dump_sev_msg(ostream&out, int indent) const;
+
+      Expression*msg_;
       severity_t severity_;
 };
 
 class AssertStmt : public ReportStmt {
     public:
-      AssertStmt(Expression*condition, const char*message,
+      AssertStmt(Expression*condition, Expression*message,
                  ReportStmt::severity_t severity = ReportStmt::ERROR);
 
       void dump(ostream&out, int indent) const;
@@ -309,7 +312,7 @@ class AssertStmt : public ReportStmt {
       Expression*cond_;
 
       // Message displayed when there is no report assigned.
-      static const std::string default_msg_;
+      static const char*default_msg_;
 };
 
 class WaitForStmt : public SequentialStmt {

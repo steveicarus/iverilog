@@ -33,7 +33,7 @@ class Architecture;
 class ScopeBase;
 class Entity;
 class Expression;
-class prange_t;
+class ExpRange;
 class VTypeDef;
 class ScopeBase;
 
@@ -210,7 +210,7 @@ class VTypeArray : public VType {
 
     public:
       VTypeArray(const VType*etype, const std::vector<range_t>&r, bool signed_vector = false);
-      VTypeArray(const VType*etype, std::list<prange_t*>*r, bool signed_vector = false);
+      VTypeArray(const VType*etype, std::list<ExpRange*>*r, bool signed_vector = false);
       VTypeArray(const VType*etype, int msb, int lsb, bool signed_vector = false);
       ~VTypeArray();
 

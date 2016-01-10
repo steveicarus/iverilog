@@ -53,6 +53,18 @@ void SubprogramBody::set_statements(list<SequentialStmt*>*stmt)
       statements_ = stmt;
 }
 
+int SubprogramBody::elaborate()
+{
+    int errors = 0;
+
+    for (list<SequentialStmt*>::const_iterator cur = statements_->begin()
+                ; cur != statements_->end() ; ++cur) {
+            errors += (*cur)->elaborate(0, this);
+    }
+
+    return errors;
+}
+
 void SubprogramBody::write_to_stream(ostream&fd) const
 {
       for (map<perm_string,Variable*>::const_iterator cur = new_variables_.begin()

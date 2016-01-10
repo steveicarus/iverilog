@@ -90,6 +90,8 @@ class ScopeBase {
         finalizers_.push_back(s);
       }
 
+      void dump_scope(ostream&out) const;
+
     protected:
       void cleanup();
 
@@ -153,9 +155,6 @@ class Scope : public ScopeBase {
       ~Scope();
 
       ComponentBase* find_component(perm_string by_name);
-
-    public:
-      void dump_scope(ostream&out) const;
 
     protected:
 	// Helper method for emitting signals in the scope.

@@ -169,10 +169,11 @@ static int get_default_format(const char *name)
     int default_format;
 
     switch(name[ strlen(name)-1 ]){
-	/*  writE/strobE or monitoR or displaY/fdisplaY or sformaT */
+	/*  writE/strobE or monitoR or displaY/fdisplaY or sformaT/sformatF */
     case 'e':
     case 'r':
     case 't':
+    case 'f':
     case 'y': default_format = vpiDecStrVal; break;
     case 'h': default_format = vpiHexStrVal; break;
     case 'o': default_format = vpiOctStrVal; break;
@@ -620,10 +621,6 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
     case 't':
     case 'T':
       *idx += 1;
-      if (plus != 0) {
-        vpi_printf("WARNING: %s:%d: invalid format %s%s.\n",
-                   info->filename, info->lineno, info->name, fmtb);
-      }
       if (*idx >= info->nitems) {
         vpi_printf("WARNING: %s:%d: missing argument for %s%s.\n",
                    info->filename, info->lineno, info->name, fmtb);
@@ -647,6 +644,29 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
         } else {
           char *tbuf;
           PLI_INT32 time_units = vpi_get(vpiTimeUnit, info->scope);
+
+          if (plus != 0) {
+              /* Icarus-specific extension to print out time units.
+               * It is needed by vhdlpp to correctly implement time'image(). */
+              PLI_INT32 time_prec = vpi_get(vpiTimePrecision, info->scope);
+
+              if(time_units < -12)
+                  timeformat_info.suff = strdup(" fs");
+              else if(time_units < -9)
+                  timeformat_info.suff = strdup(" ps");
+              else if(time_units < -6)
+                  timeformat_info.suff = strdup(" ns");
+              else if(time_units < -3)
+                  timeformat_info.suff = strdup(" us");
+              else if(time_units < 0)
+                  timeformat_info.suff = strdup(" ms");
+              else
+                  timeformat_info.suff = strdup(" s");
+
+              /* Adjust shift for get_time(), so the number indeed matches the unit */
+              time_units += (3 + (time_units % 3)) % 3 + (time_prec - time_units);
+          }
+
           unsigned swidth, free_flag = 0;
           unsigned suff_len = strlen(timeformat_info.suff);
           char *cp;
@@ -1238,7 +1258,8 @@ static PLI_INT32 sys_display_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return sys_common_compiletf(name, 0, 0);
 }
 
-/* This implements the $display/$fdisplay and the $write/$fwrite based tasks. */
+/* This implements the $sformatf, $display/$fdisplay
+ * and the $write/$fwrite based tasks. */
 static PLI_INT32 sys_display_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, scope;
@@ -1246,6 +1267,7 @@ static PLI_INT32 sys_display_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       char* result;
       unsigned int size;
       PLI_UINT32 fd_mcd;
+      s_vpi_value val;
 
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
@@ -1254,7 +1276,6 @@ static PLI_INT32 sys_display_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       if(name[1] == 'f') {
 	      errno = 0;
 	      vpiHandle arg = vpi_scan(argv);
-	      s_vpi_value val;
 	      val.format = vpiIntVal;
 	      vpi_get_value(arg, &val);
 	      fd_mcd = val.value.integer;
@@ -1275,7 +1296,11 @@ static PLI_INT32 sys_display_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 		    vpi_free_object(argv);
 		    return 0;
 	      }
+      } else if(strncmp(name,"$sformatf",9) == 0) {
+	      /* return as a string */
+	      fd_mcd = 0;
       } else {
+	      /* stdout */
 	      fd_mcd = 1;
       }
 
@@ -1293,13 +1318,21 @@ static PLI_INT32 sys_display_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	/* Because %u and %z may put embedded NULL characters into the
 	 * returned string strlen() may not match the real size! */
       result = get_display(&size, &info);
-      my_mcd_rawwrite(fd_mcd, result, size);
-      if ((strncmp(name,"$display",8) == 0) ||
-          (strncmp(name,"$fdisplay",9) == 0)) my_mcd_rawwrite(fd_mcd, "\n", 1);
 
+      if(fd_mcd > 0) {
+	      my_mcd_rawwrite(fd_mcd, result, size);
+	      if ((strncmp(name,"$display",8) == 0) ||
+	          (strncmp(name,"$fdisplay",9) == 0)) my_mcd_rawwrite(fd_mcd, "\n", 1);
+      } else {
+	      /* Return as a string ($sformatf) */
+	      val.format = vpiStringVal;
+	      val.value.str = result;
+	      vpi_put_value(callh, &val, 0, vpiNoDelay);
+      }
+
+      free(result);
       free(info.filename);
       free(info.items);
-      free(result);
       return 0;
 }
 
@@ -1665,7 +1698,7 @@ static PLI_INT32 sys_sformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
   if (argv == 0) {
     vpi_printf("ERROR:%s:%d: ", vpi_get_str(vpiFile, callh),
                (int)vpi_get(vpiLineNo, callh));
-    vpi_printf("%s requires at least two argument.\n", name);
+    vpi_printf("%s requires at least two arguments.\n", name);
     vpi_control(vpiFinish, 1);
     return 0;
   }
@@ -1686,7 +1719,7 @@ static PLI_INT32 sys_sformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
   if (arg == 0) {
     vpi_printf("ERROR:%s:%d: ", vpi_get_str(vpiFile, callh),
                (int)vpi_get(vpiLineNo, callh));
-    vpi_printf("%s requires at least two argument.\n", name);
+    vpi_printf("%s requires at least two arguments.\n", name);
     vpi_control(vpiFinish, 1);
     return 0;
   }
@@ -1751,6 +1784,46 @@ static PLI_INT32 sys_sformat_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
   free(val.value.str);
   free(info.filename);
   free(info.items);
+  return 0;
+}
+
+static PLI_INT32 sys_sformatf_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
+{
+  vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+  vpiHandle argv = vpi_iterate(vpiArgument, callh);
+  vpiHandle arg;
+  PLI_INT32 type;
+
+  /* Check that there are arguments. */
+  if (argv == 0) {
+    vpi_printf("ERROR:%s:%d: ", vpi_get_str(vpiFile, callh),
+               (int)vpi_get(vpiLineNo, callh));
+    vpi_printf("%s requires at least one argument.\n", name);
+    vpi_control(vpiFinish, 1);
+    return 0;
+  }
+
+  /* The first argument must be a string, a register or a SV string. */
+  arg = vpi_scan(argv);
+  if (arg == 0) {
+    vpi_printf("ERROR:%s:%d: ", vpi_get_str(vpiFile, callh),
+               (int)vpi_get(vpiLineNo, callh));
+    vpi_printf("%s requires at least one argument.\n", name);
+    vpi_control(vpiFinish, 1);
+    return 0;
+  }
+  type = vpi_get(vpiType, arg);
+  if (((type != vpiConstant && type != vpiParameter) ||
+      vpi_get(vpiConstType, arg) != vpiStringConst) &&
+      type != vpiReg && type != vpiStringVar) {
+    vpi_printf("ERROR:%s:%d: ", vpi_get_str(vpiFile, callh),
+               (int)vpi_get(vpiLineNo, callh));
+    vpi_printf("%s's first argument must be a string or a register.\n", name);
+    vpi_control(vpiFinish, 1);
+    return 0;
+  }
+
+  if (sys_check_args(callh, argv, name, 0, 0)) vpi_control(vpiFinish, 1);
   return 0;
 }
 
@@ -2431,6 +2504,16 @@ void sys_display_register(void)
       tf_data.compiletf = sys_sformat_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$sformat";
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.type      = vpiSysFunc;
+      tf_data.sysfunctype = vpiStringFunc;
+      tf_data.tfname    = "$sformatf";
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = sys_sformatf_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$sformatf";
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 

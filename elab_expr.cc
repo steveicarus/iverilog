@@ -2838,7 +2838,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	    concat->set(idx, parms[off+idx]);
       }
 
-      if (wid_sum == 0) {
+      if (wid_sum == 0 && expr_type_ != IVL_VT_STRING) {
 	    cerr << get_fileline() << ": error: Concatenation/replication "
 	         << "may not have zero width in this context." << endl;
 	    des->errors += 1;

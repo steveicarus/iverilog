@@ -384,6 +384,11 @@ The function returns an integer.
 The function returns a vector with the given width, and is signed or
 unsigned according to the flag.
 
+.TP 8
+.B vpiSysFuncString
+The function returns a string. This is an Icarus-specific extension, not
+available in the VPI standard.
+
 .SH "COMMAND FILES"
 The command file allows the user to place source file names and
 certain command line switches into a text file instead of on a long

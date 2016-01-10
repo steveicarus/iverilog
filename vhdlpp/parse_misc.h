@@ -26,7 +26,7 @@ class ActiveScope;
 class Architecture;
 class Expression;
 class Package;
-class prange_t;
+class ExpRange;
 class ScopeBase;
 class VType;
 
@@ -35,11 +35,11 @@ extern void bind_architecture_to_entity(const char*ename, Architecture*arch);
 
 extern const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
 					    ScopeBase*scope,
-					    std::list<prange_t*>*ranges);
+					    std::list<ExpRange*>*ranges);
 extern const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_name,
 					    ScopeBase*scope,
 					    Expression*range_left,
-					    bool downto,
+					    int direction,
 					    Expression*range_right);
 
 /*
