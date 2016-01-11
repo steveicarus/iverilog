@@ -205,11 +205,8 @@ void draw_ufunc_real(ivl_expr_t expr)
 	/* Take in arguments to function and call the function code. */
       draw_ufunc_preamble(expr);
 
-	/* Return value signal cannot be an array. */
-      assert(ivl_signal_dimensions(retval) == 0);
-
-	/* Load the result into a word. */
-      fprintf(vvp_out, "  %%load/real v%p_0;\n", retval);
+	/* The %callf/real function emitted by the preamble leaves
+	   the result in the stack for us. */
 
       draw_ufunc_epilogue(expr);
 }

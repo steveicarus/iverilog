@@ -111,6 +111,11 @@ struct vthread_s {
 	    uint64_t w_uint;
       } words[WORDS_COUNT];
 
+	// These vectors are depths within the parent thread's
+	// corresponding stack.  This is how the %ret/* instructions
+	// get at parent thread arguments.
+      vector<unsigned> args_real;
+
     private:
       vector<vvp_vector4_t>stack_vec4_;
     public:
@@ -166,6 +171,12 @@ struct vthread_s {
 	    assert(depth < stack_real_.size());
 	    unsigned use_index = stack_real_.size()-1-depth;
 	    return stack_real_[use_index];
+      }
+      inline void poke_real(unsigned depth, double val)
+      {
+	    assert(depth < stack_real_.size());
+	    unsigned use_index = stack_real_.size()-1-depth;
+	    stack_real_[use_index] = val;
       }
       inline void pop_real(unsigned cnt)
       {
@@ -1270,11 +1281,10 @@ bool of_BREAKPOINT(vthread_t, vvp_code_t)
  * %callf/void <code-label>, <scope-label>
  * Combine the %fork and %join steps for invoking a function.
  */
-static bool do_callf_void(vthread_t thr, vvp_code_t cp)
+static bool do_callf_void(vthread_t thr, vthread_t child)
 {
-      vthread_t child = vthread_new(cp->cptr2, cp->scope);
 
-      if (cp->scope->is_automatic()) {
+      if (child->parent_scope->is_automatic()) {
 	      /* The context allocated for this child is the top entry
 		 on the write context stack */
 	    child->wt_context = thr->wt_context;
@@ -1289,7 +1299,7 @@ static bool do_callf_void(vthread_t thr, vvp_code_t cp)
 
         // Execute the function. This SHOULD run the function to completion,
         // but there are some exceptional situations where it won't.
-      assert(cp->scope->get_type_code() == vpiFunction);
+      assert(child->parent_scope->get_type_code() == vpiFunction);
       thr->task_func_children.insert(child);
       child->is_scheduled = 1;
       child->i_am_in_function = 1;
@@ -1309,36 +1319,44 @@ static bool do_callf_void(vthread_t thr, vvp_code_t cp)
 
 bool of_CALLF_OBJ(vthread_t thr, vvp_code_t cp)
 {
-      return do_callf_void(thr, cp);
+      vthread_t child = vthread_new(cp->cptr2, cp->scope);
+      return do_callf_void(thr, child);
 
       // XXXX NOT IMPLEMENTED
 }
 
 bool of_CALLF_REAL(vthread_t thr, vvp_code_t cp)
 {
-      // XXXX Here, I should arrange for a reference to the destination variable
-      // XXXX as a place in my stack. The function will write to that place in
-      // XXXX my stack for me.
-      return do_callf_void(thr, cp);
+      vthread_t child = vthread_new(cp->cptr2, cp->scope);
+
+	// This is the return value. Push a place-holder value. The function
+	// will replace this with the actual value using a %ret/real instruction.
+      thr->push_real(0.0);
+      child->args_real.push_back(0);
+
+      return do_callf_void(thr, child);
 }
 
 bool of_CALLF_STR(vthread_t thr, vvp_code_t cp)
 {
-      return do_callf_void(thr, cp);
+      vthread_t child = vthread_new(cp->cptr2, cp->scope);
+      return do_callf_void(thr, child);
 
       // XXXX NOT IMPLEMENTED
 }
 
 bool of_CALLF_VEC4(vthread_t thr, vvp_code_t cp)
 {
-      return do_callf_void(thr, cp);
+      vthread_t child = vthread_new(cp->cptr2, cp->scope);
+      return do_callf_void(thr, child);
 
       // XXXX NOT IMPLEMENTED
 }
 
 bool of_CALLF_VOID(vthread_t thr, vvp_code_t cp)
 {
-      return do_callf_void(thr, cp);
+      vthread_t child = vthread_new(cp->cptr2, cp->scope);
+      return do_callf_void(thr, child);
 }
 
 /*
@@ -4927,6 +4945,22 @@ bool of_REPLICATE(vthread_t thr, vvp_code_t cp)
 
       thr->push_vec4(res);
 
+      return true;
+}
+
+/*
+ * %ret/real <index>
+ */
+bool of_RET_REAL(vthread_t thr, vvp_code_t cp)
+{
+      size_t index = cp->number;
+      double val = thr->pop_real();
+
+      assert(index >= 0 && index < thr->args_real.size());
+      unsigned depth = thr->args_real[index];
+	// Use the depth to put the value into the stack of
+	// the parent thread.
+      thr->parent->poke_real(depth, val);
       return true;
 }
 

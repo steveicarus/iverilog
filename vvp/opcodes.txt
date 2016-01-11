@@ -225,7 +225,7 @@ out, then this function is a no-op.
 * %callf/void <code-label>, <scope-label>
 
 More directly implement function calling. This subsumes the %fork and
-%join of the mroe general task and block calling, but is optimized for
+%join of the more general task and block calling, but is optimized for
 functions, which are threads of a special, constrained sort.
 
 The different variants reflect the different return types for the
@@ -1003,6 +1003,18 @@ statement. The <type> is 0 for nets and 1 for registers. See the other
 Pop the vec4 value, replicate it <count> times, then push the
 result. In other words, push the concatenation of <count> copies.
 See also the %concat instruction.
+
+* %ret/obj <index>
+* %ret/real <index>
+* %ret/str <index>
+* %ret/vec4 <index>
+
+Write a value to the indexed function argument. The value is popped
+from the appropriate stack and written into the argument. The return
+value of a function is the first argument of the appropriate type, so
+for example to store the return value for a real function, use
+"%ret/real 0;". It is up to the function caller to set up the argument
+references.
 
 * %set/dar/obj/real <index>
 * %set/dar/obj/str <index>

@@ -574,6 +574,18 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
       var = ivl_lval_sig(lval);
       assert(var != 0);
 
+	/* Special Case: If the l-value signal is named after its scope,
+	   and the scope is a function, then this is an assign to a return
+	   value and should be handled differently. */
+      ivl_scope_t sig_scope = ivl_signal_scope(var);
+      if ((ivl_scope_type(sig_scope) == IVL_SCT_FUNCTION)
+	  && (strcmp(ivl_signal_basename(var), ivl_scope_basename(sig_scope)) == 0)) {
+	    assert(ivl_signal_dimensions(var) == 0);
+	    fprintf(vvp_out, "    %%ret/real 0; Assign to %s\n",
+		    ivl_signal_basename(var));
+	    return 0;
+      }
+
       if (ivl_signal_dimensions(var) == 0) {
 	    fprintf(vvp_out, "    %%store/real v%p_0;\n", var);
 	    return 0;

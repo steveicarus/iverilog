@@ -449,6 +449,16 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	    break;
       }
 
+	/* Special Case: If this variable is the return value of a function,
+	   then it need to exist as an actual variable. */
+      if ((ivl_signal_data_type(sig)==IVL_VT_REAL)
+	  && (ivl_scope_type(ivl_signal_scope(sig))==IVL_SCT_FUNCTION)
+	  && (strcmp(ivl_signal_basename(sig),ivl_scope_basename(ivl_signal_scope(sig))) == 0)) {
+	    fprintf(vvp_out, "; Variable %s is REAL return value of scope S_%p\n",
+		    ivl_signal_basename(sig), ivl_signal_scope(sig));
+	    return;
+      }
+
       const char *datatype_flag = ivl_signal_integer(sig) ? "/i" :
 			       ivl_signal_signed(sig)? "/s" : "";
       const char *local_flag = local_flag_str(sig);

@@ -198,6 +198,7 @@ extern bool of_RELEASE_NET(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_REG(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_WR(vthread_t thr, vvp_code_t code);
 extern bool of_REPLICATE(vthread_t thr, vvp_code_t code);
+extern bool of_RET_REAL(vthread_t thr, vvp_code_t code);
 extern bool of_SCOPY(vthread_t thr, vvp_code_t code);
 extern bool of_SET_DAR_OBJ_REAL(vthread_t thr, vvp_code_t code);
 extern bool of_SET_DAR_OBJ_STR(vthread_t thr, vvp_code_t code);
