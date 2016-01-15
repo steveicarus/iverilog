@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2016
+ * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -583,10 +585,29 @@ const VType* ExpArithmetic::resolve_operand_types_(const VType*t1, const VType*t
       return 0;
 }
 
+int ExpAttribute::elaborate_args(Entity*ent, ScopeBase*scope, const VType*ltype)
+{
+      int errors = 0;
+
+      if(args_) {
+	    for(list<Expression*>::iterator it = args_->begin();
+                    it != args_->end(); ++it) {
+		errors += (*it)->elaborate_expr(ent, scope, ltype);
+            }
+      }
+
+      return errors;
+}
+
 int ExpObjAttribute::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
 {
+      int errors = 0;
       const VType*sub_type = base_->probe_type(ent, scope);
-      return base_->elaborate_expr(ent, scope, sub_type);
+
+      errors += elaborate_args(ent, scope, sub_type);
+      errors += base_->elaborate_expr(ent, scope, sub_type);
+
+      return errors;
 }
 
 const VType* ExpObjAttribute::probe_type(Entity*, ScopeBase*) const
@@ -597,10 +618,9 @@ const VType* ExpObjAttribute::probe_type(Entity*, ScopeBase*) const
       return NULL;
 }
 
-int ExpTypeAttribute::elaborate_expr(Entity*, ScopeBase*, const VType*)
+int ExpTypeAttribute::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
 {
-      // This is just to mute warnings, there is nothing to elaborate here
-      return 0;
+      return elaborate_args(ent, scope, ltype);
 }
 
 const VType* ExpTypeAttribute::probe_type(Entity*, ScopeBase*) const
