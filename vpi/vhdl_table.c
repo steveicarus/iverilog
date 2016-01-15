@@ -40,11 +40,16 @@ struct monitor_data {
 static struct monitor_data **mdata = 0;
 static unsigned mdata_count = 0;
 
-typedef enum { EVENT = 0, RISING_EDGE = 1, FALLING_EDGE = 2 } event_type_t;
-static const char* func_names[] = {
-      "$ivlh_attribute_event",
-      "$ivlh_rising_edge",
-      "$ivlh_falling_edge"
+typedef enum {
+    EVENT           = 0,
+    RISING_EDGE     = 1,
+    FALLING_EDGE    = 2
+} event_type_t;
+static const char* attr_func_names[] = {
+    "$ivlh_attribute_event",
+    "$ivlh_rising_edge",
+    "$ivlh_falling_edge"
+};
 };
 
 /* To keep valgrind happy free the allocated memory. */
@@ -93,7 +98,7 @@ static PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*data)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, sys),
 	               (int)vpi_get(vpiLineNo, sys));
 	    vpi_printf("(compiler error) %s requires a single argument.\n",
-	               func_names[type]);
+	               attr_func_names[type]);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -127,7 +132,7 @@ static PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*data)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, sys),
 	               (int)vpi_get(vpiLineNo, sys));
 	    vpi_printf("(compiler error) %s only takes a single argument.\n",
-	               func_names[type]);
+	               attr_func_names[type]);
 	    vpi_free_object(argv);
 	    vpi_control(vpiFinish, 1);
       }
@@ -186,32 +191,23 @@ static void vhdl_register(void)
       s_cb_data cb;
       vpiHandle res;
 
+      /* Event attribute functions */
       tf_data.type         = vpiSysFunc;
       tf_data.sysfunctype  = vpiSizedFunc;
       tf_data.calltf       = ivlh_attribute_event_calltf;
       tf_data.compiletf    = ivlh_attribute_event_compiletf;
       tf_data.sizetf       = ivlh_attribute_event_sizetf;
-      tf_data.tfname       = func_names[EVENT];
+      tf_data.tfname       = attr_func_names[EVENT];
       tf_data.user_data    = (PLI_BYTE8*) EVENT;
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
-      tf_data.type         = vpiSysFunc;
-      tf_data.sysfunctype  = vpiSizedFunc;
-      tf_data.calltf       = ivlh_attribute_event_calltf;
-      tf_data.compiletf    = ivlh_attribute_event_compiletf;
-      tf_data.sizetf       = ivlh_attribute_event_sizetf;
-      tf_data.tfname       = func_names[RISING_EDGE];
+      tf_data.tfname       = attr_func_names[RISING_EDGE];
       tf_data.user_data    = (PLI_BYTE8*) RISING_EDGE;
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
-      tf_data.type         = vpiSysFunc;
-      tf_data.sysfunctype  = vpiSizedFunc;
-      tf_data.calltf       = ivlh_attribute_event_calltf;
-      tf_data.compiletf    = ivlh_attribute_event_compiletf;
-      tf_data.sizetf       = ivlh_attribute_event_sizetf;
-      tf_data.tfname       = func_names[FALLING_EDGE];
+      tf_data.tfname       = attr_func_names[FALLING_EDGE];
       tf_data.user_data    = (PLI_BYTE8*) FALLING_EDGE;
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);

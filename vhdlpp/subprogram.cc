@@ -334,13 +334,3 @@ void SubprogramHeader::write_to_stream(ostream&fd) const
 	    return_type_->write_to_stream(fd);
       }
 }
-
-SubprogramBuiltin::SubprogramBuiltin(perm_string vhdl_name, perm_string sv_name,
-        std::list<InterfacePort*>*ports, const VType*return_type)
-    : SubprogramHeader(vhdl_name, ports, return_type), sv_name_(sv_name)
-{
-}
-
-SubprogramBuiltin::~SubprogramBuiltin()
-{
-}
