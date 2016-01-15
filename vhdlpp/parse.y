@@ -7,7 +7,7 @@
 %{
 /*
  * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2012-2014 / Stephen Williams (steve@icarus.com),
+ * Copyright CERN 2012-2016 / Stephen Williams (steve@icarus.com),
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -1678,8 +1678,13 @@ name /* IEEE 1076-2008 P8.1 */
       { Expression*tmp;
         /* Check if the IDENTIFIER is one of CHARACTER enums (LF, CR, etc.) */
         tmp = parse_char_enums($1);
-        if(!tmp)
-            tmp = new ExpName(lex_strings.make($1));
+        if(!tmp) {
+            perm_string name = lex_strings.make($1);
+            if(active_scope->find_subprogram(name) && !parse_type_by_name(name))
+                tmp = new ExpFunc(name);
+            else
+                tmp = new ExpName(name);
+        }
         FILE_NAME(tmp, @1);
         delete[]$1;
         $$ = tmp;
@@ -1693,16 +1698,15 @@ name /* IEEE 1076-2008 P8.1 */
      left context, namely whether the name is a type name or function
      name. If none of the above, treat it as a array element select. */
   | IDENTIFIER argument_list
-      { perm_string name = lex_strings.make($1);
+      { Expression*tmp;
+        perm_string name = lex_strings.make($1);
 	delete[]$1;
-	if (active_scope->is_vector_name(name) || is_subprogram_param(name)) {
-	      ExpName*tmp = new ExpName(name, $2);
-	      $$ = tmp;
-	} else {
-	      ExpFunc*tmp = new ExpFunc(name, $2);
-	      $$ = tmp;
-	}
-	FILE_NAME($$, @1);
+	if (active_scope->is_vector_name(name) || is_subprogram_param(name))
+	      tmp = new ExpName(name, $2);
+	else
+	      tmp = new ExpFunc(name, $2);
+	FILE_NAME(tmp, @1);
+        $$ = tmp;
       }
   | IDENTIFIER '(' range ')'
       { ExpName*tmp = new ExpName(lex_strings.make($1), $3->msb(), $3->lsb());
