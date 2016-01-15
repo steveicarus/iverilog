@@ -163,6 +163,11 @@ static class SubprogramHexReadWrite : public SubprogramBuiltin {
 
 void preload_std_funcs(void)
 {
+    /* function now */
+    SubprogramBuiltin*fn_now = new SubprogramBuiltin(perm_string::literal("now"),
+                                            perm_string::literal("$time"), NULL, NULL);
+    register_std_subprogram(fn_now);
+
     /* numeric_std library
      * function unsigned
      */
