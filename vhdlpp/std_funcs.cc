@@ -199,6 +199,28 @@ void preload_std_funcs(void)
                                            fn_std_logic_vector_args, &primitive_STDLOGIC_VECTOR);
     register_std_subprogram(fn_std_logic_vector);
 
+    /* numeric_std library
+     * function shift_left (arg: unsigned; count: natural) return unsigned;
+     */
+    std::list<InterfacePort*>*fn_shift_left_args = new std::list<InterfacePort*>();
+    fn_shift_left_args->push_back(new InterfacePort(&primitive_UNSIGNED));
+    fn_shift_left_args->push_back(new InterfacePort(&primitive_UNSIGNED));
+    SubprogramBuiltin*fn_shift_left = new SubprogramBuiltin(perm_string::literal("shift_left"),
+                                           perm_string::literal("$ivlh_shift_left"),
+                                           fn_shift_left_args, &primitive_UNSIGNED);
+    register_std_subprogram(fn_shift_left);
+
+    /* numeric_std library
+     * function shift_right (arg: unsigned; count: natural) return unsigned;
+     */
+    std::list<InterfacePort*>*fn_shift_right_args = new std::list<InterfacePort*>();
+    fn_shift_right_args->push_back(new InterfacePort(&primitive_UNSIGNED));
+    fn_shift_right_args->push_back(new InterfacePort(&primitive_UNSIGNED));
+    SubprogramBuiltin*fn_shift_right = new SubprogramBuiltin(perm_string::literal("shift_right"),
+                                           perm_string::literal("$ivlh_shift_right"),
+                                           fn_shift_right_args, &primitive_UNSIGNED);
+    register_std_subprogram(fn_shift_right);
+
     /* function resize
      */
     fn_resize = new SubprogramSizeCast(perm_string::literal("resize"));

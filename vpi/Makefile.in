@@ -75,7 +75,7 @@ V = va_math.o
 
 V2009 = v2009_table.o v2009_array.o v2009_enum.o v2009_string.o
 
-VHDL_SYS = vhdl_table.o
+VHDL_SYS = vhdl_table.o sys_priv.o
 
 VHDL_TEXTIO = vhdl_textio.o sys_priv.o
 
