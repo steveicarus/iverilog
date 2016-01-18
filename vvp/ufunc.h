@@ -56,18 +56,20 @@ class ufunc_core : public vvp_wide_fun_core {
 		 unsigned nports, vvp_net_t**ports,
 		 vvp_code_t start_address,
 		 __vpiScope*call_scope,
-		 char*result_label,
 		 char*scope_label);
-      ~ufunc_core();
+      virtual ~ufunc_core() =0;
 
       __vpiScope*call_scope() { return call_scope_; }
       __vpiScope*func_scope() { return func_scope_; }
 
       void assign_bits_to_ports(vvp_context_t context);
-      void finish_thread();
+      virtual void finish_thread() =0;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context);
+
+    protected:
+      void finish_thread_real_();
 
     private:
       void recv_vec4_from_inputs(unsigned port);
@@ -90,9 +92,18 @@ class ufunc_core : public vvp_wide_fun_core {
       __vpiScope*call_scope_;
       __vpiScope*func_scope_;
       vvp_code_t code_;
+};
 
-	// Where the result will be.
-      vvp_net_t*result_;
+class ufunc_real : public ufunc_core {
+   public:
+      ufunc_real(unsigned ow, vvp_net_t*ptr,
+		 unsigned nports, vvp_net_t**ports,
+		 vvp_code_t start_address,
+		 __vpiScope*call_scope,
+		 char*scope_label);
+      ~ufunc_real();
+
+      void finish_thread();
 };
 
 #endif /* IVL_ufunc_H */

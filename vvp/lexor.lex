@@ -208,7 +208,7 @@ static char* strdupnew(char const *str)
 ".tranif0"  { return K_TRANIF0; }
 ".tranif1"  { return K_TRANIF1; }
 ".tranvp"   { return K_TRANVP; }
-".ufunc"    { return K_UFUNC; }
+".ufunc/real" { return K_UFUNC_REAL; }
 ".ufunc/e"  { return K_UFUNC_E; }
 ".var"      { return K_VAR; }
 ".var/cobj" { return K_VAR_COBJECT; }

@@ -5911,12 +5911,14 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
  * a ufunc_core object that has all the port information about the
  * function.
  */
-bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
+static bool do_exec_ufunc(vthread_t thr, vvp_code_t cp, vthread_t child)
 {
       __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
       assert(child_scope);
 
+      assert(child_scope->get_type_code() == vpiFunction);
       assert(thr->children.empty());
+
 
         /* We can take a number of shortcuts because we know that a
            continuous assignment can only occur in a static scope. */
@@ -5930,28 +5932,48 @@ bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
             thr->wt_context = child_context;
             thr->rd_context = child_context;
       }
+
+      child->wt_context = child_context;
+      child->rd_context = child_context;
+
 	/* Copy all the inputs to the ufunc object to the port
 	   variables of the function. This copies all the values
 	   atomically. */
       cp->ufunc_core_ptr->assign_bits_to_ports(child_context);
-
-	/* Create a temporary thread and run it immediately. */
-      vthread_t child = vthread_new(cp->cptr, child_scope);
-      child->wt_context = child_context;
-      child->rd_context = child_context;
-
-      child->is_scheduled = 1;
-	  child->delay_delete = 1;
-      vthread_run(child);
-      running_thread = thr;
-
-      if (child->i_have_ended)
-            return true;
+      child->delay_delete = 1;
 
       child->parent = thr;
       thr->children.insert(child);
-      thr->i_am_joining = 1;
-      return false;
+	// This should be the only child
+      assert(thr->children.size()==1);
+
+      child->is_scheduled = 1;
+      child->i_am_in_function = 1;
+      vthread_run(child);
+      running_thread = thr;
+
+      assert(test_joinable(thr, child));
+
+      if (child->i_have_ended) {
+	    do_join(thr, child);
+            return true;
+      } else {
+	    thr->i_am_joining = 1;
+	    return false;
+      }
+}
+
+bool of_EXEC_UFUNC_REAL(vthread_t thr, vvp_code_t cp)
+{
+      __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
+      assert(child_scope);
+
+	/* Create a temporary thread and run it immediately. */
+      vthread_t child = vthread_new(cp->cptr, child_scope);
+      thr->push_real(0.0);
+      child->args_real.push_back(0.0);
+
+      return do_exec_ufunc(thr, cp, child);
 }
 
 /*

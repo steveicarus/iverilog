@@ -1942,6 +1942,19 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
       ivl_variable_type_t dt = data_type_of_nexus(ivl_lpm_q(net));
       const char*dly = draw_lpm_output_delay(net, dt);
 
+      const char*type_string = "";
+      switch (dt) {
+	  case IVL_VT_REAL:
+		type_string = "/real";
+		break;
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+		type_string = "/vec4";
+		break;
+	  default:
+		break;
+      }
+
 	/* Get all the input labels that I will use for net signals that
 	   connect to the inputs of the function. */
       ninp = ivl_lpm_size(net);
@@ -1954,7 +1967,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
                     vvp_mangle_id(ivl_scope_name(def)),
                     ivl_lpm_width(net), ivl_lpm_trigger(net));
       else
-            fprintf(vvp_out, "L_%p%s .ufunc TD_%s, %u", net, dly,
+            fprintf(vvp_out, "L_%p%s .ufunc%s TD_%s, %u", net, dly, type_string,
                     vvp_mangle_id(ivl_scope_name(def)),
                     ivl_lpm_width(net));
 
@@ -1982,7 +1995,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
       }
 
       fprintf(vvp_out, ")");
-
+#if 0
 	/* Now print the reference to the signal from which the
 	   result is collected. */
       { ivl_signal_t psig = ivl_scope_port(def, 0);
@@ -1991,7 +2004,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 
 	fprintf(vvp_out, " v%p_0", psig);
       }
-
+#endif
         /* Finally, print the scope identifier. */
       fprintf(vvp_out, " S_%p;\n", def);
 }

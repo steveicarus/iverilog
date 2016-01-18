@@ -41,7 +41,7 @@
 ufunc_core::ufunc_core(unsigned owid, vvp_net_t*ptr,
 		       unsigned nports, vvp_net_t**ports,
 		       vvp_code_t sa, __vpiScope*call_scope__,
-		       char*result_label, char*scope_label)
+		       char*scope_label)
 : vvp_wide_fun_core(ptr, nports)
 {
       owid_ = owid;
@@ -49,8 +49,6 @@ ufunc_core::ufunc_core(unsigned owid, vvp_net_t*ptr,
       code_ = sa;
       thread_ = 0;
       call_scope_ = call_scope__;
-
-      functor_ref_lookup(&result_, result_label);
 
 	/* A __vpiScope starts with a __vpiHandle structure so this is
 	   a safe cast. We need the (void*) to avoid a dereferenced
@@ -104,14 +102,16 @@ void ufunc_core::assign_bits_to_ports(vvp_context_t context)
  * result from the return code variable and deliver it to the output
  * of the functor, back into the netlist.
  */
-void ufunc_core::finish_thread()
+void ufunc_core::finish_thread_real_()
 {
-      thread_ = 0;
-      if (vvp_fun_signal_real*sig = dynamic_cast<vvp_fun_signal_real*>(result_->fun))
-	    propagate_real(sig->real_unfiltered_value());
+      assert(thread_);
 
-      if (vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(result_->fun))
-	    propagate_vec4(sig->vec4_unfiltered_value());
+      double val = vthread_get_real_stack(thread_, 0);
+      vthread_pop_real(thread_, 1);
+
+      propagate_real(val);
+
+      thread_ = 0;
 }
 
 /*
@@ -147,6 +147,24 @@ void ufunc_core::invoke_thread_()
       }
 }
 
+ufunc_real::ufunc_real(unsigned ow, vvp_net_t*ptr,
+		       unsigned nports, vvp_net_t**ports,
+		       vvp_code_t start_address,
+		       __vpiScope*call_scope,
+		       char*scope_label)
+: ufunc_core(ow, ptr, nports, ports, start_address, call_scope, scope_label)
+{
+}
+
+ufunc_real::~ufunc_real()
+{
+}
+
+void ufunc_real::finish_thread()
+{
+      finish_thread_real_();
+}
+
 /*
  * This function compiles the .ufunc statement that is discovered in
  * the source file. Create all the functors and the thread, and
@@ -157,11 +175,10 @@ void ufunc_core::invoke_thread_()
  * The portv list is a list of variables that the function reads as
  * inputs. The core assigns values to these nets as part of the startup.
  */
-void compile_ufunc(char*label, char*code, unsigned wid,
+void compile_ufunc_real(char*label, char*code, unsigned wid,
 		   unsigned argc,  struct symb_s*argv,
 		   unsigned portc, struct symb_s*portv,
-		   struct symb_s retv, char*scope_label,
-                   char*trigger_label)
+		   char*scope_label, char*trigger_label)
 {
 	/* The input argument list and port list must have the same
 	   sizes, since internally we will be mapping the inputs list
@@ -187,7 +204,7 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 	   the output value to the destination net functor. */
 
       vvp_code_t exec_code = codespace_allocate();
-      exec_code->opcode = of_EXEC_UFUNC;
+      exec_code->opcode = of_EXEC_UFUNC_REAL;
       code_label_lookup(exec_code, code, false);
 
       vvp_code_t reap_code = codespace_allocate();
@@ -208,9 +225,9 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 	   it about the start address of the code stub, and the scope
 	   that will contain the execution. */
       vvp_net_t*ptr = new vvp_net_t;
-      ufunc_core*fcore = new ufunc_core(wid, ptr, portc, ports,
+      ufunc_core*fcore = new ufunc_real(wid, ptr, portc, ports,
 					exec_code, call_scope,
-					retv.text, scope_label);
+					scope_label);
       ptr->fun = fcore;
       define_functor_symbol(label, ptr);
       free(label);
@@ -229,6 +246,14 @@ void compile_ufunc(char*label, char*code, unsigned wid,
       free(portv);
 }
 
+void compile_ufunc_vec4(char*label, char*code, unsigned wid,
+		   unsigned argc,  struct symb_s*argv,
+		   unsigned portc, struct symb_s*portv,
+		   char*scope_label, char*trigger_label)
+{
+	// XXXX NOT IMPLEMENTED
+      assert(0);
+}
 #ifdef CHECK_WITH_VALGRIND
 static map<ufunc_core*, bool> ufunc_map;
 
