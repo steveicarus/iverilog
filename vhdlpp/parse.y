@@ -318,6 +318,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <arch_statement> concurrent_statement component_instantiation_statement
 %type <arch_statement> concurrent_conditional_signal_assignment
 %type <arch_statement> concurrent_signal_assignment_statement concurrent_simple_signal_assignment
+%type <arch_statement> concurrent_assertion_statement
 %type <arch_statement> for_generate_statement generate_statement if_generate_statement
 %type <arch_statement> process_statement selected_signal_assignment
 %type <arch_statement_list> architecture_statement_part generate_statement_body
@@ -768,6 +769,19 @@ composite_type_definition
       { $$ = $1; }
   ;
 
+concurrent_assertion_statement
+  : assertion_statement
+      {
+        /* See more explanations at IEEE 1076-2008 P11.5 */
+        std::list<SequentialStmt*> stmts;
+        stmts.push_back($1);
+        stmts.push_back(new WaitStmt(WaitStmt::FINAL, NULL));
+        ProcessStatement*tmp = new ProcessStatement(empty_perm_string, NULL, &stmts);
+        FILE_NAME(tmp, @1);
+        $$ = tmp;
+      }
+  ;
+
   /* The when...else..when...else syntax is not a general expression
      in VHDL but a specific sort of assignment statement model. We
      create Expression objects for it, but the parser will only
@@ -877,6 +891,7 @@ concurrent_signal_assignment_statement /* IEEE 1076-2008 P11.6 */
 concurrent_statement
   : component_instantiation_statement
   | concurrent_signal_assignment_statement
+  | concurrent_assertion_statement
   | generate_statement
   | process_statement
   ;
@@ -2060,7 +2075,7 @@ process_statement
     process_declarative_part_opt
     K_begin sequence_of_statements
     K_end K_postponed_opt K_process identifier_opt ';'
-      { perm_string iname = $1? lex_strings.make($1) : perm_string();
+      { perm_string iname = $1? lex_strings.make($1) : empty_perm_string;
 	if ($1) delete[]$1;
 	if ($12) {
 	      if (iname.nil()) {
