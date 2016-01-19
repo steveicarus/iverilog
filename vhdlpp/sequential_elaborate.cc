@@ -253,6 +253,8 @@ int WaitStmt::elaborate(Entity*ent, ScopeBase*scope)
 
         // Fill the sensitivity list
         expr_->visit(fill_sens_list);
+    } else if(type_ == FINAL) {
+        return 0;   // nothing to be elaborated
     }
 
     return expr_->elaborate_expr(ent, scope, 0);

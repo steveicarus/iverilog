@@ -602,6 +602,10 @@ int WaitStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
             out << "wait(";
             break;
+
+        case FINAL:
+            out << "/* final wait */" << endl;
+            return 0;   // no expression to be emitted
     }
 
     errors += expr_->emit(out, ent, scope);
@@ -620,6 +624,10 @@ void WaitStmt::write_to_stream(std::ostream&fd)
         case UNTIL:
             fd << "wait until ";
             break;
+
+        case FINAL:
+            fd << "wait";
+            return;     // no expression to be emitted
     }
 
     expr_->write_to_stream(fd);

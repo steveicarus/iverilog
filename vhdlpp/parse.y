@@ -2837,6 +2837,11 @@ wait_statement
         FILE_NAME(tmp, @1);
         $$ = tmp;
       }
+  | K_wait ';'
+      { WaitStmt*tmp = new WaitStmt(WaitStmt::FINAL, NULL);
+        FILE_NAME(tmp, @1);
+        $$ = tmp;
+      }
   ;
 
 waveform
