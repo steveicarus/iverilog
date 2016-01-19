@@ -288,7 +288,16 @@ int FinalStatement::emit(ostream&out, Entity*ent, Architecture*arc)
  */
 int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 {
-      out << "always begin" << endl;
+      /* Check if the process has no sensitivity list and ends up with
+       * a final wait. If so, convert the process to an initial block. */
+      const WaitStmt*wait_stmt = NULL;
+      if (! stmt_list().empty())
+          wait_stmt = dynamic_cast<const WaitStmt*>(stmt_list().back());
+
+      if (wait_stmt && wait_stmt->type() == WaitStmt::FINAL)
+          out << "initial begin" << endl;
+      else
+          out << "always begin" << endl;
 
       int errors = StatementList::emit(out, ent, arc);
 

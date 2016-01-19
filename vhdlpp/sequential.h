@@ -332,13 +332,15 @@ class WaitForStmt : public SequentialStmt {
 
 class WaitStmt : public SequentialStmt {
     public:
-      typedef enum { ON, UNTIL } wait_type_t;
+      typedef enum { ON, UNTIL, FINAL } wait_type_t;
       WaitStmt(wait_type_t type, Expression*expression);
 
       void dump(ostream&out, int indent) const;
       int elaborate(Entity*ent, ScopeBase*scope);
       int emit(ostream&out, Entity*entity, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
+
+      inline wait_type_t type() const { return type_; }
 
     private:
       wait_type_t type_;
