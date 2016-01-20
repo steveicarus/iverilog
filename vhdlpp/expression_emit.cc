@@ -62,7 +62,7 @@ inline static int emit_logic(char val, ostream& out, const VTypePrimitive::type_
     return 0;
 }
 
-int Expression::emit(ostream&out, Entity*, ScopeBase*)
+int Expression::emit(ostream&out, Entity*, ScopeBase*) const
 {
       out << " /* " << get_fileline() << ": internal error: "
 	  << "I don't know how to emit this expression! "
@@ -70,7 +70,7 @@ int Expression::emit(ostream&out, Entity*, ScopeBase*)
       return 1;
 }
 
-int Expression::emit_package(ostream&out)
+int Expression::emit_package(ostream&out) const
 {
       out << " /* " << get_fileline() << ": internal error: "
 	  << "I don't know how to emit_package this expression! "
@@ -83,7 +83,7 @@ bool Expression::is_primary(void) const
       return false;
 }
 
-int ExpBinary::emit_operand1(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpBinary::emit_operand1(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
       bool oper_primary = operand1_->is_primary();
@@ -93,7 +93,7 @@ int ExpBinary::emit_operand1(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpBinary::emit_operand2(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpBinary::emit_operand2(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
       bool oper_primary = operand2_->is_primary();
@@ -103,14 +103,14 @@ int ExpBinary::emit_operand2(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpUnary::emit_operand1(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpUnary::emit_operand1(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
       errors += operand1_->emit(out, ent, scope);
       return errors;
 }
 
-int ExpAggregate::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpAggregate::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       if (peek_type() == 0) {
 	    out << "/* " << get_fileline() << ": internal error: "
@@ -134,7 +134,7 @@ int ExpAggregate::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return 1;
 }
 
-int ExpAggregate::emit_array_(ostream&out, Entity*ent, ScopeBase*scope, const VTypeArray*atype)
+int ExpAggregate::emit_array_(ostream&out, Entity*ent, ScopeBase*scope, const VTypeArray*atype) const
 {
       int errors = 0;
 
@@ -194,8 +194,8 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, ScopeBase*scope, const VT
       if(use_msb < use_lsb)
         swap(use_msb, use_lsb);
 
-      map<int64_t,choice_element*> element_map;
-      choice_element*element_other = 0;
+      map<int64_t,const choice_element*> element_map;
+      const choice_element*element_other = 0;
 
       bool positional_section = true;
       int64_t positional_idx = use_msb;
@@ -283,7 +283,7 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, ScopeBase*scope, const VT
 
       out << "{";
       for (int64_t idx = use_msb ; idx >= use_lsb ; idx -= 1) {
-	    choice_element*cur = element_map[idx];
+	    const choice_element*cur = element_map[idx];
 	    if (cur == 0)
 		  cur = element_other;
 
@@ -303,7 +303,7 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, ScopeBase*scope, const VT
       return errors;
 }
 
-int ExpAggregate::emit_record_(ostream&out, Entity*ent, ScopeBase*scope, const VTypeRecord*)
+int ExpAggregate::emit_record_(ostream&out, Entity*ent, ScopeBase*scope, const VTypeRecord*) const
 {
       int errors = 0;
 
@@ -331,7 +331,7 @@ int ExpAggregate::emit_record_(ostream&out, Entity*ent, ScopeBase*scope, const V
       return errors;
 }
 
-int ExpObjAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpObjAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
 
@@ -372,7 +372,7 @@ int ExpObjAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpTypeAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpTypeAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
 
@@ -409,7 +409,7 @@ int ExpTypeAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpArithmetic::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpArithmetic::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
 
@@ -463,7 +463,7 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpBitstring::emit(ostream&out, Entity*, ScopeBase*)
+int ExpBitstring::emit(ostream&out, Entity*, ScopeBase*) const
 {
       int errors = 0;
 
@@ -475,7 +475,7 @@ int ExpBitstring::emit(ostream&out, Entity*, ScopeBase*)
 }
 
 int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*, ScopeBase*,
-				      const VTypePrimitive*etype)
+				      const VTypePrimitive*etype) const
 {
       out << "1'b";
       int res = emit_logic(value_, out, etype->type());
@@ -488,7 +488,7 @@ int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*, ScopeBase*,
       return res;
 }
 
-int ExpCharacter::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpCharacter::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       const VType*etype = peek_type();
       const VTypeArray*array;
@@ -519,7 +519,7 @@ bool ExpConcat::is_primary(void) const
       return true;
 }
 
-int ExpConcat::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpConcat::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
       out << "{";
@@ -530,7 +530,7 @@ int ExpConcat::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpConditional::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpConditional::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
       out << "(";
@@ -538,10 +538,10 @@ int ExpConditional::emit(ostream&out, Entity*ent, ScopeBase*scope)
 	// Draw out any when-else expressions. These are all the else_
 	// clauses besides the last.
       if (options_.size() > 1) {
-	    list<case_t*>::iterator last = options_.end();
+	    list<case_t*>::const_iterator last = options_.end();
 	    --last;
 
-	    for (list<case_t*>::iterator cur = options_.begin()
+	    for (list<case_t*>::const_iterator cur = options_.begin()
 		       ; cur != last ; ++cur) {
 		  errors += (*cur)->emit_option(out, ent, scope);
 	    }
@@ -560,7 +560,7 @@ int ExpConditional::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpConditional::case_t::emit_option(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpConditional::case_t::emit_option(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
       assert(cond_ != 0);
@@ -582,7 +582,7 @@ int ExpConditional::case_t::emit_option(ostream&out, Entity*ent, ScopeBase*scope
       return errors;
 }
 
-int ExpConditional::case_t::emit_default(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpConditional::case_t::emit_default(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
 	// Trailing else must have no condition.
@@ -599,7 +599,7 @@ int ExpConditional::case_t::emit_default(ostream&out, Entity*ent, ScopeBase*scop
       return errors;
 }
 
-int ExpEdge::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpEdge::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
       switch (fun_) {
@@ -616,7 +616,7 @@ int ExpEdge::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
 
@@ -642,25 +642,25 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpInteger::emit(ostream&out, Entity*, ScopeBase*)
+int ExpInteger::emit(ostream&out, Entity*, ScopeBase*) const
 {
       out << "32'd" << value_;
       return 0;
 }
 
-int ExpInteger::emit_package(ostream&out)
+int ExpInteger::emit_package(ostream&out) const
 {
       out << value_;
       return 0;
 }
 
-int ExpReal::emit(ostream&out, Entity*, ScopeBase*)
+int ExpReal::emit(ostream&out, Entity*, ScopeBase*) const
 {
       out << value_;
       return 0;
 }
 
-int ExpReal::emit_package(ostream&out)
+int ExpReal::emit_package(ostream&out) const
 {
       out << value_;
       return 0;
@@ -671,7 +671,7 @@ bool ExpReal::is_primary(void) const
       return true;
 }
 
-int ExpLogical::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpLogical::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
 
@@ -703,7 +703,7 @@ int ExpLogical::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpName::emit_as_prefix_(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpName::emit_as_prefix_(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
       if (prefix_.get()) {
@@ -721,7 +721,7 @@ int ExpName::emit_as_prefix_(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpName::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpName::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
       int field_size = 0;
@@ -763,7 +763,7 @@ int ExpName::emit(ostream&out, Entity*ent, ScopeBase*scope)
 }
 
 bool ExpName::try_workarounds_(ostream&out, Entity*ent, ScopeBase*scope,
-        list<index_t*>& indices, int& data_size)
+        list<index_t*>& indices, int& data_size) const
 {
     Expression*exp = NULL;
     bool wrkand_required = false;
@@ -860,7 +860,7 @@ bool ExpName::check_const_record_workaround_(const VTypeRecord*rec,
 }
 
 int ExpName::emit_workaround_(ostream&out, Entity*ent, ScopeBase*scope,
-        const list<index_t*>& indices, int field_size)
+        const list<index_t*>& indices, int field_size) const
 {
     int errors = 0;
 
@@ -882,7 +882,7 @@ bool ExpName::is_primary(void) const
       return true;
 }
 
-int ExpRelation::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpRelation::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
       errors += emit_operand1(out, ent, scope);
@@ -912,7 +912,7 @@ int ExpRelation::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpShift::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpShift::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
 
@@ -947,7 +947,7 @@ bool ExpString::is_primary(void) const
       return true;
 }
 
-int ExpString::emit(ostream& out, Entity*ent, ScopeBase*scope)
+int ExpString::emit(ostream& out, Entity*ent, ScopeBase*scope) const
 {
       const VTypeArray*arr;
       const VType*type = peek_type();
@@ -962,7 +962,7 @@ int ExpString::emit(ostream& out, Entity*ent, ScopeBase*scope)
       return 0;
 }
 
-int ExpString::emit_as_array_(ostream& out, Entity*, ScopeBase*, const VTypeArray*arr)
+int ExpString::emit_as_array_(ostream& out, Entity*, ScopeBase*, const VTypeArray*arr) const
 {
       int errors = 0;
       assert(arr->dimensions() == 1);
@@ -1010,7 +1010,7 @@ std::string ExpString::escape_quot(const std::string& str)
       return result;
 }
 
-int ExpUAbs::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpUAbs::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
       out << "abs(";
@@ -1019,7 +1019,7 @@ int ExpUAbs::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpUNot::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpUNot::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
 
@@ -1035,7 +1035,7 @@ int ExpUNot::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpCast::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpCast::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
       errors += type_->emit_def(out, empty_perm_string);
@@ -1045,7 +1045,7 @@ int ExpCast::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpNew::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpNew::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
       out << "new[";
@@ -1054,7 +1054,7 @@ int ExpNew::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int ExpTime::emit(ostream&out, Entity*, ScopeBase*)
+int ExpTime::emit(ostream&out, Entity*, ScopeBase*) const
 {
       out << amount_;
 
@@ -1070,7 +1070,7 @@ int ExpTime::emit(ostream&out, Entity*, ScopeBase*)
       return 0;
 }
 
-int ExpRange::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpRange::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
 
