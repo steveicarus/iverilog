@@ -659,7 +659,7 @@ void ExpName::visit(ExprVisitor& func)
       func(this);
 }
 
-int ExpName::index_t::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpName::index_t::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
 
