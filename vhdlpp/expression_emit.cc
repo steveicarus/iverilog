@@ -1089,7 +1089,7 @@ int ExpRange::emit(ostream&out, Entity*ent, ScopeBase*scope) const
           errors += right_->emit(out, ent, scope);
       }
 
-      return 0;
+      return errors;
 }
 
 int ExpDelay::emit(ostream&out, Entity*ent, ScopeBase*scope) const
