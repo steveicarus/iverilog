@@ -334,3 +334,10 @@ void ExpRange::write_to_stream(ostream&fd) const
           right_->write_to_stream(fd);
       }
 }
+
+void ExpDelay::write_to_stream(ostream&out) const
+{
+      expr_->write_to_stream(out);
+      out << " after ";
+      delay_->write_to_stream(out);
+}

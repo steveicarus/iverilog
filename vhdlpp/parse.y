@@ -2882,6 +2882,8 @@ waveform_elements
 waveform_element
   : expression
       { $$ = $1; }
+  | expression K_after expression
+      { $$ = new ExpDelay($1, $3); }
   | K_null
       { $$ = 0; }
   ;

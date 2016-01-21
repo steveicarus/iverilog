@@ -846,3 +846,14 @@ Expression*ExpRange::right()
                                     ExpAttribute::RIGHT, NULL);
     return right_;
 }
+
+ExpDelay::ExpDelay(Expression*expr, Expression*delay)
+: expr_(expr), delay_(delay)
+{
+}
+
+ExpDelay::~ExpDelay()
+{
+    delete expr_;
+    delete delay_;
+}

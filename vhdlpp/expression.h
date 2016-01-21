@@ -982,6 +982,27 @@ class ExpRange : public Expression {
         bool range_reverse_;
 };
 
+// Helper class that wraps other expression to specify delay.
+class ExpDelay : public Expression {
+public:
+    ExpDelay(Expression*expr, Expression*delay);
+    ~ExpDelay();
+
+    Expression*clone() const { return new ExpDelay(expr_->clone(), delay_->clone()); }
+
+    int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
+    void write_to_stream(std::ostream&) const;
+    int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
+    void dump(ostream&out, int indent = 0) const;
+
+    const Expression*peek_expr() const { return expr_; }
+    const Expression*peek_delay() const { return delay_; }
+
+private:
+    Expression*expr_;
+    Expression*delay_;
+};
+
 // Elaborates an expression used as an argument in a procedure/function call.
 int elaborate_argument(Expression*expr, const SubprogramHeader*subp,
                        int idx, Entity*ent, ScopeBase*scope);

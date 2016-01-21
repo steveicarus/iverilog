@@ -1100,6 +1100,16 @@ int ExpRange::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
     return errors;
 }
 
+int ExpDelay::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
+{
+    int errors = 0;
+
+    errors += expr_->elaborate_expr(ent, scope, ltype);
+    errors += delay_->elaborate_expr(ent, scope, ltype);
+
+    return errors;
+}
+
 int elaborate_argument(Expression*expr, const SubprogramHeader*subp,
                        int idx, Entity*ent, ScopeBase*scope)
 {
