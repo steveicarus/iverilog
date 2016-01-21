@@ -132,16 +132,21 @@ int SignalAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
       int errors = 0;
 
       ivl_assert(*this, rval_.size() == 1);
-      Expression*rval = rval_.front();
+      const Expression*rval = rval_.front();
 
       out << "// " << get_fileline() << endl;
       out << "assign ";
+      if(const ExpDelay*delayed = dynamic_cast<const ExpDelay*>(rval)) {
+        out << "#(";
+        delayed->peek_delay()->emit(out, ent, arc);
+        out << ") ";
+        rval = delayed->peek_expr();
+      }
       errors += lval_->emit(out, ent, arc);
       out << " = ";
-
       errors += rval->emit(out, ent, arc);
-
       out << ";" << endl;
+
       return errors;
 }
 
@@ -316,5 +321,4 @@ int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 
       out << "end" << endl;
       return errors;
-
 }

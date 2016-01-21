@@ -123,3 +123,11 @@ void ExpRange::dump(ostream&out, int indent) const
       out << setw(indent) << "" << "Range ";
       write_to_stream(out);
 }
+
+void ExpDelay::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "Expression ";
+      expr_->write_to_stream(out);
+      out << " delayed by ";
+      delay_->write_to_stream(out);
+}

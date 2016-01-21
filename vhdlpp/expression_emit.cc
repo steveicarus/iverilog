@@ -1091,3 +1091,15 @@ int ExpRange::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 
       return 0;
 }
+
+int ExpDelay::emit(ostream&out, Entity*ent, ScopeBase*scope) const
+{
+      int errors = 0;
+
+      out << "#(";
+      errors += delay_->emit(out, ent, scope);
+      out << ") ";
+      errors += expr_->emit(out, ent, scope);
+
+      return errors;
+}
