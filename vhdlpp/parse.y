@@ -533,7 +533,7 @@ block_declarative_item
       { /* Save the signal declaration in the block_signals map. */
 	for (std::list<perm_string>::iterator cur = $2->begin()
 		   ; cur != $2->end() ; ++cur) {
-	      Signal*sig = new Signal(*cur, $4, $5);
+	      Signal*sig = new Signal(*cur, $4, $5 ? $5->clone() : 0);
 	      FILE_NAME(sig, @1);
 	      active_scope->bind_name(*cur, sig);
 	}
