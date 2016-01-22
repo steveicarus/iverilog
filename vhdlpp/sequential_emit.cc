@@ -82,7 +82,7 @@ void IfSequential::write_to_stream(std::ostream&fd)
 {
       fd << "if ";
       cond_->write_to_stream(fd);
-      fd << " then " << endl;
+      fd << " then" << endl;
 
       for (list<SequentialStmt*>::iterator cur = if_.begin()
 		 ; cur != if_.end() ; ++cur)
