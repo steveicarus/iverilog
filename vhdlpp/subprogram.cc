@@ -82,7 +82,8 @@ void SubprogramBody::write_to_stream(ostream&fd) const
       } else {
 	    fd << "--empty body" << endl;
       }
-	    fd << "end function;" << endl;
+
+      fd << "end function " << header_->name() << ";" << endl;
 }
 
 SubprogramHeader::SubprogramHeader(perm_string nam, list<InterfacePort*>*ports,
