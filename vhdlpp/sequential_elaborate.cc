@@ -190,7 +190,7 @@ int ProcedureCall::elaborate(Entity*ent, ScopeBase*scope)
       if(param_list_) {
 	    for(list<named_expr_t*>::iterator cur = param_list_->begin()
 		 ; cur != param_list_->end() ; ++cur) {
-		errors += elaborate_argument((*cur)->expr(), def_, idx, ent, scope);
+		errors += def_->elaborate_argument((*cur)->expr(), idx, ent, scope);
 		++idx;
             }
       }

@@ -201,6 +201,35 @@ void SubprogramHeader::set_body(SubprogramBody*bdy)
     bdy->header_ = this;
 }
 
+int SubprogramHeader::elaborate_argument(Expression*expr, int idx,
+                                         Entity*ent, ScopeBase*scope)
+{
+    const VType*type = expr->probe_type(ent, scope);
+    const InterfacePort*param = peek_param(idx);
+
+    if(!param) {
+        cerr << expr->get_fileline()
+                << ": error: Too many arguments when calling "
+                << name_ << "." << endl;
+        return 1;
+    }
+
+    // Enable reg_flag for variables that might be modified in subprograms
+    if(param->mode == PORT_OUT || param->mode == PORT_INOUT) {
+        if(const ExpName*e = dynamic_cast<const ExpName*>(expr)) {
+            if(Signal*sig = scope->find_signal(e->peek_name()))
+                sig->count_ref_sequ();
+            else if(Variable*var = scope->find_variable(e->peek_name()))
+                var->count_ref_sequ();
+        }
+    }
+
+    if(!type)
+        type = param->type;
+
+    return expr->elaborate_expr(ent, scope, type);
+}
+
 SubprogramHeader*SubprogramHeader::make_instance(std::vector<Expression*> arguments,
                                                  ScopeBase*scope) const {
     assert(arguments.size() == ports_->size());

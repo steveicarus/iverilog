@@ -94,6 +94,9 @@ class SubprogramHeader : public LineInfo {
 
       int elaborate() { return (body_ ? body_->elaborate() : 0); }
 
+	// Elaborates an argument basing on the types stored in the subprogram header.
+      int elaborate_argument(Expression*expr, int idx, Entity*ent, ScopeBase*scope);
+
 	// Emits the function name, including the package if required.
       int emit_full_name(const std::vector<Expression*>&argv,
                          std::ostream&out, Entity*, ScopeBase*) const;
