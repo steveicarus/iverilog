@@ -150,6 +150,56 @@ int SignalAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
+int CondSignalAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+    int errors = 0;
+
+    out << "// " << get_fileline() << endl;
+    out << "always @(";
+
+    bool first = true;
+    for(list<const ExpName*>::const_iterator it = sens_list_.begin();
+            it != sens_list_.end(); ++it) {
+        if(first)
+            first = false;
+        else
+            out << ",";
+
+        errors += (*it)->emit(out, ent, arc);
+    }
+
+    out << ") begin" << endl;
+
+    first = true;
+    for(list<ExpConditional::case_t*>::iterator it = options_.begin();
+            it != options_.end(); ++it) {
+        ExpConditional::case_t*cas = *it;
+        ivl_assert(*this, cas->true_clause().size() == 1);
+        const Expression*rval = cas->true_clause().front();
+
+        if(first)
+            first = false;
+        else
+            out << "else ";
+
+        if(Expression*cond = cas->condition()) {
+            out << "if(";
+            cond->emit(out, ent, arc);
+            out << ") ";
+        }
+
+        out << endl;
+        lval_->emit(out, ent, arc);
+        out << " = ";
+        rval->emit(out, ent, arc);
+        out << ";" << endl;
+    }
+
+    out << "end" << endl;
+
+    return errors;
+}
+
 int ComponentInstantiation::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       const char*comma = "";

@@ -95,6 +95,18 @@ void SignalAssignment::dump(ostream&out, int indent) const
       }
 }
 
+void CondSignalAssignment::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "CondSignalAssignment file=" << get_fileline() << endl;
+      lval_->dump(out, indent+1);
+      out << setw(indent+2) << "" << "<= <expr>..." << endl;
+
+      for(list<ExpConditional::case_t*>::const_iterator it = options_.begin();
+              it != options_.end(); ++it) {
+          (*it)->dump(out, indent+2);
+      }
+}
+
 void StatementList::dump(ostream&out, int indent) const
 {
       out << setw(indent+3) << "" << "sequence of statements:" << endl;

@@ -377,7 +377,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <elsif_list> if_statement_elsif_list if_statement_elsif_list_opt
 
 %type <exp_options> else_when_waveform selected_waveform
-%type <exp_options_list> else_when_waveforms selected_waveform_list
+%type <exp_options_list> else_when_waveforms else_when_waveforms_opt selected_waveform_list
 
 %type <subprogram> function_specification procedure_specification
 %type <subprogram> subprogram_specification subprogram_body_start
@@ -787,18 +787,18 @@ concurrent_assertion_statement
      create Expression objects for it, but the parser will only
      recognize it it in specific situations. */
 concurrent_conditional_signal_assignment /* IEEE 1076-2008 P11.6 */
-  : name LEQ waveform K_when expression else_when_waveforms ';'
-      { ExpConditional*tmp = new ExpConditional($5, $3, $6);
-	FILE_NAME(tmp, @3);
-	delete $3;
-	delete $6;
+  : name LEQ waveform K_when expression else_when_waveforms_opt ';'
+      { std::list<ExpConditional::case_t*>*options;
+        options = $6 ? $6 : new std::list<ExpConditional::case_t*>;
+        options->push_front(new ExpConditional::case_t($5, $3));
 
-        ExpName*name = dynamic_cast<ExpName*> ($1);
-	assert(name);
-	SignalAssignment*tmpa = new SignalAssignment(name, tmp);
-	FILE_NAME(tmpa, @1);
+        ExpName*name = dynamic_cast<ExpName*>($1);
+        assert(name);
+        CondSignalAssignment*tmp = new CondSignalAssignment(name, *options);
 
-	$$ = tmpa;
+        FILE_NAME(tmp, @1);
+        delete options;
+        $$ = tmp;
       }
 
   /* Error recovery rules. */
@@ -841,6 +841,12 @@ else_when_waveforms
 	$$ = tmp;
       }
   ;
+
+else_when_waveforms_opt
+  : else_when_waveforms { $$ = $1; }
+  | { $$ = 0; }
+  ;
+
 
 else_when_waveform
   : K_else waveform K_when expression

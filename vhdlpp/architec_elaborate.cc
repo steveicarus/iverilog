@@ -353,3 +353,48 @@ int SignalAssignment::elaborate(Entity*ent, Architecture*arc)
 
       return errors;
 }
+
+int CondSignalAssignment::elaborate(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+        // Visitor to extract signal names occuring in the conditional
+        // statements to create the sensitivity list
+      struct name_extractor_t : public ExprVisitor {
+          name_extractor_t(list<const ExpName*>& name_list)
+              : name_list_(name_list) {}
+          void operator() (Expression*s) {
+              if(const ExpName*name = dynamic_cast<const ExpName*>(s))
+                  name_list_.push_back(name);
+          }
+
+          private:
+            list<const ExpName*>& name_list_;
+      } name_extractor(sens_list_);
+
+        // Elaborate the l-value expression.
+      errors += lval_->elaborate_lval(ent, arc, true);
+
+        // The elaborate_lval should have resolved the type of the
+        // l-value expression. We'll use that type to elaborate the
+        // r-value.
+      const VType*lval_type = lval_->peek_type();
+      if (lval_type == 0) {
+          if (errors == 0) {
+              errors += 1;
+              cerr << get_fileline()
+                   << ": error: Unable to calculate type for l-value expression."
+                   << endl;
+          }
+          return errors;
+      }
+
+      for(list<ExpConditional::case_t*>::iterator it = options_.begin();
+              it != options_.end(); ++it) {
+          ExpConditional::case_t*cas = (*it);
+          cas->elaborate_expr(ent, arc, lval_type);
+          cas->visit(name_extractor);
+      }
+
+      return errors;
+}
