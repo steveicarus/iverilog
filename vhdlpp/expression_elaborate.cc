@@ -817,7 +817,7 @@ int ExpFunc::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
 
 	// Elaborate arguments
       for (size_t idx = 0; idx < argv_.size(); ++idx) {
-	    errors += elaborate_argument(argv_[idx], prog, idx, ent, scope);
+	    errors += prog->elaborate_argument(argv_[idx], idx, ent, scope);
       }
 
 	// SystemVerilog functions work only with defined size data types, therefore
@@ -1108,36 +1108,4 @@ int ExpDelay::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
     errors += delay_->elaborate_expr(ent, scope, ltype);
 
     return errors;
-}
-
-int elaborate_argument(Expression*expr, const SubprogramHeader*subp,
-                       int idx, Entity*ent, ScopeBase*scope)
-{
-    const VType*type = expr->probe_type(ent, scope);
-
-    if(subp) {
-        const InterfacePort*param = subp->peek_param(idx);
-
-        if(!param) {
-            cerr << expr->get_fileline()
-                 << ": error: Too many arguments when calling "
-                 << subp->name() << "." << endl;
-            return 1;
-        }
-
-        // Enable reg_flag for variables that might be modified in subprograms
-        if(param->mode == PORT_OUT || param->mode == PORT_INOUT) {
-            if(const ExpName*e = dynamic_cast<const ExpName*>(expr)) {
-                if(Signal*sig = scope->find_signal(e->peek_name()))
-                    sig->count_ref_sequ();
-                else if(Variable*var = scope->find_variable(e->peek_name()))
-                    var->count_ref_sequ();
-            }
-        }
-
-        if(!type)
-            type = param->type;
-    }
-
-    return expr->elaborate_expr(ent, scope, type);
 }

@@ -1004,8 +1004,4 @@ private:
     Expression*delay_;
 };
 
-// Elaborates an expression used as an argument in a procedure/function call.
-int elaborate_argument(Expression*expr, const SubprogramHeader*subp,
-                       int idx, Entity*ent, ScopeBase*scope);
-
 #endif /* IVL_expression_H */
