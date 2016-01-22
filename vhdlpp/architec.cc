@@ -178,6 +178,21 @@ SignalAssignment::~SignalAssignment()
       delete lval_;
 }
 
+CondSignalAssignment::CondSignalAssignment(ExpName*target, std::list<ExpConditional::case_t*>&options)
+: lval_(target)
+{
+    options_.splice(options_.end(), options);
+}
+
+CondSignalAssignment::~CondSignalAssignment()
+{
+    delete lval_;
+    for(list<ExpConditional::case_t*>::iterator it = options_.begin();
+            it != options_.end(); ++it) {
+        delete *it;
+    }
+}
+
 ComponentInstantiation::ComponentInstantiation(perm_string i, perm_string c,
 					       list<named_expr_t*>*parms,
 					       list<named_expr_t*>*ports)

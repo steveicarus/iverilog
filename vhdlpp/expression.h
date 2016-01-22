@@ -509,8 +509,9 @@ class ExpConditional : public Expression {
 	    case_t(const case_t&other);
 	    ~case_t();
 
-	    inline Expression*condition() { return cond_; }
+	    inline Expression*condition() const { return cond_; }
 	    inline void set_condition(Expression*cond) { cond_ = cond; }
+	    inline const std::list<Expression*>& true_clause() const { return true_clause_; }
 
 	    int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*lt);
 	    int emit_option(ostream&out, Entity*ent, ScopeBase*scope) const;
