@@ -181,9 +181,32 @@ void ExpReal::write_to_stream(ostream&fd) const
       fd << value_;
 }
 
-void ExpLogical::write_to_stream(ostream&) const
+void ExpLogical::write_to_stream(ostream&out) const
 {
-      ivl_assert(*this, !"Not supported");
+      peek_operand1()->write_to_stream(out);
+
+      switch (fun_) {
+	  case AND:
+	    out << " and ";
+	    break;
+	  case OR:
+	    out << " or ";
+	    break;
+	  case XOR:
+	    out << " xor ";
+	    break;
+	  case NAND:
+	    out << " nand ";
+	    break;
+	  case NOR:
+	    out << " nor ";
+	    break;
+	  case XNOR:
+	    out << " xnor ";
+	    break;
+      }
+
+      peek_operand2()->write_to_stream(out);
 }
 
 void ExpName::write_to_stream(ostream&fd) const
