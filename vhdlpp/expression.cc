@@ -88,11 +88,13 @@ list<Expression*>*ExpAttribute::clone_args() const {
 void ExpAttribute::visit_args(ExprVisitor& func)
 {
       if(args_) {
-	    for(list<Expression*>::iterator it = args_->begin();
+          for(list<Expression*>::iterator it = args_->begin();
                     it != args_->end(); ++it) {
-		func(*it);
-            }
+              (*it)->visit(func);
+          }
       }
+
+      func(this);
 }
 
 ExpObjAttribute::ExpObjAttribute(ExpName*base, perm_string name, list<Expression*>*args)
@@ -405,9 +407,8 @@ Expression*ExpConditional::clone() const
 void ExpConditional::visit(ExprVisitor& func)
 {
       for(std::list<case_t*>::iterator it = options_.begin();
-              it != options_.end(); ++it) {
+              it != options_.end(); ++it)
           (*it)->visit(func);
-      }
 
       func(this);
 }
@@ -474,12 +475,11 @@ Expression*ExpSelected::clone() const
 void ExpConditional::case_t::visit(ExprVisitor& func)
 {
       if(cond_)
-          func(cond_);
+          cond_->visit(func);
 
       for(std::list<Expression*>::iterator it = true_clause_.begin();
-              it != true_clause_.end(); ++it) {
-          func(*it);
-      }
+              it != true_clause_.end(); ++it)
+          (*it)->visit(func);
 }
 
 ExpEdge::ExpEdge(ExpEdge::fun_t typ, Expression*op)
