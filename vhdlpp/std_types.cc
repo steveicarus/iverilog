@@ -34,6 +34,7 @@ const VTypePrimitive primitive_TIME(VTypePrimitive::TIME);
 
 VTypeDef type_BOOLEAN(perm_string::literal("boolean"));
 VTypeDef type_FILE_OPEN_KIND(perm_string::literal("file_open_kind"));
+VTypeDef type_FILE_OPEN_STATUS(perm_string::literal("file_open_status"));
 
 const VTypeArray primitive_CHARACTER(&primitive_BIT,            7, 0);
 const VTypeArray primitive_BIT_VECTOR(&primitive_BIT,           vector<VTypeArray::range_t> (1));
@@ -63,6 +64,17 @@ void generate_global_types(ActiveScope*res)
       type_FILE_OPEN_KIND.set_definition(enum_FILE_OPEN_KIND);
       std_types[type_FILE_OPEN_KIND.peek_name()] = &type_FILE_OPEN_KIND;
       std_enums.push_back(enum_FILE_OPEN_KIND);
+
+    // file_open_status
+      list<perm_string> enum_FILE_OPEN_STATUS_vals;
+      enum_FILE_OPEN_STATUS_vals.push_back(perm_string::literal("open_ok"));
+      enum_FILE_OPEN_STATUS_vals.push_back(perm_string::literal("status_error"));
+      enum_FILE_OPEN_STATUS_vals.push_back(perm_string::literal("name_error"));
+      enum_FILE_OPEN_STATUS_vals.push_back(perm_string::literal("mode_error"));
+      VTypeEnum*enum_FILE_OPEN_STATUS = new VTypeEnum(&enum_FILE_OPEN_STATUS_vals);
+      type_FILE_OPEN_STATUS.set_definition(enum_FILE_OPEN_STATUS);
+      std_types[type_FILE_OPEN_STATUS.peek_name()] = &type_FILE_OPEN_STATUS;
+      std_enums.push_back(enum_FILE_OPEN_STATUS);
 
       res->use_name(type_BOOLEAN.peek_name(),           &type_BOOLEAN);
       res->use_name(perm_string::literal("bit"),        &primitive_BIT);
