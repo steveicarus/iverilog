@@ -54,6 +54,8 @@ class SubprogramBody : public LineInfo, public ScopeBase {
       void write_to_stream(std::ostream&fd) const;
       void dump(std::ostream&fd) const;
 
+      const SubprogramHeader*header() const { return header_; }
+
     private:
       std::list<SequentialStmt*>*statements_;
       SubprogramHeader*header_;

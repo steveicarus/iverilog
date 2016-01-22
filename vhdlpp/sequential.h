@@ -135,6 +135,7 @@ class ReturnStmt  : public SequentialStmt {
       ~ReturnStmt();
 
     public:
+      int elaborate(Entity*ent, ScopeBase*scope);
       int emit(ostream&out, Entity*entity, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
       void dump(ostream&out, int indent) const;
