@@ -133,6 +133,22 @@ int IfSequential::Elsif::elaborate(Entity*ent, ScopeBase*scope)
       return errors;
 }
 
+int ReturnStmt::elaborate(Entity*ent, ScopeBase*scope)
+{
+      const VType*ltype = NULL;
+
+      // Try to determine the expression type by
+      // looking up the function return type.
+      const SubprogramBody*subp = dynamic_cast<const SubprogramBody*>(scope);
+      if(subp) {
+          if(const SubprogramHeader*header = subp->header()) {
+              ltype = header->peek_return_type();
+          }
+      }
+
+      return val_->elaborate_expr(ent, scope, ltype);
+}
+
 int SignalSeqAssignment::elaborate(Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
