@@ -21,6 +21,7 @@
 # include  "subprogram.h"
 # include  "sequential.h"
 # include  "vtype.h"
+# include  "package.h"
 # include  <iostream>
 
 using namespace std;
@@ -95,6 +96,23 @@ int SubprogramHeader::emit_package(ostream&fd) const
 	    fd << "endtask" << endl;
 
       return errors;
+}
+
+int SubprogramHeader::emit_full_name(const std::vector<Expression*>&argv,
+                        std::ostream&out, Entity*ent, ScopeBase*scope) const
+{
+    // If this function has an elaborated definition, and if
+    // that definition is in a package, then include the
+    // package name as a scope qualifier. This assures that
+    // the SV elaborator finds the correct VHDL elaborated
+    // definition. It should not be emitted only if we call another
+    // function from the same package.
+    const Package*pkg = dynamic_cast<const Package*>(parent_);
+    const SubprogramBody*subp = dynamic_cast<const SubprogramBody*>(scope);
+    if (pkg != 0 && (!subp || !subp->header() || subp->header()->get_parent() != pkg))
+        out << "\\" << pkg->name() << " ::";
+
+    return emit_name(argv, out, ent, scope);
 }
 
 int SubprogramHeader::emit_name(const std::vector<Expression*>&,
