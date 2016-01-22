@@ -1118,6 +1118,13 @@ int elaborate_argument(Expression*expr, const SubprogramHeader*subp,
     if(subp) {
         const InterfacePort*param = subp->peek_param(idx);
 
+        if(!param) {
+            cerr << expr->get_fileline()
+                 << ": error: Too many arguments when calling "
+                 << subp->name() << "." << endl;
+            return 1;
+        }
+
         // Enable reg_flag for variables that might be modified in subprograms
         if(param->mode == PORT_OUT || param->mode == PORT_INOUT) {
             if(const ExpName*e = dynamic_cast<const ExpName*>(expr)) {
