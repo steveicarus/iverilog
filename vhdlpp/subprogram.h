@@ -94,11 +94,15 @@ class SubprogramHeader : public LineInfo {
 
       int elaborate() { return (body_ ? body_->elaborate() : 0); }
 
+	// Emits the function name, including the package if required.
+      int emit_full_name(const std::vector<Expression*>&argv,
+                         std::ostream&out, Entity*, ScopeBase*) const;
+
 	// Function name used in the emission step. The main purpose of this
 	// method is to handle functions offered by standard VHDL libraries.
 	// Allows to return different function names depending on the arguments
 	// (think of size casting or signed/unsigned functions).
-      virtual int emit_name(const std::vector<Expression*>&,
+      virtual int emit_name(const std::vector<Expression*>&argv,
                             std::ostream&out, Entity*, ScopeBase*) const;
 
 	// Emit arguments for a specific call. It allows to reorder or skip

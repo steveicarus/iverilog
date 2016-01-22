@@ -210,26 +210,27 @@ void VariableSeqAssignment::write_to_stream(ostream&fd)
 int ProcedureCall::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
-      std::vector<Expression*>params;
+      vector<Expression*>argv;
 
+      if(!def_) {
+          cerr << get_fileline() << ": error: unknown procedure: " << name_ << endl;
+          return 1;
+      }
+
+      // Convert the parameter list to vector
       if(param_list_) {
-          params.reserve(param_list_->size());
+          argv.reserve(param_list_->size());
 
           for(std::list<named_expr_t*>::iterator it = param_list_->begin();
                   it != param_list_->end(); ++it)
-              params.push_back((*it)->expr());
+              argv.push_back((*it)->expr());
       }
 
-      const Package*pkg = dynamic_cast<const Package*> (def_->get_parent());
-      if (pkg != 0)
-          out << "\\" << pkg->name() << " ::";
-
-      errors += def_->emit_name(params, out, ent, scope);
-
+      def_->emit_full_name(argv, out, ent, scope);
       out << " (";
-      if(param_list_) {
-	    errors += def_->emit_args(params, out, ent, scope);
-      }
+
+      if(param_list_)
+	    errors += def_->emit_args(argv, out, ent, scope);
 
       out << ");" << endl;
       return errors;

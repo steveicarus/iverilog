@@ -625,16 +625,7 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope) const
           return 1;
       }
 
-      // If this function has an elaborated definition, and if
-      // that definition is in a package, then include the
-      // package name as a scope qualifier. This assures that
-      // the SV elaborator finds the correct VHDL elaborated
-      // definition.
-      const Package*pkg = dynamic_cast<const Package*> (def_->get_parent());
-      if (pkg != 0)
-          out << "\\" << pkg->name() << " ::";
-
-      errors += def_->emit_name(argv_, out, ent, scope);
+      def_->emit_full_name(argv_, out, ent, scope);
       out << " (";
       def_->emit_args(argv_, out, ent, scope);
       out << ")";
