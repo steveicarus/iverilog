@@ -370,6 +370,7 @@ static void import_std_use(const YYLTYPE&loc, ActiveScope*res, perm_string packa
             res->use_name(perm_string::literal("text"),     &primitive_INTEGER);
             res->use_name(perm_string::literal("line"),     &primitive_STRING);
             res->use_name(type_FILE_OPEN_KIND.peek_name(),  &type_FILE_OPEN_KIND);
+            res->use_name(type_FILE_OPEN_STATUS.peek_name(),  &type_FILE_OPEN_STATUS);
 	    return;
       } else {
 	    sorrymsg(loc, "package %s of library %s not yet supported", package.str(), name.str());
