@@ -290,6 +290,16 @@ static unsigned is_netlist_signal(ivl_net_logic_t net, ivl_nexus_t nex)
       return rtn;
 }
 
+int signal_is_return_value(ivl_signal_t sig)
+{
+      ivl_scope_t sig_scope = ivl_signal_scope(sig);
+      if (ivl_scope_type(sig_scope) != IVL_SCT_FUNCTION)
+	    return 0;
+      if (strcmp(ivl_signal_basename(sig), ivl_scope_basename(sig_scope)) == 0)
+	    return 1;
+      return 0;
+}
+
 /*
  * This tests a bufz device against an output receiver, and determines
  * if the device can be skipped. If this function returns false, then a
@@ -455,6 +465,13 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	  && (ivl_scope_type(ivl_signal_scope(sig))==IVL_SCT_FUNCTION)
 	  && (strcmp(ivl_signal_basename(sig),ivl_scope_basename(ivl_signal_scope(sig))) == 0)) {
 	    fprintf(vvp_out, "; Variable %s is REAL return value of scope S_%p\n",
+		    ivl_signal_basename(sig), ivl_signal_scope(sig));
+	    return;
+      }
+      if ((ivl_signal_data_type(sig)==IVL_VT_LOGIC)
+	  && (ivl_scope_type(ivl_signal_scope(sig))==IVL_SCT_FUNCTION)
+	  && (strcmp(ivl_signal_basename(sig),ivl_scope_basename(ivl_signal_scope(sig))) == 0)) {
+	    fprintf(vvp_out, "; Variable %s is vec4 return value of scope S_%p\n",
 		    ivl_signal_basename(sig), ivl_signal_scope(sig));
 	    return;
       }

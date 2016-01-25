@@ -95,7 +95,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_RESOLV K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_SUBSTITUTE
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
-%token K_UFUNC_REAL K_UFUNC_E K_UDP K_UDP_C K_UDP_S
+%token K_UFUNC_REAL K_UFUNC_VEC4 K_UFUNC_E K_UDP K_UDP_C K_UDP_S
 %token K_VAR K_VAR_COBJECT K_VAR_DARRAY
 %token K_VAR_QUEUE
 %token K_VAR_S K_VAR_STR K_VAR_I K_VAR_R K_VAR_2S K_VAR_2U
@@ -256,6 +256,9 @@ statement
 
   | T_LABEL K_UFUNC_REAL T_SYMBOL ',' T_NUMBER ',' symbols '(' symbols ')' T_SYMBOL ';'
       { compile_ufunc_real($1, $3, $5, $7.cnt, $7.vect, $9.cnt, $9.vect, $11, 0); }
+
+  | T_LABEL K_UFUNC_VEC4 T_SYMBOL ',' T_NUMBER ',' symbols '(' symbols ')' T_SYMBOL ';'
+      { compile_ufunc_vec4($1, $3, $5, $7.cnt, $7.vect, $9.cnt, $9.vect, $11, 0); }
 
   | T_LABEL K_UFUNC_E T_SYMBOL ',' T_NUMBER ',' T_SYMBOL ',' symbols '(' symbols ')' T_SYMBOL ';'
       { compile_ufunc_vec4($1, $3, $5, $9.cnt, $9.vect, $11.cnt, $11.vect, $13, $7); }

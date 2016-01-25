@@ -191,9 +191,6 @@ void draw_ufunc_vec4(ivl_expr_t expr)
 	/* Take in arguments to function and call function code. */
       draw_ufunc_preamble(expr);
 
-      assert(ivl_signal_dimensions(retval) == 0);
-      fprintf(vvp_out, "    %%load/vec4  v%p_0;\n", retval);
-
       draw_ufunc_epilogue(expr);
 }
 

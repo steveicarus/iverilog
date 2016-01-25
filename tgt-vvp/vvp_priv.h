@@ -208,6 +208,10 @@ extern void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix);
  */
 extern int draw_eval_condition(ivl_expr_t expr);
 
+/*
+ * Return true if the signal is the return value of a function.
+ */
+extern int signal_is_return_value(ivl_signal_t sig);
 
 extern int number_is_unknown(ivl_expr_t ex);
 extern int number_is_immediate(ivl_expr_t ex, unsigned lim_wid, int negative_is_ok);

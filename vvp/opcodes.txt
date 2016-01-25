@@ -1016,6 +1016,11 @@ for example to store the return value for a real function, use
 "%ret/real 0;". It is up to the function caller to set up the argument
 references.
 
+* %retload/vec4 <index>
+
+Read a value from the indexed function argument. The value is read
+from the argument and pushed to the appropriate stack.
+
 * %set/dar/obj/real <index>
 * %set/dar/obj/str <index>
 * %set/dar/obj/vec4 <index>

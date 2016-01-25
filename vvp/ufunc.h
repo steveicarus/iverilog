@@ -70,6 +70,7 @@ class ufunc_core : public vvp_wide_fun_core {
 
     protected:
       void finish_thread_real_();
+      void finish_thread_vec4_();
 
     private:
       void recv_vec4_from_inputs(unsigned port);
@@ -92,18 +93,6 @@ class ufunc_core : public vvp_wide_fun_core {
       __vpiScope*call_scope_;
       __vpiScope*func_scope_;
       vvp_code_t code_;
-};
-
-class ufunc_real : public ufunc_core {
-   public:
-      ufunc_real(unsigned ow, vvp_net_t*ptr,
-		 unsigned nports, vvp_net_t**ports,
-		 vvp_code_t start_address,
-		 __vpiScope*call_scope,
-		 char*scope_label);
-      ~ufunc_real();
-
-      void finish_thread();
 };
 
 #endif /* IVL_ufunc_H */

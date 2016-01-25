@@ -209,6 +209,17 @@ static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
       ivl_signal_t sig = ivl_lval_sig(lval);
       int part_off_idx;
 
+
+	/* Special Case: If the l-value signal is named after its scope,
+	   and the scope is a function, then this is an assign to a return
+	   value and should be handled differently. */
+      if (signal_is_return_value(sig)) {
+	    assert(ivl_signal_dimensions(sig) == 0);
+	    fprintf(vvp_out, "    %%ret/vec4 0; Assign to %s\n",
+		    ivl_signal_basename(sig));
+	    return;
+      }
+
 	/* If the slice of the l-value is a BOOL variable, then cast
 	   the data to a BOOL vector so that the stores can be valid. */
       if (ivl_signal_data_type(sig) == IVL_VT_BOOL) {
@@ -344,6 +355,16 @@ static void store_vec4_to_lval(ivl_statement_t net)
 
 	    if (lidx+1 < ivl_stmt_lvals(net))
 		  fprintf(vvp_out, "    %%split/vec4 %u;\n", lwid);
+
+	      /* Special Case: If the l-value signal is named after its scope,
+		 and the scope is a function, then this is an assign to a return
+		 value and should be handled differently. */
+	    if (signal_is_return_value(lsig)) {
+		  assert(ivl_signal_dimensions(lsig) == 0);
+		  fprintf(vvp_out, "    %%ret/vec4 0; Assign to %s (store_vec4_to_lval)\n",
+			  ivl_signal_basename(lsig));
+		  continue;
+	    }
 
 	    if (word_ex) {
 		    /* Handle index into an array */

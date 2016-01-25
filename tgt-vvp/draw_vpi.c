@@ -99,6 +99,12 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 		    /* This should never happen since we have IVL_EX_SELECT. */
 		  return 0;
 
+	    } else if (signal_is_return_value(ivl_expr_signal(expr))) {
+		    /* If the signal is the return value of a function,
+		       then this can't be handled as a true signal, so
+		       fall back on general expression processing. */
+		  return 0;
+
 	    } else if (ivl_expr_signed(expr) !=
 	               ivl_signal_signed(ivl_expr_signal(expr))) {
 		  return 0;

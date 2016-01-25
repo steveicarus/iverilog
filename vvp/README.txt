@@ -702,11 +702,14 @@ STRUCTURAL FUNCTION CALLS:
 
 The .ufunc statements define a call to a user defined function.
 
-	<label> .ufunc   <flabel>, <wid>,
-            <isymbols> ( <psymbols> ) <rsymbol> <ssymbol>;
+	<label> .ufunc/real <flabel>, <wid>,
+            <isymbols> ( <psymbols> ) <ssymbol>;
+
+	<label> .ufunc/vec4 <flabel>, <wid>,
+            <isymbols> ( <psymbols> ) <ssymbol>;
 
 	<label> .ufunc/e <flabel>, <wid>, <trigger>,
-            <isymbols> ( <psymbols> ) <rsymbol> <ssymbol>;
+            <isymbols> ( <psymbols> ) <ssymbol>;
 
 The first variant is used for functions that only need to be called
 when one of their inputs changes value. The second variant is used
@@ -728,10 +731,6 @@ The <psymbols> list is exactly the same size as the <isymbols>
 list. The <psymbols> are variables that represent the input ports for
 the function. The ufunc performs an assignment to these variables
 before calling the function.
-
-The <rsymbol> is the variable within the function where the result
-will be found when the function code ends. This value is picked up
-and propagated to the output of the functor.
 
 The <ssymbol> is the function scope name.
 

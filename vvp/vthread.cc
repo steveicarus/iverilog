@@ -115,6 +115,7 @@ struct vthread_s {
 	// corresponding stack.  This is how the %ret/* instructions
 	// get at parent thread arguments.
       vector<unsigned> args_real;
+      vector<unsigned> args_vec4;
 
     private:
       vector<vvp_vector4_t>stack_vec4_;
@@ -142,6 +143,12 @@ struct vthread_s {
 	    unsigned use_index = stack_vec4_.size();
 	    assert(use_index >= 1);
 	    return stack_vec4_[use_index-1];
+      }
+      inline void poke_vec4(unsigned depth, const vvp_vector4_t&val)
+      {
+	    assert(depth < stack_vec4_.size());
+	    unsigned use_index = stack_vec4_.size()-1-depth;
+	    stack_vec4_[use_index] = val;
       }
       inline void pop_vec4(unsigned cnt)
       {
@@ -1348,9 +1355,13 @@ bool of_CALLF_STR(vthread_t thr, vvp_code_t cp)
 bool of_CALLF_VEC4(vthread_t thr, vvp_code_t cp)
 {
       vthread_t child = vthread_new(cp->cptr2, cp->scope);
-      return do_callf_void(thr, child);
 
-      // XXXX NOT IMPLEMENTED
+	// This is the return value. Push a place-holder value. The function
+	// will replace this with the actual value using a %ret/real instruction.
+      thr->push_vec4(vvp_vector4_t());
+      child->args_vec4.push_back(0);
+
+      return do_callf_void(thr, child);
 }
 
 bool of_CALLF_VOID(vthread_t thr, vvp_code_t cp)
@@ -4964,6 +4975,47 @@ bool of_RET_REAL(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %ret/vec4 <index>
+ */
+bool of_RET_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      size_t index = cp->number;
+      vvp_vector4_t val = thr->pop_vec4();
+
+      assert(index >= 0 && index < thr->args_vec4.size());
+      unsigned depth = thr->args_vec4[index];
+	// Use the depth to put the value into the stack of
+	// the parent thread.
+      thr->parent->poke_vec4(depth, val);
+      return true;
+}
+
+/*
+ * %retload/real <index>
+ */
+bool of_RETLOAD_REAL(vthread_t thr, vvp_code_t cp)
+{
+	// NOT IMPLEMENTED
+      assert(0);
+      return true;
+}
+
+/*
+ * %retload/vec4 <index>
+ */
+bool of_RETLOAD_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      size_t index = cp->number;
+
+      assert(index >= 0 && index < thr->args_vec4.size());
+      unsigned depth = thr->args_vec4[index];
+	// Use the depth to put the value into the stack of
+	// the parent thread.
+      thr->push_vec4(thr->parent->peek_vec4(depth));
+      return true;
+}
+
 bool of_SCOPY(vthread_t thr, vvp_code_t)
 {
       vvp_object_t tmp;
@@ -5971,7 +6023,20 @@ bool of_EXEC_UFUNC_REAL(vthread_t thr, vvp_code_t cp)
 	/* Create a temporary thread and run it immediately. */
       vthread_t child = vthread_new(cp->cptr, child_scope);
       thr->push_real(0.0);
-      child->args_real.push_back(0.0);
+      child->args_real.push_back(0);
+
+      return do_exec_ufunc(thr, cp, child);
+}
+
+bool of_EXEC_UFUNC_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
+      assert(child_scope);
+
+	/* Create a temporary thread and run it immediately. */
+      vthread_t child = vthread_new(cp->cptr, child_scope);
+      thr->push_vec4(vvp_vector4_t());
+      child->args_vec4.push_back(0);
 
       return do_exec_ufunc(thr, cp, child);
 }

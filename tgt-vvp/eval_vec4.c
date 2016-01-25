@@ -1005,6 +1005,15 @@ static void draw_signal_vec4(ivl_expr_t expr)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
 
+	/* Special Case: If the signal is the return value of the function,
+	   then use a different opcode to get the value. */
+      if (signal_is_return_value(sig)) {
+	    assert(ivl_signal_dimensions(sig) == 0);
+	    fprintf(vvp_out, "    %%retload/vec4 0; Load %s (draw_signal_vec4)\n",
+		    ivl_signal_basename(sig));
+	    return;
+      }
+
 	/* Handle the simple case, a signal expression that is a
 	   simple vector, no array dimensions. */
       if (ivl_signal_dimensions(sig) == 0) {
