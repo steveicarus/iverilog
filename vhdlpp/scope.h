@@ -240,13 +240,6 @@ class ActiveScope : public ScopeBase {
         cur_constants_[name] = new const_t(obj, val);
       }
 
-      inline void bind_name(perm_string name, SubprogramHeader*obj)
-      { map<perm_string, SubprogramHeader*>::iterator it;
-        if((it = use_subprograms_.find(name)) != use_subprograms_.end() )
-            use_subprograms_.erase(it);
-        cur_subprograms_[name] = obj;
-      }
-
       void bind(Entity*ent)
       { context_entity_ = ent; }
 

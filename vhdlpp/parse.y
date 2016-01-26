@@ -2578,7 +2578,7 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
 	body->set_statements($4);
 
 	prog->set_body(body);
-	active_scope->bind_name(prog->name(), prog);
+	active_scope->bind_subprogram(prog->name(), prog);
 	active_sub = NULL;
       }
 
@@ -2596,7 +2596,7 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
 
 subprogram_declaration
   : subprogram_specification ';'
-      { if ($1) active_scope->bind_name($1->name(), $1); }
+      { if ($1) active_scope->bind_subprogram($1->name(), $1); }
   ;
 
 subprogram_declarative_item /* IEEE 1079-2008 P4.3 */
