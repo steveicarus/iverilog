@@ -911,40 +911,49 @@ const VType* ExpName::probe_prefix_type_(Entity*ent, ScopeBase*scope) const
  */
 const VType* ExpName::probe_prefixed_type_(Entity*ent, ScopeBase*scope) const
 {
-	// First, get the type of the prefix.
+      // First, get the type of the prefix.
       const VType*prefix_type = prefix_->probe_prefix_type_(ent, scope);
       if (prefix_type == 0) {
-	    return 0;
+          return 0;
       }
 
       while (const VTypeDef*def = dynamic_cast<const VTypeDef*> (prefix_type)) {
-	    prefix_type = def->peek_definition();
+          prefix_type = def->peek_definition();
       }
 
-	// If the prefix type is a record, then the current name is
-	// the name of a member.
-      if (const VTypeRecord*pref_record = dynamic_cast<const VTypeRecord*> (prefix_type)) {
-	    const VTypeRecord::element_t*element = pref_record->element_by_name(name_);
-	    ivl_assert(*this, element);
+      const VType*element_type = prefix_type;
+      bool type_changed = true;
 
-	    const VType*element_type = element->peek_type();
-	    ivl_assert(*this, element_type);
+      // Keep unwinding the type until we find the basic element type
+      while (type_changed) {
+          type_changed = false;
 
-	    return element_type;
+          // If the prefix type is a record, then the current name is
+          // the name of a member.
+          if (const VTypeRecord*pref_record = dynamic_cast<const VTypeRecord*>(element_type)) {
+              const VTypeRecord::element_t*element = pref_record->element_by_name(name_);
+              ivl_assert(*this, element);
+
+              element_type = element->peek_type();
+              ivl_assert(*this, element_type);
+              type_changed = true;
+          }
+
+          if (const VTypeArray*pref_array = dynamic_cast<const VTypeArray*>(element_type)) {
+              element_type = pref_array->basic_type(false);
+              ivl_assert(*this, element_type);
+              type_changed = true;
+          }
       }
 
-      if (const VTypeArray*pref_array = dynamic_cast<const VTypeArray*> (prefix_type)) {
-            const VType*element_type = pref_array->element_type();
-            ivl_assert(*this, element_type);
-
-            return element_type;
+      if(!element_type) {
+          cerr << get_fileline() << ": sorry: I don't know how to probe "
+              << "prefix type " << typeid(*prefix_type).name()
+              << " of " << name_ << "." << endl;
+          return NULL;
       }
 
-      cerr << get_fileline() << ": sorry: I don't know how to probe "
-	   << "prefix type " << typeid(*prefix_type).name()
-	   << " of " << name_ << "." << endl;
-
-      return 0;
+      return element_type;
 }
 
 const VType* ExpName::probe_type(Entity*ent, ScopeBase*scope) const
