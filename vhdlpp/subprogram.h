@@ -169,4 +169,8 @@ class SubprogramBuiltin : public SubprogramStdHeader
       perm_string sv_name_;
 };
 
+// Helper function to print out a human-readable function signature.
+void emit_subprogram_sig(std::ostream&out, perm_string name,
+        const std::list<const VType*>&arg_types);
+
 #endif /* IVL_subprogram_H */

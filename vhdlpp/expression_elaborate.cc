@@ -795,7 +795,9 @@ const VType*ExpFunc::probe_type(Entity*, ScopeBase*scope) const
           prog = library_find_subprogram(name_);
 
       if(!prog) {
-          cerr << get_fileline() << ": sorry: VHDL function " << name_ << " not yet implemented" << endl;
+          cerr << get_fileline() << ": sorry: could not find function ";
+          emit_subprogram_sig(cerr, name_, arg_types);
+          cerr << endl;
           ivl_assert(*this, false);
       }
 
@@ -812,8 +814,13 @@ int ExpFunc::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
       if(!prog)
             prog = library_find_subprogram(name_);
 
-      ivl_assert(*this, def_==0);
       def_ = prog;
+      if(!def_) {
+            cerr << get_fileline() << ": error: could not find function ";
+            emit_subprogram_sig(cerr, name_, arg_types);
+            cerr << endl;
+            return 1;
+      }
 
 	// Elaborate arguments
       for (size_t idx = 0; idx < argv_.size(); ++idx) {
@@ -826,11 +833,6 @@ int ExpFunc::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
       if(def_ && !def_->is_std() && def_->unbounded()) {
             def_ = prog->make_instance(argv_, scope);
             name_ = def_->name();
-      }
-
-      if(!def_) {
-            cerr << get_fileline() << ": error: could not find function " << name_ << endl;
-            ++errors;
       }
 
       return errors;

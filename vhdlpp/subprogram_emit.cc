@@ -142,3 +142,23 @@ int SubprogramBuiltin::emit_name(const std::vector<Expression*>&,
     out << sv_name_;
     return 0;
 }
+
+void emit_subprogram_sig(ostream&out, perm_string name,
+        const list<const VType*>&arg_types)
+{
+    out << name << "(";
+    bool first = true;
+    for(list<const VType*>::const_iterator it = arg_types.begin();
+            it != arg_types.end(); ++it) {
+        if(first)
+            first = false;
+        else
+            out << ", ";
+
+        if(*it)
+            (*it)->write_to_stream(out);
+        else
+            out << "<unresolved type>";
+    }
+    out << ")";
+}
