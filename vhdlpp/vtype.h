@@ -282,7 +282,7 @@ class VTypeRange : public VType {
 	// Get the type that is limited by the range.
       inline const VType*base_type() const { return base_; }
 
-    private:
+    protected:
       const VType*base_;
 };
 
@@ -295,7 +295,6 @@ class VTypeRangeConst : public VTypeRange {
           return new VTypeRangeConst(base_type()->clone(), start_, end_);
       }
 
-    public: // Virtual methods
       void write_to_stream(std::ostream&fd) const;
 
     private:
@@ -309,6 +308,7 @@ class VTypeRangeExpr : public VTypeRange {
       ~VTypeRangeExpr();
 
       VType*clone() const;
+      int elaborate(Entity*end, ScopeBase*scope) const;
 
     public: // Virtual methods
       void write_to_stream(std::ostream&fd) const;
