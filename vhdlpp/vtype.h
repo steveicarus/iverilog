@@ -168,6 +168,7 @@ class VTypePrimitive : public VType {
 
       VType*clone() const { return new VTypePrimitive(*this); }
 
+      bool type_match(const VType*that) const;
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
       int get_width(ScopeBase*scope) const;
@@ -221,6 +222,7 @@ class VTypeArray : public VType {
       VType*clone() const;
 
       int elaborate(Entity*ent, ScopeBase*scope) const;
+      bool type_match(const VType*that) const;
       void write_to_stream(std::ostream&fd) const;
       void write_type_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
