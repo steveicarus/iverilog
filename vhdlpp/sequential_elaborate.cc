@@ -183,7 +183,12 @@ int ProcedureCall::elaborate(Entity*ent, ScopeBase*scope)
       if(!def_)
             def_ = library_find_subprogram(name_);
 
-      assert(def_);
+      if(!def_) {
+            cerr << get_fileline() << ": error: could not find procedure ";
+            emit_subprogram_sig(cerr, name_, arg_types);
+            cerr << endl;
+            return 1;
+      }
 
 	// Elaborate arguments
       size_t idx = 0;
