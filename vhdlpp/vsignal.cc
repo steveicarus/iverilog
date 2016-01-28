@@ -35,11 +35,12 @@ SigVarBase::~SigVarBase()
 {
 }
 
-void SigVarBase::elaborate_init_expr(Entity*ent, ScopeBase*scope)
+void SigVarBase::elaborate(Entity*ent, ScopeBase*scope)
 {
-    if(init_expr_) {
+    if(init_expr_)
         init_expr_->elaborate_expr(ent, scope, peek_type());
-    }
+
+    type_->elaborate(ent, scope);
 }
 
 void SigVarBase::type_elaborate_(VType::decl_t&decl)
