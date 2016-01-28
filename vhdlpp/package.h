@@ -36,8 +36,6 @@ class Package : public Scope, public LineInfo {
 
       perm_string name() const { return name_; }
 
-      SubprogramHeader* recall_subprogram(perm_string name) const;
-
 	// This method writes a package header to a library file.
       void write_to_stream(std::ostream&fd) const;
 
