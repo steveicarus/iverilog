@@ -843,7 +843,10 @@ const VType* ExpFunc::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*) c
 
 const VType* ExpInteger::probe_type(Entity*, ScopeBase*) const
 {
-      return &primitive_INTEGER;
+      if(value_ >= 0)
+          return &primitive_NATURAL;
+      else
+          return &primitive_INTEGER;
 }
 
 int ExpInteger::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
