@@ -2018,18 +2018,21 @@ procedure_call
   : IDENTIFIER ';'
       {
     ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1));
+    FILE_NAME(tmp, @1);
     delete[] $1;
     $$ = tmp;
       }
   | IDENTIFIER '(' association_list ')' ';'
       {
     ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1), $3);
+    FILE_NAME(tmp, @1);
     delete[] $1;
     $$ = tmp;
       }
   | IDENTIFIER argument_list ';'
       {
     ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1), $2);
+    FILE_NAME(tmp, @1);
     delete[] $1;
     delete $2; // parameters are copied in this variant
     $$ = tmp;
