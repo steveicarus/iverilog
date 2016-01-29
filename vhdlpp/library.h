@@ -19,15 +19,18 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-class SubprogramHeader;
+#include <list>
 
-extern void library_set_work_path(const char*work_path);
-extern void library_add_directory(const char*directory);
+class SubprogramHeader;
+class VType;
+
+void library_set_work_path(const char*work_path);
+void library_add_directory(const char*directory);
 
 int elaborate_libraries(void);
 int emit_packages(void);
 
-extern SubprogramHeader*library_find_subprogram(perm_string name);
+SubprogramHeader*library_match_subprogram(perm_string name, const list<const VType*>*params);
 
 #endif /* IVL_library_H */
 

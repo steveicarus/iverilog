@@ -61,9 +61,14 @@ int Architecture::elaborate(Entity*entity)
       }
 
 	// Elaborate subprograms
-      for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
+      for (map<perm_string,SubHeaderList>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++cur) {
-	    errors += cur->second->elaborate();
+	    const SubHeaderList& subp_list = cur->second;
+
+	    for(SubHeaderList::const_iterator it = subp_list.begin();
+			it != subp_list.end(); ++it) {
+        	errors += (*it)->elaborate();
+	    }
       }
 	// Create 'initial' and 'final' blocks for implicit
 	// initalization and clean-up actions

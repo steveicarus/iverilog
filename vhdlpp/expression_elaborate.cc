@@ -783,22 +783,29 @@ int ExpConditional::case_t::elaborate_expr(Entity*ent, ScopeBase*scope, const VT
       return errors;
 }
 
-const VType*ExpFunc::probe_type(Entity*, ScopeBase*scope) const
+const VType*ExpFunc::probe_type(Entity*ent, ScopeBase*scope) const
 {
       SubprogramHeader*prog = def_;
 
       if(!prog) {
-          prog = scope->find_subprogram(name_);
-      }
+          list<const VType*> arg_types;
 
-      if(!prog)
-          prog = library_find_subprogram(name_);
+          for(vector<Expression*>::const_iterator it = argv_.begin();
+                  it != argv_.end(); ++it) {
+              arg_types.push_back((*it)->probe_type(ent, scope));
+          }
 
-      if(!prog) {
-          cerr << get_fileline() << ": sorry: could not find function ";
-          emit_subprogram_sig(cerr, name_, arg_types);
-          cerr << endl;
-          ivl_assert(*this, false);
+          prog = scope->match_subprogram(name_, &arg_types);
+
+          if(!prog)
+              prog = library_match_subprogram(name_, &arg_types);
+
+          if(!prog) {
+              cerr << get_fileline() << ": sorry: could not find function ";
+              emit_subprogram_sig(cerr, name_, arg_types);
+              cerr << endl;
+              ivl_assert(*this, false);
+          }
       }
 
       return prog->peek_return_type();
@@ -808,13 +815,19 @@ int ExpFunc::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
 {
       int errors = 0;
 
-      ivl_assert(*this, scope);
-      SubprogramHeader*prog = scope->find_subprogram(name_);
+      ivl_assert(*this, def_ == 0);   // do not elaborate twice
 
-      if(!prog)
-            prog = library_find_subprogram(name_);
+      // Create a list of argument types to find a matching subprogram
+      list<const VType*> arg_types;
+      for(vector<Expression*>::iterator it = argv_.begin();
+              it != argv_.end(); ++it)
+          arg_types.push_back((*it)->probe_type(ent, scope));
 
-      def_ = prog;
+      def_ = scope->match_subprogram(name_, &arg_types);
+
+      if(!def_)
+            def_ = library_match_subprogram(name_, &arg_types);
+
       if(!def_) {
             cerr << get_fileline() << ": error: could not find function ";
             emit_subprogram_sig(cerr, name_, arg_types);
@@ -824,15 +837,15 @@ int ExpFunc::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
 
 	// Elaborate arguments
       for (size_t idx = 0; idx < argv_.size(); ++idx) {
-	    errors += prog->elaborate_argument(argv_[idx], idx, ent, scope);
+	    errors += def_->elaborate_argument(argv_[idx], idx, ent, scope);
       }
 
 	// SystemVerilog functions work only with defined size data types, therefore
 	// if header does not specify argument or return type size, create a function
 	// instance that work with this particular size.
       if(def_ && !def_->is_std() && def_->unbounded()) {
-            def_ = prog->make_instance(argv_, scope);
-            name_ = def_->name();
+            def_ = def_->make_instance(argv_, scope);
+            name_ = def_->name();   // TODO necessary?
       }
 
       return errors;

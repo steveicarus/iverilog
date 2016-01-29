@@ -22,11 +22,11 @@
 #include "std_types.h"
 #include "scope.h"
 
-static std::map<perm_string,SubprogramHeader*> std_subprograms;
+static std::map<perm_string,SubHeaderList> std_subprograms;
 
 static inline void register_std_subprogram(SubprogramHeader*header)
 {
-    std_subprograms[header->name()] = header;
+    std_subprograms[header->name()].push_back(header);
 }
 
 // Special case: to_integer function
@@ -356,17 +356,20 @@ void preload_std_funcs(void)
 
 void delete_std_funcs()
 {
-    for(std::map<perm_string,SubprogramHeader*>::iterator it = std_subprograms.begin();
-            it != std_subprograms.end(); ++it) {
-        delete it->second;
+    for(std::map<perm_string,SubHeaderList>::iterator cur = std_subprograms.begin();
+            cur != std_subprograms.end(); ++cur) {
+	    for(SubHeaderList::const_iterator it = cur->second.begin();
+			it != cur->second.end(); ++it) {
+                delete *it;
+            }
     }
 }
 
-SubprogramHeader*find_std_subprogram(perm_string name)
+SubHeaderList find_std_subprogram(perm_string name)
 {
-      map<perm_string,SubprogramHeader*>::const_iterator cur = std_subprograms.find(name);
-      if (cur != std_subprograms.end())
-          return cur->second;
+    map<perm_string,SubHeaderList>::const_iterator cur = std_subprograms.find(name);
+    if(cur != std_subprograms.end())
+        return cur->second;
 
-      return NULL;
+    return SubHeaderList();
 }
