@@ -178,10 +178,22 @@ int ProcedureCall::elaborate(Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      def_ = scope->find_subprogram(name_);
+      assert(!def_);   // do not elaborate twice
+
+      // Create a list of argument types to find a matching subprogram
+      list<const VType*> arg_types;
+      if(param_list_) {
+            for(list<named_expr_t*>::iterator it = param_list_->begin();
+                    it != param_list_->end(); ++it) {
+                named_expr_t* e = *it;
+                arg_types.push_back(e->expr()->probe_type(ent, scope));
+            }
+      }
+
+      def_ = scope->match_subprogram(name_, &arg_types);
 
       if(!def_)
-            def_ = library_find_subprogram(name_);
+            def_ = library_match_subprogram(name_, &arg_types);
 
       if(!def_) {
             cerr << get_fileline() << ": error: could not find procedure ";

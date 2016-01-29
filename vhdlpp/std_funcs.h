@@ -29,6 +29,6 @@ void preload_std_funcs();
 void delete_std_funcs();
 
 // Returns subprogram header for a requested function or NULL if it does not exist.
-SubprogramHeader*find_std_subprogram(perm_string name);
+SubHeaderList find_std_subprogram(perm_string name);
 
 #endif /* IVL_std_funcs_H */

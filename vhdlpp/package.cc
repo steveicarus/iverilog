@@ -24,6 +24,8 @@
 # include  "parse_misc.h"
 # include  "std_types.h"
 # include  "ivl_assert.h"
+# include  <list>
+# include  <iterator>
 
 Package::Package(perm_string n, const ActiveScope&ref)
 : Scope(ref), name_(n)
@@ -45,9 +47,14 @@ int Package::elaborate()
 {
       int errors = 0;
 
-      for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
-		 ; cur != cur_subprograms_.end() ; ++cur) {
-	    errors += cur->second->elaborate();
+      for (map<perm_string,SubHeaderList>::iterator cur = cur_subprograms_.begin()
+		 ; cur != cur_subprograms_.end() ; ++ cur) {
+	    SubHeaderList& subp_list = cur->second;
+
+	    for(SubHeaderList::iterator it = subp_list.begin();
+			it != subp_list.end(); ++it) {
+                errors += (*it)->elaborate();
+            }
       }
 
       return errors;
@@ -108,10 +115,15 @@ void Package::write_to_stream(ostream&fd) const
 	    fd << ";" << endl;
       }
 
-      for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
+      for (map<perm_string,SubHeaderList>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++cur) {
-	    cur->second->write_to_stream(fd);
-	    fd << ";" << endl;
+	    const SubHeaderList& subp_list = cur->second;
+
+	    for(SubHeaderList::const_iterator it = subp_list.begin();
+			it != subp_list.end(); ++it) {
+                (*it)->write_to_stream(fd);
+                fd << ";" << endl;
+            }
       }
 
       for (map<perm_string,ComponentBase*>::const_iterator cur = old_components_.begin()
@@ -128,14 +140,20 @@ void Package::write_to_stream(ostream&fd) const
       fd << "end package " << name_ << ";" << endl;
 
       fd << "package body " << name_ << " is" << endl;
-        for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
+      for (map<perm_string,SubHeaderList>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++cur) {
-            SubprogramHeader*subp = cur->second;
-            if(subp->body()) {
-                subp->write_to_stream(fd);
-                fd << " is" << endl;
-                subp->body()->write_to_stream(fd);
+	    const SubHeaderList& subp_list = cur->second;
+
+	    for(SubHeaderList::const_iterator it = subp_list.begin();
+			it != subp_list.end(); ++it) {
+                const SubprogramHeader*subp = *it;
+
+                if(subp->body()) {
+                    subp->write_to_stream(fd);
+                    fd << " is" << endl;
+                    subp->body()->write_to_stream(fd);
+                }
             }
-        }
+      }
       fd << "end " << name_ << ";" << endl;
 }

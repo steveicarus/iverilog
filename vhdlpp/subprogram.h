@@ -32,7 +32,6 @@
 class InterfacePort;
 class SequentialStmt;
 class VType;
-class SubprogramHeader;
 
 class SubprogramBody : public LineInfo, public ScopeBase {
 
@@ -73,6 +72,7 @@ class SubprogramHeader : public LineInfo {
 	// matches this subprogram and that subprogram.
       bool compare_specification(SubprogramHeader*that) const;
 
+      int param_count() const { return ports_ ? ports_->size() : 0; }
       const InterfacePort*find_param(perm_string nam) const;
       const InterfacePort*peek_param(int idx) const;
       const VType*peek_param_type(int idx) const;

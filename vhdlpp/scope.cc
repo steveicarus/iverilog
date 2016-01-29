@@ -70,9 +70,14 @@ ScopeBase::ScopeBase(const ActiveScope&ref)
       // an active scope and is making the actual scope. At this point
       // we know that "this" is the parent scope for the subprograms,
       // so set it now.
-    for (map<perm_string,SubprogramHeader*>::iterator cur = cur_subprograms_.begin()
-	       ; cur != cur_subprograms_.end(); ++cur) {
-	cur->second->set_parent(this);
+    for (map<perm_string,SubHeaderList>::iterator cur = cur_subprograms_.begin()
+                ; cur != cur_subprograms_.end(); ++cur) {
+        SubHeaderList& subp_list = cur->second;
+
+        for (SubHeaderList::iterator it = subp_list.begin();
+                it != subp_list.end(); ++it) {
+            (*it)->set_parent(this);
+        }
     }
 }
 
@@ -94,7 +99,10 @@ void ScopeBase::cleanup()
     delete_all(new_components_);
     delete_all(cur_types_);
     delete_all(cur_constants_);
-    delete_all(cur_subprograms_);
+    for (map<perm_string,SubHeaderList>::iterator cur = cur_subprograms_.begin()
+                ; cur != cur_subprograms_.end() ; ++cur) {
+        delete_all(cur->second);
+    }
 }
 
 const VType*ScopeBase::find_type(perm_string by_name)
@@ -157,32 +165,42 @@ const InterfacePort* ScopeBase::find_param(perm_string) const
 
 const InterfacePort* ScopeBase::find_param_all(perm_string by_name) const
 {
-      for(map<perm_string,SubprogramHeader*>::const_iterator it = use_subprograms_.begin();
-              it != use_subprograms_.end(); ++it) {
-          if(const InterfacePort*port = it->second->find_param(by_name))
-              return port;
+      for(map<perm_string,SubHeaderList>::const_iterator cur = use_subprograms_.begin();
+              cur != use_subprograms_.end(); ++cur) {
+            const SubHeaderList& subp_list = cur->second;
+
+            for(SubHeaderList::const_iterator it = subp_list.begin();
+                        it != subp_list.end(); ++it) {
+                if(const InterfacePort*port = (*it)->find_param(by_name))
+                    return port;
+            }
       }
 
-      for(map<perm_string,SubprogramHeader*>::const_iterator it = cur_subprograms_.begin();
-              it != cur_subprograms_.end(); ++it) {
-          if(const InterfacePort*port = it->second->find_param(by_name))
-              return port;
+      for(map<perm_string,SubHeaderList>::const_iterator cur = cur_subprograms_.begin();
+              cur != cur_subprograms_.end(); ++cur) {
+            const SubHeaderList& subp_list = cur->second;
+
+            for(SubHeaderList::const_iterator it = subp_list.begin();
+                        it != subp_list.end(); ++it) {
+                if(const InterfacePort*port = (*it)->find_param(by_name))
+                    return port;
+            }
       }
 
       return NULL;
 }
 
-SubprogramHeader* ScopeBase::find_subprogram(perm_string name) const
+SubHeaderList ScopeBase::find_subprogram(perm_string name) const
 {
-      map<perm_string,SubprogramHeader*>::const_iterator cur;
+      map<perm_string,SubHeaderList>::const_iterator cur;
 
       cur = cur_subprograms_.find(name);
       if (cur != cur_subprograms_.end())
-	    return cur->second;
+            return cur->second;
 
       cur = use_subprograms_.find(name);
       if (cur != use_subprograms_.end())
-	  return cur->second;
+            return cur->second;
 
       return find_std_subprogram(name);
 }
@@ -217,9 +235,9 @@ void ScopeBase::do_use_from(const ScopeBase*that)
         old_components_[cur->first] = cur->second;
       }
 
-      for (map<perm_string,SubprogramHeader*>::const_iterator cur = that->cur_subprograms_.begin()
+      for (map<perm_string,SubHeaderList>::const_iterator cur = that->cur_subprograms_.begin()
 		 ; cur != that->cur_subprograms_.end() ; ++ cur) {
-	    if (cur->second == 0)
+	    if (cur->second.empty())
 		  continue;
 	    use_subprograms_[cur->first] = cur->second;
       }
@@ -266,21 +284,86 @@ void ScopeBase::transfer_from(ScopeBase&ref, transfer_type_t what)
     }
 }
 
+SubprogramHeader*ScopeBase::match_subprogram(perm_string name,
+                                             const list<const VType*>*params) const
+{
+    int req_param_count = params ? params->size() : 0;
+
+    // Find all subprograms with matching name
+    SubHeaderList l = find_std_subprogram(name);
+    map<perm_string,SubHeaderList>::const_iterator cur;
+
+    cur = use_subprograms_.find(name);
+    if (cur != use_subprograms_.end())
+        copy(cur->second.begin(), cur->second.end(),
+                front_insert_iterator<SubHeaderList>(l));
+
+    cur = cur_subprograms_.find(name);
+    if(cur != cur_subprograms_.end())
+        copy(cur->second.begin(), cur->second.end(),
+                front_insert_iterator<SubHeaderList>(l));
+
+    // Find the matching one
+    for(SubHeaderList::iterator it = l.begin(); it != l.end(); ++it) {
+        SubprogramHeader*subp = *it;
+
+        if(req_param_count != subp->param_count())
+            continue;
+
+        // Do not check the return type here, it might depend on the arguments
+
+        if(params) {
+            list<const VType*>::const_iterator p = params->begin();
+            bool ok = true;
+
+            for(int i = 0; i < req_param_count; ++i) {
+                const VType*param_type = subp->peek_param_type(i);
+
+                if(*p && param_type && !param_type->type_match(*p)) {
+                    ok = false;
+                    break;
+                }
+
+                ++p;
+            }
+
+            if(!ok)
+                continue;   // check another function
+        }
+
+        // Yay, we have a match!
+        return subp;
+    }
+
+    return NULL;
+}
+
 void ActiveScope::set_package_header(Package*pkg)
 {
       assert(package_header_ == 0);
       package_header_ = pkg;
 }
 
-SubprogramHeader* ActiveScope::recall_subprogram(perm_string name) const
+SubprogramHeader* ActiveScope::recall_subprogram(const SubprogramHeader*subp) const
 {
-      if (SubprogramHeader*tmp = find_subprogram(name))
-	    return tmp;
+      list<const VType*> arg_types;
+      SubprogramHeader*tmp;
 
-      if (package_header_)
-	    return package_header_->find_subprogram(name);
+      for(int i = 0; i < subp->param_count(); ++i)
+          arg_types.push_back(subp->peek_param_type(i));
 
-      return 0;
+      if ((tmp = match_subprogram(subp->name(), &arg_types))) {
+            assert(!tmp->body());
+            return tmp;
+      }
+
+      if (package_header_) {
+            tmp = package_header_->match_subprogram(subp->name(), &arg_types);
+            assert(!tmp || !tmp->body());
+            return tmp;
+      }
+
+      return NULL;
 }
 
 bool ActiveScope::is_vector_name(perm_string name) const

@@ -1701,7 +1701,8 @@ name /* IEEE 1076-2008 P8.1 */
         tmp = parse_char_enums($1);
         if(!tmp) {
             perm_string name = lex_strings.make($1);
-            if(active_scope->find_subprogram(name) && !parse_type_by_name(name))
+            /* There are functions that have the same name types, e.g. integer */
+            if(!active_scope->find_subprogram(name).empty() && !parse_type_by_name(name))
                 tmp = new ExpFunc(name);
             else
                 tmp = new ExpName(name);
@@ -2565,12 +2566,10 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
     K_begin subprogram_statement_part K_end
     subprogram_kind_opt identifier_opt ';'
       { SubprogramHeader*prog = $1;
-	SubprogramHeader*tmp = active_scope->recall_subprogram(prog->name());
-	if (tmp && prog->compare_specification(tmp)) {
+	SubprogramHeader*tmp = active_scope->recall_subprogram(prog);
+	if (tmp) {
 	      delete prog;
 	      prog = tmp;
-	} else if (tmp) {
-	      errormsg(@1, "Subprogram specification for %s doesn't match specification in package header.\n", prog->name().str());
 	}
 
 	SubprogramBody*body = new SubprogramBody();

@@ -36,6 +36,8 @@ class SubprogramHeader;
 class VType;
 class SequentialStmt;
 
+typedef list<SubprogramHeader*> SubHeaderList;
+
 template<typename T>
 struct delete_object{
     void operator()(T* item) { delete item; }
@@ -59,7 +61,7 @@ class ScopeBase {
       Variable* find_variable(perm_string by_name) const;
       virtual const InterfacePort* find_param(perm_string by_name) const;
       const InterfacePort* find_param_all(perm_string by_name) const;
-      SubprogramHeader* find_subprogram(perm_string by_name) const;
+      SubHeaderList find_subprogram(perm_string by_name) const;
 	// Checks if a string is one of possible enum values. If so, the enum
 	// type is returned, otherwise NULL.
       const VTypeEnum* is_enum_name(perm_string name) const;
@@ -70,10 +72,10 @@ class ScopeBase {
       void transfer_from(ScopeBase&ref, transfer_type_t what = ALL);
 
       inline void bind_subprogram(perm_string name, SubprogramHeader*obj)
-      { map<perm_string, SubprogramHeader*>::iterator it;
+      { map<perm_string, SubHeaderList>::iterator it;
         if((it = use_subprograms_.find(name)) != use_subprograms_.end() )
-            use_subprograms_.erase(it);
-        cur_subprograms_[name] = obj;
+            it->second.remove(obj);
+        cur_subprograms_[name].push_back(obj);
       }
 
 	// Adds a statement to implicit initializers list
@@ -91,6 +93,10 @@ class ScopeBase {
       }
 
       void dump_scope(ostream&out) const;
+
+	// Looks for a subprogram with specified name and parameter types.
+      SubprogramHeader*match_subprogram(perm_string name,
+                                        const list<const VType*>*params) const;
 
     protected:
       void cleanup();
@@ -134,8 +140,8 @@ class ScopeBase {
       std::map<perm_string, struct const_t*> use_constants_; //imported constants
       std::map<perm_string, struct const_t*> cur_constants_; //current constants
 
-      std::map<perm_string, SubprogramHeader*> use_subprograms_; //imported
-      std::map<perm_string, SubprogramHeader*> cur_subprograms_; //current
+      std::map<perm_string, SubHeaderList> use_subprograms_; //imported
+      std::map<perm_string, SubHeaderList> cur_subprograms_; //current
 
       std::list<const VTypeEnum*> use_enums_;
 
@@ -191,7 +197,7 @@ class ActiveScope : public ScopeBase {
 	// Locate the subprogram by name. The subprogram body uses
 	// this to locate the subprogram declaration. Note that the
 	// subprogram may be in a package header.
-      SubprogramHeader* recall_subprogram(perm_string name) const;
+      SubprogramHeader* recall_subprogram(const SubprogramHeader*subp) const;
 
       /* All bind_name function check if the given name was present
        * in previous scopes. If it is found, it is erased (but the pointer
