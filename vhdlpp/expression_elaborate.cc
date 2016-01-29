@@ -579,8 +579,6 @@ const VType* ExpArithmetic::resolve_operand_types_(const VType*t1, const VType*t
 
       if (t1->type_match(t2))
 	    return t1;
-      if (t2->type_match(t2))
-	    return t2;
 
       return 0;
 }
