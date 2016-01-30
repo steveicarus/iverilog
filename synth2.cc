@@ -1421,6 +1421,16 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 		 are used to collect the outputs from the substatement
 		 for the inputs of the FF bank. */
 	    NetBus tmp_out (scope, tmp_set.size());
+	    for (unsigned idx = 0 ; idx < tmp_out.pin_count() ; idx += 1) {
+		  unsigned ptr = nex_map.find_nexus(tmp_set[idx]);
+		  ivl_assert(*this, ptr < nex_out.pin_count());
+		  if (nex_out.pin(ptr).is_linked()) {
+		        cerr << get_fileline() << ": sorry: multiple statements "
+			        "assigning to the same flip-flop are not yet "
+			        "supported in synthesis." << endl;
+		        return false;
+		  }
+	    }
 
 	      /* Create a temporary ff_ce (FF clock-enable) that
 		 accounts for the subset of outputs that this
