@@ -226,6 +226,8 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    rsig = tmp;
       }
 
+      rsig = crop_to_width(des, rsig, lsig->vector_width());
+
       if (nex_out.pin_count() > 1) {
 	    NexusSet tmp_set;
 	    nex_output(tmp_set);
