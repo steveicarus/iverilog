@@ -282,15 +282,40 @@ class __vpiScope : public __vpiHandle {
       signed int time_precision :8;
 
     protected:
-      __vpiScope(const char*nam, const char*tnam);
+      __vpiScope(const char*nam, const char*tnam, bool is_auto_flag =false);
 
     private:
 	/* The scope has a name. */
       const char*name_;
       const char*tname_;
-    protected:
 	/* the scope may be "automatic" */
       bool is_automatic_;
+};
+
+class vpiScopeFunction  : public __vpiScope {
+    public:
+      inline vpiScopeFunction(const char*nam, const char*tnam,
+			      bool auto_flag, int func_type, unsigned func_wid)
+      : __vpiScope(nam,tnam, auto_flag), func_type_(func_type), func_wid_(func_wid)
+      { }
+
+      int get_type_code(void) const { return vpiFunction; }
+      int vpi_get(int code)
+      {
+	    switch (code) {
+		case vpiFuncType:
+		  return func_type_;
+		default:
+		  return __vpiScope::vpi_get(code);
+	    }
+      }
+
+    public:
+      inline unsigned get_func_width(void) const { return func_wid_; }
+
+    private:
+      int func_type_;
+      unsigned func_wid_;
 };
 
 extern __vpiScope* vpip_peek_current_scope(void);

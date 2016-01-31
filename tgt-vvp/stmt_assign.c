@@ -202,6 +202,49 @@ static void get_vec_from_lval(ivl_statement_t net, struct vec_slice_info*slices)
 
 }
 
+static void put_vec_to_ret_slice(ivl_signal_t sig, struct vec_slice_info*slice,
+				 unsigned wid)
+{
+      int part_off_idx;
+
+	/* If the slice of the l-value is a BOOL variable, then cast
+	   the data to a BOOL vector so that the stores can be valid. */
+      if (ivl_signal_data_type(sig) == IVL_VT_BOOL) {
+	    fprintf(vvp_out, "    %%cast2;\n");
+      }
+
+      switch (slice->type) {
+	  default:
+	    fprintf(vvp_out, " ; XXXX slice->type=%d\n", slice->type);
+	    assert(0);
+	    break;
+
+	  case SLICE_SIMPLE_VECTOR:
+	    assert(slice->u_.simple_vector.use_word == 0);
+	    fprintf(vvp_out, "    %%ret/vec4 0, 0, %u;\n", wid);
+	    break;
+
+	  case SLICE_PART_SELECT_STATIC:
+	    part_off_idx = allocate_word();
+	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n",
+		    part_off_idx, slice->u_.part_select_static.part_off);
+	    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+	    fprintf(vvp_out, "    %%ret/vec4 0, %d, %u;\n", part_off_idx, wid);
+	    clr_word(part_off_idx);
+	    break;
+
+	  case SLICE_PART_SELECT_DYNAMIC:
+	    fprintf(vvp_out, "    %%flag_mov 4, %u;\n",
+		    slice->u_.part_select_dynamic.x_flag);
+	    fprintf(vvp_out, "    %%ret/vec4 0, %d, %u;\n",
+		    slice->u_.part_select_dynamic.word_idx_reg, wid);
+	    clr_word(slice->u_.part_select_dynamic.word_idx_reg);
+	    clr_flag(slice->u_.part_select_dynamic.x_flag);
+	    break;
+
+      }
+}
+
 static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
 				  unsigned wid)
 {
@@ -214,9 +257,7 @@ static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
 	   and the scope is a function, then this is an assign to a return
 	   value and should be handled differently. */
       if (signal_is_return_value(sig)) {
-	    assert(ivl_signal_dimensions(sig) == 0);
-	    fprintf(vvp_out, "    %%ret/vec4 0; Assign to %s\n",
-		    ivl_signal_basename(sig));
+	    put_vec_to_ret_slice(sig, slice, wid);
 	    return;
       }
 
@@ -356,16 +397,6 @@ static void store_vec4_to_lval(ivl_statement_t net)
 	    if (lidx+1 < ivl_stmt_lvals(net))
 		  fprintf(vvp_out, "    %%split/vec4 %u;\n", lwid);
 
-	      /* Special Case: If the l-value signal is named after its scope,
-		 and the scope is a function, then this is an assign to a return
-		 value and should be handled differently. */
-	    if (signal_is_return_value(lsig)) {
-		  assert(ivl_signal_dimensions(lsig) == 0);
-		  fprintf(vvp_out, "    %%ret/vec4 0; Assign to %s (store_vec4_to_lval)\n",
-			  ivl_signal_basename(lsig));
-		  continue;
-	    }
-
 	    if (word_ex) {
 		    /* Handle index into an array */
 		  int word_index = allocate_word();
@@ -396,7 +427,10 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		  draw_eval_expr_into_integer(part_off_ex, offset_index);
 		    /* Note that flag4 is set by the eval above. */
 		  assert(lsig);
-		  if (ivl_signal_type(lsig)==IVL_SIT_UWIRE) {
+		  if (signal_is_return_value(lsig)) {
+			fprintf(vvp_out, "    %%ret/vec4 0, %d, %u; Assign to %s (store_vec4_to_lval)\n",
+				offset_index, lwid, ivl_signal_basename(lsig));
+		  } else if (ivl_signal_type(lsig)==IVL_SIT_UWIRE) {
 			fprintf(vvp_out, "    %%force/vec4/off v%p_0, %d;\n",
 				lsig, offset_index);
 		  } else {
@@ -411,6 +445,7 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		       member. We will use a property assign
 		       function. */
 		  assert(!lsig);
+		  assert(!signal_is_return_value(lsig));
 		  ivl_type_t sub_type = draw_lval_expr(nest);
 		  assert(ivl_type_base(sub_type) == IVL_VT_CLASS);
 		  fprintf(vvp_out, "    %%store/prop/v %d, %u;\n",
@@ -421,7 +456,13 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		    /* No offset expression, so use simpler store function. */
 		  assert(lsig);
 		  assert(lwid == ivl_signal_width(lsig));
-		  fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", lsig, lwid);
+		  if (signal_is_return_value(lsig)) {
+			fprintf(vvp_out, "    %%ret/vec4 0, 0, %u;  Assign to %s (store_vec4_to_lval)\n",
+				lwid, ivl_signal_basename(lsig));
+		  } else {
+			fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n",
+				lsig, lwid);
+		  }
 	    }
       }
 }

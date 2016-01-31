@@ -327,8 +327,8 @@ static vpiHandle module_iter(int code, vpiHandle obj)
 }
 
 
-__vpiScope::__vpiScope(const char*nam, const char*tnam)
-: is_automatic_(false)
+__vpiScope::__vpiScope(const char*nam, const char*tnam, bool auto_flag)
+: is_automatic_(auto_flag)
 {
       name_ = vpip_name_string(nam);
       tname_ = vpip_name_string(tnam? tnam : "");
@@ -376,7 +376,7 @@ vpiHandle __vpiScope::vpi_iterate(int code)
 class vpiScopeModule  : public __vpiScope {
     public:
       inline vpiScopeModule(const char*nam, const char*tnam)
-      : __vpiScope(nam,tnam) { }
+      : __vpiScope(nam,tnam,false) { }
       int get_type_code(void) const { return vpiModule; }
 };
 
@@ -394,34 +394,20 @@ struct vpiScopeTask  : public __vpiScope {
 
 struct vpiScopeTaskAuto  : public __vpiScope {
       inline vpiScopeTaskAuto(const char*nam, const char*tnam)
-      : __vpiScope(nam,tnam) { is_automatic_=true; }
+      : __vpiScope(nam,tnam,true) {  }
       int get_type_code(void) const { return vpiTask; }
-};
-
-class vpiScopeFunction  : public __vpiScope {
-    public:
-      inline vpiScopeFunction(const char*nam, const char*tnam)
-      : __vpiScope(nam,tnam) { }
-      int get_type_code(void) const { return vpiFunction; }
-};
-
-class vpiScopeFunctionAuto  : public __vpiScope {
-    public:
-      inline vpiScopeFunctionAuto(const char*nam, const char*tnam)
-      : __vpiScope(nam,tnam) { is_automatic_=true; }
-      int get_type_code(void) const { return vpiFunction; }
 };
 
 struct vpiScopeBegin  : public __vpiScope {
       inline vpiScopeBegin(const char*nam, const char*tnam)
-      : __vpiScope(nam,tnam) { }
+      : __vpiScope(nam,tnam,false) { }
       int get_type_code(void) const { return vpiNamedBegin; }
 };
 
 class vpiScopeBeginAuto  : public __vpiScope {
     public:
       inline vpiScopeBeginAuto(const char*nam, const char*tnam)
-      : __vpiScope(nam,tnam) { is_automatic_=true; }
+      : __vpiScope(nam,tnam,true) {  }
       int get_type_code(void) const { return vpiNamedBegin; }
 };
 
@@ -433,14 +419,14 @@ struct vpiScopeGenerate  : public __vpiScope {
 
 struct vpiScopeFork  : public __vpiScope {
       inline vpiScopeFork(const char*nam, const char*tnam)
-      : __vpiScope(nam,tnam) { }
+      : __vpiScope(nam,tnam,false) { }
       int get_type_code(void) const { return vpiNamedFork; }
 };
 
 class vpiScopeForkAuto  : public __vpiScope {
     public:
       inline vpiScopeForkAuto(const char*nam, const char*tnam)
-      : __vpiScope(nam,tnam) { is_automatic_=true; }
+      : __vpiScope(nam,tnam,true) {  }
       int get_type_code(void) const { return vpiNamedFork; }
 };
 
@@ -475,14 +461,54 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
                    long def_file_idx, long def_lineno, long is_cell)
 {
       count_vpi_scopes += 1;
+      char sign_flag;
+      unsigned wid;
 
       __vpiScope*scope;
       if (strcmp(type,"module") == 0) {
 	    scope = new vpiScopeModule(name, tname);
-      } else if (strcmp(type,"function") == 0) {
-	    scope = new vpiScopeFunction(name, tname);
-      } else if (strcmp(type,"autofunction") == 0) {
-	    scope = new vpiScopeFunctionAuto(name, tname);
+      } else if ( sscanf(type, "function.vec4.%c%u", &sign_flag, &wid) == 2 ) {
+	    int type_code;
+	    if (sign_flag=='s') {
+		  type_code = vpiSizedSignedFunc;
+	    } else if (sign_flag=='u') {
+		  type_code = vpiSizedFunc;
+	    } else if (sign_flag=='i') {
+		  type_code = vpiIntFunc;
+	    } else {
+		  assert(0);
+		  type_code = vpiSizedFunc;
+	    }
+	    scope = new vpiScopeFunction(name, tname, false, type_code, wid);
+
+      } else if ( sscanf(type, "autofunction.vec4.%c%u", &sign_flag, &wid) == 2 ) {
+	    int type_code;
+	    switch (sign_flag) {
+		case 's':
+		  type_code = vpiSizedSignedFunc;
+		  break;
+		case 'u':
+		  type_code = vpiSizedFunc;
+		  break;
+		default:
+		  assert(0);
+		  type_code = vpiSizedFunc;
+		  break;
+	    }
+	    scope = new vpiScopeFunction(name, tname, true, type_code, wid);
+
+      } else if (strcmp(type,"function.obj") == 0) {
+	    scope = new vpiScopeFunction(name, tname, false, vpiSizedFunc, 0);
+      } else if (strcmp(type,"autofunction.obj") == 0) {
+	    scope = new vpiScopeFunction(name, tname, true, vpiSizedFunc, 0);
+      } else if (strcmp(type,"function.real") == 0) {
+	    scope = new vpiScopeFunction(name, tname, false, vpiRealFunc, 0);
+      } else if (strcmp(type,"autofunction.real") == 0) {
+	    scope = new vpiScopeFunction(name, tname, true, vpiRealFunc, 0);
+      } else if (strcmp(type,"function.str") == 0) {
+	    scope = new vpiScopeFunction(name, tname, false, vpiSizedFunc, 0);
+      } else if (strcmp(type,"autofunction.str") == 0) {
+	    scope = new vpiScopeFunction(name, tname, true, vpiSizedFunc, 0);
       } else if (strcmp(type,"task") == 0) {
 	    scope = new vpiScopeTask(name, tname);
       } else if (strcmp(type,"autotask") == 0) {

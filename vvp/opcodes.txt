@@ -1007,7 +1007,7 @@ See also the %concat instruction.
 * %ret/obj <index>
 * %ret/real <index>
 * %ret/str <index>
-* %ret/vec4 <index>
+* %ret/vec4 <index>, <offset>, <wid>
 
 Write a value to the indexed function argument. The value is popped
 from the appropriate stack and written into the argument. The return
@@ -1015,6 +1015,14 @@ value of a function is the first argument of the appropriate type, so
 for example to store the return value for a real function, use
 "%ret/real 0;". It is up to the function caller to set up the argument
 references.
+
+The %ret/vec4 opcode works very much like the %store/vec4 opcode. The
+<off> and <wid> operands are the offset and width of the subvector of
+the destination value that is written by the value popped from the
+vec4 stack. Off the <offset> is zero, then the literal offset is
+zero. If the <offset> is non-zero, then it selects an index register
+that contains the actual offset. In this case, flag-4 is tested, and
+if not 1, the assign is suppressed.
 
 * %retload/vec4 <index>
 
@@ -1137,7 +1145,9 @@ popped off the top of the stack and written to the variable. The value
 is then optionally truncated to <wid> bits and assigned to the
 variable. It is an error for the value to be fewer then <wid>
 bits. The <offset> is the index register that contains a part offset
-for writing into a part of the variable.
+for writing into a part of the variable. If the <offset> is 0, then
+use the literal value 0 instead of getting an offset from index
+register 0.
 
 The %store/vec4a is similar, but the target is an array of vec4, the
 <addr> is an index register that contains the canonical address, and

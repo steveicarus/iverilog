@@ -1356,9 +1356,12 @@ bool of_CALLF_VEC4(vthread_t thr, vvp_code_t cp)
 {
       vthread_t child = vthread_new(cp->cptr2, cp->scope);
 
+      vpiScopeFunction*scope_func = dynamic_cast<vpiScopeFunction*>(cp->scope);
+      assert(scope_func);
+
 	// This is the return value. Push a place-holder value. The function
 	// will replace this with the actual value using a %ret/real instruction.
-      thr->push_vec4(vvp_vector4_t());
+      thr->push_vec4(vvp_vector4_t(scope_func->get_func_width()));
       child->args_vec4.push_back(0);
 
       return do_callf_void(thr, child);
@@ -4976,18 +4979,68 @@ bool of_RET_REAL(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %ret/vec4 <index>
+ * %ret/vec4 <index>, <offset>, <wid>
  */
 bool of_RET_VEC4(vthread_t thr, vvp_code_t cp)
 {
       size_t index = cp->number;
-      vvp_vector4_t val = thr->pop_vec4();
+      unsigned off_index = cp->bit_idx[0];
+      int wid = cp->bit_idx[1];
 
       assert(index >= 0 && index < thr->args_vec4.size());
       unsigned depth = thr->args_vec4[index];
-	// Use the depth to put the value into the stack of
-	// the parent thread.
-      thr->parent->poke_vec4(depth, val);
+
+      int off = off_index? thr->words[off_index].w_int : 0;
+      const int sig_value_size = thr->parent->peek_vec4(depth).size();
+
+      vvp_vector4_t&val = thr->peek_vec4();
+      unsigned val_size = val.size();
+
+      if (off_index!=0 && thr->flags[4] == BIT4_1) {
+	    thr->pop_vec4(1);
+	    return true;
+      }
+
+      if (off <= -wid) {
+	    thr->pop_vec4(1);
+	    return true;
+      }
+
+      if (off >= sig_value_size) {
+	    thr->pop_vec4(1);
+	    return true;
+      }
+
+	// IF the index is below the vector, then only assign the high
+	// bits that overlap with the target
+      if (off < 0) {
+	    int use_off = -off;
+	    wid -= use_off;
+	    val = val.subvalue(use_off, wid);
+	    val_size = wid;
+	    off = 0;
+      }
+
+	// If the value is partly above the taret, then only assign
+	// the bits that overlap
+      if ((off+wid) > sig_value_size) {
+	    wid = sig_value_size - off;
+	    val = val.subvalue(0, wid);
+	    val.resize(wid);
+	    val_size = wid;
+      }
+
+      if (off==0 && val_size==(unsigned)sig_value_size) {
+	    thr->parent->poke_vec4(depth, val);
+
+      } else {
+	    vvp_vector4_t tmp_dst = thr->parent->peek_vec4(depth);
+	    assert(wid>=0 && val.size() == (unsigned)wid);
+	    tmp_dst.set_vec(off, val);
+	    thr->parent->poke_vec4(depth, tmp_dst);
+      }
+
+      thr->pop_vec4(1);
       return true;
 }
 
@@ -6033,9 +6086,12 @@ bool of_EXEC_UFUNC_VEC4(vthread_t thr, vvp_code_t cp)
       __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
       assert(child_scope);
 
+      vpiScopeFunction*scope_func = dynamic_cast<vpiScopeFunction*>(child_scope);
+      assert(scope_func);
+
 	/* Create a temporary thread and run it immediately. */
       vthread_t child = vthread_new(cp->cptr, child_scope);
-      thr->push_vec4(vvp_vector4_t());
+      thr->push_vec4(vvp_vector4_t(scope_func->get_func_width()));
       child->args_vec4.push_back(0);
 
       return do_exec_ufunc(thr, cp, child);

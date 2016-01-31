@@ -2043,6 +2043,29 @@ extern "C" const char*ivl_scope_file(ivl_scope_t net)
       return net->file.str();
 }
 
+extern "C" ivl_variable_type_t ivl_scope_func_type(ivl_scope_t net)
+{
+      assert(net);
+      assert(net->type_ == IVL_SCT_FUNCTION);
+      return net->func_type;
+}
+
+extern "C" int ivl_scope_func_signed(ivl_scope_t net)
+{
+      assert(net);
+      assert(net->type_ == IVL_SCT_FUNCTION);
+      assert(net->func_type == IVL_VT_LOGIC);
+      return net->func_signed? !0 : 0;
+}
+
+extern "C" unsigned ivl_scope_func_width(ivl_scope_t net)
+{
+      assert(net);
+      assert(net->type_ == IVL_SCT_FUNCTION);
+      assert(net->func_type == IVL_VT_LOGIC);
+      return net->func_width;
+}
+
 extern "C" unsigned ivl_scope_is_auto(ivl_scope_t net)
 {
       assert(net);

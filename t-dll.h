@@ -653,6 +653,8 @@ struct ivl_process_s {
  * there.
  */
 struct ivl_scope_s {
+      ivl_scope_s();
+
       ivl_scope_t parent;
       std::map<hname_t,ivl_scope_t> children;
 	// This is just like the children map above, but in vector
@@ -686,6 +688,9 @@ struct ivl_scope_s {
 	/* Scopes that are tasks/functions have a definition. */
       ivl_statement_t def;
       unsigned is_auto;
+      ivl_variable_type_t func_type;
+      bool func_signed;
+      unsigned func_width;
 
       unsigned is_cell;
 

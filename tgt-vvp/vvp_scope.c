@@ -2235,6 +2235,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       const char *type;
 
       const char*prefix = ivl_scope_is_auto(net) ? "auto" : "";
+      char suffix[32];
+
+      suffix[0] = 0;
 
       switch (ivl_scope_type(net)) {
       case IVL_SCT_MODULE:   type = "module";   break;
@@ -2248,8 +2251,30 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       default:               type = "?";        assert(0);
       }
 
-      fprintf(vvp_out, "S_%p .scope %s%s, \"%s\" \"%s\" %u %u",
-	      net, prefix, type,
+      if (ivl_scope_type(net)==IVL_SCT_FUNCTION) {
+	    switch (ivl_scope_func_type(net)) {
+		case IVL_VT_LOGIC:
+		  snprintf(suffix, sizeof suffix, ".vec4.%c%u",
+			   ivl_scope_func_signed(net)? 'u' : 's',
+			   ivl_scope_func_width(net));
+		  break;
+		case IVL_VT_REAL:
+		  snprintf(suffix, sizeof suffix, ".real");
+		  break;
+		case IVL_VT_STRING:
+		  snprintf(suffix, sizeof suffix, ".str");
+		  break;
+		case IVL_VT_CLASS:
+		  snprintf(suffix, sizeof suffix, ".obj");
+		  break;
+		default:
+		  assert(0);
+		  break;
+	    }
+      }
+      
+      fprintf(vvp_out, "S_%p .scope %s%s%s, \"%s\" \"%s\" %u %u",
+	      net, prefix, type, suffix,
 	      vvp_mangle_name(ivl_scope_basename(net)),
               vvp_mangle_name(ivl_scope_tname(net)),
 	      ivl_file_table_index(ivl_scope_file(net)),

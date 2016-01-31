@@ -103,6 +103,13 @@ inline const char*dlerror(void)
 { return strerror( errno ); }
 #endif
 
+ivl_scope_s::ivl_scope_s()
+{
+      func_type = IVL_VT_NO_TYPE;
+      func_signed = false;
+      func_width = 0;
+}
+
 /*
  * The custom new operator for the ivl_nexus_s type allows us to
  * allocate nexus objects in blocks. There are generally lots of them
@@ -589,6 +596,21 @@ void dll_target::make_scope_param_expr(ivl_parameter_t cur_par, NetExpr*etmp)
       expr_ = 0;
 }
 
+static void fill_in_scope_function(ivl_scope_t scope, const NetScope*net)
+{
+      scope->type_ = IVL_SCT_FUNCTION;
+      const NetFuncDef*def = net->func_def();
+      assert(def);
+
+      const NetNet*return_sig = def->return_sig();
+      assert(return_sig);
+
+      scope->tname_ = def->scope()->basename();
+      scope->func_type = return_sig->data_type();
+      scope->func_signed = return_sig->get_signed();
+      scope->func_width = return_sig->vector_width();
+}
+
 void dll_target::add_root(const NetScope *s)
 {
       ivl_scope_t root_ = new struct ivl_scope_s;
@@ -635,7 +657,7 @@ void dll_target::add_root(const NetScope *s)
 	  }
 	    break;
 	  case NetScope::FUNC:
-	    root_->type_ = IVL_SCT_FUNCTION;
+	    fill_in_scope_function(root_, s);
 	    break;
 	  default:
 	    assert(0);
@@ -2508,8 +2530,7 @@ void dll_target::scope(const NetScope*net)
 		      break;
 		}
 		case NetScope::FUNC:
-		  scop->type_ = IVL_SCT_FUNCTION;
-		  scop->tname_ = net->func_def()->scope()->basename();
+		  fill_in_scope_function(scop, net);
 		  break;
 		case NetScope::BEGIN_END:
 		  scop->type_ = IVL_SCT_BEGIN;

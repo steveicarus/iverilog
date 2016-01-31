@@ -1745,6 +1745,13 @@ extern unsigned    ivl_parameter_lineno(ivl_parameter_t net);
  * ivl_scope_lineno
  *    Returns the instantiation file and line for this scope.
  *
+ * ivl_scope_func_type
+ * ivl_scope_func_signed
+ * ivl_scope_func_width
+ *
+ *    If the scope is a function, these function can be used to get
+ *    the type of the return value.
+ *
  * ivl_scope_is_auto
  *    Is the task or function declared to be automatic?
  *
@@ -1863,6 +1870,9 @@ extern const char*  ivl_scope_tname(ivl_scope_t net);
 extern int          ivl_scope_time_precision(ivl_scope_t net);
 extern int          ivl_scope_time_units(ivl_scope_t net);
 
+extern ivl_variable_type_t ivl_scope_func_type(ivl_scope_t net);
+extern int ivl_scope_func_signed(ivl_scope_t net);
+extern unsigned ivl_scope_func_width(ivl_scope_t net);
 
 /* SIGNALS
  * Signals are named things in the Verilog source, like wires and
