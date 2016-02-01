@@ -5049,8 +5049,13 @@ bool of_RET_VEC4(vthread_t thr, vvp_code_t cp)
  */
 bool of_RETLOAD_REAL(vthread_t thr, vvp_code_t cp)
 {
-	// NOT IMPLEMENTED
-      assert(0);
+      size_t index = cp->number;
+
+      assert(index >= 0 && index < thr->args_real.size());
+      unsigned depth = thr->args_real[index];
+	// Use the depth to extract the values from the stack
+	// of the parent thread.
+      thr->push_real(thr->parent->peek_real(depth));
       return true;
 }
 

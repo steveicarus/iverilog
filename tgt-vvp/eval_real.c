@@ -297,6 +297,16 @@ static void draw_signal_real_real(ivl_expr_t expr)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
 
+	/* Special Case: If the signal is the return value of the function,
+	   then use a different opcode to get the value. */
+      if (signal_is_return_value(sig)) {
+	    assert(ivl_signal_dimensions(sig) == 0);
+	    fprintf(vvp_out, "    %%retload/real 0; Load %s (draw_signal_real_real)\n",
+		    ivl_signal_basename(sig));
+	    return;
+      }
+
+
       if (ivl_signal_dimensions(sig) == 0) {
 	    fprintf(vvp_out, "    %%load/real v%p_0;\n", sig);
 	    return;
