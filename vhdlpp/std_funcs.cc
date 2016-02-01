@@ -318,6 +318,17 @@ void preload_std_funcs(void)
                                           perm_string::literal("$ivlh_file_open"),
                                           args, NULL));
 
+    /* procedure file_open (status: out file_open_status, file f: text; filename: in string, file_open_kind: in mode);
+     */
+    args = new list<InterfacePort*>();
+    args->push_back(new InterfacePort(&type_FILE_OPEN_STATUS, PORT_OUT));
+    args->push_back(new InterfacePort(&primitive_INTEGER, PORT_IN));
+    args->push_back(new InterfacePort(&primitive_STRING, PORT_IN));
+    args->push_back(new InterfacePort(&type_FILE_OPEN_KIND, PORT_IN));
+    register_std_subprogram(new SubprogramBuiltin(perm_string::literal("file_open"),
+                                          perm_string::literal("$ivlh_file_open"),
+                                          args, NULL));
+
     /* std.textio library
      * procedure file_close (file f: text);
      */

@@ -48,6 +48,7 @@
 # include  <assert.h>
 # include  <string.h>
 # include  <ctype.h>
+# include  <errno.h>
 # include  "ivl_alloc.h"
 
 /* additional parameter values to distinguish between integer, boolean and
@@ -55,6 +56,7 @@
 enum format_t { FORMAT_STD, FORMAT_BOOL, FORMAT_TIME, FORMAT_HEX, FORMAT_STRING };
 
 enum file_mode_t { FILE_MODE_READ, FILE_MODE_WRITE, FILE_MODE_APPEND, FILE_MODE_LAST };
+enum file_open_status_t { FS_OPEN_OK, FS_STATUS_ERROR, FS_NAME_ERROR, FS_MODE_ERROR };
 
 /* bits per vector, in a single s_vpi_vecval struct */
 static const size_t BPW = 8 * sizeof(PLI_INT32);
@@ -65,6 +67,11 @@ static int is_integer_var(vpiHandle obj)
 
     return (type == vpiIntegerVar || type == vpiShortIntVar ||
          type == vpiIntVar || type == vpiLongIntVar);
+}
+
+static int is_const(vpiHandle obj)
+{
+    return vpi_get(vpiType, obj) == vpiConstant;
 }
 
 static void show_error_line(vpiHandle callh) {
@@ -281,40 +288,44 @@ static int write_time(char *string, const s_vpi_value* val,
 static PLI_INT32 ivlh_file_open_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-    vpiHandle argv;
+    vpiHandle argv, arg;
     assert(callh != 0);
+    int ok = 1;
 
     argv = vpi_iterate(vpiArgument, callh);
 
     /* Check that there is a file name argument and that it is a string. */
-    if (argv == 0) {
-        show_error_line(callh);
-        vpi_printf("%s requires a string file name argument.\n", name);
-        vpi_control(vpiFinish, 1);
-        return 0;
-    }
+    if (argv == 0)
+        ok = 0;
 
-    if(!is_integer_var(vpi_scan(argv))) {
-        show_error_line(callh);
-        vpi_printf("%s's first argument has to be an integer variable (file handle).\n", name);
-        vpi_control(vpiFinish, 1);
-    }
+    arg = vpi_scan(argv);
+    if (!arg || !is_integer_var(arg))
+        ok = 0;
 
-    if(!is_string_obj(vpi_scan(argv))) {
-        show_error_line(callh);
-        vpi_printf("%s's second argument argument must be a string (file name).\n", name);
-        vpi_control(vpiFinish, 1);
-    }
+    arg = vpi_scan(argv);
+    if (arg && is_integer_var(arg))
+        arg = vpi_scan(argv);
 
-    /* When provided, the type argument must be a string. */
-    if(!vpi_scan(argv)) {
+    // no vpi_scan() here, if we had both 'status' and 'file' arguments,
+    // then the next arg is read in the above if, otherwise we are going
+    // to check the second argument once again
+    if (!arg || !is_string_obj(arg))
+        ok = 0;
+
+    arg = vpi_scan(argv);
+    if (arg && !is_const(arg))
+        ok = 0;
+
+    if (!ok) {
         show_error_line(callh);
-        vpi_printf("%s's third argument must be an integer (open mode).\n", name);
+        vpi_printf("%s() function is available in following variants:\n", name);
+        vpi_printf("* (file f: text; filename: in string, file_open_kind: in mode)\n");
+        vpi_printf("* (status: out file_open_status, file f: text; filename: in string, file_open_kind: in mode)\n");
         vpi_control(vpiFinish, 1);
     }
 
     /* Make sure there are no extra arguments. */
-    check_for_extra_args(argv, callh, name, "three arguments", 1);
+    check_for_extra_args(argv, callh, name, "four arguments", 1);
 
     return 0;
 }
@@ -330,15 +341,25 @@ static PLI_INT32 ivlh_file_open_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     int mode;
     char *fname;
 
+    vpiHandle fstatush = vpi_scan(argv);
     vpiHandle fhandleh = vpi_scan(argv);
     vpiHandle fnameh = vpi_scan(argv);
     vpiHandle modeh = vpi_scan(argv);
+
+    if(!modeh) {
+        /* There are only three arguments, so rearrange handles */
+        modeh = fnameh;
+        fnameh = fhandleh;
+        fhandleh = fstatush;
+        fstatush = 0;
+    } else {
+        vpi_free_object(argv);
+    }
 
     /* Get the mode handle */
     val.format = vpiIntVal;
     vpi_get_value(modeh, &val);
     mode = val.value.integer;
-    vpi_free_object(argv);
 
     if(mode < 0 || mode >= FILE_MODE_LAST) {
         show_error_line(callh);
@@ -355,21 +376,51 @@ static PLI_INT32 ivlh_file_open_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     }
 
     /* Open file and save the handle */
+    PLI_INT32 result = -1;
     switch(mode) {
         case FILE_MODE_READ:
-            val.value.integer = vpi_fopen(fname, "r");
+            result = vpi_fopen(fname, "r");
             break;
 
         case FILE_MODE_WRITE:
-            val.value.integer = vpi_fopen(fname, "w");
+            result = vpi_fopen(fname, "w");
             break;
 
         case FILE_MODE_APPEND:
-            val.value.integer = vpi_fopen(fname, "a");
+            result = vpi_fopen(fname, "a");
             break;
     }
 
+    if(fstatush) {
+        val.format = vpiIntVal;
+
+        if(!result) {
+            switch(errno) {
+                case ENOENT:
+                case ENAMETOOLONG:
+                    val.value.integer = FS_NAME_ERROR;
+                    break;
+
+                case EINVAL:
+                case EACCES:
+                case EEXIST:
+                case EISDIR:
+                    val.value.integer = FS_MODE_ERROR;
+                    break;
+
+                default:
+                    val.value.integer = FS_STATUS_ERROR;
+                    break;
+            }
+        } else {
+            val.value.integer = FS_OPEN_OK;
+        }
+
+        vpi_put_value(fstatush, &val, 0, vpiNoDelay);
+    }
+
     val.format = vpiIntVal;
+    val.value.integer = result;
     vpi_put_value(fhandleh, &val, 0, vpiNoDelay);
     free(fname);
 
