@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2014-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -76,8 +76,8 @@ static int draw_condition_binary_compare(ivl_expr_t expr)
 	   %cmp instruction. */
       if (ivl_expr_width(le)==use_wid && test_immediate_vec4_ok(le)) {
 	    ivl_expr_t tmp = le;
-	    re = le;
-	    le = tmp;
+	    le = re;
+	    re = tmp;
       }
 
       draw_eval_vec4(le);

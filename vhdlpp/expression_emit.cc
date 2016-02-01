@@ -224,7 +224,7 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, ScopeBase*scope, const VT
 	      // If this is a range choice, then calculate the bounds
 	      // of the range and scan through the values, mapping the
 	      // value to the aggregate_[idx] element.
-	    if (prange_t*range = aggregate_[idx].choice->range_expressions()) {
+	    if (ExpRange*range = aggregate_[idx].choice->range_expressions()) {
 		  int64_t begin_val, end_val;
 
 		  if (! range->msb()->evaluate(ent, scope, begin_val)) {
@@ -331,13 +331,13 @@ int ExpAggregate::emit_record_(ostream&out, Entity*ent, ScopeBase*scope, const V
       return errors;
 }
 
-int ExpAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpObjAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
 	// Try to evaluate first
       int64_t val;
-      if(evaluate(scope, val)) {
+      if(evaluate(ent, scope, val)) {
             out << val;
             return 0;
       }
@@ -365,8 +365,46 @@ int ExpAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
 	    return errors;
       }
 
+      // Fallback
       out << "$ivl_attribute(";
       errors += base_->emit(out, ent, scope);
+      out << ", \"" << name_ << "\")";
+      return errors;
+}
+
+int ExpTypeAttribute::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+      int errors = 0;
+
+      // Special case: The image attribute
+      if (name_=="image") {
+            if(!args_ || args_->size() != 1) {
+                out << "/* Invalid 'image attribute */" << endl;
+                cerr << get_fileline() << ": error: 'image attribute takes "
+                        << "exactly one argument." << endl;
+                ++errors;
+            } else {
+                out << "$sformatf(\"";
+
+                if(base_->type_match(&primitive_INTEGER))
+                    out << "%0d";
+                else if(base_->type_match(&primitive_REAL))
+                    out << "%f";
+                else if(base_->type_match(&primitive_CHARACTER))
+                    out << "'%c'";
+                else if(base_->type_match(&primitive_TIME))
+                    out << "%+0t";
+
+                out << "\",";
+                args_->front()->emit(out, ent, scope);
+                out << ")";
+            }
+            return errors;
+      }
+
+      // Fallback
+      out << "$ivl_attribute(";
+      errors += base_->emit_def(out, empty_perm_string);
       out << ", \"" << name_ << "\")";
       return errors;
 }
@@ -453,15 +491,14 @@ int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*, ScopeBase*,
 int ExpCharacter::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       const VType*etype = peek_type();
+      const VTypeArray*array;
+
+      if (etype != &primitive_CHARACTER && (array = dynamic_cast<const VTypeArray*>(etype))) {
+	    etype = array->element_type();
+      }
 
       if (const VTypePrimitive*use_type = dynamic_cast<const VTypePrimitive*>(etype)) {
 	    return emit_primitive_bit_(out, ent, scope, use_type);
-      }
-
-      if (const VTypeArray*array = dynamic_cast<const VTypeArray*>(etype)) {
-	    if (const VTypePrimitive*use_type = dynamic_cast<const VTypePrimitive*>(array->element_type())) {
-		  return emit_primitive_bit_(out, ent, scope, use_type);
-	    }
       }
 
       out << "\"" << value_ << "\"";
@@ -583,7 +620,10 @@ int ExpFunc::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      ivl_assert(*this, def_);
+      if(!def_) {
+          cerr << get_fileline() << ": error: unknown function: " << name_ << endl;
+          return 1;
+      }
 
       // If this function has an elaborated definition, and if
       // that definition is in a package, then include the
@@ -909,10 +949,11 @@ bool ExpString::is_primary(void) const
 
 int ExpString::emit(ostream& out, Entity*ent, ScopeBase*scope)
 {
+      const VTypeArray*arr;
       const VType*type = peek_type();
       assert(type != 0);
 
-      if (const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type)) {
+      if (type != &primitive_STRING && (arr = dynamic_cast<const VTypeArray*>(type))) {
 	    return emit_as_array_(out, ent, scope, arr);
       }
 
@@ -1024,6 +1065,28 @@ int ExpTime::emit(ostream&out, Entity*, ScopeBase*)
           case US: out << "us"; break;
           case MS: out << "ms"; break;
           case S:  out << "s"; break;
+      }
+
+      return 0;
+}
+
+int ExpRange::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+      int errors = 0;
+
+      if(range_expr_) {
+          out << "$left(";
+          errors += range_base_->emit(out, ent, scope);
+          out << "):$right(";
+          errors += range_base_->emit(out, ent, scope);
+          out << ")";
+      } else if(direction_ == AUTO) {
+          ivl_assert(*this, false);
+          out << "/* auto dir */";
+      } else {
+          errors += left_->emit(out, ent, scope);
+          out << ":";
+          errors += right_->emit(out, ent, scope);
       }
 
       return 0;

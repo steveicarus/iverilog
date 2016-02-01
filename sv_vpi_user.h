@@ -75,6 +75,10 @@ EXTERN_C_START
 /********* task/function properties **********/
 #define vpiOtherFunc          6
 
+/* Icarus-specific function type to use string as the return type */
+#define vpiStringFunc       10
+#define vpiSysFuncString    vpiSysFuncString
+
 EXTERN_C_END
 
 #endif /* SV_VPI_USER_H */

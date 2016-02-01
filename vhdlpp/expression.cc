@@ -54,28 +54,87 @@ bool Expression::symbolic_compare(const Expression*) const
       return false;
 }
 
-ExpAttribute::ExpAttribute(ExpName*bas, perm_string nam)
-: base_(bas), name_(nam)
+ExpAttribute::ExpAttribute(perm_string nam, list<Expression*>*args)
+: name_(nam), args_(args)
 {
 }
 
 ExpAttribute::~ExpAttribute()
 {
-	/* Different attributes can point to the same base so we cannot delete this here.
-	 * Look at the vhdl_range test with valgrind to see this issue. */
-//      delete base_;
+      if(args_) {
+	    for(list<Expression*>::iterator it = args_->begin();
+                    it != args_->end(); ++it) {
+		delete *it;
+            }
+      }
+
+      delete args_;
 }
 
-Expression*ExpAttribute::clone() const
-{
-      return new ExpAttribute(static_cast<ExpName*>(base_->clone()), name_);
+list<Expression*>*ExpAttribute::clone_args() const {
+      list<Expression*>*new_args = NULL;
+
+      if(args_) {
+	    for(list<Expression*>::iterator it = args_->begin();
+                    it != args_->end(); ++it) {
+		new_args->push_back((*it)->clone());
+            }
+      }
+
+      return new_args;
 }
 
-void ExpAttribute::visit(ExprVisitor& func)
+void ExpAttribute::visit_args(ExprVisitor& func)
 {
+      if(args_) {
+	    for(list<Expression*>::iterator it = args_->begin();
+                    it != args_->end(); ++it) {
+		func(*it);
+            }
+      }
+}
+
+ExpObjAttribute::ExpObjAttribute(ExpName*base, perm_string name, list<Expression*>*args)
+: ExpAttribute(name, args), base_(base)
+{
+}
+
+ExpObjAttribute::~ExpObjAttribute()
+{
+    delete base_;
+}
+
+Expression*ExpObjAttribute::clone() const
+{
+      return new ExpObjAttribute(static_cast<ExpName*>(base_->clone()),
+                                 name_, clone_args());
+}
+
+void ExpObjAttribute::visit(ExprVisitor& func)
+{
+      visit_args(func);
       base_->visit(func);
       func(this);
 }
+
+ExpTypeAttribute::ExpTypeAttribute(const VType*base, perm_string name, list<Expression*>*args)
+: ExpAttribute(name, args), base_(base)
+{
+}
+
+Expression*ExpTypeAttribute::clone() const
+{
+      return new ExpTypeAttribute(base_, name_, clone_args());
+}
+
+void ExpTypeAttribute::visit(ExprVisitor& func)
+{
+      visit_args(func);
+      func(this);
+}
+
+const perm_string ExpAttribute::LEFT = perm_string::literal("left");
+const perm_string ExpAttribute::RIGHT = perm_string::literal("right");
 
 ExpBinary::ExpBinary(Expression*op1, Expression*op2)
 : operand1_(op1), operand2_(op2)
@@ -88,14 +147,14 @@ ExpBinary::~ExpBinary()
       delete operand2_;
 }
 
-bool ExpBinary::eval_operand1(ScopeBase*scope, int64_t&val) const
+bool ExpBinary::eval_operand1(Entity*ent, ScopeBase*scope, int64_t&val) const
 {
-      return operand1_->evaluate(scope, val);
+      return operand1_->evaluate(ent, scope, val);
 }
 
-bool ExpBinary::eval_operand2(ScopeBase*scope, int64_t&val) const
+bool ExpBinary::eval_operand2(Entity*ent, ScopeBase*scope, int64_t&val) const
 {
-      return operand2_->evaluate(scope, val);
+      return operand2_->evaluate(ent, scope, val);
 }
 
 void ExpBinary::visit(ExprVisitor& func)
@@ -192,7 +251,7 @@ ExpAggregate::choice_t::choice_t()
 {
 }
 
-ExpAggregate::choice_t::choice_t(prange_t*rang)
+ExpAggregate::choice_t::choice_t(ExpRange*rang)
 : range_(rang)
 {
 }
@@ -203,7 +262,7 @@ ExpAggregate::choice_t::choice_t(const choice_t&other)
         expr_.reset(e->clone());
 
     if(other.range_.get())
-        range_.reset(new prange_t(*other.range_.get()));
+        range_.reset(static_cast<ExpRange*>(other.range_.get()->clone()));
 }
 
 ExpAggregate::choice_t::~choice_t()
@@ -221,7 +280,7 @@ Expression*ExpAggregate::choice_t::simple_expression(bool detach_flag)
       return res;
 }
 
-prange_t*ExpAggregate::choice_t::range_expressions(void)
+ExpRange*ExpAggregate::choice_t::range_expressions(void)
 {
       return range_.get();
 }
@@ -493,7 +552,7 @@ ExpInteger::~ExpInteger()
 {
 }
 
-bool ExpInteger::evaluate(ScopeBase*, int64_t&val) const
+bool ExpInteger::evaluate(Entity*, ScopeBase*, int64_t&val) const
 {
       val = value_;
       return true;
@@ -535,6 +594,7 @@ ExpName::ExpName(perm_string nn, list<Expression*>*indices)
 ExpName::ExpName(perm_string nn, Expression*msb, Expression*lsb)
 : name_(nn), index_(msb), lsb_(lsb)
 {
+    ivl_assert(*this, !msb || msb != lsb);
 }
 
 ExpName::ExpName(ExpName*prefix, perm_string nn)
@@ -545,6 +605,7 @@ ExpName::ExpName(ExpName*prefix, perm_string nn)
 ExpName::ExpName(ExpName*prefix, perm_string nn, Expression*msb, Expression*lsb)
 : prefix_(prefix), name_(nn), index_(msb), lsb_(lsb)
 {
+    ivl_assert(*this, !msb || msb != lsb);
 }
 
 ExpName::~ExpName()
@@ -711,4 +772,76 @@ double ExpTime::to_fs() const
     }
 
     return val;
+}
+
+ExpRange::ExpRange(Expression*left, Expression*right, range_dir_t direction)
+: left_(left), right_(right), direction_(direction), range_expr_(false),
+    range_base_(NULL)
+{
+}
+
+ExpRange::ExpRange(ExpName*base, bool reverse_range)
+: left_(NULL), right_(NULL), direction_(AUTO), range_expr_(true),
+    range_base_(base), range_reverse_(reverse_range)
+{
+}
+
+ExpRange::~ExpRange()
+{
+    delete left_;
+    delete right_;
+    delete range_base_;
+}
+
+Expression*ExpRange::clone() const
+{
+    if(range_expr_)
+        return new ExpRange(static_cast<ExpName*>(range_base_->clone()), range_reverse_);
+    else
+        return new ExpRange(left_->clone(), right_->clone(), direction_);
+}
+
+Expression* ExpRange::msb()
+{
+    ivl_assert(*this, direction() != AUTO);
+
+    switch(direction()) {
+        case DOWNTO: return left_;
+        case TO: return right_;
+        default: return NULL;
+    }
+
+    return NULL;
+}
+
+Expression* ExpRange::lsb()
+{
+    ivl_assert(*this, direction() != AUTO);
+
+    switch(direction()) {
+        case DOWNTO: return right_;
+        case TO: return left_;
+        default: return NULL;
+    }
+
+    return NULL;
+}
+
+Expression*ExpRange::left()
+{
+    if(range_expr_ && !left_)
+        // TODO check if it is an object or type
+        left_ = new ExpObjAttribute(static_cast<ExpName*>(range_base_->clone()),
+                                    ExpAttribute::LEFT, NULL);
+
+    return left_;
+}
+
+Expression*ExpRange::right()
+{
+    if(range_expr_ && !right_)
+        // TODO check if it is an object or type
+        right_ = new ExpObjAttribute(static_cast<ExpName*>(range_base_->clone()),
+                                    ExpAttribute::RIGHT, NULL);
+    return right_;
 }

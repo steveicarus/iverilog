@@ -23,7 +23,6 @@
 class ActiveScope;
 
 void emit_std_types(ostream&out);
-int emit_packages(void);
 void generate_global_types(ActiveScope*res);
 bool is_global_type(perm_string type_name);
 void delete_global_types();

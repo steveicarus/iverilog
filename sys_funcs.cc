@@ -204,6 +204,17 @@ int load_sys_func_table(const char*path)
 		  continue;
 	    }
 
+	    if (strcmp(stype,"vpiSysFuncString") == 0) {
+		  cell = new struct sfunc_return_type_cell;
+		  cell->name = lex_strings.add(name);
+		  cell->type = IVL_VT_STRING;
+		  cell->wid  = 0;   // string is a dynamic length type
+		  cell->signed_flag = false;
+		  cell->next = sfunc_stack;
+		  sfunc_stack = cell;
+		  continue;
+	    }
+
 	    fprintf(stderr, "%s:%s: Unknown type: %s\n",
 		    path, name, stype);
       }

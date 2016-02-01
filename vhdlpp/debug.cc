@@ -101,7 +101,7 @@ void ComponentBase::dump_ports(ostream&out, int indent) const
       }
 }
 
-void Scope::dump_scope(ostream&out) const
+void ScopeBase::dump_scope(ostream&out) const
 {
 	// Dump types
       out << "   -- imported types" << endl;
@@ -251,9 +251,16 @@ void ExpAggregate::choice_t::dump(ostream&out, int indent) const
       out << setw(indent) << "" << "?choice_t?" << endl;
 }
 
-void ExpAttribute::dump(ostream&out, int indent) const
+void ExpTypeAttribute::dump(ostream&out, int indent) const
 {
-      out << setw(indent) << "" << "Attribute " << name_
+      out << setw(indent) << "" << "Attribute (type-related) " << name_
+	  << " at " << get_fileline() << endl;
+      base_->show(out);
+}
+
+void ExpObjAttribute::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "Attribute (object-related) " << name_
 	  << " at " << get_fileline() << endl;
       base_->dump(out, indent+4);
 }
@@ -440,13 +447,6 @@ void named_expr_t::dump(ostream&out, int indent) const
 {
     out << setw(indent) << "" << name_ << "=>";
     expr_->dump(out, indent);
-}
-
-void prange_t::dump(ostream&out, int indent) const
-{
-    left_->dump(out, indent);
-    out << setw(indent) << "" << (direction_ ? "downto" : "to");
-    right_->dump(out, indent);
 }
 
 ostream& Expression::dump_inline(ostream&out) const

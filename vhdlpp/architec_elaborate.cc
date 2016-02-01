@@ -21,6 +21,7 @@
 # include  "entity.h"
 # include  "expression.h"
 # include  "sequential.h"
+# include  "subprogram.h"
 # include  <typeinfo>
 # include  <cassert>
 
@@ -59,6 +60,11 @@ int Architecture::elaborate(Entity*entity)
 	    cur->second->elaborate_init_expr(entity, this);
       }
 
+	// Elaborate subprograms
+      for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
+		 ; cur != cur_subprograms_.end() ; ++cur) {
+	    errors += cur->second->elaborate();
+      }
 	// Create 'initial' and 'final' blocks for implicit
 	// initalization and clean-up actions
       if(!initializers_.empty())
@@ -222,7 +228,7 @@ int ProcessStatement::rewrite_as_always_edge_(Entity*, Architecture*)
       }
 
 	// If operand1 is not an 'event attribute, I give up.
-      const ExpAttribute*op1 = dynamic_cast<const ExpAttribute*>(op1_raw);
+      const ExpObjAttribute*op1 = dynamic_cast<const ExpObjAttribute*>(op1_raw);
       if (op1 == 0)
 	    return -1;
       if (op1->peek_attribute() != "event")

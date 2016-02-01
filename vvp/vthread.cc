@@ -346,6 +346,11 @@ void vthread_push_real(struct vthread_s*thr, double val)
       thr->push_real(val);
 }
 
+void vthread_push_str(struct vthread_s*thr, const string&val)
+{
+      thr->push_str(val);
+}
+
 void vthread_pop_vec4(struct vthread_s*thr, unsigned depth)
 {
       thr->pop_vec4(depth);

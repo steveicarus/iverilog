@@ -100,7 +100,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_VAR_QUEUE
 %token K_VAR_S K_VAR_STR K_VAR_I K_VAR_R K_VAR_2S K_VAR_2U
 %token K_vpi_call K_vpi_call_w K_vpi_call_i
-%token K_vpi_func K_vpi_func_r
+%token K_vpi_func K_vpi_func_r K_vpi_func_s
 %token K_ivl_version K_ivl_delay_selection
 %token K_vpi_module K_vpi_time_precision K_file_names K_file_line
 %token K_PORT_INPUT K_PORT_OUTPUT K_PORT_INOUT K_PORT_MIXED K_PORT_NODIR
@@ -658,6 +658,10 @@ statement
       { compile_vpi_func_call($1, $5, -vpiRealVal, 0, $3, $4,
 			      $6.argc, $6.argv, $8, $9, $10); }
 
+  | label_opt K_vpi_func_s T_NUMBER T_NUMBER T_STRING
+    argument_opt '{' T_NUMBER T_NUMBER T_NUMBER '}' ';'
+      { compile_vpi_func_call($1, $5, -vpiStringVal, 0, $3, $4,
+			      $6.argc, $6.argv, $8, $9, $10); }
 
   /* Scope statements come in two forms. There are the scope
      declaration and the scope recall. The declarations create the

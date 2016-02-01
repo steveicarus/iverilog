@@ -133,6 +133,7 @@ extern void draw_vpi_task_call(ivl_statement_t net);
 
 extern void draw_vpi_func_call(ivl_expr_t expr);
 extern void draw_vpi_rfunc_call(ivl_expr_t expr);
+extern void draw_vpi_sfunc_call(ivl_expr_t expr);
 
 extern void draw_class_in_scope(ivl_type_t classtype);
 

@@ -1241,6 +1241,7 @@ stack when the call returns.
 
 * %vpi_func <file> <line> <name> [, ...] {<vec4> <real> <str>}
 * %vpi_func/r <file> <line> <name> [, ...] {<vec4> <real> <str>}
+* %vpi_func/s <file> <line> <name> [, ...] {<vec4> <real> <str>}
 
 This instruction is similar to %vpi_call, except that it is for
 calling system functions. The difference here is the return value from

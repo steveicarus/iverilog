@@ -236,20 +236,27 @@ int main(int argc, char*argv[])
 	    return 3;
       }
 
+      errors = elaborate_libraries();
+      if (errors > 0) {
+	    fprintf(stderr, "%d errors elaborating libraries.\n", errors);
+	    parser_cleanup();
+	    return 4;
+      }
+
       emit_std_types(cout);
 
       errors = emit_packages();
       if (errors > 0) {
 	    fprintf(stderr, "%d errors emitting packages.\n", errors);
 	    parser_cleanup();
-	    return 4;
+	    return 5;
       }
 
       errors = emit_entities();
       if (errors > 0) {
 	    fprintf(stderr, "%d errors emitting design.\n", errors);
-        parser_cleanup();
-	    return 4;
+	    parser_cleanup();
+	    return 6;
       }
 
       parser_cleanup();

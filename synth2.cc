@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -102,6 +102,14 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 
       NetNet*rsig = rval_->synthesize(des, scope, rval_);
       assert(rsig);
+
+      if (lval_->word() && ! dynamic_cast<NetEConst*>(lval_->word())) {
+	    cerr << get_fileline() << ": sorry: assignment to variable "
+		    "location in memory is not currently supported in "
+		    "synthesis." << endl;
+	    des->errors += 1;
+	    return false;
+      }
 
       NetNet*lsig = lval_->sig();
       if (!lsig) {
@@ -217,6 +225,8 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    connect(ps->pin(0), tmp->pin(0));
 	    rsig = tmp;
       }
+
+      rsig = crop_to_width(des, rsig, lsig->vector_width());
 
       if (nex_out.pin_count() > 1) {
 	    NexusSet tmp_set;
@@ -1411,6 +1421,16 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 		 are used to collect the outputs from the substatement
 		 for the inputs of the FF bank. */
 	    NetBus tmp_out (scope, tmp_set.size());
+	    for (unsigned idx = 0 ; idx < tmp_out.pin_count() ; idx += 1) {
+		  unsigned ptr = nex_map.find_nexus(tmp_set[idx]);
+		  ivl_assert(*this, ptr < nex_out.pin_count());
+		  if (nex_out.pin(ptr).is_linked()) {
+		        cerr << get_fileline() << ": sorry: multiple statements "
+			        "assigning to the same flip-flop are not yet "
+			        "supported in synthesis." << endl;
+		        return false;
+		  }
+	    }
 
 	      /* Create a temporary ff_ce (FF clock-enable) that
 		 accounts for the subset of outputs that this

@@ -383,10 +383,10 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
     ivl_assert(*this, range_);
 
     int64_t start_val;
-    bool start_rc = range_->msb()->evaluate(ent, scope, start_val);
+    bool start_rc = range_->left()->evaluate(ent, scope, start_val);
 
     int64_t finish_val;
-    bool finish_rc = range_->lsb()->evaluate(ent, scope, finish_val);
+    bool finish_rc = range_->right()->evaluate(ent, scope, finish_val);
 
     perm_string scope_name = loop_name();
     if (scope_name.nil()) {
@@ -403,48 +403,31 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
         // determined during the run-time
         errors += emit_runtime_(out, ent, scope);
     } else {
-        bool dir = range_->is_downto();
+        ExpRange::range_dir_t dir = range_->direction();
 
-        if (!dir) {
-            int64_t tmp = start_val;
-            start_val = finish_val;
-            finish_val = tmp;
-        }
+        if(dir == ExpRange::AUTO)
+            dir = start_val < finish_val ? ExpRange::TO : ExpRange::DOWNTO;
 
-        if (dir && (start_val < finish_val)) {
-           if(range_->is_auto_dir()) {
-               dir = false;
-           } else {
-               out << "begin /* Degenerate loop at " << get_fileline()
-                   << ": " << start_val
-                   << " downto " << finish_val << " */ end" << endl
-                   << "end" << endl;
-               return errors;
-           }
-        }
-
-        else if (!dir && start_val > finish_val) {
-           if(range_->is_auto_dir()) {
-               dir = true;
-           } else {
-               out << "begin /* Degenerate loop at " << get_fileline()
-                   << ": " << start_val
-                   << " to " << finish_val << " */ end" << endl
-                   << "end" << endl;
-               return errors;
-           }
+        if ((dir == ExpRange::DOWNTO && start_val < finish_val) ||
+                (dir == ExpRange::TO && start_val > finish_val)) {
+            out << "begin /* Degenerate loop at " << get_fileline()
+                << ": " << start_val;
+            out << (dir == ExpRange::DOWNTO ? " downto " : " to ");
+            out << finish_val << " */ end" << endl
+                << "end" << endl;
+            return errors;
         }
 
         out << "for (\\" << it_ << " = " << start_val << " ; ";
 
-        if (dir)
+        if (dir == ExpRange::DOWNTO)
             out << "\\" << it_ << " >= " << finish_val;
         else
             out << "\\" << it_ << " <= " << finish_val;
 
         out << "; \\" << it_ << " = \\" << it_;
 
-        if (dir)
+        if (dir == ExpRange::DOWNTO)
             out << " - 1)";
         else
             out << " + 1)";
@@ -463,9 +446,7 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
 void ForLoopStatement::write_to_stream(ostream&fd)
 {
     fd << "for " << it_ << " in ";
-    range_->expr_left()->write_to_stream(fd);
-    fd << " to ";
-    range_->expr_right()->write_to_stream(fd);
+    range_->write_to_stream(fd);
     fd << " loop" << endl;
     write_to_stream_substatements(fd);
     fd << "end loop;" << endl;
@@ -476,41 +457,43 @@ int ForLoopStatement::emit_runtime_(ostream&out, Entity*ent, ScopeBase*scope)
     int errors = 0;
 
     out << "for (\\" << it_ << " = ";
-    errors += range_->expr_left()->emit(out, ent, scope);
+    errors += range_->left()->emit(out, ent, scope);
 
     // Twisted way of determining the loop direction at runtime
     out << " ;\n(";
-    errors += range_->expr_left()->emit(out, ent, scope);
+    errors += range_->left()->emit(out, ent, scope);
     out << " < ";
-    errors += range_->expr_right()->emit(out, ent, scope);
+    errors += range_->right()->emit(out, ent, scope);
     out << " ? \\" << it_ << " <= ";
-    errors += range_->expr_right()->emit(out, ent, scope);
+    errors += range_->right()->emit(out, ent, scope);
     out << " : \\" << it_ << " >= ";
-    errors += range_->expr_right()->emit(out, ent, scope);
+    errors += range_->right()->emit(out, ent, scope);
     out << ");\n\\" << it_ << " = \\" << it_ << " + (";
-    errors += range_->expr_left()->emit(out, ent, scope);
+    errors += range_->left()->emit(out, ent, scope);
     out << " < ";
-    errors += range_->expr_right()->emit(out, ent, scope);
+    errors += range_->right()->emit(out, ent, scope);
     out << " ? 1 : -1))";
 
     return errors;
 }
 
-int ReportStmt::emit(ostream&out, Entity*, ScopeBase*)
+int ReportStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
-    out << "$display(\"";
+    out << "$display(\"** ";
 
     switch(severity_)
     {
-        case NOTE:          out << "** Note: "; break;
-        case WARNING:       out << "** Warning: "; break;
-        case ERROR:         out << "** Error: "; break;
-        case FAILURE:       out << "** Failure: "; break;
+        case NOTE:          out << "Note"; break;
+        case WARNING:       out << "Warning"; break;
+        case ERROR:         out << "Error"; break;
+        case FAILURE:       out << "Failure"; break;
         case UNSPECIFIED:   ivl_assert(*this, false); break;
     }
 
-    out << ExpString::escape_quot(msg_);
-    out << " (" << get_fileline() << ")\");";
+    out << ": \",";
+
+    msg_->emit(out, ent, scope);
+    out << ",\" (" << get_fileline() << ")\");";
 
     if(severity_ == FAILURE)
         out << "$finish();";
@@ -522,7 +505,8 @@ int ReportStmt::emit(ostream&out, Entity*, ScopeBase*)
 
 void ReportStmt::write_to_stream(std::ostream&fd)
 {
-    fd << "report \"" << ExpString::escape_quot(msg_) << "\"" << std::endl;
+    fd << "report ";
+    msg_->write_to_stream(fd);
 
     fd << "severity ";
     switch(severity_)
@@ -563,7 +547,7 @@ int WaitForStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
     out << "#(";
     errors += delay_->emit(out, ent, scope);
-    out << ")";
+    out << ");" << std::endl;
 
     return errors;
 }
@@ -586,6 +570,7 @@ int WaitStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
         case UNTIL:
             if(!sens_list_.empty()) {
                 out << "@(";
+
                 for(std::set<ExpName*>::iterator it = sens_list_.begin();
                         it != sens_list_.end(); ++it) {
                     if(it != sens_list_.begin())
@@ -594,7 +579,7 @@ int WaitStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
                     (*it)->emit(out, ent, scope);
                 }
 
-                out << ");";
+                out << "); ";
             }
 
             out << "wait(";

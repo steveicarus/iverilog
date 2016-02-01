@@ -42,6 +42,7 @@ class Package : public Scope, public LineInfo {
       void write_to_stream(std::ostream&fd) const;
 
       int emit_package(std::ostream&fd) const;
+      int elaborate();
 
     private:
       perm_string from_library_;

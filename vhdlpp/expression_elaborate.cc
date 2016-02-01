@@ -57,7 +57,8 @@ const VType* Expression::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*
       return res;
 }
 
-const VType*ExpName::elaborate_adjust_type_with_range_(Entity*, ScopeBase*scope, const VType*type)
+const VType*ExpName::elaborate_adjust_type_with_range_(Entity*ent, ScopeBase*scope,
+                                                       const VType*type)
 {
 	// Unfold typedefs
       while (const VTypeDef*tdef = dynamic_cast<const VTypeDef*>(type)) {
@@ -76,9 +77,9 @@ const VType*ExpName::elaborate_adjust_type_with_range_(Entity*, ScopeBase*scope,
 		  int64_t use_msb, use_lsb;
 		  bool flag;
 
-		  flag = index_->evaluate(scope, use_msb);
+		  flag = index_->evaluate(ent, scope, use_msb);
 		  ivl_assert(*this, flag);
-		  flag = lsb_->evaluate(scope, use_lsb);
+		  flag = lsb_->evaluate(ent, scope, use_lsb);
 		  ivl_assert(*this, flag);
 
 		  type = new VTypeArray(array->element_type(), use_msb, use_lsb);
@@ -216,36 +217,44 @@ int ExpName::elaborate_lval(Entity*ent, ScopeBase*scope, bool is_sequ)
 
       const VType*found_type = 0;
 
-      if (const InterfacePort*cur = ent->find_port(name_)) {
-	    if (cur->mode != PORT_OUT && cur->mode != PORT_INOUT) {
-		  cerr << get_fileline() << ": error: Assignment to "
-			"input port " << name_ << "." << endl;
-		  return errors += 1;
-	    }
+      if (ent) {
+          if (const InterfacePort*cur = ent->find_port(name_)) {
+                  if (cur->mode != PORT_OUT && cur->mode != PORT_INOUT) {
+                      cerr << get_fileline() << ": error: Assignment to "
+                              "input port " << name_ << "." << endl;
+                      return errors += 1;
+                  }
 
-	    if (is_sequ)
-		  ent->set_declaration_l_value(name_, is_sequ);
+                  if (is_sequ)
+                      ent->set_declaration_l_value(name_, is_sequ);
 
-	    found_type = cur->type;
+                  found_type = cur->type;
 
-      } else if (ent->find_generic(name_)) {
+          } else if (ent->find_generic(name_)) {
 
-	    cerr << get_fileline() << ": error: Assignment to generic "
-		 << name_ << " from entity "
-		 << ent->get_name() << "." << endl;
-	    return 1;
+                  cerr << get_fileline() << ": error: Assignment to generic "
+                      << name_ << " from entity "
+                      << ent->get_name() << "." << endl;
+                  return 1;
+          }
+      }
 
-      } else if (Signal*sig = scope->find_signal(name_)) {
-	      // Tell the target signal that this may be a sequential l-value.
-	    if (is_sequ) sig->count_ref_sequ();
+      if (!found_type && scope) {
+        if (Signal*sig = scope->find_signal(name_)) {
+            // Tell the target signal that this may be a sequential l-value.
+            if (is_sequ) sig->count_ref_sequ();
 
-	    found_type = sig->peek_type();
+            found_type = sig->peek_type();
 
-      } else if (Variable*var = scope->find_variable(name_)) {
-	      // Tell the target signal that this may be a sequential l-value.
-	    if (is_sequ) var->count_ref_sequ();
+        } else if (Variable*var = scope->find_variable(name_)) {
+                // Tell the target signal that this may be a sequential l-value.
+                if (is_sequ) var->count_ref_sequ();
 
-	    found_type = var->peek_type();
+                found_type = var->peek_type();
+
+        } else if (const InterfacePort*port = scope->find_param(name_)) {
+                found_type = port->type;
+        }
       }
 
       if (found_type == 0) {
@@ -318,7 +327,8 @@ int ExpName::elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*lva
 
 int Expression::elaborate_expr(Entity*, ScopeBase*, const VType*)
 {
-      cerr << get_fileline() << ": internal error: I don't know how to elaborate expression type=" << typeid(*this).name() << endl;
+      cerr << get_fileline() << ": internal error: I don't know how to "
+           << "elaborate expression type=" << typeid(*this).name() << endl;
       return 1;
 }
 
@@ -393,7 +403,7 @@ const VType*ExpAggregate::fit_type(Entity*, ScopeBase*, const VTypeArray*host) c
       elements_[0]->map_choices(&ce[0]);
 
       ivl_assert(*this, ce.size() == 1);
-      prange_t*prange = ce[0].choice->range_expressions();
+      ExpRange*prange = ce[0].choice->range_expressions();
       ivl_assert(*this, prange);
 
       Expression*use_msb = prange->msb();
@@ -573,23 +583,32 @@ const VType* ExpArithmetic::resolve_operand_types_(const VType*t1, const VType*t
       return 0;
 }
 
-const VType* ExpAttribute::probe_type(Entity*ent, ScopeBase*scope) const
+int ExpObjAttribute::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
 {
-      base_->probe_type(ent, scope);
+      const VType*sub_type = base_->probe_type(ent, scope);
+      return base_->elaborate_expr(ent, scope, sub_type);
+}
 
-      if (name_ == "length" || name_ == "left" || name_ == "right") {
+const VType* ExpObjAttribute::probe_type(Entity*, ScopeBase*) const
+{
+      if (name_ == "length" || name_ == "left" || name_ == "right")
 	    return &primitive_NATURAL;
-      }
 
+      return NULL;
+}
+
+int ExpTypeAttribute::elaborate_expr(Entity*, ScopeBase*, const VType*)
+{
+      // This is just to mute warnings, there is nothing to elaborate here
       return 0;
 }
 
-int ExpAttribute::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
+const VType* ExpTypeAttribute::probe_type(Entity*, ScopeBase*) const
 {
-      int errors = 0;
-      const VType*sub_type = base_->probe_type(ent, scope);
-      errors += base_->elaborate_expr(ent, scope, sub_type);
-      return errors;
+      if(name_ == "image")
+	    return &primitive_STRING;
+
+      return NULL;
 }
 
 const VType*ExpBitstring::fit_type(Entity*, ScopeBase*, const VTypeArray*atype) const
@@ -648,8 +667,8 @@ const VType*ExpConcat::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*at
                             new ExpArithmetic(ExpArithmetic::PLUS, sizes[0], sizes[1]),
                             new ExpInteger(1));
 
-      std::list<prange_t*> ranges;
-      ranges.push_front(new prange_t(size, new ExpInteger(0), true));
+      std::list<ExpRange*> ranges;
+      ranges.push_front(new ExpRange(size, new ExpInteger(0), ExpRange::DOWNTO));
       const VType*array = new VTypeArray(types[1], &ranges);
 
       return array;
@@ -912,31 +931,31 @@ const VType* ExpName::probe_type(Entity*ent, ScopeBase*scope) const
 
       if(ent) {
         if (const InterfacePort*cur = ent->find_port(name_)) {
-                ivl_assert(*this, cur->type);
-                return cur->type;
+            ivl_assert(*this, cur->type);
+            return cur->type;
         }
 
         if (const InterfacePort*cur = ent->find_generic(name_)) {
-                ivl_assert(*this, cur->type);
-                return cur->type;
+            ivl_assert(*this, cur->type);
+            return cur->type;
         }
       }
 
       if(scope) {
         if (Signal*sig = scope->find_signal(name_))
-                return sig->peek_type();
+            return sig->peek_type();
 
         if (Variable*var = scope->find_variable(name_))
-                return var->peek_type();
+            return var->peek_type();
 
         const VType*type = 0;
         Expression*cval = 0;
         if (scope->find_constant(name_, type, cval))
-                return type;
+            return type;
 
         Architecture*arc = dynamic_cast<Architecture*>(scope);
         if (arc && (type = arc->probe_genvar_type(name_))) {
-                return type;
+            return type;
         }
 
         if (const InterfacePort*port = scope->find_param(name_)) {
@@ -1046,6 +1065,19 @@ int ExpTime::elaborate_expr(Entity*, ScopeBase*, const VType*)
 {
       set_type(&primitive_INTEGER);
       return 0;
+}
+
+int ExpRange::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
+{
+    int errors = 0;
+
+    if(left_)
+        errors += left_->elaborate_expr(ent, scope, &primitive_INTEGER);
+
+    if(right_)
+        errors += right_->elaborate_expr(ent, scope, &primitive_INTEGER);
+
+    return errors;
 }
 
 int elaborate_argument(Expression*expr, const SubprogramHeader*subp,
