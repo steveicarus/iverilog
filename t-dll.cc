@@ -603,12 +603,19 @@ static void fill_in_scope_function(ivl_scope_t scope, const NetScope*net)
       assert(def);
 
       const NetNet*return_sig = def->return_sig();
-      assert(return_sig);
+      if (return_sig == 0) {
+	      // Special case: If there is no return signal, this is
+	      // apparently a VOID function.
+	    scope->func_type = IVL_VT_VOID;
+	    scope->func_signed = 0;
+	    scope->func_width = 0;
+      } else {
+	    scope->func_type = return_sig->data_type();
+	    scope->func_signed = return_sig->get_signed();
+	    scope->func_width = return_sig->vector_width();
+      }
 
       scope->tname_ = def->scope()->basename();
-      scope->func_type = return_sig->data_type();
-      scope->func_signed = return_sig->get_signed();
-      scope->func_width = return_sig->vector_width();
 }
 
 void dll_target::add_root(const NetScope *s)

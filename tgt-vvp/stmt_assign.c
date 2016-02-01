@@ -445,7 +445,7 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		       member. We will use a property assign
 		       function. */
 		  assert(!lsig);
-		  assert(!signal_is_return_value(lsig));
+
 		  ivl_type_t sub_type = draw_lval_expr(nest);
 		  assert(ivl_type_base(sub_type) == IVL_VT_CLASS);
 		  fprintf(vvp_out, "    %%store/prop/v %d, %u;\n",

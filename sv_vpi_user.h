@@ -72,6 +72,9 @@ EXTERN_C_START
 /********* Many-to-One ***********/
 #define vpiMember           742
 
+/********* task/function properties **********/
+#define vpiOtherFunc          6
+
 EXTERN_C_END
 
 #endif /* SV_VPI_USER_H */

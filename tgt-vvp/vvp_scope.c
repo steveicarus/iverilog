@@ -2271,7 +2271,8 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 		  snprintf(suffix, sizeof suffix, ".obj");
 		  break;
 		case IVL_VT_VOID:
-		  assert(0);
+		  snprintf(suffix, sizeof suffix, ".void");
+		  break;
 		default:
 		  assert(0);
 		  break;

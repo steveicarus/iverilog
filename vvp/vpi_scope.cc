@@ -506,9 +506,13 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
       } else if (strcmp(type,"autofunction.real") == 0) {
 	    scope = new vpiScopeFunction(name, tname, true, vpiRealFunc, 0);
       } else if (strcmp(type,"function.str") == 0) {
-	    scope = new vpiScopeFunction(name, tname, false, vpiSizedFunc, 0);
+	    scope = new vpiScopeFunction(name, tname, false, vpiOtherFunc, 0);
       } else if (strcmp(type,"autofunction.str") == 0) {
-	    scope = new vpiScopeFunction(name, tname, true, vpiSizedFunc, 0);
+	    scope = new vpiScopeFunction(name, tname, true, vpiOtherFunc, 0);
+      } else if (strcmp(type,"function.void") == 0) {
+	    scope = new vpiScopeFunction(name, tname, false, vpiOtherFunc, 0);
+      } else if (strcmp(type,"autofunction.void") == 0) {
+	    scope = new vpiScopeFunction(name, tname, true, vpiOtherFunc, 0);
       } else if (strcmp(type,"task") == 0) {
 	    scope = new vpiScopeTask(name, tname);
       } else if (strcmp(type,"autotask") == 0) {
