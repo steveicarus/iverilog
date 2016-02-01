@@ -2053,8 +2053,8 @@ extern "C" ivl_variable_type_t ivl_scope_func_type(ivl_scope_t net)
 extern "C" int ivl_scope_func_signed(ivl_scope_t net)
 {
       assert(net);
-      assert(net->type_ == IVL_SCT_FUNCTION);
-      assert(net->func_type == IVL_VT_LOGIC);
+      assert(net->type_==IVL_SCT_FUNCTION);
+      assert(net->func_type==IVL_VT_LOGIC || net->func_type==IVL_VT_BOOL);
       return net->func_signed? !0 : 0;
 }
 
@@ -2062,7 +2062,7 @@ extern "C" unsigned ivl_scope_func_width(ivl_scope_t net)
 {
       assert(net);
       assert(net->type_ == IVL_SCT_FUNCTION);
-      assert(net->func_type == IVL_VT_LOGIC);
+      assert(net->func_type==IVL_VT_LOGIC || net->func_type==IVL_VT_BOOL);
       return net->func_width;
 }
 

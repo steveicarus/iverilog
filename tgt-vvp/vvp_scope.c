@@ -2254,6 +2254,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       if (ivl_scope_type(net)==IVL_SCT_FUNCTION) {
 	    switch (ivl_scope_func_type(net)) {
 		case IVL_VT_LOGIC:
+		case IVL_VT_BOOL:
 		  snprintf(suffix, sizeof suffix, ".vec4.%c%u",
 			   ivl_scope_func_signed(net)? 'u' : 's',
 			   ivl_scope_func_width(net));
@@ -2265,8 +2266,12 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 		  snprintf(suffix, sizeof suffix, ".str");
 		  break;
 		case IVL_VT_CLASS:
+		case IVL_VT_DARRAY:
+		case IVL_VT_QUEUE:
 		  snprintf(suffix, sizeof suffix, ".obj");
 		  break;
+		case IVL_VT_VOID:
+		  assert(0);
 		default:
 		  assert(0);
 		  break;
