@@ -111,11 +111,17 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 
 	    slice->type = SLICE_SIMPLE_VECTOR;
 	    slice->u_.simple_vector.use_word = use_word;
-	    fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
+	    if (signal_is_return_value(sig)) {
+		  assert(use_word==0);
+		  fprintf(vvp_out, "    %%retload/vec4 0;\n");
+	    } else {
+		  fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
+	    }
 
       } else if (ivl_signal_dimensions(sig)==0 && part_off_ex==0 && word_ix==0) {
 
 	    assert(use_word == 0);
+	    assert(!signal_is_return_value(sig)); // NOT IMPLEMENTED
 
 	    slice->type = SLICE_PART_SELECT_STATIC;
 	    slice->u_.part_select_static.part_off = part_off;
@@ -128,6 +134,7 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 
 	    assert(use_word == 0);
 	    assert(part_off == 0);
+	    assert(!signal_is_return_value(sig)); // NOT IMPLEMENTED
 
 	    slice->type = SLICE_PART_SELECT_DYNAMIC;
 
@@ -143,6 +150,8 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 
       } else if (ivl_signal_dimensions(sig) > 0 && word_ix == 0) {
 
+	    assert(!signal_is_return_value(sig)); // NOT IMPLEMENTED
+
 	    slice->type = SLICE_MEMORY_WORD_STATIC;
 	    slice->u_.memory_word_static.use_word = use_word;
 	    if (use_word < ivl_signal_array_count(sig)) {
@@ -156,6 +165,7 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 
       } else if (ivl_signal_dimensions(sig) > 0 && word_ix != 0) {
 
+	    assert(!signal_is_return_value(sig)); // NOT IMPLEMENTED
 	    slice->type = SLICE_MEMORY_WORD_DYNAMIC;
 
 	    slice->u_.memory_word_dynamic.word_idx_reg = allocate_word();
@@ -479,6 +489,7 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	   of the l-value. We need these values as part of the r-value
 	   calculation. */
       if (ivl_stmt_opcode(net) != 0) {
+	    fprintf(vvp_out, "    ; show_stmt_assign_vector: Get l-value for compressed %c= operand\n", ivl_stmt_opcode(net));
             slices = calloc(ivl_stmt_lvals(net), sizeof(struct vec_slice_info));
 	    get_vec_from_lval(net, slices);
       }

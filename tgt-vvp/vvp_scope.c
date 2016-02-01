@@ -462,16 +462,20 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	/* Special Case: If this variable is the return value of a function,
 	   then it need to exist as an actual variable. */
       if ((ivl_signal_data_type(sig)==IVL_VT_REAL)
-	  && (ivl_scope_type(ivl_signal_scope(sig))==IVL_SCT_FUNCTION)
-	  && (strcmp(ivl_signal_basename(sig),ivl_scope_basename(ivl_signal_scope(sig))) == 0)) {
+	  && signal_is_return_value(sig)) {
 	    fprintf(vvp_out, "; Variable %s is REAL return value of scope S_%p\n",
 		    ivl_signal_basename(sig), ivl_signal_scope(sig));
 	    return;
       }
       if ((ivl_signal_data_type(sig)==IVL_VT_LOGIC)
-	  && (ivl_scope_type(ivl_signal_scope(sig))==IVL_SCT_FUNCTION)
-	  && (strcmp(ivl_signal_basename(sig),ivl_scope_basename(ivl_signal_scope(sig))) == 0)) {
+	  && signal_is_return_value(sig)) {
 	    fprintf(vvp_out, "; Variable %s is vec4 return value of scope S_%p\n",
+		    ivl_signal_basename(sig), ivl_signal_scope(sig));
+	    return;
+      }
+      if ((ivl_signal_data_type(sig)==IVL_VT_BOOL)
+	  && signal_is_return_value(sig)) {
+	    fprintf(vvp_out, "; Variable %s is bool return value of scope S_%p\n",
 		    ivl_signal_basename(sig), ivl_signal_scope(sig));
 	    return;
       }
