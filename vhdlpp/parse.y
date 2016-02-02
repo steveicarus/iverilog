@@ -1149,6 +1149,8 @@ expression_list
 expression
   : expression_logical
       { $$ = $1; }
+  | range
+      { $$ = $1; }
   ;
 
 /*
