@@ -68,23 +68,25 @@ const VType*ExpName::elaborate_adjust_type_with_range_(Entity*ent, ScopeBase*sco
       }
 
       if (const VTypeArray*array = dynamic_cast<const VTypeArray*>(type)) {
-	    if (index_ && !lsb_) {
-		    // If the name is an array or a vector, then an
-		    // indexed name has the type of the element.
-		  type = array->element_type();
+	    Expression*idx = index(0);
 
-	    } else if (index_ && lsb_) {
+	    if (ExpRange*range = dynamic_cast<ExpRange*>(idx)) {
 		    // If the name is an array, then a part select is
 		    // also an array, but with different bounds.
 		  int64_t use_msb, use_lsb;
 		  bool flag;
 
-		  flag = index_->evaluate(ent, scope, use_msb);
+		  flag = range->msb()->evaluate(ent, scope, use_msb);
 		  ivl_assert(*this, flag);
-		  flag = lsb_->evaluate(ent, scope, use_lsb);
+		  flag = range->lsb()->evaluate(ent, scope, use_lsb);
 		  ivl_assert(*this, flag);
 
 		  type = new VTypeArray(array->element_type(), use_msb, use_lsb);
+	    }
+	    else if(idx) {
+		    // If the name is an array or a vector, then an
+		    // indexed name has the type of the element.
+		  type = array->element_type();
 	    }
       }
 
@@ -99,10 +101,14 @@ int ExpName::elaborate_lval_(Entity*ent, ScopeBase*scope, bool is_sequ, ExpName*
 	    debug_log_file << get_fileline() << ": ExpName::elaborate_lval_: "
 			   << "name_=" << name_
 			   << ", suffix->name()=" << suffix->name();
-	    if (index_)
-		  debug_log_file << ", index_=" << *index_;
-	    if (lsb_)
-		  debug_log_file << ", lsb_=" << *lsb_;
+	    if (indices_) {
+		for(list<Expression*>::const_iterator it = indices_->begin();
+		        it != indices_->end(); ++it) {
+		    debug_log_file << "[";
+		    debug_log_file << **it;
+		    debug_log_file << "]";
+		}
+	    }
 	    debug_log_file << endl;
       }
 
@@ -1032,11 +1038,12 @@ int ExpName::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
       if(prefix_.get())
 	    prefix_.get()->elaborate_expr(ent, scope, NULL);
 
-      if(index_)
-	    index_->elaborate_expr(ent, scope, &primitive_INTEGER);
-
-      if(lsb_)
-	    lsb_->elaborate_expr(ent, scope, &primitive_INTEGER);
+      if (indices_) {
+          for(list<Expression*>::const_iterator it = indices_->begin();
+                  it != indices_->end(); ++it) {
+              (*it)->elaborate_expr(ent, scope, &primitive_INTEGER);
+          }
+      }
 
       return 0;
 }

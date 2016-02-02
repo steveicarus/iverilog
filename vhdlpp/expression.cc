@@ -578,41 +578,54 @@ ExpLogical::~ExpLogical()
 }
 
 ExpName::ExpName(perm_string nn)
-: name_(nn), index_(0), lsb_(0)
+: name_(nn), indices_(NULL)
 {
 }
 
 ExpName::ExpName(perm_string nn, list<Expression*>*indices)
-: name_(nn), index_(0), lsb_(0)
-{
-	/* For now, assume a single index. */
-      ivl_assert(*this, indices->size() == 1);
-
-      index_ = indices->front();
-      indices->pop_front();
-}
-
-ExpName::ExpName(perm_string nn, Expression*msb, Expression*lsb)
-: name_(nn), index_(msb), lsb_(lsb)
-{
-    ivl_assert(*this, !msb || msb != lsb);
-}
-
-ExpName::ExpName(ExpName*prefix, perm_string nn)
-: prefix_(prefix), name_(nn), index_(0), lsb_(0)
+: name_(nn), indices_(indices)
 {
 }
 
-ExpName::ExpName(ExpName*prefix, perm_string nn, Expression*msb, Expression*lsb)
-: prefix_(prefix), name_(nn), index_(msb), lsb_(lsb)
+ExpName::ExpName(ExpName*prefix, perm_string nn, std::list<Expression*>*indices)
+: prefix_(prefix), name_(nn), indices_(indices)
 {
-    ivl_assert(*this, !msb || msb != lsb);
 }
 
 ExpName::~ExpName()
 {
-      delete index_;
-      delete lsb_;
+    if(indices_) {
+        for(list<Expression*>::iterator it = indices_->begin();
+                it != indices_->end(); ++it) {
+            delete *it;
+        }
+
+        delete indices_;
+    }
+}
+
+Expression*ExpName::clone() const {
+    list<Expression*>*new_indices = NULL;
+
+    if(indices_) {
+        new_indices = new list<Expression*>();
+
+        for(list<Expression*>::const_iterator it = indices_->begin();
+                it != indices_->end(); ++it) {
+            new_indices->push_back((*it)->clone());
+        }
+    }
+
+    return new ExpName(static_cast<ExpName*>(safe_clone(prefix_.get())),
+            name_, new_indices);
+}
+
+void ExpName::add_index(std::list<Expression*>*idx)
+{
+      if(!indices_)
+          indices_ = new list<Expression*>();
+
+      indices_->splice(indices_->end(), *idx);
 }
 
 bool ExpName::symbolic_compare(const Expression*that) const
@@ -624,25 +637,48 @@ bool ExpName::symbolic_compare(const Expression*that) const
       if (name_ != that_name->name_)
 	    return false;
 
-      if (that_name->index_ && !index_)
+      if (that_name->indices_ && !indices_)
 	    return false;
-      if (index_ && !that_name->index_)
+      if (indices_ && !that_name->indices_)
 	    return false;
 
-      if (index_) {
-	    assert(that_name->index_);
-	    return index_->symbolic_compare(that_name->index_);
+      if (indices_) {
+	    assert(that_name->indices_);
+
+            if(indices_->size() != that_name->indices_->size())
+                return false;
+
+            list<Expression*>::const_iterator it, jt;
+            it = indices_->begin();
+            jt = that_name->indices_->begin();
+
+            for(unsigned int i = 0; i < indices_->size(); ++i) {
+                if(!(*it)->symbolic_compare(*jt))
+                    return false;
+
+                ++it;
+                ++jt;
+            }
       }
 
       return true;
 }
 
-void ExpName::set_range(Expression*msb, Expression*lsb)
+Expression*ExpName::index(unsigned int number) const
 {
-      assert(index_==0);
-      index_ = msb;
-      assert(lsb_==0);
-      lsb_ = lsb;
+    if(!indices_)
+        return NULL;
+
+    if(number >= indices_->size())
+        return NULL;
+
+    if(number == 0)
+        return indices_->front();
+
+    list<Expression*>::const_iterator it = indices_->begin();
+    advance(it, number);
+
+    return *it;
 }
 
 void ExpName::visit(ExprVisitor& func)
@@ -650,11 +686,12 @@ void ExpName::visit(ExprVisitor& func)
       if(prefix_.get())
           prefix_.get()->visit(func);
 
-      if(index_)
-          index_->visit(func);
-
-      if(lsb_)
-          lsb_->visit(func);
+      if(indices_) {
+          for(list<Expression*>::const_iterator it = indices_->begin();
+                  it != indices_->end(); ++it) {
+              (*it)->visit(func);
+          }
+      }
 
       func(this);
 }
