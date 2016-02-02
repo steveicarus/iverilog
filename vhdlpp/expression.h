@@ -690,22 +690,18 @@ class ExpName : public Expression {
     public:
       explicit ExpName(perm_string nn);
       ExpName(perm_string nn, std::list<Expression*>*indices);
-      ExpName(perm_string nn, Expression*msb, Expression*lsb);
-      ExpName(ExpName*prefix, perm_string nn);
-      ExpName(ExpName*prefix, perm_string nn, Expression*msb, Expression*lsb);
+      ExpName(ExpName*prefix, perm_string nn, std::list<Expression*>*indices = NULL);
       ~ExpName();
 
     public: // Base methods
-      Expression*clone() const {
-          return new ExpName(static_cast<ExpName*>(safe_clone(prefix_.get())),
-                  name_, safe_clone(index_), safe_clone(lsb_));
-      }
+      Expression*clone() const;
       int elaborate_lval(Entity*ent, ScopeBase*scope, bool);
       int elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*);
       const VType* probe_type(Entity*ent, ScopeBase*scope) const;
       const VType* fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*host) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
+      int emit_indices(ostream&out, Entity*ent, ScopeBase*scope) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       bool is_primary(void) const;
       bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
@@ -713,7 +709,7 @@ class ExpName : public Expression {
       void dump(ostream&out, int indent = 0) const;
       inline const char* name() const { return name_; }
       inline const perm_string& peek_name() const { return name_; }
-      void set_range(Expression*msb, Expression*lsb);
+      void add_index(std::list<Expression*>*idx);
       void visit(ExprVisitor& func);
 
     private:
@@ -760,10 +756,11 @@ class ExpName : public Expression {
                            const list<index_t*>&indices, int field_size) const;
 
     private:
+      Expression*index(unsigned int number) const;
+
       std::auto_ptr<ExpName> prefix_;
       perm_string name_;
-      Expression*index_;
-      Expression*lsb_;
+      std::list<Expression*>*indices_;
 };
 
 class ExpNameALL : public ExpName {

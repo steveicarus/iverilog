@@ -395,10 +395,13 @@ void ExpName::dump(ostream&out, int indent) const
 	  << " at " << get_fileline() << endl;
       if (prefix_.get())
 	    prefix_->dump(out, indent+8);
-      if (index_)
-	    index_->dump(out, indent+6);
-      if (lsb_)
-	    lsb_->dump(out, indent+6);
+
+      if (indices_) {
+          for(list<Expression*>::const_iterator it = indices_->begin();
+                  it != indices_->end(); ++it) {
+              (*it)->dump(out, indent+6);
+          }
+      }
 }
 
 void ExpNameALL::dump(ostream&out, int indent) const

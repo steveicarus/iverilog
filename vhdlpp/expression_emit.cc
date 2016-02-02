@@ -694,6 +694,22 @@ int ExpLogical::emit(ostream&out, Entity*ent, ScopeBase*scope) const
       return errors;
 }
 
+int ExpName::emit_indices(ostream&out, Entity*ent, ScopeBase*scope) const
+{
+      int errors = 0;
+
+      if (indices_) {
+          for(list<Expression*>::const_iterator it = indices_->begin();
+                  it != indices_->end(); ++it) {
+              out << "[";
+              errors += (*it)->emit(out, ent, scope);
+              out << "]";
+          }
+      }
+
+      return errors;
+}
+
 int ExpName::emit_as_prefix_(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
@@ -702,12 +718,7 @@ int ExpName::emit_as_prefix_(ostream&out, Entity*ent, ScopeBase*scope) const
       }
 
       out << "\\" << name_ << " ";
-      if (index_) {
-	    out << "[";
-	    errors += index_->emit(out, ent, scope);
-	    out << "]";
-	    ivl_assert(*this, lsb_ == 0);
-      }
+      errors += emit_indices(out, ent, scope);
       out << ".";
       return errors;
 }
@@ -739,16 +750,7 @@ int ExpName::emit(ostream&out, Entity*ent, ScopeBase*scope) const
       else
 	    out << "\\" << name_ << " ";
 
-      if (index_) {
-	    out << "[";
-	    errors += index_->emit(out, ent, scope);
-
-	    if (lsb_) {
-		  out << ":";
-		  errors += lsb_->emit(out, ent, scope);
-	    }
-	    out << "]";
-      }
+      errors += emit_indices(out, ent, scope);
 
       return errors;
 }
@@ -759,6 +761,8 @@ bool ExpName::try_workarounds_(ostream&out, Entity*ent, ScopeBase*scope,
     Expression*exp = NULL;
     bool wrkand_required = false;
     const VType*type = NULL;
+    Expression*idx = index(0);
+    ExpRange*range = dynamic_cast<ExpRange*>(idx);
 
     if(!scope)
         return false;
@@ -766,7 +770,7 @@ bool ExpName::try_workarounds_(ostream&out, Entity*ent, ScopeBase*scope,
     if(prefix_.get())
         prefix_->try_workarounds_(out, ent, scope, indices, data_size);
 
-    if(index_ && !lsb_ && scope->find_constant(name_, type, exp)) {
+    if(idx && !range && scope->find_constant(name_, type, exp)) {
         while(const VTypeDef*type_def = dynamic_cast<const VTypeDef*>(type)) {
             type = type_def->peek_definition();
         }
@@ -778,7 +782,7 @@ bool ExpName::try_workarounds_(ostream&out, Entity*ent, ScopeBase*scope,
 
     if(prefix_.get() && scope->find_constant(prefix_->name_, type, exp)) {
         // Handle the case of array of records
-        if(prefix_->index_) {
+        if(prefix_->index(0)) {
             const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
             assert(arr);
             type = arr->element_type();
@@ -795,17 +799,23 @@ bool ExpName::try_workarounds_(ostream&out, Entity*ent, ScopeBase*scope,
         wrkand_required |= check_const_record_workaround_(rec, scope, indices, data_size);
     }
 
+    // Workarounds are currently implemented only for one-dimensional arrays
+    assert(!indices_ || indices_->size() == 1 || !wrkand_required);
+
     return wrkand_required;
 }
 
 bool ExpName::check_const_array_workaround_(const VTypeArray*arr,
         ScopeBase*scope, list<index_t*>&indices, int&data_size) const
 {
+    assert(indices_ && indices_->size() == 1);
+
     const VType*element = arr->element_type();
     data_size = element->get_width(scope);
     if(data_size < 0)
         return false;
-    indices.push_back(new index_t(index_->clone(), new ExpInteger(data_size)));
+
+    indices.push_back(new index_t(index(0)->clone(), new ExpInteger(data_size)));
 
     return true;
 }
@@ -830,7 +840,7 @@ bool ExpName::check_const_record_workaround_(const VTypeRecord*rec,
             data_size = tmp_field;
             indices.push_back(new index_t(NULL, NULL, new ExpInteger(tmp_offset)));
 
-            if(index_) {
+            if(index(0)) {
                 const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type);
                 assert(arr);
                 return check_const_array_workaround_(arr, scope, indices, data_size);

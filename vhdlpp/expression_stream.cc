@@ -217,14 +217,20 @@ void ExpName::write_to_stream(ostream&fd) const
       }
 
       fd << name_;
-      if (index_) {
-	    fd << "(";
-	    index_->write_to_stream(fd);
-	    if (lsb_) {
-		  fd << " downto ";
-		  lsb_->write_to_stream(fd);
-	    }
-	    fd << ")";
+
+      if (indices_) {
+          fd << "(";
+          bool first = true;
+          for(list<Expression*>::const_iterator it = indices_->begin();
+                  it != indices_->end(); ++it) {
+              if(first)
+                  first = false;
+              else
+                  fd << ",";
+
+              (*it)->write_to_stream(fd);
+          }
+          fd << ")";
       }
 }
 

@@ -331,7 +331,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <expr> expression factor primary relation
 %type <expr> expression_logical expression_logical_and expression_logical_or
 %type <expr> expression_logical_xnor expression_logical_xor
-%type <expr> name prefix selected_name
+%type <expr> name prefix selected_name indexed_name
 %type <expr> shift_expression signal_declaration_assign_opt
 %type <expr> simple_expression simple_expression_2 term
 %type <expr> variable_declaration_assign_opt waveform_element interface_element_expression
@@ -1715,36 +1715,40 @@ name /* IEEE 1076-2008 P8.1 */
   | selected_name
       { $$ = $1; }
 
+  | indexed_name
+      { $$ = $1; }
+
+
+  | selected_name '(' expression_list ')'
+    {
+        ExpName*name = dynamic_cast<ExpName*>($1);
+        assert(name);
+        name->add_index($3);
+        delete $3;  // contents of the list is moved to the selected_name
+    }
+  ;
+
+indexed_name
   /* Note that this rule can match array element selects and various
      function calls. The only way we can tell the difference is from
      left context, namely whether the name is a type name or function
      name. If none of the above, treat it as a array element select. */
-  | IDENTIFIER argument_list
+  : IDENTIFIER '(' expression_list ')'
       { Expression*tmp;
         perm_string name = lex_strings.make($1);
-	delete[]$1;
-	if (active_scope->is_vector_name(name) || is_subprogram_param(name))
-	      tmp = new ExpName(name, $2);
-	else
-	      tmp = new ExpFunc(name, $2);
-	FILE_NAME(tmp, @1);
+        delete[]$1;
+        if (active_scope->is_vector_name(name) || is_subprogram_param(name))
+            tmp = new ExpName(name, $3);
+        else
+            tmp = new ExpFunc(name, $3);
+        FILE_NAME(tmp, @1);
         $$ = tmp;
       }
-  | IDENTIFIER '(' range ')'
-      { ExpName*tmp = new ExpName(lex_strings.make($1), $3->msb(), $3->lsb());
-	FILE_NAME(tmp, @1);
-	delete[]$1;
-	$$ = tmp;
-      }
-  | selected_name '(' range ')'
-      { ExpName*tmp = dynamic_cast<ExpName*> ($1);
-	tmp->set_range($3->msb(), $3->lsb());
-	$$ = tmp;
-      }
-  | selected_name '(' expression ')'
-      { ExpName*tmp = dynamic_cast<ExpName*> ($1);
-	tmp->set_range($3, NULL);
-	$$ = tmp;
+  | indexed_name '(' expression_list ')'
+      { ExpName*name = dynamic_cast<ExpName*>($1);
+        assert(name);
+        name->add_index($3);
+        $$ = $1;
       }
   ;
 
