@@ -98,9 +98,21 @@ int VTypeArray::emit_with_dims_(std::ostream&out, bool packed, perm_string name)
 
       list<const VTypeArray*> dims;
       const VTypeArray*cur = this;
-      while (const VTypeArray*sub = dynamic_cast<const VTypeArray*> (cur->element_type())) {
-	    dims.push_back(cur);
-	    cur = sub;
+      bool added_dim = true;
+
+      while(added_dim) {
+            added_dim = false;
+            const VType*el_type = cur->element_type();
+
+            while(const VTypeDef*tdef = dynamic_cast<const VTypeDef*>(el_type)) {
+                el_type = tdef->peek_definition();
+            }
+
+            if(const VTypeArray*sub = dynamic_cast<const VTypeArray*>(el_type)) {
+                dims.push_back(cur);
+                cur = sub;
+                added_dim = true;
+            }
       }
       dims.push_back(cur);
 
