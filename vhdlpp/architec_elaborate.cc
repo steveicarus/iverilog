@@ -258,6 +258,8 @@ int ProcessStatement::rewrite_as_always_edge_(Entity*, Architecture*)
 	    return -1;
 
       const ExpCharacter*op2b = dynamic_cast<const ExpCharacter*>(op2b_raw);
+      if (op2b == 0)
+	    return -1;
       if (op2b->value() != '1' && op2b->value() != '0')
 	    return -1;
 
