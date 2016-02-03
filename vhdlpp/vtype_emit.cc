@@ -134,9 +134,9 @@ int VTypeArray::emit_with_dims_(std::ostream&out, bool packed, perm_string name)
 	        }
 
 	        out << "[";
-	        if (!cur->dimension(i).is_box()) {  // if not unbounded {
+	        if (!cur->dimension(i).is_box()) {  // if not unbounded
 	            errors += cur->dimension(i).msb()->emit(out, 0, 0);
-	        out << ":";
+	            out << ":";
 	            errors += cur->dimension(i).lsb()->emit(out, 0, 0);
 	        }
 	        out << "]";
