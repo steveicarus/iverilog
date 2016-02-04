@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -4985,7 +4985,7 @@ bool of_RET_REAL(vthread_t thr, vvp_code_t cp)
 	    assert(fun_thr->parent);
 	    fun_thr = fun_thr->parent;
       }
-      assert(index >= 0 && index < fun_thr->args_real.size());
+      assert(index < fun_thr->args_real.size());
       unsigned depth = fun_thr->args_real[index];
 	// Use the depth to put the value into the stack of
 	// the parent thread.
@@ -5007,7 +5007,7 @@ bool of_RET_VEC4(vthread_t thr, vvp_code_t cp)
 	    assert(fun_thr->parent);
 	    fun_thr = fun_thr->parent;
       }
-      assert(index >= 0 && index < fun_thr->args_vec4.size());
+      assert(index < fun_thr->args_vec4.size());
       unsigned depth = fun_thr->args_vec4[index];
 
       int off = off_index? thr->words[off_index].w_int : 0;
@@ -5077,7 +5077,7 @@ bool of_RETLOAD_REAL(vthread_t thr, vvp_code_t cp)
 	    assert(fun_thr->parent);
 	    fun_thr = fun_thr->parent;
       }
-      assert(index >= 0 && index < fun_thr->args_real.size());
+      assert(index < fun_thr->args_real.size());
       unsigned depth = fun_thr->args_real[index];
 	// Use the depth to extract the values from the stack
 	// of the parent thread.
@@ -5097,7 +5097,7 @@ bool of_RETLOAD_VEC4(vthread_t thr, vvp_code_t cp)
 	    assert(fun_thr->parent);
 	    fun_thr = fun_thr->parent;
       }
-      assert(index >= 0 && index < fun_thr->args_vec4.size());
+      assert(index < fun_thr->args_vec4.size());
       unsigned depth = fun_thr->args_vec4[index];
 	// Use the depth to put the value into the stack of
 	// the parent thread.
