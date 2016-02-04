@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -650,6 +650,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
                * It is needed by vhdlpp to correctly implement time'image(). */
               PLI_INT32 time_prec = vpi_get(vpiTimePrecision, info->scope);
 
+              free(timeformat_info.suff);
               if(time_units < -12)
                   timeformat_info.suff = strdup(" fs");
               else if(time_units < -9)
