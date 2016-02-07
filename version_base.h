@@ -4,7 +4,7 @@
  * number for the compiled result.
  */
 # define VERSION_MAJOR  10
-# define VERSION_MINOR   0
+# define VERSION_MINOR   1
 
 /*
  * This will be appended to the version. Use this to mark development
