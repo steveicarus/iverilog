@@ -153,6 +153,7 @@ FILE *depend_file = NULL;
  * These are the warning enable flags.
  */
 bool warn_implicit  = false;
+bool warn_implicit_dimensions = false;
 bool warn_timescale = false;
 bool warn_portbinding = false;
 bool warn_inf_loop = false;
@@ -681,6 +682,9 @@ static void read_iconfig_file(const char*ipath)
 			break;
 		      case 'i':
 			warn_implicit = true;
+			break;
+		      case 'd':
+			warn_implicit_dimensions = true;
 			break;
 		      case 'l':
 			warn_inf_loop = true;
