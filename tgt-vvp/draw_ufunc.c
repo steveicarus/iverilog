@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -187,6 +187,7 @@ void draw_ufunc_vec4(ivl_expr_t expr)
 {
       ivl_scope_t def = ivl_expr_def(expr);
       ivl_signal_t retval = ivl_scope_port(def, 0);
+      (void) retval;
 
 	/* Take in arguments to function and call function code. */
       draw_ufunc_preamble(expr);
@@ -198,6 +199,7 @@ void draw_ufunc_real(ivl_expr_t expr)
 {
       ivl_scope_t def = ivl_expr_def(expr);
       ivl_signal_t retval = ivl_scope_port(def, 0);
+      (void) retval;
 
 	/* Take in arguments to function and call the function code. */
       draw_ufunc_preamble(expr);
