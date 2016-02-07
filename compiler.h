@@ -80,6 +80,10 @@ extern unsigned recursive_mod_limit;
 /* Implicit definitions of wires. */
 extern bool warn_implicit;
 
+/* Warn if dimensions of port or var/net are implicitly taken from
+   the input/output/inout declaration. */
+extern bool warn_implicit_dimensions;
+
 /* inherit timescales across files. */
 extern bool warn_timescale;
 

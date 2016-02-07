@@ -976,6 +976,23 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       if (port_set_ || net_set_) {
+
+	    if (warn_implicit_dimensions
+		&& port_set_ && net_set_
+		&& net_.empty() && !port_.empty()) {
+		  cerr << get_fileline() << ": warning: "
+		       << "var/net declaration of " << basename()
+		       << " inherits dimensions from port declaration." << endl;
+	    }
+
+	    if (warn_implicit_dimensions
+		&& port_set_ && net_set_
+		&& port_.empty() && net_.empty()) {
+		  cerr << get_fileline() << ": warning: "
+		       << "Port declaration of " << basename()
+		       << " inherits dimensions from var/net." << endl;
+	    }
+
 	    bool bad_range = false;
 	    vector<netrange_t> plist, nlist;
 	    /* If they exist get the port definition MSB and LSB */
