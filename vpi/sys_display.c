@@ -642,7 +642,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           vpi_printf("WARNING: %s:%d: incompatible value for %s%s.\n",
                      info->filename, info->lineno, info->name, fmtb);
         } else {
-          char *tbuf;
+          char *tbuf, *prev_suff;
           PLI_INT32 time_units = vpi_get(vpiTimeUnit, info->scope);
 
           if (plus != 0) {
@@ -650,7 +650,10 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
                * It is needed by vhdlpp to correctly implement time'image(). */
               PLI_INT32 time_prec = vpi_get(vpiTimePrecision, info->scope);
 
-              free(timeformat_info.suff);
+              /* We are about to override the suffix string set with $timeformat(),
+               * therefore we need to restore it after the call. */
+              prev_suff = timeformat_info.suff;
+
               if(time_units < -12)
                   timeformat_info.suff = strdup(" fs");
               else if(time_units < -9)
@@ -687,6 +690,13 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           }
           cp = tbuf;
           swidth = strlen(tbuf);
+
+          if(plus != 0) {
+              /* Restore the previous suffix string, overridden by
+               * a vhdlpp-specific $sformatf() call. */
+              free(timeformat_info.suff);
+              timeformat_info.suff = prev_suff;
+          }
 
           if (ld_zero == 1) {
             /* No leading zeros are created by this conversion so just make
