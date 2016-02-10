@@ -265,7 +265,7 @@ int AssertStmt::elaborate(Entity*ent, ScopeBase*scope)
 
 int WaitForStmt::elaborate(Entity*ent, ScopeBase*scope)
 {
-    return delay_->elaborate_expr(ent, scope, 0);
+    return delay_->elaborate_expr(ent, scope, &primitive_TIME);
 }
 
 int WaitStmt::elaborate(Entity*ent, ScopeBase*scope)
