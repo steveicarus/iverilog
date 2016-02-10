@@ -987,7 +987,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    if (warn_implicit_dimensions
 		&& port_set_ && net_set_
-		&& port_.empty() && net_.empty()) {
+		&& port_.empty() && !net_.empty()) {
 		  cerr << get_fileline() << ": warning: "
 		       << "Port declaration of " << basename()
 		       << " inherits dimensions from var/net." << endl;
