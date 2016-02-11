@@ -30,7 +30,7 @@ const VTypePrimitive primitive_INTEGER(VTypePrimitive::INTEGER);
 const VTypePrimitive primitive_NATURAL(VTypePrimitive::NATURAL);
 const VTypePrimitive primitive_REAL(VTypePrimitive::REAL);
 const VTypePrimitive primitive_STDLOGIC(VTypePrimitive::STDLOGIC, true);
-const VTypePrimitive primitive_TIME(VTypePrimitive::TIME);
+const VTypePrimitive primitive_TIME(VTypePrimitive::TIME, true);
 
 VTypeDef type_BOOLEAN(perm_string::literal("boolean"));
 VTypeDef type_FILE_OPEN_KIND(perm_string::literal("file_open_kind"));
