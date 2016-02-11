@@ -334,6 +334,7 @@ class VTypeEnum : public VType {
       int get_width(ScopeBase*) const { return 32; }
 
       int emit_def(std::ostream&out, perm_string name) const;
+      int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 
 	// Checks if the name is stored in the enum.
       bool has_name(perm_string name) const;
