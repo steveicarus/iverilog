@@ -54,7 +54,10 @@ int Signal::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
       VType::decl_t decl;
       type_elaborate_(decl);
-      if (peek_refcnt_sequ_() > 0 || !peek_type()->can_be_packed())
+
+      const VType*type = peek_type();
+      if (peek_refcnt_sequ_() > 0
+              || (!type->can_be_packed() && dynamic_cast<const VTypeArray*>(type)))
 	    decl.reg_flag = true;
       errors += decl.emit(out, peek_name());
 
