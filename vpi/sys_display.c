@@ -642,7 +642,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           vpi_printf("WARNING: %s:%d: incompatible value for %s%s.\n",
                      info->filename, info->lineno, info->name, fmtb);
         } else {
-          char *tbuf, *prev_suff;
+          char *tbuf, *prev_suff = 0;
           PLI_INT32 time_units = vpi_get(vpiTimeUnit, info->scope);
 
           if (plus != 0) {
