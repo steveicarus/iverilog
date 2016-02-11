@@ -235,28 +235,15 @@ int VTypeRecord::emit_def(ostream&out, perm_string name) const
  */
 int VTypeDef::emit_def(ostream&out, perm_string name) const
 {
-      int errors = 0;
       emit_name(out, name_);
       emit_name(out, name);
-      return errors;
+
+      return 0;
 }
 
 int VTypeDef::emit_decl(ostream&out, perm_string name, bool reg_flag) const
 {
-      int errors = 0;
-
-      if(!reg_flag)
-          out << "wire ";
-
-      if(dynamic_cast<const VTypeArray*>(type_)) {
-          errors += type_->emit_def(out, name);
-      } else {
-          assert(name_ != empty_perm_string);
-          cout << "\\" << name_;
-          emit_name(out, name);
-      }
-
-      return errors;
+      return type_->emit_decl(out, name, reg_flag);
 }
 
 int VTypeDef::emit_typedef(ostream&out, typedef_context_t&ctx) const

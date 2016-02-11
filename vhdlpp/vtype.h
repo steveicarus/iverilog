@@ -109,8 +109,6 @@ class VType {
 	// to evaluate.
       virtual int get_width(ScopeBase*) const { return -1; }
 
-    private:
-      friend struct decl_t;
 	// This virtual method is called to emit the declaration. This
 	// is used by the decl_t object to emit variable/wire/port declarations.
       virtual int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
@@ -411,6 +409,7 @@ class VTypeDef : public VType {
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
 
       int emit_def(std::ostream&out, perm_string name) const;
+      int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 
       bool can_be_packed() const { return type_->can_be_packed(); }
 
@@ -419,9 +418,6 @@ class VTypeDef : public VType {
     protected:
       perm_string name_;
       const VType*type_;
-
-    private:
-      int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 };
 
 class VSubTypeDef : public VTypeDef {
