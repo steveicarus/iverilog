@@ -153,7 +153,7 @@ int VTypeArray::emit_with_dims_(std::ostream&out, bool packed, perm_string name)
 int VTypeEnum::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;
-      out << "enum integer {";
+      out << "enum int {";
       assert(names_.size() >= 1);
       out << "\\" << names_[0] << " ";
       for (size_t idx = 1 ; idx < names_.size() ; idx += 1)
@@ -163,6 +163,17 @@ int VTypeEnum::emit_def(ostream&out, perm_string name) const
       emit_name(out, name);
 
       return errors;
+}
+
+int VTypeEnum::emit_decl(std::ostream&out, perm_string name, bool reg_flag) const
+{
+      if (!reg_flag)
+	    out << "wire ";
+
+      out << "int";
+      emit_name(out, name);
+
+      return 0;
 }
 
 int VTypePrimitive::emit_primitive_type(ostream&out) const
