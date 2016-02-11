@@ -894,3 +894,11 @@ ExpDelay::~ExpDelay()
     delete expr_;
     delete delay_;
 }
+
+void ExpDelay::visit(ExprVisitor& func)
+{
+    expr_->visit(func);
+    delay_->visit(func);
+
+    func(this);
+}
