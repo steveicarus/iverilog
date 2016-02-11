@@ -992,6 +992,7 @@ public:
     void write_to_stream(std::ostream&) const;
     int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
     void dump(ostream&out, int indent = 0) const;
+    void visit(ExprVisitor& func);
 
     const Expression*peek_expr() const { return expr_; }
     const Expression*peek_delay() const { return delay_; }
