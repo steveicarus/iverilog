@@ -350,8 +350,10 @@ const VType* ExpBinary::probe_type(Entity*ent, ScopeBase*scope) const
       if (t2 == 0)
 	    return t1;
 
-      if (t1 == t2)
+      if (t1->type_match(t2))
 	    return t1;
+      if (t2->type_match(t1))
+	    return t2;
 
       if (const VType*tb = resolve_operand_types_(t1, t2))
 	    return tb;

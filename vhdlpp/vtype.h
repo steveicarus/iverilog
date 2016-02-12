@@ -295,6 +295,9 @@ class VTypeRangeConst : public VTypeRange {
           return new VTypeRangeConst(base_type()->clone(), start_, end_);
       }
 
+      int64_t start() const { return start_; }
+      int64_t end() const { return end_; }
+
       void write_to_stream(std::ostream&fd) const;
 
     private:
