@@ -53,6 +53,13 @@ bool VTypePrimitive::type_match(const VType*that) const
               (that_type == NATURAL || that_type == INTEGER));
       }
 
+      if(const VTypeRangeConst*range = dynamic_cast<const VTypeRangeConst*>(that)) {
+           if (type_ == INTEGER)
+               return true;
+           if (type_ == NATURAL && range->start() >= 0 && range->end() >= 0)
+               return true;
+      }
+
       return false;
 }
 
