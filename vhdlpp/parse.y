@@ -760,9 +760,11 @@ composite_type_definition
   | K_array '(' index_subtype_definition_list ')' K_of subtype_indication
       { std::list<ExpRange*> r;
 	// NULL boundaries indicate unbounded array type
-	r.push_back(new ExpRange(NULL, NULL, ExpRange::DOWNTO));
-	VTypeArray*tmp = new VTypeArray($6, &r);
-	$$ = tmp;
+	ExpRange*tmp = new ExpRange(NULL, NULL, ExpRange::DOWNTO);
+	r.push_back(tmp);
+	FILE_NAME(tmp, @1);
+	VTypeArray*arr = new VTypeArray($6, &r);
+	$$ = arr;
       }
 
   | record_type_definition
@@ -1317,6 +1319,7 @@ file_open_information
      {
         ExpName*mode = new ExpName(lex_strings.make($2));
         delete[]$2;
+        FILE_NAME(mode, @1);
         $$ = new file_open_info_t(new ExpString($4), mode);
      }
   | K_is STRING_LITERAL
@@ -1720,7 +1723,6 @@ name /* IEEE 1076-2008 P8.1 */
   | indexed_name
       { $$ = $1; }
 
-
   | selected_name '(' expression_list ')'
     {
         ExpName*name = dynamic_cast<ExpName*>($1);
@@ -1924,7 +1926,7 @@ primary
   | name '\'' IDENTIFIER argument_list_opt
       { ExpAttribute*tmp = NULL;
 	perm_string attr = lex_strings.make($3);
-        ExpName*base = dynamic_cast<ExpName*>($1);
+	ExpName*base = dynamic_cast<ExpName*>($1);
 	const VType*type = parse_type_by_name(base->peek_name());
 
 	if(type) {
@@ -1933,7 +1935,7 @@ primary
 	    tmp = new ExpObjAttribute(base, attr, $4);
 	}
 
-	FILE_NAME(tmp, @3);
+	FILE_NAME(tmp, @1);
 	delete[]$3;
 	$$ = tmp;
       }
@@ -1950,8 +1952,8 @@ primary
       }
   | REAL_LITERAL
       { ExpReal*tmp = new ExpReal($1);
-    FILE_NAME(tmp, @1);
-    $$ = tmp;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   | STRING_LITERAL
       { ExpString*tmp = new ExpString($1);
@@ -2153,6 +2155,7 @@ process_sensitivity_list
 range
   : simple_expression direction simple_expression
       { ExpRange* tmp = new ExpRange($1, $3, $2);
+	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   | name '\'' K_range
@@ -2161,6 +2164,7 @@ range
         ExpName*name = NULL;
         if((name = dynamic_cast<ExpName*>($1))) {
             tmp = new ExpRange(name, false);
+            FILE_NAME(tmp, @1);
         } else {
 	    errormsg(@1, "'range attribute can be used with named expressions only");
         }
@@ -2172,6 +2176,7 @@ range
         ExpName*name = NULL;
         if((name = dynamic_cast<ExpName*>($1))) {
             tmp = new ExpRange(name, true);
+            FILE_NAME(tmp, @1);
         } else {
 	    errormsg(@1, "'reverse_range attribute can be used with named expressions only");
         }
@@ -2515,6 +2520,7 @@ simple_expression_2
 		    tmp = new ExpArithmetic(item.op, tmp, item.term);
 	}
 	delete lst;
+	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   ;
@@ -2897,7 +2903,9 @@ waveform_element
   : expression
       { $$ = $1; }
   | expression K_after expression
-      { $$ = new ExpDelay($1, $3); }
+      { ExpDelay*tmp = new ExpDelay($1, $3);
+        FILE_NAME(tmp, @1);
+        $$ = tmp; }
   | K_null
       { $$ = 0; }
   ;
