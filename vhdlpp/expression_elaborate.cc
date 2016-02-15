@@ -1020,8 +1020,14 @@ const VType* ExpName::probe_type(Entity*ent, ScopeBase*scope) const
         }
       }
 
-      cerr << get_fileline() << ": error: Signal/variable " << name_
-	   << " not found in this context." << endl;
+      if(ent || scope) {
+          // Do not display error messages if there was no entity or scope
+          // specified. There are functions that are called without any specific
+          // context and they still may want to probe the expression type.
+        cerr << get_fileline() << ": error: Signal/variable " << name_
+             << " not found in this context." << endl;
+      }
+
       return 0;
 }
 
