@@ -498,7 +498,7 @@ void BasicLoopStatement::write_to_stream(std::ostream&fd)
 
 int ReportStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
-    out << "$display(\"** ";
+    out << "$display(\"%s\", {\"** ";
 
     switch(severity_)
     {
@@ -512,7 +512,7 @@ int ReportStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
     out << ": \",";
 
     msg_->emit(out, ent, scope);
-    out << ",\" (" << get_fileline() << ")\");";
+    out << ",\" (" << get_fileline() << ")\"});";
 
     if(severity_ == FAILURE)
         out << "$finish();";
