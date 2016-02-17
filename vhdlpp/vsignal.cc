@@ -63,8 +63,12 @@ int Signal::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
       Expression*init_expr = peek_init_expr();
       if (init_expr) {
-	    out << " = ";
-	    init_expr->emit(out, ent, scope);
+            /* Emit initialization value for wires as a weak assignment */
+            if(!decl.reg_flag)
+                out << ";" << endl << "/*init*/ assign (weak1, weak0) " << peek_name();
+
+            out << " = ";
+            init_expr->emit(out, ent, scope);
       }
       out << ";" << endl;
       return errors;
