@@ -186,109 +186,6 @@ int IfGenerate::elaborate(Entity*ent, Architecture*arc)
       return errors;
 }
 
-/*
- * This method attempts to rewrite the process content as an
- * always-@(n-edge <expr>) version of the same statement. This makes
- * for a more natural translation to Verilog, if it comes to that.
- */
-int ProcessStatement::rewrite_as_always_edge_(Entity*, Architecture*)
-{
-	// If there are multiple sensitivity expressions, I give up.
-      if (sensitivity_list_.size() != 1)
-	    return -1;
-
-	// If there are multiple statements, I give up.
-      if (stmt_list().size() != 1)
-	    return -1;
-
-      Expression*se = sensitivity_list_.front();
-      SequentialStmt*stmt_raw = stmt_list().front();
-
-	// If the statement is not an if-statement, I give up.
-      IfSequential*stmt = dynamic_cast<IfSequential*> (stmt_raw);
-      if (stmt == 0)
-	    return -1;
-
-	// If the "if" statement has a false clause, then give up.
-      if (stmt->false_size() != 0)
-	    return -1;
-
-      const Expression*ce_raw = stmt->peek_condition();
-
-	// Here we expect the condition to be
-	//    <name>'event AND <name>='1'.
-	// So if ce_raw is not a logical AND, I give up.
-      const ExpLogical*ce = dynamic_cast<const ExpLogical*> (ce_raw);
-      if (ce == 0)
-	    return -1;
-      if (ce->logic_fun() != ExpLogical::AND)
-	    return -1;
-
-      const Expression*op1_raw = ce->peek_operand1();
-      const Expression*op2_raw = ce->peek_operand2();
-      if (dynamic_cast<const ExpAttribute*>(op2_raw)) {
-	    const Expression*tmp = op1_raw;
-	    op1_raw = op2_raw;
-	    op2_raw = tmp;
-      }
-
-	// If operand1 is not an 'event attribute, I give up.
-      const ExpObjAttribute*op1 = dynamic_cast<const ExpObjAttribute*>(op1_raw);
-      if (op1 == 0)
-	    return -1;
-      if (op1->peek_attribute() != "event")
-	    return -1;
-
-      const ExpRelation*op2 = dynamic_cast<const ExpRelation*>(op2_raw);
-      if (op2 == 0)
-	    return -1;
-      if (op2->relation_fun() != ExpRelation::EQ)
-	    return -1;
-
-      const Expression*op2a_raw = op2->peek_operand1();
-      const Expression*op2b_raw = op2->peek_operand2();
-
-      if (dynamic_cast<const ExpCharacter*>(op2a_raw)) {
-	    const Expression*tmp = op2b_raw;
-	    op2b_raw = op2a_raw;
-	    op2a_raw = tmp;
-      }
-
-      if (! se->symbolic_compare(op1->peek_base()))
-	    return -1;
-
-      const ExpCharacter*op2b = dynamic_cast<const ExpCharacter*>(op2b_raw);
-      if (op2b == 0)
-	    return -1;
-      if (op2b->value() != '1' && op2b->value() != '0')
-	    return -1;
-
-	// We've matched this pattern:
-	//   process (<se>) if (<se>'event and <se> = <op2b>) then ...
-	// And we can convert it to:
-	//   always @(<N>edge <se>) ...
-
-	// Replace the sensitivity expression with an edge
-	// expression. The ExpEdge expression signals that this is an
-	// always-@(edge) statement.
-      ExpEdge*edge = new ExpEdge(op2b->value()=='1'? ExpEdge::POSEDGE : ExpEdge::NEGEDGE, se);
-      assert(sensitivity_list_.size() == 1);
-      sensitivity_list_.pop_front();
-      sensitivity_list_.push_front(edge);
-
-	// Replace the statement with the body of the always
-	// statement, which is the true clause of the top "if"
-	// statement. There should be no "else" clause.
-      assert(stmt_list().size() == 1);
-      stmt_list().pop_front();
-
-      stmt->extract_true(stmt_list());
-
-      delete stmt;
-
-      return 0;
-}
-
 int StatementList::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
@@ -301,33 +198,10 @@ int StatementList::elaborate(Entity*ent, Architecture*arc)
       return errors;
 }
 
-/*
- * Change the "process (<expr>) <stmt>" into "always @(<expr>) ..."
- */
-int ProcessStatement::extract_anyedge_(Entity*, Architecture*)
-{
-      vector<Expression*> se;
-      while (! sensitivity_list_.empty()) {
-	    se.push_back(sensitivity_list_.front());
-	    sensitivity_list_.pop_front();
-      }
-
-      for (size_t idx = 0 ; idx < se.size() ; idx += 1) {
-	    ExpEdge*edge = new ExpEdge(ExpEdge::ANYEDGE, se[idx]);
-	    FILE_NAME(edge, se[idx]);
-	    sensitivity_list_.push_back(edge);
-      }
-
-      return 0;
-}
-
 int ProcessStatement::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-      if (rewrite_as_always_edge_(ent, arc) >= 0) {
-	    extract_anyedge_(ent, arc);
-      }
 
       StatementList::elaborate(ent, arc);
 

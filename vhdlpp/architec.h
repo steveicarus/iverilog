@@ -284,9 +284,6 @@ class ProcessStatement : public StatementList {
       void dump(ostream&out, int indent =0) const;
 
     private:
-      int rewrite_as_always_edge_(Entity*ent, Architecture*arc);
-      int extract_anyedge_(Entity*ent, Architecture*arc);
-
       perm_string iname_;
       std::list<Expression*> sensitivity_list_;
 };
