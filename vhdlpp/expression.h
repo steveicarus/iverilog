@@ -29,6 +29,7 @@
 # include  <list>
 # include  <memory>
 # include  <vector>
+# include  <cassert>
 
 class ExpRange;
 class ScopeBase;
@@ -38,9 +39,25 @@ class VTypeArray;
 class VTypePrimitive;
 class ExpName;
 
+/*
+ * Helper class to recursively traverse an expression tree
+ * (i.e. complex expressions).
+ */
 struct ExprVisitor {
-    virtual ~ExprVisitor() {};
+    ExprVisitor() : level_(0) {}
+    virtual ~ExprVisitor() {}
     virtual void operator() (Expression*s) = 0;
+
+    // Methods to manage recursion depth. Every Expression::visit() method
+    // should call down() in the beginning and up() in the end.
+    inline void down() { ++level_; }
+    inline void up() { --level_; assert(level_ >= 0); }
+
+protected:
+    int level() const { return level_; }
+
+private:
+    int level_;
 };
 
 /*
@@ -126,7 +143,7 @@ class Expression : public LineInfo {
       virtual ostream& dump_inline(ostream&out) const;
 
 	// Recursively visits a tree of expressions (useful for complex expressions).
-      virtual void visit(ExprVisitor& func) { func(this); }
+      virtual void visit(ExprVisitor& func) { func.down(); func(this); func.up(); }
 
     protected:
 	// This function is called by the derived class during

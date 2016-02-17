@@ -87,6 +87,9 @@ list<Expression*>*ExpAttribute::clone_args() const {
 
 void ExpAttribute::visit_args(ExprVisitor& func)
 {
+      func.down();
+      func(this);
+
       if(args_) {
           for(list<Expression*>::iterator it = args_->begin();
                     it != args_->end(); ++it) {
@@ -94,7 +97,7 @@ void ExpAttribute::visit_args(ExprVisitor& func)
           }
       }
 
-      func(this);
+      func.up();
 }
 
 ExpObjAttribute::ExpObjAttribute(ExpName*base, perm_string name, list<Expression*>*args)
@@ -113,11 +116,13 @@ Expression*ExpObjAttribute::clone() const
                                  name_, clone_args());
 }
 
-void ExpObjAttribute::visit(ExprVisitor& func)
+void ExpObjAttribute::visit(ExprVisitor&func)
 {
+      func.down();
+      func(this);
       visit_args(func);
       base_->visit(func);
-      func(this);
+      func.up();
 }
 
 ExpTypeAttribute::ExpTypeAttribute(const VType*base, perm_string name, list<Expression*>*args)
@@ -130,10 +135,12 @@ Expression*ExpTypeAttribute::clone() const
       return new ExpTypeAttribute(base_, name_, clone_args());
 }
 
-void ExpTypeAttribute::visit(ExprVisitor& func)
+void ExpTypeAttribute::visit(ExprVisitor&func)
 {
-      visit_args(func);
+      func.down();
       func(this);
+      visit_args(func);
+      func.up();
 }
 
 const perm_string ExpAttribute::LEFT = perm_string::literal("left");
@@ -160,11 +167,13 @@ bool ExpBinary::eval_operand2(Entity*ent, ScopeBase*scope, int64_t&val) const
       return operand2_->evaluate(ent, scope, val);
 }
 
-void ExpBinary::visit(ExprVisitor& func)
+void ExpBinary::visit(ExprVisitor&func)
 {
+      func.down();
+      func(this);
       operand1_->visit(func);
       operand2_->visit(func);
-      func(this);
+      func.up();
 }
 
 ExpUnary::ExpUnary(Expression*op1)
@@ -177,10 +186,12 @@ ExpUnary::~ExpUnary()
       delete operand1_;
 }
 
-void ExpUnary::visit(ExprVisitor& func)
+void ExpUnary::visit(ExprVisitor&func)
 {
-    operand1_->visit(func);
+    func.down();
     func(this);
+    operand1_->visit(func);
+    func.up();
 }
 
 ExpAggregate::ExpAggregate(std::list<element_t*>*el)
@@ -227,8 +238,11 @@ Expression* ExpAggregate::clone() const
       return new ExpAggregate(new_elements);
 }
 
-void ExpAggregate::visit(ExprVisitor& func)
+void ExpAggregate::visit(ExprVisitor&func)
 {
+    func.down();
+    func(this);
+
     for(std::vector<element_t*>::iterator it = elements_.begin();
             it != elements_.end(); ++it) {
         (*it)->extract_expression()->visit(func);
@@ -242,7 +256,7 @@ void ExpAggregate::visit(ExprVisitor& func)
         it->expr->visit(func);
     }
 
-    func(this);
+    func.up();
 }
 
 ExpAggregate::choice_t::choice_t(Expression*exp)
@@ -366,11 +380,13 @@ ExpConcat::~ExpConcat()
       delete operand2_;
 }
 
-void ExpConcat::visit(ExprVisitor& func)
+void ExpConcat::visit(ExprVisitor&func)
 {
-    operand1_->visit(func);
-    operand2_->visit(func);
-    func(this);
+      func.down();
+      func(this);
+      operand1_->visit(func);
+      operand2_->visit(func);
+      func.up();
 }
 
 ExpConditional::ExpConditional(Expression*co, list<Expression*>*tru,
@@ -404,13 +420,16 @@ Expression*ExpConditional::clone() const
       return new ExpConditional(NULL, NULL, new_options);
 }
 
-void ExpConditional::visit(ExprVisitor& func)
+void ExpConditional::visit(ExprVisitor&func)
 {
+      func.down();
+      func(this);
+
       for(std::list<case_t*>::iterator it = options_.begin();
               it != options_.end(); ++it)
           (*it)->visit(func);
 
-      func(this);
+      func.up();
 }
 
 ExpConditional::case_t::case_t(Expression*cond, std::list<Expression*>*tru)
@@ -472,14 +491,16 @@ Expression*ExpSelected::clone() const
       return new ExpSelected(selector_->clone(), new_options);
 }
 
-void ExpConditional::case_t::visit(ExprVisitor& func)
+void ExpConditional::case_t::visit(ExprVisitor&func)
 {
+      func.down();
       if(cond_)
           cond_->visit(func);
 
       for(std::list<Expression*>::iterator it = true_clause_.begin();
               it != true_clause_.end(); ++it)
           (*it)->visit(func);
+      func.up();
 }
 
 ExpEdge::ExpEdge(ExpEdge::fun_t typ, Expression*op)
@@ -529,14 +550,18 @@ Expression*ExpFunc::clone() const {
     return f;
 }
 
-void ExpFunc::visit(ExprVisitor& func) {
+void ExpFunc::visit(ExprVisitor&func)
+{
+    func.down();
+    func(this);
+
     if(!argv_.empty()) {
         for(std::vector<Expression*>::iterator it = argv_.begin();
                 it != argv_.end(); ++it)
             (*it)->visit(func);
     }
 
-    func(this);
+    func.up();
 }
 
 const VType* ExpFunc::func_ret_type() const
@@ -681,8 +706,11 @@ Expression*ExpName::index(unsigned int number) const
     return *it;
 }
 
-void ExpName::visit(ExprVisitor& func)
+void ExpName::visit(ExprVisitor&func)
 {
+      func.down();
+      func(this);
+
       if(prefix_.get())
           prefix_.get()->visit(func);
 
@@ -693,7 +721,7 @@ void ExpName::visit(ExprVisitor& func)
           }
       }
 
-      func(this);
+      func.up();
 }
 
 int ExpName::index_t::emit(ostream&out, Entity*ent, ScopeBase*scope) const
@@ -768,10 +796,12 @@ ExpCast::~ExpCast()
 {
 }
 
-void ExpCast::visit(ExprVisitor& func)
+void ExpCast::visit(ExprVisitor&func)
 {
-    base_->visit(func);
+    func.down();
     func(this);
+    base_->visit(func);
+    func.up();
 }
 
 ExpNew::ExpNew(Expression*size) :
@@ -784,10 +814,12 @@ ExpNew::~ExpNew()
     delete size_;
 }
 
-void ExpNew::visit(ExprVisitor& func)
+void ExpNew::visit(ExprVisitor&func)
 {
-    size_->visit(func);
+    func.down();
     func(this);
+    size_->visit(func);
+    func.up();
 }
 
 ExpTime::ExpTime(uint64_t amount, timeunit_t unit)
@@ -895,10 +927,11 @@ ExpDelay::~ExpDelay()
     delete delay_;
 }
 
-void ExpDelay::visit(ExprVisitor& func)
+void ExpDelay::visit(ExprVisitor&func)
 {
+    func.down();
+    func(this);
     expr_->visit(func);
     delay_->visit(func);
-
-    func(this);
+    func.up();
 }
