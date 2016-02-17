@@ -85,3 +85,14 @@ bool VTypeArray::type_match(const VType*that) const
 
       return false;
 }
+
+bool VTypeRange::type_match(const VType*that) const
+{
+      if(VType::type_match(that))
+          return true;
+
+      if(base_->type_match(that))
+          return true;
+
+      return false;
+}

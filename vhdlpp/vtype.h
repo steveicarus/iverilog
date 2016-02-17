@@ -278,6 +278,7 @@ class VTypeRange : public VType {
 
       bool write_std_types(std::ostream&fd) const;
       int emit_def(std::ostream&out, perm_string name) const;
+      bool type_match(const VType*that) const;
 
 	// Get the type that is limited by the range.
       inline const VType*base_type() const { return base_; }
