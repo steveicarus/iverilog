@@ -116,21 +116,31 @@ class SubprogramReadWrite : public SubprogramBuiltin {
           }
 
           const VType*arg_type = argv[1]->probe_type(ent, scope);
-          const VTypeArray*arr = dynamic_cast<const VTypeArray*>(arg_type);
-          const VTypePrimitive*prim = dynamic_cast<const VTypePrimitive*>(arg_type);
+
+          while(const VTypeDef*tdef = dynamic_cast<const VTypeDef*>(arg_type))
+            arg_type = tdef->peek_definition();
 
           // Pick the right format
-          if(hex_format_)
+          if(hex_format_) {
               out << FORMAT_HEX;
-          else if(prim && prim->type() == VTypePrimitive::TIME)
-              out << FORMAT_TIME;
-          else if(arg_type && arg_type->type_match(&type_BOOLEAN))
-              out << FORMAT_BOOL;
-          else if((arg_type && arg_type->type_match(&primitive_CHARACTER)) ||
-                 (arr && arr->element_type() == &primitive_CHARACTER))
-              out << FORMAT_STRING;
-          else
+          } else if(arg_type) {
+              if(arg_type->type_match(&primitive_TIME)) {
+                  out << FORMAT_TIME;
+              } else if(arg_type->type_match(&type_BOOLEAN)) {
+                  out << FORMAT_BOOL;
+              } else if(arg_type->type_match(&primitive_CHARACTER)) {
+                  out << FORMAT_STRING;
+              } else {
+                  const VTypeArray*arr = dynamic_cast<const VTypeArray*>(arg_type);
+
+                  if(arr && arr->element_type() == &primitive_CHARACTER)
+                    out << FORMAT_STRING;
+                  else
+                    out << FORMAT_STD;
+              }
+          } else {
               out << FORMAT_STD;
+          }
 
           return errors;
       }
