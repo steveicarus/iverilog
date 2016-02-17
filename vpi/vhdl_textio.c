@@ -522,6 +522,11 @@ static PLI_INT32 ivlh_readline_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     vpi_put_value(stringh, &val, 0, vpiNoDelay);
     free(text);
 
+    /* Set end-of-file flag if we have just reached the end of the file.
+     * Otherwise the flag would be set only after the next read operation. */
+    int c = fgetc(fp);
+    ungetc(c, fp);
+
     return 0;
 }
 
