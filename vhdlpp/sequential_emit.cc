@@ -26,9 +26,11 @@
 # include  "package.h"
 # include  "compiler.h"
 # include  "subprogram.h"
+# include  "std_types.h"
 # include  <iostream>
 # include  <cstdio>
 # include  <typeinfo>
+# include  <limits>
 # include  <ivl_assert.h>
 
 int SequentialStmt::emit(ostream&out, Entity*, ScopeBase*)
@@ -498,7 +500,7 @@ void BasicLoopStatement::write_to_stream(std::ostream&fd)
 
 int ReportStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
-    out << "$display(\"%s\", {\"** ";
+    out << "$display(\"** ";
 
     switch(severity_)
     {
@@ -511,8 +513,47 @@ int ReportStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
     out << ": \",";
 
-    msg_->emit(out, ent, scope);
-    out << ",\" (" << get_fileline() << ")\"});";
+    struct emitter : public ExprVisitor {
+        emitter(ostream&outp, Entity*enti, ScopeBase*scop)
+            : out_(outp), ent_(enti), scope_(scop),
+              level_lock_(numeric_limits<int>::max()) {}
+
+        void operator() (Expression*s) {
+            if(!dynamic_cast<ExpConcat*>(s)) {
+                if(level() > level_lock_)
+                    return;
+
+                if(dynamic_cast<ExpAttribute*>(s)) {
+                    level_lock_ = level();
+                } else {
+                    level_lock_ = numeric_limits<int>::max();
+                }
+
+                const VType*type = s->probe_type(ent_, scope_);
+
+                if(dynamic_cast<ExpName*>(s) && type
+                        && type->type_match(&primitive_STRING)) {
+                    out_ << "$sformatf(\"%s\", (";
+                    s->emit(out_, ent_, scope_);
+                    out_ << "))";
+                } else {
+                    s->emit(out_, ent_, scope_);
+                }
+
+                out_ << ", ";
+            }
+        }
+
+        private:
+            ostream&out_;
+            Entity*ent_;
+            ScopeBase*scope_;
+            int level_lock_;
+    } emit_visitor(out, ent, scope);
+
+    msg_->visit(emit_visitor);
+
+    out << "\" (" << get_fileline() << ")\");";
 
     if(severity_ == FAILURE)
         out << "$finish();";
