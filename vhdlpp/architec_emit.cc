@@ -361,6 +361,8 @@ int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
       else
           out << "always begin" << endl;
 
+      emit_variables(out, ent, arc);
+
       int errors = StatementList::emit(out, ent, arc);
 
       if (! sensitivity_list_.empty()) {

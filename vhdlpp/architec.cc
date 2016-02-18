@@ -260,9 +260,10 @@ StatementList::~StatementList()
 }
 
 ProcessStatement::ProcessStatement(perm_string iname,
+				   const ActiveScope&ref,
 				   std::list<Expression*>*sensitivity_list,
 				   std::list<SequentialStmt*>*statements_list)
-: StatementList(statements_list), iname_(iname)
+: StatementList(statements_list), Scope(ref), iname_(iname)
 {
       if (sensitivity_list)
 	    sensitivity_list_.splice(sensitivity_list_.end(), *sensitivity_list);

@@ -271,10 +271,11 @@ class FinalStatement : public StatementList {
       void dump(ostream&out, int indent =0) const;
 };
 
-class ProcessStatement : public StatementList {
+class ProcessStatement : public StatementList, public Scope {
 
     public:
       ProcessStatement(perm_string iname,
+		       const ActiveScope&ref,
 		       std::list<Expression*>*sensitivity_list,
 		       std::list<SequentialStmt*>*statement_list);
       ~ProcessStatement();

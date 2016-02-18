@@ -778,7 +778,10 @@ concurrent_assertion_statement
         std::list<SequentialStmt*> stmts;
         stmts.push_back($1);
         stmts.push_back(new WaitStmt(WaitStmt::FINAL, NULL));
-        ProcessStatement*tmp = new ProcessStatement(empty_perm_string, NULL, &stmts);
+        push_scope();
+        ProcessStatement*tmp = new ProcessStatement(empty_perm_string, *active_scope,
+                                                    NULL, &stmts);
+        pop_scope();
         FILE_NAME(tmp, @1);
         $$ = tmp;
       }
@@ -2089,26 +2092,30 @@ process_declarative_part_opt
 
 process_statement
   : identifier_colon_opt K_postponed_opt K_process
+      {
+	push_scope();
+      }
     process_sensitivity_list_opt K_is_opt
     process_declarative_part_opt
     K_begin sequence_of_statements
     K_end K_postponed_opt K_process identifier_opt ';'
       { perm_string iname = $1? lex_strings.make($1) : empty_perm_string;
 	if ($1) delete[]$1;
-	if ($12) {
+	if ($13) {
 	      if (iname.nil()) {
-		    errormsg(@12, "Process end name %s for un-named processes.\n", $12);
-	      } else if (iname != $12) {
-		    errormsg(@12, "Process name %s does not match opening name %s.\n",
-			     $12, $1);
+		    errormsg(@13, "Process end name %s for un-named processes.\n", $13);
+	      } else if (iname != $13) {
+		    errormsg(@13, "Process name %s does not match opening name %s.\n",
+			     $13, $1);
 	      }
-	      delete[]$12;
+	      delete[]$13;
 	}
 
-	ProcessStatement*tmp = new ProcessStatement(iname, $4, $8);
-	FILE_NAME(tmp, @3);
-	delete $4;
-	delete $8;
+	ProcessStatement*tmp = new ProcessStatement(iname, *active_scope, $5, $9);
+	pop_scope();
+	FILE_NAME(tmp, @4);
+	delete $5;
+	delete $9;
 	$$ = tmp;
       }
 

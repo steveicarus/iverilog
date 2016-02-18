@@ -202,7 +202,6 @@ int ProcessStatement::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-
       StatementList::elaborate(ent, arc);
 
       return errors;
