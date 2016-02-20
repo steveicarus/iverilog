@@ -1,7 +1,7 @@
 #ifndef IVL_netlist_H
 #define IVL_netlist_H
 /*
- * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -379,6 +379,8 @@ class Nexus {
 
       NetNet* pick_any_net();
 
+      NetNode* pick_any_node();
+
       /* This method counts the number of input and output links for
          this nexus, and assigns the results to the output arguments. */
       void count_io(unsigned&inp, unsigned&out) const;
@@ -387,6 +389,10 @@ class Nexus {
 	   use this nexus as an l-value. This can be true if the nexus
 	   is a variable, but also if this is a net with a force. */
       bool assign_lval() const;
+
+	/* This method returns true if there are any inputs
+	   attached to this nexus but no drivers. */
+      bool has_floating_input() const;
 
 	/* This method returns true if there are any drivers
 	   (including variables) attached to this nexus. */
@@ -1146,6 +1152,12 @@ class NetScope : public Definitions, public Attrib {
 	   children of this node as well. */
       void run_functor(Design*des, functor_t*fun);
 
+	/* These are used in synthesis. They provide shared pullup and
+	   pulldown nodes for this scope. */
+      void add_tie_hi(Design*des);
+      void add_tie_lo(Design*des);
+      Link&tie_hi() const { return tie_hi_->pin(0); };
+      Link&tie_lo() const { return tie_lo_->pin(0); };
 
 	/* This member is used during elaboration to pass defparam
 	   assignments from the scope pass to the parameter evaluation
@@ -1267,6 +1279,9 @@ class NetScope : public Definitions, public Attrib {
       /* Final procedures sets this to notify statements that
 	 they are part of a final procedure. */
       bool in_final_;
+
+      NetNode*tie_hi_;
+      NetNode*tie_lo_;
 };
 
 /*
@@ -2605,12 +2620,11 @@ class NetProc : public virtual LineInfo {
 
 	// Synthesize as asynchronous logic, and return true. The
 	// nex_out is where this function attaches its output
-	// results. The accumulated_nex_out is used by sequential
-	// blocks to show outputs from the previous code.
+	// results.
+      typedef vector<bool> mask_t;
       virtual bool synth_async(Design*des, NetScope*scope,
-			       NexusSet&nex_map,
-			       NetBus&nex_out,
-			       NetBus&accumulated_nex_out);
+			       NexusSet&nex_map, NetBus&nex_out,
+			       NetBus&enables, vector<mask_t>&bitmasks);
 
 	// Synthesize as synchronous logic, and return true. That
 	// means binding the outputs to the data port of a FF, and the
@@ -2630,6 +2644,7 @@ class NetProc : public virtual LineInfo {
 			      NetBus&ff_aclr,  NetBus&ff_aset,
 			      vector<verinum>&ff_aset_value,
 			      NexusSet&nex_map, NetBus&nex_out,
+			      vector<mask_t>&bitmasks,
 			      const std::vector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;
@@ -2640,7 +2655,9 @@ class NetProc : public virtual LineInfo {
     protected:
       bool synth_async_block_substatement_(Design*des, NetScope*scope,
 					   NexusSet&nex_map,
-					   NetBus&accumulated_nex_out,
+					   NetBus&nex_out,
+					   NetBus&enables,
+					   vector<mask_t>&bitmasks,
 					   NetProc*substmt);
     private:
       friend class NetBlock;
@@ -2819,7 +2836,7 @@ class NetAssignBase : public NetProc {
 
       bool synth_async(Design*des, NetScope*scope,
 		       NexusSet&nex_map, NetBus&nex_out,
-		       NetBus&accumulated_nex_out);
+		       NetBus&enables, vector<mask_t>&bitmasks);
 
 	// This dumps all the lval structures.
       void dump_lval(ostream&) const;
@@ -2905,7 +2922,7 @@ class NetBlock  : public NetProc {
 	// synthesize as asynchronous logic, and return true.
       bool synth_async(Design*des, NetScope*scope,
 		       NexusSet&nex_map, NetBus&nex_out,
-		       NetBus&accumulated_nex_out);
+		       NetBus&enables, vector<mask_t>&bitmasks);
 
       bool synth_sync(Design*des, NetScope*scope,
 		      bool&ff_negedge,
@@ -2913,6 +2930,7 @@ class NetBlock  : public NetProc {
 		      NetBus&ff_aclr,NetBus&ff_aset,
 		      vector<verinum>&ff_aset_value,
 		      NexusSet&nex_map, NetBus&nex_out,
+		      vector<mask_t>&bitmasks,
 		      const std::vector<NetEvProbe*>&events);
 
 	// This version of emit_recurse scans all the statements of
@@ -2968,7 +2986,7 @@ class NetCase  : public NetProc {
 
       bool synth_async(Design*des, NetScope*scope,
 		       NexusSet&nex_map, NetBus&nex_out,
-		       NetBus&accumulated_nex_out);
+		       NetBus&enables, vector<mask_t>&bitmasks);
 
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
@@ -2984,7 +3002,7 @@ class NetCase  : public NetProc {
 
       bool synth_async_casez_(Design*des, NetScope*scope,
 			      NexusSet&nex_map, NetBus&nex_out,
-			      NetBus&accumulated_nex_out);
+			      NetBus&enables, vector<mask_t>&bitmasks);
 
       TYPE type_;
 
@@ -3048,7 +3066,7 @@ class NetCondit  : public NetProc {
       bool is_asynchronous();
       bool synth_async(Design*des, NetScope*scope,
 		       NexusSet&nex_map, NetBus&nex_out,
-		       NetBus&accumulated_nex_out);
+		       NetBus&enables, vector<mask_t>&bitmasks);
 
       bool synth_sync(Design*des, NetScope*scope,
 		      bool&ff_negedge,
@@ -3056,6 +3074,7 @@ class NetCondit  : public NetProc {
 		      NetBus&ff_aclr,NetBus&ff_aset,
 		      vector<verinum>&ff_aset_value,
 		      NexusSet&nex_map, NetBus&nex_out,
+		      vector<mask_t>&bitmasks,
 		      const std::vector<NetEvProbe*>&events);
 
       virtual bool emit_proc(struct target_t*) const;
@@ -3327,7 +3346,7 @@ class NetEvWait  : public NetProc {
 
       virtual bool synth_async(Design*des, NetScope*scope,
 			       NexusSet&nex_map, NetBus&nex_out,
-			       NetBus&accumulated_nex_out);
+			       NetBus&enables, vector<mask_t>&bitmasks);
 
       virtual bool synth_sync(Design*des, NetScope*scope,
 			      bool&ff_negedge,
@@ -3335,6 +3354,7 @@ class NetEvWait  : public NetProc {
 			      NetBus&ff_aclr,NetBus&ff_aset,
 			      vector<verinum>&ff_aset_value,
 			      NexusSet&nex_map, NetBus&nex_out,
+			      vector<mask_t>&bitmasks,
 			      const std::vector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;
@@ -3439,7 +3459,7 @@ class NetForLoop : public NetProc {
 	// synthesize as asynchronous logic, and return true.
       bool synth_async(Design*des, NetScope*scope,
 		       NexusSet&nex_map, NetBus&nex_out,
-		       NetBus&accumulated_nex_out);
+		       NetBus&enables, vector<mask_t>&bitmasks);
 
     private:
       NetNet*index_;
@@ -3827,8 +3847,14 @@ class NetProcTop  : public LineInfo, public Attrib {
       bool emit(struct target_t*tgt) const;
 
     private:
+      bool tie_off_floating_inputs_(Design*des,
+				    NexusSet&nex_map, NetBus&nex_in,
+				    vector<NetProc::mask_t>&bitmasks,
+				    bool is_ff_input);
+
       const ivl_process_type_t type_;
       NetProc*const statement_;
+      Design*synthesized_design_;
 
       NetScope*scope_;
       friend class Design;

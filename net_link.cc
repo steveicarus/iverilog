@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -311,6 +311,20 @@ void Nexus::count_io(unsigned&inp, unsigned&out) const
       }
 }
 
+bool Nexus::has_floating_input() const
+{
+      bool found_input = false;
+      for (const Link*cur = first_nlink() ;  cur ; cur = cur->next_nlink()) {
+	    if (cur->get_dir() == Link::OUTPUT)
+		  return false;
+
+	    if (cur->get_dir() == Link::INPUT)
+		  found_input = true;
+      }
+
+      return found_input;
+}
+
 bool Nexus::drivers_present() const
 {
       for (const Link*cur = first_nlink() ;  cur ; cur = cur->next_nlink()) {
@@ -462,6 +476,17 @@ NetNet* Nexus::pick_any_net()
 	    NetNet*sig = dynamic_cast<NetNet*>(cur->get_obj());
 	    if (sig != 0)
 		  return sig;
+      }
+
+      return 0;
+}
+
+NetNode* Nexus::pick_any_node()
+{
+      for (Link*cur = first_nlink() ; cur ; cur = cur->next_nlink()) {
+	    NetNode*node = dynamic_cast<NetNode*>(cur->get_obj());
+	    if (node != 0)
+		  return node;
       }
 
       return 0;
