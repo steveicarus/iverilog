@@ -211,6 +211,9 @@ ivl_scope_enumerates
 ivl_scope_event
 ivl_scope_events
 ivl_scope_file
+ivl_scope_func_type
+ivl_scope_func_signed
+ivl_scope_func_width
 ivl_scope_is_auto
 ivl_scope_is_cell
 ivl_scope_lineno
