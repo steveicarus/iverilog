@@ -83,7 +83,7 @@ void vvp_dff::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	    tmp = clk_;
 	    clk_ = bit.value(0);
 	    if (clk_ == clk_active_ && tmp != clk_active_)
-		  port.ptr()->send_vec4(d_, 0);
+		  schedule_propagate_vector(port.ptr(), 0, d_);
 	    break;
 
 	  case 2: // CE
@@ -118,17 +118,17 @@ void vvp_dff::recv_async(vvp_net_ptr_t)
 
 void vvp_dff_aclr::recv_async(vvp_net_ptr_t port)
 {
-      port.ptr()->send_vec4(vvp_vector4_t(d_.size(), BIT4_0), 0);
+      schedule_propagate_vector(port.ptr(), 0, vvp_vector4_t(d_.size(), BIT4_0));
 }
 
 void vvp_dff_aset::recv_async(vvp_net_ptr_t port)
 {
-      port.ptr()->send_vec4(vvp_vector4_t(d_.size(), BIT4_1), 0);
+      schedule_propagate_vector(port.ptr(), 0, vvp_vector4_t(d_.size(), BIT4_1));
 }
 
 void vvp_dff_asc::recv_async(vvp_net_ptr_t port)
 {
-      port.ptr()->send_vec4(asc_value_, 0);
+      schedule_propagate_vector(port.ptr(), 0, asc_value_);
 }
 
 void compile_dff(char*label, unsigned width, bool negedge,
