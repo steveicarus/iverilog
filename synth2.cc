@@ -1526,7 +1526,8 @@ bool NetProcTop::synth_async(Design*des)
       vector<NetProc::mask_t> bitmasks (nex_set.size());
 
 	// Save links to the initial nex_out. These will be used later
-	// to detect floating mux inputs that need to be tied off.
+	// to detect floating part-substitute and mux inputs that need
+	// to be tied off.
       NetBus nex_in (scope(), nex_out.pin_count());
       for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1)
 	    connect(nex_in.pin(idx), nex_out.pin(idx));
@@ -1834,6 +1835,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
       }
 
       delete expr_input;
+
 #if 0
 	/* Detect the case that this is a *synchronous* set/reset. It
 	   is not asynchronous because we know the condition is not
@@ -2042,7 +2044,8 @@ bool NetProcTop::synth_sync(Design*des)
       vector<NetProc::mask_t> bitmasks (nex_set.size());
 
 	// Save links to the initial nex_d. These will be used later
-	// to detect floating mux inputs that need to be tied off.
+	// to detect floating part-substitute and mux inputs that need
+	// to be tied off.
       NetBus nex_in (scope(), nex_d.pin_count());
       for (unsigned idx = 0 ; idx < nex_in.pin_count() ; idx += 1)
 	    connect(nex_in.pin(idx), nex_d.pin(idx));
@@ -2052,7 +2055,7 @@ bool NetProcTop::synth_sync(Design*des)
       for (unsigned idx = 0 ; idx < nex_q.pin_count() ; idx += 1)
 	    connect(nex_q.pin(idx), nex_set[idx].lnk);
 
-	// Connect the input later.
+	// Connect the D of the NetFF devices later.
 
 	/* Synthesize the input to the DFF. */
       bool negedge = false;
