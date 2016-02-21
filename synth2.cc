@@ -413,22 +413,26 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    tmp->local_flag(true);
 	    tmp->set_line(*this);
 
-	    NetNet*use_lsig = nex_out.pin(ptr).nexus()->pick_any_net();
-	    if (use_lsig) {
+	    NetNet*isig = nex_out.pin(ptr).nexus()->pick_any_net();
+	    if (isig) {
 		  if (debug_synth2) {
 			cerr << get_fileline() << ": NetAssignBase::synth_async: "
-			     << " Found a use_sig:" << endl;
+			     << " Found an isig:" << endl;
 			nex_out.pin(ptr).dump_link(cerr, 8);
 		  }
 	    } else {
 		  if (debug_synth2) {
 			cerr << get_fileline() << ": NetAssignBase::synth_async: "
-			     << " Found no use_sig, resorting to lsig." << endl;
+			     << " Found no isig, resorting to lsig." << endl;
 		  }
-		  use_lsig = lsig;
+		  isig = new NetNet(scope, scope->local_symbol(),
+				    NetNet::WIRE, NetNet::not_an_array, tmp_type);
+		  isig->local_flag(true);
+		  isig->set_line(*this);
+		  connect(isig->pin(0), nex_out.pin(ptr));
 	    }
-	    ivl_assert(*this, use_lsig);
-	    NetSubstitute*ps = new NetSubstitute(use_lsig, rsig, lsig_width, base_off);
+	    ivl_assert(*this, isig);
+	    NetSubstitute*ps = new NetSubstitute(isig, rsig, lsig_width, base_off);
 	    ps->set_line(*this);
 	    des->add_node(ps);
 
@@ -1766,10 +1770,19 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	    for (unsigned pin = 0 ; pin < tmp_out.pin_count() ; pin += 1) {
 		  Nexus*rst_nex = tmp_out.pin(pin).nexus();
 
+		  if (!all_bits_driven(tmp_masks[pin])) {
+			cerr << get_fileline() << ": sorry: Not all bits of '"
+			     << nex_map[idx].lnk.nexus()->pick_any_net()->name()
+			     << "' are asynchronously set or reset. This is "
+			     << "not currently supported in synthesis." << endl;
+			des->errors += 1;
+			return false;
+		  }
+
 		  if (! rst_nex->drivers_constant() ||
 		      ! tmp_ena.pin(pin).is_linked(scope->tie_hi()) ) {
-			cerr << get_fileline() << ": sorry: "
-			     << "Asynchronous LOAD not implemented." << endl;
+			cerr << get_fileline() << ": sorry: Asynchronous load "
+			     << "is not currently supported in synthesis." << endl;
 			des->errors += 1;
 			return false;
 		  }
@@ -1777,7 +1790,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 		  if (ff_aclr.pin(pin).is_linked() ||
 		      ff_aset.pin(pin).is_linked()) {
 			cerr << get_fileline() << ": sorry: More than "
-				"one asynchronous set/reset signal is "
+				"one asynchronous set/reset clause is "
 				"not currently supported in synthesis." << endl;
 			des->errors += 1;
 			return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -102,6 +102,17 @@ bool Nexus::drivers_constant() const
 			break;
 		  }
 
+	    const NetSubstitute*ps = dynamic_cast<const NetSubstitute*>(cur->get_obj());
+	    if (ps) {
+		  if (ps->pin(1).nexus()->drivers_constant() &&
+		      ps->pin(2).nexus()->drivers_constant() ) {
+			constant_drivers += 1;
+			continue;
+		  }
+		  driven_ = VAR;
+		  return false;
+	    }
+
 	    if (! dynamic_cast<const NetConst*>(cur->get_obj())) {
 		  driven_ = VAR;
 		  return false;
@@ -199,10 +210,12 @@ verinum Nexus::driven_vector() const
       const Link*cur = list_;
 
       verinum val;
+      verinum pval;
       unsigned width = 0;
 
       for (cur = first_nlink() ; cur  ;  cur = cur->next_nlink()) {
 
+	    const NetSubstitute*ps;
 	    const NetConst*obj;
 	    const NetNet*sig;
 	    if ((obj = dynamic_cast<const NetConst*>(cur->get_obj()))) {
@@ -210,6 +223,18 @@ verinum Nexus::driven_vector() const
 		  ivl_assert(*obj, val.len() == 0);
 		  ivl_assert(*obj, cur->get_pin() == 0);
 		  val = obj->value();
+		  width = val.len();
+
+	    } else if ((ps = dynamic_cast<const NetSubstitute*>(cur->get_obj()))) {
+		  if (cur->get_pin() != 0)
+			continue;
+
+		    // Multiple drivers are not currently supported.
+		  ivl_assert(*ps, val.len() == 0);
+		  val  = ps->pin(1).nexus()->driven_vector();
+		  pval = ps->pin(2).nexus()->driven_vector();
+		  for (unsigned idx = 0; idx < pval.len(); idx += 1)
+			val.set(ps->base() + idx, pval.get(idx));
 		  width = val.len();
 
 	    } else if ((sig = dynamic_cast<const NetNet*>(cur->get_obj()))) {
