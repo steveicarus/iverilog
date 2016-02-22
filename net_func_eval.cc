@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -209,6 +209,71 @@ bool NetProc::evaluate_function(const LineInfo&,
       return false;
 }
 
+void NetAssign::eval_func_lval_op_(const LineInfo&loc,
+				   verinum&lv, verinum&rv) const
+{
+      unsigned lv_width = lv.len();
+      bool lv_sign = lv.has_sign();
+      switch (op_) {
+	  case 'l':
+	  case 'R':
+	      // The left operand is self-determined.
+	    break;
+	  case 'r':
+	      // The left operand is self-determined, but we need to
+	      // cast it to unsigned to get a logical shift.
+	    lv.has_sign(false);
+	    break;
+          default:
+	      // The left operand must be cast to the expression type/size
+	    lv = cast_to_width(lv, rv.len());
+	    lv.has_sign(rv.has_sign());
+      }
+      switch (op_) {
+	  case '+':
+	    lv = lv + rv;
+	    break;
+	  case '-':
+	    lv = lv - rv;
+	    break;
+	  case '*':
+	    lv = lv * rv;
+	    break;
+	  case '/':
+	    lv = lv / rv;
+	    break;
+	  case '%':
+	    lv = lv % rv;
+	    break;
+	  case '&':
+	    for (unsigned idx = 0 ; idx < lv.len() ; idx += 1)
+		  lv.set(idx, lv[idx] & rv[idx]);
+	    break;
+	  case '|':
+	    for (unsigned idx = 0 ; idx < lv.len() ; idx += 1)
+		  lv.set(idx, lv[idx] | rv[idx]);
+	    break;
+	  case '^':
+	    for (unsigned idx = 0 ; idx < lv.len() ; idx += 1)
+		  lv.set(idx, lv[idx] ^ rv[idx]);
+	    break;
+	  case 'l':
+	    lv = lv << rv.as_unsigned();
+	    break;
+	  case 'r':
+	    lv = lv >> rv.as_unsigned();
+	    break;
+	  case 'R':
+	    lv = lv >> rv.as_unsigned();
+	    break;
+	  default:
+	      // illegal assignment operator
+	    ivl_assert(loc, 0);
+      }
+      lv = cast_to_width(lv, lv_width);
+      lv.has_sign(lv_sign);
+}
+
 bool NetAssign::eval_func_lval_(const LineInfo&loc,
 				map<perm_string,LocalVar>&context_map,
 				const NetAssign_*lval, NetExpr*rval_result) const
@@ -271,16 +336,37 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 	    NetEConst*lval_const = dynamic_cast<NetEConst*>(old_lval);
 	    verinum lval_v = lval_const->value();
 	    NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
-	    verinum rval_v = cast_to_width(rval_const->value(), lval->lwidth());
+	    verinum rval_v = rval_const->value();
 
-	    for (unsigned idx = 0 ; idx < rval_v.len() ; idx += 1)
-		  lval_v.set(idx+base, rval_v[idx]);
+	    verinum lpart(verinum::Vx, lval->lwidth());
+	    if (op_) {
+		  for (unsigned idx = 0 ; idx < lpart.len() ; idx += 1)
+			lpart.set(idx, lval_v[base+idx]);
+
+		  eval_func_lval_op_(loc, lpart, rval_v);
+	    } else {
+		  lpart = cast_to_width(rval_v, lval->lwidth());
+	    }
+	    for (unsigned idx = 0 ; idx < lpart.len() ; idx += 1)
+		  lval_v.set(idx+base, lpart[idx]);
 
 	    delete base_result;
 	    delete rval_result;
 	    rval_result = new NetEConst(lval_v);
       } else {
-	    rval_result = fix_assign_value(lval->sig(), rval_result);
+	    if (op_) {
+		  NetEConst*lval_const = dynamic_cast<NetEConst*>(old_lval);
+		  verinum lval_v = lval_const->value();
+		  NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
+		  verinum rval_v = rval_const->value();
+
+		  eval_func_lval_op_(loc, lval_v, rval_v);
+
+		  delete rval_result;
+		  rval_result = new NetEConst(lval_v);
+	    } else {
+		  rval_result = fix_assign_value(lval->sig(), rval_result);
+	    }
       }
 
       if (old_lval)
