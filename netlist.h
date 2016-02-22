@@ -2881,6 +2881,7 @@ class NetAssign : public NetAssignBase {
 				     map<perm_string,LocalVar>&ctx) const;
 
     private:
+      void eval_func_lval_op_real_(const LineInfo&loc, verireal&lv, verireal&rv) const;
       void eval_func_lval_op_(const LineInfo&loc, verinum&lv, verinum&rv) const;
       bool eval_func_lval_(const LineInfo&loc, map<perm_string,LocalVar>&ctx,
 			   const NetAssign_*lval, NetExpr*rval_result) const;
