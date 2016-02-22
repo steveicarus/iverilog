@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,6 +23,7 @@
 # include  "netlist.h"
 # include  "netclass.h"
 # include  "netenum.h"
+# include  "netvector.h"
 # include  <cstring>
 # include  <cstdlib>
 # include  <sstream>
@@ -161,6 +162,8 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest,
       lineno_ = 0;
       def_lineno_ = 0;
       genvar_tmp_val = 0;
+      tie_hi_ = 0;
+      tie_lo_ = 0;
 }
 
 NetScope::~NetScope()
@@ -743,4 +746,34 @@ perm_string NetScope::local_symbol()
       ostringstream res;
       res << "_s" << (lcounter_++);
       return lex_strings.make(res.str());
+}
+
+void NetScope::add_tie_hi(Design*des)
+{
+      if (tie_hi_ == 0) {
+	    NetNet*sig = new NetNet(this, lex_strings.make("_LOGIC1"),
+				    NetNet::WIRE, &netvector_t::scalar_logic);
+	    sig->local_flag(true);
+
+	    tie_hi_ = new NetLogic(this, local_symbol(),
+				   1, NetLogic::PULLUP, 1);
+	    des->add_node(tie_hi_);
+
+	    connect(sig->pin(0), tie_hi_->pin(0));
+      }
+}
+
+void NetScope::add_tie_lo(Design*des)
+{
+      if (tie_lo_ == 0) {
+	    NetNet*sig = new NetNet(this, lex_strings.make("_LOGIC0"),
+				    NetNet::WIRE, &netvector_t::scalar_logic);
+	    sig->local_flag(true);
+
+	    tie_lo_ = new NetLogic(this, local_symbol(),
+				   1, NetLogic::PULLDOWN, 1);
+	    des->add_node(tie_lo_);
+
+	    connect(sig->pin(0), tie_lo_->pin(0));
+      }
 }

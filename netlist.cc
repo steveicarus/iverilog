@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1022,11 +1022,36 @@ NetProc::~NetProc()
 NetProcTop::NetProcTop(NetScope*s, ivl_process_type_t t, NetProc*st)
 : type_(t), statement_(st), scope_(s)
 {
+      synthesized_design_ = 0;
 }
 
 NetProcTop::~NetProcTop()
 {
+      if (!synthesized_design_) {
+	    delete statement_;
+	    return;
+      }
+
+      NexusSet nex_set;
+      statement_->nex_output(nex_set);
+
       delete statement_;
+
+      bool flag = false;
+      for (unsigned idx = 0 ;  idx < nex_set.size() ;  idx += 1) {
+
+	    NetNet*net = nex_set[idx].lnk.nexus()->pick_any_net();
+	    if (net->peek_lref() > 0) {
+		  cerr << get_fileline() << ": warning: '" << net->name()
+		       << "' is driven by more than one process." << endl;
+		  flag = true;
+	    }
+      }
+      if (flag) {
+	    cerr << get_fileline() << ": sorry: Cannot synthesize signals "
+		    "that are driven by more than one process." << endl;
+	    synthesized_design_->errors += 1;
+      }
 }
 
 NetProc* NetProcTop::statement()
