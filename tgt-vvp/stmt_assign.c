@@ -193,17 +193,17 @@ static void get_vec_from_lval(ivl_statement_t net, struct vec_slice_info*slices)
       unsigned wid = ivl_stmt_lwidth(net);
 
       cur_bit = 0;
-      for (lidx = 0 ; lidx < ivl_stmt_lvals(net) ; lidx += 1) {
+      for (lidx = ivl_stmt_lvals(net) ; lidx > 0 ; lidx -= 1) {
 	    ivl_lval_t lval;
 	    unsigned bit_limit = wid - cur_bit;
 
-	    lval = ivl_stmt_lval(net, lidx);
+	    lval = ivl_stmt_lval(net, lidx-1);
 
 	    if (bit_limit > ivl_lval_width(lval))
 		  bit_limit = ivl_lval_width(lval);
 
-	    get_vec_from_lval_slice(lval, slices+lidx, bit_limit);
-	    if (lidx > 0) {
+	    get_vec_from_lval_slice(lval, slices+lidx-1, bit_limit);
+	    if (cur_bit > 0) {
 		  fprintf(vvp_out, "    %%concat/vec4;\n");
 	    }
 
