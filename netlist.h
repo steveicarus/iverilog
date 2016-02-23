@@ -2764,6 +2764,12 @@ class NetAssign_ {
       void set_property(const perm_string&name);
       inline perm_string get_property(void) const { return member_; }
 
+	// Determine if the assigned object is signed or unsigned.
+	// This is used when determining the expression type for
+	// a compressed assignment statement.
+      bool get_signed() const { return signed_; }
+      void set_signed(bool flag) { signed_ = flag; }
+
 	// Get the width of the r-value that this node expects. This
 	// method accounts for the presence of the mux, so it is not
 	// necessarily the same as the pin_count().
@@ -2814,6 +2820,7 @@ class NetAssign_ {
 	// member/property if signal is a class.
       perm_string member_;
 
+      bool signed_;
       bool turn_sig_to_wire_on_release_;
 	// indexed part select base
       NetExpr*base_;

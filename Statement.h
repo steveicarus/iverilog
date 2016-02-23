@@ -108,7 +108,8 @@ class PAssign_  : public Statement {
       NetAssign_* elaborate_lval(Design*, NetScope*scope) const;
       NetExpr* elaborate_rval_(Design*, NetScope*, ivl_type_t lv_net_type,
 			       ivl_variable_type_t lv_type,
-			       unsigned lv_width) const;
+			       unsigned lv_width,
+			       bool force_unsigned =false) const;
       NetExpr* elaborate_rval_(Design*, NetScope*, ivl_type_t ntype) const;
 
       NetExpr* elaborate_rval_obj_(Design*, NetScope*,

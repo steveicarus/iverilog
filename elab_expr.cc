@@ -90,7 +90,7 @@ static NetBranch* find_existing_implicit_branch(NetNet*sig, NetNet*gnd)
 
 NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 			     ivl_variable_type_t lv_type, unsigned lv_width,
-			     PExpr*expr, bool need_const)
+			     PExpr*expr, bool need_const, bool force_unsigned)
 {
       if (debug_elaborate) {
 	    cerr << expr->get_fileline() << ": elaborate_rval_expr: "
@@ -135,7 +135,7 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
       }
 
       return elab_and_eval(des, scope, expr, context_wid, need_const,
-			   false, lv_type);
+			   false, lv_type, force_unsigned);
 }
 
 /*

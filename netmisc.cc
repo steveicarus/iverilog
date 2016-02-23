@@ -802,9 +802,10 @@ NetExpr* condition_reduce(NetExpr*expr)
 }
 
 static NetExpr* do_elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
-				 int context_width, bool need_const, bool annotatable,
-				 bool force_expand,
-				 ivl_variable_type_t cast_type)
+				 int context_width, bool need_const,
+				 bool annotatable, bool force_expand,
+				 ivl_variable_type_t cast_type,
+				 bool force_unsigned)
 {
       PExpr::width_mode_t mode = PExpr::SIZED;
       if ((context_width == -2) && !gn_strict_expr_width_flag)
@@ -823,6 +824,11 @@ static NetExpr* do_elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
       unsigned pos_context_width = context_width > 0 ? context_width : 0;
       if ((pe->expr_type() != IVL_VT_REAL) && (expr_width < pos_context_width))
             expr_width = pos_context_width;
+
+	// If this is the RHS of a compressed assignment, the LHS also
+	// affects the expression type (signed/unsigned).
+      if (force_unsigned)
+	    pe->cast_signed(false);
 
       if (debug_elaborate) {
             cerr << pe->get_fileline() << ": elab_and_eval: test_width of "
@@ -910,10 +916,11 @@ static NetExpr* do_elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 
 NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 		       int context_width, bool need_const, bool annotatable,
-		       ivl_variable_type_t cast_type)
+		       ivl_variable_type_t cast_type, bool force_unsigned)
 {
       return do_elab_and_eval(des, scope, pe, context_width,
-			      need_const, annotatable, false, cast_type);
+			      need_const, annotatable, false,
+			      cast_type, force_unsigned);
 }
 
 /*
@@ -926,7 +933,8 @@ NetExpr* elab_and_eval_lossless(Design*des, NetScope*scope, PExpr*pe,
 				 ivl_variable_type_t cast_type)
 {
       return do_elab_and_eval(des, scope, pe, context_width,
-			      need_const, annotatable, true, cast_type);
+			      need_const, annotatable, true,
+			      cast_type, false);
 }
 
 NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,

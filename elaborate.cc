@@ -2307,7 +2307,8 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 				   ivl_type_t lv_net_type,
 				   ivl_variable_type_t lv_type,
-				   unsigned lv_width) const
+				   unsigned lv_width,
+				   bool force_unsigned) const
 {
       ivl_assert(*this, rval_);
 
@@ -2316,7 +2317,7 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 	// should look into fixing calls to this method to pass a
 	// net_type instead of the separate lv_width/lv_type values.
       NetExpr*rv = elaborate_rval_expr(des, scope, lv_net_type, lv_type, lv_width,
-				       rval(), is_constant_);
+				       rval(), is_constant_, force_unsigned);
 
       if (!is_constant_ || !rv) return rv;
 
@@ -2434,7 +2435,12 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
 
-      NetExpr*rv = elaborate_rval_(des, scope, 0, lv->expr_type(), count_lval_width(lv));
+	// Compressed assignments should behave identically to the
+	// equivalent uncompressed assignments. This means we need
+	// to take the type of the LHS into account when determining
+	// the type of the RHS expression.
+      NetExpr*rv = elaborate_rval_(des, scope, 0, lv->expr_type(),
+				   count_lval_width(lv), !lv->get_signed());
       if (rv == 0) return 0;
 
       NetAssign*cur = new NetAssign(lv, op_, rv);

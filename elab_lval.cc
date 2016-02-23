@@ -138,6 +138,9 @@ NetAssign_* PEConcat::elaborate_lval(Design*des,
 		  continue;
 	    }
 
+	      /* A concatenation is always unsigned. */
+	    tmp->set_signed(false);
+
 	      /* Link the new l-value to the previous one. */
 	    NetAssign_*last = tmp;
 	    while (last->more)
@@ -399,6 +402,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	/* No select expressions. */
 
       NetAssign_*lv = new NetAssign_(reg);
+      lv->set_signed(reg->get_signed());
 
       return lv;
 }

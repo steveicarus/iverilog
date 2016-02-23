@@ -44,6 +44,7 @@ NetAssign_::NetAssign_(NetAssign_*n)
 {
       lwid_ = 0;
       more = 0;
+      signed_ = false;
       turn_sig_to_wire_on_release_ = false;
 }
 
@@ -53,6 +54,7 @@ NetAssign_::NetAssign_(NetNet*s)
       lwid_ = sig_->vector_width();
       sig_->incr_lref();
       more = 0;
+      signed_ = false;
       turn_sig_to_wire_on_release_ = false;
 }
 

@@ -258,7 +258,8 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 			      PExpr*pe, int context_width,
                               bool need_const =false,
                               bool annotatable =false,
-			      ivl_variable_type_t cast_type =IVL_VT_NO_TYPE);
+			      ivl_variable_type_t cast_type =IVL_VT_NO_TYPE,
+			      bool force_unsigned =false);
 
 extern NetExpr* elab_and_eval_lossless(Design*des, NetScope*scope,
 			      PExpr*pe, int context_width,
@@ -297,7 +298,8 @@ extern NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 				    ivl_type_t lv_net_type,
 				    ivl_variable_type_t lv_type,
 				    unsigned lv_width, PExpr*expr,
-                                    bool need_const =false);
+				    bool need_const =false,
+				    bool force_unsigned =false);
 
 extern bool evaluate_ranges(Design*des, NetScope*scope,
 			    std::vector<netrange_t>&llist,
