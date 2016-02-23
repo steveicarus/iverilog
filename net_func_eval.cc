@@ -252,8 +252,8 @@ void NetAssign::eval_func_lval_op_(const LineInfo&loc,
 	    break;
           default:
 	      // The left operand must be cast to the expression type/size
-	    lv = cast_to_width(lv, rv.len());
 	    lv.has_sign(rv.has_sign());
+	    lv = cast_to_width(lv, rv.len());
       }
       switch (op_) {
 	  case '+':
