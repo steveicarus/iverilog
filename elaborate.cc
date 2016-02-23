@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2439,11 +2439,31 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
 	// equivalent uncompressed assignments. This means we need
 	// to take the type of the LHS into account when determining
 	// the type of the RHS expression.
+      bool force_unsigned;
+      switch (op_) {
+	  case 'l':
+	  case 'r':
+	  case 'R':
+	      // The right-hand operand of shift operations is
+	      // self-determined.
+	    force_unsigned = false;
+	    break;
+	  default:
+	    force_unsigned = !lv->get_signed();
+	    break;
+      }
       NetExpr*rv = elaborate_rval_(des, scope, 0, lv->expr_type(),
-				   count_lval_width(lv), !lv->get_signed());
+				   count_lval_width(lv), force_unsigned);
       if (rv == 0) return 0;
 
-      NetAssign*cur = new NetAssign(lv, op_, rv);
+	// The ivl_target API doesn't support signalling the type
+	// of a lval, so convert arithmetic shifts into logical
+	// shifts now if the lval is unsigned.
+      char op = op_;
+      if ((op == 'R') && !lv->get_signed())
+	    op = 'r';
+
+      NetAssign*cur = new NetAssign(lv, op, rv);
       cur->set_line(*this);
 
       return cur;
