@@ -3249,11 +3249,14 @@ void vvp_net_fun_t::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&,
       assert(0);
 }
 
-void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bit,
                                  unsigned base, unsigned wid, unsigned vwid,
-                                 vvp_context_t ctx)
+                                 vvp_context_t)
 {
-      ptr.ptr()->send_vec4_pv(bit, base, wid, vwid, ctx);
+      cerr << "internal error: " << typeid(*this).name() << ": "
+	   << "recv_vec4_pv(" << bit << ", " << base
+	   << ", " << wid << ", " << vwid << ") not implemented" << endl;
+      assert(0);
 }
 
 void vvp_net_fun_t::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
