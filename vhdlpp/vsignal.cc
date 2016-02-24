@@ -22,6 +22,7 @@
 # include  "vsignal.h"
 # include  "expression.h"
 # include  "vtype.h"
+# include  "std_types.h"
 # include  <iostream>
 
 using namespace std;
@@ -64,7 +65,7 @@ int Signal::emit(ostream&out, Entity*ent, ScopeBase*scope)
       Expression*init_expr = peek_init_expr();
       if (init_expr) {
             /* Emit initialization value for wires as a weak assignment */
-            if(!decl.reg_flag)
+            if(!decl.reg_flag && !type->type_match(&primitive_REAL))
                 out << ";" << endl << "/*init*/ assign (weak1, weak0) " << peek_name();
 
             out << " = ";
