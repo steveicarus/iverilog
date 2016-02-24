@@ -208,6 +208,15 @@ void vvp_fun_part_pv::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       port.ptr()->send_vec4_pv(bit, base_, wid_, vwid_, context);
 }
 
+void vvp_fun_part_pv::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                 unsigned base, unsigned wid, unsigned vwid,
+                                 vvp_context_t ctx)
+{
+      assert(port.port() == 0);
+
+      port.ptr()->send_vec4_pv(bit, base, wid, vwid, ctx);
+}
+
 void vvp_fun_part_pv::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 {
       assert(port.port() == 0);
