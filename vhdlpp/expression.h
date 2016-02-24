@@ -708,7 +708,7 @@ class ExpName : public Expression {
       explicit ExpName(perm_string nn);
       ExpName(perm_string nn, std::list<Expression*>*indices);
       ExpName(ExpName*prefix, perm_string nn, std::list<Expression*>*indices = NULL);
-      ~ExpName();
+      virtual ~ExpName();
 
     public: // Base methods
       Expression*clone() const;
@@ -783,7 +783,7 @@ class ExpName : public Expression {
 class ExpNameALL : public ExpName {
 
     public:
-      ExpNameALL() : ExpName(perm_string()) { }
+      ExpNameALL() : ExpName(empty_perm_string) { }
 
     public:
       const VType* probe_type(Entity*ent, ScopeBase*scope) const;
@@ -813,6 +813,64 @@ class ExpRelation : public ExpBinary {
 
     private:
       fun_t fun_;
+};
+
+/*
+ * Helper class to handle name expressions coming from another scope. As such,
+ * we get more information regarding their type, etc. from the associated scope.
+ */
+class ExpScopedName : public Expression {
+    public:
+        ExpScopedName(perm_string scope, ExpName*exp);
+        ~ExpScopedName();
+
+        Expression*clone() const
+        { return new ExpScopedName(scope_name_, static_cast<ExpName*>(name_->clone())); }
+
+        int elaborate_lval(Entity*ent, ScopeBase*scope, bool is_sequ)
+        { return name_->elaborate_lval(ent, get_scope(scope), is_sequ); }
+
+        int elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*lval)
+        { return name_->elaborate_rval(ent, get_scope(scope), lval); }
+
+        const VType* probe_type(Entity*ent, ScopeBase*scope) const
+        { return name_->probe_type(ent, get_scope(scope)); }
+
+        const VType* fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*host) const
+        { return name_->fit_type(ent, get_scope(scope), host); }
+
+        int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
+        { return name_->elaborate_expr(ent, get_scope(scope), ltype); }
+
+        void write_to_stream(std::ostream&fd) const
+        { name_->write_to_stream(fd); }
+
+        int emit(ostream&out, Entity*ent, ScopeBase*scope) const {
+            out << scope_name_ << ".";
+            return name_->emit(out, ent, scope);
+        }
+
+        bool is_primary(void) const
+        { return name_->is_primary(); }
+
+        bool evaluate(Entity*ent, ScopeBase*, int64_t&val) const
+        { return name_->evaluate(ent, scope_, val); }
+
+        bool symbolic_compare(const Expression*that) const
+        { return name_->symbolic_compare(that); }
+
+        void dump(ostream&out, int indent = 0) const;
+
+        void visit(ExprVisitor&func);
+
+    private:
+        // Functions that resolve the origin scope for the name expression
+        ScopeBase*get_scope(const ScopeBase*scope);
+        ScopeBase*get_scope(const ScopeBase*scope) const;
+
+        perm_string scope_name_;
+        ScopeBase*scope_;
+        ExpName*name_;
 };
 
 class ExpShift : public ExpBinary {

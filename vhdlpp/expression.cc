@@ -755,6 +755,37 @@ ExpRelation::~ExpRelation()
 {
 }
 
+ExpScopedName::ExpScopedName(perm_string scope, ExpName*exp)
+: scope_name_(scope), scope_(NULL), name_(exp)
+{
+}
+
+ExpScopedName::~ExpScopedName()
+{
+    delete name_;
+}
+
+void ExpScopedName::visit(ExprVisitor&func)
+{
+    func.down();
+    func(this);
+    name_->visit(func);
+    func.up();
+}
+
+ScopeBase*ExpScopedName::get_scope(const ScopeBase*scope)
+{
+    if(!scope_)
+        scope_ = scope->find_scope(scope_name_);
+
+    return scope_;
+}
+
+ScopeBase*ExpScopedName::get_scope(const ScopeBase*scope) const
+{
+    return scope_ ? scope_ : scope->find_scope(scope_name_);
+}
+
 ExpShift::ExpShift(ExpShift::shift_t op, Expression*op1, Expression*op2)
 : ExpBinary(op1, op2), shift_(op)
 {

@@ -71,7 +71,7 @@ void ExpConcat::dump(ostream&out, int indent) const
 
 void ExpCast::dump(ostream&out, int indent) const
 {
-      out << "Casting ";
+      out << setw(indent) << "" << "Casting ";
       base_->dump(out, indent+4);
       out << " to ";
       type_->emit_def(out, empty_perm_string);
@@ -79,8 +79,15 @@ void ExpCast::dump(ostream&out, int indent) const
 
 void ExpNew::dump(ostream&out, int indent) const
 {
-      out << "New dynamic array size: ";
+      out << setw(indent) << "" << "New dynamic array size: " << endl;
       size_->dump(out, indent);
+}
+
+void ExpScopedName::dump(ostream&out, int indent) const
+{
+    out << setw(indent) << "" << "Scoped name expression: " << endl;
+    out << "    scope " << scope_name_ << " " << scope_ << endl;
+    name_->dump(out, indent+4);
 }
 
 void ExpShift::dump(ostream&out, int indent) const
