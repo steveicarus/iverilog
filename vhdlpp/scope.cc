@@ -317,11 +317,8 @@ SubprogramHeader*ScopeBase::match_subprogram(perm_string name,
     return NULL;
 }
 
-void ActiveScope::set_package_header(Package*pkg)
 void ScopeBase::generate_name()
 {
-      assert(package_header_ == 0);
-      package_header_ = pkg;
     char buf[64];
 
     // Generate a name for the scope

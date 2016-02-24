@@ -31,6 +31,7 @@
 
 class InterfacePort;
 class SequentialStmt;
+class Package;
 class VType;
 
 class SubprogramBody : public LineInfo, public ScopeBase {
@@ -78,8 +79,8 @@ class SubprogramHeader : public LineInfo {
       const VType*peek_param_type(int idx) const;
       const VType*peek_return_type() const { return return_type_; }
 
-      void set_parent(const ScopeBase*par);
-      inline const ScopeBase*get_parent() const { return parent_; }
+      inline void set_package(const Package*pkg) { assert(!package_); package_ = pkg; }
+      inline const Package*get_package() const { return package_; }
 
 	// Checks if either return type or parameters are unbounded vectors.
       bool unbounded() const;
@@ -138,7 +139,7 @@ class SubprogramHeader : public LineInfo {
       std::list<InterfacePort*>*ports_;
       const VType*return_type_;
       SubprogramBody*body_;
-      const ScopeBase*parent_;
+      const Package*package_;
 };
 
 // Class to define functions headers defined in the standard VHDL libraries.

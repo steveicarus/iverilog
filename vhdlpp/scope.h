@@ -101,6 +101,11 @@ class ScopeBase {
 
       perm_string peek_name() const { return name_; }
 
+      void set_package_header(Package*pkg) {
+          assert(package_header_ == 0);
+          package_header_ = pkg;
+      }
+
     protected:
       void cleanup();
 
@@ -158,6 +163,10 @@ class ScopeBase {
 
       void do_use_from(const ScopeBase*that);
 
+      // If this is a package body, then there is a Package header
+      // already declared.
+      Package*package_header_;
+
       // Generates an unique name for the scope
       void generate_name();
 
@@ -192,8 +201,6 @@ class ActiveScope : public ScopeBase {
       explicit ActiveScope(const ActiveScope*par);
 
       ~ActiveScope() { }
-
-      void set_package_header(Package*);
 
 	// Pull items from "that" scope into "this" scope as is
 	// defined by a "use" directive. The parser uses this method
@@ -276,10 +283,6 @@ class ActiveScope : public ScopeBase {
       std::map<perm_string,VTypeDef*> incomplete_types;
 
     private:
-	// If this is a package body, then there is a Package header
-	// already declared.
-      Package*package_header_;
-
       Entity*context_entity_;
 };
 

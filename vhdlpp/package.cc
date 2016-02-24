@@ -53,6 +53,7 @@ int Package::elaborate()
 
 	    for(SubHeaderList::iterator it = subp_list.begin();
 			it != subp_list.end(); ++it) {
+                (*it)->set_package(this);
                 errors += (*it)->elaborate();
             }
       }

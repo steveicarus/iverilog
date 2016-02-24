@@ -107,10 +107,9 @@ int SubprogramHeader::emit_full_name(const std::vector<Expression*>&argv,
     // the SV elaborator finds the correct VHDL elaborated
     // definition. It should not be emitted only if we call another
     // function from the same package.
-    const Package*pkg = dynamic_cast<const Package*>(parent_);
     const SubprogramBody*subp = dynamic_cast<const SubprogramBody*>(scope);
-    if (pkg != 0 && (!subp || !subp->header() || subp->header()->get_parent() != pkg))
-        out << "\\" << pkg->name() << " ::";
+    if (package_ && (!subp || !subp->header() || subp->header()->get_package() != package_))
+        out << "\\" << package_->name() << " ::";
 
     return emit_name(argv, out, ent, scope);
 }

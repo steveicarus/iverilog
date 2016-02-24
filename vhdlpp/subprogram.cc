@@ -88,7 +88,7 @@ void SubprogramBody::write_to_stream(ostream&fd) const
 
 SubprogramHeader::SubprogramHeader(perm_string nam, list<InterfacePort*>*ports,
 		       const VType*return_type)
-: name_(nam), ports_(ports), return_type_(return_type), body_(NULL), parent_(NULL)
+: name_(nam), ports_(ports), return_type_(return_type), body_(NULL), package_(NULL)
 {
 }
 
@@ -170,12 +170,6 @@ const VType*SubprogramHeader::peek_param_type(int idx) const
         return port->type;
 
       return NULL;
-}
-
-void SubprogramHeader::set_parent(const ScopeBase*par)
-{
-      ivl_assert(*this, !parent_);
-      parent_ = par;
 }
 
 bool SubprogramHeader::unbounded() const {
@@ -263,7 +257,7 @@ SubprogramHeader*SubprogramHeader::make_instance(std::vector<Expression*> argume
         }
 
         body_inst->set_statements(body_->statements_);
-        instance->set_parent(scope);
+        instance->set_package(package_);
         instance->set_body(body_inst);
         instance->fix_return_type();
     }
