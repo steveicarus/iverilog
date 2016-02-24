@@ -86,6 +86,7 @@ extern int yylex(union YYSTYPE*yylvalp,YYLTYPE*yyllocp,yyscan_t yyscanner);
 static ActiveScope*active_scope = new ActiveScope;
 static stack<ActiveScope*> scope_stack;
 static SubprogramHeader*active_sub = NULL;
+static ActiveScope*arc_scope = NULL;
 
 /*
  * When a scope boundary starts, call the push_scope function to push
@@ -353,7 +354,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <record_elements> element_declaration element_declaration_list
 
 %type <text> architecture_body_start package_declaration_start
-%type <text> package_body_start
+%type <text> package_body_start process_start
 %type <text> identifier_opt identifier_colon_opt logical_name suffix instantiated_unit
 
 %type <name_list> logical_name_list identifier_list
@@ -412,6 +413,8 @@ architecture_body
 	delete[]$3;
 	delete $8;
 	pop_scope();
+	assert(arc_scope);
+	arc_scope = NULL;
 	if ($11) delete[]$11;
       }
   ;
@@ -420,6 +423,8 @@ architecture_body_start
   : K_architecture IDENTIFIER
       { $$ = $2;
 	push_scope();
+	assert(!arc_scope);
+	arc_scope = active_scope;
       }
   ;
 /*
@@ -1293,17 +1298,19 @@ file_declaration
 		std::list<Expression*> params;
 
 		// add file_open() call in 'initial' block
-		params.push_back(new ExpName(*cur));
+		params.push_back(new ExpScopedName(active_scope->peek_name(), new ExpName(*cur)));
 		params.push_back($5->filename()->clone());
 		params.push_back($5->kind()->clone());
-		ProcedureCall*fopen_call = new ProcedureCall(perm_string::literal("file_open"), &params);
-		active_scope->add_initializer(fopen_call);
+		ProcedureCall*fopen_call = new ProcedureCall(
+                                    perm_string::literal("file_open"), &params);
+		arc_scope->add_initializer(fopen_call);
 
 		// add file_close() call in 'final' block
 		params.clear();
-		params.push_back(new ExpName(*cur));
-		ProcedureCall*fclose_call = new ProcedureCall(perm_string::literal("file_close"), &params);
-		active_scope->add_finalizer(fclose_call);
+		params.push_back(new ExpScopedName(active_scope->peek_name(), new ExpName(*cur)));
+		ProcedureCall*fclose_call = new ProcedureCall(
+                                    perm_string::literal("file_close"), &params);
+		arc_scope->add_finalizer(fclose_call);
 
 		delete $5;
 	      }
@@ -2090,37 +2097,40 @@ process_declarative_part_opt
   |
   ;
 
-process_statement
+process_start
   : identifier_colon_opt K_postponed_opt K_process
-      {
-	push_scope();
-      }
-    process_sensitivity_list_opt K_is_opt
+       { push_scope();
+         $$ = $1;
+       }
+  ;
+
+process_statement
+  : process_start process_sensitivity_list_opt K_is_opt
     process_declarative_part_opt
     K_begin sequence_of_statements
     K_end K_postponed_opt K_process identifier_opt ';'
       { perm_string iname = $1? lex_strings.make($1) : empty_perm_string;
 	if ($1) delete[]$1;
-	if ($13) {
+	if ($10) {
 	      if (iname.nil()) {
-		    errormsg(@13, "Process end name %s for un-named processes.\n", $13);
-	      } else if (iname != $13) {
-		    errormsg(@13, "Process name %s does not match opening name %s.\n",
-			     $13, $1);
+		    errormsg(@10, "Process end name %s for un-named processes.\n", $10);
+	      } else if (iname != $10) {
+		    errormsg(@10, "Process name %s does not match opening name %s.\n",
+			     $10, $1);
 	      }
-	      delete[]$13;
+	      delete[]$10;
 	}
 
-	ProcessStatement*tmp = new ProcessStatement(iname, *active_scope, $5, $9);
-	pop_scope();
-	FILE_NAME(tmp, @4);
-	delete $5;
-	delete $9;
+	ProcessStatement*tmp = new ProcessStatement(iname, *active_scope, $2, $6);
+        arc_scope->bind_scope(tmp->peek_name(), tmp);
+        pop_scope();
+	FILE_NAME(tmp, @3);
+	delete $2;
+	delete $6;
 	$$ = tmp;
       }
 
-  | identifier_colon_opt K_postponed_opt K_process
-    process_sensitivity_list_opt K_is_opt
+  | process_start process_sensitivity_list_opt K_is_opt
     process_declarative_part_opt
     K_begin error
     K_end K_postponed_opt K_process identifier_opt ';'

@@ -30,6 +30,7 @@ class Entity;
 class Expression;
 class ExpName;
 class GenerateStatement;
+class ProcessStatement;
 class SequentialStmt;
 class Signal;
 class named_expr_t;
@@ -65,9 +66,20 @@ class Architecture : public Scope, public LineInfo {
 
       perm_string get_name() const { return name_; }
 
-	// Sets the currently processed component (to be able to reach its parameters).
-      void set_cur_component(ComponentInstantiation*component) { cur_component_ = component; }
       bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp) const;
+      Variable* find_variable(perm_string by_name) const;
+
+	// Sets the currently processed component (to be able to reach its parameters).
+      void set_cur_component(ComponentInstantiation*component) {
+          assert(!cur_component_ || !component);
+          cur_component_ = component;
+      }
+
+	// Sets the currently elaborated process (to use its scope for variable resolving).
+      void set_cur_process(ProcessStatement*process) {
+          assert(!cur_process_ || !process);
+          cur_process_ = process;
+      }
 
 	// Elaborate this architecture in the context of the given entity.
       int elaborate(Entity*entity);
@@ -113,7 +125,8 @@ class Architecture : public Scope, public LineInfo {
       // Currently processed component (or NULL if none).
       ComponentInstantiation*cur_component_;
 
-    private: // Not implemented
+      // Currently elaborated process (or NULL if none).
+      ProcessStatement*cur_process_;
 };
 
 /*
@@ -239,8 +252,16 @@ class StatementList : public Architecture::Statement {
       StatementList(std::list<SequentialStmt*>*statement_list);
       virtual ~StatementList();
 
-      virtual int elaborate(Entity*ent, Architecture*arc);
-      virtual int emit(ostream&out, Entity*entity, Architecture*arc);
+      int elaborate(Entity*ent, Architecture*arc) {
+          return elaborate(ent, static_cast<ScopeBase*>(arc));
+      }
+
+      int emit(ostream&out, Entity*ent, Architecture*arc) {
+          return emit(out, ent, static_cast<ScopeBase*>(arc));
+      }
+
+      virtual int elaborate(Entity*ent, ScopeBase*scope);
+      virtual int emit(ostream&out, Entity*entity, ScopeBase*scope);
       virtual void dump(ostream&out, int indent =0) const;
 
       std::list<SequentialStmt*>& stmt_list() { return statements_; }
@@ -256,7 +277,7 @@ class InitialStatement : public StatementList {
       InitialStatement(std::list<SequentialStmt*>*statement_list)
           : StatementList(statement_list) {}
 
-      int emit(ostream&out, Entity*entity, Architecture*arc);
+      int emit(ostream&out, Entity*entity, ScopeBase*scope);
       void dump(ostream&out, int indent =0) const;
 };
 
@@ -267,7 +288,7 @@ class FinalStatement : public StatementList {
       FinalStatement(std::list<SequentialStmt*>*statement_list)
           : StatementList(statement_list) {}
 
-      int emit(ostream&out, Entity*entity, Architecture*arc);
+      int emit(ostream&out, Entity*entity, ScopeBase*scope);
       void dump(ostream&out, int indent =0) const;
 };
 

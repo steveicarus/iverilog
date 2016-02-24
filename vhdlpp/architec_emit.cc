@@ -28,38 +28,28 @@
 # include  <typeinfo>
 # include  <ivl_assert.h>
 
-int Scope::emit_signals(ostream&out, Entity*entity, Architecture*arc)
+int Scope::emit_signals(ostream&out, Entity*entity, ScopeBase*scope)
 {
-      int errors = 0;
+    int errors = 0;
 
-      for (map<perm_string,Signal*>::iterator cur = old_signals_.begin()
-		 ; cur != old_signals_.end() ; ++cur) {
+    for (map<perm_string,Signal*>::iterator cur = new_signals_.begin()
+       ; cur != new_signals_.end() ; ++cur) {
+        errors += cur->second->emit(out, entity, scope);
+    }
 
-	    errors += cur->second->emit(out, entity, arc);
-      }
-      for (map<perm_string,Signal*>::iterator cur = new_signals_.begin()
-         ; cur != new_signals_.end() ; ++cur) {
-
-        errors += cur->second->emit(out, entity, arc);
-      }
-      return errors;
+    return errors;
 }
 
-int Scope::emit_variables(ostream&out, Entity*entity, Architecture*arc)
+int Scope::emit_variables(ostream&out, Entity*entity, ScopeBase*scope)
 {
-      int errors = 0;
+    int errors = 0;
 
-      for (map<perm_string,Variable*>::iterator cur = old_variables_.begin()
-		 ; cur != old_variables_.end() ; ++cur) {
+    for (map<perm_string,Variable*>::iterator cur = new_variables_.begin()
+       ; cur != new_variables_.end() ; ++cur) {
+        errors += cur->second->emit(out, entity, scope);
+    }
 
-	    errors += cur->second->emit(out, entity, arc);
-      }
-      for (map<perm_string,Variable*>::iterator cur = new_variables_.begin()
-         ; cur != new_variables_.end() ; ++cur) {
-
-        errors += cur->second->emit(out, entity, arc);
-      }
-      return errors;
+    return errors;
 }
 
 int Architecture::emit(ostream&out, Entity*entity)
@@ -310,31 +300,31 @@ int IfGenerate::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
-int StatementList::emit(ostream&out, Entity*ent, Architecture*arc)
+int StatementList::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
       for (std::list<SequentialStmt*>::iterator it = statements_.begin();
               it != statements_.end(); ++it) {
-            errors += (*it)->emit(out, ent, arc);
+            errors += (*it)->emit(out, ent, scope);
       }
 
       return errors;
 }
 
-int InitialStatement::emit(ostream&out, Entity*ent, Architecture*arc)
+int InitialStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       out << "initial begin" << endl;
-      int errors = StatementList::emit(out, ent, arc);
+      int errors = StatementList::emit(out, ent, scope);
       out << "end" << endl;
 
       return errors;
 }
 
-int FinalStatement::emit(ostream&out, Entity*ent, Architecture*arc)
+int FinalStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       out << "final begin" << endl;
-      int errors = StatementList::emit(out, ent, arc);
+      int errors = StatementList::emit(out, ent, scope);
       out << "end" << endl;
 
       return errors;
@@ -348,22 +338,25 @@ int FinalStatement::emit(ostream&out, Entity*ent, Architecture*arc)
  * beginning. In VHDL, all the statements are initially executed once
  * before blocking in the first wait on the sensitivity list.
  */
-int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
+int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*)
 {
+      int errors = 0;
+
       /* Check if the process has no sensitivity list and ends up with
        * a final wait. If so, convert the process to an initial block. */
       const WaitStmt*wait_stmt = NULL;
-      if (! stmt_list().empty())
+      if (!stmt_list().empty())
           wait_stmt = dynamic_cast<const WaitStmt*>(stmt_list().back());
 
       if (wait_stmt && wait_stmt->type() == WaitStmt::FINAL)
-          out << "initial begin" << endl;
+          out << "initial begin : ";
       else
-          out << "always begin" << endl;
+          out << "always begin : ";
 
-      emit_variables(out, ent, arc);
+      out << peek_name() << endl;
 
-      int errors = StatementList::emit(out, ent, arc);
+      errors += emit_variables(out, ent, this);
+      errors += StatementList::emit(out, ent, this);
 
       if (! sensitivity_list_.empty()) {
 	    out << "@(";
@@ -372,12 +365,12 @@ int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 		       ; cur != sensitivity_list_.end() ; ++cur) {
 
 		  if (comma) out << comma;
-		  errors += (*cur)->emit(out, ent, arc);
+		  errors += (*cur)->emit(out, ent, this);
 		  comma = ", ";
 	    }
-	    out << ") /* sensitivity list for process */;" << endl;
+	    out << "); /* sensitivity list for process */" << endl;
       }
 
-      out << "end" << endl;
+      out << "end /* " << peek_name() << " */" << endl;
       return errors;
 }

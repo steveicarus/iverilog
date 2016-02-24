@@ -29,7 +29,7 @@ using namespace std;
 
 Architecture::Architecture(perm_string name, const ActiveScope&ref,
 			   list<Architecture::Statement*>&s)
-: Scope(ref), name_(name), cur_component_(NULL)
+: Scope(ref), name_(name), cur_component_(NULL), cur_process_(NULL)
 {
       statements_.splice(statements_.end(), s);
 }
@@ -66,6 +66,14 @@ bool Architecture::find_constant(perm_string by_name, const VType*&typ, Expressi
     }
 
     return false;
+}
+
+Variable* Architecture::find_variable(perm_string by_name) const
+{
+    if(cur_process_)
+        return cur_process_->find_variable(by_name);
+
+    return ScopeBase::find_variable(by_name);
 }
 
 void Architecture::push_genvar_type(perm_string gname, const VType*gtype)

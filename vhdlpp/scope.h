@@ -55,10 +55,11 @@ class ScopeBase {
       explicit ScopeBase(const ActiveScope&ref);
       virtual ~ScopeBase() =0;
 
+      ScopeBase* find_scope(perm_string name) const;
       const VType* find_type(perm_string by_name);
       virtual bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp) const;
       Signal* find_signal(perm_string by_name) const;
-      Variable* find_variable(perm_string by_name) const;
+      virtual Variable* find_variable(perm_string by_name) const;
       virtual const InterfacePort* find_param(perm_string by_name) const;
       const InterfacePort* find_param_all(perm_string by_name) const;
       SubHeaderList find_subprogram(perm_string by_name) const;
@@ -97,6 +98,8 @@ class ScopeBase {
 	// Looks for a subprogram with specified name and parameter types.
       SubprogramHeader*match_subprogram(perm_string name,
                                         const list<const VType*>*params) const;
+
+      perm_string peek_name() const { return name_; }
 
     protected:
       void cleanup();
@@ -143,6 +146,8 @@ class ScopeBase {
       std::map<perm_string, SubHeaderList> use_subprograms_; //imported
       std::map<perm_string, SubHeaderList> cur_subprograms_; //current
 
+      std::map<perm_string, ScopeBase*> scopes_;
+
       std::list<const VTypeEnum*> use_enums_;
 
 	// List of statements that should be emitted in a 'initial' block
@@ -152,20 +157,26 @@ class ScopeBase {
       std::list<SequentialStmt*> finalizers_;
 
       void do_use_from(const ScopeBase*that);
+
+      // Generates an unique name for the scope
+      void generate_name();
+
+private:
+      perm_string name_;
 };
 
 class Scope : public ScopeBase {
 
     public:
-      explicit Scope(const ActiveScope&ref);
-      ~Scope();
+      explicit Scope(const ActiveScope&ref) : ScopeBase(ref) {}
+      virtual ~Scope() {}
 
       ComponentBase* find_component(perm_string by_name);
 
     protected:
 	// Helper method for emitting signals in the scope.
-      int emit_signals(ostream&out, Entity*ent, Architecture*arc);
-      int emit_variables(ostream&out, Entity*ent, Architecture*arc);
+      int emit_signals(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit_variables(ostream&out, Entity*ent, ScopeBase*scope);
 };
 
 /*
@@ -177,8 +188,8 @@ class Scope : public ScopeBase {
 class ActiveScope : public ScopeBase {
 
     public:
-      ActiveScope() : package_header_(0), context_entity_(0) { }
-      explicit ActiveScope(ActiveScope*par) : ScopeBase(*par), package_header_(0), context_entity_(0) { }
+      ActiveScope() : context_entity_(0) { }
+      explicit ActiveScope(const ActiveScope*par);
 
       ~ActiveScope() { }
 
@@ -231,6 +242,12 @@ class ActiveScope : public ScopeBase {
         if((it = use_types_.find(name)) != use_types_.end() )
             use_types_.erase(it);
         cur_types_[name] = t;
+      }
+
+      void bind_scope(perm_string name, ScopeBase*scope)
+      {
+          assert(scopes_.find(name) == scopes_.end());
+          scopes_[name] = scope;
       }
 
       inline void use_enum(const VTypeEnum* t)

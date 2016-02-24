@@ -24,61 +24,30 @@
 # include  "entity.h"
 # include  "std_funcs.h"
 # include  "std_types.h"
+# include  "compiler.h"
 # include  <algorithm>
 # include  <iostream>
 # include  <iterator>
+# include  <cstdio>
+# include  <cstring>
 # include  <cassert>
+# include  <StringHeap.h>
 
 using namespace std;
 
-/*
- * If the merge_flag is passed in, then the new scope is a merge of
- * the parent scopes. This brings in all of the parent scopes into the
- * "old_*_" variables. This clears up the "new_*_" variables to
- * accumulate new scope values.
- */
+static int scope_counter = 0;
+
 ScopeBase::ScopeBase(const ActiveScope&ref)
-: use_constants_(ref.use_constants_), cur_constants_(ref.cur_constants_)
+: old_signals_(ref.old_signals_), new_signals_(ref.new_signals_),
+    old_variables_(ref.old_variables_), new_variables_(ref.new_variables_),
+    old_components_(ref.old_components_), new_components_(ref.new_components_),
+    use_types_(ref.use_types_), cur_types_(ref.cur_types_),
+    use_constants_(ref.use_constants_), cur_constants_(ref.cur_constants_),
+    use_subprograms_(ref.use_subprograms_), cur_subprograms_(ref.cur_subprograms_),
+    scopes_(ref.scopes_), use_enums_(ref.use_enums_),
+    initializers_(ref.initializers_), finalizers_(ref.finalizers_),
+    name_(ref.name_)
 {
-    merge(ref.old_signals_.begin(), ref.old_signals_.end(),
-          ref.new_signals_.begin(), ref.new_signals_.end(),
-          insert_iterator<map<perm_string, Signal*> >(
-              old_signals_, old_signals_.end())
-    );
-    merge(ref.old_variables_.begin(), ref.old_variables_.end(),
-          ref.new_variables_.begin(), ref.new_variables_.end(),
-          insert_iterator<map<perm_string, Variable*> >(
-              old_variables_, old_variables_.end())
-    );
-    merge(ref.old_components_.begin(), ref.old_components_.end(),
-          ref.new_components_.begin(), ref.new_components_.end(),
-          insert_iterator<map<perm_string, ComponentBase*> >(
-              old_components_, old_components_.end())
-    );
-    use_types_ = ref.use_types_;
-    cur_types_ = ref.cur_types_;
-
-    use_subprograms_ = ref.use_subprograms_;
-    cur_subprograms_ = ref.cur_subprograms_;
-
-    use_enums_ = ref.use_enums_;
-
-    initializers_ = ref.initializers_;
-    finalizers_ = ref.finalizers_;
-
-      // This constructor is invoked when the parser is finished with
-      // an active scope and is making the actual scope. At this point
-      // we know that "this" is the parent scope for the subprograms,
-      // so set it now.
-    for (map<perm_string,SubHeaderList>::iterator cur = cur_subprograms_.begin()
-                ; cur != cur_subprograms_.end(); ++cur) {
-        SubHeaderList& subp_list = cur->second;
-
-        for (SubHeaderList::iterator it = subp_list.begin();
-                it != subp_list.end(); ++it) {
-            (*it)->set_parent(this);
-        }
-    }
 }
 
 ScopeBase::~ScopeBase()
@@ -103,6 +72,16 @@ void ScopeBase::cleanup()
                 ; cur != cur_subprograms_.end() ; ++cur) {
         delete_all(cur->second);
     }
+}
+
+ScopeBase*ScopeBase::find_scope(perm_string name) const
+{
+    map<perm_string, ScopeBase*>::const_iterator it = scopes_.find(name);
+
+    if(it != scopes_.end())
+        return it->second;
+
+    return NULL;
 }
 
 const VType*ScopeBase::find_type(perm_string by_name)
@@ -339,9 +318,15 @@ SubprogramHeader*ScopeBase::match_subprogram(perm_string name,
 }
 
 void ActiveScope::set_package_header(Package*pkg)
+void ScopeBase::generate_name()
 {
       assert(package_header_ == 0);
       package_header_ = pkg;
+    char buf[64];
+
+    // Generate a name for the scope
+    snprintf(buf, sizeof(buf), "__scope_%d", scope_counter++);
+    name_ = gen_strings.make(buf);
 }
 
 SubprogramHeader* ActiveScope::recall_subprogram(const SubprogramHeader*subp) const
@@ -384,15 +369,6 @@ bool ActiveScope::is_vector_name(perm_string name) const
       return false;
 }
 
-Scope::Scope(const ActiveScope&ref)
-: ScopeBase(ref)
-{
-}
-
-Scope::~Scope()
-{
-}
-
 ComponentBase* Scope::find_component(perm_string by_name)
 {
       map<perm_string,ComponentBase*>::const_iterator cur = new_components_.find(by_name);
@@ -404,4 +380,38 @@ ComponentBase* Scope::find_component(perm_string by_name)
             return cur->second;
       } else
 	    return cur->second;
+}
+
+ActiveScope::ActiveScope(const ActiveScope*par)
+: ScopeBase(*par), context_entity_(par->context_entity_)
+{
+    generate_name();
+
+    // Move all the objects available in higher level scopes to use*/old* maps.
+    // This way we can store the new items in now empty cur*/new* maps.
+    merge(par->old_signals_.begin(), par->old_signals_.end(),
+          par->new_signals_.begin(), par->new_signals_.end(),
+          insert_iterator<map<perm_string, Signal*> >(
+              old_signals_, old_signals_.end())
+    );
+    merge(par->old_variables_.begin(), par->old_variables_.end(),
+          par->new_variables_.begin(), par->new_variables_.end(),
+          insert_iterator<map<perm_string, Variable*> >(
+              old_variables_, old_variables_.end())
+    );
+    merge(par->old_components_.begin(), par->old_components_.end(),
+          par->new_components_.begin(), par->new_components_.end(),
+          insert_iterator<map<perm_string, ComponentBase*> >(
+              old_components_, old_components_.end())
+    );
+    merge(par->use_types_.begin(), par->use_types_.end(),
+          par->cur_types_.begin(), par->cur_types_.end(),
+          insert_iterator<map<perm_string, const VType*> >(
+              use_types_, use_types_.end())
+    );
+    merge(par->use_subprograms_.begin(), par->use_subprograms_.end(),
+          par->cur_subprograms_.begin(), par->cur_subprograms_.end(),
+          insert_iterator<map<perm_string, SubHeaderList> >(
+              use_subprograms_, use_subprograms_.end())
+    );
 }

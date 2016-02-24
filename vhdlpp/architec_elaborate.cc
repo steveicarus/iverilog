@@ -186,13 +186,13 @@ int IfGenerate::elaborate(Entity*ent, Architecture*arc)
       return errors;
 }
 
-int StatementList::elaborate(Entity*ent, Architecture*arc)
+int StatementList::elaborate(Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
       for (std::list<SequentialStmt*>::iterator it = statements_.begin();
               it != statements_.end(); ++it) {
-            errors += (*it)->elaborate(ent, arc);
+            errors += (*it)->elaborate(ent, scope);
       }
 
       return errors;
@@ -202,7 +202,16 @@ int ProcessStatement::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
+      arc->set_cur_process(this);
+
+      for (map<perm_string,Variable*>::iterator cur = new_variables_.begin()
+		 ; cur != new_variables_.end() ; ++cur) {
+	    cur->second->elaborate(ent, arc);
+      }
+
       StatementList::elaborate(ent, arc);
+
+      arc->set_cur_process(NULL);
 
       return errors;
 }
