@@ -61,6 +61,9 @@ enum file_open_status_t { FS_OPEN_OK, FS_STATUS_ERROR, FS_NAME_ERROR, FS_MODE_ER
 /* bits per vector, in a single s_vpi_vecval struct */
 static const size_t BPW = 8 * sizeof(PLI_INT32);
 
+/* string buffer size */
+static const size_t STRING_BUF_SIZE = 1024;
+
 static int is_integer_var(vpiHandle obj)
 {
     PLI_INT32 type = vpi_get(vpiType, obj);
@@ -224,11 +227,18 @@ static int read_time(const char *string, s_vpi_value *val, PLI_INT32 scope_unit)
     return processed_chars;
 }
 
-static int read_string(const char *string, s_vpi_value *val) {
-    char buf[1024];
+static int read_string(const char *string, s_vpi_value *val, int count) {
+    char buf[STRING_BUF_SIZE];
     int processed_chars;
+    char format_str[32];
 
-    if(sscanf(string, "%1024s%n", buf, &processed_chars) != 1)
+    /* No string length limit imposed */
+    if(count == 0)
+        count = STRING_BUF_SIZE;
+
+    snprintf(format_str, 32, "%%%ds%%n", count);
+
+    if(sscanf(string, format_str, buf, &processed_chars) != 1)
         return 0;
 
     val->format = vpiStringVal;
@@ -473,8 +483,7 @@ static PLI_INT32 ivlh_readline_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     PLI_UINT32 fd;
     FILE *fp;
     char *text;
-    const int BUF_SIZE = 1024;
-    char buf[BUF_SIZE];
+    char buf[STRING_BUF_SIZE];
 
     /* Get the file descriptor. */
     arg = vpi_scan(argv);
@@ -496,7 +505,7 @@ static PLI_INT32 ivlh_readline_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     }
 
     /* Read in the bytes. Return 0 if there was an error. */
-    if(fgets(buf, BUF_SIZE, fp) == 0) {
+    if(fgets(buf, STRING_BUF_SIZE, fp) == 0) {
         show_error_line(callh);
         vpi_printf("%s reading past the end of file.\n", name);
 
@@ -509,7 +518,7 @@ static PLI_INT32 ivlh_readline_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
         show_error_line(callh);
         vpi_printf("%s read 0 bytes.\n", name);
         return 0;
-    } else if(len == BUF_SIZE - 1) {
+    } else if(len == STRING_BUF_SIZE - 1) {
         show_warning_line(callh);
         vpi_printf("%s has reached the buffer limit, part of the "
                 "processed string might have been skipped.\n", name);
@@ -625,18 +634,14 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     vpiHandle argv = vpi_iterate(vpiArgument, callh);
     vpiHandle stringh, varh, formath;
     s_vpi_value val;
-    PLI_INT32 type, format;
+    PLI_INT32 type, format, dest_size;
     char *string = 0;
-    int processed_chars = 0, fail = 0;
+    unsigned int processed_chars = 0, fail = 0;
 
     /* Get the string */
     stringh = vpi_scan(argv);
     val.format = vpiStringVal;
     vpi_get_value(stringh, &val);
-
-    /* Get the destination variable */
-    varh = vpi_scan(argv);
-    type = vpi_get(vpiType, varh);
 
     if(strlen(val.value.str) == 0) {
         show_error_line(callh);
@@ -645,6 +650,11 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     }
 
     string = strdup(val.value.str);
+
+    /* Get the destination variable */
+    varh = vpi_scan(argv);
+    type = vpi_get(vpiType, varh);
+    dest_size = vpi_get(vpiSize, varh);
 
     /* Get the format (see enum format_t) */
     formath = vpi_scan(argv);
@@ -679,7 +689,7 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
                     break;
 
                 case vpiStringVar:
-                    processed_chars = read_string(string, &val);
+                    processed_chars = read_string(string, &val, dest_size / 8);
                     break;
 
                 default:
@@ -719,7 +729,7 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
             break;
 
         case FORMAT_STRING:
-            processed_chars = read_string(string, &val);
+            processed_chars = read_string(string, &val, dest_size / 8);
             break;
     }
 
@@ -727,7 +737,7 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
         show_error_line(callh);
         vpi_printf("%s could not read a valid value.\n", name);
         fail = 1;
-    } else if(val.format == vpiStringVar && processed_chars == 1024) {
+    } else if(val.format == vpiStringVar && processed_chars == STRING_BUF_SIZE) {
         show_warning_line(callh);
         vpi_printf("%s has reached the buffer limit, part of the "
                 "processed string might have been skipped.\n", name);
@@ -815,9 +825,8 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     s_vpi_value val;
     PLI_INT32 type, format;
     char *string = 0;
-    int fail = 0, res = 0;
-    const int BUF_SIZE = 1024;
-    char buf[BUF_SIZE];
+    unsigned int fail = 0, res = 0;
+    char buf[STRING_BUF_SIZE];
 
     /* Get the string */
     stringh = vpi_scan(argv);
@@ -869,7 +878,7 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
                 case vpiIntegerVar:
                     val.format = vpiIntVal;
                     vpi_get_value(varh, &val);
-                    res = snprintf(buf, BUF_SIZE, "%s%d", string, val.value.integer);
+                    res = snprintf(buf, STRING_BUF_SIZE, "%s%d", string, val.value.integer);
                     break;
 
                 case vpiBitVar:   /* bit, bit vector */
@@ -881,19 +890,19 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
                     for(size_t i = 0; i< strlen(val.value.str); ++i)
                         val.value.str[i] = toupper(val.value.str[i]);
 
-                    res = snprintf(buf, BUF_SIZE, "%s%s", string, val.value.str);
+                    res = snprintf(buf, STRING_BUF_SIZE, "%s%s", string, val.value.str);
                     break;
 
                 case vpiRealVar:
                     val.format = vpiRealVal;
                     vpi_get_value(varh, &val);
-                    res = snprintf(buf, BUF_SIZE, "%s%lf", string, val.value.real);
+                    res = snprintf(buf, STRING_BUF_SIZE, "%s%lf", string, val.value.real);
                     break;
 
                 case vpiStringVar:
                     val.format = vpiStringVal;
                     vpi_get_value(varh, &val);
-                    res = snprintf(buf, BUF_SIZE, "%s%s", string, val.value.str);
+                    res = snprintf(buf, STRING_BUF_SIZE, "%s%s", string, val.value.str);
                     break;
 
                 default:
@@ -907,7 +916,7 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
         case FORMAT_BOOL:
             val.format = vpiIntVal;
             vpi_get_value(varh, &val);
-            res = snprintf(buf, BUF_SIZE, "%s%s", string,
+            res = snprintf(buf, STRING_BUF_SIZE, "%s%s", string,
                            val.value.integer ? "TRUE" : "FALSE");
             break;
 
@@ -923,29 +932,29 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
                 break;
             }
 
-            res = snprintf(buf, BUF_SIZE, "%s%s", string, tmp);
+            res = snprintf(buf, STRING_BUF_SIZE, "%s%s", string, tmp);
             }
             break;
 
         case FORMAT_HEX:
             val.format = vpiIntVal;
             vpi_get_value(varh, &val);
-            res = snprintf(buf, BUF_SIZE, "%s%X", string, val.value.integer);
+            res = snprintf(buf, STRING_BUF_SIZE, "%s%X", string, val.value.integer);
             break;
 
         case FORMAT_STRING:
             val.format = vpiStringVal;
             vpi_get_value(varh, &val);
-            res = snprintf(buf, BUF_SIZE, "%s%s", string, val.value.str);
+            res = snprintf(buf, STRING_BUF_SIZE, "%s%s", string, val.value.str);
             break;
     }
 
-    if(res > BUF_SIZE)
+    if(res > STRING_BUF_SIZE)
         fail = 1;
 
     if(!fail) {
         /* Strip the read token from the string */
-        char* tmp = strndup(buf, BUF_SIZE);
+        char* tmp = strndup(buf, STRING_BUF_SIZE);
         val.format = vpiStringVal;
         val.value.str = tmp;
         vpi_put_value(stringh, &val, 0, vpiNoDelay);
