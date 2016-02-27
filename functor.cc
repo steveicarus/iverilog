@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -99,6 +99,10 @@ void functor_t::lpm_pow(Design*, NetPow*)
 }
 
 void functor_t::sign_extend(Design*, NetSignExtend*)
+{
+}
+
+void functor_t::lpm_substitute(Design*, NetSubstitute*)
 {
 }
 
@@ -253,6 +257,11 @@ void NetPow::functor_node(Design*des, functor_t*fun)
 void NetSignExtend::functor_node(Design*des, functor_t*fun)
 {
       fun->sign_extend(des, this);
+}
+
+void NetSubstitute::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_substitute(des, this);
 }
 
 void NetUReduce::functor_node(Design*des, functor_t*fun)

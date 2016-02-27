@@ -261,6 +261,7 @@ class NetObj  : public NetPins, public Attrib {
       const NetScope* scope() const;
 
       perm_string name() const { return name_; }
+      void rename(perm_string n) { name_ = n; }
 
       const NetExpr* rise_time() const { return delay1_; }
       const NetExpr* fall_time() const { return delay2_; }
@@ -2260,6 +2261,7 @@ class NetSubstitute : public NetNode {
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*tgt) const;
+      virtual void functor_node(Design*des, functor_t*fun);
 
     private:
       unsigned wid_;

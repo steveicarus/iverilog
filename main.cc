@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -228,6 +228,7 @@ bool synthesis = false;
 extern void cprop(Design*des);
 extern void synth(Design*des);
 extern void synth2(Design*des);
+extern void synthsplit(Design*des);
 extern void syn_rules(Design*des);
 extern void nodangle(Design*des);
 
@@ -236,11 +237,12 @@ static struct net_func_map {
       const char*name;
       void (*func)(Design*);
 } func_table[] = {
-      { "cprop",   &cprop },
-      { "nodangle",&nodangle },
-      { "synth",   &synth },
-      { "synth2",  &synth2 },
-      { "syn-rules",   &syn_rules },
+      { "cprop",      &cprop },
+      { "nodangle",   &nodangle },
+      { "synth",      &synth },
+      { "synth2",     &synth2 },
+      { "synthsplit", &synthsplit },
+      { "syn-rules",  &syn_rules },
       { 0, 0 }
 };
 
