@@ -631,7 +631,7 @@ static NetNet* mux_selector_reduce_width(Design*des, NetScope*scope,
 
 	// Create the concat: osig = {...,...}
       NetConcat*osig_cat = new NetConcat(scope, scope->local_symbol(),
-					 sel_need, 2, true);
+					 sel_need, 2, !disable_concatz_generation);
       osig_cat->set_line(loc);
       des->add_node(osig_cat);
       connect(osig_cat->pin(0), osig->pin(0));
