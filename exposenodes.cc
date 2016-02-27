@@ -28,7 +28,7 @@
 
 
 /*
- * The synthsplit functor is primarily provided for use by the vlog95
+ * The exposenodes functor is primarily provided for use by the vlog95
  * target. To implement some LPM objects, it needs to take a bit or part
  * of one of the LPM inputs. If that input is not connected to a real
  * net in the design, we need to create a net at that point so that
@@ -42,7 +42,7 @@
  * name it generates is unique).
  */
 
-struct synthsplit_functor  : public functor_t {
+struct exposenodes_functor  : public functor_t {
 
       unsigned count;
 
@@ -55,6 +55,12 @@ static bool expose_nexus(Nexus*nex)
 {
       NetNet*sig = 0;
       for (Link*cur = nex->first_nlink() ; cur ; cur = cur->next_nlink()) {
+
+	      // Don't expose nodes that are attached to constants
+	    if (dynamic_cast<NetConst*> (cur->get_obj()))
+		  return false;
+	    if (dynamic_cast<NetLiteral*> (cur->get_obj()))
+		  return false;
 
 	    NetNet*cur_sig = dynamic_cast<NetNet*> (cur->get_obj());
 	    if (cur_sig == 0)
@@ -77,7 +83,7 @@ static bool expose_nexus(Nexus*nex)
  * The vlog95 target implements a wide mux as a hierarchy of 2:1 muxes,
  * picking off one bit of the select input at each level of the hierarchy.
  */
-void synthsplit_functor::lpm_mux(Design*, NetMux*obj)
+void exposenodes_functor::lpm_mux(Design*, NetMux*obj)
 {
       if (obj->sel_width() == 1)
 	    return;
@@ -89,7 +95,7 @@ void synthsplit_functor::lpm_mux(Design*, NetMux*obj)
 /*
  * A VP part select is going to select a part from its input.
  */
-void synthsplit_functor::lpm_part_select(Design*, NetPartSelect*obj)
+void exposenodes_functor::lpm_part_select(Design*, NetPartSelect*obj)
 {
       if (obj->dir() != NetPartSelect::VP)
 	    return;
@@ -101,22 +107,22 @@ void synthsplit_functor::lpm_part_select(Design*, NetPartSelect*obj)
 /*
  * A substitute is going to select one or two parts from the wider input signal.
  */
-void synthsplit_functor::lpm_substitute(Design*, NetSubstitute*obj)
+void exposenodes_functor::lpm_substitute(Design*, NetSubstitute*obj)
 {
       if (expose_nexus(obj->pin(1).nexus()))
 	    count += 1;
 }
 
-void synthsplit(Design*des)
+void exposenodes(Design*des)
 {
-      synthsplit_functor synthsplit;
-      synthsplit.count = 0;
+      exposenodes_functor exposenodes;
+      exposenodes.count = 0;
       if (verbose_flag) {
 	    cout << " ... Look for intermediate nodes" << endl << flush;
       }
-      des->functor(&synthsplit);
+      des->functor(&exposenodes);
       if (verbose_flag) {
-	    cout << " ... Exposed " << synthsplit.count 
+	    cout << " ... Exposed " << exposenodes.count 
 		 << " intermediate signals." << endl << flush;
       }
 }
