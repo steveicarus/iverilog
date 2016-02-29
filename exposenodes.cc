@@ -122,7 +122,7 @@ void exposenodes(Design*des)
       }
       des->functor(&exposenodes);
       if (verbose_flag) {
-	    cout << " ... Exposed " << exposenodes.count 
+	    cout << " ... Exposed " << exposenodes.count
 		 << " intermediate signals." << endl << flush;
       }
 }

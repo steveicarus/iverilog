@@ -2282,7 +2282,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 		  break;
 	    }
       }
-      
+
       fprintf(vvp_out, "S_%p .scope %s%s%s, \"%s\" \"%s\" %u %u",
 	      net, prefix, type, suffix,
 	      vvp_mangle_name(ivl_scope_basename(net)),

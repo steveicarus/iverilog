@@ -97,7 +97,7 @@ SCOPE STATEMENTS:
 
 The syntax of a scope statement is:
 
-    	<label> .scope <type>, <name> <type-name> <file> <lineno> ;
+	<label> .scope <type>, <name> <type-name> <file> <lineno> ;
 
 	<label> .scope <type>, <name> <type-name> <file> <lineno>, \
 		       <def-file> <def-lineno> <is-cell>, <parent> ;
