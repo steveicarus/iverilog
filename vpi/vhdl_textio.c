@@ -92,7 +92,7 @@ static int set_vec_val(s_vpi_vecval* vector, char value, int idx) {
     s_vpi_vecval*v = &vector[idx / BPW];
     PLI_INT32 bit = idx % BPW;
 
-    switch(toupper(value)) {
+    switch(value) {
         case '0':
             v->bval &= ~(1 << bit);
             v->aval &= ~(1 << bit);
@@ -103,11 +103,13 @@ static int set_vec_val(s_vpi_vecval* vector, char value, int idx) {
             v->aval |= (1 << bit);
             break;
 
+        case 'z':
         case 'Z':
             v->bval |= (1 << bit);
             v->aval &= ~(1 << bit);
             break;
 
+        case 'x':
         case 'X':
             v->bval |= (1 << bit);
             v->aval |= (1 << bit);
