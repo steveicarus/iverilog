@@ -888,9 +888,21 @@ int ExpRelation::emit(ostream&out, Entity*ent, ScopeBase*scope) const
       int errors = 0;
       errors += emit_operand1(out, ent, scope);
 
+      const VType*type1 = peek_operand1()->probe_type(ent, scope);
+      const VType*type2 = peek_operand2()->probe_type(ent, scope);
+      bool logical_compare = false;
+
+      // Apply case equality operator if any of the operands is of logic type
+      if(((type1 && (type1->type_match(&primitive_STDLOGIC) ||
+                     type1->type_match(&primitive_STDLOGIC_VECTOR)))
+          || (type2 && (type2->type_match(&primitive_STDLOGIC) ||
+                     type2->type_match(&primitive_STDLOGIC_VECTOR))))) {
+        logical_compare = true;
+      }
+
       switch (fun_) {
 	  case EQ:
-	    out << " == ";
+	    out << (logical_compare ? " === " : " == ");
 	    break;
 	  case LT:
 	    out << " < ";
@@ -899,7 +911,7 @@ int ExpRelation::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 	    out << " > ";
 	    break;
 	  case NEQ:
-	    out << " != ";
+	    out << (logical_compare ? " !== " : " != ");
 	    break;
 	  case LE:
 	    out << " <= ";
