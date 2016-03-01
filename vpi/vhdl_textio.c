@@ -861,10 +861,13 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
                 break;
 
             case vpiDecConst:
-            case vpiBinaryConst:
             case vpiOctConst:
             case vpiHexConst:
                 type = vpiIntVar;
+                break;
+
+            case vpiBinaryConst:
+                type = vpiBitVar;
                 break;
         }
     }
