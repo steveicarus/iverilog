@@ -467,6 +467,12 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 		    ivl_signal_basename(sig), ivl_signal_scope(sig));
 	    return;
       }
+      if ((ivl_signal_data_type(sig)==IVL_VT_STRING)
+	  && signal_is_return_value(sig)) {
+	    fprintf(vvp_out, "; Variable %s is string return value of scope S_%p\n",
+		    ivl_signal_basename(sig), ivl_signal_scope(sig));
+	    return;
+      }
       if ((ivl_signal_data_type(sig)==IVL_VT_LOGIC)
 	  && signal_is_return_value(sig)) {
 	    fprintf(vvp_out, "; Variable %s is vec4 return value of scope S_%p\n",

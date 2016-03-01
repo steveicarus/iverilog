@@ -115,6 +115,7 @@ struct vthread_s {
 	// corresponding stack.  This is how the %ret/* instructions
 	// get at parent thread arguments.
       vector<unsigned> args_real;
+      vector<unsigned> args_str;
       vector<unsigned> args_vec4;
 
     private:
@@ -217,6 +218,12 @@ struct vthread_s {
 	    assert(depth<stack_str_.size());
 	    unsigned use_index = stack_str_.size()-1-depth;
 	    return stack_str_[use_index];
+      }
+      inline void poke_str(unsigned depth, const string&val)
+      {
+	    assert(depth < stack_str_.size());
+	    unsigned use_index = stack_str_.size()-1-depth;
+	    stack_str_[use_index] = val;
       }
       inline void pop_str(unsigned cnt)
       {
@@ -1357,9 +1364,11 @@ bool of_CALLF_REAL(vthread_t thr, vvp_code_t cp)
 bool of_CALLF_STR(vthread_t thr, vvp_code_t cp)
 {
       vthread_t child = vthread_new(cp->cptr2, cp->scope);
-      return do_callf_void(thr, child);
 
-      // XXXX NOT IMPLEMENTED
+      thr->push_str("");
+      child->args_str.push_back(0);
+
+      return do_callf_void(thr, child);
 }
 
 bool of_CALLF_VEC4(vthread_t thr, vvp_code_t cp)
@@ -4994,6 +5003,27 @@ bool of_RET_REAL(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %ret/str <index>
+ */
+bool of_RET_STR(vthread_t thr, vvp_code_t cp)
+{
+      size_t index = cp->number;
+      string val = thr->pop_str();
+
+      vthread_t fun_thr = thr;
+      while (fun_thr->parent_scope->get_type_code() != vpiFunction) {
+	    assert(fun_thr->parent);
+	    fun_thr = fun_thr->parent;
+      }
+      assert(index < fun_thr->args_str.size());
+      unsigned depth = fun_thr->args_str[index];
+	// Use the depth to put the value into the stack of
+	// the parent thread.
+      fun_thr->parent->poke_str(depth, val);
+      return true;
+}
+
+/*
  * %ret/vec4 <index>, <offset>, <wid>
  */
 bool of_RET_VEC4(vthread_t thr, vvp_code_t cp)
@@ -5082,6 +5112,27 @@ bool of_RETLOAD_REAL(vthread_t thr, vvp_code_t cp)
 	// Use the depth to extract the values from the stack
 	// of the parent thread.
       thr->push_real(fun_thr->parent->peek_real(depth));
+      return true;
+}
+
+/*
+ * %retload/str <index>
+ */
+bool of_RETLOAD_STR(vthread_t thr, vvp_code_t cp)
+{
+      size_t index = cp->number;
+
+
+      vthread_t fun_thr = thr;
+      while (fun_thr->parent_scope->get_type_code() != vpiFunction) {
+	    assert(fun_thr->parent);
+	    fun_thr = fun_thr->parent;
+      }
+      assert(index < fun_thr->args_str.size());
+      unsigned depth = fun_thr->args_str[index];
+	// Use the depth to extract the values from the stack
+	// of the parent thread.
+      thr->push_str(fun_thr->parent->peek_str(depth));
       return true;
 }
 

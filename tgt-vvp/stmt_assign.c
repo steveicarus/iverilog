@@ -894,6 +894,19 @@ static int show_stmt_assign_sig_string(ivl_statement_t net)
       assert(ivl_stmt_lvals(net) == 1);
       assert(ivl_stmt_opcode(net) == 0);
 
+	/* Special case: If the l-value signal (string) is named after
+	   its scope, and the scope is a function, then this is an
+	   assign to a return value and should be handled
+	   differently. */
+      if (signal_is_return_value(var)) {
+	    assert(ivl_signal_dimensions(var) == 0);
+	    assert(part == 0 && aidx == 0);
+	    draw_eval_string(rval);
+	    fprintf(vvp_out, "    %%ret/str 0; Assign to %s\n",
+		    ivl_signal_basename(var));
+	    return 0;
+      }
+
 	/* Simplest case: no mux. Evaluate the r-value as a string and
 	   store the result into the variable. Note that the
 	   %store/str opcode pops the string result. */

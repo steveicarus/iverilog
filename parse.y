@@ -2067,6 +2067,15 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
 	$$ = tmp;
       }
 
+
+  /* Ports can be string. */
+
+  | port_direction K_string list_of_identifiers ';'
+      { vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1, IVL_VT_STRING, true,
+						   0, $3);
+	$$ = tmp;
+      }
+
   ;
 
 

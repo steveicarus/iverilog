@@ -1026,6 +1026,7 @@ if not 1, the assign is suppressed.
 
 * %retload/vec4 <index>
 * %retload/real <index>
+* %retload/str <index>
 
 Read a value from the indexed function argument. The value is read
 from the argument and pushed to the appropriate stack.

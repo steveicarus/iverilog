@@ -76,6 +76,15 @@ static void string_ex_signal(ivl_expr_t expr)
 	    return;
       }
 
+	/* Special Case: If the signal is the return value of the
+	   function, then use a different opcode to get the value. */
+      if (signal_is_return_value(sig)) {
+	    assert(ivl_signal_dimensions(sig) == 0);
+	    fprintf(vvp_out, "    %%retload/str 0; Load %s (string_ex_signal)\n",
+		    ivl_signal_basename(sig));
+	    return;
+      }
+
 	/* Simple case: This is a simple variable. Generate a load
 	   statement to load the string into the stack. */
       if (ivl_signal_dimensions(sig) == 0) {

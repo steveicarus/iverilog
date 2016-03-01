@@ -185,9 +185,6 @@ static void draw_ufunc_epilogue(ivl_expr_t expr)
 
 void draw_ufunc_vec4(ivl_expr_t expr)
 {
-      ivl_scope_t def = ivl_expr_def(expr);
-      ivl_signal_t retval = ivl_scope_port(def, 0);
-      (void) retval;
 
 	/* Take in arguments to function and call function code. */
       draw_ufunc_preamble(expr);
@@ -197,9 +194,6 @@ void draw_ufunc_vec4(ivl_expr_t expr)
 
 void draw_ufunc_real(ivl_expr_t expr)
 {
-      ivl_scope_t def = ivl_expr_def(expr);
-      ivl_signal_t retval = ivl_scope_port(def, 0);
-      (void) retval;
 
 	/* Take in arguments to function and call the function code. */
       draw_ufunc_preamble(expr);
@@ -212,17 +206,12 @@ void draw_ufunc_real(ivl_expr_t expr)
 
 void draw_ufunc_string(ivl_expr_t expr)
 {
-      ivl_scope_t def = ivl_expr_def(expr);
-      ivl_signal_t retval = ivl_scope_port(def, 0);
 
 	/* Take in arguments to function and call the function code. */
       draw_ufunc_preamble(expr);
 
-	/* Return value signal cannot be an array. */
-      assert(ivl_signal_dimensions(retval) == 0);
-
-	/* Load the result into a word. */
-      fprintf(vvp_out, "  %%load/str v%p_0;\n", retval);
+	/* The %callf/str function emitted by the preamble leaves
+	   the result in the stack for us. */
 
       draw_ufunc_epilogue(expr);
 }
