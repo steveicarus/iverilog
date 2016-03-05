@@ -1,7 +1,7 @@
 #ifndef IVL_compiler_H
 #define IVL_compiler_H
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -185,6 +185,11 @@ extern bool gn_strict_ca_eval_flag;
 /* If this flag is true, then force strict conformance to the IEEE
    standard expression width rules. */
 extern bool gn_strict_expr_width_flag;
+
+/* If this flag is true, then don't add a for-loop control variable
+   to an implicit event_expression list if it is only used inside the
+   loop. */
+extern bool gn_shared_loop_index_flag;
 
 /* If variables can be converted to uwires by a continuous assignment
    (assuming no procedural assign, then return true. This will be true
