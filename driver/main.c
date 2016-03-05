@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -128,6 +128,7 @@ const char*gen_icarus = "icarus-misc";
 const char*gen_io_range_error = "io-range-error";
 const char*gen_strict_ca_eval = "no-strict-ca-eval";
 const char*gen_strict_expr_width = "no-strict-expr-width";
+const char*gen_shared_loop_index = "shared-loop-index";
 const char*gen_verilog_ams = "no-verilog-ams";
 
 /* Boolean: true means use a default include dir, false means don't */
@@ -739,6 +740,12 @@ static int process_generation(const char*name)
       else if (strcmp(name,"no-strict-expr-width") == 0)
 	    gen_strict_expr_width = "no-strict-expr-width";
 
+      else if (strcmp(name,"shared-loop-index") == 0)
+	    gen_shared_loop_index = "shared-loop-index";
+
+      else if (strcmp(name,"no-shared-loop-index") == 0)
+	    gen_shared_loop_index = "no-shared-loop-index";
+
       else if (strcmp(name,"verilog-ams") == 0)
 	    gen_verilog_ams = "verilog-ams";
 
@@ -764,7 +771,8 @@ static int process_generation(const char*name)
 		            "    icarus-misc | no-icarus-misc\n"
 		            "    io-range-error | no-io-range-error\n"
 		            "    strict-ca-eval | no-strict-ca-eval\n"
-		            "    strict-expr-width | no-strict-expr-width\n");
+		            "    strict-expr-width | no-strict-expr-width\n"
+		            "    shared-loop-index | no-shared-loop-index\n");
 
 	    return 1;
       }
@@ -1118,6 +1126,7 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "generation:%s\n", gen_io_range_error);
       fprintf(iconfig_file, "generation:%s\n", gen_strict_ca_eval);
       fprintf(iconfig_file, "generation:%s\n", gen_strict_expr_width);
+      fprintf(iconfig_file, "generation:%s\n", gen_shared_loop_index);
       fprintf(iconfig_file, "generation:%s\n", gen_verilog_ams);
       fprintf(iconfig_file, "generation:%s\n", gen_icarus);
       fprintf(iconfig_file, "warnings:%s\n", warning_flags);

@@ -1,4 +1,4 @@
-.TH iverilog 1 "Aug 7th, 2015" "" "Version %M.%n%E"
+.TH iverilog 1 "Mar 5th, 2016" "" "Version %M.%n%E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -132,6 +132,17 @@ for determining expression bit lengths. When disabled, the RHS of a
 parameter assignment is evaluated as a lossless expression, as is any
 expression containing an unsized constant number, and unsized constant
 numbers are not truncated to integer width.
+.TP 8
+.B -gshared-loop-index\fI|\fP-gno-shared-loop-index
+Enable (default) or disable the exclusion of for-loop control variables
+from implicit event_expression lists. When enabled, if a for-loop control
+variable (loop index) is only used inside the for-loop statement, the
+compiler will not include it in an implicit event_expression list it
+calculates for that statement or any enclosing statement. This allows
+the same control variable to be used in multiple processes without risk
+of entering an infinite loop caused by each process triggering all other
+processes that use the same varaible. For strict compliance with the
+standards, this behaviour should be disabled.
 .TP 8
 .B -I\fIincludedir\fP
 Append directory \fIincludedir\fP to list of directories searched
@@ -537,7 +548,7 @@ Tips on using, debugging, and developing the compiler can be found at
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002\-2015 Stephen Williams
+Copyright \(co  2002\-2016 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0
