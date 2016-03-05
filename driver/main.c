@@ -128,7 +128,7 @@ const char*gen_icarus = "icarus-misc";
 const char*gen_io_range_error = "io-range-error";
 const char*gen_strict_ca_eval = "no-strict-ca-eval";
 const char*gen_strict_expr_width = "no-strict-expr-width";
-const char*gen_shared_loop_index = "shared-loop-index";
+const char*gen_shared_loop_index = "no-shared-loop-index";
 const char*gen_verilog_ams = "no-verilog-ams";
 
 /* Boolean: true means use a default include dir, false means don't */

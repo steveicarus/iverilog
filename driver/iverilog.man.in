@@ -134,7 +134,7 @@ expression containing an unsized constant number, and unsized constant
 numbers are not truncated to integer width.
 .TP 8
 .B -gshared-loop-index\fI|\fP-gno-shared-loop-index
-Enable (default) or disable the exclusion of for-loop control variables
+Enable or disable (default) the exclusion of for-loop control variables
 from implicit event_expression lists. When enabled, if a for-loop control
 variable (loop index) is only used inside the for-loop statement, the
 compiler will not include it in an implicit event_expression list it

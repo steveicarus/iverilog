@@ -108,7 +108,7 @@ bool gn_assertions_flag = true;
 bool gn_io_range_error_flag = true;
 bool gn_strict_ca_eval_flag = false;
 bool gn_strict_expr_width_flag = false;
-bool gn_shared_loop_index_flag = true;
+bool gn_shared_loop_index_flag = false;
 bool gn_verilog_ams_flag = false;
 
 /*
