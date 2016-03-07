@@ -48,6 +48,7 @@
 # include  <assert.h>
 # include  <string.h>
 # include  <ctype.h>
+# include  <errno.h>
 # include  "ivl_alloc.h"
 
 /* additional parameter values to distinguish between integer, boolean and
@@ -55,9 +56,13 @@
 enum format_t { FORMAT_STD, FORMAT_BOOL, FORMAT_TIME, FORMAT_HEX, FORMAT_STRING };
 
 enum file_mode_t { FILE_MODE_READ, FILE_MODE_WRITE, FILE_MODE_APPEND, FILE_MODE_LAST };
+enum file_open_status_t { FS_OPEN_OK, FS_STATUS_ERROR, FS_NAME_ERROR, FS_MODE_ERROR };
 
 /* bits per vector, in a single s_vpi_vecval struct */
 static const size_t BPW = 8 * sizeof(PLI_INT32);
+
+/* string buffer size */
+static const size_t STRING_BUF_SIZE = 1024;
 
 static int is_integer_var(vpiHandle obj)
 {
@@ -65,6 +70,11 @@ static int is_integer_var(vpiHandle obj)
 
     return (type == vpiIntegerVar || type == vpiShortIntVar ||
          type == vpiIntVar || type == vpiLongIntVar);
+}
+
+static int is_const(vpiHandle obj)
+{
+    return vpi_get(vpiType, obj) == vpiConstant;
 }
 
 static void show_error_line(vpiHandle callh) {
@@ -82,7 +92,7 @@ static int set_vec_val(s_vpi_vecval* vector, char value, int idx) {
     s_vpi_vecval*v = &vector[idx / BPW];
     PLI_INT32 bit = idx % BPW;
 
-    switch(toupper(value)) {
+    switch(value) {
         case '0':
             v->bval &= ~(1 << bit);
             v->aval &= ~(1 << bit);
@@ -93,11 +103,13 @@ static int set_vec_val(s_vpi_vecval* vector, char value, int idx) {
             v->aval |= (1 << bit);
             break;
 
+        case 'z':
         case 'Z':
             v->bval |= (1 << bit);
             v->aval &= ~(1 << bit);
             break;
 
+        case 'x':
         case 'X':
             v->bval |= (1 << bit);
             v->aval |= (1 << bit);
@@ -217,11 +229,18 @@ static int read_time(const char *string, s_vpi_value *val, PLI_INT32 scope_unit)
     return processed_chars;
 }
 
-static int read_string(const char *string, s_vpi_value *val) {
-    char buf[1024];
+static int read_string(const char *string, s_vpi_value *val, int count) {
+    char buf[STRING_BUF_SIZE];
     int processed_chars;
+    char format_str[32];
 
-    if(sscanf(string, "%1024s%n", buf, &processed_chars) != 1)
+    /* No string length limit imposed */
+    if(count == 0)
+        count = STRING_BUF_SIZE;
+
+    snprintf(format_str, 32, "%%%ds%%n", count);
+
+    if(sscanf(string, format_str, buf, &processed_chars) != 1)
         return 0;
 
     val->format = vpiStringVal;
@@ -281,40 +300,44 @@ static int write_time(char *string, const s_vpi_value* val,
 static PLI_INT32 ivlh_file_open_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-    vpiHandle argv;
+    vpiHandle argv, arg;
     assert(callh != 0);
+    int ok = 1;
 
     argv = vpi_iterate(vpiArgument, callh);
 
     /* Check that there is a file name argument and that it is a string. */
-    if (argv == 0) {
-        show_error_line(callh);
-        vpi_printf("%s requires a string file name argument.\n", name);
-        vpi_control(vpiFinish, 1);
-        return 0;
-    }
+    if (argv == 0)
+        ok = 0;
 
-    if(!is_integer_var(vpi_scan(argv))) {
-        show_error_line(callh);
-        vpi_printf("%s's first argument has to be an integer variable (file handle).\n", name);
-        vpi_control(vpiFinish, 1);
-    }
+    arg = vpi_scan(argv);
+    if (!arg || !is_integer_var(arg))
+        ok = 0;
 
-    if(!is_string_obj(vpi_scan(argv))) {
-        show_error_line(callh);
-        vpi_printf("%s's second argument argument must be a string (file name).\n", name);
-        vpi_control(vpiFinish, 1);
-    }
+    arg = vpi_scan(argv);
+    if (arg && is_integer_var(arg))
+        arg = vpi_scan(argv);
 
-    /* When provided, the type argument must be a string. */
-    if(!vpi_scan(argv)) {
+    // no vpi_scan() here, if we had both 'status' and 'file' arguments,
+    // then the next arg is read in the above if, otherwise we are going
+    // to check the second argument once again
+    if (!arg || !is_string_obj(arg))
+        ok = 0;
+
+    arg = vpi_scan(argv);
+    if (arg && !is_const(arg))
+        ok = 0;
+
+    if (!ok) {
         show_error_line(callh);
-        vpi_printf("%s's third argument must be an integer (open mode).\n", name);
+        vpi_printf("%s() function is available in following variants:\n", name);
+        vpi_printf("* (file f: text; filename: in string, file_open_kind: in mode)\n");
+        vpi_printf("* (status: out file_open_status, file f: text; filename: in string, file_open_kind: in mode)\n");
         vpi_control(vpiFinish, 1);
     }
 
     /* Make sure there are no extra arguments. */
-    check_for_extra_args(argv, callh, name, "three arguments", 1);
+    check_for_extra_args(argv, callh, name, "four arguments", 1);
 
     return 0;
 }
@@ -330,15 +353,25 @@ static PLI_INT32 ivlh_file_open_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     int mode;
     char *fname;
 
+    vpiHandle fstatush = vpi_scan(argv);
     vpiHandle fhandleh = vpi_scan(argv);
     vpiHandle fnameh = vpi_scan(argv);
     vpiHandle modeh = vpi_scan(argv);
+
+    if(!modeh) {
+        /* There are only three arguments, so rearrange handles */
+        modeh = fnameh;
+        fnameh = fhandleh;
+        fhandleh = fstatush;
+        fstatush = 0;
+    } else {
+        vpi_free_object(argv);
+    }
 
     /* Get the mode handle */
     val.format = vpiIntVal;
     vpi_get_value(modeh, &val);
     mode = val.value.integer;
-    vpi_free_object(argv);
 
     if(mode < 0 || mode >= FILE_MODE_LAST) {
         show_error_line(callh);
@@ -355,21 +388,51 @@ static PLI_INT32 ivlh_file_open_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     }
 
     /* Open file and save the handle */
+    PLI_INT32 result = -1;
     switch(mode) {
         case FILE_MODE_READ:
-            val.value.integer = vpi_fopen(fname, "r");
+            result = vpi_fopen(fname, "r");
             break;
 
         case FILE_MODE_WRITE:
-            val.value.integer = vpi_fopen(fname, "w");
+            result = vpi_fopen(fname, "w");
             break;
 
         case FILE_MODE_APPEND:
-            val.value.integer = vpi_fopen(fname, "a");
+            result = vpi_fopen(fname, "a");
             break;
     }
 
+    if(fstatush) {
+        val.format = vpiIntVal;
+
+        if(!result) {
+            switch(errno) {
+                case ENOENT:
+                case ENAMETOOLONG:
+                    val.value.integer = FS_NAME_ERROR;
+                    break;
+
+                case EINVAL:
+                case EACCES:
+                case EEXIST:
+                case EISDIR:
+                    val.value.integer = FS_MODE_ERROR;
+                    break;
+
+                default:
+                    val.value.integer = FS_STATUS_ERROR;
+                    break;
+            }
+        } else {
+            val.value.integer = FS_OPEN_OK;
+        }
+
+        vpi_put_value(fstatush, &val, 0, vpiNoDelay);
+    }
+
     val.format = vpiIntVal;
+    val.value.integer = result;
     vpi_put_value(fhandleh, &val, 0, vpiNoDelay);
     free(fname);
 
@@ -422,8 +485,7 @@ static PLI_INT32 ivlh_readline_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     PLI_UINT32 fd;
     FILE *fp;
     char *text;
-    const int BUF_SIZE = 1024;
-    char buf[BUF_SIZE];
+    char buf[STRING_BUF_SIZE];
 
     /* Get the file descriptor. */
     arg = vpi_scan(argv);
@@ -445,7 +507,7 @@ static PLI_INT32 ivlh_readline_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     }
 
     /* Read in the bytes. Return 0 if there was an error. */
-    if(fgets(buf, BUF_SIZE, fp) == 0) {
+    if(fgets(buf, STRING_BUF_SIZE, fp) == 0) {
         show_error_line(callh);
         vpi_printf("%s reading past the end of file.\n", name);
 
@@ -458,7 +520,7 @@ static PLI_INT32 ivlh_readline_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
         show_error_line(callh);
         vpi_printf("%s read 0 bytes.\n", name);
         return 0;
-    } else if(len == BUF_SIZE - 1) {
+    } else if(len == STRING_BUF_SIZE - 1) {
         show_warning_line(callh);
         vpi_printf("%s has reached the buffer limit, part of the "
                 "processed string might have been skipped.\n", name);
@@ -470,6 +532,11 @@ static PLI_INT32 ivlh_readline_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     val.value.str = text;
     vpi_put_value(stringh, &val, 0, vpiNoDelay);
     free(text);
+
+    /* Set end-of-file flag if we have just reached the end of the file.
+     * Otherwise the flag would be set only after the next read operation. */
+    int c = fgetc(fp);
+    ungetc(c, fp);
 
     return 0;
 }
@@ -569,18 +636,14 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     vpiHandle argv = vpi_iterate(vpiArgument, callh);
     vpiHandle stringh, varh, formath;
     s_vpi_value val;
-    PLI_INT32 type, format;
+    PLI_INT32 type, format, dest_size;
     char *string = 0;
-    int processed_chars = 0, fail = 0;
+    unsigned int processed_chars = 0, fail = 0;
 
     /* Get the string */
     stringh = vpi_scan(argv);
     val.format = vpiStringVal;
     vpi_get_value(stringh, &val);
-
-    /* Get the destination variable */
-    varh = vpi_scan(argv);
-    type = vpi_get(vpiType, varh);
 
     if(strlen(val.value.str) == 0) {
         show_error_line(callh);
@@ -589,6 +652,11 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     }
 
     string = strdup(val.value.str);
+
+    /* Get the destination variable */
+    varh = vpi_scan(argv);
+    type = vpi_get(vpiType, varh);
+    dest_size = vpi_get(vpiSize, varh);
 
     /* Get the format (see enum format_t) */
     formath = vpi_scan(argv);
@@ -623,7 +691,7 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
                     break;
 
                 case vpiStringVar:
-                    processed_chars = read_string(string, &val);
+                    processed_chars = read_string(string, &val, dest_size / 8);
                     break;
 
                 default:
@@ -663,7 +731,7 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
             break;
 
         case FORMAT_STRING:
-            processed_chars = read_string(string, &val);
+            processed_chars = read_string(string, &val, dest_size / 8);
             break;
     }
 
@@ -671,7 +739,7 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
         show_error_line(callh);
         vpi_printf("%s could not read a valid value.\n", name);
         fail = 1;
-    } else if(val.format == vpiStringVar && processed_chars == 1024) {
+    } else if(val.format == vpiStringVar && processed_chars == STRING_BUF_SIZE) {
         show_warning_line(callh);
         vpi_printf("%s has reached the buffer limit, part of the "
                 "processed string might have been skipped.\n", name);
@@ -759,9 +827,8 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     s_vpi_value val;
     PLI_INT32 type, format;
     char *string = 0;
-    int fail = 0, res = 0;
-    const int BUF_SIZE = 1024;
-    char buf[BUF_SIZE];
+    unsigned int fail = 0, res = 0;
+    char buf[STRING_BUF_SIZE];
 
     /* Get the string */
     stringh = vpi_scan(argv);
@@ -794,10 +861,13 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
                 break;
 
             case vpiDecConst:
-            case vpiBinaryConst:
             case vpiOctConst:
             case vpiHexConst:
                 type = vpiIntVar;
+                break;
+
+            case vpiBinaryConst:
+                type = vpiBitVar;
                 break;
         }
     }
@@ -813,7 +883,7 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
                 case vpiIntegerVar:
                     val.format = vpiIntVal;
                     vpi_get_value(varh, &val);
-                    res = snprintf(buf, BUF_SIZE, "%s%d", string, val.value.integer);
+                    res = snprintf(buf, STRING_BUF_SIZE, "%s%d", string, val.value.integer);
                     break;
 
                 case vpiBitVar:   /* bit, bit vector */
@@ -825,19 +895,19 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
                     for(size_t i = 0; i< strlen(val.value.str); ++i)
                         val.value.str[i] = toupper(val.value.str[i]);
 
-                    res = snprintf(buf, BUF_SIZE, "%s%s", string, val.value.str);
+                    res = snprintf(buf, STRING_BUF_SIZE, "%s%s", string, val.value.str);
                     break;
 
                 case vpiRealVar:
                     val.format = vpiRealVal;
                     vpi_get_value(varh, &val);
-                    res = snprintf(buf, BUF_SIZE, "%s%lf", string, val.value.real);
+                    res = snprintf(buf, STRING_BUF_SIZE, "%s%lf", string, val.value.real);
                     break;
 
                 case vpiStringVar:
                     val.format = vpiStringVal;
                     vpi_get_value(varh, &val);
-                    res = snprintf(buf, BUF_SIZE, "%s%s", string, val.value.str);
+                    res = snprintf(buf, STRING_BUF_SIZE, "%s%s", string, val.value.str);
                     break;
 
                 default:
@@ -851,7 +921,7 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
         case FORMAT_BOOL:
             val.format = vpiIntVal;
             vpi_get_value(varh, &val);
-            res = snprintf(buf, BUF_SIZE, "%s%s", string,
+            res = snprintf(buf, STRING_BUF_SIZE, "%s%s", string,
                            val.value.integer ? "TRUE" : "FALSE");
             break;
 
@@ -867,29 +937,29 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
                 break;
             }
 
-            res = snprintf(buf, BUF_SIZE, "%s%s", string, tmp);
+            res = snprintf(buf, STRING_BUF_SIZE, "%s%s", string, tmp);
             }
             break;
 
         case FORMAT_HEX:
             val.format = vpiIntVal;
             vpi_get_value(varh, &val);
-            res = snprintf(buf, BUF_SIZE, "%s%X", string, val.value.integer);
+            res = snprintf(buf, STRING_BUF_SIZE, "%s%X", string, val.value.integer);
             break;
 
         case FORMAT_STRING:
             val.format = vpiStringVal;
             vpi_get_value(varh, &val);
-            res = snprintf(buf, BUF_SIZE, "%s%s", string, val.value.str);
+            res = snprintf(buf, STRING_BUF_SIZE, "%s%s", string, val.value.str);
             break;
     }
 
-    if(res > BUF_SIZE)
+    if(res > STRING_BUF_SIZE)
         fail = 1;
 
     if(!fail) {
         /* Strip the read token from the string */
-        char* tmp = strndup(buf, BUF_SIZE);
+        char* tmp = strndup(buf, STRING_BUF_SIZE);
         val.format = vpiStringVal;
         val.value.str = tmp;
         vpi_put_value(stringh, &val, 0, vpiNoDelay);

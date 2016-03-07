@@ -24,6 +24,8 @@
 # include  "parse_misc.h"
 # include  "std_types.h"
 # include  "ivl_assert.h"
+# include  <list>
+# include  <iterator>
 
 Package::Package(perm_string n, const ActiveScope&ref)
 : Scope(ref), name_(n)
@@ -45,9 +47,15 @@ int Package::elaborate()
 {
       int errors = 0;
 
-      for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
-		 ; cur != cur_subprograms_.end() ; ++cur) {
-	    errors += cur->second->elaborate();
+      for (map<perm_string,SubHeaderList>::iterator cur = cur_subprograms_.begin()
+		 ; cur != cur_subprograms_.end() ; ++ cur) {
+	    SubHeaderList& subp_list = cur->second;
+
+	    for(SubHeaderList::iterator it = subp_list.begin();
+			it != subp_list.end(); ++it) {
+                (*it)->set_package(this);
+                errors += (*it)->elaborate();
+            }
       }
 
       return errors;
@@ -67,9 +75,6 @@ void Package::write_to_stream(ostream&fd) const
 	// and identifiers.
       for (map<perm_string,const VType*>::const_iterator cur = use_types_.begin()
 		 ; cur != use_types_.end() ; ++cur) {
-	    const VTypeDef*def = dynamic_cast<const VTypeDef*> (cur->second);
-	    if (def == 0)
-		  continue;
 
 	      // Do not include global types in types dump
 	    if (is_global_type(cur->first))
@@ -79,9 +84,6 @@ void Package::write_to_stream(ostream&fd) const
       }
       for (map<perm_string,const VType*>::const_iterator cur = cur_types_.begin()
 		 ; cur != cur_types_.end() ; ++cur) {
-	    const VTypeDef*def = dynamic_cast<const VTypeDef*> (cur->second);
-	    if (def == 0)
-		  continue;
 
 	      // Do not include global types in types dump
 	    if (is_global_type(cur->first))
@@ -92,31 +94,11 @@ void Package::write_to_stream(ostream&fd) const
 
       for (map<perm_string,const VType*>::const_iterator cur = use_types_.begin()
 		 ; cur != use_types_.end() ; ++cur) {
-
-	      // Do not include global types in types dump
-	    if (is_global_type(cur->first))
-		  continue;
-
-	    if(!dynamic_cast<const VTypeDef*>(cur->second))
-		  fd << "sub";
-
-	    fd << "type " << cur->first << " is ";
-	    cur->second->write_type_to_stream(fd);
-	    fd << "; -- imported" << endl;
+	    cur->second->write_typedef_to_stream(fd, cur->first);
       }
       for (map<perm_string,const VType*>::const_iterator cur = cur_types_.begin()
 		 ; cur != cur_types_.end() ; ++cur) {
-
-	      // Do not include global types in types dump
-	    if (is_global_type(cur->first))
-		  continue;
-
-	    if(!dynamic_cast<const VTypeDef*>(cur->second))
-		  fd << "sub";
-
-	    fd << "type " << cur->first << " is ";
-	    cur->second->write_type_to_stream(fd);
-	    fd << ";" << endl;
+	    cur->second->write_typedef_to_stream(fd, cur->first);
       }
 
       for (map<perm_string,struct const_t*>::const_iterator cur = cur_constants_.begin()
@@ -134,10 +116,15 @@ void Package::write_to_stream(ostream&fd) const
 	    fd << ";" << endl;
       }
 
-      for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
+      for (map<perm_string,SubHeaderList>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++cur) {
-	    cur->second->write_to_stream(fd);
-	    fd << ";" << endl;
+	    const SubHeaderList& subp_list = cur->second;
+
+	    for(SubHeaderList::const_iterator it = subp_list.begin();
+			it != subp_list.end(); ++it) {
+                (*it)->write_to_stream(fd);
+                fd << ";" << endl;
+            }
       }
 
       for (map<perm_string,ComponentBase*>::const_iterator cur = old_components_.begin()
@@ -154,14 +141,20 @@ void Package::write_to_stream(ostream&fd) const
       fd << "end package " << name_ << ";" << endl;
 
       fd << "package body " << name_ << " is" << endl;
-        for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
+      for (map<perm_string,SubHeaderList>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++cur) {
-            SubprogramHeader*subp = cur->second;
-            if(subp->body()) {
-                subp->write_to_stream(fd);
-                fd << " is" << endl;
-                subp->body()->write_to_stream(fd);
+	    const SubHeaderList& subp_list = cur->second;
+
+	    for(SubHeaderList::const_iterator it = subp_list.begin();
+			it != subp_list.end(); ++it) {
+                const SubprogramHeader*subp = *it;
+
+                if(subp->body()) {
+                    subp->write_to_stream(fd);
+                    fd << " is" << endl;
+                    subp->body()->write_to_stream(fd);
+                }
             }
-        }
+      }
       fd << "end " << name_ << ";" << endl;
 }

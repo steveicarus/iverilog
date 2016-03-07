@@ -99,7 +99,7 @@ int IfSequential::elaborate(Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      errors += cond_->elaborate_expr(ent, scope, 0);
+      errors += cond_->elaborate_expr(ent, scope, &type_BOOLEAN);
 
       for (list<SequentialStmt*>::iterator cur = if_.begin()
 		 ; cur != if_.end() ; ++cur) {
@@ -123,7 +123,7 @@ int IfSequential::Elsif::elaborate(Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      errors += cond_->elaborate_expr(ent, scope, 0);
+      errors += cond_->elaborate_expr(ent, scope, &type_BOOLEAN);
 
       for (list<SequentialStmt*>::iterator cur = if_.begin()
 		 ; cur != if_.end() ; ++cur) {
@@ -131,6 +131,22 @@ int IfSequential::Elsif::elaborate(Entity*ent, ScopeBase*scope)
       }
 
       return errors;
+}
+
+int ReturnStmt::elaborate(Entity*ent, ScopeBase*scope)
+{
+      const VType*ltype = NULL;
+
+      // Try to determine the expression type by
+      // looking up the function return type.
+      const SubprogramBody*subp = dynamic_cast<const SubprogramBody*>(scope);
+      if(subp) {
+          if(const SubprogramHeader*header = subp->header()) {
+              ltype = header->peek_return_type();
+          }
+      }
+
+      return val_->elaborate_expr(ent, scope, ltype);
 }
 
 int SignalSeqAssignment::elaborate(Entity*ent, ScopeBase*scope)
@@ -162,19 +178,36 @@ int ProcedureCall::elaborate(Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
 
-      def_ = scope->find_subprogram(name_);
+      assert(!def_);   // do not elaborate twice
+
+      // Create a list of argument types to find a matching subprogram
+      list<const VType*> arg_types;
+      if(param_list_) {
+            for(list<named_expr_t*>::iterator it = param_list_->begin();
+                    it != param_list_->end(); ++it) {
+                named_expr_t* e = *it;
+                arg_types.push_back(e->expr()->probe_type(ent, scope));
+            }
+      }
+
+      def_ = scope->match_subprogram(name_, &arg_types);
 
       if(!def_)
-            def_ = library_find_subprogram(name_);
+            def_ = library_match_subprogram(name_, &arg_types);
 
-      assert(def_);
+      if(!def_) {
+            cerr << get_fileline() << ": error: could not find procedure ";
+            emit_subprogram_sig(cerr, name_, arg_types);
+            cerr << endl;
+            return 1;
+      }
 
 	// Elaborate arguments
       size_t idx = 0;
       if(param_list_) {
 	    for(list<named_expr_t*>::iterator cur = param_list_->begin()
 		 ; cur != param_list_->end() ; ++cur) {
-		errors += elaborate_argument((*cur)->expr(), def_, idx, ent, scope);
+		errors += def_->elaborate_argument((*cur)->expr(), idx, ent, scope);
 		++idx;
             }
       }
@@ -212,9 +245,9 @@ int WhileLoopStatement::elaborate(Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int BasicLoopStatement::elaborate(Entity*, ScopeBase*)
+int BasicLoopStatement::elaborate(Entity*ent, ScopeBase*scope)
 {
-    return 0;
+    return elaborate_substatements(ent, scope);
 }
 
 int ReportStmt::elaborate(Entity*ent, ScopeBase*scope)
@@ -232,7 +265,7 @@ int AssertStmt::elaborate(Entity*ent, ScopeBase*scope)
 
 int WaitForStmt::elaborate(Entity*ent, ScopeBase*scope)
 {
-    return delay_->elaborate_expr(ent, scope, 0);
+    return delay_->elaborate_expr(ent, scope, &primitive_TIME);
 }
 
 int WaitStmt::elaborate(Entity*ent, ScopeBase*scope)
@@ -253,6 +286,8 @@ int WaitStmt::elaborate(Entity*ent, ScopeBase*scope)
 
         // Fill the sensitivity list
         expr_->visit(fill_sens_list);
+    } else if(type_ == FINAL) {
+        return 0;   // nothing to be elaborated
     }
 
     return expr_->elaborate_expr(ent, scope, 0);

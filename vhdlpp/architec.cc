@@ -29,7 +29,7 @@ using namespace std;
 
 Architecture::Architecture(perm_string name, const ActiveScope&ref,
 			   list<Architecture::Statement*>&s)
-: Scope(ref), name_(name), cur_component_(NULL)
+: Scope(ref), name_(name), cur_component_(NULL), cur_process_(NULL)
 {
       statements_.splice(statements_.end(), s);
 }
@@ -66,6 +66,14 @@ bool Architecture::find_constant(perm_string by_name, const VType*&typ, Expressi
     }
 
     return false;
+}
+
+Variable* Architecture::find_variable(perm_string by_name) const
+{
+    if(cur_process_)
+        return cur_process_->find_variable(by_name);
+
+    return ScopeBase::find_variable(by_name);
 }
 
 void Architecture::push_genvar_type(perm_string gname, const VType*gtype)
@@ -178,6 +186,21 @@ SignalAssignment::~SignalAssignment()
       delete lval_;
 }
 
+CondSignalAssignment::CondSignalAssignment(ExpName*target, std::list<ExpConditional::case_t*>&options)
+: lval_(target)
+{
+    options_.splice(options_.end(), options);
+}
+
+CondSignalAssignment::~CondSignalAssignment()
+{
+    delete lval_;
+    for(list<ExpConditional::case_t*>::iterator it = options_.begin();
+            it != options_.end(); ++it) {
+        delete *it;
+    }
+}
+
 ComponentInstantiation::ComponentInstantiation(perm_string i, perm_string c,
 					       list<named_expr_t*>*parms,
 					       list<named_expr_t*>*ports)
@@ -245,9 +268,10 @@ StatementList::~StatementList()
 }
 
 ProcessStatement::ProcessStatement(perm_string iname,
+				   const ActiveScope&ref,
 				   std::list<Expression*>*sensitivity_list,
 				   std::list<SequentialStmt*>*statements_list)
-: StatementList(statements_list), iname_(iname)
+: StatementList(statements_list), Scope(ref), iname_(iname)
 {
       if (sensitivity_list)
 	    sensitivity_list_.splice(sensitivity_list_.end(), *sensitivity_list);

@@ -249,6 +249,25 @@ static NetExpr* make_sub_expr(long val, NetExpr*expr)
 }
 
 /*
+ * Subtract a signed constant from an existing expression.
+ */
+static NetExpr* make_sub_expr(NetExpr*expr, long val)
+{
+      verinum val_v (val, expr->expr_width());
+      val_v.has_sign(true);
+
+      NetEConst*val_c = new NetEConst(val_v);
+      val_c->set_line(*expr);
+
+      NetEBAdd*res = new NetEBAdd('-', expr, val_c, expr->expr_width(),
+                                  expr->has_sign());
+      res->set_line(*expr);
+
+      return res;
+}
+
+
+/*
  * Multiple an existing expression by a signed positive number.
  * This does a lossless multiply, so the arguments will need to be
  * sized to match the output size.
@@ -434,17 +453,26 @@ NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,
 	    -- pcur;
       }
 
-      long sb;
-      if (pcur->get_msb() >= pcur->get_lsb())
-	    sb = pcur->get_lsb();
-      else
-	    sb = pcur->get_msb();
-
+      long sb = min(pcur->get_lsb(), pcur->get_msb());
       long loff;
       reg->sb_to_slice(indices, sb, loff, lwid);
 
+      bool idx_incr = pcur->get_msb() < pcur->get_lsb();
+
+      if(pcur->get_lsb() != 0) {
+          // Adjust the base for the case when the array range does not start from 0
+          if(idx_incr)
+              base = make_sub_expr(pcur->get_lsb(), base);
+          else
+              base = make_sub_expr(base, pcur->get_lsb());
+      }
+
       base = make_mult_expr(base, lwid);
-      base = make_add_expr(base, loff);
+
+      // TODO I do not see any influence of the lines below to the test suite
+      if(!idx_incr)
+            base = make_add_expr(base, loff);
+
       return base;
 }
 
@@ -1412,7 +1440,7 @@ bool evaluate_index_prefix(Design*des, NetScope*scope,
 		  return false;
 	    }
 
-	    prefix_indices .push_back(tmp);
+	    prefix_indices.push_back(tmp);
 	    delete texpr;
       }
 

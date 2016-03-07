@@ -36,6 +36,16 @@ void VType::write_type_to_stream(ostream&fd) const
       write_to_stream(fd);
 }
 
+void VType::write_typedef_to_stream(ostream&fd, perm_string name) const
+{
+      if(is_global_type(name))
+          return;
+
+      fd << "type " << name << " is ";
+      write_type_to_stream(fd);
+      fd << ";" << endl;
+}
+
 void VTypeArray::write_to_stream(ostream&fd) const
 {
       if(write_special_case(fd))
@@ -238,3 +248,12 @@ void VTypeEnum::write_to_stream(std::ostream&fd) const
       fd << ")";
 }
 
+void VSubTypeDef::write_typedef_to_stream(ostream&fd, perm_string name) const
+{
+      if(is_global_type(name))
+          return;
+
+      fd << "subtype " << name << " is ";
+      write_type_to_stream(fd);
+      fd << ";" << endl;
+}

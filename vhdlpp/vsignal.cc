@@ -22,6 +22,7 @@
 # include  "vsignal.h"
 # include  "expression.h"
 # include  "vtype.h"
+# include  "std_types.h"
 # include  <iostream>
 
 using namespace std;
@@ -35,11 +36,12 @@ SigVarBase::~SigVarBase()
 {
 }
 
-void SigVarBase::elaborate_init_expr(Entity*ent, ScopeBase*scope)
+void SigVarBase::elaborate(Entity*ent, ScopeBase*scope)
 {
-    if(init_expr_) {
+    if(init_expr_)
         init_expr_->elaborate_expr(ent, scope, peek_type());
-    }
+
+    type_->elaborate(ent, scope);
 }
 
 void SigVarBase::type_elaborate_(VType::decl_t&decl)
@@ -53,14 +55,21 @@ int Signal::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
       VType::decl_t decl;
       type_elaborate_(decl);
-      if (peek_refcnt_sequ_() > 0 || !peek_type()->can_be_packed())
+
+      const VType*type = peek_type();
+      if (peek_refcnt_sequ_() > 0
+              || (!type->can_be_packed() && dynamic_cast<const VTypeArray*>(type)))
 	    decl.reg_flag = true;
       errors += decl.emit(out, peek_name());
 
       Expression*init_expr = peek_init_expr();
       if (init_expr) {
-	    out << " = ";
-	    init_expr->emit(out, ent, scope);
+            /* Emit initialization value for wires as a weak assignment */
+            if(!decl.reg_flag && !type->type_match(&primitive_REAL))
+                out << ";" << endl << "/*init*/ assign (weak1, weak0) " << peek_name();
+
+            out << " = ";
+            init_expr->emit(out, ent, scope);
       }
       out << ";" << endl;
       return errors;

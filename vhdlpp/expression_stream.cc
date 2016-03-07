@@ -181,9 +181,32 @@ void ExpReal::write_to_stream(ostream&fd) const
       fd << value_;
 }
 
-void ExpLogical::write_to_stream(ostream&) const
+void ExpLogical::write_to_stream(ostream&out) const
 {
-      ivl_assert(*this, !"Not supported");
+      peek_operand1()->write_to_stream(out);
+
+      switch (fun_) {
+	  case AND:
+	    out << " and ";
+	    break;
+	  case OR:
+	    out << " or ";
+	    break;
+	  case XOR:
+	    out << " xor ";
+	    break;
+	  case NAND:
+	    out << " nand ";
+	    break;
+	  case NOR:
+	    out << " nor ";
+	    break;
+	  case XNOR:
+	    out << " xnor ";
+	    break;
+      }
+
+      peek_operand2()->write_to_stream(out);
 }
 
 void ExpName::write_to_stream(ostream&fd) const
@@ -194,14 +217,20 @@ void ExpName::write_to_stream(ostream&fd) const
       }
 
       fd << name_;
-      if (index_) {
-	    fd << "(";
-	    index_->write_to_stream(fd);
-	    if (lsb_) {
-		  fd << " downto ";
-		  lsb_->write_to_stream(fd);
-	    }
-	    fd << ")";
+
+      if (indices_) {
+          fd << "(";
+          bool first = true;
+          for(list<Expression*>::const_iterator it = indices_->begin();
+                  it != indices_->end(); ++it) {
+              if(first)
+                  first = false;
+              else
+                  fd << ",";
+
+              (*it)->write_to_stream(fd);
+          }
+          fd << ")";
       }
 }
 
@@ -333,4 +362,11 @@ void ExpRange::write_to_stream(ostream&fd) const
           }
           right_->write_to_stream(fd);
       }
+}
+
+void ExpDelay::write_to_stream(ostream&out) const
+{
+      expr_->write_to_stream(out);
+      out << " after ";
+      delay_->write_to_stream(out);
 }

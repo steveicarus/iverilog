@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2016
+ * @author Maciej Suminski <maciej.suminski@cern.ch>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -73,9 +75,9 @@ void library_add_directory(const char*directory)
       library_search_path.push_front(directory);
 }
 
-SubprogramHeader*library_find_subprogram(perm_string name)
+SubprogramHeader*library_match_subprogram(perm_string name, const list<const VType*>*params)
 {
-      SubprogramHeader*subp = NULL;
+      SubprogramHeader*subp;
       map<perm_string,struct library_contents>::const_iterator lib_it;
 
       for(lib_it = libraries.begin(); lib_it != libraries.end(); ++lib_it) {
@@ -83,7 +85,7 @@ SubprogramHeader*library_find_subprogram(perm_string name)
         map<perm_string,Package*>::const_iterator pack_it;
 
         for(pack_it = lib.packages.begin(); pack_it != lib.packages.end(); ++pack_it) {
-            if((subp = pack_it->second->find_subprogram(name)))
+            if((subp = pack_it->second->match_subprogram(name, params)))
                 return subp;
         }
       }
@@ -370,6 +372,7 @@ static void import_std_use(const YYLTYPE&loc, ActiveScope*res, perm_string packa
             res->use_name(perm_string::literal("text"),     &primitive_INTEGER);
             res->use_name(perm_string::literal("line"),     &primitive_STRING);
             res->use_name(type_FILE_OPEN_KIND.peek_name(),  &type_FILE_OPEN_KIND);
+            res->use_name(type_FILE_OPEN_STATUS.peek_name(),  &type_FILE_OPEN_STATUS);
 	    return;
       } else {
 	    sorrymsg(loc, "package %s of library %s not yet supported", package.str(), name.str());

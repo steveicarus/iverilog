@@ -21,6 +21,7 @@
 # include  "subprogram.h"
 # include  "sequential.h"
 # include  "vtype.h"
+# include  "package.h"
 # include  <iostream>
 
 using namespace std;
@@ -97,6 +98,22 @@ int SubprogramHeader::emit_package(ostream&fd) const
       return errors;
 }
 
+int SubprogramHeader::emit_full_name(const std::vector<Expression*>&argv,
+                        std::ostream&out, Entity*ent, ScopeBase*scope) const
+{
+    // If this function has an elaborated definition, and if
+    // that definition is in a package, then include the
+    // package name as a scope qualifier. This assures that
+    // the SV elaborator finds the correct VHDL elaborated
+    // definition. It should not be emitted only if we call another
+    // function from the same package.
+    const SubprogramBody*subp = dynamic_cast<const SubprogramBody*>(scope);
+    if (package_ && (!subp || !subp->header() || subp->header()->get_package() != package_))
+        out << "\\" << package_->name() << " ::";
+
+    return emit_name(argv, out, ent, scope);
+}
+
 int SubprogramHeader::emit_name(const std::vector<Expression*>&,
                                 std::ostream&out, Entity*, ScopeBase*) const
 {
@@ -123,4 +140,24 @@ int SubprogramBuiltin::emit_name(const std::vector<Expression*>&,
     // do not escape the names for builtin functions
     out << sv_name_;
     return 0;
+}
+
+void emit_subprogram_sig(ostream&out, perm_string name,
+        const list<const VType*>&arg_types)
+{
+    out << name << "(";
+    bool first = true;
+    for(list<const VType*>::const_iterator it = arg_types.begin();
+            it != arg_types.end(); ++it) {
+        if(first)
+            first = false;
+        else
+            out << ", ";
+
+        if(*it)
+            (*it)->write_to_stream(out);
+        else
+            out << "<unresolved type>";
+    }
+    out << ")";
 }
