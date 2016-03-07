@@ -42,8 +42,8 @@ class SigVarBase : public LineInfo {
 
       void dump(ostream&out, int indent = 0) const;
 
-	// Elaborates initializer expressions if needed.
-      void elaborate_init_expr(Entity*ent, ScopeBase*scope);
+	// Elaborates type & initializer expressions.
+      void elaborate(Entity*ent, ScopeBase*scope);
 
       perm_string peek_name() const { return name_; }
 

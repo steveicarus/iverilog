@@ -82,7 +82,7 @@ void IfSequential::write_to_stream(std::ostream&fd)
 {
       fd << "if ";
       cond_->write_to_stream(fd);
-      fd << " then " << endl;
+      fd << " then" << endl;
 
       for (list<SequentialStmt*>::iterator cur = if_.begin()
 		 ; cur != if_.end() ; ++cur)
@@ -210,26 +210,27 @@ void VariableSeqAssignment::write_to_stream(ostream&fd)
 int ProcedureCall::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
       int errors = 0;
-      std::vector<Expression*>params;
+      vector<Expression*>argv;
 
+      if(!def_) {
+          cerr << get_fileline() << ": error: unknown procedure: " << name_ << endl;
+          return 1;
+      }
+
+      // Convert the parameter list to vector
       if(param_list_) {
-          params.reserve(param_list_->size());
+          argv.reserve(param_list_->size());
 
           for(std::list<named_expr_t*>::iterator it = param_list_->begin();
                   it != param_list_->end(); ++it)
-              params.push_back((*it)->expr());
+              argv.push_back((*it)->expr());
       }
 
-      const Package*pkg = dynamic_cast<const Package*> (def_->get_parent());
-      if (pkg != 0)
-          out << "\\" << pkg->name() << " ::";
-
-      errors += def_->emit_name(params, out, ent, scope);
-
+      def_->emit_full_name(argv, out, ent, scope);
       out << " (";
-      if(param_list_) {
-	    errors += def_->emit_args(params, out, ent, scope);
-      }
+
+      if(param_list_)
+	    errors += def_->emit_args(argv, out, ent, scope);
 
       out << ");" << endl;
       return errors;
@@ -477,6 +478,24 @@ int ForLoopStatement::emit_runtime_(ostream&out, Entity*ent, ScopeBase*scope)
     return errors;
 }
 
+int BasicLoopStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+    int errors = 0;
+
+    out << "forever begin" << endl;
+    errors += emit_substatements(out, ent, scope);
+    out << "end" << endl;
+
+    return errors;
+}
+
+void BasicLoopStatement::write_to_stream(std::ostream&fd)
+{
+    fd << "loop" << endl;
+    write_to_stream_substatements(fd);
+    fd << "end loop;" << endl;
+}
+
 int ReportStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 {
     out << "$display(\"** ";
@@ -584,6 +603,10 @@ int WaitStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
             out << "wait(";
             break;
+
+        case FINAL:
+            out << "/* final wait */" << endl;
+            return 0;   // no expression to be emitted
     }
 
     errors += expr_->emit(out, ent, scope);
@@ -602,6 +625,10 @@ void WaitStmt::write_to_stream(std::ostream&fd)
         case UNTIL:
             fd << "wait until ";
             break;
+
+        case FINAL:
+            fd << "wait";
+            return;     // no expression to be emitted
     }
 
     expr_->write_to_stream(fd);

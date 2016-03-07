@@ -45,25 +45,30 @@ int Architecture::elaborate(Entity*entity)
         // Elaborate initializer expressions for signals & variables
       for (map<perm_string,Signal*>::iterator cur = old_signals_.begin()
 		 ; cur != old_signals_.end() ; ++cur) {
-	    cur->second->elaborate_init_expr(entity, this);
+	    cur->second->elaborate(entity, this);
       }
       for (map<perm_string,Signal*>::iterator cur = new_signals_.begin()
 		 ; cur != new_signals_.end() ; ++cur) {
-	    cur->second->elaborate_init_expr(entity, this);
+	    cur->second->elaborate(entity, this);
       }
       for (map<perm_string,Variable*>::iterator cur = old_variables_.begin()
 		 ; cur != old_variables_.end() ; ++cur) {
-	    cur->second->elaborate_init_expr(entity, this);
+	    cur->second->elaborate(entity, this);
       }
       for (map<perm_string,Variable*>::iterator cur = new_variables_.begin()
 		 ; cur != new_variables_.end() ; ++cur) {
-	    cur->second->elaborate_init_expr(entity, this);
+	    cur->second->elaborate(entity, this);
       }
 
 	// Elaborate subprograms
-      for (map<perm_string,SubprogramHeader*>::const_iterator cur = cur_subprograms_.begin()
+      for (map<perm_string,SubHeaderList>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++cur) {
-	    errors += cur->second->elaborate();
+	    const SubHeaderList& subp_list = cur->second;
+
+	    for(SubHeaderList::const_iterator it = subp_list.begin();
+			it != subp_list.end(); ++it) {
+        	errors += (*it)->elaborate();
+	    }
       }
 	// Create 'initial' and 'final' blocks for implicit
 	// initalization and clean-up actions
@@ -253,6 +258,8 @@ int ProcessStatement::rewrite_as_always_edge_(Entity*, Architecture*)
 	    return -1;
 
       const ExpCharacter*op2b = dynamic_cast<const ExpCharacter*>(op2b_raw);
+      if (op2b == 0)
+	    return -1;
       if (op2b->value() != '1' && op2b->value() != '0')
 	    return -1;
 
@@ -349,6 +356,51 @@ int SignalAssignment::elaborate(Entity*ent, Architecture*arc)
       for (list<Expression*>::iterator cur = rval_.begin()
 		 ; cur != rval_.end() ; ++cur) {
 	    errors += (*cur)->elaborate_expr(ent, arc, lval_type);
+      }
+
+      return errors;
+}
+
+int CondSignalAssignment::elaborate(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+        // Visitor to extract signal names occuring in the conditional
+        // statements to create the sensitivity list
+      struct name_extractor_t : public ExprVisitor {
+          name_extractor_t(list<const ExpName*>& name_list)
+              : name_list_(name_list) {}
+          void operator() (Expression*s) {
+              if(const ExpName*name = dynamic_cast<const ExpName*>(s))
+                  name_list_.push_back(name);
+          }
+
+          private:
+            list<const ExpName*>& name_list_;
+      } name_extractor(sens_list_);
+
+        // Elaborate the l-value expression.
+      errors += lval_->elaborate_lval(ent, arc, true);
+
+        // The elaborate_lval should have resolved the type of the
+        // l-value expression. We'll use that type to elaborate the
+        // r-value.
+      const VType*lval_type = lval_->peek_type();
+      if (lval_type == 0) {
+          if (errors == 0) {
+              errors += 1;
+              cerr << get_fileline()
+                   << ": error: Unable to calculate type for l-value expression."
+                   << endl;
+          }
+          return errors;
+      }
+
+      for(list<ExpConditional::case_t*>::iterator it = options_.begin();
+              it != options_.end(); ++it) {
+          ExpConditional::case_t*cas = (*it);
+          cas->elaborate_expr(ent, arc, lval_type);
+          cas->visit(name_extractor);
       }
 
       return errors;

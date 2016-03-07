@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2015 / Stephen Williams (steve@icarus.com),
+ * Copyright CERN 2016
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -87,11 +88,13 @@ list<Expression*>*ExpAttribute::clone_args() const {
 void ExpAttribute::visit_args(ExprVisitor& func)
 {
       if(args_) {
-	    for(list<Expression*>::iterator it = args_->begin();
+          for(list<Expression*>::iterator it = args_->begin();
                     it != args_->end(); ++it) {
-		func(*it);
-            }
+              (*it)->visit(func);
+          }
       }
+
+      func(this);
 }
 
 ExpObjAttribute::ExpObjAttribute(ExpName*base, perm_string name, list<Expression*>*args)
@@ -404,9 +407,8 @@ Expression*ExpConditional::clone() const
 void ExpConditional::visit(ExprVisitor& func)
 {
       for(std::list<case_t*>::iterator it = options_.begin();
-              it != options_.end(); ++it) {
+              it != options_.end(); ++it)
           (*it)->visit(func);
-      }
 
       func(this);
 }
@@ -473,12 +475,11 @@ Expression*ExpSelected::clone() const
 void ExpConditional::case_t::visit(ExprVisitor& func)
 {
       if(cond_)
-          func(cond_);
+          cond_->visit(func);
 
       for(std::list<Expression*>::iterator it = true_clause_.begin();
-              it != true_clause_.end(); ++it) {
-          func(*it);
-      }
+              it != true_clause_.end(); ++it)
+          (*it)->visit(func);
 }
 
 ExpEdge::ExpEdge(ExpEdge::fun_t typ, Expression*op)
@@ -577,41 +578,54 @@ ExpLogical::~ExpLogical()
 }
 
 ExpName::ExpName(perm_string nn)
-: name_(nn), index_(0), lsb_(0)
+: name_(nn), indices_(NULL)
 {
 }
 
 ExpName::ExpName(perm_string nn, list<Expression*>*indices)
-: name_(nn), index_(0), lsb_(0)
-{
-	/* For now, assume a single index. */
-      ivl_assert(*this, indices->size() == 1);
-
-      index_ = indices->front();
-      indices->pop_front();
-}
-
-ExpName::ExpName(perm_string nn, Expression*msb, Expression*lsb)
-: name_(nn), index_(msb), lsb_(lsb)
-{
-    ivl_assert(*this, !msb || msb != lsb);
-}
-
-ExpName::ExpName(ExpName*prefix, perm_string nn)
-: prefix_(prefix), name_(nn), index_(0), lsb_(0)
+: name_(nn), indices_(indices)
 {
 }
 
-ExpName::ExpName(ExpName*prefix, perm_string nn, Expression*msb, Expression*lsb)
-: prefix_(prefix), name_(nn), index_(msb), lsb_(lsb)
+ExpName::ExpName(ExpName*prefix, perm_string nn, std::list<Expression*>*indices)
+: prefix_(prefix), name_(nn), indices_(indices)
 {
-    ivl_assert(*this, !msb || msb != lsb);
 }
 
 ExpName::~ExpName()
 {
-      delete index_;
-      delete lsb_;
+    if(indices_) {
+        for(list<Expression*>::iterator it = indices_->begin();
+                it != indices_->end(); ++it) {
+            delete *it;
+        }
+
+        delete indices_;
+    }
+}
+
+Expression*ExpName::clone() const {
+    list<Expression*>*new_indices = NULL;
+
+    if(indices_) {
+        new_indices = new list<Expression*>();
+
+        for(list<Expression*>::const_iterator it = indices_->begin();
+                it != indices_->end(); ++it) {
+            new_indices->push_back((*it)->clone());
+        }
+    }
+
+    return new ExpName(static_cast<ExpName*>(safe_clone(prefix_.get())),
+            name_, new_indices);
+}
+
+void ExpName::add_index(std::list<Expression*>*idx)
+{
+      if(!indices_)
+          indices_ = new list<Expression*>();
+
+      indices_->splice(indices_->end(), *idx);
 }
 
 bool ExpName::symbolic_compare(const Expression*that) const
@@ -623,25 +637,48 @@ bool ExpName::symbolic_compare(const Expression*that) const
       if (name_ != that_name->name_)
 	    return false;
 
-      if (that_name->index_ && !index_)
+      if (that_name->indices_ && !indices_)
 	    return false;
-      if (index_ && !that_name->index_)
+      if (indices_ && !that_name->indices_)
 	    return false;
 
-      if (index_) {
-	    assert(that_name->index_);
-	    return index_->symbolic_compare(that_name->index_);
+      if (indices_) {
+	    assert(that_name->indices_);
+
+            if(indices_->size() != that_name->indices_->size())
+                return false;
+
+            list<Expression*>::const_iterator it, jt;
+            it = indices_->begin();
+            jt = that_name->indices_->begin();
+
+            for(unsigned int i = 0; i < indices_->size(); ++i) {
+                if(!(*it)->symbolic_compare(*jt))
+                    return false;
+
+                ++it;
+                ++jt;
+            }
       }
 
       return true;
 }
 
-void ExpName::set_range(Expression*msb, Expression*lsb)
+Expression*ExpName::index(unsigned int number) const
 {
-      assert(index_==0);
-      index_ = msb;
-      assert(lsb_==0);
-      lsb_ = lsb;
+    if(!indices_)
+        return NULL;
+
+    if(number >= indices_->size())
+        return NULL;
+
+    if(number == 0)
+        return indices_->front();
+
+    list<Expression*>::const_iterator it = indices_->begin();
+    advance(it, number);
+
+    return *it;
 }
 
 void ExpName::visit(ExprVisitor& func)
@@ -649,16 +686,17 @@ void ExpName::visit(ExprVisitor& func)
       if(prefix_.get())
           prefix_.get()->visit(func);
 
-      if(index_)
-          index_->visit(func);
-
-      if(lsb_)
-          lsb_->visit(func);
+      if(indices_) {
+          for(list<Expression*>::const_iterator it = indices_->begin();
+                  it != indices_->end(); ++it) {
+              (*it)->visit(func);
+          }
+      }
 
       func(this);
 }
 
-int ExpName::index_t::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int ExpName::index_t::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;
 
@@ -844,4 +882,23 @@ Expression*ExpRange::right()
         right_ = new ExpObjAttribute(static_cast<ExpName*>(range_base_->clone()),
                                     ExpAttribute::RIGHT, NULL);
     return right_;
+}
+
+ExpDelay::ExpDelay(Expression*expr, Expression*delay)
+: expr_(expr), delay_(delay)
+{
+}
+
+ExpDelay::~ExpDelay()
+{
+    delete expr_;
+    delete delay_;
+}
+
+void ExpDelay::visit(ExprVisitor& func)
+{
+    expr_->visit(func);
+    delay_->visit(func);
+
+    func(this);
 }

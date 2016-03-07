@@ -199,6 +199,16 @@ void WaitForStmt::dump(ostream&out, int indent) const
 void WaitStmt::dump(ostream&out, int indent) const
 {
     out << setw(indent) << "" << "WaitStmt at file=" << get_fileline() << endl;
-    out << setw(indent+3) << "" << "expression: ";
-    expr_->dump(out, indent+3);
+    out << setw(indent+3) << "type = ";
+
+    switch(type_) {
+        case ON: out << "ON" << endl; break;
+        case UNTIL: out << "UNTIL" << endl; break;
+        case FINAL: out << "FINAL" << endl; break;
+    }
+
+    if(type_ != FINAL) {
+        out << setw(indent+3) << "" << "expression: ";
+        expr_->dump(out, indent+3);
+    }
 }

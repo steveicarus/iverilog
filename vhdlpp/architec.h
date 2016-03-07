@@ -189,6 +189,25 @@ class SignalAssignment  : public Architecture::Statement {
       std::list<Expression*> rval_;
 };
 
+class CondSignalAssignment : public Architecture::Statement {
+
+    public:
+      CondSignalAssignment(ExpName*target, std::list<ExpConditional::case_t*>&options);
+      ~CondSignalAssignment();
+
+      int elaborate(Entity*ent, Architecture*arc);
+      int emit(ostream&out, Entity*entity, Architecture*arc);
+      void dump(ostream&out, int ident =0) const;
+
+    private:
+      ExpName*lval_;
+      std::list<ExpConditional::case_t*> options_;
+
+      // List of signals that should be emitted in the related process
+      // sensitivity list. It is filled during the elaboration step.
+      std::list<const ExpName*>sens_list_;
+};
+
 class ComponentInstantiation  : public Architecture::Statement {
 
     public:

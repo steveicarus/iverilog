@@ -27,6 +27,7 @@ class Architecture;
 class Expression;
 class Package;
 class ExpRange;
+class ExpString;
 class ScopeBase;
 class VType;
 
@@ -62,5 +63,12 @@ extern Package*library_recall_package(perm_string library_parse_name, perm_strin
 extern void library_import(const YYLTYPE&loc, const std::list<perm_string>*names);
 
 extern void library_use(const YYLTYPE&loc, ActiveScope*res, const char*libname, const char*pack, const char*ident);
+
+/*
+ * Converts CHARACTER enums to an ExpString* if applicable.
+ * See the standard VHDL library (package STANDARD) or VHDL-2008/16.3
+ * for more details).
+ */
+extern ExpString*parse_char_enums(const char*str);
 
 #endif /* IVL_parse_misc_H */

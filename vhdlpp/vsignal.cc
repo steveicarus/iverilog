@@ -35,11 +35,12 @@ SigVarBase::~SigVarBase()
 {
 }
 
-void SigVarBase::elaborate_init_expr(Entity*ent, ScopeBase*scope)
+void SigVarBase::elaborate(Entity*ent, ScopeBase*scope)
 {
-    if(init_expr_) {
+    if(init_expr_)
         init_expr_->elaborate_expr(ent, scope, peek_type());
-    }
+
+    type_->elaborate(ent, scope);
 }
 
 void SigVarBase::type_elaborate_(VType::decl_t&decl)
@@ -53,7 +54,10 @@ int Signal::emit(ostream&out, Entity*ent, ScopeBase*scope)
 
       VType::decl_t decl;
       type_elaborate_(decl);
-      if (peek_refcnt_sequ_() > 0 || !peek_type()->can_be_packed())
+
+      const VType*type = peek_type();
+      if (peek_refcnt_sequ_() > 0
+              || (!type->can_be_packed() && dynamic_cast<const VTypeArray*>(type)))
 	    decl.reg_flag = true;
       errors += decl.emit(out, peek_name());
 

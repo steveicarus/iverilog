@@ -1412,7 +1412,7 @@ bool evaluate_index_prefix(Design*des, NetScope*scope,
 		  return false;
 	    }
 
-	    prefix_indices .push_back(tmp);
+	    prefix_indices.push_back(tmp);
 	    delete texpr;
       }
 

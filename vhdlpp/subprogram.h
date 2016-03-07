@@ -32,7 +32,6 @@
 class InterfacePort;
 class SequentialStmt;
 class VType;
-class SubprogramHeader;
 
 class SubprogramBody : public LineInfo, public ScopeBase {
 
@@ -54,6 +53,8 @@ class SubprogramBody : public LineInfo, public ScopeBase {
       void write_to_stream(std::ostream&fd) const;
       void dump(std::ostream&fd) const;
 
+      const SubprogramHeader*header() const { return header_; }
+
     private:
       std::list<SequentialStmt*>*statements_;
       SubprogramHeader*header_;
@@ -71,6 +72,7 @@ class SubprogramHeader : public LineInfo {
 	// matches this subprogram and that subprogram.
       bool compare_specification(SubprogramHeader*that) const;
 
+      int param_count() const { return ports_ ? ports_->size() : 0; }
       const InterfacePort*find_param(perm_string nam) const;
       const InterfacePort*peek_param(int idx) const;
       const VType*peek_param_type(int idx) const;
@@ -92,11 +94,18 @@ class SubprogramHeader : public LineInfo {
 
       int elaborate() { return (body_ ? body_->elaborate() : 0); }
 
+	// Elaborates an argument basing on the types stored in the subprogram header.
+      int elaborate_argument(Expression*expr, int idx, Entity*ent, ScopeBase*scope);
+
+	// Emits the function name, including the package if required.
+      int emit_full_name(const std::vector<Expression*>&argv,
+                         std::ostream&out, Entity*, ScopeBase*) const;
+
 	// Function name used in the emission step. The main purpose of this
 	// method is to handle functions offered by standard VHDL libraries.
 	// Allows to return different function names depending on the arguments
 	// (think of size casting or signed/unsigned functions).
-      virtual int emit_name(const std::vector<Expression*>&,
+      virtual int emit_name(const std::vector<Expression*>&argv,
                             std::ostream&out, Entity*, ScopeBase*) const;
 
 	// Emit arguments for a specific call. It allows to reorder or skip
@@ -133,14 +142,25 @@ class SubprogramHeader : public LineInfo {
 };
 
 // Class to define functions headers defined in the standard VHDL libraries.
-class SubprogramBuiltin : public SubprogramHeader
+class SubprogramStdHeader : public SubprogramHeader
+{
+    public:
+      SubprogramStdHeader(perm_string name, std::list<InterfacePort*>*ports,
+              const VType*return_type) :
+          SubprogramHeader(name, ports, return_type) {}
+      virtual ~SubprogramStdHeader() {};
+
+      bool is_std() const { return true; }
+};
+
+// The simplest case, when only function name has to be changed.
+class SubprogramBuiltin : public SubprogramStdHeader
 {
     public:
       SubprogramBuiltin(perm_string vhdl_name, perm_string sv_name,
-              std::list<InterfacePort*>*ports, const VType*return_type);
-      ~SubprogramBuiltin();
-
-      bool is_std() const { return true; }
+              std::list<InterfacePort*>*ports, const VType*return_type) :
+          SubprogramStdHeader(vhdl_name, ports, return_type), sv_name_(sv_name) {}
+      ~SubprogramBuiltin() {}
 
       int emit_name(const std::vector<Expression*>&, std::ostream&out, Entity*, ScopeBase*) const;
 
@@ -148,5 +168,9 @@ class SubprogramBuiltin : public SubprogramHeader
 	// SystemVerilog counterpart function name
       perm_string sv_name_;
 };
+
+// Helper function to print out a human-readable function signature.
+void emit_subprogram_sig(std::ostream&out, perm_string name,
+        const std::list<const VType*>&arg_types);
 
 #endif /* IVL_subprogram_H */

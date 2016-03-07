@@ -7,7 +7,7 @@
 %{
 /*
  * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2012-2014 / Stephen Williams (steve@icarus.com),
+ * Copyright CERN 2012-2016 / Stephen Williams (steve@icarus.com),
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -318,6 +318,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <arch_statement> concurrent_statement component_instantiation_statement
 %type <arch_statement> concurrent_conditional_signal_assignment
 %type <arch_statement> concurrent_signal_assignment_statement concurrent_simple_signal_assignment
+%type <arch_statement> concurrent_assertion_statement
 %type <arch_statement> for_generate_statement generate_statement if_generate_statement
 %type <arch_statement> process_statement selected_signal_assignment
 %type <arch_statement_list> architecture_statement_part generate_statement_body
@@ -330,7 +331,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <expr> expression factor primary relation
 %type <expr> expression_logical expression_logical_and expression_logical_or
 %type <expr> expression_logical_xnor expression_logical_xor
-%type <expr> name prefix selected_name
+%type <expr> name prefix selected_name indexed_name
 %type <expr> shift_expression signal_declaration_assign_opt
 %type <expr> simple_expression simple_expression_2 term
 %type <expr> variable_declaration_assign_opt waveform_element interface_element_expression
@@ -376,7 +377,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <elsif_list> if_statement_elsif_list if_statement_elsif_list_opt
 
 %type <exp_options> else_when_waveform selected_waveform
-%type <exp_options_list> else_when_waveforms selected_waveform_list
+%type <exp_options_list> else_when_waveforms else_when_waveforms_opt selected_waveform_list
 
 %type <subprogram> function_specification procedure_specification
 %type <subprogram> subprogram_specification subprogram_body_start
@@ -532,7 +533,7 @@ block_declarative_item
       { /* Save the signal declaration in the block_signals map. */
 	for (std::list<perm_string>::iterator cur = $2->begin()
 		   ; cur != $2->end() ; ++cur) {
-	      Signal*sig = new Signal(*cur, $4, $5);
+	      Signal*sig = new Signal(*cur, $4, $5 ? $5->clone() : 0);
 	      FILE_NAME(sig, @1);
 	      active_scope->bind_name(*cur, sig);
 	}
@@ -546,6 +547,8 @@ block_declarative_item
   | subprogram_declaration
 
   | subprogram_body
+
+  | subtype_declaration
 
   | type_declaration
 
@@ -757,13 +760,28 @@ composite_type_definition
   | K_array '(' index_subtype_definition_list ')' K_of subtype_indication
       { std::list<ExpRange*> r;
 	// NULL boundaries indicate unbounded array type
-	r.push_back(new ExpRange(NULL, NULL, ExpRange::DOWNTO));
-	VTypeArray*tmp = new VTypeArray($6, &r);
-	$$ = tmp;
+	ExpRange*tmp = new ExpRange(NULL, NULL, ExpRange::DOWNTO);
+	r.push_back(tmp);
+	FILE_NAME(tmp, @1);
+	VTypeArray*arr = new VTypeArray($6, &r);
+	$$ = arr;
       }
 
   | record_type_definition
       { $$ = $1; }
+  ;
+
+concurrent_assertion_statement
+  : assertion_statement
+      {
+        /* See more explanations at IEEE 1076-2008 P11.5 */
+        std::list<SequentialStmt*> stmts;
+        stmts.push_back($1);
+        stmts.push_back(new WaitStmt(WaitStmt::FINAL, NULL));
+        ProcessStatement*tmp = new ProcessStatement(empty_perm_string, NULL, &stmts);
+        FILE_NAME(tmp, @1);
+        $$ = tmp;
+      }
   ;
 
   /* The when...else..when...else syntax is not a general expression
@@ -771,18 +789,18 @@ composite_type_definition
      create Expression objects for it, but the parser will only
      recognize it it in specific situations. */
 concurrent_conditional_signal_assignment /* IEEE 1076-2008 P11.6 */
-  : name LEQ waveform K_when expression else_when_waveforms ';'
-      { ExpConditional*tmp = new ExpConditional($5, $3, $6);
-	FILE_NAME(tmp, @3);
-	delete $3;
-	delete $6;
+  : name LEQ waveform K_when expression else_when_waveforms_opt ';'
+      { std::list<ExpConditional::case_t*>*options;
+        options = $6 ? $6 : new std::list<ExpConditional::case_t*>;
+        options->push_front(new ExpConditional::case_t($5, $3));
 
-        ExpName*name = dynamic_cast<ExpName*> ($1);
-	assert(name);
-	SignalAssignment*tmpa = new SignalAssignment(name, tmp);
-	FILE_NAME(tmpa, @1);
+        ExpName*name = dynamic_cast<ExpName*>($1);
+        assert(name);
+        CondSignalAssignment*tmp = new CondSignalAssignment(name, *options);
 
-	$$ = tmpa;
+        FILE_NAME(tmp, @1);
+        delete options;
+        $$ = tmp;
       }
 
   /* Error recovery rules. */
@@ -825,6 +843,12 @@ else_when_waveforms
 	$$ = tmp;
       }
   ;
+
+else_when_waveforms_opt
+  : else_when_waveforms { $$ = $1; }
+  | { $$ = 0; }
+  ;
+
 
 else_when_waveform
   : K_else waveform K_when expression
@@ -875,6 +899,7 @@ concurrent_signal_assignment_statement /* IEEE 1076-2008 P11.6 */
 concurrent_statement
   : component_instantiation_statement
   | concurrent_signal_assignment_statement
+  | concurrent_assertion_statement
   | generate_statement
   | process_statement
   ;
@@ -1126,6 +1151,8 @@ expression_list
 expression
   : expression_logical
       { $$ = $1; }
+  | range
+      { $$ = $1; }
   ;
 
 /*
@@ -1292,6 +1319,7 @@ file_open_information
      {
         ExpName*mode = new ExpName(lex_strings.make($2));
         delete[]$2;
+        FILE_NAME(mode, @1);
         $$ = new file_open_info_t(new ExpString($4), mode);
      }
   | K_is STRING_LITERAL
@@ -1660,7 +1688,6 @@ loop_statement
 	BasicLoopStatement* tmp = new BasicLoopStatement(loop_name, $3);
 	FILE_NAME(tmp, @2);
 
-	sorrymsg(@1, "Loop statements are not supported.\n");
 	$$ = tmp;
       };
 
@@ -1674,7 +1701,17 @@ mode_opt : mode {$$ = $1;} | {$$ = PORT_NONE;} ;
 
 name /* IEEE 1076-2008 P8.1 */
   : IDENTIFIER /* simple_name (IEEE 1076-2008 P8.2) */
-      { Expression*tmp = new ExpName(lex_strings.make($1));
+      { Expression*tmp;
+        /* Check if the IDENTIFIER is one of CHARACTER enums (LF, CR, etc.) */
+        tmp = parse_char_enums($1);
+        if(!tmp) {
+            perm_string name = lex_strings.make($1);
+            /* There are functions that have the same name types, e.g. integer */
+            if(!active_scope->find_subprogram(name).empty() && !parse_type_by_name(name))
+                tmp = new ExpFunc(name);
+            else
+                tmp = new ExpName(name);
+        }
         FILE_NAME(tmp, @1);
         delete[]$1;
         $$ = tmp;
@@ -1683,37 +1720,39 @@ name /* IEEE 1076-2008 P8.1 */
   | selected_name
       { $$ = $1; }
 
+  | indexed_name
+      { $$ = $1; }
+
+  | selected_name '(' expression_list ')'
+    {
+        ExpName*name = dynamic_cast<ExpName*>($1);
+        assert(name);
+        name->add_index($3);
+        delete $3;  // contents of the list is moved to the selected_name
+    }
+  ;
+
+indexed_name
   /* Note that this rule can match array element selects and various
      function calls. The only way we can tell the difference is from
      left context, namely whether the name is a type name or function
      name. If none of the above, treat it as a array element select. */
-  | IDENTIFIER argument_list
-      { perm_string name = lex_strings.make($1);
-	delete[]$1;
-	if (active_scope->is_vector_name(name) || is_subprogram_param(name)) {
-	      ExpName*tmp = new ExpName(name, $2);
-	      $$ = tmp;
-	} else {
-	      ExpFunc*tmp = new ExpFunc(name, $2);
-	      $$ = tmp;
-	}
-	FILE_NAME($$, @1);
+  : IDENTIFIER '(' expression_list ')'
+      { Expression*tmp;
+        perm_string name = lex_strings.make($1);
+        delete[]$1;
+        if (active_scope->is_vector_name(name) || is_subprogram_param(name))
+            tmp = new ExpName(name, $3);
+        else
+            tmp = new ExpFunc(name, $3);
+        FILE_NAME(tmp, @1);
+        $$ = tmp;
       }
-  | IDENTIFIER '(' range ')'
-      { ExpName*tmp = new ExpName(lex_strings.make($1), $3->msb(), $3->lsb());
-	FILE_NAME(tmp, @1);
-	delete[]$1;
-	$$ = tmp;
-      }
-  | selected_name '(' range ')'
-      { ExpName*tmp = dynamic_cast<ExpName*> ($1);
-	tmp->set_range($3->msb(), $3->lsb());
-	$$ = tmp;
-      }
-  | selected_name '(' expression ')'
-      { ExpName*tmp = dynamic_cast<ExpName*> ($1);
-	tmp->set_range($3, NULL);
-	$$ = tmp;
+  | indexed_name '(' expression_list ')'
+      { ExpName*name = dynamic_cast<ExpName*>($1);
+        assert(name);
+        name->add_index($3);
+        $$ = $1;
       }
   ;
 
@@ -1887,7 +1926,7 @@ primary
   | name '\'' IDENTIFIER argument_list_opt
       { ExpAttribute*tmp = NULL;
 	perm_string attr = lex_strings.make($3);
-        ExpName*base = dynamic_cast<ExpName*>($1);
+	ExpName*base = dynamic_cast<ExpName*>($1);
 	const VType*type = parse_type_by_name(base->peek_name());
 
 	if(type) {
@@ -1896,7 +1935,7 @@ primary
 	    tmp = new ExpObjAttribute(base, attr, $4);
 	}
 
-	FILE_NAME(tmp, @3);
+	FILE_NAME(tmp, @1);
 	delete[]$3;
 	$$ = tmp;
       }
@@ -1913,8 +1952,8 @@ primary
       }
   | REAL_LITERAL
       { ExpReal*tmp = new ExpReal($1);
-    FILE_NAME(tmp, @1);
-    $$ = tmp;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   | STRING_LITERAL
       { ExpString*tmp = new ExpString($1);
@@ -1987,18 +2026,21 @@ procedure_call
   : IDENTIFIER ';'
       {
     ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1));
+    FILE_NAME(tmp, @1);
     delete[] $1;
     $$ = tmp;
       }
   | IDENTIFIER '(' association_list ')' ';'
       {
     ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1), $3);
+    FILE_NAME(tmp, @1);
     delete[] $1;
     $$ = tmp;
       }
   | IDENTIFIER argument_list ';'
       {
     ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1), $2);
+    FILE_NAME(tmp, @1);
     delete[] $1;
     delete $2; // parameters are copied in this variant
     $$ = tmp;
@@ -2051,7 +2093,7 @@ process_statement
     process_declarative_part_opt
     K_begin sequence_of_statements
     K_end K_postponed_opt K_process identifier_opt ';'
-      { perm_string iname = $1? lex_strings.make($1) : perm_string();
+      { perm_string iname = $1? lex_strings.make($1) : empty_perm_string;
 	if ($1) delete[]$1;
 	if ($12) {
 	      if (iname.nil()) {
@@ -2113,6 +2155,7 @@ process_sensitivity_list
 range
   : simple_expression direction simple_expression
       { ExpRange* tmp = new ExpRange($1, $3, $2);
+	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   | name '\'' K_range
@@ -2121,6 +2164,7 @@ range
         ExpName*name = NULL;
         if((name = dynamic_cast<ExpName*>($1))) {
             tmp = new ExpRange(name, false);
+            FILE_NAME(tmp, @1);
         } else {
 	    errormsg(@1, "'range attribute can be used with named expressions only");
         }
@@ -2132,6 +2176,7 @@ range
         ExpName*name = NULL;
         if((name = dynamic_cast<ExpName*>($1))) {
             tmp = new ExpRange(name, true);
+            FILE_NAME(tmp, @1);
         } else {
 	    errormsg(@1, "'reverse_range attribute can be used with named expressions only");
         }
@@ -2475,6 +2520,7 @@ simple_expression_2
 		    tmp = new ExpArithmetic(item.op, tmp, item.term);
 	}
 	delete lst;
+	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   ;
@@ -2535,12 +2581,10 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
     K_begin subprogram_statement_part K_end
     subprogram_kind_opt identifier_opt ';'
       { SubprogramHeader*prog = $1;
-	SubprogramHeader*tmp = active_scope->recall_subprogram(prog->name());
-	if (tmp && prog->compare_specification(tmp)) {
+	SubprogramHeader*tmp = active_scope->recall_subprogram(prog);
+	if (tmp) {
 	      delete prog;
 	      prog = tmp;
-	} else if (tmp) {
-	      errormsg(@1, "Subprogram specification for %s doesn't match specification in package header.\n", prog->name().str());
 	}
 
 	SubprogramBody*body = new SubprogramBody();
@@ -2548,7 +2592,7 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
 	body->set_statements($4);
 
 	prog->set_body(body);
-	active_scope->bind_name(prog->name(), prog);
+	active_scope->bind_subprogram(prog->name(), prog);
 	active_sub = NULL;
       }
 
@@ -2566,7 +2610,7 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
 
 subprogram_declaration
   : subprogram_specification ';'
-      { if ($1) active_scope->bind_name($1->name(), $1); }
+      { if ($1) active_scope->bind_subprogram($1->name(), $1); }
   ;
 
 subprogram_declarative_item /* IEEE 1079-2008 P4.3 */
@@ -2607,12 +2651,21 @@ subprogram_statement_part
 subtype_declaration
   : K_subtype IDENTIFIER K_is subtype_indication ';'
       { perm_string name = lex_strings.make($2);
-	delete[] $2;
 	if ($4 == 0) {
 	      errormsg(@1, "Failed to declare type name %s.\n", name.str());
 	} else {
-	      active_scope->bind_name(name, $4);
+	      VTypeDef*tmp;
+	      map<perm_string,VTypeDef*>::iterator cur = active_scope->incomplete_types.find(name);
+	      if (cur == active_scope->incomplete_types.end()) {
+		    tmp = new VSubTypeDef(name, $4);
+		    active_scope->bind_name(name, tmp);
+	      } else {
+		    tmp = cur->second;
+		    tmp->set_definition($4);
+		    active_scope->incomplete_types.erase(cur);
+	      }
 	}
+	delete[]$2;
       }
   ;
 
@@ -2697,9 +2750,6 @@ type_declaration
 		    tmp->set_definition($4);
 		    active_scope->incomplete_types.erase(cur);
 	      }
-	      if(const VTypeEnum*enum_type = dynamic_cast<const VTypeEnum*>($4)) {
-		    active_scope->use_enum(enum_type);
-	      }
 	}
 	delete[]$2;
       }
@@ -2724,6 +2774,7 @@ type_declaration
 type_definition
   : '(' enumeration_literal_list ')'
       { VTypeEnum*tmp = new VTypeEnum($2);
+	active_scope->use_enum(tmp);
 	delete $2;
 	$$ = tmp;
       }
@@ -2821,6 +2872,11 @@ wait_statement
         FILE_NAME(tmp, @1);
         $$ = tmp;
       }
+  | K_wait ';'
+      { WaitStmt*tmp = new WaitStmt(WaitStmt::FINAL, NULL);
+        FILE_NAME(tmp, @1);
+        $$ = tmp;
+      }
   ;
 
 waveform
@@ -2846,6 +2902,10 @@ waveform_elements
 waveform_element
   : expression
       { $$ = $1; }
+  | expression K_after expression
+      { ExpDelay*tmp = new ExpDelay($1, $3);
+        FILE_NAME(tmp, @1);
+        $$ = tmp; }
   | K_null
       { $$ = 0; }
   ;
