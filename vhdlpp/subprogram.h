@@ -146,9 +146,9 @@ class SubprogramHeader : public LineInfo {
 class SubprogramStdHeader : public SubprogramHeader
 {
     public:
-      SubprogramStdHeader(perm_string name, std::list<InterfacePort*>*ports,
+      SubprogramStdHeader(perm_string nam, std::list<InterfacePort*>*ports,
               const VType*return_type) :
-          SubprogramHeader(name, ports, return_type) {}
+          SubprogramHeader(nam, ports, return_type) {}
       virtual ~SubprogramStdHeader() {};
 
       bool is_std() const { return true; }
