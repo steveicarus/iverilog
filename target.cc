@@ -183,6 +183,12 @@ void target_t::lpm_ff(const NetFF*)
 	    "Unhandled NetFF." << endl;
 }
 
+void target_t::lpm_latch(const NetLatch*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetLatch." << endl;
+}
+
 void target_t::lpm_mult(const NetMult*)
 {
       cerr << "target (" << typeid(*this).name() << "): "

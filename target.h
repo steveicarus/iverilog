@@ -98,6 +98,7 @@ struct target_t {
       virtual void lpm_mult(const NetMult*);
       virtual void lpm_mux(const NetMux*);
       virtual void lpm_pow(const NetPow*);
+      virtual void lpm_latch(const NetLatch*);
 
       virtual bool concat(const NetConcat*);
       virtual bool part_select(const NetPartSelect*);

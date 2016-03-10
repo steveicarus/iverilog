@@ -123,6 +123,12 @@ bool NetFF::emit_node(struct target_t*tgt) const
       return true;
 }
 
+bool NetLatch::emit_node(struct target_t*tgt) const
+{
+      tgt->lpm_latch(this);
+      return true;
+}
+
 bool NetLiteral::emit_node(struct target_t*tgt) const
 {
       return tgt->net_literal(this);

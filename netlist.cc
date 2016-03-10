@@ -1306,6 +1306,60 @@ const verinum& NetFF::sset_value() const
       return sset_value_;
 }
 
+/*
+ * The NetLatch class represents an LPM_LATCH device. The pinout is assigned
+ * like so:
+ *    0  -- Enable
+ *    1  -- Data
+ *    2  -- Q
+ */
+
+NetLatch::NetLatch(NetScope*s, perm_string n, unsigned width__)
+: NetNode(s, n, 3), width_(width__)
+{
+      pin_Enable().set_dir(Link::INPUT);
+      pin_Data().set_dir(Link::INPUT);
+      pin_Q().set_dir(Link::OUTPUT);
+}
+
+NetLatch::~NetLatch()
+{
+}
+
+unsigned NetLatch::width() const
+{
+      return width_;
+}
+
+Link& NetLatch::pin_Enable()
+{
+      return pin(0);
+}
+
+const Link& NetLatch::pin_Enable() const
+{
+      return pin(0);
+}
+
+Link& NetLatch::pin_Data()
+{
+      return pin(1);
+}
+
+const Link& NetLatch::pin_Data() const
+{
+      return pin(1);
+}
+
+Link& NetLatch::pin_Q()
+{
+      return pin(2);
+}
+
+const Link& NetLatch::pin_Q() const
+{
+      return pin(2);
+}
 
 NetAbs::NetAbs(NetScope*s, perm_string n, unsigned w)
 : NetNode(s, n, 2), width_(w)

@@ -688,6 +688,14 @@ void NetFF::dump_node(ostream&o, unsigned ind) const
       dump_obj_attr(o, ind+4);
 }
 
+void NetLatch::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "LPM_LATCH: " << name()
+	<< " scope=" << scope_path(scope()) << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
 void NetLiteral::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "constant real " << real_
