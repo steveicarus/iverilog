@@ -76,6 +76,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_compare(const NetCompare*);
       void lpm_divide(const NetDivide*);
       void lpm_ff(const NetFF*);
+      void lpm_latch(const NetLatch*);
       void lpm_modulo(const NetModulo*);
       void lpm_mult(const NetMult*);
       void lpm_mux(const NetMux*);
@@ -388,6 +389,18 @@ struct ivl_lpm_s {
 		  ivl_expr_t aset_value;
 		  ivl_expr_t sset_value;
 	    } ff;
+	    struct ivl_lpm_latch_s {
+		  unsigned negedge_flag :1;
+		  ivl_nexus_t we;
+		  union {
+			ivl_nexus_t*pins;
+			ivl_nexus_t pin;
+		  } q;
+		  union {
+			ivl_nexus_t*pins;
+			ivl_nexus_t pin;
+		  } d;
+	    } latch;
 
 	    struct ivl_lpm_mux_s {
 		  unsigned size;

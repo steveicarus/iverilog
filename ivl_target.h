@@ -336,7 +336,8 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_SUB    =  8,
       IVL_LPM_SUBSTITUTE=39,
       /* IVL_LPM_RAM =  9, / obsolete */
-      IVL_LPM_UFUNC  = 14
+      IVL_LPM_UFUNC  = 14,
+      IVL_LPM_LATCH  = 40
 } ivl_lpm_type_t;
 
 /* The path edge type is the edge type used to select a specific
@@ -1313,6 +1314,11 @@ extern unsigned    ivl_lpm_lineno(ivl_lpm_t net);
  * single ivl_lpm_data input are the same with, ivl_lpm_width. This
  * device carries a vector like other LPM devices.
  *
+ * - Latch (IVL_LPM_LATCH)
+ * This data is an asynchronous latch. The ivl_lpm_q output and
+ * single ivl_lpm_data input are the same with, ivl_lpm_width. This
+ * device carries a vector like other LPM devices.
+ *
  * - Memory port (IVL_LPM_RAM) (deprecated in favor of IVL_LPM_ARRAY)
  * These are structural ports into a memory device. They represent
  * address/data ports of a memory device that the context can hook to
@@ -1428,18 +1434,18 @@ extern unsigned    ivl_lpm_negedge(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
   /* IVL_LPM_UFUNC */
 extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
-  /* IVL_LPM_FF */
+  /* IVL_LPM_FF IVL_LPM_LATCH*/
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
   /* IVL_LPM_ADD IVL_LPM_CONCAT IVL_LPM_FF IVL_LPM_PART IVL_LPM_MULT
      IVL_LPM_MUX IVL_LPM_POW IVL_LPM_SHIFTL IVL_LPM_SHIFTR IVL_LPM_SUB
-     IVL_LPM_UFUNC IVL_LPM_SUBSTITUTE */
+     IVL_LPM_UFUNC IVL_LPM_SUBSTITUTE IVL_LPM_LATCH*/
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_POW IVL_LPM_SUB IVL_LPM_CMP_EQ
      IVL_LPM_CMP_EEQ IVL_LPM_CMP_EQX IVL_LPM_CMP_EQZ IVL_LPM_CMP_NEE */
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_PART IVL_LPM_POW
      IVL_LPM_SUB IVL_LPM_UFUNC IVL_LPM_CMP_EEQ IVL_LPM_CMP_EQX
-     IVL_LPM_CMP_EQZ IVL_LPM_CMP_NEE IVL_LPM_SUBSTITUTE */
+     IVL_LPM_CMP_EQZ IVL_LPM_CMP_NEE IVL_LPM_SUBSTITUTE IVL_LPM_LATCH*/
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net);
 extern ivl_drive_t ivl_lpm_drive0(ivl_lpm_t net);
 extern ivl_drive_t ivl_lpm_drive1(ivl_lpm_t net);

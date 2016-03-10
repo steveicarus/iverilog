@@ -1148,6 +1148,8 @@ extern "C" ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net)
       switch (net->type) {
 	  case IVL_LPM_FF:
 	    return net->u_.ff.we;
+	  case IVL_LPM_LATCH:
+	    return net->u_.latch.we;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1220,6 +1222,9 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_FF:
 	    assert(idx == 0);
 	    return net->u_.ff.d.pin;
+	  case IVL_LPM_LATCH:
+	    assert(idx == 0);
+	    return net->u_.latch.d.pin;
 
 	  case IVL_LPM_CONCAT:
 	  case IVL_LPM_CONCATZ:
@@ -1344,6 +1349,8 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net)
 
 	  case IVL_LPM_FF:
 	    return net->u_.ff.q.pin;
+	  case IVL_LPM_LATCH:
+	    return net->u_.latch.q.pin;
 
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.q;

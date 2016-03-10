@@ -2051,6 +2051,45 @@ void dll_target::lpm_ff(const NetFF*net)
       nexus_lpm_add(obj->u_.ff.d.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 }
 
+void dll_target::lpm_latch(const NetLatch*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type  = IVL_LPM_LATCH;
+      obj->name  = net->name();
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+      FILE_NAME(obj, net);
+
+      obj->width = net->width();
+
+      scope_add_lpm(obj->scope, obj);
+
+      const Nexus*nex;
+
+	/* If there is a clock enable, then connect it up to the FF
+	   device. */
+      if (net->pin_Enable().is_linked()) {
+	    nex = net->pin_Enable().nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.latch.we = nex->t_cookie();
+	    assert(obj->u_.latch.we);
+	    nexus_lpm_add(obj->u_.latch.we, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+      } else {
+	    obj->u_.latch.we = 0;
+      }
+
+      nex = net->pin_Q().nexus();
+      assert(nex->t_cookie());
+      obj->u_.latch.q.pin = nex->t_cookie();
+      nexus_lpm_add(obj->u_.latch.q.pin, obj, 0,
+		    IVL_DR_STRONG, IVL_DR_STRONG);
+
+      nex = net->pin_Data().nexus();
+      assert(nex->t_cookie());
+      obj->u_.latch.d.pin = nex->t_cookie();
+      nexus_lpm_add(obj->u_.latch.d.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+}
+
 /*
  * Make the NetMult object into an IVL_LPM_MULT node.
  */
