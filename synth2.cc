@@ -28,6 +28,52 @@
 
 using namespace std;
 
+/* General notes on enables and bitmasks.
+ *
+ * When synthesising an asynchronous process that contains conditional
+ * statements (if/case statements), we need to determine the conditions
+ * that cause each nexus driven by that process to be updated. If a
+ * nexus is not updated under all circumstances, we must infer a latch.
+ * To this end, we generate an enable signal for each output nexus. As
+ * we walk the statement tree for the process, for each substatement we
+ * pass the enable signals generated so far into the synth_async method,
+ * and on return from the synth_async method, the enable signals will be
+ * updated to reflect any conditions introduced by that substatement.
+ * Once we have synthesised all the statements for that process, if an
+ * enable signal is not tied high, we must infer a latch for that nexus.
+ *
+ * When synthesising a synchronous process, we use the synth_async method
+ * to synthesise the combinatorial inputs to the D pins of the flip-flops
+ * we infer for that process. In this case the enable signal can be used
+ * as a clock enable for the flip-flop. This saves us explicitly feeding
+ * back the flip-flop output to undriven inputs of any synthesised muxes.
+ *
+ * The strategy described above is not sufficient when not all bits in
+ * a nexus are treated identically (i.e. different conditional clauses
+ * drive differing parts of the same vector). To handle this properly,
+ * we would (potentially) need to generate a separate enable signal for
+ * each bit in the vector. This would be a lot of work, particularly if
+ * we wanted to eliminate duplicates. For now, the strategy employed is
+ * to maintain a bitmask for each output nexus that identifies which bits
+ * in the nexus are unconditionally driven (driven by every clause). When
+ * we finish synthesising an asynchronous process, if the bitmask is not
+ * all ones, we must infer a latch. This currently results in an error,
+ * because to safely synthesise such a latch we would need the bit-level
+ * gate enables. When we finish synthesising a synchronous process, if
+ * the bitmask is not all ones, we explicitly feed the flip-flop outputs
+ * back to undriven inputs of any synthesised muxes to ensure undriven
+ * parts of the vector retain their previous state when the flip-flop is
+ * clocked.
+ *
+ * The enable signals are passed as links to the current output nexus
+ * for each signal. If an enable signal is not linked, this is treated
+ * as if the signal was tied low.
+ *
+ * The bitmasks are passed as bool vectors. 'true' indicates a bit is
+ * unconditionally driven. An empty vector (size = 0) indicates that
+ * the current substatement doesn't drive any bits in the nexus.
+ */
+
 static void qualify_enable(Design*des, NetScope*scope, NetNet*qualifier,
 			   bool active_state, NetLogic::TYPE gate_type,
 			   Link&enable_i, Link&enable_o)
