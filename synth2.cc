@@ -165,10 +165,10 @@ static void merge_sequential_masks(NetProc::mask_t&top_mask, NetProc::mask_t&sub
 
 static void merge_parallel_masks(NetProc::mask_t&top_mask, NetProc::mask_t&sub_mask)
 {
-      if (top_mask.size() == 0)
+      if (sub_mask.size() == 0)
 	    return;
 
-      if (sub_mask.size() == 0) {
+      if (top_mask.size() == 0) {
 	    top_mask = sub_mask;
 	    return;
       }
