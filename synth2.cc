@@ -1581,28 +1581,44 @@ bool NetProcTop::synth_async(Design*des)
       bool flag = statement_->synth_async(des, scope(), nex_set, nex_out, enables, bitmasks);
       if (!flag) return false;
 
-      bool latch_flag = false;
-      for (unsigned idx = 0 ; idx < enables.pin_count() ; idx += 1) {
-	    if (!enables.pin(idx).is_linked(scope()->tie_hi())) {
+      flag = tie_off_floating_inputs_(des, nex_set, nex_in, bitmasks, false);
+      if (!flag) return false;
+
+      for (unsigned idx = 0 ;  idx < nex_set.size() ;  idx += 1) {
+
+	    if (enables.pin(idx).is_linked(scope()->tie_hi())) {
+		  connect(nex_set[idx].lnk, nex_out.pin(idx));
+	    } else {
 		  cerr << get_fileline() << ": warning: "
 		       << "A latch has been inferred for '"
 		       << nex_set[idx].lnk.nexus()->pick_any_net()->name()
 		       << "'." << endl;
-		  latch_flag = true;
+
+		  if (debug_synth2) {
+			cerr << get_fileline() << ": debug: "
+			      << "Top level making a "
+			      << nex_set[idx].wid << "-wide "
+			      << "NetLatch device." << endl;
+		  }
+
+		  NetLatch*latch = new NetLatch(scope(), scope()->local_symbol(),
+						nex_set[idx].wid);
+		  des->add_node(latch);
+		  latch->set_line(*this);
+
+		  NetNet*tmp = nex_out.pin(idx).nexus()->pick_any_net();
+		  tmp->set_line(*this);
+		  assert(tmp);
+
+		  tmp = crop_to_width(des, tmp, latch->width());
+
+		  connect(nex_set[idx].lnk, latch->pin_Q());
+		  connect(tmp->pin(0), latch->pin_Data());
+
+		  assert (enables.pin(idx).is_linked());
+		  connect(enables.pin(idx), latch->pin_Enable());
 	    }
       }
-      if (latch_flag) {
-	    cerr << get_fileline() << ": sorry: Latches are not "
-		 << "currently supported in synthesis." << endl;
-	    des->errors += 1;
-	    return false;
-      }
-
-      flag = tie_off_floating_inputs_(des, nex_set, nex_in, bitmasks, false);
-      if (!flag) return false;
-
-      for (unsigned idx = 0 ;  idx < nex_set.size() ;  idx += 1)
-	    connect(nex_set[idx].lnk, nex_out.pin(idx));
 
       synthesized_design_ = des;
       return true;
