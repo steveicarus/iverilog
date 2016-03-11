@@ -436,6 +436,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       if (lpm) switch (ivl_lpm_type(lpm)) {
 
 	  case IVL_LPM_FF:
+	  case IVL_LPM_LATCH:
 	  case IVL_LPM_ABS:
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_ARRAY:
