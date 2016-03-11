@@ -364,6 +364,7 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 	case IVL_LPM_CONCATZ:
 	case IVL_LPM_DIVIDE:
 	case IVL_LPM_FF:
+	case IVL_LPM_LATCH:
 	case IVL_LPM_MOD:
 	case IVL_LPM_MULT:
 	case IVL_LPM_MUX:
@@ -1437,8 +1438,27 @@ static void emit_negedge_dff_prim(void)
       fprintf(vlog_out, "endprimitive\n");
 }
 
+static void emit_latch_prim(void)
+{
+      fprintf(vlog_out, "\n");
+      fprintf(vlog_out, "/* Icarus generated UDP to represent a synthesized "
+                        "LATCH. */\n");
+      fprintf(vlog_out, "primitive IVL_LATCH "
+                        "(q, en, d);\n");
+      fprintf(vlog_out, "%*coutput q;\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*cinput en, d;\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*creg q;\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*ctable\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*c 1 0 : ? : 0 ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c 1 1 : ? : 1 ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c 0 ? : ? : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cendtable\n", indent_incr, ' ');
+      fprintf(vlog_out, "endprimitive\n");
+}
+
 static unsigned need_posedge_dff_prim = 0;
 static unsigned need_negedge_dff_prim = 0;
+static unsigned need_latch_prim = 0;
 
 /*
  * Synthesis creates a D-FF LPM object. To allow this to be simulated as
@@ -1456,7 +1476,7 @@ void emit_icarus_generated_udps()
 {
 	/* Emit the copyright information and LGPL note and then emit any
 	 * needed primitives. */
-      if (need_posedge_dff_prim || need_negedge_dff_prim) {
+      if (need_posedge_dff_prim || need_negedge_dff_prim || need_latch_prim) {
 	    fprintf(vlog_out,
 "\n"
 "/*\n"
@@ -1484,6 +1504,7 @@ void emit_icarus_generated_udps()
       }
       if (need_posedge_dff_prim) emit_posedge_dff_prim();
       if (need_negedge_dff_prim) emit_negedge_dff_prim();
+      if (need_latch_prim) emit_latch_prim();
 }
 
 static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
@@ -1604,6 +1625,41 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
 	    need_negedge_dff_prim = 1;
       else
 	    need_posedge_dff_prim = 1;
+}
+
+static void emit_lpm_latch(ivl_scope_t scope, ivl_lpm_t lpm)
+{
+      ivl_nexus_t nex;
+      unsigned emitted;
+
+      fprintf(vlog_out, "%*c", indent, ' ');
+      fprintf(vlog_out, "IVL_LATCH");
+      emit_lpm_strength(lpm);
+	/* The lpm LATCH does not support any delays. */
+	/* The LATCH name is a temporary so we don't bother to print it unless
+	 * we have a range. Then we need to use a made up name. */
+      if (ivl_lpm_width(lpm) > 1) {
+	    fprintf(vlog_out, " synth_%p [%u:0]", lpm, ivl_lpm_width(lpm)-1U);
+      }
+      fprintf(vlog_out, " (");
+	/* Emit the q pin. */
+      emit_name_of_nexus(scope, ivl_lpm_q(lpm), 0);
+      fprintf(vlog_out, ", ");
+	/* Emit the enable pin expression(s) if needed. */
+      emitted = 0;
+      nex = ivl_lpm_enable(lpm);
+      if (nex) {
+	    emit_nexus_as_ca(scope, nex, 0, 0);
+	    emitted = 1;
+      }
+      if (!emitted) fprintf(vlog_out, "1'b1");
+      fprintf(vlog_out, ", ");
+	/* Emit the data pin expression(s). */
+      nex = ivl_lpm_data(lpm, 0);
+      assert (nex);
+      emit_nexus_as_ca(scope, nex, 0, 0);
+      fprintf(vlog_out, ");\n");
+	    need_latch_prim = 1;
 }
 
 static ivl_signal_t get_output_from_nexus(ivl_scope_t scope, ivl_nexus_t nex,
@@ -1727,6 +1783,10 @@ void emit_lpm(ivl_scope_t scope, ivl_lpm_t lpm)
 	/* If the LPM is a D-FF then we need to emit it as a UDP. */
       if (type == IVL_LPM_FF) {
 	    emit_lpm_ff(scope, lpm);
+	    return;
+      }
+      if (type == IVL_LPM_LATCH) {
+	    emit_lpm_latch(scope, lpm);
 	    return;
       }
 // HERE: Look for a select passed to a pull device (pr2019553).
@@ -2199,6 +2259,7 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		      case IVL_LPM_CMP_NEE:   fprintf(stderr, "nee"); break;
 		      case IVL_LPM_DIVIDE:    fprintf(stderr, "divide"); break;
 		      case IVL_LPM_FF:        fprintf(stderr, "dff"); break;
+		      case IVL_LPM_LATCH:     fprintf(stderr, "latch"); break;
 		      case IVL_LPM_MOD:       fprintf(stderr, "mod"); break;
 		      case IVL_LPM_MULT:      fprintf(stderr, "mult"); break;
 		      case IVL_LPM_MUX:       fprintf(stderr, "mux"); break;
