@@ -1408,7 +1408,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // that connects to the port.
 
 	    NetNet*sig = 0;
-	    if (prts.empty() || (prts[0]->port_type() == NetNet::PINPUT)) {
+	    NetNet::PortType ptype = prts[0]->port_type();
+	    if (prts.empty() || (ptype == NetNet::PINPUT)) {
 
 		    // Special case: If the input port is an unpacked
 		    // array, then there should be no sub-ports and
@@ -1501,7 +1502,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 					   sig->vector_width());
 		  }
 
-	    } else if (prts[0]->port_type() == NetNet::PINOUT) {
+	    } else if (ptype == NetNet::PINOUT) {
 
 		    // For now, do not support unpacked array outputs.
 		  ivl_assert(*this, prts[0]->unpacked_dimensions()==0);
@@ -1562,7 +1563,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    } else {
 
 		    /* Port type must be OUTPUT here. */
-		  ivl_assert(*this, prts[0]->port_type() == NetNet::POUTPUT);
+		  ivl_assert(*this, ptype == NetNet::POUTPUT);
 
 		    // Special case: If the output port is an unpacked
 		    // array, then there should be no sub-ports and
@@ -1625,11 +1626,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			}
 			prts_vector_width = sig->vector_width();
 			for (unsigned pidx = 0; pidx < prts.size(); pidx += 1) {
-			      prts[pidx]->port_type(NetNet::NOT_A_PORT);
 			      prts[pidx] = cast_to_int4(des, scope, prts[pidx],
 			                               prts_vector_width /
 			                               instance.size());
-			      prts[pidx]->port_type(NetNet::POUTPUT);
 			}
 		  }
 
@@ -1638,9 +1637,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  if ((sig->data_type() == IVL_VT_REAL ) &&
 		      !prts.empty() && (prts[0]->data_type() != IVL_VT_REAL )) {
 			prts_vector_width -= prts[0]->vector_width() - 1;
-			prts[0]->port_type(NetNet::NOT_A_PORT);
 			prts[0] = cast_to_real(des, scope, prts[0]);
-			prts[0]->port_type(NetNet::POUTPUT);
 			  // No support for multiple real drivers.
 			if (instance.size() != 1) {
 			      cerr << pins[idx]->get_fileline() << ": error: "
@@ -1658,10 +1655,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  if ((sig->data_type() == IVL_VT_BOOL ) &&
 		      !prts.empty() && (prts[0]->data_type() == IVL_VT_LOGIC )) {
 			for (unsigned pidx = 0; pidx < prts.size(); pidx += 1) {
-			      prts[pidx]->port_type(NetNet::NOT_A_PORT);
 			      prts[pidx] = cast_to_int2(des, scope, prts[pidx],
 			                                prts[pidx]->vector_width());
-			      prts[pidx]->port_type(NetNet::POUTPUT);
 			}
 		  }
 
@@ -1685,7 +1680,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 #ifndef NDEBUG
 	    if ((! prts.empty())
-		&& (prts[0]->port_type() != NetNet::PINPUT)) {
+		&& (ptype != NetNet::PINPUT)) {
 		  assert(sig->type() != NetNet::REG);
 	    }
 #endif
@@ -1718,7 +1713,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		&& (prts_vector_width != sig->vector_width())) {
 		  bool as_signed = false;
 
-		  switch (prts[0]->port_type()) {
+		  switch (ptype) {
 		    case NetNet::POUTPUT:
 			as_signed = prts[0]->get_signed();
 			break;
@@ -1742,7 +1737,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			" bits, got " << sig->vector_width() << "." << endl;
 
 		    // Delete this when inout ports pad correctly.
-		  if (prts[0]->port_type() == NetNet::PINOUT) {
+		  if (ptype == NetNet::PINOUT) {
 		     if (prts_vector_width > sig->vector_width()) {
 			cerr << get_fileline() << ":        : Leaving "
 			     << (prts_vector_width-sig->vector_width())
@@ -1762,7 +1757,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			     << " high bits of the port."
 			     << endl;
 		  } else {
-			if (prts[0]->port_type() == NetNet::PINPUT) {
+			if (ptype == NetNet::PINPUT) {
 			      cerr << get_fileline() << ":        : Pruning ";
 			} else {
 			      cerr << get_fileline() << ":        : Padding ";
@@ -1774,7 +1769,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  }
 
 		  sig = resize_net_to_port_(des, scope, sig, prts_vector_width,
-					    prts[0]->port_type(), as_signed);
+					    ptype, as_signed);
 	    }
 
 	      // Connect the sig expression that is the context of the
@@ -1825,7 +1820,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  for (unsigned ldx = 0 ;  ldx < prts.size() ;  ldx += 1)
 			connect(prts[ldx]->pin(0), sig->pin(0));
 
-	    } else switch (prts[0]->port_type()) {
+	    } else switch (ptype) {
 		case NetNet::POUTPUT:
 		  ctmp = new NetConcat(scope, scope->local_symbol(),
 				       prts_vector_width, prts.size());
