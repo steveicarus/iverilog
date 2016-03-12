@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -86,7 +86,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_CONCAT K_CONCAT8 K_DEBUG K_DELAY K_DFF_N K_DFF_N_ACLR
 %token K_DFF_N_ASET K_DFF_P K_DFF_P_ACLR K_DFF_P_ASET
 %token K_ENUM2 K_ENUM2_S K_ENUM4 K_ENUM4_S K_EVENT K_EVENT_OR
-%token K_EXPORT K_EXTEND_S K_FUNCTOR K_IMPORT K_ISLAND K_MODPATH
+%token K_EXPORT K_EXTEND_S K_FUNCTOR K_IMPORT K_ISLAND K_LATCH K_MODPATH
 %token K_NET K_NET_S K_NET_R K_NET_2S K_NET_2U
 %token K_NET8 K_NET8_2S K_NET8_2U K_NET8_S
 %token K_PARAM_STR K_PARAM_L K_PARAM_REAL K_PART K_PART_PV
@@ -521,6 +521,11 @@ statement
 
   | T_LABEL K_DFF_P_ASET T_NUMBER symbol ',' symbol ',' symbol ',' symbol ',' T_SYMBOL ';'
       { compile_dff_aset($1, $3, false, $4, $6, $8, $10, $12); }
+
+  /* LATCH nodes have an output and take 2 inputs. */
+
+  | T_LABEL K_LATCH T_NUMBER symbol ',' symbol ';'
+      { compile_latch($1, $3, $4, $6); }
 
   /* The various reduction operator nodes take a single input. */
 
