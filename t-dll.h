@@ -1,7 +1,7 @@
 #ifndef IVL_t_dll_H
 #define IVL_t_dll_H
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -390,8 +390,7 @@ struct ivl_lpm_s {
 		  ivl_expr_t sset_value;
 	    } ff;
 	    struct ivl_lpm_latch_s {
-		  unsigned negedge_flag :1;
-		  ivl_nexus_t we;
+		  ivl_nexus_t e;
 		  union {
 			ivl_nexus_t*pins;
 			ivl_nexus_t pin;

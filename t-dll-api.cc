@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1149,7 +1149,7 @@ extern "C" ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net)
 	  case IVL_LPM_FF:
 	    return net->u_.ff.we;
 	  case IVL_LPM_LATCH:
-	    return net->u_.latch.we;
+	    return net->u_.latch.e;
 	  default:
 	    assert(0);
 	    return 0;

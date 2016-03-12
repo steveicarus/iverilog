@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2066,17 +2066,11 @@ void dll_target::lpm_latch(const NetLatch*net)
 
       const Nexus*nex;
 
-	/* If there is a clock enable, then connect it up to the FF
-	   device. */
-      if (net->pin_Enable().is_linked()) {
-	    nex = net->pin_Enable().nexus();
-	    assert(nex->t_cookie());
-	    obj->u_.latch.we = nex->t_cookie();
-	    assert(obj->u_.latch.we);
-	    nexus_lpm_add(obj->u_.latch.we, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
-      } else {
-	    obj->u_.latch.we = 0;
-      }
+      nex = net->pin_Enable().nexus();
+      assert(nex->t_cookie());
+      obj->u_.latch.e = nex->t_cookie();
+      assert(obj->u_.latch.e);
+      nexus_lpm_add(obj->u_.latch.e, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       nex = net->pin_Q().nexus();
       assert(nex->t_cookie());
