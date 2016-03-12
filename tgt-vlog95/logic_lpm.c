@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2016 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1483,7 +1483,7 @@ void emit_icarus_generated_udps()
 " * This is the copyright information for the following primitive(s)\n"
 " * (library elements).\n"
 " *\n"
-" * Copyright (C) 2011-2015 Cary R. (cygcary@yahoo.com)\n"
+" * Copyright (C) 2011-2016 Cary R. (cygcary@yahoo.com)\n"
 " *\n"
 " * This library is free software; you can redistribute it and/or\n"
 " * modify it under the terms of the GNU Lesser General Public\n"
@@ -1659,7 +1659,7 @@ static void emit_lpm_latch(ivl_scope_t scope, ivl_lpm_t lpm)
       assert (nex);
       emit_nexus_as_ca(scope, nex, 0, 0);
       fprintf(vlog_out, ");\n");
-	    need_latch_prim = 1;
+      need_latch_prim = 1;
 }
 
 static ivl_signal_t get_output_from_nexus(ivl_scope_t scope, ivl_nexus_t nex,
