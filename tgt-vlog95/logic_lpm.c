@@ -608,7 +608,8 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex, unsigned allow_UD,
 	    } else if (sig) {
 // HERE: should these be allow_UD?
 		  if (must_be_sig) {
-			emit_nexus_as_ca(scope, ivl_signal_nex(sig, word),
+			emit_nexus_as_ca(ivl_signal_scope(sig),
+					 ivl_signal_nex(sig, word),
 			                 0, 0);
 		  } else emit_name_of_nexus(scope, nex, 0);
 // HERE: The assert causes pr1703959 to fail.
