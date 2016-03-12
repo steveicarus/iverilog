@@ -1606,7 +1606,7 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
 	    emitted = 1;
       }
       nex = ivl_lpm_async_set(lpm);
-      if (aset_bits && (aset_bits[0] != '0')) nex = 0;
+      if (!aset_bits || (aset_bits[0] != '0')) nex = 0;
       if (nex) {
 	    if (emitted) fprintf(vlog_out, " | ");
 	    emit_nexus_as_ca(scope, nex, 0, 0);
