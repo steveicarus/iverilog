@@ -942,10 +942,6 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    ena_mux[mdx] = new NetMux(scope, scope->local_symbol(),
 				      1, mux_size, sel_need);
 
-	      // Initialise the bitmasks appropriately for calculating
-	      // the intersection of the individual clause bitmasks.
-	    bitmasks[mdx] = mask_t (mux_width[mdx], true);
-
 	      // Assume a full case to start with. We'll check this as
 	      // we synthesise each clause.
 	    full_case[mdx] = true;
@@ -1311,7 +1307,6 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  continue;
 	    }
 
-	    bitmasks[idx] = mask_t (nex_map[idx].wid, true);
 	    merge_parallel_masks(bitmasks[idx], a_masks[idx]);
 	    merge_parallel_masks(bitmasks[idx], b_masks[idx]);
 
