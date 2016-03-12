@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -559,6 +559,39 @@ static void show_lpm_ff(ivl_lpm_t net)
 
 }
 
+static void show_lpm_latch(ivl_lpm_t net)
+{
+      ivl_nexus_t nex;
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_LATCH %s: <width=%u>\n",
+	      ivl_lpm_basename(net), width);
+
+      nex = ivl_lpm_enable(net);
+      fprintf(out, "      E: %p\n", nex);
+      if (width_of_nexus(nex) != 1) {
+	    fprintf(out, "    E: ERROR: Nexus width is %u\n",
+		    width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+
+      nex = ivl_lpm_data(net,0);
+      fprintf(out, "      D: %p\n", nex);
+      if (width_of_nexus(nex) != width) {
+	    fprintf(out, "    D: ERROR: Nexus width is %u\n",
+		    width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+
+      nex = ivl_lpm_q(net);
+      fprintf(out, "      Q: %p\n", nex);
+      if (width_of_nexus(nex) != width) {
+	    fprintf(out, "    Q: ERROR: Nexus width is %u\n",
+		    width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+}
+
 static void show_lpm_mod(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
@@ -1015,6 +1048,10 @@ static void show_lpm(ivl_lpm_t net)
 
 	  case IVL_LPM_FF:
 	    show_lpm_ff(net);
+	    break;
+
+	  case IVL_LPM_LATCH:
+	    show_lpm_latch(net);
 	    break;
 
 	  case IVL_LPM_CMP_GE:
