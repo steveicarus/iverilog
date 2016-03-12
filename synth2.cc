@@ -1594,11 +1594,18 @@ bool NetProcTop::synth_async(Design*des)
 		       << nex_set[idx].lnk.nexus()->pick_any_net()->name()
 		       << "'." << endl;
 
+		  if (enables.pin(idx).nexus()->pick_any_net()->local_flag()) {
+			cerr << get_fileline() << ": warning: The latch "
+			        "enable is connected to a synthesized "
+			        "expression. The latch may be sensitive "
+			        "to glitches." << endl;
+		  }
+
 		  if (debug_synth2) {
 			cerr << get_fileline() << ": debug: "
-			      << "Top level making a "
-			      << nex_set[idx].wid << "-wide "
-			      << "NetLatch device." << endl;
+			     << "Top level making a "
+			     << nex_set[idx].wid << "-wide "
+			     << "NetLatch device." << endl;
 		  }
 
 		  NetLatch*latch = new NetLatch(scope(), scope()->local_symbol(),
