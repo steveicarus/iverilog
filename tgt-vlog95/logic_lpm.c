@@ -1139,7 +1139,7 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	case IVL_LPM_CAST_INT:
 	case IVL_LPM_CAST_INT2:
 	case IVL_LPM_CAST_REAL:
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 1, 0);
 	    break;
 	case IVL_LPM_CMP_EEQ:
 	    fprintf(vlog_out, "(");
