@@ -103,7 +103,7 @@ int Architecture::emit(ostream&out, Entity*entity)
 
 		// Do not emit unbounded functions, we will just need fixed instances later
 		if(!subp->unbounded())
-        	    errors += subp->emit_package(out);
+		    errors += subp->emit_package(out);
 	    }
       }
 

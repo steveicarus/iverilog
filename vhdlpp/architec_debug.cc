@@ -126,7 +126,7 @@ void InitialStatement::dump(ostream&out, int indent) const
 
 void FinalStatement::dump(ostream&out, int indent) const
 {
-      out << setw(indent) << "" << "FinalStatment file=" << get_fileline() << endl;
+      out << setw(indent) << "" << "FinalStatement file=" << get_fileline() << endl;
 
       StatementList::dump(out, indent);
 }

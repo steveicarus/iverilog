@@ -67,11 +67,11 @@ int Architecture::elaborate(Entity*entity)
 
 	    for(SubHeaderList::const_iterator it = subp_list.begin();
 			it != subp_list.end(); ++it) {
-        	errors += (*it)->elaborate();
+			errors += (*it)->elaborate();
 	    }
       }
 	// Create 'initial' and 'final' blocks for implicit
-	// initalization and clean-up actions
+	// initialization and clean-up actions
       if(!initializers_.empty())
 	    statements_.push_front(new InitialStatement(&initializers_));
 

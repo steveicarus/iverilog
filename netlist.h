@@ -2624,7 +2624,7 @@ class NetProc : public virtual LineInfo {
 	//
 	// nex_map holds the set of nexuses that are driven by this
 	// process, nex_out holds the accumulated outputs from this and
-	// preceeding sequential processes (i.e statements in the same
+	// preceding sequential processes (i.e statements in the same
 	// block), enables holds the accumulated clock/gate enables,
 	// and bitmasks holds the accumulated masks that flag which bits
 	// are unconditionally driven (i.e. driven by every clause in

@@ -117,7 +117,7 @@ The <file> and <lineno> are the location of the instantiation of this
 scope. For a module, it is the location of the instance.
 
 The <def-file> and <def-lineno> is the source file and line number for
-the defintion of the scope. For modules, this is where the module is
+the definition of the scope. For modules, this is where the module is
 defined instead of where it is instantiated.
 
 The <is-cell> flag is only useful for module instances. It is true

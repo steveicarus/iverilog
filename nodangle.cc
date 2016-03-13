@@ -140,7 +140,7 @@ static void check_is_floating(NetNet*sig)
       if (sig->type() == NetNet::IMPLICIT_REG) return;
       if (sig->type() == NetNet::REG) return ;
 
-	// Asignments drive a signal.
+	// Assignments drive a signal.
       if (sig->peek_lref() > 0) return;
 
       for (unsigned idx = 0 ; idx < sig->pin_count() ; idx += 1) {
