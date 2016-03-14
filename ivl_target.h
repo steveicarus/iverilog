@@ -1,7 +1,7 @@
 #ifndef IVL_ivl_target_H
 #define IVL_ivl_target_H
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -315,6 +315,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_CMP_NEE= 19, /* Case NE (!==) */
       IVL_LPM_DIVIDE = 12,
       IVL_LPM_FF     =  3,
+      IVL_LPM_LATCH  = 40,
       IVL_LPM_MOD    = 13,
       IVL_LPM_MULT   =  4,
       IVL_LPM_MUX    =  5,
@@ -1309,8 +1310,13 @@ extern unsigned    ivl_lpm_lineno(ivl_lpm_t net);
  * inputs and the Q. All the types must be exactly the same.
  *
  * - D-FlipFlop (IVL_LPM_FF)
- * This data is an edge sensitive register. The ivl_lpm_q output and
- * single ivl_lpm_data input are the same with, ivl_lpm_width. This
+ * This device is an edge sensitive register. The ivl_lpm_q output and
+ * single ivl_lpm_data input are the same width, ivl_lpm_width. This
+ * device carries a vector like other LPM devices.
+ *
+ * - Latch (IVL_LPM_LATCH)
+ * This device is an asynchronous latch. The ivl_lpm_q output and
+ * single ivl_lpm_data input are the same width, ivl_lpm_width. This
  * device carries a vector like other LPM devices.
  *
  * - Memory port (IVL_LPM_RAM) (deprecated in favor of IVL_LPM_ARRAY)
@@ -1428,18 +1434,18 @@ extern unsigned    ivl_lpm_negedge(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
   /* IVL_LPM_UFUNC */
 extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
-  /* IVL_LPM_FF */
+  /* IVL_LPM_FF IVL_LPM_LATCH*/
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
   /* IVL_LPM_ADD IVL_LPM_CONCAT IVL_LPM_FF IVL_LPM_PART IVL_LPM_MULT
      IVL_LPM_MUX IVL_LPM_POW IVL_LPM_SHIFTL IVL_LPM_SHIFTR IVL_LPM_SUB
-     IVL_LPM_UFUNC IVL_LPM_SUBSTITUTE */
+     IVL_LPM_UFUNC IVL_LPM_SUBSTITUTE IVL_LPM_LATCH */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_POW IVL_LPM_SUB IVL_LPM_CMP_EQ
      IVL_LPM_CMP_EEQ IVL_LPM_CMP_EQX IVL_LPM_CMP_EQZ IVL_LPM_CMP_NEE */
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_PART IVL_LPM_POW
      IVL_LPM_SUB IVL_LPM_UFUNC IVL_LPM_CMP_EEQ IVL_LPM_CMP_EQX
-     IVL_LPM_CMP_EQZ IVL_LPM_CMP_NEE IVL_LPM_SUBSTITUTE */
+     IVL_LPM_CMP_EQZ IVL_LPM_CMP_NEE IVL_LPM_SUBSTITUTE IVL_LPM_LATCH */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net);
 extern ivl_drive_t ivl_lpm_drive0(ivl_lpm_t net);
 extern ivl_drive_t ivl_lpm_drive1(ivl_lpm_t net);

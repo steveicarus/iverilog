@@ -195,7 +195,7 @@ combining up to four inputs down to one output.
      B | *  *  1
 
 
-DFF STATEMENTS:
+DFF AND LATCH STATEMENTS:
 
 The Verilog language itself does not have a DFF primitive, but post
 synthesis readily creates DFF devices that are best simulated with a
@@ -218,6 +218,15 @@ clock. The <async-input> is a special asynchronous input that on the
 rising edge causes the device to clear/set, forces the output to
 propagate, and disables the clock until the aynchronous input is
 deasserted. Thus, they implement DFF with asynchronous clr or set.
+
+Similarly, synthesis creates D-type latches, so there is the LATCH
+statement to support this:
+
+        <label> .latch <width> <d>, <en>;
+
+The <en> is a single bit vector (or scalar) on port-1. Port-0 is any
+type of datum at all. The device will transfer the input to the output
+whenever <en> is a logic 1.
 
 
 UDP STATEMENTS:

@@ -78,6 +78,10 @@ void functor_t::lpm_ff(Design*, NetFF*)
 {
 }
 
+void functor_t::lpm_latch(Design*, NetLatch*)
+{
+}
+
 void functor_t::lpm_logic(Design*, NetLogic*)
 {
 }
@@ -217,6 +221,11 @@ void NetDivide::functor_node(Design*des, functor_t*fun)
 void NetFF::functor_node(Design*des, functor_t*fun)
 {
       fun->lpm_ff(des, this);
+}
+
+void NetLatch::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_latch(des, this);
 }
 
 void NetLiteral::functor_node(Design*des, functor_t*fun)

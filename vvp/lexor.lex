@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -168,6 +168,7 @@ static char* strdupnew(char const *str)
 ".functor"  { return K_FUNCTOR; }
 ".import"   { return K_IMPORT; }
 ".island"   { return K_ISLAND; }
+".latch"    { return K_LATCH; }
 ".modpath"  { return K_MODPATH; }
 ".net"      { return K_NET; }
 ".net/2s"   { return K_NET_2S; }

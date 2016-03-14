@@ -1020,7 +1020,7 @@ class ExpRange : public Expression {
         typedef enum { DOWNTO, TO, AUTO } range_dir_t;
 
         // Regular range
-        ExpRange(Expression*left, Expression*right, range_dir_t direction);
+        ExpRange(Expression*left_idx, Expression*right_idx, range_dir_t dir);
         // 'range/'reverse range attribute
         ExpRange(ExpName*base, bool reverse_range);
         ~ExpRange();

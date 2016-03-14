@@ -1684,6 +1684,35 @@ class NetFF  : public NetNode {
       verinum sset_value_;
 };
 
+
+/*
+ * This class represents an LPM_LATCH device. There is no literal gate
+ * type in Verilog that maps, but gates of this type can be inferred.
+ */
+class NetLatch  : public NetNode {
+
+    public:
+      NetLatch(NetScope*s, perm_string n, unsigned vector_width);
+      ~NetLatch();
+
+      unsigned width() const;
+
+      Link& pin_Enable();
+      Link& pin_Data();
+      Link& pin_Q();
+
+      const Link& pin_Enable() const;
+      const Link& pin_Data() const;
+      const Link& pin_Q() const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+      virtual void functor_node(Design*des, functor_t*fun);
+
+    private:
+      unsigned width_;
+};
+
 /*
  * This class implements a basic LPM_MULT combinational multiplier. It
  * is used as a structural representation of the * operator. The

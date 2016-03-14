@@ -875,8 +875,8 @@ double ExpTime::to_fs() const
     return val;
 }
 
-ExpRange::ExpRange(Expression*left, Expression*right, range_dir_t direction)
-: left_(left), right_(right), direction_(direction), range_expr_(false),
+ExpRange::ExpRange(Expression*left_idx, Expression*right_idx, range_dir_t dir)
+: left_(left_idx), right_(right_idx), direction_(dir), range_expr_(false),
     range_base_(NULL)
 {
 }

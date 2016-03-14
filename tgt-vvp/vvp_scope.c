@@ -1830,6 +1830,31 @@ static void draw_lpm_ff(ivl_lpm_t net)
       fprintf(vvp_out, ";\n");
 }
 
+/*
+ * Emit a LATCH primitive. This uses the following syntax:
+ *
+ * .latch <width> <data>, <enable>;
+ */
+static void draw_lpm_latch(ivl_lpm_t net)
+{
+      ivl_nexus_t nex;
+
+      unsigned width = ivl_lpm_width(net);
+      fprintf(vvp_out, "L_%p .latch %u ", net, width);
+
+      nex = ivl_lpm_data(net,0);
+      assert(nex);
+      fprintf(vvp_out, "%s", draw_net_input(nex));
+      assert(width_of_nexus(nex) == width);
+
+      nex = ivl_lpm_enable(net);
+      assert(nex);
+      assert(width_of_nexus(nex) == 1);
+      fprintf(vvp_out, ", %s", draw_net_input(nex));
+
+      fprintf(vvp_out, ";\n");
+}
+
 static void draw_lpm_shiftl(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
@@ -2158,6 +2183,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 
 	  case IVL_LPM_FF:
 	    draw_lpm_ff(net);
+	    return;
+
+	  case IVL_LPM_LATCH:
+	    draw_lpm_latch(net);
 	    return;
 
 	  case IVL_LPM_CMP_EEQ:

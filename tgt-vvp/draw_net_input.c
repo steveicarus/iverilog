@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -436,6 +436,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       if (lpm) switch (ivl_lpm_type(lpm)) {
 
 	  case IVL_LPM_FF:
+	  case IVL_LPM_LATCH:
 	  case IVL_LPM_ABS:
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_ARRAY:
@@ -711,6 +712,8 @@ static void draw_net_input_x(ivl_nexus_t nex,
 		  tmp += strlen(tmp);
 		  switch (res) {
 		      case IVL_SIT_TRI:
+		      case IVL_SIT_TRIAND:
+		      case IVL_SIT_TRIOR:
 		      case IVL_SIT_UWIRE:
 			for (jdx = 0 ;  jdx < wid ;  jdx += 1)
 			      *tmp++ = 'z';

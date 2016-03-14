@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -684,6 +684,14 @@ void NetFF::dump_node(ostream&o, unsigned ind) const
 	    o << " posedge";
       o << " aset_value=" << aset_value_ << endl;
 
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetLatch::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "LPM_LATCH: " << name()
+	<< " scope=" << scope_path(scope()) << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }

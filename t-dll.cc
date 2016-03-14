@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2049,6 +2049,39 @@ void dll_target::lpm_ff(const NetFF*net)
       assert(nex->t_cookie());
       obj->u_.ff.d.pin = nex->t_cookie();
       nexus_lpm_add(obj->u_.ff.d.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+}
+
+void dll_target::lpm_latch(const NetLatch*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type  = IVL_LPM_LATCH;
+      obj->name  = net->name();
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+      FILE_NAME(obj, net);
+
+      obj->width = net->width();
+
+      scope_add_lpm(obj->scope, obj);
+
+      const Nexus*nex;
+
+      nex = net->pin_Enable().nexus();
+      assert(nex->t_cookie());
+      obj->u_.latch.e = nex->t_cookie();
+      assert(obj->u_.latch.e);
+      nexus_lpm_add(obj->u_.latch.e, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+      nex = net->pin_Q().nexus();
+      assert(nex->t_cookie());
+      obj->u_.latch.q.pin = nex->t_cookie();
+      nexus_lpm_add(obj->u_.latch.q.pin, obj, 0,
+		    IVL_DR_STRONG, IVL_DR_STRONG);
+
+      nex = net->pin_Data().nexus();
+      assert(nex->t_cookie());
+      obj->u_.latch.d.pin = nex->t_cookie();
+      nexus_lpm_add(obj->u_.latch.d.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 }
 
 /*

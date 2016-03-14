@@ -304,7 +304,7 @@ WaitForStmt::WaitForStmt(Expression*delay)
 {
 }
 
-WaitStmt::WaitStmt(wait_type_t type, Expression*expr)
-: type_(type), expr_(expr)
+WaitStmt::WaitStmt(wait_type_t typ, Expression*expr)
+: type_(typ), expr_(expr)
 {
 }

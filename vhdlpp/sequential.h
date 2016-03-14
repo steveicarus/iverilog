@@ -334,7 +334,7 @@ class WaitForStmt : public SequentialStmt {
 class WaitStmt : public SequentialStmt {
     public:
       typedef enum { ON, UNTIL, FINAL } wait_type_t;
-      WaitStmt(wait_type_t type, Expression*expression);
+      WaitStmt(wait_type_t typ, Expression*expression);
 
       void dump(ostream&out, int indent) const;
       int elaborate(Entity*ent, ScopeBase*scope);

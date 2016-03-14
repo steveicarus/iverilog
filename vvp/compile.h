@@ -1,7 +1,7 @@
 #ifndef IVL_compile_H
 #define IVL_compile_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -224,6 +224,10 @@ extern void compile_dff_aset(char*label, unsigned width, bool negedge,
 			     struct symb_s arg_e,
 			     struct symb_s arg_a,
 			     char*asc_value);
+
+extern void compile_latch(char*label, unsigned width,
+			  struct symb_s arg_d,
+			  struct symb_s arg_e);
 
 extern void compile_enum2_type(char*label, long width, bool signed_flag,
 			      std::list<struct enum_name_s>*names);

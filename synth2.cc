@@ -28,6 +28,52 @@
 
 using namespace std;
 
+/* General notes on enables and bitmasks.
+ *
+ * When synthesising an asynchronous process that contains conditional
+ * statements (if/case statements), we need to determine the conditions
+ * that cause each nexus driven by that process to be updated. If a
+ * nexus is not updated under all circumstances, we must infer a latch.
+ * To this end, we generate an enable signal for each output nexus. As
+ * we walk the statement tree for the process, for each substatement we
+ * pass the enable signals generated so far into the synth_async method,
+ * and on return from the synth_async method, the enable signals will be
+ * updated to reflect any conditions introduced by that substatement.
+ * Once we have synthesised all the statements for that process, if an
+ * enable signal is not tied high, we must infer a latch for that nexus.
+ *
+ * When synthesising a synchronous process, we use the synth_async method
+ * to synthesise the combinatorial inputs to the D pins of the flip-flops
+ * we infer for that process. In this case the enable signal can be used
+ * as a clock enable for the flip-flop. This saves us explicitly feeding
+ * back the flip-flop output to undriven inputs of any synthesised muxes.
+ *
+ * The strategy described above is not sufficient when not all bits in
+ * a nexus are treated identically (i.e. different conditional clauses
+ * drive differing parts of the same vector). To handle this properly,
+ * we would (potentially) need to generate a separate enable signal for
+ * each bit in the vector. This would be a lot of work, particularly if
+ * we wanted to eliminate duplicates. For now, the strategy employed is
+ * to maintain a bitmask for each output nexus that identifies which bits
+ * in the nexus are unconditionally driven (driven by every clause). When
+ * we finish synthesising an asynchronous process, if the bitmask is not
+ * all ones, we must infer a latch. This currently results in an error,
+ * because to safely synthesise such a latch we would need the bit-level
+ * gate enables. When we finish synthesising a synchronous process, if
+ * the bitmask is not all ones, we explicitly feed the flip-flop outputs
+ * back to undriven inputs of any synthesised muxes to ensure undriven
+ * parts of the vector retain their previous state when the flip-flop is
+ * clocked.
+ *
+ * The enable signals are passed as links to the current output nexus
+ * for each signal. If an enable signal is not linked, this is treated
+ * as if the signal was tied low.
+ *
+ * The bitmasks are passed as bool vectors. 'true' indicates a bit is
+ * unconditionally driven. An empty vector (size = 0) indicates that
+ * the current substatement doesn't drive any bits in the nexus.
+ */
+
 static void qualify_enable(Design*des, NetScope*scope, NetNet*qualifier,
 			   bool active_state, NetLogic::TYPE gate_type,
 			   Link&enable_i, Link&enable_o)
@@ -165,10 +211,10 @@ static void merge_sequential_masks(NetProc::mask_t&top_mask, NetProc::mask_t&sub
 
 static void merge_parallel_masks(NetProc::mask_t&top_mask, NetProc::mask_t&sub_mask)
 {
-      if (top_mask.size() == 0)
+      if (sub_mask.size() == 0)
 	    return;
 
-      if (sub_mask.size() == 0) {
+      if (top_mask.size() == 0) {
 	    top_mask = sub_mask;
 	    return;
       }
@@ -896,10 +942,6 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    ena_mux[mdx] = new NetMux(scope, scope->local_symbol(),
 				      1, mux_size, sel_need);
 
-	      // Initialise the bitmasks appropriately for calculating
-	      // the intersection of the individual clause bitmasks.
-	    bitmasks[mdx] = mask_t (mux_width[mdx], true);
-
 	      // Assume a full case to start with. We'll check this as
 	      // we synthesise each clause.
 	    full_case[mdx] = true;
@@ -1265,7 +1307,6 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  continue;
 	    }
 
-	    bitmasks[idx] = mask_t (nex_map[idx].wid, true);
 	    merge_parallel_masks(bitmasks[idx], a_masks[idx]);
 	    merge_parallel_masks(bitmasks[idx], b_masks[idx]);
 
@@ -1535,28 +1576,51 @@ bool NetProcTop::synth_async(Design*des)
       bool flag = statement_->synth_async(des, scope(), nex_set, nex_out, enables, bitmasks);
       if (!flag) return false;
 
-      bool latch_flag = false;
-      for (unsigned idx = 0 ; idx < enables.pin_count() ; idx += 1) {
-	    if (!enables.pin(idx).is_linked(scope()->tie_hi())) {
+      flag = tie_off_floating_inputs_(des, nex_set, nex_in, bitmasks, false);
+      if (!flag) return false;
+
+      for (unsigned idx = 0 ;  idx < nex_set.size() ;  idx += 1) {
+
+	    if (enables.pin(idx).is_linked(scope()->tie_hi())) {
+		  connect(nex_set[idx].lnk, nex_out.pin(idx));
+	    } else {
 		  cerr << get_fileline() << ": warning: "
 		       << "A latch has been inferred for '"
 		       << nex_set[idx].lnk.nexus()->pick_any_net()->name()
 		       << "'." << endl;
-		  latch_flag = true;
+
+		  if (enables.pin(idx).nexus()->pick_any_net()->local_flag()) {
+			cerr << get_fileline() << ": warning: The latch "
+			        "enable is connected to a synthesized "
+			        "expression. The latch may be sensitive "
+			        "to glitches." << endl;
+		  }
+
+		  if (debug_synth2) {
+			cerr << get_fileline() << ": debug: "
+			     << "Top level making a "
+			     << nex_set[idx].wid << "-wide "
+			     << "NetLatch device." << endl;
+		  }
+
+		  NetLatch*latch = new NetLatch(scope(), scope()->local_symbol(),
+						nex_set[idx].wid);
+		  des->add_node(latch);
+		  latch->set_line(*this);
+
+		  NetNet*tmp = nex_out.pin(idx).nexus()->pick_any_net();
+		  tmp->set_line(*this);
+		  assert(tmp);
+
+		  tmp = crop_to_width(des, tmp, latch->width());
+
+		  connect(nex_set[idx].lnk, latch->pin_Q());
+		  connect(tmp->pin(0), latch->pin_Data());
+
+		  assert (enables.pin(idx).is_linked());
+		  connect(enables.pin(idx), latch->pin_Enable());
 	    }
       }
-      if (latch_flag) {
-	    cerr << get_fileline() << ": sorry: Latches are not "
-		 << "currently supported in synthesis." << endl;
-	    des->errors += 1;
-	    return false;
-      }
-
-      flag = tie_off_floating_inputs_(des, nex_set, nex_in, bitmasks, false);
-      if (!flag) return false;
-
-      for (unsigned idx = 0 ;  idx < nex_set.size() ;  idx += 1)
-	    connect(nex_set[idx].lnk, nex_out.pin(idx));
 
       synthesized_design_ = des;
       return true;
