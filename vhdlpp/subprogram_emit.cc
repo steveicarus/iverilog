@@ -45,7 +45,7 @@ int SubprogramBody::emit_package(ostream&fd) const
           if(const Expression*init = var->peek_init_expr()) {
               fd << cur->first << " = ";
               init->emit(fd, NULL, NULL);
-              fd << "; -- automatic function emulation" << endl;
+              fd << "; // automatic function emulation" << endl;
           }
       }
 
