@@ -54,13 +54,13 @@ int SubprogramHeader::emit_package(ostream&fd) const
       int errors = 0;
 
       if (return_type_) {
-	    fd << "function ";
+	    fd << "function automatic ";
 	    return_type_->emit_def(fd, empty_perm_string);
       } else {
-	    fd << "task";
+	    fd << "task automatic";
       }
 
-	    fd << " \\" << name_ << " (";
+      fd << " \\" << name_ << " (";
 
       for (list<InterfacePort*>::const_iterator cur = ports_->begin()
 		 ; cur != ports_->end() ; ++cur) {
