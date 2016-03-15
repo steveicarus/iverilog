@@ -32,9 +32,21 @@ int SubprogramBody::emit_package(ostream&fd) const
 
       for (map<perm_string,Variable*>::const_iterator cur = new_variables_.begin()
          ; cur != new_variables_.end() ; ++cur) {
-        // Enable reg_flag for variables
-        cur->second->count_ref_sequ();
-        errors += cur->second->emit(fd, NULL, NULL);
+          // Enable reg_flag for variables
+          cur->second->count_ref_sequ();
+          errors += cur->second->emit(fd, NULL, NULL);
+      }
+
+    // Emulate automatic functions (add explicit initial value assignments)
+      for (map<perm_string,Variable*>::const_iterator cur = new_variables_.begin()
+         ; cur != new_variables_.end() ; ++cur) {
+          Variable*var = cur->second;
+
+          if(const Expression*init = var->peek_init_expr()) {
+              fd << cur->first << " = ";
+              init->emit(fd, NULL, NULL);
+              fd << "; -- automatic function emulation" << endl;
+          }
       }
 
       if (statements_) {

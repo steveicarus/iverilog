@@ -46,13 +46,12 @@ class SigVarBase : public LineInfo {
       void elaborate(Entity*ent, ScopeBase*scope);
 
       perm_string peek_name() const { return name_; }
+      const Expression* peek_init_expr() const { return init_expr_; }
 
     protected:
       unsigned peek_refcnt_sequ_() const { return refcnt_sequ_; }
 
       void type_elaborate_(VType::decl_t&decl);
-
-      Expression* peek_init_expr() const { return init_expr_; }
 
     private:
       perm_string name_;

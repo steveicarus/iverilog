@@ -62,7 +62,7 @@ int Signal::emit(ostream&out, Entity*ent, ScopeBase*scope)
 	    decl.reg_flag = true;
       errors += decl.emit(out, peek_name());
 
-      Expression*init_expr = peek_init_expr();
+      const Expression*init_expr = peek_init_expr();
       if (init_expr) {
             /* Emit initialization value for wires as a weak assignment */
             if(!decl.reg_flag && !type->type_match(&primitive_REAL))
@@ -84,7 +84,7 @@ int Variable::emit(ostream&out, Entity*ent, ScopeBase*scope)
       decl.reg_flag = true;
       errors += decl.emit(out, peek_name());
 
-      Expression*init_expr = peek_init_expr();
+      const Expression*init_expr = peek_init_expr();
       if (init_expr) {
 	    out << " = ";
 	    init_expr->emit(out, ent, scope);
