@@ -720,7 +720,7 @@ class NetNet  : public NetObj, public PortType {
 	/* This method returns a reference to the packed dimensions
 	   for the vector. These are arranged as a list where the
 	   first range in the list (front) is the left-most range in
-	   the verilog declaration. These packed dims are compressed
+	   the Verilog declaration. These packed dims are compressed
 	   to represent the dimensions of all the subtypes. */
       const std::vector<netrange_t>& packed_dims() const { return slice_dims_; }
 
