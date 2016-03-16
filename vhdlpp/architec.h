@@ -270,7 +270,7 @@ class StatementList : public Architecture::Statement {
       std::list<SequentialStmt*> statements_;
 };
 
-// There is no direct VHDL countepart to SV 'initial' statement,
+// There is no direct VHDL counterpart to SV 'initial' statement,
 // but we can still use it during the translation process.
 class InitialStatement : public StatementList {
     public:
@@ -281,7 +281,7 @@ class InitialStatement : public StatementList {
       void dump(ostream&out, int indent =0) const;
 };
 
-// There is no direct VHDL countepart to SV 'final' statement,
+// There is no direct VHDL counterpart to SV 'final' statement,
 // but we can still use it during the translation process.
 class FinalStatement : public StatementList {
     public:

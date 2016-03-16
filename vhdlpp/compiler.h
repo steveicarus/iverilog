@@ -36,7 +36,7 @@ extern StringHeapLex lex_strings;
 // Stores file names
 extern StringHeapLex filename_strings;
 
-// Stores generated strigns (e.g. scope names)
+// Stores generated strings (e.g. scope names)
 extern StringHeapLex gen_strings;
 
 #endif /* IVL_compiler_H */

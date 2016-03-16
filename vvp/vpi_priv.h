@@ -445,7 +445,7 @@ struct __vpiModPathSrc : public __vpiHandle {
 
 /*
  *
- * The vpiMoaPath vpiHandle will define
+ * The vpiModPath vpiHandle will define
  * a vpiModPath of record .modpath as defined
  * in the IEEE 1364
  *

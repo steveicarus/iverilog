@@ -5061,7 +5061,7 @@ bool of_RET_VEC4(vthread_t thr, vvp_code_t cp)
 	    return true;
       }
 
-	// IF the index is below the vector, then only assign the high
+	// If the index is below the vector, then only assign the high
 	// bits that overlap with the target
       if (off < 0) {
 	    int use_off = -off;
@@ -5071,7 +5071,7 @@ bool of_RET_VEC4(vthread_t thr, vvp_code_t cp)
 	    off = 0;
       }
 
-	// If the value is partly above the taret, then only assign
+	// If the value is partly above the target, then only assign
 	// the bits that overlap
       if ((off+wid) > sig_value_size) {
 	    wid = sig_value_size - off;

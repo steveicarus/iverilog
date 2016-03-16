@@ -247,7 +247,7 @@ int CondSignalAssignment::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-        // Visitor to extract signal names occuring in the conditional
+        // Visitor to extract signal names occurring in the conditional
         // statements to create the sensitivity list
       struct name_extractor_t : public ExprVisitor {
           name_extractor_t(list<const ExpName*>& name_list)

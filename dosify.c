@@ -19,7 +19,7 @@
 
 /*
  * This is a simple program to make a dosified copy of the
- * original. That is, it converts unix style line ends to DOS
+ * original. That is, it converts Unix style line ends to DOS
  * style. This is useful for installing text files.
  *
  * The exact substitution is to replace \n with \r\n. If the line

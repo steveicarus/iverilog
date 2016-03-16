@@ -68,7 +68,7 @@ void dll_target::sub_off_from_expr_(long off)
 	    off >>= 1;
       }
 
-	/* Now make the subtractor (x-4 in the above example)
+	/* Now make the subtracter (x-4 in the above example)
 	   that has as input A the index expression and input B
 	   the constant to subtract. */
       ivl_expr_t tmps = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
@@ -104,7 +104,7 @@ void dll_target::mul_expr_by_const_(long val)
 	    val >>= 1;
       }
 
-	/* Now make the subtractor (x-4 in the above example)
+	/* Now make the subtracter (x-4 in the above example)
 	   that has as input A the index expression and input B
 	   the constant to subtract. */
       ivl_expr_t tmps = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
