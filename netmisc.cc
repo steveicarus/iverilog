@@ -925,7 +925,7 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 
 /*
  * This variant of elab_and_eval does the expression losslessly, no
- * matter what the generation of verilog. This is in support of
+ * matter what the generation of Verilog. This is in support of
  * certain special contexts, notably index expressions.
  */
 NetExpr* elab_and_eval_lossless(Design*des, NetScope*scope, PExpr*pe,
