@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -758,6 +758,16 @@ void schedule_vthread(vthread_t thr, vvp_time64_t delay, bool push_flag)
       } else {
 	    schedule_event_(cur, delay, SEQ_ACTIVE);
       }
+}
+
+void schedule_init_vthread(vthread_t thr)
+{
+      struct vthread_event_s*cur = new vthread_event_s;
+
+      cur->thr = thr;
+      vthread_mark_scheduled(thr);
+
+      schedule_init_event(cur);
 }
 
 void schedule_final_vthread(vthread_t thr)
