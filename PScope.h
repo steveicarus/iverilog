@@ -57,6 +57,9 @@ class LexicalScope {
 	// A virtual destructor is so that dynamic_cast can work.
       virtual ~LexicalScope() { }
 
+      enum lifetime_t { INHERITED, STATIC, AUTOMATIC };
+      lifetime_t default_lifetime;
+
       struct range_t {
 	      // True if this is an exclude
 	    bool exclude_flag;

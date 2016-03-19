@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -452,6 +452,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
       PSpecPath* specpath;
       list<index_component_t> *dimensions;
+
+      LexicalScope::lifetime_t lifetime;
 };
 
 %token <text>      IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
@@ -560,7 +562,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <number>  number pos_neg_number
 %type <flag>    signing unsigned_signed_opt signed_unsigned_opt
 %type <flag>    import_export
-%type <flag>    K_automatic_opt K_packed_opt K_reg_opt K_static_opt K_virtual_opt
+%type <flag>    K_packed_opt K_reg_opt K_static_opt K_virtual_opt
 %type <flag>    udp_reg_opt edge_operator
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
@@ -664,6 +666,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <int_val> atom2_type
 %type <int_val> module_start module_end
 
+%type <lifetime> lifetime_opt
+
 %token K_TAND
 %right K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
 %right K_XOR_EQ K_LS_EQ K_RS_EQ K_RSS_EQ
@@ -723,17 +727,17 @@ block_identifier_opt /* */
   ;
 
 class_declaration /* IEEE1800-2005: A.1.2 */
-  : K_virtual_opt K_class class_identifier class_declaration_extends_opt ';'
-      { pform_start_class_declaration(@2, $3, $4.type, $4.exprs); }
+  : K_virtual_opt K_class lifetime_opt class_identifier class_declaration_extends_opt ';'
+      { pform_start_class_declaration(@2, $4, $5.type, $5.exprs, $3); }
     class_items_opt K_endclass
       { // Process a class.
-	pform_end_class_declaration(@8);
+	pform_end_class_declaration(@9);
       }
     class_declaration_endlabel_opt
       { // Wrap up the class.
-	if ($10 && $3 && $3->name != $10) {
-	      yyerror(@10, "error: Class end label doesn't match class name.");
-	      delete[]$10;
+	if ($11 && $4 && $4->name != $11) {
+	      yyerror(@11, "error: Class end label doesn't match class name.");
+	      delete[]$11;
 	}
       }
   ;
@@ -1193,7 +1197,7 @@ for_step /* IEEE1800-2005: A.6.8 */
      definitions in the func_body to take on the scope of the function
      instead of the module. */
 function_declaration /* IEEE1800-2005: A.2.6 */
-  : K_function K_automatic_opt data_type_or_implicit_or_void IDENTIFIER ';'
+  : K_function lifetime_opt data_type_or_implicit_or_void IDENTIFIER ';'
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
@@ -1214,7 +1218,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 		                 "function name");
 	      }
 	      if (! gn_system_verilog()) {
-		    yyerror(@11, "error: Function end label require "
+		    yyerror(@11, "error: Function end labels require "
 		                 "SystemVerilog.");
 	      }
 	      delete[]$11;
@@ -1222,7 +1226,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	delete[]$4;
       }
 
-  | K_function K_automatic_opt data_type_or_implicit_or_void IDENTIFIER
+  | K_function lifetime_opt data_type_or_implicit_or_void IDENTIFIER
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
@@ -1258,7 +1262,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 
   /* Detect and recover from some errors. */
 
-  | K_function K_automatic_opt data_type_or_implicit_or_void IDENTIFIER error K_endfunction
+  | K_function lifetime_opt data_type_or_implicit_or_void IDENTIFIER error K_endfunction
       { /* */
 	if (current_function) {
 	      pform_pop_scope();
@@ -1362,6 +1366,12 @@ jump_statement /* IEEE1800-2005: A.6.5 */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  ;
+
+lifetime_opt /* IEEE1800-2005: A.2.1.3 */
+  : K_automatic { $$ = LexicalScope::AUTOMATIC; }
+  | K_static    { $$ = LexicalScope::STATIC; }
+  |             { $$ = LexicalScope::INHERITED; }
   ;
 
   /* Loop statements are kinds of statements. */
@@ -1703,20 +1713,20 @@ open_range_list /* IEEE1800-2005 A.2.11 */
   ;
 
 package_declaration /* IEEE1800-2005 A.1.2 */
-  : K_package IDENTIFIER ';'
-      { pform_start_package_declaration(@1, $2);
+  : K_package lifetime_opt IDENTIFIER ';'
+      { pform_start_package_declaration(@1, $3, $2);
       }
     package_item_list_opt
     K_endpackage endlabel_opt
       { pform_end_package_declaration(@1);
 	// If an end label is present make sure it match the package name.
-	if ($7) {
-	      if (strcmp($2,$7) != 0) {
-		    yyerror(@7, "error: End label doesn't match package name");
+	if ($8) {
+	      if (strcmp($3,$8) != 0) {
+		    yyerror(@8, "error: End label doesn't match package name");
 	      }
-	      delete[]$7;
+	      delete[]$8;
 	}
-	delete[]$2;
+	delete[]$3;
       }
   ;
 
@@ -1895,7 +1905,7 @@ streaming_concatenation /* IEEE1800-2005: A.8.1 */
 
 task_declaration /* IEEE1800-2005: A.2.7 */
 
-  : K_task K_automatic_opt IDENTIFIER ';'
+  : K_task lifetime_opt IDENTIFIER ';'
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
@@ -1908,7 +1918,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	pform_pop_scope();
 	current_task = 0;
 	if ($7 && $7->size() > 1 && !gn_system_verilog()) {
-	      yyerror(@7, "error: Task body with multiple statements requres SystemVerilog.");
+	      yyerror(@7, "error: Task body with multiple statements requires SystemVerilog.");
 	}
 	delete $7;
       }
@@ -1931,7 +1941,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	delete[]$3;
       }
 
-  | K_task K_automatic_opt IDENTIFIER '('
+  | K_task lifetime_opt IDENTIFIER '('
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
@@ -1965,7 +1975,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	delete[]$3;
       }
 
-  | K_task K_automatic_opt IDENTIFIER '(' ')' ';'
+  | K_task lifetime_opt IDENTIFIER '(' ')' ';'
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
@@ -1982,7 +1992,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	pform_pop_scope();
 	current_task = 0;
 	if ($9->size() > 1 && !gn_system_verilog()) {
-	      yyerror(@9, "error: Task body with multiple statements requres SystemVerilog.");
+	      yyerror(@9, "error: Task body with multiple statements requires SystemVerilog.");
 	}
 	delete $9;
       }
@@ -2005,7 +2015,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	delete[]$3;
       }
 
-  | K_task K_automatic_opt IDENTIFIER error K_endtask
+  | K_task lifetime_opt IDENTIFIER error K_endtask
       {
 	assert(current_task == 0);
       }
@@ -4381,13 +4391,13 @@ local_timeunit_prec_decl2
      items, and finally an end marker. */
 
 module
-  : attribute_list_opt module_start IDENTIFIER
-      { pform_startmodule(@2, $3, $2==K_program, $2==K_interface, $1); }
+  : attribute_list_opt module_start lifetime_opt IDENTIFIER
+      { pform_startmodule(@2, $4, $2==K_program, $2==K_interface, $3, $1); }
     module_package_import_list_opt
     module_parameter_port_list_opt
     module_port_list_opt
     module_attribute_foreign ';'
-      { pform_module_set_ports($7); }
+      { pform_module_set_ports($8); }
     local_timeunit_prec_decl_opt
       { have_timeunit_decl = true; // Every thing past here is
 	have_timeprec_decl = true; // a check!
@@ -4413,22 +4423,22 @@ module
 	}
 	  // Check that program/endprogram and module/endmodule
 	  // keywords match.
-	if ($2 != $14) {
+	if ($2 != $15) {
 	      switch ($2) {
 		  case K_module:
-		    yyerror(@14, "error: module not closed by endmodule.");
+		    yyerror(@15, "error: module not closed by endmodule.");
 		    break;
 		  case K_program:
-		    yyerror(@14, "error: program not closed by endprogram.");
+		    yyerror(@15, "error: program not closed by endprogram.");
 		    break;
 		  case K_interface:
-		    yyerror(@14, "error: interface not closed by endinterface.");
+		    yyerror(@15, "error: interface not closed by endinterface.");
 		    break;
 		  default:
 		    break;
 	      }
 	}
-	pform_endmodule($3, in_celldefine, ucd);
+	pform_endmodule($4, in_celldefine, ucd);
 	have_timeunit_decl = false; // We will allow decls again.
 	have_timeprec_decl = false;
       }
@@ -4438,19 +4448,19 @@ module
 	// endlabel_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	if ($16) {
-	      if (strcmp($3,$16) != 0) {
+	if ($17) {
+	      if (strcmp($4,$17) != 0) {
 		    switch ($2) {
 			case K_module:
-			  yyerror(@16, "error: End label doesn't match "
+			  yyerror(@17, "error: End label doesn't match "
 			               "module name.");
 			  break;
 			case K_program:
-			  yyerror(@16, "error: End label doesn't match "
+			  yyerror(@17, "error: End label doesn't match "
 			               "program name.");
 			  break;
 			case K_interface:
-			  yyerror(@16, "error: End label doesn't match "
+			  yyerror(@17, "error: End label doesn't match "
 			               "interface name.");
 			  break;
 			default:
@@ -4461,9 +4471,9 @@ module
 		    yyerror(@8, "error: Module end labels require "
 		                 "SystemVerilog.");
 	      }
-	      delete[]$16;
+	      delete[]$17;
 	}
-	delete[]$3;
+	delete[]$4;
       }
   ;
 
@@ -6786,7 +6796,6 @@ udp_primitive
      presence is significant. This is a fairly common pattern so
      collect those rules here. */
 
-K_automatic_opt: K_automatic { $$ = true; } | { $$ = false; } ;
 K_packed_opt   : K_packed    { $$ = true; } | { $$ = false; } ;
 K_reg_opt      : K_reg       { $$ = true; } | { $$ = false; } ;
 K_static_opt   : K_static    { $$ = true; } | { $$ = false; } ;
