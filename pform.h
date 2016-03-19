@@ -351,8 +351,8 @@ extern void pform_makewire(const struct vlltype&li,
 			   list<perm_string>*names,
 			   list<named_pexpr_t>*attr);
 
-extern void pform_make_reginit(const struct vlltype&li,
-			       perm_string name, PExpr*expr);
+extern void pform_make_var_init(const struct vlltype&li,
+				perm_string name, PExpr*expr);
 
   /* Look up the names of the wires, and set the port type,
      i.e. input, output or inout. If the wire does not exist, create

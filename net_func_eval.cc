@@ -88,6 +88,10 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 	// fills in the context_map with local variables held by the scope.
       scope()->evaluate_function_find_locals(loc, context_map);
 
+	// Execute any variable initialization statements.
+      if (const NetProc*init_proc = scope()->var_init())
+	    init_proc->evaluate_function(loc, context_map);
+
       if (debug_eval_tree && proc_==0) {
 	    cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
 		 << "Function " << scope_path(scope())
@@ -505,6 +509,10 @@ bool NetBlock::evaluate_function(const LineInfo&loc,
 	      // Now collect the new locals.
 	    subscope_->evaluate_function_find_locals(loc, local_context_map);
 	    use_local_context_map = true;
+
+	      // Execute any variable initialization statements.
+	    if (const NetProc*init_proc = subscope_->var_init())
+		  init_proc->evaluate_function(loc, local_context_map);
       }
 
 	// Now use the local context map if there is any local

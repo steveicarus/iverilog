@@ -139,6 +139,7 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest,
 	    time_from_timescale_ = false;
       }
 
+      var_init_ = 0;
       switch (t) {
 	  case NetScope::TASK:
 	    task_ = 0;

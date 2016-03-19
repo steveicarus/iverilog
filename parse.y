@@ -4223,7 +4223,7 @@ port_declaration
 	port_declaration_context.port_net_type = use_type;
 	port_declaration_context.data_type = $4;
 
-	pform_make_reginit(@5, name, $7);
+	pform_make_var_init(@5, name, $7);
 
 	delete[]$5;
 	$$ = ptmp;
@@ -4622,7 +4622,7 @@ module_item
 		       IVL_VT_NO_TYPE, $1, SR_BOTH);
 	for (pp = $6->begin(); pp != $6->end(); ++ pp ) {
 	      if ((*pp).second) {
-		   pform_make_reginit(@2, (*pp).first, (*pp).second);
+		   pform_make_var_init(@2, (*pp).first, (*pp).second);
 	      }
 	}
 	delete $6;
@@ -5486,7 +5486,7 @@ register_variable
 	pform_makewire(@1, name, NetNet::REG,
 		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
 	pform_set_reg_idx(name, $2);
-	pform_make_reginit(@1, name, $4);
+	pform_make_var_init(@1, name, $4);
 	$$ = $1;
       }
   ;

@@ -1,7 +1,7 @@
 #ifndef IVL_PScope_H
 #define IVL_PScope_H
 /*
- * Copyright (c) 2008-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,6 +36,7 @@ class PProcess;
 class PClass;
 class PTask;
 class PWire;
+class Statement;
 
 class Design;
 class NetScope;
@@ -108,6 +109,9 @@ class LexicalScope {
         // creating implicit nets.
       map<perm_string,LineInfo*> genvars;
 
+	// Variable initializations in this scope
+      vector<Statement*> var_inits;
+
 	// Behaviors (processes) in this scope
       list<PProcess*> behaviors;
       list<AProcess*> analog_behaviors;
@@ -129,6 +133,10 @@ class LexicalScope {
       void dump_events_(ostream&out, unsigned indent) const;
 
       void dump_wires_(ostream&out, unsigned indent) const;
+
+      void dump_var_inits_(ostream&out, unsigned indent) const;
+
+      bool elaborate_var_inits_(Design*des, NetScope*scope) const;
 
     private:
       LexicalScope*parent_;

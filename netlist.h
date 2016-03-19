@@ -1020,6 +1020,13 @@ class NetScope : public Definitions, public Attrib {
       TYPE type() const;
       void print_type(ostream&) const;
 
+	// This provides a link to the variable initialisation process
+	// for use when evaluating a constant function. Note this is
+	// only used for static functions - the variable initialization
+	// for automatic functions is included in the function definition.
+      void set_var_init(const NetProc*proc) { var_init_ = proc; }
+      const NetProc* var_init() const { return var_init_; }
+
       void set_task_def(NetTaskDef*);
       void set_func_def(NetFuncDef*);
       void set_class_def(netclass_t*);
@@ -1249,6 +1256,8 @@ class NetScope : public Definitions, public Attrib {
       vector<NetNet*> port_nets;
 
       vector<PortInfo> ports_;
+
+      const NetProc*var_init_;
 
       union {
 	    NetTaskDef*task_;
@@ -2904,6 +2913,7 @@ class NetBlock  : public NetProc {
       NetScope* subscope() const { return subscope_; }
 
       void append(NetProc*);
+      void prepend(NetProc*);
 
       const NetProc*proc_first() const;
       const NetProc*proc_next(const NetProc*cur) const;
