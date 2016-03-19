@@ -5974,7 +5974,7 @@ bool LexicalScope::elaborate_var_inits_(Design*des, NetScope*scope) const
       if (var_inits.size() == 1) {
 	    proc = var_inits[0]->elaborate(des, scope);
       } else {
-	    NetBlock*blk = new NetBlock(NetBlock::SEQU, scope);
+	    NetBlock*blk = new NetBlock(NetBlock::SEQU, 0);
 	    bool flag = true;
 	    for (unsigned idx = 0; idx < var_inits.size(); idx += 1) {
 		  NetProc*tmp = var_inits[idx]->elaborate(des, scope);
@@ -5989,6 +5989,9 @@ bool LexicalScope::elaborate_var_inits_(Design*des, NetScope*scope) const
 	    return false;
 
       NetProcTop*top = new NetProcTop(scope, IVL_PR_INITIAL, proc);
+      if (const LineInfo*li = dynamic_cast<const LineInfo*>(this)) {
+	    top->set_line(*li);
+      }
       if (gn_system_verilog()) {
 	    top->attribute(perm_string::literal("_ivl_schedule_init"),
 			   verinum(1));
