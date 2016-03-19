@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2306,6 +2306,7 @@ int draw_process(ivl_process_t net, void*x)
       ivl_scope_t scope = ivl_process_scope(net);
       ivl_statement_t stmt = ivl_process_stmt(net);
 
+      int init_flag = 0;
       int push_flag = 0;
 
       (void)x; /* Parameter is not used. */
@@ -2313,6 +2314,12 @@ int draw_process(ivl_process_t net, void*x)
       for (idx = 0 ;  idx < ivl_process_attr_cnt(net) ;  idx += 1) {
 
 	    ivl_attribute_t attr = ivl_process_attr_val(net, idx);
+
+	    if (strcmp(attr->key, "_ivl_schedule_init") == 0) {
+
+		  init_flag = 1;
+
+	    }
 
 	    if (strcmp(attr->key, "_ivl_schedule_push") == 0) {
 
@@ -2357,7 +2364,9 @@ int draw_process(ivl_process_t net, void*x)
 
 	  case IVL_PR_INITIAL:
 	  case IVL_PR_ALWAYS:
-	    if (push_flag) {
+	    if (init_flag) {
+		  fprintf(vvp_out, "    .thread T_%u, $init;\n", thread_count);
+	    } else if (push_flag) {
 		  fprintf(vvp_out, "    .thread T_%u, $push;\n", thread_count);
 	    } else {
 		  fprintf(vvp_out, "    .thread T_%u;\n", thread_count);

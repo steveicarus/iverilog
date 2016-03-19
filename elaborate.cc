@@ -5966,6 +5966,10 @@ bool LexicalScope::elaborate_var_inits_(Design*des, NetScope*scope) const
 	    return false;
 
       NetProcTop*top = new NetProcTop(scope, IVL_PR_INITIAL, proc);
+      if (gn_system_verilog()) {
+	    top->attribute(perm_string::literal("_ivl_schedule_init"),
+			   verinum(1));
+      }
       des->add_process(top);
 
       scope->set_var_init(proc);
