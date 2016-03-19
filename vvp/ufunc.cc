@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -186,9 +186,9 @@ void ufunc_core::invoke_thread_()
 ufunc_vec4::ufunc_vec4(unsigned ow, vvp_net_t*ptr,
 		       unsigned nports, vvp_net_t**ports,
 		       vvp_code_t start_address,
-		       __vpiScope*call_scope,
+		       __vpiScope*call_scope_in,
 		       char*scope_label)
-: ufunc_core(ow, ptr, nports, ports, start_address, call_scope, scope_label)
+: ufunc_core(ow, ptr, nports, ports, start_address, call_scope_in, scope_label)
 {
 }
 
@@ -204,9 +204,9 @@ void ufunc_vec4::finish_thread()
 ufunc_real::ufunc_real(unsigned ow, vvp_net_t*ptr,
 		       unsigned nports, vvp_net_t**ports,
 		       vvp_code_t start_address,
-		       __vpiScope*call_scope,
+		       __vpiScope*call_scope_in,
 		       char*scope_label)
-: ufunc_core(ow, ptr, nports, ports, start_address, call_scope, scope_label)
+: ufunc_core(ow, ptr, nports, ports, start_address, call_scope_in, scope_label)
 {
 }
 
