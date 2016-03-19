@@ -115,6 +115,11 @@ PBlock::~PBlock()
 	    delete list_[idx];
 }
 
+bool PBlock::var_init_needs_explicit_lifetime() const
+{
+      return default_lifetime == STATIC;
+}
+
 PChainConstructor* PBlock::extract_chain_constructor()
 {
       if (list_.empty())

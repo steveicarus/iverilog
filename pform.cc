@@ -513,6 +513,7 @@ PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
       }
 
       PBlock*block = new PBlock(block_name, lexical_scope, bt);
+      block->default_lifetime = find_lifetime(LexicalScope::INHERITED);
       lexical_scope = block;
 
       return block;

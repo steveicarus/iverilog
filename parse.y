@@ -65,6 +65,10 @@ static PTask* current_task = 0;
 static PFunction* current_function = 0;
 static stack<PBlock*> current_block_stack;
 
+/* The variable declaration rules need to know if a lifetime has been
+   specified. */
+static LexicalScope::lifetime_t var_lifetime;
+
 static pform_name_t* pform_create_this(void)
 {
       name_component_t name (perm_string::literal("@"));
@@ -666,7 +670,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <int_val> atom2_type
 %type <int_val> module_start module_end
 
-%type <lifetime> lifetime_opt
+%type <lifetime> lifetime lifetime_opt
 
 %token K_TAND
 %right K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
@@ -1368,10 +1372,14 @@ jump_statement /* IEEE1800-2005: A.6.5 */
       }
   ;
 
-lifetime_opt /* IEEE1800-2005: A.2.1.3 */
+lifetime /* IEEE1800-2005: A.2.1.3 */
   : K_automatic { $$ = LexicalScope::AUTOMATIC; }
   | K_static    { $$ = LexicalScope::STATIC; }
-  |             { $$ = LexicalScope::INHERITED; }
+  ;
+
+lifetime_opt /* IEEE1800-2005: A.2.1.3 */
+  : lifetime { $$ = $1; }
+  |          { $$ = LexicalScope::INHERITED; }
   ;
 
   /* Loop statements are kinds of statements. */
@@ -2262,6 +2270,19 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
       }
   ;
 
+variable_lifetime
+  : lifetime
+      { if (!gn_system_verilog()) {
+	      yyerror(@1, "error: overriding the default variable lifetime "
+			  "requires SystemVerilog.");
+	} else if ($1 != pform_peek_scope()->default_lifetime) {
+	      yyerror(@1, "sorry: overriding the default variable lifetime "
+			  "is not yet supported.");
+	}
+	var_lifetime = $1;
+      }
+  ;
+
   /* Verilog-2001 supports attribute lists, which can be attached to a
      variety of different objects. The syntax inside the (* *) is a
      comma separated list of names or names with assigned values. */
@@ -2336,8 +2357,18 @@ block_item_decl
       { if ($1) pform_set_data_type(@1, $1, $2, NetNet::REG, attributes_in_context);
       }
 
+  | variable_lifetime data_type register_variable_list ';'
+      { if ($2) pform_set_data_type(@2, $2, $3, NetNet::REG, attributes_in_context);
+	var_lifetime = LexicalScope::INHERITED;
+      }
+
   | K_reg data_type register_variable_list ';'
       { if ($2) pform_set_data_type(@2, $2, $3, NetNet::REG, attributes_in_context);
+      }
+
+  | variable_lifetime K_reg data_type register_variable_list ';'
+      { if ($3) pform_set_data_type(@3, $3, $4, NetNet::REG, attributes_in_context);
+	var_lifetime = LexicalScope::INHERITED;
       }
 
   | K_event event_variable_list ';'
@@ -5496,7 +5527,13 @@ register_variable
 	$$ = $1;
       }
   | IDENTIFIER dimensions_opt '=' expression
-      { perm_string name = lex_strings.make($1);
+      { if (pform_peek_scope()->var_init_needs_explicit_lifetime()
+	    && (var_lifetime == LexicalScope::INHERITED)) {
+	      cerr << @3 << ": warning: Static variable initialization requires "
+			    "explicit lifetime in this context." << endl;
+	      warn_count += 1;
+	}
+	perm_string name = lex_strings.make($1);
 	pform_makewire(@1, name, NetNet::REG,
 		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
 	pform_set_reg_idx(name, $2);
