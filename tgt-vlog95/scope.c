@@ -706,13 +706,10 @@ static void emit_named_block_scope(ivl_scope_t scope)
 }
 
 /*
- * In SystemVerilog a task or function can have a process to initialize
- * variables. In reality SystemVerilog requires this to be before the
- * initial/always blocks are processed, but that's not how it is currently
- * implemented in Icarus!
- *
- * In Verilog-2001 a named block can also have a process to initialize
- * variables. This is handled the same way.
+ * In SystemVerilog a task, function, or block can have a process to
+ * initialize variables. SystemVerilog requires this to be before the
+ * initial/always blocks are processed, but there's no way to express
+ * this in Verilog-95.
  */
 static int find_tfb_process(ivl_process_t proc, ivl_scope_t scope)
 {
