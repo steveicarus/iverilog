@@ -41,6 +41,8 @@ class PTaskFunc : public PScope, public LineInfo {
       PTaskFunc(perm_string name, LexicalScope*parent);
       ~PTaskFunc();
 
+      bool var_init_needs_explicit_lifetime() const;
+
       void set_ports(std::vector<pform_tf_port_t>*p);
 
       void set_this(class_type_t*use_type, PWire*this_wire);

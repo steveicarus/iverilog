@@ -53,11 +53,12 @@ class NetScope;
 class LexicalScope {
 
     public:
-      explicit LexicalScope(LexicalScope*parent) : parent_(parent) { }
+      enum lifetime_t { INHERITED, STATIC, AUTOMATIC };
+
+      explicit LexicalScope(LexicalScope*parent) : default_lifetime(INHERITED), parent_(parent) { }
 	// A virtual destructor is so that dynamic_cast can work.
       virtual ~LexicalScope() { }
 
-      enum lifetime_t { INHERITED, STATIC, AUTOMATIC };
       lifetime_t default_lifetime;
 
       struct range_t {
@@ -123,6 +124,8 @@ class LexicalScope {
       std::set<enum_type_t*> enum_sets;
 
       LexicalScope* parent_scope() const { return parent_; }
+
+      virtual bool var_init_needs_explicit_lifetime() const;
 
     protected:
       void dump_typedefs_(ostream&out, unsigned indent) const;

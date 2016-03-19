@@ -183,6 +183,8 @@ class PBlock  : public PScope, public Statement {
 
       BL_TYPE bl_type() const { return bl_type_; }
 
+      bool var_init_needs_explicit_lifetime() const;
+
 	// This is only used if this block is the statement list for a
 	// constructor. We look for a PChainConstructor as the first
 	// statement, and if it is there, extract it.

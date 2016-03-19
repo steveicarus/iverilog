@@ -19,6 +19,11 @@
 
 # include  "PScope.h"
 
+bool LexicalScope::var_init_needs_explicit_lifetime() const
+{
+      return false;
+}
+
 PScope::PScope(perm_string n, LexicalScope*parent)
 : LexicalScope(parent), name_(n)
 {
@@ -58,4 +63,3 @@ PScopeExtra::PScopeExtra(perm_string n)
 PScopeExtra::~PScopeExtra()
 {
 }
-
