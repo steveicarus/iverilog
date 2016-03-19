@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -312,10 +312,27 @@ static inline void FILE_NAME(LineInfo*obj, const char*file, unsigned lineno)
  */
 static LexicalScope* lexical_scope = 0;
 
+LexicalScope* pform_peek_scope(void)
+{
+      assert(lexical_scope);
+      return lexical_scope;
+}
+
 void pform_pop_scope()
 {
       assert(lexical_scope);
       lexical_scope = lexical_scope->parent_scope();
+}
+
+static LexicalScope::lifetime_t find_lifetime(LexicalScope::lifetime_t lifetime)
+{
+      if (lifetime != LexicalScope::INHERITED)
+	    return lifetime;
+
+      if (lexical_scope != 0)
+	    return lexical_scope->default_lifetime;
+
+      return LexicalScope::STATIC;
 }
 
 static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
@@ -328,15 +345,11 @@ static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
       return scopex;
 }
 
-LexicalScope* pform_peek_scope(void)
-{
-      assert(lexical_scope);
-      return lexical_scope;
-}
-
-PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
+PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name,
+			       LexicalScope::lifetime_t lifetime)
 {
       PClass*class_scope = new PClass(name, lexical_scope);
+      class_scope->default_lifetime = find_lifetime(lifetime);
       FILE_NAME(class_scope, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
@@ -364,20 +377,27 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
       return class_scope;
 }
 
-PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name)
+PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name,
+				   LexicalScope::lifetime_t lifetime)
 {
       PPackage*pkg_scope = new PPackage(name, lexical_scope);
+      pkg_scope->default_lifetime = find_lifetime(lifetime);
       FILE_NAME(pkg_scope, loc);
 
       lexical_scope = pkg_scope;
       return pkg_scope;
 }
 
-PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
+PTask* pform_push_task_scope(const struct vlltype&loc, char*name,
+			     LexicalScope::lifetime_t lifetime)
 {
       perm_string task_name = lex_strings.make(name);
 
+      LexicalScope::lifetime_t default_lifetime = find_lifetime(lifetime);
+      bool is_auto = default_lifetime == LexicalScope::AUTOMATIC;
+
       PTask*task = new PTask(task_name, lexical_scope, is_auto);
+      task->default_lifetime = default_lifetime;
       FILE_NAME(task, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
@@ -424,11 +444,15 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 }
 
 PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
-                                      bool is_auto)
+                                     LexicalScope::lifetime_t lifetime)
 {
       perm_string func_name = lex_strings.make(name);
 
+      LexicalScope::lifetime_t default_lifetime = find_lifetime(lifetime);
+      bool is_auto = default_lifetime == LexicalScope::AUTOMATIC;
+
       PFunction*func = new PFunction(func_name, lexical_scope, is_auto);
+      func->default_lifetime = default_lifetime;
       FILE_NAME(func, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
@@ -1131,11 +1155,18 @@ verinum* pform_verinum_with_size(verinum*siz, verinum*val,
 
 void pform_startmodule(const struct vlltype&loc, const char*name,
 		       bool program_block, bool is_interface,
+		       LexicalScope::lifetime_t lifetime,
 		       list<named_pexpr_t>*attr)
 {
       if (! pform_cur_module.empty() && !gn_system_verilog()) {
 	    cerr << loc << ": error: Module definition " << name
 		 << " cannot nest into module " << pform_cur_module.front()->mod_name() << "." << endl;
+	    error_count += 1;
+      }
+
+      if (lifetime != LexicalScope::INHERITED && !gn_system_verilog()) {
+	    cerr << loc << ": error: Default subroutine lifetimes "
+		    "require SystemVerilog." << endl;
 	    error_count += 1;
       }
 
@@ -1158,6 +1189,8 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
       Module*cur_module = new Module(lexical_scope, lex_name);
       cur_module->program_block = program_block;
       cur_module->is_interface = is_interface;
+      cur_module->default_lifetime = find_lifetime(lifetime);
+
 	/* Set the local time unit/precision to the global value. */
       cur_module->time_unit = pform_time_unit;
       cur_module->time_precision = pform_time_prec;

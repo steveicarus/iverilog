@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,9 +36,13 @@ static PClass*pform_cur_class = 0;
  * if present, are the "exprs" that would be passed to a chained
  * constructor.
  */
-void pform_start_class_declaration(const struct vlltype&loc, class_type_t*type, data_type_t*base_type, list<PExpr*>*base_exprs)
+void pform_start_class_declaration(const struct vlltype&loc,
+				   class_type_t*type,
+				   data_type_t*base_type,
+				   list<PExpr*>*base_exprs,
+				   LexicalScope::lifetime_t lifetime)
 {
-      PClass*class_scope = pform_push_class_scope(loc, type->name);
+      PClass*class_scope = pform_push_class_scope(loc, type->name, lifetime);
       class_scope->type = type;
       assert(pform_cur_class == 0);
       pform_cur_class = class_scope;
@@ -127,7 +131,7 @@ void pform_set_constructor_return(PFunction*net)
 PFunction*pform_push_constructor_scope(const struct vlltype&loc)
 {
       assert(pform_cur_class);
-      PFunction*func = pform_push_function_scope(loc, "new", true);
+      PFunction*func = pform_push_function_scope(loc, "new", LexicalScope::AUTOMATIC);
       return func;
 }
 
@@ -138,7 +142,7 @@ void pform_end_class_declaration(const struct vlltype&loc)
 	// If there were initializer statements, then collect them
 	// into an implicit constructor function.
       if (! pform_cur_class->type->initialize.empty()) {
-	    PFunction*func = pform_push_function_scope(loc, "new@", true);
+	    PFunction*func = pform_push_function_scope(loc, "new@", LexicalScope::AUTOMATIC);
 	    func->set_ports(0);
 	    pform_set_constructor_return(func);
 	    pform_set_this_class(loc, func);
