@@ -56,6 +56,17 @@ void NetBlock::append(NetProc*cur)
       }
 }
 
+void NetBlock::prepend(NetProc*cur)
+{
+      if (last_ == 0) {
+	    last_ = cur;
+	    cur->next_ = cur;
+      } else {
+	    cur->next_ = last_->next_;
+	    last_->next_ = cur;
+      }
+}
+
 const NetProc* NetBlock::proc_first() const
 {
       if (last_ == 0)

@@ -2253,23 +2253,30 @@ void pform_make_pgassign_list(list<PExpr*>*alist,
 }
 
 /*
- * this function makes the initial assignment to a register as given
- * in the source. It handles the case where a reg variable is assigned
- * where it it declared:
+ * This function makes the initial assignment to a variable as given
+ * in the source. It handles the case where a variable is assigned
+ * where it is declared, e.g.
  *
  *    reg foo = <expr>;
  *
- * This is equivalent to the combination of statements:
+ * In Verilog-2001 this is only supported at the module level, and is
+ * equivalent to the combination of statements:
  *
  *    reg foo;
  *    initial foo = <expr>;
  *
- * and that is how it is parsed. This syntax is not part of the
- * IEEE1364-1995 standard, but is approved by OVI as enhancement
- * BTF-B14.
+ * In SystemVerilog, variable initializations are allowed in any scope.
+ * For static variables, initializations are performed before the start
+ * of simulation. For automatic variables, initializations are performed
+ * each time the enclosing block is entered. Here we store the variable
+ * assignments in the current scope, and later elaboration creates an
+ * initialization block that will be executed at the appropriate time.
+ *
+ * This syntax is not part of the IEEE1364-1995 standard, but is
+ * approved by OVI as enhancement BTF-B14.
  */
-void pform_make_reginit(const struct vlltype&li,
-			perm_string name, PExpr*expr)
+void pform_make_var_init(const struct vlltype&li,
+			 perm_string name, PExpr*expr)
 {
       if (! pform_at_module_level() && !gn_system_verilog()) {
 	    VLerror(li, "error: variable declaration assignments are only "
@@ -2280,7 +2287,7 @@ void pform_make_reginit(const struct vlltype&li,
 
       PWire*cur = pform_get_wire_in_scope(name);
       if (cur == 0) {
-	    VLerror(li, "internal error: reginit to non-register?");
+	    VLerror(li, "internal error: var_init to non-register?");
 	    delete expr;
 	    return;
       }
@@ -2289,10 +2296,8 @@ void pform_make_reginit(const struct vlltype&li,
       FILE_NAME(lval, li);
       PAssign*ass = new PAssign(lval, expr, true);
       FILE_NAME(ass, li);
-      PProcess*top = new PProcess(IVL_PR_INITIAL, ass);
-      FILE_NAME(top, li);
 
-      pform_put_behavior_in_scope(top);
+      lexical_scope->var_inits.push_back(ass);
 }
 
 /*

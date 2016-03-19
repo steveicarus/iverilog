@@ -2871,13 +2871,26 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  return 0;
 	    }
-
 	    assert(nscope);
-
-	    elaborate_behaviors_(des, nscope);
       }
 
       NetBlock*cur = new NetBlock(type, nscope);
+
+      if (nscope) {
+	      // Handle any variable initialization statements in this scope.
+	      // For automatic scopes these statements need to be executed
+	      // each time the block is entered, so add them to the main
+	      // block. For static scopes, put them in a separate process
+	      // that will be executed at the start of simulation.
+	    if (nscope->is_auto()) {
+		  for (unsigned idx = 0; idx < var_inits.size(); idx += 1) {
+			NetProc*tmp = var_inits[idx]->elaborate(des, nscope);
+			if (tmp) cur->append(tmp);
+		  }
+	    } else {
+		  elaborate_var_inits_(des, nscope);
+	    }
+      }
 
       if (nscope == 0)
 	    nscope = scope;
@@ -5000,7 +5013,6 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return;
       }
-
       assert(def);
 
       ivl_assert(*this, statement_);
@@ -5011,6 +5023,31 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
             scope->is_const_func(true); // error recovery
 	    des->errors += 1;
 	    return;
+      }
+
+	// Handle any variable initialization statements in this scope.
+	// For automatic functions, these statements need to be executed
+	// each time the function is called, so insert them at the start
+	// of the elaborated definition. For static functions, put them
+	// in a separate process that will be executed before the start
+	// of simulation.
+      if (is_auto_) {
+	      // Get the NetBlock of the statement. If it is not a
+	      // NetBlock then create one to wrap the initialization
+	      // statements and the original statement.
+	    NetBlock*blk = dynamic_cast<NetBlock*> (st);
+	    if ((blk == 0) && (var_inits.size() > 0)) {
+		  blk = new NetBlock(NetBlock::SEQU, scope);
+		  blk->set_line(*this);
+		  blk->append(st);
+		  st = blk;
+	    }
+	    for (unsigned idx = var_inits.size(); idx > 0; idx -= 1) {
+		  NetProc*tmp = var_inits[idx-1]->elaborate(des, scope);
+		  if (tmp) blk->prepend(tmp);
+	    }
+      } else {
+	    elaborate_var_inits_(des, scope);
       }
 
       def->set_proc(st);
@@ -5175,11 +5212,6 @@ NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
 
 void PTask::elaborate(Design*des, NetScope*task) const
 {
-	// Elaborate any processes that are part of this scope that
-	// aren't the definition itself. This can happen, for example,
-	// with variable initialization statements in this scope.
-      elaborate_behaviors_(des, task);
-
       NetTaskDef*def = task->task_def();
       assert(def);
 
@@ -5196,6 +5228,31 @@ void PTask::elaborate(Design*des, NetScope*task) const
 		       << " at " << get_fileline() << "." << endl;
 		  return;
 	    }
+      }
+
+	// Handle any variable initialization statements in this scope.
+	// For automatic tasks , these statements need to be executed
+	// each time the task is called, so insert them at the start
+	// of the elaborated definition. For static tasks, put them
+	// in a separate process that will be executed before the start
+	// of simulation.
+      if (is_auto_) {
+	      // Get the NetBlock of the statement. If it is not a
+	      // NetBlock then create one to wrap the initialization
+	      // statements and the original statement.
+	    NetBlock*blk = dynamic_cast<NetBlock*> (st);
+	    if ((blk == 0) && (var_inits.size() > 0)) {
+		  blk = new NetBlock(NetBlock::SEQU, task);
+		  blk->set_line(*this);
+		  blk->append(st);
+		  st = blk;
+	    }
+	    for (unsigned idx = var_inits.size(); idx > 0; idx -= 1) {
+		  NetProc*tmp = var_inits[idx-1]->elaborate(des, task);
+		  if (tmp) blk->prepend(tmp);
+	    }
+      } else {
+	    elaborate_var_inits_(des, task);
       }
 
       def->set_proc(st);
@@ -5654,6 +5711,10 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	    (*gt)->elaborate(des, scope);
       }
 
+	// Elaborate the variable initialization statements, making a
+	// single initial process out of them.
+      result_flag &= elaborate_var_inits_(des, scope);
+
 	// Elaborate the behaviors, making processes out of them. This
 	// involves scanning the PProcess* list, creating a NetProcTop
 	// for each process.
@@ -5844,6 +5905,8 @@ bool PGenerate::elaborate_(Design*des, NetScope*scope) const
       for (gates_it_t cur = gates.begin() ; cur != gates.end() ; ++ cur )
 	    (*cur)->elaborate(des, scope);
 
+      elaborate_var_inits_(des, scope);
+
       typedef list<PProcess*>::const_iterator proc_it_t;
       for (proc_it_t cur = behaviors.begin(); cur != behaviors.end(); ++ cur )
 	    (*cur)->elaborate(des, scope);
@@ -5877,6 +5940,37 @@ bool PScope::elaborate_behaviors_(Design*des, NetScope*scope) const
       }
 
       return result_flag;
+}
+
+bool LexicalScope::elaborate_var_inits_(Design*des, NetScope*scope) const
+{
+      if (var_inits.size() == 0)
+	    return true;
+
+      NetProc*proc = 0;
+      if (var_inits.size() == 1) {
+	    proc = var_inits[0]->elaborate(des, scope);
+      } else {
+	    NetBlock*blk = new NetBlock(NetBlock::SEQU, scope);
+	    bool flag = true;
+	    for (unsigned idx = 0; idx < var_inits.size(); idx += 1) {
+		  NetProc*tmp = var_inits[idx]->elaborate(des, scope);
+		  if (tmp)
+			blk->append(tmp);
+		  else
+			flag = false;
+	    }
+	    if (flag) proc = blk;
+      }
+      if (proc == 0)
+	    return false;
+
+      NetProcTop*top = new NetProcTop(scope, IVL_PR_INITIAL, proc);
+      des->add_process(top);
+
+      scope->set_var_init(proc);
+
+      return true;
 }
 
 class elaborate_package_t : public elaborator_work_item_t {
