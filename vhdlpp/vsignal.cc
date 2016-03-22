@@ -21,6 +21,7 @@
 
 # include  "vsignal.h"
 # include  "expression.h"
+# include  "scope.h"
 # include  "vtype.h"
 # include  "std_types.h"
 # include  <iostream>
@@ -78,6 +79,8 @@ int Signal::emit(ostream&out, Entity*ent, ScopeBase*scope, bool initialize)
 int Variable::emit(ostream&out, Entity*ent, ScopeBase*scope, bool initialize)
 {
       int errors = 0;
+
+      out << (!scope->is_subprogram() ? "static " : "automatic ");
 
       VType::decl_t decl;
       type_elaborate_(decl);

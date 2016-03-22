@@ -55,6 +55,7 @@ class SubprogramBody : public LineInfo, public ScopeBase {
       void dump(std::ostream&fd) const;
 
       const SubprogramHeader*header() const { return header_; }
+      bool is_subprogram() const { return true; }
 
     private:
       std::list<SequentialStmt*>*statements_;
