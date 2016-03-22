@@ -26,7 +26,7 @@
 
 using namespace std;
 
-int SubprogramBody::emit_package(ostream&fd) const
+int SubprogramBody::emit_package(ostream&fd)
 {
       int errors = 0;
 
@@ -34,7 +34,7 @@ int SubprogramBody::emit_package(ostream&fd) const
          ; cur != new_variables_.end() ; ++cur) {
           // Enable reg_flag for variables
           cur->second->count_ref_sequ();
-          errors += cur->second->emit(fd, NULL, NULL);
+          errors += cur->second->emit(fd, NULL, this, false);
       }
 
     // Emulate automatic functions (add explicit initial value assignments)
@@ -44,7 +44,7 @@ int SubprogramBody::emit_package(ostream&fd) const
 
           if(const Expression*init = var->peek_init_expr()) {
               fd << cur->first << " = ";
-              init->emit(fd, NULL, NULL);
+              init->emit(fd, NULL, this);
               fd << "; // automatic function emulation" << endl;
           }
       }

@@ -49,7 +49,7 @@ class SubprogramBody : public LineInfo, public ScopeBase {
       int emit(ostream&out, Entity*ent, ScopeBase*scope);
 
 	// Emit body as it would show up in a package.
-      int emit_package(std::ostream&fd) const;
+      int emit_package(std::ostream&fd);
 
       void write_to_stream(std::ostream&fd) const;
       void dump(std::ostream&fd) const;

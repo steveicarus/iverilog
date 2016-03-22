@@ -70,7 +70,7 @@ class Signal : public SigVarBase {
     public:
       Signal(perm_string name, const VType*type, Expression*init_expr);
 
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope, bool initalize = true);
 };
 
 class Variable : public SigVarBase {
@@ -78,7 +78,7 @@ class Variable : public SigVarBase {
     public:
       Variable(perm_string name, const VType*type, Expression*init_expr = NULL);
 
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope, bool initialize = true);
       void write_to_stream(std::ostream&fd);
 };
 

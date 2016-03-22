@@ -49,7 +49,7 @@ void SigVarBase::type_elaborate_(VType::decl_t&decl)
       decl.type = type_;
 }
 
-int Signal::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int Signal::emit(ostream&out, Entity*ent, ScopeBase*scope, bool initialize)
 {
       int errors = 0;
 
@@ -63,7 +63,7 @@ int Signal::emit(ostream&out, Entity*ent, ScopeBase*scope)
       errors += decl.emit(out, peek_name());
 
       const Expression*init_expr = peek_init_expr();
-      if (init_expr) {
+      if (initialize && init_expr) {
             /* Emit initialization value for wires as a weak assignment */
             if(!decl.reg_flag && !type->type_match(&primitive_REAL))
                 out << ";" << endl << "/*init*/ assign (weak1, weak0) " << peek_name();
@@ -75,7 +75,7 @@ int Signal::emit(ostream&out, Entity*ent, ScopeBase*scope)
       return errors;
 }
 
-int Variable::emit(ostream&out, Entity*ent, ScopeBase*scope)
+int Variable::emit(ostream&out, Entity*ent, ScopeBase*scope, bool initialize)
 {
       int errors = 0;
 
@@ -85,7 +85,7 @@ int Variable::emit(ostream&out, Entity*ent, ScopeBase*scope)
       errors += decl.emit(out, peek_name());
 
       const Expression*init_expr = peek_init_expr();
-      if (init_expr) {
+      if (initialize && init_expr) {
 	    out << " = ";
 	    init_expr->emit(out, ent, scope);
       }
