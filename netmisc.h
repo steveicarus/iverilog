@@ -1,7 +1,7 @@
 #ifndef IVL_netmisc_H
 #define IVL_netmisc_H
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -66,6 +66,27 @@ inline NetScope* symbol_search(const LineInfo*li,
  * enough.
  */
 extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid, const LineInfo&info);
+
+/*
+ * This function transforms an expression by either zero or sign extending
+ * the high bits until the expression has the desired width. This may mean
+ * not transforming the expression at all, if it is already wide enough.
+ * The extension method and the returned expression type is determined by
+ * signed_flag.
+ */
+extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid, bool signed_flag,
+			    const LineInfo&info);
+
+/*
+ * This function transforms an expression by either zero or sign extending
+ * or discarding the high bits until the expression has the desired width.
+ * This may mean not transforming the expression at all, if it is already
+ * the correct width. The extension method (if needed) and the returned
+ * expression type is determined by signed_flag.
+ */
+extern NetExpr*cast_to_width(NetExpr*expr, unsigned wid, bool signed_flag,
+			     const LineInfo&info);
+
 extern NetNet*pad_to_width(Design*des, NetNet*n, unsigned w,
                            const LineInfo&info);
 

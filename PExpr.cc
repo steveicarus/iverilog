@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2012 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2016 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -137,7 +137,7 @@ bool PEBinary::has_aa_term(Design*des, NetScope*scope) const
       return left_->has_aa_term(des, scope) || right_->has_aa_term(des, scope);
 }
 
-PECastSize::PECastSize(unsigned si, PExpr*b)
+PECastSize::PECastSize(PExpr*si, PExpr*b)
 : size_(si), base_(b)
 {
 }

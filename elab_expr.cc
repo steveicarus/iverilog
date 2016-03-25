@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2517,22 +2517,54 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 
 unsigned PECastSize::test_width(Design*des, NetScope*scope, width_mode_t&)
 {
-      expr_width_ = size_;
+      ivl_assert(*this, size_);
+      ivl_assert(*this, base_);
+
+      NetExpr*size_ex = elab_and_eval(des, scope, size_, -1, true);
+      NetEConst*size_ce = dynamic_cast<NetEConst*>(size_ex);
+      expr_width_ = size_ce ? size_ce->value().as_ulong() : 0;
+      delete size_ex;
+      if (expr_width_ == 0) {
+	    cerr << get_fileline() << ": error: Cast size expression "
+		    "must be constant and greater than zero." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       width_mode_t tmp_mode = PExpr::SIZED;
       base_->test_width(des, scope, tmp_mode);
 
-      return size_;
+      if (!type_is_vectorable(base_->expr_type())) {
+	    cerr << get_fileline() << ": error: Cast base expression "
+		    "must be a vector type." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      expr_type_   = base_->expr_type();
+      min_width_   = expr_width_;
+      signed_flag_ = base_->has_sign();
+
+      return expr_width_;
 }
 
 NetExpr* PECastSize::elaborate_expr(Design*des, NetScope*scope,
-				    unsigned, unsigned) const
+				    unsigned expr_wid, unsigned flags) const
 {
-      NetExpr*sub = base_->elaborate_expr(des, scope, base_->expr_width(), NO_FLAGS);
-      NetESelect*sel = new NetESelect(sub, 0, size_);
-      sel->set_line(*this);
+      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
 
-      return sel;
+      ivl_assert(*this, size_);
+      ivl_assert(*this, base_);
+
+      NetExpr*sub = base_->elaborate_expr(des, scope, base_->expr_width(), flags);
+
+	// Perform the cast. The extension method (zero/sign), if needed,
+	// depends on the type of the base expression.
+      NetExpr*tmp = cast_to_width(sub, expr_width_, base_->has_sign(), *this);
+
+	// Pad up to the expression width. The extension method (zero/sign)
+	// depends on the type of enclosing expression.
+      return pad_to_width(tmp, expr_wid, signed_flag_, *this);
 }
 
 unsigned PECastType::test_width(Design*des, NetScope*scope, width_mode_t&wid)

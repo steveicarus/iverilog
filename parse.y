@@ -613,7 +613,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <gates> gate_instance_list
 
 %type <pform_name> hierarchy_identifier implicit_class_handle
-%type <expr>  assignment_pattern expression expr_primary expr_mintypmax
+%type <expr>  assignment_pattern expression expr_mintypmax
+%type <expr>  expr_primary_or_typename expr_primary
 %type <expr>  class_new dynamic_array_new
 %type <expr>  inc_or_dec_expression inside_expression lpvalue
 %type <expr>  branch_probe_expression streaming_concatenation
@@ -3083,7 +3084,7 @@ branch_probe_expression
   ;
 
 expression
-  : expr_primary
+  : expr_primary_or_typename
       { $$ = $1; }
   | inc_or_dec_expression
       { $$ = $1; }
@@ -3378,6 +3379,20 @@ expression_list_proper
       }
   ;
 
+expr_primary_or_typename
+  : expr_primary
+
+  /* There are a few special cases (notably $bits argument) where the
+     expression may be a type name. Let the elaborator sort this out. */
+  | TYPE_IDENTIFIER
+      { PETypename*tmp = new PETypename($1.type);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+	delete[]$1.text;
+      }
+
+  ;
+
 expr_primary
   : number
       { assert($1);
@@ -3417,15 +3432,6 @@ expr_primary
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete[]$1;
-      }
-
-  /* There are a few special cases (notably $bits argument) where the
-     expression may be a type name. Let the elaborator sort this out. */
-  | TYPE_IDENTIFIER
-      { PETypename*tmp = new PETypename($1.type);
-	FILE_NAME(tmp,@1);
-	$$ = tmp;
-	delete[]$1.text;
       }
 
   /* The hierarchy_identifier rule matches simple identifiers as well as
@@ -3731,12 +3737,11 @@ expr_primary
 
   /* Cast expressions are primaries */
 
-  | DEC_NUMBER '\'' '(' expression ')'
+  | expr_primary '\'' '(' expression ')'
       { PExpr*base = $4;
 	if (gn_system_verilog()) {
-	      PECastSize*tmp = new PECastSize($1->as_ulong(), base);
+	      PECastSize*tmp = new PECastSize($1, base);
 	      FILE_NAME(tmp, @1);
-	      delete $1;
 	      $$ = tmp;
 	} else {
 	      yyerror(@1, "error: Size cast requires SystemVerilog.");

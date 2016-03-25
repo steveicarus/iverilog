@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -318,7 +318,7 @@ void PECallFunction::dump(ostream &out) const
 
 void PECastSize::dump(ostream &out) const
 {
-      out << size_ << "'(";
+      out << *size_ << "'(";
       base_->dump(out);
       out << ")";
 }
