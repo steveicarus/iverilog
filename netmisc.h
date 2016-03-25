@@ -60,14 +60,6 @@ inline NetScope* symbol_search(const LineInfo*li,
 }
 
 /*
- * This function transforms an expression by padding the high bits
- * with V0 until the expression has the desired width. This may mean
- * not transforming the expression at all, if it is already wide
- * enough.
- */
-extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid, const LineInfo&info);
-
-/*
  * This function transforms an expression by either zero or sign extending
  * the high bits until the expression has the desired width. This may mean
  * not transforming the expression at all, if it is already wide enough.
@@ -76,6 +68,13 @@ extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid, const LineInfo&info);
  */
 extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid, bool signed_flag,
 			    const LineInfo&info);
+/*
+ * This version determines the extension method from the base expression type.
+ */
+inline NetExpr*pad_to_width(NetExpr*expr, unsigned wid, const LineInfo&info)
+{
+      return pad_to_width(expr, wid, expr->has_sign(), info);
+}
 
 /*
  * This function transforms an expression by either zero or sign extending
