@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -46,7 +46,7 @@ ScopeBase::ScopeBase(const ActiveScope&ref)
     use_subprograms_(ref.use_subprograms_), cur_subprograms_(ref.cur_subprograms_),
     scopes_(ref.scopes_), use_enums_(ref.use_enums_),
     initializers_(ref.initializers_), finalizers_(ref.finalizers_),
-    name_(ref.name_)
+    package_header_(ref.package_header_), name_(ref.name_)
 {
 }
 

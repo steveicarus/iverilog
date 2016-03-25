@@ -1,7 +1,7 @@
 #ifndef IVL_scope_H
 #define IVL_scope_H
 /*
- * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -51,7 +51,7 @@ struct delete_pair_second{
 class ScopeBase {
 
     public:
-      ScopeBase() { }
+      ScopeBase() : package_header_(0) { }
       explicit ScopeBase(const ActiveScope&ref);
       virtual ~ScopeBase() =0;
 
