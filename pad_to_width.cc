@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -48,6 +48,54 @@ NetExpr*pad_to_width(NetExpr*expr, unsigned wid, const LineInfo&info)
       NetESelect*tmp = new NetESelect(expr, 0, wid);
       tmp->set_line(info);
       tmp->cast_signed(expr->has_sign());
+      return tmp;
+}
+
+NetExpr*pad_to_width(NetExpr*expr, unsigned wid, bool signed_flag,
+		     const LineInfo&info)
+{
+      if (wid <= expr->expr_width()) {
+	    expr->cast_signed(signed_flag);
+	    return expr;
+      }
+
+	/* If the expression is a const, then replace it with a wider
+	   const. This is a more efficient result. */
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
+	    verinum oval = tmp->value();
+	    oval.has_sign(signed_flag);
+	    oval = pad_to_width(oval, wid);
+	    tmp = new NetEConst(oval);
+	    tmp->set_line(info);
+	    delete expr;
+	    return tmp;
+      }
+
+      NetESelect*tmp = new NetESelect(expr, 0, wid);
+      tmp->cast_signed(signed_flag);
+      tmp->set_line(info);
+      return tmp;
+}
+
+NetExpr*cast_to_width(NetExpr*expr, unsigned wid, bool signed_flag,
+		      const LineInfo&info)
+{
+        /* If the expression is a const, then replace it with a new
+           const. This is a more efficient result. */
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
+            tmp->cast_signed(signed_flag);
+            if (wid != tmp->expr_width()) {
+                  tmp = new NetEConst(verinum(tmp->value(), wid));
+                  tmp->set_line(info);
+                  delete expr;
+            }
+            return tmp;
+      }
+
+      NetESelect*tmp = new NetESelect(expr, 0, wid);
+      tmp->cast_signed(signed_flag);
+      tmp->set_line(info);
+
       return tmp;
 }
 

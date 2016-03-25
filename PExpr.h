@@ -1,7 +1,7 @@
 #ifndef IVL_PExpr_H
 #define IVL_PExpr_H
 /*
- * Copyright (c) 1998-2014 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2016 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -971,7 +971,7 @@ class PECallFunction : public PExpr {
 class PECastSize  : public PExpr {
 
     public:
-      explicit PECastSize(unsigned expr_wid, PExpr*base);
+      explicit PECastSize(PExpr*size, PExpr*base);
       ~PECastSize();
 
       void dump(ostream &out) const;
@@ -984,7 +984,7 @@ class PECastSize  : public PExpr {
 				  width_mode_t&mode);
 
     private:
-      unsigned size_;
+      PExpr* size_;
       PExpr* base_;
 };
 
