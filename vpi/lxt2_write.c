@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2012 Tony Bybell.
+ * Copyright (c) 2003-2016 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1029,12 +1029,12 @@ for(i=len;i>0;i--)
 
 if(!i)
 	{
-	sprintf(tname, "%s_%03d.lxt", lt->lxtname, ++lt->break_number);
+	sprintf(tname, "%s_%03u.lxt", lt->lxtname, ++lt->break_number);
 	}
 	else
 	{
 	memcpy(tname, lt->lxtname, i);
-	sprintf(tname+i, "_%03d.lxt", ++lt->break_number);
+	sprintf(tname+i, "_%03u.lxt", ++lt->break_number);
 	}
 
 f2 = fopen(tname, "wb");
