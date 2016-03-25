@@ -24,33 +24,6 @@
 # include  "netmisc.h"
 
 
-/*
- * This function transforms an expression by padding the high bits
- * with V0 until the expression has the desired width. This may mean
- * not transforming the expression at all, if it is already wide
- * enough.
- */
-NetExpr*pad_to_width(NetExpr*expr, unsigned wid, const LineInfo&info)
-{
-      if (wid <= expr->expr_width())
-	    return expr;
-
-	/* If the expression is a const, then replace it with a wider
-	   const. This is a more efficient result. */
-      if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
-	    verinum oval = pad_to_width(tmp->value(), wid);
-	    tmp = new NetEConst(oval);
-	    tmp->set_line(info);
-	    delete expr;
-	    return tmp;
-      }
-
-      NetESelect*tmp = new NetESelect(expr, 0, wid);
-      tmp->set_line(info);
-      tmp->cast_signed(expr->has_sign());
-      return tmp;
-}
-
 NetExpr*pad_to_width(NetExpr*expr, unsigned wid, bool signed_flag,
 		     const LineInfo&info)
 {
