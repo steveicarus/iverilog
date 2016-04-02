@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -754,7 +754,7 @@ static unsigned need_delay(ivl_net_logic_t lptr)
 /*
  * Draw the appropriate delay statement. Returns zero if there is not a delay.
  */
-static void draw_delay(ivl_net_logic_t lptr)
+static void draw_logic_delay(ivl_net_logic_t lptr)
 {
       ivl_expr_t rise_exp = ivl_logic_delay(lptr, 0);
       ivl_expr_t fall_exp = ivl_logic_delay(lptr, 1);
@@ -767,49 +767,7 @@ static void draw_delay(ivl_net_logic_t lptr)
 	    delay_wid = 0;
       }
 
-	/* If the delays are all constants then process them here. */
-      if (number_is_immediate(rise_exp, 64, 0) &&
-          number_is_immediate(fall_exp, 64, 0) &&
-          number_is_immediate(decay_exp, 64, 0)) {
-
-	    assert(! number_is_unknown(rise_exp));
-	    assert(! number_is_unknown(fall_exp));
-	    assert(! number_is_unknown(decay_exp));
-
-	    fprintf(vvp_out, "L_%p .delay %u "
-	                     "(%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") L_%p/d;\n",
-	                     lptr, delay_wid,
-	                     get_number_immediate64(rise_exp),
-	                     get_number_immediate64(fall_exp),
-	                     get_number_immediate64(decay_exp), lptr);
-	/* For a variable delay we indicate only two delays by setting the
-	 * decay time to zero. */
-      } else {
-	    ivl_signal_t sig;
-	    assert(ivl_expr_type(rise_exp) == IVL_EX_SIGNAL);
-	    assert(ivl_expr_type(fall_exp) == IVL_EX_SIGNAL);
-	    assert((decay_exp == 0) ||
-	           (ivl_expr_type(decay_exp) == IVL_EX_SIGNAL));
-
-	    fprintf(vvp_out, "L_%p .delay %u L_%p/d", lptr, delay_wid, lptr);
-
-	    sig = ivl_expr_signal(rise_exp);
-	    assert(ivl_signal_dimensions(sig) == 0);
-	    fprintf(vvp_out, ", %s", draw_net_input(ivl_signal_nex(sig,0)));
-
-	    sig = ivl_expr_signal(fall_exp);
-	    assert(ivl_signal_dimensions(sig) == 0);
-	    fprintf(vvp_out, ", %s", draw_net_input(ivl_signal_nex(sig,0)));
-
-	    if (decay_exp) {
-		  sig = ivl_expr_signal(decay_exp);
-		  assert(ivl_signal_dimensions(sig) == 0);
-		  fprintf(vvp_out, ", %s;\n",
-		                   draw_net_input(ivl_signal_nex(sig,0)));
-	    } else {
-		  fprintf(vvp_out, ", 0;\n");
-	    }
-      }
+      draw_delay(lptr, delay_wid, 0, rise_exp, fall_exp, decay_exp);
 }
 
 static void draw_udp_def(ivl_udp_t udp)
@@ -945,7 +903,7 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
       fprintf(vvp_out, ";\n");
 
 	/* Generate a delay when needed. */
-      if (need_delay_flag) draw_delay(lptr);
+      if (need_delay_flag) draw_logic_delay(lptr);
 }
 
 static void draw_logic_in_scope(ivl_net_logic_t lptr)
@@ -1149,7 +1107,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
       free(input_strings);
 
 	/* Generate a delay when needed. */
-      if (need_delay_flag) draw_delay(lptr);
+      if (need_delay_flag) draw_logic_delay(lptr);
 }
 
 static void draw_event_in_scope(ivl_event_t obj)
@@ -1349,20 +1307,8 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net, ivl_variable_type_t dt)
 
       const char*dly = "";
       if (d_rise != 0) {
-	    assert(number_is_immediate(d_rise, 64, 0));
-	    assert(number_is_immediate(d_fall, 64, 0));
-	    assert(number_is_immediate(d_decay, 64, 0));
-
-	    assert(! number_is_unknown(d_rise));
-	    assert(! number_is_unknown(d_fall));
-	    assert(! number_is_unknown(d_decay));
-
+	    draw_delay(net, width, 0, d_rise, d_fall, d_decay);
 	    dly = "/d";
-	    fprintf(vvp_out, "L_%p .delay %u (%" PRIu64 ",%" PRIu64 ",%" PRIu64 ")"
-		    " L_%p/d;\n", net, width,
-                    get_number_immediate64(d_rise),
-	            get_number_immediate64(d_fall),
-	            get_number_immediate64(d_decay), net);
       }
 
       return dly;

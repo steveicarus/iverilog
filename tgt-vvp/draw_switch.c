@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010,2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -38,18 +38,6 @@ void draw_switch_in_scope(ivl_switch_t sw)
       ivl_expr_t fall_exp = ivl_switch_delay(sw, 1);
       ivl_expr_t decay_exp= ivl_switch_delay(sw, 2);
 
-      if ((rise_exp || fall_exp || decay_exp) &&
-          (!number_is_immediate(rise_exp, 64, 0) ||
-           number_is_unknown(rise_exp) ||
-           !number_is_immediate(fall_exp, 64, 0) ||
-           number_is_unknown(fall_exp) ||
-	   !number_is_immediate(decay_exp, 64, 0) ||
-	   number_is_unknown(decay_exp))) {
-	    fprintf(stderr, "%s:%u: error: Invalid tranif delay expression.\n",
-	                    ivl_switch_file(sw), ivl_switch_lineno(sw));
-	    vvp_errors += 1;
-      }
-
       island = ivl_switch_island(sw);
       if (ivl_island_flag_test(island, 0) == 0)
 	    draw_tran_island(island);
@@ -67,24 +55,18 @@ void draw_switch_in_scope(ivl_switch_t sw)
       char str_e_buf[4 + 2*sizeof(void*)];
 
       if (enable && rise_exp) {
-	    assert(fall_exp && decay_exp);
-
 	      /* If the enable has a delay, then generate a .delay
 		 node to delay the input by the specified amount. Do
 		 the delay outside of the island so that the island
 		 processing doesn't have to deal with it. */
 	    const char*raw = draw_net_input(enable);
 
+	    draw_delay(sw, 1, raw, rise_exp, fall_exp, decay_exp);
+
 	    snprintf(str_e_buf, sizeof str_e_buf, "p%p", sw);
 	    str_e = str_e_buf;
 
-	    fprintf(vvp_out, "%s/d .delay 1 "
-		    "(%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") %s;\n",
-		    str_e, get_number_immediate64(rise_exp),
-		    get_number_immediate64(fall_exp),
-		    get_number_immediate64(decay_exp), raw);
-
-	    fprintf(vvp_out, "%s .import I%p, %s/d;\n", str_e, island, str_e);
+	    fprintf(vvp_out, "%s .import I%p, L_%p;\n", str_e, island, sw);
 
       } else if (enable) {
 	    str_e = draw_island_net_input(island, enable);
