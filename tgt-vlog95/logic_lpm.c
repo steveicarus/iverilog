@@ -307,6 +307,44 @@ static void emit_delay(ivl_scope_t scope, ivl_expr_t rise, ivl_expr_t fall,
       fprintf(vlog_out, ")");
 }
 
+static void emit_driver_delay(ivl_scope_t scope, ivl_nexus_t nex)
+{
+      ivl_expr_t rise = 0;
+      ivl_expr_t fall = 0;
+      ivl_expr_t decay = 0;
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_lpm_t t_lpm = ivl_nexus_ptr_lpm(nex_ptr);
+	    ivl_net_const_t t_net_const = ivl_nexus_ptr_con(nex_ptr);
+	    ivl_net_logic_t t_nlogic = ivl_nexus_ptr_log(nex_ptr);
+	    ivl_drive_t cur_drive1 = ivl_nexus_ptr_drive1(nex_ptr);
+	    ivl_drive_t cur_drive0 = ivl_nexus_ptr_drive0(nex_ptr);
+	    if ((cur_drive1 == IVL_DR_HiZ) &&
+	        (cur_drive0 == IVL_DR_HiZ)) continue;
+	      /* Only one driver can set the delay. */
+	    assert( ! rise);
+	    if (t_lpm) {
+		  rise  = ivl_lpm_delay(t_lpm, 0);
+		  fall  = ivl_lpm_delay(t_lpm, 1);
+		  decay = ivl_lpm_delay(t_lpm, 2);
+	    }
+	    if (t_net_const) {
+		  rise  = ivl_const_delay(t_net_const, 0);
+		  fall  = ivl_const_delay(t_net_const, 1);
+		  decay = ivl_const_delay(t_net_const, 2);
+	    }
+	    if (t_nlogic) {
+		  rise  = ivl_logic_delay(t_nlogic, 0);
+		  fall  = ivl_logic_delay(t_nlogic, 1);
+		  decay = ivl_logic_delay(t_nlogic, 2);
+	    }
+      }
+
+      emit_delay(scope, rise, fall, decay, 3);
+}
+
 static unsigned is_local_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 {
       unsigned idx, count = ivl_nexus_ptrs(nex);
@@ -1795,14 +1833,19 @@ void emit_lpm(ivl_scope_t scope, ivl_lpm_t lpm)
       if (output_is_module_instantiation_input(scope, output)) return;
       fprintf(vlog_out, "%*cassign", indent, ' ');
       emit_lpm_strength(lpm);
-      emit_delay(scope,
-                 ivl_lpm_delay(lpm, 0),
-                 ivl_lpm_delay(lpm, 1),
-                 ivl_lpm_delay(lpm, 2),
-                 3);
-      fprintf(vlog_out, " ");
-      if (type == IVL_LPM_PART_PV) emit_lpm_part_pv(scope, lpm);
-      else emit_name_of_nexus(scope, output, 0);
+      if (type == IVL_LPM_PART_PV) {
+	    emit_driver_delay(scope, ivl_lpm_data(lpm, 0));
+	    fprintf(vlog_out, " ");
+	    emit_lpm_part_pv(scope, lpm);
+      } else {
+	    emit_delay(scope,
+                       ivl_lpm_delay(lpm, 0),
+                       ivl_lpm_delay(lpm, 1),
+                       ivl_lpm_delay(lpm, 2),
+                       3);
+	    fprintf(vlog_out, " ");
+	    emit_name_of_nexus(scope, output, 0);
+      }
       fprintf(vlog_out, " = ");
       emit_lpm_as_ca(scope, lpm, 0);
       fprintf(vlog_out, ";");
