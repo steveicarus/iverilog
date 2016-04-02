@@ -787,7 +787,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
       if (check_delay_count(des)) return;
       NetExpr* rise_time, *fall_time, *decay_time;
-      eval_delays(des, scope, rise_time, fall_time, decay_time);
+      eval_delays(des, scope, rise_time, fall_time, decay_time, true);
 
       struct attrib_list_t*attrib_list;
       unsigned attrib_list_n = 0;
@@ -2000,7 +2000,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 		  PDelays tmp_del;
 		  tmp_del.set_delays(overrides_, false);
 		  tmp_del.eval_delays(des, scope, rise_expr, fall_expr,
-		                      decay_expr);
+		                      decay_expr, true);
 	    }
       }
 
