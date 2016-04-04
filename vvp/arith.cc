@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,13 +26,13 @@
 # include  <cmath>
 
 vvp_arith_::vvp_arith_(unsigned wid)
-: wid_(wid), x_val_(wid)
+: wid_(wid), op_a_(wid), op_b_(wid), x_val_(wid)
 {
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    op_a_ .set_bit(idx, BIT4_Z);
+	    op_b_ .set_bit(idx, BIT4_Z);
 	    x_val_.set_bit(idx, BIT4_X);
-
-      op_a_ = x_val_;
-      op_b_ = x_val_;
+      }
 }
 
 void vvp_arith_::dispatch_operand_(vvp_net_ptr_t ptr, vvp_vector4_t bit)
@@ -49,6 +49,36 @@ void vvp_arith_::dispatch_operand_(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 	    fprintf(stderr, "Unsupported port type %u.\n", port);
 	    assert(0);
       }
+}
+
+void vvp_arith_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			      unsigned base, unsigned wid, unsigned vwid,
+                              vvp_context_t)
+{
+      unsigned port = ptr.port();
+
+      assert(bit.size() == wid);
+      assert(base + wid <= vwid);
+
+      vvp_vector4_t tmp;
+      switch (port) {
+	  case 0:
+	    tmp = op_a_;
+	    break;
+	  case 1:
+	    tmp = op_b_;
+	    break;
+	  default:
+	    fprintf(stderr, "Unsupported port type %u.\n", port);
+	    assert(0);
+      }
+
+	// Set the part for the input. If nothing changes, then break.
+      bool flag = tmp.set_vec(base, bit);
+      if (flag == false)
+	    return;
+
+      recv_vec4(ptr, tmp, 0);
 }
 
 
