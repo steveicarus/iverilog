@@ -1,7 +1,7 @@
 #ifndef IVL_pform_types_H
 #define IVL_pform_types_H
 /*
- * Copyright (c) 2007-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -71,6 +71,21 @@ typedef named<PExpr*> named_pexpr_t;
  *       second = 0
  */
 typedef std::pair<PExpr*,PExpr*> pform_range_t;
+
+/*
+ * The pform_port_t holds the name and optional unpacked dimensions
+ * and initialization expression for a single port in a list of port
+ * declarations.
+ */
+struct pform_port_t {
+      pform_port_t(perm_string n, list<pform_range_t>*ud, PExpr*e)
+	: name(n), udims(ud), expr(e) { }
+      ~pform_port_t() { }
+
+      perm_string name;
+      list<pform_range_t>*udims;
+      PExpr*expr;
+};
 
 /*
  * Semantic NOTES:

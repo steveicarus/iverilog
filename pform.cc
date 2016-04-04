@@ -1939,6 +1939,7 @@ static void pform_set_net_range(perm_string name,
 	    VLerror("error: name is not a valid net.");
 	    return;
       }
+
 	// If this is not implicit ("implicit" meaning we don't
 	// know what the type is yet) then set the type now.
       if (net_type != NetNet::IMPLICIT && net_type != NetNet::NONE) {
@@ -2344,7 +2345,8 @@ void pform_module_define_port(const struct vlltype&li,
 			      NetNet::PortType port_kind,
 			      NetNet::Type type,
 			      data_type_t*vtype,
-			      list<named_pexpr_t>*attr)
+			      list<named_pexpr_t>*attr,
+			      bool keep_attr)
 {
       struct_type_t*struct_type = 0;
       ivl_variable_type_t data_type = IVL_VT_NO_TYPE;
@@ -2433,8 +2435,35 @@ void pform_module_define_port(const struct vlltype&li,
 	    cur->set_unpacked_idx(*urange);
       }
 
-      pform_bind_attributes(cur->attributes, attr);
+      pform_bind_attributes(cur->attributes, attr, keep_attr);
       pform_put_wire_in_scope(name, cur);
+}
+
+void pform_module_define_port(const struct vlltype&li,
+			      list<pform_port_t>*ports,
+			      NetNet::PortType port_kind,
+			      NetNet::Type type,
+			      data_type_t*vtype,
+			      list<named_pexpr_t>*attr)
+{
+      for (list<pform_port_t>::iterator cur = ports->begin()
+		 ; cur != ports->end() ; ++ cur ) {
+
+	    data_type_t*use_type = vtype;
+	    if (cur->udims)
+		  use_type = new uarray_type_t(vtype, cur->udims);
+
+	    pform_module_define_port(li, cur->name, port_kind, type, use_type,
+				     attr, true);
+	    if (cur->udims)
+		  delete use_type;
+
+	    if (cur->expr)
+		  pform_make_var_init(li, cur->name, cur->expr);
+      }
+
+      delete ports;
+      delete attr;
 }
 
 /*
@@ -3239,24 +3268,53 @@ static void pform_set_port_type(perm_string name, NetNet::PortType pt,
 }
 
 void pform_set_port_type(const struct vlltype&li,
-			 list<perm_string>*names,
-			 list<pform_range_t>*range,
-			 bool signed_flag,
+			 list<pform_port_t>*ports,
 			 NetNet::PortType pt,
+			 data_type_t*dt,
 			 list<named_pexpr_t>*attr)
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
 
-      for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end() ; ++ cur ) {
-	    perm_string txt = *cur;
-	    pform_set_port_type(txt, pt, li.text, li.first_line);
-	    pform_set_net_range(txt, NetNet::NONE, range, signed_flag, IVL_VT_NO_TYPE,
-	                        SR_PORT, attr);
+      list<pform_range_t>*range = 0;
+      bool signed_flag = false;
+      if (vector_type_t*vt = dynamic_cast<vector_type_t*> (dt)) {
+	    assert(vt->implicit_flag);
+	    range = vt->pdims.get();
+	    signed_flag = vt->signed_flag;
+      } else {
+	    assert(dt == 0);
       }
 
-      delete names;
-      delete range;
+      bool have_init_expr = false;
+      for (list<pform_port_t>::iterator cur = ports->begin()
+		 ; cur != ports->end() ; ++ cur ) {
+
+	    pform_set_port_type(cur->name, pt, li.text, li.first_line);
+	    pform_set_net_range(cur->name, NetNet::NONE, range, signed_flag,
+				IVL_VT_NO_TYPE, SR_PORT, attr);
+	    if (cur->udims) {
+		  cerr << li.text << ":" << li.first_line << ": warning: "
+		       << "Array dimensions in incomplete port declarations "
+		       << "are currently ignored." << endl;
+		  cerr << li.text << ":" << li.first_line << ":        : "
+		       << "The dimensions specified in the net or variable "
+		       << "declaration will be used." << endl;
+		  delete cur->udims;
+	    }
+	    if (cur->expr) {
+		  have_init_expr = true;
+		  delete cur->expr;
+	    }
+      }
+      if (have_init_expr) {
+	    cerr << li.text << ":" << li.first_line << ": error: "
+		 << "Incomplete port declarations cannot be initialized."
+		 << endl;
+	    error_count += 1;
+      }
+
+      delete ports;
+      delete dt;
       delete attr;
 }
 
