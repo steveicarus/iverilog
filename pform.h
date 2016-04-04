@@ -168,11 +168,18 @@ extern void pform_startmodule(const struct vlltype&loc, const char*name,
 extern void pform_check_timeunit_prec();
 extern void pform_module_set_ports(vector<Module::port_t*>*);
 
-/* This function is used to support the port definition in a
-   port_definition_list. In this case, we have everything needed to
-   define the port, all in one place. */
+/* These functions are used when we have a complete port definition, either
+   in an ansi style or non-ansi style declaration. In this case, we have
+   everything needed to define the port, all in one place. */
 extern void pform_module_define_port(const struct vlltype&li,
 				     perm_string name,
+				     NetNet::PortType,
+				     NetNet::Type type,
+				     data_type_t*vtype,
+				     list<named_pexpr_t>*attr,
+				     bool keep_attr =false);
+extern void pform_module_define_port(const struct vlltype&li,
+				     list<pform_port_t>*ports,
 				     NetNet::PortType,
 				     NetNet::Type type,
 				     data_type_t*vtype,
@@ -364,14 +371,14 @@ extern void pform_makewire(const struct vlltype&li,
 extern void pform_make_var_init(const struct vlltype&li,
 				perm_string name, PExpr*expr);
 
-  /* Look up the names of the wires, and set the port type,
-     i.e. input, output or inout. If the wire does not exist, create
-     it. The second form takes a single name. */
+/* This function is used when we have an incomplete port definition in
+   a non-ansi style declaration. Look up the names of the wires, and set
+   the port type, i.e. input, output or inout, and, if specified, the
+   range and signedness. If the wire does not exist, create it. */
 extern void pform_set_port_type(const struct vlltype&li,
-				list<perm_string>*names,
-				list<pform_range_t>*range,
-				bool signed_flag,
+				list<pform_port_t>*ports,
 				NetNet::PortType,
+				data_type_t*dt,
 				list<named_pexpr_t>*attr);
 
 extern void pform_set_reg_idx(perm_string name,

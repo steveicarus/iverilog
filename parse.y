@@ -135,17 +135,17 @@ static list<named_pexpr_t>*attributes_in_context = 0;
 static const struct str_pair_t pull_strength = { IVL_DR_PULL,  IVL_DR_PULL };
 static const struct str_pair_t str_strength = { IVL_DR_STRONG, IVL_DR_STRONG };
 
-static list<pair<perm_string,PExpr*> >* make_port_list(char*id, PExpr*expr)
+static list<pform_port_t>* make_port_list(char*id, list<pform_range_t>*udims, PExpr*expr)
 {
-      list<pair<perm_string,PExpr*> >*tmp = new list<pair<perm_string,PExpr*> >;
-      tmp->push_back(make_pair(lex_strings.make(id), expr));
+      list<pform_port_t>*tmp = new list<pform_port_t>;
+      tmp->push_back(pform_port_t(lex_strings.make(id), udims, expr));
       delete[]id;
       return tmp;
 }
-static list<pair<perm_string,PExpr*> >* make_port_list(list<pair<perm_string, PExpr*> >*tmp,
-                                                       char*id, PExpr*expr)
+static list<pform_port_t>* make_port_list(list<pform_port_t>*tmp,
+                                          char*id, list<pform_range_t>*udims, PExpr*expr)
 {
-      tmp->push_back(make_pair(lex_strings.make(id), expr));
+      tmp->push_back(pform_port_t(lex_strings.make(id), udims, expr));
       delete[]id;
       return tmp;
 }
@@ -374,7 +374,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       char*text;
       list<perm_string>*perm_strings;
 
-      list<pair<perm_string,PExpr*> >*port_list;
+      list<pform_port_t>*port_list;
 
       vector<pform_tf_port_t>* tf_ports;
 
@@ -582,7 +582,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <text> register_variable net_variable event_variable endlabel_opt class_declaration_endlabel_opt
 %type <perm_strings> register_variable_list net_variable_list event_variable_list
 %type <perm_strings> list_of_identifiers loop_variables
-%type <port_list> list_of_port_identifiers
+%type <port_list> list_of_port_identifiers list_of_variable_port_identifiers
 
 %type <net_decl_assign> net_decl_assign net_decl_assigns
 
@@ -642,7 +642,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <ranges> variable_dimension
 %type <ranges> dimensions_opt dimensions
 
-%type <nettype>  net_type var_type net_type_opt
+%type <nettype>  net_type net_type_opt
 %type <gatetype> gatetype switchtype
 %type <porttype> port_direction port_direction_opt
 %type <vartype> bit_logic bit_logic_opt
@@ -4057,14 +4057,21 @@ list_of_identifiers
 	;
 
 list_of_port_identifiers
-	: IDENTIFIER
-                { $$ = make_port_list($1, 0); }
-	| IDENTIFIER '=' expression
-                { $$ = make_port_list($1, $3); }
-	| list_of_port_identifiers ',' IDENTIFIER
-                { $$ = make_port_list($1, $3, 0); }
-	| list_of_port_identifiers ',' IDENTIFIER '=' expression
-                { $$ = make_port_list($1, $3, $5); }
+	: IDENTIFIER dimensions_opt
+                { $$ = make_port_list($1, $2, 0); }
+	| list_of_port_identifiers ',' IDENTIFIER dimensions_opt
+                { $$ = make_port_list($1, $3, $4, 0); }
+	;
+
+list_of_variable_port_identifiers
+	: IDENTIFIER dimensions_opt
+                { $$ = make_port_list($1, $2, 0); }
+	| IDENTIFIER dimensions_opt '=' expression
+                { $$ = make_port_list($1, $2, $4); }
+	| list_of_variable_port_identifiers ',' IDENTIFIER dimensions_opt
+                { $$ = make_port_list($1, $3, $4, 0); }
+	| list_of_variable_port_identifiers ',' IDENTIFIER dimensions_opt '=' expression
+                { $$ = make_port_list($1, $3, $4, $6); }
 	;
 
 
@@ -4652,58 +4659,102 @@ module_item
 		  delete $4;
 		}
 
-  | attribute_list_opt port_direction unsigned_signed_opt dimensions_opt delay3_opt list_of_identifiers ';'
-      { pform_set_port_type(@2, $6, $4, $3, $2, $1); }
 
-  /* The next two rules handle Verilog 2001 statements of the form:
+  /* The next two rules handle port declarations that include a net type, e.g.
        input wire signed [h:l] <list>;
      This creates the wire and sets the port type all at once. */
 
-  | attribute_list_opt port_direction net_type unsigned_signed_opt dimensions_opt list_of_identifiers ';'
-      { pform_makewire(@2, $5, $4, $6, $3, $2, IVL_VT_NO_TYPE, $1, SR_BOTH); }
+  | attribute_list_opt port_direction net_type data_type_or_implicit list_of_port_identifiers ';'
+      { pform_module_define_port(@2, $5, $2, $3, $4, $1); }
 
-  | attribute_list_opt K_output var_type unsigned_signed_opt dimensions_opt list_of_port_identifiers ';'
-      { list<pair<perm_string,PExpr*> >::const_iterator pp;
-	list<perm_string>*tmp = new list<perm_string>;
-	for (pp = $6->begin(); pp != $6->end(); ++ pp ) {
-	      tmp->push_back((*pp).first);
+  | attribute_list_opt port_direction K_wreal list_of_port_identifiers ';'
+      { real_type_t*real_type = new real_type_t(real_type_t::REAL);
+	pform_module_define_port(@2, $4, $2, NetNet::WIRE, real_type, $1);
+      }
+
+  /* The next three rules handle port declarations that include a variable
+     type, e.g.
+       output reg signed [h:l] <list>;
+     and also handle incomplete port declarations, e.g.
+       input signed [h:l] <list>;
+   */
+  | attribute_list_opt K_inout data_type_or_implicit list_of_port_identifiers ';'
+      { NetNet::Type use_type = $3 ? NetNet::IMPLICIT : NetNet::NONE;
+	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
+	      if (dtype->implicit_flag)
+		    use_type = NetNet::NONE;
 	}
-	pform_makewire(@2, $5, $4, tmp, $3, NetNet::POUTPUT,
-		       IVL_VT_NO_TYPE, $1, SR_BOTH);
-	for (pp = $6->begin(); pp != $6->end(); ++ pp ) {
-	      if ((*pp).second) {
-		   pform_make_var_init(@2, (*pp).first, (*pp).second);
-	      }
+	if (use_type == NetNet::NONE)
+	      pform_set_port_type(@2, $4, NetNet::PINOUT, $3, $1);
+	else
+	      pform_module_define_port(@2, $4, NetNet::PINOUT, use_type, $3, $1);
+      }
+
+  | attribute_list_opt K_input data_type_or_implicit list_of_port_identifiers ';'
+      { NetNet::Type use_type = $3 ? NetNet::IMPLICIT : NetNet::NONE;
+	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
+	      if (dtype->implicit_flag)
+		    use_type = NetNet::NONE;
 	}
-	delete $6;
+	if (use_type == NetNet::NONE)
+	      pform_set_port_type(@2, $4, NetNet::PINPUT, $3, $1);
+	else
+	      pform_module_define_port(@2, $4, NetNet::PINPUT, use_type, $3, $1);
       }
 
-  | attribute_list_opt port_direction K_wreal list_of_identifiers ';'
-      { pform_makewire(@2, 0, true, $4, NetNet::WIRE, $2,
-		       IVL_VT_REAL, $1, SR_BOTH);
+  | attribute_list_opt K_output data_type_or_implicit list_of_variable_port_identifiers ';'
+      { NetNet::Type use_type = $3 ? NetNet::IMPLICIT : NetNet::NONE;
+	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
+	      if (dtype->implicit_flag)
+		    use_type = NetNet::NONE;
+	      else if (dtype->reg_flag)
+		    use_type = NetNet::REG;
+	      else
+		    use_type = NetNet::IMPLICIT_REG;
+
+		// The SystemVerilog types that can show up as
+		// output ports are implicitly (on the inside)
+		// variables because "reg" is not valid syntax
+		// here.
+	} else if (dynamic_cast<atom2_type_t*> ($3)) {
+	      use_type = NetNet::IMPLICIT_REG;
+	} else if (dynamic_cast<struct_type_t*> ($3)) {
+	      use_type = NetNet::IMPLICIT_REG;
+	} else if (enum_type_t*etype = dynamic_cast<enum_type_t*> ($3)) {
+	      if(etype->base_type == IVL_VT_LOGIC)
+		  use_type = NetNet::IMPLICIT_REG;
+	}
+	if (use_type == NetNet::NONE)
+	      pform_set_port_type(@2, $4, NetNet::POUTPUT, $3, $1);
+	else
+	      pform_module_define_port(@2, $4, NetNet::POUTPUT, use_type, $3, $1);
       }
 
-  /* var_type declaration (reg variables) cannot be input or output,
-     because the port declaration implies an external driver, which
-     cannot be attached to a reg. These rules catch that error early. */
-
-  | attribute_list_opt K_input var_type unsigned_signed_opt dimensions_opt list_of_identifiers ';'
-      { pform_makewire(@2, $5, $4, $6, $3, NetNet::PINPUT,
-		       IVL_VT_NO_TYPE, $1);
-	yyerror(@3, "error: reg variables cannot be inputs.");
-      }
-
-  | attribute_list_opt K_inout var_type unsigned_signed_opt dimensions_opt list_of_identifiers ';'
-      { pform_makewire(@2, $5, $4, $6, $3, NetNet::PINOUT,
-		       IVL_VT_NO_TYPE, $1);
-	yyerror(@3, "error: reg variables cannot be inouts.");
-      }
-
-  | attribute_list_opt port_direction unsigned_signed_opt dimensions_opt delay3_opt error ';'
+  | attribute_list_opt port_direction net_type data_type_or_implicit error ';'
       { yyerror(@2, "error: Invalid variable list in port declaration.");
 	if ($1) delete $1;
 	if ($4) delete $4;
-	if ($5) delete $5;
+	yyerrok;
+      }
+
+  | attribute_list_opt K_inout data_type_or_implicit error ';'
+      { yyerror(@2, "error: Invalid variable list in port declaration.");
+	if ($1) delete $1;
+	if ($3) delete $3;
+	yyerrok;
+      }
+
+  | attribute_list_opt K_input data_type_or_implicit error ';'
+      { yyerror(@2, "error: Invalid variable list in port declaration.");
+	if ($1) delete $1;
+	if ($3) delete $3;
+	yyerrok;
+      }
+
+  | attribute_list_opt K_output data_type_or_implicit error ';'
+      { yyerror(@2, "error: Invalid variable list in port declaration.");
+	if ($1) delete $1;
+	if ($3) delete $3;
 	yyerrok;
       }
 
@@ -5101,10 +5152,6 @@ net_type
 		              "instead." << endl;
 		    }
 	| K_uwire   { $$ = NetNet::UNRESOLVED_WIRE; }
-	;
-
-var_type
-	: K_reg { $$ = NetNet::REG; }
 	;
 
 param_type
