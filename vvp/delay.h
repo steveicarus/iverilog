@@ -1,7 +1,7 @@
 #ifndef IVL_delay_H
 #define IVL_delay_H
 /*
- * Copyright 2005-2014 Stephen Williams
+ * Copyright 2005-2016 Stephen Williams
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -98,6 +98,12 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
       void recv_real(vvp_net_ptr_t port, double bit,
                      vvp_context_t);
 	//void recv_long(vvp_net_ptr_t port, long bit);
+
+      void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t ctx);
+      void recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
+			unsigned base, unsigned wid, unsigned vwid);
 
     private:
       virtual void run_run();

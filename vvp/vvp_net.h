@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_net_H
 #define IVL_vvp_net_H
 /*
- * Copyright (c) 2004-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1230,6 +1230,13 @@ class vvp_net_fun_t {
 	// do something about it.
       virtual void force_flag(bool run_now);
 
+   protected:
+      void recv_vec4_pv_(vvp_net_ptr_t p, const vvp_vector4_t&bit,
+			 unsigned base, unsigned wid, unsigned vwid,
+                         vvp_context_t context);
+      void recv_vec8_pv_(vvp_net_ptr_t p, const vvp_vector8_t&bit,
+			 unsigned base, unsigned wid, unsigned vwid);
+
     public: // These objects are only permallocated.
       static void* operator new(std::size_t size) { return heap_.alloc(size); }
       static void operator delete(void*); // not implemented
@@ -1470,6 +1477,9 @@ class vvp_fun_drive  : public vvp_net_fun_t {
                      vvp_context_t context);
 	//void recv_long(vvp_net_ptr_t port, long bit);
 
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t);
     private:
       unsigned char drive0_;
       unsigned char drive1_;
@@ -1490,6 +1500,9 @@ class vvp_fun_extend_signed  : public vvp_net_fun_t {
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context);
 
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t);
     private:
       unsigned width_;
 };
@@ -1570,6 +1583,10 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
                      vvp_context_t context);
       void recv_real(vvp_net_ptr_t port, double bit,
                      vvp_context_t context);
+
+      void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t context);
 
     private:
       vvp_wide_fun_core*core_;

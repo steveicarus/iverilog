@@ -53,34 +53,10 @@ void vvp_arith_::dispatch_operand_(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 
 void vvp_arith_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 			      unsigned base, unsigned wid, unsigned vwid,
-                              vvp_context_t)
+                              vvp_context_t ctx)
 {
-      unsigned port = ptr.port();
-
-      assert(bit.size() == wid);
-      assert(base + wid <= vwid);
-
-      vvp_vector4_t tmp;
-      switch (port) {
-	  case 0:
-	    tmp = op_a_;
-	    break;
-	  case 1:
-	    tmp = op_b_;
-	    break;
-	  default:
-	    fprintf(stderr, "Unsupported port type %u.\n", port);
-	    assert(0);
-      }
-
-	// Set the part for the input. If nothing changes, then break.
-      bool flag = tmp.set_vec(base, bit);
-      if (flag == false)
-	    return;
-
-      recv_vec4(ptr, tmp, 0);
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
 }
-
 
 vvp_arith_abs::vvp_arith_abs()
 {
@@ -110,6 +86,13 @@ void vvp_arith_abs::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       }
 
       ptr.ptr()->send_vec4(out, 0);
+}
+
+void vvp_arith_abs::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+				 unsigned base, unsigned wid, unsigned vwid,
+				 vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
 }
 
 void vvp_arith_abs::recv_real(vvp_net_ptr_t ptr, double bit,
@@ -151,6 +134,13 @@ void vvp_arith_cast_real::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       ptr.ptr()->send_real(val, 0);
 }
 
+void vvp_arith_cast_real::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+				       unsigned base, unsigned wid, unsigned vwid,
+				       vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+}
+
 vvp_arith_cast_vec2::vvp_arith_cast_vec2(unsigned wid)
 : wid_(wid)
 {
@@ -171,6 +161,13 @@ void vvp_arith_cast_vec2::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 {
       vvp_vector2_t tmp = bit;
       ptr.ptr()->send_vec4(vector2_to_vector4(tmp,wid_), 0);
+}
+
+void vvp_arith_cast_vec2::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+				       unsigned base, unsigned wid, unsigned vwid,
+				       vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
 }
 
 // Division
