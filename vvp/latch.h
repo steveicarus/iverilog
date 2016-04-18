@@ -37,6 +37,10 @@ class vvp_latch : public vvp_net_fun_t {
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t);
 
+      void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t ctx);
+
     private:
       vvp_bit4_t en_;
       vvp_vector4_t d_;

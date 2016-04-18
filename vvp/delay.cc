@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2014 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2005-2016 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -332,6 +332,13 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       }
 }
 
+void vvp_fun_delay::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			         unsigned base, unsigned wid, unsigned vwid,
+                                 vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+}
+
 /* See the recv_vec4 comment above. */
 void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 {
@@ -395,6 +402,12 @@ void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 	    enqueue_(cur);
 	    schedule_generic(this, use_delay, false);
       }
+}
+
+void vvp_fun_delay::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
+			         unsigned base, unsigned wid, unsigned vwid)
+{
+      recv_vec8_pv_(ptr, bit, base, wid, vwid);
 }
 
 void vvp_fun_delay::recv_real(vvp_net_ptr_t port, double bit,

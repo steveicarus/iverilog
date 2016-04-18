@@ -3249,6 +3249,31 @@ void vvp_net_fun_t::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&,
       assert(0);
 }
 
+void vvp_net_fun_t::recv_vec4_pv_(vvp_net_ptr_t p, const vvp_vector4_t&bit,
+                                  unsigned base, unsigned wid, unsigned vwid,
+                                  vvp_context_t)
+{
+	// The majority of functors don't normally expect to receive part
+	// values, because the primary operands of an expression will be
+	// extended to the expression width. But in the case that a primary
+	// operand is a wire that is only partly driven by a single driver,
+	// the part value driven onto the wire propagates directly to the
+	// inputs of any functors connected to that wire. In this case we
+	// know that the remaining bits are undriven, so can simply build
+	// the full width value from the part we have received.
+	//
+	// Note that this case is almost certainly a bug in the user's
+	// code, but we still need to handle it correctly. See GitHub
+	// issue #99 and br_gh99*.v in the test suite for examples.
+
+      assert(bit.size() == wid);
+      assert(base + wid <= vwid);
+
+      vvp_vector4_t tmp(vwid, BIT4_Z);
+      tmp.set_vec(base, bit);
+      recv_vec4(p, tmp, 0);
+}
+
 void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bit,
                                  unsigned base, unsigned wid, unsigned vwid,
                                  vvp_context_t)
@@ -3262,6 +3287,19 @@ void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bit,
 void vvp_net_fun_t::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 {
       recv_vec4(port, reduce4(bit), 0);
+}
+
+void vvp_net_fun_t::recv_vec8_pv_(vvp_net_ptr_t p, const vvp_vector8_t&bit,
+				  unsigned base, unsigned wid, unsigned vwid)
+{
+	// This is the strength-aware version of recv_vec4_pv_.
+
+      assert(bit.size() == wid);
+      assert(base + wid <= vwid);
+
+      vvp_vector8_t tmp(vwid);
+      tmp.set_vec(base, bit);
+      recv_vec8(p, tmp);
 }
 
 void vvp_net_fun_t::recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
@@ -3331,6 +3369,12 @@ void vvp_fun_drive::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       port.ptr()->send_vec8(vvp_vector8_t(bit, drive0_, drive1_));
 }
 
+void vvp_fun_drive::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+				 unsigned base, unsigned wid, unsigned vwid,
+				 vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+}
 
 /* **** vvp_wide_fun_* methods **** */
 
@@ -3424,6 +3468,13 @@ void vvp_wide_fun_t::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 {
       unsigned pidx = port_base_ + port.port();
       core_->dispatch_vec4_from_input_(pidx, bit);
+}
+
+void vvp_wide_fun_t::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+				  unsigned base, unsigned wid, unsigned vwid,
+				  vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
 }
 
 void vvp_wide_fun_t::recv_real(vvp_net_ptr_t port, double bit,

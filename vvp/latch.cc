@@ -70,6 +70,13 @@ void vvp_latch::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       }
 }
 
+void vvp_latch::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			     unsigned base, unsigned wid, unsigned vwid,
+                             vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+}
+
 void compile_latch(char*label, unsigned width,
 		   struct symb_s arg_d,
 		   struct symb_s arg_e)
