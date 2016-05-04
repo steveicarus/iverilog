@@ -46,13 +46,12 @@ class SigVarBase : public LineInfo {
       void elaborate(Entity*ent, ScopeBase*scope);
 
       perm_string peek_name() const { return name_; }
+      const Expression* peek_init_expr() const { return init_expr_; }
 
     protected:
       unsigned peek_refcnt_sequ_() const { return refcnt_sequ_; }
 
       void type_elaborate_(VType::decl_t&decl);
-
-      Expression* peek_init_expr() const { return init_expr_; }
 
     private:
       perm_string name_;
@@ -71,7 +70,7 @@ class Signal : public SigVarBase {
     public:
       Signal(perm_string name, const VType*type, Expression*init_expr);
 
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope, bool initalize = true);
 };
 
 class Variable : public SigVarBase {
@@ -79,7 +78,7 @@ class Variable : public SigVarBase {
     public:
       Variable(perm_string name, const VType*type, Expression*init_expr = NULL);
 
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope, bool initialize = true);
       void write_to_stream(std::ostream&fd);
 };
 

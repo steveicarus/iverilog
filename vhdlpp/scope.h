@@ -67,6 +67,8 @@ class ScopeBase {
 	// type is returned, otherwise NULL.
       const VTypeEnum* is_enum_name(perm_string name) const;
 
+      virtual bool is_subprogram() const { return false; }
+
 	// Moves signals, variables and components from another scope to
 	// this one. After the transfer new_* maps are cleared in the source scope.
       enum transfer_type_t { SIGNALS = 1, VARIABLES = 2, COMPONENTS = 4, ALL = 0xffff };

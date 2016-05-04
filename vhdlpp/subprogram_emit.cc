@@ -26,15 +26,27 @@
 
 using namespace std;
 
-int SubprogramBody::emit_package(ostream&fd) const
+int SubprogramBody::emit_package(ostream&fd)
 {
       int errors = 0;
 
       for (map<perm_string,Variable*>::const_iterator cur = new_variables_.begin()
          ; cur != new_variables_.end() ; ++cur) {
-        // Enable reg_flag for variables
-        cur->second->count_ref_sequ();
-        errors += cur->second->emit(fd, NULL, NULL);
+          // Enable reg_flag for variables
+          cur->second->count_ref_sequ();
+          errors += cur->second->emit(fd, NULL, this, false);
+      }
+
+    // Emulate automatic functions (add explicit initial value assignments)
+      for (map<perm_string,Variable*>::const_iterator cur = new_variables_.begin()
+         ; cur != new_variables_.end() ; ++cur) {
+          Variable*var = cur->second;
+
+          if(const Expression*init = var->peek_init_expr()) {
+              fd << cur->first << " = ";
+              init->emit(fd, NULL, this);
+              fd << "; // automatic function emulation" << endl;
+          }
       }
 
       if (statements_) {
@@ -54,13 +66,13 @@ int SubprogramHeader::emit_package(ostream&fd) const
       int errors = 0;
 
       if (return_type_) {
-	    fd << "function ";
+	    fd << "function automatic ";
 	    return_type_->emit_def(fd, empty_perm_string);
       } else {
-	    fd << "task";
+	    fd << "task automatic";
       }
 
-	    fd << " \\" << name_ << " (";
+      fd << " \\" << name_ << " (";
 
       for (list<InterfacePort*>::const_iterator cur = ports_->begin()
 		 ; cur != ports_->end() ; ++cur) {
