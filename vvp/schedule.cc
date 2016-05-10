@@ -21,6 +21,7 @@
 # include  "schedule.h"
 # include  "vthread.h"
 # include  "vpi_priv.h"
+# include  "vvp_net_sig.h"
 # include  "slab.h"
 # include  "compile.h"
 # include  <new>
@@ -322,6 +323,78 @@ void assign_array_word_s::operator delete(void*ptr)
 }
 
 unsigned long count_assign_aword_pool(void) { return array_w_heap.pool; }
+
+struct force_vector4_event_s  : public event_s {
+	/* The default constructor. */
+      explicit force_vector4_event_s(const vvp_vector4_t&that): val(that) {
+	    net = NULL;
+	    base = 0;
+	    vwid = 0;
+      }
+	/* Where to do the force. */
+      vvp_net_t*net;
+	/* Value to force. */
+      vvp_vector4_t val;
+	/* Offset of the part into the destination. */
+      unsigned base;
+	/* Width of the destination vector. */
+      unsigned vwid;
+
+      void run_run(void);
+      void single_step_display(void);
+
+      static void* operator new(size_t);
+      static void operator delete(void*);
+};
+
+void force_vector4_event_s::run_run(void)
+{
+      count_assign_events += 1;
+
+      unsigned wid = val.size();
+      if ((base + wid) > vwid)
+	    wid = vwid - base;
+
+	// Make a mask of which bits are to be forced, 0 for unforced
+	// bits and 1 for forced bits.
+      vvp_vector2_t mask (vvp_vector2_t::FILL0, vwid);
+      for (unsigned idx = 0 ; idx < wid ; idx += 1)
+	    mask.set_bit(base+idx, 1);
+
+      vvp_vector4_t tmp (vwid, BIT4_Z);
+
+	// vvp_net_t::force_vec4 propagates all the bits of the
+	// forced vector value, regardless of the mask. This
+	// ensures the unforced bits retain their current value.
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(net->fil);
+      assert(sig);
+      sig->vec4_value(tmp);
+
+      tmp.set_vec(base, val);
+      net->force_vec4(tmp, mask);
+}
+
+void force_vector4_event_s::single_step_display(void)
+{
+      cerr << "force_vector4_event: Force val=" << val
+	   << ", vwid=" << vwid << ", base=" << base << endl;
+}
+
+static const size_t FORCE4_CHUNK_COUNT = 8192 / sizeof(struct force_vector4_event_s);
+static slab_t<sizeof(force_vector4_event_s),FORCE4_CHUNK_COUNT> force4_heap;
+
+inline void* force_vector4_event_s::operator new(size_t size)
+{
+      assert(size == sizeof(force_vector4_event_s));
+      return force4_heap.alloc_slab();
+}
+
+void force_vector4_event_s::operator delete(void*dptr)
+{
+      force4_heap.free_slab(dptr);
+}
+
+unsigned long count_force4_pool(void) { return force4_heap.pool; }
 
 /*
  * This class supports the propagation of vec4 outputs from a
@@ -791,6 +864,18 @@ void schedule_assign_vector(vvp_net_ptr_t ptr,
 {
       struct assign_vector4_event_s*cur = new struct assign_vector4_event_s(bit);
       cur->ptr = ptr;
+      cur->base = base;
+      cur->vwid = vwid;
+      schedule_event_(cur, delay, SEQ_NBASSIGN);
+}
+
+void schedule_force_vector(vvp_net_t*net,
+			    unsigned base, unsigned vwid,
+			    const vvp_vector4_t&bit,
+			    vvp_time64_t delay)
+{
+      struct force_vector4_event_s*cur = new struct force_vector4_event_s(bit);
+      cur->net = net;
       cur->base = base;
       cur->vwid = vwid;
       schedule_event_(cur, delay, SEQ_NBASSIGN);

@@ -2998,6 +2998,38 @@ bool of_FORCE_VEC4_OFF(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %force/vec4/off/d <net>, <off>, <del>
+ */
+bool of_FORCE_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      unsigned base_idx = cp->bit_idx[0];
+      long base = thr->words[base_idx].w_int;
+
+      unsigned delay_idx = cp->bit_idx[1];
+      vvp_time64_t delay = thr->words[delay_idx].w_uint;
+
+      vvp_vector4_t value = thr->pop_vec4();
+
+      assert(net->fil);
+
+      if (thr->flags[4] == BIT4_1)
+	    return true;
+
+	// This is the width of the target vector.
+      unsigned use_size = net->fil->filter_size();
+
+      if (base >= (long)use_size)
+	    return true;
+      if (base < -(long)use_size)
+	    return true;
+
+      schedule_force_vector(net, base, use_size, value, delay);
+      return true;
+}
+
 bool of_FORCE_WR(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net  = cp->net;

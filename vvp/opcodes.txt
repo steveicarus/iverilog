@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -528,15 +528,17 @@ writes the LSB to the selected flag.
 
 * %force/vec4 <label>
 * %force/vec4/off <label>, <off>
+* %force/vec4/off/d <label>, <off>, <delay>
 
 Perform a "force" assign of a values to the target variable. The value
 to be forced is popped from the vec4 stack and forced to the target
 variable. The /off variant forces a part of a vector. The width of the
 part comes from the width of the popped value, and the <off> is an
 index register that contains the canonical offset where the value
-sets written.
+gets written. The <delay> is an index register that contains the
+delay.
 
-The %force/vec4/off instruction will test the value of flags[4], and if
+The %force/vec4/off instructions will test the value of flags[4], and if
 it is 1, will suppress the actual assignment. This is intended to help
 with detection of invalid index expressions.
 

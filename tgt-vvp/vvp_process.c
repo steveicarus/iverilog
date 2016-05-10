@@ -225,6 +225,10 @@ static void assign_to_lvector(ivl_lval_t lval,
 
       const unsigned long use_word = 0;
 
+      const char*assign_op = "%assign";
+      if (ivl_signal_type(sig) == IVL_SIT_UWIRE)
+	    assign_op = "%force";
+
 	// Detect the case that this is actually a non-blocking assign
 	// to an array word. In that case, run off somewhere else to
 	// deal with it.
@@ -263,8 +267,8 @@ static void assign_to_lvector(ivl_lval_t lval,
 		       to know to skip the assign. */
 		  draw_eval_expr_into_integer(part_off_ex, offset_index);
 		    /* If the index expression has XZ bits, skip the assign. */
-		  fprintf(vvp_out, "    %%assign/vec4/off/d v%p_%lu, %d, %d;\n",
-			  sig, use_word, offset_index, delay_index);
+		  fprintf(vvp_out, "    %s/vec4/off/d v%p_%lu, %d, %d;\n",
+			  assign_op, sig, use_word, offset_index, delay_index);
 
 		  clr_word(offset_index);
 		  clr_word(delay_index);
@@ -273,8 +277,8 @@ static void assign_to_lvector(ivl_lval_t lval,
 		  int offset_index = allocate_word();
 		    /* Event control delay... */
 		  draw_eval_expr_into_integer(part_off_ex, offset_index);
-		  fprintf(vvp_out, "    %%assign/vec4/off/e v%p_%lu, %d;\n",
-			  sig, use_word, offset_index);
+		  fprintf(vvp_out, "    %s/vec4/off/e v%p_%lu, %d;\n",
+			  assign_op, sig, use_word, offset_index);
 		  fprintf(vvp_out, "    %%evctl/c;\n");
 
 		  clr_word(offset_index);
@@ -292,8 +296,8 @@ static void assign_to_lvector(ivl_lval_t lval,
 		       to know to skip the assign. */
 		  draw_eval_expr_into_integer(part_off_ex, offset_index);
 		    /* If the index expression has XZ bits, skip the assign. */
-		  fprintf(vvp_out, "    %%assign/vec4/off/d v%p_%lu, %d, %d;\n",
-			  sig, use_word, offset_index, delay_index);
+		  fprintf(vvp_out, "    %s/vec4/off/d v%p_%lu, %d, %d;\n",
+			  assign_op, sig, use_word, offset_index, delay_index);
 		  clr_word(offset_index);
 		  clr_word(delay_index);
 	    }
@@ -306,8 +310,8 @@ static void assign_to_lvector(ivl_lval_t lval,
 		  fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n",
 			  offset_index, part_off);
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
-		  fprintf(vvp_out, "    %%assign/vec4/off/e v%p_%lu, %d;\n",
-			  sig, use_word, offset_index);
+		  fprintf(vvp_out, "    %s/vec4/off/e v%p_%lu, %d;\n",
+			  assign_op, sig, use_word, offset_index);
 		  fprintf(vvp_out, "    %%evctl/c;\n");
 		  clr_word(offset_index);
 
@@ -325,8 +329,8 @@ static void assign_to_lvector(ivl_lval_t lval,
 				delay_index, low_d, hig_d);
 			fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  }
-		  fprintf(vvp_out, "    %%assign/vec4/off/d v%p_%lu, %d, %d;\n",
-			  sig, use_word, offset_index, delay_index);
+		  fprintf(vvp_out, "    %s/vec4/off/d v%p_%lu, %d, %d;\n",
+			  assign_op, sig, use_word, offset_index, delay_index);
 		  clr_word(offset_index);
 		  clr_word(delay_index);
 	    }
@@ -335,13 +339,13 @@ static void assign_to_lvector(ivl_lval_t lval,
 	      /* Calculated delay... */
 	    int delay_index = allocate_word();
 	    draw_eval_expr_into_integer(dexp, delay_index);
-	    fprintf(vvp_out, "    %%assign/vec4/d v%p_%lu, %d;\n",
-		    sig, use_word, delay_index);
+	    fprintf(vvp_out, "    %s/vec4/d v%p_%lu, %d;\n",
+		    assign_op, sig, use_word, delay_index);
 	    clr_word(delay_index);
       } else if (nevents != 0) {
 	      /* Event control delay... */
-	    fprintf(vvp_out, "    %%assign/vec4/e v%p_%lu;\n",
-		    sig, use_word);
+	    fprintf(vvp_out, "    %s/vec4/e v%p_%lu;\n",
+		    assign_op, sig, use_word);
 	    fprintf(vvp_out, "    %%evctl/c;\n");
 
       } else {
@@ -353,12 +357,12 @@ static void assign_to_lvector(ivl_lval_t lval,
 		  int delay_index = allocate_word();
 		  fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
 		          delay_index, low_d, hig_d);
-		  fprintf(vvp_out, "    %%assign/vec4/d v%p_%lu, %d;\n",
-		          sig, use_word, delay_index);
+		  fprintf(vvp_out, "    %s/vec4/d v%p_%lu, %d;\n",
+		          assign_op, sig, use_word, delay_index);
 		  clr_word(delay_index);
 	    } else {
-		  fprintf(vvp_out, "    %%assign/vec4 v%p_%lu, %lu;\n",
-		          sig, use_word, low_d);
+		  fprintf(vvp_out, "    %s/vec4 v%p_%lu, %lu;\n",
+		          assign_op, sig, use_word, low_d);
 	    }
       }
 }

@@ -60,6 +60,15 @@ extern void schedule_assign_array_word(vvp_array_t mem,
 				       unsigned word_address,
 				       double val,
 				       vvp_time64_t delay);
+
+/*
+ * Create an event to force the output of a net.
+ */
+extern void schedule_force_vector(vvp_net_t*net,
+				  unsigned base, unsigned vwid,
+				  const vvp_vector4_t&val,
+				  vvp_time64_t delay);
+
 /*
  * Create an event to propagate the output of a net.
  */
