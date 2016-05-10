@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -213,8 +213,14 @@ void vvp_fun_part_pv::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                                  vvp_context_t ctx)
 {
       assert(port.port() == 0);
+      assert(bit.size() == wid);
+      assert(base + wid <= vwid);
+      assert(vwid == wid_);
 
-      port.ptr()->send_vec4_pv(bit, base, wid, vwid, ctx);
+      vvp_vector4_t tmp(wid_, BIT4_Z);
+      tmp.set_vec(base, bit);
+
+      port.ptr()->send_vec4_pv(tmp, base_, wid_, vwid_, ctx);
 }
 
 void vvp_fun_part_pv::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
