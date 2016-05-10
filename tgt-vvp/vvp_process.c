@@ -225,6 +225,15 @@ static void assign_to_lvector(ivl_lval_t lval,
 
       const unsigned long use_word = 0;
 
+      if (ivl_signal_type(sig) == IVL_SIT_UWIRE) {
+	    fprintf(stderr, "%s:%u: tgt-vvp sorry: V10 does not support "
+		    "mixed continuous and non-blocking assignments to "
+		    "different parts of the same vector (%s).\n",
+		    ivl_signal_file(sig), ivl_signal_lineno(sig),
+		    ivl_signal_basename(sig));
+	    vvp_errors += 1;
+      }
+
 	// Detect the case that this is actually a non-blocking assign
 	// to an array word. In that case, run off somewhere else to
 	// deal with it.
