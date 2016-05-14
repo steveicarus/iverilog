@@ -5183,6 +5183,11 @@ param_type
 	param_active_signed = true;
 	param_active_type = IVL_VT_BOOL;
       }
+  | TYPE_IDENTIFIER
+      { pform_set_param_from_type(@1, $1.type, $1.text, param_active_range,
+	                          param_active_signed, param_active_type);
+	delete[]$1.text;
+      }
   ;
 
   /* parameter and localparam assignment lists are broken into

@@ -424,6 +424,13 @@ extern void pform_set_specparam(const struct vlltype&loc,
 				 PExpr*expr);
 extern void pform_set_defparam(const pform_name_t&name, PExpr*expr);
 
+extern void pform_set_param_from_type(const struct vlltype&loc,
+                                      const data_type_t *data_type,
+                                      const char *name,
+                                      list<pform_range_t> *&param_range,
+                                      bool &param_signed,
+                                      ivl_variable_type_t &param_type);
+
 /*
  * Functions related to specify blocks.
  */

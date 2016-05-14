@@ -3173,6 +3173,28 @@ void pform_set_defparam(const pform_name_t&name, PExpr*expr)
             pform_cur_module.front()->defparms.push_back(make_pair(name,expr));
 }
 
+void pform_set_param_from_type(const struct vlltype&loc,
+                               const data_type_t *data_type,
+                               const char *name,
+                               list<pform_range_t> *&param_range,
+                               bool &param_signed,
+                               ivl_variable_type_t &param_type)
+{
+      if (const vector_type_t *vec = dynamic_cast<const vector_type_t*> (data_type)) {
+	    param_range = vec->pdims.get();
+	    param_signed = vec->signed_flag;
+	    param_type = vec->base_type;
+	    return;
+      }
+
+      param_range = 0;
+      param_signed = false;
+      param_type = IVL_VT_NO_TYPE;
+      cerr << loc.get_fileline() << ": sorry: cannot currently create a "
+              "parameter of type '" << name << "' which was defined at: "
+           << data_type->get_fileline() <<  "." << endl;
+      error_count += 1;
+}
 /*
  * Specify paths.
  */
