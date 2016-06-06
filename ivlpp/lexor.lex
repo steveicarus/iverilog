@@ -1,7 +1,7 @@
 %option prefix="yy"
 %{
 /*
- * Copyright (c) 1999-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -148,18 +148,38 @@ static void ifdef_leave(void)
     free(cur);
 }
 
-#define YY_INPUT(buf,result,max_size) do {                 \
-    if (istack->file) {                                    \
-        size_t rc = fread(buf, 1, max_size, istack->file); \
-        result = (rc == 0) ? YY_NULL : rc;                 \
-    } else {                                               \
-        if (*istack->str == 0)                             \
-            result = YY_NULL;                              \
-        else {                                             \
-            buf[0] = *istack->str++;                       \
-            result = 1;                                    \
-        }                                                  \
-    }                                                      \
+#define YY_INPUT(buf,result,max_size) do {                              \
+    if (istack->file) {                                                 \
+        size_t rc = fread(buf, 1, max_size, istack->file);              \
+        result = (rc == 0) ? YY_NULL : rc;                              \
+    } else {                                                            \
+        /* We are expanding a macro. Handle the SV macro escape         \
+           sequences. There doesn't seem to be any good reason          \
+           not to allow them in traditional Verilog as well. */         \
+        while ((istack->str[0] == '`') &&                               \
+               (istack->str[1] == '`')) {                               \
+            istack->str += 2;                                           \
+        }                                                               \
+        if (*istack->str == 0) {                                        \
+            result = YY_NULL;                                           \
+        } else if ((istack->str[0] == '`') &&                           \
+                   (istack->str[1] == '"')) {                           \
+            istack->str += 2;                                           \
+            buf[0] = '"';                                               \
+            result = 1;                                                 \
+        } else if ((istack->str[0] == '`') &&                           \
+                   (istack->str[1] == '\\')&&                           \
+                   (istack->str[2] == '`') &&                           \
+                   (istack->str[3] == '"')) {                           \
+            istack->str += 4;                                           \
+            buf[0] = '\\';                                              \
+            buf[1] = '"';                                               \
+            result = 2;                                                 \
+        } else {                                                        \
+            buf[0] = *istack->str++;                                    \
+            result = 1;                                                 \
+        }                                                               \
+    }                                                                   \
 } while (0)
 
 static int comment_enter = 0;
@@ -241,12 +261,6 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <PCOMENT>`[a-zA-Z][a-zA-Z0-9_$]* {
     if (macro_needs_args(yytext+1)) yy_push_state(MA_START); else do_expand(0);
 }
-
- /* `" overrides the usual lexical meaning of " and `\`" indicates
-    that the expansion should include the escape sequence \".
-  */
-`\"           { fputc('"', yyout); }
-`\\`\"        { fprintf(yyout, "\\\""); }
 
  /* Strings do not contain preprocessor directives, but can expand
   * macros. If that happens, they get expanded in the context of the
@@ -514,28 +528,18 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
         do_expand(0);
 }
 
-  /* Stringified version of macro expansion.  If the sequence `` is
-   * encountered inside a macro definition, we use the SystemVerilog
-   * handling of ignoring it so that identifiers can be constructed
-   * from arguments. If istack->file is NULL, we are reading text
-   * produced from a macro, so use SystemVerilog's handling;
-   * otherwise, use the special Icarus handling.
-   */
+  /* Stringified version of macro expansion. This is an Icarus extension.
+     When expanding macro text, the SV usage of `` takes precedence. */
 ``[a-zA-Z_][a-zA-Z0-9_$]* {
-      if (istack->file == NULL)
-	    fprintf(yyout, "%s", yytext+2);
-      else {
-	    assert(do_expand_stringify_flag == 0);
-	    do_expand_stringify_flag = 1;
-	    fputc('"', yyout);
-	    if (macro_needs_args(yytext+2))
-		  yy_push_state(MA_START);
-	    else
-		  do_expand(0);
-      }
+    assert(istack->file);
+    assert(do_expand_stringify_flag == 0);
+    do_expand_stringify_flag = 1;
+    fputc('"', yyout);
+    if (macro_needs_args(yytext+2))
+        yy_push_state(MA_START);
+    else
+        do_expand(0);
 }
-
-`` { if (istack->file != NULL) ECHO; }
 
 <MA_START>\(  { BEGIN(MA_ADD); macro_start_args(); }
 
