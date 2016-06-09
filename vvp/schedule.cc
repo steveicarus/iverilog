@@ -1038,6 +1038,10 @@ extern void vpiStartOfSim();
 extern void vpiPostsim();
 extern void vpiNextSimTime(void);
 
+static bool sim_at_rosync = false;
+bool schedule_at_rosync(void)
+{ return sim_at_rosync; }
+
 /*
  * The scheduler uses this function to drain the rosync events of the
  * current time. The ctim object is still in the event queue, because
@@ -1050,6 +1054,7 @@ extern void vpiNextSimTime(void);
  */
 static void run_rosync(struct event_time_s*ctim)
 {
+      sim_at_rosync = true;
       while (ctim->rosync) {
 	    struct event_s*cur = ctim->rosync->next;
 	    if (cur->next == cur) {
@@ -1061,6 +1066,7 @@ static void run_rosync(struct event_time_s*ctim)
 	    cur->run_run();
 	    delete cur;
       }
+      sim_at_rosync = false;
 
       while (ctim->del_thr) {
 	    struct event_s*cur = ctim->del_thr->next;
