@@ -156,6 +156,13 @@ extern void schedule_simulate(void);
 extern vvp_time64_t schedule_simtime(void);
 
 /*
+ * Indicate that the simulator is running the rosync callbacks. This is
+ * used to prevent the callbacks from performing any write operations
+ * in the current simulation time slot.
+ */
+extern bool schedule_at_rosync(void);
+
+/*
  * This function is the equivalent of the $finish system task. It
  * tells the simulator that simulation is done, the current thread
  * should be stopped, all remaining events abandoned and the

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1067,13 +1067,13 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 	    vvp_time64_t dly;
 	    int scale;
 
-            if (vpi_get(vpiAutomatic, obj)) {
-                  fprintf(stderr, "vpi error: cannot put a value with "
-                                  "a delay on automatically allocated "
-                                  "variable '%s'\n",
-                                  vpi_get_str(vpiName, obj));
-                  return 0;
-            }
+	    if (vpi_get(vpiAutomatic, obj)) {
+		  fprintf(stderr, "VPI error: cannot put a value with "
+				  "a delay on automatically allocated "
+				  "variable '%s'.\n",
+				  vpi_get_str(vpiName, obj));
+		  return 0;
+	    }
 
 	    assert(when != 0);
 
@@ -1093,6 +1093,13 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 		default:
 		  dly = 0;
 		  break;
+	    }
+
+	    if ((dly == 0) && schedule_at_rosync()) {
+		  fprintf(stderr, "VPI error: attempted to put a value to "
+				  "variable '%s' during a read-only synch "
+				  "callback.\n", vpi_get_str(vpiName, obj));
+		  return 0;
 	    }
 
 	    vpip_put_value_event*put = new vpip_put_value_event;
@@ -1130,6 +1137,13 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 	    put->flags = flags;
 	    schedule_generic(put, dly, false, true, true);
 	    return 0;
+      }
+
+      if (schedule_at_rosync()) {
+            fprintf(stderr, "VPI error: attempted to put a value to "
+			    "variable '%s' during a read-only synch "
+			    "callback.\n", vpi_get_str(vpiName, obj));
+            return 0;
       }
 
       obj->vpi_put_value(vp, flags);
