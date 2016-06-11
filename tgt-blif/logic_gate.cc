@@ -96,6 +96,20 @@ static int do_print_logic_gate(FILE*fd, ivl_net_logic_t net, unsigned bit)
 	    fprintf(fd, "0 1\n");
 	    break;
 
+	  case IVL_LO_PULLDOWN:
+	    assert(ivl_logic_pins(net)==1);
+	    fprintf(fd, "0\n");
+	    break;
+	  case IVL_LO_PULLUP:
+	    assert(ivl_logic_pins(net)==1);
+	    fprintf(fd, "1\n");
+	    break;
+
+	  case IVL_LO_BUFZ:
+	    assert(ivl_logic_pins(net)==2);
+	    fprintf(fd, "1 1\n");
+	    break;
+
 	  default:
 	    fprintf(fd, "# ERROR: Logic type %d not handled\n", ivl_logic_type(net));
 	    rc += 1;
