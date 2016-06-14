@@ -1048,6 +1048,15 @@ int ExpUNot::emit(ostream&out, Entity*ent, ScopeBase*scope) const
       return errors;
 }
 
+int ExpUMinus::emit(ostream&out, Entity*ent, ScopeBase*scope) const
+{
+      int errors = 0;
+      out << "-(";
+      errors += emit_operand1(out, ent, scope);
+      out << ")";
+      return errors;
+}
+
 int ExpCast::emit(ostream&out, Entity*ent, ScopeBase*scope) const
 {
       int errors = 0;

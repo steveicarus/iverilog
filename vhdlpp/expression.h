@@ -948,6 +948,19 @@ class ExpUNot : public ExpUnary {
       void dump(ostream&out, int indent = 0) const;
 };
 
+class ExpUMinus : public ExpUnary {
+
+    public:
+      explicit ExpUMinus(Expression*op1);
+      ~ExpUMinus();
+
+      Expression*clone() const { return new ExpUMinus(peek_operand()->clone()); }
+
+      void write_to_stream(std::ostream&fd) const;
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
+      void dump(ostream&out, int indent = 0) const;
+};
+
 /*
  * Class that wraps other expressions to cast them to other types.
  */

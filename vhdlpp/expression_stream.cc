@@ -327,6 +327,13 @@ void ExpUNot::write_to_stream(ostream&fd) const
       write_to_stream_operand1(fd);
 }
 
+void ExpUMinus::write_to_stream(ostream&fd) const
+{
+      fd << "-(";
+      write_to_stream_operand1(fd);
+      fd << ")";
+}
+
 void ExpCast::write_to_stream(ostream&fd) const
 {
       // Type casting is introduced only for a few specific cases in

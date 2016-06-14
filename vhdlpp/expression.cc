@@ -818,6 +818,15 @@ ExpUNot::~ExpUNot()
 {
 }
 
+ExpUMinus::ExpUMinus(Expression*op1)
+: ExpUnary(op1)
+{
+}
+
+ExpUMinus::~ExpUMinus()
+{
+}
+
 ExpCast::ExpCast(Expression*base, const VType*type) :
     base_(base), type_(type)
 {

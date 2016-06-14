@@ -142,6 +142,12 @@ void ExpUNot::dump(ostream&out, int indent) const
       dump_operand1(out, indent+4);
 }
 
+void ExpUMinus::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "unary_minus() at " << get_fileline() << endl;
+      dump_operand1(out, indent+4);
+}
+
 void ExpTime::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "Time ";
