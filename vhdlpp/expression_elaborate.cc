@@ -74,14 +74,13 @@ const VType*ExpName::elaborate_adjust_type_with_range_(Entity*ent, ScopeBase*sco
 		    // If the name is an array, then a part select is
 		    // also an array, but with different bounds.
 		  int64_t use_msb, use_lsb;
-		  bool flag;
+		  bool flag = true;
 
-		  flag = range->msb()->evaluate(ent, scope, use_msb);
-		  ivl_assert(*this, flag);
-		  flag = range->lsb()->evaluate(ent, scope, use_lsb);
-		  ivl_assert(*this, flag);
+		  flag &= range->msb()->evaluate(ent, scope, use_msb);
+		  flag &= range->lsb()->evaluate(ent, scope, use_lsb);
 
-		  type = new VTypeArray(array->element_type(), use_msb, use_lsb);
+                  if(flag)
+                    type = new VTypeArray(array->element_type(), use_msb, use_lsb);
 	    }
 	    else if(idx) {
 		    // If the name is an array or a vector, then an

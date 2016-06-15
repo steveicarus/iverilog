@@ -144,19 +144,6 @@ bool ExpName::evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const
           return false;
       }
 
-      if (ent) {
-          const InterfacePort*gen = ent->find_generic(name_);
-          if (gen) {
-              // Evaluate the default expression and use that.
-              if (gen->expr && gen->expr->evaluate(ent, scope, val))
-                  return true;
-
-              cerr << get_fileline() << ": sorry: I could not evaluate "
-                   << "generic override." << endl;
-              return false;
-          }
-      }
-
       if (scope) {
           const VType*type;
           Expression*exp;
