@@ -2,6 +2,7 @@
 #define IVL_vpi_priv_H
 /*
  * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -226,11 +227,6 @@ struct __vpiScopedRealtime : public __vpiSystemTime {
       char*vpi_get_str(int code);
       void vpi_get_value(p_vpi_value val);
 };
-
-struct __vpiPortInfo : public __vpiHandle {
-
-};
-
 
 /*
  * Scopes are created by .scope statements in the source. These
