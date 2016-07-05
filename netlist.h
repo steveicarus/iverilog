@@ -251,7 +251,6 @@ class NetPins : public LineInfo {
 class NetObj  : public NetPins, public Attrib {
 
     public:
-    public:
 	// The name of the object must be a permallocated string. A
 	// lex_strings string, for example.
       explicit NetObj(NetScope*s, perm_string n, unsigned npins);

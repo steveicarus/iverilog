@@ -1737,29 +1737,29 @@ static void draw_lpm_ff(ivl_lpm_t net)
       nex = ivl_lpm_data(net,0);
       assert(nex);
       fprintf(vvp_out, "%s", draw_net_input(nex));
-      assert(width_of_nexus(nex) == width);;
+      assert(width_of_nexus(nex) == width);
 
       nex = ivl_lpm_clk(net);
       assert(nex);
-      assert(width_of_nexus(nex) == 1);;
+      assert(width_of_nexus(nex) == 1);
       fprintf(vvp_out, ", %s", draw_net_input(nex));
 
       nex = ivl_lpm_enable(net);
       if (nex) {
-	    assert(width_of_nexus(nex) == 1);;
+	    assert(width_of_nexus(nex) == 1);
 	    fprintf(vvp_out, ", %s", draw_net_input(nex));
       } else {
 	    fprintf(vvp_out, ", C4<1>");
       }
 
       if ( (nex = ivl_lpm_async_clr(net)) ) {
-	    assert(width_of_nexus(nex) == 1);;
+	    assert(width_of_nexus(nex) == 1);
 	    fprintf(vvp_out, ", %s", draw_net_input(nex));
       }
 
       if ( (nex = ivl_lpm_async_set(net)) ) {
 	    ivl_expr_t val = ivl_lpm_aset_value(net);
-	    assert(width_of_nexus(nex) == 1);;
+	    assert(width_of_nexus(nex) == 1);
 	    fprintf(vvp_out, ", %s", draw_net_input(nex));
 	    if (val) {
 		  unsigned nbits = ivl_expr_width(val);
