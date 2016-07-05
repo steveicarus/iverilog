@@ -121,11 +121,7 @@ const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
 	    Expression*lef = tmpr->left();
 	    Expression*rig = tmpr->right();
 	    return calculate_subtype_array(loc, base_name, scope,
-					   lef, 
-					   (tmpr->direction() == ExpRange::range_dir_t::DOWNTO
-					   	? true
-					   	: false), 
-					   rig);
+					   lef, tmpr->direction(), rig);
       }
 
       sorrymsg(loc, "Don't know how to handle multiple ranges here.\n");
