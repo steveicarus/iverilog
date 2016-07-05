@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -508,6 +509,7 @@ void NetScope::add_module_port_info( unsigned idx, perm_string name, PortType::E
                                 unsigned long width )
 {
       assert(type_ == MODULE);
+      assert(ports_.size() > idx);
       PortInfo &info = ports_[idx];
       info.name = name;
       info.type = ptype;
