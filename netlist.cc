@@ -557,7 +557,7 @@ void NetNet::calculate_slice_widths_from_packed_dims_(void)
       ivl_assert(*this, ! slice_wids_.empty());
       slice_wids_[0] = netrange_width(slice_dims_);
       vector<netrange_t>::const_iterator cur = slice_dims_.begin();
-      for (size_t idx = 1 ; idx < slice_wids_.size() ; idx += 1) {
+      for (size_t idx = 1 ; idx < slice_wids_.size() ; idx += 1, cur++) {
 	    slice_wids_[idx] = slice_wids_[idx-1] / cur->width();
       }
 }
