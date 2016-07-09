@@ -122,7 +122,7 @@ const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
 	    Expression*rig = tmpr->right();
 	    return calculate_subtype_array(loc, base_name, scope,
 					   lef, 
-					   (tmpr->direction() == ExpRange::range_dir_t::DOWNTO
+					   (tmpr->direction() == ExpRange::DOWNTO
 					   	? true
 					   	: false), 
 					   rig);
