@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -457,22 +457,25 @@ NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,
       long loff;
       reg->sb_to_slice(indices, sb, loff, lwid);
 
-      bool idx_incr = pcur->get_msb() < pcur->get_lsb();
+	/* Calculate the space needed for the offset. */
+      unsigned min_wid = num_bits(-loff);
+	/* We need enough space for the larger of the offset or the
+	 * base expression. */
+      if (min_wid < base->expr_width()) min_wid = base->expr_width();
+	/* Pad the base expression to the correct width. */
+      base = pad_to_width(base, min_wid, *base);
 
-      if(pcur->get_lsb() != 0) {
-          // Adjust the base for the case when the array range does not start from 0
-          if(idx_incr)
-              base = make_sub_expr(pcur->get_lsb(), base);
-          else
-              base = make_sub_expr(base, pcur->get_lsb());
+      if (pcur->get_msb() >= pcur->get_lsb()) {
+	    if (pcur->get_lsb() != 0)
+		  base = make_sub_expr(base, pcur->get_lsb());
+	    base = make_mult_expr(base, lwid);
+	    base = make_add_expr(base, loff);
+      } else {
+	    if (pcur->get_msb() != 0)
+		  base = make_sub_expr(base, pcur->get_msb());
+	    base = make_mult_expr(base, lwid);
+	    base = make_sub_expr(loff, base);
       }
-
-      base = make_mult_expr(base, lwid);
-
-      // TODO I do not see any influence of the lines below to the test suite
-      if(!idx_incr)
-            base = make_add_expr(base, loff);
-
       return base;
 }
 
