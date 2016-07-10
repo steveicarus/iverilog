@@ -5847,7 +5847,23 @@ specify_path_identifiers
 		  delete[]$1;
 		}
 	| IDENTIFIER '[' expr_primary ']'
-		{ list<perm_string>*tmp = new list<perm_string>;
+		{ if (gn_specify_blocks_flag) {
+			yywarn(@4, "Bit selects are not currently supported "
+				   "in path declarations. The declaration "
+				   "will be applied to the whole vector.");
+		  }
+		  list<perm_string>*tmp = new list<perm_string>;
+		  tmp->push_back(lex_strings.make($1));
+		  $$ = tmp;
+		  delete[]$1;
+		}
+	| IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
+		{ if (gn_specify_blocks_flag) {
+			yywarn(@4, "Part selects are not currently supported "
+				   "in path declarations. The declaration "
+				   "will be applied to the whole vector.");
+		  }
+		  list<perm_string>*tmp = new list<perm_string>;
 		  tmp->push_back(lex_strings.make($1));
 		  $$ = tmp;
 		  delete[]$1;
@@ -5859,7 +5875,23 @@ specify_path_identifiers
 		  delete[]$3;
 		}
 	| specify_path_identifiers ',' IDENTIFIER '[' expr_primary ']'
-		{ list<perm_string>*tmp = $1;
+		{ if (gn_specify_blocks_flag) {
+			yywarn(@4, "Bit selects are not currently supported "
+				   "in path declarations. The declaration "
+				   "will be applied to the whole vector.");
+		  }
+		  list<perm_string>*tmp = $1;
+		  tmp->push_back(lex_strings.make($3));
+		  $$ = tmp;
+		  delete[]$3;
+		}
+	| specify_path_identifiers ',' IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
+		{ if (gn_specify_blocks_flag) {
+			yywarn(@4, "Part selects are not currently supported "
+				   "in path declarations. The declaration "
+				   "will be applied to the whole vector.");
+		  }
+		  list<perm_string>*tmp = $1;
 		  tmp->push_back(lex_strings.make($3));
 		  $$ = tmp;
 		  delete[]$3;
