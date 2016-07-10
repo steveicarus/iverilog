@@ -725,77 +725,41 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 	   receive the event at hand. Put the event in to the
 	   appropriate list for the kind of assign we have at hand. */
 
-      switch (select_queue) {
+      struct event_s** q = 0;
 
+      switch (select_queue) {
 	  case SEQ_START:
-	    if (ctim->start == 0) {
-		  ctim->start = cur;
-	    } else {
-		  cur->next = ctim->active->next;
-		  ctim->active->next = cur;
-		  ctim->active = cur;
-	    }
+	    q = &ctim->start;
 	    break;
 
 	  case SEQ_ACTIVE:
-	    if (ctim->active == 0) {
-		  ctim->active = cur;
-
-	    } else {
-		    /* Put the cur event on the end of the active list. */
-		  cur->next = ctim->active->next;
-		  ctim->active->next = cur;
-		  ctim->active = cur;
-	    }
+	    q = &ctim->active;
 	    break;
 
 	  case SEQ_NBASSIGN:
-	    if (ctim->nbassign == 0) {
-		  ctim->nbassign = cur;
-
-	    } else {
-		    /* Put the cur event on the end of the active list. */
-		  cur->next = ctim->nbassign->next;
-		  ctim->nbassign->next = cur;
-		  ctim->nbassign = cur;
-	    }
+	    q = &ctim->nbassign;
 	    break;
 
 	  case SEQ_RWSYNC:
-	    if (ctim->rwsync == 0) {
-		  ctim->rwsync = cur;
-
-	    } else {
-		    /* Put the cur event on the end of the active list. */
-		  cur->next = ctim->rwsync->next;
-		  ctim->rwsync->next = cur;
-		  ctim->rwsync = cur;
-	    }
+	    q = &ctim->rwsync;
 	    break;
 
 	  case SEQ_ROSYNC:
-	    if (ctim->rosync == 0) {
-		  ctim->rosync = cur;
-
-	    } else {
-		    /* Put the cur event on the end of the active list. */
-		  cur->next = ctim->rosync->next;
-		  ctim->rosync->next = cur;
-		  ctim->rosync = cur;
-	    }
+	    q = &ctim->rosync;
 	    break;
 
 	  case DEL_THREAD:
-	    if (ctim->del_thr == 0) {
-		  ctim->del_thr = cur;
-
-	    } else {
-		    /* Put the cur event on the end of the active list. */
-		  cur->next = ctim->del_thr->next;
-		  ctim->del_thr->next = cur;
-		  ctim->del_thr = cur;
-	    }
+	    q = &ctim->del_thr;
 	    break;
+      }
+
+      if (q) {
+	    if (*q) {
+		  /* Put the cur event on the end of the queue. */
+		  cur->next = (*q)->next;
+		  (*q)->next = cur;
+	    }
+	    *q = cur;
       }
 }
 
