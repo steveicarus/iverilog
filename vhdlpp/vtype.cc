@@ -119,7 +119,10 @@ VTypeArray::VTypeArray(const VType*element, std::list<ExpRange*>*r, bool sv)
       for (size_t idx = 0 ; idx < ranges_.size() ; idx += 1) {
 	    ExpRange*curp = r->front();
 	    r->pop_front();
-	    ranges_[idx] = range_t(curp->msb(), curp->lsb(), curp->direction());
+	    ranges_[idx] = range_t(curp->msb(), curp->lsb(), 
+	    	(curp->direction() == ExpRange::DOWNTO
+	    		? true
+	    		: false));
       }
 }
 

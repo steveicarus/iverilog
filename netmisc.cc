@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -203,7 +203,7 @@ static NetExpr* make_add_expr(NetExpr*expr, long val)
       }
 
       verinum val_v (val, expr->expr_width());
-      val_v.has_sign(true);
+      val_v.has_sign(expr->has_sign());
 
       NetEConst*val_c = new NetEConst(val_v);
       val_c->set_line(*expr);
@@ -236,7 +236,7 @@ static NetExpr* make_add_expr(const LineInfo*loc, NetExpr*expr1, NetExpr*expr2)
 static NetExpr* make_sub_expr(long val, NetExpr*expr)
 {
       verinum val_v (val, expr->expr_width());
-      val_v.has_sign(true);
+      val_v.has_sign(expr->has_sign());
 
       NetEConst*val_c = new NetEConst(val_v);
       val_c->set_line(*expr);
@@ -254,7 +254,7 @@ static NetExpr* make_sub_expr(long val, NetExpr*expr)
 static NetExpr* make_sub_expr(NetExpr*expr, long val)
 {
       verinum val_v (val, expr->expr_width());
-      val_v.has_sign(true);
+      val_v.has_sign(expr->has_sign());
 
       NetEConst*val_c = new NetEConst(val_v);
       val_c->set_line(*expr);
@@ -268,7 +268,7 @@ static NetExpr* make_sub_expr(NetExpr*expr, long val)
 
 
 /*
- * Multiple an existing expression by a signed positive number.
+ * Multiply an existing expression by a signed positive number.
  * This does a lossless multiply, so the arguments will need to be
  * sized to match the output size.
  */
@@ -277,7 +277,7 @@ static NetExpr* make_mult_expr(NetExpr*expr, unsigned long val)
       const unsigned val_wid = ceil(log2((double)val)) ;
       unsigned use_wid = expr->expr_width() + val_wid;
       verinum val_v (val, use_wid);
-      val_v.has_sign(true);
+      val_v.has_sign(expr->has_sign());
 
       NetEConst*val_c = new NetEConst(val_v);
       val_c->set_line(*expr);
@@ -457,22 +457,37 @@ NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,
       long loff;
       reg->sb_to_slice(indices, sb, loff, lwid);
 
-      bool idx_incr = pcur->get_msb() < pcur->get_lsb();
-
-      if(pcur->get_lsb() != 0) {
-          // Adjust the base for the case when the array range does not start from 0
-          if(idx_incr)
-              base = make_sub_expr(pcur->get_lsb(), base);
-          else
-              base = make_sub_expr(base, pcur->get_lsb());
+      unsigned min_wid = base->expr_width();
+      if ((sb < 0) && !base->has_sign()) min_wid += 1;
+      if (min_wid < num_bits(pcur->get_lsb())) min_wid = pcur->get_lsb();
+      if (min_wid < num_bits(pcur->get_msb())) min_wid = pcur->get_msb();
+      base = pad_to_width(base, min_wid, *base);
+      if ((sb < 0) && !base->has_sign()) {
+	    NetESelect *tmp = new NetESelect(base, 0 , min_wid);
+	    tmp->set_line(*base);
+	    tmp->cast_signed(true);
+            base = tmp;
       }
 
-      base = make_mult_expr(base, lwid);
-
-      // TODO I do not see any influence of the lines below to the test suite
-      if(!idx_incr)
-            base = make_add_expr(base, loff);
-
+      if (pcur->get_msb() >= pcur->get_lsb()) {
+	    if (pcur->get_lsb() != 0)
+		  base = make_sub_expr(base, pcur->get_lsb());
+	    base = make_mult_expr(base, lwid);
+	    min_wid = base->expr_width();
+	    if (min_wid < num_bits(loff)) min_wid = num_bits(loff);
+	    if (loff != 0) min_wid += 1;
+	    base = pad_to_width(base, min_wid, *base);
+	    base = make_add_expr(base, loff);
+      } else {
+	    if (pcur->get_msb() != 0)
+		  base = make_sub_expr(base, pcur->get_msb());
+	    base = make_mult_expr(base, lwid);
+	    min_wid = base->expr_width();
+	    if (min_wid < num_bits(loff)) min_wid = num_bits(loff);
+	    if (loff != 0) min_wid += 1;
+	    base = pad_to_width(base, min_wid, *base);
+	    base = make_sub_expr(loff, base);
+      }
       return base;
 }
 
