@@ -831,7 +831,6 @@ int main(int argc, char **argv)
       int version_flag = 0;
       int opt;
 
-#ifdef __MINGW32__
 	/* Calculate the ivl_root from the path to the command. This
 	   is necessary because of the installation process on
 	   Windows. Mostly, it is those darn drive letters, but oh
@@ -848,9 +847,20 @@ int main(int argc, char **argv)
 	   the lib\ivl$(suffix) to finish. */
       char *s;
       char tmppath[MAXSIZE];
+#ifdef __MINGW32__
       GetModuleFileName(NULL, tmppath, sizeof tmppath);
 	/* Convert to a short name to remove any embedded spaces. */
       GetShortPathName(tmppath, ivl_root, sizeof ivl_root);
+#else
+      if (access("/proc/self/exe", F_OK) != -1) {
+            readlink("/proc/self/exe", ivl_root, MAXSIZE);
+      } else {
+            /* In a UNIX environment, the IVL_ROOT from the Makefile is
+               dependable. It points to the $prefix/lib/ivl directory,
+               where the sub-parts are installed. */
+            strcpy(ivl_root, IVL_ROOT);
+      }
+#endif
       s = strrchr(ivl_root, sep);
       if (s) *s = 0;
       else {
@@ -865,17 +875,12 @@ int main(int argc, char **argv)
 	                    argv[0], sep);
 	    exit(1);
       }
+#ifdef __MINGW32__
       strcat(ivl_root, "\\lib\\ivl" IVL_SUFFIX);
-
-      base = ivl_root;
-
 #else
-        /* In a UNIX environment, the IVL_ROOT from the Makefile is
-	   dependable. It points to the $prefix/lib/ivl directory,
-	   where the sub-parts are installed. */
-      strcpy(ivl_root, IVL_ROOT);
-      base = ivl_root;
+      strcat(ivl_root, "/lib/ivl" IVL_SUFFIX);
 #endif
+      base = ivl_root;
 
 	/* Create a temporary file for communicating input parameters
 	   to the preprocessor. */
