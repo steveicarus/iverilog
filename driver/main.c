@@ -833,7 +833,8 @@ int main(int argc, char **argv)
 
 	/* Calculate the ivl_root from the path to the command. This
 	   is necessary because of the installation process on
-	   Windows. Mostly, it is those darn drive letters, but oh
+	   Windows (and using some package managers such as conda). 
+         Mostly, it is those darn drive letters, but oh
 	   well. We know the command path is formed like this:
 
 		D:\iverilog\bin\iverilog.exe
@@ -855,7 +856,8 @@ int main(int argc, char **argv)
       if (access("/proc/self/exe", F_OK) != -1) {
             readlink("/proc/self/exe", ivl_root, MAXSIZE);
       } else {
-            /* In a UNIX environment, the IVL_ROOT from the Makefile is
+            /* In a UNIX environment, if /proc/self/exe does not
+               exist, the IVL_ROOT from the Makefile is
                dependable. It points to the $prefix/lib/ivl directory,
                where the sub-parts are installed. */
             strcpy(ivl_root, IVL_ROOT);
