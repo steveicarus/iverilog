@@ -3794,7 +3794,9 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	   expression that can be a target to a procedural
 	   assignment, including a memory word. */
 
-      for (unsigned idx = 0 ;  idx < parm_count ;  idx += 1) {
+      for (unsigned idx = use_this?1:0 ;  idx < parm_count ;  idx += 1) {
+
+	    size_t parms_idx = use_this? idx-1 : idx;
 
 	    NetNet*port = def->port(idx);
 
@@ -3810,12 +3812,12 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 		 message. Note that the elaborate_lval method already
 		 printed a detailed message for the latter case. */
 	    NetAssign_*lv = 0;
-	    if (idx < parms_.size() && parms_[idx]) {
-		  lv = parms_[idx]->elaborate_lval(des, scope, false, false);
+	    if (parms_idx < parms_.size() && parms_[parms_idx]) {
+		  lv = parms_[parms_idx]->elaborate_lval(des, scope, false, false);
 		  if (lv == 0) {
-			cerr << parms_[idx]->get_fileline() << ": error: "
+			cerr << parms_[parms_idx]->get_fileline() << ": error: "
 			     << "I give up on task port " << (idx+1)
-			     << " expression: " << *parms_[idx] << endl;
+			     << " expression: " << *parms_[parms_idx] << endl;
 		  }
 	    } else if (port->port_type() == NetNet::POUTPUT) {
 		    // Output ports were skipped earlier, so
