@@ -1,7 +1,7 @@
 #ifndef IVL_vlog95_priv_H
 #define IVL_vlog95_priv_H
 /*
- * Copyright (C) 2010-2014 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2016 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -144,6 +144,11 @@ extern char * get_package_name(ivl_scope_t scope);
  * Get the appropriate MSB and LSB for a signal.
  */
 extern void get_sig_msb_lsb(ivl_signal_t sig, int *msb, int *lsb);
+
+/*
+ * Convert a timescale value to a string.
+ */
+extern const char*get_time_const(int time_value);
 
 /*
  * Cleanup functions.
