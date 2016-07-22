@@ -345,12 +345,36 @@ static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
       return scopex;
 }
 
+/*
+ * Set the local time unit/precision to the global value.
+ */
+static void pform_set_scope_timescale(PScope*scope, const struct vlltype&loc)
+{
+      scope->time_unit = pform_time_unit;
+      scope->time_precision = pform_time_prec;
+	/* If we have a timescale file then the time information is from
+	 * a timescale directive. */
+      scope->time_from_timescale = pform_timescale_file != 0;
+
+      if (warn_timescale && (lexical_scope == 0) && pform_timescale_file
+	  && (strcmp(pform_timescale_file, loc.text) != 0)) {
+
+	    cerr << loc.get_fileline() << ": warning: "
+		 << "timescale for " << scope->pscope_name()
+		 << " inherited from another file." << endl;
+	    cerr << pform_timescale_file << ":" << pform_timescale_line
+		 << ": ...: The inherited timescale is here." << endl;
+      }
+}
+
 PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name,
 			       LexicalScope::lifetime_t lifetime)
 {
       PClass*class_scope = new PClass(name, lexical_scope);
       class_scope->default_lifetime = find_lifetime(lifetime);
       FILE_NAME(class_scope, loc);
+
+      pform_set_scope_timescale(class_scope, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
 
@@ -384,6 +408,8 @@ PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name,
       pkg_scope->default_lifetime = find_lifetime(lifetime);
       FILE_NAME(pkg_scope, loc);
 
+      pform_set_scope_timescale(pkg_scope, loc);
+
       lexical_scope = pkg_scope;
       return pkg_scope;
 }
@@ -399,6 +425,8 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name,
       PTask*task = new PTask(task_name, lexical_scope, is_auto);
       task->default_lifetime = default_lifetime;
       FILE_NAME(task, loc);
+
+      pform_set_scope_timescale(task, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
       if ((scopex == 0) && !gn_system_verilog()) {
@@ -454,6 +482,8 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
       PFunction*func = new PFunction(func_name, lexical_scope, is_auto);
       func->default_lifetime = default_lifetime;
       FILE_NAME(func, loc);
+
+      pform_set_scope_timescale(func, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
       if ((scopex == 0) && (generation_flag < GN_VER2005_SV)) {
@@ -1200,17 +1230,12 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
       cur_module->is_interface = is_interface;
       cur_module->default_lifetime = find_lifetime(lifetime);
 
-	/* Set the local time unit/precision to the global value. */
-      cur_module->time_unit = pform_time_unit;
-      cur_module->time_precision = pform_time_prec;
+      FILE_NAME(cur_module, loc);
+
+      pform_set_scope_timescale(cur_module, loc);
       tu_local_flag = tu_global_flag;
       tp_local_flag = tp_global_flag;
 
-	/* If we have a timescale file then the time information is from
-	 * a timescale directive. */
-      cur_module->time_from_timescale = pform_timescale_file != 0;
-
-      FILE_NAME(cur_module, loc);
       cur_module->library_flag = pform_library_flag;
 
       pform_cur_module.push_front(cur_module);
@@ -1221,15 +1246,6 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
 	   zero. That's just the way it is, thanks to the standard. */
       scope_generate_counter = 1;
 
-      if (warn_timescale && pform_timescale_file
-	  && (strcmp(pform_timescale_file,loc.text) != 0)) {
-
-	    cerr << cur_module->get_fileline() << ": warning: "
-		 << "timescale for " << name
-		 << " inherited from another file." << endl;
-	    cerr << pform_timescale_file << ":" << pform_timescale_line
-		 << ": ...: The inherited timescale is here." << endl;
-      }
       pform_bind_attributes(cur_module->attributes, attr);
 }
 
