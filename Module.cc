@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,9 +35,6 @@ Module::Module(LexicalScope*parent, perm_string n)
       program_block = false;
       uc_drive = UCD_NONE;
       timescale_warn_done = false;
-      time_unit = 0;
-      time_precision = 0;
-      time_from_timescale = false;
 }
 
 Module::~Module()

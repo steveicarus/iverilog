@@ -159,11 +159,16 @@ class PScope : public LexicalScope {
 	// modules do not nest in Verilog, the parent must be nil for
 	// modules. Scopes for tasks and functions point to their
 	// containing module.
-      PScope(perm_string name, LexicalScope*parent);
-      PScope(perm_string name);
+      explicit PScope(perm_string name, LexicalScope*parent =0);
       virtual ~PScope();
 
       perm_string pscope_name() const { return name_; }
+
+	/* These are the timescale for this scope. The default is
+	   set by the `timescale directive or, in SystemVerilog,
+	   by timeunit and timeprecision statements. */
+      int time_unit, time_precision;
+      bool time_from_timescale;
 
     protected:
       bool elaborate_sig_wires_(Design*des, NetScope*scope) const;
@@ -182,14 +187,13 @@ class PScope : public LexicalScope {
 class PScopeExtra : public PScope {
 
     public:
-      PScopeExtra(perm_string, LexicalScope*parent);
-      PScopeExtra(perm_string);
+      explicit PScopeExtra(perm_string, LexicalScope*parent =0);
       ~PScopeExtra();
 
 	/* Task definitions within this module */
       std::map<perm_string,PTask*> tasks;
       std::map<perm_string,PFunction*> funcs;
-	/* class definitions within this module. */
+	/* Class definitions within this module. */
       std::map<perm_string,PClass*> classes;
 	/* This is the lexical order of the classes, and is used by
 	   elaboration to choose an elaboration order. */

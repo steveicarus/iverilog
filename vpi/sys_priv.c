@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -229,15 +229,18 @@ unsigned is_string_obj(vpiHandle obj)
 
 
 /*
- * Find the enclosing module.
+ * Find the enclosing module. If there is no enclosing module (which can be
+ * the case in SystemVerilog), return the highest enclosing scope.
  */
 vpiHandle sys_func_module(vpiHandle obj)
 {
       assert(obj);
 
       while (vpi_get(vpiType, obj) != vpiModule) {
-	    obj = vpi_handle(vpiScope, obj);
-	    assert(obj);
+	    vpiHandle scope = vpi_handle(vpiScope, obj);
+	    if (scope == 0)
+		  break;
+	    obj = scope;
       }
 
       return obj;

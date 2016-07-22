@@ -36,6 +36,7 @@
 # include  "PEvent.h"
 # include  "PGenerate.h"
 # include  "PPackage.h"
+# include  "PScope.h"
 # include  "PSpec.h"
 # include  "netlist.h"
 # include  "netenum.h"
@@ -49,6 +50,9 @@
 # include  "compiler.h"
 # include  "ivl_assert.h"
 
+
+// Implemented in elab_scope.cc
+extern void set_scope_timescale(Design*des, NetScope*scope, PScope*pscope);
 
 void PGate::elaborate(Design*, NetScope*) const
 {
@@ -6238,6 +6242,7 @@ Design* elaborate(list<perm_string>roots)
 	    ivl_assert(*pac->second, pac->first == pac->second->pscope_name());
 	    NetScope*scope = des->make_package_scope(pac->first);
 	    scope->set_line(pac->second);
+	    set_scope_timescale(des, scope, pac->second);
 
 	    elaborator_work_item_t*es = new elaborate_package_t(des, scope, pac->second);
 	    des->elaboration_work_list.push_back(es);
@@ -6274,11 +6279,7 @@ Design* elaborate(list<perm_string>roots)
 	      // Collect some basic properties of this scope from the
 	      // Module definition.
 	    scope->set_line(rmod);
-	    scope->time_unit(rmod->time_unit);
-	    scope->time_precision(rmod->time_precision);
-	    scope->time_from_timescale(rmod->time_from_timescale);
-	    des->set_precision(rmod->time_precision);
-
+	    set_scope_timescale(des, scope, rmod);
 
 	      // Save this scope, along with its definition, in the
 	      // "root_elems" list for later passes.

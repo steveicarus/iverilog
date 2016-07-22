@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -53,6 +53,15 @@
 # include  <typeinfo>
 # include  <cassert>
 # include  "ivl_assert.h"
+
+
+void set_scope_timescale(Design*des, NetScope*scope, PScope*pscope)
+{
+      scope->time_unit(pscope->time_unit);
+      scope->time_precision(pscope->time_precision);
+      scope->time_from_timescale(pscope->time_from_timescale);
+      des->set_precision(pscope->time_precision);
+}
 
 typedef map<perm_string,LexicalScope::param_expr_t>::const_iterator mparm_it_t;
 
@@ -523,6 +532,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       class_scope->set_class_def(use_class);
       use_class->set_class_scope(class_scope);
       use_class->set_definition_scope(scope);
+      set_scope_timescale(des, class_scope, pclass);
 
 	// Collect the properties, elaborate them, and add them to the
 	// elaborated class definition.
@@ -654,8 +664,10 @@ static void elaborate_scope_task(Design*des, NetScope*scope, PTask*task)
       task_scope->is_auto(task->is_auto());
       task_scope->set_line(task);
 
-      if (scope==0)
+      if (scope==0) {
+	    set_scope_timescale(des, task_scope, task);
 	    des->add_root_task(task_scope, task);
+      }
 
       if (debug_scopes) {
 	    cerr << task->get_fileline() << ": elaborate_scope_task: "
@@ -719,8 +731,10 @@ static void elaborate_scope_func(Design*des, NetScope*scope, PFunction*task)
       task_scope->is_auto(task->is_auto());
       task_scope->set_line(task);
 
-      if (scope==0)
+      if (scope==0) {
+	    set_scope_timescale(des, task_scope, task);
 	    des->add_root_task(task_scope, task);
+      }
 
       if (debug_scopes) {
 	    cerr << task->get_fileline() << ": elaborate_scope_func: "
@@ -1750,11 +1764,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 
 	    instances[idx] = my_scope;
 
-	      // Set time units and precision.
-	    my_scope->time_unit(mod->time_unit);
-	    my_scope->time_precision(mod->time_precision);
-	    my_scope->time_from_timescale(mod->time_from_timescale);
-	    des->set_precision(mod->time_precision);
+	    set_scope_timescale(des, my_scope, mod);
 
 	      // Look for module parameter replacements. The "replace" map
 	      // maps parameter name to replacement expression that is
