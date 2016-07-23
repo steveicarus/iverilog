@@ -847,14 +847,14 @@ int main(int argc, char **argv)
 	   turning the last two \ characters to null. Then we append
 	   the lib\ivl$(suffix) to finish. */
       char *s;
-      char tmppath[MAXSIZE];
 #ifdef __MINGW32__
+      char tmppath[MAXSIZE];
       GetModuleFileName(NULL, tmppath, sizeof tmppath);
 	/* Convert to a short name to remove any embedded spaces. */
       GetShortPathName(tmppath, ivl_root, sizeof ivl_root);
 #else
       if (access("/proc/self/exe", F_OK) != -1) {
-            readlink("/proc/self/exe", ivl_root, MAXSIZE);
+            readlink("/proc/self/exe", ivl_root, sizeof ivl_root);
       } else {
             /* In a UNIX environment, if /proc/self/exe does not
                exist, the IVL_ROOT from the Makefile is
