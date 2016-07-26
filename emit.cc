@@ -507,7 +507,6 @@ int Design::emit(struct target_t*tgt) const
       for (map<NetScope*,PTaskFunc*>::const_iterator scope = root_tasks_.begin()
 		 ; scope != root_tasks_.end() ; ++ scope) {
 	    scope->first->emit_scope(tgt);
-	    scope->first->emit_defs(tgt);
       }
 
 	// enumerate package scopes
@@ -521,7 +520,6 @@ int Design::emit(struct target_t*tgt) const
 	    const NetScope*use_scope = cur->second->class_scope();
 	    cur->second->emit_scope(tgt);
 	    tgt->class_type(use_scope, cur->second);
-	    cur->second->emit_defs(tgt);
       }
 
 	// enumerate root scopes
@@ -548,6 +546,12 @@ int Design::emit(struct target_t*tgt) const
 
 	// emit task and function definitions
       bool tasks_rc = true;
+      for (map<NetScope*,PTaskFunc*>::const_iterator scope = root_tasks_.begin()
+		 ; scope != root_tasks_.end() ; ++ scope)
+	    tasks_rc &= scope->first->emit_defs(tgt);
+      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
+		 ; cur != classes_.end() ; ++cur)
+	    tasks_rc &= cur->second->emit_defs(tgt);
       for (map<perm_string,NetScope*>::const_iterator scope = packages_.begin()
 		 ; scope != packages_.end() ; ++ scope )
 	    tasks_rc &= scope->second->emit_defs(tgt);
