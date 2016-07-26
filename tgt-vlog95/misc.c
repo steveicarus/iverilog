@@ -747,7 +747,9 @@ void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex, unsigned allow_UD)
  * This function traverses the scope tree looking for the enclosing module
  * scope. When it is found the module scope is returned. As far as this
  * translation is concerned a package is a special form of a module
- * definition and a class is also a top level scope.
+ * definition and a class is also a top level scope. In SystemVerilog,
+ * tasks and functions can also be top level scopes - we create a wrapper
+ * module for these later.
  */
 ivl_scope_t get_module_scope(ivl_scope_t scope)
 {
@@ -756,6 +758,12 @@ ivl_scope_t get_module_scope(ivl_scope_t scope)
              (ivl_scope_type(scope) != IVL_SCT_PACKAGE) &&
              (ivl_scope_type(scope) != IVL_SCT_CLASS)) {
 	    ivl_scope_t pscope = ivl_scope_parent(scope);
+	    if (pscope == 0) {
+		  if (ivl_scope_type(scope) == IVL_SCT_TASK)
+			break;
+		  if (ivl_scope_type(scope) == IVL_SCT_FUNCTION)
+			break;
+	    }
 	    assert(pscope);
 	    scope = pscope;
       }
