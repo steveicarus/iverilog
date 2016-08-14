@@ -3074,6 +3074,7 @@ uint32_t *rvat_chain_table_lengths;
 uint64_t rvat_vc_maxhandle;
 off_t rvat_vc_start;
 uint32_t *rvat_sig_offs;
+int rvat_packtype;
 
 uint32_t rvat_chain_len;
 unsigned char *rvat_chain_mem;
@@ -5886,6 +5887,7 @@ if(frame_uclen == frame_clen)
 
 xc->rvat_vc_maxhandle = fstReaderVarint64(xc->f);
 xc->rvat_vc_start = ftello(xc->f);      /* points to '!' character */
+xc->rvat_packtype = fgetc(xc->f);
 
 #ifdef FST_DEBUG
 fprintf(stderr, "\tframe_uclen: %d, frame_clen: %d, frame_maxhandle: %d\n",
@@ -5910,37 +5912,84 @@ xc->rvat_chain_table_lengths = calloc((xc->rvat_vc_maxhandle+1), sizeof(uint32_t
 pnt = chain_cmem;
 idx = 0;
 pval = 0;
-do
+
+if(sectype == FST_BL_VCDATA_DYN_ALIAS2)
         {
-        int skiplen;
-        uint64_t val = fstGetVarint32(pnt, &skiplen);
-
-        if(!val)
-                {
-                pnt += skiplen;
-                val = fstGetVarint32(pnt, &skiplen);
-                xc->rvat_chain_table[idx] = 0;
-                xc->rvat_chain_table_lengths[idx] = -val;
-                idx++;
-                }
-        else
-        if(val&1)
-                {
-                pval = xc->rvat_chain_table[idx] = pval + (val >> 1);
-                if(idx) { xc->rvat_chain_table_lengths[pidx] = pval - xc->rvat_chain_table[pidx]; }
-                pidx = idx++;
-                }
-                else
-                {
-                fstHandle loopcnt = val >> 1;
-                for(i=0;i<loopcnt;i++)
+        uint32_t prev_alias = 0;
+                                 
+        do      {
+                int skiplen;
+ 
+                if(*pnt & 0x01)
                         {
-                        xc->rvat_chain_table[idx++] = 0;
+                        int64_t shval = fstGetSVarint64(pnt, &skiplen) >> 1;
+                        if(shval > 0)
+                                {
+                                pval = xc->rvat_chain_table[idx] = pval + shval;
+                                if(idx) { xc->rvat_chain_table_lengths[pidx] = pval - xc->rvat_chain_table[pidx]; }
+                                pidx = idx++;
+                                }
+                        else if(shval < 0)
+                                {
+                                xc->rvat_chain_table[idx] = 0;                                   /* need to explicitly zero as calloc above might not run */
+                                xc->rvat_chain_table_lengths[idx] = prev_alias = shval;          /* because during this loop iter would give stale data! */
+                                idx++;
+                                } 
+                        else
+                                {
+                                xc->rvat_chain_table[idx] = 0;                                   /* need to explicitly zero as calloc above might not run */
+                                xc->rvat_chain_table_lengths[idx] = prev_alias;                  /* because during this loop iter would give stale data! */
+                                idx++;
+                                }
                         }
-                }
-
-        pnt += skiplen;
-        } while (pnt != (chain_cmem + chain_clen));
+                        else
+                        {
+                        uint64_t val = fstGetVarint32(pnt, &skiplen);
+        
+                        fstHandle loopcnt = val >> 1;
+                        for(i=0;i<loopcnt;i++)
+                                {
+                                xc->rvat_chain_table[idx++] = 0;
+                                }
+                        }
+                        
+                pnt += skiplen;
+                } while (pnt != (chain_cmem + chain_clen));
+        }
+        else
+	{
+	do
+	        {
+	        int skiplen;
+	        uint64_t val = fstGetVarint32(pnt, &skiplen);
+	
+	        if(!val)
+	                {
+	                pnt += skiplen;
+	                val = fstGetVarint32(pnt, &skiplen);
+	                xc->rvat_chain_table[idx] = 0;
+	                xc->rvat_chain_table_lengths[idx] = -val;
+	                idx++;
+	                }
+	        else
+	        if(val&1)
+	                {
+	                pval = xc->rvat_chain_table[idx] = pval + (val >> 1);
+	                if(idx) { xc->rvat_chain_table_lengths[pidx] = pval - xc->rvat_chain_table[pidx]; }
+	                pidx = idx++;
+	                }
+	                else
+	                {
+	                fstHandle loopcnt = val >> 1;
+	                for(i=0;i<loopcnt;i++)
+	                        {
+	                        xc->rvat_chain_table[idx++] = 0;
+	                        }
+	                }
+	
+	        pnt += skiplen;
+	        } while (pnt != (chain_cmem + chain_clen));
+	}
 
 free(chain_cmem);
 xc->rvat_chain_table[idx] = indx_pos - xc->rvat_vc_start;
@@ -6004,10 +6053,20 @@ if(!xc->rvat_chain_mem)
                 unsigned char *mc = malloc(xc->rvat_chain_table_lengths[facidx]);
                 unsigned long destlen = xc->rvat_chain_len;
                 unsigned long sourcelen = xc->rvat_chain_table_lengths[facidx];
-                int rc;
+                int rc = Z_OK;
 
                 fstFread(mc, xc->rvat_chain_table_lengths[facidx], 1, xc->f);
-                rc = uncompress(mu, &destlen, mc, sourcelen);
+
+                switch(xc->rvat_packtype)
+			{
+                        case '4': rc = (destlen == (unsigned long)LZ4_decompress_safe_partial((char *)mc, (char *)mu, sourcelen, destlen, destlen)) ? Z_OK : Z_DATA_ERROR;
+                        	break;
+                        case 'F': fastlz_decompress(mc, sourcelen, mu, destlen); /* rc appears unreliable */
+                        	break;
+                        default:  rc = uncompress(mu, &destlen, mc, sourcelen);
+                        	break;
+                        }
+
                 free(mc);
 
                 if(rc != Z_OK)
