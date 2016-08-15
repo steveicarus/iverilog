@@ -121,10 +121,10 @@ const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
 	    Expression*lef = tmpr->left();
 	    Expression*rig = tmpr->right();
 	    return calculate_subtype_array(loc, base_name, scope,
-					   lef, 
+					   lef,
 					   (tmpr->direction() == ExpRange::DOWNTO
-					   	? true
-					   	: false), 
+						? true
+						: false),
 					   rig);
       }
 

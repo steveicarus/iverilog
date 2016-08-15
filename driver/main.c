@@ -833,8 +833,8 @@ int main(int argc, char **argv)
 
 	/* Calculate the ivl_root from the path to the command. This
 	   is necessary because of the installation process on
-	   Windows (and using some package managers such as conda). 
-         Mostly, it is those darn drive letters, but oh
+	   Windows (and using some package managers such as conda).
+	   Mostly, it is those darn drive letters, but oh
 	   well. We know the command path is formed like this:
 
 		D:\iverilog\bin\iverilog.exe
