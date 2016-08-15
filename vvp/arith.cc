@@ -830,7 +830,7 @@ vvp_cmp_gtge_base_::vvp_cmp_gtge_base_(unsigned wid, bool flag)
 
 
 void vvp_cmp_gtge_base_::recv_vec4_base_(vvp_net_ptr_t ptr,
-					 vvp_vector4_t bit,
+					 const vvp_vector4_t&bit,
 					 vvp_bit4_t out_if_equal)
 {
       dispatch_operand_(ptr, bit);

@@ -212,7 +212,7 @@ class vvp_cmp_gtge_base_ : public vvp_arith_ {
       explicit vvp_cmp_gtge_base_(unsigned wid, bool signed_flag);
 
     protected:
-      void recv_vec4_base_(vvp_net_ptr_t ptr, vvp_vector4_t bit,
+      void recv_vec4_base_(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 			   vvp_bit4_t out_if_equal);
     private:
       bool signed_flag_;
