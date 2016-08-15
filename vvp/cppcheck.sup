@@ -1,3 +1,35 @@
 // The new() operator is always used to allocate space for this class and
 // pool is defined there.
 uninitVar:vvp_net.cc:167
+
+// These functions are not used by Icarus
+// __libvpi_c_dummy_function()
+unusedFunction:libvpi.c:24
+// yy_flex_strlen()
+unusedFunction:lexor.cc:3632
+// yy_scan_string()
+unusedFunction:lexor.cc:3417
+// yyget_debug()
+unusedFunction:lexor.cc:3557
+// yyget_in()
+unusedFunction:lexor.cc:3501
+// yyget_leng()
+unusedFunction:lexor.cc:3517
+// yyget_lineno()
+unusedFunction:lexor.cc:3492
+// yyget_out()
+unusedFunction:lexor.cc:3509
+// yyget_text()
+unusedFunction:lexor.cc:3526
+// yylex_destroy()
+unusedFunction:lexor.cc:3596
+// yypush_buffer_state()
+unusedFunction:lexor.cc:3282
+// yyset_debug()
+unusedFunction:lexor.cc:3562
+// yyset_in()
+unusedFunction:lexor.cc:3547
+// yyset_lineno()
+unusedFunction:lexor.cc:3535
+// yyset_out()
+unusedFunction:lexor.cc:3552
