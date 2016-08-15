@@ -1145,9 +1145,9 @@ class vvp_net_t {
 	// operate only on the vvp_net_t whose output is to be
 	// forced. These methods then communicate the force to the
 	// attached filter to set up the actual force.
-      void force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
-      void force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
-      void force_real(double val, vvp_vector2_t mask);
+      void force_vec4(const vvp_vector4_t&val, const vvp_vector2_t&mask);
+      void force_vec8(const vvp_vector8_t&val, const vvp_vector2_t&mask);
+      void force_real(double val, const vvp_vector2_t&mask);
 
     public: // Method to support $countdrivers
       void count_drivers(unsigned idx, unsigned counts[4]);
@@ -1306,9 +1306,9 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 	// Support for force methods. These are called by the
 	// vvp_net_t::force_* methods to set the force value and mask
 	// for the filter.
-      virtual void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask) =0;
-      virtual void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask) =0;
-      virtual void force_fil_real(double val, vvp_vector2_t mask) =0;
+      virtual void force_fil_vec4(const vvp_vector4_t&val, const vvp_vector2_t&mask) =0;
+      virtual void force_fil_vec8(const vvp_vector8_t&val, const vvp_vector2_t&mask) =0;
+      virtual void force_fil_real(double val, const vvp_vector2_t&mask) =0;
 
     public: // These objects are only permallocated.
       static void* operator new(std::size_t size) { return heap_.alloc(size); }
@@ -1327,9 +1327,9 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 
     protected:
 	// Set bits of the filter force mask
-      void force_mask(vvp_vector2_t mask);
+      void force_mask(const vvp_vector2_t&mask);
 	// Release the force on the bits set in the mask.
-      void release_mask(vvp_vector2_t mask);
+      void release_mask(const vvp_vector2_t&mask);
 	// Test bits of the filter force mask;
       bool test_force_mask(unsigned bit) const;
       bool test_force_mask_is_zero() const;

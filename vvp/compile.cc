@@ -1474,8 +1474,8 @@ struct __vpiModPath* compile_modpath(char*label, unsigned width,
 
 static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
 					       char edge,
-					       struct symb_s src,
-					       struct numbv_s vals,
+					       const struct symb_s&src,
+					       struct numbv_s&vals,
 					       bool ifnone)
 {
       vvp_fun_modpath*dst = path->modpath;
@@ -1537,10 +1537,10 @@ static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
 }
 
 void compile_modpath_src(struct __vpiModPath*dst, char edge,
-			 struct symb_s src,
-			 struct numbv_s vals,
-			 struct symb_s condit_src,
-			 struct symb_s path_term_in)
+			 const struct symb_s&src,
+			 struct numbv_s&vals,
+			 const struct symb_s&condit_src,
+			 const struct symb_s&path_term_in)
 {
       struct __vpiModPathSrc*obj =
 	    make_modpath_src(dst, edge, src, vals, false);
@@ -1549,10 +1549,10 @@ void compile_modpath_src(struct __vpiModPath*dst, char edge,
 }
 
 void compile_modpath_src(struct __vpiModPath*dst, char edge,
-			 struct symb_s src,
-			 struct numbv_s vals,
+			 const struct symb_s&src,
+			 struct numbv_s&vals,
 			 int condit_src,
-			 struct symb_s path_term_in,
+			 const struct symb_s&path_term_in,
 			 bool ifnone)
 {
       assert(condit_src == 0);

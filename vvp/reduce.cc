@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -238,7 +238,7 @@ vvp_bit4_t vvp_reduce_xnor::calculate_result() const
       return ~res;
 }
 
-static void make_reduce(char*label, vvp_net_fun_t*red, struct symb_s arg)
+static void make_reduce(char*label, vvp_net_fun_t*red, const struct symb_s&arg)
 {
       vvp_net_t*ptr = new vvp_net_t;
       ptr->fun = red;
@@ -249,37 +249,37 @@ static void make_reduce(char*label, vvp_net_fun_t*red, struct symb_s arg)
       input_connect(ptr, 0, arg.text);
 }
 
-void compile_reduce_and(char*label, struct symb_s arg)
+void compile_reduce_and(char*label, const struct symb_s&arg)
 {
       vvp_reduce_and* reduce = new vvp_reduce_and;
       make_reduce(label, reduce, arg);
 }
 
-void compile_reduce_or(char*label, struct symb_s arg)
+void compile_reduce_or(char*label, const struct symb_s&arg)
 {
       vvp_reduce_or* reduce = new vvp_reduce_or;
       make_reduce(label, reduce, arg);
 }
 
-void compile_reduce_xor(char*label, struct symb_s arg)
+void compile_reduce_xor(char*label, const struct symb_s&arg)
 {
       vvp_reduce_xor* reduce = new vvp_reduce_xor;
       make_reduce(label, reduce, arg);
 }
 
-void compile_reduce_nand(char*label, struct symb_s arg)
+void compile_reduce_nand(char*label, const struct symb_s&arg)
 {
       vvp_reduce_nand* reduce = new vvp_reduce_nand;
       make_reduce(label, reduce, arg);
 }
 
-void compile_reduce_nor(char*label, struct symb_s arg)
+void compile_reduce_nor(char*label, const struct symb_s&arg)
 {
       vvp_reduce_nor* reduce = new vvp_reduce_nor;
       make_reduce(label, reduce, arg);
 }
 
-void compile_reduce_xnor(char*label, struct symb_s arg)
+void compile_reduce_xnor(char*label, const struct symb_s&arg)
 {
       vvp_reduce_xnor* reduce = new vvp_reduce_xnor;
       make_reduce(label, reduce, arg);

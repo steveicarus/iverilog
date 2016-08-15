@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -319,7 +319,7 @@ vvp_net_fil_t::prop_t vvp_net_fil_t::filter_object(vvp_object_t&)
       return PROP;
 }
 
-void vvp_net_fil_t::force_mask(vvp_vector2_t mask)
+void vvp_net_fil_t::force_mask(const vvp_vector2_t&mask)
 {
       if (force_mask_.size() == 0)
 	    force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, mask.size());
@@ -334,7 +334,7 @@ void vvp_net_fil_t::force_mask(vvp_vector2_t mask)
       }
 }
 
-void vvp_net_fil_t::release_mask(vvp_vector2_t mask)
+void vvp_net_fil_t::release_mask(const vvp_vector2_t&mask)
 {
       if (force_mask_.size() == 0)
 	    return;

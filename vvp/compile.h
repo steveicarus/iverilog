@@ -241,24 +241,24 @@ extern __vpiModPath* compile_modpath(char*label,
 				     struct symb_s dest);
 extern void compile_modpath_src(__vpiModPath*dst,
 				char edge,
-				struct symb_s input,
-				struct numbv_s d,
-				int condit_input, /* match with '0' */
-				struct symb_s path_term_input,
-				bool ifnone);
+				const struct symb_s&src,
+				struct numbv_s&vals,
+				const struct symb_s&condit_src,
+				const struct symb_s&path_term_in);
 extern void compile_modpath_src(__vpiModPath*dst,
 				char edge,
-				struct symb_s input,
-				struct numbv_s d,
-				struct symb_s condit_input,
-				struct symb_s path_term_input);
+				const struct symb_s&src,
+				struct numbv_s&vals,
+				int condit_src, /* match with '0' */
+				const struct symb_s&path_term_in,
+				bool ifnone);
 
-extern void compile_reduce_and(char*label, struct symb_s arg);
-extern void compile_reduce_or(char*label, struct symb_s arg);
-extern void compile_reduce_xor(char*label, struct symb_s arg);
-extern void compile_reduce_nand(char*label, struct symb_s arg);
-extern void compile_reduce_nor(char*label, struct symb_s arg);
-extern void compile_reduce_xnor(char*label, struct symb_s arg);
+extern void compile_reduce_and(char*label, const struct symb_s&arg);
+extern void compile_reduce_or(char*label, const struct symb_s&arg);
+extern void compile_reduce_xor(char*label, const struct symb_s&arg);
+extern void compile_reduce_nand(char*label, const struct symb_s&arg);
+extern void compile_reduce_nor(char*label, const struct symb_s&arg);
+extern void compile_reduce_xnor(char*label, const struct symb_s&arg);
 
 extern void compile_extend_signed(char*label, long width, struct symb_s arg);
 
