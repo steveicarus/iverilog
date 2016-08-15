@@ -853,14 +853,20 @@ int main(int argc, char **argv)
 	/* Convert to a short name to remove any embedded spaces. */
       GetShortPathName(tmppath, ivl_root, sizeof ivl_root);
 #else
+      ssize_t len = 0;
       if (access("/proc/self/exe", F_OK) != -1) {
-            readlink("/proc/self/exe", ivl_root, sizeof ivl_root);
-      } else {
-            /* In a UNIX environment, if /proc/self/exe does not
-               exist, the IVL_ROOT from the Makefile is
-               dependable. It points to the $prefix/lib/ivl directory,
-               where the sub-parts are installed. */
-            strcpy(ivl_root, IVL_ROOT);
+	    len = readlink("/proc/self/exe", ivl_root, sizeof ivl_root);
+	    assert(len < (ssize_t) sizeof ivl_root);
+	      /* Terminate the string with a NULL. */
+	    if (len > 0) ivl_root[len] = '\0';
+      }
+	/* In a UNIX environment, if /proc/self/exe does not exist or
+	   reading fails, the IVL_ROOT from the Makefile is dependable.
+	   It points to the $prefix/lib/ivl directory, where the
+	   sub-parts are installed. */
+      if (len <= 0) {
+	    assert(strlen(IVL_ROOT) < sizeof ivl_root);
+	    strcpy(ivl_root, IVL_ROOT);
       }
 #endif
       s = strrchr(ivl_root, sep);
