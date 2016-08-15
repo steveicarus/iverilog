@@ -3,13 +3,15 @@
 // problems will not be fixed.
 
 // fstapi.c from GTKWave
-obsoleteFunctionsasctime:fstapi.c:930
-obsoleteFunctionsalloca:fstapi.c:2305
-unreadVariable:fstapi.c:1648
+shiftNegative:fstapi.c:673
+asctimeCalled:fstapi.c:930
+allocaCalled:fstapi.c:2305
 variableScope:fstapi.c:666
+variableScope:fstapi.c:1030
+variableScope:fstapi.c:1337
 variableScope:fstapi.c:1338
 variableScope:fstapi.c:1339
-variableScope:fstapi.c:1396
+variableScope:fstapi.c:1396 
 variableScope:fstapi.c:1979
 variableScope:fstapi.c:2108
 variableScope:fstapi.c:2541
@@ -20,27 +22,27 @@ variableScope:fstapi.c:2738
 variableScope:fstapi.c:2854
 variableScope:fstapi.c:2893
 variableScope:fstapi.c:2894
-variableScope:fstapi.c:3612
-variableScope:fstapi.c:3786
-variableScope:fstapi.c:3788
-variableScope:fstapi.c:4230
+variableScope:fstapi.c:3613
+variableScope:fstapi.c:3787
+variableScope:fstapi.c:3789
 variableScope:fstapi.c:4231
-variableScope:fstapi.c:4240
-variableScope:fstapi.c:4503
-variableScope:fstapi.c:4774
-variableScope:fstapi.c:4777
-variableScope:fstapi.c:5271
-variableScope:fstapi.c:5275
+variableScope:fstapi.c:4232
+variableScope:fstapi.c:4241
+variableScope:fstapi.c:4504
+variableScope:fstapi.c:4775
+variableScope:fstapi.c:4778
+variableScope:fstapi.c:5272
 variableScope:fstapi.c:5276
-variableScope:fstapi.c:5432
-variableScope:fstapi.c:5490
-variableScope:fstapi.c:5803
-variableScope:fstapi.c:5806
-variableScope:fstapi.c:6042
-variableScope:fstapi.c:6147
-variableScope:fstapi.c:6148
-variableScope:fstapi.c:6179
-variableScope:fstapi.c:6407
+variableScope:fstapi.c:5277
+variableScope:fstapi.c:5433
+variableScope:fstapi.c:5491
+variableScope:fstapi.c:5804
+variableScope:fstapi.c:5807
+variableScope:fstapi.c:6101
+variableScope:fstapi.c:6206
+variableScope:fstapi.c:6207
+variableScope:fstapi.c:6238
+variableScope:fstapi.c:6466
 // These functions are not used by Icarus
 // fstReaderClrFacProcessMask()
 unusedFunction:fstapi.c:3344
@@ -141,12 +143,9 @@ unusedFunction:fstapi.c:2436
 // fstWriterSetValueList()
 unusedFunction:fstapi.c:2366
 
-// These functions are not used by Icarus
-//unusedFunction:fstapi.c:226
-
 // lxt2_write.c from GTKWave
-obsoleteFunctionsalloca:lxt2_write.c:1813
-obsoleteFunctionsalloca:lxt2_write.c:1819
+allocaCalled:lxt2_write.c:1813
+allocaCalled:lxt2_write.c:1819
 variableScope:lxt2_write.c:33
 variableScope:lxt2_write.c:63
 variableScope:lxt2_write.c:196
@@ -181,6 +180,8 @@ unusedFunction:lxt2_write.c:1581
 unusedFunction:lxt2_write.c:877
 
 // lxt_write.c from GTKWave
+shiftNegative:lxt_write.c:2700
+shiftNegative:lxt_write.c:2744
 variableScope:lxt_write.c:31
 variableScope:lxt_write.c:83
 variableScope:lxt_write.c:527
@@ -227,6 +228,7 @@ unusedFunction:lxt_write.c:1585
 unusedFunction:lxt_write.c:1277
 
 // fastlz.c from GTKWave
+unusedLabel:fastlz.c:545
 // These functions are not used by Icarus
 // fastlz_compress_level()
 unusedFunction:fastlz.c:150
