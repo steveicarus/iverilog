@@ -1096,10 +1096,10 @@ void pform_set_timeunit(const char*txt, bool in_module, bool only_check)
 
 int pform_get_timeunit()
 {
-      if (pform_cur_module.front())
-	    return pform_cur_module.front()->time_unit;
-      else
+      if (pform_cur_module.empty())
 	    return pform_time_unit;
+      else
+	    return pform_cur_module.front()->time_unit;
 }
 
 void pform_set_timeprecision(const char*txt, bool in_module, bool only_check)
