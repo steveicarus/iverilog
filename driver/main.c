@@ -825,69 +825,106 @@ static void add_sft_file(const char *module)
       free(file);
 }
 
+static void find_ivl_root_failed(const char *reason)
+{
+      fprintf(stderr, "Cannot locate IVL modules : %s\n", reason);
+      exit(1);
+}
+
+static void find_ivl_root(void)
+{
+#ifdef __MINGW32__
+      const char *ivl_lib_prefix = "\\lib";
+      const char *ivl_lib_suffix = "\\ivl" IVL_SUFFIX;
+#else
+      const char *ivl_lib_prefix = IVL_LIB;
+      const char *ivl_lib_suffix = "/ivl" IVL_SUFFIX;
+#endif
+      ssize_t len = 0;
+      char *s;
+
+#ifndef __MINGW32__
+	/* First try the location specified in the build process. */
+      if (access(IVL_ROOT, F_OK) != -1) {
+	    assert(strlen(IVL_ROOT) < sizeof ivl_root);
+	    strcpy(ivl_root, IVL_ROOT);
+	    return;
+      }
+#endif
+	/* If that fails, calculate the ivl_root from the path to the
+	   command. This is always necessary on Windows because of the
+	   installation process, but may also be necessary on other OSs
+	   if the package has been relocated.
+
+	   On Windows we know the command path is formed like this:
+
+		$(prefix)\bin\iverilog.exe
+
+	   The module path in a Windows installation is the path:
+
+		$(prefix)\lib\ivl$(suffix)
+
+	   so we chop the file name and the last directory by
+	   turning the last two \ characters to null. Then we append
+	   the lib\ivl$(suffix) to finish.
+
+	   On other OSs, we expect the command path to be:
+
+		$(prefix)/bin/iverilog
+
+	   and the module path to be:
+
+		$(prefix)/$(lib)/ivl$(suffix)
+
+	   so we extract the $(prefix) from the command location as for
+	   Windows and the $(lib) from IVL_LIB. This will of course fail
+	   if the user has overridden $(bindir) or $(libdir), but there's
+	   not a lot we can do in that case.
+ */
+#ifdef __MINGW32__
+      char tmppath[MAXSIZE];
+      len = GetModuleFileName(NULL, tmppath, sizeof tmppath);
+      if (len >= (ssize_t) sizeof ivl_root) {
+	    find_ivl_root_failed("command path exceeds size of string buffer.");
+      }
+	/* Convert to a short name to remove any embedded spaces. */
+      len = GetShortPathName(tmppath, ivl_root, sizeof ivl_root);
+#else
+      len = readlink("/proc/self/exe", ivl_root, sizeof ivl_root);
+#endif
+      if (len >= (ssize_t) sizeof ivl_root) {
+	    find_ivl_root_failed("command path exceeds size of string buffer.");
+      }
+      if (len <= 0) {
+	    find_ivl_root_failed("couldn't get command path from OS.");
+      }
+      s = strrchr(ivl_root, sep);
+      if (s == 0) {
+	    find_ivl_root_failed("missing first separator in command path.");
+      }
+      *s = 0;
+      s = strrchr(ivl_root, sep);
+      if (s == 0) {
+	    find_ivl_root_failed("missing second separator in command path.");
+      }
+      *s = 0;
+      len = s - ivl_root;
+      s = strrchr(ivl_lib_prefix, sep);
+      assert(s);
+      if (len + strlen(s) + strlen(ivl_lib_suffix) >= (ssize_t) sizeof ivl_root) {
+	    find_ivl_root_failed("module path exceeds size of string buffer.");
+      }
+      strcat(ivl_root, s);
+      strcat(ivl_root, ivl_lib_suffix);
+}
+
 int main(int argc, char **argv)
 {
       int e_flag = 0;
       int version_flag = 0;
       int opt;
 
-	/* Calculate the ivl_root from the path to the command. This
-	   is necessary because of the installation process on
-	   Windows (and using some package managers such as conda).
-	   Mostly, it is those darn drive letters, but oh
-	   well. We know the command path is formed like this:
-
-		D:\iverilog\bin\iverilog.exe
-
-	   The module path in a Windows installation is the path:
-
-		D:\iverilog\lib\ivl$(suffix)
-
-	   so we chop the file name and the last directory by
-	   turning the last two \ characters to null. Then we append
-	   the lib\ivl$(suffix) to finish. */
-      char *s;
-#ifdef __MINGW32__
-      char tmppath[MAXSIZE];
-      GetModuleFileName(NULL, tmppath, sizeof tmppath);
-	/* Convert to a short name to remove any embedded spaces. */
-      GetShortPathName(tmppath, ivl_root, sizeof ivl_root);
-#else
-      ssize_t len = 0;
-      if (access("/proc/self/exe", F_OK) != -1) {
-	    len = readlink("/proc/self/exe", ivl_root, sizeof ivl_root);
-	    assert(len < (ssize_t) sizeof ivl_root);
-	      /* Terminate the string with a NULL. */
-	    if (len > 0) ivl_root[len] = '\0';
-      }
-	/* In a UNIX environment, if /proc/self/exe does not exist or
-	   reading fails, the IVL_ROOT from the Makefile is dependable.
-	   It points to the $prefix/lib/ivl directory, where the
-	   sub-parts are installed. */
-      if (len <= 0) {
-	    assert(strlen(IVL_ROOT) < sizeof ivl_root);
-	    strcpy(ivl_root, IVL_ROOT);
-      }
-#endif
-      s = strrchr(ivl_root, sep);
-      if (s) *s = 0;
-      else {
-	    fprintf(stderr, "%s: Missing first %c in exe path!\n",
-	                    argv[0], sep);
-	    exit(1);
-      }
-      s = strrchr(ivl_root, sep);
-      if (s) *s = 0;
-      else {
-	    fprintf(stderr, "%s: Missing second %c in exe path!\n",
-	                    argv[0], sep);
-	    exit(1);
-      }
-#ifdef __MINGW32__
-      strcat(ivl_root, "\\lib\\ivl" IVL_SUFFIX);
-#else
-      strcat(ivl_root, "/lib/ivl" IVL_SUFFIX);
-#endif
+      find_ivl_root();
       base = ivl_root;
 
 	/* Create a temporary file for communicating input parameters
