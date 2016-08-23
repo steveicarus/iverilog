@@ -77,7 +77,7 @@ static const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_n
       const VType*base_type = parse_type_by_name(lex_strings.make(base_name));
 
       if (base_type == 0) {
-	    errormsg(loc, "Unable to find base type %s of array.\n", base_name);
+	    errormsg(loc, "Unable to find array base type '%s'.\n", base_name);
 	    return 0;
       }
 
@@ -141,7 +141,7 @@ const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_name,
       const VType*base_type = parse_type_by_name(lex_strings.make(base_name));
 
       if (base_type == 0) {
-	    errormsg(loc, "Unable to find base type %s of range.\n", base_name);
+	    errormsg(loc, "Unable to find range base type '%s'.\n", base_name);
 	    return 0;
       }
 

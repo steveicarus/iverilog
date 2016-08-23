@@ -361,6 +361,8 @@ static void import_ieee_use(ActiveScope*res, perm_string package, perm_string na
 	    import_ieee_use_numeric_std(res, name);
 	    return;
       }
+
+      cerr << "Warning: Package ieee." << package.str() <<" is not yet supported" << endl;
 }
 
 static void import_std_use(const YYLTYPE&loc, ActiveScope*res, perm_string package, perm_string name)
@@ -375,7 +377,7 @@ static void import_std_use(const YYLTYPE&loc, ActiveScope*res, perm_string packa
             res->use_name(type_FILE_OPEN_STATUS.peek_name(),  &type_FILE_OPEN_STATUS);
 	    return;
       } else {
-	    sorrymsg(loc, "package %s of library %s not yet supported", package.str(), name.str());
+            cerr << "Warning: Package std." << package.str() <<" is not yet supported" << endl;
 	    return;
       }
 }
