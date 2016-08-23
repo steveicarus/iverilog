@@ -140,7 +140,7 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, ScopeBase*scope, const VT
 
 	// Special case: The aggregate is a single "others" item.
       if (aggregate_.size() == 1 && aggregate_[0].choice->others()) {
-	    assert(atype->dimensions() == 1);
+	    assert(atype->dimensions().size() == 1);
 
 	    const VTypeArray::range_t&rang = atype->dimension(0);
 	    assert(! rang.is_box());
@@ -978,7 +978,7 @@ int ExpString::emit(ostream& out, Entity*ent, ScopeBase*scope) const
 int ExpString::emit_as_array_(ostream& out, Entity*, ScopeBase*, const VTypeArray*arr) const
 {
       int errors = 0;
-      assert(arr->dimensions() == 1);
+      assert(arr->dimensions().size() == 1);
 
       const VTypePrimitive*etype = dynamic_cast<const VTypePrimitive*> (arr->basic_type());
       assert(etype);

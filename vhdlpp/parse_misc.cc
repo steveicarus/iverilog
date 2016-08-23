@@ -97,7 +97,7 @@ static const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_n
 	    vector<VTypeArray::range_t> range (base_array->dimensions());
 
 	      // For now, I only know how to handle 1 dimension
-	    assert(base_array->dimensions() == 1);
+	    assert(base_array->dimensions().size() == 1);
 
 	    range[0] = VTypeArray::range_t(array_left, array_right, downto);
 

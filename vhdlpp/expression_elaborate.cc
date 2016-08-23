@@ -418,7 +418,7 @@ const VType*ExpAggregate::fit_type(Entity*, ScopeBase*, const VTypeArray*host) c
       Expression*use_msb = prange->msb();
       Expression*use_lsb = prange->lsb();
 
-      ivl_assert(*this, host->dimensions() == 1);
+      ivl_assert(*this, host->dimensions().size() == 1);
       vector<VTypeArray::range_t> range (1);
 
       range[0] = VTypeArray::range_t(use_msb, use_lsb);
@@ -677,7 +677,7 @@ const VType*ExpConcat::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*at
 
 	    if(const VTypeArray*arr = dynamic_cast<const VTypeArray*>(types[i])) {
 		types[i] = arr->element_type();
-		ivl_assert(*this, arr->dimensions() == 1);
+		ivl_assert(*this, arr->dimensions().size() == 1);
 		const VTypeArray::range_t&dim = arr->dimension(0);
 		sizes[i] = new ExpArithmetic(ExpArithmetic::MINUS, dim.msb(), dim.lsb());
 	    } else {
@@ -732,7 +732,7 @@ int ExpConcat::elaborate_expr_array_(Entity*ent, ScopeBase*scope, const VTypeArr
       int errors = 0;
 
 	// For now, only support single-dimension arrays here.
-      ivl_assert(*this, atype->dimensions() == 1);
+      ivl_assert(*this, atype->dimensions().size() == 1);
 
       const VType*type1 = operand1_->fit_type(ent, scope, atype);
       ivl_assert(*this, type1);

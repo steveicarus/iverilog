@@ -226,7 +226,7 @@ class VTypeArray : public VType {
       void show(std::ostream&) const;
       int get_width(ScopeBase*scope) const;
 
-      inline size_t dimensions() const { return ranges_.size(); };
+      const std::vector<range_t>&dimensions() const { return ranges_; };
       const range_t&dimension(size_t idx) const
       { return ranges_[idx]; }
 

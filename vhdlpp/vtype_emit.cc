@@ -65,7 +65,7 @@ int VTypeArray::emit_def(ostream&out, perm_string name) const
       const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (raw_base);
 
       if (base) {
-	    assert(dimensions() == 1);
+	    assert(dimensions().size() == 1);
 
 	    // If this is a string type without any boundaries specified, then
 	    // there is a direct counterpart in SV called.. 'string'
@@ -127,7 +127,7 @@ int VTypeArray::emit_with_dims_(std::ostream&out, bool packed, perm_string name)
 	        name_emitted = true;
 	    }
 
-	    for(unsigned i = 0; i < cur->dimensions(); ++i) {
+	    for(unsigned i = 0; i < cur->dimensions().size(); ++i) {
 	        if(cur->dimension(i).is_box() && !name_emitted) {
 	            emit_name(out, name);
 	            name_emitted = true;

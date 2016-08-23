@@ -85,7 +85,7 @@ bool ExpAttribute::test_array_type(const VType*type) const
           return false;
       }
 
-      if (arr->dimensions() > 1) {
+      if (arr->dimensions().size() > 1) {
           cerr << endl << get_fileline() << ": error: "
               << "Cannot apply the '" << name_
               << " attribute to multidimensional arrays" << endl;
