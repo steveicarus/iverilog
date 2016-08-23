@@ -68,28 +68,51 @@ class SubprogramSizeCast : public SubprogramStdHeader {
           : SubprogramStdHeader(nam, NULL, target) {
           ports_ = new list<InterfacePort*>();
           ports_->push_back(new InterfacePort(base));
-          ports_->push_back(new InterfacePort(&primitive_INTEGER));
+          ports_->push_back(new InterfacePort(&primitive_NATURAL));
       }
 
-      int emit_name(const std::vector<Expression*>&argv,
-                    std::ostream&out, Entity*ent, ScopeBase*scope) const {
-          int64_t use_size;
-          bool rc = argv[1]->evaluate(ent, scope, use_size);
-
-          if(!rc) {
-              cerr << get_fileline() << ": sorry: Could not evaluate the "
-                   << "expression size. Size casting impossible." << endl;
-              return 1;
-          }
-
-          out << use_size << "'";
+      int emit_name(const std::vector<Expression*>&,
+                    std::ostream&, Entity*, ScopeBase*) const {
           return 0;
       }
 
       int emit_args(const std::vector<Expression*>&argv,
                     std::ostream&out, Entity*ent, ScopeBase*scope) const {
+          int64_t new_size, old_size;
 
-          return argv[0]->emit(out, ent, scope);
+          const VType*type = argv[0]->probe_type(ent, scope);
+
+          if(!type) {
+              cerr << get_fileline() << ": sorry: Could not determine "
+                   << "the argument type. Size casting impossible." << endl;
+              return 1;
+          }
+
+          old_size = type->get_width(scope);
+
+          if(old_size <= 0) {
+              cerr << get_fileline() << ": sorry: Could not determine "
+                   << "the argument size. Size casting impossible." << endl;
+              return 1;
+          }
+
+          if(!argv[1]->evaluate(ent, scope, new_size)) {
+              cerr << get_fileline() << ": sorry: Could not evaluate the requested"
+                   << "expression size. Size casting impossible." << endl;
+              return 1;
+          }
+
+
+          out << new_size << "'(" << old_size << "'(";
+
+          if(const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type))
+                out << (arr->signed_vector() ? "$signed" : "$unsigned");
+
+          out << "(";
+          bool res = argv[0]->emit(out, ent, scope);
+          out << ")))";
+
+          return res;
       }
 };
 
