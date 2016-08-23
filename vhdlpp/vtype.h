@@ -253,6 +253,8 @@ class VTypeArray : public VType {
 	// To handle subtypes
       inline void set_parent_type(const VTypeArray*parent) { parent_ = parent; }
 
+      const VTypeArray*get_parent_type() const { return parent_; }
+
 	// Wherever it is possible, replaces range lsb & msb expressions with
 	// constant integers.
       void evaluate_ranges(ScopeBase*scope);

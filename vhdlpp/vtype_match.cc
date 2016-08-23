@@ -70,7 +70,15 @@ bool VTypeArray::type_match(const VType*that) const
 
       // Check if both arrays are of the same size
       if(const VTypeArray*arr = dynamic_cast<const VTypeArray*>(that)) {
-          if(!element_type()->type_match(arr->element_type()))
+          const VTypeArray*this_parent = this;
+          while(const VTypeArray*tmp = this_parent->get_parent_type())
+              this_parent = tmp;
+
+          const VTypeArray*that_parent = arr;
+          while(const VTypeArray*tmp = that_parent->get_parent_type())
+              that_parent = tmp;
+
+          if(this_parent != that_parent)
               return false;
 
           int this_width = get_width(NULL);
