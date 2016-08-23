@@ -210,7 +210,13 @@ void preload_std_funcs(void)
        have to do anything for that to work.
     */
     args = new list<InterfacePort*>();
-    args->push_back(new InterfacePort(&primitive_STDLOGIC_VECTOR));
+    args->push_back(new InterfacePort(&primitive_SIGNED));
+    register_std_subprogram(new SubprogramBuiltin(perm_string::literal("std_logic_vector"),
+                                           empty_perm_string,
+                                           args, &primitive_STDLOGIC_VECTOR));
+
+    args = new list<InterfacePort*>();
+    args->push_back(new InterfacePort(&primitive_UNSIGNED));
     register_std_subprogram(new SubprogramBuiltin(perm_string::literal("std_logic_vector"),
                                            empty_perm_string,
                                            args, &primitive_STDLOGIC_VECTOR));
@@ -238,6 +244,13 @@ void preload_std_funcs(void)
      * function shift_right (arg: signed; count: natural) return signed;
      */
     args = new list<InterfacePort*>();
+    args->push_back(new InterfacePort(&primitive_UNSIGNED));
+    args->push_back(new InterfacePort(&primitive_NATURAL));
+    register_std_subprogram(new SubprogramBuiltin(perm_string::literal("shift_right"),
+                                           perm_string::literal("$ivlh_shift_right"),
+                                           args, &primitive_UNSIGNED));
+
+    args = new list<InterfacePort*>();
     args->push_back(new InterfacePort(&primitive_SIGNED));
     args->push_back(new InterfacePort(&primitive_NATURAL));
     register_std_subprogram(new SubprogramBuiltin(perm_string::literal("shift_right"),
@@ -247,12 +260,16 @@ void preload_std_funcs(void)
     /* function resize
      */
     register_std_subprogram(new SubprogramSizeCast(perm_string::literal("resize"),
-                &primitive_STDLOGIC_VECTOR, &primitive_STDLOGIC_VECTOR));
+                &primitive_UNSIGNED, &primitive_UNSIGNED));
+
+    register_std_subprogram(new SubprogramSizeCast(perm_string::literal("resize"),
+                &primitive_SIGNED, &primitive_SIGNED));
 
     /* std_logic_arith library
      * function conv_std_logic_vector(arg: integer; size: integer) return std_logic_vector;
      */
-    register_std_subprogram(new SubprogramSizeCast(perm_string::literal("conv_std_logic_vector"),
+    register_std_subprogram(new SubprogramSizeCast(
+                perm_string::literal("conv_std_logic_vector"),
                 &primitive_INTEGER, &primitive_STDLOGIC_VECTOR));
 
     /* numeric_bit library
