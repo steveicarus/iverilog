@@ -172,6 +172,24 @@ const VType*SubprogramHeader::peek_param_type(int idx) const
       return NULL;
 }
 
+const VType*SubprogramHeader::exact_return_type(const std::vector<Expression*>&argv, Entity*ent, ScopeBase*scope)
+{
+    const VTypeArray*orig_ret = dynamic_cast<const VTypeArray*>(return_type_);
+
+    if(!orig_ret)
+        return return_type_;
+
+    const VTypeArray*arg = dynamic_cast<const VTypeArray*>(argv[0]->fit_type(ent, scope, orig_ret));
+
+    if(!arg)
+        return return_type_;
+
+    VTypeArray*ret = new VTypeArray(orig_ret->element_type(), arg->dimensions(), orig_ret->signed_vector());
+    ret->set_parent_type(orig_ret);
+
+    return ret;
+}
+
 bool SubprogramHeader::unbounded() const {
     if(return_type_ && return_type_->is_unbounded())
        return true;

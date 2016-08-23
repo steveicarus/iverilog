@@ -26,7 +26,6 @@
 # include  "entity.h"
 # include  "vsignal.h"
 # include  "subprogram.h"
-# include  "library.h"
 # include  "std_types.h"
 # include  <iostream>
 # include  <typeinfo>
@@ -790,55 +789,23 @@ int ExpConditional::case_t::elaborate_expr(Entity*ent, ScopeBase*scope, const VT
 
 const VType*ExpFunc::probe_type(Entity*ent, ScopeBase*scope) const
 {
-      SubprogramHeader*prog = def_;
+      if(!def_)
+          def_ = match_signature(ent, scope);
 
-      if(!prog) {
-          list<const VType*> arg_types;
-
-          for(vector<Expression*>::const_iterator it = argv_.begin();
-                  it != argv_.end(); ++it) {
-              arg_types.push_back((*it)->probe_type(ent, scope));
-          }
-
-          prog = scope->match_subprogram(name_, &arg_types);
-
-          if(!prog)
-              prog = library_match_subprogram(name_, &arg_types);
-
-          if(!prog) {
-              cerr << get_fileline() << ": sorry: could not find function ";
-              emit_subprogram_sig(cerr, name_, arg_types);
-              cerr << endl;
-              ivl_assert(*this, false);
-          }
-      }
-
-      return prog->peek_return_type();
+      return def_ ? def_->exact_return_type(argv_, ent, scope) : NULL;
 }
 
 int ExpFunc::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
 {
       int errors = 0;
 
-      ivl_assert(*this, def_ == 0);   // do not elaborate twice
+      if(def_)
+          return 0;
 
-      // Create a list of argument types to find a matching subprogram
-      list<const VType*> arg_types;
-      for(vector<Expression*>::iterator it = argv_.begin();
-              it != argv_.end(); ++it)
-          arg_types.push_back((*it)->probe_type(ent, scope));
-
-      def_ = scope->match_subprogram(name_, &arg_types);
+      def_ = match_signature(ent, scope);
 
       if(!def_)
-            def_ = library_match_subprogram(name_, &arg_types);
-
-      if(!def_) {
-            cerr << get_fileline() << ": error: could not find function ";
-            emit_subprogram_sig(cerr, name_, arg_types);
-            cerr << endl;
-            return 1;
-      }
+          return 1;
 
 	// Elaborate arguments
       for (size_t idx = 0; idx < argv_.size(); ++idx) {
@@ -858,7 +825,7 @@ int ExpFunc::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
 
 const VType* ExpFunc::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*) const
 {
-      return probe_type(ent, scope);
+    return probe_type(ent, scope);
 }
 
 const VType* ExpInteger::probe_type(Entity*, ScopeBase*) const

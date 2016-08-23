@@ -620,12 +620,15 @@ class ExpFunc : public Expression {
       void write_to_stream(std::ostream&fd) const;
       int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       void dump(ostream&out, int indent = 0) const;
-      void visit(ExprVisitor& func); // NOTE: does not handle expressions in subprogram
+      void visit(ExprVisitor& func); // NOTE: does not handle expressions in subprogram body
+
+      // Returns a subprogram header that matches the function call
+      SubprogramHeader*match_signature(Entity*ent, ScopeBase*scope) const;
 
     private:
       perm_string name_;
       std::vector<Expression*> argv_;
-      SubprogramHeader*def_;
+      mutable SubprogramHeader*def_;
 };
 
 class ExpInteger : public Expression {

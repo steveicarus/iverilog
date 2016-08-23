@@ -80,6 +80,10 @@ class SubprogramHeader : public LineInfo {
       const VType*peek_param_type(int idx) const;
       const VType*peek_return_type() const { return return_type_; }
 
+	// Computes the exact return type (e.g. std_logic_vector(7 downto 0)
+	// instead of generic std_logic_vector)
+      virtual const VType*exact_return_type(const std::vector<Expression*>&, Entity*, ScopeBase*);
+
       inline void set_package(const Package*pkg) { assert(!package_); package_ = pkg; }
       inline const Package*get_package() const { return package_; }
 

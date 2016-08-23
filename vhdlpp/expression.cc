@@ -24,6 +24,7 @@
 # include  "subprogram.h"
 # include  "parse_types.h"
 # include  "scope.h"
+# include  "library.h"
 # include  <iostream>
 # include  <typeinfo>
 # include  <cstring>
@@ -567,6 +568,32 @@ void ExpFunc::visit(ExprVisitor&func)
 const VType* ExpFunc::func_ret_type() const
 {
     return def_ ? def_->peek_return_type() : NULL;
+}
+
+SubprogramHeader*ExpFunc::match_signature(Entity*ent, ScopeBase*scope) const
+{
+    SubprogramHeader*prog = NULL;
+    list<const VType*> arg_types;
+
+      // Create a list of argument types to find a matching subprogram
+    for(vector<Expression*>::const_iterator it = argv_.begin();
+            it != argv_.end(); ++it) {
+        arg_types.push_back((*it)->probe_type(ent, scope));
+    }
+
+    prog = scope->match_subprogram(name_, &arg_types);
+
+    if(!prog)
+        prog = library_match_subprogram(name_, &arg_types);
+
+    if(!prog) {
+        cerr << get_fileline() << ": sorry: could not find function ";
+        emit_subprogram_sig(cerr, name_, arg_types);
+        cerr << endl;
+        ivl_assert(*this, false);
+    }
+
+    return prog;
 }
 
 ExpInteger::ExpInteger(int64_t val)
