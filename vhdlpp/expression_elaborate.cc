@@ -578,6 +578,7 @@ int ExpArithmetic::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype
 
 const VType* ExpArithmetic::resolve_operand_types_(const VType*t1, const VType*t2) const
 {
+    // Ranges
       while (const VTypeRange*tmp = dynamic_cast<const VTypeRange*> (t1))
 	    t1 = tmp->base_type();
       while (const VTypeRange*tmp = dynamic_cast<const VTypeRange*> (t2))
@@ -586,7 +587,58 @@ const VType* ExpArithmetic::resolve_operand_types_(const VType*t1, const VType*t
       if (t1->type_match(t2))
 	    return t1;
 
-      return 0;
+    // Signed & unsigned (resized to the widest argument)
+    const VTypeArray*t1_arr = dynamic_cast<const VTypeArray*>(t1);
+    const VTypeArray*t2_arr = dynamic_cast<const VTypeArray*>(t2);
+
+    if(t1_arr && t2_arr) {
+        const VTypeArray*t1_parent = t1_arr->get_parent_type();
+        const VTypeArray*t2_parent = t2_arr->get_parent_type();
+
+        if(t1_parent == t2_parent
+                && (t1_parent == &primitive_SIGNED || t1_parent == &primitive_UNSIGNED)) {
+            int t1_size = t1_arr->get_width(NULL);
+            int t2_size = t2_arr->get_width(NULL);
+
+            // Easy, the same sizes, so we do not need to resize
+            if(t1_size == t2_size && t1_size > 0)
+                return t1;  // == t2
+
+            VTypeArray*resolved = new VTypeArray(t1_parent->element_type(),
+                    std::max(t1_size, t2_size) - 1, 0, t1_parent->signed_vector());
+            resolved->set_parent_type(t1_parent);
+
+            return resolved;
+        }
+
+    } else if(t1_arr) {
+        if(const VTypePrimitive*prim = dynamic_cast<const VTypePrimitive*>(t2)) {
+            const VTypeArray*t1_parent = t1_arr->get_parent_type();
+            VTypePrimitive::type_t t2_type = prim->type();
+
+            if((t2_type == VTypePrimitive::NATURAL || t2_type == VTypePrimitive::INTEGER)
+                    && t1_parent == &primitive_SIGNED)
+                return t1;
+
+            if((t2_type == VTypePrimitive::NATURAL) && t1_parent == &primitive_UNSIGNED)
+                return t1;
+        }
+
+    } else if(t2_arr) {
+        if(const VTypePrimitive*prim = dynamic_cast<const VTypePrimitive*>(t1)) {
+            const VTypeArray*t2_parent = t2_arr->get_parent_type();
+            VTypePrimitive::type_t t1_type = prim->type();
+
+            if((t1_type == VTypePrimitive::NATURAL || t1_type == VTypePrimitive::INTEGER)
+                    && t2_parent == &primitive_SIGNED)
+                return t2;
+
+            if((t1_type == VTypePrimitive::NATURAL) && t2_parent == &primitive_UNSIGNED)
+                return t2;
+        }
+    }
+
+    return 0;
 }
 
 int ExpAttribute::elaborate_args(Entity*ent, ScopeBase*scope, const VType*ltype)
