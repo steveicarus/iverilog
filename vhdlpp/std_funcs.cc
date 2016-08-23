@@ -24,7 +24,7 @@
 
 static std::map<perm_string,SubHeaderList> std_subprograms;
 
-static inline void register_std_subprogram(SubprogramHeader*header)
+void register_std_subprogram(SubprogramHeader*header)
 {
     std_subprograms[header->name()].push_back(header);
 }
