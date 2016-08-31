@@ -350,7 +350,6 @@ exactly the same as the .var statement:
 	<label> .net8     "name", <msb>, <lsb>, <symbol>;
 	<label> .net8/s   "name", <msb>, <lsb>, <symbol>;
 	<label> .net/real "name", <msb>, <lsb>, <symbol>;
-	<label> .alias    "name", <msb>, <lsb>, <symbol>;
 
 
 Like a .var statement, the .net statement creates a VPI object with

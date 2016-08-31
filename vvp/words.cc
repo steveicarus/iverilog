@@ -567,26 +567,3 @@ void compile_netw_real(char*label, char*array_label, unsigned long array_addr,
       __compile_real(label, 0, array_label, array_addr,
                      msb, lsb, false, argc, argv);
 }
-
-void compile_aliasw(char*label, char*array_label, unsigned long array_addr,
-                    int msb, int lsb, unsigned argc, struct symb_s*argv)
-{
-      vvp_array_t array = array_find(array_label);
-      assert(array);
-
-      assert(argc == 1);
-      vvp_net_t*node = vvp_net_lookup(argv[0].text);
-
-	/* Add the label into the functor symbol table. */
-      assert(node);
-      define_functor_symbol(label, node);
-
-      vpiHandle obj = vvp_lookup_handle(argv[0].text);
-      assert(obj);
-      array->alias_word(array_addr, obj, msb, lsb);
-
-      free(label);
-      free(array_label);
-      free(argv[0].text);
-      free(argv);
-}

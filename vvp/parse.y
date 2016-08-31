@@ -72,7 +72,7 @@ static struct __vpiModPath*modpath_dst = 0;
       int      vpi_enum;
 };
 
-%token K_A K_ALIAS K_ALIAS_R K_APV
+%token K_A K_APV
 %token K_ARITH_ABS K_ARITH_DIV K_ARITH_DIV_R K_ARITH_DIV_S K_ARITH_MOD
 %token K_ARITH_MOD_R K_ARITH_MOD_S
 %token K_ARITH_MULT K_ARITH_MULT_R K_ARITH_SUB K_ARITH_SUB_R
@@ -819,18 +819,6 @@ statement
   | T_LABEL K_NET_R T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
     symbols_net ';'
       { compile_netw_real($1, $3, $4, $6, $7, $9.cnt, $9.vect); }
-
-  /* Array word versions of alias directives. */
-
-        | T_LABEL K_ALIAS T_SYMBOL T_NUMBER ','
-	  signed_t_number signed_t_number ','
-          symbols_net ';'
-                 { compile_aliasw($1, $3, $4, $6, $7, $9.cnt, $9.vect); }
-
-        | T_LABEL K_ALIAS_R T_SYMBOL T_NUMBER ','
-	  signed_t_number signed_t_number ','
-          symbols_net ';'
-                 { compile_aliasw($1, $3, $4, $6, $7, $9.cnt, $9.vect); }
 
   /* Parameter statements come in a few simple forms. The most basic
      is the string parameter. */

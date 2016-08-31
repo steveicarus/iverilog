@@ -543,9 +543,6 @@ extern void compile_netw_real(char*label, char*array_symbol,
 			      int msb, int lsb,
 			      unsigned argc, struct symb_s*argv);
 
-extern void compile_aliasw(char*label, char*array_symbol,
-			   unsigned long array_addr, int msb, int lsb,
-			   unsigned argc, struct symb_s*argv);
 
 extern void compile_island(char*label, char*type);
 extern void compile_island_port(char*label, char*island, char*src);
