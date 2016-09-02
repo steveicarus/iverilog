@@ -119,6 +119,35 @@ void ExpShift::dump(ostream&out, int indent) const
       dump_operands(out, indent+4);
 }
 
+void ExpString::dump(ostream&out, int indent) const
+{
+    out << setw(indent) << "" << "String \"" << value_;
+    out << "\"" << " at " << get_fileline() << endl;
+}
+
+void ExpUAbs::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "abs() at " << get_fileline() << endl;
+      dump_operand1(out, indent+4);
+}
+
+void ExpUnary::dump_operand1(ostream&out, int indent) const
+{
+      operand1_->dump(out, indent);
+}
+
+void ExpUNot::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "not() at " << get_fileline() << endl;
+      dump_operand1(out, indent+4);
+}
+
+void ExpUMinus::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "unary_minus() at " << get_fileline() << endl;
+      dump_operand1(out, indent+4);
+}
+
 void ExpTime::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "Time ";

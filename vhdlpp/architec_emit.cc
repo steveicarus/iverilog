@@ -152,22 +152,9 @@ int CondSignalAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
     int errors = 0;
 
     out << "// " << get_fileline() << endl;
-    out << "always @(";
-
+    out << "always begin" << endl;
     bool first = true;
-    for(list<const ExpName*>::const_iterator it = sens_list_.begin();
-            it != sens_list_.end(); ++it) {
-        if(first)
-            first = false;
-        else
-            out << ",";
 
-        errors += (*it)->emit(out, ent, arc);
-    }
-
-    out << ") begin" << endl;
-
-    first = true;
     for(list<ExpConditional::case_t*>::iterator it = options_.begin();
             it != options_.end(); ++it) {
         ExpConditional::case_t*cas = *it;
@@ -192,6 +179,21 @@ int CondSignalAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
         out << ";" << endl;
     }
 
+    // Sensitivity list
+    first = true;
+    out << "@(";
+
+    for(list<const ExpName*>::const_iterator it = sens_list_.begin();
+            it != sens_list_.end(); ++it) {
+        if(first)
+            first = false;
+        else
+            out << ",";
+
+        errors += (*it)->emit(out, ent, arc);
+    }
+
+    out << ");" << endl;
     out << "end" << endl;
 
     return errors;

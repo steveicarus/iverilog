@@ -24,7 +24,7 @@
 
 static std::map<perm_string,SubHeaderList> std_subprograms;
 
-static inline void register_std_subprogram(SubprogramHeader*header)
+void register_std_subprogram(SubprogramHeader*header)
 {
     std_subprograms[header->name()].push_back(header);
 }
@@ -68,28 +68,51 @@ class SubprogramSizeCast : public SubprogramStdHeader {
           : SubprogramStdHeader(nam, NULL, target) {
           ports_ = new list<InterfacePort*>();
           ports_->push_back(new InterfacePort(base));
-          ports_->push_back(new InterfacePort(&primitive_INTEGER));
+          ports_->push_back(new InterfacePort(&primitive_NATURAL));
       }
 
-      int emit_name(const std::vector<Expression*>&argv,
-                    std::ostream&out, Entity*ent, ScopeBase*scope) const {
-          int64_t use_size;
-          bool rc = argv[1]->evaluate(ent, scope, use_size);
-
-          if(!rc) {
-              cerr << get_fileline() << ": sorry: Could not evaluate the "
-                   << "expression size. Size casting impossible." << endl;
-              return 1;
-          }
-
-          out << use_size << "'";
+      int emit_name(const std::vector<Expression*>&,
+                    std::ostream&, Entity*, ScopeBase*) const {
           return 0;
       }
 
       int emit_args(const std::vector<Expression*>&argv,
                     std::ostream&out, Entity*ent, ScopeBase*scope) const {
+          int64_t new_size, old_size;
 
-          return argv[0]->emit(out, ent, scope);
+          const VType*type = argv[0]->probe_type(ent, scope);
+
+          if(!type) {
+              cerr << get_fileline() << ": sorry: Could not determine "
+                   << "the argument type. Size casting impossible." << endl;
+              return 1;
+          }
+
+          old_size = type->get_width(scope);
+
+          if(old_size <= 0) {
+              cerr << get_fileline() << ": sorry: Could not determine "
+                   << "the argument size. Size casting impossible." << endl;
+              return 1;
+          }
+
+          if(!argv[1]->evaluate(ent, scope, new_size)) {
+              cerr << get_fileline() << ": sorry: Could not evaluate the requested"
+                   << "expression size. Size casting impossible." << endl;
+              return 1;
+          }
+
+
+          out << new_size << "'(" << old_size << "'(";
+
+          if(const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type))
+                out << (arr->signed_vector() ? "$signed" : "$unsigned");
+
+          out << "(";
+          bool res = argv[0]->emit(out, ent, scope);
+          out << ")))";
+
+          return res;
       }
 };
 
@@ -187,7 +210,13 @@ void preload_std_funcs(void)
        have to do anything for that to work.
     */
     args = new list<InterfacePort*>();
-    args->push_back(new InterfacePort(&primitive_STDLOGIC_VECTOR));
+    args->push_back(new InterfacePort(&primitive_SIGNED));
+    register_std_subprogram(new SubprogramBuiltin(perm_string::literal("std_logic_vector"),
+                                           empty_perm_string,
+                                           args, &primitive_STDLOGIC_VECTOR));
+
+    args = new list<InterfacePort*>();
+    args->push_back(new InterfacePort(&primitive_UNSIGNED));
     register_std_subprogram(new SubprogramBuiltin(perm_string::literal("std_logic_vector"),
                                            empty_perm_string,
                                            args, &primitive_STDLOGIC_VECTOR));
@@ -215,6 +244,13 @@ void preload_std_funcs(void)
      * function shift_right (arg: signed; count: natural) return signed;
      */
     args = new list<InterfacePort*>();
+    args->push_back(new InterfacePort(&primitive_UNSIGNED));
+    args->push_back(new InterfacePort(&primitive_NATURAL));
+    register_std_subprogram(new SubprogramBuiltin(perm_string::literal("shift_right"),
+                                           perm_string::literal("$ivlh_shift_right"),
+                                           args, &primitive_UNSIGNED));
+
+    args = new list<InterfacePort*>();
     args->push_back(new InterfacePort(&primitive_SIGNED));
     args->push_back(new InterfacePort(&primitive_NATURAL));
     register_std_subprogram(new SubprogramBuiltin(perm_string::literal("shift_right"),
@@ -224,12 +260,16 @@ void preload_std_funcs(void)
     /* function resize
      */
     register_std_subprogram(new SubprogramSizeCast(perm_string::literal("resize"),
-                &primitive_STDLOGIC_VECTOR, &primitive_STDLOGIC_VECTOR));
+                &primitive_UNSIGNED, &primitive_UNSIGNED));
+
+    register_std_subprogram(new SubprogramSizeCast(perm_string::literal("resize"),
+                &primitive_SIGNED, &primitive_SIGNED));
 
     /* std_logic_arith library
      * function conv_std_logic_vector(arg: integer; size: integer) return std_logic_vector;
      */
-    register_std_subprogram(new SubprogramSizeCast(perm_string::literal("conv_std_logic_vector"),
+    register_std_subprogram(new SubprogramSizeCast(
+                perm_string::literal("conv_std_logic_vector"),
                 &primitive_INTEGER, &primitive_STDLOGIC_VECTOR));
 
     /* numeric_bit library

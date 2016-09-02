@@ -26,7 +26,6 @@
 # include  "entity.h"
 # include  "vsignal.h"
 # include  "subprogram.h"
-# include  "library.h"
 # include  "std_types.h"
 # include  <iostream>
 # include  <typeinfo>
@@ -74,14 +73,13 @@ const VType*ExpName::elaborate_adjust_type_with_range_(Entity*ent, ScopeBase*sco
 		    // If the name is an array, then a part select is
 		    // also an array, but with different bounds.
 		  int64_t use_msb, use_lsb;
-		  bool flag;
+		  bool flag = true;
 
-		  flag = range->msb()->evaluate(ent, scope, use_msb);
-		  ivl_assert(*this, flag);
-		  flag = range->lsb()->evaluate(ent, scope, use_lsb);
-		  ivl_assert(*this, flag);
+		  flag &= range->msb()->evaluate(ent, scope, use_msb);
+		  flag &= range->lsb()->evaluate(ent, scope, use_lsb);
 
-		  type = new VTypeArray(array->element_type(), use_msb, use_lsb);
+                  if(flag)
+                    type = new VTypeArray(array->element_type(), use_msb, use_lsb);
 	    }
 	    else if(idx) {
 		    // If the name is an array or a vector, then an
@@ -419,7 +417,7 @@ const VType*ExpAggregate::fit_type(Entity*, ScopeBase*, const VTypeArray*host) c
       Expression*use_msb = prange->msb();
       Expression*use_lsb = prange->lsb();
 
-      ivl_assert(*this, host->dimensions() == 1);
+      ivl_assert(*this, host->dimensions().size() == 1);
       vector<VTypeArray::range_t> range (1);
 
       range[0] = VTypeArray::range_t(use_msb, use_lsb);
@@ -580,6 +578,7 @@ int ExpArithmetic::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype
 
 const VType* ExpArithmetic::resolve_operand_types_(const VType*t1, const VType*t2) const
 {
+    // Ranges
       while (const VTypeRange*tmp = dynamic_cast<const VTypeRange*> (t1))
 	    t1 = tmp->base_type();
       while (const VTypeRange*tmp = dynamic_cast<const VTypeRange*> (t2))
@@ -588,7 +587,58 @@ const VType* ExpArithmetic::resolve_operand_types_(const VType*t1, const VType*t
       if (t1->type_match(t2))
 	    return t1;
 
-      return 0;
+    // Signed & unsigned (resized to the widest argument)
+    const VTypeArray*t1_arr = dynamic_cast<const VTypeArray*>(t1);
+    const VTypeArray*t2_arr = dynamic_cast<const VTypeArray*>(t2);
+
+    if(t1_arr && t2_arr) {
+        const VTypeArray*t1_parent = t1_arr->get_parent_type();
+        const VTypeArray*t2_parent = t2_arr->get_parent_type();
+
+        if(t1_parent == t2_parent
+                && (t1_parent == &primitive_SIGNED || t1_parent == &primitive_UNSIGNED)) {
+            int t1_size = t1_arr->get_width(NULL);
+            int t2_size = t2_arr->get_width(NULL);
+
+            // Easy, the same sizes, so we do not need to resize
+            if(t1_size == t2_size && t1_size > 0)
+                return t1;  // == t2
+
+            VTypeArray*resolved = new VTypeArray(t1_parent->element_type(),
+                    std::max(t1_size, t2_size) - 1, 0, t1_parent->signed_vector());
+            resolved->set_parent_type(t1_parent);
+
+            return resolved;
+        }
+
+    } else if(t1_arr) {
+        if(const VTypePrimitive*prim = dynamic_cast<const VTypePrimitive*>(t2)) {
+            const VTypeArray*t1_parent = t1_arr->get_parent_type();
+            VTypePrimitive::type_t t2_type = prim->type();
+
+            if((t2_type == VTypePrimitive::NATURAL || t2_type == VTypePrimitive::INTEGER)
+                    && t1_parent == &primitive_SIGNED)
+                return t1;
+
+            if((t2_type == VTypePrimitive::NATURAL) && t1_parent == &primitive_UNSIGNED)
+                return t1;
+        }
+
+    } else if(t2_arr) {
+        if(const VTypePrimitive*prim = dynamic_cast<const VTypePrimitive*>(t1)) {
+            const VTypeArray*t2_parent = t2_arr->get_parent_type();
+            VTypePrimitive::type_t t1_type = prim->type();
+
+            if((t1_type == VTypePrimitive::NATURAL || t1_type == VTypePrimitive::INTEGER)
+                    && t2_parent == &primitive_SIGNED)
+                return t2;
+
+            if((t1_type == VTypePrimitive::NATURAL) && t2_parent == &primitive_UNSIGNED)
+                return t2;
+        }
+    }
+
+    return 0;
 }
 
 int ExpAttribute::elaborate_args(Entity*ent, ScopeBase*scope, const VType*ltype)
@@ -678,7 +728,7 @@ const VType*ExpConcat::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*at
 
 	    if(const VTypeArray*arr = dynamic_cast<const VTypeArray*>(types[i])) {
 		types[i] = arr->element_type();
-		ivl_assert(*this, arr->dimensions() == 1);
+		ivl_assert(*this, arr->dimensions().size() == 1);
 		const VTypeArray::range_t&dim = arr->dimension(0);
 		sizes[i] = new ExpArithmetic(ExpArithmetic::MINUS, dim.msb(), dim.lsb());
 	    } else {
@@ -733,7 +783,7 @@ int ExpConcat::elaborate_expr_array_(Entity*ent, ScopeBase*scope, const VTypeArr
       int errors = 0;
 
 	// For now, only support single-dimension arrays here.
-      ivl_assert(*this, atype->dimensions() == 1);
+      ivl_assert(*this, atype->dimensions().size() == 1);
 
       const VType*type1 = operand1_->fit_type(ent, scope, atype);
       ivl_assert(*this, type1);
@@ -791,55 +841,23 @@ int ExpConditional::case_t::elaborate_expr(Entity*ent, ScopeBase*scope, const VT
 
 const VType*ExpFunc::probe_type(Entity*ent, ScopeBase*scope) const
 {
-      SubprogramHeader*prog = def_;
+      if(!def_)
+          def_ = match_signature(ent, scope);
 
-      if(!prog) {
-          list<const VType*> arg_types;
-
-          for(vector<Expression*>::const_iterator it = argv_.begin();
-                  it != argv_.end(); ++it) {
-              arg_types.push_back((*it)->probe_type(ent, scope));
-          }
-
-          prog = scope->match_subprogram(name_, &arg_types);
-
-          if(!prog)
-              prog = library_match_subprogram(name_, &arg_types);
-
-          if(!prog) {
-              cerr << get_fileline() << ": sorry: could not find function ";
-              emit_subprogram_sig(cerr, name_, arg_types);
-              cerr << endl;
-              ivl_assert(*this, false);
-          }
-      }
-
-      return prog->peek_return_type();
+      return def_ ? def_->exact_return_type(argv_, ent, scope) : NULL;
 }
 
 int ExpFunc::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
 {
       int errors = 0;
 
-      ivl_assert(*this, def_ == 0);   // do not elaborate twice
+      if(def_)
+          return 0;
 
-      // Create a list of argument types to find a matching subprogram
-      list<const VType*> arg_types;
-      for(vector<Expression*>::iterator it = argv_.begin();
-              it != argv_.end(); ++it)
-          arg_types.push_back((*it)->probe_type(ent, scope));
-
-      def_ = scope->match_subprogram(name_, &arg_types);
+      def_ = match_signature(ent, scope);
 
       if(!def_)
-            def_ = library_match_subprogram(name_, &arg_types);
-
-      if(!def_) {
-            cerr << get_fileline() << ": error: could not find function ";
-            emit_subprogram_sig(cerr, name_, arg_types);
-            cerr << endl;
-            return 1;
-      }
+          return 1;
 
 	// Elaborate arguments
       for (size_t idx = 0; idx < argv_.size(); ++idx) {
@@ -859,7 +877,7 @@ int ExpFunc::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
 
 const VType* ExpFunc::fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*) const
 {
-      return probe_type(ent, scope);
+    return probe_type(ent, scope);
 }
 
 const VType* ExpInteger::probe_type(Entity*, ScopeBase*) const

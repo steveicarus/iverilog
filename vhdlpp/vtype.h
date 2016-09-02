@@ -226,7 +226,7 @@ class VTypeArray : public VType {
       void show(std::ostream&) const;
       int get_width(ScopeBase*scope) const;
 
-      inline size_t dimensions() const { return ranges_.size(); };
+      const std::vector<range_t>&dimensions() const { return ranges_; };
       const range_t&dimension(size_t idx) const
       { return ranges_[idx]; }
 
@@ -252,6 +252,8 @@ class VTypeArray : public VType {
 
 	// To handle subtypes
       inline void set_parent_type(const VTypeArray*parent) { parent_ = parent; }
+
+      const VTypeArray*get_parent_type() const { return parent_; }
 
 	// Wherever it is possible, replaces range lsb & msb expressions with
 	// constant integers.

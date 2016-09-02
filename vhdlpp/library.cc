@@ -25,6 +25,7 @@
 # include  "compiler.h"
 # include  "package.h"
 # include  "std_types.h"
+# include  "std_funcs.h"
 # include  <fstream>
 # include  <list>
 # include  <map>
@@ -110,7 +111,7 @@ static string make_library_package_path(perm_string lib_name, perm_string name)
 }
 
 static void import_ieee(void);
-static void import_ieee_use(ActiveScope*res, perm_string package, perm_string name);
+static void import_ieee_use(const YYLTYPE&loc, ActiveScope*res, perm_string package, perm_string name);
 static void import_std_use(const YYLTYPE&loc, ActiveScope*res, perm_string package, perm_string name);
 
 static void dump_library_package(ostream&file, perm_string lname, perm_string pname, Package*pack)
@@ -242,7 +243,7 @@ void library_use(const YYLTYPE&loc, ActiveScope*res,
 
 	// Special case handling for the IEEE library.
       if (use_library == "ieee") {
-	    import_ieee_use(res, use_package, use_name);
+	    import_ieee_use(loc, res, use_package, use_name);
 	    return;
       }
 	// Special case handling for the STD library.
@@ -312,8 +313,30 @@ static void import_ieee_use_std_logic_1164(ActiveScope*res, perm_string name)
       }
 }
 
-static void import_ieee_use_std_logic_arith(ActiveScope*, perm_string)
+static void import_ieee_use_std_logic_misc(ActiveScope*, perm_string name)
 {
+      bool all_flag = name=="all";
+      list<InterfacePort*>*args;
+
+      if (all_flag || name == "or_reduce") {
+            /* function or_reduce(arg : std_logic_vector) return std_logic;
+            */
+            args = new list<InterfacePort*>();
+            args->push_back(new InterfacePort(&primitive_STDLOGIC_VECTOR));
+            register_std_subprogram(new SubprogramBuiltin(perm_string::literal("or_reduce"),
+                                                perm_string::literal("|"),
+                                                args, &primitive_STDLOGIC));
+      }
+
+      if (all_flag || name == "and_reduce") {
+            /* function and_reduce(arg : std_logic_vector) return std_logic;
+            */
+            args = new list<InterfacePort*>();
+            args->push_back(new InterfacePort(&primitive_STDLOGIC_VECTOR));
+            register_std_subprogram(new SubprogramBuiltin(perm_string::literal("and_reduce"),
+                                                perm_string::literal("&"),
+                                                args, &primitive_STDLOGIC));
+      }
 }
 
 static void import_ieee_use_numeric_bit(ActiveScope*res, perm_string name)
@@ -340,7 +363,7 @@ static void import_ieee_use_numeric_std(ActiveScope*res, perm_string name)
       }
 }
 
-static void import_ieee_use(ActiveScope*res, perm_string package, perm_string name)
+static void import_ieee_use(const YYLTYPE&loc, ActiveScope*res, perm_string package, perm_string name)
 {
       if (package == "std_logic_1164") {
 	    import_ieee_use_std_logic_1164(res, name);
@@ -348,8 +371,18 @@ static void import_ieee_use(ActiveScope*res, perm_string package, perm_string na
       }
 
       if (package == "std_logic_arith") {
-	    import_ieee_use_std_logic_arith(res, name);
+            // arithmetic operators for std_logic_vector
 	    return;
+      }
+
+      if (package == "std_logic_misc") {
+            import_ieee_use_std_logic_misc(res, name);
+            return;
+      }
+
+      if (package == "std_logic_unsigned") {
+            // arithmetic operators for std_logic_vector
+            return;
       }
 
       if (package == "numeric_bit") {
@@ -361,9 +394,11 @@ static void import_ieee_use(ActiveScope*res, perm_string package, perm_string na
 	    import_ieee_use_numeric_std(res, name);
 	    return;
       }
+
+      cerr << "Warning: Package ieee." << package.str() <<" is not yet supported" << endl;
 }
 
-static void import_std_use(const YYLTYPE&loc, ActiveScope*res, perm_string package, perm_string name)
+static void import_std_use(const YYLTYPE&loc, ActiveScope*res, perm_string package, perm_string /*name*/)
 {
       if (package == "standard") {
 	    // do nothing
@@ -375,7 +410,7 @@ static void import_std_use(const YYLTYPE&loc, ActiveScope*res, perm_string packa
             res->use_name(type_FILE_OPEN_STATUS.peek_name(),  &type_FILE_OPEN_STATUS);
 	    return;
       } else {
-	    sorrymsg(loc, "package %s of library %s not yet supported", package.str(), name.str());
+            cerr << "Warning: Package std." << package.str() <<" is not yet supported" << endl;
 	    return;
       }
 }

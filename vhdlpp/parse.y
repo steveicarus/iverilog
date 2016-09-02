@@ -2484,11 +2484,6 @@ shift_expression
       }
   ;
 
-sign
-  : '+'
-  | '-'
-  ;
-
 signal_declaration_assign_opt
   : VASSIGN expression { $$ = $2; }
   |                    { $$ = 0;  }
@@ -2514,10 +2509,10 @@ signal_declaration_assign_opt
  * list fixes up the associations.
  */
 simple_expression
-  : sign simple_expression_2
-      { sorrymsg(@1, "Unary expression +- not supported.\n");
-	$$ = $2;
-      }
+  : '-' simple_expression_2
+      { $$ = new ExpUMinus($2); }
+  | '+' simple_expression_2
+      { $$ = $2; }
   | simple_expression_2
       { $$ = $1; }
   ;
