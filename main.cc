@@ -1118,7 +1118,7 @@ int main(int argc, char*argv[])
 
 	/* Decide if we are going to allow system functions to be called
 	 * as tasks. */
-      if (generation_flag >= GN_VER2005_SV) {
+      if (gn_system_verilog()) {
 	    def_sfunc_as_task = IVL_SFUNC_AS_TASK_WARNING;
       }
 

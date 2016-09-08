@@ -453,7 +453,7 @@ TU [munpf]
       return BASED_NUMBER;
 }
 \'[01xzXZ] {
-      if (generation_flag < GN_VER2005_SV) {
+      if (!gn_system_verilog()) {
 	    cerr << yylloc.text << ":" << yylloc.first_line << ": warning: "
 		 << "Using SystemVerilog 'N bit vector.  Use at least "
 		 << "-g2005-sv to remove this warning." << endl;
@@ -479,7 +479,7 @@ TU [munpf]
 
   /* This rule handles scaled time values for SystemVerilog. */
 [0-9][0-9_]*(\.[0-9][0-9_]*)?{TU}?s {
-      if(generation_flag & (GN_VER2005_SV | GN_VER2009 | GN_VER2012)) {
+      if (gn_system_verilog()) {
 	    yylval.text = strdupnew(yytext);
 	    return TIME_LITERAL;
       } else REJECT; }
@@ -857,7 +857,7 @@ verinum*make_unsized_binary(const char*txt)
 	    ptr += 1;
       }
 
-      assert((tolower(*ptr) == 'b') || (generation_flag >= GN_VER2005_SV));
+      assert((tolower(*ptr) == 'b') || gn_system_verilog());
       if (tolower(*ptr) == 'b') {
 	    ptr += 1;
       } else {

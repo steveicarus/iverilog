@@ -142,7 +142,8 @@ extern int build_library_index(const char*path, bool key_case_sensitive);
 
 /* This is the generation of Verilog that the compiler is asked to
    support. Then there are also more detailed controls for more
-   specific language features. */
+   specific language features. Note that the compiler often assumes
+   this is an ordered list. */
 enum generation_t {
       GN_VER1995  = 1,
       GN_VER2001_NOCONFIG  = 2,
@@ -191,25 +192,19 @@ extern bool gn_strict_expr_width_flag;
    loop. */
 extern bool gn_shared_loop_index_flag;
 
-/* If variables can be converted to uwires by a continuous assignment
-   (assuming no procedural assign, then return true. This will be true
-   for SystemVerilog */
-static inline bool gn_var_can_be_uwire(void)
+static inline bool gn_system_verilog(void)
 {
-      if (generation_flag == GN_VER2005_SV ||
-          generation_flag == GN_VER2009  ||
-          generation_flag == GN_VER2012)
+      if (generation_flag >= GN_VER2005_SV)
 	    return true;
       return false;
 }
 
-static inline bool gn_system_verilog(void)
+/* If variables can be converted to uwires by a continuous assignment
+   (assuming no procedural assign), then return true. This will be true
+   for SystemVerilog */
+static inline bool gn_var_can_be_uwire(void)
 {
-      if (generation_flag == GN_VER2005_SV ||
-          generation_flag == GN_VER2009  ||
-          generation_flag == GN_VER2012)
-	    return true;
-      return false;
+      return gn_system_verilog();
 }
 
 static inline bool gn_modules_nest(void)
