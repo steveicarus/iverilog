@@ -486,7 +486,7 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
       pform_set_scope_timescale(func, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-      if ((scopex == 0) && (generation_flag < GN_VER2005_SV)) {
+      if ((scopex == 0) && !gn_system_verilog()) {
 	    cerr << func->get_fileline() << ": error: function declarations "
 		  "must be contained within a module." << endl;
 	    error_count += 1;
@@ -1257,7 +1257,7 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
 void pform_check_timeunit_prec()
 {
       assert(! pform_cur_module.empty());
-      if ((generation_flag & (GN_VER2005_SV | GN_VER2009 | GN_VER2012)) &&
+      if (gn_system_verilog() &&
           (pform_cur_module.front()->time_unit < pform_cur_module.front()->time_precision)) {
 	    VLerror("error: a timeprecision is missing or is too large!");
       } else assert(pform_cur_module.front()->time_unit >=
@@ -2683,7 +2683,7 @@ void pform_makewire(const struct vlltype&li,
 		    NetNet::Type type,
 		    data_type_t*data_type)
 {
-      if ((lexical_scope == 0) && (generation_flag < GN_VER2005_SV)) {
+      if ((lexical_scope == 0) && !gn_system_verilog()) {
 	    VLerror(li, "error: variable declarations must be contained within a module.");
 	    return;
       }
@@ -2990,7 +2990,7 @@ void pform_set_parameter(const struct vlltype&loc,
 			 LexicalScope::range_t*value_range)
 {
       LexicalScope*scope = lexical_scope;
-      if ((scope == 0) && (generation_flag < GN_VER2005_SV)) {
+      if ((scope == 0) && !gn_system_verilog()) {
 	    VLerror(loc, "error: parameter declarations must be contained within a module.");
 	    return;
       }
@@ -3065,7 +3065,7 @@ void pform_set_localparam(const struct vlltype&loc,
 			  bool signed_flag, list<pform_range_t>*range, PExpr*expr)
 {
       LexicalScope*scope = lexical_scope;
-      if ((scope == 0) && (generation_flag < GN_VER2005_SV)) {
+      if ((scope == 0) && !gn_system_verilog()) {
 	    VLerror(loc, "error: localparam declarations must be contained within a module.");
 	    return;
       }

@@ -2241,7 +2241,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
       }
   | '[' expression ']'
       { // SystemVerilog canonical range
-	if (generation_flag < GN_VER2005_SV) {
+	if (!gn_system_verilog()) {
 	      warn_count += 1;
 	      cerr << @2 << ": warning: Use of SystemVerilog [size] dimension. "
 		   << "Use at least -g2005-sv to remove this warning." << endl;
