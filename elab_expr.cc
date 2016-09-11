@@ -1549,6 +1549,18 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 
       bool need_const = NEED_CONST & flags;
 
+	/* These functions can work in a constant context with a signal expression. */
+      if ((nparms == 1) && (dynamic_cast<PEIdent*>(parms_[0]))) {
+	    if (strcmp(name, "$dimensions") == 0) need_const = false;
+	    else if (strcmp(name, "$high") == 0) need_const = false;
+	    else if (strcmp(name, "$increment") == 0) need_const = false;
+	    else if (strcmp(name, "$left") == 0) need_const = false;
+	    else if (strcmp(name, "$low") == 0) need_const = false;
+	    else if (strcmp(name, "$right") == 0) need_const = false;
+	    else if (strcmp(name, "$size") == 0) need_const = false;
+	    else if (strcmp(name, "$unpacked_dimensions") == 0) need_const = false;
+      }
+
       unsigned parm_errors = 0;
       unsigned missing_parms = 0;
       for (unsigned idx = 0 ;  idx < nparms ;  idx += 1) {
