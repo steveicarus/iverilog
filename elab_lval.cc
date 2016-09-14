@@ -75,15 +75,8 @@
  */
 NetAssign_* PExpr::elaborate_lval(Design*, NetScope*, bool, bool) const
 {
-      NetNet*ll = 0;
-      if (ll == 0) {
-	    cerr << get_fileline() << ": Assignment l-value too complex."
-		 << endl;
-	    return 0;
-      }
-
-      NetAssign_*lv = new NetAssign_(ll);
-      return lv;
+      cerr << get_fileline() << ": Assignment l-value too complex." << endl;
+      return 0;
 }
 
 /*
