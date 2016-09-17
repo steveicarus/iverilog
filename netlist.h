@@ -388,6 +388,10 @@ class Nexus {
 	   is a variable, but also if this is a net with a force. */
       bool assign_lval() const;
 
+	/* This method returns true if there are any inputs
+	   attached to this nexus but no drivers. */
+      bool has_floating_input() const;
+
 	/* This method returns true if there are any drivers
 	   (including variables) attached to this nexus. */
       bool drivers_present() const;
