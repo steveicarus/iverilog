@@ -669,7 +669,7 @@ static void draw_net_in_scope(ivl_signal_t sig)
 				      swapped ? last : first );
 			}
 
-			fprintf(vvp_out, "v%p_%u .alias%s v%p %u, %d %d, "
+			fprintf(vvp_out, "v%p_%u .net%s v%p %u, %d %d, "
 			        "v%p_%u; Alias to %s\n", sig, iword,
 			        datatype_flag, sig, iword, msb, lsb,
 			        nex_data->net, nex_data->net_word,
