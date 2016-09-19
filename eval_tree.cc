@@ -697,7 +697,9 @@ NetEConst* NetEBComp::eval_eqeqeq_(bool ne_flag, const NetExpr*le, const NetExpr
 	// If the left value is longer check it against the pad bit.
       if (res == verinum::V1) {
 	    verinum::V pad = verinum::V0;
-	    if (is_signed) pad = rv.get(rv.len()-1);
+	    if (is_signed)
+		  pad = rv.get(rv.len()-1);
+
 	    for (unsigned idx = cnt ;  idx < lv.len() ;  idx += 1)
 		  if (lv.get(idx) != pad) {
 			res = verinum::V0;
@@ -708,12 +710,15 @@ NetEConst* NetEBComp::eval_eqeqeq_(bool ne_flag, const NetExpr*le, const NetExpr
 	// If the right value is longer check it against the pad bit.
       if (res == verinum::V1) {
 	    verinum::V pad = verinum::V0;
-	    if (is_signed) pad = lv.get(lv.len()-1);
+	    if (is_signed)
+		  pad = lv.get(lv.len()-1);
+
 	    for (unsigned idx = cnt ;  idx < rv.len() ;  idx += 1) {
-		  if (rv.get(idx) != pad)
+		  if (rv.get(idx) != pad) {
 			res = verinum::V0;
 			break;
 		  }
+	    }
       }
 
       if (ne_flag) {
