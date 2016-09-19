@@ -1180,7 +1180,7 @@ static long get_number_as_long(ivl_expr_t expr)
          }
 
          if (ivl_expr_signed(expr) && bits[nbits-1] == '1' &&
-             nbits < 8*sizeof(long)) imm |= -1L << nbits;
+             nbits < 8*sizeof(long)) imm |= -1UL << nbits;
       }
       break;
    }
