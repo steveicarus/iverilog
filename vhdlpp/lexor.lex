@@ -163,6 +163,9 @@ time			{integer}{W}*([fFpPnNuUmM]?[sS])
 }
 
 {based_literal} {
+    for(char*cp = yytext ; *cp ; ++cp)
+        *cp = tolower(*cp);
+
     if(!are_underscores_correct(yytext) || !is_based_correct(yytext))
         std::cerr << "An invalid form of based literal:"
             << yytext << std::endl;
@@ -235,6 +238,14 @@ static bool are_underscores_correct(char* text)
 	return 1;
 }
 
+static bool is_char_ok(char c, int base)
+{
+    if(base <= 10)
+        return '0' <= c && c - '0' < base;
+    else
+        return isdigit(c) || (c >= 'a' && c < 'a' + base - 10);
+}
+
 /**
 * This function checks if the format of a based number
 * is correct according to the VHDL standard
@@ -246,8 +257,8 @@ static bool is_based_correct(char* text)
 {
     char* ptr;
     //BASE examination
-    char clean_base[4];
-    clean_base[3] = '\0';
+    char clean_base[4] = {0,};
+    char* clean_base_end = clean_base + sizeof(clean_base);
     char* clean_base_ptr = clean_base;
     for(ptr = text; ptr != strchr(text, '#'); ++ptr)
     {
@@ -255,7 +266,7 @@ static bool is_based_correct(char* text)
             ++ptr;
         if(!(*ptr >= '0' && *ptr <= '9')) //the base uses chars other than digits
             return 0;
-        if(*clean_base_ptr == '\0')
+        if(clean_base_ptr == clean_base_end)
             break;
         *clean_base_ptr = *ptr;
         ++clean_base_ptr;
@@ -278,20 +289,7 @@ static bool is_based_correct(char* text)
             return 0;
     }
     bool point = false;
-    set<char> allowed_chars;
 
-    unsigned c;
-    if(base <= 10) {
-        for(c = 0; c < base; ++c)
-            allowed_chars.insert(c + '0');
-    }
-    else
-    {
-        for(c = 0; c < 10; ++c)
-            allowed_chars.insert(c + '0');
-        for(c = 0; c < base - 10; ++c)
-            allowed_chars.insert(c + 'a');
-    }
     //MANTISSA examination
     for(ptr = strchr(text, '#') + 1, length = 0; ptr != strrchr(text, '#'); ++ptr)
     {
@@ -307,9 +305,10 @@ static bool is_based_correct(char* text)
                 continue;
             }
         }
-        //the number consists of other chars than allowed
-        if(allowed_chars.find(*ptr) == allowed_chars.end())
+        //check if the number consists of other chars than allowed
+        if(!is_char_ok(*ptr, base))
             return 0;
+
         ++length;
     }
     if(length == 0)
