@@ -3935,9 +3935,9 @@ bool of_MOD_S(vthread_t thr, vvp_code_t)
 	      /* Sign extend the signed operands when needed. */
 	    if (wid < 8*sizeof(long long)) {
 		  if (lv & (1LL << (wid-1)))
-			lv |= -1LL << wid;
+			lv |= -1ULL << wid;
 		  if (rv & (1LL << (wid-1)))
-			rv |= -1LL << wid;
+			rv |= -1ULL << wid;
 	    }
 
 	    lv %= rv;
@@ -4089,7 +4089,7 @@ static bool of_PARTI_base(vthread_t thr, vvp_code_t cp, bool signed_flag)
 	// NOTE: This is treating the vector as signed. Is that correct?
       int32_t use_base = base;
       if (signed_flag && bwid < 32 && (base&(1<<(bwid-1)))) {
-	    use_base |= (-1) << bwid;
+	    use_base |= -1UL << bwid;
       }
 
       if (use_base >= (int32_t)value.size()) {

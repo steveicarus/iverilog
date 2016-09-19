@@ -987,8 +987,8 @@ void vvp_vector4_t::resize(unsigned newsize, vvp_bit4_t pad_bit)
 		    // no need for re-allocation so we are done now.
 		  if (newsize > size_) {
 			if (unsigned fill = size_ % BITS_PER_WORD) {
-			      abits_ptr_[cnt-1] &= ~((-1L) << fill);
-			      bbits_ptr_[cnt-1] &= ~((-1L) << fill);
+			      abits_ptr_[cnt-1] &= ~((-1UL) << fill);
+			      bbits_ptr_[cnt-1] &= ~((-1UL) << fill);
 			      abits_ptr_[cnt-1] |= word_pad_abits << fill;
 			      bbits_ptr_[cnt-1] |= word_pad_bbits << fill;
 			}
@@ -1018,9 +1018,9 @@ void vvp_vector4_t::resize(unsigned newsize, vvp_bit4_t pad_bit)
 
 	    if (newsize > size_) {
 		  if (unsigned fill = size_ % BITS_PER_WORD) {
-			newbits[cnt-1] &= ~((-1L) << fill);
+			newbits[cnt-1] &= ~((-1UL) << fill);
 			newbits[cnt-1] |= word_pad_abits << fill;
-			newbits[newcnt+cnt-1] &= ~((-1L) << fill);
+			newbits[newcnt+cnt-1] &= ~((-1UL) << fill);
 			newbits[newcnt+cnt-1] |= word_pad_bbits << fill;
 		  }
 		  for (unsigned idx = cnt ;  idx < newcnt ;  idx += 1)
@@ -1043,8 +1043,8 @@ void vvp_vector4_t::resize(unsigned newsize, vvp_bit4_t pad_bit)
 	    }
 
 	    if (newsize > size_) {
-		  abits_val_ &= ~((-1L) << size_);
-		  bbits_val_ &= ~((-1L) << size_);
+		  abits_val_ &= ~((-1UL) << size_);
+		  bbits_val_ &= ~((-1UL) << size_);
 		  abits_val_ |= word_pad_abits << size_;
 		  bbits_val_ |= word_pad_bbits << size_;
 	    }
@@ -2018,7 +2018,7 @@ template <class INT>bool vector4_to_value(const vvp_vector4_t&vec, INT&val,
 
       if (is_signed && vec.value(vec.size()-1) == BIT4_1) {
 	    if (vec.size() < 8*sizeof(val))
-		  res |= (~static_cast<INT>(0)) << vec.size();
+		  res |= static_cast<INT>(-1ULL << vec.size());
       }
 
       val = res;
