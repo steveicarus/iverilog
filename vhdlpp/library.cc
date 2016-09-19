@@ -363,7 +363,8 @@ static void import_ieee_use_numeric_std(ActiveScope*res, perm_string name)
       }
 }
 
-static void import_ieee_use(const YYLTYPE&loc, ActiveScope*res, perm_string package, perm_string name)
+static void import_ieee_use(const YYLTYPE&/*loc*/, ActiveScope*res,
+        perm_string package, perm_string name)
 {
       if (package == "std_logic_1164") {
 	    import_ieee_use_std_logic_1164(res, name);
@@ -398,7 +399,8 @@ static void import_ieee_use(const YYLTYPE&loc, ActiveScope*res, perm_string pack
       cerr << "Warning: Package ieee." << package.str() <<" is not yet supported" << endl;
 }
 
-static void import_std_use(const YYLTYPE&loc, ActiveScope*res, perm_string package, perm_string /*name*/)
+static void import_std_use(const YYLTYPE&/*loc*/, ActiveScope*res,
+        perm_string package, perm_string /*name*/)
 {
       if (package == "standard") {
 	    // do nothing
