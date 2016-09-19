@@ -622,7 +622,6 @@ static void pform_put_wire_in_scope(perm_string name, PWire*net)
 static void pform_put_enum_type_in_scope(enum_type_t*enum_set)
 {
       if (lexical_scope) {
-	    ivl_assert(*enum_set, lexical_scope);
 	    lexical_scope->enum_sets.insert(enum_set);
       } else {
 	    pform_enum_sets.insert(enum_set);

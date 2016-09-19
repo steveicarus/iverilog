@@ -1,6 +1,6 @@
 // These are correct and are used to find the base (zero) pin.
-thisSubtraction:netlist.h:4991
-thisSubtraction:netlist.h:5000
+thisSubtraction:netlist.h:5081
+thisSubtraction:netlist.h:5090
 
 // These are the functions that the compiler exports to the targets.
 //ivl_branch_island()

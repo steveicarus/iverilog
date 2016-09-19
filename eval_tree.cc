@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -545,7 +545,7 @@ NetEConst* NetEBComp::eval_eqeq_real_(bool ne_flag, const NetExpr*le, const NetE
       bool flag = get_real_arguments(le, re, lval, rval);
       if (! flag) return 0;
 
-      verinum result(((lval == rval) ^ ne_flag) ?
+      verinum result(((lval == rval) != ne_flag) ?
                      verinum::V1 : verinum::V0, 1);
       NetEConst*res = new NetEConst(result);
       ivl_assert(*this, res);
