@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -332,21 +332,14 @@ static sync_callback* make_sync(p_cb_data data, bool readonly_flag)
       cb->handle = obj;
       obj->cb_sync = cb;
 
+      vvp_time64_t tv = 0;
       switch (obj->cb_time.type) {
 	  case vpiSuppressTime:
-	    schedule_generic(cb, 0, true, readonly_flag);
 	    break;
 
 	  case vpiSimTime:
-	      { vvp_time64_t tv = vpip_timestruct_to_time(&obj->cb_time);
-		vvp_time64_t tn = schedule_simtime();
-		if (tv < tn) {
-		      schedule_generic(cb, 0, true, readonly_flag);
-		} else {
-		      schedule_generic(cb, tv - tn, true, readonly_flag);
-		}
-		break;
-	      }
+	    tv = vpip_timestruct_to_time(&obj->cb_time);
+	    break;
 
 	  default:
 	    fprintf(stderr, "Unsupported time type %d.\n",
@@ -354,6 +347,7 @@ static sync_callback* make_sync(p_cb_data data, bool readonly_flag)
 	    assert(0);
 	    break;
       }
+      schedule_generic(cb, tv, true, readonly_flag);
       return obj;
 }
 
@@ -365,7 +359,7 @@ static struct __vpiCallback* make_afterdelay(p_cb_data data, bool simtime_flag)
       cb->handle = obj;
       obj->cb_sync = cb;
 
-      vvp_time64_t tv;
+      vvp_time64_t tv = 0;
       switch (obj->cb_time.type) {
 	  case vpiSimTime:
 	    tv = vpip_timestruct_to_time(&obj->cb_time);
@@ -375,7 +369,6 @@ static struct __vpiCallback* make_afterdelay(p_cb_data data, bool simtime_flag)
 	    fprintf(stderr, "Unsupported time type %d.\n",
 	            (int)obj->cb_time.type);
 	    assert(0);
-	    tv = 0;
 	    break;
       }
 
