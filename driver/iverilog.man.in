@@ -1,14 +1,15 @@
-.TH iverilog 1 "Mar 5th, 2016" "" "Version %M.%n%E"
+.TH iverilog 1 "Oct 2nd, 2016" "" "Version %M.%n%E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
 [\-ESVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
-[\-Pparameter=value] [\-pflag=value]
-[\-dname] [\-g1995|\-g2001|\-g2005|\-g2005-sv|\-g2009|\-g2012|\-g<feature>]
+[\-Pparameter=value] [\-pflag=value] [\-dname]
+[\-g1995\:|\-g2001\:|\-g2005\:|\-g2005-sv\:|\-g2009\:|\-g2012\:|\-g<feature>]
 [\-Iincludedir] [\-mmodule] [\-M[mode=]file] [\-Nfile] [\-ooutputfilename]
-[\-stopmodule] [\-ttype] [\-Tmin/typ/max] [\-Wclass] [\-ypath] sourcefile
+[\-stopmodule] [\-ttype] [\-Tmin/typ/max] [\-Wclass] [\-ypath] [\-lfile]
+sourcefile
 
 .SH DESCRIPTION
 .PP
@@ -149,6 +150,12 @@ Append directory \fIincludedir\fP to list of directories searched
 for Verilog include files. The \fB\-I\fP switch may be used many times
 to specify several directories to search, the directories are searched
 in the order they appear on the command line.
+.TP 8
+.B -l\fIfile\fP
+Add the specified file to the list of source files to be compiled,
+but mark it as a library file. All modules contained within that
+file will be treated as library modules, and only elaborated if
+they are instantiated by other modules in the design.
 .TP 8
 .B -M\fIpath\fP
 This is equivalent to \fB\-Mall=path\fP. Preserved for backwards
@@ -412,6 +419,15 @@ character. Variables are substituted in file names.
 A \fB\-c\fP or \fB\-f\fP token prefixes a command file, exactly like it
 does on the command line. The cmdfile may be on the same line or the
 next non-comment line.
+
+.TP 8
+.B -l\ \fIfile\fP -v\ \fIfile\fP
+A \fB\-l\fP token prefixes a library file in the command file,
+exactly like it does on the command line. The parameter to the \fB\-l\fP
+flag may be on the same line or the next non-comment line. \fB\-v\fP is
+an alias for \fB\-l\fP, provided for compatibility with other simulators.
+
+Variables in the \fIfile\fP are substituted.
 
 .TP 8
 .B -y\ \fIlibdir\fP

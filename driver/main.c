@@ -44,7 +44,7 @@ const char HELP[] =
 "                [-M [mode=]depfile] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
 "                [-s topmodule] [-t target] [-T min|typ|max]\n"
-"                [-W class] [-y dir] [-Y suf] source_file(s)\n"
+"                [-W class] [-y dir] [-Y suf] [-l file] source_file(s)\n"
 "\n"
 "See the man page for details.";
 
@@ -928,7 +928,7 @@ int main(int argc, char **argv)
 	}
       }
 
-      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hI:M:m:N:o:P:p:Ss:T:t:vVW:y:Y:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hl:I:M:m:N:o:P:p:Ss:T:t:vVW:y:Y:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -981,6 +981,10 @@ int main(int argc, char **argv)
 
 		case 'I':
 		  process_include_dir(optarg);
+		  break;
+
+		case 'l':
+		  process_file_name(optarg, 1);
 		  break;
 
 		case 'M':
