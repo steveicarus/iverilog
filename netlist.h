@@ -388,6 +388,10 @@ class Nexus {
 	   is a variable, but also if this is a net with a force. */
       bool assign_lval() const;
 
+	/* This method returns true if there are any inputs
+	   attached to this nexus but no drivers. */
+      bool has_floating_input() const;
+
 	/* This method returns true if there are any drivers
 	   (including variables) attached to this nexus. */
       bool drivers_present() const;
@@ -713,7 +717,7 @@ class NetNet  : public NetObj, public PortType {
 	/* This method returns a reference to the packed dimensions
 	   for the vector. These are arranged as a list where the
 	   first range in the list (front) is the left-most range in
-	   the verilog declaration. These packed dims are compressed
+	   the Verilog declaration. These packed dims are compressed
 	   to represent the dimensions of all the subtypes. */
       const std::vector<netrange_t>& packed_dims() const { return slice_dims_; }
 
@@ -1020,6 +1024,13 @@ class NetScope : public Definitions, public Attrib {
       TYPE type() const;
       void print_type(ostream&) const;
 
+	// This provides a link to the variable initialisation process
+	// for use when evaluating a constant function. Note this is
+	// only used for static functions - the variable initialization
+	// for automatic functions is included in the function definition.
+      void set_var_init(const NetProc*proc) { var_init_ = proc; }
+      const NetProc* var_init() const { return var_init_; }
+
       void set_task_def(NetTaskDef*);
       void set_func_def(NetFuncDef*);
       void set_class_def(netclass_t*);
@@ -1249,6 +1260,8 @@ class NetScope : public Definitions, public Attrib {
       vector<NetNet*> port_nets;
 
       vector<PortInfo> ports_;
+
+      const NetProc*var_init_;
 
       union {
 	    NetTaskDef*task_;
@@ -2732,6 +2745,12 @@ class NetAssign_ {
       void set_property(const perm_string&name);
       inline perm_string get_property(void) const { return member_; }
 
+	// Determine if the assigned object is signed or unsigned.
+	// This is used when determining the expression type for
+	// a compressed assignment statement.
+      bool get_signed() const { return signed_; }
+      void set_signed(bool flag) { signed_ = flag; }
+
 	// Get the width of the r-value that this node expects. This
 	// method accounts for the presence of the mux, so it is not
 	// necessarily the same as the pin_count().
@@ -2782,6 +2801,7 @@ class NetAssign_ {
 	// member/property if signal is a class.
       perm_string member_;
 
+      bool signed_;
       bool turn_sig_to_wire_on_release_;
 	// indexed part select base
       NetExpr*base_;
@@ -2849,6 +2869,8 @@ class NetAssign : public NetAssignBase {
 				     map<perm_string,LocalVar>&ctx) const;
 
     private:
+      void eval_func_lval_op_real_(const LineInfo&loc, verireal&lv, verireal&rv) const;
+      void eval_func_lval_op_(const LineInfo&loc, verinum&lv, verinum&rv) const;
       bool eval_func_lval_(const LineInfo&loc, map<perm_string,LocalVar>&ctx,
 			   const NetAssign_*lval, NetExpr*rval_result) const;
 
@@ -2895,6 +2917,7 @@ class NetBlock  : public NetProc {
       NetScope* subscope() const { return subscope_; }
 
       void append(NetProc*);
+      void prepend(NetProc*);
 
       const NetProc*proc_first() const;
       const NetProc*proc_next(const NetProc*cur) const;

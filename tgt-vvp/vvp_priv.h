@@ -257,6 +257,13 @@ extern int test_immediate_vec4_ok(ivl_expr_t expr);
 extern void draw_immediate_vec4(ivl_expr_t expr, const char*opcode);
 
 /*
+ * Draw a delay statement.
+ */
+extern void draw_delay(void*ptr, unsigned wid, const char*input,
+		       ivl_expr_t rise_exp, ivl_expr_t fall_exp,
+		       ivl_expr_t decay_exp);
+
+/*
  * These functions manage word register allocation.
  */
 extern int allocate_word(void);

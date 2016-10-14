@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2016 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -60,7 +60,6 @@ int target_design(ivl_design_t des)
 {
       ivl_scope_t *roots;
       unsigned nroots, idx;
-      unsigned has_root_scope = 0;
       const char*path = ivl_design_flag(des, "-o");
 	/* Set the indent spacing with the -pspacing flag passed to iverilog
 	 * (e.g. -pspacing=4). The default is 2 spaces. */
@@ -190,23 +189,27 @@ int target_design(ivl_design_t des)
 	    switch(ivl_scope_type(roots[idx])) {
 		  case IVL_SCT_FUNCTION:
 		  case IVL_SCT_TASK:
-			if (! has_root_scope) {
-			      fprintf(vlog_out, "module ivl_root_scope;\n");
-			      indent += indent_incr;
-			      has_root_scope = 1;
-			}
+			  /* Create a separate module for each task/function.
+			     This allows us to handle different timescales. */
+			fprintf(vlog_out, "\n`timescale %s/%s\n",
+				get_time_const(ivl_scope_time_units(roots[idx])),
+				get_time_const(ivl_scope_time_precision(roots[idx])));
+			fprintf(vlog_out, "module ivl_root_scope_%s;\n",
+				ivl_scope_basename(roots[idx]));
+			indent += indent_incr;
+
 			  /* Say this task/function has a parent so the
 			   * definition is emitted correctly. */
 			emit_scope(roots[idx], roots[idx]);
+
+			indent -= indent_incr;
+			assert(indent == 0);
+			fprintf(vlog_out, "endmodule /* ivl_root_scope_%p */\n",
+				roots[idx]);
 			break;
 		  default:
 			break;
 	    }
-      }
-      if (has_root_scope) {
-	    indent -= indent_incr;
-	    assert(indent == 0);
-	    fprintf(vlog_out, "endmodule /* ivl_root_scope */\n");
       }
 	/* Emit the rest of the scope objects. */
       for (idx = 0; idx < nroots; idx += 1) emit_scope(roots[idx], 0);

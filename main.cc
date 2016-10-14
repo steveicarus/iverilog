@@ -108,6 +108,7 @@ bool gn_assertions_flag = true;
 bool gn_io_range_error_flag = true;
 bool gn_strict_ca_eval_flag = false;
 bool gn_strict_expr_width_flag = false;
+bool gn_shared_loop_index_flag = false;
 bool gn_verilog_ams_flag = false;
 
 /*
@@ -343,6 +344,12 @@ static void process_generation_flag(const char*gen)
 
       } else if (strcmp(gen,"no-strict-expr-width") == 0) {
 	    gn_strict_expr_width_flag = false;
+
+      } else if (strcmp(gen,"shared-loop-index") == 0) {
+	    gn_shared_loop_index_flag = true;
+
+      } else if (strcmp(gen,"no-shared-loop-index") == 0) {
+	    gn_shared_loop_index_flag = false;
 
 	  } else {
       }
@@ -1111,7 +1118,7 @@ int main(int argc, char*argv[])
 
 	/* Decide if we are going to allow system functions to be called
 	 * as tasks. */
-      if (generation_flag >= GN_VER2005_SV) {
+      if (gn_system_verilog()) {
 	    def_sfunc_as_task = IVL_SFUNC_AS_TASK_WARNING;
       }
 

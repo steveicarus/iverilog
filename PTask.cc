@@ -30,6 +30,11 @@ PTaskFunc::~PTaskFunc()
 {
 }
 
+bool PTaskFunc::var_init_needs_explicit_lifetime() const
+{
+      return default_lifetime == STATIC;
+}
+
 void PTaskFunc::set_ports(vector<pform_tf_port_t>*p)
 {
       assert(ports_ == 0);

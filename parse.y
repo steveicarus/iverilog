@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -64,6 +64,10 @@ static struct {
 static PTask* current_task = 0;
 static PFunction* current_function = 0;
 static stack<PBlock*> current_block_stack;
+
+/* The variable declaration rules need to know if a lifetime has been
+   specified. */
+static LexicalScope::lifetime_t var_lifetime;
 
 static pform_name_t* pform_create_this(void)
 {
@@ -131,17 +135,17 @@ static list<named_pexpr_t>*attributes_in_context = 0;
 static const struct str_pair_t pull_strength = { IVL_DR_PULL,  IVL_DR_PULL };
 static const struct str_pair_t str_strength = { IVL_DR_STRONG, IVL_DR_STRONG };
 
-static list<pair<perm_string,PExpr*> >* make_port_list(char*id, PExpr*expr)
+static list<pform_port_t>* make_port_list(char*id, list<pform_range_t>*udims, PExpr*expr)
 {
-      list<pair<perm_string,PExpr*> >*tmp = new list<pair<perm_string,PExpr*> >;
-      tmp->push_back(make_pair(lex_strings.make(id), expr));
+      list<pform_port_t>*tmp = new list<pform_port_t>;
+      tmp->push_back(pform_port_t(lex_strings.make(id), udims, expr));
       delete[]id;
       return tmp;
 }
-static list<pair<perm_string,PExpr*> >* make_port_list(list<pair<perm_string, PExpr*> >*tmp,
-                                                       char*id, PExpr*expr)
+static list<pform_port_t>* make_port_list(list<pform_port_t>*tmp,
+                                          char*id, list<pform_range_t>*udims, PExpr*expr)
 {
-      tmp->push_back(make_pair(lex_strings.make(id), expr));
+      tmp->push_back(pform_port_t(lex_strings.make(id), udims, expr));
       delete[]id;
       return tmp;
 }
@@ -370,7 +374,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       char*text;
       list<perm_string>*perm_strings;
 
-      list<pair<perm_string,PExpr*> >*port_list;
+      list<pform_port_t>*port_list;
 
       vector<pform_tf_port_t>* tf_ports;
 
@@ -452,6 +456,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
       PSpecPath* specpath;
       list<index_component_t> *dimensions;
+
+      LexicalScope::lifetime_t lifetime;
 };
 
 %token <text>      IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
@@ -560,7 +566,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <number>  number pos_neg_number
 %type <flag>    signing unsigned_signed_opt signed_unsigned_opt
 %type <flag>    import_export
-%type <flag>    K_automatic_opt K_packed_opt K_reg_opt K_static_opt K_virtual_opt
+%type <flag>    K_packed_opt K_reg_opt K_static_opt K_virtual_opt
 %type <flag>    udp_reg_opt edge_operator
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
@@ -576,7 +582,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <text> register_variable net_variable event_variable endlabel_opt class_declaration_endlabel_opt
 %type <perm_strings> register_variable_list net_variable_list event_variable_list
 %type <perm_strings> list_of_identifiers loop_variables
-%type <port_list> list_of_port_identifiers
+%type <port_list> list_of_port_identifiers list_of_variable_port_identifiers
 
 %type <net_decl_assign> net_decl_assign net_decl_assigns
 
@@ -607,7 +613,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <gates> gate_instance_list
 
 %type <pform_name> hierarchy_identifier implicit_class_handle
-%type <expr>  assignment_pattern expression expr_primary expr_mintypmax
+%type <expr>  assignment_pattern expression expr_mintypmax
+%type <expr>  expr_primary_or_typename expr_primary
 %type <expr>  class_new dynamic_array_new
 %type <expr>  inc_or_dec_expression inside_expression lpvalue
 %type <expr>  branch_probe_expression streaming_concatenation
@@ -635,7 +642,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <ranges> variable_dimension
 %type <ranges> dimensions_opt dimensions
 
-%type <nettype>  net_type var_type net_type_opt
+%type <nettype>  net_type net_type_opt
 %type <gatetype> gatetype switchtype
 %type <porttype> port_direction port_direction_opt
 %type <vartype> bit_logic bit_logic_opt
@@ -663,6 +670,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <real_type> non_integer_type
 %type <int_val> atom2_type
 %type <int_val> module_start module_end
+
+%type <lifetime> lifetime lifetime_opt
 
 %token K_TAND
 %right K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
@@ -723,17 +732,17 @@ block_identifier_opt /* */
   ;
 
 class_declaration /* IEEE1800-2005: A.1.2 */
-  : K_virtual_opt K_class class_identifier class_declaration_extends_opt ';'
-      { pform_start_class_declaration(@2, $3, $4.type, $4.exprs); }
+  : K_virtual_opt K_class lifetime_opt class_identifier class_declaration_extends_opt ';'
+      { pform_start_class_declaration(@2, $4, $5.type, $5.exprs, $3); }
     class_items_opt K_endclass
       { // Process a class.
-	pform_end_class_declaration(@8);
+	pform_end_class_declaration(@9);
       }
     class_declaration_endlabel_opt
       { // Wrap up the class.
-	if ($10 && $3 && $3->name != $10) {
-	      yyerror(@10, "error: Class end label doesn't match class name.");
-	      delete[]$10;
+	if ($11 && $4 && $4->name != $11) {
+	      yyerror(@11, "error: Class end label doesn't match class name.");
+	      delete[]$11;
 	}
       }
   ;
@@ -1193,7 +1202,7 @@ for_step /* IEEE1800-2005: A.6.8 */
      definitions in the func_body to take on the scope of the function
      instead of the module. */
 function_declaration /* IEEE1800-2005: A.2.6 */
-  : K_function K_automatic_opt data_type_or_implicit_or_void IDENTIFIER ';'
+  : K_function lifetime_opt data_type_or_implicit_or_void IDENTIFIER ';'
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
@@ -1214,7 +1223,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 		                 "function name");
 	      }
 	      if (! gn_system_verilog()) {
-		    yyerror(@11, "error: Function end label require "
+		    yyerror(@11, "error: Function end labels require "
 		                 "SystemVerilog.");
 	      }
 	      delete[]$11;
@@ -1222,7 +1231,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	delete[]$4;
       }
 
-  | K_function K_automatic_opt data_type_or_implicit_or_void IDENTIFIER
+  | K_function lifetime_opt data_type_or_implicit_or_void IDENTIFIER
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
@@ -1258,7 +1267,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 
   /* Detect and recover from some errors. */
 
-  | K_function K_automatic_opt data_type_or_implicit_or_void IDENTIFIER error K_endfunction
+  | K_function lifetime_opt data_type_or_implicit_or_void IDENTIFIER error K_endfunction
       { /* */
 	if (current_function) {
 	      pform_pop_scope();
@@ -1362,6 +1371,16 @@ jump_statement /* IEEE1800-2005: A.6.5 */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  ;
+
+lifetime /* IEEE1800-2005: A.2.1.3 */
+  : K_automatic { $$ = LexicalScope::AUTOMATIC; }
+  | K_static    { $$ = LexicalScope::STATIC; }
+  ;
+
+lifetime_opt /* IEEE1800-2005: A.2.1.3 */
+  : lifetime { $$ = $1; }
+  |          { $$ = LexicalScope::INHERITED; }
   ;
 
   /* Loop statements are kinds of statements. */
@@ -1703,20 +1722,20 @@ open_range_list /* IEEE1800-2005 A.2.11 */
   ;
 
 package_declaration /* IEEE1800-2005 A.1.2 */
-  : K_package IDENTIFIER ';'
-      { pform_start_package_declaration(@1, $2);
+  : K_package lifetime_opt IDENTIFIER ';'
+      { pform_start_package_declaration(@1, $3, $2);
       }
     package_item_list_opt
     K_endpackage endlabel_opt
       { pform_end_package_declaration(@1);
 	// If an end label is present make sure it match the package name.
-	if ($7) {
-	      if (strcmp($2,$7) != 0) {
-		    yyerror(@7, "error: End label doesn't match package name");
+	if ($8) {
+	      if (strcmp($3,$8) != 0) {
+		    yyerror(@8, "error: End label doesn't match package name");
 	      }
-	      delete[]$7;
+	      delete[]$8;
 	}
-	delete[]$2;
+	delete[]$3;
       }
   ;
 
@@ -1895,7 +1914,7 @@ streaming_concatenation /* IEEE1800-2005: A.8.1 */
 
 task_declaration /* IEEE1800-2005: A.2.7 */
 
-  : K_task K_automatic_opt IDENTIFIER ';'
+  : K_task lifetime_opt IDENTIFIER ';'
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
@@ -1908,7 +1927,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	pform_pop_scope();
 	current_task = 0;
 	if ($7 && $7->size() > 1 && !gn_system_verilog()) {
-	      yyerror(@7, "error: Task body with multiple statements requres SystemVerilog.");
+	      yyerror(@7, "error: Task body with multiple statements requires SystemVerilog.");
 	}
 	delete $7;
       }
@@ -1931,7 +1950,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	delete[]$3;
       }
 
-  | K_task K_automatic_opt IDENTIFIER '('
+  | K_task lifetime_opt IDENTIFIER '('
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
@@ -1965,7 +1984,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	delete[]$3;
       }
 
-  | K_task K_automatic_opt IDENTIFIER '(' ')' ';'
+  | K_task lifetime_opt IDENTIFIER '(' ')' ';'
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
@@ -1982,7 +2001,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	pform_pop_scope();
 	current_task = 0;
 	if ($9->size() > 1 && !gn_system_verilog()) {
-	      yyerror(@9, "error: Task body with multiple statements requres SystemVerilog.");
+	      yyerror(@9, "error: Task body with multiple statements requires SystemVerilog.");
 	}
 	delete $9;
       }
@@ -2005,7 +2024,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	delete[]$3;
       }
 
-  | K_task K_automatic_opt IDENTIFIER error K_endtask
+  | K_task lifetime_opt IDENTIFIER error K_endtask
       {
 	assert(current_task == 0);
       }
@@ -2213,7 +2232,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
       }
   | '[' expression ']'
       { // SystemVerilog canonical range
-	if (generation_flag < GN_VER2005_SV) {
+	if (!gn_system_verilog()) {
 	      warn_count += 1;
 	      cerr << @2 << ": warning: Use of SystemVerilog [size] dimension. "
 		   << "Use at least -g2005-sv to remove this warning." << endl;
@@ -2240,6 +2259,19 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
 	}
 	tmp->push_back(index);
 	$$ = tmp;
+      }
+  ;
+
+variable_lifetime
+  : lifetime
+      { if (!gn_system_verilog()) {
+	      yyerror(@1, "error: overriding the default variable lifetime "
+			  "requires SystemVerilog.");
+	} else if ($1 != pform_peek_scope()->default_lifetime) {
+	      yyerror(@1, "sorry: overriding the default variable lifetime "
+			  "is not yet supported.");
+	}
+	var_lifetime = $1;
       }
   ;
 
@@ -2317,8 +2349,18 @@ block_item_decl
       { if ($1) pform_set_data_type(@1, $1, $2, NetNet::REG, attributes_in_context);
       }
 
+  | variable_lifetime data_type register_variable_list ';'
+      { if ($2) pform_set_data_type(@2, $2, $3, NetNet::REG, attributes_in_context);
+	var_lifetime = LexicalScope::INHERITED;
+      }
+
   | K_reg data_type register_variable_list ';'
       { if ($2) pform_set_data_type(@2, $2, $3, NetNet::REG, attributes_in_context);
+      }
+
+  | variable_lifetime K_reg data_type register_variable_list ';'
+      { if ($3) pform_set_data_type(@3, $3, $4, NetNet::REG, attributes_in_context);
+	var_lifetime = LexicalScope::INHERITED;
       }
 
   | K_event event_variable_list ';'
@@ -3033,7 +3075,7 @@ branch_probe_expression
   ;
 
 expression
-  : expr_primary
+  : expr_primary_or_typename
       { $$ = $1; }
   | inc_or_dec_expression
       { $$ = $1; }
@@ -3328,6 +3370,20 @@ expression_list_proper
       }
   ;
 
+expr_primary_or_typename
+  : expr_primary
+
+  /* There are a few special cases (notably $bits argument) where the
+     expression may be a type name. Let the elaborator sort this out. */
+  | TYPE_IDENTIFIER
+      { PETypename*tmp = new PETypename($1.type);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+	delete[]$1.text;
+      }
+
+  ;
+
 expr_primary
   : number
       { assert($1);
@@ -3367,15 +3423,6 @@ expr_primary
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete[]$1;
-      }
-
-  /* There are a few special cases (notably $bits argument) where the
-     expression may be a type name. Let the elaborator sort this out. */
-  | TYPE_IDENTIFIER
-      { PETypename*tmp = new PETypename($1.type);
-	FILE_NAME(tmp,@1);
-	$$ = tmp;
-	delete[]$1.text;
       }
 
   /* The hierarchy_identifier rule matches simple identifiers as well as
@@ -3681,12 +3728,11 @@ expr_primary
 
   /* Cast expressions are primaries */
 
-  | DEC_NUMBER '\'' '(' expression ')'
+  | expr_primary '\'' '(' expression ')'
       { PExpr*base = $4;
 	if (gn_system_verilog()) {
-	      PECastSize*tmp = new PECastSize($1->as_ulong(), base);
+	      PECastSize*tmp = new PECastSize($1, base);
 	      FILE_NAME(tmp, @1);
-	      delete $1;
 	      $$ = tmp;
 	} else {
 	      yyerror(@1, "error: Size cast requires SystemVerilog.");
@@ -4002,14 +4048,21 @@ list_of_identifiers
 	;
 
 list_of_port_identifiers
-	: IDENTIFIER
-                { $$ = make_port_list($1, 0); }
-	| IDENTIFIER '=' expression
-                { $$ = make_port_list($1, $3); }
-	| list_of_port_identifiers ',' IDENTIFIER
-                { $$ = make_port_list($1, $3, 0); }
-	| list_of_port_identifiers ',' IDENTIFIER '=' expression
-                { $$ = make_port_list($1, $3, $5); }
+	: IDENTIFIER dimensions_opt
+                { $$ = make_port_list($1, $2, 0); }
+	| list_of_port_identifiers ',' IDENTIFIER dimensions_opt
+                { $$ = make_port_list($1, $3, $4, 0); }
+	;
+
+list_of_variable_port_identifiers
+	: IDENTIFIER dimensions_opt
+                { $$ = make_port_list($1, $2, 0); }
+	| IDENTIFIER dimensions_opt '=' expression
+                { $$ = make_port_list($1, $2, $4); }
+	| list_of_variable_port_identifiers ',' IDENTIFIER dimensions_opt
+                { $$ = make_port_list($1, $3, $4, 0); }
+	| list_of_variable_port_identifiers ',' IDENTIFIER dimensions_opt '=' expression
+                { $$ = make_port_list($1, $3, $4, $6); }
 	;
 
 
@@ -4218,7 +4271,7 @@ port_declaration
 	port_declaration_context.port_net_type = use_type;
 	port_declaration_context.data_type = $4;
 
-	pform_make_reginit(@5, name, $7);
+	pform_make_var_init(@5, name, $7);
 
 	delete[]$5;
 	$$ = ptmp;
@@ -4372,13 +4425,13 @@ local_timeunit_prec_decl2
      items, and finally an end marker. */
 
 module
-  : attribute_list_opt module_start IDENTIFIER
-      { pform_startmodule(@2, $3, $2==K_program, $2==K_interface, $1); }
+  : attribute_list_opt module_start lifetime_opt IDENTIFIER
+      { pform_startmodule(@2, $4, $2==K_program, $2==K_interface, $3, $1); }
     module_package_import_list_opt
     module_parameter_port_list_opt
     module_port_list_opt
     module_attribute_foreign ';'
-      { pform_module_set_ports($7); }
+      { pform_module_set_ports($8); }
     local_timeunit_prec_decl_opt
       { have_timeunit_decl = true; // Every thing past here is
 	have_timeprec_decl = true; // a check!
@@ -4404,22 +4457,22 @@ module
 	}
 	  // Check that program/endprogram and module/endmodule
 	  // keywords match.
-	if ($2 != $14) {
+	if ($2 != $15) {
 	      switch ($2) {
 		  case K_module:
-		    yyerror(@14, "error: module not closed by endmodule.");
+		    yyerror(@15, "error: module not closed by endmodule.");
 		    break;
 		  case K_program:
-		    yyerror(@14, "error: program not closed by endprogram.");
+		    yyerror(@15, "error: program not closed by endprogram.");
 		    break;
 		  case K_interface:
-		    yyerror(@14, "error: interface not closed by endinterface.");
+		    yyerror(@15, "error: interface not closed by endinterface.");
 		    break;
 		  default:
 		    break;
 	      }
 	}
-	pform_endmodule($3, in_celldefine, ucd);
+	pform_endmodule($4, in_celldefine, ucd);
 	have_timeunit_decl = false; // We will allow decls again.
 	have_timeprec_decl = false;
       }
@@ -4429,19 +4482,19 @@ module
 	// endlabel_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	if ($16) {
-	      if (strcmp($3,$16) != 0) {
+	if ($17) {
+	      if (strcmp($4,$17) != 0) {
 		    switch ($2) {
 			case K_module:
-			  yyerror(@16, "error: End label doesn't match "
+			  yyerror(@17, "error: End label doesn't match "
 			               "module name.");
 			  break;
 			case K_program:
-			  yyerror(@16, "error: End label doesn't match "
+			  yyerror(@17, "error: End label doesn't match "
 			               "program name.");
 			  break;
 			case K_interface:
-			  yyerror(@16, "error: End label doesn't match "
+			  yyerror(@17, "error: End label doesn't match "
 			               "interface name.");
 			  break;
 			default:
@@ -4452,9 +4505,9 @@ module
 		    yyerror(@8, "error: Module end labels require "
 		                 "SystemVerilog.");
 	      }
-	      delete[]$16;
+	      delete[]$17;
 	}
-	delete[]$3;
+	delete[]$4;
       }
   ;
 
@@ -4597,58 +4650,102 @@ module_item
 		  delete $4;
 		}
 
-  | attribute_list_opt port_direction unsigned_signed_opt dimensions_opt delay3_opt list_of_identifiers ';'
-      { pform_set_port_type(@2, $6, $4, $3, $2, $1); }
 
-  /* The next two rules handle Verilog 2001 statements of the form:
+  /* The next two rules handle port declarations that include a net type, e.g.
        input wire signed [h:l] <list>;
      This creates the wire and sets the port type all at once. */
 
-  | attribute_list_opt port_direction net_type unsigned_signed_opt dimensions_opt list_of_identifiers ';'
-      { pform_makewire(@2, $5, $4, $6, $3, $2, IVL_VT_NO_TYPE, $1, SR_BOTH); }
+  | attribute_list_opt port_direction net_type data_type_or_implicit list_of_port_identifiers ';'
+      { pform_module_define_port(@2, $5, $2, $3, $4, $1); }
 
-  | attribute_list_opt K_output var_type unsigned_signed_opt dimensions_opt list_of_port_identifiers ';'
-      { list<pair<perm_string,PExpr*> >::const_iterator pp;
-	list<perm_string>*tmp = new list<perm_string>;
-	for (pp = $6->begin(); pp != $6->end(); ++ pp ) {
-	      tmp->push_back((*pp).first);
+  | attribute_list_opt port_direction K_wreal list_of_port_identifiers ';'
+      { real_type_t*real_type = new real_type_t(real_type_t::REAL);
+	pform_module_define_port(@2, $4, $2, NetNet::WIRE, real_type, $1);
+      }
+
+  /* The next three rules handle port declarations that include a variable
+     type, e.g.
+       output reg signed [h:l] <list>;
+     and also handle incomplete port declarations, e.g.
+       input signed [h:l] <list>;
+   */
+  | attribute_list_opt K_inout data_type_or_implicit list_of_port_identifiers ';'
+      { NetNet::Type use_type = $3 ? NetNet::IMPLICIT : NetNet::NONE;
+	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
+	      if (dtype->implicit_flag)
+		    use_type = NetNet::NONE;
 	}
-	pform_makewire(@2, $5, $4, tmp, $3, NetNet::POUTPUT,
-		       IVL_VT_NO_TYPE, $1, SR_BOTH);
-	for (pp = $6->begin(); pp != $6->end(); ++ pp ) {
-	      if ((*pp).second) {
-		   pform_make_reginit(@2, (*pp).first, (*pp).second);
-	      }
+	if (use_type == NetNet::NONE)
+	      pform_set_port_type(@2, $4, NetNet::PINOUT, $3, $1);
+	else
+	      pform_module_define_port(@2, $4, NetNet::PINOUT, use_type, $3, $1);
+      }
+
+  | attribute_list_opt K_input data_type_or_implicit list_of_port_identifiers ';'
+      { NetNet::Type use_type = $3 ? NetNet::IMPLICIT : NetNet::NONE;
+	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
+	      if (dtype->implicit_flag)
+		    use_type = NetNet::NONE;
 	}
-	delete $6;
+	if (use_type == NetNet::NONE)
+	      pform_set_port_type(@2, $4, NetNet::PINPUT, $3, $1);
+	else
+	      pform_module_define_port(@2, $4, NetNet::PINPUT, use_type, $3, $1);
       }
 
-  | attribute_list_opt port_direction K_wreal list_of_identifiers ';'
-      { pform_makewire(@2, 0, true, $4, NetNet::WIRE, $2,
-		       IVL_VT_REAL, $1, SR_BOTH);
+  | attribute_list_opt K_output data_type_or_implicit list_of_variable_port_identifiers ';'
+      { NetNet::Type use_type = $3 ? NetNet::IMPLICIT : NetNet::NONE;
+	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
+	      if (dtype->implicit_flag)
+		    use_type = NetNet::NONE;
+	      else if (dtype->reg_flag)
+		    use_type = NetNet::REG;
+	      else
+		    use_type = NetNet::IMPLICIT_REG;
+
+		// The SystemVerilog types that can show up as
+		// output ports are implicitly (on the inside)
+		// variables because "reg" is not valid syntax
+		// here.
+	} else if (dynamic_cast<atom2_type_t*> ($3)) {
+	      use_type = NetNet::IMPLICIT_REG;
+	} else if (dynamic_cast<struct_type_t*> ($3)) {
+	      use_type = NetNet::IMPLICIT_REG;
+	} else if (enum_type_t*etype = dynamic_cast<enum_type_t*> ($3)) {
+	      if(etype->base_type == IVL_VT_LOGIC)
+		  use_type = NetNet::IMPLICIT_REG;
+	}
+	if (use_type == NetNet::NONE)
+	      pform_set_port_type(@2, $4, NetNet::POUTPUT, $3, $1);
+	else
+	      pform_module_define_port(@2, $4, NetNet::POUTPUT, use_type, $3, $1);
       }
 
-  /* var_type declaration (reg variables) cannot be input or output,
-     because the port declaration implies an external driver, which
-     cannot be attached to a reg. These rules catch that error early. */
-
-  | attribute_list_opt K_input var_type unsigned_signed_opt dimensions_opt list_of_identifiers ';'
-      { pform_makewire(@2, $5, $4, $6, $3, NetNet::PINPUT,
-		       IVL_VT_NO_TYPE, $1);
-	yyerror(@3, "error: reg variables cannot be inputs.");
-      }
-
-  | attribute_list_opt K_inout var_type unsigned_signed_opt dimensions_opt list_of_identifiers ';'
-      { pform_makewire(@2, $5, $4, $6, $3, NetNet::PINOUT,
-		       IVL_VT_NO_TYPE, $1);
-	yyerror(@3, "error: reg variables cannot be inouts.");
-      }
-
-  | attribute_list_opt port_direction unsigned_signed_opt dimensions_opt delay3_opt error ';'
+  | attribute_list_opt port_direction net_type data_type_or_implicit error ';'
       { yyerror(@2, "error: Invalid variable list in port declaration.");
 	if ($1) delete $1;
 	if ($4) delete $4;
-	if ($5) delete $5;
+	yyerrok;
+      }
+
+  | attribute_list_opt K_inout data_type_or_implicit error ';'
+      { yyerror(@2, "error: Invalid variable list in port declaration.");
+	if ($1) delete $1;
+	if ($3) delete $3;
+	yyerrok;
+      }
+
+  | attribute_list_opt K_input data_type_or_implicit error ';'
+      { yyerror(@2, "error: Invalid variable list in port declaration.");
+	if ($1) delete $1;
+	if ($3) delete $3;
+	yyerrok;
+      }
+
+  | attribute_list_opt K_output data_type_or_implicit error ';'
+      { yyerror(@2, "error: Invalid variable list in port declaration.");
+	if ($1) delete $1;
+	if ($3) delete $3;
 	yyerrok;
       }
 
@@ -5046,10 +5143,6 @@ net_type
 		              "instead." << endl;
 		    }
 	| K_uwire   { $$ = NetNet::UNRESOLVED_WIRE; }
-	;
-
-var_type
-	: K_reg { $$ = NetNet::REG; }
 	;
 
 param_type
@@ -5477,11 +5570,17 @@ register_variable
 	$$ = $1;
       }
   | IDENTIFIER dimensions_opt '=' expression
-      { perm_string name = lex_strings.make($1);
+      { if (pform_peek_scope()->var_init_needs_explicit_lifetime()
+	    && (var_lifetime == LexicalScope::INHERITED)) {
+	      cerr << @3 << ": warning: Static variable initialization requires "
+			    "explicit lifetime in this context." << endl;
+	      warn_count += 1;
+	}
+	perm_string name = lex_strings.make($1);
 	pform_makewire(@1, name, NetNet::REG,
 		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
 	pform_set_reg_idx(name, $2);
-	pform_make_reginit(@1, name, $4);
+	pform_make_var_init(@1, name, $4);
 	$$ = $1;
       }
   ;
@@ -5734,7 +5833,23 @@ specify_path_identifiers
 		  delete[]$1;
 		}
 	| IDENTIFIER '[' expr_primary ']'
-		{ list<perm_string>*tmp = new list<perm_string>;
+		{ if (gn_specify_blocks_flag) {
+			yywarn(@4, "Bit selects are not currently supported "
+				   "in path declarations. The declaration "
+				   "will be applied to the whole vector.");
+		  }
+		  list<perm_string>*tmp = new list<perm_string>;
+		  tmp->push_back(lex_strings.make($1));
+		  $$ = tmp;
+		  delete[]$1;
+		}
+	| IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
+		{ if (gn_specify_blocks_flag) {
+			yywarn(@4, "Part selects are not currently supported "
+				   "in path declarations. The declaration "
+				   "will be applied to the whole vector.");
+		  }
+		  list<perm_string>*tmp = new list<perm_string>;
 		  tmp->push_back(lex_strings.make($1));
 		  $$ = tmp;
 		  delete[]$1;
@@ -5746,7 +5861,23 @@ specify_path_identifiers
 		  delete[]$3;
 		}
 	| specify_path_identifiers ',' IDENTIFIER '[' expr_primary ']'
-		{ list<perm_string>*tmp = $1;
+		{ if (gn_specify_blocks_flag) {
+			yywarn(@4, "Bit selects are not currently supported "
+				   "in path declarations. The declaration "
+				   "will be applied to the whole vector.");
+		  }
+		  list<perm_string>*tmp = $1;
+		  tmp->push_back(lex_strings.make($3));
+		  $$ = tmp;
+		  delete[]$3;
+		}
+	| specify_path_identifiers ',' IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
+		{ if (gn_specify_blocks_flag) {
+			yywarn(@4, "Part selects are not currently supported "
+				   "in path declarations. The declaration "
+				   "will be applied to the whole vector.");
+		  }
+		  list<perm_string>*tmp = $1;
 		  tmp->push_back(lex_strings.make($3));
 		  $$ = tmp;
 		  delete[]$3;
@@ -6777,7 +6908,6 @@ udp_primitive
      presence is significant. This is a fairly common pattern so
      collect those rules here. */
 
-K_automatic_opt: K_automatic { $$ = true; } | { $$ = false; } ;
 K_packed_opt   : K_packed    { $$ = true; } | { $$ = false; } ;
 K_reg_opt      : K_reg       { $$ = true; } | { $$ = false; } ;
 K_static_opt   : K_static    { $$ = true; } | { $$ = false; } ;

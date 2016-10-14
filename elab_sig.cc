@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1185,6 +1185,14 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       NetLogic*pull = 0;
       if (wtype == NetNet::SUPPLY0 || wtype == NetNet::SUPPLY1) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Generate a SUPPLY pull for the ";
+		  if (wtype == NetNet::SUPPLY0) cerr << "supply0";
+		  else cerr << "supply1";
+		  cerr << " net." << endl;
+	    }
+
 	    NetLogic::TYPE pull_type = (wtype==NetNet::SUPPLY1)
 		  ? NetLogic::PULLUP
 		  : NetLogic::PULLDOWN;
@@ -1195,14 +1203,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    pull->pin(0).drive1(IVL_DR_SUPPLY);
 	    des->add_node(pull);
 	    wtype = NetNet::WIRE;
-
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: "
-		       << "Generate a SUPPLY pull for the ";
-		  if (wtype == NetNet::SUPPLY0) cerr << "supply0";
-		  else cerr << "supply1";
-		  cerr << " net." << endl;
-	    }
       }
 
 

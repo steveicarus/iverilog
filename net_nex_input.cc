@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -426,6 +426,15 @@ NexusSet* NetForLoop::nex_input(bool rem_out)
       tmp = step_statement_->nex_input(rem_out);
       result->add(*tmp);
       delete tmp;
+
+      if (gn_shared_loop_index_flag) {
+	    tmp = new NexusSet();
+	    for (unsigned idx = 0 ; idx < index_->pin_count() ; idx += 1)
+		tmp->add(index_->pin(idx).nexus(), 0, index_->vector_width());
+
+	    result->rem(*tmp);
+	    delete tmp;
+      }
 
       return result;
 }

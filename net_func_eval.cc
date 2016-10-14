@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -87,6 +87,10 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 	// Ask the scope to collect definitions for local values. This
 	// fills in the context_map with local variables held by the scope.
       scope()->evaluate_function_find_locals(loc, context_map);
+
+	// Execute any variable initialization statements.
+      if (const NetProc*init_proc = scope()->var_init())
+	    init_proc->evaluate_function(loc, context_map);
 
       if (debug_eval_tree && proc_==0) {
 	    cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
@@ -209,6 +213,98 @@ bool NetProc::evaluate_function(const LineInfo&,
       return false;
 }
 
+void NetAssign::eval_func_lval_op_real_(const LineInfo&loc,
+					verireal&lv, verireal&rv) const
+{
+      switch (op_) {
+	  case '+':
+	    lv = lv + rv;
+	    break;
+	  case '-':
+	    lv = lv - rv;
+	    break;
+	  case '*':
+	    lv = lv * rv;
+	    break;
+	  case '/':
+	    lv = lv / rv;
+	    break;
+	  case '%':
+	    lv = lv % rv;
+	    break;
+	  default:
+	    cerr << "Illegal assignment operator: "
+		 << human_readable_op(op_) << endl;
+	    ivl_assert(loc, 0);
+      }
+}
+
+void NetAssign::eval_func_lval_op_(const LineInfo&loc,
+				   verinum&lv, verinum&rv) const
+{
+      unsigned lv_width = lv.len();
+      bool lv_sign = lv.has_sign();
+      switch (op_) {
+	  case 'l':
+	  case 'R':
+	      // The left operand is self-determined.
+	    break;
+	  case 'r':
+	      // The left operand is self-determined, but we need to
+	      // cast it to unsigned to get a logical shift.
+	    lv.has_sign(false);
+	    break;
+          default:
+	      // The left operand must be cast to the expression type/size
+	    lv.has_sign(rv.has_sign());
+	    lv = cast_to_width(lv, rv.len());
+      }
+      switch (op_) {
+	  case '+':
+	    lv = lv + rv;
+	    break;
+	  case '-':
+	    lv = lv - rv;
+	    break;
+	  case '*':
+	    lv = lv * rv;
+	    break;
+	  case '/':
+	    lv = lv / rv;
+	    break;
+	  case '%':
+	    lv = lv % rv;
+	    break;
+	  case '&':
+	    for (unsigned idx = 0 ; idx < lv.len() ; idx += 1)
+		  lv.set(idx, lv[idx] & rv[idx]);
+	    break;
+	  case '|':
+	    for (unsigned idx = 0 ; idx < lv.len() ; idx += 1)
+		  lv.set(idx, lv[idx] | rv[idx]);
+	    break;
+	  case '^':
+	    for (unsigned idx = 0 ; idx < lv.len() ; idx += 1)
+		  lv.set(idx, lv[idx] ^ rv[idx]);
+	    break;
+	  case 'l':
+	    lv = lv << rv.as_unsigned();
+	    break;
+	  case 'r':
+	    lv = lv >> rv.as_unsigned();
+	    break;
+	  case 'R':
+	    lv = lv >> rv.as_unsigned();
+	    break;
+	  default:
+	    cerr << "Illegal assignment operator: "
+		 << human_readable_op(op_) << endl;
+	    ivl_assert(loc, 0);
+      }
+      lv = cast_to_width(lv, lv_width);
+      lv.has_sign(lv_sign);
+}
+
 bool NetAssign::eval_func_lval_(const LineInfo&loc,
 				map<perm_string,LocalVar>&context_map,
 				const NetAssign_*lval, NetExpr*rval_result) const
@@ -269,18 +365,55 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 	    ivl_assert(loc, base + lval->lwidth() <= old_lval->expr_width());
 
 	    NetEConst*lval_const = dynamic_cast<NetEConst*>(old_lval);
+	    ivl_assert(loc, lval_const);
 	    verinum lval_v = lval_const->value();
 	    NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
-	    verinum rval_v = cast_to_width(rval_const->value(), lval->lwidth());
+	    ivl_assert(loc, rval_const);
+	    verinum rval_v = rval_const->value();
 
-	    for (unsigned idx = 0 ; idx < rval_v.len() ; idx += 1)
-		  lval_v.set(idx+base, rval_v[idx]);
+	    verinum lpart(verinum::Vx, lval->lwidth());
+	    if (op_) {
+		  for (unsigned idx = 0 ; idx < lpart.len() ; idx += 1)
+			lpart.set(idx, lval_v[base+idx]);
+
+		  eval_func_lval_op_(loc, lpart, rval_v);
+	    } else {
+		  lpart = cast_to_width(rval_v, lval->lwidth());
+	    }
+	    for (unsigned idx = 0 ; idx < lpart.len() ; idx += 1)
+		  lval_v.set(idx+base, lpart[idx]);
 
 	    delete base_result;
 	    delete rval_result;
 	    rval_result = new NetEConst(lval_v);
       } else {
-	    rval_result = fix_assign_value(lval->sig(), rval_result);
+	    if (op_ == 0) {
+		  rval_result = fix_assign_value(lval->sig(), rval_result);
+	    } else if (dynamic_cast<NetECReal*>(rval_result)) {
+		  NetECReal*lval_const = dynamic_cast<NetECReal*>(old_lval);
+		  ivl_assert(loc, lval_const);
+		  verireal lval_r = lval_const->value();
+		  NetECReal*rval_const = dynamic_cast<NetECReal*>(rval_result);
+		  ivl_assert(loc, rval_const);
+		  verireal rval_r = rval_const->value();
+
+		  eval_func_lval_op_real_(loc, lval_r, rval_r);
+
+		  delete rval_result;
+		  rval_result = new NetECReal(lval_r);
+	    } else {
+		  NetEConst*lval_const = dynamic_cast<NetEConst*>(old_lval);
+		  ivl_assert(loc, lval_const);
+		  verinum lval_v = lval_const->value();
+		  NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
+		  ivl_assert(loc, rval_const);
+		  verinum rval_v = rval_const->value();
+
+		  eval_func_lval_op_(loc, lval_v, rval_v);
+
+		  delete rval_result;
+		  rval_result = new NetEConst(lval_v);
+	    }
       }
 
       if (old_lval)
@@ -317,6 +450,13 @@ bool NetAssign::evaluate_function(const LineInfo&loc,
 	// expect the RHS to be a vector value.
       NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
       ivl_assert(*this, rval_const);
+
+      if (op_) {
+	    cerr << get_fileline() << ": sorry: Assignment operators "
+		    "inside a constant function are not currently "
+		    "supported if the LHS is a concatenation." << endl;
+	    return false;
+      }
 
       verinum rval_full = rval_const->value();
       delete rval_result;
@@ -369,6 +509,10 @@ bool NetBlock::evaluate_function(const LineInfo&loc,
 	      // Now collect the new locals.
 	    subscope_->evaluate_function_find_locals(loc, local_context_map);
 	    use_local_context_map = true;
+
+	      // Execute any variable initialization statements.
+	    if (const NetProc*init_proc = subscope_->var_init())
+		  init_proc->evaluate_function(loc, local_context_map);
       }
 
 	// Now use the local context map if there is any local

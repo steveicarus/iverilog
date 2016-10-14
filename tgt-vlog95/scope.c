@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2016 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,33 +23,6 @@
 # include "ivl_alloc.h"
 
 const char *func_rtn_name = 0;
-
-static const char*get_time_const(int time_value)
-{
-      switch (time_value) {
-	case   2: return "100s";
-	case   1: return "10s";
-	case   0: return "1s";
-	case  -1: return "100ms";
-	case  -2: return "10ms";
-	case  -3: return "1ms";
-	case  -4: return "100us";
-	case  -5: return "10us";
-	case  -6: return "1us";
-	case  -7: return "100ns";
-	case  -8: return "10ns";
-	case  -9: return "1ns";
-	case -10: return "100ps";
-	case -11: return "10ps";
-	case -12: return "1ps";
-	case -13: return "100fs";
-	case -14: return "10fs";
-	case -15: return "1fs";
-	default:
-	    fprintf(stderr, "Invalid time constant value %d.\n", time_value);
-	    return "N/A";
-      }
-}
 
 static void emit_func_return(ivl_signal_t sig)
 {

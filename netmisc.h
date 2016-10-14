@@ -1,7 +1,7 @@
 #ifndef IVL_netmisc_H
 #define IVL_netmisc_H
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -60,12 +60,32 @@ inline NetScope* symbol_search(const LineInfo*li,
 }
 
 /*
- * This function transforms an expression by padding the high bits
- * with V0 until the expression has the desired width. This may mean
- * not transforming the expression at all, if it is already wide
- * enough.
+ * This function transforms an expression by either zero or sign extending
+ * the high bits until the expression has the desired width. This may mean
+ * not transforming the expression at all, if it is already wide enough.
+ * The extension method and the returned expression type is determined by
+ * signed_flag.
  */
-extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid, const LineInfo&info);
+extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid, bool signed_flag,
+			    const LineInfo&info);
+/*
+ * This version determines the extension method from the base expression type.
+ */
+inline NetExpr*pad_to_width(NetExpr*expr, unsigned wid, const LineInfo&info)
+{
+      return pad_to_width(expr, wid, expr->has_sign(), info);
+}
+
+/*
+ * This function transforms an expression by either zero or sign extending
+ * or discarding the high bits until the expression has the desired width.
+ * This may mean not transforming the expression at all, if it is already
+ * the correct width. The extension method (if needed) and the returned
+ * expression type is determined by signed_flag.
+ */
+extern NetExpr*cast_to_width(NetExpr*expr, unsigned wid, bool signed_flag,
+			     const LineInfo&info);
+
 extern NetNet*pad_to_width(Design*des, NetNet*n, unsigned w,
                            const LineInfo&info);
 
@@ -258,7 +278,8 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 			      PExpr*pe, int context_width,
                               bool need_const =false,
                               bool annotatable =false,
-			      ivl_variable_type_t cast_type =IVL_VT_NO_TYPE);
+			      ivl_variable_type_t cast_type =IVL_VT_NO_TYPE,
+			      bool force_unsigned =false);
 
 extern NetExpr* elab_and_eval_lossless(Design*des, NetScope*scope,
 			      PExpr*pe, int context_width,
@@ -297,7 +318,8 @@ extern NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 				    ivl_type_t lv_net_type,
 				    ivl_variable_type_t lv_type,
 				    unsigned lv_width, PExpr*expr,
-                                    bool need_const =false);
+				    bool need_const =false,
+				    bool force_unsigned =false);
 
 extern bool evaluate_ranges(Design*des, NetScope*scope,
 			    std::vector<netrange_t>&llist,

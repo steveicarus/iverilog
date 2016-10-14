@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -137,6 +137,9 @@ NetAssign_* PEConcat::elaborate_lval(Design*des,
 		  des->errors += 1;
 		  continue;
 	    }
+
+	      /* A concatenation is always unsigned. */
+	    tmp->set_signed(false);
 
 	      /* Link the new l-value to the previous one. */
 	    NetAssign_*last = tmp;
@@ -287,13 +290,13 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       }
 
 	// We are processing the tail of a string of names. For
-	// example, the verilog may be "a.b.c", so we are processing
+	// example, the Verilog may be "a.b.c", so we are processing
 	// "c" at this point. (Note that if method_name is not nil,
 	// then this is "a.b.c.method" and "a.b.c" is a struct or class.)
       const name_component_t&name_tail = path_.back();
 
 	// Use the last index to determine what kind of select
-	// (bit/part/etc) we are processing. For example, the verilog
+	// (bit/part/etc) we are processing. For example, the Verilog
 	// may be "a.b.c[1][2][<index>]". All but the last index must
 	// be simple expressions, only the <index> may be a part
 	// select etc., so look at it to determine how we will be
@@ -399,6 +402,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	/* No select expressions. */
 
       NetAssign_*lv = new NetAssign_(reg);
+      lv->set_signed(reg->get_signed());
 
       return lv;
 }
@@ -687,20 +691,24 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 		  unsigned long lwid;
 		  bool rcl = reg->sb_to_slice(prefix_indices, lsb, loff, lwid);
 		  ivl_assert(*this, rcl);
-		  cerr << get_fileline() << ": warning: L-value packed array "
-		       << "select of " << reg->name();
-		  if (reg->unpacked_dimensions() > 0) cerr << "[]";
-		  cerr << " has an undefined index." << endl;
-
+		  if (warn_ob_select) {
+			cerr << get_fileline()
+			     << ": warning: L-value packed array select of "
+			     << reg->name();
+			if (reg->unpacked_dimensions() > 0) cerr << "[]";
+			cerr << " has an undefined index." << endl;
+		  }
 		  lv->set_part(new NetEConst(verinum(verinum::Vx)), lwid);
 		  return true;
 	      // The index is undefined and this is a bit select.
 	    } else {
-		  cerr << get_fileline() << ": warning: L-value bit select of "
-		       << reg->name();
-		  if (reg->unpacked_dimensions() > 0) cerr << "[]";
-		  cerr << " has an undefined index." << endl;
-
+		  if (warn_ob_select) {
+			cerr << get_fileline()
+			     << ": warning: L-value bit select of "
+			     << reg->name();
+			if (reg->unpacked_dimensions() > 0) cerr << "[]";
+			cerr << " has an undefined index." << endl;
+		  }
 		  lv->set_part(new NetEConst(verinum(verinum::Vx)), 1);
 		  return true;
 	    }
@@ -797,12 +805,10 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 	      // Constant bit select that does something useful.
 	    long loff = reg->sb_to_idx(prefix_indices,lsb);
 
-	    if (loff < 0 || loff >= (long)reg->vector_width()) {
-		  cerr << get_fileline() << ": error: bit select "
+	    if (warn_ob_select && (loff < 0 || loff >= (long)reg->vector_width())) {
+		  cerr << get_fileline() << ": warning: bit select "
 		       << reg->name() << "[" <<lsb<<"]"
 		       << " is out of range." << endl;
-		  des->errors += 1;
-		  return 0;
 	    }
 
 	    if (reg->type()==NetNet::UNRESOLVED_WIRE) {
@@ -868,10 +874,13 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
       ivl_assert(*this, reg);
 
       if (! parts_defined_flag) {
-	    cerr << get_fileline() << ": warning: L-value part select of "
-	         << reg->name();
-	    if (reg->unpacked_dimensions() > 0) cerr << "[]";
-	    cerr << " has an undefined index." << endl;
+	    if (warn_ob_select) {
+		  cerr << get_fileline()
+		       << ": warning: L-value part select of "
+		       << reg->name();
+		  if (reg->unpacked_dimensions() > 0) cerr << "[]";
+		  cerr << " has an undefined index." << endl;
+	    }
 	      // Use a width of two here so we can distinguish between an
 	      // undefined bit or part select.
 	    lv->set_part(new NetEConst(verinum(verinum::Vx)), 2);
@@ -934,11 +943,11 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
       }
 
 	/* If the part select extends beyond the extremes of the
-	   variable, then report an error. Note that loff is
+	   variable, then output a warning. Note that loff is
 	   converted to normalized form so is relative the
 	   variable pins. */
 
-      if (loff < 0 || moff >= (long)reg->vector_width()) {
+      if (warn_ob_select && (loff < 0 || moff >= (long)reg->vector_width())) {
 	    cerr << get_fileline() << ": warning: Part select "
 		 << reg->name() << "[" << msb<<":"<<lsb<<"]"
 		 << " is out of range." << endl;

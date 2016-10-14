@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -203,7 +203,7 @@ static NetExpr* make_add_expr(NetExpr*expr, long val)
       }
 
       verinum val_v (val, expr->expr_width());
-      val_v.has_sign(true);
+      val_v.has_sign(expr->has_sign());
 
       NetEConst*val_c = new NetEConst(val_v);
       val_c->set_line(*expr);
@@ -236,7 +236,7 @@ static NetExpr* make_add_expr(const LineInfo*loc, NetExpr*expr1, NetExpr*expr2)
 static NetExpr* make_sub_expr(long val, NetExpr*expr)
 {
       verinum val_v (val, expr->expr_width());
-      val_v.has_sign(true);
+      val_v.has_sign(expr->has_sign());
 
       NetEConst*val_c = new NetEConst(val_v);
       val_c->set_line(*expr);
@@ -249,7 +249,26 @@ static NetExpr* make_sub_expr(long val, NetExpr*expr)
 }
 
 /*
- * Multiple an existing expression by a signed positive number.
+ * Subtract a signed constant from an existing expression.
+ */
+static NetExpr* make_sub_expr(NetExpr*expr, long val)
+{
+      verinum val_v (val, expr->expr_width());
+      val_v.has_sign(expr->has_sign());
+
+      NetEConst*val_c = new NetEConst(val_v);
+      val_c->set_line(*expr);
+
+      NetEBAdd*res = new NetEBAdd('-', expr, val_c, expr->expr_width(),
+                                  expr->has_sign());
+      res->set_line(*expr);
+
+      return res;
+}
+
+
+/*
+ * Multiply an existing expression by a signed positive number.
  * This does a lossless multiply, so the arguments will need to be
  * sized to match the output size.
  */
@@ -258,7 +277,7 @@ static NetExpr* make_mult_expr(NetExpr*expr, unsigned long val)
       const unsigned val_wid = ceil(log2((double)val)) ;
       unsigned use_wid = expr->expr_width() + val_wid;
       verinum val_v (val, use_wid);
-      val_v.has_sign(true);
+      val_v.has_sign(expr->has_sign());
 
       NetEConst*val_c = new NetEConst(val_v);
       val_c->set_line(*expr);
@@ -434,17 +453,41 @@ NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,
 	    -- pcur;
       }
 
-      long sb;
-      if (pcur->get_msb() >= pcur->get_lsb())
-	    sb = pcur->get_lsb();
-      else
-	    sb = pcur->get_msb();
-
+      long sb = min(pcur->get_lsb(), pcur->get_msb());
       long loff;
       reg->sb_to_slice(indices, sb, loff, lwid);
 
-      base = make_mult_expr(base, lwid);
-      base = make_add_expr(base, loff);
+      unsigned min_wid = base->expr_width();
+      if ((sb < 0) && !base->has_sign()) min_wid += 1;
+      if (min_wid < num_bits(pcur->get_lsb())) min_wid = pcur->get_lsb();
+      if (min_wid < num_bits(pcur->get_msb())) min_wid = pcur->get_msb();
+      base = pad_to_width(base, min_wid, *base);
+      if ((sb < 0) && !base->has_sign()) {
+	    NetESelect *tmp = new NetESelect(base, 0 , min_wid);
+	    tmp->set_line(*base);
+	    tmp->cast_signed(true);
+            base = tmp;
+      }
+
+      if (pcur->get_msb() >= pcur->get_lsb()) {
+	    if (pcur->get_lsb() != 0)
+		  base = make_sub_expr(base, pcur->get_lsb());
+	    base = make_mult_expr(base, lwid);
+	    min_wid = base->expr_width();
+	    if (min_wid < num_bits(loff)) min_wid = num_bits(loff);
+	    if (loff != 0) min_wid += 1;
+	    base = pad_to_width(base, min_wid, *base);
+	    base = make_add_expr(base, loff);
+      } else {
+	    if (pcur->get_msb() != 0)
+		  base = make_sub_expr(base, pcur->get_msb());
+	    base = make_mult_expr(base, lwid);
+	    min_wid = base->expr_width();
+	    if (min_wid < num_bits(loff)) min_wid = num_bits(loff);
+	    if (loff != 0) min_wid += 1;
+	    base = pad_to_width(base, min_wid, *base);
+	    base = make_sub_expr(loff, base);
+      }
       return base;
 }
 
@@ -802,9 +845,10 @@ NetExpr* condition_reduce(NetExpr*expr)
 }
 
 static NetExpr* do_elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
-				 int context_width, bool need_const, bool annotatable,
-				 bool force_expand,
-				 ivl_variable_type_t cast_type)
+				 int context_width, bool need_const,
+				 bool annotatable, bool force_expand,
+				 ivl_variable_type_t cast_type,
+				 bool force_unsigned)
 {
       PExpr::width_mode_t mode = PExpr::SIZED;
       if ((context_width == -2) && !gn_strict_expr_width_flag)
@@ -823,6 +867,11 @@ static NetExpr* do_elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
       unsigned pos_context_width = context_width > 0 ? context_width : 0;
       if ((pe->expr_type() != IVL_VT_REAL) && (expr_width < pos_context_width))
             expr_width = pos_context_width;
+
+	// If this is the RHS of a compressed assignment, the LHS also
+	// affects the expression type (signed/unsigned).
+      if (force_unsigned)
+	    pe->cast_signed(false);
 
       if (debug_elaborate) {
             cerr << pe->get_fileline() << ": elab_and_eval: test_width of "
@@ -910,15 +959,16 @@ static NetExpr* do_elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 
 NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 		       int context_width, bool need_const, bool annotatable,
-		       ivl_variable_type_t cast_type)
+		       ivl_variable_type_t cast_type, bool force_unsigned)
 {
       return do_elab_and_eval(des, scope, pe, context_width,
-			      need_const, annotatable, false, cast_type);
+			      need_const, annotatable, false,
+			      cast_type, force_unsigned);
 }
 
 /*
  * This variant of elab_and_eval does the expression losslessly, no
- * matter what the generation of verilog. This is in support of
+ * matter what the generation of Verilog. This is in support of
  * certain special contexts, notably index expressions.
  */
 NetExpr* elab_and_eval_lossless(Design*des, NetScope*scope, PExpr*pe,
@@ -926,7 +976,8 @@ NetExpr* elab_and_eval_lossless(Design*des, NetScope*scope, PExpr*pe,
 				 ivl_variable_type_t cast_type)
 {
       return do_elab_and_eval(des, scope, pe, context_width,
-			      need_const, annotatable, true, cast_type);
+			      need_const, annotatable, true,
+			      cast_type, false);
 }
 
 NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
@@ -1404,7 +1455,7 @@ bool evaluate_index_prefix(Design*des, NetScope*scope,
 		  return false;
 	    }
 
-	    prefix_indices .push_back(tmp);
+	    prefix_indices.push_back(tmp);
 	    delete texpr;
       }
 

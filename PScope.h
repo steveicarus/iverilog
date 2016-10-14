@@ -1,7 +1,7 @@
 #ifndef IVL_PScope_H
 #define IVL_PScope_H
 /*
- * Copyright (c) 2008-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,6 +36,7 @@ class PProcess;
 class PClass;
 class PTask;
 class PWire;
+class Statement;
 
 class Design;
 class NetScope;
@@ -52,9 +53,13 @@ class NetScope;
 class LexicalScope {
 
     public:
-      explicit LexicalScope(LexicalScope*parent) : parent_(parent) { }
+      enum lifetime_t { INHERITED, STATIC, AUTOMATIC };
+
+      explicit LexicalScope(LexicalScope*parent) : default_lifetime(INHERITED), parent_(parent) { }
 	// A virtual destructor is so that dynamic_cast can work.
       virtual ~LexicalScope() { }
+
+      lifetime_t default_lifetime;
 
       struct range_t {
 	      // True if this is an exclude
@@ -108,6 +113,9 @@ class LexicalScope {
         // creating implicit nets.
       map<perm_string,LineInfo*> genvars;
 
+	// Variable initializations in this scope
+      vector<Statement*> var_inits;
+
 	// Behaviors (processes) in this scope
       list<PProcess*> behaviors;
       list<AProcess*> analog_behaviors;
@@ -116,6 +124,8 @@ class LexicalScope {
       std::set<enum_type_t*> enum_sets;
 
       LexicalScope* parent_scope() const { return parent_; }
+
+      virtual bool var_init_needs_explicit_lifetime() const;
 
     protected:
       void dump_typedefs_(ostream&out, unsigned indent) const;
@@ -129,6 +139,10 @@ class LexicalScope {
       void dump_events_(ostream&out, unsigned indent) const;
 
       void dump_wires_(ostream&out, unsigned indent) const;
+
+      void dump_var_inits_(ostream&out, unsigned indent) const;
+
+      bool elaborate_var_inits_(Design*des, NetScope*scope) const;
 
     private:
       LexicalScope*parent_;
@@ -145,11 +159,16 @@ class PScope : public LexicalScope {
 	// modules do not nest in Verilog, the parent must be nil for
 	// modules. Scopes for tasks and functions point to their
 	// containing module.
-      PScope(perm_string name, LexicalScope*parent);
-      PScope(perm_string name);
+      explicit PScope(perm_string name, LexicalScope*parent =0);
       virtual ~PScope();
 
       perm_string pscope_name() const { return name_; }
+
+	/* These are the timescale for this scope. The default is
+	   set by the `timescale directive or, in SystemVerilog,
+	   by timeunit and timeprecision statements. */
+      int time_unit, time_precision;
+      bool time_from_timescale;
 
     protected:
       bool elaborate_sig_wires_(Design*des, NetScope*scope) const;
@@ -168,14 +187,13 @@ class PScope : public LexicalScope {
 class PScopeExtra : public PScope {
 
     public:
-      PScopeExtra(perm_string, LexicalScope*parent);
-      PScopeExtra(perm_string);
+      explicit PScopeExtra(perm_string, LexicalScope*parent =0);
       ~PScopeExtra();
 
 	/* Task definitions within this module */
       std::map<perm_string,PTask*> tasks;
       std::map<perm_string,PFunction*> funcs;
-	/* class definitions within this module. */
+	/* Class definitions within this module. */
       std::map<perm_string,PClass*> classes;
 	/* This is the lexical order of the classes, and is used by
 	   elaboration to choose an elaboration order. */

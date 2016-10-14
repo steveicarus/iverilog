@@ -1,7 +1,7 @@
 #ifndef IVL_schedule_H
 #define IVL_schedule_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,6 +34,8 @@
  */
 extern void schedule_vthread(vthread_t thr, vvp_time64_t delay,
 			     bool push_flag =false);
+
+extern void schedule_init_vthread(vthread_t thr);
 
 extern void schedule_final_vthread(vthread_t thr);
 
@@ -152,6 +154,13 @@ extern void schedule_simulate(void);
  * but is used for printouts and stuff.
  */
 extern vvp_time64_t schedule_simtime(void);
+
+/*
+ * Indicate that the simulator is running the rosync callbacks. This is
+ * used to prevent the callbacks from performing any write operations
+ * in the current simulation time slot.
+ */
+extern bool schedule_at_rosync(void);
 
 /*
  * This function is the equivalent of the $finish system task. It

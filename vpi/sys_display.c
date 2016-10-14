@@ -1971,12 +1971,7 @@ static PLI_INT32 sys_printtimescale_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
             item = vpi_scan(argv);
             vpi_free_object(argv);
       }
-
-      if (vpi_get(vpiType, item) != vpiModule) {
-	    scope = vpi_handle(vpiModule, item);
-      } else {
-	    scope = item;
-      }
+      scope = sys_func_module(item);
 
       vpi_printf("Time scale of (%s) is ", vpi_get_str(vpiFullName, item));
       vpi_printf("%s / ", pts_convert(vpi_get(vpiTimeUnit, scope)));

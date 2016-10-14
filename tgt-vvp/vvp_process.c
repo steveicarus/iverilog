@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -224,6 +224,15 @@ static void assign_to_lvector(ivl_lval_t lval,
       unsigned long part_off = 0;
 
       const unsigned long use_word = 0;
+
+      if (ivl_signal_type(sig) == IVL_SIT_UWIRE) {
+	    fprintf(stderr, "%s:%u: tgt-vvp sorry: V10 does not support "
+		    "mixed continuous and non-blocking assignments to "
+		    "different parts of the same vector (%s).\n",
+		    ivl_signal_file(sig), ivl_signal_lineno(sig),
+		    ivl_signal_basename(sig));
+	    vvp_errors += 1;
+      }
 
 	// Detect the case that this is actually a non-blocking assign
 	// to an array word. In that case, run off somewhere else to
@@ -2298,6 +2307,7 @@ int draw_process(ivl_process_t net, void*x)
       ivl_scope_t scope = ivl_process_scope(net);
       ivl_statement_t stmt = ivl_process_stmt(net);
 
+      int init_flag = 0;
       int push_flag = 0;
 
       (void)x; /* Parameter is not used. */
@@ -2305,6 +2315,12 @@ int draw_process(ivl_process_t net, void*x)
       for (idx = 0 ;  idx < ivl_process_attr_cnt(net) ;  idx += 1) {
 
 	    ivl_attribute_t attr = ivl_process_attr_val(net, idx);
+
+	    if (strcmp(attr->key, "_ivl_schedule_init") == 0) {
+
+		  init_flag = 1;
+
+	    }
 
 	    if (strcmp(attr->key, "_ivl_schedule_push") == 0) {
 
@@ -2349,7 +2365,9 @@ int draw_process(ivl_process_t net, void*x)
 
 	  case IVL_PR_INITIAL:
 	  case IVL_PR_ALWAYS:
-	    if (push_flag) {
+	    if (init_flag) {
+		  fprintf(vvp_out, "    .thread T_%u, $init;\n", thread_count);
+	    } else if (push_flag) {
 		  fprintf(vvp_out, "    .thread T_%u, $push;\n", thread_count);
 	    } else {
 		  fprintf(vvp_out, "    .thread T_%u;\n", thread_count);

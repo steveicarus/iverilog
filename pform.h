@@ -1,7 +1,7 @@
 #ifndef IVL_pform_H
 #define IVL_pform_H
 /*
- * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -163,15 +163,23 @@ extern PWire* pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_ty
  */
 extern void pform_startmodule(const struct vlltype&loc, const char*name,
 			      bool program_block, bool is_interface,
+			      LexicalScope::lifetime_t lifetime,
 			      list<named_pexpr_t>*attr);
 extern void pform_check_timeunit_prec();
 extern void pform_module_set_ports(vector<Module::port_t*>*);
 
-/* This function is used to support the port definition in a
-   port_definition_list. In this case, we have everything needed to
-   define the port, all in one place. */
+/* These functions are used when we have a complete port definition, either
+   in an ansi style or non-ansi style declaration. In this case, we have
+   everything needed to define the port, all in one place. */
 extern void pform_module_define_port(const struct vlltype&li,
 				     perm_string name,
+				     NetNet::PortType,
+				     NetNet::Type type,
+				     data_type_t*vtype,
+				     list<named_pexpr_t>*attr,
+				     bool keep_attr =false);
+extern void pform_module_define_port(const struct vlltype&li,
+				     list<pform_port_t>*ports,
 				     NetNet::PortType,
 				     NetNet::Type type,
 				     data_type_t*vtype,
@@ -186,7 +194,8 @@ extern void pform_endmodule(const char*, bool inside_celldefine,
 extern void pform_start_class_declaration(const struct vlltype&loc,
 					  class_type_t*type,
 					  data_type_t*base_type,
-					  std::list<PExpr*>*base_exprs);
+					  std::list<PExpr*>*base_exprs,
+					  LexicalScope::lifetime_t lifetime);
 extern void pform_class_property(const struct vlltype&loc,
 				 property_qualifier_t pq,
 				 data_type_t*data_type,
@@ -211,7 +220,8 @@ extern void pform_make_udp(perm_string name,
  * Package related functions.
  */
 extern void pform_start_package_declaration(const struct vlltype&loc,
-					    const char*type);
+					    const char*type,
+					    LexicalScope::lifetime_t lifetime);
 extern void pform_end_package_declaration(const struct vlltype&loc);
 extern void pform_package_import(const struct vlltype&loc,
 				 PPackage*pkg, const char*ident);
@@ -246,13 +256,20 @@ extern void pform_pop_scope();
  */
 extern LexicalScope* pform_peek_scope();
 
-extern PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name);
+extern PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name,
+				      LexicalScope::lifetime_t lifetime);
+
 extern PFunction*pform_push_constructor_scope(const struct vlltype&loc);
-extern PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name);
+
+extern PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name,
+					  LexicalScope::lifetime_t lifetime);
+
 extern PTask*pform_push_task_scope(const struct vlltype&loc, char*name,
-                                   bool is_auto);
+				   LexicalScope::lifetime_t lifetime);
+
 extern PFunction*pform_push_function_scope(const struct vlltype&loc, const char*name,
-                                           bool is_auto);
+					   LexicalScope::lifetime_t lifetime);
+
 extern PBlock*pform_push_block_scope(char*name, PBlock::BL_TYPE tt);
 
 extern void pform_put_behavior_in_scope(AProcess*proc);
@@ -351,17 +368,17 @@ extern void pform_makewire(const struct vlltype&li,
 			   list<perm_string>*names,
 			   list<named_pexpr_t>*attr);
 
-extern void pform_make_reginit(const struct vlltype&li,
-			       perm_string name, PExpr*expr);
+extern void pform_make_var_init(const struct vlltype&li,
+				perm_string name, PExpr*expr);
 
-  /* Look up the names of the wires, and set the port type,
-     i.e. input, output or inout. If the wire does not exist, create
-     it. The second form takes a single name. */
+/* This function is used when we have an incomplete port definition in
+   a non-ansi style declaration. Look up the names of the wires, and set
+   the port type, i.e. input, output or inout, and, if specified, the
+   range and signedness. If the wire does not exist, create it. */
 extern void pform_set_port_type(const struct vlltype&li,
-				list<perm_string>*names,
-				list<pform_range_t>*range,
-				bool signed_flag,
+				list<pform_port_t>*ports,
 				NetNet::PortType,
+				data_type_t*dt,
 				list<named_pexpr_t>*attr);
 
 extern void pform_set_reg_idx(perm_string name,

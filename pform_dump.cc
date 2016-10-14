@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -318,7 +318,7 @@ void PECallFunction::dump(ostream &out) const
 
 void PECastSize::dump(ostream &out) const
 {
-      out << size_ << "'(";
+      out << *size_ << "'(";
       base_->dump(out);
       out << ")";
 }
@@ -789,6 +789,8 @@ void PBlock::dump(ostream&out, unsigned ind) const
             dump_events_(out, ind+2);
 
 	    dump_wires_(out, ind+2);
+
+	    dump_var_inits_(out, ind+2);
       }
 
       for (unsigned idx = 0 ;  idx < list_.size() ;  idx += 1) {
@@ -1030,6 +1032,8 @@ void PFunction::dump(ostream&out, unsigned ind) const
 
       dump_wires_(out, ind+2);
 
+      dump_var_inits_(out, ind+2);
+
       if (statement_)
 	    statement_->dump(out, ind+2);
       else
@@ -1071,6 +1075,8 @@ void PTask::dump(ostream&out, unsigned ind) const
       dump_events_(out, ind+2);
 
       dump_wires_(out, ind+2);
+
+      dump_var_inits_(out, ind+2);
 
       if (statement_)
 	    statement_->dump(out, ind+2);
@@ -1269,6 +1275,8 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 	    (*idx)->dump(out, indent+2);
       }
 
+      dump_var_inits_(out, indent+2);
+
       for (list<PProcess*>::const_iterator idx = behaviors.begin()
 		 ; idx != behaviors.end() ; ++ idx ) {
 	    (*idx)->dump(out, indent+2);
@@ -1405,6 +1413,14 @@ void LexicalScope::dump_wires_(ostream&out, unsigned indent) const
 		 ; wire != wires.end() ; ++ wire ) {
 
 	    (*wire).second->dump(out, indent);
+      }
+}
+
+void LexicalScope::dump_var_inits_(ostream&out, unsigned indent) const
+{
+	// Iterate through and display all the register initializations.
+      for (unsigned idx = 0; idx < var_inits.size(); idx += 1) {
+	    var_inits[idx]->dump(out, indent);
       }
 }
 
@@ -1564,6 +1580,7 @@ void Module::dump(ostream&out) const
 	    (*gate)->dump(out);
       }
 
+      dump_var_inits_(out, 4);
 
       for (list<PProcess*>::const_iterator behav = behaviors.begin()
 		 ; behav != behaviors.end() ; ++ behav ) {

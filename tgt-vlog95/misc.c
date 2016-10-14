@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2016 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -747,7 +747,9 @@ void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex, unsigned allow_UD)
  * This function traverses the scope tree looking for the enclosing module
  * scope. When it is found the module scope is returned. As far as this
  * translation is concerned a package is a special form of a module
- * definition and a class is also a top level scope.
+ * definition and a class is also a top level scope. In SystemVerilog,
+ * tasks and functions can also be top level scopes - we create a wrapper
+ * module for these later.
  */
 ivl_scope_t get_module_scope(ivl_scope_t scope)
 {
@@ -756,6 +758,12 @@ ivl_scope_t get_module_scope(ivl_scope_t scope)
              (ivl_scope_type(scope) != IVL_SCT_PACKAGE) &&
              (ivl_scope_type(scope) != IVL_SCT_CLASS)) {
 	    ivl_scope_t pscope = ivl_scope_parent(scope);
+	    if (pscope == 0) {
+		  if (ivl_scope_type(scope) == IVL_SCT_TASK)
+			break;
+		  if (ivl_scope_type(scope) == IVL_SCT_FUNCTION)
+			break;
+	    }
 	    assert(pscope);
 	    scope = pscope;
       }
@@ -872,7 +880,8 @@ void emit_scope_path(ivl_scope_t scope, ivl_scope_t call_scope)
 
 	/* Check to see if this is a root scope task or function. */
       if (ivl_scope_parent(call_scope) == 0) {
-	    fprintf(vlog_out, "ivl_root_scope.");
+	    fprintf(vlog_out, "ivl_root_scope_%s.",
+		    ivl_scope_basename(call_scope));
 	    mod_scope = 0;
 	    call_mod_scope = 0;
       } else {
@@ -936,5 +945,32 @@ void get_sig_msb_lsb(ivl_signal_t sig, int *msb, int *lsb)
 	    *msb = ivl_signal_width(sig) - 1;
 	    *lsb = 0;
 	    break;
+      }
+}
+
+const char*get_time_const(int time_value)
+{
+      switch (time_value) {
+	case   2: return "100s";
+	case   1: return "10s";
+	case   0: return "1s";
+	case  -1: return "100ms";
+	case  -2: return "10ms";
+	case  -3: return "1ms";
+	case  -4: return "100us";
+	case  -5: return "10us";
+	case  -6: return "1us";
+	case  -7: return "100ns";
+	case  -8: return "10ns";
+	case  -9: return "1ns";
+	case -10: return "100ps";
+	case -11: return "10ps";
+	case -12: return "1ps";
+	case -13: return "100fs";
+	case -14: return "10fs";
+	case -15: return "1fs";
+	default:
+	    fprintf(stderr, "Invalid time constant value %d.\n", time_value);
+	    return "N/A";
       }
 }

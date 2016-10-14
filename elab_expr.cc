@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -90,7 +90,7 @@ static NetBranch* find_existing_implicit_branch(NetNet*sig, NetNet*gnd)
 
 NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 			     ivl_variable_type_t lv_type, unsigned lv_width,
-			     PExpr*expr, bool need_const)
+			     PExpr*expr, bool need_const, bool force_unsigned)
 {
       if (debug_elaborate) {
 	    cerr << expr->get_fileline() << ": elaborate_rval_expr: "
@@ -135,7 +135,7 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
       }
 
       return elab_and_eval(des, scope, expr, context_wid, need_const,
-			   false, lv_type);
+			   false, lv_type, force_unsigned);
 }
 
 /*
@@ -675,10 +675,7 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
       NetExpr*tmp = new NetEBComp(op_, lp, rp);
       tmp->set_line(*this);
 
-      tmp = pad_to_width(tmp, expr_wid, *this);
-      tmp->cast_signed(signed_flag_);
-
-      return tmp;
+      return pad_to_width(tmp, expr_wid, signed_flag_, *this);
 }
 
 unsigned PEBLogic::test_width(Design*, NetScope*, width_mode_t&)
@@ -716,10 +713,7 @@ NetExpr*PEBLogic::elaborate_expr(Design*des, NetScope*scope,
       NetExpr*tmp = new NetEBLogic(op_, lp, rp);
       tmp->set_line(*this);
 
-      tmp = pad_to_width(tmp, expr_wid, *this);
-      tmp->cast_signed(signed_flag_);
-
-      return tmp;
+      return pad_to_width(tmp, expr_wid, signed_flag_, *this);
 }
 
 unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
@@ -1035,8 +1029,7 @@ NetExpr*PEBShift::elaborate_expr_leaf(Design*des, NetExpr*lp, NetExpr*rp,
 		  tmp->set_line(*this);
 		  tmp = new NetESelect(lp, tmp, 1);
 		  tmp->set_line(*this);
-		  tmp = pad_to_width(tmp, expr_wid, *this);
-		  tmp->cast_signed(true);
+		  tmp = pad_to_width(tmp, expr_wid, true, *this);
 
                   delete rp;
 		  return tmp;
@@ -1414,23 +1407,7 @@ NetExpr*PECallFunction::cast_to_width_(NetExpr*expr, unsigned wid) const
 		 << " from expr_width()=" << expr->expr_width() << endl;
       }
 
-        /* If the expression is a const, then replace it with a new
-           const. This is a more efficient result. */
-      if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
-            tmp->cast_signed(signed_flag_);
-            if (wid != tmp->expr_width()) {
-                  tmp = new NetEConst(verinum(tmp->value(), wid));
-                  tmp->set_line(*this);
-                  delete expr;
-            }
-            return tmp;
-      }
-
-      NetESelect*tmp = new NetESelect(expr, 0, wid);
-      tmp->cast_signed(signed_flag_);
-      tmp->set_line(*this);
-
-      return tmp;
+      return cast_to_width(expr, wid, signed_flag_, *this);
 }
 
 /*
@@ -1606,10 +1583,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
       if (missing_parms || parm_errors)
             return 0;
 
-      NetExpr*tmp = pad_to_width(fun, expr_wid, *this);
-      tmp->cast_signed(signed_flag_);
-
-      return tmp;
+      return pad_to_width(fun, expr_wid, signed_flag_, *this);
 }
 
 NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
@@ -1666,10 +1640,7 @@ NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
       NetExpr*tmp = new NetEAccess(branch, nature);
       tmp->set_line(*this);
 
-      tmp = pad_to_width(tmp, expr_wid, *this);
-      tmp->cast_signed(signed_flag_);
-
-      return tmp;
+      return pad_to_width(tmp, expr_wid, signed_flag_, *this);
 }
 
 /*
@@ -2281,10 +2252,7 @@ NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*ds
 	    if(res->darray_type())
 	        return func;
 
-            NetExpr*tmp = pad_to_width(func, expr_wid, *this);
-            tmp->cast_signed(signed_flag_);
-
-	    return tmp;
+            return pad_to_width(func, expr_wid, signed_flag_, *this);
       }
 
       cerr << get_fileline() << ": internal error: Unable to locate "
@@ -2521,22 +2489,54 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 
 unsigned PECastSize::test_width(Design*des, NetScope*scope, width_mode_t&)
 {
-      expr_width_ = size_;
+      ivl_assert(*this, size_);
+      ivl_assert(*this, base_);
+
+      NetExpr*size_ex = elab_and_eval(des, scope, size_, -1, true);
+      NetEConst*size_ce = dynamic_cast<NetEConst*>(size_ex);
+      expr_width_ = size_ce ? size_ce->value().as_ulong() : 0;
+      delete size_ex;
+      if (expr_width_ == 0) {
+	    cerr << get_fileline() << ": error: Cast size expression "
+		    "must be constant and greater than zero." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       width_mode_t tmp_mode = PExpr::SIZED;
       base_->test_width(des, scope, tmp_mode);
 
-      return size_;
+      if (!type_is_vectorable(base_->expr_type())) {
+	    cerr << get_fileline() << ": error: Cast base expression "
+		    "must be a vector type." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      expr_type_   = base_->expr_type();
+      min_width_   = expr_width_;
+      signed_flag_ = base_->has_sign();
+
+      return expr_width_;
 }
 
 NetExpr* PECastSize::elaborate_expr(Design*des, NetScope*scope,
-				    unsigned, unsigned) const
+				    unsigned expr_wid, unsigned flags) const
 {
-      NetExpr*sub = base_->elaborate_expr(des, scope, base_->expr_width(), NO_FLAGS);
-      NetESelect*sel = new NetESelect(sub, 0, size_);
-      sel->set_line(*this);
+      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
 
-      return sel;
+      ivl_assert(*this, size_);
+      ivl_assert(*this, base_);
+
+      NetExpr*sub = base_->elaborate_expr(des, scope, base_->expr_width(), flags);
+
+	// Perform the cast. The extension method (zero/sign), if needed,
+	// depends on the type of the base expression.
+      NetExpr*tmp = cast_to_width(sub, expr_width_, base_->has_sign(), *this);
+
+	// Pad up to the expression width. The extension method (zero/sign)
+	// depends on the type of enclosing expression.
+      return pad_to_width(tmp, expr_wid, signed_flag_, *this);
 }
 
 unsigned PECastType::test_width(Design*des, NetScope*scope, width_mode_t&wid)
@@ -2851,8 +2851,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      NetExpr*tmp = pad_to_width(concat, expr_wid, *this);
-      tmp->cast_signed(signed_flag_);
+      NetExpr*tmp = pad_to_width(concat, expr_wid, signed_flag_, *this);
 
       concat_depth -= 1;
       return tmp;
@@ -3769,10 +3768,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
             if (!tmp) return 0;
 
-            tmp = pad_to_width(tmp, expr_wid, *this);
-            tmp->cast_signed(signed_flag_);
-
-            return tmp;
+            return pad_to_width(tmp, expr_wid, signed_flag_, *this);
       }
 
 	// If the identifier names a signal (a register or wire)
@@ -3808,10 +3804,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		       << ", tmp=" << *tmp << endl;
 	    }
 
-            tmp = pad_to_width(tmp, expr_wid, *this);
-            tmp->cast_signed(signed_flag_);
-
-            return tmp;
+            return pad_to_width(tmp, expr_wid, signed_flag_, *this);
       }
 
 	// If the identifier is a named event
@@ -3911,9 +3904,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 							       member_comp);
 			if (!tmp) return 0;
 
-			tmp = pad_to_width(tmp, expr_wid, *this);
-			tmp->cast_signed(signed_flag_);
-			return tmp;
+			return pad_to_width(tmp, expr_wid, signed_flag_, *this);
 		  }
 
 		  if (net->class_type() != 0) {
@@ -4492,7 +4483,7 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 		       << "Elaborate parameter <" << path_
 		       << "> as enumeration constant." << *etmp << endl;
 	    tmp = etmp->dup_expr();
-            tmp = pad_to_width(tmp, expr_wid, *this);
+            tmp = pad_to_width(tmp, expr_wid, signed_flag_, *this);
 
       } else {
 	    perm_string name = peek_tail_name(path_);
@@ -6082,7 +6073,7 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 		  }
 		  tmp->set_line(*this);
 	    }
-            tmp = pad_to_width(tmp, expr_wid, *this);
+            tmp = pad_to_width(tmp, expr_wid, signed_flag_, *this);
 	    break;
 
 	  case '&': // Reduction AND
@@ -6100,7 +6091,7 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 	    }
 	    tmp = new NetEUReduce(op_, ip);
 	    tmp->set_line(*this);
-            tmp = pad_to_width(tmp, expr_wid, *this);
+            tmp = pad_to_width(tmp, expr_wid, signed_flag_, *this);
 	    break;
 
 	  case '~':

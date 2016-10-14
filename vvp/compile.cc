@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1935,7 +1935,9 @@ void compile_thread(char*start_sym, char*flag)
 
       vthread_t thr = vthread_new(pc, vpip_peek_current_scope());
 
-      if (flag && (strcmp(flag,"$final") == 0))
+      if (flag && (strcmp(flag,"$init") == 0))
+	    schedule_init_vthread(thr);
+      else if (flag && (strcmp(flag,"$final") == 0))
 	    schedule_final_vthread(thr);
       else
 	    schedule_vthread(thr, 0, push_flag);

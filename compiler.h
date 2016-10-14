@@ -1,7 +1,7 @@
 #ifndef IVL_compiler_H
 #define IVL_compiler_H
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -142,7 +142,8 @@ extern int build_library_index(const char*path, bool key_case_sensitive);
 
 /* This is the generation of Verilog that the compiler is asked to
    support. Then there are also more detailed controls for more
-   specific language features. */
+   specific language features. Note that the compiler often assumes
+   this is an ordered list. */
 enum generation_t {
       GN_VER1995  = 1,
       GN_VER2001_NOCONFIG  = 2,
@@ -186,25 +187,24 @@ extern bool gn_strict_ca_eval_flag;
    standard expression width rules. */
 extern bool gn_strict_expr_width_flag;
 
-/* If variables can be converted to uwires by a continuous assignment
-   (assuming no procedural assign, then return true. This will be true
-   for SystemVerilog */
-static inline bool gn_var_can_be_uwire(void)
+/* If this flag is true, then don't add a for-loop control variable
+   to an implicit event_expression list if it is only used inside the
+   loop. */
+extern bool gn_shared_loop_index_flag;
+
+static inline bool gn_system_verilog(void)
 {
-      if (generation_flag == GN_VER2005_SV ||
-          generation_flag == GN_VER2009  ||
-          generation_flag == GN_VER2012)
+      if (generation_flag >= GN_VER2005_SV)
 	    return true;
       return false;
 }
 
-static inline bool gn_system_verilog(void)
+/* If variables can be converted to uwires by a continuous assignment
+   (assuming no procedural assign), then return true. This will be true
+   for SystemVerilog */
+static inline bool gn_var_can_be_uwire(void)
 {
-      if (generation_flag == GN_VER2005_SV ||
-          generation_flag == GN_VER2009  ||
-          generation_flag == GN_VER2012)
-	    return true;
-      return false;
+      return gn_system_verilog();
 }
 
 static inline bool gn_modules_nest(void)

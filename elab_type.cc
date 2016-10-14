@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,11 +17,13 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+# include  "PExpr.h"
 # include  "pform_types.h"
 # include  "netlist.h"
 # include  "netclass.h"
 # include  "netdarray.h"
 # include  "netenum.h"
+# include  "netqueue.h"
 # include  "netparray.h"
 # include  "netscalar.h"
 # include  "netstruct.h"
@@ -242,6 +244,16 @@ ivl_type_s* uarray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
       if (cur->first==0 && cur->second==0) {
 	    assert(dims->size()==1);
 	    ivl_type_s*res = new netdarray_t(btype);
+	    return res;
+      }
+
+	// Special case: if the dimension is null:nil. this is a queue.
+      if (cur->second==0 && dynamic_cast<PENull*>(cur->first)) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "SV queues inside classes are not yet supported." << endl;
+	    des->errors += 1;
+
+	    ivl_type_s*res = new netqueue_t(btype);
 	    return res;
       }
 

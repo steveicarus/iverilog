@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,6 +41,19 @@ void vvp_fun_pmos_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 
       en_ = inv_en_? ~bit : bit;
       generate_output_(ptr);
+}
+
+void vvp_fun_pmos_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			         unsigned base, unsigned wid, unsigned vwid,
+                                 vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+}
+
+void vvp_fun_pmos_::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
+			         unsigned base, unsigned wid, unsigned vwid)
+{
+      recv_vec8_pv_(ptr, bit, base, wid, vwid);
 }
 
 void vvp_fun_pmos_::generate_output_(vvp_net_ptr_t ptr)
@@ -147,7 +160,18 @@ void vvp_fun_cmos_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t &bit,
       generate_output_(ptr);
 }
 
-#include <iostream>
+void vvp_fun_cmos_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			         unsigned base, unsigned wid, unsigned vwid,
+                                 vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+}
+
+void vvp_fun_cmos_::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
+			         unsigned base, unsigned wid, unsigned vwid)
+{
+      recv_vec8_pv_(ptr, bit, base, wid, vwid);
+}
 
 void vvp_fun_cmos_::generate_output_(vvp_net_ptr_t ptr)
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -36,6 +36,7 @@
 # include  "PEvent.h"
 # include  "PGenerate.h"
 # include  "PPackage.h"
+# include  "PScope.h"
 # include  "PSpec.h"
 # include  "netlist.h"
 # include  "netenum.h"
@@ -49,6 +50,9 @@
 # include  "compiler.h"
 # include  "ivl_assert.h"
 
+
+// Implemented in elab_scope.cc
+extern void set_scope_timescale(Design*des, NetScope*scope, PScope*pscope);
 
 void PGate::elaborate(Design*, NetScope*) const
 {
@@ -787,7 +791,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
       if (check_delay_count(des)) return;
       NetExpr* rise_time, *fall_time, *decay_time;
-      eval_delays(des, scope, rise_time, fall_time, decay_time);
+      eval_delays(des, scope, rise_time, fall_time, decay_time, true);
 
       struct attrib_list_t*attrib_list;
       unsigned attrib_list_n = 0;
@@ -1421,6 +1425,16 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		       << prts[0]->name() << " is coerced to inout." << endl;
 	    }
 
+	    if (!prts.empty() && (prts[0]->port_type() == NetNet::POUTPUT)
+                && (prts[0]->type() != NetNet::REG)
+                && prts[0]->pin(0).nexus()->has_floating_input()
+                && pins[idx]->is_collapsible_net(des, scope)) {
+                  prts[0]->port_type(NetNet::PINOUT);
+
+		  cerr << pins[idx]->get_fileline() << ": warning: output port "
+		       << prts[0]->name() << " is coerced to inout." << endl;
+	    }
+
 	      // Elaborate the expression that connects to the
 	      // module[s] port. sig is the thing outside the module
 	      // that connects to the port.
@@ -2000,7 +2014,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 		  PDelays tmp_del;
 		  tmp_del.set_delays(overrides_, false);
 		  tmp_del.eval_delays(des, scope, rise_expr, fall_expr,
-		                      decay_expr);
+		                      decay_expr, true);
 	    }
       }
 
@@ -2325,7 +2339,8 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 				   ivl_type_t lv_net_type,
 				   ivl_variable_type_t lv_type,
-				   unsigned lv_width) const
+				   unsigned lv_width,
+				   bool force_unsigned) const
 {
       ivl_assert(*this, rval_);
 
@@ -2334,7 +2349,7 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 	// should look into fixing calls to this method to pass a
 	// net_type instead of the separate lv_width/lv_type values.
       NetExpr*rv = elaborate_rval_expr(des, scope, lv_net_type, lv_type, lv_width,
-				       rval(), is_constant_);
+				       rval(), is_constant_, force_unsigned);
 
       if (!is_constant_ || !rv) return rv;
 
@@ -2452,10 +2467,35 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
 
-      NetExpr*rv = elaborate_rval_(des, scope, 0, lv->expr_type(), count_lval_width(lv));
+	// Compressed assignments should behave identically to the
+	// equivalent uncompressed assignments. This means we need
+	// to take the type of the LHS into account when determining
+	// the type of the RHS expression.
+      bool force_unsigned;
+      switch (op_) {
+	  case 'l':
+	  case 'r':
+	  case 'R':
+	      // The right-hand operand of shift operations is
+	      // self-determined.
+	    force_unsigned = false;
+	    break;
+	  default:
+	    force_unsigned = !lv->get_signed();
+	    break;
+      }
+      NetExpr*rv = elaborate_rval_(des, scope, 0, lv->expr_type(),
+				   count_lval_width(lv), force_unsigned);
       if (rv == 0) return 0;
 
-      NetAssign*cur = new NetAssign(lv, op_, rv);
+	// The ivl_target API doesn't support signalling the type
+	// of a lval, so convert arithmetic shifts into logical
+	// shifts now if the lval is unsigned.
+      char op = op_;
+      if ((op == 'R') && !lv->get_signed())
+	    op = 'r';
+
+      NetAssign*cur = new NetAssign(lv, op, rv);
       cur->set_line(*this);
 
       return cur;
@@ -2868,13 +2908,26 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  return 0;
 	    }
-
 	    assert(nscope);
-
-	    elaborate_behaviors_(des, nscope);
       }
 
       NetBlock*cur = new NetBlock(type, nscope);
+
+      if (nscope) {
+	      // Handle any variable initialization statements in this scope.
+	      // For automatic scopes these statements need to be executed
+	      // each time the block is entered, so add them to the main
+	      // block. For static scopes, put them in a separate process
+	      // that will be executed at the start of simulation.
+	    if (nscope->is_auto()) {
+		  for (unsigned idx = 0; idx < var_inits.size(); idx += 1) {
+			NetProc*tmp = var_inits[idx]->elaborate(des, nscope);
+			if (tmp) cur->append(tmp);
+		  }
+	    } else {
+		  elaborate_var_inits_(des, nscope);
+	    }
+      }
 
       if (nscope == 0)
 	    nscope = scope;
@@ -3778,7 +3831,9 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	   expression that can be a target to a procedural
 	   assignment, including a memory word. */
 
-      for (unsigned idx = 0 ;  idx < parm_count ;  idx += 1) {
+      for (unsigned idx = use_this?1:0 ;  idx < parm_count ;  idx += 1) {
+
+	    size_t parms_idx = use_this? idx-1 : idx;
 
 	    NetNet*port = def->port(idx);
 
@@ -3794,12 +3849,12 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 		 message. Note that the elaborate_lval method already
 		 printed a detailed message for the latter case. */
 	    NetAssign_*lv = 0;
-	    if (idx < parms_.size() && parms_[idx]) {
-		  lv = parms_[idx]->elaborate_lval(des, scope, false, false);
+	    if (parms_idx < parms_.size() && parms_[parms_idx]) {
+		  lv = parms_[parms_idx]->elaborate_lval(des, scope, false, false);
 		  if (lv == 0) {
-			cerr << parms_[idx]->get_fileline() << ": error: "
+			cerr << parms_[parms_idx]->get_fileline() << ": error: "
 			     << "I give up on task port " << (idx+1)
-			     << " expression: " << *parms_[idx] << endl;
+			     << " expression: " << *parms_[parms_idx] << endl;
 		  }
 	    } else if (port->port_type() == NetNet::POUTPUT) {
 		    // Output ports were skipped earlier, so
@@ -4997,7 +5052,6 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return;
       }
-
       assert(def);
 
       ivl_assert(*this, statement_);
@@ -5008,6 +5062,31 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
             scope->is_const_func(true); // error recovery
 	    des->errors += 1;
 	    return;
+      }
+
+	// Handle any variable initialization statements in this scope.
+	// For automatic functions, these statements need to be executed
+	// each time the function is called, so insert them at the start
+	// of the elaborated definition. For static functions, put them
+	// in a separate process that will be executed before the start
+	// of simulation.
+      if (is_auto_) {
+	      // Get the NetBlock of the statement. If it is not a
+	      // NetBlock then create one to wrap the initialization
+	      // statements and the original statement.
+	    NetBlock*blk = dynamic_cast<NetBlock*> (st);
+	    if ((blk == 0) && (var_inits.size() > 0)) {
+		  blk = new NetBlock(NetBlock::SEQU, scope);
+		  blk->set_line(*this);
+		  blk->append(st);
+		  st = blk;
+	    }
+	    for (unsigned idx = var_inits.size(); idx > 0; idx -= 1) {
+		  NetProc*tmp = var_inits[idx-1]->elaborate(des, scope);
+		  if (tmp) blk->prepend(tmp);
+	    }
+      } else {
+	    elaborate_var_inits_(des, scope);
       }
 
       def->set_proc(st);
@@ -5172,11 +5251,6 @@ NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
 
 void PTask::elaborate(Design*des, NetScope*task) const
 {
-	// Elaborate any processes that are part of this scope that
-	// aren't the definition itself. This can happen, for example,
-	// with variable initialization statements in this scope.
-      elaborate_behaviors_(des, task);
-
       NetTaskDef*def = task->task_def();
       assert(def);
 
@@ -5193,6 +5267,31 @@ void PTask::elaborate(Design*des, NetScope*task) const
 		       << " at " << get_fileline() << "." << endl;
 		  return;
 	    }
+      }
+
+	// Handle any variable initialization statements in this scope.
+	// For automatic tasks , these statements need to be executed
+	// each time the task is called, so insert them at the start
+	// of the elaborated definition. For static tasks, put them
+	// in a separate process that will be executed before the start
+	// of simulation.
+      if (is_auto_) {
+	      // Get the NetBlock of the statement. If it is not a
+	      // NetBlock then create one to wrap the initialization
+	      // statements and the original statement.
+	    NetBlock*blk = dynamic_cast<NetBlock*> (st);
+	    if ((blk == 0) && (var_inits.size() > 0)) {
+		  blk = new NetBlock(NetBlock::SEQU, task);
+		  blk->set_line(*this);
+		  blk->append(st);
+		  st = blk;
+	    }
+	    for (unsigned idx = var_inits.size(); idx > 0; idx -= 1) {
+		  NetProc*tmp = var_inits[idx-1]->elaborate(des, task);
+		  if (tmp) blk->prepend(tmp);
+	    }
+      } else {
+	    elaborate_var_inits_(des, task);
       }
 
       def->set_proc(st);
@@ -5651,6 +5750,10 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	    (*gt)->elaborate(des, scope);
       }
 
+	// Elaborate the variable initialization statements, making a
+	// single initial process out of them.
+      result_flag &= elaborate_var_inits_(des, scope);
+
 	// Elaborate the behaviors, making processes out of them. This
 	// involves scanning the PProcess* list, creating a NetProcTop
 	// for each process.
@@ -5841,6 +5944,8 @@ bool PGenerate::elaborate_(Design*des, NetScope*scope) const
       for (gates_it_t cur = gates.begin() ; cur != gates.end() ; ++ cur )
 	    (*cur)->elaborate(des, scope);
 
+      elaborate_var_inits_(des, scope);
+
       typedef list<PProcess*>::const_iterator proc_it_t;
       for (proc_it_t cur = behaviors.begin(); cur != behaviors.end(); ++ cur )
 	    (*cur)->elaborate(des, scope);
@@ -5874,6 +5979,44 @@ bool PScope::elaborate_behaviors_(Design*des, NetScope*scope) const
       }
 
       return result_flag;
+}
+
+bool LexicalScope::elaborate_var_inits_(Design*des, NetScope*scope) const
+{
+      if (var_inits.size() == 0)
+	    return true;
+
+      NetProc*proc = 0;
+      if (var_inits.size() == 1) {
+	    proc = var_inits[0]->elaborate(des, scope);
+      } else {
+	    NetBlock*blk = new NetBlock(NetBlock::SEQU, 0);
+	    bool flag = true;
+	    for (unsigned idx = 0; idx < var_inits.size(); idx += 1) {
+		  NetProc*tmp = var_inits[idx]->elaborate(des, scope);
+		  if (tmp)
+			blk->append(tmp);
+		  else
+			flag = false;
+	    }
+	    if (flag) proc = blk;
+      }
+      if (proc == 0)
+	    return false;
+
+      NetProcTop*top = new NetProcTop(scope, IVL_PR_INITIAL, proc);
+      if (const LineInfo*li = dynamic_cast<const LineInfo*>(this)) {
+	    top->set_line(*li);
+      }
+      if (gn_system_verilog()) {
+	    top->attribute(perm_string::literal("_ivl_schedule_init"),
+			   verinum(1));
+      }
+      des->add_process(top);
+
+      scope->set_var_init(proc);
+
+      return true;
 }
 
 class elaborate_package_t : public elaborator_work_item_t {
@@ -6109,6 +6252,7 @@ Design* elaborate(list<perm_string>roots)
 	    ivl_assert(*pac->second, pac->first == pac->second->pscope_name());
 	    NetScope*scope = des->make_package_scope(pac->first);
 	    scope->set_line(pac->second);
+	    set_scope_timescale(des, scope, pac->second);
 
 	    elaborator_work_item_t*es = new elaborate_package_t(des, scope, pac->second);
 	    des->elaboration_work_list.push_back(es);
@@ -6145,11 +6289,7 @@ Design* elaborate(list<perm_string>roots)
 	      // Collect some basic properties of this scope from the
 	      // Module definition.
 	    scope->set_line(rmod);
-	    scope->time_unit(rmod->time_unit);
-	    scope->time_precision(rmod->time_precision);
-	    scope->time_from_timescale(rmod->time_from_timescale);
-	    des->set_precision(rmod->time_precision);
-
+	    set_scope_timescale(des, scope, rmod);
 
 	      // Save this scope, along with its definition, in the
 	      // "root_elems" list for later passes.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -312,10 +312,27 @@ static inline void FILE_NAME(LineInfo*obj, const char*file, unsigned lineno)
  */
 static LexicalScope* lexical_scope = 0;
 
+LexicalScope* pform_peek_scope(void)
+{
+      assert(lexical_scope);
+      return lexical_scope;
+}
+
 void pform_pop_scope()
 {
       assert(lexical_scope);
       lexical_scope = lexical_scope->parent_scope();
+}
+
+static LexicalScope::lifetime_t find_lifetime(LexicalScope::lifetime_t lifetime)
+{
+      if (lifetime != LexicalScope::INHERITED)
+	    return lifetime;
+
+      if (lexical_scope != 0)
+	    return lexical_scope->default_lifetime;
+
+      return LexicalScope::STATIC;
 }
 
 static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
@@ -328,16 +345,36 @@ static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
       return scopex;
 }
 
-LexicalScope* pform_peek_scope(void)
+/*
+ * Set the local time unit/precision to the global value.
+ */
+static void pform_set_scope_timescale(PScope*scope, const struct vlltype&loc)
 {
-      assert(lexical_scope);
-      return lexical_scope;
+      scope->time_unit = pform_time_unit;
+      scope->time_precision = pform_time_prec;
+	/* If we have a timescale file then the time information is from
+	 * a timescale directive. */
+      scope->time_from_timescale = pform_timescale_file != 0;
+
+      if (warn_timescale && (lexical_scope == 0) && pform_timescale_file
+	  && (strcmp(pform_timescale_file, loc.text) != 0)) {
+
+	    cerr << loc.get_fileline() << ": warning: "
+		 << "timescale for " << scope->pscope_name()
+		 << " inherited from another file." << endl;
+	    cerr << pform_timescale_file << ":" << pform_timescale_line
+		 << ": ...: The inherited timescale is here." << endl;
+      }
 }
 
-PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
+PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name,
+			       LexicalScope::lifetime_t lifetime)
 {
       PClass*class_scope = new PClass(name, lexical_scope);
+      class_scope->default_lifetime = find_lifetime(lifetime);
       FILE_NAME(class_scope, loc);
+
+      pform_set_scope_timescale(class_scope, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
 
@@ -364,21 +401,32 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
       return class_scope;
 }
 
-PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name)
+PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name,
+				   LexicalScope::lifetime_t lifetime)
 {
       PPackage*pkg_scope = new PPackage(name, lexical_scope);
+      pkg_scope->default_lifetime = find_lifetime(lifetime);
       FILE_NAME(pkg_scope, loc);
+
+      pform_set_scope_timescale(pkg_scope, loc);
 
       lexical_scope = pkg_scope;
       return pkg_scope;
 }
 
-PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
+PTask* pform_push_task_scope(const struct vlltype&loc, char*name,
+			     LexicalScope::lifetime_t lifetime)
 {
       perm_string task_name = lex_strings.make(name);
 
+      LexicalScope::lifetime_t default_lifetime = find_lifetime(lifetime);
+      bool is_auto = default_lifetime == LexicalScope::AUTOMATIC;
+
       PTask*task = new PTask(task_name, lexical_scope, is_auto);
+      task->default_lifetime = default_lifetime;
       FILE_NAME(task, loc);
+
+      pform_set_scope_timescale(task, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
       if ((scopex == 0) && !gn_system_verilog()) {
@@ -424,15 +472,21 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 }
 
 PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
-                                      bool is_auto)
+                                     LexicalScope::lifetime_t lifetime)
 {
       perm_string func_name = lex_strings.make(name);
 
+      LexicalScope::lifetime_t default_lifetime = find_lifetime(lifetime);
+      bool is_auto = default_lifetime == LexicalScope::AUTOMATIC;
+
       PFunction*func = new PFunction(func_name, lexical_scope, is_auto);
+      func->default_lifetime = default_lifetime;
       FILE_NAME(func, loc);
 
+      pform_set_scope_timescale(func, loc);
+
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-      if ((scopex == 0) && (generation_flag < GN_VER2005_SV)) {
+      if ((scopex == 0) && !gn_system_verilog()) {
 	    cerr << func->get_fileline() << ": error: function declarations "
 		  "must be contained within a module." << endl;
 	    error_count += 1;
@@ -489,6 +543,7 @@ PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
       }
 
       PBlock*block = new PBlock(block_name, lexical_scope, bt);
+      block->default_lifetime = find_lifetime(LexicalScope::INHERITED);
       lexical_scope = block;
 
       return block;
@@ -1041,7 +1096,10 @@ void pform_set_timeunit(const char*txt, bool in_module, bool only_check)
 
 int pform_get_timeunit()
 {
-      return pform_cur_module.front()->time_unit;
+      if (pform_cur_module.empty())
+	    return pform_time_unit;
+      else
+	    return pform_cur_module.front()->time_unit;
 }
 
 void pform_set_timeprecision(const char*txt, bool in_module, bool only_check)
@@ -1131,11 +1189,18 @@ verinum* pform_verinum_with_size(verinum*siz, verinum*val,
 
 void pform_startmodule(const struct vlltype&loc, const char*name,
 		       bool program_block, bool is_interface,
+		       LexicalScope::lifetime_t lifetime,
 		       list<named_pexpr_t>*attr)
 {
       if (! pform_cur_module.empty() && !gn_system_verilog()) {
 	    cerr << loc << ": error: Module definition " << name
 		 << " cannot nest into module " << pform_cur_module.front()->mod_name() << "." << endl;
+	    error_count += 1;
+      }
+
+      if (lifetime != LexicalScope::INHERITED && !gn_system_verilog()) {
+	    cerr << loc << ": error: Default subroutine lifetimes "
+		    "require SystemVerilog." << endl;
 	    error_count += 1;
       }
 
@@ -1158,17 +1223,14 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
       Module*cur_module = new Module(lexical_scope, lex_name);
       cur_module->program_block = program_block;
       cur_module->is_interface = is_interface;
-	/* Set the local time unit/precision to the global value. */
-      cur_module->time_unit = pform_time_unit;
-      cur_module->time_precision = pform_time_prec;
+      cur_module->default_lifetime = find_lifetime(lifetime);
+
+      FILE_NAME(cur_module, loc);
+
+      pform_set_scope_timescale(cur_module, loc);
       tu_local_flag = tu_global_flag;
       tp_local_flag = tp_global_flag;
 
-	/* If we have a timescale file then the time information is from
-	 * a timescale directive. */
-      cur_module->time_from_timescale = pform_timescale_file != 0;
-
-      FILE_NAME(cur_module, loc);
       cur_module->library_flag = pform_library_flag;
 
       pform_cur_module.push_front(cur_module);
@@ -1179,15 +1241,6 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
 	   zero. That's just the way it is, thanks to the standard. */
       scope_generate_counter = 1;
 
-      if (warn_timescale && pform_timescale_file
-	  && (strcmp(pform_timescale_file,loc.text) != 0)) {
-
-	    cerr << cur_module->get_fileline() << ": warning: "
-		 << "timescale for " << name
-		 << " inherited from another file." << endl;
-	    cerr << pform_timescale_file << ":" << pform_timescale_line
-		 << ": ...: The inherited timescale is here." << endl;
-      }
       pform_bind_attributes(cur_module->attributes, attr);
 }
 
@@ -1199,7 +1252,7 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
 void pform_check_timeunit_prec()
 {
       assert(! pform_cur_module.empty());
-      if ((generation_flag & (GN_VER2005_SV | GN_VER2009 | GN_VER2012)) &&
+      if (gn_system_verilog() &&
           (pform_cur_module.front()->time_unit < pform_cur_module.front()->time_precision)) {
 	    VLerror("error: a timeprecision is missing or is too large!");
       } else assert(pform_cur_module.front()->time_unit >=
@@ -1905,6 +1958,7 @@ static void pform_set_net_range(perm_string name,
 	    VLerror("error: name is not a valid net.");
 	    return;
       }
+
 	// If this is not implicit ("implicit" meaning we don't
 	// know what the type is yet) then set the type now.
       if (net_type != NetNet::IMPLICIT && net_type != NetNet::NONE) {
@@ -2248,23 +2302,30 @@ void pform_make_pgassign_list(list<PExpr*>*alist,
 }
 
 /*
- * this function makes the initial assignment to a register as given
- * in the source. It handles the case where a reg variable is assigned
- * where it it declared:
+ * This function makes the initial assignment to a variable as given
+ * in the source. It handles the case where a variable is assigned
+ * where it is declared, e.g.
  *
  *    reg foo = <expr>;
  *
- * This is equivalent to the combination of statements:
+ * In Verilog-2001 this is only supported at the module level, and is
+ * equivalent to the combination of statements:
  *
  *    reg foo;
  *    initial foo = <expr>;
  *
- * and that is how it is parsed. This syntax is not part of the
- * IEEE1364-1995 standard, but is approved by OVI as enhancement
- * BTF-B14.
+ * In SystemVerilog, variable initializations are allowed in any scope.
+ * For static variables, initializations are performed before the start
+ * of simulation. For automatic variables, initializations are performed
+ * each time the enclosing block is entered. Here we store the variable
+ * assignments in the current scope, and later elaboration creates an
+ * initialization block that will be executed at the appropriate time.
+ *
+ * This syntax is not part of the IEEE1364-1995 standard, but is
+ * approved by OVI as enhancement BTF-B14.
  */
-void pform_make_reginit(const struct vlltype&li,
-			perm_string name, PExpr*expr)
+void pform_make_var_init(const struct vlltype&li,
+			 perm_string name, PExpr*expr)
 {
       if (! pform_at_module_level() && !gn_system_verilog()) {
 	    VLerror(li, "error: variable declaration assignments are only "
@@ -2275,7 +2336,7 @@ void pform_make_reginit(const struct vlltype&li,
 
       PWire*cur = pform_get_wire_in_scope(name);
       if (cur == 0) {
-	    VLerror(li, "internal error: reginit to non-register?");
+	    VLerror(li, "internal error: var_init to non-register?");
 	    delete expr;
 	    return;
       }
@@ -2284,10 +2345,8 @@ void pform_make_reginit(const struct vlltype&li,
       FILE_NAME(lval, li);
       PAssign*ass = new PAssign(lval, expr, true);
       FILE_NAME(ass, li);
-      PProcess*top = new PProcess(IVL_PR_INITIAL, ass);
-      FILE_NAME(top, li);
 
-      pform_put_behavior_in_scope(top);
+      lexical_scope->var_inits.push_back(ass);
 }
 
 /*
@@ -2305,7 +2364,8 @@ void pform_module_define_port(const struct vlltype&li,
 			      NetNet::PortType port_kind,
 			      NetNet::Type type,
 			      data_type_t*vtype,
-			      list<named_pexpr_t>*attr)
+			      list<named_pexpr_t>*attr,
+			      bool keep_attr)
 {
       struct_type_t*struct_type = 0;
       ivl_variable_type_t data_type = IVL_VT_NO_TYPE;
@@ -2394,8 +2454,35 @@ void pform_module_define_port(const struct vlltype&li,
 	    cur->set_unpacked_idx(*urange);
       }
 
-      pform_bind_attributes(cur->attributes, attr);
+      pform_bind_attributes(cur->attributes, attr, keep_attr);
       pform_put_wire_in_scope(name, cur);
+}
+
+void pform_module_define_port(const struct vlltype&li,
+			      list<pform_port_t>*ports,
+			      NetNet::PortType port_kind,
+			      NetNet::Type type,
+			      data_type_t*vtype,
+			      list<named_pexpr_t>*attr)
+{
+      for (list<pform_port_t>::iterator cur = ports->begin()
+		 ; cur != ports->end() ; ++ cur ) {
+
+	    data_type_t*use_type = vtype;
+	    if (cur->udims)
+		  use_type = new uarray_type_t(vtype, cur->udims);
+
+	    pform_module_define_port(li, cur->name, port_kind, type, use_type,
+				     attr, true);
+	    if (cur->udims)
+		  delete use_type;
+
+	    if (cur->expr)
+		  pform_make_var_init(li, cur->name, cur->expr);
+      }
+
+      delete ports;
+      delete attr;
 }
 
 /*
@@ -2591,7 +2678,7 @@ void pform_makewire(const struct vlltype&li,
 		    NetNet::Type type,
 		    data_type_t*data_type)
 {
-      if ((lexical_scope == 0) && (generation_flag < GN_VER2005_SV)) {
+      if ((lexical_scope == 0) && !gn_system_verilog()) {
 	    VLerror(li, "error: variable declarations must be contained within a module.");
 	    return;
       }
@@ -2896,7 +2983,7 @@ void pform_set_parameter(const struct vlltype&loc,
 			 LexicalScope::range_t*value_range)
 {
       LexicalScope*scope = lexical_scope;
-      if ((scope == 0) && (generation_flag < GN_VER2005_SV)) {
+      if ((scope == 0) && !gn_system_verilog()) {
 	    VLerror(loc, "error: parameter declarations must be contained within a module.");
 	    return;
       }
@@ -2971,7 +3058,7 @@ void pform_set_localparam(const struct vlltype&loc,
 			  bool signed_flag, list<pform_range_t>*range, PExpr*expr)
 {
       LexicalScope*scope = lexical_scope;
-      if ((scope == 0) && (generation_flag < GN_VER2005_SV)) {
+      if ((scope == 0) && !gn_system_verilog()) {
 	    VLerror(loc, "error: localparam declarations must be contained within a module.");
 	    return;
       }
@@ -3200,24 +3287,53 @@ static void pform_set_port_type(perm_string name, NetNet::PortType pt,
 }
 
 void pform_set_port_type(const struct vlltype&li,
-			 list<perm_string>*names,
-			 list<pform_range_t>*range,
-			 bool signed_flag,
+			 list<pform_port_t>*ports,
 			 NetNet::PortType pt,
+			 data_type_t*dt,
 			 list<named_pexpr_t>*attr)
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
 
-      for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end() ; ++ cur ) {
-	    perm_string txt = *cur;
-	    pform_set_port_type(txt, pt, li.text, li.first_line);
-	    pform_set_net_range(txt, NetNet::NONE, range, signed_flag, IVL_VT_NO_TYPE,
-	                        SR_PORT, attr);
+      list<pform_range_t>*range = 0;
+      bool signed_flag = false;
+      if (vector_type_t*vt = dynamic_cast<vector_type_t*> (dt)) {
+	    assert(vt->implicit_flag);
+	    range = vt->pdims.get();
+	    signed_flag = vt->signed_flag;
+      } else {
+	    assert(dt == 0);
       }
 
-      delete names;
-      delete range;
+      bool have_init_expr = false;
+      for (list<pform_port_t>::iterator cur = ports->begin()
+		 ; cur != ports->end() ; ++ cur ) {
+
+	    pform_set_port_type(cur->name, pt, li.text, li.first_line);
+	    pform_set_net_range(cur->name, NetNet::NONE, range, signed_flag,
+				IVL_VT_NO_TYPE, SR_PORT, attr);
+	    if (cur->udims) {
+		  cerr << li.text << ":" << li.first_line << ": warning: "
+		       << "Array dimensions in incomplete port declarations "
+		       << "are currently ignored." << endl;
+		  cerr << li.text << ":" << li.first_line << ":        : "
+		       << "The dimensions specified in the net or variable "
+		       << "declaration will be used." << endl;
+		  delete cur->udims;
+	    }
+	    if (cur->expr) {
+		  have_init_expr = true;
+		  delete cur->expr;
+	    }
+      }
+      if (have_init_expr) {
+	    cerr << li.text << ":" << li.first_line << ": error: "
+		 << "Incomplete port declarations cannot be initialized."
+		 << endl;
+	    error_count += 1;
+      }
+
+      delete ports;
+      delete dt;
       delete attr;
 }
 

@@ -565,7 +565,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 
 	// The minimum selector width is the number of inputs that
 	// are selected, rounded up to the nearest power of 2.
-      unsigned sel_need = ceil(log2(max_guard_value + 1));
+      unsigned sel_need = max(ceil(log2(max_guard_value + 1)), 1.0);
 
 	// If the sel_width can select more than just the explicit
 	// guard values, and there is a default statement, then adjust

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1408,6 +1408,9 @@ static vpiHandle PV_get_handle(int code, vpiHandle ref)
       switch (code) {
 	  case vpiParent:
 	    return rfp->parent;
+
+	  case vpiScope:
+	    return vpi_handle(vpiScope, rfp->parent);
 
 	  case vpiModule:
 	    return vpi_handle(vpiModule, rfp->parent);

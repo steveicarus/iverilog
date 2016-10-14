@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -330,9 +330,11 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
       cptr = ivl_nexus_ptr_con(nptr);
       if (cptr) {
+	    char tmp[64];
 	    char *result = 0;
 	    ivl_expr_t d_rise, d_fall, d_decay;
             unsigned dly_width = 0;
+	    char *dly;
 
 	      /* Constants should have exactly 1 pin, with a literal value. */
 	    assert(nptr_pin == 0);
@@ -368,68 +370,17 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	    d_fall = ivl_const_delay(cptr, 1);
 	    d_decay = ivl_const_delay(cptr, 2);
 
-	      /* We have a delayed constant, so we need to build some code. */
+	    dly = "";
 	    if (d_rise != 0) {
-		  char tmp[128];
-		  fprintf(vvp_out, "L_%p/d .functor BUFT 1, %s, "
-		                   "C4<0>, C4<0>, C4<0>;\n", cptr, result);
-		  free(result);
-
-		    /* Is this a fixed or variable delay? */
-		  if (number_is_immediate(d_rise, 64, 0) &&
-		      number_is_immediate(d_fall, 64, 0) &&
-		      number_is_immediate(d_decay, 64, 0)) {
-
-			assert(! number_is_unknown(d_rise));
-			assert(! number_is_unknown(d_fall));
-			assert(! number_is_unknown(d_decay));
-
-			fprintf(vvp_out, "L_%p .delay %u "
-				"(%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") L_%p/d;\n",
-			                 cptr, dly_width,
-			                 get_number_immediate64(d_rise),
-			                 get_number_immediate64(d_fall),
-			                 get_number_immediate64(d_decay), cptr);
-
-		  } else {
-			ivl_signal_t sig;
-			// We do not currently support calculating the decay
-			// from the rise and fall variable delays.
-			assert(d_decay != 0);
-			assert(ivl_expr_type(d_rise) == IVL_EX_SIGNAL);
-			assert(ivl_expr_type(d_fall) == IVL_EX_SIGNAL);
-			assert(ivl_expr_type(d_decay) == IVL_EX_SIGNAL);
-
-			fprintf(vvp_out, "L_%p .delay %u L_%p/d",
-                                cptr, dly_width, cptr);
-
-			sig = ivl_expr_signal(d_rise);
-			assert(ivl_signal_dimensions(sig) == 0);
-			fprintf(vvp_out, ", v%p_0", sig);
-
-			sig = ivl_expr_signal(d_fall);
-			assert(ivl_signal_dimensions(sig) == 0);
-			fprintf(vvp_out, ", v%p_0", sig);
-
-			sig = ivl_expr_signal(d_decay);
-			assert(ivl_signal_dimensions(sig) == 0);
-			fprintf(vvp_out, ", v%p_0;\n", sig);
-		  }
-
-		  snprintf(tmp, sizeof tmp, "L_%p", cptr);
-		  result = strdup(tmp);
-
-	    } else {
-		  char tmp[64];
-		  fprintf(vvp_out, "L_%p .functor BUFT 1, %s, "
-			  "C4<0>, C4<0>, C4<0>;\n", cptr, result);
-		  free(result);
-
-		  snprintf(tmp, sizeof tmp, "L_%p", cptr);
-		  result = strdup(tmp);
+		  draw_delay(cptr, dly_width, 0, d_rise, d_fall, d_decay);
+		  dly = "/d";
 	    }
+	    fprintf(vvp_out, "L_%p%s .functor BUFT 1, %s, C4<0>, C4<0>, C4<0>;\n",
+		    cptr, dly, result);
+	    free(result);
 
-	    return result;
+	    snprintf(tmp, sizeof tmp, "L_%p", cptr);
+	    return strdup(tmp);
       }
 
       lpm = ivl_nexus_ptr_lpm(nptr);
@@ -711,6 +662,8 @@ static void draw_net_input_x(ivl_nexus_t nex,
 		  tmp += strlen(tmp);
 		  switch (res) {
 		      case IVL_SIT_TRI:
+		      case IVL_SIT_TRIAND:
+		      case IVL_SIT_TRIOR:
 		      case IVL_SIT_UWIRE:
 			for (jdx = 0 ;  jdx < wid ;  jdx += 1)
 			      *tmp++ = 'z';

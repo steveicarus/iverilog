@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -760,6 +760,16 @@ void schedule_vthread(vthread_t thr, vvp_time64_t delay, bool push_flag)
       }
 }
 
+void schedule_init_vthread(vthread_t thr)
+{
+      struct vthread_event_s*cur = new vthread_event_s;
+
+      cur->thr = thr;
+      vthread_mark_scheduled(thr);
+
+      schedule_init_event(cur);
+}
+
 void schedule_final_vthread(vthread_t thr)
 {
       struct vthread_event_s*cur = new vthread_event_s;
@@ -939,6 +949,10 @@ extern void vpiStartOfSim();
 extern void vpiPostsim();
 extern void vpiNextSimTime(void);
 
+static bool sim_at_rosync = false;
+bool schedule_at_rosync(void)
+{ return sim_at_rosync; }
+
 /*
  * The scheduler uses this function to drain the rosync events of the
  * current time. The ctim object is still in the event queue, because
@@ -951,6 +965,7 @@ extern void vpiNextSimTime(void);
  */
 static void run_rosync(struct event_time_s*ctim)
 {
+      sim_at_rosync = true;
       while (ctim->rosync) {
 	    struct event_s*cur = ctim->rosync->next;
 	    if (cur->next == cur) {
@@ -962,6 +977,7 @@ static void run_rosync(struct event_time_s*ctim)
 	    cur->run_run();
 	    delete cur;
       }
+      sim_at_rosync = false;
 
       while (ctim->del_thr) {
 	    struct event_s*cur = ctim->del_thr->next;

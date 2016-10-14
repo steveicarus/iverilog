@@ -311,6 +311,20 @@ void Nexus::count_io(unsigned&inp, unsigned&out) const
       }
 }
 
+bool Nexus::has_floating_input() const
+{
+      bool found_input = false;
+      for (const Link*cur = first_nlink() ;  cur ; cur = cur->next_nlink()) {
+	    if (cur->get_dir() == Link::OUTPUT)
+		  return false;
+
+	    if (cur->get_dir() == Link::INPUT)
+		  found_input = true;
+      }
+
+      return found_input;
+}
+
 bool Nexus::drivers_present() const
 {
       for (const Link*cur = first_nlink() ;  cur ; cur = cur->next_nlink()) {
