@@ -235,8 +235,8 @@ static int read_string(const char *string, s_vpi_value *val, int count) {
     char format_str[32];
 
     /* No string length limit imposed */
-    if(count == 0)
-        count = STRING_BUF_SIZE;
+    if(count <= 0 || count >= (int)STRING_BUF_SIZE)
+        count = STRING_BUF_SIZE - 1;
 
     snprintf(format_str, 32, "%%%ds%%n", count);
 
@@ -244,7 +244,7 @@ static int read_string(const char *string, s_vpi_value *val, int count) {
         return 0;
 
     val->format = vpiStringVal;
-    val->value.str = strndup(buf, processed_chars);
+    val->value.str = strdup(buf);
 
     return processed_chars;
 }
@@ -526,8 +526,13 @@ static PLI_INT32 ivlh_readline_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
                 "processed string might have been skipped.\n", name);
     }
 
+    /* Remove the newline character(s) */
+    while (len > 0 && (buf[len-1] == '\n' || buf[len-1] == '\r')) {
+        buf[len-1] = 0;
+        len--;
+    }
     /* Return the characters to the register. */
-    text = strndup(buf, len - 1); /* skip the newline character */
+    text = strdup(buf);
     val.format = vpiStringVal;
     val.value.str = text;
     vpi_put_value(stringh, &val, 0, vpiNoDelay);
@@ -954,12 +959,12 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
             break;
     }
 
-    if(res > STRING_BUF_SIZE)
+    if(res >= STRING_BUF_SIZE)
         fail = 1;
 
     if(!fail) {
         /* Strip the read token from the string */
-        char* tmp = strndup(buf, STRING_BUF_SIZE);
+        char* tmp = strdup(buf);
         val.format = vpiStringVal;
         val.value.str = tmp;
         vpi_put_value(stringh, &val, 0, vpiNoDelay);
