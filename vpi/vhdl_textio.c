@@ -188,7 +188,7 @@ static int read_time(const char *string, s_vpi_value *val, PLI_INT32 scope_unit)
     char units[2];
     int time_unit, processed_chars;
 
-    if(sscanf(string, "%ld %2s%n", &period, units, &processed_chars) != 2)
+    if(sscanf(string, "%" PLI_UINT64_FMT " %2s%n", &period, units, &processed_chars) != 2)
         return 0;
 
     if(!strncasecmp(units, "fs", 2))
@@ -289,9 +289,9 @@ static int write_time(char *string, const s_vpi_value* val,
     }
 
     if(prefix)
-        sprintf(string, "%ld %cs", period, prefix);
+        sprintf(string, "%" PLI_UINT64_FMT " %cs", period, prefix);
     else
-        sprintf(string, "%ld s", period);
+        sprintf(string, "%" PLI_UINT64_FMT " s", period);
 
     return 0;
 }
