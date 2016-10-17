@@ -3346,6 +3346,7 @@ class NetEvWait  : public NetProc {
 	// process? This method checks.
       virtual bool is_synchronous();
 
+      virtual NexusSet* nex_input(bool rem_out = true);
       virtual void nex_output(NexusSet&out);
 
       virtual bool synth_async(Design*des, NetScope*scope,

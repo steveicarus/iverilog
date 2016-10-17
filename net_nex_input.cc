@@ -404,6 +404,16 @@ NexusSet* NetDoWhile::nex_input(bool rem_out)
       return result;
 }
 
+NexusSet* NetEvWait::nex_input(bool rem_out)
+{
+      NexusSet*result;
+      if (statement_)
+        result = statement_->nex_input(rem_out);
+      else
+        result = new NexusSet;
+      return result;
+}
+
 NexusSet* NetForce::nex_input(bool)
 {
       cerr << get_fileline() << ": internal warning: NetForce::nex_input()"
