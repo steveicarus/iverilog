@@ -408,9 +408,10 @@ NexusSet* NetEvWait::nex_input(bool rem_out)
 {
       NexusSet*result;
       if (statement_)
-        result = statement_->nex_input(rem_out);
+	    result = statement_->nex_input(rem_out);
       else
-        result = new NexusSet;
+	    result = new NexusSet;
+
       return result;
 }
 
