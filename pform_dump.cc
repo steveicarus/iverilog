@@ -928,7 +928,10 @@ void PDisable::dump(ostream&out, unsigned ind) const
 void PDoWhile::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "do" << endl;
-      statement_->dump(out, ind+3);
+      if (statement_)
+	    statement_->dump(out, ind+3);
+      else
+	    out << setw(ind+3) << "" << "/* NOOP */" << endl;
       out << setw(ind) << "" << "while (" << *cond_ << ");" << endl;
 }
 
@@ -991,13 +994,19 @@ void PForeach::dump(ostream&fd, unsigned ind) const
       }
 
       fd << "] /* " << get_fileline() << " */" << endl;
-      statement_->dump(fd, ind+3);
+      if (statement_)
+	    statement_->dump(fd, ind+3);
+      else
+	    fd << setw(ind+3) << "" << "/* NOOP */" << endl;
 }
 
 void PForever::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "forever /* " << get_fileline() << " */" << endl;
-      statement_->dump(out, ind+3);
+      if (statement_)
+	    statement_->dump(out, ind+3);
+      else
+	    out << setw(ind+3) << "" << "/* NOOP */" << endl;
 }
 
 void PForStatement::dump(ostream&out, unsigned ind) const
@@ -1005,7 +1014,10 @@ void PForStatement::dump(ostream&out, unsigned ind) const
       out << setw(ind) << "" << "for (" << *name1_ << " = " << *expr1_
 	  << "; " << *cond_ << "; <for_step>)" << endl;
       step_->dump(out, ind+6);
-      statement_->dump(out, ind+3);
+      if (statement_)
+	    statement_->dump(out, ind+3);
+      else
+	    out << setw(ind+3) << "" << "/* NOOP */" << endl;
 }
 
 void PFunction::dump(ostream&out, unsigned ind) const
@@ -1049,7 +1061,10 @@ void PRelease::dump(ostream&out, unsigned ind) const
 void PRepeat::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "repeat (" << *expr_ << ")" << endl;
-      statement_->dump(out, ind+3);
+      if (statement_)
+	    statement_->dump(out, ind+3);
+      else
+	    out << setw(ind+3) << "" << "/* NOOP */" << endl;
 }
 
 void PReturn::dump(ostream&fd, unsigned ind) const
@@ -1132,7 +1147,10 @@ void PTrigger::dump(ostream&out, unsigned ind) const
 void PWhile::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "while (" << *cond_ << ")" << endl;
-      statement_->dump(out, ind+3);
+      if (statement_)
+	    statement_->dump(out, ind+3);
+      else
+	    out << setw(ind+3) << "" << "/* NOOP */" << endl;
 }
 
 void PProcess::dump(ostream&out, unsigned ind) const
@@ -1142,7 +1160,10 @@ void PProcess::dump(ostream&out, unsigned ind) const
 
       dump_attributes_map(out, attributes, ind+2);
 
-      statement_->dump(out, ind+2);
+      if (statement_)
+	    statement_->dump(out, ind+2);
+      else
+	    out << setw(ind+2) << "" << "/* NOOP */" << endl;
 }
 
 void AProcess::dump(ostream&out, unsigned ind) const
@@ -1163,7 +1184,10 @@ void AProcess::dump(ostream&out, unsigned ind) const
 
       dump_attributes_map(out, attributes, ind+2);
 
-      statement_->dump(out, ind+2);
+      if (statement_)
+	    statement_->dump(out, ind+2);
+      else
+	    out << setw(ind+2) << "" << "/* NOOP */" << endl;
 }
 
 void PSpecPath::dump(std::ostream&out, unsigned ind) const
