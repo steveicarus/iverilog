@@ -5002,6 +5002,8 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
       ivl_assert(*this, index_tail.lsb == 0);
 
       NetExpr*mux = elab_and_eval(des, scope, index_tail.msb, -1, need_const);
+      if (!mux)
+	    return 0;
 
       if (const netdarray_t*darray = net->sig()->darray_type()) {
 	      // Special case: This is a select of a dynamic
