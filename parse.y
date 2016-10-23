@@ -1426,6 +1426,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	vector<Statement*>tmp_for_list (1);
 	tmp_for_list[0] = tmp_for;
 	PBlock*tmp_blk = current_block_stack.top();
+	current_block_stack.pop();
 	tmp_blk->set_statement(tmp_for_list);
 	$$ = tmp_blk;
 	delete[]$4;
@@ -1476,6 +1477,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	vector<Statement*>tmp_for_list(1);
 	tmp_for_list[0] = tmp_for;
 	PBlock*tmp_blk = current_block_stack.top();
+	current_block_stack.pop();
 	tmp_blk->set_statement(tmp_for_list);
 	$$ = tmp_blk;
       }
