@@ -2717,11 +2717,16 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    return bl;
       }
 
-      if (lv->enumeration() &&
-          ! lv->enumeration()->matches(rv->enumeration())) {
-	    cerr << get_fileline() << ": error: "
-		 << "Enumeration type mismatch in assignment." << endl;
-	    des->errors += 1;
+      if (lv->enumeration()) {
+	    if (! rv->enumeration()) {
+		  cerr << get_fileline() << ": error: "
+		          "This assignment requires an explicit cast." << endl;
+		  des->errors += 1;
+	    } else if (! lv->enumeration()->matches(rv->enumeration())) {
+		  cerr << get_fileline() << ": error: "
+		          "Enumeration type mismatch in assignment." << endl;
+		  des->errors += 1;
+	    }
       }
 
       NetAssign*cur = new NetAssign(lv, rv);
