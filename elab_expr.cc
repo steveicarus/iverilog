@@ -2648,17 +2648,15 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
 
           if((base_->expr_type() != IVL_VT_BOOL) &&
                 (base_->expr_type() != IVL_VT_LOGIC)) {
-              cerr << get_fileline() << ": cannot be casted to string." << endl;
+              cerr << get_fileline() << ": cannot be cast to a string." << endl;
               ivl_assert(*this, false);
           }
 
           return expr;
       }
 
-      cerr << get_fileline() << ": sorry: I don't know how to cast expression." << endl;
-      ivl_assert(*this, false);
-
-      return expr;
+      cerr << get_fileline() << ": sorry: This cast operation is not yet supported." << endl;
+      return 0;
 }
 
 unsigned PEConcat::test_width(Design*des, NetScope*scope, width_mode_t&)
