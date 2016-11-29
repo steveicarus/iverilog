@@ -291,6 +291,25 @@ void preload_std_funcs(void)
                 args, &primitive_INTEGER));
 
     /* std_logic_1164 library
+     * function to_bit (signal s : std_ulogic) return bit;
+     */
+    args = new list<InterfacePort*>();
+    args->push_back(new InterfacePort(&primitive_STDLOGIC));
+    register_std_subprogram(new SubprogramBuiltin(perm_string::literal("to_bit"),
+                                           empty_perm_string,
+                                           args, &primitive_BIT));
+
+    /* std_logic_1164 library
+     * function to_bitvector (signal s : std_logic_vector) return bit_vector;
+     * function to_bitvector (signal s : std_ulogic_vector) return bit_vector;
+     */
+    args = new list<InterfacePort*>();
+    args->push_back(new InterfacePort(&primitive_STDLOGIC_VECTOR));
+    register_std_subprogram(new SubprogramBuiltin(perm_string::literal("to_bitvector"),
+                                           empty_perm_string,
+                                           args, &primitive_BIT_VECTOR));
+
+    /* std_logic_1164 library
      * function rising_edge  (signal s : std_ulogic) return boolean;
      */
     args = new list<InterfacePort*>();
