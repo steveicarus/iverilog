@@ -70,7 +70,6 @@ dllib=@DLLIB@
 HOSTCC = @CC@
 HOSTCFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 
-CC = @CC@
 CXX = @CXX@
 DLLTOOL = @DLLTOOL@
 INSTALL = @INSTALL@
@@ -129,7 +128,7 @@ all: dep config.h _pli_types.h version_tag.h ivl@EXEEXT@ version.exe iverilog-vp
 ifeq (@MINGW32@,yes)
 all: dosify.exe
 dosify.exe: $(srcdir)/dosify.c
-	$(HOSTCC) $(HOSTCFLAGS) -o dosify.exe $(srcdir)/dosify.c
+	$(CC) $(CFLAGS) -o dosify.exe $(srcdir)/dosify.c
 endif
 
 # This rule rules the compiler in the trivial hello.vl program to make
@@ -239,7 +238,7 @@ iverilog-vpi: $(srcdir)/iverilog-vpi.sh Makefile
 endif
 
 version.exe: $(srcdir)/version.c $(srcdir)/version_base.h version_tag.h
-	$(HOSTCC) $(HOSTCFLAGS) -o version.exe -I. -I$(srcdir) $(srcdir)/version.c
+	$(CC) $(CFLAGS) -o version.exe -I. -I$(srcdir) $(srcdir)/version.c
 
 %.o: %.cc config.h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o

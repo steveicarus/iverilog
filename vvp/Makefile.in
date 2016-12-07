@@ -35,7 +35,6 @@ includedir = @includedir@
 HOSTCC = @CC@
 HOSTCFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 
-CC = @CC@
 CXX = @CXX@
 DLLTOOL = @DLLTOOL@
 AR = @AR@
@@ -153,7 +152,7 @@ endif
 	mv $*.d dep/$*.d
 
 tables.cc: $(srcdir)/draw_tt.c
-	$(HOSTCC) $(HOSTCFLAGS) -o draw_tt.exe $(srcdir)/draw_tt.c
+	$(CC) $(CFLAGS) -o draw_tt.exe $(srcdir)/draw_tt.c
 	./draw_tt.exe > tables.cc
 	rm draw_tt.exe
 
