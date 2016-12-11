@@ -36,6 +36,7 @@ mandir = @mandir@
 dllib=@DLLIB@
 
 CC = @CC@
+HOSTCC := @CC@
 WINDRES = @WINDRES@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -97,6 +98,11 @@ install: all installdirs $(bindir)/iverilog-vpi$(suffix)@EXEEXT@
 
 $(bindir)/iverilog-vpi$(suffix)@EXEEXT@: ./iverilog-vpi@EXEEXT@
 	$(INSTALL_PROGRAM) ./iverilog-vpi@EXEEXT@ "$(bindir)/iverilog-vpi$(suffix)@EXEEXT@"
+ifeq (@WIN32@,yes)
+	$(INSTALL_PROGRAM) $(shell $(HOSTCC) --print-file-name=libwinpthread-1.dll) "$(DESTDIR)$(bindir)"
+	$(INSTALL_PROGRAM) $(shell $(HOSTCC) --print-file-name=libgcc_s_sjlj-1.dll) "$(DESTDIR)$(bindir)"
+	$(INSTALL_PROGRAM) $(shell $(HOSTCC) --print-file-name=libstdc++-6.dll) "$(DESTDIR)$(bindir)"
+endif
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(bindir)"
