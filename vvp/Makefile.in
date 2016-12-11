@@ -35,6 +35,8 @@ includedir = @includedir@
 HOSTCC = @CC@
 HOSTCFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 
+BUILDCC = @CC_FOR_BUILD@
+BUILDEXT = @BUILD_EXEEXT@
 CXX = @CXX@
 DLLTOOL = @DLLTOOL@
 AR = @AR@
@@ -152,9 +154,9 @@ endif
 	mv $*.d dep/$*.d
 
 tables.cc: $(srcdir)/draw_tt.c
-	$(CC) $(CFLAGS) -o draw_tt.exe $(srcdir)/draw_tt.c
-	./draw_tt.exe > tables.cc
-	rm draw_tt.exe
+	$(CC) $(CFLAGS) -o draw_tt$(BUILDEXT) $(srcdir)/draw_tt.c
+	./draw_tt$(BUILDEXT) > tables.cc
+	rm draw_tt$(BUILDEXT)
 
 lexor.o: lexor.cc parse.h
 

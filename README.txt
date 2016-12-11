@@ -26,7 +26,7 @@ system and C/C++ compilation should be able to build the source
 distribution with little effort. Some actual programming skills are
 not required, but helpful in case of problems.
 
-If you are building for Windows, see the mingw.txt file.
+If you are building on Windows, see the mingw.txt file.
 
 2.1 Compile Time Prerequisites
 
@@ -105,6 +105,12 @@ configure script that modify its behavior:
 	    library files and include directory so that installations
 	    with the same prefix but different suffix are guaranteed
 	    to not interfere with each other.
+
+	--host=<host-type>
+	    Compile iverilog for a different platform. You can use:
+                x64_64-w64-mingw32 for building 64-bit Windows executables
+                i686-w64-mingw32 for building 32-bit Windows executables
+            Both options require installing the required mingw-w64 packages.
 
 2.3 (Optional) Testing
 
