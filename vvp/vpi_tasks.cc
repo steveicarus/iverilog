@@ -978,6 +978,7 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
       else if (sysfunc_vec4*func_vec4 = dynamic_cast<sysfunc_vec4*>(ref)) {
 	    vthread_push_vec4(thr, func_vec4->return_value());
       }
+      vpip_cur_task = 0;
 }
 
 /*
