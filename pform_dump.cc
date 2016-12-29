@@ -627,10 +627,10 @@ void PGBuiltin::dump(ostream&out, unsigned ind) const
 	    out << "bufif1 ";
 	    break;
 	  case PGBuiltin::NOTIF0:
-	    out << "bufif0 ";
+	    out << "notif0 ";
 	    break;
 	  case PGBuiltin::NOTIF1:
-	    out << "bufif1 ";
+	    out << "notif1 ";
 	    break;
 	  case PGBuiltin::NAND:
 	    out << "nand ";
