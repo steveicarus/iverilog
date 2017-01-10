@@ -655,6 +655,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <statement> statement statement_item statement_or_null
 %type <statement> compressed_statement
 %type <statement> loop_statement for_step jump_statement
+%type <statement> procedural_assertion_statement
 %type <statement_list> statement_or_null_list statement_or_null_list_opt
 
 %type <statement> analog_statement
@@ -1813,6 +1814,21 @@ port_direction_opt
 
 property_expr /* IEEE1800-2012 A.2.10 */
   : expression
+  ;
+
+procedural_assertion_statement /* IEEE1800-2012 A.6.10 */
+  : K_assert '(' expression ')' statement %prec less_than_K_else
+      { yyerror(@1, "sorry: Simple immediate assertion statements not implemented.");
+	$$ = 0;
+      }
+  | K_assert '(' expression ')' K_else statement
+      { yyerror(@1, "sorry: Simple immediate assertion statements not implemented.");
+	$$ = 0;
+      }
+  | K_assert '(' expression ')' statement K_else statement
+      { yyerror(@1, "sorry: Simple immediate assertion statements not implemented.");
+	$$ = 0;
+      }
   ;
 
   /* The property_qualifier rule is as literally described in the LRM,
@@ -6226,6 +6242,8 @@ statement_item /* This is roughly statement_item in the LRM */
 		  delete $2;
 		  $$ = tmp;
 		}
+
+  | procedural_assertion_statement { $$ = $1; }
 
   | loop_statement { $$ = $1; }
 
