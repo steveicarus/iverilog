@@ -5677,7 +5677,6 @@ unsigned PETernary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       } else if (tru_type == IVL_VT_LOGIC || fal_type == IVL_VT_LOGIC) {
 	    expr_type_ = IVL_VT_LOGIC;
       } else {
-	    ivl_assert(*this, tru_type == fal_type);
 	    expr_type_ = tru_type;
       }
       if (expr_type_ == IVL_VT_REAL) {
