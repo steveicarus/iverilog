@@ -1167,7 +1167,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    container->genvar_tmp_val = genvar;
 	    delete step;
 	    delete test_ex;
-	    test_ex = elab_and_eval(des, container, loop_test, -1);
+	    test_ex = elab_and_eval(des, container, loop_test, -1, true);
 	    test = dynamic_cast<NetEConst*>(test_ex);
 	    assert(test);
       }
