@@ -40,6 +40,7 @@
 # include  <sstream>
 # include  <cstring>
 # include  <cstdlib>
+# include  <cctype>
 
 # include  "ivl_assert.h"
 # include  "ivl_alloc.h"
@@ -84,6 +85,42 @@ std::string vlltype::get_fileline() const
       string res = buf.str();
       return res;
 
+}
+
+static bool is_hex_digit_str(const char *str)
+{
+      while (*str) {
+	    if (!isxdigit(*str)) return false;
+	    str++;
+      }
+      return true;
+}
+
+static bool is_dec_digit_str(const char *str)
+{
+      while (*str) {
+	    if (!isdigit(*str)) return false;
+	    str++;
+      }
+      return true;
+}
+
+static bool is_oct_digit_str(const char *str)
+{
+      while (*str) {
+	    if (*str < '0' || *str > '7') return false;
+	    str++;
+      }
+      return true;
+}
+
+static bool is_bin_digit_str(const char *str)
+{
+      while (*str) {
+	    if (*str != '0' && *str != '1') return false;
+	    str++;
+      }
+      return true;
 }
 
 /*
@@ -152,90 +189,137 @@ void parm_to_defparam_list(const string&param)
         ptr = strchr(nkey, '.');
     }
     name.push_back(name_component_t(lex_strings.make(nkey)));
+    free(key);
 
     // Resolve value to PExpr class. Should support all kind of constant
     // format including based number, dec number, real number and string.
-    if (*value == '"') {    // string type
-        char *buf = strdup (value);
-        char *buf_ptr = buf+1;
-        // Parse until another '"' or '\0'
-        while (*buf_ptr != '"' && *buf_ptr != '\0') {
-            buf_ptr++;
-            // Check for escape, especially '\"', which does not mean the
-            // end of string.
-            if (*buf_ptr == '\\' && *(buf_ptr+1) != '\0')
-                buf_ptr += 2;
-        }
-        if (*buf_ptr == '\0')   // String end without '"'
-            cerr << "<command line>: error: missing close quote of string for defparam: " << name << endl;
-        else if (*(buf_ptr+1) != 0) { // '"' appears within string with no escape
-            cerr << buf_ptr << endl;
-            cerr << "<command line>: error: \'\"\' appears within string value for defparam: " << name
-                 << ". Ignore characters after \'\"\'" << endl;
-        }
 
-        *buf_ptr = '\0';
-        buf_ptr = buf+1;
-        // Remember to use 'new' to allocate string for PEString
-        // because 'delete' is used by its destructor.
-        char *nchar = strcpy(new char [strlen(buf_ptr)+1], buf_ptr);
-        PExpr* ndec = new PEString(nchar);
+    // Is it a string?
+    if (*value == '"') {
+	char *buf = strdup (value);
+	char *buf_ptr = buf+1;
+	// Parse until another '"' or '\0'
+	while (*buf_ptr != '"' && *buf_ptr != '\0') {
+	    buf_ptr++;
+	    // Check for escape, especially '\"', which does not mean the
+	    // end of string.
+	    if (*buf_ptr == '\\' && *(buf_ptr+1) != '\0')
+		buf_ptr += 2;
+	}
+	if (*buf_ptr == '\0')	// String end without '"'
+	    cerr << "<command line>: error: missing close quote of string for defparam: " << name << endl;
+	else if (*(buf_ptr+1) != 0) { // '"' appears within string with no escape
+	    cerr << buf_ptr << endl;
+	    cerr << "<command line>: error: \'\"\' appears within string value for defparam: " << name
+		 << ". Ignore characters after \'\"\'" << endl;
+	}
+
+	*buf_ptr = '\0';
+	buf_ptr = buf+1;
+	// Remember to use 'new' to allocate string for PEString
+	// because 'delete' is used by its destructor.
+	char *nchar = strcpy(new char [strlen(buf_ptr)+1], buf_ptr);
+	PExpr* ndec = new PEString(nchar);
 	Module::user_defparms.push_back( make_pair(name, ndec) );
-        free(buf);
+	free(buf);
+	free(value);
+	return;
     }
-    else {      // number type
-        char *num = strchr(value, '\'');
-        if (num != 0) {
-            verinum *val;
-            // BASED_NUMBER, something like - scope.parameter='b11
-            // make sure to check 'h' first because 'b'&'d' may be included
-            // in hex format
-            if (strchr(num, 'h') || strchr(num, 'H'))
-                val = make_unsized_hex(num);
-            else if (strchr(num, 'd') || strchr(num, 'D'))
-                if (strchr(num, 'x') || strchr(num, 'X') || strchr(num, 'z') || strchr(num, 'Z'))
-                    val = make_undef_highz_dec(num);
-                else
-                    val = make_unsized_dec(num);
-            else if (strchr(num, 'b') || strchr(num, 'B')) {
-                val = make_unsized_binary(num);
-            }
-            else if (strchr(num, 'o') || strchr(num, 'O'))
-                val = make_unsized_octal(num);
-            else {
-                cerr << "<command line>: error: value specify error for defparam: " << name << endl;
-                free(key);
-                free(value);
-                return;
-            }
 
-            // BASED_NUMBER with size, something like - scope.parameter=2'b11
-            if (num != value) {
-                *num = 0;
-                verinum *siz = make_unsized_dec(value);
-                val = pform_verinum_with_size(siz, val, "<command line>", 0);
-            }
-
-            PExpr* ndec = new PENumber(val);
-	    Module::user_defparms.push_back( make_pair(name, ndec) );
-
-        }
-        else {
-            // REALTIME, something like - scope.parameter=1.22 or scope.parameter=1e2
-            if (strchr(value, '.') || strchr(value, 'e') || strchr(value, 'E')) {
-                verireal *val = new verireal(value);
-                PExpr* nreal = new PEFNumber(val);
-		Module::user_defparms.push_back( make_pair(name, nreal) );
-            }
-            else {
-                // DEC_NUMBER, something like - scope.parameter=3
-                verinum *val = make_unsized_dec(value);
-                PExpr* ndec = new PENumber(val);
-		Module::user_defparms.push_back( make_pair(name, ndec) );
-            }
-        }
+    // Is it a based number?
+    char *num = strchr(value, '\'');
+    if (num != 0) {
+	verinum *val;
+	const char *base = num + 1;
+	if (*base == 's' || *base == 'S')
+	    base++;
+	switch (*base) {
+	  case 'h':
+	  case 'H':
+	    if (is_hex_digit_str(base+1)) {
+		val = make_unsized_hex(num);
+	    } else {
+		cerr << "<command line>: error: invalid digit in hex value specified for defparam: " << name << endl;
+		free(value);
+		return;
+	    }
+	    break;
+	  case 'd':
+	  case 'D':
+	    if (is_dec_digit_str(base+1)) {
+		val = make_unsized_dec(num);
+	    } else {
+		cerr << "<command line>: error: invalid digit in decimal value specified for defparam: " << name << endl;
+		free(value);
+		return;
+	    }
+	    break;
+	  case 'o':
+	  case 'O':
+	    if (is_oct_digit_str(base+1)) {
+		val = make_unsized_octal(num);
+	    } else {
+		cerr << "<command line>: error: invalid digit in octal value specified for defparam: " << name << endl;
+		free(value);
+		return;
+	    }
+	    break;
+	  case 'b':
+	  case 'B':
+	    if (is_bin_digit_str(base+1)) {
+		val = make_unsized_binary(num);
+	    } else {
+		cerr << "<command line>: error: invalid digit in binary value specified for defparam: " << name << endl;
+		free(value);
+		return;
+	    }
+	    break;
+	  default:
+	    cerr << "<command line>: error: invalid numeric base specified for defparam: " << name << endl;
+	    free(value);
+	    return;
+	}
+	if (num != value) {  // based number with size
+	    *num = 0;
+	    if (is_dec_digit_str(value)) {
+		verinum *siz = make_unsized_dec(value);
+		val = pform_verinum_with_size(siz, val, "<command line>", 0);
+	    } else {
+		cerr << "<command line>: error: invalid size for value specified for defparam: " << name << endl;
+		free(value);
+		return;
+	    }
+	}
+	PExpr* ndec = new PENumber(val);
+	Module::user_defparms.push_back( make_pair(name, ndec) );
+	free(value);
+	return;
     }
-    free(key);
+
+    // Is it a decimal number?
+    num = (value[0] == '-') ? value + 1 : value;
+    if (is_dec_digit_str(num)) {
+	verinum *val = make_unsized_dec(num);
+	if (value[0] == '-') *val = -(*val);
+	PExpr* ndec = new PENumber(val);
+	Module::user_defparms.push_back( make_pair(name, ndec) );
+	free(value);
+	return;
+    }
+
+    // Is it a real number?
+    char *end = 0;
+    double rval = strtod(value, &end);
+    if (end != value && *end == 0) {
+	verireal *val = new verireal(rval);
+	PExpr* nreal = new PEFNumber(val);
+	Module::user_defparms.push_back( make_pair(name, nreal) );
+	free(value);
+	return;
+    }
+
+    // None of the above.
+    cerr << "<command line>: error: invalid value specified for defparam: " << name << endl;
     free(value);
 }
 
