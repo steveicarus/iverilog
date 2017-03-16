@@ -4855,9 +4855,8 @@ module_item
 	| attribute_list_opt
 	  IDENTIFIER parameter_value_opt gate_instance_list ';'
 		{ perm_string tmp1 = lex_strings.make($2);
-		  pform_make_modgates(@2, tmp1, $3, $4);
+		  pform_make_modgates(@2, tmp1, $3, $4, $1);
 		  delete[]$2;
-		  if ($1) delete $1;
 		}
 
         | attribute_list_opt

@@ -2213,7 +2213,8 @@ static void pform_make_modgate(perm_string type,
 			       struct parmvalue_t*overrides,
 			       list<PExpr*>*wires,
 			       PExpr*msb, PExpr*lsb,
-			       const char*fn, unsigned ln)
+			       const char*fn, unsigned ln,
+			       std::list<named_pexpr_t>*attr)
 {
       for (list<PExpr*>::iterator idx = wires->begin()
 		 ; idx != wires->end() ; ++idx) {
@@ -2244,6 +2245,7 @@ static void pform_make_modgate(perm_string type,
 	    pform_cur_generate->add_gate(cur);
       else
 	    pform_cur_module.front()->add_gate(cur);
+      pform_bind_attributes(cur->attributes, attr);
 }
 
 static void pform_make_modgate(perm_string type,
@@ -2251,7 +2253,8 @@ static void pform_make_modgate(perm_string type,
 			       struct parmvalue_t*overrides,
 			       list<named_pexpr_t>*bind,
 			       PExpr*msb, PExpr*lsb,
-			       const char*fn, unsigned ln)
+			       const char*fn, unsigned ln,
+			       std::list<named_pexpr_t>*attr)
 {
       unsigned npins = bind->size();
       named<PExpr*>*pins = new named<PExpr*>[npins];
@@ -2288,12 +2291,14 @@ static void pform_make_modgate(perm_string type,
 	    pform_cur_generate->add_gate(cur);
       else
 	    pform_cur_module.front()->add_gate(cur);
+      pform_bind_attributes(cur->attributes, attr);
 }
 
 void pform_make_modgates(const struct vlltype&loc,
 			 perm_string type,
 			 struct parmvalue_t*overrides,
-			 svector<lgate>*gates)
+			 svector<lgate>*gates,
+			 std::list<named_pexpr_t>*attr)
 {
       assert(! pform_cur_module.empty());
       if (pform_cur_module.front()->program_block) {
@@ -2315,7 +2320,7 @@ void pform_make_modgates(const struct vlltype&loc,
 		  pform_make_modgate(type, cur_name, overrides,
 				     cur.parms_by_name,
 				     cur.range.first, cur.range.second,
-				     cur.file, cur.lineno);
+				     cur.file, cur.lineno, attr);
 
 	    } else if (cur.parms) {
 
@@ -2329,14 +2334,14 @@ void pform_make_modgates(const struct vlltype&loc,
 		  pform_make_modgate(type, cur_name, overrides,
 				     cur.parms,
 				     cur.range.first, cur.range.second,
-				     cur.file, cur.lineno);
+				     cur.file, cur.lineno, attr);
 
 	    } else {
 		  list<PExpr*>*wires = new list<PExpr*>;
 		  pform_make_modgate(type, cur_name, overrides,
 				     wires,
 				     cur.range.first, cur.range.second,
-				     cur.file, cur.lineno);
+				     cur.file, cur.lineno, attr);
 	    }
       }
 
