@@ -478,7 +478,8 @@ extern void pform_makegates(const struct vlltype&loc,
 extern void pform_make_modgates(const struct vlltype&loc,
 				perm_string type,
 				struct parmvalue_t*overrides,
-				svector<lgate>*gates);
+				svector<lgate>*gates,
+				list<named_pexpr_t>*attr);
 
 /* Make a continuous assignment node, with optional bit- or part- select. */
 extern void pform_make_pgassign_list(list<PExpr*>*alist,

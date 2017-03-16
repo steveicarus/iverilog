@@ -729,6 +729,7 @@ void PGModule::dump(ostream&out, unsigned ind) const
 	    dump_pins(out);
       }
       out << ");" << endl;
+      dump_attributes_map(out, attributes, 8);
 }
 
 void Statement::dump(ostream&out, unsigned ind) const

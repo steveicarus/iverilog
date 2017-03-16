@@ -1728,6 +1728,10 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 		 << "." << endl;
       }
 
+	    struct attrib_list_t*attrib_list;
+	    unsigned attrib_list_n = 0;
+	    attrib_list = evaluate_attributes(attributes, attrib_list_n, des, sc);
+
 	// Run through the module instances, and make scopes out of
 	// them. Also do parameter overrides that are done on the
 	// instantiation line.
@@ -1761,6 +1765,9 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	    my_scope->set_line(get_file(), mod->get_file(),
 	                       get_lineno(), mod->get_lineno());
 	    my_scope->set_module_name(mod->mod_name());
+
+	    for (unsigned adx = 0 ;  adx < attrib_list_n ;  adx += 1)
+	      my_scope->attribute(attrib_list[adx].key, attrib_list[adx].val);
 
 	    instances[idx] = my_scope;
 
@@ -1820,6 +1827,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	    mod->elaborate_scope(des, my_scope, replace);
 
       }
+	    delete[]attrib_list;
 
 	/* Stash the instance array of scopes into the parent
 	   scope. Later elaboration passes will use this vector to
