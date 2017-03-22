@@ -2204,8 +2204,10 @@ void PGModule::elaborate(Design*des, NetScope*scope) const
 	    return;
       }
 
-      cerr << get_fileline() << ": internal error: Unknown module type: " <<
-	    type_ << endl;
+      if (!ignore_missing_modules) {
+        cerr << get_fileline() << ": internal error: Unknown module type: " <<
+	      type_ << endl;
+      }
 }
 
 void PGModule::elaborate_scope(Design*des, NetScope*sc) const
@@ -2249,9 +2251,11 @@ void PGModule::elaborate_scope(Design*des, NetScope*sc) const
 
 	// Not a module or primitive that I know about or can find by
 	// any means, so give up.
-      cerr << get_fileline() << ": error: Unknown module type: " << type_ << endl;
-      missing_modules[type_] += 1;
-      des->errors += 1;
+      if (!ignore_missing_modules) {
+        cerr << get_fileline() << ": error: Unknown module type: " << type_ << endl;
+        missing_modules[type_] += 1;
+        des->errors += 1;
+      }
 }
 
 

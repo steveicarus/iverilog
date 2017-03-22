@@ -38,7 +38,7 @@ const char NOTICE[] =
 ;
 
 const char HELP[] =
-"Usage: iverilog [-ESvV] [-B base] [-c cmdfile|-f cmdfile]\n"
+"Usage: iverilog [-EiSvV] [-B base] [-c cmdfile|-f cmdfile]\n"
 "                [-g1995|-g2001|-g2005|-g2005-sv|-g2009|-g2012] [-g<feature>]\n"
 "                [-D macro[=defn]] [-I includedir]\n"
 "                [-M [mode=]depfile] [-m module]\n"
@@ -139,6 +139,9 @@ int gen_std_include = 1;
 int gen_relative_include = 0;
 
 char warning_flags[16] = "n";
+
+/* Boolean: true means ignore errors about missing modules */
+int ignore_missing_modules = 0;
 
 unsigned integer_width = 32;
 
@@ -987,7 +990,7 @@ int main(int argc, char **argv)
 	}
       }
 
-      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hl:I:M:m:N:o:P:p:Ss:T:t:vVW:y:Y:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hl:I:iM:m:N:o:P:p:Ss:T:t:vVW:y:Y:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -1041,6 +1044,10 @@ int main(int argc, char **argv)
 		case 'I':
 		  process_include_dir(optarg);
 		  break;
+
+		case 'i':
+  		  ignore_missing_modules = 1;
+  		  break;
 
 		case 'l':
 		  process_file_name(optarg, 1);
@@ -1184,6 +1191,7 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "generation:%s\n", gen_verilog_ams);
       fprintf(iconfig_file, "generation:%s\n", gen_icarus);
       fprintf(iconfig_file, "warnings:%s\n", warning_flags);
+      fprintf(iconfig_file, "ignore_missing_modules:%s\n", ignore_missing_modules ? "true" : "false");
       fprintf(iconfig_file, "out:%s\n", opath);
       if (depfile) {
             fprintf(iconfig_file, "depfile:%s\n", depfile);

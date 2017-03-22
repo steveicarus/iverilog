@@ -117,6 +117,9 @@ extern bool debug_emit;
 extern bool debug_synth2;
 extern bool debug_optimizer;
 
+/* Ignore errors about missing modules */
+extern bool ignore_missing_modules;
+
 /* Control evaluation of functions at compile time:
  *   0 = only for functions in constant expressions
  *   1 = only for automatic functions

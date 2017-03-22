@@ -165,6 +165,11 @@ bool warn_anachronisms = false;
 bool warn_floating_nets = false;
 
 /*
+ * Ignore errors about missing modules
+ */
+bool ignore_missing_modules = false;
+
+/*
  * Debug message class flags.
  */
 bool debug_scopes = false;
@@ -570,6 +575,9 @@ static bool set_default_timescale(const char*ts_string)
  *
  *    warnings:<string>
  *        Warning flag letters.
+ *
+ *    ignore_missing_modules:<bool>
+ *        true to ignore errors about missing modules
  */
 bool had_timescale = false;
 static void read_iconfig_file(const char*ipath)
@@ -719,6 +727,10 @@ static void read_iconfig_file(const char*ipath)
 		      default:
 			break;
 		  }
+
+		} else if (strcmp(buf, "ignore_missing_modules") == 0) {
+		  if (strcmp(cp, "true") == 0)
+		    ignore_missing_modules = true;
 
 	    } else if (strcmp(buf, "-y") == 0) {
 		  build_library_index(cp, CASE_SENSITIVE);
