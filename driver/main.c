@@ -1268,8 +1268,12 @@ int main(int argc, char **argv)
 	   will append to the file, so this is necessary to make sure
 	   it starts out empty. */
       if (depfile) {
-	    FILE*fd = fopen(depfile, "w");
-	    fclose(fd);
+            FILE *fd = fopen(depfile, "w");
+            if (!fd) {
+                  fprintf(stderr, "%s: can't open %s file.\n\n%s\n", argv[0], depfile, HELP);
+                  return 1;
+            }
+            fclose(fd);
       }
 
       if (source_count == 0 && !version_flag) {
