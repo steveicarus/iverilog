@@ -2142,9 +2142,11 @@ static void pform_makegate(PGBuiltin::Type type,
 	    return;
       }
 
-      for (list<PExpr*>::iterator cur = info.parms->begin()
-		 ; cur != info.parms->end() ; ++cur) {
-	    pform_declare_implicit_nets(*cur);
+      if (info.parms) {
+	    for (list<PExpr*>::iterator cur = info.parms->begin()
+		       ; cur != info.parms->end() ; ++cur) {
+		  pform_declare_implicit_nets(*cur);
+	    }
       }
 
       perm_string dev_name = lex_strings.make(info.name);
