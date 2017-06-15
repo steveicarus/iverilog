@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -464,6 +464,7 @@ int vpip_time_units_from_handle(vpiHandle obj)
       struct __vpiSysTaskCall*task;
       struct __vpiScope*scope;
       struct __vpiSignal*signal;
+      struct __vpiNamedEvent*event;
 
       if (obj == 0)
 	    return vpip_get_time_precision();
@@ -481,6 +482,11 @@ int vpip_time_units_from_handle(vpiHandle obj)
 	  case vpiReg:
 	    signal = dynamic_cast<__vpiSignal*>(obj);
 	    scope = vpip_scope(signal);
+	    return scope->time_units;
+
+	  case vpiNamedEvent:
+	    event = dynamic_cast<__vpiNamedEvent*>(obj);
+	    scope = event->get_scope();
 	    return scope->time_units;
 
 	  default:
@@ -1104,7 +1110,10 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 
 	    vpip_put_value_event*put = new vpip_put_value_event;
 	    put->handle = obj;
-	    put->value = *vp;
+	    if (!dynamic_cast<__vpiNamedEvent*>(obj)) {
+		  assert(vp);
+		  put->value = *vp;
+	    }
 	      /* Since this is a scheduled put event we must copy any pointer
 	       * data to keep it available until the event is actually run. */
 	    switch (put->value.format) {
