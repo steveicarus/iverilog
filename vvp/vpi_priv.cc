@@ -1110,7 +1110,10 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 
 	    vpip_put_value_event*put = new vpip_put_value_event;
 	    put->handle = obj;
-	    if (!dynamic_cast<__vpiNamedEvent*>(obj)) {
+	    if (dynamic_cast<__vpiNamedEvent*>(obj)) {
+		  put->value.format = vpiIntVal;
+		  put->value.value.integer = 0;
+	    } else {
 		  assert(vp);
 		  put->value = *vp;
 	    }
