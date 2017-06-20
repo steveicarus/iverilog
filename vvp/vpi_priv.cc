@@ -464,7 +464,7 @@ int vpip_time_units_from_handle(vpiHandle obj)
       struct __vpiSysTaskCall*task;
       struct __vpiScope*scope;
       struct __vpiSignal*signal;
-      struct __vpiNamedEvent*event;
+      __vpiNamedEvent*event;
 
       if (obj == 0)
 	    return vpip_get_time_precision();
