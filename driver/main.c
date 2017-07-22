@@ -1046,8 +1046,8 @@ int main(int argc, char **argv)
 		  break;
 
 		case 'i':
-  		  ignore_missing_modules = 1;
-  		  break;
+		  ignore_missing_modules = 1;
+		  break;
 
 		case 'l':
 		  process_file_name(optarg, 1);
