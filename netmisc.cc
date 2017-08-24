@@ -1443,8 +1443,8 @@ bool evaluate_index_prefix(Design*des, NetScope*scope,
 {
       list<index_component_t>::const_iterator icur = indices.begin();
       for (size_t idx = 0 ; (idx+1) < indices.size() ; idx += 1, ++icur) {
-	    assert(icur != indices.end());
-	    assert(icur->sel == index_component_t::SEL_BIT);
+	    ivl_assert(*(icur->msb), icur != indices.end());
+	    ivl_assert(*(icur->msb), icur->sel == index_component_t::SEL_BIT);
 	    NetExpr*texpr = elab_and_eval(des, scope, icur->msb, -1, true);
 
 	    long tmp;
