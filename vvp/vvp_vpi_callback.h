@@ -57,8 +57,7 @@ class vvp_vpi_callback {
 
     private:
       value_callback*vpi_callbacks_;
-      struct __vpiArray* array_;
-      unsigned long array_word_;
+      struct __vpi_array_word*array_words_;
 };
 
 

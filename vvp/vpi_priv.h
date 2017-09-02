@@ -1,7 +1,7 @@
 #ifndef IVL_vpi_priv_H
 #define IVL_vpi_priv_H
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -479,8 +479,10 @@ class __vpiNamedEvent : public __vpiHandle {
       __vpiNamedEvent(__vpiScope*scope, const char*name);
       ~__vpiNamedEvent();
       int get_type_code(void) const;
+      __vpiScope*get_scope(void) const { return scope_; }
       int vpi_get(int code);
       char* vpi_get_str(int code);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
       vpiHandle vpi_handle(int code);
 
       inline void add_vpi_callback(__vpiCallback*cb)

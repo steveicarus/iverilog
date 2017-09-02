@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -304,16 +304,16 @@ bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
  */
 bool NetScope::replace_parameter(perm_string key, PExpr*val, NetScope*scope)
 {
-      bool flag = false;
+      if (parameters.find(key) == parameters.end())
+	    return false;
 
-      if (parameters.find(key) != parameters.end()) {
-	    param_expr_t&ref = parameters[key];
-	    ref.val_expr = val;
-            ref.val_scope = scope;
-	    flag = true;
-      }
+      param_expr_t&ref = parameters[key];
+      if (ref.local_flag)
+	    return false;
 
-      return flag;
+      ref.val_expr = val;
+      ref.val_scope = scope;
+      return true;
 }
 
 bool NetScope::make_parameter_unannotatable(perm_string key)
