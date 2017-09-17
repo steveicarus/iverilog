@@ -2210,8 +2210,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
 	    if (! parent->i_have_ended)
 		  schedule_vthread(parent, 0, true);
 
-//	    do_join(parent, thr);
-	    vthread_reap(thr);
+	    do_join(parent, thr);
 
       } else if (parent) {
 	      /* If the parent is yet to %join me, let its %join
