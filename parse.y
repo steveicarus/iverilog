@@ -2044,7 +2044,10 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 
   | K_task lifetime_opt IDENTIFIER error K_endtask
       {
-	assert(current_task == 0);
+	if (current_task) {
+	      pform_pop_scope();
+	      current_task = 0;
+	}
       }
     endlabel_opt
       { // Last step: check any closing name. This is done late so
