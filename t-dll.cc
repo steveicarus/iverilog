@@ -288,6 +288,13 @@ ivl_scope_t dll_target::find_scope(ivl_design_s &des, const NetScope*cur)
 		  return scope;
       }
 
+      for (map<const NetScope*,ivl_scope_t>::iterator idx = des.root_tasks.begin()
+		 ; idx != des.root_tasks.end() ; ++ idx) {
+	    ivl_scope_t scope = find_scope_from_root(idx->second, cur);
+	    if (scope)
+		  return scope;
+      }
+
       return 0;
 }
 
