@@ -2613,7 +2613,7 @@ bool of_END(vthread_t thr, vvp_code_t)
 	/* If I have a parent who is waiting for me, then mark that I
 	   have ended, and schedule that parent. Also, finish the
 	   %join for the parent. */
-      if (thr->parent && thr->parent->i_am_joining) {
+      if (!thr->i_am_detached && thr->parent && thr->parent->i_am_joining) {
 	    vthread_t tmp = thr->parent;
 	    assert(! thr->i_am_detached);
 
