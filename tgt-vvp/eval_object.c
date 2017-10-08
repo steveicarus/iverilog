@@ -111,6 +111,11 @@ static int eval_darray_new(ivl_expr_t ex)
 		  errors += 1;
 		  break;
 	    }
+      } else if (init_expr && (ivl_expr_value(init_expr) == IVL_VT_DARRAY)) {
+		  ivl_signal_t sig = ivl_expr_signal(init_expr);
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+		  fprintf(vvp_out, "    %%scopy;\n");
+
       } else if (init_expr && number_is_immediate(size_expr,32,0)) {
 	      /* In this case, there is an init expression, the
 		 expression is NOT an array_pattern, and the size
