@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -1037,9 +1037,8 @@ int main(int argc, char*argv[])
 		  pform_dump(out, cur->second);
 	    }
 	    out << "PFORM DUMP $ROOT CLASSES:" << endl;
-	    for (map<perm_string,PClass*>::iterator cur = pform_classes.begin()
-		       ; cur != pform_classes.end() ; ++ cur) {
-		  pform_dump(out, cur->second);
+	    for (size_t idx = 0 ; idx < pform_classes.size() ; idx += 1) {
+		  pform_dump(out, pform_classes[idx]);
 	    }
 	    out << "PFORM DUMP PACKAGES:" << endl;
 	    for (map<perm_string,PPackage*>::iterator pac = pform_packages.begin()

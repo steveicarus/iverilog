@@ -1,7 +1,7 @@
 #ifndef IVL_parse_api_H
 #define IVL_parse_api_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -45,7 +45,7 @@ extern std::map<perm_string,PUdp*>   pform_primitives;
 extern std::map<perm_string,data_type_t*> pform_typedefs;
 extern std::set<enum_type_t*> pform_enum_sets;
 extern std::map<perm_string,PTaskFunc*> pform_tasks;
-extern std::map<perm_string,PClass*> pform_classes;
+extern std::vector<PClass*> pform_classes;
 extern std::map<perm_string,PPackage*> pform_packages;
 
 extern void pform_dump(std::ostream&out, const PClass*pac);
