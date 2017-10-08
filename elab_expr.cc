@@ -3448,29 +3448,29 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       }
 
       if (net == 0) {
-	    cerr << get_fileline() << ": internal error: "
-		 << "Expecting idents with ntype to be signals." << endl;
+            cerr << get_fileline() << ": error: Unable to bind variable `"
+	         << path_ << "' in `" << scope_path(use_scope) << "'" << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
       if (! ntype->type_compatible(net->net_type())) {
-	    cerr << get_fileline() << ": internal_error: "
-		 << "net type doesn't match context type." << endl;
+	    cerr << get_fileline() << ": error: the type of the variable '"
+		 << path_ << "' doesn't match the context type." << endl;
 
-	    cerr << get_fileline() << ":               : "
-		 << "net type=";
+	    cerr << get_fileline() << ":      : " << "variable type=";
 	    if (net->net_type())
 		  net->net_type()->debug_dump(cerr);
 	    else
 		  cerr << "<nil>";
 	    cerr << endl;
 
-	    cerr << get_fileline() << ":               : "
-		 << "context type=";
+	    cerr << get_fileline() << ":      : " << "context type=";
 	    ivl_assert(*this, ntype);
 	    ntype->debug_dump(cerr);
 	    cerr << endl;
+	    des->errors += 1;
+	    return 0;
       }
       ivl_assert(*this, ntype->type_compatible(net->net_type()));
 
