@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -71,7 +71,7 @@ set<enum_type_t*>pform_enum_sets;
 /*
  * Class definitions in the $root scope go here.
  */
-map<perm_string,PClass*> pform_classes;
+vector<PClass*> pform_classes;
 
 /*
  * Task and function definitions in the $root scope go here.
@@ -467,7 +467,7 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name,
 	/* If no scope was found then this is being defined in the
 	 * compilation unit scope. */
       if (scopex == 0) {
-	    pform_classes[name] = class_scope;
+	    pform_classes.push_back(class_scope);
 	    lexical_scope = class_scope;
 	    return class_scope;
       }

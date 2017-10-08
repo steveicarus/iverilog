@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -509,8 +509,10 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
       netclass_t*use_base_class = 0;
       if (base_class) {
-	    ivl_assert(*pclass, scope);
-	    use_base_class = scope->find_class(base_class->name);
+	    if (scope)
+		  use_base_class = scope->find_class(base_class->name);
+	    if (use_base_class == 0)
+		  use_base_class = des->find_class(base_class->name);
 	    if (use_base_class == 0) {
 		  cerr << pclass->get_fileline() << ": error: "
 		       << "Base class " << base_class->name
@@ -605,13 +607,9 @@ static void elaborate_scope_classes(Design*des, NetScope*scope,
 
 void elaborate_rootscope_classes(Design*des)
 {
-      if (pform_classes.empty())
-	    return;
-
-      for (map<perm_string,PClass*>::iterator cur = pform_classes.begin()
-		 ; cur != pform_classes.end() ; ++ cur) {
-	    blend_class_constructors(cur->second);
-	    elaborate_scope_class(des, 0, cur->second);
+      for (size_t idx = 0 ; idx < pform_classes.size() ; idx += 1) {
+            blend_class_constructors(pform_classes[idx]);
+            elaborate_scope_class(des, 0, pform_classes[idx]);
       }
 }
 
