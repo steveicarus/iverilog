@@ -82,6 +82,7 @@ static int eval_darray_new(ivl_expr_t ex)
 	    unsigned idx;
 	    switch (ivl_type_base(element_type)) {
 		case IVL_VT_BOOL:
+		case IVL_VT_LOGIC:
 		  for (idx = 0 ; idx < ivl_expr_parms(init_expr) ; idx += 1) {
 			draw_eval_vec4(ivl_expr_parm(init_expr,idx));
 			fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
