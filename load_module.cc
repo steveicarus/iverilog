@@ -82,43 +82,16 @@ bool load_module(const char*type)
 		  fflush(depend_file);
 	    }
 
-	    if (ivlpp_string) {
-		  char*cmdline = (char*)malloc(strlen(ivlpp_string) +
-					       strlen(path) + 4);
-		  strcpy(cmdline, ivlpp_string);
-		  strcat(cmdline, " \"");
-		  strcat(cmdline, path);
-		  strcat(cmdline, "\"");
+	    if (verbose_flag)
+		  cerr << "Loading library file " << path << "." << endl;
 
-		  if (verbose_flag)
-			cerr << "Executing: " << cmdline << endl<< flush;
-
-		  FILE*file = popen(cmdline, "r");
-
-		  if (verbose_flag)
-			cerr << "...parsing output from preprocessor..." << endl << flush;
-
-		  pform_parse(path, file);
-		  pclose(file);
-		  free(cmdline);
-
-	    } else {
-		  if (verbose_flag)
-			cerr << "Loading library file "
-			     << path << "." << endl;
-
-		  FILE*file = fopen(path, "r");
-		  assert(file);
-		  pform_parse(path, file);
-		  fclose(file);
-	    }
+	    pform_parse(path);
 
 	    if (verbose_flag)
 		  cerr << "... Load module complete." << endl << flush;
 
 	    return true;
       }
-
 
       return false;
 }

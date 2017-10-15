@@ -57,13 +57,13 @@ extern void elaborate_rootscope_classes(Design*des);
 extern void elaborate_rootscope_tasks(Design*des);
 
 /*
- * This code actually invokes the parser to make modules. The first
- * parameter is the name of the file that is to be parsed. The
- * optional second parameter is the opened descriptor for the file. If
- * the descriptor is 0 (or skipped) then the function will attempt to
- * open the file on its own.
+ * This code actually invokes the parser to make modules. If the path
+ * parameter is "-", the parser reads from stdin, otherwise it attempts
+ * to open and read the specified file. When reading from a file, if
+ * the ivlpp_string variable is not set to null, the file will be piped
+ * through the command specified by ivlpp_string before being parsed.
  */
-extern int  pform_parse(const char*path, FILE*file =0);
+extern int pform_parse(const char*path);
 
 extern string vl_file;
 

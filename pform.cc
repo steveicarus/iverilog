@@ -3715,22 +3715,38 @@ void pform_add_modport_port(const struct vlltype&loc,
 FILE*vl_input = 0;
 extern void reset_lexor();
 
-int pform_parse(const char*path, FILE*file)
+int pform_parse(const char*path)
 {
       vl_file = path;
-      if (file == 0) {
+      if (strcmp(path, "-") == 0) {
+	    vl_input = stdin;
+      } else if (ivlpp_string) {
+	    char*cmdline = (char*)malloc(strlen(ivlpp_string) +
+					        strlen(path) + 4);
+	    strcpy(cmdline, ivlpp_string);
+	    strcat(cmdline, " \"");
+	    strcat(cmdline, path);
+	    strcat(cmdline, "\"");
 
-	    if (strcmp(path, "-") == 0)
-		  vl_input = stdin;
-	    else
-		  vl_input = fopen(path, "r");
+	    if (verbose_flag)
+		  cerr << "Executing: " << cmdline << endl<< flush;
+
+	    vl_input = popen(cmdline, "r");
 	    if (vl_input == 0) {
-		  cerr << "Unable to open " <<vl_file << "." << endl;
-		  return 11;
+		  cerr << "Unable to preprocess " << path << "." << endl;
+		  return 1;
 	    }
 
+	    if (verbose_flag)
+		  cerr << "...parsing output from preprocessor..." << endl << flush;
+
+	    free(cmdline);
       } else {
-	    vl_input = file;
+	    vl_input = fopen(path, "r");
+	    if (vl_input == 0) {
+		  cerr << "Unable to open " << path << "." << endl;
+		  return 1;
+	    }
       }
 
       reset_lexor();
@@ -3738,8 +3754,12 @@ int pform_parse(const char*path, FILE*file)
       warn_count = 0;
       int rc = VLparse();
 
-      if (file == 0)
-	    fclose(vl_input);
+      if (vl_input != stdin) {
+	    if (ivlpp_string)
+		  pclose(vl_input);
+	    else 
+		  fclose(vl_input);
+      }
 
       if (rc) {
 	    cerr << "I give up." << endl;

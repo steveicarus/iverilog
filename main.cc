@@ -140,6 +140,8 @@ void add_vpi_module(const char*name)
 map<perm_string,unsigned> missing_modules;
 map<perm_string,bool> library_file_map;
 
+vector<perm_string> source_files;
+
 list<const char*> library_suff;
 
 list<perm_string> roots;
@@ -178,6 +180,11 @@ bool debug_elaborate = false;
 bool debug_emit = false;
 bool debug_synth2 = false;
 bool debug_optimizer = false;
+
+/*
+ * Compilation control flags.
+ */
+bool separate_compilation = false;
 
 /*
  * Optimization control flags.
@@ -777,6 +784,38 @@ static void read_iconfig_file(const char*ipath)
       fclose(ifile);
 }
 
+/*
+ * This function reads a list of source file names. Each name starts
+ * with the first non-space character, and ends with the last non-space
+ * character. Spaces in the middle are OK.
+ */
+static void read_sources_file(const char*path)
+{
+      char line_buf[2048];
+
+      FILE*fd = fopen(path, "r");
+      if (fd == 0) {
+	    cerr << "ERROR: Unable to read source file list: " << path << endl;
+	    return;
+      }
+
+      while (fgets(line_buf, sizeof line_buf, fd) != 0) {
+	    char*cp = line_buf + strspn(line_buf, " \t\r\b\f");
+	    char*tail = cp + strlen(cp);
+	    while (tail > cp) {
+		  if (! isspace((int)tail[-1]))
+			break;
+		  tail -= 1;
+		  tail[0] = 0;
+	    }
+
+	    if (cp < tail)
+		  source_files.push_back(filename_strings.make(cp));
+      }
+
+      fclose(fd);
+}
+
 extern Design* elaborate(list <perm_string> root);
 
 #if defined(HAVE_TIMES)
@@ -863,12 +902,14 @@ int main(int argc, char*argv[])
       min_typ_max_flag = TYP;
       min_typ_max_warn = 10;
 
-      while ((opt = getopt(argc, argv, "C:f:hN:P:p:Vv")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "C:F:f:hN:P:p:Vv")) != EOF) switch (opt) {
 
 	  case 'C':
 	    read_iconfig_file(optarg);
 	    break;
-
+	  case 'F':
+	    read_sources_file(optarg);
+	    break;
 	  case 'f':
 	    parm_to_flagmap(optarg);
 	    break;
@@ -921,6 +962,7 @@ int main(int argc, char*argv[])
 "usage: ivl <options> <file>\n"
 "options:\n"
 "\t-C <name>        Config file from driver.\n"
+"\t-F <file>        List of source files from driver.\n"
 "\t-h               Print usage information, and exit.\n"
 "\t-N <file>        Dump the elaborated netlist to <file>.\n"
 "\t-P <file>        Write the parsed input to <file>.\n"
@@ -936,10 +978,18 @@ int main(int argc, char*argv[])
 	    return 0;
       }
 
-      if (optind == argc) {
+      int arg = optind;
+      while (arg < argc) {
+	    perm_string path = filename_strings.make(argv[arg++]);
+	    source_files.push_back(path);
+      }
+
+      if (source_files.empty()) {
 	    cerr << "No input files." << endl;
 	    return 1;
       }
+
+      separate_compilation = source_files.size() > 1;
 
       if( depfile_name ) {
 	      depend_file = fopen(depfile_name, "a");
@@ -1036,7 +1086,10 @@ int main(int argc, char*argv[])
 
 	/* Parse the input. Make the pform. */
       pform_set_timescale(def_ts_units, def_ts_prec, 0, 0);
-      int rc = pform_parse(argv[optind]);
+      int rc = 0;
+      for (unsigned idx = 0; idx < source_files.size(); idx += 1) {
+	    rc += pform_parse(source_files[idx]);
+      }
 
       if (pf_path) {
 	    ofstream out (pf_path);

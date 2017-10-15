@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -72,6 +72,7 @@ static const char* set_file_name(char*text)
 void reset_lexor();
 static void line_directive();
 static void line_directive2();
+static void reset_all();
 
 verinum*make_unsized_binary(const char*txt);
 verinum*make_undef_highz_dec(const char*txt);
@@ -566,11 +567,7 @@ TU [munpf]
 		    "definition." << endl;
 	    error_count += 1;
       } else {
-	    pform_set_default_nettype(NetNet::WIRE, yylloc.text,
-	                              yylloc.first_line);
-	    in_celldefine = false;
-	    uc_drive = UCD_NONE;
-	    pform_set_timescale(def_ts_units, def_ts_prec, 0, 0);
+	    reset_all();
       } }
 
   /* Notice and handle the `unconnected_drive directive. */
@@ -1597,6 +1594,18 @@ static void line_directive2()
       yylloc.first_line = lineno;
 }
 
+/*
+ * Reset all compiler directives. This will be called when a `resetall
+ * directive is encountered or when a new compilation unit is started.
+ */
+static void reset_all()
+{
+      pform_set_default_nettype(NetNet::WIRE, yylloc.text, yylloc.first_line);
+      in_celldefine = false;
+      uc_drive = UCD_NONE;
+      pform_set_timescale(def_ts_units, def_ts_prec, 0, 0);
+}
+
 extern FILE*vl_input;
 void reset_lexor()
 {
@@ -1605,6 +1614,14 @@ void reset_lexor()
 
 	/* Announce the first file name. */
       yylloc.text = set_file_name(strdupnew(vl_file.c_str()));
+
+      if (separate_compilation) {
+	    reset_all();
+	    if (!keyword_mask_stack.empty()) {
+		  lexor_keyword_mask = keyword_mask_stack.back();
+		  keyword_mask_stack.clear();
+	    }
+      }
 }
 
 /*
