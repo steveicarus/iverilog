@@ -868,8 +868,8 @@ void define_macro(const char* name, const char* value, int keyword, int argc)
     prev = def_lookup(name);
     if (prev) {
         emit_pathline(istack);
-        fprintf(stderr, "warning: redefinition of macro %s\n",
-            name);
+        fprintf(stderr, "warning: redefinition of macro %s from value '%s' to '%s'\n",
+            name, prev->value, value);
     }
 
     def = malloc(sizeof(struct define_t));
