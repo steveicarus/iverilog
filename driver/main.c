@@ -138,7 +138,7 @@ int gen_std_include = 1;
    of the include list. */
 int gen_relative_include = 0;
 
-char warning_flags[16] = "n";
+char warning_flags[17] = "n";
 
 /* Boolean: true means ignore errors about missing modules */
 int ignore_missing_modules = 0;
@@ -505,6 +505,10 @@ static void process_warning_switch(const char*name)
 	    process_warning_switch("select-range");
 	    process_warning_switch("timescale");
 	    process_warning_switch("sensitivity-entire-array");
+	    process_warning_switch("macro-redefinition");
+      } else if (strcmp(name,"macro-redefinition") == 0) {
+          if (! strchr(warning_flags, 'r'))
+ 		  strcat(warning_flags, "r");
       } else if (strcmp(name,"anachronisms") == 0) {
 	    if (! strchr(warning_flags, 'n'))
 		  strcat(warning_flags, "n");
@@ -1288,8 +1292,10 @@ int main(int argc, char **argv)
 	/* Write the preprocessor command needed to preprocess a
 	   single file. This may be used to preprocess library
 	   files. */
-      fprintf(iconfig_file, "ivlpp:%s%civlpp -L -F\"%s\" -P\"%s\"\n",
-	      ivlpp_dir, sep, defines_path, compiled_defines_path);
+      fprintf(iconfig_file, "ivlpp:%s%civlpp -L -F\"%s\" -P\"%s\" %s\n",
+	      ivlpp_dir, sep, defines_path, compiled_defines_path,
+            strchr(warning_flags, 'r') ? "-Wredef" : ""
+      );
 
 	/* Done writing to the iconfig file. Close it now. */
       fclose(iconfig_file);
