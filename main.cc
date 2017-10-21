@@ -1103,21 +1103,11 @@ int main(int argc, char*argv[])
 		       ; cur != disciplines.end() ; ++ cur ) {
 		  pform_dump(out, (*cur).second);
 	    }
-	    out << "PFORM DUMP $ROOT TASKS/FUNCTIONS:" << endl;
-	    for (map<perm_string,PTaskFunc*>::iterator cur = pform_tasks.begin()
-		       ; cur != pform_tasks.end() ; ++ cur) {
-		  pform_dump(out, cur->second);
-	    }
-	    out << "PFORM DUMP $ROOT CLASSES:" << endl;
-	    for (size_t idx = 0 ; idx < pform_classes.size() ; idx += 1) {
-		  pform_dump(out, pform_classes[idx]);
-	    }
 	    out << "PFORM DUMP PACKAGES:" << endl;
 	    for (map<perm_string,PPackage*>::iterator pac = pform_packages.begin()
 		       ; pac != pform_packages.end() ; ++ pac) {
 		  pform_dump(out, pac->second);
 	    }
-
 	    out << "PFORM DUMP MODULES:" << endl;
 	    for (map<perm_string,Module*>::iterator mod = pform_modules.begin()
 		       ; mod != pform_modules.end() ; ++ mod ) {
@@ -1233,12 +1223,6 @@ int main(int argc, char*argv[])
 
 	    delete (*idx).second;
 	    (*idx).second = 0;
-      }
-
-      for(map<perm_string,data_type_t*>::iterator it = pform_typedefs.begin()
-                 ; it != pform_typedefs.end() ; ++it) {
-            delete (*it).second;
-            (*it).second = 0;
       }
 
       if (verbose_flag) {

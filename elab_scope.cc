@@ -167,8 +167,7 @@ static void collect_scope_specparams_(Design*des, NetScope*scope,
 }
 
 /*
- * Elaborate the enumeration into the given scope. If scope==0, then
- * the enumeration goes into $root instead of a scope.
+ * Elaborate the enumeration into the given scope.
  */
 static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 					enum_type_t*enum_type)
@@ -193,10 +192,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 					 enum_type);
 
       use_enum->set_line(enum_type->li);
-      if (scope)
-	    scope->add_enumeration_set(enum_type, use_enum);
-      else
-	    des->add_enumeration_set(enum_type, use_enum);
+      scope->add_enumeration_set(enum_type, use_enum);
 
       size_t name_idx = 0;
 	// Find the enumeration width.
@@ -364,10 +360,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	    }
 
 	    rc_flag = use_enum->insert_name(name_idx, cur->name, cur_value);
-	    if (scope)
-		  rc_flag &= scope->add_enumeration_name(use_enum, cur->name);
-	    else
-		  rc_flag &= des->add_enumeration_name(use_enum, cur->name);
+	    rc_flag &= scope->add_enumeration_name(use_enum, cur->name);
 
 	    if (! rc_flag) {
 		  cerr << use_enum->get_fileline()
@@ -394,15 +387,6 @@ static void elaborate_scope_enumerations(Design*des, NetScope*scope,
 		 ; cur != enum_types.end() ; ++ cur) {
 	    enum_type_t*curp = *cur;
 	    elaborate_scope_enumeration(des, scope, curp);
-      }
-}
-
-void elaborate_rootscope_enumerations(Design*des)
-{
-      for (set<enum_type_t*>::const_iterator cur = pform_enum_sets.begin()
-		 ; cur != pform_enum_sets.end() ; ++ cur) {
-	    enum_type_t*curp = *cur;
-	    elaborate_scope_enumeration(des, 0, curp);
       }
 }
 
@@ -509,10 +493,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
       netclass_t*use_base_class = 0;
       if (base_class) {
-	    if (scope)
-		  use_base_class = scope->find_class(base_class->name);
-	    if (use_base_class == 0)
-		  use_base_class = des->find_class(base_class->name);
+	    use_base_class = scope->find_class(base_class->name);
 	    if (use_base_class == 0) {
 		  cerr << pclass->get_fileline() << ": error: "
 		       << "Base class " << base_class->name
@@ -527,9 +508,10 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       use_type->save_elaborated_type = use_class;
 
 	// Class scopes have no parent scope, because references are
-	// not allowed to escape a class method.
+	// not allowed to escape a class method. But they are allowed
+	// to reference the compilation unit scope.
       NetScope*class_scope = new NetScope(0, hname_t(pclass->pscope_name()),
-					  NetScope::CLASS);
+					  NetScope::CLASS, scope->unit());
       class_scope->set_line(pclass);
       class_scope->set_class_def(use_class);
       use_class->set_class_scope(class_scope);
@@ -588,12 +570,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 	    cur->second->elaborate_scope(des, method_scope);
       }
 
-      if (scope) {
-	    scope->add_class(use_class);
-
-      } else {
-	    des->add_class(use_class, pclass);
-      }
+      scope->add_class(use_class);
 }
 
 static void elaborate_scope_classes(Design*des, NetScope*scope,
@@ -602,14 +579,6 @@ static void elaborate_scope_classes(Design*des, NetScope*scope,
       for (size_t idx = 0 ; idx < classes.size() ; idx += 1) {
 	    blend_class_constructors(classes[idx]);
 	    elaborate_scope_class(des, scope, classes[idx]);
-      }
-}
-
-void elaborate_rootscope_classes(Design*des)
-{
-      for (size_t idx = 0 ; idx < pform_classes.size() ; idx += 1) {
-            blend_class_constructors(pform_classes[idx]);
-            elaborate_scope_class(des, 0, pform_classes[idx]);
       }
 }
 
@@ -661,11 +630,6 @@ static void elaborate_scope_task(Design*des, NetScope*scope, PTask*task)
       NetScope*task_scope = new NetScope(scope, use_name, NetScope::TASK);
       task_scope->is_auto(task->is_auto());
       task_scope->set_line(task);
-
-      if (scope==0) {
-	    set_scope_timescale(des, task_scope, task);
-	    des->add_root_task(task_scope, task);
-      }
 
       if (debug_scopes) {
 	    cerr << task->get_fileline() << ": elaborate_scope_task: "
@@ -729,11 +693,6 @@ static void elaborate_scope_func(Design*des, NetScope*scope, PFunction*task)
       task_scope->is_auto(task->is_auto());
       task_scope->set_line(task);
 
-      if (scope==0) {
-	    set_scope_timescale(des, task_scope, task);
-	    des->add_root_task(task_scope, task);
-      }
-
       if (debug_scopes) {
 	    cerr << task->get_fileline() << ": elaborate_scope_func: "
 		 << "Elaborate task scope " << scope_path(task_scope) << endl;
@@ -787,28 +746,6 @@ static void elaborate_scope_funcs(Design*des, NetScope*scope,
 	    elaborate_scope_func(des, scope, cur->second);
       }
 
-}
-
-void elaborate_rootscope_tasks(Design*des)
-{
-      for (map<perm_string,PTaskFunc*>::iterator cur = pform_tasks.begin()
-		 ; cur != pform_tasks.end() ; ++ cur) {
-
-	    if (PTask*task = dynamic_cast<PTask*> (cur->second)) {
-		  elaborate_scope_task(des, 0, task);
-		  continue;
-	    }
-
-	    if (PFunction*func = dynamic_cast<PFunction*>(cur->second)) {
-		  elaborate_scope_func(des, 0, func);
-		  continue;
-	    }
-
-	    cerr << cur->second->get_fileline() << ": internal error: "
-		 << "elaborate_rootscope_tasks does not understand "
-		 << "this object," << endl;
-	    des->errors += 1;
-      }
 }
 
 class generate_schemes_work_item_t : public elaborator_work_item_t {
@@ -1756,7 +1693,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // Create the new scope as a MODULE with my name. Note
 	      // that if this is a nested module, mark it thus so that
 	      // scope searches will continue into the parent scope.
-	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE,
+	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE, 0,
 					     bound_type_? true : false,
 					     mod->program_block,
 					     mod->is_interface);

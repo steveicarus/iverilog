@@ -63,20 +63,18 @@ map<perm_string,Module*> pform_modules;
 map<perm_string,PUdp*> pform_primitives;
 
 /*
- * typedefs in the $root scope go here.
+ * The pform_units is a list of the SystemVerilog compilation unit scopes.
+ * The current compilation unit is the last element in the list. All items
+ * declared or defined at the top level (outside any design element) are
+ * added to the current compilation unit scope.
  */
-map<perm_string,data_type_t*>pform_typedefs;
-set<enum_type_t*>pform_enum_sets;
+vector<PPackage*> pform_units;
 
-/*
- * Class definitions in the $root scope go here.
- */
-vector<PClass*> pform_classes;
-
-/*
- * Task and function definitions in the $root scope go here.
- */
-map<perm_string,PTaskFunc*> pform_tasks;
+static bool is_compilation_unit(LexicalScope*scope)
+{
+	// A compilation unit is the only scope that doesn't have a parent.
+      return scope->parent_scope() == 0;
+}
 
 std::string vlltype::get_fileline() const
 {
@@ -406,6 +404,7 @@ void pform_pop_scope()
 {
       assert(lexical_scope);
       lexical_scope = lexical_scope->parent_scope();
+      assert(lexical_scope);
 }
 
 static LexicalScope::lifetime_t find_lifetime(LexicalScope::lifetime_t lifetime)
@@ -413,10 +412,7 @@ static LexicalScope::lifetime_t find_lifetime(LexicalScope::lifetime_t lifetime)
       if (lifetime != LexicalScope::INHERITED)
 	    return lifetime;
 
-      if (lexical_scope != 0)
-	    return lexical_scope->default_lifetime;
-
-      return LexicalScope::STATIC;
+      return lexical_scope->default_lifetime;
 }
 
 static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
@@ -440,7 +436,7 @@ static void pform_set_scope_timescale(PScope*scope, const struct vlltype&loc)
 	 * a timescale directive. */
       scope->time_from_timescale = pform_timescale_file != 0;
 
-      if (warn_timescale && (lexical_scope == 0) && pform_timescale_file
+      if (warn_timescale && is_compilation_unit(lexical_scope) && pform_timescale_file
 	  && (strcmp(pform_timescale_file, loc.text) != 0)) {
 
 	    cerr << loc.get_fileline() << ": warning: "
@@ -461,16 +457,8 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name,
       pform_set_scope_timescale(class_scope, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-
+      assert(scopex);
       assert(!pform_cur_generate);
-
-	/* If no scope was found then this is being defined in the
-	 * compilation unit scope. */
-      if (scopex == 0) {
-	    pform_classes.push_back(class_scope);
-	    lexical_scope = class_scope;
-	    return class_scope;
-      }
 
       if (scopex->classes.find(name) != scopex->classes.end()) {
 	    cerr << class_scope->get_fileline() << ": error: duplicate "
@@ -513,7 +501,8 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name,
       pform_set_scope_timescale(task, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-      if ((scopex == 0) && !gn_system_verilog()) {
+      assert(scopex);
+      if (is_compilation_unit(scopex) && !gn_system_verilog()) {
 	    cerr << task->get_fileline() << ": error: task declarations "
 		  "must be contained within a module." << endl;
 	    error_count += 1;
@@ -530,7 +519,7 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name,
 		  error_count += 1;
 	    }
 	    pform_cur_generate->tasks[task->pscope_name()] = task;
-      } else if (scopex) {
+      } else {
 	      // Check if the task is already in the dictionary.
 	    if (scopex->tasks.find(task->pscope_name()) != scopex->tasks.end()) {
 		  cerr << task->get_fileline() << ": error: duplicate "
@@ -539,15 +528,6 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name,
 		  error_count += 1;
 	    }
 	    scopex->tasks[task->pscope_name()] = task;
-
-      } else {
-	    if (pform_tasks.find(task_name) != pform_tasks.end()) {
-		  cerr << task->get_fileline() << ": error: "
-		       << "Duplicate definition for task '" << name
-		       << "' in $root scope." << endl;
-		  error_count += 1;
-	    }
-	    pform_tasks[task_name] = task;
       }
 
       lexical_scope = task;
@@ -570,7 +550,8 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
       pform_set_scope_timescale(func, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-      if ((scopex == 0) && !gn_system_verilog()) {
+      assert(scopex);
+      if (is_compilation_unit(scopex) && !gn_system_verilog()) {
 	    cerr << func->get_fileline() << ": error: function declarations "
 		  "must be contained within a module." << endl;
 	    error_count += 1;
@@ -588,7 +569,7 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 	    }
 	    pform_cur_generate->funcs[func->pscope_name()] = func;
 
-      } else if (scopex != 0) {
+      } else {
 	      // Check if the function is already in the dictionary.
 	    if (scopex->funcs.find(func->pscope_name()) != scopex->funcs.end()) {
 		  cerr << func->get_fileline() << ": error: duplicate "
@@ -597,15 +578,6 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 		  error_count += 1;
 	    }
 	    scopex->funcs[func->pscope_name()] = func;
-
-      } else {
-	    if (pform_tasks.find(func_name) != pform_tasks.end()) {
-		  cerr << func->get_fileline() << ": error: "
-		       << "Duplicate definition for function '" << name
-		       << "' in $root scope." << endl;
-		  error_count += 1;
-	    }
-	    pform_tasks[func_name] = func;
       }
 
       lexical_scope = func;
@@ -705,11 +677,7 @@ static void pform_put_wire_in_scope(perm_string name, PWire*net)
 
 static void pform_put_enum_type_in_scope(enum_type_t*enum_set)
 {
-      if (lexical_scope) {
-	    lexical_scope->enum_sets.insert(enum_set);
-      } else {
-	    pform_enum_sets.insert(enum_set);
-      }
+      lexical_scope->enum_sets.insert(enum_set);
 }
 
 PWire*pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_type, NetNet::PortType port_type, ivl_variable_type_t vt_type)
@@ -736,12 +704,7 @@ void pform_set_typedef(perm_string name, data_type_t*data_type, std::list<pform_
       if(unp_ranges)
 	    data_type = new uarray_type_t(data_type, unp_ranges);
 
-	// If we are in a lexical scope (i.e. a package or module)
-	// then put the typedef into that scope. Otherwise, put it
-	// into the $root scope.
-      data_type_t*&ref = lexical_scope
-	    ? lexical_scope->typedefs[name]
-	    : pform_typedefs[name];
+      data_type_t*&ref = lexical_scope->typedefs[name];
 
       ivl_assert(*data_type, ref == 0);
       ref = data_type;
@@ -751,24 +714,9 @@ void pform_set_typedef(perm_string name, data_type_t*data_type, std::list<pform_
       }
 }
 
-static data_type_t* test_type_identifier_in_root(perm_string name)
-{
-      map<perm_string,data_type_t*>::iterator cur = pform_typedefs.find(name);
-      if (cur != pform_typedefs.end())
-	    return cur->second;
-      else
-	    return 0;
-}
-
 data_type_t* pform_test_type_identifier(const char*txt)
 {
       perm_string name = lex_strings.make(txt);
-
-	// If there is no lexical_scope yet, then look only in the
-	// $root scope for typedefs.
-      if (lexical_scope == 0) {
-	    return test_type_identifier_in_root(name);
-      }
 
       LexicalScope*cur_scope = lexical_scope;
       do {
@@ -799,10 +747,6 @@ data_type_t* pform_test_type_identifier(const char*txt)
 	    cur_scope = cur_scope->parent_scope();
       } while (cur_scope);
 
-	// See if there is a typedef in the $root scope.
-      if (data_type_t*tmp = test_type_identifier_in_root(name))
-	    return tmp;
-
       return 0;
 }
 
@@ -813,13 +757,6 @@ data_type_t* pform_test_type_identifier(const char*txt)
  */
 bool pform_test_type_identifier_local(perm_string name)
 {
-      if (lexical_scope == 0) {
-	    if (test_type_identifier_in_root(name))
-		  return true;
-	    else
-		  return false;
-      }
-
       LexicalScope*cur_scope = lexical_scope;
 
       map<perm_string,data_type_t*>::iterator cur;
@@ -1418,11 +1355,9 @@ void pform_endmodule(const char*name, bool inside_celldefine,
 	    use_module_map[mod_name] = cur_module;
       }
 
-	// The current lexical scope should be this module by now, and
-	// this module should not have a parent lexical scope.
+	// The current lexical scope should be this module by now.
       ivl_assert(*cur_module, lexical_scope == cur_module);
       pform_pop_scope();
-      ivl_assert(*cur_module, ! pform_cur_module.empty() || lexical_scope == 0);
 
       tp_decl_flag = false;
       tu_decl_flag = false;
@@ -2773,11 +2708,11 @@ void pform_makewire(const struct vlltype&li,
 		    NetNet::Type type,
 		    data_type_t*data_type)
 {
-      if ((lexical_scope == 0) && !gn_system_verilog()) {
+      if (is_compilation_unit(lexical_scope) && !gn_system_verilog()) {
 	    VLerror(li, "error: variable declarations must be contained within a module.");
 	    return;
       }
-      if (lexical_scope == 0) {
+      if (is_compilation_unit(lexical_scope)) {
 	    VLerror(li, "sorry: variable declarations in the $root scope are not yet supported.");
 	    return;
       }
@@ -3080,11 +3015,11 @@ void pform_set_parameter(const struct vlltype&loc,
 			 LexicalScope::range_t*value_range)
 {
       LexicalScope*scope = lexical_scope;
-      if ((scope == 0) && !gn_system_verilog()) {
+      if (is_compilation_unit(scope) && !gn_system_verilog()) {
 	    VLerror(loc, "error: parameter declarations must be contained within a module.");
 	    return;
       }
-      if (scope == 0) {
+      if (is_compilation_unit(scope)) {
 	    VLerror(loc, "sorry: parameter declarations in the $root scope are not yet supported.");
 	    return;
       }
@@ -3155,11 +3090,11 @@ void pform_set_localparam(const struct vlltype&loc,
 			  bool signed_flag, list<pform_range_t>*range, PExpr*expr)
 {
       LexicalScope*scope = lexical_scope;
-      if ((scope == 0) && !gn_system_verilog()) {
+      if (is_compilation_unit(scope) && !gn_system_verilog()) {
 	    VLerror(loc, "error: localparam declarations must be contained within a module.");
 	    return;
       }
-      if (scope == 0) {
+      if (is_compilation_unit(scope)) {
 	    VLerror(loc, "sorry: localparam declarations in the $root scope are not yet supported.");
 	    return;
       }
@@ -3749,6 +3684,21 @@ int pform_parse(const char*path)
 	    }
       }
 
+      if (pform_units.empty() || separate_compilation) {
+	    char unit_name[20];
+	    static unsigned nunits = 0;
+	    if (separate_compilation)
+		  sprintf(unit_name, "$unit#%u", ++nunits);
+	    else
+		  sprintf(unit_name, "$unit");
+	    PPackage*unit = new PPackage(lex_strings.make(unit_name), 0);
+	    unit->default_lifetime = LexicalScope::STATIC;
+	    unit->time_unit = def_ts_units;
+	    unit->time_precision = def_ts_prec;
+	    unit->time_from_timescale = false;
+	    pform_units.push_back(unit);
+	    lexical_scope = unit;
+      }
       reset_lexor();
       error_count = 0;
       warn_count = 0;

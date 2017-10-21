@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1390,6 +1390,8 @@ void NetScope::dump(ostream&o) const
       if (is_interface()) o << " (interface)";
       o << " " << children_.size() << " children, "
 	<< classes_.size() << " classes" << endl;
+      if (unit() && !is_unit())
+	    o << "    in compilation unit " << unit()->basename() << endl;
 
       for (unsigned idx = 0 ;  idx < attr_cnt() ;  idx += 1)
 	    o << "    (* " << attr_key(idx) << " = "
@@ -1900,18 +1902,6 @@ void Design::dump(ostream&o) const
       for (map<perm_string,NetScope*>::const_iterator cur = packages_.begin()
 		 ; cur != packages_.end() ; ++cur) {
 	    cur->second->dump(o);
-      }
-
-      o << "$ROOT CLASSES:" << endl;
-      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
-		 ; cur != classes_.end() ; ++cur) {
-	    cur->second->dump_scope(o);
-      }
-
-      o << "$ROOT TASKS/FUNCTIONS:" << endl;
-      for (map<NetScope*,PTaskFunc*>::const_iterator cur = root_tasks_.begin()
-		 ; cur != root_tasks_.end() ; ++ cur) {
-	    cur->first->dump(o);
       }
 
       o << "SCOPES:" << endl;

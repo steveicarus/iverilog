@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -261,12 +261,6 @@ ivl_scope_t dll_target::find_scope(ivl_design_s &des, const NetScope*cur)
 	    return tmp;
       }
 
-      if (cur->type()==NetScope::TASK || cur->type()==NetScope::FUNC) {
-	    map<const NetScope*,ivl_scope_t>::const_iterator idx = des.root_tasks.find(cur);
-	    if (idx != des.root_tasks.end())
-		  return idx->second;
-      }
-
       for (unsigned idx = 0; idx < des.roots.size(); idx += 1) {
 	    assert(des.roots[idx]);
 	    ivl_scope_t scope = find_scope_from_root(des.roots[idx], cur);
@@ -283,13 +277,6 @@ ivl_scope_t dll_target::find_scope(ivl_design_s &des, const NetScope*cur)
 
       for (map<const NetScope*,ivl_scope_t>::iterator idx = des.classes.begin()
 		 ; idx != des.classes.end() ; ++ idx) {
-	    ivl_scope_t scope = find_scope_from_root(idx->second, cur);
-	    if (scope)
-		  return scope;
-      }
-
-      for (map<const NetScope*,ivl_scope_t>::iterator idx = des.root_tasks.begin()
-		 ; idx != des.root_tasks.end() ; ++ idx) {
 	    ivl_scope_t scope = find_scope_from_root(idx->second, cur);
 	    if (scope)
 		  return scope;
@@ -657,22 +644,6 @@ void dll_target::add_root(const NetScope *s)
 	  case NetScope::CLASS:
 	    root_->type_ = IVL_SCT_CLASS;
 	    break;
-	  case NetScope::TASK: {
-		const NetTaskDef*def = s->task_def();
-		if (def == 0) {
-		      cerr << "?:?" << ": internal error: "
-			   << "task " << root_->name_
-			   << " has no definition." << endl;
-		}
-		assert(def);
-		root_->type_ = IVL_SCT_TASK;
-		root_->tname_ = def->scope()->basename();
-		break;
-	  }
-	    break;
-	  case NetScope::FUNC:
-	    fill_in_scope_function(root_, s);
-	    break;
 	  default:
 	    assert(0);
       }
@@ -699,11 +670,6 @@ void dll_target::add_root(const NetScope *s)
 	  case NetScope::CLASS:
 	    root_->ports = 0;
 	    des_.classes[s] = root_;
-	    break;
-
-	  case NetScope::TASK:
-	  case NetScope::FUNC:
-	    des_.root_tasks[s] = root_;
 	    break;
 
 	  default:
@@ -747,11 +713,7 @@ bool dll_target::start_design(const Design*des)
       }
       assert(idx == des_.disciplines.size());
 
-      list<NetScope *> scope_list = des->find_roottask_scopes();
-      for (list<NetScope*>::const_iterator cur = scope_list.begin()
-		 ; cur != scope_list.end() ; ++ cur) {
-	    add_root(*cur);
-      }
+      list<NetScope *> scope_list;
 
       scope_list = des->find_package_scopes();
       for (list<NetScope*>::const_iterator cur = scope_list.begin()

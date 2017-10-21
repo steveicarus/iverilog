@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -6170,28 +6170,6 @@ bool Design::check_proc_delay() const
       return result_flag;
 }
 
-void Design::root_elaborate(void)
-{
-      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
-		 ; cur != classes_.end() ; ++ cur) {
-	    netclass_t*cur_class = cur->second;
-	    PClass*cur_pclass = class_to_pclass_[cur_class];
-	    cur_class->elaborate(this, cur_pclass);
-      }
-
-      for (map<NetScope*,PTaskFunc*>::iterator cur = root_tasks_.begin()
-		 ; cur != root_tasks_.end() ; ++ cur) {
-
-	    if (debug_elaborate) {
-		  cerr << cur->second->get_fileline() << ": Design::root_elaborate: "
-		       << "Elaborate for root task/func " << scope_path(cur->first) << endl;
-	    }
-
-	    cur->second->elaborate(this, cur->first);
-      }
-
-}
-
 /*
  * This function is the root of all elaboration. The input is the list
  * of root module names. The function locates the Module definitions
@@ -6211,8 +6189,13 @@ struct root_elem {
 
 Design* elaborate(list<perm_string>roots)
 {
+      unsigned npackages = pform_packages.size();
+      if (gn_system_verilog())
+	    npackages += pform_units.size();
+
       vector<struct root_elem> root_elems(roots.size());
-      vector<struct pack_elem> pack_elems(pform_packages.size());
+      vector<struct pack_elem> pack_elems(npackages);
+      map<LexicalScope*,NetScope*> unit_scopes;
       bool rc = true;
       unsigned i = 0;
 
@@ -6220,23 +6203,36 @@ Design* elaborate(list<perm_string>roots)
 	// module and elaborate what I find.
       Design*des = new Design;
 
-	// Elaborate enum sets in $root scope.
-      elaborate_rootscope_enumerations(des);
+	// Elaborate the compilation unit scopes. From here on, these are
+	// treated as an additional set of packages.
+      if (gn_system_verilog()) {
+	    for (i = 0; i < pform_units.size(); i += 1) {
+		  PPackage*unit = pform_units[i];
+		  NetScope*scope = des->make_package_scope(unit->pscope_name(), 0, true);
+		  scope->set_line(unit);
+		  set_scope_timescale(des, scope, unit);
 
-	// Elaborate tasks and functions in $root scope.
-      elaborate_rootscope_tasks(des);
+		  elaborator_work_item_t*es = new elaborate_package_t(des, scope, unit);
+		  des->elaboration_work_list.push_back(es);
 
-	// Elaborate classes in $root scope.
-      elaborate_rootscope_classes(des);
+		  pack_elems[i].pack = unit;
+		  pack_elems[i].scope = scope;
+
+		  unit_scopes[unit] = scope;
+	    }
+      }
 
 	// Elaborate the packages. Package elaboration is simpler
-	// because there are fewer sub-scopes involved.
-      i = 0;
+	// because there are fewer sub-scopes involved. Note that
+	// in SystemVerilog, packages are not allowed to refer to
+	// the compilation unit scope, but the VHDL preprocessor
+	// assumes they can.
       for (map<perm_string,PPackage*>::iterator pac = pform_packages.begin()
 		 ; pac != pform_packages.end() ; ++ pac) {
 
 	    ivl_assert(*pac->second, pac->first == pac->second->pscope_name());
-	    NetScope*scope = des->make_package_scope(pac->first);
+	    NetScope*unit_scope = unit_scopes[pac->second->parent_scope()];
+	    NetScope*scope = des->make_package_scope(pac->first, unit_scope, false);
 	    scope->set_line(pac->second);
 	    set_scope_timescale(des, scope, pac->second);
 
@@ -6267,9 +6263,13 @@ Design* elaborate(list<perm_string>roots)
 	      // Get the module definition for this root instance.
 	    Module *rmod = (*mod).second;
 
+	      // Get the compilation unit scope for this module.
+	    NetScope*unit_scope = unit_scopes[rmod->parent_scope()];
+
 	      // Make the root scope. This makes a NetScope object and
 	      // pushes it into the list of root scopes in the Design.
-	    NetScope*scope = des->make_root_scope(*root, rmod->program_block,
+	    NetScope*scope = des->make_root_scope(*root, unit_scope,
+						  rmod->program_block,
 						  rmod->is_interface);
 
 	      // Collect some basic properties of this scope from the
@@ -6367,8 +6367,6 @@ Design* elaborate(list<perm_string>roots)
 		 << "Start calling $root elaborate_sig methods." << endl;
       }
 
-      des->root_elaborate_sig();
-
       if (debug_elaborate) {
 	    cerr << "<toplevel>: elaborate: "
 		 << "Start calling root module elaborate_sig methods." << endl;
@@ -6429,8 +6427,6 @@ Design* elaborate(list<perm_string>roots)
 	    NetScope*scope = pack_elems[i].scope;
 	    rc &= pkg->elaborate(des, scope);
       }
-
-      des->root_elaborate();
 
       for (i = 0; i < root_elems.size(); i++) {
 	    Module *rmod = root_elems[i].mod;
