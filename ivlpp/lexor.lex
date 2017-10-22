@@ -866,7 +866,7 @@ void define_macro(const char* name, const char* value, int keyword, int argc)
      */
 
     prev = def_lookup(name);
-    if (prev) {
+    if (prev && warn_redef) {
         emit_pathline(istack);
         fprintf(stderr, "warning: redefinition of macro %s from value '%s' to '%s'\n",
             name, prev->value, value);
