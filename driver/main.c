@@ -344,9 +344,12 @@ static int t_version_only(void)
 
 static void build_preprocess_command(int e_flag)
 {
-      snprintf(tmp, sizeof tmp, "%s%civlpp %s%s -F\"%s\" -f\"%s\" -p\"%s\" ",
-	       ivlpp_dir, sep, verbose_flag?" -v":"",
-	       e_flag?"":" -L", defines_path, source_path,
+      snprintf(tmp, sizeof tmp, "%s%civlpp %s%s%s -F\"%s\" -f\"%s\" -p\"%s\" ",
+	       ivlpp_dir, sep,
+             verbose_flag?" -v":"",
+	       e_flag?"":" -L",
+             strchr(warning_flags, 'r') ? " -Wredef " : "",
+             defines_path, source_path,
 	       compiled_defines_path);
 }
 
@@ -547,6 +550,12 @@ static void process_warning_switch(const char*name)
 		  cp[0] = cp[1];
 		  cp += 1;
 	    }
+      } else if (strcmp(name,"no-macro-redefinition") == 0) {
+        char*cp = strchr(warning_flags, 'r');
+  	    if (cp) while (*cp) {
+  		  cp[0] = cp[1];
+  		  cp += 1;
+  	    }
       } else if (strcmp(name,"no-floating-nets") == 0) {
 	    char*cp = strchr(warning_flags, 'f');
 	    if (cp) while (*cp) {
@@ -1292,9 +1301,10 @@ int main(int argc, char **argv)
 	/* Write the preprocessor command needed to preprocess a
 	   single file. This may be used to preprocess library
 	   files. */
-      fprintf(iconfig_file, "ivlpp:%s%civlpp -L -F\"%s\" -P\"%s\" %s\n",
-	      ivlpp_dir, sep, defines_path, compiled_defines_path,
-            strchr(warning_flags, 'r') ? "-Wredef" : ""
+      fprintf(iconfig_file, "ivlpp:%s%civlpp %s -L -F\"%s\" -P\"%s\"\n",
+	      ivlpp_dir, sep,
+            strchr(warning_flags, 'r') ? "-Wredef" : "",
+            defines_path, compiled_defines_path
       );
 
 	/* Done writing to the iconfig file. Close it now. */
