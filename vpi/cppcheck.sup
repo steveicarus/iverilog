@@ -45,83 +45,83 @@ variableScope:fstapi.c:6238
 variableScope:fstapi.c:6466
 // These functions are not used by Icarus
 // fstReaderClrFacProcessMask()
-unusedFunction:fstapi.c:3344
+unusedFunction:fstapi.c:3345
 // fstReaderClrFacProcessMaskAll()
-unusedFunction:fstapi.c:3373
+unusedFunction:fstapi.c:3374
 // fstReaderGetAliasCount()
-unusedFunction:fstapi.c:3436
+unusedFunction:fstapi.c:3437
 // fstReaderGetCurrentFlatScope()
-unusedFunction:fstapi.c:3182
+unusedFunction:fstapi.c:3183
 // fstReaderGetAliasCount()
-unusedFunction:fstapi.c:3279
+unusedFunction:fstapi.c:3280
 // fstReaderGetCurrentScopeUserInfo()
-unusedFunction:fstapi.c:3196
+unusedFunction:fstapi.c:3197
 // fstReaderGetDateString()
-unusedFunction:fstapi.c:3464
+unusedFunction:fstapi.c:3465
 // fstReaderGetDoubleEndianMatchState()
-unusedFunction:fstapi.c:3450
+unusedFunction:fstapi.c:3451
 // fstReaderGetDumpActivityChangeTime()
-unusedFunction:fstapi.c:3492
+unusedFunction:fstapi.c:3493
 // fstReaderGetDumpActivityChangeValue()
-unusedFunction:fstapi.c:3507
+unusedFunction:fstapi.c:3508
 // fstReaderGetEndTime()
-unusedFunction:fstapi.c:3401
+unusedFunction:fstapi.c:3402
 // fstReaderGetFacProcessMask()
-unusedFunction:fstapi.c:3307
+unusedFunction:fstapi.c:3308
 // fstReaderGetFileType()
-unusedFunction:fstapi.c:3471
+unusedFunction:fstapi.c:3472
 // fstReaderGetFseekFailed()
-unusedFunction:fstapi.c:3292
+unusedFunction:fstapi.c:3293
 // fstReaderGetMaxHandle()
-unusedFunction:fstapi.c:3429
+unusedFunction:fstapi.c:3430
 // fstReaderGetMemoryUsedByWriter()
-unusedFunction:fstapi.c:3408
+unusedFunction:fstapi.c:3409
 // fstReaderGetNumberDumpActivityChanges()
-unusedFunction:fstapi.c:3485
+unusedFunction:fstapi.c:3486
 // fstReaderGetScopeCount()
-unusedFunction:fstapi.c:3415
+unusedFunction:fstapi.c:3416
 // fstReaderGetStartTime()
-unusedFunction:fstapi.c:3394
+unusedFunction:fstapi.c:3395
 // fstReaderGetTimescale()
-unusedFunction:fstapi.c:3387
+unusedFunction:fstapi.c:3388
 // fstReaderGetTimezero()
-unusedFunction:fstapi.c:3478
+unusedFunction:fstapi.c:3479
 // fstReaderGetValueChangeSectionCount()
-unusedFunction:fstapi.c:3443
+unusedFunction:fstapi.c:3444
 // fstReaderGetValueFromHandleAtTime()
-unusedFunction:fstapi.c:5685
+unusedFunction:fstapi.c:5686
 // fstReaderGetVarCount()
-unusedFunction:fstapi.c:3422
+unusedFunction:fstapi.c:3423
 // fstReaderGetVersionString()
-unusedFunction:fstapi.c:3457
+unusedFunction:fstapi.c:3458
 // fstReaderIterBlocks()
-unusedFunction:fstapi.c:4652
+unusedFunction:fstapi.c:4653
 // fstReaderIterBlocksSetNativeDoublesOnCallback()
-unusedFunction:fstapi.c:3557
+unusedFunction:fstapi.c:3558
 // fstReaderIterateHier()
-unusedFunction:fstapi.c:3782
+unusedFunction:fstapi.c:3783
 // fstReaderIterateHierRewind()
-unusedFunction:fstapi.c:3762
+unusedFunction:fstapi.c:3763
 // fstReaderOpen()
-unusedFunction:fstapi.c:4550
+unusedFunction:fstapi.c:4551
 // fstReaderOpenForUtilitiesOnly()
-unusedFunction:fstapi.c:4542
+unusedFunction:fstapi.c:4543
 // fstReaderPushScope()
-unusedFunction:fstapi.c:3244
+unusedFunction:fstapi.c:3245
 // fstReaderResetScope()
-unusedFunction:fstapi.c:3233
+unusedFunction:fstapi.c:3234
 // fstReaderSetFacProcessMask()
-unusedFunction:fstapi.c:3326
+unusedFunction:fstapi.c:3327
 // fstReaderSetFacProcessMaskAll()
-unusedFunction:fstapi.c:3362
+unusedFunction:fstapi.c:3363
 // fstReaderSetLimitTimeRange()
-unusedFunction:fstapi.c:3522
+unusedFunction:fstapi.c:3523
 // fstReaderSetUnlimitedTimeRange()
-unusedFunction:fstapi.c:3535
+unusedFunction:fstapi.c:3536
 // fstReaderSetVcdExtensions()
-unusedFunction:fstapi.c:3546
+unusedFunction:fstapi.c:3547
 // fstUtilityEscToBin()
-unusedFunction:fstapi.c:6485
+unusedFunction:fstapi.c:6544
 // fstWriterCreateVar2()
 unusedFunction:fstapi.c:2528
 // fstWriterEmitVariableLengthValueChange()
@@ -232,6 +232,10 @@ unusedLabel:fastlz.c:545
 // These functions are not used by Icarus
 // fastlz_compress_level()
 unusedFunction:fastlz.c:150
+// FASTLZ_COMPRESSOR()
+unusedFunction:fastlz.c:162
+// FASTLZ_DECOMPRESSOR()
+unusedFunction:fastlz.c:416
 
 // lz4.c from GTKWave
 // These functions are not used by Icarus
