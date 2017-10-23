@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
@@ -2134,7 +2134,7 @@ extern "C" int ivl_scope_func_signed(ivl_scope_t net)
       assert(net);
       assert(net->type_==IVL_SCT_FUNCTION);
       assert(net->func_type==IVL_VT_LOGIC || net->func_type==IVL_VT_BOOL);
-      return net->func_signed? !0 : 0;
+      return net->func_signed? 1 : 0;
 }
 
 extern "C" unsigned ivl_scope_func_width(ivl_scope_t net)

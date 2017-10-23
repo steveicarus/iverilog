@@ -1,7 +1,7 @@
 #ifndef IVL_netlist_H
 #define IVL_netlist_H
 /*
- * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -4561,7 +4561,7 @@ class NetESFunc  : public NetExpr {
 
       bool takes_nargs_(ID func, unsigned nargs) {
 	    if (nargs > 15) nargs = 15;
-	    return func & (1 << (nargs + 16));
+	    return func & (1U << (nargs + 16));
       }
 
       const char* name_;
