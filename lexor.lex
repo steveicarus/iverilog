@@ -429,6 +429,12 @@ TU [munpf]
 
       if (strcmp(yytext,"$attribute") == 0)
 	    return KK_attribute;
+
+      if (gn_system_verilog() && strcmp(yytext,"$unit") == 0) {
+	    yylval.package = pform_units.back();
+	    return PACKAGE_IDENTIFIER;
+      }
+
       yylval.text = strdupnew(yytext);
       return SYSTEM_IDENTIFIER; }
 
