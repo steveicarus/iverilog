@@ -1,7 +1,7 @@
 #ifndef IVL_parse_misc_H
 #define IVL_parse_misc_H
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -71,12 +71,6 @@ extern unsigned long based_size;
 extern bool in_celldefine;
 enum UCDriveType { UCD_NONE, UCD_PULL0, UCD_PULL1 };
 extern UCDriveType uc_drive;
-/*
- * Flags to control if we are declaring or checking a timeunit or
- * timeprecision statement.
- */
-extern bool have_timeunit_decl;
-extern bool have_timeprec_decl;
 
 /*
  * The parser signals back to the lexor that the next identifier

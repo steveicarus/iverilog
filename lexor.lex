@@ -311,15 +311,6 @@ TU [munpf]
 	    BEGIN(UDPTABLE);
 	    break;
 
-	    /* Translate these to checks if we already have or are
-	     * outside the declaration region. */
-	  case K_timeunit:
-	    if (have_timeunit_decl) rc = K_timeunit_check;
-	    break;
-	  case K_timeprecision:
-	    if (have_timeprec_decl) rc = K_timeprecision_check;
-	    break;
-
 	  default:
 	    yylval.text = 0;
 	    break;

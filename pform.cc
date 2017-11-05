@@ -73,6 +73,7 @@ vector<PPackage*> pform_units;
 static bool is_compilation_unit(LexicalScope*scope)
 {
 	// A compilation unit is the only scope that doesn't have a parent.
+      assert(scope);
       return scope->parent_scope() == 0;
 }
 
@@ -355,29 +356,26 @@ static PModport*pform_cur_modport = 0;
 static NetNet::Type pform_default_nettype = NetNet::WIRE;
 
 /*
- * These variables track the current time scale, as well as where the
- * timescale was set. This supports warnings about tangled timescales.
+ * These variables track the time scale set by the most recent `timescale
+ * directive. Time scales set by SystemVerilog timeunit and timeprecision
+ * declarations are stored directly in the current lexical scope.
  */
 static int pform_time_unit;
 static int pform_time_prec;
 
-/* These two flags check the initial timeprecision and timeunit
- * declaration inside a module.
- */
-static bool tp_decl_flag = false;
-static bool tu_decl_flag = false;
-
 /*
- * Flags used to set time_from_timescale based on timeunit and
- * timeprecision.
+ * These variables track where the most recent `timescale directive
+ * occurred. This allows us to warn about time scales that are inherited
+ * from another file.
  */
-static bool tu_global_flag = false;
-static bool tp_global_flag = false;
-static bool tu_local_flag = false;
-static bool tp_local_flag = false;
-
 static char*pform_timescale_file = 0;
 static unsigned pform_timescale_line;
+
+/*
+ * These variables track whether we can accept new timeunits declarations.
+ */
+bool allow_timeunit_decl = true;
+bool allow_timeprec_decl = true;
 
 static inline void FILE_NAME(LineInfo*obj, const char*file, unsigned lineno)
 {
@@ -426,17 +424,57 @@ static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
 }
 
 /*
- * Set the local time unit/precision to the global value.
+ * Set the local time unit/precision. This version is used for setting
+ * the time scale for design elements (modules, packages, etc.) and is
+ * called after any initial timeunit and timeprecision declarations
+ * have been parsed.
  */
-static void pform_set_scope_timescale(PScope*scope, const struct vlltype&loc)
+void pform_set_scope_timescale(const struct vlltype&loc)
 {
-      scope->time_unit = pform_time_unit;
-      scope->time_precision = pform_time_prec;
-	/* If we have a timescale file then the time information is from
-	 * a timescale directive. */
-      scope->time_from_timescale = pform_timescale_file != 0;
+      PScopeExtra*scope = dynamic_cast<PScopeExtra*>(lexical_scope);
+      assert(scope);
 
-      if (warn_timescale && is_compilation_unit(lexical_scope) && pform_timescale_file
+      PScopeExtra*parent = find_nearest_scopex(scope->parent_scope());
+
+      bool used_global_timescale = false;
+      if (scope->time_unit_is_default) {
+            if (is_compilation_unit(scope)) {
+                  scope->time_unit = def_ts_units;
+            } else if (!is_compilation_unit(parent)) {
+                  scope->time_unit = parent->time_unit;
+                  scope->time_unit_is_default = parent->time_unit_is_default;
+            } else if (pform_timescale_file != 0) {
+                  scope->time_unit = pform_time_unit;
+                  scope->time_unit_is_default = false;
+                  used_global_timescale = true;
+            } else /* parent is compilation unit */ {
+                  scope->time_unit = parent->time_unit;
+                  scope->time_unit_is_default = parent->time_unit_is_default;
+            }
+      }
+      if (scope->time_prec_is_default) {
+            if (is_compilation_unit(scope)) {
+                  scope->time_precision = def_ts_prec;
+            } else if (!is_compilation_unit(parent)) {
+                  scope->time_precision = parent->time_precision;
+                  scope->time_prec_is_default = parent->time_prec_is_default;
+            } else if (pform_timescale_file != 0) {
+                  scope->time_precision = pform_time_prec;
+                  scope->time_prec_is_default = false;
+                  used_global_timescale = true;
+            } else {
+                  scope->time_precision = parent->time_precision;
+                  scope->time_prec_is_default = parent->time_prec_is_default;
+            }
+      }
+
+      if (gn_system_verilog() && (scope->time_unit < scope->time_precision)) {
+	    VLerror("error: a timeprecision is missing or is too large!");
+      } else {
+            assert(scope->time_unit >= scope->time_precision);
+      }
+
+      if (warn_timescale && used_global_timescale
 	  && (strcmp(pform_timescale_file, loc.text) != 0)) {
 
 	    cerr << loc.get_fileline() << ": warning: "
@@ -445,6 +483,22 @@ static void pform_set_scope_timescale(PScope*scope, const struct vlltype&loc)
 	    cerr << pform_timescale_file << ":" << pform_timescale_line
 		 << ": ...: The inherited timescale is here." << endl;
       }
+
+      allow_timeunit_decl = false;
+      allow_timeprec_decl = false;
+}
+
+/*
+ * Set the local time unit/precision. This version is used for setting
+ * the time scale for subsidiary items (classes, subroutines, etc.),
+ * which simply inherit their time scale from their parent scope.
+ */
+static void pform_set_scope_timescale(PScope*scope, const PScope*parent)
+{
+      scope->time_unit            = parent->time_unit;
+      scope->time_precision       = parent->time_precision;
+      scope->time_unit_is_default = parent->time_unit_is_default;
+      scope->time_prec_is_default = parent->time_prec_is_default;
 }
 
 PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name,
@@ -454,11 +508,11 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name,
       class_scope->default_lifetime = find_lifetime(lifetime);
       FILE_NAME(class_scope, loc);
 
-      pform_set_scope_timescale(class_scope, loc);
-
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
       assert(scopex);
       assert(!pform_cur_generate);
+
+      pform_set_scope_timescale(class_scope, scopex);
 
       if (scopex->classes.find(name) != scopex->classes.end()) {
 	    cerr << class_scope->get_fileline() << ": error: duplicate "
@@ -480,7 +534,8 @@ PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name,
       pkg_scope->default_lifetime = find_lifetime(lifetime);
       FILE_NAME(pkg_scope, loc);
 
-      pform_set_scope_timescale(pkg_scope, loc);
+      allow_timeunit_decl = true;
+      allow_timeprec_decl = true;
 
       lexical_scope = pkg_scope;
       return pkg_scope;
@@ -498,8 +553,6 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name,
       task->default_lifetime = default_lifetime;
       FILE_NAME(task, loc);
 
-      pform_set_scope_timescale(task, loc);
-
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
       assert(scopex);
       if (is_compilation_unit(scopex) && !gn_system_verilog()) {
@@ -507,6 +560,8 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name,
 		  "must be contained within a module." << endl;
 	    error_count += 1;
       }
+
+      pform_set_scope_timescale(task, scopex);
 
       if (pform_cur_generate) {
 	      // Check if the task is already in the dictionary.
@@ -547,8 +602,6 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
       func->default_lifetime = default_lifetime;
       FILE_NAME(func, loc);
 
-      pform_set_scope_timescale(func, loc);
-
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
       assert(scopex);
       if (is_compilation_unit(scopex) && !gn_system_verilog()) {
@@ -556,6 +609,8 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 		  "must be contained within a module." << endl;
 	    error_count += 1;
       }
+
+      pform_set_scope_timescale(func, scopex);
 
       if (pform_cur_generate) {
 	      // Check if the function is already in the dictionary.
@@ -907,64 +962,23 @@ static void pform_declare_implicit_nets(PExpr*expr)
 /*
  * The lexor calls this function to set the active timescale when it
  * detects a `timescale directive. The function saves the directive
- * values (for use by modules) and if warnings are enabled checks to
- * see if some modules have no timescale.
+ * values (for use by subsequent design elements) and if warnings are
+ * enabled checks to see if some design elements have no timescale.
  */
 void pform_set_timescale(int unit, int prec,
 			 const char*file, unsigned lineno)
 {
-      bool first_flag = true;
-
       assert(unit >= prec);
       pform_time_unit = unit;
       pform_time_prec = prec;
-	/* A `timescale clears the timeunit/timeprecision state. */
-      tu_global_flag = false;
-      tp_global_flag = false;
 
       if (pform_timescale_file) {
 	    free(pform_timescale_file);
-	    first_flag = false;
       }
 
       if (file) pform_timescale_file = strdup(file);
       else pform_timescale_file = 0;
       pform_timescale_line = lineno;
-
-      if (!warn_timescale || !first_flag || !file) return;
-
-	/* Look to see if we have any modules without a timescale. */
-      bool have_no_ts = false;
-      map<perm_string,Module*>::iterator mod;
-      for (mod = pform_modules.begin(); mod != pform_modules.end(); ++ mod ) {
-	    const Module*mp = (*mod).second;
-	    if (mp->time_from_timescale ||
-	        mp->timescale_warn_done) continue;
-	    have_no_ts = true;
-	    break;
-      }
-
-	/* If we do then print a message for the new ones. */
-      if (have_no_ts) {
-	    cerr << file << ":" << lineno << ": warning: "
-		 << "Some modules have no timescale. This may cause"
-		 << endl;
-	    cerr << file << ":" << lineno << ":        : "
-		 << "confusing timing results.  Affected modules are:"
-		 << endl;
-
-	    for (mod = pform_modules.begin()
-		       ; mod != pform_modules.end() ; ++ mod ) {
-		  Module*mp = (*mod).second;
-		  if (mp->time_from_timescale ||
-		      mp->timescale_warn_done) continue;
-		  mp->timescale_warn_done = true;
-
-		  cerr << file << ":" << lineno << ":        : "
-		       << "  -- module " << (*mod).first
-		       << " declared here: " << mp->get_fileline() << endl;
-	    }
-      }
 }
 
 bool get_time_unit(const char*cp, int &unit)
@@ -1084,70 +1098,62 @@ static bool get_time_unit_prec(const char*cp, int &res, bool is_unit)
       return true;
 }
 
-void pform_set_timeunit(const char*txt, bool in_module, bool only_check)
+void pform_set_timeunit(const char*txt)
 {
       int val;
 
       if (get_time_unit_prec(txt, val, true)) return;
 
-      if (in_module) {
-	    if (!only_check) {
-		  pform_cur_module.front()->time_unit = val;
-		  tu_decl_flag = true;
-		  tu_local_flag = true;
-	    } else if (!tu_decl_flag) {
-		  VLerror(yylloc, "error: repeat timeunit found and the "
-		                  "initial module timeunit is missing.");
-		  return;
-	    } else if (pform_cur_module.front()->time_unit != val) {
-		  VLerror(yylloc, "error: repeat timeunit does not match "
-		                  "the initial module timeunit "
-		                  "declaration.");
-		  return;
-	    }
+      PScopeExtra*scope = dynamic_cast<PScopeExtra*>(lexical_scope);
+      assert(scope);
 
+      if (allow_timeunit_decl) {
+            scope->time_unit = val;
+            scope->time_unit_is_local = true;
+            scope->time_unit_is_default = false;
+            allow_timeunit_decl = false;
+      } else if (!scope->time_unit_is_local) {
+            VLerror(yylloc, "error: repeat timeunit found and the initial "
+                            "timeunit for this scope is missing.");
+      } else if (scope->time_unit != val) {
+            VLerror(yylloc, "error: repeat timeunit does not match the "
+                            "initial timeunit for this scope.");
       } else {
-	      /* Skip a global timeunit when `timescale is defined. */
-	    if (pform_timescale_file) return;
-	    tu_global_flag = true;
-	    pform_time_unit = val;
+	      // This is a redeclaration, so don't allow any new declarations
+            allow_timeprec_decl = false;
       }
 }
 
 int pform_get_timeunit()
 {
-      if (pform_cur_module.empty())
-	    return pform_time_unit;
-      else
-	    return pform_cur_module.front()->time_unit;
+      PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
+      assert(scopex);
+      return scopex->time_unit;
 }
 
-void pform_set_timeprecision(const char*txt, bool in_module, bool only_check)
+void pform_set_timeprecision(const char*txt)
 {
       int val;
 
       if (get_time_unit_prec(txt, val, false)) return;
 
-      if (in_module) {
-	    if (!only_check) {
-		  pform_cur_module.front()->time_precision = val;
-		  tp_decl_flag = true;
-		  tp_local_flag = true;
-	    } else if (!tp_decl_flag) {
-		  VLerror(yylloc, "error: repeat timeprecision found and the "
-		                  "initial module timeprecision is missing.");
-		  return;
-	    } else if (pform_cur_module.front()->time_precision != val) {
-		  VLerror(yylloc, "error: repeat timeprecision does not match "
-		                  "the initial module timeprecision "
-		                  "declaration.");
-		  return;
-	    }
+      PScopeExtra*scope = dynamic_cast<PScopeExtra*>(lexical_scope);
+      assert(scope);
+
+      if (allow_timeprec_decl) {
+            scope->time_precision = val;
+            scope->time_prec_is_local = true;
+            scope->time_prec_is_default = false;
+            allow_timeprec_decl = false;
+      } else if (!scope->time_prec_is_local) {
+            VLerror(yylloc, "error: repeat timeprecision found and the initial "
+                            "timeprecision for this scope is missing.");
+      } else if (scope->time_precision != val) {
+            VLerror(yylloc, "error: repeat timeprecision does not match the "
+                            "initial timeprecision for this scope.");
       } else {
-	      /* Skip a global timeprecision when `timescale is defined. */
-	    if (pform_timescale_file) return;
-	    pform_time_prec = val;
-	    tp_global_flag=true;
+	      // This is a redeclaration, so don't allow any new declarations
+            allow_timeunit_decl = false;
       }
 }
 
@@ -1252,13 +1258,12 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
 
       FILE_NAME(cur_module, loc);
 
-      pform_set_scope_timescale(cur_module, loc);
-      tu_local_flag = tu_global_flag;
-      tp_local_flag = tp_global_flag;
-
       cur_module->library_flag = pform_library_flag;
 
       pform_cur_module.push_front(cur_module);
+
+      allow_timeunit_decl = true;
+      allow_timeprec_decl = true;
 
       lexical_scope = cur_module;
 
@@ -1267,21 +1272,6 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
       scope_generate_counter = 1;
 
       pform_bind_attributes(cur_module->attributes, attr);
-}
-
-/*
- * In SystemVerilog we can have separate timeunit and timeprecision
- * declarations. We need to have the values worked out by time this
- * task is called.
- */
-void pform_check_timeunit_prec()
-{
-      assert(! pform_cur_module.empty());
-      if (gn_system_verilog() &&
-          (pform_cur_module.front()->time_unit < pform_cur_module.front()->time_precision)) {
-	    VLerror("error: a timeprecision is missing or is too large!");
-      } else assert(pform_cur_module.front()->time_unit >=
-                    pform_cur_module.front()->time_precision);
 }
 
 /*
@@ -1327,8 +1317,6 @@ void pform_endmodule(const char*name, bool inside_celldefine,
       Module*cur_module  = pform_cur_module.front();
       pform_cur_module.pop_front();
 
-      cur_module->time_from_timescale = (tu_local_flag && tp_local_flag)
-	                             || (pform_timescale_file != 0);
       perm_string mod_name = cur_module->mod_name();
       assert(strcmp(name, mod_name) == 0);
       cur_module->is_cell = inside_celldefine;
@@ -1358,11 +1346,6 @@ void pform_endmodule(const char*name, bool inside_celldefine,
 	// The current lexical scope should be this module by now.
       ivl_assert(*cur_module, lexical_scope == cur_module);
       pform_pop_scope();
-
-      tp_decl_flag = false;
-      tu_decl_flag = false;
-      tu_local_flag = false;
-      tp_local_flag = false;
 }
 
 static void pform_add_genvar(const struct vlltype&li, const perm_string&name,
@@ -3691,12 +3674,18 @@ int pform_parse(const char*path)
 		  sprintf(unit_name, "$unit#%u", ++nunits);
 	    else
 		  sprintf(unit_name, "$unit");
+
 	    PPackage*unit = new PPackage(lex_strings.make(unit_name), 0);
 	    unit->default_lifetime = LexicalScope::STATIC;
-	    unit->time_unit = def_ts_units;
-	    unit->time_precision = def_ts_prec;
-	    unit->time_from_timescale = false;
+	    unit->set_file(filename_strings.make(path));
+	    unit->set_lineno(1);
 	    pform_units.push_back(unit);
+
+	    pform_set_timescale(def_ts_units, def_ts_prec, 0, 0);
+
+	    allow_timeunit_decl = true;
+	    allow_timeprec_decl = true;
+
 	    lexical_scope = unit;
       }
       reset_lexor();

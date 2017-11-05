@@ -6147,6 +6147,131 @@ bool Design::check_proc_delay() const
 }
 
 /*
+ * Check whether all design elements have an explicit timescale or all
+ * design elements use the default timescale. If a mixture of explicit
+ * and default timescales is found, a warning message is output. Note
+ * that we only need to check the top level design elements - nested
+ * design elements will always inherit the timescale from their parent
+ * if they don't have any local timescale declarations.
+ *
+ * NOTE: Strictly speaking, this should be an error for SystemVerilog
+ * (1800-2012 section 3.14.2).
+ */
+static void check_timescales(bool&some_explicit, bool&some_implicit,
+			     const PScope*scope)
+{
+      if (scope->time_unit_is_default)
+	    some_implicit = true;
+      else
+	    some_explicit = true;
+      if (scope->time_prec_is_default)
+	    some_implicit = true;
+      else
+	    some_explicit = true;
+}
+
+static void check_timescales()
+{
+      bool some_explicit = false;
+      bool some_implicit = false;
+      map<perm_string,Module*>::iterator mod;
+      for (mod = pform_modules.begin(); mod != pform_modules.end(); ++mod) {
+	    const Module*mp = (*mod).second;
+	    check_timescales(some_explicit, some_implicit, mp);
+	    if (some_explicit && some_implicit)
+		  break;
+      }
+      map<perm_string,PPackage*>::iterator pkg;
+      if (gn_system_verilog() && !(some_explicit && some_implicit)) {
+	    for (pkg = pform_packages.begin(); pkg != pform_packages.end(); ++pkg) {
+		  const PPackage*pp = (*pkg).second;
+		  check_timescales(some_explicit, some_implicit, pp);
+		  if (some_explicit && some_implicit)
+			break;
+	    }
+      }
+      if (gn_system_verilog() && !(some_explicit && some_implicit)) {
+	    for (unsigned idx = 0; idx < pform_units.size(); idx += 1) {
+		  const PPackage*pp = pform_units[idx];
+		    // We don't need a timescale if the compilation unit
+		    // contains no items outside a design element.
+		  if (pp->parameters.empty() &&
+		      pp->localparams.empty() &&
+		      pp->wires.empty() &&
+		      pp->tasks.empty() &&
+		      pp->funcs.empty() &&
+		      pp->classes.empty())
+			continue;
+
+		  check_timescales(some_explicit, some_implicit, pp);
+		  if (some_explicit && some_implicit)
+			break;
+	    }
+      }
+
+      if (!(some_explicit && some_implicit))
+	    return;
+
+      if (gn_system_verilog()) {
+	    cerr << "warning: "
+		 << "Some design elements have no explicit time unit and/or"
+		 << endl;
+	    cerr << "       : "
+		 << "time precision. This may cause confusing timing results."
+		 << endl;
+	    cerr << "       : "
+		 << "Affected design elements are:"
+		 << endl;
+      } else {
+	    cerr << "warning: "
+		 << "Some modules have no timescale. This may cause"
+		 << endl;
+	    cerr << "       : "
+		 << "confusing timing results.	Affected modules are:"
+		 << endl;
+      }
+
+      for (mod = pform_modules.begin(); mod != pform_modules.end(); ++mod) {
+	    Module*mp = (*mod).second;
+	    if (mp->has_explicit_timescale())
+		  continue;
+	    cerr << "       :   -- module " << (*mod).first
+		 << " declared here: " << mp->get_fileline() << endl;
+      }
+
+      if (!gn_system_verilog())
+	    return;
+
+      for (pkg = pform_packages.begin(); pkg != pform_packages.end(); ++pkg) {
+	    PPackage*pp = (*pkg).second;
+	    if (pp->has_explicit_timescale())
+		  continue;
+	    cerr << "       :   -- package " << (*pkg).first
+		 << " declared here: " << pp->get_fileline() << endl;
+      }
+
+      for (unsigned idx = 0; idx < pform_units.size(); idx += 1) {
+	    PPackage*pp = pform_units[idx];
+	    if (pp->has_explicit_timescale())
+		  continue;
+
+	    if (pp->parameters.empty() &&
+		pp->localparams.empty() &&
+		pp->wires.empty() &&
+		pp->tasks.empty() &&
+		pp->funcs.empty() &&
+		pp->classes.empty())
+		  continue;
+
+	    cerr << "       :   -- compilation unit";
+	    if (pform_units.size() > 1) {
+		  cerr << " from: " << pp->get_file();
+	    }
+	    cerr << endl;
+      }
+}
+
+/*
  * This function is the root of all elaboration. The input is the list
  * of root module names. The function locates the Module definitions
  * for each root, does the whole elaboration sequence, and fills in
@@ -6314,6 +6439,10 @@ Design* elaborate(list<perm_string>roots)
 	// now and return nothing.
       if (des->errors > 0)
 	    return des;
+
+	// Now we have the full design, check for timescale inconsistencies.
+      if (warn_timescale)
+	    check_timescales();
 
       if (debug_elaborate) {
 	    cerr << "<toplevel>: elaborate: "

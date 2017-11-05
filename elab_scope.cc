@@ -59,7 +59,7 @@ void set_scope_timescale(Design*des, NetScope*scope, PScope*pscope)
 {
       scope->time_unit(pscope->time_unit);
       scope->time_precision(pscope->time_precision);
-      scope->time_from_timescale(pscope->time_from_timescale);
+      scope->time_from_timescale(pscope->has_explicit_timescale());
       des->set_precision(pscope->time_precision);
 }
 

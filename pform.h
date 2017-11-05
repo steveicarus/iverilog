@@ -1,7 +1,7 @@
 #ifndef IVL_pform_H
 #define IVL_pform_H
 /*
- * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -165,8 +165,8 @@ extern void pform_startmodule(const struct vlltype&loc, const char*name,
 			      bool program_block, bool is_interface,
 			      LexicalScope::lifetime_t lifetime,
 			      list<named_pexpr_t>*attr);
-extern void pform_check_timeunit_prec();
 extern void pform_module_set_ports(vector<Module::port_t*>*);
+extern void pform_set_scope_timescale(const struct vlltype&loc);
 
 /* These functions are used when we have a complete port definition, either
    in an ansi style or non-ansi style declaration. In this case, we have
@@ -567,8 +567,7 @@ extern void parm_to_defparam_list(const string&param);
  */
 extern bool get_time_unit(const char*cp, int &unit);
 extern int  pform_get_timeunit();
-extern void pform_set_timeunit(const char*txt, bool in_module, bool only_check);
-extern void pform_set_timeprecision(const char*txt, bool in_module,
-                                    bool only_check);
+extern void pform_set_timeunit(const char*txt);
+extern void pform_set_timeprecision(const char*txt);
 
 #endif /* IVL_pform_H */

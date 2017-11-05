@@ -1085,7 +1085,6 @@ int main(int argc, char*argv[])
       if (flag_tmp) disable_concatz_generation = strcmp(flag_tmp,"true")==0;
 
 	/* Parse the input. Make the pform. */
-      pform_set_timescale(def_ts_units, def_ts_prec, 0, 0);
       int rc = 0;
       for (unsigned idx = 0; idx < source_files.size(); idx += 1) {
 	    rc += pform_parse(source_files[idx]);
