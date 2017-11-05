@@ -3696,7 +3696,7 @@ int pform_parse(const char*path)
       if (vl_input != stdin) {
 	    if (ivlpp_string)
 		  pclose(vl_input);
-	    else 
+	    else
 		  fclose(vl_input);
       }
 
