@@ -2355,19 +2355,7 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 {
       NetExpr*dex = elab_and_eval(des, scope, expr, -1);
 
-	/* Print a warning if we find default and `timescale based
-	 * delays in the design, since this is likely an error. */
-      if (scope->time_from_timescale()) dly_used_timescale = true;
-      else dly_used_no_timescale = true;
-
-      if (display_ts_dly_warning &&
-          dly_used_no_timescale && dly_used_timescale) {
-	    cerr << "warning: Found both default and "
-	            "`timescale based delays. Use" << endl;
-	    cerr << "         -Wtimescale to find the "
-	            "module(s) with no `timescale." << endl;
-	    display_ts_dly_warning = false;
-      }
+      check_for_inconsistent_delays(scope);
 
 	/* If the delay expression is a real constant or vector
 	   constant, then evaluate it, scale it to the local time
@@ -5415,19 +5403,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       ndelays = delays.size();
       if (ndelays > 12) ndelays = 12;
 
-	/* Print a warning if we find default and `timescale based
-	 * delays in the design, since this is likely an error. */
-      if (scope->time_from_timescale()) dly_used_timescale = true;
-      else dly_used_no_timescale = true;
-
-      if (display_ts_dly_warning &&
-          dly_used_no_timescale && dly_used_timescale) {
-	    cerr << "warning: Found both default and "
-	            "`timescale based delays. Use" << endl;
-	    cerr << "         -Wtimescale to find the "
-	            "module(s) with no `timescale." << endl;
-	    display_ts_dly_warning = false;
-      }
+      check_for_inconsistent_delays(scope);
 
 	/* Elaborate the delay values themselves. Remember to scale
 	   them for the timescale/precision of the scope. */
