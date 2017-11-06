@@ -53,6 +53,8 @@ extern char dep_mode;
 
 extern int verbose_flag;
 
+extern int warn_redef;
+
 /* This is the entry to the lexer. */
 extern int yylex(void);
 
