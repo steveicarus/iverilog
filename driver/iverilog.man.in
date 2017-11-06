@@ -316,8 +316,8 @@ after a \fB\-Wall\fP argument to suppress isolated warning types.
 
 .TP 8
 .B all
-This enables the anachronisms, implicit, portbind, select\-range,
-timescale, and sensitivity\-entire\-array warning categories.
+This enables the anachronisms, implicit, macro-redefinition, portbind,
+select\-range, timescale, and sensitivity\-entire\-array warning categories.
 
 .TP 8
 .B anachronisms
@@ -329,6 +329,10 @@ or removed in the selected generation of the Verilog language.
 This enables warnings for creation of implicit declarations. For
 example, if a scalar wire X is used but not declared in the Verilog
 source, this will print a warning at its first use.
+
+.TP 8
+.B macro-redefinition
+This enables preprocessor warnings when a macro is being redefined.
 
 .TP 8
 .B portbind

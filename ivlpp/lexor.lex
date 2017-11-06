@@ -858,6 +858,19 @@ void define_macro(const char* name, const char* value, int keyword, int argc)
 {
     int idx;
     struct define_t* def;
+    struct define_t* prev;
+
+    /* Verilog spec has a very nasty system of macros jumping from
+     * file to file, resulting in a global macro scope. We abosolutely
+     * MUST track macro redefinitions and warn user about them.
+     */
+
+    prev = def_lookup(name);
+    if (prev && warn_redef) {
+        emit_pathline(istack);
+        fprintf(stderr, "warning: redefinition of macro %s from value '%s' to '%s'\n",
+            name, prev->value, value);
+    }
 
     def = malloc(sizeof(struct define_t));
     def->name = strdup(name);

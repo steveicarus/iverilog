@@ -98,6 +98,9 @@ int line_direct_flag = 0;
 unsigned error_count = 0;
 FILE *depend_file = NULL;
 
+/* Should we warn about macro redefinitions? */
+int warn_redef = 0;
+
 static int flist_read_flags(const char*path)
 {
       char line_buf[2048];
@@ -282,7 +285,7 @@ int main(int argc, char*argv[])
       include_dir[0] = 0;  /* 0 is reserved for the current files path. */
       include_dir[1] = strdup(".");
 
-      while ((opt=getopt(argc, argv, "F:f:K:Lo:p:P:vV")) != EOF) switch (opt) {
+      while ((opt=getopt(argc, argv, "F:f:K:Lo:p:P:vVW:")) != EOF) switch (opt) {
 
 	  case 'F':
 	    flist_read_flags(optarg);
@@ -336,6 +339,12 @@ int main(int argc, char*argv[])
 		break;
 	  }
 
+	  case 'W': {
+		  if (strcmp(optarg, "redef")==0)
+		  	warn_redef = 1;
+		  break;
+	  }
+
 	  case 'v':
 	    fprintf(stderr, "Icarus Verilog Preprocessor version "
 		    VERSION " (" VERSION_TAG ")\n\n");
@@ -366,7 +375,8 @@ int main(int argc, char*argv[])
 		    "    -p<fil> - Write precompiled defines to <fil>\n"
 		    "    -P<fil> - Read precompiled defines from <fil>\n"
 		    "    -v      - Verbose\n"
-		    "    -V      - Print version information and quit\n",
+		    "    -V      - Print version information and quit\n"
+			"    -W<cat> - Enable extra ivlpp warning category (e.g. redef)\n",
 		    argv[0]);
 	    return flag_errors;
       }
