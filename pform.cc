@@ -469,7 +469,9 @@ void pform_set_scope_timescale(const struct vlltype&loc)
       }
 
       if (gn_system_verilog() && (scope->time_unit < scope->time_precision)) {
-	    VLerror("error: a timeprecision is missing or is too large!");
+	    if (scope->time_unit_is_local || scope->time_prec_is_local) {
+		  VLerror("error: a timeprecision is missing or is too large!");
+	    }
       } else {
             assert(scope->time_unit >= scope->time_precision);
       }
@@ -1098,7 +1100,7 @@ static bool get_time_unit_prec(const char*cp, int &res, bool is_unit)
       return true;
 }
 
-void pform_set_timeunit(const char*txt)
+void pform_set_timeunit(const char*txt, bool initial_decl)
 {
       int val;
 
@@ -1107,7 +1109,7 @@ void pform_set_timeunit(const char*txt)
       PScopeExtra*scope = dynamic_cast<PScopeExtra*>(lexical_scope);
       assert(scope);
 
-      if (allow_timeunit_decl) {
+      if (initial_decl) {
             scope->time_unit = val;
             scope->time_unit_is_local = true;
             scope->time_unit_is_default = false;
@@ -1118,9 +1120,6 @@ void pform_set_timeunit(const char*txt)
       } else if (scope->time_unit != val) {
             VLerror(yylloc, "error: repeat timeunit does not match the "
                             "initial timeunit for this scope.");
-      } else {
-	      // This is a redeclaration, so don't allow any new declarations
-            allow_timeprec_decl = false;
       }
 }
 
@@ -1131,7 +1130,7 @@ int pform_get_timeunit()
       return scopex->time_unit;
 }
 
-void pform_set_timeprecision(const char*txt)
+void pform_set_timeprec(const char*txt, bool initial_decl)
 {
       int val;
 
@@ -1140,7 +1139,7 @@ void pform_set_timeprecision(const char*txt)
       PScopeExtra*scope = dynamic_cast<PScopeExtra*>(lexical_scope);
       assert(scope);
 
-      if (allow_timeprec_decl) {
+      if (initial_decl) {
             scope->time_precision = val;
             scope->time_prec_is_local = true;
             scope->time_prec_is_default = false;
@@ -1151,9 +1150,6 @@ void pform_set_timeprecision(const char*txt)
       } else if (scope->time_precision != val) {
             VLerror(yylloc, "error: repeat timeprecision does not match the "
                             "initial timeprecision for this scope.");
-      } else {
-	      // This is a redeclaration, so don't allow any new declarations
-            allow_timeunit_decl = false;
       }
 }
 

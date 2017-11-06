@@ -567,7 +567,12 @@ extern void parm_to_defparam_list(const string&param);
  */
 extern bool get_time_unit(const char*cp, int &unit);
 extern int  pform_get_timeunit();
-extern void pform_set_timeunit(const char*txt);
-extern void pform_set_timeprecision(const char*txt);
+extern void pform_set_timeunit(const char*txt, bool initial_decl);
+extern void pform_set_timeprec(const char*txt, bool initial_decl);
+/*
+ * Flags to determine whether this is an initial declaration.
+ */
+extern bool allow_timeunit_decl;
+extern bool allow_timeprec_decl;
 
 #endif /* IVL_pform_H */

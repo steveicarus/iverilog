@@ -2234,13 +2234,14 @@ tf_port_list /* IEEE1800-2005: A.2.7 */
 
 timeunits_declaration /* IEEE1800-2005: A.1.2 */
   : K_timeunit TIME_LITERAL ';'
-      { pform_set_timeunit($2); }
+      { pform_set_timeunit($2, allow_timeunit_decl); }
   | K_timeunit TIME_LITERAL '/' TIME_LITERAL ';'
-      { pform_set_timeunit($2);
-        pform_set_timeprecision($4);
+      { bool initial_decl = allow_timeunit_decl && allow_timeprec_decl;
+        pform_set_timeunit($2, initial_decl);
+        pform_set_timeprec($4, initial_decl);
       }
   | K_timeprecision TIME_LITERAL ';'
-      { pform_set_timeprecision($2); }
+      { pform_set_timeprec($2, allow_timeprec_decl); }
   ;
 
   /* Allow zero, one, or two declarations. The second declaration might
