@@ -48,7 +48,7 @@ static void __compile_var_real(char*label, char*name,
 
       define_functor_symbol(label, net);
 
-      vpiHandle obj = vpip_make_real_var(name, net, false);
+      vpiHandle obj = vpip_make_real_var(name, net);
       compile_vpi_symbol(label, obj);
 
       if (name) {
@@ -350,7 +350,7 @@ static void do_compile_net(vvp_net_t*node, vvp_array_t array,
       vpiHandle obj = 0;
       if (! local_flag) {
 	      /* Make the vpiHandle for the reg. */
-	    obj = vpip_make_net4(name, msb, lsb, signed_flag, node);
+	    obj = vpip_make_net4(scope, name, msb, lsb, signed_flag, node);
 	      /* This attaches the label to the vpiHandle */
 	    compile_vpi_symbol(my_label, obj);
       }
@@ -481,7 +481,7 @@ static void __compile_real_net2(vvp_net_t*node, vvp_array_t array,
 
       vpiHandle obj = 0;
       if (!local_flag) {
-	    obj = vpip_make_real_var(name, node, true);
+	    obj = vpip_make_real_net(scope, name, node);
 	    compile_vpi_symbol(my_label, obj);
       }
 #ifdef CHECK_WITH_VALGRIND

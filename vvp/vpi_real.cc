@@ -178,7 +178,8 @@ vpiHandle __vpiRealVar::vpi_handle(int code)
 vpiHandle __vpiRealVar::vpi_iterate(int code)
 { return real_var_iterate(code, this); }
 
-vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net, bool is_wire)
+static vpiHandle vpip_make_real_(__vpiScope*scope, const char*name,
+				 vvp_net_t*net, bool is_wire)
 {
       struct __vpiRealVar*obj = new __vpiRealVar;
 
@@ -187,9 +188,20 @@ vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net, bool is_wire)
       obj->is_wire = is_wire;
       obj->net = net;
 
-      obj->within.scope = vpip_peek_current_scope();
+      obj->within.scope = scope;
 
       return obj;
+}
+
+vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
+{
+      return vpip_make_real_(vpip_peek_current_scope(), name, net, false);
+}
+
+vpiHandle vpip_make_real_net(__vpiScope*scope,
+			     const char*name, vvp_net_t*net)
+{
+      return vpip_make_real_(scope, name, net, true);
 }
 
 #ifdef CHECK_WITH_VALGRIND
