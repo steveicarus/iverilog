@@ -696,9 +696,9 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %nonassoc K_exclude
 
  /* to resolve timeunits declaration/redeclaration ambiguity */
-%precedence no_timeunits_declaration
-%precedence one_timeunits_declaration
-%precedence K_timeunit K_timeprecision
+%nonassoc no_timeunits_declaration
+%nonassoc one_timeunits_declaration
+%nonassoc K_timeunit K_timeprecision
 
 %%
 
