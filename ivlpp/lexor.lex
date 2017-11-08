@@ -863,8 +863,13 @@ void define_macro(const char* name, const char* value, int keyword, int argc)
     /* Verilog has a very nasty system of macros jumping from
      * file to file, resulting in a global macro scope. Here
      * we optionally warn about any redefinitions.
+     *
+     * If istack is empty, we are processing a configuration
+     * or precompiled macro file, so don't want to check for
+     * redefinitions - when a precompiled macro file is used,
+     * it will contain copies of any predefined macros.
      */
-    if (warn_redef) {
+    if (warn_redef && istack) {
 	prev = def_lookup(name);
 	if (prev && (warn_redef_all || (strcmp(prev->value, value) != 0))) {
 	    emit_pathline(istack);
