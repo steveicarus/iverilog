@@ -931,7 +931,7 @@ class NetScope : public Definitions, public Attrib {
 	   and attach it to the given parent. If no compilation unit is
 	   specified, the parent's compilation unit is used. The name
 	   is expected to have been permallocated. */
-      NetScope(NetScope*up, const hname_t&name, TYPE t, NetScope*unit=0,
+      NetScope(NetScope*up, const hname_t&name, TYPE t, NetScope*in_unit=0,
 	       bool nest=false, bool program=false, bool interface=false,
                bool compilation_unit=false);
       ~NetScope();

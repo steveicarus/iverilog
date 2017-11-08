@@ -112,10 +112,10 @@ void Definitions::add_class(netclass_t*net_class)
  * in question.
  */
 
-NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, NetScope*unit,
+NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, NetScope*in_unit,
 		   bool nest, bool program, bool interface, bool compilation_unit)
 : type_(t), name_(n), nested_module_(nest), program_block_(program),
-  is_interface_(interface), is_unit_(compilation_unit), unit_(unit), up_(up)
+  is_interface_(interface), is_unit_(compilation_unit), unit_(in_unit), up_(up)
 {
       events_ = 0;
       lcounter_ = 0;
