@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1999-2015 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -100,6 +100,7 @@ FILE *depend_file = NULL;
 
 /* Should we warn about macro redefinitions? */
 int warn_redef = 0;
+int warn_redef_all = 0;
 
 static int flist_read_flags(const char*path)
 {
@@ -339,11 +340,14 @@ int main(int argc, char*argv[])
 		break;
 	  }
 
-	  case 'W': {
-		  if (strcmp(optarg, "redef")==0)
-		  	warn_redef = 1;
-		  break;
-	  }
+	  case 'W':
+	    if (strcmp(optarg, "redef-all") == 0) {
+		  warn_redef_all = 1;
+		  warn_redef = 1;
+	    } else if (strcmp(optarg, "redef-chg") == 0) {
+		  warn_redef = 1;
+	    }
+	    break;
 
 	  case 'v':
 	    fprintf(stderr, "Icarus Verilog Preprocessor version "
@@ -376,7 +380,9 @@ int main(int argc, char*argv[])
 		    "    -P<fil> - Read precompiled defines from <fil>\n"
 		    "    -v      - Verbose\n"
 		    "    -V      - Print version information and quit\n"
-			"    -W<cat> - Enable extra ivlpp warning category (e.g. redef)\n",
+		    "    -W<cat> - Enable extra ivlpp warning category:\n"
+		    "               o redef-all - all macro redefinitions\n"
+		    "               o redef-chg - macro definition changes\n",
 		    argv[0]);
 	    return flag_errors;
       }

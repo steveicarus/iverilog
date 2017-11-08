@@ -1,4 +1,4 @@
-.TH iverilog 1 "Oct 14th, 2017" "" "Version %M.%n%E"
+.TH iverilog 1 "Nov 8th, 2017" "" "Version %M.%n%E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -316,8 +316,9 @@ after a \fB\-Wall\fP argument to suppress isolated warning types.
 
 .TP 8
 .B all
-This enables the anachronisms, implicit, macro-redefinition, portbind,
-select\-range, timescale, and sensitivity\-entire\-array warning categories.
+This enables the anachronisms, implicit, macro-replacement, portbind,
+select\-range, timescale, and sensitivity\-entire\-array warning
+categories.
 
 .TP 8
 .B anachronisms
@@ -331,8 +332,11 @@ example, if a scalar wire X is used but not declared in the Verilog
 source, this will print a warning at its first use.
 
 .TP 8
-.B macro-redefinition
+.B macro-redefinition\fI | \fPmacro-replacement
 This enables preprocessor warnings when a macro is being redefined.
+The first variant prints a warning any time a macro is redefined.
+The second variant only prints a warning if the macro text changes.
+Use \fBno-macro-redefinition\fP to turn off all warnings of this type.
 
 .TP 8
 .B portbind

@@ -350,7 +350,8 @@ static void build_preprocess_command(int e_flag)
 	       ivlpp_dir, sep,
                verbose_flag ? " -v" : "",
 	       e_flag ? "" : " -L",
-               strchr(warning_flags, 'r') ? " -Wredef " : "",
+               strchr(warning_flags, 'r') ? " -Wredef-all " :
+               strchr(warning_flags, 'R') ? " -Wredef-chg " : "",
                defines_path, source_path,
 	       compiled_defines_path,
 	       e_flag ? "" : " | ");
@@ -520,14 +521,11 @@ static void process_warning_switch(const char*name)
 	    process_warning_switch("anachronisms");
 	    process_warning_switch("implicit");
 	    process_warning_switch("implicit-dimensions");
+	    process_warning_switch("macro-replacement");
 	    process_warning_switch("portbind");
 	    process_warning_switch("select-range");
 	    process_warning_switch("timescale");
 	    process_warning_switch("sensitivity-entire-array");
-	    process_warning_switch("macro-redefinition");
-      } else if (strcmp(name,"macro-redefinition") == 0) {
-          if (! strchr(warning_flags, 'r'))
- 		  strcat(warning_flags, "r");
       } else if (strcmp(name,"anachronisms") == 0) {
 	    if (! strchr(warning_flags, 'n'))
 		  strcat(warning_flags, "n");
@@ -540,6 +538,12 @@ static void process_warning_switch(const char*name)
       } else if (strcmp(name,"implicit-dimensions") == 0) {
 	    if (! strchr(warning_flags, 'd'))
 		  strcat(warning_flags, "d");
+      } else if (strcmp(name,"macro-redefinition") == 0) {
+	  if (! strchr(warning_flags, 'r'))
+		  strcat(warning_flags, "r");
+      } else if (strcmp(name,"macro-replacement") == 0) {
+	  if (! strchr(warning_flags, 'R'))
+		  strcat(warning_flags, "R");
       } else if (strcmp(name,"portbind") == 0) {
 	    if (! strchr(warning_flags, 'p'))
 		  strcat(warning_flags, "p");
@@ -566,12 +570,6 @@ static void process_warning_switch(const char*name)
 		  cp[0] = cp[1];
 		  cp += 1;
 	    }
-      } else if (strcmp(name,"no-macro-redefinition") == 0) {
-        char*cp = strchr(warning_flags, 'r');
-  	    if (cp) while (*cp) {
-  		  cp[0] = cp[1];
-  		  cp += 1;
-  	    }
       } else if (strcmp(name,"no-floating-nets") == 0) {
 	    char*cp = strchr(warning_flags, 'f');
 	    if (cp) while (*cp) {
@@ -586,6 +584,17 @@ static void process_warning_switch(const char*name)
 	    }
       } else if (strcmp(name,"no-implicit-dimensions") == 0) {
 	    char*cp = strchr(warning_flags, 'd');
+	    if (cp) while (*cp) {
+		  cp[0] = cp[1];
+		  cp += 1;
+	    }
+      } else if (strcmp(name,"no-macro-redefinition") == 0) {
+	    char*cp = strchr(warning_flags, 'r');
+	    if (cp) while (*cp) {
+		  cp[0] = cp[1];
+		  cp += 1;
+	    }
+	    cp = strchr(warning_flags, 'R');
 	    if (cp) while (*cp) {
 		  cp[0] = cp[1];
 		  cp += 1;
@@ -1322,7 +1331,8 @@ int main(int argc, char **argv)
 	   files. */
       fprintf(iconfig_file, "ivlpp:%s%civlpp %s -L -F\"%s\" -P\"%s\"\n",
 	      ivlpp_dir, sep,
-              strchr(warning_flags, 'r') ? "-Wredef" : "",
+              strchr(warning_flags, 'r') ? "-Wredef-all" :
+              strchr(warning_flags, 'R') ? "-Wredef-chg" : "",
               defines_path, compiled_defines_path
       );
 
