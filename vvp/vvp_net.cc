@@ -3421,7 +3421,8 @@ unsigned vvp_wide_fun_core::port_count() const
 vvp_vector4_t& vvp_wide_fun_core::value(unsigned idx)
 {
       assert(idx < nports_);
-      assert(port_values_);
+      if (port_values_ == 0)
+	    port_values_ = new vvp_vector4_t [nports_];
       return port_values_[idx];
 }
 
