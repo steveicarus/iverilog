@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -3138,6 +3138,25 @@ unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
 		  min_width_  = 32;
 		  signed_flag_= true;
 		  return 32;
+	    }
+      }
+
+	// Look for the enumeration attributes.
+      if (const netenum_t*netenum = net->enumeration()) {
+	    if (member_name == "num") {
+		  expr_type_  = IVL_VT_BOOL;
+		  expr_width_ = 32;
+		  min_width_  = 32;
+		  signed_flag_= true;
+		  return 32;
+	    }
+	    if ((member_name == "first") || (member_name == "last") ||
+	        (member_name == "next") || (member_name == "prev")) {
+		  expr_type_  = netenum->base_type();
+		  expr_width_ = netenum->packed_width();;
+		  min_width_ = expr_width_;
+		  signed_flag_ = netenum->get_signed();
+		  return expr_width_;
 	    }
       }
 
