@@ -5,7 +5,7 @@
 
 %{
 /*
- * Copyright (c) 2007-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -217,7 +217,7 @@ static void destroy_sdf_lexor(void)
 {
 # ifdef FLEX_SCANNER
 #   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5
-#     if defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
+#     if YY_FLEX_MINOR_VERSION > 5 || defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
     yylex_destroy();
 #     endif
 #   endif
