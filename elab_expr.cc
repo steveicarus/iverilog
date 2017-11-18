@@ -329,10 +329,12 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
                 case '>': // >   Should be handled by PEBComp
                 case 'e': // ==  Should be handled by PEBComp
                 case 'E': // === Should be handled by PEBComp
+                case 'w': // ==? Should be handled by PEBComp
                 case 'L': // <=  Should be handled by PEBComp
                 case 'G': // >=  Should be handled by PEBComp
                 case 'n': // !=  Should be handled by PEBComp
                 case 'N': // !== Should be handled by PEBComp
+                case 'W': // !=? Should be handled by PEBComp
                 case 'p': // **  should be handled by PEBPower
                   ivl_assert(*this, 0);
                 default:
@@ -663,6 +665,18 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": error: "
 		       << human_readable_op(op_)
 		       << " operator may not have REAL or STRING operands."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    break;
+	  case 'w': /* ==? */
+	  case 'W': /* !=? */
+	    if ((lp->expr_type() != IVL_VT_BOOL && lp->expr_type() != IVL_VT_LOGIC) ||
+		(rp->expr_type() != IVL_VT_BOOL && rp->expr_type() != IVL_VT_LOGIC)) {
+		  cerr << get_fileline() << ": error: "
+		       << human_readable_op(op_)
+		       << " operator may only have INTEGRAL operands."
 		       << endl;
 		  des->errors += 1;
 		  return 0;

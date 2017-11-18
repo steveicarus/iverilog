@@ -188,6 +188,8 @@ TU [munpf]
 "!=" { return K_NE; }
 "===" { return K_CEQ; }
 "!==" { return K_CNE; }
+"==?" { return K_WEQ; }
+"!=?" { return K_WNE; }
 "||" { return K_LOR; }
 "&&" { return K_LAND; }
 "&&&" { return K_TAND; }

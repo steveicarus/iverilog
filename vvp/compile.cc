@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -117,21 +117,23 @@ static const struct opcode_table_s opcode_table[] = {
       { "%cassign/vec4",    of_CASSIGN_VEC4,    1,{OA_FUNC_PTR,OA_NONE,     OA_NONE} },
       { "%cassign/vec4/off",of_CASSIGN_VEC4_OFF,2,{OA_FUNC_PTR,OA_BIT1,     OA_NONE} },
       { "%cassign/wr",  of_CASSIGN_WR,  1,{OA_FUNC_PTR,OA_NONE,     OA_NONE} },
-      { "%cast2",  of_CAST2,  0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%cmp/e",  of_CMPE,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%cmp/ne", of_CMPNE,  0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%cmp/s",  of_CMPS,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%cmp/str",of_CMPSTR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%cmp/u",  of_CMPU,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%cmp/wr", of_CMPWR,  0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%cmp/ws", of_CMPWS,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
-      { "%cmp/wu", of_CMPWU,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
-      { "%cmp/x",  of_CMPX,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%cmp/z",  of_CMPZ,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%cmpi/e", of_CMPIE,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%cmpi/ne",of_CMPINE, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%cmpi/s", of_CMPIS,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%cmpi/u", of_CMPIU,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%cast2",   of_CAST2,  0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%cmp/e",   of_CMPE,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%cmp/ne",  of_CMPNE,  0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%cmp/s",   of_CMPS,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%cmp/str", of_CMPSTR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%cmp/u",   of_CMPU,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%cmp/we",  of_CMPWE,  0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%cmp/wne", of_CMPWNE, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%cmp/wr",  of_CMPWR,  0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%cmp/ws",  of_CMPWS,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%cmp/wu",  of_CMPWU,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%cmp/x",   of_CMPX,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%cmp/z",   of_CMPZ,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%cmpi/e",  of_CMPIE,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%cmpi/ne", of_CMPINE, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%cmpi/s",  of_CMPIS,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%cmpi/u",  of_CMPIU,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%concat/str",  of_CONCAT_STR,  0,{OA_NONE,  OA_NONE,  OA_NONE} },
       { "%concat/vec4", of_CONCAT_VEC4, 0,{OA_NONE,  OA_NONE,  OA_NONE} },
       { "%concati/str", of_CONCATI_STR, 1,{OA_STRING,OA_NONE,  OA_NONE} },
@@ -1399,6 +1401,38 @@ void compile_cmp_gt_r(char*label, unsigned argc, struct symb_s*argv)
       }
 
       vvp_arith_real_ *arith = new vvp_cmp_gt_real;
+      make_arith(arith, label, argc, argv);
+}
+
+void compile_cmp_weq(char*label, long wid,
+		     unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if (argc != 2) {
+	    fprintf(stderr, "%s .cmp/weq has wrong number of symbols\n",label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_ *arith = new vvp_cmp_weq(wid);
+
+      make_arith(arith, label, argc, argv);
+}
+
+void compile_cmp_wne(char*label, long wid,
+		     unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if (argc != 2) {
+	    fprintf(stderr, "%s .cmp/wne has wrong number of symbols\n",label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_ *arith = new vvp_cmp_wne(wid);
+
       make_arith(arith, label, argc, argv);
 }
 

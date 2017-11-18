@@ -187,8 +187,14 @@ ostream& operator << (ostream&fd, NetCaseCmp::kind_t that)
 	  case NetCaseCmp::NEQ:
 	    fd << "!==";
 	    break;
-	  case NetCaseCmp::XEQ:
+	  case NetCaseCmp::WEQ:
 	    fd << "==?";
+	    break;
+	  case NetCaseCmp::WNE:
+	    fd << "!=?";
+	    break;
+	  case NetCaseCmp::XEQ:
+	    fd << "==x?";
 	    break;
 	  case NetCaseCmp::ZEQ:
 	    fd << "==z?";
@@ -1631,11 +1637,14 @@ void NetEBinary::dump(ostream&o) const
 	  case 'A':
 	    o << "~&";
 	    break;
+	  case 'e':
+	    o << "==";
+	    break;
 	  case 'E':
 	    o << "===";
 	    break;
-	  case 'e':
-	    o << "==";
+	  case 'w':
+	    o << "==?";
 	    break;
 	  case 'G':
 	    o << ">=";
@@ -1651,6 +1660,9 @@ void NetEBinary::dump(ostream&o) const
 	    break;
 	  case 'N':
 	    o << "!==";
+	    break;
+	  case 'W':
+	    o << "!=?";
 	    break;
 	  case 'o':
 	    o << "||";

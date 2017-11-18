@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -301,6 +301,18 @@ The %cmp/ne and %cmpi/ne variants are the same as the %cmp/e and
 %cmpi/e variants, but the 4 and 6 flags are inverted in order to
 eliminate the need for a %flag_inv instruction to implement != and !==
 operations.
+
+* %cmp/we
+* %cmp/wne
+
+These instructions perform a wild comparison of two vectors of equal
+size. Two values are pulled from the top of the stack, and not replaced.
+The results are written into flag bit 4. The comparisons work like eq/ne
+except an x/z bit in the r-value will match any l-value bit.
+
+The %cmp/wne variant is the same as %cmp/we, but the 4 flag is inverted
+in order to eliminate the need for a %flag_inv instruction to implement
+the !=? operator.
 
 * %cmp/wr
 
@@ -1299,7 +1311,7 @@ table for the xor is:
 
 
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU

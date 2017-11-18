@@ -2365,6 +2365,8 @@ class NetCaseCmp  : public NetNode {
       enum kind_t {
 	    EEQ, // ===
 	    NEQ, // !==
+	    WEQ, // ==?
+	    WNE, // !=?
 	    XEQ, // casex guard tests
 	    ZEQ  // casez guard tests
       };
@@ -4137,6 +4139,7 @@ class NetEBComp : public NetEBinary {
       NetEConst*eval_gt_(const NetExpr*le, const NetExpr*re) const;
       NetEConst*eval_gteq_(const NetExpr*le, const NetExpr*re) const;
       NetEConst*eval_eqeqeq_(bool ne_flag, const NetExpr*le, const NetExpr*re) const;
+      NetEConst*eval_weqeq_(bool ne_flag, const NetExpr*le, const NetExpr*re) const;
 };
 
 /*

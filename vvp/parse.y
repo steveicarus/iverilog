@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -80,7 +80,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_ARRAY K_ARRAY_2U K_ARRAY_2S K_ARRAY_I K_ARRAY_OBJ K_ARRAY_R K_ARRAY_S K_ARRAY_STR K_ARRAY_PORT
 %token K_CAST_INT K_CAST_REAL K_CAST_REAL_S K_CAST_2
 %token K_CLASS
-%token K_CMP_EEQ K_CMP_EQ K_CMP_EQX K_CMP_EQZ
+%token K_CMP_EEQ K_CMP_EQ K_CMP_EQX K_CMP_EQZ K_CMP_WEQ K_CMP_WNE
 %token K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
 %token K_CMP_GE K_CMP_GE_R K_CMP_GE_S K_CMP_GT K_CMP_GT_R K_CMP_GT_S
 %token K_CONCAT K_CONCAT8 K_DEBUG K_DELAY K_DFF_N K_DFF_N_ACLR
@@ -473,6 +473,16 @@ statement
 	| T_LABEL K_CMP_GT_S T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_cmp_gt($1, $3, true, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_CMP_WEQ T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_weq($1, $3, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_CMP_WNE T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_wne($1, $3, obj.cnt, obj.vect);
 		}
 
   /* Delay nodes take a set of numbers or a set of inputs. The delay

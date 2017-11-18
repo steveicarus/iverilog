@@ -274,7 +274,18 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       if (op_ == 'E' || op_ == 'N') {
 	    NetCaseCmp*gate = new NetCaseCmp(scope, scope->local_symbol(),
-					     width, op_=='E'?NetCaseCmp::EEQ:NetCaseCmp::NEQ);
+					     width, op_=='E' ? NetCaseCmp::EEQ : NetCaseCmp::NEQ);
+	    gate->set_line(*this);
+	    connect(gate->pin(0), osig->pin(0));
+	    connect(gate->pin(1), lsig->pin(0));
+	    connect(gate->pin(2), rsig->pin(0));
+	    des->add_node(gate);
+	    return osig;
+      }
+
+      if (op_ == 'w' || op_ == 'W') {
+	    NetCaseCmp*gate = new NetCaseCmp(scope, scope->local_symbol(),
+					     width, op_=='w' ? NetCaseCmp::WEQ : NetCaseCmp::WNE);
 	    gate->set_line(*this);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));

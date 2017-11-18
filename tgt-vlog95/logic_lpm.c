@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2016 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2017 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -398,6 +398,8 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 	case IVL_LPM_CMP_GT:
 	case IVL_LPM_CMP_NE:
 	case IVL_LPM_CMP_NEE:
+	case IVL_LPM_CMP_WEQ:
+	case IVL_LPM_CMP_WNE:
 	case IVL_LPM_CONCAT:
 	case IVL_LPM_CONCATZ:
 	case IVL_LPM_DIVIDE:
@@ -1194,19 +1196,19 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_CMP_EQX:
-// HERE: Need to heck that this is not a real nexus.
+// HERE: Need to check that this is not a real nexus.
 	    fprintf(vlog_out, "(");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " ==? ");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
-	    fprintf(stderr, "%s:%u: vlog95 error: Compare wildcard equal "
+	    fprintf(stderr, "%s:%u: vlog95 error: Compare wildcard equal (caseX) "
 	                    "operator is not supported.\n",
 	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
 	    vlog_errors += 1;
 	    break;
 	case IVL_LPM_CMP_EQZ:
-// HERE: Need to heck that this is not a real nexus.
+// HERE: Need to check that this is not a real nexus.
 	    fprintf(vlog_out, "(");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " == ");
@@ -1244,6 +1246,28 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	    fprintf(vlog_out, " !== ");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
+	    break;
+	case IVL_LPM_CMP_WEQ:
+	    fprintf(vlog_out, "(");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
+	    fprintf(vlog_out, " ==? ");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
+	    fprintf(vlog_out, ")");
+	    fprintf(stderr, "%s:%u: vlog95 error: Wild equality "
+	                    "operator is not supported.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
+	    break;
+	case IVL_LPM_CMP_WNE:
+	    fprintf(vlog_out, "(");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
+	    fprintf(vlog_out, " !=? ");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
+	    fprintf(vlog_out, ")");
+	    fprintf(stderr, "%s:%u: vlog95 error: Wild inequality "
+	                    "operator is not supported.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
 	    break;
 	  /* A concat-Z should never be generated, but report it as an
 	   * error if one is generated. */

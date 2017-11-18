@@ -571,7 +571,8 @@ NetEConst* NetEBComp::eval_eqeq_(bool ne_flag, const NetExpr*le, const NetExpr*r
 
       verinum::V res = eq_res;
 
-      assert(lv.len() == rv.len());
+	// The two expressions should already be padded to the same size.
+      ivl_assert(*this, lv.len() == rv.len());
 
       for (unsigned idx = 0 ;  idx < lv.len() ;  idx += 1) {
 
@@ -626,7 +627,8 @@ NetEConst* NetEBComp::eval_eqeqeq_(bool ne_flag, const NetExpr*le, const NetExpr
 
       verinum::V res = verinum::V1;
 
-      assert(lv.len() == rv.len());
+	// The two expressions should already be padded to the same size.
+      ivl_assert(*this, lv.len() == rv.len());
 
       for (unsigned idx = 0 ;  idx < lv.len() ;  idx += 1)
 	    if (lv.get(idx) != rv.get(idx)) {
@@ -637,6 +639,55 @@ NetEConst* NetEBComp::eval_eqeqeq_(bool ne_flag, const NetExpr*le, const NetExpr
       if (ne_flag) {
 	    if (res == verinum::V0) res = verinum::V1;
 	    else res = verinum::V0;
+      }
+
+      NetEConst*result = new NetEConst(verinum(res, 1));
+      ivl_assert(*this, result);
+      return result;
+}
+
+NetEConst* NetEBComp::eval_weqeq_(bool ne_flag, const NetExpr*le, const NetExpr*re) const
+{
+      const NetEConst*lc = dynamic_cast<const NetEConst*>(le);
+      const NetEConst*rc = dynamic_cast<const NetEConst*>(re);
+      if (lc == 0 || rc == 0) return 0;
+
+      const verinum&lv = lc->value();
+      const verinum&rv = rc->value();
+
+      const verinum::V eq_res = ne_flag ? verinum::V0 : verinum::V1;
+      const verinum::V ne_res = ne_flag ? verinum::V1 : verinum::V0;
+
+      verinum::V res = eq_res;
+
+	// The two expressions should already be padded to the same size.
+      ivl_assert(*this, lv.len() == rv.len());
+
+      for (unsigned idx = 0 ;  idx < lv.len() ;  idx += 1) {
+	      // An X or Z in the R-value matches any L-value.
+	    switch (rv.get(idx)) {
+		case verinum::Vx:
+		case verinum::Vz:
+		  continue;
+		default:
+		  break;
+	    }
+
+	      // An X or Z in the L-value that is not matches by an R-value X/Z returns undefined.
+	    switch (lv.get(idx)) {
+		case verinum::Vx:
+		case verinum::Vz:
+		  res = verinum::Vx;
+		  continue;
+		default:
+		  break;
+	    }
+
+	      // A hard (0/1) mismatch gives a not-equal result.
+	    if (rv.get(idx) != lv.get(idx)) {
+		  res = ne_res;
+		  break;
+	    }
       }
 
       NetEConst*result = new NetEConst(verinum(res, 1));
@@ -657,6 +708,10 @@ NetEConst* NetEBComp::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 	    res = eval_eqeq_(false, l, r);
 	    break;
 
+	  case 'w': // Wild equality (==?)
+	    res = eval_weqeq_(false, l, r);
+	    break;
+
 	  case 'G': // >=
 	    res = eval_gteq_(l, r);
 	    break;
@@ -671,6 +726,10 @@ NetEConst* NetEBComp::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
 	  case 'n': // not-equal (!=)
 	    res = eval_eqeq_(true, l, r);
+	    break;
+
+	  case 'W': // Wild not-equal (!=?)
+	    res = eval_weqeq_(true, l, r);
 	    break;
 
 	  case '<': // Less than

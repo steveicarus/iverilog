@@ -1260,6 +1260,8 @@ const char *human_readable_op(const char op, bool unary)
 		if (unary) type = "~|";     // NOR
 		else type = "!==";          // Case inequality
 		break;
+	    case 'w': type = "==?"; break;  // Wild equality
+	    case 'W': type = "!=?"; break;  // Wild inequality
 
 	    case 'l': type = "<<(<)"; break;  // Left shifts
 	    case 'r': type = ">>";    break;  // Logical right shift

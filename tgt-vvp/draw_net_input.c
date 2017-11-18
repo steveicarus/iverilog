@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -398,6 +398,8 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_CONCATZ:
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	  case IVL_LPM_CMP_EQX:
 	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_GE:

@@ -1,7 +1,7 @@
 #ifndef IVL_ivl_target_H
 #define IVL_ivl_target_H
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -306,8 +306,10 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_CONCAT = 16,
       IVL_LPM_CONCATZ = 36, /* Transparent concat */
       IVL_LPM_CMP_EEQ= 18, /* Case EQ (===) */
-      IVL_LPM_CMP_EQX= 37, /* Wildcard EQ (==?) */
+      IVL_LPM_CMP_EQX= 37, /* Wildcard EQ (casex) */
       IVL_LPM_CMP_EQZ= 38, /* casez EQ */
+      IVL_LPM_CMP_WEQ= 41,
+      IVL_LPM_CMP_WNE= 42,
       IVL_LPM_CMP_EQ = 10,
       IVL_LPM_CMP_GE =  1,
       IVL_LPM_CMP_GT =  2,

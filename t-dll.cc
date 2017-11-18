@@ -1244,6 +1244,12 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
 	  case NetCaseCmp::NEQ:
 	    obj->type = IVL_LPM_CMP_NEE;
 	    break;
+	  case NetCaseCmp::WEQ:
+	    obj->type = IVL_LPM_CMP_WEQ;
+	    break;
+	  case NetCaseCmp::WNE:
+	    obj->type = IVL_LPM_CMP_WNE;
+	    break;
 	  case NetCaseCmp::XEQ:
 	      obj->type = IVL_LPM_CMP_EQX;
 	    break;

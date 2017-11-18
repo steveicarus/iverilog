@@ -1235,6 +1235,8 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
@@ -1390,6 +1392,8 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net)
 	  case IVL_LPM_CMP_EQX:
 	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
@@ -1540,6 +1544,8 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:

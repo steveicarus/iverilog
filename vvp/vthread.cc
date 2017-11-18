@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1942,6 +1942,71 @@ bool of_CMPX(vthread_t thr, vvp_code_t)
       }
 
       thr->flags[4] = eq;
+      return true;
+}
+
+static void do_CMPWE(vthread_t thr, const vvp_vector4_t&lval, const vvp_vector4_t&rval)
+{
+      assert(rval.size() == lval.size());
+
+      if (lval.has_xz() || rval.has_xz()) {
+
+	    unsigned wid = lval.size();
+	    vvp_bit4_t eq  = BIT4_1;
+
+	    for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+		  vvp_bit4_t lv = lval.value(idx);
+		  vvp_bit4_t rv = rval.value(idx);
+
+		  if (bit4_is_xz(rv))
+			continue;
+		  if ((eq == BIT4_1) && bit4_is_xz(lv))
+			eq = BIT4_X;
+		  if ((lv == BIT4_0) && (rv==BIT4_1))
+			eq = BIT4_0;
+		  if ((lv == BIT4_1) && (rv==BIT4_0))
+			eq = BIT4_0;
+
+		  if (eq == BIT4_0)
+			break;
+	    }
+
+	    thr->flags[4] = eq;
+
+      } else {
+	      // If there are no XZ bits anywhere, then the results of
+	      // ==? match the === test.
+	    thr->flags[4] = (lval.eeq(rval)? BIT4_1 : BIT4_0);
+      }
+}
+
+bool of_CMPWE(vthread_t thr, vvp_code_t)
+{
+	// We are going to pop these and push nothing in their
+	// place, but for now it is more efficient to use a constant
+	// reference. When we finish, pop the stack without copies.
+      const vvp_vector4_t&rval = thr->peek_vec4(0);
+      const vvp_vector4_t&lval = thr->peek_vec4(1);
+
+      do_CMPWE(thr, lval, rval);
+
+      thr->pop_vec4(2);
+      return true;
+}
+
+bool of_CMPWNE(vthread_t thr, vvp_code_t)
+{
+	// We are going to pop these and push nothing in their
+	// place, but for now it is more efficient to use a constant
+	// reference. When we finish, pop the stack without copies.
+      const vvp_vector4_t&rval = thr->peek_vec4(0);
+      const vvp_vector4_t&lval = thr->peek_vec4(1);
+
+      do_CMPWE(thr, lval, rval);
+
+      thr->flags[4] =  ~thr->flags[4];
+
+      thr->pop_vec4(2);
       return true;
 }
 

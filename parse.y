@@ -465,7 +465,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %token <number> BASED_NUMBER DEC_NUMBER UNBASED_NUMBER
 %token <realtime> REALTIME
 %token K_PLUS_EQ K_MINUS_EQ K_INCR K_DECR
-%token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LP K_LS K_RS K_RSS K_SG
+%token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_WEQ K_WNE K_LP K_LS K_RS K_RSS K_SG
  /* K_CONTRIBUTE is <+, the contribution assign. */
 %token K_CONTRIBUTE
 %token K_PO_POS K_PO_NEG K_POW
@@ -678,7 +678,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %left '|'
 %left '^' K_NXOR K_NOR
 %left '&' K_NAND
-%left K_EQ K_NE K_CEQ K_CNE
+%left K_EQ K_NE K_CEQ K_CNE K_WEQ K_WNE
 %left K_GE K_LE '<' '>'
 %left K_LS K_RS K_RSS
 %left '+' '-'
@@ -3284,6 +3284,11 @@ expression
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
+  | expression K_WEQ attribute_list_opt expression
+      { PEBinary*tmp = new PEBComp('w', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
   | expression K_LE attribute_list_opt expression
       { PEBinary*tmp = new PEBComp('L', $1, $4);
 	FILE_NAME(tmp, @2);
@@ -3301,6 +3306,11 @@ expression
       }
   | expression K_CNE attribute_list_opt expression
       { PEBinary*tmp = new PEBComp('N', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_WNE attribute_list_opt expression
+      { PEBinary*tmp = new PEBComp('W', $1, $4);
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
