@@ -3557,6 +3557,16 @@ vector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
 PProcess* pform_make_behavior(ivl_process_type_t type, Statement*st,
 			      list<named_pexpr_t>*attr)
 {
+	// Add an implicit @* around the statement for the always_comb and
+	// always_latch statements.
+      if ((type == IVL_PR_ALWAYS_COMB) || (type == IVL_PR_ALWAYS_LATCH)) {
+	    PEventStatement *tmp = new PEventStatement(true);
+	    tmp->set_file(st->get_file());
+	    tmp->set_lineno(st->get_lineno());
+	    tmp->set_statement(st);
+	    st = tmp;
+      }
+
       PProcess*pp = new PProcess(type, st);
 
 	// If we are in a part of the code where the meta-comment
@@ -3576,8 +3586,10 @@ PProcess* pform_make_behavior(ivl_process_type_t type, Statement*st,
       pform_put_behavior_in_scope(pp);
 
       ivl_assert(*st, ! pform_cur_module.empty());
-      if (pform_cur_module.front()->program_block && type == IVL_PR_ALWAYS) {
-	    cerr << st->get_fileline() << ": error: Always statements not allowed"
+      if (pform_cur_module.front()->program_block &&
+          ((type == IVL_PR_ALWAYS) || (type == IVL_PR_ALWAYS_COMB) ||
+           (type == IVL_PR_ALWAYS_FF) || (type == IVL_PR_ALWAYS_LATCH))) {
+	    cerr << st->get_fileline() << ": error: Always statements are not allowed"
 		 << " in program blocks." << endl;
 	    error_count += 1;
       }

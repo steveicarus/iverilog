@@ -121,6 +121,15 @@ std::ostream& operator << (std::ostream&out, ivl_process_type_t pt)
 	  case IVL_PR_ALWAYS:
 	    out << "always";
 	    break;
+	  case IVL_PR_ALWAYS_COMB:
+	    out << "always_comb";
+	    break;
+	  case IVL_PR_ALWAYS_FF:
+	    out << "always_ff";
+	    break;
+	  case IVL_PR_ALWAYS_LATCH:
+	    out << "always_latch";
+	    break;
 	  case IVL_PR_FINAL:
 	    out << "final";
 	    break;
@@ -1175,6 +1184,11 @@ void AProcess::dump(ostream&out, unsigned ind) const
 	    break;
 	  case IVL_PR_ALWAYS:
 	    out << setw(ind) << "" << "analog";
+	    break;
+	  case IVL_PR_ALWAYS_COMB:
+	  case IVL_PR_ALWAYS_FF:
+	  case IVL_PR_ALWAYS_LATCH:
+	    assert(0);
 	    break;
 	  case IVL_PR_FINAL:
 	    out << setw(ind) << "" << "analog final";

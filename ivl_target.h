@@ -355,9 +355,12 @@ typedef enum ivl_path_edge_e {
 /* Processes are initial, always, or final blocks with a statement. This is
    the type of the ivl_process_t object. */
 typedef enum ivl_process_type_e ENUM_UNSIGNED_INT {
-      IVL_PR_INITIAL = 0,
-      IVL_PR_ALWAYS  = 1,
-      IVL_PR_FINAL   = 2
+      IVL_PR_INITIAL      = 0,
+      IVL_PR_ALWAYS       = 1,
+      IVL_PR_ALWAYS_COMB  = 3,
+      IVL_PR_ALWAYS_FF    = 4,
+      IVL_PR_ALWAYS_LATCH = 5,
+      IVL_PR_FINAL        = 2
 } ivl_process_type_t;
 
 /* These are the sorts of reasons a scope may come to be. These types

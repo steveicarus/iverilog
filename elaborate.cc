@@ -4200,14 +4200,15 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
       if (expr_.count() == 0) {
 	    assert(enet);
-	     /* For synthesis we want just the inputs, but for the rest we
-	      * want inputs and outputs that may cause a value to change. */
+	     /* For synthesis or always_comb/latch we want just the inputs,
+	      * but for the rest we want inputs and outputs that may cause
+	      * a value to change. */
 	    extern bool synthesis; /* Synthesis flag from main.cc */
 	    bool rem_out = false;
-	    if (synthesis) {
+	    if (synthesis || search_funcs_) {
 		  rem_out = true;
 	    }
-	    NexusSet*nset = enet->nex_input(rem_out);
+	    NexusSet*nset = enet->nex_input(rem_out, search_funcs_);
 	    if (nset == 0) {
 		  cerr << get_fileline() << ": error: Unable to elaborate:"
 		       << endl;
@@ -5356,7 +5357,10 @@ bool PProcess::elaborate(Design*des, NetScope*scope) const
 	gets into its wait statement before non-combinational
 	code is executed. */
       do {
-	    if (top->type() != IVL_PR_ALWAYS)
+	    if ((top->type() != IVL_PR_ALWAYS) &&
+	        (top->type() != IVL_PR_ALWAYS_COMB) &&
+	        (top->type() != IVL_PR_ALWAYS_FF) &&
+	        (top->type() != IVL_PR_ALWAYS_LATCH))
 		  break;
 
 	    NetEvWait*st = dynamic_cast<NetEvWait*>(top->statement());
@@ -6110,7 +6114,10 @@ bool Design::check_proc_delay() const
 	       * a runtime infinite loop will happen. If we possible have some
 	       * delay then print a warning that an infinite loop is possible.
 	       */
-	    if (pr->type() == IVL_PR_ALWAYS) {
+	    if ((pr->type() == IVL_PR_ALWAYS) ||
+	        (pr->type() == IVL_PR_ALWAYS_COMB) ||
+	        (pr->type() == IVL_PR_ALWAYS_FF) ||
+	        (pr->type() == IVL_PR_ALWAYS_LATCH)) {
 		  DelayType dly_type = pr->statement()->delay_type();
 
 		  if (dly_type == NO_DELAY || dly_type == ZERO_DELAY) {

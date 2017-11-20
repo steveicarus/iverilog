@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -294,20 +294,20 @@ PDoWhile::~PDoWhile()
 }
 
 PEventStatement::PEventStatement(const svector<PEEvent*>&ee)
-: expr_(ee), statement_(0)
+: expr_(ee), statement_(0), search_funcs_(false)
 {
       assert(expr_.count() > 0);
 }
 
 
 PEventStatement::PEventStatement(PEEvent*ee)
-: expr_(1), statement_(0)
+: expr_(1), statement_(0), search_funcs_(false)
 {
       expr_[0] = ee;
 }
 
-PEventStatement::PEventStatement(void)
-: statement_(0)
+PEventStatement::PEventStatement(bool search_funcs)
+: statement_(0), search_funcs_(search_funcs)
 {
 }
 

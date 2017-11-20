@@ -2358,6 +2358,9 @@ int draw_process(ivl_process_t net, void*x)
 	    break;
 
 	  case IVL_PR_ALWAYS:
+	  case IVL_PR_ALWAYS_COMB:
+	  case IVL_PR_ALWAYS_FF:
+	  case IVL_PR_ALWAYS_LATCH:
 	    fprintf(vvp_out, "    %%jmp T_%u;\n", thread_count);
 	    break;
       }
@@ -2368,6 +2371,9 @@ int draw_process(ivl_process_t net, void*x)
 
 	  case IVL_PR_INITIAL:
 	  case IVL_PR_ALWAYS:
+	  case IVL_PR_ALWAYS_COMB:
+	  case IVL_PR_ALWAYS_FF:
+	  case IVL_PR_ALWAYS_LATCH:
 	    if (init_flag) {
 		  fprintf(vvp_out, "    .thread T_%u, $init;\n", thread_count);
 	    } else if (push_flag) {

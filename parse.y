@@ -4852,6 +4852,18 @@ module_item
       { PProcess*tmp = pform_make_behavior(IVL_PR_ALWAYS, $3, $1);
 	FILE_NAME(tmp, @2);
       }
+  | attribute_list_opt K_always_comb statement_item
+      { PProcess*tmp = pform_make_behavior(IVL_PR_ALWAYS_COMB, $3, $1);
+	FILE_NAME(tmp, @2);
+      }
+  | attribute_list_opt K_always_ff statement_item
+      { PProcess*tmp = pform_make_behavior(IVL_PR_ALWAYS_FF, $3, $1);
+	FILE_NAME(tmp, @2);
+      }
+  | attribute_list_opt K_always_latch statement_item
+      { PProcess*tmp = pform_make_behavior(IVL_PR_ALWAYS_LATCH, $3, $1);
+	FILE_NAME(tmp, @2);
+      }
   | attribute_list_opt K_initial statement_item
       { PProcess*tmp = pform_make_behavior(IVL_PR_INITIAL, $3, $1);
 	FILE_NAME(tmp, @2);
@@ -6401,7 +6413,7 @@ statement_item /* This is roughly statement_item in the LRM */
 		  $$ = tmp;
 		}
 	| K_wait K_fork ';'
-		{ PEventStatement*tmp = new PEventStatement(0);
+		{ PEventStatement*tmp = new PEventStatement((PEEvent*)0);
 		  FILE_NAME(tmp,@1);
 		  $$ = tmp;
 		}

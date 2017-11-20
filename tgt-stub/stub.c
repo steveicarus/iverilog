@@ -1166,6 +1166,24 @@ static int show_process(ivl_process_t net, void*x)
 	    else
 		  fprintf(out, "always\n");
 	    break;
+	  case IVL_PR_ALWAYS_COMB:
+	    if (ivl_process_analog(net))
+		  assert(0);
+	    else
+		  fprintf(out, "always_comb\n");
+	    break;
+	  case IVL_PR_ALWAYS_FF:
+	    if (ivl_process_analog(net))
+		  assert(0);
+	    else
+		  fprintf(out, "always_ff\n");
+	    break;
+	  case IVL_PR_ALWAYS_LATCH:
+	    if (ivl_process_analog(net))
+		  assert(0);
+	    else
+		  fprintf(out, "always_latch\n");
+	    break;
 	  case IVL_PR_FINAL:
 	    if (ivl_process_analog(net))
 		  fprintf(out, "analog final\n");

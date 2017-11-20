@@ -990,6 +990,18 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
 	    o << "always  /* " << get_fileline() << " in "
 	      << scope_path(scope_) << " */" << endl;
 	    break;
+	  case IVL_PR_ALWAYS_COMB:
+	    o << "always_comb  /* " << get_fileline() << " in "
+	      << scope_path(scope_) << " */" << endl;
+	    break;
+	  case IVL_PR_ALWAYS_FF:
+	    o << "always_ff  /* " << get_fileline() << " in "
+	      << scope_path(scope_) << " */" << endl;
+	    break;
+	  case IVL_PR_ALWAYS_LATCH:
+	    o << "always_latch  /* " << get_fileline() << " in "
+	      << scope_path(scope_) << " */" << endl;
+	    break;
 	  case IVL_PR_FINAL:
 	    o << "final  /* " << get_fileline() << " in "
 	      << scope_path(scope_) << " */" << endl;
@@ -1015,6 +1027,13 @@ void NetAnalogTop::dump(ostream&o, unsigned ind) const
 	  case IVL_PR_ALWAYS:
 	    o << "analog /* " << get_fileline() << " in "
 	      << scope_path(scope_) << " */" << endl;
+	    break;
+
+	    // These are not used in an analog context.
+	  case IVL_PR_ALWAYS_COMB:
+	  case IVL_PR_ALWAYS_FF:
+	  case IVL_PR_ALWAYS_LATCH:
+	    assert(0);
 	    break;
 
 	  case IVL_PR_FINAL:
