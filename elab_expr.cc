@@ -2278,8 +2278,8 @@ NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*ds
       }
 
       cerr << get_fileline() << ": internal error: Unable to locate "
-	    "function return value for " << path_
-	   << " in " << dscope->basename() << "." << endl;
+              "function return value for " << path_
+           << " in " << dscope->basename() << "." << endl;
       des->errors += 1;
       return 0;
 }
