@@ -2815,6 +2815,16 @@ extern "C" uint64_t ivl_stmt_delay_val(ivl_statement_t net)
       return net->u_.delay_.value;
 }
 
+extern "C" unsigned ivl_stmt_needs_t0_trigger(ivl_statement_t net)
+{
+      assert(net);
+      if (net->type_ == IVL_ST_WAIT) {
+	    return net->u_.wait_.needs_t0_trigger;
+      } else {
+	    return 0;
+      }
+}
+
 extern "C" unsigned ivl_stmt_nevent(ivl_statement_t net)
 {
       assert(net);

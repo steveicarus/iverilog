@@ -2105,6 +2105,7 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  *    handle disable statements.
  *
  * ivl_stmt_events
+ * ivl_stmt_needs_t0_trigger
  * ivl_stmt_nevent
  *    Statements that have event arguments (TRIGGER and WAIT) make
  *    those event objects available through these methods.
@@ -2232,6 +2233,7 @@ extern ivl_expr_t ivl_stmt_delay_expr(ivl_statement_t net);
   /* IVL_ST_DELAY */
 extern uint64_t ivl_stmt_delay_val(ivl_statement_t net);
   /* IVL_ST_WAIT IVL_ST_TRIGGER */
+extern unsigned    ivl_stmt_needs_t0_trigger(ivl_statement_t net);
 extern unsigned    ivl_stmt_nevent(ivl_statement_t net);
 extern ivl_event_t ivl_stmt_events(ivl_statement_t net, unsigned idx);
   /* IVL_ST_CONTRIB */

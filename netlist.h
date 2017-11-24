@@ -3398,10 +3398,12 @@ class NetEvWait  : public NetProc {
 
       void add_event(NetEvent*tgt);
       void replace_event(NetEvent*orig, NetEvent*repl);
+      inline void set_t0_trigger() { has_t0_trigger_ = true; };
 
       inline unsigned nevents() const { return events_.size(); }
       inline const NetEvent*event(unsigned idx) const { return events_[idx]; }
       inline NetEvent*event(unsigned idx) { return events_[idx]; }
+      inline bool has_t0_trigger() const { return has_t0_trigger_; };
 
       NetProc*statement();
 
@@ -3442,6 +3444,7 @@ class NetEvWait  : public NetProc {
       NetProc*statement_;
 	// Events that I might wait for.
       std::vector<NetEvent*>events_;
+      bool has_t0_trigger_;
 };
 
 ostream& operator << (ostream&out, const NetEvWait&obj);

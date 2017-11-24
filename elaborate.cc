@@ -4208,6 +4208,9 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    if (synthesis || search_funcs_) {
 		  rem_out = true;
 	    }
+	      // If this is an always_comp/latch then we need an implicit T0
+	      // trigger of the event expression.
+	    if (search_funcs_) wa->set_t0_trigger();
 	    NexusSet*nset = enet->nex_input(rem_out, search_funcs_);
 	    if (nset == 0) {
 		  cerr << get_fileline() << ": error: Unable to elaborate:"
@@ -6111,7 +6114,7 @@ bool Design::check_proc_delay() const
 
       for (const NetProcTop*pr = procs_ ;  pr ;  pr = pr->next_) {
 	      /* If this is an always block and we have no or zero delay then
-	       * a runtime infinite loop will happen. If we possible have some
+	       * a runtime infinite loop will happen. If we possibly have some
 	       * delay then print a warning that an infinite loop is possible.
 	       */
 	    if ((pr->type() == IVL_PR_ALWAYS) ||

@@ -862,6 +862,7 @@ struct ivl_statement_s {
 	    } utask_;
 
 	    struct { /* IVL_ST_TRIGGER IVL_ST_WAIT */
+		  unsigned needs_t0_trigger;
 		  unsigned nevent;
 		  union {
 			ivl_event_t event;
