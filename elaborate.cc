@@ -4208,7 +4208,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    if (synthesis || search_funcs_) {
 		  rem_out = true;
 	    }
-	      // If this is an always_comp/latch then we need an implicit T0
+	      // If this is an always_comb/latch then we need an implicit T0
 	      // trigger of the event expression.
 	    if (search_funcs_) wa->set_t0_trigger();
 	    NexusSet*nset = enet->nex_input(rem_out, search_funcs_);
