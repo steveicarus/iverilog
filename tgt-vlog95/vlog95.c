@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2016 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2017 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 
 static const char*version_string =
 "Icarus Verilog VLOG95 Code Generator " VERSION " (" VERSION_TAG ")\n\n"
-"Copyright (C) 2010-2015 Cary R. (cygcary@yahoo.com)\n\n"
+"Copyright (C) 2010-2017 Cary R. (cygcary@yahoo.com)\n\n"
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"
 "  the Free Software Foundation; either version 2 of the License, or\n"
@@ -219,8 +219,11 @@ int target_design(ivl_design_t des)
 	/* Emit any UDP definitions that the design used. */
       emit_udp_list();
 
-	/* Emit any UDPs that are Icarus generated (D-FF). */
+	/* Emit any UDPs that are Icarus generated (D-FF or latch). */
       emit_icarus_generated_udps();
+
+	/* Emit the Icarus top module used to trigger translated always_comb/latch processes at T0. */
+      emit_icarus_generated_top_module();
 
 	/* If there were errors then add this information to the output. */
       if (vlog_errors) {
