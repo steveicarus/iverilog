@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -345,7 +345,7 @@ void NetEvProbe::find_similar_probes(list<NetEvProbe*>&plist)
 }
 
 NetEvWait::NetEvWait(NetProc*pr)
-: statement_(pr)
+: statement_(pr), has_t0_trigger_(false)
 {
 }
 
