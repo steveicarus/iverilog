@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -303,6 +303,15 @@ static void syn_start_process(NetProcTop*t)
       first_ = new syn_token_t;
       last_ = first_;
       ptr_ = first_;
+
+	// Can the following be converted into S_ALWAYS?
+      if ((t->type() == IVL_PR_ALWAYS_COMB) ||
+          (t->type() == IVL_PR_ALWAYS_FF) ||
+          (t->type() == IVL_PR_ALWAYS_LATCH)) {
+	    cerr << t->get_fileline() << ": internal error: "
+		 << " Need to check if this can be synthesized." << endl;
+	    assert(0);
+      }
 
       first_->token = (t->type() == IVL_PR_ALWAYS)? S_ALWAYS : S_INITIAL;
       first_->top = t;
