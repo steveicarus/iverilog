@@ -2328,11 +2328,10 @@ bool of_DELAY(vthread_t thr, vvp_code_t cp)
       vvp_time64_t low = cp->bit_idx[0];
       vvp_time64_t hig = cp->bit_idx[1];
 
-      vvp_time64_t res = 32;
-      res = hig << res;
-      res += low;
+      vvp_time64_t delay = (hig << 32) | low;
 
-      schedule_vthread(thr, res);
+      if (delay == 0) schedule_inactive(thr);
+      else schedule_vthread(thr, delay);
       return false;
 }
 
@@ -2342,7 +2341,8 @@ bool of_DELAYX(vthread_t thr, vvp_code_t cp)
 
       assert(cp->number < vthread_s::WORDS_COUNT);
       delay = thr->words[cp->number].w_uint;
-      schedule_vthread(thr, delay);
+      if (delay == 0) schedule_inactive(thr);
+      else schedule_vthread(thr, delay);
       return false;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1643,6 +1643,7 @@ static int show_stmt_utask(ivl_statement_t net)
 
 static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
 {
+      static unsigned int cascade_counter = 0;
 	/* Look to see if this is a SystemVerilog wait fork. */
       if ((ivl_stmt_nevent(net) == 1) && (ivl_stmt_events(net, 0) == 0)) {
 	    assert(ivl_statement_type(ivl_stmt_sub_stmt(net)) == IVL_ST_NOOP);
@@ -1655,11 +1656,17 @@ static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
 
       if (ivl_stmt_nevent(net) == 1) {
 	    ivl_event_t ev = ivl_stmt_events(net, 0);
-	    fprintf(vvp_out, "    %%wait E_%p;\n", ev);
+	    if (ivl_stmt_needs_t0_trigger(net)) {
+		  fprintf(vvp_out, "Ewait_%u .event/or E_%p, E_0x0;\n",
+		                   cascade_counter, ev);
+		  fprintf(vvp_out, "    %%wait Ewait_%u;\n", cascade_counter);
+		  cascade_counter += 1;
+	    } else {
+		  fprintf(vvp_out, "    %%wait E_%p;\n", ev);
+	    }
 
       } else {
 	    unsigned idx;
-	    static unsigned int cascade_counter = 0;
 	    ivl_event_t ev = ivl_stmt_events(net, 0);
 	    fprintf(vvp_out, "Ewait_%u .event/or E_%p", cascade_counter, ev);
 
@@ -1667,6 +1674,7 @@ static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
 		  ev = ivl_stmt_events(net, idx);
 		  fprintf(vvp_out, ", E_%p", ev);
 	    }
+	    assert(ivl_stmt_needs_t0_trigger(net) == 0);
 	    fprintf(vvp_out, ";\n    %%wait Ewait_%u;\n", cascade_counter);
 	    cascade_counter += 1;
       }
