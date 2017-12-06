@@ -2768,7 +2768,7 @@ static DelayType delay_type_from_expr(const NetExpr*expr)
  * The looping structures can use the same basic code so put it here
  * instead of duplicating it for each one (repeat and while).
  */
-static DelayType get_loop_delay_type(const NetExpr*expr, const NetProc*proc)
+static DelayType get_loop_delay_type(const NetExpr*expr, const NetProc*proc, bool print_delay)
 {
       DelayType result;
 
@@ -2779,12 +2779,12 @@ static DelayType get_loop_delay_type(const NetExpr*expr, const NetProc*proc)
 	    break;
 	    /* We have a constant true expression so the body always runs. */
 	  case DEFINITE_DELAY:
-	    result = proc->delay_type();
+	    result = proc->delay_type(print_delay);
 	    break;
 	    /* We don't know if the body will run so reduce a DEFINITE_DELAY
 	     * to a POSSIBLE_DELAY. All other stay the same. */
 	  case POSSIBLE_DELAY:
-	    result = combine_delays(NO_DELAY, proc->delay_type());
+	    result = combine_delays(NO_DELAY, proc->delay_type(print_delay));
 	    break;
 	    /* This should never happen since delay_type_from_expr() only
 	     * returns three different values. */
@@ -2797,12 +2797,12 @@ static DelayType get_loop_delay_type(const NetExpr*expr, const NetProc*proc)
 }
 
 /* The default object does not have any delay. */
-DelayType NetProc::delay_type() const
+DelayType NetProc::delay_type(bool /* print_delay */ ) const
 {
       return NO_DELAY;
 }
 
-DelayType NetBlock::delay_type() const
+DelayType NetBlock::delay_type(bool print_delay) const
 {
 	// A join_none has no delay.
       if (type() == PARA_JOIN_NONE) return NO_DELAY;
@@ -2812,7 +2812,7 @@ DelayType NetBlock::delay_type() const
       if (type() == PARA_JOIN_ANY) {
 	    result = DEFINITE_DELAY;
 	    for (const NetProc*cur = proc_first(); cur; cur = proc_next(cur)) {
-		  DelayType dt = cur->delay_type();
+		  DelayType dt = cur->delay_type(print_delay);
 		  if (dt < result) result = dt;
 		  if (dt == NO_DELAY) break;
 	    }
@@ -2821,7 +2821,7 @@ DelayType NetBlock::delay_type() const
       } else {
 	    result = NO_DELAY;
 	    for (const NetProc*cur = proc_first(); cur; cur = proc_next(cur)) {
-		  DelayType dt = cur->delay_type();
+		  DelayType dt = cur->delay_type(print_delay);
 		  if (dt > result) result = dt;
 		  if (dt == DEFINITE_DELAY) break;
 	    }
@@ -2830,7 +2830,7 @@ DelayType NetBlock::delay_type() const
       return result;
 }
 
-DelayType NetCase::delay_type() const
+DelayType NetCase::delay_type(bool print_delay) const
 {
       DelayType result = NO_DELAY;
       bool def_stmt = false;
@@ -2838,7 +2838,7 @@ DelayType NetCase::delay_type() const
 
       for (unsigned idx = 0; idx < nstmts; idx += 1) {
 	    if (!expr(idx)) def_stmt = true;
-	    DelayType dt = stat(idx) ? stat(idx)->delay_type() : NO_DELAY;
+	    DelayType dt = stat(idx) ? stat(idx)->delay_type(print_delay) : NO_DELAY;
             if (idx == 0) {
 		  result = dt;
             } else {
@@ -2853,41 +2853,51 @@ DelayType NetCase::delay_type() const
       return result;
 }
 
-DelayType NetCondit::delay_type() const
+DelayType NetCondit::delay_type(bool print_delay) const
 {
-      DelayType if_type = if_  ? if_->delay_type()   : NO_DELAY;
-      DelayType el_type = else_? else_->delay_type() : NO_DELAY;
+      DelayType if_type = if_  ? if_->delay_type(print_delay)   : NO_DELAY;
+      DelayType el_type = else_? else_->delay_type(print_delay) : NO_DELAY;
       return combine_delays(if_type, el_type);
 }
 
 /*
  * A do/while will execute the body at least once.
  */
-DelayType NetDoWhile::delay_type() const
+DelayType NetDoWhile::delay_type(bool print_delay) const
 {
       ivl_assert(*this, proc_);
-      return proc_->delay_type();
+      return proc_->delay_type(print_delay);
 }
 
-DelayType NetEvWait::delay_type() const
+DelayType NetEvWait::delay_type(bool print_delay) const
 {
+      if (print_delay) {
+	    cerr << get_fileline() << ": error: an event control is not allowed "
+	         << "in an always_comb, always_ff or always_latch process."
+	         << endl;
+      }
       return DEFINITE_DELAY;
 }
 
-DelayType NetForever::delay_type() const
+DelayType NetForever::delay_type(bool print_delay) const
 {
       ivl_assert(*this, statement_);
-      return statement_->delay_type();
+      return statement_->delay_type(print_delay);
 }
 
-DelayType NetForLoop::delay_type() const
+DelayType NetForLoop::delay_type(bool print_delay) const
 {
       ivl_assert(*this, statement_);
-      return get_loop_delay_type(condition_, statement_);
+      return get_loop_delay_type(condition_, statement_, print_delay);
 }
 
-DelayType NetPDelay::delay_type() const
+DelayType NetPDelay::delay_type(bool print_delay) const
 {
+      if (print_delay) {
+	    cerr << get_fileline() << ": error: a blocking delay is not allowed "
+	         << "in an always_comb, always_ff or always_latch process."
+	         << endl;
+      }
       if (expr_) {
 	    return delay_type_from_expr(expr_);
       } else {
@@ -2896,7 +2906,7 @@ DelayType NetPDelay::delay_type() const
 	    } else {
 		  if (statement_) {
 			return combine_delays(ZERO_DELAY,
-			                      statement_->delay_type());
+			                      statement_->delay_type(print_delay));
 		  } else {
 			return ZERO_DELAY;
 		  }
@@ -2904,24 +2914,24 @@ DelayType NetPDelay::delay_type() const
       }
 }
 
-DelayType NetRepeat::delay_type() const
+DelayType NetRepeat::delay_type(bool print_delay) const
 {
       ivl_assert(*this, statement_);
-      return get_loop_delay_type(expr_, statement_);
+      return get_loop_delay_type(expr_, statement_, print_delay);
 }
 
-DelayType NetTaskDef::delay_type() const
+DelayType NetTaskDef::delay_type(bool print_delay) const
 {
-      return proc_->delay_type();
+      return proc_->delay_type(print_delay);
 }
 
-DelayType NetUTask::delay_type() const
+DelayType NetUTask::delay_type(bool print_delay) const
 {
-      return task()->task_def()->delay_type();
+      return task()->task_def()->delay_type(print_delay);
 }
 
-DelayType NetWhile::delay_type() const
+DelayType NetWhile::delay_type(bool print_delay) const
 {
       ivl_assert(*this, proc_);
-      return get_loop_delay_type(cond_, proc_);
+      return get_loop_delay_type(cond_, proc_, print_delay);
 }

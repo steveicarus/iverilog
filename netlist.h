@@ -2715,7 +2715,7 @@ class NetProc : public virtual LineInfo {
       virtual void dump(ostream&, unsigned ind) const;
 
 	// Recursively checks to see if there is delay in this element.
-      virtual DelayType delay_type() const;
+      virtual DelayType delay_type(bool print_delay=false) const;
 
     protected:
       bool synth_async_block_substatement_(Design*des, NetScope*scope,
@@ -3018,7 +3018,7 @@ class NetBlock  : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
-      virtual DelayType delay_type() const;
+      virtual DelayType delay_type(bool print_delay=false) const;
 
     private:
       const Type type_;
@@ -3065,7 +3065,7 @@ class NetCase  : public NetProc {
 
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
-      virtual DelayType delay_type() const;
+      virtual DelayType delay_type(bool print_delay=false) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
@@ -3155,7 +3155,7 @@ class NetCondit  : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
-      virtual DelayType delay_type() const;
+      virtual DelayType delay_type(bool print_delay=false) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
@@ -3256,7 +3256,7 @@ class NetDoWhile  : public NetProc {
       virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
-      virtual DelayType delay_type() const;
+      virtual DelayType delay_type(bool print_delay=false) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
@@ -3439,7 +3439,7 @@ class NetEvWait  : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
 	// This will ignore any statement.
       virtual void dump_inline(ostream&) const;
-      virtual DelayType delay_type() const;
+      virtual DelayType delay_type(bool print_delay=false) const;
 
     private:
       NetProc*statement_;
@@ -3509,7 +3509,7 @@ class NetForever : public NetProc {
       virtual NexusSet* nex_input(bool rem_out = true, bool search_funcs = false) const;
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
-      virtual DelayType delay_type() const;
+      virtual DelayType delay_type(bool print_delay=false) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
@@ -3532,7 +3532,7 @@ class NetForLoop : public NetProc {
       virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
-      virtual DelayType delay_type() const;
+      virtual DelayType delay_type(bool print_delay=false) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
@@ -3633,7 +3633,7 @@ class NetPDelay  : public NetProc {
 
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
-      virtual DelayType delay_type() const;
+      virtual DelayType delay_type(bool print_delay=false) const;
 
       bool emit_proc_recurse(struct target_t*) const;
 
@@ -3658,7 +3658,7 @@ class NetRepeat : public NetProc {
       virtual NexusSet* nex_input(bool rem_out = true, bool search_funcs = false) const;
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
-      virtual DelayType delay_type() const;
+      virtual DelayType delay_type(bool print_delay=false) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
@@ -3739,7 +3739,7 @@ class NetTaskDef : public NetBaseDef {
       ~NetTaskDef();
 
       void dump(ostream&, unsigned) const;
-      DelayType delay_type() const;
+      DelayType delay_type(bool print_delay=false) const;
 
     private: // not implemented
       NetTaskDef(const NetTaskDef&);
@@ -3856,7 +3856,7 @@ class NetUTask  : public NetProc {
       virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
-      virtual DelayType delay_type() const;
+      virtual DelayType delay_type(bool print_delay=false) const;
 
     private:
       NetScope*task_;
@@ -3881,7 +3881,7 @@ class NetWhile  : public NetProc {
       virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
-      virtual DelayType delay_type() const;
+      virtual DelayType delay_type(bool print_delay=false) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 

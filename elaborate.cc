@@ -6151,7 +6151,7 @@ bool Design::check_proc_delay() const
 			           << "first statement of an always_ff must "
 			           << "be an event control." << endl;
 			      result_flag = false;
-			} else if (wait->statement()->delay_type() != NO_DELAY) {
+			} else if (wait->statement()->delay_type(true) != NO_DELAY) {
 			      cerr << pr->get_fileline() << ": error: there "
 			           << "must ";
 
