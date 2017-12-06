@@ -442,3 +442,8 @@ NetProc* NetEvWait::statement()
 {
       return statement_;
 }
+
+const NetProc* NetEvWait::statement() const
+{
+      return statement_;
+}

@@ -6136,6 +6136,38 @@ bool Design::check_proc_delay() const
 			cerr << pr->get_fileline() << ":        : A runtime"
 			     << " infinite loop may be possible." << endl;
 		  }
+
+		    // The always_comb/ff/latch blocks have special delay
+		    // rules that need to be checked.
+		  if ((pr->type() == IVL_PR_ALWAYS_COMB) ||
+		      (pr->type() == IVL_PR_ALWAYS_FF) ||
+		      (pr->type() == IVL_PR_ALWAYS_LATCH)) {
+			const NetEvWait *wait = dynamic_cast<const NetEvWait*> (pr->statement());
+			if (! wait) {
+				// The always_comb/latch have an event wait
+				// added automatically by the compiler.
+			      assert(pr->type() == IVL_PR_ALWAYS_FF);
+			      cerr << pr->get_fileline() << ": error: the "
+			           << "first statement of an always_ff must "
+			           << "be an event control." << endl;
+			      result_flag = false;
+			} else if (wait->statement()->delay_type() != NO_DELAY) {
+			      cerr << pr->get_fileline() << ": error: there "
+			           << "must ";
+
+			      if (pr->type() == IVL_PR_ALWAYS_FF) {
+				    cerr << "only be a single event control "
+				         << "and no blocking delays in an "
+				         << "always_ff process.";
+			      } else {
+				    cerr << "be no event controls or blocking "
+				         << "delays in an always_comb/latch "
+				         << "process.";
+			      }
+			      cerr << endl;
+			      result_flag = false;
+			}
+		  }
 	    }
 
 	        /* If this is a final block it must not have a delay,

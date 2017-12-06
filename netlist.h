@@ -3406,6 +3406,7 @@ class NetEvWait  : public NetProc {
       inline bool has_t0_trigger() const { return has_t0_trigger_; };
 
       NetProc*statement();
+      const NetProc*statement() const;
 
       virtual bool emit_proc(struct target_t*) const;
       bool emit_recurse(struct target_t*) const;
