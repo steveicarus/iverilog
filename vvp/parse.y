@@ -27,6 +27,7 @@
 # include  <cstdlib>
 # include  <cassert>
 # include  "ivl_alloc.h"
+# include  "version_base.h"
 
 /*
  * These are bits in the lexor.
@@ -708,8 +709,18 @@ statement
 
 
   /* Port information for scopes... currently this is just meta-data for VPI queries */
-	| K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING
+	| K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING ';'
 		{ compile_port_info( $2 /* port_index */, $3, $4 /* width */,
+		                     $5 /*&name */ ); }
+  /* Unfortunately, older versions didn't check for a semicolon at the end of
+    .port_info statements.
+     To insure backwards compatablitly with old files, we have a duplicate rule
+     that doesn't require a semicolon. After version 11, this rule will be
+     disabled (and can safely be deleted. */
+	| K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING
+		{ if (VERSION_MAJOR > 11)
+			yyerror("syntax error");
+		  compile_port_info( $2 /* port_index */, $3, $4 /* width */,
 		                     $5 /*&name */ ); }
 
 	|         K_TIMESCALE T_NUMBER T_NUMBER';'
