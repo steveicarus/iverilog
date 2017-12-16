@@ -2304,7 +2304,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
             unsigned width = ivl_scope_mod_module_port_width(net,idx);
             if( name == 0 )
                 name = "";
-            fprintf( vvp_out, "    .port_info %u %s %u \"%s\"\n",
+            fprintf( vvp_out, "    .port_info %u %s %u \"%s\";\n",
                     idx, vvp_port_info_type_str(ptype), width,
 		    vvp_mangle_name(name) );
         }
