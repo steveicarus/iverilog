@@ -2965,9 +2965,9 @@ static bool do_expr_event_match(const NetExpr*expr, const NetEvWait*evwt)
 	    ns_evwt->add(const_cast<Nexus*> (prb->pin(idx).nexus()),
 	                 0, prb->pin(idx).nexus()->vector_width());
       }
-	// Get the NexusSet for the expression 
+	// Get the NexusSet for the expression.
       NexusSet *ns_expr = expr->nex_input();
-	// Make sure the event and expression NexusSets match exactly
+	// Make sure the event and expression NexusSets match exactly.
       if (ns_evwt->size() != ns_expr->size()) {
 	    delete ns_evwt;
 	    delete ns_expr;
