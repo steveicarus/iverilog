@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1358,6 +1358,7 @@ static NetEvWait* make_func_trigger(Design*des, NetScope*scope, NetExpr*root)
       if (nset && (nset->size() > 0)) {
             NetEvent*ev = new NetEvent(scope->local_symbol());
             ev->set_line(*root);
+            ev->local_flag(true);
 
             NetEvProbe*pr = new NetEvProbe(scope, scope->local_symbol(),
                                            ev, NetEvProbe::ANYEDGE,

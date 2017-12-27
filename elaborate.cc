@@ -2906,11 +2906,12 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
       if (nscope == 0)
 	    nscope = scope;
 
-	// Handle the special case that the block contains only one
-	// statement. There is no need to keep the block node. Also,
-	// don't elide named blocks, because they might be referenced
-	// elsewhere.
-      if ((list_.size() == 1) && (pscope_name() == 0)) {
+	// Handle the special case that the sequential block contains
+	// only one statement. There is no need to keep the block node.
+	// Also, don't elide named blocks, because they might be
+	// referenced elsewhere.
+      if ((type == NetBlock::SEQU) && (list_.size() == 1) &&
+          (pscope_name() == 0)) {
 	    assert(list_[0]);
 	    NetProc*tmp = list_[0]->elaborate(des, nscope);
 	    return tmp;
@@ -4190,6 +4191,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
       NetEvent*ev = new NetEvent(scope->local_symbol());
       ev->set_line(*this);
+      ev->local_flag(true);
       unsigned expr_count = 0;
 
       NetEvWait*wa = new NetEvWait(enet);
@@ -4470,6 +4472,8 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	      /* Create an event wait and an otherwise unreferenced
 		 event variable to force a perpetual wait. */
 	    NetEvent*wait_event = new NetEvent(scope->local_symbol());
+	    wait_event->set_line(*this);
+	    wait_event->local_flag(true);
 	    scope->add_event(wait_event);
 
 	    NetEvWait*wait = new NetEvWait(0);
@@ -4490,6 +4494,8 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
       eval_expr(expr);
 
       NetEvent*wait_event = new NetEvent(scope->local_symbol());
+      wait_event->set_line(*this);
+      wait_event->local_flag(true);
       scope->add_event(wait_event);
 
       NetEvWait*wait = new NetEvWait(0 /* noop */);
@@ -6110,10 +6116,10 @@ class later_defparams : public elaborator_work_item_t {
 
 bool Design::check_proc_delay() const
 {
-      bool result_flag = true;
+      bool result = false;
 
       for (const NetProcTop*pr = procs_ ;  pr ;  pr = pr->next_) {
-	      /* If this is an always block and we have no or zero delay then
+	      /* If this is an always process and we have no or zero delay then
 	       * a runtime infinite loop will happen. If we possibly have some
 	       * delay then print a warning that an infinite loop is possible.
 	       */
@@ -6128,7 +6134,7 @@ bool Design::check_proc_delay() const
 			     << " statement does not have any delay." << endl;
 			cerr << pr->get_fileline() << ":      : A runtime"
 			     << " infinite loop will occur." << endl;
-			result_flag = false;
+			result = true;
 
 		  } else if (dly_type == POSSIBLE_DELAY && warn_inf_loop) {
 			cerr << pr->get_fileline() << ": warning: always"
@@ -6137,20 +6143,20 @@ bool Design::check_proc_delay() const
 			     << " infinite loop may be possible." << endl;
 		  }
 
-		    // The always_comb/ff/latch blocks have special delay
-		    // rules that need to be checked.
+		    // The always_comb/ff/latch processes also have special
+		    // delay rules that need to be checked.
 		  if ((pr->type() == IVL_PR_ALWAYS_COMB) ||
 		      (pr->type() == IVL_PR_ALWAYS_FF) ||
 		      (pr->type() == IVL_PR_ALWAYS_LATCH)) {
 			const NetEvWait *wait = dynamic_cast<const NetEvWait*> (pr->statement());
 			if (! wait) {
-				// The always_comb/latch have an event wait
-				// added automatically by the compiler.
+				// The always_comb/latch processes have an event
+				// control added automatically by the compiler.
 			      assert(pr->type() == IVL_PR_ALWAYS_FF);
 			      cerr << pr->get_fileline() << ": error: the "
 			           << "first statement of an always_ff must "
 			           << "be an event control." << endl;
-			      result_flag = false;
+			      result = true;
 			} else if (wait->statement()->delay_type(true) != NO_DELAY) {
 			      cerr << pr->get_fileline() << ": error: there "
 			           << "must ";
@@ -6165,7 +6171,7 @@ bool Design::check_proc_delay() const
 				         << "process.";
 			      }
 			      cerr << endl;
-			      result_flag = false;
+			      result = true;
 			}
 		  }
 	    }
@@ -6180,12 +6186,30 @@ bool Design::check_proc_delay() const
 		  if (dly_type != NO_DELAY && dly_type != ZERO_DELAY) {
 			cerr << pr->get_fileline() << ": error: final"
 			     << " statement contains a delay." << endl;
-			result_flag = false;
+			result = true;
 		  }
 	    }
       }
 
-      return result_flag;
+      return result;
+}
+
+/*
+ * Check to see if the always_* processes only contain synthesizable
+ * constructs.
+ */
+bool Design::check_proc_synth() const
+{
+      bool result = false;
+      for (const NetProcTop*pr = procs_ ;  pr ;  pr = pr->next_) {
+	    if ((pr->type() == IVL_PR_ALWAYS_COMB) ||
+	        (pr->type() == IVL_PR_ALWAYS_FF) ||
+	        (pr->type() == IVL_PR_ALWAYS_LATCH)) {
+		  result |= pr->statement()->check_synth(pr->type(),
+		                                         pr->scope());
+	    }
+      }
+      return result;
 }
 
 /*
@@ -6589,16 +6613,22 @@ Design* elaborate(list<perm_string>roots)
 	// Now that everything is fully elaborated verify that we do
 	// not have an always block with no delay (an infinite loop),
         // or a final block with a delay.
-      if (des->check_proc_delay() == false) {
-	    delete des;
-	    des = 0;
-      }
+      bool has_failure = des->check_proc_delay();
+
+	// Check to see if the always_comb/ff/latch processes only have
+	// synthesizable constructs
+      has_failure |= des->check_proc_synth();
 
       if (debug_elaborate) {
                cerr << "<toplevel>" << ": debug: "
                     << " finishing with "
                     <<  des->find_root_scopes().size() << " root scopes " << endl;
          }
+
+      if (has_failure) {
+	    delete des;
+	    des = 0;
+      }
 
       return des;
 }

@@ -1158,6 +1158,9 @@ class NetScope : public Definitions, public Attrib {
       perm_string local_symbol();
 
       void dump(ostream&) const;
+	// Check to see if the scope has items that are not allowed
+	// in an always_comb/ff/latch process.
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
       void emit_scope(struct target_t*tgt) const;
       bool emit_defs(struct target_t*tgt) const;
 
@@ -2716,6 +2719,8 @@ class NetProc : public virtual LineInfo {
 
 	// Recursively checks to see if there is delay in this element.
       virtual DelayType delay_type(bool print_delay=false) const;
+	// Check to see if the item is synthesizable.
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
 
     protected:
       bool synth_async_block_substatement_(Design*des, NetScope*scope,
@@ -2743,6 +2748,8 @@ class NetAlloc  : public NetProc {
 
       const NetScope* scope() const;
 
+      virtual NexusSet* nex_input(bool rem_out = true, bool search_funcs = false) const;
+      virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -2913,6 +2920,7 @@ class NetAssignBase : public NetProc {
 	// This dumps all the lval structures.
       void dump_lval(ostream&) const;
       virtual void dump(ostream&, unsigned ind) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
 
     private:
       NetAssign_*lval_;
@@ -2934,6 +2942,7 @@ class NetAssign : public NetAssignBase {
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
@@ -2956,6 +2965,7 @@ class NetAssignNB  : public NetAssignBase {
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
 
       unsigned nevents() const;
       const NetEvent*event(unsigned) const;
@@ -3019,6 +3029,7 @@ class NetBlock  : public NetProc {
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type(bool print_delay=false) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
 
     private:
       const Type type_;
@@ -3066,6 +3077,7 @@ class NetCase  : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type(bool print_delay=false) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
@@ -3102,9 +3114,9 @@ class NetCAssign  : public NetAssignBase {
       explicit NetCAssign(NetAssign_*lv, NetExpr*rv);
       ~NetCAssign();
 
-      virtual NexusSet* nex_input(bool rem_out = true, bool search_funcs = false) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual bool emit_proc(struct target_t*) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
 
     private: // not implemented
       NetCAssign(const NetCAssign&);
@@ -3156,6 +3168,7 @@ class NetCondit  : public NetProc {
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type(bool print_delay=false) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
@@ -3201,6 +3214,7 @@ class NetDeassign : public NetAssignBase {
 
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
 
     private: // not implemented
       NetDeassign(const NetDeassign&);
@@ -3224,8 +3238,11 @@ class NetDisable  : public NetProc {
 
       const NetScope*target() const;
 
+      virtual NexusSet* nex_input(bool rem_out = true, bool search_funcs = false) const;
+      virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
@@ -3257,6 +3274,7 @@ class NetDoWhile  : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type(bool print_delay=false) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
@@ -3313,6 +3331,9 @@ class NetEvent : public LineInfo {
 
       perm_string name() const;
 
+      bool local_flag() const { return local_flag_; }
+      void local_flag(bool f) { local_flag_ = f; }
+
 	// Get information about probes connected to me.
       unsigned nprobe() const;
       NetEvProbe* probe(unsigned);
@@ -3344,6 +3365,7 @@ class NetEvent : public LineInfo {
 
     private:
       perm_string name_;
+      bool local_flag_;
 
 	// The NetScope class uses these to list the events.
       NetScope*scope_;
@@ -3381,8 +3403,11 @@ class NetEvTrig  : public NetProc {
 
       const NetEvent*event() const;
 
+      virtual NexusSet* nex_input(bool rem_out = true, bool search_funcs = false) const;
+      virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
 
     private:
       NetEvent*event_;
@@ -3440,6 +3465,7 @@ class NetEvWait  : public NetProc {
 	// This will ignore any statement.
       virtual void dump_inline(ostream&) const;
       virtual DelayType delay_type(bool print_delay=false) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
 
     private:
       NetProc*statement_;
@@ -3488,10 +3514,9 @@ class NetForce  : public NetAssignBase {
       explicit NetForce(NetAssign_*l, NetExpr*r);
       ~NetForce();
 
-      virtual NexusSet* nex_input(bool rem_out = true, bool search_funcs = false) const;
-
       virtual void dump(ostream&, unsigned ind) const;
       virtual bool emit_proc(struct target_t*) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
 };
 
 /*
@@ -3507,9 +3532,11 @@ class NetForever : public NetProc {
       void emit_recurse(struct target_t*) const;
 
       virtual NexusSet* nex_input(bool rem_out = true, bool search_funcs = false) const;
+      virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type(bool print_delay=false) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
@@ -3533,6 +3560,7 @@ class NetForLoop : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type(bool print_delay=false) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
@@ -3565,6 +3593,8 @@ class NetFree   : public NetProc {
 
       const NetScope* scope() const;
 
+      virtual NexusSet* nex_input(bool rem_out = true, bool search_funcs = false) const;
+      virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -3634,6 +3664,7 @@ class NetPDelay  : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type(bool print_delay=false) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
 
       bool emit_proc_recurse(struct target_t*) const;
 
@@ -3656,9 +3687,11 @@ class NetRepeat : public NetProc {
       void emit_recurse(struct target_t*) const;
 
       virtual NexusSet* nex_input(bool rem_out = true, bool search_funcs = false) const;
+      virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type(bool print_delay=false) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
@@ -3681,6 +3714,7 @@ class NetRelease : public NetAssignBase {
 
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
 
     private:
 };
@@ -3882,11 +3916,12 @@ class NetWhile  : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type(bool print_delay=false) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
     private:
-      NetExpr* cond_;
+      NetExpr*cond_;
       NetProc*proc_;
 };
 
@@ -4954,6 +4989,7 @@ class Design {
       void add_process(NetAnalogTop*);
       void delete_process(NetProcTop*);
       bool check_proc_delay() const;
+      bool check_proc_synth() const;
 
       NetNet* find_discipline_reference(ivl_discipline_t dis, NetScope*scope);
 

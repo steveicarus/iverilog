@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,8 +36,13 @@ void NetProc::nex_output(NexusSet&)
 	   << endl;
 }
 
+void NetAlloc::nex_output(NexusSet&)
+{
+}
+
 void NetAssign_::nex_output(NexusSet&out)
 {
+      assert(! nest_);
       assert(sig_);
       unsigned use_word = 0;
       unsigned use_base = 0;
@@ -89,8 +94,7 @@ void NetAssignBase::nex_output(NexusSet&out)
 
 void NetBlock::nex_output(NexusSet&out)
 {
-      if (last_ == 0)
-	    return;
+      if (last_ == 0) return;
 
       NetProc*cur = last_;
       do {
@@ -104,10 +108,8 @@ void NetCase::nex_output(NexusSet&out)
       for (size_t idx = 0 ;  idx < items_.size() ;  idx += 1) {
 
 	      // Empty statements clearly have no output.
-	    if (items_[idx].statement == 0)
-		  continue;
+	    if (items_[idx].statement == 0) continue;
 
-	    assert(items_[idx].statement);
 	    items_[idx].statement->nex_output(out);
       }
 
@@ -115,22 +117,31 @@ void NetCase::nex_output(NexusSet&out)
 
 void NetCondit::nex_output(NexusSet&out)
 {
-      if (if_ != 0)
-	    if_->nex_output(out);
-      if (else_ != 0)
-	    else_->nex_output(out);
+      if (if_) if_->nex_output(out);
+      if (else_) else_->nex_output(out);
+}
+
+void NetDisable::nex_output(NexusSet&)
+{
 }
 
 void NetDoWhile::nex_output(NexusSet&out)
 {
-      if (proc_ != 0)
-	    proc_->nex_output(out);
+      if (proc_) proc_->nex_output(out);
+}
+
+void NetEvTrig::nex_output(NexusSet&)
+{
 }
 
 void NetEvWait::nex_output(NexusSet&out)
 {
-      assert(statement_);
-      statement_->nex_output(out);
+      if (statement_) statement_->nex_output(out);
+}
+
+void NetForever::nex_output(NexusSet&out)
+{
+      if (statement_) statement_->nex_output(out);
 }
 
 void NetForLoop::nex_output(NexusSet&out)
@@ -138,7 +149,16 @@ void NetForLoop::nex_output(NexusSet&out)
       if (statement_) statement_->nex_output(out);
 }
 
+void NetFree::nex_output(NexusSet&)
+{
+}
+
 void NetPDelay::nex_output(NexusSet&out)
+{
+      if (statement_) statement_->nex_output(out);
+}
+
+void NetRepeat::nex_output(NexusSet&out)
 {
       if (statement_) statement_->nex_output(out);
 }
@@ -163,6 +183,5 @@ void NetUTask::nex_output(NexusSet&)
 
 void NetWhile::nex_output(NexusSet&out)
 {
-      if (proc_ != 0)
-	    proc_->nex_output(out);
+      if (proc_) proc_->nex_output(out);
 }

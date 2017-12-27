@@ -28,6 +28,7 @@
 NetEvent::NetEvent(perm_string n)
 : name_(n)
 {
+      local_flag_ = false;
       scope_ = 0;
       snext_ = 0;
       probes_ = 0;
