@@ -2937,7 +2937,11 @@ DelayType NetRepeat::delay_type(bool print_delay) const
 
 DelayType NetTaskDef::delay_type(bool print_delay) const
 {
-      return proc_->delay_type(print_delay);
+      if (proc_) {
+	    return proc_->delay_type(print_delay);
+      } else {
+	    return NO_DELAY;
+      }
 }
 
 DelayType NetUTask::delay_type(bool print_delay) const
@@ -3459,9 +3463,11 @@ bool NetSTask::check_synth(ivl_process_type_t pr_type,
 }
 
 bool NetTaskDef::check_synth(ivl_process_type_t pr_type,
-                             const NetScope* scope) const
+                             const NetScope* /* scope */) const
 {
+      bool result = false;
       const NetScope *tscope = this->scope();
+      result |= tscope->check_synth(pr_type, tscope);
       if (! tscope->is_auto()) {
 	    cerr << tscope->get_def_file() << ":"
 	         << tscope->get_def_lineno()
@@ -3469,7 +3475,8 @@ bool NetTaskDef::check_synth(ivl_process_type_t pr_type,
 	         << ") must be automatic to be synthesized "
 	         << get_process_type_as_string(pr_type) << endl;
       }
-      return proc_->check_synth(pr_type, scope);
+      if (proc_) result |= proc_->check_synth(pr_type, tscope);
+      return result;
 }
 
 bool NetUTask::check_synth(ivl_process_type_t pr_type,
