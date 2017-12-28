@@ -24,6 +24,7 @@
 # include  <typeinfo>
 # include  <cstdlib>
 # include  <climits>
+# include  <cstring>
 # include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
@@ -3077,6 +3078,10 @@ bool NetProc::check_synth(ivl_process_type_t /* pr_type */,
       return false;
 }
 
+// FIXME: User function calls still need to be checked (NetEUFunc).
+//      : Non-constant system functions need a warning (NetESFunc).
+//      : Constant functions should already be elaborated.
+
 /* By default assign elements can be synthesized. */
 bool NetAssignBase::check_synth(ivl_process_type_t /* pr_type */,
                                 const NetScope* /* scope */  ) const
@@ -3438,9 +3443,40 @@ bool NetScope::check_synth(ivl_process_type_t pr_type,
       return result;
 }
 
-// FIXME: User task and function calls still need to be checked.
-//      : System task enables should be ignored and constant system functions
-//      : should also be okay. Non-constant system functions are an error.
+bool NetSTask::check_synth(ivl_process_type_t pr_type,
+                           const NetScope* /* scope */) const
+{
+      if (strcmp(name(), "$ivl_darray_method$delete") == 0) {
+	    cerr << get_fileline() << ": warning: Dynamic array "
+	            "delete method cannot be synthesized "
+	         << get_process_type_as_string(pr_type) << endl;
+      } else {
+	    cerr << get_fileline() << ": warning: System task ("
+	         << name() << ") cannot be synthesized "
+	         << get_process_type_as_string(pr_type) << endl;
+      }
+      return false;
+}
+
+bool NetTaskDef::check_synth(ivl_process_type_t pr_type,
+                             const NetScope* scope) const
+{
+      const NetScope *tscope = this->scope();
+      if (! tscope->is_auto()) {
+	    cerr << tscope->get_def_file() << ":"
+	         << tscope->get_def_lineno()
+	         << ": warning: user task (" << tscope->basename()
+	         << ") must be automatic to be synthesized "
+	         << get_process_type_as_string(pr_type) << endl;
+      }
+      return proc_->check_synth(pr_type, scope);
+}
+
+bool NetUTask::check_synth(ivl_process_type_t pr_type,
+                           const NetScope* scope) const
+{
+      return task()->task_def()->check_synth(pr_type, scope);
+}
 
 bool NetWhile::check_synth(ivl_process_type_t pr_type,
                            const NetScope* scope) const

@@ -3744,6 +3744,7 @@ class NetSTask  : public NetProc {
       virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
       virtual bool evaluate_function(const LineInfo&loc,
 				     map<perm_string,LocalVar>&ctx) const;
 
@@ -3774,6 +3775,7 @@ class NetTaskDef : public NetBaseDef {
 
       void dump(ostream&, unsigned) const;
       DelayType delay_type(bool print_delay=false) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
 
     private: // not implemented
       NetTaskDef(const NetTaskDef&);
@@ -3891,6 +3893,7 @@ class NetUTask  : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type(bool print_delay=false) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
 
     private:
       NetScope*task_;
