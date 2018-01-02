@@ -1,7 +1,7 @@
 #ifndef IVL_compile_H
 #define IVL_compile_H
 /*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -418,7 +418,7 @@ extern void compile_ufunc_vec4(char*label, char*code, unsigned wid,
  */
 extern void compile_event(char*label, char*type,
 			  unsigned argc, struct symb_s*argv);
-extern void compile_named_event(char*label, char*type);
+extern void compile_named_event(char*label, char*type, bool local_flag=false);
 
 
 /*

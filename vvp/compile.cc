@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -495,8 +495,8 @@ bool vvp_net_resolv_list_s::resolve(bool mes)
 	      // the compiler output instead of implicitly in this code.
 	    assert(! vpip_peek_current_scope()->is_automatic());
 	    t0_trigger_generated = true;
-	      // Create an event with no name for the T0 trigger
-	    compile_named_event(strdup(label()), strcpy(new char [1],""));
+	      // Create a local event with no name for the T0 trigger
+	    compile_named_event(strdup(label()), strcpy(new char [1],""), true);
 	    tmp = vvp_net_lookup(label());
 	    assert(tmp);
 	    tmp->link(port);
