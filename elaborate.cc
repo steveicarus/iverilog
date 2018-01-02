@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2018 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -6183,7 +6183,7 @@ bool Design::check_proc_delay() const
 	    if (pr->type() == IVL_PR_FINAL) {
 		  DelayType dly_type = pr->statement()->delay_type();
 
-		  if (dly_type != NO_DELAY && dly_type != ZERO_DELAY) {
+		  if (dly_type != NO_DELAY) {
 			cerr << pr->get_fileline() << ": error: final"
 			     << " statement contains a delay." << endl;
 			result = true;
