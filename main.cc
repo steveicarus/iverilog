@@ -1102,6 +1102,11 @@ int main(int argc, char*argv[])
 		       ; cur != disciplines.end() ; ++ cur ) {
 		  pform_dump(out, (*cur).second);
 	    }
+	    out << "PFORM DUMP COMPILATION UNITS:" << endl;
+	    for (vector<PPackage*>::iterator pac = pform_units.begin()
+		       ; pac != pform_units.end() ; ++ pac) {
+		  pform_dump(out, *pac);
+	    }
 	    out << "PFORM DUMP PACKAGES:" << endl;
 	    for (map<perm_string,PPackage*>::iterator pac = pform_packages.begin()
 		       ; pac != pform_packages.end() ; ++ pac) {
