@@ -1720,8 +1720,10 @@ void PPackage::pform_dump(std::ostream&out) const
       dump_localparams_(out, 4);
       dump_parameters_(out, 4);
       dump_enumerations_(out, 4);
+      dump_wires_(out, 4);
       dump_tasks_(out, 4);
       dump_funcs_(out, 4);
+      dump_var_inits_(out, 4);
       out << "endpackage" << endl;
 }
 

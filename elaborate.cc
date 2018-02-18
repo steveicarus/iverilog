@@ -5684,6 +5684,10 @@ bool PPackage::elaborate(Design*des, NetScope*scope) const
 	// Elaborate class definitions.
       elaborate_classes(des, scope, classes);
 
+	// Elaborate the variable initialization statements, making a
+	// single initial process out of them.
+      result_flag &= elaborate_var_inits_(des, scope);
+
       return result_flag;
 }
 

@@ -2682,17 +2682,14 @@ void pform_makewire(const vlltype&li,
  * net_decl_assign_t argument.
  */
 void pform_makewire(const struct vlltype&li,
-		    std::list<PExpr*>*, str_pair_t ,
+		    std::list<PExpr*>*delay,
+		    str_pair_t str,
 		    std::list<decl_assignment_t*>*assign_list,
 		    NetNet::Type type,
 		    data_type_t*data_type)
 {
       if (is_compilation_unit(lexical_scope) && !gn_system_verilog()) {
 	    VLerror(li, "error: variable declarations must be contained within a module.");
-	    return;
-      }
-      if (is_compilation_unit(lexical_scope)) {
-	    VLerror(li, "sorry: variable declarations in the $root scope are not yet supported.");
 	    return;
       }
 
@@ -2709,8 +2706,18 @@ void pform_makewire(const struct vlltype&li,
       while (! assign_list->empty()) {
 	    decl_assignment_t*first = assign_list->front();
 	    assign_list->pop_front();
-	      // For now, do not handle assignment expressions.
-	    assert(! first->expr.get());
+            if (PExpr*expr = first->expr.release()) {
+                  if (type == NetNet::REG || type == NetNet::IMPLICIT_REG) {
+                        pform_make_var_init(li, first->name, expr);
+                  } else {
+	                PWire*cur = pform_get_wire_in_scope(first->name);
+	                assert(cur);
+		        PEIdent*lval = new PEIdent(first->name);
+		        FILE_NAME(lval, li.text, li.first_line);
+		        PGAssign*ass = pform_make_pgassign(lval, expr, delay, str);
+		        FILE_NAME(ass, li.text, li.first_line);
+                  }
+            }
 	    delete first;
       }
 }
