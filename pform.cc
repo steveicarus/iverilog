@@ -737,16 +737,28 @@ static void pform_put_enum_type_in_scope(enum_type_t*enum_set)
       lexical_scope->enum_sets.insert(enum_set);
 }
 
-PWire*pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_type, NetNet::PortType port_type, ivl_variable_type_t vt_type)
+PWire*pform_get_make_wire_in_scope(const struct vlltype&li, perm_string name,
+                                   NetNet::Type net_type, NetNet::PortType port_type,
+                                   ivl_variable_type_t vt_type)
 {
       PWire*cur = pform_get_wire_in_scope(name);
+
+	// If the wire already exists and is fully defined, this
+	// must be a redeclaration. Start again with a new wire.
+      if (cur && cur->get_data_type() != IVL_VT_NO_TYPE) {
+	    LineInfo tloc;
+	    FILE_NAME(&tloc, li);
+	    cerr << tloc.get_fileline() << ": error: duplicate declaration "
+	            "for net or variable '" << name << "'." << endl;
+	    error_count += 1;
+	    delete cur;
+            cur = 0;
+      }
+
       if (cur == 0) {
 	    cur = new PWire(name, net_type, port_type, vt_type);
 	    pform_put_wire_in_scope(name, cur);
       } else {
-	      // If this is a duplicate wire, the data type has already
-	      // been set, then return NULL.
-	    if (cur->get_data_type() != IVL_VT_NO_TYPE) return 0;
 	    bool rc = cur->set_wire_type(net_type);
 	    assert(rc);
 	    rc = cur->set_data_type(vt_type);
@@ -3377,9 +3389,9 @@ void pform_set_port_type(const struct vlltype&li,
       delete attr;
 }
 
-static void pform_set_integer_2atom(uint64_t width, bool signed_flag, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
+static void pform_set_integer_2atom(const struct vlltype&li, uint64_t width, bool signed_flag, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
-      PWire*cur = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, IVL_VT_BOOL);
+      PWire*cur = pform_get_make_wire_in_scope(li, name, net_type, NetNet::NOT_A_PORT, IVL_VT_BOOL);
       assert(cur);
 
       cur->set_signed(signed_flag);
@@ -3393,12 +3405,12 @@ static void pform_set_integer_2atom(uint64_t width, bool signed_flag, perm_strin
       pform_bind_attributes(cur->attributes, attr, true);
 }
 
-static void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
+static void pform_set_integer_2atom(const struct vlltype&li, uint64_t width, bool signed_flag, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
-	    pform_set_integer_2atom(width, signed_flag, txt, net_type, attr);
+	    pform_set_integer_2atom(li, width, signed_flag, txt, net_type, attr);
       }
 }
 
@@ -3409,7 +3421,7 @@ template <class T> static void pform_set2_data_type(const struct vlltype&li, T*d
 	    VLerror(li, "Compound type is not PACKED in this context.");
       }
 
-      PWire*net = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, base_type);
+      PWire*net = pform_get_make_wire_in_scope(li, name, net_type, NetNet::NOT_A_PORT, base_type);
       assert(net);
       net->set_data_type(data_type);
       pform_bind_attributes(net->attributes, attr, true);
@@ -3423,11 +3435,11 @@ template <class T> static void pform_set2_data_type(const struct vlltype&li, T*d
       }
 }
 
-static void pform_set_enum(enum_type_t*enum_type,
+static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
 			   perm_string name, NetNet::Type net_type,
 			   std::list<named_pexpr_t>*attr)
 {
-      PWire*cur = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, enum_type->base_type);
+      PWire*cur = pform_get_make_wire_in_scope(li, name, net_type, NetNet::NOT_A_PORT, enum_type->base_type);
       assert(cur);
 
       cur->set_signed(enum_type->signed_flag);
@@ -3466,7 +3478,7 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur) {
 	    perm_string txt = *cur;
-	    pform_set_enum(enum_type, txt, net_type, attr);
+	    pform_set_enum(li, enum_type, txt, net_type, attr);
       }
 
 }
@@ -3490,11 +3502,11 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
       }
 
       if (atom2_type_t*atom2_type = dynamic_cast<atom2_type_t*> (data_type)) {
-	    pform_set_integer_2atom(atom2_type->type_code, atom2_type->signed_flag, names, net_type, attr);
+	    pform_set_integer_2atom(li, atom2_type->type_code, atom2_type->signed_flag, names, net_type, attr);
       }
 
       else if (struct_type_t*struct_type = dynamic_cast<struct_type_t*> (data_type)) {
-	    pform_set_struct_type(struct_type, names, net_type, attr);
+	    pform_set_struct_type(li, struct_type, names, net_type, attr);
       }
 
       else if (enum_type_t*enum_type = dynamic_cast<enum_type_t*> (data_type)) {
@@ -3515,7 +3527,7 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
       }
 
       else if (class_type_t*class_type = dynamic_cast<class_type_t*> (data_type)) {
-	    pform_set_class_type(class_type, names, net_type, attr);
+	    pform_set_class_type(li, class_type, names, net_type, attr);
       }
 
       else if (parray_type_t*array_type = dynamic_cast<parray_type_t*> (data_type)) {
@@ -3523,7 +3535,7 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
       }
 
       else if (string_type_t*string_type = dynamic_cast<string_type_t*> (data_type)) {
-	    pform_set_string_type(string_type, names, net_type, attr);
+	    pform_set_string_type(li, string_type, names, net_type, attr);
 
       } else {
 	    VLerror(li, "internal error: Unexpected data_type.");

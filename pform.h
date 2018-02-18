@@ -147,7 +147,11 @@ extern bool pform_in_interface(void);
  */
 extern PWire* pform_get_wire_in_scope(perm_string name);
 
-extern PWire* pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_type, NetNet::PortType port_type, ivl_variable_type_t vt_type);
+extern PWire* pform_get_make_wire_in_scope(const struct vlltype&li,
+                                           perm_string name,
+                                           NetNet::Type net_type,
+                                           NetNet::PortType port_type,
+                                           ivl_variable_type_t vt_type);
 
 /*
  * The parser uses startmodule and endmodule together to build up a
@@ -386,11 +390,11 @@ extern void pform_set_reg_idx(perm_string name,
 
 extern void pform_set_data_type(const struct vlltype&li, data_type_t*, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr);
 
-extern void pform_set_struct_type(struct_type_t*struct_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
+extern void pform_set_struct_type(const struct vlltype&li, struct_type_t*struct_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
 
-extern void pform_set_string_type(const string_type_t*string_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
+extern void pform_set_string_type(const struct vlltype&li, const string_type_t*string_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
 
-extern void pform_set_class_type(class_type_t*class_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*addr);
+extern void pform_set_class_type(const struct vlltype&li, class_type_t*class_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*addr);
 
 
   /* pform_set_attrib and pform_set_type_attrib exist to support the

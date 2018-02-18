@@ -22,18 +22,18 @@
 # include  "parse_misc.h"
 # include  "ivl_assert.h"
 
-static void pform_set_class_type(class_type_t*class_type, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
+static void pform_set_class_type(const struct vlltype&li, class_type_t*class_type, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
-      PWire*net = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, IVL_VT_CLASS);
+      PWire*net = pform_get_make_wire_in_scope(li, name, net_type, NetNet::NOT_A_PORT, IVL_VT_CLASS);
       assert(net);
       net->set_data_type(class_type);
       pform_bind_attributes(net->attributes, attr, true);
 }
 
-void pform_set_class_type(class_type_t*class_type, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
+void pform_set_class_type(const struct vlltype&li, class_type_t*class_type, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur) {
-	    pform_set_class_type(class_type, *cur, net_type, attr);
+	    pform_set_class_type(li, class_type, *cur, net_type, attr);
       }
 }
