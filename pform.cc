@@ -3017,14 +3017,12 @@ void pform_set_parameter(const struct vlltype&loc,
 	    VLerror(loc, "error: parameter declarations must be contained within a module.");
 	    return;
       }
-      if (is_compilation_unit(scope)) {
-	    VLerror(loc, "sorry: parameter declarations in the $root scope are not yet supported.");
-	    return;
-      }
       if (scope == pform_cur_generate) {
             VLerror("parameter declarations are not permitted in generate blocks");
             return;
       }
+      PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
+      assert(scopex);
 
 	// Check if the parameter name is already in the dictionary.
       if (scope->parameters.find(name) != scope->parameters.end()) {
@@ -3032,14 +3030,14 @@ void pform_set_parameter(const struct vlltype&loc,
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: duplicate definition "
 	            "for parameter '" << name << "' in '"
-	         << pform_cur_module.front()->mod_name() << "'." << endl;
+	         << scopex->pscope_name() << "'." << endl;
 	    error_count += 1;
       }
       if (scope->localparams.find(name) != scope->localparams.end()) {
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: localparam and "
-		 << "parameter in '" << pform_cur_module.front()->mod_name()
+		 << "parameter in '" << scopex->pscope_name()
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
@@ -3051,7 +3049,7 @@ void pform_set_parameter(const struct vlltype&loc,
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: specparam and "
-		  "parameter in '" << pform_cur_module.front()->mod_name()
+		  "parameter in '" << scopex->pscope_name()
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
@@ -3092,10 +3090,8 @@ void pform_set_localparam(const struct vlltype&loc,
 	    VLerror(loc, "error: localparam declarations must be contained within a module.");
 	    return;
       }
-      if (is_compilation_unit(scope)) {
-	    VLerror(loc, "sorry: localparam declarations in the $root scope are not yet supported.");
-	    return;
-      }
+      PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
+      assert(scopex);
 
 	// Check if the localparam name is already in the dictionary.
       if (scope->localparams.find(name) != scope->localparams.end()) {
@@ -3103,14 +3099,14 @@ void pform_set_localparam(const struct vlltype&loc,
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: duplicate definition "
 	            "for localparam '" << name << "' in '"
-	         << pform_cur_module.front()->mod_name() << "'." << endl;
+	         << scopex->pscope_name() << "'." << endl;
 	    error_count += 1;
       }
       if (scope->parameters.find(name) != scope->parameters.end()) {
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: parameter and "
-		 << "localparam in '" << pform_cur_module.front()->mod_name()
+		 << "localparam in '" << scopex->pscope_name()
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
@@ -3121,7 +3117,7 @@ void pform_set_localparam(const struct vlltype&loc,
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: specparam and "
-		  "localparam in '" << pform_cur_module.front()->mod_name()
+		  "localparam in '" << scopex->pscope_name()
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
