@@ -593,7 +593,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
 %type <tf_ports> function_item function_item_list function_item_list_opt
 %type <tf_ports> task_item task_item_list task_item_list_opt
-%type <tf_ports> tf_port_declaration tf_port_item tf_port_list tf_port_list_opt
+%type <tf_ports> tf_port_declaration tf_port_item tf_port_item_list tf_port_list tf_port_list_opt
 
 %type <named_pexpr> modport_simple_port port_name parameter_value_byname
 %type <named_pexprs> port_name_list parameter_value_byname_list
@@ -2133,10 +2133,14 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 
   : port_direction_opt data_type_or_implicit IDENTIFIER dimensions_opt tf_port_item_expr_opt
       { vector<pform_tf_port_t>*tmp;
-	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT? NetNet::PINPUT : $1;
+	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT ? port_declaration_context.port_type : $1;
 	perm_string name = lex_strings.make($3);
 	list<perm_string>* ilist = list_from_identifier($3);
 
+	if (use_port_type == NetNet::PIMPLICIT) {
+	      yyerror(@1, "error: missing task/function port direction.");
+	      use_port_type = NetNet::PINPUT; // for error recovery
+	}
 	if (($2 == 0) && ($1==NetNet::PIMPLICIT)) {
 		// Detect special case this is an undecorated
 		// identifier and we need to get the declaration from
@@ -2147,7 +2151,6 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	      tmp = pform_make_task_ports(@3, use_port_type,
 					  port_declaration_context.data_type,
 					  ilist);
-
 
 	} else {
 		// Otherwise, the decorations for this identifier
@@ -2195,8 +2198,15 @@ tf_port_item_expr_opt
   ;
 
 tf_port_list /* IEEE1800-2005: A.2.7 */
+  :   { port_declaration_context.port_type = gn_system_verilog() ? NetNet::PINPUT : NetNet::PIMPLICIT;
+	port_declaration_context.data_type = 0;
+      }
+    tf_port_item_list
+      { $$ = $2; }
+  ;
 
-  : tf_port_list ',' tf_port_item
+tf_port_item_list
+  : tf_port_item_list ',' tf_port_item
       { vector<pform_tf_port_t>*tmp;
 	if ($1 && $3) {
 	      size_t s1 = $1->size();
@@ -2222,11 +2232,11 @@ tf_port_list /* IEEE1800-2005: A.2.7 */
       { yyerror(@2, "error: Syntax error in task/function port declaration.");
 	$$ = $3;
       }
-  | tf_port_list ','
+  | tf_port_item_list ','
       { yyerror(@2, "error: NULL port declarations are not allowed.");
 	$$ = $1;
       }
-  | tf_port_list ';'
+  | tf_port_item_list ';'
       { yyerror(@2, "error: ';' is an invalid port declaration separator.");
 	$$ = $1;
       }
