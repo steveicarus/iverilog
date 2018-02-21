@@ -2122,7 +2122,9 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 
   : port_direction_opt data_type_or_implicit IDENTIFIER dimensions_opt tf_port_item_expr_opt
       { vector<pform_tf_port_t>*tmp;
-	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT ? port_declaration_context.port_type : $1;
+	NetNet::PortType use_port_type = $1;
+        if ((use_port_type == NetNet::PIMPLICIT) && (gn_system_verilog() || ($2 == 0)))
+              use_port_type = port_declaration_context.port_type;
 	perm_string name = lex_strings.make($3);
 	list<perm_string>* ilist = list_from_identifier($3);
 
