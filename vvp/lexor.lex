@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -196,6 +196,9 @@ static char* strdupnew(char const *str)
 ".reduce/xnor" { return K_REDUCE_XNOR; }
 ".repeat"   { return K_REPEAT; }
 ".resolv"   { return K_RESOLV; }
+".rtran"    { return K_RTRAN; }
+".rtranif0" { return K_RTRANIF0; }
+".rtranif1" { return K_RTRANIF1; }
 ".scope"    { return K_SCOPE; }
 ".sfunc"    { return K_SFUNC; }
 ".sfunc/e"  { return K_SFUNC_E; }

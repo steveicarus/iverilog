@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -93,7 +93,8 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_PARAM_STR K_PARAM_L K_PARAM_REAL K_PART K_PART_PV
 %token K_PART_V K_PART_V_S K_PORT K_PORT_INFO K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
-%token K_RESOLV K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
+%token K_RESOLV K_RTRAN K_RTRANIF0 K_RTRANIF1
+%token K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_SUBSTITUTE
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
 %token K_UFUNC_REAL K_UFUNC_VEC4 K_UFUNC_E K_UDP K_UDP_C K_UDP_S
@@ -870,14 +871,23 @@ statement
   | T_LABEL K_EXPORT T_SYMBOL ';'
       { compile_island_export($1, $3); }
 
+  | K_RTRAN T_SYMBOL ',' T_SYMBOL T_SYMBOL ';'
+      { compile_island_tranif(0, $2, $4, $5, 0, 1); }
+
+  | K_RTRANIF0 T_SYMBOL ',' T_SYMBOL T_SYMBOL ',' T_SYMBOL ';'
+      { compile_island_tranif(0, $2, $4, $5, $7, 1); }
+
+  | K_RTRANIF1 T_SYMBOL ',' T_SYMBOL T_SYMBOL ',' T_SYMBOL ';'
+      { compile_island_tranif(1, $2, $4, $5, $7, 1); }
+
   | K_TRAN T_SYMBOL ',' T_SYMBOL T_SYMBOL ';'
-      { compile_island_tranif(0, $2, $4, $5, 0); }
+      { compile_island_tranif(0, $2, $4, $5, 0, 0); }
 
   | K_TRANIF0 T_SYMBOL ',' T_SYMBOL T_SYMBOL ',' T_SYMBOL ';'
-      { compile_island_tranif(0, $2, $4, $5, $7); }
+      { compile_island_tranif(0, $2, $4, $5, $7, 0); }
 
   | K_TRANIF1 T_SYMBOL ',' T_SYMBOL T_SYMBOL ',' T_SYMBOL ';'
-      { compile_island_tranif(1, $2, $4, $5, $7); }
+      { compile_island_tranif(1, $2, $4, $5, $7, 0); }
 
   | K_TRANVP T_NUMBER T_NUMBER T_NUMBER ',' T_SYMBOL ',' T_SYMBOL T_SYMBOL ';'
       { compile_island_tranvp($6, $8, $9, $2, $3, $4); }

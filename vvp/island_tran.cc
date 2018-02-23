@@ -401,7 +401,8 @@ void compile_island_tran(char*label)
       compile_island_base(label, use_island);
 }
 
-void compile_island_tranif(int sense, char*island, char*pa, char*pb, char*pe)
+void compile_island_tranif(int sense, char*island, char*pa, char*pb, char*pe,
+                           bool resistive)
 {
       vvp_island*use_island = compile_find_island(island);
       assert(use_island);
@@ -418,7 +419,7 @@ void compile_island_tranif(int sense, char*island, char*pa, char*pb, char*pe)
       vvp_island_branch_tran*br = new vvp_island_branch_tran(en,
                                                              sense ? true :
                                                                      false,
-                                                             0, 0, 0, false);
+                                                             0, 0, 0, resistive);
 
       use_island->add_branch(br, pa, pb);
 
