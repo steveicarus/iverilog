@@ -77,9 +77,15 @@ the configure scripts.
 Unpack the tar-ball and cd into the verilog-######### directory
 (presumably that is how you got to this README) and compile the source
 with the commands:
-
+	
   ./configure
   make
+
+If you are building from git, you have to run the command below before
+compile the source. This will generate the "configure" file, which is 
+automatically done when building from tarball.
+
+  sh configure.sh
 
 Normally, this command automatically figures out everything it needs
 to know. It generally works pretty well. There are a few flags to the
