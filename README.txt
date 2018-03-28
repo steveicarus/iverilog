@@ -85,7 +85,7 @@ If you are building from git, you have to run the command below before
 compile the source. This will generate the "configure" file, which is 
 automatically done when building from tarball.
 
-  sh configure.sh
+  sh autoconf.sh
 
 Normally, this command automatically figures out everything it needs
 to know. It generally works pretty well. There are a few flags to the
