@@ -96,6 +96,11 @@ do
 	 exit;
 	 ;;
 
+    --ccflags)
+	 echo "$CXXFLAGS"
+	 exit;
+	 ;;
+
     --ldflags)
 	 echo "$LDFLAGS"
 	 exit;
