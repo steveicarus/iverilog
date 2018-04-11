@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -510,22 +510,10 @@ int Design::emit(struct target_t*tgt) const
       if (tgt->start_design(this) == false)
 	    return -2;
 
-      for (map<NetScope*,PTaskFunc*>::const_iterator scope = root_tasks_.begin()
-		 ; scope != root_tasks_.end() ; ++ scope) {
-	    scope->first->emit_scope(tgt);
-      }
-
 	// enumerate package scopes
       for (map<perm_string,NetScope*>::const_iterator scope = packages_.begin()
 		 ; scope != packages_.end() ; ++ scope) {
 	    scope->second->emit_scope(tgt);
-      }
-
-      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
-		 ; cur != classes_.end() ; ++cur) {
-	    const NetScope*use_scope = cur->second->class_scope();
-	    cur->second->emit_scope(tgt);
-	    tgt->class_type(use_scope, cur->second);
       }
 
 	// enumerate root scopes
@@ -552,12 +540,6 @@ int Design::emit(struct target_t*tgt) const
 
 	// emit task and function definitions
       bool tasks_rc = true;
-      for (map<NetScope*,PTaskFunc*>::const_iterator scope = root_tasks_.begin()
-		 ; scope != root_tasks_.end() ; ++ scope)
-	    tasks_rc &= scope->first->emit_defs(tgt);
-      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
-		 ; cur != classes_.end() ; ++cur)
-	    tasks_rc &= cur->second->emit_defs(tgt);
       for (map<perm_string,NetScope*>::const_iterator scope = packages_.begin()
 		 ; scope != packages_.end() ; ++ scope )
 	    tasks_rc &= scope->second->emit_defs(tgt);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,6 +57,8 @@ static void draw_binary_real(ivl_expr_t expr)
       switch (ivl_expr_opcode(expr)) {
 	  case 'E':
 	  case 'N':
+	  case 'w':
+	  case 'W':
 	  case 'l':
 	  case 'r':
 	  case 'R':

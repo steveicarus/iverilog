@@ -1,7 +1,7 @@
 %option prefix="yy"
 %{
 /*
- * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -858,6 +858,25 @@ void define_macro(const char* name, const char* value, int keyword, int argc)
 {
     int idx;
     struct define_t* def;
+    struct define_t* prev;
+
+    /* Verilog has a very nasty system of macros jumping from
+     * file to file, resulting in a global macro scope. Here
+     * we optionally warn about any redefinitions.
+     *
+     * If istack is empty, we are processing a configuration
+     * or precompiled macro file, so don't want to check for
+     * redefinitions - when a precompiled macro file is used,
+     * it will contain copies of any predefined macros.
+     */
+    if (warn_redef && istack) {
+	prev = def_lookup(name);
+	if (prev && (warn_redef_all || (strcmp(prev->value, value) != 0))) {
+	    emit_pathline(istack);
+	    fprintf(stderr, "warning: redefinition of macro %s from value '%s' to '%s'\n",
+	    name, prev->value, value);
+	}
+    }
 
     def = malloc(sizeof(struct define_t));
     def->name = strdup(name);
@@ -2100,7 +2119,7 @@ void destroy_lexor(void)
 {
 # ifdef FLEX_SCANNER
 #   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5
-#     if defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
+#     if YY_FLEX_MINOR_VERSION > 5 || defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
     yylex_destroy();
 #     endif
 #   endif

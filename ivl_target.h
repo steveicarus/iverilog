@@ -1,7 +1,7 @@
 #ifndef IVL_ivl_target_H
 #define IVL_ivl_target_H
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -306,8 +306,10 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_CONCAT = 16,
       IVL_LPM_CONCATZ = 36, /* Transparent concat */
       IVL_LPM_CMP_EEQ= 18, /* Case EQ (===) */
-      IVL_LPM_CMP_EQX= 37, /* Wildcard EQ (==?) */
+      IVL_LPM_CMP_EQX= 37, /* Wildcard EQ (casex) */
       IVL_LPM_CMP_EQZ= 38, /* casez EQ */
+      IVL_LPM_CMP_WEQ= 41,
+      IVL_LPM_CMP_WNE= 42,
       IVL_LPM_CMP_EQ = 10,
       IVL_LPM_CMP_GE =  1,
       IVL_LPM_CMP_GT =  2,
@@ -353,9 +355,12 @@ typedef enum ivl_path_edge_e {
 /* Processes are initial, always, or final blocks with a statement. This is
    the type of the ivl_process_t object. */
 typedef enum ivl_process_type_e ENUM_UNSIGNED_INT {
-      IVL_PR_INITIAL = 0,
-      IVL_PR_ALWAYS  = 1,
-      IVL_PR_FINAL   = 2
+      IVL_PR_INITIAL      = 0,
+      IVL_PR_ALWAYS       = 1,
+      IVL_PR_ALWAYS_COMB  = 3,
+      IVL_PR_ALWAYS_FF    = 4,
+      IVL_PR_ALWAYS_LATCH = 5,
+      IVL_PR_FINAL        = 2
 } ivl_process_type_t;
 
 /* These are the sorts of reasons a scope may come to be. These types
@@ -2100,6 +2105,7 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  *    handle disable statements.
  *
  * ivl_stmt_events
+ * ivl_stmt_needs_t0_trigger
  * ivl_stmt_nevent
  *    Statements that have event arguments (TRIGGER and WAIT) make
  *    those event objects available through these methods.
@@ -2227,6 +2233,7 @@ extern ivl_expr_t ivl_stmt_delay_expr(ivl_statement_t net);
   /* IVL_ST_DELAY */
 extern uint64_t ivl_stmt_delay_val(ivl_statement_t net);
   /* IVL_ST_WAIT IVL_ST_TRIGGER */
+extern unsigned    ivl_stmt_needs_t0_trigger(ivl_statement_t net);
 extern unsigned    ivl_stmt_nevent(ivl_statement_t net);
 extern ivl_event_t ivl_stmt_events(ivl_statement_t net, unsigned idx);
   /* IVL_ST_CONTRIB */

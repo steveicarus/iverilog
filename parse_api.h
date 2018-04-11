@@ -1,7 +1,7 @@
 #ifndef IVL_parse_api_H
 #define IVL_parse_api_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -42,28 +42,21 @@ struct enum_type_t;
  */
 extern std::map<perm_string,Module*> pform_modules;
 extern std::map<perm_string,PUdp*>   pform_primitives;
-extern std::map<perm_string,data_type_t*> pform_typedefs;
-extern std::set<enum_type_t*> pform_enum_sets;
-extern std::map<perm_string,PTaskFunc*> pform_tasks;
-extern std::map<perm_string,PClass*> pform_classes;
+extern std::vector<PPackage*>        pform_units;
 extern std::map<perm_string,PPackage*> pform_packages;
 
 extern void pform_dump(std::ostream&out, const PClass*pac);
 extern void pform_dump(std::ostream&out, const PPackage*pac);
 extern void pform_dump(std::ostream&out, const PTaskFunc*tf);
 
-extern void elaborate_rootscope_enumerations(Design*des);
-extern void elaborate_rootscope_classes(Design*des);
-extern void elaborate_rootscope_tasks(Design*des);
-
 /*
- * This code actually invokes the parser to make modules. The first
- * parameter is the name of the file that is to be parsed. The
- * optional second parameter is the opened descriptor for the file. If
- * the descriptor is 0 (or skipped) then the function will attempt to
- * open the file on its own.
+ * This code actually invokes the parser to make modules. If the path
+ * parameter is "-", the parser reads from stdin, otherwise it attempts
+ * to open and read the specified file. When reading from a file, if
+ * the ivlpp_string variable is not set to null, the file will be piped
+ * through the command specified by ivlpp_string before being parsed.
  */
-extern int  pform_parse(const char*path, FILE*file =0);
+extern int pform_parse(const char*path);
 
 extern string vl_file;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
@@ -93,10 +93,7 @@ extern "C" void ivl_design_roots(ivl_design_t des, ivl_scope_t **scopes,
       assert (nscopes && scopes);
       if (des->root_scope_list.size() == 0) {
 	    size_t fill = 0;
-	    des->root_scope_list.resize(des->root_tasks.size() + des->packages.size() + des->roots.size() + des->classes.size());
-	    for (map<const NetScope*,ivl_scope_t>::iterator idx = des->root_tasks.begin()
-		       ; idx != des->root_tasks.end() ; ++ idx)
-		  des->root_scope_list[fill++] = idx->second;
+	    des->root_scope_list.resize(des->packages.size() + des->roots.size() + des->classes.size());
 
 	    for (map<const NetScope*,ivl_scope_t>::iterator idx = des->classes.begin()
 		       ; idx != des->classes.end() ; ++ idx)
@@ -1238,6 +1235,8 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
@@ -1393,6 +1392,8 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net)
 	  case IVL_LPM_CMP_EQX:
 	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
@@ -1543,6 +1544,8 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
@@ -2134,7 +2137,7 @@ extern "C" int ivl_scope_func_signed(ivl_scope_t net)
       assert(net);
       assert(net->type_==IVL_SCT_FUNCTION);
       assert(net->func_type==IVL_VT_LOGIC || net->func_type==IVL_VT_BOOL);
-      return net->func_signed? !0 : 0;
+      return net->func_signed? 1 : 0;
 }
 
 extern "C" unsigned ivl_scope_func_width(ivl_scope_t net)
@@ -2810,6 +2813,16 @@ extern "C" uint64_t ivl_stmt_delay_val(ivl_statement_t net)
       assert(net);
       assert(net->type_ == IVL_ST_DELAY);
       return net->u_.delay_.value;
+}
+
+extern "C" unsigned ivl_stmt_needs_t0_trigger(ivl_statement_t net)
+{
+      assert(net);
+      if (net->type_ == IVL_ST_WAIT) {
+	    return net->u_.wait_.needs_t0_trigger;
+      } else {
+	    return 0;
+      }
 }
 
 extern "C" unsigned ivl_stmt_nevent(ivl_statement_t net)

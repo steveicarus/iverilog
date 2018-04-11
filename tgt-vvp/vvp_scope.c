@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1521,6 +1521,16 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 	    type = "nee";
 	    signed_string = "";
 	    break;
+	  case IVL_LPM_CMP_WEQ:
+	    assert(dtc != IVL_VT_REAL); /* Should never get here! */
+	    type = "weq";
+	    signed_string = "";
+	    break;
+	  case IVL_LPM_CMP_WNE:
+	    assert(dtc != IVL_VT_REAL); /* Should never get here! */
+	    type = "wne";
+	    signed_string = "";
+	    break;
 	  default:
 	    assert(0);
       }
@@ -2143,6 +2153,8 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	    draw_lpm_cmp(net);
 	    return;
 
@@ -2292,7 +2304,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
             unsigned width = ivl_scope_mod_module_port_width(net,idx);
             if( name == 0 )
                 name = "";
-            fprintf( vvp_out, "    .port_info %u %s %u \"%s\"\n",
+            fprintf( vvp_out, "    .port_info %u %s %u \"%s\";\n",
                     idx, vvp_port_info_type_str(ptype), width,
 		    vvp_mangle_name(name) );
         }

@@ -1,7 +1,7 @@
 #ifndef IVL_compile_H
 #define IVL_compile_H
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -194,6 +194,10 @@ extern void compile_cmp_ne(char*label, long width,
 extern void compile_cmp_ge(char*label, long width, bool signed_flag,
 			   unsigned argc, struct symb_s*argv);
 extern void compile_cmp_gt(char*label, long width, bool signed_flag,
+			   unsigned argc, struct symb_s*argv);
+extern void compile_cmp_weq(char*label, long width,
+			   unsigned argc, struct symb_s*argv);
+extern void compile_cmp_wne(char*label, long width,
 			   unsigned argc, struct symb_s*argv);
 
 extern void compile_arith_mult_r(char*label, unsigned argc,
@@ -414,7 +418,7 @@ extern void compile_ufunc_vec4(char*label, char*code, unsigned wid,
  */
 extern void compile_event(char*label, char*type,
 			  unsigned argc, struct symb_s*argv);
-extern void compile_named_event(char*label, char*type);
+extern void compile_named_event(char*label, char*type, bool local_flag=false);
 
 
 /*
@@ -552,7 +556,7 @@ extern void compile_island_cleanup(void);
 
 extern void compile_island_tran(char*label);
 extern void compile_island_tranif(int sense, char*island,
-				  char*ba, char*bb, char*src);
+				  char*ba, char*bb, char*src, bool resistive);
 extern void compile_island_tranvp(char*island, char*ba, char*bb,
 				  unsigned width, unsigned part, unsigned off);
 

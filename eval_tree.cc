@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -570,11 +570,11 @@ NetEConst* NetEBComp::eval_eqeq_(bool ne_flag, const NetExpr*le, const NetExpr*r
       const verinum::V ne_res = ne_flag? verinum::V1 : verinum::V0;
 
       verinum::V res = eq_res;
-      unsigned top = lv.len();
-      if (rv.len() < top)
-	    top = rv.len();
 
-      for (unsigned idx = 0 ;  idx < top ;  idx += 1) {
+	// The two expressions should already be padded to the same size.
+      ivl_assert(*this, lv.len() == rv.len());
+
+      for (unsigned idx = 0 ;  idx < lv.len() ;  idx += 1) {
 
 	    bool x_bit_present = false;
 
@@ -611,60 +611,6 @@ NetEConst* NetEBComp::eval_eqeq_(bool ne_flag, const NetExpr*le, const NetExpr*r
 	    }
       }
 
-      if (res != verinum::Vx) {
-	    verinum::V lpad = verinum::V0;
-	    verinum::V rpad = verinum::V0;
-
-	    if (lv.has_sign() && lv.get(lv.len()-1) == verinum::V1)
-		  lpad = verinum::V1;
-	    if (rv.has_sign() && rv.get(rv.len()-1) == verinum::V1)
-		  rpad = verinum::V1;
-
-	    for (unsigned idx = top ;  idx < lv.len() ;  idx += 1)
-		  switch (lv.get(idx)) {
-
-		      case verinum::Vx:
-		      case verinum::Vz:
-			res = verinum::Vx;
-			break;
-
-		      case verinum::V0:
-			if (res != verinum::Vx && rpad != verinum::V0)
-			      res = ne_res;
-			break;
-
-		      case verinum::V1:
-			if (res != verinum::Vx && rpad != verinum::V1)
-			      res = ne_res;
-			break;
-
-		      default:
-			break;
-		  }
-
-	    for (unsigned idx = top ;  idx < rv.len() ;  idx += 1)
-		  switch (rv.get(idx)) {
-
-		      case verinum::Vx:
-		      case verinum::Vz:
-			res = verinum::Vx;
-			break;
-
-		      case verinum::V0:
-			if (res != verinum::Vx && lpad != verinum::V0)
-			      res = ne_res;
-			break;
-
-		      case verinum::V1:
-			if (res != verinum::Vx && lpad != verinum::V1)
-			      res = ne_res;
-			break;
-
-		      default:
-			break;
-		  }
-      }
-
       NetEConst*result = new NetEConst(verinum(res, 1));
       ivl_assert(*this, result);
       return result;
@@ -681,49 +627,67 @@ NetEConst* NetEBComp::eval_eqeqeq_(bool ne_flag, const NetExpr*le, const NetExpr
 
       verinum::V res = verinum::V1;
 
-	// Find the smallest argument length.
-      unsigned cnt = lv.len();
-      if (cnt > rv.len()) cnt = rv.len();
+	// The two expressions should already be padded to the same size.
+      ivl_assert(*this, lv.len() == rv.len());
 
-	// Check the common bits.
-      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < lv.len() ;  idx += 1)
 	    if (lv.get(idx) != rv.get(idx)) {
 		  res = verinum::V0;
 		  break;
 	    }
 
-      bool is_signed = lv.has_sign() && rv.has_sign();
-
-	// If the left value is longer check it against the pad bit.
-      if (res == verinum::V1) {
-	    verinum::V pad = verinum::V0;
-	    if (is_signed)
-		  pad = rv.get(rv.len()-1);
-
-	    for (unsigned idx = cnt ;  idx < lv.len() ;  idx += 1)
-		  if (lv.get(idx) != pad) {
-			res = verinum::V0;
-			break;
-		  }
-      }
-
-	// If the right value is longer check it against the pad bit.
-      if (res == verinum::V1) {
-	    verinum::V pad = verinum::V0;
-	    if (is_signed)
-		  pad = lv.get(lv.len()-1);
-
-	    for (unsigned idx = cnt ;  idx < rv.len() ;  idx += 1) {
-		  if (rv.get(idx) != pad) {
-			res = verinum::V0;
-			break;
-		  }
-	    }
-      }
-
       if (ne_flag) {
 	    if (res == verinum::V0) res = verinum::V1;
 	    else res = verinum::V0;
+      }
+
+      NetEConst*result = new NetEConst(verinum(res, 1));
+      ivl_assert(*this, result);
+      return result;
+}
+
+NetEConst* NetEBComp::eval_weqeq_(bool ne_flag, const NetExpr*le, const NetExpr*re) const
+{
+      const NetEConst*lc = dynamic_cast<const NetEConst*>(le);
+      const NetEConst*rc = dynamic_cast<const NetEConst*>(re);
+      if (lc == 0 || rc == 0) return 0;
+
+      const verinum&lv = lc->value();
+      const verinum&rv = rc->value();
+
+      const verinum::V eq_res = ne_flag ? verinum::V0 : verinum::V1;
+      const verinum::V ne_res = ne_flag ? verinum::V1 : verinum::V0;
+
+      verinum::V res = eq_res;
+
+	// The two expressions should already be padded to the same size.
+      ivl_assert(*this, lv.len() == rv.len());
+
+      for (unsigned idx = 0 ;  idx < lv.len() ;  idx += 1) {
+	      // An X or Z in the R-value matches any L-value.
+	    switch (rv.get(idx)) {
+		case verinum::Vx:
+		case verinum::Vz:
+		  continue;
+		default:
+		  break;
+	    }
+
+	      // An X or Z in the L-value that is not matches by an R-value X/Z returns undefined.
+	    switch (lv.get(idx)) {
+		case verinum::Vx:
+		case verinum::Vz:
+		  res = verinum::Vx;
+		  continue;
+		default:
+		  break;
+	    }
+
+	      // A hard (0/1) mismatch gives a not-equal result.
+	    if (rv.get(idx) != lv.get(idx)) {
+		  res = ne_res;
+		  break;
+	    }
       }
 
       NetEConst*result = new NetEConst(verinum(res, 1));
@@ -744,6 +708,10 @@ NetEConst* NetEBComp::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 	    res = eval_eqeq_(false, l, r);
 	    break;
 
+	  case 'w': // Wild equality (==?)
+	    res = eval_weqeq_(false, l, r);
+	    break;
+
 	  case 'G': // >=
 	    res = eval_gteq_(l, r);
 	    break;
@@ -758,6 +726,10 @@ NetEConst* NetEBComp::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
 	  case 'n': // not-equal (!=)
 	    res = eval_eqeq_(true, l, r);
+	    break;
+
+	  case 'W': // Wild not-equal (!=?)
+	    res = eval_weqeq_(true, l, r);
 	    break;
 
 	  case '<': // Less than

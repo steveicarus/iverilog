@@ -294,6 +294,7 @@ ivl_stmt_lval
 ivl_stmt_lvals
 ivl_stmt_lwidth
 ivl_stmt_name
+ivl_stmt_needs_t0_trigger
 ivl_stmt_nevent
 ivl_stmt_opcode
 ivl_stmt_parm

@@ -1,7 +1,7 @@
 #ifndef IVL_schedule_H
 #define IVL_schedule_H
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,6 +34,8 @@
  */
 extern void schedule_vthread(vthread_t thr, vvp_time64_t delay,
 			     bool push_flag =false);
+
+extern void schedule_inactive(vthread_t thr);
 
 extern void schedule_init_vthread(vthread_t thr);
 
@@ -85,6 +87,12 @@ extern void schedule_propagate_vector(vvp_net_t*ptr,
 extern void schedule_set_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&val);
 extern void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector8_t val);
 extern void schedule_set_vector(vvp_net_ptr_t ptr, double val);
+
+/*
+ * Create a T0 event for always_comb/latch processes. This is the first
+ * event in the first inactive region.
+ */
+extern void schedule_t0_trigger(vvp_net_ptr_t ptr);
 
 /*
  * The schedule_init_vector function assigns an initial value to a

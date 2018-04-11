@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -187,8 +187,14 @@ ostream& operator << (ostream&fd, NetCaseCmp::kind_t that)
 	  case NetCaseCmp::NEQ:
 	    fd << "!==";
 	    break;
-	  case NetCaseCmp::XEQ:
+	  case NetCaseCmp::WEQ:
 	    fd << "==?";
+	    break;
+	  case NetCaseCmp::WNE:
+	    fd << "!=?";
+	    break;
+	  case NetCaseCmp::XEQ:
+	    fd << "==x?";
 	    break;
 	  case NetCaseCmp::ZEQ:
 	    fd << "==z?";
@@ -984,6 +990,18 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
 	    o << "always  /* " << get_fileline() << " in "
 	      << scope_path(scope_) << " */" << endl;
 	    break;
+	  case IVL_PR_ALWAYS_COMB:
+	    o << "always_comb  /* " << get_fileline() << " in "
+	      << scope_path(scope_) << " */" << endl;
+	    break;
+	  case IVL_PR_ALWAYS_FF:
+	    o << "always_ff  /* " << get_fileline() << " in "
+	      << scope_path(scope_) << " */" << endl;
+	    break;
+	  case IVL_PR_ALWAYS_LATCH:
+	    o << "always_latch  /* " << get_fileline() << " in "
+	      << scope_path(scope_) << " */" << endl;
+	    break;
 	  case IVL_PR_FINAL:
 	    o << "final  /* " << get_fileline() << " in "
 	      << scope_path(scope_) << " */" << endl;
@@ -1009,6 +1027,13 @@ void NetAnalogTop::dump(ostream&o, unsigned ind) const
 	  case IVL_PR_ALWAYS:
 	    o << "analog /* " << get_fileline() << " in "
 	      << scope_path(scope_) << " */" << endl;
+	    break;
+
+	    // These are not used in an analog context.
+	  case IVL_PR_ALWAYS_COMB:
+	  case IVL_PR_ALWAYS_FF:
+	  case IVL_PR_ALWAYS_LATCH:
+	    assert(0);
 	    break;
 
 	  case IVL_PR_FINAL:
@@ -1390,6 +1415,8 @@ void NetScope::dump(ostream&o) const
       if (is_interface()) o << " (interface)";
       o << " " << children_.size() << " children, "
 	<< classes_.size() << " classes" << endl;
+      if (unit() && !is_unit())
+	    o << "    in compilation unit " << unit()->basename() << endl;
 
       for (unsigned idx = 0 ;  idx < attr_cnt() ;  idx += 1)
 	    o << "    (* " << attr_key(idx) << " = "
@@ -1629,11 +1656,14 @@ void NetEBinary::dump(ostream&o) const
 	  case 'A':
 	    o << "~&";
 	    break;
+	  case 'e':
+	    o << "==";
+	    break;
 	  case 'E':
 	    o << "===";
 	    break;
-	  case 'e':
-	    o << "==";
+	  case 'w':
+	    o << "==?";
 	    break;
 	  case 'G':
 	    o << ">=";
@@ -1649,6 +1679,9 @@ void NetEBinary::dump(ostream&o) const
 	    break;
 	  case 'N':
 	    o << "!==";
+	    break;
+	  case 'W':
+	    o << "!=?";
 	    break;
 	  case 'o':
 	    o << "||";
@@ -1900,18 +1933,6 @@ void Design::dump(ostream&o) const
       for (map<perm_string,NetScope*>::const_iterator cur = packages_.begin()
 		 ; cur != packages_.end() ; ++cur) {
 	    cur->second->dump(o);
-      }
-
-      o << "$ROOT CLASSES:" << endl;
-      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
-		 ; cur != classes_.end() ; ++cur) {
-	    cur->second->dump_scope(o);
-      }
-
-      o << "$ROOT TASKS/FUNCTIONS:" << endl;
-      for (map<NetScope*,PTaskFunc*>::const_iterator cur = root_tasks_.begin()
-		 ; cur != root_tasks_.end() ; ++ cur) {
-	    cur->first->dump(o);
       }
 
       o << "SCOPES:" << endl;

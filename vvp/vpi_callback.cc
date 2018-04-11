@@ -636,24 +636,37 @@ void callback_execute(struct __vpiCallback*cur)
       vpi_mode_flag = save_mode;
 }
 
+/*
+ * Usually there is at most one array word associated with a vvp signal, but
+ * due to port collapsing, there may be more. Using a linked list to record
+ * the array words minimises memory use for the most common case (no array
+ * words) or next most common case (one array word).
+ */
+struct __vpi_array_word {
+      struct __vpi_array_word* next;
+      struct __vpiArray* array;
+      unsigned long word;
+};
+
 vvp_vpi_callback::vvp_vpi_callback()
 {
       vpi_callbacks_ = 0;
-      array_ = 0;
-      array_word_ = 0;
+      array_words_ = 0;
 }
 
 vvp_vpi_callback::~vvp_vpi_callback()
 {
       assert(vpi_callbacks_ == 0);
-      assert(array_ == 0);
+      assert(array_words_ == 0);
 }
 
 void vvp_vpi_callback::attach_as_word(vvp_array_t arr, unsigned long addr)
 {
-      assert(array_ == 0);
-      array_ = arr;
-      array_word_ = addr;
+      struct __vpi_array_word*tmp = new __vpi_array_word;
+      tmp->array = arr;
+      tmp->word = addr;
+      tmp->next = array_words_;
+      array_words_ = tmp;
 }
 
 void vvp_vpi_callback::add_vpi_callback(value_callback*cb)
@@ -671,6 +684,11 @@ void vvp_vpi_callback::clear_all_callbacks()
 	    delete vpi_callbacks_;
 	    vpi_callbacks_ = tmp;
       }
+      while (array_words_) {
+	    struct __vpi_array_word*tmp = array_words_->next;
+	    delete array_words_;
+	    array_words_ = tmp;
+      }
 }
 #endif
 
@@ -682,7 +700,11 @@ void vvp_vpi_callback::clear_all_callbacks()
  */
 void vvp_vpi_callback::run_vpi_callbacks()
 {
-      if (array_) array_->word_change(array_word_);
+      struct __vpi_array_word*array_word = array_words_;
+      while (array_word) {
+	    array_word->array->word_change(array_word->word);
+	    array_word = array_word->next;
+      }
 
       value_callback *next = vpi_callbacks_;
       value_callback *prev = 0;

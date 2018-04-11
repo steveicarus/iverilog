@@ -1,10 +1,10 @@
-.TH iverilog 1 "Oct 2nd, 2016" "" "Version %M.%n%E"
+.TH iverilog 1 "Nov 8th, 2017" "" "Version %M.%n%E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[\-ESVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
+[\-ESuVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
 [\-Pparameter=value] [\-pflag=value] [\-dname]
 [\-g1995\:|\-g2001\:|\-g2005\:|\-g2005-sv\:|\-g2009\:|\-g2012\:|\-g<feature>]
 [\-Iincludedir] [\-mmodule] [\-M[mode=]file] [\-Nfile] [\-ooutputfilename]
@@ -222,6 +222,12 @@ will suppress the warning that the compiler is making a choice.
 Use this switch to specify the target output format. See the
 \fBTARGETS\fP section below for a list of valid output formats.
 .TP 8
+.B -u
+Treat each source file as a separate compilation unit (as defined in
+SystemVerilog). If compiling for an \fIIEEE1364\fP generation, this
+will just reset all compiler directives (including macro definitions)
+before each new file is processed.
+.TP 8
 .B -v
 Turn on verbose messages. This will print the command lines that are
 executed to perform the actual compilation, along with version
@@ -310,8 +316,9 @@ after a \fB\-Wall\fP argument to suppress isolated warning types.
 
 .TP 8
 .B all
-This enables the anachronisms, implicit, portbind, select\-range,
-timescale, and sensitivity\-entire\-array warning categories.
+This enables the anachronisms, implicit, macro-replacement, portbind,
+select\-range, timescale, and sensitivity\-entire\-array warning
+categories.
 
 .TP 8
 .B anachronisms
@@ -323,6 +330,13 @@ or removed in the selected generation of the Verilog language.
 This enables warnings for creation of implicit declarations. For
 example, if a scalar wire X is used but not declared in the Verilog
 source, this will print a warning at its first use.
+
+.TP 8
+.B macro-redefinition\fI | \fPmacro-replacement
+This enables preprocessor warnings when a macro is being redefined.
+The first variant prints a warning any time a macro is redefined.
+The second variant only prints a warning if the macro text changes.
+Use \fBno-macro-redefinition\fP to turn off all warnings of this type.
 
 .TP 8
 .B portbind
@@ -564,7 +578,7 @@ Tips on using, debugging, and developing the compiler can be found at
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002\-2016 Stephen Williams
+Copyright \(co  2002\-2017 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

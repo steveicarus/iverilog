@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -27,6 +27,7 @@
 # include  <cstdlib>
 # include  <cassert>
 # include  "ivl_alloc.h"
+# include  "version_base.h"
 
 /*
  * These are bits in the lexor.
@@ -80,7 +81,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_ARRAY K_ARRAY_2U K_ARRAY_2S K_ARRAY_I K_ARRAY_OBJ K_ARRAY_R K_ARRAY_S K_ARRAY_STR K_ARRAY_PORT
 %token K_CAST_INT K_CAST_REAL K_CAST_REAL_S K_CAST_2
 %token K_CLASS
-%token K_CMP_EEQ K_CMP_EQ K_CMP_EQX K_CMP_EQZ
+%token K_CMP_EEQ K_CMP_EQ K_CMP_EQX K_CMP_EQZ K_CMP_WEQ K_CMP_WNE
 %token K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
 %token K_CMP_GE K_CMP_GE_R K_CMP_GE_S K_CMP_GT K_CMP_GT_R K_CMP_GT_S
 %token K_CONCAT K_CONCAT8 K_DEBUG K_DELAY K_DFF_N K_DFF_N_ACLR
@@ -92,7 +93,8 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_PARAM_STR K_PARAM_L K_PARAM_REAL K_PART K_PART_PV
 %token K_PART_V K_PART_V_S K_PORT K_PORT_INFO K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
-%token K_RESOLV K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
+%token K_RESOLV K_RTRAN K_RTRANIF0 K_RTRANIF1
+%token K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_SUBSTITUTE
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
 %token K_UFUNC_REAL K_UFUNC_VEC4 K_UFUNC_E K_UDP K_UDP_C K_UDP_S
@@ -475,6 +477,16 @@ statement
 		  compile_cmp_gt($1, $3, true, obj.cnt, obj.vect);
 		}
 
+	| T_LABEL K_CMP_WEQ T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_weq($1, $3, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_CMP_WNE T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_wne($1, $3, obj.cnt, obj.vect);
+		}
+
   /* Delay nodes take a set of numbers or a set of inputs. The delay
      node takes two form, one with an array of constants and a single
      input, and another with an array of inputs. */
@@ -698,8 +710,18 @@ statement
 
 
   /* Port information for scopes... currently this is just meta-data for VPI queries */
-	| K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING
+	| K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING ';'
 		{ compile_port_info( $2 /* port_index */, $3, $4 /* width */,
+		                     $5 /*&name */ ); }
+  /* Unfortunately, older versions didn't check for a semicolon at the end of
+    .port_info statements.
+     To insure backwards compatablitly with old files, we have a duplicate rule
+     that doesn't require a semicolon. After version 11, this rule will be
+     disabled (and can safely be deleted. */
+	| K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING
+		{ if (VERSION_MAJOR > 11)
+			yyerror("syntax error");
+		  compile_port_info( $2 /* port_index */, $3, $4 /* width */,
 		                     $5 /*&name */ ); }
 
 	|         K_TIMESCALE T_NUMBER T_NUMBER';'
@@ -849,14 +871,23 @@ statement
   | T_LABEL K_EXPORT T_SYMBOL ';'
       { compile_island_export($1, $3); }
 
+  | K_RTRAN T_SYMBOL ',' T_SYMBOL T_SYMBOL ';'
+      { compile_island_tranif(0, $2, $4, $5, 0, 1); }
+
+  | K_RTRANIF0 T_SYMBOL ',' T_SYMBOL T_SYMBOL ',' T_SYMBOL ';'
+      { compile_island_tranif(0, $2, $4, $5, $7, 1); }
+
+  | K_RTRANIF1 T_SYMBOL ',' T_SYMBOL T_SYMBOL ',' T_SYMBOL ';'
+      { compile_island_tranif(1, $2, $4, $5, $7, 1); }
+
   | K_TRAN T_SYMBOL ',' T_SYMBOL T_SYMBOL ';'
-      { compile_island_tranif(0, $2, $4, $5, 0); }
+      { compile_island_tranif(0, $2, $4, $5, 0, 0); }
 
   | K_TRANIF0 T_SYMBOL ',' T_SYMBOL T_SYMBOL ',' T_SYMBOL ';'
-      { compile_island_tranif(0, $2, $4, $5, $7); }
+      { compile_island_tranif(0, $2, $4, $5, $7, 0); }
 
   | K_TRANIF1 T_SYMBOL ',' T_SYMBOL T_SYMBOL ',' T_SYMBOL ';'
-      { compile_island_tranif(1, $2, $4, $5, $7); }
+      { compile_island_tranif(1, $2, $4, $5, $7, 0); }
 
   | K_TRANVP T_NUMBER T_NUMBER T_NUMBER ',' T_SYMBOL ',' T_SYMBOL T_SYMBOL ';'
       { compile_island_tranvp($6, $8, $9, $2, $3, $4); }

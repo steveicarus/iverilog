@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2018 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2355,19 +2355,7 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 {
       NetExpr*dex = elab_and_eval(des, scope, expr, -1);
 
-	/* Print a warning if we find default and `timescale based
-	 * delays in the design, since this is likely an error. */
-      if (scope->time_from_timescale()) dly_used_timescale = true;
-      else dly_used_no_timescale = true;
-
-      if (display_ts_dly_warning &&
-          dly_used_no_timescale && dly_used_timescale) {
-	    cerr << "warning: Found both default and "
-	            "`timescale based delays. Use" << endl;
-	    cerr << "         -Wtimescale to find the "
-	            "module(s) with no `timescale." << endl;
-	    display_ts_dly_warning = false;
-      }
+      check_for_inconsistent_delays(scope);
 
 	/* If the delay expression is a real constant or vector
 	   constant, then evaluate it, scale it to the local time
@@ -2918,11 +2906,12 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
       if (nscope == 0)
 	    nscope = scope;
 
-	// Handle the special case that the block contains only one
-	// statement. There is no need to keep the block node. Also,
-	// don't elide named blocks, because they might be referenced
-	// elsewhere.
-      if ((list_.size() == 1) && (pscope_name() == 0)) {
+	// Handle the special case that the sequential block contains
+	// only one statement. There is no need to keep the block node.
+	// Also, don't elide named blocks, because they might be
+	// referenced elsewhere.
+      if ((type == NetBlock::SEQU) && (list_.size() == 1) &&
+          (pscope_name() == 0)) {
 	    assert(list_[0]);
 	    NetProc*tmp = list_[0]->elaborate(des, nscope);
 	    return tmp;
@@ -4202,6 +4191,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
       NetEvent*ev = new NetEvent(scope->local_symbol());
       ev->set_line(*this);
+      ev->local_flag(true);
       unsigned expr_count = 0;
 
       NetEvWait*wa = new NetEvWait(enet);
@@ -4212,14 +4202,18 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
       if (expr_.count() == 0) {
 	    assert(enet);
-	     /* For synthesis we want just the inputs, but for the rest we
-	      * want inputs and outputs that may cause a value to change. */
+	     /* For synthesis or always_comb/latch we want just the inputs,
+	      * but for the rest we want inputs and outputs that may cause
+	      * a value to change. */
 	    extern bool synthesis; /* Synthesis flag from main.cc */
 	    bool rem_out = false;
-	    if (synthesis) {
+	    if (synthesis || search_funcs_) {
 		  rem_out = true;
 	    }
-	    NexusSet*nset = enet->nex_input(rem_out);
+	      // If this is an always_comb/latch then we need an implicit T0
+	      // trigger of the event expression.
+	    if (search_funcs_) wa->set_t0_trigger();
+	    NexusSet*nset = enet->nex_input(rem_out, search_funcs_);
 	    if (nset == 0) {
 		  cerr << get_fileline() << ": error: Unable to elaborate:"
 		       << endl;
@@ -4478,6 +4472,8 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	      /* Create an event wait and an otherwise unreferenced
 		 event variable to force a perpetual wait. */
 	    NetEvent*wait_event = new NetEvent(scope->local_symbol());
+	    wait_event->set_line(*this);
+	    wait_event->local_flag(true);
 	    scope->add_event(wait_event);
 
 	    NetEvWait*wait = new NetEvWait(0);
@@ -4498,6 +4494,8 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
       eval_expr(expr);
 
       NetEvent*wait_event = new NetEvent(scope->local_symbol());
+      wait_event->set_line(*this);
+      wait_event->local_flag(true);
       scope->add_event(wait_event);
 
       NetEvWait*wait = new NetEvWait(0 /* noop */);
@@ -5368,7 +5366,10 @@ bool PProcess::elaborate(Design*des, NetScope*scope) const
 	gets into its wait statement before non-combinational
 	code is executed. */
       do {
-	    if (top->type() != IVL_PR_ALWAYS)
+	    if ((top->type() != IVL_PR_ALWAYS) &&
+	        (top->type() != IVL_PR_ALWAYS_COMB) &&
+	        (top->type() != IVL_PR_ALWAYS_FF) &&
+	        (top->type() != IVL_PR_ALWAYS_LATCH))
 		  break;
 
 	    NetEvWait*st = dynamic_cast<NetEvWait*>(top->statement());
@@ -5415,19 +5416,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       ndelays = delays.size();
       if (ndelays > 12) ndelays = 12;
 
-	/* Print a warning if we find default and `timescale based
-	 * delays in the design, since this is likely an error. */
-      if (scope->time_from_timescale()) dly_used_timescale = true;
-      else dly_used_no_timescale = true;
-
-      if (display_ts_dly_warning &&
-          dly_used_no_timescale && dly_used_timescale) {
-	    cerr << "warning: Found both default and "
-	            "`timescale based delays. Use" << endl;
-	    cerr << "         -Wtimescale to find the "
-	            "module(s) with no `timescale." << endl;
-	    display_ts_dly_warning = false;
-      }
+      check_for_inconsistent_delays(scope);
 
 	/* Elaborate the delay values themselves. Remember to scale
 	   them for the timescale/precision of the scope. */
@@ -5694,6 +5683,10 @@ bool PPackage::elaborate(Design*des, NetScope*scope) const
 
 	// Elaborate class definitions.
       elaborate_classes(des, scope, classes);
+
+	// Elaborate the variable initialization statements, making a
+	// single initial process out of them.
+      result_flag &= elaborate_var_inits_(des, scope);
 
       return result_flag;
 }
@@ -6127,14 +6120,17 @@ class later_defparams : public elaborator_work_item_t {
 
 bool Design::check_proc_delay() const
 {
-      bool result_flag = true;
+      bool result = false;
 
       for (const NetProcTop*pr = procs_ ;  pr ;  pr = pr->next_) {
-	      /* If this is an always block and we have no or zero delay then
-	       * a runtime infinite loop will happen. If we possible have some
+	      /* If this is an always process and we have no or zero delay then
+	       * a runtime infinite loop will happen. If we possibly have some
 	       * delay then print a warning that an infinite loop is possible.
 	       */
-	    if (pr->type() == IVL_PR_ALWAYS) {
+	    if ((pr->type() == IVL_PR_ALWAYS) ||
+	        (pr->type() == IVL_PR_ALWAYS_COMB) ||
+	        (pr->type() == IVL_PR_ALWAYS_FF) ||
+	        (pr->type() == IVL_PR_ALWAYS_LATCH)) {
 		  DelayType dly_type = pr->statement()->delay_type();
 
 		  if (dly_type == NO_DELAY || dly_type == ZERO_DELAY) {
@@ -6142,13 +6138,45 @@ bool Design::check_proc_delay() const
 			     << " statement does not have any delay." << endl;
 			cerr << pr->get_fileline() << ":      : A runtime"
 			     << " infinite loop will occur." << endl;
-			result_flag = false;
+			result = true;
 
 		  } else if (dly_type == POSSIBLE_DELAY && warn_inf_loop) {
 			cerr << pr->get_fileline() << ": warning: always"
 			     << " statement may not have any delay." << endl;
 			cerr << pr->get_fileline() << ":        : A runtime"
 			     << " infinite loop may be possible." << endl;
+		  }
+
+		    // The always_comb/ff/latch processes also have special
+		    // delay rules that need to be checked.
+		  if ((pr->type() == IVL_PR_ALWAYS_COMB) ||
+		      (pr->type() == IVL_PR_ALWAYS_FF) ||
+		      (pr->type() == IVL_PR_ALWAYS_LATCH)) {
+			const NetEvWait *wait = dynamic_cast<const NetEvWait*> (pr->statement());
+			if (! wait) {
+				// The always_comb/latch processes have an event
+				// control added automatically by the compiler.
+			      assert(pr->type() == IVL_PR_ALWAYS_FF);
+			      cerr << pr->get_fileline() << ": error: the "
+			           << "first statement of an always_ff must "
+			           << "be an event control." << endl;
+			      result = true;
+			} else if (wait->statement()->delay_type(true) != NO_DELAY) {
+			      cerr << pr->get_fileline() << ": error: there "
+			           << "must ";
+
+			      if (pr->type() == IVL_PR_ALWAYS_FF) {
+				    cerr << "only be a single event control "
+				         << "and no blocking delays in an "
+				         << "always_ff process.";
+			      } else {
+				    cerr << "be no event controls or blocking "
+				         << "delays in an always_comb/latch "
+				         << "process.";
+			      }
+			      cerr << endl;
+			      result = true;
+			}
 		  }
 	    }
 
@@ -6159,37 +6187,158 @@ bool Design::check_proc_delay() const
 	    if (pr->type() == IVL_PR_FINAL) {
 		  DelayType dly_type = pr->statement()->delay_type();
 
-		  if (dly_type != NO_DELAY && dly_type != ZERO_DELAY) {
+		  if (dly_type != NO_DELAY) {
 			cerr << pr->get_fileline() << ": error: final"
 			     << " statement contains a delay." << endl;
-			result_flag = false;
+			result = true;
 		  }
 	    }
       }
 
-      return result_flag;
+      return result;
 }
 
-void Design::root_elaborate(void)
+/*
+ * Check to see if the always_* processes only contain synthesizable
+ * constructs.
+ */
+bool Design::check_proc_synth() const
 {
-      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
-		 ; cur != classes_.end() ; ++ cur) {
-	    netclass_t*cur_class = cur->second;
-	    PClass*cur_pclass = class_to_pclass_[cur_class];
-	    cur_class->elaborate(this, cur_pclass);
-      }
-
-      for (map<NetScope*,PTaskFunc*>::iterator cur = root_tasks_.begin()
-		 ; cur != root_tasks_.end() ; ++ cur) {
-
-	    if (debug_elaborate) {
-		  cerr << cur->second->get_fileline() << ": Design::root_elaborate: "
-		       << "Elaborate for root task/func " << scope_path(cur->first) << endl;
+      bool result = false;
+      for (const NetProcTop*pr = procs_ ;  pr ;  pr = pr->next_) {
+	    if ((pr->type() == IVL_PR_ALWAYS_COMB) ||
+	        (pr->type() == IVL_PR_ALWAYS_FF) ||
+	        (pr->type() == IVL_PR_ALWAYS_LATCH)) {
+		  result |= pr->statement()->check_synth(pr->type(),
+		                                         pr->scope());
 	    }
+      }
+      return result;
+}
 
-	    cur->second->elaborate(this, cur->first);
+/*
+ * Check whether all design elements have an explicit timescale or all
+ * design elements use the default timescale. If a mixture of explicit
+ * and default timescales is found, a warning message is output. Note
+ * that we only need to check the top level design elements - nested
+ * design elements will always inherit the timescale from their parent
+ * if they don't have any local timescale declarations.
+ *
+ * NOTE: Strictly speaking, this should be an error for SystemVerilog
+ * (1800-2012 section 3.14.2).
+ */
+static void check_timescales(bool&some_explicit, bool&some_implicit,
+			     const PScope*scope)
+{
+      if (scope->time_unit_is_default)
+	    some_implicit = true;
+      else
+	    some_explicit = true;
+      if (scope->time_prec_is_default)
+	    some_implicit = true;
+      else
+	    some_explicit = true;
+}
+
+static void check_timescales()
+{
+      bool some_explicit = false;
+      bool some_implicit = false;
+      map<perm_string,Module*>::iterator mod;
+      for (mod = pform_modules.begin(); mod != pform_modules.end(); ++mod) {
+	    const Module*mp = (*mod).second;
+	    check_timescales(some_explicit, some_implicit, mp);
+	    if (some_explicit && some_implicit)
+		  break;
+      }
+      map<perm_string,PPackage*>::iterator pkg;
+      if (gn_system_verilog() && !(some_explicit && some_implicit)) {
+	    for (pkg = pform_packages.begin(); pkg != pform_packages.end(); ++pkg) {
+		  const PPackage*pp = (*pkg).second;
+		  check_timescales(some_explicit, some_implicit, pp);
+		  if (some_explicit && some_implicit)
+			break;
+	    }
+      }
+      if (gn_system_verilog() && !(some_explicit && some_implicit)) {
+	    for (unsigned idx = 0; idx < pform_units.size(); idx += 1) {
+		  const PPackage*pp = pform_units[idx];
+		    // We don't need a timescale if the compilation unit
+		    // contains no items outside a design element.
+		  if (pp->parameters.empty() &&
+		      pp->localparams.empty() &&
+		      pp->wires.empty() &&
+		      pp->tasks.empty() &&
+		      pp->funcs.empty() &&
+		      pp->classes.empty())
+			continue;
+
+		  check_timescales(some_explicit, some_implicit, pp);
+		  if (some_explicit && some_implicit)
+			break;
+	    }
       }
 
+      if (!(some_explicit && some_implicit))
+	    return;
+
+      if (gn_system_verilog()) {
+	    cerr << "warning: "
+		 << "Some design elements have no explicit time unit and/or"
+		 << endl;
+	    cerr << "       : "
+		 << "time precision. This may cause confusing timing results."
+		 << endl;
+	    cerr << "       : "
+		 << "Affected design elements are:"
+		 << endl;
+      } else {
+	    cerr << "warning: "
+		 << "Some modules have no timescale. This may cause"
+		 << endl;
+	    cerr << "       : "
+		 << "confusing timing results.	Affected modules are:"
+		 << endl;
+      }
+
+      for (mod = pform_modules.begin(); mod != pform_modules.end(); ++mod) {
+	    Module*mp = (*mod).second;
+	    if (mp->has_explicit_timescale())
+		  continue;
+	    cerr << "       :   -- module " << (*mod).first
+		 << " declared here: " << mp->get_fileline() << endl;
+      }
+
+      if (!gn_system_verilog())
+	    return;
+
+      for (pkg = pform_packages.begin(); pkg != pform_packages.end(); ++pkg) {
+	    PPackage*pp = (*pkg).second;
+	    if (pp->has_explicit_timescale())
+		  continue;
+	    cerr << "       :   -- package " << (*pkg).first
+		 << " declared here: " << pp->get_fileline() << endl;
+      }
+
+      for (unsigned idx = 0; idx < pform_units.size(); idx += 1) {
+	    PPackage*pp = pform_units[idx];
+	    if (pp->has_explicit_timescale())
+		  continue;
+
+	    if (pp->parameters.empty() &&
+		pp->localparams.empty() &&
+		pp->wires.empty() &&
+		pp->tasks.empty() &&
+		pp->funcs.empty() &&
+		pp->classes.empty())
+		  continue;
+
+	    cerr << "       :   -- compilation unit";
+	    if (pform_units.size() > 1) {
+		  cerr << " from: " << pp->get_file();
+	    }
+	    cerr << endl;
+      }
 }
 
 /*
@@ -6211,8 +6360,13 @@ struct root_elem {
 
 Design* elaborate(list<perm_string>roots)
 {
+      unsigned npackages = pform_packages.size();
+      if (gn_system_verilog())
+	    npackages += pform_units.size();
+
       vector<struct root_elem> root_elems(roots.size());
-      vector<struct pack_elem> pack_elems(pform_packages.size());
+      vector<struct pack_elem> pack_elems(npackages);
+      map<LexicalScope*,NetScope*> unit_scopes;
       bool rc = true;
       unsigned i = 0;
 
@@ -6220,23 +6374,36 @@ Design* elaborate(list<perm_string>roots)
 	// module and elaborate what I find.
       Design*des = new Design;
 
-	// Elaborate enum sets in $root scope.
-      elaborate_rootscope_enumerations(des);
+	// Elaborate the compilation unit scopes. From here on, these are
+	// treated as an additional set of packages.
+      if (gn_system_verilog()) {
+	    for (i = 0; i < pform_units.size(); i += 1) {
+		  PPackage*unit = pform_units[i];
+		  NetScope*scope = des->make_package_scope(unit->pscope_name(), 0, true);
+		  scope->set_line(unit);
+		  set_scope_timescale(des, scope, unit);
 
-	// Elaborate tasks and functions in $root scope.
-      elaborate_rootscope_tasks(des);
+		  elaborator_work_item_t*es = new elaborate_package_t(des, scope, unit);
+		  des->elaboration_work_list.push_back(es);
 
-	// Elaborate classes in $root scope.
-      elaborate_rootscope_classes(des);
+		  pack_elems[i].pack = unit;
+		  pack_elems[i].scope = scope;
+
+		  unit_scopes[unit] = scope;
+	    }
+      }
 
 	// Elaborate the packages. Package elaboration is simpler
-	// because there are fewer sub-scopes involved.
-      i = 0;
+	// because there are fewer sub-scopes involved. Note that
+	// in SystemVerilog, packages are not allowed to refer to
+	// the compilation unit scope, but the VHDL preprocessor
+	// assumes they can.
       for (map<perm_string,PPackage*>::iterator pac = pform_packages.begin()
 		 ; pac != pform_packages.end() ; ++ pac) {
 
 	    ivl_assert(*pac->second, pac->first == pac->second->pscope_name());
-	    NetScope*scope = des->make_package_scope(pac->first);
+	    NetScope*unit_scope = unit_scopes[pac->second->parent_scope()];
+	    NetScope*scope = des->make_package_scope(pac->first, unit_scope, false);
 	    scope->set_line(pac->second);
 	    set_scope_timescale(des, scope, pac->second);
 
@@ -6267,9 +6434,13 @@ Design* elaborate(list<perm_string>roots)
 	      // Get the module definition for this root instance.
 	    Module *rmod = (*mod).second;
 
+	      // Get the compilation unit scope for this module.
+	    NetScope*unit_scope = unit_scopes[rmod->parent_scope()];
+
 	      // Make the root scope. This makes a NetScope object and
 	      // pushes it into the list of root scopes in the Design.
-	    NetScope*scope = des->make_root_scope(*root, rmod->program_block,
+	    NetScope*scope = des->make_root_scope(*root, unit_scope,
+						  rmod->program_block,
 						  rmod->is_interface);
 
 	      // Collect some basic properties of this scope from the
@@ -6339,6 +6510,10 @@ Design* elaborate(list<perm_string>roots)
       if (des->errors > 0)
 	    return des;
 
+	// Now we have the full design, check for timescale inconsistencies.
+      if (warn_timescale)
+	    check_timescales();
+
       if (debug_elaborate) {
 	    cerr << "<toplevel>: elaborate: "
 		 << "Start calling Package elaborate_sig methods." << endl;
@@ -6366,8 +6541,6 @@ Design* elaborate(list<perm_string>roots)
 	    cerr << "<toplevel>: elaborate: "
 		 << "Start calling $root elaborate_sig methods." << endl;
       }
-
-      des->root_elaborate_sig();
 
       if (debug_elaborate) {
 	    cerr << "<toplevel>: elaborate: "
@@ -6430,8 +6603,6 @@ Design* elaborate(list<perm_string>roots)
 	    rc &= pkg->elaborate(des, scope);
       }
 
-      des->root_elaborate();
-
       for (i = 0; i < root_elems.size(); i++) {
 	    Module *rmod = root_elems[i].mod;
 	    NetScope *scope = root_elems[i].scope;
@@ -6446,16 +6617,22 @@ Design* elaborate(list<perm_string>roots)
 	// Now that everything is fully elaborated verify that we do
 	// not have an always block with no delay (an infinite loop),
         // or a final block with a delay.
-      if (des->check_proc_delay() == false) {
-	    delete des;
-	    des = 0;
-      }
+      bool has_failure = des->check_proc_delay();
+
+	// Check to see if the always_comb/ff/latch processes only have
+	// synthesizable constructs
+      has_failure |= des->check_proc_synth();
 
       if (debug_elaborate) {
                cerr << "<toplevel>" << ": debug: "
                     << " finishing with "
                     <<  des->find_root_scopes().size() << " root scopes " << endl;
          }
+
+      if (has_failure) {
+	    delete des;
+	    des = 0;
+      }
 
       return des;
 }

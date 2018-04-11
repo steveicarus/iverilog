@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2017 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,24 @@
 # include <string.h>
 # include "config.h"
 # include "vlog95_priv.h"
+
+static unsigned need_ivl_top_module = 0;
+
+void emit_icarus_generated_top_module()
+{
+      if (need_ivl_top_module) {
+	    fprintf(vlog_out,
+"\n"
+"/*\n"
+" * This module is used to trigger any always_comb or always_latch processes\n"
+" * at time zero to make sure all the outputs have the correct values.\n"
+"*/\n"
+"module IVL_top_priv_module;\n"
+"  event IVL_T0_trigger_event;\n"
+"  initial #0 -> IVL_T0_trigger_event;\n"
+"endmodule /* IVL_top_priv_module */\n");
+      }
+}
 
 void emit_event(ivl_scope_t scope, ivl_statement_t stmt)
 {
@@ -68,4 +86,12 @@ void emit_event(ivl_scope_t scope, ivl_statement_t stmt)
 		  emit_id(ivl_event_basename(event));
 	    }
       }
+
+	/* If this is an always_comb/latch then we need to add a trigger to
+	 * get the correct functionality. */
+      if (ivl_stmt_needs_t0_trigger(stmt)) {
+	    assert(first == 0);
+	    fprintf(vlog_out, " or IVL_top_priv_module.IVL_T0_trigger_event");
+	    need_ivl_top_module = 1;
+      };
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -45,14 +45,14 @@ struct vvp_island_branch_tran : public vvp_island_branch {
 
       vvp_island_branch_tran(vvp_net_t*en__, bool active_high__,
                              unsigned width__, unsigned part__,
-                             unsigned offset__);
+                             unsigned offset__, bool resistive__);
       bool run_test_enabled();
       void run_resolution();
       void run_output();
 
       vvp_net_t*en;
       unsigned width, part, offset;
-      bool active_high;
+      bool active_high, resistive;
       tran_state_t state;
 };
 
@@ -60,9 +60,10 @@ vvp_island_branch_tran::vvp_island_branch_tran(vvp_net_t*en__,
                                                bool active_high__,
                                                unsigned width__,
                                                unsigned part__,
-                                               unsigned offset__)
+                                               unsigned offset__,
+                                               bool resistive__)
 : en(en__), width(width__), part(part__), offset(offset__),
-  active_high(active_high__)
+  active_high(active_high__), resistive(resistive__)
 {
       state = en__ ? tran_disabled : tran_enabled;
 }
@@ -235,7 +236,8 @@ bool vvp_island_branch_tran::run_test_enabled()
 // input is 'x' or 'z'. We use the rules that are given for MOS switches.
 inline vvp_vector8_t resolve_ambiguous(const vvp_vector8_t&a,
                                        const vvp_vector8_t&b,
-                                       tran_state_t state)
+                                       tran_state_t state,
+                                       unsigned str_map[8])
 {
       assert(a.size() == b.size());
       vvp_vector8_t out (a.size());
@@ -243,6 +245,9 @@ inline vvp_vector8_t resolve_ambiguous(const vvp_vector8_t&a,
       for (unsigned idx = 0 ;  idx < out.size() ;  idx += 1) {
 	    vvp_scalar_t a_bit = a.value(idx);
 	    vvp_scalar_t b_bit = b.value(idx);
+            b_bit = vvp_scalar_t(b_bit.value(),
+                                 str_map[b_bit.strength0()],
+                                 str_map[b_bit.strength1()]);
 	    if (state == tran_unknown) {
 		  switch (b_bit.value()) {
 		      case BIT4_0:
@@ -293,8 +298,8 @@ static void push_value_through_branch(const vvp_vector8_t&val,
         // previously collected (and resolved) for the port.
       if (branch->width == 0) {
               // There are no part selects.
-            dst_port->value = resolve_ambiguous(dst_port->value, val,
-                                                branch->state);
+            dst_port->value = resolve_ambiguous(dst_port->value, val, branch->state,
+                                                vvp_switch_strength_map[branch->resistive]);
 
       } else if (dst_ab == 1) {
               // The other side is a strict subset (part select)
@@ -396,7 +401,8 @@ void compile_island_tran(char*label)
       compile_island_base(label, use_island);
 }
 
-void compile_island_tranif(int sense, char*island, char*pa, char*pb, char*pe)
+void compile_island_tranif(int sense, char*island, char*pa, char*pb, char*pe,
+                           bool resistive)
 {
       vvp_island*use_island = compile_find_island(island);
       assert(use_island);
@@ -413,7 +419,7 @@ void compile_island_tranif(int sense, char*island, char*pa, char*pb, char*pe)
       vvp_island_branch_tran*br = new vvp_island_branch_tran(en,
                                                              sense ? true :
                                                                      false,
-                                                             0, 0, 0);
+                                                             0, 0, 0, resistive);
 
       use_island->add_branch(br, pa, pb);
 
@@ -430,7 +436,7 @@ void compile_island_tranvp(char*island, char*pa, char*pb,
       free(island);
 
       vvp_island_branch_tran*br = new vvp_island_branch_tran(NULL, false,
-                                                             wid, par, off);
+                                                             wid, par, off, false);
 
       use_island->add_branch(br, pa, pb);
 

@@ -82,6 +82,7 @@ static int eval_darray_new(ivl_expr_t ex)
 	    unsigned idx;
 	    switch (ivl_type_base(element_type)) {
 		case IVL_VT_BOOL:
+		case IVL_VT_LOGIC:
 		  for (idx = 0 ; idx < ivl_expr_parms(init_expr) ; idx += 1) {
 			draw_eval_vec4(ivl_expr_parm(init_expr,idx));
 			fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
@@ -110,6 +111,11 @@ static int eval_darray_new(ivl_expr_t ex)
 		  errors += 1;
 		  break;
 	    }
+      } else if (init_expr && (ivl_expr_value(init_expr) == IVL_VT_DARRAY)) {
+		  ivl_signal_t sig = ivl_expr_signal(init_expr);
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+		  fprintf(vvp_out, "    %%scopy;\n");
+
       } else if (init_expr && number_is_immediate(size_expr,32,0)) {
 	      /* In this case, there is an init expression, the
 		 expression is NOT an array_pattern, and the size

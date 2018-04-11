@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -385,8 +385,7 @@ static void draw_binary_vec4_compare(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
 	    break;
 	  case 'n': /* != */
-	    fprintf(vvp_out, "    %%cmp/e;\n");
-	    fprintf(vvp_out, "    %%flag_inv 4;\n");
+	    fprintf(vvp_out, "    %%cmp/ne;\n");
 	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
 	    break;
 	  case 'E': /* === */
@@ -394,9 +393,16 @@ static void draw_binary_vec4_compare(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%flag_get/vec4 6;\n");
 	    break;
 	  case 'N': /* !== */
-	    fprintf(vvp_out, "    %%cmp/e;\n");
-	    fprintf(vvp_out, "    %%flag_inv 6;\n");
+	    fprintf(vvp_out, "    %%cmp/ne;\n");
 	    fprintf(vvp_out, "    %%flag_get/vec4 6;\n");
+	    break;
+	  case 'w': /* ==? */
+	    fprintf(vvp_out, "    %%cmp/we;\n");
+	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
+	    break;
+	  case 'W': /* !=? */
+	    fprintf(vvp_out, "    %%cmp/wne;\n");
+	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
 	    break;
 	  default:
 	    assert(0);
@@ -689,8 +695,10 @@ static void draw_binary_vec4(ivl_expr_t expr)
 
 	  case 'e': /* == */
 	  case 'E': /* === */
-	  case 'n': /* !== */
+	  case 'n': /* != */
 	  case 'N': /* !== */
+	  case 'w': /* ==? */
+	  case 'W': /* !=? */
 	    draw_binary_vec4_compare(expr);
 	    break;
 

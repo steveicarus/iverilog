@@ -1,7 +1,7 @@
 #ifndef IVL_netmisc_H
 #define IVL_netmisc_H
 /*
- * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -378,10 +378,6 @@ const char *human_readable_op(const char op, bool unary = false);
 enum const_bool { C_NON, C_0, C_1, C_X };
 const_bool const_logical(const NetExpr*expr);
 
-extern bool dly_used_no_timescale;
-extern bool dly_used_timescale;
-extern bool display_ts_dly_warning;
-
 /*
  * When scaling a real value to a time we need to do some standard
  * processing.
@@ -408,5 +404,11 @@ extern void assign_unpacked_with_bufz(Design*des, NetScope*scope,
 				      NetNet*lval, NetNet*rval);
 
 extern NetPartSelect* detect_partselect_lval(Link&pin);
+
+/*
+ * Print a warning if we find a mixture of default and explicit timescale
+ * based delays in the design, since this is likely an error.
+ */
+extern void check_for_inconsistent_delays(NetScope*scope);
 
 #endif /* IVL_netmisc_H */

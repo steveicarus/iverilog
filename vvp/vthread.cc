@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1945,6 +1945,71 @@ bool of_CMPX(vthread_t thr, vvp_code_t)
       return true;
 }
 
+static void do_CMPWE(vthread_t thr, const vvp_vector4_t&lval, const vvp_vector4_t&rval)
+{
+      assert(rval.size() == lval.size());
+
+      if (lval.has_xz() || rval.has_xz()) {
+
+	    unsigned wid = lval.size();
+	    vvp_bit4_t eq  = BIT4_1;
+
+	    for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+		  vvp_bit4_t lv = lval.value(idx);
+		  vvp_bit4_t rv = rval.value(idx);
+
+		  if (bit4_is_xz(rv))
+			continue;
+		  if ((eq == BIT4_1) && bit4_is_xz(lv))
+			eq = BIT4_X;
+		  if ((lv == BIT4_0) && (rv==BIT4_1))
+			eq = BIT4_0;
+		  if ((lv == BIT4_1) && (rv==BIT4_0))
+			eq = BIT4_0;
+
+		  if (eq == BIT4_0)
+			break;
+	    }
+
+	    thr->flags[4] = eq;
+
+      } else {
+	      // If there are no XZ bits anywhere, then the results of
+	      // ==? match the === test.
+	    thr->flags[4] = (lval.eeq(rval)? BIT4_1 : BIT4_0);
+      }
+}
+
+bool of_CMPWE(vthread_t thr, vvp_code_t)
+{
+	// We are going to pop these and push nothing in their
+	// place, but for now it is more efficient to use a constant
+	// reference. When we finish, pop the stack without copies.
+      const vvp_vector4_t&rval = thr->peek_vec4(0);
+      const vvp_vector4_t&lval = thr->peek_vec4(1);
+
+      do_CMPWE(thr, lval, rval);
+
+      thr->pop_vec4(2);
+      return true;
+}
+
+bool of_CMPWNE(vthread_t thr, vvp_code_t)
+{
+	// We are going to pop these and push nothing in their
+	// place, but for now it is more efficient to use a constant
+	// reference. When we finish, pop the stack without copies.
+      const vvp_vector4_t&rval = thr->peek_vec4(0);
+      const vvp_vector4_t&lval = thr->peek_vec4(1);
+
+      do_CMPWE(thr, lval, rval);
+
+      thr->flags[4] =  ~thr->flags[4];
+
+      thr->pop_vec4(2);
+      return true;
+}
+
 bool of_CMPWR(vthread_t thr, vvp_code_t)
 {
       double r = thr->pop_real();
@@ -2263,11 +2328,10 @@ bool of_DELAY(vthread_t thr, vvp_code_t cp)
       vvp_time64_t low = cp->bit_idx[0];
       vvp_time64_t hig = cp->bit_idx[1];
 
-      vvp_time64_t res = 32;
-      res = hig << res;
-      res += low;
+      vvp_time64_t delay = (hig << 32) | low;
 
-      schedule_vthread(thr, res);
+      if (delay == 0) schedule_inactive(thr);
+      else schedule_vthread(thr, delay);
       return false;
 }
 
@@ -2277,7 +2341,8 @@ bool of_DELAYX(vthread_t thr, vvp_code_t cp)
 
       assert(cp->number < vthread_s::WORDS_COUNT);
       delay = thr->words[cp->number].w_uint;
-      schedule_vthread(thr, delay);
+      if (delay == 0) schedule_inactive(thr);
+      else schedule_vthread(thr, delay);
       return false;
 }
 
@@ -2325,7 +2390,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
       }
 
       vthread_t parent = thr->parent;
-      if (parent && parent->i_am_joining) {
+      if (parent && parent->i_am_joining && test_joinable(parent, thr)) {
 	      // If a parent is waiting in a %join, wake it up. Note
 	      // that it is possible to be waiting in a %join yet
 	      // already scheduled if multiple child threads are
@@ -2335,8 +2400,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
 	    if (! parent->i_have_ended)
 		  schedule_vthread(parent, 0, true);
 
-	      // Let the parent do the reaping.
-	    vthread_reap(thr);
+	    do_join(parent, thr);
 
       } else if (parent) {
 	      /* If the parent is yet to %join me, let its %join
@@ -2739,7 +2803,7 @@ bool of_END(vthread_t thr, vvp_code_t)
 	/* If I have a parent who is waiting for me, then mark that I
 	   have ended, and schedule that parent. Also, finish the
 	   %join for the parent. */
-      if (thr->parent && thr->parent->i_am_joining) {
+      if (!thr->i_am_detached && thr->parent && thr->parent->i_am_joining) {
 	    vthread_t tmp = thr->parent;
 	    assert(! thr->i_am_detached);
 

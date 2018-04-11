@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -101,11 +101,11 @@ uint64_t Design::scale_to_precision(uint64_t val,
       return val;
 }
 
-NetScope* Design::make_root_scope(perm_string root, bool program_block,
-				  bool is_interface)
+NetScope* Design::make_root_scope(perm_string root, NetScope*unit_scope,
+				  bool program_block, bool is_interface)
 {
       NetScope *root_scope_;
-      root_scope_ = new NetScope(0, hname_t(root), NetScope::MODULE,
+      root_scope_ = new NetScope(0, hname_t(root), NetScope::MODULE, unit_scope,
 				 false, program_block, is_interface);
 	/* This relies on the fact that the basename return value is
 	   permallocated. */
@@ -125,29 +125,16 @@ list<NetScope*> Design::find_root_scopes() const
       return root_scopes_;
 }
 
-NetScope* Design::make_package_scope(perm_string name)
+NetScope* Design::make_package_scope(perm_string name, NetScope*unit_scope,
+				     bool is_unit)
 {
       NetScope*scope;
 
-      scope = new NetScope(0, hname_t(name), NetScope::PACKAGE, false, false);
+      scope = new NetScope(0, hname_t(name), NetScope::PACKAGE, unit_scope,
+			   false, false, false, is_unit);
       scope->set_module_name(scope->basename());
       packages_[name] = scope;
       return scope;
-}
-
-void Design::add_class(netclass_t*cl, PClass*pclass)
-{
-      Definitions::add_class(cl);
-      class_to_pclass_[cl] = pclass;
-}
-
-netclass_t* Design::find_class(perm_string name) const
-{
-      map<perm_string,netclass_t*>::const_iterator cur = classes_.find(name);
-      if (cur != classes_.end())
-	    return cur->second;
-
-      return 0;
 }
 
 NetScope* Design::find_package(perm_string name) const
@@ -170,17 +157,6 @@ list<NetScope*> Design::find_package_scopes() const
       return res;
 }
 
-list<NetScope*> Design::find_roottask_scopes() const
-{
-      list<NetScope*>res;
-      for (map<NetScope*,PTaskFunc*>::const_iterator cur = root_tasks_.begin()
-		 ; cur != root_tasks_.end() ; ++ cur) {
-	    res.push_back (cur->first);
-      }
-
-      return res;
-}
-
 /*
  * This method locates a scope in the design, given its rooted
  * hierarchical name. Each component of the key is used to scan one
@@ -196,25 +172,6 @@ NetScope* Design::find_scope(const std::list<hname_t>&path) const
 		 ; scope != root_scopes_.end(); ++ scope ) {
 
 	    NetScope*cur = *scope;
-	    if (path.front() != cur->fullname())
-		  continue;
-
-	    std::list<hname_t> tmp = path;
-	    tmp.pop_front();
-
-	    while (cur) {
-		  if (tmp.empty()) return cur;
-
-		  cur = cur->child( tmp.front() );
-
-		  tmp.pop_front();
-	    }
-      }
-
-      for (map<NetScope*,PTaskFunc*>::const_iterator root = root_tasks_.begin()
-		 ; root != root_tasks_.end() ; ++ root) {
-
-	    NetScope*cur = root->first;
 	    if (path.front() != cur->fullname())
 		  continue;
 
@@ -253,6 +210,49 @@ NetScope* Design::find_scope(const hname_t&path) const
       return 0;
 }
 
+static bool is_design_unit(NetScope*scope)
+{
+      return (scope->type() == NetScope::MODULE && !scope->nested_module())
+	  || (scope->type() == NetScope::PACKAGE);
+}
+
+static bool is_subroutine(NetScope::TYPE type)
+{
+      return type == NetScope::TASK || type == NetScope::FUNC;
+}
+
+/*
+ * This method locates a scope within another scope, given its relative
+ * hierarchical name. Each component of the key is used to scan one
+ * more step down the tree until the name runs out or the search
+ * fails.
+ */
+NetScope* Design::find_scope_(NetScope*scope, const std::list<hname_t>&path,
+                              NetScope::TYPE type) const
+{
+      std::list<hname_t> tmp = path;
+
+      do {
+	    hname_t key = tmp.front();
+	      /* If we are looking for a module or we are not
+	       * looking at the last path component check for
+	       * a name match (second line). */
+	    if (scope->type() == NetScope::MODULE
+		&& (type == NetScope::MODULE || tmp.size() > 1)
+		&& scope->module_name()==key.peek_name()) {
+
+		    /* Up references may match module name */
+
+	    } else {
+		  scope = scope->child( key );
+		  if (scope == 0) break;
+	    }
+	    tmp.pop_front();
+      } while (! tmp.empty());
+
+      return scope;
+}
+
 /*
  * This is a relative lookup of a scope by name. The starting point is
  * the scope parameter within which I start looking for the scope. If
@@ -266,34 +266,60 @@ NetScope* Design::find_scope(NetScope*scope, const std::list<hname_t>&path,
       if (path.empty())
 	    return scope;
 
-      for ( ; scope ;  scope = scope->parent()) {
+	// Record the compilation unit scope for use later.
+      NetScope*unit_scope = scope->unit();
 
-	    std::list<hname_t> tmp = path;
+	// First search upwards through the hierarchy.
+      while (scope) {
+	    NetScope*found_scope = find_scope_(scope, path, type);
+	    if (found_scope)
+		  return found_scope;
 
-	    NetScope*cur = scope;
-	    do {
-		  hname_t key = tmp.front();
-		    /* If we are looking for a module or we are not
-		     * looking at the last path component check for
-		     * a name match (second line). */
-		  if (cur->type() == NetScope::MODULE
-		      && (type == NetScope::MODULE || tmp.size() > 1)
-		      && cur->module_name()==key.peek_name()) {
+	      // Avoid searching the unit scope twice.
+	    if (scope == unit_scope)
+		  unit_scope = 0;
 
-			  /* Up references may match module name */
+	      // Special case - see IEEE 1800-2012 section 23.8.1.
+	    if (unit_scope && is_design_unit(scope) && is_subroutine(type)) {
+		  found_scope = find_scope_(unit_scope, path, type);
+		  if (found_scope)
+			  return found_scope;
 
-		  } else {
-			cur = cur->child( key );
-			if (cur == 0) break;
-		  }
-		  tmp.pop_front();
-	    } while (! tmp.empty());
+		  unit_scope = 0;
+	    }
 
-	    if (cur) return cur;
+	    scope = scope->parent();
+      }
+
+	// If we haven't already done so, search the compilation unit scope.
+      if (unit_scope) {
+	    NetScope*found_scope = find_scope_(unit_scope, path, type);
+	    if (found_scope)
+		  return found_scope;
       }
 
 	// Last chance. Look for the name starting at the root.
       return find_scope(path);
+}
+
+/*
+ * This method locates a scope within another scope, given its relative
+ * hierarchical name. Each component of the key is used to scan one
+ * more step down the tree until the name runs out or the search
+ * fails.
+ */
+NetScope* Design::find_scope_(NetScope*scope, const hname_t&path,
+                              NetScope::TYPE type) const
+{
+	/* If we are looking for a module or we are not
+	 * looking at the last path component check for
+	 * a name match (second line). */
+      if ((scope->type() == NetScope::MODULE) && (type == NetScope::MODULE)
+	  && (scope->module_name() == path.peek_name())) {
+	      /* Up references may match module name */
+	    return scope;
+      }
+      return scope->child( path );
 }
 
 /*
@@ -307,24 +333,36 @@ NetScope* Design::find_scope(NetScope*scope, const hname_t&path,
 {
       assert(scope);
 
-      for ( ; scope ;  scope = scope->parent()) {
+	// Record the compilation unit scope for use later.
+      NetScope*unit_scope = scope->unit();
 
-	    NetScope*cur = scope;
+	// First search upwards through the hierarchy.
+      while (scope) {
+	    NetScope*found_scope = find_scope_(scope, path, type);
+	    if (found_scope)
+		  return found_scope;
 
-	      /* If we are looking for a module or we are not
-	       * looking at the last path component check for
-	       * a name match (second line). */
-	    if (cur->type() == NetScope::MODULE
-		&& (type == NetScope::MODULE)
-		&& cur->module_name()==path.peek_name()) {
+	      // Avoid searching the unit scope twice.
+	    if (scope == unit_scope)
+		  unit_scope = 0;
 
-		    /* Up references may match module name */
+	      // Special case - see IEEE 1800-2012 section 23.8.1.
+	    if (unit_scope && is_design_unit(scope) && is_subroutine(type)) {
+		  found_scope = find_scope_(unit_scope, path, type);
+		  if (found_scope)
+			  return found_scope;
 
-	    } else {
-		  cur = cur->child( path );
+		  unit_scope = 0;
 	    }
 
-	    if (cur) return cur;
+	    scope = scope->parent();
+      }
+
+	// If we haven't already done so, search the compilation unit scope.
+      if (unit_scope) {
+	    NetScope*found_scope = find_scope_(unit_scope, path, type);
+	    if (found_scope)
+		  return found_scope;
       }
 
 	// Last chance. Look for the name starting at the root.
@@ -865,11 +903,6 @@ NetScope* Design::find_task(NetScope*scope, const pform_name_t&name)
 	    return task;
 
       return 0;
-}
-
-void Design::add_root_task(NetScope*tscope, PTaskFunc*tf)
-{
-      root_tasks_[tscope] = tf;
 }
 
 void Design::add_node(NetNode*net)

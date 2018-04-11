@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -38,7 +38,7 @@ const char NOTICE[] =
 ;
 
 const char HELP[] =
-"Usage: iverilog [-EiSvV] [-B base] [-c cmdfile|-f cmdfile]\n"
+"Usage: iverilog [-EiSuvV] [-B base] [-c cmdfile|-f cmdfile]\n"
 "                [-g1995|-g2001|-g2005|-g2005-sv|-g2009|-g2012] [-g<feature>]\n"
 "                [-D macro[=defn]] [-I includedir]\n"
 "                [-M [mode=]depfile] [-m module]\n"
@@ -138,7 +138,9 @@ int gen_std_include = 1;
    of the include list. */
 int gen_relative_include = 0;
 
-char warning_flags[16] = "n";
+char warning_flags[17] = "n";
+
+int separate_compilation_flag = 0;
 
 /* Boolean: true means ignore errors about missing modules */
 int ignore_missing_modules = 0;
@@ -344,10 +346,15 @@ static int t_version_only(void)
 
 static void build_preprocess_command(int e_flag)
 {
-      snprintf(tmp, sizeof tmp, "%s%civlpp %s%s -F\"%s\" -f\"%s\" -p\"%s\" ",
-	       ivlpp_dir, sep, verbose_flag?" -v":"",
-	       e_flag?"":" -L", defines_path, source_path,
-	       compiled_defines_path);
+      snprintf(tmp, sizeof tmp, "%s%civlpp %s%s%s -F\"%s\" -f\"%s\" -p\"%s\"%s",
+	       ivlpp_dir, sep,
+               verbose_flag ? " -v" : "",
+	       e_flag ? "" : " -L",
+               strchr(warning_flags, 'r') ? " -Wredef-all " :
+               strchr(warning_flags, 'R') ? " -Wredef-chg " : "",
+               defines_path, source_path,
+	       compiled_defines_path,
+	       e_flag ? "" : " | ");
 }
 
 static int t_preprocess_only(void)
@@ -410,8 +417,12 @@ static int t_compile(void)
 {
       unsigned rc;
 
-	/* Start by building the preprocess command line. */
-      build_preprocess_command(0);
+	/* Start by building the preprocess command line, if required.
+	   This pipes into the main ivl command. */
+      if (!separate_compilation_flag)
+	    build_preprocess_command(0);
+      else
+	    strcpy(tmp, "");
 
       size_t ncmd = strlen(tmp);
       char*cmd = malloc(ncmd + 1);
@@ -421,8 +432,8 @@ static int t_compile(void)
       int rtn;
 #endif
 
-	/* Build the ivl command and pipe it to the preprocessor. */
-      snprintf(tmp, sizeof tmp, " | %s%civl", base, sep);
+	/* Build the ivl command. */
+      snprintf(tmp, sizeof tmp, "%s%civl", base, sep);
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
       strcpy(cmd+ncmd, tmp);
@@ -450,7 +461,16 @@ static int t_compile(void)
       strcpy(cmd+ncmd, tmp);
       ncmd += rc;
 
-      snprintf(tmp, sizeof tmp, " -C\"%s\" -- -", iconfig_common_path);
+      snprintf(tmp, sizeof tmp, " -C\"%s\"", iconfig_common_path);
+      rc = strlen(tmp);
+      cmd = realloc(cmd, ncmd+rc+1);
+      strcpy(cmd+ncmd, tmp);
+      ncmd += rc;
+
+      if (separate_compilation_flag)
+	    snprintf(tmp, sizeof tmp, " -F\"%s\"", source_path);
+      else
+	    snprintf(tmp, sizeof tmp, " -- -");
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
       strcpy(cmd+ncmd, tmp);
@@ -501,6 +521,7 @@ static void process_warning_switch(const char*name)
 	    process_warning_switch("anachronisms");
 	    process_warning_switch("implicit");
 	    process_warning_switch("implicit-dimensions");
+	    process_warning_switch("macro-replacement");
 	    process_warning_switch("portbind");
 	    process_warning_switch("select-range");
 	    process_warning_switch("timescale");
@@ -517,6 +538,12 @@ static void process_warning_switch(const char*name)
       } else if (strcmp(name,"implicit-dimensions") == 0) {
 	    if (! strchr(warning_flags, 'd'))
 		  strcat(warning_flags, "d");
+      } else if (strcmp(name,"macro-redefinition") == 0) {
+	  if (! strchr(warning_flags, 'r'))
+		  strcat(warning_flags, "r");
+      } else if (strcmp(name,"macro-replacement") == 0) {
+	  if (! strchr(warning_flags, 'R'))
+		  strcat(warning_flags, "R");
       } else if (strcmp(name,"portbind") == 0) {
 	    if (! strchr(warning_flags, 'p'))
 		  strcat(warning_flags, "p");
@@ -557,6 +584,17 @@ static void process_warning_switch(const char*name)
 	    }
       } else if (strcmp(name,"no-implicit-dimensions") == 0) {
 	    char*cp = strchr(warning_flags, 'd');
+	    if (cp) while (*cp) {
+		  cp[0] = cp[1];
+		  cp += 1;
+	    }
+      } else if (strcmp(name,"no-macro-redefinition") == 0) {
+	    char*cp = strchr(warning_flags, 'r');
+	    if (cp) while (*cp) {
+		  cp[0] = cp[1];
+		  cp += 1;
+	    }
+	    cp = strchr(warning_flags, 'R');
 	    if (cp) while (*cp) {
 		  cp[0] = cp[1];
 		  cp += 1;
@@ -990,7 +1028,7 @@ int main(int argc, char **argv)
 	}
       }
 
-      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hl:I:iM:m:N:o:P:p:Ss:T:t:vVW:y:Y:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hl:I:iM:m:N:o:P:p:Ss:T:t:uvVW:y:Y:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -1046,8 +1084,8 @@ int main(int argc, char **argv)
 		  break;
 
 		case 'i':
-  		  ignore_missing_modules = 1;
-  		  break;
+		  ignore_missing_modules = 1;
+		  break;
 
 		case 'l':
 		  process_file_name(optarg, 1);
@@ -1093,6 +1131,9 @@ int main(int argc, char **argv)
 		case 't':
 		  targ = optarg;
 		  break;
+		case 'u':
+		  separate_compilation_flag = 1;
+		  break;
 		case 'v':
 		  verbose_flag = 1;
 		  break;
@@ -1135,7 +1176,7 @@ int main(int argc, char **argv)
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
-	    printf("Copyright 1998-2015 Stephen Williams\n\n");
+	    printf("Copyright 1998-2017 Stephen Williams\n\n");
 	    puts(NOTICE);
       }
 
@@ -1288,8 +1329,12 @@ int main(int argc, char **argv)
 	/* Write the preprocessor command needed to preprocess a
 	   single file. This may be used to preprocess library
 	   files. */
-      fprintf(iconfig_file, "ivlpp:%s%civlpp -L -F\"%s\" -P\"%s\"\n",
-	      ivlpp_dir, sep, defines_path, compiled_defines_path);
+      fprintf(iconfig_file, "ivlpp:%s%civlpp %s -L -F\"%s\" -P\"%s\"\n",
+	      ivlpp_dir, sep,
+              strchr(warning_flags, 'r') ? "-Wredef-all" :
+              strchr(warning_flags, 'R') ? "-Wredef-chg" : "",
+              defines_path, compiled_defines_path
+      );
 
 	/* Done writing to the iconfig file. Close it now. */
       fclose(iconfig_file);

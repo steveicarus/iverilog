@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -393,6 +393,12 @@ static void show_lpm_cmp_eeq(ivl_lpm_t net)
 	    break;
 	  case IVL_LPM_CMP_NEE:
 	    str = "NEE";
+	    break;
+	  case IVL_LPM_CMP_WEQ:
+	    str = "WEQ";
+	    break;
+	  case IVL_LPM_CMP_WNE:
+	    str = "WNE";
 	    break;
 	  default:
 	    assert(0);
@@ -1043,6 +1049,8 @@ static void show_lpm(ivl_lpm_t net)
 	  case IVL_LPM_CMP_EQX:
 	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	    show_lpm_cmp_eeq(net);
 	    break;
 
@@ -1157,6 +1165,24 @@ static int show_process(ivl_process_t net, void*x)
 		  fprintf(out, "analog\n");
 	    else
 		  fprintf(out, "always\n");
+	    break;
+	  case IVL_PR_ALWAYS_COMB:
+	    if (ivl_process_analog(net))
+		  assert(0);
+	    else
+		  fprintf(out, "always_comb\n");
+	    break;
+	  case IVL_PR_ALWAYS_FF:
+	    if (ivl_process_analog(net))
+		  assert(0);
+	    else
+		  fprintf(out, "always_ff\n");
+	    break;
+	  case IVL_PR_ALWAYS_LATCH:
+	    if (ivl_process_analog(net))
+		  assert(0);
+	    else
+		  fprintf(out, "always_latch\n");
 	    break;
 	  case IVL_PR_FINAL:
 	    if (ivl_process_analog(net))

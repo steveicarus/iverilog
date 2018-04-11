@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -829,7 +829,7 @@ static void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
  * inputs, it is only accessed by behavioral trigger statements, which
  * in vvp are %set instructions.
  */
-void compile_named_event(char*label, char*name)
+void compile_named_event(char*label, char*name, bool local_flag)
 {
       vvp_net_t*ptr = new vvp_net_t;
 
@@ -842,7 +842,7 @@ void compile_named_event(char*label, char*name)
       }
       define_functor_symbol(label, ptr);
       compile_vpi_symbol(label, obj);
-      vpip_attach_to_current_scope(obj);
+      if (! local_flag) vpip_attach_to_current_scope(obj);
 
       free(label);
       delete[] name;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -78,9 +78,8 @@ static void elaborate_array_ranges(Design*des, NetScope*scope,
  */
 ivl_type_s* data_type_t::elaborate_type(Design*des, NetScope*scope)
 {
+      ivl_assert(*this, scope);
       Definitions*use_definitions = scope;
-      if (use_definitions == 0)
-	    use_definitions = des;
 
       map<Definitions*,ivl_type_s*>::iterator pos = cache_type_elaborate_.lower_bound(use_definitions);
 	  if (pos != cache_type_elaborate_.end() && pos->first == use_definitions)
@@ -147,13 +146,13 @@ ivl_type_s* class_type_t::elaborate_type_raw(Design*, NetScope*) const
  * available at the right time. At that time, the netenum_t* object is
  * stashed in the scope so that I can retrieve it here.
  */
-ivl_type_s* enum_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
+ivl_type_s* enum_type_t::elaborate_type_raw(Design*, NetScope*scope) const
 {
       ivl_assert(*this, scope);
       ivl_type_s*tmp = scope->enumeration_for_key(this);
-      if (tmp) return tmp;
-
-      tmp = des->enumeration_for_key(this);
+      if (tmp == 0 && scope->unit()) {
+	    tmp = scope->unit()->enumeration_for_key(this);
+}
       return tmp;
 }
 

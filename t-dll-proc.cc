@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -847,11 +847,14 @@ bool dll_target::proc_wait(const NetEvWait*net)
 
 	/* This is a wait fork statement. */
       if ((net->nevents() == 1) && (net->event(0) == 0)) {
+	    stmt_cur_->u_.wait_.needs_t0_trigger = 0;
 	    stmt_cur_->u_.wait_.event = 0;
 	    stmt_cur_->type_ = IVL_ST_WAIT;
 	    stmt_cur_->u_.wait_.stmt_->type_ = IVL_ST_NOOP;
 	    return true;
       }
+
+      stmt_cur_->u_.wait_.needs_t0_trigger = net->has_t0_trigger();
 
 	// This event processing code is also in the NB assign above.
       if (net->nevents() > 1) {

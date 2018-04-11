@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1971,6 +1971,8 @@ static const char *pts_convert(int value)
 {
       const char *string;
       switch (value) {
+            case   2: string = "100s";  break;
+            case   1: string = "10s";   break;
             case   0: string = "1s";    break;
             case  -1: string = "100ms"; break;
             case  -2: string = "10ms";  break;

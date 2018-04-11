@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -684,6 +684,8 @@ similar:
 	<label> .cmp/gt  <wid>, <A>, <B>;
 	<label> .cmp/ge.s <wid>, <A>, <B>;
 	<label> .cmp/gt.s <wid>, <A>, <B>;
+	<label> .cmp/weq <wid>, <A>, <B>;
+	<label> .cmp/wne <wid>, <A>, <B>;
 
 Whereas the arithmetic statements generate an output the width of
 <wid>, the comparisons produce a single bit vector result. The plain

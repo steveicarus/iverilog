@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -134,6 +134,9 @@ void synth_f::process(Design*des, NetProcTop*top)
       top_ = top;
       switch (top->type()) {
 	  case IVL_PR_ALWAYS:
+	  case IVL_PR_ALWAYS_COMB:
+	  case IVL_PR_ALWAYS_FF:
+	  case IVL_PR_ALWAYS_LATCH:
 	    proc_always_(des);
 	    break;
 	  case IVL_PR_INITIAL:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -38,7 +38,8 @@ PScope::PScope(perm_string n, LexicalScope*parent)
 {
       time_unit = 0;
       time_precision = 0;
-      time_from_timescale = false;
+      time_unit_is_default = true;
+      time_prec_is_default = true;
 }
 
 PScope::~PScope()
@@ -51,6 +52,8 @@ PScope::~PScope()
 PScopeExtra::PScopeExtra(perm_string n, LexicalScope*parent)
 : PScope(n, parent)
 {
+      time_unit_is_local = false;
+      time_prec_is_local = false;
 }
 
 PScopeExtra::~PScopeExtra()
