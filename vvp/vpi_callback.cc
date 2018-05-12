@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -774,6 +774,15 @@ void vvp_signal_value::get_signal_value(struct t_vpi_value*vp)
       }
 }
 
+static double vlg_round(double rval)
+{
+      if (rval >= 0.0) {
+            return floor(rval + 0.5);
+      } else {
+            return ceil(rval - 0.5);
+      }
+}
+
 static void real_signal_value(struct t_vpi_value*vp, double rval)
 {
       char*rbuf = (char *) need_result_buf(64 + 1, RBUF_VAL);
@@ -791,31 +800,26 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 	    if (rval != rval || (rval && (rval == 0.5*rval))) {
 		  rval = 0.0;
 	    } else {
-		  if (rval >= 0.0) rval = floor(rval + 0.5);
-		  else rval = ceil(rval - 0.5);
+		  rval = vlg_round(rval);
 	    }
 	    vp->value.integer = (PLI_INT32)rval;
 	    break;
 
 	  case vpiDecStrVal:
-#if !defined(__GNUC__)
-		  if (isnan(rval))
-			  sprintf(rbuf, "%s", "nan");
-		  else
-			  sprintf(rbuf, "%0.0f", rval);
-#else
-	    sprintf(rbuf, "%0.0f", rval);
-#endif
+	    if (isnan(rval))
+		  sprintf(rbuf, "%s", "nan");
+	    else
+		  sprintf(rbuf, "%0.0f", vlg_round(rval));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(rbuf, "%lx", (long)rval);
+	    sprintf(rbuf, "%lx", (long)vlg_round(rval));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiBinStrVal: {
-		unsigned long val = (unsigned long)rval;
+		unsigned long val = (unsigned long)vlg_round(rval);
 		unsigned len = 0;
 
 		while (val > 0) {
@@ -823,7 +827,7 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 		      val /= 2;
 		}
 
-		val = (unsigned long)rval;
+		val = (unsigned long)vlg_round(rval);
 		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
 		      rbuf[len-idx-1] = (val & 1)? '1' : '0';
 		      val /= 2;
