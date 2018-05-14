@@ -1,5 +1,5 @@
 /*
- * Copyright CERN 2016
+ * Copyright CERN 2016-2018
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -201,7 +201,7 @@ void preload_std_funcs(void)
     args = new list<InterfacePort*>();
     args->push_back(new InterfacePort(&primitive_REAL));
     register_std_subprogram(new SubprogramBuiltin(perm_string::literal("integer"),
-                                           perm_string::literal("$signed"),
+                                           perm_string::literal("int'"),
                                            args, &primitive_INTEGER));
 
     /* function std_logic_vector
