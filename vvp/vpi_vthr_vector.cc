@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -80,6 +80,15 @@ static int vthr_word_get(int code, vpiHandle ref)
       }
 }
 
+static double vlg_round(double rval)
+{
+      if (rval >= 0.0) {
+            return floor(rval + 0.5);
+      } else {
+            return ceil(rval - 0.5);
+      }
+}
+
 static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       struct __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(ref);
@@ -108,31 +117,26 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	    if (val != val || (val && (val == 0.5*val))) {
 		  val = 0.0;
 	    } else {
-		  if (val >= 0.0) val = floor(val + 0.5);
-		  else val = ceil(val - 0.5);
+		  val = vlg_round(val);
 	    }
 	    vp->value.integer = (PLI_INT32)val;
 	    break;
 
 	  case vpiDecStrVal:
-#if !defined(__GNUC__)
-		if (isnan(val))
-			sprintf(rbuf, "%s", "nan");
-		else
-			sprintf(rbuf, "%0.0f", val);
-#else
-	    sprintf(rbuf, "%0.0f", val);
-#endif
+	    if (isnan(val))
+		  sprintf(rbuf, "%s", "nan");
+	    else
+		  sprintf(rbuf, "%0.0f", vlg_round(val));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(rbuf, "%lx", (long)val);
+	    sprintf(rbuf, "%lx", (long)vlg_round(val));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiBinStrVal: {
-		unsigned long vali = (unsigned long)val;
+		unsigned long vali = (unsigned long)vlg_round(val);
 		unsigned len = 0;
 
 		while (vali > 0) {
@@ -140,7 +144,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 		      vali /= 2;
 		}
 
-		vali = (unsigned long)val;
+		vali = (unsigned long)vlg_round(val);
 		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
 		      rbuf[len-idx-1] = (vali & 1)? '1' : '0';
 		      vali /= 2;
