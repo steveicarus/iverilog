@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1445,6 +1445,13 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 		  des->errors += 1;
 		  return 0;
 	    }
+
+            if (!type_is_vectorable(expr_type_)) {
+	          cerr << get_fileline() << ": error: The argument to "
+		       << name << " must be a vector type." << endl;
+	          des->errors += 1;
+	          return 0;
+            }
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": PECallFunction::elaborate_sfunc_: "

@@ -1,5 +1,5 @@
 /*
- * Copyright CERN 2015
+ * Copyright CERN 2016-2018
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -120,7 +120,7 @@ void preload_std_funcs(void)
     std::list<InterfacePort*>*fn_integer_args = new std::list<InterfacePort*>();
     fn_integer_args->push_back(new InterfacePort(&primitive_INTEGER));
     fn_integer = new SubprogramBuiltin(perm_string::literal("integer"),
-                                           perm_string::literal("$signed"),
+                                           perm_string::literal("int'"),
                                            fn_integer_args, &primitive_INTEGER);
     std_subprograms[fn_integer->name()] = fn_integer;
 
