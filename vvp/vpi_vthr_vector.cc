@@ -130,6 +130,11 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	    vp->value.str = rbuf;
 	    break;
 
+	  case vpiOctStrVal:
+	    sprintf(rbuf, "%lo", (long)vlg_round(val));
+	    vp->value.str = rbuf;
+	    break;
+
 	  case vpiHexStrVal:
 	    sprintf(rbuf, "%lx", (long)vlg_round(val));
 	    vp->value.str = rbuf;
@@ -283,6 +288,7 @@ class __vpiVThrVec4Stack : public __vpiHandle {
       void vpi_get_value_int_   (p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_real_  (p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_strength_(p_vpi_value vp, const vvp_vector4_t&val);
+      void vpi_get_value_octstr_(p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_hexstr_(p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_vector_(p_vpi_value vp, const vvp_vector4_t&val);
     private:
@@ -350,6 +356,9 @@ void __vpiVThrVec4Stack::vpi_get_value(p_vpi_value vp)
 	  case vpiDecStrVal:
 	    vpi_get_value_decstr_(vp, val);
 	    break;
+	  case vpiOctStrVal:
+	    vpi_get_value_octstr_(vp, val);
+	    break;
 	  case vpiHexStrVal:
 	    vpi_get_value_hexstr_(vp, val);
 	    break;
@@ -397,6 +406,48 @@ void __vpiVThrVec4Stack::vpi_get_value_decstr_(p_vpi_value vp, const vvp_vector4
       char *rbuf = (char*) need_result_buf(nbuf, RBUF_VAL);
 
       vpip_vec4_to_dec_str(val, rbuf, nbuf, signed_flag_);
+      vp->value.str = rbuf;
+}
+
+void __vpiVThrVec4Stack::vpi_get_value_octstr_(p_vpi_value vp, const vvp_vector4_t&val)
+{
+      unsigned wid = val.size();
+      unsigned owid = (wid + 2) / 3;
+      char*rbuf = (char*) need_result_buf(owid+1, RBUF_VAL);
+      rbuf[owid] = 0;
+
+      unsigned oval = 0;
+      for (unsigned idx = 0; idx < wid ; idx += 1) {
+	    unsigned tmp = 0;
+	    switch (val.value(idx)) {
+		case BIT4_0:
+		  tmp = 0;
+		  break;
+		case BIT4_1:
+		  tmp = 1;
+		  break;
+		case BIT4_X:
+		  tmp = 2;
+		  break;
+		case BIT4_Z:
+		  tmp = 3;
+		  break;
+	    }
+
+	    oval = oval | (tmp << 2*(idx%3));
+
+	    if (idx%3 == 2) {
+		  owid -= 1;
+		  rbuf[owid] = oct_digits[oval];
+		  oval = 0;
+	    }
+      }
+
+      if (owid > 0) {
+	    owid -= 1;
+	    rbuf[owid] = oct_digits[oval];
+	    oval = 0;
+      }
       vp->value.str = rbuf;
 }
 
