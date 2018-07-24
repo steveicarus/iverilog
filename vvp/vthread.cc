@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2200,7 +2200,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
       }
 
       vthread_t parent = thr->parent;
-      if (parent && parent->i_am_joining) {
+      if (parent && parent->i_am_joining && test_joinable(parent, thr)) {
 	      // If a parent is waiting in a %join, wake it up. Note
 	      // that it is possible to be waiting in a %join yet
 	      // already scheduled if multiple child threads are
@@ -2210,8 +2210,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
 	    if (! parent->i_have_ended)
 		  schedule_vthread(parent, 0, true);
 
-	      // Let the parent do the reaping.
-	    vthread_reap(thr);
+	    do_join(parent, thr);
 
       } else if (parent) {
 	      /* If the parent is yet to %join me, let its %join
@@ -2518,6 +2517,10 @@ bool of_DIV_S(vthread_t thr, vvp_code_t)
 	    if (bp[0] == 0) {
 		  vvp_vector4_t tmp(wid, BIT4_X);
 		  vala = tmp;
+	    } else if (((long)ap[0] == LONG_MIN) && ((long)bp[0] == -1)) {
+		  vvp_vector4_t tmp(wid, BIT4_0);
+		  tmp.set_bit(wid-1, BIT4_1);
+		  vala = tmp;
 	    } else {
 		  long tmpa = (long) ap[0];
 		  long tmpb = (long) bp[0];
@@ -2614,7 +2617,7 @@ bool of_END(vthread_t thr, vvp_code_t)
 	/* If I have a parent who is waiting for me, then mark that I
 	   have ended, and schedule that parent. Also, finish the
 	   %join for the parent. */
-      if (thr->parent && thr->parent->i_am_joining) {
+      if (!thr->i_am_detached && thr->parent && thr->parent->i_am_joining) {
 	    vthread_t tmp = thr->parent;
 	    assert(! thr->i_am_detached);
 
@@ -3768,6 +3771,9 @@ bool of_MOD_S(vthread_t thr, vvp_code_t)
 	    if (rv == 0)
 		  goto x_out;
 
+	    if ((lv == LONG_LONG_MIN) && (rv == -1))
+		  goto zero_out;
+
 	      /* Sign extend the signed operands when needed. */
 	    if (wid < 8*sizeof(long long)) {
 		  if (lv & (1LL << (wid-1)))
@@ -3798,6 +3804,9 @@ bool of_MOD_S(vthread_t thr, vvp_code_t)
 
  x_out:
       vala = vvp_vector4_t(wid, BIT4_X);
+      return true;
+ zero_out:
+      vala = vvp_vector4_t(wid, BIT4_0);
       return true;
 }
 

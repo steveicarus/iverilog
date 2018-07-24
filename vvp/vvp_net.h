@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_net_H
 #define IVL_vvp_net_H
 /*
- * Copyright (c) 2004-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -954,9 +954,11 @@ inline vvp_vector8_t resolve(const vvp_vector8_t&a, const vvp_vector8_t&b)
       return out;
 }
 
-  /* This function implements the strength reduction implied by
-     Verilog standard resistive devices. */
-extern vvp_vector8_t resistive_reduction(const vvp_vector8_t&a);
+  /* This lookup tabke implements the strength reduction implied by
+     Verilog standard switch devices. The major dimension selects
+     between non-resistive and resistive devices. */
+extern unsigned vvp_switch_strength_map[2][8];
+
   /* The reduce4 function converts a vector8 to a vector4, losing
      strength information in the process. */
 extern vvp_vector4_t reduce4(const vvp_vector8_t&that);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2015 Tony Bybell.
+ * Copyright (c) 2009-2017 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -168,7 +168,11 @@ enum fstHierType {
     FST_HT_ATTRBEGIN   = 3,
     FST_HT_ATTREND     = 4,
 
-    FST_HT_MAX         = 4
+    /* FST_HT_TREEBEGIN and FST_HT_TREEEND are not yet used by FST but are currently used when fstHier bridges other formats */
+    FST_HT_TREEBEGIN   = 5,
+    FST_HT_TREEEND     = 6,
+
+    FST_HT_MAX         = 6
 };
 
 enum fstAttrType {

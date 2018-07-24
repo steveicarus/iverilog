@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2724,12 +2724,27 @@ DelayType NetProc::delay_type() const
 
 DelayType NetBlock::delay_type() const
 {
-      DelayType result = NO_DELAY;
+	// A join_none has no delay.
+      if (type() == PARA_JOIN_NONE) return NO_DELAY;
 
-      for (const NetProc*cur = proc_first(); cur; cur = proc_next(cur)) {
-	    DelayType dt = cur->delay_type();
-            if (dt > result) result = dt;
-            if (dt == DEFINITE_DELAY) break;
+      DelayType result;
+	// A join_any has the minimum delay.
+      if (type() == PARA_JOIN_ANY) {
+	    result = DEFINITE_DELAY;
+	    for (const NetProc*cur = proc_first(); cur; cur = proc_next(cur)) {
+		  DelayType dt = cur->delay_type();
+		  if (dt < result) result = dt;
+		  if (dt == NO_DELAY) break;
+	    }
+
+	// A begin or join has the maximum delay.
+      } else {
+	    result = NO_DELAY;
+	    for (const NetProc*cur = proc_first(); cur; cur = proc_next(cur)) {
+		  DelayType dt = cur->delay_type();
+		  if (dt > result) result = dt;
+		  if (dt == DEFINITE_DELAY) break;
+	    }
       }
 
       return result;
@@ -2800,9 +2815,10 @@ DelayType NetPDelay::delay_type() const
 		  return DEFINITE_DELAY;
 	    } else {
 		  if (statement_) {
-			return statement_->delay_type();
+			return combine_delays(ZERO_DELAY,
+			                      statement_->delay_type());
 		  } else {
-			return NO_DELAY;
+			return ZERO_DELAY;
 		  }
 	    }
       }

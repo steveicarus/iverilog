@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -289,7 +289,10 @@ static PLI_INT32 sys_sdf_annotate_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       FILE *sdf_fd;
       char *fname = get_filename(callh, name, vpi_scan(argv));
 
-      if (fname == 0) return 0;
+      if (fname == 0) {
+	    vpi_free_object(argv);
+	    return 0;
+      }
 
       sdf_fd = fopen(fname, "r");
       if (sdf_fd == 0) {
@@ -297,6 +300,8 @@ static PLI_INT32 sys_sdf_annotate_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("Unable to open SDF file \"%s\"."
 		       " Skipping this annotation.\n", fname);
+	    vpi_free_object(argv);
+	    free(fname);
 	    return 0;
       }
 

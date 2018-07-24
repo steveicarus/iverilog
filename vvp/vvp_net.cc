@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -3421,7 +3421,8 @@ unsigned vvp_wide_fun_core::port_count() const
 vvp_vector4_t& vvp_wide_fun_core::value(unsigned idx)
 {
       assert(idx < nports_);
-      assert(port_values_);
+      if (port_values_ == 0)
+	    port_values_ = new vvp_vector4_t [nports_];
       return port_values_[idx];
 }
 
@@ -3685,31 +3686,28 @@ vvp_scalar_t fully_featured_resolv_(vvp_scalar_t a, vvp_scalar_t b)
       return res;
 }
 
-vvp_vector8_t resistive_reduction(const vvp_vector8_t&that)
-{
-      static unsigned rstr[8] = {
-	    0, /* Hi-Z --> Hi-Z */
-	    1, /* Small capacitance  --> Small capacitance */
-	    1, /* Medium capacitance --> Small capacitance */
-	    2, /* Weak drive         --> Medium capacitance */
-	    2, /* Large capacitance  --> Medium capacitance */
-	    3, /* Pull drive         --> Weak drive */
-	    5, /* Strong drive       --> Pull drive */
-	    5  /* Supply drive       --> Pull drive */
-      };
-
-      vvp_vector8_t res (that.size());
-
-      for (unsigned idx = 0 ;  idx < res.size() ;  idx += 1) {
-	    vvp_scalar_t bit = that.value(idx);
-	    bit = vvp_scalar_t(bit.value(),
-			       rstr[bit.strength0()],
-			       rstr[bit.strength1()]);
-	    res.set_bit(idx, bit);
+unsigned vvp_switch_strength_map[2][8] = {
+      {  // non-resistive
+	    0, /* High impedance   --> High impedance   */
+	    1, /* Small capacitor  --> Small capacitor  */
+	    2, /* Medium capacitor --> Medium capacitor */
+	    3, /* Weak drive       --> Weak drive       */
+	    4, /* Large capacitor  --> Large capacitor  */
+	    5, /* Pull drive       --> Pull drive       */
+	    6, /* Strong drive     --> Strong drive     */
+	    6  /* Supply drive     --> Strong drive     */
+      },
+      {  // resistive
+	    0, /* High impedance   --> High impedance   */
+	    1, /* Small capacitor  --> Small capacitor  */
+	    1, /* Medium capacitor --> Small capacitor  */
+	    2, /* Weak drive       --> Medium capacitor */
+	    2, /* Large capacitor  --> Medium capacitor */
+	    3, /* Pull drive       --> Weak drive       */
+	    5, /* Strong drive     --> Pull drive       */
+	    5  /* Supply drive     --> Pull drive       */
       }
-
-      return res;
-}
+};
 
 vvp_vector4_t reduce4(const vvp_vector8_t&that)
 {

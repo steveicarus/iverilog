@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1445,6 +1445,13 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 		  des->errors += 1;
 		  return 0;
 	    }
+
+            if (!type_is_vectorable(expr_type_)) {
+	          cerr << get_fileline() << ": error: The argument to "
+		       << name << " must be a vector type." << endl;
+	          des->errors += 1;
+	          return 0;
+            }
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": PECallFunction::elaborate_sfunc_: "
@@ -3440,29 +3447,41 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       }
 
       if (net == 0) {
-	    cerr << get_fileline() << ": internal error: "
-		 << "Expecting idents with ntype to be signals." << endl;
+            cerr << get_fileline() << ": error: Unable to bind variable `"
+	         << path_ << "' in `" << scope_path(use_scope) << "'" << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
-      if (! ntype->type_compatible(net->net_type())) {
-	    cerr << get_fileline() << ": internal_error: "
-		 << "net type doesn't match context type." << endl;
+      if (const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype)) {
+            if (array_type->type_compatible(net->net_type())) {
+                  NetESignal*tmp = new NetESignal(net);
+                  tmp->set_line(*this);
+                  return tmp;
+            }
 
-	    cerr << get_fileline() << ":               : "
-		 << "net type=";
+              // Icarus allows a dynamic array to be initialised with a
+              // single elementary value, so try that next.
+	    ntype = array_type->element_type();
+      }
+
+      if (! ntype->type_compatible(net->net_type())) {
+	    cerr << get_fileline() << ": error: the type of the variable '"
+		 << path_ << "' doesn't match the context type." << endl;
+
+	    cerr << get_fileline() << ":      : " << "variable type=";
 	    if (net->net_type())
 		  net->net_type()->debug_dump(cerr);
 	    else
 		  cerr << "<nil>";
 	    cerr << endl;
 
-	    cerr << get_fileline() << ":               : "
-		 << "context type=";
+	    cerr << get_fileline() << ":      : " << "context type=";
 	    ivl_assert(*this, ntype);
 	    ntype->debug_dump(cerr);
 	    cerr << endl;
+	    des->errors += 1;
+	    return 0;
       }
       ivl_assert(*this, ntype->type_compatible(net->net_type()));
 
@@ -5318,9 +5337,8 @@ NetExpr* PENewArray::elaborate_expr(Design*des, NetScope*scope,
 	      // expression. Elaborate the expression as an element
 	      // type. The run-time will assign this value to each element.
 	    const netarray_t*array_type = dynamic_cast<const netarray_t*> (ntype);
-	    ivl_type_t elem_type = array_type->element_type();
 
-	    init_val = init_->elaborate_expr(des, scope, elem_type, flags);
+	    init_val = init_->elaborate_expr(des, scope, array_type, flags);
       }
 
       NetENew*tmp = new NetENew(ntype, size, init_val);
@@ -5571,6 +5589,10 @@ unsigned PENumber::test_width(Design*, NetScope*, width_mode_t&mode)
 
 NetExpr* PENumber::elaborate_expr(Design*des, NetScope*, ivl_type_t ntype, unsigned) const
 {
+        // Icarus allows dynamic arrays to be initialised with a single value.
+      if (const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype))
+            ntype = array_type->element_type();
+
       const netvector_t*use_type = dynamic_cast<const netvector_t*> (ntype);
       if (use_type == 0) {
 	    cerr << get_fileline() << ": internal error: "
