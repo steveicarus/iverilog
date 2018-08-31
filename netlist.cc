@@ -2954,7 +2954,7 @@ static bool do_expr_event_match(const NetExpr*expr, const NetEvWait*evwt)
 	// The event wait should only have a single event.
       if (evwt->nevents() != 1) return false;
 	// The event should have a single probe.
-      const NetEvent* evt = evwt->event(0);
+      const NetEvent *evt = evwt->event(0);
       if (evt->nprobe() != 1) return false;
 	// The probe should be for any edge.
       const NetEvProbe *prb = evt->probe(0);

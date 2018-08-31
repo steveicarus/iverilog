@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010,2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,6 +23,7 @@
 # include <stdlib.h>
 # include <string.h>
 
+extern void sys_bit_vec_register(void);
 extern void sys_convert_register(void);
 extern void sys_countdrivers_register(void);
 extern void sys_darray_register(void);
@@ -196,6 +197,7 @@ static void sys_lxt_or_vcd_register(void)
 }
 
 void (*vlog_startup_routines[])(void) = {
+      sys_bit_vec_register,
       sys_convert_register,
       sys_countdrivers_register,
       sys_darray_register,

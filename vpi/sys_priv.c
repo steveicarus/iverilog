@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -398,4 +398,24 @@ PLI_INT32 sys_one_string_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       check_for_extra_args(argv, callh, name, "a single string argument", 0);
 
       return 0;
+}
+
+/* Return an integer value to the caller. */
+void put_integer_value(vpiHandle callh, PLI_INT32 result)
+{
+      s_vpi_value val;
+
+      val.format = vpiIntVal;
+      val.value.integer = result;
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
+}
+
+/* Return a scalar value to the caller. */
+void put_scalar_value(vpiHandle callh, PLI_INT32 result)
+{
+      s_vpi_value val;
+
+      val.format = vpiScalarVal;
+      val.value.scalar = result;
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
 }

@@ -51,7 +51,8 @@ CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
 # Object files for system.vpi
-O = sys_table.o sys_convert.o sys_countdrivers.o sys_darray.o sys_deposit.o sys_display.o \
+O = sys_table.o sys_bit_vec.o sys_convert.o sys_countdrivers.o sys_darray.o \
+    sys_deposit.o sys_display.o \
     sys_fileio.o sys_finish.o sys_icarus.o sys_plusargs.o sys_queue.o \
     sys_random.o sys_random_mti.o sys_readmem.o sys_readmem_lex.o sys_scanf.o \
     sys_sdf.o sys_time.o sys_vcd.o sys_vcdoff.o vcd_priv.o mt19937int.o \
