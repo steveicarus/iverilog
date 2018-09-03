@@ -283,7 +283,7 @@ static PLI_INT32 sys_bit_vec_sizetf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 /*
  * Register the functions with Verilog.
  */
-void sys_bit_vec_register(void)
+void sys_bitvec_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;
