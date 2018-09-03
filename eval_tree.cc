@@ -1908,17 +1908,16 @@ NetExpr* NetESFunc::evaluate_min_max_(ID id, const NetExpr*arg0_,
       return res;
 }
 
-static void no_string_arg(const NetESFunc*info)
+static void no_string_arg(const NetESFunc*info, unsigned arg_num)
 {
       cerr << info->get_fileline() << ": error: constant function "
-           << info->name() << "() does not support a string argument."
-           << endl;
+           << info->name() << "() does not support a string argument ("
+           << arg_num+1 << ")." << endl;
 }
 
-NetEConst* NetESFunc::evaluate_countbits_(const NetExpr* arg,
-                                          const NetExpr* /*arg1*/) const
+NetEConst* NetESFunc::evaluate_countbits_() const
 {
-      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg);
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(parms_[0]);
 
       NetEConst*res = 0;
 
@@ -1926,13 +1925,63 @@ NetEConst* NetESFunc::evaluate_countbits_(const NetExpr* arg,
 	    verinum value = tmpi->value();
 
 	    if (value.is_string()) {
-		  no_string_arg(this);
+		  no_string_arg(this, 0);
 		  return 0;
 	    }
 
-	    cerr << get_fileline() << ": error: constant function "
-	         << name_ << "() is not currently supported."
-	         << endl;
+	      /* Find which values need to be counted. */
+	    bool count_0 = false;
+	    bool count_1 = false;
+	    bool count_z = false;
+	    bool count_x = false;
+	    for (unsigned arg=1; arg < parms_.size(); ++arg) {
+		  const NetEConst*argi = dynamic_cast<const NetEConst*>(parms_[arg]);
+		  if (! argi) return 0;
+		  verinum check_for = argi->value();
+		  if (check_for.is_string()) {
+			no_string_arg(this, arg);
+			return 0;
+		  }
+		  switch (check_for[0]) {
+		    case verinum::V0:
+			count_0 = true;
+			break;
+		    case verinum::V1:
+			count_1 = true;
+			break;
+		    case verinum::Vz:
+			count_z = true;
+			break;
+		    case verinum::Vx:
+			count_x = true;
+			break;
+		  }
+	    }
+
+	      /* Search each bit of the vector looking for the values to
+	       * be counted. */
+	    int count = 0;
+	    for (unsigned bit=0; bit < value.len(); ++bit) {
+		  switch (value[bit]) {
+		    case verinum::V0:
+			if (count_0) ++count;
+			break;
+		    case verinum::V1:
+			if (count_1) ++count;
+			break;
+		    case verinum::Vz:
+			if (count_z) ++count;
+			break;
+		    case verinum::Vx:
+			if (count_x) ++count;
+			break;
+		  }
+	    }
+
+	    verinum tmp (count, integer_width);
+	    tmp.has_sign(true);
+	    res = new NetEConst(tmp);
+	    ivl_assert(*this, res);
       }
 
       return res;
@@ -1949,12 +1998,12 @@ NetEConst* NetESFunc::evaluate_countones_(const NetExpr* arg) const
 	    int count = 0;
 
 	    if (value.is_string()) {
-		  no_string_arg(this);
+		  no_string_arg(this, 0);
 		  return 0;
 	    }
 
 	    for (unsigned bit=0; bit < value.len(); ++bit) {
-		  if (value[bit] == verinum::V1) count += 1;
+		  if (value[bit] == verinum::V1) ++count;
 	    }
 
 	    verinum tmp (count, integer_width);
@@ -1997,7 +2046,7 @@ NetEConst* NetESFunc::evaluate_isunknown_(const NetExpr* arg) const
 	    unsigned is_unknown = 1;
 
 	    if (value.is_string()) {
-		  no_string_arg(this);
+		  no_string_arg(this, 0);
 		  return 0;
 	    }
 
@@ -2038,7 +2087,7 @@ NetEConst* NetESFunc::evaluate_onehot_(const NetExpr* arg) const
 	    verinum value = tmpi->value();
 
 	    if (value.is_string()) {
-		  no_string_arg(this);
+		  no_string_arg(this, 0);
 		  return 0;
 	    }
 
@@ -2061,7 +2110,7 @@ NetEConst* NetESFunc::evaluate_onehot0_(const NetExpr* arg) const
 	    verinum value = tmpi->value();
 
 	    if (value.is_string()) {
-		  no_string_arg(this);
+		  no_string_arg(this, 0);
 		  return 0;
 	    }
 
@@ -2243,7 +2292,7 @@ NetExpr* NetESFunc::evaluate_two_arg_(ID id, const NetExpr*arg0,
 {
       switch (id) {
 	  case CTBITS:
-	    return evaluate_countbits_(arg0, arg1);
+	    return evaluate_countbits_();
 	      /* The array functions are handled together. */
 	  case HIGH:
 	  case INCR:
@@ -2381,10 +2430,16 @@ NetExpr* NetESFunc::eval_tree()
 		       << " arguments." << endl;
 		  return 0;
 	    }
-// HERE: Need to add support for a multi argument $countbits().
-	    cerr << get_fileline() << ": sorry: constant functions with "
-	         << parms_.size() << " arguments are not supported: "
-	         << name_ << "()." << endl;
+	    if (id == CTBITS) {
+		  for (unsigned bit = 0; bit < parms_.size(); ++bit) {
+			eval_expr(parms_[bit]);
+		  }
+		  return evaluate_countbits_();
+	    } else {
+		  cerr << get_fileline() << ": sorry: constant functions with "
+		       << parms_.size() << " arguments are not supported: "
+		       << name_ << "()." << endl;
+	    }
 	    return 0;
       }
 }

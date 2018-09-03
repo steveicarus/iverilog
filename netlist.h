@@ -4657,8 +4657,7 @@ class NetESFunc  : public NetExpr {
       NetEConst* evaluate_array_funcs_(ID id,
                                        const NetExpr*arg0,
                                        const NetExpr*arg1) const;
-      NetEConst* evaluate_countbits_(const NetExpr*arg0,
-                                     const NetExpr*arg1) const;
+      NetEConst* evaluate_countbits_(void) const;
 
     public:
       bool is_built_in() const { return built_in_id_() != NOT_BUILT_IN; };
