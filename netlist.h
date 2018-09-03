@@ -4605,7 +4605,7 @@ class NetESFunc  : public NetExpr {
                   /* Added in SystemVerilog 2009 and later. */
                 CTONES = 0x00020024,  /* $countones takes one argument. */
                   /* Added in SystemVerilog 2012 and later. */
-                CTBITS = 0xfffe0025,  /* $countbits takes one or more arguments. */
+                CTBITS = 0xfffc0025,  /* $countbits takes two or more arguments. */
                   /* Added as Icarus extensions to Verilog-A. */
                 ABS    = 0x00020026,  /* $abs takes one argument. */
                 MAX    = 0x00040027,  /* $max takes two argument. */

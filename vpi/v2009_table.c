@@ -24,7 +24,7 @@ extern void v2009_string_register(void);
 
 void (*vlog_startup_routines[])(void) = {
       v2009_array_register,
-      v2009_sys_bitvec_register,
+      v2009_bitvec_register,
       v2009_enum_register,
       v2009_string_register,
       0

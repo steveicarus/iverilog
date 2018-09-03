@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1908,15 +1908,62 @@ NetExpr* NetESFunc::evaluate_min_max_(ID id, const NetExpr*arg0_,
       return res;
 }
 
-NetEConst* NetESFunc::evaluate_countbits_(const NetExpr* /*arg0*/,
-                                          const NetExpr* /*arg1*/) const
+static void no_string_arg(const NetESFunc*info)
 {
-      return 0;
+      cerr << info->get_fileline() << ": error: constant function "
+           << info->name() << "() does not support a string argument."
+           << endl;
 }
 
-NetEConst* NetESFunc::evaluate_countones_(const NetExpr* /*arg*/) const
+NetEConst* NetESFunc::evaluate_countbits_(const NetExpr* arg,
+                                          const NetExpr* /*arg1*/) const
 {
-      return 0;
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg);
+
+      NetEConst*res = 0;
+
+      if (tmpi) {
+	    verinum value = tmpi->value();
+
+	    if (value.is_string()) {
+		  no_string_arg(this);
+		  return 0;
+	    }
+
+	    cerr << get_fileline() << ": error: constant function "
+	         << name_ << "() is not currently supported."
+	         << endl;
+      }
+
+      return res;
+}
+
+NetEConst* NetESFunc::evaluate_countones_(const NetExpr* arg) const
+{
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg);
+
+      NetEConst*res = 0;
+
+      if (tmpi) {
+	    verinum value = tmpi->value();
+	    int count = 0;
+
+	    if (value.is_string()) {
+		  no_string_arg(this);
+		  return 0;
+	    }
+
+	    for (unsigned bit=0; bit < value.len(); ++bit) {
+		  if (value[bit] == verinum::V1) count += 1;
+	    }
+
+	    verinum tmp (count, integer_width);
+	    tmp.has_sign(true);
+	    res = new NetEConst(tmp);
+	    ivl_assert(*this, res);
+      }
+
+      return res;
 }
 
 /* Get the total number of dimensions for the given expression. */
@@ -1939,19 +1986,92 @@ NetEConst* NetESFunc::evaluate_dimensions_(const NetExpr*arg) const
       return new NetEConst(verinum(verinum(res), integer_width));
 }
 
-NetEConst* NetESFunc::evaluate_isunknown_(const NetExpr* /*arg*/) const
+NetEConst* NetESFunc::evaluate_isunknown_(const NetExpr* arg) const
 {
-      return 0;
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg);
+
+      NetEConst*res = 0;
+
+      if (tmpi) {
+	    verinum value = tmpi->value();
+	    unsigned is_unknown = 1;
+
+	    if (value.is_string()) {
+		  no_string_arg(this);
+		  return 0;
+	    }
+
+	    if (value.is_defined()) is_unknown = 0;
+
+	    verinum tmp (is_unknown, 1U);
+	    tmp.has_sign(false);
+	    res = new NetEConst(tmp);
+	    ivl_assert(*this, res);
+      }
+
+      return res;
 }
 
-NetEConst* NetESFunc::evaluate_onehot_(const NetExpr* /*arg*/) const
+static bool is_onehot(verinum&value, bool zero_is_okay)
 {
-      return 0;
+      bool found_a_one = false;
+
+      for (unsigned bit=0; bit < value.len(); ++bit) {
+	    if (value[bit] == verinum::V1) {
+		  if (found_a_one) return false;
+		  found_a_one = true;
+	    }
+      }
+
+	/* If no one bit was found return true if zero is okay. */
+      if (zero_is_okay) found_a_one = true;
+      return found_a_one;
 }
 
-NetEConst* NetESFunc::evaluate_onehot0_(const NetExpr* /*arg*/) const
+NetEConst* NetESFunc::evaluate_onehot_(const NetExpr* arg) const
 {
-      return 0;
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg);
+
+      NetEConst*res = 0;
+
+      if (tmpi) {
+	    verinum value = tmpi->value();
+
+	    if (value.is_string()) {
+		  no_string_arg(this);
+		  return 0;
+	    }
+
+	    verinum tmp (is_onehot(value, false), 1U);
+	    tmp.has_sign(false);
+	    res = new NetEConst(tmp);
+	    ivl_assert(*this, res);
+      }
+
+      return res;
+}
+
+NetEConst* NetESFunc::evaluate_onehot0_(const NetExpr* arg) const
+{
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg);
+
+      NetEConst*res = 0;
+
+      if (tmpi) {
+	    verinum value = tmpi->value();
+
+	    if (value.is_string()) {
+		  no_string_arg(this);
+		  return 0;
+	    }
+
+	    verinum tmp (is_onehot(value, true), 1U);
+	    tmp.has_sign(false);
+	    res = new NetEConst(tmp);
+	    ivl_assert(*this, res);
+      }
+
+      return res;
 }
 
 /* Get the number of unpacked dimensions for the given expression. */
@@ -2194,12 +2314,12 @@ NetESFunc::ID NetESFunc::built_in_id_() const
 	    built_in_func["$unpacked_dimensions" ] = UPDIMS;
       }
 
-	/* These are available in 1800-2009 and later. */
+	/* This is available in 1800-2009 and later. */
       if (funcs_need_init && (generation_flag >= GN_VER2009)) {
 	    built_in_func["$countones" ] = CTONES;
       }
 
-	/* These are available in 1800-2012 and later. */
+	/* This is available in 1800-2012 and later. */
       if (funcs_need_init && (generation_flag >= GN_VER2012)) {
 	    built_in_func["$countbits" ] = CTBITS;
       }
@@ -2226,7 +2346,7 @@ NetESFunc::ID NetESFunc::built_in_id_() const
 
 NetExpr* NetESFunc::eval_tree()
 {
-	/* Get the ID for this system function if it is can be used as a
+	/* Get the ID for this system function if it can be used as a
 	 * constant function. */
       ID id = built_in_id_();
       if (id == NOT_BUILT_IN) return 0;
@@ -2234,8 +2354,9 @@ NetExpr* NetESFunc::eval_tree()
       switch (parms_.size()) {
 	  case 1:
 	    if (! takes_nargs_(id, 1)) {
-		  cerr << get_fileline() << ": error: " << name_
-		       << "() does not support a single argument." << endl;
+		  cerr << get_fileline() << ": error: constant function "
+		       << name_ << "() does not support a single argument."
+		       << endl;
 		  return 0;
 	    }
 	    eval_expr(parms_[0]);
@@ -2243,8 +2364,9 @@ NetExpr* NetESFunc::eval_tree()
 
 	  case 2:
 	    if (! takes_nargs_(id, 2)) {
-		  cerr << get_fileline() << ": error: " << name_
-		       << "() does not support two arguments." << endl;
+		  cerr << get_fileline() << ": error: constant function "
+		       << name_ << "() does not support two arguments."
+		       << endl;
 		  return 0;
 	    }
 	    eval_expr(parms_[0]);
@@ -2254,13 +2376,13 @@ NetExpr* NetESFunc::eval_tree()
 	  default:
 	      /* Check to see if the function was called correctly. */
 	    if (! takes_nargs_(id, parms_.size())) {
-		  cerr << get_fileline() << ": error: " << name_
-		       << "() does not support " << parms_.size()
+		  cerr << get_fileline() << ": error: constant function "
+		       << name_ << "() does not support " << parms_.size()
 		       << " arguments." << endl;
 		  return 0;
 	    }
 // HERE: Need to add support for a multi argument $countbits().
-	    cerr << get_fileline() << ": sorry: functions with "
+	    cerr << get_fileline() << ": sorry: constant functions with "
 	         << parms_.size() << " arguments are not supported: "
 	         << name_ << "()." << endl;
 	    return 0;

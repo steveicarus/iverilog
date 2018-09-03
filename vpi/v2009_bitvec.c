@@ -23,7 +23,7 @@
 /*
  * Check that $couintbits() is called with the correct arguments.
  */
-static PLI_INT32 sys_countbits_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
+static PLI_INT32 countbits_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv, arg;
@@ -100,7 +100,7 @@ static PLI_INT32 count_bits_in_expr(vpiHandle expr_arg, char search[4])
       return result;
 }
 
-static PLI_INT32 sys_countbits_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
+static PLI_INT32 countbits_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -169,7 +169,7 @@ static PLI_INT32 count_ones_in_expr(vpiHandle expr_arg)
       return result;
 }
 
-static PLI_INT32 sys_countones_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
+static PLI_INT32 countones_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -213,7 +213,7 @@ static PLI_INT32 is_onehot(vpiHandle expr_arg, unsigned zero_is_okay)
       return vpi0;
 }
 
-static PLI_INT32 sys_onehot_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
+static PLI_INT32 onehot_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -227,7 +227,7 @@ static PLI_INT32 sys_onehot_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_onehot0_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
+static PLI_INT32 onehot0_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -259,7 +259,7 @@ static PLI_INT32 is_unknown(vpiHandle expr_arg)
       return vpi0;
 }
 
-static PLI_INT32 sys_isunknown_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
+static PLI_INT32 isunknown_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -273,7 +273,7 @@ static PLI_INT32 sys_isunknown_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_bit_vec_sizetf(ICARUS_VPI_CONST PLI_BYTE8 *name)
+static PLI_INT32 bit_vec_sizetf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       (void)name;  /* Parameter is not used. */
 
@@ -283,15 +283,15 @@ static PLI_INT32 sys_bit_vec_sizetf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 /*
  * Register the functions with Verilog.
  */
-void sys_bitvec_register(void)
+void v2009_bitvec_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;
 
       tf_data.type        = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
-      tf_data.calltf      = sys_countbits_calltf;
-      tf_data.compiletf   = sys_countbits_compiletf;
+      tf_data.calltf      = countbits_calltf;
+      tf_data.compiletf   = countbits_compiletf;
       tf_data.sizetf      = 0;
       tf_data.tfname      = "$countbits";
       tf_data.user_data   = 0;
@@ -300,7 +300,7 @@ void sys_bitvec_register(void)
 
       tf_data.type        = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
-      tf_data.calltf      = sys_countones_calltf;
+      tf_data.calltf      = countones_calltf;
       tf_data.compiletf   = sys_one_numeric_arg_compiletf;
       tf_data.sizetf      = 0;
       tf_data.tfname      = "$countones";
@@ -310,9 +310,9 @@ void sys_bitvec_register(void)
 
       tf_data.type        = vpiSysFunc;
       tf_data.sysfunctype = vpiSizedFunc;
-      tf_data.calltf      = sys_onehot_calltf;
+      tf_data.calltf      = onehot_calltf;
       tf_data.compiletf   = sys_one_numeric_arg_compiletf;
-      tf_data.sizetf      = sys_bit_vec_sizetf;
+      tf_data.sizetf      = bit_vec_sizetf;
       tf_data.tfname      = "$onehot";
       tf_data.user_data   = "$onehot";
       res = vpi_register_systf(&tf_data);
@@ -320,9 +320,9 @@ void sys_bitvec_register(void)
 
       tf_data.type        = vpiSysFunc;
       tf_data.sysfunctype = vpiSizedFunc;
-      tf_data.calltf      = sys_onehot0_calltf;
+      tf_data.calltf      = onehot0_calltf;
       tf_data.compiletf   = sys_one_numeric_arg_compiletf;
-      tf_data.sizetf      = sys_bit_vec_sizetf;
+      tf_data.sizetf      = bit_vec_sizetf;
       tf_data.tfname      = "$onehot0";
       tf_data.user_data   = "$onehot0";
       res = vpi_register_systf(&tf_data);
@@ -330,9 +330,9 @@ void sys_bitvec_register(void)
 
       tf_data.type        = vpiSysFunc;
       tf_data.sysfunctype = vpiSizedFunc;
-      tf_data.calltf      = sys_isunknown_calltf;
+      tf_data.calltf      = isunknown_calltf;
       tf_data.compiletf   = sys_one_numeric_arg_compiletf;
-      tf_data.sizetf      = sys_bit_vec_sizetf;
+      tf_data.sizetf      = bit_vec_sizetf;
       tf_data.tfname      = "$isunknown";
       tf_data.user_data   = "$isunknown";
       res = vpi_register_systf(&tf_data);
