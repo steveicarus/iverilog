@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,11 +18,13 @@
  */
 
 extern void v2009_array_register(void);
+extern void v2009_bitvec_register(void);
 extern void v2009_enum_register(void);
 extern void v2009_string_register(void);
 
 void (*vlog_startup_routines[])(void) = {
       v2009_array_register,
+      v2009_sys_bitvec_register,
       v2009_enum_register,
       v2009_string_register,
       0

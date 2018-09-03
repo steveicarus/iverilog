@@ -23,7 +23,6 @@
 # include <stdlib.h>
 # include <string.h>
 
-extern void sys_bit_vec_register(void);
 extern void sys_convert_register(void);
 extern void sys_countdrivers_register(void);
 extern void sys_darray_register(void);
@@ -197,7 +196,6 @@ static void sys_lxt_or_vcd_register(void)
 }
 
 void (*vlog_startup_routines[])(void) = {
-      sys_bit_vec_register,
       sys_convert_register,
       sys_countdrivers_register,
       sys_darray_register,

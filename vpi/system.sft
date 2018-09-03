@@ -17,12 +17,6 @@ $dist_erlang       vpiSysFuncInt
 $clog2             vpiSysFuncInt
 $q_full            vpiSysFuncInt
 
-$countbits  vpiSysFuncInt
-$countones  vpiSysFuncInt
-$onehot     vpiSysFuncSized 1 unsigned
-$onehot0    vpiSysFuncSized 1 unsigned
-$isunknown  vpiSysFuncSized 1 unsigned
-
 $abstime       vpiSysFuncReal
 $simparam      vpiSysFuncReal
 $simparam$str  vpiSysFuncSized 1024 unsigned
