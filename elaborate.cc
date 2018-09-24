@@ -6198,6 +6198,132 @@ bool Design::check_proc_delay() const
       return result;
 }
 
+static void print_nexus_name(const Nexus*nex)
+{
+      for (const Link*cur = nex->first_nlink(); cur; cur = cur->next_nlink()) {
+	    if (cur->get_dir() != Link::OUTPUT) continue;
+	    const NetPins*obj = cur->get_obj();
+	      // For a NetNet (signal) just use the name.
+	    if (const NetNet*net = dynamic_cast<const NetNet*>(obj)) {
+		  cerr << net->name();
+		  return;
+	      // For a NetPartSelect calculate the name.
+	    } else if (const NetPartSelect*ps = dynamic_cast<const NetPartSelect*>(obj)) {
+		  assert(ps->pin_count() >= 2);
+		  assert(ps->pin(1).get_dir() == Link::INPUT);
+		  assert(ps->pin(1).is_linked());
+		  print_nexus_name(ps->pin(1).nexus());
+		  cerr << "[]";
+		  return;
+	      // For a NetUReduce calculate the name.
+	    } else if (const NetUReduce*reduce = dynamic_cast<const NetUReduce*>(obj)) {
+		  assert(reduce->pin_count() == 2);
+		  assert(reduce->pin(1).get_dir() == Link::INPUT);
+		  assert(reduce->pin(1).is_linked());
+		  switch (reduce->type()) {
+		    case NetUReduce::AND:
+			cerr << "&";
+			break;
+		    case NetUReduce::OR:
+			cerr << "|";
+			break;
+		    case NetUReduce::XOR:
+			cerr << "^";
+			break;
+		    case NetUReduce::NAND:
+			cerr << "~&";
+			break;
+		    case NetUReduce::NOR:
+			cerr << "~|";
+			break;
+		    case NetUReduce::XNOR:
+			cerr << "~^";
+			break;
+		    case NetUReduce::NONE:
+			assert(0);
+		  }
+		  print_nexus_name(reduce->pin(1).nexus());
+		  return;
+	    } else if (const NetLogic*logic = dynamic_cast<const NetLogic*>(obj)) {
+		  assert(logic->pin_count() >= 2);
+		  assert(logic->pin(1).get_dir() == Link::INPUT);
+		  assert(logic->pin(1).is_linked());
+		  switch (logic->type()) {
+		    case NetLogic::NOT:
+			cerr << "~";
+			break;
+		    default:
+			  // The other operators should never be used here,
+			  // so just return the nexus name.
+			cerr << nex->name();
+			return;
+		  }
+		  print_nexus_name(logic->pin(1).nexus());
+		  return;
+	    }
+	// Use the following to find the type of anything that may be missing:
+	//    cerr << "(" << typeid(*obj).name() << ") ";
+      }
+	// Otherwise just use the nexus name so somthing is printed.
+      cerr << nex->name();
+}
+
+static void print_event_probe_name(const NetEvProbe *prb)
+{
+      assert(prb->pin_count() == 1);
+      assert(prb->pin(0).get_dir() == Link::INPUT);
+      assert(prb->pin(0).is_linked());
+      print_nexus_name(prb->pin(0).nexus());
+}
+
+static void check_event_probe_width(const LineInfo *info, const NetEvProbe *prb)
+{
+      assert(prb->pin_count() == 1);
+      assert(prb->pin(0).get_dir() == Link::INPUT);
+      assert(prb->pin(0).is_linked());
+      if (prb->edge() == NetEvProbe::ANYEDGE) return;
+      if (prb->pin(0).nexus()->vector_width() > 1) {
+	    cerr << info->get_fileline() << " Warning: Synthesis wants "
+                    "the sensitivity list expressions for '";
+	    switch (prb->edge()) {
+	      case NetEvProbe::POSEDGE:
+		  cerr << "posedge ";
+		  break;
+	      case NetEvProbe::NEGEDGE:
+		  cerr << "negedge ";
+		  break;
+	      default:
+		  break;
+	    }
+	    print_nexus_name(prb->pin(0).nexus());
+	    cerr << "' to be a single bit." << endl;
+      }
+}
+
+static void check_ff_sensitivity(const NetProc* statement)
+{
+      const NetEvWait *evwt = dynamic_cast<const NetEvWait*> (statement);
+	// We have already checked for and reported if the first statmemnt is
+	// not a wait.
+      if (! evwt) return;
+
+      for (unsigned cevt = 0; cevt < evwt->nevents(); cevt += 1) {
+	    const NetEvent *evt = evwt->event(cevt);
+	    for (unsigned cprb = 0; cprb < evt->nprobe(); cprb += 1) {
+		  const NetEvProbe *prb = evt->probe(cprb);
+		  check_event_probe_width(evwt, prb);
+		  if (prb->edge() == NetEvProbe::ANYEDGE) {
+			cerr << evwt->get_fileline() << " Warning: Synthesis "
+			        "requires the sensitivity list of an "
+			        "always_ff process to only be edge "
+			        "sensitive. ";
+			print_event_probe_name(prb);
+			cerr  << " is missing a pos/negedge." << endl;
+		  }
+	    }
+      }
+}
+
 /*
  * Check to see if the always_* processes only contain synthesizable
  * constructs.
@@ -6211,6 +6337,9 @@ bool Design::check_proc_synth() const
 	        (pr->type() == IVL_PR_ALWAYS_LATCH)) {
 		  result |= pr->statement()->check_synth(pr->type(),
 		                                         pr->scope());
+		  if (pr->type() == IVL_PR_ALWAYS_FF) {
+			check_ff_sensitivity(pr->statement());
+		  }
 	    }
       }
       return result;
