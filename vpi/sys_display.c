@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -414,23 +414,23 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
         } else {
           char ch = value.value.str[strlen(value.value.str)-1];
 
-          /* If the default buffer is too small, make it big enough. */
-          size = width + 1;
-          if (size > ini_size) result = realloc(result, size*sizeof(char));
-
           /* If the width is less than one then use a width of one. */
           if (width < 1) width = 1;
+          size = width + 1;
+          assert(size <= ini_size);
+
           if (ljust == 0) {
             if (width > 1) {
-              char *cp = malloc((width+1)*sizeof(char));
-              memset(cp, (ld_zero == 1 ? '0': ' '), width-1);
-              cp[width-1] = ch;
-              cp[width] = '\0';
-              sprintf(result, "%*s", width, cp);
-              free(cp);
-            } else sprintf(result, "%c", ch);
-          } else sprintf(result, "%-*c", width, ch);
-          size = strlen(result) + 1;
+              memset(result, (ld_zero == 1 ? '0': ' '), width-1);
+            }
+            result[width-1] = ch;
+          } else {
+            result[0] = ch;
+            if (width > 1) {
+              memset(result+1, ' ', width-1);
+            }
+          }
+          result[width] = '\0';
         }
       }
       break;
