@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2014 Michael Ruff (mruff  at chiaro.com)
+ * Copyright (c) 2003-2018 Michael Ruff (mruff  at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -90,12 +90,12 @@ static void error_message(vpiHandle callh, const char* msg)
     vpi_control(vpiFinish, 1);
 }
 
-static PLI_INT32 sizetf_32 (PLI_BYTE8*name)
+static PLI_INT32 sizetf_32 (ICARUS_VPI_CONST PLI_BYTE8*name)
 {
     (void)name;  /* Parameter is not used. */
     return 32;
 }
-static PLI_INT32 sizetf_64 (PLI_BYTE8*name)
+static PLI_INT32 sizetf_64 (ICARUS_VPI_CONST PLI_BYTE8*name)
 {
     (void)name;  /* Parameter is not used. */
     return 64;
@@ -288,4 +288,3 @@ void sys_convert_register(void)
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 }
-

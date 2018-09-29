@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2014 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2018 Michael Ruff (mruff at chiaro.com)
  *                         Michael Runyan (mrunyan at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
@@ -42,8 +42,8 @@ typedef struct t_pli_data {
       int	paramvc;	/* parameter number for misctf */
 } s_pli_data, *p_pli_data;
 
-static PLI_INT32 compiletf(char *);
-static PLI_INT32 calltf(char *);
+static PLI_INT32 compiletf(ICARUS_VPI_CONST PLI_BYTE8 *);
+static PLI_INT32 calltf(ICARUS_VPI_CONST PLI_BYTE8 *);
 static PLI_INT32 callback(p_cb_data);
 
 /*
@@ -150,7 +150,7 @@ void veriusertfs_register_table(p_tfcell vtable)
 	    tf_data.tfname = tf->tfname;
 	    tf_data.compiletf = compiletf;
 	    tf_data.calltf = calltf;
-	    tf_data.sizetf = (PLI_INT32 (*)(PLI_BYTE8 *))tf->sizetf;
+	    tf_data.sizetf = (PLI_INT32 (*)(ICARUS_VPI_CONST PLI_BYTE8 *))tf->sizetf;
 	    tf_data.user_data = (char *)data;
 
 	    if (pli_trace) {
@@ -180,7 +180,7 @@ void veriusertfs_register_table(p_tfcell vtable)
  * This function calls the veriusertfs checktf and sets up all the
  * callbacks misctf requires.
  */
-static PLI_INT32 compiletf(char *data)
+static PLI_INT32 compiletf(ICARUS_VPI_CONST PLI_BYTE8*data)
 {
       p_pli_data pli;
       p_tfcell tf;
@@ -260,7 +260,7 @@ static PLI_INT32 compiletf(char *data)
 /*
  * This function is the wrapper for the veriusertfs calltf routine.
  */
-static PLI_INT32 calltf(char *data)
+static PLI_INT32 calltf(ICARUS_VPI_CONST PLI_BYTE8*data)
 {
       int rc = 0;
       p_pli_data pli;
