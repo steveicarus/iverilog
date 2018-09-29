@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -606,27 +606,36 @@ bool schedule_stopped(void)
 
 /*
  * These are the signal handling infrastructure. The SIGINT signal
- * leads to an implicit $stop.
+ * leads to an implicit $stop. The SIGHUP and SIGTERM signals lead
+ * to an implicit $finish.
  */
-extern "C" void signals_handler(int)
+extern bool stop_is_finish;
+
+extern "C" void signals_handler(int signum)
 {
 #ifdef __MINGW32__
 	// Windows implements the original UNIX semantics for signal,
 	// so we have to re-establish the signal handler each time a
 	// signal is caught.
-      signal(SIGINT, &signals_handler);
+      signal(signum, &signals_handler);
 #endif
+      if (signum != SIGINT)
+	    stop_is_finish = true;
       schedule_stopped_flag = true;
 }
 
 static void signals_capture(void)
 {
-      signal(SIGINT, &signals_handler);
+      signal(SIGHUP,  &signals_handler);
+      signal(SIGINT,  &signals_handler);
+      signal(SIGTERM, &signals_handler);
 }
 
 static void signals_revert(void)
 {
-      signal(SIGINT, SIG_DFL);
+      signal(SIGHUP,  SIG_DFL);
+      signal(SIGINT,  SIG_DFL);
+      signal(SIGTERM, SIG_DFL);
 }
 
 /*
