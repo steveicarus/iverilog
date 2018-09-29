@@ -1,7 +1,7 @@
 #ifndef VPI_USER_H
 #define VPI_USER_H
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,7 +46,9 @@ EXTERN_C_START
 # include  <stdarg.h>
 # include  "_pli_types.h"
 
+#ifndef ICARUS_VPI_CONST
 #define ICARUS_VPI_CONST
+#endif
 #ifdef __cplusplus
 typedef class __vpiHandle *vpiHandle;
 #else
@@ -63,7 +65,7 @@ typedef struct t_vpi_systf_data {
       const char *tfname;
       PLI_INT32 (*calltf)   (ICARUS_VPI_CONST PLI_BYTE8*);
       PLI_INT32 (*compiletf)(ICARUS_VPI_CONST PLI_BYTE8*);
-      PLI_INT32 (*sizetf)   (PLI_BYTE8*);
+      PLI_INT32 (*sizetf)   (ICARUS_VPI_CONST PLI_BYTE8*);
       ICARUS_VPI_CONST PLI_BYTE8 *user_data;
 } s_vpi_systf_data, *p_vpi_systf_data;
 
@@ -466,7 +468,7 @@ typedef struct t_cb_data {
       p_vpi_time time;
       p_vpi_value value;
       PLI_INT32 index;
-      char      *user_data;
+      ICARUS_VPI_CONST PLI_BYTE8 *user_data;
 } s_cb_data, *p_cb_data;
 
 #define cbValueChange        1

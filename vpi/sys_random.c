@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -924,7 +924,7 @@ static PLI_INT32 sys_dist_erlang_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_rand_func_sizetf(PLI_BYTE8 *name)
+static PLI_INT32 sys_rand_func_sizetf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       (void)name; /* Parameter is not used. */
       return 32;
