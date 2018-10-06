@@ -2611,7 +2611,7 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
 
         // Find rounded up length that can fit the whole casted array of vectors
         int len = base->expr_width() + vector->packed_width() - 1;
-        if(base->expr_width() > vector->packed_width()) {
+        if(base->expr_width() > (unsigned)vector->packed_width()) {
             len /= vector->packed_width();
         } else {
             len /= base->expr_width();
