@@ -44,6 +44,7 @@ typedef struct t_pli_data {
 
 static PLI_INT32 compiletf(ICARUS_VPI_CONST PLI_BYTE8 *);
 static PLI_INT32 calltf(ICARUS_VPI_CONST PLI_BYTE8 *);
+static PLI_INT32 sizetf(ICARUS_VPI_CONST PLI_BYTE8 *);
 static PLI_INT32 callback(p_cb_data);
 
 /*
@@ -150,7 +151,7 @@ void veriusertfs_register_table(p_tfcell vtable)
 	    tf_data.tfname = tf->tfname;
 	    tf_data.compiletf = compiletf;
 	    tf_data.calltf = calltf;
-	    tf_data.sizetf = (PLI_INT32 (*)(ICARUS_VPI_CONST PLI_BYTE8 *))tf->sizetf;
+	    tf_data.sizetf = sizetf;
 	    tf_data.user_data = (char *)data;
 
 	    if (pli_trace) {
@@ -278,6 +279,32 @@ static PLI_INT32 calltf(ICARUS_VPI_CONST PLI_BYTE8*data)
 	    }
 
 	    rc = tf->calltf(tf->data, reason_calltf);
+      }
+
+      return rc;
+}
+
+/*
+ * This function is the wrapper for the veriusertfs sizetf routine.
+ */
+static PLI_INT32 sizetf(ICARUS_VPI_CONST PLI_BYTE8*data)
+{
+      int rc = 32;
+      p_pli_data pli;
+      p_tfcell tf;
+
+      /* cast back from opaque */
+      pli = (p_pli_data)data;
+      tf = pli->tf;
+
+      /* execute sizetf */
+      if (tf->sizetf) {
+	    if (pli_trace) {
+		  fprintf(pli_trace, "Call %s->sizetf(%d, %d)\n",
+			  tf->tfname, tf->data, reason_sizetf);
+	    }
+
+	    rc = tf->sizetf(tf->data, reason_sizetf);
       }
 
       return rc;
