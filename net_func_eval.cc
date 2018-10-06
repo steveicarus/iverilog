@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,6 +22,10 @@
 # include  "compiler.h"
 # include  <typeinfo>
 # include  "ivl_assert.h"
+
+#if __cplusplus < 201103L
+#define unique_ptr auto_ptr
+#endif
 
 using namespace std;
 
@@ -1018,7 +1022,7 @@ NetExpr* NetESignal::evaluate_function(const LineInfo&loc,
 NetExpr* NetETernary::evaluate_function(const LineInfo&loc,
 				map<perm_string,LocalVar>&context_map) const
 {
-      auto_ptr<NetExpr> cval (cond_->evaluate_function(loc, context_map));
+      unique_ptr<NetExpr> cval (cond_->evaluate_function(loc, context_map));
 
       switch (const_logical(cval.get())) {
 
