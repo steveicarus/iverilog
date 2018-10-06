@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -860,6 +860,7 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
 	 * (.resolv, etc.) can be built before we build the .udp call.
 	 * This matches what is done for the other primitives.
 	 */
+      assert(ivl_logic_pins(lptr) > 0);
       ninp = ivl_logic_pins(lptr) - 1;
       input_strings = calloc(ninp, sizeof(char*));
       for (pdx = 0 ;  pdx < ninp ;  pdx += 1) {
@@ -922,7 +923,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
       ivl_drive_t str1 = ivl_logic_drive1(lptr);
 
       int level;
-      int ninp;
+      unsigned ninp;
       const char **input_strings;
 
       switch (ivl_logic_type(lptr)) {
@@ -1055,8 +1056,8 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
 	/* Get all the input label that I will use for parameters to
 	   the functor that I create later. */
+      assert(ivl_logic_pins(lptr) > 0);
       ninp = ivl_logic_pins(lptr) - 1;
-      assert(ninp >= 0);
       input_strings = calloc(ninp, sizeof(char*));
       for (pdx = 0 ;  pdx < (unsigned)ninp ;  pdx += 1)
 	    input_strings[pdx] = draw_net_input(ivl_logic_pin(lptr, pdx+1));
