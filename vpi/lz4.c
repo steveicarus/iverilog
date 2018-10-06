@@ -228,6 +228,9 @@ static const int LZ4_minLength = (MFLIMIT+1);
 #define GB *(1U<<30)
 
 #define MAXD_LOG 16
+#ifdef MAX_DISTANCE
+#undef MAX_DISTANCE
+#endif
 #define MAX_DISTANCE ((1 << MAXD_LOG) - 1)
 
 #define ML_BITS  4
