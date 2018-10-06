@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -131,6 +131,7 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func,
 	  case vpiObjTypeVal:
 	      /* The default format is vpiTimeVal. */
 	    vp->format = vpiTimeVal;
+	    // fallthrough
 	  case vpiTimeVal:
 	    vp->value.time = &time_value;
 	    vp->value.time->type = vpiSimTime;

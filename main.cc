@@ -1002,16 +1002,22 @@ int main(int argc, char*argv[])
       switch (generation_flag) {
         case GN_VER2012:
 	  lexor_keyword_mask |= GN_KEYWORDS_1800_2012;
+	  // fallthrough
         case GN_VER2009:
 	  lexor_keyword_mask |= GN_KEYWORDS_1800_2009;
+	  // fallthrough
         case GN_VER2005_SV:
 	  lexor_keyword_mask |= GN_KEYWORDS_1800_2005;
+	  // fallthrough
         case GN_VER2005:
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_2005;
+	  // fallthrough
         case GN_VER2001:
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001_CONFIG;
+	  // fallthrough
         case GN_VER2001_NOCONFIG:
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001;
+	  // fallthrough
         case GN_VER1995:
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_1995;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -724,7 +724,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 	  case vpiObjTypeVal:
 	    // Use the following case to actually set the value!
 	    vp->format = vpiVectorVal;
-
+	    // fallthrough
 	  case vpiVectorVal: {
 		unsigned hwid = (width + 31)/32;
 
@@ -784,6 +784,7 @@ void vpip_vec2_get_value(const vvp_vector2_t&word_val, unsigned width,
 
 	  case vpiObjTypeVal:
 	    vp->format = vpiIntVal;
+	    // fallthrough
 	  case vpiIntVal:
 	    vector2_to_value(word_val, vp->value.integer, signed_flag);
 	    break;
@@ -862,7 +863,7 @@ void vpip_real_get_value(double real, s_vpi_value*vp)
 	  case vpiObjTypeVal:
 	    // Use the following case to actually set the value!
 	    vp->format = vpiRealVal;
-
+	    // fallthrough
 	  case vpiRealVal:
 	    vp->value.real = real;
 	    break;
@@ -944,7 +945,7 @@ void vpip_string_get_value(const string&val, s_vpi_value*vp)
 	  case vpiObjTypeVal:
 	    // Use the following case to actually set the value!
 	    vp->format = vpiStringVal;
-
+	    // fallthrough
 	  case vpiStringVal:
 	    rbuf = (char *) need_result_buf(val.size() + 1, RBUF_VAL);
 	    strcpy(rbuf, val.c_str());

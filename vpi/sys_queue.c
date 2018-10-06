@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2014  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2011-2018  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -781,6 +781,7 @@ static PLI_INT32 fill_variable_with_scaled_time(vpiHandle var, uint64_t c_time)
 	    switch (words) {
 	      default:
 		  val_ptr[1].aval = (c_time >> 32) & 0xffffffff;
+		  // fallthrough
 	      case 1:
 		  val_ptr[0].aval = c_time & 0xffffffff;
 	    }

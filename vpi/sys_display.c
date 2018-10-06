@@ -1169,7 +1169,7 @@ static int sys_check_args(vpiHandle callh, vpiHandle argv, const PLI_BYTE8*name,
 			           name, vpi_get_str(vpiType, arg));
 			ret = 1;
 		  }
-
+		  // fallthrough
 	      case vpiConstant:
 	      case vpiParameter:
 	      case vpiNet:

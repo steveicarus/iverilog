@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for statements.
  *
- *  Copyright (C) 2008-2013  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2018  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -683,8 +683,10 @@ static void get_nexuses_from_expr(ivl_expr_t expr, set<ivl_nexus_t> &out)
       break;
    case IVL_EX_TERNARY:
       get_nexuses_from_expr(ivl_expr_oper3(expr), out);
+      // fallthrough
    case IVL_EX_BINARY:
       get_nexuses_from_expr(ivl_expr_oper2(expr), out);
+      // fallthrough
    case IVL_EX_UNARY:
       get_nexuses_from_expr(ivl_expr_oper1(expr), out);
       break;

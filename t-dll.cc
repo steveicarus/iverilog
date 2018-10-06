@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2018 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2519,6 +2519,7 @@ void dll_target::scope(const NetScope*net)
 		case NetScope::PACKAGE:
 		  cerr << "?:?" << ": internal error: "
 		       << "Package scopes should not have parents." << endl;
+		  // fallthrough
 		case NetScope::MODULE:
 		  scop->type_ = IVL_SCT_MODULE;
 		  scop->tname_ = net->module_name();

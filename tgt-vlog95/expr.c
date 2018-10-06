@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2018 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -451,6 +451,7 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
 		  vlog_errors += 1;
 	    }
+	    //fallthrough
 	case '+':
 	case '-':
 	case '*':
@@ -476,7 +477,7 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 	                    ivl_expr_file(expr),
 	                    ivl_expr_lineno(expr));
 	    vlog_errors += 1;
-
+	    // fallthrough
 	case 'E':
 	case 'e':
 	case 'N':
@@ -504,6 +505,7 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
 		  vlog_errors += 1;
 	    }
+	    // fallthrough
 	case 'l':
 	case 'r':
 	    emit_expr(scope, oper1, wid, 0, 0, 0);

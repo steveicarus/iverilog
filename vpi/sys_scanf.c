@@ -1258,6 +1258,7 @@ static int is_assignable_obj(vpiHandle obj)
 	    break;
 	case vpiPartSelect:
 	    if (! is_assignable_obj(vpi_handle(vpiParent, obj))) break;
+	    // fallthrough
 	case vpiIntegerVar:
 	case vpiBitVar:
 	case vpiByteVar:
@@ -1403,7 +1404,7 @@ static PLI_INT32 sys_sscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	  case vpiConstant:
 	  case vpiParameter:
 	    if (vpi_get(vpiConstType, reg) == vpiStringConst) break;
-
+	    // fallthrough
 	  default:
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));

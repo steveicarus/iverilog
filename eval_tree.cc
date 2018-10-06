@@ -1074,6 +1074,7 @@ NetEConst* NetEBShift::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 		  break;
 		case 'r':
                   lv.has_sign(false);
+		  // fallthrough
 		case 'R':
 		  val = cast_to_width(lv >> shift, wid);
 		  break;
@@ -1525,6 +1526,7 @@ NetEConst* NetEUReduce::eval_arguments_(const NetExpr*ex) const
 
 	  case 'A':
 		invert = true;
+		// fallthrough
 	  case '&': {
 		res = verinum::V1;
 		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
@@ -1534,6 +1536,7 @@ NetEConst* NetEUReduce::eval_arguments_(const NetExpr*ex) const
 
 	  case 'N':
 		invert = true;
+		// fallthrough
 	  case '|': {
 		res = verinum::V0;
 		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
@@ -1543,6 +1546,7 @@ NetEConst* NetEUReduce::eval_arguments_(const NetExpr*ex) const
 
 	  case 'X':
 		invert = true;
+		// fallthrough
 	  case '^': {
 		  /* Reduction XOR. */
 		unsigned ones = 0, unknown = 0;
@@ -1594,6 +1598,7 @@ NetExpr* NetECast::eval_arguments_(const NetExpr*ex) const
 			res_val = cast_to_width(res_val, expr_width());
 		  res = new NetEConst(res_val);
 	    }
+	    // fallthrough
 	  case 'v':
 	    if (const NetECReal*val = dynamic_cast<const NetECReal*>(ex)) {
 		  verinum res_val(val->value().as_double(), false);

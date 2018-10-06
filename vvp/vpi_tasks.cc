@@ -447,6 +447,7 @@ vpiHandle sysfunc_4net::vpi_put_value(p_vpi_value vp, int)
                                 (int)vp->value.scalar);
                         assert(0);
                 }
+		break;
           }
 
 	  case vpiIntVal: {
