@@ -626,14 +626,18 @@ extern "C" void signals_handler(int signum)
 
 static void signals_capture(void)
 {
+#ifndef __MINGW32__
       signal(SIGHUP,  &signals_handler);
+#endif
       signal(SIGINT,  &signals_handler);
       signal(SIGTERM, &signals_handler);
 }
 
 static void signals_revert(void)
 {
+#ifndef __MINGW32__
       signal(SIGHUP,  SIG_DFL);
+#endif
       signal(SIGINT,  SIG_DFL);
       signal(SIGTERM, SIG_DFL);
 }
