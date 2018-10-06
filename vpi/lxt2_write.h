@@ -43,7 +43,7 @@ extern "C" {
 #define ftello ftell
 #endif
 
-#include <wavealloca.h>
+#include "wavealloca.h"
 
 #define LXT2_WR_HDRID (0x1380)
 #define LXT2_WR_VERSION (0x0001)
@@ -314,4 +314,3 @@ int 			lxt2_wr_emit_value_bit_string(struct lxt2_wr_trace *lt, struct lxt2_wr_sy
 #endif
 
 #endif
-
