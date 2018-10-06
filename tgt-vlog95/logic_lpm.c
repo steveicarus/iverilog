@@ -1276,7 +1276,7 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	                    "should not be generated.\n",
 	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
 	    vlog_errors += 1;
-	    // falthrough
+	    // fallthrough
 	case IVL_LPM_CONCAT:
 	    emit_lpm_concat(scope, lpm);
 	    break;
