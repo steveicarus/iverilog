@@ -1,7 +1,7 @@
 #ifndef IVL_expression_H
 #define IVL_expression_H
 /*
- * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2018 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2015 / Stephen Williams (steve@icarus.com),
  * Copyright CERN 2016
  * @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -38,6 +38,10 @@ class VType;
 class VTypeArray;
 class VTypePrimitive;
 class ExpName;
+
+#if __cplusplus < 201103L
+#define unique_ptr auto_ptr
+#endif
 
 /*
  * Helper class to recursively traverse an expression tree
@@ -273,8 +277,8 @@ class ExpAggregate : public Expression {
 	    void dump(ostream&out, int indent) const;
 
 	  private:
-	    std::auto_ptr<Expression>expr_;
-	    std::auto_ptr<ExpRange>  range_;
+	    std::unique_ptr<Expression>expr_;
+	    std::unique_ptr<ExpRange>  range_;
 	  private: // not implemented
 	    choice_t& operator= (const choice_t&);
       };
@@ -778,7 +782,7 @@ class ExpName : public Expression {
     private:
       Expression*index(unsigned int number) const;
 
-      std::auto_ptr<ExpName> prefix_;
+      std::unique_ptr<ExpName> prefix_;
       perm_string name_;
       std::list<Expression*>*indices_;
 };
