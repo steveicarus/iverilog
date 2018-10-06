@@ -108,6 +108,7 @@ static PLI_INT32 ivl_enum_method_next_prev_compiletf(ICARUS_VPI_CONST PLI_BYTE8*
 		case vpiConstant:
 		case vpiParameter:
 		  if (vpi_get(vpiConstType, arg_count) != vpiStringConst) break;
+		  // fallthrough
 		default:
 		  vpi_printf("%s:%d: compiler error: ",
 		             vpi_get_str(vpiFile, sys),

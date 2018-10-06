@@ -108,6 +108,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 
 	  case vpiObjTypeVal:
 	    vp->format = vpiRealVal;
+	    // fallthrough
 	  case vpiRealVal:
 	    vp->value.real = val;
 	    break;
@@ -258,6 +259,7 @@ void __vpiVThrStrStack::vpi_get_value(p_vpi_value vp)
 
 	  case vpiObjTypeVal:
 	    vp->format = vpiStringVal;
+	    // fallthrough
 	  case vpiStringVal:
 	    rbuf = (char *) need_result_buf(val.size()+1, RBUF_VAL);
 	    strcpy(rbuf, val.c_str());
@@ -376,6 +378,7 @@ void __vpiVThrVec4Stack::vpi_get_value(p_vpi_value vp)
 	    break;
 	  case vpiObjTypeVal:
 	    vp->format = vpiVectorVal;
+	    // fallthrough
 	  case vpiVectorVal:
 	    vpi_get_value_vector_(vp, val);
 	    break;

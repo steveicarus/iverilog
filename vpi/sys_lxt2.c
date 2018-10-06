@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -612,6 +612,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  PLI_INT32 idx = vpi_get(vpiIndex, item);
 		  item = vpi_handle_by_index(array, idx);
 	    }
+	    // fallthrough
 	  case vpiIntegerVar:
 	  case vpiBitVar:
 	  case vpiByteVar:

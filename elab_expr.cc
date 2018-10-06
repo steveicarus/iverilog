@@ -2753,6 +2753,7 @@ NetExpr* PEConcat::elaborate_expr(Design*, NetScope*,
 		  tmp->set_line(*this);
 		  return tmp;
 	    }
+	    // fallthrough
 	  default:
 	    cerr << get_fileline() << ": internal error: "
 		 << "I don't know how to elaborate(ivl_type_t)"

@@ -796,7 +796,7 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
       switch (vp->format) {
 	  case vpiObjTypeVal:
 	    vp->format = vpiRealVal;
-
+	    // fallthrough
 	  case vpiRealVal:
 	    vp->value.real = rval;
 	    break;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -335,6 +335,7 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope, NetExpr*root)
 		  des->errors += 1;
 		  return 0;
 	    }
+	    // fallthrough
 	  case 'e': // ==
 	    connect(dev->pin_AEB(), osig->pin(0));
 	    break;
@@ -353,6 +354,7 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope, NetExpr*root)
 		  des->errors += 1;
 		  return 0;
 	    }
+	    // fallthrough
 	  case 'n': // !=
 	    connect(dev->pin_ANEB(), osig->pin(0));
 	    break;

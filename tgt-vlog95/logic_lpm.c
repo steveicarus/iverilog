@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2018 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1055,6 +1055,7 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	                    "should not be generated.\n",
 	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
 	    vlog_errors += 1;
+	    // fallthrough
 	case IVL_LPM_CONCAT:
 	    emit_lpm_concat(scope, lpm);
 	    break;
@@ -2167,10 +2168,9 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		      case IVL_VT_BOOL:    fprintf(stderr, " bool"); break;
 		      case IVL_VT_LOGIC:   fprintf(stderr, " logic"); break;
 		      case IVL_VT_STRING:  fprintf(stderr, " string"); break;
-		      case IVL_VT_DARRAY:  fprintf(stderr, " dynamic array");
-		      case IVL_VT_CLASS:   fprintf(stderr, " class");
-		      case IVL_VT_QUEUE:   fprintf(stderr, " queue");
-		                           break;
+		      case IVL_VT_DARRAY:  fprintf(stderr, " dynamic array"); break;
+		      case IVL_VT_CLASS:   fprintf(stderr, " class"); break;
+		      case IVL_VT_QUEUE:   fprintf(stderr, " queue"); break;
 		  }
 		  if (ivl_signal_signed(sig)) fprintf(stderr, " <signed>");
 	    } else fprintf(stderr, "Error: No/missing information!");

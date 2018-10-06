@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2018 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1457,6 +1457,7 @@ extern "C" unsigned ivl_lpm_selects(ivl_lpm_t net)
 	  case IVL_LPM_CONCATZ:
 	    cerr << "error: ivl_lpm_selects() is no longer supported for "
 	            "IVL_LPM_CONCAT, use ivl_lpm_size() instead." << endl;
+	    // fallthrough
 	  default:
 	    assert(0);
 	    return 0;
