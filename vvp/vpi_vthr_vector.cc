@@ -132,17 +132,17 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiOctStrVal:
-	    sprintf(rbuf, "%lo", (long)vlg_round(val));
+	    sprintf(rbuf, "%" PRIo64, (uint64_t)vlg_round(val));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(rbuf, "%lx", (long)vlg_round(val));
+	    sprintf(rbuf, "%" PRIx64, (uint64_t)vlg_round(val));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiBinStrVal: {
-		unsigned long vali = (unsigned long)vlg_round(val);
+		uint64_t vali = (uint64_t)vlg_round(val);
 		unsigned len = 0;
 
 		while (vali > 0) {
@@ -150,7 +150,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 		      vali /= 2;
 		}
 
-		vali = (unsigned long)vlg_round(val);
+		vali = (uint64_t)vlg_round(val);
 		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
 		      rbuf[len-idx-1] = (vali & 1)? '1' : '0';
 		      vali /= 2;

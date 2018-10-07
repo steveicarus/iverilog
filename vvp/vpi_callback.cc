@@ -814,12 +814,12 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(rbuf, "%lx", (long)vlg_round(rval));
+	    sprintf(rbuf, "%" PRIx64, (uint64_t)vlg_round(rval));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiBinStrVal: {
-		unsigned long val = (unsigned long)vlg_round(rval);
+		uint64_t val = (uint64_t)vlg_round(rval);
 		unsigned len = 0;
 
 		while (val > 0) {
@@ -827,7 +827,7 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 		      val /= 2;
 		}
 
-		val = (unsigned long)vlg_round(rval);
+		val = (uint64_t)vlg_round(rval);
 		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
 		      rbuf[len-idx-1] = (val & 1)? '1' : '0';
 		      val /= 2;
