@@ -166,6 +166,13 @@ select lxt format, which is far more compact, though limited to
 GTKWave or compatible viewers. It can also be used to suppress VCD
 output, a time-saver for regression tests.
 
+.TP 8
+.B IVERILOG_VPI_MODULE_PATH=\fI/some/path:/some/other/path\fP
+This adds additional components to the VPI module search path. Paths
+specified in this way are searched after paths specified with \-M, but
+before the default search path. Multiple paths can be separated with
+colons or semicolons.
+
 .SH INTERACTIVE MODE
 .PP
 The simulation engine supports an interactive mode. The user may

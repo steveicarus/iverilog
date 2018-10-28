@@ -336,6 +336,28 @@ int main(int argc, char*argv[])
 	    flag_errors += 1;
       }
 
+      if (char *var = ::getenv("IVERILOG_VPI_MODULE_PATH")) {
+            char *ptr = var;
+            char *end = var+strlen(var);
+            int len = 0;
+            while (ptr <= end) {
+                  if (*ptr == 0 || *ptr == ':' || *ptr == ';') {
+                        if (len > 0) {
+                              if (vpip_module_path_cnt >= VPIP_MODULE_PATH_MAX) {
+                                    fprintf(stderr, "Too many paths specified\n");
+                                    return -1;
+                              }
+                              vpip_module_path[vpip_module_path_cnt++] = strndup(var, len);
+                        }
+                        len = 0;
+                        var = ptr+1;
+                  } else {
+                        len++;
+                  }
+                  ptr++;
+            }
+      }
+
 #ifdef __MINGW32__
 	/* Calculate the module path from the path to the command.
 	   This is necessary because of the installation process on
