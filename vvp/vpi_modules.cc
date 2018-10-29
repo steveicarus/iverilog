@@ -33,24 +33,9 @@ static unsigned dll_list_cnt = 0;
 typedef void (*vlog_startup_routines_t)(void);
 
 
-const char* vpip_module_path[64] = {
-#ifdef MODULE_DIR1
-      MODULE_DIR1,
-#endif
-#ifdef MODULE_DIR2
-      MODULE_DIR2,
-#endif
-      0
-};
+const char* vpip_module_path[VPIP_MODULE_PATH_MAX] = {0};
 
-unsigned vpip_module_path_cnt = 0
-#ifdef MODULE_DIR1
-         + 1
-#endif
-#ifdef MODULE_DIR2
-         + 1
-#endif
-;
+unsigned vpip_module_path_cnt = 0;
 
 void load_module_delete(void)
 {

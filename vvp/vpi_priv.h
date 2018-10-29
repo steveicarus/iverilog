@@ -874,7 +874,7 @@ vpiHandle vpip_make_vthr_APV(char*label, unsigned index, unsigned bit, unsigned 
 extern void vpip_load_module(const char*name);
 
 # define VPIP_MODULE_PATH_MAX 64
-extern const char* vpip_module_path[64];
+extern const char* vpip_module_path[VPIP_MODULE_PATH_MAX];
 extern unsigned vpip_module_path_cnt;
 
 /*
