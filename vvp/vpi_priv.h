@@ -1,7 +1,7 @@
 #ifndef IVL_vpi_priv_H
 #define IVL_vpi_priv_H
 /*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -873,9 +873,9 @@ vpiHandle vpip_make_vthr_APV(char*label, unsigned index, unsigned bit, unsigned 
  */
 extern void vpip_load_module(const char*name);
 
-# define VPIP_MODULE_PATH_MAX 64
-extern const char* vpip_module_path[VPIP_MODULE_PATH_MAX];
-extern unsigned vpip_module_path_cnt;
+extern void vpip_clear_module_paths();
+extern void vpip_add_module_path(const char *path);
+extern void vpip_add_env_and_default_module_paths();
 
 /*
  * The vpip_build_vpi_call function creates a __vpiSysTaskCall object
