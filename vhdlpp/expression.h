@@ -903,4 +903,8 @@ class ExpTime : public Expression {
         timeunit_t unit_;
 };
 
+#if __cplusplus < 201103L
+#undef unique_ptr
+#endif
+
 #endif /* IVL_expression_H */
