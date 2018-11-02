@@ -1097,4 +1097,8 @@ private:
     Expression*delay_;
 };
 
+#if __cplusplus < 201103L
+#undef unique_ptr
+#endif
+
 #endif /* IVL_expression_H */
