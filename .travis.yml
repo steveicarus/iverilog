@@ -1,8 +1,16 @@
 language: cpp
 
-compiler:
-  - clang
-  - gcc
+matrix:
+  include:
+    - os: linux
+      compiler:
+        - clang
+    - os: linux
+      compiler:
+        - gcc        
+    - os: windows
+      compiler:
+        - gcc
 
 addons:
   apt:
@@ -13,15 +21,28 @@ sudo: false
 
 notifications:
   email: false
-  
+
+
 install:
- - git clone https://github.com/steveicarus/ivtest.git
- - export PATH=$HOME/bin:$PATH
- 
-before_script:
-  -  autoconf
-  - ./configure --prefix=$HOME
+  - git clone https://github.com/steveicarus/ivtest.git
+  - export PATH=$HOME/bin:$PATH
+  
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PowerShell -Command "Invoke-WebRequest -outfile 7zsetup.exe http://www.7-zip.org/a/7z1604-x64.exe"; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PowerShell -Command "Invoke-WebRequest -outfile msys2-x86_64-latest.tar.xz http://repo.msys2.org/distrib/msys2-x86_64-latest.tar.xz"; fi 
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PowerShell -Command "Start-Process .\7zsetup -ArgumentList '/S /D=c:/7zip' -Wait"; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PowerShell -Command "C:\7zip\7z e msys2-x86_64-latest.tar.xz -Wait"; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PowerShell -Command "C:\7zip\7z x msys2-x86_64-latest.tar -oC:\\" ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PowerShell -Command "C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -S  base-devel mingw-w64-x86_64-toolchain'"; fi
 
 script:
-  - make; make install
-  - cd ivtest; perl vvp_reg.pl
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PowerShell -Command "C:\msys64\usr\bin\bash -lc 'PATH=/mingw64/bin:/bin ./autoconf.sh'"; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PowerShell -Command "C:\msys64\usr\bin\bash -lc 'PATH=/mingw64/bin:/bin ./configure --prefix=/usr'"; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PowerShell -Command "C:\msys64\usr\bin\bash -lc 'PATH=/mingw64/bin:/bin make'"; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PowerShell -Command "C:\msys64\usr\bin\bash -lc 'PATH=/mingw64/bin:/bin make install'"; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PowerShell -Command "C:\msys64\usr\bin\bash -lc 'PATH=/mingw64/bin:/bin iverilog -h'"; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PowerShell -Command "C:\msys64\usr\bin\bash -lc 'export PATH=/mingw64/bin:/bin; cd $TRAVIS_BUILD_DIR/ivtest; perl vvp_reg.pl'"; fi
+  
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then autoconf; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./configure --prefix=$HOME; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make; make install; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd ivtest; perl vvp_reg.pl; fi
