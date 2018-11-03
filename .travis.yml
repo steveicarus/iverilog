@@ -13,6 +13,10 @@ sudo: false
 
 notifications:
   email: false
+
+os:
+  - linux
+  - windows
   
 install:
  - git clone https://github.com/steveicarus/ivtest.git
