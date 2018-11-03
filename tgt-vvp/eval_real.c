@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,6 +57,8 @@ static void draw_binary_real(ivl_expr_t expr)
       switch (ivl_expr_opcode(expr)) {
 	  case 'E':
 	  case 'N':
+	  case 'w':
+	  case 'W':
 	  case 'l':
 	  case 'r':
 	  case 'R':
@@ -247,19 +249,7 @@ static void draw_real_logic_expr(ivl_expr_t expr)
 {
       draw_eval_vec4(expr);
       const char*sign_flag = ivl_expr_signed(expr)? "/s" : "";
-
-      if (ivl_expr_width(expr) > 64) {
-            fprintf(vvp_out, "    %%cvt/rv%s;\n", sign_flag);
-      } else {
-	    int res = allocate_word();
-            fprintf(vvp_out, "    %%ix/vec4%s %d;\n", sign_flag, res);
-
-            if (ivl_expr_signed(expr))
-                  fprintf(vvp_out, "    %%cvt/rs %d;\n", res);
-            else
-                  fprintf(vvp_out, "    %%cvt/ru %d;\n", res);
-	    clr_word(res);
-      }
+      fprintf(vvp_out, "    %%cvt/rv%s;\n", sign_flag);
 }
 
 static void draw_select_real(ivl_expr_t expr)
@@ -308,6 +298,16 @@ static void draw_sfunc_real(ivl_expr_t expr)
 static void draw_signal_real_real(ivl_expr_t expr)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
+
+	/* Special Case: If the signal is the return value of the function,
+	   then use a different opcode to get the value. */
+      if (signal_is_return_value(sig)) {
+	    assert(ivl_signal_dimensions(sig) == 0);
+	    fprintf(vvp_out, "    %%retload/real 0; Load %s (draw_signal_real_real)\n",
+		    ivl_signal_basename(sig));
+	    return;
+      }
+
 
       if (ivl_signal_dimensions(sig) == 0) {
 	    fprintf(vvp_out, "    %%load/real v%p_0;\n", sig);
@@ -535,13 +535,7 @@ void draw_eval_real(ivl_expr_t expr)
 	    if (ivl_expr_value(expr) == IVL_VT_VECTOR) {
 		  draw_eval_vec4(expr);
 		  const char*sign_flag = ivl_expr_signed(expr)? "/s" : "";
-
-		  int res = allocate_word();
-
-		  fprintf(vvp_out, "    %%ix/vec4%s %d;\n", sign_flag, res);
-		  fprintf(vvp_out, "    %%cvt/rs %d;\n", res);
-
-		  clr_word(res);
+		  fprintf(vvp_out, "    %%cvt/rv%s;\n", sign_flag);
 
 	    } else {
 		  fprintf(stderr, "XXXX Evaluate real expression (%d)\n",

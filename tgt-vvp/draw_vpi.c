@@ -23,10 +23,6 @@
 # include  <assert.h>
 # include  "ivl_alloc.h"
 
-#ifdef __MINGW32__  /* MinGW has inconsistent %p output. */
-#define snprintf _snprintf
-#endif
-
 struct args_info {
       char*text;
 	/* True ('s' or 'u' if this argument is a calculated vec4. */
@@ -101,6 +97,12 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 	    if (ivl_expr_width(expr) !=
 	        ivl_signal_width(ivl_expr_signal(expr))) {
 		    /* This should never happen since we have IVL_EX_SELECT. */
+		  return 0;
+
+	    } else if (signal_is_return_value(ivl_expr_signal(expr))) {
+		    /* If the signal is the return value of a function,
+		       then this can't be handled as a true signal, so
+		       fall back on general expression processing. */
 		  return 0;
 
 	    } else if (ivl_expr_signed(expr) !=
@@ -512,6 +514,17 @@ void draw_vpi_rfunc_call(ivl_expr_t fnet)
       char call_string[1024];
 
       sprintf(call_string, "    %%vpi_func/r %u %u \"%s\"",
+              ivl_file_table_index(ivl_expr_file(fnet)),
+	      ivl_expr_lineno(fnet), ivl_expr_name(fnet));
+
+      draw_vpi_taskfunc_args(call_string, 0, fnet);
+}
+
+void draw_vpi_sfunc_call(ivl_expr_t fnet)
+{
+      char call_string[1024];
+
+      sprintf(call_string, "    %%vpi_func/s %u %u \"%s\"",
               ivl_file_table_index(ivl_expr_file(fnet)),
 	      ivl_expr_lineno(fnet), ivl_expr_name(fnet));
 

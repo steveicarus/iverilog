@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2014-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -76,8 +76,8 @@ static int draw_condition_binary_compare(ivl_expr_t expr)
 	   %cmp instruction. */
       if (ivl_expr_width(le)==use_wid && test_immediate_vec4_ok(le)) {
 	    ivl_expr_t tmp = le;
-	    re = le;
-	    le = tmp;
+	    le = re;
+	    re = tmp;
       }
 
       draw_eval_vec4(le);
@@ -189,21 +189,48 @@ static int draw_condition_binary_le(ivl_expr_t expr)
       char use_opcode = ivl_expr_opcode(expr);
       char s_flag = (ivl_expr_signed(le) && ivl_expr_signed(re)) ? 's' : 'u';
 
-	/* If this is a > or >=, then convert it to < or <= by
-	   swapping the operands. Adjust the opcode to match. */
-      switch (use_opcode) {
-	  case 'G':
+      if (test_immediate_vec4_ok(le) && !test_immediate_vec4_ok(re)) {
 	    tmp = le;
 	    le = re;
 	    re = tmp;
-	    use_opcode = 'L';
-	    break;
-	  case '>':
-	    tmp = le;
-	    le = re;
-	    re = tmp;
-	    use_opcode = '<';
-	    break;
+
+	    switch (use_opcode) {
+		case 'G':
+		  use_opcode = 'L';
+		  break;
+		case 'L':
+		  use_opcode = 'G';
+		  break;
+		case '>':
+		  use_opcode = '<';
+		  break;
+		case '<':
+		  use_opcode = '>';
+		  break;
+		default:
+		  assert(0);
+		  break;
+	    }
+
+      } else if (!test_immediate_vec4_ok(re)) {
+	      /* If this is a > or >=, then convert it to < or <= by
+		 swapping the operands. Adjust the opcode to match. Do
+		 this because the instruction really only supports <
+		 and <= and we can avoid a %flag_inv instruction. */
+	    switch (use_opcode) {
+		case 'G':
+		  tmp = le;
+		  le = re;
+		  re = tmp;
+		  use_opcode = 'L';
+		  break;
+		case '>':
+		  tmp = le;
+		  le = re;
+		  re = tmp;
+		  use_opcode = '<';
+		  break;
+	    }
       }
 
 	/* NOTE: I think I would rather the elaborator handle the
@@ -231,6 +258,13 @@ static int draw_condition_binary_le(ivl_expr_t expr)
       }
 
       switch (use_opcode) {
+	  case '>':
+	    fprintf(vvp_out, "    %%flag_or 5, 4; GT is !LE\n");
+	    fprintf(vvp_out, "    %%flag_inv 5;\n");
+	    return 5;
+	  case 'G':
+	    fprintf(vvp_out, "    %%flag_inv 5; GE is !LT\n");
+	    return 5;
 	  case '<':
 	    return 5;
 	  case 'L':

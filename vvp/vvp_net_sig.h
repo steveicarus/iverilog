@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_net_sig_H
 #define IVL_vvp_net_sig_H
 /*
- * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -125,9 +125,9 @@ class automatic_signal_base : public vvp_signal_value, public vvp_net_fil_t {
       virtual void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag);
 
       virtual unsigned filter_size() const;
-      virtual void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
-      virtual void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
-      virtual void force_fil_real(double val, vvp_vector2_t mask);
+      virtual void force_fil_vec4(const vvp_vector4_t&val, const vvp_vector2_t&mask);
+      virtual void force_fil_vec8(const vvp_vector8_t&val, const vvp_vector2_t&mask);
+      virtual void force_fil_real(double val, const vvp_vector2_t&mask);
       virtual void get_value(struct t_vpi_value*value);
 };
 
@@ -393,7 +393,7 @@ class vvp_fun_signal_object_aa : public vvp_fun_signal_object, public automatic_
 /* vvp_wire
  * The vvp_wire is different from vvp_variable objects in that it
  * exists only as a filter. The vvp_wire class tree is for
- * implementing verilog wires/nets (as opposed to regs/variables).
+ * implementing Verilog wires/nets (as opposed to regs/variables).
  *
  *   vvp_vpi_callback
  *          |
@@ -435,9 +435,9 @@ class vvp_wire_vec4 : public vvp_wire_base {
       void get_value(struct t_vpi_value*value);
 	// Abstract methods from vvp_net_fit_t
       unsigned filter_size() const;
-      void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
-      void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
-      void force_fil_real(double val, vvp_vector2_t mask);
+      void force_fil_vec4(const vvp_vector4_t&val, const vvp_vector2_t&mask);
+      void force_fil_vec8(const vvp_vector8_t&val, const vvp_vector2_t&mask);
+      void force_fil_real(double val, const vvp_vector2_t&mask);
       void release(vvp_net_ptr_t ptr, bool net_flag);
       void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag);
 
@@ -463,7 +463,7 @@ class vvp_wire_vec4 : public vvp_wire_base {
 class vvp_wire_vec8 : public vvp_wire_base {
 
     public:
-      vvp_wire_vec8(unsigned wid);
+      explicit vvp_wire_vec8(unsigned wid);
 
 	// The main filter behavior for this class
       prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
@@ -480,9 +480,9 @@ class vvp_wire_vec8 : public vvp_wire_base {
       void get_value(struct t_vpi_value*value);
 	// Abstract methods from vvp_net_fit_t
       unsigned filter_size() const;
-      void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
-      void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
-      void force_fil_real(double val, vvp_vector2_t mask);
+      void force_fil_vec4(const vvp_vector4_t&val, const vvp_vector2_t&mask);
+      void force_fil_vec8(const vvp_vector8_t&val, const vvp_vector2_t&mask);
+      void force_fil_real(double val, const vvp_vector2_t&mask);
       void release(vvp_net_ptr_t ptr, bool net_flag);
       void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag);
 
@@ -519,9 +519,9 @@ class vvp_wire_real : public vvp_wire_base {
       void get_value(struct t_vpi_value*value);
 	// Abstract methods from vvp_net_fit_t
       unsigned filter_size() const;
-      void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
-      void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
-      void force_fil_real(double val, vvp_vector2_t mask);
+      void force_fil_vec4(const vvp_vector4_t&val, const vvp_vector2_t&mask);
+      void force_fil_vec8(const vvp_vector8_t&val, const vvp_vector2_t&mask);
+      void force_fil_real(double val, const vvp_vector2_t&mask);
       void release(vvp_net_ptr_t ptr, bool net_flag);
       void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag);
 
@@ -549,9 +549,9 @@ class vvp_wire_string : public vvp_wire_base {
       void get_value(struct t_vpi_value*value);
 	// Abstract methods from vvp_net_fil_t
       unsigned filter_size() const;
-      void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
-      void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
-      void force_fil_real(double val, vvp_vector2_t mask);
+      void force_fil_vec4(const vvp_vector4_t&val, const vvp_vector2_t&mask);
+      void force_fil_vec8(const vvp_vector8_t&val, const vvp_vector2_t&mask);
+      void force_fil_real(double val, const vvp_vector2_t&mask);
       void release(vvp_net_ptr_t ptr, bool net_flag);
       void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag);
 

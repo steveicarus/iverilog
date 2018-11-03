@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for statements.
  *
- *  Copyright (C) 2008-2013  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2018  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -683,8 +683,10 @@ static void get_nexuses_from_expr(ivl_expr_t expr, set<ivl_nexus_t> &out)
       break;
    case IVL_EX_TERNARY:
       get_nexuses_from_expr(ivl_expr_oper3(expr), out);
+      // fallthrough
    case IVL_EX_BINARY:
       get_nexuses_from_expr(ivl_expr_oper2(expr), out);
+      // fallthrough
    case IVL_EX_UNARY:
       get_nexuses_from_expr(ivl_expr_oper1(expr), out);
       break;
@@ -1180,7 +1182,7 @@ static long get_number_as_long(ivl_expr_t expr)
          }
 
          if (ivl_expr_signed(expr) && bits[nbits-1] == '1' &&
-             nbits < 8*sizeof(long)) imm |= -1L << nbits;
+             nbits < 8*sizeof(long)) imm |= -1UL << nbits;
       }
       break;
    }
@@ -1248,6 +1250,7 @@ static void process_number(vhdl_binop_expr *all, vhdl_var_ref *test,
       switch (bits[i]) {
       case 'x':
          if (is_casez) break;
+         // fallthrough 
       case '?':
       case 'z':
          continue;  // Ignore these.

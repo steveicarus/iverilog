@@ -26,7 +26,8 @@ class ActiveScope;
 class Architecture;
 class Expression;
 class Package;
-class prange_t;
+class ExpRange;
+class ExpString;
 class ScopeBase;
 class VType;
 
@@ -35,11 +36,11 @@ extern void bind_architecture_to_entity(const char*ename, Architecture*arch);
 
 extern const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
 					    ScopeBase*scope,
-					    std::list<prange_t*>*ranges);
+					    std::list<ExpRange*>*ranges);
 extern const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_name,
 					    ScopeBase*scope,
 					    Expression*range_left,
-					    bool downto,
+					    int direction,
 					    Expression*range_right);
 
 /*
@@ -63,8 +64,11 @@ extern void library_import(const YYLTYPE&loc, const std::list<perm_string>*names
 
 extern void library_use(const YYLTYPE&loc, ActiveScope*res, const char*libname, const char*pack, const char*ident);
 
-extern void generate_global_types(ActiveScope*res);
-
-extern bool is_global_type(perm_string type_name);
+/*
+ * Converts CHARACTER enums to an ExpString* if applicable.
+ * See the standard VHDL library (package STANDARD) or VHDL-2008/16.3
+ * for more details).
+ */
+extern ExpString*parse_char_enums(const char*str);
 
 #endif /* IVL_parse_misc_H */

@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -121,11 +121,6 @@ static void hookup_DFF_CE(NetFF*ff, NetESignal*d, NetEvProbe*pclk,
       connect(ff->pin_Clock(), pclk->pin(0));
       if (ce) connect(ff->pin_Enable(), ce->pin(0));
 
-      ff->attribute(perm_string::literal("LPM_FFType"), verinum("DFF"));
-      if (pclk->edge() == NetEvProbe::NEGEDGE)
-	    ff->attribute(perm_string::literal("Clock:LPM_Polarity"), verinum("INVERT"));
-
-
 	/* This lval_ represents a reg that is a WIRE in the
 	   synthesized results. This function signals the destructor
 	   to change the REG that this l-value refers to into a
@@ -165,7 +160,8 @@ static void make_DFF_CE(Design*des, NetProcTop*top,
 
 	    if (a->sig()) {
               // cerr << "new NetFF named " << a->name() << endl;
-              NetFF*ff = new NetFF(top->scope(), a->name(),
+	      bool negedge = pclk->edge() == NetEvProbe::NEGEDGE;
+              NetFF*ff = new NetFF(top->scope(), a->name(), negedge,
 				   a->sig()->vector_width());
               hookup_DFF_CE(ff, d, pclk, ce, a, rval_pinoffset);
               des->add_node(ff);
@@ -307,6 +303,15 @@ static void syn_start_process(NetProcTop*t)
       first_ = new syn_token_t;
       last_ = first_;
       ptr_ = first_;
+
+	// Can the following be converted into S_ALWAYS?
+      if ((t->type() == IVL_PR_ALWAYS_COMB) ||
+          (t->type() == IVL_PR_ALWAYS_FF) ||
+          (t->type() == IVL_PR_ALWAYS_LATCH)) {
+	    cerr << t->get_fileline() << ": internal error: "
+		 << " Need to check if this can be synthesized." << endl;
+	    assert(0);
+      }
 
       first_->token = (t->type() == IVL_PR_ALWAYS)? S_ALWAYS : S_INITIAL;
       first_->top = t;

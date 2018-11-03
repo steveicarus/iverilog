@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,7 +40,7 @@
 # include  <cstdlib>
 # include  "ivl_alloc.h"
 
-struct __vpiScope*stop_current_scope = 0;
+__vpiScope*stop_current_scope = 0;
 bool stop_is_finish;  /* When set, $stop acts like $finish (set in main.cc). */
 int  stop_is_finish_exit_code = 0;
 
@@ -81,8 +81,8 @@ static void cmd_call(unsigned argc, char*argv[])
 	    vpip_make_root_iterator(table, ntable);
 
       } else {
-	    table = stop_current_scope->intern;
-	    ntable = stop_current_scope->nintern;
+	    table = &stop_current_scope->intern[0];
+	    ntable = stop_current_scope->intern.size();
       }
 
 	/* This is an array of vpiHandles, for passing to the created
@@ -127,7 +127,7 @@ static void cmd_call(unsigned argc, char*argv[])
 		 the name in argv[idx+2]. Look in the current scope. */
 
 	    for (unsigned tmp = 0 ;  (tmp < ntable)&& !handle ;  tmp += 1) {
-		  struct __vpiScope*scope;
+		  __vpiScope*scope;
 		  const char*name;
 
 		  switch (table[tmp]->get_type_code()) {
@@ -139,7 +139,7 @@ static void cmd_call(unsigned argc, char*argv[])
 		      case vpiNamedBegin:
 		      case vpiNamedFork:
 			scope = dynamic_cast<__vpiScope*>(table[idx]);
-			if (strcmp(scope->name, argv[idx+1]) == 0)
+			if (strcmp(scope->scope_name(), argv[idx+1]) == 0)
 			      handle = table[tmp];
 			break;
 
@@ -221,45 +221,45 @@ static void cmd_list(unsigned, char*[])
 	    vpip_make_root_iterator(table, ntable);
 
       } else {
-	    table = stop_current_scope->intern;
-	    ntable = stop_current_scope->nintern;
+	    table = &stop_current_scope->intern[0];
+	    ntable = stop_current_scope->intern.size();
       }
 
       printf("%u items in this scope:\n", ntable);
       for (unsigned idx = 0 ;  idx < ntable ;  idx += 1) {
 
-	    struct __vpiScope*scope;
+	    __vpiScope*scope;
 	    struct __vpiSignal*sig;
 
 	    switch (table[idx]->get_type_code()) {
 		case vpiModule:
 		  scope = dynamic_cast<__vpiScope*>(table[idx]);
-		  printf("module  : %s\n", scope->name);
+		  printf("module  : %s\n", scope->scope_name());
 		  break;
 
 		case vpiGenScope:
 		  scope = dynamic_cast<__vpiScope*>(table[idx]);
-		  printf("generate: %s\n", scope->name);
+		  printf("generate: %s\n", scope->scope_name());
 		  break;
 
 		case vpiTask:
 		  scope = dynamic_cast<__vpiScope*>(table[idx]);
-		  printf("task    : %s\n", scope->name);
+		  printf("task    : %s\n", scope->scope_name());
 		  break;
 
 		case vpiFunction:
 		  scope = dynamic_cast<__vpiScope*>(table[idx]);
-		  printf("function: %s\n", scope->name);
+		  printf("function: %s\n", scope->scope_name());
 		  break;
 
 		case vpiNamedBegin:
 		  scope = dynamic_cast<__vpiScope*>(table[idx]);
-		  printf("block   : %s\n", scope->name);
+		  printf("block   : %s\n", scope->scope_name());
 		  break;
 
 		case vpiNamedFork:
 		  scope = dynamic_cast<__vpiScope*>(table[idx]);
-		  printf("fork    : %s\n", scope->name);
+		  printf("fork    : %s\n", scope->scope_name());
 		  break;
 
 		case vpiParameter:
@@ -324,11 +324,11 @@ static void cmd_push(unsigned argc, char* argv[])
 	    __vpiHandle**table;
 	    unsigned ntable;
 
-	    struct __vpiScope*child = 0;
+	    __vpiScope*child = 0;
 
 	    if (stop_current_scope) {
-		  table = stop_current_scope->intern;
-		  ntable = stop_current_scope->nintern;
+		  table = &stop_current_scope->intern[0];
+		  ntable = stop_current_scope->intern.size();
 	    } else {
 		  vpip_make_root_iterator(table, ntable);
 	    }
@@ -339,11 +339,11 @@ static void cmd_push(unsigned argc, char* argv[])
 		  if (table[tmp]->get_type_code() != vpiModule)
 			continue;
 
-		  struct __vpiScope*cp = dynamic_cast<__vpiScope*>(table[tmp]);
+		  __vpiScope*cp = dynamic_cast<__vpiScope*>(table[tmp]);
 
 		    /* This is a scope, and the name matches, then
 		       report that I found the child. */
-		  if (strcmp(cp->name, argv[idx]) == 0) {
+		  if (strcmp(cp->scope_name(), argv[idx]) == 0) {
 			child = cp;
 			break;
 		  }
@@ -373,6 +373,7 @@ static void cmd_trace(unsigned argc, char*argv[])
 	    break;
 	default:
 	    printf("Only using the first argument to trace.\n");
+	    // fallthrough
 	case 2:
 	    if ((strcmp(argv[1], "on") == 0) || (strcmp(argv[1], "1") == 0)) {
 		  show_file_line = true;
@@ -396,15 +397,15 @@ static void cmd_trace(unsigned argc, char*argv[])
 
 static void cmd_where(unsigned, char*[])
 {
-      struct __vpiScope*cur = stop_current_scope;
+      __vpiScope*cur = stop_current_scope;
 
       while (cur) {
 	    switch (cur->get_type_code()) {
 		case vpiModule:
-		  printf("module %s\n", cur->name);
+		  printf("module %s\n", cur->scope_name());
 		  break;
 		default:
-		  printf("scope (%d) %s;\n", cur->get_type_code(), cur->name);
+		  printf("scope (%d) %s;\n", cur->get_type_code(), cur->scope_name());
 		  break;
 	    }
 

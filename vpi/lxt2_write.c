@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2012 Tony Bybell.
+ * Copyright (c) 2003-2016 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -97,7 +97,7 @@ if (lo<hi)
 
 static void wave_msort(struct lxt2_wr_symbol **a, int num)
 {
-struct lxt2_wr_symbol **b = malloc(((num/2)+1) * sizeof(struct lxt2_wr_symbol *));
+struct lxt2_wr_symbol **b = (struct lxt2_wr_symbol**)malloc(((num/2)+1) * sizeof(struct lxt2_wr_symbol *));
 
 wave_mergesort(a, b, 0, num-1);
 
@@ -583,7 +583,7 @@ unsigned int i;
 if((lt)&&(lt->numfacs))
 	{
 	struct lxt2_wr_symbol *s = lt->symchain;
-	struct lxt2_wr_symbol **aliascache = calloc(lt->numalias ? lt->numalias : 1, sizeof(struct lxt2_wr_symbol *));
+	struct lxt2_wr_symbol **aliascache = (struct lxt2_wr_symbol**)calloc(lt->numalias ? lt->numalias : 1, sizeof(struct lxt2_wr_symbol *));
 	unsigned int aliases_encountered, facs_encountered;
 
 	lt->sorted_facs = (struct lxt2_wr_symbol **)calloc(lt->numfacs, sizeof(struct lxt2_wr_symbol *));
@@ -920,7 +920,7 @@ if(flags&LXT2_WR_SYM_F_DOUBLE)
 		s->len = 32;
 		}
 
-	s->value = malloc(s->len + 1);
+	s->value = (char*)malloc(s->len + 1);
 	memset(s->value, lt->initial_value, s->len);
 	s->value[s->len]=0;
 
@@ -1017,7 +1017,7 @@ static void lxt2_wr_emit_do_breakfile(struct lxt2_wr_trace *lt)
 {
 unsigned int len = strlen(lt->lxtname);
 int i;
-char *tname = malloc(len + 30);
+char *tname = (char*)malloc(len + 30);
 FILE *f2, *clone;
 off_t cnt, seg;
 char buf[32768];
@@ -1029,12 +1029,12 @@ for(i=len;i>0;i--)
 
 if(!i)
 	{
-	sprintf(tname, "%s_%03d.lxt", lt->lxtname, ++lt->break_number);
+	sprintf(tname, "%s_%03u.lxt", lt->lxtname, ++lt->break_number);
 	}
 	else
 	{
 	memcpy(tname, lt->lxtname, i);
-	sprintf(tname+i, "_%03d.lxt", ++lt->break_number);
+	sprintf(tname+i, "_%03u.lxt", ++lt->break_number);
 	}
 
 f2 = fopen(tname, "wb");
@@ -1810,13 +1810,13 @@ while(s->aliased_to)	/* find root alias if exists */
 valuelen = strlen(value);	/* ensure string is proper length */
 if(valuelen == s->len)
 	{
-	vfix = wave_alloca(s->len+1);
+	vfix = (char*)wave_alloca(s->len+1);
 	strcpy(vfix, value);
 	value = vfix;
 	}
 	else
 	{
-	vfix = wave_alloca(s->len+1);
+	vfix = (char*)wave_alloca(s->len+1);
 
 	if(valuelen < s->len)
 		{
@@ -2088,7 +2088,7 @@ if((lt)&&(lt->blackout))
 					else
 					{
 					free(s->value);
-					s->value = calloc(1, 1*sizeof(char));
+					s->value = (char*)calloc(1, 1*sizeof(char));
 					}
 				}
 			}
@@ -2101,9 +2101,11 @@ if((lt)&&(lt->blackout))
                 {
                 if((!(s->flags&LXT2_WR_SYM_F_ALIAS))&&(s->rows<2))
                         {
+			char tmp[16]; /* To get rid of the warning */
 			if(!(s->flags&(LXT2_WR_SYM_F_DOUBLE|LXT2_WR_SYM_F_STRING)))
 				{
-	                        lxt2_wr_emit_value_bit_string(lt, s, 0, "x");
+	                        strcpy(tmp, "x");
+	                        lxt2_wr_emit_value_bit_string(lt, s, 0, tmp);
 				}
 			else if (s->flags&LXT2_WR_SYM_F_DOUBLE)
 				{
@@ -2113,7 +2115,8 @@ if((lt)&&(lt->blackout))
 				}
 			else if (s->flags&LXT2_WR_SYM_F_STRING)
 				{
-				lxt2_wr_emit_value_string(lt, s, 0, "UNDEF");
+				strcpy(tmp, "UNDEF");
+				lxt2_wr_emit_value_string(lt, s, 0, tmp);
 				}
                         }
                 s=s->symchain;
@@ -2202,4 +2205,3 @@ if(lt)
         lt->timezero = timeval;
         }
 }
-

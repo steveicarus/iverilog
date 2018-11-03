@@ -46,7 +46,7 @@ class perm_string {
     private:
       friend class StringHeap;
       friend class StringHeapLex;
-      perm_string(const char*t) : text_(t) { };
+      explicit perm_string(const char*t) : text_(t) { };
 
     private:
       const char*text_;
@@ -78,11 +78,11 @@ class StringHeap {
       perm_string make(const char*);
 
     private:
-      enum { HEAPCELL = 0x10000 };
+      static const unsigned DEFAULT_CELL_SIZE = 0x10000;
 
       char*cell_base_;
+      unsigned cell_size_;
       unsigned cell_ptr_;
-      unsigned cell_count_;
 
     private: // not implemented
       StringHeap(const StringHeap&);

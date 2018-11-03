@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,7 +36,7 @@
 
 static const char*version_string =
 "Icarus Verilog STUB Code Generator " VERSION " (" VERSION_TAG ")\n\n"
-"Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)\n\n"
+"Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)\n\n"
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"
 "  the Free Software Foundation; either version 2 of the License, or\n"
@@ -394,6 +394,12 @@ static void show_lpm_cmp_eeq(ivl_lpm_t net)
 	  case IVL_LPM_CMP_NEE:
 	    str = "NEE";
 	    break;
+	  case IVL_LPM_CMP_WEQ:
+	    str = "WEQ";
+	    break;
+	  case IVL_LPM_CMP_WNE:
+	    str = "WNE";
+	    break;
 	  default:
 	    assert(0);
 	    break;
@@ -497,10 +503,11 @@ static void show_lpm_concat(ivl_lpm_t net)
 static void show_lpm_ff(ivl_lpm_t net)
 {
       ivl_nexus_t nex;
+      char*edge = ivl_lpm_negedge(net) ? "negedge" : "posedge";
       unsigned width = ivl_lpm_width(net);
 
-      fprintf(out, "  LPM_FF %s: <width=%u>\n",
-	      ivl_lpm_basename(net), width);
+      fprintf(out, "  LPM_FF %s: <polarity=%s> <width=%u>\n",
+	      ivl_lpm_basename(net), edge, width);
 
       nex = ivl_lpm_clk(net);
       fprintf(out, "    clk: %p\n", nex);
@@ -556,6 +563,39 @@ static void show_lpm_ff(ivl_lpm_t net)
 	    stub_errors += 1;
       }
 
+}
+
+static void show_lpm_latch(ivl_lpm_t net)
+{
+      ivl_nexus_t nex;
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_LATCH %s: <width=%u>\n",
+	      ivl_lpm_basename(net), width);
+
+      nex = ivl_lpm_enable(net);
+      fprintf(out, "      E: %p\n", nex);
+      if (width_of_nexus(nex) != 1) {
+	    fprintf(out, "    E: ERROR: Nexus width is %u\n",
+		    width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+
+      nex = ivl_lpm_data(net,0);
+      fprintf(out, "      D: %p\n", nex);
+      if (width_of_nexus(nex) != width) {
+	    fprintf(out, "    D: ERROR: Nexus width is %u\n",
+		    width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+
+      nex = ivl_lpm_q(net);
+      fprintf(out, "      Q: %p\n", nex);
+      if (width_of_nexus(nex) != width) {
+	    fprintf(out, "    Q: ERROR: Nexus width is %u\n",
+		    width_of_nexus(nex));
+	    stub_errors += 1;
+      }
 }
 
 static void show_lpm_mod(ivl_lpm_t net)
@@ -1009,11 +1049,17 @@ static void show_lpm(ivl_lpm_t net)
 	  case IVL_LPM_CMP_EQX:
 	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	    show_lpm_cmp_eeq(net);
 	    break;
 
 	  case IVL_LPM_FF:
 	    show_lpm_ff(net);
+	    break;
+
+	  case IVL_LPM_LATCH:
+	    show_lpm_latch(net);
 	    break;
 
 	  case IVL_LPM_CMP_GE:
@@ -1119,6 +1165,24 @@ static int show_process(ivl_process_t net, void*x)
 		  fprintf(out, "analog\n");
 	    else
 		  fprintf(out, "always\n");
+	    break;
+	  case IVL_PR_ALWAYS_COMB:
+	    if (ivl_process_analog(net))
+		  assert(0);
+	    else
+		  fprintf(out, "always_comb\n");
+	    break;
+	  case IVL_PR_ALWAYS_FF:
+	    if (ivl_process_analog(net))
+		  assert(0);
+	    else
+		  fprintf(out, "always_ff\n");
+	    break;
+	  case IVL_PR_ALWAYS_LATCH:
+	    if (ivl_process_analog(net))
+		  assert(0);
+	    else
+		  fprintf(out, "always_latch\n");
 	    break;
 	  case IVL_PR_FINAL:
 	    if (ivl_process_analog(net))

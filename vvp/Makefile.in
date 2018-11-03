@@ -55,7 +55,7 @@ else
 INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
 endif
 
-CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@
+CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ -DICARUS_VPI_CONST=const
 CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 LDFLAGS = @rdynamic@ @LDFLAGS@
@@ -72,7 +72,7 @@ V = vpi_modules.o vpi_callback.o vpi_cobject.o vpi_const.o vpi_darray.o \
     vpip_to_dec.o vpip_format.o vvp_vpi.o
 
 O = main.o parse.o parse_misc.o lexor.o arith.o array_common.o array.o bufif.o compile.o \
-    concat.o dff.o class_type.o enum_type.o extend.o file_line.o npmos.o part.o \
+    concat.o dff.o class_type.o enum_type.o extend.o file_line.o latch.o npmos.o part.o \
     permaheap.o reduce.o resolv.o \
     sfunc.o stop.o \
     substitute.o \

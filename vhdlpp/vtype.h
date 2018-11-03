@@ -33,7 +33,7 @@ class Architecture;
 class ScopeBase;
 class Entity;
 class Expression;
-class prange_t;
+class ExpRange;
 class VTypeDef;
 class ScopeBase;
 
@@ -72,6 +72,10 @@ class VType {
 	// definitions. Most types accept the default definition of this.
       virtual void write_type_to_stream(std::ostream&fd) const;
 
+	// Emits a type definition. This is used to distinguish types and
+	// subtypes.
+      virtual void write_typedef_to_stream(std::ostream&fd, perm_string name) const;
+
 	// This virtual method writes a human-readable version of the
 	// type to a given file for debug purposes. (Question: is this
 	// really necessary given the write_to_stream method?)
@@ -105,8 +109,6 @@ class VType {
 	// to evaluate.
       virtual int get_width(ScopeBase*) const { return -1; }
 
-    private:
-      friend struct decl_t;
 	// This virtual method is called to emit the declaration. This
 	// is used by the decl_t object to emit variable/wire/port declarations.
       virtual int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
@@ -156,7 +158,7 @@ class VTypeERROR : public VType {
 class VTypePrimitive : public VType {
 
     public:
-      enum type_t { BOOLEAN, BIT, INTEGER, NATURAL, REAL, STDLOGIC, CHARACTER };
+      enum type_t { BIT, INTEGER, NATURAL, REAL, STDLOGIC, TIME };
 
     public:
       VTypePrimitive(type_t tt, bool packed = false);
@@ -164,6 +166,7 @@ class VTypePrimitive : public VType {
 
       VType*clone() const { return new VTypePrimitive(*this); }
 
+      bool type_match(const VType*that) const;
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
       int get_width(ScopeBase*scope) const;
@@ -179,14 +182,6 @@ class VTypePrimitive : public VType {
       type_t type_;
       bool packed_;
 };
-
-extern const VTypePrimitive primitive_BOOLEAN;
-extern const VTypePrimitive primitive_BIT;
-extern const VTypePrimitive primitive_INTEGER;
-extern const VTypePrimitive primitive_NATURAL;
-extern const VTypePrimitive primitive_REAL;
-extern const VTypePrimitive primitive_STDLOGIC;
-extern const VTypePrimitive primitive_CHARACTER;
 
 /*
  * An array is a compound N-dimensional array of element type. The
@@ -218,19 +213,20 @@ class VTypeArray : public VType {
 
     public:
       VTypeArray(const VType*etype, const std::vector<range_t>&r, bool signed_vector = false);
-      VTypeArray(const VType*etype, std::list<prange_t*>*r, bool signed_vector = false);
+      VTypeArray(const VType*etype, std::list<ExpRange*>*r, bool signed_vector = false);
       VTypeArray(const VType*etype, int msb, int lsb, bool signed_vector = false);
       ~VTypeArray();
 
       VType*clone() const;
 
       int elaborate(Entity*ent, ScopeBase*scope) const;
+      bool type_match(const VType*that) const;
       void write_to_stream(std::ostream&fd) const;
       void write_type_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
       int get_width(ScopeBase*scope) const;
 
-      inline size_t dimensions() const { return ranges_.size(); };
+      const std::vector<range_t>&dimensions() const { return ranges_; };
       const range_t&dimension(size_t idx) const
       { return ranges_[idx]; }
 
@@ -257,6 +253,8 @@ class VTypeArray : public VType {
 	// To handle subtypes
       inline void set_parent_type(const VTypeArray*parent) { parent_ = parent; }
 
+      const VTypeArray*get_parent_type() const { return parent_; }
+
 	// Wherever it is possible, replaces range lsb & msb expressions with
 	// constant integers.
       void evaluate_ranges(ScopeBase*scope);
@@ -264,6 +262,8 @@ class VTypeArray : public VType {
     private:
       int emit_with_dims_(std::ostream&out, bool packed, perm_string name) const;
 
+	// Handles a few special types of array (*_vector, string types).
+      bool write_special_case(std::ostream&out) const;
       void write_range_to_stream_(std::ostream&fd) const;
 
       const VType*etype_;
@@ -275,27 +275,62 @@ class VTypeArray : public VType {
 class VTypeRange : public VType {
 
     public:
-      VTypeRange(const VType*base, int64_t max_val, int64_t min_val);
-      ~VTypeRange();
+      VTypeRange(const VType*base);
+      virtual ~VTypeRange() = 0;
 
-      VType*clone() const { return new VTypeRange(base_->clone(), max_, min_); }
+      bool write_std_types(std::ostream&fd) const;
+      int emit_def(std::ostream&out, perm_string name) const;
+      bool type_match(const VType*that) const;
 
 	// Get the type that is limited by the range.
-      inline const VType* base_type() const { return base_; }
+      inline const VType*base_type() const { return base_; }
+
+    protected:
+      const VType*base_;
+};
+
+class VTypeRangeConst : public VTypeRange {
+
+    public:
+      VTypeRangeConst(const VType*base, int64_t end, int64_t start);
+
+      VType*clone() const {
+          return new VTypeRangeConst(base_type()->clone(), start_, end_);
+      }
+
+      int64_t start() const { return start_; }
+      int64_t end() const { return end_; }
+
+      void write_to_stream(std::ostream&fd) const;
+
+    private:
+      const int64_t start_, end_;
+};
+
+class VTypeRangeExpr : public VTypeRange {
+
+    public:
+      VTypeRangeExpr(const VType*base, Expression*end, Expression*start, bool downto);
+      ~VTypeRangeExpr();
+
+      VType*clone() const;
+      int elaborate(Entity*end, ScopeBase*scope) const;
 
     public: // Virtual methods
       void write_to_stream(std::ostream&fd) const;
-      int emit_def(std::ostream&out, perm_string name) const;
 
     private:
-      const VType*base_;
-      int64_t max_, min_;
+      // Boundaries
+      Expression*start_, *end_;
+
+      // Range direction (downto/to)
+      bool downto_;
 };
 
 class VTypeEnum : public VType {
 
     public:
-      VTypeEnum(const std::list<perm_string>*names);
+      explicit VTypeEnum(const std::list<perm_string>*names);
       ~VTypeEnum();
 
       VType*clone() const { return new VTypeEnum(*this); }
@@ -305,6 +340,7 @@ class VTypeEnum : public VType {
       int get_width(ScopeBase*) const { return 32; }
 
       int emit_def(std::ostream&out, perm_string name) const;
+      int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 
 	// Checks if the name is stored in the enum.
       bool has_name(perm_string name) const;
@@ -358,9 +394,11 @@ class VTypeDef : public VType {
     public:
       explicit VTypeDef(perm_string name);
       explicit VTypeDef(perm_string name, const VType*is);
-      ~VTypeDef();
+      virtual ~VTypeDef();
 
       VType*clone() const { return new VTypeDef(*this); }
+
+      bool type_match(const VType*that) const;
 
       inline perm_string peek_name() const { return name_; }
 
@@ -372,22 +410,28 @@ class VTypeDef : public VType {
 	// type, and this method gets it for us.
       inline const VType* peek_definition(void) const { return type_; }
 
-      void write_to_stream(std::ostream&fd) const;
+      virtual void write_to_stream(std::ostream&fd) const;
       void write_type_to_stream(std::ostream&fd) const;
       int get_width(ScopeBase*scope) const { return type_->get_width(scope); }
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
 
       int emit_def(std::ostream&out, perm_string name) const;
+      int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 
       bool can_be_packed() const { return type_->can_be_packed(); }
 
       bool is_unbounded() const { return type_->is_unbounded(); }
-    private:
-      int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 
-    private:
+    protected:
       perm_string name_;
       const VType*type_;
+};
+
+class VSubTypeDef : public VTypeDef {
+    public:
+      explicit VSubTypeDef(perm_string name) : VTypeDef(name) {}
+      explicit VSubTypeDef(perm_string name, const VType*is) : VTypeDef(name, is) {}
+      void write_typedef_to_stream(std::ostream&fd, perm_string name) const;
 };
 
 #endif /* IVL_vtype_H */

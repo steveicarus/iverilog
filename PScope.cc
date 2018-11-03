@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,21 +19,9 @@
 
 # include  "PScope.h"
 
-PScope::PScope(perm_string n, LexicalScope*parent)
-: LexicalScope(parent), name_(n)
+bool LexicalScope::var_init_needs_explicit_lifetime() const
 {
-}
-
-PScope::PScope(perm_string n)
-: LexicalScope(0), name_(n)
-{
-}
-
-PScope::~PScope()
-{
-    for(map<perm_string, data_type_t*>::iterator it = typedefs.begin();
-        it != typedefs.end(); ++it)
-        delete it->second;
+      return false;
 }
 
 PWire* LexicalScope::wires_find(perm_string name)
@@ -45,17 +33,29 @@ PWire* LexicalScope::wires_find(perm_string name)
 	    return (*cur).second;
 }
 
+PScope::PScope(perm_string n, LexicalScope*parent)
+: LexicalScope(parent), name_(n)
+{
+      time_unit = 0;
+      time_precision = 0;
+      time_unit_is_default = true;
+      time_prec_is_default = true;
+}
+
+PScope::~PScope()
+{
+    for(map<perm_string, data_type_t*>::iterator it = typedefs.begin();
+        it != typedefs.end(); ++it)
+        delete it->second;
+}
+
 PScopeExtra::PScopeExtra(perm_string n, LexicalScope*parent)
 : PScope(n, parent)
 {
-}
-
-PScopeExtra::PScopeExtra(perm_string n)
-: PScope(n)
-{
+      time_unit_is_local = false;
+      time_prec_is_local = false;
 }
 
 PScopeExtra::~PScopeExtra()
 {
 }
-

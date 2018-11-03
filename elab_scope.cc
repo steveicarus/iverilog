@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -53,6 +53,15 @@
 # include  <typeinfo>
 # include  <cassert>
 # include  "ivl_assert.h"
+
+
+void set_scope_timescale(Design*des, NetScope*scope, PScope*pscope)
+{
+      scope->time_unit(pscope->time_unit);
+      scope->time_precision(pscope->time_precision);
+      scope->time_from_timescale(pscope->has_explicit_timescale());
+      des->set_precision(pscope->time_precision);
+}
 
 typedef map<perm_string,LexicalScope::param_expr_t>::const_iterator mparm_it_t;
 
@@ -158,8 +167,7 @@ static void collect_scope_specparams_(Design*des, NetScope*scope,
 }
 
 /*
- * Elaborate the enumeration into the given scope. If scope==0, then
- * the enumeration goes into $root instead of a scope.
+ * Elaborate the enumeration into the given scope.
  */
 static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 					enum_type_t*enum_type)
@@ -184,10 +192,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 					 enum_type);
 
       use_enum->set_line(enum_type->li);
-      if (scope)
-	    scope->add_enumeration_set(enum_type, use_enum);
-      else
-	    des->add_enumeration_set(enum_type, use_enum);
+      scope->add_enumeration_set(enum_type, use_enum);
 
       size_t name_idx = 0;
 	// Find the enumeration width.
@@ -355,10 +360,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	    }
 
 	    rc_flag = use_enum->insert_name(name_idx, cur->name, cur_value);
-	    if (scope)
-		  rc_flag &= scope->add_enumeration_name(use_enum, cur->name);
-	    else
-		  rc_flag &= des->add_enumeration_name(use_enum, cur->name);
+	    rc_flag &= scope->add_enumeration_name(use_enum, cur->name);
 
 	    if (! rc_flag) {
 		  cerr << use_enum->get_fileline()
@@ -385,15 +387,6 @@ static void elaborate_scope_enumerations(Design*des, NetScope*scope,
 		 ; cur != enum_types.end() ; ++ cur) {
 	    enum_type_t*curp = *cur;
 	    elaborate_scope_enumeration(des, scope, curp);
-      }
-}
-
-void elaborate_rootscope_enumerations(Design*des)
-{
-      for (set<enum_type_t*>::const_iterator cur = pform_enum_sets.begin()
-		 ; cur != pform_enum_sets.end() ; ++ cur) {
-	    enum_type_t*curp = *cur;
-	    elaborate_scope_enumeration(des, 0, curp);
       }
 }
 
@@ -500,7 +493,6 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
       netclass_t*use_base_class = 0;
       if (base_class) {
-	    ivl_assert(*pclass, scope);
 	    use_base_class = scope->find_class(base_class->name);
 	    if (use_base_class == 0) {
 		  cerr << pclass->get_fileline() << ": error: "
@@ -516,13 +508,15 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       use_type->save_elaborated_type = use_class;
 
 	// Class scopes have no parent scope, because references are
-	// not allowed to escape a class method.
+	// not allowed to escape a class method. But they are allowed
+	// to reference the compilation unit scope.
       NetScope*class_scope = new NetScope(0, hname_t(pclass->pscope_name()),
-					  NetScope::CLASS);
+					  NetScope::CLASS, scope->unit());
       class_scope->set_line(pclass);
       class_scope->set_class_def(use_class);
       use_class->set_class_scope(class_scope);
       use_class->set_definition_scope(scope);
+      set_scope_timescale(des, class_scope, pclass);
 
 	// Collect the properties, elaborate them, and add them to the
 	// elaborated class definition.
@@ -576,12 +570,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 	    cur->second->elaborate_scope(des, method_scope);
       }
 
-      if (scope) {
-	    scope->add_class(use_class);
-
-      } else {
-	    des->add_class(use_class, pclass);
-      }
+      scope->add_class(use_class);
 }
 
 static void elaborate_scope_classes(Design*des, NetScope*scope,
@@ -590,18 +579,6 @@ static void elaborate_scope_classes(Design*des, NetScope*scope,
       for (size_t idx = 0 ; idx < classes.size() ; idx += 1) {
 	    blend_class_constructors(classes[idx]);
 	    elaborate_scope_class(des, scope, classes[idx]);
-      }
-}
-
-void elaborate_rootscope_classes(Design*des)
-{
-      if (pform_classes.empty())
-	    return;
-
-      for (map<perm_string,PClass*>::iterator cur = pform_classes.begin()
-		 ; cur != pform_classes.end() ; ++ cur) {
-	    blend_class_constructors(cur->second);
-	    elaborate_scope_class(des, 0, cur->second);
       }
 }
 
@@ -653,9 +630,6 @@ static void elaborate_scope_task(Design*des, NetScope*scope, PTask*task)
       NetScope*task_scope = new NetScope(scope, use_name, NetScope::TASK);
       task_scope->is_auto(task->is_auto());
       task_scope->set_line(task);
-
-      if (scope==0)
-	    des->add_root_task(task_scope, task);
 
       if (debug_scopes) {
 	    cerr << task->get_fileline() << ": elaborate_scope_task: "
@@ -719,9 +693,6 @@ static void elaborate_scope_func(Design*des, NetScope*scope, PFunction*task)
       task_scope->is_auto(task->is_auto());
       task_scope->set_line(task);
 
-      if (scope==0)
-	    des->add_root_task(task_scope, task);
-
       if (debug_scopes) {
 	    cerr << task->get_fileline() << ": elaborate_scope_func: "
 		 << "Elaborate task scope " << scope_path(task_scope) << endl;
@@ -775,28 +746,6 @@ static void elaborate_scope_funcs(Design*des, NetScope*scope,
 	    elaborate_scope_func(des, scope, cur->second);
       }
 
-}
-
-void elaborate_rootscope_tasks(Design*des)
-{
-      for (map<perm_string,PTaskFunc*>::iterator cur = pform_tasks.begin()
-		 ; cur != pform_tasks.end() ; ++ cur) {
-
-	    if (PTask*task = dynamic_cast<PTask*> (cur->second)) {
-		  elaborate_scope_task(des, 0, task);
-		  continue;
-	    }
-
-	    if (PFunction*func = dynamic_cast<PFunction*>(cur->second)) {
-		  elaborate_scope_func(des, 0, func);
-		  continue;
-	    }
-
-	    cerr << cur->second->get_fileline() << ": internal error: "
-		 << "elabortae_rootscope_tasks does not understand "
-		 << "this object," << endl;
-	    des->errors += 1;
-      }
 }
 
 class generate_schemes_work_item_t : public elaborator_work_item_t {
@@ -1155,7 +1104,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    container->genvar_tmp_val = genvar;
 	    delete step;
 	    delete test_ex;
-	    test_ex = elab_and_eval(des, container, loop_test, -1);
+	    test_ex = elab_and_eval(des, container, loop_test, -1, true);
 	    test = dynamic_cast<NetEConst*>(test_ex);
 	    assert(test);
       }
@@ -1714,6 +1663,10 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 		 << "." << endl;
       }
 
+	    struct attrib_list_t*attrib_list;
+	    unsigned attrib_list_n = 0;
+	    attrib_list = evaluate_attributes(attributes, attrib_list_n, des, sc);
+
 	// Run through the module instances, and make scopes out of
 	// them. Also do parameter overrides that are done on the
 	// instantiation line.
@@ -1740,7 +1693,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // Create the new scope as a MODULE with my name. Note
 	      // that if this is a nested module, mark it thus so that
 	      // scope searches will continue into the parent scope.
-	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE,
+	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE, 0,
 					     bound_type_? true : false,
 					     mod->program_block,
 					     mod->is_interface);
@@ -1748,13 +1701,12 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	                       get_lineno(), mod->get_lineno());
 	    my_scope->set_module_name(mod->mod_name());
 
+	    for (unsigned adx = 0 ;  adx < attrib_list_n ;  adx += 1)
+	      my_scope->attribute(attrib_list[adx].key, attrib_list[adx].val);
+
 	    instances[idx] = my_scope;
 
-	      // Set time units and precision.
-	    my_scope->time_unit(mod->time_unit);
-	    my_scope->time_precision(mod->time_precision);
-	    my_scope->time_from_timescale(mod->time_from_timescale);
-	    des->set_precision(mod->time_precision);
+	    set_scope_timescale(des, my_scope, mod);
 
 	      // Look for module parameter replacements. The "replace" map
 	      // maps parameter name to replacement expression that is
@@ -1793,8 +1745,12 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // so the mapping into the replace list is much easier.
 	    if (parms_) {
 		  assert(overrides_ == 0);
-		  for (unsigned jdx = 0 ;  jdx < nparms_ ;  jdx += 1)
-			replace[parms_[jdx].name] = parms_[jdx].parm;
+		  for (unsigned jdx = 0 ;  jdx < nparms_ ;  jdx += 1) {
+		          // No expression means that the parameter is not
+		          // replaced.
+			if (parms_[jdx].parm)
+			      replace[parms_[jdx].name] = parms_[jdx].parm;
+		  }
 
 	    }
 
@@ -1806,6 +1762,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	    mod->elaborate_scope(des, my_scope, replace);
 
       }
+	    delete[]attrib_list;
 
 	/* Stash the instance array of scopes into the parent
 	   scope. Later elaboration passes will use this vector to

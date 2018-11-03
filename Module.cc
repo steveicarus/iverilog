@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -32,12 +32,9 @@ Module::Module(LexicalScope*parent, perm_string n)
 {
       library_flag = false;
       is_cell = false;
+      is_interface = false;
       program_block = false;
       uc_drive = UCD_NONE;
-      timescale_warn_done = false;
-      time_unit = 0;
-      time_precision = 0;
-      time_from_timescale = false;
 }
 
 Module::~Module()
@@ -94,13 +91,15 @@ perm_string Module::get_port_name(unsigned idx) const
 {
 
       assert(idx < ports.size());
-      if (ports[idx] == 0) {
+      if (ports[idx] == 0 || ports[idx]->name.str() == 0) {
               /* It is possible to have undeclared ports. These
                  are ports that are skipped in the declaration,
                  for example like so: module foo(x ,, y); The
                  port between x and y is unnamed and thus
-                 inaccessible to binding by name. */
-            return perm_string::literal("");
+                 inaccessible to binding by name. Port references
+		 that aren't simple or escaped identifiers are
+		 also inaccessible to binding by name. */
+            return perm_string::literal("unnamed");
       }
       return ports[idx]->name;
 }

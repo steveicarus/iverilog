@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -39,19 +39,11 @@ flags. These are used as destinations for operations that return
 boolean values, for example comparisons. They are also used as inputs
 for test and branch opcodes.
 
-* %abs/wr <bit-o>, <bit-i>
+* %abs/wr
 
 This instruction calculates the absolute value of a real value. It uses
-the fabs() function in the run-time to do the work.
-
-* %add <bit-l>, <bit-r>, <wid> (XXXX Old version)
-
-This instruction adds the right vector into the left vector, the
-vectors having the width <wid>. If any of the bits of either vector
-are x or z, the result is x. Otherwise, the result is the arithmetic
-sum.
-
-See also the %sub instruction.
+the fabs() function in the run-time to do the work, and manipulates
+the top of the real-value stack.
 
 * %add
 * %addi <vala>, <valb>, <wid>
@@ -65,7 +57,7 @@ immediate value (See %pushi/vec4).
 
 See also the %sub instruction.
 
-* %add/wr <bit-l>, <bit-r>
+* %add/wr
 
 This is the real valued version of the %add instruction. The arguments
 are popped from the stack, right operand then left, and the result
@@ -118,7 +110,7 @@ event control registers to determine when to perform the assign.
 %evctl is used to set the event control information.
 
 * %assign/v0 <var-label>, <delay>, <bit> (XXXX Old description)
-* %assign/v0/d <var-label>, <delayx>, <bit> (XXXX Old description
+* %assign/v0/d <var-label>, <delayx>, <bit> (XXXX Old description)
 * %assign/v0/e <var-label>, <bit> (XXXX Old description)
 
 The %assign/v0 instruction is a vector version of non-blocking
@@ -142,8 +134,8 @@ assignments. For blocking assignments, see %set/v.
 * %assign/vec4/d <var-label>, <delayx>
 * %assign/vec4/e <var-label>
 
-The %assign/vec4 instruction if a vec4 version of non-blocking
-assignment, The <delay> is the number lf clock ticks in the future
+The %assign/vec4 instruction is a vec4 version of non-blocking
+assignment. The <delay> is the number of clock ticks in the future
 where the assignment should schedule, and the value to assign is
 pulled from the vec4 stack.
 
@@ -226,6 +218,22 @@ debugger commands.
 This may not work on all platforms. If run-time debugging is compiled
 out, then this function is a no-op.
 
+* %callf/obj <code-label>, <scope-label>
+* %callf/real <code-label>, <scope-label>
+* %callf/str <code-label>, <scope-label>
+* %callf/vec4 <code-label>, <scope-label>
+* %callf/void <code-label>, <scope-label>
+
+More directly implement function calling. This subsumes the %fork and
+%join of the more general task and block calling, but is optimized for
+functions, which are threads of a special, constrained sort.
+
+The different variants reflect the different return types for the
+called function. For example, if the function returns a string, the
+%callf/str opcode is used, and will push the string return value into
+the caller's string stack. The %callf/void function is special in that
+is pushes no value onto any stack.
+
 * %cassign/vec4 <var-label>
 * %cassign/vec4/off <var-label>, <off-index>
 
@@ -294,6 +302,18 @@ The %cmp/ne and %cmpi/ne variants are the same as the %cmp/e and
 eliminate the need for a %flag_inv instruction to implement != and !==
 operations.
 
+* %cmp/we
+* %cmp/wne
+
+These instructions perform a wild comparison of two vectors of equal
+size. Two values are pulled from the top of the stack, and not replaced.
+The results are written into flag bit 4. The comparisons work like eq/ne
+except an x/z bit in the r-value will match any l-value bit.
+
+The %cmp/wne variant is the same as %cmp/we, but the 4 flag is inverted
+in order to eliminate the need for a %flag_inv instruction to implement
+the !=? operator.
+
 * %cmp/wr
 
 Compare real values for equality and less-then. This opcode pops to
@@ -351,31 +371,19 @@ The %concati/vec4 form takes an immediate value and appends it (lsb)
 to the value on the top of the stack. See the %pushi/vec4 instruction
 for how to describe the immediate value.
 
-* %cvt/sr <bit-l>
-* %cvt/rs <bit-l>
-
-Copy a word from r to l, converting it from real to signed integer (sr)
-or signed integer to real (rs) in the process. The source and destination
-may be the same word address, leading to a convert in place. Precision
-may be lost in the conversion.
-
-The %cvt/sr <bit-l> gets the real value from the top of the real value
-stack (and pops the value) and writes it to the indexed register.
-
+* %cvt/sr <index>
 * %cvt/ur <bit-l>
-* %cvt/ru <bit-r>
 
-Copy a word from r to l, converting it from real to unsigned integer (ur)
-or signed integer to real (ru) in the process. The source and destination
-may be the same word address, leading to a convert in place. Precision
-may be lost in the conversion.
+Pop a word from the real-value stack, convert it to a signed or
+unsigned integer, and write it to the <index> index
+register. Precision may be lost in the conversion.
 
-* %cvt/rv <bit-r>, <wid>
-* %cvt/rv/s <bit-r>, <wid>
+* %cvt/rv
+* %cvt/rv/s
 
-The %cvt/rv instruction converts a thread vector starting at <bit-r>
-and with the width <wid> to a real word. Push the result onto the real
-value stack. Precision may be lost in the conversion.
+The %cvt/rv instruction pops a value from the thread vec4 stack and
+converts it to a real word. Push the result onto the real value
+stack. Precision may be lost in the conversion.
 
 The %cvt/rv/s instruction is the same as %cvt/rv, but treats the thread
 vector as a signed value.
@@ -504,6 +512,10 @@ the format of the output is:
 <description> is a string, if string is 0 then the following default
 message is used: "Procedural tracing.".
 
+* %flag_inv <flag>
+
+This instruct inverts a flag bit.
+
 * %flag_mov <flag1>, <flag2>
 
 This instruction copies the flag bit from <flag2> to <flag1>.
@@ -528,15 +540,17 @@ writes the LSB to the selected flag.
 
 * %force/vec4 <label>
 * %force/vec4/off <label>, <off>
+* %force/vec4/off/d <label>, <off>, <delay>
 
 Perform a "force" assign of a values to the target variable. The value
 to be forced is popped from the vec4 stack and forced to the target
 variable. The /off variant forces a part of a vector. The width of the
 part comes from the width of the popped value, and the <off> is an
 index register that contains the canonical offset where the value
-sets written.
+gets written. The <delay> is an index register that contains the
+delay.
 
-The %foce/vec4/off instruction will test the value if flags[4], and if
+The %force/vec4/off instructions will test the value of flags[4], and if
 it is 1, will suppress the actual assignment. This is intended to help
 with detection of invalid index expressions.
 
@@ -896,15 +910,15 @@ The <skip> is the number of top positions on the stack to keep,
 before starting to pop. This allows for popping positions other than
 the top of the stack.
 
-* %pow <bit-l>, <bit-r>, <wid>
-* %pow/s <bit-l>, <bit-r>, <wid>
+* %pow
+* %pow/s
 
-The %pow opcode raises <bit-l> (unsigned) to the power of <bit-r>
-(unsigned) giving an exact integer result. The %pow/s opcode does
-the same for signed values, except it uses the double pow() function
-to calculate the result so may not produce exact results. The result
-replaces the left operand.
+The %pow opcode pops the "B" value from the stack, then pops the "A"
+value from the stack, then pushes A**B back onto the stack. Of there
+are any X or Z bits in A or B, then an X value is pushed onto the
+stack instead of a calculated values.
 
+The %pow/s opcode does the same for signed values.
 
 * %pow/wr
 
@@ -1003,6 +1017,33 @@ statement. The <type> is 0 for nets and 1 for registers. See the other
 Pop the vec4 value, replicate it <count> times, then push the
 result. In other words, push the concatenation of <count> copies.
 See also the %concat instruction.
+
+* %ret/obj <index>
+* %ret/real <index>
+* %ret/str <index>
+* %ret/vec4 <index>, <offset>, <wid>
+
+Write a value to the indexed function argument. The value is popped
+from the appropriate stack and written into the argument. The return
+value of a function is the first argument of the appropriate type, so
+for example to store the return value for a real function, use
+"%ret/real 0;". It is up to the function caller to set up the argument
+references.
+
+The %ret/vec4 opcode works very much like the %store/vec4 opcode. The
+<off> and <wid> operands are the offset and width of the subvector of
+the destination value that is written by the value popped from the
+vec4 stack. Off the <offset> is zero, then the literal offset is
+zero. If the <offset> is non-zero, then it selects an index register
+that contains the actual offset. In this case, flag-4 is tested, and
+if not 1, the assign is suppressed.
+
+* %retload/vec4 <index>
+* %retload/real <index>
+* %retload/str <index>
+
+Read a value from the indexed function argument. The value is read
+from the argument and pushed to the appropriate stack.
 
 * %set/dar/obj/real <index>
 * %set/dar/obj/str <index>
@@ -1120,7 +1161,9 @@ popped off the top of the stack and written to the variable. The value
 is then optionally truncated to <wid> bits and assigned to the
 variable. It is an error for the value to be fewer then <wid>
 bits. The <offset> is the index register that contains a part offset
-for writing into a part of the variable.
+for writing into a part of the variable. If the <offset> is 0, then
+use the literal value 0 instead of getting an offset from index
+register 0.
 
 The %store/vec4a is similar, but the target is an array of vec4, the
 <addr> is an index register that contains the canonical address, and
@@ -1145,17 +1188,6 @@ which implement the push_back (qb) and push_front (qf)
 functions. These only apply to queue object, and are distinct from the
 dar versions because the begin/front don't exist, by definition.
 
-* %sub <bit-l>, <bit-r>, <wid> (XXXX Old version)
-
-This instruction arithmetically subtracts the right vector out of the
-left vector. It accomplishes this by adding to the left vector 1 plus
-the 1s complement of the right vector. The carry value is dropped, and
-the result, placed in <bit-l>, is the subtraction of <bit-r> from the
-input <bit-l>. Both vectors have the same width. If any bits in either
-operand are x, then the entire result is x.
-
-See also the %add instruction.
-
 * %sub
 
 This instruction subtracts vec4 values. The right value is popped from
@@ -1163,6 +1195,13 @@ the vec4 stack, then the left value is popped. The right is subtracted
 from the left, and the result pushed.
 
 See also the %add instruction.
+
+* %subi <vala>, <valb>, <wid>
+
+This instruction pops a value "A" from the vec4 stack, generates a
+values "B" from the immediate argument, and pushes A-B.
+
+See also the %addi instruction.
 
 * %sub/wr
 
@@ -1217,6 +1256,7 @@ stack when the call returns.
 
 * %vpi_func <file> <line> <name> [, ...] {<vec4> <real> <str>}
 * %vpi_func/r <file> <line> <name> [, ...] {<vec4> <real> <str>}
+* %vpi_func/s <file> <line> <name> [, ...] {<vec4> <real> <str>}
 
 This instruction is similar to %vpi_call, except that it is for
 calling system functions. The difference here is the return value from
@@ -1271,7 +1311,7 @@ table for the xor is:
 
 
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU

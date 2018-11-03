@@ -1,7 +1,7 @@
 #ifndef IVL_t_dll_H
 #define IVL_t_dll_H
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -76,6 +76,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_compare(const NetCompare*);
       void lpm_divide(const NetDivide*);
       void lpm_ff(const NetFF*);
+      void lpm_latch(const NetLatch*);
       void lpm_modulo(const NetModulo*);
       void lpm_mult(const NetMult*);
       void lpm_mux(const NetMux*);
@@ -370,6 +371,7 @@ struct ivl_lpm_s {
 
       union {
 	    struct ivl_lpm_ff_s {
+		  unsigned negedge_flag :1;
 		  ivl_nexus_t clk;
 		  ivl_nexus_t we;
 		  ivl_nexus_t aclr;
@@ -387,6 +389,17 @@ struct ivl_lpm_s {
 		  ivl_expr_t aset_value;
 		  ivl_expr_t sset_value;
 	    } ff;
+	    struct ivl_lpm_latch_s {
+		  ivl_nexus_t e;
+		  union {
+			ivl_nexus_t*pins;
+			ivl_nexus_t pin;
+		  } q;
+		  union {
+			ivl_nexus_t*pins;
+			ivl_nexus_t pin;
+		  } d;
+	    } latch;
 
 	    struct ivl_lpm_mux_s {
 		  unsigned size;
@@ -632,7 +645,7 @@ struct ivl_parameter_s {
  * that generally only matters for VPI calls.
  */
 struct ivl_process_s {
-      ivl_process_type_t type_ : 2;
+      ivl_process_type_t type_ : 3;
       unsigned int analog_flag : 1;
       ivl_scope_t scope_;
       ivl_statement_t stmt_;
@@ -652,6 +665,8 @@ struct ivl_process_s {
  * there.
  */
 struct ivl_scope_s {
+      ivl_scope_s();
+
       ivl_scope_t parent;
       std::map<hname_t,ivl_scope_t> children;
 	// This is just like the children map above, but in vector
@@ -685,6 +700,9 @@ struct ivl_scope_s {
 	/* Scopes that are tasks/functions have a definition. */
       ivl_statement_t def;
       unsigned is_auto;
+      ivl_variable_type_t func_type;
+      bool func_signed;
+      unsigned func_width;
 
       unsigned is_cell;
 
@@ -844,6 +862,7 @@ struct ivl_statement_s {
 	    } utask_;
 
 	    struct { /* IVL_ST_TRIGGER IVL_ST_WAIT */
+		  unsigned needs_t0_trigger;
 		  unsigned nevent;
 		  union {
 			ivl_event_t event;

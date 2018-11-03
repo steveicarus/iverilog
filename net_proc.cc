@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -53,6 +53,17 @@ void NetBlock::append(NetProc*cur)
 	    cur->next_ = last_->next_;
 	    last_->next_ = cur;
 	    last_ = cur;
+      }
+}
+
+void NetBlock::prepend(NetProc*cur)
+{
+      if (last_ == 0) {
+	    last_ = cur;
+	    cur->next_ = cur;
+      } else {
+	    cur->next_ = last_->next_;
+	    last_->next_ = cur;
       }
 }
 
@@ -188,6 +199,7 @@ NetForever::~NetForever()
 NetForLoop::NetForLoop(NetNet*ind, NetExpr*iexpr, NetExpr*cond, NetProc*sub, NetProc*step)
 : index_(ind), init_expr_(iexpr), condition_(cond), statement_(sub), step_statement_(step)
 {
+      as_block_ = NULL;
 }
 
 void NetForLoop::wrap_up()

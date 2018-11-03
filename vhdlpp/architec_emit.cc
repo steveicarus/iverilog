@@ -23,42 +23,33 @@
 # include  "sequential.h"
 # include  "subprogram.h"
 # include  "vsignal.h"
+# include  "std_types.h"
 # include  <iostream>
 # include  <typeinfo>
 # include  <ivl_assert.h>
 
-int Scope::emit_signals(ostream&out, Entity*entity, Architecture*arc)
+int Scope::emit_signals(ostream&out, Entity*entity, ScopeBase*scope)
 {
-      int errors = 0;
+    int errors = 0;
 
-      for (map<perm_string,Signal*>::iterator cur = old_signals_.begin()
-		 ; cur != old_signals_.end() ; ++cur) {
+    for (map<perm_string,Signal*>::iterator cur = new_signals_.begin()
+       ; cur != new_signals_.end() ; ++cur) {
+        errors += cur->second->emit(out, entity, scope);
+    }
 
-	    errors += cur->second->emit(out, entity, arc);
-      }
-      for (map<perm_string,Signal*>::iterator cur = new_signals_.begin()
-         ; cur != new_signals_.end() ; ++cur) {
-
-        errors += cur->second->emit(out, entity, arc);
-      }
-      return errors;
+    return errors;
 }
 
-int Scope::emit_variables(ostream&out, Entity*entity, Architecture*arc)
+int Scope::emit_variables(ostream&out, Entity*entity, ScopeBase*scope)
 {
-      int errors = 0;
+    int errors = 0;
 
-      for (map<perm_string,Variable*>::iterator cur = old_variables_.begin()
-		 ; cur != old_variables_.end() ; ++cur) {
+    for (map<perm_string,Variable*>::iterator cur = new_variables_.begin()
+       ; cur != new_variables_.end() ; ++cur) {
+        errors += cur->second->emit(out, entity, scope);
+    }
 
-	    errors += cur->second->emit(out, entity, arc);
-      }
-      for (map<perm_string,Variable*>::iterator cur = new_variables_.begin()
-         ; cur != new_variables_.end() ; ++cur) {
-
-        errors += cur->second->emit(out, entity, arc);
-      }
-      return errors;
+    return errors;
 }
 
 int Architecture::emit(ostream&out, Entity*entity)
@@ -70,15 +61,16 @@ int Architecture::emit(ostream&out, Entity*entity)
 	// of the full definition.
 
       typedef_context_t typedef_ctx;
-      //for (map<perm_string,const VType*>::iterator cur = use_types_.begin()
-		 //; cur != use_types_.end() ; ++cur) {
+      for (map<perm_string,const VType*>::iterator cur = use_types_.begin()
+		 ; cur != use_types_.end() ; ++cur) {
+	    if(is_global_type(cur->first))
+                continue;
 
-	    //if(const VTypeDef*def = dynamic_cast<const VTypeDef*>(cur->second))
-		//errors += def->emit_typedef(out, typedef_ctx);
-      //}
+	    if(const VTypeDef*def = dynamic_cast<const VTypeDef*>(cur->second))
+		errors += def->emit_typedef(out, typedef_ctx);
+      }
       for (map<perm_string,const VType*>::iterator cur = cur_types_.begin()
 		 ; cur != cur_types_.end() ; ++cur) {
-
 	    if(const VTypeDef*def = dynamic_cast<const VTypeDef*>(cur->second))
 		errors += def->emit_typedef(out, typedef_ctx);
       }
@@ -101,11 +93,18 @@ int Architecture::emit(ostream&out, Entity*entity)
       errors += emit_signals(out, entity, this);
       errors += emit_variables(out, entity, this);
 
-      for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
+      for (map<perm_string,SubHeaderList>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++ cur) {
-	    // Do not emit unbounded functions, we will just need fixed instances later
-	    if(!cur->second->unbounded())
-                errors += cur->second->emit_package(out);
+	    const SubHeaderList& subp_list = cur->second;
+
+	    for(SubHeaderList::const_iterator it = subp_list.begin();
+			it != subp_list.end(); ++it) {
+                SubprogramHeader*subp = *it;
+
+		// Do not emit unbounded functions, we will just need fixed instances later
+		if(!subp->unbounded())
+		    errors += subp->emit_package(out);
+	    }
       }
 
       for (list<Architecture::Statement*>::iterator cur = statements_.begin()
@@ -130,17 +129,74 @@ int SignalAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
       int errors = 0;
 
       ivl_assert(*this, rval_.size() == 1);
-      Expression*rval = rval_.front();
+      const Expression*rval = rval_.front();
 
       out << "// " << get_fileline() << endl;
       out << "assign ";
+      if(const ExpDelay*delayed = dynamic_cast<const ExpDelay*>(rval)) {
+        out << "#(";
+        delayed->peek_delay()->emit(out, ent, arc);
+        out << ") ";
+        rval = delayed->peek_expr();
+      }
       errors += lval_->emit(out, ent, arc);
       out << " = ";
-
       errors += rval->emit(out, ent, arc);
-
       out << ";" << endl;
+
       return errors;
+}
+
+int CondSignalAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+    int errors = 0;
+
+    out << "// " << get_fileline() << endl;
+    out << "always begin" << endl;
+    bool first = true;
+
+    for(list<ExpConditional::case_t*>::iterator it = options_.begin();
+            it != options_.end(); ++it) {
+        ExpConditional::case_t*cas = *it;
+        ivl_assert(*this, cas->true_clause().size() == 1);
+        const Expression*rval = cas->true_clause().front();
+
+        if(first)
+            first = false;
+        else
+            out << "else ";
+
+        if(Expression*cond = cas->condition()) {
+            out << "if(";
+            cond->emit(out, ent, arc);
+            out << ") ";
+        }
+
+        out << endl;
+        lval_->emit(out, ent, arc);
+        out << " = ";
+        rval->emit(out, ent, arc);
+        out << ";" << endl;
+    }
+
+    // Sensitivity list
+    first = true;
+    out << "@(";
+
+    for(list<const ExpName*>::const_iterator it = sens_list_.begin();
+            it != sens_list_.end(); ++it) {
+        if(first)
+            first = false;
+        else
+            out << ",";
+
+        errors += (*it)->emit(out, ent, arc);
+    }
+
+    out << ");" << endl;
+    out << "end" << endl;
+
+    return errors;
 }
 
 int ComponentInstantiation::emit(ostream&out, Entity*ent, Architecture*arc)
@@ -149,6 +205,22 @@ int ComponentInstantiation::emit(ostream&out, Entity*ent, Architecture*arc)
       int errors = 0;
 
       arc->set_cur_component(this);
+
+      if(ComponentBase*comp = arc->find_component(cname_)) {
+        const std::vector<InterfacePort*>& generics = comp->get_generics();
+
+      if(generics.size() != generic_map_.size())
+	    // Display an error for generics that do not have neither
+	    // default nor component specific value defined
+	    for(vector<InterfacePort*>::const_iterator it = generics.begin();
+			it != generics.end(); ++it) {
+		if(!(*it)->expr && generic_map_.count((*it)->name) == 0) {
+		    cerr << get_fileline() << ": generic " << (*it)->name <<
+			"value is not defined" << endl;
+		    ++errors;
+		}
+	    }
+      }
 
       out << cname_;
       if (! generic_map_.empty()) {
@@ -230,6 +302,36 @@ int IfGenerate::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
+int StatementList::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+      int errors = 0;
+
+      for (std::list<SequentialStmt*>::iterator it = statements_.begin();
+              it != statements_.end(); ++it) {
+            errors += (*it)->emit(out, ent, scope);
+      }
+
+      return errors;
+}
+
+int InitialStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+      out << "initial begin" << endl;
+      int errors = StatementList::emit(out, ent, scope);
+      out << "end" << endl;
+
+      return errors;
+}
+
+int FinalStatement::emit(ostream&out, Entity*ent, ScopeBase*scope)
+{
+      out << "final begin" << endl;
+      int errors = StatementList::emit(out, ent, scope);
+      out << "end" << endl;
+
+      return errors;
+}
+
 /*
  * Emit a process statement using "always" syntax.
  *
@@ -238,16 +340,25 @@ int IfGenerate::emit(ostream&out, Entity*ent, Architecture*arc)
  * beginning. In VHDL, all the statements are initially executed once
  * before blocking in the first wait on the sensitivity list.
  */
-int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
+int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*)
 {
       int errors = 0;
 
-      out << "always begin" << endl;
+      /* Check if the process has no sensitivity list and ends up with
+       * a final wait. If so, convert the process to an initial block. */
+      const WaitStmt*wait_stmt = NULL;
+      if (!stmt_list().empty())
+          wait_stmt = dynamic_cast<const WaitStmt*>(stmt_list().back());
 
-      for (list<SequentialStmt*>::iterator cur = statements_list_.begin()
-		 ; cur != statements_list_.end() ; ++cur) {
-	    errors += (*cur)->emit(out, ent, arc);
-      }
+      if (wait_stmt && wait_stmt->type() == WaitStmt::FINAL)
+          out << "initial begin : ";
+      else
+          out << "always begin : ";
+
+      out << peek_name() << endl;
+
+      errors += emit_variables(out, ent, this);
+      errors += StatementList::emit(out, ent, this);
 
       if (! sensitivity_list_.empty()) {
 	    out << "@(";
@@ -256,13 +367,12 @@ int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 		       ; cur != sensitivity_list_.end() ; ++cur) {
 
 		  if (comma) out << comma;
-		  errors += (*cur)->emit(out, ent, arc);
+		  errors += (*cur)->emit(out, ent, this);
 		  comma = ", ";
 	    }
-	    out << ") /* sensitivity list for process */;" << endl;
+	    out << "); /* sensitivity list for process */" << endl;
       }
 
-      out << "end" << endl;
+      out << "end /* " << peek_name() << " */" << endl;
       return errors;
-
 }

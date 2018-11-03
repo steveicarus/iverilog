@@ -20,6 +20,7 @@
 # include  "architec.h"
 # include  "expression.h"
 # include  "parse_types.h"
+# include  "sequential.h"
 // Need this for parse_errors?
 # include  "parse_api.h"
 # include  <cassert>
@@ -28,7 +29,7 @@ using namespace std;
 
 Architecture::Architecture(perm_string name, const ActiveScope&ref,
 			   list<Architecture::Statement*>&s)
-: Scope(ref), name_(name), cur_component_(NULL)
+: Scope(ref), name_(name), cur_component_(NULL), cur_process_(NULL)
 {
       statements_.splice(statements_.end(), s);
 }
@@ -65,6 +66,14 @@ bool Architecture::find_constant(perm_string by_name, const VType*&typ, Expressi
     }
 
     return false;
+}
+
+Variable* Architecture::find_variable(perm_string by_name) const
+{
+    if(cur_process_)
+        return cur_process_->find_variable(by_name);
+
+    return ScopeBase::find_variable(by_name);
 }
 
 void Architecture::push_genvar_type(perm_string gname, const VType*gtype)
@@ -136,7 +145,7 @@ GenerateStatement::~GenerateStatement()
 }
 
 ForGenerate::ForGenerate(perm_string gname, perm_string genvar,
-			 prange_t*rang, std::list<Architecture::Statement*>&s)
+			 ExpRange*rang, std::list<Architecture::Statement*>&s)
 : GenerateStatement(gname, s), genvar_(genvar),
   lsb_(rang->lsb()), msb_(rang->msb())
 {
@@ -175,6 +184,21 @@ SignalAssignment::~SignalAssignment()
 	    delete *cur;
       }
       delete lval_;
+}
+
+CondSignalAssignment::CondSignalAssignment(ExpName*target, std::list<ExpConditional::case_t*>&options)
+: lval_(target)
+{
+    options_.splice(options_.end(), options);
+}
+
+CondSignalAssignment::~CondSignalAssignment()
+{
+    delete lval_;
+    for(list<ExpConditional::case_t*>::iterator it = options_.begin();
+            it != options_.end(); ++it) {
+        delete *it;
+    }
 }
 
 ComponentInstantiation::ComponentInstantiation(perm_string i, perm_string c,
@@ -229,18 +253,34 @@ Expression*ComponentInstantiation::find_generic_map(perm_string by_name) const
     return p->second;
 }
 
+StatementList::StatementList(std::list<SequentialStmt*>*statement_list)
+{
+    if(statement_list)
+	  statements_.splice(statements_.end(), *statement_list);
+}
+
+StatementList::~StatementList()
+{
+    for(std::list<SequentialStmt*>::iterator it = statements_.begin();
+            it != statements_.end(); ++it) {
+        delete *it;
+    }
+}
 
 ProcessStatement::ProcessStatement(perm_string iname,
+				   const ActiveScope&ref,
 				   std::list<Expression*>*sensitivity_list,
 				   std::list<SequentialStmt*>*statements_list)
-: iname_(iname)
+: StatementList(statements_list), Scope(ref), iname_(iname)
 {
       if (sensitivity_list)
 	    sensitivity_list_.splice(sensitivity_list_.end(), *sensitivity_list);
-      if (statements_list)
-	    statements_list_.splice(statements_list_.end(), *statements_list);
 }
 
 ProcessStatement::~ProcessStatement()
 {
+    for(std::list<Expression*>::iterator it = sensitivity_list_.begin();
+            it != sensitivity_list_.end(); ++it) {
+        delete *it;
+    }
 }

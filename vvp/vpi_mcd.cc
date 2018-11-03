@@ -161,7 +161,14 @@ extern "C" PLI_UINT32 vpi_mcd_open(char *name)
 	return 0;  /* too many open mcd's */
 
 got_entry:
+#if defined(__GNUC__)
 	mcd_table[i].fp = fopen(name, "w");
+#else
+	if (strcmp(name, "/dev/null") != 0)
+		mcd_table[i].fp = fopen(name, "w");
+	else
+		mcd_table[i].fp = fopen("nul", "w");
+#endif
 	if(mcd_table[i].fp == NULL)
 		return 0;
 	mcd_table[i].filename = strdup(name);
@@ -191,31 +198,6 @@ vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
       }
 
       va_copy(saved_ap, ap);
-#ifdef __MINGW32__
-	/*
-	 * The MinGW runtime (version 3.14) fixes some things, but breaks
-	 * %f for us, so we have to us the underlying version.
-	 */
-      rc = _vsnprintf(buffer, sizeof buffer, fmt, ap);
-	/*
-	 * Windows returns -1 to indicate the result was truncated (thanks for
-	 * following the standard!). Since we don't know how big to make the
-	 * buffer just keep doubling it until it works.
-	 */
-      if (rc == -1) {
-	    size_t buf_size = sizeof buffer;
-	    buf_ptr = NULL;
-	    need_free = true;
-	    while (rc == -1) {
-		  va_list tmp_ap;
-		  va_copy(tmp_ap, saved_ap);
-		  buf_size *= 2;
-		  buf_ptr = (char *)realloc(buf_ptr, buf_size);
-		  rc = vsnprintf(buf_ptr, buf_size, fmt, tmp_ap);
-		  va_end(tmp_ap);
-	    }
-      }
-#else
       rc = vsnprintf(buffer, sizeof buffer, fmt, ap);
       assert(rc >= 0);
 	/*
@@ -227,7 +209,6 @@ vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
 	    need_free = true;
 	    rc = vsnprintf(buf_ptr, rc+1, fmt, saved_ap);
       }
-#endif
       va_end(saved_ap);
 
       for(int i = 0; i < 31; i++) {
@@ -254,6 +235,24 @@ extern "C" PLI_INT32 vpi_mcd_printf(PLI_UINT32 mcd, const char *fmt, ...)
       int r = vpi_mcd_vprintf(mcd,fmt,ap);
       va_end(ap);
       return r;
+}
+
+extern "C" void vpip_mcd_rawwrite(PLI_UINT32 mcd, const char*buf, size_t cnt)
+{
+      if (!IS_MCD(mcd)) return;
+
+      for(int idx = 0; idx < 31; idx += 1) {
+	    if (((mcd>>idx) & 1) == 0)
+		  continue;
+
+	    if (mcd_table[idx].fp == 0)
+		  continue;
+
+	    fwrite(buf, 1, cnt, mcd_table[idx].fp);
+	    if (idx == 0 && logfile)
+		  fwrite(buf, 1, cnt, logfile);
+
+      }
 }
 
 extern "C" PLI_INT32 vpi_mcd_flush(PLI_UINT32 mcd)
@@ -306,7 +305,14 @@ extern "C" PLI_INT32 vpi_fopen(const char*name, const char*mode)
       }
 
 got_entry:
-      fd_table[i].fp = fopen(name, mode);
+#ifndef _MSC_VER
+	  fd_table[i].fp = fopen(name, mode);
+#else // Changed for MSVC++ so vpi/pr723.v will pass.
+	  if(strcmp(name, "/dev/null") != 0)
+		fd_table[i].fp = fopen(name, mode);
+	  else
+		fd_table[i].fp = fopen("nul", mode);
+#endif
       if (fd_table[i].fp == NULL) return 0;
       fd_table[i].filename = strdup(name);
       return ((1U<<31)|i);

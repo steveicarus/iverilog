@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2013 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2016 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -181,6 +181,12 @@ void target_t::lpm_ff(const NetFF*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetFF." << endl;
+}
+
+void target_t::lpm_latch(const NetLatch*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetLatch." << endl;
 }
 
 void target_t::lpm_mult(const NetMult*)

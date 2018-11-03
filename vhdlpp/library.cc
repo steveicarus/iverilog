@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2016
+ * @author Maciej Suminski <maciej.suminski@cern.ch>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,6 +24,8 @@
 # include  "parse_misc.h"
 # include  "compiler.h"
 # include  "package.h"
+# include  "std_types.h"
+# include  "std_funcs.h"
 # include  <fstream>
 # include  <list>
 # include  <map>
@@ -72,9 +76,9 @@ void library_add_directory(const char*directory)
       library_search_path.push_front(directory);
 }
 
-Subprogram*library_find_subprogram(perm_string name)
+SubprogramHeader*library_match_subprogram(perm_string name, const list<const VType*>*params)
 {
-      Subprogram*subp = NULL;
+      SubprogramHeader*subp;
       map<perm_string,struct library_contents>::const_iterator lib_it;
 
       for(lib_it = libraries.begin(); lib_it != libraries.end(); ++lib_it) {
@@ -82,7 +86,7 @@ Subprogram*library_find_subprogram(perm_string name)
         map<perm_string,Package*>::const_iterator pack_it;
 
         for(pack_it = lib.packages.begin(); pack_it != lib.packages.end(); ++pack_it) {
-            if((subp = pack_it->second->find_subprogram(name)))
+            if((subp = pack_it->second->match_subprogram(name, params)))
                 return subp;
         }
       }
@@ -107,7 +111,7 @@ static string make_library_package_path(perm_string lib_name, perm_string name)
 }
 
 static void import_ieee(void);
-static void import_ieee_use(ActiveScope*res, perm_string package, perm_string name);
+static void import_ieee_use(const YYLTYPE&loc, ActiveScope*res, perm_string package, perm_string name);
 static void import_std_use(const YYLTYPE&loc, ActiveScope*res, perm_string package, perm_string name);
 
 static void dump_library_package(ostream&file, perm_string lname, perm_string pname, Package*pack)
@@ -239,7 +243,7 @@ void library_use(const YYLTYPE&loc, ActiveScope*res,
 
 	// Special case handling for the IEEE library.
       if (use_library == "ieee") {
-	    import_ieee_use(res, use_package, use_name);
+	    import_ieee_use(loc, res, use_package, use_name);
 	    return;
       }
 	// Special case handling for the STD library.
@@ -305,14 +309,34 @@ static void import_ieee_use_std_logic_1164(ActiveScope*res, perm_string name)
       bool all_flag = name=="all";
 
       if (all_flag || name == "std_logic_vector") {
-	    vector<VTypeArray::range_t> dims (1);
-	    res->use_name(perm_string::literal("std_logic_vector"),
-			   new VTypeArray(&primitive_STDLOGIC, dims, false));
+	    res->use_name(perm_string::literal("std_logic_vector"), &primitive_STDLOGIC_VECTOR);
       }
 }
 
-static void import_ieee_use_std_logic_arith(ActiveScope*, perm_string)
+static void import_ieee_use_std_logic_misc(ActiveScope*, perm_string name)
 {
+      bool all_flag = name=="all";
+      list<InterfacePort*>*args;
+
+      if (all_flag || name == "or_reduce") {
+            /* function or_reduce(arg : std_logic_vector) return std_logic;
+            */
+            args = new list<InterfacePort*>();
+            args->push_back(new InterfacePort(&primitive_STDLOGIC_VECTOR));
+            register_std_subprogram(new SubprogramBuiltin(perm_string::literal("or_reduce"),
+                                                perm_string::literal("|"),
+                                                args, &primitive_STDLOGIC));
+      }
+
+      if (all_flag || name == "and_reduce") {
+            /* function and_reduce(arg : std_logic_vector) return std_logic;
+            */
+            args = new list<InterfacePort*>();
+            args->push_back(new InterfacePort(&primitive_STDLOGIC_VECTOR));
+            register_std_subprogram(new SubprogramBuiltin(perm_string::literal("and_reduce"),
+                                                perm_string::literal("&"),
+                                                args, &primitive_STDLOGIC));
+      }
 }
 
 static void import_ieee_use_numeric_bit(ActiveScope*res, perm_string name)
@@ -320,14 +344,10 @@ static void import_ieee_use_numeric_bit(ActiveScope*res, perm_string name)
       bool all_flag = name=="all";
 
       if (all_flag || name == "signed") {
-	    vector<VTypeArray::range_t> dims (1);
-	    res->use_name(perm_string::literal("signed"),
-			   new VTypeArray(&primitive_STDLOGIC, dims, true));
+	    res->use_name(perm_string::literal("signed"), &primitive_SIGNED);
       }
       if (all_flag || name == "unsigned") {
-	    vector<VTypeArray::range_t> dims (1);
-	    res->use_name(perm_string::literal("unsigned"),
-			   new VTypeArray(&primitive_BIT, dims, false));
+	    res->use_name(perm_string::literal("unsigned"), &primitive_UNSIGNED);
       }
 }
 
@@ -336,18 +356,15 @@ static void import_ieee_use_numeric_std(ActiveScope*res, perm_string name)
       bool all_flag = name=="all";
 
       if (all_flag || name == "signed") {
-	    vector<VTypeArray::range_t> dims (1);
-	    res->use_name(perm_string::literal("signed"),
-			   new VTypeArray(&primitive_STDLOGIC, dims, true));
+	    res->use_name(perm_string::literal("signed"), &primitive_SIGNED);
       }
       if (all_flag || name == "unsigned") {
-	    vector<VTypeArray::range_t> dims (1);
-	    res->use_name(perm_string::literal("unsigned"),
-			   new VTypeArray(&primitive_STDLOGIC, dims, false));
+	    res->use_name(perm_string::literal("unsigned"), &primitive_UNSIGNED);
       }
 }
 
-static void import_ieee_use(ActiveScope*res, perm_string package, perm_string name)
+static void import_ieee_use(const YYLTYPE&/*loc*/, ActiveScope*res,
+        perm_string package, perm_string name)
 {
       if (package == "std_logic_1164") {
 	    import_ieee_use_std_logic_1164(res, name);
@@ -355,8 +372,18 @@ static void import_ieee_use(ActiveScope*res, perm_string package, perm_string na
       }
 
       if (package == "std_logic_arith") {
-	    import_ieee_use_std_logic_arith(res, name);
+            // arithmetic operators for std_logic_vector
 	    return;
+      }
+
+      if (package == "std_logic_misc") {
+            import_ieee_use_std_logic_misc(res, name);
+            return;
+      }
+
+      if (package == "std_logic_unsigned") {
+            // arithmetic operators for std_logic_vector
+            return;
       }
 
       if (package == "numeric_bit") {
@@ -368,62 +395,26 @@ static void import_ieee_use(ActiveScope*res, perm_string package, perm_string na
 	    import_ieee_use_numeric_std(res, name);
 	    return;
       }
+
+      cerr << "Warning: Package ieee." << package.str() <<" is not yet supported" << endl;
 }
 
-static void import_std_use(const YYLTYPE&loc, ActiveScope*/*res*/, perm_string package, perm_string name)
+static void import_std_use(const YYLTYPE&/*loc*/, ActiveScope*res,
+        perm_string package, perm_string /*name*/)
 {
       if (package == "standard") {
 	    // do nothing
 	    return;
       } else if (package == "textio") {
-	    cerr << "warning: textio package not really supported" << endl;
+            res->use_name(perm_string::literal("text"),     &primitive_INTEGER);
+            res->use_name(perm_string::literal("line"),     &primitive_STRING);
+            res->use_name(type_FILE_OPEN_KIND.peek_name(),  &type_FILE_OPEN_KIND);
+            res->use_name(type_FILE_OPEN_STATUS.peek_name(),  &type_FILE_OPEN_STATUS);
 	    return;
       } else {
-	    sorrymsg(loc, "package %s of library %s not yet supported", package.str(), name.str());
+            cerr << "Warning: Package std." << package.str() <<" is not yet supported" << endl;
 	    return;
       }
-}
-
-const VTypePrimitive primitive_BOOLEAN(VTypePrimitive::BOOLEAN, true);
-const VTypePrimitive primitive_BIT(VTypePrimitive::BIT, true);
-const VTypePrimitive primitive_INTEGER(VTypePrimitive::INTEGER);
-const VTypePrimitive primitive_NATURAL(VTypePrimitive::NATURAL);
-const VTypePrimitive primitive_REAL(VTypePrimitive::REAL);
-const VTypePrimitive primitive_STDLOGIC(VTypePrimitive::STDLOGIC, true);
-const VTypePrimitive primitive_CHARACTER(VTypePrimitive::CHARACTER);
-
-static const VTypeArray primitive_BIT_VECTOR(&primitive_BIT,      vector<VTypeArray::range_t> (1));
-static const VTypeArray primitive_BOOL_VECTOR(&primitive_BOOLEAN, vector<VTypeArray::range_t> (1));
-static const VTypeArray primitive_STRING(&primitive_CHARACTER,    vector<VTypeArray::range_t> (1));
-
-void generate_global_types(ActiveScope*res)
-{
-      res->use_name(perm_string::literal("boolean"),   &primitive_BOOLEAN);
-      res->use_name(perm_string::literal("bit"),       &primitive_BIT);
-      res->use_name(perm_string::literal("integer"),   &primitive_INTEGER);
-      res->use_name(perm_string::literal("real"),      &primitive_REAL);
-      res->use_name(perm_string::literal("std_logic"), &primitive_STDLOGIC);
-      res->use_name(perm_string::literal("character"), &primitive_CHARACTER);
-      res->use_name(perm_string::literal("bit_vector"),&primitive_BOOL_VECTOR);
-      res->use_name(perm_string::literal("string"),    &primitive_STRING);
-      res->use_name(perm_string::literal("natural"),   &primitive_NATURAL);
-}
-
-bool is_global_type(perm_string name)
-{
-      if (name == "boolean") return true;
-      if (name == "bit") return true;
-      if (name == "integer") return true;
-      if (name == "real") return true;
-      if (name == "std_logic") return true;
-      if (name == "std_logic_vector") return true;
-      if (name == "character") return true;
-      if (name == "bit_vector") return true;
-      if (name == "string") return true;
-      if (name == "natural") return true;
-      if (name == "signed") return true;
-      if (name == "unsigned") return true;
-      return false;
 }
 
 void library_set_work_path(const char*path)
@@ -465,4 +456,28 @@ int emit_packages(void)
       }
 
       return 0;
+}
+
+static int elaborate_library_packages(map<perm_string,Package*>packages)
+{
+      int errors = 0;
+
+      for (map<perm_string,Package*>::iterator cur = packages.begin()
+		 ; cur != packages.end() ;  ++cur) {
+	    errors += cur->second->elaborate();
+      }
+
+      return errors;
+}
+
+int elaborate_libraries()
+{
+      int errors = 0;
+
+      for (map<perm_string,struct library_contents>::iterator cur = libraries.begin()
+		 ; cur != libraries.end() ;  ++cur) {
+	    errors += elaborate_library_packages(cur->second.packages);
+      }
+
+      return errors;
 }

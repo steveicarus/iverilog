@@ -1,7 +1,7 @@
 #ifndef IVL_Module_H
 #define IVL_Module_H
 /*
- * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -120,12 +120,6 @@ class Module : public PScopeExtra, public LineInfo {
       vector<port_t*> ports;
 
       map<perm_string,PExpr*> attributes;
-
-	/* These are the timescale for this module. The default is
-	   set by the `timescale directive. */
-      int time_unit, time_precision;
-      bool time_from_timescale;
-      bool timescale_warn_done;
 
 	/* The module has a list of generate schemes that appear in
 	   the module definition. These are used at elaboration time. */

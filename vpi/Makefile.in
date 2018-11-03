@@ -45,18 +45,19 @@ else
 INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
 endif
 
-CPPFLAGS = $(INCLUDE_PATH) @file64_support@ @CPPFLAGS@ @DEFS@ @PICFLAG@
+CPPFLAGS = $(INCLUDE_PATH) @file64_support@ @CPPFLAGS@ @DEFS@ -DICARUS_VPI_CONST=const @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
 # Object files for system.vpi
-O = sys_table.o sys_convert.o sys_countdrivers.o sys_darray.o sys_deposit.o sys_display.o \
+O = sys_table.o sys_convert.o sys_countdrivers.o sys_darray.o sys_deposit.o \
+    sys_display.o \
     sys_fileio.o sys_finish.o sys_icarus.o sys_plusargs.o sys_queue.o \
     sys_random.o sys_random_mti.o sys_readmem.o sys_readmem_lex.o sys_scanf.o \
     sys_sdf.o sys_time.o sys_vcd.o sys_vcdoff.o vcd_priv.o mt19937int.o \
     sys_priv.o sdf_parse.o sdf_lexor.o stringheap.o vams_simparam.o \
-    table_mod.o table_mod_lexor.o table_mod_parse.o
+    table_mod.o table_mod_parse.o table_mod_lexor.o
 OPP = vcd_priv2.o
 
 ifeq (@HAVE_LIBZ@,yes)
@@ -73,13 +74,16 @@ M = sys_clog2.o v2005_math.o
 # Object files for va_math.vpi
 V = va_math.o
 
-V2009 = v2009_table.o v2009_array.o v2009_enum.o v2009_string.o
+V2009 = v2009_table.o v2009_array.o v2009_bitvec.o v2009_enum.o v2009_string.o \
+        sys_priv.o
 
-VHDL_SYS = vhdl_table.o
+VHDL_SYS = vhdl_table.o sys_priv.o
+
+VHDL_TEXTIO = vhdl_textio.o sys_priv.o
 
 VPI_DEBUG = vpi_debug.o
 
-all: dep system.vpi va_math.vpi v2005_math.vpi v2009.vpi vhdl_sys.vpi vpi_debug.vpi $(ALL32)
+all: dep system.vpi va_math.vpi v2005_math.vpi v2009.vpi vhdl_sys.vpi vhdl_textio.vpi vpi_debug.vpi $(ALL32)
 
 check: all
 
@@ -88,14 +92,14 @@ clean:
 	rm -f sdf_lexor.c sdf_parse.c sdf_parse.output sdf_parse.h
 	rm -f table_mod_parse.c table_mod_parse.h table_mod_parse.output
 	rm -f table_mod_lexor.c
-	rm -f va_math.vpi v2005_math.vpi v2009.vpi vhdl_sys.vpi vpi_debug.vpi
+	rm -f va_math.vpi v2005_math.vpi v2009.vpi vhdl_sys.vpi vhdl_textio.vpi vpi_debug.vpi
 
 distclean: clean
 	rm -f Makefile config.log
 	rm -f vpi_config.h stamp-vpi_config-h
 
 # The -U flag is used to skip checking paths that depend on that define having
-# an explict value (i.e. the define is expected to be real code).
+# an explicit value (i.e. the define is expected to be real code).
 cppcheck: $(O:.o=.c) $(OPP:.o=.cc) $(M:.o=.c) $(V:.o=.c)
 	cppcheck --enable=all -f --suppressions-list=$(srcdir)/cppcheck.sup \
 	         -UYY_USER_INIT \
@@ -163,6 +167,9 @@ va_math.vpi: $V ../vvp/libvpi.a
 vhdl_sys.vpi: $(VHDL_SYS) ../vvp/libvpi.a
 	$(CC) @shared@ -o $@ $(VHDL_SYS) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
+vhdl_textio.vpi: $(VHDL_TEXTIO) ../vvp/libvpi.a
+	$(CC) @shared@ -o $@ $(VHDL_TEXTIO) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
+
 vpi_debug.vpi: $(VPI_DEBUG) ../vvp/libvpi.a
 	$(CC) @shared@ -o $@ $(VPI_DEBUG) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
@@ -177,6 +184,7 @@ install: all installdirs \
     $(vpidir)/v2005_math.vpi $(vpidir)/v2005_math.sft \
     $(vpidir)/v2009.vpi $(vpidir)/v2009.sft \
     $(vpidir)/vhdl_sys.vpi $(vpidir)/vhdl_sys.sft \
+    $(vpidir)/vhdl_textio.vpi $(vpidir)/vhdl_textio.sft \
     $(vpidir)/vpi_debug.vpi
 
 $(vpidir)/system.vpi: ./system.vpi
@@ -209,6 +217,12 @@ $(vpidir)/vhdl_sys.vpi: ./vhdl_sys.vpi
 $(vpidir)/vhdl_sys.sft: vhdl_sys.sft
 	$(INSTALL_DATA) $< "$(DESTDIR)$@"
 
+$(vpidir)/vhdl_textio.vpi: ./vhdl_textio.vpi
+	$(INSTALL_PROGRAM) ./vhdl_textio.vpi "$(DESTDIR)$(vpidir)/vhdl_textio.vpi"
+
+$(vpidir)/vhdl_textio.sft: vhdl_textio.sft
+	$(INSTALL_DATA) $< "$(DESTDIR)$@"
+
 $(vpidir)/vpi_debug.vpi: ./vpi_debug.vpi
 	$(INSTALL_PROGRAM) ./vpi_debug.vpi "$(DESTDIR)$(vpidir)/vpi_debug.vpi"
 
@@ -226,6 +240,8 @@ uninstall:
 	rm -f "$(DESTDIR)$(vpidir)/v2009.sft"
 	rm -f "$(DESTDIR)$(vpidir)/vhdl_sys.vpi"
 	rm -f "$(DESTDIR)$(vpidir)/vhdl_sys.sft"
+	rm -f "$(DESTDIR)$(vpidir)/vhdl_textio.vpi"
+	rm -f "$(DESTDIR)$(vpidir)/vhdl_textio.sft"
 	rm -f "$(DESTDIR)$(vpidir)/vpi_debug.vpi"
 
 -include $(patsubst %.o, dep/%.d, $O)

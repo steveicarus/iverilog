@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -111,6 +111,13 @@ struct vthread_s {
 	    uint64_t w_uint;
       } words[WORDS_COUNT];
 
+	// These vectors are depths within the parent thread's
+	// corresponding stack.  This is how the %ret/* instructions
+	// get at parent thread arguments.
+      vector<unsigned> args_real;
+      vector<unsigned> args_str;
+      vector<unsigned> args_vec4;
+
     private:
       vector<vvp_vector4_t>stack_vec4_;
     public:
@@ -127,15 +134,22 @@ struct vthread_s {
       }
       inline const vvp_vector4_t& peek_vec4(unsigned depth)
       {
-	    assert(depth < stack_vec4_.size());
-	    unsigned use_index = stack_vec4_.size()-1-depth;
+	    unsigned size = stack_vec4_.size();
+	    assert(depth < size);
+	    unsigned use_index = size-1-depth;
 	    return stack_vec4_[use_index];
       }
       inline vvp_vector4_t& peek_vec4(void)
       {
-	    assert(! stack_vec4_.empty());
-	    unsigned use_index = stack_vec4_.size()-1;
-	    return stack_vec4_[use_index];
+	    unsigned use_index = stack_vec4_.size();
+	    assert(use_index >= 1);
+	    return stack_vec4_[use_index-1];
+      }
+      inline void poke_vec4(unsigned depth, const vvp_vector4_t&val)
+      {
+	    assert(depth < stack_vec4_.size());
+	    unsigned use_index = stack_vec4_.size()-1-depth;
+	    stack_vec4_[use_index] = val;
       }
       inline void pop_vec4(unsigned cnt)
       {
@@ -165,6 +179,12 @@ struct vthread_s {
 	    assert(depth < stack_real_.size());
 	    unsigned use_index = stack_real_.size()-1-depth;
 	    return stack_real_[use_index];
+      }
+      inline void poke_real(unsigned depth, double val)
+      {
+	    assert(depth < stack_real_.size());
+	    unsigned use_index = stack_real_.size()-1-depth;
+	    stack_real_[use_index] = val;
       }
       inline void pop_real(unsigned cnt)
       {
@@ -198,6 +218,12 @@ struct vthread_s {
 	    assert(depth<stack_str_.size());
 	    unsigned use_index = stack_str_.size()-1-depth;
 	    return stack_str_[use_index];
+      }
+      inline void poke_str(unsigned depth, const string&val)
+      {
+	    assert(depth < stack_str_.size());
+	    unsigned use_index = stack_str_.size()-1-depth;
+	    stack_str_[use_index] = val;
       }
       inline void pop_str(unsigned cnt)
       {
@@ -247,6 +273,7 @@ struct vthread_s {
       unsigned i_am_joining      :1;
       unsigned i_am_detached     :1;
       unsigned i_am_waiting      :1;
+      unsigned i_am_in_function  :1; // True if running function code
       unsigned i_have_ended      :1;
       unsigned i_was_disabled    :1;
       unsigned waiting_for_event :1;
@@ -261,7 +288,7 @@ struct vthread_s {
 	/* This points to my parent, if I have one. */
       struct vthread_s*parent;
 	/* This points to the containing scope. */
-      struct __vpiScope*parent_scope;
+      __vpiScope*parent_scope;
 	/* This is used for keeping wait queues. */
       struct vthread_s*wait_next;
 	/* These are used to access automatically allocated items. */
@@ -293,6 +320,8 @@ inline vthread_s::vthread_s()
 void vthread_s::debug_dump(ostream&fd, const char*label)
 {
       fd << "**** " << label << endl;
+      fd << "**** ThreadId: " << this << ", parent id: " << parent << endl;
+
       fd << "**** Flags: ";
       for (int idx = 0 ; idx < FLAGS_COUNT ; idx += 1)
 	    fd << flags[idx];
@@ -302,13 +331,16 @@ void vthread_s::debug_dump(ostream&fd, const char*label)
 	    fd << "    " << (stack_vec4_.size()-idx) << ": " << stack_vec4_[idx-1] << endl;
       fd << "**** str stack (" << stack_str_.size() << ")..." << endl;
       fd << "**** obj stack (" << stack_obj_size_ << ")..." << endl;
+      fd << "**** args_vec4 array (" << args_vec4.size() << ")..." << endl;
+      for (size_t idx = 0 ; idx < args_vec4.size() ; idx += 1)
+	    fd << "    " << idx << ": " << args_vec4[idx] << endl;
       fd << "**** Done ****" << endl;
 }
 
 static bool test_joinable(vthread_t thr, vthread_t child);
 static void do_join(vthread_t thr, vthread_t child);
 
-struct __vpiScope* vthread_scope(struct vthread_s*thr)
+__vpiScope* vthread_scope(struct vthread_s*thr)
 {
       return thr->parent_scope;
 }
@@ -324,6 +356,11 @@ void vthread_push_vec4(struct vthread_s*thr, const vvp_vector4_t&val)
 void vthread_push_real(struct vthread_s*thr, double val)
 {
       thr->push_real(val);
+}
+
+void vthread_push_str(struct vthread_s*thr, const string&val)
+{
+      thr->push_str(val);
 }
 
 void vthread_pop_vec4(struct vthread_s*thr, unsigned depth)
@@ -356,6 +393,9 @@ const vvp_vector4_t& vthread_get_vec4_stack(struct vthread_s*thr, unsigned depth
       return thr->peek_vec4(depth);
 }
 
+/*
+ * Some thread management functions
+ */
 /*
  * This is a function to get a vvp_queue handle from the variable
  * referenced by "net". If the queue is nil, then allocated it and
@@ -422,9 +462,9 @@ static void multiply_array_imm(unsigned long*res, unsigned long*val,
  * the last freed context. If none available, create a new one. Add
  * it to the list of live contexts in that scope.
  */
-static vvp_context_t vthread_alloc_context(struct __vpiScope*scope)
+static vvp_context_t vthread_alloc_context(__vpiScope*scope)
 {
-      assert(scope->is_automatic);
+      assert(scope->is_automatic());
 
       vvp_context_t context = scope->free_contexts;
       if (context) {
@@ -450,9 +490,9 @@ static vvp_context_t vthread_alloc_context(struct __vpiScope*scope)
  * onto the freed context stack. Remove it from the list of live contexts
  * in that scope.
  */
-static void vthread_free_context(vvp_context_t context, struct __vpiScope*scope)
+static void vthread_free_context(vvp_context_t context, __vpiScope*scope)
 {
-      assert(scope->is_automatic);
+      assert(scope->is_automatic());
       assert(context);
 
       if (context == scope->live_contexts) {
@@ -490,7 +530,7 @@ void contexts_delete(struct __vpiScope*scope)
 /*
  * Create a new thread with the given start address.
  */
-vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
+vthread_t vthread_new(vvp_code_t pc, __vpiScope*scope)
 {
       vthread_t thr = new struct vthread_s;
       thr->pc     = pc;
@@ -504,6 +544,7 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       thr->i_am_joining  = 0;
       thr->i_am_detached = 0;
       thr->i_am_waiting  = 0;
+      thr->i_am_in_function = 0;
       thr->is_scheduled  = 0;
       thr->i_have_ended  = 0;
       thr->i_was_disabled = 0;
@@ -726,6 +767,9 @@ vvp_context_item_t vthread_get_rd_context_item(unsigned context_idx)
       return vvp_get_context_item(running_thread->rd_context, context_idx);
 }
 
+/*
+ * %abs/wr
+ */
 bool of_ABS_WR(vthread_t thr, vvp_code_t)
 {
       thr->push_real( fabs(thr->pop_real()) );
@@ -849,6 +893,9 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %add/wr
+ */
 bool of_ADD_WR(vthread_t thr, vvp_code_t)
 {
       double r = thr->pop_real();
@@ -949,7 +996,7 @@ bool of_ASSIGN_VEC4_A_D(vthread_t thr, vvp_code_t cp)
       unsigned wid = val.size();
       const unsigned array_wid = cp->array->get_word_size();
 
-	// Abort if flags[4] is set. This can happen if the calulation
+	// Abort if flags[4] is set. This can happen if the calculation
 	// into an index register failed.
       if (thr->flags[4] == BIT4_1)
 	    return true;
@@ -992,7 +1039,7 @@ bool of_ASSIGN_VEC4_A_E(vthread_t thr, vvp_code_t cp)
       unsigned wid = val.size();
       const unsigned array_wid = cp->array->get_word_size();
 
-	// Abort if flags[4] is set. This can happen if the calulation
+	// Abort if flags[4] is set. This can happen if the calculation
 	// into an index register failed.
       if (thr->flags[4] == BIT4_1)
 	    return true;
@@ -1038,7 +1085,7 @@ bool of_ASSIGN_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
       int off = thr->words[off_index].w_int;
       vvp_time64_t del = thr->words[del_index].w_uint;
 
-	// Abort if flags[4] is set. This can happen if the calulation
+	// Abort if flags[4] is set. This can happen if the calculation
 	// into an index register failed.
       if (thr->flags[4] == BIT4_1)
 	    return true;
@@ -1080,7 +1127,7 @@ bool of_ASSIGN_VEC4_OFF_E(vthread_t thr, vvp_code_t cp)
 
       int off = thr->words[off_index].w_int;
 
-	// Abort if flags[4] is set. This can happen if the calulation
+	// Abort if flags[4] is set. This can happen if the calculation
 	// into an index register failed.
       if (thr->flags[4] == BIT4_1)
 	    return true;
@@ -1252,6 +1299,97 @@ bool of_BLEND_WR(vthread_t thr, vvp_code_t)
 bool of_BREAKPOINT(vthread_t, vvp_code_t)
 {
       return true;
+}
+
+/*
+ * %callf/void <code-label>, <scope-label>
+ * Combine the %fork and %join steps for invoking a function.
+ */
+static bool do_callf_void(vthread_t thr, vthread_t child)
+{
+
+      if (child->parent_scope->is_automatic()) {
+	      /* The context allocated for this child is the top entry
+		 on the write context stack */
+	    child->wt_context = thr->wt_context;
+	    child->rd_context = thr->wt_context;
+      }
+
+        // Mark the function thread as a direct child of the current thread.
+      child->parent = thr;
+      thr->children.insert(child);
+        // This should be the only child
+      assert(thr->children.size()==1);
+
+        // Execute the function. This SHOULD run the function to completion,
+        // but there are some exceptional situations where it won't.
+      assert(child->parent_scope->get_type_code() == vpiFunction);
+      thr->task_func_children.insert(child);
+      child->is_scheduled = 1;
+      child->i_am_in_function = 1;
+      vthread_run(child);
+      running_thread = thr;
+
+      assert(test_joinable(thr, child));
+
+      if (child->i_have_ended) {
+	    do_join(thr, child);
+	    return true;
+      } else {
+	    thr->i_am_joining = 1;
+	    return false;
+      }
+}
+
+bool of_CALLF_OBJ(vthread_t thr, vvp_code_t cp)
+{
+      vthread_t child = vthread_new(cp->cptr2, cp->scope);
+      return do_callf_void(thr, child);
+
+      // XXXX NOT IMPLEMENTED
+}
+
+bool of_CALLF_REAL(vthread_t thr, vvp_code_t cp)
+{
+      vthread_t child = vthread_new(cp->cptr2, cp->scope);
+
+	// This is the return value. Push a place-holder value. The function
+	// will replace this with the actual value using a %ret/real instruction.
+      thr->push_real(0.0);
+      child->args_real.push_back(0);
+
+      return do_callf_void(thr, child);
+}
+
+bool of_CALLF_STR(vthread_t thr, vvp_code_t cp)
+{
+      vthread_t child = vthread_new(cp->cptr2, cp->scope);
+
+      thr->push_str("");
+      child->args_str.push_back(0);
+
+      return do_callf_void(thr, child);
+}
+
+bool of_CALLF_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      vthread_t child = vthread_new(cp->cptr2, cp->scope);
+
+      vpiScopeFunction*scope_func = dynamic_cast<vpiScopeFunction*>(cp->scope);
+      assert(scope_func);
+
+	// This is the return value. Push a place-holder value. The function
+	// will replace this with the actual value using a %ret/real instruction.
+      thr->push_vec4(vvp_vector4_t(scope_func->get_func_width()));
+      child->args_vec4.push_back(0);
+
+      return do_callf_void(thr, child);
+}
+
+bool of_CALLF_VOID(vthread_t thr, vvp_code_t cp)
+{
+      vthread_t child = vthread_new(cp->cptr2, cp->scope);
+      return do_callf_void(thr, child);
 }
 
 /*
@@ -1807,6 +1945,71 @@ bool of_CMPX(vthread_t thr, vvp_code_t)
       return true;
 }
 
+static void do_CMPWE(vthread_t thr, const vvp_vector4_t&lval, const vvp_vector4_t&rval)
+{
+      assert(rval.size() == lval.size());
+
+      if (lval.has_xz() || rval.has_xz()) {
+
+	    unsigned wid = lval.size();
+	    vvp_bit4_t eq  = BIT4_1;
+
+	    for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+		  vvp_bit4_t lv = lval.value(idx);
+		  vvp_bit4_t rv = rval.value(idx);
+
+		  if (bit4_is_xz(rv))
+			continue;
+		  if ((eq == BIT4_1) && bit4_is_xz(lv))
+			eq = BIT4_X;
+		  if ((lv == BIT4_0) && (rv==BIT4_1))
+			eq = BIT4_0;
+		  if ((lv == BIT4_1) && (rv==BIT4_0))
+			eq = BIT4_0;
+
+		  if (eq == BIT4_0)
+			break;
+	    }
+
+	    thr->flags[4] = eq;
+
+      } else {
+	      // If there are no XZ bits anywhere, then the results of
+	      // ==? match the === test.
+	    thr->flags[4] = (lval.eeq(rval)? BIT4_1 : BIT4_0);
+      }
+}
+
+bool of_CMPWE(vthread_t thr, vvp_code_t)
+{
+	// We are going to pop these and push nothing in their
+	// place, but for now it is more efficient to use a constant
+	// reference. When we finish, pop the stack without copies.
+      const vvp_vector4_t&rval = thr->peek_vec4(0);
+      const vvp_vector4_t&lval = thr->peek_vec4(1);
+
+      do_CMPWE(thr, lval, rval);
+
+      thr->pop_vec4(2);
+      return true;
+}
+
+bool of_CMPWNE(vthread_t thr, vvp_code_t)
+{
+	// We are going to pop these and push nothing in their
+	// place, but for now it is more efficient to use a constant
+	// reference. When we finish, pop the stack without copies.
+      const vvp_vector4_t&rval = thr->peek_vec4(0);
+      const vvp_vector4_t&lval = thr->peek_vec4(1);
+
+      do_CMPWE(thr, lval, rval);
+
+      thr->flags[4] =  ~thr->flags[4];
+
+      thr->pop_vec4(2);
+      return true;
+}
+
 bool of_CMPWR(vthread_t thr, vvp_code_t)
 {
       double r = thr->pop_real();
@@ -1977,22 +2180,6 @@ bool of_CONCATI_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_CVT_RS(vthread_t thr, vvp_code_t cp)
-{
-      int64_t r = thr->words[cp->bit_idx[0]].w_int;
-      thr->push_real( (double)(r) );
-
-      return true;
-}
-
-bool of_CVT_RU(vthread_t thr, vvp_code_t cp)
-{
-      uint64_t r = thr->words[cp->bit_idx[0]].w_uint;
-      thr->push_real( (double)(r) );
-
-      return true;
-}
-
 /*
  * %cvt/rv
  */
@@ -2030,6 +2217,9 @@ bool of_CVT_SR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %cvt/ur <idx>
+ */
 bool of_CVT_UR(vthread_t thr, vvp_code_t cp)
 {
       double r = thr->pop_real();
@@ -2138,11 +2328,10 @@ bool of_DELAY(vthread_t thr, vvp_code_t cp)
       vvp_time64_t low = cp->bit_idx[0];
       vvp_time64_t hig = cp->bit_idx[1];
 
-      vvp_time64_t res = 32;
-      res = hig << res;
-      res += low;
+      vvp_time64_t delay = (hig << 32) | low;
 
-      schedule_vthread(thr, res);
+      if (delay == 0) schedule_inactive(thr);
+      else schedule_vthread(thr, delay);
       return false;
 }
 
@@ -2152,7 +2341,8 @@ bool of_DELAYX(vthread_t thr, vvp_code_t cp)
 
       assert(cp->number < vthread_s::WORDS_COUNT);
       delay = thr->words[cp->number].w_uint;
-      schedule_vthread(thr, delay);
+      if (delay == 0) schedule_inactive(thr);
+      else schedule_vthread(thr, delay);
       return false;
 }
 
@@ -2200,7 +2390,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
       }
 
       vthread_t parent = thr->parent;
-      if (parent && parent->i_am_joining) {
+      if (parent && parent->i_am_joining && test_joinable(parent, thr)) {
 	      // If a parent is waiting in a %join, wake it up. Note
 	      // that it is possible to be waiting in a %join yet
 	      // already scheduled if multiple child threads are
@@ -2210,8 +2400,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
 	    if (! parent->i_have_ended)
 		  schedule_vthread(parent, 0, true);
 
-	      // Let the parent do the reaping.
-	    vthread_reap(thr);
+	    do_join(parent, thr);
 
       } else if (parent) {
 	      /* If the parent is yet to %join me, let its %join
@@ -2233,7 +2422,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
  */
 bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 {
-      struct __vpiScope*scope = (struct __vpiScope*)cp->handle;
+      __vpiScope*scope = (__vpiScope*)cp->handle;
 
       bool disabled_myself_flag = false;
 
@@ -2518,6 +2707,10 @@ bool of_DIV_S(vthread_t thr, vvp_code_t)
 	    if (bp[0] == 0) {
 		  vvp_vector4_t tmp(wid, BIT4_X);
 		  vala = tmp;
+	    } else if (((long)ap[0] == LONG_MIN) && ((long)bp[0] == -1)) {
+		  vvp_vector4_t tmp(wid, BIT4_0);
+		  tmp.set_bit(wid-1, BIT4_1);
+		  vala = tmp;
 	    } else {
 		  long tmpa = (long) ap[0];
 		  long tmpb = (long) bp[0];
@@ -2614,7 +2807,7 @@ bool of_END(vthread_t thr, vvp_code_t)
 	/* If I have a parent who is waiting for me, then mark that I
 	   have ended, and schedule that parent. Also, finish the
 	   %join for the parent. */
-      if (thr->parent && thr->parent->i_am_joining) {
+      if (!thr->i_am_detached && thr->parent && thr->parent->i_am_joining) {
 	    vthread_t tmp = thr->parent;
 	    assert(! thr->i_am_detached);
 
@@ -2859,9 +3052,49 @@ bool of_FORCE_VEC4_OFF(vthread_t thr, vvp_code_t cp)
 	    mask.set_bit(base+idx, 1);
 
       vvp_vector4_t tmp (use_size, BIT4_Z);
+
+	// vvp_net_t::force_vec4 propagates all the bits of the
+	// forced vector value, regardless of the mask. This
+	// ensures the unforced bits retain their current value.
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(net->fil);
+      assert(sig);
+      sig->vec4_value(tmp);
+
       tmp.set_vec(base, value);
 
       net->force_vec4(tmp, mask);
+      return true;
+}
+
+/*
+ * %force/vec4/off/d <net>, <off>, <del>
+ */
+bool of_FORCE_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      unsigned base_idx = cp->bit_idx[0];
+      long base = thr->words[base_idx].w_int;
+
+      unsigned delay_idx = cp->bit_idx[1];
+      vvp_time64_t delay = thr->words[delay_idx].w_uint;
+
+      vvp_vector4_t value = thr->pop_vec4();
+
+      assert(net->fil);
+
+      if (thr->flags[4] == BIT4_1)
+	    return true;
+
+	// This is the width of the target vector.
+      unsigned use_size = net->fil->filter_size();
+
+      if (base >= (long)use_size)
+	    return true;
+      if (base < -(long)use_size)
+	    return true;
+
+      schedule_force_vector(net, base, use_size, value, delay);
       return true;
 }
 
@@ -2885,7 +3118,7 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
 {
       vthread_t child = vthread_new(cp->cptr2, cp->scope);
 
-      if (cp->scope->is_automatic) {
+      if (cp->scope->is_automatic()) {
               /* The context allocated for this child is the top entry
                  on the write context stack. */
             child->wt_context = thr->wt_context;
@@ -2895,24 +3128,26 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
       child->parent = thr;
       thr->children.insert(child);
 
-	/* If the child scope is not the same as the current scope,
-	   infer that this is a task or function call. */
       switch (cp->scope->get_type_code()) {
-	  case vpiFunction:
+          case vpiFunction:
+	      // Functions should be started by the %callf opcodes, and
+	      // NOT by the %fork instruction
+	    assert(0);
+          case vpiTask:
 	    thr->task_func_children.insert(child);
-	    child->is_scheduled = 1;
-	    vthread_run(child);
-	    running_thread = thr;
 	    break;
-	  case vpiTask:
-	    thr->task_func_children.insert(child);
-	    schedule_vthread(child, 0, true);
-	    break;
-	  default:
-	    schedule_vthread(child, 0, true);
+          default:
 	    break;
       }
 
+      if (thr->i_am_in_function) {
+	    child->is_scheduled = 1;
+	    child->i_am_in_function = 1;
+	    vthread_run(child);
+	    running_thread = thr;
+      } else {
+	    schedule_vthread(child, 0, true);
+      }
       return true;
 }
 
@@ -3258,7 +3493,7 @@ static void do_join(vthread_t thr, vthread_t child)
       vthread_reap(child);
 }
 
-bool of_JOIN(vthread_t thr, vvp_code_t)
+static bool do_join_opcode(vthread_t thr)
 {
       assert( !thr->i_am_joining );
       assert( !thr->children.empty());
@@ -3283,6 +3518,11 @@ bool of_JOIN(vthread_t thr, vvp_code_t)
 	// then pause.
       thr->i_am_joining = 1;
       return false;
+}
+
+bool of_JOIN(vthread_t thr, vvp_code_t)
+{
+      return do_join_opcode(thr);
 }
 
 /*
@@ -3760,12 +4000,15 @@ bool of_MOD_S(vthread_t thr, vvp_code_t)
 	    if (rv == 0)
 		  goto x_out;
 
+	    if ((lv == LONG_LONG_MIN) && (rv == -1))
+		  goto zero_out;
+
 	      /* Sign extend the signed operands when needed. */
 	    if (wid < 8*sizeof(long long)) {
 		  if (lv & (1LL << (wid-1)))
-			lv |= -1LL << wid;
+			lv |= -1ULL << wid;
 		  if (rv & (1LL << (wid-1)))
-			rv |= -1LL << wid;
+			rv |= -1ULL << wid;
 	    }
 
 	    lv %= rv;
@@ -3790,6 +4033,9 @@ bool of_MOD_S(vthread_t thr, vvp_code_t)
 
  x_out:
       vala = vvp_vector4_t(wid, BIT4_X);
+      return true;
+ zero_out:
+      vala = vvp_vector4_t(wid, BIT4_0);
       return true;
 }
 
@@ -3917,7 +4163,7 @@ static bool of_PARTI_base(vthread_t thr, vvp_code_t cp, bool signed_flag)
 	// NOTE: This is treating the vector as signed. Is that correct?
       int32_t use_base = base;
       if (signed_flag && bwid < 32 && (base&(1<<(bwid-1)))) {
-	    use_base |= (-1) << bwid;
+	    use_base |= -1UL << bwid;
       }
 
       if (use_base >= (int32_t)value.size()) {
@@ -4340,6 +4586,7 @@ bool of_POP_VEC4(vthread_t thr, vvp_code_t cp)
 
 /*
  * %pow
+ * %pow/s
  */
 static bool of_POW_base(vthread_t thr, bool signed_flag)
 {
@@ -4794,7 +5041,7 @@ static bool do_release_vec(vvp_code_t cp, bool net_flag)
       } else {
 	    net->fil->release_pv(ptr, base, width, net_flag);
       }
-      net->fun->force_flag();
+      net->fun->force_flag(false);
 
       return true;
 }
@@ -4837,6 +5084,181 @@ bool of_REPLICATE(vthread_t thr, vvp_code_t cp)
 
       thr->push_vec4(res);
 
+      return true;
+}
+
+/*
+ * %ret/real <index>
+ */
+bool of_RET_REAL(vthread_t thr, vvp_code_t cp)
+{
+      size_t index = cp->number;
+      double val = thr->pop_real();
+
+      vthread_t fun_thr = thr;
+      while (fun_thr->parent_scope->get_type_code() != vpiFunction) {
+	    assert(fun_thr->parent);
+	    fun_thr = fun_thr->parent;
+      }
+      assert(index < fun_thr->args_real.size());
+      unsigned depth = fun_thr->args_real[index];
+	// Use the depth to put the value into the stack of
+	// the parent thread.
+      fun_thr->parent->poke_real(depth, val);
+      return true;
+}
+
+/*
+ * %ret/str <index>
+ */
+bool of_RET_STR(vthread_t thr, vvp_code_t cp)
+{
+      size_t index = cp->number;
+      string val = thr->pop_str();
+
+      vthread_t fun_thr = thr;
+      while (fun_thr->parent_scope->get_type_code() != vpiFunction) {
+	    assert(fun_thr->parent);
+	    fun_thr = fun_thr->parent;
+      }
+      assert(index < fun_thr->args_str.size());
+      unsigned depth = fun_thr->args_str[index];
+	// Use the depth to put the value into the stack of
+	// the parent thread.
+      fun_thr->parent->poke_str(depth, val);
+      return true;
+}
+
+/*
+ * %ret/vec4 <index>, <offset>, <wid>
+ */
+bool of_RET_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      size_t index = cp->number;
+      unsigned off_index = cp->bit_idx[0];
+      int wid = cp->bit_idx[1];
+
+      vthread_t fun_thr = thr;
+      while (fun_thr->parent_scope->get_type_code() != vpiFunction) {
+	    assert(fun_thr->parent);
+	    fun_thr = fun_thr->parent;
+      }
+      assert(index < fun_thr->args_vec4.size());
+      unsigned depth = fun_thr->args_vec4[index];
+
+      int off = off_index? thr->words[off_index].w_int : 0;
+      const int sig_value_size = fun_thr->parent->peek_vec4(depth).size();
+
+      vvp_vector4_t&val = thr->peek_vec4();
+      unsigned val_size = val.size();
+
+      if (off_index!=0 && thr->flags[4] == BIT4_1) {
+	    thr->pop_vec4(1);
+	    return true;
+      }
+
+      if (off <= -wid) {
+	    thr->pop_vec4(1);
+	    return true;
+      }
+
+      if (off >= sig_value_size) {
+	    thr->pop_vec4(1);
+	    return true;
+      }
+
+	// If the index is below the vector, then only assign the high
+	// bits that overlap with the target
+      if (off < 0) {
+	    int use_off = -off;
+	    wid -= use_off;
+	    val = val.subvalue(use_off, wid);
+	    val_size = wid;
+	    off = 0;
+      }
+
+	// If the value is partly above the target, then only assign
+	// the bits that overlap
+      if ((off+wid) > sig_value_size) {
+	    wid = sig_value_size - off;
+	    val = val.subvalue(0, wid);
+	    val.resize(wid);
+	    val_size = wid;
+      }
+
+      if (off==0 && val_size==(unsigned)sig_value_size) {
+	    fun_thr->parent->poke_vec4(depth, val);
+
+      } else {
+	    vvp_vector4_t tmp_dst = fun_thr->parent->peek_vec4(depth);
+	    assert(wid>=0 && val.size() == (unsigned)wid);
+	    tmp_dst.set_vec(off, val);
+	    fun_thr->parent->poke_vec4(depth, tmp_dst);
+      }
+
+      thr->pop_vec4(1);
+      return true;
+}
+
+/*
+ * %retload/real <index>
+ */
+bool of_RETLOAD_REAL(vthread_t thr, vvp_code_t cp)
+{
+      size_t index = cp->number;
+
+
+      vthread_t fun_thr = thr;
+      while (fun_thr->parent_scope->get_type_code() != vpiFunction) {
+	    assert(fun_thr->parent);
+	    fun_thr = fun_thr->parent;
+      }
+      assert(index < fun_thr->args_real.size());
+      unsigned depth = fun_thr->args_real[index];
+	// Use the depth to extract the values from the stack
+	// of the parent thread.
+      thr->push_real(fun_thr->parent->peek_real(depth));
+      return true;
+}
+
+/*
+ * %retload/str <index>
+ */
+bool of_RETLOAD_STR(vthread_t thr, vvp_code_t cp)
+{
+      size_t index = cp->number;
+
+
+      vthread_t fun_thr = thr;
+      while (fun_thr->parent_scope->get_type_code() != vpiFunction) {
+	    assert(fun_thr->parent);
+	    fun_thr = fun_thr->parent;
+      }
+      assert(index < fun_thr->args_str.size());
+      unsigned depth = fun_thr->args_str[index];
+	// Use the depth to extract the values from the stack
+	// of the parent thread.
+      thr->push_str(fun_thr->parent->peek_str(depth));
+      return true;
+}
+
+/*
+ * %retload/vec4 <index>
+ */
+bool of_RETLOAD_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      size_t index = cp->number;
+
+      vthread_t fun_thr = thr;
+      while (fun_thr->parent_scope->get_type_code() != vpiFunction) {
+	    assert(fun_thr->parent);
+	    fun_thr = fun_thr->parent;
+      }
+      assert(index < fun_thr->args_vec4.size());
+      unsigned depth = fun_thr->args_vec4[index];
+	// Use the depth to put the value into the stack of
+	// the parent thread.
+      thr->push_vec4(fun_thr->parent->peek_vec4(depth));
       return true;
 }
 
@@ -5396,14 +5818,17 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
       const int sig_value_size = sig->value_size();
 
       vvp_vector4_t&val = thr->peek_vec4();
+      unsigned val_size = val.size();
 
-      if (val.size() < (unsigned)wid) {
-	    cerr << "XXXX Internal error: val.size()=" << val.size()
+      if ((int)val_size < wid) {
+	    cerr << "XXXX Internal error: val.size()=" << val_size
 		 << ", expecting >= " << wid << endl;
       }
-      assert(val.size() >= (unsigned)wid);
-      if (val.size() > (unsigned)wid)
+      assert((int)val_size >= wid);
+      if ((int)val_size > wid) {
 	    val.resize(wid);
+	    val_size = wid;
+      }
 
 	// If there is a problem loading the index register, flags-4
 	// will be set to 1, and we know here to skip the actual assignment.
@@ -5427,6 +5852,7 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
 	    int use_off = -off;
 	    wid -= use_off;
 	    val = val.subvalue(use_off, wid);
+	    val_size = wid;
 	    off = 0;
       }
 
@@ -5436,10 +5862,11 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
 	    wid = sig_value_size - off;
 	    val = val.subvalue(0, wid);
 	    val.resize(wid);
+	    val_size = wid;
       }
 
 
-      if (off==0 && val.size()==(unsigned)sig_value_size)
+      if (off==0 && val_size==(unsigned)sig_value_size)
 	    vvp_send_vec4(ptr, val, thr->wt_context);
       else
 	    vvp_send_vec4_pv(ptr, val, off, wid, sig_value_size, thr->wt_context);
@@ -5684,6 +6111,7 @@ bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
  */
 bool of_WAIT(vthread_t thr, vvp_code_t cp)
 {
+      assert(! thr->i_am_in_function);
       assert(! thr->waiting_for_event);
       thr->waiting_for_event = 1;
 
@@ -5704,6 +6132,7 @@ bool of_WAIT_FORK(vthread_t thr, vvp_code_t)
 {
 	/* If a %wait/fork is being executed then the parent thread
 	 * cannot be waiting in a join or already waiting. */
+      assert(! thr->i_am_in_function);
       assert(! thr->i_am_joining);
       assert(! thr->i_am_waiting);
 
@@ -5780,12 +6209,14 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
  * a ufunc_core object that has all the port information about the
  * function.
  */
-bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
+static bool do_exec_ufunc(vthread_t thr, vvp_code_t cp, vthread_t child)
 {
-      struct __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
+      __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
       assert(child_scope);
 
+      assert(child_scope->get_type_code() == vpiFunction);
       assert(thr->children.empty());
+
 
         /* We can take a number of shortcuts because we know that a
            continuous assignment can only occur in a static scope. */
@@ -5794,32 +6225,69 @@ bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
 
         /* If an automatic function, allocate a context for this call. */
       vvp_context_t child_context = 0;
-      if (child_scope->is_automatic) {
+      if (child_scope->is_automatic()) {
             child_context = vthread_alloc_context(child_scope);
             thr->wt_context = child_context;
             thr->rd_context = child_context;
       }
+
+      child->wt_context = child_context;
+      child->rd_context = child_context;
+
 	/* Copy all the inputs to the ufunc object to the port
 	   variables of the function. This copies all the values
 	   atomically. */
       cp->ufunc_core_ptr->assign_bits_to_ports(child_context);
-
-	/* Create a temporary thread and run it immediately. */
-      vthread_t child = vthread_new(cp->cptr, child_scope);
-      child->wt_context = child_context;
-      child->rd_context = child_context;
-
-      child->is_scheduled = 1;
-      vthread_run(child);
-      running_thread = thr;
-
-      if (child->i_have_ended)
-            return true;
+      child->delay_delete = 1;
 
       child->parent = thr;
       thr->children.insert(child);
-      thr->i_am_joining = 1;
-      return false;
+	// This should be the only child
+      assert(thr->children.size()==1);
+
+      child->is_scheduled = 1;
+      child->i_am_in_function = 1;
+      vthread_run(child);
+      running_thread = thr;
+
+      assert(test_joinable(thr, child));
+
+      if (child->i_have_ended) {
+	    do_join(thr, child);
+            return true;
+      } else {
+	    thr->i_am_joining = 1;
+	    return false;
+      }
+}
+
+bool of_EXEC_UFUNC_REAL(vthread_t thr, vvp_code_t cp)
+{
+      __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
+      assert(child_scope);
+
+	/* Create a temporary thread and run it immediately. */
+      vthread_t child = vthread_new(cp->cptr, child_scope);
+      thr->push_real(0.0);
+      child->args_real.push_back(0);
+
+      return do_exec_ufunc(thr, cp, child);
+}
+
+bool of_EXEC_UFUNC_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
+      assert(child_scope);
+
+      vpiScopeFunction*scope_func = dynamic_cast<vpiScopeFunction*>(child_scope);
+      assert(scope_func);
+
+	/* Create a temporary thread and run it immediately. */
+      vthread_t child = vthread_new(cp->cptr, child_scope);
+      thr->push_vec4(vvp_vector4_t(scope_func->get_func_width()));
+      child->args_vec4.push_back(0);
+
+      return do_exec_ufunc(thr, cp, child);
 }
 
 /*
@@ -5828,7 +6296,7 @@ bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
  */
 bool of_REAP_UFUNC(vthread_t thr, vvp_code_t cp)
 {
-      struct __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
+      __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
       assert(child_scope);
 
 	/* Copy the output from the result variable to the output
@@ -5836,7 +6304,7 @@ bool of_REAP_UFUNC(vthread_t thr, vvp_code_t cp)
       cp->ufunc_core_ptr->finish_thread();
 
         /* If an automatic function, free the context for this call. */
-      if (child_scope->is_automatic) {
+      if (child_scope->is_automatic()) {
             vthread_free_context(thr->rd_context, child_scope);
             thr->wt_context = 0;
             thr->rd_context = 0;

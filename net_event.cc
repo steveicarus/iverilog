@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,6 +28,7 @@
 NetEvent::NetEvent(perm_string n)
 : name_(n)
 {
+      local_flag_ = false;
       scope_ = 0;
       snext_ = 0;
       probes_ = 0;
@@ -345,7 +346,7 @@ void NetEvProbe::find_similar_probes(list<NetEvProbe*>&plist)
 }
 
 NetEvWait::NetEvWait(NetProc*pr)
-: statement_(pr)
+: statement_(pr), has_t0_trigger_(false)
 {
 }
 
@@ -369,6 +370,7 @@ NetEvWait::~NetEvWait()
 			tmp->next = tmp->next->next;
 			delete tmp;
 		  }
+		  delete tgt;
 	    }
 	    events_.clear();
       }
@@ -438,6 +440,11 @@ void NetEvWait::replace_event(NetEvent*src, NetEvent*repl)
 }
 
 NetProc* NetEvWait::statement()
+{
+      return statement_;
+}
+
+const NetProc* NetEvWait::statement() const
 {
       return statement_;
 }

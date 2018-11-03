@@ -67,8 +67,9 @@ static int print_concat(FILE*fd, ivl_lpm_t net)
 int print_lpm(FILE*fd, ivl_lpm_t net)
 {
       int rc = 0;
+      ivl_lpm_type_t type = ivl_lpm_type(net);
 
-      switch (ivl_lpm_type(net)) {
+      switch (type) {
 	  case IVL_LPM_ADD:
 	    rc += print_lpm_add(fd, net);
 	    break;
@@ -107,6 +108,13 @@ int print_lpm(FILE*fd, ivl_lpm_t net)
 	    break;
 	  case IVL_LPM_SUB:
 	    rc += print_lpm_sub(fd, net);
+	    break;
+	  case IVL_LPM_SHIFTL:
+	  case IVL_LPM_SHIFTR:
+	    rc += print_lpm_shift(fd, net, type == IVL_LPM_SHIFTL);
+	    break;
+	  case IVL_LPM_SIGN_EXT:
+	    rc += print_lpm_sign_ext(fd, net);
 	    break;
 	  default:
 	    fprintf(fd, "# XXXX ivl_lpm_type(net) --> %d\n", ivl_lpm_type(net));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -120,6 +120,15 @@ std::ostream& operator << (std::ostream&out, ivl_process_type_t pt)
 	    break;
 	  case IVL_PR_ALWAYS:
 	    out << "always";
+	    break;
+	  case IVL_PR_ALWAYS_COMB:
+	    out << "always_comb";
+	    break;
+	  case IVL_PR_ALWAYS_FF:
+	    out << "always_ff";
+	    break;
+	  case IVL_PR_ALWAYS_LATCH:
+	    out << "always_latch";
 	    break;
 	  case IVL_PR_FINAL:
 	    out << "final";
@@ -318,7 +327,7 @@ void PECallFunction::dump(ostream &out) const
 
 void PECastSize::dump(ostream &out) const
 {
-      out << size_ << "'(";
+      out << *size_ << "'(";
       base_->dump(out);
       out << ")";
 }
@@ -627,10 +636,10 @@ void PGBuiltin::dump(ostream&out, unsigned ind) const
 	    out << "bufif1 ";
 	    break;
 	  case PGBuiltin::NOTIF0:
-	    out << "bufif0 ";
+	    out << "notif0 ";
 	    break;
 	  case PGBuiltin::NOTIF1:
-	    out << "bufif1 ";
+	    out << "notif1 ";
 	    break;
 	  case PGBuiltin::NAND:
 	    out << "nand ";
@@ -729,6 +738,7 @@ void PGModule::dump(ostream&out, unsigned ind) const
 	    dump_pins(out);
       }
       out << ");" << endl;
+      dump_attributes_map(out, attributes, 8);
 }
 
 void Statement::dump(ostream&out, unsigned ind) const
@@ -789,6 +799,8 @@ void PBlock::dump(ostream&out, unsigned ind) const
             dump_events_(out, ind+2);
 
 	    dump_wires_(out, ind+2);
+
+	    dump_var_inits_(out, ind+2);
       }
 
       for (unsigned idx = 0 ;  idx < list_.size() ;  idx += 1) {
@@ -841,7 +853,7 @@ void PCase::dump(ostream&out, unsigned ind) const
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
 	    PCase::Item*cur = (*items_)[idx];
 
-	    if (cur->expr.size()) {
+	    if (! cur->expr.empty()) {
 		  out << setw(ind+2) << "" << "default:";
 
 	    } else {
@@ -926,7 +938,10 @@ void PDisable::dump(ostream&out, unsigned ind) const
 void PDoWhile::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "do" << endl;
-      statement_->dump(out, ind+3);
+      if (statement_)
+	    statement_->dump(out, ind+3);
+      else
+	    out << setw(ind+3) << "" << "/* NOOP */" << endl;
       out << setw(ind) << "" << "while (" << *cond_ << ");" << endl;
 }
 
@@ -989,13 +1004,19 @@ void PForeach::dump(ostream&fd, unsigned ind) const
       }
 
       fd << "] /* " << get_fileline() << " */" << endl;
-      statement_->dump(fd, ind+3);
+      if (statement_)
+	    statement_->dump(fd, ind+3);
+      else
+	    fd << setw(ind+3) << "" << "/* NOOP */" << endl;
 }
 
 void PForever::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "forever /* " << get_fileline() << " */" << endl;
-      statement_->dump(out, ind+3);
+      if (statement_)
+	    statement_->dump(out, ind+3);
+      else
+	    out << setw(ind+3) << "" << "/* NOOP */" << endl;
 }
 
 void PForStatement::dump(ostream&out, unsigned ind) const
@@ -1003,7 +1024,10 @@ void PForStatement::dump(ostream&out, unsigned ind) const
       out << setw(ind) << "" << "for (" << *name1_ << " = " << *expr1_
 	  << "; " << *cond_ << "; <for_step>)" << endl;
       step_->dump(out, ind+6);
-      statement_->dump(out, ind+3);
+      if (statement_)
+	    statement_->dump(out, ind+3);
+      else
+	    out << setw(ind+3) << "" << "/* NOOP */" << endl;
 }
 
 void PFunction::dump(ostream&out, unsigned ind) const
@@ -1030,6 +1054,8 @@ void PFunction::dump(ostream&out, unsigned ind) const
 
       dump_wires_(out, ind+2);
 
+      dump_var_inits_(out, ind+2);
+
       if (statement_)
 	    statement_->dump(out, ind+2);
       else
@@ -1045,7 +1071,10 @@ void PRelease::dump(ostream&out, unsigned ind) const
 void PRepeat::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "repeat (" << *expr_ << ")" << endl;
-      statement_->dump(out, ind+3);
+      if (statement_)
+	    statement_->dump(out, ind+3);
+      else
+	    out << setw(ind+3) << "" << "/* NOOP */" << endl;
 }
 
 void PReturn::dump(ostream&fd, unsigned ind) const
@@ -1071,6 +1100,8 @@ void PTask::dump(ostream&out, unsigned ind) const
       dump_events_(out, ind+2);
 
       dump_wires_(out, ind+2);
+
+      dump_var_inits_(out, ind+2);
 
       if (statement_)
 	    statement_->dump(out, ind+2);
@@ -1126,7 +1157,10 @@ void PTrigger::dump(ostream&out, unsigned ind) const
 void PWhile::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "while (" << *cond_ << ")" << endl;
-      statement_->dump(out, ind+3);
+      if (statement_)
+	    statement_->dump(out, ind+3);
+      else
+	    out << setw(ind+3) << "" << "/* NOOP */" << endl;
 }
 
 void PProcess::dump(ostream&out, unsigned ind) const
@@ -1136,7 +1170,10 @@ void PProcess::dump(ostream&out, unsigned ind) const
 
       dump_attributes_map(out, attributes, ind+2);
 
-      statement_->dump(out, ind+2);
+      if (statement_)
+	    statement_->dump(out, ind+2);
+      else
+	    out << setw(ind+2) << "" << "/* NOOP */" << endl;
 }
 
 void AProcess::dump(ostream&out, unsigned ind) const
@@ -1148,6 +1185,11 @@ void AProcess::dump(ostream&out, unsigned ind) const
 	  case IVL_PR_ALWAYS:
 	    out << setw(ind) << "" << "analog";
 	    break;
+	  case IVL_PR_ALWAYS_COMB:
+	  case IVL_PR_ALWAYS_FF:
+	  case IVL_PR_ALWAYS_LATCH:
+	    assert(0);
+	    break;
 	  case IVL_PR_FINAL:
 	    out << setw(ind) << "" << "analog final";
 	    break;
@@ -1157,7 +1199,10 @@ void AProcess::dump(ostream&out, unsigned ind) const
 
       dump_attributes_map(out, attributes, ind+2);
 
-      statement_->dump(out, ind+2);
+      if (statement_)
+	    statement_->dump(out, ind+2);
+      else
+	    out << setw(ind+2) << "" << "/* NOOP */" << endl;
 }
 
 void PSpecPath::dump(std::ostream&out, unsigned ind) const
@@ -1268,6 +1313,8 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 		 ; idx != gates.end() ; ++ idx ) {
 	    (*idx)->dump(out, indent+2);
       }
+
+      dump_var_inits_(out, indent+2);
 
       for (list<PProcess*>::const_iterator idx = behaviors.begin()
 		 ; idx != behaviors.end() ; ++ idx ) {
@@ -1405,6 +1452,14 @@ void LexicalScope::dump_wires_(ostream&out, unsigned indent) const
 		 ; wire != wires.end() ; ++ wire ) {
 
 	    (*wire).second->dump(out, indent);
+      }
+}
+
+void LexicalScope::dump_var_inits_(ostream&out, unsigned indent) const
+{
+	// Iterate through and display all the register initializations.
+      for (unsigned idx = 0; idx < var_inits.size(); idx += 1) {
+	    var_inits[idx]->dump(out, indent);
       }
 }
 
@@ -1564,6 +1619,7 @@ void Module::dump(ostream&out) const
 	    (*gate)->dump(out);
       }
 
+      dump_var_inits_(out, 4);
 
       for (list<PProcess*>::const_iterator behav = behaviors.begin()
 		 ; behav != behaviors.end() ; ++ behav ) {
@@ -1664,8 +1720,10 @@ void PPackage::pform_dump(std::ostream&out) const
       dump_localparams_(out, 4);
       dump_parameters_(out, 4);
       dump_enumerations_(out, 4);
+      dump_wires_(out, 4);
       dump_tasks_(out, 4);
       dump_funcs_(out, 4);
+      dump_var_inits_(out, 4);
       out << "endpackage" << endl;
 }
 

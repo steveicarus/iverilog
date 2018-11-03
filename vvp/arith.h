@@ -1,7 +1,7 @@
 #ifndef IVL_arith_H
 #define IVL_arith_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,6 +37,10 @@ class vvp_arith_  : public vvp_net_fun_t {
     public:
       explicit vvp_arith_(unsigned wid);
 
+      void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t ctx);
+
     protected:
       void dispatch_operand_(vvp_net_ptr_t ptr, vvp_vector4_t bit);
 
@@ -58,6 +62,10 @@ class vvp_arith_abs : public vvp_net_fun_t {
                      vvp_context_t);
       void recv_real(vvp_net_ptr_t ptr, double bit,
                      vvp_context_t);
+
+      void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t ctx);
 
     private:
 };
@@ -82,6 +90,10 @@ class vvp_arith_cast_real : public vvp_net_fun_t {
       void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
                      vvp_context_t);
 
+      void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t ctx);
+
     private:
       bool signed_;
 };
@@ -95,6 +107,10 @@ class vvp_arith_cast_vec2 : public vvp_net_fun_t {
                      vvp_context_t);
       void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
                      vvp_context_t);
+
+      void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t ctx);
 
     private:
       unsigned wid_;
@@ -184,6 +200,24 @@ class vvp_cmp_ne  : public vvp_arith_ {
 
 };
 
+class vvp_cmp_weq  : public vvp_arith_ {
+
+    public:
+      explicit vvp_cmp_weq(unsigned wid);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
+
+};
+
+class vvp_cmp_wne  : public vvp_arith_ {
+
+    public:
+      explicit vvp_cmp_wne(unsigned wid);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
+
+};
+
 
 /*
  * This base class implements both GT and GE comparisons. The derived
@@ -196,7 +230,7 @@ class vvp_cmp_gtge_base_ : public vvp_arith_ {
       explicit vvp_cmp_gtge_base_(unsigned wid, bool signed_flag);
 
     protected:
-      void recv_vec4_base_(vvp_net_ptr_t ptr, vvp_vector4_t bit,
+      void recv_vec4_base_(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 			   vvp_bit4_t out_if_equal);
     private:
       bool signed_flag_;

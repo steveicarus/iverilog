@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,7 +46,7 @@ static int real_var_get(int code, vpiHandle ref)
 	    return 0; // Not implemented for now!
 
 	case vpiAutomatic:
-	    return (int) vpip_scope(rfp)->is_automatic;
+	  return vpip_scope(rfp)->is_automatic()? 1 : 0;
       }
 
       return 0;
@@ -124,14 +124,33 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
       fil->get_signal_value(vp);
 }
 
-static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp, int)
+static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp, int flags)
 {
-      double result = real_from_vpi_value(vp);
-
       struct __vpiRealVar*rfp = dynamic_cast<__vpiRealVar*>(ref);
       assert(rfp);
       vvp_net_ptr_t destination (rfp->net, 0);
-      vvp_send_real(destination, result, vthread_get_wt_context());
+
+	/* If this is a release, then we are not really putting a
+	   value. Instead, issue a release "command" to the signal
+	   node to cause it to release a forced value. */
+      if (flags == vpiReleaseFlag) {
+	    assert(rfp->net->fil);
+	    rfp->net->fil->force_unlink();
+	    rfp->net->fil->release(destination, rfp->is_wire);
+	    real_var_get_value(ref, vp);
+	    return ref;
+      }
+
+      double result = real_from_vpi_value(vp);
+
+      if (flags == vpiForceFlag) {
+	    vvp_vector2_t mask (vvp_vector2_t::FILL1, 1);
+	    rfp->net->force_real(result, mask);
+      } else if (rfp->is_wire) {
+	    rfp->net->send_real(result, vthread_get_wt_context());
+      } else {
+	    vvp_send_real(destination, result, vthread_get_wt_context());
+      }
       return 0;
 }
 
@@ -159,17 +178,30 @@ vpiHandle __vpiRealVar::vpi_handle(int code)
 vpiHandle __vpiRealVar::vpi_iterate(int code)
 { return real_var_iterate(code, this); }
 
-vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
+static vpiHandle vpip_make_real_(__vpiScope*scope, const char*name,
+				 vvp_net_t*net, bool is_wire)
 {
       struct __vpiRealVar*obj = new __vpiRealVar;
 
       obj->id.name = name ? vpip_name_string(name) : 0;
       obj->is_netarray = 0;
+      obj->is_wire = is_wire;
       obj->net = net;
 
-      obj->within.scope = vpip_peek_current_scope();
+      obj->within.scope = scope;
 
       return obj;
+}
+
+vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
+{
+      return vpip_make_real_(vpip_peek_current_scope(), name, net, false);
+}
+
+vpiHandle vpip_make_real_net(__vpiScope*scope,
+			     const char*name, vvp_net_t*net)
+{
+      return vpip_make_real_(scope, name, net, true);
 }
 
 #ifdef CHECK_WITH_VALGRIND

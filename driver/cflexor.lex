@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -124,7 +124,8 @@ int cmdfile_stack_ptr = 0;
 "-c" { return TOK_Dc; }
 "-f" { return TOK_Dc; }
 
-  /* Notice the -v flag. */
+  /* Notice the -l or -v flag. */
+"-l" { return TOK_Dv; }
 "-v" { return TOK_Dv; }
 
   /* Notice the -y flag. */
@@ -251,7 +252,7 @@ void destroy_lexor(void)
 {
 # ifdef FLEX_SCANNER
 #   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5
-#     if defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
+#     if YY_FLEX_MINOR_VERSION > 5 || defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
     yylex_destroy();
 #     endif
 #   endif

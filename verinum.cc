@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,6 +22,7 @@
 # include  "verinum.h"
 # include  <iostream>
 # include  <cassert>
+# include  <climits>
 # include  <cmath> // Needed to get pow for as_double().
 # include  <cstdio> // Needed to get snprintf for as_string().
 # include  <algorithm>
@@ -1444,7 +1445,8 @@ verinum operator / (const verinum&left, const verinum&right)
 	    if (use_len <= (8*sizeof(long) - 1)) {
 		  long l = left.as_long();
 		  long r = right.as_long();
-		  long v = l / r;
+		  bool overflow = (l == LONG_MIN) && (r == -1);
+		  long v = overflow ? LONG_MIN : l / r;
 		  for (unsigned idx = 0 ;  idx < use_len ;  idx += 1) {
 			result.set(idx,  (v & 1)? verinum::V1 : verinum::V0);
 			v >>= 1;
@@ -1518,7 +1520,8 @@ verinum operator % (const verinum&left, const verinum&right)
 		    /* Use native signed modulus to do the work. */
 		  long l = left.as_long();
 		  long r = right.as_long();
-		  long v = l % r;
+		  bool overflow = (l == LONG_MIN) && (r == -1);
+		  long v = overflow ? 0 : l % r;
 		  for (unsigned idx = 0 ;  idx < use_len ;  idx += 1) {
 			result.set(idx,  (v & 1)? verinum::V1 : verinum::V0);
 			v >>= 1;

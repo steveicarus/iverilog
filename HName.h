@@ -42,7 +42,7 @@ class hname_t {
       hname_t ();
       explicit hname_t (perm_string text);
       explicit hname_t (perm_string text, int num);
-      explicit hname_t (perm_string text, std::vector<int>&nums);
+      explicit hname_t (perm_string text, const std::vector<int>&nums);
       hname_t (const hname_t&that);
       ~hname_t();
 
@@ -56,12 +56,12 @@ class hname_t {
 
       size_t has_numbers() const;
       int peek_number(size_t idx) const;
+      const std::vector<int>&peek_numbers() const;
 
     private:
       perm_string name_;
-	// If the number is anything other than INT_MIN, then this is
-	// the numeric part of the name. Otherwise, it is not part of
-	// the name at all.
+	// If this vector has size, then the numbers all together make
+	// up part of the hierarchical name.
       std::vector<int> number_;
 
     private: // not implemented
@@ -80,6 +80,11 @@ inline int hname_t::peek_number(size_t idx) const
 {
       assert(number_.size() > idx);
       return number_[idx];
+}
+
+inline const std::vector<int>& hname_t::peek_numbers(void) const
+{
+      return number_;
 }
 
 inline size_t hname_t::has_numbers() const

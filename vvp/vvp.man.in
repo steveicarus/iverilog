@@ -1,10 +1,10 @@
-.TH vvp 1 "May 23rd, 2010" "" "Version %M.%m.%n %E"
+.TH vvp 1 "May 10th, 2015" "" "Version %M.%n %E"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
 .SH SYNOPSIS
 .B vvp
-[\-nNsvV] [\-Mpath] [\-mmodule] [\-llogfile] inputfile [extended-args...]
+[\-inNsvV] [\-Mpath] [\-mmodule] [\-llogfile] inputfile [extended-args...]
 
 .SH DESCRIPTION
 .PP
@@ -15,6 +15,9 @@ command is not by itself executable on any platform. Instead, the
 
 .SH OPTIONS
 \fIvvp\fP accepts the following options:
+.TP 8
+.B -i
+This flag causes all output to <stdout> to be unbuffered.
 .TP 8
 .B -l\fIlogfile\fP
 This flag specifies a logfile where all MCI <stdlog> output goes.
@@ -160,8 +163,15 @@ its behavior. These can be used to make semi-permanent changes.
 This selects the output format for the waveform output. Normally,
 waveforms are dumped in vcd format, but this variable can be used to
 select lxt format, which is far more compact, though limited to
-gtkwave or compatible viewers. It can also be used to suppress VCD
+GTKWave or compatible viewers. It can also be used to suppress VCD
 output, a time-saver for regression tests.
+
+.TP 8
+.B IVERILOG_VPI_MODULE_PATH=\fI/some/path:/some/other/path\fP
+This adds additional components to the VPI module search path. Paths
+specified in this way are searched after paths specified with \-M, but
+before the default search path. Multiple paths can be separated with
+colons or semicolons.
 
 .SH INTERACTIVE MODE
 .PP
@@ -182,11 +192,11 @@ Steve Williams (steve@icarus.com)
 .SH SEE ALSO
 iverilog(1),
 iverilog\-vpi(1),
-.BR "<http://www.icarus.com/eda/verilog/>"
+.BR "<http://iverilog.icarus.com/>"
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2001\-2010 Stephen Williams
+Copyright \(co  2001\-2015 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

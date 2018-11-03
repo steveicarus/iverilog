@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -49,7 +49,7 @@ int __vpiNamedEvent::vpi_get(int code)
       switch (code) {
 
 	  case vpiAutomatic:
-	    return (int) scope_->is_automatic;
+	    return scope_->is_automatic()? 1 : 0;
       }
 
       return 0;
@@ -63,6 +63,16 @@ char* __vpiNamedEvent::vpi_get_str(int code)
       return generic_get_str(code, scope_, name_, NULL);
 }
 
+vpiHandle __vpiNamedEvent::vpi_put_value(p_vpi_value, int)
+{
+	// p_vpi_value may be NULL, and an event doesn't care
+	// what the value is
+      vvp_vector4_t val;
+      vvp_net_ptr_t dest(funct, 0);
+      vvp_send_vec4(dest, val, vthread_get_wt_context());
+
+      return this;
+}
 
 vpiHandle __vpiNamedEvent::vpi_handle(int code)
 {

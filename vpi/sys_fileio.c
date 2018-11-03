@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -132,7 +132,7 @@ static PLI_INT32 sys_fopen_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 			      }
 			}
 			if (! fail) break;
-
+			// fallthrough
 		      default:
 			vpi_printf("WARNING: %s:%d: ",
 			           vpi_get_str(vpiFile, callh),
@@ -880,7 +880,16 @@ static PLI_INT32 sys_fseek_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       val.format = vpiIntVal;
+#if defined(__GNUC__)
       val.value.integer = fseek(fp, offset, oper);
+#else
+      if(oper < 0) {
+           val.value.integer = EOF;
+           errno = EINVAL;
+      }
+      else
+           val.value.integer = fseek(fp, offset, oper);
+#endif
       vpi_put_value(callh, &val, 0 , vpiNoDelay);
 
       return 0;

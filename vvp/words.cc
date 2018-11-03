@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,7 +37,7 @@ static void __compile_var_real(char*label, char*name,
 {
       vvp_net_t*net = new vvp_net_t;
 
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
 	    vvp_fun_signal_real_aa*tmp = new vvp_fun_signal_real_aa;
 	    net->fil = tmp;
 	    net->fun = tmp;
@@ -54,7 +54,7 @@ static void __compile_var_real(char*label, char*name,
       if (name) {
 	    assert(!array);
 	    vpip_attach_to_current_scope(obj);
-            if (!vpip_peek_current_scope()->is_automatic)
+            if (!vpip_peek_current_scope()->is_automatic())
                   schedule_init_vector(vvp_net_ptr_t(net,0), 0.0);
       }
       if (array) {
@@ -82,7 +82,7 @@ void compile_var_string(char*label, char*name)
 {
       vvp_net_t*net = new vvp_net_t;
 
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
 	    vvp_fun_signal_string_aa*tmp = new vvp_fun_signal_string_aa;
 	    net->fil = tmp;
 	    net->fun = tmp;
@@ -105,7 +105,7 @@ void compile_var_darray(char*label, char*name)
 {
       vvp_net_t*net = new vvp_net_t;
 
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
 	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa;
 	    net->fil = tmp;
 	    net->fun = tmp;
@@ -128,7 +128,7 @@ void compile_var_queue(char*label, char*name)
 {
       vvp_net_t*net = new vvp_net_t;
 
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
 	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa;
 	    net->fil = tmp;
 	    net->fun = tmp;
@@ -151,7 +151,7 @@ void compile_var_cobject(char*label, char*name)
 {
       vvp_net_t*net = new vvp_net_t;
 
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
 	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa;
 	    net->fil = tmp;
 	    net->fun = tmp;
@@ -182,7 +182,7 @@ void compile_variable(char*label, char*name,
 
       vvp_net_t*net = new vvp_net_t;
 
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
 	    vvp_fun_signal4_aa*tmp = new vvp_fun_signal4_aa(wid);
 	    net->fil = tmp;
             net->fun = tmp;
@@ -221,7 +221,7 @@ void compile_variable(char*label, char*name,
 	// scope as a signal.
       if (name) {
 	    if (obj) vpip_attach_to_current_scope(obj);
-            if (!vpip_peek_current_scope()->is_automatic) {
+            if (!vpip_peek_current_scope()->is_automatic()) {
 		  vvp_vector4_t tmp;
 		  vfil->vec4_value(tmp);
 	          schedule_init_vector(vvp_net_ptr_t(net,0), tmp);
@@ -262,7 +262,7 @@ vvp_net_t* create_constant_node(const char*val_str)
 class base_net_resolv : public resolv_list_s {
     public:
       explicit base_net_resolv(char*ref_label, vvp_array_t array,
-			       struct __vpiScope*scope,
+			       __vpiScope*scope,
 			       char*my_label, char*name,
 			       unsigned array_addr, bool local_flag)
       : resolv_list_s(ref_label)
@@ -278,7 +278,7 @@ class base_net_resolv : public resolv_list_s {
       char*my_label_;
       vvp_array_t array_;
       char*name_;
-      struct __vpiScope*scope_;
+      __vpiScope*scope_;
       unsigned array_addr_;
       bool local_flag_;
 };
@@ -287,7 +287,7 @@ class __compile_net_resolv : public base_net_resolv {
 
     public:
       explicit __compile_net_resolv(char*ref_label, vvp_array_t array,
-				    struct __vpiScope*scope,
+				    __vpiScope*scope,
 				    char*my_label, char*name,
 				    int msb, int lsb, unsigned array_addr,
 				    int vpi_type_code, bool signed_flag, bool local_flag)
@@ -321,7 +321,7 @@ class __compile_net_resolv : public base_net_resolv {
  */
 
 static void do_compile_net(vvp_net_t*node, vvp_array_t array,
-			   struct __vpiScope*scope,
+			   __vpiScope*scope,
 			   char*my_label, char*name,
 			   int msb, int lsb, unsigned array_addr,
 			   int vpi_type_code, bool signed_flag, bool local_flag)
@@ -350,7 +350,7 @@ static void do_compile_net(vvp_net_t*node, vvp_array_t array,
       vpiHandle obj = 0;
       if (! local_flag) {
 	      /* Make the vpiHandle for the reg. */
-	    obj = vpip_make_net4(name, msb, lsb, signed_flag, node);
+	    obj = vpip_make_net4(scope, name, msb, lsb, signed_flag, node);
 	      /* This attaches the label to the vpiHandle */
 	    compile_vpi_symbol(my_label, obj);
       }
@@ -398,7 +398,7 @@ static void __compile_net(char*label,
       }
 #endif
       if (node == 0) {
-	    struct __vpiScope*scope = vpip_peek_current_scope();
+	    __vpiScope*scope = vpip_peek_current_scope();
 	    __compile_net_resolv*res
 		  = new __compile_net_resolv(argv[0].text,
 					     array, scope, label, name,
@@ -410,7 +410,7 @@ static void __compile_net(char*label,
       }
       assert(node);
 
-      struct __vpiScope*scope = vpip_peek_current_scope();
+      __vpiScope*scope = vpip_peek_current_scope();
       do_compile_net(node, array, scope, label, name, msb, lsb, array_addr,
 		     vpi_type_code, signed_flag, local_flag);
 
@@ -453,7 +453,7 @@ class __compile_real_net_resolv : public base_net_resolv {
 
     public:
       explicit __compile_real_net_resolv(char*ref_label, vvp_array_t array,
-					 struct __vpiScope*scope,
+					 __vpiScope*scope,
 					 char*my_label, char*name,
 					 unsigned array_addr, bool local_flag)
       : base_net_resolv(ref_label, array, scope, my_label, name, array_addr, local_flag)
@@ -468,7 +468,7 @@ class __compile_real_net_resolv : public base_net_resolv {
 };
 
 static void __compile_real_net2(vvp_net_t*node, vvp_array_t array,
-				struct __vpiScope*scope,
+				__vpiScope*scope,
 				char*my_label, char*name,
 				unsigned array_addr, bool local_flag)
 {
@@ -481,7 +481,7 @@ static void __compile_real_net2(vvp_net_t*node, vvp_array_t array,
 
       vpiHandle obj = 0;
       if (!local_flag) {
-	    obj = vpip_make_real_var(name, node);
+	    obj = vpip_make_real_net(scope, name, node);
 	    compile_vpi_symbol(my_label, obj);
       }
 #ifdef CHECK_WITH_VALGRIND
@@ -522,7 +522,7 @@ static void __compile_real(char*label, char*name,
 		 bufz node that can carry the constant value. */
 	    node = create_constant_node(argv[0].text);
       }
-      struct __vpiScope*scope = vpip_peek_current_scope();
+      __vpiScope*scope = vpip_peek_current_scope();
       if (node == 0) {
 	    __compile_real_net_resolv*res
 		  = new __compile_real_net_resolv(argv[0].text, array,
@@ -566,27 +566,4 @@ void compile_netw_real(char*label, char*array_label, unsigned long array_addr,
 {
       __compile_real(label, 0, array_label, array_addr,
                      msb, lsb, false, argc, argv);
-}
-
-void compile_aliasw(char*label, char*array_label, unsigned long array_addr,
-                    int msb, int lsb, unsigned argc, struct symb_s*argv)
-{
-      vvp_array_t array = array_find(array_label);
-      assert(array);
-
-      assert(argc == 1);
-      vvp_net_t*node = vvp_net_lookup(argv[0].text);
-
-	/* Add the label into the functor symbol table. */
-      assert(node);
-      define_functor_symbol(label, node);
-
-      vpiHandle obj = vvp_lookup_handle(argv[0].text);
-      assert(obj);
-      array->alias_word(array_addr, obj, msb, lsb);
-
-      free(label);
-      free(array_label);
-      free(argv[0].text);
-      free(argv);
 }

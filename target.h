@@ -1,7 +1,7 @@
 #ifndef IVL_target_H
 #define IVL_target_H
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -95,6 +95,7 @@ struct target_t {
       virtual void lpm_divide(const NetDivide*);
       virtual void lpm_modulo(const NetModulo*);
       virtual void lpm_ff(const NetFF*);
+      virtual void lpm_latch(const NetLatch*);
       virtual void lpm_mult(const NetMult*);
       virtual void lpm_mux(const NetMux*);
       virtual void lpm_pow(const NetPow*);

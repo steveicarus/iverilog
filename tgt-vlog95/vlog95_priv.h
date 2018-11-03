@@ -1,7 +1,7 @@
 #ifndef IVL_vlog95_priv_H
 #define IVL_vlog95_priv_H
 /*
- * Copyright (C) 2010-2014 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2017 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -106,7 +106,6 @@ extern void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex,
 extern void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex);
 extern void emit_const_nexus(ivl_scope_t scope, ivl_net_const_t const_net);
 extern void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig);
-extern void emit_icarus_generated_udps(void);
 
 extern void add_udp_to_list(ivl_udp_t udp);
 extern void emit_udp_list(void);
@@ -117,6 +116,9 @@ extern void emit_real_number(double value);
 extern void emit_number(const char *bits, unsigned nbits, unsigned is_signed,
                         const char *file, unsigned lineno);
 extern void emit_string(const char *string);
+
+extern void emit_icarus_generated_udps(void);
+extern void emit_icarus_generated_top_module(void);
 
 /*
  * Find the enclosing module scope.
@@ -144,6 +146,11 @@ extern char * get_package_name(ivl_scope_t scope);
  * Get the appropriate MSB and LSB for a signal.
  */
 extern void get_sig_msb_lsb(ivl_signal_t sig, int *msb, int *lsb);
+
+/*
+ * Convert a timescale value to a string.
+ */
+extern const char*get_time_const(int time_value);
 
 /*
  * Cleanup functions.

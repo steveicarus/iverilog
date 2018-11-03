@@ -144,7 +144,7 @@ ivl_signal_t find_signal_named(const std::string &name, const vhdl_scope *scope)
 
 // Compare the name of an entity against a string
 struct cmp_ent_name {
-   cmp_ent_name(const string& n) : name_(n) {}
+   explicit cmp_ent_name(const string& n) : name_(n) {}
 
    bool operator()(const vhdl_entity* ent) const
    {

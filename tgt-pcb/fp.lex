@@ -6,7 +6,7 @@
 
 %{
 /*
- *  Copyright (C) 2011-2013 Stephen Williams (steve@icarus.com)
+ *  Copyright (C) 2011-2017 Stephen Williams (steve@icarus.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -79,11 +79,14 @@ void init_fp_lexor(FILE*fd)
       yyrestart(fd);
 }
 
+/*
+ * Modern version of flex (>=2.5.9) can clean up the scanner data.
+ */
 void destroy_fp_lexor()
 {
 # ifdef FLEX_SCANNER
 #   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5
-#     if defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
+#     if YY_FLEX_MINOR_VERSION > 5 || defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
       yylex_destroy();
 #     endif
 #   endif

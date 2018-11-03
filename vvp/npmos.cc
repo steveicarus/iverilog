@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,9 +19,10 @@
 
 # include  "npmos.h"
 
-vvp_fun_pmos_::vvp_fun_pmos_(bool enable_invert)
+vvp_fun_pmos_::vvp_fun_pmos_(bool enable_invert, bool resistive)
 {
       inv_en_ = enable_invert;
+      resistive_ = resistive;
 }
 
 
@@ -43,13 +44,32 @@ void vvp_fun_pmos_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       generate_output_(ptr);
 }
 
+void vvp_fun_pmos_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			         unsigned base, unsigned wid, unsigned vwid,
+                                 vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+}
+
+void vvp_fun_pmos_::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
+			         unsigned base, unsigned wid, unsigned vwid)
+{
+      recv_vec8_pv_(ptr, bit, base, wid, vwid);
+}
+
 void vvp_fun_pmos_::generate_output_(vvp_net_ptr_t ptr)
 {
+      const unsigned*strength_map = vvp_switch_strength_map[resistive_];
+
       vvp_vector8_t out (bit_.size());
 
       for (unsigned idx = 0 ;  idx < out.size() ;  idx += 1) {
 	    vvp_bit4_t   b_en  = en_.value(idx);
 	    vvp_scalar_t b_bit = bit_.value(idx);
+
+            b_bit = vvp_scalar_t(b_bit.value(),
+                                 strength_map[b_bit.strength0()],
+                                 strength_map[b_bit.strength1()]);
 
 	    switch (b_en) {
 		case BIT4_0:
@@ -80,7 +100,7 @@ void vvp_fun_pmos_::generate_output_(vvp_net_ptr_t ptr)
 
 
 vvp_fun_pmos::vvp_fun_pmos(bool enable_invert)
-: vvp_fun_pmos_(enable_invert)
+: vvp_fun_pmos_(enable_invert, false)
 {
 }
 
@@ -99,7 +119,7 @@ void vvp_fun_pmos::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 }
 
 vvp_fun_rpmos::vvp_fun_rpmos(bool enable_invert)
-: vvp_fun_pmos_(enable_invert)
+: vvp_fun_pmos_(enable_invert, true)
 {
 }
 
@@ -113,7 +133,7 @@ void vvp_fun_rpmos::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
       if (ptr.port() != 0)
 	    return;
 
-      bit_ = resistive_reduction(bit);
+      bit_ = bit;
       generate_output_(ptr);
 }
 
@@ -122,8 +142,9 @@ void vvp_fun_rpmos::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
  * CMOS primitive.
  */
 
-vvp_fun_cmos_::vvp_fun_cmos_()
+vvp_fun_cmos_::vvp_fun_cmos_(bool resistive)
 {
+      resistive_ = resistive;
 }
 
 void vvp_fun_cmos_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t &bit,
@@ -147,16 +168,33 @@ void vvp_fun_cmos_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t &bit,
       generate_output_(ptr);
 }
 
-#include <iostream>
+void vvp_fun_cmos_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			         unsigned base, unsigned wid, unsigned vwid,
+                                 vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+}
+
+void vvp_fun_cmos_::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
+			         unsigned base, unsigned wid, unsigned vwid)
+{
+      recv_vec8_pv_(ptr, bit, base, wid, vwid);
+}
 
 void vvp_fun_cmos_::generate_output_(vvp_net_ptr_t ptr)
 {
+      const unsigned*strength_map = vvp_switch_strength_map[resistive_];
+
       vvp_vector8_t out (bit_.size());
 
       for (unsigned idx = 0 ;  idx < out.size() ;  idx += 1) {
 	    vvp_bit4_t   b_n_en  = n_en_.value(idx);
 	    vvp_bit4_t   b_p_en  = p_en_.value(idx);
 	    vvp_scalar_t b_bit = bit_.value(idx);
+
+            b_bit = vvp_scalar_t(b_bit.value(),
+                                 strength_map[b_bit.strength0()],
+                                 strength_map[b_bit.strength1()]);
 
 	    if (b_n_en == BIT4_1 || b_p_en == BIT4_0) {
 		  out.set_bit(idx, b_bit);
@@ -182,7 +220,7 @@ void vvp_fun_cmos_::generate_output_(vvp_net_ptr_t ptr)
 }
 
 vvp_fun_cmos::vvp_fun_cmos()
-: vvp_fun_cmos_()
+: vvp_fun_cmos_(false)
 {
 }
 
@@ -201,7 +239,7 @@ void vvp_fun_cmos::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 }
 
 vvp_fun_rcmos::vvp_fun_rcmos()
-: vvp_fun_cmos_()
+: vvp_fun_cmos_(true)
 {
 }
 
@@ -215,6 +253,6 @@ void vvp_fun_rcmos::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
       if (ptr.port() != 0)
 	    return;
 
-      bit_ = resistive_reduction(bit);
+      bit_ = bit;
       generate_output_(ptr);
 }

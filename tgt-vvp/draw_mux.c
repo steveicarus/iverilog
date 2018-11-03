@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,44 +51,8 @@ static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
             if (data_type_of_nexus(ivl_lpm_q(net)) == IVL_VT_REAL)
                   dly_width = 0;
 
+	    draw_delay(net, dly_width, 0, d_rise, d_fall, d_decay);
 	    dly = "/d";
-	    if (number_is_immediate(d_rise, 64, 0) &&
-	        number_is_immediate(d_fall, 64, 0) &&
-	        number_is_immediate(d_decay, 64, 0)) {
-
-		  assert( ! number_is_unknown(d_rise));
-		  assert( ! number_is_unknown(d_fall));
-		  assert( ! number_is_unknown(d_decay));
-
-		  fprintf(vvp_out, "L_%p .delay %u (%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") L_%p/d;\n",
-		                   net, dly_width,
-				   get_number_immediate64(d_rise),
-		                   get_number_immediate64(d_fall),
-		                   get_number_immediate64(d_decay), net);
-	    } else {
-		  ivl_signal_t sig;
-		  // We do not currently support calculating the decay from
-		  // the rise and fall variable delays.
-		  assert(d_decay != 0);
-		  assert(ivl_expr_type(d_rise) == IVL_EX_SIGNAL);
-		  assert(ivl_expr_type(d_fall) == IVL_EX_SIGNAL);
-		  assert(ivl_expr_type(d_decay) == IVL_EX_SIGNAL);
-
-		  fprintf(vvp_out, "L_%p .delay %u L_%p/d",
-                          net, dly_width, net);
-
-		  sig = ivl_expr_signal(d_rise);
-		  assert(ivl_signal_dimensions(sig) == 0);
-		  fprintf(vvp_out, ", v%p_0", sig);
-
-		  sig = ivl_expr_signal(d_fall);
-		  assert(ivl_signal_dimensions(sig) == 0);
-		  fprintf(vvp_out, ", v%p_0", sig);
-
-		  sig = ivl_expr_signal(d_decay);
-		  assert(ivl_signal_dimensions(sig) == 0);
-		  fprintf(vvp_out, ", v%p_0;\n", sig);
-	    }
       }
 
       input[0] = draw_net_input(ivl_lpm_data(net,0));
@@ -119,7 +83,7 @@ static void draw_lpm_mux_nest(ivl_lpm_t net, const char*muxz)
 	      net, select_input);
 
       for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 2) {
-	    fprintf(vvp_out, "L_%p/0/%d .functor %s %u",
+	    fprintf(vvp_out, "L_%p/0/%u .functor %s %u",
 		    net, idx/2, muxz, width);
 	    fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,idx+0)));
 	    fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,idx+1)));
@@ -131,10 +95,10 @@ static void draw_lpm_mux_nest(ivl_lpm_t net, const char*muxz)
 		    net, level, select_input, level, level);
 
 	    for (idx = 0 ;  idx < (ivl_lpm_size(net) >> level); idx += 2) {
-		  fprintf(vvp_out, "L_%p/%u/%d .functor %s %u",
+		  fprintf(vvp_out, "L_%p/%u/%u .functor %s %u",
 			  net, level, idx/2, muxz, width);
-		  fprintf(vvp_out, ", L_%p/%d/%d", net, level-1, idx+0);
-		  fprintf(vvp_out, ", L_%p/%d/%d", net, level-1, idx+1);
+		  fprintf(vvp_out, ", L_%p/%u/%u", net, level-1, idx+0);
+		  fprintf(vvp_out, ", L_%p/%u/%u", net, level-1, idx+1);
 		  fprintf(vvp_out, ", L_%p/%us",   net, level);
 		  fprintf(vvp_out, ", C4<>;\n");
 	    }
@@ -142,14 +106,14 @@ static void draw_lpm_mux_nest(ivl_lpm_t net, const char*muxz)
       }
 
 
-      fprintf(vvp_out, "L_%p/%ds .part %s, %d, 1; Bit %d of the select\n",
+      fprintf(vvp_out, "L_%p/%us .part %s, %u, 1; Bit %u of the select\n",
 	      net, swidth-1, select_input, swidth-1, swidth-1);
 
 
       fprintf(vvp_out, "L_%p .functor %s %u", net, muxz, width);
-      fprintf(vvp_out, ", L_%p/%d/0", net, swidth-2);
-      fprintf(vvp_out, ", L_%p/%d/1", net, swidth-2);
-      fprintf(vvp_out, ", L_%p/%ds",  net, swidth-1);
+      fprintf(vvp_out, ", L_%p/%u/0", net, swidth-2);
+      fprintf(vvp_out, ", L_%p/%u/1", net, swidth-2);
+      fprintf(vvp_out, ", L_%p/%us",  net, swidth-1);
       fprintf(vvp_out, ", C4<>;\n");
 
       free(select_input);

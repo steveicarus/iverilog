@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2014 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2005-2016 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -164,7 +164,7 @@ vvp_fun_delay::vvp_fun_delay(vvp_net_t*n, unsigned width, const vvp_delay_t&d)
       initial_ = true;
 	// Calculate the values used when converting variable delays
 	// to simulation time units.
-      struct __vpiScope*scope = vpip_peek_current_scope();
+      __vpiScope*scope = vpip_peek_current_scope();
 
       int pow = scope->time_units - scope->time_precision;
       round_ = 1;
@@ -332,6 +332,13 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       }
 }
 
+void vvp_fun_delay::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			         unsigned base, unsigned wid, unsigned vwid,
+                                 vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+}
+
 /* See the recv_vec4 comment above. */
 void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 {
@@ -395,6 +402,12 @@ void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 	    enqueue_(cur);
 	    schedule_generic(this, use_delay, false);
       }
+}
+
+void vvp_fun_delay::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
+			         unsigned base, unsigned wid, unsigned vwid)
+{
+      recv_vec8_pv_(ptr, bit, base, wid, vwid);
 }
 
 void vvp_fun_delay::recv_real(vvp_net_ptr_t port, double bit,
@@ -645,8 +658,11 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	   and schedule an event for each partial change. Hard! */
       for (unsigned idx = 1 ;  idx < bit.size() ;  idx += 1) {
 	    vvp_time64_t tmp = delay_from_edge(cur_vec4_.value(idx),
-					       bit.value(0),
+					       bit.value(idx),
 					       out_at);
+	      /* If the current and new bit values match then no delay
+	       * is needed for this bit. */
+	    if (cur_vec4_.value(idx) == bit.value(idx)) continue;
 	    assert(tmp == use_delay);
       }
 
@@ -767,7 +783,7 @@ static vpiHandle modpath_src_get_handle(int code, vpiHandle ref)
 	  return rfp->dest->scope;
 
 	  case vpiModule:
-	      { struct __vpiScope*scope = rfp->dest->scope;
+	      { __vpiScope*scope = rfp->dest->scope;
 		while (scope && scope->get_type_code() != vpiModule)
 		      scope = scope->scope;
 		assert(scope);

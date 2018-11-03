@@ -51,7 +51,7 @@ static int print_lpm_cmp_gt_s(FILE*fd, ivl_lpm_t net)
 	    return 0;
       }
 
-      fprintf(stderr, "%s:%u: sorry: blif: Signed agnitude compare not implemented yet\n",
+      fprintf(stderr, "%s:%u: sorry: blif: Signed magnitude compare not implemented yet\n",
 	      ivl_lpm_file(net), ivl_lpm_lineno(net));
 
       return 1;

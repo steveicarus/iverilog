@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -227,8 +227,8 @@ static void draw_binary_vec4_compare_real(ivl_expr_t expr)
 	    break;
 	  case 'n': /* != */
 	    fprintf(vvp_out, "    %%cmp/wr;\n");
+	    fprintf(vvp_out, "    %%flag_inv 4;\n");
 	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    fprintf(vvp_out, "    %%inv;\n");
 	    break;
 	  default:
 	    assert(0);
@@ -247,8 +247,8 @@ static void draw_binary_vec4_compare_string(ivl_expr_t expr)
 	    break;
 	  case 'n': /* != */
 	    fprintf(vvp_out, "    %%cmp/str;\n");
+	    fprintf(vvp_out, "    %%flag_inv 4;\n");
 	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    fprintf(vvp_out, "    %%inv;\n");
 	    break;
 	  default:
 	    assert(0);
@@ -298,9 +298,9 @@ static void draw_binary_vec4_compare_class(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%test_nul/a v%p, %d;\n", sig, word_ix);
 		  clr_word(word_ix);
 	    }
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
 	    if (ivl_expr_opcode(expr) == 'n')
-		  fprintf(vvp_out, "    %%inv;\n");
+		  fprintf(vvp_out, "    %%flag_inv 4;\n");
+	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
 	    return;
       }
 
@@ -320,9 +320,9 @@ static void draw_binary_vec4_compare_class(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 	    fprintf(vvp_out, "    %%test_nul/prop %u, %d;\n", pidx, idx);
 	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
 	    if (ivl_expr_opcode(expr) == 'n')
-		  fprintf(vvp_out, "    %%inv;\n");
+		  fprintf(vvp_out, "    %%flag_inv 4;\n");
+	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
 
 	    if (idx != 0) clr_word(idx);
 	    return;
@@ -385,18 +385,24 @@ static void draw_binary_vec4_compare(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
 	    break;
 	  case 'n': /* != */
-	    fprintf(vvp_out, "    %%cmp/e;\n");
+	    fprintf(vvp_out, "    %%cmp/ne;\n");
 	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    fprintf(vvp_out, "    %%inv;\n");
 	    break;
 	  case 'E': /* === */
 	    fprintf(vvp_out, "    %%cmp/e;\n");
 	    fprintf(vvp_out, "    %%flag_get/vec4 6;\n");
 	    break;
 	  case 'N': /* !== */
-	    fprintf(vvp_out, "    %%cmp/e;\n");
+	    fprintf(vvp_out, "    %%cmp/ne;\n");
 	    fprintf(vvp_out, "    %%flag_get/vec4 6;\n");
-	    fprintf(vvp_out, "    %%inv;\n");
+	    break;
+	  case 'w': /* ==? */
+	    fprintf(vvp_out, "    %%cmp/we;\n");
+	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
+	    break;
+	  case 'W': /* !=? */
+	    fprintf(vvp_out, "    %%cmp/wne;\n");
+	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
 	    break;
 	  default:
 	    assert(0);
@@ -415,7 +421,7 @@ static void draw_binary_vec4_land(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%or/r;\n");
 
 	/* Now push the right expression. Again, reduce to a single
-	   bit if necessasry. */
+	   bit if necessary. */
       draw_eval_vec4(re);
       if (ivl_expr_width(re) > 1)
 	    fprintf(vvp_out, "    %%or/r;\n");
@@ -615,7 +621,7 @@ static void draw_binary_vec4_lor(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%or/r;\n");
 
 	/* Now push the right expression. Again, reduce to a single
-	   bit if necessasry. */
+	   bit if necessary. */
       draw_eval_vec4(re);
       if (ivl_expr_width(re) > 1)
 	    fprintf(vvp_out, "    %%or/r;\n");
@@ -689,8 +695,10 @@ static void draw_binary_vec4(ivl_expr_t expr)
 
 	  case 'e': /* == */
 	  case 'E': /* === */
-	  case 'n': /* !== */
+	  case 'n': /* != */
 	  case 'N': /* !== */
+	  case 'w': /* ==? */
+	  case 'W': /* !=? */
 	    draw_binary_vec4_compare(expr);
 	    break;
 
@@ -952,7 +960,7 @@ static void draw_select_pad_vec4(ivl_expr_t expr)
 }
 
 /*
- * This function handles the speical case of a call to the internal
+ * This function handles the special case of a call to the internal
  * functions $ivl_darray_method$pop_back et al. The first (and only)
  * argument is the signal that represents a dynamic queue. Generate a
  * %qpop instruction to pop a value and push it to the vec4 stack.
@@ -1005,6 +1013,15 @@ static void draw_signal_vec4(ivl_expr_t expr)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
 
+	/* Special Case: If the signal is the return value of the function,
+	   then use a different opcode to get the value. */
+      if (signal_is_return_value(sig)) {
+	    assert(ivl_signal_dimensions(sig) == 0);
+	    fprintf(vvp_out, "    %%retload/vec4 0; Load %s (draw_signal_vec4)\n",
+		    ivl_signal_basename(sig));
+	    return;
+      }
+
 	/* Handle the simple case, a signal expression that is a
 	   simple vector, no array dimensions. */
       if (ivl_signal_dimensions(sig) == 0) {
@@ -1032,7 +1049,7 @@ static void draw_string_vec4(ivl_expr_t expr)
 
       for (unsigned idx = 0 ; idx < wid ; idx += 8) {
 	    tmp <<= 8;
-	    tmp |= *p;
+	    tmp |= (unsigned long)*p;
 	    p += 1;
 	    tmp_wid += 8;
 	    if (tmp_wid == 32) {

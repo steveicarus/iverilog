@@ -29,6 +29,7 @@
 # include  "compiler.h"
 # include  <iostream>
 # include  <cassert>
+# include  <cstring>
 
 using namespace std;
 
@@ -76,7 +77,7 @@ static const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_n
       const VType*base_type = parse_type_by_name(lex_strings.make(base_name));
 
       if (base_type == 0) {
-	    errormsg(loc, "Unable to find base type %s of array.\n", base_name);
+	    errormsg(loc, "Unable to find array base type '%s'.\n", base_name);
 	    return 0;
       }
 
@@ -96,7 +97,7 @@ static const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_n
 	    vector<VTypeArray::range_t> range (base_array->dimensions());
 
 	      // For now, I only know how to handle 1 dimension
-	    assert(base_array->dimensions() == 1);
+	    assert(base_array->dimensions().size() == 1);
 
 	    range[0] = VTypeArray::range_t(array_left, array_right, downto);
 
@@ -113,14 +114,18 @@ static const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_n
 }
 
 const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
-				     ScopeBase*scope, list<prange_t*>*ranges)
+				     ScopeBase*scope, list<ExpRange*>*ranges)
 {
       if (ranges->size() == 1) {
-	    prange_t*tmpr = ranges->front();
-	    Expression*lef = tmpr->expr_left();
-	    Expression*rig = tmpr->expr_right();
+	    ExpRange*tmpr = ranges->front();
+	    Expression*lef = tmpr->left();
+	    Expression*rig = tmpr->right();
 	    return calculate_subtype_array(loc, base_name, scope,
-					   lef, tmpr->is_downto(), rig);
+					   lef,
+					   (tmpr->direction() == ExpRange::DOWNTO
+						? true
+						: false),
+					   rig);
       }
 
       sorrymsg(loc, "Don't know how to handle multiple ranges here.\n");
@@ -130,28 +135,37 @@ const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
 const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_name,
 				     ScopeBase*scope,
 				     Expression*range_left,
-				     bool /* downto*/ ,
+				     int direction,
 				     Expression*range_right)
 {
       const VType*base_type = parse_type_by_name(lex_strings.make(base_name));
 
       if (base_type == 0) {
-	    errormsg(loc, "Unable to find base type %s of range.\n", base_name);
+	    errormsg(loc, "Unable to find range base type '%s'.\n", base_name);
 	    return 0;
       }
 
       assert(range_left && range_right);
 
       int64_t left_val, right_val;
-      bool rc = range_left->evaluate(scope, left_val);
-      if (rc == false)
-	    return 0;
+      VTypeRange*subtype;
 
-      rc = range_right->evaluate(scope, right_val);
-      if (rc == false)
-	    return 0;
+      if(range_left->evaluate(scope, left_val) && range_right->evaluate(scope, right_val)) {
+	    subtype = new VTypeRangeConst(base_type, left_val, right_val);
+      } else {
+	    subtype = new VTypeRangeExpr(base_type, range_left, range_right, direction);
+      }
 
-      VTypeRange*sub_type = new VTypeRange(base_type, left_val, right_val);
+      return subtype;
+}
 
-      return sub_type;
+ExpString*parse_char_enums(const char*str)
+{
+      if(!strcasecmp(str, "LF"))
+	    return new ExpString("\\n");
+
+      if(!strcasecmp(str, "CR"))
+	    return new ExpString("\\r");
+
+      return NULL;
 }

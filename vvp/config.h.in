@@ -86,15 +86,9 @@
 
 typedef uint64_t vvp_time64_t;
 
-#ifdef __MINGW32__
-# define TIME_FMT_O "I64o"
-# define TIME_FMT_U "I64u"
-# define TIME_FMT_X "I64x"
-#else
 # define TIME_FMT_O PRIo64
 # define TIME_FMT_U PRIu64
 # define TIME_FMT_X PRIx64
-#endif
 
 # ifdef UINT64_T_AND_ULONG_SAME
 #  define UL_AND_TIME64_SAME

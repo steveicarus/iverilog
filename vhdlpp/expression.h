@@ -1,8 +1,9 @@
 #ifndef IVL_expression_H
 #define IVL_expression_H
 /*
- * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2018 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2015 / Stephen Williams (steve@icarus.com),
+ * Copyright CERN 2016
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -28,15 +29,40 @@
 # include  <list>
 # include  <memory>
 # include  <vector>
+# include  <cassert>
 
-class prange_t;
-class Entity;
+class ExpRange;
 class ScopeBase;
-class Subprogram;
+class SubprogramHeader;
 class VType;
 class VTypeArray;
 class VTypePrimitive;
 class ExpName;
+
+#if __cplusplus < 201103L
+#define unique_ptr auto_ptr
+#endif
+
+/*
+ * Helper class to recursively traverse an expression tree
+ * (i.e. complex expressions).
+ */
+struct ExprVisitor {
+    ExprVisitor() : level_(0) {}
+    virtual ~ExprVisitor() {}
+    virtual void operator() (Expression*s) = 0;
+
+    // Methods to manage recursion depth. Every Expression::visit() method
+    // should call down() in the beginning and up() in the end.
+    inline void down() { ++level_; }
+    inline void up() { --level_; assert(level_ >= 0); }
+
+protected:
+    int level() const { return level_; }
+
+private:
+    int level_;
+};
 
 /*
  * The Expression class represents parsed expressions from the parsed
@@ -92,18 +118,18 @@ class Expression : public LineInfo {
 	// The emit virtual method is called by architecture emit to
 	// output the generated code for the expression. The derived
 	// class fills in the details of what exactly happened.
-      virtual int emit(ostream&out, Entity*ent, ScopeBase*scope) =0;
+      virtual int emit(ostream&out, Entity*ent, ScopeBase*scope) const =0;
 
 	// The emit_package virtual message is similar, but is called
 	// in a package context and to emit SV packages.
-      virtual int emit_package(std::ostream&out);
+      virtual int emit_package(std::ostream&out) const;
 
 	// The evaluate virtual method tries to evaluate expressions
 	// to constant literal values. Return true and set the val
 	// argument if the evaluation works, or return false if it
 	// cannot be done.
-      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
-      virtual bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
+      virtual bool evaluate(Entity*, ScopeBase*, int64_t&) const { return false; }
+      bool evaluate(ScopeBase*scope, int64_t&val) const { return evaluate(NULL, scope, val); }
 
 	// The symbolic compare returns true if the two expressions
 	// are equal without actually calculating the value.
@@ -119,6 +145,9 @@ class Expression : public LineInfo {
 	// Debug dump of the expression.
       virtual void dump(ostream&out, int indent = 0) const =0;
       virtual ostream& dump_inline(ostream&out) const;
+
+	// Recursively visits a tree of expressions (useful for complex expressions).
+      virtual void visit(ExprVisitor& func) { func.down(); func(this); func.up(); }
 
     protected:
 	// This function is called by the derived class during
@@ -154,18 +183,21 @@ static inline ostream& operator <<(ostream&out, const Expression&exp)
 class ExpUnary : public Expression {
 
     public:
-      ExpUnary(Expression*op1);
+      explicit ExpUnary(Expression*op1);
       virtual ~ExpUnary() =0;
 
       inline const Expression*peek_operand() const { return operand1_; }
 
       const VType*fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*atype) const;
+      const VType*probe_type(Entity*ent, ScopeBase*scope) const;
+      int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
+      void visit(ExprVisitor& func);
 
     protected:
       inline void write_to_stream_operand1(std::ostream&fd) const
       { operand1_->write_to_stream(fd); }
 
-      int emit_operand1(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit_operand1(ostream&out, Entity*ent, ScopeBase*scope) const;
       void dump_operand1(ostream&out, int indent = 0) const;
 
     private:
@@ -186,15 +218,16 @@ class ExpBinary : public Expression {
       inline const Expression* peek_operand2(void) const { return operand2_; }
 
       const VType*probe_type(Entity*ent, ScopeBase*scope) const;
+      void visit(ExprVisitor& func);
 
     protected:
 
       int elaborate_exprs(Entity*, ScopeBase*, const VType*);
-      int emit_operand1(ostream&out, Entity*ent, ScopeBase*scope);
-      int emit_operand2(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit_operand1(ostream&out, Entity*ent, ScopeBase*scope) const;
+      int emit_operand2(ostream&out, Entity*ent, ScopeBase*scope) const;
 
-      bool eval_operand1(ScopeBase*scope, int64_t&val) const;
-      bool eval_operand2(ScopeBase*scope, int64_t&val) const;
+      bool eval_operand1(Entity*ent, ScopeBase*scope, int64_t&val) const;
+      bool eval_operand2(Entity*ent, ScopeBase*scope, int64_t&val) const;
 
       inline void write_to_stream_operand1(std::ostream&out) const
           { operand1_->write_to_stream(out); }
@@ -227,7 +260,7 @@ class ExpAggregate : public Expression {
 	      // Create a named choice
 	    explicit choice_t(perm_string name);
 	      // discreate_range choice
-	    explicit choice_t(prange_t*ran);
+	    explicit choice_t(ExpRange*ran);
 
 	    choice_t(const choice_t&other);
 
@@ -237,15 +270,15 @@ class ExpAggregate : public Expression {
 	    bool others() const;
 	      // Return expression if this represents a simple_expression.
 	    Expression*simple_expression(bool detach_flag =true);
-	      // Return prange_t if this represents a range_expression
-	    prange_t*range_expressions(void);
+	      // Return ExpRange if this represents a range_expression
+	    ExpRange*range_expressions(void);
 
 	    void write_to_stream(std::ostream&fd);
 	    void dump(ostream&out, int indent) const;
 
 	  private:
-	    std::auto_ptr<Expression>expr_;
-	    std::auto_ptr<prange_t>  range_;
+	    std::unique_ptr<Expression>expr_;
+	    std::unique_ptr<ExpRange>  range_;
 	  private: // not implemented
 	    choice_t& operator= (const choice_t&);
       };
@@ -288,23 +321,23 @@ class ExpAggregate : public Expression {
       };
 
     public:
-      ExpAggregate(std::list<element_t*>*el);
+      explicit ExpAggregate(std::list<element_t*>*el);
       ~ExpAggregate();
 
       Expression*clone() const;
 
-      const VType*probe_type(Entity*ent, ScopeBase*scope) const;
       const VType*fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
 
     private:
       int elaborate_expr_array_(Entity*ent, ScopeBase*scope, const VTypeArray*ltype);
       int elaborate_expr_record_(Entity*ent, ScopeBase*scope, const VTypeRecord*ltype);
-      int emit_array_(ostream&out, Entity*ent, ScopeBase*scope, const VTypeArray*ltype);
-      int emit_record_(ostream&out, Entity*ent, ScopeBase*scope, const VTypeRecord*ltype);
+      int emit_array_(ostream&out, Entity*ent, ScopeBase*scope, const VTypeArray*ltype) const;
+      int emit_record_(ostream&out, Entity*ent, ScopeBase*scope, const VTypeRecord*ltype) const;
 
     private:
 	// This is the elements as directly parsed.
@@ -330,8 +363,8 @@ class ExpArithmetic : public ExpBinary {
 
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
-      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
+      virtual bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
 
     private:
@@ -344,26 +377,70 @@ class ExpArithmetic : public ExpBinary {
 class ExpAttribute : public Expression {
 
     public:
-      ExpAttribute(ExpName*base, perm_string name);
-      ~ExpAttribute();
+      ExpAttribute(perm_string name,std::list<Expression*>*args);
+      virtual ~ExpAttribute();
+
+      inline perm_string peek_attribute() const { return name_; }
+
+      // Constants for the standard attributes
+      static const perm_string LEFT;
+      static const perm_string RIGHT;
+
+    protected:
+      std::list<Expression*>*clone_args() const;
+      int elaborate_args(Entity*ent, ScopeBase*scope, const VType*ltype);
+      void visit_args(ExprVisitor& func);
+
+      bool evaluate_type_attr(const VType*type, Entity*ent, ScopeBase*scope, int64_t&val) const;
+      bool test_array_type(const VType*type) const;
+
+      perm_string name_;
+      std::list<Expression*>*args_;
+};
+
+class ExpObjAttribute : public ExpAttribute {
+    public:
+      ExpObjAttribute(ExpName*base, perm_string name, std::list<Expression*>*args);
+      ~ExpObjAttribute();
 
       Expression*clone() const;
 
-      inline perm_string peek_attribute() const { return name_; }
       inline const ExpName* peek_base() const { return base_; }
 
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       const VType*probe_type(Entity*ent, ScopeBase*scope) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+	// Some attributes can be evaluated at compile time
+      bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
+      void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
+
+    private:
+      ExpName*base_;
+};
+
+class ExpTypeAttribute : public ExpAttribute {
+    public:
+      ExpTypeAttribute(const VType*base, perm_string name, std::list<Expression*>*args);
+      // no destructor - VType objects (base_) are shared between many expressions
+
+      Expression*clone() const;
+
+      inline const VType* peek_base() const { return base_; }
+
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
+      const VType*probe_type(Entity*ent, ScopeBase*scope) const;
+      int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
+      void write_to_stream(std::ostream&fd) const;
 	// Some attributes can be evaluated at compile time
       bool evaluate(ScopeBase*scope, int64_t&val) const;
       bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
 
     private:
-      ExpName*base_;
-      perm_string name_;
+      const VType*base_;
 };
 
 class ExpBitstring : public Expression {
@@ -378,7 +455,7 @@ class ExpBitstring : public Expression {
       const VType*fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       void dump(ostream&out, int indent = 0) const;
 
     private:
@@ -389,7 +466,7 @@ class ExpBitstring : public Expression {
 class ExpCharacter : public Expression {
 
     public:
-      ExpCharacter(char val);
+      explicit ExpCharacter(char val);
       ExpCharacter(const ExpCharacter&other) : Expression() { value_ = other.value_; }
       ~ExpCharacter();
 
@@ -398,7 +475,7 @@ class ExpCharacter : public Expression {
       const VType*fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
 
@@ -406,7 +483,7 @@ class ExpCharacter : public Expression {
 
     private:
       int emit_primitive_bit_(ostream&out, Entity*ent, ScopeBase*scope,
-			      const VTypePrimitive*etype);
+			      const VTypePrimitive*etype) const;
 
     private:
       char value_;
@@ -426,10 +503,10 @@ class ExpConcat : public Expression {
       const VType*fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
-      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
 
     private:
       int elaborate_expr_array_(Entity*ent, ScopeBase*scope, const VTypeArray*ltype);
@@ -447,16 +524,22 @@ class ExpConcat : public Expression {
 class ExpConditional : public Expression {
 
     public:
-      class else_t : public LineInfo {
+      class case_t : public LineInfo {
 	  public:
-	    else_t(Expression*cond, std::list<Expression*>*tru);
-	    else_t(const else_t&other);
-	    ~else_t();
+	    case_t(Expression*cond, std::list<Expression*>*tru);
+	    case_t(const case_t&other);
+	    ~case_t();
+
+	    inline Expression*condition() const { return cond_; }
+	    inline void set_condition(Expression*cond) { cond_ = cond; }
+	    inline const std::list<Expression*>& true_clause() const { return true_clause_; }
 
 	    int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*lt);
-	    int emit_when_else(ostream&out, Entity*ent, ScopeBase*scope);
-	    int emit_else(ostream&out, Entity*ent, ScopeBase*scope);
+	    int emit_option(ostream&out, Entity*ent, ScopeBase*scope) const;
+	    int emit_default(ostream&out, Entity*ent, ScopeBase*scope) const;
 	    void dump(ostream&out, int indent = 0) const;
+            std::list<Expression*>& extract_true_clause() { return true_clause_; }
+            void visit(ExprVisitor& func);
 
 	  private:
 	    Expression*cond_;
@@ -465,21 +548,34 @@ class ExpConditional : public Expression {
 
     public:
       ExpConditional(Expression*cond, std::list<Expression*>*tru,
-		     std::list<else_t*>*fal);
-      ~ExpConditional();
+		     std::list<case_t*>*options);
+      virtual ~ExpConditional();
 
-      Expression*clone() const;
+      virtual Expression*clone() const;
 
       const VType*probe_type(Entity*ent, ScopeBase*scope) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
+
+    protected:
+      std::list<case_t*> options_;
+};
+
+/*
+ * Expression to handle selected assignments (with .. select target <= value when ..)
+ */
+class ExpSelected : public ExpConditional {
+    public:
+      ExpSelected(Expression*selector, std::list<case_t*>*options);
+      ~ExpSelected();
+
+      Expression*clone() const;
 
     private:
-      Expression*cond_;
-      std::list<Expression*> true_clause_;
-      std::list<else_t*> else_clause_;
+      Expression*selector_;
 };
 
 /*
@@ -500,7 +596,7 @@ class ExpEdge : public ExpUnary {
       inline fun_t edge_fun() const { return fun_; }
 
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       void dump(ostream&out, int indent = 0) const;
 
     private:
@@ -526,19 +622,23 @@ class ExpFunc : public Expression {
       const VType*probe_type(Entity*ent, ScopeBase*scope) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func); // NOTE: does not handle expressions in subprogram body
+
+      // Returns a subprogram header that matches the function call
+      SubprogramHeader*match_signature(Entity*ent, ScopeBase*scope) const;
 
     private:
       perm_string name_;
       std::vector<Expression*> argv_;
-      Subprogram*def_;
+      mutable SubprogramHeader*def_;
 };
 
 class ExpInteger : public Expression {
 
     public:
-      ExpInteger(int64_t val);
+      explicit ExpInteger(int64_t val);
       ExpInteger(const ExpInteger&other) : Expression(), value_(other.value_) {}
       ~ExpInteger();
 
@@ -547,10 +647,10 @@ class ExpInteger : public Expression {
       const VType*probe_type(Entity*ent, ScopeBase*scope) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
-      int emit_package(std::ostream&out);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
+      int emit_package(std::ostream&out) const;
       bool is_primary(void) const { return true; }
-      bool evaluate(ScopeBase*scope, int64_t&val) const;
+      bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
       virtual ostream& dump_inline(ostream&out) const;
 
@@ -561,7 +661,7 @@ class ExpInteger : public Expression {
 class ExpReal : public Expression {
 
     public:
-      ExpReal(double val);
+      explicit ExpReal(double val);
       ExpReal(const ExpReal&other) : Expression(), value_(other.value_) {}
       ~ExpReal();
 
@@ -570,8 +670,8 @@ class ExpReal : public Expression {
       const VType*probe_type(Entity*ent, ScopeBase*scope) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
-      int emit_package(std::ostream&out);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
+      int emit_package(std::ostream&out) const;
       bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
       virtual ostream& dump_inline(ostream&out) const;
@@ -597,7 +697,7 @@ class ExpLogical : public ExpBinary {
 
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       void dump(ostream&out, int indent = 0) const;
 
     private:
@@ -614,40 +714,40 @@ class ExpName : public Expression {
     public:
       explicit ExpName(perm_string nn);
       ExpName(perm_string nn, std::list<Expression*>*indices);
-      ExpName(perm_string nn, Expression*msb, Expression*lsb);
-      ExpName(ExpName*prefix, perm_string nn);
-      ExpName(ExpName*prefix, perm_string nn, Expression*msb, Expression*lsb);
-      ~ExpName();
+      ExpName(ExpName*prefix, perm_string nn, std::list<Expression*>*indices = NULL);
+      virtual ~ExpName();
 
     public: // Base methods
-      Expression*clone() const {
-          return new ExpName(static_cast<ExpName*>(safe_clone(prefix_.get())),
-                  name_, safe_clone(index_), safe_clone(lsb_));
-      }
+      Expression*clone() const;
       int elaborate_lval(Entity*ent, ScopeBase*scope, bool);
       int elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*);
       const VType* probe_type(Entity*ent, ScopeBase*scope) const;
       const VType* fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*host) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit_indices(ostream&out, Entity*ent, ScopeBase*scope) const;
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       bool is_primary(void) const;
-      bool evaluate(ScopeBase*scope, int64_t&val) const;
       bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       bool symbolic_compare(const Expression*that) const;
       void dump(ostream&out, int indent = 0) const;
       inline const char* name() const { return name_; }
       inline const perm_string& peek_name() const { return name_; }
-
-      void set_range(Expression*msb, Expression*lsb);
+      void add_index(std::list<Expression*>*idx);
+      void visit(ExprVisitor& func);
 
     private:
       class index_t {
       public:
           index_t(Expression*idx, Expression*size, Expression*offset = NULL) :
             idx_(idx), size_(size), offset_(offset) {}
+          ~index_t() {
+                delete idx_;
+                delete size_;
+                delete offset_;
+          }
 
-          int emit(ostream&out, Entity*ent, ScopeBase*scope);
+          int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
 
       private:
           Expression*idx_;
@@ -661,14 +761,14 @@ class ExpName : public Expression {
       const VType* probe_prefix_type_(Entity*ent, ScopeBase*scope) const;
       const VType* probe_prefixed_type_(Entity*ent, ScopeBase*scope) const;
 
-      int emit_as_prefix_(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit_as_prefix_(ostream&out, Entity*ent, ScopeBase*scope) const;
 
 	// There are some workarounds required for constant arrays/records, as
 	// they are currently emitted as flat localparams (without any type
 	// information). The following workarounds adjust the access indices
 	// to select appropriate parts of the localparam.
       bool try_workarounds_(ostream&out, Entity*ent, ScopeBase*scope,
-                            list<index_t*>&indices, int&data_size);
+                            list<index_t*>&indices, int&data_size) const;
 
       bool check_const_array_workaround_(const VTypeArray*arr, ScopeBase*scope,
                                          list<index_t*>&indices, int&data_size) const;
@@ -677,22 +777,22 @@ class ExpName : public Expression {
                                           list<index_t*>&indices, int&data_size) const;
 
       int emit_workaround_(ostream&out, Entity*ent, ScopeBase*scope,
-                           const list<index_t*>&indices, int field_size);
+                           const list<index_t*>&indices, int field_size) const;
 
     private:
-      std::auto_ptr<ExpName> prefix_;
+      Expression*index(unsigned int number) const;
+
+      std::unique_ptr<ExpName> prefix_;
       perm_string name_;
-      Expression*index_;
-      Expression*lsb_;
+      std::list<Expression*>*indices_;
 };
 
 class ExpNameALL : public ExpName {
 
     public:
-      ExpNameALL() : ExpName(perm_string()) { }
+      ExpNameALL() : ExpName(empty_perm_string) { }
 
     public:
-      int elaborate_lval(Entity*ent, ScopeBase*scope, bool);
       const VType* probe_type(Entity*ent, ScopeBase*scope) const;
       void dump(ostream&out, int indent =0) const;
 };
@@ -715,11 +815,69 @@ class ExpRelation : public ExpBinary {
       const VType* probe_type(Entity*ent, ScopeBase*scope) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       void dump(ostream&out, int indent = 0) const;
 
     private:
       fun_t fun_;
+};
+
+/*
+ * Helper class to handle name expressions coming from another scope. As such,
+ * we get more information regarding their type, etc. from the associated scope.
+ */
+class ExpScopedName : public Expression {
+    public:
+        ExpScopedName(perm_string scope, ExpName*exp);
+        ~ExpScopedName();
+
+        Expression*clone() const
+        { return new ExpScopedName(scope_name_, static_cast<ExpName*>(name_->clone())); }
+
+        int elaborate_lval(Entity*ent, ScopeBase*scope, bool is_sequ)
+        { return name_->elaborate_lval(ent, get_scope(scope), is_sequ); }
+
+        int elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*lval)
+        { return name_->elaborate_rval(ent, get_scope(scope), lval); }
+
+        const VType* probe_type(Entity*ent, ScopeBase*scope) const
+        { return name_->probe_type(ent, get_scope(scope)); }
+
+        const VType* fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*host) const
+        { return name_->fit_type(ent, get_scope(scope), host); }
+
+        int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)
+        { return name_->elaborate_expr(ent, get_scope(scope), ltype); }
+
+        void write_to_stream(std::ostream&fd) const
+        { name_->write_to_stream(fd); }
+
+        int emit(ostream&out, Entity*ent, ScopeBase*scope) const {
+            out << scope_name_ << ".";
+            return name_->emit(out, ent, scope);
+        }
+
+        bool is_primary(void) const
+        { return name_->is_primary(); }
+
+        bool evaluate(Entity*ent, ScopeBase*, int64_t&val) const
+        { return name_->evaluate(ent, scope_, val); }
+
+        bool symbolic_compare(const Expression*that) const
+        { return name_->symbolic_compare(that); }
+
+        void dump(ostream&out, int indent = 0) const;
+
+        void visit(ExprVisitor&func);
+
+    private:
+        // Functions that resolve the origin scope for the name expression
+        ScopeBase*get_scope(const ScopeBase*scope);
+        ScopeBase*get_scope(const ScopeBase*scope) const;
+
+        perm_string scope_name_;
+        ScopeBase*scope_;
+        ExpName*name_;
 };
 
 class ExpShift : public ExpBinary {
@@ -735,8 +893,8 @@ class ExpShift : public ExpBinary {
 
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
-      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
+      bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
 
     private:
@@ -755,42 +913,58 @@ class ExpString : public Expression {
       const VType*fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
-      const std::vector<char>& get_value() const { return value_; }
+      const std::string& get_value() const { return value_; }
+
+	// Converts quotation marks (") to its escaped
+	// counterpart in SystemVerilog (\")
+      static std::string escape_quot(const std::string& str);
 
     private:
-      int emit_as_array_(ostream&out, Entity*ent, ScopeBase*scope, const VTypeArray*arr);
+      int emit_as_array_(ostream&out, Entity*ent, ScopeBase*scope, const VTypeArray*arr) const;
 
     private:
-      std::vector<char> value_;
+      std::string value_;
 };
 
 class ExpUAbs : public ExpUnary {
 
     public:
-      ExpUAbs(Expression*op1);
+      explicit ExpUAbs(Expression*op1);
       ~ExpUAbs();
 
       Expression*clone() const { return new ExpUAbs(peek_operand()->clone()); }
 
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       void dump(ostream&out, int indent = 0) const;
 };
 
 class ExpUNot : public ExpUnary {
 
     public:
-      ExpUNot(Expression*op1);
+      explicit ExpUNot(Expression*op1);
       ~ExpUNot();
 
       Expression*clone() const { return new ExpUNot(peek_operand()->clone()); }
 
-      int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
+      void dump(ostream&out, int indent = 0) const;
+};
+
+class ExpUMinus : public ExpUnary {
+
+    public:
+      explicit ExpUMinus(Expression*op1);
+      ~ExpUMinus();
+
+      Expression*clone() const { return new ExpUMinus(peek_operand()->clone()); }
+
+      void write_to_stream(std::ostream&fd) const;
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       void dump(ostream&out, int indent = 0) const;
 };
 
@@ -809,8 +983,9 @@ class ExpCast : public Expression {
             return base_->elaborate_expr(ent, scope, type_);
       }
       void write_to_stream(std::ostream&fd) const;
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
 
     private:
       Expression*base_;
@@ -824,18 +999,106 @@ class ExpCast : public Expression {
 class ExpNew : public Expression {
 
     public:
-      ExpNew(Expression*size);
+      explicit ExpNew(Expression*size);
       ~ExpNew();
 
       Expression*clone() const { return new ExpNew(size_->clone()); }
 
       // There is no 'new' in VHDL - do not emit anything
       void write_to_stream(std::ostream&) const {};
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
       void dump(ostream&out, int indent = 0) const;
+      void visit(ExprVisitor& func);
 
     private:
       Expression*size_;
 };
+
+class ExpTime : public Expression {
+    public:
+        typedef enum { FS, PS, NS, US, MS, S } timeunit_t;
+
+        ExpTime(uint64_t amount, timeunit_t unit);
+
+        Expression*clone() const { return new ExpTime(amount_, unit_); }
+
+        int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
+        void write_to_stream(std::ostream&) const;
+        int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
+        //bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const;
+        void dump(ostream&out, int indent = 0) const;
+
+    private:
+        // Returns the time value expressed in femtoseconds
+        double to_fs() const;
+        uint64_t amount_;
+        timeunit_t unit_;
+};
+
+class ExpRange : public Expression {
+    public:
+        typedef enum { DOWNTO, TO, AUTO } range_dir_t;
+
+        // Regular range
+        ExpRange(Expression*left_idx, Expression*right_idx, range_dir_t dir);
+        // 'range/'reverse range attribute
+        ExpRange(ExpName*base, bool reverse_range);
+        ~ExpRange();
+
+        Expression*clone() const;
+
+        // Returns the upper boundary
+        Expression*msb();
+        // Returns the lower boundary
+        Expression*lsb();
+
+        Expression*left();
+        Expression*right();
+
+        range_dir_t direction() const { return direction_; }
+
+        int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
+        void write_to_stream(std::ostream&) const;
+        int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
+        void dump(ostream&out, int indent = 0) const;
+    private:
+        // Regular range related fields
+        Expression*left_, *right_;
+        range_dir_t direction_;
+
+        // 'range/'reverse_range attribute related fields
+        // Flag to indicate it is a 'range/'reverse_range expression
+        bool range_expr_;
+        // Object name to which the attribute is applied
+        ExpName*range_base_;
+        // Flag to distinguish between 'range & 'reverse_range
+        bool range_reverse_;
+};
+
+// Helper class that wraps other expression to specify delay.
+class ExpDelay : public Expression {
+public:
+    ExpDelay(Expression*expr, Expression*delay);
+    ~ExpDelay();
+
+    Expression*clone() const { return new ExpDelay(expr_->clone(), delay_->clone()); }
+
+    int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
+    void write_to_stream(std::ostream&) const;
+    int emit(ostream&out, Entity*ent, ScopeBase*scope) const;
+    void dump(ostream&out, int indent = 0) const;
+    void visit(ExprVisitor& func);
+
+    const Expression*peek_expr() const { return expr_; }
+    const Expression*peek_delay() const { return delay_; }
+
+private:
+    Expression*expr_;
+    Expression*delay_;
+};
+
+#if __cplusplus < 201103L
+#undef unique_ptr
+#endif
 
 #endif /* IVL_expression_H */

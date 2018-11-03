@@ -165,3 +165,50 @@ void BasicLoopStatement::dump(ostream&out, int indent) const
     out << setw(indent) << "" << "BasicLoopStatement at file=" << get_fileline() << endl;
     LoopStatement::dump(out, indent+2);
 }
+
+void ReportStmt::dump(ostream&out, int indent) const
+{
+    out << setw(indent) << "" << "ReportStmt at file=" << get_fileline() << endl;
+    dump_sev_msg(out, indent+3);
+}
+
+void ReportStmt::dump_sev_msg(ostream&out, int indent) const
+{
+    out << setw(indent) << "" << "severity: " << severity_ << endl;
+
+    if(msg_) {
+        out << setw(indent) << "" << "message: ";
+        msg_->dump(out, indent);
+    }
+}
+
+void AssertStmt::dump(ostream&out, int indent) const
+{
+    out << setw(indent) << "" << "AssertStmt at file=" << get_fileline() << endl;
+    out << setw(indent+3) << "" << "condition: ";
+    dump_sev_msg(out, indent+3);
+}
+
+void WaitForStmt::dump(ostream&out, int indent) const
+{
+    out << setw(indent) << "" << "WaitForStmt at file=" << get_fileline() << endl;
+    out << setw(indent+3) << "" << "delay: ";
+    delay_->dump(out, indent+3);
+}
+
+void WaitStmt::dump(ostream&out, int indent) const
+{
+    out << setw(indent) << "" << "WaitStmt at file=" << get_fileline() << endl;
+    out << setw(indent+3) << "type = ";
+
+    switch(type_) {
+        case ON: out << "ON" << endl; break;
+        case UNTIL: out << "UNTIL" << endl; break;
+        case FINAL: out << "FINAL" << endl; break;
+    }
+
+    if(type_ != FINAL) {
+        out << setw(indent+3) << "" << "expression: ";
+        expr_->dump(out, indent+3);
+    }
+}

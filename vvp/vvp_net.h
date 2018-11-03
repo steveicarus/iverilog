@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_net_H
 #define IVL_vvp_net_H
 /*
- * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -27,6 +27,7 @@
 # include  <cstddef>
 # include  <cstdlib>
 # include  <cstring>
+# include  <string>
 # include  <new>
 # include  <cassert>
 
@@ -953,9 +954,11 @@ inline vvp_vector8_t resolve(const vvp_vector8_t&a, const vvp_vector8_t&b)
       return out;
 }
 
-  /* This function implements the strength reduction implied by
-     Verilog standard resistive devices. */
-extern vvp_vector8_t resistive_reduction(const vvp_vector8_t&a);
+  /* This lookup tabke implements the strength reduction implied by
+     Verilog standard switch devices. The major dimension selects
+     between non-resistive and resistive devices. */
+extern unsigned vvp_switch_strength_map[2][8];
+
   /* The reduce4 function converts a vector8 to a vector4, losing
      strength information in the process. */
 extern vvp_vector4_t reduce4(const vvp_vector8_t&that);
@@ -1039,7 +1042,7 @@ template <class T> class vvp_sub_pointer_t {
 
       vvp_sub_pointer_t(T*ptr__, unsigned port__)
       {
-	    bits_ = reinterpret_cast<unsigned long> (ptr__);
+	    bits_ = reinterpret_cast<uintptr_t> (ptr__);
 	    assert( (bits_  &  3) == 0 );
 	    assert( (port__ & ~3) == 0 );
 	    bits_ |= port__;
@@ -1061,7 +1064,7 @@ template <class T> class vvp_sub_pointer_t {
       bool operator != (vvp_sub_pointer_t that) const { return bits_ != that.bits_; }
 
     private:
-      unsigned long bits_;
+      uintptr_t bits_;
 };
 
 typedef vvp_sub_pointer_t<vvp_net_t> vvp_net_ptr_t;
@@ -1144,9 +1147,9 @@ class vvp_net_t {
 	// operate only on the vvp_net_t whose output is to be
 	// forced. These methods then communicate the force to the
 	// attached filter to set up the actual force.
-      void force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
-      void force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
-      void force_real(double val, vvp_vector2_t mask);
+      void force_vec4(const vvp_vector4_t&val, const vvp_vector2_t&mask);
+      void force_vec8(const vvp_vector8_t&val, const vvp_vector2_t&mask);
+      void force_real(double val, const vvp_vector2_t&mask);
 
     public: // Method to support $countdrivers
       void count_drivers(unsigned idx, unsigned counts[4]);
@@ -1159,7 +1162,9 @@ class vvp_net_t {
       static void operator delete(void*); // not implemented
     private: // not implemented
       static void* operator new[](std::size_t size);
+#if defined(__GNUC__)
       static void operator delete[](void*);
+#endif
 };
 
 /*
@@ -1221,11 +1226,18 @@ class vvp_net_fun_t {
       virtual void recv_long_pv(vvp_net_ptr_t port, long bit,
                                 unsigned base, unsigned wid);
 
-	// This method is called when the net it forced or
+	// This method is called when the net is forced or
 	// released. This is very rarely needed; island ports use it
 	// to know that the net is being forced and that it needs to
 	// do something about it.
-      virtual void force_flag(void);
+      virtual void force_flag(bool run_now);
+
+   protected:
+      void recv_vec4_pv_(vvp_net_ptr_t p, const vvp_vector4_t&bit,
+			 unsigned base, unsigned wid, unsigned vwid,
+                         vvp_context_t context);
+      void recv_vec8_pv_(vvp_net_ptr_t p, const vvp_vector8_t&bit,
+			 unsigned base, unsigned wid, unsigned vwid);
 
     public: // These objects are only permallocated.
       static void* operator new(std::size_t size) { return heap_.alloc(size); }
@@ -1296,9 +1308,9 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 	// Support for force methods. These are called by the
 	// vvp_net_t::force_* methods to set the force value and mask
 	// for the filter.
-      virtual void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask) =0;
-      virtual void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask) =0;
-      virtual void force_fil_real(double val, vvp_vector2_t mask) =0;
+      virtual void force_fil_vec4(const vvp_vector4_t&val, const vvp_vector2_t&mask) =0;
+      virtual void force_fil_vec8(const vvp_vector8_t&val, const vvp_vector2_t&mask) =0;
+      virtual void force_fil_real(double val, const vvp_vector2_t&mask) =0;
 
     public: // These objects are only permallocated.
       static void* operator new(std::size_t size) { return heap_.alloc(size); }
@@ -1317,9 +1329,9 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 
     protected:
 	// Set bits of the filter force mask
-      void force_mask(vvp_vector2_t mask);
+      void force_mask(const vvp_vector2_t&mask);
 	// Release the force on the bits set in the mask.
-      void release_mask(vvp_vector2_t mask);
+      void release_mask(const vvp_vector2_t&mask);
 	// Test bits of the filter force mask;
       bool test_force_mask(unsigned bit) const;
       bool test_force_mask_is_zero() const;
@@ -1467,6 +1479,9 @@ class vvp_fun_drive  : public vvp_net_fun_t {
                      vvp_context_t context);
 	//void recv_long(vvp_net_ptr_t port, long bit);
 
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t);
     private:
       unsigned char drive0_;
       unsigned char drive1_;
@@ -1487,6 +1502,9 @@ class vvp_fun_extend_signed  : public vvp_net_fun_t {
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context);
 
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t);
     private:
       unsigned width_;
 };
@@ -1567,6 +1585,10 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
                      vvp_context_t context);
       void recv_real(vvp_net_ptr_t port, double bit,
                      vvp_context_t context);
+
+      void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t context);
 
     private:
       vvp_wide_fun_core*core_;

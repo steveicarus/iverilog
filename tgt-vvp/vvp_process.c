@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,10 +22,6 @@
 # include  <assert.h>
 # include  <stdlib.h>
 # include  <stdbool.h>
-
-#ifdef __MINGW32__ /* MinGW has inconsistent %p output. */
-#define snprintf _snprintf
-#endif
 
 static int show_statement(ivl_statement_t net, ivl_scope_t sscope);
 
@@ -229,6 +225,10 @@ static void assign_to_lvector(ivl_lval_t lval,
 
       const unsigned long use_word = 0;
 
+      const char*assign_op = "%assign";
+      if (ivl_signal_type(sig) == IVL_SIT_UWIRE)
+	    assign_op = "%force";
+
 	// Detect the case that this is actually a non-blocking assign
 	// to an array word. In that case, run off somewhere else to
 	// deal with it.
@@ -267,8 +267,8 @@ static void assign_to_lvector(ivl_lval_t lval,
 		       to know to skip the assign. */
 		  draw_eval_expr_into_integer(part_off_ex, offset_index);
 		    /* If the index expression has XZ bits, skip the assign. */
-		  fprintf(vvp_out, "    %%assign/vec4/off/d v%p_%lu, %d, %d;\n",
-			  sig, use_word, offset_index, delay_index);
+		  fprintf(vvp_out, "    %s/vec4/off/d v%p_%lu, %d, %d;\n",
+			  assign_op, sig, use_word, offset_index, delay_index);
 
 		  clr_word(offset_index);
 		  clr_word(delay_index);
@@ -277,8 +277,8 @@ static void assign_to_lvector(ivl_lval_t lval,
 		  int offset_index = allocate_word();
 		    /* Event control delay... */
 		  draw_eval_expr_into_integer(part_off_ex, offset_index);
-		  fprintf(vvp_out, "    %%assign/vec4/off/e v%p_%lu, %d;\n",
-			  sig, use_word, offset_index);
+		  fprintf(vvp_out, "    %s/vec4/off/e v%p_%lu, %d;\n",
+			  assign_op, sig, use_word, offset_index);
 		  fprintf(vvp_out, "    %%evctl/c;\n");
 
 		  clr_word(offset_index);
@@ -296,8 +296,8 @@ static void assign_to_lvector(ivl_lval_t lval,
 		       to know to skip the assign. */
 		  draw_eval_expr_into_integer(part_off_ex, offset_index);
 		    /* If the index expression has XZ bits, skip the assign. */
-		  fprintf(vvp_out, "    %%assign/vec4/off/d v%p_%lu, %d, %d;\n",
-			  sig, use_word, offset_index, delay_index);
+		  fprintf(vvp_out, "    %s/vec4/off/d v%p_%lu, %d, %d;\n",
+			  assign_op, sig, use_word, offset_index, delay_index);
 		  clr_word(offset_index);
 		  clr_word(delay_index);
 	    }
@@ -310,8 +310,8 @@ static void assign_to_lvector(ivl_lval_t lval,
 		  fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n",
 			  offset_index, part_off);
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
-		  fprintf(vvp_out, "    %%assign/vec4/off/e v%p_%lu, %d;\n",
-			  sig, use_word, offset_index);
+		  fprintf(vvp_out, "    %s/vec4/off/e v%p_%lu, %d;\n",
+			  assign_op, sig, use_word, offset_index);
 		  fprintf(vvp_out, "    %%evctl/c;\n");
 		  clr_word(offset_index);
 
@@ -329,8 +329,8 @@ static void assign_to_lvector(ivl_lval_t lval,
 				delay_index, low_d, hig_d);
 			fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  }
-		  fprintf(vvp_out, "    %%assign/vec4/off/d v%p_%lu, %d, %d;\n",
-			  sig, use_word, offset_index, delay_index);
+		  fprintf(vvp_out, "    %s/vec4/off/d v%p_%lu, %d, %d;\n",
+			  assign_op, sig, use_word, offset_index, delay_index);
 		  clr_word(offset_index);
 		  clr_word(delay_index);
 	    }
@@ -339,13 +339,13 @@ static void assign_to_lvector(ivl_lval_t lval,
 	      /* Calculated delay... */
 	    int delay_index = allocate_word();
 	    draw_eval_expr_into_integer(dexp, delay_index);
-	    fprintf(vvp_out, "    %%assign/vec4/d v%p_%lu, %d;\n",
-		    sig, use_word, delay_index);
+	    fprintf(vvp_out, "    %s/vec4/d v%p_%lu, %d;\n",
+		    assign_op, sig, use_word, delay_index);
 	    clr_word(delay_index);
       } else if (nevents != 0) {
 	      /* Event control delay... */
-	    fprintf(vvp_out, "    %%assign/vec4/e v%p_%lu;\n",
-		    sig, use_word);
+	    fprintf(vvp_out, "    %s/vec4/e v%p_%lu;\n",
+		    assign_op, sig, use_word);
 	    fprintf(vvp_out, "    %%evctl/c;\n");
 
       } else {
@@ -357,12 +357,12 @@ static void assign_to_lvector(ivl_lval_t lval,
 		  int delay_index = allocate_word();
 		  fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
 		          delay_index, low_d, hig_d);
-		  fprintf(vvp_out, "    %%assign/vec4/d v%p_%lu, %d;\n",
-		          sig, use_word, delay_index);
+		  fprintf(vvp_out, "    %s/vec4/d v%p_%lu, %d;\n",
+		          assign_op, sig, use_word, delay_index);
 		  clr_word(delay_index);
 	    } else {
-		  fprintf(vvp_out, "    %%assign/vec4 v%p_%lu, %lu;\n",
-		          sig, use_word, low_d);
+		  fprintf(vvp_out, "    %s/vec4 v%p_%lu, %lu;\n",
+		          assign_op, sig, use_word, low_d);
 	    }
       }
 }
@@ -675,7 +675,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 
 	      /* Duplicate the case expression so that the cmp
 		 instructions below do not completely erase the
-		 value. Do this in fromt of each compare. */
+		 value. Do this in front of each compare. */
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
 	    draw_eval_vec4(cex);
 
@@ -771,7 +771,7 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 		  continue;
 	    }
 
-	      /* The referene value... */
+	      /* The reference value... */
 	    fprintf(vvp_out, "    %%dup/real;\n");
 	      /* The guard value... */
 	    draw_eval_real(cex);
@@ -1625,16 +1625,25 @@ static int show_stmt_utask(ivl_statement_t net)
 
       show_stmt_file_line(net, "User task call.");
 
-      fprintf(vvp_out, "    %%fork TD_%s",
-	      vvp_mangle_id(ivl_scope_name(task)));
-      fprintf(vvp_out, ", S_%p;\n", task);
-      fprintf(vvp_out, "    %%join;\n");
+      if (ivl_scope_type(task) == IVL_SCT_FUNCTION) {
+	      // A function called as a task is (presumably) a void function.
+	      // Use the %callf/void instruction to call it.
+	    fprintf(vvp_out, "    %%callf/void TD_%s",
+		    vvp_mangle_id(ivl_scope_name(task)));
+	    fprintf(vvp_out, ", S_%p;\n", task);
+      } else {
+	    fprintf(vvp_out, "    %%fork TD_%s",
+		    vvp_mangle_id(ivl_scope_name(task)));
+	    fprintf(vvp_out, ", S_%p;\n", task);
+	    fprintf(vvp_out, "    %%join;\n");
+      }
 
       return 0;
 }
 
 static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
 {
+      static unsigned int cascade_counter = 0;
 	/* Look to see if this is a SystemVerilog wait fork. */
       if ((ivl_stmt_nevent(net) == 1) && (ivl_stmt_events(net, 0) == 0)) {
 	    assert(ivl_statement_type(ivl_stmt_sub_stmt(net)) == IVL_ST_NOOP);
@@ -1647,11 +1656,17 @@ static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
 
       if (ivl_stmt_nevent(net) == 1) {
 	    ivl_event_t ev = ivl_stmt_events(net, 0);
-	    fprintf(vvp_out, "    %%wait E_%p;\n", ev);
+	    if (ivl_stmt_needs_t0_trigger(net)) {
+		  fprintf(vvp_out, "Ewait_%u .event/or E_%p, E_0x0;\n",
+		                   cascade_counter, ev);
+		  fprintf(vvp_out, "    %%wait Ewait_%u;\n", cascade_counter);
+		  cascade_counter += 1;
+	    } else {
+		  fprintf(vvp_out, "    %%wait E_%p;\n", ev);
+	    }
 
       } else {
 	    unsigned idx;
-	    static unsigned int cascade_counter = 0;
 	    ivl_event_t ev = ivl_stmt_events(net, 0);
 	    fprintf(vvp_out, "Ewait_%u .event/or E_%p", cascade_counter, ev);
 
@@ -1659,6 +1674,7 @@ static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
 		  ev = ivl_stmt_events(net, idx);
 		  fprintf(vvp_out, ", E_%p", ev);
 	    }
+	    assert(ivl_stmt_needs_t0_trigger(net) == 0);
 	    fprintf(vvp_out, ";\n    %%wait Ewait_%u;\n", cascade_counter);
 	    cascade_counter += 1;
       }
@@ -2302,6 +2318,7 @@ int draw_process(ivl_process_t net, void*x)
       ivl_scope_t scope = ivl_process_scope(net);
       ivl_statement_t stmt = ivl_process_stmt(net);
 
+      int init_flag = 0;
       int push_flag = 0;
 
       (void)x; /* Parameter is not used. */
@@ -2309,6 +2326,12 @@ int draw_process(ivl_process_t net, void*x)
       for (idx = 0 ;  idx < ivl_process_attr_cnt(net) ;  idx += 1) {
 
 	    ivl_attribute_t attr = ivl_process_attr_val(net, idx);
+
+	    if (strcmp(attr->key, "_ivl_schedule_init") == 0) {
+
+		  init_flag = 1;
+
+	    }
 
 	    if (strcmp(attr->key, "_ivl_schedule_push") == 0) {
 
@@ -2325,7 +2348,7 @@ int draw_process(ivl_process_t net, void*x)
       fprintf(vvp_out, "    .scope S_%p;\n", scope);
 
 	/* Generate the entry label. Just give the thread a number so
-	   that we ar certain the label is unique. */
+	   that we are certain the label is unique. */
       fprintf(vvp_out, "T_%u ;\n", thread_count);
 
 	/* Draw the contents of the thread. */
@@ -2343,6 +2366,9 @@ int draw_process(ivl_process_t net, void*x)
 	    break;
 
 	  case IVL_PR_ALWAYS:
+	  case IVL_PR_ALWAYS_COMB:
+	  case IVL_PR_ALWAYS_FF:
+	  case IVL_PR_ALWAYS_LATCH:
 	    fprintf(vvp_out, "    %%jmp T_%u;\n", thread_count);
 	    break;
       }
@@ -2353,7 +2379,12 @@ int draw_process(ivl_process_t net, void*x)
 
 	  case IVL_PR_INITIAL:
 	  case IVL_PR_ALWAYS:
-	    if (push_flag) {
+	  case IVL_PR_ALWAYS_COMB:
+	  case IVL_PR_ALWAYS_FF:
+	  case IVL_PR_ALWAYS_LATCH:
+	    if (init_flag) {
+		  fprintf(vvp_out, "    .thread T_%u, $init;\n", thread_count);
+	    } else if (push_flag) {
 		  fprintf(vvp_out, "    .thread T_%u, $push;\n", thread_count);
 	    } else {
 		  fprintf(vvp_out, "    .thread T_%u;\n", thread_count);

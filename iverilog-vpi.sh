@@ -35,6 +35,7 @@ CCSRC=
 CXSRC=
 OBJ=
 LIB=
+LIBDIR=
 OUT=
 INCOPT=
 DEFS=
@@ -81,6 +82,9 @@ do
     -l*) LIB="$LIB $parm"
 	 ;;
 
+    -L*) LIBDIR="$LIBDIR $parm"
+	 ;;
+
     -I*) INCOPT="$INCOPT $parm"
 	 ;;
 
@@ -89,6 +93,11 @@ do
 
     --cflags)
 	 echo "$CFLAGS"
+	 exit;
+	 ;;
+
+    --ccflags)
+	 echo "$CXXFLAGS"
 	 exit;
 	 ;;
 
@@ -148,4 +157,4 @@ then
 fi
 
 echo "Making $OUT from $OBJ..."
-exec $LD -o $OUT $LDFLAGS $OBJ $LIB $LDLIBS
+exec $LD -o $OUT $LDFLAGS $LIBDIR $OBJ $LIB $LDLIBS

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,11 +21,6 @@
 # include  <string.h>
 # include  <assert.h>
 # include  <stdlib.h>
-
-#ifdef __MINGW32__ /* MinGW has inconsistent %p output. */
-#define snprintf _snprintf
-#endif
-
 
 /*
  * These functions handle the blocking assignment. Use the %set
@@ -116,7 +111,12 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 
 	    slice->type = SLICE_SIMPLE_VECTOR;
 	    slice->u_.simple_vector.use_word = use_word;
-	    fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
+	    if (signal_is_return_value(sig)) {
+		  assert(use_word==0);
+		  fprintf(vvp_out, "    %%retload/vec4 0;\n");
+	    } else {
+		  fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
+	    }
 
       } else if (ivl_signal_dimensions(sig)==0 && part_off_ex==0 && word_ix==0) {
 
@@ -125,7 +125,12 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    slice->type = SLICE_PART_SELECT_STATIC;
 	    slice->u_.part_select_static.part_off = part_off;
 
-	    fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
+	    if (signal_is_return_value(sig)) {
+		  assert(use_word==0);
+		  fprintf(vvp_out, "    %%retload/vec4 0;\n");
+	    } else {
+		  fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
+	    }
 	    fprintf(vvp_out, "    %%pushi/vec4 %lu, 0, 32;\n", part_off);
 	    fprintf(vvp_out, "    %%part/u %u;\n", wid);
 
@@ -133,6 +138,7 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 
 	    assert(use_word == 0);
 	    assert(part_off == 0);
+	    assert(!signal_is_return_value(sig)); // NOT IMPLEMENTED
 
 	    slice->type = SLICE_PART_SELECT_DYNAMIC;
 
@@ -148,6 +154,8 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 
       } else if (ivl_signal_dimensions(sig) > 0 && word_ix == 0) {
 
+	    assert(!signal_is_return_value(sig)); // NOT IMPLEMENTED
+
 	    slice->type = SLICE_MEMORY_WORD_STATIC;
 	    slice->u_.memory_word_static.use_word = use_word;
 	    if (use_word < ivl_signal_array_count(sig)) {
@@ -161,6 +169,7 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 
       } else if (ivl_signal_dimensions(sig) > 0 && word_ix != 0) {
 
+	    assert(!signal_is_return_value(sig)); // NOT IMPLEMENTED
 	    slice->type = SLICE_MEMORY_WORD_DYNAMIC;
 
 	    slice->u_.memory_word_dynamic.word_idx_reg = allocate_word();
@@ -188,17 +197,17 @@ static void get_vec_from_lval(ivl_statement_t net, struct vec_slice_info*slices)
       unsigned wid = ivl_stmt_lwidth(net);
 
       cur_bit = 0;
-      for (lidx = 0 ; lidx < ivl_stmt_lvals(net) ; lidx += 1) {
+      for (lidx = ivl_stmt_lvals(net) ; lidx > 0 ; lidx -= 1) {
 	    ivl_lval_t lval;
 	    unsigned bit_limit = wid - cur_bit;
 
-	    lval = ivl_stmt_lval(net, lidx);
+	    lval = ivl_stmt_lval(net, lidx-1);
 
 	    if (bit_limit > ivl_lval_width(lval))
 		  bit_limit = ivl_lval_width(lval);
 
-	    get_vec_from_lval_slice(lval, slices+lidx, bit_limit);
-	    if (lidx > 0) {
+	    get_vec_from_lval_slice(lval, slices+lidx-1, bit_limit);
+	    if (cur_bit > 0) {
 		  fprintf(vvp_out, "    %%concat/vec4;\n");
 	    }
 
@@ -207,12 +216,64 @@ static void get_vec_from_lval(ivl_statement_t net, struct vec_slice_info*slices)
 
 }
 
+static void put_vec_to_ret_slice(ivl_signal_t sig, struct vec_slice_info*slice,
+				 unsigned wid)
+{
+      int part_off_idx;
+
+	/* If the slice of the l-value is a BOOL variable, then cast
+	   the data to a BOOL vector so that the stores can be valid. */
+      if (ivl_signal_data_type(sig) == IVL_VT_BOOL) {
+	    fprintf(vvp_out, "    %%cast2;\n");
+      }
+
+      switch (slice->type) {
+	  default:
+	    fprintf(vvp_out, " ; XXXX slice->type=%d\n", slice->type);
+	    assert(0);
+	    break;
+
+	  case SLICE_SIMPLE_VECTOR:
+	    assert(slice->u_.simple_vector.use_word == 0);
+	    fprintf(vvp_out, "    %%ret/vec4 0, 0, %u;\n", wid);
+	    break;
+
+	  case SLICE_PART_SELECT_STATIC:
+	    part_off_idx = allocate_word();
+	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n",
+		    part_off_idx, slice->u_.part_select_static.part_off);
+	    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+	    fprintf(vvp_out, "    %%ret/vec4 0, %d, %u;\n", part_off_idx, wid);
+	    clr_word(part_off_idx);
+	    break;
+
+	  case SLICE_PART_SELECT_DYNAMIC:
+	    fprintf(vvp_out, "    %%flag_mov 4, %u;\n",
+		    slice->u_.part_select_dynamic.x_flag);
+	    fprintf(vvp_out, "    %%ret/vec4 0, %d, %u;\n",
+		    slice->u_.part_select_dynamic.word_idx_reg, wid);
+	    clr_word(slice->u_.part_select_dynamic.word_idx_reg);
+	    clr_flag(slice->u_.part_select_dynamic.x_flag);
+	    break;
+
+      }
+}
+
 static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
 				  unsigned wid)
 {
 	//unsigned skip_set = transient_id++;
       ivl_signal_t sig = ivl_lval_sig(lval);
       int part_off_idx;
+
+
+	/* Special Case: If the l-value signal is named after its scope,
+	   and the scope is a function, then this is an assign to a return
+	   value and should be handled differently. */
+      if (signal_is_return_value(sig)) {
+	    put_vec_to_ret_slice(sig, slice, wid);
+	    return;
+      }
 
 	/* If the slice of the l-value is a BOOL variable, then cast
 	   the data to a BOOL vector so that the stores can be valid. */
@@ -380,7 +441,10 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		  draw_eval_expr_into_integer(part_off_ex, offset_index);
 		    /* Note that flag4 is set by the eval above. */
 		  assert(lsig);
-		  if (ivl_signal_type(lsig)==IVL_SIT_UWIRE) {
+		  if (signal_is_return_value(lsig)) {
+			fprintf(vvp_out, "    %%ret/vec4 0, %d, %u; Assign to %s (store_vec4_to_lval)\n",
+				offset_index, lwid, ivl_signal_basename(lsig));
+		  } else if (ivl_signal_type(lsig)==IVL_SIT_UWIRE) {
 			fprintf(vvp_out, "    %%force/vec4/off v%p_0, %d;\n",
 				lsig, offset_index);
 		  } else {
@@ -395,6 +459,7 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		       member. We will use a property assign
 		       function. */
 		  assert(!lsig);
+
 		  ivl_type_t sub_type = draw_lval_expr(nest);
 		  assert(ivl_type_base(sub_type) == IVL_VT_CLASS);
 		  fprintf(vvp_out, "    %%store/prop/v %d, %u;\n",
@@ -405,7 +470,13 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		    /* No offset expression, so use simpler store function. */
 		  assert(lsig);
 		  assert(lwid == ivl_signal_width(lsig));
-		  fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", lsig, lwid);
+		  if (signal_is_return_value(lsig)) {
+			fprintf(vvp_out, "    %%ret/vec4 0, 0, %u;  Assign to %s (store_vec4_to_lval)\n",
+				lwid, ivl_signal_basename(lsig));
+		  } else {
+			fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n",
+				lsig, lwid);
+		  }
 	    }
       }
 }
@@ -422,6 +493,7 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	   of the l-value. We need these values as part of the r-value
 	   calculation. */
       if (ivl_stmt_opcode(net) != 0) {
+	    fprintf(vvp_out, "    ; show_stmt_assign_vector: Get l-value for compressed %c= operand\n", ivl_stmt_opcode(net));
             slices = calloc(ivl_stmt_lvals(net), sizeof(struct vec_slice_info));
 	    get_vec_from_lval(net, slices);
       }
@@ -560,28 +632,159 @@ static int show_stmt_assign_vector(ivl_statement_t net)
       return 0;
 }
 
-/*
- * This function assigns a value to a real variable. This is destined
- * for /dev/null when typed ivl_signal_t takes over all the real
- * variable support.
- */
-static int show_stmt_assign_sig_real(ivl_statement_t net)
+enum real_lval_type_e {
+      REAL_NO_TYPE = 0,
+      REAL_SIMPLE_WORD,
+      REAL_MEMORY_WORD_STATIC,
+      REAL_MEMORY_WORD_DYNAMIC
+};
+
+struct real_lval_info {
+      enum real_lval_type_e type;
+
+      union {
+	    struct {
+		  unsigned long use_word;
+	    } simple_word;
+
+	    struct {
+		  unsigned long use_word;
+	    } memory_word_static;
+
+	    struct {
+		    /* Index reg that holds the memory word index */
+		  int word_idx_reg;
+		    /* Stored x/non-x flag */
+		  unsigned x_flag;
+	    } memory_word_dynamic;
+      } u_;
+};
+
+static void get_real_from_lval(ivl_lval_t lval, struct real_lval_info*slice)
 {
-      ivl_lval_t lval;
+      ivl_signal_t sig = ivl_lval_sig(lval);
+      ivl_expr_t word_ix = ivl_lval_idx(lval);
+      unsigned long use_word = 0;
+
+	/* If the word index is a constant expression, then evaluate
+	   it to select the word, and pay no further heed to the
+	   expression itself. */
+      if (word_ix && number_is_immediate(word_ix, IMM_WID, 0)) {
+	    assert(! number_is_unknown(word_ix));
+	    use_word = get_number_immediate(word_ix);
+	    word_ix = 0;
+      }
+
+      if (ivl_signal_dimensions(sig)==0 && word_ix==0) {
+
+	    slice->type = REAL_SIMPLE_WORD;
+	    slice->u_.simple_word.use_word = use_word;
+	    if (signal_is_return_value(sig)) {
+		  assert(use_word==0);
+		  fprintf(vvp_out, "    %%retload/real 0;\n");
+	    } else {
+		  fprintf(vvp_out, "    %%load/real v%p_%lu;\n", sig, use_word);
+	    }
+
+      } else if (ivl_signal_dimensions(sig) > 0 && word_ix == 0) {
+
+	    assert(!signal_is_return_value(sig)); // NOT IMPLEMENTED
+
+	    slice->type = REAL_MEMORY_WORD_STATIC;
+	    slice->u_.memory_word_static.use_word = use_word;
+	    if (use_word < ivl_signal_array_count(sig)) {
+		  fprintf(vvp_out, "    %%ix/load 3, %lu, 0;\n",
+			  use_word);
+		  fprintf(vvp_out, "    %%load/reala v%p, 3;\n", sig);
+	    } else {
+		  fprintf(vvp_out, "    %%pushi/real 0, 0;\n");
+	    }
+
+      } else if (ivl_signal_dimensions(sig) > 0 && word_ix != 0) {
+
+	    assert(!signal_is_return_value(sig)); // NOT IMPLEMENTED
+	    slice->type = REAL_MEMORY_WORD_DYNAMIC;
+
+	    slice->u_.memory_word_dynamic.word_idx_reg = allocate_word();
+	    slice->u_.memory_word_dynamic.x_flag = allocate_flag();
+
+	    draw_eval_expr_into_integer(word_ix, slice->u_.memory_word_dynamic.word_idx_reg);
+	    fprintf(vvp_out, "    %%flag_mov %u, 4;\n", slice->u_.memory_word_dynamic.x_flag);
+	    fprintf(vvp_out, "    %%load/reala v%p, %d;\n", sig, slice->u_.memory_word_dynamic.word_idx_reg);
+
+      } else {
+	    assert(0);
+      }
+}
+
+static void put_real_to_lval(ivl_lval_t lval, struct real_lval_info*slice)
+{
+      ivl_signal_t sig = ivl_lval_sig(lval);
+
+	/* Special Case: If the l-value signal is named after its scope,
+	   and the scope is a function, then this is an assign to a return
+	   value and should be handled differently. */
+      if (signal_is_return_value(sig)) {
+	    assert(slice->u_.simple_word.use_word == 0);
+	    fprintf(vvp_out, "    %%ret/real 0;\n");
+	    return;
+      }
+
+      switch (slice->type) {
+	  default:
+	    fprintf(vvp_out, " ; XXXX slice->type=%d\n", slice->type);
+	    assert(0);
+	    break;
+
+	  case REAL_SIMPLE_WORD:
+	    fprintf(vvp_out, "    %%store/real v%p_%lu;\n",
+		    sig, slice->u_.simple_word.use_word);
+	    break;
+
+	  case REAL_MEMORY_WORD_STATIC:
+	    if (slice->u_.memory_word_static.use_word < ivl_signal_array_count(sig)) {
+		  int word_idx = allocate_word();
+		  fprintf(vvp_out,"    %%flag_set/imm 4, 0;\n");
+		  fprintf(vvp_out,"    %%ix/load %d, %lu, 0;\n", word_idx, slice->u_.memory_word_static.use_word);
+		  fprintf(vvp_out,"    %%store/reala v%p, %d;\n", sig, word_idx);
+		  clr_word(word_idx);
+	    } else {
+		  fprintf(vvp_out," ; Skip this slice write to v%p [%lu]\n", sig, slice->u_.memory_word_static.use_word);
+	    }
+	    break;
+
+	  case REAL_MEMORY_WORD_DYNAMIC:
+	    fprintf(vvp_out, "    %%flag_mov 4, %u;\n", slice->u_.memory_word_dynamic.x_flag);
+	    fprintf(vvp_out, "    %%store/reala v%p, %d;\n", sig, slice->u_.memory_word_dynamic.word_idx_reg);
+	    clr_word(slice->u_.memory_word_dynamic.word_idx_reg);
+	    clr_flag(slice->u_.memory_word_dynamic.x_flag);
+	    break;
+
+      }
+}
+
+static void store_real_to_lval(ivl_lval_t lval)
+{
       ivl_signal_t var;
 
-      assert(ivl_stmt_opcode(net) == 0);
-
-      draw_eval_real(ivl_stmt_rval(net));
-
-      assert(ivl_stmt_lvals(net) == 1);
-      lval = ivl_stmt_lval(net, 0);
       var = ivl_lval_sig(lval);
       assert(var != 0);
 
+	/* Special Case: If the l-value signal is named after its scope,
+	   and the scope is a function, then this is an assign to a return
+	   value and should be handled differently. */
+      ivl_scope_t sig_scope = ivl_signal_scope(var);
+      if ((ivl_scope_type(sig_scope) == IVL_SCT_FUNCTION)
+	  && (strcmp(ivl_signal_basename(var), ivl_scope_basename(sig_scope)) == 0)) {
+	    assert(ivl_signal_dimensions(var) == 0);
+	    fprintf(vvp_out, "    %%ret/real 0; Assign to %s\n",
+		    ivl_signal_basename(var));
+	    return;
+      }
+
       if (ivl_signal_dimensions(var) == 0) {
 	    fprintf(vvp_out, "    %%store/real v%p_0;\n", var);
-	    return 0;
+	    return;
       }
 
 	// For now, only support 1-dimensional arrays.
@@ -617,7 +820,66 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
       }
 
       clr_word(word_ix);
+}
 
+/*
+ * This function assigns a value to a real variable. This is destined
+ * for /dev/null when typed ivl_signal_t takes over all the real
+ * variable support.
+ */
+static int show_stmt_assign_sig_real(ivl_statement_t net)
+{
+      struct real_lval_info*slice = 0;
+      ivl_lval_t lval;
+
+      assert(ivl_stmt_lvals(net) == 1);
+      lval = ivl_stmt_lval(net, 0);
+
+	/* If this is a compressed assignment, then get the contents
+	   of the l-value. We need this value as part of the r-value
+	   calculation. */
+      if (ivl_stmt_opcode(net) != 0) {
+	    fprintf(vvp_out, "    ; show_stmt_assign_real: Get l-value for compressed %c= operand\n", ivl_stmt_opcode(net));
+            slice = calloc(1, sizeof(struct real_lval_info));
+	    get_real_from_lval(lval, slice);
+      }
+
+      draw_eval_real(ivl_stmt_rval(net));
+
+      switch (ivl_stmt_opcode(net)) {
+	  case 0:
+	    store_real_to_lval(lval);
+	    if (slice) free(slice);
+	    return 0;
+
+	  case '+':
+	    fprintf(vvp_out, "    %%add/wr;\n");
+	    break;
+
+	  case '-':
+	    fprintf(vvp_out, "    %%sub/wr;\n");
+	    break;
+
+	  case '*':
+	    fprintf(vvp_out, "    %%mul/wr;\n");
+	    break;
+
+	  case '/':
+	    fprintf(vvp_out, "    %%div/wr;\n");
+	    break;
+
+	  case '%':
+	    fprintf(vvp_out, "    %%mod/wr;\n");
+	    break;
+
+	  default:
+	    fprintf(vvp_out, "; UNSUPPORTED ASSIGNMENT OPCODE: %c\n", ivl_stmt_opcode(net));
+	    assert(0);
+	    break;
+      }
+
+      put_real_to_lval(lval, slice);
+      free(slice);
       return 0;
 }
 
@@ -631,6 +893,19 @@ static int show_stmt_assign_sig_string(ivl_statement_t net)
 
       assert(ivl_stmt_lvals(net) == 1);
       assert(ivl_stmt_opcode(net) == 0);
+
+	/* Special case: If the l-value signal (string) is named after
+	   its scope, and the scope is a function, then this is an
+	   assign to a return value and should be handled
+	   differently. */
+      if (signal_is_return_value(var)) {
+	    assert(ivl_signal_dimensions(var) == 0);
+	    assert(part == 0 && aidx == 0);
+	    draw_eval_string(rval);
+	    fprintf(vvp_out, "    %%ret/str 0; Assign to %s\n",
+		    ivl_signal_basename(var));
+	    return 0;
+      }
 
 	/* Simplest case: no mux. Evaluate the r-value as a string and
 	   store the result into the variable. Note that the

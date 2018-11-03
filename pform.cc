@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -40,6 +40,7 @@
 # include  <sstream>
 # include  <cstring>
 # include  <cstdlib>
+# include  <cctype>
 
 # include  "ivl_assert.h"
 # include  "ivl_alloc.h"
@@ -62,20 +63,19 @@ map<perm_string,Module*> pform_modules;
 map<perm_string,PUdp*> pform_primitives;
 
 /*
- * typedefs in the $root scope go here.
+ * The pform_units is a list of the SystemVerilog compilation unit scopes.
+ * The current compilation unit is the last element in the list. All items
+ * declared or defined at the top level (outside any design element) are
+ * added to the current compilation unit scope.
  */
-map<perm_string,data_type_t*>pform_typedefs;
-set<enum_type_t*>pform_enum_sets;
+vector<PPackage*> pform_units;
 
-/*
- * Class definitions in the $root scope go here.
- */
-map<perm_string,PClass*> pform_classes;
-
-/*
- * Task and function definitions in the $root scope go here.
- */
-map<perm_string,PTaskFunc*> pform_tasks;
+static bool is_compilation_unit(LexicalScope*scope)
+{
+	// A compilation unit is the only scope that doesn't have a parent.
+      assert(scope);
+      return scope->parent_scope() == 0;
+}
 
 std::string vlltype::get_fileline() const
 {
@@ -84,6 +84,42 @@ std::string vlltype::get_fileline() const
       string res = buf.str();
       return res;
 
+}
+
+static bool is_hex_digit_str(const char *str)
+{
+      while (*str) {
+	    if (!isxdigit(*str)) return false;
+	    str++;
+      }
+      return true;
+}
+
+static bool is_dec_digit_str(const char *str)
+{
+      while (*str) {
+	    if (!isdigit(*str)) return false;
+	    str++;
+      }
+      return true;
+}
+
+static bool is_oct_digit_str(const char *str)
+{
+      while (*str) {
+	    if (*str < '0' || *str > '7') return false;
+	    str++;
+      }
+      return true;
+}
+
+static bool is_bin_digit_str(const char *str)
+{
+      while (*str) {
+	    if (*str != '0' && *str != '1') return false;
+	    str++;
+      }
+      return true;
 }
 
 /*
@@ -152,90 +188,137 @@ void parm_to_defparam_list(const string&param)
         ptr = strchr(nkey, '.');
     }
     name.push_back(name_component_t(lex_strings.make(nkey)));
+    free(key);
 
     // Resolve value to PExpr class. Should support all kind of constant
     // format including based number, dec number, real number and string.
-    if (*value == '"') {    // string type
-        char *buf = strdup (value);
-        char *buf_ptr = buf+1;
-        // Parse until another '"' or '\0'
-        while (*buf_ptr != '"' && *buf_ptr != '\0') {
-            buf_ptr++;
-            // Check for escape, especially '\"', which does not mean the
-            // end of string.
-            if (*buf_ptr == '\\' && *(buf_ptr+1) != '\0')
-                buf_ptr += 2;
-        }
-        if (*buf_ptr == '\0')   // String end without '"'
-            cerr << "<command line>: error: missing close quote of string for defparam: " << name << endl;
-        else if (*(buf_ptr+1) != 0) { // '"' appears within string with no escape
-            cerr << buf_ptr << endl;
-            cerr << "<command line>: error: \'\"\' appears within string value for defparam: " << name
-                 << ". Ignore characters after \'\"\'" << endl;
-        }
 
-        *buf_ptr = '\0';
-        buf_ptr = buf+1;
-        // Remember to use 'new' to allocate string for PEString
-        // because 'delete' is used by its destructor.
-        char *nchar = strcpy(new char [strlen(buf_ptr)+1], buf_ptr);
-        PExpr* ndec = new PEString(nchar);
+    // Is it a string?
+    if (*value == '"') {
+	char *buf = strdup (value);
+	char *buf_ptr = buf+1;
+	// Parse until another '"' or '\0'
+	while (*buf_ptr != '"' && *buf_ptr != '\0') {
+	    buf_ptr++;
+	    // Check for escape, especially '\"', which does not mean the
+	    // end of string.
+	    if (*buf_ptr == '\\' && *(buf_ptr+1) != '\0')
+		buf_ptr += 2;
+	}
+	if (*buf_ptr == '\0')	// String end without '"'
+	    cerr << "<command line>: error: missing close quote of string for defparam: " << name << endl;
+	else if (*(buf_ptr+1) != 0) { // '"' appears within string with no escape
+	    cerr << buf_ptr << endl;
+	    cerr << "<command line>: error: \'\"\' appears within string value for defparam: " << name
+		 << ". Ignore characters after \'\"\'" << endl;
+	}
+
+	*buf_ptr = '\0';
+	buf_ptr = buf+1;
+	// Remember to use 'new' to allocate string for PEString
+	// because 'delete' is used by its destructor.
+	char *nchar = strcpy(new char [strlen(buf_ptr)+1], buf_ptr);
+	PExpr* ndec = new PEString(nchar);
 	Module::user_defparms.push_back( make_pair(name, ndec) );
-        free(buf);
+	free(buf);
+	free(value);
+	return;
     }
-    else {      // number type
-        char *num = strchr(value, '\'');
-        if (num != 0) {
-            verinum *val;
-            // BASED_NUMBER, something like - scope.parameter='b11
-            // make sure to check 'h' first because 'b'&'d' may be included
-            // in hex format
-            if (strchr(num, 'h') || strchr(num, 'H'))
-                val = make_unsized_hex(num);
-            else if (strchr(num, 'd') || strchr(num, 'D'))
-                if (strchr(num, 'x') || strchr(num, 'X') || strchr(num, 'z') || strchr(num, 'Z'))
-                    val = make_undef_highz_dec(num);
-                else
-                    val = make_unsized_dec(num);
-            else if (strchr(num, 'b') || strchr(num, 'B')) {
-                val = make_unsized_binary(num);
-            }
-            else if (strchr(num, 'o') || strchr(num, 'O'))
-                val = make_unsized_octal(num);
-            else {
-                cerr << "<command line>: error: value specify error for defparam: " << name << endl;
-                free(key);
-                free(value);
-                return;
-            }
 
-            // BASED_NUMBER with size, something like - scope.parameter=2'b11
-            if (num != value) {
-                *num = 0;
-                verinum *siz = make_unsized_dec(value);
-                val = pform_verinum_with_size(siz, val, "<command line>", 0);
-            }
-
-            PExpr* ndec = new PENumber(val);
-	    Module::user_defparms.push_back( make_pair(name, ndec) );
-
-        }
-        else {
-            // REALTIME, something like - scope.parameter=1.22 or scope.parameter=1e2
-            if (strchr(value, '.') || strchr(value, 'e') || strchr(value, 'E')) {
-                verireal *val = new verireal(value);
-                PExpr* nreal = new PEFNumber(val);
-		Module::user_defparms.push_back( make_pair(name, nreal) );
-            }
-            else {
-                // DEC_NUMBER, something like - scope.parameter=3
-                verinum *val = make_unsized_dec(value);
-                PExpr* ndec = new PENumber(val);
-		Module::user_defparms.push_back( make_pair(name, ndec) );
-            }
-        }
+    // Is it a based number?
+    char *num = strchr(value, '\'');
+    if (num != 0) {
+	verinum *val;
+	const char *base = num + 1;
+	if (*base == 's' || *base == 'S')
+	    base++;
+	switch (*base) {
+	  case 'h':
+	  case 'H':
+	    if (is_hex_digit_str(base+1)) {
+		val = make_unsized_hex(num);
+	    } else {
+		cerr << "<command line>: error: invalid digit in hex value specified for defparam: " << name << endl;
+		free(value);
+		return;
+	    }
+	    break;
+	  case 'd':
+	  case 'D':
+	    if (is_dec_digit_str(base+1)) {
+		val = make_unsized_dec(num);
+	    } else {
+		cerr << "<command line>: error: invalid digit in decimal value specified for defparam: " << name << endl;
+		free(value);
+		return;
+	    }
+	    break;
+	  case 'o':
+	  case 'O':
+	    if (is_oct_digit_str(base+1)) {
+		val = make_unsized_octal(num);
+	    } else {
+		cerr << "<command line>: error: invalid digit in octal value specified for defparam: " << name << endl;
+		free(value);
+		return;
+	    }
+	    break;
+	  case 'b':
+	  case 'B':
+	    if (is_bin_digit_str(base+1)) {
+		val = make_unsized_binary(num);
+	    } else {
+		cerr << "<command line>: error: invalid digit in binary value specified for defparam: " << name << endl;
+		free(value);
+		return;
+	    }
+	    break;
+	  default:
+	    cerr << "<command line>: error: invalid numeric base specified for defparam: " << name << endl;
+	    free(value);
+	    return;
+	}
+	if (num != value) {  // based number with size
+	    *num = 0;
+	    if (is_dec_digit_str(value)) {
+		verinum *siz = make_unsized_dec(value);
+		val = pform_verinum_with_size(siz, val, "<command line>", 0);
+	    } else {
+		cerr << "<command line>: error: invalid size for value specified for defparam: " << name << endl;
+		free(value);
+		return;
+	    }
+	}
+	PExpr* ndec = new PENumber(val);
+	Module::user_defparms.push_back( make_pair(name, ndec) );
+	free(value);
+	return;
     }
-    free(key);
+
+    // Is it a decimal number?
+    num = (value[0] == '-') ? value + 1 : value;
+    if (is_dec_digit_str(num)) {
+	verinum *val = make_unsized_dec(num);
+	if (value[0] == '-') *val = -(*val);
+	PExpr* ndec = new PENumber(val);
+	Module::user_defparms.push_back( make_pair(name, ndec) );
+	free(value);
+	return;
+    }
+
+    // Is it a real number?
+    char *end = 0;
+    double rval = strtod(value, &end);
+    if (end != value && *end == 0) {
+	verireal *val = new verireal(rval);
+	PExpr* nreal = new PEFNumber(val);
+	Module::user_defparms.push_back( make_pair(name, nreal) );
+	free(value);
+	return;
+    }
+
+    // None of the above.
+    cerr << "<command line>: error: invalid value specified for defparam: " << name << endl;
     free(value);
 }
 
@@ -273,29 +356,26 @@ static PModport*pform_cur_modport = 0;
 static NetNet::Type pform_default_nettype = NetNet::WIRE;
 
 /*
- * These variables track the current time scale, as well as where the
- * timescale was set. This supports warnings about tangled timescales.
+ * These variables track the time scale set by the most recent `timescale
+ * directive. Time scales set by SystemVerilog timeunit and timeprecision
+ * declarations are stored directly in the current lexical scope.
  */
 static int pform_time_unit;
 static int pform_time_prec;
 
-/* These two flags check the initial timeprecision and timeunit
- * declaration inside a module.
- */
-static bool tp_decl_flag = false;
-static bool tu_decl_flag = false;
-
 /*
- * Flags used to set time_from_timescale based on timeunit and
- * timeprecision.
+ * These variables track where the most recent `timescale directive
+ * occurred. This allows us to warn about time scales that are inherited
+ * from another file.
  */
-static bool tu_global_flag = false;
-static bool tp_global_flag = false;
-static bool tu_local_flag = false;
-static bool tp_local_flag = false;
-
 static char*pform_timescale_file = 0;
 static unsigned pform_timescale_line;
+
+/*
+ * These variables track whether we can accept new timeunits declarations.
+ */
+bool allow_timeunit_decl = true;
+bool allow_timeprec_decl = true;
 
 static inline void FILE_NAME(LineInfo*obj, const char*file, unsigned lineno)
 {
@@ -312,10 +392,25 @@ static inline void FILE_NAME(LineInfo*obj, const char*file, unsigned lineno)
  */
 static LexicalScope* lexical_scope = 0;
 
+LexicalScope* pform_peek_scope(void)
+{
+      assert(lexical_scope);
+      return lexical_scope;
+}
+
 void pform_pop_scope()
 {
       assert(lexical_scope);
       lexical_scope = lexical_scope->parent_scope();
+      assert(lexical_scope);
+}
+
+static LexicalScope::lifetime_t find_lifetime(LexicalScope::lifetime_t lifetime)
+{
+      if (lifetime != LexicalScope::INHERITED)
+	    return lifetime;
+
+      return lexical_scope->default_lifetime;
 }
 
 static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
@@ -328,28 +423,98 @@ static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
       return scopex;
 }
 
-LexicalScope* pform_peek_scope(void)
+/*
+ * Set the local time unit/precision. This version is used for setting
+ * the time scale for design elements (modules, packages, etc.) and is
+ * called after any initial timeunit and timeprecision declarations
+ * have been parsed.
+ */
+void pform_set_scope_timescale(const struct vlltype&loc)
 {
-      assert(lexical_scope);
-      return lexical_scope;
+      PScopeExtra*scope = dynamic_cast<PScopeExtra*>(lexical_scope);
+      assert(scope);
+
+      PScopeExtra*parent = find_nearest_scopex(scope->parent_scope());
+
+      bool used_global_timescale = false;
+      if (scope->time_unit_is_default) {
+            if (is_compilation_unit(scope)) {
+                  scope->time_unit = def_ts_units;
+            } else if (!is_compilation_unit(parent)) {
+                  scope->time_unit = parent->time_unit;
+                  scope->time_unit_is_default = parent->time_unit_is_default;
+            } else if (pform_timescale_file != 0) {
+                  scope->time_unit = pform_time_unit;
+                  scope->time_unit_is_default = false;
+                  used_global_timescale = true;
+            } else /* parent is compilation unit */ {
+                  scope->time_unit = parent->time_unit;
+                  scope->time_unit_is_default = parent->time_unit_is_default;
+            }
+      }
+      if (scope->time_prec_is_default) {
+            if (is_compilation_unit(scope)) {
+                  scope->time_precision = def_ts_prec;
+            } else if (!is_compilation_unit(parent)) {
+                  scope->time_precision = parent->time_precision;
+                  scope->time_prec_is_default = parent->time_prec_is_default;
+            } else if (pform_timescale_file != 0) {
+                  scope->time_precision = pform_time_prec;
+                  scope->time_prec_is_default = false;
+                  used_global_timescale = true;
+            } else {
+                  scope->time_precision = parent->time_precision;
+                  scope->time_prec_is_default = parent->time_prec_is_default;
+            }
+      }
+
+      if (gn_system_verilog() && (scope->time_unit < scope->time_precision)) {
+	    if (scope->time_unit_is_local || scope->time_prec_is_local) {
+		  VLerror("error: a timeprecision is missing or is too large!");
+	    }
+      } else {
+            assert(scope->time_unit >= scope->time_precision);
+      }
+
+      if (warn_timescale && used_global_timescale
+	  && (strcmp(pform_timescale_file, loc.text) != 0)) {
+
+	    cerr << loc.get_fileline() << ": warning: "
+		 << "timescale for " << scope->pscope_name()
+		 << " inherited from another file." << endl;
+	    cerr << pform_timescale_file << ":" << pform_timescale_line
+		 << ": ...: The inherited timescale is here." << endl;
+      }
+
+      allow_timeunit_decl = false;
+      allow_timeprec_decl = false;
 }
 
-PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
+/*
+ * Set the local time unit/precision. This version is used for setting
+ * the time scale for subsidiary items (classes, subroutines, etc.),
+ * which simply inherit their time scale from their parent scope.
+ */
+static void pform_set_scope_timescale(PScope*scope, const PScope*parent)
+{
+      scope->time_unit            = parent->time_unit;
+      scope->time_precision       = parent->time_precision;
+      scope->time_unit_is_default = parent->time_unit_is_default;
+      scope->time_prec_is_default = parent->time_prec_is_default;
+}
+
+PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name,
+			       LexicalScope::lifetime_t lifetime)
 {
       PClass*class_scope = new PClass(name, lexical_scope);
+      class_scope->default_lifetime = find_lifetime(lifetime);
       FILE_NAME(class_scope, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-
+      assert(scopex);
       assert(!pform_cur_generate);
 
-	/* If no scope was found then this is being defined in the
-	 * compilation unit scope. */
-      if (scopex == 0) {
-	    pform_classes[name] = class_scope;
-	    lexical_scope = class_scope;
-	    return class_scope;
-      }
+      pform_set_scope_timescale(class_scope, scopex);
 
       if (scopex->classes.find(name) != scopex->classes.end()) {
 	    cerr << class_scope->get_fileline() << ": error: duplicate "
@@ -364,28 +529,41 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
       return class_scope;
 }
 
-PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name)
+PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name,
+				   LexicalScope::lifetime_t lifetime)
 {
       PPackage*pkg_scope = new PPackage(name, lexical_scope);
+      pkg_scope->default_lifetime = find_lifetime(lifetime);
       FILE_NAME(pkg_scope, loc);
+
+      allow_timeunit_decl = true;
+      allow_timeprec_decl = true;
 
       lexical_scope = pkg_scope;
       return pkg_scope;
 }
 
-PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
+PTask* pform_push_task_scope(const struct vlltype&loc, char*name,
+			     LexicalScope::lifetime_t lifetime)
 {
       perm_string task_name = lex_strings.make(name);
 
+      LexicalScope::lifetime_t default_lifetime = find_lifetime(lifetime);
+      bool is_auto = default_lifetime == LexicalScope::AUTOMATIC;
+
       PTask*task = new PTask(task_name, lexical_scope, is_auto);
+      task->default_lifetime = default_lifetime;
       FILE_NAME(task, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-      if ((scopex == 0) && !gn_system_verilog()) {
+      assert(scopex);
+      if (is_compilation_unit(scopex) && !gn_system_verilog()) {
 	    cerr << task->get_fileline() << ": error: task declarations "
 		  "must be contained within a module." << endl;
 	    error_count += 1;
       }
+
+      pform_set_scope_timescale(task, scopex);
 
       if (pform_cur_generate) {
 	      // Check if the task is already in the dictionary.
@@ -398,7 +576,7 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 		  error_count += 1;
 	    }
 	    pform_cur_generate->tasks[task->pscope_name()] = task;
-      } else if (scopex) {
+      } else {
 	      // Check if the task is already in the dictionary.
 	    if (scopex->tasks.find(task->pscope_name()) != scopex->tasks.end()) {
 		  cerr << task->get_fileline() << ": error: duplicate "
@@ -407,15 +585,6 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 		  error_count += 1;
 	    }
 	    scopex->tasks[task->pscope_name()] = task;
-
-      } else {
-	    if (pform_tasks.find(task_name) != pform_tasks.end()) {
-		  cerr << task->get_fileline() << ": error: "
-		       << "Duplicate definition for task '" << name
-		       << "' in $root scope." << endl;
-		  error_count += 1;
-	    }
-	    pform_tasks[task_name] = task;
       }
 
       lexical_scope = task;
@@ -424,19 +593,26 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 }
 
 PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
-                                      bool is_auto)
+                                     LexicalScope::lifetime_t lifetime)
 {
       perm_string func_name = lex_strings.make(name);
 
+      LexicalScope::lifetime_t default_lifetime = find_lifetime(lifetime);
+      bool is_auto = default_lifetime == LexicalScope::AUTOMATIC;
+
       PFunction*func = new PFunction(func_name, lexical_scope, is_auto);
+      func->default_lifetime = default_lifetime;
       FILE_NAME(func, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-      if ((scopex == 0) && (generation_flag < GN_VER2005_SV)) {
+      assert(scopex);
+      if (is_compilation_unit(scopex) && !gn_system_verilog()) {
 	    cerr << func->get_fileline() << ": error: function declarations "
 		  "must be contained within a module." << endl;
 	    error_count += 1;
       }
+
+      pform_set_scope_timescale(func, scopex);
 
       if (pform_cur_generate) {
 	      // Check if the function is already in the dictionary.
@@ -450,7 +626,7 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 	    }
 	    pform_cur_generate->funcs[func->pscope_name()] = func;
 
-      } else if (scopex != 0) {
+      } else {
 	      // Check if the function is already in the dictionary.
 	    if (scopex->funcs.find(func->pscope_name()) != scopex->funcs.end()) {
 		  cerr << func->get_fileline() << ": error: duplicate "
@@ -459,15 +635,6 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 		  error_count += 1;
 	    }
 	    scopex->funcs[func->pscope_name()] = func;
-
-      } else {
-	    if (pform_tasks.find(func_name) != pform_tasks.end()) {
-		  cerr << func->get_fileline() << ": error: "
-		       << "Duplicate definition for function '" << name
-		       << "' in $root scope." << endl;
-		  error_count += 1;
-	    }
-	    pform_tasks[func_name] = func;
       }
 
       lexical_scope = func;
@@ -489,6 +656,7 @@ PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
       }
 
       PBlock*block = new PBlock(block_name, lexical_scope, bt);
+      block->default_lifetime = find_lifetime(LexicalScope::INHERITED);
       lexical_scope = block;
 
       return block;
@@ -566,24 +734,31 @@ static void pform_put_wire_in_scope(perm_string name, PWire*net)
 
 static void pform_put_enum_type_in_scope(enum_type_t*enum_set)
 {
-      if (lexical_scope) {
-	    ivl_assert(*enum_set, lexical_scope);
-	    lexical_scope->enum_sets.insert(enum_set);
-      } else {
-	    pform_enum_sets.insert(enum_set);
-      }
+      lexical_scope->enum_sets.insert(enum_set);
 }
 
-PWire*pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_type, NetNet::PortType port_type, ivl_variable_type_t vt_type)
+PWire*pform_get_make_wire_in_scope(const struct vlltype&li, perm_string name,
+                                   NetNet::Type net_type, NetNet::PortType port_type,
+                                   ivl_variable_type_t vt_type)
 {
       PWire*cur = pform_get_wire_in_scope(name);
+
+	// If the wire already exists and is fully defined, this
+	// must be a redeclaration. Start again with a new wire.
+      if (cur && cur->get_data_type() != IVL_VT_NO_TYPE) {
+	    LineInfo tloc;
+	    FILE_NAME(&tloc, li);
+	    cerr << tloc.get_fileline() << ": error: duplicate declaration "
+	            "for net or variable '" << name << "'." << endl;
+	    error_count += 1;
+	    delete cur;
+            cur = 0;
+      }
+
       if (cur == 0) {
 	    cur = new PWire(name, net_type, port_type, vt_type);
 	    pform_put_wire_in_scope(name, cur);
       } else {
-	      // If this is a duplicate wire, the data type has already
-	      // been set, then return NULL.
-	    if (cur->get_data_type() != IVL_VT_NO_TYPE) return 0;
 	    bool rc = cur->set_wire_type(net_type);
 	    assert(rc);
 	    rc = cur->set_data_type(vt_type);
@@ -598,12 +773,7 @@ void pform_set_typedef(perm_string name, data_type_t*data_type, std::list<pform_
       if(unp_ranges)
 	    data_type = new uarray_type_t(data_type, unp_ranges);
 
-	// If we are in a lexical scope (i.e. a package or module)
-	// then put the typedef into that scope. Otherwise, put it
-	// into the $root scope.
-      data_type_t*&ref = lexical_scope
-	    ? lexical_scope->typedefs[name]
-	    : pform_typedefs[name];
+      data_type_t*&ref = lexical_scope->typedefs[name];
 
       ivl_assert(*data_type, ref == 0);
       ref = data_type;
@@ -613,24 +783,9 @@ void pform_set_typedef(perm_string name, data_type_t*data_type, std::list<pform_
       }
 }
 
-static data_type_t* test_type_identifier_in_root(perm_string name)
-{
-      map<perm_string,data_type_t*>::iterator cur = pform_typedefs.find(name);
-      if (cur != pform_typedefs.end())
-	    return cur->second;
-      else
-	    return 0;
-}
-
 data_type_t* pform_test_type_identifier(const char*txt)
 {
       perm_string name = lex_strings.make(txt);
-
-	// If there is no lexical_scope yet, then look only in the
-	// $root scope for typedefs.
-      if (lexical_scope == 0) {
-	    return test_type_identifier_in_root(name);
-      }
 
       LexicalScope*cur_scope = lexical_scope;
       do {
@@ -661,10 +816,6 @@ data_type_t* pform_test_type_identifier(const char*txt)
 	    cur_scope = cur_scope->parent_scope();
       } while (cur_scope);
 
-	// See if there is a typedef in the $root scope.
-      if (data_type_t*tmp = test_type_identifier_in_root(name))
-	    return tmp;
-
       return 0;
 }
 
@@ -675,13 +826,6 @@ data_type_t* pform_test_type_identifier(const char*txt)
  */
 bool pform_test_type_identifier_local(perm_string name)
 {
-      if (lexical_scope == 0) {
-	    if (test_type_identifier_in_root(name))
-		  return true;
-	    else
-		  return false;
-      }
-
       LexicalScope*cur_scope = lexical_scope;
 
       map<perm_string,data_type_t*>::iterator cur;
@@ -832,64 +976,23 @@ static void pform_declare_implicit_nets(PExpr*expr)
 /*
  * The lexor calls this function to set the active timescale when it
  * detects a `timescale directive. The function saves the directive
- * values (for use by modules) and if warnings are enabled checks to
- * see if some modules have no timescale.
+ * values (for use by subsequent design elements) and if warnings are
+ * enabled checks to see if some design elements have no timescale.
  */
 void pform_set_timescale(int unit, int prec,
 			 const char*file, unsigned lineno)
 {
-      bool first_flag = true;
-
       assert(unit >= prec);
       pform_time_unit = unit;
       pform_time_prec = prec;
-	/* A `timescale clears the timeunit/timeprecision state. */
-      tu_global_flag = false;
-      tp_global_flag = false;
 
       if (pform_timescale_file) {
 	    free(pform_timescale_file);
-	    first_flag = false;
       }
 
       if (file) pform_timescale_file = strdup(file);
       else pform_timescale_file = 0;
       pform_timescale_line = lineno;
-
-      if (!warn_timescale || !first_flag || !file) return;
-
-	/* Look to see if we have any modules without a timescale. */
-      bool have_no_ts = false;
-      map<perm_string,Module*>::iterator mod;
-      for (mod = pform_modules.begin(); mod != pform_modules.end(); ++ mod ) {
-	    const Module*mp = (*mod).second;
-	    if (mp->time_from_timescale ||
-	        mp->timescale_warn_done) continue;
-	    have_no_ts = true;
-	    break;
-      }
-
-	/* If we do then print a message for the new ones. */
-      if (have_no_ts) {
-	    cerr << file << ":" << lineno << ": warning: "
-		 << "Some modules have no timescale. This may cause"
-		 << endl;
-	    cerr << file << ":" << lineno << ":        : "
-		 << "confusing timing results.  Affected modules are:"
-		 << endl;
-
-	    for (mod = pform_modules.begin()
-		       ; mod != pform_modules.end() ; ++ mod ) {
-		  Module*mp = (*mod).second;
-		  if (mp->time_from_timescale ||
-		      mp->timescale_warn_done) continue;
-		  mp->timescale_warn_done = true;
-
-		  cerr << file << ":" << lineno << ":        : "
-		       << "  -- module " << (*mod).first
-		       << " declared here: " << mp->get_fileline() << endl;
-	    }
-      }
 }
 
 bool get_time_unit(const char*cp, int &unit)
@@ -1009,67 +1112,56 @@ static bool get_time_unit_prec(const char*cp, int &res, bool is_unit)
       return true;
 }
 
-void pform_set_timeunit(const char*txt, bool in_module, bool only_check)
+void pform_set_timeunit(const char*txt, bool initial_decl)
 {
       int val;
 
       if (get_time_unit_prec(txt, val, true)) return;
 
-      if (in_module) {
-	    if (!only_check) {
-		  pform_cur_module.front()->time_unit = val;
-		  tu_decl_flag = true;
-		  tu_local_flag = true;
-	    } else if (!tu_decl_flag) {
-		  VLerror(yylloc, "error: repeat timeunit found and the "
-		                  "initial module timeunit is missing.");
-		  return;
-	    } else if (pform_cur_module.front()->time_unit != val) {
-		  VLerror(yylloc, "error: repeat timeunit does not match "
-		                  "the initial module timeunit "
-		                  "declaration.");
-		  return;
-	    }
+      PScopeExtra*scope = dynamic_cast<PScopeExtra*>(lexical_scope);
+      assert(scope);
 
-      } else {
-	      /* Skip a global timeunit when `timescale is defined. */
-	    if (pform_timescale_file) return;
-	    tu_global_flag = true;
-	    pform_time_unit = val;
+      if (initial_decl) {
+            scope->time_unit = val;
+            scope->time_unit_is_local = true;
+            scope->time_unit_is_default = false;
+            allow_timeunit_decl = false;
+      } else if (!scope->time_unit_is_local) {
+            VLerror(yylloc, "error: repeat timeunit found and the initial "
+                            "timeunit for this scope is missing.");
+      } else if (scope->time_unit != val) {
+            VLerror(yylloc, "error: repeat timeunit does not match the "
+                            "initial timeunit for this scope.");
       }
 }
 
 int pform_get_timeunit()
 {
-      return pform_cur_module.front()->time_unit;
+      PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
+      assert(scopex);
+      return scopex->time_unit;
 }
 
-void pform_set_timeprecision(const char*txt, bool in_module, bool only_check)
+void pform_set_timeprec(const char*txt, bool initial_decl)
 {
       int val;
 
       if (get_time_unit_prec(txt, val, false)) return;
 
-      if (in_module) {
-	    if (!only_check) {
-		  pform_cur_module.front()->time_precision = val;
-		  tp_decl_flag = true;
-		  tp_local_flag = true;
-	    } else if (!tp_decl_flag) {
-		  VLerror(yylloc, "error: repeat timeprecision found and the "
-		                  "initial module timeprecision is missing.");
-		  return;
-	    } else if (pform_cur_module.front()->time_precision != val) {
-		  VLerror(yylloc, "error: repeat timeprecision does not match "
-		                  "the initial module timeprecision "
-		                  "declaration.");
-		  return;
-	    }
-      } else {
-	      /* Skip a global timeprecision when `timescale is defined. */
-	    if (pform_timescale_file) return;
-	    pform_time_prec = val;
-	    tp_global_flag=true;
+      PScopeExtra*scope = dynamic_cast<PScopeExtra*>(lexical_scope);
+      assert(scope);
+
+      if (initial_decl) {
+            scope->time_precision = val;
+            scope->time_prec_is_local = true;
+            scope->time_prec_is_default = false;
+            allow_timeprec_decl = false;
+      } else if (!scope->time_prec_is_local) {
+            VLerror(yylloc, "error: repeat timeprecision found and the initial "
+                            "timeprecision for this scope is missing.");
+      } else if (scope->time_precision != val) {
+            VLerror(yylloc, "error: repeat timeprecision does not match the "
+                            "initial timeprecision for this scope.");
       }
 }
 
@@ -1087,16 +1179,21 @@ verinum* pform_verinum_with_size(verinum*siz, verinum*val,
 
       verinum::V pad;
 
-      switch (val->get(val->len()-1)) {
-	  case verinum::Vz:
-	    pad = verinum::Vz;
-	    break;
-	  case verinum::Vx:
+      if (val->len() == 0) {
 	    pad = verinum::Vx;
-	    break;
-	  default:
-	    pad = verinum::V0;
-	    break;
+      } else {
+
+	    switch (val->get(val->len()-1)) {
+		case verinum::Vz:
+		  pad = verinum::Vz;
+		  break;
+		case verinum::Vx:
+		  pad = verinum::Vx;
+		  break;
+		default:
+		  pad = verinum::V0;
+		  break;
+	    }
       }
 
       verinum*res = new verinum(pad, size, true);
@@ -1131,11 +1228,18 @@ verinum* pform_verinum_with_size(verinum*siz, verinum*val,
 
 void pform_startmodule(const struct vlltype&loc, const char*name,
 		       bool program_block, bool is_interface,
+		       LexicalScope::lifetime_t lifetime,
 		       list<named_pexpr_t>*attr)
 {
       if (! pform_cur_module.empty() && !gn_system_verilog()) {
 	    cerr << loc << ": error: Module definition " << name
 		 << " cannot nest into module " << pform_cur_module.front()->mod_name() << "." << endl;
+	    error_count += 1;
+      }
+
+      if (lifetime != LexicalScope::INHERITED && !gn_system_verilog()) {
+	    cerr << loc << ": error: Default subroutine lifetimes "
+		    "require SystemVerilog." << endl;
 	    error_count += 1;
       }
 
@@ -1158,20 +1262,16 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
       Module*cur_module = new Module(lexical_scope, lex_name);
       cur_module->program_block = program_block;
       cur_module->is_interface = is_interface;
-	/* Set the local time unit/precision to the global value. */
-      cur_module->time_unit = pform_time_unit;
-      cur_module->time_precision = pform_time_prec;
-      tu_local_flag = tu_global_flag;
-      tp_local_flag = tp_global_flag;
-
-	/* If we have a timescale file then the time information is from
-	 * a timescale directive. */
-      cur_module->time_from_timescale = pform_timescale_file != 0;
+      cur_module->default_lifetime = find_lifetime(lifetime);
 
       FILE_NAME(cur_module, loc);
+
       cur_module->library_flag = pform_library_flag;
 
       pform_cur_module.push_front(cur_module);
+
+      allow_timeunit_decl = true;
+      allow_timeprec_decl = true;
 
       lexical_scope = cur_module;
 
@@ -1179,31 +1279,7 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
 	   zero. That's just the way it is, thanks to the standard. */
       scope_generate_counter = 1;
 
-      if (warn_timescale && pform_timescale_file
-	  && (strcmp(pform_timescale_file,loc.text) != 0)) {
-
-	    cerr << cur_module->get_fileline() << ": warning: "
-		 << "timescale for " << name
-		 << " inherited from another file." << endl;
-	    cerr << pform_timescale_file << ":" << pform_timescale_line
-		 << ": ...: The inherited timescale is here." << endl;
-      }
       pform_bind_attributes(cur_module->attributes, attr);
-}
-
-/*
- * In SystemVerilog we can have separate timeunit and timeprecision
- * declarations. We need to have the values worked out by time this
- * task is called.
- */
-void pform_check_timeunit_prec()
-{
-      assert(! pform_cur_module.empty());
-      if ((generation_flag & (GN_VER2005_SV | GN_VER2009 | GN_VER2012)) &&
-          (pform_cur_module.front()->time_unit < pform_cur_module.front()->time_precision)) {
-	    VLerror("error: a timeprecision is missing or is too large!");
-      } else assert(pform_cur_module.front()->time_unit >=
-                    pform_cur_module.front()->time_precision);
 }
 
 /*
@@ -1249,8 +1325,6 @@ void pform_endmodule(const char*name, bool inside_celldefine,
       Module*cur_module  = pform_cur_module.front();
       pform_cur_module.pop_front();
 
-      cur_module->time_from_timescale = (tu_local_flag && tp_local_flag)
-	                             || (pform_timescale_file != 0);
       perm_string mod_name = cur_module->mod_name();
       assert(strcmp(name, mod_name) == 0);
       cur_module->is_cell = inside_celldefine;
@@ -1277,16 +1351,9 @@ void pform_endmodule(const char*name, bool inside_celldefine,
 	    use_module_map[mod_name] = cur_module;
       }
 
-	// The current lexical scope should be this module by now, and
-	// this module should not have a parent lexical scope.
+	// The current lexical scope should be this module by now.
       ivl_assert(*cur_module, lexical_scope == cur_module);
       pform_pop_scope();
-      ivl_assert(*cur_module, ! pform_cur_module.empty() || lexical_scope == 0);
-
-      tp_decl_flag = false;
-      tu_decl_flag = false;
-      tu_local_flag = false;
-      tp_local_flag = false;
 }
 
 static void pform_add_genvar(const struct vlltype&li, const perm_string&name,
@@ -1905,6 +1972,7 @@ static void pform_set_net_range(perm_string name,
 	    VLerror("error: name is not a valid net.");
 	    return;
       }
+
 	// If this is not implicit ("implicit" meaning we don't
 	// know what the type is yet) then set the type now.
       if (net_type != NetNet::IMPLICIT && net_type != NetNet::NONE) {
@@ -2000,9 +2068,11 @@ static void pform_makegate(PGBuiltin::Type type,
 	    return;
       }
 
-      for (list<PExpr*>::iterator cur = info.parms->begin()
-		 ; cur != info.parms->end() ; ++cur) {
-	    pform_declare_implicit_nets(*cur);
+      if (info.parms) {
+	    for (list<PExpr*>::iterator cur = info.parms->begin()
+		       ; cur != info.parms->end() ; ++cur) {
+		  pform_declare_implicit_nets(*cur);
+	    }
       }
 
       perm_string dev_name = lex_strings.make(info.name);
@@ -2071,7 +2141,8 @@ static void pform_make_modgate(perm_string type,
 			       struct parmvalue_t*overrides,
 			       list<PExpr*>*wires,
 			       PExpr*msb, PExpr*lsb,
-			       const char*fn, unsigned ln)
+			       const char*fn, unsigned ln,
+			       std::list<named_pexpr_t>*attr)
 {
       for (list<PExpr*>::iterator idx = wires->begin()
 		 ; idx != wires->end() ; ++idx) {
@@ -2102,6 +2173,7 @@ static void pform_make_modgate(perm_string type,
 	    pform_cur_generate->add_gate(cur);
       else
 	    pform_cur_module.front()->add_gate(cur);
+      pform_bind_attributes(cur->attributes, attr);
 }
 
 static void pform_make_modgate(perm_string type,
@@ -2109,7 +2181,8 @@ static void pform_make_modgate(perm_string type,
 			       struct parmvalue_t*overrides,
 			       list<named_pexpr_t>*bind,
 			       PExpr*msb, PExpr*lsb,
-			       const char*fn, unsigned ln)
+			       const char*fn, unsigned ln,
+			       std::list<named_pexpr_t>*attr)
 {
       unsigned npins = bind->size();
       named<PExpr*>*pins = new named<PExpr*>[npins];
@@ -2146,12 +2219,14 @@ static void pform_make_modgate(perm_string type,
 	    pform_cur_generate->add_gate(cur);
       else
 	    pform_cur_module.front()->add_gate(cur);
+      pform_bind_attributes(cur->attributes, attr);
 }
 
 void pform_make_modgates(const struct vlltype&loc,
 			 perm_string type,
 			 struct parmvalue_t*overrides,
-			 svector<lgate>*gates)
+			 svector<lgate>*gates,
+			 std::list<named_pexpr_t>*attr)
 {
       assert(! pform_cur_module.empty());
       if (pform_cur_module.front()->program_block) {
@@ -2173,7 +2248,7 @@ void pform_make_modgates(const struct vlltype&loc,
 		  pform_make_modgate(type, cur_name, overrides,
 				     cur.parms_by_name,
 				     cur.range.first, cur.range.second,
-				     cur.file, cur.lineno);
+				     cur.file, cur.lineno, attr);
 
 	    } else if (cur.parms) {
 
@@ -2187,14 +2262,14 @@ void pform_make_modgates(const struct vlltype&loc,
 		  pform_make_modgate(type, cur_name, overrides,
 				     cur.parms,
 				     cur.range.first, cur.range.second,
-				     cur.file, cur.lineno);
+				     cur.file, cur.lineno, attr);
 
 	    } else {
 		  list<PExpr*>*wires = new list<PExpr*>;
 		  pform_make_modgate(type, cur_name, overrides,
 				     wires,
 				     cur.range.first, cur.range.second,
-				     cur.file, cur.lineno);
+				     cur.file, cur.lineno, attr);
 	    }
       }
 
@@ -2248,23 +2323,30 @@ void pform_make_pgassign_list(list<PExpr*>*alist,
 }
 
 /*
- * this function makes the initial assignment to a register as given
- * in the source. It handles the case where a reg variable is assigned
- * where it it declared:
+ * This function makes the initial assignment to a variable as given
+ * in the source. It handles the case where a variable is assigned
+ * where it is declared, e.g.
  *
  *    reg foo = <expr>;
  *
- * This is equivalent to the combination of statements:
+ * In Verilog-2001 this is only supported at the module level, and is
+ * equivalent to the combination of statements:
  *
  *    reg foo;
  *    initial foo = <expr>;
  *
- * and that is how it is parsed. This syntax is not part of the
- * IEEE1364-1995 standard, but is approved by OVI as enhancement
- * BTF-B14.
+ * In SystemVerilog, variable initializations are allowed in any scope.
+ * For static variables, initializations are performed before the start
+ * of simulation. For automatic variables, initializations are performed
+ * each time the enclosing block is entered. Here we store the variable
+ * assignments in the current scope, and later elaboration creates an
+ * initialization block that will be executed at the appropriate time.
+ *
+ * This syntax is not part of the IEEE1364-1995 standard, but is
+ * approved by OVI as enhancement BTF-B14.
  */
-void pform_make_reginit(const struct vlltype&li,
-			perm_string name, PExpr*expr)
+void pform_make_var_init(const struct vlltype&li,
+			 perm_string name, PExpr*expr)
 {
       if (! pform_at_module_level() && !gn_system_verilog()) {
 	    VLerror(li, "error: variable declaration assignments are only "
@@ -2275,7 +2357,7 @@ void pform_make_reginit(const struct vlltype&li,
 
       PWire*cur = pform_get_wire_in_scope(name);
       if (cur == 0) {
-	    VLerror(li, "internal error: reginit to non-register?");
+	    VLerror(li, "internal error: var_init to non-register?");
 	    delete expr;
 	    return;
       }
@@ -2284,10 +2366,8 @@ void pform_make_reginit(const struct vlltype&li,
       FILE_NAME(lval, li);
       PAssign*ass = new PAssign(lval, expr, true);
       FILE_NAME(ass, li);
-      PProcess*top = new PProcess(IVL_PR_INITIAL, ass);
-      FILE_NAME(top, li);
 
-      pform_put_behavior_in_scope(top);
+      lexical_scope->var_inits.push_back(ass);
 }
 
 /*
@@ -2305,7 +2385,8 @@ void pform_module_define_port(const struct vlltype&li,
 			      NetNet::PortType port_kind,
 			      NetNet::Type type,
 			      data_type_t*vtype,
-			      list<named_pexpr_t>*attr)
+			      list<named_pexpr_t>*attr,
+			      bool keep_attr)
 {
       struct_type_t*struct_type = 0;
       ivl_variable_type_t data_type = IVL_VT_NO_TYPE;
@@ -2394,8 +2475,35 @@ void pform_module_define_port(const struct vlltype&li,
 	    cur->set_unpacked_idx(*urange);
       }
 
-      pform_bind_attributes(cur->attributes, attr);
+      pform_bind_attributes(cur->attributes, attr, keep_attr);
       pform_put_wire_in_scope(name, cur);
+}
+
+void pform_module_define_port(const struct vlltype&li,
+			      list<pform_port_t>*ports,
+			      NetNet::PortType port_kind,
+			      NetNet::Type type,
+			      data_type_t*vtype,
+			      list<named_pexpr_t>*attr)
+{
+      for (list<pform_port_t>::iterator cur = ports->begin()
+		 ; cur != ports->end() ; ++ cur ) {
+
+	    data_type_t*use_type = vtype;
+	    if (cur->udims)
+		  use_type = new uarray_type_t(vtype, cur->udims);
+
+	    pform_module_define_port(li, cur->name, port_kind, type, use_type,
+				     attr, true);
+	    if (cur->udims)
+		  delete use_type;
+
+	    if (cur->expr)
+		  pform_make_var_init(li, cur->name, cur->expr);
+      }
+
+      delete ports;
+      delete attr;
 }
 
 /*
@@ -2422,7 +2530,11 @@ static PWire* pform_get_or_make_wire(const vlltype&li, perm_string name,
 			      ivl_variable_type_t dtype)
 {
       PWire*cur = pform_get_wire_in_scope(name);
-      if (cur) {
+
+	// If the wire already exists but isn't yet fully defined,
+	// carry on adding details.
+      if (cur && (cur->get_data_type() == IVL_VT_NO_TYPE ||
+                  cur->get_wire_type() == NetNet::IMPLICIT) ) {
 	      // If this is not implicit ("implicit" meaning we don't
 	      // know what the type is yet) then set the type now.
 	    if (type != NetNet::IMPLICIT) {
@@ -2438,6 +2550,18 @@ static PWire* pform_get_or_make_wire(const vlltype&li, perm_string name,
 		  FILE_NAME(cur, li.text, li.first_line);
 	    }
 	    return cur;
+      }
+
+	// If the wire already exists and is fully defined, this
+	// must be a redeclaration. Start again with a new wire.
+      if (cur) {
+	    LineInfo tloc;
+	    FILE_NAME(&tloc, li);
+	    cerr << tloc.get_fileline() << ": error: duplicate declaration "
+	            "for net or variable '" << name << "' in '"
+	         << pform_cur_module.front()->mod_name() << "'." << endl;
+	    error_count += 1;
+	    delete cur;
       }
 
       cur = new PWire(name, type, ptype, dtype);
@@ -2570,11 +2694,17 @@ void pform_makewire(const vlltype&li,
  * net_decl_assign_t argument.
  */
 void pform_makewire(const struct vlltype&li,
-		    std::list<PExpr*>*, str_pair_t ,
+		    std::list<PExpr*>*delay,
+		    str_pair_t str,
 		    std::list<decl_assignment_t*>*assign_list,
 		    NetNet::Type type,
 		    data_type_t*data_type)
 {
+      if (is_compilation_unit(lexical_scope) && !gn_system_verilog()) {
+	    VLerror(li, "error: variable declarations must be contained within a module.");
+	    return;
+      }
+
       list<perm_string>*names = new list<perm_string>;
 
       for (list<decl_assignment_t*>::iterator cur = assign_list->begin()
@@ -2588,8 +2718,18 @@ void pform_makewire(const struct vlltype&li,
       while (! assign_list->empty()) {
 	    decl_assignment_t*first = assign_list->front();
 	    assign_list->pop_front();
-	      // For now, do not handle assignment expressions.
-	    assert(! first->expr.get());
+            if (PExpr*expr = first->expr.release()) {
+                  if (type == NetNet::REG || type == NetNet::IMPLICIT_REG) {
+                        pform_make_var_init(li, first->name, expr);
+                  } else {
+	                PWire*cur = pform_get_wire_in_scope(first->name);
+	                assert(cur);
+		        PEIdent*lval = new PEIdent(first->name);
+		        FILE_NAME(lval, li.text, li.first_line);
+		        PGAssign*ass = pform_make_pgassign(lval, expr, delay, str);
+		        FILE_NAME(ass, li.text, li.first_line);
+                  }
+            }
 	    delete first;
       }
 }
@@ -2661,7 +2801,10 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 	    }
 
 	    curw->set_signed(signed_flag);
-	    if (isint) assert(curw->set_wire_type(NetNet::INTEGER));
+		if (isint) {
+			bool flag = curw->set_wire_type(NetNet::INTEGER);
+			assert(flag);
+		}
 
 	      /* If there is a range involved, it needs to be set. */
 	    if (range) {
@@ -2744,7 +2887,9 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 	    ret = do_make_task_ports(loc, pt, IVL_VT_CLASS, class_type, names);
       }
 
-      ret = do_make_task_ports(loc, pt, IVL_VT_NO_TYPE, vtype, names);
+      if (! ret) {
+	    ret = do_make_task_ports(loc, pt, IVL_VT_NO_TYPE, vtype, names);
+      }
 
       if (unpacked_dims) {
 	    for (list<perm_string>::iterator cur = names->begin()
@@ -2868,10 +3013,16 @@ void pform_set_parameter(const struct vlltype&loc,
 			 LexicalScope::range_t*value_range)
 {
       LexicalScope*scope = lexical_scope;
+      if (is_compilation_unit(scope) && !gn_system_verilog()) {
+	    VLerror(loc, "error: parameter declarations must be contained within a module.");
+	    return;
+      }
       if (scope == pform_cur_generate) {
             VLerror("parameter declarations are not permitted in generate blocks");
             return;
       }
+      PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
+      assert(scopex);
 
 	// Check if the parameter name is already in the dictionary.
       if (scope->parameters.find(name) != scope->parameters.end()) {
@@ -2879,26 +3030,26 @@ void pform_set_parameter(const struct vlltype&loc,
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: duplicate definition "
 	            "for parameter '" << name << "' in '"
-	         << pform_cur_module.front()->mod_name() << "'." << endl;
+	         << scopex->pscope_name() << "'." << endl;
 	    error_count += 1;
       }
       if (scope->localparams.find(name) != scope->localparams.end()) {
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: localparam and "
-		 << "parameter in '" << pform_cur_module.front()->mod_name()
+		 << "parameter in '" << scopex->pscope_name()
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
 	// Only a Module scope has specparams.
-      if ((scope == pform_cur_module.front()) &&
-          (dynamic_cast<Module*> (scope)) &&
+	  if ((dynamic_cast<Module*> (scope)) &&
+		  (scope == pform_cur_module.front()) &&
           (pform_cur_module.front()->specparams.find(name) !=
            pform_cur_module.front()->specparams.end())) {
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: specparam and "
-		  "parameter in '" << pform_cur_module.front()->mod_name()
+		  "parameter in '" << scopex->pscope_name()
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
@@ -2925,8 +3076,8 @@ void pform_set_parameter(const struct vlltype&loc,
       parm.range = value_range;
 
 	// Only a Module keeps the position of the parameter.
-      if ((scope == pform_cur_module.front()) &&
-          (dynamic_cast<Module*> (scope)))
+	  if ((dynamic_cast<Module*> (scope)) &&
+		  (scope == pform_cur_module.front()))
             pform_cur_module.front()->param_names.push_back(name);
 }
 
@@ -2935,7 +3086,12 @@ void pform_set_localparam(const struct vlltype&loc,
 			  bool signed_flag, list<pform_range_t>*range, PExpr*expr)
 {
       LexicalScope*scope = lexical_scope;
-      ivl_assert(loc, scope);
+      if (is_compilation_unit(scope) && !gn_system_verilog()) {
+	    VLerror(loc, "error: localparam declarations must be contained within a module.");
+	    return;
+      }
+      PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
+      assert(scopex);
 
 	// Check if the localparam name is already in the dictionary.
       if (scope->localparams.find(name) != scope->localparams.end()) {
@@ -2943,14 +3099,14 @@ void pform_set_localparam(const struct vlltype&loc,
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: duplicate definition "
 	            "for localparam '" << name << "' in '"
-	         << pform_cur_module.front()->mod_name() << "'." << endl;
+	         << scopex->pscope_name() << "'." << endl;
 	    error_count += 1;
       }
       if (scope->parameters.find(name) != scope->parameters.end()) {
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: parameter and "
-		 << "localparam in '" << pform_cur_module.front()->mod_name()
+		 << "localparam in '" << scopex->pscope_name()
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
@@ -2961,7 +3117,7 @@ void pform_set_localparam(const struct vlltype&loc,
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: specparam and "
-		  "localparam in '" << pform_cur_module.front()->mod_name()
+		  "localparam in '" << scopex->pscope_name()
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
@@ -3055,6 +3211,28 @@ void pform_set_defparam(const pform_name_t&name, PExpr*expr)
             pform_cur_module.front()->defparms.push_back(make_pair(name,expr));
 }
 
+void pform_set_param_from_type(const struct vlltype&loc,
+                               const data_type_t *data_type,
+                               const char *name,
+                               list<pform_range_t> *&param_range,
+                               bool &param_signed,
+                               ivl_variable_type_t &param_type)
+{
+      if (const vector_type_t *vec = dynamic_cast<const vector_type_t*> (data_type)) {
+	    param_range = vec->pdims.get();
+	    param_signed = vec->signed_flag;
+	    param_type = vec->base_type;
+	    return;
+      }
+
+      param_range = 0;
+      param_signed = false;
+      param_type = IVL_VT_NO_TYPE;
+      cerr << loc.get_fileline() << ": sorry: cannot currently create a "
+              "parameter of type '" << name << "' which was defined at: "
+           << data_type->get_fileline() <<  "." << endl;
+      error_count += 1;
+}
 /*
  * Specify paths.
  */
@@ -3157,30 +3335,59 @@ static void pform_set_port_type(perm_string name, NetNet::PortType pt,
 }
 
 void pform_set_port_type(const struct vlltype&li,
-			 list<perm_string>*names,
-			 list<pform_range_t>*range,
-			 bool signed_flag,
+			 list<pform_port_t>*ports,
 			 NetNet::PortType pt,
+			 data_type_t*dt,
 			 list<named_pexpr_t>*attr)
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
 
-      for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end() ; ++ cur ) {
-	    perm_string txt = *cur;
-	    pform_set_port_type(txt, pt, li.text, li.first_line);
-	    pform_set_net_range(txt, NetNet::NONE, range, signed_flag, IVL_VT_NO_TYPE,
-	                        SR_PORT, attr);
+      list<pform_range_t>*range = 0;
+      bool signed_flag = false;
+      if (vector_type_t*vt = dynamic_cast<vector_type_t*> (dt)) {
+	    assert(vt->implicit_flag);
+	    range = vt->pdims.get();
+	    signed_flag = vt->signed_flag;
+      } else {
+	    assert(dt == 0);
       }
 
-      delete names;
-      delete range;
+      bool have_init_expr = false;
+      for (list<pform_port_t>::iterator cur = ports->begin()
+		 ; cur != ports->end() ; ++ cur ) {
+
+	    pform_set_port_type(cur->name, pt, li.text, li.first_line);
+	    pform_set_net_range(cur->name, NetNet::NONE, range, signed_flag,
+				IVL_VT_NO_TYPE, SR_PORT, attr);
+	    if (cur->udims) {
+		  cerr << li.text << ":" << li.first_line << ": warning: "
+		       << "Array dimensions in incomplete port declarations "
+		       << "are currently ignored." << endl;
+		  cerr << li.text << ":" << li.first_line << ":        : "
+		       << "The dimensions specified in the net or variable "
+		       << "declaration will be used." << endl;
+		  delete cur->udims;
+	    }
+	    if (cur->expr) {
+		  have_init_expr = true;
+		  delete cur->expr;
+	    }
+      }
+      if (have_init_expr) {
+	    cerr << li.text << ":" << li.first_line << ": error: "
+		 << "Incomplete port declarations cannot be initialized."
+		 << endl;
+	    error_count += 1;
+      }
+
+      delete ports;
+      delete dt;
       delete attr;
 }
 
-static void pform_set_integer_2atom(uint64_t width, bool signed_flag, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
+static void pform_set_integer_2atom(const struct vlltype&li, uint64_t width, bool signed_flag, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
-      PWire*cur = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, IVL_VT_BOOL);
+      PWire*cur = pform_get_make_wire_in_scope(li, name, net_type, NetNet::NOT_A_PORT, IVL_VT_BOOL);
       assert(cur);
 
       cur->set_signed(signed_flag);
@@ -3194,12 +3401,12 @@ static void pform_set_integer_2atom(uint64_t width, bool signed_flag, perm_strin
       pform_bind_attributes(cur->attributes, attr, true);
 }
 
-static void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
+static void pform_set_integer_2atom(const struct vlltype&li, uint64_t width, bool signed_flag, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
-	    pform_set_integer_2atom(width, signed_flag, txt, net_type, attr);
+	    pform_set_integer_2atom(li, width, signed_flag, txt, net_type, attr);
       }
 }
 
@@ -3210,7 +3417,7 @@ template <class T> static void pform_set2_data_type(const struct vlltype&li, T*d
 	    VLerror(li, "Compound type is not PACKED in this context.");
       }
 
-      PWire*net = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, base_type);
+      PWire*net = pform_get_make_wire_in_scope(li, name, net_type, NetNet::NOT_A_PORT, base_type);
       assert(net);
       net->set_data_type(data_type);
       pform_bind_attributes(net->attributes, attr, true);
@@ -3228,14 +3435,8 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
 			   perm_string name, NetNet::Type net_type,
 			   std::list<named_pexpr_t>*attr)
 {
-      PWire*cur = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, enum_type->base_type);
-	// A NULL is returned for a duplicate enumeration.
-      if (! cur) {
-	    cerr << li.get_fileline() << ": error: Found duplicate "
-		 << "enumeration named " << name << "." << endl;
-	    error_count += 1;
-	    return;
-      }
+      PWire*cur = pform_get_make_wire_in_scope(li, name, net_type, NetNet::NOT_A_PORT, enum_type->base_type);
+      assert(cur);
 
       cur->set_signed(enum_type->signed_flag);
 
@@ -3297,11 +3498,11 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
       }
 
       if (atom2_type_t*atom2_type = dynamic_cast<atom2_type_t*> (data_type)) {
-	    pform_set_integer_2atom(atom2_type->type_code, atom2_type->signed_flag, names, net_type, attr);
+	    pform_set_integer_2atom(li, atom2_type->type_code, atom2_type->signed_flag, names, net_type, attr);
       }
 
       else if (struct_type_t*struct_type = dynamic_cast<struct_type_t*> (data_type)) {
-	    pform_set_struct_type(struct_type, names, net_type, attr);
+	    pform_set_struct_type(li, struct_type, names, net_type, attr);
       }
 
       else if (enum_type_t*enum_type = dynamic_cast<enum_type_t*> (data_type)) {
@@ -3322,7 +3523,7 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
       }
 
       else if (class_type_t*class_type = dynamic_cast<class_type_t*> (data_type)) {
-	    pform_set_class_type(class_type, names, net_type, attr);
+	    pform_set_class_type(li, class_type, names, net_type, attr);
       }
 
       else if (parray_type_t*array_type = dynamic_cast<parray_type_t*> (data_type)) {
@@ -3330,7 +3531,7 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
       }
 
       else if (string_type_t*string_type = dynamic_cast<string_type_t*> (data_type)) {
-	    pform_set_string_type(string_type, names, net_type, attr);
+	    pform_set_string_type(li, string_type, names, net_type, attr);
 
       } else {
 	    VLerror(li, "internal error: Unexpected data_type.");
@@ -3371,6 +3572,16 @@ vector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
 PProcess* pform_make_behavior(ivl_process_type_t type, Statement*st,
 			      list<named_pexpr_t>*attr)
 {
+	// Add an implicit @* around the statement for the always_comb and
+	// always_latch statements.
+      if ((type == IVL_PR_ALWAYS_COMB) || (type == IVL_PR_ALWAYS_LATCH)) {
+	    PEventStatement *tmp = new PEventStatement(true);
+	    tmp->set_file(st->get_file());
+	    tmp->set_lineno(st->get_lineno());
+	    tmp->set_statement(st);
+	    st = tmp;
+      }
+
       PProcess*pp = new PProcess(type, st);
 
 	// If we are in a part of the code where the meta-comment
@@ -3390,8 +3601,10 @@ PProcess* pform_make_behavior(ivl_process_type_t type, Statement*st,
       pform_put_behavior_in_scope(pp);
 
       ivl_assert(*st, ! pform_cur_module.empty());
-      if (pform_cur_module.front()->program_block && type == IVL_PR_ALWAYS) {
-	    cerr << st->get_fileline() << ": error: Always statements not allowed"
+      if (pform_cur_module.front()->program_block &&
+          ((type == IVL_PR_ALWAYS) || (type == IVL_PR_ALWAYS_COMB) ||
+           (type == IVL_PR_ALWAYS_FF) || (type == IVL_PR_ALWAYS_LATCH))) {
+	    cerr << st->get_fileline() << ": error: Always statements are not allowed"
 		 << " in program blocks." << endl;
 	    error_count += 1;
       }
@@ -3443,31 +3656,72 @@ void pform_add_modport_port(const struct vlltype&loc,
 FILE*vl_input = 0;
 extern void reset_lexor();
 
-int pform_parse(const char*path, FILE*file)
+int pform_parse(const char*path)
 {
       vl_file = path;
-      if (file == 0) {
+      if (strcmp(path, "-") == 0) {
+	    vl_input = stdin;
+      } else if (ivlpp_string) {
+	    char*cmdline = (char*)malloc(strlen(ivlpp_string) +
+					        strlen(path) + 4);
+	    strcpy(cmdline, ivlpp_string);
+	    strcat(cmdline, " \"");
+	    strcat(cmdline, path);
+	    strcat(cmdline, "\"");
 
-	    if (strcmp(path, "-") == 0)
-		  vl_input = stdin;
-	    else
-		  vl_input = fopen(path, "r");
+	    if (verbose_flag)
+		  cerr << "Executing: " << cmdline << endl<< flush;
+
+	    vl_input = popen(cmdline, "r");
 	    if (vl_input == 0) {
-		  cerr << "Unable to open " <<vl_file << "." << endl;
-		  return 11;
+		  cerr << "Unable to preprocess " << path << "." << endl;
+		  return 1;
 	    }
 
+	    if (verbose_flag)
+		  cerr << "...parsing output from preprocessor..." << endl << flush;
+
+	    free(cmdline);
       } else {
-	    vl_input = file;
+	    vl_input = fopen(path, "r");
+	    if (vl_input == 0) {
+		  cerr << "Unable to open " << path << "." << endl;
+		  return 1;
+	    }
       }
 
+      if (pform_units.empty() || separate_compilation) {
+	    char unit_name[20];
+	    static unsigned nunits = 0;
+	    if (separate_compilation)
+		  sprintf(unit_name, "$unit#%u", ++nunits);
+	    else
+		  sprintf(unit_name, "$unit");
+
+	    PPackage*unit = new PPackage(lex_strings.make(unit_name), 0);
+	    unit->default_lifetime = LexicalScope::STATIC;
+	    unit->set_file(filename_strings.make(path));
+	    unit->set_lineno(1);
+	    pform_units.push_back(unit);
+
+	    pform_set_timescale(def_ts_units, def_ts_prec, 0, 0);
+
+	    allow_timeunit_decl = true;
+	    allow_timeprec_decl = true;
+
+	    lexical_scope = unit;
+      }
       reset_lexor();
       error_count = 0;
       warn_count = 0;
       int rc = VLparse();
 
-      if (file == 0)
-	    fclose(vl_input);
+      if (vl_input != stdin) {
+	    if (ivlpp_string)
+		  pclose(vl_input);
+	    else
+		  fclose(vl_input);
+      }
 
       if (rc) {
 	    cerr << "I give up." << endl;

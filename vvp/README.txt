@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -97,24 +97,33 @@ SCOPE STATEMENTS:
 
 The syntax of a scope statement is:
 
-        <label> .scope <type>, <instance>, <declaration>, <parent> ;
+	<label> .scope <type>, <name> <type-name> <file> <lineno> ;
+
+	<label> .scope <type>, <name> <type-name> <file> <lineno>, \
+		       <def-file> <def-lineno> <is-cell>, <parent> ;
 
 The <type> is the general type of the scope: module, autofunction,
-function, autotask, task, begin, fork or generate.
+function, autotask, task, begin, fork, autobegin, autofork, or generate.
 
-The <instance> is a string that is the base name of the instance. For
-modules, this is the instance name. For tasks, this is the task name.
+The <name> is a string that is the base name of the instance. For
+modules, this is the instance name. For tasks and functions, this is
+the task or function name.
 
-The <declaration> is a string that represents the declaration. For
-modules, this is the name of the module given in the module
-declaration, and *not* the instantiation. For tasks and functions,
-this is the hierarchical name of the path to the declaration. This is
-because the declaration can be different within different module
-instances.
+The <type-name> is the name of the type. For most scope types, this is
+the name as the <name>, but for module and class scopes, this is the
+name of the definition, and not the instance.
 
-Finally, the <parent> is the label for the parent scope for this
-one. Root scopes leave this out. Otherwise, this label references
-another .scope record.
+The <file> and <lineno> are the location of the instantiation of this
+scope. For a module, it is the location of the instance.
+
+The <def-file> and <def-lineno> is the source file and line number for
+the definition of the scope. For modules, this is where the module is
+defined instead of where it is instantiated.
+
+The <is-cell> flag is only useful for module instances. It is true
+(not zero) if the module is a celltype instead of a regular module.
+
+The short form of the scope statement is only used for root scopes.
 
 PARAMETER STATEMENTS:
 
@@ -186,24 +195,39 @@ combining up to four inputs down to one output.
      B | *  *  1
 
 
-DFF STATEMENTS:
+DFF AND LATCH STATEMENTS:
 
 The Verilog language itself does not have a DFF primitive, but post
 synthesis readily creates DFF devices that are best simulated with a
 common device. Thus, there is the DFF statement to create DFF devices:
 
-        <label> .dff <d>, <clk>, <ce>;
-        <label> .dff/aclr <d>, <clk>, <ce>, <async-input>;
-        <label> .dff/aset <d>, <clk>, <ce>, <async-input>;
+        <label> .dff/p <width> <d>, <clk>, <ce>;
+        <label> .dff/n <width> <d>, <clk>, <ce>;
+        <label> .dff/p/aclr <width> <d>, <clk>, <ce>, <async-input>;
+        <label> .dff/n/aclr <width> <d>, <clk>, <ce>, <async-input>;
+        <label> .dff/p/aset <width> <d>, <clk>, <ce>, <async-input>[, <set-value>];
+        <label> .dff/n/aset <width> <d>, <clk>, <ce>, <async-input>[, <set-value>];
 
-The generated functor is generally synchronous on the <clk> rising
-edge of <clk>, with the <ce> enable active high. The <clk> and <ce>
-are single bit vectors (or scalars) on ports 1 and 2. Port-0 is any
+The /p variants simulate positive-edge triggered flip-flops and the
+/n variants simulate negative-edge triggered flip-flops. The generated
+functor is generally synchronous on the specified edge of <clk>, with
+the <ce> enable active high. The <clk> and <ce> are single bit vectors
+(or scalars) on ports 1 and 2. Port-0 is any type of datum at all. The
+device will transfer the input to the output when it is loaded by a
+clock. The <async-input> is a special asynchronous input that on the
+rising edge causes the device to clear/set, forces the output to
+propagate, and disables the clock until the aynchronous input is
+deasserted. Thus, they implement DFF with asynchronous clr or set.
+
+Similarly, synthesis creates D-type latches, so there is the LATCH
+statement to support this:
+
+        <label> .latch <width> <d>, <en>;
+
+The <en> is a single bit vector (or scalar) on port-1. Port-0 is any
 type of datum at all. The device will transfer the input to the output
-when it is loaded by a clock. The <async-input> is a special
-asynchronous input that on the rising edge causes the device to
-clear/set, and force the output to propagate. Thus, they implement DFF
-with asynchronous clr or set.
+whenever <en> is a logic 1.
+
 
 UDP STATEMENTS:
 
@@ -218,8 +242,8 @@ only.
 
 The function of a UDP is defined via a table.  The rows of the table
 are strings which describe input states or edges, and the new output
-state.	Combinatorial UDPs require one character for each input, and
-one character at the end for the output state.	Sequential UDPs need
+state.  Combinatorial UDPs require one character for each input, and
+one character at the end for the output state.  Sequential UDPs need
 an additional char for the current state, which is the first char of
 the row.
 
@@ -227,7 +251,7 @@ Any input transition or the new state must match at most one row (or
 all matches must provide the same output state).  If no row matches,
 the output becomes 1'bx.
 
-The output state can be specified as "0", "1", or "x".	Sequential
+The output state can be specified as "0", "1", or "x".  Sequential
 UDPs may also have "-": no change.
 
 An input or current output state can be
@@ -256,7 +280,7 @@ A combinatorial UDP is defined like this:
 	<type> .udp/comb "<name>", <number>, "<row0>", "<row1>", ... ;
 
 <type> is a label that identifies the UDP.  <number> is the number of
-inputs.	 "<name>" is there for public identification.  Sequential UDPs
+inputs.  "<name>" is there for public identification.  Sequential UDPs
 need an additional initialization value:
 
 	<type> .udp/sequ "<name>", <number>, <init>, "<row0>", "<row1>", ... ;
@@ -326,7 +350,6 @@ exactly the same as the .var statement:
 	<label> .net8     "name", <msb>, <lsb>, <symbol>;
 	<label> .net8/s   "name", <msb>, <lsb>, <symbol>;
 	<label> .net/real "name", <msb>, <lsb>, <symbol>;
-	<label> .alias    "name", <msb>, <lsb>, <symbol>;
 
 
 Like a .var statement, the .net statement creates a VPI object with
@@ -535,8 +558,8 @@ implicit from these numbers. The <symbol> is then the input source.
 
 SUBSTITUTION STATEMENTS:
 
-The substition statement doesn't have a direct analog in Verilog, it
-only turns up in synthesis. It is a sorthand for forms like this:
+The substitution statement doesn't have a direct analog in Verilog, it
+only turns up in synthesis. It is a shorthand for forms like this:
 
    foo = <a>;
    foo[n] = <s>;
@@ -661,6 +684,8 @@ similar:
 	<label> .cmp/gt  <wid>, <A>, <B>;
 	<label> .cmp/ge.s <wid>, <A>, <B>;
 	<label> .cmp/gt.s <wid>, <A>, <B>;
+	<label> .cmp/weq <wid>, <A>, <B>;
+	<label> .cmp/wne <wid>, <A>, <B>;
 
 Whereas the arithmetic statements generate an output the width of
 <wid>, the comparisons produce a single bit vector result. The plain
@@ -687,11 +712,14 @@ STRUCTURAL FUNCTION CALLS:
 
 The .ufunc statements define a call to a user defined function.
 
-	<label> .ufunc   <flabel>, <wid>,
-            <isymbols> ( <psymbols> ) <rsymbol> <ssymbol>;
+	<label> .ufunc/real <flabel>, <wid>,
+            <isymbols> ( <psymbols> ) <ssymbol>;
+
+	<label> .ufunc/vec4 <flabel>, <wid>,
+            <isymbols> ( <psymbols> ) <ssymbol>;
 
 	<label> .ufunc/e <flabel>, <wid>, <trigger>,
-            <isymbols> ( <psymbols> ) <rsymbol> <ssymbol>;
+            <isymbols> ( <psymbols> ) <ssymbol>;
 
 The first variant is used for functions that only need to be called
 when one of their inputs changes value. The second variant is used
@@ -713,10 +741,6 @@ The <psymbols> list is exactly the same size as the <isymbols>
 list. The <psymbols> are variables that represent the input ports for
 the function. The ufunc performs an assignment to these variables
 before calling the function.
-
-The <rsymbol> is the variable within the function where the result
-will be found when the function code ends. This value is picked up
-and propagated to the output of the functor.
 
 The <ssymbol> is the function scope name.
 
@@ -826,6 +850,7 @@ instructions. The formats are:
    %vpi_call/i <file-index> <lineno> <name>, <args>... ;
    %vpi_func <file-index> <lineno> <name>, <args>... ;
    %vpi_func/r <file-index> <lineno> <name>, <args>... ;
+   %vpi_func/s <file-index> <lineno> <name>, <args>... ;
 
 The <file-index> is an index into the string table. The indexed string
 is the source code file name where this call appears. The <lineno> is

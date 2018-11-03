@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,6 +24,7 @@
 # include  <typeinfo>
 # include  <cstdlib>
 # include  <climits>
+# include  <cstring>
 # include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
@@ -175,6 +176,7 @@ bool NetPins::pins_are_virtual(void) const
 NetPins::NetPins(unsigned npins)
 : npins_(npins)
 {
+      default_dir_ = Link::PASSIVE;
       pins_ = NULL;  // Wait until someone asks.
       if (disable_virtual_pins) devirtualize_pins();  // Ask.  Bummer.
 }
@@ -557,7 +559,7 @@ void NetNet::calculate_slice_widths_from_packed_dims_(void)
       ivl_assert(*this, ! slice_wids_.empty());
       slice_wids_[0] = netrange_width(slice_dims_);
       vector<netrange_t>::const_iterator cur = slice_dims_.begin();
-      for (size_t idx = 1 ; idx < slice_wids_.size() ; idx += 1) {
+      for (size_t idx = 1 ; idx < slice_wids_.size() ; idx += 1, ++cur) {
 	    slice_wids_[idx] = slice_wids_[idx-1] / cur->width();
       }
 }
@@ -1021,11 +1023,36 @@ NetProc::~NetProc()
 NetProcTop::NetProcTop(NetScope*s, ivl_process_type_t t, NetProc*st)
 : type_(t), statement_(st), scope_(s)
 {
+      synthesized_design_ = 0;
 }
 
 NetProcTop::~NetProcTop()
 {
+      if (!synthesized_design_) {
+	    delete statement_;
+	    return;
+      }
+
+      NexusSet nex_set;
+      statement_->nex_output(nex_set);
+
       delete statement_;
+
+      bool flag = false;
+      for (unsigned idx = 0 ;  idx < nex_set.size() ;  idx += 1) {
+
+	    NetNet*net = nex_set[idx].lnk.nexus()->pick_any_net();
+	    if (net->peek_lref() > 0) {
+		  cerr << get_fileline() << ": warning: '" << net->name()
+		       << "' is driven by more than one process." << endl;
+		  flag = true;
+	    }
+      }
+      if (flag) {
+	    cerr << get_fileline() << ": sorry: Cannot synthesize signals "
+		    "that are driven by more than one process." << endl;
+	    synthesized_design_->errors += 1;
+      }
 }
 
 NetProc* NetProcTop::statement()
@@ -1153,8 +1180,8 @@ unsigned NetReplicate::repeat() const
  *     ...
  */
 
-NetFF::NetFF(NetScope*s, perm_string n, unsigned width__)
-: NetNode(s, n, 8), width_(width__)
+NetFF::NetFF(NetScope*s, perm_string n, bool negedge__, unsigned width__)
+: NetNode(s, n, 8), negedge_(negedge__), width_(width__)
 {
       pin_Clock().set_dir(Link::INPUT);
       pin_Enable().set_dir(Link::INPUT);
@@ -1168,6 +1195,11 @@ NetFF::NetFF(NetScope*s, perm_string n, unsigned width__)
 
 NetFF::~NetFF()
 {
+}
+
+bool NetFF::is_negedge() const
+{
+      return negedge_;
 }
 
 unsigned NetFF::width() const
@@ -1275,6 +1307,60 @@ const verinum& NetFF::sset_value() const
       return sset_value_;
 }
 
+/*
+ * The NetLatch class represents an LPM_LATCH device. The pinout is assigned
+ * like so:
+ *    0  -- Enable
+ *    1  -- Data
+ *    2  -- Q
+ */
+
+NetLatch::NetLatch(NetScope*s, perm_string n, unsigned width__)
+: NetNode(s, n, 3), width_(width__)
+{
+      pin_Enable().set_dir(Link::INPUT);
+      pin_Data().set_dir(Link::INPUT);
+      pin_Q().set_dir(Link::OUTPUT);
+}
+
+NetLatch::~NetLatch()
+{
+}
+
+unsigned NetLatch::width() const
+{
+      return width_;
+}
+
+Link& NetLatch::pin_Enable()
+{
+      return pin(0);
+}
+
+const Link& NetLatch::pin_Enable() const
+{
+      return pin(0);
+}
+
+Link& NetLatch::pin_Data()
+{
+      return pin(1);
+}
+
+const Link& NetLatch::pin_Data() const
+{
+      return pin(1);
+}
+
+Link& NetLatch::pin_Q()
+{
+      return pin(2);
+}
+
+const Link& NetLatch::pin_Q() const
+{
+      return pin(2);
+}
 
 NetAbs::NetAbs(NetScope*s, perm_string n, unsigned w)
 : NetNode(s, n, 2), width_(w)
@@ -2683,7 +2769,7 @@ static DelayType delay_type_from_expr(const NetExpr*expr)
  * The looping structures can use the same basic code so put it here
  * instead of duplicating it for each one (repeat and while).
  */
-static DelayType get_loop_delay_type(const NetExpr*expr, const NetProc*proc)
+static DelayType get_loop_delay_type(const NetExpr*expr, const NetProc*proc, bool print_delay)
 {
       DelayType result;
 
@@ -2694,12 +2780,20 @@ static DelayType get_loop_delay_type(const NetExpr*expr, const NetProc*proc)
 	    break;
 	    /* We have a constant true expression so the body always runs. */
 	  case DEFINITE_DELAY:
-	    result = proc->delay_type();
+	    if (proc) {
+		  result = proc->delay_type(print_delay);
+	    } else {
+		  result = NO_DELAY;
+	    }
 	    break;
 	    /* We don't know if the body will run so reduce a DEFINITE_DELAY
 	     * to a POSSIBLE_DELAY. All other stay the same. */
 	  case POSSIBLE_DELAY:
-	    result = combine_delays(NO_DELAY, proc->delay_type());
+	    if (proc) {
+		  result = combine_delays(NO_DELAY, proc->delay_type(print_delay));
+	    } else {
+		  result = NO_DELAY;
+	    }
 	    break;
 	    /* This should never happen since delay_type_from_expr() only
 	     * returns three different values. */
@@ -2712,25 +2806,40 @@ static DelayType get_loop_delay_type(const NetExpr*expr, const NetProc*proc)
 }
 
 /* The default object does not have any delay. */
-DelayType NetProc::delay_type() const
+DelayType NetProc::delay_type(bool /* print_delay */ ) const
 {
       return NO_DELAY;
 }
 
-DelayType NetBlock::delay_type() const
+DelayType NetBlock::delay_type(bool print_delay) const
 {
-      DelayType result = NO_DELAY;
+	// A join_none has no delay.
+      if (type() == PARA_JOIN_NONE) return NO_DELAY;
 
-      for (const NetProc*cur = proc_first(); cur; cur = proc_next(cur)) {
-	    DelayType dt = cur->delay_type();
-            if (dt > result) result = dt;
-            if (dt == DEFINITE_DELAY) break;
+      DelayType result;
+	// A join_any has the minimum delay.
+      if (type() == PARA_JOIN_ANY) {
+	    result = DEFINITE_DELAY;
+	    for (const NetProc*cur = proc_first(); cur; cur = proc_next(cur)) {
+		  DelayType dt = cur->delay_type(print_delay);
+		  if (dt < result) result = dt;
+		  if ((dt == NO_DELAY) && !print_delay) break;
+	    }
+
+	// A begin or join has the maximum delay.
+      } else {
+	    result = NO_DELAY;
+	    for (const NetProc*cur = proc_first(); cur; cur = proc_next(cur)) {
+		  DelayType dt = cur->delay_type(print_delay);
+		  if (dt > result) result = dt;
+		  if ((dt == DEFINITE_DELAY) && !print_delay) break;
+	    }
       }
 
       return result;
 }
 
-DelayType NetCase::delay_type() const
+DelayType NetCase::delay_type(bool print_delay) const
 {
       DelayType result = NO_DELAY;
       bool def_stmt = false;
@@ -2738,13 +2847,15 @@ DelayType NetCase::delay_type() const
 
       for (unsigned idx = 0; idx < nstmts; idx += 1) {
 	    if (!expr(idx)) def_stmt = true;
+	    DelayType dt = stat(idx) ? stat(idx)->delay_type(print_delay) : NO_DELAY;
             if (idx == 0) {
-		  result = stat(idx)->delay_type();
+		  result = dt;
             } else {
-		  result = combine_delays(result, stat(idx)->delay_type());
+		  result = combine_delays(result, dt);
             }
       }
 
+// FIXME: If all the cases are covered (e.g. an enum) then this is not true.
 	/* If we don't have a default statement we don't know for sure
 	 * that we have a delay. */
       if (!def_stmt) result = combine_delays(NO_DELAY, result);
@@ -2752,69 +2863,636 @@ DelayType NetCase::delay_type() const
       return result;
 }
 
-DelayType NetCondit::delay_type() const
+DelayType NetCondit::delay_type(bool print_delay) const
 {
-      DelayType if_type = if_  ? if_->delay_type()   : NO_DELAY;
-      DelayType el_type = else_? else_->delay_type() : NO_DELAY;
+      DelayType if_type = if_  ? if_->delay_type(print_delay)   : NO_DELAY;
+      DelayType el_type = else_? else_->delay_type(print_delay) : NO_DELAY;
       return combine_delays(if_type, el_type);
 }
 
 /*
  * A do/while will execute the body at least once.
  */
-DelayType NetDoWhile::delay_type() const
+DelayType NetDoWhile::delay_type(bool print_delay) const
 {
-      return proc_->delay_type();
+      if (proc_) return proc_->delay_type(print_delay);
+
+      return ZERO_DELAY;
 }
 
-DelayType NetEvWait::delay_type() const
+DelayType NetEvWait::delay_type(bool print_delay) const
 {
+      if (print_delay) {
+	    cerr << get_fileline() << ": error: an event control is not allowed "
+	            "in an always_comb, always_ff or always_latch process."
+	         << endl;
+      }
+
       return DEFINITE_DELAY;
 }
 
-DelayType NetForever::delay_type() const
+DelayType NetForever::delay_type(bool print_delay) const
 {
-      return statement_->delay_type();
+      if (statement_) return statement_->delay_type(print_delay);
+
+      return ZERO_DELAY;
 }
 
-DelayType NetForLoop::delay_type() const
+DelayType NetForLoop::delay_type(bool print_delay) const
 {
-      return get_loop_delay_type(condition_, statement_);
+      return get_loop_delay_type(condition_, statement_, print_delay);
 }
 
-DelayType NetPDelay::delay_type() const
+DelayType NetPDelay::delay_type(bool print_delay) const
 {
+      if (print_delay) {
+	    cerr << get_fileline() << ": error: a blocking delay is not allowed "
+	            "in an always_comb, always_ff or always_latch process."
+	         << endl;
+      }
+
       if (expr_) {
-	    return delay_type_from_expr(expr_);
-      } else {
-	    if (delay() > 0) {
-		  return DEFINITE_DELAY;
+	    if (statement_) {
+		  return combine_delays(delay_type_from_expr(expr_),
+		                        statement_->delay_type(print_delay));
 	    } else {
-		  if (statement_) {
-			return statement_->delay_type();
-		  } else {
-			return NO_DELAY;
-		  }
+		  return delay_type_from_expr(expr_);
+	    }
+      }
+
+      if (delay() > 0) return DEFINITE_DELAY;
+
+      if (statement_) {
+	    return combine_delays(ZERO_DELAY,
+	                          statement_->delay_type(print_delay));
+      } else {
+	    return ZERO_DELAY;
+      }
+}
+
+DelayType NetRepeat::delay_type(bool print_delay) const
+{
+      return get_loop_delay_type(expr_, statement_, print_delay);
+}
+
+DelayType NetTaskDef::delay_type(bool print_delay) const
+{
+      if (proc_) {
+	    return proc_->delay_type(print_delay);
+      } else {
+	    return NO_DELAY;
+      }
+}
+
+DelayType NetUTask::delay_type(bool print_delay) const
+{
+      return task()->task_def()->delay_type(print_delay);
+}
+
+static bool do_expr_event_match(const NetExpr*expr, const NetEvWait*evwt)
+{
+	// The event wait should only have a single event.
+      if (evwt->nevents() != 1) return false;
+	// The event should have a single probe.
+      const NetEvent *evt = evwt->event(0);
+      if (evt->nprobe() != 1) return false;
+	// The probe should be for any edge.
+      const NetEvProbe *prb = evt->probe(0);
+      if (prb->edge() != NetEvProbe::ANYEDGE) return false;
+	// Create a NexusSet from the event probe signals.
+      NexusSet *ns_evwt = new NexusSet;
+      for (unsigned idx =0; idx < prb->pin_count(); idx += 1) {
+	    if (! prb->pin(idx).is_linked()) {
+		  delete ns_evwt;
+		  return false;
+	    }
+	      // Casting away const is safe since this nexus set is only being read.
+	    ns_evwt->add(const_cast<Nexus*> (prb->pin(idx).nexus()),
+	                 0, prb->pin(idx).nexus()->vector_width());
+      }
+	// Get the NexusSet for the expression.
+      NexusSet *ns_expr = expr->nex_input();
+	// Make sure the event and expression NexusSets match exactly.
+      if (ns_evwt->size() != ns_expr->size()) {
+	    delete ns_evwt;
+	    delete ns_expr;
+	    return false;
+      }
+      ns_expr->rem(*ns_evwt);
+      delete ns_evwt;
+      if (ns_expr->size() != 0) {
+	    delete ns_expr;
+	    return false;
+      }
+      delete ns_expr;
+
+      return true;
+}
+
+static bool while_is_wait(const NetExpr*expr, const NetProc*stmt)
+{
+      if (const NetEvWait*evwt = dynamic_cast<const NetEvWait*>(stmt)) {
+	    if (evwt->statement()) return false;
+	    const NetEBComp*cond = dynamic_cast<const NetEBComp*>(expr);
+	    if (! cond) return false;
+	    if (cond->op() != 'N') return false;
+	    const NetEConst*cval = dynamic_cast<const NetEConst*>(cond->right());
+	    if (! cval) return false;
+	    const verinum val = cval->value();
+	    if (val.len() != 1) return false;
+	    if (val.get(0) != verinum::V1) return false;
+	    if (! do_expr_event_match(cond->left(), evwt)) return false;
+	    if (evwt->get_lineno() != cond->get_lineno()) return false;
+	    if (evwt->get_file() != cond->get_file()) return false;
+	    return true;
+      }
+      return false;
+}
+
+DelayType NetWhile::delay_type(bool print_delay) const
+{
+	// If the wait was a constant value the compiler already removed it
+	// so we know we can only have a possible delay.
+      if (while_is_wait(cond_, proc_)) {
+	    if (print_delay) {
+		  cerr << get_fileline() << ": error: a wait statement is "
+		          "not allowed in an "
+		          "always_comb, always_ff or always_latch process."
+		       << endl;
+	    }
+	    return POSSIBLE_DELAY;
+      }
+      return get_loop_delay_type(cond_, proc_, print_delay);
+}
+
+/*
+ * These are the check_synth() functions. They are used to print
+ * a warning if the item is not synthesizable.
+ */
+static const char * get_process_type_as_string(ivl_process_type_t pr_type)
+{
+      switch (pr_type) {
+	case IVL_PR_ALWAYS_COMB:
+	    return "in an always_comb process.";
+	    break;
+	case IVL_PR_ALWAYS_FF:
+	    return "in an always_ff process.";
+	    break;
+	case IVL_PR_ALWAYS_LATCH:
+	    return "in an always_latch process.";
+	    break;
+	default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+static void print_synth_warning(const NetProc *net_proc, const char *name,
+                              ivl_process_type_t pr_type)
+{
+      cerr << net_proc->get_fileline() << ": warning: " << name
+           << " statement cannot be synthesized "
+           << get_process_type_as_string(pr_type) << endl;
+}
+
+static void check_if_logic_l_value(const NetAssignBase *base,
+                                   ivl_process_type_t pr_type)
+{
+      if (base->l_val_count() != 1) return;
+
+      const NetAssign_*lval = base->l_val(0);
+      if (! lval) return;
+
+      NetNet*sig = lval->sig();
+      if (! sig) return;
+
+      if ((sig->data_type() != IVL_VT_BOOL) &&
+          (sig->data_type() != IVL_VT_LOGIC)) {
+	    cerr << base->get_fileline() << ": warning: Assinging to a "
+	            "non-integral variable ("<< sig->name()
+	         << ") cannot be synthesized "
+	         << get_process_type_as_string(pr_type) << endl;
+      }
+}
+
+/* By default elements can be synthesized or ignored. */
+bool NetProc::check_synth(ivl_process_type_t /* pr_type */,
+                          const NetScope* /* scope */ ) const
+{
+      return false;
+}
+
+// FIXME: User function calls still need to be checked (NetEUFunc).
+//      : Non-constant system functions need a warning (NetESFunc).
+//      : Constant functions should already be elaborated.
+
+/* By default assign elements can be synthesized. */
+bool NetAssignBase::check_synth(ivl_process_type_t /* pr_type */,
+                                const NetScope* /* scope */  ) const
+{
+      return false;
+}
+
+bool NetAssign::check_synth(ivl_process_type_t pr_type,
+                            const NetScope* /* scope */ ) const
+{
+      check_if_logic_l_value(this, pr_type);
+
+// FIXME: Check that ff/latch only use this for internal signals.
+      return false;
+}
+
+bool NetAssignNB::check_synth(ivl_process_type_t pr_type,
+                              const NetScope* /* scope */ ) const
+{
+      bool result = false;
+      if (pr_type == IVL_PR_ALWAYS_COMB) {
+	    cerr << get_fileline() << ": warning: A non-blocking assignment "
+	            "should not be used in an always_comb process." << endl;
+      }
+
+      if (event_) {
+	    cerr << get_fileline() << ": error: A non-blocking assignment "
+	            "cannot be synthesized with an event control "
+	         << get_process_type_as_string(pr_type) << endl;
+	    result = true;
+      }
+
+      check_if_logic_l_value(this, pr_type);
+
+      return result;
+}
+
+bool NetBlock::check_synth(ivl_process_type_t pr_type,
+                           const NetScope* scope) const
+{
+      bool result = false;
+	// Only a begin/end can be synthesized.
+      if (type() != SEQU) {
+	    cerr << get_fileline() << ": error: A fork/";
+	    switch (type()) {
+	      case PARA:
+		  cerr << "join";
+		  break;
+	      case PARA_JOIN_ANY:
+		  cerr << "join_any";
+		  break;
+	      case PARA_JOIN_NONE:
+		  cerr << "join_none";
+		  break;
+	      default:
+		  assert(0);
+	    }
+	    cerr << " statement cannot be synthesized "
+                 << get_process_type_as_string(pr_type) << endl;
+	    result = true;
+      }
+
+      const NetScope*save_scope = scope;
+      if (subscope()) scope = subscope();
+      if (scope != save_scope) {
+	    result |= scope->check_synth(pr_type, scope);
+      }
+      for (const NetProc*cur = proc_first(); cur; cur = proc_next(cur)) {
+	    result |= cur->check_synth(pr_type, scope);
+      }
+      scope = save_scope;
+      return result;
+}
+
+bool NetCase::check_synth(ivl_process_type_t pr_type,
+                          const NetScope* scope) const
+{
+      bool result = false;
+      for (unsigned idx = 0; idx < nitems(); idx += 1) {
+	    if (stat(idx)) result |= stat(idx)->check_synth(pr_type, scope);
+      }
+// FIXME: Check for ff/latch/comb structures.
+      return result;
+}
+
+bool NetCAssign::check_synth(ivl_process_type_t pr_type,
+                             const NetScope* /* scope */ ) const
+{
+      print_synth_warning(this, "A procedural assign", pr_type);
+      return false;
+}
+
+bool NetCondit::check_synth(ivl_process_type_t pr_type,
+                            const NetScope* scope) const
+{
+      bool result = false;
+      if (if_) result |= if_->check_synth(pr_type, scope);
+      if (else_) result |= else_->check_synth(pr_type, scope);
+// FIXME: Check for ff/latch/comb structures.
+      return result;
+}
+
+bool NetDeassign::check_synth(ivl_process_type_t pr_type,
+                              const NetScope* /* scope */ ) const
+{
+      print_synth_warning(this, "A procedural deassign", pr_type);
+      return false;
+}
+
+bool NetDisable::check_synth(ivl_process_type_t pr_type,
+                             const NetScope* scope) const
+{
+      while (scope) {
+	    if (scope != target_) scope = scope->parent();
+	    else break;
+      }
+
+
+      if (! scope) {
+	    cerr << get_fileline() << ": warning: A disable statement can "
+	            "only be synthesized when disabling an enclosing block "
+                 << get_process_type_as_string(pr_type) << endl;
+      }
+      return false;
+}
+
+bool NetDoWhile::check_synth(ivl_process_type_t pr_type,
+                             const NetScope* scope) const
+{
+      bool result = false;
+      print_synth_warning(this, "A do/while", pr_type);
+      if (proc_) result |= proc_->check_synth(pr_type, scope);
+      return result;
+}
+
+bool NetEvTrig::check_synth(ivl_process_type_t pr_type,
+                            const NetScope* /* scope */ ) const
+{
+      print_synth_warning(this, "An event trigger", pr_type);
+      return false;
+}
+
+// The delay check above has already marked this as an error.
+bool NetEvWait::check_synth(ivl_process_type_t pr_type,
+                            const NetScope* scope) const
+{
+      bool result = false;
+      if (statement_) result |= statement_->check_synth(pr_type, scope);
+      return result;
+}
+
+bool NetForce::check_synth(ivl_process_type_t pr_type,
+                           const NetScope* /* scope */ ) const
+{
+      print_synth_warning(this, "A force", pr_type);
+      return false;
+}
+
+bool NetForever::check_synth(ivl_process_type_t pr_type,
+                             const NetScope* scope) const
+{
+      bool result = false;
+      print_synth_warning(this, "A forever", pr_type);
+      if (statement_) result |= statement_->check_synth(pr_type, scope);
+      return result;
+}
+
+/*
+ * A bunch of private routines to verify that a for loop has the correct
+ * structure for synthesis.
+ */
+static void print_for_idx_warning(const NetProc*proc, const char*check,
+                                  ivl_process_type_t pr_type, NetNet*idx)
+{
+      cerr << proc->get_fileline() << ": warning: A for statement must use "
+              "the index (" << idx->name() << ") in the " << check
+           << " expression to be synthesized "
+           << get_process_type_as_string(pr_type) << endl;
+}
+
+static void check_for_const_synth(const NetExpr*expr, const NetProc*proc,
+                                  const char*str, ivl_process_type_t pr_type)
+{
+      if (! dynamic_cast<const NetEConst*>(expr)) {
+	    cerr << proc-> get_fileline() << ": warning: A for "
+	            "statement must " << str
+	         << " value to be synthesized "
+	         << get_process_type_as_string(pr_type) << endl;
+      }
+}
+
+static void check_for_bin_synth(const NetExpr*left,const NetExpr*right,
+                                const char*str, const char*check,
+                                const NetProc*proc,
+                                ivl_process_type_t pr_type, NetNet*index)
+{
+      const NetESignal*lsig = dynamic_cast<const NetESignal*>(left);
+      const NetESignal*rsig = dynamic_cast<const NetESignal*>(right);
+
+      if (lsig && (lsig->sig() == index)) {
+	    check_for_const_synth(right, proc, str, pr_type);
+      } else if (rsig && (rsig->sig() == index)) {
+	    check_for_const_synth(left, proc, str, pr_type);
+      } else {
+	    print_for_idx_warning(proc, check, pr_type, index);
+      }
+}
+
+static void print_for_step_warning(const NetProc*proc,
+                                   ivl_process_type_t pr_type)
+{
+      cerr << proc->get_fileline() << ": warning: A for statement step must "
+              "be a simple assignment statement to be synthesized "
+           << get_process_type_as_string(pr_type) << endl;
+}
+
+static void print_for_step_warning(const NetProc*proc,
+                                   ivl_process_type_t pr_type, NetNet*idx)
+{
+      cerr << proc->get_fileline() << ": warning: A for statement step must "
+              "be an assignment to the index variable ("
+           << idx->name() << ") to be synthesized "
+           << get_process_type_as_string(pr_type) << endl;
+}
+
+static void check_for_bstep_synth(const NetExpr*expr, const NetProc*proc,
+                                  ivl_process_type_t pr_type, NetNet*index)
+{
+      if (const NetECast*tmp = dynamic_cast<const NetECast*>(expr)) {
+	    expr = tmp->expr();
+      }
+
+      if (const NetEBAdd*tmp = dynamic_cast<const NetEBAdd*>(expr)) {
+	    check_for_bin_synth(tmp->left(), tmp->right(),
+                                "change by a constant", "step", proc, pr_type,
+	                        index);
+      } else {
+	    cerr << proc->get_fileline() << ": warning: A for statement "
+	            "step must be a simple binary +/- "
+	            "to be synthesized "
+	         << get_process_type_as_string(pr_type) << endl;
+      }
+}
+
+static void check_for_step_synth(const NetAssign*assign, const NetProc*proc,
+                                 ivl_process_type_t pr_type, NetNet*index)
+{
+      if (assign->l_val_count() != 1) {
+	    print_for_step_warning(proc, pr_type);
+      } else if (assign->l_val(0)->sig() != index) {
+	    print_for_step_warning(proc, pr_type, index);
+      } else {
+	    switch (assign->assign_operator()) {
+	      case '+':
+	      case '-':
+		    check_for_const_synth(assign->rval(), proc,
+		                          "have a constant step", pr_type);
+		    break;
+	      case 0:
+		    check_for_bstep_synth(assign->rval(), proc, pr_type, index);
+		    break;
+	     default:
+		    cerr << proc->get_fileline() << ": warning: A for statement "
+		            "step does not support operator '"
+		         << assign->assign_operator()
+                         << "' it must be +/- to be synthesized "
+		         << get_process_type_as_string(pr_type) << endl;
+		   break;
 	    }
       }
 }
 
-DelayType NetRepeat::delay_type() const
+bool NetForLoop::check_synth(ivl_process_type_t pr_type,
+                             const NetScope* scope) const
 {
-      return get_loop_delay_type(expr_, statement_);
+      bool result = false;
+
+// FIXME: What about an enum (NetEConstEnum)?
+      if (! dynamic_cast<const NetEConst*>(init_expr_)) {
+	    cerr << get_fileline() << ": warning: A for statement must "
+	            "have a constant initial value to be synthesized "
+                 << get_process_type_as_string(pr_type) << endl;
+      }
+
+// FIXME: Do the following also need to be supported in the condition?
+//        It would seem like they are hard to use to find the bounds.
+//          From NetEBinary
+//            What about NetEBits sig & constant, etc.
+//          From NetEUnary
+//            What about NetEUBits ! sig or ! (sig == constat)
+//            What about NetEUReduce &signal
+      if (const NetESignal*tmp = dynamic_cast<const NetESignal*>(condition_)) {
+	    if (tmp->sig() != index_) {
+		  print_for_idx_warning(this, "condition", pr_type, index_);
+	    }
+      } else if (const NetEBComp*cmp = dynamic_cast<const NetEBComp*>(condition_)) {
+	    check_for_bin_synth(cmp->left(), cmp->right(),
+                                "compare against a constant", "condition",
+	                        this, pr_type, index_);
+      } else {
+	    print_for_idx_warning(this, "condition", pr_type, index_);
+      }
+
+      if (const NetAssign*tmp = dynamic_cast<const NetAssign*>(step_statement_)) {
+	    check_for_step_synth(tmp, this, pr_type, index_);
+      } else {
+	    print_for_step_warning(this, pr_type);
+      }
+
+      if (statement_) result |= statement_->check_synth(pr_type, scope);
+      return result;
 }
 
-DelayType NetTaskDef::delay_type() const
+// The delay check above has already marked this as an error.
+bool NetPDelay::check_synth(ivl_process_type_t /* pr_type */,
+                            const NetScope* /* scope */ ) const
 {
-      return proc_->delay_type();
+      return false;
 }
 
-DelayType NetUTask::delay_type() const
+bool NetRelease::check_synth(ivl_process_type_t pr_type,
+                             const NetScope* /* scope */ ) const
 {
-      return task()->task_def()->delay_type();
+      print_synth_warning(this, "A release", pr_type);
+      return false;
 }
 
-DelayType NetWhile::delay_type() const
+bool NetRepeat::check_synth(ivl_process_type_t pr_type,
+                            const NetScope* scope) const
 {
-      return get_loop_delay_type(cond_, proc_);
+      bool result = false;
+      print_synth_warning(this, "A repeat", pr_type);
+      if (statement_) result |= statement_->check_synth(pr_type, scope);
+      return result;
+}
+
+bool NetScope::check_synth(ivl_process_type_t pr_type,
+                           const NetScope* /* scope */) const
+{
+      bool result = false;
+	// Skip local events/signals
+      for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_) {
+	    if (cur->local_flag()) continue;
+	    cerr << cur->get_fileline() << ": warning: An event ("
+	         << cur->name() << ") cannot be synthesized "
+	         << get_process_type_as_string(pr_type) << endl;
+      }
+      for (signals_map_iter_t cur = signals_map_.begin();
+           cur != signals_map_.end() ; ++ cur) {
+	    const NetNet*sig = cur->second;
+	    if ((sig->data_type() != IVL_VT_BOOL) &&
+	        (sig->data_type() != IVL_VT_LOGIC)) {
+		  cerr << sig->get_fileline() << ": warning: A non-integral "
+		          "variable (" << sig->name() << ") cannot be "
+		          "synthesized "
+		       << get_process_type_as_string(pr_type) << endl;
+	    }
+      }
+      return result;
+}
+
+bool NetSTask::check_synth(ivl_process_type_t pr_type,
+                           const NetScope* /* scope */) const
+{
+      if (strcmp(name(), "$ivl_darray_method$delete") == 0) {
+	    cerr << get_fileline() << ": warning: Dynamic array "
+	            "delete method cannot be synthesized "
+	         << get_process_type_as_string(pr_type) << endl;
+      } else {
+	    cerr << get_fileline() << ": warning: System task ("
+	         << name() << ") cannot be synthesized "
+	         << get_process_type_as_string(pr_type) << endl;
+      }
+      return false;
+}
+
+bool NetTaskDef::check_synth(ivl_process_type_t pr_type,
+                             const NetScope* /* scope */) const
+{
+      bool result = false;
+      const NetScope *tscope = this->scope();
+      result |= tscope->check_synth(pr_type, tscope);
+      if (! tscope->is_auto()) {
+	    cerr << tscope->get_def_file() << ":"
+	         << tscope->get_def_lineno()
+	         << ": warning: user task (" << tscope->basename()
+	         << ") must be automatic to be synthesized "
+	         << get_process_type_as_string(pr_type) << endl;
+      }
+      if (proc_) result |= proc_->check_synth(pr_type, tscope);
+      return result;
+}
+
+bool NetUTask::check_synth(ivl_process_type_t pr_type,
+                           const NetScope* scope) const
+{
+      return task()->task_def()->check_synth(pr_type, scope);
+}
+
+bool NetWhile::check_synth(ivl_process_type_t pr_type,
+                           const NetScope* scope) const
+{
+      bool result = false;
+	// A wait is already maked as an error in the delay check above.
+      if (! while_is_wait(cond_, proc_)) {
+	    print_synth_warning(this, "A while", pr_type);
+	    if (proc_) result |= proc_->check_synth(pr_type, scope);
+      }
+      return result;
 }

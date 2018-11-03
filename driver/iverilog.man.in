@@ -1,14 +1,15 @@
-.TH iverilog 1 "December 16th, 2014" "" "Version %M.%m.%n %E"
+.TH iverilog 1 "Nov 8th, 2017" "" "Version %M.%n%E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[\-ESVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
-[\-Pparameter=value] [\-pflag=value]
-[\-dname] [\-g1995|\-g2001|\-g2005|\-g2005-sv|\-g2009|\-g2012|\-g<feature>]
+[\-ESuVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
+[\-Pparameter=value] [\-pflag=value] [\-dname]
+[\-g1995\:|\-g2001\:|\-g2005\:|\-g2005-sv\:|\-g2009\:|\-g2012\:|\-g<feature>]
 [\-Iincludedir] [\-mmodule] [\-M[mode=]file] [\-Nfile] [\-ooutputfilename]
-[\-stopmodule] [\-ttype] [\-Tmin/typ/max] [\-Wclass] [\-ypath] sourcefile
+[\-stopmodule] [\-ttype] [\-Tmin/typ/max] [\-Wclass] [\-ypath] [\-lfile]
+sourcefile
 
 .SH DESCRIPTION
 .PP
@@ -30,7 +31,7 @@ different set of programs. The path given is used to locate
 \fIivlpp\fP, \fIivl\fP, code generators and the VPI modules.
 .TP 8
 .B -c\fIfile\fP -f\fIfile\fP
-These flags specifies an input file that contains a list of Verilog
+These flags specify an input file that contains a list of Verilog
 source files. This is similar to the \fIcommand file\fP of other
 Verilog simulators, in that it is a file that contains the file names
 instead of taking them on the command line. See \fBCommand Files\fP below.
@@ -133,11 +134,28 @@ parameter assignment is evaluated as a lossless expression, as is any
 expression containing an unsized constant number, and unsized constant
 numbers are not truncated to integer width.
 .TP 8
+.B -gshared-loop-index\fI|\fP-gno-shared-loop-index
+Enable (default) or disable the exclusion of for-loop control variables
+from implicit event_expression lists. When enabled, if a for-loop control
+variable (loop index) is only used inside the for-loop statement, the
+compiler will not include it in an implicit event_expression list it
+calculates for that statement or any enclosing statement. This allows
+the same control variable to be used in multiple processes without risk
+of entering an infinite loop caused by each process triggering all other
+processes that use the same varaible. For strict compliance with the
+standards, this behaviour should be disabled.
+.TP 8
 .B -I\fIincludedir\fP
 Append directory \fIincludedir\fP to list of directories searched
 for Verilog include files. The \fB\-I\fP switch may be used many times
 to specify several directories to search, the directories are searched
 in the order they appear on the command line.
+.TP 8
+.B -l\fIfile\fP
+Add the specified file to the list of source files to be compiled,
+but mark it as a library file. All modules contained within that
+file will be treated as library modules, and only elaborated if
+they are instantiated by other modules in the design.
 .TP 8
 .B -M\fIpath\fP
 This is equivalent to \fB\-Mall=path\fP. Preserved for backwards
@@ -203,6 +221,12 @@ will suppress the warning that the compiler is making a choice.
 .B -t\fItarget\fP
 Use this switch to specify the target output format. See the
 \fBTARGETS\fP section below for a list of valid output formats.
+.TP 8
+.B -u
+Treat each source file as a separate compilation unit (as defined in
+SystemVerilog). If compiling for an \fIIEEE1364\fP generation, this
+will just reset all compiler directives (including macro definitions)
+before each new file is processed.
 .TP 8
 .B -v
 Turn on verbose messages. This will print the command lines that are
@@ -292,14 +316,27 @@ after a \fB\-Wall\fP argument to suppress isolated warning types.
 
 .TP 8
 .B all
-This enables the implicit, portbind, select\-range, timescale, and
-sensitivity\-entire\-array warning categories.
+This enables the anachronisms, implicit, macro-replacement, portbind,
+select\-range, timescale, and sensitivity\-entire\-array warning
+categories.
+
+.TP 8
+.B anachronisms
+This enables warnings for use of features that have been deprecated
+or removed in the selected generation of the Verilog language.
 
 .TP 8
 .B implicit
 This enables warnings for creation of implicit declarations. For
 example, if a scalar wire X is used but not declared in the Verilog
 source, this will print a warning at its first use.
+
+.TP 8
+.B macro-redefinition\fI | \fPmacro-replacement
+This enables preprocessor warnings when a macro is being redefined.
+The first variant prints a warning any time a macro is redefined.
+The second variant only prints a warning if the macro text changes.
+Use \fBno-macro-redefinition\fP to turn off all warnings of this type.
 
 .TP 8
 .B portbind
@@ -379,6 +416,11 @@ The function returns an integer.
 The function returns a vector with the given width, and is signed or
 unsigned according to the flag.
 
+.TP 8
+.B vpiSysFuncString
+The function returns a string. This is an Icarus-specific extension, not
+available in the VPI standard.
+
 .SH "COMMAND FILES"
 The command file allows the user to place source file names and
 certain command line switches into a text file instead of on a long
@@ -396,6 +438,15 @@ character. Variables are substituted in file names.
 A \fB\-c\fP or \fB\-f\fP token prefixes a command file, exactly like it
 does on the command line. The cmdfile may be on the same line or the
 next non-comment line.
+
+.TP 8
+.B -l\ \fIfile\fP -v\ \fIfile\fP
+A \fB\-l\fP token prefixes a library file in the command file,
+exactly like it does on the command line. The parameter to the \fB\-l\fP
+flag may be on the same line or the next non-comment line. \fB\-v\fP is
+an alias for \fB\-l\fP, provided for compatibility with other simulators.
+
+Variables in the \fIfile\fP are substituted.
 
 .TP 8
 .B -y\ \fIlibdir\fP
@@ -520,14 +571,14 @@ Steve Williams (steve@icarus.com)
 
 .SH SEE ALSO
 vvp(1),
-.BR "<http://www.icarus.com/eda/verilog/>"
+.BR "<http://iverilog.icarus.com/>"
 
 Tips on using, debugging, and developing the compiler can be found at
 .BR "<http://iverilog.wikia.com/>"
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002\-2014 Stephen Williams
+Copyright \(co  2002\-2017 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

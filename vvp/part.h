@@ -88,7 +88,7 @@ class vvp_fun_part_aa  : public vvp_fun_part, public automatic_hooks_s {
                         vvp_context_t context);
 
     private:
-      struct __vpiScope*context_scope_;
+      __vpiScope*context_scope_;
       unsigned context_idx_;
 };
 
@@ -108,6 +108,10 @@ class vvp_fun_part_pv  : public vvp_net_fun_t {
     public:
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context);
+
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                        unsigned, unsigned, unsigned,
+                        vvp_context_t);
 
       void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
@@ -185,7 +189,7 @@ class vvp_fun_part_var_aa  : public vvp_fun_part_var, public automatic_hooks_s {
                         vvp_context_t context);
 
     private:
-      struct __vpiScope*context_scope_;
+      __vpiScope*context_scope_;
       unsigned context_idx_;
 };
 

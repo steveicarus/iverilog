@@ -12,5 +12,11 @@ $high			vpiSysFuncInt
 $increment		vpiSysFuncInt
 $size			vpiSysFuncInt
 
+$countbits  vpiSysFuncInt
+$countones  vpiSysFuncInt
+$onehot     vpiSysFuncSized 1 unsigned
+$onehot0    vpiSysFuncSized 1 unsigned
+$isunknown  vpiSysFuncSized 1 unsigned
+
 $ivl_array_method$to_vec	vpiSysFuncVoid
 $ivl_array_method$from_vec	vpiSysFuncVoid

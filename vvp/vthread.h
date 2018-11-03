@@ -36,13 +36,14 @@
 
 typedef struct vthread_s* vthread_t;
 typedef struct vvp_code_s*vvp_code_t;
+class __vpiScope;
 
 /*
  * This creates a new simulation thread, with the given start
  * address. The generated thread is ready to run, but is not yet
  * scheduled.
  */
-extern vthread_t vthread_new(vvp_code_t sa, struct __vpiScope*scope);
+extern vthread_t vthread_new(vvp_code_t sa, __vpiScope*scope);
 
 /*
  * This function marks the thread as scheduled. It is used only by the
@@ -72,7 +73,7 @@ extern void vthread_run(vthread_t thr);
  */
 extern void vthread_schedule_list(vthread_t thr);
 
-extern struct __vpiScope*vthread_scope(vthread_t thr);
+extern __vpiScope*vthread_scope(vthread_t thr);
 
 /*
  * This function returns a handle to the writable context of the currently
@@ -112,6 +113,7 @@ extern vvp_context_item_t vthread_get_rd_context_item(unsigned context_idx);
  * Access value stacks from thread space.
  */
 extern void vthread_push_vec4(struct vthread_s*thr, const vvp_vector4_t&val);
+extern void vthread_push_str(struct vthread_s*thr, const std::string&val);
 extern void vthread_push_real(struct vthread_s*thr, double val);
 
 extern void vthread_pop_vec4(struct vthread_s*thr, unsigned count);

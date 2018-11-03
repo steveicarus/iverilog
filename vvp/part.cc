@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -208,6 +208,21 @@ void vvp_fun_part_pv::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       port.ptr()->send_vec4_pv(bit, base_, wid_, vwid_, context);
 }
 
+void vvp_fun_part_pv::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                 unsigned base, unsigned wid, unsigned vwid,
+                                 vvp_context_t ctx)
+{
+      assert(port.port() == 0);
+      assert(bit.size() == wid);
+      assert(base + wid <= vwid);
+      assert(vwid == wid_);
+
+      vvp_vector4_t tmp(wid_, BIT4_Z);
+      tmp.set_vec(base, bit);
+
+      port.ptr()->send_vec4_pv(tmp, base_, wid_, vwid_, ctx);
+}
+
 void vvp_fun_part_pv::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 {
       assert(port.port() == 0);
@@ -411,7 +426,7 @@ void compile_part_select(char*label, char*source,
 			 unsigned base, unsigned wid)
 {
       vvp_fun_part*fun = 0;
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
             fun = new vvp_fun_part_aa(base, wid);
       } else {
             fun = new vvp_fun_part_sa(base, wid);
@@ -431,7 +446,7 @@ void compile_part_select_var(char*label, char*source, char*var,
 			     unsigned wid, bool is_signed)
 {
       vvp_fun_part_var*fun = 0;
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
             fun = new vvp_fun_part_var_aa(wid, is_signed);
       } else {
             fun = new vvp_fun_part_var_sa(wid, is_signed);

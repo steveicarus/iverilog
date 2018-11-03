@@ -1,7 +1,7 @@
 #ifndef IVL_codes_H
 #define IVL_codes_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -56,6 +56,11 @@ extern bool of_ASSIGN_WRE(vthread_t thr, vvp_code_t code);
 extern bool of_BLEND(vthread_t thr, vvp_code_t code);
 extern bool of_BLEND_WR(vthread_t thr, vvp_code_t code);
 extern bool of_BREAKPOINT(vthread_t thr, vvp_code_t code);
+extern bool of_CALLF_OBJ(vthread_t thr, vvp_code_t code);
+extern bool of_CALLF_REAL(vthread_t thr, vvp_code_t code);
+extern bool of_CALLF_STR(vthread_t thr, vvp_code_t code);
+extern bool of_CALLF_VEC4(vthread_t thr, vvp_code_t code);
+extern bool of_CALLF_VOID(vthread_t thr, vvp_code_t code);
 extern bool of_CASSIGN_LINK(vthread_t thr, vvp_code_t code);
 extern bool of_CASSIGN_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_CASSIGN_VEC4_OFF(vthread_t thr, vvp_code_t code);
@@ -70,6 +75,8 @@ extern bool of_CMPIS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPSTR(vthread_t thr, vvp_code_t code);
 extern bool of_CMPU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPIU(vthread_t thr, vvp_code_t code);
+extern bool of_CMPWE(vthread_t thr, vvp_code_t code);
+extern bool of_CMPWNE(vthread_t thr, vvp_code_t code);
 extern bool of_CMPWR(vthread_t thr, vvp_code_t code);
 extern bool of_CMPWS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPWU(vthread_t thr, vvp_code_t code);
@@ -79,8 +86,6 @@ extern bool of_CONCAT_STR(vthread_t thr, vvp_code_t code);
 extern bool of_CONCATI_STR(vthread_t thr, vvp_code_t code);
 extern bool of_CONCAT_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_CONCATI_VEC4(vthread_t thr, vvp_code_t code);
-extern bool of_CVT_RS(vthread_t thr, vvp_code_t code);
-extern bool of_CVT_RU(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_RV(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_RV_S(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_SR(vthread_t thr, vvp_code_t code);
@@ -115,6 +120,7 @@ extern bool of_FLAG_SET_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE_LINK(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE_VEC4_OFF(vthread_t thr, vvp_code_t code);
+extern bool of_FORCE_VEC4_OFF_D(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE_WR(vthread_t thr, vvp_code_t code);
 extern bool of_FORK(vthread_t thr, vvp_code_t code);
 extern bool of_FREE(vthread_t thr, vvp_code_t code);
@@ -195,6 +201,12 @@ extern bool of_RELEASE_NET(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_REG(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_WR(vthread_t thr, vvp_code_t code);
 extern bool of_REPLICATE(vthread_t thr, vvp_code_t code);
+extern bool of_RET_REAL(vthread_t thr, vvp_code_t code);
+extern bool of_RET_STR(vthread_t thr, vvp_code_t code);
+extern bool of_RET_VEC4(vthread_t thr, vvp_code_t code);
+extern bool of_RETLOAD_REAL(vthread_t thr, vvp_code_t code);
+extern bool of_RETLOAD_STR(vthread_t thr, vvp_code_t code);
+extern bool of_RETLOAD_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_SCOPY(vthread_t thr, vvp_code_t code);
 extern bool of_SET_DAR_OBJ_REAL(vthread_t thr, vvp_code_t code);
 extern bool of_SET_DAR_OBJ_STR(vthread_t thr, vvp_code_t code);
@@ -244,7 +256,8 @@ extern bool of_XORR(vthread_t thr, vvp_code_t code);
 
 extern bool of_ZOMBIE(vthread_t thr, vvp_code_t code);
 
-extern bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t code);
+extern bool of_EXEC_UFUNC_REAL(vthread_t thr, vvp_code_t code);
+extern bool of_EXEC_UFUNC_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_REAP_UFUNC(vthread_t thr, vvp_code_t code);
 
 extern bool of_CHUNK_LINK(vthread_t thr, vvp_code_t code);
@@ -261,7 +274,7 @@ struct vvp_code_s {
 	    vvp_code_t   cptr;
 	    vvp_array_t array;
 	    class __vpiHandle*handle;
-	    struct __vpiScope*scope;
+	    __vpiScope*scope;
 	    const char*text;
       };
 

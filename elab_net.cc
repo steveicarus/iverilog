@@ -328,39 +328,66 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		      return false;
 		}
 
-		long lidx_tmp = sig->sb_to_idx(prefix_indices, lsb);
-		long midx_tmp = sig->sb_to_idx(prefix_indices, msb);
-		  /* Detect reversed indices of a part select. */
-		if (lidx_tmp > midx_tmp) {
-		      cerr << get_fileline() << ": error: Part select "
-			   << sig->name() << "[" << msb << ":"
-			   << lsb << "] indices reversed." << endl;
-		      cerr << get_fileline() << ":      : Did you mean "
-			   << sig->name() << "[" << lsb << ":"
-			   << msb << "]?" << endl;
-		      long tmp = midx_tmp;
-		      midx_tmp = lidx_tmp;
-		      lidx_tmp = tmp;
-		      des->errors += 1;
-		}
+		if (prefix_indices.size()+1 < sig->packed_dims().size()) {
+		      // Here we have a slice that doesn't have enough indices
+		      // to get to a single slice. For example:
+		      //    wire [9:0][5:1] foo
+		      //      ... foo[4:3] ...
+		      // Make this work by finding the indexed slices and
+		      // creating a generated slice that spans the whole
+		      // range.
+		      long loff, moff;
+		      unsigned long lwid, mwid;
+		      bool lrc;
+		      lrc = sig->sb_to_slice(prefix_indices, lsb, loff, lwid);
+		      ivl_assert(*this, lrc);
+		      lrc = sig->sb_to_slice(prefix_indices, msb, moff, mwid);
+		      ivl_assert(*this, lrc);
+		      ivl_assert(*this, lwid == mwid);
 
-		  /* Warn about a part select that is out of range. */
-		if (midx_tmp >= (long)sig->vector_width() || lidx_tmp < 0) {
-		      cerr << get_fileline() << ": warning: Part select "
-			   << sig->name();
-		      if (sig->unpacked_dimensions() > 0) {
-			    cerr << "[]";
+		      if (moff > loff) {
+			    lidx = loff;
+			    midx = moff + mwid - 1;
+		      } else {
+			    lidx = moff;
+			    midx = loff + lwid - 1;
 		      }
-		      cerr << "[" << msb << ":" << lsb
-			   << "] is out of range." << endl;
-		}
-		  /* This is completely out side the signal so just skip it. */
-		if (lidx_tmp >= (long)sig->vector_width() || midx_tmp < 0) {
-		      return false;
-		}
+		} else {
+		      long lidx_tmp = sig->sb_to_idx(prefix_indices, lsb);
+		      long midx_tmp = sig->sb_to_idx(prefix_indices, msb);
 
-		midx = midx_tmp;
-		lidx = lidx_tmp;
+		        /* Detect reversed indices of a part select. */
+		      if (lidx_tmp > midx_tmp) {
+			    cerr << get_fileline() << ": error: Part select "
+			        << sig->name() << "[" << msb << ":"
+			        << lsb << "] indices reversed." << endl;
+			    cerr << get_fileline() << ":      : Did you mean "
+			        << sig->name() << "[" << lsb << ":"
+			        << msb << "]?" << endl;
+			    long tmp = midx_tmp;
+			    midx_tmp = lidx_tmp;
+			    lidx_tmp = tmp;
+			    des->errors += 1;
+		      }
+
+		        /* Warn about a part select that is out of range. */
+		      if (midx_tmp >= (long)sig->vector_width() || lidx_tmp < 0) {
+			    cerr << get_fileline() << ": warning: Part select "
+			         << sig->name();
+			    if (sig->unpacked_dimensions() > 0) {
+				cerr << "[]";
+			    }
+			    cerr << "[" << msb << ":" << lsb
+			         << "] is out of range." << endl;
+		}
+		        /* This is completely out side the signal so just skip it. */
+		      if (lidx_tmp >= (long)sig->vector_width() || midx_tmp < 0) {
+			    return false;
+		      }
+
+		      midx = midx_tmp;
+		      lidx = lidx_tmp;
+		}
 		break;
 	  }
 
@@ -630,7 +657,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    indices_flags flags;
 	    indices_to_expressions(des, scope, this,
 				   path_tail.index, sig->unpacked_dimensions(),
-				   true, sig->unpacked_count(),
+				   true,
 				   flags,
 				   unpacked_indices,
 				   unpacked_indices_const);

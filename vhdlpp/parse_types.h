@@ -1,7 +1,7 @@
 #ifndef IVL_parse_types_H
 #define IVL_parse_types_H
 /*
- * Copyright (c) 2011,2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2015 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -26,7 +26,8 @@
 class named_expr_t {
 
     public:
-      named_expr_t (perm_string n, Expression*e) : name_(n), expr_(e) { }
+      named_expr_t(perm_string n, Expression*e) : name_(n), expr_(e) { }
+      ~named_expr_t() { delete expr_; }
 
       perm_string name() const { return name_; }
       Expression* expr() const { return expr_; }
@@ -68,38 +69,28 @@ class instant_list_t {
       std::list<perm_string>* labels_;
 };
 
-class prange_t {
-    public:
-      prange_t(Expression* left, Expression* right, bool dir)
-        : left_(left), right_(right), direction_(dir), auto_dir_(false) {}
-      prange_t(const prange_t&other) :
-          left_(other.left_->clone()), right_(other.right_->clone()),
-          direction_(other.direction_), auto_dir_(other.auto_dir_) {}
-      ~prange_t() { delete left_; delete right_; }
-      void dump(ostream&out, int indent) const;
-
-      inline Expression*msb() { return direction_? left_ : right_; }
-      inline Expression*lsb() { return direction_? right_: left_;  }
-
-      inline bool is_downto() const { return direction_; }
-      inline void set_auto_dir(bool enabled = true) { auto_dir_ = enabled; };
-      inline bool is_auto_dir() const { return auto_dir_; }
-
-      inline Expression*expr_left() { return left_; }
-      inline Expression*expr_right() { return right_; }
-
-    private:
-      Expression *left_, *right_;
-      bool direction_;
-      bool auto_dir_;
-
-    private: //not implemented
-      prange_t operator=(const prange_t&);
-};
-
 struct adding_term {
       ExpArithmetic::fun_t op;
       Expression*term;
+};
+
+// Stores information for file declarations containing a file name and open mode
+// (VHDL-2008 6.4.2.5)
+class file_open_info_t {
+    public:
+      file_open_info_t(ExpString*filename__, ExpName*kind__ = NULL)
+        : kind_(kind__), filename_(filename__) {
+          // By default files are opened in read-only mode
+          if(!kind_) kind_ = new ExpName(perm_string::literal("read_mode"));
+      }
+      ~file_open_info_t() { delete kind_; delete filename_; }
+
+      ExpName*kind() { return kind_; }
+      ExpString*filename() { return filename_; }
+
+    private:
+      ExpName*kind_;
+      ExpString*filename_;
 };
 
 #endif /* IVL_parse_types_H */

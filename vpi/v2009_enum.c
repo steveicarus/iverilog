@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -108,6 +108,7 @@ static PLI_INT32 ivl_enum_method_next_prev_compiletf(ICARUS_VPI_CONST PLI_BYTE8*
 		case vpiConstant:
 		case vpiParameter:
 		  if (vpi_get(vpiConstType, arg_count) != vpiStringConst) break;
+		  // fallthrough
 		default:
 		  vpi_printf("%s:%d: compiler error: ",
 		             vpi_get_str(vpiFile, sys),
@@ -226,7 +227,7 @@ static void fill_handle_with_init(vpiHandle arg, int is_two_state)
 /*
  * Implement the next()/prev() enumeration methods.
  */
-static PLI_INT32 ivl_enum_method_next_prev_calltf(PLI_BYTE8*name)
+static PLI_INT32 ivl_enum_method_next_prev_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -431,7 +432,7 @@ static PLI_INT32 ivl_enum_method_name_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 /*
  * Implement the name() enumeration method.
  */
-static PLI_INT32 ivl_enum_method_name_calltf(PLI_BYTE8*name)
+static PLI_INT32 ivl_enum_method_name_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);

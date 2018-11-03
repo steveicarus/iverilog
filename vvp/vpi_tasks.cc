@@ -143,54 +143,25 @@ static vpiHandle systask_iter(int, vpiHandle ref)
 }
 
 struct systask_def : public __vpiSysTaskCall {
-      inline systask_def() { }
-      int get_type_code(void) const { return vpiSysTaskCall; }
-      int vpi_get(int code)         { return systask_get(code, this); }
-      char*vpi_get_str(int code)    { return systask_get_str(code, this); }
-      vpiHandle vpi_handle(int code) { return systask_handle(code, this); }
-      vpiHandle vpi_iterate(int code){ return systask_iter(code, this); }
+      virtual ~systask_def() {};
+      virtual int get_type_code(void) const { return vpiSysTaskCall; }
+      virtual int vpi_get(int code)         { return systask_get(code, this); }
+      virtual char*vpi_get_str(int code)    { return systask_get_str(code, this); }
+      virtual vpiHandle vpi_handle(int code) { return systask_handle(code, this); }
+      virtual vpiHandle vpi_iterate(int code){ return systask_iter(code, this); }
 };
 
-static vpiHandle sysfunc_put_rnet_value(vpiHandle ref, p_vpi_value vp, int)
-{
-      struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
+struct sysfunc_def : public systask_def {
+      virtual ~sysfunc_def() {};
+      virtual int get_type_code(void) const { return vpiSysFuncCall; }
+      virtual int vpi_get(int code)         { return sysfunc_get(code, this); }
+};
 
-      rfp->put_value = true;
-
-      double val;
-      switch (vp->format) {
-
-	  case vpiRealVal:
-	    val = vp->value.real;
-	    break;
-
-	  default:
-	    val = 0.0;
-	    fprintf(stderr, "Unsupported format %d.\n", (int)vp->format);
-	    assert(0);
-      }
-
-      rfp->fnet->send_real(val, vthread_get_wt_context());
-
-      return 0;
-}
-
-static vpiHandle sysfunc_put_no_value(vpiHandle, p_vpi_value, int)
-{
-      return 0;
-}
-
-struct sysfunc_real : public __vpiSysTaskCall {
-      inline sysfunc_real() { }
-      int get_type_code(void) const { return vpiSysFuncCall; }
-      int vpi_get(int code)         { return sysfunc_get(code, this); }
-      char* vpi_get_str(int code)   { return systask_get_str(code, this); }
+struct sysfunc_real : public sysfunc_def {
       vpiHandle vpi_put_value(p_vpi_value val, int flags);
-      vpiHandle vpi_handle(int code)
-            { return systask_handle(code, this); }
-      vpiHandle vpi_iterate(int code)
-            { return systask_iter(code, this); }
+      inline double return_value() const { return return_value_; }
 
+    private:
       double return_value_;
 };
 
@@ -211,18 +182,53 @@ vpiHandle sysfunc_real::vpi_put_value(p_vpi_value vp, int)
       return 0;
 }
 
-class sysfunc_vec4 : public __vpiSysTaskCall {
-    public:
-      inline sysfunc_vec4(unsigned wid): return_value_(wid, BIT4_X) { }
-      int get_type_code(void) const { return vpiSysFuncCall; }
+struct sysfunc_str : public sysfunc_def {
       int vpi_get(int code);
-      char* vpi_get_str(int code)   { return systask_get_str(code, this); }
       vpiHandle vpi_put_value(p_vpi_value val, int flags);
-      vpiHandle vpi_handle(int code)
-            { return systask_handle(code, this); }
-      vpiHandle vpi_iterate(int code)
-            { return systask_iter(code, this); }
+      inline const std::string& return_value() const { return return_value_; };
 
+    private:
+      std::string return_value_;
+};
+
+int sysfunc_str::vpi_get(int code)
+{
+      switch (code) {
+	  case vpiSize:
+	    return return_value_.size();
+
+	  case vpiLineNo:
+	    return lineno;
+
+	  case vpiUserDefn:
+	    return defn->is_user_defn;
+
+	  default:
+	    return vpiUndefined;
+      }
+}
+
+vpiHandle sysfunc_str::vpi_put_value(p_vpi_value vp, int)
+{
+      put_value = true;
+
+      switch (vp->format) {
+	  case vpiStringVal:
+	    return_value_ = std::string(vp->value.str);
+	    break;
+	  default:
+	    fprintf(stderr, "Unsupported format %d.\n", (int)vp->format);
+	    assert(0);
+      }
+
+      return 0;
+}
+
+class sysfunc_vec4 : public sysfunc_def {
+    public:
+      explicit inline sysfunc_vec4(unsigned wid): return_value_(wid, BIT4_X) { }
+      int vpi_get(int code);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
       inline const vvp_vector4_t& return_value() const { return return_value_; }
 
     private:
@@ -232,7 +238,6 @@ class sysfunc_vec4 : public __vpiSysTaskCall {
       vpiHandle put_value_vector_(p_vpi_value vp);
       vpiHandle put_value_time_(p_vpi_value vp);
 
-    private:
       vvp_vector4_t return_value_;
 };
 
@@ -388,47 +393,14 @@ vpiHandle sysfunc_vec4::vpi_put_value(p_vpi_value vp, int)
       return 0;
 }
 
-struct sysfunc_4net : public __vpiSysTaskCall {
-      inline sysfunc_4net(unsigned wid) : vwid_(wid) { }
-      int get_type_code(void) const { return vpiSysFuncCall; }
+struct sysfunc_4net : public sysfunc_def {
+      explicit inline sysfunc_4net(unsigned wid) : vwid_(wid) { }
       int vpi_get(int code);
-      char* vpi_get_str(int code)   { return systask_get_str(code, this); }
       vpiHandle vpi_put_value(p_vpi_value val, int flags);
-      vpiHandle vpi_handle(int code)
-            { return systask_handle(code, this); }
-      vpiHandle vpi_iterate(int code)
-            { return systask_iter(code, this); }
 
     private:
       unsigned vwid_;
 };
-
-struct sysfunc_rnet : public __vpiSysTaskCall {
-      inline sysfunc_rnet() { }
-      int get_type_code(void) const { return vpiSysFuncCall; }
-      int vpi_get(int code)         { return sysfunc_get(code, this); }
-      char* vpi_get_str(int code)   { return systask_get_str(code, this); }
-      vpiHandle vpi_put_value(p_vpi_value val, int flags)
-            { return sysfunc_put_rnet_value(this, val, flags); }
-      vpiHandle vpi_handle(int code)
-            { return systask_handle(code, this); }
-      vpiHandle vpi_iterate(int code)
-            { return systask_iter(code, this); }
-};
-
-struct sysfunc_no : public __vpiSysTaskCall {
-      inline sysfunc_no() { }
-      int get_type_code(void) const { return vpiSysFuncCall; }
-      int vpi_get(int code)         { return sysfunc_get(code, this); }
-      char* vpi_get_str(int code)   { return systask_get_str(code, this); }
-      vpiHandle vpi_put_value(p_vpi_value val, int flags)
-            { return sysfunc_put_no_value(this, val, flags); }
-      vpiHandle vpi_handle(int code)
-            { return systask_handle(code, this); }
-      vpiHandle vpi_iterate(int code)
-            { return systask_iter(code, this); }
-};
-
 
 // support getting vpiSize for a system function call
 int sysfunc_4net::vpi_get(int code)
@@ -475,6 +447,7 @@ vpiHandle sysfunc_4net::vpi_put_value(p_vpi_value vp, int)
                                 (int)vp->value.scalar);
                         assert(0);
                 }
+		break;
           }
 
 	  case vpiIntVal: {
@@ -544,6 +517,41 @@ vpiHandle sysfunc_4net::vpi_put_value(p_vpi_value vp, int)
       }
 
       fnet->send_vec4(val, vthread_get_wt_context());
+      return 0;
+}
+
+struct sysfunc_rnet : public sysfunc_def {
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+};
+
+vpiHandle sysfunc_rnet::vpi_put_value(p_vpi_value vp, int)
+{
+      put_value = true;
+
+      double value;
+      switch (vp->format) {
+
+	  case vpiRealVal:
+	    value = vp->value.real;
+	    break;
+
+	  default:
+	    value = 0.0;
+	    fprintf(stderr, "Unsupported format %d.\n", (int)vp->format);
+	    assert(0);
+      }
+
+      fnet->send_real(value, vthread_get_wt_context());
+
+      return 0;
+}
+
+struct sysfunc_no : public sysfunc_def {
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+};
+
+vpiHandle sysfunc_no::vpi_put_value(p_vpi_value, int)
+{
       return 0;
 }
 
@@ -845,6 +853,9 @@ vpiHandle vpip_build_vpi_call(const char*name, int val_code, unsigned return_wid
 	    } else if (val_code == -vpiVectorVal) {
 		  obj = new sysfunc_vec4(return_width);
 
+	    } else if (val_code == -vpiStringVal) {
+		  obj = new sysfunc_str;
+
            } else if (val_code == 0 && fnet == 0) {
 		  obj = new sysfunc_no;
 
@@ -957,14 +968,18 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
       if (vpip_cur_task->string_stack > 0)
 	    vthread_pop_str(thr, vpip_cur_task->string_stack);
 
-	/* If the function has a real value, then push the value
-	   to the thread stack. */
+	/* If the function returns a value, then push the value
+	   to the appropriate thread stack. */
       if (sysfunc_real*func_real = dynamic_cast<sysfunc_real*>(ref)) {
-	    vthread_push_real(thr, func_real->return_value_);
+	    vthread_push_real(thr, func_real->return_value());
       }
-      if (sysfunc_vec4*func_vec4 = dynamic_cast<sysfunc_vec4*>(ref)) {
+      else if (sysfunc_str*func_string = dynamic_cast<sysfunc_str*>(ref)) {
+	    vthread_push_str(thr, func_string->return_value());
+      }
+      else if (sysfunc_vec4*func_vec4 = dynamic_cast<sysfunc_vec4*>(ref)) {
 	    vthread_push_vec4(thr, func_vec4->return_value());
       }
+      vpip_cur_task = 0;
 }
 
 /*

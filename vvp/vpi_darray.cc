@@ -170,7 +170,6 @@ void __vpiDarrayVar::put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, 
 
       case vpiVectorVal:        // 2 vs 4 state logic?
       {
-          int new_bit;
           int size = get_word_size();
           PLI_INT32 a = 0, b = 0;
           vvp_vector4_t new_vec(size);
@@ -178,6 +177,7 @@ void __vpiDarrayVar::put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, 
           vec--; // it will be increased in the first loop iteration
 
           for(int i = 0; i < size; ++i) {
+            int new_bit;
             if(i % (8 * sizeof(vec->aval)) == 0) {
                 ++vec;
                 a = vec->aval;
@@ -292,7 +292,7 @@ vvp_darray*__vpiDarrayVar::get_vvp_darray() const
 
 vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net)
 {
-      struct __vpiScope*scope = vpip_peek_current_scope();
+      __vpiScope*scope = vpip_peek_current_scope();
       const char*use_name = name ? vpip_name_string(name) : 0;
 
       __vpiDarrayVar*obj = new __vpiDarrayVar(scope, use_name, net);
@@ -338,10 +338,10 @@ void __vpiQueueVar::vpi_get_value(p_vpi_value val)
 
 vpiHandle vpip_make_queue_var(const char*name, vvp_net_t*net)
 {
-      struct __vpiScope*scope = vpip_peek_current_scope();
+      __vpiScope*scope = vpip_peek_current_scope();
       const char*use_name = name ? vpip_name_string(name) : 0;
 
-      class __vpiQueueVar*obj = new __vpiQueueVar(scope, use_name, net);
+      __vpiQueueVar*obj = new __vpiQueueVar(scope, use_name, net);
 
       return obj;
 }
@@ -349,14 +349,14 @@ vpiHandle vpip_make_queue_var(const char*name, vvp_net_t*net)
 #ifdef CHECK_WITH_VALGRIND
 void darray_delete(vpiHandle item)
 {
-      class __vpiDarrayVar*obj = dynamic_cast<__vpiDarrayVar*>(item);
+      __vpiDarrayVar*obj = dynamic_cast<__vpiDarrayVar*>(item);
       if (obj->vals_words) delete [] (obj->vals_words-1);
       delete obj;
 }
 
 void queue_delete(vpiHandle item)
 {
-      class __vpiQueueVar*obj = dynamic_cast<__vpiQueueVar*>(item);
+      __vpiQueueVar*obj = dynamic_cast<__vpiQueueVar*>(item);
       delete obj;
 }
 #endif

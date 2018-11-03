@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -39,6 +39,8 @@ static char *dump_path = NULL;
 static struct lxt2_wr_trace *dump_file = NULL;
 
 static void* lxt2_thread(void*arg);
+
+static struct t_vpi_time zero_delay = { vpiSimTime, 0, 0, 0.0 };
 
 /*
  * Manage a table of all the dump-enabled vcd item. The cells of this
@@ -105,7 +107,6 @@ void delete_all_vcd_info(void)
  */
 # define VCD_INFO_ENDP ((struct vcd_info*)1)
 static struct vcd_info *vcd_dmp_list = VCD_INFO_ENDP;
-static struct t_vpi_time vcd_dmp_time;
 
 static PLI_UINT64 vcd_cur_time = 0;
 static int dump_is_off = 0;
@@ -302,9 +303,8 @@ static PLI_INT32 variable_cb_1(p_cb_data cause)
       }
 
       if (vcd_dmp_list == VCD_INFO_ENDP) {
-	  vcd_dmp_time.type = vpiSuppressTime;
           cb = *cause;
-	  cb.time   = &vcd_dmp_time;
+	  cb.time = &zero_delay;
           cb.reason = cbReadOnlySynch;
           cb.cb_rtn = variable_cb_2;
           vpi_register_cb(&cb);
@@ -358,7 +358,6 @@ static PLI_INT32 finish_cb(p_cb_data cause)
 __inline__ static int install_dumpvars_callback(void)
 {
       struct t_cb_data cb;
-      static struct t_vpi_time now;
 
       if (dumpvars_status == 1) return 0;
 
@@ -369,8 +368,7 @@ __inline__ static int install_dumpvars_callback(void)
 	    return 1;
       }
 
-      now.type = vpiSimTime;
-      cb.time = &now;
+      cb.time = &zero_delay;
       cb.reason = cbReadOnlySynch;
       cb.cb_rtn = dumpvars_cb;
       cb.user_data = 0x0;
@@ -612,6 +610,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  PLI_INT32 idx = vpi_get(vpiIndex, item);
 		  item = vpi_handle_by_index(array, idx);
 	    }
+	    // fallthrough
 	  case vpiIntegerVar:
 	  case vpiBitVar:
 	  case vpiByteVar:

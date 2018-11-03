@@ -101,7 +101,7 @@ void ComponentBase::dump_ports(ostream&out, int indent) const
       }
 }
 
-void Scope::dump_scope(ostream&out) const
+void ScopeBase::dump_scope(ostream&out) const
 {
 	// Dump types
       out << "   -- imported types" << endl;
@@ -150,18 +150,35 @@ void Scope::dump_scope(ostream&out) const
       }
 	// Dump subprograms
       out << "   -- Imported Subprograms" << endl;
-      for (map<perm_string,Subprogram*>::const_iterator cur = use_subprograms_.begin()
-		 ; cur != use_subprograms_.end() ; ++cur) {
-	    out << "   subprogram " << cur->first << " is" << endl;
-	    cur->second->dump(out);
-	    out << "   end subprogram " << cur->first << endl;
+      for (map<perm_string,SubHeaderList>::const_iterator cur = use_subprograms_.begin()
+		 ; cur != cur_subprograms_.end() ; ++ cur) {
+	    const SubHeaderList& subp_list = cur->second;
+
+	    for(SubHeaderList::const_iterator it = subp_list.begin();
+			it != subp_list.end(); ++it) {
+                const SubprogramHeader*subp = *it;
+                out << "   subprogram " << cur->first << " is" << endl;
+                subp->dump(out);
+                if(subp->body())
+                    subp->body()->dump(out);
+                out << "   end subprogram " << cur->first << endl;
+            }
       }
+
       out << "   -- Subprograms from this scope" << endl;
-      for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
+      for (map<perm_string,SubHeaderList>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++cur) {
-	    out << "   subprogram " << cur->first << " is" << endl;
-	    cur->second->dump(out);
-	    out << "   end subprogram " << cur->first << endl;
+	    const SubHeaderList& subp_list = cur->second;
+
+	    for(SubHeaderList::const_iterator it = subp_list.begin();
+			it != subp_list.end(); ++it) {
+                const SubprogramHeader*subp = *it;
+                out << "   subprogram " << cur->first << " is" << endl;
+                subp->dump(out);
+                if(subp->body())
+                    subp->body()->dump(out);
+                out << "   end subprogram " << cur->first << endl;
+            }
       }
 	// Dump component declarations
       out << "   -- Components" << endl;
@@ -247,9 +264,16 @@ void ExpAggregate::choice_t::dump(ostream&out, int indent) const
       out << setw(indent) << "" << "?choice_t?" << endl;
 }
 
-void ExpAttribute::dump(ostream&out, int indent) const
+void ExpTypeAttribute::dump(ostream&out, int indent) const
 {
-      out << setw(indent) << "" << "Attribute " << name_
+      out << setw(indent) << "" << "Attribute (type-related) " << name_
+	  << " at " << get_fileline() << endl;
+      base_->show(out);
+}
+
+void ExpObjAttribute::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "Attribute (object-related) " << name_
 	  << " at " << get_fileline() << endl;
       base_->dump(out, indent+4);
 }
@@ -279,22 +303,14 @@ void ExpCharacter::dump(ostream&out, int indent) const
 void ExpConditional::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "Conditional expression at "<< get_fileline() << endl;
-      out << setw(indent) << "" << "  when:" << endl;
-      cond_->dump(out, indent+4);
 
-      out << setw(indent) << "" << "  do:" << endl;
-      for (list<Expression*>::const_iterator cur = true_clause_.begin()
-		 ; cur != true_clause_.end() ; ++cur) {
-	    (*cur)->dump(out, indent+4);
-      }
-
-      for (list<else_t*>::const_iterator cur = else_clause_.begin()
-		 ; cur != else_clause_.end() ; ++cur) {
+      for (list<case_t*>::const_iterator cur = options_.begin()
+		 ; cur != options_.end() ; ++cur) {
 	    (*cur)->dump(out, indent);
       }
 }
 
-void ExpConditional::else_t::dump(ostream&out, int indent) const
+void ExpConditional::case_t::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "when:" << endl;
       if (cond_) cond_->dump(out, indent+4);
@@ -379,10 +395,13 @@ void ExpName::dump(ostream&out, int indent) const
 	  << " at " << get_fileline() << endl;
       if (prefix_.get())
 	    prefix_->dump(out, indent+8);
-      if (index_)
-	    index_->dump(out, indent+6);
-      if (lsb_)
-	    lsb_->dump(out, indent+6);
+
+      if (indices_) {
+          for(list<Expression*>::const_iterator it = indices_->begin();
+                  it != indices_->end(); ++it) {
+              (*it)->dump(out, indent+6);
+          }
+      }
 }
 
 void ExpNameALL::dump(ostream&out, int indent) const
@@ -417,44 +436,10 @@ void ExpRelation::dump(ostream&out, int indent) const
       dump_operands(out, indent+4);
 }
 
-void ExpString::dump(ostream&out, int indent) const
-{
-    out << setw(indent) << "" << "String \"";
-    for(vector<char>::const_iterator it = value_.begin();
-        it != value_.end(); ++it)
-        out << *it;
-    out << "\""
-    << " at " << get_fileline() << endl;
-}
-
-void ExpUAbs::dump(ostream&out, int indent) const
-{
-      out << setw(indent) << "" << "abs() at " << get_fileline() << endl;
-      dump_operand1(out, indent+4);
-}
-
-void ExpUnary::dump_operand1(ostream&out, int indent) const
-{
-      operand1_->dump(out, indent);
-}
-
-void ExpUNot::dump(ostream&out, int indent) const
-{
-      out << setw(indent) << "" << "not() at " << get_fileline() << endl;
-      dump_operand1(out, indent+4);
-}
-
 void named_expr_t::dump(ostream&out, int indent) const
 {
     out << setw(indent) << "" << name_ << "=>";
     expr_->dump(out, indent);
-}
-
-void prange_t::dump(ostream&out, int indent) const
-{
-    left_->dump(out, indent);
-    out << setw(indent) << "" << (direction_ ? "downto" : "to");
-    right_->dump(out, indent);
 }
 
 ostream& Expression::dump_inline(ostream&out) const
@@ -475,7 +460,20 @@ ostream& ExpReal::dump_inline(ostream&out) const
       return out;
 }
 
-void Subprogram::dump(ostream&fd) const
+void SubprogramBody::dump(ostream&fd) const
+{
+      if (statements_== 0 || statements_->empty()) {
+	    fd << "        <no definition>" << endl;
+      } else {
+	    for (list<SequentialStmt*>::const_iterator cur = statements_->begin()
+		       ; cur != statements_->end() ; ++cur) {
+		  SequentialStmt*curp = *cur;
+		  curp->dump(fd, 8);
+	    }
+      }
+}
+
+void SubprogramHeader::dump(ostream&fd) const
 {
       fd << "     " << name_;
 
@@ -501,14 +499,4 @@ void Subprogram::dump(ostream&fd) const
       fd << " return ";
       return_type_->show(fd);
       fd << endl;
-
-      if (statements_== 0 || statements_->empty()) {
-	    fd << "        <no definition>" << endl;
-      } else {
-	    for (list<SequentialStmt*>::const_iterator cur = statements_->begin()
-		       ; cur != statements_->end() ; ++cur) {
-		  SequentialStmt*curp = *cur;
-		  curp->dump(fd, 8);
-	    }
-      }
 }

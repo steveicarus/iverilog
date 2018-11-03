@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -53,7 +53,7 @@ vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts)
       return ti;
 }
 
-double vpip_time_to_scaled_real(vvp_time64_t ti, struct __vpiScope*scope)
+double vpip_time_to_scaled_real(vvp_time64_t ti, __vpiScope*scope)
 {
       double val;
       int scale = 0;
@@ -70,7 +70,7 @@ double vpip_time_to_scaled_real(vvp_time64_t ti, struct __vpiScope*scope)
  * does not check for overflow. It is only used for modpath delays and
  * they are required to be non-negative.
  */
-vvp_time64_t vpip_scaled_real_to_time64(double val, struct __vpiScope*scope)
+vvp_time64_t vpip_scaled_real_to_time64(double val, __vpiScope*scope)
 {
       int shift = 0;
       if (scope) shift = scope->time_units - scope->time_precision;
@@ -131,6 +131,7 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func,
 	  case vpiObjTypeVal:
 	      /* The default format is vpiTimeVal. */
 	    vp->format = vpiTimeVal;
+	    // fallthrough
 	  case vpiTimeVal:
 	    vp->value.time = &time_value;
 	    vp->value.time->type = vpiSimTime;
@@ -153,7 +154,7 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func,
 
 	    rbuf[num_bits] = 0;
 	    for (unsigned i = 1; i <= num_bits; i++) {
-	      rbuf[num_bits-i] = x  & 1 ? '1' : '0';
+	      rbuf[num_bits-i] = (x  & 1) ? '1' : '0';
 	      x = x >> 1;
 	    }
 
@@ -352,7 +353,7 @@ void __vpiScopedRealtime::vpi_get_value(p_vpi_value val)
  * $time and $stime system functions return a value scaled to a scope,
  * and the $simtime returns the unscaled time.
  */
-vpiHandle vpip_sim_time(struct __vpiScope*scope, bool is_stime)
+vpiHandle vpip_sim_time(__vpiScope*scope, bool is_stime)
 {
       if (scope) {
 	    if (is_stime) {
@@ -367,7 +368,7 @@ vpiHandle vpip_sim_time(struct __vpiScope*scope, bool is_stime)
       }
 }
 
-vpiHandle vpip_sim_realtime(struct __vpiScope*scope)
+vpiHandle vpip_sim_realtime(__vpiScope*scope)
 {
       scope->scoped_realtime.scope = scope;
       return &scope->scoped_realtime;

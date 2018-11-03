@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -108,23 +108,23 @@ unsigned vpip_size(__vpiSignal *sig)
       return abs(sig->msb.get_value() - sig->lsb.get_value()) + 1;
 }
 
-struct __vpiScope* vpip_scope(__vpiSignal*sig)
+__vpiScope* vpip_scope(__vpiSignal*sig)
 {
       if (sig->is_netarray)
-	    return  (struct __vpiScope*) vpi_handle(vpiScope, sig->within.parent);
+	    return  (__vpiScope*) vpi_handle(vpiScope, sig->within.parent);
       else
 	    return sig->within.scope;
 }
 
-struct __vpiScope* vpip_scope(__vpiRealVar*sig)
+__vpiScope* vpip_scope(__vpiRealVar*sig)
 {
       if (sig->is_netarray)
-	    return  (struct __vpiScope*) vpi_handle(vpiScope, sig->within.parent);
+	    return  (__vpiScope*) vpi_handle(vpiScope, sig->within.parent);
       else
 	    return sig->within.scope;
 }
 
-vpiHandle vpip_module(struct __vpiScope*scope)
+vpiHandle vpip_module(__vpiScope*scope)
 {
       while(scope && scope->get_type_code() != vpiModule) {
 	    scope = scope->scope;
@@ -161,7 +161,7 @@ static unsigned hash_string(const char*text)
       unsigned h = 0;
 
       while (*text) {
-	    h = (h << 4) ^ (h >> 28) ^ *text;
+	    h = (h << 4) ^ (h >> 28) ^ (unsigned)*text;
 	    text += 1;
       }
       return h;
@@ -462,8 +462,9 @@ char* vpi_get_str(PLI_INT32 property, vpiHandle ref)
 int vpip_time_units_from_handle(vpiHandle obj)
 {
       struct __vpiSysTaskCall*task;
-      struct __vpiScope*scope;
+      __vpiScope*scope;
       struct __vpiSignal*signal;
+      __vpiNamedEvent*event;
 
       if (obj == 0)
 	    return vpip_get_time_precision();
@@ -483,6 +484,11 @@ int vpip_time_units_from_handle(vpiHandle obj)
 	    scope = vpip_scope(signal);
 	    return scope->time_units;
 
+	  case vpiNamedEvent:
+	    event = dynamic_cast<__vpiNamedEvent*>(obj);
+	    scope = event->get_scope();
+	    return scope->time_units;
+
 	  default:
 	    fprintf(stderr, "ERROR: vpip_time_units_from_handle called with "
 		    "object handle type=%u\n", obj->get_type_code());
@@ -494,7 +500,7 @@ int vpip_time_units_from_handle(vpiHandle obj)
 int vpip_time_precision_from_handle(vpiHandle obj)
 {
       struct __vpiSysTaskCall*task;
-      struct __vpiScope*scope;
+      __vpiScope*scope;
       struct __vpiSignal*signal;
 
       if (obj == 0)
@@ -718,7 +724,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 	  case vpiObjTypeVal:
 	    // Use the following case to actually set the value!
 	    vp->format = vpiVectorVal;
-
+	    // fallthrough
 	  case vpiVectorVal: {
 		unsigned hwid = (width + 31)/32;
 
@@ -778,6 +784,7 @@ void vpip_vec2_get_value(const vvp_vector2_t&word_val, unsigned width,
 
 	  case vpiObjTypeVal:
 	    vp->format = vpiIntVal;
+	    // fallthrough
 	  case vpiIntVal:
 	    vector2_to_value(word_val, vp->value.integer, signed_flag);
 	    break;
@@ -856,7 +863,7 @@ void vpip_real_get_value(double real, s_vpi_value*vp)
 	  case vpiObjTypeVal:
 	    // Use the following case to actually set the value!
 	    vp->format = vpiRealVal;
-
+	    // fallthrough
 	  case vpiRealVal:
 	    vp->value.real = real;
 	    break;
@@ -938,7 +945,7 @@ void vpip_string_get_value(const string&val, s_vpi_value*vp)
 	  case vpiObjTypeVal:
 	    // Use the following case to actually set the value!
 	    vp->format = vpiStringVal;
-
+	    // fallthrough
 	  case vpiStringVal:
 	    rbuf = (char *) need_result_buf(val.size() + 1, RBUF_VAL);
 	    strcpy(rbuf, val.c_str());
@@ -1067,13 +1074,13 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 	    vvp_time64_t dly;
 	    int scale;
 
-            if (vpi_get(vpiAutomatic, obj)) {
-                  fprintf(stderr, "vpi error: cannot put a value with "
-                                  "a delay on automatically allocated "
-                                  "variable '%s'\n",
-                                  vpi_get_str(vpiName, obj));
-                  return 0;
-            }
+	    if (vpi_get(vpiAutomatic, obj)) {
+		  fprintf(stderr, "VPI error: cannot put a value with "
+				  "a delay on automatically allocated "
+				  "variable '%s'.\n",
+				  vpi_get_str(vpiName, obj));
+		  return 0;
+	    }
 
 	    assert(when != 0);
 
@@ -1095,9 +1102,22 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 		  break;
 	    }
 
+	    if ((dly == 0) && schedule_at_rosync()) {
+		  fprintf(stderr, "VPI error: attempted to put a value to "
+				  "variable '%s' during a read-only synch "
+				  "callback.\n", vpi_get_str(vpiName, obj));
+		  return 0;
+	    }
+
 	    vpip_put_value_event*put = new vpip_put_value_event;
 	    put->handle = obj;
-	    put->value = *vp;
+	    if (dynamic_cast<__vpiNamedEvent*>(obj)) {
+		  put->value.format = vpiIntVal;
+		  put->value.value.integer = 0;
+	    } else {
+		  assert(vp);
+		  put->value = *vp;
+	    }
 	      /* Since this is a scheduled put event we must copy any pointer
 	       * data to keep it available until the event is actually run. */
 	    switch (put->value.format) {
@@ -1130,6 +1150,13 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 	    put->flags = flags;
 	    schedule_generic(put, dly, false, true, true);
 	    return 0;
+      }
+
+      if (schedule_at_rosync()) {
+            fprintf(stderr, "VPI error: attempted to put a value to "
+			    "variable '%s' during a read-only synch "
+			    "callback.\n", vpi_get_str(vpiName, obj));
+            return 0;
       }
 
       obj->vpi_put_value(vp, flags);
@@ -1253,14 +1280,14 @@ vpiHandle vpi_handle_by_index(vpiHandle ref, PLI_INT32 idx)
 static vpiHandle find_name(const char *name, vpiHandle handle)
 {
       vpiHandle rtn = 0;
-      struct __vpiScope*ref = dynamic_cast<__vpiScope*>(handle);
+      __vpiScope*ref = dynamic_cast<__vpiScope*>(handle);
 
       /* check module names */
       if (!strcmp(name, vpi_get_str(vpiName, handle)))
 	    rtn = handle;
 
       /* brute force search for the name in all objects in this scope */
-      for (unsigned i = 0 ;  i < ref->nintern ;  i += 1) {
+      for (unsigned i = 0 ;  i < ref->intern.size() ;  i += 1) {
 	      /* The standard says that since a port does not have a full
 	       * name it cannot be found by name. Because of this we need
 	       * to skip ports here so the correct handle can be located. */

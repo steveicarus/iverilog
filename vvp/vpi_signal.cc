@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,6 +25,7 @@
 # include  "compile.h"
 # include  "vpi_priv.h"
 # include  "vvp_net_sig.h"
+# include  "vvp_island.h"
 # include  "schedule.h"
 # include  "statistics.h"
 # include  "config.h"
@@ -131,12 +132,22 @@ char *generic_get_str(int code, vpiHandle ref, const char *name, const char *ind
       return res;
 }
 
-static vpiHandle fill_in_net4(struct __vpiSignal*obj,
-			      const char*name, int msb, int lsb,
-			      bool signed_flag, vvp_net_t*node);
+static vpiHandle fill_in_net4(struct __vpiSignal*obj, __vpiScope*scope,
+                              const char*name, int msb, int lsb,
+                              bool signed_flag, vvp_net_t*node);
+
+static vpiHandle fill_in_var4(struct __vpiSignal*obj,
+                              const char*name, int msb, int lsb,
+                              bool signed_flag, vvp_net_t*node)
+{
+	// Variable declarations are always resolved immediately,
+	// so we can assume they belong in the current scope.
+      return fill_in_net4(obj, vpip_peek_current_scope(),
+			  name, msb, lsb, signed_flag, node);
+}
 
 /*
- * The standard formating/conversion routines.
+ * The standard formatting/conversion routines.
  * They work with full or partial signals.
  */
 
@@ -570,7 +581,7 @@ static int signal_get(int code, vpiHandle ref)
 	    return (rfp->msb.get_value() != rfp->lsb.get_value());
 
           case vpiAutomatic:
-            return (int) vpip_scope(rfp)->is_automatic;
+            return vpip_scope(rfp)->is_automatic() ? 1  : 0;
 
 #ifdef BR916_STOPGAP_FIX
           case _vpiFromThr:
@@ -580,7 +591,7 @@ static int signal_get(int code, vpiHandle ref)
 	    // This private property must return zero when undefined.
 	  case _vpiNexusId:
 	    if (rfp->msb.get_value() == rfp->lsb.get_value())
-		  return (int) (unsigned long) rfp->node;
+		  return (int) (uintptr_t) rfp->node;
 	    else
 		  return 0;
 
@@ -759,7 +770,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		    "value type %d not implemented."
 		    " Signal is %s in scope %s\n",
 		    (int)vp->format, vpi_get_str(vpiName, ref),
-		    vpip_scope(rfp)->name);
+		    vpip_scope(rfp)->scope_name());
 	    assert(0);
       }
 }
@@ -802,17 +813,22 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
       unsigned wid;
       struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
       assert(rfp);
+      vvp_net_ptr_t dest(rfp->node, 0);
+
+      bool net_flag = ref->get_type_code()==vpiNet;
 
 	/* If this is a release, then we are not really putting a
 	   value. Instead, issue a release "command" to the signal
-	   node to cause it to release a forced value. */
+	   node to cause it to release a forced value. Note that
+	   if this net is attached to an island, we need to rerun
+	   the calculations immediately so we can return the
+	   released value. */
       if (flags == vpiReleaseFlag) {
-	    vvp_net_fil_t*sig
-		  = reinterpret_cast<vvp_net_fil_t*>(rfp->node->fil);
-	    assert(sig);
-
-	    vvp_net_ptr_t ptr(rfp->node, 0);
-	    sig->release(ptr, false);
+	    assert(rfp->node->fil);
+	    rfp->node->fil->force_unlink();
+	    rfp->node->fil->release(dest, net_flag);
+	    rfp->node->fun->force_flag(true);
+	    signal_get_value(ref, vp);
 	    return ref;
       }
 
@@ -823,22 +839,16 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 	    ? (rfp->msb.get_value() - rfp->lsb.get_value() + 1)
 	    : (rfp->lsb.get_value() - rfp->msb.get_value() + 1);
 
-
       vvp_vector4_t val = vec4_from_vpi_value(vp, wid);
 
-	/* If this is a vpiForce, then instead of writing to the
-	   signal input port, we write to the special "force" port. */
-      int dest_port = 0;
-      if (flags == vpiForceFlag)
-	    dest_port = 2;
-
-	/* This is the destination that I'm going to poke into. Make
-	   it from the vvp_net_t pointer, and assume a write to
-	   port-0. This is the port where signals receive input. */
-      vvp_net_ptr_t destination (rfp->node, dest_port);
-
-      vvp_send_vec4(destination, val, vthread_get_wt_context());
-
+      if (flags == vpiForceFlag) {
+	    vvp_vector2_t mask (vvp_vector2_t::FILL1, wid);
+	    rfp->node->force_vec4(val, mask);
+      } else if (net_flag && !dynamic_cast<vvp_island_port*>(rfp->node->fun)) {
+	    rfp->node->send_vec4(val, vthread_get_wt_context());
+      } else {
+	    vvp_send_vec4(dest, val, vthread_get_wt_context());
+      }
       return ref;
 }
 
@@ -851,7 +861,7 @@ vvp_vector4_t vec4_from_vpi_value(s_vpi_value*vp, unsigned wid)
 	  case vpiIntVal: {
 		long vpi_val = vp->value.integer;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      vvp_bit4_t bit = vpi_val&1 ? BIT4_1 : BIT4_0;
+		      vvp_bit4_t bit = (vpi_val & 1) ? BIT4_1 : BIT4_0;
 		      val.set_bit(idx, bit);
 		      vpi_val >>= 1;
 		}
@@ -972,7 +982,7 @@ struct signal_longint : public __vpiSignal {
 vpiHandle vpip_make_int4(const char*name, int msb, int lsb, vvp_net_t*vec)
 {
       __vpiSignal*obj = new signal_integer;
-      return fill_in_net4(obj, name, msb, lsb, true, vec);
+      return fill_in_var4(obj, name, msb, lsb, true, vec);
 }
 
 /*
@@ -1011,7 +1021,7 @@ vpiHandle vpip_make_int2(const char*name, int msb, int lsb, bool signed_flag,
 	    }
       }
 
-      return fill_in_net4(obj, name, msb, lsb, signed_flag, vec);
+      return fill_in_var4(obj, name, msb, lsb, signed_flag, vec);
 }
 
 /*
@@ -1021,7 +1031,7 @@ vpiHandle vpip_make_var4(const char*name, int msb, int lsb,
 			bool signed_flag, vvp_net_t*vec)
 {
       __vpiSignal*obj = new signal_reg;
-      return fill_in_net4(obj, name, msb, lsb, signed_flag, vec);
+      return fill_in_var4(obj, name, msb, lsb, signed_flag, vec);
 }
 
 #ifdef CHECK_WITH_VALGRIND
@@ -1040,11 +1050,11 @@ struct vpiSignal_plug {
 
 void* __vpiSignal::operator new(size_t siz)
 {
-      assert(siz == sizeof(struct vpiSignal_plug)
 #ifdef CHECK_WITH_VALGRIND
-                    - sizeof(struct vpiSignal_plug *)
+      assert(siz == sizeof(struct vpiSignal_plug) - sizeof(struct vpiSignal_plug *));
+#else
+      assert(siz == sizeof(struct vpiSignal_plug));
 #endif
-            );
       static struct vpiSignal_plug*alloc_array = 0;
       static unsigned alloc_index = 0;
       const unsigned alloc_count = 512;
@@ -1116,13 +1126,13 @@ void signal_pool_delete()
  * The name is the PLI name for the object. If it is an array it is
  * <name>[<index>].
  */
-static vpiHandle fill_in_net4(struct __vpiSignal*obj,
+static vpiHandle fill_in_net4(struct __vpiSignal*obj, __vpiScope*scope,
 			      const char*name, int msb, int lsb,
 			      bool signed_flag, vvp_net_t*node)
 {
       obj->id.name = name? vpip_name_string(name) : 0;
-      obj->msb = msb;
-      obj->lsb = lsb;
+      obj->msb = __vpiDecConst(msb);
+      obj->lsb = __vpiDecConst(lsb);
       obj->signed_flag = signed_flag? 1 : 0;
       obj->is_netarray = 0;
       obj->node = node;
@@ -1130,18 +1140,19 @@ static vpiHandle fill_in_net4(struct __vpiSignal*obj,
 	// Place this object within a scope. If this object is
 	// attached to an array, then this value will be replaced with
 	// the handle to the parent.
-      obj->within.scope = vpip_peek_current_scope();
+      obj->within.scope = scope;
 
       count_vpi_nets += 1;
 
       return obj;
 }
 
-vpiHandle vpip_make_net4(const char*name, int msb, int lsb,
+vpiHandle vpip_make_net4(__vpiScope*scope,
+			 const char*name, int msb, int lsb,
 			 bool signed_flag, vvp_net_t*node)
 {
       struct __vpiSignal*obj = new signal_net;
-      return fill_in_net4(obj, name, msb, lsb, signed_flag, node);
+      return fill_in_net4(obj, scope, name, msb, lsb, signed_flag, node);
 }
 
 static int PV_get_base(struct __vpiPV*rfp)
@@ -1189,6 +1200,7 @@ static int PV_get(int code, vpiHandle ref)
 
 	case vpiLeftRange:
             rval += rfp->width - 1;
+	    // fallthrough
 	case vpiRightRange:
 	    rval += vpi_get(vpiRightRange, rfp->parent) + PV_get_base(rfp);
 	    return rval;
@@ -1296,7 +1308,7 @@ static void PV_get_value(vpiHandle ref, p_vpi_value vp)
       }
 }
 
-static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
+static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int flags)
 {
       struct __vpiPV*rfp = dynamic_cast<__vpiPV*>(ref);
       assert(rfp);
@@ -1309,7 +1321,10 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
       if (base >= (signed) sig_size) return 0;
       if (base + (signed) width < 0) return 0;
 
-      vvp_vector4_t val = vec4_from_vpi_value(vp, width);
+      vvp_vector4_t val;
+      if (flags != vpiReleaseFlag) {
+	    val = vec4_from_vpi_value(vp, width);
+      }
 
 	/*
 	 * If the base is less than zero then trim off any unneeded
@@ -1317,7 +1332,9 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
 	 */
       if (base < 0) {
 	    width += base;
-	    val = val.subvalue(-base, width);
+	    if (flags != vpiReleaseFlag) {
+		  val = val.subvalue(-base, width);
+	    }
 	    base = 0;
       }
 
@@ -1327,20 +1344,71 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
 	 */
       if (base+width > sig_size) {
 	    width = sig_size - base;
-	    val = val.subvalue(0, width);
+	    if (flags != vpiReleaseFlag) {
+		  val = val.subvalue(0, width);
+	    }
       }
 
+      assert(rfp->parent);
+      bool net_flag = rfp->parent->get_type_code()==vpiNet;
       bool full_sig = base == 0 && width == sig_size;
 
       vvp_net_ptr_t dest(rfp->net, 0);
 
-      if (full_sig) {
-	    vvp_send_vec4(dest, val, vthread_get_wt_context());
-      } else {
-	    vvp_send_vec4_pv(dest, val, base, width, sig_size,
-                             vthread_get_wt_context());
+	/* If this is a release, then we are not really putting a
+	   value. Instead, issue a release "command" to the signal
+	   node to cause it to release a forced value.  Note that
+	   if this net is attached to an island, we need to rerun
+	   the calculations immediately so we can return the
+	   released value.*/
+      if (flags == vpiReleaseFlag) {
+	    assert(rfp->net->fil);
+	      // XXXX Can't really do this if this is a partial release?
+	    rfp->net->fil->force_unlink();
+	    if (full_sig) {
+		  rfp->net->fil->release(dest, net_flag);
+	    } else {
+		  rfp->net->fil->release_pv(dest, base, width, net_flag);
+	    }
+	    rfp->net->fun->force_flag(true);
+	    PV_get_value(ref, vp);
+	    return ref;
       }
 
+      if (flags == vpiForceFlag) {
+	    if (full_sig) {
+		  vvp_vector2_t mask (vvp_vector2_t::FILL1, sig_size);
+		  rfp->net->force_vec4(val, mask);
+	    } else {
+		  vvp_vector2_t mask (vvp_vector2_t::FILL0, sig_size);
+		  for (unsigned idx = 0 ; idx < width ; idx += 1)
+		        mask.set_bit(base+idx, 1);
+
+		  vvp_vector4_t tmp (sig_size, BIT4_Z);
+
+		    // vvp_net_t::force_vec4 propagates all the bits of the
+		    // forced vector value, regardless of the mask. This
+		    // ensures the unforced bits retain their current value.
+		  sig->vec4_value(tmp);
+
+		  tmp.set_vec(base, val);
+		  rfp->net->force_vec4(tmp, mask);
+	    }
+      } else if (net_flag && !dynamic_cast<vvp_island_port*>(rfp->net->fun)) {
+	    if (full_sig) {
+		  rfp->net->send_vec4(val, vthread_get_wt_context());
+	    } else {
+		  rfp->net->send_vec4_pv(val, base, width, sig_size,
+		                         vthread_get_wt_context());
+	    }
+      } else {
+	    if (full_sig) {
+		  vvp_send_vec4(dest, val, vthread_get_wt_context());
+	    } else {
+		  vvp_send_vec4_pv(dest, val, base, width, sig_size,
+	                           vthread_get_wt_context());
+	    }
+      }
       return 0;
 }
 
@@ -1352,6 +1420,9 @@ static vpiHandle PV_get_handle(int code, vpiHandle ref)
       switch (code) {
 	  case vpiParent:
 	    return rfp->parent;
+
+	  case vpiScope:
+	    return vpi_handle(vpiScope, rfp->parent);
 
 	  case vpiModule:
 	    return vpi_handle(vpiModule, rfp->parent);

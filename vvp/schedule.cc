@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,9 +17,11 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+# include  "config.h"
 # include  "schedule.h"
 # include  "vthread.h"
 # include  "vpi_priv.h"
+# include  "vvp_net_sig.h"
 # include  "slab.h"
 # include  "compile.h"
 # include  <new>
@@ -27,8 +29,11 @@
 # include  <csignal>
 # include  <cstdlib>
 # include  <cassert>
-
 # include  <iostream>
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+# include  "ivl_alloc.h"
+#endif
 
 unsigned long count_assign_events = 0;
 unsigned long count_gen_events = 0;
@@ -71,6 +76,7 @@ struct event_time_s {
 	    count_time_events += 1;
 	    start = 0;
 	    active = 0;
+	    inactive = 0;
 	    nbassign = 0;
 	    rwsync = 0;
 	    rosync = 0;
@@ -81,6 +87,7 @@ struct event_time_s {
 
       struct event_s*start;
       struct event_s*active;
+      struct event_s*inactive;
       struct event_s*nbassign;
       struct event_s*rwsync;
       struct event_s*rosync;
@@ -121,7 +128,7 @@ void vthread_event_s::run_run(void)
 
 void vthread_event_s::single_step_display(void)
 {
-      struct __vpiScope*scope = vthread_scope(thr);
+      __vpiScope*scope = vthread_scope(thr);
       cerr << "vthread_event: Resume thread"
 	   << " scope=" << scope->vpi_get_str(vpiFullName)
 	   << endl;
@@ -154,14 +161,14 @@ void del_thr_event_s::run_run(void)
 
 void del_thr_event_s::single_step_display(void)
 {
-      struct __vpiScope*scope = vthread_scope(thr);
+      __vpiScope*scope = vthread_scope(thr);
       cerr << "del_thr_event: Reap completed thread"
 	   << " scope=" << scope->vpi_get_str(vpiFullName) << endl;
 }
 
 struct assign_vector4_event_s  : public event_s {
 	/* The default constructor. */
-      assign_vector4_event_s(const vvp_vector4_t&that) : val(that) {
+      explicit assign_vector4_event_s(const vvp_vector4_t&that) : val(that) {
 	    base = 0;
 	    vwid = 0;
       }
@@ -319,13 +326,85 @@ void assign_array_word_s::operator delete(void*ptr)
 
 unsigned long count_assign_aword_pool(void) { return array_w_heap.pool; }
 
+struct force_vector4_event_s  : public event_s {
+	/* The default constructor. */
+      explicit force_vector4_event_s(const vvp_vector4_t&that): val(that) {
+	    net = NULL;
+	    base = 0;
+	    vwid = 0;
+      }
+	/* Where to do the force. */
+      vvp_net_t*net;
+	/* Value to force. */
+      vvp_vector4_t val;
+	/* Offset of the part into the destination. */
+      unsigned base;
+	/* Width of the destination vector. */
+      unsigned vwid;
+
+      void run_run(void);
+      void single_step_display(void);
+
+      static void* operator new(size_t);
+      static void operator delete(void*);
+};
+
+void force_vector4_event_s::run_run(void)
+{
+      count_assign_events += 1;
+
+      unsigned wid = val.size();
+      if ((base + wid) > vwid)
+	    wid = vwid - base;
+
+	// Make a mask of which bits are to be forced, 0 for unforced
+	// bits and 1 for forced bits.
+      vvp_vector2_t mask (vvp_vector2_t::FILL0, vwid);
+      for (unsigned idx = 0 ; idx < wid ; idx += 1)
+	    mask.set_bit(base+idx, 1);
+
+      vvp_vector4_t tmp (vwid, BIT4_Z);
+
+	// vvp_net_t::force_vec4 propagates all the bits of the
+	// forced vector value, regardless of the mask. This
+	// ensures the unforced bits retain their current value.
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(net->fil);
+      assert(sig);
+      sig->vec4_value(tmp);
+
+      tmp.set_vec(base, val);
+      net->force_vec4(tmp, mask);
+}
+
+void force_vector4_event_s::single_step_display(void)
+{
+      cerr << "force_vector4_event: Force val=" << val
+	   << ", vwid=" << vwid << ", base=" << base << endl;
+}
+
+static const size_t FORCE4_CHUNK_COUNT = 8192 / sizeof(struct force_vector4_event_s);
+static slab_t<sizeof(force_vector4_event_s),FORCE4_CHUNK_COUNT> force4_heap;
+
+inline void* force_vector4_event_s::operator new(size_t size)
+{
+      assert(size == sizeof(force_vector4_event_s));
+      return force4_heap.alloc_slab();
+}
+
+void force_vector4_event_s::operator delete(void*dptr)
+{
+      force4_heap.free_slab(dptr);
+}
+
+unsigned long count_force4_pool(void) { return force4_heap.pool; }
+
 /*
  * This class supports the propagation of vec4 outputs from a
  * vvp_net_t object.
  */
 struct propagate_vector4_event_s : public event_s {
 	/* The default constructor. */
-      propagate_vector4_event_s(const vvp_vector4_t&that) : val(that) {
+      explicit propagate_vector4_event_s(const vvp_vector4_t&that) : val(that) {
 	    net = NULL;
       }
 	/* A constructor that makes the val directly. */
@@ -527,21 +606,40 @@ bool schedule_stopped(void)
 
 /*
  * These are the signal handling infrastructure. The SIGINT signal
- * leads to an implicit $stop.
+ * leads to an implicit $stop. The SIGHUP and SIGTERM signals lead
+ * to an implicit $finish.
  */
-extern "C" void signals_handler(int)
+extern bool stop_is_finish;
+
+extern "C" void signals_handler(int signum)
 {
+#ifdef __MINGW32__
+	// Windows implements the original UNIX semantics for signal,
+	// so we have to re-establish the signal handler each time a
+	// signal is caught.
+      signal(signum, &signals_handler);
+#endif
+      if (signum != SIGINT)
+	    stop_is_finish = true;
       schedule_stopped_flag = true;
 }
 
 static void signals_capture(void)
 {
-      signal(SIGINT, &signals_handler);
+#ifndef __MINGW32__
+      signal(SIGHUP,  &signals_handler);
+#endif
+      signal(SIGINT,  &signals_handler);
+      signal(SIGTERM, &signals_handler);
 }
 
 static void signals_revert(void)
 {
-      signal(SIGINT, SIG_DFL);
+#ifndef __MINGW32__
+      signal(SIGHUP,  SIG_DFL);
+#endif
+      signal(SIGINT,  SIG_DFL);
+      signal(SIGTERM, SIG_DFL);
 }
 
 /*
@@ -578,14 +676,13 @@ static void schedule_final_event(struct event_s*cur)
  * itself, and the structure is placed in the right place in the
  * queue.
  */
-typedef enum event_queue_e { SEQ_START, SEQ_ACTIVE, SEQ_NBASSIGN,
+typedef enum event_queue_e { SEQ_START, SEQ_ACTIVE, SEQ_INACTIVE, SEQ_NBASSIGN,
 			     SEQ_RWSYNC, SEQ_ROSYNC, DEL_THREAD } event_queue_t;
 
 static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 			    event_queue_t select_queue)
 {
       cur->next = cur;
-
       struct event_time_s*ctim = sched_list;
 
       if (sched_list == 0) {
@@ -642,77 +739,46 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 	   receive the event at hand. Put the event in to the
 	   appropriate list for the kind of assign we have at hand. */
 
-      switch (select_queue) {
+      struct event_s** q = 0;
 
+      switch (select_queue) {
 	  case SEQ_START:
-	    if (ctim->start == 0) {
-		  ctim->start = cur;
-	    } else {
-		  cur->next = ctim->active->next;
-		  ctim->active->next = cur;
-		  ctim->active = cur;
-	    }
+	    q = &ctim->start;
 	    break;
 
 	  case SEQ_ACTIVE:
-	    if (ctim->active == 0) {
-		  ctim->active = cur;
+	    q = &ctim->active;
+	    break;
 
-	    } else {
-		    /* Put the cur event on the end of the active list. */
-		  cur->next = ctim->active->next;
-		  ctim->active->next = cur;
-		  ctim->active = cur;
-	    }
+	  case SEQ_INACTIVE:
+	    assert(delay == 0);
+	    q = &ctim->inactive;
 	    break;
 
 	  case SEQ_NBASSIGN:
-	    if (ctim->nbassign == 0) {
-		  ctim->nbassign = cur;
-
-	    } else {
-		    /* Put the cur event on the end of the active list. */
-		  cur->next = ctim->nbassign->next;
-		  ctim->nbassign->next = cur;
-		  ctim->nbassign = cur;
-	    }
+	    q = &ctim->nbassign;
 	    break;
 
 	  case SEQ_RWSYNC:
-	    if (ctim->rwsync == 0) {
-		  ctim->rwsync = cur;
-
-	    } else {
-		    /* Put the cur event on the end of the active list. */
-		  cur->next = ctim->rwsync->next;
-		  ctim->rwsync->next = cur;
-		  ctim->rwsync = cur;
-	    }
+	    q = &ctim->rwsync;
 	    break;
 
 	  case SEQ_ROSYNC:
-	    if (ctim->rosync == 0) {
-		  ctim->rosync = cur;
-
-	    } else {
-		    /* Put the cur event on the end of the active list. */
-		  cur->next = ctim->rosync->next;
-		  ctim->rosync->next = cur;
-		  ctim->rosync = cur;
-	    }
+	    q = &ctim->rosync;
 	    break;
 
 	  case DEL_THREAD:
-	    if (ctim->del_thr == 0) {
-		  ctim->del_thr = cur;
-
-	    } else {
-		    /* Put the cur event on the end of the active list. */
-		  cur->next = ctim->del_thr->next;
-		  ctim->del_thr->next = cur;
-		  ctim->del_thr = cur;
-	    }
+	    q = &ctim->del_thr;
 	    break;
+      }
+
+      if (q) {
+	    if (*q) {
+		  /* Put the cur event on the end of the queue. */
+		  cur->next = (*q)->next;
+		  (*q)->next = cur;
+	    }
+	    *q = cur;
       }
 }
 
@@ -754,6 +820,33 @@ void schedule_vthread(vthread_t thr, vvp_time64_t delay, bool push_flag)
       }
 }
 
+void schedule_t0_trigger(vvp_net_ptr_t ptr)
+{
+      vvp_vector4_t bit (1, BIT4_X);
+      struct assign_vector4_event_s*cur = new struct assign_vector4_event_s(bit);
+      cur->ptr = ptr;
+      schedule_event_(cur, 0, SEQ_INACTIVE);
+}
+
+void schedule_inactive(vthread_t thr)
+{
+      struct vthread_event_s*cur = new vthread_event_s;
+
+      cur->thr = thr;
+      vthread_mark_scheduled(thr);
+      schedule_event_(cur, 0, SEQ_INACTIVE);
+}
+
+void schedule_init_vthread(vthread_t thr)
+{
+      struct vthread_event_s*cur = new vthread_event_s;
+
+      cur->thr = thr;
+      vthread_mark_scheduled(thr);
+
+      schedule_init_event(cur);
+}
+
 void schedule_final_vthread(vthread_t thr)
 {
       struct vthread_event_s*cur = new vthread_event_s;
@@ -771,6 +864,18 @@ void schedule_assign_vector(vvp_net_ptr_t ptr,
 {
       struct assign_vector4_event_s*cur = new struct assign_vector4_event_s(bit);
       cur->ptr = ptr;
+      cur->base = base;
+      cur->vwid = vwid;
+      schedule_event_(cur, delay, SEQ_NBASSIGN);
+}
+
+void schedule_force_vector(vvp_net_t*net,
+			    unsigned base, unsigned vwid,
+			    const vvp_vector4_t&bit,
+			    vvp_time64_t delay)
+{
+      struct force_vector4_event_s*cur = new struct force_vector4_event_s(bit);
+      cur->net = net;
       cur->base = base;
       cur->vwid = vwid;
       schedule_event_(cur, delay, SEQ_NBASSIGN);
@@ -933,6 +1038,10 @@ extern void vpiStartOfSim();
 extern void vpiPostsim();
 extern void vpiNextSimTime(void);
 
+static bool sim_at_rosync = false;
+bool schedule_at_rosync(void)
+{ return sim_at_rosync; }
+
 /*
  * The scheduler uses this function to drain the rosync events of the
  * current time. The ctim object is still in the event queue, because
@@ -945,6 +1054,7 @@ extern void vpiNextSimTime(void);
  */
 static void run_rosync(struct event_time_s*ctim)
 {
+      sim_at_rosync = true;
       while (ctim->rosync) {
 	    struct event_s*cur = ctim->rosync->next;
 	    if (cur->next == cur) {
@@ -956,6 +1066,7 @@ static void run_rosync(struct event_time_s*ctim)
 	    cur->run_run();
 	    delete cur;
       }
+      sim_at_rosync = false;
 
       while (ctim->del_thr) {
 	    struct event_s*cur = ctim->del_thr->next;
@@ -969,7 +1080,7 @@ static void run_rosync(struct event_time_s*ctim)
 	    delete cur;
       }
 
-      if (ctim->active || ctim->nbassign || ctim->rwsync) {
+      if (ctim->active || ctim->inactive || ctim->nbassign || ctim->rwsync) {
 	    cerr << "SCHEDULER ERROR: read-only sync events "
 		 << "created RW events!" << endl;
       }
@@ -1070,21 +1181,26 @@ void schedule_simulate(void)
 		 queues. If there are not events at all, then release
 		 the event_time object. */
 	    if (ctim->active == 0) {
-		  ctim->active = ctim->nbassign;
-		  ctim->nbassign = 0;
+		  ctim->active = ctim->inactive;
+		  ctim->inactive = 0;
 
 		  if (ctim->active == 0) {
-			ctim->active = ctim->rwsync;
-			ctim->rwsync = 0;
+			ctim->active = ctim->nbassign;
+			ctim->nbassign = 0;
 
-			  /* If out of rw events, then run the rosync
-			     events and delete this time step. This also
-			     deletes threads as needed. */
 			if (ctim->active == 0) {
-			      run_rosync(ctim);
-			      sched_list = ctim->next;
-			      delete ctim;
-			      continue;
+			      ctim->active = ctim->rwsync;
+			      ctim->rwsync = 0;
+
+				/* If out of rw events, then run the rosync
+				   events and delete this time step. This also
+				   deletes threads as needed. */
+			      if (ctim->active == 0) {
+				    run_rosync(ctim);
+				    sched_list = ctim->next;
+				    delete ctim;
+				    continue;
+			      }
 			}
 		  }
 	    }
@@ -1131,4 +1247,21 @@ void schedule_simulate(void)
 
       // Execute post-simulation callbacks
       vpiPostsim();
+#ifdef CHECK_WITH_VALGRIND
+      schedule_delete();
+#endif
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void schedule_delete(void)
+{
+      vthread_event_heap.delete_pool();
+      assign4_heap.delete_pool();
+      assign8_heap.delete_pool();
+      assignr_heap.delete_pool();
+      array_w_heap.delete_pool();
+      array_r_w_heap.delete_pool();
+      generic_event_heap.delete_pool();
+      event_time_heap.delete_pool();
+}
+#endif

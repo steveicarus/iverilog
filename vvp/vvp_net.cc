@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -319,7 +319,7 @@ vvp_net_fil_t::prop_t vvp_net_fil_t::filter_object(vvp_object_t&)
       return PROP;
 }
 
-void vvp_net_fil_t::force_mask(vvp_vector2_t mask)
+void vvp_net_fil_t::force_mask(const vvp_vector2_t&mask)
 {
       if (force_mask_.size() == 0)
 	    force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, mask.size());
@@ -334,7 +334,7 @@ void vvp_net_fil_t::force_mask(vvp_vector2_t mask)
       }
 }
 
-void vvp_net_fil_t::release_mask(vvp_vector2_t mask)
+void vvp_net_fil_t::release_mask(const vvp_vector2_t&mask)
 {
       if (force_mask_.size() == 0)
 	    return;
@@ -987,8 +987,8 @@ void vvp_vector4_t::resize(unsigned newsize, vvp_bit4_t pad_bit)
 		    // no need for re-allocation so we are done now.
 		  if (newsize > size_) {
 			if (unsigned fill = size_ % BITS_PER_WORD) {
-			      abits_ptr_[cnt-1] &= ~((-1L) << fill);
-			      bbits_ptr_[cnt-1] &= ~((-1L) << fill);
+			      abits_ptr_[cnt-1] &= ~((-1UL) << fill);
+			      bbits_ptr_[cnt-1] &= ~((-1UL) << fill);
 			      abits_ptr_[cnt-1] |= word_pad_abits << fill;
 			      bbits_ptr_[cnt-1] |= word_pad_bbits << fill;
 			}
@@ -1018,9 +1018,9 @@ void vvp_vector4_t::resize(unsigned newsize, vvp_bit4_t pad_bit)
 
 	    if (newsize > size_) {
 		  if (unsigned fill = size_ % BITS_PER_WORD) {
-			newbits[cnt-1] &= ~((-1L) << fill);
+			newbits[cnt-1] &= ~((-1UL) << fill);
 			newbits[cnt-1] |= word_pad_abits << fill;
-			newbits[newcnt+cnt-1] &= ~((-1L) << fill);
+			newbits[newcnt+cnt-1] &= ~((-1UL) << fill);
 			newbits[newcnt+cnt-1] |= word_pad_bbits << fill;
 		  }
 		  for (unsigned idx = cnt ;  idx < newcnt ;  idx += 1)
@@ -1043,8 +1043,8 @@ void vvp_vector4_t::resize(unsigned newsize, vvp_bit4_t pad_bit)
 	    }
 
 	    if (newsize > size_) {
-		  abits_val_ &= ~((-1L) << size_);
-		  bbits_val_ &= ~((-1L) << size_);
+		  abits_val_ &= ~((-1UL) << size_);
+		  bbits_val_ &= ~((-1UL) << size_);
 		  abits_val_ |= word_pad_abits << size_;
 		  bbits_val_ |= word_pad_bbits << size_;
 	    }
@@ -2018,7 +2018,7 @@ template <class INT>bool vector4_to_value(const vvp_vector4_t&vec, INT&val,
 
       if (is_signed && vec.value(vec.size()-1) == BIT4_1) {
 	    if (vec.size() < 8*sizeof(val))
-		  res |= (~static_cast<INT>(0)) << vec.size();
+		  res |= static_cast<INT>(-1ULL << vec.size());
       }
 
       val = res;
@@ -3249,6 +3249,31 @@ void vvp_net_fun_t::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&,
       assert(0);
 }
 
+void vvp_net_fun_t::recv_vec4_pv_(vvp_net_ptr_t p, const vvp_vector4_t&bit,
+                                  unsigned base, unsigned wid, unsigned vwid,
+                                  vvp_context_t)
+{
+	// The majority of functors don't normally expect to receive part
+	// values, because the primary operands of an expression will be
+	// extended to the expression width. But in the case that a primary
+	// operand is a wire that is only partly driven by a single driver,
+	// the part value driven onto the wire propagates directly to the
+	// inputs of any functors connected to that wire. In this case we
+	// know that the remaining bits are undriven, so can simply build
+	// the full width value from the part we have received.
+	//
+	// Note that this case is almost certainly a bug in the user's
+	// code, but we still need to handle it correctly. See GitHub
+	// issue #99 and br_gh99*.v in the test suite for examples.
+
+      assert(bit.size() == wid);
+      assert(base + wid <= vwid);
+
+      vvp_vector4_t tmp(vwid, BIT4_Z);
+      tmp.set_vec(base, bit);
+      recv_vec4(p, tmp, 0);
+}
+
 void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bit,
                                  unsigned base, unsigned wid, unsigned vwid,
                                  vvp_context_t)
@@ -3262,6 +3287,19 @@ void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bit,
 void vvp_net_fun_t::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 {
       recv_vec4(port, reduce4(bit), 0);
+}
+
+void vvp_net_fun_t::recv_vec8_pv_(vvp_net_ptr_t p, const vvp_vector8_t&bit,
+				  unsigned base, unsigned wid, unsigned vwid)
+{
+	// This is the strength-aware version of recv_vec4_pv_.
+
+      assert(bit.size() == wid);
+      assert(base + wid <= vwid);
+
+      vvp_vector8_t tmp(vwid);
+      tmp.set_vec(base, bit);
+      recv_vec8(p, tmp);
 }
 
 void vvp_net_fun_t::recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
@@ -3305,7 +3343,7 @@ void vvp_net_fun_t::recv_object(vvp_net_ptr_t, vvp_object_t, vvp_context_t)
       assert(0);
 }
 
-void vvp_net_fun_t::force_flag(void)
+void vvp_net_fun_t::force_flag(bool)
 {
 }
 
@@ -3331,6 +3369,12 @@ void vvp_fun_drive::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       port.ptr()->send_vec8(vvp_vector8_t(bit, drive0_, drive1_));
 }
 
+void vvp_fun_drive::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+				 unsigned base, unsigned wid, unsigned vwid,
+				 vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+}
 
 /* **** vvp_wide_fun_* methods **** */
 
@@ -3377,7 +3421,8 @@ unsigned vvp_wide_fun_core::port_count() const
 vvp_vector4_t& vvp_wide_fun_core::value(unsigned idx)
 {
       assert(idx < nports_);
-      assert(port_values_);
+      if (port_values_ == 0)
+	    port_values_ = new vvp_vector4_t [nports_];
       return port_values_[idx];
 }
 
@@ -3424,6 +3469,13 @@ void vvp_wide_fun_t::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 {
       unsigned pidx = port_base_ + port.port();
       core_->dispatch_vec4_from_input_(pidx, bit);
+}
+
+void vvp_wide_fun_t::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+				  unsigned base, unsigned wid, unsigned vwid,
+				  vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
 }
 
 void vvp_wide_fun_t::recv_real(vvp_net_ptr_t port, double bit,
@@ -3585,10 +3637,10 @@ vvp_scalar_t fully_featured_resolv_(vvp_scalar_t a, vvp_scalar_t b)
 	   has an even wider ambiguity. */
 
       unsigned tmp = 0;
-      int sv1a = a.value_&0x80 ? STREN1(a.value_) : - STREN1(a.value_);
-      int sv0a = a.value_&0x08 ? STREN0(a.value_) : - STREN0(a.value_);
-      int sv1b = b.value_&0x80 ? STREN1(b.value_) : - STREN1(b.value_);
-      int sv0b = b.value_&0x08 ? STREN0(b.value_) : - STREN0(b.value_);
+      int sv1a = (a.value_ & 0x80) ? STREN1(a.value_) : - STREN1(a.value_);
+      int sv0a = (a.value_ & 0x08) ? STREN0(a.value_) : - STREN0(a.value_);
+      int sv1b = (b.value_ & 0x80) ? STREN1(b.value_) : - STREN1(b.value_);
+      int sv0b = (b.value_ & 0x08) ? STREN0(b.value_) : - STREN0(b.value_);
 
       int sv1 = sv1a;
       int sv0 = sv0a;
@@ -3634,31 +3686,28 @@ vvp_scalar_t fully_featured_resolv_(vvp_scalar_t a, vvp_scalar_t b)
       return res;
 }
 
-vvp_vector8_t resistive_reduction(const vvp_vector8_t&that)
-{
-      static unsigned rstr[8] = {
-	    0, /* Hi-Z --> Hi-Z */
-	    1, /* Small capacitance  --> Small capacitance */
-	    1, /* Medium capacitance --> Small capacitance */
-	    2, /* Weak drive         --> Medium capacitance */
-	    2, /* Large capacitance  --> Medium capacitance */
-	    3, /* Pull drive         --> Weak drive */
-	    5, /* Strong drive       --> Pull drive */
-	    5  /* Supply drive       --> Pull drive */
-      };
-
-      vvp_vector8_t res (that.size());
-
-      for (unsigned idx = 0 ;  idx < res.size() ;  idx += 1) {
-	    vvp_scalar_t bit = that.value(idx);
-	    bit = vvp_scalar_t(bit.value(),
-			       rstr[bit.strength0()],
-			       rstr[bit.strength1()]);
-	    res.set_bit(idx, bit);
+unsigned vvp_switch_strength_map[2][8] = {
+      {  // non-resistive
+	    0, /* High impedance   --> High impedance   */
+	    1, /* Small capacitor  --> Small capacitor  */
+	    2, /* Medium capacitor --> Medium capacitor */
+	    3, /* Weak drive       --> Weak drive       */
+	    4, /* Large capacitor  --> Large capacitor  */
+	    5, /* Pull drive       --> Pull drive       */
+	    6, /* Strong drive     --> Strong drive     */
+	    6  /* Supply drive     --> Strong drive     */
+      },
+      {  // resistive
+	    0, /* High impedance   --> High impedance   */
+	    1, /* Small capacitor  --> Small capacitor  */
+	    1, /* Medium capacitor --> Small capacitor  */
+	    2, /* Weak drive       --> Medium capacitor */
+	    2, /* Large capacitor  --> Medium capacitor */
+	    3, /* Pull drive       --> Weak drive       */
+	    5, /* Strong drive     --> Pull drive       */
+	    5  /* Supply drive     --> Pull drive       */
       }
-
-      return res;
-}
+};
 
 vvp_vector4_t reduce4(const vvp_vector8_t&that)
 {

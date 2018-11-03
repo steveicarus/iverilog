@@ -50,11 +50,14 @@ int Entity::emit(ostream&out)
 		  const InterfacePort*curp = *cur;
 		  if (cur != parms_.begin())
 			out << ", ";
-		  out << "parameter \\" << curp->name << " ";
+		  out << "parameter \\" << curp->name << " = ";
 		  if(curp->expr) {
-			out << "= ";
 			errors += curp->expr->emit(out, this, 0);
-                  }
+                  } else {
+			// Unlike VHDL, Verilog module parameter port list
+			// elements are always assignments.  Fill in the blank.
+			out << "1'bx";
+		  }
 	    }
 	    out << ") ";
       }
@@ -74,17 +77,21 @@ int Entity::emit(ostream&out)
 
 		  switch (port->mode) {
 		      case PORT_NONE: // Should not happen
+			cerr << get_fileline() << ": error: Undefined port direction." << endl;
 			out << "NO_PORT " << port->name;
 			break;
 		      case PORT_IN:
 			out << "input ";
-			errors += decl.emit(out, port->name);
 			break;
 		      case PORT_OUT:
 			out << "output ";
-			errors += decl.emit(out, port->name);
+			break;
+		      case PORT_INOUT:
+			out << "inout ";
 			break;
 		  }
+
+		  errors += decl.emit(out, port->name);
 	    }
 	    cout << ")";
       }

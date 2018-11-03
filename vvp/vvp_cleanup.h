@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_cleanup_H
 #define IVL_vvp_cleanup_H
 /*
- * Copyright (c) 2009-2014 Cary R. (cygcary@yahoo.com)
+ * Copyright (c) 2009-2015 Cary R. (cygcary@yahoo.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,6 +33,7 @@ extern void vpi_mcd_delete(void);
 extern void load_module_delete(void);
 extern void modpath_delete(void);
 extern void root_table_delete(void);
+extern void schedule_delete(void);
 extern void signal_pool_delete(void);
 extern void simulator_cb_delete(void);
 extern void udp_defns_delete(void);
@@ -47,7 +48,7 @@ extern void PV_delete(class __vpiHandle *item);
 extern void class_delete(class __vpiHandle *item);
 extern void class_def_delete(class_type *item);
 extern void constant_delete(class __vpiHandle *item);
-extern void contexts_delete(struct __vpiScope *scope);
+extern void contexts_delete(__vpiScope *scope);
 extern void darray_delete(class __vpiHandle *item);
 extern void queue_delete(class __vpiHandle *item);
 extern void enum_delete(class __vpiHandle *item);
@@ -62,7 +63,7 @@ extern void thread_vthr_delete(class __vpiHandle *item);
 extern void thread_word_delete(class __vpiHandle *item);
 extern void vpi_call_delete(class __vpiHandle *item);
 extern void exec_ufunc_delete(vvp_code_t euf_code);
-extern void vthreads_delete(struct __vpiScope*scope);
+extern void vthreads_delete(__vpiScope*scope);
 extern void vvp_net_delete(vvp_net_t *item);
 
 

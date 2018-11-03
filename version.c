@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2009-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -29,13 +29,10 @@ static void run_string(const char*txt)
 	    if (cp[0] == '%' && cp[1] != 0) {
 		  switch (cp[1]) {
 		      case 'M':
-			fprintf(stdout, "%u", VERSION_MAJOR1);
-			break;
-		      case 'm':
-			fprintf(stdout, "%u", VERSION_MAJOR2);
+			fprintf(stdout, "%d", VERSION_MAJOR);
 			break;
 		      case 'n':
-			fprintf(stdout, "%u", VERSION_MINOR);
+			fprintf(stdout, "%d", VERSION_MINOR);
 			break;
 		      case 'E':
 			fprintf(stdout, "%s", VERSION_EXTRA);

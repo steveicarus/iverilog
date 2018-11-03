@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -290,6 +290,16 @@ static unsigned is_netlist_signal(ivl_net_logic_t net, ivl_nexus_t nex)
       return rtn;
 }
 
+int signal_is_return_value(ivl_signal_t sig)
+{
+      ivl_scope_t sig_scope = ivl_signal_scope(sig);
+      if (ivl_scope_type(sig_scope) != IVL_SCT_FUNCTION)
+	    return 0;
+      if (strcmp(ivl_signal_basename(sig), ivl_scope_basename(sig_scope)) == 0)
+	    return 1;
+      return 0;
+}
+
 /*
  * This tests a bufz device against an output receiver, and determines
  * if the device can be skipped. If this function returns false, then a
@@ -447,6 +457,33 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	    msb = ivl_signal_width(sig) - 1;
 	    lsb = 0;
 	    break;
+      }
+
+	/* Special Case: If this variable is the return value of a function,
+	   then it need to exist as an actual variable. */
+      if ((ivl_signal_data_type(sig)==IVL_VT_REAL)
+	  && signal_is_return_value(sig)) {
+	    fprintf(vvp_out, "; Variable %s is REAL return value of scope S_%p\n",
+		    ivl_signal_basename(sig), ivl_signal_scope(sig));
+	    return;
+      }
+      if ((ivl_signal_data_type(sig)==IVL_VT_STRING)
+	  && signal_is_return_value(sig)) {
+	    fprintf(vvp_out, "; Variable %s is string return value of scope S_%p\n",
+		    ivl_signal_basename(sig), ivl_signal_scope(sig));
+	    return;
+      }
+      if ((ivl_signal_data_type(sig)==IVL_VT_LOGIC)
+	  && signal_is_return_value(sig)) {
+	    fprintf(vvp_out, "; Variable %s is vec4 return value of scope S_%p\n",
+		    ivl_signal_basename(sig), ivl_signal_scope(sig));
+	    return;
+      }
+      if ((ivl_signal_data_type(sig)==IVL_VT_BOOL)
+	  && signal_is_return_value(sig)) {
+	    fprintf(vvp_out, "; Variable %s is bool return value of scope S_%p\n",
+		    ivl_signal_basename(sig), ivl_signal_scope(sig));
+	    return;
       }
 
       const char *datatype_flag = ivl_signal_integer(sig) ? "/i" :
@@ -669,7 +706,7 @@ static void draw_net_in_scope(ivl_signal_t sig)
 				      swapped ? last : first );
 			}
 
-			fprintf(vvp_out, "v%p_%u .alias%s v%p %u, %d %d, "
+			fprintf(vvp_out, "v%p_%u .net%s v%p %u, %d %d, "
 			        "v%p_%u; Alias to %s\n", sig, iword,
 			        datatype_flag, sig, iword, msb, lsb,
 			        nex_data->net, nex_data->net_word,
@@ -717,7 +754,7 @@ static unsigned need_delay(ivl_net_logic_t lptr)
 /*
  * Draw the appropriate delay statement. Returns zero if there is not a delay.
  */
-static void draw_delay(ivl_net_logic_t lptr)
+static void draw_logic_delay(ivl_net_logic_t lptr)
 {
       ivl_expr_t rise_exp = ivl_logic_delay(lptr, 0);
       ivl_expr_t fall_exp = ivl_logic_delay(lptr, 1);
@@ -730,49 +767,7 @@ static void draw_delay(ivl_net_logic_t lptr)
 	    delay_wid = 0;
       }
 
-	/* If the delays are all constants then process them here. */
-      if (number_is_immediate(rise_exp, 64, 0) &&
-          number_is_immediate(fall_exp, 64, 0) &&
-          number_is_immediate(decay_exp, 64, 0)) {
-
-	    assert(! number_is_unknown(rise_exp));
-	    assert(! number_is_unknown(fall_exp));
-	    assert(! number_is_unknown(decay_exp));
-
-	    fprintf(vvp_out, "L_%p .delay %u "
-	                     "(%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") L_%p/d;\n",
-	                     lptr, delay_wid,
-	                     get_number_immediate64(rise_exp),
-	                     get_number_immediate64(fall_exp),
-	                     get_number_immediate64(decay_exp), lptr);
-	/* For a variable delay we indicate only two delays by setting the
-	 * decay time to zero. */
-      } else {
-	    ivl_signal_t sig;
-	    assert(ivl_expr_type(rise_exp) == IVL_EX_SIGNAL);
-	    assert(ivl_expr_type(fall_exp) == IVL_EX_SIGNAL);
-	    assert((decay_exp == 0) ||
-	           (ivl_expr_type(decay_exp) == IVL_EX_SIGNAL));
-
-	    fprintf(vvp_out, "L_%p .delay %u L_%p/d", lptr, delay_wid, lptr);
-
-	    sig = ivl_expr_signal(rise_exp);
-	    assert(ivl_signal_dimensions(sig) == 0);
-	    fprintf(vvp_out, ", %s", draw_net_input(ivl_signal_nex(sig,0)));
-
-	    sig = ivl_expr_signal(fall_exp);
-	    assert(ivl_signal_dimensions(sig) == 0);
-	    fprintf(vvp_out, ", %s", draw_net_input(ivl_signal_nex(sig,0)));
-
-	    if (decay_exp) {
-		  sig = ivl_expr_signal(decay_exp);
-		  assert(ivl_signal_dimensions(sig) == 0);
-		  fprintf(vvp_out, ", %s;\n",
-		                   draw_net_input(ivl_signal_nex(sig,0)));
-	    } else {
-		  fprintf(vvp_out, ", 0;\n");
-	    }
-      }
+      draw_delay(lptr, delay_wid, 0, rise_exp, fall_exp, decay_exp);
 }
 
 static void draw_udp_def(ivl_udp_t udp)
@@ -865,6 +860,7 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
 	 * (.resolv, etc.) can be built before we build the .udp call.
 	 * This matches what is done for the other primitives.
 	 */
+      assert(ivl_logic_pins(lptr) > 0);
       ninp = ivl_logic_pins(lptr) - 1;
       input_strings = calloc(ninp, sizeof(char*));
       for (pdx = 0 ;  pdx < ninp ;  pdx += 1) {
@@ -908,7 +904,7 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
       fprintf(vvp_out, ";\n");
 
 	/* Generate a delay when needed. */
-      if (need_delay_flag) draw_delay(lptr);
+      if (need_delay_flag) draw_logic_delay(lptr);
 }
 
 static void draw_logic_in_scope(ivl_net_logic_t lptr)
@@ -927,7 +923,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
       ivl_drive_t str1 = ivl_logic_drive1(lptr);
 
       int level;
-      int ninp;
+      unsigned ninp;
       const char **input_strings;
 
       switch (ivl_logic_type(lptr)) {
@@ -1060,8 +1056,8 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
 	/* Get all the input label that I will use for parameters to
 	   the functor that I create later. */
+      assert(ivl_logic_pins(lptr) > 0);
       ninp = ivl_logic_pins(lptr) - 1;
-      assert(ninp >= 0);
       input_strings = calloc(ninp, sizeof(char*));
       for (pdx = 0 ;  pdx < (unsigned)ninp ;  pdx += 1)
 	    input_strings[pdx] = draw_net_input(ivl_logic_pin(lptr, pdx+1));
@@ -1084,7 +1080,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		  }
 		  for (pdx = inst; pdx < (unsigned)ninp && pdx < inst+4 ; pdx += 1) {
 			if (level) {
-			      fprintf(vvp_out, ", L_%p/%d/%d",
+			      fprintf(vvp_out, ", L_%p/%d/%u",
 				      lptr, level - 1, pdx*4);
 			} else {
 			      fprintf(vvp_out, ", %s", input_strings[pdx]);
@@ -1112,7 +1108,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
       free(input_strings);
 
 	/* Generate a delay when needed. */
-      if (need_delay_flag) draw_delay(lptr);
+      if (need_delay_flag) draw_logic_delay(lptr);
 }
 
 static void draw_event_in_scope(ivl_event_t obj)
@@ -1312,20 +1308,8 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net, ivl_variable_type_t dt)
 
       const char*dly = "";
       if (d_rise != 0) {
-	    assert(number_is_immediate(d_rise, 64, 0));
-	    assert(number_is_immediate(d_fall, 64, 0));
-	    assert(number_is_immediate(d_decay, 64, 0));
-
-	    assert(! number_is_unknown(d_rise));
-	    assert(! number_is_unknown(d_fall));
-	    assert(! number_is_unknown(d_decay));
-
+	    draw_delay(net, width, 0, d_rise, d_fall, d_decay);
 	    dly = "/d";
-	    fprintf(vvp_out, "L_%p .delay %u (%" PRIu64 ",%" PRIu64 ",%" PRIu64 ")"
-		    " L_%p/d;\n", net, width,
-                    get_number_immediate64(d_rise),
-	            get_number_immediate64(d_fall),
-	            get_number_immediate64(d_decay), net);
       }
 
       return dly;
@@ -1538,6 +1522,16 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 	    type = "nee";
 	    signed_string = "";
 	    break;
+	  case IVL_LPM_CMP_WEQ:
+	    assert(dtc != IVL_VT_REAL); /* Should never get here! */
+	    type = "weq";
+	    signed_string = "";
+	    break;
+	  case IVL_LPM_CMP_WNE:
+	    assert(dtc != IVL_VT_REAL); /* Should never get here! */
+	    type = "wne";
+	    signed_string = "";
+	    break;
 	  default:
 	    assert(0);
       }
@@ -1716,65 +1710,104 @@ static void draw_lpm_concat(ivl_lpm_t net)
 /*
  * Emit a DFF primitive. This uses the following syntax:
  *
- * .dff <data>, <clock>, <enable>, <async>;
- *
- * The async pin currently sets the stored data value and propagates it
- * to the output (not very useful). This routine always sets the async
- * value to high-Z which is ignored in the VVP code. This is all OK
- * since synthesis is not currently functional.
+ * .dff<variant> <width> <data>, <clock>, <enable>[, <async>[, <async-value>]];
  */
 static void draw_lpm_ff(ivl_lpm_t net)
 {
       ivl_nexus_t nex;
 
-	/* Sync/Async set/clear control is currently only supported in V0.8
-	 * which has working synthesis. If/when this is added see that code
-	 * for clues about how this should be implemented. The dff primitive
-	 * used here (from vvp) needs to be improved to support both an
-	 * async set and clear. See the UDP generated by the tgt-vlog95 code
-	 * generator in V0.10 and later for how this might be done. */
+	/* Sync set/clear control is not currently supported. This is not
+	 * a problem, as synthesis can incorporate this in the D input
+	 * expression. All modern synthesis tools do this as a matter of
+	 * course, as most cell libraries don't contain flip-flops with
+	 * sync set/clear.
+	 */
       assert(ivl_lpm_sync_clr(net) == 0);
       assert(ivl_lpm_sync_set(net) == 0);
 
+      unsigned width = ivl_lpm_width(net);
+      char*edge = ivl_lpm_negedge(net) ? "n" : "p";
       if (ivl_lpm_async_clr(net)) {
+	      /* Synthesis doesn't currently support both set and clear.
+		 If it ever does, it might be better to implement the
+		 flip-flop as a UDP. See tgt-vlog95 for an example of
+		 how to do this. */
 	    if (ivl_lpm_async_set(net)) {
-		  fprintf(stderr, "%s:%u:vvp.tgt: sorry: No support for a D-ff "
+		  fprintf(stderr, "%s:%u:vvp.tgt: sorry: No support for a DFF "
 		                  "with both an async. set and clear.\n",
 		                  ivl_lpm_file(net), ivl_lpm_lineno(net));
 		  vvp_errors += 1;
 	    }
-	    fprintf(vvp_out, "L_%p .dff/aclr ", net);
+	    fprintf(vvp_out, "L_%p .dff/%s/aclr %u ", net, edge, width);
       } else if (ivl_lpm_async_set(net)) {
-	    fprintf(vvp_out, "L_%p .dff/aset ", net);
+	    fprintf(vvp_out, "L_%p .dff/%s/aset %u ", net, edge, width);
       } else {
-	    fprintf(vvp_out, "L_%p .dff ", net);
+	    fprintf(vvp_out, "L_%p .dff/%s %u ", net, edge, width);
       }
 
       nex = ivl_lpm_data(net,0);
       assert(nex);
       fprintf(vvp_out, "%s", draw_net_input(nex));
-      assert(width_of_nexus(nex) == ivl_lpm_width(net));;
+      assert(width_of_nexus(nex) == width);
 
       nex = ivl_lpm_clk(net);
       assert(nex);
-      assert(width_of_nexus(nex) == 1);;
+      assert(width_of_nexus(nex) == 1);
       fprintf(vvp_out, ", %s", draw_net_input(nex));
 
       nex = ivl_lpm_enable(net);
       if (nex) {
-	    assert(width_of_nexus(nex) == 1);;
+	    assert(width_of_nexus(nex) == 1);
 	    fprintf(vvp_out, ", %s", draw_net_input(nex));
       } else {
 	    fprintf(vvp_out, ", C4<1>");
       }
 
       if ( (nex = ivl_lpm_async_clr(net)) ) {
+	    assert(width_of_nexus(nex) == 1);
 	    fprintf(vvp_out, ", %s", draw_net_input(nex));
       }
 
       if ( (nex = ivl_lpm_async_set(net)) ) {
+	    ivl_expr_t val = ivl_lpm_aset_value(net);
+	    assert(width_of_nexus(nex) == 1);
 	    fprintf(vvp_out, ", %s", draw_net_input(nex));
+	    if (val) {
+		  unsigned nbits = ivl_expr_width(val);
+		  const char*bits = ivl_expr_bits(val);
+		  unsigned bb;
+		  assert(nbits == width);
+		  fprintf(vvp_out, ", C4<");
+		  for (bb = 0 ;  bb < nbits;  bb += 1)
+			fprintf(vvp_out, "%c", bits[nbits-bb-1]);
+		  fprintf(vvp_out, ">");
+	    }
       }
+
+      fprintf(vvp_out, ";\n");
+}
+
+/*
+ * Emit a LATCH primitive. This uses the following syntax:
+ *
+ * .latch <width> <data>, <enable>;
+ */
+static void draw_lpm_latch(ivl_lpm_t net)
+{
+      ivl_nexus_t nex;
+
+      unsigned width = ivl_lpm_width(net);
+      fprintf(vvp_out, "L_%p .latch %u ", net, width);
+
+      nex = ivl_lpm_data(net,0);
+      assert(nex);
+      fprintf(vvp_out, "%s", draw_net_input(nex));
+      assert(width_of_nexus(nex) == width);
+
+      nex = ivl_lpm_enable(net);
+      assert(nex);
+      assert(width_of_nexus(nex) == 1);
+      fprintf(vvp_out, ", %s", draw_net_input(nex));
 
       fprintf(vvp_out, ";\n");
 }
@@ -1918,6 +1951,19 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
       ivl_variable_type_t dt = data_type_of_nexus(ivl_lpm_q(net));
       const char*dly = draw_lpm_output_delay(net, dt);
 
+      const char*type_string = "";
+      switch (dt) {
+	  case IVL_VT_REAL:
+		type_string = "/real";
+		break;
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+		type_string = "/vec4";
+		break;
+	  default:
+		break;
+      }
+
 	/* Get all the input labels that I will use for net signals that
 	   connect to the inputs of the function. */
       ninp = ivl_lpm_size(net);
@@ -1930,7 +1976,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
                     vvp_mangle_id(ivl_scope_name(def)),
                     ivl_lpm_width(net), ivl_lpm_trigger(net));
       else
-            fprintf(vvp_out, "L_%p%s .ufunc TD_%s, %u", net, dly,
+            fprintf(vvp_out, "L_%p%s .ufunc%s TD_%s, %u", net, dly, type_string,
                     vvp_mangle_id(ivl_scope_name(def)),
                     ivl_lpm_width(net));
 
@@ -1958,7 +2004,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
       }
 
       fprintf(vvp_out, ")");
-
+#if 0
 	/* Now print the reference to the signal from which the
 	   result is collected. */
       { ivl_signal_t psig = ivl_scope_port(def, 0);
@@ -1967,7 +2013,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 
 	fprintf(vvp_out, " v%p_0", psig);
       }
-
+#endif
         /* Finally, print the scope identifier. */
       fprintf(vvp_out, " S_%p;\n", def);
 }
@@ -2096,6 +2142,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	    draw_lpm_ff(net);
 	    return;
 
+	  case IVL_LPM_LATCH:
+	    draw_lpm_latch(net);
+	    return;
+
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_EQX:
@@ -2104,6 +2154,8 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	    draw_lpm_cmp(net);
 	    return;
 
@@ -2181,6 +2233,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       const char *type;
 
       const char*prefix = ivl_scope_is_auto(net) ? "auto" : "";
+      char suffix[32];
+
+      suffix[0] = 0;
 
       switch (ivl_scope_type(net)) {
       case IVL_SCT_MODULE:   type = "module";   break;
@@ -2194,8 +2249,36 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       default:               type = "?";        assert(0);
       }
 
-      fprintf(vvp_out, "S_%p .scope %s%s, \"%s\" \"%s\" %u %u",
-	      net, prefix, type,
+      if (ivl_scope_type(net)==IVL_SCT_FUNCTION) {
+	    switch (ivl_scope_func_type(net)) {
+		case IVL_VT_LOGIC:
+		case IVL_VT_BOOL:
+		  snprintf(suffix, sizeof suffix, ".vec4.%c%u",
+			   ivl_scope_func_signed(net)? 'u' : 's',
+			   ivl_scope_func_width(net));
+		  break;
+		case IVL_VT_REAL:
+		  snprintf(suffix, sizeof suffix, ".real");
+		  break;
+		case IVL_VT_STRING:
+		  snprintf(suffix, sizeof suffix, ".str");
+		  break;
+		case IVL_VT_CLASS:
+		case IVL_VT_DARRAY:
+		case IVL_VT_QUEUE:
+		  snprintf(suffix, sizeof suffix, ".obj");
+		  break;
+		case IVL_VT_VOID:
+		  snprintf(suffix, sizeof suffix, ".void");
+		  break;
+		default:
+		  assert(0);
+		  break;
+	    }
+      }
+
+      fprintf(vvp_out, "S_%p .scope %s%s%s, \"%s\" \"%s\" %u %u",
+	      net, prefix, type, suffix,
 	      vvp_mangle_name(ivl_scope_basename(net)),
               vvp_mangle_name(ivl_scope_tname(net)),
 	      ivl_file_table_index(ivl_scope_file(net)),
@@ -2222,7 +2305,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
             unsigned width = ivl_scope_mod_module_port_width(net,idx);
             if( name == 0 )
                 name = "";
-            fprintf( vvp_out, "    .port_info %u %s %u \"%s\"\n",
+            fprintf( vvp_out, "    .port_info %u %s %u \"%s\";\n",
                     idx, vvp_port_info_type_str(ptype), width,
 		    vvp_mangle_name(name) );
         }

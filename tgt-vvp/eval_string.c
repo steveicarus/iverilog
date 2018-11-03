@@ -76,6 +76,15 @@ static void string_ex_signal(ivl_expr_t expr)
 	    return;
       }
 
+	/* Special Case: If the signal is the return value of the
+	   function, then use a different opcode to get the value. */
+      if (signal_is_return_value(sig)) {
+	    assert(ivl_signal_dimensions(sig) == 0);
+	    fprintf(vvp_out, "    %%retload/str 0; Load %s (string_ex_signal)\n",
+		    ivl_signal_basename(sig));
+	    return;
+      }
+
 	/* Simple case: This is a simple variable. Generate a load
 	   statement to load the string into the stack. */
       if (ivl_signal_dimensions(sig) == 0) {
@@ -163,6 +172,12 @@ static void string_ex_pop(ivl_expr_t expr)
       fprintf(vvp_out, "    %%qpop/%s/str v%p_0;\n", fb, ivl_expr_signal(arg));
 }
 
+static void draw_sfunc_string(ivl_expr_t expr)
+{
+    assert(ivl_expr_value(expr) == IVL_VT_STRING);
+    draw_vpi_sfunc_call(expr);
+}
+
 void draw_eval_string(ivl_expr_t expr)
 {
 
@@ -195,7 +210,7 @@ void draw_eval_string(ivl_expr_t expr)
 	    else if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_front")==0)
 		  string_ex_pop(expr);
 	    else
-		  fallback_eval(expr);
+		  draw_sfunc_string(expr);
 	    break;
 
 	  case IVL_EX_UFUNC:

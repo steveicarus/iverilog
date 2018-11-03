@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -768,7 +768,7 @@ void compile_event(char*label, char*type, unsigned argc, struct symb_s*argv)
 
 	    free(type);
 
-            if (vpip_peek_current_scope()->is_automatic) {
+            if (vpip_peek_current_scope()->is_automatic()) {
                   fun = new vvp_fun_anyedge_aa;
             } else {
                   fun = new vvp_fun_anyedge_sa;
@@ -786,7 +786,7 @@ void compile_event(char*label, char*type, unsigned argc, struct symb_s*argv)
 	    assert(argc <= 4);
 	    free(type);
 
-            if (vpip_peek_current_scope()->is_automatic) {
+            if (vpip_peek_current_scope()->is_automatic()) {
                   fun = new vvp_fun_edge_aa(edge);
             } else {
                   fun = new vvp_fun_edge_sa(edge);
@@ -807,7 +807,7 @@ void compile_event(char*label, char*type, unsigned argc, struct symb_s*argv)
 static void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
 {
       vvp_net_t* ptr = new vvp_net_t;
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
             ptr->fun = new vvp_fun_event_or_aa;
       } else {
             ptr->fun = new vvp_fun_event_or_sa;
@@ -829,20 +829,20 @@ static void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
  * inputs, it is only accessed by behavioral trigger statements, which
  * in vvp are %set instructions.
  */
-void compile_named_event(char*label, char*name)
+void compile_named_event(char*label, char*name, bool local_flag)
 {
       vvp_net_t*ptr = new vvp_net_t;
 
       vpiHandle obj = vpip_make_named_event(name, ptr);
 
-      if (vpip_peek_current_scope()->is_automatic) {
+      if (vpip_peek_current_scope()->is_automatic()) {
             ptr->fun = new vvp_named_event_aa(obj);
       } else {
             ptr->fun = new vvp_named_event_sa(obj);
       }
       define_functor_symbol(label, ptr);
       compile_vpi_symbol(label, obj);
-      vpip_attach_to_current_scope(obj);
+      if (! local_flag) vpip_attach_to_current_scope(obj);
 
       free(label);
       delete[] name;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2014 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2016 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,33 +23,6 @@
 # include "ivl_alloc.h"
 
 const char *func_rtn_name = 0;
-
-static const char*get_time_const(int time_value)
-{
-      switch (time_value) {
-	case   2: return "100s";
-	case   1: return "10s";
-	case   0: return "1s";
-	case  -1: return "100ms";
-	case  -2: return "10ms";
-	case  -3: return "1ms";
-	case  -4: return "100us";
-	case  -5: return "10us";
-	case  -6: return "1us";
-	case  -7: return "100ns";
-	case  -8: return "10ns";
-	case  -9: return "1ns";
-	case -10: return "100ps";
-	case -11: return "10ps";
-	case -12: return "1ps";
-	case -13: return "100fs";
-	case -14: return "10fs";
-	case -15: return "1fs";
-	default:
-	    fprintf(stderr, "Invalid time constant value %d.\n", time_value);
-	    return "N/A";
-      }
-}
 
 static void emit_func_return(ivl_signal_t sig)
 {
@@ -432,10 +405,13 @@ static void emit_sig_type(ivl_signal_t sig)
       }
 	/* Check to see if we have a variable (reg) or a net. */
       if (type == IVL_SIT_REG) {
+	      /* The variable data type will be declared later, so here
+		 we just want to declare the range and whether or not it
+		 is signed. */
 	    if (ivl_signal_integer(sig)) {
-		  fprintf(vlog_out, " integer");
+		  /* nothing to do */
 	    } else if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
-		  fprintf(vlog_out, " real");
+		  /* nothing to do */
 	    } else {
 		  int msb, lsb;
 		  get_sig_msb_lsb(sig, &msb, &lsb);
@@ -703,17 +679,17 @@ static void emit_named_block_scope(ivl_scope_t scope)
 }
 
 /*
- * In SystemVerilog a task or function can have a process to initialize
- * variables. In reality SystemVerilog requires this to be before the
- * initial/always blocks are processed, but that's not how it is currently
- * implemented in Icarus!
+ * In SystemVerilog a task, function, or block can have a process to
+ * initialize variables. SystemVerilog requires this to be before the
+ * initial/always blocks are processed, but there's no way to express
+ * this in Verilog-95.
  */
-static int find_tf_process(ivl_process_t proc, ivl_scope_t scope)
+static int find_tfb_process(ivl_process_t proc, ivl_scope_t scope)
 {
       if (scope == ivl_process_scope(proc)) {
 	    ivl_scope_t mod_scope = scope;
-	      /* A task or function can only have initial processes that
-	       * are used to set local variables. */
+	      /* A task or function or named block can only have initial
+	       * processes that are used to set local variables. */
 	    assert(ivl_process_type(proc) == IVL_PR_INITIAL);
 	      /* Find the module scope for this task/function. */
 	    while (ivl_scope_type(mod_scope) != IVL_SCT_MODULE) {
@@ -728,15 +704,16 @@ static int find_tf_process(ivl_process_t proc, ivl_scope_t scope)
 }
 
 /*
- * Emit any initial blocks for the tasks or functions in a module.
+ * Emit any initial blocks for the tasks/functions/named blocks in a module.
  */
-static int emit_tf_process(ivl_scope_t scope, ivl_scope_t parent)
+static int emit_tfb_process(ivl_scope_t scope, ivl_scope_t parent)
 {
       ivl_scope_type_t sc_type = ivl_scope_type(scope);
       (void)parent;  /* Parameter is not used. */
-      if ((sc_type == IVL_SCT_FUNCTION) || (sc_type == IVL_SCT_TASK)) {
+      if ((sc_type == IVL_SCT_FUNCTION) || (sc_type == IVL_SCT_TASK) ||
+          (sc_type == IVL_SCT_BEGIN) || (sc_type == IVL_SCT_FORK)) {
 	/* Output the initial/always blocks for this module. */
-	    ivl_design_process(design, (ivl_process_f)find_tf_process, scope);
+	    ivl_design_process(design, (ivl_process_f)find_tfb_process, scope);
       }
       return 0;
 }
@@ -1169,9 +1146,10 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 		  emit_tran(scope, ivl_scope_switch(scope, idx));
 	    }
 
-	      /* Output any initial blocks for tasks or functions defined
-	       * in this module. Used to initialize local variables. */
-	    ivl_scope_children(scope, (ivl_scope_f*) emit_tf_process, scope);
+	      /* Output any initial blocks for tasks or functions or named
+	       * blocks defined in this module. Used to initialize local
+	       * variables. */
+	    ivl_scope_children(scope, (ivl_scope_f*) emit_tfb_process, scope);
 
 	      /* Output the initial/always blocks for this module. */
 	    ivl_design_process(design, (ivl_process_f)find_process, scope);

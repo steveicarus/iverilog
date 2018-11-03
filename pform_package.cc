@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -35,12 +35,13 @@ map<perm_string,PPackage*> pform_packages;
 
 static PPackage*pform_cur_package = 0;
 
-void pform_start_package_declaration(const struct vlltype&loc, const char*name)
+void pform_start_package_declaration(const struct vlltype&loc, const char*name,
+				     LexicalScope::lifetime_t lifetime)
 {
       ivl_assert(loc, pform_cur_package == 0);
 
       perm_string use_name = lex_strings.make(name);
-      PPackage*pkg_scope = pform_push_package_scope(loc, use_name);
+      PPackage*pkg_scope = pform_push_package_scope(loc, use_name, lifetime);
       FILE_NAME(pkg_scope, loc);
       pform_cur_package = pkg_scope;
 }

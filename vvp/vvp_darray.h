@@ -44,17 +44,20 @@ class vvp_darray : public vvp_object {
 
       virtual void set_word(unsigned adr, const vvp_object_t&value);
       virtual void get_word(unsigned adr, vvp_object_t&value);
+
+      virtual void shallow_copy(const vvp_object*obj);
 };
 
 template <class TYPE> class vvp_darray_atom : public vvp_darray {
 
     public:
-      inline vvp_darray_atom(size_t siz) : array_(siz) { }
+      explicit inline vvp_darray_atom(size_t siz) : array_(siz) { }
       ~vvp_darray_atom();
 
       size_t get_size(void) const;
       void set_word(unsigned adr, const vvp_vector4_t&value);
       void get_word(unsigned adr, vvp_vector4_t&value);
+      void shallow_copy(const vvp_object*obj);
 
     private:
       std::vector<TYPE> array_;
@@ -70,6 +73,7 @@ class vvp_darray_vec4 : public vvp_darray {
       size_t get_size(void) const;
       void set_word(unsigned adr, const vvp_vector4_t&value);
       void get_word(unsigned adr, vvp_vector4_t&value);
+      void shallow_copy(const vvp_object*obj);
 
     private:
       std::vector<vvp_vector4_t> array_;
@@ -86,6 +90,7 @@ class vvp_darray_vec2 : public vvp_darray {
       size_t get_size(void) const;
       void set_word(unsigned adr, const vvp_vector4_t&value);
       void get_word(unsigned adr, vvp_vector4_t&value);
+      void shallow_copy(const vvp_object*obj);
 
     private:
       std::vector<vvp_vector2_t> array_;
@@ -95,12 +100,13 @@ class vvp_darray_vec2 : public vvp_darray {
 class vvp_darray_real : public vvp_darray {
 
     public:
-      inline vvp_darray_real(size_t siz) : array_(siz) { }
+      explicit inline vvp_darray_real(size_t siz) : array_(siz) { }
       ~vvp_darray_real();
 
       size_t get_size(void) const;
       void set_word(unsigned adr, double value);
       void get_word(unsigned adr, double&value);
+      void shallow_copy(const vvp_object*obj);
 
     private:
       std::vector<double> array_;
@@ -109,12 +115,13 @@ class vvp_darray_real : public vvp_darray {
 class vvp_darray_string : public vvp_darray {
 
     public:
-      inline vvp_darray_string(size_t siz) : array_(siz) { }
+      explicit inline vvp_darray_string(size_t siz) : array_(siz) { }
       ~vvp_darray_string();
 
       size_t get_size(void) const;
       void set_word(unsigned adr, const std::string&value);
       void get_word(unsigned adr, std::string&value);
+      void shallow_copy(const vvp_object*obj);
 
     private:
       std::vector<std::string> array_;
@@ -123,12 +130,13 @@ class vvp_darray_string : public vvp_darray {
 class vvp_darray_object : public vvp_darray {
 
     public:
-      inline vvp_darray_object(size_t siz) : array_(siz) { }
+      explicit inline vvp_darray_object(size_t siz) : array_(siz) { }
       ~vvp_darray_object();
 
       size_t get_size(void) const;
       void set_word(unsigned adr, const vvp_object_t&value);
       void get_word(unsigned adr, vvp_object_t&value);
+      void shallow_copy(const vvp_object*obj);
 
     private:
       std::vector<vvp_object_t> array_;

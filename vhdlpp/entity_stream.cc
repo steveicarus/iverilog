@@ -69,6 +69,9 @@ void ComponentBase::write_to_stream(ostream&fd) const
                     case PORT_OUT:
                     fd << "out ";
                     break;
+                    case PORT_INOUT:
+                    fd << "inout ";
+                    break;
                 }
 
                 item->type->write_to_stream(fd);

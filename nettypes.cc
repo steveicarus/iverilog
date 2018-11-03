@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -141,18 +141,17 @@ bool prefix_to_slice(const std::vector<netrange_t>&dims,
 
 	// Now similarly go through the prefix numbers, working
 	// through the dimensions until we run out. Accumulate a
-	// growing slice width (acc_wid) that is used to caculate the
+	// growing slice width (acc_wid) that is used to calculate the
 	// growing offset (acc_off).
       list<long>::const_iterator icur = prefix.end();
       do {
 	    -- icur;
 	    acc_wid *= pcur->width();
+	    -- pcur;
 	    if (pcur->get_msb() >= pcur->get_lsb())
 		  acc_off += (*icur - pcur->get_lsb()) * acc_wid;
 	    else
 		  acc_off += (pcur->get_lsb() - *icur) * acc_wid;
-
-	    -- pcur;
 
       } while (icur != prefix.begin());
 

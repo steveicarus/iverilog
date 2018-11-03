@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2018 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,22 +38,28 @@ static StringHeap api_strings;
 
 extern "C" ivl_island_t ivl_branch_island(ivl_branch_t net)
 {
+      assert(net);
       return net->island;
 }
 
 extern "C" ivl_nexus_t ivl_branch_terminal(ivl_branch_t net, int idx)
 {
+      assert(net);
       assert(idx >= 0);
-      assert( idx < 2);
+      assert(idx < 2);
       return net->pins[idx];
 }
 extern "C" const char*ivl_design_delay_sel(ivl_design_t des)
 {
+      assert(des);
+      assert(des->self);
       return des->self->get_delay_sel();
 }
 
 extern "C" const char*ivl_design_flag(ivl_design_t des, const char*key)
 {
+      assert(des);
+      assert(des->self);
       return des->self->get_flag(key);
 }
 
@@ -60,6 +67,7 @@ extern "C" int ivl_design_process(ivl_design_t des,
 				  ivl_process_f func,
 				  void*cd)
 {
+      assert(des);
       for (ivl_process_t idx = des->threads_;  idx;  idx = idx->next_) {
 	    int rc = (func)(idx, cd);
 	    if (rc != 0)
@@ -72,8 +80,8 @@ extern "C" int ivl_design_process(ivl_design_t des,
 extern "C" ivl_scope_t ivl_design_root(ivl_design_t des)
 {
       cerr << "ANACHRONISM: ivl_design_root called. "
-	    "Use ivl_design_roots instead." << endl;
-
+       "Use ivl_design_roots instead." << endl;
+      assert(des);
       assert (des->roots.size() > 0);
       return des->roots[0];
 }
@@ -81,13 +89,11 @@ extern "C" ivl_scope_t ivl_design_root(ivl_design_t des)
 extern "C" void ivl_design_roots(ivl_design_t des, ivl_scope_t **scopes,
 				 unsigned int *nscopes)
 {
+      assert(des);
       assert (nscopes && scopes);
       if (des->root_scope_list.size() == 0) {
 	    size_t fill = 0;
-	    des->root_scope_list.resize(des->root_tasks.size() + des->packages.size() + des->roots.size() + des->classes.size());
-	    for (map<const NetScope*,ivl_scope_t>::iterator idx = des->root_tasks.begin()
-		       ; idx != des->root_tasks.end() ; ++ idx)
-		  des->root_scope_list[fill++] = idx->second;
+	    des->root_scope_list.resize(des->packages.size() + des->roots.size() + des->classes.size());
 
 	    for (map<const NetScope*,ivl_scope_t>::iterator idx = des->classes.begin()
 		       ; idx != des->classes.end() ; ++ idx)
@@ -105,16 +111,19 @@ extern "C" void ivl_design_roots(ivl_design_t des, ivl_scope_t **scopes,
 
 extern "C" int ivl_design_time_precision(ivl_design_t des)
 {
+      assert(des);
       return des->time_precision;
 }
 
 extern "C" unsigned ivl_design_consts(ivl_design_t des)
 {
+      assert(des);
       return des->consts.size();
 }
 
 extern "C" ivl_net_const_t ivl_design_const(ivl_design_t des, unsigned idx)
 {
+      assert(des);
       assert(idx < des->consts.size());
       return des->consts[idx];
 }
@@ -134,21 +143,25 @@ extern "C" ivl_discipline_t ivl_design_discipline(ivl_design_t des, unsigned idx
 
 extern "C" ivl_dis_domain_t ivl_discipline_domain(ivl_discipline_t net)
 {
+      assert(net);
       return net->domain();
 }
 
 extern "C" ivl_nature_t ivl_discipline_flow(ivl_discipline_t net)
 {
+      assert(net);
       return net->flow();
 }
 
 extern "C" const char* ivl_discipline_name(ivl_discipline_t net)
 {
+      assert(net);
       return net->name();
 }
 
 extern "C" ivl_nature_t ivl_discipline_potential(ivl_discipline_t net)
 {
+      assert(net);
       return net->potential();
 }
 
@@ -169,13 +182,6 @@ extern "C" unsigned ivl_expr_lineno(ivl_expr_t net)
 {
       assert(net);
       return net->lineno;
-}
-
-inline static const char *basename(ivl_scope_t scope, const char *inst)
-{
-      inst += strlen(ivl_scope_name(scope));
-      assert(*inst == '.');
-      return inst+1;
 }
 
 extern "C" ivl_variable_type_t ivl_const_type(ivl_net_const_t net)
@@ -204,6 +210,7 @@ extern "C" const char*ivl_const_bits(ivl_net_const_t net)
 
 extern "C" ivl_expr_t ivl_const_delay(ivl_net_const_t net, unsigned transition)
 {
+      assert(net);
       assert(transition < 3);
       return net->delay[transition];
 }
@@ -303,6 +310,7 @@ extern "C" unsigned ivl_enum_lineno(ivl_enumtype_t net)
 
 extern "C" const char* ivl_event_name(ivl_event_t net)
 {
+      assert(net);
       static char*name_buffer = 0;
       static unsigned name_size = 0;
 
@@ -327,6 +335,7 @@ extern "C" const char* ivl_event_name(ivl_event_t net)
 
 extern "C" const char* ivl_event_basename(ivl_event_t net)
 {
+      assert(net);
       return net->name;
 }
 
@@ -344,6 +353,7 @@ extern "C" unsigned ivl_event_lineno(ivl_event_t net)
 
 extern "C" ivl_scope_t ivl_event_scope(ivl_event_t net)
 {
+      assert(net);
       return net->scope;
 }
 
@@ -388,13 +398,15 @@ extern "C" ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx)
 
 extern "C" const char* ivl_expr_bits(ivl_expr_t net)
 {
-      assert(net && (net->type_ == IVL_EX_NUMBER));
+      assert(net);
+      assert(net->type_ == IVL_EX_NUMBER);
       return net->u_.number_.bits_;
 }
 
 extern "C" ivl_branch_t ivl_expr_branch(ivl_expr_t net)
 {
-      assert(net && (net->type_ == IVL_EX_BACCESS));
+      assert(net);
+      assert(net->type_ == IVL_EX_BACCESS);
       return net->u_.branch_.branch;
 }
 
@@ -416,29 +428,34 @@ extern "C" ivl_scope_t ivl_expr_def(ivl_expr_t net)
 
 extern "C" uint64_t ivl_expr_delay_val(ivl_expr_t net)
 {
+      assert(net);
       assert(net->type_ == IVL_EX_DELAY);
       return net->u_.delay_.value;
 }
 
 extern "C" double ivl_expr_dvalue(ivl_expr_t net)
 {
+      assert(net);
       assert(net->type_ == IVL_EX_REALNUM);
       return net->u_.real_.value;
 }
 
 extern "C" ivl_enumtype_t ivl_expr_enumtype(ivl_expr_t net)
 {
+      assert(net);
       assert(net->type_ == IVL_EX_ENUMTYPE);
       return net->u_.enumtype_.type;
 }
 
 extern "C" ivl_type_t ivl_expr_net_type(ivl_expr_t net)
 {
+      assert(net);
       return net->net_type;
 }
 
 extern "C" const char* ivl_expr_name(ivl_expr_t net)
 {
+      assert(net);
       switch (net->type_) {
 
 	  case IVL_EX_SFUNC:
@@ -462,7 +479,8 @@ extern "C" const char* ivl_expr_name(ivl_expr_t net)
 
 extern "C" ivl_nature_t ivl_expr_nature(ivl_expr_t net)
 {
-      assert(net && (net->type_ == IVL_EX_BACCESS));
+      assert(net);
+      assert(net->type_ == IVL_EX_BACCESS);
       return net->u_.branch_.nature;
 }
 
@@ -692,12 +710,14 @@ extern "C" int ivl_expr_sized(ivl_expr_t net)
 
 extern "C" const char* ivl_expr_string(ivl_expr_t net)
 {
+      assert(net);
       assert(net->type_ == IVL_EX_STRING);
       return net->u_.string_.value_;
 }
 
 extern "C" unsigned long ivl_expr_uvalue(ivl_expr_t net)
 {
+      assert(net);
       switch (net->type_) {
 
 	  case IVL_EX_ULONG:
@@ -729,7 +749,7 @@ extern "C" ivl_variable_type_t ivl_expr_value(ivl_expr_t net)
 
 extern "C" unsigned ivl_expr_width(ivl_expr_t net)
 {
-//      assert(net);
+      assert(net);
       return net->width_;
 }
 
@@ -798,6 +818,7 @@ extern "C" unsigned ivl_file_table_size()
 
 extern "C" int ivl_island_flag_set(ivl_island_t net, unsigned flag, int value)
 {
+      assert(net);
       if (flag >= net->flags.size()) {
 	    if (value == 0)
 		  return 0;
@@ -812,6 +833,7 @@ extern "C" int ivl_island_flag_set(ivl_island_t net, unsigned flag, int value)
 
 extern "C" int ivl_island_flag_test(ivl_island_t net, unsigned flag)
 {
+      assert(net);
       if (flag >= net->flags.size())
 	    return 0;
       else
@@ -854,12 +876,14 @@ extern "C" const char* ivl_logic_attr(ivl_net_logic_t net, const char*key)
 
 extern "C" unsigned ivl_logic_attr_cnt(ivl_net_logic_t net)
 {
+      assert(net);
       return net->nattr;
 }
 
 extern "C" ivl_attribute_t ivl_logic_attr_val(ivl_net_logic_t net,
 					      unsigned idx)
 {
+      assert(net);
       assert(idx < net->nattr);
       return net->attr + idx;
 }
@@ -919,22 +943,26 @@ extern "C" ivl_scope_t ivl_logic_scope(ivl_net_logic_t net)
 
 extern "C" ivl_logic_t ivl_logic_type(ivl_net_logic_t net)
 {
+      assert(net);
       return net->type_;
 }
 
 extern "C" unsigned ivl_logic_pins(ivl_net_logic_t net)
 {
+      assert(net);
       return net->npins_;
 }
 
 extern "C" ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin)
 {
+      assert(net);
       assert(pin < net->npins_);
       return net->pins_[pin];
 }
 
 extern "C" ivl_udp_t ivl_logic_udp(ivl_net_logic_t net)
 {
+      assert(net);
       assert(net->type_ == IVL_LO_UDP);
       assert(net->udp);
       return net->udp;
@@ -942,6 +970,7 @@ extern "C" ivl_udp_t ivl_logic_udp(ivl_net_logic_t net)
 
 extern "C" ivl_expr_t ivl_logic_delay(ivl_net_logic_t net, unsigned transition)
 {
+      assert(net);
       assert(transition < 3);
       return net->delay[transition];
 }
@@ -954,21 +983,25 @@ extern "C" unsigned ivl_logic_width(ivl_net_logic_t net)
 
 extern "C" int  ivl_udp_sequ(ivl_udp_t net)
 {
+      assert(net);
       return net->sequ;
 }
 
 extern "C" unsigned ivl_udp_nin(ivl_udp_t net)
 {
+      assert(net);
       return net->nin;
 }
 
 extern "C" char ivl_udp_init(ivl_udp_t net)
 {
+      assert(net);
       return net->init;
 }
 
 extern "C" const char* ivl_udp_port(ivl_udp_t net, unsigned idx)
 {
+      assert(net);
       assert(idx <= net->nin);
       assert(net->ports);
       assert(net->ports[idx].c_str());
@@ -977,6 +1010,7 @@ extern "C" const char* ivl_udp_port(ivl_udp_t net, unsigned idx)
 
 extern "C" const char* ivl_udp_row(ivl_udp_t net, unsigned idx)
 {
+      assert(net);
       assert(idx < net->nrows);
       assert(net->table);
       assert(net->table[idx]);
@@ -985,27 +1019,32 @@ extern "C" const char* ivl_udp_row(ivl_udp_t net, unsigned idx)
 
 extern "C" unsigned    ivl_udp_rows(ivl_udp_t net)
 {
+      assert(net);
       return net->nrows;
 }
 
 extern "C" const char* ivl_udp_name(ivl_udp_t net)
 {
+      assert(net);
       assert(net->name);
       return net->name;
 }
 
 extern "C" const char* ivl_udp_file(ivl_udp_t net)
 {
+      assert(net);
       return net->file.str();
 }
 
 extern "C" unsigned ivl_udp_lineno(ivl_udp_t net)
 {
+      assert(net);
       return net->lineno;
 }
 
 extern "C" const char* ivl_lpm_basename(ivl_lpm_t net)
 {
+      assert(net);
       return net->name;
 }
 
@@ -1035,6 +1074,7 @@ extern "C" ivl_nexus_t ivl_lpm_sync_clr(ivl_lpm_t net)
 
 extern "C" ivl_expr_t ivl_lpm_delay(ivl_lpm_t net, unsigned transition)
 {
+      assert(net);
       assert(transition < 3);
       return net->delay[transition];
 }
@@ -1084,6 +1124,18 @@ extern "C" unsigned ivl_lpm_base(ivl_lpm_t net)
 	    return net->u_.part.base;
 	  case IVL_LPM_SUBSTITUTE:
 	    return net->u_.substitute.base;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+extern "C" unsigned ivl_lpm_negedge(ivl_lpm_t net)
+{
+      assert(net);
+      switch (net->type) {
+	  case IVL_LPM_FF:
+	    return net->u_.ff.negedge_flag;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1143,6 +1195,8 @@ extern "C" ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net)
       switch (net->type) {
 	  case IVL_LPM_FF:
 	    return net->u_.ff.we;
+	  case IVL_LPM_LATCH:
+	    return net->u_.latch.e;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1151,11 +1205,13 @@ extern "C" ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net)
 
 extern "C" const char* ivl_lpm_file(ivl_lpm_t net)
 {
+      assert(net);
       return net->file.str();
 }
 
 extern "C" unsigned ivl_lpm_lineno(ivl_lpm_t net)
 {
+      assert(net);
       return net->lineno;
 }
 
@@ -1179,6 +1235,8 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
@@ -1215,6 +1273,9 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_FF:
 	    assert(idx == 0);
 	    return net->u_.ff.d.pin;
+	  case IVL_LPM_LATCH:
+	    assert(idx == 0);
+	    return net->u_.latch.d.pin;
 
 	  case IVL_LPM_CONCAT:
 	  case IVL_LPM_CONCATZ:
@@ -1292,6 +1353,7 @@ extern "C" ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx)
  */
 extern "C" const char* ivl_lpm_name(ivl_lpm_t net)
 {
+      assert(net);
       static char*name_buffer = 0;
       static unsigned name_size = 0;
 
@@ -1330,6 +1392,8 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net)
 	  case IVL_LPM_CMP_EQX:
 	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
@@ -1339,6 +1403,8 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net)
 
 	  case IVL_LPM_FF:
 	    return net->u_.ff.q.pin;
+	  case IVL_LPM_LATCH:
+	    return net->u_.latch.q.pin;
 
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.q;
@@ -1427,6 +1493,7 @@ extern "C" ivl_scope_t ivl_lpm_scope(ivl_lpm_t net)
 
 extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net)
 {
+      assert(net);
       switch (net->type) {
 
 	  case IVL_LPM_MUX:
@@ -1443,6 +1510,7 @@ extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net)
 
 extern "C" unsigned ivl_lpm_selects(ivl_lpm_t net)
 {
+      assert(net);
       switch (net->type) {
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.swid;
@@ -1452,6 +1520,7 @@ extern "C" unsigned ivl_lpm_selects(ivl_lpm_t net)
 	  case IVL_LPM_CONCATZ:
 	    cerr << "error: ivl_lpm_selects() is no longer supported for "
 	            "IVL_LPM_CONCAT, use ivl_lpm_size() instead." << endl;
+	    // fallthrough
 	  default:
 	    assert(0);
 	    return 0;
@@ -1476,6 +1545,8 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
@@ -1519,6 +1590,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 
 extern "C" unsigned ivl_lpm_size(ivl_lpm_t net)
 {
+      assert(net);
       switch (net->type) {
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.size;
@@ -1571,12 +1643,14 @@ extern "C" unsigned ivl_lpm_size(ivl_lpm_t net)
 
 extern "C" const char* ivl_lpm_string(ivl_lpm_t net)
 {
+      assert(net);
       assert(net->type == IVL_LPM_SFUNC);
       return net->u_.sfunc.fun_name;
 }
 
 extern "C" ivl_lpm_type_t ivl_lpm_type(ivl_lpm_t net)
 {
+      assert(net);
       return net->type;
 }
 
@@ -1664,6 +1738,7 @@ extern "C" ivl_lval_t ivl_lval_nest(ivl_lval_t net)
 
 extern "C" const char* ivl_nature_name(ivl_nature_t net)
 {
+      assert(net);
       return net->name();
 }
 
@@ -1873,16 +1948,19 @@ extern ivl_scope_t ivl_path_scope(ivl_delaypath_t obj)
 
 extern ivl_nexus_t ivl_path_source(ivl_delaypath_t net)
 {
+      assert(net);
       return net->src;
 }
 
 extern int ivl_path_source_posedge(ivl_delaypath_t net)
 {
+      assert(net);
       return net->posedge ? 1 : 0;
 }
 
 extern int ivl_path_source_negedge(ivl_delaypath_t net)
 {
+      assert(net);
       return net->negedge ? 1 : 0;
 }
 
@@ -1900,32 +1978,38 @@ extern "C" unsigned ivl_process_lineno(ivl_process_t net)
 
 extern "C" ivl_process_type_t ivl_process_type(ivl_process_t net)
 {
+      assert(net);
       return net->type_;
 }
 
 extern "C" int ivl_process_analog(ivl_process_t net)
 {
+      assert(net);
       return net->analog_flag != 0;
 }
 
 extern "C" ivl_scope_t ivl_process_scope(ivl_process_t net)
 {
+      assert(net);
       return net->scope_;
 }
 
 extern "C" ivl_statement_t ivl_process_stmt(ivl_process_t net)
 {
+      assert(net);
       return net->stmt_;
 }
 
 extern "C" unsigned ivl_process_attr_cnt(ivl_process_t net)
 {
+      assert(net);
       return net->nattr;
 }
 
 extern "C" ivl_attribute_t ivl_process_attr_val(ivl_process_t net,
 						unsigned idx)
 {
+      assert(net);
       assert(idx < net->nattr);
       return net->attr + idx;
 }
@@ -1939,6 +2023,7 @@ extern "C" unsigned ivl_scope_attr_cnt(ivl_scope_t net)
 extern "C" ivl_attribute_t ivl_scope_attr_val(ivl_scope_t net,
 					      unsigned idx)
 {
+      assert(net);
       assert(idx < net->nattr);
       return net->attr + idx;
 }
@@ -1946,7 +2031,6 @@ extern "C" ivl_attribute_t ivl_scope_attr_val(ivl_scope_t net,
 extern "C" const char* ivl_scope_basename(ivl_scope_t net)
 {
       assert(net);
-
       return net->name_;
 }
 
@@ -1966,24 +2050,28 @@ extern "C" int ivl_scope_children(ivl_scope_t net,
 
 extern "C" size_t ivl_scope_childs(ivl_scope_t net)
 {
+      assert(net);
       assert(net->child.size() == net->children.size());
       return net->child.size();
 }
 
 extern "C" ivl_scope_t ivl_scope_child(ivl_scope_t net, size_t idx)
 {
-      assert(net && idx < net->child.size());
+      assert(net);
+      assert(idx < net->child.size());
       return net->child[idx];
 }
 
 extern "C" ivl_type_t ivl_scope_class(ivl_scope_t net, unsigned idx)
 {
+      assert(net);
       assert(idx < net->classes.size());
       return net->classes[idx];
 }
 
 extern "C" unsigned ivl_scope_classes(ivl_scope_t net)
 {
+      assert(net);
       return net->classes.size();
 }
 
@@ -2036,6 +2124,29 @@ extern "C" const char*ivl_scope_file(ivl_scope_t net)
 {
       assert(net);
       return net->file.str();
+}
+
+extern "C" ivl_variable_type_t ivl_scope_func_type(ivl_scope_t net)
+{
+      assert(net);
+      assert(net->type_ == IVL_SCT_FUNCTION);
+      return net->func_type;
+}
+
+extern "C" int ivl_scope_func_signed(ivl_scope_t net)
+{
+      assert(net);
+      assert(net->type_==IVL_SCT_FUNCTION);
+      assert(net->func_type==IVL_VT_LOGIC || net->func_type==IVL_VT_BOOL);
+      return net->func_signed? 1 : 0;
+}
+
+extern "C" unsigned ivl_scope_func_width(ivl_scope_t net)
+{
+      assert(net);
+      assert(net->type_ == IVL_SCT_FUNCTION);
+      assert(net->func_type==IVL_VT_LOGIC || net->func_type==IVL_VT_BOOL);
+      return net->func_width;
 }
 
 extern "C" unsigned ivl_scope_is_auto(ivl_scope_t net)
@@ -2094,6 +2205,7 @@ static unsigned scope_name_len(ivl_scope_t net)
 
 static void push_scope_basename(ivl_scope_t net, char*buf)
 {
+      assert(net);
       if (net->parent == 0) {
 	    strcpy(buf, net->name_);
 	    return;
@@ -2106,6 +2218,7 @@ static void push_scope_basename(ivl_scope_t net, char*buf)
 
 extern "C" const char* ivl_scope_name(ivl_scope_t net)
 {
+      assert(net);
       static char*name_buffer = 0;
       static unsigned name_size = 0;
 
@@ -2148,21 +2261,22 @@ extern "C" ivl_scope_t ivl_scope_parent(ivl_scope_t net)
 extern "C" unsigned ivl_scope_mod_module_ports(ivl_scope_t net)
 {
       assert(net);
-      assert (net->type_ == IVL_SCT_MODULE );
+      assert(net->type_ == IVL_SCT_MODULE );
       return static_cast<unsigned>(net->module_ports_info.size());
 }
 
 extern "C" const char *ivl_scope_mod_module_port_name(ivl_scope_t net, unsigned idx )
 {
       assert(net);
-      assert (net->type_ == IVL_SCT_MODULE );
-      assert( idx < net->module_ports_info.size());
+      assert(net->type_ == IVL_SCT_MODULE );
+      assert(idx < net->module_ports_info.size());
 
       return net->module_ports_info[idx].name;
 }
 
 extern "C" ivl_signal_port_t ivl_scope_mod_module_port_type(ivl_scope_t net, unsigned idx )
 {
+      assert(net);
       switch( net->module_ports_info[idx].type )
       {
       case PortType::PINPUT : return IVL_SIP_INPUT;
@@ -2174,6 +2288,7 @@ extern "C" ivl_signal_port_t ivl_scope_mod_module_port_type(ivl_scope_t net, uns
 
 extern "C" unsigned ivl_scope_mod_module_port_width(ivl_scope_t net, unsigned idx )
 {
+    assert(net);
     return net->module_ports_info[idx].width;
 }
 
@@ -2256,31 +2371,37 @@ extern "C" const char* ivl_scope_tname(ivl_scope_t net)
 
 extern "C" int ivl_signal_array_base(ivl_signal_t net)
 {
+      assert(net);
       return net->array_base;
 }
 
 extern "C" unsigned ivl_signal_array_count(ivl_signal_t net)
 {
+      assert(net);
       return net->array_words;
 }
 
 extern "C" unsigned ivl_signal_array_addr_swapped(ivl_signal_t net)
 {
+      assert(net);
       return net->array_addr_swapped;
 }
 
 extern "C" unsigned ivl_signal_dimensions(ivl_signal_t net)
 {
+      assert(net);
       return net->array_dimensions_;
 }
 
 extern "C" ivl_discipline_t ivl_signal_discipline(ivl_signal_t net)
 {
+      assert(net);
       return net->discipline;
 }
 
 extern "C" const char* ivl_signal_attr(ivl_signal_t net, const char*key)
 {
+      assert(net);
       if (net->nattr == 0)
 	    return 0;
 
@@ -2296,22 +2417,26 @@ extern "C" const char* ivl_signal_attr(ivl_signal_t net, const char*key)
 
 extern "C" unsigned ivl_signal_attr_cnt(ivl_signal_t net)
 {
+      assert(net);
       return net->nattr;
 }
 
 extern "C" ivl_attribute_t ivl_signal_attr_val(ivl_signal_t net, unsigned idx)
 {
+      assert(net);
       assert(idx < net->nattr);
       return net->attr + idx;
 }
 
 extern "C" const char* ivl_signal_basename(ivl_signal_t net)
 {
+      assert(net);
       return net->name_;
 }
 
 extern "C" const char* ivl_signal_name(ivl_signal_t net)
 {
+      assert(net);
       static char*name_buffer = 0;
       static unsigned name_size = 0;
 
@@ -2332,6 +2457,7 @@ extern "C" const char* ivl_signal_name(ivl_signal_t net)
 
 extern "C" ivl_nexus_t ivl_signal_nex(ivl_signal_t net, unsigned word)
 {
+      assert(net);
       assert(word < net->array_words);
       if (net->array_words > 1) {
 	    if (net->pins) {
@@ -2348,23 +2474,27 @@ extern "C" ivl_nexus_t ivl_signal_nex(ivl_signal_t net, unsigned word)
 
 extern "C" unsigned ivl_signal_packed_dimensions(ivl_signal_t net)
 {
+      assert(net);
       return net->packed_dims.size();
 }
 
 extern "C" int ivl_signal_packed_msb(ivl_signal_t net, unsigned dim)
 {
+      assert(net);
       assert(dim < net->packed_dims.size());
       return net->packed_dims[dim].get_msb();
 }
 
 extern "C" int ivl_signal_packed_lsb(ivl_signal_t net, unsigned dim)
 {
+      assert(net);
       assert(dim < net->packed_dims.size());
       return net->packed_dims[dim].get_lsb();
 }
 
 extern "C" int ivl_signal_msb(ivl_signal_t net)
 {
+      assert(net);
       if (net->packed_dims.empty())
 	    return 0;
 
@@ -2374,6 +2504,7 @@ extern "C" int ivl_signal_msb(ivl_signal_t net)
 
 extern "C" int ivl_signal_lsb(ivl_signal_t net)
 {
+      assert(net);
       if (net->packed_dims.empty())
 	    return 0;
 
@@ -2389,31 +2520,39 @@ extern "C" ivl_scope_t ivl_signal_scope(ivl_signal_t net)
 
 extern "C" unsigned ivl_signal_width(ivl_signal_t net)
 {
+      assert(net);
+      assert(net->net_type);
       return net->net_type->packed_width();
 }
 
 extern "C" ivl_signal_port_t ivl_signal_port(ivl_signal_t net)
 {
+      assert(net);
       return net->port_;
 }
 
 extern "C" int ivl_signal_module_port_index(ivl_signal_t net)
 {
+      assert(net);
       return net->module_port_index_;
 }
 
 extern "C" int ivl_signal_local(ivl_signal_t net)
 {
+      assert(net);
       return net->local_;
 }
 
 extern "C" int ivl_signal_signed(ivl_signal_t net)
 {
+      assert(net);
+      assert(net->net_type);
       return net->net_type->get_signed()? 1 : 0;
 }
 
 extern "C" unsigned ivl_signal_forced_net(ivl_signal_t net)
 {
+      assert(net);
       return net->forced_net_;
 }
 
@@ -2431,6 +2570,7 @@ extern "C" unsigned ivl_signal_lineno(ivl_signal_t net)
 
 extern "C" int ivl_signal_integer(ivl_signal_t net)
 {
+      assert(net);
       if (const netvector_t*vec = dynamic_cast<const netvector_t*> (net->net_type))
 	    return vec->get_isint()? 1 : 0;
       else if (const netenum_t*enm = dynamic_cast<const netenum_t*> (net->net_type))
@@ -2441,47 +2581,57 @@ extern "C" int ivl_signal_integer(ivl_signal_t net)
 
 extern "C" ivl_variable_type_t ivl_signal_data_type(ivl_signal_t net)
 {
+      assert(net);
+      assert(net->net_type);
       return net->net_type->base_type();
 }
 
 extern "C" ivl_type_t ivl_signal_net_type(ivl_signal_t net)
 {
+      assert(net);
       return net->net_type;
 }
 
 extern "C" unsigned ivl_signal_npath(ivl_signal_t net)
 {
+      assert(net);
       return net->npath;
 }
 
 extern "C" ivl_delaypath_t ivl_signal_path(ivl_signal_t net, unsigned idx)
 {
+      assert(net);
       assert(idx < net->npath);
       return net->path + idx;
 }
 
 extern "C" ivl_signal_type_t ivl_signal_type(ivl_signal_t net)
 {
+      assert(net);
       return net->type_;
 }
 
 extern "C" ivl_statement_type_t ivl_statement_type(ivl_statement_t net)
 {
+      assert(net);
       return net->type_;
 }
 
 extern "C" const char* ivl_stmt_file(ivl_statement_t net)
 {
+      assert(net);
       return net->file.str();
 }
 
 extern "C" unsigned ivl_stmt_lineno(ivl_statement_t net)
 {
+      assert(net);
       return net->lineno;
 }
 
 extern "C" ivl_scope_t ivl_stmt_block_scope(ivl_statement_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_BLOCK:
 	  case IVL_ST_FORK:
@@ -2496,6 +2646,7 @@ extern "C" ivl_scope_t ivl_stmt_block_scope(ivl_statement_t net)
 
 extern "C" unsigned ivl_stmt_block_count(ivl_statement_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_BLOCK:
 	  case IVL_ST_FORK:
@@ -2511,6 +2662,7 @@ extern "C" unsigned ivl_stmt_block_count(ivl_statement_t net)
 extern "C" ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net,
 					       unsigned i)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_BLOCK:
 	  case IVL_ST_FORK:
@@ -2525,6 +2677,7 @@ extern "C" ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net,
 
 extern "C" ivl_scope_t ivl_stmt_call(ivl_statement_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_ALLOC:
 	    return net->u_.alloc_.scope;
@@ -2545,6 +2698,7 @@ extern "C" ivl_scope_t ivl_stmt_call(ivl_statement_t net)
 
 extern "C" unsigned ivl_stmt_case_count(ivl_statement_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_CASE:
 	  case IVL_ST_CASER:
@@ -2559,6 +2713,7 @@ extern "C" unsigned ivl_stmt_case_count(ivl_statement_t net)
 
 extern "C" ivl_expr_t ivl_stmt_case_expr(ivl_statement_t net, unsigned idx)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_CASE:
 	  case IVL_ST_CASER:
@@ -2575,6 +2730,7 @@ extern "C" ivl_expr_t ivl_stmt_case_expr(ivl_statement_t net, unsigned idx)
 
 extern "C" ivl_statement_t ivl_stmt_case_stmt(ivl_statement_t net, unsigned idx)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_CASE:
 	  case IVL_ST_CASER:
@@ -2591,6 +2747,7 @@ extern "C" ivl_statement_t ivl_stmt_case_stmt(ivl_statement_t net, unsigned idx)
 
 extern "C" ivl_expr_t ivl_stmt_cond_expr(ivl_statement_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_ASSIGN_NB:
 	    return net->u_.assign_.count;
@@ -2617,6 +2774,7 @@ extern "C" ivl_expr_t ivl_stmt_cond_expr(ivl_statement_t net)
 
 extern "C" ivl_statement_t ivl_stmt_cond_false(ivl_statement_t net)
 {
+      assert(net);
       assert(net->type_ == IVL_ST_CONDIT);
       if (net->u_.condit_.stmt_[1].type_ == IVL_ST_NONE)
 	    return 0;
@@ -2626,6 +2784,7 @@ extern "C" ivl_statement_t ivl_stmt_cond_false(ivl_statement_t net)
 
 extern "C" ivl_statement_t ivl_stmt_cond_true(ivl_statement_t net)
 {
+      assert(net);
       assert(net->type_ == IVL_ST_CONDIT);
       if (net->u_.condit_.stmt_[0].type_ == IVL_ST_NONE)
 	    return 0;
@@ -2635,6 +2794,7 @@ extern "C" ivl_statement_t ivl_stmt_cond_true(ivl_statement_t net)
 
 extern "C" ivl_expr_t ivl_stmt_delay_expr(ivl_statement_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_ASSIGN:
 	  case IVL_ST_ASSIGN_NB:
@@ -2651,12 +2811,24 @@ extern "C" ivl_expr_t ivl_stmt_delay_expr(ivl_statement_t net)
 
 extern "C" uint64_t ivl_stmt_delay_val(ivl_statement_t net)
 {
+      assert(net);
       assert(net->type_ == IVL_ST_DELAY);
       return net->u_.delay_.value;
 }
 
+extern "C" unsigned ivl_stmt_needs_t0_trigger(ivl_statement_t net)
+{
+      assert(net);
+      if (net->type_ == IVL_ST_WAIT) {
+	    return net->u_.wait_.needs_t0_trigger;
+      } else {
+	    return 0;
+      }
+}
+
 extern "C" unsigned ivl_stmt_nevent(ivl_statement_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_ASSIGN_NB:
 	    return net->u_.assign_.nevent;
@@ -2675,6 +2847,7 @@ extern "C" unsigned ivl_stmt_nevent(ivl_statement_t net)
 
 extern "C" ivl_event_t ivl_stmt_events(ivl_statement_t net, unsigned idx)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_ASSIGN_NB:
 	    assert(idx < net->u_.assign_.nevent);
@@ -2702,6 +2875,7 @@ extern "C" ivl_event_t ivl_stmt_events(ivl_statement_t net, unsigned idx)
 
 extern "C" ivl_expr_t ivl_stmt_lexp(ivl_statement_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_CONTRIB:
 	    return net->u_.contrib_.lval;
@@ -2713,6 +2887,7 @@ extern "C" ivl_expr_t ivl_stmt_lexp(ivl_statement_t net)
 
 extern "C" ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_ASSIGN:
 	  case IVL_ST_ASSIGN_NB:
@@ -2731,6 +2906,7 @@ extern "C" ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx)
 
 extern "C" unsigned ivl_stmt_lvals(ivl_statement_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_ASSIGN:
 	  case IVL_ST_ASSIGN_NB:
@@ -2748,6 +2924,7 @@ extern "C" unsigned ivl_stmt_lvals(ivl_statement_t net)
 
 extern "C" unsigned ivl_stmt_lwidth(ivl_statement_t net)
 {
+      assert(net);
       assert((net->type_ == IVL_ST_ASSIGN)
 	     || (net->type_ == IVL_ST_ASSIGN_NB)
 	     || (net->type_ == IVL_ST_CASSIGN)
@@ -2780,6 +2957,7 @@ extern "C" unsigned ivl_stmt_lwidth(ivl_statement_t net)
 
 extern "C" const char* ivl_stmt_name(ivl_statement_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_STASK:
 	    return net->u_.stask_.name_;
@@ -2792,6 +2970,7 @@ extern "C" const char* ivl_stmt_name(ivl_statement_t net)
 
 extern "C" char ivl_stmt_opcode(ivl_statement_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_ASSIGN:
 	    return net->u_.assign_.oper;
@@ -2803,6 +2982,7 @@ extern "C" char ivl_stmt_opcode(ivl_statement_t net)
 
 extern "C" ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_STASK:
 	    assert(idx < net->u_.stask_.nparm_);
@@ -2816,6 +2996,7 @@ extern "C" ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx)
 
 extern "C" unsigned ivl_stmt_parm_count(ivl_statement_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_STASK:
 	    return net->u_.stask_.nparm_;
@@ -2827,6 +3008,7 @@ extern "C" unsigned ivl_stmt_parm_count(ivl_statement_t net)
 
 extern "C" ivl_expr_t ivl_stmt_rval(ivl_statement_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_ASSIGN:
 	  case IVL_ST_ASSIGN_NB:
@@ -2844,6 +3026,7 @@ extern "C" ivl_expr_t ivl_stmt_rval(ivl_statement_t net)
 
 extern "C" ivl_sfunc_as_task_t ivl_stmt_sfunc_as_task(ivl_statement_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_STASK:
 	    return net->u_.stask_.sfunc_as_task_;
@@ -2856,6 +3039,7 @@ extern "C" ivl_sfunc_as_task_t ivl_stmt_sfunc_as_task(ivl_statement_t net)
 
 extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_ST_DELAY:
 	    return net->u_.delay_.stmt_;
@@ -2878,67 +3062,80 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 extern "C" const char*ivl_switch_basename(ivl_switch_t net)
 {
+      assert(net);
       return net->name;
 }
 
 extern "C" ivl_scope_t ivl_switch_scope(ivl_switch_t net)
 {
+      assert(net);
       return net->scope;
 }
 
 extern "C" ivl_switch_type_t ivl_switch_type(ivl_switch_t net)
 {
+      assert(net);
       return net->type;
 }
 
 extern "C" ivl_nexus_t ivl_switch_a(ivl_switch_t net)
 {
+      assert(net);
       return net->pins[0];
 }
 
 extern "C" ivl_nexus_t ivl_switch_b(ivl_switch_t net)
 {
+      assert(net);
       return net->pins[1];
 }
 
 extern "C" ivl_nexus_t ivl_switch_enable(ivl_switch_t net)
 {
+      assert(net);
       return net->pins[2];
 }
 
 extern "C" unsigned ivl_switch_width(ivl_switch_t net)
 {
+      assert(net);
       return net->width;
 }
 
 extern "C" unsigned ivl_switch_part(ivl_switch_t net)
 {
+      assert(net);
       return net->part;
 }
 
 extern "C" unsigned ivl_switch_offset(ivl_switch_t net)
 {
+      assert(net);
       return net->offset;
 }
 
 extern "C" ivl_expr_t ivl_switch_delay(ivl_switch_t net, unsigned transition)
 {
+      assert(net);
       assert(transition < 3);
       return net->delay[transition];
 }
 
 extern "C" const char* ivl_switch_file(ivl_switch_t net)
 {
+      assert(net);
       return net->file;
 }
 
 extern "C" ivl_island_t ivl_switch_island(ivl_switch_t net)
 {
+      assert(net);
       return net->island;
 }
 
 extern "C" unsigned ivl_switch_lineno(ivl_switch_t net)
 {
+      assert(net);
       return net->lineno;
 }
 
@@ -2959,12 +3156,14 @@ extern "C" ivl_type_t ivl_type_element(ivl_type_t net)
 
 extern "C" unsigned ivl_type_packed_dimensions(ivl_type_t net)
 {
+      assert(net);
       vector<netrange_t> slice = net->slice_dimensions();
       return slice.size();
 }
 
 extern "C" int ivl_type_packed_lsb(ivl_type_t net, unsigned dim)
 {
+      assert(net);
       vector<netrange_t> slice = net->slice_dimensions();
       assert(dim < slice.size());
       return slice[dim].get_lsb();
@@ -2972,6 +3171,7 @@ extern "C" int ivl_type_packed_lsb(ivl_type_t net, unsigned dim)
 
 extern "C" int ivl_type_packed_msb(ivl_type_t net, unsigned dim)
 {
+      assert(net);
       vector<netrange_t> slice = net->slice_dimensions();
       assert(dim < slice.size());
       return slice[dim].get_msb();
@@ -2979,9 +3179,8 @@ extern "C" int ivl_type_packed_msb(ivl_type_t net, unsigned dim)
 
 extern "C" const char* ivl_type_name(ivl_type_t net)
 {
-      if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(net)) {
+      if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(net))
 	    return class_type->get_name();
-      }
 
       return 0;
 }
@@ -3013,5 +3212,6 @@ extern "C" ivl_type_t ivl_type_prop_type(ivl_type_t net, int idx)
 
 extern "C" int ivl_type_signed(ivl_type_t net)
 {
+      assert(net);
       return net->get_signed()? 1 : 0;
 }

@@ -67,6 +67,11 @@ void vvp_darray::get_word(unsigned, vvp_object_t&)
       cerr << "XXXX get_word(vvp_object_t) not implemented for " << typeid(*this).name() << endl;
 }
 
+void vvp_darray::shallow_copy(const vvp_object*)
+{
+      cerr << "XXXX shallow_copy(vvp_object_t) not implemented for " << typeid(*this).name() << endl;
+}
+
 template <class TYPE> vvp_darray_atom<TYPE>::~vvp_darray_atom()
 {
 }
@@ -99,6 +104,16 @@ template <class TYPE> void vvp_darray_atom<TYPE>::get_word(unsigned adr, vvp_vec
 	    word >>= 1;
       }
       value = tmp;
+}
+
+template <class TYPE> void vvp_darray_atom<TYPE>::shallow_copy(const vvp_object*obj)
+{
+      const vvp_darray_atom<TYPE>*that = dynamic_cast<const vvp_darray_atom<TYPE>*>(obj);
+      assert(that);
+
+      unsigned num_items = min(array_.size(), that->array_.size());
+      for (unsigned idx = 0 ; idx < num_items ; idx += 1)
+	    array_[idx] = that->array_[idx];
 }
 
 template class vvp_darray_atom<uint8_t>;
@@ -140,6 +155,16 @@ void vvp_darray_vec4::get_word(unsigned adr, vvp_vector4_t&value)
       assert(value.size() == word_wid_);
 }
 
+void vvp_darray_vec4::shallow_copy(const vvp_object*obj)
+{
+      const vvp_darray_vec4*that = dynamic_cast<const vvp_darray_vec4*>(obj);
+      assert(that);
+
+      unsigned num_items = min(array_.size(), that->array_.size());
+      for (unsigned idx = 0 ; idx < num_items ; idx += 1)
+	    array_[idx] = that->array_[idx];
+}
+
 vvp_darray_vec2::~vvp_darray_vec2()
 {
 }
@@ -173,6 +198,15 @@ void vvp_darray_vec2::get_word(unsigned adr, vvp_vector4_t&value)
       }
 }
 
+void vvp_darray_vec2::shallow_copy(const vvp_object*obj)
+{
+      const vvp_darray_vec2*that = dynamic_cast<const vvp_darray_vec2*>(obj);
+      assert(that);
+
+      unsigned num_items = min(array_.size(), that->array_.size());
+      for (unsigned idx = 0 ; idx < num_items ; idx += 1)
+	    array_[idx] = that->array_[idx];
+}
 
 vvp_darray_object::~vvp_darray_object()
 {
@@ -198,6 +232,16 @@ void vvp_darray_object::get_word(unsigned adr, vvp_object_t&value)
       }
 
       value = array_[adr];
+}
+
+void vvp_darray_object::shallow_copy(const vvp_object*obj)
+{
+      const vvp_darray_object*that = dynamic_cast<const vvp_darray_object*>(obj);
+      assert(that);
+
+      unsigned num_items = min(array_.size(), that->array_.size());
+      for (unsigned idx = 0 ; idx < num_items ; idx += 1)
+	    array_[idx] = that->array_[idx];
 }
 
 vvp_darray_real::~vvp_darray_real()
@@ -226,6 +270,16 @@ void vvp_darray_real::get_word(unsigned adr, double&value)
       value = array_[adr];
 }
 
+void vvp_darray_real::shallow_copy(const vvp_object*obj)
+{
+      const vvp_darray_real*that = dynamic_cast<const vvp_darray_real*>(obj);
+      assert(that);
+
+      unsigned num_items = min(array_.size(), that->array_.size());
+      for (unsigned idx = 0 ; idx < num_items ; idx += 1)
+	    array_[idx] = that->array_[idx];
+}
+
 vvp_darray_string::~vvp_darray_string()
 {
 }
@@ -250,6 +304,16 @@ void vvp_darray_string::get_word(unsigned adr, string&value)
       }
 
       value = array_[adr];
+}
+
+void vvp_darray_string::shallow_copy(const vvp_object*obj)
+{
+      const vvp_darray_string*that = dynamic_cast<const vvp_darray_string*>(obj);
+      assert(that);
+
+      unsigned num_items = min(array_.size(), that->array_.size());
+      for (unsigned idx = 0 ; idx < num_items ; idx += 1)
+	    array_[idx] = that->array_[idx];
 }
 
 vvp_queue::~vvp_queue()

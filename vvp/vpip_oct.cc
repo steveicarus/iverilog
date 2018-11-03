@@ -106,6 +106,7 @@ void vpip_oct_str_to_vec4(vvp_vector4_t&val, const char*str)
 		  pad = BIT4_1;
 		  break;
 	    }
+	    // fallthrough
 	  default:  // Everything else gets '0' padded.
 	    pad = BIT4_0;
 	    break;
@@ -116,7 +117,6 @@ void vpip_oct_str_to_vec4(vvp_vector4_t&val, const char*str)
 	    if (idx < tval.size()) val.set_bit(idx, tval.value(idx));
 	    else val.set_bit(idx, pad);
       }
-
 }
 
 void vpip_vec4_to_oct_str(const vvp_vector4_t&bits, char*buf, unsigned nbuf)

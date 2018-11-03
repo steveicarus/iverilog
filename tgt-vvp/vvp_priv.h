@@ -23,11 +23,6 @@
 # include  "ivl_target.h"
 # include  <stdio.h>
 
-#ifdef __MINGW32__  /* MinGW has inconsistent %p output. */
-#define snprintf _snprintf
-#endif
-
-
 extern int debug_draw;
 
 /*
@@ -138,6 +133,7 @@ extern void draw_vpi_task_call(ivl_statement_t net);
 
 extern void draw_vpi_func_call(ivl_expr_t expr);
 extern void draw_vpi_rfunc_call(ivl_expr_t expr);
+extern void draw_vpi_sfunc_call(ivl_expr_t expr);
 
 extern void draw_class_in_scope(ivl_type_t classtype);
 
@@ -213,6 +209,10 @@ extern void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix);
  */
 extern int draw_eval_condition(ivl_expr_t expr);
 
+/*
+ * Return true if the signal is the return value of a function.
+ */
+extern int signal_is_return_value(ivl_signal_t sig);
 
 extern int number_is_unknown(ivl_expr_t ex);
 extern int number_is_immediate(ivl_expr_t ex, unsigned lim_wid, int negative_is_ok);
@@ -242,13 +242,13 @@ extern void draw_eval_real(ivl_expr_t ex);
 extern int draw_eval_bool64(ivl_expr_t ex);
 
 /*
- * The draw_eval_string functio evaluates the expression as a string,
+ * The draw_eval_string function evaluates the expression as a string,
  * and pushes the string onto the string stack.
  */
 extern void draw_eval_string(ivl_expr_t ex);
 
 /*
- * The draw_eval_string functio evaluates the expression as an object,
+ * The draw_eval_string function evaluates the expression as an object,
  * and pushes the object onto the object stack.
  */
 extern int draw_eval_object(ivl_expr_t ex);
@@ -260,6 +260,13 @@ extern void show_stmt_file_line(ivl_statement_t net, const char*desc);
  */
 extern int test_immediate_vec4_ok(ivl_expr_t expr);
 extern void draw_immediate_vec4(ivl_expr_t expr, const char*opcode);
+
+/*
+ * Draw a delay statement.
+ */
+extern void draw_delay(void*ptr, unsigned wid, const char*input,
+		       ivl_expr_t rise_exp, ivl_expr_t fall_exp,
+		       ivl_expr_t decay_exp);
 
 /*
  * These functions manage word register allocation.

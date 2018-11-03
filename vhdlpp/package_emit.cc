@@ -20,8 +20,9 @@
 
 # include  "package.h"
 # include  "subprogram.h"
-# include  <iostream>
 # include  "ivl_assert.h"
+# include  <iostream>
+# include  <list>
 
 using namespace std;
 
@@ -64,14 +65,22 @@ int Package::emit_package(ostream&fd) const
       //}
 
       fd << "package \\" << name() << " ;" << endl;
-      for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
+      for (map<perm_string,SubHeaderList>::const_iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++ cur) {
-	    // Do not emit unbounded functions, we will just need fixed instances later
-	    if(!cur->second->unbounded())
-		errors += cur->second->emit_package(fd);
-	    else
-		fd << "/* function " << cur->second->name() <<
-		      " has to be instantiated, skipping */" << endl;
+	    const SubHeaderList& subp_list = cur->second;
+
+	    for(SubHeaderList::const_iterator it = subp_list.begin();
+			it != subp_list.end(); ++it) {
+                SubprogramHeader*header = *it;
+
+                // Do not emit unbounded functions, we will just need fixed instances later
+                if(!header->unbounded())
+                    errors += header->emit_package(fd);
+                else
+                    fd << "/* function " << header->name()
+                       << " has to be instantiated, skipping */" << endl;
+            }
+
       }
 
       fd << "endpackage /* " << name() << " */" << endl;

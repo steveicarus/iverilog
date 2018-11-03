@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -102,8 +102,6 @@ static char* strdupnew(char const *str)
 
 
   /* These are some keywords that are recognized. */
-".alias"      { return K_ALIAS; }
-".alias/real" { return K_ALIAS_R; }
 ".abs"          { return K_ARITH_ABS; }
 ".arith/div"    { return K_ARITH_DIV; }
 ".arith/div.r"  { return K_ARITH_DIV_R; }
@@ -148,12 +146,17 @@ static char* strdupnew(char const *str)
 ".cmp/gt"   { return K_CMP_GT; }
 ".cmp/gt.r" { return K_CMP_GT_R; }
 ".cmp/gt.s" { return K_CMP_GT_S; }
+".cmp/weq"  { return K_CMP_WEQ; }
+".cmp/wne"  { return K_CMP_WNE; }
 ".concat"   { return K_CONCAT; }
 ".concat8"  { return K_CONCAT8; }
 ".delay"    { return K_DELAY; }
-".dff"      { return K_DFF; }
-".dff/aclr" { return K_DFF_ACLR; }
-".dff/aset" { return K_DFF_ASET; }
+".dff/n"      { return K_DFF_N; }
+".dff/n/aclr" { return K_DFF_N_ACLR; }
+".dff/n/aset" { return K_DFF_N_ASET; }
+".dff/p"      { return K_DFF_P; }
+".dff/p/aclr" { return K_DFF_P_ACLR; }
+".dff/p/aset" { return K_DFF_P_ASET; }
 ".enum2"    { return K_ENUM2; }
 ".enum2/s"  { return K_ENUM2_S; }
 ".enum4"    { return K_ENUM4; }
@@ -165,6 +168,7 @@ static char* strdupnew(char const *str)
 ".functor"  { return K_FUNCTOR; }
 ".import"   { return K_IMPORT; }
 ".island"   { return K_ISLAND; }
+".latch"    { return K_LATCH; }
 ".modpath"  { return K_MODPATH; }
 ".net"      { return K_NET; }
 ".net/2s"   { return K_NET_2S; }
@@ -192,6 +196,9 @@ static char* strdupnew(char const *str)
 ".reduce/xnor" { return K_REDUCE_XNOR; }
 ".repeat"   { return K_REPEAT; }
 ".resolv"   { return K_RESOLV; }
+".rtran"    { return K_RTRAN; }
+".rtranif0" { return K_RTRANIF0; }
+".rtranif1" { return K_RTRANIF1; }
 ".scope"    { return K_SCOPE; }
 ".sfunc"    { return K_SFUNC; }
 ".sfunc/e"  { return K_SFUNC_E; }
@@ -205,7 +212,8 @@ static char* strdupnew(char const *str)
 ".tranif0"  { return K_TRANIF0; }
 ".tranif1"  { return K_TRANIF1; }
 ".tranvp"   { return K_TRANVP; }
-".ufunc"    { return K_UFUNC; }
+".ufunc/real" { return K_UFUNC_REAL; }
+".ufunc/vec4" { return K_UFUNC_VEC4; }
 ".ufunc/e"  { return K_UFUNC_E; }
 ".var"      { return K_VAR; }
 ".var/cobj" { return K_VAR_COBJECT; }
@@ -231,8 +239,7 @@ static char* strdupnew(char const *str)
 "%vpi_call/i" { return K_vpi_call_i; }
 "%vpi_func"   { return K_vpi_func; }
 "%vpi_func/r" { return K_vpi_func_r; }
-"%disable"    { return K_disable; }
-"%fork"       { return K_fork; }
+"%vpi_func/s" { return K_vpi_func_s; }
 "%file_line"  { return K_file_line; }
 
   /* Handle the specialized variable access functions. */
@@ -331,7 +338,7 @@ void destroy_lexor()
 {
 # ifdef FLEX_SCANNER
 #   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5
-#     if defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
+#     if YY_FLEX_MINOR_VERSION > 5 || defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
     yylex_destroy();
 #     endif
 #   endif

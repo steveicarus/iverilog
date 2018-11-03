@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,13 +26,13 @@
 # include  <cmath>
 
 vvp_arith_::vvp_arith_(unsigned wid)
-: wid_(wid), x_val_(wid)
+: wid_(wid), op_a_(wid), op_b_(wid), x_val_(wid)
 {
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    op_a_ .set_bit(idx, BIT4_Z);
+	    op_b_ .set_bit(idx, BIT4_Z);
 	    x_val_.set_bit(idx, BIT4_X);
-
-      op_a_ = x_val_;
-      op_b_ = x_val_;
+      }
 }
 
 void vvp_arith_::dispatch_operand_(vvp_net_ptr_t ptr, vvp_vector4_t bit)
@@ -51,6 +51,12 @@ void vvp_arith_::dispatch_operand_(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       }
 }
 
+void vvp_arith_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			      unsigned base, unsigned wid, unsigned vwid,
+                              vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+}
 
 vvp_arith_abs::vvp_arith_abs()
 {
@@ -80,6 +86,13 @@ void vvp_arith_abs::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       }
 
       ptr.ptr()->send_vec4(out, 0);
+}
+
+void vvp_arith_abs::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+				 unsigned base, unsigned wid, unsigned vwid,
+				 vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
 }
 
 void vvp_arith_abs::recv_real(vvp_net_ptr_t ptr, double bit,
@@ -121,6 +134,13 @@ void vvp_arith_cast_real::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       ptr.ptr()->send_real(val, 0);
 }
 
+void vvp_arith_cast_real::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+				       unsigned base, unsigned wid, unsigned vwid,
+				       vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+}
+
 vvp_arith_cast_vec2::vvp_arith_cast_vec2(unsigned wid)
 : wid_(wid)
 {
@@ -141,6 +161,13 @@ void vvp_arith_cast_vec2::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 {
       vvp_vector2_t tmp = bit;
       ptr.ptr()->send_vec4(vector2_to_vector4(tmp,wid_), 0);
+}
+
+void vvp_arith_cast_vec2::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+				       unsigned base, unsigned wid, unsigned vwid,
+				       vvp_context_t ctx)
+{
+      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
 }
 
 // Division
@@ -803,7 +830,7 @@ vvp_cmp_gtge_base_::vvp_cmp_gtge_base_(unsigned wid, bool flag)
 
 
 void vvp_cmp_gtge_base_::recv_vec4_base_(vvp_net_ptr_t ptr,
-					 vvp_vector4_t bit,
+					 const vvp_vector4_t&bit,
 					 vvp_bit4_t out_if_equal)
 {
       dispatch_operand_(ptr, bit);
@@ -839,6 +866,76 @@ void vvp_cmp_gt::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
                            vvp_context_t)
 {
       recv_vec4_base_(ptr, bit, BIT4_0);
+}
+
+vvp_cmp_weq::vvp_cmp_weq(unsigned wid)
+: vvp_arith_(wid)
+{
+}
+
+void vvp_cmp_weq::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                            vvp_context_t)
+{
+      dispatch_operand_(ptr, bit);
+
+      vvp_vector4_t eeq (1);
+      eeq.set_bit(0, BIT4_1);
+
+      assert(op_a_.size() == op_b_.size());
+      for (unsigned idx = 0 ;  idx < op_a_.size() ;  idx += 1) {
+	    vvp_bit4_t a = op_a_.value(idx);
+	    vvp_bit4_t b = op_b_.value(idx);
+	    if (b == BIT4_X)
+		  continue;
+	    else if (b == BIT4_Z)
+		  continue;
+	    else if (a == BIT4_X)
+		  eeq.set_bit(0, BIT4_X);
+	    else if (a == BIT4_Z)
+		  eeq.set_bit(0, BIT4_X);
+            else if (a != b) {
+		  eeq.set_bit(0, BIT4_0);
+		  break;
+	    }
+      }
+
+      vvp_net_t*net = ptr.ptr();
+      net->send_vec4(eeq, 0);
+}
+
+vvp_cmp_wne::vvp_cmp_wne(unsigned wid)
+: vvp_arith_(wid)
+{
+}
+
+void vvp_cmp_wne::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                            vvp_context_t)
+{
+      dispatch_operand_(ptr, bit);
+
+      vvp_vector4_t eeq (1);
+      eeq.set_bit(0, BIT4_0);
+
+      assert(op_a_.size() == op_b_.size());
+      for (unsigned idx = 0 ;  idx < op_a_.size() ;  idx += 1) {
+	    vvp_bit4_t a = op_a_.value(idx);
+	    vvp_bit4_t b = op_b_.value(idx);
+	    if (b == BIT4_X)
+		  continue;
+	    else if (b == BIT4_Z)
+		  continue;
+	    else if (a == BIT4_X)
+		  eeq.set_bit(0, BIT4_X);
+	    else if (a == BIT4_Z)
+		  eeq.set_bit(0, BIT4_X);
+            else if (a != b) {
+		  eeq.set_bit(0, BIT4_1);
+		  break;
+	    }
+      }
+
+      vvp_net_t*net = ptr.ptr();
+      net->send_vec4(eeq, 0);
 }
 
 

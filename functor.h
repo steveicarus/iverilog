@@ -1,7 +1,7 @@
 #ifndef IVL_functor_H
 #define IVL_functor_H
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -75,6 +75,9 @@ struct functor_t {
 	/* This method is called for each FF in the design. */
       virtual void lpm_ff(class Design*des, class NetFF*);
 
+	/* This method is called for each LATCH in the design. */
+      virtual void lpm_latch(class Design*des, class NetLatch*);
+
 	/* Handle LPM combinational logic devices. */
       virtual void lpm_logic(class Design*des, class NetLogic*);
 
@@ -88,6 +91,9 @@ struct functor_t {
 
 	/* This method is called for each power. */
       virtual void lpm_pow(class Design*des, class NetPow*);
+
+	/* This method is called for each part substitute. */
+      virtual void lpm_substitute(class Design*des, class NetSubstitute*);
 
 	/* This method is called for each unary reduction gate. */
       virtual void lpm_ureduce(class Design*des, class NetUReduce*);

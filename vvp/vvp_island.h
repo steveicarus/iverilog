@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_island_H
 #define IVL_vvp_island_H
 /*
- * Copyright (c) 2008-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -137,8 +137,10 @@ class vvp_island_port  : public vvp_net_fun_t {
 
 	// This is painful, but necessary. If the island is connected
 	// to a forced net, we need to rerun the calculations whenever
-	// a force/release happens to the net.
-      virtual void force_flag(void);
+	// a force/release happens to the net. If run_now is true, we
+	// rerun immediately, otherwise we schedule it for the end of
+	// the current time slot.
+      virtual void force_flag(bool run_now);
 
     public:
       vvp_vector8_t invalue;

@@ -21,3 +21,5 @@
 StringHeapLex lex_strings;
 
 StringHeapLex filename_strings;
+
+StringHeapLex gen_strings;

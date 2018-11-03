@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2002-2015 Gus Baldauf (gus@picturel.com)
+ * Copyright (c) 2002 Gus Baldauf (gus@picturel.com)
+ * Copyright (c) 2015 Martin Whitaker
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,7 +21,7 @@
 /*
  *	iverilog-vpi.c
  *
- *	this program provides the functionality of iverilog-vpi.sh under Win32
+ *	this program provides the functionality of iverilog-vpi.sh under Windows
  */
 
 #include <stdio.h>
@@ -52,8 +53,8 @@ static struct global_strings {
 	char *pIVL;		/* path to IVL directory */
 	char *pCCFLAGS;		/* compiler flags for compiling C source files */
 	char *pCXFLAGS;		/* compiler flags for compiling C++ source files */
-	char *pLDLIBS;		/* LDLIBS option */
-	char *pNewPath;		/* new PATH environment variable setting */
+	char *pLDLIBS;		/* linker flags for final linking stage */
+	char *pCCNAME;		/* base name of compiler */
 	char *pLD;		/* what to use for a linker */
 } gstr;
 
@@ -79,8 +80,8 @@ static void myExit(int exitVal)
 	deInitDynString(gstr.pCCFLAGS);
 	deInitDynString(gstr.pCXFLAGS);
 	deInitDynString(gstr.pLDLIBS);
-	deInitDynString(gstr.pNewPath);
-	free(gstr.pLD);
+	deInitDynString(gstr.pCCNAME);
+	deInitDynString(gstr.pLD);
 
 	exit(exitVal);
 }
@@ -89,9 +90,8 @@ static void myExit(int exitVal)
 
 static void usage(void)
 {
-	fprintf(stderr,"usage: iverilog-vpi" IVERILOG_SUFFIX " [src and obj files]...\n");
-	fprintf(stderr,"   or  iverilog-vpi" IVERILOG_SUFFIX " -mingw=dir\n");
-	fprintf(stderr,"   or  iverilog-vpi" IVERILOG_SUFFIX " -ivl=dir\n");
+	fprintf(stderr, "usage: iverilog-vpi" IVERILOG_SUFFIX " [options] [src and obj files]...\n");
+	fprintf(stderr, "   or  iverilog-vpi" IVERILOG_SUFFIX " -mingw=dir\n");
 	myExit(1);
 }
 
@@ -100,7 +100,7 @@ static void initDynString(char **str)
 	*str = (char *) malloc(1);
 
 	if (!*str) {
-		fprintf(stderr,"error: out of memory\n");
+		fprintf(stderr, "error: out of memory\n");
 		myExit(4);
 	}
 
@@ -111,6 +111,8 @@ static void initDynString(char **str)
 
 static void init(void)
 {
+	char *ptr;
+
 	initDynString(&gstr.pCCSRC);
 	initDynString(&gstr.pCXSRC);
 	initDynString(&gstr.pOBJ);
@@ -123,7 +125,14 @@ static void init(void)
 	initDynString(&gstr.pCCFLAGS);
 	initDynString(&gstr.pCXFLAGS);
 	initDynString(&gstr.pLDLIBS);
-	initDynString(&gstr.pNewPath);
+	initDynString(&gstr.pCCNAME);
+	initDynString(&gstr.pLD);
+
+	  /* Get the base name of the C compiler. */
+	assign(&gstr.pCCNAME, IVERILOG_VPI_CC);
+	ptr = strchr(gstr.pCCNAME, ' ');
+	if (ptr != NULL) *ptr = '\0';
+
 	  /* By default use the C compiler to link the programs. */
 	assign(&gstr.pLD, IVERILOG_VPI_CC);
 }
@@ -139,7 +148,7 @@ static int endsIn (char *end, char *str)
 
 	ext = str + (strlen(str) - strlen(end));
 
-	return stricmp(end,ext) ? 0 : 1;
+	return stricmp(end, ext) ? 0 : 1;
 }
 
 /* return true if "str" begins with "prefix", case insensitive */
@@ -149,7 +158,7 @@ static int startsWith (char *prefix, char *str)
 	if (strlen(prefix) >= strlen(str))
 		return 0;
 
-	return strnicmp(prefix,str,strlen(prefix)) ? 0 : 1;
+	return strnicmp(prefix, str, strlen(prefix)) ? 0 : 1;
 }
 
 /* append "app" to "ptr", allocating memory as needed    */
@@ -158,26 +167,26 @@ static int startsWith (char *prefix, char *str)
 static void appendn (char **ptr, char *app, size_t count)
 {
 	char *nptr = (char *) realloc(*ptr, strlen(*ptr) +
-                                            (count?count:strlen(app)) + 1);
+                                            (count ? count : strlen(app)) + 1);
 
 	if (nptr == NULL) {
-		fprintf(stderr,"error: out of memory\n");
+		fprintf(stderr, "error: out of memory\n");
 		free(*ptr);
 		myExit(4);
 	}
 	*ptr = nptr;
 
 	if (count)
-		strncat(*ptr,app,count);
+		strncat(*ptr, app, count);
 	else
-		strcat(*ptr,app);
+		strcat(*ptr, app);
 }
 
 /* append "app" to "ptr", allocating memory as needed    */
 
 static void append (char **ptr, char *app)
 {
-	appendn(ptr,app,0);
+	appendn(ptr, app, 0);
 }
 
 /* if the string does not end with a backslash, add one */
@@ -185,7 +194,7 @@ static void append (char **ptr, char *app)
 static void appendBackSlash(char **str)
 {
 	if ((*str)[strlen(*str)-1] != '\\')
-		append(str,"\\");
+		append(str, "\\");
 }
 
 /* copy count characters of "str" to "ptr", allocating memory as needed */
@@ -193,28 +202,28 @@ static void appendBackSlash(char **str)
 
 static void assignn (char **ptr, char *str, size_t count)
 {
-	char *nptr = (char *) realloc(*ptr, (count?count:strlen(str)) + 1);
+	char *nptr = (char *) realloc(*ptr, (count ? count : strlen(str)) + 1);
 
 	if (nptr == NULL) {
-		fprintf(stderr,"error: out of memory\n");
+		fprintf(stderr, "error: out of memory\n");
 		free(*ptr);
 		myExit(4);
 	}
 	*ptr = nptr;
 
 	if (count) {
-		strncpy(*ptr,str,count);
+		strncpy(*ptr, str, count);
 		(*ptr)[count] = 0;
 	}
 	else
-		strcpy(*ptr,str);
+		strcpy(*ptr, str);
 }
 
 /* copy count characters of "str" to "ptr", allocating memory as needed */
 
 static void assign (char **ptr, char *str)
 {
-	assignn(ptr,str,0);
+	assignn(ptr, str, 0);
 }
 
 /* get a copy of a Icarus Verilog registry string key */
@@ -226,11 +235,11 @@ static int GetRegistryKey(char *key, char **value)
 	char *regKeyBuffer;
 	DWORD regKeyType, regKeySize;
 
-	lrv = RegOpenKeyEx(HKEY_LOCAL_MACHINE,"Software\\Icarus Verilog",0,KEY_QUERY_VALUE,&hkKey);
+	lrv = RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\Icarus Verilog", 0, KEY_QUERY_VALUE, &hkKey);
 	if (lrv != ERROR_SUCCESS)
 		return 0;
 
-	lrv = RegQueryValueEx(hkKey,key,NULL,&regKeyType,NULL,&regKeySize);
+	lrv = RegQueryValueEx(hkKey, key, NULL, &regKeyType, NULL, &regKeySize);
 	if ((lrv != ERROR_SUCCESS) || (regKeyType != REG_SZ) || (!regKeySize)) {
 		lrv = RegCloseKey(hkKey);
 		return 0;
@@ -239,7 +248,7 @@ static int GetRegistryKey(char *key, char **value)
 	regKeyBuffer = (char *) malloc(regKeySize+1);
 	if (!regKeyBuffer) {
 		lrv = RegCloseKey(hkKey);
-		fprintf(stderr,"error: out of memory\n");
+		fprintf(stderr, "error: out of memory\n");
 		myExit(4);
 	}
 	regKeyBuffer[regKeySize] = 0;		/* makes sure there is a trailing NULL */
@@ -255,7 +264,7 @@ static int GetRegistryKey(char *key, char **value)
 
 	RegCloseKey(hkKey);
 
-	assign(value,regKeyBuffer);
+	assign(value, regKeyBuffer);
 	free(regKeyBuffer);
 
 	return 1;
@@ -265,27 +274,30 @@ static int GetRegistryKey(char *key, char **value)
 
 static void SetRegistryKey(char *key, char *value)
 {
+	long lrv;
 	HKEY hkKey;
 	DWORD res;
 
-	if (RegCreateKeyEx(
-		HKEY_LOCAL_MACHINE,
-		"Software\\Icarus Verilog",
-		0,
-		"",
-		REG_OPTION_NON_VOLATILE,
-		KEY_ALL_ACCESS,NULL,
-		&hkKey,
-		&res) != ERROR_SUCCESS)
-			return;
+	lrv = RegCreateKeyEx(HKEY_LOCAL_MACHINE, "Software\\Icarus Verilog", 0, "",
+			     REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkKey, &res);
+	if (lrv != ERROR_SUCCESS) {
+		char message[1024];
+		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, lrv, LANG_USER_DEFAULT,
+			      message, sizeof(message), NULL);
+		fprintf(stderr, "error: couldn't write to registry - %s\n", message);
+		if (lrv == ERROR_ACCESS_DENIED) {
+			fprintf(stderr, "       try running as administrator\n");
+		}
+		return;
+	}
 
 	/* This needs an unsigned char *, but for MinGW the char is signed. */
 	RegSetValueEx(hkKey, key, 0, REG_SZ, (unsigned char *) value,
 	              strlen(value)+1);
 	RegCloseKey(hkKey);
 
-	printf("info:  storing %s in Windows' registry entry\n",value);
-	printf("       HKEY_LOCAL_MACHINE\\Software\\Icarus Verilog\\%s\n",key);
+	printf("info:  storing %s in Windows' registry entry\n", value);
+	printf("       HKEY_LOCAL_MACHINE\\Software\\Icarus Verilog\\%s\n", key);
 }
 
 /* parse the command line, assign results to global variable strings */
@@ -302,7 +314,6 @@ static int parse(int argc, char *argv[])
 	char lib_option[]   = "-l";
 	char inc_option[]   = "-I";
 	char mingw_option[] = "-mingw=";
-	char ivl_option[]   = "-ivl=";
 	char def_option[]   = "-D";
 
 	if (argc == 1) return 0;
@@ -342,7 +353,7 @@ static int parse(int argc, char *argv[])
 		  /* Check for compiled object files */
 		else if (endsIn(dot_o_ext, argv[idx])) {
 			++srcFileCnt;
-			append(&gstr.pOBJ," ");
+			append(&gstr.pOBJ, " ");
 			append(&gstr.pOBJ, argv[idx]);
 			if (!*gstr.pOUT)
 			   assignn(&gstr.pOUT, argv[idx],
@@ -352,10 +363,6 @@ static int parse(int argc, char *argv[])
 		else if (startsWith(mingw_option, argv[idx]))
 			assignn(&gstr.pMINGW, argv[idx]+sizeof(mingw_option)-1,
 			        strlen(argv[idx])-(sizeof(mingw_option)-1));
-		  /* Check for the -ivl   option */
-		else if (startsWith(ivl_option, argv[idx]))
-			assignn(&gstr.pIVL, argv[idx]+sizeof(ivl_option)-1,
-			        strlen(argv[idx])-(sizeof(ivl_option)-1));
 		  /* Check for the --name option */
 		else if (startsWith(name_option, argv[idx])) {
 			assignn(&gstr.pOUT, argv[idx]+sizeof(name_option)-1,
@@ -396,7 +403,7 @@ static int parse(int argc, char *argv[])
 		  /* Check for the --install-dir option */
 		else if (stricmp("--install-dir", argv[idx]) == 0) {
 			setup_ivl_environment();
-			printf("%s\\\\lib\\\\ivl" IVERILOG_SUFFIX "\\\\.\n", gstr.pIVL);
+			printf("%s\\lib\\ivl" IVERILOG_SUFFIX "\\.\n", gstr.pIVL);
 			myExit(0);
 		}
 		  /* This is different than iverilog-vpi.sh, we don't
@@ -405,15 +412,16 @@ static int parse(int argc, char *argv[])
 	}
 
 	  /* In case there is a --name without source/object files */
-	if (0 == srcFileCnt) assign(&gstr.pOUT,"");
+	if (0 == srcFileCnt) assign(&gstr.pOUT, "");
 
-	  /* Normally it's an error if there are no source or object files */
-	  /* Unless we are setting the IVL or MinGW registry entries */
-	if (!*gstr.pOUT) {
-		if (!*gstr.pMINGW && !*gstr.pIVL) return 0;
-	} else
+	if (*gstr.pOUT) {
 		  /* We have a valid result file so add the .vpi extension */
 		append(&gstr.pOUT, ".vpi");
+	} else {
+		  /* Unless we are setting the MinGW registry entry, it's
+		     an error if there are no source or object files */
+		if (!*gstr.pMINGW) return 0;
+	}
 
 	return 1;
 }
@@ -424,58 +432,27 @@ static void checkMingwDir(char *root)
 {
 	int irv;
 	struct _stat stat_buf;
-
-	char *path, *comp, *cp;
-	initDynString(&path);
-	assign(&path,gstr.pMINGW);
-	appendBackSlash(&path);
-	append(&path,"bin\\");
-	/* Get just the compiler name (the first word) */
-	comp = strdup(IVERILOG_VPI_CC);
-	cp = strchr(comp, ' ');
-	if (cp != NULL) *cp = '\0';
-        append(&path, comp);
-	append(&path,".exe");
-        free(comp);
-
-	irv = _stat(path,&stat_buf);
-	deInitDynString(path);
-
-	if (irv) {
-		fprintf(stderr,"error: %s does not appear to be the valid root directory\n",root);
-		fprintf(stderr,"       of MinGW.  Use the -mingw option of iverilog-vpi.exe to\n");
-		fprintf(stderr,"       point to the MinGW root directory.  For a Windows command\n");
-		fprintf(stderr,"       shell the option would be something like -mingw=c:\\mingw\n");
-		fprintf(stderr,"       For a Cygwin shell the option would be something like\n");
-		fprintf(stderr,"       -mingw=c:\\\\mingw\n");
-		myExit(5);
-	}
-}
-
-/* do minimal check that the Icarus Verilog root directory looks valid */
-
-static void checkIvlDir(char *root)
-{
-	int irv;
-	struct _stat stat_buf;
-
 	char *path;
+
 	initDynString(&path);
-	assign(&path,gstr.pIVL);
+	assign(&path, gstr.pMINGW);
 	appendBackSlash(&path);
-	append(&path,"bin\\vvp" IVERILOG_SUFFIX ".exe");
+	append(&path, "bin\\");
+        append(&path, gstr.pCCNAME);
+	append(&path, ".exe");
 
 	irv = _stat(path,&stat_buf);
 	deInitDynString(path);
 
 	if (irv) {
-		fprintf(stderr,"error: %s does not appear to be the valid root directory of\n",root);
-		fprintf(stderr,"       Icarus Verilog.  Use the -ivl option of iverilog-vpi" IVERILOG_SUFFIX " to\n");
-		fprintf(stderr,"       point to the Icarus Verilog root directory.  For a Windows\n");
-		fprintf(stderr,"       command shell the option would be something like -ivl=c:\\iverilog\n");
-		fprintf(stderr,"       For a Cygwin shell the option would be something like\n");
-		fprintf(stderr,"       -ivl=c:\\\\iverilog\n");
-		myExit(6);
+		fprintf(stderr, "error: %s\n", root);
+		fprintf(stderr, "       does not appear to be the valid root directory of\n");
+		fprintf(stderr, "       MinGW.  Use the -mingw option of iverilog-vpi.exe to\n");
+		fprintf(stderr, "       point to the MinGW root directory.  For a Windows command\n");
+		fprintf(stderr, "       shell the option would be something like -mingw=c:\\mingw\n");
+		fprintf(stderr, "       For a Cygwin shell the option would be something like\n");
+		fprintf(stderr, "       -mingw=c:\\\\mingw\n");
+		myExit(5);
 	}
 }
 
@@ -485,67 +462,91 @@ static void checkIvlDir(char *root)
 
 static void setup_mingw_environment(void)
 {
-	char *pOldPATH = getenv("PATH");		/* get current path */
+	char buffer[1];		/* doesn't matter how big this is, as we don't use the result */
+	char *path;
 
 	if (*gstr.pMINGW) {
 		checkMingwDir(gstr.pMINGW);
-		SetRegistryKey(IVL_REGKEY_MINGW,gstr.pMINGW);
-	} else if (!GetRegistryKey(IVL_REGKEY_MINGW,&gstr.pMINGW)) {
-			fprintf(stderr,"error: can not locate the MinGW root directory, use the -mingw option of\n");
-			fprintf(stderr,"       iverilog-vpi.exe to point to the MinGW root directory.  For\n");
-			fprintf(stderr,"       a Windows command shell the option would be something like\n");
-			fprintf(stderr,"       -mingw=c:\\mingw  For a Cygwin shell the option would be\n");
-			fprintf(stderr,"       something like -mingw=c:\\\\mingw\n");
-			myExit(5);
-		}
+		if (!*gstr.pOUT) SetRegistryKey(IVL_REGKEY_MINGW, gstr.pMINGW);
+
+	} else if (GetRegistryKey(IVL_REGKEY_MINGW, &gstr.pMINGW)) {
+		checkMingwDir(gstr.pMINGW);
+
+	} else if (SearchPath(NULL, gstr.pCCNAME, ".exe", sizeof(buffer), buffer, NULL)) {
+		return;
+
+	} else {
+		fprintf(stderr, "error: cannot locate the MinGW C compiler - either add its location\n");
+		fprintf(stderr, "       to the PATH environment variable or use the -mingw option of\n");
+		fprintf(stderr, "       iverilog-vpi.exe to point to the MinGW root directory.  For\n");
+		fprintf(stderr, "       a Windows command shell the option would be something like\n");
+		fprintf(stderr, "       -mingw=c:\\mingw  For a Cygwin shell the option would be\n");
+		fprintf(stderr, "       something like -mingw=c:\\\\mingw\n");
+		myExit(5);
+	}
 
 	  /* Create new path with MinGW in it */
-	assign(&gstr.pNewPath,"PATH=");
-	append(&gstr.pNewPath,gstr.pMINGW);
-	appendBackSlash(&gstr.pNewPath);
-	append(&gstr.pNewPath, "\\");
-	append(&gstr.pNewPath,"bin;");
-	append(&gstr.pNewPath,pOldPATH);
+	initDynString(&path);
+	assign(&path, "PATH=");
+	append(&path, gstr.pMINGW);
+	appendBackSlash(&path);
+	append(&path, "bin;");
+	append(&path, getenv("PATH"));
 
 	  /* Place new path in environment */
-	_putenv(gstr.pNewPath);
+	_putenv(path);
+	deInitDynString(path);
 }
 
-/* see if we can find iverilog root */
-
-#define IVL_REGKEY_IVL   "InstallDir"
+/* find the iverilog root and initialise the compiler options */
 
 static void setup_ivl_environment(void)
 {
-	if (*gstr.pIVL) {
-		checkIvlDir(gstr.pIVL);
-		SetRegistryKey(IVL_REGKEY_IVL,gstr.pIVL);
-	} else if (!GetRegistryKey(IVL_REGKEY_IVL,&gstr.pIVL)) {
-			fprintf(stderr,"error: can not locate the Icarus Verilog root directory, use the -ivl option\n");
-			fprintf(stderr,"       of iverilog-vpi" IVERILOG_SUFFIX " to point to the Icarus Verilog root directory.\n");
-			fprintf(stderr,"       For a Windows command shell the option would be something like\n");
-			fprintf(stderr,"       -ivl=c:\\iverilog  For a Cygwin shell the option would be something\n");
-			fprintf(stderr,"       like -ivl=c:\\\\iverilog\n");
-			myExit(6);
-		}
+	char path[4096];
+	char *ptr;
+
+	  /* Extract the Icarus Verilog root directory from the path to the
+	     command. The command path will look something like this:
+
+		C:\iverilog\bin\iverilog-vpi.exe
+
+	     The corresponding root directory is
+
+		C:\iverilog
+
+	     so we chop off the file name and the last directory. */
+	GetModuleFileName(NULL, path, sizeof(path));
+	ptr = strrchr(path, '\\');
+	if (!ptr) {
+		fprintf(stderr, "error: couldn't find start of program name in command path '%s'\n", path);
+		myExit(6);
+	}
+	*ptr = 0;
+	ptr = strrchr(path, '\\');
+	if (!ptr) {
+		fprintf(stderr, "error: couldn't find start of bin directory in command path '%s'\n", path);
+		myExit(6);
+	}
+	*ptr = 0;
+	assign(&gstr.pIVL, path);
 
 	  /* Build up the CCFLAGS option string */
-	assign(&gstr.pCCFLAGS,IVERILOG_VPI_CFLAGS " -I\"");
-	append(&gstr.pCCFLAGS,gstr.pIVL);
+	assign(&gstr.pCCFLAGS, IVERILOG_VPI_CFLAGS " -I\"");
+	append(&gstr.pCCFLAGS, gstr.pIVL);
 	appendBackSlash(&gstr.pCCFLAGS);
-	append(&gstr.pCCFLAGS,"\\include\\\\iverilog\"" IVERILOG_SUFFIX);
+	append(&gstr.pCCFLAGS, "include\\iverilog\"" IVERILOG_SUFFIX);
 
 	  /* Build up the CXFLAGS option string */
-	assign(&gstr.pCXFLAGS,IVERILOG_VPI_CXXFLAGS " -I\"");
-	append(&gstr.pCXFLAGS,gstr.pIVL);
+	assign(&gstr.pCXFLAGS, IVERILOG_VPI_CXXFLAGS " -I\"");
+	append(&gstr.pCXFLAGS, gstr.pIVL);
 	appendBackSlash(&gstr.pCXFLAGS);
-	append(&gstr.pCXFLAGS,"\\include\\\\iverilog\"" IVERILOG_SUFFIX);
+	append(&gstr.pCXFLAGS, "include\\iverilog\"" IVERILOG_SUFFIX);
 
 	  /* Build up the LDFLAGS option string */
-	assign(&gstr.pLDLIBS,"-L\"");
-	append(&gstr.pLDLIBS,gstr.pIVL);
+	assign(&gstr.pLDLIBS, "-L\"");
+	append(&gstr.pLDLIBS, gstr.pIVL);
 	appendBackSlash(&gstr.pLDLIBS);
-	append(&gstr.pLDLIBS,"\\lib\" " IVERILOG_VPI_LDLIBS);
+	append(&gstr.pLDLIBS, "lib\" " IVERILOG_VPI_LDLIBS);
 }
 
 /* compile source modules */
@@ -609,12 +610,7 @@ static void compile_and_link(void)
 
 	  /* To make the output match iverilog-vpi.sh do not print out the
 	   * root directories */
-
 //	printf("MinGW root directory:  %s.\n", gstr.pMINGW);
-	checkMingwDir(gstr.pMINGW);
-
-//	printf("Icarus Verilog root directory:  %s.\n", gstr.pIVL);
-	checkIvlDir(gstr.pIVL);
 
 	  /* compile the C source files (*.c) */
 	compile(gstr.pCCSRC, gstr.pCCFLAGS, &gstr.pOBJ, &compile_errors, IVERILOG_VPI_CC );
@@ -622,7 +618,7 @@ static void compile_and_link(void)
 	compile(gstr.pCXSRC, gstr.pCXFLAGS, &gstr.pOBJ, &compile_errors, IVERILOG_VPI_CXX);
 
 	if (compile_errors) {
-		fprintf(stderr,"iverilog-vpi: %d file(s) failed to compile.\n",
+		fprintf(stderr, "iverilog-vpi: %d file(s) failed to compile.\n",
 		        compile_errors);
 		myExit(2);
 	}
@@ -653,7 +649,7 @@ int main(int argc, char *argv[])
 {
 	init();
 
-	if (!parse(argc,argv)) usage();
+	if (!parse(argc, argv)) usage();
 
 	setup_mingw_environment();
 	setup_ivl_environment();

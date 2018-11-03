@@ -21,6 +21,7 @@
 # include  "entity.h"
 # include  "expression.h"
 # include  "sequential.h"
+# include  "subprogram.h"
 # include  <typeinfo>
 # include  <cassert>
 
@@ -44,20 +45,38 @@ int Architecture::elaborate(Entity*entity)
         // Elaborate initializer expressions for signals & variables
       for (map<perm_string,Signal*>::iterator cur = old_signals_.begin()
 		 ; cur != old_signals_.end() ; ++cur) {
-	    cur->second->elaborate_init_expr(entity, this);
+	    cur->second->elaborate(entity, this);
       }
       for (map<perm_string,Signal*>::iterator cur = new_signals_.begin()
 		 ; cur != new_signals_.end() ; ++cur) {
-	    cur->second->elaborate_init_expr(entity, this);
+	    cur->second->elaborate(entity, this);
       }
       for (map<perm_string,Variable*>::iterator cur = old_variables_.begin()
 		 ; cur != old_variables_.end() ; ++cur) {
-	    cur->second->elaborate_init_expr(entity, this);
+	    cur->second->elaborate(entity, this);
       }
       for (map<perm_string,Variable*>::iterator cur = new_variables_.begin()
 		 ; cur != new_variables_.end() ; ++cur) {
-	    cur->second->elaborate_init_expr(entity, this);
+	    cur->second->elaborate(entity, this);
       }
+
+	// Elaborate subprograms
+      for (map<perm_string,SubHeaderList>::const_iterator cur = cur_subprograms_.begin()
+		 ; cur != cur_subprograms_.end() ; ++cur) {
+	    const SubHeaderList& subp_list = cur->second;
+
+	    for(SubHeaderList::const_iterator it = subp_list.begin();
+			it != subp_list.end(); ++it) {
+			errors += (*it)->elaborate();
+	    }
+      }
+	// Create 'initial' and 'final' blocks for implicit
+	// initialization and clean-up actions
+      if(!initializers_.empty())
+	    statements_.push_front(new InitialStatement(&initializers_));
+
+      if(!finalizers_.empty())
+	    statements_.push_front(new FinalStatement(&finalizers_));
 
       for (list<Architecture::Statement*>::iterator cur = statements_.begin()
 		 ; cur != statements_.end() ; ++cur) {
@@ -167,187 +186,32 @@ int IfGenerate::elaborate(Entity*ent, Architecture*arc)
       return errors;
 }
 
-/*
- * This method attempts to rewrite the process content as an
- * always-@(n-edge <expr>) version of the same statement. This makes
- * for a more natural translation to Verilog, if it comes to that.
- */
-int ProcessStatement::rewrite_as_always_edge_(Entity*, Architecture*)
+int StatementList::elaborate(Entity*ent, ScopeBase*scope)
 {
-	// If there are multiple sensitivity expressions, I give up.
-      if (sensitivity_list_.size() != 1)
-	    return -1;
+      int errors = 0;
 
-	// If there are multiple statements, I give up.
-      if (statements_list_.size() != 1)
-	    return -1;
-
-      Expression*se = sensitivity_list_.front();
-      SequentialStmt*stmt_raw = statements_list_.front();
-
-	// If the statement is not an if-statement, I give up.
-      IfSequential*stmt = dynamic_cast<IfSequential*> (stmt_raw);
-      if (stmt == 0)
-	    return -1;
-
-	// If the "if" statement has a false clause, then give up.
-      if (stmt->false_size() != 0)
-	    return -1;
-
-      const Expression*ce_raw = stmt->peek_condition();
-	// Now we have matched this pattern:
-	//   process(<expr>) begin if <ce_raw>...
-	// The <ce_raw> is the condition.
-
-      if (const ExpFunc*ce_func = dynamic_cast<const ExpFunc*>(ce_raw)) {
-	    if (ce_func->func_args() != 1)
-		  return -1;
-	    if (ce_func->func_name()!="rising_edge" && ce_func->func_name()!="falling_edge")
-		  return -1;
-
-	    if (! se->symbolic_compare(ce_func->func_arg(0)))
-		return -1;
-
-	      // We've matched this pattern:
-	      //  process(<se>) if (rising_edge(<se>)) then ...
-	      // and we can convert it to:
-	      //  always @(posedge <se>) ...
-
-	    ExpEdge::fun_t use_edge;
-	    if (ce_func->func_name()=="rising_edge")
-		  use_edge = ExpEdge::POSEDGE;
-	    else if (ce_func->func_name()=="falling_edge")
-		  use_edge = ExpEdge::NEGEDGE;
-	    else
-		  use_edge = ExpEdge::ANYEDGE;
-
-	      // Replace the sensitivity expression with an edge
-	      // expression. The ExpEdge expression signals that this
-	      // is an always-@(edge) statement.
-	    ExpEdge*edge = new ExpEdge(use_edge, se);
-	    assert(sensitivity_list_.size() == 1);
-	    sensitivity_list_.pop_front();
-	    sensitivity_list_.push_front(edge);
-
-	      // Replace the statement with the body of the always
-	      // statement, which is the true clause of the top "if"
-	      // statement. There should be no "else" clause.
-	    assert(statements_list_.size() == 1);
-	    statements_list_.pop_front();
-	    stmt->extract_true(statements_list_);
-
-	    delete stmt;
-	    return 0;
+      for (std::list<SequentialStmt*>::iterator it = statements_.begin();
+              it != statements_.end(); ++it) {
+            errors += (*it)->elaborate(ent, scope);
       }
 
-	// Here we expect the condition to be
-	//    <name>'event AND <name>='1'.
-	// So if ce_raw is not a logical AND, I give up.
-      const ExpLogical*ce = dynamic_cast<const ExpLogical*> (ce_raw);
-      if (ce == 0)
-	    return -1;
-      if (ce->logic_fun() != ExpLogical::AND)
-	    return -1;
-
-      const Expression*op1_raw = ce->peek_operand1();
-      const Expression*op2_raw = ce->peek_operand2();
-      if (dynamic_cast<const ExpAttribute*>(op2_raw)) {
-	    const Expression*tmp = op1_raw;
-	    op1_raw = op2_raw;
-	    op2_raw = tmp;
-      }
-
-	// If operand1 is not an 'event attribute, I give up.
-      const ExpAttribute*op1 = dynamic_cast<const ExpAttribute*>(op1_raw);
-      if (op1 == 0)
-	    return -1;
-      if (op1->peek_attribute() != "event")
-	    return -1;
-
-      const ExpRelation*op2 = dynamic_cast<const ExpRelation*>(op2_raw);
-      if (op2 == 0)
-	    return -1;
-      if (op2->relation_fun() != ExpRelation::EQ)
-	    return -1;
-
-      const Expression*op2a_raw = op2->peek_operand1();
-      const Expression*op2b_raw = op2->peek_operand2();
-
-      if (dynamic_cast<const ExpCharacter*>(op2a_raw)) {
-	    const Expression*tmp = op2b_raw;
-	    op2b_raw = op2a_raw;
-	    op2a_raw = tmp;
-      }
-
-      if (! se->symbolic_compare(op1->peek_base()))
-	    return -1;
-
-      const ExpCharacter*op2b = dynamic_cast<const ExpCharacter*>(op2b_raw);
-      if (op2b->value() != '1' && op2b->value() != '0')
-	    return -1;
-
-	// We've matched this pattern:
-	//   process (<se>) if (<se>'event and <se> = <op2b>) then ...
-	// And we can convert it to:
-	//   always @(<N>edge <se>) ...
-
-	// Replace the sensitivity expression with an edge
-	// expression. The ExpEdge expression signals that this is an
-	// always-@(edge) statement.
-      ExpEdge*edge = new ExpEdge(op2b->value()=='1'? ExpEdge::POSEDGE : ExpEdge::NEGEDGE, se);
-      assert(sensitivity_list_.size() == 1);
-      sensitivity_list_.pop_front();
-      sensitivity_list_.push_front(edge);
-
-	// Replace the statement with the body of the always
-	// statement, which is the true clause of the top "if"
-	// statement. There should be no "else" clause.
-      assert(statements_list_.size() == 1);
-      statements_list_.pop_front();
-
-      stmt->extract_true(statements_list_);
-
-      delete stmt;
-
-      return 0;
-}
-
-/*
- * Change the "process (<expr>) <stmt>" into "always @(<expr>) ..."
- */
-int ProcessStatement::extract_anyedge_(Entity*, Architecture*)
-{
-
-      vector<Expression*> se;
-      while (! sensitivity_list_.empty()) {
-	    se.push_back(sensitivity_list_.front());
-	    sensitivity_list_.pop_front();
-      }
-
-      for (size_t idx = 0 ; idx < se.size() ; idx += 1) {
-	    ExpEdge*edge = new ExpEdge(ExpEdge::ANYEDGE, se[idx]);
-	    FILE_NAME(edge, se[idx]);
-	    sensitivity_list_.push_back(edge);
-      }
-
-      return 0;
+      return errors;
 }
 
 int ProcessStatement::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-      if (rewrite_as_always_edge_(ent, arc) >= 0) {
+      arc->set_cur_process(this);
 
-      } else if (extract_anyedge_(ent, arc) >= 0) {
-
-      } else {
+      for (map<perm_string,Variable*>::iterator cur = new_variables_.begin()
+		 ; cur != new_variables_.end() ; ++cur) {
+	    cur->second->elaborate(ent, arc);
       }
 
-      for (list<SequentialStmt*>::iterator cur = statements_list_.begin()
-		 ; cur != statements_list_.end() ; ++cur) {
-	    errors += (*cur)->elaborate(ent, arc);
-      }
+      StatementList::elaborate(ent, arc);
+
+      arc->set_cur_process(NULL);
 
       return errors;
 }
@@ -374,6 +238,51 @@ int SignalAssignment::elaborate(Entity*ent, Architecture*arc)
       for (list<Expression*>::iterator cur = rval_.begin()
 		 ; cur != rval_.end() ; ++cur) {
 	    errors += (*cur)->elaborate_expr(ent, arc, lval_type);
+      }
+
+      return errors;
+}
+
+int CondSignalAssignment::elaborate(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+        // Visitor to extract signal names occurring in the conditional
+        // statements to create the sensitivity list
+      struct name_extractor_t : public ExprVisitor {
+          name_extractor_t(list<const ExpName*>& name_list)
+              : name_list_(name_list) {}
+          void operator() (Expression*s) {
+              if(const ExpName*name = dynamic_cast<const ExpName*>(s))
+                  name_list_.push_back(name);
+          }
+
+          private:
+            list<const ExpName*>& name_list_;
+      } name_extractor(sens_list_);
+
+        // Elaborate the l-value expression.
+      errors += lval_->elaborate_lval(ent, arc, true);
+
+        // The elaborate_lval should have resolved the type of the
+        // l-value expression. We'll use that type to elaborate the
+        // r-value.
+      const VType*lval_type = lval_->peek_type();
+      if (lval_type == 0) {
+          if (errors == 0) {
+              errors += 1;
+              cerr << get_fileline()
+                   << ": error: Unable to calculate type for l-value expression."
+                   << endl;
+          }
+          return errors;
+      }
+
+      for(list<ExpConditional::case_t*>::iterator it = options_.begin();
+              it != options_.end(); ++it) {
+          ExpConditional::case_t*cas = (*it);
+          cas->elaborate_expr(ent, arc, lval_type);
+          cas->visit(name_extractor);
       }
 
       return errors;

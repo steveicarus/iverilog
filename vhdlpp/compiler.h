@@ -30,8 +30,13 @@ extern bool verbose_flag;
 extern bool debug_elaboration;
 extern std::ofstream debug_log_file;
 
+// Stores strings created by the lexer
 extern StringHeapLex lex_strings;
 
+// Stores file names
 extern StringHeapLex filename_strings;
+
+// Stores generated strings (e.g. scope names)
+extern StringHeapLex gen_strings;
 
 #endif /* IVL_compiler_H */

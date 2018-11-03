@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,6 +24,7 @@
 # include  "netlist.h"
 # include  "netclass.h"
 # include  "netenum.h"
+# include  "netvector.h"
 # include  <cstring>
 # include  <cstdlib>
 # include  <sstream>
@@ -110,10 +112,10 @@ void Definitions::add_class(netclass_t*net_class)
  * in question.
  */
 
-NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest,
-		   bool program, bool interface)
+NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, NetScope*in_unit,
+		   bool nest, bool program, bool interface, bool compilation_unit)
 : type_(t), name_(n), nested_module_(nest), program_block_(program),
-  is_interface_(interface), up_(up)
+  is_interface_(interface), is_unit_(compilation_unit), unit_(in_unit), up_(up)
 {
       events_ = 0;
       lcounter_ = 0;
@@ -121,6 +123,9 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest,
       is_cell_ = false;
       calls_stask_ = false;
       in_final_ = false;
+
+      if (compilation_unit)
+	    unit_ = this;
 
       if (up) {
 	    assert(t!=CLASS);
@@ -131,6 +136,8 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest,
 	    time_from_timescale_ = up->time_from_timescale();
 	      // Need to check for duplicate names?
 	    up_->children_[name_] = this;
+	    if (unit_ == 0)
+		  unit_ = up_->unit_;
       } else {
 	    need_const_func_ = false;
 	    is_const_func_ = false;
@@ -139,6 +146,7 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest,
 	    time_from_timescale_ = false;
       }
 
+      var_init_ = 0;
       switch (t) {
 	  case NetScope::TASK:
 	    task_ = 0;
@@ -161,6 +169,8 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest,
       lineno_ = 0;
       def_lineno_ = 0;
       genvar_tmp_val = 0;
+      tie_hi_ = 0;
+      tie_lo_ = 0;
 }
 
 NetScope::~NetScope()
@@ -205,6 +215,8 @@ const netenum_t*NetScope::find_enumeration_for_name(perm_string name)
 	    NetEConstEnum*tmp = cur_scope->enum_names_[name];
 	    if (tmp) break;
 	    cur_scope = cur_scope->parent();
+	    if (cur_scope == 0)
+		  cur_scope = unit_;
       }
 
       assert(cur_scope);
@@ -264,19 +276,20 @@ bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
       assert(self != up_->children_.end());
       assert(self->second == this);
 
-      char tmp[32];
-      int pad_pos = strlen(prefix);
-      int max_pos = sizeof(tmp) - strlen(suffix) - 1;
-      strncpy(tmp, prefix, sizeof(tmp));
-      tmp[31] = 0;
+	// This is to keep the pad attempts from being stuck in some
+	// sort of infinite loop. This should not be a practical
+	// limit, but an extreme one.
+      const size_t max_pad_attempts = 32 + strlen(prefix);
+
+      string use_prefix = prefix;
 
 	// Try a variety of potential new names. Make sure the new
 	// name is not in the parent scope. Keep looking until we are
 	// sure we have a unique name, or we run out of names to try.
-      while (pad_pos <= max_pos) {
+      while (use_prefix.size() <= max_pad_attempts) {
 	      // Try this name...
-	    strcat(tmp + pad_pos, suffix);
-	    hname_t new_name(lex_strings.make(tmp));
+	    string tmp = use_prefix + suffix;
+	    hname_t new_name(lex_strings.make(tmp.c_str()), name_.peek_numbers());
 	    if (!up_->child(new_name)) {
 		    // Ah, this name is unique. Rename myself, and
 		    // change my name in the parent scope.
@@ -285,7 +298,9 @@ bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
 		  up_->children_[name_] = this;
 		  return true;
 	    }
-	    tmp[pad_pos++] = pad;
+
+	      // Name collides, so try a different name.
+	    use_prefix = use_prefix + pad;
       }
       return false;
 }
@@ -296,16 +311,16 @@ bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
  */
 bool NetScope::replace_parameter(perm_string key, PExpr*val, NetScope*scope)
 {
-      bool flag = false;
+      if (parameters.find(key) == parameters.end())
+	    return false;
 
-      if (parameters.find(key) != parameters.end()) {
-	    param_expr_t&ref = parameters[key];
-	    ref.val_expr = val;
-            ref.val_scope = scope;
-	    flag = true;
-      }
+      param_expr_t&ref = parameters[key];
+      if (ref.local_flag)
+	    return false;
 
-      return flag;
+      ref.val_expr = val;
+      ref.val_scope = scope;
+      return true;
 }
 
 bool NetScope::make_parameter_unannotatable(perm_string key)
@@ -356,12 +371,7 @@ const NetExpr* NetScope::get_parameter(Design*des,
       msb = 0;
       lsb = 0;
       const NetExpr*tmp = enumeration_expr(key);
-      if (tmp) return tmp;
-
-      tmp = des->enumeration_expr(key);
-      if (tmp) return tmp;
-
-      return 0;
+      return tmp;
 }
 
 NetScope::param_ref_t NetScope::find_parameter(perm_string key)
@@ -376,11 +386,6 @@ NetScope::param_ref_t NetScope::find_parameter(perm_string key)
       assert(0);
 	// But return something to avoid a compiler warning.
       return idx;
-}
-
-NetScope::TYPE NetScope::type() const
-{
-      return type_;
 }
 
 void NetScope::print_type(ostream&stream) const
@@ -501,6 +506,7 @@ void NetScope::add_module_port_info( unsigned idx, perm_string name, PortType::E
                                 unsigned long width )
 {
       assert(type_ == MODULE);
+      assert(ports_.size() > idx);
       PortInfo &info = ports_[idx];
       info.name = name;
       info.type = ptype;
@@ -648,14 +654,10 @@ netclass_t*NetScope::find_class(perm_string name)
       if (type_==CLASS && name_==hname_t(name))
 	    return class_def_;
 
-	// Look for the class that directly within this scope.
+	// Look for the class directly within this scope.
       map<perm_string,netclass_t*>::const_iterator cur = classes_.find(name);
       if (cur != classes_.end())
 	    return cur->second;
-
-	// If this is a module scope, then look no further.
-      if (type_==MODULE)
-	    return 0;
 
       if (up_==0 && type_==CLASS) {
 	    assert(class_def_);
@@ -664,12 +666,16 @@ netclass_t*NetScope::find_class(perm_string name)
 	    return def_parent->find_class(name);
       }
 
-	// If there is no further to look, ...
-      if (up_ == 0)
-	    return 0;
-
 	// Try looking up for the class.
-      return up_->find_class(name);
+      if (up_!=0 && type_!=MODULE)
+	    return up_->find_class(name);
+
+	// Try the compilation unit.
+      if (unit_ != 0)
+	    return unit_->find_class(name);
+
+	// Nowhere left to try...
+      return 0;
 }
 
 /*
@@ -740,4 +746,34 @@ perm_string NetScope::local_symbol()
       ostringstream res;
       res << "_s" << (lcounter_++);
       return lex_strings.make(res.str());
+}
+
+void NetScope::add_tie_hi(Design*des)
+{
+      if (tie_hi_ == 0) {
+	    NetNet*sig = new NetNet(this, lex_strings.make("_LOGIC1"),
+				    NetNet::WIRE, &netvector_t::scalar_logic);
+	    sig->local_flag(true);
+
+	    tie_hi_ = new NetLogic(this, local_symbol(),
+				   1, NetLogic::PULLUP, 1);
+	    des->add_node(tie_hi_);
+
+	    connect(sig->pin(0), tie_hi_->pin(0));
+      }
+}
+
+void NetScope::add_tie_lo(Design*des)
+{
+      if (tie_lo_ == 0) {
+	    NetNet*sig = new NetNet(this, lex_strings.make("_LOGIC0"),
+				    NetNet::WIRE, &netvector_t::scalar_logic);
+	    sig->local_flag(true);
+
+	    tie_lo_ = new NetLogic(this, local_symbol(),
+				   1, NetLogic::PULLDOWN, 1);
+	    des->add_node(tie_lo_);
+
+	    connect(sig->pin(0), tie_lo_->pin(0));
+      }
 }

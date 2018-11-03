@@ -1,7 +1,7 @@
 #ifndef IVL_scope_H
 #define IVL_scope_H
 /*
- * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2016 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -32,8 +32,11 @@ class ActiveScope;
 class Architecture;
 class ComponentBase;
 class Package;
-class Subprogram;
+class SubprogramHeader;
 class VType;
+class SequentialStmt;
+
+typedef list<SubprogramHeader*> SubHeaderList;
 
 template<typename T>
 struct delete_object{
@@ -48,28 +51,61 @@ struct delete_pair_second{
 class ScopeBase {
 
     public:
-      ScopeBase() { }
+      ScopeBase() : package_header_(0) { }
       explicit ScopeBase(const ActiveScope&ref);
       virtual ~ScopeBase() =0;
 
+      ScopeBase* find_scope(perm_string name) const;
       const VType* find_type(perm_string by_name);
       virtual bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp) const;
       Signal* find_signal(perm_string by_name) const;
-      Variable* find_variable(perm_string by_name) const;
+      virtual Variable* find_variable(perm_string by_name) const;
       virtual const InterfacePort* find_param(perm_string by_name) const;
-      Subprogram* find_subprogram(perm_string by_name) const;
-      bool is_enum_name(perm_string name) const;
+      const InterfacePort* find_param_all(perm_string by_name) const;
+      SubHeaderList find_subprogram(perm_string by_name) const;
+	// Checks if a string is one of possible enum values. If so, the enum
+	// type is returned, otherwise NULL.
+      const VTypeEnum* is_enum_name(perm_string name) const;
+
+      virtual bool is_subprogram() const { return false; }
 
 	// Moves signals, variables and components from another scope to
 	// this one. After the transfer new_* maps are cleared in the source scope.
       enum transfer_type_t { SIGNALS = 1, VARIABLES = 2, COMPONENTS = 4, ALL = 0xffff };
       void transfer_from(ScopeBase&ref, transfer_type_t what = ALL);
 
-      inline void bind_subprogram(perm_string name, Subprogram*obj)
-      { map<perm_string, Subprogram*>::iterator it;
+      inline void bind_subprogram(perm_string name, SubprogramHeader*obj)
+      { map<perm_string, SubHeaderList>::iterator it;
         if((it = use_subprograms_.find(name)) != use_subprograms_.end() )
-            use_subprograms_.erase(it);
-        cur_subprograms_[name] = obj;
+            it->second.remove(obj);
+        cur_subprograms_[name].push_back(obj);
+      }
+
+	// Adds a statement to implicit initializers list
+	// (emitted in a 'initial block).
+      void add_initializer(SequentialStmt* s)
+      {
+        initializers_.push_back(s);
+      }
+
+	// Adds a statement to implicit finalizers list
+	// (emitted in a 'final' block).
+      void add_finalizer(SequentialStmt* s)
+      {
+        finalizers_.push_back(s);
+      }
+
+      void dump_scope(ostream&out) const;
+
+	// Looks for a subprogram with specified name and parameter types.
+      SubprogramHeader*match_subprogram(perm_string name,
+                                        const list<const VType*>*params) const;
+
+      perm_string peek_name() const { return name_; }
+
+      void set_package_header(Package*pkg) {
+          assert(package_header_ == 0);
+          package_header_ = pkg;
       }
 
     protected:
@@ -114,29 +150,44 @@ class ScopeBase {
       std::map<perm_string, struct const_t*> use_constants_; //imported constants
       std::map<perm_string, struct const_t*> cur_constants_; //current constants
 
-      std::map<perm_string, Subprogram*> use_subprograms_; //imported
-      std::map<perm_string, Subprogram*> cur_subprograms_; //current
+      std::map<perm_string, SubHeaderList> use_subprograms_; //imported
+      std::map<perm_string, SubHeaderList> cur_subprograms_; //current
+
+      std::map<perm_string, ScopeBase*> scopes_;
 
       std::list<const VTypeEnum*> use_enums_;
 
+	// List of statements that should be emitted in a 'initial' block
+      std::list<SequentialStmt*> initializers_;
+
+	// List of statements that should be emitted in a 'final' block
+      std::list<SequentialStmt*> finalizers_;
+
       void do_use_from(const ScopeBase*that);
+
+      // If this is a package body, then there is a Package header
+      // already declared.
+      Package*package_header_;
+
+      // Generates an unique name for the scope
+      void generate_name();
+
+private:
+      perm_string name_;
 };
 
 class Scope : public ScopeBase {
 
     public:
-      explicit Scope(const ActiveScope&ref);
-      ~Scope();
+      explicit Scope(const ActiveScope&ref) : ScopeBase(ref) {}
+      virtual ~Scope() {}
 
       ComponentBase* find_component(perm_string by_name);
 
-    public:
-      void dump_scope(ostream&out) const;
-
     protected:
 	// Helper method for emitting signals in the scope.
-      int emit_signals(ostream&out, Entity*ent, Architecture*arc);
-      int emit_variables(ostream&out, Entity*ent, Architecture*arc);
+      int emit_signals(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit_variables(ostream&out, Entity*ent, ScopeBase*scope);
 };
 
 /*
@@ -148,12 +199,10 @@ class Scope : public ScopeBase {
 class ActiveScope : public ScopeBase {
 
     public:
-      ActiveScope() : package_header_(0), context_entity_(0) { }
-      ActiveScope(ActiveScope*par) : ScopeBase(*par), package_header_(0), context_entity_(0) { }
+      ActiveScope() : context_entity_(0) { }
+      explicit ActiveScope(const ActiveScope*par);
 
       ~ActiveScope() { }
-
-      void set_package_header(Package*);
 
 	// Pull items from "that" scope into "this" scope as is
 	// defined by a "use" directive. The parser uses this method
@@ -166,9 +215,9 @@ class ActiveScope : public ScopeBase {
       bool is_vector_name(perm_string name) const;
 
 	// Locate the subprogram by name. The subprogram body uses
-	// this to locate the sobprogram declaration. Note that the
+	// this to locate the subprogram declaration. Note that the
 	// subprogram may be in a package header.
-      Subprogram* recall_subprogram(perm_string name) const;
+      SubprogramHeader* recall_subprogram(const SubprogramHeader*subp) const;
 
       /* All bind_name function check if the given name was present
        * in previous scopes. If it is found, it is erased (but the pointer
@@ -204,6 +253,12 @@ class ActiveScope : public ScopeBase {
         cur_types_[name] = t;
       }
 
+      void bind_scope(perm_string name, ScopeBase*scope)
+      {
+          assert(scopes_.find(name) == scopes_.end());
+          scopes_[name] = scope;
+      }
+
       inline void use_enum(const VTypeEnum* t)
       { use_enums_.push_back(t); }
 
@@ -215,13 +270,6 @@ class ActiveScope : public ScopeBase {
         if((it = use_constants_.find(name)) != use_constants_.end() )
             use_constants_.erase(it);
         cur_constants_[name] = new const_t(obj, val);
-      }
-
-      inline void bind_name(perm_string name, Subprogram*obj)
-      { map<perm_string, Subprogram*>::iterator it;
-        if((it = use_subprograms_.find(name)) != use_subprograms_.end() )
-            use_subprograms_.erase(it);
-        cur_subprograms_[name] = obj;
       }
 
       void bind(Entity*ent)
@@ -237,10 +285,6 @@ class ActiveScope : public ScopeBase {
       std::map<perm_string,VTypeDef*> incomplete_types;
 
     private:
-	// If this is a package body, then there is a Package header
-	// already declared.
-      Package*package_header_;
-
       Entity*context_entity_;
 };
 

@@ -32,8 +32,8 @@ static unsigned string_pool_count = 0;
 StringHeap::StringHeap()
 {
       cell_base_ = 0;
-      cell_ptr_ = HEAPCELL;
-      cell_count_ = 0;
+      cell_size_ = 0;
+      cell_ptr_  = 0;
 }
 
 StringHeap::~StringHeap()
@@ -45,20 +45,24 @@ StringHeap::~StringHeap()
 const char* StringHeap::add(const char*text)
 {
       unsigned len = strlen(text);
-      assert((len+1) <= HEAPCELL);
-
-      unsigned rem = HEAPCELL - cell_ptr_;
+      unsigned rem = cell_size_ - cell_ptr_;
       if (rem < (len+1)) {
-	    cell_base_ = (char*)malloc(HEAPCELL);
+	      // release any unused memory
+	    if (rem > 0) {
+		  cell_base_ = (char*)realloc(cell_base_, cell_ptr_);
+		  assert(cell_base_ != 0);
+	    }
+	      // start new cell
+	    cell_size_ = (len+1) > DEFAULT_CELL_SIZE ? len+1 : DEFAULT_CELL_SIZE;
+	    cell_base_ = (char*)malloc(cell_size_);
+	    cell_ptr_  = 0;
+	    assert(cell_base_ != 0);
 #ifdef CHECK_WITH_VALGRIND
 	    string_pool_count += 1;
 	    string_pool = (char **) realloc(string_pool,
 	                                    string_pool_count*sizeof(char **));
 	    string_pool[string_pool_count-1] = cell_base_;
 #endif
-	    cell_ptr_ = 0;
-	    cell_count_ += 1;
-	    assert(cell_base_ != 0);
       }
 
       char*res = cell_base_ + cell_ptr_;
@@ -66,7 +70,7 @@ const char* StringHeap::add(const char*text)
       cell_ptr_ += len;
       cell_base_[cell_ptr_++] = 0;
 
-      assert(cell_ptr_ <= HEAPCELL);
+      assert(cell_ptr_ <= cell_size_);
 
       return res;
 }

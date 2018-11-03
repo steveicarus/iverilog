@@ -169,22 +169,38 @@ void CaseSeqStmt::CaseStmtAlternative::visit(SeqStmtVisitor& func)
 }
 
 ProcedureCall::ProcedureCall(perm_string name)
-: name_(name), param_list_(0)
+: name_(name), param_list_(NULL), def_(NULL)
 {
 }
 
 ProcedureCall::ProcedureCall(perm_string name, std::list<named_expr_t*>* param_list)
-: name_(name), param_list_(param_list)
+: name_(name), param_list_(param_list), def_(NULL)
 {
+}
+
+ProcedureCall::ProcedureCall(perm_string name, std::list<Expression*>* param_list)
+: name_(name), def_(NULL)
+{
+    param_list_ = new std::list<named_expr_t*>;
+    for(std::list<Expression*>::const_iterator it = param_list->begin();
+            it != param_list->end(); ++it)
+    {
+        param_list_->push_back(new named_expr_t(empty_perm_string, *it));
+    }
 }
 
 ProcedureCall::~ProcedureCall()
 {
+    if(!param_list_)
+        return;
+
     while(param_list_->size() > 0) {
         named_expr_t* cur = param_list_->front();
         param_list_->pop_front();
         delete cur;
     }
+
+    delete param_list_;
 }
 
 ReturnStmt::ReturnStmt(Expression*val)
@@ -224,7 +240,7 @@ void LoopStatement::visit(SeqStmtVisitor& func)
     func(this);
 }
 
-ForLoopStatement::ForLoopStatement(perm_string scope_name, perm_string it, prange_t* range, list<SequentialStmt*>* stmts)
+ForLoopStatement::ForLoopStatement(perm_string scope_name, perm_string it, ExpRange* range, list<SequentialStmt*>* stmts)
 : LoopStatement(scope_name, stmts), it_(it), range_(range)
 {
 }
@@ -245,7 +261,7 @@ VariableSeqAssignment::~VariableSeqAssignment()
       delete rval_;
 }
 
-WhileLoopStatement::WhileLoopStatement(perm_string lname, ExpLogical* cond, list<SequentialStmt*>* stmts)
+WhileLoopStatement::WhileLoopStatement(perm_string lname, Expression* cond, list<SequentialStmt*>* stmts)
 : LoopStatement(lname, stmts), cond_(cond)
 {
 }
@@ -261,5 +277,34 @@ BasicLoopStatement::BasicLoopStatement(perm_string lname, list<SequentialStmt*>*
 }
 
 BasicLoopStatement::~BasicLoopStatement()
+{
+}
+
+ReportStmt::ReportStmt(Expression*msg, severity_t sev)
+: msg_(msg), severity_(sev)
+{
+    if(sev == ReportStmt::UNSPECIFIED)
+        severity_ = ReportStmt::NOTE;
+}
+
+AssertStmt::AssertStmt(Expression*condition, Expression*msg, ReportStmt::severity_t sev)
+: ReportStmt(msg, sev), cond_(condition)
+{
+    if(msg == NULL)
+        msg_ = new ExpString(default_msg_);
+
+    if(sev == ReportStmt::UNSPECIFIED)
+        severity_ = ReportStmt::ERROR;
+}
+
+const char*AssertStmt::default_msg_ = "Assertion violation.";
+
+WaitForStmt::WaitForStmt(Expression*delay)
+: delay_(delay)
+{
+}
+
+WaitStmt::WaitStmt(wait_type_t typ, Expression*expr)
+: type_(typ), expr_(expr)
 {
 }

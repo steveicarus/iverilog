@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -42,7 +42,10 @@ unsigned count_lval_width(const NetAssign_*idx)
 NetAssign_::NetAssign_(NetAssign_*n)
 : nest_(n), sig_(0), word_(0), base_(0), sel_type_(IVL_SEL_OTHER)
 {
+      lwid_ = 0;
       more = 0;
+      signed_ = false;
+      turn_sig_to_wire_on_release_ = false;
 }
 
 NetAssign_::NetAssign_(NetNet*s)
@@ -51,6 +54,7 @@ NetAssign_::NetAssign_(NetNet*s)
       lwid_ = sig_->vector_width();
       sig_->incr_lref();
       more = 0;
+      signed_ = false;
       turn_sig_to_wire_on_release_ = false;
 }
 

@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -72,6 +72,7 @@ static const char* set_file_name(char*text)
 void reset_lexor();
 static void line_directive();
 static void line_directive2();
+static void reset_all();
 
 verinum*make_unsized_binary(const char*txt);
 verinum*make_undef_highz_dec(const char*txt);
@@ -187,6 +188,8 @@ TU [munpf]
 "!=" { return K_NE; }
 "===" { return K_CEQ; }
 "!==" { return K_CNE; }
+"==?" { return K_WEQ; }
+"!=?" { return K_WNE; }
 "||" { return K_LOR; }
 "&&" { return K_LAND; }
 "&&&" { return K_TAND; }
@@ -310,15 +313,6 @@ TU [munpf]
 	    BEGIN(UDPTABLE);
 	    break;
 
-	    /* Translate these to checks if we already have or are
-	     * outside the declaration region. */
-	  case K_timeunit:
-	    if (have_timeunit_decl) rc = K_timeunit_check;
-	    break;
-	  case K_timeprecision:
-	    if (have_timeprec_decl) rc = K_timeprecision_check;
-	    break;
-
 	  default:
 	    yylval.text = 0;
 	    break;
@@ -428,22 +422,38 @@ TU [munpf]
 
       if (strcmp(yytext,"$attribute") == 0)
 	    return KK_attribute;
+
+      if (gn_system_verilog() && strcmp(yytext,"$unit") == 0) {
+	    yylval.package = pform_units.back();
+	    return PACKAGE_IDENTIFIER;
+      }
+
       yylval.text = strdupnew(yytext);
       return SYSTEM_IDENTIFIER; }
 
 
-\'[sS]?[dD][ \t]*[0-9][0-9_]*  { yylval.number = make_unsized_dec(yytext);
-                            return BASED_NUMBER; }
-\'[sS]?[dD][ \t]*[xzXZ?]_* { yylval.number = make_undef_highz_dec(yytext);
-                             return BASED_NUMBER; }
-\'[sS]?[bB][ \t]*[0-1xzXZ_\?]+ { yylval.number = make_unsized_binary(yytext);
-                        return BASED_NUMBER; }
-\'[sS]?[oO][ \t]*[0-7xzXZ_\?]+ { yylval.number = make_unsized_octal(yytext);
-                        return BASED_NUMBER; }
-\'[sS]?[hH][ \t]*[0-9a-fA-FxzXZ_\?]+ { yylval.number = make_unsized_hex(yytext);
-                              return BASED_NUMBER; }
+\'[sS]?[dD][ \t]*[0-9][0-9_]* {
+      yylval.number = make_unsized_dec(yytext);
+      return BASED_NUMBER;
+}
+\'[sS]?[dD][ \t]*[xzXZ?]_* {
+      yylval.number = make_undef_highz_dec(yytext);
+      return BASED_NUMBER;
+}
+\'[sS]?[bB][ \t]*[0-1xzXZ?][0-1xzXZ?_]* {
+      yylval.number = make_unsized_binary(yytext);
+      return BASED_NUMBER;
+}
+\'[sS]?[oO][ \t]*[0-7xzXZ?][0-7xzXZ?_]* {
+      yylval.number = make_unsized_octal(yytext);
+      return BASED_NUMBER;
+}
+\'[sS]?[hH][ \t]*[0-9a-fA-FxzXZ?][0-9a-fA-FxzXZ?_]* {
+      yylval.number = make_unsized_hex(yytext);
+      return BASED_NUMBER;
+}
 \'[01xzXZ] {
-      if (generation_flag < GN_VER2005_SV) {
+      if (!gn_system_verilog()) {
 	    cerr << yylloc.text << ":" << yylloc.first_line << ": warning: "
 		 << "Using SystemVerilog 'N bit vector.  Use at least "
 		 << "-g2005-sv to remove this warning." << endl;
@@ -469,7 +479,7 @@ TU [munpf]
 
   /* This rule handles scaled time values for SystemVerilog. */
 [0-9][0-9_]*(\.[0-9][0-9_]*)?{TU}?s {
-      if(generation_flag & (GN_VER2005_SV | GN_VER2009 | GN_VER2012)) {
+      if (gn_system_verilog()) {
 	    yylval.text = strdupnew(yytext);
 	    return TIME_LITERAL;
       } else REJECT; }
@@ -556,11 +566,7 @@ TU [munpf]
 		    "definition." << endl;
 	    error_count += 1;
       } else {
-	    pform_set_default_nettype(NetNet::WIRE, yylloc.text,
-	                              yylloc.first_line);
-	    in_celldefine = false;
-	    uc_drive = UCD_NONE;
-	    pform_set_timescale(def_ts_units, def_ts_prec, 0, 0);
+	    reset_all();
       } }
 
   /* Notice and handle the `unconnected_drive directive. */
@@ -847,7 +853,7 @@ verinum*make_unsized_binary(const char*txt)
 	    ptr += 1;
       }
 
-      assert((tolower(*ptr) == 'b') || (generation_flag >= GN_VER2005_SV));
+      assert((tolower(*ptr) == 'b') || gn_system_verilog());
       if (tolower(*ptr) == 'b') {
 	    ptr += 1;
       } else {
@@ -861,6 +867,14 @@ verinum*make_unsized_binary(const char*txt)
       unsigned size = 0;
       for (const char*idx = ptr ;  *idx ;  idx += 1)
 	    if (*idx != '_') size += 1;
+
+      if (size == 0) {
+	    VLerror(yylloc, "Numeric literal has no digits in it.");
+	    verinum*out = new verinum();
+	    out->has_sign(sign_flag);
+	    out->is_single(single_flag);
+	    return out;
+      }
 
       if ((based_size > 0) && (size > based_size)) yywarn(yylloc,
           "extra digits given for sized binary constant.");
@@ -1579,6 +1593,18 @@ static void line_directive2()
       yylloc.first_line = lineno;
 }
 
+/*
+ * Reset all compiler directives. This will be called when a `resetall
+ * directive is encountered or when a new compilation unit is started.
+ */
+static void reset_all()
+{
+      pform_set_default_nettype(NetNet::WIRE, yylloc.text, yylloc.first_line);
+      in_celldefine = false;
+      uc_drive = UCD_NONE;
+      pform_set_timescale(def_ts_units, def_ts_prec, 0, 0);
+}
+
 extern FILE*vl_input;
 void reset_lexor()
 {
@@ -1587,6 +1613,14 @@ void reset_lexor()
 
 	/* Announce the first file name. */
       yylloc.text = set_file_name(strdupnew(vl_file.c_str()));
+
+      if (separate_compilation) {
+	    reset_all();
+	    if (!keyword_mask_stack.empty()) {
+		  lexor_keyword_mask = keyword_mask_stack.back();
+		  keyword_mask_stack.clear();
+	    }
+      }
 }
 
 /*
@@ -1596,7 +1630,7 @@ void destroy_lexor()
 {
 # ifdef FLEX_SCANNER
 #   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5
-#     if defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
+#     if YY_FLEX_MINOR_VERSION > 5 || defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
     yylex_destroy();
 #     endif
 #   endif

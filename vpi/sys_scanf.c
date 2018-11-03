@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,7 @@
 /* round() is ISO C99 from math.h. This define should enable it. */
 # define _ISOC99_SOURCE 1
 # define _SVID_SOURCE 1
+# define _DEFAULT_SOURCE 1
 
 # include  "sys_priv.h"
 # include  <ctype.h>
@@ -218,7 +219,7 @@ static double get_float(struct byte_source *src, unsigned width, int *match)
  */
 static int scan_format_float(vpiHandle callh, vpiHandle argv,
                              struct byte_source *src, unsigned width,
-                             unsigned suppress_flag, PLI_BYTE8 *name,
+                             unsigned suppress_flag, ICARUS_VPI_CONST PLI_BYTE8 *name,
                              char code)
 {
       vpiHandle arg;
@@ -265,7 +266,7 @@ static int scan_format_float(vpiHandle callh, vpiHandle argv,
  */
 static int scan_format_float_time(vpiHandle callh, vpiHandle argv,
 				  struct byte_source*src, unsigned width,
-                                  unsigned suppress_flag, PLI_BYTE8 *name)
+                                  unsigned suppress_flag, ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle scope = vpi_handle(vpiScope, callh);
       int time_units = vpi_get(vpiTimeUnit, scope);
@@ -329,7 +330,7 @@ static int scan_format_float_time(vpiHandle callh, vpiHandle argv,
  */
 static int scan_format_base(vpiHandle callh, vpiHandle argv,
                             struct byte_source *src, unsigned width,
-                            unsigned suppress_flag, PLI_BYTE8 *name,
+                            unsigned suppress_flag, ICARUS_VPI_CONST PLI_BYTE8 *name,
                             const char *match, char code,
                             PLI_INT32 type)
 {
@@ -405,7 +406,7 @@ static int scan_format_base(vpiHandle callh, vpiHandle argv,
  */
 static int scan_format_binary(vpiHandle callh, vpiHandle argv,
                               struct byte_source *src, int width,
-                              unsigned suppress_flag, PLI_BYTE8 *name)
+                              unsigned suppress_flag, ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       return scan_format_base(callh, argv, src, width, suppress_flag, name,
                               "01xzXZ?_", 'b', vpiBinStrVal);
@@ -419,7 +420,7 @@ static int scan_format_binary(vpiHandle callh, vpiHandle argv,
  */
 static int scan_format_char(vpiHandle callh, vpiHandle argv,
                             struct byte_source *src, unsigned width,
-                            unsigned suppress_flag, PLI_BYTE8 *name)
+                            unsigned suppress_flag, ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle arg;
       s_vpi_value val;
@@ -465,7 +466,7 @@ static int scan_format_char(vpiHandle callh, vpiHandle argv,
  */
 static int scan_format_decimal(vpiHandle callh, vpiHandle argv,
                                struct byte_source *src, unsigned width,
-                               unsigned suppress_flag, PLI_BYTE8 *name)
+                               unsigned suppress_flag, ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle arg;
       char *strval = malloc(1);
@@ -584,7 +585,7 @@ static int scan_format_decimal(vpiHandle callh, vpiHandle argv,
  */
 static int scan_format_hex(vpiHandle callh, vpiHandle argv,
                            struct byte_source *src, unsigned width,
-                           unsigned suppress_flag, PLI_BYTE8 *name)
+                           unsigned suppress_flag, ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       return scan_format_base(callh, argv, src, width, suppress_flag, name,
                               "0123456789abcdefxzABCDEFXZ?_", 'h',
@@ -596,7 +597,7 @@ static int scan_format_hex(vpiHandle callh, vpiHandle argv,
  */
 static int scan_format_octal(vpiHandle callh, vpiHandle argv,
                              struct byte_source *src, unsigned width,
-                             unsigned suppress_flag, PLI_BYTE8 *name)
+                             unsigned suppress_flag, ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       return scan_format_base(callh, argv, src, width, suppress_flag, name,
                               "01234567xzXZ?_", 'o', vpiOctStrVal);
@@ -607,7 +608,7 @@ static int scan_format_octal(vpiHandle callh, vpiHandle argv,
  * Routine to return the current hierarchical path (implements %m).
  */
 static int scan_format_module_path(vpiHandle callh, vpiHandle argv,
-                                   unsigned suppress_flag, PLI_BYTE8 *name)
+                                   unsigned suppress_flag, ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle scope, arg;
       char *module_path;
@@ -649,7 +650,7 @@ static int scan_format_module_path(vpiHandle callh, vpiHandle argv,
  */
 static int scan_format_string(vpiHandle callh, vpiHandle argv,
                               struct byte_source *src, unsigned width,
-                              unsigned suppress_flag, PLI_BYTE8 *name)
+                              unsigned suppress_flag, ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle arg;
       char *strval = malloc(1);
@@ -728,7 +729,7 @@ static int scan_format_string(vpiHandle callh, vpiHandle argv,
  */
 static int scan_format_two_state(vpiHandle callh, vpiHandle argv,
                                  struct byte_source *src, unsigned width,
-                                 unsigned suppress_flag, PLI_BYTE8 *name)
+                                 unsigned suppress_flag, ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle arg;
       p_vpi_vecval val_ptr;
@@ -867,7 +868,7 @@ static int scan_format_two_state(vpiHandle callh, vpiHandle argv,
  */
 static int scan_format_four_state(vpiHandle callh, vpiHandle argv,
                                   struct byte_source *src, unsigned width,
-                                  unsigned suppress_flag, PLI_BYTE8 *name)
+                                  unsigned suppress_flag, ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle arg;
       p_vpi_vecval val_ptr;
@@ -1005,7 +1006,7 @@ static int scan_format_four_state(vpiHandle callh, vpiHandle argv,
  * passed to this function, which processes the rest of the function.
  */
 static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv,
-                       PLI_BYTE8 *name)
+                       ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       s_vpi_value val;
       vpiHandle item;
@@ -1257,6 +1258,7 @@ static int is_assignable_obj(vpiHandle obj)
 	    break;
 	case vpiPartSelect:
 	    if (! is_assignable_obj(vpi_handle(vpiParent, obj))) break;
+	    // fallthrough
 	case vpiIntegerVar:
 	case vpiBitVar:
 	case vpiByteVar:
@@ -1402,7 +1404,7 @@ static PLI_INT32 sys_sscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	  case vpiConstant:
 	  case vpiParameter:
 	    if (vpi_get(vpiConstType, reg) == vpiStringConst) break;
-
+	    // fallthrough
 	  default:
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));

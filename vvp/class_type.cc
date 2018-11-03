@@ -36,7 +36,7 @@ using namespace std;
  */
 class class_property_t {
     public:
-      explicit inline class_property_t() { }
+      inline class_property_t() { }
       virtual ~class_property_t() =0;
 	// How much space does an instance of this property require?
       virtual size_t instance_size() const =0;
@@ -143,7 +143,7 @@ template <class T> class property_atom : public class_property_t {
 
 class property_bit : public class_property_t {
     public:
-      inline property_bit(size_t wid): wid_(wid) { }
+      explicit inline property_bit(size_t wid): wid_(wid) { }
       ~property_bit() { }
 
       size_t instance_size() const { return sizeof(vvp_vector2_t); }
@@ -168,7 +168,7 @@ class property_bit : public class_property_t {
 
 class property_logic : public class_property_t {
     public:
-      inline property_logic(size_t wid): wid_(wid) { }
+      explicit inline property_logic(size_t wid): wid_(wid) { }
       ~property_logic() { }
 
       size_t instance_size() const { return sizeof(vvp_vector4_t); }
@@ -388,8 +388,8 @@ void property_object::get_object(char*buf, vvp_object_t&val, uint64_t idx)
 
 void property_object::copy(char*dst, char*src)
 {
-      vvp_object_t*dst_obj = reinterpret_cast<vvp_object_t*>(dst);
-      vvp_object_t*src_obj = reinterpret_cast<vvp_object_t*>(src);
+      vvp_object_t*dst_obj = reinterpret_cast<vvp_object_t*>(dst+offset_);
+      vvp_object_t*src_obj = reinterpret_cast<vvp_object_t*>(src+offset_);
       for (size_t idx = 0 ; idx < array_size_ ; idx += 1)
 	    dst_obj[idx] = src_obj[idx];
 }
@@ -595,7 +595,7 @@ void compile_class_property(unsigned idx, char*nam, char*typ, uint64_t array_siz
 
 void compile_class_done(void)
 {
-      struct __vpiScope*scope = vpip_peek_current_scope();
+      __vpiScope*scope = vpip_peek_current_scope();
       assert(scope);
       assert(compile_class);
       compile_class->finish_setup();

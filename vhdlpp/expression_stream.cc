@@ -61,13 +61,9 @@ void ExpAggregate::choice_t::write_to_stream(ostream&fd)
 	    return;
       }
 
-      if (prange_t*rp = range_expressions()) {
-	    rp->msb()->write_to_stream(fd);
-	    if (rp->is_downto())
-		  fd << " downto ";
-	    else
-		  fd << " to ";
-	    rp->msb()->write_to_stream(fd);
+      if (ExpRange*rp = range_expressions()) {
+	    rp->write_to_stream(fd);
+	    return;
       }
 
       fd << "/* ERROR */";
@@ -111,7 +107,13 @@ void ExpArithmetic::write_to_stream(ostream&out) const
       out << ")";
 }
 
-void ExpAttribute::write_to_stream(ostream&fd) const
+void ExpObjAttribute::write_to_stream(ostream&fd) const
+{
+      base_->write_to_stream(fd);
+      fd << "'" << name_;
+}
+
+void ExpTypeAttribute::write_to_stream(ostream&fd) const
 {
       base_->write_to_stream(fd);
       fd << "'" << name_;
@@ -179,9 +181,32 @@ void ExpReal::write_to_stream(ostream&fd) const
       fd << value_;
 }
 
-void ExpLogical::write_to_stream(ostream&) const
+void ExpLogical::write_to_stream(ostream&out) const
 {
-      ivl_assert(*this, !"Not supported");
+      peek_operand1()->write_to_stream(out);
+
+      switch (fun_) {
+	  case AND:
+	    out << " and ";
+	    break;
+	  case OR:
+	    out << " or ";
+	    break;
+	  case XOR:
+	    out << " xor ";
+	    break;
+	  case NAND:
+	    out << " nand ";
+	    break;
+	  case NOR:
+	    out << " nor ";
+	    break;
+	  case XNOR:
+	    out << " xnor ";
+	    break;
+      }
+
+      peek_operand2()->write_to_stream(out);
 }
 
 void ExpName::write_to_stream(ostream&fd) const
@@ -192,14 +217,20 @@ void ExpName::write_to_stream(ostream&fd) const
       }
 
       fd << name_;
-      if (index_) {
-	    fd << "(";
-	    index_->write_to_stream(fd);
-	    if (lsb_) {
-		  fd << " downto ";
-		  lsb_->write_to_stream(fd);
-	    }
-	    fd << ")";
+
+      if (indices_) {
+          fd << "(";
+          bool first = true;
+          for(list<Expression*>::const_iterator it = indices_->begin();
+                  it != indices_->end(); ++it) {
+              if(first)
+                  first = false;
+              else
+                  fd << ",";
+
+              (*it)->write_to_stream(fd);
+          }
+          fd << ")";
       }
 }
 
@@ -272,10 +303,15 @@ void ExpShift::write_to_stream(ostream&out) const
 void ExpString::write_to_stream(ostream&fd) const
 {
     fd << "\"";
-    for(vector<char>::const_iterator it = value_.begin();
-      it != value_.end(); ++it) {
-        fd << *it;
+
+    // Restore double quotation marks
+    for(string::const_iterator it = value_.begin(); it != value_.end(); ++it) {
+        if(*it == '"')
+            fd << "\"\"";
+        else
+            fd << *it;
     }
+
     fd << "\"";
 }
 
@@ -291,9 +327,53 @@ void ExpUNot::write_to_stream(ostream&fd) const
       write_to_stream_operand1(fd);
 }
 
+void ExpUMinus::write_to_stream(ostream&fd) const
+{
+      fd << "-(";
+      write_to_stream_operand1(fd);
+      fd << ")";
+}
+
 void ExpCast::write_to_stream(ostream&fd) const
 {
       // Type casting is introduced only for a few specific cases in
       // SystemVerilog, so no need to use it here
       base_->write_to_stream(fd);
+}
+
+void ExpTime::write_to_stream(ostream&fd) const
+{
+      fd << amount_;
+
+      switch(unit_) {
+          case FS: fd << " fs"; break;
+          case PS: fd << " ps"; break;
+          case NS: fd << " ns"; break;
+          case US: fd << " us"; break;
+          case MS: fd << " ms"; break;
+          case S:  fd << " s"; break;
+      }
+}
+
+void ExpRange::write_to_stream(ostream&fd) const
+{
+      if(range_expr_) {
+          range_base_->write_to_stream(fd);
+          fd << (range_reverse_ ? "'reverse_range" : "'range");
+      } else {
+          left_->write_to_stream(fd);
+          switch(direction_) {
+              case DOWNTO: fd << " downto "; break;
+              case TO: fd << " to "; break;
+              default: ivl_assert(*this, false); break;
+          }
+          right_->write_to_stream(fd);
+      }
+}
+
+void ExpDelay::write_to_stream(ostream&out) const
+{
+      expr_->write_to_stream(out);
+      out << " after ";
+      delay_->write_to_stream(out);
 }

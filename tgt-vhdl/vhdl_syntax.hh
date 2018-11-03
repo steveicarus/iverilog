@@ -178,7 +178,7 @@ private:
 
 class vhdl_const_string : public vhdl_expr {
 public:
-   vhdl_const_string(const string& value)
+   explicit vhdl_const_string(const string& value)
       : vhdl_expr(vhdl_type::string(), true), value_(value) {}
 
    void emit(std::ostream &of, int level) const;
@@ -207,7 +207,7 @@ private:
 
 class vhdl_const_bit : public vhdl_expr {
 public:
-   vhdl_const_bit(char bit)
+   explicit vhdl_const_bit(char bit)
       : vhdl_expr(vhdl_type::std_logic(), true), bit_(bit) {}
    void emit(std::ostream &of, int level) const;
    vhdl_expr *to_boolean();
@@ -237,7 +237,7 @@ private:
 
 class vhdl_const_int : public vhdl_expr {
 public:
-   vhdl_const_int(int64_t value)
+   explicit vhdl_const_int(int64_t value)
       : vhdl_expr(vhdl_type::integer(), true), value_(value) {}
    void emit(std::ostream &of, int level) const;
    vhdl_expr *to_vector(vhdl_type_name_t name, int w);
@@ -247,7 +247,7 @@ private:
 
 class vhdl_const_bool : public vhdl_expr {
 public:
-   vhdl_const_bool(bool value)
+   explicit vhdl_const_bool(bool value)
       : vhdl_expr(vhdl_type::boolean(), true), value_(value) {}
    void emit(std::ostream &of, int level) const;
 private:
@@ -478,7 +478,7 @@ private:
 
 class vhdl_assert_stmt : public vhdl_report_stmt {
 public:
-   vhdl_assert_stmt(const char *reason);
+   explicit vhdl_assert_stmt(const char *reason);
 
    void emit(ostream &of, int level) const;
 };
@@ -486,7 +486,7 @@ public:
 
 class vhdl_if_stmt : public vhdl_seq_stmt {
 public:
-   vhdl_if_stmt(vhdl_expr *test);
+   explicit vhdl_if_stmt(vhdl_expr *test);
    ~vhdl_if_stmt();
 
    stmt_container *get_then_container() { return &then_part_; }
@@ -513,7 +513,7 @@ private:
 class vhdl_case_branch : public vhdl_element {
    friend class vhdl_case_stmt;
 public:
-   vhdl_case_branch(vhdl_expr *when) : when_(when) {}
+   explicit vhdl_case_branch(vhdl_expr *when) : when_(when) {}
    ~vhdl_case_branch();
 
    stmt_container *get_container() { return &stmts_; }
@@ -527,7 +527,7 @@ typedef std::list<vhdl_case_branch*> case_branch_list_t;
 
 class vhdl_case_stmt : public vhdl_seq_stmt {
 public:
-   vhdl_case_stmt(vhdl_expr *test) : test_(test) {}
+   explicit vhdl_case_stmt(vhdl_expr *test) : test_(test) {}
    ~vhdl_case_stmt();
 
    void add_branch(vhdl_case_branch *b) { branches_.push_back(b); }
@@ -554,7 +554,7 @@ private:
 
 class vhdl_while_stmt : public vhdl_loop_stmt {
 public:
-   vhdl_while_stmt(vhdl_expr *test) : test_(test) {}
+   explicit vhdl_while_stmt(vhdl_expr *test) : test_(test) {}
    ~vhdl_while_stmt();
 
    void emit(std::ostream &of, int level) const;
@@ -584,7 +584,7 @@ private:
  */
 class vhdl_pcall_stmt : public vhdl_seq_stmt {
 public:
-   vhdl_pcall_stmt(const char *name) : name_(name) {}
+   explicit vhdl_pcall_stmt(const char *name) : name_(name) {}
 
    void emit(std::ostream &of, int level) const;
    void add_expr(vhdl_expr *e) { exprs_.add_expr(e); }
@@ -658,7 +658,7 @@ public:
 
    void emit(std::ostream &of, int level) const;
 private:
-   vhdl_component_decl(const char *name);
+   explicit vhdl_component_decl(const char *name);
 
    decl_list_t ports_;
 };
@@ -852,7 +852,7 @@ private:
 
 class vhdl_forward_fdecl : public vhdl_decl {
 public:
-   vhdl_forward_fdecl(const vhdl_function *f)
+   explicit vhdl_forward_fdecl(const vhdl_function *f)
       : vhdl_decl((f->get_name() + "_Forward").c_str()), f_(f) {}
 
    void emit(std::ostream &of, int level) const;
@@ -863,7 +863,7 @@ private:
 
 class vhdl_process : public vhdl_conc_stmt, public vhdl_procedural {
 public:
-   vhdl_process(const char *name = "") : name_(name) {}
+   explicit vhdl_process(const char *name = "") : name_(name) {}
 
    void emit(std::ostream &of, int level) const;
    void add_sensitivity(const std::string &name);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -141,46 +141,45 @@ void verify_version(char*ivl_ver, char*commit)
       }
       delete[] commit;
 
-      char*vvp_ver = strdup(VERSION);
-      char *vp, *ip;
+      int file_major, file_minor, file_minor2;
+      char file_extra[128];
 
-	/* Check the major/minor version. */
-      ip = strrchr(ivl_ver, '.');
-      *ip = '\0';
-      vp = strrchr(vvp_ver, '.');
-      *vp = '\0';
-      if (strcmp(ivl_ver, vvp_ver) != 0) {
-	    vpi_mcd_printf(1, "Error: VVP input file version %s can not "
-	                      "be run with run time version %s!\n",
-	                      ivl_ver, vvp_ver);
+	// Old style format: 0.<major>.<minor> <extra>
+	// This also catches a potential new-new format that has
+	// another sub-minor number.
+      file_extra[0] = 0;
+      int rc = sscanf(ivl_ver, "%d.%d.%d %127s", &file_major, &file_minor, &file_minor2, file_extra);
+
+	// If it wasn't the old style format, try the new format:
+	// <major>.<minor> <extra>
+      if (rc == 2) {
+	    file_extra[0] = 0;
+	    rc = sscanf(ivl_ver, "%d.%d %127s", &file_major, &file_minor, file_extra);
+	    file_minor2 = 0;
+      }
+      delete[] ivl_ver;
+
+	// If this was the old format, the file_major will be 0. In
+	// this case it is not really what we meant, so convert to the
+	// new format.
+      if (file_major == 0) {
+	    file_major = file_minor;
+	    file_minor = file_minor2;
+	    file_minor2 = 0;
+      }
+
+      if (VERSION_MAJOR != file_major) {
+	    vpi_mcd_printf(1, "Error: VVP input file %d.%d can not "
+			   "be run with run time version %s\n",
+			   file_major, file_minor, VERSION);
 	    exit(1);
       }
 
-	/* Check that the sub-version is compatible. */
-      ip += 1;
-      vp += 1;
-      int ivl_sv, vvp_sv;
-      if (strcmp(ip, "devel") == 0) {
-	    ivl_sv = -1;
-      } else {
-	    int res = sscanf(ip, "%d", &ivl_sv);
-	    assert(res == 1);
+      if (VERSION_MINOR < file_minor) {
+	    vpi_mcd_printf(1, "Warning: VVP input file sub version %d.%d"
+			   " is greater than the run time version %s.\n",
+			   file_major, file_minor, VERSION);
       }
-      if (strcmp(vp, "devel") == 0) {
-	    vvp_sv = -1;
-      } else {
-	    int res = sscanf(vp, "%d", &vvp_sv);
-	    assert(res == 1);
-      }
-      if (ivl_sv > vvp_sv) {
-	    if (verbose_flag) vpi_mcd_printf(1, " ... ");
-	    vpi_mcd_printf(1, "Warning: VVP input file sub-version %s is "
-	                      "greater than the run time sub-version %s!\n",
-	                      ip, vp);
-      }
-
-      delete[] ivl_ver;
-      free(vvp_ver);
 }
 
 int vpip_delay_selection = _vpiDelaySelTypical;
@@ -263,43 +262,6 @@ int main(int argc, char*argv[])
       extern bool stop_is_finish;
       extern int  stop_is_finish_exit_code;
 
-#ifdef __MINGW32__
-	/* Calculate the module path from the path to the command.
-	   This is necessary because of the installation process on
-	   Windows. Mostly, it is those darn drive letters, but oh
-	   well. We know the command path is formed like this:
-
-		D:\iverilog\bin\iverilog.exe
-
-	   The IVL_ROOT in a Windows installation is the path:
-
-		D:\iverilog\lib\ivl$(suffix)
-
-	   so we chop the file name and the last directory by
-	   turning the last two \ characters to null. Then we append
-	   the lib\ivl$(suffix) to finish. */
-      char *s;
-      char basepath[4096], tmp[4096];
-      GetModuleFileName(NULL, tmp, sizeof tmp);
-	/* Convert to a short name to remove any embedded spaces. */
-      GetShortPathName(tmp, basepath, sizeof basepath);
-      s = strrchr(basepath, '\\');
-      if (s) *s = 0;
-      else {
-	    fprintf(stderr, "%s: Missing first \\ in exe path!\n", argv[0]);
-	    exit(1);
-      }
-      s = strrchr(basepath, '\\');
-      if (s) *s = 0;
-      else {
-	    fprintf(stderr, "%s: Missing second \\ in exe path!\n", argv[0]);
-	    exit(1);
-      }
-      strcat(s, "\\lib\\ivl" IVL_SUFFIX);
-      vpip_module_path[0] = strdup(basepath);
-#endif
-
-
       if( ::getenv("VVP_WAIT_FOR_DEBUGGER") != 0 ) {
           fprintf( stderr, "Waiting for debugger...\n");
           bool debugger_release = false;
@@ -316,12 +278,13 @@ int main(int argc, char*argv[])
         /* For non-interactive runs we do not want to run the interactive
          * debugger, so make $stop just execute a $finish. */
       stop_is_finish = false;
-      while ((opt = getopt(argc, argv, "+hl:M:m:nNsvV")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "+hil:M:m:nNsvV")) != EOF) switch (opt) {
          case 'h':
            fprintf(stderr,
                    "Usage: vvp [options] input-file [+plusargs...]\n"
                    "Options:\n"
                    " -h             Print this help message.\n"
+                   " -i             Interactive mode (unbuffered stdio).\n"
                    " -l file        Logfile, '-' for <stderr>\n"
                    " -M path        VPI module directory\n"
 		   " -M -           Clear VPI module path\n"
@@ -332,15 +295,17 @@ int main(int argc, char*argv[])
                    " -v             Verbose progress messages.\n"
                    " -V             Print the version information.\n" );
            exit(0);
+	  case 'i':
+	    setvbuf(stdout, 0, _IONBF, 0);
+	    break;
 	  case 'l':
 	    logfile_name = optarg;
 	    break;
 	  case 'M':
 	    if (strcmp(optarg,"-") == 0) {
-		  vpip_module_path_cnt = 0;
-		  vpip_module_path[0] = 0;
+		  vpip_clear_module_paths();
 	    } else {
-		  vpip_module_path[vpip_module_path_cnt++] = optarg;
+		  vpip_add_module_path(optarg);
 	    }
 	    break;
 	  case 'm':
@@ -366,13 +331,15 @@ int main(int argc, char*argv[])
 	    flag_errors += 1;
       }
 
+      vpip_add_env_and_default_module_paths();
+
       if (flag_errors)
 	    return flag_errors;
 
       if (version_flag) {
 	    fprintf(stderr, "Icarus Verilog runtime version " VERSION " ("
 	                    VERSION_TAG ")\n\n");
-	    fprintf(stderr, "Copyright 1998-2012 Stephen Williams\n\n");
+	    fprintf(stderr, "Copyright 1998-2015 Stephen Williams\n\n");
 	    fprintf(stderr,
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"
@@ -464,34 +431,18 @@ int main(int argc, char*argv[])
       }
 
       if (verbose_flag) {
-#ifdef __MINGW32__  /* MinGW does not know about z. */
-	    vpi_mcd_printf(1, " ... %8lu functors (net_fun pool=%u bytes)\n",
-#else
 	    vpi_mcd_printf(1, " ... %8lu functors (net_fun pool=%zu bytes)\n",
-#endif
 			   count_functors, vvp_net_fun_t::heap_total());
 	    vpi_mcd_printf(1, "           %8lu logic\n",  count_functors_logic);
 	    vpi_mcd_printf(1, "           %8lu bufif\n",  count_functors_bufif);
 	    vpi_mcd_printf(1, "           %8lu resolv\n",count_functors_resolv);
 	    vpi_mcd_printf(1, "           %8lu signals\n", count_functors_sig);
-#ifdef __MINGW32__  /* MinGW does not know about z. */
-	    vpi_mcd_printf(1, " ... %8lu filters (net_fil pool=%u bytes)\n",
-#else
 	    vpi_mcd_printf(1, " ... %8lu filters (net_fil pool=%zu bytes)\n",
-#endif
 			   count_filters, vvp_net_fil_t::heap_total());
-#ifdef __MINGW32__  /* MinGW does not know about z. */
-	    vpi_mcd_printf(1, " ... %8lu opcodes (%u bytes)\n",
-#else
 	    vpi_mcd_printf(1, " ... %8lu opcodes (%zu bytes)\n",
-#endif
 	                   count_opcodes, size_opcodes);
 	    vpi_mcd_printf(1, " ... %8lu nets\n",     count_vpi_nets);
-#ifdef __MINGW32__  /* MinGW does not know about z. */
-	    vpi_mcd_printf(1, " ... %8lu vvp_nets (%u bytes)\n",
-#else
 	    vpi_mcd_printf(1, " ... %8lu vvp_nets (%zu bytes)\n",
-#endif
 			   count_vvp_nets, size_vvp_nets);
 	    vpi_mcd_printf(1, " ... %8lu arrays (%lu words)\n",
 			   count_net_arrays, count_net_array_words);

@@ -1,0 +1,187 @@
+// These are the functions that the runtime exports.
+
+// The ACC functions.
+
+// acc_close()
+unusedFunction:a_close.c:23
+// acc_compare_handles()
+unusedFunction:a_compare_handles.c:23
+// acc_configure()
+unusedFunction:a_configure.c:25
+
+// acc_fetch_argc()
+unusedFunction:a_fetch_argc.c:27
+// acc_fetch_argv()
+unusedFunction:a_fetch_argv.c:27
+// acc_fetch_defname()
+unusedFunction:a_fetch_fullname.c:37
+// acc_fetch_direction()
+unusedFunction:a_fetch_dir.c:26
+// acc_fetch_fulltype()
+unusedFunction:a_fetch_type.c:66
+// acc_fetch_itfarg()
+unusedFunction:a_fetch_tfarg.c:27
+// acc_fetch_location()
+unusedFunction:a_fetch_location.c:23
+// acc_fetch_name()
+unusedFunction:a_fetch_fullname.c:32
+// acc_fetch_paramtype()
+unusedFunction:a_fetch_type_str.c:47
+// acc_fetch_paramval()
+unusedFunction:a_fetch_param.c:25
+// acc_fetch_range()
+unusedFunction:a_fetch_range.c:26
+// acc_fetch_size()
+unusedFunction:a_fetch_type.c:24
+// acc_fetch_tfarg()
+unusedFunction:a_fetch_tfarg.c:56
+// acc_fetch_tfarg_int()
+unusedFunction:a_fetch_tfarg.c:91
+// acc_fetch_timescale_info()
+unusedFunction:a_fetch_time.c:24
+// acc_fetch_type()
+unusedFunction:a_fetch_type.c:29
+// acc_fetch_type_str()
+unusedFunction:a_fetch_type_str.c:24
+// acc_fetch_value()
+unusedFunction:a_fetch_value.c:115
+
+// acc_handle_by_name()
+unusedFunction:a_handle_by_name.c:29
+// acc_handle_hiconn()
+unusedFunction:a_handle_hiconn.c:26
+// acc_handle_object()
+unusedFunction:a_handle_object.c:26
+// acc_handle_parent()
+unusedFunction:a_handle_parent.c:24
+// acc_handle_scope()
+unusedFunction:a_handle_parent.c:34
+// acc_handle_simulated_net()
+unusedFunction:a_handle_simulated_net.c:26
+// acc_handle_tfarg()
+unusedFunction:a_handle_tfarg.c:26
+// acc_handle_tfinst()
+unusedFunction:a_handle_tfarg.c:53
+
+// acc_initialize()
+unusedFunction:a_initialize.c:24
+
+// acc_next_bit()
+unusedFunction:a_next_bit.c:26
+// acc_next_port()
+unusedFunction:a_next_port.c:26
+// acc_next_scope()
+unusedFunction:a_next.c:86
+// acc_next_topmod()
+unusedFunction:a_next_topmod.c:30
+
+// acc_product_version()
+unusedFunction:a_product_version.c:23
+
+// acc_set_scope()
+unusedFunction:a_handle_object.c:40
+
+// acc_set_value()
+unusedFunction:a_set_value.c:27
+
+// acc_vcl_add()
+unusedFunction:a_vcl.c:157
+// acc_vcl_delete()
+unusedFunction:a_vcl.c:196
+
+// acc_version()
+unusedFunction:a_version.c:23
+
+// These are the TF routines.
+
+// io_printf()
+unusedFunction:io_print.c:26
+
+// mc_scan_plusargs()
+unusedFunction:mc_scan_plusargs.c:27
+
+// tf_asynchoff()
+unusedFunction:asynch.c:34
+// tf_asynchon()
+unusedFunction:asynch.c:28
+// tf_dofinish()
+unusedFunction:finish.c:26
+// tf_dostop()
+unusedFunction:finish.c:32
+// tf_error()
+unusedFunction:io_print.c:45
+// tf_exprinfo()
+unusedFunction:exprinfo.c:26
+// tf_getcstringp()
+unusedFunction:getcstringp.c:26
+// tf_getlongp()
+unusedFunction:getlongp.c:29
+// tf_getlongtime()
+unusedFunction:getsimtime.c:112
+// tf_getp()
+unusedFunction:getp.c:73
+// tf_getrealp()
+unusedFunction:getp.c:120
+// tf_gettime()
+unusedFunction:getsimtime.c:77
+// tf_getworkarea()
+unusedFunction:workarea.c:62
+// tf_igettimeprecision()
+unusedFunction:getsimtime.c:198
+// tf_igettimeunit()
+unusedFunction:getsimtime.c:228
+// tf_long_to_real()
+unusedFunction:math.c:47
+// tf_message()
+unusedFunction:io_print.c:56
+// tf_mipname()
+unusedFunction:spname.c:47
+// tf_multiply_long()
+unusedFunction:math.c:27
+// tf_nodeinfo()
+unusedFunction:nodeinfo.c:27
+// tf_nump()
+unusedFunction:nump.c:42
+// tf_putlongp()
+unusedFunction:putlongp.c:28
+// tf_putp()
+unusedFunction:putp.c:88
+// tf_putrealp()
+unusedFunction:putp.c:137
+// tf_real_to_long()
+unusedFunction:math.c:40
+// tf_rosynchronize()
+unusedFunction:veriusertfs.c:391
+// tf_scale_longdelay()
+unusedFunction:getsimtime.c:136
+// tf_scale_realdelay()
+unusedFunction:getsimtime.c:161
+// tf_setdelay()
+unusedFunction:delay.c:75
+// tf_setrealdelay()
+unusedFunction:veriusertfs.c:426
+// tf_setworkarea()
+unusedFunction:workarea.c:36
+// tf_spname()
+unusedFunction:spname.c:25
+// tf_strgetp()
+unusedFunction:getp.c:177
+// tf_strgettime()
+unusedFunction:getsimtime.c:85
+// tf_synchronize()
+unusedFunction:veriusertfs.c:364
+// tf_typep()
+unusedFunction:typep.c:24
+// tf_unscale_longdelay()
+unusedFunction:getsimtime.c:144
+// tf_unscale_realdelay()
+unusedFunction:getsimtime.c:171
+// tf_warning()
+unusedFunction:io_print.c:34
+
+// Non-standard TF routines the Icarus provides.
+
+// tf_getlongsimtime()
+unusedFunction:getsimtime.c:126
+// veriusertfs_register_table()
+unusedFunction:veriusertfs.c:76

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -715,16 +715,23 @@ void PTaskFunc::elaborate_sig_ports_(Design*des, NetScope*scope,
 		  continue;
 	    }
 
-	      // If the port has a default expression that can be used
-	      // as a value when the caller doesn't bind, then
-	      // elaborate that expression here. This expression
-	      // should evaluate down do a constant.
+	      // If the port has a default expression, elaborate
+	      // that expression here.
 	    if (ports_->at(idx).defe != 0) {
-		  tmp_def = elab_and_eval(des, scope, ports_->at(idx).defe, -1, true);
-		  if (tmp_def==0) {
-			cerr << get_fileline() << ": error: Unable to evaluate "
-			     << *ports_->at(idx).defe
-			     << " as a port default (constant) expression." << endl;
+		  if (tmp->port_type() == NetNet::PINPUT) {
+			tmp_def = elab_and_eval(des, scope, ports_->at(idx).defe,
+						-1, scope->need_const_func());
+			if (tmp_def == 0) {
+			      cerr << get_fileline()
+				   << ": error: Unable to evaluate "
+				   << *ports_->at(idx).defe
+				   << " as a port default expression." << endl;
+			      des->errors += 1;
+			}
+		  } else {
+			cerr << get_fileline() << ": sorry: Default arguments "
+			        "for subroutine output or inout ports are not "
+			        "yet supported." << endl;
 			des->errors += 1;
 		  }
 	    }
@@ -969,6 +976,23 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       if (port_set_ || net_set_) {
+
+	    if (warn_implicit_dimensions
+		&& port_set_ && net_set_
+		&& net_.empty() && !port_.empty()) {
+		  cerr << get_fileline() << ": warning: "
+		       << "var/net declaration of " << basename()
+		       << " inherits dimensions from port declaration." << endl;
+	    }
+
+	    if (warn_implicit_dimensions
+		&& port_set_ && net_set_
+		&& port_.empty() && !net_.empty()) {
+		  cerr << get_fileline() << ": warning: "
+		       << "Port declaration of " << basename()
+		       << " inherits dimensions from var/net." << endl;
+	    }
+
 	    bool bad_range = false;
 	    vector<netrange_t> plist, nlist;
 	    /* If they exist get the port definition MSB and LSB */
@@ -1161,6 +1185,14 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       NetLogic*pull = 0;
       if (wtype == NetNet::SUPPLY0 || wtype == NetNet::SUPPLY1) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Generate a SUPPLY pull for the ";
+		  if (wtype == NetNet::SUPPLY0) cerr << "supply0";
+		  else cerr << "supply1";
+		  cerr << " net." << endl;
+	    }
+
 	    NetLogic::TYPE pull_type = (wtype==NetNet::SUPPLY1)
 		  ? NetLogic::PULLUP
 		  : NetLogic::PULLDOWN;
@@ -1171,14 +1203,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    pull->pin(0).drive1(IVL_DR_SUPPLY);
 	    des->add_node(pull);
 	    wtype = NetNet::WIRE;
-
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: "
-		       << "Generate a SUPPLY pull for the ";
-		  if (wtype == NetNet::SUPPLY0) cerr << "supply0";
-		  else cerr << "supply1";
-		  cerr << " net." << endl;
-	    }
       }
 
 
@@ -1308,28 +1332,4 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    sig->attribute(attrib_list[idx].key, attrib_list[idx].val);
 
       return sig;
-}
-
-
-void Design::root_elaborate_sig(void)
-{
-      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
-		 ; cur != classes_.end() ; ++ cur) {
-
-	    netclass_t*cur_class = cur->second;
-	    PClass*cur_pclass = class_to_pclass_[cur_class];
-
-	    cur_class->elaborate_sig(this, cur_pclass);
-      }
-
-      for (map<NetScope*,PTaskFunc*>::iterator cur = root_tasks_.begin()
-		 ; cur != root_tasks_.end() ; ++ cur) {
-
-	    if (debug_elaborate) {
-		  cerr << cur->second->get_fileline() << ": root_elaborate_sig: "
-		       << "Elaborate_sig for root task/func " << scope_path(cur->first) << endl;
-	    }
-
-	    cur->second->elaborate_sig(this, cur->first);
-      }
 }

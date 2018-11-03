@@ -1,7 +1,7 @@
 #ifndef IVL_npmos_H
 #define IVL_npmos_H
 /*
- * Copyright (c) 2005-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,17 +46,23 @@
 class vvp_fun_pmos_ : public vvp_net_fun_t {
 
     public:
-      explicit vvp_fun_pmos_(bool enable_invert);
+      explicit vvp_fun_pmos_(bool enable_invert, bool resistive);
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t);
+
+      void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t ctx);
+      void recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
+			unsigned base, unsigned wid, unsigned vwid);
 
     protected:
       void generate_output_(vvp_net_ptr_t port);
 
       vvp_vector8_t bit_;
       vvp_vector4_t en_;
-      bool inv_en_;
+      bool inv_en_, resistive_;
 };
 
 class vvp_fun_pmos  : public vvp_fun_pmos_ {
@@ -103,10 +109,16 @@ class vvp_fun_rpmos  : public vvp_fun_pmos_ {
 
 class vvp_fun_cmos_ : public vvp_net_fun_t {
     public:
-      explicit vvp_fun_cmos_();
+      explicit vvp_fun_cmos_(bool resistive);
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t &bit,
                      vvp_context_t);
+
+      void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t ctx);
+      void recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
+			unsigned base, unsigned wid, unsigned vwid);
 
     protected:
       void generate_output_(vvp_net_ptr_t port);
@@ -114,6 +126,7 @@ class vvp_fun_cmos_ : public vvp_net_fun_t {
       vvp_vector8_t bit_;
       vvp_vector4_t n_en_;
       vvp_vector4_t p_en_;
+      bool resistive_;
 };
 
 class vvp_fun_cmos : public vvp_fun_cmos_ {

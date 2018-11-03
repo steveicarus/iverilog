@@ -629,7 +629,7 @@ static unsigned initialize_table_model(vpiHandle callh, const char *name,
 }
 
 /*
- * Routine to evalute the table model using the current input values.
+ * Routine to evaluate the table model using the current input values.
  */
 static double eval_table_model(vpiHandle callh, p_table_mod table)
 {

@@ -223,6 +223,10 @@ case "${host}" in
 	CPPFLAGS="-mieee $CPPFLAGS"
 	CFLAGS="-mieee $CFLAGS"
 	;;
+    *-*-mingw*)
+	CXXFLAGS="-D__USE_MINGW_ANSI_STDIO=1 $CXXFLAGS"
+	CFLAGS="-D__USE_MINGW_ANSI_STDIO=1 $CFLAGS"
+	;;
 esac
 
 # Do some more operating system specific setup. We put the file64_support
@@ -237,6 +241,9 @@ case "${host}" in
 	;;
 esac
 AC_SUBST(file64_support)
+
+# fstapi.c (from GTKWave) needs this define.
+AC_CHECK_FUNCS(realpath)
 
 # Check that these functions exist. They are mostly C99
 # functions that older compilers may not yet support.

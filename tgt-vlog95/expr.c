@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2018 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,8 +44,10 @@ static expr_sign_t expr_get_binary_sign_type(ivl_expr_t expr)
       switch (ivl_expr_opcode(expr)) {
 	case 'E':
 	case 'e':
+	case 'w':
 	case 'N':
 	case 'n':
+	case 'W':
 	case '<':
 	case 'L':
 	case '>':
@@ -417,8 +419,10 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 	case 'p': oper = "**"; break;
 	case 'E': oper = "==="; break;
 	case 'e': oper = "=="; break;
+	case 'w': oper = "==?"; break;
 	case 'N': oper = "!=="; break;
 	case 'n': oper = "!="; break;
+	case 'W': oper = "!=?"; break;
 	case '<': oper = "<"; break;
 	case 'L': oper = "<="; break;
 	case '>': oper = ">"; break;
@@ -447,6 +451,7 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
 		  vlog_errors += 1;
 	    }
+	    //fallthrough
 	case '+':
 	case '-':
 	case '*':
@@ -465,6 +470,14 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 	    fprintf(vlog_out, " %s ", oper);
 	    emit_expr(scope, oper2, wid, 0, can_skip_unsigned, is_full_prec);
 	    break;
+	case 'w':
+	case 'W':
+	    fprintf(stderr, "%s:%u: vlog95 error: The wild equality operators "
+	                    "cannot be converted.\n",
+	                    ivl_expr_file(expr),
+	                    ivl_expr_lineno(expr));
+	    vlog_errors += 1;
+	    // fallthrough
 	case 'E':
 	case 'e':
 	case 'N':
@@ -492,6 +505,7 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
 		  vlog_errors += 1;
 	    }
+	    // fallthrough
 	case 'l':
 	case 'r':
 	    emit_expr(scope, oper1, wid, 0, 0, 0);

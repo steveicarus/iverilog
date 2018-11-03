@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -120,6 +120,12 @@ bool NetDivide::emit_node(struct target_t*tgt) const
 bool NetFF::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_ff(this);
+      return true;
+}
+
+bool NetLatch::emit_node(struct target_t*tgt) const
+{
+      tgt->lpm_latch(this);
       return true;
 }
 
@@ -504,24 +510,10 @@ int Design::emit(struct target_t*tgt) const
       if (tgt->start_design(this) == false)
 	    return -2;
 
-      for (map<NetScope*,PTaskFunc*>::const_iterator scope = root_tasks_.begin()
-		 ; scope != root_tasks_.end() ; ++ scope) {
-	    scope->first->emit_scope(tgt);
-	    scope->first->emit_defs(tgt);
-      }
-
 	// enumerate package scopes
       for (map<perm_string,NetScope*>::const_iterator scope = packages_.begin()
 		 ; scope != packages_.end() ; ++ scope) {
 	    scope->second->emit_scope(tgt);
-      }
-
-      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
-		 ; cur != classes_.end() ; ++cur) {
-	    const NetScope*use_scope = cur->second->class_scope();
-	    cur->second->emit_scope(tgt);
-	    tgt->class_type(use_scope, cur->second);
-	    cur->second->emit_defs(tgt);
       }
 
 	// enumerate root scopes

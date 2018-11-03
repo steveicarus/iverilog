@@ -139,7 +139,7 @@ long get_number_immediate(ivl_expr_t expr)
 		      assert(0);
 		}
 		if (ivl_expr_signed(expr) && bits[nbits-1]=='1' &&
-		    nbits < 8*sizeof(long)) imm |= -1L << nbits;
+		    nbits < 8*sizeof(long)) imm |= -1UL << nbits;
 		break;
 	  }
 

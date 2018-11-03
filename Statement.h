@@ -1,7 +1,7 @@
 #ifndef IVL_Statement_H
 #define IVL_Statement_H
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -108,7 +108,8 @@ class PAssign_  : public Statement {
       NetAssign_* elaborate_lval(Design*, NetScope*scope) const;
       NetExpr* elaborate_rval_(Design*, NetScope*, ivl_type_t lv_net_type,
 			       ivl_variable_type_t lv_type,
-			       unsigned lv_width) const;
+			       unsigned lv_width,
+			       bool force_unsigned =false) const;
       NetExpr* elaborate_rval_(Design*, NetScope*, ivl_type_t ntype) const;
 
       NetExpr* elaborate_rval_obj_(Design*, NetScope*,
@@ -181,6 +182,8 @@ class PBlock  : public PScope, public Statement {
       ~PBlock();
 
       BL_TYPE bl_type() const { return bl_type_; }
+
+      bool var_init_needs_explicit_lifetime() const;
 
 	// This is only used if this block is the statement list for a
 	// constructor. We look for a PChainConstructor as the first
@@ -289,7 +292,7 @@ class PCAssign  : public Statement {
  */
 class PChainConstructor : public Statement {
     public:
-      PChainConstructor(const list<PExpr*>&parms);
+      explicit PChainConstructor(const list<PExpr*>&parms);
       ~PChainConstructor();
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
@@ -399,8 +402,9 @@ class PEventStatement  : public Statement {
 
       explicit PEventStatement(const svector<PEEvent*>&ee);
       explicit PEventStatement(PEEvent*ee);
-	// Make an @* statement.
-      explicit PEventStatement(void);
+	// Make an @* statement or make a special @* version with the items
+	// from functions added and ouputs removed for always_comb/latch.
+      explicit PEventStatement(bool search_funcs = false);
 
       ~PEventStatement();
 
@@ -426,6 +430,7 @@ class PEventStatement  : public Statement {
     private:
       svector<PEEvent*>expr_;
       Statement*statement_;
+      bool search_funcs_;
 };
 
 ostream& operator << (ostream&o, const PEventStatement&obj);

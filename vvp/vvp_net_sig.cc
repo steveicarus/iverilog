@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -117,27 +117,27 @@ double vvp_signal_value::real_value() const
       return 0;
 }
 
-void vvp_net_t::force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
+void vvp_net_t::force_vec4(const vvp_vector4_t&val, const vvp_vector2_t&mask)
 {
       assert(fil);
       fil->force_fil_vec4(val, mask);
-      fun->force_flag();
+      fun->force_flag(false);
       vvp_send_vec4(out_, val, 0);
 }
 
-void vvp_net_t::force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
+void vvp_net_t::force_vec8(const vvp_vector8_t&val, const vvp_vector2_t&mask)
 {
       assert(fil);
       fil->force_fil_vec8(val, mask);
-      fun->force_flag();
+      fun->force_flag(false);
       vvp_send_vec8(out_, val);
 }
 
-void vvp_net_t::force_real(double val, vvp_vector2_t mask)
+void vvp_net_t::force_real(double val, const vvp_vector2_t&mask)
 {
       assert(fil);
       fil->force_fil_real(val, mask);
-      fun->force_flag();
+      fun->force_flag(false);
       vvp_send_real(out_, val, 0);
 }
 
@@ -310,15 +310,15 @@ unsigned automatic_signal_base::filter_size() const
       assert(0);
       return(0);
 }
-void automatic_signal_base::force_fil_vec4(const vvp_vector4_t&, vvp_vector2_t)
+void automatic_signal_base::force_fil_vec4(const vvp_vector4_t&, const vvp_vector2_t&)
 {
       assert(0);
 }
-void automatic_signal_base::force_fil_vec8(const vvp_vector8_t&, vvp_vector2_t)
+void automatic_signal_base::force_fil_vec8(const vvp_vector8_t&, const vvp_vector2_t&)
 {
       assert(0);
 }
-void automatic_signal_base::force_fil_real(double, vvp_vector2_t)
+void automatic_signal_base::force_fil_real(double, const vvp_vector2_t&)
 {
       assert(0);
 }
@@ -940,7 +940,7 @@ unsigned vvp_wire_vec4::filter_size() const
       return bits4_.size();
 }
 
-void vvp_wire_vec4::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
+void vvp_wire_vec4::force_fil_vec4(const vvp_vector4_t&val, const vvp_vector2_t&mask)
 {
       force_mask(mask);
 
@@ -957,12 +957,12 @@ void vvp_wire_vec4::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
       run_vpi_callbacks();
 }
 
-void vvp_wire_vec4::force_fil_vec8(const vvp_vector8_t&, vvp_vector2_t)
+void vvp_wire_vec4::force_fil_vec8(const vvp_vector8_t&, const vvp_vector2_t&)
 {
       assert(0);
 }
 
-void vvp_wire_vec4::force_fil_real(double, vvp_vector2_t)
+void vvp_wire_vec4::force_fil_real(double, const vvp_vector2_t&)
 {
       assert(0);
 }
@@ -1108,12 +1108,12 @@ unsigned vvp_wire_vec8::filter_size() const
       return bits8_.size();
 }
 
-void vvp_wire_vec8::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
+void vvp_wire_vec8::force_fil_vec4(const vvp_vector4_t&val, const vvp_vector2_t&mask)
 {
       force_fil_vec8(vvp_vector8_t(val,6,6), mask);
 }
 
-void vvp_wire_vec8::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
+void vvp_wire_vec8::force_fil_vec8(const vvp_vector8_t&val, const vvp_vector2_t&mask)
 {
       force_mask(mask);
 
@@ -1130,7 +1130,7 @@ void vvp_wire_vec8::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
       run_vpi_callbacks();
 }
 
-void vvp_wire_vec8::force_fil_real(double, vvp_vector2_t)
+void vvp_wire_vec8::force_fil_real(double, const vvp_vector2_t&)
 {
       assert(0);
 }
@@ -1240,17 +1240,17 @@ unsigned vvp_wire_real::filter_size() const
       return 0;
 }
 
-void vvp_wire_real::force_fil_vec4(const vvp_vector4_t&, vvp_vector2_t)
+void vvp_wire_real::force_fil_vec4(const vvp_vector4_t&, const vvp_vector2_t&)
 {
       assert(0);
 }
 
-void vvp_wire_real::force_fil_vec8(const vvp_vector8_t&, vvp_vector2_t)
+void vvp_wire_real::force_fil_vec8(const vvp_vector8_t&, const vvp_vector2_t&)
 {
       assert(0);
 }
 
-void vvp_wire_real::force_fil_real(double val, vvp_vector2_t mask)
+void vvp_wire_real::force_fil_real(double val, const vvp_vector2_t&mask)
 {
       force_mask(mask);
       if (mask.value(0))
@@ -1339,15 +1339,15 @@ unsigned vvp_wire_string::filter_size() const
       return 0;
 }
 
-void vvp_wire_string::force_fil_vec4(const vvp_vector4_t&, vvp_vector2_t)
+void vvp_wire_string::force_fil_vec4(const vvp_vector4_t&, const vvp_vector2_t&)
 {
       assert(0);
 }
-void vvp_wire_string::force_fil_vec8(const vvp_vector8_t&, vvp_vector2_t)
+void vvp_wire_string::force_fil_vec8(const vvp_vector8_t&, const vvp_vector2_t&)
 {
       assert(0);
 }
-void vvp_wire_string::force_fil_real(double, vvp_vector2_t)
+void vvp_wire_string::force_fil_real(double, const vvp_vector2_t&)
 {
       assert(0);
 }

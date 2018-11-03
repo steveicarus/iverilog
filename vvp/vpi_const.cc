@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,7 +31,7 @@
 
 class __vpiStringConst : public __vpiHandle {
     public:
-      __vpiStringConst(char*val);
+      explicit __vpiStringConst(char*val);
       ~__vpiStringConst();
       int get_type_code(void) const;
       int vpi_get(int code);
@@ -129,7 +129,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 	  case vpiObjTypeVal:
 	      /* String parameters by default have vpiStringVal values. */
 	    vp->format = vpiStringVal;
-
+	    // fallthrough
 	  case vpiStringVal:
 	    rbuf = (char *) need_result_buf(size + 1, RBUF_VAL);
 	    strcpy(rbuf, value_);
@@ -224,7 +224,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 
 
 struct __vpiStringConstTEMP : public __vpiStringConst {
-      inline __vpiStringConstTEMP(char*v) : __vpiStringConst(v) { }
+      explicit inline __vpiStringConstTEMP(char*v) : __vpiStringConst(v) { }
       free_object_fun_t free_object_fun(void);
 };
 
@@ -257,7 +257,7 @@ class __vpiStringParam  : public __vpiStringConst {
       char*vpi_get_str(int code);
       vpiHandle vpi_handle(int code);
 
-      struct __vpiScope* scope;
+      __vpiScope* scope;
       bool     local_flag;
       unsigned file_idx;
       unsigned lineno;
@@ -454,7 +454,7 @@ struct __vpiBinaryParam  : public __vpiBinaryConst {
       char*vpi_get_str(int code);
       vpiHandle vpi_handle(int code);
 
-      struct __vpiScope*scope;
+      __vpiScope*scope;
       unsigned file_idx;
       unsigned lineno;
       bool     local_flag;
@@ -683,7 +683,7 @@ struct __vpiRealParam  : public __vpiRealConst {
       char*vpi_get_str(int code);
       vpiHandle vpi_handle(int code);
 
-      struct __vpiScope* scope;
+      __vpiScope* scope;
       bool local_flag;
       unsigned file_idx;
       unsigned lineno;

@@ -1,7 +1,7 @@
 #ifndef VPI_USER_H
 #define VPI_USER_H
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,7 +46,9 @@ EXTERN_C_START
 # include  <stdarg.h>
 # include  "_pli_types.h"
 
+#ifndef ICARUS_VPI_CONST
 #define ICARUS_VPI_CONST
+#endif
 #ifdef __cplusplus
 typedef class __vpiHandle *vpiHandle;
 #else
@@ -63,7 +65,7 @@ typedef struct t_vpi_systf_data {
       const char *tfname;
       PLI_INT32 (*calltf)   (ICARUS_VPI_CONST PLI_BYTE8*);
       PLI_INT32 (*compiletf)(ICARUS_VPI_CONST PLI_BYTE8*);
-      PLI_INT32 (*sizetf)   (PLI_BYTE8*);
+      PLI_INT32 (*sizetf)   (ICARUS_VPI_CONST PLI_BYTE8*);
       ICARUS_VPI_CONST PLI_BYTE8 *user_data;
 } s_vpi_systf_data, *p_vpi_systf_data;
 
@@ -421,10 +423,17 @@ extern PLI_UINT32 vpi_mcd_open(char *name);
 extern PLI_UINT32 vpi_mcd_close(PLI_UINT32 mcd);
 extern char      *vpi_mcd_name(PLI_UINT32 mcd);
 extern PLI_INT32  vpi_mcd_printf(PLI_UINT32 mcd, const char*fmt, ...)
+#ifdef __MINGW32__
+      __attribute__((format (gnu_printf,2,3)));
+#else
       __attribute__((format (printf,2,3)));
-
+#endif
 extern PLI_INT32  vpi_printf(const char*fmt, ...)
+#ifdef __MINGW32__
+      __attribute__((format (gnu_printf,1,2)));
+#else
       __attribute__((format (printf,1,2)));
+#endif
 
 extern PLI_INT32  vpi_vprintf(const char*fmt, va_list ap);
 extern PLI_INT32  vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap);
@@ -459,7 +468,7 @@ typedef struct t_cb_data {
       p_vpi_time time;
       p_vpi_value value;
       PLI_INT32 index;
-      char      *user_data;
+      ICARUS_VPI_CONST PLI_BYTE8 *user_data;
 } s_cb_data, *p_cb_data;
 
 #define cbValueChange        1
@@ -624,6 +633,10 @@ extern void vpip_format_strength(char*str, s_vpi_value*value, unsigned bit);
 extern void vpip_set_return_value(int value);
 extern s_vpi_vecval vpip_calc_clog2(vpiHandle arg);
 extern void vpip_make_systf_system_defined(vpiHandle ref);
+
+  /* Perform fwrite to mcd files. This is used to write raw data,
+     which may include nulls. */
+extern void vpip_mcd_rawwrite(PLI_UINT32 mcd, const char*buf, size_t count);
 
   /* Return driver information for a net bit. The information is returned
      in the 'counts' array as follows:

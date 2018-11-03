@@ -36,7 +36,7 @@ double acc_fetch_paramval(handle object)
 		  fprintf(pli_trace, "acc_fetch_paramval(%s) --> \"%s\"\n",
 			  vpi_get_str(vpiName, object), val.value.str);
 	    }
-	    return (double) (long)val.value.str;
+	    return (double) (intptr_t)val.value.str;
 
 	  default:
 	    vpi_printf("XXXX: parameter %s has type %d\n",

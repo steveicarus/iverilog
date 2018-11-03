@@ -55,14 +55,8 @@ VTypePrimitive::~VTypePrimitive()
 void VTypePrimitive::show(ostream&out) const
 {
       switch (type_) {
-	  case BOOLEAN:
-	    out << "BOOLEAN";
-	    break;
 	  case BIT:
 	    out << "BIT";
-	    break;
-	  case CHARACTER:
-	    out << "CHARACTER";
 	    break;
 	  case INTEGER:
 	    out << "INTEGER";
@@ -76,13 +70,15 @@ void VTypePrimitive::show(ostream&out) const
 	  case STDLOGIC:
 	    out << "STD_LOGIC";
 	    break;
+	  case TIME:
+	    out << "TIME";
+	    break;
       }
 }
 
 int VTypePrimitive::get_width(ScopeBase*) const
 {
     switch(type_) {
-        case BOOLEAN:
         case BIT:
         case STDLOGIC:
             return 1;
@@ -90,9 +86,6 @@ int VTypePrimitive::get_width(ScopeBase*) const
         case INTEGER:
         case NATURAL:
             return 32;
-
-        case CHARACTER:
-            return 8;
 
         default:
             std::cerr << "sorry: primitive type " << type_ <<
@@ -115,21 +108,21 @@ VTypeArray::VTypeArray(const VType*element, const vector<VTypeArray::range_t>&r,
 
 /*
  * Create a VTypeArray range set from a list of parsed ranges.
- * FIXME: We are copying pointers from the prange_t object into the
- * range_t. This means that we cannot delete the prange_t object
+ * FIXME: We are copying pointers from the ExpRange object into the
+ * range_t. This means that we cannot delete the ExpRange object
  * unless we invent a way to remove the pointers from that object. So
  * this is a memory leak. Something to fix.
  */
-VTypeArray::VTypeArray(const VType*element, std::list<prange_t*>*r, bool sv)
+VTypeArray::VTypeArray(const VType*element, std::list<ExpRange*>*r, bool sv)
 : etype_(element), ranges_(r->size()), signed_flag_(sv), parent_(NULL)
 {
       for (size_t idx = 0 ; idx < ranges_.size() ; idx += 1) {
-	    prange_t*curp = r->front();
+	    ExpRange*curp = r->front();
 	    r->pop_front();
-	    Expression*msb = curp->msb();
-	    Expression*lsb = curp->lsb();
-	    bool dir = curp->is_downto();
-	    ranges_[idx] = range_t(msb, lsb, dir);
+	    ranges_[idx] = range_t(curp->msb(), curp->lsb(),
+		(curp->direction() == ExpRange::DOWNTO
+			? true
+			: false));
       }
 }
 
@@ -263,25 +256,44 @@ bool VTypeArray::is_variable_length(ScopeBase*scope) const {
 void VTypeArray::evaluate_ranges(ScopeBase*scope) {
     for(std::vector<range_t>::iterator it = ranges_.begin(); it != ranges_.end(); ++it ) {
         int64_t lsb_val = -1, msb_val = -1;
-        bool dir = it->is_downto();
 
         if(it->msb()->evaluate(scope, msb_val) && it->lsb()->evaluate(scope, lsb_val)) {
             assert(lsb_val >= 0);
             assert(msb_val >= 0);
-            *it = range_t(new ExpInteger(msb_val), new ExpInteger(lsb_val), dir);
+            *it = range_t(new ExpInteger(msb_val), new ExpInteger(lsb_val), msb_val > lsb_val);
         }
     }
 }
 
-VTypeRange::VTypeRange(const VType*base, int64_t max_val, int64_t min_val)
+VTypeRange::VTypeRange(const VType*base)
 : base_(base)
 {
-      max_ = max_val;
-      min_ = min_val;
 }
 
 VTypeRange::~VTypeRange()
 {
+}
+
+VTypeRangeConst::VTypeRangeConst(const VType*base, int64_t start_val, int64_t end_val)
+: VTypeRange(base), start_(start_val), end_(end_val)
+{
+}
+
+VTypeRangeExpr::VTypeRangeExpr(const VType*base, Expression*start_expr,
+                               Expression*end_expr, bool downto)
+: VTypeRange(base), start_(start_expr), end_(end_expr), downto_(downto)
+{
+}
+
+VTypeRangeExpr::~VTypeRangeExpr()
+{
+    delete start_;
+    delete end_;
+}
+
+VType*VTypeRangeExpr::clone() const {
+    return new VTypeRangeExpr(base_type()->clone(), start_->clone(),
+                              end_->clone(), downto_);
 }
 
 VTypeEnum::VTypeEnum(const std::list<perm_string>*names)

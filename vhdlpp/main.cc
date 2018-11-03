@@ -1,6 +1,6 @@
 
 const char COPYRIGHT[] =
-      "Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)\n"
+      "Copyright (c) 2011-2015 Stephen Williams (steve@icarus.com)\n"
       "Copyright CERN 2012 / Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
@@ -38,7 +38,7 @@ const char COPYRIGHT[] =
  *        information to the file named <path>.
  *
  *     elaboration=<path>
- *        Enable debugging of elaboratin by dumping elaboration
+ *        Enable debugging of elaboration by dumping elaboration
  *        process information to the file named <path>.
  *
  *     entities=<path>
@@ -76,6 +76,8 @@ const char NOTICE[] =
 
 # include  "compiler.h"
 # include  "library.h"
+# include  "std_funcs.h"
+# include  "std_types.h"
 # include  "parse_api.h"
 # include  "vtype.h"
 # include  <fstream>
@@ -184,6 +186,8 @@ int main(int argc, char*argv[])
       library_set_work_path(work_path);
 
       preload_global_types();
+      preload_std_funcs();
+
       int errors = 0;
 
       for (int idx = optind ; idx < argc ; idx += 1) {
@@ -232,18 +236,27 @@ int main(int argc, char*argv[])
 	    return 3;
       }
 
+      errors = elaborate_libraries();
+      if (errors > 0) {
+	    fprintf(stderr, "%d errors elaborating libraries.\n", errors);
+	    parser_cleanup();
+	    return 4;
+      }
+
+      emit_std_types(cout);
+
       errors = emit_packages();
       if (errors > 0) {
 	    fprintf(stderr, "%d errors emitting packages.\n", errors);
 	    parser_cleanup();
-	    return 4;
+	    return 5;
       }
 
       errors = emit_entities();
       if (errors > 0) {
 	    fprintf(stderr, "%d errors emitting design.\n", errors);
-        parser_cleanup();
-	    return 4;
+	    parser_cleanup();
+	    return 6;
       }
 
       parser_cleanup();

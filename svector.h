@@ -1,7 +1,7 @@
 #ifndef IVL_svector_H
 #define IVL_svector_H
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -39,7 +39,7 @@ template <class TYPE> class svector {
 
       explicit svector(unsigned size) : nitems_(size), items_(new TYPE[size])
 	    { for (unsigned idx = 0 ;  idx < size ;  idx += 1)
-		  items_[idx] = 0;
+		  items_[idx] = TYPE(0);
 	    }
 
       svector(const svector<TYPE>&that)
@@ -57,7 +57,7 @@ template <class TYPE> class svector {
 		    items_[l.nitems_+idx] = r[idx];
 	    }
 
-      svector(const svector<TYPE>&l, TYPE r)
+      svector(const svector<TYPE>&l, TYPE&r)
             : nitems_(l.nitems_ + 1), items_(new TYPE[nitems_])
 	    { for (unsigned idx = 0 ;  idx < l.nitems_ ;  idx += 1)
 		    items_[idx] = l[idx];

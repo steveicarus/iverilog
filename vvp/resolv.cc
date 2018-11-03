@@ -29,7 +29,7 @@
 /*
  * The core functor for a resolver node stores all the input values
  * received by that node. This provides the necessary information
- * for implementing the $countdrivers system call. For efficency,
+ * for implementing the $countdrivers system call. For efficiency,
  * the resolver is implemented using a balanced quaternary tree, so
  * the core functor also stores the current value for each branch
  * of the tree, to eliminate the need to re-evaluate branches whose

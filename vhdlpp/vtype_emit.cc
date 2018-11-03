@@ -22,6 +22,7 @@
 
 # include  "vtype.h"
 # include  "expression.h"
+# include  "std_types.h"
 # include  <iostream>
 # include  <typeinfo>
 # include  <cassert>
@@ -64,7 +65,15 @@ int VTypeArray::emit_def(ostream&out, perm_string name) const
       const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (raw_base);
 
       if (base) {
-	    assert(dimensions() == 1);
+	    assert(dimensions().size() == 1);
+
+	    // If this is a string type without any boundaries specified, then
+	    // there is a direct counterpart in SV called.. 'string'
+	    if(this == &primitive_STRING) {
+		  out << "string";
+		  emit_name(out, name);
+		  return errors;
+	    }
 
 	    base->emit_def(out, empty_perm_string);
 	    if (signed_flag_)
@@ -89,9 +98,21 @@ int VTypeArray::emit_with_dims_(std::ostream&out, bool packed, perm_string name)
 
       list<const VTypeArray*> dims;
       const VTypeArray*cur = this;
-      while (const VTypeArray*sub = dynamic_cast<const VTypeArray*> (cur->etype_)) {
-	    dims.push_back(cur);
-	    cur = sub;
+      bool added_dim = true;
+
+      while(added_dim) {
+            added_dim = false;
+            const VType*el_type = cur->element_type();
+
+            while(const VTypeDef*tdef = dynamic_cast<const VTypeDef*>(el_type)) {
+                el_type = tdef->peek_definition();
+            }
+
+            if(const VTypeArray*sub = dynamic_cast<const VTypeArray*>(el_type)) {
+                dims.push_back(cur);
+                cur = sub;
+                added_dim = true;
+            }
       }
       dims.push_back(cur);
 
@@ -106,16 +127,16 @@ int VTypeArray::emit_with_dims_(std::ostream&out, bool packed, perm_string name)
 	        name_emitted = true;
 	    }
 
-	    for(unsigned i = 0; i < cur->dimensions(); ++i) {
+	    for(unsigned i = 0; i < cur->dimensions().size(); ++i) {
 	        if(cur->dimension(i).is_box() && !name_emitted) {
 	            emit_name(out, name);
 	            name_emitted = true;
 	        }
 
 	        out << "[";
-	        if (!cur->dimension(i).is_box()) {  // if not unbounded {
+	        if (!cur->dimension(i).is_box()) {  // if not unbounded
 	            errors += cur->dimension(i).msb()->emit(out, 0, 0);
-	        out << ":";
+	            out << ":";
 	            errors += cur->dimension(i).lsb()->emit(out, 0, 0);
 	        }
 	        out << "]";
@@ -132,7 +153,7 @@ int VTypeArray::emit_with_dims_(std::ostream&out, bool packed, perm_string name)
 int VTypeEnum::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;
-      out << "enum {";
+      out << "enum int {";
       assert(names_.size() >= 1);
       out << "\\" << names_[0] << " ";
       for (size_t idx = 1 ; idx < names_.size() ; idx += 1)
@@ -144,13 +165,23 @@ int VTypeEnum::emit_def(ostream&out, perm_string name) const
       return errors;
 }
 
+int VTypeEnum::emit_decl(std::ostream&out, perm_string name, bool reg_flag) const
+{
+      if (!reg_flag)
+	    out << "wire ";
+
+      out << "int";
+      emit_name(out, name);
+
+      return 0;
+}
+
 int VTypePrimitive::emit_primitive_type(ostream&out) const
 {
       int errors = 0;
       switch (type_) {
-	  case BOOLEAN:
 	  case BIT:
-	    out << "bool";
+	    out << "bit";
 	    break;
 	  case STDLOGIC:
 	    out << "logic";
@@ -164,8 +195,8 @@ int VTypePrimitive::emit_primitive_type(ostream&out) const
 	  case REAL:
 	    out << "real";
 	    break;
-	  case CHARACTER:
-	    out << "char";
+	  case TIME:
+	    out << "time";
 	    break;
 	  default:
 	    assert(0);
@@ -215,29 +246,15 @@ int VTypeRecord::emit_def(ostream&out, perm_string name) const
  */
 int VTypeDef::emit_def(ostream&out, perm_string name) const
 {
-      int errors = 0;
       emit_name(out, name_);
       emit_name(out, name);
-      return errors;
+
+      return 0;
 }
 
 int VTypeDef::emit_decl(ostream&out, perm_string name, bool reg_flag) const
 {
-      int errors = 0;
-      if (reg_flag)
-	    out << "reg ";
-      else
-	    out << "wire ";
-
-      if(dynamic_cast<const VTypeArray*>(type_)) {
-          errors += type_->emit_def(out, name);
-      } else {
-          assert(name_ != empty_perm_string);
-          cout << "\\" << name_;
-          emit_name(out, name);
-      }
-
-      return errors;
+      return type_->emit_decl(out, name, reg_flag);
 }
 
 int VTypeDef::emit_typedef(ostream&out, typedef_context_t&ctx) const

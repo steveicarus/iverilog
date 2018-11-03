@@ -95,7 +95,7 @@ keys, with their corresponding values, are:
       This is exactly the same as the "-Dname=<value>" described above.
 
    I:<dir>
-      This is exctly the same as "-I<dir>".
+      This is exactly the same as "-I<dir>".
 
    relative include:<flag>
       The <flag> can be "true" or "false". This enables "relative

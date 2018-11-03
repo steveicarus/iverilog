@@ -1,7 +1,7 @@
 #ifndef IVL_compile_H
 #define IVL_compile_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -195,6 +195,10 @@ extern void compile_cmp_ge(char*label, long width, bool signed_flag,
 			   unsigned argc, struct symb_s*argv);
 extern void compile_cmp_gt(char*label, long width, bool signed_flag,
 			   unsigned argc, struct symb_s*argv);
+extern void compile_cmp_weq(char*label, long width,
+			   unsigned argc, struct symb_s*argv);
+extern void compile_cmp_wne(char*label, long width,
+			   unsigned argc, struct symb_s*argv);
 
 extern void compile_arith_mult_r(char*label, unsigned argc,
                                  struct symb_s*argv);
@@ -208,21 +212,26 @@ extern void compile_cmp_ne_r(char*label, unsigned argc, struct symb_s*argv);
 extern void compile_cmp_ge_r(char*label, unsigned argc, struct symb_s*argv);
 extern void compile_cmp_gt_r(char*label, unsigned argc, struct symb_s*argv);
 
-extern void compile_dff(char*label,
+extern void compile_dff(char*label, unsigned width, bool negedge,
 			struct symb_s arg_d,
 			struct symb_s arg_c,
 			struct symb_s arg_e);
 
-extern void compile_dff_aclr(char*label,
+extern void compile_dff_aclr(char*label, unsigned width, bool negedge,
 			     struct symb_s arg_d,
 			     struct symb_s arg_c,
 			     struct symb_s arg_e,
 			     struct symb_s arg_a);
-extern void compile_dff_aset(char*label,
+extern void compile_dff_aset(char*label, unsigned width, bool negedge,
 			     struct symb_s arg_d,
 			     struct symb_s arg_c,
 			     struct symb_s arg_e,
-			     struct symb_s arg_a);
+			     struct symb_s arg_a,
+			     char*asc_value);
+
+extern void compile_latch(char*label, unsigned width,
+			  struct symb_s arg_d,
+			  struct symb_s arg_e);
 
 extern void compile_enum2_type(char*label, long width, bool signed_flag,
 			      std::list<struct enum_name_s>*names);
@@ -236,24 +245,24 @@ extern __vpiModPath* compile_modpath(char*label,
 				     struct symb_s dest);
 extern void compile_modpath_src(__vpiModPath*dst,
 				char edge,
-				struct symb_s input,
-				struct numbv_s d,
-				int condit_input, /* match with '0' */
-				struct symb_s path_term_input,
-				bool ifnone);
+				const struct symb_s&src,
+				struct numbv_s&vals,
+				const struct symb_s&condit_src,
+				const struct symb_s&path_term_in);
 extern void compile_modpath_src(__vpiModPath*dst,
 				char edge,
-				struct symb_s input,
-				struct numbv_s d,
-				struct symb_s condit_input,
-				struct symb_s path_term_input);
+				const struct symb_s&src,
+				struct numbv_s&vals,
+				int condit_src, /* match with '0' */
+				const struct symb_s&path_term_in,
+				bool ifnone);
 
-extern void compile_reduce_and(char*label, struct symb_s arg);
-extern void compile_reduce_or(char*label, struct symb_s arg);
-extern void compile_reduce_xor(char*label, struct symb_s arg);
-extern void compile_reduce_nand(char*label, struct symb_s arg);
-extern void compile_reduce_nor(char*label, struct symb_s arg);
-extern void compile_reduce_xnor(char*label, struct symb_s arg);
+extern void compile_reduce_and(char*label, const struct symb_s&arg);
+extern void compile_reduce_or(char*label, const struct symb_s&arg);
+extern void compile_reduce_xor(char*label, const struct symb_s&arg);
+extern void compile_reduce_nand(char*label, const struct symb_s&arg);
+extern void compile_reduce_nor(char*label, const struct symb_s&arg);
+extern void compile_reduce_xnor(char*label, const struct symb_s&arg);
 
 extern void compile_extend_signed(char*label, long width, struct symb_s arg);
 
@@ -338,8 +347,11 @@ extern void functor_ref_lookup(vvp_net_t**ref, char*lab);
  * code points to a code structure that points to the instruction
  * field that receives the result, and the label is the name to
  * lookup. The lookup will free the label text when it is done.
+ *
+ * The cptr2 flag tells the lookup to write the code pointer into the
+ * cptr2 member of the code, instead of the cptr member.
  */
-extern void code_label_lookup(struct vvp_code_s *code, char *label);
+extern void code_label_lookup(struct vvp_code_s *code, char *label, bool cptr2);
 
 /*
  * The `compile_udp_def' function creates a UDP.  The `table' is a
@@ -389,11 +401,14 @@ extern void compile_array_cleanup(void);
 /*
  * Compile the .ufunc statement.
  */
-extern void compile_ufunc(char*label, char*code, unsigned wid,
+extern void compile_ufunc_real(char*label, char*code, unsigned wid,
 			  unsigned argc, struct symb_s*argv,
 			  unsigned portc, struct symb_s*portv,
-			  struct symb_s retv, char*scope_label,
-                          char*trigger_label);
+			  char*scope_label, char*trigger_label);
+extern void compile_ufunc_vec4(char*label, char*code, unsigned wid,
+			  unsigned argc, struct symb_s*argv,
+			  unsigned portc, struct symb_s*portv,
+			  char*scope_label, char*trigger_label);
 
 /*
  * The compile_event function takes the parts of the event statement
@@ -403,7 +418,7 @@ extern void compile_ufunc(char*label, char*code, unsigned wid,
  */
 extern void compile_event(char*label, char*type,
 			  unsigned argc, struct symb_s*argv);
-extern void compile_named_event(char*label, char*type);
+extern void compile_named_event(char*label, char*type, bool local_flag=false);
 
 
 /*
@@ -433,7 +448,6 @@ struct comp_operands_s {
 typedef struct comp_operands_s*comp_operands_t;
 
 extern void compile_code(char*label, char*mnem, comp_operands_t opa);
-extern void compile_disable(char*label, struct symb_s symb);
 
 extern void compile_file_line(char*label, long file_idx, long lineno,
                               char*description);
@@ -459,8 +473,6 @@ extern void compile_vpi_func_call(char*label, char*name,
 				  unsigned string_stack);
 extern void print_vpi_call_errors();
 
-extern void compile_fork(char*label, struct symb_s targ_s,
-			 struct symb_s scope_s);
 extern void compile_codelabel(char*label);
 
 /*
@@ -512,7 +524,7 @@ extern void compile_port_info( unsigned index, int vpi_port_type, unsigned width
  * given name.
  *
  * The vpi_type_code argument of compile_net() is one of the vpi
- * object codes for the equivelent variable types. The supported codes
+ * object codes for the equivalent variable types. The supported codes
  * are:
  *   vpiLogic  -- 4-value logic
  *   vpiIntVar -- 2-value logic
@@ -535,9 +547,6 @@ extern void compile_netw_real(char*label, char*array_symbol,
 			      int msb, int lsb,
 			      unsigned argc, struct symb_s*argv);
 
-extern void compile_aliasw(char*label, char*array_symbol,
-			   unsigned long array_addr, int msb, int lsb,
-			   unsigned argc, struct symb_s*argv);
 
 extern void compile_island(char*label, char*type);
 extern void compile_island_port(char*label, char*island, char*src);
@@ -547,7 +556,7 @@ extern void compile_island_cleanup(void);
 
 extern void compile_island_tran(char*label);
 extern void compile_island_tranif(int sense, char*island,
-				  char*ba, char*bb, char*src);
+				  char*ba, char*bb, char*src, bool resistive);
 extern void compile_island_tranvp(char*island, char*ba, char*bb,
 				  unsigned width, unsigned part, unsigned off);
 

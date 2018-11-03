@@ -1,7 +1,7 @@
 #ifndef IVL_schedule_H
 #define IVL_schedule_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,6 +35,10 @@
 extern void schedule_vthread(vthread_t thr, vvp_time64_t delay,
 			     bool push_flag =false);
 
+extern void schedule_inactive(vthread_t thr);
+
+extern void schedule_init_vthread(vthread_t thr);
+
 extern void schedule_final_vthread(vthread_t thr);
 
 /*
@@ -58,6 +62,15 @@ extern void schedule_assign_array_word(vvp_array_t mem,
 				       unsigned word_address,
 				       double val,
 				       vvp_time64_t delay);
+
+/*
+ * Create an event to force the output of a net.
+ */
+extern void schedule_force_vector(vvp_net_t*net,
+				  unsigned base, unsigned vwid,
+				  const vvp_vector4_t&val,
+				  vvp_time64_t delay);
+
 /*
  * Create an event to propagate the output of a net.
  */
@@ -74,6 +87,12 @@ extern void schedule_propagate_vector(vvp_net_t*ptr,
 extern void schedule_set_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&val);
 extern void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector8_t val);
 extern void schedule_set_vector(vvp_net_ptr_t ptr, double val);
+
+/*
+ * Create a T0 event for always_comb/latch processes. This is the first
+ * event in the first inactive region.
+ */
+extern void schedule_t0_trigger(vvp_net_ptr_t ptr);
 
 /*
  * The schedule_init_vector function assigns an initial value to a
@@ -152,6 +171,13 @@ extern void schedule_simulate(void);
  * but is used for printouts and stuff.
  */
 extern vvp_time64_t schedule_simtime(void);
+
+/*
+ * Indicate that the simulator is running the rosync callbacks. This is
+ * used to prevent the callbacks from performing any write operations
+ * in the current simulation time slot.
+ */
+extern bool schedule_at_rosync(void);
 
 /*
  * This function is the equivalent of the $finish system task. It

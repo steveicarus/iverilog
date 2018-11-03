@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2016 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -130,10 +130,36 @@ static void draw_ufunc_preamble(ivl_expr_t expr)
       }
 
 	/* Call the function */
-      fprintf(vvp_out, "    %%fork TD_%s", vvp_mangle_id(ivl_scope_name(def)));
-      fprintf(vvp_out, ", S_%p;\n", def);
-      fprintf(vvp_out, "    %%join;\n");
-
+      switch (ivl_expr_value(expr)) {
+	  case IVL_VT_VOID:
+	    fprintf(vvp_out, "    %%callf/void TD_%s", vvp_mangle_id(ivl_scope_name(def)));
+	    fprintf(vvp_out, ", S_%p;\n", def);
+	    break;
+	  case IVL_VT_REAL:
+	    fprintf(vvp_out, "    %%callf/real TD_%s", vvp_mangle_id(ivl_scope_name(def)));
+	    fprintf(vvp_out, ", S_%p;\n", def);
+	    break;
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    fprintf(vvp_out, "    %%callf/vec4 TD_%s", vvp_mangle_id(ivl_scope_name(def)));
+	    fprintf(vvp_out, ", S_%p;\n", def);
+	    break;
+	  case IVL_VT_STRING:
+	    fprintf(vvp_out, "    %%callf/str TD_%s", vvp_mangle_id(ivl_scope_name(def)));
+	    fprintf(vvp_out, ", S_%p;\n", def);
+	    break;
+	  case IVL_VT_CLASS:
+	  case IVL_VT_DARRAY:
+	  case IVL_VT_QUEUE:
+	    fprintf(vvp_out, "    %%callf/obj TD_%s", vvp_mangle_id(ivl_scope_name(def)));
+	    fprintf(vvp_out, ", S_%p;\n", def);
+	    break;
+	  default:
+	    fprintf(vvp_out, "    %%fork TD_%s", vvp_mangle_id(ivl_scope_name(def)));
+	    fprintf(vvp_out, ", S_%p;\n", def);
+	    fprintf(vvp_out, "    %%join;\n");
+	    break;
+      }
 }
 
 static void draw_ufunc_epilogue(ivl_expr_t expr)
@@ -159,48 +185,33 @@ static void draw_ufunc_epilogue(ivl_expr_t expr)
 
 void draw_ufunc_vec4(ivl_expr_t expr)
 {
-      ivl_scope_t def = ivl_expr_def(expr);
-      ivl_signal_t retval = ivl_scope_port(def, 0);
 
 	/* Take in arguments to function and call function code. */
       draw_ufunc_preamble(expr);
-
-      assert(ivl_signal_dimensions(retval) == 0);
-      fprintf(vvp_out, "    %%load/vec4  v%p_0;\n", retval);
 
       draw_ufunc_epilogue(expr);
 }
 
 void draw_ufunc_real(ivl_expr_t expr)
 {
-      ivl_scope_t def = ivl_expr_def(expr);
-      ivl_signal_t retval = ivl_scope_port(def, 0);
 
 	/* Take in arguments to function and call the function code. */
       draw_ufunc_preamble(expr);
 
-	/* Return value signal cannot be an array. */
-      assert(ivl_signal_dimensions(retval) == 0);
-
-	/* Load the result into a word. */
-      fprintf(vvp_out, "  %%load/real v%p_0;\n", retval);
+	/* The %callf/real function emitted by the preamble leaves
+	   the result in the stack for us. */
 
       draw_ufunc_epilogue(expr);
 }
 
 void draw_ufunc_string(ivl_expr_t expr)
 {
-      ivl_scope_t def = ivl_expr_def(expr);
-      ivl_signal_t retval = ivl_scope_port(def, 0);
 
 	/* Take in arguments to function and call the function code. */
       draw_ufunc_preamble(expr);
 
-	/* Return value signal cannot be an array. */
-      assert(ivl_signal_dimensions(retval) == 0);
-
-	/* Load the result into a word. */
-      fprintf(vvp_out, "  %%load/str v%p_0;\n", retval);
+	/* The %callf/str function emitted by the preamble leaves
+	   the result in the stack for us. */
 
       draw_ufunc_epilogue(expr);
 }

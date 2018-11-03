@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2018 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,7 +31,8 @@ typedef enum lpm_sign_e {
 } lpm_sign_t;
 
 static ivl_signal_t nexus_is_signal(ivl_scope_t scope, ivl_nexus_t nex,
-                                    int*base, unsigned*array_word);
+                                    int*msb, int*lsb, unsigned*array_word,
+				    ivl_net_const_t*accept_const);
 
 /*
  * Look to see if the nexus driver is signed.
@@ -68,12 +69,12 @@ static int nexus_driver_is_signed(ivl_scope_t scope, ivl_nexus_t nex)
 		     * local signal to get the sign information. */
 		  if (ivl_logic_type(t_nlogic) == IVL_LO_BUFZ) {
 			unsigned array_word = 0;
-			int base = 0;
+			int msb = 0, lsb = 0;
 			ivl_signal_t sig;
 			assert(ivl_logic_pins(t_nlogic) == 2);
 			sig = nexus_is_signal(scope,
 			                      ivl_logic_pin(t_nlogic, 0),
-			                      &base, &array_word);
+			                      &msb, &lsb, &array_word, 0);
 			assert(sig);
 			is_signed = ivl_signal_signed(sig);
 		  }
@@ -86,6 +87,19 @@ static int nexus_driver_is_signed(ivl_scope_t scope, ivl_nexus_t nex)
       }
 
       return is_signed;
+}
+
+static unsigned get_nexus_width(ivl_nexus_t nex)
+{
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(nex_ptr);
+	    if (sig) return ivl_signal_width(sig);
+      }
+      assert(0);
+      return 0;
 }
 
 static lpm_sign_t lpm_get_sign_type(ivl_lpm_t lpm,
@@ -196,6 +210,14 @@ static void emit_gate_strength(ivl_net_logic_t nlogic, unsigned strength_type)
                     "gate", ivl_logic_file(nlogic), ivl_logic_lineno(nlogic));
 }
 
+static void emit_part_selector(int msb, int lsb)
+{
+      if (msb != lsb)
+	    fprintf(vlog_out, "[%d:%d]", msb, lsb);
+      else
+	    fprintf(vlog_out, "[%d]", lsb);
+}
+
 /*
  * Look for a single driver behind an LPM that passes strength information
  * and get the real drive information from it.
@@ -285,6 +307,44 @@ static void emit_delay(ivl_scope_t scope, ivl_expr_t rise, ivl_expr_t fall,
       fprintf(vlog_out, ")");
 }
 
+static void emit_driver_delay(ivl_scope_t scope, ivl_nexus_t nex)
+{
+      ivl_expr_t rise = 0;
+      ivl_expr_t fall = 0;
+      ivl_expr_t decay = 0;
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_lpm_t t_lpm = ivl_nexus_ptr_lpm(nex_ptr);
+	    ivl_net_const_t t_net_const = ivl_nexus_ptr_con(nex_ptr);
+	    ivl_net_logic_t t_nlogic = ivl_nexus_ptr_log(nex_ptr);
+	    ivl_drive_t cur_drive1 = ivl_nexus_ptr_drive1(nex_ptr);
+	    ivl_drive_t cur_drive0 = ivl_nexus_ptr_drive0(nex_ptr);
+	    if ((cur_drive1 == IVL_DR_HiZ) &&
+	        (cur_drive0 == IVL_DR_HiZ)) continue;
+	      /* Only one driver can set the delay. */
+	    assert( ! rise);
+	    if (t_lpm) {
+		  rise  = ivl_lpm_delay(t_lpm, 0);
+		  fall  = ivl_lpm_delay(t_lpm, 1);
+		  decay = ivl_lpm_delay(t_lpm, 2);
+	    }
+	    if (t_net_const) {
+		  rise  = ivl_const_delay(t_net_const, 0);
+		  fall  = ivl_const_delay(t_net_const, 1);
+		  decay = ivl_const_delay(t_net_const, 2);
+	    }
+	    if (t_nlogic) {
+		  rise  = ivl_logic_delay(t_nlogic, 0);
+		  fall  = ivl_logic_delay(t_nlogic, 1);
+		  decay = ivl_logic_delay(t_nlogic, 2);
+	    }
+      }
+
+      emit_delay(scope, rise, fall, decay, 3);
+}
+
 static unsigned is_local_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 {
       unsigned idx, count = ivl_nexus_ptrs(nex);
@@ -338,10 +398,13 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 	case IVL_LPM_CMP_GT:
 	case IVL_LPM_CMP_NE:
 	case IVL_LPM_CMP_NEE:
+	case IVL_LPM_CMP_WEQ:
+	case IVL_LPM_CMP_WNE:
 	case IVL_LPM_CONCAT:
 	case IVL_LPM_CONCATZ:
 	case IVL_LPM_DIVIDE:
 	case IVL_LPM_FF:
+	case IVL_LPM_LATCH:
 	case IVL_LPM_MOD:
 	case IVL_LPM_MULT:
 	case IVL_LPM_MUX:
@@ -585,7 +648,8 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex, unsigned allow_UD,
 	    } else if (sig) {
 // HERE: should these be allow_UD?
 		  if (must_be_sig) {
-			emit_nexus_as_ca(scope, ivl_signal_nex(sig, word),
+			emit_nexus_as_ca(ivl_signal_scope(sig),
+					 ivl_signal_nex(sig, word),
 			                 0, 0);
 		  } else emit_name_of_nexus(scope, nex, 0);
 // HERE: The assert causes pr1703959 to fail.
@@ -758,7 +822,8 @@ static ivl_signal_t find_output_signal(ivl_scope_t scope, ivl_nexus_t nex,
 }
 
 static ivl_signal_t nexus_is_signal(ivl_scope_t scope, ivl_nexus_t nex,
-                                    int*base, unsigned*array_word)
+                                    int*msb, int*lsb, unsigned*array_word,
+				    ivl_net_const_t*accept_const)
 {
       unsigned idx, count = ivl_nexus_ptrs(nex);
       ivl_lpm_t lpm = 0;
@@ -767,10 +832,16 @@ static ivl_signal_t nexus_is_signal(ivl_scope_t scope, ivl_nexus_t nex,
       ivl_signal_t sig;
 	/* Look for a signal in the local scope first. */
       sig = find_local_signal(scope, nex, array_word);
-      if (sig) return sig;
+      if (sig) {
+	    get_sig_msb_lsb(sig, msb, lsb);
+	    return sig;
+      }
 	/* Now look for an output signal driving into the local scope. */
       sig = find_output_signal(scope, nex, array_word);
-      if (sig) return sig;
+      if (sig) {
+	    get_sig_msb_lsb(sig, msb, lsb);
+	    return sig;
+      }
 	/* Now scan the nexus looking for a driver. */
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
@@ -785,11 +856,18 @@ static ivl_signal_t nexus_is_signal(ivl_scope_t scope, ivl_nexus_t nex,
 		    /* The real signal could be hidden behind a select. */
 		  if (ivl_lpm_type(t_lpm) == IVL_LPM_PART_VP) {
 			t_sig = nexus_is_signal(scope, ivl_lpm_data(t_lpm, 0),
-			                        base, array_word);
+			                        msb, lsb, array_word, 0);
 		  }
 
-		  if (t_sig) *base += ivl_lpm_base(t_lpm);
-		  else lpm = t_lpm;
+		  if (t_sig) {
+			if (*msb >= *lsb) {
+			      *lsb += ivl_lpm_base(t_lpm);
+			      *msb = *lsb + (int)ivl_lpm_width(t_lpm) - 1;
+			} else {
+			      *lsb -= ivl_lpm_base(t_lpm);
+			      *msb = *lsb - (int)ivl_lpm_width(t_lpm) + 1;
+			}
+		  } else lpm = t_lpm;
 	    }
 	    if (t_net_const) {
 		  assert(! net_const);
@@ -802,7 +880,7 @@ static ivl_signal_t nexus_is_signal(ivl_scope_t scope, ivl_nexus_t nex,
 			assert(ivl_logic_pins(t_nlogic) == 2);
 			t_sig = nexus_is_signal(scope,
 			                        ivl_logic_pin(t_nlogic, 1),
-			                        base, array_word);
+			                        msb, lsb, array_word, 0);
 		  } else nlogic = t_nlogic;
 	    }
 	    if (t_sig) {
@@ -812,7 +890,14 @@ static ivl_signal_t nexus_is_signal(ivl_scope_t scope, ivl_nexus_t nex,
 		  *array_word = ivl_nexus_ptr_pin(nex_ptr);
 	    }
       }
-      return sig;
+      if (sig) return sig;
+
+      if (accept_const && net_const) {
+	    *lsb = 0;
+	    *msb = ivl_const_width(net_const) - 1;
+	    *accept_const = net_const;
+      }
+      return 0;
 }
 
 static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm,
@@ -821,9 +906,9 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm,
       unsigned width = ivl_lpm_width(lpm);
       unsigned array_word = 0;
       int base = ivl_lpm_base(lpm);
-      int msb, lsb;
+      int msb = 0, lsb = 0;
       ivl_signal_t sig = nexus_is_signal(scope, ivl_lpm_data(lpm, 0),
-                                         &base, &array_word);
+                                         &msb, &lsb, &array_word, 0);
 
       if (sign_extend && !allow_signed) {
 	    fprintf(stderr, "%s:%u: vlog95 error: >>> operator is not "
@@ -854,9 +939,9 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm,
 	    fprintf(vlog_out, "[%d]", array_idx);
       }
 
-      get_sig_msb_lsb(sig, &msb, &lsb);
       if (sign_extend) {
 	    assert(base != lsb);
+// HERE: This looks wrong.
 	    if (msb >= lsb) base += lsb;
 	    else base = lsb - base;
 	    fprintf(vlog_out, " >>> %d)", base);
@@ -880,7 +965,7 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm,
 		  }
 	    } else {
 		    /* Skip a select of the entire bit. */
-		  if ((msb == lsb) && (lsb == base)) return;
+		  if ((msb == lsb) && (base == 0)) return;
 		  fprintf(vlog_out, "[");
 		  if (msb >= lsb) base += lsb;
 		  else base = lsb - base;
@@ -924,6 +1009,120 @@ static void emit_lpm_func(ivl_scope_t scope, ivl_lpm_t lpm)
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, count), 0, 0);
 	    fprintf(vlog_out, ")");
       }
+}
+
+static void emit_mux_select_bit(ivl_scope_t scope, ivl_lpm_t lpm, unsigned bit)
+{
+      unsigned array_word = 0;
+      int msb = 0, lsb = 0;
+
+      ivl_signal_t sig = nexus_is_signal(scope, ivl_lpm_select(lpm),
+					 &msb, &lsb, &array_word, 0);
+      assert(sig);
+      emit_scope_call_path(scope, ivl_signal_scope(sig));
+      emit_id(ivl_signal_basename(sig));
+      if (ivl_signal_dimensions(sig)) {
+	    int array_idx = (int) array_word + ivl_signal_array_base(sig);
+	    fprintf(vlog_out, "[%d]", array_idx);
+      }
+      if (msb >= lsb) {
+	    fprintf(vlog_out, "[%d]", lsb + (int)bit);
+      } else {
+	    fprintf(vlog_out, "[%d]", lsb - (int)bit);
+      }
+}
+
+static void emit_lpm_mux(ivl_scope_t scope, ivl_lpm_t lpm,
+			 unsigned sel_bit, unsigned offset)
+{
+      assert(sel_bit < sizeof(unsigned)*8);
+      fprintf(vlog_out, "(");
+      emit_mux_select_bit(scope, lpm, sel_bit);
+      fprintf(vlog_out, " ? ");
+      if (sel_bit > 0) {
+	    emit_lpm_mux(scope, lpm, sel_bit - 1, offset + (1U << sel_bit));
+	    fprintf(vlog_out, " : ");
+	    emit_lpm_mux(scope, lpm, sel_bit - 1, offset);
+      } else {
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, offset + 1), 0, 0);
+	    fprintf(vlog_out, " : ");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, offset + 0), 0, 0);
+      }
+      fprintf(vlog_out, ")");
+}
+
+static void emit_lpm_substitute(ivl_scope_t scope, ivl_lpm_t lpm)
+{
+      unsigned array_word = 0;
+      int msb = 0, lsb = 0;
+      unsigned base = ivl_lpm_base(lpm);
+      unsigned width;
+      int psb;
+      int wid;
+
+	/* Find the wider signal. Accept a constant if there's no signal. */
+      ivl_net_const_t net_const = 0;
+      ivl_signal_t sig = nexus_is_signal(scope, ivl_lpm_data(lpm, 0),
+					 &msb, &lsb, &array_word,
+					 &net_const);
+      assert(sig || net_const);
+
+	// Get the width of the part being substituted.
+      width = get_nexus_width(ivl_lpm_data(lpm, 1));
+
+      fprintf(vlog_out, "{");
+
+      if (msb >= lsb) {
+	   psb = lsb + base + width; wid = 1 + msb - psb;
+      } else {
+	   psb = lsb - base - width; wid = 1 + psb - msb;
+      }
+      if (wid > 0) {
+	    if (sig) {
+		  emit_scope_call_path(scope, ivl_signal_scope(sig));
+		  emit_id(ivl_signal_basename(sig));
+		  if (ivl_signal_dimensions(sig)) {
+			int array_idx = (int) array_word + ivl_signal_array_base(sig);
+			fprintf(vlog_out, "[%d]", array_idx);
+		  }
+		  emit_part_selector(msb, psb);
+	    } else {
+		  assert (msb >= psb);
+		  emit_number(ivl_const_bits(net_const) + psb, wid, 0,
+			      ivl_const_file(net_const),
+			      ivl_const_lineno(net_const));
+	    }
+
+	    fprintf(vlog_out, ", ");
+      }
+
+      emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
+
+      if (msb >= lsb) {
+	   psb = lsb + base - 1; wid = 1 + psb - lsb;
+      } else {
+	   psb = lsb - base + 1; wid = 1 + lsb - psb;
+      }
+      if (wid > 0) {
+	    fprintf(vlog_out, ", ");
+
+	    if (sig) {
+		  emit_scope_call_path(scope, ivl_signal_scope(sig));
+		  emit_id(ivl_signal_basename(sig));
+		  if (ivl_signal_dimensions(sig)) {
+			int array_idx = (int) array_word + ivl_signal_array_base(sig);
+			fprintf(vlog_out, "[%d]", array_idx);
+		  }
+		  emit_part_selector(psb, lsb);
+	    } else {
+		  assert (psb >= lsb);
+		  emit_number(ivl_const_bits(net_const), wid, 0,
+			      ivl_const_file(net_const),
+			      ivl_const_lineno(net_const));
+	    }
+      }
+
+      fprintf(vlog_out, "}");
 }
 
 static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
@@ -980,7 +1179,7 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	case IVL_LPM_CAST_INT:
 	case IVL_LPM_CAST_INT2:
 	case IVL_LPM_CAST_REAL:
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 1, 0);
 	    break;
 	case IVL_LPM_CMP_EEQ:
 	    fprintf(vlog_out, "(");
@@ -997,19 +1196,19 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_CMP_EQX:
-// HERE: Need to heck that this is not a real nexus.
+// HERE: Need to check that this is not a real nexus.
 	    fprintf(vlog_out, "(");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " ==? ");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
-	    fprintf(stderr, "%s:%u: vlog95 error: Compare wildcard equal "
+	    fprintf(stderr, "%s:%u: vlog95 error: Compare wildcard equal (caseX) "
 	                    "operator is not supported.\n",
 	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
 	    vlog_errors += 1;
 	    break;
 	case IVL_LPM_CMP_EQZ:
-// HERE: Need to heck that this is not a real nexus.
+// HERE: Need to check that this is not a real nexus.
 	    fprintf(vlog_out, "(");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " == ");
@@ -1048,6 +1247,28 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
+	case IVL_LPM_CMP_WEQ:
+	    fprintf(vlog_out, "(");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
+	    fprintf(vlog_out, " ==? ");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
+	    fprintf(vlog_out, ")");
+	    fprintf(stderr, "%s:%u: vlog95 error: Wild equality "
+	                    "operator is not supported.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
+	    break;
+	case IVL_LPM_CMP_WNE:
+	    fprintf(vlog_out, "(");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
+	    fprintf(vlog_out, " !=? ");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
+	    fprintf(vlog_out, ")");
+	    fprintf(stderr, "%s:%u: vlog95 error: Wild inequality "
+	                    "operator is not supported.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
+	    break;
 	  /* A concat-Z should never be generated, but report it as an
 	   * error if one is generated. */
 	case IVL_LPM_CONCATZ:
@@ -1055,6 +1276,7 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	                    "should not be generated.\n",
 	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
 	    vlog_errors += 1;
+	    // fallthrough
 	case IVL_LPM_CONCAT:
 	    emit_lpm_concat(scope, lpm);
 	    break;
@@ -1087,13 +1309,17 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_MUX:
-	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_select(lpm), 0, 0);
-	    fprintf(vlog_out, " ? ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
-	    fprintf(vlog_out, " : ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
-	    fprintf(vlog_out, ")");
+            if (ivl_lpm_selects(lpm) > 1) {
+                  emit_lpm_mux(scope, lpm, ivl_lpm_selects(lpm) - 1, 0);
+            } else {
+                  fprintf(vlog_out, "(");
+                  emit_nexus_as_ca(scope, ivl_lpm_select(lpm), 0, 0);
+                  fprintf(vlog_out, " ? ");
+                  emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
+                  fprintf(vlog_out, " : ");
+                  emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
+                  fprintf(vlog_out, ")");
+            }
 	    break;
 	case IVL_LPM_PART_PV:
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 1, 0);
@@ -1188,11 +1414,7 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_SUBSTITUTE:
-	    fprintf(vlog_out, "<unknown>");
-	    fprintf(stderr, "%s:%u: vlog95 sorry: Substitute LPMs are "
-	                    "not currently translated.\n",
-	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
-	    vlog_errors += 1;
+            emit_lpm_substitute(scope, lpm);
 	    break;
 	case IVL_LPM_UFUNC:
 	    emit_scope_path(scope, ivl_lpm_define(lpm));
@@ -1245,7 +1467,62 @@ static void emit_posedge_dff_prim(void)
       fprintf(vlog_out, "endprimitive\n");
 }
 
+static void emit_negedge_dff_prim(void)
+{
+      fprintf(vlog_out, "\n");
+      fprintf(vlog_out, "/* Icarus generated UDP to represent a synthesized "
+                        "negative edge D-FF. */\n");
+      fprintf(vlog_out, "primitive IVL_negedge_DFF "
+                        "(q, clk, en, d, clr, set);\n");
+      fprintf(vlog_out, "%*coutput q;\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*cinput clk, en, d, clr, set;\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*creg q;\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*ctable\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*cf 1 0 0 0 : ? : 0 ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cf 1 1 0 0 : ? : 1 ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cn 1 0 0 0 : 0 : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cn 1 1 0 0 : 1 : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cn x 0 0 0 : 0 : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cn x 1 0 0 : 1 : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cp ? ? 0 0 : ? : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c* 0 ? 0 0 : ? : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? * ? ? ? : ? : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? * ? ? : ? : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? * ? : ? : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? ? * : ? : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? 0 1 : ? : 1 ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? 0 x : 1 : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? 0 x : 0 : x ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? 1 ? : ? : 0 ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? x 0 : 0 : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? x 0 : 1 : x ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? x x : ? : x ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c? ? ? x 1 : ? : x ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cendtable\n", indent_incr, ' ');
+      fprintf(vlog_out, "endprimitive\n");
+}
+
+static void emit_latch_prim(void)
+{
+      fprintf(vlog_out, "\n");
+      fprintf(vlog_out, "/* Icarus generated UDP to represent a synthesized "
+                        "LATCH. */\n");
+      fprintf(vlog_out, "primitive IVL_LATCH "
+                        "(q, en, d);\n");
+      fprintf(vlog_out, "%*coutput q;\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*cinput en, d;\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*creg q;\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*ctable\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*c 1 0 : ? : 0 ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c 1 1 : ? : 1 ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*c 0 ? : ? : - ;\n", 2*indent_incr, ' ');
+      fprintf(vlog_out, "%*cendtable\n", indent_incr, ' ');
+      fprintf(vlog_out, "endprimitive\n");
+}
+
 static unsigned need_posedge_dff_prim = 0;
+static unsigned need_negedge_dff_prim = 0;
+static unsigned need_latch_prim = 0;
 
 /*
  * Synthesis creates a D-FF LPM object. To allow this to be simulated as
@@ -1263,14 +1540,14 @@ void emit_icarus_generated_udps()
 {
 	/* Emit the copyright information and LGPL note and then emit any
 	 * needed primitives. */
-      if (need_posedge_dff_prim) {
+      if (need_posedge_dff_prim || need_negedge_dff_prim || need_latch_prim) {
 	    fprintf(vlog_out,
 "\n"
 "/*\n"
 " * This is the copyright information for the following primitive(s)\n"
 " * (library elements).\n"
 " *\n"
-" * Copyright (C) 2011 Cary R. (cygcary@yahoo.com)\n"
+" * Copyright (C) 2011-2016 Cary R. (cygcary@yahoo.com)\n"
 " *\n"
 " * This library is free software; you can redistribute it and/or\n"
 " * modify it under the terms of the GNU Lesser General Public\n"
@@ -1290,13 +1567,13 @@ void emit_icarus_generated_udps()
 "NOTE: vlog95: Adding LGPL 2.1 primitive(s) at the end of the output file.\n");
       }
       if (need_posedge_dff_prim) emit_posedge_dff_prim();
+      if (need_negedge_dff_prim) emit_negedge_dff_prim();
+      if (need_latch_prim) emit_latch_prim();
 }
 
 static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
 {
-// HERE: No support for lpm attributes and hence polarity information.
-//      ivl_attribute_t clock_pol = find_lpm_attr(lpm, "Clock:LPM_Polarity");
-      ivl_attribute_t clock_pol = 0;
+      unsigned negedge = ivl_lpm_negedge(lpm);
       ivl_expr_t aset_expr = ivl_lpm_aset_value(lpm);
       ivl_expr_t sset_expr = ivl_lpm_sset_value(lpm);
       ivl_nexus_t nex;
@@ -1305,7 +1582,13 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
       const char *sset_bits = 0;
 	/* For now we only support a width of 1 for these bits. */
       if (aset_expr) {
-	    assert(ivl_expr_width(aset_expr) == 1);
+	    if (ivl_expr_width(aset_expr) != 1) {
+		  fprintf(stderr, "%s:%u: vlog95 sorry: FF LPMs with "
+			  "multi-bit asynchronous set values are not "
+			  "currently translated.\n",
+			  ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+		  vlog_errors += 1;
+	    }
 	    aset_bits = ivl_expr_bits(aset_expr);
       }
       if (sset_expr) {
@@ -1314,9 +1597,7 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
       }
 
       fprintf(vlog_out, "%*c", indent, ' ');
-	/* If there is a clock polarity attribute then we have a negative
-	 * edge D-FF. */
-      if (clock_pol) {
+      if (negedge) {
 	    fprintf(vlog_out, "IVL_negedge_DFF");
       } else {
 	    fprintf(vlog_out, "IVL_posedge_DFF");
@@ -1368,7 +1649,7 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
       }
       nex = ivl_lpm_sync_set(lpm);
       if (nex) {
-	    if (! sset_bits || (sset_bits && (sset_bits[0] == '1'))) {
+	    if (! sset_bits || (sset_bits[0] == '1')) {
 		  emit_nexus_as_ca(scope, nex, 0, 0);
 		  if (have_data) fprintf(vlog_out, " | ");
 	    } else {
@@ -1389,7 +1670,7 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
 	    emitted = 1;
       }
       nex = ivl_lpm_async_set(lpm);
-      if (aset_bits && (aset_bits[0] != '0')) nex = 0;
+      if (!aset_bits || (aset_bits[0] != '0')) nex = 0;
       if (nex) {
 	    if (emitted) fprintf(vlog_out, " | ");
 	    emit_nexus_as_ca(scope, nex, 0, 0);
@@ -1404,7 +1685,45 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
       else fprintf(vlog_out, "1'b0");
       fprintf(vlog_out, ");\n");
 	/* We need to emit a primitive for this instance. */
-      need_posedge_dff_prim = 1;
+      if (negedge)
+	    need_negedge_dff_prim = 1;
+      else
+	    need_posedge_dff_prim = 1;
+}
+
+static void emit_lpm_latch(ivl_scope_t scope, ivl_lpm_t lpm)
+{
+      ivl_nexus_t nex;
+      unsigned emitted;
+
+      fprintf(vlog_out, "%*c", indent, ' ');
+      fprintf(vlog_out, "IVL_LATCH");
+      emit_lpm_strength(lpm);
+	/* The lpm LATCH does not support any delays. */
+	/* The LATCH name is a temporary so we don't bother to print it unless
+	 * we have a range. Then we need to use a made up name. */
+      if (ivl_lpm_width(lpm) > 1) {
+	    fprintf(vlog_out, " synth_%p [%u:0]", lpm, ivl_lpm_width(lpm)-1U);
+      }
+      fprintf(vlog_out, " (");
+	/* Emit the q pin. */
+      emit_name_of_nexus(scope, ivl_lpm_q(lpm), 0);
+      fprintf(vlog_out, ", ");
+	/* Emit the enable pin expression(s) if needed. */
+      emitted = 0;
+      nex = ivl_lpm_enable(lpm);
+      if (nex) {
+	    emit_nexus_as_ca(scope, nex, 0, 0);
+	    emitted = 1;
+      }
+      if (!emitted) fprintf(vlog_out, "1'b1");
+      fprintf(vlog_out, ", ");
+	/* Emit the data pin expression(s). */
+      nex = ivl_lpm_data(lpm, 0);
+      assert (nex);
+      emit_nexus_as_ca(scope, nex, 0, 0);
+      fprintf(vlog_out, ");\n");
+      need_latch_prim = 1;
 }
 
 static ivl_signal_t get_output_from_nexus(ivl_scope_t scope, ivl_nexus_t nex,
@@ -1530,19 +1849,28 @@ void emit_lpm(ivl_scope_t scope, ivl_lpm_t lpm)
 	    emit_lpm_ff(scope, lpm);
 	    return;
       }
+      if (type == IVL_LPM_LATCH) {
+	    emit_lpm_latch(scope, lpm);
+	    return;
+      }
 // HERE: Look for a select passed to a pull device (pr2019553).
 	/* Skip assignments to a module instantiation input. */
       if (output_is_module_instantiation_input(scope, output)) return;
       fprintf(vlog_out, "%*cassign", indent, ' ');
       emit_lpm_strength(lpm);
-      emit_delay(scope,
-                 ivl_lpm_delay(lpm, 0),
-                 ivl_lpm_delay(lpm, 1),
-                 ivl_lpm_delay(lpm, 2),
-                 3);
-      fprintf(vlog_out, " ");
-      if (type == IVL_LPM_PART_PV) emit_lpm_part_pv(scope, lpm);
-      else emit_name_of_nexus(scope, output, 0);
+      if (type == IVL_LPM_PART_PV) {
+	    emit_driver_delay(scope, ivl_lpm_data(lpm, 0));
+	    fprintf(vlog_out, " ");
+	    emit_lpm_part_pv(scope, lpm);
+      } else {
+	    emit_delay(scope,
+                       ivl_lpm_delay(lpm, 0),
+                       ivl_lpm_delay(lpm, 1),
+                       ivl_lpm_delay(lpm, 2),
+                       3);
+	    fprintf(vlog_out, " ");
+	    emit_name_of_nexus(scope, output, 0);
+      }
       fprintf(vlog_out, " = ");
       emit_lpm_as_ca(scope, lpm, 0);
       fprintf(vlog_out, ";");
@@ -1900,7 +2228,7 @@ void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig)
 {
       ivl_nexus_t nex = ivl_signal_nex(sig, 0);
       unsigned idx, count = ivl_nexus_ptrs(nex);
-      unsigned long emitted = (unsigned long) ivl_nexus_get_private(nex);
+      unsigned long emitted = (uintptr_t) ivl_nexus_get_private(nex);
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
 	    ivl_net_const_t net_const = ivl_nexus_ptr_con(nex_ptr);
@@ -1930,7 +2258,7 @@ void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig)
 	    fprintf(vlog_out, "\n");
 	      /* Increment the emitted constant count by one. */
 	    ivl_nexus_set_private(nex,
-	          (void *) ((unsigned long) ivl_nexus_get_private(nex) + 1U));
+	          (void *) ((uintptr_t) ivl_nexus_get_private(nex) + 1U));
 	    return;
       }
 	/* We must find the constant in the nexus. */
@@ -2000,6 +2328,7 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		      case IVL_LPM_CMP_NEE:   fprintf(stderr, "nee"); break;
 		      case IVL_LPM_DIVIDE:    fprintf(stderr, "divide"); break;
 		      case IVL_LPM_FF:        fprintf(stderr, "dff"); break;
+		      case IVL_LPM_LATCH:     fprintf(stderr, "latch"); break;
 		      case IVL_LPM_MOD:       fprintf(stderr, "mod"); break;
 		      case IVL_LPM_MULT:      fprintf(stderr, "mult"); break;
 		      case IVL_LPM_MUX:       fprintf(stderr, "mux"); break;
@@ -2125,10 +2454,9 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		      case IVL_VT_BOOL:    fprintf(stderr, " bool"); break;
 		      case IVL_VT_LOGIC:   fprintf(stderr, " logic"); break;
 		      case IVL_VT_STRING:  fprintf(stderr, " string"); break;
-		      case IVL_VT_DARRAY:  fprintf(stderr, " dynamic array");
-		      case IVL_VT_CLASS:   fprintf(stderr, " class");
-		      case IVL_VT_QUEUE:   fprintf(stderr, " queue");
-		                           break;
+		      case IVL_VT_DARRAY:  fprintf(stderr, " dynamic array"); break;
+		      case IVL_VT_CLASS:   fprintf(stderr, " class"); break;
+		      case IVL_VT_QUEUE:   fprintf(stderr, " queue"); break;
 		  }
 		  if (ivl_signal_signed(sig)) fprintf(stderr, " <signed>");
 	    } else fprintf(stderr, "Error: No/missing information!");

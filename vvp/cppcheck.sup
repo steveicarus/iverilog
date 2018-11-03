@@ -1,3 +1,51 @@
 // The new() operator is always used to allocate space for this class and
 // pool is defined there.
 uninitVar:vvp_net.cc:167
+
+// These functions are not used by Icarus
+// __libvpi_c_dummy_function()
+unusedFunction:libvpi.c:24
+
+// These functions are not used by Icarus
+// vpi_chk_error()
+unusedFunction:vpi_priv.cc:193
+// vpi_compare_objects()
+unusedFunction:vpi_priv.cc:209
+// vpi_control()
+unusedFunction:vpi_priv.cc:1556
+// vpi_flush()
+unusedFunction:vpi_priv.cc:1519
+// vpi_fopen()
+unusedFunction:vpi_mcd.cc:287
+// vpi_get_file()
+unusedFunction:vpi_mcd.cc:321
+// vpi_get_systf_info()
+unusedFunction:vpi_priv.cc:225
+// vpi_get_time()
+unusedFunction:vpi_priv.cc:532
+// vpi_get_userdata()
+unusedFunction:vpi_tasks.cc:1020
+// vpi_get_vlog_info()
+unusedFunction:vpi_priv.cc:561
+// vpi_handle_by_index()
+unusedFunction:vpi_priv.cc:1273
+// vpi_handle_by_name()
+unusedFunction:vpi_priv.cc:1356
+// vpi_mcd_close()
+unusedFunction:vpi_mcd.cc:111
+// vpi_mcd_name()
+unusedFunction:vpi_mcd.cc:138
+// vpi_mcd_open()
+unusedFunction:vpi_mcd.cc:153
+// vpi_put_userdata()
+unusedFunction:vpi_tasks.cc:1010
+// vpi_register_cb()
+unusedFunction:vpi_callback.cc:552
+// vpi_register_systf()
+unusedFunction:vpi_tasks.cc:990
+// vpi_remove_cb()
+unusedFunction:vpi_callback.cc:601
+// vpi_sim_control()
+unusedFunction:vpi_priv.cc:1548
+// vpi_vprintf()
+unusedFunction:vpi_priv.cc:1505
