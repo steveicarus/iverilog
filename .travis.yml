@@ -4,9 +4,6 @@ matrix:
   include:
     - os: linux
       compiler:
-        - clang
-    - os: linux
-      compiler:
         - gcc        
     - os: windows
       compiler:
@@ -21,7 +18,6 @@ sudo: false
 
 notifications:
   email: false
-
 
 install:
   - git clone https://github.com/steveicarus/ivtest.git
