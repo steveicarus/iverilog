@@ -1250,7 +1250,7 @@ static void process_number(vhdl_binop_expr *all, vhdl_var_ref *test,
       switch (bits[i]) {
       case 'x':
          if (is_casez) break;
-         // fallthrough 
+         // fallthrough
       case '?':
       case 'z':
          continue;  // Ignore these.
