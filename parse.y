@@ -622,6 +622,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <decl_assignments> list_of_variable_decl_assignments
 
 %type <data_type>  data_type data_type_or_implicit data_type_or_implicit_or_void
+%type <data_type>  simple_type_or_string
 %type <class_type> class_identifier
 %type <struct_member>  struct_union_member
 %type <struct_members> struct_union_member_list
@@ -1881,6 +1882,60 @@ real_or_realtime
 signing /* IEEE1800-2005: A.2.2.1 */
   : K_signed   { $$ = true; }
   | K_unsigned { $$ = false; }
+  ;
+
+simple_type_or_string /* IEEE1800-2005: A.2.2.1 */
+  : integer_vector_type
+      { ivl_variable_type_t use_vtype = $1;
+	bool reg_flag = false;
+	if (use_vtype == IVL_VT_NO_TYPE) {
+	      use_vtype = IVL_VT_LOGIC;
+	      reg_flag = true;
+	}
+	vector_type_t*tmp = new vector_type_t(use_vtype, false, 0);
+	tmp->reg_flag = reg_flag;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | non_integer_type
+      { real_type_t*tmp = new real_type_t($1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | atom2_type
+      { atom2_type_t*tmp = new atom2_type_t($1, true);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_integer
+      { list<pform_range_t>*pd = make_range_from_width(integer_width);
+	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, true, pd);
+	tmp->reg_flag = true;
+	tmp->integer_flag = true;
+	$$ = tmp;
+      }
+  | K_time
+      { list<pform_range_t>*pd = make_range_from_width(64);
+	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, pd);
+	tmp->reg_flag = !gn_system_verilog();
+	$$ = tmp;
+      }
+  | TYPE_IDENTIFIER
+      { $$ = $1.type;
+	delete[]$1.text;
+      }
+  | PACKAGE_IDENTIFIER K_SCOPE_RES
+      { lex_in_package_scope($1); }
+    TYPE_IDENTIFIER
+      { lex_in_package_scope(0);
+	$$ = $4.type;
+	delete[]$4.text;
+      }
+  | K_string
+      { string_type_t*tmp = new string_type_t;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
   ;
 
 statement /* IEEE1800-2005: A.6.4 */
@@ -3798,7 +3853,7 @@ expr_primary
 	}
       }
 
-  | data_type '\'' '(' expression ')'
+  | simple_type_or_string '\'' '(' expression ')'
       { PExpr*base = $4;
 	if (gn_system_verilog()) {
 	      PECastType*tmp = new PECastType($1, base);
