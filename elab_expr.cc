@@ -2557,7 +2557,13 @@ NetExpr* PECastSize::elaborate_expr(Design*des, NetScope*scope,
       ivl_assert(*this, size_);
       ivl_assert(*this, base_);
 
-      NetExpr*sub = base_->elaborate_expr(des, scope, base_->expr_width(), flags);
+        // When changing size, a cast behaves exactly like an assignment,
+        // so the result size affects the final expression width.
+      unsigned cast_width = base_->expr_width();
+      if (cast_width < expr_width_)
+            cast_width = expr_width_;
+
+      NetExpr*sub = base_->elaborate_expr(des, scope, cast_width, flags);
 
 	// Perform the cast. The extension method (zero/sign), if needed,
 	// depends on the type of the base expression.
