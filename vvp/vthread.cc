@@ -4000,7 +4000,7 @@ bool of_MOD_S(vthread_t thr, vvp_code_t)
 	    if (rv == 0)
 		  goto x_out;
 
-	    if ((lv == LONG_LONG_MIN) && (rv == -1))
+	    if ((lv == LLONG_MIN) && (rv == -1))
 		  goto zero_out;
 
 	      /* Sign extend the signed operands when needed. */
