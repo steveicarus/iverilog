@@ -1194,7 +1194,12 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
       if (!name_tail.index.empty())
 	    use_sel = name_tail.index.back().sel;
 
-      ivl_assert(*this, use_sel == index_component_t::SEL_NONE || use_sel == index_component_t::SEL_BIT);
+      if (use_sel != index_component_t::SEL_NONE && use_sel != index_component_t::SEL_BIT) {
+	    cerr << get_fileline() << ": sorry: Assignments to part selects of "
+		    "a struct member are not yet supported." << endl;
+	    des->errors += 1;
+	    return false;
+      }
 
       if (! name_tail.index.empty()) {
 
