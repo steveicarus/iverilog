@@ -270,7 +270,7 @@ that contain Verilog source files.  During elaboration, the compiler
 notices the instantiation of undefined module types. If the user
 specifies library search directories, the compiler will search the
 directory for files with the name of the missing module type. If it
-finds such a file, it loads it as a Verilog source file, they tries
+finds such a file, it loads it as a Verilog source file, then tries
 again to elaborate the module.
 
 Library module files should contain only a single module, but this is
