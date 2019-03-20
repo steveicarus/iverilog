@@ -116,13 +116,17 @@ programs.
 
 RESEARCHING EXISTING/PAST BUGS, AND FILING REPORTS
 
-The URL <http://sourceforge.net/tracker/?group_id=149850> is the main
-bug tracking system. Once you believe you have found a bug, you may
-browse the bugs database for existing bugs that may be related to
-yours. You might find that your bug has already been fixed in a later
-release or snapshot. If that's the case, then you are set. Also,
-consider if you are reporting a bug or really asking for a new
-feature, and use the appropriate tracker.
+The URL <https://sourceforge.net/p/iverilog/bugs/> is the main
+bug tracking system, although some users have reported bugs at
+<https://github.com/steveicarus/iverilog/issues/>. Once you believe
+you have found a bug, you may browse the bugs database for existing
+bugs that may be related to yours. You might find that your bug has
+already been fixed in a later release or snapshot. If that's the case,
+then you are set. Also, consider if you are reporting a bug or really
+asking for a new feature, and use the appropriate tracker.
+
+ system (although you will also find bug rep
+
 
 The bug database supports basic keyword searches, and you can
 optionally limit your search to active bugs, or fixed bugs. You may
@@ -145,7 +149,7 @@ version from git. Please see the developer documentation for more
 detailed instructions -- <http://iverilog.wikia.com/wiki/>.
 
 When you make a patch, submit it to the "Patches" tracker at
-<http://sourceforge.net/tracker/?group_id=149850>. Patches added to
+<https://sourceforge.net/p/iverilog/patches/>. Patches added to
 the "Patches" tracker enter the developer workflow, are checked,
 applied to the appropriate git branch, and are pushed. Then the
 tracker item is closed.
@@ -158,7 +162,7 @@ clarification before applying it.)
 
 COPYRIGHT ISSUES
 
-Icarus Verilog is Copyright (c) 1998-2008 Stephen Williams except
+Icarus Verilog is Copyright (c) 1998-2018 Stephen Williams except
 where otherwise noted. Minor patches are covered as derivative works
 (or editorial comment or whatever the appropriate legal term is) and
 folded into the rest of ivl. However, if a submission can reasonably

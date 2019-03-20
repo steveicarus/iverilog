@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -49,6 +49,7 @@ static void get_mem_params(vpiHandle argv, vpiHandle callh, const char *name,
 		case vpiConstant:
 		case vpiParameter:
 		  if (vpi_get(vpiConstType, *start_item) != vpiRealConst) break;
+		  // fallthrough
 		case vpiRealVar:
 		  vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
@@ -67,6 +68,7 @@ static void get_mem_params(vpiHandle argv, vpiHandle callh, const char *name,
 			if (vpi_get(vpiConstType, *stop_item) != vpiRealConst) {
 			      break;
 			}
+			// fallthrough
 		      case vpiRealVar:
 			vpi_printf("WARNING: %s:%d: ",
 			           vpi_get_str(vpiFile, callh),

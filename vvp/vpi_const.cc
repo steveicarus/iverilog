@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -129,7 +129,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 	  case vpiObjTypeVal:
 	      /* String parameters by default have vpiStringVal values. */
 	    vp->format = vpiStringVal;
-
+	    // fallthrough
 	  case vpiStringVal:
 	    rbuf = (char *) need_result_buf(size + 1, RBUF_VAL);
 	    strcpy(rbuf, value_);

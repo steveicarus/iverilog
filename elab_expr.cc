@@ -2535,7 +2535,13 @@ NetExpr* PECastSize::elaborate_expr(Design*des, NetScope*scope,
       ivl_assert(*this, size_);
       ivl_assert(*this, base_);
 
-      NetExpr*sub = base_->elaborate_expr(des, scope, base_->expr_width(), flags);
+        // When changing size, a cast behaves exactly like an assignment,
+        // so the result size affects the final expression width.
+      unsigned cast_width = base_->expr_width();
+      if (cast_width < expr_width_)
+            cast_width = expr_width_;
+
+      NetExpr*sub = base_->elaborate_expr(des, scope, cast_width, flags);
 
 	// Perform the cast. The extension method (zero/sign), if needed,
 	// depends on the type of the base expression.
@@ -2589,7 +2595,7 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
 
         // Find rounded up length that can fit the whole casted array of vectors
         int len = base->expr_width() + vector->packed_width() - 1;
-        if(base->expr_width() > vector->packed_width()) {
+        if(base->expr_width() > (unsigned)vector->packed_width()) {
             len /= vector->packed_width();
         } else {
             len /= base->expr_width();
@@ -2753,6 +2759,7 @@ NetExpr* PEConcat::elaborate_expr(Design*, NetScope*,
 		  tmp->set_line(*this);
 		  return tmp;
 	    }
+	    // fallthrough
 	  default:
 	    cerr << get_fileline() << ": internal error: "
 		 << "I don't know how to elaborate(ivl_type_t)"

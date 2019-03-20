@@ -1,5 +1,5 @@
 		THE ICARUS VERILOG COMPILATION SYSTEM
-		Copyright 2000-2004 Stephen Williams
+		Copyright 2000-2019 Stephen Williams
 
 
 1.0 What is ICARUS Verilog?
@@ -47,7 +47,7 @@ on a UNIX-like system:
 
 	- bison and flex
 
-	- gperf 2.7
+	- gperf 2.7 or later
 	  The lexical analyzer doesn't recognize keywords directly,
 	  but instead matches symbols and looks them up in a hash
 	  table in order to get the proper lexical code. The gperf
@@ -56,7 +56,7 @@ on a UNIX-like system:
 	  A version problem with this program is the most common cause
 	  of difficulty. See the Icarus Verilog FAQ.
 
-	- readline 4.2
+	- readline 4.2 or later
 	  On Linux systems, this usually means the readline-devel
 	  rpm. In any case, it is the development headers of readline
 	  that are needed.
@@ -67,7 +67,7 @@ on a UNIX-like system:
 If you are building from git, you will also need software to generate
 the configure scripts.
 
-	- autoconf 2.53
+	- autoconf 2.53 or later
 	  This generates configure scripts from configure.in. The 2.53
 	  or later versions are known to work, autoconf 2.13 is
 	  reported to *not* work.

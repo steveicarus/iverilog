@@ -1,7 +1,7 @@
 #ifndef IVL_pform_types_H
 #define IVL_pform_types_H
 /*
- * Copyright (c) 2007-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -32,6 +32,10 @@
 # include  <vector>
 # include  <map>
 # include  <memory>
+
+#if __cplusplus < 201103L
+#define unique_ptr auto_ptr
+#endif
 
 /*
  * parse-form types.
@@ -117,7 +121,7 @@ struct name_component_t {
 struct decl_assignment_t {
       perm_string name;
       std::list<pform_range_t>index;
-      std::auto_ptr<PExpr> expr;
+      std::unique_ptr<PExpr> expr;
 };
 
 struct pform_tf_port_t {
@@ -170,14 +174,14 @@ struct enum_type_t : public data_type_t {
       ivl_variable_type_t base_type;
       bool signed_flag;
       bool integer_flag; // True if "integer" was used
-      std::auto_ptr< list<pform_range_t> > range;
-      std::auto_ptr< list<named_pexpr_t> > names;
+      std::unique_ptr< list<pform_range_t> > range;
+      std::unique_ptr< list<named_pexpr_t> > names;
       LineInfo li;
 };
 
 struct struct_member_t : public LineInfo {
-      std::auto_ptr<data_type_t> type;
-      std::auto_ptr< list<decl_assignment_t*> > names;
+      std::unique_ptr<data_type_t> type;
+      std::unique_ptr< list<decl_assignment_t*> > names;
       void pform_dump(std::ostream&out, unsigned indent) const;
 };
 
@@ -188,7 +192,7 @@ struct struct_type_t : public data_type_t {
 
       bool packed_flag;
       bool union_flag;
-      std::auto_ptr< list<struct_member_t*> > members;
+      std::unique_ptr< list<struct_member_t*> > members;
 };
 
 struct atom2_type_t : public data_type_t {
@@ -234,7 +238,7 @@ struct vector_type_t : public data_type_t {
       bool reg_flag; // True if "reg" was used
       bool integer_flag; // True if "integer" was used
       bool implicit_flag; // True if this type is implicitly logic/reg
-      std::auto_ptr< list<pform_range_t> > pdims;
+      std::unique_ptr< list<pform_range_t> > pdims;
 };
 
 struct array_base_t : public data_type_t {
@@ -243,7 +247,7 @@ struct array_base_t : public data_type_t {
       : base_type(btype), dims(pd) { }
 
       data_type_t*base_type;
-      std::auto_ptr< list<pform_range_t> > dims;
+      std::unique_ptr< list<pform_range_t> > dims;
 };
 
 /*
@@ -375,5 +379,9 @@ inline perm_string peek_tail_name(const pform_name_t&that)
 extern std::ostream& operator<< (std::ostream&out, const pform_name_t&);
 extern std::ostream& operator<< (std::ostream&out, const name_component_t&that);
 extern std::ostream& operator<< (std::ostream&out, const index_component_t&that);
+
+#if __cplusplus < 201103L
+#undef unique_ptr
+#endif
 
 #endif /* IVL_pform_types_H */

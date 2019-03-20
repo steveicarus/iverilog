@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -126,6 +126,7 @@ void vpip_hex_str_to_vec4(vvp_vector4_t&val, const char*str)
 		  pad = BIT4_1;
 		  break;
 	    }
+	    // fallthrough
 	  default:  // Everything else gets '0' padded.
 	    pad = BIT4_0;
 	    break;
