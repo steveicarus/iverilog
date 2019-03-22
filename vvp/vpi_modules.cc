@@ -102,13 +102,13 @@ void vpip_add_env_and_default_module_paths()
       s = strrchr(basepath, '\\');
       if (s) *s = 0;
       else {
-	    fprintf(stderr, "%s: Missing first \\ in exe path!\n", argv[0]);
+	    fprintf(stderr, "%s: Missing first \\ in exe path!\n", tmp);
 	    exit(1);
       }
       s = strrchr(basepath, '\\');
       if (s) *s = 0;
       else {
-	    fprintf(stderr, "%s: Missing second \\ in exe path!\n", argv[0]);
+	    fprintf(stderr, "%s: Missing second \\ in exe path!\n", tmp);
 	    exit(1);
       }
       strcat(s, "\\lib\\ivl" IVL_SUFFIX);

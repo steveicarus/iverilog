@@ -195,4 +195,16 @@ inline int64_t i64round(double x)
 #define TU ""
 #endif
 
+#ifdef __MINGW32__
+# include  <string.h>
+static inline char*strndup(const char*s, size_t n)
+{
+      if (strlen(s) < n) return strdup(s);
+      char*tmp = (char*)malloc(n);
+      strncpy(tmp, s, n);
+      tmp[n-1] = 0;
+      return tmp;
+}
+#endif
+
 #endif /* IVL_config_H */
