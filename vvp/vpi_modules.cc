@@ -68,7 +68,7 @@ void vpip_add_env_and_default_module_paths()
             while (ptr <= end) {
                   if (*ptr == 0 || *ptr == ':' || *ptr == ';') {
                         if (len > 0) {
-                              vpip_add_module_path(strndup(var, len));
+                              vpip_add_module_path(strdup(var));
                         }
                         len = 0;
                         var = ptr+1;
@@ -102,13 +102,13 @@ void vpip_add_env_and_default_module_paths()
       s = strrchr(basepath, '\\');
       if (s) *s = 0;
       else {
-	    fprintf(stderr, "%s: Missing first \\ in exe path!\n", argv[0]);
+	    fprintf(stderr, "%s: Missing first \\ in exe path!\n", s);
 	    exit(1);
       }
       s = strrchr(basepath, '\\');
       if (s) *s = 0;
       else {
-	    fprintf(stderr, "%s: Missing second \\ in exe path!\n", argv[0]);
+	    fprintf(stderr, "%s: Missing second \\ in exe path!\n", s);
 	    exit(1);
       }
       strcat(s, "\\lib\\ivl" IVL_SUFFIX);
