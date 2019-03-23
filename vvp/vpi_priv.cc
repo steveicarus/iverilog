@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1293,7 +1293,7 @@ static vpiHandle find_name(const char *name, vpiHandle handle)
 	       * to skip ports here so the correct handle can be located. */
 	    if (vpi_get(vpiType, ref->intern[i]) == vpiPort) continue;
 	    char *nm = vpi_get_str(vpiName, ref->intern[i]);
-	    if (!strcmp(name, nm)) {
+	    if (nm && !strcmp(name, nm)) {
 		  rtn = ref->intern[i];
 		  break;
 	    } else if (vpi_get(vpiType, ref->intern[i]) == vpiMemory ||
@@ -1303,7 +1303,7 @@ static vpiHandle find_name(const char *name, vpiHandle handle)
 		  word_i = vpi_iterate(vpiMemoryWord, ref->intern[i]);
 		  while (word_i && (word_h = vpi_scan(word_i))) {
 			nm = vpi_get_str(vpiName, word_h);
-			if (!strcmp(name, nm)) {
+			if (nm && !strcmp(name, nm)) {
 			      rtn = word_h;
 			      vpi_free_object(word_i);
 			      break;
