@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -80,6 +80,15 @@ static int vthr_word_get(int code, vpiHandle ref)
       }
 }
 
+static double vlg_round(double rval)
+{
+      if (rval >= 0.0) {
+            return floor(rval + 0.5);
+      } else {
+            return ceil(rval - 0.5);
+      }
+}
+
 static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       struct __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(ref);
@@ -99,6 +108,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 
 	  case vpiObjTypeVal:
 	    vp->format = vpiRealVal;
+	    // fallthrough
 	  case vpiRealVal:
 	    vp->value.real = val;
 	    break;
@@ -108,31 +118,31 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	    if (val != val || (val && (val == 0.5*val))) {
 		  val = 0.0;
 	    } else {
-		  if (val >= 0.0) val = floor(val + 0.5);
-		  else val = ceil(val - 0.5);
+		  val = vlg_round(val);
 	    }
 	    vp->value.integer = (PLI_INT32)val;
 	    break;
 
 	  case vpiDecStrVal:
-#if !defined(__GNUC__)
-		if (isnan(val))
-			sprintf(rbuf, "%s", "nan");
-		else
-			sprintf(rbuf, "%0.0f", val);
-#else
-	    sprintf(rbuf, "%0.0f", val);
-#endif
+	    if (isnan(val))
+		  sprintf(rbuf, "%s", "nan");
+	    else
+		  sprintf(rbuf, "%0.0f", vlg_round(val));
+	    vp->value.str = rbuf;
+	    break;
+
+	  case vpiOctStrVal:
+	    sprintf(rbuf, "%" PRIo64, (uint64_t)vlg_round(val));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(rbuf, "%lx", (long)val);
+	    sprintf(rbuf, "%" PRIx64, (uint64_t)vlg_round(val));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiBinStrVal: {
-		unsigned long vali = (unsigned long)val;
+		uint64_t vali = (uint64_t)vlg_round(val);
 		unsigned len = 0;
 
 		while (vali > 0) {
@@ -140,7 +150,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 		      vali /= 2;
 		}
 
-		vali = (unsigned long)val;
+		vali = (uint64_t)vlg_round(val);
 		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
 		      rbuf[len-idx-1] = (vali & 1)? '1' : '0';
 		      vali /= 2;
@@ -249,6 +259,7 @@ void __vpiVThrStrStack::vpi_get_value(p_vpi_value vp)
 
 	  case vpiObjTypeVal:
 	    vp->format = vpiStringVal;
+	    // fallthrough
 	  case vpiStringVal:
 	    rbuf = (char *) need_result_buf(val.size()+1, RBUF_VAL);
 	    strcpy(rbuf, val.c_str());
@@ -279,6 +290,7 @@ class __vpiVThrVec4Stack : public __vpiHandle {
       void vpi_get_value_int_   (p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_real_  (p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_strength_(p_vpi_value vp, const vvp_vector4_t&val);
+      void vpi_get_value_octstr_(p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_hexstr_(p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_vector_(p_vpi_value vp, const vvp_vector4_t&val);
     private:
@@ -346,6 +358,9 @@ void __vpiVThrVec4Stack::vpi_get_value(p_vpi_value vp)
 	  case vpiDecStrVal:
 	    vpi_get_value_decstr_(vp, val);
 	    break;
+	  case vpiOctStrVal:
+	    vpi_get_value_octstr_(vp, val);
+	    break;
 	  case vpiHexStrVal:
 	    vpi_get_value_hexstr_(vp, val);
 	    break;
@@ -363,6 +378,7 @@ void __vpiVThrVec4Stack::vpi_get_value(p_vpi_value vp)
 	    break;
 	  case vpiObjTypeVal:
 	    vp->format = vpiVectorVal;
+	    // fallthrough
 	  case vpiVectorVal:
 	    vpi_get_value_vector_(vp, val);
 	    break;
@@ -393,6 +409,48 @@ void __vpiVThrVec4Stack::vpi_get_value_decstr_(p_vpi_value vp, const vvp_vector4
       char *rbuf = (char*) need_result_buf(nbuf, RBUF_VAL);
 
       vpip_vec4_to_dec_str(val, rbuf, nbuf, signed_flag_);
+      vp->value.str = rbuf;
+}
+
+void __vpiVThrVec4Stack::vpi_get_value_octstr_(p_vpi_value vp, const vvp_vector4_t&val)
+{
+      unsigned wid = val.size();
+      unsigned owid = (wid + 2) / 3;
+      char*rbuf = (char*) need_result_buf(owid+1, RBUF_VAL);
+      rbuf[owid] = 0;
+
+      unsigned oval = 0;
+      for (unsigned idx = 0; idx < wid ; idx += 1) {
+	    unsigned tmp = 0;
+	    switch (val.value(idx)) {
+		case BIT4_0:
+		  tmp = 0;
+		  break;
+		case BIT4_1:
+		  tmp = 1;
+		  break;
+		case BIT4_X:
+		  tmp = 2;
+		  break;
+		case BIT4_Z:
+		  tmp = 3;
+		  break;
+	    }
+
+	    oval = oval | (tmp << 2*(idx%3));
+
+	    if (idx%3 == 2) {
+		  owid -= 1;
+		  rbuf[owid] = oct_digits[oval];
+		  oval = 0;
+	    }
+      }
+
+      if (owid > 0) {
+	    owid -= 1;
+	    rbuf[owid] = oct_digits[oval];
+	    oval = 0;
+      }
       vp->value.str = rbuf;
 }
 

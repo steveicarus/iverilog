@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -329,10 +329,12 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
                 case '>': // >   Should be handled by PEBComp
                 case 'e': // ==  Should be handled by PEBComp
                 case 'E': // === Should be handled by PEBComp
+                case 'w': // ==? Should be handled by PEBComp
                 case 'L': // <=  Should be handled by PEBComp
                 case 'G': // >=  Should be handled by PEBComp
                 case 'n': // !=  Should be handled by PEBComp
                 case 'N': // !== Should be handled by PEBComp
+                case 'W': // !=? Should be handled by PEBComp
                 case 'p': // **  should be handled by PEBPower
                   ivl_assert(*this, 0);
                 default:
@@ -663,6 +665,18 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": error: "
 		       << human_readable_op(op_)
 		       << " operator may not have REAL or STRING operands."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    break;
+	  case 'w': /* ==? */
+	  case 'W': /* !=? */
+	    if ((lp->expr_type() != IVL_VT_BOOL && lp->expr_type() != IVL_VT_LOGIC) ||
+		(rp->expr_type() != IVL_VT_BOOL && rp->expr_type() != IVL_VT_LOGIC)) {
+		  cerr << get_fileline() << ": error: "
+		       << human_readable_op(op_)
+		       << " operator may only have INTEGRAL operands."
 		       << endl;
 		  des->errors += 1;
 		  return 0;
@@ -1441,6 +1455,13 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 		  des->errors += 1;
 		  return 0;
 	    }
+
+            if (!type_is_vectorable(expr_type_)) {
+	          cerr << get_fileline() << ": error: The argument to "
+		       << name << " must be a vector type." << endl;
+	          des->errors += 1;
+	          return 0;
+            }
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": PECallFunction::elaborate_sfunc_: "
@@ -2264,8 +2285,8 @@ NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*ds
       }
 
       cerr << get_fileline() << ": internal error: Unable to locate "
-	    "function return value for " << path_
-	   << " in " << dscope->basename() << "." << endl;
+              "function return value for " << path_
+           << " in " << dscope->basename() << "." << endl;
       des->errors += 1;
       return 0;
 }
@@ -2536,7 +2557,13 @@ NetExpr* PECastSize::elaborate_expr(Design*des, NetScope*scope,
       ivl_assert(*this, size_);
       ivl_assert(*this, base_);
 
-      NetExpr*sub = base_->elaborate_expr(des, scope, base_->expr_width(), flags);
+        // When changing size, a cast behaves exactly like an assignment,
+        // so the result size affects the final expression width.
+      unsigned cast_width = base_->expr_width();
+      if (cast_width < expr_width_)
+            cast_width = expr_width_;
+
+      NetExpr*sub = base_->elaborate_expr(des, scope, cast_width, flags);
 
 	// Perform the cast. The extension method (zero/sign), if needed,
 	// depends on the type of the base expression.
@@ -2590,7 +2617,7 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
 
         // Find rounded up length that can fit the whole casted array of vectors
         int len = base->expr_width() + vector->packed_width() - 1;
-        if(base->expr_width() > vector->packed_width()) {
+        if(base->expr_width() > (unsigned)vector->packed_width()) {
             len /= vector->packed_width();
         } else {
             len /= base->expr_width();
@@ -2754,6 +2781,7 @@ NetExpr* PEConcat::elaborate_expr(Design*, NetScope*,
 		  tmp->set_line(*this);
 		  return tmp;
 	    }
+	    // fallthrough
 	  default:
 	    cerr << get_fileline() << ": internal error: "
 		 << "I don't know how to elaborate(ivl_type_t)"
@@ -3141,6 +3169,25 @@ unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
 	    }
       }
 
+	// Look for the enumeration attributes.
+      if (const netenum_t*netenum = net->enumeration()) {
+	    if (member_name == "num") {
+		  expr_type_  = IVL_VT_BOOL;
+		  expr_width_ = 32;
+		  min_width_  = 32;
+		  signed_flag_= true;
+		  return 32;
+	    }
+	    if ((member_name == "first") || (member_name == "last") ||
+	        (member_name == "next") || (member_name == "prev")) {
+		  expr_type_  = netenum->base_type();
+		  expr_width_ = netenum->packed_width();;
+		  min_width_ = expr_width_;
+		  signed_flag_ = netenum->get_signed();
+		  return expr_width_;
+	    }
+      }
+
       return 0;
 }
 
@@ -3448,29 +3495,41 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       }
 
       if (net == 0) {
-	    cerr << get_fileline() << ": internal error: "
-		 << "Expecting idents with ntype to be signals." << endl;
+            cerr << get_fileline() << ": error: Unable to bind variable `"
+	         << path_ << "' in `" << scope_path(use_scope) << "'" << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
-      if (! ntype->type_compatible(net->net_type())) {
-	    cerr << get_fileline() << ": internal_error: "
-		 << "net type doesn't match context type." << endl;
+      if (const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype)) {
+            if (array_type->type_compatible(net->net_type())) {
+                  NetESignal*tmp = new NetESignal(net);
+                  tmp->set_line(*this);
+                  return tmp;
+            }
 
-	    cerr << get_fileline() << ":               : "
-		 << "net type=";
+              // Icarus allows a dynamic array to be initialised with a
+              // single elementary value, so try that next.
+	    ntype = array_type->element_type();
+      }
+
+      if (! ntype->type_compatible(net->net_type())) {
+	    cerr << get_fileline() << ": error: the type of the variable '"
+		 << path_ << "' doesn't match the context type." << endl;
+
+	    cerr << get_fileline() << ":      : " << "variable type=";
 	    if (net->net_type())
 		  net->net_type()->debug_dump(cerr);
 	    else
 		  cerr << "<nil>";
 	    cerr << endl;
 
-	    cerr << get_fileline() << ":               : "
-		 << "context type=";
+	    cerr << get_fileline() << ":      : " << "context type=";
 	    ivl_assert(*this, ntype);
 	    ntype->debug_dump(cerr);
 	    cerr << endl;
+	    des->errors += 1;
+	    return 0;
       }
       ivl_assert(*this, ntype->type_compatible(net->net_type()));
 
@@ -5326,9 +5385,8 @@ NetExpr* PENewArray::elaborate_expr(Design*des, NetScope*scope,
 	      // expression. Elaborate the expression as an element
 	      // type. The run-time will assign this value to each element.
 	    const netarray_t*array_type = dynamic_cast<const netarray_t*> (ntype);
-	    ivl_type_t elem_type = array_type->element_type();
 
-	    init_val = init_->elaborate_expr(des, scope, elem_type, flags);
+	    init_val = init_->elaborate_expr(des, scope, array_type, flags);
       }
 
       NetENew*tmp = new NetENew(ntype, size, init_val);
@@ -5579,6 +5637,10 @@ unsigned PENumber::test_width(Design*, NetScope*, width_mode_t&mode)
 
 NetExpr* PENumber::elaborate_expr(Design*des, NetScope*, ivl_type_t ntype, unsigned) const
 {
+        // Icarus allows dynamic arrays to be initialised with a single value.
+      if (const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype))
+            ntype = array_type->element_type();
+
       const netvector_t*use_type = dynamic_cast<const netvector_t*> (ntype);
       if (use_type == 0) {
 	    cerr << get_fileline() << ": internal error: "
@@ -5685,7 +5747,6 @@ unsigned PETernary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       } else if (tru_type == IVL_VT_LOGIC || fal_type == IVL_VT_LOGIC) {
 	    expr_type_ = IVL_VT_LOGIC;
       } else {
-	    ivl_assert(*this, tru_type == fal_type);
 	    expr_type_ = tru_type;
       }
       if (expr_type_ == IVL_VT_REAL) {

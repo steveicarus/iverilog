@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2017 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -143,14 +143,21 @@ static bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 	    }
 
-	      // Don't scan up past a module boundary.
-	    if (scope->type()==NetScope::MODULE && !scope->nested_module())
-		  break;
 	      // Don't scan up if we are searching within a prefixed scope.
 	    if (prefix_scope)
 		  break;
 
-	    scope = scope->parent();
+	      // Don't scan up past a module boundary.
+	    if (scope->type()==NetScope::MODULE && !scope->nested_module())
+		  scope = 0;
+	    else
+		  scope = scope->parent();
+
+	      // Last chance - try the compilation unit.
+	    if (scope == 0 && start_scope != 0) {
+		  scope = start_scope->unit();
+		  start_scope = 0;
+	    }
       }
 
 	// Last chance: this is a single name, so it might be the name

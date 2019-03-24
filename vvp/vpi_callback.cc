@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -316,7 +316,9 @@ void sync_cb::run_run()
       if (cur->cb_data.cb_rtn != 0) {
 	    assert(vpi_mode_flag == VPI_MODE_NONE);
 	    vpi_mode_flag = sync_flag? VPI_MODE_ROSYNC : VPI_MODE_RWSYNC;
+	    vpip_cur_task = dynamic_cast<__vpiSysTaskCall*>(cur->cb_data.obj);
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    vpip_cur_task = 0;
 	    vpi_mode_flag = VPI_MODE_NONE;
       }
 
@@ -634,24 +636,37 @@ void callback_execute(struct __vpiCallback*cur)
       vpi_mode_flag = save_mode;
 }
 
+/*
+ * Usually there is at most one array word associated with a vvp signal, but
+ * due to port collapsing, there may be more. Using a linked list to record
+ * the array words minimises memory use for the most common case (no array
+ * words) or next most common case (one array word).
+ */
+struct __vpi_array_word {
+      struct __vpi_array_word* next;
+      struct __vpiArray* array;
+      unsigned long word;
+};
+
 vvp_vpi_callback::vvp_vpi_callback()
 {
       vpi_callbacks_ = 0;
-      array_ = 0;
-      array_word_ = 0;
+      array_words_ = 0;
 }
 
 vvp_vpi_callback::~vvp_vpi_callback()
 {
       assert(vpi_callbacks_ == 0);
-      assert(array_ == 0);
+      assert(array_words_ == 0);
 }
 
 void vvp_vpi_callback::attach_as_word(vvp_array_t arr, unsigned long addr)
 {
-      assert(array_ == 0);
-      array_ = arr;
-      array_word_ = addr;
+      struct __vpi_array_word*tmp = new __vpi_array_word;
+      tmp->array = arr;
+      tmp->word = addr;
+      tmp->next = array_words_;
+      array_words_ = tmp;
 }
 
 void vvp_vpi_callback::add_vpi_callback(value_callback*cb)
@@ -669,6 +684,11 @@ void vvp_vpi_callback::clear_all_callbacks()
 	    delete vpi_callbacks_;
 	    vpi_callbacks_ = tmp;
       }
+      while (array_words_) {
+	    struct __vpi_array_word*tmp = array_words_->next;
+	    delete array_words_;
+	    array_words_ = tmp;
+      }
 }
 #endif
 
@@ -680,7 +700,11 @@ void vvp_vpi_callback::clear_all_callbacks()
  */
 void vvp_vpi_callback::run_vpi_callbacks()
 {
-      if (array_) array_->word_change(array_word_);
+      struct __vpi_array_word*array_word = array_words_;
+      while (array_word) {
+	    array_word->array->word_change(array_word->word);
+	    array_word = array_word->next;
+      }
 
       value_callback *next = vpi_callbacks_;
       value_callback *prev = 0;
@@ -750,6 +774,15 @@ void vvp_signal_value::get_signal_value(struct t_vpi_value*vp)
       }
 }
 
+static double vlg_round(double rval)
+{
+      if (rval >= 0.0) {
+            return floor(rval + 0.5);
+      } else {
+            return ceil(rval - 0.5);
+      }
+}
+
 static void real_signal_value(struct t_vpi_value*vp, double rval)
 {
       char*rbuf = (char *) need_result_buf(64 + 1, RBUF_VAL);
@@ -757,7 +790,7 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
       switch (vp->format) {
 	  case vpiObjTypeVal:
 	    vp->format = vpiRealVal;
-
+	    // fallthrough
 	  case vpiRealVal:
 	    vp->value.real = rval;
 	    break;
@@ -767,31 +800,26 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 	    if (rval != rval || (rval && (rval == 0.5*rval))) {
 		  rval = 0.0;
 	    } else {
-		  if (rval >= 0.0) rval = floor(rval + 0.5);
-		  else rval = ceil(rval - 0.5);
+		  rval = vlg_round(rval);
 	    }
 	    vp->value.integer = (PLI_INT32)rval;
 	    break;
 
 	  case vpiDecStrVal:
-#if !defined(__GNUC__)
-		  if (isnan(rval))
-			  sprintf(rbuf, "%s", "nan");
-		  else
-			  sprintf(rbuf, "%0.0f", rval);
-#else
-	    sprintf(rbuf, "%0.0f", rval);
-#endif
+	    if (isnan(rval))
+		  sprintf(rbuf, "%s", "nan");
+	    else
+		  sprintf(rbuf, "%0.0f", vlg_round(rval));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(rbuf, "%lx", (long)rval);
+	    sprintf(rbuf, "%" PRIx64, (uint64_t)vlg_round(rval));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiBinStrVal: {
-		unsigned long val = (unsigned long)rval;
+		uint64_t val = (uint64_t)vlg_round(rval);
 		unsigned len = 0;
 
 		while (val > 0) {
@@ -799,7 +827,7 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 		      val /= 2;
 		}
 
-		val = (unsigned long)rval;
+		val = (uint64_t)vlg_round(rval);
 		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
 		      rbuf[len-idx-1] = (val & 1)? '1' : '0';
 		      val /= 2;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -373,6 +373,7 @@ static void cmd_trace(unsigned argc, char*argv[])
 	    break;
 	default:
 	    printf("Only using the first argument to trace.\n");
+	    // fallthrough
 	case 2:
 	    if ((strcmp(argv[1], "on") == 0) || (strcmp(argv[1], "1") == 0)) {
 		  show_file_line = true;

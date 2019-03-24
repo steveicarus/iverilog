@@ -1,7 +1,7 @@
 #ifndef IVL_arith_H
 #define IVL_arith_H
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -195,6 +195,24 @@ class vvp_cmp_ne  : public vvp_arith_ {
 
     public:
       explicit vvp_cmp_ne(unsigned wid);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
+
+};
+
+class vvp_cmp_weq  : public vvp_arith_ {
+
+    public:
+      explicit vvp_cmp_weq(unsigned wid);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
+
+};
+
+class vvp_cmp_wne  : public vvp_arith_ {
+
+    public:
+      explicit vvp_cmp_wne(unsigned wid);
       void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
                      vvp_context_t);
 

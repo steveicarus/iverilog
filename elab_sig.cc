@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1332,28 +1332,4 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    sig->attribute(attrib_list[idx].key, attrib_list[idx].val);
 
       return sig;
-}
-
-
-void Design::root_elaborate_sig(void)
-{
-      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
-		 ; cur != classes_.end() ; ++ cur) {
-
-	    netclass_t*cur_class = cur->second;
-	    PClass*cur_pclass = class_to_pclass_[cur_class];
-
-	    cur_class->elaborate_sig(this, cur_pclass);
-      }
-
-      for (map<NetScope*,PTaskFunc*>::iterator cur = root_tasks_.begin()
-		 ; cur != root_tasks_.end() ; ++ cur) {
-
-	    if (debug_elaborate) {
-		  cerr << cur->second->get_fileline() << ": root_elaborate_sig: "
-		       << "Elaborate_sig for root task/func " << scope_path(cur->first) << endl;
-	    }
-
-	    cur->second->elaborate_sig(this, cur->first);
-      }
 }

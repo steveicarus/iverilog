@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1260,6 +1260,8 @@ const char *human_readable_op(const char op, bool unary)
 		if (unary) type = "~|";     // NOR
 		else type = "!==";          // Case inequality
 		break;
+	    case 'w': type = "==?"; break;  // Wild equality
+	    case 'W': type = "!=?"; break;  // Wild inequality
 
 	    case 'l': type = "<<(<)"; break;  // Left shifts
 	    case 'r': type = ">>";    break;  // Logical right shift
@@ -1664,4 +1666,39 @@ NetScope* find_method_containing_scope(const LineInfo&, NetScope*scope)
 	// Should I check if this scope is a TASK or FUNC?
 
       return scope;
+}
+
+
+/*
+ * Print a warning if we find a mixture of default and explicit timescale
+ * based delays in the design, since this is likely an error.
+ */
+void check_for_inconsistent_delays(NetScope*scope)
+{
+      static bool used_implicit_timescale = false;
+      static bool used_explicit_timescale = false;
+      static bool display_ts_dly_warning = true;
+
+      if (scope->time_from_timescale())
+	    used_explicit_timescale = true;
+      else
+	    used_implicit_timescale = true;
+
+      if (display_ts_dly_warning &&
+	  used_explicit_timescale &&
+	  used_implicit_timescale) {
+	    if (gn_system_verilog()) {
+		  cerr << "warning: Found both default and explicit "
+			  "timescale based delays. Use" << endl;
+		  cerr << "       : -Wtimescale to find the design "
+			  "element(s) with no explicit" << endl;
+		  cerr << "       : timescale." << endl;
+	    } else {
+		  cerr << "warning: Found both default and "
+			  "`timescale based delays. Use" << endl;
+		  cerr << "       : -Wtimescale to find the "
+			  "module(s) with no `timescale." << endl;
+	    }
+	    display_ts_dly_warning = false;
+      }
 }

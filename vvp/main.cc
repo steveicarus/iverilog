@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -262,43 +262,6 @@ int main(int argc, char*argv[])
       extern bool stop_is_finish;
       extern int  stop_is_finish_exit_code;
 
-#ifdef __MINGW32__
-	/* Calculate the module path from the path to the command.
-	   This is necessary because of the installation process on
-	   Windows. Mostly, it is those darn drive letters, but oh
-	   well. We know the command path is formed like this:
-
-		D:\iverilog\bin\iverilog.exe
-
-	   The IVL_ROOT in a Windows installation is the path:
-
-		D:\iverilog\lib\ivl$(suffix)
-
-	   so we chop the file name and the last directory by
-	   turning the last two \ characters to null. Then we append
-	   the lib\ivl$(suffix) to finish. */
-      char *s;
-      char basepath[4096], tmp[4096];
-      GetModuleFileName(NULL, tmp, sizeof tmp);
-	/* Convert to a short name to remove any embedded spaces. */
-      GetShortPathName(tmp, basepath, sizeof basepath);
-      s = strrchr(basepath, '\\');
-      if (s) *s = 0;
-      else {
-	    fprintf(stderr, "%s: Missing first \\ in exe path!\n", argv[0]);
-	    exit(1);
-      }
-      s = strrchr(basepath, '\\');
-      if (s) *s = 0;
-      else {
-	    fprintf(stderr, "%s: Missing second \\ in exe path!\n", argv[0]);
-	    exit(1);
-      }
-      strcat(s, "\\lib\\ivl" IVL_SUFFIX);
-      vpip_module_path[0] = strdup(basepath);
-#endif
-
-
       if( ::getenv("VVP_WAIT_FOR_DEBUGGER") != 0 ) {
           fprintf( stderr, "Waiting for debugger...\n");
           bool debugger_release = false;
@@ -340,10 +303,9 @@ int main(int argc, char*argv[])
 	    break;
 	  case 'M':
 	    if (strcmp(optarg,"-") == 0) {
-		  vpip_module_path_cnt = 0;
-		  vpip_module_path[0] = 0;
+		  vpip_clear_module_paths();
 	    } else {
-		  vpip_module_path[vpip_module_path_cnt++] = optarg;
+		  vpip_add_module_path(optarg);
 	    }
 	    break;
 	  case 'm':
@@ -368,6 +330,8 @@ int main(int argc, char*argv[])
 	  default:
 	    flag_errors += 1;
       }
+
+      vpip_add_env_and_default_module_paths();
 
       if (flag_errors)
 	    return flag_errors;

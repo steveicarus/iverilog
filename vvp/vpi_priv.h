@@ -1,7 +1,7 @@
 #ifndef IVL_vpi_priv_H
 #define IVL_vpi_priv_H
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -376,7 +376,8 @@ extern vpiHandle vpip_make_int4(const char*name, int msb, int lsb,
 			       vvp_net_t*vec);
 extern vpiHandle vpip_make_var4(const char*name, int msb, int lsb,
 			       bool signed_flag, vvp_net_t*net);
-extern vpiHandle vpip_make_net4(const char*name, int msb, int lsb,
+extern vpiHandle vpip_make_net4(__vpiScope*scope,
+				const char*name, int msb, int lsb,
 				bool signed_flag, vvp_net_t*node);
 
 /*
@@ -479,8 +480,10 @@ class __vpiNamedEvent : public __vpiHandle {
       __vpiNamedEvent(__vpiScope*scope, const char*name);
       ~__vpiNamedEvent();
       int get_type_code(void) const;
+      __vpiScope*get_scope(void) const { return scope_; }
       int vpi_get(int code);
       char* vpi_get_str(int code);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
       vpiHandle vpi_handle(int code);
 
       inline void add_vpi_callback(__vpiCallback*cb)
@@ -541,7 +544,9 @@ struct __vpiRealVar : public __vpiHandle {
 };
 
 extern __vpiScope* vpip_scope(__vpiRealVar*sig);
-extern vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net, bool is_wire);
+extern vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net);
+extern vpiHandle vpip_make_real_net(__vpiScope*scope,
+				    const char*name, vvp_net_t*net);
 
 class __vpiBaseVar : public __vpiHandle {
 
@@ -868,9 +873,9 @@ vpiHandle vpip_make_vthr_APV(char*label, unsigned index, unsigned bit, unsigned 
  */
 extern void vpip_load_module(const char*name);
 
-# define VPIP_MODULE_PATH_MAX 64
-extern const char* vpip_module_path[64];
-extern unsigned vpip_module_path_cnt;
+extern void vpip_clear_module_paths();
+extern void vpip_add_module_path(const char *path);
+extern void vpip_add_env_and_default_module_paths();
 
 /*
  * The vpip_build_vpi_call function creates a __vpiSysTaskCall object

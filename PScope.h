@@ -1,7 +1,7 @@
 #ifndef IVL_PScope_H
 #define IVL_PScope_H
 /*
- * Copyright (c) 2008-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -164,11 +164,18 @@ class PScope : public LexicalScope {
 
       perm_string pscope_name() const { return name_; }
 
-	/* These are the timescale for this scope. The default is
+	/* These are the timescale for this scope. The value is
 	   set by the `timescale directive or, in SystemVerilog,
 	   by timeunit and timeprecision statements. */
       int time_unit, time_precision;
-      bool time_from_timescale;
+
+	/* Flags used to support warnings about timescales. */
+      bool time_unit_is_default;
+      bool time_prec_is_default;
+
+      bool has_explicit_timescale() const {
+	     return !(time_unit_is_default || time_prec_is_default);
+	   }
 
     protected:
       bool elaborate_sig_wires_(Design*des, NetScope*scope) const;
@@ -198,6 +205,10 @@ class PScopeExtra : public PScope {
 	/* This is the lexical order of the classes, and is used by
 	   elaboration to choose an elaboration order. */
       std::vector<PClass*> classes_lexical;
+
+	/* Flags used to support warnings about timescales. */
+      bool time_unit_is_local;
+      bool time_prec_is_local;
 
     protected:
       void dump_classes_(ostream&out, unsigned indent) const;

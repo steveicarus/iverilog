@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -120,6 +120,15 @@ std::ostream& operator << (std::ostream&out, ivl_process_type_t pt)
 	    break;
 	  case IVL_PR_ALWAYS:
 	    out << "always";
+	    break;
+	  case IVL_PR_ALWAYS_COMB:
+	    out << "always_comb";
+	    break;
+	  case IVL_PR_ALWAYS_FF:
+	    out << "always_ff";
+	    break;
+	  case IVL_PR_ALWAYS_LATCH:
+	    out << "always_latch";
 	    break;
 	  case IVL_PR_FINAL:
 	    out << "final";
@@ -627,10 +636,10 @@ void PGBuiltin::dump(ostream&out, unsigned ind) const
 	    out << "bufif1 ";
 	    break;
 	  case PGBuiltin::NOTIF0:
-	    out << "bufif0 ";
+	    out << "notif0 ";
 	    break;
 	  case PGBuiltin::NOTIF1:
-	    out << "bufif1 ";
+	    out << "notif1 ";
 	    break;
 	  case PGBuiltin::NAND:
 	    out << "nand ";
@@ -729,6 +738,7 @@ void PGModule::dump(ostream&out, unsigned ind) const
 	    dump_pins(out);
       }
       out << ");" << endl;
+      dump_attributes_map(out, attributes, 8);
 }
 
 void Statement::dump(ostream&out, unsigned ind) const
@@ -843,7 +853,7 @@ void PCase::dump(ostream&out, unsigned ind) const
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
 	    PCase::Item*cur = (*items_)[idx];
 
-	    if (cur->expr.size()) {
+	    if (! cur->expr.empty()) {
 		  out << setw(ind+2) << "" << "default:";
 
 	    } else {
@@ -1174,6 +1184,11 @@ void AProcess::dump(ostream&out, unsigned ind) const
 	    break;
 	  case IVL_PR_ALWAYS:
 	    out << setw(ind) << "" << "analog";
+	    break;
+	  case IVL_PR_ALWAYS_COMB:
+	  case IVL_PR_ALWAYS_FF:
+	  case IVL_PR_ALWAYS_LATCH:
+	    assert(0);
 	    break;
 	  case IVL_PR_FINAL:
 	    out << setw(ind) << "" << "analog final";
@@ -1705,8 +1720,10 @@ void PPackage::pform_dump(std::ostream&out) const
       dump_localparams_(out, 4);
       dump_parameters_(out, 4);
       dump_enumerations_(out, 4);
+      dump_wires_(out, 4);
       dump_tasks_(out, 4);
       dump_funcs_(out, 4);
+      dump_var_inits_(out, 4);
       out << "endpackage" << endl;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -464,6 +464,7 @@ int vpip_time_units_from_handle(vpiHandle obj)
       struct __vpiSysTaskCall*task;
       __vpiScope*scope;
       struct __vpiSignal*signal;
+      __vpiNamedEvent*event;
 
       if (obj == 0)
 	    return vpip_get_time_precision();
@@ -481,6 +482,11 @@ int vpip_time_units_from_handle(vpiHandle obj)
 	  case vpiReg:
 	    signal = dynamic_cast<__vpiSignal*>(obj);
 	    scope = vpip_scope(signal);
+	    return scope->time_units;
+
+	  case vpiNamedEvent:
+	    event = dynamic_cast<__vpiNamedEvent*>(obj);
+	    scope = event->get_scope();
 	    return scope->time_units;
 
 	  default:
@@ -718,7 +724,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 	  case vpiObjTypeVal:
 	    // Use the following case to actually set the value!
 	    vp->format = vpiVectorVal;
-
+	    // fallthrough
 	  case vpiVectorVal: {
 		unsigned hwid = (width + 31)/32;
 
@@ -778,6 +784,7 @@ void vpip_vec2_get_value(const vvp_vector2_t&word_val, unsigned width,
 
 	  case vpiObjTypeVal:
 	    vp->format = vpiIntVal;
+	    // fallthrough
 	  case vpiIntVal:
 	    vector2_to_value(word_val, vp->value.integer, signed_flag);
 	    break;
@@ -856,7 +863,7 @@ void vpip_real_get_value(double real, s_vpi_value*vp)
 	  case vpiObjTypeVal:
 	    // Use the following case to actually set the value!
 	    vp->format = vpiRealVal;
-
+	    // fallthrough
 	  case vpiRealVal:
 	    vp->value.real = real;
 	    break;
@@ -938,7 +945,7 @@ void vpip_string_get_value(const string&val, s_vpi_value*vp)
 	  case vpiObjTypeVal:
 	    // Use the following case to actually set the value!
 	    vp->format = vpiStringVal;
-
+	    // fallthrough
 	  case vpiStringVal:
 	    rbuf = (char *) need_result_buf(val.size() + 1, RBUF_VAL);
 	    strcpy(rbuf, val.c_str());
@@ -1104,7 +1111,13 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 
 	    vpip_put_value_event*put = new vpip_put_value_event;
 	    put->handle = obj;
-	    put->value = *vp;
+	    if (dynamic_cast<__vpiNamedEvent*>(obj)) {
+		  put->value.format = vpiIntVal;
+		  put->value.value.integer = 0;
+	    } else {
+		  assert(vp);
+		  put->value = *vp;
+	    }
 	      /* Since this is a scheduled put event we must copy any pointer
 	       * data to keep it available until the event is actually run. */
 	    switch (put->value.format) {
@@ -1280,7 +1293,7 @@ static vpiHandle find_name(const char *name, vpiHandle handle)
 	       * to skip ports here so the correct handle can be located. */
 	    if (vpi_get(vpiType, ref->intern[i]) == vpiPort) continue;
 	    char *nm = vpi_get_str(vpiName, ref->intern[i]);
-	    if (!strcmp(name, nm)) {
+	    if (nm && !strcmp(name, nm)) {
 		  rtn = ref->intern[i];
 		  break;
 	    } else if (vpi_get(vpiType, ref->intern[i]) == vpiMemory ||
@@ -1290,7 +1303,7 @@ static vpiHandle find_name(const char *name, vpiHandle handle)
 		  word_i = vpi_iterate(vpiMemoryWord, ref->intern[i]);
 		  while (word_i && (word_h = vpi_scan(word_i))) {
 			nm = vpi_get_str(vpiName, word_h);
-			if (!strcmp(name, nm)) {
+			if (nm && !strcmp(name, nm)) {
 			      rtn = word_h;
 			      vpi_free_object(word_i);
 			      break;

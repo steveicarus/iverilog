@@ -1,7 +1,7 @@
 #ifndef IVL_compiler_H
 #define IVL_compiler_H
 /*
- * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -116,6 +116,13 @@ extern bool debug_elaborate;
 extern bool debug_emit;
 extern bool debug_synth2;
 extern bool debug_optimizer;
+
+/* Ignore errors about missing modules */
+extern bool ignore_missing_modules;
+
+/* Treat each source file as a separate compilation unit (as defined
+   by SystemVerilog). */
+extern bool separate_compilation;
 
 /* Control evaluation of functions at compile time:
  *   0 = only for functions in constant expressions

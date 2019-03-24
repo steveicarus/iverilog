@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2018 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -259,12 +259,6 @@ ivl_scope_t dll_target::find_scope(ivl_design_s &des, const NetScope*cur)
       if (cur->type() == NetScope::CLASS) {
 	    ivl_scope_t tmp = des.classes[cur];
 	    return tmp;
-      }
-
-      if (cur->type()==NetScope::TASK || cur->type()==NetScope::FUNC) {
-	    map<const NetScope*,ivl_scope_t>::const_iterator idx = des.root_tasks.find(cur);
-	    if (idx != des.root_tasks.end())
-		  return idx->second;
       }
 
       for (unsigned idx = 0; idx < des.roots.size(); idx += 1) {
@@ -650,22 +644,6 @@ void dll_target::add_root(const NetScope *s)
 	  case NetScope::CLASS:
 	    root_->type_ = IVL_SCT_CLASS;
 	    break;
-	  case NetScope::TASK: {
-		const NetTaskDef*def = s->task_def();
-		if (def == 0) {
-		      cerr << "?:?" << ": internal error: "
-			   << "task " << root_->name_
-			   << " has no definition." << endl;
-		}
-		assert(def);
-		root_->type_ = IVL_SCT_TASK;
-		root_->tname_ = def->scope()->basename();
-		break;
-	  }
-	    break;
-	  case NetScope::FUNC:
-	    fill_in_scope_function(root_, s);
-	    break;
 	  default:
 	    assert(0);
       }
@@ -692,11 +670,6 @@ void dll_target::add_root(const NetScope *s)
 	  case NetScope::CLASS:
 	    root_->ports = 0;
 	    des_.classes[s] = root_;
-	    break;
-
-	  case NetScope::TASK:
-	  case NetScope::FUNC:
-	    des_.root_tasks[s] = root_;
 	    break;
 
 	  default:
@@ -740,11 +713,7 @@ bool dll_target::start_design(const Design*des)
       }
       assert(idx == des_.disciplines.size());
 
-      list<NetScope *> scope_list = des->find_roottask_scopes();
-      for (list<NetScope*>::const_iterator cur = scope_list.begin()
-		 ; cur != scope_list.end() ; ++ cur) {
-	    add_root(*cur);
-      }
+      list<NetScope *> scope_list;
 
       scope_list = des->find_package_scopes();
       for (list<NetScope*>::const_iterator cur = scope_list.begin()
@@ -1274,6 +1243,12 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
 	    break;
 	  case NetCaseCmp::NEQ:
 	    obj->type = IVL_LPM_CMP_NEE;
+	    break;
+	  case NetCaseCmp::WEQ:
+	    obj->type = IVL_LPM_CMP_WEQ;
+	    break;
+	  case NetCaseCmp::WNE:
+	    obj->type = IVL_LPM_CMP_WNE;
 	    break;
 	  case NetCaseCmp::XEQ:
 	      obj->type = IVL_LPM_CMP_EQX;
@@ -2544,6 +2519,7 @@ void dll_target::scope(const NetScope*net)
 		case NetScope::PACKAGE:
 		  cerr << "?:?" << ": internal error: "
 		       << "Package scopes should not have parents." << endl;
+		  // fallthrough
 		case NetScope::MODULE:
 		  scop->type_ = IVL_SCT_MODULE;
 		  scop->tname_ = net->module_name();

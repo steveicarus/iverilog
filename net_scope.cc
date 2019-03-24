@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -112,10 +112,10 @@ void Definitions::add_class(netclass_t*net_class)
  * in question.
  */
 
-NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest,
-		   bool program, bool interface)
+NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, NetScope*in_unit,
+		   bool nest, bool program, bool interface, bool compilation_unit)
 : type_(t), name_(n), nested_module_(nest), program_block_(program),
-  is_interface_(interface), up_(up)
+  is_interface_(interface), is_unit_(compilation_unit), unit_(in_unit), up_(up)
 {
       events_ = 0;
       lcounter_ = 0;
@@ -123,6 +123,9 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest,
       is_cell_ = false;
       calls_stask_ = false;
       in_final_ = false;
+
+      if (compilation_unit)
+	    unit_ = this;
 
       if (up) {
 	    assert(t!=CLASS);
@@ -133,6 +136,8 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest,
 	    time_from_timescale_ = up->time_from_timescale();
 	      // Need to check for duplicate names?
 	    up_->children_[name_] = this;
+	    if (unit_ == 0)
+		  unit_ = up_->unit_;
       } else {
 	    need_const_func_ = false;
 	    is_const_func_ = false;
@@ -210,6 +215,8 @@ const netenum_t*NetScope::find_enumeration_for_name(perm_string name)
 	    NetEConstEnum*tmp = cur_scope->enum_names_[name];
 	    if (tmp) break;
 	    cur_scope = cur_scope->parent();
+	    if (cur_scope == 0)
+		  cur_scope = unit_;
       }
 
       assert(cur_scope);
@@ -304,16 +311,16 @@ bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
  */
 bool NetScope::replace_parameter(perm_string key, PExpr*val, NetScope*scope)
 {
-      bool flag = false;
+      if (parameters.find(key) == parameters.end())
+	    return false;
 
-      if (parameters.find(key) != parameters.end()) {
-	    param_expr_t&ref = parameters[key];
-	    ref.val_expr = val;
-            ref.val_scope = scope;
-	    flag = true;
-      }
+      param_expr_t&ref = parameters[key];
+      if (ref.local_flag)
+	    return false;
 
-      return flag;
+      ref.val_expr = val;
+      ref.val_scope = scope;
+      return true;
 }
 
 bool NetScope::make_parameter_unannotatable(perm_string key)
@@ -364,12 +371,7 @@ const NetExpr* NetScope::get_parameter(Design*des,
       msb = 0;
       lsb = 0;
       const NetExpr*tmp = enumeration_expr(key);
-      if (tmp) return tmp;
-
-      tmp = des->enumeration_expr(key);
-      if (tmp) return tmp;
-
-      return 0;
+      return tmp;
 }
 
 NetScope::param_ref_t NetScope::find_parameter(perm_string key)
@@ -384,11 +386,6 @@ NetScope::param_ref_t NetScope::find_parameter(perm_string key)
       assert(0);
 	// But return something to avoid a compiler warning.
       return idx;
-}
-
-NetScope::TYPE NetScope::type() const
-{
-      return type_;
 }
 
 void NetScope::print_type(ostream&stream) const
@@ -657,14 +654,10 @@ netclass_t*NetScope::find_class(perm_string name)
       if (type_==CLASS && name_==hname_t(name))
 	    return class_def_;
 
-	// Look for the class that directly within this scope.
+	// Look for the class directly within this scope.
       map<perm_string,netclass_t*>::const_iterator cur = classes_.find(name);
       if (cur != classes_.end())
 	    return cur->second;
-
-	// If this is a module scope, then look no further.
-      if (type_==MODULE)
-	    return 0;
 
       if (up_==0 && type_==CLASS) {
 	    assert(class_def_);
@@ -673,12 +666,16 @@ netclass_t*NetScope::find_class(perm_string name)
 	    return def_parent->find_class(name);
       }
 
-	// If there is no further to look, ...
-      if (up_ == 0)
-	    return 0;
-
 	// Try looking up for the class.
-      return up_->find_class(name);
+      if (up_!=0 && type_!=MODULE)
+	    return up_->find_class(name);
+
+	// Try the compilation unit.
+      if (unit_ != 0)
+	    return unit_->find_class(name);
+
+	// Nowhere left to try...
+      return 0;
 }
 
 /*

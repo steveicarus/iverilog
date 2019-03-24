@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -146,6 +146,8 @@ static char* strdupnew(char const *str)
 ".cmp/gt"   { return K_CMP_GT; }
 ".cmp/gt.r" { return K_CMP_GT_R; }
 ".cmp/gt.s" { return K_CMP_GT_S; }
+".cmp/weq"  { return K_CMP_WEQ; }
+".cmp/wne"  { return K_CMP_WNE; }
 ".concat"   { return K_CONCAT; }
 ".concat8"  { return K_CONCAT8; }
 ".delay"    { return K_DELAY; }
@@ -194,6 +196,9 @@ static char* strdupnew(char const *str)
 ".reduce/xnor" { return K_REDUCE_XNOR; }
 ".repeat"   { return K_REPEAT; }
 ".resolv"   { return K_RESOLV; }
+".rtran"    { return K_RTRAN; }
+".rtranif0" { return K_RTRANIF0; }
+".rtranif1" { return K_RTRANIF1; }
 ".scope"    { return K_SCOPE; }
 ".sfunc"    { return K_SFUNC; }
 ".sfunc/e"  { return K_SFUNC_E; }
@@ -333,7 +338,7 @@ void destroy_lexor()
 {
 # ifdef FLEX_SCANNER
 #   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5
-#     if defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
+#     if YY_FLEX_MINOR_VERSION > 5 || defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
     yylex_destroy();
 #     endif
 #   endif

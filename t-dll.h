@@ -1,7 +1,7 @@
 #ifndef IVL_t_dll_H
 #define IVL_t_dll_H
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -645,7 +645,7 @@ struct ivl_parameter_s {
  * that generally only matters for VPI calls.
  */
 struct ivl_process_s {
-      ivl_process_type_t type_ : 2;
+      ivl_process_type_t type_ : 3;
       unsigned int analog_flag : 1;
       ivl_scope_t scope_;
       ivl_statement_t stmt_;
@@ -862,6 +862,7 @@ struct ivl_statement_s {
 	    } utask_;
 
 	    struct { /* IVL_ST_TRIGGER IVL_ST_WAIT */
+		  unsigned needs_t0_trigger;
 		  unsigned nevent;
 		  union {
 			ivl_event_t event;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -393,6 +393,9 @@ static int show_process(ivl_process_t net, void*x)
 	    fprintf(out, "    initial\n");
 	    break;
 	  case IVL_PR_ALWAYS:
+	  case IVL_PR_ALWAYS_COMB:
+	  case IVL_PR_ALWAYS_FF:
+	  case IVL_PR_ALWAYS_LATCH:
 	    fprintf(out, "    always\n");
 	    break;
 	  case IVL_PR_FINAL:

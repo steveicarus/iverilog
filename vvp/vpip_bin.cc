@@ -100,6 +100,7 @@ void vpip_bin_str_to_vec4(vvp_vector4_t&vec4, const char*buf)
 		  pad = BIT4_1;
 		  break;
 	    }
+	    // fallthrough
 	  default:  // Everything else gets '0' padded/
 	    pad = BIT4_0;
 	    break;

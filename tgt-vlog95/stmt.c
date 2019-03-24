@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2017 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1606,6 +1606,9 @@ void emit_process(ivl_scope_t scope, ivl_process_t proc)
             fprintf(vlog_out, "initial");
             break;
         case IVL_PR_ALWAYS:
+        case IVL_PR_ALWAYS_COMB:
+        case IVL_PR_ALWAYS_FF:
+        case IVL_PR_ALWAYS_LATCH:
             fprintf(vlog_out, "always");
             break;
         case IVL_PR_FINAL:

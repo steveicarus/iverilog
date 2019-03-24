@@ -1,7 +1,7 @@
 #ifndef IVL_codes_H
 #define IVL_codes_H
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -75,6 +75,8 @@ extern bool of_CMPIS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPSTR(vthread_t thr, vvp_code_t code);
 extern bool of_CMPU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPIU(vthread_t thr, vvp_code_t code);
+extern bool of_CMPWE(vthread_t thr, vvp_code_t code);
+extern bool of_CMPWNE(vthread_t thr, vvp_code_t code);
 extern bool of_CMPWR(vthread_t thr, vvp_code_t code);
 extern bool of_CMPWS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPWU(vthread_t thr, vvp_code_t code);

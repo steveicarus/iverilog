@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -132,9 +132,19 @@ char *generic_get_str(int code, vpiHandle ref, const char *name, const char *ind
       return res;
 }
 
-static vpiHandle fill_in_net4(struct __vpiSignal*obj,
-			      const char*name, int msb, int lsb,
-			      bool signed_flag, vvp_net_t*node);
+static vpiHandle fill_in_net4(struct __vpiSignal*obj, __vpiScope*scope,
+                              const char*name, int msb, int lsb,
+                              bool signed_flag, vvp_net_t*node);
+
+static vpiHandle fill_in_var4(struct __vpiSignal*obj,
+                              const char*name, int msb, int lsb,
+                              bool signed_flag, vvp_net_t*node)
+{
+	// Variable declarations are always resolved immediately,
+	// so we can assume they belong in the current scope.
+      return fill_in_net4(obj, vpip_peek_current_scope(),
+			  name, msb, lsb, signed_flag, node);
+}
 
 /*
  * The standard formatting/conversion routines.
@@ -972,7 +982,7 @@ struct signal_longint : public __vpiSignal {
 vpiHandle vpip_make_int4(const char*name, int msb, int lsb, vvp_net_t*vec)
 {
       __vpiSignal*obj = new signal_integer;
-      return fill_in_net4(obj, name, msb, lsb, true, vec);
+      return fill_in_var4(obj, name, msb, lsb, true, vec);
 }
 
 /*
@@ -1011,7 +1021,7 @@ vpiHandle vpip_make_int2(const char*name, int msb, int lsb, bool signed_flag,
 	    }
       }
 
-      return fill_in_net4(obj, name, msb, lsb, signed_flag, vec);
+      return fill_in_var4(obj, name, msb, lsb, signed_flag, vec);
 }
 
 /*
@@ -1021,7 +1031,7 @@ vpiHandle vpip_make_var4(const char*name, int msb, int lsb,
 			bool signed_flag, vvp_net_t*vec)
 {
       __vpiSignal*obj = new signal_reg;
-      return fill_in_net4(obj, name, msb, lsb, signed_flag, vec);
+      return fill_in_var4(obj, name, msb, lsb, signed_flag, vec);
 }
 
 #ifdef CHECK_WITH_VALGRIND
@@ -1116,7 +1126,7 @@ void signal_pool_delete()
  * The name is the PLI name for the object. If it is an array it is
  * <name>[<index>].
  */
-static vpiHandle fill_in_net4(struct __vpiSignal*obj,
+static vpiHandle fill_in_net4(struct __vpiSignal*obj, __vpiScope*scope,
 			      const char*name, int msb, int lsb,
 			      bool signed_flag, vvp_net_t*node)
 {
@@ -1130,18 +1140,19 @@ static vpiHandle fill_in_net4(struct __vpiSignal*obj,
 	// Place this object within a scope. If this object is
 	// attached to an array, then this value will be replaced with
 	// the handle to the parent.
-      obj->within.scope = vpip_peek_current_scope();
+      obj->within.scope = scope;
 
       count_vpi_nets += 1;
 
       return obj;
 }
 
-vpiHandle vpip_make_net4(const char*name, int msb, int lsb,
+vpiHandle vpip_make_net4(__vpiScope*scope,
+			 const char*name, int msb, int lsb,
 			 bool signed_flag, vvp_net_t*node)
 {
       struct __vpiSignal*obj = new signal_net;
-      return fill_in_net4(obj, name, msb, lsb, signed_flag, node);
+      return fill_in_net4(obj, scope, name, msb, lsb, signed_flag, node);
 }
 
 static int PV_get_base(struct __vpiPV*rfp)
@@ -1189,6 +1200,7 @@ static int PV_get(int code, vpiHandle ref)
 
 	case vpiLeftRange:
             rval += rfp->width - 1;
+	    // fallthrough
 	case vpiRightRange:
 	    rval += vpi_get(vpiRightRange, rfp->parent) + PV_get_base(rfp);
 	    return rval;

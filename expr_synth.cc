@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -274,7 +274,18 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       if (op_ == 'E' || op_ == 'N') {
 	    NetCaseCmp*gate = new NetCaseCmp(scope, scope->local_symbol(),
-					     width, op_=='E'?NetCaseCmp::EEQ:NetCaseCmp::NEQ);
+					     width, op_=='E' ? NetCaseCmp::EEQ : NetCaseCmp::NEQ);
+	    gate->set_line(*this);
+	    connect(gate->pin(0), osig->pin(0));
+	    connect(gate->pin(1), lsig->pin(0));
+	    connect(gate->pin(2), rsig->pin(0));
+	    des->add_node(gate);
+	    return osig;
+      }
+
+      if (op_ == 'w' || op_ == 'W') {
+	    NetCaseCmp*gate = new NetCaseCmp(scope, scope->local_symbol(),
+					     width, op_=='w' ? NetCaseCmp::WEQ : NetCaseCmp::WNE);
 	    gate->set_line(*this);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
@@ -335,6 +346,7 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope, NetExpr*root)
 		  des->errors += 1;
 		  return 0;
 	    }
+	    // fallthrough
 	  case 'e': // ==
 	    connect(dev->pin_AEB(), osig->pin(0));
 	    break;
@@ -353,6 +365,7 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope, NetExpr*root)
 		  des->errors += 1;
 		  return 0;
 	    }
+	    // fallthrough
 	  case 'n': // !=
 	    connect(dev->pin_ANEB(), osig->pin(0));
 	    break;
@@ -1347,6 +1360,7 @@ static NetEvWait* make_func_trigger(Design*des, NetScope*scope, NetExpr*root)
       if (nset && (nset->size() > 0)) {
             NetEvent*ev = new NetEvent(scope->local_symbol());
             ev->set_line(*root);
+            ev->local_flag(true);
 
             NetEvProbe*pr = new NetEvProbe(scope, scope->local_symbol(),
                                            ev, NetEvProbe::ANYEDGE,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -165,7 +165,8 @@ bool netclass_t::test_for_missing_initializers() const
 NetScope*netclass_t::method_from_name(perm_string name) const
 {
       NetScope*task = class_scope_->child( hname_t(name) );
-      if (task == 0) return 0;
+      if ((task == 0) && super_)
+	    task = super_->method_from_name(name);
       return task;
 
 }

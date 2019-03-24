@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -32,25 +32,96 @@ static unsigned dll_list_cnt = 0;
 
 typedef void (*vlog_startup_routines_t)(void);
 
+# define VPIP_MODULE_PATH_MAX 64
 
-const char* vpip_module_path[64] = {
+static const char* vpip_module_path[VPIP_MODULE_PATH_MAX] = {0};
+
+static unsigned vpip_module_path_cnt = 0;
+
+static bool disable_default_paths = false;
+
+void vpip_clear_module_paths()
+{
+      vpip_module_path_cnt = 0;
+      vpip_module_path[0] = 0;
+      disable_default_paths = true;
+}
+
+void vpip_add_module_path(const char*path)
+{
+      if (vpip_module_path_cnt >= VPIP_MODULE_PATH_MAX) {
+	    fprintf(stderr, "Too many module paths specified\n");
+	    exit(1);
+      }
+      vpip_module_path[vpip_module_path_cnt++] = path;
+}
+
+void vpip_add_env_and_default_module_paths()
+{
+      if (disable_default_paths)
+	    return;
+
+      if (char *var = ::getenv("IVERILOG_VPI_MODULE_PATH")) {
+            char *ptr = var;
+            char *end = var+strlen(var);
+            int len = 0;
+            while (ptr <= end) {
+                  if (*ptr == 0 || *ptr == ':' || *ptr == ';') {
+                        if (len > 0) {
+                              vpip_add_module_path(strndup(var, len));
+                        }
+                        len = 0;
+                        var = ptr+1;
+                  } else {
+                        len++;
+                  }
+                  ptr++;
+            }
+      }
+
+#ifdef __MINGW32__
+	/* Calculate the module path from the path to the command.
+	   This is necessary because of the installation process on
+	   Windows. Mostly, it is those darn drive letters, but oh
+	   well. We know the command path is formed like this:
+
+		D:\iverilog\bin\iverilog.exe
+
+	   The IVL_ROOT in a Windows installation is the path:
+
+		D:\iverilog\lib\ivl$(suffix)
+
+	   so we chop the file name and the last directory by
+	   turning the last two \ characters to null. Then we append
+	   the lib\ivl$(suffix) to finish. */
+      char *s;
+      char basepath[4096], tmp[4096];
+      GetModuleFileName(NULL, tmp, sizeof tmp);
+	/* Convert to a short name to remove any embedded spaces. */
+      GetShortPathName(tmp, basepath, sizeof basepath);
+      s = strrchr(basepath, '\\');
+      if (s) *s = 0;
+      else {
+	    fprintf(stderr, "%s: Missing first \\ in exe path!\n", tmp);
+	    exit(1);
+      }
+      s = strrchr(basepath, '\\');
+      if (s) *s = 0;
+      else {
+	    fprintf(stderr, "%s: Missing second \\ in exe path!\n", tmp);
+	    exit(1);
+      }
+      strcat(s, "\\lib\\ivl" IVL_SUFFIX);
+      vpip_add_module_path(strdup(basepath));
+#else
 #ifdef MODULE_DIR1
-      MODULE_DIR1,
+      vpip_add_module_path(MODULE_DIR1);
+#endif
 #endif
 #ifdef MODULE_DIR2
-      MODULE_DIR2,
+      vpip_add_module_path(MODULE_DIR2);
 #endif
-      0
-};
-
-unsigned vpip_module_path_cnt = 0
-#ifdef MODULE_DIR1
-         + 1
-#endif
-#ifdef MODULE_DIR2
-         + 1
-#endif
-;
+}
 
 void load_module_delete(void)
 {

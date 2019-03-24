@@ -62,20 +62,20 @@ ivl_variable_type_t struct_type_t::figure_packed_base_type(void) const
  * out the base type of the packed variable. Elaboration, later on,
  * well figure out the rest.
  */
-static void pform_set_packed_struct(struct_type_t*struct_type, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
+static void pform_set_packed_struct(const struct vlltype&li, struct_type_t*struct_type, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
       ivl_variable_type_t base_type = struct_type->figure_packed_base_type();
 
-      PWire*net = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, base_type);
+      PWire*net = pform_get_make_wire_in_scope(li, name, net_type, NetNet::NOT_A_PORT, base_type);
       assert(net);
       net->set_data_type(struct_type);
       pform_bind_attributes(net->attributes, attr, true);
 }
 
-static void pform_set_struct_type(struct_type_t*struct_type, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
+static void pform_set_struct_type(const struct vlltype&li, struct_type_t*struct_type, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
       if (struct_type->packed_flag) {
-	    pform_set_packed_struct(struct_type, name, net_type, attr);
+	    pform_set_packed_struct(li, struct_type, name, net_type, attr);
 	    return;
       }
 
@@ -83,11 +83,11 @@ static void pform_set_struct_type(struct_type_t*struct_type, perm_string name, N
 	// a "sorry" message, so no need to do anything here.
 }
 
-void pform_set_struct_type(struct_type_t*struct_type, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
+void pform_set_struct_type(const struct vlltype&li, struct_type_t*struct_type, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur) {
-	    pform_set_struct_type(struct_type, *cur, net_type, attr);
+	    pform_set_struct_type(li, struct_type, *cur, net_type, attr);
       }
 }
 
@@ -99,7 +99,7 @@ static void pform_makewire(const struct vlltype&li,
 {
       ivl_variable_type_t base_type = struct_type->figure_packed_base_type();
 
-      PWire*cur = pform_get_make_wire_in_scope(name, NetNet::WIRE, ptype, base_type);
+      PWire*cur = pform_get_make_wire_in_scope(li, name, NetNet::WIRE, ptype, base_type);
       assert(cur);
       FILE_NAME(cur, li);
       cur->set_data_type(struct_type);

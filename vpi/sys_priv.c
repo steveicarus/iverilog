@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,17 +37,17 @@ PLI_UINT64 timerec_to_time64(const struct t_vpi_time*timerec)
 
 char *as_escaped(char *arg)
 {
-      unsigned idx, cur, cnt, len = strlen(arg);
-      char *res = (char *) malloc(sizeof(char *) * len);
+      unsigned idx, cur, cnt, len = strlen(arg) + 1;
+      char *res = (char *) malloc(sizeof(char) * len);
       cur = 0;
-      cnt = len;
+      cnt = len - 1;
       for (idx = 0; idx < cnt; idx++) {
 	    if (isprint((int)arg[idx])) {
 		  res[cur] = arg[idx];
 		  cur += 1;
 	    } else {
 		  len += 3;
-		  res = (char *) realloc(res, sizeof(char *) * len);
+		  res = (char *) realloc(res, sizeof(char) * len);
 		  sprintf(&(res[cur]), "\\%03o", arg[idx]);
 		  cur += 4;
 	    }
@@ -398,4 +398,24 @@ PLI_INT32 sys_one_string_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       check_for_extra_args(argv, callh, name, "a single string argument", 0);
 
       return 0;
+}
+
+/* Return an integer value to the caller. */
+void put_integer_value(vpiHandle callh, PLI_INT32 result)
+{
+      s_vpi_value val;
+
+      val.format = vpiIntVal;
+      val.value.integer = result;
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
+}
+
+/* Return a scalar value to the caller. */
+void put_scalar_value(vpiHandle callh, PLI_INT32 result)
+{
+      s_vpi_value val;
+
+      val.format = vpiScalarVal;
+      val.value.scalar = result;
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
 }

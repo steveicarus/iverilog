@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -570,11 +570,11 @@ NetEConst* NetEBComp::eval_eqeq_(bool ne_flag, const NetExpr*le, const NetExpr*r
       const verinum::V ne_res = ne_flag? verinum::V1 : verinum::V0;
 
       verinum::V res = eq_res;
-      unsigned top = lv.len();
-      if (rv.len() < top)
-	    top = rv.len();
 
-      for (unsigned idx = 0 ;  idx < top ;  idx += 1) {
+	// The two expressions should already be padded to the same size.
+      ivl_assert(*this, lv.len() == rv.len());
+
+      for (unsigned idx = 0 ;  idx < lv.len() ;  idx += 1) {
 
 	    bool x_bit_present = false;
 
@@ -611,60 +611,6 @@ NetEConst* NetEBComp::eval_eqeq_(bool ne_flag, const NetExpr*le, const NetExpr*r
 	    }
       }
 
-      if (res != verinum::Vx) {
-	    verinum::V lpad = verinum::V0;
-	    verinum::V rpad = verinum::V0;
-
-	    if (lv.has_sign() && lv.get(lv.len()-1) == verinum::V1)
-		  lpad = verinum::V1;
-	    if (rv.has_sign() && rv.get(rv.len()-1) == verinum::V1)
-		  rpad = verinum::V1;
-
-	    for (unsigned idx = top ;  idx < lv.len() ;  idx += 1)
-		  switch (lv.get(idx)) {
-
-		      case verinum::Vx:
-		      case verinum::Vz:
-			res = verinum::Vx;
-			break;
-
-		      case verinum::V0:
-			if (res != verinum::Vx && rpad != verinum::V0)
-			      res = ne_res;
-			break;
-
-		      case verinum::V1:
-			if (res != verinum::Vx && rpad != verinum::V1)
-			      res = ne_res;
-			break;
-
-		      default:
-			break;
-		  }
-
-	    for (unsigned idx = top ;  idx < rv.len() ;  idx += 1)
-		  switch (rv.get(idx)) {
-
-		      case verinum::Vx:
-		      case verinum::Vz:
-			res = verinum::Vx;
-			break;
-
-		      case verinum::V0:
-			if (res != verinum::Vx && lpad != verinum::V0)
-			      res = ne_res;
-			break;
-
-		      case verinum::V1:
-			if (res != verinum::Vx && lpad != verinum::V1)
-			      res = ne_res;
-			break;
-
-		      default:
-			break;
-		  }
-      }
-
       NetEConst*result = new NetEConst(verinum(res, 1));
       ivl_assert(*this, result);
       return result;
@@ -681,49 +627,67 @@ NetEConst* NetEBComp::eval_eqeqeq_(bool ne_flag, const NetExpr*le, const NetExpr
 
       verinum::V res = verinum::V1;
 
-	// Find the smallest argument length.
-      unsigned cnt = lv.len();
-      if (cnt > rv.len()) cnt = rv.len();
+	// The two expressions should already be padded to the same size.
+      ivl_assert(*this, lv.len() == rv.len());
 
-	// Check the common bits.
-      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < lv.len() ;  idx += 1)
 	    if (lv.get(idx) != rv.get(idx)) {
 		  res = verinum::V0;
 		  break;
 	    }
 
-      bool is_signed = lv.has_sign() && rv.has_sign();
-
-	// If the left value is longer check it against the pad bit.
-      if (res == verinum::V1) {
-	    verinum::V pad = verinum::V0;
-	    if (is_signed)
-		  pad = rv.get(rv.len()-1);
-
-	    for (unsigned idx = cnt ;  idx < lv.len() ;  idx += 1)
-		  if (lv.get(idx) != pad) {
-			res = verinum::V0;
-			break;
-		  }
-      }
-
-	// If the right value is longer check it against the pad bit.
-      if (res == verinum::V1) {
-	    verinum::V pad = verinum::V0;
-	    if (is_signed)
-		  pad = lv.get(lv.len()-1);
-
-	    for (unsigned idx = cnt ;  idx < rv.len() ;  idx += 1) {
-		  if (rv.get(idx) != pad) {
-			res = verinum::V0;
-			break;
-		  }
-	    }
-      }
-
       if (ne_flag) {
 	    if (res == verinum::V0) res = verinum::V1;
 	    else res = verinum::V0;
+      }
+
+      NetEConst*result = new NetEConst(verinum(res, 1));
+      ivl_assert(*this, result);
+      return result;
+}
+
+NetEConst* NetEBComp::eval_weqeq_(bool ne_flag, const NetExpr*le, const NetExpr*re) const
+{
+      const NetEConst*lc = dynamic_cast<const NetEConst*>(le);
+      const NetEConst*rc = dynamic_cast<const NetEConst*>(re);
+      if (lc == 0 || rc == 0) return 0;
+
+      const verinum&lv = lc->value();
+      const verinum&rv = rc->value();
+
+      const verinum::V eq_res = ne_flag ? verinum::V0 : verinum::V1;
+      const verinum::V ne_res = ne_flag ? verinum::V1 : verinum::V0;
+
+      verinum::V res = eq_res;
+
+	// The two expressions should already be padded to the same size.
+      ivl_assert(*this, lv.len() == rv.len());
+
+      for (unsigned idx = 0 ;  idx < lv.len() ;  idx += 1) {
+	      // An X or Z in the R-value matches any L-value.
+	    switch (rv.get(idx)) {
+		case verinum::Vx:
+		case verinum::Vz:
+		  continue;
+		default:
+		  break;
+	    }
+
+	      // An X or Z in the L-value that is not matches by an R-value X/Z returns undefined.
+	    switch (lv.get(idx)) {
+		case verinum::Vx:
+		case verinum::Vz:
+		  res = verinum::Vx;
+		  continue;
+		default:
+		  break;
+	    }
+
+	      // A hard (0/1) mismatch gives a not-equal result.
+	    if (rv.get(idx) != lv.get(idx)) {
+		  res = ne_res;
+		  break;
+	    }
       }
 
       NetEConst*result = new NetEConst(verinum(res, 1));
@@ -744,6 +708,10 @@ NetEConst* NetEBComp::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 	    res = eval_eqeq_(false, l, r);
 	    break;
 
+	  case 'w': // Wild equality (==?)
+	    res = eval_weqeq_(false, l, r);
+	    break;
+
 	  case 'G': // >=
 	    res = eval_gteq_(l, r);
 	    break;
@@ -758,6 +726,10 @@ NetEConst* NetEBComp::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
 	  case 'n': // not-equal (!=)
 	    res = eval_eqeq_(true, l, r);
+	    break;
+
+	  case 'W': // Wild not-equal (!=?)
+	    res = eval_weqeq_(true, l, r);
 	    break;
 
 	  case '<': // Less than
@@ -1102,6 +1074,7 @@ NetEConst* NetEBShift::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 		  break;
 		case 'r':
                   lv.has_sign(false);
+		  // fallthrough
 		case 'R':
 		  val = cast_to_width(lv >> shift, wid);
 		  break;
@@ -1553,6 +1526,7 @@ NetEConst* NetEUReduce::eval_arguments_(const NetExpr*ex) const
 
 	  case 'A':
 		invert = true;
+		// fallthrough
 	  case '&': {
 		res = verinum::V1;
 		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
@@ -1562,6 +1536,7 @@ NetEConst* NetEUReduce::eval_arguments_(const NetExpr*ex) const
 
 	  case 'N':
 		invert = true;
+		// fallthrough
 	  case '|': {
 		res = verinum::V0;
 		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
@@ -1571,6 +1546,7 @@ NetEConst* NetEUReduce::eval_arguments_(const NetExpr*ex) const
 
 	  case 'X':
 		invert = true;
+		// fallthrough
 	  case '^': {
 		  /* Reduction XOR. */
 		unsigned ones = 0, unknown = 0;
@@ -1622,6 +1598,7 @@ NetExpr* NetECast::eval_arguments_(const NetExpr*ex) const
 			res_val = cast_to_width(res_val, expr_width());
 		  res = new NetEConst(res_val);
 	    }
+	    // fallthrough
 	  case 'v':
 	    if (const NetECReal*val = dynamic_cast<const NetECReal*>(ex)) {
 		  verinum res_val(val->value().as_double(), false);
@@ -1936,15 +1913,111 @@ NetExpr* NetESFunc::evaluate_min_max_(ID id, const NetExpr*arg0_,
       return res;
 }
 
-NetEConst* NetESFunc::evaluate_countbits_(const NetExpr* /*arg0*/,
-                                          const NetExpr* /*arg1*/) const
+static void no_string_arg(const NetESFunc*info, unsigned arg_num)
 {
-      return 0;
+      cerr << info->get_fileline() << ": error: constant function "
+           << info->name() << "() does not support a string argument ("
+           << arg_num+1 << ")." << endl;
 }
 
-NetEConst* NetESFunc::evaluate_countones_(const NetExpr* /*arg*/) const
+NetEConst* NetESFunc::evaluate_countbits_() const
 {
-      return 0;
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(parms_[0]);
+
+      NetEConst*res = 0;
+
+      if (tmpi) {
+	    verinum value = tmpi->value();
+
+	    if (value.is_string()) {
+		  no_string_arg(this, 0);
+		  return 0;
+	    }
+
+	      /* Find which values need to be counted. */
+	    bool count_0 = false;
+	    bool count_1 = false;
+	    bool count_z = false;
+	    bool count_x = false;
+	    for (unsigned arg=1; arg < parms_.size(); ++arg) {
+		  const NetEConst*argi = dynamic_cast<const NetEConst*>(parms_[arg]);
+		  if (! argi) return 0;
+		  verinum check_for = argi->value();
+		  if (check_for.is_string()) {
+			no_string_arg(this, arg);
+			return 0;
+		  }
+		  switch (check_for[0]) {
+		    case verinum::V0:
+			count_0 = true;
+			break;
+		    case verinum::V1:
+			count_1 = true;
+			break;
+		    case verinum::Vz:
+			count_z = true;
+			break;
+		    case verinum::Vx:
+			count_x = true;
+			break;
+		  }
+	    }
+
+	      /* Search each bit of the vector looking for the values to
+	       * be counted. */
+	    int count = 0;
+	    for (unsigned bit=0; bit < value.len(); ++bit) {
+		  switch (value[bit]) {
+		    case verinum::V0:
+			if (count_0) ++count;
+			break;
+		    case verinum::V1:
+			if (count_1) ++count;
+			break;
+		    case verinum::Vz:
+			if (count_z) ++count;
+			break;
+		    case verinum::Vx:
+			if (count_x) ++count;
+			break;
+		  }
+	    }
+
+	    verinum tmp (count, integer_width);
+	    tmp.has_sign(true);
+	    res = new NetEConst(tmp);
+	    ivl_assert(*this, res);
+      }
+
+      return res;
+}
+
+NetEConst* NetESFunc::evaluate_countones_(const NetExpr* arg) const
+{
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg);
+
+      NetEConst*res = 0;
+
+      if (tmpi) {
+	    verinum value = tmpi->value();
+	    int count = 0;
+
+	    if (value.is_string()) {
+		  no_string_arg(this, 0);
+		  return 0;
+	    }
+
+	    for (unsigned bit=0; bit < value.len(); ++bit) {
+		  if (value[bit] == verinum::V1) ++count;
+	    }
+
+	    verinum tmp (count, integer_width);
+	    tmp.has_sign(true);
+	    res = new NetEConst(tmp);
+	    ivl_assert(*this, res);
+      }
+
+      return res;
 }
 
 /* Get the total number of dimensions for the given expression. */
@@ -1967,19 +2040,92 @@ NetEConst* NetESFunc::evaluate_dimensions_(const NetExpr*arg) const
       return new NetEConst(verinum(verinum(res), integer_width));
 }
 
-NetEConst* NetESFunc::evaluate_isunknown_(const NetExpr* /*arg*/) const
+NetEConst* NetESFunc::evaluate_isunknown_(const NetExpr* arg) const
 {
-      return 0;
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg);
+
+      NetEConst*res = 0;
+
+      if (tmpi) {
+	    verinum value = tmpi->value();
+	    unsigned is_unknown = 1;
+
+	    if (value.is_string()) {
+		  no_string_arg(this, 0);
+		  return 0;
+	    }
+
+	    if (value.is_defined()) is_unknown = 0;
+
+	    verinum tmp (is_unknown, 1U);
+	    tmp.has_sign(false);
+	    res = new NetEConst(tmp);
+	    ivl_assert(*this, res);
+      }
+
+      return res;
 }
 
-NetEConst* NetESFunc::evaluate_onehot_(const NetExpr* /*arg*/) const
+static bool is_onehot(verinum&value, bool zero_is_okay)
 {
-      return 0;
+      bool found_a_one = false;
+
+      for (unsigned bit=0; bit < value.len(); ++bit) {
+	    if (value[bit] == verinum::V1) {
+		  if (found_a_one) return false;
+		  found_a_one = true;
+	    }
+      }
+
+	/* If no one bit was found return true if zero is okay. */
+      if (zero_is_okay) found_a_one = true;
+      return found_a_one;
 }
 
-NetEConst* NetESFunc::evaluate_onehot0_(const NetExpr* /*arg*/) const
+NetEConst* NetESFunc::evaluate_onehot_(const NetExpr* arg) const
 {
-      return 0;
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg);
+
+      NetEConst*res = 0;
+
+      if (tmpi) {
+	    verinum value = tmpi->value();
+
+	    if (value.is_string()) {
+		  no_string_arg(this, 0);
+		  return 0;
+	    }
+
+	    verinum tmp (is_onehot(value, false), 1U);
+	    tmp.has_sign(false);
+	    res = new NetEConst(tmp);
+	    ivl_assert(*this, res);
+      }
+
+      return res;
+}
+
+NetEConst* NetESFunc::evaluate_onehot0_(const NetExpr* arg) const
+{
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg);
+
+      NetEConst*res = 0;
+
+      if (tmpi) {
+	    verinum value = tmpi->value();
+
+	    if (value.is_string()) {
+		  no_string_arg(this, 0);
+		  return 0;
+	    }
+
+	    verinum tmp (is_onehot(value, true), 1U);
+	    tmp.has_sign(false);
+	    res = new NetEConst(tmp);
+	    ivl_assert(*this, res);
+      }
+
+      return res;
 }
 
 /* Get the number of unpacked dimensions for the given expression. */
@@ -2151,7 +2297,7 @@ NetExpr* NetESFunc::evaluate_two_arg_(ID id, const NetExpr*arg0,
 {
       switch (id) {
 	  case CTBITS:
-	    return evaluate_countbits_(arg0, arg1);
+	    return evaluate_countbits_();
 	      /* The array functions are handled together. */
 	  case HIGH:
 	  case INCR:
@@ -2222,12 +2368,12 @@ NetESFunc::ID NetESFunc::built_in_id_() const
 	    built_in_func["$unpacked_dimensions" ] = UPDIMS;
       }
 
-	/* These are available in 1800-2009 and later. */
+	/* This is available in 1800-2009 and later. */
       if (funcs_need_init && (generation_flag >= GN_VER2009)) {
 	    built_in_func["$countones" ] = CTONES;
       }
 
-	/* These are available in 1800-2012 and later. */
+	/* This is available in 1800-2012 and later. */
       if (funcs_need_init && (generation_flag >= GN_VER2012)) {
 	    built_in_func["$countbits" ] = CTBITS;
       }
@@ -2254,7 +2400,7 @@ NetESFunc::ID NetESFunc::built_in_id_() const
 
 NetExpr* NetESFunc::eval_tree()
 {
-	/* Get the ID for this system function if it is can be used as a
+	/* Get the ID for this system function if it can be used as a
 	 * constant function. */
       ID id = built_in_id_();
       if (id == NOT_BUILT_IN) return 0;
@@ -2262,8 +2408,9 @@ NetExpr* NetESFunc::eval_tree()
       switch (parms_.size()) {
 	  case 1:
 	    if (! takes_nargs_(id, 1)) {
-		  cerr << get_fileline() << ": error: " << name_
-		       << "() does not support a single argument." << endl;
+		  cerr << get_fileline() << ": error: constant function "
+		       << name_ << "() does not support a single argument."
+		       << endl;
 		  return 0;
 	    }
 	    eval_expr(parms_[0]);
@@ -2271,8 +2418,9 @@ NetExpr* NetESFunc::eval_tree()
 
 	  case 2:
 	    if (! takes_nargs_(id, 2)) {
-		  cerr << get_fileline() << ": error: " << name_
-		       << "() does not support two arguments." << endl;
+		  cerr << get_fileline() << ": error: constant function "
+		       << name_ << "() does not support two arguments."
+		       << endl;
 		  return 0;
 	    }
 	    eval_expr(parms_[0]);
@@ -2282,15 +2430,21 @@ NetExpr* NetESFunc::eval_tree()
 	  default:
 	      /* Check to see if the function was called correctly. */
 	    if (! takes_nargs_(id, parms_.size())) {
-		  cerr << get_fileline() << ": error: " << name_
-		       << "() does not support " << parms_.size()
+		  cerr << get_fileline() << ": error: constant function "
+		       << name_ << "() does not support " << parms_.size()
 		       << " arguments." << endl;
 		  return 0;
 	    }
-// HERE: Need to add support for a multi argument $countbits().
-	    cerr << get_fileline() << ": sorry: functions with "
-	         << parms_.size() << " arguments are not supported: "
-	         << name_ << "()." << endl;
+	    if (id == CTBITS) {
+		  for (unsigned bit = 0; bit < parms_.size(); ++bit) {
+			eval_expr(parms_[bit]);
+		  }
+		  return evaluate_countbits_();
+	    } else {
+		  cerr << get_fileline() << ": sorry: constant functions with "
+		       << parms_.size() << " arguments are not supported: "
+		       << name_ << "()." << endl;
+	    }
 	    return 0;
       }
 }

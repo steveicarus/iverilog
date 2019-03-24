@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2012-2014  Martin Whitaker. (icarus@martin-whitaker.me.uk)
+ *  Copyright (C) 2012-2018  Martin Whitaker. (icarus@martin-whitaker.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ static void check_net_arg(vpiHandle arg, vpiHandle callh, const char *name)
 	  case vpiPartSelect:
             if (vpi_get(vpiType, vpi_handle(vpiParent, arg)) != vpiNet)
                   break;
+	    // fallthrough
 	  case vpiNet:
 	    if (vpi_get(vpiSize, arg) != 1)
                   break;

@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -34,9 +34,6 @@
 class PSpecPath;
 
 extern void lex_end_table();
-
-bool have_timeunit_decl = false;
-bool have_timeprec_decl = false;
 
 static list<pform_range_t>* param_active_range = 0;
 static bool param_active_signed = false;
@@ -468,7 +465,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %token <number> BASED_NUMBER DEC_NUMBER UNBASED_NUMBER
 %token <realtime> REALTIME
 %token K_PLUS_EQ K_MINUS_EQ K_INCR K_DECR
-%token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LP K_LS K_RS K_RSS K_SG
+%token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_WEQ K_WNE K_LP K_LS K_RS K_RSS K_SG
  /* K_CONTRIBUTE is <+, the contribution assign. */
 %token K_CONTRIBUTE
 %token K_PO_POS K_PO_NEG K_POW
@@ -532,8 +529,6 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %token K_tagged K_this K_throughout K_timeprecision K_timeunit K_type
 %token K_typedef K_union K_unique K_var K_virtual K_void K_wait_order
 %token K_wildcard K_with K_within
- /* Fake tokens that are passed once we have an initial token. */
-%token K_timeprecision_check K_timeunit_check
 
  /* The new tokens from 1800-2009. */
 %token K_accept_on K_checker K_endchecker K_eventually K_global K_implies
@@ -598,7 +593,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
 %type <tf_ports> function_item function_item_list function_item_list_opt
 %type <tf_ports> task_item task_item_list task_item_list_opt
-%type <tf_ports> tf_port_declaration tf_port_item tf_port_list tf_port_list_opt
+%type <tf_ports> tf_port_declaration tf_port_item tf_port_item_list tf_port_list tf_port_list_opt
 
 %type <named_pexpr> modport_simple_port port_name parameter_value_byname
 %type <named_pexprs> port_name_list parameter_value_byname_list
@@ -627,6 +622,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <decl_assignments> list_of_variable_decl_assignments
 
 %type <data_type>  data_type data_type_or_implicit data_type_or_implicit_or_void
+%type <data_type>  simple_type_or_string
 %type <class_type> class_identifier
 %type <struct_member>  struct_union_member
 %type <struct_members> struct_union_member_list
@@ -655,6 +651,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <statement> statement statement_item statement_or_null
 %type <statement> compressed_statement
 %type <statement> loop_statement for_step jump_statement
+%type <statement> procedural_assertion_statement
 %type <statement_list> statement_or_null_list statement_or_null_list_opt
 
 %type <statement> analog_statement
@@ -682,7 +679,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %left '|'
 %left '^' K_NXOR K_NOR
 %left '&' K_NAND
-%left K_EQ K_NE K_CEQ K_CNE
+%left K_EQ K_NE K_CEQ K_CNE K_WEQ K_WNE
 %left K_GE K_LE '<' '>'
 %left K_LS K_RS K_RSS
 %left '+' '-'
@@ -691,7 +688,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %left UNARY_PREC
 
 
-/* to resolve dangling else ambiguity. */
+ /* to resolve dangling else ambiguity. */
 %nonassoc less_than_K_else
 %nonassoc K_else
 
@@ -699,12 +696,22 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %nonassoc '('
 %nonassoc K_exclude
 
+ /* to resolve timeunits declaration/redeclaration ambiguity */
+%nonassoc no_timeunits_declaration
+%nonassoc one_timeunits_declaration
+%nonassoc K_timeunit K_timeprecision
+
 %%
 
 
   /* IEEE1800-2005: A.1.2 */
   /* source_text ::= [ timeunits_declaration ] { description } */
-source_text : description_list | ;
+source_text
+  : timeunits_declaration_opt
+      { pform_set_scope_timescale(yyloc); }
+    description_list
+  | /* empty */
+  ;
 
 assertion_item /* IEEE1800-2012: A.6.10 */
   : concurrent_assertion_item
@@ -1136,11 +1143,7 @@ data_type_or_implicit_or_void
       }
   ;
 
-  /* NOTE 1: We pull the "timeunits_declaration" into the description
-     here in order to be a little more flexible with where timeunits
-     statements may go. This may be a bad idea, but it is legacy now. */
-
-  /* NOTE 2: The "module" rule of the description combines the
+  /* NOTE: The "module" rule of the description combines the
      module_declaration, program_declaration, and interface_declaration
      rules from the standard description. */
 
@@ -1725,17 +1728,18 @@ open_range_list /* IEEE1800-2005 A.2.11 */
 
 package_declaration /* IEEE1800-2005 A.1.2 */
   : K_package lifetime_opt IDENTIFIER ';'
-      { pform_start_package_declaration(@1, $3, $2);
-      }
+      { pform_start_package_declaration(@1, $3, $2); }
+    timeunits_declaration_opt
+      { pform_set_scope_timescale(@1); }
     package_item_list_opt
     K_endpackage endlabel_opt
       { pform_end_package_declaration(@1);
 	// If an end label is present make sure it match the package name.
-	if ($8) {
-	      if (strcmp($3,$8) != 0) {
-		    yyerror(@8, "error: End label doesn't match package name");
+	if ($10) {
+	      if (strcmp($3,$10) != 0) {
+		    yyerror(@10, "error: End label doesn't match package name");
 	      }
-	      delete[]$8;
+	      delete[]$10;
 	}
 	delete[]$3;
       }
@@ -1815,6 +1819,21 @@ property_expr /* IEEE1800-2012 A.2.10 */
   : expression
   ;
 
+procedural_assertion_statement /* IEEE1800-2012 A.6.10 */
+  : K_assert '(' expression ')' statement %prec less_than_K_else
+      { yyerror(@1, "sorry: Simple immediate assertion statements not implemented.");
+	$$ = 0;
+      }
+  | K_assert '(' expression ')' K_else statement
+      { yyerror(@1, "sorry: Simple immediate assertion statements not implemented.");
+	$$ = 0;
+      }
+  | K_assert '(' expression ')' statement K_else statement
+      { yyerror(@1, "sorry: Simple immediate assertion statements not implemented.");
+	$$ = 0;
+      }
+  ;
+
   /* The property_qualifier rule is as literally described in the LRM,
      but the use is usually as { property_qualifier }, which is
      implemented by the property_qualifier_opt rule below. */
@@ -1863,6 +1882,60 @@ real_or_realtime
 signing /* IEEE1800-2005: A.2.2.1 */
   : K_signed   { $$ = true; }
   | K_unsigned { $$ = false; }
+  ;
+
+simple_type_or_string /* IEEE1800-2005: A.2.2.1 */
+  : integer_vector_type
+      { ivl_variable_type_t use_vtype = $1;
+	bool reg_flag = false;
+	if (use_vtype == IVL_VT_NO_TYPE) {
+	      use_vtype = IVL_VT_LOGIC;
+	      reg_flag = true;
+	}
+	vector_type_t*tmp = new vector_type_t(use_vtype, false, 0);
+	tmp->reg_flag = reg_flag;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | non_integer_type
+      { real_type_t*tmp = new real_type_t($1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | atom2_type
+      { atom2_type_t*tmp = new atom2_type_t($1, true);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_integer
+      { list<pform_range_t>*pd = make_range_from_width(integer_width);
+	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, true, pd);
+	tmp->reg_flag = true;
+	tmp->integer_flag = true;
+	$$ = tmp;
+      }
+  | K_time
+      { list<pform_range_t>*pd = make_range_from_width(64);
+	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, pd);
+	tmp->reg_flag = !gn_system_verilog();
+	$$ = tmp;
+      }
+  | TYPE_IDENTIFIER
+      { $$ = $1.type;
+	delete[]$1.text;
+      }
+  | PACKAGE_IDENTIFIER K_SCOPE_RES
+      { lex_in_package_scope($1); }
+    TYPE_IDENTIFIER
+      { lex_in_package_scope(0);
+	$$ = $4.type;
+	delete[]$4.text;
+      }
+  | K_string
+      { string_type_t*tmp = new string_type_t;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
   ;
 
 statement /* IEEE1800-2005: A.6.4 */
@@ -2028,7 +2101,10 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 
   | K_task lifetime_opt IDENTIFIER error K_endtask
       {
-	assert(current_task == 0);
+	if (current_task) {
+	      pform_pop_scope();
+	      current_task = 0;
+	}
       }
     endlabel_opt
       { // Last step: check any closing name. This is done late so
@@ -2112,10 +2188,16 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 
   : port_direction_opt data_type_or_implicit IDENTIFIER dimensions_opt tf_port_item_expr_opt
       { vector<pform_tf_port_t>*tmp;
-	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT? NetNet::PINPUT : $1;
+	NetNet::PortType use_port_type = $1;
+        if ((use_port_type == NetNet::PIMPLICIT) && (gn_system_verilog() || ($2 == 0)))
+              use_port_type = port_declaration_context.port_type;
 	perm_string name = lex_strings.make($3);
 	list<perm_string>* ilist = list_from_identifier($3);
 
+	if (use_port_type == NetNet::PIMPLICIT) {
+	      yyerror(@1, "error: missing task/function port direction.");
+	      use_port_type = NetNet::PINPUT; // for error recovery
+	}
 	if (($2 == 0) && ($1==NetNet::PIMPLICIT)) {
 		// Detect special case this is an undecorated
 		// identifier and we need to get the declaration from
@@ -2126,7 +2208,6 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	      tmp = pform_make_task_ports(@3, use_port_type,
 					  port_declaration_context.data_type,
 					  ilist);
-
 
 	} else {
 		// Otherwise, the decorations for this identifier
@@ -2174,8 +2255,15 @@ tf_port_item_expr_opt
   ;
 
 tf_port_list /* IEEE1800-2005: A.2.7 */
+  :   { port_declaration_context.port_type = gn_system_verilog() ? NetNet::PINPUT : NetNet::PIMPLICIT;
+	port_declaration_context.data_type = 0;
+      }
+    tf_port_item_list
+      { $$ = $2; }
+  ;
 
-  : tf_port_list ',' tf_port_item
+tf_port_item_list
+  : tf_port_item_list ',' tf_port_item
       { vector<pform_tf_port_t>*tmp;
 	if ($1 && $3) {
 	      size_t s1 = $1->size();
@@ -2201,30 +2289,34 @@ tf_port_list /* IEEE1800-2005: A.2.7 */
       { yyerror(@2, "error: Syntax error in task/function port declaration.");
 	$$ = $3;
       }
-  | tf_port_list ','
+  | tf_port_item_list ','
       { yyerror(@2, "error: NULL port declarations are not allowed.");
 	$$ = $1;
       }
-  | tf_port_list ';'
+  | tf_port_item_list ';'
       { yyerror(@2, "error: ';' is an invalid port declaration separator.");
 	$$ = $1;
       }
   ;
 
-  /* NOTE: Icarus Verilog is a little more generous with the
-     timeunits declarations by allowing them to happen in multiple
-     places in the file. So the rule is adjusted to be invoked by the
-     "description" rule. This theoretically allows files to be
-     concatenated together and still compile. */
 timeunits_declaration /* IEEE1800-2005: A.1.2 */
   : K_timeunit TIME_LITERAL ';'
-      { pform_set_timeunit($2, false, false); }
+      { pform_set_timeunit($2, allow_timeunit_decl); }
   | K_timeunit TIME_LITERAL '/' TIME_LITERAL ';'
-      { pform_set_timeunit($2, false, false);
-        pform_set_timeprecision($4, false, false);
+      { bool initial_decl = allow_timeunit_decl && allow_timeprec_decl;
+        pform_set_timeunit($2, initial_decl);
+        pform_set_timeprec($4, initial_decl);
       }
   | K_timeprecision TIME_LITERAL ';'
-      { pform_set_timeprecision($2, false, false); }
+      { pform_set_timeprec($2, allow_timeprec_decl); }
+  ;
+
+  /* Allow zero, one, or two declarations. The second declaration might
+     be a repeat declaration, but the pform functions take care of that. */
+timeunits_declaration_opt
+  : /* empty */           %prec no_timeunits_declaration
+  | timeunits_declaration %prec one_timeunits_declaration
+  | timeunits_declaration timeunits_declaration
   ;
 
 value_range /* IEEE1800-2005: A.8.3 */
@@ -3259,6 +3351,11 @@ expression
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
+  | expression K_WEQ attribute_list_opt expression
+      { PEBinary*tmp = new PEBComp('w', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
   | expression K_LE attribute_list_opt expression
       { PEBinary*tmp = new PEBComp('L', $1, $4);
 	FILE_NAME(tmp, @2);
@@ -3276,6 +3373,11 @@ expression
       }
   | expression K_CNE attribute_list_opt expression
       { PEBinary*tmp = new PEBComp('N', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_WNE attribute_list_opt expression
+      { PEBinary*tmp = new PEBComp('W', $1, $4);
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
@@ -3751,7 +3853,7 @@ expr_primary
 	}
       }
 
-  | data_type '\'' '(' expression ')'
+  | simple_type_or_string '\'' '(' expression ')'
       { PExpr*base = $4;
 	if (gn_system_verilog()) {
 	      PECastType*tmp = new PECastType($1, base);
@@ -4390,47 +4492,6 @@ cont_assign_list
       { $$ = $1; }
   ;
 
-  /* We allow zero, one or two unique declarations. */
-local_timeunit_prec_decl_opt
-	: /* Empty */
-	| K_timeunit TIME_LITERAL '/' TIME_LITERAL ';'
-		{ pform_set_timeunit($2, true, false);
-		  have_timeunit_decl = true;
-		  pform_set_timeprecision($4, true, false);
-		  have_timeprec_decl = true;
-		}
-	| local_timeunit_prec_decl
-	| local_timeunit_prec_decl local_timeunit_prec_decl2
-	;
-
-  /* By setting the appropriate have_time???_decl we allow only
-     one declaration of each type in this module. */
-local_timeunit_prec_decl
-	: K_timeunit TIME_LITERAL ';'
-		{ pform_set_timeunit($2, true, false);
-		  have_timeunit_decl = true;
-		}
-	| K_timeprecision TIME_LITERAL ';'
-		{ pform_set_timeprecision($2, true, false);
-		  have_timeprec_decl = true;
-		}
-	;
-local_timeunit_prec_decl2
-	: K_timeunit TIME_LITERAL ';'
-		{ pform_set_timeunit($2, true, false);
-		  have_timeunit_decl = true;
-		}
-	| K_timeprecision TIME_LITERAL ';'
-		{ pform_set_timeprecision($2, true, false);
-		  have_timeprec_decl = true;
-		}
-	  /* As the second item this form is always a check. */
-	| K_timeunit TIME_LITERAL '/' TIME_LITERAL ';'
-		{ pform_set_timeunit($2, true, true);
-		  pform_set_timeprecision($4, true, true);
-		}
-	;
-
   /* This is the global structure of a module. A module is a start
      section, with optional ports, then an optional list of module
      items, and finally an end marker. */
@@ -4443,11 +4504,8 @@ module
     module_port_list_opt
     module_attribute_foreign ';'
       { pform_module_set_ports($8); }
-    local_timeunit_prec_decl_opt
-      { have_timeunit_decl = true; // Every thing past here is
-	have_timeprec_decl = true; // a check!
-	pform_check_timeunit_prec();
-      }
+    timeunits_declaration_opt
+      { pform_set_scope_timescale(@2); }
     module_item_list_opt
     module_end
       { Module::UCDriveType ucd;
@@ -4484,8 +4542,6 @@ module
 	      }
 	}
 	pform_endmodule($4, in_celldefine, ucd);
-	have_timeunit_decl = false; // We will allow decls again.
-	have_timeprec_decl = false;
       }
     endlabel_opt
       { // Last step: check any closing name. This is done late so
@@ -4839,9 +4895,8 @@ module_item
 	| attribute_list_opt
 	  IDENTIFIER parameter_value_opt gate_instance_list ';'
 		{ perm_string tmp1 = lex_strings.make($2);
-		  pform_make_modgates(@2, tmp1, $3, $4);
+		  pform_make_modgates(@2, tmp1, $3, $4, $1);
 		  delete[]$2;
-		  if ($1) delete $1;
 		}
 
         | attribute_list_opt
@@ -4864,6 +4919,18 @@ module_item
       { PProcess*tmp = pform_make_behavior(IVL_PR_ALWAYS, $3, $1);
 	FILE_NAME(tmp, @2);
       }
+  | attribute_list_opt K_always_comb statement_item
+      { PProcess*tmp = pform_make_behavior(IVL_PR_ALWAYS_COMB, $3, $1);
+	FILE_NAME(tmp, @2);
+      }
+  | attribute_list_opt K_always_ff statement_item
+      { PProcess*tmp = pform_make_behavior(IVL_PR_ALWAYS_FF, $3, $1);
+	FILE_NAME(tmp, @2);
+      }
+  | attribute_list_opt K_always_latch statement_item
+      { PProcess*tmp = pform_make_behavior(IVL_PR_ALWAYS_LATCH, $3, $1);
+	FILE_NAME(tmp, @2);
+      }
   | attribute_list_opt K_initial statement_item
       { PProcess*tmp = pform_make_behavior(IVL_PR_INITIAL, $3, $1);
 	FILE_NAME(tmp, @2);
@@ -4877,6 +4944,8 @@ module_item
       { pform_make_analog_behavior(@2, IVL_PR_ALWAYS, $3); }
 
   | attribute_list_opt assertion_item
+
+  | timeunits_declaration
 
   | class_declaration
 
@@ -5001,14 +5070,6 @@ module_item
 	| KK_attribute '(' error ')' ';'
 		{ yyerror(@1, "error: Malformed $attribute parameter list."); }
 
-	| K_timeunit_check  TIME_LITERAL ';'
-		{ pform_set_timeunit($2, true, true); }
-	| K_timeunit_check TIME_LITERAL '/' TIME_LITERAL ';'
-		{ pform_set_timeunit($2, true, true);
-		  pform_set_timeprecision($4, true, true);
-		}
-	| K_timeprecision_check TIME_LITERAL ';'
-		{ pform_set_timeprecision($2, true, true); }
 	;
 
 module_item_list
@@ -6241,6 +6302,8 @@ statement_item /* This is roughly statement_item in the LRM */
 		  $$ = tmp;
 		}
 
+  | procedural_assertion_statement { $$ = $1; }
+
   | loop_statement { $$ = $1; }
 
   | jump_statement { $$ = $1; }
@@ -6417,7 +6480,7 @@ statement_item /* This is roughly statement_item in the LRM */
 		  $$ = tmp;
 		}
 	| K_wait K_fork ';'
-		{ PEventStatement*tmp = new PEventStatement(0);
+		{ PEventStatement*tmp = new PEventStatement((PEEvent*)0);
 		  FILE_NAME(tmp,@1);
 		  $$ = tmp;
 		}

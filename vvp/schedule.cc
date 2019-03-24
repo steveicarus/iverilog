@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -76,6 +76,7 @@ struct event_time_s {
 	    count_time_events += 1;
 	    start = 0;
 	    active = 0;
+	    inactive = 0;
 	    nbassign = 0;
 	    rwsync = 0;
 	    rosync = 0;
@@ -86,6 +87,7 @@ struct event_time_s {
 
       struct event_s*start;
       struct event_s*active;
+      struct event_s*inactive;
       struct event_s*nbassign;
       struct event_s*rwsync;
       struct event_s*rosync;
@@ -604,27 +606,40 @@ bool schedule_stopped(void)
 
 /*
  * These are the signal handling infrastructure. The SIGINT signal
- * leads to an implicit $stop.
+ * leads to an implicit $stop. The SIGHUP and SIGTERM signals lead
+ * to an implicit $finish.
  */
-extern "C" void signals_handler(int)
+extern bool stop_is_finish;
+
+extern "C" void signals_handler(int signum)
 {
 #ifdef __MINGW32__
 	// Windows implements the original UNIX semantics for signal,
 	// so we have to re-establish the signal handler each time a
 	// signal is caught.
-      signal(SIGINT, &signals_handler);
+      signal(signum, &signals_handler);
 #endif
+      if (signum != SIGINT)
+	    stop_is_finish = true;
       schedule_stopped_flag = true;
 }
 
 static void signals_capture(void)
 {
-      signal(SIGINT, &signals_handler);
+#ifndef __MINGW32__
+      signal(SIGHUP,  &signals_handler);
+#endif
+      signal(SIGINT,  &signals_handler);
+      signal(SIGTERM, &signals_handler);
 }
 
 static void signals_revert(void)
 {
-      signal(SIGINT, SIG_DFL);
+#ifndef __MINGW32__
+      signal(SIGHUP,  SIG_DFL);
+#endif
+      signal(SIGINT,  SIG_DFL);
+      signal(SIGTERM, SIG_DFL);
 }
 
 /*
@@ -661,14 +676,13 @@ static void schedule_final_event(struct event_s*cur)
  * itself, and the structure is placed in the right place in the
  * queue.
  */
-typedef enum event_queue_e { SEQ_START, SEQ_ACTIVE, SEQ_NBASSIGN,
+typedef enum event_queue_e { SEQ_START, SEQ_ACTIVE, SEQ_INACTIVE, SEQ_NBASSIGN,
 			     SEQ_RWSYNC, SEQ_ROSYNC, DEL_THREAD } event_queue_t;
 
 static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 			    event_queue_t select_queue)
 {
       cur->next = cur;
-
       struct event_time_s*ctim = sched_list;
 
       if (sched_list == 0) {
@@ -736,6 +750,11 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 	    q = &ctim->active;
 	    break;
 
+	  case SEQ_INACTIVE:
+	    assert(delay == 0);
+	    q = &ctim->inactive;
+	    break;
+
 	  case SEQ_NBASSIGN:
 	    q = &ctim->nbassign;
 	    break;
@@ -799,6 +818,23 @@ void schedule_vthread(vthread_t thr, vvp_time64_t delay, bool push_flag)
       } else {
 	    schedule_event_(cur, delay, SEQ_ACTIVE);
       }
+}
+
+void schedule_t0_trigger(vvp_net_ptr_t ptr)
+{
+      vvp_vector4_t bit (1, BIT4_X);
+      struct assign_vector4_event_s*cur = new struct assign_vector4_event_s(bit);
+      cur->ptr = ptr;
+      schedule_event_(cur, 0, SEQ_INACTIVE);
+}
+
+void schedule_inactive(vthread_t thr)
+{
+      struct vthread_event_s*cur = new vthread_event_s;
+
+      cur->thr = thr;
+      vthread_mark_scheduled(thr);
+      schedule_event_(cur, 0, SEQ_INACTIVE);
 }
 
 void schedule_init_vthread(vthread_t thr)
@@ -1044,7 +1080,7 @@ static void run_rosync(struct event_time_s*ctim)
 	    delete cur;
       }
 
-      if (ctim->active || ctim->nbassign || ctim->rwsync) {
+      if (ctim->active || ctim->inactive || ctim->nbassign || ctim->rwsync) {
 	    cerr << "SCHEDULER ERROR: read-only sync events "
 		 << "created RW events!" << endl;
       }
@@ -1145,21 +1181,26 @@ void schedule_simulate(void)
 		 queues. If there are not events at all, then release
 		 the event_time object. */
 	    if (ctim->active == 0) {
-		  ctim->active = ctim->nbassign;
-		  ctim->nbassign = 0;
+		  ctim->active = ctim->inactive;
+		  ctim->inactive = 0;
 
 		  if (ctim->active == 0) {
-			ctim->active = ctim->rwsync;
-			ctim->rwsync = 0;
+			ctim->active = ctim->nbassign;
+			ctim->nbassign = 0;
 
-			  /* If out of rw events, then run the rosync
-			     events and delete this time step. This also
-			     deletes threads as needed. */
 			if (ctim->active == 0) {
-			      run_rosync(ctim);
-			      sched_list = ctim->next;
-			      delete ctim;
-			      continue;
+			      ctim->active = ctim->rwsync;
+			      ctim->rwsync = 0;
+
+				/* If out of rw events, then run the rosync
+				   events and delete this time step. This also
+				   deletes threads as needed. */
+			      if (ctim->active == 0) {
+				    run_rosync(ctim);
+				    sched_list = ctim->next;
+				    delete ctim;
+				    continue;
+			      }
 			}
 		  }
 	    }

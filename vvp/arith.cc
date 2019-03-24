@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -866,6 +866,76 @@ void vvp_cmp_gt::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
                            vvp_context_t)
 {
       recv_vec4_base_(ptr, bit, BIT4_0);
+}
+
+vvp_cmp_weq::vvp_cmp_weq(unsigned wid)
+: vvp_arith_(wid)
+{
+}
+
+void vvp_cmp_weq::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                            vvp_context_t)
+{
+      dispatch_operand_(ptr, bit);
+
+      vvp_vector4_t eeq (1);
+      eeq.set_bit(0, BIT4_1);
+
+      assert(op_a_.size() == op_b_.size());
+      for (unsigned idx = 0 ;  idx < op_a_.size() ;  idx += 1) {
+	    vvp_bit4_t a = op_a_.value(idx);
+	    vvp_bit4_t b = op_b_.value(idx);
+	    if (b == BIT4_X)
+		  continue;
+	    else if (b == BIT4_Z)
+		  continue;
+	    else if (a == BIT4_X)
+		  eeq.set_bit(0, BIT4_X);
+	    else if (a == BIT4_Z)
+		  eeq.set_bit(0, BIT4_X);
+            else if (a != b) {
+		  eeq.set_bit(0, BIT4_0);
+		  break;
+	    }
+      }
+
+      vvp_net_t*net = ptr.ptr();
+      net->send_vec4(eeq, 0);
+}
+
+vvp_cmp_wne::vvp_cmp_wne(unsigned wid)
+: vvp_arith_(wid)
+{
+}
+
+void vvp_cmp_wne::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                            vvp_context_t)
+{
+      dispatch_operand_(ptr, bit);
+
+      vvp_vector4_t eeq (1);
+      eeq.set_bit(0, BIT4_0);
+
+      assert(op_a_.size() == op_b_.size());
+      for (unsigned idx = 0 ;  idx < op_a_.size() ;  idx += 1) {
+	    vvp_bit4_t a = op_a_.value(idx);
+	    vvp_bit4_t b = op_b_.value(idx);
+	    if (b == BIT4_X)
+		  continue;
+	    else if (b == BIT4_Z)
+		  continue;
+	    else if (a == BIT4_X)
+		  eeq.set_bit(0, BIT4_X);
+	    else if (a == BIT4_Z)
+		  eeq.set_bit(0, BIT4_X);
+            else if (a != b) {
+		  eeq.set_bit(0, BIT4_1);
+		  break;
+	    }
+      }
+
+      vvp_net_t*net = ptr.ptr();
+      net->send_vec4(eeq, 0);
 }
 
 
