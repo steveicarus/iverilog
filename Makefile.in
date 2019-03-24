@@ -70,7 +70,8 @@ dllib=@DLLIB@
 HOSTCC = @CC@
 HOSTCFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 
-CC = @CC@
+BUILDCC = @CC_FOR_BUILD@
+BUILDEXT = @BUILD_EXEEXT@
 CXX = @CXX@
 DLLTOOL = @DLLTOOL@
 INSTALL = @INSTALL@
@@ -127,9 +128,9 @@ all: dep config.h _pli_types.h version_tag.h ivl@EXEEXT@ version.exe iverilog-vp
 # In the windows world, the installer will need a dosify program to
 # dosify text files.
 ifeq (@MINGW32@,yes)
-all: dosify.exe
-dosify.exe: $(srcdir)/dosify.c
-	$(HOSTCC) $(HOSTCFLAGS) -o dosify.exe $(srcdir)/dosify.c
+all: dosify$(BUILDEXT)
+dosify$(BUILDEXT): $(srcdir)/dosify.c
+	$(BUILDCC) $(CFLAGS) -o dosify$(BUILDEXT) $(srcdir)/dosify.c
 endif
 
 # This rule rules the compiler in the trivial hello.vl program to make
@@ -156,7 +157,7 @@ clean:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 	rm -f *.o parse.cc parse.h lexor.cc
 	rm -f ivl.exp iverilog-vpi.man iverilog-vpi.pdf iverilog-vpi.ps
-	rm -f parse.output syn-rules.output dosify.exe ivl@EXEEXT@ check.vvp
+	rm -f parse.output syn-rules.output dosify$(BUILDEXT) ivl@EXEEXT@ check.vvp
 	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc
 	rm -rf dep
 	rm -f version.exe
@@ -239,7 +240,7 @@ iverilog-vpi: $(srcdir)/iverilog-vpi.sh Makefile
 endif
 
 version.exe: $(srcdir)/version.c $(srcdir)/version_base.h version_tag.h
-	$(HOSTCC) $(HOSTCFLAGS) -o version.exe -I. -I$(srcdir) $(srcdir)/version.c
+	$(BUILDCC) $(CFLAGS) -o version.exe -I. -I$(srcdir) $(srcdir)/version.c
 
 %.o: %.cc config.h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o

@@ -224,8 +224,8 @@ case "${host}" in
 	CFLAGS="-mieee $CFLAGS"
 	;;
     *-*-mingw*)
-	CXXFLAGS="-D__USE_MINGW_ANSI_STDIO=1 $CXXFLAGS"
-	CFLAGS="-D__USE_MINGW_ANSI_STDIO=1 $CFLAGS"
+	CXXFLAGS="-Wno-deprecated-declarations -Wno-sign-compare -D__USE_MINGW_ANSI_STDIO=1 $CXXFLAGS"
+	CFLAGS="-Wno-sign-compare -D__USE_MINGW_ANSI_STDIO=1 $CFLAGS"
 	;;
 esac
 
@@ -325,5 +325,5 @@ then
 AC_MSG_ERROR(cannot configure white space in libdir: $libdir)
 fi
 AC_MSG_RESULT(ok)
-
+AX_PROG_CC_FOR_BUILD
 AC_OUTPUT(Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile tgt-blif/Makefile tgt-sizer/Makefile)
