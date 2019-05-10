@@ -322,9 +322,9 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
                   min_width_ = UINT_MAX; // disable width pruning
                   break;
 
-                case 'l': // <<  Should be handled by PEBShift
-                case 'r': // >>  Should be handled by PEBShift
-                case 'R': // >>> Should be handled by PEBShift
+                case 'l': // <<  Should be handled by PEBLeftWidth
+                case 'r': // >>  Should be handled by PEBLeftWidth
+                case 'R': // >>> Should be handled by PEBLeftWidth
                 case '<': // <   Should be handled by PEBComp
                 case '>': // >   Should be handled by PEBComp
                 case 'e': // ==  Should be handled by PEBComp
@@ -335,7 +335,7 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
                 case 'n': // !=  Should be handled by PEBComp
                 case 'N': // !== Should be handled by PEBComp
                 case 'W': // !=? Should be handled by PEBComp
-                case 'p': // **  should be handled by PEBPower
+                case 'p': // **  should be handled by PEBLeftWidth
                   ivl_assert(*this, 0);
                 default:
                   break;
