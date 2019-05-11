@@ -388,7 +388,8 @@ NetNet* NetEBPow::synthesize(Design*des, NetScope*scope, NetExpr*root)
       powr->set_line(*this);
       des->add_node(powr);
 
-      powr->set_signed( has_sign() );
+        // The lpm_pwr object only cares about the signedness of the exponent.
+      powr->set_signed( right_->has_sign() );
 
       connect(powr->pin_DataA(), lsig->pin(0));
       connect(powr->pin_DataB(), rsig->pin(0));

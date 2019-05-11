@@ -1245,8 +1245,10 @@ extern unsigned    ivl_lpm_lineno(ivl_lpm_t net);
  * width of a general power is the XXXX of the widths of the
  * inputs.
  *
- * Power may be signed. If so, the output should be sign extended
- * to fill in its result.
+ * Power may be signed. This indicates the type of the exponent. The
+ * base will always be treated as unsigned. The compiler must ensure
+ * the width of the base is equal to the width of the output to
+ * obtain the correct result when the base is really a signed value.
  *
  * - Part Select (IVL_LPM_PART_VP and IVL_LPM_PART_PV)
  * There are two part select devices, one that extracts a part from a
