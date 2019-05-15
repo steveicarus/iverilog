@@ -661,6 +661,7 @@ return(rc);
 }
 
 
+#ifndef FST_DYNAMIC_ALIAS2_DISABLE
 static int fstWriterSVarint(FILE *handle, int64_t v)
 {
 unsigned char buf[15]; /* ceil(64/7) = 10 + sign byte padded way up */
@@ -686,6 +687,7 @@ len = pnt-buf;
 fstFwrite(buf, len, 1, handle);
 return(len);
 }
+#endif
 
 
 /***********************/
@@ -4808,6 +4810,7 @@ uint32_t cur_blackout = 0;
 int packtype;
 unsigned char *mc_mem = NULL;
 uint32_t mc_mem_len; /* corresponds to largest value encountered in chain_table_lengths[i] */
+int dumpvars_state = 0;
 
 if(!xc) return(0);
 
@@ -4817,7 +4820,6 @@ length_remaining = (uint32_t *)calloc(xc->maxhandle, sizeof(uint32_t));
 
 if(fv)
         {
-        fprintf(fv, "$dumpvars\n");
 #ifndef FST_WRITEX_DISABLE
         fflush(fv);
         setvbuf(fv, (char *) NULL, _IONBF, 0); /* even buffered IO is slow so disable it and use our own routines that don't need seeking */
@@ -4964,8 +4966,10 @@ for(;;)
 
                                 if(beg_tim)
                                         {
+					if(dumpvars_state == 1) { wx_len = sprintf(wx_buf, "$end\n"); fstWritex(xc, wx_buf, wx_len); dumpvars_state = 2; }
                                         wx_len = sprintf(wx_buf, "#%" PRIu64 "\n", beg_tim);
                                         fstWritex(xc, wx_buf, wx_len);
+					if(!dumpvars_state) { wx_len = sprintf(wx_buf, "$dumpvars\n"); fstWritex(xc, wx_buf, wx_len); dumpvars_state = 1; }
                                         }
                                 if((xc->num_blackouts)&&(cur_blackout != xc->num_blackouts))
                                         {
@@ -5398,8 +5402,10 @@ for(;;)
                                                 }
                                         }
 
+				if(dumpvars_state == 1) { wx_len = sprintf(wx_buf, "$end\n"); fstWritex(xc, wx_buf, wx_len); dumpvars_state = 2; }
                                 wx_len = sprintf(wx_buf, "#%" PRIu64 "\n", time_table[i]);
                                 fstWritex(xc, wx_buf, wx_len);
+				if(!dumpvars_state) { wx_len = sprintf(wx_buf, "$dumpvars\n"); fstWritex(xc, wx_buf, wx_len); dumpvars_state = 1; }
 
                                 if((xc->num_blackouts)&&(cur_blackout != xc->num_blackouts))
                                         {
