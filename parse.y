@@ -5752,7 +5752,7 @@ specify_item
 		  pform_module_specify_path(tmp);
 		}
 	| K_ifnone specify_edge_path_decl ';'
-		{ yyerror(@1, "Sorry: ifnone with an edge-sensitive path is "
+		{ yywarn(@1, "Sorry: ifnone with an edge-sensitive path is "
 		              "not supported.");
 		  yyerrok;
 		}
