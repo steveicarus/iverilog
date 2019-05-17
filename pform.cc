@@ -1847,7 +1847,7 @@ void pform_make_udp(perm_string name, list<perm_string>*parms,
 
 	// Put the primitive into the primitives table
       if (pform_primitives[name]) {
-	    VLerror("UDP primitive already exists.");
+	    VLwarn("UDP primitive already exists.");
 
       } else {
 	    PUdp*udp = new PUdp(name, parms->size());
