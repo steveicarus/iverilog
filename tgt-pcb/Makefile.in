@@ -91,6 +91,7 @@ fp.cc: $(srcdir)/fp.y
 	$(YACC) --verbose -t -p fp -d -o $@ $<
 fp.h: fp.cc
 	mv fp.cc.h $@ 2>/dev/null || mv fp.hh $@
+	touch $@
 
 ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl
