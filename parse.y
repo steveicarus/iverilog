@@ -3533,11 +3533,12 @@ expr_primary
      function call. If a system identifier, then a system function
      call. It can also be a call to a class method (function). */
 
-  | hierarchy_identifier '(' expression_list_with_nuls ')'
-      { list<PExpr*>*expr_list = $3;
+  | hierarchy_identifier attribute_list_opt '(' expression_list_with_nuls ')'
+      { list<PExpr*>*expr_list = $4;
 	strip_tail_items(expr_list);
 	PECallFunction*tmp = pform_make_call_function(@1, *$1, *expr_list);
 	delete $1;
+	delete $2;
 	$$ = tmp;
       }
   | implicit_class_handle '.' hierarchy_identifier '(' expression_list_with_nuls ')'
