@@ -5495,7 +5495,7 @@ port_name
 		  tmp->name = lex_strings.make($3);
 		  tmp->parm = 0;
 		  delete[]$3;
-		  delete $1;	
+		  delete $1;
 		  $$ = tmp;
 		}
 	| attribute_list_opt '.' IDENTIFIER
@@ -5553,8 +5553,7 @@ port_conn_expression_list_with_nuls
 	tmp->push_back(0);
 	$$ = tmp;
       }
-	;
-
+  ;
 
   /* A port reference is an internal (to the module) name of the port,
      possibly with a part of bit select to attach it to specific bits
