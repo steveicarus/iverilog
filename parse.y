@@ -597,6 +597,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
 %type <named_pexpr> modport_simple_port port_name parameter_value_byname
 %type <named_pexprs> port_name_list parameter_value_byname_list
+%type <exprs> port_conn_expression_list_with_nuls
 
 %type <named_pexpr> attribute
 %type <named_pexprs> attribute_list attribute_instance_list attribute_list_opt
@@ -3557,11 +3558,12 @@ expr_primary
      function call. If a system identifier, then a system function
      call. It can also be a call to a class method (function). */
 
-  | hierarchy_identifier '(' expression_list_with_nuls ')'
-      { list<PExpr*>*expr_list = $3;
+  | hierarchy_identifier attribute_list_opt '(' expression_list_with_nuls ')'
+      { list<PExpr*>*expr_list = $4;
 	strip_tail_items(expr_list);
 	PECallFunction*tmp = pform_make_call_function(@1, *$1, *expr_list);
 	delete $1;
+	delete $2;
 	$$ = tmp;
       }
   | implicit_class_handle '.' hierarchy_identifier '(' expression_list_with_nuls ')'
@@ -3922,7 +3924,7 @@ function_item
   /* A gate_instance is a module instantiation or a built in part
      type. In any case, the gate has a set of connections to ports. */
 gate_instance
-	: IDENTIFIER '(' expression_list_with_nuls ')'
+	: IDENTIFIER '(' port_conn_expression_list_with_nuls ')'
 		{ lgate*tmp = new lgate;
 		  tmp->name = $1;
 		  tmp->parms = $3;
@@ -3932,7 +3934,7 @@ gate_instance
 		  $$ = tmp;
 		}
 
-  | IDENTIFIER dimensions '(' expression_list_with_nuls ')'
+  | IDENTIFIER dimensions '(' port_conn_expression_list_with_nuls ')'
       { lgate*tmp = new lgate;
 	list<pform_range_t>*rng = $2;
 	tmp->name = $1;
@@ -3947,7 +3949,7 @@ gate_instance
 	$$ = tmp;
       }
 
-	| '(' expression_list_with_nuls ')'
+	| '(' port_conn_expression_list_with_nuls ')'
 		{ lgate*tmp = new lgate;
 		  tmp->name = "";
 		  tmp->parms = $2;
@@ -5471,34 +5473,38 @@ port_opt
      looking for the ports of a module declaration. */
 
 port_name
-	: '.' IDENTIFIER '(' expression ')'
+	: attribute_list_opt '.' IDENTIFIER '(' expression ')'
 		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make($2);
-		  tmp->parm = $4;
-		  delete[]$2;
+		  tmp->name = lex_strings.make($3);
+		  tmp->parm = $5;
+		  delete[]$3;
+		  delete $1;
 		  $$ = tmp;
 		}
-	| '.' IDENTIFIER '(' error ')'
+	| attribute_list_opt '.' IDENTIFIER '(' error ')'
 		{ yyerror(@3, "error: invalid port connection expression.");
 		  named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make($2);
+		  tmp->name = lex_strings.make($3);
 		  tmp->parm = 0;
-		  delete[]$2;
+		  delete[]$3;
+		  delete $1;
 		  $$ = tmp;
 		}
-	| '.' IDENTIFIER '(' ')'
+	| attribute_list_opt '.' IDENTIFIER '(' ')'
 		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make($2);
+		  tmp->name = lex_strings.make($3);
 		  tmp->parm = 0;
-		  delete[]$2;
+		  delete[]$3;
+		  delete $1;	
 		  $$ = tmp;
 		}
-	| '.' IDENTIFIER
+	| attribute_list_opt '.' IDENTIFIER
 		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make($2);
-		  tmp->parm = new PEIdent(lex_strings.make($2), true);
+		  tmp->name = lex_strings.make($3);
+		  tmp->parm = new PEIdent(lex_strings.make($3), true);
 		  FILE_NAME(tmp->parm, @1);
-		  delete[]$2;
+		  delete[]$3;
+		  delete $1;
 		  $$ = tmp;
 		}
 	| K_DOTSTAR
@@ -5523,6 +5529,31 @@ port_name_list
 	$$ = tmp;
       }
   ;
+
+port_conn_expression_list_with_nuls
+  : port_conn_expression_list_with_nuls ',' attribute_list_opt expression
+      { list<PExpr*>*tmp = $1;
+	tmp->push_back($4);
+	delete $3;
+	$$ = tmp;
+      }
+  | attribute_list_opt expression
+      { list<PExpr*>*tmp = new list<PExpr*>;
+	tmp->push_back($2);
+	delete $1;
+	$$ = tmp;
+      }
+  |
+      { list<PExpr*>*tmp = new list<PExpr*>;
+        tmp->push_back(0);
+	$$ = tmp;
+      }
+  | port_conn_expression_list_with_nuls ','
+      { list<PExpr*>*tmp = $1;
+	tmp->push_back(0);
+	$$ = tmp;
+      }
+	;
 
 
   /* A port reference is an internal (to the module) name of the port,
