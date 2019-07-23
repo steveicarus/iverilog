@@ -59,6 +59,7 @@ extern int  VLlex();
 extern void VLerror(const char*msg);
 extern void VLerror(const YYLTYPE&loc, const char*msg, ...) __attribute__((format(printf,2,3)));
 #define yywarn VLwarn
+extern void VLwarn(const char*msg);
 extern void VLwarn(const YYLTYPE&loc, const char*msg);
 
 extern void destroy_lexor();

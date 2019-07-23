@@ -39,6 +39,11 @@ std::ostream& operator << (std::ostream&o, const YYLTYPE&loc)
       return o;
 }
 
+void VLwarn(const char*msg)
+{
+      warn_count += 1;
+      cerr << yylloc.text << ":" << yylloc.first_line << ": " << msg << endl;
+}
 
 void VLerror(const char*msg)
 {
