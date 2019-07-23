@@ -3704,6 +3704,10 @@ int pform_parse(const char*path)
 	    unit->set_lineno(1);
 	    pform_units.push_back(unit);
 
+            pform_cur_module.clear();
+            pform_cur_generate = 0;
+            pform_cur_modport = 0;
+
 	    pform_set_timescale(def_ts_units, def_ts_prec, 0, 0);
 
 	    allow_timeunit_decl = true;
