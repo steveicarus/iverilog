@@ -34,7 +34,7 @@ class NetScope;
  * looking for a plausible Verilog file to hold the module, and
  * invoking the parser to bring in that file's contents.
  */
-extern bool load_module(const char*type);
+extern bool load_module(const char*type, int&parser_errors);
 
 
 

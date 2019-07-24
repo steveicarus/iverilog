@@ -54,10 +54,12 @@ extern FILE *depend_file;
  * Use the type name as a key, and search the module library for a
  * file name that has that key.
  */
-bool load_module(const char*type)
+bool load_module(const char*type, int&parser_errors)
 {
       char path[4096];
       char*ltype = strdup(type);
+
+      parser_errors = 0;
 
       for (char*tmp = ltype ; *tmp ;  tmp += 1)
 	    *tmp = tolower(*tmp);
@@ -98,7 +100,7 @@ bool load_module(const char*type)
 		  if (verbose_flag)
 			cerr << "...parsing output from preprocessor..." << endl << flush;
 
-		  pform_parse(path, file);
+		  parser_errors = pform_parse(path, file);
 		  pclose(file);
 		  free(cmdline);
 
@@ -109,14 +111,14 @@ bool load_module(const char*type)
 
 		  FILE*file = fopen(path, "r");
 		  assert(file);
-		  pform_parse(path, file);
+		  parser_errors = pform_parse(path, file);
 		  fclose(file);
 	    }
 
 	    if (verbose_flag)
 		  cerr << "... Load module complete." << endl << flush;
 
-	    return true;
+	    return parser_errors == 0;
       }
 
 
