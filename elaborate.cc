@@ -2233,7 +2233,8 @@ void PGModule::elaborate_scope(Design*des, NetScope*sc) const
 	// Not a module or primitive that I know about yet, so try to
 	// load a library module file (which parses some new Verilog
 	// code) and try again.
-      if (load_module(type_)) {
+      int parser_errors = 0;
+      if (load_module(type_, parser_errors)) {
 
 	      // Try again to find the module type
 	    mod = pform_modules.find(type_);
@@ -2248,6 +2249,10 @@ void PGModule::elaborate_scope(Design*des, NetScope*sc) const
 		  return;
       }
 
+      if (parser_errors) {
+            cerr << get_fileline() << ": error: Failed to parse library file." << endl;
+            des->errors += parser_errors + 1;
+      }
 
 	// Not a module or primitive that I know about or can find by
 	// any means, so give up.
