@@ -902,8 +902,7 @@ void compile_var2_array(char*label, char*name, int last, int first,
       } else if (lsb == 0 && msb == 63 && !signed_flag) {
 	    arr->vals = new vvp_darray_atom<uint64_t>(arr->get_size());
       } else {
-	      // For now, only support the atom sizes.
-	    assert(0);
+	    arr->vals = new vvp_darray_vec2(arr->get_size(), arr->vals_width);
       }
       count_var_arrays += 1;
       count_var_array_words += arr->get_size();
