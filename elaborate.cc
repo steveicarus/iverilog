@@ -4790,14 +4790,18 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
 		 << " packed dimensions." << endl;
       }
 
+      std::vector<netrange_t>dims = array_sig->unpacked_dims();
+      if (array_sig->packed_dimensions() > 0) {
+            dims.insert(dims.end(), array_sig->packed_dims().begin(), array_sig->packed_dims().end());
+      }
+
 	// Classic arrays are processed this way.
       if (array_sig->data_type()==IVL_VT_BOOL)
-	    return elaborate_static_array_(des, scope, array_sig->unpacked_dims());
+	    return elaborate_static_array_(des, scope, dims);
       if (array_sig->data_type()==IVL_VT_LOGIC)
-	    return elaborate_static_array_(des, scope, array_sig->unpacked_dims());
+	    return elaborate_static_array_(des, scope, dims);
       if (array_sig->unpacked_dimensions() >= index_vars_.size())
-	    return elaborate_static_array_(des, scope, array_sig->unpacked_dims());
-
+	    return elaborate_static_array_(des, scope, dims);
 
 	// At this point, we know that the array is dynamic so we
 	// handle that slightly differently, using run-time tests.
@@ -4868,7 +4872,7 @@ NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
       }
 
       ivl_assert(*this, index_vars_.size() > 0);
-      ivl_assert(*this, dims.size() == index_vars_.size());
+      ivl_assert(*this, dims.size() >= index_vars_.size());
 
       NetProc*sub;
       if (statement_)
