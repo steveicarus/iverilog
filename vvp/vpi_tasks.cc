@@ -915,14 +915,17 @@ void vpi_call_delete(vpiHandle item)
 		      case _vpi_at_A:
 			A_delete(obj->args[arg]);
 			break;
+		  }
+		  break;
+		case vpiPartSelect:
+		  switch (vpi_get(_vpiFromThr, obj->args[arg])) {
+		      case _vpi_at_PV:
+			PV_delete(obj->args[arg]);
+			break;
 		      case _vpi_at_APV:
 			APV_delete(obj->args[arg]);
 			break;
 		  }
-		  break;
-		case vpiPartSelect:
-		  assert(vpi_get(_vpiFromThr, obj->args[arg]) == _vpi_at_PV);
-		  PV_delete(obj->args[arg]);
 		  break;
 	    }
       }

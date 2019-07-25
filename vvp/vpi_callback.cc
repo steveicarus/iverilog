@@ -209,8 +209,12 @@ static value_callback* make_value_change(p_cb_data data)
       }
 
 	// Special case: the target object is a vpiPartSelect
-      if (data->obj->get_type_code() == vpiPartSelect)
-	    return make_value_change_part(data);
+      if (data->obj->get_type_code() == vpiPartSelect) {
+            if (data->obj->vpi_handle(vpiArray))
+	        return vpip_array_word_change(data);
+            else
+	        return make_value_change_part(data);
+      }
 
       if (data->obj->get_type_code() == vpiMemoryWord)
 	    return vpip_array_word_change(data);

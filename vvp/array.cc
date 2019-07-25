@@ -95,10 +95,11 @@ struct __vpiArrayVthrA : public __vpiHandle {
 
 
 struct __vpiArrayVthrAPV : public __vpiHandle {
-      int get_type_code(void) const { return vpiMemoryWord; }
+      int get_type_code(void) const { return vpiPartSelect; }
       int vpi_get(int code);
       char* vpi_get_str(int code);
       void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_handle(int code);
 
       struct __vpiArray*array;
       unsigned word_sel;
@@ -495,13 +496,10 @@ int __vpiArrayVthrAPV::vpi_get(int code)
 	    return part_wid;
 
 	  case vpiLeftRange:
-	    return array->msb.get_value();
+	    return part_bit + part_wid - 1;
 
 	  case vpiRightRange:
-	    return array->lsb.get_value();
-
-	  case vpiIndex:
-	    return (int)word_sel;
+	    return part_bit;
 
 	  case vpiAutomatic:
 	    return array->get_scope()->is_automatic() ? 1 : 0;
@@ -543,6 +541,28 @@ void __vpiArrayVthrAPV::vpi_get_value(p_vpi_value vp)
 	    tmp = tmp.subvalue(part_bit, part_wid);
 	    vpip_vec4_get_value(tmp, part_wid, array->signed_flag, vp);
       }
+}
+
+vpiHandle __vpiArrayVthrAPV::vpi_handle(int code)
+{
+      switch (code) {
+            // Not currently implemented. We would need to create a VPI
+            // object for the memory word.
+	  case vpiParent:
+	    return 0;
+
+            // Not part of the Verilog standard. We use this internally.
+	  case vpiArray:
+	    return array;
+
+	  case vpiScope:
+	    return array->get_scope();
+
+	  case vpiModule:
+	    return vpip_module(array->get_scope());
+      }
+
+      return 0;
 }
 
 void __vpiArray::set_word(unsigned address, unsigned part_off, const vvp_vector4_t&val)
