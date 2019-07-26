@@ -22,8 +22,8 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include  "cfparse.h"
 # include  "cfparse_misc.h"
+# include  "cfparse.h"
 # include  "globals.h"
 # include  <string.h>
 
