@@ -47,7 +47,7 @@ on a UNIX-like system:
 
 	- bison and flex
 
-	- gperf 2.7 or later
+	- gperf 3.0 or later
 	  The lexical analyzer doesn't recognize keywords directly,
 	  but instead matches symbols and looks them up in a hash
 	  table in order to get the proper lexical code. The gperf
