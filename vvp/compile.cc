@@ -676,7 +676,7 @@ struct code_label_resolv_list_s: public resolv_list_s {
 bool code_label_resolv_list_s::resolve(bool mes)
 {
       symbol_value_t val = sym_get_value(sym_codespace, label());
-      if (val.num) {
+      if (val.ptr) {
 	    if (cptr2_flag)
 		  code->cptr2 = reinterpret_cast<vvp_code_t>(val.ptr);
 	    else
