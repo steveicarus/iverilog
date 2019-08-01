@@ -338,7 +338,7 @@ symbol_value_t symbol_table_s::find_value_(struct tree_node_*cur,
 
       assert(0);
       { symbol_value_t tmp;
-        tmp.num = 0;
+        tmp.ptr = 0;
         return tmp;
       }
 }
@@ -366,7 +366,7 @@ void symbol_table_s::sym_set_value(const char*key, symbol_value_t val)
 symbol_value_t symbol_table_s::sym_get_value(const char*key)
 {
       symbol_value_t def;
-      def.num = 0;
+      def.ptr = 0;
 
       if (root->count == 0) {
 	      /* Handle the special case that this is the very first

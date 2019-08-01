@@ -49,7 +49,6 @@ typedef struct symbol_value_s {
       union {
 	    vvp_net_t*net;
 	    void*ptr;
-	    unsigned long num;
       };
 } symbol_value_t;
 
