@@ -757,6 +757,11 @@ void PTaskFunc::elaborate_sig_ports_(Design*des, NetScope*scope,
 		       << "Function arguments must be input ports." << endl;
 		  des->errors += 1;
 	    }
+	    if (tmp->unpacked_dimensions() != 0) {
+		  cerr << get_fileline() << ": sorry: Subroutine ports with "
+			  "unpacked dimensions are not yet supported." << endl;
+		 des->errors += 1;
+	    }
       }
 }
 
