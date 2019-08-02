@@ -46,6 +46,8 @@ on a UNIX-like system:
 	  to work. MSVC++ 5 and 6 are known to definitely *not* work.
 
 	- bison and flex
+          It has been reported that bison 2.3 on MacOS generates broken
+          code, but bison 3.0.4 works.
 
 	- gperf 3.0 or later
 	  The lexical analyzer doesn't recognize keywords directly,
