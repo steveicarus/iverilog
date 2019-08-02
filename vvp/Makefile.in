@@ -65,11 +65,11 @@ dllib=@DLLIB@
 
 MDIR1 = -DMODULE_DIR1='"$(libdir)/ivl$(suffix)"'
 
-V = vpi_modules.o vpi_callback.o vpi_cobject.o vpi_const.o vpi_darray.o \
-    vpi_event.o vpi_iter.o vpi_mcd.o \
-    vpi_priv.o vpi_scope.o vpi_real.o vpi_signal.o vpi_string.o vpi_tasks.o vpi_time.o \
-    vpi_vthr_vector.o vpip_bin.o vpip_hex.o vpip_oct.o \
-    vpip_to_dec.o vpip_format.o vvp_vpi.o
+VPI = vpi_modules.o vpi_callback.o vpi_cobject.o vpi_const.o vpi_darray.o \
+      vpi_event.o vpi_iter.o vpi_mcd.o \
+      vpi_priv.o vpi_scope.o vpi_real.o vpi_signal.o vpi_string.o vpi_tasks.o vpi_time.o \
+      vpi_vthr_vector.o vpip_bin.o vpip_hex.o vpip_oct.o \
+      vpip_to_dec.o vpip_format.o vvp_vpi.o
 
 O = main.o parse.o parse_misc.o lexor.o arith.o array_common.o array.o bufif.o compile.o \
     concat.o dff.o class_type.o enum_type.o extend.o file_line.o npmos.o part.o \
@@ -79,7 +79,7 @@ O = main.o parse.o parse_misc.o lexor.o arith.o array_common.o array.o bufif.o c
     symbols.o ufunc.o codes.o vthread.o schedule.o \
     statistics.o tables.o udp.o vvp_island.o vvp_net.o vvp_net_sig.o \
     vvp_object.o vvp_cobject.o vvp_darray.o event.o logic.o delay.o \
-    words.o island_tran.o $V
+    words.o island_tran.o $(VPI)
 
 all: dep vvp@EXEEXT@ libvpi.a vvp.man
 
