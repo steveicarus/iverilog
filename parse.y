@@ -2223,7 +2223,11 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	      tmp = pform_make_task_ports(@3, use_port_type, $2, ilist);
 	}
 	if ($4 != 0) {
-	      pform_set_reg_idx(name, $4);
+	      if (gn_system_verilog()) {
+		    pform_set_reg_idx(name, $4);
+	      } else {
+		    yyerror(@4, "error: Task/function port with unpacked dimensions requires SystemVerilog.");
+	      }
 	}
 
 	$$ = tmp;
