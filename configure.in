@@ -224,8 +224,8 @@ case "${host}" in
 	CFLAGS="-mieee $CFLAGS"
 	;;
     *-*-mingw*)
-	CXXFLAGS="-Wno-deprecated-declarations -Wno-sign-compare -D__USE_MINGW_ANSI_STDIO=1 $CXXFLAGS"
-	CFLAGS="-Wno-sign-compare -D__USE_MINGW_ANSI_STDIO=1 $CFLAGS"
+	CXXFLAGS="-D__USE_MINGW_ANSI_STDIO=1 $CXXFLAGS"
+	CFLAGS="-D__USE_MINGW_ANSI_STDIO=1 $CFLAGS"
 	;;
 esac
 
