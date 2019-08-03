@@ -6718,8 +6718,7 @@ Design* elaborate(list<perm_string>roots)
 			if (netnet != 0) {
 			  // Elaboration may actually fail with
 			  // erroneous input source
-			  ivl_assert(*mport[pin], netnet->pin_count()==1);
-                          prt_vector_width += netnet->vector_width();
+                          prt_vector_width += netnet->vector_width() * netnet->pin_count();
                           ptype = PortType::merged(netnet->port_type(), ptype);
 			}
 		  }
