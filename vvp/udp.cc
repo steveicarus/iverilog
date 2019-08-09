@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2019 Stephen Williams (steve@icarus.com)
  *
  * (This is a rewrite of code that was ...
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>)
@@ -907,7 +907,12 @@ vvp_udp_fun_core::vvp_udp_fun_core(vvp_net_t*net, vvp_udp_s*def)
       current_.mask1 = 0;
       current_.maskx = ~ ((-1UL) << port_count());
 
+        // If the initial value is 0 or 1, schedule the initial assignment
+        // normally, so that any sensitive always processes can be started
+        // first.
       if (cur_out_ != BIT4_X)
+	    schedule_generic(this, 0, false);
+      else
 	    schedule_functor(this);
 }
 
