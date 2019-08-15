@@ -1,6 +1,6 @@
 #norootforbuild
 #
-%define rev_date 20170824
+%define rev_date 20190815
 # Normally, the suff-ix is %nil, meaning the suffix is to not be used.
 # But if the builder wants to make a suffixed package, he may set this
 # to a value (i.e. -test) to cause suffixes to be put in all the right
@@ -10,7 +10,7 @@
 #
 Summary: Icarus Verilog
 Name: verilog%{suff}
-Version: 10.2
+Version: 10.3
 Release: 0
 License: GPL
 Group: Productivity/Scientific/Electronics
