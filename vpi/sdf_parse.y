@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,7 +46,8 @@ char sdf_use_hchar = '.';
 
 %token K_ABSOLUTE K_CELL K_CELLTYPE K_COND K_CONDELSE K_DATE K_DELAYFILE
 %token K_DELAY K_DESIGN K_DIVIDER K_HOLD K_INCREMENT K_INSTANCE
-%token K_INTERCONNECT K_IOPATH K_NEGEDGE K_POSEDGE K_PROCESS K_PROGRAM
+%token K_INTERCONNECT K_IOPATH K_NEGEDGE K_PATHPULSE K_PATHPULSEPERCENT
+%token K_PERIOD K_POSEDGE K_PROCESS K_PROGRAM
 %token K_RECREM K_RECOVERY K_REMOVAL K_SDFVERSION K_SETUP K_SETUPHOLD
 %token K_TEMPERATURE K_TIMESCALE K_TIMINGCHECK K_VENDOR K_VERSION
 %token K_VOLTAGE K_WIDTH
@@ -65,7 +66,7 @@ char sdf_use_hchar = '.';
 %type <string_val> port port_instance port_interconnect
 
 %type <real_val> signed_real_number
-%type <delay> delval rvalue rtriple signed_real_number_opt
+%type <delay> delval rvalue_opt rvalue rtriple signed_real_number_opt
 
 %type <int_val> edge_identifier
 %type <port_with_edge> port_edge port_spec
@@ -246,7 +247,9 @@ deltype_list
   ;
 
 deltype
-  : '(' K_ABSOLUTE del_def_list ')'
+  : '(' K_PATHPULSE input_output_path_opt rvalue rvalue_opt ')'
+  | '(' K_PATHPULSEPERCENT input_output_path_opt rvalue rvalue_opt ')'
+  | '(' K_ABSOLUTE del_def_list ')'
   | '(' K_INCREMENT del_def_list ')'
   | '(' error ')'
     { vpi_printf("%s:%d: SDF ERROR: Invalid/malformed delay type\n",
@@ -324,6 +327,7 @@ tchk_def
   | '(' K_RECREM port_tchk port_tchk rvalue rvalue ')'
   | '(' K_REMOVAL port_tchk port_tchk rvalue ')'
   | '(' K_WIDTH port_tchk rvalue ')'
+  | '(' K_PERIOD port_tchk rvalue ')'
   ;
 
 port_tchk
@@ -392,6 +396,15 @@ equality_operator
 scalar_constant
   : K_LOGICAL_ONE
   | K_LOGICAL_ZERO
+  ;
+
+input_output_path_opt
+  : input_output_path
+  |
+  ;
+
+input_output_path
+  : port_instance port_instance
   ;
 
 port_spec
@@ -464,6 +477,14 @@ delval
 	vpi_printf("%s:%d: SDF WARNING: Pulse rejection limits ignored\n",
 		   sdf_parse_path, @3.first_line);
       }
+  ;
+
+rvalue_opt
+  : /* When missing. */
+      { $$.value = 0.0;
+	$$.defined = 0;
+      }
+  | rvalue
   ;
 
 rvalue

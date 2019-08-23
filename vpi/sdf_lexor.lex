@@ -5,7 +5,7 @@
 
 %{
 /*
- * Copyright (c) 2007-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -144,6 +144,9 @@ static struct {
       { "INTERCONNECT", K_INTERCONNECT },
       { "INSTANCE",     K_INSTANCE },
       { "IOPATH",       K_IOPATH },
+      { "PATHPULSE",    K_PATHPULSE },
+      { "PATHPULSEPERCENT", K_PATHPULSEPERCENT },
+      { "PERIOD",       K_PERIOD },
       { "PROCESS",      K_PROCESS },
       { "PROGRAM",      K_PROGRAM },
       { "RECREM",       K_RECREM },
