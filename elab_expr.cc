@@ -1107,12 +1107,14 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 	    bool rc = eval_as_long(value, nexpr);
 	    ivl_assert(*this, rc && value>=0);
 
-	      // The argument type/width is self-determined and doesn't
-	      // affect the result type/width.
+	      // The argument width is self-determined and doesn't
+	      // affect the result width.
 	    width_mode_t arg_mode = SIZED;
 	    parms_[0]->test_width(des, scope, arg_mode);
 
+	    expr_type_  = pexpr->expr_type();
 	    expr_width_ = value;
+	    min_width_  = value;
 	    signed_flag_= false;
 	    return expr_width_;
       }

@@ -925,6 +925,21 @@ static NetExpr* do_elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
       if (tmp == 0) return 0;
 
       if ((cast_type != IVL_VT_NO_TYPE) && (cast_type != tmp->expr_type())) {
+            if (cast_type != pe->expr_type()) {
+                  switch (pe->expr_type()) {
+                      case IVL_VT_BOOL:
+                      case IVL_VT_LOGIC:
+                      case IVL_VT_REAL:
+                        break;
+                      default:
+                        cerr << tmp->get_fileline() << ": error: "
+                                "this expression cannot be implicitly "
+                                "cast to the target type." << endl;
+                        des->errors += 1;
+                        delete tmp;
+                        return 0;
+                  }
+            }
             switch (cast_type) {
                 case IVL_VT_REAL:
                   tmp = cast_to_real(tmp);
