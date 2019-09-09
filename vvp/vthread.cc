@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1544,6 +1544,39 @@ bool of_CAST2(vthread_t thr, vvp_code_t)
 	    }
       }
 
+      return true;
+}
+
+/*
+ * %cast/vec4/str <wid>
+ */
+bool of_CAST_VEC4_STR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->number;
+      string str = thr->pop_str();
+
+      vvp_vector4_t vec(wid, BIT4_0);
+
+      if (wid != 8*str.length()) {
+            cerr << "VVP error: size mismatch when casting string to vector." << endl;
+            thr->push_vec4(vec);
+            schedule_stop(0);
+            return false;
+      }
+
+      unsigned sdx = 0;
+      unsigned vdx = wid;
+      while (vdx > 0) {
+            char ch = str[sdx++];
+            vdx -= 8;
+            for (unsigned bdx = 0; bdx < 8; bdx += 1) {
+                  if (ch & 1)
+                        vec.set_bit(vdx+bdx, BIT4_1);
+                  ch >>= 1;
+            }
+      }
+
+      thr->push_vec4(vec);
       return true;
 }
 

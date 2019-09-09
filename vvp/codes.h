@@ -1,7 +1,7 @@
 #ifndef IVL_codes_H
 #define IVL_codes_H
 /*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -66,6 +66,7 @@ extern bool of_CASSIGN_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_CASSIGN_VEC4_OFF(vthread_t thr, vvp_code_t code);
 extern bool of_CASSIGN_WR(vthread_t thr, vvp_code_t code);
 extern bool of_CAST2(vthread_t thr, vvp_code_t code);
+extern bool of_CAST_VEC4_STR(vthread_t thr, vvp_code_t code);
 extern bool of_CMPE(vthread_t thr, vvp_code_t code);
 extern bool of_CMPIE(vthread_t thr, vvp_code_t code);
 extern bool of_CMPINE(vthread_t thr, vvp_code_t code);

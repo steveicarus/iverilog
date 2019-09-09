@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2019 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -257,6 +257,12 @@ value stack.
 
 Pop a value from the vec4 stack, convert it using Verilog rules to a
 vector2 (binary) value, and push the result.
+
+* %cast/vec4/str <wid>
+
+Pop a value from the string stack, convert it to a vector that is <wid>
+bits wide, and push the result to the vec4 stack. If the string does not
+fit exactly in <wid> bits, print an error message and stop the simulation.
 
 * %cmp/s
 * %cmp/u
