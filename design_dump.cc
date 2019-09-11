@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1711,7 +1711,7 @@ void NetECast::dump(ostream&fd) const
 {
       if (op_=='2')
 	    fd << "bool<" << expr_width() << ">(" << *expr_ << ")";
-      else if (op_=='4')
+      else if (op_=='v')
 	    fd << "logic<" << expr_width() << ">(" << *expr_ << ")";
       else
 	    NetEUnary::dump(fd);
