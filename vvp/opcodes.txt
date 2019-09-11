@@ -258,6 +258,20 @@ value stack.
 Pop a value from the vec4 stack, convert it using Verilog rules to a
 vector2 (binary) value, and push the result.
 
+* %cast/vec2/dar <wid>
+
+Pop a dynamic array value from the object stack, convert it to a 2-state
+vector that is <wid> bits wide, and push the result to the vec4 stack.
+If the dynamic array does not fit exactly in <wid> bits, print an error
+message and stop the simulation.
+
+* %cast/vec4/dar <wid>
+
+Pop a dynamic array value from the object stack, convert it to a 4-state
+vector that is <wid> bits wide, and push the result to the vec4 stack.
+If the dynamic array does not fit exactly in <wid> bits, print an error
+message and stop the simulation.
+
 * %cast/vec4/str <wid>
 
 Pop a value from the string stack, convert it to a vector that is <wid>

@@ -1547,6 +1547,43 @@ bool of_CAST2(vthread_t thr, vvp_code_t)
       return true;
 }
 
+bool do_cast_vec_dar(vthread_t thr, vvp_code_t cp, bool as_vec4)
+{
+      unsigned wid = cp->number;
+
+      vvp_object_t obj;
+      thr->pop_object(obj);
+
+      vvp_darray*darray = obj.peek<vvp_darray>();
+      assert(darray);
+
+      vvp_vector4_t vec = darray->get_bitstream(as_vec4);
+      if (vec.size() != wid) {
+            cerr << "VVP error: size mismatch when casting dynamic array to vector." << endl;
+            thr->push_vec4(vvp_vector4_t(wid));
+            schedule_stop(0);
+            return false;
+      }
+      thr->push_vec4(vec);
+      return true;
+}
+
+/*
+ * %cast/vec2/dar <wid>
+ */
+bool of_CAST_VEC2_DAR(vthread_t thr, vvp_code_t cp)
+{
+      return do_cast_vec_dar(thr, cp, false);
+}
+
+/*
+ * %cast/vec4/dar <wid>
+ */
+bool of_CAST_VEC4_DAR(vthread_t thr, vvp_code_t cp)
+{
+      return do_cast_vec_dar(thr, cp, true);
+}
+
 /*
  * %cast/vec4/str <wid>
  */

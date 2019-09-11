@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -72,6 +72,12 @@ void vvp_darray::shallow_copy(const vvp_object*)
       cerr << "XXXX shallow_copy(vvp_object_t) not implemented for " << typeid(*this).name() << endl;
 }
 
+vvp_vector4_t vvp_darray::get_bitstream(bool)
+{
+      cerr << "XXXX get_bitstream() not implemented for " << typeid(*this).name() << endl;
+      return vvp_vector4_t();
+}
+
 template <class TYPE> vvp_darray_atom<TYPE>::~vvp_darray_atom()
 {
 }
@@ -114,6 +120,27 @@ template <class TYPE> void vvp_darray_atom<TYPE>::shallow_copy(const vvp_object*
       unsigned num_items = min(array_.size(), that->array_.size());
       for (unsigned idx = 0 ; idx < num_items ; idx += 1)
 	    array_[idx] = that->array_[idx];
+}
+
+template <class TYPE> vvp_vector4_t vvp_darray_atom<TYPE>::get_bitstream(bool)
+{
+      const unsigned word_wid = sizeof(TYPE) * 8;
+
+      vvp_vector4_t vec(array_.size() * word_wid, BIT4_0);
+
+      unsigned adx = 0;
+      unsigned vdx = vec.size();
+      while (vdx > 0) {
+            TYPE word = array_[adx++];
+            vdx -= word_wid;
+            for (unsigned bdx = 0; bdx < word_wid; bdx += 1) {
+                  if (word & 1)
+                        vec.set_bit(vdx+bdx, BIT4_1);
+                  word >>= 1;
+            }
+      }
+
+      return vec;
 }
 
 template class vvp_darray_atom<uint8_t>;
@@ -165,6 +192,25 @@ void vvp_darray_vec4::shallow_copy(const vvp_object*obj)
 	    array_[idx] = that->array_[idx];
 }
 
+vvp_vector4_t vvp_darray_vec4::get_bitstream(bool as_vec4)
+{
+      vvp_vector4_t vec(array_.size() * word_wid_, BIT4_0);
+
+      unsigned adx = 0;
+      unsigned vdx = vec.size();
+      while (vdx > 0) {
+            vdx -= word_wid_;
+            for (unsigned bdx = 0; bdx < word_wid_; bdx += 1) {
+                  vvp_bit4_t bit = array_[adx].value(bdx);
+                  if (as_vec4 || (bit == BIT4_1))
+                        vec.set_bit(vdx+bdx, bit);
+            }
+            adx++;
+      }
+
+      return vec;
+}
+
 vvp_darray_vec2::~vvp_darray_vec2()
 {
 }
@@ -206,6 +252,24 @@ void vvp_darray_vec2::shallow_copy(const vvp_object*obj)
       unsigned num_items = min(array_.size(), that->array_.size());
       for (unsigned idx = 0 ; idx < num_items ; idx += 1)
 	    array_[idx] = that->array_[idx];
+}
+
+vvp_vector4_t vvp_darray_vec2::get_bitstream(bool)
+{
+      vvp_vector4_t vec(array_.size() * word_wid_, BIT4_0);
+
+      unsigned adx = 0;
+      unsigned vdx = vec.size();
+      while (vdx > 0) {
+            vdx -= word_wid_;
+            for (unsigned bdx = 0; bdx < word_wid_; bdx += 1) {
+                  if (array_[adx].value(bdx))
+                        vec.set_bit(vdx+bdx, BIT4_1);
+            }
+            adx++;
+      }
+
+      return vec;
 }
 
 vvp_darray_object::~vvp_darray_object()
@@ -278,6 +342,32 @@ void vvp_darray_real::shallow_copy(const vvp_object*obj)
       unsigned num_items = min(array_.size(), that->array_.size());
       for (unsigned idx = 0 ; idx < num_items ; idx += 1)
 	    array_[idx] = that->array_[idx];
+}
+
+vvp_vector4_t vvp_darray_real::get_bitstream(bool)
+{
+      const unsigned word_wid = sizeof(double) * 8;
+      assert(word_wid == 64);
+
+      vvp_vector4_t vec(array_.size() * word_wid, BIT4_0);
+
+      unsigned adx = 0;
+      unsigned vdx = vec.size();
+      while (vdx > 0) {
+            union {
+                double   value;
+                uint64_t bits;
+            } word;
+            word.value = array_[adx++];
+            vdx -= word_wid;
+            for (unsigned bdx = 0; bdx < word_wid; bdx += 1) {
+                  if (word.bits & 1)
+                        vec.set_bit(vdx+bdx, BIT4_1);
+                  word.bits >>= 1;
+            }
+      }
+
+      return vec;
 }
 
 vvp_darray_string::~vvp_darray_string()

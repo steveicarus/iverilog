@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_darray_H
 #define IVL_vvp_darray_H
 /*
- * Copyright (c) 2012-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,6 +46,8 @@ class vvp_darray : public vvp_object {
       virtual void get_word(unsigned adr, vvp_object_t&value);
 
       virtual void shallow_copy(const vvp_object*obj);
+
+      virtual vvp_vector4_t get_bitstream(bool as_vec4);
 };
 
 template <class TYPE> class vvp_darray_atom : public vvp_darray {
@@ -58,6 +60,7 @@ template <class TYPE> class vvp_darray_atom : public vvp_darray {
       void set_word(unsigned adr, const vvp_vector4_t&value);
       void get_word(unsigned adr, vvp_vector4_t&value);
       void shallow_copy(const vvp_object*obj);
+      vvp_vector4_t get_bitstream(bool as_vec4);
 
     private:
       std::vector<TYPE> array_;
@@ -74,6 +77,7 @@ class vvp_darray_vec4 : public vvp_darray {
       void set_word(unsigned adr, const vvp_vector4_t&value);
       void get_word(unsigned adr, vvp_vector4_t&value);
       void shallow_copy(const vvp_object*obj);
+      vvp_vector4_t get_bitstream(bool as_vec4);
 
     private:
       std::vector<vvp_vector4_t> array_;
@@ -91,6 +95,7 @@ class vvp_darray_vec2 : public vvp_darray {
       void set_word(unsigned adr, const vvp_vector4_t&value);
       void get_word(unsigned adr, vvp_vector4_t&value);
       void shallow_copy(const vvp_object*obj);
+      vvp_vector4_t get_bitstream(bool as_vec4);
 
     private:
       std::vector<vvp_vector2_t> array_;
@@ -107,6 +112,7 @@ class vvp_darray_real : public vvp_darray {
       void set_word(unsigned adr, double value);
       void get_word(unsigned adr, double&value);
       void shallow_copy(const vvp_object*obj);
+      vvp_vector4_t get_bitstream(bool as_vec4);
 
     private:
       std::vector<double> array_;
