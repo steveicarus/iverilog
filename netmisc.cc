@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -158,7 +158,7 @@ NetExpr* cast_to_int2(NetExpr*expr, unsigned width)
 NetExpr* cast_to_int4(NetExpr*expr, unsigned width)
 {
 	// Special case: The expression is already LOGIC or BOOL
-      if (expr->expr_type() != IVL_VT_REAL)
+      if (expr->expr_type() == IVL_VT_LOGIC || expr->expr_type() == IVL_VT_BOOL)
 	    return expr;
 
       if (debug_elaborate)

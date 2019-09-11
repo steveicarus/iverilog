@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1255,10 +1255,24 @@ static void draw_unary_vec4(ivl_expr_t expr)
 	    local_count += 1;
 	    break;
 
-	  case 'v': /* Cast real to vec4 */
-	    assert(ivl_expr_value(sub) == IVL_VT_REAL);
-	    draw_eval_real(sub);
-	    fprintf(vvp_out, "    %%cvt/vr %u;\n", ivl_expr_width(expr));
+	  case 'v': /* Cast expression to vec4 */
+	    switch (ivl_expr_value(sub)) {
+		case IVL_VT_REAL:
+		  draw_eval_real(sub);
+		  fprintf(vvp_out, "    %%cvt/vr %u;\n", ivl_expr_width(expr));
+		  break;
+		case IVL_VT_STRING:
+		  draw_eval_string(sub);
+		  fprintf(vvp_out, "    %%cast/vec4/str %u;\n", ivl_expr_width(expr));
+		  break;
+		case IVL_VT_DARRAY:
+		  draw_eval_object(sub);
+		  fprintf(vvp_out, "    %%cast/vec4/dar %u;\n", ivl_expr_width(expr));
+		  break;
+		default:
+		  assert(0);
+		  break;
+	    }
 	    break;
 
 	  case '2': /* Cast expression to bool */
@@ -1275,6 +1289,14 @@ static void draw_unary_vec4(ivl_expr_t expr)
 		case IVL_VT_REAL:
 		  draw_eval_real(sub);
 		  fprintf(vvp_out, "    %%cvt/vr %u;\n", ivl_expr_width(expr));
+		  break;
+		case IVL_VT_STRING:
+		  draw_eval_string(sub);
+		  fprintf(vvp_out, "    %%cast/vec4/str %u;\n", ivl_expr_width(expr));
+		  break;
+		case IVL_VT_DARRAY:
+		  draw_eval_object(sub);
+		  fprintf(vvp_out, "    %%cast/vec2/dar %u;\n", ivl_expr_width(expr));
 		  break;
 		default:
 		  assert(0);
