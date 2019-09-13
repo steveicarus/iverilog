@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2346,9 +2346,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
 		   << "Use at least -g2005-sv to remove this warning." << endl;
 	}
 	list<pform_range_t> *tmp = new list<pform_range_t>;
-	pform_range_t index;
-	index.first = new PENumber(new verinum((uint64_t)0, integer_width));
-	index.second = new PEBinary('-', $2, new PENumber(new verinum((uint64_t)1, integer_width)));
+	pform_range_t index ($2,0);
 	tmp->push_back(index);
 	$$ = tmp;
       }

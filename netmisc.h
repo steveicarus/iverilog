@@ -1,7 +1,7 @@
 #ifndef IVL_netmisc_H
 #define IVL_netmisc_H
 /*
- * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -321,7 +321,11 @@ extern NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 				    bool need_const =false,
 				    bool force_unsigned =false);
 
-extern bool evaluate_ranges(Design*des, NetScope*scope,
+extern bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
+                           const pform_range_t&range,
+                           long&index_l, long&index_r);
+
+extern bool evaluate_ranges(Design*des, NetScope*scope, const LineInfo*li,
 			    std::vector<netrange_t>&llist,
 			    const std::list<pform_range_t>&rlist);
 /*
