@@ -1037,50 +1037,94 @@ NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
       return tmp;
 }
 
-bool evaluate_ranges(Design*des, NetScope*scope,
+bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
+		    const pform_range_t&range, long&index_l, long&index_r)
+{
+      bool dimension_ok = true;
+
+        // Unsized and queue dimensions should be handled before calling
+        // this function. If we find them here, we are in a context where
+        // they are not allowed.
+      if (range.first == 0) {
+            cerr << li->get_fileline() << ": error: "
+                    "An unsized dimension is not allowed here." << endl;
+            dimension_ok = false;
+            des->errors += 1;
+      } else if (dynamic_cast<PENull*>(range.first)) {
+            cerr << li->get_fileline() << ": error: "
+                    "A queue dimension is not allowed here." << endl;
+            dimension_ok = false;
+            des->errors += 1;
+      } else {
+            NetExpr*texpr = elab_and_eval(des, scope, range.first, -1, true);
+            if (! eval_as_long(index_l, texpr)) {
+                  cerr << range.first->get_fileline() << ": error: "
+                          "Dimensions must be constant." << endl;
+                  cerr << range.first->get_fileline() << "       : "
+                       << (range.second ? "This MSB" : "This size")
+                       << " expression violates the rule: "
+                       << *range.first << endl;
+                  dimension_ok = false;
+                  des->errors += 1;
+            }
+            delete texpr;
+
+            if (range.second == 0) {
+                    // This is a SystemVerilog [size] dimension. The IEEE
+                    // standard does not allow this in a packed dimension,
+                    // but we do. At least one commercial simulator does too.
+                  if (!dimension_ok) {
+                        // bail out
+                  } else if (index_l > 0) {
+                        index_l = index_l - 1;
+                        index_r = 0;
+                  } else {
+                        cerr << range.first->get_fileline() << ": error: "
+                                "Dimension size must be greater than zero." << endl;
+                        cerr << range.first->get_fileline() << "       : "
+                                "This size expression violates the rule: "
+                             << *range.first << endl;
+                        dimension_ok = false;
+                        des->errors += 1;
+                  }
+            } else {
+                  texpr = elab_and_eval(des, scope, range.second, -1, true);
+                  if (! eval_as_long(index_r, texpr)) {
+                        cerr << range.second->get_fileline() << ": error: "
+                                "Dimensions must be constant." << endl;
+                        cerr << range.second->get_fileline() << "       : "
+                                "This LSB expression violates the rule: "
+                             << *range.second << endl;
+                        dimension_ok = false;
+                        des->errors += 1;
+                  }
+                  delete texpr;
+            }
+      }
+
+        /* Error recovery */
+      if (!dimension_ok) {
+            index_l = 0;
+            index_r = 0;
+      }
+
+      return dimension_ok;
+}
+
+bool evaluate_ranges(Design*des, NetScope*scope, const LineInfo*li,
 		     vector<netrange_t>&llist,
 		     const list<pform_range_t>&rlist)
 {
-      bool bad_msb = false, bad_lsb = false;
+      bool dimensions_ok = true;
 
       for (list<pform_range_t>::const_iterator cur = rlist.begin()
 		 ; cur != rlist.end() ; ++cur) {
-	    long use_msb, use_lsb;
-
-	    NetExpr*texpr = elab_and_eval(des, scope, cur->first, -1, true);
-	    if (! eval_as_long(use_msb, texpr)) {
-		  cerr << cur->first->get_fileline() << ": error: "
-			"Range expressions must be constant." << endl;
-		  cerr << cur->first->get_fileline() << "       : "
-			"This MSB expression violates the rule: "
-		       << *cur->first << endl;
-		  des->errors += 1;
-		  bad_msb = true;
-	    }
-
-	    delete texpr;
-
-	    texpr = elab_and_eval(des, scope, cur->second, -1, true);
-	    if (! eval_as_long(use_lsb, texpr)) {
-		  cerr << cur->second->get_fileline() << ": error: "
-			"Range expressions must be constant." << endl;
-		  cerr << cur->second->get_fileline() << "       : "
-			"This LSB expression violates the rule: "
-		       << *cur->second << endl;
-		  des->errors += 1;
-		  bad_lsb = true;
-	    }
-
-	    delete texpr;
-
-	      /* Error recovery */
-	    if (bad_lsb) use_lsb = 0;
-	    if (bad_msb) use_msb = use_lsb;
-
-	    llist.push_back(netrange_t(use_msb, use_lsb));
+            long index_l, index_r;
+            dimensions_ok &= evaluate_range(des, scope, li, *cur, index_l, index_r);
+            llist.push_back(netrange_t(index_l, index_r));
       }
 
-      return bad_msb | bad_lsb;
+      return dimensions_ok;
 }
 
 void eval_expr(NetExpr*&expr, int context_width)
