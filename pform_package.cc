@@ -154,6 +154,12 @@ void pform_package_import(const struct vlltype&, PPackage*pkg, const char*ident)
 		  scope->imports[cur->first] = pkg;
 	    }
 
+	    for (map<perm_string,PWire*>::const_iterator cur = pkg->wires.begin()
+		       ; cur != pkg->wires.end() ; ++cur) {
+
+		  scope->imports[cur->first] = pkg;
+	    }
+
             for (set<enum_type_t*>::const_iterator cur = pkg->enum_sets.begin()
 		       ; cur != pkg->enum_sets.end() ; ++ cur) {
                   scope->enum_sets.insert(*cur);
