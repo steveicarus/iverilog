@@ -433,10 +433,10 @@ class PEIdent : public PExpr {
 				   bool need_const_idx) const;
       NetAssign_*elaborate_lval_net_class_member_(Design*, NetScope*,
 						   NetNet*,
-						   const perm_string&) const;
+						   pform_name_t) const;
       bool elaborate_lval_net_packed_member_(Design*, NetScope*,
 					     NetAssign_*,
-					     const name_component_t&) const;
+					     pform_name_t member_path) const;
       bool elaborate_lval_darray_bit_(Design*, NetScope*,
 				       NetAssign_*) const;
 
@@ -530,8 +530,7 @@ class PEIdent : public PExpr {
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
 				     bool bidirectional_flag) const;
 
-      NetAssign_*scan_lname_for_nested_members_(Design*des, NetScope*scope,
-						       const pform_name_t&path) const;
+
       bool eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 			     long&midx, long&lidx) const;
 };
