@@ -99,6 +99,10 @@ ostream& operator<< (ostream&out, const name_component_t&that)
 ostream& operator<< (ostream&o, const pform_name_t&that)
 {
       pform_name_t::const_iterator cur;
+      if (that.size() == 0) {
+	    o << "<nil>";
+	    return o;
+      }
 
       cur = that.begin();
       o << *cur;

@@ -1053,7 +1053,11 @@ void NetAlloc::dump(ostream&o, unsigned ind) const
 void NetAssign_::dump_lval(ostream&o) const
 {
       if (sig_) o << sig_->name();
-      else if (nest_) nest_->dump_lval(o);
+      else if (nest_) {
+	    o << "(";
+	    nest_->dump_lval(o);
+	    o << ")";
+      }
       else o << "<?>";
 
       if (! member_.nil()) {
