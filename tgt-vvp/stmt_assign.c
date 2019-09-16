@@ -1020,6 +1020,7 @@ static int show_stmt_assign_sig_darray(ivl_statement_t net)
 
       } else if (mux) {
 	    draw_eval_vec4(rval);
+	    resize_vec4_wid(rval, ivl_stmt_lwidth(net));
 
 	      /* The %store/dar/vec4 expects the array index to be in index
 		 register 3. Calculate the index in place. */
