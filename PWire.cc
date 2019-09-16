@@ -67,6 +67,7 @@ bool PWire::set_wire_type(NetNet::Type t)
 		  isint_ = true;
 		  return true;
 	    }
+	    if (t == NetNet::IMPLICIT_REG) return true;
 	    return false;
 	  case NetNet::REG:
 	    if (t == NetNet::INTEGER) {

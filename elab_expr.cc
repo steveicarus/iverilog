@@ -5397,12 +5397,11 @@ NetExpr* PENewArray::elaborate_expr(Design*des, NetScope*scope,
       return tmp;
 }
 
-/*
- * This method should never actually be called.
- */
-NetExpr* PENewArray::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
+NetExpr* PENewArray::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
 {
-      ivl_assert(*this, 0);
+      cerr << get_fileline() << ": error: The new array constructor may "
+              "only be used in an assignment to a dynamic array." << endl;
+      des->errors += 1;
       return 0;
 }
 

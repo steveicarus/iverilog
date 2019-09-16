@@ -1563,6 +1563,15 @@ variable_decl_assignment /* IEEE1800-2005 A.2.3 */
 	delete[]$1;
 	$$ = tmp;
       }
+  | IDENTIFIER dimensions '=' dynamic_array_new
+      { decl_assignment_t*tmp = new decl_assignment_t;
+	tmp->name = lex_strings.make($1);
+	tmp->index = *$2;
+	tmp->expr .reset($4);
+	delete $2;
+	delete[]$1;
+	$$ = tmp;
+      }
   ;
 
 
@@ -5679,6 +5688,20 @@ register_variable
 	$$ = $1;
       }
   | IDENTIFIER dimensions_opt '=' expression
+      { if (pform_peek_scope()->var_init_needs_explicit_lifetime()
+	    && (var_lifetime == LexicalScope::INHERITED)) {
+	      cerr << @3 << ": warning: Static variable initialization requires "
+			    "explicit lifetime in this context." << endl;
+	      warn_count += 1;
+	}
+	perm_string name = lex_strings.make($1);
+	pform_makewire(@1, name, NetNet::REG,
+		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
+	pform_set_reg_idx(name, $2);
+	pform_make_var_init(@1, name, $4);
+	$$ = $1;
+      }
+  | IDENTIFIER dimensions_opt '=' dynamic_array_new
       { if (pform_peek_scope()->var_init_needs_explicit_lifetime()
 	    && (var_lifetime == LexicalScope::INHERITED)) {
 	      cerr << @3 << ": warning: Static variable initialization requires "
