@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -47,6 +47,8 @@
 
 using namespace std;
 
+#if 0
+/* These functions are not currently used. */
 static bool get_const_argument(NetExpr*exp, verinum&res)
 {
       switch (exp->expr_type()) {
@@ -73,8 +75,6 @@ static bool get_const_argument(NetExpr*exp, verinum&res)
       return true;
 }
 
-#if 0
-/* This function is not currently used. */
 static bool get_const_argument(NetExpr*exp, long&res)
 {
       verinum tmp;
@@ -876,13 +876,13 @@ static ivl_type_s*elaborate_type(Design*des, NetScope*scope,
       return 0;
 }
 
-static netparray_t* elaborate_parray_type(Design*des, NetScope*scope,
+static netparray_t* elaborate_parray_type(Design*des, NetScope*scope, const LineInfo*li,
 					  parray_type_t*data_type)
 {
 
       vector<netrange_t>packed_dimensions;
-      bool bad_range = evaluate_ranges(des, scope, packed_dimensions, * data_type->dims);
-      ivl_assert(*data_type, !bad_range);
+      bool dimensions_ok = evaluate_ranges(des, scope, li, packed_dimensions, * data_type->dims);
+      ivl_assert(*data_type, dimensions_ok);
 
       ivl_type_s*element_type = elaborate_type(des, scope, data_type->base_type);
 
@@ -998,7 +998,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		       << " inherits dimensions from var/net." << endl;
 	    }
 
-	    bool bad_range = false;
+	    bool dimensions_ok = true;
 	    vector<netrange_t> plist, nlist;
 	    /* If they exist get the port definition MSB and LSB */
 	    if (port_set_ && !port_.empty()) {
@@ -1006,7 +1006,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 			cerr << get_fileline() << ": PWire::elaborate_sig: "
 			     << "Evaluate ranges for port " << basename() << endl;
 		  }
-		  bad_range |= evaluate_ranges(des, scope, plist, port_);
+		  dimensions_ok &= evaluate_ranges(des, scope, this, plist, port_);
 		  nlist = plist;
 		    /* An implicit port can have a range so note that here. */
 		  is_implicit_scalar = false;
@@ -1014,13 +1014,13 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
             assert(port_set_ || port_.empty());
 
 	    /* If they exist get the net/etc. definition MSB and LSB */
-	    if (net_set_ && !net_.empty() && !bad_range) {
+	    if (net_set_ && !net_.empty() && dimensions_ok) {
 		  nlist.clear();
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PWire::elaborate_sig: "
 			     << "Evaluate ranges for net " << basename() << endl;
 		  }
-		  bad_range |= evaluate_ranges(des, scope, nlist, net_);
+		  dimensions_ok &= evaluate_ranges(des, scope, this, nlist, net_);
 	    }
             assert(net_set_ || net_.empty());
 
@@ -1121,39 +1121,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	      // Cannot handle dynamic arrays of arrays yet.
 	    ivl_assert(*this, netdarray==0);
-	    ivl_assert(*this, use_lidx && use_ridx);
-
-	    NetExpr*lexp = elab_and_eval(des, scope, use_lidx, -1, true);
-	    NetExpr*rexp = elab_and_eval(des, scope, use_ridx, -1, true);
-
-	    if ((lexp == 0) || (rexp == 0)) {
-		  cerr << get_fileline() << ": internal error: There is "
-		       << "a problem evaluating indices for ``"
-		       << name_ << "''." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    bool const_flag = true;
-	    verinum lval, rval;
-	    const_flag &= get_const_argument(lexp, lval);
-	    const_flag &= get_const_argument(rexp, rval);
-	    delete rexp;
-	    delete lexp;
 
 	    long index_l, index_r;
-	    if (! const_flag) {
-		  cerr << get_fileline() << ": error: The indices "
-		       << "are not constant for array ``"
-		       << name_ << "''." << endl;
-		  des->errors += 1;
-                    /* Attempt to recover from error, */
-	          index_l = 0;
-	          index_r = 0;
-	    } else {
-		  index_l = lval.as_long();
-		  index_r = rval.as_long();
-	    }
+	    evaluate_range(des, scope, this, *cur, index_l, index_r);
+
 	    if (abs(index_r - index_l) > warn_dimension_size) {
 		  cerr << get_fileline() << ": warning: Array dimension "
 		          "is greater than " << warn_dimension_size
@@ -1276,7 +1247,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	      // The trick here is that the parray type has an
 	      // arbitrary sub-type, and not just a scalar bit...
-	    netparray_t*use_type = elaborate_parray_type(des, scope, parray_type);
+	    netparray_t*use_type = elaborate_parray_type(des, scope, this, parray_type);
 	      // Should not be getting packed dimensions other than
 	      // through the parray type declaration.
 	    ivl_assert(*this, packed_dimensions.empty());

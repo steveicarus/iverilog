@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1563,6 +1563,15 @@ variable_decl_assignment /* IEEE1800-2005 A.2.3 */
 	delete[]$1;
 	$$ = tmp;
       }
+  | IDENTIFIER dimensions '=' dynamic_array_new
+      { decl_assignment_t*tmp = new decl_assignment_t;
+	tmp->name = lex_strings.make($1);
+	tmp->index = *$2;
+	tmp->expr .reset($4);
+	delete $2;
+	delete[]$1;
+	$$ = tmp;
+      }
   ;
 
 
@@ -2346,9 +2355,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
 		   << "Use at least -g2005-sv to remove this warning." << endl;
 	}
 	list<pform_range_t> *tmp = new list<pform_range_t>;
-	pform_range_t index;
-	index.first = new PENumber(new verinum((uint64_t)0, integer_width));
-	index.second = new PEBinary('-', $2, new PENumber(new verinum((uint64_t)1, integer_width)));
+	pform_range_t index ($2,0);
 	tmp->push_back(index);
 	$$ = tmp;
       }
@@ -5681,6 +5688,20 @@ register_variable
 	$$ = $1;
       }
   | IDENTIFIER dimensions_opt '=' expression
+      { if (pform_peek_scope()->var_init_needs_explicit_lifetime()
+	    && (var_lifetime == LexicalScope::INHERITED)) {
+	      cerr << @3 << ": warning: Static variable initialization requires "
+			    "explicit lifetime in this context." << endl;
+	      warn_count += 1;
+	}
+	perm_string name = lex_strings.make($1);
+	pform_makewire(@1, name, NetNet::REG,
+		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
+	pform_set_reg_idx(name, $2);
+	pform_make_var_init(@1, name, $4);
+	$$ = $1;
+      }
+  | IDENTIFIER dimensions_opt '=' dynamic_array_new
       { if (pform_peek_scope()->var_init_needs_explicit_lifetime()
 	    && (var_lifetime == LexicalScope::INHERITED)) {
 	      cerr << @3 << ": warning: Static variable initialization requires "

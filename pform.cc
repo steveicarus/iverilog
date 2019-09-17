@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2710,6 +2710,8 @@ void pform_makewire(const struct vlltype&li,
       for (list<decl_assignment_t*>::iterator cur = assign_list->begin()
 		 ; cur != assign_list->end() ; ++ cur) {
 	    decl_assignment_t* curp = *cur;
+	    pform_makewire(li, curp->name, type, NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
+	    pform_set_reg_idx(curp->name, &curp->index);
 	    names->push_back(curp->name);
       }
 
@@ -2722,8 +2724,6 @@ void pform_makewire(const struct vlltype&li,
                   if (type == NetNet::REG || type == NetNet::IMPLICIT_REG) {
                         pform_make_var_init(li, first->name, expr);
                   } else {
-	                PWire*cur = pform_get_wire_in_scope(first->name);
-	                assert(cur);
 		        PEIdent*lval = new PEIdent(first->name);
 		        FILE_NAME(lval, li.text, li.first_line);
 		        PGAssign*ass = pform_make_pgassign(lval, expr, delay, str);

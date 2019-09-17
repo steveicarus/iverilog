@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -257,9 +257,9 @@ ivl_type_s* uarray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
       }
 
       vector<netrange_t> dimensions;
-      bool bad_range = evaluate_ranges(des, scope, dimensions, *dims);
+      bool dimensions_ok = evaluate_ranges(des, scope, this, dimensions, *dims);
 
-      if (bad_range) {
+      if (!dimensions_ok) {
 	    cerr << get_fileline() << " : warning: "
 		 << "Bad dimensions for type here." << endl;
       }
