@@ -29,6 +29,7 @@
 # include  "netdarray.h"
 # include  "netparray.h"
 # include  "netvector.h"
+# include  "netenum.h"
 # include  "compiler.h"
 # include  <cstdlib>
 # include  <iostream>
@@ -1146,6 +1147,11 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 
       const netstruct_t*struct_type = reg->struct_type();
       ivl_assert(*this, struct_type);
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_lval_net_packed_member_: "
+		 << "Type=" << *struct_type
+		 << endl;
+      }
 
       if (! struct_type->packed()) {
 	    cerr << get_fileline() << ": sorry: Only packed structures "
@@ -1254,22 +1260,83 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 		  return false;
 	    }
 
-	    if (! member_comp.index.empty()) {
-
-		    // If there are index expressions in this l-value
-		    // expression, then the implicit assumption is that the
-		    // member is a vector type with packed dimensions. For
-		    // example, if the l-value expression is "foo.member[1][2]",
+	    if (const netvector_t*mem_vec = dynamic_cast<const netvector_t*>(member->net_type)) {
+		    // If the member type is a netvector_t, then it is a
+		    // vector of atom or scaler objects. For example, if the
+		    // l-value expression is "foo.member[1][2]", 
 		    // then the member should be something like:
-		    //    ... logic [h:l][m:n] foo;
-		    // Get the dimensions from the netvector_t that this implies.
-		  const netvector_t*mem_vec = dynamic_cast<const netvector_t*>(member->net_type);
-		  ivl_assert(*this, mem_vec);
-		  const vector<netrange_t>&mem_packed_dims = mem_vec->packed_dims();
+		    //    ... logic [h:l][m:n] member;
+		    // There should be index expressions index the vector
+		    // down, but there doesn't need to be all of them. We
+		    // can, for example, be selecting a part of the vector.
 
-		  if (member_comp.index.size() > mem_packed_dims.size()) {
+		    // We only need to process this if there are any
+		    // index expressions. If not, then the packed
+		    // vector can be handled atomically.
+
+		    // In any case, this should be the tail of the
+		    // member_path, because the array element of this
+		    // kind of array cannot be a struct.
+		  if (member_comp.index.size() > 0) {
+			  // These are the dimensions defined by the type
+			const vector<netrange_t>&mem_packed_dims = mem_vec->packed_dims();
+
+			if (member_comp.index.size() > mem_packed_dims.size()) {
+			      cerr << get_fileline() << ": error: "
+				   << "Too many index expressions for member." << endl;
+			      des->errors += 1;
+			      return false;
+			}
+
+			  // Evaluate all but the last index expression, into prefix_indices.
+			list<long>prefix_indices;
+			bool rc = evaluate_index_prefix(des, scope, prefix_indices, member_comp.index);
+			ivl_assert(*this, rc);
+
+			  // Evaluate the last index expression into a constant long.
+			NetExpr*texpr = elab_and_eval(des, scope, member_comp.index.back().msb, -1, true);
+			long tmp;
+			if (texpr == 0 || !eval_as_long(tmp, texpr)) {
+			      cerr << get_fileline() << ": error: "
+				    "Array index expressions must be constant here." << endl;
+			      des->errors += 1;
+			      return false;
+			}
+
+			delete texpr;
+
+			  // Now use the prefix_to_slice function to calculate the
+			  // offset and width of the addressed slice of the member.
+			long loff;
+			unsigned long lwid;
+			prefix_to_slice(mem_packed_dims, prefix_indices, tmp, loff, lwid);
+
+			off += loff;
+			use_width = lwid;
+		  }
+
+		    // The netvector_t only has atom elements, to
+		    // there is no next struct type.
+		  struct_type = 0;
+
+	    } else if (const netparray_t*array = dynamic_cast<const netparray_t*> (member->net_type)) {
+		    // If the member is a parray, then the elements
+		    // are themselves packed object, including
+		    // possibly a struct. Handle this by taking the
+		    // part select of the current part of the
+		    // variable, then stepping to the element type to
+		    // possibly iterate through more of the member_path.
+
+		  ivl_assert(*this, array->packed());
+		  ivl_assert(*this, member_comp.index.size() > 0);
+
+		    // These are the dimensions defined by the type
+		  const vector<netrange_t>&mem_packed_dims = array->static_dimensions();
+
+		  if (member_comp.index.size() != mem_packed_dims.size()) {
 			cerr << get_fileline() << ": error: "
-			     << "Too many index expressions for member." << endl;
+			     << "Incorrect number of index expressions for member "
+			     << member_name << "." << endl;
 			des->errors += 1;
 			return false;
 		  }
@@ -1284,7 +1351,8 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 		  long tmp;
 		  if (texpr == 0 || !eval_as_long(tmp, texpr)) {
 			cerr << get_fileline() << ": error: "
-			      "Array index expressions must be constant here." << endl;
+			     << "Array index expressions for member " << member_name
+			     << " must be constant here." << endl;
 			des->errors += 1;
 			return false;
 		  }
@@ -1297,13 +1365,58 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 		  unsigned long lwid;
 		  prefix_to_slice(mem_packed_dims, prefix_indices, tmp, loff, lwid);
 
-		  off += loff;
-		  use_width = lwid;
+		  ivl_type_t element_type = array->element_type();
+		  long element_width = element_type->packed_width();
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PEIdent::elaborate_lval_net_packed_member_: "
+			     << "parray subselection loff=" << loff
+			     << ", lwid=" << lwid
+			     << ", element_width=" << element_width
+			     << endl;
+		  }
+
+		    // The width and offset calculated from the
+		    // indices is actually in elements, and not
+		    // bits. In fact, in this context, the lwid should
+		    // come down to 1 (one element).
+		  off += loff * element_width;
+		  ivl_assert(*this, lwid==1);
+		  use_width = element_width;
+
+		    // To move on to the next component in the member
+		    // path, get the element type. For example, for
+		    // the path a.b[1].c, we are processing b[1] here,
+		    // and the element type should be a netstruct_t
+		    // that will wind up containing the member c.
+		  struct_type = dynamic_cast<const netstruct_t*> (element_type);
+
+	    } else if (const netstruct_t*tmp_struct = dynamic_cast<const netstruct_t*> (member->net_type)) {
+		    // If the member is itself a struct, then get
+		    // ready to go on to the next iteration.
+		  struct_type = tmp_struct;
+
+	    } else if (const netenum_t*tmp_enum = dynamic_cast<const netenum_t*> (member->net_type)) {
+		    // If the element is an enum, then we don't have
+		    // anything special to do.
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PEIdent::elaborate_lval_net_packed_member_: "
+			     << "Tail element is an enum: " << *tmp_enum
+			     << endl;
+		  }
+		  struct_type = 0;
+
+	    } else {
+		    // Unknown type?
+		  cerr << get_fileline() << ": internal error: "
+		       << "Unexpected member type? " << *(member->net_type)
+		       << endl;
+		  des->errors += 1;
+		  return false;
+		  struct_type = 0;
 	    }
 
 	      // Complete this component of the path, mark it
 	      // completed, and set up for the next component.
-	    struct_type = dynamic_cast<const netstruct_t*> (member->net_type);
 	    completed_path .push_back(member_comp);
 	    member_path.pop_front();
 
