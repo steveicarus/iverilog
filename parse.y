@@ -666,6 +666,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <specpath> specify_edge_path specify_edge_path_decl
 
 %type <real_type> non_integer_type
+%type <int_val> assert_or_assume
 %type <int_val> atom2_type
 %type <int_val> module_start module_end
 
@@ -712,6 +713,13 @@ source_text
       { pform_set_scope_timescale(yyloc); }
     description_list
   | /* empty */
+  ;
+
+assert_or_assume
+  : K_assert
+      { $$ = 1; } /* IEEE1800-2012: Table 20-7 */
+  | K_assume
+      { $$ = 4; } /* IEEE1800-2012: Table 20-7 */
   ;
 
 assertion_item /* IEEE1800-2012: A.6.10 */
@@ -1830,17 +1838,59 @@ property_expr /* IEEE1800-2012 A.2.10 */
   ;
 
 procedural_assertion_statement /* IEEE1800-2012 A.6.10 */
-  : K_assert '(' expression ')' statement %prec less_than_K_else
-      { yyerror(@1, "sorry: Simple immediate assertion statements not implemented.");
-	$$ = 0;
+    // $assertcontrol is not yet supported.
+  : assert_or_assume '(' expression ')' statement_or_null %prec less_than_K_else
+      {
+	if (gn_assertions_flag) {
+	      list<PExpr*>arg_list;
+	      PCallTask*tmp1 = new PCallTask(lex_strings.make("$error"), arg_list);
+	      FILE_NAME(tmp1, @1);
+	      PCondit*tmp2 = new PCondit($3, $5, tmp1);
+	      FILE_NAME(tmp2, @1);
+	      $$ = tmp2;
+        } else {
+	      $$ = 0;
+	}
       }
-  | K_assert '(' expression ')' K_else statement
-      { yyerror(@1, "sorry: Simple immediate assertion statements not implemented.");
-	$$ = 0;
+  | assert_or_assume '(' expression ')' K_else statement_or_null
+      {
+	if (gn_assertions_flag) {
+	      PCondit*tmp = new PCondit($3, 0, $6);
+	      FILE_NAME(tmp, @1);
+	      $$ = tmp;
+        } else {
+	      $$ = 0;
+	}
       }
-  | K_assert '(' expression ')' statement K_else statement
-      { yyerror(@1, "sorry: Simple immediate assertion statements not implemented.");
-	$$ = 0;
+  | assert_or_assume '(' expression ')' statement_or_null K_else statement_or_null
+      {
+	if (gn_assertions_flag) {
+	      PCondit*tmp = new PCondit($3, $5, $7);
+	      FILE_NAME(tmp, @1);
+	      $$ = tmp;
+        } else {
+	      $$ = 0;
+	}
+      }
+  | K_cover '(' expression ')' statement_or_null
+      // Coverage collection is not currently supported.
+      { $$ = 0; }
+
+  | assert_or_assume '(' error ')' statement_or_null %prec less_than_K_else
+      { yyerror(@1, "error: Malformed conditional expression.");
+	$$ = $5;
+      }
+  | assert_or_assume '(' error ')' K_else statement_or_null
+      { yyerror(@1, "error: Malformed conditional expression.");
+	$$ = $6;
+      }
+  | assert_or_assume '(' error ')' statement_or_null K_else statement_or_null
+      { yyerror(@1, "error: Malformed conditional expression.");
+	$$ = $5;
+      }
+  | K_cover '(' error ')' statement_or_null
+      { yyerror(@1, "error: Malformed conditional expression.");
+	$$ = $5;
       }
   ;
 
