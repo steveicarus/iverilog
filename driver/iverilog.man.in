@@ -1,4 +1,4 @@
-.TH iverilog 1 "Nov 8th, 2017" "" "Version %M.%n%E"
+.TH iverilog 1 "Sep 20th, 2019" "" "Version %M.%n%E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -79,6 +79,11 @@ use any of the new \fIIEEE1800\fP keywords.
 .B -gverilog-ams\fI|\fP-gno-verilog-ams
 Enable or disable (default) support for Verilog\-AMS.
 Very little Verilog\-AMS specific functionality is currently supported.
+.TP 8
+.B -gassertions\fI|\fP-gno-assertions
+Enable (default) or disable SystemVerilog assertions. When enabled,
+assertion statements are elaborated. When disabled, assertion statements
+are parsed but ignored.
 .TP 8
 .B -gspecify\fI|\fP-gno-specify
 Enable or disable (default) specify block support. When enabled,
@@ -578,7 +583,7 @@ Tips on using, debugging, and developing the compiler can be found at
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002\-2017 Stephen Williams
+Copyright \(co  2002\-2019 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0
