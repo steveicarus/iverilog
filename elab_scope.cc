@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -542,6 +542,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 	      // Task methods are always automatic...
 	    method_scope->is_auto(true);
 	    method_scope->set_line(cur->second);
+	    method_scope->add_imports(&cur->second->imports);
 
 	    if (debug_scopes) {
 		  cerr << cur->second->get_fileline() << ": elaborate_scope_class: "
@@ -560,6 +561,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 	      // Function methods are always automatic...
 	    method_scope->is_auto(true);
 	    method_scope->set_line(cur->second);
+	    method_scope->add_imports(&cur->second->imports);
 
 	    if (debug_scopes) {
 		  cerr << cur->second->get_fileline() << ": elaborate_scope_class: "
@@ -630,6 +632,7 @@ static void elaborate_scope_task(Design*des, NetScope*scope, PTask*task)
       NetScope*task_scope = new NetScope(scope, use_name, NetScope::TASK);
       task_scope->is_auto(task->is_auto());
       task_scope->set_line(task);
+      task_scope->add_imports(&task->imports);
 
       if (debug_scopes) {
 	    cerr << task->get_fileline() << ": elaborate_scope_task: "
@@ -692,6 +695,7 @@ static void elaborate_scope_func(Design*des, NetScope*scope, PFunction*task)
       NetScope*task_scope = new NetScope(scope, use_name, NetScope::FUNC);
       task_scope->is_auto(task->is_auto());
       task_scope->set_line(task);
+      task_scope->add_imports(&task->imports);
 
       if (debug_scopes) {
 	    cerr << task->get_fileline() << ": elaborate_scope_func: "
@@ -1065,6 +1069,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    NetScope*scope = new NetScope(container, use_name,
 					  NetScope::GENBLOCK);
 	    scope->set_line(get_file(), get_lineno());
+	    scope->add_imports(&imports);
 
 	      // Set in the scope a localparam for the value of the
 	      // genvar within this instance of the generate
@@ -1200,6 +1205,7 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 	// for myself. That is what I will pass to the subscope.
       NetScope*scope = new NetScope(container, use_name, NetScope::GENBLOCK);
       scope->set_line(get_file(), get_lineno());
+      scope->add_imports(&imports);
 
       elaborate_subscope_(des, scope);
 
@@ -1340,6 +1346,8 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
       NetScope*scope = new NetScope(container, use_name,
 				    NetScope::GENBLOCK);
       scope->set_line(get_file(), get_lineno());
+      scope->add_imports(&imports);
+
       item->elaborate_subscope_(des, scope);
 
       return true;
@@ -1395,6 +1403,7 @@ bool PGenerate::generate_scope_nblock_(Design*des, NetScope*container)
       NetScope*scope = new NetScope(container, use_name,
 				    NetScope::GENBLOCK);
       scope->set_line(get_file(), get_lineno());
+      scope->add_imports(&imports);
 
       elaborate_subscope_(des, scope);
 
@@ -1700,6 +1709,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	    my_scope->set_line(get_file(), mod->get_file(),
 	                       get_lineno(), mod->get_lineno());
 	    my_scope->set_module_name(mod->mod_name());
+	    my_scope->add_imports(&mod->imports);
 
 	    for (unsigned adx = 0 ;  adx < attrib_list_n ;  adx += 1)
 	      my_scope->attribute(attrib_list[adx].key, attrib_list[adx].val);
@@ -1924,6 +1934,7 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 				    : NetScope::BEGIN_END);
 	    my_scope->set_line(get_file(), get_lineno());
             my_scope->is_auto(scope->is_auto());
+	    my_scope->add_imports(&imports);
 
 	      // Scan the parameters in the scope, and store the information
 	      // needed to evaluate the parameter expressions.
