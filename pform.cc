@@ -663,19 +663,11 @@ PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
 }
 
 /*
- * Create a new identifier. Check if this is an imported name.
+ * Create a new identifier.
  */
 PEIdent* pform_new_ident(const pform_name_t&name)
 {
-      LexicalScope*scope = pform_peek_scope();
-      map<perm_string,PPackage*>::const_iterator pkg = scope->imports.find(name.front().name);
-      if (pkg == scope->imports.end())
-	    return new PEIdent(name);
-
-	// XXXX For now, do not support indexed imported names.
-      assert(name.back().index.size() == 0);
-
-      return new PEIdent(pkg->second, name);
+      return new PEIdent(name);
 }
 
 PGenerate* pform_parent_generate(void)
@@ -841,29 +833,7 @@ PECallFunction* pform_make_call_function(const struct vlltype&loc,
 					 const pform_name_t&name,
 					 const list<PExpr*>&parms)
 {
-      PECallFunction*tmp = 0;
-
-	// First try to get the function name from a package. Check
-	// the imports, and if the name is there, make the function as
-	// a package member.
-      do {
-	    if (name.size() != 1)
-		  break;
-
-	    perm_string use_name = peek_tail_name(name);
-
-	    map<perm_string,PPackage*>::iterator cur_pkg;
-	    cur_pkg = lexical_scope->imports.find(use_name);
-	    if (cur_pkg == lexical_scope->imports.end())
-		  break;
-
-	    tmp = new PECallFunction(cur_pkg->second, use_name, parms);
-      } while(0);
-
-      if (tmp == 0) {
-	    tmp = new PECallFunction(name, parms);
-      }
-
+      PECallFunction*tmp = new PECallFunction(name, parms);
       FILE_NAME(tmp, loc);
       return tmp;
 }
@@ -872,26 +842,7 @@ PCallTask* pform_make_call_task(const struct vlltype&loc,
 				const pform_name_t&name,
 				const list<PExpr*>&parms)
 {
-      PCallTask*tmp = 0;
-
-      do {
-	    if (name.size() != 1)
-		  break;
-
-	    perm_string use_name = peek_tail_name(name);
-
-	    map<perm_string,PPackage*>::iterator cur_pkg;
-	    cur_pkg = lexical_scope->imports.find(use_name);
-	    if (cur_pkg == lexical_scope->imports.end())
-		  break;
-
-	    tmp = new PCallTask(cur_pkg->second, name, parms);
-      } while (0);
-
-      if (tmp == 0) {
-	    tmp = new PCallTask(name, parms);
-      }
-
+      PCallTask*tmp = new PCallTask(name, parms);
       FILE_NAME(tmp, loc);
       return tmp;
 }

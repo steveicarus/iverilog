@@ -1,7 +1,7 @@
 #ifndef IVL_pform_H
 #define IVL_pform_H
 /*
- * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -312,8 +312,7 @@ extern void pform_set_typedef(perm_string name, data_type_t*data_type,
 			      std::list<pform_range_t>*unp_ranges);
 
 /*
- * This function makes a PECallFunction of the named function. Decide
- * if this function is in the scope or is imported from a package.
+ * This function makes a PECallFunction of the named function.
  */
 extern PECallFunction* pform_make_call_function(const struct vlltype&loc,
 						const pform_name_t&name,
