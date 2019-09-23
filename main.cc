@@ -735,7 +735,7 @@ static void read_iconfig_file(const char*ipath)
 			break;
 		  }
 
-		} else if (strcmp(buf, "ignore_missing_modules") == 0) {
+	    } else if (strcmp(buf, "ignore_missing_modules") == 0) {
 		  if (strcmp(cp, "true") == 0)
 		    ignore_missing_modules = true;
 
@@ -1174,7 +1174,7 @@ int main(int argc, char*argv[])
 
       if (roots.empty()) {
 	    cerr << "No top level modules, and no -s option." << endl;
-	    return 1;
+	    return ignore_missing_modules ? 0 : 1;
       }
 
 
