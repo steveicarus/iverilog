@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -156,6 +156,11 @@ void PBlock::push_statement_front(Statement*that)
 	    list_[idx] = list_[idx-1];
 
       list_[0] = that;
+}
+
+PNamedItem::SymbolType PBlock::symbol_type() const
+{
+      return BLOCK;
 }
 
 PCallTask::PCallTask(const pform_name_t&n, const list<PExpr*>&p)

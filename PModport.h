@@ -1,7 +1,7 @@
 #ifndef IVL_PModport_H
 #define IVL_PModport_H
 /*
- * Copyright (c) 2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2015-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include  "LineInfo.h"
+# include  "PNamedItem.h"
 # include  "PScope.h"
 # include  "StringHeap.h"
 # include  "netlist.h"
@@ -28,7 +28,7 @@
 /*
  * The PModport class represents a parsed SystemVerilog modport list.
  */
-class PModport : public LineInfo {
+class PModport : public PNamedItem {
 
     public:
 	// The name is a perm-allocated string. It is the simple name
@@ -40,6 +40,8 @@ class PModport : public LineInfo {
 
       typedef pair <NetNet::PortType,PExpr*> simple_port_t;
       map<perm_string,simple_port_t> simple_ports;
+
+      SymbolType symbol_type() const;
 
     private:
       perm_string name_;

@@ -118,9 +118,9 @@ O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
     pform_disciplines.o pform_dump.o pform_package.o pform_pclass.o \
     pform_class_type.o pform_string_type.o pform_struct_type.o pform_types.o \
     symbol_search.o sync.o sys_funcs.o verinum.o verireal.o target.o \
-    Attrib.o HName.o Module.o PClass.o PDelays.o PEvent.o PExpr.o PGate.o \
-    PGenerate.o PModport.o PPackage.o PScope.o PSpec.o PTask.o PUdp.o \
-    PFunction.o PWire.o Statement.o AStatement.o $M $(FF) $(TT)
+    Attrib.o HName.o Module.o PClass.o PDelays.o PEvent.o PExpr.o PFunction.o \
+    PGate.o PGenerate.o PModport.o PNamedItem.o PPackage.o PScope.o PSpec.o \
+    PTask.o PUdp.o PWire.o Statement.o AStatement.o $M $(FF) $(TT)
 
 all: dep config.h _pli_types.h version_tag.h ivl@EXEEXT@ version.exe iverilog-vpi.man
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true

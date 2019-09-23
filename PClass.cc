@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -27,4 +27,9 @@ PClass::PClass(perm_string name, LexicalScope*parent)
 
 PClass::~PClass()
 {
+}
+
+PNamedItem::SymbolType PClass::symbol_type() const
+{
+      return CLASS;
 }

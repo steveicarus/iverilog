@@ -1,7 +1,7 @@
 #ifndef IVL_Module_H
 #define IVL_Module_H
 /*
- * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,7 +28,7 @@
 # include  "HName.h"
 # include  "named.h"
 # include  "PScope.h"
-# include  "LineInfo.h"
+# include  "PNamedItem.h"
 # include  "netlist.h"
 # include  "pform_types.h"
 class PExpr;
@@ -54,7 +54,7 @@ class NetScope;
  * these containers as well.
  */
 
-class Module : public PScopeExtra, public LineInfo {
+class Module : public PScopeExtra, public PNamedItem {
 
 	/* The module ports are in general a vector of port_t
 	   objects. Each port has a name and an ordered list of
@@ -159,6 +159,8 @@ class Module : public PScopeExtra, public LineInfo {
       bool elaborate_scope(Design*, NetScope*scope, const replace_t&rep);
 
       bool elaborate_sig(Design*, NetScope*scope) const;
+
+      SymbolType symbol_type() const;
 
     private:
       void dump_specparams_(ostream&out, unsigned indent) const;

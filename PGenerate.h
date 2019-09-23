@@ -1,7 +1,7 @@
 #ifndef IVL_PGenerate_H
 #define IVL_PGenerate_H
 /*
- * Copyright (c) 2006-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include  "LineInfo.h"
+# include  "PNamedItem.h"
 # include  "StringHeap.h"
 # include  "HName.h"
 # include  "PScope.h"
@@ -50,7 +50,7 @@ class PWire;
  *    The parent points to the GS_CASE that contains this item.
  *    the loop_test is compared with the parent->loop_test expression.
  */
-class PGenerate : public LineInfo, public LexicalScope {
+class PGenerate : public PNamedItem, public LexicalScope {
 
     public:
       explicit PGenerate(LexicalScope*parent, unsigned id_number);
@@ -106,6 +106,8 @@ class PGenerate : public LineInfo, public LexicalScope {
       bool elaborate(Design*des, NetScope*container) const;
 
       void dump(ostream&out, unsigned indent) const;
+
+      SymbolType symbol_type() const;
 
     private:
       bool generate_scope_loop_(Design*des, NetScope*container);

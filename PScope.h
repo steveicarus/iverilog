@@ -1,7 +1,7 @@
 #ifndef IVL_PScope_H
 #define IVL_PScope_H
 /*
- * Copyright (c) 2008-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include  "LineInfo.h"
+# include  "PNamedItem.h"
 # include  "StringHeap.h"
 # include  "pform_types.h"
 # include  "ivl_target.h"
@@ -79,7 +79,7 @@ class LexicalScope {
 	/* The scope has parameters that are evaluated when the scope
 	   is elaborated. During parsing, I put the parameters into
 	   this map. */
-      struct param_expr_t : public LineInfo {
+      struct param_expr_t : public PNamedItem {
 	    param_expr_t() : type(IVL_VT_NO_TYPE), msb(0), lsb(0), signed_flag(false), expr(0), range(0) { }
 	      // Type information
 	    ivl_variable_type_t type;
@@ -90,6 +90,8 @@ class LexicalScope {
 	    PExpr*expr;
 	      // If there are range constraints, list them here
 	    range_t*range;
+
+	    SymbolType symbol_type() const;
       };
       map<perm_string,param_expr_t>parameters;
       map<perm_string,param_expr_t>localparams;

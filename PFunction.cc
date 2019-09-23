@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -82,4 +82,9 @@ PChainConstructor* PFunction::extract_chain_constructor()
       }
 
       return res;
+}
+
+PNamedItem::SymbolType PFunction::symbol_type() const
+{
+      return FUNCTION;
 }
