@@ -1,10 +1,10 @@
-.TH iverilog 1 "Nov 8th, 2017" "" "Version %M.%n%E"
+.TH iverilog 1 "Sep 20th, 2019" "" "Version %M.%n%E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[\-ESuVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
+[\-EiSuVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
 [\-Pparameter=value] [\-pflag=value] [\-dname]
 [\-g1995\:|\-g2001\:|\-g2005\:|\-g2005-sv\:|\-g2009\:|\-g2012\:|\-g<feature>]
 [\-Iincludedir] [\-mmodule] [\-M[mode=]file] [\-Nfile] [\-ooutputfilename]
@@ -80,6 +80,11 @@ use any of the new \fIIEEE1800\fP keywords.
 Enable or disable (default) support for Verilog\-AMS.
 Very little Verilog\-AMS specific functionality is currently supported.
 .TP 8
+.B -gassertions\fI|\fP-gno-assertions
+Enable (default) or disable SystemVerilog assertions. When enabled,
+assertion statements are elaborated. When disabled, assertion statements
+are parsed but ignored.
+.TP 8
 .B -gspecify\fI|\fP-gno-specify
 Enable or disable (default) specify block support. When enabled,
 specify block code is elaborated. When disabled, specify blocks are
@@ -150,6 +155,13 @@ Append directory \fIincludedir\fP to list of directories searched
 for Verilog include files. The \fB\-I\fP switch may be used many times
 to specify several directories to search, the directories are searched
 in the order they appear on the command line.
+.TP 8
+.B -i
+Ignore missing modules. Normally it is an error if a module instantiation
+refers to an undefined module. This option causes the compiler to skip
+over that instantiation. It will also stop the compiler returning an
+error if there are no top level modules. This allows the compiler to be
+used to check incomplete designs for errors.
 .TP 8
 .B -l\fIfile\fP
 Add the specified file to the list of source files to be compiled,
@@ -578,7 +590,7 @@ Tips on using, debugging, and developing the compiler can be found at
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002\-2017 Stephen Williams
+Copyright \(co  2002\-2019 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0
