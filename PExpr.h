@@ -521,10 +521,7 @@ class PEIdent : public PExpr {
 					   unsigned flags) const;
 
       unsigned test_width_method_(Design*des, NetScope*scope, width_mode_t&mode);
-      NetExpr*elaborate_expr_method_(Design*des,
-				     NetScope*scope,
-				     unsigned expr_wid,
-				     unsigned flags) const;
+
 
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,

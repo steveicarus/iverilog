@@ -1923,81 +1923,274 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 					 Design*des, NetScope*scope,
 					 NetNet*net,
 					 const list<index_component_t>&base_index,
-					 const name_component_t&comp)
+					 pform_name_t member_path)
 {
-      unsigned long off;
-      const netstruct_t::member_t*mem = get_struct_member(li, des, 0, net,
-                                                          comp.name, off);
-      if (mem == 0) return 0;
+      const netstruct_t*struct_type = net->struct_type();
+      ivl_assert(*li, struct_type);
 
-      ivl_assert(*li, mem->net_type && mem->net_type->packed());
-
-      unsigned use_width = mem->net_type->packed_width();
-
-      if (debug_elaborate) {
-	    cerr << li->get_fileline() << ": debug: check_for_struct_members: "
-		 << "Found struct member " << mem->name
-		 << " At offset " << off
-		 << ", member width = " << use_width << endl;
+      if (! struct_type->packed()) {
+	    cerr << li->get_fileline() << ": sorry: "
+		 << "Unpacked structures not supported here."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
       }
 
-	// The struct member may be a packed array. Process index
-	// expression that address the member element.
-      if ( ! comp.index.empty() ) {
-	    const netvector_t*mem_vec = dynamic_cast<const netvector_t*> (mem->net_type);
-	    ivl_assert(*li, mem_vec);
+	// These make up the "part" select that is the equivilent of
+	// following the member path through the nested structs. To
+	// start with, the off[set] is zero, and use_width is the
+	// width of the entire variable. The first member_comp is at
+	// some offset within the variable, and will have a reduced
+	// width. As we step through the member_path the off
+	// increases, and use_width shrinks.
+      unsigned long off = 0;
+      unsigned long use_width = struct_type->packed_width();
 
-	    const vector<netrange_t>&packed_dims = mem_vec->packed_dims();
-
-	      // Evaluate all but the last index expression, into prefix_indices.
-	    list<long>prefix_indices;
-	    bool rc = evaluate_index_prefix(des, scope, prefix_indices, comp.index);
-	    ivl_assert(*li, rc);
-
-	      // Make sure that index values that select array
-	      // elements are in fact like bit selects. The tail may
-	      // be part selects only if we are taking the part-select
-	      // of the word of an array.
-	    ivl_assert(*li, comp.index.size() >= packed_dims.size() || comp.index.back().sel == index_component_t::SEL_BIT);
-
-	      // Evaluate the part/bit select expressions. This may be
-	      // a bit select or a part select. In any case, assume
-	      // the arguments are constant and generate a part select
-	      // of the appropriate width.
-	    long poff = 0;
-	    unsigned long pwid = 0;
-	    rc = calculate_part(li, des, scope, comp.index.back(), poff, pwid);
-	    ivl_assert(*li, rc);
-
-	      // Now use the prefix_to_slice function to calculate the
-	      // offset and width of the addressed slice of the member.
-	    long loff;
-	    unsigned long lwid;
-	    prefix_to_slice(packed_dims, prefix_indices, poff, loff, lwid);
+      pform_name_t completed_path;
+      do {
+	    const name_component_t member_comp = member_path.front();
+	    const perm_string&member_name = member_comp.name;
 
 	    if (debug_elaborate) {
-		  cerr << li->get_fileline() << ": debug: check_for_struct_members: "
-		       << "Evaluate prefix gives slice loff=" << loff
-		       << ", lwid=" << lwid << ", part select pwid=" << pwid << endl;
+		  cerr << li->get_fileline() << ": check_for_struct_members: "
+		       << "Processing member_comp=" << member_comp
+		       << " (completed_path=" << completed_path << ")"
+		       << endl;
 	    }
 
-	    off += loff;
-	    if (comp.index.size() >= packed_dims.size())
-		  use_width = pwid;
-	    else
-		  use_width = lwid;
-      }
+	      // Calculate the offset within the packed structure of the
+	      // member, and any indices. We will add in the offset of the
+	      // struct into the packed array later. Note that this works
+	      // for packed unions as well (although the offset will be 0
+	      // for union members).
+	    unsigned long tmp_off;
+	    const netstruct_t::member_t* member = struct_type->packed_member(member_name, tmp_off);
 
-	// If the base symbol has dimensions, then this is a packed
-	// array of structures. Convert an array of indices to a
-	// single part select. For example, "net" is a packed array
-	// of struct, and "mem" is the struct member. In Verilog it
-	// looks something like "net[idx].mem". We've already
-	// converted "mem" to an offset into the packed struct, so now
-	// we just canonicalize "[idx]" and add the ".mem" offset to
-	// get a collapsed index.
+	    if (member == 0) {
+		  cerr << li->get_fileline() << ": error: Member " << member_name
+		       << " is not a member of struct type of "
+		       << net->name()
+		       << "." << completed_path << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    if (debug_elaborate) {
+		  cerr << li->get_fileline() << ": check_for_struct_members: "
+		       << "Member type: " << *(member->net_type)
+		       << " (" << typeid(*(member->net_type)).name() << ")"
+		       << endl;
+	    }
+
+	    off += tmp_off;
+	    ivl_assert(*li, use_width >= (unsigned long)member->net_type->packed_width());
+	    use_width = member->net_type->packed_width();
+
+	      // At this point, off and use_width are the part select
+	      // expressed by the member_comp, which is a member of the
+	      // struct. We can further refine the part select with any
+	      // indices that might be present.
+
+	    if (const netstruct_t*tmp_struct = dynamic_cast<const netstruct_t*>(member->net_type)) {
+		    // If the member is itself a struct, then get
+		    // ready to go on to the next iteration.
+		  struct_type = tmp_struct;
+
+	    } else if (const netenum_t*tmp_enum = dynamic_cast<const netenum_t*> (member->net_type)) {
+
+		    // If the element is an enum, then we don't have
+		    // anything special to do.
+		  if (debug_elaborate) {
+			cerr << li->get_fileline() << ": check_for_struct_members: "
+			     << "Tail element is an enum" << *tmp_enum
+			     << endl;
+		  }
+		  struct_type = 0;
+
+	    } else if (const netvector_t*mem_vec = dynamic_cast<const netvector_t*>(member->net_type)) {
+
+		  if (debug_elaborate) {
+			cerr << li->get_fileline() << ": check_for_struct_members: "
+			     << "member_comp=" << member_comp
+			     << " has " << member_comp.index.size() << " indices."
+			     << endl;
+		  }
+
+		    // If the member type is a netvector_t, then it is a
+		    // vector of atom or scaler objects. For example, if the
+		    // l-value expression is "foo.member[1][2]", 
+		    // then the member should be something like:
+		    //    ... logic [h:l][m:n] member;
+		    // There should be index expressions index the vector
+		    // down, but there doesn't need to be all of them. We
+		    // can, for example, be selecting a part of the vector.
+
+		    // We only need to process this if there are any
+		    // index expressions. If not, then the packed
+		    // vector can be handled atomically.
+
+		    // In any case, this should be the tail of the
+		    // member_path, because the array element of this
+		    // kind of array cannot be a struct.
+		  if (member_comp.index.size() > 0) {
+			  // These are the dimensions defined by the type
+			const vector<netrange_t>&mem_packed_dims = mem_vec->packed_dims();
+
+			if (member_comp.index.size() > mem_packed_dims.size()) {
+			      cerr << li->get_fileline() << ": error: "
+				   << "Too many index expressions for member." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+
+			  // Evaluate all but the last index expression, into prefix_indices.
+			list<long>prefix_indices;
+			bool rc = evaluate_index_prefix(des, scope, prefix_indices, member_comp.index);
+			ivl_assert(*li, rc);
+
+			if (debug_elaborate) {
+			      cerr << li->get_fileline() << ": check_for_struct_members: "
+				   << "prefix_indices.size()==" << prefix_indices.size()
+				   << ", mem_packed_dims.size()==" << mem_packed_dims.size()
+				   << endl;
+			}
+
+			long tail_off = 0;
+			unsigned long tail_wid = 0;
+			rc = calculate_part(li, des, scope, member_comp.index.back(), tail_off, tail_wid);
+			if (! rc) return 0;
+
+			if (debug_elaborate) {
+			      cerr << li->get_fileline() << ": check_for_struct_member: "
+				   << "calculate_part for tail returns tail_off=" << tail_off
+				   << ", tail_wid=" << tail_wid
+				   << endl;
+			}
+
+
+			  // Now use the prefix_to_slice function to calculate the
+			  // offset and width of the addressed slice
+			  // of the member. The lwid comming out of
+			  // the prefix_to_slice is the number of
+			  // elements, and should be 1. The tmp_wid it
+			  // the bit with of the result.
+			long loff;
+			unsigned long lwid;
+			prefix_to_slice(mem_packed_dims, prefix_indices, tail_off, loff, lwid);
+
+			if (debug_elaborate) {
+			      cerr << li->get_fileline() << ": check_for_struct_members: "
+				   << "Calculate loff=" << loff << " lwid=" << lwid
+				   << " tail_off=" << tail_off << " tail_wid=" << tail_wid
+				   << " off=" << off << " use_width=" << use_width
+				   << endl;
+			}
+
+			off += loff;
+			use_width = lwid * tail_wid;
+		  }
+
+		    // The netvector_t only has atom elements, so
+		    // there is no next struct type.
+		  struct_type = 0;
+
+	    } else if (const netparray_t*array = dynamic_cast<const netparray_t*>(member->net_type)) {
+
+		    // If the member is a parray, then the elements
+		    // are themselves packed object, including
+		    // possibly a struct. Handle this by taking the
+		    // part select of the current part of the
+		    // variable, then stepping to the element type to
+		    // possibly iterate through more of the member_path.
+		  ivl_assert(*li, array->packed());
+		  ivl_assert(*li, member_comp.index.size() > 0);
+
+		    // These are the dimensions defined by the type
+		  const vector<netrange_t>&mem_packed_dims = array->static_dimensions();
+
+		  if (member_comp.index.size() != mem_packed_dims.size()) {
+			cerr << li->get_fileline() << ": error: "
+			     << "Incorrect number of index expressions for member "
+			     << member_name << "." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+
+		    // Evaluate all but the last index expression, into prefix_indices.
+		  list<long>prefix_indices;
+		  bool rc = evaluate_index_prefix(des, scope, prefix_indices, member_comp.index);
+		  ivl_assert(*li, rc);
+
+		    // Evaluate the last index expression into a constant long.
+		  NetExpr*texpr = elab_and_eval(des, scope, member_comp.index.back().msb, -1, true);
+		  long tmp;
+		  if (texpr == 0 || !eval_as_long(tmp, texpr)) {
+			cerr << li->get_fileline() << ": error: "
+			     << "Array index expressions for member " << member_name
+			     << " must be constant here." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+
+		  delete texpr;
+
+		    // Now use the prefix_to_slice function to calculate the
+		    // offset and width of the addressed slice of the member.
+		  long loff;
+		  unsigned long lwid;
+		  prefix_to_slice(mem_packed_dims, prefix_indices, tmp, loff, lwid);
+
+		  ivl_type_t element_type = array->element_type();
+		  long element_width = element_type->packed_width();
+		  if (debug_elaborate) {
+			cerr << li->get_fileline() << ": PEIdent::elaborate_lval_net_packed_member_: "
+			     << "parray subselection loff=" << loff
+			     << ", lwid=" << lwid
+			     << ", element_width=" << element_width
+			     << endl;
+		  }
+
+		    // The width and offset calculated from the
+		    // indices is actually in elements, and not
+		    // bits. In fact, in this context, the lwid should
+		    // come down to 1 (one element).
+		  off += loff * element_width;
+		  ivl_assert(*li, lwid==1);
+		  use_width = element_width;
+
+		    // To move on to the next component in the member
+		    // path, get the element type. For example, for
+		    // the path a.b[1].c, we are processing b[1] here,
+		    // and the element type should be a netstruct_t
+		    // that will wind up containing the member c.
+		  struct_type = dynamic_cast<const netstruct_t*> (element_type);
+
+	    } else {
+		    // Unknown type?
+		  cerr << li->get_fileline() << ": internal error: "
+		       << "Unexpected member type? " << *(member->net_type)
+		       << endl;
+		  des->errors += 1;
+		  struct_type = 0;
+	    }
+
+	      // Complete this component of the path, mark it
+	      // completed, and set up for the next component.
+	    completed_path .push_back(member_comp);
+	    member_path.pop_front();
+
+      } while (member_path.size() > 0 && struct_type != 0);
+
+	// The dimensions in the expression must match the packed
+	// dimensions that are declared for the variable. For example,
+	// if foo is a packed array of struct, then this expression
+	// must be "b[n][m]" with the right number of dimensions to
+	// match the declaration of "b".
+	// Note that one of the packed dimensions is the packed struct
+	// itself.
+      ivl_assert(*li, base_index.size()+1 == net->packed_dimensions());
+
       NetExpr*packed_base = 0;
-      if(net->packed_dimensions() > 1) {
+      if (net->packed_dimensions() > 1) {
 	    list<index_component_t>tmp_index = base_index;
 	    index_component_t member_select;
 	    member_select.sel = index_component_t::SEL_BIT;
@@ -2013,20 +2206,23 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 
       long tmp;
       if (packed_base && eval_as_long(tmp, packed_base)) {
-	    off = tmp;
+	    off += tmp;
 	    delete packed_base;
 	    packed_base = 0;
       }
 
       NetESignal*sig = new NetESignal(net);
-      NetExpr  *base = packed_base ? packed_base : make_const_val(off);
+      NetExpr   *base = packed_base? packed_base : make_const_val(off);
+      NetESelect*sel = new NetESelect(sig, base, use_width);
 
       if (debug_elaborate) {
-	    cerr << li->get_fileline() << ": debug: check_for_struct_members: "
-		 << "Convert packed indices/member select into part select: " << *base << endl;
+	    cerr << li->get_fileline() << ": check_for_struct_member: "
+		 << "Finally, completed_path=" << completed_path
+		 << ", off=" << off << ", use_width=" << use_width
+		 << ", base=" << *base
+		 << endl;
       }
 
-      NetESelect*sel = new NetESelect(sig, base, use_width);
       return sel;
 }
 
@@ -3469,6 +3665,10 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 					      ex1, ex2);
 
       if (net == 0 && gn_system_verilog() && path_.size() >= 2) {
+	      // NOTE: this is assuming the member_path is only one
+	      // component long, and that the use_path will wind up
+	      // being the path to the variable. This is not
+	      // necessarily true. Should fix this.
 	    pform_name_t use_path = path_;
 	    name_component_t member_comp = use_path.back();
 	    use_path.pop_back();
@@ -3480,9 +3680,11 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		    // Nope, no struct/class with member.
 
 	    } else if (net->struct_type() != 0) {
+		  pform_name_t member_path;
+		  member_path.push_back( member_comp );
 		  return check_for_struct_members(this, des, use_scope,
 						  net, use_path.back().index,
-						  member_comp);
+						  member_path);
 
 	    } else if (net->class_type()!=0) {
 		  if (debug_elaborate) {
@@ -3701,59 +3903,6 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
       return tmp;
 }
 
-NetExpr* PEIdent::elaborate_expr_method_(Design*des, NetScope*scope,
-					 unsigned, unsigned) const
-{
-      if (!gn_system_verilog())
-	    return 0;
-      if (path_.size() < 2)
-	    return 0;
-
-      pform_name_t use_path = path_;
-      perm_string member_name = peek_tail_name(path_);
-      use_path.pop_back();
-
-      if (debug_elaborate) {
-	    cerr << get_fileline() << ": PEIdent::elaborate_expr_method_: "
-		 << "Try to find method=" << member_name
-		 << " of signal " << use_path << endl;
-      }
-
-      NetNet*net = 0;
-      const NetExpr*par = 0;
-      NetEvent*eve = 0;
-      const NetExpr*ex1 = 0, *ex2 = 0;
-      symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
-      if (net == 0) {
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": PEIdent::elaborate_expr_method_: "
-		       << "Only nets can have methods, so give up here." << endl;
-	    return 0;
-      }
-
-      if (net->darray_type()) {
-	    if (member_name == "size") {
-		  NetESFunc*fun = new NetESFunc("$size", IVL_VT_BOOL, 32, 1);
-		  fun->set_line(*this);
-
-		  NetESignal*arg = new NetESignal(net);
-		  arg->set_line(*net);
-
-		  fun->parm(0, arg);
-		  return fun;
-	    }
-
-	    return 0;
-      }
-
-      if (debug_elaborate) {
-	    cerr << get_fileline() << ": PEIdent::elaborate_expr_method_: "
-		 << "Give up trying to find method " << member_name
-		 << " of " << path_ << "." << endl;
-      }
-
-      return 0;
-}
 
 /*
  * Elaborate an identifier in an expression. The identifier can be a
@@ -3776,6 +3925,12 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       NetEvent*     eve = 0;
 
       const NetExpr*ex1, *ex2;
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+		 << "path_=" << path_
+		 << endl;
+      }
 
 	// Special case: Detect the special situation that this name
 	// is the name of a variable in the class, and this is a class
@@ -3806,30 +3961,56 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
             scope->is_const_func(false);
       }
 
-      if (debug_elaborate)
-	    cerr << get_fileline() << ": PEIdent::elaborate_expr: path_=" << path_ << endl;
-
+	// If this identifier is pulled from a package, then switch
+	// the scope we are using.
       NetScope*use_scope = scope;
       if (package_) {
 	    use_scope = des->find_package(package_->pscope_name());
 	    ivl_assert(*this, use_scope);
       }
 
-	// Special case: Detect the special situation that the name is
-	// a method of an object (including built-in methods) that has
-	// no arguments. For example, "foo.size" is the call to the
-	// size() method if foo is an array type.
-      if (NetExpr*tmp = elaborate_expr_method_(des, scope, expr_wid, flags)) {
-	    return tmp;
+
+	// Find the net/parameter/event object that this name refers
+	// to. The path_ may be a scoped path, and may include method
+	// or member name parts. For example, main.a.b.c may refer to
+	// a net called "b" in the scope "main.a" and with a member
+	// named "c". This loop tries to figure that out and the
+	// result is the complete path_ split into a base_path (that
+	// locates the object) and the member_path that selects parts
+	// in the object.
+      pform_name_t base_path = path_;
+      pform_name_t member_path;
+      NetScope*found_in = 0;
+      while (net==0 && par==0 && eve==0 && base_path.size()>0) {
+	    found_in = symbol_search(this, des, use_scope, base_path,
+				     net, par, eve, ex1, ex2);
+	    if (net) break;
+	    if (par) break;
+	    if (eve) break;
+	      // Not found. Try to pop another name off the base_path
+	      // and push it to the front of the member path.
+	    member_path.push_front( base_path.back() );
+	    base_path.pop_back();
       }
 
-      NetScope*found_in = symbol_search(this, des, use_scope, path_,
-					net, par, eve,
-					ex1, ex2);
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+		 << "Symbol search found base_path=" << base_path
+		 << ", member_path=" << member_path
+		 << endl;
+      }
 
 	// If the identifier name is a parameter name, then return
 	// the parameter value.
       if (par != 0) {
+
+	    if (member_path.size() > 0) {
+		  cerr << get_fileline() << ": error: Paramater name " << base_path
+		       << " can't have member names (member_path=" << member_path << ")."
+		       << endl;
+		  des->errors += 1;
+	    }
+
 	    NetExpr*tmp = elaborate_expr_param_(des, scope, par, found_in,
                                                 ex1, ex2, expr_wid, flags);
 
@@ -3838,7 +4019,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
             return pad_to_width(tmp, expr_wid, signed_flag_, *this);
       }
 
-	// If the identifier names a signal (a register or wire)
+	// If the identifier names a signal (a variable or a net)
 	// then create a NetESignal node to handle it.
       if (net != 0) {
             if (NEED_CONST & flags) {
@@ -3859,6 +4040,80 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
                   scope->is_const_func(false);
             }
 
+	      // If this is a struct, and there are members in the
+	      // member_path, then generate an expression that
+	      // reflects the member selection.
+	    if (net->struct_type() && member_path.size() > 0) {
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+			     << "Ident " << base_path
+			     << " look for struct member " << member_path
+			     << endl;
+		  }
+
+		  NetExpr*tmp = check_for_struct_members(this, des, use_scope,
+							 net, base_path.back().index,
+							 member_path);
+		  if (!tmp) return 0;
+		  else return pad_to_width(tmp, expr_wid, signed_flag_, *this);
+	    }
+
+	      // If this is an array object, and there are members in
+	      // the member_path, check for array properties.
+	    if (net->darray_type() && member_path.size() > 0) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+		       << "Ident " << base_path
+		       << " look for array property " << member_path
+		       << endl;
+
+		  ivl_assert(*this, member_path.size() == 1);
+		  const name_component_t member_comp = member_path.front();
+		  if (member_comp.name == "size") {
+			NetESFunc*fun = new NetESFunc("$size", IVL_VT_BOOL, 32, 1);
+			fun->set_line(*this);
+
+			NetESignal*arg = new NetESignal(net);
+			arg->set_line(*net);
+
+			fun->parm(0, arg);
+			return fun;
+		  }
+	    }
+
+	    if (net->class_type() && member_path.size() > 0) {
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+			     << "Ident " << base_path
+			     << " look for class property " << member_path
+			     << endl;
+		  }
+
+		  ivl_assert(*this, member_path.size() == 1);
+		  const name_component_t member_comp = member_path.front();
+		  return check_for_class_property(this, des, use_scope,
+							net, member_comp);
+	    }
+
+	    if (net->enumeration() && member_path.size() > 0) {
+		  const netenum_t*netenum = net->enumeration();
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+			     << "Ident " << base_path
+			     << " look for enumeration method " << member_path
+			     << endl;
+		  }
+
+		  NetESignal*expr = new NetESignal(net);
+		  expr->set_line(*this);
+		  ivl_assert(*this, member_path.size() == 1);
+		  const name_component_t member_comp = member_path.front();
+		  ivl_assert(*this, member_comp.index.empty());
+		  return check_for_enum_methods(this, des, use_scope,
+						netenum, base_path, member_comp.name,
+						expr, expr_wid, NULL, 0);
+	    }
+
+	    ivl_assert(*this, member_path.size() == 0);
 	    NetExpr*tmp = elaborate_expr_net(des, scope, net, found_in,
                                              expr_wid, flags);
 
@@ -3895,6 +4150,13 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
                   scope->is_const_func(false);
             }
 
+	    if (member_path.size() > 0) {
+		  cerr << get_fileline() << ": error: Event name " << base_path
+		       << " can't have member names (member_path=" << member_path << ")"
+		       << endl;
+		  des->errors += 1;
+	    }
+
 	    NetEEvent*tmp = new NetEEvent(eve);
 	    tmp->set_line(*this);
 	    return tmp;
@@ -3917,75 +4179,6 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    return tmp;
       }
 
-	// Maybe this is a method attached to an enumeration name? If
-	// this is SystemVerilog, then test to see if the name is
-	// really a method attached to an object.
-      if (gn_system_verilog() && found_in==0 && path_.size() >= 2) {
-	    pform_name_t use_path = path_;
-	    name_component_t member_comp = use_path.back();
-	    use_path.pop_back();
-
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-		       << "Look for base_path " << use_path
-		       << " for member " << member_comp << "." << endl;
-
-	    ivl_assert(*this, net == 0);
-	    symbol_search(this, des, use_scope, use_path, net, par, eve, ex1, ex2);
-
-	      // Check to see if we have a net and if so is it an
-	      // enumeration? If so then check to see if this is an
-	      // enumeration method call.
-	    if (net != 0) {
-		    // If this net is actually an enum, the method may
-		    // be an enumeration method.
-		  if (const netenum_t*netenum = net->enumeration()) {
-			  // We may need the net expression for the
-			  // enumeration variable so get it.
-			NetESignal*expr = new NetESignal(net);
-			expr->set_line(*this);
-			  // This expression cannot be a select!
-			assert(use_path.back().index.empty());
-
-			return check_for_enum_methods(this, des, use_scope,
-			                              netenum,
-			                              use_path, member_comp.name,
-			                              expr, expr_wid, NULL, 0);
-		  }
-
-		    // If this net is a struct, the method name may be
-		    // a struct member.
-		  if (net->struct_type() != 0) {
-			if (debug_elaborate) {
-			      cerr << get_fileline() << ": debug: "
-				   << "PEIdent::elaborate_expr: "
-				   << "Ident " << use_path
-				   << " is a struct."
-				   << " Expecting " << net->packed_dims().size()
-				   << "-1 dimensions, "
-				   << "got " << use_path.back().index.size() << "." << endl;
-			}
-
-			NetExpr*tmp = check_for_struct_members(this, des, use_scope,
-							       net, use_path.back().index,
-							       member_comp);
-			if (!tmp) return 0;
-
-			return pad_to_width(tmp, expr_wid, signed_flag_, *this);
-		  }
-
-		  if (net->class_type() != 0) {
-			if (debug_elaborate) {
-			      cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-				   << "Ident " << use_path
-				   << " look for property " << member_comp << endl;
-			}
-
-			return check_for_class_property(this, des, use_scope,
-							net, member_comp);
-		  }
-	    }
-      }
 
 	// At this point we've exhausted all the possibilities that
 	// are not scopes. If this is not a system task argument, then
