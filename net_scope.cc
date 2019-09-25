@@ -743,9 +743,28 @@ const NetScope* NetScope::child_byname(perm_string name) const
 
 perm_string NetScope::local_symbol()
 {
-      ostringstream res;
-      res << "_s" << (lcounter_++);
-      return lex_strings.make(res.str());
+      perm_string sym;
+      do {
+	    ostringstream res;
+	    res << "_ivl_" << (lcounter_++);
+	    perm_string sym_tmp = lex_strings.make(res.str());
+
+	      // If the name already exists as a signal, try again.
+	    if (signals_map_.find(sym_tmp) != signals_map_.end())
+		  continue;
+	      // If the name already exists as a parameter, try again.
+	    if (parameters.find(sym_tmp) != parameters.end())
+		  continue;
+	    if (genvars_.find(sym_tmp) != genvars_.end())
+		  continue;
+	      // If the name already exists as a class, try again.
+	    if (classes_.find(sym_tmp) != classes_.end())
+		  continue;
+
+	      // No collisions, this is the one.
+	    sym = sym_tmp;
+      } while (sym.nil());
+      return sym;
 }
 
 void NetScope::add_tie_hi(Design*des)
