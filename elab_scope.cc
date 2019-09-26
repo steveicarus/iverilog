@@ -63,7 +63,7 @@ void set_scope_timescale(Design*des, NetScope*scope, PScope*pscope)
       des->set_precision(pscope->time_precision);
 }
 
-typedef map<perm_string,LexicalScope::param_expr_t>::const_iterator mparm_it_t;
+typedef map<perm_string,LexicalScope::param_expr_t*>::const_iterator mparm_it_t;
 
 static void collect_parm_item_(Design*des, NetScope*scope, perm_string name,
 			       const LexicalScope::param_expr_t&cur,
@@ -110,59 +110,59 @@ static void collect_parm_item_(Design*des, NetScope*scope, perm_string name,
 }
 
 static void collect_scope_parameters_(Design*des, NetScope*scope,
-      const map<perm_string,LexicalScope::param_expr_t>&parameters)
+      const map<perm_string,LexicalScope::param_expr_t*>&parameters)
 {
       for (mparm_it_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  ++ cur ) {
 
 	      // A parameter can not have the same name as a genvar.
 	    if (scope->find_genvar((*cur).first)) {
-		  cerr << cur->second.get_fileline()
+		  cerr << cur->second->get_fileline()
 		       << ": error: parameter and genvar in '"
 		       << scope->fullname() << "' have the same name '"
 		       << (*cur).first << "'." << endl;
 		  des->errors += 1;
 	    }
 
-	    collect_parm_item_(des, scope, (*cur).first, (*cur).second, false, false);
+	    collect_parm_item_(des, scope, cur->first, *(cur->second), false, false);
       }
 }
 
 static void collect_scope_localparams_(Design*des, NetScope*scope,
-      const map<perm_string,LexicalScope::param_expr_t>&localparams)
+      const map<perm_string,LexicalScope::param_expr_t*>&localparams)
 {
       for (mparm_it_t cur = localparams.begin()
 		 ; cur != localparams.end() ;  ++ cur ) {
 
 	      // A localparam can not have the same name as a genvar.
 	    if (scope->find_genvar((*cur).first)) {
-		  cerr << cur->second.get_fileline()
+		  cerr << cur->second->get_fileline()
 		       << ": error: localparam and genvar in '"
 		       << scope->fullname() << "' have the same name '"
 		       << (*cur).first << "'." << endl;
 		  des->errors += 1;
 	    }
 
-	    collect_parm_item_(des, scope, (*cur).first, (*cur).second, false, true);
+	    collect_parm_item_(des, scope, cur->first, *(cur->second), false, true);
       }
 }
 
 static void collect_scope_specparams_(Design*des, NetScope*scope,
-      const map<perm_string,LexicalScope::param_expr_t>&specparams)
+      const map<perm_string,LexicalScope::param_expr_t*>&specparams)
 {
       for (mparm_it_t cur = specparams.begin()
 		 ; cur != specparams.end() ;  ++ cur ) {
 
 	      // A specparam can not have the same name as a genvar.
 	    if (scope->find_genvar((*cur).first)) {
-		  cerr << cur->second.get_fileline()
+		  cerr << cur->second->get_fileline()
 		       << ": error: specparam and genvar in '"
 		       << scope->fullname() << "' have the same name '"
 		       << (*cur).first << "'." << endl;
 		  des->errors += 1;
 	    }
 
-	    collect_parm_item_(des, scope, (*cur).first, (*cur).second, true, false);
+	    collect_parm_item_(des, scope, cur->first, *(cur->second), true, false);
       }
 }
 

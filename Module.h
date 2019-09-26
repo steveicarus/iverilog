@@ -97,7 +97,7 @@ class Module : public PScopeExtra, public PNamedItem {
 	/* specparams are simpler than other parameters, in that they
 	   can have a range, but not an explicit type. The restrictions
 	   are enforced by the parser. */
-      map<perm_string,param_expr_t>specparams;
+      map<perm_string,param_expr_t*>specparams;
 
 	/* The module also has defparam assignments which don't create
 	   new parameters within the module, but may be used to set

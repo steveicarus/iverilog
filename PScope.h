@@ -105,8 +105,8 @@ class LexicalScope {
 
 	    SymbolType symbol_type() const;
       };
-      map<perm_string,param_expr_t>parameters;
-      map<perm_string,param_expr_t>localparams;
+      map<perm_string,param_expr_t*>parameters;
+      map<perm_string,param_expr_t*>localparams;
 
 	// Defined types in the scope.
       map<perm_string,data_type_t*>typedefs;

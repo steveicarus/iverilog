@@ -3059,27 +3059,28 @@ void pform_set_parameter(const struct vlltype&loc,
       }
 
       assert(expr);
-      Module::param_expr_t&parm = scope->parameters[name];
-      FILE_NAME(&parm, loc);
+      Module::param_expr_t*parm = new Module::param_expr_t();
+      FILE_NAME(parm, loc);
 
-      parm.expr = expr;
+      add_local_symbol(scope, name, parm);
+      scope->parameters[name] = parm;
 
-      parm.type = type;
+      parm->expr = expr;
+
+      parm->type = type;
       if (range) {
 	    assert(range->size() == 1);
 	    pform_range_t&rng = range->front();
 	    assert(rng.first);
 	    assert(rng.second);
-	    parm.msb = rng.first;
-	    parm.lsb = rng.second;
+	    parm->msb = rng.first;
+	    parm->lsb = rng.second;
       } else {
-	    parm.msb = 0;
-	    parm.lsb = 0;
+	    parm->msb = 0;
+	    parm->lsb = 0;
       }
-      parm.signed_flag = signed_flag;
-      parm.range = value_range;
-
-      add_local_symbol(scope, name, &parm);
+      parm->signed_flag = signed_flag;
+      parm->range = value_range;
 
 	// Only a Module keeps the position of the parameter.
       if ((dynamic_cast<Module*>(scope)) && (scope == pform_cur_module.front()))
@@ -3097,27 +3098,28 @@ void pform_set_localparam(const struct vlltype&loc,
       }
 
       assert(expr);
-      Module::param_expr_t&parm = scope->localparams[name];
-      FILE_NAME(&parm, loc);
+      Module::param_expr_t*parm = new Module::param_expr_t();
+      FILE_NAME(parm, loc);
 
-      parm.expr = expr;
+      add_local_symbol(scope, name, parm);
+      scope->localparams[name] = parm;
 
-      parm.type = type;
+      parm->expr = expr;
+
+      parm->type = type;
       if (range) {
 	    assert(range->size() == 1);
 	    pform_range_t&rng = range->front();
 	    assert(rng.first);
 	    assert(rng.second);
-	    parm.msb = rng.first;
-	    parm.lsb = rng.second;
+	    parm->msb = rng.first;
+	    parm->lsb = rng.second;
       } else {
-	    parm.msb  = 0;
-	    parm.lsb  = 0;
+	    parm->msb  = 0;
+	    parm->lsb  = 0;
       }
-      parm.signed_flag = signed_flag;
-      parm.range = 0;
-
-      add_local_symbol(scope, name, &parm);
+      parm->signed_flag = signed_flag;
+      parm->range = 0;
 }
 
 void pform_set_specparam(const struct vlltype&loc, perm_string name,
@@ -3128,28 +3130,29 @@ void pform_set_specparam(const struct vlltype&loc, perm_string name,
       assert(scope == lexical_scope);
 
       assert(expr);
-      Module::param_expr_t&parm = pform_cur_module.front()->specparams[name];
-      FILE_NAME(&parm, loc);
+      Module::param_expr_t*parm = new Module::param_expr_t();
+      FILE_NAME(parm, loc);
 
-      parm.expr = expr;
+      add_local_symbol(scope, name, parm);
+      pform_cur_module.front()->specparams[name] = parm;
+
+      parm->expr = expr;
 
       if (range) {
 	    assert(range->size() == 1);
 	    pform_range_t&rng = range->front();
 	    assert(rng.first);
 	    assert(rng.second);
-	    parm.type = IVL_VT_LOGIC;
-	    parm.msb = rng.first;
-	    parm.lsb = rng.second;
+	    parm->type = IVL_VT_LOGIC;
+	    parm->msb = rng.first;
+	    parm->lsb = rng.second;
       } else {
-	    parm.type = IVL_VT_NO_TYPE;
-	    parm.msb  = 0;
-	    parm.lsb  = 0;
+	    parm->type = IVL_VT_NO_TYPE;
+	    parm->msb  = 0;
+	    parm->lsb  = 0;
       }
-      parm.signed_flag = false;
-      parm.range = 0;
-
-      add_local_symbol(scope, name, &parm);
+      parm->signed_flag = false;
+      parm->range = 0;
 }
 
 void pform_set_defparam(const pform_name_t&name, PExpr*expr)
