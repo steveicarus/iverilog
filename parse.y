@@ -1428,7 +1428,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
       { pform_name_t tmp_hident;
 	tmp_hident.push_back(name_component_t(lex_strings.make($4)));
 
-	PEIdent*tmp_ident = pform_new_ident(tmp_hident);
+	PEIdent*tmp_ident = pform_new_ident(@4, tmp_hident);
 	FILE_NAME(tmp_ident, @4);
 
 	PForStatement*tmp_for = new PForStatement(tmp_ident, $6, $8, $10, $13);
@@ -3604,7 +3604,7 @@ expr_primary
      indexed arrays and part selects */
 
   | hierarchy_identifier
-      { PEIdent*tmp = pform_new_ident(*$1);
+      { PEIdent*tmp = pform_new_ident(@1, *$1);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete $1;
@@ -4500,7 +4500,7 @@ atom2_type
      rule to reflect the rules for assignment l-values. */
 lpvalue
   : hierarchy_identifier
-      { PEIdent*tmp = pform_new_ident(*$1);
+      { PEIdent*tmp = pform_new_ident(@1, *$1);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete $1;
@@ -5040,24 +5040,24 @@ module_item
               IDENTIFIER '=' expression ')'
       { pform_start_generate_for(@1, $3, $5, $7, $9, $11); }
     generate_block
-      { pform_endgenerate(); }
+      { pform_endgenerate(false); }
 
   | generate_if
     generate_block_opt
     K_else
       { pform_start_generate_else(@1); }
     generate_block
-      { pform_endgenerate(); }
+      { pform_endgenerate(true); }
 
   | generate_if
     generate_block_opt %prec less_than_K_else
-      { pform_endgenerate(); }
+      { pform_endgenerate(true); }
 
   | K_case '(' expression ')'
       { pform_start_generate_case(@1, $3); }
     generate_case_items
     K_endcase
-      { pform_endgenerate(); }
+      { pform_endgenerate(true); }
 
   | modport_declaration
 
@@ -5154,9 +5154,9 @@ generate_case_items
 
 generate_case_item
   : expression_list_proper ':' { pform_generate_case_item(@1, $1); } generate_block_opt
-      { pform_endgenerate(); }
+      { pform_endgenerate(false); }
   | K_default ':' { pform_generate_case_item(@1, 0); } generate_block_opt
-      { pform_endgenerate(); }
+      { pform_endgenerate(false); }
   ;
 
 generate_item
@@ -5177,7 +5177,7 @@ generate_item
 	      warn_count += 1;
 	      cerr << @1 << ": warning: Anachronistic use of named begin/end to surround generate schemes." << endl;
 	}
-	pform_endgenerate();
+	pform_endgenerate(false);
       }
   ;
 

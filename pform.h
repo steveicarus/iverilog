@@ -246,7 +246,7 @@ extern void pform_add_modport_port(const struct vlltype&loc,
  * This creates an identifier aware of names that may have been
  * imported from other packages.
  */
-extern PEIdent* pform_new_ident(const pform_name_t&name);
+extern PEIdent* pform_new_ident(const struct vlltype&loc, const pform_name_t&name);
 
 /*
  * Enter/exit name scopes. The push_scope function pushes the scope
@@ -299,7 +299,7 @@ extern void pform_start_generate_case(const struct vlltype&lp, PExpr*test);
 extern void pform_start_generate_nblock(const struct vlltype&lp, char*name);
 extern void pform_generate_case_item(const struct vlltype&lp, list<PExpr*>*test);
 extern void pform_generate_block_name(char*name);
-extern void pform_endgenerate();
+extern void pform_endgenerate(bool end_conditional);
 
 /*
  * This function returns the lexically containing generate scheme, if

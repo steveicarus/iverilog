@@ -349,6 +349,13 @@ static unsigned scope_generate_counter = 1;
      always within a module. */
 static PGenerate*pform_cur_generate = 0;
 
+  /* Blocks within the same conditional generate construct may have
+     the same name. Here we collect the set of names used in each
+     construct, so they can be added to the local scope without
+     conflicting with each other. Generate constructs may nest, so
+     we need a stack. */
+static list<set<perm_string>> conditional_block_names;
+
   /* This tracks the current modport list being processed. This is
      always within an interface. */
 static PModport*pform_cur_modport = 0;
@@ -421,6 +428,87 @@ static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
 	    scopex = dynamic_cast<PScopeExtra*> (scope);
       }
       return scopex;
+}
+
+static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*item)
+{
+      assert(scope);
+
+	// Check for conflict with another local symbol.
+      map<perm_string,PNamedItem*>::const_iterator cur_sym
+	    = scope->local_symbols.find(name);
+      if (cur_sym != scope->local_symbols.end()) {
+	    cerr << item->get_fileline() << ": error: "
+		    "'" << name << "' has already been declared "
+		    "in this scope." << endl;
+	    cerr << cur_sym->second->get_fileline() << ":      : "
+		    "It was declared here as "
+		 << cur_sym->second->symbol_type() << "." << endl;
+	    error_count += 1;
+	    return;
+      }
+
+	// Check for conflict with an explicit import.
+      map<perm_string,PPackage*>::const_iterator cur_pkg
+	    = scope->explicit_imports.find(name);
+      if (cur_pkg != scope->explicit_imports.end()) {
+	    cerr << item->get_fileline() << ": error: "
+		    "'" << name << "' has already been "
+		    "imported into this scope from package '"
+		 << cur_pkg->second->pscope_name() << "'." << endl;
+	    error_count += 1;
+	    return;
+      }
+
+      scope->local_symbols[name] = item;
+}
+
+static PPackage*find_potential_import(const struct vlltype&loc, LexicalScope*scope,
+				      perm_string name, PNamedItem::SymbolType st)
+{
+      assert(scope);
+
+      PPackage*found_pkg = 0;
+      for (set<PPackage*>::const_iterator cur_pkg = scope->potential_imports.begin();
+	      cur_pkg != scope->potential_imports.end(); ++cur_pkg) {
+	    PPackage*search_pkg = *cur_pkg;
+	    map<perm_string,PNamedItem*>::const_iterator cur_sym
+		= search_pkg->local_symbols.find(name);
+	    if (cur_sym != search_pkg->local_symbols.end()) {
+		  if (st != PNamedItem::ANY && st != cur_sym->second->symbol_type())
+			continue;
+
+		  if (found_pkg) {
+			cerr << loc.get_fileline() << ": error: "
+				"Ambiguous use of '" << name << "'. "
+				"It is exported by both '"
+			      << found_pkg->pscope_name()
+			      << "' and by '"
+			      << search_pkg->pscope_name()
+			      << "'." << endl;
+			error_count += 1;
+		  } else {
+			found_pkg = search_pkg;
+			scope->explicit_imports[name] = found_pkg;
+		  }
+	    }
+      }
+      return found_pkg;
+}
+
+static void check_potential_imports(const struct vlltype&loc, perm_string name)
+{
+      LexicalScope*scope = lexical_scope;
+      while (scope) {
+	    if (scope->local_symbols.find(name) != scope->local_symbols.end())
+		  return;
+	    if (scope->explicit_imports.find(name) != scope->explicit_imports.end())
+		  return;
+	    if (find_potential_import(loc, scope, name, PNamedItem::ANY))
+		  return;
+
+	    scope = scope->parent_scope();
+      }
 }
 
 /*
@@ -516,12 +604,6 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name,
 
       pform_set_scope_timescale(class_scope, scopex);
 
-      if (scopex->classes.find(name) != scopex->classes.end()) {
-	    cerr << class_scope->get_fileline() << ": error: duplicate "
-		  "definition for class '" << name << "' in '"
-		 << scopex->pscope_name() << "'." << endl;
-	    error_count += 1;
-      }
       scopex->classes[name] = class_scope;
       scopex->classes_lexical .push_back(class_scope);
 
@@ -566,25 +648,11 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name,
       pform_set_scope_timescale(task, scopex);
 
       if (pform_cur_generate) {
-	      // Check if the task is already in the dictionary.
-	    if (pform_cur_generate->tasks.find(task->pscope_name()) !=
-	        pform_cur_generate->tasks.end()) {
-		  cerr << task->get_fileline() << ": error: duplicate "
-		          "definition for task '" << name << "' in '"
-		       << pform_cur_module.front()->mod_name() << "' (generate)."
-		       << endl;
-		  error_count += 1;
-	    }
-	    pform_cur_generate->tasks[task->pscope_name()] = task;
+	    add_local_symbol(pform_cur_generate, task_name, task);
+	    pform_cur_generate->tasks[task_name] = task;
       } else {
-	      // Check if the task is already in the dictionary.
-	    if (scopex->tasks.find(task->pscope_name()) != scopex->tasks.end()) {
-		  cerr << task->get_fileline() << ": error: duplicate "
-		          "definition for task '" << name << "' in '"
-		       << scopex->pscope_name() << "'." << endl;
-		  error_count += 1;
-	    }
-	    scopex->tasks[task->pscope_name()] = task;
+	    add_local_symbol(scopex, task_name, task);
+	    scopex->tasks[task_name] = task;
       }
 
       lexical_scope = task;
@@ -615,26 +683,12 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
       pform_set_scope_timescale(func, scopex);
 
       if (pform_cur_generate) {
-	      // Check if the function is already in the dictionary.
-	    if (pform_cur_generate->funcs.find(func->pscope_name()) !=
-	        pform_cur_generate->funcs.end()) {
-		  cerr << func->get_fileline() << ": error: duplicate "
-		          "definition for function '" << name << "' in '"
-		       << pform_cur_module.front()->mod_name() << "' (generate)."
-		       << endl;
-		  error_count += 1;
-	    }
-	    pform_cur_generate->funcs[func->pscope_name()] = func;
+	    add_local_symbol(pform_cur_generate, func_name, func);
+	    pform_cur_generate->funcs[func_name] = func;
 
       } else {
-	      // Check if the function is already in the dictionary.
-	    if (scopex->funcs.find(func->pscope_name()) != scopex->funcs.end()) {
-		  cerr << func->get_fileline() << ": error: duplicate "
-		          "definition for function '" << name << "' in '"
-		       << scopex->pscope_name() << "'." << endl;
-		  error_count += 1;
-	    }
-	    scopex->funcs[func->pscope_name()] = func;
+	    add_local_symbol(scopex, func_name, func);
+	    scopex->funcs[func_name] = func;
       }
 
       lexical_scope = func;
@@ -657,6 +711,7 @@ PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
 
       PBlock*block = new PBlock(block_name, lexical_scope, bt);
       block->default_lifetime = find_lifetime(LexicalScope::INHERITED);
+      if (name) add_local_symbol(lexical_scope, block_name, block);
       lexical_scope = block;
 
       return block;
@@ -665,8 +720,11 @@ PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
 /*
  * Create a new identifier.
  */
-PEIdent* pform_new_ident(const pform_name_t&name)
+PEIdent* pform_new_ident(const struct vlltype&loc, const pform_name_t&name)
 {
+      if (gn_system_verilog() && name.size() == 1)
+	    check_potential_imports(loc, name.back().name);
+
       return new PEIdent(name);
 }
 
@@ -721,6 +779,7 @@ PWire*pform_get_wire_in_scope(perm_string name)
 
 static void pform_put_wire_in_scope(perm_string name, PWire*net)
 {
+      add_local_symbol(lexical_scope, name, net);
       lexical_scope->wires[name] = net;
 }
 
@@ -729,7 +788,7 @@ static void pform_put_enum_type_in_scope(enum_type_t*enum_set)
       lexical_scope->enum_sets.insert(enum_set);
 }
 
-PWire*pform_get_make_wire_in_scope(const struct vlltype&li, perm_string name,
+PWire*pform_get_make_wire_in_scope(const struct vlltype&, perm_string name,
                                    NetNet::Type net_type, NetNet::PortType port_type,
                                    ivl_variable_type_t vt_type)
 {
@@ -737,15 +796,11 @@ PWire*pform_get_make_wire_in_scope(const struct vlltype&li, perm_string name,
 
 	// If the wire already exists and is fully defined, this
 	// must be a redeclaration. Start again with a new wire.
-      if (cur && cur->get_data_type() != IVL_VT_NO_TYPE) {
-	    LineInfo tloc;
-	    FILE_NAME(&tloc, li);
-	    cerr << tloc.get_fileline() << ": error: duplicate declaration "
-	            "for net or variable '" << name << "'." << endl;
-	    error_count += 1;
-	    delete cur;
+	// The error will be reported when we add the new wire
+	// to the scope. Do not delete the old wire - it will
+	// remain in the local symbol map.
+      if (cur && cur->get_data_type() != IVL_VT_NO_TYPE)
             cur = 0;
-      }
 
       if (cur == 0) {
 	    cur = new PWire(name, net_type, port_type, vt_type);
@@ -765,6 +820,8 @@ void pform_set_typedef(perm_string name, data_type_t*data_type, std::list<pform_
       if(unp_ranges)
 	    data_type = new uarray_type_t(data_type, unp_ranges);
 
+      add_local_symbol(lexical_scope, name, data_type);
+
       data_type_t*&ref = lexical_scope->typedefs[name];
 
       ivl_assert(*data_type, ref == 0);
@@ -772,10 +829,14 @@ void pform_set_typedef(perm_string name, data_type_t*data_type, std::list<pform_
 
       if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(data_type)) {
 	    pform_put_enum_type_in_scope(enum_type);
+
+	    list<named_pexpr_t>::const_iterator cur;
+	    for (cur = enum_type->names->begin(); cur != enum_type->names->end(); ++cur) 
+		  add_local_symbol(lexical_scope, cur->name, enum_type);
       }
 }
 
-data_type_t* pform_test_type_identifier(const char*txt)
+data_type_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
 {
       perm_string name = lex_strings.make(txt);
 
@@ -790,8 +851,8 @@ data_type_t* pform_test_type_identifier(const char*txt)
 	      // the name has at least shadowed any other possible
 	      // meaning for this name.
 	    map<perm_string,PPackage*>::iterator cur_pkg;
-	    cur_pkg = cur_scope->imports.find(name);
-	    if (cur_pkg != cur_scope->imports.end()) {
+	    cur_pkg = cur_scope->explicit_imports.find(name);
+	    if (cur_pkg != cur_scope->explicit_imports.end()) {
 		  PPackage*pkg = cur_pkg->second;
 		  cur = pkg->typedefs.find(name);
 		  if (cur != pkg->typedefs.end())
@@ -804,6 +865,13 @@ data_type_t* pform_test_type_identifier(const char*txt)
 	    cur = cur_scope->typedefs.find(name);
 	    if (cur != cur_scope->typedefs.end())
 		  return cur->second;
+
+            PPackage*pkg = find_potential_import(loc, cur_scope, name, PNamedItem::TYPE);
+            if (pkg) {
+	          cur = pkg->typedefs.find(name);
+	          if (cur != cur_scope->typedefs.end())
+		        return cur->second;
+            }
 
 	    cur_scope = cur_scope->parent_scope();
       } while (cur_scope);
@@ -833,6 +901,9 @@ PECallFunction* pform_make_call_function(const struct vlltype&loc,
 					 const pform_name_t&name,
 					 const list<PExpr*>&parms)
 {
+      if (gn_system_verilog() && name.size() == 1)
+	    check_potential_imports(loc, name.back().name);
+
       PECallFunction*tmp = new PECallFunction(name, parms);
       FILE_NAME(tmp, loc);
       return tmp;
@@ -842,6 +913,9 @@ PCallTask* pform_make_call_task(const struct vlltype&loc,
 				const pform_name_t&name,
 				const list<PExpr*>&parms)
 {
+      if (gn_system_verilog() && name.size() == 1)
+	    check_potential_imports(loc, name.back().name);
+
       PCallTask*tmp = new PCallTask(name, parms);
       FILE_NAME(tmp, loc);
       return tmp;
@@ -1224,6 +1298,8 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
       allow_timeunit_decl = true;
       allow_timeprec_decl = true;
 
+      add_local_symbol(lexical_scope, lex_name, cur_module);
+
       lexical_scope = cur_module;
 
 	/* The generate scheme numbering starts with *1*, not
@@ -1307,31 +1383,20 @@ void pform_endmodule(const char*name, bool inside_celldefine,
       pform_pop_scope();
 }
 
-static void pform_add_genvar(const struct vlltype&li, const perm_string&name,
-                             map<perm_string,LineInfo*>&genvars)
-{
-      LineInfo*lni = new LineInfo();
-      FILE_NAME(lni, li);
-      if (genvars.find(name) != genvars.end()) {
-            cerr << lni->get_fileline() << ": error: genvar '"
-		 << name << "' has already been declared." << endl;
-            cerr << genvars[name]->get_fileline()
-                << ":        the previous declaration is here." << endl;
-            error_count += 1;
-            delete lni;
-      } else {
-            genvars[name] = lni;
-      }
-}
-
 void pform_genvars(const struct vlltype&li, list<perm_string>*names)
 {
       list<perm_string>::const_iterator cur;
       for (cur = names->begin(); cur != names->end() ; *cur++) {
-            if (pform_cur_generate)
-                  pform_add_genvar(li, *cur, pform_cur_generate->genvars);
-            else
-                  pform_add_genvar(li, *cur, pform_cur_module.front()->genvars);
+	    PGenvar*genvar = new PGenvar();
+	    FILE_NAME(genvar, li);
+
+	    if (pform_cur_generate) {
+		  add_local_symbol(pform_cur_generate, *cur, genvar);
+		  pform_cur_generate->genvars[*cur] = genvar;
+	    } else {
+		  add_local_symbol(pform_cur_module.front(), *cur, genvar);
+		  pform_cur_module.front()->genvars[*cur] = genvar;
+	    }
       }
 
       delete names;
@@ -1374,6 +1439,8 @@ void pform_start_generate_if(const struct vlltype&li, PExpr*test)
       pform_cur_generate->loop_init = 0;
       pform_cur_generate->loop_test = test;
       pform_cur_generate->loop_step = 0;
+
+      conditional_block_names.push_front(set<perm_string>());
 }
 
 void pform_start_generate_else(const struct vlltype&li)
@@ -1382,7 +1449,7 @@ void pform_start_generate_else(const struct vlltype&li)
       assert(pform_cur_generate->scheme_type == PGenerate::GS_CONDIT);
 
       PGenerate*cur = pform_cur_generate;
-      pform_endgenerate();
+      pform_endgenerate(false);
 
       PGenerate*gen = new PGenerate(lexical_scope, scope_generate_counter++);
       lexical_scope = gen;
@@ -1416,6 +1483,8 @@ void pform_start_generate_case(const struct vlltype&li, PExpr*expr)
       pform_cur_generate->loop_init = 0;
       pform_cur_generate->loop_test = expr;
       pform_cur_generate->loop_step = 0;
+
+      conditional_block_names.push_front(set<perm_string>());
 }
 
 /*
@@ -1438,6 +1507,10 @@ void pform_start_generate_nblock(const struct vlltype&li, char*name)
 
       pform_cur_generate->scope_name = lex_strings.make(name);
       delete[]name;
+
+      add_local_symbol(pform_cur_generate->parent_scope(),
+                       pform_cur_generate->scope_name,
+                       pform_cur_generate);
 }
 
 /*
@@ -1479,13 +1552,30 @@ void pform_generate_block_name(char*name)
 {
       assert(pform_cur_generate != 0);
       assert(pform_cur_generate->scope_name == 0);
-      pform_cur_generate->scope_name = lex_strings.make(name);
+      perm_string scope_name = lex_strings.make(name);
+      pform_cur_generate->scope_name = scope_name;
+
+      if (pform_cur_generate->scheme_type == PGenerate::GS_CONDIT
+       || pform_cur_generate->scheme_type == PGenerate::GS_ELSE
+       || pform_cur_generate->scheme_type == PGenerate::GS_CASE_ITEM) {
+
+            if (conditional_block_names.front().count(scope_name))
+                  return;
+
+            conditional_block_names.front().insert(scope_name);
+      }
+
+      add_local_symbol(pform_cur_generate->parent_scope(),
+                       scope_name, pform_cur_generate);
 }
 
-void pform_endgenerate()
+void pform_endgenerate(bool end_conditional)
 {
       assert(pform_cur_generate != 0);
       assert(! pform_cur_module.empty());
+
+      if (end_conditional)
+            conditional_block_names.pop_front();
 
 	// If there is no explicit block name then generate a temporary
 	// name. This will be replaced by the correct name later, once
@@ -1975,18 +2065,10 @@ static void pform_set_net_range(list<perm_string>*names,
  */
 static void pform_make_event(perm_string name, const char*fn, unsigned ln)
 {
-	// Check if the named event is already in the dictionary.
-      if (lexical_scope->events.find(name) != lexical_scope->events.end()) {
-	    LineInfo tloc;
-	    FILE_NAME(&tloc, fn, ln);
-	    cerr << tloc.get_fileline() << ": error: duplicate definition "
-	            "for named event '" << name << "' in '"
-	         << pform_cur_module.front()->mod_name() << "'." << endl;
-	    error_count += 1;
-      }
-
       PEvent*event = new PEvent(name);
       FILE_NAME(event, fn, ln);
+
+      add_local_symbol(lexical_scope, name, event);
       lexical_scope->events[name] = event;
 }
 
@@ -2040,10 +2122,13 @@ static void pform_makegate(PGBuiltin::Type type,
       cur->strength1(str.str1);
       FILE_NAME(cur, info.file, info.lineno);
 
-      if (pform_cur_generate)
+      if (pform_cur_generate) {
+	    if (dev_name != "") add_local_symbol(pform_cur_generate, dev_name, cur);
 	    pform_cur_generate->add_gate(cur);
-      else
+      } else {
+	    if (dev_name != "") add_local_symbol(pform_cur_module.front(), dev_name, cur);
 	    pform_cur_module.front()->add_gate(cur);
+      }
 }
 
 void pform_makegates(const struct vlltype&loc,
@@ -2120,10 +2205,13 @@ static void pform_make_modgate(perm_string type,
 	    cur->set_parameters(overrides->by_order);
       }
 
-      if (pform_cur_generate)
+      if (pform_cur_generate) {
+	    if (name != "") add_local_symbol(pform_cur_generate, name, cur);
 	    pform_cur_generate->add_gate(cur);
-      else
+      } else {
+	    if (name != "") add_local_symbol(pform_cur_module.front(), name, cur);
 	    pform_cur_module.front()->add_gate(cur);
+      }
       pform_bind_attributes(cur->attributes, attr);
 }
 
@@ -2165,11 +2253,13 @@ static void pform_make_modgate(perm_string type,
 	    cur->set_parameters(overrides->by_order);
       }
 
-
-      if (pform_cur_generate)
+      if (pform_cur_generate) {
+	    add_local_symbol(pform_cur_generate, name, cur);
 	    pform_cur_generate->add_gate(cur);
-      else
+      } else {
+	    add_local_symbol(pform_cur_module.front(), name, cur);
 	    pform_cur_module.front()->add_gate(cur);
+      }
       pform_bind_attributes(cur->attributes, attr);
 }
 
@@ -2505,20 +2595,15 @@ static PWire* pform_get_or_make_wire(const vlltype&li, perm_string name,
 
 	// If the wire already exists and is fully defined, this
 	// must be a redeclaration. Start again with a new wire.
-      if (cur) {
-	    LineInfo tloc;
-	    FILE_NAME(&tloc, li);
-	    cerr << tloc.get_fileline() << ": error: duplicate declaration "
-	            "for net or variable '" << name << "' in '"
-	         << pform_cur_module.front()->mod_name() << "'." << endl;
-	    error_count += 1;
-	    delete cur;
-      }
+	// The error will be reported when we add the new wire
+	// to the scope. Do not delete the old wire - it will
+	// remain in the local symbol map.
 
       cur = new PWire(name, type, ptype, dtype);
       FILE_NAME(cur, li.text, li.first_line);
 
       pform_put_wire_in_scope(name, cur);
+
       return cur;
 }
 
@@ -2972,38 +3057,6 @@ void pform_set_parameter(const struct vlltype&loc,
             VLerror("parameter declarations are not permitted in generate blocks");
             return;
       }
-      PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-      assert(scopex);
-
-	// Check if the parameter name is already in the dictionary.
-      if (scope->parameters.find(name) != scope->parameters.end()) {
-	    LineInfo tloc;
-	    FILE_NAME(&tloc, loc);
-	    cerr << tloc.get_fileline() << ": error: duplicate definition "
-	            "for parameter '" << name << "' in '"
-	         << scopex->pscope_name() << "'." << endl;
-	    error_count += 1;
-      }
-      if (scope->localparams.find(name) != scope->localparams.end()) {
-	    LineInfo tloc;
-	    FILE_NAME(&tloc, loc);
-	    cerr << tloc.get_fileline() << ": error: localparam and "
-		 << "parameter in '" << scopex->pscope_name()
-	         << "' have the same name '" << name << "'." << endl;
-	    error_count += 1;
-      }
-	// Only a Module scope has specparams.
-	  if ((dynamic_cast<Module*> (scope)) &&
-		  (scope == pform_cur_module.front()) &&
-          (pform_cur_module.front()->specparams.find(name) !=
-           pform_cur_module.front()->specparams.end())) {
-	    LineInfo tloc;
-	    FILE_NAME(&tloc, loc);
-	    cerr << tloc.get_fileline() << ": error: specparam and "
-		  "parameter in '" << scopex->pscope_name()
-	         << "' have the same name '" << name << "'." << endl;
-	    error_count += 1;
-      }
 
       assert(expr);
       Module::param_expr_t&parm = scope->parameters[name];
@@ -3026,9 +3079,10 @@ void pform_set_parameter(const struct vlltype&loc,
       parm.signed_flag = signed_flag;
       parm.range = value_range;
 
+      add_local_symbol(scope, name, &parm);
+
 	// Only a Module keeps the position of the parameter.
-	  if ((dynamic_cast<Module*> (scope)) &&
-		  (scope == pform_cur_module.front()))
+      if ((dynamic_cast<Module*>(scope)) && (scope == pform_cur_module.front()))
             pform_cur_module.front()->param_names.push_back(name);
 }
 
@@ -3040,37 +3094,6 @@ void pform_set_localparam(const struct vlltype&loc,
       if (is_compilation_unit(scope) && !gn_system_verilog()) {
 	    VLerror(loc, "error: localparam declarations must be contained within a module.");
 	    return;
-      }
-      PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-      assert(scopex);
-
-	// Check if the localparam name is already in the dictionary.
-      if (scope->localparams.find(name) != scope->localparams.end()) {
-	    LineInfo tloc;
-	    FILE_NAME(&tloc, loc);
-	    cerr << tloc.get_fileline() << ": error: duplicate definition "
-	            "for localparam '" << name << "' in '"
-	         << scopex->pscope_name() << "'." << endl;
-	    error_count += 1;
-      }
-      if (scope->parameters.find(name) != scope->parameters.end()) {
-	    LineInfo tloc;
-	    FILE_NAME(&tloc, loc);
-	    cerr << tloc.get_fileline() << ": error: parameter and "
-		 << "localparam in '" << scopex->pscope_name()
-	         << "' have the same name '" << name << "'." << endl;
-	    error_count += 1;
-      }
-
-      if ((! pform_cur_module.empty()) &&
-	  (scope == pform_cur_module.front()) &&
-          (pform_cur_module.front()->specparams.find(name) != pform_cur_module.front()->specparams.end())) {
-	    LineInfo tloc;
-	    FILE_NAME(&tloc, loc);
-	    cerr << tloc.get_fileline() << ": error: specparam and "
-		  "localparam in '" << scopex->pscope_name()
-	         << "' have the same name '" << name << "'." << endl;
-	    error_count += 1;
       }
 
       assert(expr);
@@ -3093,6 +3116,8 @@ void pform_set_localparam(const struct vlltype&loc,
       }
       parm.signed_flag = signed_flag;
       parm.range = 0;
+
+      add_local_symbol(scope, name, &parm);
 }
 
 void pform_set_specparam(const struct vlltype&loc, perm_string name,
@@ -3102,35 +3127,7 @@ void pform_set_specparam(const struct vlltype&loc, perm_string name,
       Module*scope = pform_cur_module.front();
       assert(scope == lexical_scope);
 
-	// Check if the specparam name is already in the dictionary.
-      if (pform_cur_module.front()->specparams.find(name) !=
-          pform_cur_module.front()->specparams.end()) {
-	    LineInfo tloc;
-	    FILE_NAME(&tloc, loc);
-	    cerr << tloc.get_fileline() << ": error: duplicate definition "
-	            "for specparam '" << name << "' in '"
-	         << pform_cur_module.front()->mod_name() << "'." << endl;
-	    error_count += 1;
-      }
-      if (scope->parameters.find(name) != scope->parameters.end()) {
-	    LineInfo tloc;
-	    FILE_NAME(&tloc, loc);
-	    cerr << tloc.get_fileline() << ": error: parameter and "
-		  "specparam in '" << pform_cur_module.front()->mod_name()
-	         << "' have the same name '" << name << "'." << endl;
-	    error_count += 1;
-      }
-      if (scope->localparams.find(name) != scope->localparams.end()) {
-	    LineInfo tloc;
-	    FILE_NAME(&tloc, loc);
-	    cerr << tloc.get_fileline() << ": error: localparam and "
-		  "specparam in '" << pform_cur_module.front()->mod_name()
-	         << "' have the same name '" << name << "'." << endl;
-	    error_count += 1;
-      }
-
       assert(expr);
-
       Module::param_expr_t&parm = pform_cur_module.front()->specparams[name];
       FILE_NAME(&parm, loc);
 
@@ -3151,6 +3148,8 @@ void pform_set_specparam(const struct vlltype&loc, perm_string name,
       }
       parm.signed_flag = false;
       parm.range = 0;
+
+      add_local_symbol(scope, name, &parm);
 }
 
 void pform_set_defparam(const pform_name_t&name, PExpr*expr)
@@ -3572,12 +3571,10 @@ void pform_start_modport_item(const struct vlltype&loc, const char*name)
       perm_string use_name = lex_strings.make(name);
       pform_cur_modport = new PModport(use_name);
       FILE_NAME(pform_cur_modport, loc);
-      if (scope->modports.find(use_name) != scope->modports.end()) {
-	    cerr << loc << ": error: duplicate declaration for modport '"
-		 << name << "' in '" << scope->mod_name() << "'." << endl;
-	    error_count += 1;
-      }
+
+      add_local_symbol(scope, use_name, pform_cur_modport);
       scope->modports[use_name] = pform_cur_modport;
+
       delete[] name;
 }
 

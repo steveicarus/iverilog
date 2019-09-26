@@ -61,6 +61,18 @@ class LexicalScope {
 
       lifetime_t default_lifetime;
 
+	// Symbols that are defined or declared in this scope.
+      std::map<perm_string,PNamedItem*>local_symbols;
+
+	// Symbols that are explicitly imported. Bind the imported name
+	// to the package from which the name is imported.
+      std::map<perm_string,PPackage*>explicit_imports;
+
+	// Packages that are wildcard imported. When identifiers from
+	// these packages are referenced, they will be added to the
+	// explicit imports (IEEE 1800-2012 26.3).
+      std::set<PPackage*>potential_imports;
+
       struct range_t {
 	      // True if this is an exclude
 	    bool exclude_flag;
@@ -101,10 +113,6 @@ class LexicalScope {
 
 	// Named events in the scope.
       map<perm_string,PEvent*>events;
-
-	// Symbols that are imported. Bind the imported name to the
-	// package from which the name is imported.
-      std::map<perm_string,PPackage*>imports;
 
 	// Nets and variables (wires) in the scope
       map<perm_string,PWire*>wires;

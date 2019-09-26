@@ -6528,7 +6528,7 @@ Design* elaborate(list<perm_string>roots)
 		  PPackage*unit = pform_units[i];
 		  NetScope*scope = des->make_package_scope(unit->pscope_name(), 0, true);
 		  scope->set_line(unit);
-		  scope->add_imports(&unit->imports);
+		  scope->add_imports(&unit->explicit_imports);
 		  set_scope_timescale(des, scope, unit);
 
 		  elaborator_work_item_t*es = new elaborate_package_t(des, scope, unit);
@@ -6553,7 +6553,7 @@ Design* elaborate(list<perm_string>roots)
 	    NetScope*unit_scope = unit_scopes[pac->second->parent_scope()];
 	    NetScope*scope = des->make_package_scope(pac->first, unit_scope, false);
 	    scope->set_line(pac->second);
-	    scope->add_imports(&pac->second->imports);
+	    scope->add_imports(&pac->second->explicit_imports);
 	    set_scope_timescale(des, scope, pac->second);
 
 	    elaborator_work_item_t*es = new elaborate_package_t(des, scope, pac->second);
@@ -6595,7 +6595,7 @@ Design* elaborate(list<perm_string>roots)
 	      // Collect some basic properties of this scope from the
 	      // Module definition.
 	    scope->set_line(rmod);
-	    scope->add_imports(&rmod->imports);
+	    scope->add_imports(&rmod->explicit_imports);
 	    set_scope_timescale(des, scope, rmod);
 
 	      // Save this scope, along with its definition, in the
