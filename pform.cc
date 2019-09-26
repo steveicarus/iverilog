@@ -696,7 +696,8 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
       return func;
 }
 
-PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
+PBlock* pform_push_block_scope(const struct vlltype&loc, char*name,
+			       PBlock::BL_TYPE bt)
 {
       perm_string block_name;
       if (name) block_name = lex_strings.make(name);
@@ -710,6 +711,7 @@ PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
       }
 
       PBlock*block = new PBlock(block_name, lexical_scope, bt);
+      FILE_NAME(block, loc);
       block->default_lifetime = find_lifetime(LexicalScope::INHERITED);
       if (name) add_local_symbol(lexical_scope, block_name, block);
       lexical_scope = block;

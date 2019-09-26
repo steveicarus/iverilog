@@ -1414,8 +1414,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	char for_block_name [64];
 	snprintf(for_block_name, sizeof for_block_name, "$ivl_for_loop%u", for_counter);
 	for_counter += 1;
-	PBlock*tmp = pform_push_block_scope(for_block_name, PBlock::BL_SEQ);
-	FILE_NAME(tmp, @1);
+	PBlock*tmp = pform_push_block_scope(@1, for_block_name, PBlock::BL_SEQ);
 	current_block_stack.push(tmp);
 
 	list<decl_assignment_t*>assign_list;
@@ -1476,8 +1475,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	snprintf(for_block_name, sizeof for_block_name, "$ivl_foreach%u", foreach_counter);
 	foreach_counter += 1;
 
-	PBlock*tmp = pform_push_block_scope(for_block_name, PBlock::BL_SEQ);
-	FILE_NAME(tmp, @1);
+	PBlock*tmp = pform_push_block_scope(@1, for_block_name, PBlock::BL_SEQ);
 	current_block_stack.push(tmp);
 
 	pform_make_foreach_declarations(@1, $5);
@@ -6252,8 +6250,7 @@ statement_item /* This is roughly statement_item in the LRM */
       }
   /* In SystemVerilog an unnamed block can contain variable declarations. */
   | K_begin
-      { PBlock*tmp = pform_push_block_scope(0, PBlock::BL_SEQ);
-	FILE_NAME(tmp, @1);
+      { PBlock*tmp = pform_push_block_scope(@1, 0, PBlock::BL_SEQ);
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
@@ -6287,8 +6284,7 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
   | K_begin ':' IDENTIFIER
-      { PBlock*tmp = pform_push_block_scope($3, PBlock::BL_SEQ);
-	FILE_NAME(tmp, @1);
+      { PBlock*tmp = pform_push_block_scope(@1, $3, PBlock::BL_SEQ);
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
@@ -6325,8 +6321,7 @@ statement_item /* This is roughly statement_item in the LRM */
       }
   /* In SystemVerilog an unnamed block can contain variable declarations. */
   | K_fork
-      { PBlock*tmp = pform_push_block_scope(0, PBlock::BL_PAR);
-	FILE_NAME(tmp, @1);
+      { PBlock*tmp = pform_push_block_scope(@1, 0, PBlock::BL_PAR);
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
@@ -6361,8 +6356,7 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
   | K_fork ':' IDENTIFIER
-      { PBlock*tmp = pform_push_block_scope($3, PBlock::BL_PAR);
-	FILE_NAME(tmp, @1);
+      { PBlock*tmp = pform_push_block_scope(@1, $3, PBlock::BL_PAR);
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
