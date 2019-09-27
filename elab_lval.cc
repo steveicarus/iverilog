@@ -1253,7 +1253,9 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 	    if (!member_comp.index.empty())
 		  use_sel = member_comp.index.back().sel;
 
-	    if (use_sel != index_component_t::SEL_NONE && use_sel != index_component_t::SEL_BIT) {
+	    if (use_sel != index_component_t::SEL_NONE
+		&& use_sel != index_component_t::SEL_BIT
+		&& use_sel != index_component_t::SEL_PART) {
 		  cerr << get_fileline() << ": sorry: Assignments to part selects of "
 			"a struct member are not yet supported." << endl;
 		  des->errors += 1;
@@ -1293,26 +1295,42 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 			bool rc = evaluate_index_prefix(des, scope, prefix_indices, member_comp.index);
 			ivl_assert(*this, rc);
 
-			  // Evaluate the last index expression into a constant long.
-			NetExpr*texpr = elab_and_eval(des, scope, member_comp.index.back().msb, -1, true);
-			long tmp;
-			if (texpr == 0 || !eval_as_long(tmp, texpr)) {
-			      cerr << get_fileline() << ": error: "
-				    "Array index expressions must be constant here." << endl;
-			      des->errors += 1;
-			      return false;
+			if (debug_elaborate) {
+			      cerr << get_fileline() << ": PEIdent::elaborate_lval_net_packed_member_: "
+				   << "prefix_indices.size()==" << prefix_indices.size()
+				   << ", mem_packed_dims.size()==" << mem_packed_dims.size()
+				   << " (netvector_t context)"
+				   << endl;
 			}
 
-			delete texpr;
+			long tail_off = 0;
+			unsigned long tail_wid = 0;
+			rc = calculate_part(this, des, scope, member_comp.index.back(), tail_off, tail_wid);
+			ivl_assert(*this, rc);
+
+			if (debug_elaborate) {
+			      cerr << get_fileline() << ": PEIdent::elaborate_lval_net_packed_member_: "
+				   << "calculate_part for tail returns tail_off=" << tail_off
+				   << ", tail_wid=" << tail_wid
+				   << endl;
+			}
 
 			  // Now use the prefix_to_slice function to calculate the
 			  // offset and width of the addressed slice of the member.
 			long loff;
 			unsigned long lwid;
-			prefix_to_slice(mem_packed_dims, prefix_indices, tmp, loff, lwid);
+			prefix_to_slice(mem_packed_dims, prefix_indices, tail_off, loff, lwid);
+
+			if (debug_elaborate) {
+			      cerr << get_fileline() << ": PEIdent::elaborate_lval_net_packed_member_: "
+				   << "Calculate loff=" << loff << " lwid=" << lwid
+				   << " tail_off=" << tail_off << " tail_wid=" << tail_wid
+				   << " off=" << off << " use_width=" << use_width
+				   << endl;
+			}
 
 			off += loff;
-			use_width = lwid;
+			use_width = lwid * tail_wid;
 		  }
 
 		    // The netvector_t only has atom elements, to
@@ -1345,6 +1363,14 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 		  list<long>prefix_indices;
 		  bool rc = evaluate_index_prefix(des, scope, prefix_indices, member_comp.index);
 		  ivl_assert(*this, rc);
+
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PEIdent::elaborate_lval_net_packed_member_: "
+			     << "prefix_indices.size()==" << prefix_indices.size()
+			     << ", mem_packed_dims.size()==" << mem_packed_dims.size()
+			     << " (netparray_t context)"
+			     << endl;
+		  }
 
 		    // Evaluate the last index expression into a constant long.
 		  NetExpr*texpr = elab_and_eval(des, scope, member_comp.index.back().msb, -1, true);
