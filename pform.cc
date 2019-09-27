@@ -1567,8 +1567,13 @@ void pform_generate_block_name(char*name)
             conditional_block_names.front().insert(scope_name);
       }
 
-      add_local_symbol(pform_cur_generate->parent_scope(),
-                       scope_name, pform_cur_generate);
+      LexicalScope*parent_scope = pform_cur_generate->parent_scope();
+      assert(parent_scope);
+      if (pform_cur_generate->scheme_type == PGenerate::GS_CASE_ITEM)
+	      // Skip over the PGenerate::GS_CASE container.
+	    parent_scope = parent_scope->parent_scope();
+
+      add_local_symbol(parent_scope, scope_name, pform_cur_generate);
 }
 
 void pform_endgenerate(bool end_conditional)
