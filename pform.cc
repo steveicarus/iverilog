@@ -787,6 +787,23 @@ static void pform_put_wire_in_scope(perm_string name, PWire*net)
 
 static void pform_put_enum_type_in_scope(enum_type_t*enum_set)
 {
+      if (lexical_scope->enum_sets.count(enum_set))
+            return;
+
+      set<perm_string> enum_names;
+      list<named_pexpr_t>::const_iterator cur;
+      for (cur = enum_set->names->begin(); cur != enum_set->names->end(); ++cur) {
+	    if (enum_names.count(cur->name)) {
+		  cerr << enum_set->get_fileline() << ": error: "
+			  "Duplicate enumeration name '"
+		       << cur->name << "'." << endl;
+		  error_count += 1;
+	    } else {
+		  add_local_symbol(lexical_scope, cur->name, enum_set);
+		  enum_names.insert(cur->name);
+	    }
+      }
+
       lexical_scope->enum_sets.insert(enum_set);
 }
 
@@ -829,13 +846,8 @@ void pform_set_typedef(perm_string name, data_type_t*data_type, std::list<pform_
       ivl_assert(*data_type, ref == 0);
       ref = data_type;
 
-      if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(data_type)) {
+      if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(data_type))
 	    pform_put_enum_type_in_scope(enum_type);
-
-	    list<named_pexpr_t>::const_iterator cur;
-	    for (cur = enum_type->names->begin(); cur != enum_type->names->end(); ++cur) 
-		  add_local_symbol(lexical_scope, cur->name, enum_type);
-      }
 }
 
 data_type_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
