@@ -115,15 +115,6 @@ static void collect_scope_parameters_(Design*des, NetScope*scope,
       for (mparm_it_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  ++ cur ) {
 
-	      // A parameter can not have the same name as a genvar.
-	    if (scope->find_genvar((*cur).first)) {
-		  cerr << cur->second->get_fileline()
-		       << ": error: parameter and genvar in '"
-		       << scope->fullname() << "' have the same name '"
-		       << (*cur).first << "'." << endl;
-		  des->errors += 1;
-	    }
-
 	    collect_parm_item_(des, scope, cur->first, *(cur->second), false, false);
       }
 }
@@ -134,15 +125,6 @@ static void collect_scope_localparams_(Design*des, NetScope*scope,
       for (mparm_it_t cur = localparams.begin()
 		 ; cur != localparams.end() ;  ++ cur ) {
 
-	      // A localparam can not have the same name as a genvar.
-	    if (scope->find_genvar((*cur).first)) {
-		  cerr << cur->second->get_fileline()
-		       << ": error: localparam and genvar in '"
-		       << scope->fullname() << "' have the same name '"
-		       << (*cur).first << "'." << endl;
-		  des->errors += 1;
-	    }
-
 	    collect_parm_item_(des, scope, cur->first, *(cur->second), false, true);
       }
 }
@@ -152,15 +134,6 @@ static void collect_scope_specparams_(Design*des, NetScope*scope,
 {
       for (mparm_it_t cur = specparams.begin()
 		 ; cur != specparams.end() ;  ++ cur ) {
-
-	      // A specparam can not have the same name as a genvar.
-	    if (scope->find_genvar((*cur).first)) {
-		  cerr << cur->second->get_fileline()
-		       << ": error: specparam and genvar in '"
-		       << scope->fullname() << "' have the same name '"
-		       << (*cur).first << "'." << endl;
-		  des->errors += 1;
-	    }
 
 	    collect_parm_item_(des, scope, cur->first, *(cur->second), true, false);
       }
@@ -650,39 +623,6 @@ static void elaborate_scope_tasks(Design*des, NetScope*scope,
       for (tasks_it_t cur = tasks.begin()
 		 ; cur != tasks.end() ;  ++ cur ) {
 
-	    hname_t use_name( (*cur).first );
-	      // A task can not have the same name as another scope object.
-	    const NetScope *child = scope->child(use_name);
-	    if (child) {
-		  cerr << cur->second->get_fileline() << ": error: task and ";
-		  child->print_type(cerr);
-		  cerr << " in '" << scope->fullname()
-		       << "' have the same name '" << use_name << "'." << endl;
-		  des->errors += 1;
-		  continue;
-	    }
-
-	      // A task can not have the same name as a genvar.
-	    if (scope->find_genvar((*cur).first)) {
-		  cerr << cur->second->get_fileline()
-		       << ": error: task and genvar in '"
-		       << scope->fullname() << "' have the same name '"
-		       << (*cur).first << "'." << endl;
-		  des->errors += 1;
-	    }
-
-	      // A task can not have the same name as a parameter.
-	    const NetExpr *ex_msb, *ex_lsb;
-	    const NetExpr *parm = scope->get_parameter(des, (*cur).first,
-                                                       ex_msb, ex_lsb);
-	    if (parm) {
-		  cerr << cur->second->get_fileline()
-		       << ": error: task and parameter in '"
-		       << scope->fullname() << "' have the same name '"
-		       << (*cur).first << "'." << endl;
-		  des->errors += 1;
-	    }
-
 	    elaborate_scope_task(des, scope, cur->second);
       }
 
@@ -712,40 +652,6 @@ static void elaborate_scope_funcs(Design*des, NetScope*scope,
 
       for (funcs_it_t cur = funcs.begin()
 		 ; cur != funcs.end() ;  ++ cur ) {
-
-	    hname_t use_name( (*cur).first );
-	      // A function can not have the same name as another scope object.
-	    const NetScope *child = scope->child(use_name);
-	    if (child) {
-		  cerr << cur->second->get_fileline()
-		       << ": error: function and ";
-		  child->print_type(cerr);
-		  cerr << " in '" << scope->fullname()
-		       << "' have the same name '" << use_name << "'." << endl;
-		  des->errors += 1;
-		  continue;
-	    }
-
-	      // A function can not have the same name as a genvar.
-	    if (scope->find_genvar((*cur).first)) {
-		  cerr << cur->second->get_fileline()
-		       << ": error: function and genvar in '"
-		       << scope->fullname() << "' have the same name '"
-		       << (*cur).first << "'." << endl;
-		  des->errors += 1;
-	    }
-
-	      // A function can not have the same name as a parameter.
-	    const NetExpr *ex_msb, *ex_lsb;
-	    const NetExpr *parm = scope->get_parameter(des, (*cur).first,
-                                                       ex_msb, ex_lsb);
-	    if (parm) {
-		  cerr << cur->second->get_fileline()
-		       << ": error: function and parameter in '"
-		       << scope->fullname() << "' have the same name '"
-		       << (*cur).first << "'." << endl;
-		  des->errors += 1;
-	    }
 
 	    elaborate_scope_func(des, scope, cur->second);
       }
@@ -989,56 +895,6 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    return false;
       }
 
-	// Check the generate block name.
-
-	// A generate "loop" can not have the same name as another
-	// scope object. Find any scope with this name, not just an
-	// exact match scope.
-      const NetScope *child = container->child_byname(scope_name);
-      if (child) {
-	    cerr << get_fileline() << ": error: generate \"loop\" and ";
-	    child->print_type(cerr);
-	    cerr << " in '" << container->fullname()
-	         << "' have the same name '" << scope_name << "'." << endl;
-	    des->errors += 1;
-	    return false;
-      }
-
-	// A generate "loop" can not have the same name as a genvar.
-      if (container->find_genvar(scope_name)) {
-	    cerr << get_fileline() << ": error: generate \"loop\" and "
-	            "genvar in '" << container->fullname()
-	         << "' have the same name '" << scope_name << "'." << endl;
-	    des->errors += 1;
-      }
-
-	// A generate "loop" can not have the same name as a named event.
-      const NetEvent *event = container->find_event(scope_name);
-      if (event) {
-	    cerr << get_fileline() << ": error: generate \"loop\" and "
-	            "named event in '" << container->fullname()
-	         << "' have the same name '" << scope_name << "'." << endl;
-	    des->errors += 1;
-      }
-
-	// A generate "loop" can not have the same name as a parameter.
-      const NetExpr*tmsb;
-      const NetExpr*tlsb;
-      const NetExpr*texpr = container->get_parameter(des, scope_name,
-                                                     tmsb, tlsb);
-      if (texpr != 0) {
-	    cerr << get_fileline() << ": error: generate \"loop\" and "
-	            "parameter in '" << container->fullname()
-	         << "' have the same name '" << scope_name << "'." << endl;
-	    des->errors += 1;
-      }
-
-	// These have all been checked so we just need to skip the actual
-	// generation for these name conflicts. Not skipping these two will
-	// cause the compiler to have problems (assert, inf. loop, etc.).
-      if (container->get_parameter(des, loop_index, tmsb, tlsb)) return false;
-      if (container->find_event(loop_index)) return false;
-
       genvar = init->value().as_long();
       delete init_ex;
 
@@ -1146,45 +1002,6 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
       }
 
       hname_t use_name (scope_name);
-	// A generate "if" can not have the same name as another scope object.
-      const NetScope *child = container->child(use_name);
-      if (child) {
-	    cerr << get_fileline() << ": error: generate \"if\" and ";
-	    child->print_type(cerr);
-	    cerr << " in '" << container->fullname()
-	         << "' have the same name '" << use_name << "'." << endl;
-	    des->errors += 1;
-	    return false;
-      }
-
-	// A generate "if" can not have the same name as a genvar.
-      if (container->find_genvar(scope_name)) {
-	    cerr << get_fileline() << ": error: generate \"if\" and "
-	            "genvar in '" << container->fullname()
-	         << "' have the same name '" << scope_name << "'." << endl;
-	    des->errors += 1;
-      }
-
-	// A generate "if" can not have the same name as a named event.
-      const NetEvent *event = container->find_event(scope_name);
-      if (event) {
-	    cerr << get_fileline() << ": error: generate \"if\" and "
-	            "named event in '" << container->fullname()
-	         << "' have the same name '" << use_name << "'." << endl;
-	    des->errors += 1;
-      }
-
-	// A generate "if" can not have the same name as a parameter.
-      const NetExpr *ex_msb, *ex_lsb;
-      const NetExpr *parm = container->get_parameter(des, scope_name,
-                                                     ex_msb, ex_lsb);
-      if (parm) {
-	    cerr << get_fileline() << ": error: generate \"if\" and "
-	            "parameter in '" << container->fullname()
-	         << "' have the same name '" << use_name << "'." << endl;
-	    des->errors += 1;
-      }
-
       if (debug_scopes)
 	    cerr << get_fileline() << ": debug: Generate condition "
 		 << (else_flag? "(else)" : "(if)")
@@ -1289,44 +1106,6 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 
 	// The name of the scope to generate, whatever that item is.
       hname_t use_name (item->scope_name);
-	// A generate "case" can not have the same name as another scope object.
-      const NetScope *child = container->child(use_name);
-      if (child) {
-	    cerr << get_fileline() << ": error: generate \"case\" and ";
-	    child->print_type(cerr);
-	    cerr << " in '" << container->fullname()
-	         << "' have the same name '" << use_name << "'." << endl;
-	    des->errors += 1;
-	    return false;
-      }
-
-	// A generate "case" can not have the same name as a genvar.
-      if (container->find_genvar(item->scope_name)) {
-	    cerr << get_fileline() << ": error: generate \"case\" and "
-	            "genvar in '" << container->fullname()
-	         << "' have the same name '" << use_name << "'." << endl;
-	    des->errors += 1;
-      }
-
-	// A generate "case" can not have the same name as a named event.
-      const NetEvent *event = container->find_event(item->scope_name);
-      if (event) {
-	    cerr << get_fileline() << ": error: generate \"case\" and "
-	            "named event in '" << container->fullname()
-	         << "' have the same name '" << use_name << "'." << endl;
-	    des->errors += 1;
-      }
-
-	// A generate "case" can not have the same name as a parameter.
-      const NetExpr *ex_msb, *ex_lsb;
-      const NetExpr *parm = container->get_parameter(des, item->scope_name,
-                                                     ex_msb, ex_lsb);
-      if (parm) {
-	    cerr << get_fileline() << ": error: generate \"case\" and "
-	            "parameter in '" << container->fullname()
-	         << "' have the same name '" << use_name << "'." << endl;
-	    des->errors += 1;
-      }
 
       item->probe_for_direct_nesting_();
       if (item->direct_nested_) {
@@ -1356,46 +1135,6 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 bool PGenerate::generate_scope_nblock_(Design*des, NetScope*container)
 {
       hname_t use_name (scope_name);
-	// A generate "block" can not have the same name as another scope
-	// object.
-      const NetScope *child = container->child(use_name);
-      if (child) {
-	    cerr << get_fileline() << ": error: generate \"block\" and ";
-	    child->print_type(cerr);
-	    cerr << " in '" << container->fullname()
-	         << "' have the same name '" << use_name << "'." << endl;
-	    des->errors += 1;
-	    return false;
-      }
-
-	// A generate "block" can not have the same name as a genvar.
-      if (container->find_genvar(scope_name)) {
-	    cerr << get_fileline() << ": error: generate \"block\" and "
-	            "genvar in '" << container->fullname()
-	         << "' have the same name '" << scope_name << "'." << endl;
-	    des->errors += 1;
-      }
-
-	// A generate "block" can not have the same name as a named event.
-      const NetEvent *event = container->find_event(scope_name);
-      if (event) {
-	    cerr << get_fileline() << ": error: generate \"block\" and "
-	            "named event in '" << container->fullname()
-	         << "' have the same name '" << use_name << "'." << endl;
-	    des->errors += 1;
-      }
-
-	// A generate "block" can not have the same name as a parameter.
-      const NetExpr *ex_msb, *ex_lsb;
-      const NetExpr *parm = container->get_parameter(des, scope_name,
-                                                     ex_msb, ex_lsb);
-      if (parm) {
-	    cerr << get_fileline() << ": error: generate \"block\" and "
-	            "parameter in '" << container->fullname()
-	         << "' have the same name '" << use_name << "'." << endl;
-	    des->errors += 1;
-      }
-
       if (debug_scopes)
 	    cerr << get_fileline() << ": debug: Generate named block "
 		 << ": Generate scope=" << use_name << endl;
@@ -1534,36 +1273,6 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 
 	// Missing module instance names have already been rejected.
       assert(get_name() != "");
-
-	// A module instance can not have the same name as another scope object.
-      const NetScope *child = sc->child(hname_t(get_name()));
-      if (child) {
-	    cerr << get_fileline() << ": error: module <" << mod->mod_name()
-	         << "> instance and ";
-	    child->print_type(cerr);
-	    cerr << " in '" << sc->fullname()
-	         << "' have the same name '" << get_name() << "'." << endl;
-	    des->errors += 1;
-	    return;
-      }
-
-	// A module instance can not have the same name as a genvar.
-      if (sc->find_genvar(get_name())) {
-	    cerr << get_fileline() << ": error: module <" << mod->mod_name()
-	         << "> instance and genvar in '" << sc->fullname()
-	         << "' have the same name '" << get_name() << "'." << endl;
-	    des->errors += 1;
-      }
-
-	// A module instance can not have the same name as a parameter.
-      const NetExpr *ex_msb, *ex_lsb;
-      const NetExpr *parm = sc->get_parameter(des, get_name(), ex_msb, ex_lsb);
-      if (parm) {
-	    cerr << get_fileline() << ": error: module <" << mod->mod_name()
-	         << "> instance and parameter in '" << sc->fullname()
-	         << "' have the same name '" << get_name() << "'." << endl;
-	    des->errors += 1;
-      }
 
 	// check for recursive instantiation by scanning the current
 	// scope and its parents. Look for a module instantiation of
@@ -1791,36 +1500,8 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
  * no hierarchy, but neither does the NetEvent, until it is stored in
  * the NetScope object.
  */
-void PEvent::elaborate_scope(Design*des, NetScope*scope) const
+void PEvent::elaborate_scope(Design*, NetScope*scope) const
 {
-	// A named event can not have the same name as another scope object.
-      const NetScope *child = scope->child(hname_t(name_));
-      if (child) {
-	    cerr << get_fileline() << ": error: named event and ";
-	    child->print_type(cerr);
-	    cerr << " in '" << scope->fullname()
-	         << "' have the same name '" << name_ << "'." << endl;
-	    des->errors += 1;
-      }
-
-	// A named event can not have the same name as a genvar.
-      if (scope->find_genvar(name_)) {
-	    cerr << get_fileline() << ": error: named event and "
-	         << "genvar in '" << scope->fullname()
-	         << "' have the same name '" << name_ << "'." << endl;
-	    des->errors += 1;
-      }
-
-	// A named event can not have the same name as a parameter.
-      const NetExpr *ex_msb, *ex_lsb;
-      const NetExpr *parm = scope->get_parameter(des, name_, ex_msb, ex_lsb);
-      if (parm) {
-	    cerr << get_fileline() << ": error: named event and "
-	         << "parameter in '" << scope->fullname()
-	         << "' have the same name '" << name_ << "'." << endl;
-	    des->errors += 1;
-      }
-
       NetEvent*ev = new NetEvent(name_);
       ev->set_line(*this);
       scope->add_event(ev);
@@ -1891,37 +1572,6 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 
       if (pscope_name() != 0) {
 	    hname_t use_name(pscope_name());
-	      // A named block can not have the same name as another scope
-	      // object.
-	    const NetScope *child = scope->child(use_name);
-	    if (child) {
-		  cerr << get_fileline() << ": error: named block and ";
-		  child->print_type(cerr);
-		  cerr << " in '" << scope->fullname()
-		       << "' have the same name '" << use_name << "'." << endl;
-		  des->errors += 1;
-		  return;
-	    }
-
-	      // A named block can not have the same name as a genvar.
-	    if (scope->find_genvar(pscope_name())) {
-		  cerr << get_fileline() << ": error: named block and "
-		          "genvar in '" << scope->fullname()
-		       << "' have the same name '" << use_name << "'." << endl;
-		  des->errors += 1;
-	    }
-
-	      // A named block can not have the same name as a parameter.
-	    const NetExpr *ex_msb, *ex_lsb;
-	    const NetExpr *parm = scope->get_parameter(des, pscope_name(),
-                                                       ex_msb, ex_lsb);
-	    if (parm) {
-		  cerr << get_fileline() << ": error: named block and "
-		          "parameter in '" << scope->fullname()
-		       << "' have the same name '" << use_name << "'." << endl;
-		  des->errors += 1;
-	    }
-
 	    if (debug_scopes)
 		  cerr << get_fileline() << ": debug: "
 		       << "Elaborate block scope " << use_name

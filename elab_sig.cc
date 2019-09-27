@@ -942,44 +942,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       des->errors += error_cnt_;
 
-	// A signal can not have the same name as a scope object.
-      const NetScope *child = scope->child_byname(name_);
-      if (child) {
-	    cerr << get_fileline() << ": error: signal and ";
-	    child->print_type(cerr);
-	    cerr << " in '" << scope->fullname()
-	         << "' have the same name '" << name_ << "'." << endl;
-	    des->errors += 1;
-      }
-	// A signal can not have the same name as a genvar.
-      const LineInfo *genvar = scope->find_genvar(name_);
-      if (genvar) {
-	    cerr << get_fileline() << ": error: signal and genvar in '"
-	         << scope->fullname() << "' have the same name '" << name_
-	         << "'." << endl;
-	    des->errors += 1;
-      }
-	// A signal can not have the same name as a parameter. Note
-	// that we treat enumeration literals similar to parameters,
-	// so if the name matches an enumeration literal, it will be
-	// caught here.
-      const NetExpr *ex_msb, *ex_lsb;
-      const NetExpr *parm = scope->get_parameter(des, name_, ex_msb, ex_lsb);
-      if (parm) {
-	    cerr << get_fileline() << ": error: signal and parameter in '"
-	         << scope->fullname() << "' have the same name '" << name_
-	         << "'." << endl;
-	    des->errors += 1;
-      }
-	// A signal can not have the same name as a named event.
-      const NetEvent *event = scope->find_event(name_);
-      if (event) {
-	    cerr << get_fileline() << ": error: signal and named event in '"
-	         << scope->fullname() << "' have the same name '" << name_
-	         << "'." << endl;
-	    des->errors += 1;
-      }
-
       if (port_set_ || net_set_) {
 
 	    if (warn_implicit_dimensions
