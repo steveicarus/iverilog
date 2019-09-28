@@ -725,6 +725,7 @@ bool PPackage::elaborate_scope(Design*des, NetScope*scope)
       elaborate_scope_classes(des, scope, classes_lexical);
       elaborate_scope_funcs(des, scope, funcs);
       elaborate_scope_tasks(des, scope, tasks);
+      elaborate_scope_events_(des, scope, events);
       return true;
 }
 

@@ -1056,6 +1056,9 @@ data_declaration /* IEEE1800-2005: A.2.1.3 */
 	}
 	pform_makewire(@2, 0, str_strength, $3, NetNet::IMPLICIT_REG, data_type);
       }
+  | attribute_list_opt K_event event_variable_list ';'
+      { if ($3) pform_make_events($3, @2.text, @2.first_line);
+      }
   ;
 
 data_type /* IEEE1800-2005: A.2.2.1 */
@@ -3174,7 +3177,8 @@ clocking_event_opt /* */
 
 event_control /* A.K.A. clocking_event */
 	: '@' hierarchy_identifier
-		{ PEIdent*tmpi = new PEIdent(*$2);
+		{ PEIdent*tmpi = pform_new_ident(@2, *$2);
+		  FILE_NAME(tmpi, @2);
 		  PEEvent*tmpe = new PEEvent(PEEvent::ANYEDGE, tmpi);
 		  PEventStatement*tmps = new PEventStatement(tmpe);
 		  FILE_NAME(tmps, @1);
@@ -6403,7 +6407,7 @@ statement_item /* This is roughly statement_item in the LRM */
 		  $$ = tmp;
 		}
 	| K_TRIGGER hierarchy_identifier ';'
-		{ PTrigger*tmp = new PTrigger(*$2);
+		{ PTrigger*tmp = pform_new_trigger(@2, *$2);
 		  FILE_NAME(tmp, @1);
 		  delete $2;
 		  $$ = tmp;
