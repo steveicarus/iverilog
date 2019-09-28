@@ -4356,8 +4356,9 @@ cerr << endl;
 
 	    NetExpr*tmp = elab_and_eval(des, scope, expr_[idx]->expr(), -1);
 	    if (tmp == 0) {
-		  expr_[idx]->dump(cerr);
-		  cerr << endl;
+		  cerr << get_fileline() << ": error: "
+			  "Failed to evaluate event expression '"
+		       << *expr_[idx] << "'." << endl;
 		  des->errors += 1;
 		  continue;
 	    }
