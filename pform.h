@@ -314,6 +314,8 @@ extern PGenerate* pform_parent_generate(void);
 extern void pform_set_typedef(perm_string name, data_type_t*data_type,
 			      std::list<pform_range_t>*unp_ranges);
 
+extern void pform_set_type_referenced(const struct vlltype&loc, const char*name);
+
 /*
  * This function makes a PECallFunction of the named function.
  */

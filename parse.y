@@ -819,12 +819,14 @@ class_declaration_endlabel_opt
 
 class_declaration_extends_opt /* IEEE1800-2005: A.1.2 */
   : K_extends TYPE_IDENTIFIER
-      { $$.type = $2.type;
+      { pform_set_type_referenced(@2, $2.text);
+	$$.type = $2.type;
 	$$.exprs= 0;
 	delete[]$2.text;
       }
   | K_extends TYPE_IDENTIFIER '(' expression_list_with_nuls ')'
-      { $$.type  = $2.type;
+      { pform_set_type_referenced(@2, $2.text);
+	$$.type  = $2.type;
 	$$.exprs = $4;
 	delete[]$2.text;
       }
@@ -1106,7 +1108,8 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	$$ = tmp;
       }
   | TYPE_IDENTIFIER dimensions_opt
-      { if ($2) {
+      { pform_set_type_referenced(@1, $1.text);
+	if ($2) {
 	      parray_type_t*tmp = new parray_type_t($1.type, $2);
 	      FILE_NAME(tmp, @1);
 	      $$ = tmp;
@@ -1990,7 +1993,8 @@ simple_type_or_string /* IEEE1800-2005: A.2.2.1 */
 	$$ = tmp;
       }
   | TYPE_IDENTIFIER
-      { $$ = $1.type;
+      { pform_set_type_referenced(@1, $1.text);
+	$$ = $1.type;
 	delete[]$1.text;
       }
   | PACKAGE_IDENTIFIER K_SCOPE_RES
@@ -3561,7 +3565,8 @@ expr_primary_or_typename
   /* There are a few special cases (notably $bits argument) where the
      expression may be a type name. Let the elaborator sort this out. */
   | TYPE_IDENTIFIER
-      { PETypename*tmp = new PETypename($1.type);
+      { pform_set_type_referenced(@1, $1.text);
+	PETypename*tmp = new PETypename($1.type);
 	FILE_NAME(tmp,@1);
 	$$ = tmp;
 	delete[]$1.text;
@@ -5320,7 +5325,8 @@ param_type
 	param_active_type = IVL_VT_BOOL;
       }
   | TYPE_IDENTIFIER
-      { pform_set_param_from_type(@1, $1.type, $1.text, param_active_range,
+      { pform_set_type_referenced(@1, $1.text);
+	pform_set_param_from_type(@1, $1.type, $1.text, param_active_range,
 	                          param_active_signed, param_active_type);
 	delete[]$1.text;
       }

@@ -464,7 +464,7 @@ static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*it
 }
 
 static PPackage*find_potential_import(const struct vlltype&loc, LexicalScope*scope,
-				      perm_string name, PNamedItem::SymbolType st)
+				      perm_string name, bool make_explicit)
 {
       assert(scope);
 
@@ -475,10 +475,7 @@ static PPackage*find_potential_import(const struct vlltype&loc, LexicalScope*sco
 	    map<perm_string,PNamedItem*>::const_iterator cur_sym
 		= search_pkg->local_symbols.find(name);
 	    if (cur_sym != search_pkg->local_symbols.end()) {
-		  if (st != PNamedItem::ANY && st != cur_sym->second->symbol_type())
-			continue;
-
-		  if (found_pkg) {
+		  if (found_pkg && make_explicit) {
 			cerr << loc.get_fileline() << ": error: "
 				"Ambiguous use of '" << name << "'. "
 				"It is exported by both '"
@@ -489,7 +486,8 @@ static PPackage*find_potential_import(const struct vlltype&loc, LexicalScope*sco
 			error_count += 1;
 		  } else {
 			found_pkg = search_pkg;
-			scope->explicit_imports[name] = found_pkg;
+			if (make_explicit)
+			      scope->explicit_imports[name] = found_pkg;
 		  }
 	    }
       }
@@ -504,7 +502,7 @@ static void check_potential_imports(const struct vlltype&loc, perm_string name)
 		  return;
 	    if (scope->explicit_imports.find(name) != scope->explicit_imports.end())
 		  return;
-	    if (find_potential_import(loc, scope, name, PNamedItem::ANY))
+	    if (find_potential_import(loc, scope, name, true))
 		  return;
 
 	    scope = scope->parent_scope();
@@ -858,6 +856,12 @@ void pform_set_typedef(perm_string name, data_type_t*data_type, std::list<pform_
 	    pform_put_enum_type_in_scope(enum_type);
 }
 
+void pform_set_type_referenced(const struct vlltype&loc, const char*name)
+{
+      perm_string lex_name = lex_strings.make(name);
+      check_potential_imports(loc, lex_name);
+}
+
 data_type_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
 {
       perm_string name = lex_strings.make(txt);
@@ -888,11 +892,14 @@ data_type_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt
 	    if (cur != cur_scope->typedefs.end())
 		  return cur->second;
 
-            PPackage*pkg = find_potential_import(loc, cur_scope, name, PNamedItem::TYPE);
+            PPackage*pkg = find_potential_import(loc, cur_scope, name, false);
             if (pkg) {
 	          cur = pkg->typedefs.find(name);
 	          if (cur != cur_scope->typedefs.end())
 		        return cur->second;
+
+		    // Not a type. Give up.
+		  return 0;
             }
 
 	    cur_scope = cur_scope->parent_scope();
