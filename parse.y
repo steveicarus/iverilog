@@ -6412,12 +6412,18 @@ statement_item /* This is roughly statement_item in the LRM */
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
-	| K_TRIGGER hierarchy_identifier ';'
-		{ PTrigger*tmp = pform_new_trigger(@2, *$2);
-		  FILE_NAME(tmp, @1);
-		  delete $2;
-		  $$ = tmp;
-		}
+  | K_TRIGGER hierarchy_identifier ';'
+      { PTrigger*tmp = pform_new_trigger(@2, 0, *$2);
+	FILE_NAME(tmp, @1);
+	delete $2;
+	$$ = tmp;
+      }
+  | K_TRIGGER PACKAGE_IDENTIFIER K_SCOPE_RES hierarchy_identifier
+      { PTrigger*tmp = pform_new_trigger(@4, $2, *$4);
+	FILE_NAME(tmp, @1);
+	delete $4;
+	$$ = tmp;
+      }
 
   | procedural_assertion_statement { $$ = $1; }
 

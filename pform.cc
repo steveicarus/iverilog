@@ -728,12 +728,15 @@ PEIdent* pform_new_ident(const struct vlltype&loc, const pform_name_t&name)
       return new PEIdent(name);
 }
 
-PTrigger* pform_new_trigger(const struct vlltype&loc, const pform_name_t&name)
+PTrigger* pform_new_trigger(const struct vlltype&loc, PPackage*pkg,
+			    const pform_name_t&name)
 {
-      if (gn_system_verilog() && name.size() == 1)
+      if (gn_system_verilog() && pkg == 0 && name.size() == 1)
 	    check_potential_imports(loc, name.back().name);
 
-      return new PTrigger(name);
+      PTrigger*tmp = new PTrigger(pkg, name);
+      FILE_NAME(tmp, loc);
+      return tmp;
 }
 
 PGenerate* pform_parent_generate(void)

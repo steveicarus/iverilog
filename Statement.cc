@@ -416,8 +416,8 @@ PReturn::~PReturn()
       delete expr_;
 }
 
-PTrigger::PTrigger(const pform_name_t&e)
-: event_(e)
+PTrigger::PTrigger(PPackage*pkg, const pform_name_t&e)
+: package_(pkg), event_(e)
 {
 }
 

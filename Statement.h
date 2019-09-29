@@ -563,13 +563,14 @@ class PReturn  : public Statement {
 class PTrigger  : public Statement {
 
     public:
-      explicit PTrigger(const pform_name_t&ev);
+      explicit PTrigger(PPackage*pkg, const pform_name_t&ev);
       ~PTrigger();
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
+      PPackage*package_;
       pform_name_t event_;
 };
 

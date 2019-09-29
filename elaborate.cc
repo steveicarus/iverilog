@@ -4310,7 +4310,13 @@ cerr << endl;
 		  const NetExpr*par = 0;
 		  NetEvent*     eve = 0;
 
-		  NetScope*found_in = symbol_search(this, des, scope,
+		  NetScope*use_scope = scope;
+		  if (id->package()) {
+			use_scope = des->find_package(id->package()->pscope_name());
+			ivl_assert(*this, use_scope);
+		  }
+
+		  NetScope*found_in = symbol_search(this, des, use_scope,
                                                     id->path(),
 						    sig, par, eve);
 
@@ -5337,11 +5343,17 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
+      NetScope*use_scope = scope;
+      if (package_) {
+	    use_scope = des->find_package(package_->pscope_name());
+	    ivl_assert(*this, use_scope);
+      }
+
       NetNet*       sig = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      NetScope*found_in = symbol_search(this, des, scope, event_,
+      NetScope*found_in = symbol_search(this, des, use_scope, event_,
 					sig, par, eve);
 
       if (found_in == 0) {
