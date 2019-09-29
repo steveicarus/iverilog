@@ -378,6 +378,8 @@ vpiHandle vvp_lookup_handle(const char*label)
 
 vvp_net_t* vvp_net_lookup(const char*label)
 {
+      static bool t0_trigger_generated = false;
+
         /* First, look to see if the symbol is a vpi object of some
 	   sort. If it is, then get the vvp_ipoint_t pointer out of
 	   the vpiHandle. */
@@ -424,6 +426,23 @@ vvp_net_t* vvp_net_lookup(const char*label)
 
 	/* Failing that, look for a general functor. */
       vvp_net_t*tmp = lookup_functor_symbol(label);
+
+	// This is a special label used to create a T0 trigger for the
+	// always_comb/latch processes.
+     if (! t0_trigger_generated && (strcmp(label, "E_0x0") == 0)) {
+	      // This should never happen, but if it does then the E_0x0
+	      // event generation may need to be explicitly generated in
+	      // the compiler output instead of implicitly in this code.
+	    assert(! vpip_peek_current_scope()->is_automatic());
+	    t0_trigger_generated = true;
+	      // Create a local event with no name for the T0 trigger
+	    compile_named_event(strdup(label), strcpy(new char [1],""), true);
+	    tmp = vvp_net_lookup(label);
+	    assert(tmp);
+	      // Create a trigger for the T0 event.
+	    vvp_net_ptr_t ptr (tmp, 0);
+	    schedule_t0_trigger(ptr);
+     }
 
       return tmp;
 }
@@ -481,7 +500,6 @@ struct vvp_net_resolv_list_s: public resolv_list_s {
 
 bool vvp_net_resolv_list_s::resolve(bool mes)
 {
-      static bool t0_trigger_generated = false;
       vvp_net_t*tmp = vvp_net_lookup(label());
 
       if (tmp) {
@@ -489,25 +507,6 @@ bool vvp_net_resolv_list_s::resolve(bool mes)
 	    tmp->link(port);
 	    return true;
       }
-
-	// This is a special label used to create a T0 trigger for the
-	// always_comb/latch processes.
-     if (! t0_trigger_generated && (strcmp(label(), "E_0x0") == 0)) {
-	      // This should never happen, but if it does then the E_0x0
-	      // event generation may need to be explictly generated in
-	      // the compiler output instead of implicitly in this code.
-	    assert(! vpip_peek_current_scope()->is_automatic());
-	    t0_trigger_generated = true;
-	      // Create a local event with no name for the T0 trigger
-	    compile_named_event(strdup(label()), strcpy(new char [1],""), true);
-	    tmp = vvp_net_lookup(label());
-	    assert(tmp);
-	    tmp->link(port);
-	      // Create a trigger for the T0 event.
-	    vvp_net_ptr_t ptr (tmp, 0);
-	    schedule_t0_trigger(ptr);
-	    return true;
-     }
 
       if (mes)
 	    fprintf(stderr, "unresolved vvp_net reference: %s\n", label());

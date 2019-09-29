@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -29,6 +29,7 @@
 
 # include  <typeinfo>
 # include  <cstdlib>
+# include  <iostream>
 # include  <sstream>
 # include  <list>
 # include  "pform.h"
@@ -4221,13 +4222,13 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	      * a value to change. */
 	    extern bool synthesis; /* Synthesis flag from main.cc */
 	    bool rem_out = false;
-	    if (synthesis || search_funcs_) {
+	    if (synthesis || always_sens_) {
 		  rem_out = true;
 	    }
 	      // If this is an always_comb/latch then we need an implicit T0
 	      // trigger of the event expression.
-	    if (search_funcs_) wa->set_t0_trigger();
-	    NexusSet*nset = enet->nex_input(rem_out, search_funcs_);
+	    if (always_sens_) wa->set_t0_trigger();
+	    NexusSet*nset = enet->nex_input(rem_out, always_sens_);
 	    if (nset == 0) {
 		  cerr << get_fileline() << ": error: Unable to elaborate:"
 		       << endl;
@@ -4237,6 +4238,8 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    }
 
 	    if (nset->size() == 0) {
+                  if (always_sens_) return wa;
+
 		  cerr << get_fileline() << ": warning: @* found no "
 		          "sensitivities so it will never trigger."
 		       << endl;
@@ -4256,8 +4259,38 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    NetEvProbe*pr = new NetEvProbe(scope, scope->local_symbol(),
 					   ev, NetEvProbe::ANYEDGE,
 					   nset->size());
-	    for (unsigned idx = 0 ;  idx < nset->size() ;  idx += 1)
-		  connect(nset->at(idx).lnk, pr->pin(idx));
+	    for (unsigned idx = 0 ;  idx < nset->size() ;  idx += 1) {
+		  unsigned wid = nset->at(idx).wid;
+		  unsigned vwid = nset->at(idx).lnk.nexus()->vector_width();
+		    // Is this a part select?
+		  if (always_sens_ && (wid != vwid)) {
+			cerr << get_fileline() << ": sorry: constant "
+			        "selects in always_* processes are not "
+			        "currently supported (all bits will be "
+			        "included)." << endl;
+# if 0
+			unsigned base = nset->at(idx).base;
+// FIXME: Is this needed since you can select past the vector?
+			assert((base + wid) <= vwid);
+cerr << get_fileline() << ": base = " << base << ", width = " << wid
+     << ", expr width = " << vwid << endl;
+nset->at(idx).lnk.dump_link(cerr, 4);
+cerr << endl;
+// FIXME: Convert the link to the appropriate NetNet
+			netvector_t*tmp_vec = new netvector_t(IVL_VT_BOOL, vwid, 0);
+			NetNet*sig = new NetNet(scope, scope->local_symbol(), NetNet::IMPLICIT, tmp_vec);
+			NetPartSelect*tmp = new NetPartSelect(sig, base, wid, NetPartSelect::VP);
+			des->add_node(tmp);
+			tmp->set_line(*this);
+// FIXME: create a part select to get the correct bits to connect.
+			connect(tmp->pin(1), nset->at(idx).lnk);
+			connect(tmp->pin(0), pr->pin(idx));
+# endif
+			connect(nset->at(idx).lnk, pr->pin(idx));
+		  } else {
+			connect(nset->at(idx).lnk, pr->pin(idx));
+		  }
+	    }
 
 	    delete nset;
 	    des->add_node(pr);
@@ -6136,6 +6169,31 @@ class later_defparams : public elaborator_work_item_t {
       }
 };
 
+static ostream& operator<< (ostream&o, ivl_process_type_t t)
+{
+      switch (t) {
+	case IVL_PR_ALWAYS:
+	    o << "always";
+	    break;
+	case IVL_PR_ALWAYS_COMB:
+	    o << "always_comb";
+	    break;
+	case IVL_PR_ALWAYS_FF:
+	    o << "always_ff";
+	    break;
+	case IVL_PR_ALWAYS_LATCH:
+	    o << "always_latch";
+	    break;
+	case IVL_PR_INITIAL:
+	    o << "initial";
+	    break;
+	case IVL_PR_FINAL:
+	    o << "final";
+	    break;
+      }
+      return o;
+}
+
 bool Design::check_proc_delay() const
 {
       bool result = false;
@@ -6145,55 +6203,66 @@ bool Design::check_proc_delay() const
 	       * a runtime infinite loop will happen. If we possibly have some
 	       * delay then print a warning that an infinite loop is possible.
 	       */
-	    if ((pr->type() == IVL_PR_ALWAYS) ||
-	        (pr->type() == IVL_PR_ALWAYS_COMB) ||
-	        (pr->type() == IVL_PR_ALWAYS_FF) ||
-	        (pr->type() == IVL_PR_ALWAYS_LATCH)) {
+	    if (pr->type() == IVL_PR_ALWAYS) {
 		  DelayType dly_type = pr->statement()->delay_type();
 
 		  if (dly_type == NO_DELAY || dly_type == ZERO_DELAY) {
-			cerr << pr->get_fileline() << ": error: always"
-			     << " statement does not have any delay." << endl;
-			cerr << pr->get_fileline() << ":      : A runtime"
-			     << " infinite loop will occur." << endl;
+			cerr << pr->get_fileline() << ": error: always "
+			        "process does not have any delay." << endl;
+			cerr << pr->get_fileline() << ":      : A runtime "
+			        "infinite loop will occur." << endl;
 			result = true;
 
 		  } else if (dly_type == POSSIBLE_DELAY && warn_inf_loop) {
-			cerr << pr->get_fileline() << ": warning: always"
-			     << " statement may not have any delay." << endl;
-			cerr << pr->get_fileline() << ":        : A runtime"
-			     << " infinite loop may be possible." << endl;
+			cerr << pr->get_fileline() << ": warning: always "
+			        "process may not have any delay." << endl;
+			cerr << pr->get_fileline() << ":        : A runtime "
+			     << "infinite loop may be possible." << endl;
+		  }
+	    }
+
+	      // The always_comb/ff/latch processes have special delay rules
+	      // that need to be checked.
+	    if ((pr->type() == IVL_PR_ALWAYS_COMB) ||
+	        (pr->type() == IVL_PR_ALWAYS_FF) ||
+	        (pr->type() == IVL_PR_ALWAYS_LATCH)) {
+		  const NetEvWait *wait = dynamic_cast<const NetEvWait*> (pr->statement());
+		  if (! wait) {
+			  // The always_comb/latch processes have an event
+			  // control added automatically by the compiler.
+			assert(pr->type() == IVL_PR_ALWAYS_FF);
+			cerr << pr->get_fileline() << ": error: the first "
+			        "statement of an always_ff process must be "
+			        "an event control statement." << endl;
+			result = true;
+		  } else if (wait->statement()->delay_type(true) != NO_DELAY) {
+			cerr << pr->get_fileline() << ": error: there must ";
+
+			if (pr->type() == IVL_PR_ALWAYS_FF) {
+			      cerr << "only be a single event control and "
+			              "no blocking delays in an always_ff "
+			              "process.";
+			} else {
+			      cerr << "be no event controls or blocking "
+			              "delays in an " << pr->type()
+			           << " process.";
+			}
+			cerr << endl;
+			result = true;
 		  }
 
-		    // The always_comb/ff/latch processes also have special
-		    // delay rules that need to be checked.
-		  if ((pr->type() == IVL_PR_ALWAYS_COMB) ||
-		      (pr->type() == IVL_PR_ALWAYS_FF) ||
-		      (pr->type() == IVL_PR_ALWAYS_LATCH)) {
-			const NetEvWait *wait = dynamic_cast<const NetEvWait*> (pr->statement());
-			if (! wait) {
-				// The always_comb/latch processes have an event
-				// control added automatically by the compiler.
-			      assert(pr->type() == IVL_PR_ALWAYS_FF);
-			      cerr << pr->get_fileline() << ": error: the "
-			           << "first statement of an always_ff must "
-			           << "be an event control." << endl;
+		  if ((pr->type() != IVL_PR_ALWAYS_FF) &&
+		      (wait->nevents() == 0)) {
+			if (pr->type() == IVL_PR_ALWAYS_LATCH) {
+			      cerr << pr->get_fileline() << ": error: "
+			              "always_latch process has no event "
+			              "control." << endl;
 			      result = true;
-			} else if (wait->statement()->delay_type(true) != NO_DELAY) {
-			      cerr << pr->get_fileline() << ": error: there "
-			           << "must ";
-
-			      if (pr->type() == IVL_PR_ALWAYS_FF) {
-				    cerr << "only be a single event control "
-				         << "and no blocking delays in an "
-				         << "always_ff process.";
-			      } else {
-				    cerr << "be no event controls or blocking "
-				         << "delays in an always_comb/latch "
-				         << "process.";
-			      }
-			      cerr << endl;
-			      result = true;
+			} else {
+			      assert(pr->type() == IVL_PR_ALWAYS_COMB);
+			      cerr << pr->get_fileline() << ": warning: "
+			              "always_comb process has no "
+			              "sensitivities." << endl;
 			}
 		  }
 	    }
