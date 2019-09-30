@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1265,7 +1265,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 	    if (const netvector_t*mem_vec = dynamic_cast<const netvector_t*>(member->net_type)) {
 		    // If the member type is a netvector_t, then it is a
 		    // vector of atom or scaler objects. For example, if the
-		    // l-value expression is "foo.member[1][2]", 
+		    // l-value expression is "foo.member[1][2]",
 		    // then the member should be something like:
 		    //    ... logic [h:l][m:n] member;
 		    // There should be index expressions index the vector

@@ -1,7 +1,7 @@
 #ifndef IVL_Statement_H
 #define IVL_Statement_H
 /*
- * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -403,8 +403,8 @@ class PEventStatement  : public Statement {
       explicit PEventStatement(const svector<PEEvent*>&ee);
       explicit PEventStatement(PEEvent*ee);
 	// Make an @* statement or make a special @* version with the items
-	// from functions added and ouputs removed for always_comb/latch.
-      explicit PEventStatement(bool search_funcs = false);
+	// from functions added and outputs removed for always_comb/latch.
+      explicit PEventStatement(bool always_sens = false);
 
       ~PEventStatement();
 
@@ -430,7 +430,7 @@ class PEventStatement  : public Statement {
     private:
       svector<PEEvent*>expr_;
       Statement*statement_;
-      bool search_funcs_;
+      bool always_sens_;
 };
 
 ostream& operator << (ostream&o, const PEventStatement&obj);
