@@ -19,8 +19,8 @@
 
 # include "config.h"
 
-# include <iostream>
-
+# include  <iostream>
+# include  <set>
 # include  <cassert>
 # include  <typeinfo>
 # include  "compiler.h"
@@ -253,7 +253,15 @@ NexusSet* NetETernary::nex_input(bool rem_out, bool always_sens) const
 
 NexusSet* NetEUFunc::nex_input(bool rem_out, bool always_sens) const
 {
+      static set<string> func_set;
       NexusSet*result = new NexusSet;
+      string func_name;
+
+	// Avoid recursive function calls.
+      func_name = scope_->fullname().peek_name();
+      if (! scope_->parent()) func_set.clear();
+      if (! func_set.insert(func_name).second) return result;
+
       for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
 	    NexusSet*tmp = parms_[idx]->nex_input(rem_out, always_sens);
 	    result->add(*tmp);
