@@ -2552,6 +2552,10 @@ block_item_decl
 
   | type_declaration
 
+  /* Blocks can have imports. */
+
+  | package_import_declaration
+
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
 
@@ -5075,8 +5079,6 @@ module_item
       { pform_endgenerate(true); }
 
   | modport_declaration
-
-  | package_import_declaration
 
   /* 1364-2001 and later allow specparam declarations outside specify blocks. */
 
