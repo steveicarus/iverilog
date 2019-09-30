@@ -73,6 +73,12 @@ class LexicalScope {
 	// explicit imports (IEEE 1800-2012 26.3).
       std::set<PPackage*>potential_imports;
 
+	// A task or function call may reference a task or function defined
+	// later in the scope. So here we stash the potential imports for
+	// task and function calls. They will be added to the explicit
+	// imports if we don't find a local definition.
+      std::map<perm_string,PPackage*>possible_imports;
+
       struct range_t {
 	      // True if this is an exclude
 	    bool exclude_flag;

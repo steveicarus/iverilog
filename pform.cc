@@ -407,8 +407,17 @@ LexicalScope* pform_peek_scope(void)
 
 void pform_pop_scope()
 {
-      assert(lexical_scope);
-      lexical_scope = lexical_scope->parent_scope();
+      LexicalScope*scope = lexical_scope;
+      assert(scope);
+
+      map<perm_string,PPackage*>::const_iterator cur;
+      for (cur = scope->possible_imports.begin(); cur != scope->possible_imports.end(); ++cur) {
+            if (scope->local_symbols.find(cur->first) == scope->local_symbols.end())
+                  scope->explicit_imports[cur->first] = cur->second;
+      }
+      scope->possible_imports.clear();
+
+      lexical_scope = scope->parent_scope();
       assert(lexical_scope);
 }
 
@@ -464,7 +473,7 @@ static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*it
 }
 
 static PPackage*find_potential_import(const struct vlltype&loc, LexicalScope*scope,
-				      perm_string name, bool make_explicit)
+				      perm_string name, bool tf_call, bool make_explicit)
 {
       assert(scope);
 
@@ -486,15 +495,19 @@ static PPackage*find_potential_import(const struct vlltype&loc, LexicalScope*sco
 			error_count += 1;
 		  } else {
 			found_pkg = search_pkg;
-			if (make_explicit)
-			      scope->explicit_imports[name] = found_pkg;
+			if (make_explicit) {
+                              if (tf_call)
+			            scope->possible_imports[name] = found_pkg;
+                              else
+			            scope->explicit_imports[name] = found_pkg;
+                        }
 		  }
 	    }
       }
       return found_pkg;
 }
 
-static void check_potential_imports(const struct vlltype&loc, perm_string name)
+static void check_potential_imports(const struct vlltype&loc, perm_string name, bool tf_call)
 {
       LexicalScope*scope = lexical_scope;
       while (scope) {
@@ -502,7 +515,7 @@ static void check_potential_imports(const struct vlltype&loc, perm_string name)
 		  return;
 	    if (scope->explicit_imports.find(name) != scope->explicit_imports.end())
 		  return;
-	    if (find_potential_import(loc, scope, name, true))
+	    if (find_potential_import(loc, scope, name, tf_call, true))
 		  return;
 
 	    scope = scope->parent_scope();
@@ -723,7 +736,7 @@ PBlock* pform_push_block_scope(const struct vlltype&loc, char*name,
 PEIdent* pform_new_ident(const struct vlltype&loc, const pform_name_t&name)
 {
       if (gn_system_verilog() && name.size() == 1)
-	    check_potential_imports(loc, name.back().name);
+	    check_potential_imports(loc, name.back().name, false);
 
       return new PEIdent(name);
 }
@@ -732,7 +745,7 @@ PTrigger* pform_new_trigger(const struct vlltype&loc, PPackage*pkg,
 			    const pform_name_t&name)
 {
       if (gn_system_verilog() && pkg == 0 && name.size() == 1)
-	    check_potential_imports(loc, name.back().name);
+	    check_potential_imports(loc, name.back().name, false);
 
       PTrigger*tmp = new PTrigger(pkg, name);
       FILE_NAME(tmp, loc);
@@ -862,7 +875,7 @@ void pform_set_typedef(perm_string name, data_type_t*data_type, std::list<pform_
 void pform_set_type_referenced(const struct vlltype&loc, const char*name)
 {
       perm_string lex_name = lex_strings.make(name);
-      check_potential_imports(loc, lex_name);
+      check_potential_imports(loc, lex_name, false);
 }
 
 data_type_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
@@ -895,7 +908,7 @@ data_type_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt
 	    if (cur != cur_scope->typedefs.end())
 		  return cur->second;
 
-            PPackage*pkg = find_potential_import(loc, cur_scope, name, false);
+            PPackage*pkg = find_potential_import(loc, cur_scope, name, false, false);
             if (pkg) {
 	          cur = pkg->typedefs.find(name);
 	          if (cur != cur_scope->typedefs.end())
@@ -934,7 +947,7 @@ PECallFunction* pform_make_call_function(const struct vlltype&loc,
 					 const list<PExpr*>&parms)
 {
       if (gn_system_verilog() && name.size() == 1)
-	    check_potential_imports(loc, name.back().name);
+	    check_potential_imports(loc, name.back().name, true);
 
       PECallFunction*tmp = new PECallFunction(name, parms);
       FILE_NAME(tmp, loc);
@@ -946,7 +959,7 @@ PCallTask* pform_make_call_task(const struct vlltype&loc,
 				const list<PExpr*>&parms)
 {
       if (gn_system_verilog() && name.size() == 1)
-	    check_potential_imports(loc, name.back().name);
+	    check_potential_imports(loc, name.back().name, true);
 
       PCallTask*tmp = new PCallTask(name, parms);
       FILE_NAME(tmp, loc);
