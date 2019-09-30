@@ -877,8 +877,7 @@ class_item /* IEEE1800-2005: A.1.8 */
   | property_qualifier_opt K_typedef data_type IDENTIFIER dimensions_opt ';'
       { perm_string name = lex_strings.make($4);
 	delete[]$4;
-	yyerror(@2, "sorry: Class-local typedefs not yet supported.");
-	delete $3;
+	pform_set_typedef(name, $3, $5);
       }
 
     /* IEEE1800-1017: A.1.9 Class items: Class methods... */
