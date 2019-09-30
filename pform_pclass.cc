@@ -67,6 +67,10 @@ void pform_class_property(const struct vlltype&loc,
 {
       assert(pform_cur_class);
 
+      if (enum_type_t*enum_set = dynamic_cast<enum_type_t*>(data_type)) {
+	    pform_cur_class->enum_sets .insert(enum_set);
+      }
+
 	// Add the non-static properties to the class type
 	// object. Unwind the list of names to make a map of name to
 	// type.

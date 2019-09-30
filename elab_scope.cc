@@ -480,7 +480,9 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
       if (debug_scopes) {
 	    cerr << pclass->get_fileline() <<": elaborate_scope_class: "
-		 << "Elaborate scope class " << pclass->pscope_name() << endl;
+		 << "Elaborate scope class " << pclass->pscope_name()
+		 << " within scope " << scope_path(scope)
+		 << endl;
       }
 
       class_type_t*base_class = dynamic_cast<class_type_t*> (use_type->base_type);
@@ -518,12 +520,24 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       use_class->set_definition_scope(scope);
       set_scope_timescale(des, class_scope, pclass);
 
+	// Elaborate enum types declared in the class. We need these
+	// now because enumeration constants can be used during scope
+	// elaboration.
+      if (debug_scopes) {
+	    cerr << pclass->get_fileline() << ": elaborate_scope_class: "
+		 << "Elaborate " << pclass->enum_sets.size() << " enumerations"
+		 << " in class " << scope_path(class_scope)
+		 << ", scope=" << scope_path(scope) << "."
+		 << endl;
+      }
+      elaborate_scope_enumerations(des, class_scope, pclass->enum_sets);
+
 	// Collect the properties, elaborate them, and add them to the
 	// elaborated class definition.
       for (map<perm_string, class_type_t::prop_info_t>::iterator cur = use_type->properties.begin()
 		 ; cur != use_type->properties.end() ; ++ cur) {
 
-	    ivl_type_s*tmp = cur->second.type->elaborate_type(des, scope);
+	    ivl_type_s*tmp = cur->second.type->elaborate_type(des, class_scope);
 	    ivl_assert(*pclass, tmp);
 	    if (debug_scopes) {
 		  cerr << pclass->get_fileline() << ": elaborate_scope_class: "
@@ -789,7 +803,15 @@ bool PPackage::elaborate_scope(Design*des, NetScope*scope)
 
       collect_scope_parameters_(des, scope, parameters);
       collect_scope_localparams_(des, scope, localparams);
+
+      if (debug_scopes) {
+	    cerr << get_fileline() << ": PPackage::elaborate_scope: "
+		 << "Elaborate " << enum_sets.size() << " enumerations"
+		 << " in package scope " << scope_path(scope) << "."
+		 << endl;
+      }
       elaborate_scope_enumerations(des, scope, enum_sets);
+
       elaborate_scope_classes(des, scope, classes_lexical);
       elaborate_scope_funcs(des, scope, funcs);
       elaborate_scope_tasks(des, scope, tasks);
@@ -826,6 +848,12 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
       replace_scope_parameters_(scope, *this, replacements);
 
+      if (debug_scopes) {
+	    cerr << get_fileline() << ": Module::elaborate_scope: "
+		 << "Elaborate " << enum_sets.size() << " enumerations"
+		 << " in scope " << scope_path(scope) << "."
+		 << endl;
+      }
       elaborate_scope_enumerations(des, scope, enum_sets);
 
       assert(classes.size() == classes_lexical.size());
