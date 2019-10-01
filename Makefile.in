@@ -175,7 +175,8 @@ endif
 	rm -rf autom4te.cache
 
 cppcheck: $(O:.o=.cc) $(srcdir)/dosify.c $(srcdir)/version.c
-	cppcheck --enable=all -f --suppressions-list=$(srcdir)/cppcheck.sup \
+	cppcheck --enable=all --std=posix --std=c99 --std=c++03 -f \
+	         --suppressions-list=$(srcdir)/cppcheck.sup \
 	         -UYYPARSE_PARAM -UYYPRINT -Ushort -Usize_t -Uyyoverflow \
 	         -UYYTYPE_INT8 -UYYTYPE_INT16 -UYYTYPE_UINT8 -UYYTYPE_UINT16 \
 	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
