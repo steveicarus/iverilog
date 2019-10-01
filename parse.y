@@ -864,7 +864,7 @@ class_item /* IEEE1800-2005: A.1.8 */
 	current_function = 0;
       }
 
-    /* Class properties... */
+    /* IEEE1800-2017: A.1.9 Class items: Class properties... */
 
   | property_qualifier_opt data_type list_of_variable_decl_assignments ';'
       { pform_class_property(@2, $1, $2, $3); }
@@ -872,7 +872,15 @@ class_item /* IEEE1800-2005: A.1.8 */
   | K_const class_item_qualifier_opt data_type list_of_variable_decl_assignments ';'
       { pform_class_property(@1, $2 | property_qualifier_t::make_const(), $3, $4); }
 
-    /* Class methods... */
+    /* IEEEE1800-2017: A.1.9 Class items: class_item ::= { property_qualifier} data_declaration */
+
+  | property_qualifier_opt K_typedef data_type IDENTIFIER dimensions_opt ';'
+      { perm_string name = lex_strings.make($4);
+	delete[]$4;
+	pform_set_typedef(name, $3, $5);
+      }
+
+    /* IEEE1800-1017: A.1.9 Class items: Class methods... */
 
   | method_qualifier_opt task_declaration
       { /* The task_declaration rule puts this into the class */ }

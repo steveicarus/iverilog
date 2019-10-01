@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2017,2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,6 +57,12 @@ char *readmem_error_token = 0;
 <HEX,BIN>. { readmem_error_token = yytext; return MEM_ERROR; }
 
 %%
+ /* The call_handle is the handle for the call to the $readmem()
+    system task. This is used for adding line numbers to warnings and
+    error messages. */
+static vpiHandle call_handle = 0;
+static int too_many_digits_warning = 0;
+
 static unsigned word_width = 0;
 static struct t_vpi_vecval*vecval = 0;
 
@@ -134,6 +140,26 @@ static void make_hex_value(void)
 		  word_max -= 32;
 	    }
       }
+
+	/* If there are more text digits then needed to fill the
+	   memory word, count those digits and print a warning
+	   message. Print that warning only once per call to
+	   $readmemh() so that the user isn't flooded. */
+      int count_extra_digits = 0;
+      while (end > beg) {
+	    end -= 1;
+	    if (*end == '_') continue;
+	    count_extra_digits += 1;
+      }
+
+      if (count_extra_digits && too_many_digits_warning==0) {
+	    vpi_printf("WARNING: %s:%d: Excess hex digits (%d of '%s') while reading %d-bit words.\n",
+		       vpi_get_str(vpiFile, call_handle),
+		       vpi_get(vpiLineNo, call_handle),
+		       count_extra_digits, beg,
+		       word_width);
+	    too_many_digits_warning += 1;
+      }
 }
 
 static void make_bin_value(void)
@@ -181,11 +207,33 @@ static void make_bin_value(void)
 		  word_max -= 32;
 	    }
       }
+
+	/* If there are more text digits then needed to fill the
+	   memory word, count those digits and print a warning
+	   message. Print that warning only once per call to
+	   $readmem() so that the user isn't flooded. */
+      int count_extra_digits = 0;
+      while (end > beg) {
+	    end -= 1;
+	    if (*end == '_') continue;
+	    count_extra_digits += 1;
+      }
+
+      if (count_extra_digits && too_many_digits_warning==0) {
+	    vpi_printf("WARNING: %s:%d: Excess binary digits (%d of '%s') while reading %d-bit words.\n",
+		       vpi_get_str(vpiFile, call_handle),
+		       vpi_get(vpiLineNo, call_handle),
+		       count_extra_digits, beg,
+		       word_width);
+	    too_many_digits_warning += 1;
+      }
 }
 
-void sys_readmem_start_file(FILE*in, int bin_flag,
+void sys_readmem_start_file(vpiHandle callh, FILE*in, int bin_flag,
 			    unsigned width, struct t_vpi_vecval *vv)
 {
+      call_handle = callh;
+      too_many_digits_warning = 0;
       yyrestart(in);
       BEGIN(bin_flag? BIN : HEX);
       word_width = width;

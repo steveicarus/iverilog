@@ -76,8 +76,9 @@ distclean: clean
 	rm -f config.h stamp-config-h
 
 cppcheck: $(O:.o=.c)
-	cppcheck --enable=all -f --suppressions-list=$(srcdir)/cppcheck.sup \
-	--relative-paths=$(srcdir) $(INCLUDE_PATH) $^
+	cppcheck --enable=all --std=posix --std=c99 --std=c++03 -f \
+	         --suppressions-list=$(srcdir)/cppcheck.sup \
+	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in
 	cd ..; ./config.status --file=libveriuser/$@

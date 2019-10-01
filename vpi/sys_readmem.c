@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -332,9 +332,9 @@ static PLI_INT32 sys_readmem_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
       /* Configure the readmem lexer */
       if (strcmp(name,"$readmemb") == 0)
-	  sys_readmem_start_file(file, 1, wwid, value.value.vector);
+	    sys_readmem_start_file(callh, file, 1, wwid, value.value.vector);
       else
-	  sys_readmem_start_file(file, 0, wwid, value.value.vector);
+	    sys_readmem_start_file(callh, file, 0, wwid, value.value.vector);
 
       /*======================================== Read memory file */
 

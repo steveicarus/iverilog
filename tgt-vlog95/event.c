@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2019 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -90,8 +90,10 @@ void emit_event(ivl_scope_t scope, ivl_statement_t stmt)
 	/* If this is an always_comb/latch then we need to add a trigger to
 	 * get the correct functionality. */
       if (ivl_stmt_needs_t0_trigger(stmt)) {
-	    assert(first == 0);
-	    fprintf(vlog_out, " or IVL_top_priv_module.IVL_T0_trigger_event");
+	    if (! first) {
+		  fprintf(vlog_out, " or ");
+	    }
+	    fprintf(vlog_out, "IVL_top_priv_module.IVL_T0_trigger_event");
 	    need_ivl_top_module = 1;
       };
 }

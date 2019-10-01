@@ -299,20 +299,20 @@ PDoWhile::~PDoWhile()
 }
 
 PEventStatement::PEventStatement(const svector<PEEvent*>&ee)
-: expr_(ee), statement_(0), search_funcs_(false)
+: expr_(ee), statement_(0), always_sens_(false)
 {
       assert(expr_.count() > 0);
 }
 
 
 PEventStatement::PEventStatement(PEEvent*ee)
-: expr_(1), statement_(0), search_funcs_(false)
+: expr_(1), statement_(0), always_sens_(false)
 {
       expr_[0] = ee;
 }
 
-PEventStatement::PEventStatement(bool search_funcs)
-: statement_(0), search_funcs_(search_funcs)
+PEventStatement::PEventStatement(bool always_sens)
+: statement_(0), always_sens_(always_sens)
 {
 }
 

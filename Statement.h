@@ -405,8 +405,8 @@ class PEventStatement  : public Statement {
       explicit PEventStatement(const svector<PEEvent*>&ee);
       explicit PEventStatement(PEEvent*ee);
 	// Make an @* statement or make a special @* version with the items
-	// from functions added and ouputs removed for always_comb/latch.
-      explicit PEventStatement(bool search_funcs = false);
+	// from functions added and outputs removed for always_comb/latch.
+      explicit PEventStatement(bool always_sens = false);
 
       ~PEventStatement();
 
@@ -432,7 +432,7 @@ class PEventStatement  : public Statement {
     private:
       svector<PEEvent*>expr_;
       Statement*statement_;
-      bool search_funcs_;
+      bool always_sens_;
 };
 
 ostream& operator << (ostream&o, const PEventStatement&obj);

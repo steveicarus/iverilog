@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2017,7 +2017,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 
 		    // If the member type is a netvector_t, then it is a
 		    // vector of atom or scaler objects. For example, if the
-		    // l-value expression is "foo.member[1][2]", 
+		    // l-value expression is "foo.member[1][2]",
 		    // then the member should be something like:
 		    //    ... logic [h:l][m:n] member;
 		    // There should be index expressions index the vector

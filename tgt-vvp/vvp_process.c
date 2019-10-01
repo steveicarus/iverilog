@@ -1654,7 +1654,10 @@ static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
 
       show_stmt_file_line(net, "Event wait (@) statement.");
 
-      if (ivl_stmt_nevent(net) == 1) {
+      if (ivl_stmt_nevent(net) == 0) {
+	    assert(ivl_stmt_needs_t0_trigger(net) == 1);
+	    fprintf(vvp_out, "    %%wait E_0x0;\n");
+      } else if (ivl_stmt_nevent(net) == 1) {
 	    ivl_event_t ev = ivl_stmt_events(net, 0);
 	    if (ivl_stmt_needs_t0_trigger(net)) {
 		  fprintf(vvp_out, "Ewait_%u .event/or E_%p, E_0x0;\n",
