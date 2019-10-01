@@ -75,6 +75,7 @@ void pform_end_package_declaration(const struct vlltype&loc)
 void pform_package_import(const struct vlltype&, PPackage*pkg, const char*ident)
 {
       LexicalScope*scope = pform_peek_scope();
+      assert(scope);
 
       if (ident) {
 	    perm_string use_ident = lex_strings.make(ident);

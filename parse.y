@@ -2358,9 +2358,13 @@ variable_lifetime
       { if (!gn_system_verilog()) {
 	      yyerror(@1, "error: overriding the default variable lifetime "
 			  "requires SystemVerilog.");
-	} else if ($1 != pform_peek_scope()->default_lifetime) {
-	      yyerror(@1, "sorry: overriding the default variable lifetime "
-			  "is not yet supported.");
+	} else {
+	      LexicalScope*lex_scope = pform_peek_scope();
+	      assert(lex_scope);
+	      if ($1 != lex_scope->default_lifetime) {
+		    yyerror(@1, "sorry: overriding the default variable lifetime "
+			    "is not yet supported.");
+	      }
 	}
 	var_lifetime = $1;
       }
@@ -5690,7 +5694,9 @@ register_variable
 	$$ = $1;
       }
   | IDENTIFIER dimensions_opt '=' expression
-      { if (pform_peek_scope()->var_init_needs_explicit_lifetime()
+      { LexicalScope*lex_scope = pform_peek_scope();
+	assert(lex_scope);
+	if (lex_scope->var_init_needs_explicit_lifetime()
 	    && (var_lifetime == LexicalScope::INHERITED)) {
 	      cerr << @3 << ": warning: Static variable initialization requires "
 			    "explicit lifetime in this context." << endl;

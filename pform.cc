@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2017,2019 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -398,7 +398,6 @@ static LexicalScope* lexical_scope = 0;
 
 LexicalScope* pform_peek_scope(void)
 {
-      assert(lexical_scope);
       return lexical_scope;
 }
 
@@ -639,6 +638,14 @@ PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
 PEIdent* pform_new_ident(const pform_name_t&name)
 {
       LexicalScope*scope = pform_peek_scope();
+	// If there is no scope (should not be possible) then it is
+	// certainly not imported from a package. This case should
+	// only be triggered in otherwise incorrect syntax.
+      if (scope == 0) {
+	    return new PEIdent(name);
+      }
+
+      assert(scope);
       map<perm_string,PPackage*>::const_iterator pkg = scope->imports.find(name.front().name);
       if (pkg == scope->imports.end())
 	    return new PEIdent(name);
