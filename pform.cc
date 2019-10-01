@@ -1393,12 +1393,49 @@ void pform_module_set_ports(vector<Module::port_t*>*ports)
 void pform_endmodule(const char*name, bool inside_celldefine,
                      Module::UCDriveType uc_drive_def)
 {
+	// The parser will not call pform_endmodule() without first
+	// calling pform_startmodule(). Thus, it is impossible for the
+	// pform_cur_module stack to be empty at this point.
       assert(! pform_cur_module.empty());
       Module*cur_module  = pform_cur_module.front();
       pform_cur_module.pop_front();
-
       perm_string mod_name = cur_module->mod_name();
+
+	// Oops, there may be some sort of nesting problem. If
+	// SystemVerilog is activated, it is possible for modules to
+	// be nested. But if the nested module is broken, the parser
+	// will recover and treat is as an invalid module item,
+	// leaving the pform_cur_module stack in an inconsistent
+	// state. For example, this:
+	//    module foo;
+	//      module bar blah blab blah error;
+	//    endmodule
+	// may leave the pform_cur_module stack with the dregs of the
+	// bar module. Try to find the foo module in the stack, and
+	// print error messages as we go.
+      if (strcmp(name, mod_name) != 0) {
+	    while (pform_cur_module.size() > 0) {
+		  Module*tmp_module = pform_cur_module.front();
+		  perm_string tmp_name = tmp_module->mod_name();
+		  pform_cur_module.pop_front();
+		  ostringstream msg;
+		  msg << "Module " << mod_name
+		      << " was nested within " << tmp_name
+		      << " but broken.";
+		  VLerror(msg.str().c_str());
+
+		  ivl_assert(*cur_module, lexical_scope == cur_module);
+		  pform_pop_scope();
+		  delete cur_module;
+
+		  cur_module = tmp_module;
+		  mod_name = tmp_name;
+		  if (strcmp(name, mod_name) == 0)
+			break;
+	    }
+      }
       assert(strcmp(name, mod_name) == 0);
+
       cur_module->is_cell = inside_celldefine;
       cur_module->uc_drive = uc_drive_def;
 
