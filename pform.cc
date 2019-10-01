@@ -735,8 +735,8 @@ PBlock* pform_push_block_scope(const struct vlltype&loc, char*name,
  */
 PEIdent* pform_new_ident(const struct vlltype&loc, const pform_name_t&name)
 {
-      if (gn_system_verilog() && name.size() == 1)
-	    check_potential_imports(loc, name.back().name, false);
+      if (gn_system_verilog())
+	    check_potential_imports(loc, name.front().name, false);
 
       return new PEIdent(name);
 }
@@ -744,8 +744,8 @@ PEIdent* pform_new_ident(const struct vlltype&loc, const pform_name_t&name)
 PTrigger* pform_new_trigger(const struct vlltype&loc, PPackage*pkg,
 			    const pform_name_t&name)
 {
-      if (gn_system_verilog() && pkg == 0 && name.size() == 1)
-	    check_potential_imports(loc, name.back().name, false);
+      if (gn_system_verilog())
+	    check_potential_imports(loc, name.front().name, false);
 
       PTrigger*tmp = new PTrigger(pkg, name);
       FILE_NAME(tmp, loc);
@@ -946,8 +946,8 @@ PECallFunction* pform_make_call_function(const struct vlltype&loc,
 					 const pform_name_t&name,
 					 const list<PExpr*>&parms)
 {
-      if (gn_system_verilog() && name.size() == 1)
-	    check_potential_imports(loc, name.back().name, true);
+      if (gn_system_verilog())
+	    check_potential_imports(loc, name.front().name, true);
 
       PECallFunction*tmp = new PECallFunction(name, parms);
       FILE_NAME(tmp, loc);
@@ -958,8 +958,8 @@ PCallTask* pform_make_call_task(const struct vlltype&loc,
 				const pform_name_t&name,
 				const list<PExpr*>&parms)
 {
-      if (gn_system_verilog() && name.size() == 1)
-	    check_potential_imports(loc, name.back().name, true);
+      if (gn_system_verilog())
+	    check_potential_imports(loc, name.front().name, true);
 
       PCallTask*tmp = new PCallTask(name, parms);
       FILE_NAME(tmp, loc);
