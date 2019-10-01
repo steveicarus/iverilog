@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -25,6 +25,7 @@
 # include  "netclass.h"
 # include  "netenum.h"
 # include  "netvector.h"
+# include  "PPackage.h"
 # include  <cstring>
 # include  <cstdlib>
 # include  <sstream>
@@ -117,6 +118,7 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, NetScope*in_u
 : type_(t), name_(n), nested_module_(nest), program_block_(program),
   is_interface_(interface), is_unit_(compilation_unit), unit_(in_unit), up_(up)
 {
+      imports_ = 0;
       events_ = 0;
       lcounter_ = 0;
       is_auto_ = false;
@@ -205,16 +207,38 @@ void NetScope::set_line(perm_string file, perm_string def_file,
       def_lineno_ = def_lineno;
 }
 
+void NetScope::add_imports(const map<perm_string,PPackage*>*imports)
+{
+      if (!imports->empty())
+	    imports_ = imports;
+}
+
+NetScope*NetScope::find_import(const Design*des, perm_string name)
+{
+      if (imports_ == 0)
+	    return 0;
+
+      map<perm_string,PPackage*>::const_iterator cur = imports_->find(name);
+      if (cur != imports_->end()) {
+            return des->find_package(cur->second->pscope_name());
+      } else
+            return 0;
+}
+
 /*
  * Look for the enumeration in the current scope and any parent scopes.
  */
-const netenum_t*NetScope::find_enumeration_for_name(perm_string name)
+const netenum_t*NetScope::find_enumeration_for_name(const Design*des, perm_string name)
 {
       NetScope *cur_scope = this;
       while (cur_scope) {
 	    NetEConstEnum*tmp = cur_scope->enum_names_[name];
 	    if (tmp) break;
-	    cur_scope = cur_scope->parent();
+	    NetScope*import_scope = cur_scope->find_import(des, name);
+	    if (import_scope)
+		cur_scope = import_scope;
+	    else
+		cur_scope = cur_scope->parent();
 	    if (cur_scope == 0)
 		  cur_scope = unit_;
       }

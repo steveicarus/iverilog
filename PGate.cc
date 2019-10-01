@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -115,6 +115,11 @@ void PGate::eval_delays(Design*des, NetScope*scope,
 unsigned PGate::delay_count() const
 {
       return delay_.delay_count();
+}
+
+PNamedItem::SymbolType PGate::symbol_type() const
+{
+      return INSTANCE;
 }
 
 PGAssign::PGAssign(list<PExpr*>*pins)

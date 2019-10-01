@@ -4322,7 +4322,13 @@ cerr << endl;
 		  const NetExpr*par = 0;
 		  NetEvent*     eve = 0;
 
-		  NetScope*found_in = symbol_search(this, des, scope,
+		  NetScope*use_scope = scope;
+		  if (id->package()) {
+			use_scope = des->find_package(id->package()->pscope_name());
+			ivl_assert(*this, use_scope);
+		  }
+
+		  NetScope*found_in = symbol_search(this, des, use_scope,
                                                     id->path(),
 						    sig, par, eve);
 
@@ -4368,8 +4374,9 @@ cerr << endl;
 
 	    NetExpr*tmp = elab_and_eval(des, scope, expr_[idx]->expr(), -1);
 	    if (tmp == 0) {
-		  expr_[idx]->dump(cerr);
-		  cerr << endl;
+		  cerr << get_fileline() << ": error: "
+			  "Failed to evaluate event expression '"
+		       << *expr_[idx] << "'." << endl;
 		  des->errors += 1;
 		  continue;
 	    }
@@ -5348,11 +5355,17 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
+      NetScope*use_scope = scope;
+      if (package_) {
+	    use_scope = des->find_package(package_->pscope_name());
+	    ivl_assert(*this, use_scope);
+      }
+
       NetNet*       sig = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      NetScope*found_in = symbol_search(this, des, scope, event_,
+      NetScope*found_in = symbol_search(this, des, use_scope, event_,
 					sig, par, eve);
 
       if (found_in == 0) {
@@ -6609,6 +6622,7 @@ Design* elaborate(list<perm_string>roots)
 		  PPackage*unit = pform_units[i];
 		  NetScope*scope = des->make_package_scope(unit->pscope_name(), 0, true);
 		  scope->set_line(unit);
+		  scope->add_imports(&unit->explicit_imports);
 		  set_scope_timescale(des, scope, unit);
 
 		  elaborator_work_item_t*es = new elaborate_package_t(des, scope, unit);
@@ -6633,6 +6647,7 @@ Design* elaborate(list<perm_string>roots)
 	    NetScope*unit_scope = unit_scopes[pac->second->parent_scope()];
 	    NetScope*scope = des->make_package_scope(pac->first, unit_scope, false);
 	    scope->set_line(pac->second);
+	    scope->add_imports(&pac->second->explicit_imports);
 	    set_scope_timescale(des, scope, pac->second);
 
 	    elaborator_work_item_t*es = new elaborate_package_t(des, scope, pac->second);
@@ -6674,6 +6689,7 @@ Design* elaborate(list<perm_string>roots)
 	      // Collect some basic properties of this scope from the
 	      // Module definition.
 	    scope->set_line(rmod);
+	    scope->add_imports(&rmod->explicit_imports);
 	    set_scope_timescale(des, scope, rmod);
 
 	      // Save this scope, along with its definition, in the

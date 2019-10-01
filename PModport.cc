@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2015-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,4 +28,9 @@ PModport::PModport(perm_string n)
 
 PModport::~PModport()
 {
+}
+
+PNamedItem::SymbolType PModport::symbol_type() const
+{
+      return MODPORT;
 }

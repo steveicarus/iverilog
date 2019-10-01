@@ -1,7 +1,7 @@
 #ifndef IVL_PScope_H
 #define IVL_PScope_H
 /*
- * Copyright (c) 2008-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include  "LineInfo.h"
+# include  "PNamedItem.h"
 # include  "StringHeap.h"
 # include  "pform_types.h"
 # include  "ivl_target.h"
@@ -61,6 +61,24 @@ class LexicalScope {
 
       lifetime_t default_lifetime;
 
+	// Symbols that are defined or declared in this scope.
+      std::map<perm_string,PNamedItem*>local_symbols;
+
+	// Symbols that are explicitly imported. Bind the imported name
+	// to the package from which the name is imported.
+      std::map<perm_string,PPackage*>explicit_imports;
+
+	// Packages that are wildcard imported. When identifiers from
+	// these packages are referenced, they will be added to the
+	// explicit imports (IEEE 1800-2012 26.3).
+      std::set<PPackage*>potential_imports;
+
+	// A task or function call may reference a task or function defined
+	// later in the scope. So here we stash the potential imports for
+	// task and function calls. They will be added to the explicit
+	// imports if we don't find a local definition.
+      std::map<perm_string,PPackage*>possible_imports;
+
       struct range_t {
 	      // True if this is an exclude
 	    bool exclude_flag;
@@ -79,7 +97,7 @@ class LexicalScope {
 	/* The scope has parameters that are evaluated when the scope
 	   is elaborated. During parsing, I put the parameters into
 	   this map. */
-      struct param_expr_t : public LineInfo {
+      struct param_expr_t : public PNamedItem {
 	    param_expr_t() : type(IVL_VT_NO_TYPE), msb(0), lsb(0), signed_flag(false), expr(0), range(0) { }
 	      // Type information
 	    ivl_variable_type_t type;
@@ -90,19 +108,17 @@ class LexicalScope {
 	    PExpr*expr;
 	      // If there are range constraints, list them here
 	    range_t*range;
+
+	    SymbolType symbol_type() const;
       };
-      map<perm_string,param_expr_t>parameters;
-      map<perm_string,param_expr_t>localparams;
+      map<perm_string,param_expr_t*>parameters;
+      map<perm_string,param_expr_t*>localparams;
 
 	// Defined types in the scope.
       map<perm_string,data_type_t*>typedefs;
 
 	// Named events in the scope.
       map<perm_string,PEvent*>events;
-
-	// Symbols that are imported. Bind the imported name to the
-	// package from which the name is imported.
-      std::map<perm_string,PPackage*>imports;
 
 	// Nets and variables (wires) in the scope
       map<perm_string,PWire*>wires;

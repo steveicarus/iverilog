@@ -1,7 +1,7 @@
 #ifndef IVL_pform_types_H
 #define IVL_pform_types_H
 /*
- * Copyright (c) 2007-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,7 +21,7 @@
 
 // This for the perm_string type.
 # include  "StringHeap.h"
-# include  "LineInfo.h"
+# include  "PNamedItem.h"
 # include  "verinum.h"
 # include  "named.h"
 # include  "netstruct.h"
@@ -137,7 +137,7 @@ struct pform_tf_port_t {
  * "data_type" rule in the parse rule. We make the type virtual so
  * that dynamic types will work.
  */
-class data_type_t : public LineInfo {
+class data_type_t : public PNamedItem {
     public:
       inline explicit data_type_t() { }
       virtual ~data_type_t() = 0;
@@ -148,6 +148,8 @@ class data_type_t : public LineInfo {
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
 
       ivl_type_s* elaborate_type(Design*des, NetScope*scope);
+
+      virtual SymbolType symbol_type() const;
 
     private:
 	// Elaborate the type to an ivl_type_s type.
@@ -170,6 +172,8 @@ struct void_type_t : public data_type_t {
 struct enum_type_t : public data_type_t {
 	// Return the elaborated version of the type.
       virtual ivl_type_s*elaborate_type_raw(Design*des, NetScope*scope) const;
+
+      SymbolType symbol_type() const;
 
       ivl_variable_type_t base_type;
       bool signed_flag;
@@ -335,6 +339,8 @@ struct class_type_t : public data_type_t {
 	// type. The elaborate_type_raw() method uses this pointer,
 	// and it is used in some other situations as well.
       netclass_t* save_elaborated_type;
+
+      virtual SymbolType symbol_type() const;
 };
 
 /*

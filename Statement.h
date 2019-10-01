@@ -75,7 +75,7 @@ class PProcess : public LineInfo {
  * fact, the Statement class is abstract and represents all the
  * possible kinds of statements that exist in Verilog.
  */
-class Statement : public LineInfo {
+class Statement : virtual public LineInfo {
 
     public:
       Statement() { }
@@ -170,7 +170,7 @@ class PAssignNB  : public PAssign_ {
  * statements before constructing this object, so it knows a priori
  * what is contained.
  */
-class PBlock  : public PScope, public Statement {
+class PBlock  : public PScope, public Statement, public PNamedItem {
 
     public:
       enum BL_TYPE { BL_SEQ, BL_PAR, BL_JOIN_NONE, BL_JOIN_ANY };
@@ -204,6 +204,8 @@ class PBlock  : public PScope, public Statement {
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void elaborate_sig(Design*des, NetScope*scope) const;
+
+      SymbolType symbol_type() const;
 
     private:
       BL_TYPE bl_type_;
@@ -561,13 +563,14 @@ class PReturn  : public Statement {
 class PTrigger  : public Statement {
 
     public:
-      explicit PTrigger(const pform_name_t&ev);
+      explicit PTrigger(PPackage*pkg, const pform_name_t&ev);
       ~PTrigger();
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
+      PPackage*package_;
       pform_name_t event_;
 };
 

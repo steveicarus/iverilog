@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,6 +31,11 @@ PWire* LexicalScope::wires_find(perm_string name)
 	    return 0;
       else
 	    return (*cur).second;
+}
+
+PNamedItem::SymbolType LexicalScope::param_expr_t::symbol_type() const
+{
+      return PARAM;
 }
 
 PScope::PScope(perm_string n, LexicalScope*parent)

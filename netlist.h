@@ -77,6 +77,7 @@ class NetEvWait;
 class PClass;
 class PExpr;
 class PFunction;
+class PPackage;
 class PTaskFunc;
 struct enum_type_t;
 class netclass_t;
@@ -942,9 +943,12 @@ class NetScope : public Definitions, public Attrib {
 	   if a unique name couldn't be generated. */
       bool auto_name(const char* prefix, char pad, const char* suffix);
 
+      void add_imports(const map<perm_string,PPackage*>*imports);
+      NetScope*find_import(const Design*des, perm_string name);
+
 	/* Routine to search for the enumeration given a name. It basically
 	 * does what enumeration_for_name() does but searched the hierarchy. */
-      const netenum_t*find_enumeration_for_name(perm_string name);
+      const netenum_t*find_enumeration_for_name(const Design*des, perm_string name);
 
 	/* Parameters exist within a scope, and these methods allow
 	   one to manipulate the set. In these cases, the name is the
@@ -1268,6 +1272,8 @@ class NetScope : public Definitions, public Attrib {
 
       signed char time_unit_, time_prec_;
       bool time_from_timescale_;
+
+      const map<perm_string,PPackage*>*imports_;
 
       NetEvent *events_;
 

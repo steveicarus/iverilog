@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -111,4 +111,9 @@ ostream& operator << (ostream&out, PGenerate::scheme_t type)
 	    break;
       }
       return out;
+}
+
+PNamedItem::SymbolType PGenerate::symbol_type() const
+{
+      return GENBLOCK;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -121,4 +121,14 @@ PGate* Module::get_gate(perm_string name)
 const list<PGate*>& Module::get_gates() const
 {
       return gates_;
+}
+
+PNamedItem::SymbolType Module::symbol_type() const
+{
+      if (program_block)
+            return PROGRAM;
+      if (is_interface)
+            return INTERFACE;
+
+      return MODULE;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2019 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -72,98 +72,58 @@ void pform_end_package_declaration(const struct vlltype&loc)
  * package is declared in pform ahead of time (it is) and that we can
  * simply transfer definitions to the current scope (we can).
  */
-void pform_package_import(const struct vlltype&, PPackage*pkg, const char*ident)
+void pform_package_import(const struct vlltype&loc, PPackage*pkg, const char*ident)
 {
       LexicalScope*scope = pform_peek_scope();
 
       if (ident) {
 	    perm_string use_ident = lex_strings.make(ident);
 
-	    map<perm_string,LexicalScope::param_expr_t>::const_iterator cur
-		  = pkg->parameters.find(use_ident);
-	    if (cur != pkg->parameters.end()) {
-		  scope->imports[cur->first] = pkg;
+	      // Check that the requested symbol is available.
+	    map<perm_string,PNamedItem*>::const_iterator cur_sym
+		  = pkg->local_symbols.find(use_ident);
+	    if (cur_sym == pkg->local_symbols.end()) {
+		  cerr << loc.get_fileline() << ": error: "
+			  "'" << use_ident << "' is not exported by '"
+		       << pkg->pscope_name() << "'." << endl;
+		  error_count += 1;
 		  return;
 	    }
 
-	    cur = pkg->localparams.find(use_ident);
-	    if (cur != pkg->localparams.end()) {
-		  scope->imports[cur->first] = pkg;
+	      // Check for conflict with local symbol.
+	    cur_sym = scope->local_symbols.find(use_ident);
+	    if (cur_sym != scope->local_symbols.end()) {
+		  cerr << loc.get_fileline() << ": error: "
+			  "'" << use_ident << "' has already been declared "
+			  "in this scope." << endl;
+		  cerr << cur_sym->second->get_fileline() << ":      : "
+			  "It was declared here as "
+		       << cur_sym->second->symbol_type() << "." << endl;
+		  error_count += 1;
 		  return;
 	    }
 
-	    map<perm_string,data_type_t*>::const_iterator tcur;
-	    tcur = pkg->typedefs.find(use_ident);
-	    if (tcur != pkg->typedefs.end()) {
-		  scope->imports[tcur->first] = pkg;
+	      // Check for conflict with previous import.
+	    map<perm_string,PPackage*>::const_iterator cur_pkg
+		  = scope->explicit_imports.find(use_ident);
+	    if (cur_pkg != scope->explicit_imports.end()) {
+		  if (cur_pkg->second != pkg) {
+			cerr << loc.get_fileline() << ": error: "
+				"'" << use_ident << "' has already been "
+				"imported into this scope from package '"
+			     << cur_pkg->second->pscope_name() << "'." << endl;
+			error_count += 1;
+		  }
 		  return;
 	    }
 
-	    map<perm_string,PFunction*>::const_iterator fcur;
-	    fcur = pkg->funcs.find(use_ident);
-	    if (fcur != pkg->funcs.end()) {
-		  scope->imports[fcur->first] = pkg;
-		  return;
-	    }
-
-	    map<perm_string,PTask*>::const_iterator ttcur;
-	    ttcur = pkg->tasks.find(use_ident);
-	    if (ttcur != pkg->tasks.end()) {
-		  scope->imports[ttcur->first] = pkg;
-		  return;
-	    }
-
-	    map<perm_string,PWire*>::const_iterator wcur;
-	    wcur = pkg->wires.find(use_ident);
-	    if (wcur != pkg->wires.end()) {
-		  scope->imports[wcur->first] = pkg;
-		  return;
-	    }
-
-	    ostringstream msg;
-	    msg << "Symbol " << use_ident
-		<< " not found in package " << pkg->pscope_name() << "." << ends;
-	    VLerror(msg.str().c_str());
-	    return;
+	    scope->explicit_imports[use_ident] = pkg;
 
       } else {
-
-	      // Handle the pkg::* case by importing everything from
-	      // the package.
-	    for (map<perm_string,LexicalScope::param_expr_t>::const_iterator cur = pkg->parameters.begin()
-		       ; cur != pkg->parameters.end() ; ++cur) {
-
-		  scope->imports[cur->first] = pkg;
-	    }
-
-	    for (map<perm_string,LexicalScope::param_expr_t>::const_iterator cur = pkg->localparams.begin()
-		       ; cur != pkg->localparams.end() ; ++cur) {
-
-		  scope->imports[cur->first] = pkg;
-	    }
-
-	    for (map<perm_string,data_type_t*>::const_iterator cur = pkg->typedefs.begin()
-		       ; cur != pkg->typedefs.end() ; ++cur) {
-
-		  scope->imports[cur->first] = pkg;
-	    }
-
-	    for (map<perm_string,PFunction*>::const_iterator cur = pkg->funcs.begin()
-		       ; cur != pkg->funcs.end() ; ++cur) {
-
-		  scope->imports[cur->first] = pkg;
-	    }
-
-	    for (map<perm_string,PWire*>::const_iterator cur = pkg->wires.begin()
-		       ; cur != pkg->wires.end() ; ++cur) {
-
-		  scope->imports[cur->first] = pkg;
-	    }
-
-            for (set<enum_type_t*>::const_iterator cur = pkg->enum_sets.begin()
-		       ; cur != pkg->enum_sets.end() ; ++ cur) {
-                  scope->enum_sets.insert(*cur);
-            }
+	    set<PPackage*>::const_iterator cur_pkg
+		  = scope->potential_imports.find(pkg);
+	    if (cur_pkg == scope->potential_imports.end())
+		  scope->potential_imports.insert(pkg);
       }
 }
 

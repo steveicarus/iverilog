@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -244,7 +244,13 @@ NetScope* Design::find_scope_(NetScope*scope, const std::list<hname_t>&path,
 		    /* Up references may match module name */
 
 	    } else {
-		  scope = scope->child( key );
+		  NetScope*found_scope = scope->child(key);
+		  if (found_scope == 0) {
+			found_scope = scope->find_import(this, key.peek_name());
+			if (found_scope)
+			      found_scope = found_scope->child(key);
+		  }
+		  scope = found_scope;
 		  if (scope == 0) break;
 	    }
 	    tmp.pop_front();
@@ -319,7 +325,13 @@ NetScope* Design::find_scope_(NetScope*scope, const hname_t&path,
 	      /* Up references may match module name */
 	    return scope;
       }
-      return scope->child( path );
+      NetScope*found_scope = scope->child(path);
+      if (found_scope == 0) {
+	    found_scope = scope->find_import(this, path.peek_name());
+	    if (found_scope)
+		  found_scope = found_scope->child(path);
+      }
+      return found_scope;
 }
 
 /*
@@ -863,6 +875,11 @@ NetNet* Design::find_signal(NetScope*scope, pform_name_t path)
       while (scope) {
 	    if (NetNet*net = scope->find_signal(key))
 		  return net;
+
+	    if (NetScope*import_scope = scope->find_import(this, key)) {
+		  scope = import_scope;
+		  continue;
+	    }
 
 	    if (scope->type() == NetScope::MODULE)
 		  break;

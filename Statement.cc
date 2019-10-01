@@ -158,6 +158,11 @@ void PBlock::push_statement_front(Statement*that)
       list_[0] = that;
 }
 
+PNamedItem::SymbolType PBlock::symbol_type() const
+{
+      return BLOCK;
+}
+
 PCallTask::PCallTask(const pform_name_t&n, const list<PExpr*>&p)
 : package_(0), path_(n), parms_(p.size())
 {
@@ -411,8 +416,8 @@ PReturn::~PReturn()
       delete expr_;
 }
 
-PTrigger::PTrigger(const pform_name_t&e)
-: event_(e)
+PTrigger::PTrigger(PPackage*pkg, const pform_name_t&e)
+: package_(pkg), event_(e)
 {
 }
 
