@@ -2370,6 +2370,18 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 {
       NetExpr*dex = elab_and_eval(des, scope, expr, -1);
 
+	// If the elab_and_eval returns nil, then the function
+	// failed. It should already have printed an error message,
+	// but we can add some detail. Lets add the error count, just
+	// in case.
+      if (dex == 0) {
+	    cerr << expr->get_fileline() << ": error: "
+		 << "Unable to elaborate (or evaluate) delay expression."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       check_for_inconsistent_delays(scope);
 
 	/* If the delay expression is a real constant or vector
