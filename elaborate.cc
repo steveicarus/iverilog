@@ -6154,17 +6154,17 @@ bool Design::check_proc_delay() const
 		  DelayType dly_type = pr->statement()->delay_type();
 
 		  if (dly_type == NO_DELAY || dly_type == ZERO_DELAY) {
-			cerr << pr->get_fileline() << ": error: always"
-			     << " statement does not have any delay." << endl;
-			cerr << pr->get_fileline() << ":      : A runtime"
-			     << " infinite loop will occur." << endl;
+			cerr << pr->get_fileline() << ": error: always "
+			     << "process does not have any delay." << endl;
+			cerr << pr->get_fileline() << ":      : A runtime "
+			     << "infinite loop will occur." << endl;
 			result_flag = false;
 
 		  } else if (dly_type == POSSIBLE_DELAY && warn_inf_loop) {
-			cerr << pr->get_fileline() << ": warning: always"
-			     << " statement may not have any delay." << endl;
-			cerr << pr->get_fileline() << ":        : A runtime"
-			     << " infinite loop may be possible." << endl;
+			cerr << pr->get_fileline() << ": warning: always "
+			     << "process may not have any delay." << endl;
+			cerr << pr->get_fileline() << ":        : A runtime "
+			     << "infinite loop may be possible." << endl;
 		  }
 	    }
 
