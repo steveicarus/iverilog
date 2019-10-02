@@ -354,7 +354,7 @@ static PGenerate*pform_cur_generate = 0;
      construct, so they can be added to the local scope without
      conflicting with each other. Generate constructs may nest, so
      we need a stack. */
-static list<set<perm_string>> conditional_block_names;
+static list<set<perm_string> > conditional_block_names;
 
   /* This tracks the current modport list being processed. This is
      always within an interface. */
