@@ -51,6 +51,22 @@
  */
 extern YYLTYPE yylloc;
 
+char* yytext_string_filter(const char*str, size_t str_len)
+{
+      if (str == 0) return 0;
+      char*buf = new char[str_len+1];
+      for (size_t idx = 0 ; idx < str_len ; idx += 1) {
+	    if (str[idx] == 0) {
+		  VLerror(yylloc, "error: Found nil (\\000) in string literal, replacing with space (\\015) character.");
+		  buf[idx] = ' ';
+	    } else {
+		  buf[idx] = str[idx];
+	    }
+      }
+      buf[str_len] = 0;
+      return buf;
+}
+
 char* strdupnew(char const *str)
 {
        return str ? strcpy(new char [strlen(str)+1], str) : 0;
@@ -230,12 +246,12 @@ TU [munpf]
 <CSTRING>\\\\ { yymore(); /* Catch \\, which is a \ escaping itself */ }
 <CSTRING>\\\" { yymore(); /* Catch \", which is an escaped quote */ }
 <CSTRING>\n   { BEGIN(0);
-                yylval.text = strdupnew(yytext);
+                yylval.text = yytext_string_filter(yytext, yyleng);
 		VLerror(yylloc, "Missing close quote of string.");
 		yylloc.first_line += 1;
 		return STRING; }
 <CSTRING>\"   { BEGIN(0);
-                yylval.text = strdupnew(yytext);
+      yylval.text = yytext_string_filter(yytext, yyleng);
 		yylval.text[strlen(yytext)-1] = 0;
 		return STRING; }
 <CSTRING>.    { yymore(); }
