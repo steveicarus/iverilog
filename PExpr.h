@@ -1,7 +1,7 @@
 #ifndef IVL_PExpr_H
 #define IVL_PExpr_H
 /*
- * Copyright (c) 1998-2016 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2019 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -378,6 +378,8 @@ class PEIdent : public PExpr {
       verinum* eval_const(Design*des, NetScope*sc) const;
 
       virtual bool is_collapsible_net(Design*des, NetScope*scope) const;
+
+      const PPackage* package() const { return package_; }
 
       const pform_name_t& path() const { return path_; }
 

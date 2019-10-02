@@ -1,7 +1,7 @@
 #ifndef IVL_parse_misc_H
 #define IVL_parse_misc_H
 /*
- * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -88,7 +88,7 @@ extern void lex_in_package_scope(PPackage*pkg);
  * parser detects typedefs and marks the typedef'ed identifiers as
  * type names.
  */
-extern data_type_t* pform_test_type_identifier(const char*txt);
+extern data_type_t* pform_test_type_identifier(const YYLTYPE&loc, const char*txt);
 extern data_type_t* pform_test_type_identifier(PPackage*pkg, const char*txt);
 
 extern bool pform_test_type_identifier_local(perm_string txt);

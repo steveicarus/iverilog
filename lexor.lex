@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -378,7 +378,7 @@ TU [munpf]
 	/* If this identifier names a previously declared type, then
 	   return this as a TYPE_IDENTIFIER instead. */
       if (rc == IDENTIFIER && gn_system_verilog()) {
-	    if (data_type_t*type = pform_test_type_identifier(yylval.text)) {
+	    if (data_type_t*type = pform_test_type_identifier(yylloc, yylval.text)) {
 		  yylval.type_identifier.text = yylval.text;
 		  yylval.type_identifier.type = type;
 		  rc = TYPE_IDENTIFIER;
@@ -399,7 +399,7 @@ TU [munpf]
 	    }
       }
       if (gn_system_verilog()) {
-	    if (data_type_t*type = pform_test_type_identifier(yylval.text)) {
+	    if (data_type_t*type = pform_test_type_identifier(yylloc, yylval.text)) {
 		  yylval.type_identifier.text = yylval.text;
 		  yylval.type_identifier.type = type;
 		  return TYPE_IDENTIFIER;

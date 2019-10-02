@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,6 +24,11 @@ data_type_t::~data_type_t()
 {
 }
 
+PNamedItem::SymbolType data_type_t::symbol_type() const
+{
+      return TYPE;
+}
+
 string_type_t::~string_type_t()
 {
 }
@@ -44,3 +49,13 @@ ivl_variable_type_t vector_type_t::figure_packed_base_type(void) const
 }
 
 atom2_type_t size_type (32, true);
+
+PNamedItem::SymbolType enum_type_t::symbol_type() const
+{
+      return ENUM;
+}
+
+PNamedItem::SymbolType class_type_t::symbol_type() const
+{
+      return CLASS;
+}

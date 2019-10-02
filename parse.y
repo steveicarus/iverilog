@@ -819,12 +819,14 @@ class_declaration_endlabel_opt
 
 class_declaration_extends_opt /* IEEE1800-2005: A.1.2 */
   : K_extends TYPE_IDENTIFIER
-      { $$.type = $2.type;
+      { pform_set_type_referenced(@2, $2.text);
+	$$.type = $2.type;
 	$$.exprs= 0;
 	delete[]$2.text;
       }
   | K_extends TYPE_IDENTIFIER '(' expression_list_with_nuls ')'
-      { $$.type  = $2.type;
+      { pform_set_type_referenced(@2, $2.text);
+	$$.type  = $2.type;
 	$$.exprs = $4;
 	delete[]$2.text;
       }
@@ -1056,6 +1058,9 @@ data_declaration /* IEEE1800-2005: A.2.1.3 */
 	}
 	pform_makewire(@2, 0, str_strength, $3, NetNet::IMPLICIT_REG, data_type);
       }
+  | attribute_list_opt K_event event_variable_list ';'
+      { if ($3) pform_make_events($3, @2.text, @2.first_line);
+      }
   ;
 
 data_type /* IEEE1800-2005: A.2.2.1 */
@@ -1103,7 +1108,8 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	$$ = tmp;
       }
   | TYPE_IDENTIFIER dimensions_opt
-      { if ($2) {
+      { pform_set_type_referenced(@1, $1.text);
+	if ($2) {
 	      parray_type_t*tmp = new parray_type_t($1.type, $2);
 	      FILE_NAME(tmp, @1);
 	      $$ = tmp;
@@ -1422,8 +1428,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	char for_block_name [64];
 	snprintf(for_block_name, sizeof for_block_name, "$ivl_for_loop%u", for_counter);
 	for_counter += 1;
-	PBlock*tmp = pform_push_block_scope(for_block_name, PBlock::BL_SEQ);
-	FILE_NAME(tmp, @1);
+	PBlock*tmp = pform_push_block_scope(@1, for_block_name, PBlock::BL_SEQ);
 	current_block_stack.push(tmp);
 
 	list<decl_assignment_t*>assign_list;
@@ -1436,7 +1441,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
       { pform_name_t tmp_hident;
 	tmp_hident.push_back(name_component_t(lex_strings.make($4)));
 
-	PEIdent*tmp_ident = pform_new_ident(tmp_hident);
+	PEIdent*tmp_ident = pform_new_ident(@4, tmp_hident);
 	FILE_NAME(tmp_ident, @4);
 
 	PForStatement*tmp_for = new PForStatement(tmp_ident, $6, $8, $10, $13);
@@ -1484,8 +1489,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	snprintf(for_block_name, sizeof for_block_name, "$ivl_foreach%u", foreach_counter);
 	foreach_counter += 1;
 
-	PBlock*tmp = pform_push_block_scope(for_block_name, PBlock::BL_SEQ);
-	FILE_NAME(tmp, @1);
+	PBlock*tmp = pform_push_block_scope(@1, for_block_name, PBlock::BL_SEQ);
 	current_block_stack.push(tmp);
 
 	pform_make_foreach_declarations(@1, $5);
@@ -1989,7 +1993,8 @@ simple_type_or_string /* IEEE1800-2005: A.2.2.1 */
 	$$ = tmp;
       }
   | TYPE_IDENTIFIER
-      { $$ = $1.type;
+      { pform_set_type_referenced(@1, $1.text);
+	$$ = $1.type;
 	delete[]$1.text;
       }
   | PACKAGE_IDENTIFIER K_SCOPE_RES
@@ -2546,6 +2551,10 @@ block_item_decl
   /* Blocks can have type declarations. */
 
   | type_declaration
+
+  /* Blocks can have imports. */
+
+  | package_import_declaration
 
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
@@ -3176,7 +3185,8 @@ clocking_event_opt /* */
 
 event_control /* A.K.A. clocking_event */
 	: '@' hierarchy_identifier
-		{ PEIdent*tmpi = new PEIdent(*$2);
+		{ PEIdent*tmpi = pform_new_ident(@2, *$2);
+		  FILE_NAME(tmpi, @2);
 		  PEEvent*tmpe = new PEEvent(PEEvent::ANYEDGE, tmpi);
 		  PEventStatement*tmps = new PEventStatement(tmpe);
 		  FILE_NAME(tmps, @1);
@@ -3559,7 +3569,8 @@ expr_primary_or_typename
   /* There are a few special cases (notably $bits argument) where the
      expression may be a type name. Let the elaborator sort this out. */
   | TYPE_IDENTIFIER
-      { PETypename*tmp = new PETypename($1.type);
+      { pform_set_type_referenced(@1, $1.text);
+	PETypename*tmp = new PETypename($1.type);
 	FILE_NAME(tmp,@1);
 	$$ = tmp;
 	delete[]$1.text;
@@ -3612,7 +3623,7 @@ expr_primary
      indexed arrays and part selects */
 
   | hierarchy_identifier
-      { PEIdent*tmp = pform_new_ident(*$1);
+      { PEIdent*tmp = pform_new_ident(@1, *$1);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete $1;
@@ -4508,7 +4519,7 @@ atom2_type
      rule to reflect the rules for assignment l-values. */
 lpvalue
   : hierarchy_identifier
-      { PEIdent*tmp = pform_new_ident(*$1);
+      { PEIdent*tmp = pform_new_ident(@1, *$1);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete $1;
@@ -5048,28 +5059,26 @@ module_item
               IDENTIFIER '=' expression ')'
       { pform_start_generate_for(@1, $3, $5, $7, $9, $11); }
     generate_block
-      { pform_endgenerate(); }
+      { pform_endgenerate(false); }
 
   | generate_if
     generate_block_opt
     K_else
       { pform_start_generate_else(@1); }
     generate_block
-      { pform_endgenerate(); }
+      { pform_endgenerate(true); }
 
   | generate_if
     generate_block_opt %prec less_than_K_else
-      { pform_endgenerate(); }
+      { pform_endgenerate(true); }
 
   | K_case '(' expression ')'
       { pform_start_generate_case(@1, $3); }
     generate_case_items
     K_endcase
-      { pform_endgenerate(); }
+      { pform_endgenerate(true); }
 
   | modport_declaration
-
-  | package_import_declaration
 
   /* 1364-2001 and later allow specparam declarations outside specify blocks. */
 
@@ -5162,9 +5171,9 @@ generate_case_items
 
 generate_case_item
   : expression_list_proper ':' { pform_generate_case_item(@1, $1); } generate_block_opt
-      { pform_endgenerate(); }
+      { pform_endgenerate(false); }
   | K_default ':' { pform_generate_case_item(@1, 0); } generate_block_opt
-      { pform_endgenerate(); }
+      { pform_endgenerate(false); }
   ;
 
 generate_item
@@ -5185,7 +5194,7 @@ generate_item
 	      warn_count += 1;
 	      cerr << @1 << ": warning: Anachronistic use of named begin/end to surround generate schemes." << endl;
 	}
-	pform_endgenerate();
+	pform_endgenerate(false);
       }
   ;
 
@@ -5318,7 +5327,8 @@ param_type
 	param_active_type = IVL_VT_BOOL;
       }
   | TYPE_IDENTIFIER
-      { pform_set_param_from_type(@1, $1.type, $1.text, param_active_range,
+      { pform_set_type_referenced(@1, $1.text);
+	pform_set_param_from_type(@1, $1.type, $1.text, param_active_range,
 	                          param_active_signed, param_active_type);
 	delete[]$1.text;
       }
@@ -6260,8 +6270,7 @@ statement_item /* This is roughly statement_item in the LRM */
       }
   /* In SystemVerilog an unnamed block can contain variable declarations. */
   | K_begin
-      { PBlock*tmp = pform_push_block_scope(0, PBlock::BL_SEQ);
-	FILE_NAME(tmp, @1);
+      { PBlock*tmp = pform_push_block_scope(@1, 0, PBlock::BL_SEQ);
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
@@ -6295,8 +6304,7 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
   | K_begin ':' IDENTIFIER
-      { PBlock*tmp = pform_push_block_scope($3, PBlock::BL_SEQ);
-	FILE_NAME(tmp, @1);
+      { PBlock*tmp = pform_push_block_scope(@1, $3, PBlock::BL_SEQ);
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
@@ -6333,8 +6341,7 @@ statement_item /* This is roughly statement_item in the LRM */
       }
   /* In SystemVerilog an unnamed block can contain variable declarations. */
   | K_fork
-      { PBlock*tmp = pform_push_block_scope(0, PBlock::BL_PAR);
-	FILE_NAME(tmp, @1);
+      { PBlock*tmp = pform_push_block_scope(@1, 0, PBlock::BL_PAR);
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
@@ -6369,8 +6376,7 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
   | K_fork ':' IDENTIFIER
-      { PBlock*tmp = pform_push_block_scope($3, PBlock::BL_PAR);
-	FILE_NAME(tmp, @1);
+      { PBlock*tmp = pform_push_block_scope(@1, $3, PBlock::BL_PAR);
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
@@ -6408,12 +6414,18 @@ statement_item /* This is roughly statement_item in the LRM */
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
-	| K_TRIGGER hierarchy_identifier ';'
-		{ PTrigger*tmp = new PTrigger(*$2);
-		  FILE_NAME(tmp, @1);
-		  delete $2;
-		  $$ = tmp;
-		}
+  | K_TRIGGER hierarchy_identifier ';'
+      { PTrigger*tmp = pform_new_trigger(@2, 0, *$2);
+	FILE_NAME(tmp, @1);
+	delete $2;
+	$$ = tmp;
+      }
+  | K_TRIGGER PACKAGE_IDENTIFIER K_SCOPE_RES hierarchy_identifier
+      { PTrigger*tmp = pform_new_trigger(@4, $2, *$4);
+	FILE_NAME(tmp, @1);
+	delete $4;
+	$$ = tmp;
+      }
 
   | procedural_assertion_statement { $$ = $1; }
 

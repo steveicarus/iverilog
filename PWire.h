@@ -1,7 +1,7 @@
 #ifndef IVL_PWire_H
 #define IVL_PWire_H
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,7 +20,7 @@
  */
 
 # include  "netlist.h"
-# include  "LineInfo.h"
+# include  "PNamedItem.h"
 # include  <list>
 # include  <map>
 # include  "StringHeap.h"
@@ -51,7 +51,7 @@ enum PWSRType {SR_PORT, SR_NET, SR_BOTH};
  * from that perspective, sub-scopes within the module are a part of
  * the wire name.
  */
-class PWire : public LineInfo {
+class PWire : public PNamedItem {
 
     public:
       PWire(perm_string name,
@@ -92,6 +92,8 @@ class PWire : public LineInfo {
       void dump(ostream&out, unsigned ind=4) const;
 
       NetNet* elaborate_sig(Design*, NetScope*scope) const;
+
+      SymbolType symbol_type() const;
 
     private:
       perm_string name_;

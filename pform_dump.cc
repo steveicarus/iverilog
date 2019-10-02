@@ -1359,22 +1359,22 @@ void LexicalScope::dump_typedefs_(ostream&out, unsigned indent) const
 
 void LexicalScope::dump_parameters_(ostream&out, unsigned indent) const
 {
-      typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
+      typedef map<perm_string,param_expr_t*>::const_iterator parm_iter_t;
       for (parm_iter_t cur = parameters.begin()
 		 ; cur != parameters.end() ; ++ cur ) {
 	    out << setw(indent) << "" << "parameter "
-                << (*cur).second.type << " ";
-	    if ((*cur).second.signed_flag)
+                << (*cur).second->type << " ";
+	    if ((*cur).second->signed_flag)
 		  out << "signed ";
-	    if ((*cur).second.msb)
-		  out << "[" << *(*cur).second.msb << ":"
-		      << *(*cur).second.lsb << "] ";
+	    if ((*cur).second->msb)
+		  out << "[" << *(*cur).second->msb << ":"
+		      << *(*cur).second->lsb << "] ";
 	    out << (*cur).first << " = ";
-	    if ((*cur).second.expr)
-		  out << *(*cur).second.expr;
+	    if ((*cur).second->expr)
+		  out << *(*cur).second->expr;
 	    else
 		  out << "/* ERROR */";
-	    for (LexicalScope::range_t*tmp = (*cur).second.range
+	    for (LexicalScope::range_t*tmp = (*cur).second->range
 		       ; tmp ; tmp = tmp->next) {
 		  if (tmp->exclude_flag)
 			out << " exclude ";
@@ -1408,16 +1408,16 @@ void LexicalScope::dump_parameters_(ostream&out, unsigned indent) const
 
 void LexicalScope::dump_localparams_(ostream&out, unsigned indent) const
 {
-      typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
+      typedef map<perm_string,param_expr_t*>::const_iterator parm_iter_t;
       for (parm_iter_t cur = localparams.begin()
 		 ; cur != localparams.end() ; ++ cur ) {
 	    out << setw(indent) << "" << "localparam ";
-	    if ((*cur).second.msb)
-		  out << "[" << *(*cur).second.msb << ":"
-		      << *(*cur).second.lsb << "] ";
+	    if ((*cur).second->msb)
+		  out << "[" << *(*cur).second->msb << ":"
+		      << *(*cur).second->lsb << "] ";
 	    out << (*cur).first << " = ";
-	    if ((*cur).second.expr)
-		  out << *(*cur).second.expr << ";" << endl;
+	    if ((*cur).second->expr)
+		  out << *(*cur).second->expr << ";" << endl;
 	    else
 		  out << "/* ERROR */;" << endl;
       }
@@ -1513,16 +1513,16 @@ void PClass::dump(ostream&out, unsigned indent) const
 
 void Module::dump_specparams_(ostream&out, unsigned indent) const
 {
-      typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
+      typedef map<perm_string,param_expr_t*>::const_iterator parm_iter_t;
       for (parm_iter_t cur = specparams.begin()
 		 ; cur != specparams.end() ; ++ cur ) {
 	    out << setw(indent) << "" << "specparam ";
-	    if ((*cur).second.msb)
-		  out << "[" << *(*cur).second.msb << ":"
-		      << *(*cur).second.lsb << "] ";
+	    if ((*cur).second->msb)
+		  out << "[" << *(*cur).second->msb << ":"
+		      << *(*cur).second->lsb << "] ";
 	    out << (*cur).first << " = ";
-	    if ((*cur).second.expr)
-		  out << *(*cur).second.expr << ";" << endl;
+	    if ((*cur).second->expr)
+		  out << *(*cur).second->expr << ";" << endl;
 	    else
 		  out << "/* ERROR */;" << endl;
       }

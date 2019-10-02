@@ -1,7 +1,7 @@
 #ifndef IVL_PTask_H
 #define IVL_PTask_H
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,8 +19,8 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include  "LineInfo.h"
 # include  "PScope.h"
+# include  "PNamedItem.h"
 # include  "StringHeap.h"
 # include  <string>
 # include  <vector>
@@ -35,7 +35,7 @@ class Statement;
 class PExpr;
 
 
-class PTaskFunc : public PScope, public LineInfo {
+class PTaskFunc : public PScope, public PNamedItem {
 
     public:
       PTaskFunc(perm_string name, LexicalScope*parent);
@@ -99,6 +99,8 @@ class PTask  : public PTaskFunc {
 
       void dump(ostream&, unsigned) const;
 
+      SymbolType symbol_type() const;
+
     private:
       Statement*statement_;
       bool is_auto_;
@@ -147,6 +149,8 @@ class PFunction : public PTaskFunc {
       bool is_auto() const { return is_auto_; };
 
       void dump(ostream&, unsigned) const;
+
+      SymbolType symbol_type() const;
 
     private:
       data_type_t* return_type_;

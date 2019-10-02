@@ -1,7 +1,7 @@
 #ifndef IVL_PGate_H
 #define IVL_PGate_H
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,7 +22,7 @@
 # include  "svector.h"
 # include  "StringHeap.h"
 # include  "named.h"
-# include  "LineInfo.h"
+# include  "PNamedItem.h"
 # include  "PDelays.h"
 # include  "netlist.h"
 # include  <map>
@@ -47,7 +47,7 @@ class Module;
  * single strength pair. There is a strength of the 0 drive, and a
  * strength of the 1 drive.
  */
-class PGate : public LineInfo {
+class PGate : public PNamedItem {
 
     public:
       explicit PGate(perm_string name, list<PExpr*>*pins,
@@ -87,6 +87,8 @@ class PGate : public LineInfo {
       virtual void elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*sc) const;
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
+
+      SymbolType symbol_type() const;
 
     protected:
       const vector<PExpr*>& get_pins() const { return pins_; }
