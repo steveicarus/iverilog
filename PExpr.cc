@@ -126,9 +126,8 @@ PEBinary::~PEBinary()
 
 void PEBinary::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 {
-      assert(left_ && right_);
-      left_->declare_implicit_nets(scope, type);
-      right_->declare_implicit_nets(scope, type);
+      if (left_) left_->declare_implicit_nets(scope, type);
+      if (right_) right_->declare_implicit_nets(scope, type);
 }
 
 bool PEBinary::has_aa_term(Design*des, NetScope*scope) const
