@@ -2356,7 +2356,22 @@ void pform_make_modgates(const struct vlltype&loc,
 			 svector<lgate>*gates,
 			 std::list<named_pexpr_t>*attr)
 {
+	// The grammer should not allow module gates to happen outside
+	// an active module. But if really bad input errors combine in
+	// an ugly way with error recovery, then catch this
+	// implausible situation and return an error.
+      if (pform_cur_module.empty()) {
+	    cerr << loc << ": internal error: "
+		 << "Module instantiations outside module scope are not possible."
+		 << endl;
+	    error_count += 1;
+	    delete gates;
+	    return;
+      }
       assert(! pform_cur_module.empty());
+
+	// Detect some more realistic errors.
+
       if (pform_cur_module.front()->program_block) {
 	    cerr << loc << ": error: Module instantiations are not allowed in "
 		 << "program blocks." << endl;
