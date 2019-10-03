@@ -209,6 +209,45 @@ const pform_name_t& PCallTask::path() const
 PCase::PCase(NetCase::TYPE t, ivl_case_qualifier_t q, PExpr*ex, svector<PCase::Item*>*l)
     : type_(t), qualifier_(q), expr_(ex), items_(l)
 {
+      /* check for default case, priority / unique add one if not present to capture
+         the unknown values */
+      bool has_default = false;
+
+      for (unsigned idx = 0; idx < items_->count(); idx += 1) {
+
+            PCase::Item*cur = (*items_)[idx];
+            if (cur->expr.empty())
+                  has_default = true;
+      }
+
+      /* priory and unique qualifiers should warn if no default
+         was specified and the default case is hit, otherwise if
+         there is a default case then warn now. */
+      if (qualifier_ == IVL_CQ_PRIORITY || qualifier_ == IVL_CQ_UNIQUE) {
+
+            if (!has_default) {
+                  /* the default case should be $warning task explaining the problem */
+                  list<PExpr*>arg_list;
+
+                  arg_list.push_back(new PEString("value ('b%b) is unhandled for "
+                                                  "priority or unique case statement"));
+                  arg_list.push_back(ex);
+
+                  PCallTask*tmp1 = new PCallTask(perm_string::literal("$warning"), arg_list);
+                  tmp1->set_line(*ex);
+
+                  PCase::Item*dflt = new PCase::Item;
+                  dflt->stat = tmp1;
+
+                  /* append the default case */
+                  svector<PCase::Item*>*tmpv = new svector<PCase::Item*>(*items_, dflt);
+                  delete items_;
+                  items_ = tmpv;
+            } else {
+                  cerr << ex->get_fileline() << ": warning: priority or unique "
+                       << "case has default specified; check skipped." << endl;
+            }
+      }
 }
 
 PCase::~PCase()
