@@ -385,6 +385,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
       struct str_pair_t drive;
 
+      ivl_case_qualifier_t cqualifier;
       PCase::Item*citem;
       svector<PCase::Item*>*citems;
 
@@ -602,6 +603,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <named_pexpr> attribute
 %type <named_pexprs> attribute_list attribute_instance_list attribute_list_opt
 
+%type <cqualifier> case_qualifier
 %type <citem>  case_item
 %type <citems> case_items
 
@@ -745,6 +747,34 @@ assignment_pattern /* IEEE1800-2005: A.6.7.1 */
 block_identifier_opt /* */
   : IDENTIFIER ':'
   |
+  ;
+
+case_qualifier
+  : K_priority
+      {
+          $$ = IVL_CQ_PRIORITY;
+          if (!gn_system_verilog()) {
+              yyerror(@1, "error: `priority` requires SystemVerilog.");
+              $$ = IVL_CQ_NONE;
+          }
+      }
+  | K_unique0
+      {
+          $$ = IVL_CQ_UNIQUE0;
+          if (!gn_system_verilog()) {
+              yyerror(@1, "error: `unique0` requires SystemVerilog.");
+              $$ = IVL_CQ_NONE;
+          }
+      }
+  | K_unique
+      {
+          $$ = IVL_CQ_UNIQUE;
+          if (!gn_system_verilog()) {
+              yyerror(@1, "error: `unique` requires SystemVerilog.");
+              $$ = IVL_CQ_NONE;
+          }
+      }
+  |   { $$ = IVL_CQ_NONE; }
   ;
 
 class_declaration /* IEEE1800-2005: A.1.2 */
@@ -6433,44 +6463,44 @@ statement_item /* This is roughly statement_item in the LRM */
 
   | jump_statement { $$ = $1; }
 
-	| K_case '(' expression ')' case_items K_endcase
-		{ PCase*tmp = new PCase(NetCase::EQ, $3, $5);
+	| case_qualifier K_case '(' expression ')' case_items K_endcase
+               { PCase*tmp = new PCase(NetCase::EQ, $1, $4, $6);
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
-	| K_casex '(' expression ')' case_items K_endcase
-		{ PCase*tmp = new PCase(NetCase::EQX, $3, $5);
+	| case_qualifier K_casex '(' expression ')' case_items K_endcase
+		{ PCase*tmp = new PCase(NetCase::EQX, $1, $4, $6);
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
-	| K_casez '(' expression ')' case_items K_endcase
-		{ PCase*tmp = new PCase(NetCase::EQZ, $3, $5);
+	| case_qualifier K_casez '(' expression ')' case_items K_endcase
+		{ PCase*tmp = new PCase(NetCase::EQZ, $1, $4, $6);
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
-	| K_case '(' expression ')' error K_endcase
+	| case_qualifier K_case '(' expression ')' error K_endcase
 		{ yyerrok; }
-	| K_casex '(' expression ')' error K_endcase
+	| case_qualifier K_casex '(' expression ')' error K_endcase
 		{ yyerrok; }
-	| K_casez '(' expression ')' error K_endcase
+	| case_qualifier K_casez '(' expression ')' error K_endcase
 		{ yyerrok; }
-	| K_if '(' expression ')' statement_or_null %prec less_than_K_else
-		{ PCondit*tmp = new PCondit($3, $5, 0);
+	| case_qualifier K_if '(' expression ')' statement_or_null %prec less_than_K_else
+		{ PCondit*tmp = new PCondit($4, $6, 0);
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
-	| K_if '(' expression ')' statement_or_null K_else statement_or_null
-		{ PCondit*tmp = new PCondit($3, $5, $7);
+	| case_qualifier K_if '(' expression ')' statement_or_null K_else statement_or_null
+		{ PCondit*tmp = new PCondit($4, $6, $8);
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
-	| K_if '(' error ')' statement_or_null %prec less_than_K_else
+	| case_qualifier K_if '(' error ')' statement_or_null %prec less_than_K_else
 		{ yyerror(@1, "error: Malformed conditional expression.");
-		  $$ = $5;
+		  $$ = $6;
 		}
-	| K_if '(' error ')' statement_or_null K_else statement_or_null
+	| case_qualifier K_if '(' error ')' statement_or_null K_else statement_or_null
 		{ yyerror(@1, "error: Malformed conditional expression.");
-		  $$ = $5;
+		  $$ = $6;
 		}
   /* SystemVerilog adds the compressed_statement */
 

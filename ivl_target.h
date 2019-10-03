@@ -456,6 +456,14 @@ typedef enum ivl_variable_type_e ENUM_UNSIGNED_INT {
       IVL_VT_VECTOR = IVL_VT_LOGIC /* For compatibility */
 } ivl_variable_type_t;
 
+/* Qualifier attached to a case (or if/else) statement */
+typedef enum ivl_case_qualifier_e {
+      IVL_CQ_NONE     = 0,
+      IVL_CQ_PRIORITY = 1,
+      IVL_CQ_UNIQUE   = 2,
+      IVL_CQ_UNIQUE0  = 3
+} ivl_case_qualifier_t;
+
 /* This is the type of the function to apply to a process. */
 typedef int (*ivl_process_f)(ivl_process_t net, void*cd);
 

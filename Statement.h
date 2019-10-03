@@ -254,7 +254,7 @@ class PCase  : public Statement {
 	    Statement*stat;
       };
 
-      PCase(NetCase::TYPE, PExpr*ex, svector<Item*>*);
+      PCase(NetCase::TYPE, ivl_case_qualifier_t, PExpr*ex, svector<Item*>*);
       ~PCase();
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
@@ -264,6 +264,7 @@ class PCase  : public Statement {
 
     private:
       NetCase::TYPE type_;
+      ivl_case_qualifier_t qualifier_;
       PExpr*expr_;
 
       svector<Item*>*items_;
