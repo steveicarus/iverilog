@@ -1061,6 +1061,7 @@ data_declaration /* IEEE1800-2005: A.2.1.3 */
   | attribute_list_opt K_event event_variable_list ';'
       { if ($3) pform_make_events($3, @2.text, @2.first_line);
       }
+  | attribute_list_opt package_import_declaration
   ;
 
 data_type /* IEEE1800-2005: A.2.2.1 */
