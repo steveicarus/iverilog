@@ -1005,33 +1005,37 @@ concurrent_assertion_item /* IEEE1800-2012 A.2.10 */
 concurrent_assertion_statement /* IEEE1800-2012 A.2.10 */
   : assert_or_assume K_property '(' property_spec ')' statement_or_null %prec less_than_K_else
       { /* */
-	if (gn_assertions_flag) {
+	if (gn_unsupported_assertions_flag) {
 	      yyerror(@1, "sorry: concurrent_assertion_item not supported."
-		      " Try -gno-assertion to turn this message off.");
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
 	}
         $$ = 0;
       }
   | assert_or_assume K_property '(' property_spec ')' K_else statement_or_null
       { /* */
-	if (gn_assertions_flag) {
+	if (gn_unsupported_assertions_flag) {
 	      yyerror(@1, "sorry: concurrent_assertion_item not supported."
-		      " Try -gno-assertion to turn this message off.");
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
 	}
         $$ = 0;
       }
   | assert_or_assume K_property '(' property_spec ')' statement_or_null K_else statement_or_null
       { /* */
-	if (gn_assertions_flag) {
+	if (gn_unsupported_assertions_flag) {
 	      yyerror(@1, "sorry: concurrent_assertion_item not supported."
-		      " Try -gno-assertion to turn this message off.");
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
 	}
         $$ = 0;
       }
   | K_cover K_property '(' property_spec ')' statement_or_null
       { /* */
-	if (gn_assertions_flag) {
+	if (gn_unsupported_assertions_flag) {
 	      yyerror(@1, "sorry: concurrent_assertion_item not supported."
-		      " Try -gno-assertion to turn this message off.");
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
 	}
         $$ = 0;
       }
@@ -1039,17 +1043,19 @@ concurrent_assertion_statement /* IEEE1800-2012 A.2.10 */
          They are syntactically identical. */
   | K_cover K_sequence '(' property_spec ')' statement_or_null
       { /* */
-	if (gn_assertions_flag) {
+	if (gn_unsupported_assertions_flag) {
 	      yyerror(@1, "sorry: concurrent_assertion_item not supported."
-		      " Try -gno-assertion to turn this message off.");
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
 	}
         $$ = 0;
       }
   | K_restrict K_property '(' property_spec ')' ';'
       { /* */
-	if (gn_assertions_flag) {
+	if (gn_unsupported_assertions_flag) {
 	      yyerror(@2, "sorry: concurrent_assertion_item not supported."
-		      " Try -gno-assertion to turn this message off.");
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
 	}
         $$ = 0;
       }
@@ -1261,9 +1267,10 @@ deferred_immediate_assertion_item /* IEEE1800-2012: A.6.10 */
 deferred_immediate_assertion_statement /* IEEE1800-2012 A.6.10 */
   : assert_or_assume deferred_mode '(' expression ')' statement_or_null %prec less_than_K_else
       {
-	if (gn_assertions_flag) {
+	if (gn_unsupported_assertions_flag) {
 	      yyerror(@1, "sorry: Deferred assertions are not supported."
-		      " Try -gno-assertion to turn this message off.");
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
 	}
 	delete $4;
 	delete $6;
@@ -1271,9 +1278,10 @@ deferred_immediate_assertion_statement /* IEEE1800-2012 A.6.10 */
       }
   | assert_or_assume deferred_mode '(' expression ')' K_else statement_or_null
       {
-	if (gn_assertions_flag) {
+	if (gn_unsupported_assertions_flag) {
 	      yyerror(@1, "sorry: Deferred assertions are not supported."
-		      " Try -gno-assertion to turn this message off.");
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
 	}
 	delete $4;
 	delete $7;
@@ -1281,9 +1289,10 @@ deferred_immediate_assertion_statement /* IEEE1800-2012 A.6.10 */
       }
   | assert_or_assume deferred_mode '(' expression ')' statement_or_null K_else statement_or_null
       {
-	if (gn_assertions_flag) {
+	if (gn_unsupported_assertions_flag) {
 	      yyerror(@1, "sorry: Deferred assertions are not supported."
-		      " Try -gno-assertion to turn this message off.");
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
 	}
 	delete $4;
 	delete $6;
@@ -2071,7 +2080,7 @@ signing /* IEEE1800-2005: A.2.2.1 */
 simple_immediate_assertion_statement /* IEEE1800-2012 A.6.10 */
   : assert_or_assume '(' expression ')' statement_or_null %prec less_than_K_else
       {
-	if (gn_assertions_flag) {
+	if (gn_supported_assertions_flag) {
 	      list<PExpr*>arg_list;
 	      PCallTask*tmp1 = new PCallTask(lex_strings.make("$error"), arg_list);
 	      FILE_NAME(tmp1, @1);
@@ -2086,7 +2095,7 @@ simple_immediate_assertion_statement /* IEEE1800-2012 A.6.10 */
       }
   | assert_or_assume '(' expression ')' K_else statement_or_null
       {
-	if (gn_assertions_flag) {
+	if (gn_supported_assertions_flag) {
 	      PCondit*tmp = new PCondit($3, 0, $6);
 	      FILE_NAME(tmp, @1);
 	      $$ = tmp;
@@ -2098,7 +2107,7 @@ simple_immediate_assertion_statement /* IEEE1800-2012 A.6.10 */
       }
   | assert_or_assume '(' expression ')' statement_or_null K_else statement_or_null
       {
-	if (gn_assertions_flag) {
+	if (gn_supported_assertions_flag) {
 	      PCondit*tmp = new PCondit($3, $5, $7);
 	      FILE_NAME(tmp, @1);
 	      $$ = tmp;

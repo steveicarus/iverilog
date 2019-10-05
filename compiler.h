@@ -1,7 +1,7 @@
 #ifndef IVL_compiler_H
 #define IVL_compiler_H
 /*
- * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -177,9 +177,12 @@ extern bool gn_icarus_misc_flag;
    is false, then skip elaboration of specify behavior. */
 extern bool gn_specify_blocks_flag;
 
-/* If this flag is true, then elaborate assertions. If this flag is
-   false, then stub out assertion statements. */
-extern bool gn_assertions_flag;
+/* If this flag is true, then elaborate supported assertion statements. If
+   this flag is false, then stub out supported assertion statements. */
+extern bool gn_supported_assertions_flag;
+/* If this flag is true, then error on unsupported assertion statements. If
+   this flag is false, then stub out unsupported assertion statements. */
+extern bool gn_unsupported_assertions_flag;
 
 /* If this flag is true, then support/elaborate Verilog-AMS. */
 extern bool gn_verilog_ams_flag;
