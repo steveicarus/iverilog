@@ -2321,8 +2321,6 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 
       if (!is_constant_ || !rv) return rv;
 
-      if (dynamic_cast<NetENew*>(rv)) return rv;
-
       cerr << get_fileline() << ": error: "
             "The RHS expression must be constant." << endl;
       cerr << get_fileline() << "       : "

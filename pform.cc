@@ -2507,7 +2507,7 @@ void pform_make_var_init(const struct vlltype&li,
 
       PEIdent*lval = new PEIdent(name);
       FILE_NAME(lval, li);
-      PAssign*ass = new PAssign(lval, expr, true);
+      PAssign*ass = new PAssign(lval, expr, !gn_system_verilog());
       FILE_NAME(ass, li);
 
       lexical_scope->var_inits.push_back(ass);
