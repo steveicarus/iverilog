@@ -1150,15 +1150,29 @@ void NetBlock::dump(ostream&o, unsigned ind) const
 
 void NetCase::dump(ostream&o, unsigned ind) const
 {
+      o << setw(ind) << "";
+      switch (quality_) {
+	  case IVL_CASE_QUALITY_BASIC:
+	    break;
+	  case IVL_CASE_QUALITY_UNIQUE:
+	    o << "unique ";
+	    break;
+	  case IVL_CASE_QUALITY_UNIQUE0:
+	    o << "unique0 ";
+	    break;
+	  case IVL_CASE_QUALITY_PRIORITY:
+	    o << "priority ";
+	    break;
+      }
       switch (type_) {
 	  case EQ:
-	    o << setw(ind) << "" << "case (" << *expr_ << ")" << endl;
+	    o << "case (" << *expr_ << ")" << endl;
 	    break;
 	  case EQX:
-	    o << setw(ind) << "" << "casex (" << *expr_ << ")" << endl;
+	    o << "casex (" << *expr_ << ")" << endl;
 	    break;
 	  case EQZ:
-	    o << setw(ind) << "" << "casez (" << *expr_ << ")" << endl;
+	    o << "casez (" << *expr_ << ")" << endl;
 	    break;
       }
 

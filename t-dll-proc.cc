@@ -497,6 +497,7 @@ void dll_target::proc_case(const NetCase*net)
       }
       assert(stmt_cur_->type_ != IVL_ST_NONE);
 
+      stmt_cur_->u_.case_.quality = net->case_quality();
       assert(expr_ == 0);
       assert(net->expr());
       net->expr()->expr_scan(this);

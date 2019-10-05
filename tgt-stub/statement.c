@@ -375,8 +375,24 @@ void show_statement(ivl_statement_t net, unsigned ind)
 	  case IVL_ST_CASEZ:
 	  case IVL_ST_CASER:
 	  case IVL_ST_CASE: {
+		ivl_case_quality_t qual = ivl_stmt_case_quality(net);
 		unsigned cnt = ivl_stmt_case_count(net);
-		fprintf(out, "%*scase (...) <%u cases>\n", ind, "", cnt);
+		const char*qual_txt = "";
+		switch (qual) {
+		    case IVL_CASE_QUALITY_BASIC:
+		      qual_txt = "basic";
+		      break;
+		    case IVL_CASE_QUALITY_UNIQUE:
+		      qual_txt = "unique";
+		      break;
+		    case IVL_CASE_QUALITY_UNIQUE0:
+		      qual_txt = "unique0";
+		      break;
+		    case IVL_CASE_QUALITY_PRIORITY:
+		      qual_txt = "priority";
+		      break;
+		}
+		fprintf(out, "%*scase (...) <%u cases, %s>\n", ind, "", cnt, qual_txt);
 		show_expression(ivl_stmt_cond_expr(net), ind+4);
 
 		for (idx = 0 ;  idx < cnt ;  idx += 1) {

@@ -206,8 +206,8 @@ const pform_name_t& PCallTask::path() const
       return path_;
 }
 
-PCase::PCase(NetCase::TYPE t, PExpr*ex, svector<PCase::Item*>*l)
-: type_(t), expr_(ex), items_(l)
+PCase::PCase(ivl_case_quality_t q, NetCase::TYPE t, PExpr*ex, svector<PCase::Item*>*l)
+: quality_(q), type_(t), expr_(ex), items_(l)
 {
 }
 

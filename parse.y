@@ -408,6 +408,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
       svector<PEEvent*>*event_expr;
 
+      ivl_case_quality_t case_quality;
       NetNet::Type nettype;
       PGBuiltin::Type gatetype;
       NetNet::PortType porttype;
@@ -676,6 +677,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <int_val> module_start module_end
 
 %type <lifetime> lifetime lifetime_opt
+
+%type <case_quality> unique_priority
 
 %token K_TAND
 %right K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
@@ -6618,27 +6621,28 @@ statement_item /* This is roughly statement_item in the LRM */
 
   | jump_statement { $$ = $1; }
 
-	| K_case '(' expression ')' case_items K_endcase
-		{ PCase*tmp = new PCase(NetCase::EQ, $3, $5);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_casex '(' expression ')' case_items K_endcase
-		{ PCase*tmp = new PCase(NetCase::EQX, $3, $5);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_casez '(' expression ')' case_items K_endcase
-		{ PCase*tmp = new PCase(NetCase::EQZ, $3, $5);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_case '(' expression ')' error K_endcase
-		{ yyerrok; }
-	| K_casex '(' expression ')' error K_endcase
-		{ yyerrok; }
-	| K_casez '(' expression ')' error K_endcase
-		{ yyerrok; }
+  | unique_priority K_case '(' expression ')' case_items K_endcase
+      { PCase*tmp = new PCase($1, NetCase::EQ, $4, $6);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | unique_priority K_casex '(' expression ')' case_items K_endcase
+      { PCase*tmp = new PCase($1, NetCase::EQX, $4, $6);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | unique_priority K_casez '(' expression ')' case_items K_endcase
+      { PCase*tmp = new PCase($1, NetCase::EQZ, $4, $6);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | unique_priority K_case '(' expression ')' error K_endcase
+      { yyerrok; }
+  | unique_priority K_casex '(' expression ')' error K_endcase
+      { yyerrok; }
+  | unique_priority K_casez '(' expression ')' error K_endcase
+      { yyerrok; }
+
 	| K_if '(' expression ')' statement_or_null %prec less_than_K_else
 		{ PCondit*tmp = new PCondit($3, $5, 0);
 		  FILE_NAME(tmp, @1);
@@ -7292,6 +7296,13 @@ udp_primitive
 		  delete[]$6;
 		}
 	;
+
+unique_priority
+  :             { $$ = IVL_CASE_QUALITY_BASIC; }
+  | K_unique    { $$ = IVL_CASE_QUALITY_UNIQUE; }
+  | K_unique0   { $$ = IVL_CASE_QUALITY_UNIQUE0; }
+  | K_priority  { $$ = IVL_CASE_QUALITY_PRIORITY; }
+  ;
 
   /* Many keywords can be optional in the syntax, although their
      presence is significant. This is a fairly common pattern so

@@ -434,6 +434,14 @@ typedef enum ivl_statement_type_e {
       IVL_ST_WHILE   = 23
 } ivl_statement_type_t;
 
+/* Case statements can be tagged as unique/unique0/priority. */
+typedef enum ivl_case_quality_t {
+      IVL_CASE_QUALITY_BASIC    = 0,  /* no quality flags */
+      IVL_CASE_QUALITY_UNIQUE   = 1,
+      IVL_CASE_QUALITY_UNIQUE0  = 2,
+      IVL_CASE_QUALITY_PRIORITY = 3
+} ivl_case_quality_t;
+
 /* SystemVerilog allows a system function to be called as a task. */
 typedef enum ivl_sfunc_as_task_e {
       IVL_SFUNC_AS_TASK_ERROR   = 0,
@@ -2222,6 +2230,8 @@ extern ivl_scope_t ivl_stmt_call(ivl_statement_t net);
 extern unsigned ivl_stmt_case_count(ivl_statement_t net);
   /* IVL_ST_CASE,IVL_ST_CASER,IVL_ST_CASEX,IVL_ST_CASEZ */
 extern ivl_expr_t ivl_stmt_case_expr(ivl_statement_t net, unsigned i);
+  /* IVL+ST_CASE,IVL_ST_CASER,IVL_ST_CASEX,IVL_ST_CASEZ */
+extern ivl_case_quality_t ivl_stmt_case_quality(ivl_statement_t net);
   /* IVL_ST_CASE,IVL_ST_CASER,IVL_ST_CASEX,IVL_ST_CASEZ */
 extern ivl_statement_t ivl_stmt_case_stmt(ivl_statement_t net, unsigned i);
   /* IVL_ST_CONDIT IVL_ST_CASE IVL_ST_REPEAT IVL_ST_WHILE */

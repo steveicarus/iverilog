@@ -3050,6 +3050,9 @@ class NetBlock  : public NetProc {
  * way the comparisons are performed. Also, it is likely that the
  * target may be able to optimize differently.
  *
+ * Case statements can have unique, unique0, or priority attached to
+ * them. If not otherwise adorned, it is QBASIC.
+ *
  * Case can be one of three types:
  *    EQ  -- All bits must exactly match
  *    EQZ -- z bits are don't care
@@ -3059,13 +3062,15 @@ class NetCase  : public NetProc {
 
     public:
       enum TYPE { EQ, EQX, EQZ };
-      NetCase(TYPE c, NetExpr*ex, unsigned cnt);
+
+      NetCase(ivl_case_quality_t q, TYPE c, NetExpr*ex, unsigned cnt);
       ~NetCase();
 
       void set_case(unsigned idx, NetExpr*ex, NetProc*st);
 
       void prune();
 
+      inline ivl_case_quality_t case_quality() const { return quality_; }
       TYPE type() const;
       const NetExpr*expr() const { return expr_; }
       inline unsigned nitems() const { return items_.size(); }
@@ -3097,6 +3102,7 @@ class NetCase  : public NetProc {
 			      NexusSet&nex_map, NetBus&nex_out,
 			      NetBus&enables, vector<mask_t>&bitmasks);
 
+      ivl_case_quality_t quality_;
       TYPE type_;
 
       struct Item {
