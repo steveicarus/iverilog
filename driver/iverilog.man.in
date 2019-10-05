@@ -130,7 +130,7 @@ default, parts of the expression that do not depend on the changed
 input value(s) are not re-evaluated. If an expression contains a call
 to a function that doesn't depend solely on its input values or that
 has side effects, the resulting behavior will differ from that
-required by the standard. Using \fI\-gstrict\-ca\-eval\fP will force
+required by the standard. Using \fB\-gstrict\-ca\-eval\fP will force
 standard compliant behavior (with some loss in performance).
 .TP 8
 .B -gstrict-expr-width\fI|\fP-gno-strict-expr-width
