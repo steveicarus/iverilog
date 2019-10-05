@@ -1084,8 +1084,9 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 	    ivl_type_t prop_type = ivl_type_prop_type(sig_type, prop_idx);
 
 	    if (ivl_type_base(prop_type) == IVL_VT_BOOL) {
-		  assert(ivl_type_packed_dimensions(prop_type) == 0
-                      || ivl_type_packed_dimensions(prop_type) == 1 && ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0));
+		  assert(ivl_type_packed_dimensions(prop_type) == 0 ||
+		         (ivl_type_packed_dimensions(prop_type) == 1 &&
+		          ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0)));
 
 		  draw_eval_vec4(rval);
 		  if (ivl_expr_value(rval)!=IVL_VT_BOOL)
@@ -1097,8 +1098,9 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_LOGIC) {
-		  assert(ivl_type_packed_dimensions(prop_type) == 0
-                      || ivl_type_packed_dimensions(prop_type) == 1 && ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0));
+		  assert(ivl_type_packed_dimensions(prop_type) == 0 ||
+		         (ivl_type_packed_dimensions(prop_type) == 1 &&
+		          ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0)));
 
 		  draw_eval_vec4(rval);
 
