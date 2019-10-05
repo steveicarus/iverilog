@@ -1743,12 +1743,10 @@ variable_decl_assignment /* IEEE1800-2005 A.2.3 */
 	delete[]$1;
 	$$ = tmp;
       }
-  | IDENTIFIER '=' K_new '(' ')'
+  | IDENTIFIER '=' class_new
       { decl_assignment_t*tmp = new decl_assignment_t;
 	tmp->name = lex_strings.make($1);
-	PENewClass*expr = new PENewClass;
-	FILE_NAME(expr, @3);
-	tmp->expr .reset(expr);
+	tmp->expr .reset($3);
 	delete[]$1;
 	$$ = tmp;
       }
