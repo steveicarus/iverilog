@@ -4058,10 +4058,12 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	      // If this is an array object, and there are members in
 	      // the member_path, check for array properties.
 	    if (net->darray_type() && member_path.size() > 0) {
-		  cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-		       << "Ident " << base_path
-		       << " look for array property " << member_path
-		       << endl;
+                  if (debug_elaborate) {
+                        cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+                             << "Ident " << base_path
+                             << " look for array property " << member_path
+                             << endl;
+                  }
 
 		  ivl_assert(*this, member_path.size() == 1);
 		  const name_component_t member_comp = member_path.front();
