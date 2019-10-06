@@ -2321,8 +2321,6 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 
       if (!is_constant_ || !rv) return rv;
 
-      if (dynamic_cast<NetENew*>(rv)) return rv;
-
       cerr << get_fileline() << ": error: "
             "The RHS expression must be constant." << endl;
       cerr << get_fileline() << "       : "
@@ -3129,7 +3127,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 		  icount += cur->expr.size();
       }
 
-      NetCase*res = new NetCase(type_, expr, icount);
+      NetCase*res = new NetCase(quality_, type_, expr, icount);
       res->set_line(*this);
 
 	/* Iterate over all the case items (guard/statement pairs)

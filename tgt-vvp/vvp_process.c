@@ -644,12 +644,19 @@ static int show_stmt_block_named(ivl_statement_t net, ivl_scope_t scope)
 static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
+      ivl_case_quality_t qual = ivl_stmt_case_quality(net);
       ivl_expr_t expr = ivl_stmt_cond_expr(net);
       unsigned count = ivl_stmt_case_count(net);
 
       unsigned local_base = local_count;
 
       unsigned idx, default_case;
+
+      if (qual != IVL_CASE_QUALITY_BASIC) {
+	    fprintf(stderr, "%s:%u: tgt-vvp sorry: "
+		    "Case unique/unique0/priority qualities are ignored.\n",
+		    ivl_stmt_file(net), ivl_stmt_lineno(net));
+      }
 
       show_stmt_file_line(net, "Case statement.");
 

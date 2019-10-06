@@ -408,6 +408,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
       svector<PEEvent*>*event_expr;
 
+      ivl_case_quality_t case_quality;
       NetNet::Type nettype;
       PGBuiltin::Type gatetype;
       NetNet::PortType porttype;
@@ -575,6 +576,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <expr>    udp_initial_expr_opt
 
 %type <text> register_variable net_variable event_variable endlabel_opt class_declaration_endlabel_opt
+%type <text> block_identifier_opt
 %type <perm_strings> register_variable_list net_variable_list event_variable_list
 %type <perm_strings> list_of_identifiers loop_variables
 %type <port_list> list_of_port_identifiers list_of_variable_port_identifiers
@@ -652,6 +654,9 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <statement> statement statement_item statement_or_null
 %type <statement> compressed_statement
 %type <statement> loop_statement for_step jump_statement
+%type <statement> concurrent_assertion_statement
+%type <statement> deferred_immediate_assertion_statement
+%type <statement> simple_immediate_assertion_statement
 %type <statement> procedural_assertion_statement
 %type <statement_list> statement_or_null_list statement_or_null_list_opt
 
@@ -667,10 +672,13 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
 %type <real_type> non_integer_type
 %type <int_val> assert_or_assume
+%type <int_val> deferred_mode
 %type <int_val> atom2_type
 %type <int_val> module_start module_end
 
 %type <lifetime> lifetime lifetime_opt
+
+%type <case_quality> unique_priority
 
 %token K_TAND
 %right K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
@@ -724,6 +732,7 @@ assert_or_assume
 
 assertion_item /* IEEE1800-2012: A.6.10 */
   : concurrent_assertion_item
+  | deferred_immediate_assertion_item
   ;
 
 assignment_pattern /* IEEE1800-2005: A.6.7.1 */
@@ -744,7 +753,9 @@ assignment_pattern /* IEEE1800-2005: A.6.7.1 */
      implements it in a LALR way. */
 block_identifier_opt /* */
   : IDENTIFIER ':'
+      { $$ = $1; }
   |
+      { $$ = 0; }
   ;
 
 class_declaration /* IEEE1800-2005: A.1.2 */
@@ -988,16 +999,98 @@ class_new /* IEEE1800-2005 A.2.4 */
      concurrent_assertion_statement and checker_instantiation rules. */
 
 concurrent_assertion_item /* IEEE1800-2012 A.2.10 */
-  : block_identifier_opt K_assert K_property '(' property_spec ')' statement_or_null
-      { /* */
-	if (gn_assertions_flag) {
-	      yyerror(@2, "sorry: concurrent_assertion_item not supported."
-		      " Try -gno-assertion to turn this message off.");
-	}
+  : block_identifier_opt concurrent_assertion_statement
+      { delete $1;
+	delete $2;
       }
-  | block_identifier_opt K_assert K_property '(' error ')' statement_or_null
+  ;
+
+concurrent_assertion_statement /* IEEE1800-2012 A.2.10 */
+  : assert_or_assume K_property '(' property_spec ')' statement_or_null %prec less_than_K_else
+      { /* */
+	if (gn_unsupported_assertions_flag) {
+	      yyerror(@1, "sorry: concurrent_assertion_item not supported."
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
+	}
+        $$ = 0;
+      }
+  | assert_or_assume K_property '(' property_spec ')' K_else statement_or_null
+      { /* */
+	if (gn_unsupported_assertions_flag) {
+	      yyerror(@1, "sorry: concurrent_assertion_item not supported."
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
+	}
+        $$ = 0;
+      }
+  | assert_or_assume K_property '(' property_spec ')' statement_or_null K_else statement_or_null
+      { /* */
+	if (gn_unsupported_assertions_flag) {
+	      yyerror(@1, "sorry: concurrent_assertion_item not supported."
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
+	}
+        $$ = 0;
+      }
+  | K_cover K_property '(' property_spec ')' statement_or_null
+      { /* */
+	if (gn_unsupported_assertions_flag) {
+	      yyerror(@1, "sorry: concurrent_assertion_item not supported."
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
+	}
+        $$ = 0;
+      }
+      /* For now, cheat, and use property_spec for the sequence specification.
+         They are syntactically identical. */
+  | K_cover K_sequence '(' property_spec ')' statement_or_null
+      { /* */
+	if (gn_unsupported_assertions_flag) {
+	      yyerror(@1, "sorry: concurrent_assertion_item not supported."
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
+	}
+        $$ = 0;
+      }
+  | K_restrict K_property '(' property_spec ')' ';'
+      { /* */
+	if (gn_unsupported_assertions_flag) {
+	      yyerror(@2, "sorry: concurrent_assertion_item not supported."
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
+	}
+        $$ = 0;
+      }
+  | assert_or_assume K_property '(' error ')' statement_or_null %prec less_than_K_else
       { yyerrok;
         yyerror(@2, "error: Error in property_spec of concurrent assertion item.");
+        $$ = 0;
+      }
+  | assert_or_assume K_property '(' error ')' K_else statement_or_null
+      { yyerrok;
+        yyerror(@2, "error: Error in property_spec of concurrent assertion item.");
+        $$ = 0;
+      }
+  | assert_or_assume K_property '(' error ')' statement_or_null K_else statement_or_null
+      { yyerrok;
+        yyerror(@2, "error: Error in property_spec of concurrent assertion item.");
+        $$ = 0;
+      }
+  | K_cover K_property '(' error ')' statement_or_null
+      { yyerrok;
+        yyerror(@2, "error: Error in property_spec of concurrent assertion item.");
+        $$ = 0;
+      }
+  | K_cover K_sequence '(' error ')' statement_or_null
+      { yyerrok;
+        yyerror(@2, "error: Error in property_spec of concurrent assertion item.");
+        $$ = 0;
+      }
+  | K_restrict K_property '(' error ')' ';'
+      { yyerrok;
+        yyerror(@2, "error: Error in property_spec of concurrent assertion item.");
+        $$ = 0;
       }
   ;
 
@@ -1061,6 +1154,7 @@ data_declaration /* IEEE1800-2005: A.2.1.3 */
   | attribute_list_opt K_event event_variable_list ';'
       { if ($3) pform_make_events($3, @2.text, @2.first_line);
       }
+  | attribute_list_opt package_import_declaration
   ;
 
 data_type /* IEEE1800-2005: A.2.2.1 */
@@ -1164,6 +1258,84 @@ data_type_or_implicit_or_void
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  ;
+
+deferred_immediate_assertion_item /* IEEE1800-2012: A.6.10 */
+  : block_identifier_opt deferred_immediate_assertion_statement
+      { delete $1;
+	delete $2;
+      }
+  ;
+
+deferred_immediate_assertion_statement /* IEEE1800-2012 A.6.10 */
+  : assert_or_assume deferred_mode '(' expression ')' statement_or_null %prec less_than_K_else
+      {
+	if (gn_unsupported_assertions_flag) {
+	      yyerror(@1, "sorry: Deferred assertions are not supported."
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
+	}
+	delete $4;
+	delete $6;
+	$$ = 0;
+      }
+  | assert_or_assume deferred_mode '(' expression ')' K_else statement_or_null
+      {
+	if (gn_unsupported_assertions_flag) {
+	      yyerror(@1, "sorry: Deferred assertions are not supported."
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
+	}
+	delete $4;
+	delete $7;
+	$$ = 0;
+      }
+  | assert_or_assume deferred_mode '(' expression ')' statement_or_null K_else statement_or_null
+      {
+	if (gn_unsupported_assertions_flag) {
+	      yyerror(@1, "sorry: Deferred assertions are not supported."
+		      " Try -gno-assertions or -gsupported-assertions"
+		      " to turn this message off.");
+	}
+	delete $4;
+	delete $6;
+	delete $8;
+	$$ = 0;
+      }
+  | K_cover deferred_mode '(' expression ')' statement_or_null
+      {
+	  /* Coverage collection is not currently supported. */
+	delete $4;
+	delete $6;
+	$$ = 0;
+      }
+  | assert_or_assume deferred_mode '(' error ')' statement_or_null %prec less_than_K_else
+      { yyerror(@1, "error: Malformed conditional expression.");
+	$$ = $6;
+      }
+  | assert_or_assume deferred_mode '(' error ')' K_else statement_or_null
+      { yyerror(@1, "error: Malformed conditional expression.");
+	$$ = $7;
+      }
+  | assert_or_assume deferred_mode '(' error ')' statement_or_null K_else statement_or_null
+      { yyerror(@1, "error: Malformed conditional expression.");
+	$$ = $6;
+      }
+  | K_cover deferred_mode '(' error ')' statement_or_null
+      { yyerror(@1, "error: Malformed conditional expression.");
+	$$ = $6;
+      }
+  ;
+
+deferred_mode
+  : '#' DEC_NUMBER
+      { if (!$2->is_zero()) {
+	      yyerror(@2, "error: Delay value must be zero for deferred assertion.");
+	}
+        delete $2;
+	$$ = 0; }
+  | K_final
+      { $$ = 1; }
   ;
 
   /* NOTE: The "module" rule of the description combines the
@@ -1574,12 +1746,10 @@ variable_decl_assignment /* IEEE1800-2005 A.2.3 */
 	delete[]$1;
 	$$ = tmp;
       }
-  | IDENTIFIER '=' K_new '(' ')'
+  | IDENTIFIER '=' class_new
       { decl_assignment_t*tmp = new decl_assignment_t;
 	tmp->name = lex_strings.make($1);
-	PENewClass*expr = new PENewClass;
-	FILE_NAME(expr, @3);
-	tmp->expr .reset(expr);
+	tmp->expr .reset($3);
 	delete[]$1;
 	$$ = tmp;
       }
@@ -1845,65 +2015,17 @@ port_direction_opt
   |                { $$ = NetNet::PIMPLICIT; }
   ;
 
-property_expr /* IEEE1800-2012 A.2.10 */
-  : expression
+procedural_assertion_statement /* IEEE1800-2012 A.6.10 */
+  : concurrent_assertion_statement
+      { $$ = $1; }
+  | simple_immediate_assertion_statement
+      { $$ = $1; }
+  | deferred_immediate_assertion_statement
+      { $$ = $1; }
   ;
 
-procedural_assertion_statement /* IEEE1800-2012 A.6.10 */
-    // $assertcontrol is not yet supported.
-  : assert_or_assume '(' expression ')' statement_or_null %prec less_than_K_else
-      {
-	if (gn_assertions_flag) {
-	      list<PExpr*>arg_list;
-	      PCallTask*tmp1 = new PCallTask(lex_strings.make("$error"), arg_list);
-	      FILE_NAME(tmp1, @1);
-	      PCondit*tmp2 = new PCondit($3, $5, tmp1);
-	      FILE_NAME(tmp2, @1);
-	      $$ = tmp2;
-        } else {
-	      $$ = 0;
-	}
-      }
-  | assert_or_assume '(' expression ')' K_else statement_or_null
-      {
-	if (gn_assertions_flag) {
-	      PCondit*tmp = new PCondit($3, 0, $6);
-	      FILE_NAME(tmp, @1);
-	      $$ = tmp;
-        } else {
-	      $$ = 0;
-	}
-      }
-  | assert_or_assume '(' expression ')' statement_or_null K_else statement_or_null
-      {
-	if (gn_assertions_flag) {
-	      PCondit*tmp = new PCondit($3, $5, $7);
-	      FILE_NAME(tmp, @1);
-	      $$ = tmp;
-        } else {
-	      $$ = 0;
-	}
-      }
-  | K_cover '(' expression ')' statement_or_null
-      // Coverage collection is not currently supported.
-      { $$ = 0; }
-
-  | assert_or_assume '(' error ')' statement_or_null %prec less_than_K_else
-      { yyerror(@1, "error: Malformed conditional expression.");
-	$$ = $5;
-      }
-  | assert_or_assume '(' error ')' K_else statement_or_null
-      { yyerror(@1, "error: Malformed conditional expression.");
-	$$ = $6;
-      }
-  | assert_or_assume '(' error ')' statement_or_null K_else statement_or_null
-      { yyerror(@1, "error: Malformed conditional expression.");
-	$$ = $5;
-      }
-  | K_cover '(' error ')' statement_or_null
-      { yyerror(@1, "error: Malformed conditional expression.");
-	$$ = $5;
-      }
+property_expr /* IEEE1800-2012 A.2.10 */
+  : expression
   ;
 
   /* The property_qualifier rule is as literally described in the LRM,
@@ -1954,6 +2076,72 @@ real_or_realtime
 signing /* IEEE1800-2005: A.2.2.1 */
   : K_signed   { $$ = true; }
   | K_unsigned { $$ = false; }
+  ;
+
+simple_immediate_assertion_statement /* IEEE1800-2012 A.6.10 */
+  : assert_or_assume '(' expression ')' statement_or_null %prec less_than_K_else
+      {
+	if (gn_supported_assertions_flag) {
+	      list<PExpr*>arg_list;
+	      PCallTask*tmp1 = new PCallTask(lex_strings.make("$error"), arg_list);
+	      FILE_NAME(tmp1, @1);
+	      PCondit*tmp2 = new PCondit($3, $5, tmp1);
+	      FILE_NAME(tmp2, @1);
+	      $$ = tmp2;
+	} else {
+	      delete $3;
+	      delete $5;
+	      $$ = 0;
+	}
+      }
+  | assert_or_assume '(' expression ')' K_else statement_or_null
+      {
+	if (gn_supported_assertions_flag) {
+	      PCondit*tmp = new PCondit($3, 0, $6);
+	      FILE_NAME(tmp, @1);
+	      $$ = tmp;
+	} else {
+	      delete $3;
+	      delete $6;
+	      $$ = 0;
+	}
+      }
+  | assert_or_assume '(' expression ')' statement_or_null K_else statement_or_null
+      {
+	if (gn_supported_assertions_flag) {
+	      PCondit*tmp = new PCondit($3, $5, $7);
+	      FILE_NAME(tmp, @1);
+	      $$ = tmp;
+	} else {
+	      delete $3;
+	      delete $5;
+	      delete $7;
+	      $$ = 0;
+	}
+      }
+  | K_cover '(' expression ')' statement_or_null
+      {
+	  /* Coverage collection is not currently supported. */
+	delete $3;
+	delete $5;
+	$$ = 0;
+      }
+  | assert_or_assume '(' error ')' statement_or_null %prec less_than_K_else
+      { yyerror(@1, "error: Malformed conditional expression.");
+	$$ = $5;
+      }
+  | assert_or_assume '(' error ')' K_else statement_or_null
+      { yyerror(@1, "error: Malformed conditional expression.");
+	$$ = $6;
+      }
+  | assert_or_assume '(' error ')' statement_or_null K_else statement_or_null
+      { yyerror(@1, "error: Malformed conditional expression.");
+	$$ = $5;
+      }
+  | K_cover '(' error ')' statement_or_null
+      { yyerror(@1, "error: Malformed conditional expression.");
+	$$ = $5;
+      }
   ;
 
 simple_type_or_string /* IEEE1800-2005: A.2.2.1 */
@@ -6433,27 +6621,28 @@ statement_item /* This is roughly statement_item in the LRM */
 
   | jump_statement { $$ = $1; }
 
-	| K_case '(' expression ')' case_items K_endcase
-		{ PCase*tmp = new PCase(NetCase::EQ, $3, $5);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_casex '(' expression ')' case_items K_endcase
-		{ PCase*tmp = new PCase(NetCase::EQX, $3, $5);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_casez '(' expression ')' case_items K_endcase
-		{ PCase*tmp = new PCase(NetCase::EQZ, $3, $5);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_case '(' expression ')' error K_endcase
-		{ yyerrok; }
-	| K_casex '(' expression ')' error K_endcase
-		{ yyerrok; }
-	| K_casez '(' expression ')' error K_endcase
-		{ yyerrok; }
+  | unique_priority K_case '(' expression ')' case_items K_endcase
+      { PCase*tmp = new PCase($1, NetCase::EQ, $4, $6);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | unique_priority K_casex '(' expression ')' case_items K_endcase
+      { PCase*tmp = new PCase($1, NetCase::EQX, $4, $6);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | unique_priority K_casez '(' expression ')' case_items K_endcase
+      { PCase*tmp = new PCase($1, NetCase::EQZ, $4, $6);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | unique_priority K_case '(' expression ')' error K_endcase
+      { yyerrok; }
+  | unique_priority K_casex '(' expression ')' error K_endcase
+      { yyerrok; }
+  | unique_priority K_casez '(' expression ')' error K_endcase
+      { yyerrok; }
+
 	| K_if '(' expression ')' statement_or_null %prec less_than_K_else
 		{ PCondit*tmp = new PCondit($3, $5, 0);
 		  FILE_NAME(tmp, @1);
@@ -7107,6 +7296,13 @@ udp_primitive
 		  delete[]$6;
 		}
 	;
+
+unique_priority
+  :             { $$ = IVL_CASE_QUALITY_BASIC; }
+  | K_unique    { $$ = IVL_CASE_QUALITY_UNIQUE; }
+  | K_unique0   { $$ = IVL_CASE_QUALITY_UNIQUE0; }
+  | K_priority  { $$ = IVL_CASE_QUALITY_PRIORITY; }
+  ;
 
   /* Many keywords can be optional in the syntax, although their
      presence is significant. This is a fairly common pattern so

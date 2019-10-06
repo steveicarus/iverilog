@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -104,7 +104,8 @@ generation_t generation_flag = GN_DEFAULT;
 bool gn_icarus_misc_flag = true;
 bool gn_cadence_types_flag = true;
 bool gn_specify_blocks_flag = true;
-bool gn_assertions_flag = true;
+bool gn_supported_assertions_flag = true;
+bool gn_unsupported_assertions_flag = true;
 bool gn_io_range_error_flag = true;
 bool gn_strict_ca_eval_flag = false;
 bool gn_strict_expr_width_flag = false;
@@ -331,10 +332,16 @@ static void process_generation_flag(const char*gen)
 	    gn_specify_blocks_flag = false;
 
       } else if (strcmp(gen,"assertions") == 0) {
-	    gn_assertions_flag = true;
+	    gn_supported_assertions_flag = true;
+	    gn_unsupported_assertions_flag = true;
+
+      } else if (strcmp(gen,"supported-assertions") == 0) {
+	    gn_supported_assertions_flag = true;
+	    gn_unsupported_assertions_flag = false;
 
       } else if (strcmp(gen,"no-assertions") == 0) {
-	    gn_assertions_flag = false;
+	    gn_supported_assertions_flag = false;
+	    gn_unsupported_assertions_flag = false;
 
       } else if (strcmp(gen,"verilog-ams") == 0) {
 	    gn_verilog_ams_flag = true;

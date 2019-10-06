@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -748,6 +748,9 @@ static int process_generation(const char*name)
       else if (strcmp(name,"assertions") == 0)
 	    gen_assertions = "assertions";
 
+      else if (strcmp(name,"supported-assertions") == 0)
+	    gen_assertions = "supported-assertions";
+
       else if (strcmp(name,"no-assertions") == 0)
 	    gen_assertions = "no-assertions";
 
@@ -804,6 +807,7 @@ static int process_generation(const char*name)
 		            "    2009    -- IEEE1800-2009\n"
 		            "    2012    -- IEEE1800-2012\n"
 		            "Other generation flags:\n"
+		            "    assertions | supported-assertions | no-assertions\n"
 		            "    specify | no-specify\n"
 		            "    verilog-ams | no-verilog-ams\n"
 		            "    std-include | no-std-include\n"
@@ -1176,7 +1180,7 @@ int main(int argc, char **argv)
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
-	    printf("Copyright 1998-2017 Stephen Williams\n\n");
+	    printf("Copyright 1998-2019 Stephen Williams\n\n");
 	    puts(NOTICE);
       }
 

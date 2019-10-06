@@ -1,4 +1,4 @@
-.TH iverilog 1 "Sep 20th, 2019" "" "Version %M.%n%E"
+.TH iverilog 1 "Oct 5th, 2019" "" "Version %M.%n%E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -80,10 +80,11 @@ use any of the new \fIIEEE1800\fP keywords.
 Enable or disable (default) support for Verilog\-AMS.
 Very little Verilog\-AMS specific functionality is currently supported.
 .TP 8
-.B -gassertions\fI|\fP-gno-assertions
+.B -gassertions\fI|\fP-gsupported-assertions\fI|\fP-gno-assertions
 Enable (default) or disable SystemVerilog assertions. When enabled,
 assertion statements are elaborated. When disabled, assertion statements
-are parsed but ignored.
+are parsed but ignored. The \fB\-gsupported-assertions\fP option only
+enables assertions that are currently supported by the compiler.
 .TP 8
 .B -gspecify\fI|\fP-gno-specify
 Enable or disable (default) specify block support. When enabled,
@@ -129,7 +130,7 @@ default, parts of the expression that do not depend on the changed
 input value(s) are not re-evaluated. If an expression contains a call
 to a function that doesn't depend solely on its input values or that
 has side effects, the resulting behavior will differ from that
-required by the standard. Using \fI\-gstrict\-ca\-eval\fP will force
+required by the standard. Using \fB\-gstrict\-ca\-eval\fP will force
 standard compliant behavior (with some loss in performance).
 .TP 8
 .B -gstrict-expr-width\fI|\fP-gno-strict-expr-width

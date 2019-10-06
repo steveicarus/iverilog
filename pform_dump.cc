@@ -840,6 +840,19 @@ void PCallTask::dump(ostream&out, unsigned ind) const
 void PCase::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "";
+      switch (quality_) {
+	  case IVL_CASE_QUALITY_BASIC:
+	    break;
+	  case IVL_CASE_QUALITY_UNIQUE:
+	    out << "unique ";
+	    break;
+	  case IVL_CASE_QUALITY_UNIQUE0:
+	    out << "unique0 ";
+	    break;
+	  case IVL_CASE_QUALITY_PRIORITY:
+	    out << "priority ";
+	    break;
+      }
       switch (type_) {
 	  case NetCase::EQ:
 	    out << "case";
