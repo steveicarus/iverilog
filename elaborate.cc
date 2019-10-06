@@ -2317,7 +2317,7 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 {
       ivl_assert(*this, rval_);
 
-      NetExpr*rv = rval_->elaborate_expr(des, scope, net_type, 0);
+      NetExpr*rv = elab_and_eval(des, scope, rval_, net_type, is_constant_);
 
       if (!is_constant_ || !rv) return rv;
 
