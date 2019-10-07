@@ -47,7 +47,8 @@ on a UNIX-like system:
 
 	- bison and flex
           It has been reported that bison 2.3 on MacOS generates broken
-          code, but bison 3.0.4 works.
+          code, but bison 3.0.4 works. We recommend using the Fink
+          project version of bison and flex (finkproject.org).
 
 	- gperf 3.0 or later
 	  The lexical analyzer doesn't recognize keywords directly,
