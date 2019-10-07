@@ -163,15 +163,11 @@ unsigned PExpr::test_width(Design*des, NetScope*, width_mode_t&)
       return 1;
 }
 
-NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, ivl_type_t, unsigned) const
+NetExpr* PExpr::elaborate_expr(Design*des, NetScope*scope, ivl_type_t, unsigned flags) const
 {
-      cerr << get_fileline() << ": internal error: I do not know how to"
-	   << " elaborate (ivl_type_t) this expression. " << endl;
-      cerr << get_fileline() << ":               : Expression is: " << *this
-	   << endl;
-      cerr << get_fileline() << ":               : Expression type: " << typeid(*this).name() << endl;
-      des->errors += 1;
-      return 0;
+	// Fall back to the old method. Currently the new method won't be used
+	// if the target is a vector type, so we can use an arbitrary width.
+      return elaborate_expr(des, scope, 1, flags);
 }
 
 
@@ -181,6 +177,7 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
 	   << " elaborate this expression. " << endl;
       cerr << get_fileline() << ":               : Expression is: " << *this
 	   << endl;
+      cerr << get_fileline() << ":               : Expression type: " << typeid(*this).name() << endl;
       des->errors += 1;
       return 0;
 }
@@ -4061,10 +4058,12 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	      // If this is an array object, and there are members in
 	      // the member_path, check for array properties.
 	    if (net->darray_type() && member_path.size() > 0) {
-		  cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-		       << "Ident " << base_path
-		       << " look for array property " << member_path
-		       << endl;
+                  if (debug_elaborate) {
+                        cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+                             << "Ident " << base_path
+                             << " look for array property " << member_path
+                             << endl;
+                  }
 
 		  ivl_assert(*this, member_path.size() == 1);
 		  const name_component_t member_comp = member_path.front();

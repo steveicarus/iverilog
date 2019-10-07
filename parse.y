@@ -4890,15 +4890,27 @@ module_port_list_opt
      ports. These are simply advance ways to declare parameters, so
      that the port declarations may use them. */
 module_parameter_port_list_opt
-	:
-        | '#' '(' module_parameter_port_list ')'
-	;
+  :
+  | '#' '(' module_parameter_port_list ')'
+  ;
 
 module_parameter_port_list
-	: K_parameter param_type parameter_assign
-	| module_parameter_port_list ',' parameter_assign
-	| module_parameter_port_list ',' K_parameter param_type parameter_assign
-	;
+  : K_parameter param_type parameter_assign
+  | K_localparam param_type localparam_assign
+      { if (!gn_system_verilog()) {
+	      yyerror(@1, "error: Local parameters in module parameter "
+			  "port lists requires SystemVerilog.");
+	}
+      }
+  | module_parameter_port_list ',' parameter_assign
+  | module_parameter_port_list ',' K_parameter param_type parameter_assign
+  | module_parameter_port_list ',' K_localparam param_type localparam_assign
+      { if (!gn_system_verilog()) {
+	      yyerror(@3, "error: Local parameters in module parameter "
+			  "port lists requires SystemVerilog.");
+	}
+      }
+  ;
 
 module_item
 
