@@ -652,9 +652,9 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 
       unsigned idx, default_case;
 
-      if (qual != IVL_CASE_QUALITY_BASIC) {
+      if (qual != IVL_CASE_QUALITY_BASIC && qual != IVL_CASE_QUALITY_PRIORITY) {
 	    fprintf(stderr, "%s:%u: tgt-vvp sorry: "
-		    "Case unique/unique0/priority qualities are ignored.\n",
+		    "Case unique/unique0 qualities are ignored.\n",
 		    ivl_stmt_file(net), ivl_stmt_lineno(net));
       }
 
@@ -715,6 +715,23 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
       if (default_case < count) {
 	    ivl_statement_t cst = ivl_stmt_case_stmt(net, default_case);
 	    rc += show_statement(cst, sscope);
+      }
+	/* Emit code to check unique and priority have handled a value
+           (when there is no default). */
+      else if (default_case == count) {
+          switch (qual) {
+          case IVL_CASE_QUALITY_UNIQUE:
+          case IVL_CASE_QUALITY_PRIORITY:
+              fprintf(vvp_out, "    %%vpi_call/w %u %u \"$warning\", "
+                      "\"value is unhandled for priority or unique case statement\""
+                      " {0 0 0};\n",
+                      ivl_file_table_index(ivl_stmt_file(net)),
+                      ivl_stmt_lineno(net));
+              break;
+
+          default:
+              break;
+          }
       }
 
 	/* Jump to the out of the case. */
