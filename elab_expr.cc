@@ -2752,8 +2752,8 @@ NetExpr* PECastSize::elaborate_expr(Design*des, NetScope*scope,
       ivl_assert(*this, size_);
       ivl_assert(*this, base_);
 
-        // When changing size, a cast behaves exactly like an assignment,
-        // so the result size affects the final expression width.
+	// A cast behaves exactly like an assignment to a temporary variable,
+	// so the temporary result size may affect the sub-expression width.
       unsigned cast_width = base_->expr_width();
       if (cast_width < expr_width_)
             cast_width = expr_width_;
@@ -2769,33 +2769,33 @@ NetExpr* PECastSize::elaborate_expr(Design*des, NetScope*scope,
       return pad_to_width(tmp, expr_wid, signed_flag_, *this);
 }
 
-unsigned PECastType::test_width(Design*des, NetScope*scope, width_mode_t&wid)
+unsigned PECastType::test_width(Design*des, NetScope*scope, width_mode_t&)
 {
       ivl_type_t t = target_->elaborate_type(des, scope);
-      base_->test_width(des, scope, wid);
 
-      if(const netdarray_t*use_darray = dynamic_cast<const netdarray_t*> (t)) {
+      width_mode_t tmp_mode = PExpr::SIZED;
+      base_->test_width(des, scope, tmp_mode);
+
+      if (const netdarray_t*use_darray = dynamic_cast<const netdarray_t*>(t)) {
 	    expr_type_  = use_darray->element_base_type();
 	    expr_width_ = use_darray->element_width();
-      }
 
-      else if(const netstring_t*use_string = dynamic_cast<const netstring_t*> (t)) {
+      } else if (const netstring_t*use_string = dynamic_cast<const netstring_t*>(t)) {
 	    expr_type_  = use_string->base_type();
 	    expr_width_ = 8;
-      }
 
-      else {
+      } else {
 	    expr_type_  = t->base_type();
 	    expr_width_ = t->packed_width();
       }
-
+      min_width_   = expr_width_;
       signed_flag_ = t->get_signed();
-      min_width_ = expr_width_;
+
       return expr_width_;
 }
 
 NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
-                                    ivl_type_t type, unsigned) const
+                                    ivl_type_t type, unsigned flags) const
 {
     const netdarray_t*darray = NULL;
     const netvector_t*vector = NULL;
@@ -2824,57 +2824,62 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
     }
 
     // Fallback
-    return elaborate_expr(des, scope, (unsigned) 0, 0);
+    return elaborate_expr(des, scope, (unsigned) 0, flags);
 }
 
 NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
-				    unsigned, unsigned) const
+				    unsigned expr_wid, unsigned flags) const
 {
-      NetExpr*expr = base_->elaborate_expr(des, scope, base_->expr_width(), NO_FLAGS);
+      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
 
-      if(dynamic_cast<const real_type_t*>(target_)) {
-          return cast_to_real(expr);
+	// A cast behaves exactly like an assignment to a temporary variable,
+	// so the temporary result size may affect the sub-expression width.
+      unsigned cast_width = base_->expr_width();
+      if (type_is_vectorable(base_->expr_type()) && (cast_width < expr_width_))
+	    cast_width = expr_width_;
+
+      NetExpr*sub = base_->elaborate_expr(des, scope, cast_width, flags);
+
+      if (dynamic_cast<const real_type_t*>(target_)) {
+	    return cast_to_real(sub);
       }
 
-      if(const atom2_type_t*atom = dynamic_cast<const atom2_type_t*>(target_)) {
-          if(base_->expr_width() > expr_width_) {
-              cerr << get_fileline() << ": cast type is not wide enough to store the result." << endl;
-              ivl_assert(*this, 0);
-          }
+      NetExpr*tmp = 0;
+      if (dynamic_cast<const atom2_type_t*>(target_)) {
+	    tmp = cast_to_int2(sub, expr_width_);
+      }
+      if (const vector_type_t*vec = dynamic_cast<const vector_type_t*>(target_)) {
+	    switch (vec->base_type) {
+		case IVL_VT_BOOL:
+		  tmp = cast_to_int2(sub, expr_width_);
+		  break;
 
-          if(base_->has_sign() != atom->signed_flag) {
-              cerr << get_fileline() << ": cast type and subject differ in signedness." << endl;
-              ivl_assert(*this, 0);
-          }
+		case IVL_VT_LOGIC:
+		  tmp = cast_to_int4(sub, expr_width_);
+		  break;
 
-          // That is how you both resize & cast to integers
-          return new NetECast('2', expr, expr_width_, expr->has_sign());
+		default:
+		  break;
+	    }
+      }
+      if (tmp) {
+	    if (tmp == sub) {
+		    // We already had the correct base type, so we just need to
+		    // fix the size. Note that even if the size is already correct,
+                    // we still need to isolate the sub-expression from changes in
+                    // the signedness pushed down from the main expression.
+		  tmp = cast_to_width(sub, expr_width_, sub->has_sign(), *this);
+	    }
+	    return pad_to_width(tmp, expr_wid, signed_flag_, *this);
       }
 
-      if(const vector_type_t*vec = dynamic_cast<const vector_type_t*>(target_)) {
-          switch(vec->base_type) {
-              case IVL_VT_BOOL:
-                  return cast_to_int2(expr, expr_width_);
+      if (dynamic_cast<const string_type_t*>(target_)) {
+	    if (base_->expr_type() == IVL_VT_STRING)
+		  return sub; // no conversion
 
-              case IVL_VT_LOGIC:
-                  return cast_to_int4(expr, expr_width_);
-
-              default:
-                  break;  /* Suppress warnings */
-          }
-      }
-
-      else if(dynamic_cast<const string_type_t*>(target_)) {
-          if(base_->expr_type() == IVL_VT_STRING)
-            return expr;        // no conversion
-
-          if((base_->expr_type() != IVL_VT_BOOL) &&
-                (base_->expr_type() != IVL_VT_LOGIC)) {
-              cerr << get_fileline() << ": cannot be cast to a string." << endl;
-              ivl_assert(*this, false);
-          }
-
-          return expr;
+	    if (base_->expr_type() == IVL_VT_LOGIC
+	     || base_->expr_type() == IVL_VT_BOOL)
+		  return sub; // handled by the target as special cases
       }
 
       cerr << get_fileline() << ": sorry: This cast operation is not yet supported." << endl;
