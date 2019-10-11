@@ -2759,6 +2759,8 @@ NetExpr* PECastSize::elaborate_expr(Design*des, NetScope*scope,
             cast_width = expr_width_;
 
       NetExpr*sub = base_->elaborate_expr(des, scope, cast_width, flags);
+      if (sub == 0)
+	    return 0;
 
 	// Perform the cast. The extension method (zero/sign), if needed,
 	// depends on the type of the base expression.
@@ -2839,6 +2841,8 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
 	    cast_width = expr_width_;
 
       NetExpr*sub = base_->elaborate_expr(des, scope, cast_width, flags);
+      if (sub == 0)
+	    return 0;
 
       if (dynamic_cast<const real_type_t*>(target_)) {
 	    return cast_to_real(sub);
@@ -2883,6 +2887,7 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
       }
 
       cerr << get_fileline() << ": sorry: This cast operation is not yet supported." << endl;
+      des->errors += 1;
       return 0;
 }
 
