@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -44,11 +44,24 @@ struct sfunc_return_type_cell : sfunc_return_type {
       struct sfunc_return_type_cell*next;
 };
 
-static struct sfunc_return_type_cell*sfunc_stack = 0;
+static struct sfunc_return_type_cell*sfunc_list_head = 0;
+static struct sfunc_return_type_cell*sfunc_list_tail = 0;
+
+void append_to_list(struct sfunc_return_type_cell*cell)
+{
+      if (sfunc_list_tail) {
+	    sfunc_list_tail->next = cell;
+	    sfunc_list_tail = cell;
+      } else {
+	    sfunc_list_head = cell;
+	    sfunc_list_tail = cell;
+      }
+      cell->next = 0;
+}
 
 void cleanup_sys_func_table()
 {
-      struct sfunc_return_type_cell *next, *cur = sfunc_stack;
+      struct sfunc_return_type_cell *next, *cur = sfunc_list_head;
       while (cur) {
 	    next = cur->next;
 	    delete cur;
@@ -58,8 +71,8 @@ void cleanup_sys_func_table()
 
 const struct sfunc_return_type* lookup_sys_func(const char*name)
 {
-	/* First, try to find the name in the function stack. */
-      struct sfunc_return_type_cell*cur = sfunc_stack;
+	/* First, try to find the name in the function list. */
+      struct sfunc_return_type_cell*cur = sfunc_list_head;
       while (cur) {
 	    if (strcmp(cur->name, name) == 0)
 		  return cur;
@@ -77,7 +90,7 @@ const struct sfunc_return_type* lookup_sys_func(const char*name)
 	    idx += 1;
       }
 
-	/* No luck finding, so return the trailer, which give a
+	/* No luck finding, so return the trailer, which gives a
 	   default description. */
       return sfunc_table + idx;
 }
@@ -87,6 +100,10 @@ const struct sfunc_return_type* lookup_sys_func(const char*name)
  * format:
  *
  *    <name> <type> [<arguments>]
+ *
+ * The driver passes us user-provided tables first, so we add new entries
+ * to the end of the list. This allows user-defined functions to override
+ * built-in functions.
  */
 int load_sys_func_table(const char*path)
 {
@@ -136,8 +153,7 @@ int load_sys_func_table(const char*path)
 		  cell->type = IVL_VT_REAL;
 		  cell->wid  = 1;
 		  cell->signed_flag = true;
-		  cell->next = sfunc_stack;
-		  sfunc_stack = cell;
+		  append_to_list(cell);
 		  continue;
 	    }
 
@@ -147,8 +163,7 @@ int load_sys_func_table(const char*path)
 		  cell->type = IVL_VT_LOGIC;
 		  cell->wid  = 32;
 		  cell->signed_flag = true;
-		  cell->next = sfunc_stack;
-		  sfunc_stack = cell;
+		  append_to_list(cell);
 		  continue;
 	    }
 
@@ -188,8 +203,7 @@ int load_sys_func_table(const char*path)
 		  cell->type = IVL_VT_LOGIC;
 		  cell->wid  = width;
 		  cell->signed_flag = signed_flag;
-		  cell->next = sfunc_stack;
-		  sfunc_stack = cell;
+		  append_to_list(cell);
 		  continue;
 	    }
 
@@ -199,8 +213,7 @@ int load_sys_func_table(const char*path)
 		  cell->type = IVL_VT_VOID;
 		  cell->wid  = 0;
 		  cell->signed_flag = false;
-		  cell->next = sfunc_stack;
-		  sfunc_stack = cell;
+		  append_to_list(cell);
 		  continue;
 	    }
 
@@ -210,8 +223,7 @@ int load_sys_func_table(const char*path)
 		  cell->type = IVL_VT_STRING;
 		  cell->wid  = 0;   // string is a dynamic length type
 		  cell->signed_flag = false;
-		  cell->next = sfunc_stack;
-		  sfunc_stack = cell;
+		  append_to_list(cell);
 		  continue;
 	    }
 

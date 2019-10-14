@@ -864,7 +864,14 @@ static void add_sft_file(const char *module)
       char *file;
 
       file = (char *) malloc(strlen(base)+1+strlen(module)+4+1);
-      sprintf(file, "%s%c%s.sft", base, sep, module);
+	// If the module name has at least one directory character
+	// in it, assume it includes the path, otherwise look in
+	// the base directory.
+      if (strchr(module, sep))
+	    sprintf(file, "%s.sft", module);
+      else
+	    sprintf(file, "%s%c%s.sft", base, sep, module);
+
       if (access(file, R_OK) == 0)
             fprintf(iconfig_file, "sys_func:%s\n", file);
       free(file);
