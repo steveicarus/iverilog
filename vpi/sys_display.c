@@ -2161,6 +2161,9 @@ static PLI_INT32 sys_severity_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       free(dstr);
 
       if (strncmp(name,"$fatal",6) == 0) {
+	      /* Set the exit code from vvp as an error code. */
+	    vpip_set_return_value(1);
+	      /* Now tell the simulator to finish. */
             vpi_control(vpiFinish, finish_number.value.integer);
       }
 

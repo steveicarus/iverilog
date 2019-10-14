@@ -535,7 +535,7 @@ void stop_handler(int rc)
         /* The user may be running in a non-interactive environment, so
          * they want $stop and <Control-C> to be the same as $finish. */
       if (stop_is_finish) {
-           vpip_set_return_value(stop_is_finish_exit_code);
+	    vpip_set_return_value(stop_is_finish_exit_code);
 	    schedule_finish(0);
 	    return;
       }

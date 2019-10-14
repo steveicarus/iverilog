@@ -42,6 +42,8 @@ static PLI_INT32 sys_finish_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    return 0;
       }
 
+      vpip_set_return_value(0);
+
       vpi_control(vpiFinish, diag_msg);
       return 0;
 }
