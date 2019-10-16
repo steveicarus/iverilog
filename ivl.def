@@ -302,6 +302,7 @@ ivl_stmt_parm_count
 ivl_stmt_rval
 ivl_stmt_sfunc_as_task
 ivl_stmt_sub_stmt
+ivl_stmt_case_quality
 
 ivl_switch_a
 ivl_switch_b

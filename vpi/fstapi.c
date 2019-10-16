@@ -313,6 +313,7 @@ return(NULL);
 #include <limits.h>
 #define fstMmap(__addr,__len,__prot,__flags,__fd,__off) fstMmap2((__len), (__fd), (__off))
 #define fstMunmap(__addr,__len)                         free(__addr)
+#define MAP_FAILED (void*)-1 
 
 static void *fstMmap2(size_t __len, int __fd, off_t __off)
 {
