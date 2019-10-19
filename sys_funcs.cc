@@ -30,14 +30,14 @@
  */
 
 static const struct sfunc_return_type sfunc_table[] = {
-      { "$realtime",   IVL_VT_REAL,   1, 0 },
-      { "$bitstoreal", IVL_VT_REAL,   1, 0 },
-      { "$itor",       IVL_VT_REAL,   1, 0 },
-      { "$realtobits", IVL_VT_LOGIC, 64, 0 },
-      { "$time",       IVL_VT_LOGIC, 64, 0 },
-      { "$stime",      IVL_VT_LOGIC, 32, 0 },
-      { "$simtime",    IVL_VT_LOGIC, 64, 0 },
-      { 0,             IVL_VT_LOGIC, 32, 0 }
+      { "$realtime",   IVL_VT_REAL,   1, false, false },
+      { "$bitstoreal", IVL_VT_REAL,   1, false, false },
+      { "$itor",       IVL_VT_REAL,   1, false, false },
+      { "$realtobits", IVL_VT_LOGIC, 64, false, false },
+      { "$time",       IVL_VT_LOGIC, 64, false, false },
+      { "$stime",      IVL_VT_LOGIC, 32, false, false },
+      { "$simtime",    IVL_VT_LOGIC, 64, false, false },
+      { 0,             IVL_VT_LOGIC, 32, false, false }
 };
 
 struct sfunc_return_type_cell : sfunc_return_type {
@@ -69,9 +69,8 @@ void cleanup_sys_func_table()
       }
 }
 
-const struct sfunc_return_type* lookup_sys_func(const char*name)
+static struct sfunc_return_type* find_in_sys_func_list(const char*name)
 {
-	/* First, try to find the name in the function list. */
       struct sfunc_return_type_cell*cur = sfunc_list_head;
       while (cur) {
 	    if (strcmp(cur->name, name) == 0)
@@ -79,6 +78,16 @@ const struct sfunc_return_type* lookup_sys_func(const char*name)
 
 	    cur = cur->next;
       }
+
+      return 0;
+}
+
+const struct sfunc_return_type* lookup_sys_func(const char*name)
+{
+	/* First, try to find the name in the function list. */
+      struct sfunc_return_type*def = find_in_sys_func_list(name);
+      if (def)
+	    return def;
 
 	/* Next, look in the core table. */
       unsigned idx = 0;
@@ -147,12 +156,21 @@ int load_sys_func_table(const char*path)
 	    cp = stype + strcspn(stype, " \t\r\n");
 	    if (cp[0]) *cp++ = 0;
 
+            struct sfunc_return_type*def = find_in_sys_func_list(name);
+            if (def) {
+                    /* Keep the original definition, but flag that it
+                       overrides a later definition. */
+                  def->override_flag = true;
+                  continue;
+            }
+
 	    if (strcmp(stype,"vpiSysFuncReal") == 0) {
 		  cell = new struct sfunc_return_type_cell;
 		  cell->name = lex_strings.add(name);
 		  cell->type = IVL_VT_REAL;
 		  cell->wid  = 1;
 		  cell->signed_flag = true;
+		  cell->override_flag = false;
 		  append_to_list(cell);
 		  continue;
 	    }
@@ -163,6 +181,7 @@ int load_sys_func_table(const char*path)
 		  cell->type = IVL_VT_LOGIC;
 		  cell->wid  = 32;
 		  cell->signed_flag = true;
+		  cell->override_flag = false;
 		  append_to_list(cell);
 		  continue;
 	    }
@@ -203,6 +222,7 @@ int load_sys_func_table(const char*path)
 		  cell->type = IVL_VT_LOGIC;
 		  cell->wid  = width;
 		  cell->signed_flag = signed_flag;
+		  cell->override_flag = false;
 		  append_to_list(cell);
 		  continue;
 	    }
@@ -213,6 +233,7 @@ int load_sys_func_table(const char*path)
 		  cell->type = IVL_VT_VOID;
 		  cell->wid  = 0;
 		  cell->signed_flag = false;
+		  cell->override_flag = false;
 		  append_to_list(cell);
 		  continue;
 	    }
@@ -223,6 +244,7 @@ int load_sys_func_table(const char*path)
 		  cell->type = IVL_VT_STRING;
 		  cell->wid  = 0;   // string is a dynamic length type
 		  cell->signed_flag = false;
+		  cell->override_flag = false;
 		  append_to_list(cell);
 		  continue;
 	    }

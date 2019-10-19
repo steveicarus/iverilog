@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -461,15 +461,15 @@ bool NetESelect::has_width() const
 }
 
 NetESFunc::NetESFunc(const char*n, ivl_variable_type_t t,
-		     unsigned width, unsigned np)
-: name_(0), type_(t), enum_type_(0), parms_(np)
+		     unsigned width, unsigned np, bool is_overridden)
+: name_(0), type_(t), enum_type_(0), parms_(np), is_overridden_(is_overridden)
 {
       name_ = lex_strings.add(n);
       expr_width(width);
 }
 
 NetESFunc::NetESFunc(const char*n, ivl_type_t rtype, unsigned np)
-: NetExpr(rtype), name_(0), type_(IVL_VT_NO_TYPE), enum_type_(0), parms_(np)
+: NetExpr(rtype), name_(0), type_(IVL_VT_NO_TYPE), enum_type_(0), parms_(np), is_overridden_(false)
 {
       name_ = lex_strings.add(n);
       expr_width(rtype->packed_width());
@@ -485,7 +485,7 @@ NetESFunc::NetESFunc(const char*n, ivl_type_t rtype, unsigned np)
 }
 
 NetESFunc::NetESFunc(const char*n, const netenum_t*enum_type, unsigned np)
-: name_(0), type_(enum_type->base_type()), enum_type_(enum_type), parms_(np)
+: name_(0), type_(enum_type->base_type()), enum_type_(enum_type), parms_(np), is_overridden_(false)
 {
       name_ = lex_strings.add(n);
       expr_width(enum_type->packed_width());

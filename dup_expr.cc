@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -233,7 +233,7 @@ NetESelect* NetESelect::dup_expr() const
 
 NetESFunc* NetESFunc::dup_expr() const
 {
-      NetESFunc*tmp = new NetESFunc(name_, type_, expr_width(), nparms());
+      NetESFunc*tmp = new NetESFunc(name_, type_, expr_width(), nparms(), is_overridden_);
       ivl_assert(*this, tmp);
 
       tmp->cast_signed(has_sign());

@@ -286,7 +286,8 @@ struct sfunc_return_type {
       const char*   name;
       ivl_variable_type_t type;
       unsigned      wid;
-      int           signed_flag;
+      bool          signed_flag;
+      bool          override_flag;
 };
 
 extern const struct sfunc_return_type* lookup_sys_func(const char*name);

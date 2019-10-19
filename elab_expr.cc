@@ -1202,6 +1202,8 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
       min_width_   = expr_width_;
       signed_flag_ = sfunc_info->signed_flag;
 
+      is_overridden_ = sfunc_info->override_flag;
+
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: test_width "
 		 << "of system function " << name
@@ -1547,10 +1549,19 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
       if ((nparms == 1) && (parms_[0] == 0))
 	    nparms = 0;
 
-      NetESFunc*fun = new NetESFunc(name, expr_type_, expr_width_, nparms);
+      NetESFunc*fun = new NetESFunc(name, expr_type_, expr_width_, nparms, is_overridden_);
       fun->set_line(*this);
 
-      if (!fun->is_built_in()) {
+      bool need_const = NEED_CONST & flags;
+
+	/* We don't support evaluating overridden functions. */
+      if (is_overridden_ && (need_const || scope->need_const_func())) {
+	    cerr << get_fileline() << ": sorry: Cannot evaluate "
+		    "overridden system function." << endl;
+	    des->errors += 1;
+      }
+
+      if (is_overridden_ || !fun->is_built_in()) {
 	    if (scope->need_const_func()) {
 		  cerr << get_fileline() << ": error: " << name
 		       << " is not a built-in function, so cannot"
@@ -1566,8 +1577,6 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 	   While we're at it, try to evaluate the function parameter
 	   expression as much as possible, and use the reduced
 	   expression if one is created. */
-
-      bool need_const = NEED_CONST & flags;
 
 	/* These functions can work in a constant context with a signal expression. */
       if ((nparms == 1) && (dynamic_cast<PEIdent*>(parms_[0]))) {

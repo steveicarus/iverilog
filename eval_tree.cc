@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2400,6 +2400,10 @@ NetESFunc::ID NetESFunc::built_in_id_() const
 
 NetExpr* NetESFunc::eval_tree()
 {
+	/* We don't support evaluating overridden functions. */
+      if (is_overridden_)
+	    return 0;
+
 	/* Get the ID for this system function if it can be used as a
 	 * constant function. */
       ID id = built_in_id_();

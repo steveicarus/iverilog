@@ -928,6 +928,9 @@ class PECallFunction : public PExpr {
       pform_name_t path_;
       std::vector<PExpr *> parms_;
 
+        // For system functions.
+      bool is_overridden_;
+
       bool check_call_matches_definition_(Design*des, NetScope*dscope) const;
 
 
