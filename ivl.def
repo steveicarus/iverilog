@@ -280,6 +280,7 @@ ivl_stmt_block_stmt
 ivl_stmt_call
 ivl_stmt_case_count
 ivl_stmt_case_expr
+ivl_stmt_case_quality
 ivl_stmt_case_stmt
 ivl_stmt_cond_expr
 ivl_stmt_cond_false
