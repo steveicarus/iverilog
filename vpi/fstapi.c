@@ -955,12 +955,14 @@ fflush(xc->handle);
  */
 static void fstWriterMmapSanity(void *pnt, const char *file, int line, const char *usage)
 {
+#if !defined(__CYGWIN__) && !defined(__MINGW32__)
 if(pnt == MAP_FAILED)
 	{
 	fprintf(stderr, "fstMmap() assigned to %s failed: errno: %d, file %s, line %d.\n", usage, errno, file, line);
 	perror("Why");
 	pnt = NULL;
 	}
+#endif
 }
 
 
