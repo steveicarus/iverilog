@@ -1,4 +1,4 @@
-.TH iverilog 1 "Oct 5th, 2019" "" "Version %M.%n%E"
+.TH iverilog 1 "Oct 21st, 2019" "" "Version %M.%n%E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -7,8 +7,9 @@ iverilog - Icarus Verilog compiler
 [\-EiSuVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
 [\-Pparameter=value] [\-pflag=value] [\-dname]
 [\-g1995\:|\-g2001\:|\-g2005\:|\-g2005-sv\:|\-g2009\:|\-g2012\:|\-g<feature>]
-[\-Iincludedir] [\-mmodule] [\-M[mode=]file] [\-Nfile] [\-ooutputfilename]
-[\-stopmodule] [\-ttype] [\-Tmin/typ/max] [\-Wclass] [\-ypath] [\-lfile]
+[\-Iincludedir] [\-Lmoduledir] [\-mmodule] [\-M[mode=]file] [\-Nfile]
+[\-ooutputfilename] [\-stopmodule] [\-ttype] [\-Tmin/typ/max] [\-Wclass]
+[\-ypath] [\-lfile]
 sourcefile
 
 .SH DESCRIPTION
@@ -164,6 +165,12 @@ over that instantiation. It will also stop the compiler returning an
 error if there are no top level modules. This allows the compiler to be
 used to check incomplete designs for errors.
 .TP 8
+.B -L\fIpath\fP
+This flag adds a directory to the path list used to locate VPI
+modules. The default path includes only the install directory for the
+system.vpi module, but this flag can add other directories. Multiple
+paths are allowed, and the paths will be searched in order.
+.TP 8
 .B -l\fIfile\fP
 Add the specified file to the list of source files to be compiled,
 but mark it as a library file. All modules contained within that
@@ -191,12 +198,12 @@ prefixed by "I " and other files are prefixed by "M ".
 Add this module to the list of VPI modules to be loaded by the
 simulation. Many modules can be specified, and all will be loaded, in
 the order specified. The system module is implicit and always included
-(and loaded last). If a System Function Table file (<module>.sft)
-exists for the module it will be loaded automatically.
+(and loaded last).
 
 If the specified name includes at least one directory character, it is
 assumed to be prefixed by the path to the module, otherwise the module
-is assumed to be located in the \fIiverilog\fP base directory.
+is searched for in the paths specified by preceding \fB-L\fP options,
+and if not found there, in the \fIiverilog\fP base directory.
 .TP 8
 .B -N\fIpath\fP
 This is used for debugging the compiler proper. Dump the final netlist
@@ -406,13 +413,23 @@ sensitivity list. Although this behaviour is prescribed by the IEEE
 standard, it is not what might be expected and can have performance
 implications if the array is large.
 
-.SH "SYSTEM FUNCTION TABLE FILES"
-If the source file name as a \fB.sft\fP suffix, then it is taken to be
-a system function table file. A System function table file is used to
-describe to the compiler the return types for system functions. This
+.SH "VPI MODULES"
+If the source file name has a \fB.vpi\fP or \fB.vpl\fP suffix, then it
+is taken to be a VPI module. VPI modules supplied by the user are scanned
+to determine the return types of any system functions they provide. This
 is necessary because the compiler needs this information to elaborate
-expressions that contain these system functions, but cannot run the
-sizetf functions since it has no run-time.
+expressions that contain these system functions. The module path/name is
+passed on to the target to allow the VPI module to be automatically loaded
+at the start of simulation.
+
+VPI modules may also be supplied using the \fB-L\fP and \fB-m\fP options.
+
+.SH "SYSTEM FUNCTION TABLE FILES [deprecated]"
+If the source file name has a \fB.sft\fP suffix, then it is taken to be a
+system function table file. A system function table file is the old method
+used to describe to the compiler the return types for system functions.
+Users are encouraged to switch to the new method of simply supplying the
+VPI module.
 
 The format of the table is ASCII, one function per line. Empty lines
 are ignored, and lines that start with the '\fI#\fP' character are
