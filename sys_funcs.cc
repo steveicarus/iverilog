@@ -29,16 +29,8 @@
  * via the lookup_sys_func function.
  */
 
-static const struct sfunc_return_type sfunc_table[] = {
-      { "$realtime",   IVL_VT_REAL,   1, false, false },
-      { "$bitstoreal", IVL_VT_REAL,   1, false, false },
-      { "$itor",       IVL_VT_REAL,   1, false, false },
-      { "$realtobits", IVL_VT_LOGIC, 64, false, false },
-      { "$time",       IVL_VT_LOGIC, 64, false, false },
-      { "$stime",      IVL_VT_LOGIC, 32, false, false },
-      { "$simtime",    IVL_VT_LOGIC, 64, false, false },
-      { 0,             IVL_VT_LOGIC, 32, false, false }
-};
+static const struct sfunc_return_type default_return_type =
+    { 0, IVL_VT_LOGIC, 32, false, false };
 
 struct sfunc_return_type_cell : sfunc_return_type {
       struct sfunc_return_type_cell*next;
@@ -89,19 +81,8 @@ const struct sfunc_return_type* lookup_sys_func(const char*name)
       if (def)
 	    return def;
 
-	/* Next, look in the core table. */
-      unsigned idx = 0;
-      while (sfunc_table[idx].name) {
-
-	    if (strcmp(sfunc_table[idx].name, name) == 0)
-		  return sfunc_table + idx;
-
-	    idx += 1;
-      }
-
-	/* No luck finding, so return the trailer, which gives a
-	   default description. */
-      return sfunc_table + idx;
+	/* No luck finding, so return the default description. */
+      return &default_return_type;
 }
 
 void add_sys_func(const struct sfunc_return_type&ret_type)
