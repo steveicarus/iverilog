@@ -290,9 +290,16 @@ struct sfunc_return_type {
       bool          override_flag;
 };
 
+extern void add_sys_func(const struct sfunc_return_type&ret_type);
 extern const struct sfunc_return_type* lookup_sys_func(const char*name);
 extern int load_sys_func_table(const char*path);
 extern void cleanup_sys_func_table();
+/*
+ * This temporarily loads a VPI module, to determine the return values
+ * of system functions provided by that module, and adds the return values
+ * to the system function table.
+ */
+extern bool load_vpi_module(const char*path);
 
 /*
  * In system Verilog it is allowed with a warning to call a function

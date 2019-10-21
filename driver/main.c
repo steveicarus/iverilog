@@ -40,7 +40,7 @@ const char NOTICE[] =
 const char HELP[] =
 "Usage: iverilog [-EiSuvV] [-B base] [-c cmdfile|-f cmdfile]\n"
 "                [-g1995|-g2001|-g2005|-g2005-sv|-g2009|-g2012] [-g<feature>]\n"
-"                [-D macro[=defn]] [-I includedir]\n"
+"                [-D macro[=defn]] [-I includedir] [-L moduledir]\n"
 "                [-M [mode=]depfile] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
 "                [-s topmodule] [-t target] [-T min|typ|max]\n"
@@ -168,6 +168,9 @@ FILE*iconfig_file = 0;
 char*compiled_defines_path = 0;
 
 static char iconfig_common_path[4096] = "";
+
+static const char**vpi_path_list = 0;
+static unsigned vpi_path_list_size = 0;
 
 int synth_flag = 0;
 int verbose_flag = 0;
@@ -673,13 +676,18 @@ void process_timescale(const char*ts_string)
 /*
  * This function is called while processing a file name in a command
  * file, or a file name on the command line. Look to see if there is a
- * .sft suffix, and if so pass that as a sys_func file. Otherwise, it
- * is a Verilog source file to be written into the file list.
+ * .sft or .vpi suffix, and if so pass that as a sys_func or module
+ * file. Otherwise, it is a Verilog source file to be written into the
+ * file list.
  */
 void process_file_name(const char*name, int lib_flag)
 {
       if (strlen(name) > 4 && strcasecmp(".sft", name+strlen(name)-4) == 0) {
+	    fprintf(stderr, "SFT files are deprecated. Please pass the VPI module instead.\n");
 	    fprintf(iconfig_file,"sys_func:%s\n", name);
+
+      } else if (strlen(name) > 4 && strcasecmp(".vpi", name+strlen(name)-4) == 0) {
+	    fprintf(iconfig_file,"module:%s\n", name);
 
       } else {
 	    fprintf(source_file, "%s\n", name);
@@ -857,24 +865,54 @@ static int process_depfile(const char*name)
 }
 
 /*
- * If it exists add the SFT file for the given module.
+ * If it exists add the VPI file for the given module.
  */
-static void add_sft_file(const char *module)
+static void add_vpi_file(const char *name)
 {
-      char *file;
+      char path[4096];
 
-      file = (char *) malloc(strlen(base)+1+strlen(module)+4+1);
-	// If the module name has at least one directory character
-	// in it, assume it includes the path, otherwise look in
-	// the base directory.
-      if (strchr(module, sep))
-	    sprintf(file, "%s.sft", module);
-      else
-	    sprintf(file, "%s%c%s.sft", base, sep, module);
-
-      if (access(file, R_OK) == 0)
-            fprintf(iconfig_file, "sys_func:%s\n", file);
-      free(file);
+      int found = 0;
+      if (strchr(name, sep)) {
+	      /* If the name has at least one directory character in it
+		 then assume it is a complete name, maybe including any
+		 possible .vpi or .vpl suffix. */
+	    found = access(name, R_OK) == 0;
+	    if (!found) {
+		  snprintf(path, sizeof(path), "%s.vpi", name);
+		  found = access(path, R_OK) == 0;
+		  if (!found) {
+			snprintf(path, sizeof(path), "%s.vpl", name);
+			found = access(path, R_OK) == 0;
+		  }
+		  if (!found)
+			fprintf(stderr, "Unable to find VPI module '%s'\n", name);
+	    } else {
+		  strncpy(path, name, sizeof(path) - 1);
+	    }
+      } else {
+	    for (unsigned idx = 0; idx < vpi_path_list_size; idx += 1) {
+		  snprintf(path, sizeof(path), "%s%c%s.vpi",
+			   vpi_path_list[idx], sep, name);
+		  found = access(path, R_OK) == 0;
+		  if (found) break;
+		  snprintf(path, sizeof(path), "%s%c%s.vpl",
+			   vpi_path_list[idx], sep, name);
+		  found = access(path, R_OK) == 0;
+		  if (found) break;
+	    }
+	    if (!found) {
+		  snprintf(path, sizeof(path), "%s%c%s.vpi", base, sep, name);
+		  found = access(path, R_OK) == 0;
+	    }
+	    if (!found) {
+		  snprintf(path, sizeof(path), "%s%c%s.vpl", base, sep, name);
+		  found = access(path, R_OK) == 0;
+	    }
+	    if (!found)
+		  fprintf(stderr, "Unable to find VPI module '%s' on the search path.\n", name);
+      }
+      if (found)
+	    fprintf(iconfig_file, "module:%s\n", path);
 }
 
 static void find_ivl_root_failed(const char *reason)
@@ -1039,7 +1077,7 @@ int main(int argc, char **argv)
 	}
       }
 
-      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hl:I:iM:m:N:o:P:p:Ss:T:t:uvVW:y:Y:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hl:I:iL:M:m:N:o:P:p:Ss:T:t:uvVW:y:Y:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -1098,6 +1136,13 @@ int main(int argc, char **argv)
 		  ignore_missing_modules = 1;
 		  break;
 
+		case 'L':
+		  vpi_path_list_size += 1;
+		  vpi_path_list = (const char**)realloc(vpi_path_list,
+		                                  vpi_path_list_size*sizeof(char*));
+		  vpi_path_list[vpi_path_list_size-1] = optarg;
+		  break;
+
 		case 'l':
 		  process_file_name(optarg, 1);
 		  break;
@@ -1108,8 +1153,7 @@ int main(int argc, char **argv)
 		  break;
 
 		case 'm':
-		  fprintf(iconfig_file, "module:%s\n", optarg);
-		  add_sft_file(optarg);
+		  add_vpi_file(optarg);
 		  break;
 
 		case 'N':
@@ -1198,12 +1242,10 @@ int main(int argc, char **argv)
 	/* Write values to the iconfig file. */
       fprintf(iconfig_file, "basedir:%s\n", base);
 
-	/* Tell the core where to find the system.sft. This file
-	   describes the system functions so that elaboration knows
-	   how to handle them. */
-      fprintf(iconfig_file, "sys_func:%s%csystem.sft\n", base, sep);
-      fprintf(iconfig_file, "sys_func:%s%cvhdl_sys.sft\n", base, sep);
-      fprintf(iconfig_file, "sys_func:%s%cvhdl_textio.sft\n", base, sep);
+	/* Tell the core where to find the system VPI modules. */
+      fprintf(iconfig_file, "module:%s%csystem.vpi\n", base, sep);
+      fprintf(iconfig_file, "module:%s%cvhdl_sys.vpi\n", base, sep);
+      fprintf(iconfig_file, "module:%s%cvhdl_textio.vpi\n", base, sep);
 
 	/* If verilog-2005/09/12 is enabled or icarus-misc or verilog-ams,
 	 * then include the v2005_math library. */
@@ -1212,23 +1254,20 @@ int main(int argc, char **argv)
           strcmp(generation, "2012") == 0 ||
           strcmp(gen_icarus, "icarus-misc") == 0 ||
           strcmp(gen_verilog_ams, "verilog-ams") == 0) {
-	    fprintf(iconfig_file, "sys_func:%s%cv2005_math.sft\n", base, sep);
-	    fprintf(iconfig_file, "module:v2005_math\n");
+	    fprintf(iconfig_file, "module:%s%cv2005_math.vpi\n", base, sep);
       }
 	/* If verilog-ams or icarus_misc is enabled, then include the
 	 * va_math module as well. */
       if (strcmp(gen_verilog_ams,"verilog-ams") == 0 ||
           strcmp(gen_icarus, "icarus-misc") == 0) {
-	    fprintf(iconfig_file, "sys_func:%s%cva_math.sft\n", base, sep);
-	    fprintf(iconfig_file, "module:va_math\n");
+	    fprintf(iconfig_file, "module:%s%cva_math.vpi\n", base, sep);
       }
       /* If verilog-2009 (SystemVerilog) is enabled, then include the
          v2009 module. */
       if (strcmp(generation, "2005-sv") == 0 ||
           strcmp(generation, "2009") == 0 ||
           strcmp(generation, "2012") == 0) {
-	    fprintf(iconfig_file, "sys_func:%s%cv2009.sft\n", base, sep);
-	    fprintf(iconfig_file, "module:v2009\n");
+	    fprintf(iconfig_file, "module:%s%cv2009.vpi\n", base, sep);
       }
 
       if (mtm != 0) fprintf(iconfig_file, "-T:%s\n", mtm);

@@ -104,6 +104,24 @@ const struct sfunc_return_type* lookup_sys_func(const char*name)
       return sfunc_table + idx;
 }
 
+void add_sys_func(const struct sfunc_return_type&ret_type)
+{
+      struct sfunc_return_type*def = find_in_sys_func_list(ret_type.name);
+      if (def) {
+              /* Keep the original definition, but flag that it
+                 overrides a later definition. */
+            def->override_flag = true;
+            return;
+      }
+      struct sfunc_return_type_cell*cell = new struct sfunc_return_type_cell;
+      cell->name = lex_strings.add(ret_type.name);
+      cell->type = ret_type.type;
+      cell->wid  = ret_type.wid;
+      cell->signed_flag = ret_type.signed_flag;
+      cell->override_flag = ret_type.override_flag;
+      append_to_list(cell);
+}
+
 /*
  * This function loads a system functions descriptor file with the
  * format:
