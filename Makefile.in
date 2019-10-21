@@ -138,7 +138,7 @@ endif
 check: all
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 	test -r check.conf || cp $(srcdir)/check.conf .
-	driver/iverilog -B. -BPivlpp -tcheck -ocheck.vvp $(srcdir)/examples/hello.vl
+	driver/iverilog -B. -BMvpi -BPivlpp -tcheck -ocheck.vvp $(srcdir)/examples/hello.vl
 ifeq (@WIN32@,yes)
 ifeq (@install_suffix@,)
 	vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'

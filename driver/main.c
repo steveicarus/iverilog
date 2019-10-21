@@ -106,6 +106,7 @@ const char sep = '/';
 extern void cfreset(FILE*fd, const char*path);
 
 const char*base = 0;
+const char*vpi_dir = 0;
 const char*ivlpp_dir = 0;
 const char*vhdlpp_dir= 0;
 const char*vhdlpp_work = 0;
@@ -869,6 +870,8 @@ static int process_depfile(const char*name)
  */
 static void add_vpi_file(const char *name)
 {
+      const char*base_dir = vpi_dir ? vpi_dir : base;
+
       char path[4096];
 
       int found = 0;
@@ -901,11 +904,11 @@ static void add_vpi_file(const char *name)
 		  if (found) break;
 	    }
 	    if (!found) {
-		  snprintf(path, sizeof(path), "%s%c%s.vpi", base, sep, name);
+		  snprintf(path, sizeof(path), "%s%c%s.vpi", base_dir, sep, name);
 		  found = access(path, R_OK) == 0;
 	    }
 	    if (!found) {
-		  snprintf(path, sizeof(path), "%s%c%s.vpl", base, sep, name);
+		  snprintf(path, sizeof(path), "%s%c%s.vpl", base_dir, sep, name);
 		  found = access(path, R_OK) == 0;
 	    }
 	    if (!found)
@@ -1086,6 +1089,9 @@ int main(int argc, char **argv)
 		       character of the path indicates which path the
 		       user is specifying. */
 		  switch (optarg[0]) {
+		      case 'M': /* Path for the VPI modules */
+			vpi_dir = optarg+1;
+			break;
 		      case 'P': /* Path for the ivlpp preprocessor */
 			ivlpp_dir = optarg+1;
 			break;
@@ -1224,6 +1230,8 @@ int main(int argc, char **argv)
 	    }
       }
 
+      if (vpi_dir == 0)
+	    vpi_dir = base;
       if (ivlpp_dir == 0)
 	    ivlpp_dir = base;
       if (vhdlpp_dir == 0)
@@ -1243,9 +1251,9 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "basedir:%s\n", base);
 
 	/* Tell the core where to find the system VPI modules. */
-      fprintf(iconfig_file, "module:%s%csystem.vpi\n", base, sep);
-      fprintf(iconfig_file, "module:%s%cvhdl_sys.vpi\n", base, sep);
-      fprintf(iconfig_file, "module:%s%cvhdl_textio.vpi\n", base, sep);
+      fprintf(iconfig_file, "module:%s%csystem.vpi\n", vpi_dir, sep);
+      fprintf(iconfig_file, "module:%s%cvhdl_sys.vpi\n", vpi_dir, sep);
+      fprintf(iconfig_file, "module:%s%cvhdl_textio.vpi\n", vpi_dir, sep);
 
 	/* If verilog-2005/09/12 is enabled or icarus-misc or verilog-ams,
 	 * then include the v2005_math library. */
@@ -1254,20 +1262,20 @@ int main(int argc, char **argv)
           strcmp(generation, "2012") == 0 ||
           strcmp(gen_icarus, "icarus-misc") == 0 ||
           strcmp(gen_verilog_ams, "verilog-ams") == 0) {
-	    fprintf(iconfig_file, "module:%s%cv2005_math.vpi\n", base, sep);
+	    fprintf(iconfig_file, "module:%s%cv2005_math.vpi\n", vpi_dir, sep);
       }
 	/* If verilog-ams or icarus_misc is enabled, then include the
 	 * va_math module as well. */
       if (strcmp(gen_verilog_ams,"verilog-ams") == 0 ||
           strcmp(gen_icarus, "icarus-misc") == 0) {
-	    fprintf(iconfig_file, "module:%s%cva_math.vpi\n", base, sep);
+	    fprintf(iconfig_file, "module:%s%cva_math.vpi\n", vpi_dir, sep);
       }
       /* If verilog-2009 (SystemVerilog) is enabled, then include the
          v2009 module. */
       if (strcmp(generation, "2005-sv") == 0 ||
           strcmp(generation, "2009") == 0 ||
           strcmp(generation, "2012") == 0) {
-	    fprintf(iconfig_file, "module:%s%cv2009.vpi\n", base, sep);
+	    fprintf(iconfig_file, "module:%s%cv2009.vpi\n", vpi_dir, sep);
       }
 
       if (mtm != 0) fprintf(iconfig_file, "-T:%s\n", mtm);
