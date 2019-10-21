@@ -1,6 +1,0 @@
-$ivlh_attribute_event	vpiSysFuncSized 1 unsigned
-$ivlh_rising_edge	vpiSysFuncSized 1 unsigned
-$ivlh_falling_edge	vpiSysFuncSized 1 unsigned
-
-$ivlh_shift_left        vpiSysFuncSized 32 unsigned
-$ivlh_shift_right       vpiSysFuncSized 32 unsigned

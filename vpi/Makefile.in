@@ -180,49 +180,31 @@ stamp-vpi_config-h: $(srcdir)/vpi_config.h.in ../config.status
 vpi_config.h: stamp-vpi_config-h
 
 install: all installdirs \
-    $(vpidir)/system.vpi $(vpidir)/system.sft \
-    $(vpidir)/va_math.vpi $(vpidir)/va_math.sft \
-    $(vpidir)/v2005_math.vpi $(vpidir)/v2005_math.sft \
-    $(vpidir)/v2009.vpi $(vpidir)/v2009.sft \
-    $(vpidir)/vhdl_sys.vpi $(vpidir)/vhdl_sys.sft \
-    $(vpidir)/vhdl_textio.vpi $(vpidir)/vhdl_textio.sft \
+    $(vpidir)/system.vpi \
+    $(vpidir)/va_math.vpi \
+    $(vpidir)/v2005_math.vpi \
+    $(vpidir)/v2009.vpi \
+    $(vpidir)/vhdl_sys.vpi \
+    $(vpidir)/vhdl_textio.vpi \
     $(vpidir)/vpi_debug.vpi
 
 $(vpidir)/system.vpi: ./system.vpi
 	$(INSTALL_PROGRAM) ./system.vpi "$(DESTDIR)$(vpidir)/system.vpi"
 
-$(vpidir)/system.sft: system.sft
-	$(INSTALL_DATA) $< "$(DESTDIR)$@"
-
 $(vpidir)/va_math.vpi: ./va_math.vpi
 	$(INSTALL_PROGRAM) ./va_math.vpi "$(DESTDIR)$(vpidir)/va_math.vpi"
-
-$(vpidir)/va_math.sft: va_math.sft
-	$(INSTALL_DATA) $< "$(DESTDIR)$@"
 
 $(vpidir)/v2005_math.vpi: ./v2005_math.vpi
 	$(INSTALL_PROGRAM) ./v2005_math.vpi "$(DESTDIR)$(vpidir)/v2005_math.vpi"
 
-$(vpidir)/v2005_math.sft: v2005_math.sft
-	$(INSTALL_DATA) $< "$(DESTDIR)$@"
-
 $(vpidir)/v2009.vpi: ./v2009.vpi
 	$(INSTALL_PROGRAM) ./v2009.vpi "$(DESTDIR)$(vpidir)/v2009.vpi"
-
-$(vpidir)/v2009.sft: v2009.sft
-	$(INSTALL_DATA) $< "$(DESTDIR)$@"
 
 $(vpidir)/vhdl_sys.vpi: ./vhdl_sys.vpi
 	$(INSTALL_PROGRAM) ./vhdl_sys.vpi "$(DESTDIR)$(vpidir)/vhdl_sys.vpi"
 
-$(vpidir)/vhdl_sys.sft: vhdl_sys.sft
-	$(INSTALL_DATA) $< "$(DESTDIR)$@"
-
 $(vpidir)/vhdl_textio.vpi: ./vhdl_textio.vpi
 	$(INSTALL_PROGRAM) ./vhdl_textio.vpi "$(DESTDIR)$(vpidir)/vhdl_textio.vpi"
-
-$(vpidir)/vhdl_textio.sft: vhdl_textio.sft
-	$(INSTALL_DATA) $< "$(DESTDIR)$@"
 
 $(vpidir)/vpi_debug.vpi: ./vpi_debug.vpi
 	$(INSTALL_PROGRAM) ./vpi_debug.vpi "$(DESTDIR)$(vpidir)/vpi_debug.vpi"
@@ -232,17 +214,11 @@ installdirs: $(srcdir)/../mkinstalldirs
 
 uninstall:
 	rm -f "$(DESTDIR)$(vpidir)/system.vpi"
-	rm -f "$(DESTDIR)$(vpidir)/system.sft"
 	rm -f "$(DESTDIR)$(vpidir)/va_math.vpi"
-	rm -f "$(DESTDIR)$(vpidir)/va_math.sft"
 	rm -f "$(DESTDIR)$(vpidir)/v2005_math.vpi"
-	rm -f "$(DESTDIR)$(vpidir)/v2005_math.sft"
 	rm -f "$(DESTDIR)$(vpidir)/v2009.vpi"
-	rm -f "$(DESTDIR)$(vpidir)/v2009.sft"
 	rm -f "$(DESTDIR)$(vpidir)/vhdl_sys.vpi"
-	rm -f "$(DESTDIR)$(vpidir)/vhdl_sys.sft"
 	rm -f "$(DESTDIR)$(vpidir)/vhdl_textio.vpi"
-	rm -f "$(DESTDIR)$(vpidir)/vhdl_textio.sft"
 	rm -f "$(DESTDIR)$(vpidir)/vpi_debug.vpi"
 
 -include $(patsubst %.o, dep/%.d, $O)
