@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -216,20 +216,16 @@ void vpip_load_module(const char*name)
 	return;
       }
 
-      vpip_set_callback_t set_callback = (vpip_set_callback_t)ivl_dlsym(dll, "vpip_set_callback");
-      if (set_callback == 0) {
-            fprintf(stderr, "%s: no vpip_set_callback\n", name);
-            ivl_dlclose(dll);
-            return;
+      void*function = ivl_dlsym(dll, "vpip_set_callback");
+      if (function == 0) {
+	    fprintf(stderr, "%s: no vpip_set_callback()\n", name);
+	    ivl_dlclose(dll);
+	    return;
       }
+      vpip_set_callback_t set_callback = (vpip_set_callback_t)function;
       set_callback(&vpi_routines);
 
-#ifdef __MINGW32__
-	/* For this check MinGW does not want the leading underscore! */
-      void*table = ivl_dlsym(dll, "vlog_startup_routines");
-#else
       void*table = ivl_dlsym(dll, LU "vlog_startup_routines" TU);
-#endif
       if (table == 0) {
 	    fprintf(stderr, "%s: no vlog_startup_routines\n", name);
 	    ivl_dlclose(dll);

@@ -240,19 +240,16 @@ bool load_vpi_module(const char*path)
 	return false;
     }
 
-    vpip_set_callback_t set_callback = (vpip_set_callback_t)ivl_dlsym(dll, "vpip_set_callback");
-    if (set_callback == 0) {
+    void*function = ivl_dlsym(dll, "vpip_set_callback");
+    if (function == 0) {
         cerr << "warning: '" << path << "' has no vpip_set_callback()" << endl;
         ivl_dlclose(dll);
         return true;
     }
+    vpip_set_callback_t set_callback = (vpip_set_callback_t)function;
     set_callback(&vpi_routines);
 
-#ifdef __MINGW32__
-    void*table = ivl_dlsym(dll, "vlog_startup_routines");
-#else
     void*table = ivl_dlsym(dll, LU "vlog_startup_routines" TU);
-#endif
     if (table == 0) {
         cerr << "warning: '" << path << "' has no vlog_startup_routines" << endl;
         ivl_dlclose(dll);
