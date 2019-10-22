@@ -48,6 +48,8 @@ typedef struct __vpiArray* vvp_array_t;
  * header file elsewhere.
  */
 
+extern vpip_routines_s vpi_routines;
+
 /*
  * Routines/definitions used to build the file/line number tracing object.
  */

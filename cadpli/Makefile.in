@@ -71,7 +71,7 @@ dep:
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $<
 	mv $*.d dep
 
-SYSTEM_VPI_LDFLAGS = -L../vvp -lvpi
+SYSTEM_VPI_LDFLAGS = -L../vpi -lvpi
 ifeq (@MINGW32@,yes)
     SYSTEM_VPI_LDFLAGS += @EXTRALIBS@
 endif

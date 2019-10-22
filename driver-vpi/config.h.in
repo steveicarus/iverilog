@@ -3,8 +3,8 @@
  * This may change in the future once I have thought about it more. */
 #define IVERILOG_VPI_CC        "@IVLCC@"
 #define IVERILOG_VPI_CXX       "@IVLCXX@"
-#define IVERILOG_VPI_CFLAGS    " @IVLCFLAGS@"
-#define IVERILOG_VPI_CXXFLAGS  " @IVLCXXFLAGS@"
+#define IVERILOG_VPI_CFLAGS    " @IVLCFLAGS@ -DIVL_VPI_MODULE"
+#define IVERILOG_VPI_CXXFLAGS  " @IVLCXXFLAGS@ -DIVL_VPI_MODULE"
 #define IVERILOG_VPI_LDFLAGS   "@SHARED@"
 #define IVERILOG_VPI_LDLIBS    "-lveriuser@SUFFIX@ -lvpi@SUFFIX@"
 #define IVERILOG_SUFFIX        "@SUFFIX@"

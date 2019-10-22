@@ -45,7 +45,7 @@ else
 INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
 endif
 
-CPPFLAGS = $(INCLUDE_PATH) @file64_support@ @CPPFLAGS@ @DEFS@ -DICARUS_VPI_CONST=const @PICFLAG@
+CPPFLAGS = $(INCLUDE_PATH) @file64_support@ @CPPFLAGS@ @DEFS@ -DICARUS_VPI_CONST=const -DIVL_VPI_MODULE @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
@@ -83,12 +83,12 @@ VHDL_TEXTIO = vhdl_textio.o sys_priv.o
 
 VPI_DEBUG = vpi_debug.o
 
-all: dep system.vpi va_math.vpi v2005_math.vpi v2009.vpi vhdl_sys.vpi vhdl_textio.vpi vpi_debug.vpi $(ALL32)
+all: dep libvpi.a system.vpi va_math.vpi v2005_math.vpi v2009.vpi vhdl_sys.vpi vhdl_textio.vpi vpi_debug.vpi $(ALL32)
 
 check: all
 
 clean:
-	rm -rf *.o sys_readmem_lex.c dep system.vpi
+	rm -rf *.o sys_readmem_lex.c dep libvpi.a system.vpi
 	rm -f sdf_lexor.c sdf_parse.c sdf_parse.output sdf_parse.h
 	rm -f table_mod_parse.c table_mod_parse.h table_mod_parse.output
 	rm -f table_mod_lexor.c
@@ -122,6 +122,12 @@ dep:
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 
+libvpi.a: libvpi.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<
+	rm -f libvpi.a
+	$(AR) cqv libvpi.a libvpi.o
+	$(RANLIB) libvpi.a
+
 LIBS = @LIBS@
 SYSTEM_VPI_LDFLAGS = $(LIBS)
 VA_MATH_LDFLAGS =
@@ -130,8 +136,8 @@ ifeq (@MINGW32@,yes)
     VA_MATH_LDFLAGS += @EXTRALIBS@
 endif
 
-system.vpi: $O $(OPP) ../vvp/libvpi.a
-	$(CXX) @shared@ -o $@ $O $(OPP) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
+system.vpi: $O $(OPP) libvpi.a
+	$(CXX) @shared@ -o $@ $O $(OPP) -L. $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
 sys_readmem_lex.c: $(srcdir)/sys_readmem_lex.lex
 	$(LEX) -t $< > $@
@@ -156,23 +162,23 @@ table_mod_parse.c: $(srcdir)/table_mod_parse.y
 	$(YACC) --verbose -t -p tblmod -d -o $@ $<
 table_mod_parse.h: table_mod_parse.c
 
-v2005_math.vpi: $M ../vvp/libvpi.a
-	$(CC) @shared@ -o $@ $M -L../vvp $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
+v2005_math.vpi: $M libvpi.a
+	$(CC) @shared@ -o $@ $M -L. $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
 
-v2009.vpi: $(V2009) ../vvp/libvpi.a
-	$(CC) @shared@ -o $@ $(V2009) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
+v2009.vpi: $(V2009) libvpi.a
+	$(CC) @shared@ -o $@ $(V2009) -L. $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
-va_math.vpi: $V ../vvp/libvpi.a
-	$(CC) @shared@ -o $@ $V -L../vvp $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
+va_math.vpi: $V libvpi.a
+	$(CC) @shared@ -o $@ $V -L. $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
 
-vhdl_sys.vpi: $(VHDL_SYS) ../vvp/libvpi.a
-	$(CC) @shared@ -o $@ $(VHDL_SYS) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
+vhdl_sys.vpi: $(VHDL_SYS) libvpi.a
+	$(CC) @shared@ -o $@ $(VHDL_SYS) -L. $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
-vhdl_textio.vpi: $(VHDL_TEXTIO) ../vvp/libvpi.a
-	$(CC) @shared@ -o $@ $(VHDL_TEXTIO) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
+vhdl_textio.vpi: $(VHDL_TEXTIO) libvpi.a
+	$(CC) @shared@ -o $@ $(VHDL_TEXTIO) -L. $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
-vpi_debug.vpi: $(VPI_DEBUG) ../vvp/libvpi.a
-	$(CC) @shared@ -o $@ $(VPI_DEBUG) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
+vpi_debug.vpi: $(VPI_DEBUG) libvpi.a
+	$(CC) @shared@ -o $@ $(VPI_DEBUG) -L. $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
 stamp-vpi_config-h: $(srcdir)/vpi_config.h.in ../config.status
 	@rm -f $@
@@ -180,6 +186,7 @@ stamp-vpi_config-h: $(srcdir)/vpi_config.h.in ../config.status
 vpi_config.h: stamp-vpi_config-h
 
 install: all installdirs \
+    $(libdir)/libvpi$(suffix).a \
     $(vpidir)/system.vpi \
     $(vpidir)/va_math.vpi \
     $(vpidir)/v2005_math.vpi \
@@ -187,6 +194,9 @@ install: all installdirs \
     $(vpidir)/vhdl_sys.vpi \
     $(vpidir)/vhdl_textio.vpi \
     $(vpidir)/vpi_debug.vpi
+
+$(libdir)/libvpi$(suffix).a : ./libvpi.a
+	$(INSTALL_DATA) libvpi.a "$(DESTDIR)$(libdir)/libvpi$(suffix).a"
 
 $(vpidir)/system.vpi: ./system.vpi
 	$(INSTALL_PROGRAM) ./system.vpi "$(DESTDIR)$(vpidir)/system.vpi"
@@ -213,6 +223,7 @@ installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)" "$(DESTDIR)$(vpidir)"
 
 uninstall:
+	rm -f "$(DESTDIR)$(libdir)/libvpi$(suffix).a"
 	rm -f "$(DESTDIR)$(vpidir)/system.vpi"
 	rm -f "$(DESTDIR)$(vpidir)/va_math.vpi"
 	rm -f "$(DESTDIR)$(vpidir)/v2005_math.vpi"

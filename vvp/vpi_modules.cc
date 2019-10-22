@@ -30,6 +30,7 @@
 static ivl_dll_t*dll_list = 0;
 static unsigned dll_list_cnt = 0;
 
+typedef void (*vpip_set_callback_t)(vpip_routines_s*);
 typedef void (*vlog_startup_routines_t)(void);
 
 # define VPIP_MODULE_PATH_MAX 64
@@ -215,6 +216,13 @@ void vpip_load_module(const char*name)
 	return;
       }
 
+      vpip_set_callback_t set_callback = (vpip_set_callback_t)ivl_dlsym(dll, "vpip_set_callback");
+      if (set_callback == 0) {
+            fprintf(stderr, "%s: no vpip_set_callback\n", name);
+            ivl_dlclose(dll);
+            return;
+      }
+      set_callback(&vpi_routines);
 
 #ifdef __MINGW32__
 	/* For this check MinGW does not want the leading underscore! */

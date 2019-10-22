@@ -184,6 +184,51 @@ vpiHandle vpi_register_systf(const struct t_vpi_systf_data*ss)
     return 0;
 }
 
+vpip_routines_s vpi_routines = {
+    .register_cb                = vpi_register_cb,
+    .remove_cb                  = vpi_remove_cb,
+    .register_systf             = vpi_register_systf,
+    .get_systf_info             = vpi_get_systf_info,
+    .handle_by_name             = vpi_handle_by_name,
+    .handle_by_index            = vpi_handle_by_index,
+    .handle                     = vpi_handle,
+    .iterate                    = vpi_iterate,
+    .scan                       = vpi_scan,
+    .get                        = vpi_get,
+    .get_str                    = vpi_get_str,
+    .get_delays                 = vpi_get_delays,
+    .put_delays                 = vpi_put_delays,
+    .get_value                  = vpi_get_value,
+    .put_value                  = vpi_put_value,
+    .get_time                   = vpi_get_time,
+    .get_userdata               = vpi_get_userdata,
+    .put_userdata               = vpi_put_userdata,
+    .mcd_open                   = vpi_mcd_open,
+    .mcd_close                  = vpi_mcd_close,
+    .mcd_flush                  = vpi_mcd_flush,
+    .mcd_name                   = vpi_mcd_name,
+    .mcd_printf                 = vpi_mcd_printf,
+    .mcd_vprintf                = vpi_mcd_vprintf,
+    .flush                      = vpi_flush,
+    .printf                     = vpi_printf,
+    .vprintf                    = vpi_vprintf,
+    .chk_error                  = vpi_chk_error,
+    .compare_objects            = vpi_compare_objects,
+    .free_object                = vpi_free_object,
+    .get_vlog_info              = vpi_get_vlog_info,
+    .control                    = vpi_control,
+    .sim_control                = vpi_sim_control,
+    .fopen                      = vpi_fopen,
+    .get_file                   = vpi_get_file,
+    .calc_clog2                 = vpip_calc_clog2,
+    .count_drivers              = vpip_count_drivers,
+    .format_strength            = vpip_format_strength,
+    .make_systf_system_defined  = vpip_make_systf_system_defined,
+    .mcd_rawwrite               = vpip_mcd_rawwrite,
+    .set_return_value           = vpip_set_return_value,
+};
+
+typedef void (*vpip_set_callback_t)(vpip_routines_s*);
 typedef void (*vlog_startup_routines_t)(void);
 
 bool load_vpi_module(const char*path)
@@ -194,6 +239,14 @@ bool load_vpi_module(const char*path)
         cerr << "     : " << dlerror() << endl;
 	return false;
     }
+
+    vpip_set_callback_t set_callback = (vpip_set_callback_t)ivl_dlsym(dll, "vpip_set_callback");
+    if (set_callback == 0) {
+        cerr << "warning: '" << path << "' has no vpip_set_callback()" << endl;
+        ivl_dlclose(dll);
+        return true;
+    }
+    set_callback(&vpi_routines);
 
 #ifdef __MINGW32__
     void*table = ivl_dlsym(dll, "vlog_startup_routines");
