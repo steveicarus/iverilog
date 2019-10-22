@@ -33,6 +33,8 @@ vpidir = $(libdir)/ivl$(suffix)
 
 CC = @CC@
 CXX = @CXX@
+AR = @AR@
+RANLIB = @RANLIB@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
