@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,6 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
+# include "vpi_user.h"
 
 extern void v2009_array_register(void);
 extern void v2009_bitvec_register(void);
