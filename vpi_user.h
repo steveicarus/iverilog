@@ -676,8 +676,8 @@ extern void vpip_count_drivers(vpiHandle ref, unsigned idx,
 #endif
 
 /*
- * In Linux, a shared library can bind by name to functions provided by its
- * client when it is loaded. In Windows, a DLL can only do this statically at
+ * In Linux, when loaded, a shared library can automatically bind to functions
+ * provided by its client. In Windows, a DLL can only do this statically at
  * link time, and is then tied to a specific client. So to enable VPI modules
  * to be used by both the compiler and the simulator, we construct a jump table
  * for the VPI routines that we can pass down to the VPI modules.
@@ -734,49 +734,49 @@ extern DLLEXPORT void vpip_set_callback(vpip_routines_s*routines);
  */
 #ifdef IVL_VPI_MODULE
 
-extern vpip_routines_s*vpip;
+extern vpip_routines_s*vpip_routines;
 
-#define vpi_register_cb(...)                vpip->register_cb(__VA_ARGS__)
-#define vpi_remove_cb(...)                  vpip->remove_cb(__VA_ARGS__)
-#define vpi_register_systf(...)             vpip->register_systf(__VA_ARGS__)
-#define vpi_get_systf_info(...)             vpip->get_systf_info(__VA_ARGS__)
-#define vpi_handle_by_name(...)             vpip->handle_by_name(__VA_ARGS__)
-#define vpi_handle_by_index(...)            vpip->handle_by_index(__VA_ARGS__)
-#define vpi_handle(...)                     vpip->handle(__VA_ARGS__)
-#define vpi_iterate(...)                    vpip->iterate(__VA_ARGS__)
-#define vpi_scan(...)                       vpip->scan(__VA_ARGS__)
-#define vpi_get(...)                        vpip->get(__VA_ARGS__)
-#define vpi_get_str(...)                    vpip->get_str(__VA_ARGS__)
-#define vpi_get_delays(...)                 vpip->get_delays(__VA_ARGS__)
-#define vpi_put_delays(...)                 vpip->put_delays(__VA_ARGS__)
-#define vpi_get_value(...)                  vpip->get_value(__VA_ARGS__)
-#define vpi_put_value(...)                  vpip->put_value(__VA_ARGS__)
-#define vpi_get_time(...)                   vpip->get_time(__VA_ARGS__)
-#define vpi_get_userdata(...)               vpip->get_userdata(__VA_ARGS__)
-#define vpi_put_userdata(...)               vpip->put_userdata(__VA_ARGS__)
-#define vpi_mcd_open(...)                   vpip->mcd_open(__VA_ARGS__)
-#define vpi_mcd_close(...)                  vpip->mcd_close(__VA_ARGS__)
-#define vpi_mcd_flush(...)                  vpip->mcd_flush(__VA_ARGS__)
-#define vpi_mcd_name(...)                   vpip->mcd_name(__VA_ARGS__)
-#define vpi_mcd_printf(...)                 vpip->mcd_printf(__VA_ARGS__)
-#define vpi_mcd_vprintf(...)                vpip->mcd_vprintf(__VA_ARGS__)
-#define vpi_flush(...)                      vpip->flush(__VA_ARGS__)
-#define vpi_printf(...)                     vpip->printf(__VA_ARGS__)
-#define vpi_vprintf(...)                    vpip->vprintf(__VA_ARGS__)
-#define vpi_chk_error(...)                  vpip->chk_error(__VA_ARGS__)
-#define vpi_compare_objects(...)            vpip->compare_objects(__VA_ARGS__)
-#define vpi_free_object(...)                vpip->free_object(__VA_ARGS__)
-#define vpi_get_vlog_info(...)              vpip->get_vlog_info(__VA_ARGS__)
-#define vpi_control(...)                    vpip->control(__VA_ARGS__)
-#define vpi_sim_control(...)                vpip->sim_control(__VA_ARGS__)
-#define vpi_fopen(...)                      vpip->fopen(__VA_ARGS__)
-#define vpi_get_file(...)                   vpip->get_file(__VA_ARGS__)
-#define vpip_calc_clog2(...)                vpip->calc_clog2(__VA_ARGS__)
-#define vpip_count_drivers(...)             vpip->count_drivers(__VA_ARGS__)
-#define vpip_format_strength(...)           vpip->format_strength(__VA_ARGS__)
-#define vpip_make_systf_system_defined(...) vpip->make_systf_system_defined(__VA_ARGS__)
-#define vpip_mcd_rawwrite(...)              vpip->mcd_rawwrite(__VA_ARGS__)
-#define vpip_set_return_value(...)          vpip->set_return_value(__VA_ARGS__)
+#define vpi_register_cb(...)                vpip_routines->register_cb(__VA_ARGS__)
+#define vpi_remove_cb(...)                  vpip_routines->remove_cb(__VA_ARGS__)
+#define vpi_register_systf(...)             vpip_routines->register_systf(__VA_ARGS__)
+#define vpi_get_systf_info(...)             vpip_routines->get_systf_info(__VA_ARGS__)
+#define vpi_handle_by_name(...)             vpip_routines->handle_by_name(__VA_ARGS__)
+#define vpi_handle_by_index(...)            vpip_routines->handle_by_index(__VA_ARGS__)
+#define vpi_handle(...)                     vpip_routines->handle(__VA_ARGS__)
+#define vpi_iterate(...)                    vpip_routines->iterate(__VA_ARGS__)
+#define vpi_scan(...)                       vpip_routines->scan(__VA_ARGS__)
+#define vpi_get(...)                        vpip_routines->get(__VA_ARGS__)
+#define vpi_get_str(...)                    vpip_routines->get_str(__VA_ARGS__)
+#define vpi_get_delays(...)                 vpip_routines->get_delays(__VA_ARGS__)
+#define vpi_put_delays(...)                 vpip_routines->put_delays(__VA_ARGS__)
+#define vpi_get_value(...)                  vpip_routines->get_value(__VA_ARGS__)
+#define vpi_put_value(...)                  vpip_routines->put_value(__VA_ARGS__)
+#define vpi_get_time(...)                   vpip_routines->get_time(__VA_ARGS__)
+#define vpi_get_userdata(...)               vpip_routines->get_userdata(__VA_ARGS__)
+#define vpi_put_userdata(...)               vpip_routines->put_userdata(__VA_ARGS__)
+#define vpi_mcd_open(...)                   vpip_routines->mcd_open(__VA_ARGS__)
+#define vpi_mcd_close(...)                  vpip_routines->mcd_close(__VA_ARGS__)
+#define vpi_mcd_flush(...)                  vpip_routines->mcd_flush(__VA_ARGS__)
+#define vpi_mcd_name(...)                   vpip_routines->mcd_name(__VA_ARGS__)
+#define vpi_mcd_printf(...)                 vpip_routines->mcd_printf(__VA_ARGS__)
+#define vpi_mcd_vprintf(...)                vpip_routines->mcd_vprintf(__VA_ARGS__)
+#define vpi_flush(...)                      vpip_routines->flush(__VA_ARGS__)
+#define vpi_printf(...)                     vpip_routines->printf(__VA_ARGS__)
+#define vpi_vprintf(...)                    vpip_routines->vprintf(__VA_ARGS__)
+#define vpi_chk_error(...)                  vpip_routines->chk_error(__VA_ARGS__)
+#define vpi_compare_objects(...)            vpip_routines->compare_objects(__VA_ARGS__)
+#define vpi_free_object(...)                vpip_routines->free_object(__VA_ARGS__)
+#define vpi_get_vlog_info(...)              vpip_routines->get_vlog_info(__VA_ARGS__)
+#define vpi_control(...)                    vpip_routines->control(__VA_ARGS__)
+#define vpi_sim_control(...)                vpip_routines->sim_control(__VA_ARGS__)
+#define vpi_fopen(...)                      vpip_routines->fopen(__VA_ARGS__)
+#define vpi_get_file(...)                   vpip_routines->get_file(__VA_ARGS__)
+#define vpip_calc_clog2(...)                vpip_routines->calc_clog2(__VA_ARGS__)
+#define vpip_count_drivers(...)             vpip_routines->count_drivers(__VA_ARGS__)
+#define vpip_format_strength(...)           vpip_routines->format_strength(__VA_ARGS__)
+#define vpip_make_systf_system_defined(...) vpip_routines->make_systf_system_defined(__VA_ARGS__)
+#define vpip_mcd_rawwrite(...)              vpip_routines->mcd_rawwrite(__VA_ARGS__)
+#define vpip_set_return_value(...)          vpip_routines->set_return_value(__VA_ARGS__)
 
 #endif // IVL_VPI_MODULE
 

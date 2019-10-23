@@ -19,9 +19,9 @@
 
 #include "vpi_user.h"
 
-vpip_routines_s*vpip = 0;
+vpip_routines_s*vpip_routines = 0;
 
 DLLEXPORT void vpip_set_callback(vpip_routines_s*routines)
 {
-      vpip = routines;
+      vpip_routines = routines;
 }

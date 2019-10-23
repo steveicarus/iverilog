@@ -124,7 +124,7 @@ dep:
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 
-libvpi.a: libvpi.c
+libvpi.a: libvpi.c ../vpi_user.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<
 	rm -f libvpi.a
 	$(AR) cqv libvpi.a libvpi.o
