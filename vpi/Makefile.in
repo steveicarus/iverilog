@@ -71,10 +71,10 @@ O += sys_fst.o fstapi.o fastlz.o lz4.o
 endif
 
 # Object files for v2005_math.vpi
-M = sys_clog2.o v2005_math.o
+V2005 = sys_clog2.o v2005_math.o
 
 # Object files for va_math.vpi
-V = va_math.o
+VA_MATH = va_math.o
 
 V2009 = v2009_table.o v2009_array.o v2009_bitvec.o v2009_enum.o v2009_string.o \
         sys_priv.o
@@ -164,14 +164,14 @@ table_mod_parse.c: $(srcdir)/table_mod_parse.y
 	$(YACC) --verbose -t -p tblmod -d -o $@ $<
 table_mod_parse.h: table_mod_parse.c
 
-v2005_math.vpi: $M libvpi.a
-	$(CC) @shared@ -o $@ $M -L. $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
+v2005_math.vpi: $(V2005) libvpi.a
+	$(CC) @shared@ -o $@ $(V2005) -L. $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
 
 v2009.vpi: $(V2009) libvpi.a
 	$(CC) @shared@ -o $@ $(V2009) -L. $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
-va_math.vpi: $V libvpi.a
-	$(CC) @shared@ -o $@ $V -L. $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
+va_math.vpi: $(VA_MATH) libvpi.a
+	$(CC) @shared@ -o $@ $(VA_MATH) -L. $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
 
 vhdl_sys.vpi: $(VHDL_SYS) libvpi.a
 	$(CC) @shared@ -o $@ $(VHDL_SYS) -L. $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
@@ -236,5 +236,9 @@ uninstall:
 
 -include $(patsubst %.o, dep/%.d, $O)
 -include $(patsubst %.o, dep/%.d, $(OPP))
--include $(patsubst %.o, dep/%.d, $M)
--include $(patsubst %.o, dep/%.d, $V)
+-include $(patsubst %.o, dep/%.d, $(V2005))
+-include $(patsubst %.o, dep/%.d, $(VA_MATH))
+-include $(patsubst %.o, dep/%.d, $(V2009))
+-include $(patsubst %.o, dep/%.d, $(VHDL_SYS))
+-include $(patsubst %.o, dep/%.d, $(VHDL_TEXTIO))
+-include $(patsubst %.o, dep/%.d, $(VPI_DEBUG))
