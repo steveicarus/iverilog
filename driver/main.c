@@ -99,8 +99,10 @@ extern const char*optarg;
 
 #ifdef __MINGW32__
 const char sep = '\\';
+const char path_sep = ';';
 #else
 const char sep = '/';
+const char path_sep = ':';
 #endif
 
 extern void cfreset(FILE*fd, const char*path);
@@ -172,6 +174,9 @@ static char iconfig_common_path[4096] = "";
 
 static const char**vpi_path_list = 0;
 static unsigned vpi_path_list_size = 0;
+
+static const char**env_vpi_path_list = 0;
+static unsigned env_vpi_path_list_size = 0;
 
 int synth_flag = 0;
 int verbose_flag = 0;
@@ -865,6 +870,71 @@ static int process_depfile(const char*name)
       return 0;
 }
 
+static void add_env_vpi_module_path(const char*path)
+{
+      env_vpi_path_list_size += 1;
+      env_vpi_path_list = (const char**)realloc(env_vpi_path_list,
+					  env_vpi_path_list_size*sizeof(char*));
+      env_vpi_path_list[env_vpi_path_list_size-1] = path;
+}
+
+static void get_env_vpi_module_paths(void)
+{
+      char *var = getenv("IVERILOG_VPI_MODULE_PATH");
+      char *ptr, *end;
+
+      if (!var)
+	    return;
+
+      var = strdup(var);
+#ifdef __MINGW32__
+      convert_to_MS_path(var);
+#endif
+      ptr = var;
+      end = var+strlen(var);
+      int len = 0;
+      while (ptr <= end) {
+	    if (*ptr == 0 || *ptr == path_sep) {
+		  *ptr = 0;
+		  if (len > 0) {
+		       add_env_vpi_module_path(var);
+		  }
+		  len = 0;
+		  var = ptr+1;
+	    } else {
+		  len++;
+	    }
+	    ptr++;
+      }
+}
+
+static void add_vpi_module_path(const char*path)
+{
+#ifdef __MINGW32__
+      char*tmp_path = strdup(path);
+      convert_to_MS_path(tmp_path);
+      path = tmp_path;
+#endif
+      vpi_path_list_size += 1;
+      vpi_path_list = (const char**)realloc(vpi_path_list,
+				      vpi_path_list_size*sizeof(char*));
+      vpi_path_list[vpi_path_list_size-1] = path;
+}
+
+static int probe_for_vpi_module(const char*base_path, const char*name,
+				char*path, unsigned path_size)
+{
+      snprintf(path, path_size, "%s%c%s.vpi", base_path, sep, name);
+      if (access(path, R_OK) == 0)
+	    return 1;
+
+      snprintf(path, path_size, "%s%c%s.vpl", base_path, sep, name);
+      if (access(path, R_OK) == 0)
+	    return 1;
+
+      return 0;
+}
+
 /*
  * If it exists add the VPI file for the given module.
  */
@@ -873,6 +943,12 @@ static void add_vpi_file(const char *name)
       const char*base_dir = vpi_dir ? vpi_dir : base;
 
       char path[4096];
+
+#ifdef __MINGW32__
+      char*tmp_name = strdup(name);
+      convert_to_MS_path(name);
+      name = tmp_name;
+#endif
 
       int found = 0;
       if (strchr(name, sep)) {
@@ -887,35 +963,31 @@ static void add_vpi_file(const char *name)
 			snprintf(path, sizeof(path), "%s.vpl", name);
 			found = access(path, R_OK) == 0;
 		  }
-		  if (!found)
-			fprintf(stderr, "Unable to find VPI module '%s'\n", name);
 	    } else {
 		  strncpy(path, name, sizeof(path) - 1);
 	    }
       } else {
-	    for (unsigned idx = 0; idx < vpi_path_list_size; idx += 1) {
-		  snprintf(path, sizeof(path), "%s%c%s.vpi",
-			   vpi_path_list[idx], sep, name);
-		  found = access(path, R_OK) == 0;
-		  if (found) break;
-		  snprintf(path, sizeof(path), "%s%c%s.vpl",
-			   vpi_path_list[idx], sep, name);
-		  found = access(path, R_OK) == 0;
-		  if (found) break;
+	    for (unsigned idx = 0; !found && (idx < vpi_path_list_size); idx += 1) {
+		  found = probe_for_vpi_module(vpi_path_list[idx], name,
+					       path, sizeof(path));
+	    }
+	    for (unsigned idx = 0; !found && (idx < env_vpi_path_list_size); idx += 1) {
+		  found = probe_for_vpi_module(env_vpi_path_list[idx], name,
+					       path, sizeof(path));
 	    }
 	    if (!found) {
-		  snprintf(path, sizeof(path), "%s%c%s.vpi", base_dir, sep, name);
-		  found = access(path, R_OK) == 0;
+		  found = probe_for_vpi_module(base_dir, name,
+					       path, sizeof(path));
 	    }
-	    if (!found) {
-		  snprintf(path, sizeof(path), "%s%c%s.vpl", base_dir, sep, name);
-		  found = access(path, R_OK) == 0;
-	    }
-	    if (!found)
-		  fprintf(stderr, "Unable to find VPI module '%s' on the search path.\n", name);
       }
-      if (found)
+      if (found) {
 	    fprintf(iconfig_file, "module:%s\n", path);
+      } else {
+	    fprintf(stderr, "Unable to find VPI module '%s'\n", name);
+      }
+#ifdef __MINGW32__
+      free(tmp_name);
+#endif
 }
 
 static void find_ivl_root_failed(const char *reason)
@@ -1019,6 +1091,8 @@ int main(int argc, char **argv)
 
       find_ivl_root();
       base = ivl_root;
+
+      get_env_vpi_module_paths();
 
 	/* Create a temporary file for communicating input parameters
 	   to the preprocessor. */
@@ -1143,10 +1217,7 @@ int main(int argc, char **argv)
 		  break;
 
 		case 'L':
-		  vpi_path_list_size += 1;
-		  vpi_path_list = (const char**)realloc(vpi_path_list,
-		                                  vpi_path_list_size*sizeof(char*));
-		  vpi_path_list[vpi_path_list_size-1] = optarg;
+		  add_vpi_module_path(optarg);
 		  break;
 
 		case 'l':

@@ -1,4 +1,4 @@
-.TH iverilog 1 "Oct 21st, 2019" "" "Version %M.%n%E"
+.TH iverilog 1 "Oct 23rd, 2019" "" "Version %M.%n%E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -582,6 +582,24 @@ This is always defined when compiling with Icarus Verilog.
 .TP 8
 .B __VAMS_ENABLE__ = 1
 This is defined if Verilog\-AMS is enabled.
+
+.SH ENVIRONMENT
+.PP
+\fIiverilog\fP also accepts some environment variables that control
+its behavior. These can be used to make semi-permanent changes.
+
+.TP 8
+.B IVERILOG_ICONFIG=\fIfile-name\fP
+This sets the name used for the temporary file that passes parameters
+to the compiler proper, and prevents that file being deleted after the
+compiler has exited.
+
+.TP 8
+.B IVERILOG_VPI_MODULE_PATH=\fI/some/path:/some/other/path\fP
+This adds additional components to the VPI module search path. Paths
+specified in this way are searched after paths specified with \fB-L\fP,
+but before the default search path. Multiple paths can be separated with
+colons (semicolons if using Windows).
 
 .SH EXAMPLES
 These examples assume that you have a Verilog source file called hello.v in
