@@ -946,7 +946,7 @@ static void add_vpi_file(const char *name)
 
 #ifdef __MINGW32__
       char*tmp_name = strdup(name);
-      convert_to_MS_path(name);
+      convert_to_MS_path(tmp_name);
       name = tmp_name;
 #endif
 
