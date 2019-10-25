@@ -48,7 +48,9 @@ typedef struct __vpiArray* vvp_array_t;
  * header file elsewhere.
  */
 
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
 extern vpip_routines_s vpi_routines;
+#endif
 
 /*
  * Routines/definitions used to build the file/line number tracing object.

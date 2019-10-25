@@ -30,7 +30,9 @@
 static ivl_dll_t*dll_list = 0;
 static unsigned dll_list_cnt = 0;
 
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
 typedef void (*vpip_set_callback_t)(vpip_routines_s*);
+#endif
 typedef void (*vlog_startup_routines_t)(void);
 
 # define VPIP_MODULE_PATH_MAX 64
@@ -216,6 +218,7 @@ void vpip_load_module(const char*name)
 	return;
       }
 
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
       void*function = ivl_dlsym(dll, "vpip_set_callback");
       if (function == 0) {
 	    fprintf(stderr, "%s: no vpip_set_callback()\n", name);
@@ -224,6 +227,7 @@ void vpip_load_module(const char*name)
       }
       vpip_set_callback_t set_callback = (vpip_set_callback_t)function;
       set_callback(&vpi_routines);
+#endif
 
       void*table = ivl_dlsym(dll, LU "vlog_startup_routines" TU);
       if (table == 0) {

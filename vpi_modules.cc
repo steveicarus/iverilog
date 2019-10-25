@@ -184,6 +184,7 @@ vpiHandle vpi_register_systf(const struct t_vpi_systf_data*ss)
     return 0;
 }
 
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
 vpip_routines_s vpi_routines = {
     .register_cb                = vpi_register_cb,
     .remove_cb                  = vpi_remove_cb,
@@ -229,6 +230,7 @@ vpip_routines_s vpi_routines = {
 };
 
 typedef void (*vpip_set_callback_t)(vpip_routines_s*);
+#endif
 typedef void (*vlog_startup_routines_t)(void);
 
 bool load_vpi_module(const char*path)
@@ -240,6 +242,7 @@ bool load_vpi_module(const char*path)
 	return false;
     }
 
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
     void*function = ivl_dlsym(dll, "vpip_set_callback");
     if (function == 0) {
         cerr << "warning: '" << path << "' has no vpip_set_callback()" << endl;
@@ -248,6 +251,7 @@ bool load_vpi_module(const char*path)
     }
     vpip_set_callback_t set_callback = (vpip_set_callback_t)function;
     set_callback(&vpi_routines);
+#endif
 
     void*table = ivl_dlsym(dll, LU "vlog_startup_routines" TU);
     if (table == 0) {

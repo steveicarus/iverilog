@@ -17,6 +17,8 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
+
 #include "vpi_user.h"
 
 vpip_routines_s*vpip_routines = 0;
@@ -25,3 +27,11 @@ DLLEXPORT void vpip_set_callback(vpip_routines_s*routines)
 {
       vpip_routines = routines;
 }
+
+#else
+
+void __libvpi_c_dummy_function(void)
+{
+}
+
+#endif

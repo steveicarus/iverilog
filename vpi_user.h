@@ -675,6 +675,7 @@ extern void vpip_count_drivers(vpiHandle ref, unsigned idx,
 #   define _vpi_at_APV 6
 #endif
 
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
 /*
  * In Linux, when loaded, a shared library can automatically bind to functions
  * provided by its client. In Windows, a DLL can only do this statically at
@@ -779,6 +780,8 @@ extern vpip_routines_s*vpip_routines;
 #define vpip_set_return_value(...)          vpip_routines->set_return_value(__VA_ARGS__)
 
 #endif // IVL_VPI_MODULE
+
+#endif // defined(__MINGW32__) || defined (__CYGWIN32__)
 
 EXTERN_C_END
 
