@@ -706,17 +706,14 @@ typedef struct {
     PLI_UINT32  (*mcd_close)(PLI_UINT32);
     PLI_INT32   (*mcd_flush)(PLI_UINT32);
     char*       (*mcd_name)(PLI_UINT32);
-    PLI_INT32   (*mcd_printf)(PLI_UINT32, const char*, ...);
     PLI_INT32   (*mcd_vprintf)(PLI_UINT32, const char*, va_list);
     PLI_INT32   (*flush)(void);
-    PLI_INT32   (*printf)(const char*, ...);
     PLI_INT32   (*vprintf)(const char*, va_list);
     PLI_INT32   (*chk_error)(p_vpi_error_info);
     PLI_INT32   (*compare_objects)(vpiHandle, vpiHandle);
     PLI_INT32   (*free_object)(vpiHandle);
     PLI_INT32   (*get_vlog_info)(p_vpi_vlog_info info) ;
-    void        (*control)(PLI_INT32, ...);
-    void        (*sim_control)(PLI_INT32, ...);
+    void        (*vcontrol)(PLI_INT32, va_list);
     PLI_INT32   (*fopen)(const char*, const char*);
     FILE*       (*get_file)(PLI_INT32);
     s_vpi_vecval(*calc_clog2)(vpiHandle);
@@ -728,58 +725,6 @@ typedef struct {
 } vpip_routines_s;
 
 extern DLLEXPORT void vpip_set_callback(vpip_routines_s*routines);
-
-/*
- * IVL_VPI_MODULE should be defined when compiling a VPI module to route
- * all VPI routine calls through the jump table.
- */
-#ifdef IVL_VPI_MODULE
-
-extern vpip_routines_s*vpip_routines;
-
-#define vpi_register_cb(...)                vpip_routines->register_cb(__VA_ARGS__)
-#define vpi_remove_cb(...)                  vpip_routines->remove_cb(__VA_ARGS__)
-#define vpi_register_systf(...)             vpip_routines->register_systf(__VA_ARGS__)
-#define vpi_get_systf_info(...)             vpip_routines->get_systf_info(__VA_ARGS__)
-#define vpi_handle_by_name(...)             vpip_routines->handle_by_name(__VA_ARGS__)
-#define vpi_handle_by_index(...)            vpip_routines->handle_by_index(__VA_ARGS__)
-#define vpi_handle(...)                     vpip_routines->handle(__VA_ARGS__)
-#define vpi_iterate(...)                    vpip_routines->iterate(__VA_ARGS__)
-#define vpi_scan(...)                       vpip_routines->scan(__VA_ARGS__)
-#define vpi_get(...)                        vpip_routines->get(__VA_ARGS__)
-#define vpi_get_str(...)                    vpip_routines->get_str(__VA_ARGS__)
-#define vpi_get_delays(...)                 vpip_routines->get_delays(__VA_ARGS__)
-#define vpi_put_delays(...)                 vpip_routines->put_delays(__VA_ARGS__)
-#define vpi_get_value(...)                  vpip_routines->get_value(__VA_ARGS__)
-#define vpi_put_value(...)                  vpip_routines->put_value(__VA_ARGS__)
-#define vpi_get_time(...)                   vpip_routines->get_time(__VA_ARGS__)
-#define vpi_get_userdata(...)               vpip_routines->get_userdata(__VA_ARGS__)
-#define vpi_put_userdata(...)               vpip_routines->put_userdata(__VA_ARGS__)
-#define vpi_mcd_open(...)                   vpip_routines->mcd_open(__VA_ARGS__)
-#define vpi_mcd_close(...)                  vpip_routines->mcd_close(__VA_ARGS__)
-#define vpi_mcd_flush(...)                  vpip_routines->mcd_flush(__VA_ARGS__)
-#define vpi_mcd_name(...)                   vpip_routines->mcd_name(__VA_ARGS__)
-#define vpi_mcd_printf(...)                 vpip_routines->mcd_printf(__VA_ARGS__)
-#define vpi_mcd_vprintf(...)                vpip_routines->mcd_vprintf(__VA_ARGS__)
-#define vpi_flush(...)                      vpip_routines->flush(__VA_ARGS__)
-#define vpi_printf(...)                     vpip_routines->printf(__VA_ARGS__)
-#define vpi_vprintf(...)                    vpip_routines->vprintf(__VA_ARGS__)
-#define vpi_chk_error(...)                  vpip_routines->chk_error(__VA_ARGS__)
-#define vpi_compare_objects(...)            vpip_routines->compare_objects(__VA_ARGS__)
-#define vpi_free_object(...)                vpip_routines->free_object(__VA_ARGS__)
-#define vpi_get_vlog_info(...)              vpip_routines->get_vlog_info(__VA_ARGS__)
-#define vpi_control(...)                    vpip_routines->control(__VA_ARGS__)
-#define vpi_sim_control(...)                vpip_routines->sim_control(__VA_ARGS__)
-#define vpi_fopen(...)                      vpip_routines->fopen(__VA_ARGS__)
-#define vpi_get_file(...)                   vpip_routines->get_file(__VA_ARGS__)
-#define vpip_calc_clog2(...)                vpip_routines->calc_clog2(__VA_ARGS__)
-#define vpip_count_drivers(...)             vpip_routines->count_drivers(__VA_ARGS__)
-#define vpip_format_strength(...)           vpip_routines->format_strength(__VA_ARGS__)
-#define vpip_make_systf_system_defined(...) vpip_routines->make_systf_system_defined(__VA_ARGS__)
-#define vpip_mcd_rawwrite(...)              vpip_routines->mcd_rawwrite(__VA_ARGS__)
-#define vpip_set_return_value(...)          vpip_routines->set_return_value(__VA_ARGS__)
-
-#endif // IVL_VPI_MODULE
 
 #endif // defined(__MINGW32__) || defined (__CYGWIN32__)
 

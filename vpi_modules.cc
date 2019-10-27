@@ -124,6 +124,7 @@ void        vpip_format_strength(char*, s_vpi_value*, unsigned) { }
 void        vpip_make_systf_system_defined(vpiHandle) { }
 void        vpip_mcd_rawwrite(PLI_UINT32, const char*, size_t) { }
 void        vpip_set_return_value(int) { }
+void        vpi_vcontrol(PLI_INT32, va_list) { }
 
 
 /* When a module registers a system function, extract and save the return
@@ -208,17 +209,14 @@ vpip_routines_s vpi_routines = {
     .mcd_close                  = vpi_mcd_close,
     .mcd_flush                  = vpi_mcd_flush,
     .mcd_name                   = vpi_mcd_name,
-    .mcd_printf                 = vpi_mcd_printf,
     .mcd_vprintf                = vpi_mcd_vprintf,
     .flush                      = vpi_flush,
-    .printf                     = vpi_printf,
     .vprintf                    = vpi_vprintf,
     .chk_error                  = vpi_chk_error,
     .compare_objects            = vpi_compare_objects,
     .free_object                = vpi_free_object,
     .get_vlog_info              = vpi_get_vlog_info,
-    .control                    = vpi_control,
-    .sim_control                = vpi_sim_control,
+    .vcontrol                   = vpi_vcontrol,
     .fopen                      = vpi_fopen,
     .get_file                   = vpi_get_file,
     .calc_clog2                 = vpip_calc_clog2,
