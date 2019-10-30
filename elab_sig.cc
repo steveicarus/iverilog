@@ -932,9 +932,15 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    wtype = NetNet::WIRE;
 	    is_implicit_scalar = true;
       }
+	// Certain contexts, such as arguments to functions, presume
+	// "reg" instead of "wire". The parser reports these as
+	// IMPLICIT_REG. Also, certain cases, such as:
+	//   fun(string arg1) ...
+	// are implicitly NOT scalar, so detect that case here.
       if (wtype == NetNet::IMPLICIT_REG) {
 	    wtype = NetNet::REG;
-	    is_implicit_scalar = true;
+	    if (data_type_!=IVL_VT_STRING)
+		  is_implicit_scalar = true;
       }
 
       unsigned wid = 1;
