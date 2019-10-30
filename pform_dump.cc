@@ -528,9 +528,11 @@ void PWire::dump(ostream&out, unsigned ind) const
       if (signed_) {
 	    out << " signed";
       }
-
       if (get_isint()) {
 	    out << " integer";
+      }
+      if (get_scalar()) {
+	    out << " scalar";
       }
       if (set_data_type_) {
 	    out << " set_data_type_=" << typeid(*set_data_type_).name();

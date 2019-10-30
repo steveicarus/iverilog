@@ -238,7 +238,7 @@ ostream& netqueue_t::debug_dump(ostream&fd) const
 
 ostream& netvector_t::debug_dump(ostream&o) const
 {
-      o << type_ << (signed_? " signed" : " unsigned") << packed_dims_;
+      o << "netvector_t:" << type_ << (signed_? " signed" : " unsigned") << packed_dims_;
       return o;
 }
 

@@ -4013,6 +4013,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    cerr << get_fileline() << ": PEIdent::elaborate_expr: "
 		 << "Symbol search found base_path=" << base_path
 		 << ", member_path=" << member_path
+		 << ", par=" << par
+		 << ", net=" << net
+		 << ", eve=" << eve
 		 << endl;
       }
 
@@ -4816,6 +4819,13 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 
       const name_component_t&name_tail = path_.back();
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_net_word_: "
+		 << "expr_wid=" << expr_wid
+		 << ", net->get_scalar()==" << (net->get_scalar()?"true":"false")
+		 << endl;
+      }
+
 	// Special case: This is the entire array, and we are a direct
 	// argument of a system task.
       if (name_tail.index.empty() && (SYS_TASK_ARG & flags)) {
@@ -5510,6 +5520,15 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
                                      unsigned expr_wid,
 				     unsigned flags) const
 {
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr_net: "
+		 << "net=" << net->name()
+		 << ", net->unpacked_dimensions()=" << net->unpacked_dimensions()
+		 << ", net->get_scalar()=" << (net->get_scalar()?"true":"false")
+		 << ", net->net_type()=" << *net->net_type()
+		 << endl;
+      }
+
       if (net->unpacked_dimensions() > 0)
 	    return elaborate_expr_net_word_(des, scope, net, found_in,
                                             expr_wid, flags);
@@ -5523,8 +5542,7 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       if (! path_.back().index.empty())
 	    use_sel = path_.back().index.back().sel;
 
-      if (net->get_scalar() &&
-          use_sel != index_component_t::SEL_NONE) {
+      if (net->get_scalar() && use_sel != index_component_t::SEL_NONE) {
 	    cerr << get_fileline() << ": error: can not select part of ";
 	    if (node->expr_type() == IVL_VT_REAL) cerr << "real: ";
 	    else cerr << "scalar: ";
