@@ -103,6 +103,26 @@ char *get_filename(vpiHandle callh, const char *name, vpiHandle file)
       return strdup(val.value.str);
 }
 
+char* get_filename_with_suffix(vpiHandle callh, const char *name, vpiHandle file, const char*suff)
+{
+      char*path = get_filename(callh, name, file);
+      if (path == 0) return 0;
+
+	/* If the name already has a suffix, then don't replace it or
+	   add another suffix. Just return this path. */
+      char*tailp = strrchr(path, '.');
+      if (tailp != 0) return path;
+
+	/* The name doesn't have a suffix, so append the passed in
+	   suffix to the file name. */
+      char*new_path = malloc(strlen(path) + strlen(suff) + 2);
+      strcpy(new_path, path);
+      strcat(new_path, ".");
+      strcat(new_path, suff);
+      free(path);
+      return new_path;
+}
+
 void check_for_extra_args(vpiHandle argv, vpiHandle callh, const char *name,
                           const char *arg_str, unsigned opt)
 {

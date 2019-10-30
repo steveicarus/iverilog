@@ -467,7 +467,7 @@ static PLI_INT32 sys_dumpfile_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    return 0;
       }
 
-      path = get_filename(callh, name, vpi_scan(argv));
+      path = get_filename_with_suffix(callh, name, vpi_scan(argv), "vcd");
       vpi_free_object(argv);
       if (! path) return 0;
 
