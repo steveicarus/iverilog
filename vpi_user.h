@@ -683,6 +683,10 @@ extern void vpip_count_drivers(vpiHandle ref, unsigned idx,
  * to be used by both the compiler and the simulator, we construct a jump table
  * for the VPI routines that we can pass down to the VPI modules.
  */
+
+// Increment the version number any time vpip_routines_s is changed.
+static const PLI_UINT32 vpip_routines_version = 1;
+
 typedef struct {
     vpiHandle   (*register_cb)(p_cb_data);
     PLI_INT32   (*remove_cb)(vpiHandle);
@@ -724,7 +728,7 @@ typedef struct {
     void        (*set_return_value)(int);
 } vpip_routines_s;
 
-extern DLLEXPORT void vpip_set_callback(vpip_routines_s*routines);
+extern DLLEXPORT PLI_UINT32 vpip_set_callback(vpip_routines_s*routines, PLI_UINT32 version);
 
 #endif // defined(__MINGW32__) || defined (__CYGWIN32__)
 

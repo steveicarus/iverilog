@@ -227,7 +227,7 @@ vpip_routines_s vpi_routines = {
     .set_return_value           = vpip_set_return_value,
 };
 
-typedef void (*vpip_set_callback_t)(vpip_routines_s*);
+typedef PLI_UINT32 (*vpip_set_callback_t)(vpip_routines_s*, PLI_UINT32);
 #endif
 typedef void (*vlog_startup_routines_t)(void);
 
@@ -248,7 +248,12 @@ bool load_vpi_module(const char*path)
         return true;
     }
     vpip_set_callback_t set_callback = (vpip_set_callback_t)function;
-    set_callback(&vpi_routines);
+    if (!set_callback(&vpi_routines, vpip_routines_version)) {
+        cerr << "error: Failed to link '" << path << "'. "
+                "Try rebuilding it with iverilog-vpi." << endl;
+        ivl_dlclose(dll);
+        return true;
+    }
 #endif
 
     void*table = ivl_dlsym(dll, LU "vlog_startup_routines" TU);

@@ -285,9 +285,13 @@ void vpip_set_return_value(int value)
       vpip_routines->set_return_value(value);
 }
 
-DLLEXPORT void vpip_set_callback(vpip_routines_s*routines)
+DLLEXPORT PLI_UINT32 vpip_set_callback(vpip_routines_s*routines, PLI_UINT32 version)
 {
+      if (version != vpip_routines_version)
+            return 0;
+
       vpip_routines = routines;
+      return 1;
 }
 
 #else
