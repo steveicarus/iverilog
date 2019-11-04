@@ -38,9 +38,6 @@ HOSTCFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 BUILDCC = @CC_FOR_BUILD@
 BUILDEXT = @BUILD_EXEEXT@
 CXX = @CXX@
-DLLTOOL = @DLLTOOL@
-AR = @AR@
-RANLIB = @RANLIB@
 INSTALL = @INSTALL@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -82,7 +79,7 @@ O = main.o parse.o parse_misc.o lexor.o arith.o array_common.o array.o bufif.o c
     vvp_object.o vvp_cobject.o vvp_darray.o event.o logic.o delay.o \
     words.o island_tran.o $(VPI)
 
-all: dep vvp@EXEEXT@ libvpi.a vvp.man
+all: dep vvp@EXEEXT@ vvp.man
 
 check: all
 ifeq (@WIN32@,yes)
@@ -101,13 +98,13 @@ endif
 
 clean:
 	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc
-	rm -rf dep vvp@EXEEXT@ libvpi.a parse.output vvp.man vvp.ps vvp.pdf vvp.exp
+	rm -rf dep vvp@EXEEXT@ parse.output vvp.man vvp.ps vvp.pdf vvp.exp
 
 distclean: clean
 	rm -f Makefile config.log
 	rm -f stamp-config-h config.h
 
-cppcheck: $(O:.o=.cc) libvpi.c draw_tt.c
+cppcheck: $(O:.o=.cc) draw_tt.c
 	cppcheck --enable=all --std=posix --std=c99 --std=c++03 -f \
 	         --suppressions-list=$(srcdir)/cppcheck.sup \
 	         -UMODULE_DIR1 -UMODULE_DIR2 -UYY_USER_INIT \
@@ -121,30 +118,8 @@ Makefile: $(srcdir)/Makefile.in
 dep:
 	mkdir dep
 
-ifeq (@WIN32@,yes)
-# Under Windows (mingw) I need to make the vvp.exe in two steps.
-# The first step makes an vvp.exe that dlltool can use to make an
-# export and import library, and the last link makes a, vvp.exe
-# that really exports the things that the import library imports.
-#
-# To get this to work correctly we must use the suffixed version of the
-# executable to build the library.
-vvp@EXEEXT@ libvpi.a: $O $(srcdir)/vvp.def
-	$(CXX) -o vvp$(suffix)@EXEEXT@ $(LDFLAGS) $O $(dllib) $(LIBS)
-	$(DLLTOOL) --dllname vvp$(suffix)@EXEEXT@ --def $(srcdir)/vvp.def \
-		--output-lib libvpi.a --output-exp vvp.exp
-	rm -f vvp$(suffix)@EXEEXT@
-	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ vvp.exp $(LDFLAGS) $O $(dllib) $(LIBS)
-else
-libvpi.a: libvpi.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<
-	rm -f libvpi.a
-	$(AR) cqv libvpi.a libvpi.o
-	$(RANLIB) libvpi.a
-
 vvp@EXEEXT@: $O
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $O $(LIBS) $(dllib)
-endif
 
 %.o: %.cc config.h
 	$(CXX) $(CPPFLAGS) -DIVL_SUFFIX='"$(suffix)"' $(MDIR1) $(MDIR2) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
@@ -207,13 +182,10 @@ stamp-config-h: $(srcdir)/config.h.in ../config.status
 	cd ..; ./config.status --header=vvp/config.h
 config.h: stamp-config-h
 
-install: all installdirs $(bindir)/vvp$(suffix)@EXEEXT@ $(libdir)/libvpi$(suffix).a $(INSTALL_DOC)
+install: all installdirs $(bindir)/vvp$(suffix)@EXEEXT@ $(INSTALL_DOC)
 
 $(bindir)/vvp$(suffix)@EXEEXT@: ./vvp@EXEEXT@
 	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
-
-$(libdir)/libvpi$(suffix).a : ./libvpi.a
-	$(INSTALL_DATA) libvpi.a "$(DESTDIR)$(libdir)/libvpi$(suffix).a"
 
 $(mandir)/man1/vvp$(suffix).1: vvp.man
 	$(INSTALL_DATA) vvp.man "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1"
@@ -227,7 +199,6 @@ installdirs: $(srcdir)/../mkinstalldirs
 
 uninstall: $(UNINSTALL32)
 	rm -f "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
-	rm -f "$(DESTDIR)$(libdir)/libvpi$(suffix).a"
 	rm -f "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1" "$(DESTDIR)$(prefix)/vvp$(suffix).pdf"
 
 -include $(patsubst %.o, dep/%.d, $O)

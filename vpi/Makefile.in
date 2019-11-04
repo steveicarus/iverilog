@@ -33,6 +33,8 @@ vpidir = $(libdir)/ivl$(suffix)
 
 CC = @CC@
 CXX = @CXX@
+AR = @AR@
+RANLIB = @RANLIB@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
@@ -69,10 +71,10 @@ O += sys_fst.o fstapi.o fastlz.o lz4.o
 endif
 
 # Object files for v2005_math.vpi
-M = sys_clog2.o v2005_math.o
+V2005 = sys_clog2.o v2005_math.o
 
 # Object files for va_math.vpi
-V = va_math.o
+VA_MATH = va_math.o
 
 V2009 = v2009_table.o v2009_array.o v2009_bitvec.o v2009_enum.o v2009_string.o \
         sys_priv.o
@@ -83,12 +85,12 @@ VHDL_TEXTIO = vhdl_textio.o sys_priv.o
 
 VPI_DEBUG = vpi_debug.o
 
-all: dep system.vpi va_math.vpi v2005_math.vpi v2009.vpi vhdl_sys.vpi vhdl_textio.vpi vpi_debug.vpi $(ALL32)
+all: dep libvpi.a system.vpi va_math.vpi v2005_math.vpi v2009.vpi vhdl_sys.vpi vhdl_textio.vpi vpi_debug.vpi $(ALL32)
 
 check: all
 
 clean:
-	rm -rf *.o sys_readmem_lex.c dep system.vpi
+	rm -rf *.o sys_readmem_lex.c dep libvpi.a system.vpi
 	rm -f sdf_lexor.c sdf_parse.c sdf_parse.output sdf_parse.h
 	rm -f table_mod_parse.c table_mod_parse.h table_mod_parse.output
 	rm -f table_mod_lexor.c
@@ -122,6 +124,12 @@ dep:
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 
+libvpi.a: libvpi.c ../vpi_user.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<
+	rm -f libvpi.a
+	$(AR) cqv libvpi.a libvpi.o
+	$(RANLIB) libvpi.a
+
 LIBS = @LIBS@
 SYSTEM_VPI_LDFLAGS = $(LIBS)
 VA_MATH_LDFLAGS =
@@ -130,8 +138,8 @@ ifeq (@MINGW32@,yes)
     VA_MATH_LDFLAGS += @EXTRALIBS@
 endif
 
-system.vpi: $O $(OPP) ../vvp/libvpi.a
-	$(CXX) @shared@ -o $@ $O $(OPP) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
+system.vpi: $O $(OPP) libvpi.a
+	$(CXX) @shared@ -o $@ $O $(OPP) -L. $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
 sys_readmem_lex.c: $(srcdir)/sys_readmem_lex.lex
 	$(LEX) -t $< > $@
@@ -156,23 +164,23 @@ table_mod_parse.c: $(srcdir)/table_mod_parse.y
 	$(YACC) --verbose -t -p tblmod -d -o $@ $<
 table_mod_parse.h: table_mod_parse.c
 
-v2005_math.vpi: $M ../vvp/libvpi.a
-	$(CC) @shared@ -o $@ $M -L../vvp $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
+v2005_math.vpi: $(V2005) libvpi.a
+	$(CC) @shared@ -o $@ $(V2005) -L. $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
 
-v2009.vpi: $(V2009) ../vvp/libvpi.a
-	$(CC) @shared@ -o $@ $(V2009) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
+v2009.vpi: $(V2009) libvpi.a
+	$(CC) @shared@ -o $@ $(V2009) -L. $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
-va_math.vpi: $V ../vvp/libvpi.a
-	$(CC) @shared@ -o $@ $V -L../vvp $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
+va_math.vpi: $(VA_MATH) libvpi.a
+	$(CC) @shared@ -o $@ $(VA_MATH) -L. $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
 
-vhdl_sys.vpi: $(VHDL_SYS) ../vvp/libvpi.a
-	$(CC) @shared@ -o $@ $(VHDL_SYS) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
+vhdl_sys.vpi: $(VHDL_SYS) libvpi.a
+	$(CC) @shared@ -o $@ $(VHDL_SYS) -L. $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
-vhdl_textio.vpi: $(VHDL_TEXTIO) ../vvp/libvpi.a
-	$(CC) @shared@ -o $@ $(VHDL_TEXTIO) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
+vhdl_textio.vpi: $(VHDL_TEXTIO) libvpi.a
+	$(CC) @shared@ -o $@ $(VHDL_TEXTIO) -L. $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
-vpi_debug.vpi: $(VPI_DEBUG) ../vvp/libvpi.a
-	$(CC) @shared@ -o $@ $(VPI_DEBUG) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
+vpi_debug.vpi: $(VPI_DEBUG) libvpi.a
+	$(CC) @shared@ -o $@ $(VPI_DEBUG) -L. $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
 stamp-vpi_config-h: $(srcdir)/vpi_config.h.in ../config.status
 	@rm -f $@
@@ -180,49 +188,35 @@ stamp-vpi_config-h: $(srcdir)/vpi_config.h.in ../config.status
 vpi_config.h: stamp-vpi_config-h
 
 install: all installdirs \
-    $(vpidir)/system.vpi $(vpidir)/system.sft \
-    $(vpidir)/va_math.vpi $(vpidir)/va_math.sft \
-    $(vpidir)/v2005_math.vpi $(vpidir)/v2005_math.sft \
-    $(vpidir)/v2009.vpi $(vpidir)/v2009.sft \
-    $(vpidir)/vhdl_sys.vpi $(vpidir)/vhdl_sys.sft \
-    $(vpidir)/vhdl_textio.vpi $(vpidir)/vhdl_textio.sft \
+    $(libdir)/libvpi$(suffix).a \
+    $(vpidir)/system.vpi \
+    $(vpidir)/va_math.vpi \
+    $(vpidir)/v2005_math.vpi \
+    $(vpidir)/v2009.vpi \
+    $(vpidir)/vhdl_sys.vpi \
+    $(vpidir)/vhdl_textio.vpi \
     $(vpidir)/vpi_debug.vpi
+
+$(libdir)/libvpi$(suffix).a : ./libvpi.a
+	$(INSTALL_DATA) libvpi.a "$(DESTDIR)$(libdir)/libvpi$(suffix).a"
 
 $(vpidir)/system.vpi: ./system.vpi
 	$(INSTALL_PROGRAM) ./system.vpi "$(DESTDIR)$(vpidir)/system.vpi"
 
-$(vpidir)/system.sft: system.sft
-	$(INSTALL_DATA) $< "$(DESTDIR)$@"
-
 $(vpidir)/va_math.vpi: ./va_math.vpi
 	$(INSTALL_PROGRAM) ./va_math.vpi "$(DESTDIR)$(vpidir)/va_math.vpi"
-
-$(vpidir)/va_math.sft: va_math.sft
-	$(INSTALL_DATA) $< "$(DESTDIR)$@"
 
 $(vpidir)/v2005_math.vpi: ./v2005_math.vpi
 	$(INSTALL_PROGRAM) ./v2005_math.vpi "$(DESTDIR)$(vpidir)/v2005_math.vpi"
 
-$(vpidir)/v2005_math.sft: v2005_math.sft
-	$(INSTALL_DATA) $< "$(DESTDIR)$@"
-
 $(vpidir)/v2009.vpi: ./v2009.vpi
 	$(INSTALL_PROGRAM) ./v2009.vpi "$(DESTDIR)$(vpidir)/v2009.vpi"
-
-$(vpidir)/v2009.sft: v2009.sft
-	$(INSTALL_DATA) $< "$(DESTDIR)$@"
 
 $(vpidir)/vhdl_sys.vpi: ./vhdl_sys.vpi
 	$(INSTALL_PROGRAM) ./vhdl_sys.vpi "$(DESTDIR)$(vpidir)/vhdl_sys.vpi"
 
-$(vpidir)/vhdl_sys.sft: vhdl_sys.sft
-	$(INSTALL_DATA) $< "$(DESTDIR)$@"
-
 $(vpidir)/vhdl_textio.vpi: ./vhdl_textio.vpi
 	$(INSTALL_PROGRAM) ./vhdl_textio.vpi "$(DESTDIR)$(vpidir)/vhdl_textio.vpi"
-
-$(vpidir)/vhdl_textio.sft: vhdl_textio.sft
-	$(INSTALL_DATA) $< "$(DESTDIR)$@"
 
 $(vpidir)/vpi_debug.vpi: ./vpi_debug.vpi
 	$(INSTALL_PROGRAM) ./vpi_debug.vpi "$(DESTDIR)$(vpidir)/vpi_debug.vpi"
@@ -231,21 +225,20 @@ installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)" "$(DESTDIR)$(vpidir)"
 
 uninstall:
+	rm -f "$(DESTDIR)$(libdir)/libvpi$(suffix).a"
 	rm -f "$(DESTDIR)$(vpidir)/system.vpi"
-	rm -f "$(DESTDIR)$(vpidir)/system.sft"
 	rm -f "$(DESTDIR)$(vpidir)/va_math.vpi"
-	rm -f "$(DESTDIR)$(vpidir)/va_math.sft"
 	rm -f "$(DESTDIR)$(vpidir)/v2005_math.vpi"
-	rm -f "$(DESTDIR)$(vpidir)/v2005_math.sft"
 	rm -f "$(DESTDIR)$(vpidir)/v2009.vpi"
-	rm -f "$(DESTDIR)$(vpidir)/v2009.sft"
 	rm -f "$(DESTDIR)$(vpidir)/vhdl_sys.vpi"
-	rm -f "$(DESTDIR)$(vpidir)/vhdl_sys.sft"
 	rm -f "$(DESTDIR)$(vpidir)/vhdl_textio.vpi"
-	rm -f "$(DESTDIR)$(vpidir)/vhdl_textio.sft"
 	rm -f "$(DESTDIR)$(vpidir)/vpi_debug.vpi"
 
 -include $(patsubst %.o, dep/%.d, $O)
 -include $(patsubst %.o, dep/%.d, $(OPP))
--include $(patsubst %.o, dep/%.d, $M)
--include $(patsubst %.o, dep/%.d, $V)
+-include $(patsubst %.o, dep/%.d, $(V2005))
+-include $(patsubst %.o, dep/%.d, $(VA_MATH))
+-include $(patsubst %.o, dep/%.d, $(V2009))
+-include $(patsubst %.o, dep/%.d, $(VHDL_SYS))
+-include $(patsubst %.o, dep/%.d, $(VHDL_TEXTIO))
+-include $(patsubst %.o, dep/%.d, $(VPI_DEBUG))

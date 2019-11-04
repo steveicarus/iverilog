@@ -1,7 +1,7 @@
 #ifndef VPI_USER_H
 #define VPI_USER_H
 /*
- * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -674,6 +674,63 @@ extern void vpip_count_drivers(vpiHandle ref, unsigned idx,
 #   define _vpi_at_A   5
 #   define _vpi_at_APV 6
 #endif
+
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
+/*
+ * In Linux, when loaded, a shared library can automatically bind to functions
+ * provided by its client. In Windows, a DLL can only do this statically at
+ * link time, and is then tied to a specific client. So to enable VPI modules
+ * to be used by both the compiler and the simulator, we construct a jump table
+ * for the VPI routines that we can pass down to the VPI modules.
+ */
+
+// Increment the version number any time vpip_routines_s is changed.
+static const PLI_UINT32 vpip_routines_version = 1;
+
+typedef struct {
+    vpiHandle   (*register_cb)(p_cb_data);
+    PLI_INT32   (*remove_cb)(vpiHandle);
+    vpiHandle   (*register_systf)(const struct t_vpi_systf_data*ss);
+    void        (*get_systf_info)(vpiHandle, p_vpi_systf_data);
+    vpiHandle   (*handle_by_name)(const char*, vpiHandle);
+    vpiHandle   (*handle_by_index)(vpiHandle, PLI_INT32);
+    vpiHandle   (*handle)(PLI_INT32, vpiHandle);
+    vpiHandle   (*iterate)(PLI_INT32, vpiHandle);
+    vpiHandle   (*scan)(vpiHandle);
+    PLI_INT32   (*get)(int, vpiHandle);
+    char*       (*get_str)(PLI_INT32, vpiHandle);
+    void        (*get_delays)(vpiHandle, p_vpi_delay);
+    void        (*put_delays)(vpiHandle, p_vpi_delay);
+    void        (*get_value)(vpiHandle, p_vpi_value);
+    vpiHandle   (*put_value)(vpiHandle, p_vpi_value, p_vpi_time, PLI_INT32);
+    void        (*get_time)(vpiHandle, s_vpi_time*);
+    void*       (*get_userdata)(vpiHandle);
+    PLI_INT32   (*put_userdata)(vpiHandle, void*);
+    PLI_UINT32  (*mcd_open)(char *);
+    PLI_UINT32  (*mcd_close)(PLI_UINT32);
+    PLI_INT32   (*mcd_flush)(PLI_UINT32);
+    char*       (*mcd_name)(PLI_UINT32);
+    PLI_INT32   (*mcd_vprintf)(PLI_UINT32, const char*, va_list);
+    PLI_INT32   (*flush)(void);
+    PLI_INT32   (*vprintf)(const char*, va_list);
+    PLI_INT32   (*chk_error)(p_vpi_error_info);
+    PLI_INT32   (*compare_objects)(vpiHandle, vpiHandle);
+    PLI_INT32   (*free_object)(vpiHandle);
+    PLI_INT32   (*get_vlog_info)(p_vpi_vlog_info info) ;
+    void        (*vcontrol)(PLI_INT32, va_list);
+    PLI_INT32   (*fopen)(const char*, const char*);
+    FILE*       (*get_file)(PLI_INT32);
+    s_vpi_vecval(*calc_clog2)(vpiHandle);
+    void        (*count_drivers)(vpiHandle, unsigned, unsigned [4]);
+    void        (*format_strength)(char*, s_vpi_value*, unsigned);
+    void        (*make_systf_system_defined)(vpiHandle);
+    void        (*mcd_rawwrite)(PLI_UINT32, const char*, size_t);
+    void        (*set_return_value)(int);
+} vpip_routines_s;
+
+extern DLLEXPORT PLI_UINT32 vpip_set_callback(vpip_routines_s*routines, PLI_UINT32 version);
+
+#endif // defined(__MINGW32__) || defined (__CYGWIN32__)
 
 EXTERN_C_END
 

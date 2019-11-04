@@ -505,6 +505,7 @@ void v2009_enum_register(void)
       vpiHandle res;
 
       tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiOtherFunc;
       tf_data.calltf      = ivl_enum_method_name_calltf;
       tf_data.compiletf   = ivl_enum_method_name_compiletf;
       tf_data.sizetf      = 0;
@@ -515,6 +516,7 @@ void v2009_enum_register(void)
       vpip_make_systf_system_defined(res);
 
       tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiOtherFunc;
       tf_data.calltf      = ivl_enum_method_next_prev_calltf;
       tf_data.compiletf   = ivl_enum_method_next_prev_compiletf;
       tf_data.sizetf      = 0;
@@ -525,6 +527,7 @@ void v2009_enum_register(void)
       vpip_make_systf_system_defined(res);
 
       tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiOtherFunc;
       tf_data.calltf      = ivl_enum_method_next_prev_calltf;
       tf_data.compiletf   = ivl_enum_method_next_prev_compiletf;
       tf_data.sizetf      = 0;

@@ -117,7 +117,7 @@ O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
     net_udp.o pad_to_width.o parse.o parse_misc.o pform.o pform_analog.o \
     pform_disciplines.o pform_dump.o pform_package.o pform_pclass.o \
     pform_class_type.o pform_string_type.o pform_struct_type.o pform_types.o \
-    symbol_search.o sync.o sys_funcs.o verinum.o verireal.o target.o \
+    symbol_search.o sync.o sys_funcs.o verinum.o verireal.o vpi_modules.o target.o \
     Attrib.o HName.o Module.o PClass.o PDelays.o PEvent.o PExpr.o PFunction.o \
     PGate.o PGenerate.o PModport.o PNamedItem.o PPackage.o PScope.o PSpec.o \
     PTask.o PUdp.o PWire.o Statement.o AStatement.o $M $(FF) $(TT)
@@ -138,7 +138,7 @@ endif
 check: all
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 	test -r check.conf || cp $(srcdir)/check.conf .
-	driver/iverilog -B. -BPivlpp -tcheck -ocheck.vvp $(srcdir)/examples/hello.vl
+	driver/iverilog -B. -BMvpi -BPivlpp -tcheck -ocheck.vvp $(srcdir)/examples/hello.vl
 ifeq (@WIN32@,yes)
 ifeq (@install_suffix@,)
 	vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'

@@ -90,11 +90,6 @@ static void error_message(vpiHandle callh, const char* msg)
     vpi_control(vpiFinish, 1);
 }
 
-static PLI_INT32 sizetf_32 (ICARUS_VPI_CONST PLI_BYTE8*name)
-{
-    (void)name;  /* Parameter is not used. */
-    return 32;
-}
 static PLI_INT32 sizetf_64 (ICARUS_VPI_CONST PLI_BYTE8*name)
 {
     (void)name;  /* Parameter is not used. */
@@ -252,39 +247,43 @@ void sys_convert_register(void)
       s_vpi_systf_data tf_data;
       vpiHandle res;
 
-      tf_data.type      = vpiSysFunc;
-      tf_data.user_data = "$bitstoreal";
-      tf_data.tfname    = tf_data.user_data;
-      tf_data.sizetf    = sizetf_64;
-      tf_data.compiletf = sys_convert_compiletf;
-      tf_data.calltf    = sys_bitstoreal_calltf;
+      tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiRealFunc;
+      tf_data.user_data   = "$bitstoreal";
+      tf_data.tfname      = tf_data.user_data;
+      tf_data.sizetf      = 0;
+      tf_data.compiletf   = sys_convert_compiletf;
+      tf_data.calltf      = sys_bitstoreal_calltf;
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
-      tf_data.type      = vpiSysFunc;
-      tf_data.user_data = "$itor";
-      tf_data.tfname    = tf_data.user_data;
-      tf_data.sizetf    = sizetf_64;
-      tf_data.compiletf = sys_convert_compiletf;
-      tf_data.calltf    = sys_itor_calltf;
+      tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiRealFunc;
+      tf_data.user_data   = "$itor";
+      tf_data.tfname      = tf_data.user_data;
+      tf_data.sizetf      = 0;
+      tf_data.compiletf   = sys_convert_compiletf;
+      tf_data.calltf      = sys_itor_calltf;
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
-      tf_data.type      = vpiSysFunc;
-      tf_data.user_data = "$realtobits";
-      tf_data.tfname    = tf_data.user_data;
-      tf_data.sizetf    = sizetf_64;
-      tf_data.compiletf = sys_convert_compiletf;
-      tf_data.calltf    = sys_realtobits_calltf;
+      tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiSizedFunc;
+      tf_data.user_data   = "$realtobits";
+      tf_data.tfname      = tf_data.user_data;
+      tf_data.sizetf      = sizetf_64;
+      tf_data.compiletf   = sys_convert_compiletf;
+      tf_data.calltf      = sys_realtobits_calltf;
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
-      tf_data.type      = vpiSysFunc;
-      tf_data.user_data = "$rtoi";
-      tf_data.tfname    = tf_data.user_data;
-      tf_data.sizetf    = sizetf_32;
-      tf_data.compiletf = sys_convert_compiletf;
-      tf_data.calltf    = sys_rtoi_calltf;
+      tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.user_data   = "$rtoi";
+      tf_data.tfname      = tf_data.user_data;
+      tf_data.sizetf      = 0;
+      tf_data.compiletf   = sys_convert_compiletf;
+      tf_data.calltf      = sys_rtoi_calltf;
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 }

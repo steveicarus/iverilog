@@ -78,6 +78,12 @@ static void check_var_arg(vpiHandle arg, vpiHandle callh, const char *name,
       vpi_control(vpiFinish, 1);
 }
 
+static PLI_INT32 sys_countdrivers_sizetf(ICARUS_VPI_CONST PLI_BYTE8*name)
+{
+    (void)name;  /* Parameter is not used. */
+    return 1;
+}
+
 /*
  * Check that the given $countdrivers() call has valid arguments.
  */
@@ -204,12 +210,13 @@ void sys_countdrivers_register(void)
       s_vpi_systf_data tf_data;
       vpiHandle res;
 
-      tf_data.type = vpiSysFunc;
-      tf_data.tfname = "$countdrivers";
-      tf_data.calltf = sys_countdrivers_calltf;
-      tf_data.compiletf = sys_countdrivers_compiletf;
-      tf_data.sizetf = 0;
-      tf_data.user_data = "$countdrivers";
+      tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiSizedFunc;
+      tf_data.tfname      = "$countdrivers";
+      tf_data.calltf      = sys_countdrivers_calltf;
+      tf_data.compiletf   = sys_countdrivers_compiletf;
+      tf_data.sizetf      = sys_countdrivers_sizetf;
+      tf_data.user_data   = "$countdrivers";
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 }

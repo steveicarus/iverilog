@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,6 +30,9 @@
 static ivl_dll_t*dll_list = 0;
 static unsigned dll_list_cnt = 0;
 
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
+typedef PLI_UINT32 (*vpip_set_callback_t)(vpip_routines_s*, PLI_UINT32);
+#endif
 typedef void (*vlog_startup_routines_t)(void);
 
 # define VPIP_MODULE_PATH_MAX 64
@@ -215,13 +218,22 @@ void vpip_load_module(const char*name)
 	return;
       }
 
-
-#ifdef __MINGW32__
-	/* For this check MinGW does not want the leading underscore! */
-      void*table = ivl_dlsym(dll, "vlog_startup_routines");
-#else
-      void*table = ivl_dlsym(dll, LU "vlog_startup_routines" TU);
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
+      void*function = ivl_dlsym(dll, "vpip_set_callback");
+      if (function == 0) {
+	    fprintf(stderr, "%s: no vpip_set_callback()\n", name);
+	    ivl_dlclose(dll);
+	    return;
+      }
+      vpip_set_callback_t set_callback = (vpip_set_callback_t)function;
+      if (!set_callback(&vpi_routines, vpip_routines_version)) {
+	    fprintf(stderr, "Failed to link VPI module %s. Try rebuilding it with iverilog-vpi.\n", name);
+	    ivl_dlclose(dll);
+	    return;
+      }
 #endif
+
+      void*table = ivl_dlsym(dll, LU "vlog_startup_routines" TU);
       if (table == 0) {
 	    fprintf(stderr, "%s: no vlog_startup_routines\n", name);
 	    ivl_dlclose(dll);

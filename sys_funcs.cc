@@ -29,16 +29,8 @@
  * via the lookup_sys_func function.
  */
 
-static const struct sfunc_return_type sfunc_table[] = {
-      { "$realtime",   IVL_VT_REAL,   1, false, false },
-      { "$bitstoreal", IVL_VT_REAL,   1, false, false },
-      { "$itor",       IVL_VT_REAL,   1, false, false },
-      { "$realtobits", IVL_VT_LOGIC, 64, false, false },
-      { "$time",       IVL_VT_LOGIC, 64, false, false },
-      { "$stime",      IVL_VT_LOGIC, 32, false, false },
-      { "$simtime",    IVL_VT_LOGIC, 64, false, false },
-      { 0,             IVL_VT_LOGIC, 32, false, false }
-};
+static const struct sfunc_return_type default_return_type =
+    { 0, IVL_VT_LOGIC, 32, false, false };
 
 struct sfunc_return_type_cell : sfunc_return_type {
       struct sfunc_return_type_cell*next;
@@ -89,19 +81,26 @@ const struct sfunc_return_type* lookup_sys_func(const char*name)
       if (def)
 	    return def;
 
-	/* Next, look in the core table. */
-      unsigned idx = 0;
-      while (sfunc_table[idx].name) {
+	/* No luck finding, so return the default description. */
+      return &default_return_type;
+}
 
-	    if (strcmp(sfunc_table[idx].name, name) == 0)
-		  return sfunc_table + idx;
-
-	    idx += 1;
+void add_sys_func(const struct sfunc_return_type&ret_type)
+{
+      struct sfunc_return_type*def = find_in_sys_func_list(ret_type.name);
+      if (def) {
+              /* Keep the original definition, but flag that it
+                 overrides a later definition. */
+            def->override_flag = true;
+            return;
       }
-
-	/* No luck finding, so return the trailer, which gives a
-	   default description. */
-      return sfunc_table + idx;
+      struct sfunc_return_type_cell*cell = new struct sfunc_return_type_cell;
+      cell->name = lex_strings.add(ret_type.name);
+      cell->type = ret_type.type;
+      cell->wid  = ret_type.wid;
+      cell->signed_flag = ret_type.signed_flag;
+      cell->override_flag = ret_type.override_flag;
+      append_to_list(cell);
 }
 
 /*
