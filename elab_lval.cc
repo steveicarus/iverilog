@@ -204,7 +204,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	   print a useful error message. */
       if (reg == 0) {
 	    if (use_scope->type()==NetScope::FUNC
-		&& use_scope->func_def()->return_sig()==0
+		&& use_scope->func_def()->is_void()
 		&& use_scope->basename()==peek_tail_name(path_)) {
 		  cerr << get_fileline() << ": error: "
 		       << "Cannot assign to " << path_

@@ -3650,6 +3650,13 @@ class NetFuncDef : public NetBaseDef {
 		 const std::vector<NetExpr*>&pd);
       ~NetFuncDef();
 
+	// Return true if the function returns "void". We still treat
+	// it as a function since we need to check that the contents
+	// meet the requirements of a function, but we need to know
+	// that it is void because it can be evaluated differently.
+      inline bool is_void() const { return result_sig_ == 0; }
+
+	// Non-void functions have a return value as a signal.
       const NetNet*return_sig() const;
 
 	// When we want to evaluate the function during compile time,

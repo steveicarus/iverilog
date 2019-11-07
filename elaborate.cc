@@ -3672,6 +3672,9 @@ NetProc* PCallTask::elaborate_function_(Design*des, NetScope*scope) const
 	// call with a missing return assignment.
       if (! func) return 0;
 
+      if (gn_system_verilog() && func->is_void())
+	    return elaborate_void_function_(des, scope, func);
+
 	// Generate a function call version of this task call.
       PExpr*rval = new PECallFunction(package_, path_, parms_);
       rval->set_file(get_file());
@@ -3684,6 +3687,21 @@ NetProc* PCallTask::elaborate_function_(Design*des, NetScope*scope) const
            << peek_tail_name(path_) << "' is being called as a task." << endl;
 	// Elaborate the assignment to a dummy variable.
       return tmp->elaborate(des, scope);
+}
+
+NetProc* PCallTask::elaborate_void_function_(Design*des, NetScope*scope,
+					     NetFuncDef*def) const
+{
+      NetScope*dscope = def->scope();
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PCallTask::elaborate_void_function_: "
+		 << "function void " << scope_path(dscope)
+		 << endl;
+      }
+
+      ivl_assert(*this, dscope->elab_stage() >= 3);
+      return elaborate_build_call_(des, scope, dscope, 0);
 }
 
 NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
