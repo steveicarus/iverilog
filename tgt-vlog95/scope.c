@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2016 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2019 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,6 +26,10 @@ const char *func_rtn_name = 0;
 
 static void emit_func_return(ivl_signal_t sig)
 {
+        // Handle SV void functions.
+      if (sig == 0)
+            return;
+
       if (ivl_signal_dimensions(sig) > 0) {
 	    fprintf(stderr, "%s:%u: vlog95 error: A function cannot return "
 	                    "an array.\n", ivl_signal_file(sig),
@@ -990,6 +994,12 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
       ivl_scope_type_t sc_type = ivl_scope_type(scope);
       unsigned is_auto = ivl_scope_is_auto(scope);
       unsigned idx;
+
+	// Convert SV void functions with no arguments to tasks. This may
+	// lead to errors if the function is called from another function,
+	// but there is no way to translate that case.
+      if (is_void_function(scope) && (ivl_scope_ports(scope) == 1))
+	    sc_type = IVL_SCT_TASK;
 
 	/* Output the scope definition. */
       switch (sc_type) {

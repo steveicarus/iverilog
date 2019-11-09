@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2019 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -667,6 +667,7 @@ static unsigned is_wait(ivl_scope_t scope, ivl_statement_t stmt)
 static unsigned utask_in_port_idx(ivl_scope_t scope, ivl_statement_t stmt)
 {
       unsigned idx, ports = ivl_scope_ports(scope);
+      unsigned first_arg = is_void_function(scope) ? 1 : 0;
       ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
       ivl_signal_t lsig = ivl_lval_sig(lval);
       const char *sig_name;
@@ -682,7 +683,7 @@ static unsigned utask_in_port_idx(ivl_scope_t scope, ivl_statement_t stmt)
       if (scope != ivl_signal_scope(lsig)) return ports;
 	/* It must be an input or inout port of the task. */
       sig_name = ivl_signal_basename(lsig);
-      for (idx = 0; idx < ports; idx += 1) {
+      for (idx = first_arg; idx < ports; idx += 1) {
 	    ivl_signal_t port = ivl_scope_port(scope, idx);
 	    ivl_signal_port_t port_type = ivl_signal_port(port);
 	    if ((port_type != IVL_SIP_INPUT) &&
@@ -699,6 +700,7 @@ static unsigned utask_in_port_idx(ivl_scope_t scope, ivl_statement_t stmt)
 static unsigned utask_out_port_idx(ivl_scope_t scope, ivl_statement_t stmt)
 {
       unsigned idx, ports = ivl_scope_ports(scope);
+      unsigned first_arg = is_void_function(scope) ? 1 : 0;
       ivl_expr_t rval = ivl_stmt_rval(stmt);
       ivl_signal_t rsig = 0;
       ivl_expr_type_t expr_type = ivl_expr_type(rval);
@@ -731,7 +733,7 @@ static unsigned utask_out_port_idx(ivl_scope_t scope, ivl_statement_t stmt)
       if (ivl_signal_dimensions(rsig)) return ports;
 	/* It must be an output or inout port of the task. */
       sig_name = ivl_signal_basename(rsig);
-      for (idx = 0; idx < ports; idx += 1) {
+      for (idx = first_arg; idx < ports; idx += 1) {
 	    ivl_signal_t port = ivl_scope_port(scope, idx);
 	    ivl_signal_port_t port_type = ivl_signal_port(port);
 	    if ((port_type != IVL_SIP_OUTPUT) &&
@@ -794,6 +796,7 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
       unsigned lineno = ivl_stmt_lineno(stmt);
       unsigned start, stop, is_auto = 0;
       ivl_scope_t task_scope = 0;
+      unsigned is_void_func = 0;
       port_expr_t port_exprs;
 	/* Check to see if the block is of the basic form first.  */
       for (idx = 0; idx < count; idx += 1) {
@@ -809,7 +812,8 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
 	    if (ivl_statement_type(tmp) == IVL_ST_UTASK && !task_scope) {
 		  task_idx = idx;
 		  task_scope = ivl_stmt_call(tmp);
-		  assert(ivl_scope_type(task_scope) == IVL_SCT_TASK);
+		  is_void_func = is_void_function(task_scope);
+		  assert(ivl_scope_type(task_scope) == IVL_SCT_TASK || is_void_func);
 		  continue;
 	    }
 	      /* For an automatic task the FREE must be last. */
@@ -871,7 +875,8 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
       }
 
 	/* Verify that all the ports were defined. */
-      for (idx = 0; idx < ports; idx += 1) {
+      start = is_void_func ? 1 : 0;
+      for (idx = start; idx < ports; idx += 1) {
 	    if (port_exprs[idx].type == IVL_SIP_NONE) {
 		  free(port_exprs);
 		  return 0;
@@ -880,14 +885,18 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
 
 	/* Now that we have the arguments figured out, print the task call. */
       fprintf(vlog_out, "%*c", get_indent(), ' ');
+      if (is_void_func)
+            fprintf(vlog_out, "if (");
       emit_scope_path(scope, task_scope);
       fprintf(vlog_out, "(");
-      emit_port(scope, port_exprs[0]);
-      for (idx = 1; idx < ports; idx += 1) {
+      emit_port(scope, port_exprs[start]);
+      for (idx = start + 1; idx < ports; idx += 1) {
 	    fprintf(vlog_out, ", ");
 	    emit_port(scope, port_exprs[idx]);
       }
       free(port_exprs);
+      if (is_void_func)
+            fprintf(vlog_out, ")");
       fprintf(vlog_out, ");");
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");
@@ -1419,8 +1428,10 @@ static void emit_stmt_trigger(ivl_scope_t scope, ivl_statement_t stmt)
 static void emit_stmt_utask(ivl_scope_t scope, ivl_statement_t stmt)
 {
       ivl_scope_t task_scope = ivl_stmt_call(stmt);
-      assert(ivl_scope_type(task_scope) == IVL_SCT_TASK);
-      assert(ivl_scope_ports(task_scope) == 0);
+      assert((ivl_scope_type(task_scope) == IVL_SCT_TASK
+		&& ivl_scope_ports(task_scope) == 0)
+	  || (is_void_function(task_scope)
+		&& ivl_scope_ports(task_scope) == 1));
       fprintf(vlog_out, "%*c", get_indent(), ' ');
       emit_scope_path(scope, task_scope);
       fprintf(vlog_out, ";");
