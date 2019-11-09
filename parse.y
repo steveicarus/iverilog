@@ -3718,6 +3718,7 @@ expr_mintypmax
 expression_list_with_nuls
   : expression_list_with_nuls ',' expression
       { list<PExpr*>*tmp = $1;
+	if (tmp->empty()) tmp->push_back(0);
 	tmp->push_back($3);
 	$$ = tmp;
       }
@@ -3728,11 +3729,11 @@ expression_list_with_nuls
       }
   |
       { list<PExpr*>*tmp = new list<PExpr*>;
-        tmp->push_back(0);
 	$$ = tmp;
       }
   | expression_list_with_nuls ','
       { list<PExpr*>*tmp = $1;
+	if (tmp->empty()) tmp->push_back(0);
 	tmp->push_back(0);
 	$$ = tmp;
       }
