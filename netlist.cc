@@ -2443,6 +2443,20 @@ NetETernary::~NetETernary()
       delete false_val_;
 }
 
+const netenum_t* NetETernary::enumeration() const
+{
+	// If the condition can evaluate to an ambiguous value,
+	// the result may be blended, and so is not guaranteed
+	// to be a valid enumeration value.
+      if (cond_->expr_type() != IVL_VT_BOOL)
+	    return 0;
+
+      if (true_val_->enumeration() != false_val_->enumeration())
+	    return 0;
+
+      return true_val_->enumeration();
+}
+
 const NetExpr* NetETernary::cond_expr() const
 {
       return cond_;
