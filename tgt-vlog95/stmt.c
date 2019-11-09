@@ -1433,7 +1433,11 @@ static void emit_stmt_utask(ivl_scope_t scope, ivl_statement_t stmt)
 	  || (is_void_function(task_scope)
 		&& ivl_scope_ports(task_scope) == 1));
       fprintf(vlog_out, "%*c", get_indent(), ' ');
+      if (is_void_function(task_scope))
+            fprintf(vlog_out, "if (");
       emit_scope_path(scope, task_scope);
+      if (is_void_function(task_scope))
+            fprintf(vlog_out, "(1'bx))");
       fprintf(vlog_out, ";");
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");

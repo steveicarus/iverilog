@@ -995,12 +995,6 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
       unsigned is_auto = ivl_scope_is_auto(scope);
       unsigned idx;
 
-	// Convert SV void functions with no arguments to tasks. This may
-	// lead to errors if the function is called from another function,
-	// but there is no way to translate that case.
-      if (is_void_function(scope) && (ivl_scope_ports(scope) == 1))
-	    sc_type = IVL_SCT_TASK;
-
 	/* Output the scope definition. */
       switch (sc_type) {
 	case IVL_SCT_MODULE:
