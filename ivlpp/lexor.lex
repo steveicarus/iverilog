@@ -625,7 +625,7 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
     fputc('\n', yyout);
 }
 
-<<EOF>> { if (!load_next_input()) yyterminate(); }
+<<EOF>> { fputc('\n', yyout); if (!load_next_input()) yyterminate(); }
 
 %%
  /* Defined macros are kept in this table for convenient lookup. As
