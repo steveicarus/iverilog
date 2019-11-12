@@ -231,7 +231,7 @@ typedef struct t_vpi_delay  {
       PLI_INT32  time_type; /* vpiScaledRealTime, vpiSimTime */
       PLI_INT32  mtm_flag;
       PLI_INT32  append_flag;
-      PLI_INT32  plusere_flag;
+      PLI_INT32  pulsere_flag;
 } s_vpi_delay, *p_vpi_delay;
 
 

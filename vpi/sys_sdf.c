@@ -186,7 +186,7 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 	    delays.time_type = vpiScaledRealTime;
 	    delays.mtm_flag = 0;
 	    delays.append_flag = 0;
-	    delays.plusere_flag = 0;
+	    delays.pulsere_flag = 0;
 	    vpi_get_delays(path, &delays);
 
 	    for (idx = 0 ; idx < delval_list->count ; idx += 1) {
