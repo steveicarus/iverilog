@@ -1045,8 +1045,6 @@ The instruction also checks flag bit 4. If it is true, the result is
 replaced with X instead of a shifted result. This is intended to
 detect that the index contents were not valid.
 
-For a negative shift, %shiftr will pad the value with 'bx.
-
 * %split/vec4 <wid>
 
 Pull the top vec4 vector from the stack and split it into two
