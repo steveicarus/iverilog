@@ -955,13 +955,14 @@ void vvp_shiftl::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 
       vvp_vector4_t out (op_a_.size());
 
+      bool overflow_flag;
       unsigned long shift;
-      if (! vector4_to_value(op_b_, shift)) {
+      if (! vector4_to_value(op_b_, overflow_flag, shift)) {
 	    ptr.ptr()->send_vec4(x_val_, 0);
 	    return;
       }
 
-      if (shift > out.size())
+      if (overflow_flag || shift > out.size())
 	    shift = out.size();
 
       for (unsigned idx = 0 ;  idx < shift ;  idx += 1)
@@ -989,13 +990,14 @@ void vvp_shiftr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 
       vvp_vector4_t out (op_a_.size());
 
+      bool overflow_flag;
       unsigned long shift;
-      if (! vector4_to_value(op_b_, shift)) {
+      if (! vector4_to_value(op_b_, overflow_flag, shift)) {
 	    ptr.ptr()->send_vec4(x_val_, 0);
 	    return;
       }
 
-      if (shift > out.size())
+      if (overflow_flag || shift > out.size())
 	    shift = out.size();
 
       for (unsigned idx = shift ;  idx < out.size() ;  idx += 1)
