@@ -2042,20 +2042,21 @@ template bool vector4_to_value(const vvp_vector4_t&vec, uint32_t&val,
 template bool vector4_to_value(const vvp_vector4_t&vec, uint64_t&val,
 			       bool is_signed, bool is_arithmetic);
 
-template <class T> bool vector4_to_value(const vvp_vector4_t&vec, T&val)
+template <class T> bool vector4_to_value(const vvp_vector4_t&vec,
+                                         bool&overflow_flag, T&val)
 {
       T res = 0;
       T msk = 1;
 
+      overflow_flag = false;
       unsigned size = vec.size();
       for (unsigned idx = 0 ;  idx < size ;  idx += 1) {
 	    switch (vec.value(idx)) {
 		case BIT4_0:
 		  break;
 		case BIT4_1:
-		    // On overflow, return the maximum value of type T
 		  if (msk == 0)
-			res = ~msk;
+			overflow_flag = true;
 		  else
 			res |= msk;
 		  break;
@@ -2070,9 +2071,11 @@ template <class T> bool vector4_to_value(const vvp_vector4_t&vec, T&val)
       return true;
 }
 
-template bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val);
+template bool vector4_to_value(const vvp_vector4_t&vec, bool&overflow_flag,
+                               unsigned long&val);
 #ifndef UL_AND_TIME64_SAME
-template bool vector4_to_value(const vvp_vector4_t&vec, vvp_time64_t&val);
+template bool vector4_to_value(const vvp_vector4_t&vec, bool&overflow_flag,
+                               vvp_time64_t&val);
 #endif
 
 bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)

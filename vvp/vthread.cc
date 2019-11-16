@@ -3017,8 +3017,9 @@ bool of_IX_GETV(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t vec;
       sig->vec4_value(vec);
+      bool overflow_flag;
       uint64_t val;
-      bool known_flag = vector4_to_value(vec, val);
+      bool known_flag = vector4_to_value(vec, overflow_flag, val);
 
       if (known_flag)
 	    thr->words[index].w_uint = val;
@@ -3026,7 +3027,7 @@ bool of_IX_GETV(vthread_t thr, vvp_code_t cp)
 	    thr->words[index].w_uint = 0;
 
 	/* Set bit 4 as a flag if the input is unknown. */
-      thr->flags[4] = known_flag ? BIT4_0 : BIT4_1;
+      thr->flags[4] = known_flag ? (overflow_flag ? BIT4_X : BIT4_0) : BIT4_1;
 
       return true;
 }
@@ -3082,12 +3083,19 @@ static uint64_t vec4_to_index(vthread_t thr, bool signed_flag)
       thr->flags[4] = BIT4_0;
 
       assert(sizeof(bits[0]) <= sizeof(v));
-	//assert(val_size <= 8*sizeof(v));
 
       v = 0;
       for (unsigned idx = 0 ; idx < val_size ; idx += 8*sizeof(bits[0])) {
 	    uint64_t tmp = bits[idx/8/sizeof(bits[0])];
-	    v |= tmp << idx;
+	    if (idx < 8*sizeof(v)) {
+		  v |= tmp << idx;
+	    } else {
+		  bool overflow = signed_flag && (v >> 63) ? ~tmp != 0 : tmp != 0;
+		  if (overflow) {
+			thr->flags[4] = BIT4_X;
+			break;
+		  }
+	    }
       }
 
 	// Set the high bits that are not necessarily filled in by the
@@ -4936,7 +4944,7 @@ bool of_SHIFTL(vthread_t thr, vvp_code_t cp)
 	      // The result is 'bx if the shift amount is undefined
 	    val = vvp_vector4_t(wid, BIT4_X);
 
-      } else if (shift >= wid) {
+      } else if (thr->flags[4] == BIT4_X || shift >= wid) {
 	      // Shift is so big that all value is shifted out. Write
 	      // a constant 0 result.
 	    val = vvp_vector4_t(wid, BIT4_0);
@@ -4968,7 +4976,7 @@ bool of_SHIFTR(vthread_t thr, vvp_code_t cp)
       if (thr->flags[4] == BIT4_1) {
 	    val = vvp_vector4_t(wid, BIT4_X);
 
-      } else if (shift > wid) {
+      } else if (thr->flags[4] == BIT4_X || shift > wid) {
 	    val = vvp_vector4_t(wid, BIT4_0);
 
       } else if (shift > 0) {
@@ -4998,7 +5006,7 @@ bool of_SHIFTR_S(vthread_t thr, vvp_code_t cp)
       if (thr->flags[4] == BIT4_1) {
 	    val = vvp_vector4_t(wid, BIT4_X);
 
-      } else if (shift > wid) {
+      } else if (thr->flags[4] == BIT4_X || shift > wid) {
 	    val = vvp_vector4_t(wid, sign_bit);
 
       } else if (shift > 0) {

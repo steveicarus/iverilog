@@ -558,7 +558,14 @@ template <class T> extern bool vector4_to_value(const vvp_vector4_t&a, T&val,
 						bool is_signed,
 						bool is_arithmetic =true);
 
-template <class T> extern bool vector4_to_value(const vvp_vector4_t&a, T&val);
+template <class T> extern bool vector4_to_value(const vvp_vector4_t&a,
+                                                bool&overflow_flag, T&val);
+
+template <class T> inline bool vector4_to_value(const vvp_vector4_t&a, T&val)
+{
+      bool overflow_flag;
+      return vector4_to_value(a, overflow_flag, val);
+}
 
 extern bool vector4_to_value(const vvp_vector4_t&a, double&val, bool is_signed);
 

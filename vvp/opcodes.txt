@@ -587,12 +587,13 @@ or z, then the index register gets the value 0. The %ix/vec4/s
 instruction is the same, except that it assumes the source vector is
 sign extended to fit the index register.
 
-The instruction also writes into bit 4 a 1 if any of the bits of the
+The instruction also writes into flag 4 a 1 if any of the bits of the
 input vector are x or z. This is a flag that the 0 value written into
 the index register is really the result of calculating from unknown
-bits.
+bits. It writes an X into flag 4 if the vec4 value overflows the index
+register.
 
-	4: unknown value
+	4: unknown value or overflow
 	5: (reserved)
 	6: (reserved)
 
@@ -600,8 +601,8 @@ bits.
 * %ix/getv/s <idx>, <functor-label>
 
 These instructions are like the %ix/vec4 instructions, except that they
-read directly from a functor label instead of from thread bits. They
-set bit 4 just like %ix/get.
+read directly from a functor label instead of from thread bits. They set
+flag 4 just like %ix/get (overflow is not currently checked by ix/getv/s).
 
 * %ix/load <idx>, <low>, <high>
 
