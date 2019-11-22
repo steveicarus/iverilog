@@ -29,10 +29,12 @@ static char **string_pool = NULL;
 static unsigned string_pool_count = 0;
 #endif
 
+static const unsigned DEFAULT_CELL_SIZE = 0x10000;
+
+
 StringHeap::StringHeap()
 {
       cell_base_ = 0;
-      cell_size_ = 0;
       cell_ptr_  = 0;
 }
 
@@ -45,17 +47,37 @@ StringHeap::~StringHeap()
 const char* StringHeap::add(const char*text)
 {
       unsigned len = strlen(text);
-      unsigned rem = cell_size_ - cell_ptr_;
+      unsigned rem = cell_base_==0? 0 : (DEFAULT_CELL_SIZE - cell_ptr_);
+
+	// Special case: huge items get their own allocation.
+      if ( (len+1) >= DEFAULT_CELL_SIZE ) {
+	    char*buf = strdup(text);
+#ifdef CHECK_WITH_VALGRIND
+	    string_pool_count += 1;
+	    string_pool = (char**)realloc(string_pool,
+					  string_pool_count*sizeof(char**));
+	    string_pool[string_pool_count-1] = buf;
+#endif
+	    return buf;
+      }
+
+	// If the current cell that I'm working through cannot hold
+	// the current string, then set it aside and get another cell
+	// to put the string into.
       if (rem < (len+1)) {
-	      // release any unused memory
+	      // release any unused memory. This assumes that a
+	      // realloc shrink of the memory region will return the
+	      // same pointer.
 	    if (rem > 0) {
+		  char*old = cell_base_;
 		  cell_base_ = (char*)realloc(cell_base_, cell_ptr_);
 		  assert(cell_base_ != 0);
+		  assert(cell_base_ == old);
 	    }
 	      // start new cell
-	    cell_size_ = (len+1) > DEFAULT_CELL_SIZE ? len+1 : DEFAULT_CELL_SIZE;
-	    cell_base_ = (char*)malloc(cell_size_);
+	    cell_base_ = (char*)malloc(DEFAULT_CELL_SIZE);
 	    cell_ptr_  = 0;
+	    rem = DEFAULT_CELL_SIZE;
 	    assert(cell_base_ != 0);
 #ifdef CHECK_WITH_VALGRIND
 	    string_pool_count += 1;
@@ -65,12 +87,13 @@ const char* StringHeap::add(const char*text)
 #endif
       }
 
+      assert( (len+1) <= rem );
       char*res = cell_base_ + cell_ptr_;
       memcpy(res, text, len);
       cell_ptr_ += len;
       cell_base_[cell_ptr_++] = 0;
 
-      assert(cell_ptr_ <= cell_size_);
+      assert(cell_ptr_ <= DEFAULT_CELL_SIZE);
 
       return res;
 }

@@ -78,10 +78,7 @@ class StringHeap {
       perm_string make(const char*);
 
     private:
-      static const unsigned DEFAULT_CELL_SIZE = 0x10000;
-
       char*cell_base_;
-      unsigned cell_size_;
       unsigned cell_ptr_;
 
     private: // not implemented

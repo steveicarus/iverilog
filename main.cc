@@ -606,6 +606,14 @@ static void read_iconfig_file(const char*ipath)
       }
 
       while (fgets(buf, sizeof buf, ifile) != 0) {
+	    assert(strlen(buf) < sizeof buf);
+	    if ((strlen(buf) == ((sizeof buf) - 1))
+		&& buf[sizeof buf -2] != '\n') {
+		  cerr << "WARNING: Line buffer overflow reading iconfig file: "
+		       << ipath
+		       << "." << endl;
+		  assert(0);
+	    }
 	    if (buf[0] == '#')
 		  continue;
 	    char*cp = strchr(buf, ':');
@@ -808,6 +816,17 @@ static void read_sources_file(const char*path)
       }
 
       while (fgets(line_buf, sizeof line_buf, fd) != 0) {
+	      // assertion test that we are not overflowing the line
+	      // buffer. Really should make this more robust, but
+	      // better to assert then go weird.
+	    assert(strlen(line_buf) < sizeof line_buf);
+	    if ((strlen(line_buf) == ((sizeof line_buf) - 1))
+		&& line_buf[sizeof line_buf -2] != '\n') {
+		  cerr << "WARNING: Line buffer overflow reading sources file: "
+		       << path
+		       << "." << endl;
+		  assert(0);
+	    }
 	    char*cp = line_buf + strspn(line_buf, " \t\r\b\f");
 	    char*tail = cp + strlen(cp);
 	    while (tail > cp) {
