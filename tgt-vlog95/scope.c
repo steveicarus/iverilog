@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2016 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2019 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,6 +26,10 @@ const char *func_rtn_name = 0;
 
 static void emit_func_return(ivl_signal_t sig)
 {
+        // Handle SV void functions.
+      if (sig == 0)
+            return;
+
       if (ivl_signal_dimensions(sig) > 0) {
 	    fprintf(stderr, "%s:%u: vlog95 error: A function cannot return "
 	                    "an array.\n", ivl_signal_file(sig),

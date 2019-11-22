@@ -1,7 +1,7 @@
 #ifndef IVL_vlog95_priv_H
 #define IVL_vlog95_priv_H
 /*
- * Copyright (C) 2010-2017 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2019 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -161,5 +161,11 @@ extern void free_emitted_scope_list(void);
  * Debug routine to dump the various pieces of nexus information.
 */
 extern void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex);
+
+static inline unsigned is_void_function(ivl_scope_t scope)
+{
+      return ivl_scope_type(scope) == IVL_SCT_FUNCTION
+          && ivl_scope_port(scope, 0) == 0;
+}
 
 #endif /* IVL_vlog95_priv_H */

@@ -4757,6 +4757,8 @@ class NetETernary  : public NetExpr {
       NetETernary(NetExpr*c, NetExpr*t, NetExpr*f, unsigned wid, bool signed_flag);
       ~NetETernary();
 
+      const netenum_t* enumeration() const;
+
       const NetExpr*cond_expr() const;
       const NetExpr*true_expr() const;
       const NetExpr*false_expr() const;

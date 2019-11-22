@@ -3719,7 +3719,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
       } else if (task->type() == NetScope::FUNC) {
 	    NetFuncDef*tmp = task->func_def();
-	    if (tmp->return_sig() != 0) {
+	    if (!tmp->is_void()) {
 		  cerr << get_fileline() << ": error: "
 		       << "Calling a non-void function as a task." << endl;
 		  des->errors += 1;

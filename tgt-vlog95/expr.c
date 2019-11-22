@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2018 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2019 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -138,6 +138,8 @@ static expr_sign_t expr_get_unary_sign_type(ivl_expr_t expr)
 	case 'X':
 	      /* The reduction operators always act as if the argument is
 	       * unsigned. */
+	case '!':
+	      /* The logical negation operator works on either type. */
 	    break;
 	case 'r':
 	      /* For a cast to real the expression should be signed and no

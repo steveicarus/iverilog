@@ -3311,8 +3311,9 @@ bool of_IX_GETV(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t vec;
       sig->vec4_value(vec);
+      bool overflow_flag;
       uint64_t val;
-      bool known_flag = vector4_to_value(vec, val);
+      bool known_flag = vector4_to_value(vec, overflow_flag, val);
 
       if (known_flag)
 	    thr->words[index].w_uint = val;
@@ -3320,7 +3321,7 @@ bool of_IX_GETV(vthread_t thr, vvp_code_t cp)
 	    thr->words[index].w_uint = 0;
 
 	/* Set bit 4 as a flag if the input is unknown. */
-      thr->flags[4] = known_flag ? BIT4_0 : BIT4_1;
+      thr->flags[4] = known_flag ? (overflow_flag ? BIT4_X : BIT4_0) : BIT4_1;
 
       return true;
 }
@@ -3376,12 +3377,19 @@ static uint64_t vec4_to_index(vthread_t thr, bool signed_flag)
       thr->flags[4] = BIT4_0;
 
       assert(sizeof(bits[0]) <= sizeof(v));
-	//assert(val_size <= 8*sizeof(v));
 
       v = 0;
       for (unsigned idx = 0 ; idx < val_size ; idx += 8*sizeof(bits[0])) {
 	    uint64_t tmp = bits[idx/8/sizeof(bits[0])];
-	    v |= tmp << idx;
+	    if (idx < 8*sizeof(v)) {
+		  v |= tmp << idx;
+	    } else {
+		  bool overflow = signed_flag && (v >> 63) ? ~tmp != 0 : tmp != 0;
+		  if (overflow) {
+			thr->flags[4] = BIT4_X;
+			break;
+		  }
+	    }
       }
 
 	// Set the high bits that are not necessarily filled in by the
@@ -5402,16 +5410,16 @@ bool of_SET_DAR_OBJ_STR(vthread_t thr, vvp_code_t cp)
 bool of_SHIFTL(vthread_t thr, vvp_code_t cp)
 {
       int use_index = cp->number;
-      int shift = thr->words[use_index].w_int;
+      uint64_t shift = thr->words[use_index].w_uint;
 
       vvp_vector4_t&val = thr->peek_vec4();
-      int wid  = val.size();
+      unsigned wid  = val.size();
 
       if (thr->flags[4] == BIT4_1) {
 	      // The result is 'bx if the shift amount is undefined
 	    val = vvp_vector4_t(wid, BIT4_X);
 
-      } else if (shift >= wid) {
+      } else if (thr->flags[4] == BIT4_X || shift >= wid) {
 	      // Shift is so big that all value is shifted out. Write
 	      // a constant 0 result.
 	    val = vvp_vector4_t(wid, BIT4_0);
@@ -5421,18 +5429,6 @@ bool of_SHIFTL(vthread_t thr, vvp_code_t cp)
 	    vvp_vector4_t tmp (shift, BIT4_0);
 	    val.set_vec(0, tmp);
 	    val.set_vec(shift, blk);
-
-      } else if (shift < -wid) {
-	    val = vvp_vector4_t(wid, BIT4_X);
-
-      } else if (shift < 0) {
-	      // Negative left shift is a right shift.
-	      // For a negative shift, we pad with 'bx.
-	    int use_shift = -shift;
-	    vvp_vector4_t blk = val.subvalue(use_shift, wid-use_shift);
-	    vvp_vector4_t tmp (use_shift, BIT4_X);
-	    val.set_vec(0, blk);
-	    val.set_vec(wid-use_shift, tmp);
       }
 
       return true;
@@ -5447,15 +5443,15 @@ bool of_SHIFTL(vthread_t thr, vvp_code_t cp)
 bool of_SHIFTR(vthread_t thr, vvp_code_t cp)
 {
       int use_index = cp->number;
-      int shift = thr->words[use_index].w_int;
+      uint64_t shift = thr->words[use_index].w_uint;
 
       vvp_vector4_t val = thr->pop_vec4();
-      int wid  = val.size();
+      unsigned wid  = val.size();
 
       if (thr->flags[4] == BIT4_1) {
 	    val = vvp_vector4_t(wid, BIT4_X);
 
-      } else if (shift > wid) {
+      } else if (thr->flags[4] == BIT4_X || shift > wid) {
 	    val = vvp_vector4_t(wid, BIT4_0);
 
       } else if (shift > 0) {
@@ -5463,18 +5459,6 @@ bool of_SHIFTR(vthread_t thr, vvp_code_t cp)
 	    vvp_vector4_t tmp (shift, BIT4_0);
 	    val.set_vec(0, blk);
 	    val.set_vec(wid-shift, tmp);
-
-      } else if (shift < -wid) {
-	    val = vvp_vector4_t(wid, BIT4_X);
-
-      } else if (shift < 0) {
-	      // Negative right shift is a left shift.
-	      // For a negative shift, we pad with 'bx.
-	    int use_shift = -shift;
-	    vvp_vector4_t blk = val.subvalue(0, wid-use_shift);
-	    vvp_vector4_t tmp (use_shift, BIT4_X);
-	    val.set_vec(0, tmp);
-	    val.set_vec(use_shift, blk);
       }
 
       thr->push_vec4(val);
@@ -5487,17 +5471,17 @@ bool of_SHIFTR(vthread_t thr, vvp_code_t cp)
 bool of_SHIFTR_S(vthread_t thr, vvp_code_t cp)
 {
       int use_index = cp->number;
-      int shift = thr->words[use_index].w_int;
+      uint64_t shift = thr->words[use_index].w_uint;
 
       vvp_vector4_t val = thr->pop_vec4();
-      int wid  = val.size();
+      unsigned wid  = val.size();
 
       vvp_bit4_t sign_bit = val.value(val.size()-1);
 
       if (thr->flags[4] == BIT4_1) {
 	    val = vvp_vector4_t(wid, BIT4_X);
 
-      } else if (shift > wid) {
+      } else if (thr->flags[4] == BIT4_X || shift > wid) {
 	    val = vvp_vector4_t(wid, sign_bit);
 
       } else if (shift > 0) {
@@ -5505,16 +5489,6 @@ bool of_SHIFTR_S(vthread_t thr, vvp_code_t cp)
 	    vvp_vector4_t tmp (shift, sign_bit);
 	    val.set_vec(0, blk);
 	    val.set_vec(wid-shift, tmp);
-
-      } else if (shift < -wid) {
-	    val = vvp_vector4_t(wid, BIT4_X);
-
-      } else if (shift < 0) {
-	    int use_shift = -shift;
-	    vvp_vector4_t blk = val.subvalue(0, wid-use_shift);
-	    vvp_vector4_t tmp(use_shift, BIT4_X);
-	    val.set_vec(0, tmp);
-	    val.set_vec(use_shift, blk);
       }
 
       thr->push_vec4(val);
