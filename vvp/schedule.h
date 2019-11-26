@@ -148,6 +148,7 @@ extern void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay,
 extern void schedule_functor(vvp_gen_event_t obj);
 
 extern void schedule_at_start_of_simtime(vvp_gen_event_t obj, vvp_time64_t delay);
+extern void schedule_at_end_of_simtime(vvp_gen_event_t obj, vvp_time64_t delay);
 
 /* Use this is schedule thread deletion (after rosync). */
 extern void schedule_del_thr(vthread_t thr);

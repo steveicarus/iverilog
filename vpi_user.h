@@ -495,6 +495,7 @@ typedef struct t_cb_data {
 #define cbExitInteractive   22
 #define cbInteractiveScopeChange 23
 #define cbUnresolvedSystf   24
+#define cbAtEndOfSimTime    31
 
 extern vpiHandle vpi_register_cb(p_cb_data data);
 extern PLI_INT32 vpi_remove_cb(vpiHandle ref);

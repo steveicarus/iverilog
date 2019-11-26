@@ -1029,6 +1029,20 @@ void schedule_at_start_of_simtime(vvp_gen_event_t obj, vvp_time64_t delay)
       schedule_event_(cur, delay, SEQ_START);
 }
 
+/*
+ * In the vvp runtime of Icarus Verilog, the SEQ_RWSYNC time step is
+ * after all of the non-blocking assignments, so is effectively the
+ * same as the ReadWriteSync time.
+ */
+void schedule_at_end_of_simtime(vvp_gen_event_t obj, vvp_time64_t delay)
+{
+      struct generic_event_s*cur = new generic_event_s;
+
+      cur->obj = obj;
+      cur->delete_obj_when_done = false;
+      schedule_event_(cur, delay, SEQ_RWSYNC);
+}
+
 static vvp_time64_t schedule_time;
 vvp_time64_t schedule_simtime(void)
 { return schedule_time; }

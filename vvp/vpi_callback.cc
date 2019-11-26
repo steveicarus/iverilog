@@ -357,7 +357,7 @@ static sync_callback* make_sync(p_cb_data data, bool readonly_flag)
       return obj;
 }
 
-static struct __vpiCallback* make_afterdelay(p_cb_data data, bool simtime_flag)
+static struct __vpiCallback* make_afterdelay(p_cb_data data)
 {
       sync_callback*obj = new sync_callback(data);
       struct sync_cb*cb = new sync_cb;
@@ -378,20 +378,77 @@ static struct __vpiCallback* make_afterdelay(p_cb_data data, bool simtime_flag)
 	    break;
       }
 
-      if (simtime_flag) {
-	    vvp_time64_t cur = schedule_simtime();
-	    if (cur > tv) {
-		  tv = 0;
-		  assert(0);
-	    } else if (cur == tv) {
-		  tv = 0;
-	    } else {
-		  tv -= cur;
-	    }
-	    schedule_at_start_of_simtime(cb, tv);
-      } else {
-	    schedule_generic(cb, tv, false);
+      schedule_generic(cb, tv, false);
+
+      return obj;
+}
+
+static struct __vpiCallback* make_at_start_of_sim_time(p_cb_data data)
+{
+      sync_callback*obj = new sync_callback(data);
+      struct sync_cb*cb = new sync_cb;
+      cb->sync_flag = false;
+      cb->handle = obj;
+      obj->cb_sync = cb;
+
+      vvp_time64_t tv = 0;
+      switch (obj->cb_time.type) {
+	  case vpiSimTime:
+	    tv = vpip_timestruct_to_time(&obj->cb_time);
+	    break;
+
+	  default:
+	    fprintf(stderr, "Unsupported time type %d.\n",
+	            (int)obj->cb_time.type);
+	    assert(0);
+	    break;
       }
+
+      vvp_time64_t cur = schedule_simtime();
+      if (cur > tv) {
+	    tv = 0;
+	    assert(0);
+      } else if (cur == tv) {
+	    tv = 0;
+      } else {
+	    tv -= cur;
+      }
+      schedule_at_start_of_simtime(cb, tv);
+
+      return obj;
+}
+
+static struct __vpiCallback* make_at_end_of_sim_time(p_cb_data data)
+{
+      sync_callback*obj = new sync_callback(data);
+      struct sync_cb*cb = new sync_cb;
+      cb->sync_flag = false;
+      cb->handle = obj;
+      obj->cb_sync = cb;
+
+      vvp_time64_t tv = 0;
+      switch (obj->cb_time.type) {
+	  case vpiSimTime:
+	    tv = vpip_timestruct_to_time(&obj->cb_time);
+	    break;
+
+	  default:
+	    fprintf(stderr, "Unsupported time type %d.\n",
+	            (int)obj->cb_time.type);
+	    assert(0);
+	    break;
+      }
+
+      vvp_time64_t cur = schedule_simtime();
+      if (cur > tv) {
+	    tv = 0;
+	    assert(0);
+      } else if (cur == tv) {
+	    tv = 0;
+      } else {
+	    tv -= cur;
+      }
+      schedule_at_end_of_simtime(cb, tv);
 
       return obj;
 }
@@ -573,11 +630,15 @@ vpiHandle vpi_register_cb(p_cb_data data)
 	    break;
 
 	  case cbAtStartOfSimTime:
-	    obj = make_afterdelay(data, true);
+	    obj = make_at_start_of_sim_time(data);
+	    break;
+
+	  case cbAtEndOfSimTime:
+	    obj = make_at_end_of_sim_time(data);
 	    break;
 
 	  case cbAfterDelay:
-	    obj = make_afterdelay(data, false);
+	    obj = make_afterdelay(data);
 	    break;
 
 	  case cbEndOfCompile:
