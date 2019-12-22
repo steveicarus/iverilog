@@ -78,6 +78,11 @@ static void elaborate_array_ranges(Design*des, NetScope*scope,
  */
 ivl_type_s* data_type_t::elaborate_type(Design*des, NetScope*scope)
 {
+	// User-defined types must be elaborated in the context
+	// where they were defined.
+      if (!name.nil())
+	    scope = scope->find_typedef_scope(des, this);
+
       ivl_assert(*this, scope);
       Definitions*use_definitions = scope;
 

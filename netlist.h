@@ -946,6 +946,11 @@ class NetScope : public Definitions, public Attrib {
       void add_imports(const map<perm_string,PPackage*>*imports);
       NetScope*find_import(const Design*des, perm_string name);
 
+      void add_typedefs(const map<perm_string,data_type_t*>*typedefs);
+
+        /* Search the scope hierarchy for the scope where 'type' was defined. */
+      NetScope*find_typedef_scope(const Design*des, data_type_t*type);
+
 	/* Routine to search for the enumeration given a name. It basically
 	 * does what enumeration_for_name() does but searched the hierarchy. */
       const netenum_t*find_enumeration_for_name(const Design*des, perm_string name);
@@ -1274,6 +1279,8 @@ class NetScope : public Definitions, public Attrib {
       bool time_from_timescale_;
 
       const map<perm_string,PPackage*>*imports_;
+
+      const map<perm_string,data_type_t*>*typedefs_;
 
       NetEvent *events_;
 

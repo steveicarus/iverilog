@@ -955,6 +955,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       unsigned wid = 1;
       vector<netrange_t>packed_dimensions;
 
+      NetScope*base_type_scope = scope;
+      if (set_data_type_ && !set_data_type_->name.nil())
+            base_type_scope = scope->find_typedef_scope(des, set_data_type_);
+
       des->errors += error_cnt_;
 
       if (port_set_ || net_set_) {
@@ -997,7 +1001,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 			cerr << get_fileline() << ": PWire::elaborate_sig: "
 			     << "Evaluate ranges for net " << basename() << endl;
 		  }
-		  dimensions_ok &= evaluate_ranges(des, scope, this, nlist, net_);
+		  dimensions_ok &= evaluate_ranges(des, base_type_scope, this, nlist, net_);
 	    }
             assert(net_set_ || net_.empty());
 
@@ -1068,6 +1072,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       list<netrange_t>unpacked_dimensions;
       netdarray_t*netdarray = 0;
 
+      NetScope*array_type_scope = scope;
+      if (uarray_type_ && !uarray_type_->name.nil())
+            array_type_scope = scope->find_typedef_scope(des, uarray_type_);
+
       for (list<pform_range_t>::const_iterator cur = unpacked_.begin()
 		 ; cur != unpacked_.end() ; ++cur) {
 	    PExpr*use_lidx = cur->first;
@@ -1100,7 +1108,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    ivl_assert(*this, netdarray==0);
 
 	    long index_l, index_r;
-	    evaluate_range(des, scope, this, *cur, index_l, index_r);
+	    evaluate_range(des, array_type_scope, this, *cur, index_l, index_r);
 
 	    if (abs(index_r - index_l) > warn_dimension_size) {
 		  cerr << get_fileline() << ": warning: Array dimension "
@@ -1191,7 +1199,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       } else if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(set_data_type_)) {
 	    list<named_pexpr_t>::const_iterator sample_name = enum_type->names->begin();
-	    const netenum_t*use_enum = scope->find_enumeration_for_name(des, sample_name->name);
+	    const netenum_t*use_enum = base_type_scope->find_enumeration_for_name(des, sample_name->name);
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype

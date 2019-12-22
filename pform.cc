@@ -3520,8 +3520,9 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
 	// Add the file and line information to the enumeration type.
       FILE_NAME(&(enum_type->li), li);
 
-	// Attach the enumeration to the current scope.
-      pform_put_enum_type_in_scope(enum_type);
+	// If this is an anonymous enumeration, attach it to the current scope.
+      if (enum_type->name.nil())
+	    pform_put_enum_type_in_scope(enum_type);
 
 	// Now apply the checked enumeration type to the variables
 	// that are being declared with this type.

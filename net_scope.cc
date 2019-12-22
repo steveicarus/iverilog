@@ -119,6 +119,7 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, NetScope*in_u
   is_interface_(interface), is_unit_(compilation_unit), unit_(in_unit), up_(up)
 {
       imports_ = 0;
+      typedefs_ = 0;
       events_ = 0;
       lcounter_ = 0;
       is_auto_ = false;
@@ -224,6 +225,35 @@ NetScope*NetScope::find_import(const Design*des, perm_string name)
             return 0;
 }
 
+void NetScope::add_typedefs(const map<perm_string,data_type_t*>*typedefs)
+{
+      if (!typedefs->empty())
+	    typedefs_ = typedefs;
+}
+
+NetScope*NetScope::find_typedef_scope(const Design*des, data_type_t*type)
+{
+      assert(type);
+
+      NetScope *cur_scope = this;
+      while (cur_scope) {
+	    if (cur_scope->typedefs_ && cur_scope->typedefs_->find(type->name) != cur_scope->typedefs_->end())
+		  return cur_scope;
+	    NetScope*import_scope = cur_scope->find_import(des, type->name);
+	    if (import_scope)
+		  cur_scope = import_scope;
+	    else if (cur_scope == unit_)
+		  return 0;
+	    else
+		  cur_scope = cur_scope->parent();
+
+	    if (cur_scope == 0)
+		  cur_scope = unit_;
+      }
+
+      return 0;
+}
+
 /*
  * Look for the enumeration in the current scope and any parent scopes.
  */
@@ -235,9 +265,12 @@ const netenum_t*NetScope::find_enumeration_for_name(const Design*des, perm_strin
 	    if (tmp) break;
 	    NetScope*import_scope = cur_scope->find_import(des, name);
 	    if (import_scope)
-		cur_scope = import_scope;
+		  cur_scope = import_scope;
+	    else if (cur_scope == unit_)
+		  return 0;
 	    else
-		cur_scope = cur_scope->parent();
+		  cur_scope = cur_scope->parent();
+
 	    if (cur_scope == 0)
 		  cur_scope = unit_;
       }

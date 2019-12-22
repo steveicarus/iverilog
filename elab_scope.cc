@@ -490,6 +490,8 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       use_class->set_definition_scope(scope);
       set_scope_timescale(des, class_scope, pclass);
 
+      class_scope->add_typedefs(&pclass->typedefs);
+
 	// Elaborate enum types declared in the class. We need these
 	// now because enumeration constants can be used during scope
 	// elaboration.
@@ -708,6 +710,8 @@ bool PPackage::elaborate_scope(Design*des, NetScope*scope)
 		 << "Elaborate package " << scope_path(scope) << "." << endl;
       }
 
+      scope->add_typedefs(&typedefs);
+
       collect_scope_parameters_(des, scope, parameters);
       collect_scope_localparams_(des, scope, localparams);
 
@@ -733,6 +737,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	    cerr << get_fileline() << ": Module::elaborate_scope: "
 		 << "Elaborate " << scope_path(scope) << "." << endl;
       }
+
+      scope->add_typedefs(&typedefs);
 
 	// Add the genvars to the scope.
       typedef map<perm_string,LineInfo*>::const_iterator genvar_it_t;
@@ -1192,6 +1198,8 @@ void PGenerate::elaborate_subscope_direct_(Design*des, NetScope*scope)
 
 void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 {
+      scope->add_typedefs(&typedefs);
+
 	// Add the genvars to this scope.
       typedef map<perm_string,LineInfo*>::const_iterator genvar_it_t;
       for (genvar_it_t cur = genvars.begin(); cur != genvars.end(); ++ cur ) {
@@ -1545,6 +1553,8 @@ void PFunction::elaborate_scope(Design*des, NetScope*scope) const
         // find otherwise.
       scope->is_const_func(true);
 
+      scope->add_typedefs(&typedefs);
+
 	// Scan the parameters in the function, and store the information
         // needed to evaluate the parameter expressions.
 
@@ -1562,6 +1572,8 @@ void PFunction::elaborate_scope(Design*des, NetScope*scope) const
 void PTask::elaborate_scope(Design*des, NetScope*scope) const
 {
       assert(scope->type() == NetScope::TASK);
+
+      scope->add_typedefs(&typedefs);
 
 	// Scan the parameters in the task, and store the information
         // needed to evaluate the parameter expressions.
@@ -1611,6 +1623,7 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 	    my_scope->set_line(get_file(), get_lineno());
             my_scope->is_auto(scope->is_auto());
 	    my_scope->add_imports(&explicit_imports);
+	    my_scope->add_typedefs(&typedefs);
 
 	      // Scan the parameters in the scope, and store the information
 	      // needed to evaluate the parameter expressions.
