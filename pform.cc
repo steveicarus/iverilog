@@ -3474,7 +3474,6 @@ template <class T> static void pform_set2_data_type(const struct vlltype&li, T*d
 
       PWire*net = pform_get_make_wire_in_scope(li, name, net_type, NetNet::NOT_A_PORT, base_type);
       assert(net);
-      net->set_data_type(data_type);
       pform_bind_attributes(net->attributes, attr, true);
 }
 
@@ -3498,7 +3497,6 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
       assert(enum_type->range.get() != 0);
       assert(enum_type->range->size() == 1);
 	//XXXXcur->set_range(*enum_type->range, SR_NET);
-      cur->set_data_type(enum_type);
 	// If this is an integer enumeration switch the wire to an integer.
       if (enum_type->integer_flag) {
 	    bool res = cur->set_wire_type(NetNet::INTEGER);
@@ -3540,17 +3538,14 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
  */
 void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
-      const std::list<pform_range_t>*unpacked_dims = NULL;
-
       if (data_type == 0) {
 	    VLerror(li, "internal error: data_type==0.");
 	    assert(0);
       }
 
-      if(uarray_type_t*uarray_type = dynamic_cast<uarray_type_t*> (data_type)) {
-            unpacked_dims = uarray_type->dims.get();
+      uarray_type_t*uarray_type = dynamic_cast<uarray_type_t*> (data_type);
+      if (uarray_type)
             data_type = uarray_type->base_type;
-      }
 
       if (atom2_type_t*atom2_type = dynamic_cast<atom2_type_t*> (data_type)) {
 	    pform_set_integer_2atom(li, atom2_type->type_code, atom2_type->signed_flag, names, net_type, attr);
@@ -3593,12 +3588,14 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
 	    assert(0);
       }
 
-      if(unpacked_dims) {
-	    for (list<perm_string>::iterator cur = names->begin()
-                    ; cur != names->end() ; ++ cur ) {
-		PWire*wire = pform_get_wire_in_scope(*cur);
-		wire->set_unpacked_idx(*unpacked_dims);
+      for (list<perm_string>::iterator cur = names->begin()
+	      ; cur != names->end() ; ++ cur ) {
+	    PWire*wire = pform_get_wire_in_scope(*cur);
+	    if (uarray_type) {
+		  wire->set_unpacked_idx(*uarray_type->dims.get());
+		  wire->set_uarray_type(uarray_type);
 	    }
+	    wire->set_data_type(data_type);
       }
 
       delete names;

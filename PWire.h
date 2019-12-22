@@ -80,6 +80,7 @@ class PWire : public PNamedItem {
       void set_range(const std::list<pform_range_t>&ranges, PWSRType type);
 
       void set_unpacked_idx(const std::list<pform_range_t>&ranges);
+      void set_uarray_type(uarray_type_t*type) { uarray_type_ = type; }
 
       void set_data_type(data_type_t*type);
 
@@ -119,6 +120,7 @@ class PWire : public PNamedItem {
 	// If this wire is actually a memory, these indices will give
 	// me the size and address ranges of the memory.
       std::list<pform_range_t>unpacked_;
+      uarray_type_t*uarray_type_;
 
 	// This is the complex type of the wire. the data_type_ may
 	// modify how this is interpreted.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -68,7 +68,6 @@ static void pform_set_packed_struct(const struct vlltype&li, struct_type_t*struc
 
       PWire*net = pform_get_make_wire_in_scope(li, name, net_type, NetNet::NOT_A_PORT, base_type);
       assert(net);
-      net->set_data_type(struct_type);
       pform_bind_attributes(net->attributes, attr, true);
 }
 
