@@ -215,9 +215,9 @@ netstruct_t* struct_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 	      // There may be several names that are the same type:
 	      //   <data_type> name1, name2, ...;
 	      // Process all the member, and give them a type.
-	    for (list<decl_assignment_t*>::iterator name = curp->names->begin()
-		       ; name != curp->names->end() ;  ++ name) {
-		  decl_assignment_t*namep = *name;
+	    for (list<decl_assignment_t*>::iterator cur_name = curp->names->begin()
+		       ; cur_name != curp->names->end() ;  ++ cur_name) {
+		  decl_assignment_t*namep = *cur_name;
 
 		  netstruct_t::member_t memb;
 		  memb.name = namep->name;

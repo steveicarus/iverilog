@@ -867,6 +867,7 @@ void pform_set_typedef(perm_string name, data_type_t*data_type, std::list<pform_
 
       ivl_assert(*data_type, ref == 0);
       ref = data_type;
+      ref->name = name;
 
       if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(data_type))
 	    pform_put_enum_type_in_scope(enum_type);
