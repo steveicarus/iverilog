@@ -130,7 +130,6 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, NetScope*in_u
 	    unit_ = this;
 
       if (up) {
-	    assert(t!=CLASS);
 	    need_const_func_ = up->need_const_func_;
 	    is_const_func_ = up->is_const_func_;
 	    time_unit_ = up->time_unit();

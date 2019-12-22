@@ -359,7 +359,7 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
 {
       if (!gn_system_verilog())
 	    return 0;
-      if (scope->parent() == 0)
+      if (scope->parent() == 0 || scope->type() == NetScope::CLASS)
 	    return 0;
       if (path_.size() != 1)
 	    return 0;

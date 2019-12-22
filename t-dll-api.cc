@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
@@ -93,11 +93,7 @@ extern "C" void ivl_design_roots(ivl_design_t des, ivl_scope_t **scopes,
       assert (nscopes && scopes);
       if (des->root_scope_list.size() == 0) {
 	    size_t fill = 0;
-	    des->root_scope_list.resize(des->packages.size() + des->roots.size() + des->classes.size());
-
-	    for (map<const NetScope*,ivl_scope_t>::iterator idx = des->classes.begin()
-		       ; idx != des->classes.end() ; ++ idx)
-		  des->root_scope_list[fill++] = idx->second;
+	    des->root_scope_list.resize(des->packages.size() + des->roots.size());
 
 	    for (size_t idx = 0 ; idx < des->packages.size() ; idx += 1)
 		  des->root_scope_list[fill++] = des->packages[idx];

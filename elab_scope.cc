@@ -482,10 +482,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       ivl_assert(*pclass, use_type->save_elaborated_type == 0);
       use_type->save_elaborated_type = use_class;
 
-	// Class scopes have no parent scope, because references are
-	// not allowed to escape a class method. But they are allowed
-	// to reference the compilation unit scope.
-      NetScope*class_scope = new NetScope(0, hname_t(pclass->pscope_name()),
+      NetScope*class_scope = new NetScope(scope, hname_t(pclass->pscope_name()),
 					  NetScope::CLASS, scope->unit());
       class_scope->set_line(pclass);
       class_scope->set_class_def(use_class);

@@ -1,7 +1,7 @@
 #ifndef IVL_ivl_target_priv_H
 #define IVL_ivl_target_priv_H
 /*
- * Copyright (c) 2008-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,7 +51,6 @@ struct ivl_design_s {
       ivl_process_t threads_;
 
 	// Keep arrays of root scopes.
-      std::map<const NetScope*,ivl_scope_t> classes;
       std::vector<ivl_scope_t> packages;
       std::vector<ivl_scope_t> roots;
 
