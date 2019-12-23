@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2019 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -440,6 +440,9 @@ void class_type::set_property(size_t idx, const string&name, const string&type, 
 	    properties_[idx].type = new property_bit(wid);
       } else if (type[0] == 'L') {
 	    size_t wid = strtoul(type.c_str()+1,0,0);
+	    properties_[idx].type = new property_logic(wid);
+      } else if (type[0] == 's' && type[1] == 'L') {
+	    size_t wid = strtoul(type.c_str()+2,0,0);
 	    properties_[idx].type = new property_logic(wid);
       } else {
 	    properties_[idx].type = 0;
