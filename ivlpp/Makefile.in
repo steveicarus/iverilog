@@ -71,9 +71,11 @@ ivlpp@EXEEXT@: $O
 lexor.c: $(srcdir)/lexor.lex
 	$(LEX) -t $< > $@
 
-install: all installdirs $(libdir)/ivl$(suffix)/ivlpp@EXEEXT@
+install: all installdirs installfiles
 
-$(libdir)/ivl$(suffix)/ivlpp@EXEEXT@: ivlpp@EXEEXT@
+F = ivlpp@EXEEXT@
+
+installfiles: $(F) installdirs
 	$(INSTALL_PROGRAM) ./ivlpp@EXEEXT@ "$(DESTDIR)$(libdir)/ivl$(suffix)/ivlpp@EXEEXT@"
 
 installdirs: $(srcdir)/../mkinstalldirs
