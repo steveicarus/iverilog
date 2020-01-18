@@ -81,17 +81,16 @@ endif
 vlog95.tgt: $O $(TGTDEPLIBS)
 	$(CC) @shared@ $(LDFLAGS) -o $@ $O -lm $(TGTLDFLAGS)
 
-install: all installdirs $(libdir)/ivl$(suffix)/vlog95.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/vlog95.conf $(libdir)/ivl$(suffix)/vlog95-s.conf
+install: all installdirs installfiles
 
-$(libdir)/ivl$(suffix)/vlog95.tgt: ./vlog95.tgt
+F = ./vlog95.tgt \
+	$(srcdir)/vlog95.conf \
+	$(srcdir)/vlog95-s.conf
+
+installfiles: $(F) installdirs
 	$(INSTALL_PROGRAM) ./vlog95.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/vlog95.tgt"
-
-$(libdir)/ivl$(suffix)/vlog95.conf: $(srcdir)/vlog95.conf
 	$(INSTALL_DATA) $(srcdir)/vlog95.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/vlog95.conf"
-
-$(libdir)/ivl$(suffix)/vlog95-s.conf: $(srcdir)/vlog95-s.conf
 	$(INSTALL_DATA) $(srcdir)/vlog95-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/vlog95-s.conf"
-
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)/ivl$(suffix)"
