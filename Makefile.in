@@ -308,66 +308,61 @@ version_tag.h version:
 
 ifeq (@MINGW32@,yes)
 ifeq ($(MAN),none)
-INSTALL_DOC = $(mandir)/man1/iverilog-vpi$(suffix).1
+INSTALL_DOC = installman
 else
 ifeq ($(PS2PDF),none)
-INSTALL_DOC = $(mandir)/man1/iverilog-vpi$(suffix).1
+INSTALL_DOC = installman
 else
-INSTALL_DOC = $(prefix)/iverilog-vpi$(suffix).pdf $(mandir)/man1/iverilog-vpi$(suffix).1
+INSTALL_DOC = installpdf installman
 all: dep iverilog-vpi.pdf
 endif
 endif
 INSTALL_DOCDIR = $(mandir)/man1
 else
-INSTALL_DOC = $(mandir)/man1/iverilog-vpi$(suffix).1
+INSTALL_DOC = installman
 INSTALL_DOCDIR = $(mandir)/man1
 endif
 
 ifeq (@MINGW32@,yes)
 WIN32_INSTALL =
 else
-WIN32_INSTALL = $(bindir)/iverilog-vpi$(suffix)
+WIN32_INSTALL = installwin32
 endif
 
-install: all installdirs $(libdir)/ivl$(suffix)/ivl@EXEEXT@  $(libdir)/ivl$(suffix)/include/constants.vams $(libdir)/ivl$(suffix)/include/disciplines.vams $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/sv_vpi_user.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
+install: all installdirs installfiles
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 
-$(bindir)/iverilog-vpi$(suffix): ./iverilog-vpi installdirs
+F = ./ivl@EXEEXT@ \
+	$(srcdir)/constants.vams \
+	$(srcdir)/disciplines.vams \
+	$(srcdir)/ivl_target.h \
+	./_pli_types.h \
+	$(srcdir)/sv_vpi_user.h \
+	$(srcdir)/vpi_user.h \
+	$(srcdir)/acc_user.h \
+	$(srcdir)/veriuser.h \
+	$(INSTALL_DOC) \
+	$(WIN32_INSTALL)
+
+installwin32: ./iverilog-vpi installdirs
 	$(INSTALL_SCRIPT) ./iverilog-vpi "$(DESTDIR)$(bindir)/iverilog-vpi$(suffix)"
 
-$(libdir)/ivl$(suffix)/ivl@EXEEXT@: ./ivl@EXEEXT@ installdirs
-	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ "$(DESTDIR)$(libdir)/ivl$(suffix)/ivl@EXEEXT@"
-
-$(libdir)/ivl$(suffix)/include/constants.vams: $(srcdir)/constants.vams installdirs
-	$(INSTALL_DATA) $(srcdir)/constants.vams "$(DESTDIR)$(libdir)/ivl$(suffix)/include/constants.vams"
-
-$(libdir)/ivl$(suffix)/include/disciplines.vams: $(srcdir)/disciplines.vams installdirs
-	$(INSTALL_DATA) $(srcdir)/disciplines.vams "$(DESTDIR)$(libdir)/ivl$(suffix)/include/disciplines.vams"
-
-$(includedir)/ivl_target.h: $(srcdir)/ivl_target.h installdirs
-	$(INSTALL_DATA) $(srcdir)/ivl_target.h "$(DESTDIR)$(includedir)/ivl_target.h"
-
-$(includedir)/_pli_types.h: _pli_types.h installdirs
-	$(INSTALL_DATA) $< "$(DESTDIR)$(includedir)/_pli_types.h"
-
-$(includedir)/sv_vpi_user.h: $(srcdir)/sv_vpi_user.h installdirs
-	$(INSTALL_DATA) $(srcdir)/sv_vpi_user.h "$(DESTDIR)$(includedir)/sv_vpi_user.h"
-
-$(includedir)/vpi_user.h: $(srcdir)/vpi_user.h installdirs
-	$(INSTALL_DATA) $(srcdir)/vpi_user.h "$(DESTDIR)$(includedir)/vpi_user.h"
-
-$(includedir)/acc_user.h: $(srcdir)/acc_user.h installdirs
-	$(INSTALL_DATA) $(srcdir)/acc_user.h "$(DESTDIR)$(includedir)/acc_user.h"
-
-$(includedir)/veriuser.h: $(srcdir)/veriuser.h installdirs
-	$(INSTALL_DATA) $(srcdir)/veriuser.h "$(DESTDIR)$(includedir)/veriuser.h"
-
-$(mandir)/man1/iverilog-vpi$(suffix).1: iverilog-vpi.man installdirs
+installman: iverilog-vpi.man installdirs
 	$(INSTALL_DATA) iverilog-vpi.man "$(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1"
 
-$(prefix)/iverilog-vpi$(suffix).pdf: iverilog-vpi.pdf installdirs
+installpdf: iverilog-vpi.pdf installdirs
 	$(INSTALL_DATA) iverilog-vpi.pdf "$(DESTDIR)$(prefix)/iverilog-vpi$(suffix).pdf"
 
+installfiles: $(F) installdirs
+	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ "$(DESTDIR)$(libdir)/ivl$(suffix)/ivl@EXEEXT@"
+	$(INSTALL_DATA) $(srcdir)/constants.vams "$(DESTDIR)$(libdir)/ivl$(suffix)/include/constants.vams"
+	$(INSTALL_DATA) $(srcdir)/disciplines.vams "$(DESTDIR)$(libdir)/ivl$(suffix)/include/disciplines.vams"
+	$(INSTALL_DATA) $(srcdir)/ivl_target.h "$(DESTDIR)$(includedir)/ivl_target.h"
+	$(INSTALL_DATA) ./_pli_types.h "$(DESTDIR)$(includedir)/_pli_types.h"
+	$(INSTALL_DATA) $(srcdir)/sv_vpi_user.h "$(DESTDIR)$(includedir)/sv_vpi_user.h"
+	$(INSTALL_DATA) $(srcdir)/vpi_user.h "$(DESTDIR)$(includedir)/vpi_user.h"
+	$(INSTALL_DATA) $(srcdir)/acc_user.h "$(DESTDIR)$(includedir)/acc_user.h"
+	$(INSTALL_DATA) $(srcdir)/veriuser.h "$(DESTDIR)$(includedir)/veriuser.h"
 
 installdirs: $(srcdir)/mkinstalldirs
 	$(srcdir)/mkinstalldirs "$(DESTDIR)$(bindir)" \
