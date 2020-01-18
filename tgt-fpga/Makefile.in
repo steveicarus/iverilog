@@ -93,38 +93,38 @@ iverilog-fpga.pdf: iverilog-fpga.ps
 	ps2pdf iverilog-fpga.ps iverilog-fpga.pdf
 
 ifeq (@WIN32@,yes)
-INSTALL_DOC = $(prefix)/iverilog-fpga$(suffix).pdf $(mandir)/man1/iverilog-fpga$(suffix).1
+INSTALL_DOC = installpdf installman
 INSTALL_DOCDIR = $(mandir)/man1
 all: iverilog-fpga.pdf
 else
-INSTALL_DOC = $(mandir)/man1/iverilog-fpga$(suffix).1
+INSTALL_DOC = installman
 INSTALL_DOCDIR = $(mandir)/man1
 endif
 
-install: all installdirs $(libdir)/ivl$(suffix)/fpga.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/fpga.conf $(libdir)/ivl$(suffix)/fpga-s.conf
+install: all installdirs installfiles
 
-$(libdir)/ivl$(suffix)/fpga.tgt: ./fpga.tgt
-	$(INSTALL_PROGRAM) ./fpga.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga.tgt"
+F = ./fpga.tgt \
+	$(srcdir)/fpga.conf \
+	$(srcdir)/fpga-s.conf \
+	$(INSTALL_DOC)
 
-$(libdir)/ivl$(suffix)/fpga.conf: $(srcdir)/fpga.conf
-	$(INSTALL_DATA) $(srcdir)/fpga.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga.conf"
-
-$(libdir)/ivl$(suffix)/fpga-s.conf: $(srcdir)/fpga-s.conf
-	$(INSTALL_DATA) $(srcdir)/fpga-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga-s.conf"
-
-
-$(mandir)/man1/iverilog-fpga$(suffix).1: $(srcdir)/iverilog-fpga.man
+installman: installdirs
 	$(INSTALL_DATA) $(srcdir)/iverilog-fpga.man "$(DESTDIR)$(mandir)/man1/iverilog-fpga$(suffix).1"
 
-$(prefix)/iverilog-fpga$(suffix).pdf: iverilog-fpga.pdf
+installpdf: installdirs
 	$(INSTALL_DATA) iverilog-fpga.pdf "$(DESTDIR)$(prefix)/iverilog-fpga$(suffix).pdf"
 
+installfiles: $(F) installdirs
+	$(INSTALL_PROGRAM) ./fpga.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga.tgt"
+	$(INSTALL_DATA) $(srcdir)/fpga.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga.conf"
+	$(INSTALL_DATA) $(srcdir)/fpga-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga-s.conf"
+
 installdirs: $(srcdir)/../mkinstalldirs
-	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)/ivl$(suffix)"
+	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)/ivl$(suffix)" "$(DESTDIR)$(INSTALL_DOCDIR)"
 
 uninstall:
 	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga.tgt"
-	rm -f "$(DESTDIR)$(INSTALL_DOC)"
+	rm -f "$(DESTDIR)$(prefix)/iverilog-fpga$(suffix).pdf" "$(DESTDIR)$(mandir)/man1/iverilog-fpga$(suffix).1"
 	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga-s.conf"
 	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga.conf"
 
