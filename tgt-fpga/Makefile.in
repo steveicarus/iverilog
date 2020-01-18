@@ -108,10 +108,10 @@ F = ./fpga.tgt \
 	$(srcdir)/fpga-s.conf \
 	$(INSTALL_DOC)
 
-installman: installdirs
+installman: $(srcdir)/iverilog-fpga.man installdirs
 	$(INSTALL_DATA) $(srcdir)/iverilog-fpga.man "$(DESTDIR)$(mandir)/man1/iverilog-fpga$(suffix).1"
 
-installpdf: installdirs
+installpdf: iverilog-fpga.pdf installdirs
 	$(INSTALL_DATA) iverilog-fpga.pdf "$(DESTDIR)$(prefix)/iverilog-fpga$(suffix).pdf"
 
 installfiles: $(F) installdirs

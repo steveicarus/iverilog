@@ -112,31 +112,34 @@ iverilog.pdf: iverilog.ps
 
 ifeq (@MINGW32@,yes)
 ifeq ($(MAN),none)
-INSTALL_DOC = $(mandir)/man1/iverilog$(suffix).1
+INSTALL_DOC = installman
 else
 ifeq ($(PS2PDF),none)
-INSTALL_DOC = $(mandir)/man1/iverilog$(suffix).1
+INSTALL_DOC = installman
 else
-INSTALL_DOC = $(prefix)/iverilog$(suffix).pdf $(mandir)/man1/iverilog$(suffix).1
+INSTALL_DOC = installpdf installman
 all: iverilog.pdf
 endif
 endif
 INSTALL_DOCDIR = $(mandir)/man1
 else
-INSTALL_DOC = $(mandir)/man1/iverilog$(suffix).1
+INSTALL_DOC = installman
 INSTALL_DOCDIR = $(mandir)/man1
 endif
 
-install: all installdirs $(bindir)/iverilog$(suffix)@EXEEXT@ $(INSTALL_DOC)
+install: all installdirs installfiles
 
-$(bindir)/iverilog$(suffix)@EXEEXT@: ./iverilog@EXEEXT@
-	$(INSTALL_PROGRAM) ./iverilog@EXEEXT@ "$(DESTDIR)$(bindir)/iverilog$(suffix)@EXEEXT@"
+F = ./iverilog@EXEEXT@ \
+	$(INSTALL_DOC)
 
-$(mandir)/man1/iverilog$(suffix).1: iverilog.man
+installman: iverilog.man installdirs
 	$(INSTALL_DATA) iverilog.man "$(DESTDIR)$(mandir)/man1/iverilog$(suffix).1"
 
-$(prefix)/iverilog$(suffix).pdf: iverilog.pdf
+installpdf: iverilog.pdf installdirs
 	$(INSTALL_DATA) iverilog.pdf "$(DESTDIR)$(prefix)/iverilog$(suffix).pdf"
+
+installfiles: $(F) installdirs
+	$(INSTALL_PROGRAM) ./iverilog@EXEEXT@ "$(DESTDIR)$(bindir)/iverilog$(suffix)@EXEEXT@"
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" "$(DESTDIR)$(INSTALL_DOCDIR)"

@@ -186,10 +186,10 @@ install: all installdirs installfiles
 
 F = ./vvp@EXEEXT@ $(INSTALL_DOC)
 
-installman: installdirs
+installman: vvp.man installdirs
 	$(INSTALL_DATA) vvp.man "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1"
 
-installpdf: installdirs
+installpdf: vvp.pdf installdirs
 	$(INSTALL_DATA) vvp.pdf "$(DESTDIR)$(prefix)/vvp$(suffix).pdf"
 
 installfiles: $(F) installdirs
