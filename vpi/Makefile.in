@@ -187,38 +187,25 @@ stamp-vpi_config-h: $(srcdir)/vpi_config.h.in ../config.status
 	cd ..; ./config.status --header=vpi/vpi_config.h
 vpi_config.h: stamp-vpi_config-h
 
-install: all installdirs \
-    $(libdir)/libvpi$(suffix).a \
-    $(vpidir)/system.vpi \
-    $(vpidir)/va_math.vpi \
-    $(vpidir)/v2005_math.vpi \
-    $(vpidir)/v2009.vpi \
-    $(vpidir)/vhdl_sys.vpi \
-    $(vpidir)/vhdl_textio.vpi \
-    $(vpidir)/vpi_debug.vpi
+install: all installdirs installfiles
 
-$(libdir)/libvpi$(suffix).a : ./libvpi.a
-	$(INSTALL_DATA) libvpi.a "$(DESTDIR)$(libdir)/libvpi$(suffix).a"
+F = ./libvpi.a \
+	./system.vpi \
+	./va_math.vpi \
+	./v2005_math.vpi \
+	./v2009.vpi \
+	./vhdl_sys.vpi \
+	./vhdl_textio.vpi \
+	./vpi_debug.vpi
 
-$(vpidir)/system.vpi: ./system.vpi
+installfiles: $(F) installdirs
+	$(INSTALL_DATA) ./libvpi.a "$(DESTDIR)$(libdir)/libvpi$(suffix).a"
 	$(INSTALL_PROGRAM) ./system.vpi "$(DESTDIR)$(vpidir)/system.vpi"
-
-$(vpidir)/va_math.vpi: ./va_math.vpi
 	$(INSTALL_PROGRAM) ./va_math.vpi "$(DESTDIR)$(vpidir)/va_math.vpi"
-
-$(vpidir)/v2005_math.vpi: ./v2005_math.vpi
 	$(INSTALL_PROGRAM) ./v2005_math.vpi "$(DESTDIR)$(vpidir)/v2005_math.vpi"
-
-$(vpidir)/v2009.vpi: ./v2009.vpi
 	$(INSTALL_PROGRAM) ./v2009.vpi "$(DESTDIR)$(vpidir)/v2009.vpi"
-
-$(vpidir)/vhdl_sys.vpi: ./vhdl_sys.vpi
 	$(INSTALL_PROGRAM) ./vhdl_sys.vpi "$(DESTDIR)$(vpidir)/vhdl_sys.vpi"
-
-$(vpidir)/vhdl_textio.vpi: ./vhdl_textio.vpi
 	$(INSTALL_PROGRAM) ./vhdl_textio.vpi "$(DESTDIR)$(vpidir)/vhdl_textio.vpi"
-
-$(vpidir)/vpi_debug.vpi: ./vpi_debug.vpi
 	$(INSTALL_PROGRAM) ./vpi_debug.vpi "$(DESTDIR)$(vpidir)/vpi_debug.vpi"
 
 installdirs: $(srcdir)/../mkinstalldirs
