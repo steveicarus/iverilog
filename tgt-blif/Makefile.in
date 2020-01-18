@@ -83,17 +83,16 @@ endif
 blif.tgt: $O $(TGTDEPLIBS)
 	$(CXX) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS)
 
-install: all installdirs $(libdir)/ivl$(suffix)/blif.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/blif.conf $(libdir)/ivl$(suffix)/blif-s.conf
+install: all installdirs installfiles
 
-$(libdir)/ivl$(suffix)/blif.tgt: ./blif.tgt
+F = ./blif.tgt \
+	$(srcdir)/blif.conf \
+	$(srcdir)/blif-s.conf
+
+installfiles: $(F) installdirs
 	$(INSTALL_PROGRAM) ./blif.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/blif.tgt"
-
-$(libdir)/ivl$(suffix)/blif.conf: $(srcdir)/blif.conf
 	$(INSTALL_DATA) $(srcdir)/blif.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/blif.conf"
-
-$(libdir)/ivl$(suffix)/blif-s.conf: $(srcdir)/blif-s.conf
 	$(INSTALL_DATA) $(srcdir)/blif-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/blif-s.conf"
-
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)/ivl$(suffix)"
