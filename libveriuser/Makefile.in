@@ -103,9 +103,11 @@ libveriuser.a: libveriuser.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 
-install:: all installdirs $(libdir)/libveriuser$(suffix).a $(INSTALL32)
+install:: all installdirs installfiles
 
-$(libdir)/libveriuser$(suffix).a: ./libveriuser.a
+F = ./libveriuser.a
+
+installfiles: $(F) installdirs
 	$(INSTALL_DATA) ./libveriuser.a "$(DESTDIR)$(libdir)/libveriuser$(suffix).a"
 
 installdirs: $(srcdir)/../mkinstalldirs
