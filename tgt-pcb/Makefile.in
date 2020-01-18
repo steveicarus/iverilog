@@ -105,17 +105,16 @@ endif
 pcb.tgt: $O $(TGTDEPLIBS)
 	$(CXX) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS)
 
-install: all installdirs $(libdir)/ivl$(suffix)/pcb.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/pcb.conf $(libdir)/ivl$(suffix)/pcb-s.conf
+install: all installdirs installfiles
 
-$(libdir)/ivl$(suffix)/pcb.tgt: ./pcb.tgt
+F = ./pcb.tgt \
+	$(srcdir)/pcb.conf \
+	$(srcdir)/pcb-s.conf
+
+installfiles: $(F) installdirs
 	$(INSTALL_PROGRAM) ./pcb.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/pcb.tgt"
-
-$(libdir)/ivl$(suffix)/pcb.conf: $(srcdir)/pcb.conf
 	$(INSTALL_DATA) $(srcdir)/pcb.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/pcb.conf"
-
-$(libdir)/ivl$(suffix)/pcb-s.conf: $(srcdir)/pcb-s.conf
 	$(INSTALL_DATA) $(srcdir)/pcb-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/pcb-s.conf"
-
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)/ivl$(suffix)"
