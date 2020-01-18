@@ -81,17 +81,16 @@ endif
 null.tgt: $O $(TGTDEPLIBS)
 	$(CC) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS)
 
-install: all installdirs $(libdir)/ivl$(suffix)/null.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/null.conf $(libdir)/ivl$(suffix)/null-s.conf
+install: all installdirs installfiles
 
-$(libdir)/ivl$(suffix)/null.tgt: ./null.tgt
+F = ./null.tgt \
+	$(srcdir)/null.conf \
+	$(srcdir)/null-s.conf
+
+installfiles: $(F) installdirs
 	$(INSTALL_PROGRAM) ./null.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/null.tgt"
-
-$(libdir)/ivl$(suffix)/null.conf: $(srcdir)/null.conf
 	$(INSTALL_DATA) $(srcdir)/null.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/null.conf"
-
-$(libdir)/ivl$(suffix)/null-s.conf: $(srcdir)/null-s.conf
 	$(INSTALL_DATA) $(srcdir)/null-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/null-s.conf"
-
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)/ivl$(suffix)"
