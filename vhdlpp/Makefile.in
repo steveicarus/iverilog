@@ -127,9 +127,11 @@ lexor_keyword.o: lexor_keyword.cc parse.h
 lexor_keyword.cc: $(srcdir)/lexor_keyword.gperf
 	gperf -o -i 7 --ignore-case -C -k 1-4,6,9,$$ -H keyword_hash -N check_identifier -t $(srcdir)/lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
 
-install: all installdirs $(libdir)/ivl$(suffix)/vhdlpp@EXEEXT@
+install: all installdirs installfiles
 
-$(libdir)/ivl$(suffix)/vhdlpp@EXEEXT@: vhdlpp@EXEEXT@
+F = vhdlpp@EXEEXT@
+
+installfiles: $(F) installdirs
 	$(INSTALL_PROGRAM) ./vhdlpp@EXEEXT@ "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdlpp@EXEEXT@"
 
 installdirs: $(srcdir)/../mkinstalldirs
