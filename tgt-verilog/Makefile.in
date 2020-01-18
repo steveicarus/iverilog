@@ -80,12 +80,14 @@ endif
 verilog.tgt: $O $(TGTDEPLIBS)
 	$(CC) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS)
 
-install: all installdirs $(libdir)/ivl/verilog.tgt \
-	$(includedir)/vpi_user.h
+install: all installdirs installfiles
 
-$(libdir)/ivl/verilog.tgt: ./verilog.tgt
+F = ./verilog.tgt \
+	$(srcdir)/vpi_user.h
+
+installfiles: $(F) installdirs
 	$(INSTALL_PROGRAM) ./verilog.tgt "$(DESTDIR)$(libdir)/ivl/verilog.tgt"
-
+	$(INSTALL_DATA) $(srcdir)/vpi_user.h "$(DESTDIR)$(includedir)/vpi_user.h"
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)/ivl"
