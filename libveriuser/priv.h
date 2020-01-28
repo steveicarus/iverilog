@@ -31,6 +31,6 @@ extern char* __acc_newstring(const char*txt);
 /*
  * Trace file for logging ACC and TF calls.
  */
-FILE* pli_trace;
+extern FILE* pli_trace;
 
 #endif /* IVL_priv_H */
