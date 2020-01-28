@@ -27,6 +27,8 @@
 # include  "globals.h"
 # include  <string.h>
 
+char *current_file = NULL;
+
 static int comment_enter;
 static char* trim_trailing_white(char*txt, int trim);
 
