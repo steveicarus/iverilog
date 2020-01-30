@@ -1,7 +1,7 @@
 #ifndef IVL_pform_H
 #define IVL_pform_H
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -518,6 +518,13 @@ extern std::vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&l
  */
 extern PAssign* pform_compressed_assign_from_inc_dec(const struct vlltype&loc,
 						     PExpr*exp);
+
+/*
+ * The parser uses this function to convert a genvar increment/decrement
+ * expression to the equivalent binary add/subtract expression.
+ */
+extern PExpr* pform_genvar_inc_dec(const struct vlltype&loc, const char*name,
+                                   bool inc_flag);
 
 /*
  * These are functions that the outside-the-parser code uses the do

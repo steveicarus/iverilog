@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -3076,6 +3076,25 @@ PAssign* pform_compressed_assign_from_inc_dec(const struct vlltype&loc, PExpr*ex
       FILE_NAME(tmp, loc);
 
       delete exp;
+      return tmp;
+}
+
+PExpr* pform_genvar_inc_dec(const struct vlltype&loc, const char*name, bool inc_flag)
+{
+      if (!gn_system_verilog()) {
+	    cerr << loc << ": error: Increment/decrement operators "
+		    "require SystemVerilog." << endl;
+	    error_count += 1;
+      }
+
+      PExpr*lval = new PEIdent(lex_strings.make(name));
+      PExpr*rval = new PENumber(new verinum((uint64_t)1, 1));
+      FILE_NAME(lval, loc);
+      FILE_NAME(rval, loc);
+
+      PEBinary*tmp = new PEBinary(inc_flag ? '+' : '-', lval, rval);
+      FILE_NAME(tmp, loc);
+
       return tmp;
 }
 

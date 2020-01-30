@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -448,6 +448,11 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 	    list<PExpr*>*exprs;
       } class_declaration_extends;
 
+      struct {
+	    char*text;
+	    PExpr*expr;
+      } genvar_iter;
+
       verinum* number;
 
       verireal* realtime;
@@ -679,6 +684,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <lifetime> lifetime lifetime_opt
 
 %type <case_quality> unique_priority
+
+%type <genvar_iter> genvar_iteration
 
 %token K_TAND
 %right K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
@@ -1490,6 +1497,19 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	delete[]$4;
       }
 
+  ;
+
+genvar_iteration /* IEEE1800-2012: A.4.2 */
+  : IDENTIFIER '=' expression
+      { $$ = { $1, $3 }; }
+  | IDENTIFIER K_INCR
+      { $$ = { $1, pform_genvar_inc_dec(@1, $1, true)  }; }
+  | IDENTIFIER K_DECR
+      { $$ = { $1, pform_genvar_inc_dec(@1, $1, false) }; }
+  | K_INCR IDENTIFIER
+      { $$ = { $2, pform_genvar_inc_dec(@1, $2, true)  }; }
+  | K_DECR IDENTIFIER
+      { $$ = { $2, pform_genvar_inc_dec(@1, $2, false) }; }
   ;
 
 import_export /* IEEE1800-2012: A.2.9 */
@@ -5257,8 +5277,8 @@ module_item
 
   | K_for '(' IDENTIFIER '=' expression ';'
               expression ';'
-              IDENTIFIER '=' expression ')'
-      { pform_start_generate_for(@1, $3, $5, $7, $9, $11); }
+              genvar_iteration ')'
+      { pform_start_generate_for(@1, $3, $5, $7, $9.text, $9.expr); }
     generate_block
       { pform_endgenerate(false); }
 
