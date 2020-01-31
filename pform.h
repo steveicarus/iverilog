@@ -292,6 +292,7 @@ extern verinum* pform_verinum_with_size(verinum*s, verinum*val,
 extern void pform_genvars(const struct vlltype&li, list<perm_string>*names);
 
 extern void pform_start_generate_for(const struct vlltype&li,
+				     bool local_index,
 				     char*ident1,
 				     PExpr*init,
 				     PExpr*test,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,6 +26,7 @@ PGenerate::PGenerate(LexicalScope*parent, unsigned id)
 {
       direct_nested_ = false;
       scheme_type = GS_NONE;
+      local_index = false;
       loop_init = 0;
       loop_test = 0;
       loop_step = 0;

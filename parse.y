@@ -567,7 +567,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <number>  number pos_neg_number
 %type <flag>    signing unsigned_signed_opt signed_unsigned_opt
 %type <flag>    import_export
-%type <flag>    K_packed_opt K_reg_opt K_static_opt K_virtual_opt
+%type <flag>    K_genvar_opt K_packed_opt K_reg_opt K_static_opt K_virtual_opt
 %type <flag>    udp_reg_opt edge_operator
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
@@ -5275,10 +5275,10 @@ module_item
   | K_genvar list_of_identifiers ';'
       { pform_genvars(@1, $2); }
 
-  | K_for '(' IDENTIFIER '=' expression ';'
+  | K_for '(' K_genvar_opt IDENTIFIER '=' expression ';'
               expression ';'
               genvar_iteration ')'
-      { pform_start_generate_for(@1, $3, $5, $7, $9.text, $9.expr); }
+      { pform_start_generate_for(@2, $3, $4, $6, $8, $10.text, $10.expr); }
     generate_block
       { pform_endgenerate(false); }
 
@@ -7341,6 +7341,7 @@ unique_priority
      presence is significant. This is a fairly common pattern so
      collect those rules here. */
 
+K_genvar_opt   : K_genvar    { $$ = true; } | { $$ = false; } ;
 K_packed_opt   : K_packed    { $$ = true; } | { $$ = false; } ;
 K_reg_opt      : K_reg       { $$ = true; } | { $$ = false; } ;
 K_static_opt   : K_static    { $$ = true; } | { $$ = false; } ;

@@ -1486,6 +1486,7 @@ void pform_genvars(const struct vlltype&li, list<perm_string>*names)
 }
 
 void pform_start_generate_for(const struct vlltype&li,
+			      bool local_index,
 			      char*ident1, PExpr*init,
 			      PExpr*test,
 			      char*ident2, PExpr*next)
@@ -1499,6 +1500,7 @@ void pform_start_generate_for(const struct vlltype&li,
 
       pform_cur_generate->scheme_type = PGenerate::GS_LOOP;
 
+      pform_cur_generate->local_index = local_index;
       pform_cur_generate->loop_index = lex_strings.make(ident1);
       pform_cur_generate->loop_init = init;
       pform_cur_generate->loop_test = test;

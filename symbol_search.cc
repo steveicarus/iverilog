@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2020 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -108,6 +108,9 @@ static bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       }
 
       while (scope) {
+            if (scope->genvar_tmp.str() && path_tail.name == scope->genvar_tmp)
+                  return false;
+
 	    if (path_tail.name == "#") {
 		  cerr << li->get_fileline() << ": sorry: "
 		       << "Implicit class handle \"super\" not supported." << endl;

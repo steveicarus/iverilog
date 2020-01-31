@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -899,17 +899,19 @@ bool PGenerate::generate_scope(Design*des, NetScope*container)
  */
 bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 {
-	// Check that the loop_index variable was declared in a
-	// genvar statement.
-      NetScope*cscope = container;
-      while (cscope && !cscope->find_genvar(loop_index))
-            cscope = cscope->parent();
-      if (!cscope) {
-	    cerr << get_fileline() << ": error: genvar is missing for "
-	            "generate \"loop\" variable '" << loop_index << "'."
-	         << endl;
-	    des->errors += 1;
-	    return false;
+      if (!local_index) {
+	      // Check that the loop_index variable was declared in a
+	      // genvar statement.
+	    NetScope*cscope = container;
+	    while (cscope && !cscope->find_genvar(loop_index))
+		  cscope = cscope->parent();
+	    if (!cscope) {
+		  cerr << get_fileline() << ": error: genvar is missing for "
+			  "generate \"loop\" variable '" << loop_index << "'."
+		       << endl;
+		  des->errors += 1;
+		  return false;
+	    }
       }
 
 	// We're going to need a genvar...

@@ -1,7 +1,7 @@
 #ifndef IVL_PGenerate_H
 #define IVL_PGenerate_H
 /*
- * Copyright (c) 2006-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -71,6 +71,9 @@ class PGenerate : public PNamedItem, public LexicalScope {
 
 	// generate loops have an index variable and three
 	// expressions: for (index = <init>; <test>; index=<step>)
+	// the index is local if it was declared in the init expression,
+	// e.g. for (genvar index = <init>; <test>; index=<step>)
+      bool local_index;
       perm_string loop_index;
       PExpr*loop_init;
       PExpr*loop_test;
