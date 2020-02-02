@@ -1501,15 +1501,25 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 
 genvar_iteration /* IEEE1800-2012: A.4.2 */
   : IDENTIFIER '=' expression
-      { $$ = { $1, $3 }; }
+      { $$.text = $1;
+        $$.expr = $3;
+      }
   | IDENTIFIER K_INCR
-      { $$ = { $1, pform_genvar_inc_dec(@1, $1, true)  }; }
+      { $$.text = $1;
+        $$.expr = pform_genvar_inc_dec(@1, $1, true);
+      }
   | IDENTIFIER K_DECR
-      { $$ = { $1, pform_genvar_inc_dec(@1, $1, false) }; }
+      { $$.text = $1;
+        $$.expr = pform_genvar_inc_dec(@1, $1, false);
+      }
   | K_INCR IDENTIFIER
-      { $$ = { $2, pform_genvar_inc_dec(@1, $2, true)  }; }
+      { $$.text = $2;
+        $$.expr = pform_genvar_inc_dec(@1, $2, true);
+      }
   | K_DECR IDENTIFIER
-      { $$ = { $2, pform_genvar_inc_dec(@1, $2, false) }; }
+      { $$.text = $2;
+        $$.expr = pform_genvar_inc_dec(@1, $2, false);
+      }
   ;
 
 import_export /* IEEE1800-2012: A.2.9 */
