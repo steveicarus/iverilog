@@ -595,7 +595,7 @@ void __vpiDecConst::vpi_get_value(p_vpi_value vp)
 	      break;
 
           case vpiBinStrVal:
-	      for(int bit=31; bit<=0;bit--){
+	      for(int bit=31; bit>=0;bit--){
 		  *cp++ = "01"[ (value>>bit)&1 ];
 	      }
 	      *cp = 0;
