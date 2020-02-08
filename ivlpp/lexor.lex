@@ -1,7 +1,7 @@
 %option prefix="yy"
 %{
 /*
- * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -575,7 +575,7 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <MA_ADD>{W} { macro_add_to_arg(1); }
 
-<MA_ADD>"(" { macro_add_to_arg(0); ma_parenthesis_level++; }
+<MA_ADD>[({] { macro_add_to_arg(0); ma_parenthesis_level++; }
 
 <MA_ADD>"," {
     if (ma_parenthesis_level > 0)
@@ -584,7 +584,7 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 	macro_finish_arg();
 }
 
-<MA_ADD>")" {
+<MA_ADD>[)}] {
     if (ma_parenthesis_level > 0) {
         macro_add_to_arg(0);
         ma_parenthesis_level--;
