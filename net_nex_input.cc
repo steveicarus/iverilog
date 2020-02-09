@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -261,7 +261,8 @@ NexusSet* NetAssign_::nex_input(bool rem_out)
 
 NexusSet* NetAssignBase::nex_input(bool rem_out)
 {
-      NexusSet*result = rval_->nex_input(rem_out);
+	// For the deassign and release statements there is no R-value.
+      NexusSet*result = rval_ ? rval_->nex_input(rem_out) : new NexusSet;
 
 	/* It is possible that the lval_ can have nex_input values. In
 	   particular, index expressions are statement inputs as well,
