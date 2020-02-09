@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -310,6 +310,15 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 				NexusSet&nex_map, NetBus&nex_out,
 				NetBus&enables, vector<mask_t>&bitmasks)
 {
+      if (dynamic_cast<NetCAssign*>(this) || dynamic_cast<NetDeassign*>(this) ||
+          dynamic_cast<NetForce*>(this) || dynamic_cast<NetRelease*>(this)) {
+	    cerr << get_fileline() << ": sorry: Procedural continuous "
+		    "assignment is not currently supported in synthesis."
+		 << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
 	/* If the lval is a concatenation, synthesise each part
 	   separately. */
       if (lval_->more ) {
@@ -338,6 +347,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    return flag;
       }
 
+      assert(rval_);
       NetNet*rsig = rval_->synthesize(des, scope, rval_);
       assert(rsig);
 
