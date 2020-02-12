@@ -85,13 +85,13 @@ stub.tgt: $O $(TGTDEPLIBS)
 install: all installdirs installfiles
 
 F = ./stub.tgt \
-	./stub.conf \
-	./stub-s.conf
+	$(srcdir)/stub.conf \
+	$(srcdir)/stub-s.conf
 
 installfiles: $(F) installdirs
 	$(INSTALL_PROGRAM) ./stub.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/stub.tgt"
-	$(INSTALL_DATA) ./stub.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/stub.conf"
-	$(INSTALL_DATA) ./stub-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/stub-s.conf"
+	$(INSTALL_DATA) $(srcdir)/stub.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/stub.conf"
+	$(INSTALL_DATA) $(srcdir)/stub-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/stub-s.conf"
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)/ivl$(suffix)"
