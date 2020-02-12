@@ -75,7 +75,7 @@ install: all installdirs installfiles
 
 F = ivlpp@EXEEXT@
 
-installfiles: $(F) installdirs
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./ivlpp@EXEEXT@ "$(DESTDIR)$(libdir)/ivl$(suffix)/ivlpp@EXEEXT@"
 
 installdirs: $(srcdir)/../mkinstalldirs

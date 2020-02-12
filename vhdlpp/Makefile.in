@@ -131,7 +131,7 @@ install: all installdirs installfiles
 
 F = vhdlpp@EXEEXT@
 
-installfiles: $(F) installdirs
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./vhdlpp@EXEEXT@ "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdlpp@EXEEXT@"
 
 installdirs: $(srcdir)/../mkinstalldirs

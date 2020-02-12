@@ -85,7 +85,7 @@ install: all installdirs installfiles
 F = ./verilog.tgt \
 	$(srcdir)/vpi_user.h
 
-installfiles: $(F) installdirs
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./verilog.tgt "$(DESTDIR)$(libdir)/ivl/verilog.tgt"
 	$(INSTALL_DATA) $(srcdir)/vpi_user.h "$(DESTDIR)$(includedir)/vpi_user.h"
 

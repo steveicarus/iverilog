@@ -353,7 +353,7 @@ installman: iverilog-vpi.man installdirs
 installpdf: iverilog-vpi.pdf installdirs
 	$(INSTALL_DATA) iverilog-vpi.pdf "$(DESTDIR)$(prefix)/iverilog-vpi$(suffix).pdf"
 
-installfiles: $(F) installdirs
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ "$(DESTDIR)$(libdir)/ivl$(suffix)/ivl@EXEEXT@"
 	$(INSTALL_DATA) $(srcdir)/constants.vams "$(DESTDIR)$(libdir)/ivl$(suffix)/include/constants.vams"
 	$(INSTALL_DATA) $(srcdir)/disciplines.vams "$(DESTDIR)$(libdir)/ivl$(suffix)/include/disciplines.vams"

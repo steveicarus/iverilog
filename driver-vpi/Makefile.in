@@ -98,7 +98,7 @@ install: all installdirs installfiles
 
 F = ./iverilog-vpi@EXEEXT@
 
-installfiles: $(F) installdirs
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./iverilog-vpi@EXEEXT@ "$(bindir)/iverilog-vpi$(suffix)@EXEEXT@"
 ifeq (@WIN32@,yes)
 ifneq ($(HOSTCC),$(CC))

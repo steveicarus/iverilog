@@ -84,7 +84,7 @@ install: all installdirs installfiles
 
 F = ./pal.tgt
 
-installfiles: $(F) installdirs
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./pal.tgt "$(DESTDIR)$(libdir)/ivl/pal.tgt"
 
 installdirs: $(srcdir)/../mkinstalldirs

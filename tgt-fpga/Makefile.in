@@ -114,7 +114,7 @@ installman: $(srcdir)/iverilog-fpga.man installdirs
 installpdf: iverilog-fpga.pdf installdirs
 	$(INSTALL_DATA) iverilog-fpga.pdf "$(DESTDIR)$(prefix)/iverilog-fpga$(suffix).pdf"
 
-installfiles: $(F) installdirs
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./fpga.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga.tgt"
 	$(INSTALL_DATA) $(srcdir)/fpga.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga.conf"
 	$(INSTALL_DATA) $(srcdir)/fpga-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga-s.conf"

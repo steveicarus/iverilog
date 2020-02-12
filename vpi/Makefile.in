@@ -198,7 +198,7 @@ F = ./libvpi.a \
 	./vhdl_textio.vpi \
 	./vpi_debug.vpi
 
-installfiles: $(F) installdirs
+installfiles: $(F) | installdirs
 	$(INSTALL_DATA) ./libvpi.a "$(DESTDIR)$(libdir)/libvpi$(suffix).a"
 	$(INSTALL_PROGRAM) ./system.vpi "$(DESTDIR)$(vpidir)/system.vpi"
 	$(INSTALL_PROGRAM) ./va_math.vpi "$(DESTDIR)$(vpidir)/va_math.vpi"

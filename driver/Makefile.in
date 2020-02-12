@@ -138,7 +138,7 @@ installman: iverilog.man installdirs
 installpdf: iverilog.pdf installdirs
 	$(INSTALL_DATA) iverilog.pdf "$(DESTDIR)$(prefix)/iverilog$(suffix).pdf"
 
-installfiles: $(F) installdirs
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./iverilog@EXEEXT@ "$(DESTDIR)$(bindir)/iverilog$(suffix)@EXEEXT@"
 
 installdirs: $(srcdir)/../mkinstalldirs

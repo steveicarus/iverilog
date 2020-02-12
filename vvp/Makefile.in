@@ -192,7 +192,7 @@ installman: vvp.man installdirs
 installpdf: vvp.pdf installdirs
 	$(INSTALL_DATA) vvp.pdf "$(DESTDIR)$(prefix)/vvp$(suffix).pdf"
 
-installfiles: $(F) installdirs
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
 
 installdirs: $(srcdir)/../mkinstalldirs

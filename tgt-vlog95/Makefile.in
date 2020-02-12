@@ -87,7 +87,7 @@ F = ./vlog95.tgt \
 	$(srcdir)/vlog95.conf \
 	$(srcdir)/vlog95-s.conf
 
-installfiles: $(F) installdirs
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./vlog95.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/vlog95.tgt"
 	$(INSTALL_DATA) $(srcdir)/vlog95.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/vlog95.conf"
 	$(INSTALL_DATA) $(srcdir)/vlog95-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/vlog95-s.conf"

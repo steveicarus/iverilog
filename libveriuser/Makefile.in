@@ -107,7 +107,7 @@ install:: all installdirs installfiles
 
 F = ./libveriuser.a
 
-installfiles: $(F) installdirs
+installfiles: $(F) | installdirs
 	$(INSTALL_DATA) ./libveriuser.a "$(DESTDIR)$(libdir)/libveriuser$(suffix).a"
 
 installdirs: $(srcdir)/../mkinstalldirs

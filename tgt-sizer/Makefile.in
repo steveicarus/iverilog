@@ -87,7 +87,7 @@ F = ./sizer.tgt \
 	$(srcdir)/sizer.conf \
 	$(srcdir)/sizer-s.conf
 
-installfiles: $(F) installdirs
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./sizer.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/sizer.tgt"
 	$(INSTALL_DATA) $(srcdir)/sizer.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/sizer.conf"
 	$(INSTALL_DATA) $(srcdir)/sizer-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/sizer-s.conf"

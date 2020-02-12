@@ -83,7 +83,7 @@ install: all installdirs installfiles
 
 F = ./cadpli.vpl
 
-installfiles: $(F) installdirs
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./cadpli.vpl "$(DESTDIR)$(vpidir)/cadpli.vpl"
 
 installdirs: $(srcdir)/../mkinstalldirs

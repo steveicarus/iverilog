@@ -87,7 +87,7 @@ F = ./null.tgt \
 	$(srcdir)/null.conf \
 	$(srcdir)/null-s.conf
 
-installfiles: $(F) installdirs
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./null.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/null.tgt"
 	$(INSTALL_DATA) $(srcdir)/null.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/null.conf"
 	$(INSTALL_DATA) $(srcdir)/null-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/null-s.conf"
