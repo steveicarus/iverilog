@@ -1873,7 +1873,7 @@ modport_ports_list
 	delete[] $3;
       }
   | modport_ports_list ','
-      { yyerror(@2, "error: NULL port declarations are not allowed"); }
+      { yyerror(@2, "error: Superfluous comma in port declaration list."); }
   ;
 
 modport_ports_declaration
@@ -2585,7 +2585,7 @@ tf_port_item_list
 	$$ = $3;
       }
   | tf_port_item_list ','
-      { yyerror(@2, "error: NULL port declarations are not allowed.");
+      { yyerror(@2, "error: Superfluous comma in port declaration list.");
 	$$ = $1;
       }
   | tf_port_item_list ';'
@@ -4542,8 +4542,7 @@ list_of_port_declarations
 		}
 	| list_of_port_declarations ','
 		{
-		  yyerror(@2, "error: NULL port declarations are not "
-		              "allowed.");
+		  yyerror(@2, "error: Superfluous comma in port declaration list.");
 		}
 	| list_of_port_declarations ';'
 		{
