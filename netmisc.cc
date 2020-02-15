@@ -1533,7 +1533,13 @@ bool evaluate_index_prefix(Design*des, NetScope*scope,
       list<index_component_t>::const_iterator icur = indices.begin();
       for (size_t idx = 0 ; (idx+1) < indices.size() ; idx += 1, ++icur) {
 	    assert(icur != indices.end());
-	    assert(icur->sel == index_component_t::SEL_BIT);
+	    if (icur->sel != index_component_t::SEL_BIT) {
+		  cerr << icur->msb->get_fileline() << ": error: "
+			"All but the final index in a chain of indices must be "
+			"a single value, not a range." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
 	    NetExpr*texpr = elab_and_eval(des, scope, icur->msb, -1, true);
 
 	    long tmp;
