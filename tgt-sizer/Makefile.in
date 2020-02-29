@@ -81,17 +81,16 @@ endif
 sizer.tgt: $O $(TGTDEPLIBS)
 	$(CXX) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS)
 
-install: all installdirs $(libdir)/ivl$(suffix)/sizer.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/sizer.conf $(libdir)/ivl$(suffix)/sizer-s.conf
+install: all installdirs installfiles
 
-$(libdir)/ivl$(suffix)/sizer.tgt: ./sizer.tgt
+F = ./sizer.tgt \
+	$(srcdir)/sizer.conf \
+	$(srcdir)/sizer-s.conf
+
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./sizer.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/sizer.tgt"
-
-$(libdir)/ivl$(suffix)/sizer.conf: $(srcdir)/sizer.conf
 	$(INSTALL_DATA) $(srcdir)/sizer.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/sizer.conf"
-
-$(libdir)/ivl$(suffix)/sizer-s.conf: $(srcdir)/sizer-s.conf
 	$(INSTALL_DATA) $(srcdir)/sizer-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/sizer-s.conf"
-
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)/ivl$(suffix)"

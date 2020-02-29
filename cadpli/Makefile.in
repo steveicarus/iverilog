@@ -79,9 +79,11 @@ endif
 cadpli.vpl: $O ../vpi/libvpi.a ../libveriuser/libveriuser.o
 	$(CC) @shared@ $(LDFLAGS) -o $@ $O ../libveriuser/libveriuser.o $(SYSTEM_VPI_LDFLAGS)
 
-install: all installdirs $(vpidir)/cadpli.vpl
+install: all installdirs installfiles
 
-$(vpidir)/cadpli.vpl: ./cadpli.vpl
+F = ./cadpli.vpl
+
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./cadpli.vpl "$(DESTDIR)$(vpidir)/cadpli.vpl"
 
 installdirs: $(srcdir)/../mkinstalldirs

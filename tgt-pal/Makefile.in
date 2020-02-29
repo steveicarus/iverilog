@@ -80,11 +80,12 @@ endif
 pal.tgt: $O $(TGTDEPLIBS)
 	$(CC) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS) -lipal
 
-install: all installdirs $(libdir)/ivl/pal.tgt
+install: all installdirs installfiles
 
-$(libdir)/ivl/pal.tgt: ./pal.tgt
+F = ./pal.tgt
+
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./pal.tgt "$(DESTDIR)$(libdir)/ivl/pal.tgt"
-
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)/$(libdir)/ivl"

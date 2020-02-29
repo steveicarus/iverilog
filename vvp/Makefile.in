@@ -162,18 +162,18 @@ vvp.pdf: vvp.ps
 
 ifeq (@MINGW32@,yes)
 ifeq ($(MAN),none)
-INSTALL_DOC = $(mandir)/man1/vvp$(suffix).1
+INSTALL_DOC = installman
 else
 ifeq ($(PS2PDF),none)
-INSTALL_DOC = $(mandir)/man1/vvp$(suffix).1
+INSTALL_DOC = installman
 else
-INSTALL_DOC = $(prefix)/vvp$(suffix).pdf $(mandir)/man1/vvp$(suffix).1
+INSTALL_DOC = installpdf installman
 all: vvp.pdf
 endif
 endif
 INSTALL_DOCDIR = $(mandir)/man1
 else
-INSTALL_DOC = $(mandir)/man1/vvp$(suffix).1
+INSTALL_DOC = installman
 INSTALL_DOCDIR = $(mandir)/man1
 endif
 
@@ -182,16 +182,18 @@ stamp-config-h: $(srcdir)/config.h.in ../config.status
 	cd ..; ./config.status --header=vvp/config.h
 config.h: stamp-config-h
 
-install: all installdirs $(bindir)/vvp$(suffix)@EXEEXT@ $(INSTALL_DOC)
+install: all installdirs installfiles
 
-$(bindir)/vvp$(suffix)@EXEEXT@: ./vvp@EXEEXT@
-	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
+F = ./vvp@EXEEXT@ $(INSTALL_DOC)
 
-$(mandir)/man1/vvp$(suffix).1: vvp.man
+installman: vvp.man installdirs
 	$(INSTALL_DATA) vvp.man "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1"
 
-$(prefix)/vvp$(suffix).pdf: vvp.pdf
+installpdf: vvp.pdf installdirs
 	$(INSTALL_DATA) vvp.pdf "$(DESTDIR)$(prefix)/vvp$(suffix).pdf"
+
+installfiles: $(F) | installdirs
+	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" "$(DESTDIR)$(INSTALL_DOCDIR)"

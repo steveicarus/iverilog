@@ -104,17 +104,16 @@ stamp-vvp_config-h: $(srcdir)/vvp_config.h.in ../config.status
 	cd ..; ./config.status --header=tgt-vvp/vvp_config.h
 vvp_config.h: stamp-vvp_config-h
 
-install: all installdirs $(libdir)/ivl$(suffix)/vvp.tgt $(libdir)/ivl$(suffix)/vvp.conf $(libdir)/ivl$(suffix)/vvp-s.conf
+install: all installdirs installfiles
 
-$(libdir)/ivl$(suffix)/vvp.tgt: ./vvp.tgt
+F = ./vvp.tgt \
+	./vvp.conf \
+	./vvp-s.conf
+
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./vvp.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/vvp.tgt"
-
-$(libdir)/ivl$(suffix)/vvp.conf: vvp.conf
-	$(INSTALL_DATA) $< "$(DESTDIR)$(libdir)/ivl$(suffix)/vvp.conf"
-
-$(libdir)/ivl$(suffix)/vvp-s.conf: vvp-s.conf
-	$(INSTALL_DATA) $< "$(DESTDIR)$(libdir)/ivl$(suffix)/vvp-s.conf"
-
+	$(INSTALL_DATA) ./vvp.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/vvp.conf"
+	$(INSTALL_DATA) ./vvp-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/vvp-s.conf"
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)/ivl$(suffix)"

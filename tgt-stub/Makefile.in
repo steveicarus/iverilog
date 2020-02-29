@@ -82,17 +82,16 @@ endif
 stub.tgt: $O $(TGTDEPLIBS)
 	$(CC) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS)
 
-install: all installdirs $(libdir)/ivl$(suffix)/stub.tgt \
-	$(libdir)/ivl$(suffix)/stub.conf $(libdir)/ivl$(suffix)/stub-s.conf
+install: all installdirs installfiles
 
-$(libdir)/ivl$(suffix)/stub.tgt: ./stub.tgt
+F = ./stub.tgt \
+	$(srcdir)/stub.conf \
+	$(srcdir)/stub-s.conf
+
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./stub.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/stub.tgt"
-
-$(libdir)/ivl$(suffix)/stub.conf: stub.conf
-	$(INSTALL_DATA) $< "$(DESTDIR)$(libdir)/ivl$(suffix)/stub.conf"
-
-$(libdir)/ivl$(suffix)/stub-s.conf: stub-s.conf
-	$(INSTALL_DATA) $< "$(DESTDIR)$(libdir)/ivl$(suffix)/stub-s.conf"
+	$(INSTALL_DATA) $(srcdir)/stub.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/stub.conf"
+	$(INSTALL_DATA) $(srcdir)/stub-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/stub-s.conf"
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)/ivl$(suffix)"

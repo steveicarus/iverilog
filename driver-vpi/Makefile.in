@@ -94,9 +94,11 @@ res.o: res.rc
 	$(WINDRES) -i res.rc -o res.o
 #
 
-install: all installdirs $(bindir)/iverilog-vpi$(suffix)@EXEEXT@
+install: all installdirs installfiles
 
-$(bindir)/iverilog-vpi$(suffix)@EXEEXT@: ./iverilog-vpi@EXEEXT@
+F = ./iverilog-vpi@EXEEXT@
+
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./iverilog-vpi@EXEEXT@ "$(bindir)/iverilog-vpi$(suffix)@EXEEXT@"
 ifeq (@WIN32@,yes)
 ifneq ($(HOSTCC),$(CC))

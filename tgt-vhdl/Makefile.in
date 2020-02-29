@@ -90,17 +90,16 @@ stamp-vhdl_config-h: $(srcdir)/vhdl_config.h.in ../config.status
 	cd ..; ./config.status --header=tgt-vhdl/vhdl_config.h
 vhdl_config.h: stamp-vhdl_config-h
 
-install: all installdirs $(libdir)/ivl$(suffix)/vhdl.tgt $(libdir)/ivl$(suffix)/vhdl.conf \
-	$(libdir)/ivl$(suffix)/vhdl-s.conf
+install: all installdirs installfiles
 
-$(libdir)/ivl$(suffix)/vhdl.tgt: ./vhdl.tgt
+F = ./vhdl.tgt \
+	$(srcdir)/vhdl.conf \
+	$(srcdir)/vhdl-s.conf
+
+installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./vhdl.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdl.tgt"
-
-$(libdir)/ivl$(suffix)/vhdl.conf: vhdl.conf
-	$(INSTALL_DATA) $< "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdl.conf"
-
-$(libdir)/ivl$(suffix)/vhdl-s.conf: vhdl-s.conf
-	$(INSTALL_DATA) $< "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdl-s.conf"
+	$(INSTALL_DATA) $(srcdir)/vhdl.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdl.conf"
+	$(INSTALL_DATA) $(srcdir)/vhdl-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdl-s.conf"
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)/ivl$(suffix)"
