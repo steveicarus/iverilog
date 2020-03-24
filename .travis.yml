@@ -1,0 +1,50 @@
+language: cpp
+sudo: required
+dist: xenial
+
+addons:
+  apt:
+    packages:
+    - gperf
+
+sudo: false
+
+notifications:
+  email: false
+
+jobs:
+  include:
+  
+    - stage: Test
+      os: linux
+      before_install: 
+        - git clone https://github.com/steveicarus/ivtest.git
+        - export PATH=$HOME/bin:$PATH
+      script:
+        - autoconf
+        - ./configure --prefix=$HOME
+        - make
+        - make install
+        - cd ivtest
+        - perl vvp_reg.pl
+
+    - stage: Test
+      os: windows
+      before_install:
+        - git clone https://github.com/steveicarus/ivtest.git
+        - export PATH=$HOME/bin:$PATH
+        - PowerShell -Command "Invoke-WebRequest -outfile 7zsetup.exe http://www.7-zip.org/a/7z1604-x64.exe"
+        - PowerShell -Command "Invoke-WebRequest -outfile msys2-x86_64-latest.tar.xz http://repo.msys2.org/distrib/msys2-x86_64-latest.tar.xz"
+        - PowerShell -Command "Start-Process .\7zsetup -ArgumentList '/S /D=c:/7zip' -Wait"
+        - PowerShell -Command "C:\7zip\7z e msys2-x86_64-latest.tar.xz -Wait"
+        - PowerShell -Command "C:\7zip\7z x msys2-x86_64-latest.tar -oC:\\"
+        - PowerShell -Command "C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -S  base-devel mingw-w64-x86_64-toolchain'"
+      script:
+        - PowerShell -Command "C:\msys64\usr\bin\bash -lc 'PATH=/mingw64/bin:/bin ./autoconf.sh'"
+        - PowerShell -Command "C:\msys64\usr\bin\bash -lc 'PATH=/mingw64/bin:/bin ./configure --prefix=/usr'"
+        - PowerShell -Command "C:\msys64\usr\bin\bash -lc 'PATH=/mingw64/bin:/bin make'"
+        - PowerShell -Command "C:\msys64\usr\bin\bash -lc 'PATH=/mingw64/bin:/bin make install'"
+        - PowerShell -Command "C:\msys64\usr\bin\bash -lc 'PATH=/mingw64/bin:/bin iverilog -h'"
+        - PowerShell -Command "C:\msys64\usr\bin\bash -lc 'export PATH=/mingw64/bin:/bin; cd $TRAVIS_BUILD_DIR/ivtest; perl vvp_reg.pl'"
+  
+  
