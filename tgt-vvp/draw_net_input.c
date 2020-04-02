@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -719,9 +719,9 @@ static void draw_net_input_x(ivl_nexus_t nex,
 		  char*nex_str = draw_net_input_drive(nex, drivers[0]);
 		  char modpath_label[64];
 		  snprintf(modpath_label, sizeof modpath_label,
-			   "V_%p/m", path_sig);
+			   "V_%p_0/m", path_sig);
 		  nex_private = strdup(modpath_label);
-		  draw_modpath(path_sig, nex_str);
+		  draw_modpath(path_sig, nex_str, 0);
 
 	    } else {
 		  nex_private = draw_net_input_drive(nex, drivers[0]);
@@ -742,8 +742,20 @@ static void draw_net_input_x(ivl_nexus_t nex,
       }
 
       driver_labels = malloc(ndrivers * sizeof(char*));
-      for (idx = 0; idx < ndrivers; idx += 1) {
-            driver_labels[idx] = draw_net_input_drive(nex, drivers[idx]);
+      ivl_signal_t path_sig = find_modpath(nex);
+      if (path_sig) {
+	    for (idx = 0; idx < ndrivers; idx += 1) {
+		  char*nex_str = draw_net_input_drive(nex, drivers[idx]);
+		  char modpath_label[64];
+		  snprintf(modpath_label, sizeof modpath_label,
+			   "V_%p_%u/m", path_sig, idx);
+		  driver_labels[idx] = strdup(modpath_label);
+		  draw_modpath(path_sig, nex_str, idx);
+	    }
+      } else {
+	    for (idx = 0; idx < ndrivers; idx += 1) {
+		  driver_labels[idx] = draw_net_input_drive(nex, drivers[idx]);
+	    }
       }
       fprintf(vvp_out, "RS_%p .resolv %s", nex, resolv_type);
       for (idx = 0; idx < ndrivers; idx += 1) {

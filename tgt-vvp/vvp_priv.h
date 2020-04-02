@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_priv_H
 #define IVL_vvp_priv_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -120,7 +120,7 @@ extern char* process_octal_codes(const char*txt, unsigned wid);
  * Note: draw_modpath drive_label must be malloc'ed by the
  * caller. This function will free the string sometime in the future.
  */
-extern void draw_modpath(ivl_signal_t path_sig, char*drive_label);
+extern void draw_modpath(ivl_signal_t path_sig, char*drive_label, unsigned drive_index);
 extern void cleanup_modpath(void);
 
 /*
