@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -350,6 +350,10 @@ void NetDelaySrc::dump(ostream&o, unsigned ind) const
 	    if (has_condit()) o << " if";
 	    else o << " ifnone";
       }
+      if (parallel_)
+	    o << " parallel";
+      else
+	    o << " full";
       o << " src "
 	<< "(" << transition_delays_[IVL_PE_01]
 	<< "," << transition_delays_[IVL_PE_10]

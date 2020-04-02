@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2793,6 +2793,7 @@ bool dll_target::signal_paths(const NetNet*net)
 		  obj->path[ptr].src = nex->t_cookie();
 		  obj->path[ptr].condit = path_condit;
 		  obj->path[ptr].conditional = src->is_condit();
+		  obj->path[ptr].parallel = src->is_parallel();
 		  obj->path[ptr].posedge = src->is_posedge();
 		  obj->path[ptr].negedge = src->is_negedge();
 		  for (unsigned pe = 0 ;  pe < 12 ;  pe += 1) {

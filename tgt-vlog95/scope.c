@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2020 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -798,7 +798,11 @@ static void emit_specify_paths(ivl_scope_t scope, ivl_signal_t sig)
 		  has_edge = 1;
 	    }
 	    emit_nexus_as_ca(scope, source, 0, 0);
-	    fprintf(vlog_out, " =>");
+	    if (ivl_path_is_parallel(dpath)) {
+		  fprintf(vlog_out, " =>");
+	    } else {
+		  fprintf(vlog_out, " *>");
+	    }
 	      /* The compiler does not keep the source expression for an edge
 	       * sensitive path so add a constant to get the syntax right. */
 	    if (has_edge) {

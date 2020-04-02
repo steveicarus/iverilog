@@ -1,7 +1,7 @@
 #ifndef IVL_netlist_H
 #define IVL_netlist_H
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -554,7 +554,7 @@ class NetDelaySrc  : public NetObj {
 
     public:
       explicit NetDelaySrc(NetScope*s, perm_string n, unsigned nsrc,
-                           bool condit_src, bool conditional);
+                           bool condit_src, bool conditional, bool parallel);
       ~NetDelaySrc();
 
 	// These functions set the delays from the values in the
@@ -590,12 +590,15 @@ class NetDelaySrc  : public NetObj {
       Link&condit_pin();
       const Link&condit_pin() const;
 
+      bool is_parallel() const;
+
       void dump(ostream&, unsigned ind) const;
 
     private:
       uint64_t transition_delays_[12];
       bool condit_flag_;
       bool conditional_;
+      bool parallel_;
       bool posedge_;
       bool negedge_;
 

@@ -1,7 +1,7 @@
 #ifndef IVL_ivl_target_H
 #define IVL_ivl_target_H
 /*
- * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -524,6 +524,10 @@ extern ivl_island_t ivl_branch_island(ivl_branch_t obj);
  * ivl_path_is_condit
  *    Is this a conditional structure? Needed for ifnone.
  *
+ * ivl_path_is_parallel
+ *    This returns true if the path is a parallel connection and
+ *    false if the path is a full connection.
+ *
  * ivl_path_source_posedge
  * ivl_path_source_negedge
  *    These functions return true if the source is edge sensitive.
@@ -533,6 +537,8 @@ extern ivl_nexus_t ivl_path_source(ivl_delaypath_t obj);
 extern uint64_t ivl_path_delay(ivl_delaypath_t obj, ivl_path_edge_t pt);
 extern ivl_nexus_t ivl_path_condit(ivl_delaypath_t obj);
 extern int ivl_path_is_condit(ivl_delaypath_t obj);
+
+extern int ivl_path_is_parallel(ivl_delaypath_t obj);
 
 extern int ivl_path_source_posedge(ivl_delaypath_t obj);
 extern int ivl_path_source_negedge(ivl_delaypath_t obj);

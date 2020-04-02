@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
@@ -1927,6 +1927,12 @@ extern "C" int ivl_path_is_condit(ivl_delaypath_t obj)
 {
       assert(obj);
       return obj->conditional ? 1 : 0;
+}
+
+extern "C" int ivl_path_is_parallel(ivl_delaypath_t obj)
+{
+      assert(obj);
+      return obj->parallel ? 1 : 0;
 }
 
 extern uint64_t ivl_path_delay(ivl_delaypath_t obj, ivl_path_edge_t edg)

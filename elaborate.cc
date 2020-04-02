@@ -5628,7 +5628,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 
 	    NetDelaySrc*path = new NetDelaySrc(scope, scope->local_symbol(),
 					       src.size(), condit_sig,
-					       conditional);
+					       conditional, !full_flag_);
 	    path->set_line(*this);
 
 	      // The presence of the data_source_expression indicates
