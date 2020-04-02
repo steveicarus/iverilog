@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -127,16 +127,18 @@ static void draw_modpath_record(const char*label, const char*driver,
 struct modpath_item {
       ivl_signal_t path_sig;
       char*drive_label;
+      unsigned drive_index;
       struct modpath_item*next;
 };
 
 static struct modpath_item*modpath_list = 0;
 
-void draw_modpath(ivl_signal_t path_sig, char*drive_label)
+void draw_modpath(ivl_signal_t path_sig, char*drive_label, unsigned drive_index)
 {
       struct modpath_item*cur = calloc(1, sizeof(struct modpath_item));
       cur->path_sig = path_sig;
       cur->drive_label = drive_label;
+      cur->drive_index = drive_index;
       cur->next = modpath_list;
       modpath_list = cur;
 }
@@ -149,7 +151,7 @@ void cleanup_modpath(void)
 
 	    modpath_list = cur->next;
 
-	    snprintf(modpath_label, sizeof modpath_label, "V_%p/m", cur->path_sig);
+	    snprintf(modpath_label, sizeof modpath_label, "V_%p_%u/m", cur->path_sig, cur->drive_index);
 	    draw_modpath_record(modpath_label, cur->drive_label, cur->path_sig);
 	    free(cur->drive_label);
 	    free(cur);
