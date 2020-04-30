@@ -181,6 +181,7 @@ ivl_parameter_width
 ivl_path_condit
 ivl_path_delay
 ivl_path_is_condit
+ivl_path_is_parallel
 ivl_path_scope
 ivl_path_source
 ivl_path_source_negedge
