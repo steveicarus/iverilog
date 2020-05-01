@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -3566,6 +3566,45 @@ NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
       return sys;
 }
 
+/*
+ * This private method is called to elaborate queue push methods. The
+ * sys_task_name is the internal system-task name to use.
+ */
+NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
+					    NetNet*net,
+					    const char*sys_task_name) const
+{
+      NetESignal*sig = new NetESignal(net);
+      sig->set_line(*this);
+
+      unsigned nparms = parms_.size();
+      ivl_assert(*this, nparms == 1);
+
+      ivl_variable_type_t base_type = net->darray_type()->element_base_type();
+      int context_width = -1;
+      switch (base_type) {
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    context_width = net->darray_type()->element_width();
+	    break;
+	  default:
+	    break;
+      }
+
+      vector<NetExpr*>argv (2);
+      argv[0] = sig;
+      if (parms_[0] == 0) {
+	    argv[1] = 0;
+      } else {
+	    argv[1] = elab_and_eval(des, scope, parms_[0], context_width,
+				    false, false, base_type);
+      }
+
+      NetSTask*sys = new NetSTask(sys_task_name, IVL_SFUNC_AS_TASK_IGNORE, argv);
+      sys->set_line(*this);
+      return sys;
+}
+
 NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
                                       bool add_this_flag) const
 {
@@ -3606,13 +3645,11 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 
       if (net->queue_type()) {
 	    if (method_name=="push_back")
-		  return elaborate_sys_task_method_(des, scope, net,
-						    method_name,
-						    "$ivl_queue_method$push_back");
+		  return elaborate_queue_method_(des, scope, net,
+						 "$ivl_queue_method$push_back");
 	    if (method_name=="push_front")
-		  return elaborate_sys_task_method_(des, scope, net,
-						    method_name,
-						    "$ivl_queue_method$push_front");
+		  return elaborate_queue_method_(des, scope, net,
+						 "$ivl_queue_method$push_front");
       }
 
       if (const netclass_t*class_type = net->class_type()) {
