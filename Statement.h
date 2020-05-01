@@ -1,7 +1,7 @@
 #ifndef IVL_Statement_H
 #define IVL_Statement_H
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -237,6 +237,9 @@ class PCallTask  : public Statement {
 					 NetNet*net,
 					 perm_string method_name,
 					 const char*sys_task_name) const;
+      NetProc*elaborate_queue_method_(Design*des, NetScope*scope,
+				      NetNet*net,
+				      const char*sys_task_name) const;
       bool test_task_calls_ok_(Design*des, NetScope*scope) const;
 
       PPackage*package_;
