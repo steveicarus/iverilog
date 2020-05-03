@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1317,6 +1317,30 @@ static vpiHandle find_name(const char *name, vpiHandle handle)
       return rtn;
 }
 
+// Find the end of the escaped identifier or simple identifier
+static char * find_rest(char *name)
+{
+      char *rest;
+      if (*name == '\\') {
+	    rest = strchr(name, ' ');
+	    if (rest) {
+		  *rest++ = 0; // The space is not part of the string
+		    // There should be a '.' after the escaped ID if there is
+		    // anything more. If it is missing add it to avoid a crash
+		  if ((*rest != '.') && (*rest != 0)) {
+			*--rest = '.';
+			fprintf(stderr, "ERROR: Malformed scope string: \"%s\"", name);
+		  }
+		  if (*rest == 0) {
+			rest = 0;
+		  }
+	    }
+      } else {
+	    rest = strchr(name, '.');
+      }
+      return rest;
+}
+
 static vpiHandle find_scope(const char *name, vpiHandle handle, int depth)
 {
 
@@ -1327,7 +1351,8 @@ static vpiHandle find_scope(const char *name, vpiHandle handle, int depth)
       vector<char> name_buf (strlen(name)+1);
       strcpy(&name_buf[0], name);
       char*nm_first = &name_buf[0];
-      char*nm_rest = strchr(nm_first, '.');
+      char*nm_rest = find_rest(nm_first);
+      if (*nm_first == '\\') ++nm_first;
       if (nm_rest) {
 	    *nm_rest++ = 0;
       }
@@ -1354,6 +1379,19 @@ static vpiHandle find_scope(const char *name, vpiHandle handle, int depth)
       return rtn;
 }
 
+// Find the end of the first escaped identifier or simple identifier
+static char * find_next(char *name)
+{
+      char *next;
+      if (*name == '\\') {
+	    next = strchr(name, ' ');
+	    if (next && *++next == 0) next = 0;
+      } else {
+	    next = strchr(name, '.');
+      }
+      return next;
+}
+
 vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
 {
       vpiHandle hand;
@@ -1369,12 +1407,41 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
       vector<char> name_buf (strlen(name)+1);
       strcpy(&name_buf[0], name);
       char*nm_path = &name_buf[0];
-      char*nm_base = strrchr(nm_path, '.');
-      if (nm_base) {
-	    *nm_base++ = 0;
-      } else {
+      char*nm_base;
+
+	// Check to see if we have an escaped identifier and if so search
+	// the long way because a '.' could be in the escaped name.
+      if (strchr(nm_path, '\\')) {
+	    char *next;
 	    nm_base = nm_path;
-	    nm_path = 0;
+	    while ((next = find_next(nm_base))) {
+		  nm_base = ++next;
+	    }
+	    if (nm_path == nm_base) {
+		  nm_path = 0;
+	    } else {
+		  *(nm_base-1) = 0;
+	    }
+
+	    if (*nm_base == '\\') {
+		    // Skip the \ at the beginning
+		  ++nm_base;
+
+		    // Drop the space at the end if it exists
+		  if ((next = strchr(nm_base, ' '))) {
+			*next = 0;
+		  }
+	    }
+
+	// If there is no escaped identifier then just look for the last '.'
+      } else {
+	    nm_base = strrchr(nm_path, '.');
+	    if (nm_base) {
+		  *nm_base++ = 0;
+	    } else {
+		  nm_base = nm_path;
+		  nm_path = 0;
+	    }
       }
 
       /* If scope provided, look in corresponding module; otherwise
