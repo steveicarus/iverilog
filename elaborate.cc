@@ -1119,6 +1119,37 @@ static void convert_net(Design*des, const LineInfo *line,
       des->errors += 1;
 }
 
+static void isolate_and_connect(Design*des, NetScope*scope, const PGModule*mod,
+				NetNet*port, NetNet*sig, NetNet::PortType ptype)
+{
+      switch (ptype) {
+	  case NetNet::POUTPUT:
+	    {
+		  NetBUFZ*tmp = new NetBUFZ(scope, scope->local_symbol(),
+					    sig->vector_width(), true);
+		  tmp->set_line(*mod);
+		  des->add_node(tmp);
+		  connect(tmp->pin(1), port->pin(0));
+		  connect(tmp->pin(0), sig->pin(0));
+	    }
+	    break;
+	  case NetNet::PINOUT:
+	    {
+		  NetTran*tmp = new NetTran(scope, scope->local_symbol(),
+					    sig->vector_width(),
+					    sig->vector_width(), 0);
+		  tmp->set_line(*mod);
+		  des->add_node(tmp);
+		  connect(tmp->pin(1), port->pin(0));
+		  connect(tmp->pin(0), sig->pin(0));
+	    }
+	    break;
+	  default:
+	    ivl_assert(*mod, 0);
+	    break;
+      }
+}
+
 /*
  * Instantiate a module by recursively elaborating it. Set the path of
  * the recursive elaboration so that signal names get properly
@@ -1815,8 +1846,15 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // The simplest case, there are no
 		    // parts/concatenations on the inside of the
 		    // module, so the port and sig need simply be
-		    // connected directly.
-		  connect(prts[0]->pin(0), sig->pin(0));
+		    // connected directly. But don't collapse ports
+		    // that are a delay path destination, to avoid
+		    // the delay being applied to other drivers of
+		    // the external signal.
+		  if (prts[0]->delay_paths() > 0) {
+			isolate_and_connect(des, scope, this, prts[0], sig, ptype);
+		  } else {
+			connect(prts[0]->pin(0), sig->pin(0));
+		  }
 
 	    } else if (sig->vector_width()==prts_vector_width/instance.size()
 		       && prts.size()/instance.size() == 1) {
@@ -1832,8 +1870,13 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // The signal width is exactly the width of a
 		    // single instance of the port. In this case,
 		    // connect the sig to all the ports identically.
-		  for (unsigned ldx = 0 ;  ldx < prts.size() ;  ldx += 1)
-			connect(prts[ldx]->pin(0), sig->pin(0));
+		  for (unsigned ldx = 0 ;  ldx < prts.size() ;	ldx += 1) {
+			if (prts[ldx]->delay_paths() > 0) {
+			      isolate_and_connect(des, scope, this, prts[ldx], sig, ptype);
+			} else {
+			      connect(prts[ldx]->pin(0), sig->pin(0));
+			}
+		  }
 
 	    } else switch (ptype) {
 		case NetNet::POUTPUT:
