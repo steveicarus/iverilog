@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2018 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2020 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -294,16 +294,17 @@ static unsigned is_local_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
 	    ivl_signal_t sig = ivl_nexus_ptr_sig(nex_ptr);
 	    if (! sig) continue;
-	      /* Check to see if there is an output port driving into
-	       * the local scope. */
+	      /* Check to see if there is an output or inout port
+	       * driving into the local scope. */
 	    if ((scope == ivl_scope_parent(ivl_signal_scope(sig))) &&
-	        (ivl_signal_port(sig) == IVL_SIP_OUTPUT)) {
+		((ivl_signal_port(sig) == IVL_SIP_OUTPUT) ||
+		 (ivl_signal_port(sig) == IVL_SIP_INOUT))) {
 		  has_output_driver = 1;
 		  continue;
 	    }
 	    if (scope != ivl_signal_scope(sig)) continue;
 	    if ((ivl_nexus_ptr_drive1(nex_ptr) != IVL_DR_HiZ) ||
-	        (ivl_nexus_ptr_drive0(nex_ptr) != IVL_DR_HiZ)) continue;
+		(ivl_nexus_ptr_drive0(nex_ptr) != IVL_DR_HiZ)) continue;
 	    if (ivl_signal_local(sig)) {
 		  is_local = 1;
 	    } else {
@@ -311,9 +312,10 @@ static unsigned is_local_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 		  break;
 	    }
       }
-	/* We return is_local=true only if there is not an output driving
-	 * into this scope. This is needed since some module outputs are
-	 * combined with a concatenation. */
+	/* We return is_local=true only if there is not an output or inout
+	 * driving into this scope. This is needed since some module outputs
+	 * are combined with a concatenation and some inouts are connected
+	 * with a tran_VP. */
       return is_local && !has_output_driver;
 }
 
@@ -1707,7 +1709,8 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
             fprintf(vlog_out, "bufif1");
             dly_count = 3;
 	    break;
-//	case IVL_LO_BUFT:
+	case IVL_LO_BUFT:
+	    return;
 	case IVL_LO_BUFZ:
 	    emit_bufz(scope, nlogic);
 	    return;
