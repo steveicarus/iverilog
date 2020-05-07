@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2016 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2020 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -711,6 +711,8 @@ static unsigned is_local_input(ivl_scope_t scope, ivl_nexus_t nex)
 // HERE: Does this work correctly with an array reference created from @*?
 void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex, unsigned allow_UD)
 {
+      unsigned idx;
+
       ivl_scope_t mod_scope;
 	/* First look in the local scope for the nexus name. */
       if (find_signal_in_nexus(scope, nex)) return;
@@ -737,8 +739,19 @@ void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex, unsigned allow_UD)
 //       multiples are found in a given scope. This all needs to be before
 //       the constant code.
 
-	/* It is possible that the nexus does not have a name. For this
-	 * case do not print an actual name. */
+	/* It is possible that the nexus does not have a name. First check
+	   if it drives another nexus through a transparent buffer. */
+      for (idx = 0; idx < ivl_nexus_ptrs(nex); idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_net_logic_t nlogic = ivl_nexus_ptr_log(nex_ptr);
+	    if (nlogic && ivl_logic_type(nlogic) == IVL_LO_BUFT
+		&& ivl_logic_pin(nlogic, 1) == nex) {
+		  emit_name_of_nexus(scope, ivl_logic_pin(nlogic, 0), allow_UD);
+		  return;
+	    }
+      }
+
+	/* If not, do not print an actual name. */
       fprintf(vlog_out, "/* Empty */");
 //      dump_nexus_information(scope, nex);
 }
