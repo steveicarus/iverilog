@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Martin Whitaker (icarus@martin-whitaker.me.uk)
+ * Copyright (c) 2019-2020 Martin Whitaker (icarus@martin-whitaker.me.uk)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -93,7 +93,7 @@ PLI_INT32   vpi_vprintf(const char*, va_list) { return 0; }
 PLI_INT32   vpi_chk_error(p_vpi_error_info) { return 0; }
 PLI_INT32   vpi_compare_objects(vpiHandle, vpiHandle) { return 0; }
 PLI_INT32   vpi_free_object(vpiHandle) { return 0; }
-PLI_INT32   vpi_get_vlog_info(p_vpi_vlog_info info) 
+PLI_INT32   vpi_get_vlog_info(p_vpi_vlog_info info)
 {
     info->argc = 0;
     info->argv = 0;
