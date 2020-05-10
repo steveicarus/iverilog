@@ -21,7 +21,7 @@
 
 # include  "vpi_user.h"
 
-#if defined(__MINGW32__) || defined (__CYGWIN32__)
+#if defined(__MINGW32__) || defined (__CYGWIN__)
 #  define DLLEXPORT __declspec(dllexport)
 #else
 #  define DLLEXPORT

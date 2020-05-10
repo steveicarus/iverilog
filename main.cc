@@ -68,7 +68,7 @@ extern "C" int optind;
 extern "C" const char*optarg;
 #endif
 
-#if defined(__CYGWIN32__) && !defined(HAVE_GETOPT_H)
+#if defined(__CYGWIN__) && !defined(HAVE_GETOPT_H)
 extern "C" int getopt(int argc, char*argv[], const char*fmt);
 extern "C" int optind;
 extern "C" const char*optarg;

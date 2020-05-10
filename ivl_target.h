@@ -2321,7 +2321,7 @@ extern const char* ivl_type_prop_name(ivl_type_t net, int idx);
 extern ivl_type_t  ivl_type_prop_type(ivl_type_t net, int idx);
 
 
-#if defined(__MINGW32__) || defined (__CYGWIN32__)
+#if defined(__MINGW32__) || defined (__CYGWIN__)
 #  define DLLEXPORT __declspec(dllexport)
 #else
 #  define DLLEXPORT
