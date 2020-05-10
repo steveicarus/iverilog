@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -67,6 +67,7 @@ static void delete_sub_scopes(__vpiScope *scope)
 		case vpiGenScope:
 		case vpiNamedBegin:
 		case vpiNamedFork:
+		case vpiClassTypespec:
 		  delete_sub_scopes(lscope);
 		  vthreads_delete(lscope);
 		  delete item;
