@@ -48,7 +48,7 @@ typedef struct __vpiArray* vvp_array_t;
  * header file elsewhere.
  */
 
-#if defined(__MINGW32__) || defined (__CYGWIN32__)
+#if defined(__MINGW32__) || defined (__CYGWIN__)
 extern vpip_routines_s vpi_routines;
 #endif
 

@@ -20,7 +20,7 @@
  */
 
 
-#if defined(__MINGW32__) || defined (__CYGWIN32__)
+#if defined(__MINGW32__) || defined (__CYGWIN__)
 #  define DLLEXPORT __declspec(dllexport)
 #else
 #  define DLLEXPORT
@@ -676,7 +676,7 @@ extern void vpip_count_drivers(vpiHandle ref, unsigned idx,
 #   define _vpi_at_APV 6
 #endif
 
-#if defined(__MINGW32__) || defined (__CYGWIN32__)
+#if defined(__MINGW32__) || defined (__CYGWIN__)
 /*
  * In Linux, when loaded, a shared library can automatically bind to functions
  * provided by its client. In Windows, a DLL can only do this statically at
@@ -731,7 +731,7 @@ typedef struct {
 
 extern DLLEXPORT PLI_UINT32 vpip_set_callback(vpip_routines_s*routines, PLI_UINT32 version);
 
-#endif // defined(__MINGW32__) || defined (__CYGWIN32__)
+#endif // defined(__MINGW32__) || defined (__CYGWIN__)
 
 EXTERN_C_END
 

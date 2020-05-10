@@ -152,7 +152,7 @@ typedef struct t_tfcell
  */
 extern s_tfcell veriusertfs[];
 extern void veriusertfs_register_table(p_tfcell vtable);
-#if defined(__MINGW32__) || defined (__CYGWIN32__)
+#if defined(__MINGW32__) || defined (__CYGWIN__)
 extern __declspec(dllexport) void (*vlog_startup_routines[])(void);
 #endif
 

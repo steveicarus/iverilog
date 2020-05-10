@@ -1702,7 +1702,7 @@ extern "C" void vpip_count_drivers(vpiHandle ref, unsigned idx,
       rfp->node->count_drivers(idx, counts);
 }
 
-#if defined(__MINGW32__) || defined (__CYGWIN32__)
+#if defined(__MINGW32__) || defined (__CYGWIN__)
 vpip_routines_s vpi_routines = {
     .register_cb                = vpi_register_cb,
     .remove_cb                  = vpi_remove_cb,
