@@ -196,6 +196,7 @@ inline int64_t i64round(double x)
 #endif
 
 #ifdef __MINGW32__
+# include  <cstdlib>
 # include  <string.h>
 static inline char*strndup(const char*s, size_t n)
 {
