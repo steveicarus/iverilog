@@ -106,33 +106,36 @@ void vpi_mcd_delete(void)
 #endif
 
 /*
- * close one or more channels.  we silently refuse to close the preopened ones.
+ * Close one or more channels. We refuse to close the preopened ones.
  */
 extern "C" PLI_UINT32 vpi_mcd_close(PLI_UINT32 mcd)
 {
-	int rc = 0;
+      int rc = 0;
 
-	if (IS_MCD(mcd)) {
-		for(int i = 1; i < 31; i++) {
-			if(((mcd>>i) & 1) && mcd_table[i].fp) {
-				if(fclose(mcd_table[i].fp)) rc |= 1<<i;
-				free(mcd_table[i].filename);
-				mcd_table[i].fp = NULL;
-				mcd_table[i].filename = NULL;
+      if (IS_MCD(mcd)) {
+	    if (mcd & 1) rc |= 1;
+	    for(int i = 1; i < 31; i++) {
+		  if ((mcd>>i) & 1) {
+			if (mcd_table[i].fp) {
+			      if (fclose(mcd_table[i].fp)) rc |= 1<<i;
+			      free(mcd_table[i].filename);
+			      mcd_table[i].fp = NULL;
+			      mcd_table[i].filename = NULL;
 			} else {
-				rc |= 1<<i;
+			      rc |= 1<<i;
 			}
-		}
-	} else {
-		unsigned idx = FD_IDX(mcd);
-		if (idx > 2 && idx < fd_table_len && fd_table[idx].fp) {
-			rc = fclose(fd_table[idx].fp);
-			free(fd_table[idx].filename);
-			fd_table[idx].fp = NULL;
-			fd_table[idx].filename = NULL;
-		}
-	}
-	return rc;
+		  }
+	    }
+      } else {
+	    unsigned idx = FD_IDX(mcd);
+	    if (idx > 2 && idx < fd_table_len && fd_table[idx].fp) {
+		  if (fclose(fd_table[idx].fp)) rc = mcd;
+		  free(fd_table[idx].filename);
+		  fd_table[idx].fp = NULL;
+		  fd_table[idx].filename = NULL;
+	    } else rc = mcd;
+      }
+      return rc;
 }
 
 extern "C" char *vpi_mcd_name(PLI_UINT32 mcd)
