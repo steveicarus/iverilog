@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2012 Stephen G. Tell <steve@telltronics.org>
+ * Copyright (c) 2000-2020 Stephen G. Tell <steve@telltronics.org>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -190,7 +190,7 @@ vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
       bool need_free = false;
       va_list saved_ap;
 
-      if (!IS_MCD(mcd)) return 0;
+      if (!IS_MCD(mcd)) return EOF;
 
       if (vpi_trace) {
 	    fprintf(vpi_trace, "vpi_mcd_vprintf(0x%08x, %s, ...);\n",
