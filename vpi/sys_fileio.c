@@ -211,33 +211,17 @@ static PLI_INT32 sys_fclose_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       vpiHandle fd = vpi_scan(argv);
-      s_vpi_value val;
       PLI_UINT32 fd_mcd;
-      errno = 0;
 
       vpi_free_object(argv);
 
 	/* Get the file/MC descriptor and verify that it is valid. */
-      val.format = vpiIntVal;
-      vpi_get_value(fd, &val);
-      fd_mcd = val.value.integer;
-
-	/* If the MCD is zero we have nothing to do so just return. */
-      if (fd_mcd == 0) return 0;
-
-      if (! is_valid_fd_mcd(fd_mcd)) {
-	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
-	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("invalid file descriptor/MCD (0x%x) given to %s.\n",
-	               (unsigned int)fd_mcd, name);
-	    errno = EBADF;
-	    return 0;
-      }
+      if (get_fd_mcd_from_arg(&fd_mcd, fd, callh, name)) return 0;
 
 	/* We need to cancel any active $fstrobe()'s for this FD/MCD.
 	 * For now we check in the strobe callback and skip the output
 	 * generation when needed. */
-      vpi_mcd_close(fd_mcd);
+      fd_mcd = vpi_mcd_close(fd_mcd);
 
       return 0;
 }
@@ -249,10 +233,8 @@ static PLI_INT32 sys_fflush_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle arg;
-      s_vpi_value val;
+      vpiHandle fd;
       PLI_UINT32 fd_mcd;
-      errno = 0;
 
 	/* If we have no argument then flush all the streams. */
       if (argv == 0) {
@@ -261,30 +243,14 @@ static PLI_INT32 sys_fflush_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
 	/* Get the file/MC descriptor and verify that it is valid. */
-      arg = vpi_scan(argv);
+      fd = vpi_scan(argv);
       vpi_free_object(argv);
-      val.format = vpiIntVal;
-      vpi_get_value(arg, &val);
-      fd_mcd = val.value.integer;
-
-	/* If the MCD is zero we have nothing to do so just return. */
-      if (fd_mcd == 0) return 0;
-
-      if (! is_valid_fd_mcd(fd_mcd)) {
-	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
-	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("invalid file descriptor/MCD (0x%x) given to %s.\n",
-	               (unsigned int)fd_mcd, name);
-	    errno = EBADF;
-	    return 0;
-      }
+      if (get_fd_mcd_from_arg(&fd_mcd, fd, callh, name)) return 0;
 
       if (IS_MCD(fd_mcd)) {
 	    vpi_mcd_flush(fd_mcd);
       } else {
-	      /* If we have a valid file descriptor flush the file. */
-	    FILE *fp = vpi_get_file(fd_mcd);
-	    if (fp) fflush(fp);
+	    fflush(vpi_get_file(fd_mcd));
       }
 
       return 0;

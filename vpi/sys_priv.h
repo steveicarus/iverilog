@@ -59,6 +59,8 @@ extern unsigned is_numeric_obj(vpiHandle obj);
 extern unsigned is_string_obj(vpiHandle obj);
 
 extern unsigned is_valid_fd_mcd(PLI_UINT32 fd_mcd);
+extern unsigned get_fd_mcd_from_arg(PLI_UINT32 *fd_mcd, vpiHandle arg,
+                                    vpiHandle callh, const char *name);
 
 extern vpiHandle sys_func_module(vpiHandle obj);
 

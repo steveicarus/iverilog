@@ -20,6 +20,7 @@
 #include "sys_priv.h"
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include "ivl_alloc.h"
@@ -264,6 +265,37 @@ unsigned is_valid_fd_mcd(PLI_UINT32 fd_mcd)
       }
 
       return 1;
+}
+
+/*
+ * Get a FD/MCD from the given argument and check if it is valid. Return the
+ * FD/MCD in the fd_mcd argument and return 0 if it is valid and 1 if it is
+ * invalid. We do not print a warning mesage if the FD/MCD is zero.
+ */
+unsigned get_fd_mcd_from_arg(PLI_UINT32 *fd_mcd, vpiHandle arg,
+                             vpiHandle callh, const char *name)
+{
+      s_vpi_value val;
+
+      val.format = vpiIntVal;
+      vpi_get_value(arg, &val);
+      *fd_mcd = val.value.integer;
+
+      if (*fd_mcd == 0) return 1;
+
+      errno = 0;
+      if (! is_valid_fd_mcd(*fd_mcd)) {
+            vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+                       (int)vpi_get(vpiLineNo, callh));
+            vpi_printf("invalid %s (0x%x) given to %s().\n",
+                       IS_MCD(*fd_mcd) ? "MCD" : "file descriptor",
+                       (unsigned int)*fd_mcd,
+                       name);
+            errno = EBADF;
+            return 1;
+      }
+
+      return 0;
 }
 
 

@@ -1283,28 +1283,12 @@ static PLI_INT32 sys_display_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 
 	/* Get the file/MC descriptor and verify it is valid. */
       if (name[1] == 'f') {
-	    errno = 0;
-	    vpiHandle arg = vpi_scan(argv);
-	    val.format = vpiIntVal;
-	    vpi_get_value(arg, &val);
-	    fd_mcd = val.value.integer;
-
-	      /* If the MCD is zero we have nothing to do so just return. */
-	    if (fd_mcd == 0)  {
+	    vpiHandle fd = vpi_scan(argv);
+	    if (get_fd_mcd_from_arg(&fd_mcd, fd, callh, name)) {
 		  vpi_free_object(argv);
 		  return 0;
 	    }
-
-	    if (! is_valid_fd_mcd(fd_mcd)) {
-		  vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
-		             (int)vpi_get(vpiLineNo, callh));
-		  vpi_printf("invalid file descriptor/MCD (0x%x) given "
-		             "to %s.\n", (unsigned int)fd_mcd, name);
-		  errno = EBADF;
-		  vpi_free_object(argv);
-		  return 0;
-	    }
-      } else if (strncmp(name,"$sformatf",9) == 0) {
+      } else if (strncmp(name, "$sformatf", 9) == 0) {
 	      /* return as a string */
 	    fd_mcd = 0;
       } else {
@@ -1396,28 +1380,12 @@ static PLI_INT32 sys_strobe_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 	/* Get the file/MC descriptor and verify it is valid. */
       if (name[1] == 'f') {
-	    errno = 0;
-	    vpiHandle arg = vpi_scan(argv);
-	    s_vpi_value val;
-	    val.format = vpiIntVal;
-	    vpi_get_value(arg, &val);
-	    fd_mcd = val.value.integer;
-
-	      /* If the MCD is zero we have nothing to do so just return. */
-	    if (fd_mcd == 0)  {
+	    vpiHandle fd = vpi_scan(argv);
+	    if (get_fd_mcd_from_arg(&fd_mcd, fd, callh, name)) {
 		  vpi_free_object(argv);
                   return 0;
 	    }
 
-	    if (! is_valid_fd_mcd(fd_mcd)) {
-		  vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
-		             (int)vpi_get(vpiLineNo, callh));
-		  vpi_printf("invalid file descriptor/MCD (0x%x) given "
-		             "to %s.\n", (unsigned int)fd_mcd, name);
-		  errno = EBADF;
-		  vpi_free_object(argv);
-		  return 0;
-	    }
       } else {
 	    fd_mcd = 1;
       }
