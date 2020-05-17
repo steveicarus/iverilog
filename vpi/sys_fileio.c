@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,7 +26,6 @@
 # include  <stdlib.h>
 # include  "ivl_alloc.h"
 
-#define IS_MCD(mcd)     !((mcd)>>31&1)
 
 /*
  * Implement the $fopen system function.
@@ -86,11 +85,11 @@ static PLI_INT32 sys_fopen_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 	/* Get the mode handle if it exists. */
       if (mode) {
-            char *esc_md;
-            val.format = vpiStringVal;
-            vpi_get_value(mode, &val);
+	    char *esc_md;
+	    val.format = vpiStringVal;
+	    vpi_get_value(mode, &val);
 	      /* Verify that we have a string and that it is not NULL. */
-            if (val.format != vpiStringVal || !*(val.value.str)) {
+	    if (val.format != vpiStringVal || !*(val.value.str)) {
 		  vpi_printf("WARNING: %s:%d: ",
 		             vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
@@ -146,7 +145,7 @@ static PLI_INT32 sys_fopen_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 		  }
 	    }
 
-            mode_string = strdup(val.value.str);
+	    mode_string = strdup(val.value.str);
 
 	    vpi_free_object(argv);
       }
@@ -223,9 +222,10 @@ static PLI_INT32 sys_fclose_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpi_get_value(fd, &val);
       fd_mcd = val.value.integer;
 
-      if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
-          ( IS_MCD(fd_mcd) && vpi_mcd_printf(fd_mcd, "%s", "") == EOF) ||
-          (! fd_mcd)) {
+	/* If the MCD is zero we have nothing to do so just return. */
+      if (fd_mcd == 0) return 0;
+
+      if (! is_valid_fd_mcd(fd_mcd)) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor/MCD (0x%x) given to %s.\n",
@@ -270,9 +270,7 @@ static PLI_INT32 sys_fflush_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	/* If the MCD is zero we have nothing to do so just return. */
       if (fd_mcd == 0) return 0;
 
-      if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
-          ( IS_MCD(fd_mcd) && vpi_mcd_printf(fd_mcd, "%s", "") == EOF) ||
-          (! fd_mcd)) {
+      if (! is_valid_fd_mcd(fd_mcd)) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor/MCD (0x%x) given to %s.\n",
@@ -670,11 +668,11 @@ static PLI_INT32 sys_fread_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 		  start = min;
 		  count = max - min + 1;
 	    }
-            width = vpi_get(vpiSize, vpi_handle_by_index(mem_reg, start));
+	    width = vpi_get(vpiSize, vpi_handle_by_index(mem_reg, start));
       } else {
 	    start = 0;
 	    count = 1;
-            width = vpi_get(vpiSize, mem_reg);
+	    width = vpi_get(vpiSize, mem_reg);
 	    vpi_free_object(argv);
       }
 
@@ -883,12 +881,11 @@ static PLI_INT32 sys_fseek_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 #if defined(__GNUC__)
       val.value.integer = fseek(fp, offset, oper);
 #else
-      if(oper < 0) {
-           val.value.integer = EOF;
-           errno = EINVAL;
-      }
-      else
-           val.value.integer = fseek(fp, offset, oper);
+      if (oper < 0) {
+	    val.value.integer = EOF;
+	    errno = EINVAL;
+      } else
+	    val.value.integer = fseek(fp, offset, oper);
 #endif
       vpi_put_value(callh, &val, 0 , vpiNoDelay);
 

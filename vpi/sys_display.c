@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,8 +26,6 @@
 # include  <stdlib.h>
 # include  <math.h>
 # include  "ivl_alloc.h"
-
-#define IS_MCD(mcd)     !((mcd)>>31&1)
 
 // Flag to enable better compatibility with other simulators
 static unsigned compatible_flag = 0;
@@ -230,7 +228,7 @@ static void get_time(char *rtn, const char *value, int prec,
       shift -= 1;
     }
     if (prec > 0) strcat(rtn, ".");
-    while(prec > 0) {
+    while (prec > 0) {
       strcat(rtn, "0");
       prec -= 1;
     }
@@ -654,15 +652,15 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
                * therefore we need to restore it after the call. */
               prev_suff = timeformat_info.suff;
 
-              if(time_units < -12)
+              if (time_units < -12)
                   timeformat_info.suff = strdup(" fs");
-              else if(time_units < -9)
+              else if (time_units < -9)
                   timeformat_info.suff = strdup(" ps");
-              else if(time_units < -6)
+              else if (time_units < -6)
                   timeformat_info.suff = strdup(" ns");
-              else if(time_units < -3)
+              else if (time_units < -3)
                   timeformat_info.suff = strdup(" us");
-              else if(time_units < 0)
+              else if (time_units < 0)
                   timeformat_info.suff = strdup(" ms");
               else
                   timeformat_info.suff = strdup(" s");
@@ -691,7 +689,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           cp = tbuf;
           swidth = strlen(tbuf);
 
-          if(plus != 0) {
+          if (plus != 0) {
               /* Restore the previous suffix string, overridden by
                * a vhdlpp-specific $sformatf() call. */
               free(timeformat_info.suff);
@@ -986,10 +984,10 @@ static char *get_display(unsigned int *rtnsz, const struct strobe_cb_info *info)
           value.format = vpiRealVal;
           vpi_get_value(item, &value);
 #if !defined(__GNUC__)
-		  if(compatible_flag)
+		  if (compatible_flag)
 			  sprintf(buf, "%g", value.value.real);
 		  else {
-			  if(value.value.real == 0.0 || value.value.real == -0.0)
+			  if (value.value.real == 0.0 || value.value.real == -0.0)
 				  sprintf(buf, "%.05f", value.value.real);
 			  else
 				  sprintf(buf, "%#g", value.value.real);
@@ -1236,7 +1234,7 @@ static PLI_INT32 sys_common_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name, int no_au
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
 
-      if(name[1] == 'f') {
+      if (name[1] == 'f') {
 	      /* Check that there is a fd/mcd and that it is numeric. */
 	    if (argv == 0) {
 		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
@@ -1284,35 +1282,34 @@ static PLI_INT32 sys_display_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       argv = vpi_iterate(vpiArgument, callh);
 
 	/* Get the file/MC descriptor and verify it is valid. */
-      if(name[1] == 'f') {
-	      errno = 0;
-	      vpiHandle arg = vpi_scan(argv);
-	      val.format = vpiIntVal;
-	      vpi_get_value(arg, &val);
-	      fd_mcd = val.value.integer;
+      if (name[1] == 'f') {
+	    errno = 0;
+	    vpiHandle arg = vpi_scan(argv);
+	    val.format = vpiIntVal;
+	    vpi_get_value(arg, &val);
+	    fd_mcd = val.value.integer;
 
-		/* If the MCD is zero we have nothing to do so just return. */
-	      if (fd_mcd == 0)  {
-		    vpi_free_object(argv);
-		    return 0;
-	      }
+	      /* If the MCD is zero we have nothing to do so just return. */
+	    if (fd_mcd == 0)  {
+		  vpi_free_object(argv);
+		  return 0;
+	    }
 
-	      if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
-	          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF)) {
-		    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
-		               (int)vpi_get(vpiLineNo, callh));
-		    vpi_printf("invalid file descriptor/MCD (0x%x) given "
-		               "to %s.\n", (unsigned int)fd_mcd, name);
-		    errno = EBADF;
-		    vpi_free_object(argv);
-		    return 0;
-	      }
-      } else if(strncmp(name,"$sformatf",9) == 0) {
+	    if (! is_valid_fd_mcd(fd_mcd)) {
+		  vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("invalid file descriptor/MCD (0x%x) given "
+		             "to %s.\n", (unsigned int)fd_mcd, name);
+		  errno = EBADF;
+		  vpi_free_object(argv);
+		  return 0;
+	    }
+      } else if (strncmp(name,"$sformatf",9) == 0) {
 	      /* return as a string */
-	      fd_mcd = 0;
+	    fd_mcd = 0;
       } else {
 	      /* stdout */
-	      fd_mcd = 1;
+	    fd_mcd = 1;
       }
 
       scope = vpi_handle(vpiScope, callh);
@@ -1330,15 +1327,15 @@ static PLI_INT32 sys_display_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	 * returned string strlen() may not match the real size! */
       result = get_display(&size, &info);
 
-      if(fd_mcd > 0) {
-	      my_mcd_rawwrite(fd_mcd, result, size);
-	      if ((strncmp(name,"$display",8) == 0) ||
-	          (strncmp(name,"$fdisplay",9) == 0)) my_mcd_rawwrite(fd_mcd, "\n", 1);
+      if (fd_mcd > 0) {
+	     my_mcd_rawwrite(fd_mcd, result, size);
+	     if ((strncmp(name,"$display",8) == 0) ||
+	         (strncmp(name,"$fdisplay",9) == 0)) my_mcd_rawwrite(fd_mcd, "\n", 1);
       } else {
-	      /* Return as a string ($sformatf) */
-	      val.format = vpiStringVal;
-	      val.value.str = result;
-	      vpi_put_value(callh, &val, 0, vpiNoDelay);
+	       /* Return as a string ($sformatf) */
+	     val.format = vpiStringVal;
+	     val.value.str = result;
+	     vpi_put_value(callh, &val, 0, vpiNoDelay);
       }
 
       free(result);
@@ -1361,8 +1358,7 @@ static PLI_INT32 strobe_cb(p_cb_data cb)
 	/* We really need to cancel any $fstrobe() calls for a file when it
 	 * is closed, but for now we will just skip processing the result.
 	 * Which has the same basic effect. */
-      if ((! IS_MCD(info->fd_mcd) && vpi_get_file(info->fd_mcd) != NULL) ||
-          ( IS_MCD(info->fd_mcd) && my_mcd_printf(info->fd_mcd, "") != EOF)) {
+      if (is_valid_fd_mcd(info->fd_mcd)) {
 	    char* result;
 	    unsigned int size;
 	      /* Because %u and %z may put embedded NULL characters into the
@@ -1399,32 +1395,31 @@ static PLI_INT32 sys_strobe_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       argv = vpi_iterate(vpiArgument, callh);
 
 	/* Get the file/MC descriptor and verify it is valid. */
-      if(name[1] == 'f') {
-	      errno = 0;
-	      vpiHandle arg = vpi_scan(argv);
-	      s_vpi_value val;
-	      val.format = vpiIntVal;
-	      vpi_get_value(arg, &val);
-	      fd_mcd = val.value.integer;
+      if (name[1] == 'f') {
+	    errno = 0;
+	    vpiHandle arg = vpi_scan(argv);
+	    s_vpi_value val;
+	    val.format = vpiIntVal;
+	    vpi_get_value(arg, &val);
+	    fd_mcd = val.value.integer;
 
-		/* If the MCD is zero we have nothing to do so just return. */
-	      if (fd_mcd == 0)  {
-		    vpi_free_object(argv);
-		    return 0;
-	      }
+	      /* If the MCD is zero we have nothing to do so just return. */
+	    if (fd_mcd == 0)  {
+		  vpi_free_object(argv);
+                  return 0;
+	    }
 
-	      if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
-	          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF))  {
-		    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
-		               (int)vpi_get(vpiLineNo, callh));
-		    vpi_printf("invalid file descriptor/MCD (0x%x) given "
-		               "to %s.\n", (unsigned int)fd_mcd, name);
-		    errno = EBADF;
-		    vpi_free_object(argv);
-		    return 0;
-	      }
+	    if (! is_valid_fd_mcd(fd_mcd)) {
+		  vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("invalid file descriptor/MCD (0x%x) given "
+		             "to %s.\n", (unsigned int)fd_mcd, name);
+		  errno = EBADF;
+		  vpi_free_object(argv);
+		  return 0;
+	    }
       } else {
-	      fd_mcd = 1;
+	    fd_mcd = 1;
       }
 
       scope = vpi_handle(vpiScope, callh);
@@ -1452,6 +1447,7 @@ static PLI_INT32 sys_strobe_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       cb.value = 0;
       cb.user_data = (char*)info;
       vpi_register_cb(&cb);
+
       return 0;
 }
 

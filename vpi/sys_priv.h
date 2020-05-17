@@ -1,7 +1,7 @@
 #ifndef IVL_sys_priv_H
 #define IVL_sys_priv_H
 /*
- * Copyright (c) 2002-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,6 +21,8 @@
 
 #include "vpi_config.h"
 #include "sv_vpi_user.h"
+
+#define IS_MCD(mcd)     !((mcd)>>31&1)
 
 /*
  * Context structure for PRNG in mt19937int.c
@@ -55,6 +57,8 @@ extern struct timeformat_info_s timeformat_info;
 extern unsigned is_constant_obj(vpiHandle obj);
 extern unsigned is_numeric_obj(vpiHandle obj);
 extern unsigned is_string_obj(vpiHandle obj);
+
+extern unsigned is_valid_fd_mcd(PLI_UINT32 fd_mcd);
 
 extern vpiHandle sys_func_module(vpiHandle obj);
 

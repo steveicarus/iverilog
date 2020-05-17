@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -245,6 +245,25 @@ unsigned is_string_obj(vpiHandle obj)
     }
 
     return rtn;
+}
+
+
+/*
+ * Check if the file descriptor or MCD is valid.
+ * For a MCD check that every bit set is a valid file and
+ * for a FD make sure it exists.
+ */
+unsigned is_valid_fd_mcd(PLI_UINT32 fd_mcd)
+{
+      assert(fd_mcd); // Should already be handled!
+
+      if (IS_MCD(fd_mcd)){
+	    if (vpi_mcd_printf(fd_mcd, "%s", "") == EOF) return 0;
+      } else {
+	    if (vpi_get_file(fd_mcd) == NULL) return 0;
+      }
+
+      return 1;
 }
 
 
