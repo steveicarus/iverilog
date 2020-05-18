@@ -1174,6 +1174,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	// the source list is rearranged by name binding into this list.
       vector<PExpr*>pins (rmod->port_count());
       vector<bool>pins_fromwc (rmod->port_count(), false);
+      vector<bool>pins_is_explicitly_not_connected (rmod->port_count(), false);
 
 	// If the instance has a pins_ member, then we know we are
 	// binding by name. Therefore, make up a pins array that
@@ -1187,7 +1188,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // Handle wildcard named port
 		  if (pins_[idx].name[0] == '*') {
 			for (unsigned j = 0 ; j < nexp ; j += 1) {
-			      if (!pins[j]) {
+			      if ((!pins[j]) && (!pins_is_explicitly_not_connected[j])) {
 				    pins_fromwc[j] = true;
 				    NetNet*       net = 0;
 				    const NetExpr*par = 0;
@@ -1242,6 +1243,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // OK, do the binding by placing the expression in
 		    // the right place.
 		  pins[pidx] = pins_[idx].parm;
+		  if (!pins[pidx])
+			pins_is_explicitly_not_connected[pidx] = true;
 	    }
 
 
