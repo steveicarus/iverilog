@@ -223,6 +223,29 @@ static PLI_INT32 sys_fclose_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	 * generation when needed. */
       fd_mcd = vpi_mcd_close(fd_mcd);
 
+      if (fd_mcd) {
+	    char *fd_mcd_name;
+	    switch(fd_mcd) {
+		case 0x00000001: // MCD STDOUT
+		case 0x80000001: // FD STDOUT
+		  fd_mcd_name = "STDOUT ";
+		  break;
+		case 0x80000000: // FD STDIN
+		  fd_mcd_name = "STDIN ";
+		  break;
+		case 0x80000002: // FD STDERR
+		  fd_mcd_name = "STDERR ";
+		  break;
+		default:
+		  fd_mcd_name = "";
+	    }
+            vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+                       (int)vpi_get(vpiLineNo, callh));
+            vpi_printf("could not close %s %s(0x%x) in %s().\n",
+	               IS_MCD(fd_mcd) ? "MCD" : "file descriptor",
+                       fd_mcd_name, (unsigned int)fd_mcd, name);
+      }
+
       return 0;
 }
 
