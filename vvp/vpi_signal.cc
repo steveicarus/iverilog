@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -681,7 +681,11 @@ static vpiHandle signal_index(int idx, vpiHandle ref)
       } else {
 	    if ((idx < rfp->msb.get_value()) || (idx > rfp->lsb.get_value())) return 0;
       }
-	/* Return a handle for the individual bit. */
+
+      PLI_INT32 type = vpi_get(vpiType, ref);
+      if ((type != vpiNet) && (type != vpiReg)) return 0;
+
+	/* Return a vpiNetBit or vpiRegBit handle for the individual bit. */
       cerr << "Sorry: Icarus does not currently support "
            << "vpi_get_handle_by_index() for "
            << vpi_get_str(vpiType, ref);
