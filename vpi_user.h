@@ -1,7 +1,7 @@
 #ifndef VPI_USER_H
 #define VPI_USER_H
 /*
- * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -286,12 +286,14 @@ typedef struct t_vpi_delay  {
 #define vpiNamedEvent  34
 #define vpiNamedFork   35
 #define vpiNet         36
+#define vpiNetBit      37
 #define vpiParameter   41
 #define vpiPartSelect  42
 #define vpiPathTerm    43
 #define vpiPort        44
 #define vpiRealVar     47
 #define vpiReg         48
+#define vpiRegBit      49
 #define vpiSysFuncCall 56
 #define vpiSysTaskCall 57
 #define vpiTask        59

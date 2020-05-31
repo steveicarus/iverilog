@@ -355,6 +355,8 @@ static const char* vpi_type_values(PLI_INT32 code)
 	    return "vpiNet";
 	  case vpiNetArray:
 	    return "vpiNetArray";
+	  case vpiNetBit:
+	    return "vpiNetBit";
 	  case vpiParameter:
 	    return "vpiParameter";
 	  case vpiPartSelect:
@@ -363,6 +365,8 @@ static const char* vpi_type_values(PLI_INT32 code)
 	    return "vpiRealVar";
 	  case vpiReg:
 	    return "vpiReg";
+	  case vpiRegBit:
+	    return "vpiRegBit";
 	  case vpiShortIntVar:
 	    return "vpiShortIntVar";
 	  case vpiStringVar:

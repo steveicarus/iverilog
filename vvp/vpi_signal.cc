@@ -671,26 +671,125 @@ static vpiHandle signal_iterate(int code, vpiHandle ref)
       return 0;
 }
 
+void __vpiSignal::make_bits()
+{
+      assert(bits == NULL);
+      bits = new struct __vpiBit[width() + 1];
+
+	// Make word[-1] point to the parent.
+      bits->parent = this;
+	// Now point to word[0].
+      bits += 1;
+
+	// Update each bit to point to the base
+      struct __vpiBit*base = bits;
+      for (unsigned idx = 0; idx < width(); idx += 1) {
+	    base[idx].bit0 = base;
+	    int real_idx;
+	    if (msb.get_value() >= lsb.get_value()) {
+		  real_idx = idx + lsb.get_value();
+	    } else {
+		  real_idx = lsb.get_value() - idx;
+	    }
+	    base[idx].index = new __vpiDecConst(real_idx);
+      }
+}
+
+vpiHandle __vpiSignal::get_index(int idx)
+{
+	/* Check to see if the index is in range. */
+      if (msb.get_value() >= lsb.get_value()) {
+	    if ((idx > msb.get_value()) || (idx < lsb.get_value())) return 0;
+      } else {
+	    if ((idx < msb.get_value()) || (idx > lsb.get_value())) return 0;
+      }
+
+	/* Normalize the index */
+      unsigned norm_idx;
+      if (msb.get_value() >= lsb.get_value()) {
+	    norm_idx = idx - lsb.get_value();
+      } else {
+	    norm_idx = lsb.get_value() - idx;
+      }
+
+      if (bits == NULL) make_bits();
+
+      return &(bits[norm_idx].as_bit);
+}
+
+void __vpiSignal::get_bit_value(struct __vpiBit*bit, p_vpi_value vp)
+{
+      unsigned index = bit->get_norm_index();
+
+      vvp_signal_value*vsig = dynamic_cast<vvp_signal_value*>(node->fil);
+      assert(vsig);
+
+      if (vp->format == vpiObjTypeVal) {
+	    vp->format = vpiIntVal;
+      }
+
+      switch (vp->format) {
+	case vpiBinStrVal:
+            format_vpiBinStrVal(vsig, index, 1, vp);
+	    break;
+
+	case vpiOctStrVal:
+            format_vpiOctStrVal(vsig, index, 1, vp);
+	    break;
+
+	case vpiDecStrVal:
+            format_vpiDecStrVal(vsig, index, 1, false, vp);
+	    break;
+
+	case vpiHexStrVal:
+            format_vpiHexStrVal(vsig, index, 1, vp);
+	    break;
+
+	case vpiStringVal:
+            format_vpiStringVal(vsig, index, 1, vp);
+	    break;
+
+	case vpiIntVal:
+            format_vpiIntVal(vsig, index, 1, false, vp);
+	    break;
+
+	case vpiRealVal:
+            format_vpiRealVal(vsig, index, 1, false, vp);
+	    break;
+
+	case vpiScalarVal:
+            format_vpiScalarVal(vsig, index, vp);
+	    break;
+
+        case vpiStrengthVal:
+            format_vpiStrengthVal(vsig, index, 1, vp);
+            break;
+
+	case vpiVectorVal:
+            format_vpiVectorVal(vsig, index, 1, vp);
+	    break;
+
+	default:
+	    fprintf(stderr, "internal error: get_value() "
+		    "type %d is not implemented for bit "
+		    "select %s[%d] in scope %s.\n",
+		    (int)vp->format, vpi_get_str(vpiName),
+		    bit->get_index(),
+	            vpip_scope(this)->scope_name());
+	    assert(0);
+      };
+}
+
 static vpiHandle signal_index(int idx, vpiHandle ref)
 {
       struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
       assert(rfp);
-	/* Check to see if the index is in range. */
-      if (rfp->msb.get_value() >= rfp->lsb.get_value()) {
-	    if ((idx > rfp->msb.get_value()) || (idx < rfp->lsb.get_value())) return 0;
-      } else {
-	    if ((idx < rfp->msb.get_value()) || (idx > rfp->lsb.get_value())) return 0;
-      }
 
+	/* We can only get the bit for a net or reg. */
       PLI_INT32 type = vpi_get(vpiType, ref);
       if ((type != vpiNet) && (type != vpiReg)) return 0;
 
-	/* Return a vpiNetBit or vpiRegBit handle for the individual bit. */
-      cerr << "Sorry: Icarus does not currently support "
-           << "vpi_get_handle_by_index() for "
-           << vpi_get_str(vpiType, ref);
-      cerr << " objects (" << vpi_get_str(vpiName, ref) << ")." << endl;
-      return 0;
+      return rfp->get_index(idx);
 }
 
 unsigned __vpiSignal::width(void) const
@@ -1100,6 +1199,13 @@ void signal_delete(vpiHandle item)
       assert(obj->node->fil);
       obj->node->fil->clear_all_callbacks();
       vvp_net_delete(obj->node);
+      if (obj->bits) {
+	    for (unsigned idx=0; idx<obj->width(); idx+=1) {
+		  delete obj->bits[idx].index;
+	    }
+	    obj->bits -= 1;
+	    delete [] obj->bits;
+      }
       signal_dels += 1;
       VALGRIND_MEMPOOL_FREE(reinterpret_cast<vpiSignal_plug *>(obj)->pool, obj);
 }

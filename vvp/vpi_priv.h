@@ -344,6 +344,11 @@ struct __vpiSignal : public __vpiHandle {
 
     public:
       unsigned width() const;
+      vpiHandle get_index(int index);
+      void get_bit_value(struct __vpiBit*bit, p_vpi_value vp);
+      void make_bits();
+
+      struct __vpiBit*bits;
 
     public:
       union { // The scope or parent array that contains me.
@@ -366,7 +371,7 @@ struct __vpiSignal : public __vpiHandle {
       static void*operator new(std::size_t size);
       static void operator delete(void*); // not implemented
     protected:
-      inline __vpiSignal() { }
+      inline __vpiSignal() : bits(NULL) { }
     private: // Not implemented
       static void*operator new[] (std::size_t size);
       static void operator delete[](void*);
@@ -383,6 +388,31 @@ extern vpiHandle vpip_make_var4(const char*name, int msb, int lsb,
 extern vpiHandle vpip_make_net4(__vpiScope*scope,
 				const char*name, int msb, int lsb,
 				bool signed_flag, vvp_net_t*node);
+
+/*
+ * This is used to represent a bit in a net/reg.
+ */
+struct __vpiBit {
+      struct as_bit_t : public __vpiHandle {
+	    int get_type_code(void) const;
+	    int vpi_get(int code);
+	    char* vpi_get_str(int code);
+	    void vpi_get_value(p_vpi_value val);
+	    vpiHandle vpi_put_value(p_vpi_value val, int flags);
+	    vpiHandle vpi_handle(int code);
+      } as_bit;
+
+      vpiHandle index;
+
+      union {
+	    struct __vpiSignal*parent;
+	    struct __vpiBit*bit0;
+      };
+
+      inline unsigned get_norm_index() const { return this - bit0; }
+      inline struct __vpiSignal*get_parent() const {return (bit0 - 1)->parent; }
+      int get_index(void) const;
+};
 
 /*
  * This is used by system calls to represent a bit/part select of
