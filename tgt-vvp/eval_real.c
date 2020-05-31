@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -32,13 +32,13 @@ static unsigned long word_alloc_mask = 0x0f;
 int allocate_word()
 {
       int res = 4;
-      int max = WORD_COUNT;
 
-      while (res < max && (1U << res) & word_alloc_mask)
+      while (res < WORD_COUNT && (1U << res) & word_alloc_mask)
 	    res += 1;
 
-      if (res >= max) {
-	    fprintf(stderr, "vvp.tgt error: Thread words exhausted.\n");
+      if (res >= WORD_COUNT) {
+	    fprintf(stderr, "vvp.tgt error: Thread words (%d) exhausted "
+	                    "during VVP code generation.\n", WORD_COUNT);
 	    exit(1);
       }
       word_alloc_mask |= 1U << res;
@@ -47,8 +47,7 @@ int allocate_word()
 
 void clr_word(int res)
 {
-      int max = WORD_COUNT;
-      assert(res < max);
+      assert(res < WORD_COUNT);
       word_alloc_mask &= ~ (1U << res);
 }
 
@@ -109,7 +108,7 @@ static void draw_binary_real(ivl_expr_t expr)
 	    break;
 
 	  default:
-	    fprintf(stderr, "XXXX draw_binary_real(%c)\n",
+	    fprintf(stderr, "vvp.tgt error: draw_binary_real(%c)\n",
 		    ivl_expr_opcode(expr));
 	    assert(0);
       }
@@ -538,7 +537,7 @@ void draw_eval_real(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%cvt/rv%s;\n", sign_flag);
 
 	    } else {
-		  fprintf(stderr, "XXXX Evaluate real expression (%d)\n",
+		  fprintf(stderr, "vvp.tgt error: XXXX Evaluate real expression (%d)\n",
 			  ivl_expr_type(expr));
 		  fprintf(vvp_out, " ; XXXX Evaluate real expression (%d)\n",
 			  ivl_expr_type(expr));

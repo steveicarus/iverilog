@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -97,7 +97,7 @@ void draw_switch_in_scope(ivl_switch_t sw)
 	    break;
 
 	  default:
-	    fprintf(stderr, "%s:%u: tgt-vvp error: unrecognised switch type.\n",
+	    fprintf(stderr, "%s:%u: vvp.tgt error: unrecognised switch type.\n",
 		            ivl_switch_file(sw), ivl_switch_lineno(sw));
 	    vvp_errors += 1;
 	    return;

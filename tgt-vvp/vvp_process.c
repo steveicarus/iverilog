@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -653,7 +653,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
       unsigned idx, default_case;
 
       if (qual != IVL_CASE_QUALITY_BASIC && qual != IVL_CASE_QUALITY_PRIORITY) {
-	    fprintf(stderr, "%s:%u: tgt-vvp sorry: "
+	    fprintf(stderr, "%s:%u: vvp.tgt sorry: "
 		    "Case unique/unique0 qualities are ignored.\n",
 		    ivl_stmt_file(net), ivl_stmt_lineno(net));
       }
@@ -882,7 +882,7 @@ static void force_real_to_lval(ivl_statement_t net)
 	      /* We do not currently support using a word from a variable
 		 array as the L-value (SystemVerilog / Icarus extension). */
 	    if (ivl_signal_type(lsig) == IVL_SIT_REG) {
-		  fprintf(stderr, "%s:%u: tgt-vvp sorry: cannot %s to the "
+		  fprintf(stderr, "%s:%u: vvp.tgt sorry: cannot %s to the "
 			  "word of a variable array (%s[%ld]).\n",
 			  ivl_stmt_file(net), ivl_stmt_lineno(net),
 			  command_name, ivl_signal_basename(lsig),
@@ -938,7 +938,7 @@ static void force_vector_to_lval(ivl_statement_t net)
 		    /* We do not currently support using a word from a variable
 		       array as the L-value (SystemVerilog / Icarus extension). */
 		  if (ivl_signal_type(lsig) == IVL_SIT_REG) {
-			fprintf(stderr, "%s:%u: tgt-vvp sorry: cannot %s to the "
+			fprintf(stderr, "%s:%u: vvp.tgt sorry: cannot %s to the "
 				"word of a variable array (%s[%ld]).\n",
 				ivl_stmt_file(net), ivl_stmt_lineno(net),
 				command_name, ivl_signal_basename(lsig),
@@ -984,7 +984,7 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 	        ivl_expr_type(rval) == IVL_EX_REALNUM)
 		  return;
 
-	    fprintf(stderr, "%s:%u: tgt-vvp sorry: procedural continuous "
+	    fprintf(stderr, "%s:%u: vvp.tgt sorry: procedural continuous "
 		    "assignments are not yet fully supported. The RHS of "
 		    "this assignment will only be evaluated once, at the "
 		    "time the assignment statement is executed.\n",
@@ -1028,7 +1028,7 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 	    long use_wid = ivl_signal_width(rsig);
 	    long use_lsb, use_msb;
 	    if (ivl_signal_packed_dimensions(lsig) > 1) {
-		  fprintf(stderr, "%s:%u: tgt-vvp sorry: cannot %s part of a "
+		  fprintf(stderr, "%s:%u: vvp.tgt sorry: cannot %s part of a "
 		                  "packed array.\n",
 		                  ivl_stmt_file(net), ivl_stmt_lineno(net),
 		                  command_name);
@@ -1043,7 +1043,7 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 		  use_msb = use_lsb;
 		  use_msb -= use_wid - 1;
 	    }
-	    fprintf(stderr, "%s:%u: tgt-vvp sorry: cannot %s signal to a ",
+	    fprintf(stderr, "%s:%u: vvp.tgt sorry: cannot %s signal to a ",
 	            ivl_stmt_file(net), ivl_stmt_lineno(net), command_name);
 	    if (use_wid > 1) {
 		  fprintf(stderr, "part select (%s[%ld:%ld]).\n",
@@ -1070,7 +1070,7 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 		    /* Normalize the array access. */
 		  long real_word = use_lword;
 		  real_word += ivl_signal_array_base(lsig);
-		  fprintf(stderr, "%s:%u: tgt-vvp sorry: cannot %s to the "
+		  fprintf(stderr, "%s:%u: vvp.tgt sorry: cannot %s to the "
 		          "word of a variable array (%s[%ld]).\n",
 		          ivl_stmt_file(net), ivl_stmt_lineno(net),
 		          command_name, ivl_signal_basename(lsig), real_word);
@@ -1081,7 +1081,7 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
       if ((rword_idx = ivl_expr_oper1(rval)) != 0) {
 	    assert(ivl_signal_dimensions(rsig) != 0);
 	    if (!number_is_immediate(rword_idx, IMM_WID, 0)) {
-		  fprintf(stderr, "%s:%u: tgt-vvp sorry: procedural continuous "
+		  fprintf(stderr, "%s:%u: vvp.tgt sorry: procedural continuous "
 			  "assignments are not yet fully supported. The RHS of "
 			  "this assignment will only be evaluated once, at the "
 			  "time the assignment statement is executed.\n",
@@ -1100,7 +1100,7 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 		    /* Normalize the array access. */
 		  long real_word = use_rword;
 		  real_word += ivl_signal_array_base(rsig);
-		  fprintf(stderr, "%s:%u: tgt-vvp sorry: cannot %s from the "
+		  fprintf(stderr, "%s:%u: vvp.tgt sorry: cannot %s from the "
 		          "word of a variable array (%s[%ld]).\n",
 		          ivl_expr_file(rval), ivl_expr_lineno(rval),
 		          command_name, ivl_signal_basename(rsig), real_word);
