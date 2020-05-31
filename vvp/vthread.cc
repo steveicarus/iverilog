@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -102,7 +102,7 @@ struct vthread_s {
 	/* This is the program counter. */
       vvp_code_t pc;
 	/* These hold the private thread bits. */
-      enum { FLAGS_COUNT = 256, WORDS_COUNT = 16 };
+      enum { FLAGS_COUNT = 512, WORDS_COUNT = 16 };
       vvp_bit4_t flags[FLAGS_COUNT];
 
 	/* These are the word registers. */

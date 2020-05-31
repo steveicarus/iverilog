@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,7 +28,7 @@
 
 static const char*version_string =
 "Icarus Verilog VVP Code Generator " VERSION " (" VERSION_TAG ")\n\n"
-"Copyright (c) 2001-2015 Stephen Williams (steve@icarus.com)\n\n"
+"Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)\n\n"
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"
 "  the Free Software Foundation; either version 2 of the License, or\n"
@@ -50,7 +50,8 @@ unsigned show_file_line = 0;
 
 int debug_draw = 0;
 
-# define FLAGS_COUNT 256
+/* This needs to match the actual flag count in the VVP thread. */
+# define FLAGS_COUNT 512
 
 static uint32_t allocate_flag_mask[FLAGS_COUNT / 32] = { 0x000000ff, 0 };
 
@@ -109,7 +110,9 @@ int allocate_flag(void)
 	    return idx;
       }
 
-      return -1;
+      fprintf(stderr, "vvp.tgt error: Exceeded the maximum flag count of "
+                      "%d during VVP code generation.\n", FLAGS_COUNT);
+      exit(1);
 }
 
 void clr_flag(int idx)
