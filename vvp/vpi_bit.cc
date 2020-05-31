@@ -97,8 +97,6 @@ static int bit_get(int code, vpiHandle ref)
 	case vpiVector:  // A bit is not a vector
 	    return 0;
 
-// FIXME: Do we need a _vpiFromThr or _vpiNexusID case?
-
 	default:
 	    fprintf(stderr, "VPI error: unknown bit_get property %d.\n",
 	            code);
@@ -192,16 +190,11 @@ static vpiHandle bit_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 {
       struct __vpiBit*rfp = bit_from_handle(ref);
       assert(rfp);
-      (void) vp;
-      (void) flags;
 
-      fprintf(stderr, "Sorry: vpi_put_value() for %s type %s is not "
-                      "implemented\n", vpi_get_str(vpiFullName, ref),
-                      vpi_get_str(vpiType, ref));
+      struct __vpiSignal*parent = rfp->get_parent();
+      assert(parent);
 
-      // FIXME: Put the value to the net or reg bit.
-
-      return ref;
+      return parent->put_bit_value(rfp, vp, flags);
 }
 
 
@@ -231,6 +224,7 @@ vpiHandle __vpiBit::as_bit_t::vpi_put_value(p_vpi_value val, int flags)
 vpiHandle __vpiBit::as_bit_t::vpi_handle(int code)
 { return bit_get_handle(code, this); }
 
+// FIXME: How are delayed put values handled?
 //vpiHandle __vpiBit::as_bit_t::vpi_iterate(int code) // FIXME: Is this needed?
 //{ return bit_iterate(code, this); }
 

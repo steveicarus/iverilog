@@ -346,6 +346,7 @@ struct __vpiSignal : public __vpiHandle {
       unsigned width() const;
       vpiHandle get_index(int index);
       void get_bit_value(struct __vpiBit*bit, p_vpi_value vp);
+      vpiHandle put_bit_value(struct __vpiBit*bit, p_vpi_value vp, int flags);
       void make_bits();
 
       struct __vpiBit*bits;

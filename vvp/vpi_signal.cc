@@ -780,6 +780,32 @@ void __vpiSignal::get_bit_value(struct __vpiBit*bit, p_vpi_value vp)
       };
 }
 
+vpiHandle __vpiSignal::put_bit_value(struct __vpiBit*bit, p_vpi_value vp, int flags)
+{
+      unsigned index = bit->get_norm_index();
+      vvp_net_ptr_t dest(node, 0);
+      vvp_vector4_t val = vec4_from_vpi_value(vp, 1);
+
+      if ((flags == vpiForceFlag) || (flags == vpiReleaseFlag)) {
+	    fprintf(stderr, "Sorry: vpi_put_value() for %s does not "
+	                    "currently support force/release.\n",
+	                    bit->as_bit.vpi_get_str(vpiFullName));
+	    return NULL;
+      }
+
+      if ((get_type_code() == vpiNet) &&
+          !dynamic_cast<vvp_island_port*>(node->fun)) {
+	    node->send_vec4_pv(val, index, 1, width(),
+	                            vthread_get_wt_context());
+      } else {
+	    vvp_send_vec4_pv(dest, val, index, 1, width(),
+	                     vthread_get_wt_context());
+      }
+
+	// This is not a scheduled event so there is no event to return
+      return NULL;
+}
+
 static vpiHandle signal_index(int idx, vpiHandle ref)
 {
       struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
