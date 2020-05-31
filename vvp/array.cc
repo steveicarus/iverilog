@@ -361,6 +361,21 @@ int __vpiArrayWord::as_word_t::vpi_get(int code)
             assert(val.format == vpiIntVal);
             return val.value.integer;
 
+	  case vpiIndex:
+	    {
+		  int base_offset = 0;
+		  struct __vpiArray*base = dynamic_cast<__vpiArray*> (parent);
+		  if (base) {
+			val.format = vpiIntVal;
+			base->first_addr.vpi_get_value(&val);
+			base_offset += val.value.integer;
+		  }
+		  val.format = vpiIntVal;
+		  obj->as_index.vpi_get_value(&val);
+		  assert(val.format == vpiIntVal);
+		  return val.value.integer + base_offset;
+	    }
+
 	  case vpiAutomatic:
 	    return parent->get_scope()->is_automatic()? 1 : 0;
 
