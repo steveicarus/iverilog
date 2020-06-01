@@ -40,11 +40,9 @@ jobs:
         - PowerShell -Command "C:\7zip\7z x msys2-x86_64-latest.tar -oC:\\"
         - PowerShell -Command "C:\msys64\usr\bin\bash -lc 'pacman --noconfirm -S  base-devel mingw-w64-x86_64-toolchain'"
       script:
-        - PowerShell -Command "C:\msys64\usr\bin\bash -lc 'PATH=/mingw64/bin:/bin ./autoconf.sh'"
-        - PowerShell -Command "C:\msys64\usr\bin\bash -lc 'PATH=/mingw64/bin:/bin ./configure --prefix=/usr'"
-        - PowerShell -Command "C:\msys64\usr\bin\bash -lc 'PATH=/mingw64/bin:/bin make'"
-        - PowerShell -Command "C:\msys64\usr\bin\bash -lc 'PATH=/mingw64/bin:/bin make install'"
-        - PowerShell -Command "C:\msys64\usr\bin\bash -lc 'PATH=/mingw64/bin:/bin iverilog -h'"
-        - PowerShell -Command "C:\msys64\usr\bin\bash -lc 'export PATH=/mingw64/bin:/bin; cd $TRAVIS_BUILD_DIR/ivtest; perl vvp_reg.pl'"
-  
-  
+        - PowerShell -Command "C:\msys64\msys2_shell.cmd -defterm -no-start -mingw64 -lc './autoconf.sh'"
+        - PowerShell -Command "C:\msys64\msys2_shell.cmd -defterm -no-start -mingw64 -lc './configure --prefix=/usr'"
+        - PowerShell -Command "C:\msys64\msys2_shell.cmd -defterm -no-start -mingw64 -lc 'make'"
+        - PowerShell -Command "C:\msys64\msys2_shell.cmd -defterm -no-start -mingw64 -lc 'make install'"
+        - PowerShell -Command "C:\msys64\msys2_shell.cmd -defterm -no-start -mingw64 -lc 'iverilog -h'"
+        - PowerShell -Command "C:\msys64\msys2_shell.cmd -defterm -no-start -mingw64 -lc 'cd $TRAVIS_BUILD_DIR/ivtest; perl vvp_reg.pl'"
