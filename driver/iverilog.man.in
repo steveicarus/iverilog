@@ -502,7 +502,7 @@ Variables in the \fIincludedir\fP are substituted.
 
 .TP 8
 .B +libext+\fIext\fP
-The \fB+libext\fP token in command files fives file extensions to try
+The \fB+libext\fP token in command files lists file extensions to try
 when looking for a library file. This is useful in conjunction with
 \fB\-y\fP flags to list suffixes to try in each directory before moving
 on to the next library directory.
