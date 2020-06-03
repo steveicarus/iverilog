@@ -598,7 +598,7 @@ bool had_timescale = false;
 static void read_iconfig_file(const char*ipath)
 {
       char buf[8*1024];
-      vector<pair<char*,bool>> to_build_library_index;
+      vector<pair<char*,bool> > to_build_library_index;
 
       FILE*ifile = fopen(ipath, "r");
       if (ifile == 0) {
@@ -799,10 +799,10 @@ static void read_iconfig_file(const char*ipath)
 	    }
       }
       fclose(ifile);
-      for (vector<pair<char *, bool>>::iterator it = to_build_library_index.begin() ;
+      for (vector<pair<char *, bool> >::iterator it = to_build_library_index.begin() ;
 	   it != to_build_library_index.end() ; ++ it ) {
-	    build_library_index(get<0>(*it), get<1>(*it));
-	    free(get<0>(*it));
+	    build_library_index(it->first, it->second);
+	    free(it->first);
       }
 }
 
