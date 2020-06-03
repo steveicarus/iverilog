@@ -598,7 +598,7 @@ bool had_timescale = false;
 static void read_iconfig_file(const char*ipath)
 {
       char buf[8*1024];
-      vector<tuple<char*,bool>> to_build_library_index;
+      vector<pair<char*,bool>> to_build_library_index;
 
       FILE*ifile = fopen(ipath, "r");
       if (ifile == 0) {
@@ -757,10 +757,10 @@ static void read_iconfig_file(const char*ipath)
 		    ignore_missing_modules = true;
 
 	    } else if (strcmp(buf, "-y") == 0) {
-		  to_build_library_index.push_back(make_tuple(strdup(cp), CASE_SENSITIVE));
+		  to_build_library_index.push_back(make_pair(strdup(cp), CASE_SENSITIVE));
 
 	    } else if (strcmp(buf, "-yl") == 0) {
-		  to_build_library_index.push_back(make_tuple(strdup(cp), false));
+		  to_build_library_index.push_back(make_pair(strdup(cp), false));
 
 	    } else if (strcmp(buf, "-Y") == 0) {
 		  library_suff.push_back(strdup(cp));
@@ -799,7 +799,7 @@ static void read_iconfig_file(const char*ipath)
 	    }
       }
       fclose(ifile);
-      for (vector<tuple<char *, bool>>::iterator it = to_build_library_index.begin() ;
+      for (vector<pair<char *, bool>>::iterator it = to_build_library_index.begin() ;
 	   it != to_build_library_index.end() ; ++ it ) {
 	    build_library_index(get<0>(*it), get<1>(*it));
 	    free(get<0>(*it));
