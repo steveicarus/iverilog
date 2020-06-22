@@ -1209,7 +1209,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
-    function_item_list statement_or_null_list_opt
+    function_item_list_opt statement_or_null_list_opt
     K_endfunction
       { current_function->set_ports($7);
 	current_function->set_return($3);
