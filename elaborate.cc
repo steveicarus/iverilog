@@ -5351,6 +5351,23 @@ NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
       }
 
       NetNet*res = target->find_signal(target->basename());
+
+      if (!res) {
+	    if (target->type() == NetScope::FUNC
+		&& target->func_def()->is_void()) {
+		  cerr << get_fileline() << ": error: "
+		       << "Cannot return because function " << scope_path(target)
+		       << " is void." << endl;
+	    } else {
+		  cerr << get_fileline() << ": error: Could not find variable ``"
+		       << target->basename() << "'' in ``" << scope_path(target) <<
+		       "''" << endl;
+
+	    }
+	    des->errors += 1;
+	    return 0;
+      }
+
       ivl_variable_type_t lv_type = res->data_type();
       unsigned long wid = res->vector_width();
       NetAssign_*lv = new NetAssign_(res);
