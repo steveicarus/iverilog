@@ -5340,14 +5340,15 @@ NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-	// We don't yet support void functions, so require an
-	// expression for the return statement.
       if (expr_ == 0) {
-	    cerr << get_fileline() << ": error: "
-		 << "Return from " << scope_path(target)
-		 << " requires a return value expression." << endl;
-	    des->errors += 1;
-	    return 0;
+	    NetBlock*proc = new NetBlock(NetBlock::SEQU, 0);
+	    proc->set_line( *this );
+
+	    NetDisable*disa = new NetDisable(target);
+	    disa->set_line( *this );
+	    proc->append( disa );
+
+	    return proc;
       }
 
       NetNet*res = target->find_signal(target->basename());
