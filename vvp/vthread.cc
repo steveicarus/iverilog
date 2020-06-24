@@ -1380,7 +1380,7 @@ bool of_CALLF_VEC4(vthread_t thr, vvp_code_t cp)
 
 	// This is the return value. Push a place-holder value. The function
 	// will replace this with the actual value using a %ret/real instruction.
-      thr->push_vec4(vvp_vector4_t(scope_func->get_func_width()));
+      thr->push_vec4(vvp_vector4_t(scope_func->get_func_width(), scope_func->get_func_init_val()));
       child->args_vec4.push_back(0);
 
       return do_callf_void(thr, child);
@@ -6328,7 +6328,7 @@ bool of_EXEC_UFUNC_VEC4(vthread_t thr, vvp_code_t cp)
 
 	/* Create a temporary thread and run it immediately. */
       vthread_t child = vthread_new(cp->cptr, child_scope);
-      thr->push_vec4(vvp_vector4_t(scope_func->get_func_width()));
+      thr->push_vec4(vvp_vector4_t(scope_func->get_func_width(), scope_func->get_func_init_val()));
       child->args_vec4.push_back(0);
 
       return do_exec_ufunc(thr, cp, child);

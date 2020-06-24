@@ -295,8 +295,8 @@ class __vpiScope : public __vpiHandle {
 class vpiScopeFunction  : public __vpiScope {
     public:
       inline vpiScopeFunction(const char*nam, const char*tnam,
-			      bool auto_flag, int func_type, unsigned func_wid)
-      : __vpiScope(nam,tnam, auto_flag), func_type_(func_type), func_wid_(func_wid)
+			      bool auto_flag, int func_type, unsigned func_wid, vvp_bit4_t func_init_val)
+      : __vpiScope(nam,tnam, auto_flag), func_type_(func_type), func_wid_(func_wid), func_init_val_(func_init_val)
       { }
 
       int get_type_code(void) const { return vpiFunction; }
@@ -312,10 +312,12 @@ class vpiScopeFunction  : public __vpiScope {
 
     public:
       inline unsigned get_func_width(void) const { return func_wid_; }
+      inline vvp_bit4_t get_func_init_val(void) const { return func_init_val_; }
 
     private:
       int func_type_;
       unsigned func_wid_;
+      vvp_bit4_t func_init_val_;
 };
 
 extern __vpiScope* vpip_peek_current_scope(void);

@@ -462,13 +462,14 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
                    long def_file_idx, long def_lineno, long is_cell)
 {
       count_vpi_scopes += 1;
+      char vec_type;
       char sign_flag;
       unsigned wid;
 
       __vpiScope*scope;
       if (strcmp(type,"module") == 0) {
 	    scope = new vpiScopeModule(name, tname);
-      } else if ( sscanf(type, "function.vec4.%c%u", &sign_flag, &wid) == 2 ) {
+      } else if ( sscanf(type, "function.vec%c.%c%u", &vec_type, &sign_flag, &wid) == 3 ) {
 	    int type_code;
 	    if (sign_flag=='s') {
 		  type_code = vpiSizedSignedFunc;
@@ -480,9 +481,10 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
 		  assert(0);
 		  type_code = vpiSizedFunc;
 	    }
-	    scope = new vpiScopeFunction(name, tname, false, type_code, wid);
+	    vvp_bit4_t init_val = vec_type == '4' ? BIT4_X : BIT4_0;
+	    scope = new vpiScopeFunction(name, tname, false, type_code, wid, init_val);
 
-      } else if ( sscanf(type, "autofunction.vec4.%c%u", &sign_flag, &wid) == 2 ) {
+      } else if ( sscanf(type, "autofunction.vec%c.%c%u", &vec_type, &sign_flag, &wid) == 3 ) {
 	    int type_code;
 	    switch (sign_flag) {
 		case 's':
@@ -496,24 +498,25 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
 		  type_code = vpiSizedFunc;
 		  break;
 	    }
-	    scope = new vpiScopeFunction(name, tname, true, type_code, wid);
+	    vvp_bit4_t init_val = vec_type == '4' ? BIT4_X : BIT4_0;
+	    scope = new vpiScopeFunction(name, tname, true, type_code, wid, init_val);
 
       } else if (strcmp(type,"function.obj") == 0) {
-	    scope = new vpiScopeFunction(name, tname, false, vpiSizedFunc, 0);
+	    scope = new vpiScopeFunction(name, tname, false, vpiSizedFunc, 0, BIT4_0);
       } else if (strcmp(type,"autofunction.obj") == 0) {
-	    scope = new vpiScopeFunction(name, tname, true, vpiSizedFunc, 0);
+	    scope = new vpiScopeFunction(name, tname, true, vpiSizedFunc, 0, BIT4_0);
       } else if (strcmp(type,"function.real") == 0) {
-	    scope = new vpiScopeFunction(name, tname, false, vpiRealFunc, 0);
+	    scope = new vpiScopeFunction(name, tname, false, vpiRealFunc, 0, BIT4_0);
       } else if (strcmp(type,"autofunction.real") == 0) {
-	    scope = new vpiScopeFunction(name, tname, true, vpiRealFunc, 0);
+	    scope = new vpiScopeFunction(name, tname, true, vpiRealFunc, 0, BIT4_0);
       } else if (strcmp(type,"function.str") == 0) {
-	    scope = new vpiScopeFunction(name, tname, false, vpiOtherFunc, 0);
+	    scope = new vpiScopeFunction(name, tname, false, vpiOtherFunc, 0, BIT4_0);
       } else if (strcmp(type,"autofunction.str") == 0) {
-	    scope = new vpiScopeFunction(name, tname, true, vpiOtherFunc, 0);
+	    scope = new vpiScopeFunction(name, tname, true, vpiOtherFunc, 0, BIT4_0);
       } else if (strcmp(type,"function.void") == 0) {
-	    scope = new vpiScopeFunction(name, tname, false, vpiOtherFunc, 0);
+	    scope = new vpiScopeFunction(name, tname, false, vpiOtherFunc, 0, BIT4_0);
       } else if (strcmp(type,"autofunction.void") == 0) {
-	    scope = new vpiScopeFunction(name, tname, true, vpiOtherFunc, 0);
+	    scope = new vpiScopeFunction(name, tname, true, vpiOtherFunc, 0, BIT4_0);
       } else if (strcmp(type,"task") == 0) {
 	    scope = new vpiScopeTask(name, tname);
       } else if (strcmp(type,"autotask") == 0) {
