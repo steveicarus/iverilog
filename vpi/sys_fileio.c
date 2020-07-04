@@ -639,7 +639,7 @@ static PLI_INT32 sys_fread_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 			val.format = vpiIntVal;
 			vpi_get_value(arg, &val);
 			count = val.value.integer;
-			if (count > max-start) {
+			if (count > max-start+1) {
 			      vpi_printf("WARNING: %s:%d: ",
 			                 vpi_get_str(vpiFile, callh),
 			                 (int)vpi_get(vpiLineNo, callh));
