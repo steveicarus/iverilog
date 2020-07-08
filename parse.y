@@ -1202,9 +1202,9 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	tmp->integer_flag = true;
 	$$ = tmp;
       }
-  | K_time
+  | K_time unsigned_signed_opt
       { list<pform_range_t>*pd = make_range_from_width(64);
-	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, pd);
+	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $2, pd);
 	tmp->reg_flag = !gn_system_verilog();
 	$$ = tmp;
       }
