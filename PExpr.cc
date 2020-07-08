@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2019 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2020 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -168,7 +168,7 @@ PEBComp::~PEBComp()
 PEBLogic::PEBLogic(char op, PExpr*l, PExpr*r)
 : PEBinary(op, l, r)
 {
-      assert(op == 'a' || op == 'o');
+      assert(op == 'a' || op == 'o' || op == 'q' || op == 'Q');
 }
 
 PEBLogic::~PEBLogic()

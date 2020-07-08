@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -208,6 +208,7 @@ TU [munpf]
 "!=?" { return K_WNE; }
 "||" { return K_LOR; }
 "&&" { return K_LAND; }
+"<->" { return K_LEQUIV; }
 "&&&" { return K_TAND; }
 "~|" { return K_NOR; }
 "~^" { return K_NXOR; }

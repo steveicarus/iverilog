@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -541,6 +541,14 @@ NetNet* NetEBLogic::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    cerr << get_fileline() << ": internal error: "
 	         << human_readable_op(op_)
 	         << " is missing real to bit conversion." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if ((op() == 'q') || (op() == 'Q')) {
+	    cerr << get_fileline() << ": sorry: "
+	         << human_readable_op(op_)
+	         << " is not currently supported in this context." << endl;
 	    des->errors += 1;
 	    return 0;
       }

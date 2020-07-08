@@ -1714,6 +1714,12 @@ void NetEBinary::dump(ostream&o) const
 	  case 'p':
 	    o << "**";
 	    break;
+	  case 'q':
+	    o << "->";
+	    break;
+	  case 'Q':
+	    o << "<->";
+	    break;
 	  case 'r':
 	    o << ">>";
 	    break;

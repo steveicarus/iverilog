@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -410,6 +410,8 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 
 	  case 'a':
 	  case 'o':
+	  case 'q':
+	  case 'Q':
 	    cerr << get_fileline() << ": internal error: "
 		 << "Elaboration of " << human_readable_op(op_)
 		 << " Should have been handled in NetEBLogic::elaborate."

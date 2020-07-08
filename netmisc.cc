@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1336,9 +1336,11 @@ const char *human_readable_op(const char op, bool unary)
 	    case '|': type = "|";  break;  // Bitwise OR
 	    case 'O': type = "~|"; break;  // NOR
 
-	    case '!': type = "!"; break;   // Logical NOT
-	    case 'a': type = "&&"; break;  // Logical AND
-	    case 'o': type = "||"; break;  // Logical OR
+	    case '!': type = "!"; break;    // Logical NOT
+	    case 'a': type = "&&"; break;   // Logical AND
+	    case 'o': type = "||"; break;   // Logical OR
+	    case 'q': type = "->"; break;   // Logical implication
+	    case 'Q': type = "<->"; break;  // Logical equivalence
 
 	    case 'e': type = "==";  break;
 	    case 'n': type = "!=";  break;

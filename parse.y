@@ -476,7 +476,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %token K_CONTRIBUTE
 %token K_PO_POS K_PO_NEG K_POW
 %token K_PSTAR K_STARP K_DOTSTAR
-%token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
+%token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER K_LEQUIV
 %token K_SCOPE_RES
 %token K_edge_descriptor
 
@@ -688,8 +688,9 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <genvar_iter> genvar_iteration
 
 %token K_TAND
-%right K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
-%right K_XOR_EQ K_LS_EQ K_RS_EQ K_RSS_EQ
+%nonassoc K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
+%nonassoc K_XOR_EQ K_LS_EQ K_RS_EQ K_RSS_EQ
+%right K_TRIGGER K_LEQUIV
 %right '?' ':' K_inside
 %left K_LOR
 %left K_LAND
@@ -3686,6 +3687,19 @@ expression
       }
   | expression K_LAND attribute_list_opt expression
       { PEBinary*tmp = new PEBLogic('a', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+/*
+  FIXME: This creates shift/reduce issues that need to be solved
+  | expression K_TRIGGER attribute_list_opt expression
+      { PEBinary*tmp = new PEBLogic('q', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+*/
+  | expression K_LEQUIV attribute_list_opt expression
+      { PEBinary*tmp = new PEBLogic('Q', $1, $4);
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }

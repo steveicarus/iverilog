@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2019 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2020 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -498,6 +498,17 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 	case 'o':
 	    emit_expr(scope, oper1, ivl_expr_width(oper1), 0, 1, 0);
 	    fprintf(vlog_out, " %s ", oper);
+	    emit_expr(scope, oper2, ivl_expr_width(oper2), 0, 1, 0);
+	    break;
+	case 'q': // The arguments have already been reduced
+	    fprintf(vlog_out, "!");
+	    emit_expr(scope, oper1, ivl_expr_width(oper1), 0, 1, 0);
+	    fprintf(vlog_out, " || ");
+	    emit_expr(scope, oper2, ivl_expr_width(oper2), 0, 1, 0);
+	    break;
+	case 'Q': // The arguments have already been reduced
+	    emit_expr(scope, oper1, ivl_expr_width(oper1), 0, 1, 0);
+	    fprintf(vlog_out, " ~^ ");
 	    emit_expr(scope, oper2, ivl_expr_width(oper2), 0, 1, 0);
 	    break;
 	case 'R':

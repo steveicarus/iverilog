@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -808,44 +808,10 @@ NetExpr* NetEBDiv::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       return tmp;
 }
 
-NetEConst* NetEBLogic::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
-{
-      double lval;
-      double rval;
-
-      bool flag = get_real_arguments(l, r, lval, rval);
-      if (! flag) return 0;
-
-      verinum::V res;
-      switch (op_) {
-	  case 'a': // Logical AND (&&)
-	    if ((lval != 0.0) && (rval != 0.0))
-		  res = verinum::V1;
-	    else
-		  res = verinum::V0;
-	    break;
-
-	  case 'o': // Logical OR (||)
-	    if ((lval != 0.0) || (rval != 0.0))
-		  res = verinum::V1;
-	    else
-		  res = verinum::V0;
-	    break;
-
-	  default:
-	    return 0;
-      }
-
-      NetEConst*tmp = new NetEConst(verinum(res, 1));
-      ivl_assert(*this, tmp);
-      eval_debug(this, tmp, true);
-      return tmp;
-}
-
 NetEConst* NetEBLogic::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 {
-      if (l->expr_type() == IVL_VT_REAL || r->expr_type() == IVL_VT_REAL)
-	    return eval_tree_real_(l,r);
+	// NetEBLogic arguments should have already been reduced so real is not possible.
+      ivl_assert(*this, (l->expr_type() != IVL_VT_REAL) && (r->expr_type() != IVL_VT_REAL));
       assert(expr_type() == IVL_VT_LOGIC);
 
       const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
@@ -878,25 +844,39 @@ NetEConst* NetEBLogic::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 	  case 'a': // Logical AND (&&)
 	    if ((lv == verinum::V0) || (rv == verinum::V0))
 		  res = verinum::V0;
-
 	    else if ((lv == verinum::V1) && (rv == verinum::V1))
 		  res = verinum::V1;
-
 	    else
 		  res = verinum::Vx;
-
 	    break;
 
 	  case 'o': // Logical OR (||)
 	    if ((lv == verinum::V1) || (rv == verinum::V1))
 		  res = verinum::V1;
-
 	    else if ((lv == verinum::V0) && (rv == verinum::V0))
 		  res = verinum::V0;
-
 	    else
 		  res = verinum::Vx;
+	    break;
 
+	  case 'q': // Logical implication (->)
+	    if ((lv == verinum::V0) || (rv == verinum::V1))
+		  res = verinum::V1;
+	    else if ((lv == verinum::V1) && (rv == verinum::V0))
+		  res = verinum::V0;
+	    else
+		  res = verinum::Vx;
+	    break;
+
+	  case 'Q': // Logical equivalence (<->)
+	    if (((lv == verinum::V0) && (rv == verinum::V0)) ||
+	        ((lv == verinum::V1) && (rv == verinum::V1)))
+		  res = verinum::V1;
+	    else if (((lv == verinum::V0) && (rv == verinum::V1)) ||
+	             ((lv == verinum::V1) && (rv == verinum::V0)))
+		  res = verinum::V0;
+	    else
+		  res = verinum::Vx;
 	    break;
 
 	  default:

@@ -4258,7 +4258,6 @@ class NetEBLogic : public NetEBinary {
 
     private:
       NetEConst* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
-      NetEConst* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
 /*
