@@ -2492,9 +2492,9 @@ class NetLiteral  : public NetNode {
 class NetLogic  : public NetNode {
 
     public:
-      enum TYPE { AND, BUF, BUFIF0, BUFIF1, CMOS, NAND, NMOS, NOR, NOT,
-		  NOTIF0, NOTIF1, OR, PULLDOWN, PULLUP, RCMOS, RNMOS, RPMOS,
-		  PMOS, XNOR, XOR };
+      enum TYPE { AND, BUF, BUFIF0, BUFIF1, CMOS, EQUIV, IMPL, NAND, NMOS,
+		  NOR, NOT, NOTIF0, NOTIF1, OR, PULLDOWN, PULLUP, RCMOS,
+		  RNMOS, RPMOS, PMOS, XNOR, XOR };
 
       explicit NetLogic(NetScope*s, perm_string n, unsigned pins,
 			TYPE t, unsigned wid, bool is_cassign__=false);

@@ -265,6 +265,8 @@ typedef enum ivl_logic_e {
       IVL_LO_BUFT   = 24, /* transparent bufz. (NOT "tri-state") */
       IVL_LO_BUFZ   =  5,
       IVL_LO_CMOS   = 22,
+      IVL_LO_EQUIV  = 25,
+      IVL_LO_IMPL   = 26,
       IVL_LO_NAND   =  6,
       IVL_LO_NMOS   =  7,
       IVL_LO_NOR    =  8,
@@ -280,7 +282,6 @@ typedef enum ivl_logic_e {
       IVL_LO_RPMOS  = 16,
       IVL_LO_XNOR   = 18,
       IVL_LO_XOR    = 19,
-
       IVL_LO_UDP    = 21
 } ivl_logic_t;
 

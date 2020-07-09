@@ -694,6 +694,22 @@ static void emit_logic_as_ca(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	    assert(inputs == 1);
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0, 0);
 	    break;
+	case IVL_LO_EQUIV:
+	    assert(inputs == 2);
+	    fprintf(vlog_out, "(");
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0, 0);
+	    fprintf(vlog_out, " ~^ ");
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0, 0);
+	    fprintf(vlog_out, ")");
+	    break;
+	case IVL_LO_IMPL:
+	    assert(inputs == 2);
+	    fprintf(vlog_out, "(~");
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0, 0);
+	    fprintf(vlog_out, " | ");
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0, 0);
+	    fprintf(vlog_out, ")");
+	    break;
 	case IVL_LO_NAND:
 	    assert(inputs == 2);
 	    fprintf(vlog_out, "~(");

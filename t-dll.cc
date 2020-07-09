@@ -971,6 +971,12 @@ void dll_target::logic(const NetLogic*net)
 	  case NetLogic::CMOS:
 	    obj->type_ = IVL_LO_CMOS;
 	    break;
+	  case NetLogic::EQUIV:
+	    obj->type_ = IVL_LO_EQUIV;
+	    break;
+	  case NetLogic::IMPL:
+	    obj->type_ = IVL_LO_IMPL;
+	    break;
 	  case NetLogic::NAND:
 	    obj->type_ = IVL_LO_NAND;
 	    break;

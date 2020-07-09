@@ -545,34 +545,39 @@ NetNet* NetEBLogic::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    return 0;
       }
 
-      if ((op() == 'q') || (op() == 'Q')) {
+      NetLogic*olog;
+      perm_string oname = scope->local_symbol();
+
+	/* Create the logic OR/AND gate. This has a single bit output,
+	 * with single bit inputs for the two operands. */
+      switch (op()) {
+	case 'a':
+	    olog = new NetLogic(scope, oname, 3, NetLogic::AND, 1, true);
+	    break;
+	case 'o':
+	    olog = new NetLogic(scope, oname, 3, NetLogic::OR, 1, true);
+	    break;
+	case 'q':
+	    olog = new NetLogic(scope, oname, 3, NetLogic::IMPL, 1, true);
+	    break;
+	case 'Q':
+	    olog = new NetLogic(scope, oname, 3, NetLogic::EQUIV, 1, true);
+	    break;
+	default:
 	    cerr << get_fileline() << ": sorry: "
 	         << human_readable_op(op_)
-	         << " is not currently supported in this context." << endl;
+	         << " is not currently supported." << endl;
 	    des->errors += 1;
 	    return 0;
       }
+      olog->set_line(*this);
+      des->add_node(olog);
 
       netvector_t*osig_tmp = new netvector_t(expr_type());
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, osig_tmp);
       osig->set_line(*this);
       osig->local_flag(true);
-
-      NetLogic*olog;
-      perm_string oname = scope->local_symbol();
-
-	/* Create the logic OR/AND gate. This has a single bit output,
-	 * with single bit inputs for the two operands. */
-      if (op() == 'o') {
-	    olog = new NetLogic(scope, oname, 3, NetLogic::OR, 1, true);
-      } else {
-	    assert(op() == 'a');
-	    olog = new NetLogic(scope, oname, 3, NetLogic::AND, 1, true);
-      }
-
-      olog->set_line(*this);
-      des->add_node(olog);
 
       connect(osig->pin(0), olog->pin(0));
 

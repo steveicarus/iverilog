@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -106,6 +106,54 @@ void vvp_fun_and::run_run()
 		  bitbit = ~bitbit;
 	    result.set_bit(idx, bitbit);
       }
+
+      ptr->send_vec4(result, 0);
+}
+
+vvp_fun_equiv::vvp_fun_equiv()
+: vvp_fun_boolean_(1)
+{
+      count_functors_logic += 1;
+}
+
+vvp_fun_equiv::~vvp_fun_equiv()
+{
+}
+
+void vvp_fun_equiv::run_run()
+{
+      vvp_net_t*ptr = net_;
+      net_ = 0;
+
+      assert(input_[0].size() == 1);
+      assert(input_[1].size() == 1);
+
+      vvp_bit4_t bit = ~(input_[0].value(0) ^ input_[1].value(0));
+      vvp_vector4_t result (1, bit);
+
+      ptr->send_vec4(result, 0);
+}
+
+vvp_fun_impl::vvp_fun_impl()
+: vvp_fun_boolean_(1)
+{
+      count_functors_logic += 1;
+}
+
+vvp_fun_impl::~vvp_fun_impl()
+{
+}
+
+void vvp_fun_impl::run_run()
+{
+      vvp_net_t*ptr = net_;
+      net_ = 0;
+
+      assert(input_[0].size() == 1);
+      assert(input_[1].size() == 1);
+
+      vvp_bit4_t bit = ~input_[0].value(0) | input_[1].value(0);
+      vvp_vector4_t result (1, bit);
 
       ptr->send_vec4(result, 0);
 }
@@ -599,6 +647,12 @@ void compile_functor(char*label, char*type, unsigned width,
       } else if (strcmp(type, "BUFIF1") == 0) {
 	    obj = new vvp_fun_bufif(false,false, ostr0, ostr1);
 	    strength_aware = true;
+
+      } else if (strcmp(type, "EQUIV") == 0) {
+	    obj = new vvp_fun_equiv();
+
+      } else if (strcmp(type, "IMPL") == 0) {
+	    obj = new vvp_fun_impl();
 
       } else if (strcmp(type, "NAND") == 0) {
 	    obj = new vvp_fun_and(width, true);

@@ -421,22 +421,15 @@ static void draw_binary_vec4_lequiv(ivl_expr_t expr)
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
 
-	/* Push the left expression. Reduce it to a single bit if
-	   necessary. */
+	/* The arguments should have already been reduced. */
+      assert(ivl_expr_width(le) == 1);
       draw_eval_vec4(le);
-      if (ivl_expr_width(le) > 1)
-	    fprintf(vvp_out, "    %%or/r;\n");
-
-	/* Now push the right expression. Again, reduce to a single
-	   bit if necessary. */
+      assert(ivl_expr_width(re) == 1);
       draw_eval_vec4(re);
-      if (ivl_expr_width(re) > 1)
-	    fprintf(vvp_out, "    %%or/r;\n");
 
       fprintf(vvp_out, "    %%xnor;\n");
 
-      if (ivl_expr_width(expr) > 1)
-	    fprintf(vvp_out, "    %%pad/u %u;\n", ivl_expr_width(expr));
+      assert(ivl_expr_width(expr) == 1);
 }
 
 static void draw_binary_vec4_land(ivl_expr_t expr)

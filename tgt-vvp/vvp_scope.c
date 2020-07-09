@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -907,6 +907,32 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
       if (need_delay_flag) draw_logic_delay(lptr);
 }
 
+static void draw_equiv_impl_in_scope(ivl_net_logic_t lptr)
+{
+      unsigned ninp;
+      const char *lval;
+      const char *rval;
+      const char*ltype = "?";
+
+      assert(width_of_nexus(ivl_logic_pin(lptr, 0)) == 1);
+
+      assert(ivl_logic_pins(lptr) > 0);
+      ninp = ivl_logic_pins(lptr) - 1;
+      assert(ninp == 2);
+
+      lval = draw_net_input(ivl_logic_pin(lptr, 1));
+      rval = draw_net_input(ivl_logic_pin(lptr, 2));
+
+      if (ivl_logic_type(lptr) == IVL_LO_EQUIV) {
+	    ltype = "EQUIV";
+      } else {
+	    assert(ivl_logic_type(lptr) == IVL_LO_IMPL);
+	    ltype = "IMPL";
+      }
+
+      fprintf(vvp_out, "L_%p .functor %s 1, %s, %s, C4<0>, C4<0>;\n", lptr, ltype, lval, rval);
+}
+
 static void draw_logic_in_scope(ivl_net_logic_t lptr)
 {
       unsigned pdx;
@@ -983,6 +1009,11 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	  case IVL_LO_BUFIF1:
 	    ltype = "BUFIF1";
 	    break;
+
+	  case IVL_LO_EQUIV:
+	  case IVL_LO_IMPL:
+	    draw_equiv_impl_in_scope(lptr);
+	    return;
 
 	  case IVL_LO_NAND:
 	    ltype = "NAND";

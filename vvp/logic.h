@@ -1,7 +1,7 @@
 #ifndef IVL_logic_H
 #define IVL_logic_H
 /*
- * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -52,6 +52,26 @@ class vvp_fun_and  : public vvp_fun_boolean_ {
     private:
       void run_run();
       bool invert_;
+};
+
+class vvp_fun_equiv : public vvp_fun_boolean_ {
+
+    public:
+      explicit vvp_fun_equiv();
+      ~vvp_fun_equiv();
+
+    private:
+      void run_run();
+};
+
+class vvp_fun_impl : public vvp_fun_boolean_ {
+
+    public:
+      explicit vvp_fun_impl();
+      ~vvp_fun_impl();
+
+    private:
+      void run_run();
 };
 
 /*

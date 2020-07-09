@@ -739,6 +739,12 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
 	  case CMOS:
 	    o << "cmos";
 	    break;
+	  case EQUIV:
+	    o << "<->";
+	    break;
+	  case IMPL:
+	    o << "->";
+	    break;
 	  case NAND:
 	    o << "nand";
 	    break;
