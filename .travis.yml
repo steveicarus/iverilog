@@ -48,6 +48,7 @@ jobs:
         - $mingw64 make install
         - $mingw64 make check
         - cd ivtest
+        - $mingw64 perl update_msys2_report.pl
         - $mingw64 perl vvp_reg.pl
         - diff regression_report-msys2.txt regression_report.txt
         - $mingw64 perl vpi_reg.pl
