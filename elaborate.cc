@@ -5339,9 +5339,20 @@ NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return 0;
       }
+      ivl_assert(*this, target->type() == NetScope::FUNC);
 
-	// We don't yet support void functions, so require an
-	// expression for the return statement.
+      if (target->func_def()->is_void()) {
+	    if (expr_) {
+		  cerr << get_fileline() << ": error: "
+		       << "A value can't be returned from a void function." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    NetDisable*disa = new NetDisable(target);
+	    disa->set_line( *this );
+	    return disa;
+      }
+
       if (expr_ == 0) {
 	    cerr << get_fileline() << ": error: "
 		 << "Return from " << scope_path(target)
