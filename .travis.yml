@@ -50,5 +50,5 @@ jobs:
         - cd ivtest
         - $mingw64 perl update_msys2_report.pl
         - $mingw64 perl vvp_reg.pl
-        - diff regression_report-msys2.txt regression_report.txt
+        - diff --strip-trailing-cr regression_report-msys2.txt regression_report.txt
         - $mingw64 perl vpi_reg.pl
