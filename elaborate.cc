@@ -5362,6 +5362,7 @@ NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
       }
 
       NetNet*res = target->find_signal(target->basename());
+      ivl_assert(*this, res);
       ivl_variable_type_t lv_type = res->data_type();
       unsigned long wid = res->vector_width();
       NetAssign_*lv = new NetAssign_(res);
