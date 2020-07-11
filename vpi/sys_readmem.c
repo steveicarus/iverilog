@@ -139,8 +139,13 @@ static int process_params(vpiHandle mitem,
       if (!stop_item && (left_addr > right_addr)) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s: Standard inconsistency, following 1364-2005.\n",
-	               name);
+	    vpi_printf("%s: The behaviour for reg[...] mem[N:0]; %s(\"...\", mem);"
+		       " changed in the 1364-2005 standard. To avoid ambiguity,"
+		       " use mem[0:N] or explicit range parameters"
+		       " %s(\"...\", mem, start, stop);. Defaulting to 1364-2005"
+		       " behavior.\n",
+		       name, name, name);
+
       }
 
 	/* Check that start_addr and stop_addr are within the memory
