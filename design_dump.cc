@@ -232,7 +232,9 @@ ostream& netdarray_t::debug_dump(ostream&o) const
 
 ostream& netqueue_t::debug_dump(ostream&fd) const
 {
-      fd << "queue of " << *element_type();
+      fd << "queue of ";
+      if (max_idx_ >= 0) fd << "(maximum of " << max_idx_+1 << " elements) ";
+      fd << *element_type();
       return fd;
 }
 

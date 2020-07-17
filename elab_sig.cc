@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1094,13 +1094,35 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    }
 
 	      // Special case: Detect the mark for a QUEUE
-	      // declaration, which is the dimensions [null:<nil>].
-	    if (use_ridx==0 && dynamic_cast<PENull*>(use_lidx)) {
+	      // declaration, which is the dimensions [null:max_idx].
+	    if (dynamic_cast<PENull*>(use_lidx)) {
 		  netvector_t*vec = new netvector_t(packed_dimensions, data_type_);
 		  vec->set_signed(get_signed());
 		  packed_dimensions.clear();
 		  ivl_assert(*this, netdarray==0);
-		  netdarray = new netqueue_t(vec);
+		  long max_idx;
+		  if (use_ridx) {
+			NetExpr*tmp = elab_and_eval(des, array_type_scope, use_ridx,
+			                            -1, true);
+			NetEConst*cv = dynamic_cast<NetEConst*>(tmp);
+			if (cv == 0) {
+			      cerr << get_fileline() << ": error: queue '" << name_
+			           << "' maximum size must be a constant!" << endl;
+			      des->errors += 1;
+			      max_idx = -1;
+			} else {
+			      verinum res = cv->value();
+			      max_idx = res.as_long();
+			      if (max_idx < 0) {
+				    cerr << get_fileline() << ": error: queue '"
+				         << name_ << "' maximum size must be positive ("
+				         << max_idx << ")!" << endl;
+				    des->errors += 1;
+				    max_idx = -1;
+			      }
+			}
+		  } else max_idx = -1;
+		  netdarray = new netqueue_t(vec, max_idx);
 		  continue;
 	    }
 

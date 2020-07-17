@@ -1780,24 +1780,37 @@ static int show_push_frontback_method(ivl_statement_t net, bool is_front)
       ivl_type_t var_type = ivl_signal_net_type(var);
       assert(ivl_type_base(var_type)== IVL_VT_QUEUE);
 
+	/* The maximum index value is passed as the signal width. */
+      long max_size = ivl_signal_width(var) + 1;
+      assert(max_size >= 0);
+      int idx = allocate_word();
+      assert(idx >= 0);
+	/* Save the queue maximum index value to an integer register. */
+      fprintf(vvp_out, "    %%ix/load %u, %ld, 0;\n", idx, max_size);
+      fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+
       ivl_type_t element_type = ivl_type_element(var_type);
 
       ivl_expr_t parm1 = ivl_stmt_parm(net,1);
       switch (ivl_type_base(element_type)) {
 	  case IVL_VT_REAL:
 	    draw_eval_real(parm1);
-	    fprintf(vvp_out, "    %%store/%s/r v%p_0;\n", type_code, var);
+	    fprintf(vvp_out, "    %%store/%s/r v%p_0, %u;\n",
+	            type_code, var, idx);
 	    break;
 	  case IVL_VT_STRING:
 	    draw_eval_string(parm1);
-	    fprintf(vvp_out, "    %%store/%s/str v%p_0;\n", type_code, var);
+	    fprintf(vvp_out, "    %%store/%s/str v%p_0, %u;\n",
+	            type_code, var, idx);
 	    break;
 	  default:
 	    draw_eval_vec4(parm1);
-	    fprintf(vvp_out, "    %%store/%s/v v%p_0, %u;\n",
-		    type_code, var, width_of_packed_type(element_type));
+	    fprintf(vvp_out, "    %%store/%s/v v%p_0, %u, %u;\n",
+	            type_code, var, idx,
+	            width_of_packed_type(element_type));
 	    break;
       }
+      clr_word(idx);
 
       return 0;
 }

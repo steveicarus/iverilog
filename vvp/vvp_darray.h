@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_darray_H
 #define IVL_vvp_darray_H
 /*
- * Copyright (c) 2012-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -154,14 +154,14 @@ class vvp_queue : public vvp_darray {
       inline vvp_queue(void) { }
       ~vvp_queue();
 
-      virtual void push_back(const vvp_vector4_t&value);
-      virtual void push_front(const vvp_vector4_t&value);
+      virtual void push_back(const vvp_vector4_t&value, unsigned max_size);
+      virtual void push_front(const vvp_vector4_t&value, unsigned max_size);
 
-      virtual void push_back(double value);
-      virtual void push_front(double value);
+      virtual void push_back(double value, unsigned max_size);
+      virtual void push_front(double value, unsigned max_size);
 
-      virtual void push_back(const std::string&value);
-      virtual void push_front(const std::string&value);
+      virtual void push_back(const std::string&value, unsigned max_size);
+      virtual void push_front(const std::string&value, unsigned max_size);
 
       virtual void pop_back(void) =0;
       virtual void pop_front(void)=0;
@@ -175,8 +175,8 @@ class vvp_queue_vec4 : public vvp_queue {
       size_t get_size(void) const;
       void set_word(unsigned adr, const vvp_vector4_t&value);
       void get_word(unsigned adr, vvp_vector4_t&value);
-      void push_back(const vvp_vector4_t&value);
-      void push_front(const vvp_vector4_t&value);
+      void push_back(const vvp_vector4_t&value, unsigned max_size);
+      void push_front(const vvp_vector4_t&value, unsigned max_size);
       void pop_back(void);
       void pop_front(void);
 
@@ -193,8 +193,8 @@ class vvp_queue_string : public vvp_queue {
       size_t get_size(void) const;
       void set_word(unsigned adr, const std::string&value);
       void get_word(unsigned adr, std::string&value);
-      void push_back(const std::string&value);
-	//void push_front(const std::string&value);
+      void push_back(const std::string&value, unsigned max_size);
+	//void push_front(const std::string&value, unsigned max_size);
       void pop_back(void);
       void pop_front(void);
 

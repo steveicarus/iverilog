@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -410,32 +410,32 @@ vvp_queue::~vvp_queue()
 {
 }
 
-void vvp_queue::push_back(const vvp_vector4_t&)
+void vvp_queue::push_back(const vvp_vector4_t&, unsigned)
 {
       cerr << "XXXX push_back(vvp_vector4_t) not implemented for " << typeid(*this).name() << endl;
 }
 
-void vvp_queue::push_front(const vvp_vector4_t&)
+void vvp_queue::push_front(const vvp_vector4_t&, unsigned)
 {
       cerr << "XXXX push_front(vvp_vector4_t) not implemented for " << typeid(*this).name() << endl;
 }
 
-void vvp_queue::push_back(double)
+void vvp_queue::push_back(double, unsigned)
 {
       cerr << "XXXX push_back(double) not implemented for " << typeid(*this).name() << endl;
 }
 
-void vvp_queue::push_front(double)
+void vvp_queue::push_front(double, unsigned)
 {
       cerr << "XXXX push_front(double) not implemented for " << typeid(*this).name() << endl;
 }
 
-void vvp_queue::push_back(const string&)
+void vvp_queue::push_back(const string&, unsigned)
 {
       cerr << "XXXX push_back(string) not implemented for " << typeid(*this).name() << endl;
 }
 
-void vvp_queue::push_front(const string&)
+void vvp_queue::push_front(const string&, unsigned)
 {
       cerr << "XXXX push_front(string) not implemented for " << typeid(*this).name() << endl;
 }
@@ -449,9 +449,10 @@ size_t vvp_queue_string::get_size() const
       return array_.size();
 }
 
-void vvp_queue_string::push_back(const string&val)
+void vvp_queue_string::push_back(const string&val, unsigned max_size)
 {
-      array_.push_back(val);
+      if (!max_size || (array_.size() < max_size)) array_.push_back(val);
+      else cerr << "Warning: value \"" << val << "\" was not added to queue." << endl;
 }
 
 void vvp_queue_string::set_word(unsigned adr, const string&value)
@@ -533,13 +534,18 @@ void vvp_queue_vec4::get_word(unsigned adr, vvp_vector4_t&value)
       value = *cur;
 }
 
-void vvp_queue_vec4::push_back(const vvp_vector4_t&val)
+void vvp_queue_vec4::push_back(const vvp_vector4_t&val, unsigned max_size)
 {
-      array_.push_back(val);
+      if (!max_size || (array_.size() < max_size)) array_.push_back(val);
+      else cerr << "Warning: value " << val << " was not added to queue." << endl;
 }
 
-void vvp_queue_vec4::push_front(const vvp_vector4_t&val)
+void vvp_queue_vec4::push_front(const vvp_vector4_t&val, unsigned max_size)
 {
+      if (max_size && (array_.size() == max_size)) {
+	    cerr << "Warning: value " << array_.back() << " was removed from queue." << endl;
+	    array_.pop_back();
+      }
       array_.push_front(val);
 }
 

@@ -5702,7 +5702,7 @@ bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %store/qb/r <var-label>
+ * %store/qb/r <var-label>, <max-idx>
  */
 bool of_STORE_QB_R(vthread_t, vvp_code_t)
 {
@@ -5711,7 +5711,7 @@ bool of_STORE_QB_R(vthread_t, vvp_code_t)
 }
 
 /*
- * %store/qb/str <var-label>
+ * %store/qb/str <var-label>, <max-idx>
  */
 bool of_STORE_QB_STR(vthread_t thr, vvp_code_t cp)
 {
@@ -5719,15 +5719,16 @@ bool of_STORE_QB_STR(vthread_t thr, vvp_code_t cp)
       string value = thr->pop_str();
 
       vvp_net_t*net = cp->net;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
       vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
 
       assert(dqueue);
-      dqueue->push_back(value);
+      dqueue->push_back(value, max_size);
       return true;
 }
 
 /*
- * %store/qb/v <var-label>, <wid>
+ * %store/qb/v <var-label>, <max-idx>, <wid>
  */
 bool of_STORE_QB_V(vthread_t thr, vvp_code_t cp)
 {
@@ -5735,20 +5736,21 @@ bool of_STORE_QB_V(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t value = thr->pop_vec4();
 
       vvp_net_t*net = cp->net;
-      unsigned wid = cp->bit_idx[0];
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+      unsigned wid = cp->bit_idx[1];
 
       assert(value.size() == wid);
 
       vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
 
       assert(dqueue);
-      dqueue->push_back(value);
+      dqueue->push_back(value, max_size);
       return true;
 }
 
 
 /*
- * %store/qf/r <var-label>
+ * %store/qf/r <var-label>, <max-idx>
  */
 bool of_STORE_QF_R(vthread_t, vvp_code_t)
 {
@@ -5757,7 +5759,7 @@ bool of_STORE_QF_R(vthread_t, vvp_code_t)
 }
 
 /*
- * %store/qf/str <var-label>
+ * %store/qf/str <var-label>, <max-idx>
  */
 bool of_STORE_QF_STR(vthread_t, vvp_code_t)
 {
@@ -5766,7 +5768,7 @@ bool of_STORE_QF_STR(vthread_t, vvp_code_t)
 }
 
 /*
- * %store/qb/v <var-label>, <wid>
+ * %store/qb/v <var-label>, <max-idx>, <wid>
  */
 bool of_STORE_QF_V(vthread_t thr, vvp_code_t cp)
 {
@@ -5774,13 +5776,14 @@ bool of_STORE_QF_V(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t value = thr->pop_vec4();
 
       vvp_net_t*net = cp->net;
-      unsigned wid = cp->bit_idx[0];
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+      unsigned wid = cp->bit_idx[1];
 
       vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
 
       assert(value.size() == wid);
       assert(dqueue);
-      dqueue->push_front(value);
+      dqueue->push_front(value, max_size);
       return true;
 }
 

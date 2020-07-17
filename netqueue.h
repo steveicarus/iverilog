@@ -1,7 +1,7 @@
 #ifndef IVL__netqueue_H
 #define IVL__netqueue_H
 /*
- * Copyright (c) 2014-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2014-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,7 +30,7 @@
 class netqueue_t : public netdarray_t {
 
     public:
-      explicit netqueue_t(ivl_type_t vec);
+      explicit netqueue_t(ivl_type_t vec, long max_idx);
       ~netqueue_t();
 
 	// This is the "base_type()" virtual method of the
@@ -41,10 +41,14 @@ class netqueue_t : public netdarray_t {
 	// A queue may have a type that is signed.
       inline bool get_signed() const { return element_type()->get_signed(); }
 
+	// Use the packed width to pass the maximum index
+      long packed_width(void) const { return max_idx_; }
+
       std::ostream& debug_dump(std::ostream&) const;
 
     private:
       bool test_compatibility(ivl_type_t that) const;
+      long max_idx_;
 };
 
 #endif

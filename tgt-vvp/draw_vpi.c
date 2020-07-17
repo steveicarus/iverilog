@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -94,9 +94,13 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 
 	         If I don't need to do any evaluating, then skip it as
 	         I'll be passing the handle to the signal itself. */
-	    if (ivl_expr_width(expr) !=
-	        ivl_signal_width(ivl_expr_signal(expr))) {
+	    if ((ivl_expr_width(expr) !=
+	         ivl_signal_width(ivl_expr_signal(expr))) &&
+	         ivl_expr_value(expr) != IVL_VT_DARRAY) {
 		    /* This should never happen since we have IVL_EX_SELECT. */
+		    /* For a queue (type of darray) we return the maximum
+		       size of the queue as the signal width. */
+		  assert(0);
 		  return 0;
 
 	    } else if (signal_is_return_value(ivl_expr_signal(expr))) {

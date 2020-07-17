@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2014-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,8 +22,8 @@
 
 using namespace std;
 
-netqueue_t::netqueue_t(ivl_type_t vec)
-: netdarray_t(vec)
+netqueue_t::netqueue_t(ivl_type_t vec, long max_idx)
+: netdarray_t(vec), max_idx_(max_idx)
 {
 }
 

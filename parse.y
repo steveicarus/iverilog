@@ -2657,6 +2657,16 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
 	tmp->push_back(index);
 	$$ = tmp;
       }
+  | '[' '$' ':' expression ']'
+      { // SystemVerilog queue with a max size
+	list<pform_range_t> *tmp = new list<pform_range_t>;
+	pform_range_t index (new PENull,$4);
+	if (!gn_system_verilog()) {
+	      yyerror("error: Queue declarations require SystemVerilog.");
+	}
+	tmp->push_back(index);
+	$$ = tmp;
+      }
   ;
 
 variable_lifetime

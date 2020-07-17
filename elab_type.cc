@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -252,12 +252,13 @@ ivl_type_s* uarray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
       }
 
 	// Special case: if the dimension is null:nil. this is a queue.
-      if (cur->second==0 && dynamic_cast<PENull*>(cur->first)) {
+      if (dynamic_cast<PENull*>(cur->first)) {
 	    cerr << get_fileline() << ": sorry: "
 		 << "SV queues inside classes are not yet supported." << endl;
 	    des->errors += 1;
 
-	    ivl_type_s*res = new netqueue_t(btype);
+	      // FIXME: Need to set the max size if cur->second is defined
+	    ivl_type_s*res = new netqueue_t(btype, -1);
 	    return res;
       }
 

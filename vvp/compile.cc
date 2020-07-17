@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -278,12 +278,12 @@ static const struct opcode_table_s opcode_table[] = {
       { "%store/prop/r",  of_STORE_PROP_R,  1, {OA_NUMBER,  OA_NONE, OA_NONE} },
       { "%store/prop/str",of_STORE_PROP_STR,1, {OA_NUMBER,  OA_NONE, OA_NONE} },
       { "%store/prop/v",  of_STORE_PROP_V,  2, {OA_NUMBER,  OA_BIT1, OA_NONE} },
-      { "%store/qb/r",   of_STORE_QB_R,    1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
-      { "%store/qb/str", of_STORE_QB_STR,  1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
-      { "%store/qb/v",   of_STORE_QB_V,    2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },
-      { "%store/qf/r",   of_STORE_QF_R,    1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
-      { "%store/qf/str", of_STORE_QF_STR,  1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
-      { "%store/qf/v",   of_STORE_QF_V,    2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },
+      { "%store/qb/r",   of_STORE_QB_R,    2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },
+      { "%store/qb/str", of_STORE_QB_STR,  2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },
+      { "%store/qb/v",   of_STORE_QB_V,    3, {OA_FUNC_PTR, OA_BIT1, OA_BIT2} },
+      { "%store/qf/r",   of_STORE_QF_R,    2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },
+      { "%store/qf/str", of_STORE_QF_STR,  2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },
+      { "%store/qf/v",   of_STORE_QF_V,    3, {OA_FUNC_PTR, OA_BIT1, OA_BIT2} },
       { "%store/real",    of_STORE_REAL,    1, {OA_FUNC_PTR,OA_NONE, OA_NONE} },
       { "%store/reala",   of_STORE_REALA,   2, {OA_ARR_PTR, OA_BIT1, OA_NONE} },
       { "%store/str",     of_STORE_STR,     1, {OA_FUNC_PTR,OA_NONE, OA_NONE} },
