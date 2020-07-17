@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2019 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2020 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -266,7 +266,8 @@ static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
 
 	/* If there are no selects then just print the name. */
       sel_expr = ivl_lval_part_off(lval);
-      if (! sel_expr && (width == ivl_signal_width(sig))) {
+      if (! sel_expr && ((width == ivl_signal_width(sig)) ||
+                         (ivl_signal_data_type(sig) == IVL_VT_QUEUE))) {
 	    emit_stmt_lval_name(scope, lval, sig);
 	    return;
       }
