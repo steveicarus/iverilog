@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -1005,6 +1005,10 @@ character of the string variable at <functor-label>. This is
 basically an implementation of <string>.putc(<muxr>, <val>) where
 <val> is the 8bit vector popped from the stack.
 
+* %qpop/b/real <functor-label>
+* %qpop/f/real <functor-label>
+* %qpop/b/str <functor-label>
+* %qpop/f/str <functor-label>
 * %qpop/b/v <functor-label>
 * %qpop/f/v <functor-label>
 

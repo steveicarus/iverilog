@@ -5012,6 +5012,30 @@ bool of_PUTC_STR_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %qpop/b/real <var-label>
+ */
+bool of_QPOP_B_REAL(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
+      assert(dqueue);
+
+      size_t size = dqueue->get_size();
+      assert(size > 0);
+
+      double value;
+      dqueue->get_word(size-1, value);
+      dqueue->pop_back();
+
+      thr->push_real(value);
+      return true;
+}
+
+/*
+ * %qpop/b/str <var-label>
+ */
 bool of_QPOP_B_STR(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
@@ -5051,6 +5075,27 @@ bool of_QPOP_B_V(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %qpop/f/real <var-label>
+ */
+bool of_QPOP_F_REAL(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
+      assert(dqueue);
+
+      double value;
+      dqueue->get_word(0, value);
+      dqueue->pop_front();
+
+      thr->push_real(value);
+      return true;
+}
+
+/*
+ * %qpop/f/str <var-label>
+ */
 bool of_QPOP_F_STR(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
@@ -5704,9 +5749,17 @@ bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
 /*
  * %store/qb/r <var-label>, <max-idx>
  */
-bool of_STORE_QB_R(vthread_t, vvp_code_t)
+bool of_STORE_QB_R(vthread_t thr, vvp_code_t cp)
 {
-      fprintf(stderr, "XXXX %%store/qb/r NOT IMPLEMENTED\n");
+	// Pop the double to be stored...
+      double value = thr->pop_real();
+
+      vvp_net_t*net = cp->net;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+      vvp_queue*dqueue = get_queue_object<vvp_queue_real>(thr, net);
+
+      assert(dqueue);
+      dqueue->push_back(value, max_size);
       return true;
 }
 
@@ -5752,9 +5805,17 @@ bool of_STORE_QB_V(vthread_t thr, vvp_code_t cp)
 /*
  * %store/qf/r <var-label>, <max-idx>
  */
-bool of_STORE_QF_R(vthread_t, vvp_code_t)
+bool of_STORE_QF_R(vthread_t thr, vvp_code_t cp)
 {
-      fprintf(stderr, "XXXX %%store/qf/r NOT IMPLEMENTED\n");
+	// Pop the double to be stored...
+      double value = thr->pop_real();
+
+      vvp_net_t*net = cp->net;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+      vvp_queue*dqueue = get_queue_object<vvp_queue_real>(thr, net);
+
+      assert(dqueue);
+      dqueue->push_front(value, max_size);
       return true;
 }
 

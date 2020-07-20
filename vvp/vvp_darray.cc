@@ -440,13 +440,61 @@ void vvp_queue::push_front(const string&, unsigned)
       cerr << "XXXX push_front(string) not implemented for " << typeid(*this).name() << endl;
 }
 
-vvp_queue_string::~vvp_queue_string()
+vvp_queue_real::~vvp_queue_real()
 {
 }
 
-size_t vvp_queue_string::get_size() const
+void vvp_queue_real::set_word(unsigned adr, double value)
 {
-      return array_.size();
+      if (adr >= array_.size())
+	    return;
+
+      list<double>::iterator cur = array_.begin();
+      while (adr > 0) {
+	    ++ cur;
+	    adr -= 1;
+      }
+
+      *cur = value;
+}
+
+void vvp_queue_real::get_word(unsigned adr, double&value)
+{
+      if (adr >= array_.size()) {
+	    value = 0.0;
+	    return;
+      }
+
+      list<double>::const_iterator cur = array_.begin();
+      while (adr > 0) {
+	    ++ cur;
+	    adr -= 1;
+      }
+
+      value = *cur;
+}
+
+void vvp_queue_real::push_back(double value, unsigned max_size)
+{
+      if (!max_size || (array_.size() < max_size)) array_.push_back(value);
+      else cerr << "Warning: value " << value
+                << " was not added to the end of already full sized ("
+                << max_size << ") queue." << endl;
+}
+
+void vvp_queue_real::push_front(double value, unsigned max_size)
+{
+      if (max_size && (array_.size() == max_size)) {
+	    cerr << "Warning: value " << array_.back()
+	         << " was removed from already full sized ("
+	         << max_size << ") queue." << endl;
+	    array_.pop_back();
+      }
+      array_.push_front(value);
+}
+
+vvp_queue_string::~vvp_queue_string()
+{
 }
 
 void vvp_queue_string::set_word(unsigned adr, const string&value)
@@ -479,15 +527,15 @@ void vvp_queue_string::get_word(unsigned adr, string&value)
       value = *cur;
 }
 
-void vvp_queue_string::push_back(const string&val, unsigned max_size)
+void vvp_queue_string::push_back(const string&value, unsigned max_size)
 {
-      if (!max_size || (array_.size() < max_size)) array_.push_back(val);
-      else cerr << "Warning: value \"" << val
+      if (!max_size || (array_.size() < max_size)) array_.push_back(value);
+      else cerr << "Warning: value \"" << value
                 << "\" was not added to the end of already full sized ("
                 << max_size << ") queue." << endl;
 }
 
-void vvp_queue_string::push_front(const string&val, unsigned max_size)
+void vvp_queue_string::push_front(const string&value, unsigned max_size)
 {
       if (max_size && (array_.size() == max_size)) {
 	    cerr << "Warning: value \"" << array_.back()
@@ -495,26 +543,11 @@ void vvp_queue_string::push_front(const string&val, unsigned max_size)
 	         << max_size << ") queue." << endl;
 	    array_.pop_back();
       }
-      array_.push_front(val);
-}
-
-void vvp_queue_string::pop_back(void)
-{
-      array_.pop_back();
-}
-
-void vvp_queue_string::pop_front(void)
-{
-      array_.pop_front();
+      array_.push_front(value);
 }
 
 vvp_queue_vec4::~vvp_queue_vec4()
 {
-}
-
-size_t vvp_queue_vec4::get_size() const
-{
-      return array_.size();
 }
 
 void vvp_queue_vec4::set_word(unsigned adr, const vvp_vector4_t&value)
@@ -547,15 +580,15 @@ void vvp_queue_vec4::get_word(unsigned adr, vvp_vector4_t&value)
       value = *cur;
 }
 
-void vvp_queue_vec4::push_back(const vvp_vector4_t&val, unsigned max_size)
+void vvp_queue_vec4::push_back(const vvp_vector4_t&value, unsigned max_size)
 {
-      if (!max_size || (array_.size() < max_size)) array_.push_back(val);
-      else cerr << "Warning: value " << val
+      if (!max_size || (array_.size() < max_size)) array_.push_back(value);
+      else cerr << "Warning: value " << value
                 << " was not added to the end of already full sized ("
                 << max_size << ") queue." << endl;
 }
 
-void vvp_queue_vec4::push_front(const vvp_vector4_t&val, unsigned max_size)
+void vvp_queue_vec4::push_front(const vvp_vector4_t&value, unsigned max_size)
 {
       if (max_size && (array_.size() == max_size)) {
 	    cerr << "Warning: value " << array_.back()
@@ -563,15 +596,5 @@ void vvp_queue_vec4::push_front(const vvp_vector4_t&val, unsigned max_size)
 	         << max_size << ") queue." << endl;
 	    array_.pop_back();
       }
-      array_.push_front(val);
-}
-
-void vvp_queue_vec4::pop_back(void)
-{
-      array_.pop_back();
-}
-
-void vvp_queue_vec4::pop_front(void)
-{
-      array_.pop_front();
+      array_.push_front(value);
 }

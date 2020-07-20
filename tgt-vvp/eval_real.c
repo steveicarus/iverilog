@@ -260,10 +260,26 @@ static void draw_select_real(ivl_expr_t expr)
 
 	/* Assume the sub-expression is a signal */
       ivl_signal_t sig = ivl_expr_signal(sube);
-      assert(ivl_signal_data_type(sig) == IVL_VT_DARRAY);
+      assert(ivl_signal_data_type(sig) == IVL_VT_DARRAY || ivl_signal_data_type(sig) == IVL_VT_QUEUE);
 
       draw_eval_expr_into_integer(shift, 3);
       fprintf(vvp_out, "    %%load/dar/r v%p_0;\n", sig);
+}
+
+static void real_ex_pop(ivl_expr_t expr)
+{
+      const char*fb;
+      ivl_expr_t arg;
+
+      if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_back")==0)
+            fb = "b";
+      else
+            fb = "f";
+
+      arg = ivl_expr_parm(expr, 0);
+      assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
+
+      fprintf(vvp_out, "    %%qpop/%s/real v%p_0;\n", fb, ivl_expr_signal(arg));
 }
 
 static void draw_sfunc_real(ivl_expr_t expr)
@@ -511,7 +527,12 @@ void draw_eval_real(ivl_expr_t expr)
 	    break;
 
 	  case IVL_EX_SFUNC:
-	    draw_sfunc_real(expr);
+	    if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_back")==0)
+		  real_ex_pop(expr);
+	    else if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_front")==0)
+		  real_ex_pop(expr);
+	    else
+		  draw_sfunc_real(expr);
 	    break;
 
 	  case IVL_EX_SIGNAL:

@@ -1,7 +1,7 @@
 #ifndef IVL_codes_H
 #define IVL_codes_H
 /*
- * Copyright (c) 2001-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -187,8 +187,10 @@ extern bool of_POP_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_POW(vthread_t thr, vvp_code_t code);
 extern bool of_POW_S(vthread_t thr, vvp_code_t code);
 extern bool of_POW_WR(vthread_t thr, vvp_code_t code);
+extern bool of_QPOP_B_REAL(vthread_t thr, vvp_code_t code);
 extern bool of_QPOP_B_STR(vthread_t thr, vvp_code_t code);
 extern bool of_QPOP_B_V(vthread_t thr, vvp_code_t code);
+extern bool of_QPOP_F_REAL(vthread_t thr, vvp_code_t code);
 extern bool of_QPOP_F_STR(vthread_t thr, vvp_code_t code);
 extern bool of_QPOP_F_V(vthread_t thr, vvp_code_t code);
 extern bool of_PROP_OBJ(vthread_t thr, vvp_code_t code);
