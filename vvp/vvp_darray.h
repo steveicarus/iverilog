@@ -194,7 +194,7 @@ class vvp_queue_string : public vvp_queue {
       void set_word(unsigned adr, const std::string&value);
       void get_word(unsigned adr, std::string&value);
       void push_back(const std::string&value, unsigned max_size);
-	//void push_front(const std::string&value, unsigned max_size);
+      void push_front(const std::string&value, unsigned max_size);
       void pop_back(void);
       void pop_front(void);
 

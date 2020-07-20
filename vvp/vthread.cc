@@ -5761,9 +5761,17 @@ bool of_STORE_QF_R(vthread_t, vvp_code_t)
 /*
  * %store/qf/str <var-label>, <max-idx>
  */
-bool of_STORE_QF_STR(vthread_t, vvp_code_t)
+bool of_STORE_QF_STR(vthread_t thr, vvp_code_t cp)
 {
-      fprintf(stderr, "XXXX %%store/qf/str NOT IMPLEMENTED\n");
+	// Pop the string to be stored...
+      string value = thr->pop_str();
+
+      vvp_net_t*net = cp->net;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
+
+      assert(dqueue);
+      dqueue->push_front(value, max_size);
       return true;
 }
 

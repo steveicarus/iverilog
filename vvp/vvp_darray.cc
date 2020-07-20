@@ -449,12 +449,6 @@ size_t vvp_queue_string::get_size() const
       return array_.size();
 }
 
-void vvp_queue_string::push_back(const string&val, unsigned max_size)
-{
-      if (!max_size || (array_.size() < max_size)) array_.push_back(val);
-      else cerr << "Warning: value \"" << val << "\" was not added to queue." << endl;
-}
-
 void vvp_queue_string::set_word(unsigned adr, const string&value)
 {
       if (adr >= array_.size())
@@ -483,6 +477,25 @@ void vvp_queue_string::get_word(unsigned adr, string&value)
       }
 
       value = *cur;
+}
+
+void vvp_queue_string::push_back(const string&val, unsigned max_size)
+{
+      if (!max_size || (array_.size() < max_size)) array_.push_back(val);
+      else cerr << "Warning: value \"" << val
+                << "\" was not added to the end of already full sized ("
+                << max_size << ") queue." << endl;
+}
+
+void vvp_queue_string::push_front(const string&val, unsigned max_size)
+{
+      if (max_size && (array_.size() == max_size)) {
+	    cerr << "Warning: value \"" << array_.back()
+	         << "\" was removed from already full sized ("
+	         << max_size << ") queue." << endl;
+	    array_.pop_back();
+      }
+      array_.push_front(val);
 }
 
 void vvp_queue_string::pop_back(void)
@@ -537,13 +550,17 @@ void vvp_queue_vec4::get_word(unsigned adr, vvp_vector4_t&value)
 void vvp_queue_vec4::push_back(const vvp_vector4_t&val, unsigned max_size)
 {
       if (!max_size || (array_.size() < max_size)) array_.push_back(val);
-      else cerr << "Warning: value " << val << " was not added to queue." << endl;
+      else cerr << "Warning: value " << val
+                << " was not added to the end of already full sized ("
+                << max_size << ") queue." << endl;
 }
 
 void vvp_queue_vec4::push_front(const vvp_vector4_t&val, unsigned max_size)
 {
       if (max_size && (array_.size() == max_size)) {
-	    cerr << "Warning: value " << array_.back() << " was removed from queue." << endl;
+	    cerr << "Warning: value " << array_.back()
+	         << " was removed from already full sized ("
+	         << max_size << ") queue." << endl;
 	    array_.pop_back();
       }
       array_.push_front(val);
