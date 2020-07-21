@@ -477,17 +477,17 @@ void vvp_queue_real::get_word(unsigned adr, double&value)
 void vvp_queue_real::push_back(double value, unsigned max_size)
 {
       if (!max_size || (array_.size() < max_size)) array_.push_back(value);
-      else cerr << "Warning: value " << value
-                << " was not added to the end of already full sized ("
-                << max_size << ") queue." << endl;
+      else cerr << "Warning: push_back(" << value
+                << ") skipped for already full bounded queue ["
+                << max_size << "]." << endl;
 }
 
 void vvp_queue_real::push_front(double value, unsigned max_size)
 {
       if (max_size && (array_.size() == max_size)) {
-	    cerr << "Warning: value " << array_.back()
-	         << " was removed from already full sized ("
-	         << max_size << ") queue." << endl;
+	    cerr << "Warning: push_front(" << value << ") removed "
+	         << array_.back() << " from already full bounded queue ["
+	         << max_size << "]." << endl;
 	    array_.pop_back();
       }
       array_.push_front(value);
@@ -530,17 +530,17 @@ void vvp_queue_string::get_word(unsigned adr, string&value)
 void vvp_queue_string::push_back(const string&value, unsigned max_size)
 {
       if (!max_size || (array_.size() < max_size)) array_.push_back(value);
-      else cerr << "Warning: value \"" << value
-                << "\" was not added to the end of already full sized ("
-                << max_size << ") queue." << endl;
+      else cerr << "Warning: push_back(\"" << value
+                << "\") skipped for already full bounded queue ["
+                << max_size << "]." << endl;
 }
 
 void vvp_queue_string::push_front(const string&value, unsigned max_size)
 {
       if (max_size && (array_.size() == max_size)) {
-	    cerr << "Warning: value \"" << array_.back()
-	         << "\" was removed from already full sized ("
-	         << max_size << ") queue." << endl;
+	    cerr << "Warning: push_front(\"" << value << "\") removed \""
+	         << array_.back() << "\" from already full bounded queue ["
+	         << max_size << "]." << endl;
 	    array_.pop_back();
       }
       array_.push_front(value);
@@ -583,17 +583,17 @@ void vvp_queue_vec4::get_word(unsigned adr, vvp_vector4_t&value)
 void vvp_queue_vec4::push_back(const vvp_vector4_t&value, unsigned max_size)
 {
       if (!max_size || (array_.size() < max_size)) array_.push_back(value);
-      else cerr << "Warning: value " << value
-                << " was not added to the end of already full sized ("
-                << max_size << ") queue." << endl;
+      else cerr << "Warning: push_back(" << value
+                << ") skipped for already full bounded queue ["
+                << max_size << "]." << endl;
 }
 
 void vvp_queue_vec4::push_front(const vvp_vector4_t&value, unsigned max_size)
 {
       if (max_size && (array_.size() == max_size)) {
-	    cerr << "Warning: value " << array_.back()
-	         << " was removed from already full sized ("
-	         << max_size << ") queue." << endl;
+	    cerr << "Warning: push_front(" << value << ") removed "
+	         << array_.back() << " from already full bounded queue ["
+	         << max_size << "]." << endl;
 	    array_.pop_back();
       }
       array_.push_front(value);

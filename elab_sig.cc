@@ -1107,7 +1107,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 			NetEConst*cv = dynamic_cast<NetEConst*>(tmp);
 			if (cv == 0) {
 			      cerr << get_fileline() << ": error: queue '" << name_
-			           << "' maximum size must be a constant!" << endl;
+			           << "' bound must be a constant!" << endl;
 			      des->errors += 1;
 			      max_idx = -1;
 			} else {
@@ -1115,7 +1115,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 			      max_idx = res.as_long();
 			      if (max_idx < 0) {
 				    cerr << get_fileline() << ": error: queue '"
-				         << name_ << "' maximum size must be positive ("
+				         << name_ << "' bound must be positive ("
 				         << max_idx << ")!" << endl;
 				    des->errors += 1;
 				    max_idx = -1;
