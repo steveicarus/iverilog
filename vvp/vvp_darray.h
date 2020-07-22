@@ -21,7 +21,7 @@
 
 # include  "vvp_object.h"
 # include  "vvp_net.h"
-# include  <list>
+# include  <deque>
 # include  <string>
 # include  <vector>
 
@@ -172,16 +172,16 @@ class vvp_queue_real : public vvp_queue {
     public:
       ~vvp_queue_real();
 
-      size_t get_size(void) const { return array_.size(); };
+      size_t get_size(void) const { return queue.size(); };
       void set_word(unsigned adr, double value);
       void get_word(unsigned adr, double&value);
       void push_back(double value, unsigned max_size);
       void push_front(double value, unsigned max_size);
-      void pop_back(void) { array_.pop_back(); };
-      void pop_front(void) { array_.pop_front(); };
+      void pop_back(void) { queue.pop_back(); };
+      void pop_front(void) { queue.pop_front(); };
 
     private:
-      std::list<double> array_;
+      std::deque<double> queue;
 };
 
 class vvp_queue_string : public vvp_queue {
@@ -189,16 +189,16 @@ class vvp_queue_string : public vvp_queue {
     public:
       ~vvp_queue_string();
 
-      size_t get_size(void) const { return array_.size(); };
+      size_t get_size(void) const { return queue.size(); };
       void set_word(unsigned adr, const std::string&value);
       void get_word(unsigned adr, std::string&value);
       void push_back(const std::string&value, unsigned max_size);
       void push_front(const std::string&value, unsigned max_size);
-      void pop_back(void) { array_.pop_back(); };
-      void pop_front(void) { array_.pop_front(); };
+      void pop_back(void) { queue.pop_back(); };
+      void pop_front(void) { queue.pop_front(); };
 
     private:
-      std::list<std::string> array_;
+      std::deque<std::string> queue;
 };
 
 class vvp_queue_vec4 : public vvp_queue {
@@ -206,16 +206,16 @@ class vvp_queue_vec4 : public vvp_queue {
     public:
       ~vvp_queue_vec4();
 
-      size_t get_size(void) const { return array_.size(); };
+      size_t get_size(void) const { return queue.size(); };
       void set_word(unsigned adr, const vvp_vector4_t&value);
       void get_word(unsigned adr, vvp_vector4_t&value);
       void push_back(const vvp_vector4_t&value, unsigned max_size);
       void push_front(const vvp_vector4_t&value, unsigned max_size);
-      void pop_back(void) { array_.pop_back(); };
-      void pop_front(void) { array_.pop_front(); };
+      void pop_back(void) { queue.pop_back(); };
+      void pop_front(void) { queue.pop_front(); };
 
     private:
-      std::list<vvp_vector4_t> array_;
+      std::deque<vvp_vector4_t> queue;
 };
 
 #endif /* IVL_vvp_darray_H */

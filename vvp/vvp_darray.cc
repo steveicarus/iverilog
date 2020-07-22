@@ -446,37 +446,21 @@ vvp_queue_real::~vvp_queue_real()
 
 void vvp_queue_real::set_word(unsigned adr, double value)
 {
-      if (adr >= array_.size())
-	    return;
-
-      list<double>::iterator cur = array_.begin();
-      while (adr > 0) {
-	    ++ cur;
-	    adr -= 1;
-      }
-
-      *cur = value;
+      if (adr < queue.size())
+	    queue[adr] = value;
 }
 
 void vvp_queue_real::get_word(unsigned adr, double&value)
 {
-      if (adr >= array_.size()) {
+      if (adr >= queue.size())
 	    value = 0.0;
-	    return;
-      }
-
-      list<double>::const_iterator cur = array_.begin();
-      while (adr > 0) {
-	    ++ cur;
-	    adr -= 1;
-      }
-
-      value = *cur;
+      else
+	    value = queue[adr];
 }
 
 void vvp_queue_real::push_back(double value, unsigned max_size)
 {
-      if (!max_size || (array_.size() < max_size)) array_.push_back(value);
+      if (!max_size || (queue.size() < max_size)) queue.push_back(value);
       else cerr << "Warning: push_back(" << value
                 << ") skipped for already full bounded queue ["
                 << max_size << "]." << endl;
@@ -484,13 +468,13 @@ void vvp_queue_real::push_back(double value, unsigned max_size)
 
 void vvp_queue_real::push_front(double value, unsigned max_size)
 {
-      if (max_size && (array_.size() == max_size)) {
+      if (max_size && (queue.size() == max_size)) {
 	    cerr << "Warning: push_front(" << value << ") removed "
-	         << array_.back() << " from already full bounded queue ["
+	         << queue.back() << " from already full bounded queue ["
 	         << max_size << "]." << endl;
-	    array_.pop_back();
+	    queue.pop_back();
       }
-      array_.push_front(value);
+      queue.push_front(value);
 }
 
 vvp_queue_string::~vvp_queue_string()
@@ -499,37 +483,21 @@ vvp_queue_string::~vvp_queue_string()
 
 void vvp_queue_string::set_word(unsigned adr, const string&value)
 {
-      if (adr >= array_.size())
-	    return;
-
-      list<string>::iterator cur = array_.begin();
-      while (adr > 0) {
-	    ++ cur;
-	    adr -= 1;
-      }
-
-      *cur = value;
+      if (adr < queue.size())
+	    queue[adr] = value;
 }
 
 void vvp_queue_string::get_word(unsigned adr, string&value)
 {
-      if (adr >= array_.size()) {
+      if (adr >= queue.size())
 	    value = "";
-	    return;
-      }
-
-      list<string>::const_iterator cur = array_.begin();
-      while (adr > 0) {
-	    ++ cur;
-	    adr -= 1;
-      }
-
-      value = *cur;
+      else
+	    value = queue[adr];
 }
 
 void vvp_queue_string::push_back(const string&value, unsigned max_size)
 {
-      if (!max_size || (array_.size() < max_size)) array_.push_back(value);
+      if (!max_size || (queue.size() < max_size)) queue.push_back(value);
       else cerr << "Warning: push_back(\"" << value
                 << "\") skipped for already full bounded queue ["
                 << max_size << "]." << endl;
@@ -537,13 +505,13 @@ void vvp_queue_string::push_back(const string&value, unsigned max_size)
 
 void vvp_queue_string::push_front(const string&value, unsigned max_size)
 {
-      if (max_size && (array_.size() == max_size)) {
+      if (max_size && (queue.size() == max_size)) {
 	    cerr << "Warning: push_front(\"" << value << "\") removed \""
-	         << array_.back() << "\" from already full bounded queue ["
+	         << queue.back() << "\" from already full bounded queue ["
 	         << max_size << "]." << endl;
-	    array_.pop_back();
+	    queue.pop_back();
       }
-      array_.push_front(value);
+      queue.push_front(value);
 }
 
 vvp_queue_vec4::~vvp_queue_vec4()
@@ -552,37 +520,21 @@ vvp_queue_vec4::~vvp_queue_vec4()
 
 void vvp_queue_vec4::set_word(unsigned adr, const vvp_vector4_t&value)
 {
-      if (adr >= array_.size())
-	    return;
-
-      list<vvp_vector4_t>::iterator cur = array_.begin();
-      while (adr > 0) {
-	    ++ cur;
-	    adr -= 1;
-      }
-
-      *cur = value;
+      if (adr < queue.size())
+	    queue[adr] = value;
 }
 
 void vvp_queue_vec4::get_word(unsigned adr, vvp_vector4_t&value)
 {
-      if (adr >= array_.size()) {
+      if (adr >= queue.size())
 	    value = vvp_vector4_t();
-	    return;
-      }
-
-      list<vvp_vector4_t>::const_iterator cur = array_.begin();
-      while (adr > 0) {
-	    ++ cur;
-	    adr -= 1;
-      }
-
-      value = *cur;
+      else
+	    value = queue[adr];
 }
 
 void vvp_queue_vec4::push_back(const vvp_vector4_t&value, unsigned max_size)
 {
-      if (!max_size || (array_.size() < max_size)) array_.push_back(value);
+      if (!max_size || (queue.size() < max_size)) queue.push_back(value);
       else cerr << "Warning: push_back(" << value
                 << ") skipped for already full bounded queue ["
                 << max_size << "]." << endl;
@@ -590,11 +542,11 @@ void vvp_queue_vec4::push_back(const vvp_vector4_t&value, unsigned max_size)
 
 void vvp_queue_vec4::push_front(const vvp_vector4_t&value, unsigned max_size)
 {
-      if (max_size && (array_.size() == max_size)) {
+      if (max_size && (queue.size() == max_size)) {
 	    cerr << "Warning: push_front(" << value << ") removed "
-	         << array_.back() << " from already full bounded queue ["
+	         << queue.back() << " from already full bounded queue ["
 	         << max_size << "]." << endl;
-	    array_.pop_back();
+	    queue.pop_back();
       }
-      array_.push_front(value);
+      queue.push_front(value);
 }
