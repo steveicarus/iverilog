@@ -27,6 +27,7 @@
 # include  "compiler.h"
 # include  "t-dll.h"
 # include  "netclass.h"
+# include  "netqueue.h"
 # include  "netmisc.h"
 # include  "discipline.h"
 # include  <cstdlib>
@@ -2701,11 +2702,18 @@ void dll_target::signal(const NetNet*net)
 	      // The back-end API doesn't yet support multi-dimension
 	      // unpacked arrays, so just report the canonical dimensions.
 	    obj->array_base = 0;
-	    obj->array_words = net->unpacked_count();
+	      // For a queue we pass the maximum queue size as the array words.
+	    if (obj->net_type->base_type() == IVL_VT_QUEUE) {
+		  long max_size = net->queue_type()->max_idx()+1;
+		  ivl_assert(*net, max_size >= 0);
+		  obj->array_words = max_size;
+	    } else
+		  obj->array_words = net->unpacked_count();
 	    obj->array_addr_swapped = 0;
       }
 
-      ivl_assert(*net, obj->array_words == net->pin_count());
+      ivl_assert(*net, (obj->array_words == net->pin_count()) ||
+                       (obj->net_type->base_type() == IVL_VT_QUEUE));
       if (debug_optimizer && obj->array_words > 1000) cerr << "debug: "
 	    "t-dll creating nexus array " << obj->array_words << " long" << endl;
       if (obj->array_words > 1 && net->pins_are_virtual()) {

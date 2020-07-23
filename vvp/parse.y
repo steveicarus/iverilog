@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -768,11 +768,11 @@ statement
   | T_LABEL K_VAR_STR T_STRING ';'
       { compile_var_string($1, $3); }
 
-  | T_LABEL K_VAR_DARRAY T_STRING ';'
-      { compile_var_darray($1, $3); }
+  | T_LABEL K_VAR_DARRAY T_STRING ',' T_NUMBER ';'
+      { compile_var_darray($1, $3, $5); }
 
-  | T_LABEL K_VAR_QUEUE T_STRING ';'
-      { compile_var_queue($1, $3); }
+  | T_LABEL K_VAR_QUEUE T_STRING  ',' T_NUMBER';'
+      { compile_var_queue($1, $3, $5); }
 
   | T_LABEL K_VAR_COBJECT T_STRING ';'
       { compile_var_cobject($1, $3); }

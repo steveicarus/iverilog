@@ -1780,13 +1780,10 @@ static int show_push_frontback_method(ivl_statement_t net, bool is_front)
       ivl_type_t var_type = ivl_signal_net_type(var);
       assert(ivl_type_base(var_type)== IVL_VT_QUEUE);
 
-	/* The maximum index value is passed as the signal width. */
-      long max_size = ivl_signal_width(var) + 1;
-      assert(max_size >= 0);
       int idx = allocate_word();
       assert(idx >= 0);
 	/* Save the queue maximum index value to an integer register. */
-      fprintf(vvp_out, "    %%ix/load %u, %ld, 0;\n", idx, max_size);
+      fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", idx, ivl_signal_array_count(var));
       fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 
       ivl_type_t element_type = ivl_type_element(var_type);

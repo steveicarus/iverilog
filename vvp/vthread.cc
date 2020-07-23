@@ -3671,10 +3671,12 @@ bool of_LOAD_DAR_R(vthread_t thr, vvp_code_t cp)
       assert(obj);
 
       vvp_darray*darray = obj->get_object().peek<vvp_darray>();
-      assert(darray);
 
       double word;
-      darray->get_word(adr, word);
+      if (darray)
+	    darray->get_word(adr, word);
+      else
+	    word = 0.0;
 
       thr->push_real(word);
       return true;
@@ -3690,12 +3692,14 @@ bool of_LOAD_DAR_STR(vthread_t thr, vvp_code_t cp)
       assert(obj);
 
       vvp_darray*darray = obj->get_object().peek<vvp_darray>();
-      assert(darray);
 
       string word;
-      darray->get_word(adr, word);
-      thr->push_str(word);
+      if (darray)
+	    darray->get_word(adr, word);
+      else
+	    word = "";
 
+      thr->push_str(word);
       return true;
 }
 
@@ -3709,12 +3713,14 @@ bool of_LOAD_DAR_VEC4(vthread_t thr, vvp_code_t cp)
       assert(obj);
 
       vvp_darray*darray = obj->get_object().peek<vvp_darray>();
-      assert(darray);
 
       vvp_vector4_t word;
-      darray->get_word(adr, word);
-      thr->push_vec4(word);
+      if (darray)
+	    darray->get_word(adr, word);
+      else
+	    word = vvp_vector4_t(obj->size());
 
+      thr->push_vec4(word);
       return true;
 }
 

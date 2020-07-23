@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_net_sig_H
 #define IVL_vvp_net_sig_H
 /*
- * Copyright (c) 2004-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -330,10 +330,12 @@ class vvp_fun_signal_string_aa : public vvp_fun_signal_string, public automatic_
 class vvp_fun_signal_object : public vvp_fun_signal_base {
 
     public:
-      explicit vvp_fun_signal_object() {};
-      unsigned size() const { return 1; }
+      explicit vvp_fun_signal_object(unsigned size) { size_ = size; };
+      unsigned size() const { return size_; }
 
       virtual vvp_object_t get_object() const =0;
+    private:
+      unsigned size_;
 };
 
 /*
@@ -342,7 +344,7 @@ class vvp_fun_signal_object : public vvp_fun_signal_base {
 class vvp_fun_signal_object_sa : public vvp_fun_signal_object {
 
     public:
-      explicit vvp_fun_signal_object_sa();
+      explicit vvp_fun_signal_object_sa(unsigned size);
 
       void recv_object(vvp_net_ptr_t port, vvp_object_t bit,
 		    vvp_context_t context);
@@ -359,7 +361,7 @@ class vvp_fun_signal_object_sa : public vvp_fun_signal_object {
 class vvp_fun_signal_object_aa : public vvp_fun_signal_object, public automatic_signal_base, public automatic_hooks_s {
 
     public:
-      explicit vvp_fun_signal_object_aa();
+      explicit vvp_fun_signal_object_aa(unsigned size);
       ~vvp_fun_signal_object_aa();
 
       void alloc_instance(vvp_context_t context);

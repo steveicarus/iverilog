@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -101,17 +101,17 @@ void compile_var_string(char*label, char*name)
       delete[] name;
 }
 
-void compile_var_darray(char*label, char*name)
+void compile_var_darray(char*label, char*name, unsigned size)
 {
       vvp_net_t*net = new vvp_net_t;
 
       if (vpip_peek_current_scope()->is_automatic()) {
-	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa;
+	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa(size);
 	    net->fil = tmp;
 	    net->fun = tmp;
       } else {
 	    net->fil = 0;
-	    net->fun = new vvp_fun_signal_object_sa;
+	    net->fun = new vvp_fun_signal_object_sa(size);
       }
 
       define_functor_symbol(label, net);
@@ -124,17 +124,17 @@ void compile_var_darray(char*label, char*name)
       delete[] name;
 }
 
-void compile_var_queue(char*label, char*name)
+void compile_var_queue(char*label, char*name, unsigned size)
 {
       vvp_net_t*net = new vvp_net_t;
 
       if (vpip_peek_current_scope()->is_automatic()) {
-	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa;
+	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa(size);
 	    net->fil = tmp;
 	    net->fun = tmp;
       } else {
 	    net->fil = 0;
-	    net->fun = new vvp_fun_signal_object_sa;
+	    net->fun = new vvp_fun_signal_object_sa(size);
       }
 
       define_functor_symbol(label, net);
@@ -152,12 +152,12 @@ void compile_var_cobject(char*label, char*name)
       vvp_net_t*net = new vvp_net_t;
 
       if (vpip_peek_current_scope()->is_automatic()) {
-	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa;
+	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa(1);
 	    net->fil = tmp;
 	    net->fun = tmp;
       } else {
 	    net->fil = 0;
-	    net->fun = new vvp_fun_signal_object_sa;
+	    net->fun = new vvp_fun_signal_object_sa(1);
       }
 
       define_functor_symbol(label, net);

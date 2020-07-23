@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -711,7 +711,8 @@ void vvp_fun_signal_string_aa::operator delete(void*)
 
   /* OBJECT signals */
 
-vvp_fun_signal_object_sa::vvp_fun_signal_object_sa()
+vvp_fun_signal_object_sa::vvp_fun_signal_object_sa(unsigned size)
+: vvp_fun_signal_object(size)
 {
 }
 
@@ -742,7 +743,8 @@ vvp_object_t vvp_fun_signal_object_sa::get_object() const
       return value_;
 }
 
-vvp_fun_signal_object_aa::vvp_fun_signal_object_aa()
+vvp_fun_signal_object_aa::vvp_fun_signal_object_aa(unsigned size)
+: vvp_fun_signal_object(size)
 {
       context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
 }

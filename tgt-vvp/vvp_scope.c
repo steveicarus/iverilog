@@ -540,13 +540,15 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 		    swapped ? first: last, swapped ? last : first, msb, lsb);
 
       } else if (ivl_signal_data_type(sig) == IVL_VT_DARRAY) {
-	    fprintf(vvp_out, "v%p_0 .var/darray \"%s\";%s\n", sig,
+	    fprintf(vvp_out, "v%p_0 .var/darray \"%s\", %u;%s\n", sig,
 		    vvp_mangle_name(ivl_signal_basename(sig)),
+		    ivl_signal_width(sig),
 		    ivl_signal_local(sig)? " Local signal" : "");
 
       } else if (ivl_signal_data_type(sig) == IVL_VT_QUEUE) {
-	    fprintf(vvp_out, "v%p_0 .var/queue \"%s\";%s\n", sig,
+	    fprintf(vvp_out, "v%p_0 .var/queue \"%s\", %u;%s\n", sig,
 		    vvp_mangle_name(ivl_signal_basename(sig)),
+		    ivl_signal_width(sig),
 		    ivl_signal_local(sig)? " Local signal" : "");
 
       } else if (ivl_signal_data_type(sig) == IVL_VT_STRING) {

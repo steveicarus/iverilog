@@ -41,8 +41,10 @@ class netqueue_t : public netdarray_t {
 	// A queue may have a type that is signed.
       inline bool get_signed() const { return element_type()->get_signed(); }
 
-	// Use the packed width to pass the maximum index
-      long packed_width(void) const { return max_idx_; }
+	// Use the packed width to pass the element width
+      long packed_width(void) const { return element_type()->packed_width(); }
+
+      long max_idx(void) const { return max_idx_; }
 
       std::ostream& debug_dump(std::ostream&) const;
 
