@@ -1008,7 +1008,8 @@ static void draw_darray_pop(ivl_expr_t expr)
       ivl_expr_t arg = ivl_expr_parm(expr, 0);
       assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
 
-      fprintf(vvp_out, "    %%qpop/%s/v v%p_0;\n", fb, ivl_expr_signal(arg));
+      fprintf(vvp_out, "    %%qpop/%s/v v%p_0, %u;\n", fb, ivl_expr_signal(arg),
+                       ivl_expr_width(expr));
 }
 
 static void draw_sfunc_vec4(ivl_expr_t expr)

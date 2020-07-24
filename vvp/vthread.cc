@@ -5025,15 +5025,17 @@ bool of_QPOP_B_REAL(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
 
-      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
+      vvp_queue*dqueue = get_queue_object<vvp_queue_real>(thr, net);
       assert(dqueue);
 
       size_t size = dqueue->get_size();
-      assert(size > 0);
 
       double value;
-      dqueue->get_word(size-1, value);
-      dqueue->pop_back();
+      if (size) {
+	    dqueue->get_word(size-1, value);
+	    dqueue->pop_back();
+      } else
+	    value = 0.0;
 
       thr->push_real(value);
       return true;
@@ -5050,11 +5052,13 @@ bool of_QPOP_B_STR(vthread_t thr, vvp_code_t cp)
       assert(dqueue);
 
       size_t size = dqueue->get_size();
-      assert(size > 0);
 
       string value;
-      dqueue->get_word(size-1, value);
-      dqueue->pop_back();
+      if (size) {
+	    dqueue->get_word(size-1, value);
+	    dqueue->pop_back();
+      } else
+	    value = "";
 
       thr->push_str(value);
       return true;
@@ -5066,17 +5070,21 @@ bool of_QPOP_B_STR(vthread_t thr, vvp_code_t cp)
 bool of_QPOP_B_V(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
+      unsigned width  = cp->bit_idx[0];
 
       vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
       assert(dqueue);
 
       size_t size = dqueue->get_size();
-      assert(size > 0);
 
       vvp_vector4_t value;
-      dqueue->get_word(size-1, value);
-      dqueue->pop_back();
+      if (size) {
+	    dqueue->get_word(size-1, value);
+	    dqueue->pop_back();
+      } else
+	    value = vvp_vector4_t(width);
 
+      assert(width == value.size());
       thr->push_vec4(value);
       return true;
 }
@@ -5088,12 +5096,17 @@ bool of_QPOP_F_REAL(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
 
-      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
+      vvp_queue*dqueue = get_queue_object<vvp_queue_real>(thr, net);
       assert(dqueue);
 
+      size_t size = dqueue->get_size();
+
       double value;
-      dqueue->get_word(0, value);
-      dqueue->pop_front();
+      if (size) {
+	    dqueue->get_word(0, value);
+	    dqueue->pop_front();
+      } else
+	    value = 0.0;
 
       thr->push_real(value);
       return true;
@@ -5109,9 +5122,14 @@ bool of_QPOP_F_STR(vthread_t thr, vvp_code_t cp)
       vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
       assert(dqueue);
 
+      size_t size = dqueue->get_size();
+
       string value;
-      dqueue->get_word(0, value);
-      dqueue->pop_front();
+      if (size) {
+	    dqueue->get_word(0, value);
+	    dqueue->pop_front();
+      } else
+	    value = "";
 
       thr->push_str(value);
       return true;
@@ -5123,17 +5141,21 @@ bool of_QPOP_F_STR(vthread_t thr, vvp_code_t cp)
 bool of_QPOP_F_V(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
+      unsigned width  = cp->bit_idx[0];
 
       vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
       assert(dqueue);
 
       size_t size = dqueue->get_size();
-      assert(size > 0);
 
       vvp_vector4_t value;
-      dqueue->get_word(0, value);
-      dqueue->pop_front();
+      if (size) {
+	    dqueue->get_word(0, value);
+	    dqueue->pop_front();
+      } else
+	    value = vvp_vector4_t(width);
 
+      assert(width == value.size());
       thr->push_vec4(value);
       return true;
 }
