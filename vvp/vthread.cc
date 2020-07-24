@@ -5034,8 +5034,10 @@ bool of_QPOP_B_REAL(vthread_t thr, vvp_code_t cp)
       if (size) {
 	    dqueue->get_word(size-1, value);
 	    dqueue->pop_back();
-      } else
+      } else {
+	    cerr << "Warning: pop_back() on empty queue<real>." << endl;
 	    value = 0.0;
+      }
 
       thr->push_real(value);
       return true;
@@ -5057,8 +5059,10 @@ bool of_QPOP_B_STR(vthread_t thr, vvp_code_t cp)
       if (size) {
 	    dqueue->get_word(size-1, value);
 	    dqueue->pop_back();
-      } else
+      } else {
+	    cerr << "Warning: pop_back() on empty queue<string>." << endl;
 	    value = "";
+      }
 
       thr->push_str(value);
       return true;
@@ -5081,8 +5085,11 @@ bool of_QPOP_B_V(vthread_t thr, vvp_code_t cp)
       if (size) {
 	    dqueue->get_word(size-1, value);
 	    dqueue->pop_back();
-      } else
+      } else {
+	    cerr << "Warning: pop_back() on empty queue<vector["
+	         << width << "]>." << endl;
 	    value = vvp_vector4_t(width);
+      }
 
       assert(width == value.size());
       thr->push_vec4(value);
@@ -5105,8 +5112,10 @@ bool of_QPOP_F_REAL(vthread_t thr, vvp_code_t cp)
       if (size) {
 	    dqueue->get_word(0, value);
 	    dqueue->pop_front();
-      } else
+      } else {
+	    cerr << "Warning: pop_front() on empty queue<real>." << endl;
 	    value = 0.0;
+      }
 
       thr->push_real(value);
       return true;
@@ -5128,8 +5137,10 @@ bool of_QPOP_F_STR(vthread_t thr, vvp_code_t cp)
       if (size) {
 	    dqueue->get_word(0, value);
 	    dqueue->pop_front();
-      } else
+      } else {
+	    cerr << "Warning: pop_front() on empty queue<string>." << endl;
 	    value = "";
+      }
 
       thr->push_str(value);
       return true;
@@ -5152,8 +5163,11 @@ bool of_QPOP_F_V(vthread_t thr, vvp_code_t cp)
       if (size) {
 	    dqueue->get_word(0, value);
 	    dqueue->pop_front();
-      } else
+      } else {
+	    cerr << "Warning: pop_front() on empty queue<vector["
+	         << width << "]>." << endl;
 	    value = vvp_vector4_t(width);
+      }
 
       assert(width == value.size());
       thr->push_vec4(value);
