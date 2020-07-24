@@ -3663,7 +3663,7 @@ bool of_LOAD_AR(vthread_t thr, vvp_code_t cp)
  */
 bool of_LOAD_DAR_R(vthread_t thr, vvp_code_t cp)
 {
-      unsigned adr = thr->words[3].w_int;
+      int64_t adr = thr->words[3].w_int;
       vvp_net_t*net = cp->net;
 
       assert(net);
@@ -3673,7 +3673,8 @@ bool of_LOAD_DAR_R(vthread_t thr, vvp_code_t cp)
       vvp_darray*darray = obj->get_object().peek<vvp_darray>();
 
       double word;
-      if (darray)
+      if (darray &&
+          (adr >= 0) && (thr->flags[4] == BIT4_0)) // A defined address >= 0
 	    darray->get_word(adr, word);
       else
 	    word = 0.0;
@@ -3684,7 +3685,7 @@ bool of_LOAD_DAR_R(vthread_t thr, vvp_code_t cp)
 
 bool of_LOAD_DAR_STR(vthread_t thr, vvp_code_t cp)
 {
-      unsigned adr = thr->words[3].w_int;
+      int64_t adr = thr->words[3].w_int;
       vvp_net_t*net = cp->net;
 
       assert(net);
@@ -3694,7 +3695,8 @@ bool of_LOAD_DAR_STR(vthread_t thr, vvp_code_t cp)
       vvp_darray*darray = obj->get_object().peek<vvp_darray>();
 
       string word;
-      if (darray)
+      if (darray &&
+          (adr >= 0) && (thr->flags[4] == BIT4_0)) // A defined address >= 0
 	    darray->get_word(adr, word);
       else
 	    word = "";
@@ -3705,7 +3707,7 @@ bool of_LOAD_DAR_STR(vthread_t thr, vvp_code_t cp)
 
 bool of_LOAD_DAR_VEC4(vthread_t thr, vvp_code_t cp)
 {
-      unsigned adr = thr->words[3].w_int;
+      int64_t adr = thr->words[3].w_int;
       vvp_net_t*net = cp->net;
 
       assert(net);
@@ -3715,7 +3717,8 @@ bool of_LOAD_DAR_VEC4(vthread_t thr, vvp_code_t cp)
       vvp_darray*darray = obj->get_object().peek<vvp_darray>();
 
       vvp_vector4_t word;
-      if (darray)
+      if (darray &&
+          (adr >= 0) && (thr->flags[4] == BIT4_0)) // A defined address >= 0
 	    darray->get_word(adr, word);
       else
 	    word = vvp_vector4_t(obj->size());
