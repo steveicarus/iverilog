@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -549,7 +549,6 @@ void dll_target::expr_sfunc(const NetESFunc*net)
       ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
 
       expr->type_ = IVL_EX_SFUNC;
-      FILE_NAME(expr, net);
       expr->value_= net->expr_type();
       expr->net_type=net->net_type();
       expr->width_= net->expr_width();
