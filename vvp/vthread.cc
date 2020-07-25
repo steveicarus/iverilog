@@ -2416,6 +2416,43 @@ bool of_DELAYX(vthread_t thr, vvp_code_t cp)
       return false;
 }
 
+bool of_DELETE_ELEM(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      int64_t idx_val = thr->words[3].w_int;
+      if (thr->flags[4] == BIT4_1) {
+	    cerr << "Warning: skipping queue delete() with undefined index."
+	         << endl;
+	    return true;
+      }
+      if (idx_val < 0) {
+	    cerr << "Warning: skipping queue delete() with negative index."
+	         << endl;
+	    return true;
+      }
+      size_t idx = idx_val;
+
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      if (dqueue == 0) {
+	    cerr << "Warning: skipping delete(" << idx
+	         << ") on empty queue." << endl;
+      } else {
+	    size_t size = dqueue->get_size();
+	    if (idx >= size) {
+		  cerr << "Warning: skipping out of range delete(" << idx
+		       << ") on queue of size " << size << "." << endl;
+	    } else {
+		  dqueue->erase(idx);
+	    }
+      }
+
+      return true;
+}
+
 /* %delete/obj <label>
  *
  * This operator works by assigning a nil to the target object. This

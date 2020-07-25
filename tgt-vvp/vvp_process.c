@@ -1748,14 +1748,22 @@ static int show_delete_method(ivl_statement_t net)
       show_stmt_file_line(net, "Delete object");
 
       unsigned parm_count = ivl_stmt_parm_count(net);
-      if (parm_count < 1)
+      if ((parm_count < 1) || (parm_count > 2))
 	    return 1;
 
       ivl_expr_t parm = ivl_stmt_parm(net, 0);
       assert(ivl_expr_type(parm) == IVL_EX_SIGNAL);
       ivl_signal_t var = ivl_expr_signal(parm);
 
-      fprintf(vvp_out, "    %%delete/obj v%p_0;\n", var);
+	/* If this is a queue then it can have an element to delete. */
+      if (parm_count == 2) {
+	    if (ivl_type_base(ivl_signal_net_type(var)) != IVL_VT_QUEUE)
+		  return 1;
+	    draw_eval_expr_into_integer(ivl_stmt_parm(net, 1), 3);
+	    fprintf(vvp_out, "    %%delete/elem v%p_0;\n", var);
+      } else {
+	    fprintf(vvp_out, "    %%delete/obj v%p_0;\n", var);
+      }
       return 0;
 }
 
@@ -1778,7 +1786,7 @@ static int show_push_frontback_method(ivl_statement_t net, bool is_front)
       assert(ivl_expr_type(parm0) == IVL_EX_SIGNAL);
       ivl_signal_t var = ivl_expr_signal(parm0);
       ivl_type_t var_type = ivl_signal_net_type(var);
-      assert(ivl_type_base(var_type)== IVL_VT_QUEUE);
+      assert(ivl_type_base(var_type) == IVL_VT_QUEUE);
 
       int idx = allocate_word();
       assert(idx >= 0);

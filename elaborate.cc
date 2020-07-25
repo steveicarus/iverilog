@@ -3596,6 +3596,23 @@ NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
       vector<NetExpr*>argv (1 + nparms);
       argv[0] = sig;
 
+      if (method_name == "delete") {
+	      // The queue delete method takes an optional element.
+	    if (net->queue_type()) {
+		  if (nparms > 1)  {
+			cerr << get_fileline() << ": error: queue method "
+			     << "delete() takes zero or one argument." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+	    } else if (nparms > 0) {
+		  cerr << get_fileline() << ": error: darray method "
+		       << "delete() takes no arguments." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+      }
+
       for (unsigned idx = 0 ; idx < nparms ; idx += 1) {
 	    PExpr*ex = parms_[idx];
 	    if (ex != 0) {
@@ -3618,13 +3635,19 @@ NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
  */
 NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
 					    NetNet*net,
+					    perm_string method_name,
 					    const char*sys_task_name) const
 {
       NetESignal*sig = new NetESignal(net);
       sig->set_line(*this);
 
       unsigned nparms = parms_.size();
-      ivl_assert(*this, nparms == 1);
+      if ((nparms == 0) || (nparms > 1)) {
+	    cerr << get_fileline() << ": error: method " << method_name
+		 << "() requires a single argument." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       ivl_variable_type_t base_type = net->darray_type()->element_base_type();
       int context_width = -1;
@@ -3684,17 +3707,16 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 
 	// Is this a delete method for dynamic arrays?
       if (net->darray_type() && method_name=="delete") {
-	    return elaborate_sys_task_method_(des, scope, net,
-					      method_name,
+	    return elaborate_sys_task_method_(des, scope, net, method_name,
 					      "$ivl_darray_method$delete");
       }
 
       if (net->queue_type()) {
 	    if (method_name=="push_back")
-		  return elaborate_queue_method_(des, scope, net,
+		  return elaborate_queue_method_(des, scope, net, method_name,
 						 "$ivl_queue_method$push_back");
 	    if (method_name=="push_front")
-		  return elaborate_queue_method_(des, scope, net,
+		  return elaborate_queue_method_(des, scope, net, method_name,
 						 "$ivl_queue_method$push_front");
       }
 
@@ -4381,8 +4403,10 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 			        "included)." << endl;
 # if 0
 			unsigned base = nset->at(idx).base;
-// FIXME: Is this needed since you can select past the vector?
-			assert((base + wid) <= vwid);
+cerr << get_fileline() << ": base = " << base << endl;
+// FIXME: make this work with selects that go before the base.
+			assert(base < vwid);
+			if (base + wid > vwid) wid = vwid - base;
 cerr << get_fileline() << ": base = " << base << ", width = " << wid
      << ", expr width = " << vwid << endl;
 nset->at(idx).lnk.dump_link(cerr, 4);

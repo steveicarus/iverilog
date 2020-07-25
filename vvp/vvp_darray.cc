@@ -477,6 +477,13 @@ void vvp_queue_real::push_front(double value, unsigned max_size)
       queue.push_front(value);
 }
 
+void vvp_queue_real::erase(unsigned idx)
+{
+      std::deque<double>::iterator pos = queue.begin();
+      for (unsigned count = 0; count < idx; ++count) ++pos;
+      queue.erase(pos);
+}
+
 vvp_queue_string::~vvp_queue_string()
 {
 }
@@ -514,6 +521,13 @@ void vvp_queue_string::push_front(const string&value, unsigned max_size)
       queue.push_front(value);
 }
 
+void vvp_queue_string::erase(unsigned idx)
+{
+      std::deque<std::string>::iterator pos = queue.begin();
+      for (unsigned count = 0; count < idx; ++count) ++pos;
+      queue.erase(pos);
+}
+
 vvp_queue_vec4::~vvp_queue_vec4()
 {
 }
@@ -549,4 +563,11 @@ void vvp_queue_vec4::push_front(const vvp_vector4_t&value, unsigned max_size)
 	    queue.pop_back();
       }
       queue.push_front(value);
+}
+
+void vvp_queue_vec4::erase(unsigned idx)
+{
+      std::deque<vvp_vector4_t>::iterator pos = queue.begin();
+      for (unsigned count = 0; count < idx; ++count) ++pos;
+      queue.erase(pos);
 }

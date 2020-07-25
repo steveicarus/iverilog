@@ -165,6 +165,7 @@ class vvp_queue : public vvp_darray {
 
       virtual void pop_back(void) =0;
       virtual void pop_front(void)=0;
+      virtual void erase(unsigned idx)=0;
 };
 
 class vvp_queue_real : public vvp_queue {
@@ -179,6 +180,7 @@ class vvp_queue_real : public vvp_queue {
       void push_front(double value, unsigned max_size);
       void pop_back(void) { queue.pop_back(); };
       void pop_front(void) { queue.pop_front(); };
+      void erase(unsigned idx);
 
     private:
       std::deque<double> queue;
@@ -196,6 +198,7 @@ class vvp_queue_string : public vvp_queue {
       void push_front(const std::string&value, unsigned max_size);
       void pop_back(void) { queue.pop_back(); };
       void pop_front(void) { queue.pop_front(); };
+      void erase(unsigned idx);
 
     private:
       std::deque<std::string> queue;
@@ -213,6 +216,7 @@ class vvp_queue_vec4 : public vvp_queue {
       void push_front(const vvp_vector4_t&value, unsigned max_size);
       void pop_back(void) { queue.pop_back(); };
       void pop_front(void) { queue.pop_front(); };
+      void erase(unsigned idx);
 
     private:
       std::deque<vvp_vector4_t> queue;
