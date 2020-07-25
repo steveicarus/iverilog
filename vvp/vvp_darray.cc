@@ -462,7 +462,7 @@ void vvp_queue_real::push_back(double value, unsigned max_size)
 {
       if (!max_size || (queue.size() < max_size)) queue.push_back(value);
       else cerr << "Warning: push_back(" << value
-                << ") skipped for already full bounded queue ["
+                << ") skipped for already full bounded queue<real> ["
                 << max_size << "]." << endl;
 }
 
@@ -470,7 +470,7 @@ void vvp_queue_real::push_front(double value, unsigned max_size)
 {
       if (max_size && (queue.size() == max_size)) {
 	    cerr << "Warning: push_front(" << value << ") removed "
-	         << queue.back() << " from already full bounded queue ["
+	         << queue.back() << " from already full bounded queue<real> ["
 	         << max_size << "]." << endl;
 	    queue.pop_back();
       }
@@ -479,8 +479,16 @@ void vvp_queue_real::push_front(double value, unsigned max_size)
 
 void vvp_queue_real::erase(unsigned idx)
 {
-      std::deque<double>::iterator pos = queue.begin();
-      for (unsigned count = 0; count < idx; ++count) ++pos;
+      std::deque<double>::iterator pos;
+      unsigned middle = queue.size()/2;
+      if (idx < middle) {
+	    pos = queue.begin();
+	    for (unsigned count = 0; count < idx; ++count) ++pos;
+      } else {
+	    pos = queue.end();
+	    for (unsigned count = queue.size(); count > idx; --count) --pos;
+      }
+
       queue.erase(pos);
 }
 
@@ -506,7 +514,7 @@ void vvp_queue_string::push_back(const string&value, unsigned max_size)
 {
       if (!max_size || (queue.size() < max_size)) queue.push_back(value);
       else cerr << "Warning: push_back(\"" << value
-                << "\") skipped for already full bounded queue ["
+                << "\") skipped for already full bounded queue<string> ["
                 << max_size << "]." << endl;
 }
 
@@ -514,7 +522,7 @@ void vvp_queue_string::push_front(const string&value, unsigned max_size)
 {
       if (max_size && (queue.size() == max_size)) {
 	    cerr << "Warning: push_front(\"" << value << "\") removed \""
-	         << queue.back() << "\" from already full bounded queue ["
+	         << queue.back() << "\" from already full bounded queue<string> ["
 	         << max_size << "]." << endl;
 	    queue.pop_back();
       }
@@ -523,8 +531,16 @@ void vvp_queue_string::push_front(const string&value, unsigned max_size)
 
 void vvp_queue_string::erase(unsigned idx)
 {
-      std::deque<std::string>::iterator pos = queue.begin();
-      for (unsigned count = 0; count < idx; ++count) ++pos;
+      std::deque<std::string>::iterator pos;
+      unsigned middle = queue.size()/2;
+      if (idx < middle) {
+	    pos = queue.begin();
+	    for (unsigned count = 0; count < idx; ++count) ++pos;
+      } else {
+	    pos = queue.end();
+	    for (unsigned count = queue.size(); count > idx; --count) --pos;
+      }
+
       queue.erase(pos);
 }
 
@@ -550,16 +566,16 @@ void vvp_queue_vec4::push_back(const vvp_vector4_t&value, unsigned max_size)
 {
       if (!max_size || (queue.size() < max_size)) queue.push_back(value);
       else cerr << "Warning: push_back(" << value
-                << ") skipped for already full bounded queue ["
-                << max_size << "]." << endl;
+                << ") skipped for already full bounded queue<vector["
+                << value.size() << "]> [" << max_size << "]." << endl;
 }
 
 void vvp_queue_vec4::push_front(const vvp_vector4_t&value, unsigned max_size)
 {
       if (max_size && (queue.size() == max_size)) {
 	    cerr << "Warning: push_front(" << value << ") removed "
-	         << queue.back() << " from already full bounded queue ["
-	         << max_size << "]." << endl;
+	         << queue.back() << " from already full bounded queue<vector["
+	         << value.size() << "]> [" << max_size << "]." << endl;
 	    queue.pop_back();
       }
       queue.push_front(value);
@@ -567,7 +583,15 @@ void vvp_queue_vec4::push_front(const vvp_vector4_t&value, unsigned max_size)
 
 void vvp_queue_vec4::erase(unsigned idx)
 {
-      std::deque<vvp_vector4_t>::iterator pos = queue.begin();
-      for (unsigned count = 0; count < idx; ++count) ++pos;
+      std::deque<vvp_vector4_t>::iterator pos;
+      unsigned middle = queue.size()/2;
+      if (idx < middle) {
+	    pos = queue.begin();
+	    for (unsigned count = 0; count < idx; ++count) ++pos;
+      } else {
+	    pos = queue.end();
+	    for (unsigned count = queue.size(); count > idx; --count) --pos;
+      }
+
       queue.erase(pos);
 }
