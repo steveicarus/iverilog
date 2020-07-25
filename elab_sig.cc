@@ -1112,11 +1112,18 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 			      max_idx = -1;
 			} else {
 			      verinum res = cv->value();
-			      max_idx = res.as_long();
-			      if (max_idx < 0) {
-				    cerr << get_fileline() << ": error: queue '"
-				         << name_ << "' bound must be positive ("
-				         << max_idx << ")!" << endl;
+			      if (res.is_defined()) {
+				    max_idx = res.as_long();
+				    if (max_idx < 0) {
+					  cerr << get_fileline() << ": error: queue '"
+					       << name_ << "' bound must be positive ("
+					       << max_idx << ")!" << endl;
+					  des->errors += 1;
+					  max_idx = -1;
+				    }
+			      } else {
+				    cerr << get_fileline() << ": error: queue '" << name_
+				         << "' bound is undefined!" << endl;
 				    des->errors += 1;
 				    max_idx = -1;
 			      }

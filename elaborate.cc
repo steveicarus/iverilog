@@ -3600,16 +3600,14 @@ NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
 	      // The queue delete method takes an optional element.
 	    if (net->queue_type()) {
 		  if (nparms > 1)  {
-			cerr << get_fileline() << ": error: queue method "
-			     << "delete() takes zero or one argument." << endl;
+			cerr << get_fileline() << ": error: queue delete() "
+			     << "method takes zero or one argument." << endl;
 			des->errors += 1;
-			return 0;
 		  }
 	    } else if (nparms > 0) {
-		  cerr << get_fileline() << ": error: darray method "
-		       << "delete() takes no arguments." << endl;
+		  cerr << get_fileline() << ": error: darray delete() "
+		       << "method takes no arguments." << endl;
 		  des->errors += 1;
-		  return 0;
 	    }
       }
 
@@ -3643,10 +3641,9 @@ NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
 
       unsigned nparms = parms_.size();
       if ((nparms == 0) || (nparms > 1)) {
-	    cerr << get_fileline() << ": error: method " << method_name
-		 << "() requires a single argument." << endl;
+	    cerr << get_fileline() << ": error: " << method_name
+		 << "() method requires a single argument." << endl;
 	    des->errors += 1;
-	    return 0;
       }
 
       ivl_variable_type_t base_type = net->darray_type()->element_base_type();

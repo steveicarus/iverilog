@@ -2665,6 +2665,11 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
       if (net->darray_type()) {
 
 	    if (method_name == "size") {
+		  if (parms_.size() != 0) {
+			cerr << get_fileline() << ": error: size() method "
+			     << "takes no arguments" << endl;
+			des->errors += 1;
+		  }
 		  NetESFunc*sys_expr = new NetESFunc("$size",
 						     IVL_VT_BOOL, 32, 1);
 		  sys_expr->parm(0, new NetESignal(net));
@@ -2673,6 +2678,11 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    }
 
 	    if (method_name == "pop_back") {
+		  if (parms_.size() != 0) {
+			cerr << get_fileline() << ": error: pop_back() method "
+			     << "takes no arguments" << endl;
+			des->errors += 1;
+		  }
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_darray_method$pop_back",
 						     expr_type_,
 						     expr_width_, 1);
@@ -2682,6 +2692,11 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    }
 
 	    if (method_name == "pop_front") {
+		  if (parms_.size() != 0) {
+			cerr << get_fileline() << ": error: pop_front() method "
+			     << "takes no arguments" << endl;
+			des->errors += 1;
+		  }
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_darray_method$pop_front",
 						     expr_type_,
 						     expr_width_, 1);
