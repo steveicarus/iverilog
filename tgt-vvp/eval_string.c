@@ -161,7 +161,7 @@ static void string_ex_pop(ivl_expr_t expr)
       const char*fb;
       ivl_expr_t arg;
 
-      if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_back")==0)
+      if (strcmp(ivl_expr_name(expr), "$ivl_queue_method$pop_back")==0)
 	    fb = "b";
       else
 	    fb = "f";
@@ -205,9 +205,9 @@ void draw_eval_string(ivl_expr_t expr)
 	  case IVL_EX_SFUNC:
 	    if (strcmp(ivl_expr_name(expr), "$ivl_string_method$substr") == 0)
 		  string_ex_substr(expr);
-	    else if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_back")==0)
+	    else if (strcmp(ivl_expr_name(expr), "$ivl_queue_method$pop_back")==0)
 		  string_ex_pop(expr);
-	    else if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_front")==0)
+	    else if (strcmp(ivl_expr_name(expr), "$ivl_queue_method$pop_front")==0)
 		  string_ex_pop(expr);
 	    else
 		  draw_sfunc_string(expr);

@@ -271,7 +271,7 @@ static void real_ex_pop(ivl_expr_t expr)
       const char*fb;
       ivl_expr_t arg;
 
-      if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_back")==0)
+      if (strcmp(ivl_expr_name(expr), "$ivl_queue_method$pop_back")==0)
             fb = "b";
       else
             fb = "f";
@@ -527,9 +527,9 @@ void draw_eval_real(ivl_expr_t expr)
 	    break;
 
 	  case IVL_EX_SFUNC:
-	    if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_back")==0)
+	    if (strcmp(ivl_expr_name(expr), "$ivl_queue_method$pop_back")==0)
 		  real_ex_pop(expr);
-	    else if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_front")==0)
+	    else if (strcmp(ivl_expr_name(expr), "$ivl_queue_method$pop_front")==0)
 		  real_ex_pop(expr);
 	    else
 		  draw_sfunc_real(expr);

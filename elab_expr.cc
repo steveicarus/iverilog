@@ -35,6 +35,7 @@
 # include  "discipline.h"
 # include  "netmisc.h"
 # include  "netdarray.h"
+# include  "netqueue.h"
 # include  "netstruct.h"
 # include  "netscalar.h"
 # include  "util.h"
@@ -2672,22 +2673,32 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  }
 		  NetESFunc*sys_expr = new NetESFunc("$size",
 						     IVL_VT_BOOL, 32, 1);
-		  sys_expr->parm(0, new NetESignal(net));
 		  sys_expr->set_line(*this);
+
+		  NetESignal*arg = new NetESignal(net);
+		  arg->set_line(*net);
+
+		  sys_expr->parm(0, arg);
 		  return sys_expr;
 	    }
+      }
 
+      if (net->queue_type()) {
 	    if (method_name == "pop_back") {
 		  if (parms_.size() != 0) {
 			cerr << get_fileline() << ": error: pop_back() method "
 			     << "takes no arguments" << endl;
 			des->errors += 1;
 		  }
-		  NetESFunc*sys_expr = new NetESFunc("$ivl_darray_method$pop_back",
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_queue_method$pop_back",
 						     expr_type_,
 						     expr_width_, 1);
-		  sys_expr->parm(0, new NetESignal(net));
 		  sys_expr->set_line(*this);
+
+		  NetESignal*arg = new NetESignal(net);
+		  arg->set_line(*net);
+
+		  sys_expr->parm(0, arg);
 		  return sys_expr;
 	    }
 
@@ -2697,11 +2708,15 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			     << "takes no arguments" << endl;
 			des->errors += 1;
 		  }
-		  NetESFunc*sys_expr = new NetESFunc("$ivl_darray_method$pop_front",
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_queue_method$pop_front",
 						     expr_type_,
 						     expr_width_, 1);
-		  sys_expr->parm(0, new NetESignal(net));
 		  sys_expr->set_line(*this);
+
+		  NetESignal*arg = new NetESignal(net);
+		  arg->set_line(*net);
+
+		  sys_expr->parm(0, arg);
 		  return sys_expr;
 	    }
 
@@ -4100,7 +4115,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
                   if (debug_elaborate) {
                         cerr << get_fileline() << ": PEIdent::elaborate_expr: "
                              << "Ident " << base_path
-                             << " look for array property " << member_path
+                             << " looking for array property " << member_path
                              << endl;
                   }
 
@@ -4108,6 +4123,46 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  const name_component_t member_comp = member_path.front();
 		  if (member_comp.name == "size") {
 			NetESFunc*fun = new NetESFunc("$size", IVL_VT_BOOL, 32, 1);
+			fun->set_line(*this);
+
+			NetESignal*arg = new NetESignal(net);
+			arg->set_line(*net);
+
+			fun->parm(0, arg);
+			return fun;
+		  }
+	    }
+
+	      // If this is a queue object, and there are members in
+	      // the member_path, check for array properties.
+	    if (net->queue_type() && member_path.size() > 0) {
+                  if (debug_elaborate) {
+                        cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+                             << "Ident " << base_path
+                             << " looking for queue property " << member_path
+                             << endl;
+                  }
+
+		  ivl_assert(*this, member_path.size() == 1);
+		  const name_component_t member_comp = member_path.front();
+		  const netqueue_t*queue = net->queue_type();
+		  ivl_variable_type_t qelem_type = queue->element_base_type();
+		  unsigned qelem_width = queue->element_width();
+		  if (member_comp.name == "pop_back") {
+			NetESFunc*fun = new NetESFunc("$ivl_queue_method$pop_back",
+			                              qelem_type, qelem_width, 1);
+			fun->set_line(*this);
+
+			NetESignal*arg = new NetESignal(net);
+			arg->set_line(*net);
+
+			fun->parm(0, arg);
+			return fun;
+		  }
+
+		  if (member_comp.name == "pop_front") {
+			NetESFunc*fun = new NetESFunc("$ivl_queue_method$pop_front",
+			                              qelem_type, qelem_width, 1);
 			fun->set_line(*this);
 
 			NetESignal*arg = new NetESignal(net);
