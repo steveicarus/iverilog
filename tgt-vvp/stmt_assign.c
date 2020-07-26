@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1050,22 +1050,68 @@ static int show_stmt_assign_sig_queue(ivl_statement_t net)
       int errors = 0;
       ivl_lval_t lval = ivl_stmt_lval(net, 0);
       ivl_expr_t rval = ivl_stmt_rval(net);
+      ivl_expr_t part = ivl_lval_part_off(lval);
       ivl_signal_t var= ivl_lval_sig(lval);
       ivl_type_t var_type= ivl_signal_net_type(var);
+      ivl_type_t element_type = ivl_type_element(var_type);
+
+      ivl_expr_t mux  = ivl_lval_idx(lval);
+
+      assert(ivl_stmt_lvals(net) == 1);
+      assert(ivl_stmt_opcode(net) == 0);
+      assert(part == 0);
+
       assert(ivl_type_base(var_type) == IVL_VT_QUEUE);
 
-      switch (ivl_expr_type(rval)) {
-	  case IVL_EX_NULL:
+      if (ivl_expr_type(rval) == IVL_EX_NULL) {
 	    errors += draw_eval_object(rval);
-	    break;
-	  default:
-	    fprintf(stderr, "XXXX: I don't know how to handle expr_type=%d here\n", ivl_expr_type(rval));
-	    fprintf(vvp_out, " ; XXXX expr_type=%d\n", ivl_expr_type(rval));
+	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", var);
+      } else if  (mux && (ivl_type_base(element_type)==IVL_VT_REAL)) {
+	    draw_eval_real(rval);
+	      /* The %store/dar expects the array index to be in
+		 index register 3. */
+	    draw_eval_expr_into_integer(mux, 3);
+	    fprintf(vvp_out, "    %%store/dar/r v%p_0;\n", var);
+      } else if (mux && ivl_type_base(element_type)==IVL_VT_STRING) {
+	    draw_eval_string(rval);
+	      /* The %store/dar expects the array index to be in
+		 index register 3. */
+	    draw_eval_expr_into_integer(mux, 3);
+	    fprintf(vvp_out, "    %%store/dar/str v%p_0;\n", var);
+      } else if (mux) { // What is left must be some form of vector
+	    draw_eval_vec4(rval);
+	    resize_vec4_wid(rval, ivl_stmt_lwidth(net));
+	      /* The %store/dar expects the array index to be in
+		 index register 3. */
+	    draw_eval_expr_into_integer(mux, 3);
+	    fprintf(vvp_out, "    %%store/dar/vec4 v%p_0;\n", var);
+      } else {
+	    fprintf(stderr, "Sorry: I don't know how to handle expr_type=%d "
+	                    "being assigned to a queue.\n", ivl_expr_type(rval));
+	    fprintf(vvp_out, "  ; Sorry: Queues do not currently handle "
+	                     "expr_type=%d.\n", ivl_expr_type(rval));
 	    errors += 1;
-	    break;
       }
+// FIXME
+#if 0
+static int show_stmt_assign_sig_darray(ivl_statement_t net)
+{
 
-      fprintf(vvp_out, "    %%store/obj v%p_0;\n", var);
+
+      } else if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
+	      /* There is no l-value mux, but the r-value is an array
+		 pattern. This is a special case of an assignment to
+		 elements of the l-value. */
+	    errors += show_stmt_assign_darray_pattern(net);
+
+      } else {
+	      /* There is no l-value mux, so this must be an
+		 assignment to the array as a whole. Evaluate the
+		 "object", and store the evaluated result. */
+	    errors += draw_eval_object(rval);
+	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", var);
+      }
+#endif
       return errors;
 }
 

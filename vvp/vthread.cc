@@ -5643,21 +5643,40 @@ bool of_SPLIT_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %store/dar/real <var>
+ * In this case, <var> is the name of a dynamic array. Signed index
+ * register 3 contains the index into the dynamic array.
+ */
 bool of_STORE_DAR_R(vthread_t thr, vvp_code_t cp)
 {
-      long adr = thr->words[3].w_int;
-
-	// Pop the real value to be store...
-      double value = thr->pop_real();
-
+      int64_t adr = thr->words[3].w_int;
+      double value = thr->pop_real(); // Pop the real value to store...
       vvp_net_t*net = cp->net;
+      unsigned max_size = 0; // FIXME: Need to get this from the compile and how to pass to set_word()
+
+      assert(net);
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
       assert(obj);
 
       vvp_darray*darray = obj->get_object().peek<vvp_darray>();
-      assert(darray);
 
-      darray->set_word(adr, value);
+      if (adr < 0)
+	    cerr << "Warning: cannot write to a negative array<real> index ("
+	         << adr << ")." << endl;
+      else if (thr->flags[4] != BIT4_0)
+	    cerr << "Warning: cannot write to an undefined array<real> index."
+	         << endl;
+      else if (darray)
+	    darray->set_word(adr, value);
+      else {
+	    vvp_queue*queue = get_queue_object<vvp_queue_real>(thr, net);
+	    if (queue)
+		  queue->push_front(value, max_size);
+	    else
+		  cerr << "Warning: cannot write to an undefined array<real>."
+		       << endl;
+      }
       return true;
 }
 
@@ -5668,38 +5687,71 @@ bool of_STORE_DAR_R(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_DAR_STR(vthread_t thr, vvp_code_t cp)
 {
-      long adr = thr->words[3].w_int;
-
-	// Pop the string to be stored...
-      string value = thr->pop_str();
-
+      int64_t adr = thr->words[3].w_int;
+      string value = thr->pop_str(); // Pop the string to be stored...
       vvp_net_t*net = cp->net;
+      unsigned max_size = 0; // FIXME: Need to get this from the compile and how to pass to set_word()
+
+      assert(net);
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
       assert(obj);
 
       vvp_darray*darray = obj->get_object().peek<vvp_darray>();
-      assert(darray);
 
-      darray->set_word(adr, value);
+      if (adr < 0)
+	    cerr << "Warning: cannot write to a negative array<string> index ("
+	         << adr << ")." << endl;
+      else if (thr->flags[4] != BIT4_0)
+	    cerr << "Warning: cannot write to an undefined array<string> index."
+	         << endl;
+      else if (darray)
+	    darray->set_word(adr, value);
+      else {
+	    vvp_queue*queue = get_queue_object<vvp_queue_string>(thr, net);
+	    if (queue)
+		  queue->push_front(value, max_size);
+	    else
+		  cerr << "Warning: cannot write to an undefined array<string>."
+		       << endl;
+      }
       return true;
 }
 
 
+/*
+ * %store/dar/vec4 <var>
+ * In this case, <var> is the name of a dynamic array. Signed index
+ * register 3 contains the index into the dynamic array.
+ */
 bool of_STORE_DAR_VEC4(vthread_t thr, vvp_code_t cp)
 {
-      long adr = thr->words[3].w_int;
-
-	// Pop the real value to be store...
-      vvp_vector4_t value = thr->pop_vec4();
-
+      int64_t adr = thr->words[3].w_int;
+      vvp_vector4_t value = thr->pop_vec4(); // Pop the real value to be store...
       vvp_net_t*net = cp->net;
+      unsigned max_size = 0; // FIXME: Need to get this from the compile and how to pass to set_word()
+
+      assert(net);
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
       assert(obj);
 
       vvp_darray*darray = obj->get_object().peek<vvp_darray>();
-      assert(darray);
 
-      darray->set_word(adr, value);
+      if (adr < 0)
+	    cerr << "Warning: cannot write to a negative array<vector["
+	         << value.size() << "]> index (" << adr << ")." << endl;
+      else if (thr->flags[4] != BIT4_0)
+	    cerr << "Warning: cannot write to an undefined array<vector["
+	         << value.size() << "]> index." << endl;
+      else if (darray)
+	    darray->set_word(adr, value);
+      else {
+	    vvp_queue*queue = get_queue_object<vvp_queue_vec4>(thr, net);
+	    if (queue)
+		  queue->push_front(value, max_size);
+	    else
+		  cerr << "Warning: cannot write to an undefined array<vector["
+		       << value.size() << "]>." << endl;
+      }
       return true;
 }
 

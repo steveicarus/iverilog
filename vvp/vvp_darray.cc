@@ -446,8 +446,17 @@ vvp_queue_real::~vvp_queue_real()
 
 void vvp_queue_real::set_word(unsigned adr, double value)
 {
+      unsigned max_size = 0; // FIXME: need to get this from the compiler; bounded queues will fail
       if (adr < queue.size())
 	    queue[adr] = value;
+      else if (adr == queue.size())
+	    if (!max_size || (queue.size() < max_size)) queue.push_back(value);
+	    else cerr << "Warning: assigning to queue<real>[" << adr << "] is"
+	                 " outside bound (" << max_size << "). " << value
+	              << " was not added." << endl;
+      else cerr << "Warning: assigning to queue<real>[" << adr << "] is outside "
+                   "of size (" << queue.size() << "). " << value
+                << " was not added." << endl;
 }
 
 void vvp_queue_real::get_word(unsigned adr, double&value)
@@ -498,8 +507,17 @@ vvp_queue_string::~vvp_queue_string()
 
 void vvp_queue_string::set_word(unsigned adr, const string&value)
 {
+      unsigned max_size = 0; // FIXME: need to get this from the compiler; bounded queues will fail
       if (adr < queue.size())
 	    queue[adr] = value;
+      else if (adr == queue.size())
+	    if (!max_size || (queue.size() < max_size)) queue.push_back(value);
+	    else cerr << "Warning: assigning to queue<string>[" << adr << "] is"
+	                 " outside bound (" << max_size << "). " << value
+	              << " was not added." << endl;
+      else cerr << "Warning: assigning to queue<string>[" << adr << "] is outside "
+                   "of size (" << queue.size() << "). " << value
+                << " was not added." << endl;
 }
 
 void vvp_queue_string::get_word(unsigned adr, string&value)
@@ -550,8 +568,17 @@ vvp_queue_vec4::~vvp_queue_vec4()
 
 void vvp_queue_vec4::set_word(unsigned adr, const vvp_vector4_t&value)
 {
+      unsigned max_size = 0; // FIXME: need to get this from the compiler; bounded queues will fail
       if (adr < queue.size())
 	    queue[adr] = value;
+      else if (adr == queue.size())
+	    if (!max_size || (queue.size() < max_size)) queue.push_back(value);
+	    else cerr << "Warning: assigning to queue<vector>[" << adr << "] is"
+	                 " outside bound (" << max_size << "). " << value
+	              << " was not added." << endl;
+      else cerr << "Warning: assigning to queue<vector>[" << adr << "] is outside "
+                   "of size (" << queue.size() << "). " << value
+                << " was not added." << endl;
 }
 
 void vvp_queue_vec4::get_word(unsigned adr, vvp_vector4_t&value)
