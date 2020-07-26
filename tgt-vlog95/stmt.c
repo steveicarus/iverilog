@@ -94,12 +94,18 @@ static void emit_stmt_lval_name(ivl_scope_t scope, ivl_lval_t lval,
       emit_id(ivl_signal_basename(sig));
       if (array_idx) {
 	    int msb, lsb;
-	    assert(ivl_signal_dimensions(sig));
+	    ivl_type_t net_type = ivl_signal_net_type(sig);
 	    fprintf(vlog_out, "[");
-	      /* For an array the LSB/MSB order is not important. They are
-	       * always accessed from base counting up. */
-	    lsb = ivl_signal_array_base(sig);
-	    msb = lsb + ivl_signal_array_count(sig) - 1;
+	    if (ivl_type_base(net_type) == IVL_VT_QUEUE) {
+		  lsb = 0;
+		  msb = 1;
+	    } else {
+		  assert(ivl_signal_dimensions(sig));
+		    /* For an array the LSB/MSB order is not important.
+		     * They are always accessed from base counting up. */
+		  lsb = ivl_signal_array_base(sig);
+		  msb = lsb + ivl_signal_array_count(sig) - 1;
+	    }
 	    emit_scaled_expr(scope, array_idx, msb, lsb);
 	    fprintf(vlog_out, "]");
       }
