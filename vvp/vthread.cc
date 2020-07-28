@@ -5937,7 +5937,7 @@ bool of_STORE_QDAR_R(vthread_t thr, vvp_code_t cp)
 	    cerr << "Warning: cannot write to an undefined queue<real> index."
 	         << endl;
       else
-	    queue->set_word(adr, value, max_size);
+	    queue->set_word_max(adr, value, max_size);
       return true;
 }
 
@@ -5960,7 +5960,7 @@ bool of_STORE_QDAR_STR(vthread_t thr, vvp_code_t cp)
 	    cerr << "Warning: cannot write to an undefined queue<string> index."
 	         << endl;
       else
-	    queue->set_word(adr, value, max_size);
+	    queue->set_word_max(adr, value, max_size);
       return true;
 }
 
@@ -5983,7 +5983,7 @@ bool of_STORE_QDAR_VEC4(vthread_t thr, vvp_code_t cp)
 	    cerr << "Warning: cannot write to an undefined queue<vector["
 	         << value.size() << "]> index." << endl;
       else
-	    queue->set_word(adr, value, max_size);
+	    queue->set_word_max(adr, value, max_size);
       return true;
 }
 

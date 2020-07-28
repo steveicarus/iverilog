@@ -154,15 +154,15 @@ class vvp_queue : public vvp_darray {
       inline vvp_queue(void) { }
       ~vvp_queue();
 
-      virtual void set_word(unsigned adr, const vvp_vector4_t&value, unsigned max_size);
+      virtual void set_word_max(unsigned adr, const vvp_vector4_t&value, unsigned max_size);
       virtual void push_back(const vvp_vector4_t&value, unsigned max_size);
       virtual void push_front(const vvp_vector4_t&value, unsigned max_size);
 
-      virtual void set_word(unsigned adr, double value, unsigned max_size);
+      virtual void set_word_max(unsigned adr, double value, unsigned max_size);
       virtual void push_back(double value, unsigned max_size);
       virtual void push_front(double value, unsigned max_size);
 
-      virtual void set_word(unsigned adr, const std::string&value, unsigned max_size);
+      virtual void set_word_max(unsigned adr, const std::string&value, unsigned max_size);
       virtual void push_back(const std::string&value, unsigned max_size);
       virtual void push_front(const std::string&value, unsigned max_size);
 
@@ -177,7 +177,8 @@ class vvp_queue_real : public vvp_queue {
       ~vvp_queue_real();
 
       size_t get_size(void) const { return queue.size(); };
-      void set_word(unsigned adr, double value, unsigned max_size);
+      void set_word_max(unsigned adr, double value, unsigned max_size);
+      void set_word(unsigned adr, double value);
       void get_word(unsigned adr, double&value);
       void push_back(double value, unsigned max_size);
       void push_front(double value, unsigned max_size);
@@ -195,7 +196,8 @@ class vvp_queue_string : public vvp_queue {
       ~vvp_queue_string();
 
       size_t get_size(void) const { return queue.size(); };
-      void set_word(unsigned adr, const std::string&value, unsigned max_size);
+      void set_word_max(unsigned adr, const std::string&value, unsigned max_size);
+      void set_word(unsigned adr, const std::string&value);
       void get_word(unsigned adr, std::string&value);
       void push_back(const std::string&value, unsigned max_size);
       void push_front(const std::string&value, unsigned max_size);
@@ -213,7 +215,8 @@ class vvp_queue_vec4 : public vvp_queue {
       ~vvp_queue_vec4();
 
       size_t get_size(void) const { return queue.size(); };
-      void set_word(unsigned adr, const vvp_vector4_t&value, unsigned max_size);
+      void set_word_max(unsigned adr, const vvp_vector4_t&value, unsigned max_size);
+      void set_word(unsigned adr, const vvp_vector4_t&value);
       void get_word(unsigned adr, vvp_vector4_t&value);
       void push_back(const vvp_vector4_t&value, unsigned max_size);
       void push_front(const vvp_vector4_t&value, unsigned max_size);
