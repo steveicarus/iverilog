@@ -494,9 +494,10 @@ void draw_vpi_task_call(ivl_statement_t tnet)
                     ivl_stmt_lineno(tnet), ivl_stmt_name(tnet));
       } else {
 	    char call_string[1024];
-	    sprintf(call_string, "    %s %u %u \"%s\"", command,
-	            ivl_file_table_index(ivl_stmt_file(tnet)),
-	            ivl_stmt_lineno(tnet), ivl_stmt_name(tnet));
+	    snprintf(call_string, sizeof(call_string),
+		     "	  %s %u %u \"%s\"", command,
+		     ivl_file_table_index(ivl_stmt_file(tnet)),
+		     ivl_stmt_lineno(tnet), ivl_stmt_name(tnet));
 	    draw_vpi_taskfunc_args(call_string, tnet, 0);
       }
 }
@@ -505,10 +506,11 @@ void draw_vpi_func_call(ivl_expr_t fnet)
 {
       char call_string[1024];
 
-      sprintf(call_string, "    %%vpi_func %u %u \"%s\" %u",
-              ivl_file_table_index(ivl_expr_file(fnet)),
-	      ivl_expr_lineno(fnet), ivl_expr_name(fnet),
-	      ivl_expr_width(fnet));
+      snprintf(call_string, sizeof(call_string),
+	       "    %%vpi_func %u %u \"%s\" %u",
+	       ivl_file_table_index(ivl_expr_file(fnet)),
+	       ivl_expr_lineno(fnet), ivl_expr_name(fnet),
+	       ivl_expr_width(fnet));
 
       draw_vpi_taskfunc_args(call_string, 0, fnet);
 }
@@ -517,9 +519,10 @@ void draw_vpi_rfunc_call(ivl_expr_t fnet)
 {
       char call_string[1024];
 
-      sprintf(call_string, "    %%vpi_func/r %u %u \"%s\"",
-              ivl_file_table_index(ivl_expr_file(fnet)),
-	      ivl_expr_lineno(fnet), ivl_expr_name(fnet));
+      snprintf(call_string, sizeof(call_string),
+	       "    %%vpi_func/r %u %u \"%s\"",
+	       ivl_file_table_index(ivl_expr_file(fnet)),
+	       ivl_expr_lineno(fnet), ivl_expr_name(fnet));
 
       draw_vpi_taskfunc_args(call_string, 0, fnet);
 }
@@ -528,9 +531,10 @@ void draw_vpi_sfunc_call(ivl_expr_t fnet)
 {
       char call_string[1024];
 
-      sprintf(call_string, "    %%vpi_func/s %u %u \"%s\"",
-              ivl_file_table_index(ivl_expr_file(fnet)),
-	      ivl_expr_lineno(fnet), ivl_expr_name(fnet));
+      snprintf(call_string, sizeof(call_string),
+	       "    %%vpi_func/s %u %u \"%s\"",
+	       ivl_file_table_index(ivl_expr_file(fnet)),
+	       ivl_expr_lineno(fnet), ivl_expr_name(fnet));
 
       draw_vpi_taskfunc_args(call_string, 0, fnet);
 }
