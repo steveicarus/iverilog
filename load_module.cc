@@ -73,7 +73,8 @@ bool load_module(const char*type, int&parser_errors)
 	    if (cur == lcur->name_map.end())
 		  continue;
 
-	    sprintf(path, "%s%c%s", lcur->dir, dir_character, (*cur).second);
+	    snprintf(path, sizeof(path), "%s%c%s",
+		     lcur->dir, dir_character, (*cur).second);
 
 	    if(depend_file) {
                   if (depfile_mode == 'p') {

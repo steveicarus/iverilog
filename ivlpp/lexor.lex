@@ -1662,7 +1662,8 @@ static void do_include(void)
         }
 
         for (idx = start ;  idx < include_cnt ;  idx += 1) {
-            sprintf(path, "%s/%s", include_dir[idx], standby->path);
+            snprintf(path, sizeof(path), "%s/%s",
+                     include_dir[idx], standby->path);
 
             if ((standby->file = fopen(path, "r"))) {
 		standby->file_close = fclose;

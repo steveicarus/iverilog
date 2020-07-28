@@ -87,13 +87,13 @@ void vpip_load_module(const char*name)
 	    if (rc != 0) {            /* did we find a file? */
 	          /* no, try with a .vpi suffix too */
 		  export_flag = false;
-		  sprintf(buf, "%s.vpi", name);
+		  snprintf(buf, sizeof(buf), "%s.vpi", name);
 		  rc = stat(buf, &sb);
 
 		    /* Try also with the .vpl suffix. */
 		  if (rc != 0) {
 			export_flag = true;
-			sprintf(buf, "%s.vpl", name);
+			snprintf(buf, sizeof(buf), "%s.vpl", name);
 			rc = stat(buf, &sb);
 		  }
 
@@ -112,13 +112,14 @@ void vpip_load_module(const char*name)
 		       ; (rc != 0) && (idx < vpip_module_path_cnt)
 		       ;  idx += 1) {
 		  export_flag = false;
-		  sprintf(buf, "%s%c%s.vpi", vpip_module_path[idx], sep, name);
+		  snprintf(buf, sizeof(buf), "%s%c%s.vpi",
+			   vpip_module_path[idx], sep, name);
 		  rc = stat(buf,&sb);
 
 		  if (rc != 0) {
 			export_flag = true;
-			sprintf(buf, "%s%c%s.vpl",
-				vpip_module_path[idx], sep, name);
+			snprintf(buf, sizeof(buf), "%s%c%s.vpl",
+				 vpip_module_path[idx], sep, name);
 			rc = stat(buf,&sb);
 		  }
 	    }
