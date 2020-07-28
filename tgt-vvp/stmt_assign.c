@@ -1063,6 +1063,11 @@ static int show_stmt_assign_sig_queue(ivl_statement_t net)
 
       assert(ivl_type_base(var_type) == IVL_VT_QUEUE);
 
+      int idx = allocate_word();
+      assert(idx >= 0);
+        /* Save the queue maximum index value to an integer register. */
+      fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", idx, ivl_signal_array_count(var));
+
       if (ivl_expr_type(rval) == IVL_EX_NULL) {
 	    errors += draw_eval_object(rval);
 	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", var);
@@ -1071,20 +1076,20 @@ static int show_stmt_assign_sig_queue(ivl_statement_t net)
 	      /* The %store/dar expects the array index to be in
 		 index register 3. */
 	    draw_eval_expr_into_integer(mux, 3);
-	    fprintf(vvp_out, "    %%store/dar/r v%p_0;\n", var);
+	    fprintf(vvp_out, "    %%store/qdar/r v%p_0, %u;\n", var, idx);
       } else if (mux && ivl_type_base(element_type)==IVL_VT_STRING) {
 	    draw_eval_string(rval);
 	      /* The %store/dar expects the array index to be in
 		 index register 3. */
 	    draw_eval_expr_into_integer(mux, 3);
-	    fprintf(vvp_out, "    %%store/dar/str v%p_0;\n", var);
+	    fprintf(vvp_out, "    %%store/qdar/str v%p_0, %u;\n", var, idx);
       } else if (mux) { // What is left must be some form of vector
 	    draw_eval_vec4(rval);
 	    resize_vec4_wid(rval, ivl_stmt_lwidth(net));
 	      /* The %store/dar expects the array index to be in
 		 index register 3. */
 	    draw_eval_expr_into_integer(mux, 3);
-	    fprintf(vvp_out, "    %%store/dar/vec4 v%p_0;\n", var);
+	    fprintf(vvp_out, "    %%store/qdar/vec4 v%p_0, %u;\n", var, idx);
       } else {
 	    fprintf(stderr, "Sorry: I don't know how to handle expr_type=%d "
 	                    "being assigned to a queue.\n", ivl_expr_type(rval));
@@ -1092,6 +1097,7 @@ static int show_stmt_assign_sig_queue(ivl_statement_t net)
 	                     "expr_type=%d.\n", ivl_expr_type(rval));
 	    errors += 1;
       }
+      clr_word(idx);
 // FIXME
 #if 0
 static int show_stmt_assign_sig_darray(ivl_statement_t net)

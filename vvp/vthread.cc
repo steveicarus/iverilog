@@ -3720,6 +3720,9 @@ bool of_LOAD_DAR_R(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %load/dar/str <array-label>;
+ */
 bool of_LOAD_DAR_STR(vthread_t thr, vvp_code_t cp)
 {
       int64_t adr = thr->words[3].w_int;
@@ -3742,6 +3745,9 @@ bool of_LOAD_DAR_STR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %load/dar/vec4 <array-label>;
+ */
 bool of_LOAD_DAR_VEC4(vthread_t thr, vvp_code_t cp)
 {
       int64_t adr = thr->words[3].w_int;
@@ -5645,15 +5651,12 @@ bool of_SPLIT_VEC4(vthread_t thr, vvp_code_t cp)
 
 /*
  * %store/dar/real <var>
- * In this case, <var> is the name of a dynamic array. Signed index
- * register 3 contains the index into the dynamic array.
  */
 bool of_STORE_DAR_R(vthread_t thr, vvp_code_t cp)
 {
       int64_t adr = thr->words[3].w_int;
       double value = thr->pop_real(); // Pop the real value to store...
       vvp_net_t*net = cp->net;
-      unsigned max_size = 0; // FIXME: Need to get this from the compile and how to pass to set_word()
 
       assert(net);
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
@@ -5669,28 +5672,21 @@ bool of_STORE_DAR_R(vthread_t thr, vvp_code_t cp)
 	         << endl;
       else if (darray)
 	    darray->set_word(adr, value);
-      else {
-	    vvp_queue*queue = get_queue_object<vvp_queue_real>(thr, net);
-	    if (queue)
-		  queue->push_front(value, max_size);
-	    else
-		  cerr << "Warning: cannot write to an undefined array<real>."
-		       << endl;
-      }
+      else
+	    cerr << "Warning: cannot write to an undefined array<real>."
+	         << endl;
+
       return true;
 }
 
 /*
  * %store/dar/str <var>
- * In this case, <var> is the name of a dynamic array. Signed index
- * register 3 contains the index into the dynamic array.
  */
 bool of_STORE_DAR_STR(vthread_t thr, vvp_code_t cp)
 {
       int64_t adr = thr->words[3].w_int;
       string value = thr->pop_str(); // Pop the string to be stored...
       vvp_net_t*net = cp->net;
-      unsigned max_size = 0; // FIXME: Need to get this from the compile and how to pass to set_word()
 
       assert(net);
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
@@ -5706,29 +5702,21 @@ bool of_STORE_DAR_STR(vthread_t thr, vvp_code_t cp)
 	         << endl;
       else if (darray)
 	    darray->set_word(adr, value);
-      else {
-	    vvp_queue*queue = get_queue_object<vvp_queue_string>(thr, net);
-	    if (queue)
-		  queue->push_front(value, max_size);
-	    else
-		  cerr << "Warning: cannot write to an undefined array<string>."
-		       << endl;
-      }
+      else
+	    cerr << "Warning: cannot write to an undefined array<string>."
+	         << endl;
+
       return true;
 }
 
-
 /*
  * %store/dar/vec4 <var>
- * In this case, <var> is the name of a dynamic array. Signed index
- * register 3 contains the index into the dynamic array.
  */
 bool of_STORE_DAR_VEC4(vthread_t thr, vvp_code_t cp)
 {
       int64_t adr = thr->words[3].w_int;
-      vvp_vector4_t value = thr->pop_vec4(); // Pop the real value to be store...
+      vvp_vector4_t value = thr->pop_vec4(); // Pop the vector4 value to be store...
       vvp_net_t*net = cp->net;
-      unsigned max_size = 0; // FIXME: Need to get this from the compile and how to pass to set_word()
 
       assert(net);
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
@@ -5744,14 +5732,10 @@ bool of_STORE_DAR_VEC4(vthread_t thr, vvp_code_t cp)
 	         << value.size() << "]> index." << endl;
       else if (darray)
 	    darray->set_word(adr, value);
-      else {
-	    vvp_queue*queue = get_queue_object<vvp_queue_vec4>(thr, net);
-	    if (queue)
-		  queue->push_front(value, max_size);
-	    else
-		  cerr << "Warning: cannot write to an undefined array<vector["
-		       << value.size() << "]>." << endl;
-      }
+      else
+	    cerr << "Warning: cannot write to an undefined array<vector["
+	         << value.size() << "]>." << endl;
+
       return true;
 }
 
@@ -5890,10 +5874,10 @@ bool of_STORE_QB_R(vthread_t thr, vvp_code_t cp)
 
       vvp_net_t*net = cp->net;
       unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      vvp_queue*dqueue = get_queue_object<vvp_queue_real>(thr, net);
 
-      assert(dqueue);
-      dqueue->push_back(value, max_size);
+      vvp_queue*queue = get_queue_object<vvp_queue_real>(thr, net);
+      assert(queue);
+      queue->push_back(value, max_size);
       return true;
 }
 
@@ -5907,10 +5891,10 @@ bool of_STORE_QB_STR(vthread_t thr, vvp_code_t cp)
 
       vvp_net_t*net = cp->net;
       unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
 
-      assert(dqueue);
-      dqueue->push_back(value, max_size);
+      vvp_queue*queue = get_queue_object<vvp_queue_string>(thr, net);
+      assert(queue);
+      queue->push_back(value, max_size);
       return true;
 }
 
@@ -5928,13 +5912,80 @@ bool of_STORE_QB_V(vthread_t thr, vvp_code_t cp)
 
       assert(value.size() == wid);
 
-      vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
-
-      assert(dqueue);
-      dqueue->push_back(value, max_size);
+      vvp_queue*queue = get_queue_object<vvp_queue_vec4>(thr, net);
+      assert(queue);
+      queue->push_back(value, max_size);
       return true;
 }
 
+/*
+ * %store/qdar/real <var>, idx
+ */
+bool of_STORE_QDAR_R(vthread_t thr, vvp_code_t cp)
+{
+      int64_t adr = thr->words[3].w_int;
+      double value = thr->pop_real(); // Pop the real value to store...
+      vvp_net_t*net = cp->net;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+
+      vvp_queue*queue = get_queue_object<vvp_queue_real>(thr, net);
+      assert(queue);
+      if (adr < 0)
+	    cerr << "Warning: cannot write to a negative queue<real> index ("
+	         << adr << ")." << endl;
+      else if (thr->flags[4] != BIT4_0)
+	    cerr << "Warning: cannot write to an undefined queue<real> index."
+	         << endl;
+      else
+	    queue->set_word(adr, value, max_size);
+      return true;
+}
+
+/*
+ * %store/qdar/str <var>, idx
+ */
+bool of_STORE_QDAR_STR(vthread_t thr, vvp_code_t cp)
+{
+      int64_t adr = thr->words[3].w_int;
+      string value = thr->pop_str(); // Pop the string to be stored...
+      vvp_net_t*net = cp->net;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+
+      vvp_queue*queue = get_queue_object<vvp_queue_string>(thr, net);
+      assert(queue);
+      if (adr < 0)
+	    cerr << "Warning: cannot write to a negative queue<string> index ("
+	         << adr << ")." << endl;
+      else if (thr->flags[4] != BIT4_0)
+	    cerr << "Warning: cannot write to an undefined queue<string> index."
+	         << endl;
+      else
+	    queue->set_word(adr, value, max_size);
+      return true;
+}
+
+/*
+ * %store/qdar/vec4 <var>, idx
+ */
+bool of_STORE_QDAR_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      int64_t adr = thr->words[3].w_int;
+      vvp_vector4_t value = thr->pop_vec4(); // Pop the vector4 value to be store...
+      vvp_net_t*net = cp->net;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+
+      vvp_queue*queue = get_queue_object<vvp_queue_vec4>(thr, net);
+      assert(queue);
+      if (adr < 0)
+	    cerr << "Warning: cannot write to a negative queue<vector["
+	         << value.size() << "]> index (" << adr << ")." << endl;
+      else if (thr->flags[4] != BIT4_0)
+	    cerr << "Warning: cannot write to an undefined queue<vector["
+	         << value.size() << "]> index." << endl;
+      else
+	    queue->set_word(adr, value, max_size);
+      return true;
+}
 
 /*
  * %store/qf/r <var-label>, <max-idx>
