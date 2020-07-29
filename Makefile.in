@@ -256,10 +256,8 @@ parse.o: parse.cc
 
 # Build this in two steps to avoid parallel build issues (see pr3462585)
 parse.cc: $(srcdir)/parse.y
-	$(YACC) --verbose -t -p VL -d -o $@ $<
+	$(YACC) --verbose -t -p VL --defines=parse.h -o $@ $<
 parse.h: parse.cc
-	mv parse.cc.h $@ 2>/dev/null || mv parse.hh $@
-	touch $@
 
 syn-rules.cc: $(srcdir)/syn-rules.y
 	$(YACC) --verbose -t -p syn_ -o $@ $<
