@@ -89,10 +89,8 @@ fp_lex.cc: $(srcdir)/fp.lex
 	$(LEX) -s -ofp_lex.cc $(srcdir)/fp.lex
 
 fp.cc: $(srcdir)/fp.y
-	$(YACC) --verbose -t -p fp -d -o $@ $<
+	$(YACC) --verbose -t -p fp --defines=fp.h -o $@ $<
 fp.h: fp.cc
-	mv fp.cc.h $@ 2>/dev/null || mv fp.hh $@
-	touch $@
 
 ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl
