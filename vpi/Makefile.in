@@ -136,20 +136,18 @@ sdf_lexor.o: sdf_lexor.c sdf_parse.h
 sdf_lexor.c: $(srcdir)/sdf_lexor.lex
 	$(LEX) -t $< > $@
 
-# Build this in two steps to avoid parallel build issues (see pr3462585)
-sdf_parse.c: $(srcdir)/sdf_parse.y
-	$(YACC) --verbose -t -p sdf -d -o $@ $<
-sdf_parse.h: sdf_parse.c
+# Use pattern rules to avoid parallel build issues (see pr3462585)
+sdf_parse%c sdf_parse%h: $(srcdir)/sdf_parse%y
+	$(YACC) --verbose -t -p sdf -d -o sdf_parse.c $<
 
 table_mod_lexor.o: table_mod_lexor.c table_mod_parse.h
 
 table_mod_lexor.c: $(srcdir)/table_mod_lexor.lex
 	$(LEX) -t $< > $@
 
-# Build this in two steps to avoid parallel build issues (see pr3462585)
-table_mod_parse.c: $(srcdir)/table_mod_parse.y
-	$(YACC) --verbose -t -p tblmod -d -o $@ $<
-table_mod_parse.h: table_mod_parse.c
+# Use pattern rules to avoid parallel build issues (see pr3462585)
+table_mod_parse%c table_mod_parse%h: $(srcdir)/table_mod_parse%y
+	$(YACC) --verbose -t -p tblmod -d -o table_mod_parse.c $<
 
 v2005_math.vpi: $M ../vvp/libvpi.a
 	$(CC) @shared@ -o $@ $M -L../vvp $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)

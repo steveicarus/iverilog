@@ -85,10 +85,9 @@ iverilog@EXEEXT@: $O
 cflexor.c: $(srcdir)/cflexor.lex
 	$(LEX) -s -t $< > $@
 
-# Build this in two steps to avoid parallel build issues (see pr3462585)
-cfparse.c: $(srcdir)/cfparse.y
-	$(YACC) --verbose -t -p cf -d -o $@ $<
-cfparse.h: cfparse.c
+# Use pattern rules to avoid parallel build issues (see pr3462585)
+cfparse%c cfparse%h: $(srcdir)/cfparse%y
+	$(YACC) --verbose -t -p cf -d -o cfparse.c $<
 
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
