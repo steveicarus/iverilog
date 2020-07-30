@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -96,6 +96,17 @@ int number_is_immediate(ivl_expr_t expr, unsigned lim_wid, int negative_ok_flag)
 
       if (pad_bit == '1' && !negative_ok_flag) return 0;
 
+	/* Check if all the bits are either x or z. */
+      if ((bits[0] ==  'x') || (bits[0] == 'z')) {
+	    char first_bit = bits[0];
+	    unsigned bits_match = 1;
+	    for (idx = 1 ;  idx < nbits ;  idx += 1)
+		  if (bits[idx] != first_bit) {
+			bits_match = 0;
+			break;
+		  }
+	    if (bits_match) return 1;
+      }
       for (idx = lim_wid ;  idx < nbits ;  idx += 1)
 	    if (bits[idx] != pad_bit) return 0;
 
