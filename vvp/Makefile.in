@@ -140,10 +140,9 @@ parse.o: parse.cc
 
 tables.o: tables.cc
 
-# Build this in two steps to avoid parallel build issues (see pr3462585)
-parse.cc: $(srcdir)/parse.y
-	$(YACC) --verbose -t --defines=parse.h -o $@ $<
-parse.h: parse.cc
+# Use pattern rules to avoid parallel build issues (see pr3462585)
+parse%cc parse%h: $(srcdir)/parse%y
+	$(YACC) --verbose -t --defines=parse.h -o parse.cc $<
 
 lexor.cc: $(srcdir)/lexor.lex
 	$(LEX) -s -olexor.cc $(srcdir)/lexor.lex
