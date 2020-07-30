@@ -1767,6 +1767,52 @@ static int show_delete_method(ivl_statement_t net)
       return 0;
 }
 
+static int show_insert_method(ivl_statement_t net)
+{
+      show_stmt_file_line(net, "queue: insert");
+
+      unsigned parm_count = ivl_stmt_parm_count(net);
+      if (parm_count != 3)
+	    return 1;
+
+      ivl_expr_t parm0 = ivl_stmt_parm(net,0);
+      assert(ivl_expr_type(parm0) == IVL_EX_SIGNAL);
+      ivl_signal_t var = ivl_expr_signal(parm0);
+      ivl_type_t var_type = ivl_signal_net_type(var);
+      assert(ivl_type_base(var_type) == IVL_VT_QUEUE);
+
+      int idx = allocate_word();
+      assert(idx >= 0);
+	/* Save the queue maximum index value to an integer register. */
+      fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", idx, ivl_signal_array_count(var));
+
+      ivl_type_t element_type = ivl_type_element(var_type);
+
+      ivl_expr_t parm1 = ivl_stmt_parm(net,1);
+	/* The %qinsert expects the array index to be in index register 3. */
+      draw_eval_expr_into_integer(parm1, 3);
+      ivl_expr_t parm2 = ivl_stmt_parm(net,2);
+      switch (ivl_type_base(element_type)) {
+	  case IVL_VT_REAL:
+	    draw_eval_real(parm2);
+	    fprintf(vvp_out, "    %%qinsert/real v%p_0, %u;\n",
+	            var, idx);
+	    break;
+	  case IVL_VT_STRING:
+	    draw_eval_string(parm2);
+	    fprintf(vvp_out, "    %%qinsert/str v%p_0, %u;\n",
+	            var, idx);
+	    break;
+	  default:
+	    draw_eval_vec4(parm2);
+	    fprintf(vvp_out, "    %%qinsert/v v%p_0, %u, %u;\n",
+	            var, idx,
+	            width_of_packed_type(element_type));
+	    break;
+      }
+      return 0;
+}
+
 static int show_push_frontback_method(ivl_statement_t net, bool is_front)
 {
       const char*type_code;
@@ -1825,6 +1871,9 @@ static int show_system_task_call(ivl_statement_t net)
 
       if (strcmp(stmt_name,"$ivl_darray_method$delete") == 0)
 	    return show_delete_method(net);
+
+      if (strcmp(stmt_name,"$ivl_queue_method$insert") == 0)
+	    return show_insert_method(net);
 
       if (strcmp(stmt_name,"$ivl_queue_method$push_front") == 0)
 	    return show_push_frontback_method(net, true);

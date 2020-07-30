@@ -415,6 +415,11 @@ void vvp_queue::set_word_max(unsigned, const vvp_vector4_t&, unsigned)
       cerr << "XXXX set_word_max(vvp_vector4_t) not implemented for " << typeid(*this).name() << endl;
 }
 
+void vvp_queue::insert(unsigned, const vvp_vector4_t&, unsigned)
+{
+      cerr << "XXXX insert(vvp_vector4_t) not implemented for " << typeid(*this).name() << endl;
+}
+
 void vvp_queue::push_back(const vvp_vector4_t&, unsigned)
 {
       cerr << "XXXX push_back(vvp_vector4_t) not implemented for " << typeid(*this).name() << endl;
@@ -430,6 +435,11 @@ void vvp_queue::set_word_max(unsigned, double, unsigned)
       cerr << "XXXX set_word_max(double) not implemented for " << typeid(*this).name() << endl;
 }
 
+void vvp_queue::insert(unsigned, double, unsigned)
+{
+      cerr << "XXXX set_word_max(double) not implemented for " << typeid(*this).name() << endl;
+}
+
 void vvp_queue::push_back(double, unsigned)
 {
       cerr << "XXXX push_back(double) not implemented for " << typeid(*this).name() << endl;
@@ -441,6 +451,11 @@ void vvp_queue::push_front(double, unsigned)
 }
 
 void vvp_queue::set_word_max(unsigned, const string&, unsigned)
+{
+      cerr << "XXXX set_word_max(string) not implemented for " << typeid(*this).name() << endl;
+}
+
+void vvp_queue::insert(unsigned, const string&, unsigned)
 {
       cerr << "XXXX set_word_max(string) not implemented for " << typeid(*this).name() << endl;
 }
@@ -490,6 +505,47 @@ void vvp_queue_real::get_word(unsigned adr, double&value)
 	    value = queue[adr];
 }
 
+void vvp_queue_real::insert(unsigned idx, double value, unsigned max_size)
+{
+	// Inserting past the end of the queue
+      if (idx > queue.size())
+	    cerr << "Warning: inserting to queue<real>[" << idx << "] is "
+	            "outside of size (" << queue.size() << "). " << value
+	         << " was not added." << endl;
+	// Inserting at the end
+      else if (idx == queue.size())
+	    if (!max_size || (queue.size() < max_size))
+		  queue.push_back(value);
+	    else
+		  cerr << "Warning: inserting to queue<real>[" << idx << "] is"
+		          " outside bound (" << max_size << "). " << value
+		       << " was not added." << endl;
+      else  {
+	    if (max_size && (queue.size() == max_size)) {
+		  cerr << "Warning: insert("<< idx << ", " << value << ") removed "
+		       << queue.back() << " from already full bounded queue<real> ["
+		       << max_size << "]." << endl;
+		  queue.pop_back();
+	    }
+	      // Inserting at the beginning
+	    if (idx == 0)
+		  queue.push_front(value);
+	      // Inserting in the middle
+	    else {
+		  std::deque<double>::iterator pos;
+		  unsigned middle = queue.size()/2;
+		  if (idx < middle) {
+			pos = queue.begin();
+			for (unsigned count = 0; count < idx; ++count) ++pos;
+		  } else {
+			pos = queue.end();
+			for (unsigned count = queue.size(); count > idx; --count) --pos;
+		  }
+		  queue.insert(pos, value);
+	    }
+      }
+}
+
 void vvp_queue_real::push_back(double value, unsigned max_size)
 {
       if (!max_size || (queue.size() < max_size))
@@ -537,8 +593,8 @@ void vvp_queue_string::set_word_max(unsigned adr, const string&value, unsigned m
 		  queue.push_back(value);
 	    else
 		  cerr << "Warning: assigning to queue<string>[" << adr << "] is"
-		          " outside bound (" << max_size << "). " << value
-		       << " was not added." << endl;
+		          " outside bound (" << max_size << "). \"" << value
+		       << "\" was not added." << endl;
       else
 	    set_word(adr, value);
 }
@@ -549,8 +605,8 @@ void vvp_queue_string::set_word(unsigned adr, const string&value)
 	    queue[adr] = value;
       else
 	    cerr << "Warning: assigning to queue<string>[" << adr << "] is outside "
-	            "of size (" << queue.size() << "). " << value
-	         << " was not added." << endl;
+	            "of size (" << queue.size() << "). \"" << value
+	         << "\" was not added." << endl;
 }
 
 void vvp_queue_string::get_word(unsigned adr, string&value)
@@ -559,6 +615,47 @@ void vvp_queue_string::get_word(unsigned adr, string&value)
 	    value = "";
       else
 	    value = queue[adr];
+}
+
+void vvp_queue_string::insert(unsigned idx, const string&value, unsigned max_size)
+{
+	// Inserting past the end of the queue
+      if (idx > queue.size())
+	    cerr << "Warning: inserting to queue<string>[" << idx << "] is "
+	            "outside of size (" << queue.size() << "). \"" << value
+	         << "\" was not added." << endl;
+	// Inserting at the end
+      else if (idx == queue.size())
+	    if (!max_size || (queue.size() < max_size))
+		  queue.push_back(value);
+	    else
+		  cerr << "Warning: inserting to queue<string>[" << idx << "] is"
+		          " outside bound (" << max_size << "). \"" << value
+		       << "\" was not added." << endl;
+      else  {
+	    if (max_size && (queue.size() == max_size)) {
+		  cerr << "Warning: insert("<< idx << ", \"" << value << "\") removed \""
+		  << queue.back() << "\" from already full bounded queue<string> ["
+		  << max_size << "]." << endl;
+		  queue.pop_back();
+	    }
+	      // Inserting at the beginning
+	    if (idx == 0)
+		  queue.push_front(value);
+	      // Inserting in the middle
+	    else {
+		  std::deque<string>::iterator pos;
+		  unsigned middle = queue.size()/2;
+		  if (idx < middle) {
+			pos = queue.begin();
+			for (unsigned count = 0; count < idx; ++count) ++pos;
+		  } else {
+			pos = queue.end();
+			for (unsigned count = queue.size(); count > idx; --count) --pos;
+		  }
+		  queue.insert(pos, value);
+	    }
+      }
 }
 
 void vvp_queue_string::push_back(const string&value, unsigned max_size)
@@ -630,6 +727,47 @@ void vvp_queue_vec4::get_word(unsigned adr, vvp_vector4_t&value)
 	    value = vvp_vector4_t(queue[0].size());
       else
 	    value = queue[adr];
+}
+
+void vvp_queue_vec4::insert(unsigned idx, const vvp_vector4_t&value, unsigned max_size)
+{
+	// Inserting past the end of the queue
+      if (idx > queue.size())
+	    cerr << "Warning: inserting to queue<vector[" << value.size()
+	         << "]>[" << idx << "] is outside of size (" << queue.size()
+	         << "). " << value << " was not added." << endl;
+	// Inserting at the end
+      else if (idx == queue.size())
+	    if (!max_size || (queue.size() < max_size))
+		  queue.push_back(value);
+	    else
+		  cerr << "Warning: inserting to queue<vector[" << value.size()
+		       << "]>[" << idx << "] is outside bound (" << max_size
+		       << "). " << value << " was not added." << endl;
+      else  {
+	    if (max_size && (queue.size() == max_size)) {
+		  cerr << "Warning: insert("<< idx << ", " << value << ") removed "
+		       << queue.back() << " from already full bounded queue<vector["
+		       << value.size() << "]> [" << max_size << "]." << endl;
+		  queue.pop_back();
+	    }
+	      // Inserting at the beginning
+	    if (idx == 0)
+		  queue.push_front(value);
+	      // Inserting in the middle
+	    else {
+		  std::deque<vvp_vector4_t>::iterator pos;
+		  unsigned middle = queue.size()/2;
+		  if (idx < middle) {
+			pos = queue.begin();
+			for (unsigned count = 0; count < idx; ++count) ++pos;
+		  } else {
+			pos = queue.end();
+			for (unsigned count = queue.size(); count > idx; --count) --pos;
+		  }
+		  queue.insert(pos, value);
+	    }
+      }
 }
 
 void vvp_queue_vec4::push_back(const vvp_vector4_t&value, unsigned max_size)

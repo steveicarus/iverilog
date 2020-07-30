@@ -1089,7 +1089,8 @@ static int show_stmt_assign_sig_queue(ivl_statement_t net)
 	      /* The %store/dar expects the array index to be in
 		 index register 3. */
 	    draw_eval_expr_into_integer(mux, 3);
-	    fprintf(vvp_out, "    %%store/qdar/vec4 v%p_0, %u;\n", var, idx);
+	    fprintf(vvp_out, "    %%store/qdar/vec4 v%p_0, %u, %u;\n", var, idx,
+	                     width_of_packed_type(element_type));
       } else {
 	    fprintf(stderr, "Sorry: I don't know how to handle expr_type=%d "
 	                    "being assigned to a queue.\n", ivl_expr_type(rval));

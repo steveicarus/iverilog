@@ -5065,6 +5065,80 @@ bool of_PUTC_STR_VEC4(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %qinsert/real <var-label>
+ */
+bool of_QINSERT_REAL(vthread_t thr, vvp_code_t cp)
+{
+      int64_t idx = thr->words[3].w_int;
+      vvp_net_t*net = cp->net;
+      double value = thr->pop_real(); // Pop the real value to be inserted.
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+
+      vvp_queue*queue = get_queue_object<vvp_queue_real>(thr, net);
+      assert(queue);
+      if (idx < 0)
+            cerr << "Warning: cannot insert at a negative queue<real> index ("
+                 << idx << "). " << value << " was not added." << endl;
+      else if (thr->flags[4] != BIT4_0)
+            cerr << "Warning: cannot insert at an undefined queue<real> index. "
+                 << value << " was not added." << endl;
+      else
+            queue->insert(idx, value, max_size);
+      return true;
+}
+
+/*
+ * %qinsert/str <var-label>
+ */
+bool of_QINSERT_STR(vthread_t thr, vvp_code_t cp)
+{
+      int64_t idx = thr->words[3].w_int;
+      vvp_net_t*net = cp->net;
+      string value = thr->pop_str(); // Pop the string to be stored...
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+
+      vvp_queue*queue = get_queue_object<vvp_queue_string>(thr, net);
+      assert(queue);
+      if (idx < 0)
+            cerr << "Warning: cannot insert at a negative queue<string> index ("
+                 << idx << "). \"" << value << "\" was not added." << endl;
+      else if (thr->flags[4] != BIT4_0)
+            cerr << "Warning: cannot insert at an undefined queue<string> index. \""
+                 << value << "\" was not added." << endl;
+      else
+            queue->insert(idx, value, max_size);
+      return true;
+}
+
+/*
+ * %qinsert/v <var-label>
+ */
+bool of_QINSERT_V(vthread_t thr, vvp_code_t cp)
+{
+      int64_t idx = thr->words[3].w_int;
+      vvp_net_t*net = cp->net;
+      vvp_vector4_t value = thr->pop_vec4(); // Pop the vector4 value to be store...
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+      unsigned wid = cp->bit_idx[1];
+
+      assert(value.size() == wid);
+
+      vvp_queue*queue = get_queue_object<vvp_queue_vec4>(thr, net);
+      assert(queue);
+      if (idx < 0)
+	    cerr << "Warning: cannot insert at a negative queue<vector["
+	         << value.size() << "]> index (" << idx << "). " << value
+	         << " was not added." << endl;
+      else if (thr->flags[4] != BIT4_0)
+            cerr << "Warning: cannot insert at an undefined queue<vector["
+	         << value.size() << "]> index. " << value
+	         << " was not added." << endl;
+      else
+            queue->insert(idx, value, max_size);
+      return true;
+}
+
+/*
  * %qpop/b/real <var-label>
  */
 bool of_QPOP_B_REAL(vthread_t thr, vvp_code_t cp)
@@ -5911,7 +5985,6 @@ bool of_STORE_QB_V(vthread_t thr, vvp_code_t cp)
       unsigned wid = cp->bit_idx[1];
 
       assert(value.size() == wid);
-
       vvp_queue*queue = get_queue_object<vvp_queue_vec4>(thr, net);
       assert(queue);
       queue->push_back(value, max_size);
@@ -5931,11 +6004,11 @@ bool of_STORE_QDAR_R(vthread_t thr, vvp_code_t cp)
       vvp_queue*queue = get_queue_object<vvp_queue_real>(thr, net);
       assert(queue);
       if (adr < 0)
-	    cerr << "Warning: cannot write to a negative queue<real> index ("
-	         << adr << ")." << endl;
+	    cerr << "Warning: cannot assign negative queue<real> index ("
+	         << adr << "). " << value  << " was not added." << endl;
       else if (thr->flags[4] != BIT4_0)
-	    cerr << "Warning: cannot write to an undefined queue<real> index."
-	         << endl;
+	    cerr << "Warning: cannot assign undefined queue<real> index. "
+	         << value << " was not added." << endl;
       else
 	    queue->set_word_max(adr, value, max_size);
       return true;
@@ -5954,11 +6027,11 @@ bool of_STORE_QDAR_STR(vthread_t thr, vvp_code_t cp)
       vvp_queue*queue = get_queue_object<vvp_queue_string>(thr, net);
       assert(queue);
       if (adr < 0)
-	    cerr << "Warning: cannot write to a negative queue<string> index ("
-	         << adr << ")." << endl;
+	    cerr << "Warning: cannot assign to a negative queue<string> index ("
+	         << adr << "). \"" << value << "\" was not added." << endl;
       else if (thr->flags[4] != BIT4_0)
-	    cerr << "Warning: cannot write to an undefined queue<string> index."
-	         << endl;
+	    cerr << "Warning: cannot assign to an undefined queue<string> index. \""
+	         << value << "\" was not added." << endl;
       else
 	    queue->set_word_max(adr, value, max_size);
       return true;
@@ -5973,15 +6046,19 @@ bool of_STORE_QDAR_VEC4(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t value = thr->pop_vec4(); // Pop the vector4 value to be store...
       vvp_net_t*net = cp->net;
       unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+      unsigned wid = cp->bit_idx[1];
 
+      assert(value.size() == wid);
       vvp_queue*queue = get_queue_object<vvp_queue_vec4>(thr, net);
       assert(queue);
       if (adr < 0)
-	    cerr << "Warning: cannot write to a negative queue<vector["
-	         << value.size() << "]> index (" << adr << ")." << endl;
+	    cerr << "Warning: cannot assign to a negative queue<vector["
+	         << value.size() << "]> index (" << adr << "). " << value
+	         << " was not added." << endl;
       else if (thr->flags[4] != BIT4_0)
-	    cerr << "Warning: cannot write to an undefined queue<vector["
-	         << value.size() << "]> index." << endl;
+	    cerr << "Warning: cannot assign to an undefined queue<vector["
+	         << value.size() << "]> index. " << value
+	         << " was not added." << endl;
       else
 	    queue->set_word_max(adr, value, max_size);
       return true;
@@ -5997,8 +6074,8 @@ bool of_STORE_QF_R(vthread_t thr, vvp_code_t cp)
 
       vvp_net_t*net = cp->net;
       unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      vvp_queue*dqueue = get_queue_object<vvp_queue_real>(thr, net);
 
+      vvp_queue*dqueue = get_queue_object<vvp_queue_real>(thr, net);
       assert(dqueue);
       dqueue->push_front(value, max_size);
       return true;
@@ -6014,8 +6091,8 @@ bool of_STORE_QF_STR(vthread_t thr, vvp_code_t cp)
 
       vvp_net_t*net = cp->net;
       unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
 
+      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
       assert(dqueue);
       dqueue->push_front(value, max_size);
       return true;
@@ -6033,9 +6110,8 @@ bool of_STORE_QF_V(vthread_t thr, vvp_code_t cp)
       unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
       unsigned wid = cp->bit_idx[1];
 
-      vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
-
       assert(value.size() == wid);
+      vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
       assert(dqueue);
       dqueue->push_front(value, max_size);
       return true;

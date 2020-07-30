@@ -3640,12 +3640,20 @@ NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
       sig->set_line(*this);
 
       unsigned nparms = parms_.size();
-      if ((nparms == 0) || (nparms > 1)) {
+	// insert() requires two arguments.
+      if ((method_name == "insert") && (nparms != 2)) {
+	    cerr << get_fileline() << ": error: " << method_name
+		 << "() method requires two arguments." << endl;
+	    des->errors += 1;
+      }
+	// push_front() and push_back() require one argument.
+      if ((method_name != "insert") && (nparms != 1)) {
 	    cerr << get_fileline() << ": error: " << method_name
 		 << "() method requires a single argument." << endl;
 	    des->errors += 1;
       }
 
+	// Get the context width if this is a logic type.
       ivl_variable_type_t base_type = net->darray_type()->element_base_type();
       int context_width = -1;
       switch (base_type) {
@@ -3657,13 +3665,35 @@ NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
 	    break;
       }
 
-      vector<NetExpr*>argv (2);
+      vector<NetExpr*>argv (nparms+1);
       argv[0] = sig;
-      if (parms_[0] == 0) {
-	    argv[1] = 0;
+      if (method_name != "insert") {
+	    if ((nparms == 0) || (parms_[0] == 0)) {
+		  argv[1] = 0;
+		  cerr << get_fileline() << ": error: " << method_name
+		       << "() methods first argument is missing." << endl;
+		  des->errors += 1;
+	    } else
+		  argv[1] = elab_and_eval(des, scope, parms_[0], context_width,
+		                          false, false, base_type);
       } else {
-	    argv[1] = elab_and_eval(des, scope, parms_[0], context_width,
-				    false, false, base_type);
+	    if ((nparms == 0) || (parms_[0] == 0)) {
+		  argv[1] = 0;
+		  cerr << get_fileline() << ": error: " << method_name
+		       << "() methods first argument is missing." << endl;
+		  des->errors += 1;
+	    } else
+		  argv[1] = elab_and_eval(des, scope, parms_[0], 32,
+		                          false, false, IVL_VT_LOGIC);
+
+	    if ((nparms < 2) || (parms_[1] == 0)) {
+		  argv[2] = 0;
+		  cerr << get_fileline() << ": error: " << method_name
+		       << "() methods second argument is missing." << endl;
+		  des->errors += 1;
+	    } else
+		  argv[2] = elab_and_eval(des, scope, parms_[1], context_width,
+		                          false, false, base_type);
       }
 
       NetSTask*sys = new NetSTask(sys_task_name, IVL_SFUNC_AS_TASK_IGNORE, argv);
@@ -3709,12 +3739,15 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
       }
 
       if (net->queue_type()) {
-	    if (method_name=="push_back")
+	    if (method_name == "push_back")
 		  return elaborate_queue_method_(des, scope, net, method_name,
 						 "$ivl_queue_method$push_back");
-	    if (method_name=="push_front")
+	    else if (method_name == "push_front")
 		  return elaborate_queue_method_(des, scope, net, method_name,
 						 "$ivl_queue_method$push_front");
+	    else if (method_name == "insert")
+		  return elaborate_queue_method_(des, scope, net, method_name,
+						 "$ivl_queue_method$insert");
       }
 
       if (const netclass_t*class_type = net->class_type()) {

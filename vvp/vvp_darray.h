@@ -155,14 +155,17 @@ class vvp_queue : public vvp_darray {
       ~vvp_queue();
 
       virtual void set_word_max(unsigned adr, const vvp_vector4_t&value, unsigned max_size);
+      virtual void insert(unsigned idx, const vvp_vector4_t&value, unsigned max_size);
       virtual void push_back(const vvp_vector4_t&value, unsigned max_size);
       virtual void push_front(const vvp_vector4_t&value, unsigned max_size);
 
       virtual void set_word_max(unsigned adr, double value, unsigned max_size);
+      virtual void insert(unsigned idx, double value, unsigned max_size);
       virtual void push_back(double value, unsigned max_size);
       virtual void push_front(double value, unsigned max_size);
 
       virtual void set_word_max(unsigned adr, const std::string&value, unsigned max_size);
+      virtual void insert(unsigned idx, const std::string&value, unsigned max_size);
       virtual void push_back(const std::string&value, unsigned max_size);
       virtual void push_front(const std::string&value, unsigned max_size);
 
@@ -180,6 +183,7 @@ class vvp_queue_real : public vvp_queue {
       void set_word_max(unsigned adr, double value, unsigned max_size);
       void set_word(unsigned adr, double value);
       void get_word(unsigned adr, double&value);
+      void insert(unsigned idx, double value, unsigned max_size);
       void push_back(double value, unsigned max_size);
       void push_front(double value, unsigned max_size);
       void pop_back(void) { queue.pop_back(); };
@@ -199,6 +203,7 @@ class vvp_queue_string : public vvp_queue {
       void set_word_max(unsigned adr, const std::string&value, unsigned max_size);
       void set_word(unsigned adr, const std::string&value);
       void get_word(unsigned adr, std::string&value);
+      void insert(unsigned idx, const std::string&value, unsigned max_size);
       void push_back(const std::string&value, unsigned max_size);
       void push_front(const std::string&value, unsigned max_size);
       void pop_back(void) { queue.pop_back(); };
@@ -218,6 +223,7 @@ class vvp_queue_vec4 : public vvp_queue {
       void set_word_max(unsigned adr, const vvp_vector4_t&value, unsigned max_size);
       void set_word(unsigned adr, const vvp_vector4_t&value);
       void get_word(unsigned adr, vvp_vector4_t&value);
+      void insert(unsigned idx, const vvp_vector4_t&value, unsigned max_size);
       void push_back(const vvp_vector4_t&value, unsigned max_size);
       void push_front(const vvp_vector4_t&value, unsigned max_size);
       void pop_back(void) { queue.pop_back(); };
