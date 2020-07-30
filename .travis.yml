@@ -17,7 +17,24 @@ jobs:
   
     - stage: Test
       os: linux
-      before_install: 
+      dist: xenial
+      before_install:
+        - git clone https://github.com/steveicarus/ivtest.git
+        - export PATH=$HOME/bin:$PATH
+      script:
+        - autoconf
+        - ./configure --prefix=$HOME
+        - make install
+        - make check
+        - cd ivtest
+        - perl vvp_reg.pl
+        - diff regression_report-devel.txt regression_report.txt
+        - perl vpi_reg.pl
+
+    - stage: Test
+      os: linux
+      dist: bionic
+      before_install:
         - git clone https://github.com/steveicarus/ivtest.git
         - export PATH=$HOME/bin:$PATH
       script:
