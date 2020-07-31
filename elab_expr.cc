@@ -202,16 +202,18 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 					ivl_type_t ntype, unsigned flags) const
 {
 	// Special case: If this is an empty pattern (i.e. '{}) and
-	// the expected type is a DARRAY, then convert this to a null
-	// handle. Internally, Icarus Verilog uses this to represent
-	// nil dynamic arrays.
-      if (parms_.size() == 0 && ntype->base_type()==IVL_VT_DARRAY) {
+	// the expected type is a DARRAY or QUEUE, then convert this
+	// to a null handle. Internally, Icarus Verilog uses this to
+	// represent nil dynamic arrays.
+      if (parms_.size() == 0 && (ntype->base_type()==IVL_VT_DARRAY ||
+                                 ntype->base_type()==IVL_VT_QUEUE)) {
 	    NetENull*tmp = new NetENull;
 	    tmp->set_line(*this);
 	    return tmp;
       }
 
-      if (ntype->base_type()==IVL_VT_DARRAY)
+      if (ntype->base_type()==IVL_VT_DARRAY ||
+          ntype->base_type()==IVL_VT_QUEUE)
 	    return elaborate_expr_darray_(des, scope, ntype, flags);
 
       cerr << get_fileline() << ": sorry: I don't know how to elaborate "

@@ -1045,6 +1045,50 @@ static int show_stmt_assign_sig_darray(ivl_statement_t net)
       return errors;
 }
 
+/*
+ * This function handles the special case that we assign an array
+ * pattern to a queue. Handle this by assigning each element.
+ * The array pattern will have a fixed size.
+ */
+static int show_stmt_assign_queue_pattern(ivl_signal_t var, ivl_expr_t rval,
+                                          ivl_type_t element_type, int max_idx)
+{
+      int errors = 0;
+      unsigned idx;
+      assert(ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN);
+      for (idx = 0 ; idx < ivl_expr_parms(rval) ; idx += 1) {
+	    switch (ivl_type_base(element_type)) {
+		case IVL_VT_BOOL:
+		case IVL_VT_LOGIC:
+		  draw_eval_vec4(ivl_expr_parm(rval,idx));
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%store/qdar/vec4 v%p_0, %d, %u;\n", var, max_idx,
+		                   width_of_packed_type(element_type));
+		  break;
+
+		case IVL_VT_REAL:
+		  draw_eval_real(ivl_expr_parm(rval,idx));
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%store/qdar/r v%p_0, %d;\n", var, max_idx);
+		  break;
+
+		case IVL_VT_STRING:
+		  draw_eval_string(ivl_expr_parm(rval,idx));
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%store/qdar/str v%p_0, %d;\n", var, max_idx);
+		  break;
+
+		default:
+		  fprintf(vvp_out, "; ERROR: show_stmt_assign_queue_pattern: "
+		                   "type_base=%d not implemented\n", ivl_type_base(element_type));
+		  errors += 1;
+		  break;
+	    }
+      }
+
+      return errors;
+}
+
 static int show_stmt_assign_sig_queue(ivl_statement_t net)
 {
       int errors = 0;
@@ -1076,21 +1120,27 @@ static int show_stmt_assign_sig_queue(ivl_statement_t net)
 	      /* The %store/dar expects the array index to be in
 		 index register 3. */
 	    draw_eval_expr_into_integer(mux, 3);
-	    fprintf(vvp_out, "    %%store/qdar/r v%p_0, %u;\n", var, idx);
+	    fprintf(vvp_out, "    %%store/qdar/r v%p_0, %d;\n", var, idx);
       } else if (mux && ivl_type_base(element_type)==IVL_VT_STRING) {
 	    draw_eval_string(rval);
 	      /* The %store/dar expects the array index to be in
 		 index register 3. */
 	    draw_eval_expr_into_integer(mux, 3);
-	    fprintf(vvp_out, "    %%store/qdar/str v%p_0, %u;\n", var, idx);
+	    fprintf(vvp_out, "    %%store/qdar/str v%p_0, %d;\n", var, idx);
       } else if (mux) { // What is left must be some form of vector
 	    draw_eval_vec4(rval);
 	    resize_vec4_wid(rval, ivl_stmt_lwidth(net));
 	      /* The %store/dar expects the array index to be in
 		 index register 3. */
 	    draw_eval_expr_into_integer(mux, 3);
-	    fprintf(vvp_out, "    %%store/qdar/vec4 v%p_0, %u, %u;\n", var, idx,
+	    fprintf(vvp_out, "    %%store/qdar/vec4 v%p_0, %d, %u;\n", var, idx,
 	                     width_of_packed_type(element_type));
+      } else if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
+	      /* There is no l-value mux, but the r-value is an array
+		 pattern. This is a special case of an assignment to
+		 elements of the l-value. */
+	    fprintf(vvp_out, "    %%delete/obj v%p_0;\n", var);
+	    errors += show_stmt_assign_queue_pattern(var, rval, element_type, idx);
       } else {
 	    fprintf(stderr, "Sorry: I don't know how to handle expr_type=%d "
 	                    "being assigned to a queue.\n", ivl_expr_type(rval));
@@ -1099,18 +1149,10 @@ static int show_stmt_assign_sig_queue(ivl_statement_t net)
 	    errors += 1;
       }
       clr_word(idx);
-// FIXME
+// FIXME: This is probably needed to assign from an actual array.
 #if 0
 static int show_stmt_assign_sig_darray(ivl_statement_t net)
 {
-
-
-      } else if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
-	      /* There is no l-value mux, but the r-value is an array
-		 pattern. This is a special case of an assignment to
-		 elements of the l-value. */
-	    errors += show_stmt_assign_darray_pattern(net);
-
       } else {
 	      /* There is no l-value mux, so this must be an
 		 assignment to the array as a whole. Evaluate the
