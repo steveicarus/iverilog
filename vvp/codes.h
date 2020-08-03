@@ -101,6 +101,7 @@ extern bool of_DELAY(vthread_t thr, vvp_code_t code);
 extern bool of_DELAYX(vthread_t thr, vvp_code_t code);
 extern bool of_DELETE_ELEM(vthread_t thr, vvp_code_t code);
 extern bool of_DELETE_OBJ(vthread_t thr, vvp_code_t code);
+extern bool of_DELETE_TAIL(vthread_t thr, vvp_code_t code);
 extern bool of_DISABLE(vthread_t thr, vvp_code_t code);
 extern bool of_DISABLE_FORK(vthread_t thr, vvp_code_t code);
 extern bool of_DIV(vthread_t thr, vvp_code_t code);

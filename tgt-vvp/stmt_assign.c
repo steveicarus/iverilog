@@ -1055,8 +1055,19 @@ static int show_stmt_assign_queue_pattern(ivl_signal_t var, ivl_expr_t rval,
 {
       int errors = 0;
       unsigned idx;
+      unsigned max_size;
+      unsigned max_elems;
       assert(ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN);
-      for (idx = 0 ; idx < ivl_expr_parms(rval) ; idx += 1) {
+      max_size = ivl_signal_array_count(var);
+      max_elems = ivl_expr_parms(rval);
+      if ((max_size != 0) && (max_elems > max_size)) {
+	    fprintf(stderr, "Warning: Array pattern assignment has more elements "
+	                    "(%u) than bounded queue '%s' supports (%u).\n"
+	                    "         Only using first %u elements.\n",
+	                    max_elems, ivl_signal_basename(var), max_size, max_size);
+	    max_elems = max_size;
+      }
+      for (idx = 0 ; idx < max_elems ; idx += 1) {
 	    switch (ivl_type_base(element_type)) {
 		case IVL_VT_BOOL:
 		case IVL_VT_LOGIC:
@@ -1084,6 +1095,15 @@ static int show_stmt_assign_queue_pattern(ivl_signal_t var, ivl_expr_t rval,
 		  errors += 1;
 		  break;
 	    }
+      }
+
+      if ((max_size == 0) || (max_elems < max_size)) {
+	    int del_idx = allocate_word();
+	    assert(del_idx >= 0);
+	      /* Save the first queue element to delete. */
+	    fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", del_idx, max_elems);
+	    fprintf(vvp_out, "    %%delete/tail v%p_0, %u;\n", var, del_idx);
+	    clr_word(del_idx);
       }
 
       return errors;
@@ -1139,7 +1159,6 @@ static int show_stmt_assign_sig_queue(ivl_statement_t net)
 	      /* There is no l-value mux, but the r-value is an array
 		 pattern. This is a special case of an assignment to
 		 elements of the l-value. */
-	    fprintf(vvp_out, "    %%delete/obj v%p_0;\n", var);
 	    errors += show_stmt_assign_queue_pattern(var, rval, element_type, idx);
       } else {
 	    fprintf(stderr, "Sorry: I don't know how to handle expr_type=%d "
