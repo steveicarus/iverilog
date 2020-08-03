@@ -2468,6 +2468,26 @@ bool of_DELETE_OBJ(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/* %delete/tail <label>, idx
+ *
+ * Remove all elements after the one specified.
+ */
+bool of_DELETE_TAIL(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      assert(dqueue);
+
+      unsigned idx = thr->words[cp->bit_idx[0]].w_int;
+      dqueue->erase_tail(idx);
+
+      return true;
+}
+
 static bool do_disable(vthread_t thr, vthread_t match)
 {
       bool flag = false;

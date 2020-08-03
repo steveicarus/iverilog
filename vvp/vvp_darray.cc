@@ -582,6 +582,13 @@ void vvp_queue_real::erase(unsigned idx)
       queue.erase(pos);
 }
 
+void vvp_queue_real::erase_tail(unsigned idx)
+{
+      assert(queue.size() >= idx);
+      if (queue.size() > idx)
+	    queue.resize(idx);
+}
+
 vvp_queue_string::~vvp_queue_string()
 {
 }
@@ -694,6 +701,13 @@ void vvp_queue_string::erase(unsigned idx)
       queue.erase(pos);
 }
 
+void vvp_queue_string::erase_tail(unsigned idx)
+{
+      assert(queue.size() >= idx);
+      if (queue.size() > idx)
+	    queue.resize(idx);
+}
+
 vvp_queue_vec4::~vvp_queue_vec4()
 {
 }
@@ -804,4 +818,11 @@ void vvp_queue_vec4::erase(unsigned idx)
       }
 
       queue.erase(pos);
+}
+
+void vvp_queue_vec4::erase_tail(unsigned idx)
+{
+      assert(queue.size() >= idx);
+      if (queue.size() > idx)
+	    queue.resize(idx);
 }
