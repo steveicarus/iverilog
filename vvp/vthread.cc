@@ -5959,6 +5959,26 @@ bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * The following are used to allow a common template to be written for
+ * queue real/string/vec4 operations
+ */
+static void pop_value(double&value, vthread_t thr, unsigned)
+{
+      value = thr->pop_real();
+}
+
+static void pop_value(string&value, vthread_t thr, unsigned)
+{
+      value = thr->pop_str();
+}
+
+static void pop_value(vvp_vector4_t&value, vthread_t thr, unsigned wid)
+{
+      value = thr->pop_vec4();
+      assert(value.size() == wid);
+}
+
+/*
  * %store/qb/r <var-label>, <max-idx>
  */
 bool of_STORE_QB_R(vthread_t thr, vvp_code_t cp)
@@ -6012,26 +6032,72 @@ bool of_STORE_QB_V(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * The following are used to allow the template to print correctly.
+ */
+static void print_queue_type(double)
+{
+      cerr << "queue<real>";
+}
+
+static void print_queue_type(string)
+{
+      cerr << "queue<string>";
+}
+
+static void print_queue_type(vvp_vector4_t value)
+{
+      cerr << "queue<vector[" << value.size() << "]>";
+}
+
+static void print_queue_value(double value)
+{
+      cerr << value;
+}
+
+static void print_queue_value(string value)
+{
+      cerr << "\"" << value << "\"";
+}
+
+static void print_queue_value(vvp_vector4_t value)
+{
+      cerr << value;
+}
+
+template <typename ELEM, class QTYPE>
+static bool store_qdar(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+{
+      int64_t adr = thr->words[3].w_int;
+      ELEM value;
+      vvp_net_t*net = cp->net;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+      pop_value(value, thr, wid); // Pop the value to store.
+
+      vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
+      assert(queue);
+      if (adr < 0) {
+	    cerr << "Warning: cannot assign to a negative ";
+	    print_queue_type(value);
+	    cerr << " index (" << adr << "). ";
+	    print_queue_value(value);
+	    cerr << " was not added." << endl;
+      } else if (thr->flags[4] != BIT4_0) {
+	    cerr << "Warning: cannot assign to an undefined ";
+	    print_queue_type(value);
+	    cerr << " index. ";
+	    print_queue_value(value);
+	    cerr << " was not added." << endl;
+      } else
+	    queue->set_word_max(adr, value, max_size);
+      return true;
+}
+
+/*
  * %store/qdar/real <var>, idx
  */
 bool of_STORE_QDAR_R(vthread_t thr, vvp_code_t cp)
 {
-      int64_t adr = thr->words[3].w_int;
-      double value = thr->pop_real(); // Pop the real value to store...
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*queue = get_queue_object<vvp_queue_real>(thr, net);
-      assert(queue);
-      if (adr < 0)
-	    cerr << "Warning: cannot assign negative queue<real> index ("
-	         << adr << "). " << value  << " was not added." << endl;
-      else if (thr->flags[4] != BIT4_0)
-	    cerr << "Warning: cannot assign undefined queue<real> index. "
-	         << value << " was not added." << endl;
-      else
-	    queue->set_word_max(adr, value, max_size);
-      return true;
+      return store_qdar<double, vvp_queue_real>(thr, cp);
 }
 
 /*
@@ -6039,22 +6105,7 @@ bool of_STORE_QDAR_R(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_QDAR_STR(vthread_t thr, vvp_code_t cp)
 {
-      int64_t adr = thr->words[3].w_int;
-      string value = thr->pop_str(); // Pop the string to be stored...
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*queue = get_queue_object<vvp_queue_string>(thr, net);
-      assert(queue);
-      if (adr < 0)
-	    cerr << "Warning: cannot assign to a negative queue<string> index ("
-	         << adr << "). \"" << value << "\" was not added." << endl;
-      else if (thr->flags[4] != BIT4_0)
-	    cerr << "Warning: cannot assign to an undefined queue<string> index. \""
-	         << value << "\" was not added." << endl;
-      else
-	    queue->set_word_max(adr, value, max_size);
-      return true;
+      return store_qdar<string, vvp_queue_string>(thr, cp);
 }
 
 /*
@@ -6062,26 +6113,7 @@ bool of_STORE_QDAR_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_QDAR_VEC4(vthread_t thr, vvp_code_t cp)
 {
-      int64_t adr = thr->words[3].w_int;
-      vvp_vector4_t value = thr->pop_vec4(); // Pop the vector4 value to be store...
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      unsigned wid = cp->bit_idx[1];
-
-      assert(value.size() == wid);
-      vvp_queue*queue = get_queue_object<vvp_queue_vec4>(thr, net);
-      assert(queue);
-      if (adr < 0)
-	    cerr << "Warning: cannot assign to a negative queue<vector["
-	         << value.size() << "]> index (" << adr << "). " << value
-	         << " was not added." << endl;
-      else if (thr->flags[4] != BIT4_0)
-	    cerr << "Warning: cannot assign to an undefined queue<vector["
-	         << value.size() << "]> index. " << value
-	         << " was not added." << endl;
-      else
-	    queue->set_word_max(adr, value, max_size);
-      return true;
+      return store_qdar<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
 }
 
 /*
