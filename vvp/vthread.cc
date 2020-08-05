@@ -444,32 +444,32 @@ inline static void pop_value(vvp_vector4_t&value, vthread_t thr, unsigned wid)
 /*
  * The following are used to allow the queue templates to print correctly.
  */
-static void print_queue_type(double)
+inline static void print_queue_type(double)
 {
       cerr << "queue<real>";
 }
 
-static void print_queue_type(string)
+inline static void print_queue_type(string)
 {
       cerr << "queue<string>";
 }
 
-static void print_queue_type(vvp_vector4_t value)
+inline static void print_queue_type(vvp_vector4_t value)
 {
       cerr << "queue<vector[" << value.size() << "]>";
 }
 
-static void print_queue_value(double value)
+inline static void print_queue_value(double value)
 {
       cerr << value;
 }
 
-static void print_queue_value(string value)
+inline static void print_queue_value(string value)
 {
       cerr << "\"" << value << "\"";
 }
 
-static void print_queue_value(vvp_vector4_t value)
+inline static void print_queue_value(vvp_vector4_t value)
 {
       cerr << value;
 }
