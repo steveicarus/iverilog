@@ -436,7 +436,7 @@ more details.
 	Standard Verilog does not allow width fields in the %t formats
 	of display strings. For example, this is illegal:
 
-		$display("Time is %0t", %time);
+		$display("Time is %0t", $time);
 
 	Standard Verilog instead relies on the $timeformat to
 	completely specify the format.
