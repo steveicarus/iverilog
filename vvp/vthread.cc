@@ -5191,28 +5191,70 @@ bool of_QINSERT_V(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * Helper functions used in the queue pop templates
+ */
+inline static void qdefault(double&value, unsigned)
+{
+      value = 0.0;
+}
+
+inline static void qdefault(string&value, unsigned)
+{
+      value = "";
+}
+
+inline static void qdefault(vvp_vector4_t&value, unsigned wid)
+{
+      value = vvp_vector4_t(wid);
+}
+
+inline void push_value(vthread_t thr, double value, unsigned)
+{
+      thr->push_real(value);
+}
+
+inline void push_value(vthread_t thr, string value, unsigned)
+{
+      thr->push_str(value);
+}
+
+inline void push_value(vthread_t thr, vvp_vector4_t value, unsigned wid)
+{
+      assert(wid == value.size());
+      thr->push_vec4(value);
+}
+
+template <typename ELEM, class QTYPE>
+static bool qpop_b(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+{
+      vvp_net_t*net = cp->net;
+
+      vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
+      assert(queue);
+
+      size_t size = queue->get_size();
+
+      ELEM value;
+      if (size) {
+	    queue->get_word(size-1, value);
+	    queue->pop_back();
+      } else {
+	    qdefault(value, wid);
+	    cerr << "Warning: pop_back() on empty ";
+	    print_queue_type(value);
+	    cerr << "." << endl;
+      }
+
+      push_value(thr, value, wid);
+      return true;
+}
+
+/*
  * %qpop/b/real <var-label>
  */
 bool of_QPOP_B_REAL(vthread_t thr, vvp_code_t cp)
 {
-      vvp_net_t*net = cp->net;
-
-      vvp_queue*dqueue = get_queue_object<vvp_queue_real>(thr, net);
-      assert(dqueue);
-
-      size_t size = dqueue->get_size();
-
-      double value;
-      if (size) {
-	    dqueue->get_word(size-1, value);
-	    dqueue->pop_back();
-      } else {
-	    cerr << "Warning: pop_back() on empty queue<real>." << endl;
-	    value = 0.0;
-      }
-
-      thr->push_real(value);
-      return true;
+      return qpop_b<double, vvp_queue_real>(thr, cp);
 }
 
 /*
@@ -5220,24 +5262,7 @@ bool of_QPOP_B_REAL(vthread_t thr, vvp_code_t cp)
  */
 bool of_QPOP_B_STR(vthread_t thr, vvp_code_t cp)
 {
-      vvp_net_t*net = cp->net;
-
-      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
-      assert(dqueue);
-
-      size_t size = dqueue->get_size();
-
-      string value;
-      if (size) {
-	    dqueue->get_word(size-1, value);
-	    dqueue->pop_back();
-      } else {
-	    cerr << "Warning: pop_back() on empty queue<string>." << endl;
-	    value = "";
-      }
-
-      thr->push_str(value);
-      return true;
+      return qpop_b<string, vvp_queue_string>(thr, cp);
 }
 
 /*
@@ -5245,52 +5270,41 @@ bool of_QPOP_B_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_QPOP_B_V(vthread_t thr, vvp_code_t cp)
 {
+      return qpop_b<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[0]);
+}
+
+template <typename ELEM, class QTYPE>
+static bool qpop_f(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+{
       vvp_net_t*net = cp->net;
-      unsigned width  = cp->bit_idx[0];
 
-      vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
-      assert(dqueue);
+      vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
+      assert(queue);
 
-      size_t size = dqueue->get_size();
+      size_t size = queue->get_size();
 
-      vvp_vector4_t value;
+      ELEM value;
       if (size) {
-	    dqueue->get_word(size-1, value);
-	    dqueue->pop_back();
+	    queue->get_word(0, value);
+	    queue->pop_front();
       } else {
-	    cerr << "Warning: pop_back() on empty queue<vector["
-	         << width << "]>." << endl;
-	    value = vvp_vector4_t(width);
+	    qdefault(value, wid);
+	    cerr << "Warning: pop_front() on empty ";
+	    print_queue_type(value);
+	    cerr << "." << endl;
       }
 
-      assert(width == value.size());
-      thr->push_vec4(value);
+      push_value(thr, value, wid);
       return true;
 }
+
 
 /*
  * %qpop/f/real <var-label>
  */
 bool of_QPOP_F_REAL(vthread_t thr, vvp_code_t cp)
 {
-      vvp_net_t*net = cp->net;
-
-      vvp_queue*dqueue = get_queue_object<vvp_queue_real>(thr, net);
-      assert(dqueue);
-
-      size_t size = dqueue->get_size();
-
-      double value;
-      if (size) {
-	    dqueue->get_word(0, value);
-	    dqueue->pop_front();
-      } else {
-	    cerr << "Warning: pop_front() on empty queue<real>." << endl;
-	    value = 0.0;
-      }
-
-      thr->push_real(value);
-      return true;
+      return qpop_f<double, vvp_queue_real>(thr, cp);
 }
 
 /*
@@ -5298,24 +5312,7 @@ bool of_QPOP_F_REAL(vthread_t thr, vvp_code_t cp)
  */
 bool of_QPOP_F_STR(vthread_t thr, vvp_code_t cp)
 {
-      vvp_net_t*net = cp->net;
-
-      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
-      assert(dqueue);
-
-      size_t size = dqueue->get_size();
-
-      string value;
-      if (size) {
-	    dqueue->get_word(0, value);
-	    dqueue->pop_front();
-      } else {
-	    cerr << "Warning: pop_front() on empty queue<string>." << endl;
-	    value = "";
-      }
-
-      thr->push_str(value);
-      return true;
+      return qpop_f<string, vvp_queue_string>(thr, cp);
 }
 
 /*
@@ -5323,27 +5320,7 @@ bool of_QPOP_F_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_QPOP_F_V(vthread_t thr, vvp_code_t cp)
 {
-      vvp_net_t*net = cp->net;
-      unsigned width  = cp->bit_idx[0];
-
-      vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
-      assert(dqueue);
-
-      size_t size = dqueue->get_size();
-
-      vvp_vector4_t value;
-      if (size) {
-	    dqueue->get_word(0, value);
-	    dqueue->pop_front();
-      } else {
-	    cerr << "Warning: pop_front() on empty queue<vector["
-	         << width << "]>." << endl;
-	    value = vvp_vector4_t(width);
-      }
-
-      assert(width == value.size());
-      thr->push_vec4(value);
-      return true;
+      return qpop_f<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[0]);
 }
 
 /*
