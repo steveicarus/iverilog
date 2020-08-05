@@ -420,6 +420,60 @@ template <class VVP_QUEUE> static vvp_queue*get_queue_object(vthread_t thr, vvp_
       return dqueue;
 }
 
+/*
+ * The following are used to allow a common template to be written for
+ * queue real/string/vec4 operations
+ */
+inline static void pop_value(double&value, vthread_t thr, unsigned)
+{
+      value = thr->pop_real();
+}
+
+inline static void pop_value(string&value, vthread_t thr, unsigned)
+{
+      value = thr->pop_str();
+}
+
+inline static void pop_value(vvp_vector4_t&value, vthread_t thr, unsigned wid)
+{
+      value = thr->pop_vec4();
+      assert(value.size() == wid);
+}
+
+
+/*
+ * The following are used to allow the queue templates to print correctly.
+ */
+static void print_queue_type(double)
+{
+      cerr << "queue<real>";
+}
+
+static void print_queue_type(string)
+{
+      cerr << "queue<string>";
+}
+
+static void print_queue_type(vvp_vector4_t value)
+{
+      cerr << "queue<vector[" << value.size() << "]>";
+}
+
+static void print_queue_value(double value)
+{
+      cerr << value;
+}
+
+static void print_queue_value(string value)
+{
+      cerr << "\"" << value << "\"";
+}
+
+static void print_queue_value(vvp_vector4_t value)
+{
+      cerr << value;
+}
+
 template <class T> T coerce_to_width(const T&that, unsigned width)
 {
       if (that.size() == width)
@@ -5084,27 +5138,40 @@ bool of_PUTC_STR_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+template <typename ELEM, class QTYPE>
+static bool qinsert(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+{
+      int64_t idx = thr->words[3].w_int;
+      ELEM value;
+      vvp_net_t*net = cp->net;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+      pop_value(value, thr, wid); // Pop the value to store.
+
+      vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
+      assert(queue);
+      if (idx < 0) {
+	    cerr << "Warning: cannot insert at a negative ";
+	    print_queue_type(value);
+	    cerr << " index (" << idx << "). ";
+	    print_queue_value(value);
+	    cerr << " was not added." << endl;
+      } else if (thr->flags[4] != BIT4_0) {
+	    cerr << "Warning: cannot insert at an undefined ";
+	    print_queue_type(value);
+	    cerr << " index. ";
+	    print_queue_value(value);
+	    cerr << " was not added." << endl;
+      } else
+	    queue->insert(idx, value, max_size);
+      return true;
+}
+
 /*
  * %qinsert/real <var-label>
  */
 bool of_QINSERT_REAL(vthread_t thr, vvp_code_t cp)
 {
-      int64_t idx = thr->words[3].w_int;
-      vvp_net_t*net = cp->net;
-      double value = thr->pop_real(); // Pop the real value to be inserted.
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*queue = get_queue_object<vvp_queue_real>(thr, net);
-      assert(queue);
-      if (idx < 0)
-            cerr << "Warning: cannot insert at a negative queue<real> index ("
-                 << idx << "). " << value << " was not added." << endl;
-      else if (thr->flags[4] != BIT4_0)
-            cerr << "Warning: cannot insert at an undefined queue<real> index. "
-                 << value << " was not added." << endl;
-      else
-            queue->insert(idx, value, max_size);
-      return true;
+      return qinsert<double, vvp_queue_real>(thr, cp);
 }
 
 /*
@@ -5112,22 +5179,7 @@ bool of_QINSERT_REAL(vthread_t thr, vvp_code_t cp)
  */
 bool of_QINSERT_STR(vthread_t thr, vvp_code_t cp)
 {
-      int64_t idx = thr->words[3].w_int;
-      vvp_net_t*net = cp->net;
-      string value = thr->pop_str(); // Pop the string to be stored...
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*queue = get_queue_object<vvp_queue_string>(thr, net);
-      assert(queue);
-      if (idx < 0)
-            cerr << "Warning: cannot insert at a negative queue<string> index ("
-                 << idx << "). \"" << value << "\" was not added." << endl;
-      else if (thr->flags[4] != BIT4_0)
-            cerr << "Warning: cannot insert at an undefined queue<string> index. \""
-                 << value << "\" was not added." << endl;
-      else
-            queue->insert(idx, value, max_size);
-      return true;
+      return qinsert<string, vvp_queue_string>(thr, cp);
 }
 
 /*
@@ -5135,27 +5187,7 @@ bool of_QINSERT_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_QINSERT_V(vthread_t thr, vvp_code_t cp)
 {
-      int64_t idx = thr->words[3].w_int;
-      vvp_net_t*net = cp->net;
-      vvp_vector4_t value = thr->pop_vec4(); // Pop the vector4 value to be store...
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      unsigned wid = cp->bit_idx[1];
-
-      assert(value.size() == wid);
-
-      vvp_queue*queue = get_queue_object<vvp_queue_vec4>(thr, net);
-      assert(queue);
-      if (idx < 0)
-	    cerr << "Warning: cannot insert at a negative queue<vector["
-	         << value.size() << "]> index (" << idx << "). " << value
-	         << " was not added." << endl;
-      else if (thr->flags[4] != BIT4_0)
-            cerr << "Warning: cannot insert at an undefined queue<vector["
-	         << value.size() << "]> index. " << value
-	         << " was not added." << endl;
-      else
-            queue->insert(idx, value, max_size);
-      return true;
+      return qinsert<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
 }
 
 /*
@@ -5959,26 +5991,6 @@ bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * The following are used to allow a common template to be written for
- * queue real/string/vec4 operations
- */
-static void pop_value(double&value, vthread_t thr, unsigned)
-{
-      value = thr->pop_real();
-}
-
-static void pop_value(string&value, vthread_t thr, unsigned)
-{
-      value = thr->pop_str();
-}
-
-static void pop_value(vvp_vector4_t&value, vthread_t thr, unsigned wid)
-{
-      value = thr->pop_vec4();
-      assert(value.size() == wid);
-}
-
-/*
  * %store/qb/r <var-label>, <max-idx>
  */
 bool of_STORE_QB_R(vthread_t thr, vvp_code_t cp)
@@ -6031,43 +6043,10 @@ bool of_STORE_QB_V(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-/*
- * The following are used to allow the template to print correctly.
- */
-static void print_queue_type(double)
-{
-      cerr << "queue<real>";
-}
-
-static void print_queue_type(string)
-{
-      cerr << "queue<string>";
-}
-
-static void print_queue_type(vvp_vector4_t value)
-{
-      cerr << "queue<vector[" << value.size() << "]>";
-}
-
-static void print_queue_value(double value)
-{
-      cerr << value;
-}
-
-static void print_queue_value(string value)
-{
-      cerr << "\"" << value << "\"";
-}
-
-static void print_queue_value(vvp_vector4_t value)
-{
-      cerr << value;
-}
-
 template <typename ELEM, class QTYPE>
 static bool store_qdar(vthread_t thr, vvp_code_t cp, unsigned wid=0)
 {
-      int64_t adr = thr->words[3].w_int;
+      int64_t idx = thr->words[3].w_int;
       ELEM value;
       vvp_net_t*net = cp->net;
       unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
@@ -6075,10 +6054,10 @@ static bool store_qdar(vthread_t thr, vvp_code_t cp, unsigned wid=0)
 
       vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
       assert(queue);
-      if (adr < 0) {
+      if (idx < 0) {
 	    cerr << "Warning: cannot assign to a negative ";
 	    print_queue_type(value);
-	    cerr << " index (" << adr << "). ";
+	    cerr << " index (" << idx << "). ";
 	    print_queue_value(value);
 	    cerr << " was not added." << endl;
       } else if (thr->flags[4] != BIT4_0) {
@@ -6088,7 +6067,7 @@ static bool store_qdar(vthread_t thr, vvp_code_t cp, unsigned wid=0)
 	    print_queue_value(value);
 	    cerr << " was not added." << endl;
       } else
-	    queue->set_word_max(adr, value, max_size);
+	    queue->set_word_max(idx, value, max_size);
       return true;
 }
 
