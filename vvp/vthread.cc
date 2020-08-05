@@ -5967,21 +5967,26 @@ bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+template <typename ELEM, class QTYPE>
+static bool store_qb(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+{
+      ELEM value;
+      vvp_net_t*net = cp->net;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+      pop_value(value, thr, wid); // Pop the value to store.
+
+      vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
+      assert(queue);
+      queue->push_back(value, max_size);
+      return true;
+}
+
 /*
  * %store/qb/r <var-label>, <max-idx>
  */
 bool of_STORE_QB_R(vthread_t thr, vvp_code_t cp)
 {
-	// Pop the double to be stored...
-      double value = thr->pop_real();
-
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*queue = get_queue_object<vvp_queue_real>(thr, net);
-      assert(queue);
-      queue->push_back(value, max_size);
-      return true;
+      return store_qb<double, vvp_queue_real>(thr, cp);
 }
 
 /*
@@ -5989,16 +5994,7 @@ bool of_STORE_QB_R(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_QB_STR(vthread_t thr, vvp_code_t cp)
 {
-	// Pop the string to be stored...
-      string value = thr->pop_str();
-
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*queue = get_queue_object<vvp_queue_string>(thr, net);
-      assert(queue);
-      queue->push_back(value, max_size);
-      return true;
+      return store_qb<string, vvp_queue_string>(thr, cp);
 }
 
 /*
@@ -6006,18 +6002,7 @@ bool of_STORE_QB_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_QB_V(vthread_t thr, vvp_code_t cp)
 {
-	// Pop the vec4 value to be stored...
-      vvp_vector4_t value = thr->pop_vec4();
-
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      unsigned wid = cp->bit_idx[1];
-
-      assert(value.size() == wid);
-      vvp_queue*queue = get_queue_object<vvp_queue_vec4>(thr, net);
-      assert(queue);
-      queue->push_back(value, max_size);
-      return true;
+      return store_qb<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
 }
 
 template <typename ELEM, class QTYPE>
@@ -6072,21 +6057,26 @@ bool of_STORE_QDAR_VEC4(vthread_t thr, vvp_code_t cp)
       return store_qdar<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
 }
 
+
+template <typename ELEM, class QTYPE>
+static bool store_qf(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+{
+      ELEM value;
+      vvp_net_t*net = cp->net;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+      pop_value(value, thr, wid); // Pop the value to store.
+
+      vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
+      assert(queue);
+      queue->push_front(value, max_size);
+      return true;
+}
 /*
  * %store/qf/r <var-label>, <max-idx>
  */
 bool of_STORE_QF_R(vthread_t thr, vvp_code_t cp)
 {
-	// Pop the double to be stored...
-      double value = thr->pop_real();
-
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*dqueue = get_queue_object<vvp_queue_real>(thr, net);
-      assert(dqueue);
-      dqueue->push_front(value, max_size);
-      return true;
+      return store_qf<double, vvp_queue_real>(thr, cp);
 }
 
 /*
@@ -6094,16 +6084,7 @@ bool of_STORE_QF_R(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_QF_STR(vthread_t thr, vvp_code_t cp)
 {
-	// Pop the string to be stored...
-      string value = thr->pop_str();
-
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
-      assert(dqueue);
-      dqueue->push_front(value, max_size);
-      return true;
+      return store_qf<string, vvp_queue_string>(thr, cp);
 }
 
 /*
@@ -6111,18 +6092,7 @@ bool of_STORE_QF_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_QF_V(vthread_t thr, vvp_code_t cp)
 {
-	// Pop the vec4 value to be stored...
-      vvp_vector4_t value = thr->pop_vec4();
-
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      unsigned wid = cp->bit_idx[1];
-
-      assert(value.size() == wid);
-      vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
-      assert(dqueue);
-      dqueue->push_front(value, max_size);
-      return true;
+      return store_qf<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
 }
 
 bool of_STORE_REAL(vthread_t thr, vvp_code_t cp)
