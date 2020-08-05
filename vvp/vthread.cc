@@ -420,6 +420,60 @@ template <class VVP_QUEUE> static vvp_queue*get_queue_object(vthread_t thr, vvp_
       return dqueue;
 }
 
+/*
+ * The following are used to allow a common template to be written for
+ * queue real/string/vec4 operations
+ */
+inline static void pop_value(double&value, vthread_t thr, unsigned)
+{
+      value = thr->pop_real();
+}
+
+inline static void pop_value(string&value, vthread_t thr, unsigned)
+{
+      value = thr->pop_str();
+}
+
+inline static void pop_value(vvp_vector4_t&value, vthread_t thr, unsigned wid)
+{
+      value = thr->pop_vec4();
+      assert(value.size() == wid);
+}
+
+
+/*
+ * The following are used to allow the queue templates to print correctly.
+ */
+inline static void print_queue_type(double)
+{
+      cerr << "queue<real>";
+}
+
+inline static void print_queue_type(string)
+{
+      cerr << "queue<string>";
+}
+
+inline static void print_queue_type(vvp_vector4_t value)
+{
+      cerr << "queue<vector[" << value.size() << "]>";
+}
+
+inline static void print_queue_value(double value)
+{
+      cerr << value;
+}
+
+inline static void print_queue_value(string value)
+{
+      cerr << "\"" << value << "\"";
+}
+
+inline static void print_queue_value(vvp_vector4_t value)
+{
+      cerr << value;
+}
+
 template <class T> T coerce_to_width(const T&that, unsigned width)
 {
       if (that.size() == width)
@@ -5084,27 +5138,40 @@ bool of_PUTC_STR_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+template <typename ELEM, class QTYPE>
+static bool qinsert(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+{
+      int64_t idx = thr->words[3].w_int;
+      ELEM value;
+      vvp_net_t*net = cp->net;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+      pop_value(value, thr, wid); // Pop the value to store.
+
+      vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
+      assert(queue);
+      if (idx < 0) {
+	    cerr << "Warning: cannot insert at a negative ";
+	    print_queue_type(value);
+	    cerr << " index (" << idx << "). ";
+	    print_queue_value(value);
+	    cerr << " was not added." << endl;
+      } else if (thr->flags[4] != BIT4_0) {
+	    cerr << "Warning: cannot insert at an undefined ";
+	    print_queue_type(value);
+	    cerr << " index. ";
+	    print_queue_value(value);
+	    cerr << " was not added." << endl;
+      } else
+	    queue->insert(idx, value, max_size);
+      return true;
+}
+
 /*
  * %qinsert/real <var-label>
  */
 bool of_QINSERT_REAL(vthread_t thr, vvp_code_t cp)
 {
-      int64_t idx = thr->words[3].w_int;
-      vvp_net_t*net = cp->net;
-      double value = thr->pop_real(); // Pop the real value to be inserted.
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*queue = get_queue_object<vvp_queue_real>(thr, net);
-      assert(queue);
-      if (idx < 0)
-            cerr << "Warning: cannot insert at a negative queue<real> index ("
-                 << idx << "). " << value << " was not added." << endl;
-      else if (thr->flags[4] != BIT4_0)
-            cerr << "Warning: cannot insert at an undefined queue<real> index. "
-                 << value << " was not added." << endl;
-      else
-            queue->insert(idx, value, max_size);
-      return true;
+      return qinsert<double, vvp_queue_real>(thr, cp);
 }
 
 /*
@@ -5112,22 +5179,7 @@ bool of_QINSERT_REAL(vthread_t thr, vvp_code_t cp)
  */
 bool of_QINSERT_STR(vthread_t thr, vvp_code_t cp)
 {
-      int64_t idx = thr->words[3].w_int;
-      vvp_net_t*net = cp->net;
-      string value = thr->pop_str(); // Pop the string to be stored...
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*queue = get_queue_object<vvp_queue_string>(thr, net);
-      assert(queue);
-      if (idx < 0)
-            cerr << "Warning: cannot insert at a negative queue<string> index ("
-                 << idx << "). \"" << value << "\" was not added." << endl;
-      else if (thr->flags[4] != BIT4_0)
-            cerr << "Warning: cannot insert at an undefined queue<string> index. \""
-                 << value << "\" was not added." << endl;
-      else
-            queue->insert(idx, value, max_size);
-      return true;
+      return qinsert<string, vvp_queue_string>(thr, cp);
 }
 
 /*
@@ -5135,26 +5187,65 @@ bool of_QINSERT_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_QINSERT_V(vthread_t thr, vvp_code_t cp)
 {
-      int64_t idx = thr->words[3].w_int;
+      return qinsert<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
+}
+
+/*
+ * Helper functions used in the queue pop templates
+ */
+inline static void qdefault(double&value, unsigned)
+{
+      value = 0.0;
+}
+
+inline static void qdefault(string&value, unsigned)
+{
+      value = "";
+}
+
+inline static void qdefault(vvp_vector4_t&value, unsigned wid)
+{
+      value = vvp_vector4_t(wid);
+}
+
+inline void push_value(vthread_t thr, double value, unsigned)
+{
+      thr->push_real(value);
+}
+
+inline void push_value(vthread_t thr, string value, unsigned)
+{
+      thr->push_str(value);
+}
+
+inline void push_value(vthread_t thr, vvp_vector4_t value, unsigned wid)
+{
+      assert(wid == value.size());
+      thr->push_vec4(value);
+}
+
+template <typename ELEM, class QTYPE>
+static bool qpop_b(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+{
       vvp_net_t*net = cp->net;
-      vvp_vector4_t value = thr->pop_vec4(); // Pop the vector4 value to be store...
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      unsigned wid = cp->bit_idx[1];
 
-      assert(value.size() == wid);
-
-      vvp_queue*queue = get_queue_object<vvp_queue_vec4>(thr, net);
+      vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
       assert(queue);
-      if (idx < 0)
-	    cerr << "Warning: cannot insert at a negative queue<vector["
-	         << value.size() << "]> index (" << idx << "). " << value
-	         << " was not added." << endl;
-      else if (thr->flags[4] != BIT4_0)
-            cerr << "Warning: cannot insert at an undefined queue<vector["
-	         << value.size() << "]> index. " << value
-	         << " was not added." << endl;
-      else
-            queue->insert(idx, value, max_size);
+
+      size_t size = queue->get_size();
+
+      ELEM value;
+      if (size) {
+	    queue->get_word(size-1, value);
+	    queue->pop_back();
+      } else {
+	    qdefault(value, wid);
+	    cerr << "Warning: pop_back() on empty ";
+	    print_queue_type(value);
+	    cerr << "." << endl;
+      }
+
+      push_value(thr, value, wid);
       return true;
 }
 
@@ -5163,24 +5254,7 @@ bool of_QINSERT_V(vthread_t thr, vvp_code_t cp)
  */
 bool of_QPOP_B_REAL(vthread_t thr, vvp_code_t cp)
 {
-      vvp_net_t*net = cp->net;
-
-      vvp_queue*dqueue = get_queue_object<vvp_queue_real>(thr, net);
-      assert(dqueue);
-
-      size_t size = dqueue->get_size();
-
-      double value;
-      if (size) {
-	    dqueue->get_word(size-1, value);
-	    dqueue->pop_back();
-      } else {
-	    cerr << "Warning: pop_back() on empty queue<real>." << endl;
-	    value = 0.0;
-      }
-
-      thr->push_real(value);
-      return true;
+      return qpop_b<double, vvp_queue_real>(thr, cp);
 }
 
 /*
@@ -5188,24 +5262,7 @@ bool of_QPOP_B_REAL(vthread_t thr, vvp_code_t cp)
  */
 bool of_QPOP_B_STR(vthread_t thr, vvp_code_t cp)
 {
-      vvp_net_t*net = cp->net;
-
-      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
-      assert(dqueue);
-
-      size_t size = dqueue->get_size();
-
-      string value;
-      if (size) {
-	    dqueue->get_word(size-1, value);
-	    dqueue->pop_back();
-      } else {
-	    cerr << "Warning: pop_back() on empty queue<string>." << endl;
-	    value = "";
-      }
-
-      thr->push_str(value);
-      return true;
+      return qpop_b<string, vvp_queue_string>(thr, cp);
 }
 
 /*
@@ -5213,52 +5270,41 @@ bool of_QPOP_B_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_QPOP_B_V(vthread_t thr, vvp_code_t cp)
 {
+      return qpop_b<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[0]);
+}
+
+template <typename ELEM, class QTYPE>
+static bool qpop_f(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+{
       vvp_net_t*net = cp->net;
-      unsigned width  = cp->bit_idx[0];
 
-      vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
-      assert(dqueue);
+      vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
+      assert(queue);
 
-      size_t size = dqueue->get_size();
+      size_t size = queue->get_size();
 
-      vvp_vector4_t value;
+      ELEM value;
       if (size) {
-	    dqueue->get_word(size-1, value);
-	    dqueue->pop_back();
+	    queue->get_word(0, value);
+	    queue->pop_front();
       } else {
-	    cerr << "Warning: pop_back() on empty queue<vector["
-	         << width << "]>." << endl;
-	    value = vvp_vector4_t(width);
+	    qdefault(value, wid);
+	    cerr << "Warning: pop_front() on empty ";
+	    print_queue_type(value);
+	    cerr << "." << endl;
       }
 
-      assert(width == value.size());
-      thr->push_vec4(value);
+      push_value(thr, value, wid);
       return true;
 }
+
 
 /*
  * %qpop/f/real <var-label>
  */
 bool of_QPOP_F_REAL(vthread_t thr, vvp_code_t cp)
 {
-      vvp_net_t*net = cp->net;
-
-      vvp_queue*dqueue = get_queue_object<vvp_queue_real>(thr, net);
-      assert(dqueue);
-
-      size_t size = dqueue->get_size();
-
-      double value;
-      if (size) {
-	    dqueue->get_word(0, value);
-	    dqueue->pop_front();
-      } else {
-	    cerr << "Warning: pop_front() on empty queue<real>." << endl;
-	    value = 0.0;
-      }
-
-      thr->push_real(value);
-      return true;
+      return qpop_f<double, vvp_queue_real>(thr, cp);
 }
 
 /*
@@ -5266,24 +5312,7 @@ bool of_QPOP_F_REAL(vthread_t thr, vvp_code_t cp)
  */
 bool of_QPOP_F_STR(vthread_t thr, vvp_code_t cp)
 {
-      vvp_net_t*net = cp->net;
-
-      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
-      assert(dqueue);
-
-      size_t size = dqueue->get_size();
-
-      string value;
-      if (size) {
-	    dqueue->get_word(0, value);
-	    dqueue->pop_front();
-      } else {
-	    cerr << "Warning: pop_front() on empty queue<string>." << endl;
-	    value = "";
-      }
-
-      thr->push_str(value);
-      return true;
+      return qpop_f<string, vvp_queue_string>(thr, cp);
 }
 
 /*
@@ -5291,27 +5320,7 @@ bool of_QPOP_F_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_QPOP_F_V(vthread_t thr, vvp_code_t cp)
 {
-      vvp_net_t*net = cp->net;
-      unsigned width  = cp->bit_idx[0];
-
-      vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
-      assert(dqueue);
-
-      size_t size = dqueue->get_size();
-
-      vvp_vector4_t value;
-      if (size) {
-	    dqueue->get_word(0, value);
-	    dqueue->pop_front();
-      } else {
-	    cerr << "Warning: pop_front() on empty queue<vector["
-	         << width << "]>." << endl;
-	    value = vvp_vector4_t(width);
-      }
-
-      assert(width == value.size());
-      thr->push_vec4(value);
-      return true;
+      return qpop_f<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[0]);
 }
 
 /*
@@ -5958,21 +5967,26 @@ bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+template <typename ELEM, class QTYPE>
+static bool store_qb(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+{
+      ELEM value;
+      vvp_net_t*net = cp->net;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+      pop_value(value, thr, wid); // Pop the value to store.
+
+      vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
+      assert(queue);
+      queue->push_back(value, max_size);
+      return true;
+}
+
 /*
  * %store/qb/r <var-label>, <max-idx>
  */
 bool of_STORE_QB_R(vthread_t thr, vvp_code_t cp)
 {
-	// Pop the double to be stored...
-      double value = thr->pop_real();
-
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*queue = get_queue_object<vvp_queue_real>(thr, net);
-      assert(queue);
-      queue->push_back(value, max_size);
-      return true;
+      return store_qb<double, vvp_queue_real>(thr, cp);
 }
 
 /*
@@ -5980,16 +5994,7 @@ bool of_STORE_QB_R(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_QB_STR(vthread_t thr, vvp_code_t cp)
 {
-	// Pop the string to be stored...
-      string value = thr->pop_str();
-
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*queue = get_queue_object<vvp_queue_string>(thr, net);
-      assert(queue);
-      queue->push_back(value, max_size);
-      return true;
+      return store_qb<string, vvp_queue_string>(thr, cp);
 }
 
 /*
@@ -5997,17 +6002,34 @@ bool of_STORE_QB_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_QB_V(vthread_t thr, vvp_code_t cp)
 {
-	// Pop the vec4 value to be stored...
-      vvp_vector4_t value = thr->pop_vec4();
+      return store_qb<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
+}
 
+template <typename ELEM, class QTYPE>
+static bool store_qdar(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+{
+      int64_t idx = thr->words[3].w_int;
+      ELEM value;
       vvp_net_t*net = cp->net;
       unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      unsigned wid = cp->bit_idx[1];
+      pop_value(value, thr, wid); // Pop the value to store.
 
-      assert(value.size() == wid);
-      vvp_queue*queue = get_queue_object<vvp_queue_vec4>(thr, net);
+      vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
       assert(queue);
-      queue->push_back(value, max_size);
+      if (idx < 0) {
+	    cerr << "Warning: cannot assign to a negative ";
+	    print_queue_type(value);
+	    cerr << " index (" << idx << "). ";
+	    print_queue_value(value);
+	    cerr << " was not added." << endl;
+      } else if (thr->flags[4] != BIT4_0) {
+	    cerr << "Warning: cannot assign to an undefined ";
+	    print_queue_type(value);
+	    cerr << " index. ";
+	    print_queue_value(value);
+	    cerr << " was not added." << endl;
+      } else
+	    queue->set_word_max(idx, value, max_size);
       return true;
 }
 
@@ -6016,22 +6038,7 @@ bool of_STORE_QB_V(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_QDAR_R(vthread_t thr, vvp_code_t cp)
 {
-      int64_t adr = thr->words[3].w_int;
-      double value = thr->pop_real(); // Pop the real value to store...
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*queue = get_queue_object<vvp_queue_real>(thr, net);
-      assert(queue);
-      if (adr < 0)
-	    cerr << "Warning: cannot assign negative queue<real> index ("
-	         << adr << "). " << value  << " was not added." << endl;
-      else if (thr->flags[4] != BIT4_0)
-	    cerr << "Warning: cannot assign undefined queue<real> index. "
-	         << value << " was not added." << endl;
-      else
-	    queue->set_word_max(adr, value, max_size);
-      return true;
+      return store_qdar<double, vvp_queue_real>(thr, cp);
 }
 
 /*
@@ -6039,22 +6046,7 @@ bool of_STORE_QDAR_R(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_QDAR_STR(vthread_t thr, vvp_code_t cp)
 {
-      int64_t adr = thr->words[3].w_int;
-      string value = thr->pop_str(); // Pop the string to be stored...
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*queue = get_queue_object<vvp_queue_string>(thr, net);
-      assert(queue);
-      if (adr < 0)
-	    cerr << "Warning: cannot assign to a negative queue<string> index ("
-	         << adr << "). \"" << value << "\" was not added." << endl;
-      else if (thr->flags[4] != BIT4_0)
-	    cerr << "Warning: cannot assign to an undefined queue<string> index. \""
-	         << value << "\" was not added." << endl;
-      else
-	    queue->set_word_max(adr, value, max_size);
-      return true;
+      return store_qdar<string, vvp_queue_string>(thr, cp);
 }
 
 /*
@@ -6062,43 +6054,29 @@ bool of_STORE_QDAR_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_QDAR_VEC4(vthread_t thr, vvp_code_t cp)
 {
-      int64_t adr = thr->words[3].w_int;
-      vvp_vector4_t value = thr->pop_vec4(); // Pop the vector4 value to be store...
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      unsigned wid = cp->bit_idx[1];
-
-      assert(value.size() == wid);
-      vvp_queue*queue = get_queue_object<vvp_queue_vec4>(thr, net);
-      assert(queue);
-      if (adr < 0)
-	    cerr << "Warning: cannot assign to a negative queue<vector["
-	         << value.size() << "]> index (" << adr << "). " << value
-	         << " was not added." << endl;
-      else if (thr->flags[4] != BIT4_0)
-	    cerr << "Warning: cannot assign to an undefined queue<vector["
-	         << value.size() << "]> index. " << value
-	         << " was not added." << endl;
-      else
-	    queue->set_word_max(adr, value, max_size);
-      return true;
+      return store_qdar<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
 }
 
+
+template <typename ELEM, class QTYPE>
+static bool store_qf(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+{
+      ELEM value;
+      vvp_net_t*net = cp->net;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+      pop_value(value, thr, wid); // Pop the value to store.
+
+      vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
+      assert(queue);
+      queue->push_front(value, max_size);
+      return true;
+}
 /*
  * %store/qf/r <var-label>, <max-idx>
  */
 bool of_STORE_QF_R(vthread_t thr, vvp_code_t cp)
 {
-	// Pop the double to be stored...
-      double value = thr->pop_real();
-
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*dqueue = get_queue_object<vvp_queue_real>(thr, net);
-      assert(dqueue);
-      dqueue->push_front(value, max_size);
-      return true;
+      return store_qf<double, vvp_queue_real>(thr, cp);
 }
 
 /*
@@ -6106,16 +6084,7 @@ bool of_STORE_QF_R(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_QF_STR(vthread_t thr, vvp_code_t cp)
 {
-	// Pop the string to be stored...
-      string value = thr->pop_str();
-
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-
-      vvp_queue*dqueue = get_queue_object<vvp_queue_string>(thr, net);
-      assert(dqueue);
-      dqueue->push_front(value, max_size);
-      return true;
+      return store_qf<string, vvp_queue_string>(thr, cp);
 }
 
 /*
@@ -6123,18 +6092,7 @@ bool of_STORE_QF_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_QF_V(vthread_t thr, vvp_code_t cp)
 {
-	// Pop the vec4 value to be stored...
-      vvp_vector4_t value = thr->pop_vec4();
-
-      vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      unsigned wid = cp->bit_idx[1];
-
-      assert(value.size() == wid);
-      vvp_queue*dqueue = get_queue_object<vvp_queue_vec4>(thr, net);
-      assert(dqueue);
-      dqueue->push_front(value, max_size);
-      return true;
+      return store_qf<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
 }
 
 bool of_STORE_REAL(vthread_t thr, vvp_code_t cp)
