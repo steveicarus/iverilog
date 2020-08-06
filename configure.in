@@ -54,6 +54,10 @@ then
         exit 1
 fi
 
+if test "x$NM" = "x"; then
+	NM=nm
+fi
+
 AC_EXEEXT
 AC_SUBST(EXEEXT)
 
