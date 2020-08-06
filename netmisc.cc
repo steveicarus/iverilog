@@ -1017,6 +1017,11 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 	    switch (cast_type) {
 		case IVL_VT_DARRAY:
 		case IVL_VT_QUEUE:
+		  if (NetESignal*net = dynamic_cast<NetESignal*>(tmp)) {
+			ivl_variable_type_t type = net->expr_type();
+			if ((type == IVL_VT_DARRAY) || (type == IVL_VT_QUEUE))
+			      return tmp;
+		  }
 		  if (dynamic_cast<PEAssignPattern*>(pe))
 			return tmp;
 		  // fall through
