@@ -495,7 +495,7 @@ void draw_vpi_task_call(ivl_statement_t tnet)
       } else {
 	    char call_string[1024];
 	    snprintf(call_string, sizeof(call_string),
-		     "	  %s %u %u \"%s\"", command,
+		     "    %s %u %u \"%s\"", command,
 		     ivl_file_table_index(ivl_stmt_file(tnet)),
 		     ivl_stmt_lineno(tnet), ivl_stmt_name(tnet));
 	    draw_vpi_taskfunc_args(call_string, tnet, 0);
