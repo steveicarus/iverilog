@@ -654,14 +654,15 @@ static void draw_net_input_x(ivl_nexus_t nex,
 	   0.0 into the net. */
       if (ndrivers == 0) {
 	    unsigned wid = width_of_nexus(nex);
+	    int pull = (res == IVL_SIT_TRI0) || (res == IVL_SIT_TRI1);
 	      /* For real nets put 0.0. */
 	    if (signal_data_type_of_nexus(nex) == IVL_VT_REAL) {
 		  nex_private = draw_Cr_to_string(0.0);
 	    } else {
 		  unsigned jdx;
-		  char*tmp = malloc(wid + 5);
+		  char*tmp = malloc((pull ? 3 : 1) * wid + 5);
 		  nex_private = tmp;
-		  strcpy(tmp, "C4<");
+		  strcpy(tmp, pull ? "C8<" : "C4<");
 		  tmp += strlen(tmp);
 		  switch (res) {
 		      case IVL_SIT_TRI:
@@ -672,12 +673,18 @@ static void draw_net_input_x(ivl_nexus_t nex,
 			      *tmp++ = 'z';
 			break;
 		      case IVL_SIT_TRI0:
-			for (jdx = 0 ;  jdx < wid ;  jdx += 1)
+			for (jdx = 0 ;  jdx < wid ;  jdx += 1) {
+			      *tmp++ = '5';
+			      *tmp++ = '5';
 			      *tmp++ = '0';
+			}
 			break;
 		      case IVL_SIT_TRI1:
-			for (jdx = 0 ;  jdx < wid ;  jdx += 1)
+			for (jdx = 0 ;  jdx < wid ;  jdx += 1) {
+			      *tmp++ = '5';
+			      *tmp++ = '5';
 			      *tmp++ = '1';
+			}
 			break;
 		      default:
 			assert(0);
@@ -690,8 +697,13 @@ static void draw_net_input_x(ivl_nexus_t nex,
 	         to do this so that .nets have something to hang onto. */
 	    char buf[64];
 	    snprintf(buf, sizeof buf, "o%p", nex);
-	    fprintf(vvp_out, "%s .functor BUFZ %u, %s; HiZ drive\n",
-		    buf, wid, nex_private);
+	    if (pull) {
+		  fprintf(vvp_out, "%s .functor BUFT %u, %s, C4<0>, C4<0>, C4<0>; pull drive\n",
+			  buf, wid, nex_private);
+	    } else {
+		  fprintf(vvp_out, "%s .functor BUFZ %u, %s; HiZ drive\n",
+			  buf, wid, nex_private);
+	    }
 	    nex_private = realloc(nex_private, strlen(buf)+1);
 	    strcpy(nex_private, buf);
 
