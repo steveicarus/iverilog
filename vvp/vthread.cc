@@ -6034,7 +6034,7 @@ static bool store_qdar(vthread_t thr, vvp_code_t cp, unsigned wid=0)
 }
 
 /*
- * %store/qdar/real <var>, idx
+ * %store/qdar/r <var>, idx
  */
 bool of_STORE_QDAR_R(vthread_t thr, vvp_code_t cp)
 {
@@ -6050,13 +6050,12 @@ bool of_STORE_QDAR_STR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %store/qdar/vec4 <var>, idx
+ * %store/qdar/v <var>, idx
  */
-bool of_STORE_QDAR_VEC4(vthread_t thr, vvp_code_t cp)
+bool of_STORE_QDAR_V(vthread_t thr, vvp_code_t cp)
 {
       return store_qdar<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
 }
-
 
 template <typename ELEM, class QTYPE>
 static bool store_qf(vthread_t thr, vvp_code_t cp, unsigned wid=0)
@@ -6093,6 +6092,39 @@ bool of_STORE_QF_STR(vthread_t thr, vvp_code_t cp)
 bool of_STORE_QF_V(vthread_t thr, vvp_code_t cp)
 {
       return store_qf<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
+}
+
+template <typename ELEM, class QTYPE>
+static bool store_qobj(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+{
+// FIXME: Can we actually use wid here?
+      (void)wid;
+      vvp_net_t*net = cp->net;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+
+      vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
+      assert(queue);
+
+      vvp_object_t src;
+      thr->pop_object(src);
+
+      queue->copy_elems(src, max_size);
+      return true;
+}
+
+bool of_STORE_QOBJ_R(vthread_t thr, vvp_code_t cp)
+{
+      return store_qobj<double, vvp_queue_real>(thr, cp);
+}
+
+bool of_STORE_QOBJ_STR(vthread_t thr, vvp_code_t cp)
+{
+      return store_qobj<string, vvp_queue_string>(thr, cp);
+}
+
+bool of_STORE_QOBJ_V(vthread_t thr, vvp_code_t cp)
+{
+      return store_qobj<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
 }
 
 bool of_STORE_REAL(vthread_t thr, vvp_code_t cp)

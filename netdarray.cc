@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,6 +18,7 @@
  */
 
 # include  "netdarray.h"
+# include  "netqueue.h"
 # include  <iostream>
 
 using namespace std;
@@ -38,9 +39,16 @@ ivl_variable_type_t netdarray_t::base_type(void) const
 
 bool netdarray_t::test_compatibility(ivl_type_t that) const
 {
-      const netdarray_t*that_da = dynamic_cast<const netdarray_t*>(that);
-      if (that_da == 0)
+      ivl_type_t elem_type = 0;
+
+      if (const netdarray_t*that_da = dynamic_cast<const netdarray_t*>(that))
+	    elem_type = that_da->element_type();
+
+      if (const netqueue_t*that_q = dynamic_cast<const netqueue_t*>(that))
+            elem_type = that_q->element_type();
+
+      if (elem_type == 0)
 	    return false;
 
-      return element_type()->type_compatible(that_da->element_type());
+      return element_type()->type_compatible(elem_type);
 }
