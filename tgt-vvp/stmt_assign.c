@@ -1062,9 +1062,10 @@ static int show_stmt_assign_queue_pattern(ivl_signal_t var, ivl_expr_t rval,
       max_size = ivl_signal_array_count(var);
       max_elems = ivl_expr_parms(rval);
       if ((max_size != 0) && (max_elems > max_size)) {
-	    fprintf(stderr, "Warning: Array pattern assignment has more elements "
+	    fprintf(stderr, "%s:%u: Warning: Array pattern assignment has more elements "
 	                    "(%u) than bounded queue '%s' supports (%u).\n"
 	                    "         Only using first %u elements.\n",
+	                    ivl_expr_file(rval), ivl_expr_lineno(rval),
 	                    max_elems, ivl_signal_basename(var), max_size, max_size);
 	    max_elems = max_size;
       }
