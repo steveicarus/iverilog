@@ -3019,17 +3019,33 @@ unsigned PEConcat::test_width(Design*des, NetScope*scope, width_mode_t&)
 // Keep track of the concatenation/repeat depth.
 static int concat_depth = 0;
 
-NetExpr* PEConcat::elaborate_expr(Design*, NetScope*,
-				  ivl_type_t type, unsigned /*flags*/) const
+NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
+				  ivl_type_t ntype, unsigned flags) const
 {
-      switch (type->base_type()) {
+      switch (ntype->base_type()) {
 	  case IVL_VT_QUEUE:
 	    if (parms_.size() == 0) {
 		  NetENull*tmp = new NetENull;
 		  tmp->set_line(*this);
 		  return tmp;
+	    } else {
+		  const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype);
+		  ivl_assert(*this, array_type);
+
+		    // This is going to be an array pattern, so run through the
+		    // elements of the expression and elaborate each as if they
+		    // are element_type expressions.
+		  ivl_type_t elem_type = array_type->element_type();
+		  vector<NetExpr*> elem_exprs (parms_.size());
+		  for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
+			NetExpr*tmp = parms_[idx]->elaborate_expr(des, scope, elem_type, flags);
+			elem_exprs[idx] = tmp;
+		  }
+
+		  NetEArrayPattern*res = new NetEArrayPattern(array_type, elem_exprs);
+		  res->set_line(*this);
+		  return res;
 	    }
-	    // fallthrough
 	  default:
 	    cerr << get_fileline() << ": internal error: "
 		 << "I don't know how to elaborate(ivl_type_t)"
