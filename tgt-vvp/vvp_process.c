@@ -2097,6 +2097,7 @@ static unsigned utask_in_port_idx(ivl_scope_t scope, ivl_statement_t stmt)
       sig_name = ivl_signal_basename(lsig);
       for (idx = 0; idx < ports; idx += 1) {
 	    ivl_signal_t port = ivl_scope_port(scope, idx);
+	    if (!port) continue;
 	    ivl_signal_port_t port_type = ivl_signal_port(port);
 	    if ((port_type != IVL_SIP_INPUT) &&
 	        (port_type != IVL_SIP_INOUT)) continue;
@@ -2136,6 +2137,7 @@ static unsigned utask_out_port_idx(ivl_scope_t scope, ivl_statement_t stmt)
       sig_name = ivl_signal_basename(rsig);
       for (idx = 0; idx < ports; idx += 1) {
 	    ivl_signal_t port = ivl_scope_port(scope, idx);
+	    if (!port) continue;
 	    ivl_signal_port_t port_type = ivl_signal_port(port);
 	    if ((port_type != IVL_SIP_OUTPUT) &&
 	        (port_type != IVL_SIP_INOUT)) continue;
@@ -2175,6 +2177,7 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
                                         ivl_statement_t stmt)
 {
       unsigned idx, ports, task_idx = 0;
+      unsigned is_void_func;
       unsigned count = ivl_stmt_block_count(stmt);
       unsigned lineno = ivl_stmt_lineno(stmt);
       ivl_scope_t task_scope = 0;
@@ -2189,7 +2192,8 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
 	    if (ivl_statement_type(tmp) == IVL_ST_UTASK && !task_scope) {
 		  task_idx = idx;
 		  task_scope = ivl_stmt_call(tmp);
-		  assert(ivl_scope_type(task_scope) == IVL_SCT_TASK);
+		  assert((ivl_scope_type(task_scope) == IVL_SCT_TASK) ||
+		         (ivl_scope_type(task_scope) == IVL_SCT_FUNCTION));
 		  continue;
 	    }
 	    return 0;
@@ -2240,7 +2244,11 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
       }
 
 	/* Verify that all the ports were defined. */
-      for (idx = 0; idx < ports; idx += 1) {
+      is_void_func = (ivl_scope_type(task_scope) == IVL_SCT_FUNCTION);
+      if (is_void_func) {
+	    assert(port_exprs[0].type == IVL_SIP_NONE);
+      }
+      for (idx = is_void_func; idx < ports; idx += 1) {
 	    if (port_exprs[idx].type == IVL_SIP_NONE) {
 		  free(port_exprs);
 		  return 0;
