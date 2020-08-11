@@ -41,6 +41,7 @@
 # include  <cassert>
 
 # include  <iostream>
+# include  <sstream>
 # include  <cstdio>
 
 using namespace std;
@@ -296,6 +297,13 @@ struct vthread_s {
 	/* These are used to pass non-blocking event control information. */
       vvp_net_t*event;
       uint64_t ecount;
+	/* Save the file/line information when available. */
+    private:
+      char *filenm_;
+      unsigned lineno_;
+    public:
+      void set_fileline(char *filenm, unsigned lineno);
+      string get_fileline();
 
       inline void cleanup()
       {
@@ -305,6 +313,8 @@ struct vthread_s {
 		  stack_str_.clear();
 		  pop_object(stack_obj_size_);
 	    }
+	    free(filenm_);
+	    filenm_ = 0;
 	    assert(stack_vec4_.empty());
 	    assert(stack_real_.empty());
 	    assert(stack_str_.empty());
@@ -315,6 +325,28 @@ struct vthread_s {
 inline vthread_s::vthread_s()
 {
       stack_obj_size_ = 0;
+      filenm_ = 0;
+      lineno_ = 0;
+}
+
+void vthread_s::set_fileline(char *filenm, unsigned lineno)
+{
+      assert(filenm);
+      if (!filenm_ || (strcmp(filenm_, filenm) != 0)) {
+	    free(filenm_);
+	    filenm_ = strdup(filenm);
+      }
+      lineno_ = lineno;
+}
+
+inline string vthread_s::get_fileline()
+{
+      ostringstream buf;
+      if (filenm_) {
+	    buf << filenm_ << ":" << lineno_ << ": ";
+      }
+      string res = buf.str();
+      return res;
 }
 
 void vthread_s::debug_dump(ostream&fd, const char*label)
@@ -334,6 +366,10 @@ void vthread_s::debug_dump(ostream&fd, const char*label)
       fd << "**** args_vec4 array (" << args_vec4.size() << ")..." << endl;
       for (size_t idx = 0 ; idx < args_vec4.size() ; idx += 1)
 	    fd << "    " << idx << ": " << args_vec4[idx] << endl;
+      fd << "**** file/line (";
+      if (filenm_) fd << filenm_;
+      else fd << "<no file name>";
+      fd << ":" << lineno_ << ")" << endl;
       fd << "**** Done ****" << endl;
 }
 
@@ -347,6 +383,10 @@ __vpiScope* vthread_scope(struct vthread_s*thr)
 
 struct vthread_s*running_thread = 0;
 
+string get_fileline()
+{
+      return running_thread->get_fileline();
+}
 
 void vthread_push_vec4(struct vthread_s*thr, const vvp_vector4_t&val)
 {
@@ -408,16 +448,16 @@ template <class VVP_QUEUE> static vvp_queue*get_queue_object(vthread_t thr, vvp_
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
       assert(obj);
 
-      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
-      if (dqueue == 0) {
+      vvp_queue*queue = obj->get_object().peek<vvp_queue>();
+      if (queue == 0) {
 	    assert(obj->get_object().test_nil());
-	    dqueue = new VVP_QUEUE;
-	    vvp_object_t val (dqueue);
+	    queue = new VVP_QUEUE;
+	    vvp_object_t val (queue);
 	    vvp_net_ptr_t ptr (net, 0);
 	    vvp_send_object(ptr, val, thr->wt_context);
       }
 
-      return dqueue;
+      return queue;
 }
 
 /*
@@ -2476,12 +2516,14 @@ bool of_DELETE_ELEM(vthread_t thr, vvp_code_t cp)
 
       int64_t idx_val = thr->words[3].w_int;
       if (thr->flags[4] == BIT4_1) {
-	    cerr << "Warning: skipping queue delete() with undefined index."
+	    cerr << thr->get_fileline()
+	         << "Warning: skipping queue delete() with undefined index."
 	         << endl;
 	    return true;
       }
       if (idx_val < 0) {
-	    cerr << "Warning: skipping queue delete() with negative index."
+	    cerr << thr->get_fileline()
+	         << "Warning: skipping queue delete() with negative index."
 	         << endl;
 	    return true;
       }
@@ -2490,17 +2532,19 @@ bool of_DELETE_ELEM(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
       assert(obj);
 
-      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
-      if (dqueue == 0) {
-	    cerr << "Warning: skipping delete(" << idx
+      vvp_queue*queue = obj->get_object().peek<vvp_queue>();
+      if (queue == 0) {
+	    cerr << thr->get_fileline()
+	         << "Warning: skipping delete(" << idx
 	         << ") on empty queue." << endl;
       } else {
-	    size_t size = dqueue->get_size();
+	    size_t size = queue->get_size();
 	    if (idx >= size) {
-		  cerr << "Warning: skipping out of range delete(" << idx
+		  cerr << thr->get_fileline()
+		       << "Warning: skipping out of range delete(" << idx
 		       << ") on queue of size " << size << "." << endl;
 	    } else {
-		  dqueue->erase(idx);
+		  queue->erase(idx);
 	    }
       }
 
@@ -2533,11 +2577,11 @@ bool of_DELETE_TAIL(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
       assert(obj);
 
-      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
-      assert(dqueue);
+      vvp_queue*queue = obj->get_object().peek<vvp_queue>();
+      assert(queue);
 
       unsigned idx = thr->words[cp->bit_idx[0]].w_int;
-      dqueue->erase_tail(idx);
+      queue->erase_tail(idx);
 
       return true;
 }
@@ -4538,7 +4582,8 @@ bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
       } else if (strcmp(text,"S") == 0) {
 	    obj = new vvp_darray_string(size);
       } else {
-	    cerr << "Internal error: Unsupported dynamic array type: "
+	    cerr << get_fileline()
+	         << "Internal error: Unsupported dynamic array type: "
 	         << text << "." << endl;
 	    assert(0);
       }
@@ -5150,13 +5195,15 @@ static bool qinsert(vthread_t thr, vvp_code_t cp, unsigned wid=0)
       vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
       assert(queue);
       if (idx < 0) {
-	    cerr << "Warning: cannot insert at a negative ";
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot insert at a negative ";
 	    print_queue_type(value);
 	    cerr << " index (" << idx << "). ";
 	    print_queue_value(value);
 	    cerr << " was not added." << endl;
       } else if (thr->flags[4] != BIT4_0) {
-	    cerr << "Warning: cannot insert at an undefined ";
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot insert at an undefined ";
 	    print_queue_type(value);
 	    cerr << " index. ";
 	    print_queue_value(value);
@@ -5240,7 +5287,8 @@ static bool qpop_b(vthread_t thr, vvp_code_t cp, unsigned wid=0)
 	    queue->pop_back();
       } else {
 	    qdefault(value, wid);
-	    cerr << "Warning: pop_back() on empty ";
+	    cerr << thr->get_fileline()
+	         << "Warning: pop_back() on empty ";
 	    print_queue_type(value);
 	    cerr << "." << endl;
       }
@@ -5289,7 +5337,8 @@ static bool qpop_f(vthread_t thr, vvp_code_t cp, unsigned wid=0)
 	    queue->pop_front();
       } else {
 	    qdefault(value, wid);
-	    cerr << "Warning: pop_front() on empty ";
+	    cerr << thr->get_fileline()
+	         << "Warning: pop_front() on empty ";
 	    print_queue_type(value);
 	    cerr << "." << endl;
       }
@@ -5768,15 +5817,18 @@ bool of_STORE_DAR_R(vthread_t thr, vvp_code_t cp)
       vvp_darray*darray = obj->get_object().peek<vvp_darray>();
 
       if (adr < 0)
-	    cerr << "Warning: cannot write to a negative array<real> index ("
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot write to a negative array<real> index ("
 	         << adr << ")." << endl;
       else if (thr->flags[4] != BIT4_0)
-	    cerr << "Warning: cannot write to an undefined array<real> index."
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot write to an undefined array<real> index."
 	         << endl;
       else if (darray)
 	    darray->set_word(adr, value);
       else
-	    cerr << "Warning: cannot write to an undefined array<real>."
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot write to an undefined array<real>."
 	         << endl;
 
       return true;
@@ -5798,15 +5850,18 @@ bool of_STORE_DAR_STR(vthread_t thr, vvp_code_t cp)
       vvp_darray*darray = obj->get_object().peek<vvp_darray>();
 
       if (adr < 0)
-	    cerr << "Warning: cannot write to a negative array<string> index ("
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot write to a negative array<string> index ("
 	         << adr << ")." << endl;
       else if (thr->flags[4] != BIT4_0)
-	    cerr << "Warning: cannot write to an undefined array<string> index."
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot write to an undefined array<string> index."
 	         << endl;
       else if (darray)
 	    darray->set_word(adr, value);
       else
-	    cerr << "Warning: cannot write to an undefined array<string>."
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot write to an undefined array<string>."
 	         << endl;
 
       return true;
@@ -5828,15 +5883,18 @@ bool of_STORE_DAR_VEC4(vthread_t thr, vvp_code_t cp)
       vvp_darray*darray = obj->get_object().peek<vvp_darray>();
 
       if (adr < 0)
-	    cerr << "Warning: cannot write to a negative array<vector["
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot write to a negative array<vector["
 	         << value.size() << "]> index (" << adr << ")." << endl;
       else if (thr->flags[4] != BIT4_0)
-	    cerr << "Warning: cannot write to an undefined array<vector["
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot write to an undefined array<vector["
 	         << value.size() << "]> index." << endl;
       else if (darray)
 	    darray->set_word(adr, value);
       else
-	    cerr << "Warning: cannot write to an undefined array<vector["
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot write to an undefined array<vector["
 	         << value.size() << "]>." << endl;
 
       return true;
@@ -6017,13 +6075,15 @@ static bool store_qdar(vthread_t thr, vvp_code_t cp, unsigned wid=0)
       vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
       assert(queue);
       if (idx < 0) {
-	    cerr << "Warning: cannot assign to a negative ";
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot assign to a negative ";
 	    print_queue_type(value);
 	    cerr << " index (" << idx << "). ";
 	    print_queue_value(value);
 	    cerr << " was not added." << endl;
       } else if (thr->flags[4] != BIT4_0) {
-	    cerr << "Warning: cannot assign to an undefined ";
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot assign to an undefined ";
 	    print_queue_type(value);
 	    cerr << " index. ";
 	    print_queue_value(value);
@@ -6387,15 +6447,19 @@ bool of_SUBSTR_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_FILE_LINE(vthread_t, vvp_code_t cp)
+bool of_FILE_LINE(vthread_t thr, vvp_code_t cp)
 {
-      if (show_file_line) {
-	    vpiHandle handle = cp->handle;
+      vpiHandle handle = cp->handle;
+      if (show_file_line)
 	    cerr << vpi_get_str(vpiFile, handle) << ":"
-	         << vpi_get(vpiLineNo, handle) << ": ";
-	    cerr << vpi_get_str(_vpiDescription, handle);
-	    cerr << endl;
-      }
+	         << vpi_get(vpiLineNo, handle) << ": "
+	         << vpi_get_str(_vpiDescription, handle) << endl;
+
+	/* When it is available, keep the file/line information in the
+	   thread for error/warning messages. */
+      thr->set_fileline(vpi_get_str(vpiFile, handle),
+                        vpi_get(vpiLineNo, handle));
+
       return true;
 }
 

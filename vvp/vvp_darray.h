@@ -244,4 +244,6 @@ class vvp_queue_vec4 : public vvp_queue {
       std::deque<vvp_vector4_t> queue;
 };
 
+extern string get_fileline();
+
 #endif /* IVL_vvp_darray_H */

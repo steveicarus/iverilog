@@ -286,4 +286,7 @@ extern void clr_flag(int idx);
 extern unsigned local_count;
 extern unsigned thread_count;
 
+extern void darray_new(ivl_type_t element_type, unsigned size_reg);
+
+
 #endif /* IVL_vvp_priv_H */

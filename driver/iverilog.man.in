@@ -1,4 +1,4 @@
-.TH iverilog 1 "Oct 23rd, 2019" "" "Version %M.%n%E"
+.TH iverilog 1 "Aug 10th, 2020" "" "Version %M.%n%E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -317,7 +317,10 @@ This is the default. The vvp target generates code for the vvp
 runtime. The output is a complete program that simulates the design
 but must be run by the \fBvvp\fP command. The -pfileline=1 option
 can be used to add procedural statement debugging opcodes to the
-generated code.
+generated code. These opcodes are also used to generate file and
+line information for procedural warning/error messages. To enable
+the debug command tracing us the trace command (trace on) from
+the vvp interactive prompt.
 .TP 8
 .B fpga
 This is a synthesis target that supports a variety of fpga devices,
@@ -630,7 +633,7 @@ Tips on using, debugging, and developing the compiler can be found at
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002\-2019 Stephen Williams
+Copyright \(co  2002\-2020 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

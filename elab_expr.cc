@@ -3024,6 +3024,8 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 {
       switch (ntype->base_type()) {
 	  case IVL_VT_QUEUE:
+// FIXME: Does a DARRAY support a zero size?
+	  case IVL_VT_DARRAY:
 	    if (parms_.size() == 0) {
 		  NetENull*tmp = new NetENull;
 		  tmp->set_line(*this);
@@ -3813,6 +3815,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		 << endl;
       }
 
+// FIXME: The real array to queue is failing here.
       if (net->unpacked_dimensions() != use_comp.index.size()) {
 	    cerr << get_fileline() << ": sorry: "
 		 << "Net " << net->name()

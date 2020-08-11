@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,6 +21,58 @@
 # include  <string.h>
 # include  <assert.h>
 
+void darray_new(ivl_type_t element_type, unsigned size_reg)
+{
+      int wid;
+      char*signed_char;
+      ivl_variable_type_t type = ivl_type_base(element_type);
+
+      if ((type == IVL_VT_BOOL) || (type == IVL_VT_LOGIC)) {
+	    int msb, lsb;
+	      // bool objects are vectorable, but for now only support
+	      // a single dimensions.
+	    assert(ivl_type_packed_dimensions(element_type) == 1);
+	    msb = ivl_type_packed_msb(element_type, 0);
+	    lsb = ivl_type_packed_lsb(element_type, 0);
+	    wid = msb>=lsb ? msb - lsb : lsb - msb;
+	    wid += 1;
+	    signed_char = ivl_type_signed(element_type) ? "s" : "";
+      } else {
+	      // REAL or STRING objects are not packable.
+	    assert(ivl_type_packed_dimensions(element_type) == 0);
+	    wid = 0;
+	    signed_char = "";
+      }
+
+      switch (type) {
+	  case IVL_VT_REAL:
+	    fprintf(vvp_out, "    %%new/darray %u, \"r\";\n",
+	                     size_reg);
+	    break;
+
+	  case IVL_VT_STRING:
+	    fprintf(vvp_out, "    %%new/darray %u, \"S\";\n",
+	                     size_reg);
+	    break;
+
+	  case IVL_VT_BOOL:
+	    fprintf(vvp_out, "    %%new/darray %u, \"%sb%d\";\n",
+	                     size_reg, signed_char, wid);
+	    break;
+
+	  case IVL_VT_LOGIC:
+	    fprintf(vvp_out, "    %%new/darray %u, \"%sv%d\";\n",
+	                     size_reg, signed_char, wid);
+	    break;
+
+	  default:
+	    assert(0);
+	    break;
+      }
+
+      clr_word(size_reg);
+}
+
 static int eval_darray_new(ivl_expr_t ex)
 {
       int errors = 0;
@@ -37,46 +89,7 @@ static int eval_darray_new(ivl_expr_t ex)
       ivl_type_t element_type = ivl_type_element(net_type);
       assert(element_type);
 
-      switch (ivl_type_base(element_type)) {
-	    int msb, lsb, wid;
-	  case IVL_VT_REAL:
-	      // REAL objects are not packable.
-	    assert(ivl_type_packed_dimensions(element_type) == 0);
-	    fprintf(vvp_out, "    %%new/darray %u, \"r\";\n", size_reg);
-	    break;
-	  case IVL_VT_STRING:
-	      // STRING objects are not packable.
-	    assert(ivl_type_packed_dimensions(element_type) == 0);
-	    fprintf(vvp_out, "    %%new/darray %u, \"S\";\n", size_reg);
-	    break;
-	  case IVL_VT_BOOL:
-	      // bool objects are vectorable, but for now only support
-	      // a single dimensions.
-	    assert(ivl_type_packed_dimensions(element_type) == 1);
-	    msb = ivl_type_packed_msb(element_type, 0);
-	    lsb = ivl_type_packed_lsb(element_type, 0);
-	    wid = msb>=lsb? msb - lsb : lsb - msb;
-	    wid += 1;
-	    fprintf(vvp_out, "    %%new/darray %u, \"%sb%d\";\n", size_reg,
-	                     ivl_type_signed(element_type) ? "s" : "", wid);
-	    break;
-	  case IVL_VT_LOGIC:
-	      // logic objects are vectorable, but for now only support
-	      // a single dimensions.
-	    assert(ivl_type_packed_dimensions(element_type) == 1);
-	    msb = ivl_type_packed_msb(element_type, 0);
-	    lsb = ivl_type_packed_lsb(element_type, 0);
-	    wid = msb>=lsb? msb - lsb : lsb - msb;
-	    wid += 1;
-	    fprintf(vvp_out, "    %%new/darray %u, \"%sv%d\";\n", size_reg,
-	                     ivl_type_signed(element_type) ? "s" : "", wid);
-	    break;
-
-	  default:
-	    assert(0);
-	    break;
-      }
-      clr_word(size_reg);
+      darray_new(element_type, size_reg);
 
       if (init_expr && ivl_expr_type(init_expr)==IVL_EX_ARRAY_PATTERN) {
 	    unsigned idx;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2020 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -80,8 +80,7 @@ vpiHandle vpip_build_file_line(char*description, long file_idx, long lineno)
 {
       struct __vpiFileLine*obj = new struct __vpiFileLine;
 
-	/* Turn on the diagnostic output when we find a %file_line. */
-      show_file_line = true;
+	/* You can turn on the diagnostic output if we find a %file_line. */
       code_is_instrumented = true;
 
       if (description) obj->description = vpip_name_string(description);
