@@ -530,7 +530,7 @@ void vvp_queue_real::copy_elems(vvp_object_t src, unsigned max_size)
       else if (vvp_darray*src_darray = src.peek<vvp_darray>())
 	    copy_elements<double, vvp_queue_real, vvp_darray>(this, src_darray, max_size);
       else
-	    cerr << "Sorry: cannot copy object to real queue." << endl;
+	    cerr << get_fileline() << "Sorry: cannot copy object to real queue." << endl;
 }
 
 void vvp_queue_real::set_word_max(unsigned adr, double value, unsigned max_size)
@@ -666,7 +666,7 @@ void vvp_queue_string::copy_elems(vvp_object_t src, unsigned max_size)
       else if (vvp_darray*src_darray = src.peek<vvp_darray>())
 	    copy_elements<string, vvp_queue_string, vvp_darray>(this, src_darray, max_size);
       else
-	    cerr << "Sorry: cannot copy object to string queue." << endl;
+	    cerr << get_fileline() << "Sorry: cannot copy object to string queue." << endl;
 }
 
 void vvp_queue_string::set_word_max(unsigned adr, const string&value, unsigned max_size)
@@ -802,7 +802,7 @@ void vvp_queue_vec4::copy_elems(vvp_object_t src, unsigned max_size)
       else if (vvp_darray*src_darray = src.peek<vvp_darray>())
 	    copy_elements<vvp_vector4_t, vvp_queue_vec4, vvp_darray>(this, src_darray, max_size);
       else
-	    cerr << "Sorry: cannot copy object to vector queue." << endl;
+	    cerr << get_fileline() << "Sorry: cannot copy object to vector queue." << endl;
 }
 
 void vvp_queue_vec4::set_word_max(unsigned adr, const vvp_vector4_t&value, unsigned max_size)
