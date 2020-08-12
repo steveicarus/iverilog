@@ -484,19 +484,22 @@ inline static void pop_value(vvp_vector4_t&value, vthread_t thr, unsigned wid)
 /*
  * The following are used to allow the queue templates to print correctly.
  */
-inline static void print_queue_type(double)
+inline static string get_queue_type(double)
 {
-      cerr << "queue<real>";
+      return "queue<real>";
 }
 
-inline static void print_queue_type(string)
+inline static string get_queue_type(string)
 {
-      cerr << "queue<string>";
+      return "queue<string>";
 }
 
-inline static void print_queue_type(vvp_vector4_t value)
+inline static string get_queue_type(vvp_vector4_t value)
 {
-      cerr << "queue<vector[" << value.size() << "]>";
+      ostringstream buf;
+      buf << "queue<vector[" << value.size() << "]>";
+      string res = buf.str();
+      return res;
 }
 
 inline static void print_queue_value(double value)
@@ -5196,16 +5199,15 @@ static bool qinsert(vthread_t thr, vvp_code_t cp, unsigned wid=0)
       assert(queue);
       if (idx < 0) {
 	    cerr << thr->get_fileline()
-	         << "Warning: cannot insert at a negative ";
-	    print_queue_type(value);
-	    cerr << " index (" << idx << "). ";
+	         << "Warning: cannot insert at a negative "
+	         << get_queue_type(value)
+	         << " index (" << idx << "). ";
 	    print_queue_value(value);
 	    cerr << " was not added." << endl;
       } else if (thr->flags[4] != BIT4_0) {
 	    cerr << thr->get_fileline()
-	         << "Warning: cannot insert at an undefined ";
-	    print_queue_type(value);
-	    cerr << " index. ";
+	         << "Warning: cannot insert at an undefined "
+	         << get_queue_type(value) << " index. ";
 	    print_queue_value(value);
 	    cerr << " was not added." << endl;
       } else
@@ -5272,7 +5274,9 @@ inline void push_value(vthread_t thr, vvp_vector4_t value, unsigned wid)
 }
 
 template <typename ELEM, class QTYPE>
-static bool qpop_b(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+static bool q_pop(vthread_t thr, vvp_code_t cp,
+                  void (*get_val_func)(vvp_queue*, ELEM&),
+                  const char*loc, unsigned wid)
 {
       vvp_net_t*net = cp->net;
 
@@ -5283,18 +5287,29 @@ static bool qpop_b(vthread_t thr, vvp_code_t cp, unsigned wid=0)
 
       ELEM value;
       if (size) {
-	    queue->get_word(size-1, value);
-	    queue->pop_back();
+	    get_val_func(queue, value);
       } else {
 	    qdefault(value, wid);
 	    cerr << thr->get_fileline()
-	         << "Warning: pop_back() on empty ";
-	    print_queue_type(value);
-	    cerr << "." << endl;
+	         << "Warning: pop_" << loc << "() on empty "
+	         << get_queue_type(value) << "." << endl;
       }
 
       push_value(thr, value, wid);
       return true;
+}
+
+template <typename ELEM>
+static void get_back_value(vvp_queue*queue, ELEM&value)
+{
+      queue->get_word(queue->get_size()-1, value);
+      queue->pop_back();
+}
+
+template <typename ELEM, class QTYPE>
+static bool qpop_b(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+{
+      return q_pop<ELEM, QTYPE>(thr, cp, get_back_value<ELEM>, "back", wid);
 }
 
 /*
@@ -5321,30 +5336,17 @@ bool of_QPOP_B_V(vthread_t thr, vvp_code_t cp)
       return qpop_b<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[0]);
 }
 
+template <typename ELEM>
+static void get_front_value(vvp_queue*queue, ELEM&value)
+{
+      queue->get_word(0, value);
+      queue->pop_front();
+}
+
 template <typename ELEM, class QTYPE>
 static bool qpop_f(vthread_t thr, vvp_code_t cp, unsigned wid=0)
 {
-      vvp_net_t*net = cp->net;
-
-      vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
-      assert(queue);
-
-      size_t size = queue->get_size();
-
-      ELEM value;
-      if (size) {
-	    queue->get_word(0, value);
-	    queue->pop_front();
-      } else {
-	    qdefault(value, wid);
-	    cerr << thr->get_fileline()
-	         << "Warning: pop_front() on empty ";
-	    print_queue_type(value);
-	    cerr << "." << endl;
-      }
-
-      push_value(thr, value, wid);
-      return true;
+      return q_pop<ELEM, QTYPE>(thr, cp, get_front_value<ELEM>, "front", wid);
 }
 
 
@@ -6076,16 +6078,15 @@ static bool store_qdar(vthread_t thr, vvp_code_t cp, unsigned wid=0)
       assert(queue);
       if (idx < 0) {
 	    cerr << thr->get_fileline()
-	         << "Warning: cannot assign to a negative ";
-	    print_queue_type(value);
-	    cerr << " index (" << idx << "). ";
+	         << "Warning: cannot assign to a negative "
+	         << get_queue_type(value)
+	         << " index (" << idx << "). ";
 	    print_queue_value(value);
 	    cerr << " was not added." << endl;
       } else if (thr->flags[4] != BIT4_0) {
 	    cerr << thr->get_fileline()
-	         << "Warning: cannot assign to an undefined ";
-	    print_queue_type(value);
-	    cerr << " index. ";
+	         << "Warning: cannot assign to an undefined "
+	         << get_queue_type(value) << " index. ";
 	    print_queue_value(value);
 	    cerr << " was not added." << endl;
       } else
