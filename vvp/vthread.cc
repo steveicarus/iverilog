@@ -4806,9 +4806,7 @@ bool of_POP_OBJ(vthread_t thr, vvp_code_t cp)
 bool of_POP_REAL(vthread_t thr, vvp_code_t cp)
 {
       unsigned cnt = cp->number;
-      for (unsigned idx = 0 ; idx < cnt ; idx += 1) {
-	    (void) thr->pop_real();
-      }
+      thr->pop_real(cnt);
       return true;
 }
 
@@ -4940,6 +4938,37 @@ bool of_PROP_OBJ(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+static void get_from_obj(unsigned pid, vvp_cobject*cobj, double&val)
+{
+      val = cobj->get_real(pid);
+}
+
+static void get_from_obj(unsigned pid, vvp_cobject*cobj, string&val)
+{
+      val = cobj->get_string(pid);
+}
+
+static void get_from_obj(unsigned pid, vvp_cobject*cobj, vvp_vector4_t&val)
+{
+      cobj->get_vec4(pid, val);
+}
+
+template <typename ELEM>
+static bool prop(vthread_t thr, vvp_code_t cp)
+{
+      unsigned pid = cp->number;
+
+      vvp_object_t&obj = thr->peek_object();
+      vvp_cobject*cobj = obj.peek<vvp_cobject>();
+      assert(cobj);
+
+      ELEM val;
+      get_from_obj(pid, cobj, val);
+      vthread_push(thr, val);
+
+      return true;
+}
+
 /*
  * %prop/r <pid>
  *
@@ -4948,15 +4977,7 @@ bool of_PROP_OBJ(vthread_t thr, vvp_code_t cp)
  */
 bool of_PROP_R(vthread_t thr, vvp_code_t cp)
 {
-      unsigned pid = cp->number;
-
-      vvp_object_t&obj = thr->peek_object();
-      vvp_cobject*cobj = obj.peek<vvp_cobject>();
-
-      double val = cobj->get_real(pid);
-      thr->push_real(val);
-
-      return true;
+      return prop<double>(thr, cp);
 }
 
 /*
@@ -4967,15 +4988,7 @@ bool of_PROP_R(vthread_t thr, vvp_code_t cp)
  */
 bool of_PROP_STR(vthread_t thr, vvp_code_t cp)
 {
-      unsigned pid = cp->number;
-
-      vvp_object_t&obj = thr->peek_object();
-      vvp_cobject*cobj = obj.peek<vvp_cobject>();
-
-      string val = cobj->get_string(pid);
-      thr->push_str(val);
-
-      return true;
+      return prop<string>(thr, cp);
 }
 
 /*
@@ -4986,16 +4999,7 @@ bool of_PROP_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_PROP_V(vthread_t thr, vvp_code_t cp)
 {
-      unsigned pid = cp->number;
-
-      vvp_object_t&obj = thr->peek_object();
-      vvp_cobject*cobj = obj.peek<vvp_cobject>();
-
-      vvp_vector4_t val;
-      cobj->get_vec4(pid, val);
-      thr->push_vec4(val);
-
-      return true;
+      return prop<vvp_vector4_t>(thr, cp);
 }
 
 bool of_PUSHI_REAL(vthread_t thr, vvp_code_t cp)
