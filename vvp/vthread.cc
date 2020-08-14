@@ -1674,7 +1674,8 @@ bool do_cast_vec_dar(vthread_t thr, vvp_code_t cp, bool as_vec4)
 
       vvp_vector4_t vec = darray->get_bitstream(as_vec4);
       if (vec.size() != wid) {
-            cerr << "VVP error: size mismatch when casting dynamic array to vector." << endl;
+	    cerr << thr->get_fileline()
+	         << "VVP error: size mismatch when casting dynamic array to vector." << endl;
             thr->push_vec4(vvp_vector4_t(wid));
             schedule_stop(0);
             return false;
@@ -1710,7 +1711,8 @@ bool of_CAST_VEC4_STR(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t vec(wid, BIT4_0);
 
       if (wid != 8*str.length()) {
-            cerr << "VVP error: size mismatch when casting string to vector." << endl;
+	    cerr << thr->get_fileline()
+	         << "VVP error: size mismatch when casting string to vector." << endl;
             thr->push_vec4(vec);
             schedule_stop(0);
             return false;
@@ -2033,7 +2035,8 @@ static void do_CMPU(vthread_t thr, const vvp_vector4_t&lval, const vvp_vector4_t
       vvp_bit4_t lt = BIT4_0;
 
       if (rval.size() != lval.size()) {
-	    cerr << "VVP ERROR: %cmp/u operand width mismatch: lval=" << lval
+	    cerr << thr->get_fileline()
+	         << "VVP ERROR: %cmp/u operand width mismatch: lval=" << lval
 		 << ", rval=" << rval << endl;
       }
       assert(rval.size() == lval.size());
@@ -3480,7 +3483,8 @@ bool of_IX_GETV(vthread_t thr, vvp_code_t cp)
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(net->fil);
       if (sig == 0) {
 	    assert(net->fil);
-	    cerr << "%%ix/getv error: Net arg not a vector signal? "
+	    cerr << thr->get_fileline()
+	         << "%%ix/getv error: Net arg not a vector signal? "
 		 << typeid(*net->fil).name() << endl;
       }
       assert(sig);
@@ -3510,7 +3514,8 @@ bool of_IX_GETV_S(vthread_t thr, vvp_code_t cp)
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(net->fil);
       if (sig == 0) {
 	    assert(net->fil);
-	    cerr << "%%ix/getv/s error: Net arg not a vector signal? "
+	    cerr << thr->get_fileline()
+	         << "%%ix/getv/s error: Net arg not a vector signal? "
 		 << "fun=" << typeid(*net->fil).name()
 		 << ", fil=" << (net->fil? typeid(*net->fil).name() : "<>")
 		 << endl;
@@ -3986,7 +3991,8 @@ bool of_LOAD_VEC4(vthread_t thr, vvp_code_t cp)
 	// signal functor. Only signals save their vector value.
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
       if (sig == 0) {
-	    cerr << "%load/v error: Net arg not a signal? "
+	    cerr << thr->get_fileline()
+	         << "%load/v error: Net arg not a signal? "
 		 << (net->fil ? typeid(*net->fil).name() : typeid(*net->fun).name()) << endl;
 	    assert(sig);
       }
@@ -6244,7 +6250,8 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
       unsigned val_size = val.size();
 
       if ((int)val_size < wid) {
-	    cerr << "XXXX Internal error: val.size()=" << val_size
+	    cerr << thr->get_fileline()
+	         << "XXXX Internal error: val.size()=" << val_size
 		 << ", expecting >= " << wid << endl;
       }
       assert((int)val_size >= wid);
@@ -6426,15 +6433,15 @@ bool of_SUBSTR_VEC4(vthread_t thr, vvp_code_t cp)
 bool of_FILE_LINE(vthread_t thr, vvp_code_t cp)
 {
       vpiHandle handle = cp->handle;
-      if (show_file_line)
-	    cerr << vpi_get_str(vpiFile, handle) << ":"
-	         << vpi_get(vpiLineNo, handle) << ": "
-	         << vpi_get_str(_vpiDescription, handle) << endl;
 
 	/* When it is available, keep the file/line information in the
 	   thread for error/warning messages. */
       thr->set_fileline(vpi_get_str(vpiFile, handle),
                         vpi_get(vpiLineNo, handle));
+
+      if (show_file_line)
+	    cerr << thr->get_fileline()
+	         << vpi_get_str(_vpiDescription, handle) << endl;
 
       return true;
 }
