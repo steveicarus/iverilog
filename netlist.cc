@@ -2154,6 +2154,14 @@ ivl_variable_type_t NetEUFunc::expr_type() const
       return IVL_VT_VOID;
 }
 
+const netenum_t* NetEUFunc::enumeration() const
+{
+      if (result_sig_)
+	    return result_sig_->enumeration();
+
+      return 0;
+}
+
 NetUTask::NetUTask(NetScope*def)
 : task_(def)
 {
