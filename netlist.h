@@ -3877,6 +3877,7 @@ class NetEUFunc  : public NetExpr {
       const NetScope* func() const;
 
       virtual ivl_variable_type_t expr_type() const;
+      virtual const netenum_t* enumeration() const;
       virtual void dump(ostream&) const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
