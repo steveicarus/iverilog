@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -974,13 +974,13 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 	/* If the function returns a value, then push the value
 	   to the appropriate thread stack. */
       if (sysfunc_real*func_real = dynamic_cast<sysfunc_real*>(ref)) {
-	    vthread_push_real(thr, func_real->return_value());
+	    vthread_push(thr, func_real->return_value());
       }
       else if (sysfunc_str*func_string = dynamic_cast<sysfunc_str*>(ref)) {
-	    vthread_push_str(thr, func_string->return_value());
+	    vthread_push(thr, func_string->return_value());
       }
       else if (sysfunc_vec4*func_vec4 = dynamic_cast<sysfunc_vec4*>(ref)) {
-	    vthread_push_vec4(thr, func_vec4->return_value());
+	    vthread_push(thr, func_vec4->return_value());
       }
       vpip_cur_task = 0;
 }

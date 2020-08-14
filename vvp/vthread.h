@@ -1,7 +1,7 @@
 #ifndef IVL_vthread_H
 #define IVL_vthread_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -112,9 +112,9 @@ extern vvp_context_item_t vthread_get_rd_context_item(unsigned context_idx);
 /*
  * Access value stacks from thread space.
  */
-extern void vthread_push_vec4(struct vthread_s*thr, const vvp_vector4_t&val);
-extern void vthread_push_str(struct vthread_s*thr, const std::string&val);
-extern void vthread_push_real(struct vthread_s*thr, double val);
+extern void vthread_push(struct vthread_s*thr, const vvp_vector4_t&val);
+extern void vthread_push(struct vthread_s*thr, const std::string&val);
+extern void vthread_push(struct vthread_s*thr, double val);
 
 extern void vthread_pop_vec4(struct vthread_s*thr, unsigned count);
 extern void vthread_pop_str(struct vthread_s*thr, unsigned count);

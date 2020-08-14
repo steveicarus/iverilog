@@ -388,24 +388,19 @@ string get_fileline()
       return running_thread->get_fileline();
 }
 
-void vthread_push_vec4(struct vthread_s*thr, const vvp_vector4_t&val)
-{
-      thr->push_vec4(val);
-}
-
-void vthread_push_real(struct vthread_s*thr, double val)
+void vthread_push(struct vthread_s*thr, double val)
 {
       thr->push_real(val);
 }
 
-void vthread_push_str(struct vthread_s*thr, const string&val)
+void vthread_push(struct vthread_s*thr, const string&val)
 {
       thr->push_str(val);
 }
 
-void vthread_pop_vec4(struct vthread_s*thr, unsigned depth)
+void vthread_push(struct vthread_s*thr, const vvp_vector4_t&val)
 {
-      thr->pop_vec4(depth);
+      thr->push_vec4(val);
 }
 
 void vthread_pop_real(struct vthread_s*thr, unsigned depth)
@@ -418,14 +413,19 @@ void vthread_pop_str(struct vthread_s*thr, unsigned depth)
       thr->pop_str(depth);
 }
 
-const string&vthread_get_str_stack(struct vthread_s*thr, unsigned depth)
+void vthread_pop_vec4(struct vthread_s*thr, unsigned depth)
 {
-      return thr->peek_str(depth);
+      thr->pop_vec4(depth);
 }
 
 double vthread_get_real_stack(struct vthread_s*thr, unsigned depth)
 {
       return thr->peek_real(depth);
+}
+
+const string&vthread_get_str_stack(struct vthread_s*thr, unsigned depth)
+{
+      return thr->peek_str(depth);
 }
 
 const vvp_vector4_t& vthread_get_vec4_stack(struct vthread_s*thr, unsigned depth)
@@ -464,22 +464,21 @@ template <class VVP_QUEUE> static vvp_queue*get_queue_object(vthread_t thr, vvp_
  * The following are used to allow a common template to be written for
  * queue real/string/vec4 operations
  */
-inline static void pop_value(double&value, vthread_t thr, unsigned)
+inline static void pop_value(vthread_t thr, double&value, unsigned)
 {
       value = thr->pop_real();
 }
 
-inline static void pop_value(string&value, vthread_t thr, unsigned)
+inline static void pop_value(vthread_t thr, string&value, unsigned)
 {
       value = thr->pop_str();
 }
 
-inline static void pop_value(vvp_vector4_t&value, vthread_t thr, unsigned wid)
+inline static void pop_value(vthread_t thr, vvp_vector4_t&value, unsigned wid)
 {
       value = thr->pop_vec4();
       assert(value.size() == wid);
 }
-
 
 /*
  * The following are used to allow the queue templates to print correctly.
@@ -516,6 +515,25 @@ inline static void print_queue_value(vvp_vector4_t value)
 {
       cerr << value;
 }
+
+/*
+ * The following are used to get a darray/queue default value.
+ */
+inline static void dq_default(double&value, unsigned)
+{
+      value = 0.0;
+}
+
+inline static void dq_default(string&value, unsigned)
+{
+      value = "";
+}
+
+inline static void dq_default(vvp_vector4_t&value, unsigned wid)
+{
+      value = vvp_vector4_t(wid);
+}
+
 
 template <class T> T coerce_to_width(const T&that, unsigned width)
 {
@@ -3816,29 +3834,35 @@ bool of_LOAD_AR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-/*
- * %load/dar/r <array-label>;
- */
-bool of_LOAD_DAR_R(vthread_t thr, vvp_code_t cp)
+template <typename ELEM>
+static bool load_dar(vthread_t thr, vvp_code_t cp)
 {
       int64_t adr = thr->words[3].w_int;
       vvp_net_t*net = cp->net;
-
       assert(net);
+
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
       assert(obj);
 
       vvp_darray*darray = obj->get_object().peek<vvp_darray>();
 
-      double word;
+      ELEM word;
       if (darray &&
           (adr >= 0) && (thr->flags[4] == BIT4_0)) // A defined address >= 0
 	    darray->get_word(adr, word);
       else
-	    word = 0.0;
+	    dq_default(word, obj->size());
 
-      thr->push_real(word);
+      vthread_push(thr, word);
       return true;
+}
+
+/*
+ * %load/dar/r <array-label>;
+ */
+bool of_LOAD_DAR_R(vthread_t thr, vvp_code_t cp)
+{
+      return load_dar<double>(thr, cp);
 }
 
 /*
@@ -3846,24 +3870,7 @@ bool of_LOAD_DAR_R(vthread_t thr, vvp_code_t cp)
  */
 bool of_LOAD_DAR_STR(vthread_t thr, vvp_code_t cp)
 {
-      int64_t adr = thr->words[3].w_int;
-      vvp_net_t*net = cp->net;
-
-      assert(net);
-      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
-      assert(obj);
-
-      vvp_darray*darray = obj->get_object().peek<vvp_darray>();
-
-      string word;
-      if (darray &&
-          (adr >= 0) && (thr->flags[4] == BIT4_0)) // A defined address >= 0
-	    darray->get_word(adr, word);
-      else
-	    word = "";
-
-      thr->push_str(word);
-      return true;
+      return load_dar<string>(thr, cp);
 }
 
 /*
@@ -3871,24 +3878,7 @@ bool of_LOAD_DAR_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_LOAD_DAR_VEC4(vthread_t thr, vvp_code_t cp)
 {
-      int64_t adr = thr->words[3].w_int;
-      vvp_net_t*net = cp->net;
-
-      assert(net);
-      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
-      assert(obj);
-
-      vvp_darray*darray = obj->get_object().peek<vvp_darray>();
-
-      vvp_vector4_t word;
-      if (darray &&
-          (adr >= 0) && (thr->flags[4] == BIT4_0)) // A defined address >= 0
-	    darray->get_word(adr, word);
-      else
-	    word = vvp_vector4_t(obj->size());
-
-      thr->push_vec4(word);
-      return true;
+      return load_dar<vvp_vector4_t>(thr, cp);
 }
 
 /*
@@ -5193,7 +5183,7 @@ static bool qinsert(vthread_t thr, vvp_code_t cp, unsigned wid=0)
       ELEM value;
       vvp_net_t*net = cp->net;
       unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      pop_value(value, thr, wid); // Pop the value to store.
+      pop_value(thr, value, wid); // Pop the value to store.
 
       vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
       assert(queue);
@@ -5242,21 +5232,6 @@ bool of_QINSERT_V(vthread_t thr, vvp_code_t cp)
 /*
  * Helper functions used in the queue pop templates
  */
-inline static void qdefault(double&value, unsigned)
-{
-      value = 0.0;
-}
-
-inline static void qdefault(string&value, unsigned)
-{
-      value = "";
-}
-
-inline static void qdefault(vvp_vector4_t&value, unsigned wid)
-{
-      value = vvp_vector4_t(wid);
-}
-
 inline void push_value(vthread_t thr, double value, unsigned)
 {
       thr->push_real(value);
@@ -5289,7 +5264,7 @@ static bool q_pop(vthread_t thr, vvp_code_t cp,
       if (size) {
 	    get_val_func(queue, value);
       } else {
-	    qdefault(value, wid);
+	    dq_default(value, wid);
 	    cerr << thr->get_fileline()
 	         << "Warning: pop_" << loc << "() on empty "
 	         << get_queue_type(value) << "." << endl;
@@ -6033,7 +6008,7 @@ static bool store_qb(vthread_t thr, vvp_code_t cp, unsigned wid=0)
       ELEM value;
       vvp_net_t*net = cp->net;
       unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      pop_value(value, thr, wid); // Pop the value to store.
+      pop_value(thr, value, wid); // Pop the value to store.
 
       vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
       assert(queue);
@@ -6072,7 +6047,7 @@ static bool store_qdar(vthread_t thr, vvp_code_t cp, unsigned wid=0)
       ELEM value;
       vvp_net_t*net = cp->net;
       unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      pop_value(value, thr, wid); // Pop the value to store.
+      pop_value(thr, value, wid); // Pop the value to store.
 
       vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
       assert(queue);
@@ -6124,7 +6099,7 @@ static bool store_qf(vthread_t thr, vvp_code_t cp, unsigned wid=0)
       ELEM value;
       vvp_net_t*net = cp->net;
       unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
-      pop_value(value, thr, wid); // Pop the value to store.
+      pop_value(thr, value, wid); // Pop the value to store.
 
       vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
       assert(queue);
