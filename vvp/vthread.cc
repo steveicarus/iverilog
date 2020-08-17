@@ -5825,15 +5825,57 @@ bool of_SPLIT_VEC4(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %store/dar/real <var>
+ * The following are used to allow the darray templates to print correctly.
  */
-bool of_STORE_DAR_R(vthread_t thr, vvp_code_t cp)
+inline static string get_darray_type(double&)
+{
+      return "darray<real>";
+}
+
+inline static string get_darray_type(string&)
+{
+      return "darray<string>";
+}
+
+inline static string get_darray_type(vvp_vector4_t value)
+{
+      ostringstream buf;
+      buf << "darray<vector[" << value.size() << "]>";
+      string res = buf.str();
+      return res;
+}
+
+/*
+ * The following are used to allow a common template to be written for
+ * darray real/string/vec4 operations
+ */
+inline static void dar_pop_value(vthread_t thr, double&value)
+{
+      value = thr->pop_real();
+}
+
+inline static void dar_pop_value(vthread_t thr, string&value)
+{
+      value = thr->pop_str();
+}
+
+inline static void dar_pop_value(vthread_t thr, vvp_vector4_t&value)
+{
+      value = thr->pop_vec4();
+}
+
+template <typename ELEM>
+static bool store_dar(vthread_t thr, vvp_code_t cp)
 {
       int64_t adr = thr->words[3].w_int;
-      double value = thr->pop_real(); // Pop the real value to store...
-      vvp_net_t*net = cp->net;
+      ELEM value;
+	// FIXME: Can we get the size of the underlying array element
+	//        and use the normal pop_value?
+      dar_pop_value(thr, value);
 
+      vvp_net_t*net = cp->net;
       assert(net);
+
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
       assert(obj);
 
@@ -5841,20 +5883,28 @@ bool of_STORE_DAR_R(vthread_t thr, vvp_code_t cp)
 
       if (adr < 0)
 	    cerr << thr->get_fileline()
-	         << "Warning: cannot write to a negative array<real> index ("
-	         << adr << ")." << endl;
+	         << "Warning: cannot write to a negative " << get_darray_type(value)
+	         << " index (" << adr << ")." << endl;
       else if (thr->flags[4] != BIT4_0)
 	    cerr << thr->get_fileline()
-	         << "Warning: cannot write to an undefined array<real> index."
-	         << endl;
+	         << "Warning: cannot write to an undefined " << get_darray_type(value)
+	         << " index." << endl;
       else if (darray)
 	    darray->set_word(adr, value);
       else
 	    cerr << thr->get_fileline()
-	         << "Warning: cannot write to an undefined array<real>."
-	         << endl;
+	         << "Warning: cannot write to an undefined " << get_darray_type(value)
+	         << "." << endl;
 
       return true;
+}
+
+/*
+ * %store/dar/real <var>
+ */
+bool of_STORE_DAR_R(vthread_t thr, vvp_code_t cp)
+{
+      return store_dar<double>(thr, cp);
 }
 
 /*
@@ -5862,32 +5912,7 @@ bool of_STORE_DAR_R(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_DAR_STR(vthread_t thr, vvp_code_t cp)
 {
-      int64_t adr = thr->words[3].w_int;
-      string value = thr->pop_str(); // Pop the string to be stored...
-      vvp_net_t*net = cp->net;
-
-      assert(net);
-      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
-      assert(obj);
-
-      vvp_darray*darray = obj->get_object().peek<vvp_darray>();
-
-      if (adr < 0)
-	    cerr << thr->get_fileline()
-	         << "Warning: cannot write to a negative array<string> index ("
-	         << adr << ")." << endl;
-      else if (thr->flags[4] != BIT4_0)
-	    cerr << thr->get_fileline()
-	         << "Warning: cannot write to an undefined array<string> index."
-	         << endl;
-      else if (darray)
-	    darray->set_word(adr, value);
-      else
-	    cerr << thr->get_fileline()
-	         << "Warning: cannot write to an undefined array<string>."
-	         << endl;
-
-      return true;
+      return store_dar<string>(thr, cp);
 }
 
 /*
@@ -5895,32 +5920,7 @@ bool of_STORE_DAR_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_DAR_VEC4(vthread_t thr, vvp_code_t cp)
 {
-      int64_t adr = thr->words[3].w_int;
-      vvp_vector4_t value = thr->pop_vec4(); // Pop the vector4 value to be store...
-      vvp_net_t*net = cp->net;
-
-      assert(net);
-      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
-      assert(obj);
-
-      vvp_darray*darray = obj->get_object().peek<vvp_darray>();
-
-      if (adr < 0)
-	    cerr << thr->get_fileline()
-	         << "Warning: cannot write to a negative array<vector["
-	         << value.size() << "]> index (" << adr << ")." << endl;
-      else if (thr->flags[4] != BIT4_0)
-	    cerr << thr->get_fileline()
-	         << "Warning: cannot write to an undefined array<vector["
-	         << value.size() << "]> index." << endl;
-      else if (darray)
-	    darray->set_word(adr, value);
-      else
-	    cerr << thr->get_fileline()
-	         << "Warning: cannot write to an undefined array<vector["
-	         << value.size() << "]>." << endl;
-
-      return true;
+      return store_dar<vvp_vector4_t>(thr, cp);
 }
 
 bool of_STORE_OBJ(vthread_t thr, vvp_code_t cp)
