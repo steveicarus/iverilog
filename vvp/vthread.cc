@@ -5870,7 +5870,7 @@ static bool store_dar(vthread_t thr, vvp_code_t cp)
       int64_t adr = thr->words[3].w_int;
       ELEM value;
 	// FIXME: Can we get the size of the underlying array element
-	//        and use the normal pop_value?
+	//        and then use the normal pop_value?
       dar_pop_value(thr, value);
 
       vvp_net_t*net = cp->net;
@@ -5982,6 +5982,54 @@ bool of_STORE_PROP_OBJ(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+static void pop_prop_val(vthread_t thr, double&val, unsigned)
+{
+      val = thr->pop_real();
+}
+
+static void pop_prop_val(vthread_t thr, string&val, unsigned)
+{
+      val = thr->pop_str();
+}
+
+static void pop_prop_val(vthread_t thr, vvp_vector4_t&val, unsigned wid)
+{
+      val = thr->pop_vec4();
+      assert(val.size() >= wid);
+      val.resize(wid);
+}
+
+static void set_val(vvp_cobject*cobj, size_t pid, double&val)
+{
+      cobj->set_real(pid, val);
+}
+
+static void set_val(vvp_cobject*cobj, size_t pid, string&val)
+{
+      cobj->set_string(pid, val);
+}
+
+static void set_val(vvp_cobject*cobj, size_t pid, vvp_vector4_t&val)
+{
+      cobj->set_vec4(pid, val);
+}
+
+template <typename ELEM>
+static bool store_prop(vthread_t thr, vvp_code_t cp, unsigned wid=0)
+{
+      size_t pid = cp->number;
+      ELEM val;
+      pop_prop_val(thr, val, wid); // Pop the value to store.
+
+      vvp_object_t&obj = thr->peek_object();
+      vvp_cobject*cobj = obj.peek<vvp_cobject>();
+      assert(cobj);
+
+      set_val(cobj, pid, val);
+
+      return true;
+}
+
 /*
  * %store/prop/r <id>
  *
@@ -5991,16 +6039,7 @@ bool of_STORE_PROP_OBJ(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_PROP_R(vthread_t thr, vvp_code_t cp)
 {
-      size_t pid = cp->number;
-      double val = thr->pop_real();
-
-      vvp_object_t&obj = thr->peek_object();
-      vvp_cobject*cobj = obj.peek<vvp_cobject>();
-      assert(cobj);
-
-      cobj->set_real(pid, val);
-
-      return true;
+      return store_prop<double>(thr, cp);
 }
 
 /*
@@ -6012,16 +6051,7 @@ bool of_STORE_PROP_R(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_PROP_STR(vthread_t thr, vvp_code_t cp)
 {
-      size_t pid = cp->number;
-      string val = thr->pop_str();
-
-      vvp_object_t&obj = thr->peek_object();
-      vvp_cobject*cobj = obj.peek<vvp_cobject>();
-      assert(cobj);
-
-      cobj->set_string(pid, val);
-
-      return true;
+      return store_prop<string>(thr, cp);
 }
 
 /*
@@ -6032,20 +6062,7 @@ bool of_STORE_PROP_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
 {
-      size_t pid = cp->number;
-      unsigned wid = cp->bit_idx[0];
-
-      vvp_vector4_t val = thr->pop_vec4();
-
-      assert(val.size() >= wid);
-      val.resize(wid);
-
-      vvp_object_t&obj = thr->peek_object();
-      vvp_cobject*cobj = obj.peek<vvp_cobject>();
-      assert(cobj);
-
-      cobj->set_vec4(pid, val);
-      return true;
+      return store_prop<vvp_vector4_t>(thr, cp, cp->bit_idx[0]);
 }
 
 template <typename ELEM, class QTYPE>
