@@ -6226,14 +6226,30 @@ bool of_STORE_QOBJ_V(vthread_t thr, vvp_code_t cp)
       return store_qobj<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
 }
 
-bool of_STORE_REAL(vthread_t thr, vvp_code_t cp)
+static void vvp_send(vthread_t thr, vvp_net_ptr_t ptr, double&val)
 {
-      double val = thr->pop_real();
+      vvp_send_real(ptr, val, thr->wt_context);
+}
+
+static void vvp_send(vthread_t thr, vvp_net_ptr_t ptr, string&val)
+{
+      vvp_send_string(ptr, val, thr->wt_context);
+}
+
+template <typename ELEM>
+static bool store(vthread_t thr, vvp_code_t cp)
+{
+      ELEM val;
+      pop_value(thr, val, 0);
 	/* set the value into port 0 of the destination. */
       vvp_net_ptr_t ptr (cp->net, 0);
-      vvp_send_real(ptr, val, thr->wt_context);
-
+      vvp_send(thr, ptr, val);
       return true;
+}
+
+bool of_STORE_REAL(vthread_t thr, vvp_code_t cp)
+{
+      return store<double>(thr, cp);
 }
 
 /*
@@ -6252,13 +6268,7 @@ bool of_STORE_REALA(vthread_t thr, vvp_code_t cp)
 
 bool of_STORE_STR(vthread_t thr, vvp_code_t cp)
 {
-	/* set the value into port 0 of the destination. */
-      vvp_net_ptr_t ptr (cp->net, 0);
-
-      string val = thr->pop_str();
-      vvp_send_string(ptr, val, thr->wt_context);
-
-      return true;
+      return store<string>(thr, cp);
 }
 
 /*
