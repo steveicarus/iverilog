@@ -6252,18 +6252,26 @@ bool of_STORE_REAL(vthread_t thr, vvp_code_t cp)
       return store<double>(thr, cp);
 }
 
+template <typename ELEM>
+static bool storea(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx = cp->bit_idx[0];
+      unsigned adr = thr->words[idx].w_int;
+      ELEM val;
+      pop_value(thr, val, 0);
+
+      if (thr->flags[4] != BIT4_1)
+	    cp->array->set_word(adr, val);
+
+      return true;
+}
+
 /*
  * %store/reala <var-label> <index>
  */
 bool of_STORE_REALA(vthread_t thr, vvp_code_t cp)
 {
-      unsigned idx = cp->bit_idx[0];
-      unsigned adr = thr->words[idx].w_int;
-
-      double val = thr->pop_real();
-      cp->array->set_word(adr, val);
-
-      return true;
+      return storea<double>(thr, cp);
 }
 
 bool of_STORE_STR(vthread_t thr, vvp_code_t cp)
@@ -6276,13 +6284,7 @@ bool of_STORE_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_STRA(vthread_t thr, vvp_code_t cp)
 {
-      unsigned idx = cp->bit_idx[0];
-      unsigned adr = thr->words[idx].w_int;
-
-      string val = thr->pop_str();
-      cp->array->set_word(adr, val);
-
-      return true;
+      return storea<string>(thr, cp);
 }
 
 /*
