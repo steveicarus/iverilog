@@ -5655,14 +5655,28 @@ bool of_SCOPY(vthread_t thr, vvp_code_t)
       return true;
 }
 
-/*
- * %set/dar/obj/real <index>
- */
-bool of_SET_DAR_OBJ_REAL(vthread_t thr, vvp_code_t cp)
+static void thread_peek(vthread_t thr, double&value)
+{
+      value = thr->peek_real(0);
+}
+
+static void thread_peek(vthread_t thr, string&value)
+{
+      value = thr->peek_str(0);
+}
+
+static void thread_peek(vthread_t thr, vvp_vector4_t&value)
+{
+      value = thr->peek_vec4(0);
+}
+
+template <typename ELEM>
+static bool set_dar_obj(vthread_t thr, vvp_code_t cp)
 {
       unsigned adr = thr->words[cp->number].w_int;
 
-      double value = thr->peek_real(0);
+      ELEM value;
+      thread_peek(thr, value);
 
       vvp_object_t&top = thr->peek_object();
       vvp_darray*darray = top.peek<vvp_darray>();
@@ -5673,20 +5687,11 @@ bool of_SET_DAR_OBJ_REAL(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %set/dar/obj/str <index>
+ * %set/dar/obj/real <index>
  */
-bool of_SET_DAR_OBJ_VEC4(vthread_t thr, vvp_code_t cp)
+bool of_SET_DAR_OBJ_REAL(vthread_t thr, vvp_code_t cp)
 {
-      unsigned adr = thr->words[cp->number].w_int;
-
-      vvp_vector4_t value = thr->peek_vec4(0);
-
-      vvp_object_t&top = thr->peek_object();
-      vvp_darray*darray = top.peek<vvp_darray>();
-      assert(darray);
-
-      darray->set_word(adr, value);
-      return true;
+      return set_dar_obj<double>(thr, cp);
 }
 
 /*
@@ -5694,16 +5699,15 @@ bool of_SET_DAR_OBJ_VEC4(vthread_t thr, vvp_code_t cp)
  */
 bool of_SET_DAR_OBJ_STR(vthread_t thr, vvp_code_t cp)
 {
-      unsigned adr = thr->words[cp->number].w_int;
+      return set_dar_obj<string>(thr, cp);
+}
 
-      string value = thr->peek_str(0);
-
-      vvp_object_t&top = thr->peek_object();
-      vvp_darray*darray = top.peek<vvp_darray>();
-      assert(darray);
-
-      darray->set_word(adr, value);
-      return true;
+/*
+ * %set/dar/obj/vec4 <index>
+ */
+bool of_SET_DAR_OBJ_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      return set_dar_obj<vvp_vector4_t>(thr, cp);
 }
 
 /*
