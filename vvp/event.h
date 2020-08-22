@@ -1,7 +1,7 @@
 #ifndef IVL_event_H
 #define IVL_event_H
 /*
- * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -217,6 +217,12 @@ class vvp_fun_edge_aa : public vvp_fun_edge, public automatic_hooks_s {
 };
 
 /*
+ * This is the base object for storing the last received values for a
+ * vvp_fun_anyedge functor.
+ */
+class anyedge_value;
+
+/*
  * The vvp_fun_anyedge functor checks to see if any value in an input
  * vector changes. Unlike the vvp_fun_edge, which watches for the LSB
  * of its inputs to change in a particular direction, the anyedge
@@ -233,14 +239,7 @@ class vvp_fun_anyedge : public vvp_net_fun_t, public waitable_hooks_s {
       virtual ~vvp_fun_anyedge();
 
     protected:
-      bool recv_vec4_(const vvp_vector4_t&bit,
-                      vvp_vector4_t&old_bits, vthread_t&threads);
-      bool recv_real_(double bit,
-                      double&old_bits, vthread_t&threads);
-
-      vvp_vector4_t bits_[4];
-	// In case I'm a real-valued event.
-      double bitsr_[4];
+      anyedge_value*last_value_[4];
 };
 
 /*
