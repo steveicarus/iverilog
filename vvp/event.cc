@@ -415,6 +415,35 @@ static anyedge_real_value*get_real_value(anyedge_value*&value)
       return real_value;
 }
 
+class anyedge_string_value : public anyedge_value {
+
+    public:
+      anyedge_string_value() {};
+      virtual ~anyedge_string_value() {};
+
+      void reset() { old_bits.clear(); }
+
+      void set(const std::string&bit) { old_bits = bit; };
+
+      void duplicate(anyedge_value*&dup);
+
+      bool recv_string(const std::string&bit);
+
+    private:
+      std::string old_bits;
+};
+
+static anyedge_string_value*get_string_value(anyedge_value*&value)
+{
+      anyedge_string_value*string_value = dynamic_cast<anyedge_string_value*>(value);
+      if (!value) {
+	    string_value = new anyedge_string_value();
+	    delete value;
+	    value = string_value;
+      }
+      return string_value;
+}
+
 struct vvp_fun_anyedge_state_s : public waitable_state_s {
       vvp_fun_anyedge_state_s()
       {
@@ -516,6 +545,22 @@ bool anyedge_real_value::recv_real(double bit)
       return false;
 }
 
+void anyedge_string_value::duplicate(anyedge_value*&dup)
+{
+      anyedge_string_value*dup_string = get_string_value(dup);
+      assert(dup_string);
+      dup_string->set(old_bits);
+}
+
+bool anyedge_string_value::recv_string(const std::string&bit)
+{
+      if (old_bits != bit) {
+	    old_bits = bit;
+            return true;
+      }
+      return false;
+}
+
 vvp_fun_anyedge_sa::vvp_fun_anyedge_sa()
 : threads_(0)
 {
@@ -564,6 +609,18 @@ void vvp_fun_anyedge_sa::recv_real(vvp_net_ptr_t port, double bit,
       anyedge_real_value*value = get_real_value(last_value_[port.port()]);
       assert(value);
       if (value->recv_real(bit)) {
+	    run_waiting_threads_(threads_);
+	    vvp_net_t*net = port.ptr();
+	    net->send_vec4(vvp_vector4_t(), 0);
+      }
+}
+
+void vvp_fun_anyedge_sa::recv_string(vvp_net_ptr_t port, const std::string&bit,
+				     vvp_context_t)
+{
+      anyedge_string_value*value = get_string_value(last_value_[port.port()]);
+      assert(value);
+      if (value->recv_string(bit)) {
 	    run_waiting_threads_(threads_);
 	    vvp_net_t*net = port.ptr();
 	    net->send_vec4(vvp_vector4_t(), 0);
@@ -667,6 +724,32 @@ void vvp_fun_anyedge_aa::recv_real(vvp_net_ptr_t port, double bit,
                   context = vvp_get_next_context(context);
             }
             anyedge_real_value*value = get_real_value(last_value_[port.port()]);
+            assert(value);
+            value->set(bit);
+      }
+}
+
+void vvp_fun_anyedge_aa::recv_string(vvp_net_ptr_t port, const std::string&bit,
+				     vvp_context_t context)
+{
+      if (context) {
+            vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
+                  (vvp_get_context_item(context, context_idx_));
+
+            anyedge_string_value*value = get_string_value(state->last_value_[port.port()]);
+            assert(value);
+            if (value->recv_string(bit)) {
+                  run_waiting_threads_(state->threads);
+                  vvp_net_t*net = port.ptr();
+                  net->send_vec4(vvp_vector4_t(), context);
+            }
+      } else {
+            context = context_scope_->live_contexts;
+            while (context) {
+                  recv_string(port, bit, context);
+                  context = vvp_get_next_context(context);
+            }
+            anyedge_string_value*value = get_string_value(last_value_[port.port()]);
             assert(value);
             value->set(bit);
       }
