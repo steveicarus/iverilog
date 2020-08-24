@@ -153,28 +153,15 @@ static void ifdef_leave(void)
         size_t rc = fread(buf, 1, max_size, istack->file);              \
         result = (rc == 0) ? YY_NULL : rc;                              \
     } else {                                                            \
-        /* We are expanding a macro. Handle the SV macro escape         \
-           sequences. There doesn't seem to be any good reason          \
-           not to allow them in traditional Verilog as well. */         \
+        /* We are expanding a macro. Handle the SV `` delimiter.        \
+           There doesn't seem to be any good reason not to allow        \
+           it in traditional Verilog as well. */                        \
         while ((istack->str[0] == '`') &&                               \
                (istack->str[1] == '`')) {                               \
             istack->str += 2;                                           \
         }                                                               \
         if (*istack->str == 0) {                                        \
             result = YY_NULL;                                           \
-        } else if ((istack->str[0] == '`') &&                           \
-                   (istack->str[1] == '"')) {                           \
-            istack->str += 2;                                           \
-            buf[0] = '"';                                               \
-            result = 1;                                                 \
-        } else if ((istack->str[0] == '`') &&                           \
-                   (istack->str[1] == '\\')&&                           \
-                   (istack->str[2] == '`') &&                           \
-                   (istack->str[3] == '"')) {                           \
-            istack->str += 4;                                           \
-            buf[0] = '\\';                                              \
-            buf[1] = '"';                                               \
-            result = 2;                                                 \
         } else {                                                        \
             buf[0] = *istack->str++;                                    \
             result = 1;                                                 \
@@ -262,9 +249,7 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
     if (macro_needs_args(yytext+1)) yy_push_state(MA_START); else do_expand(0);
 }
 
- /* Strings do not contain preprocessor directives, but can expand
-  * macros. If that happens, they get expanded in the context of the
-  * string.
+ /* Strings do not contain preprocessor directives or macro expansions.
   */
 \"            { string_enter = YY_START; BEGIN(CSTRING); ECHO; }
 <CSTRING>\\\\ |
@@ -540,6 +525,15 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
     else
         do_expand(0);
 }
+
+  /* If we are expanding a macro, handle the SV `" override. This avoids
+   * entering CSTRING state, thus allowing nested macro expansions.
+   */
+`\" { if (!istack->file) fputc('"', yyout); else REJECT; }
+
+  /* If we are expanding a macro, handle the SV `\`" escape sequence.
+   */
+`\\`\" { if (!istack->file) fputs("\\\"", yyout); else REJECT; }
 
 <MA_START>\(  { BEGIN(MA_ADD); macro_start_args(); }
 
