@@ -154,11 +154,13 @@ static void ifdef_leave(void)
         result = (rc == 0) ? YY_NULL : rc;                              \
     } else {                                                            \
         /* We are expanding a macro. Handle the SV `` delimiter.        \
-           There doesn't seem to be any good reason not to allow        \
-           it in traditional Verilog as well. */                        \
-        while ((istack->str[0] == '`') &&                               \
-               (istack->str[1] == '`')) {                               \
-            istack->str += 2;                                           \
+           If the delimiter terminates a compiler directive, leave      \
+           it in place, otherwise remove it now. */                     \
+        if (yytext[0] != '`') {                                         \
+            while ((istack->str[0] == '`') &&                           \
+                   (istack->str[1] == '`')) {                           \
+                istack->str += 2;                                       \
+            }                                                           \
         }                                                               \
         if (*istack->str == 0) {                                        \
             result = YY_NULL;                                           \
@@ -172,12 +174,12 @@ static void ifdef_leave(void)
 static int comment_enter = 0;
 static int pragma_enter = 0;
 static int string_enter = 0;
+static int prev_state = 0;
 
 static int ma_parenthesis_level = 0;
 %}
 
 %option stack
-%option nounput
 %option noinput
 %option noyy_top_state
 %option noyywrap
@@ -194,6 +196,11 @@ static int ma_parenthesis_level = 0;
 %x PCOMENT
 %x CSTRING
 %x ERROR_LINE
+
+%x IFDEF_NAME
+%x IFNDEF_NAME
+%x ELSIF_NAME
+%x ELSIF_SUPR
 
 %x IFDEF_FALSE
 %s IFDEF_TRUE
@@ -392,56 +399,51 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
    * condition that stacks on top of the IFDEF_FALSE so that output is
    * not accidentally turned on within nested ifdefs.
    */
-`ifdef{W}[a-zA-Z_][a-zA-Z0-9_$]* {
-    char* name = strchr(yytext, '`'); assert(name);
-
-    name += 6;
-    name += strspn(name, " \t\b\f");
-
+`ifdef{W} {
     ifdef_enter();
-
-    if (is_defined(name))
-        yy_push_state(IFDEF_TRUE);
-    else
-        yy_push_state(IFDEF_FALSE);
+    yy_push_state(IFDEF_NAME);
 }
 
-`ifndef{W}[a-zA-Z_][a-zA-Z0-9_$]* {
-    char* name = strchr(yytext, '`'); assert(name);
-
-    name += 7;
-    name += strspn(name, " \t\b\f");
-
+`ifndef{W} {
     ifdef_enter();
-
-    if (!is_defined(name))
-        yy_push_state(IFDEF_TRUE);
-    else
-        yy_push_state(IFDEF_FALSE);
+    yy_push_state(IFNDEF_NAME);
 }
 
 <IFDEF_FALSE,IFDEF_SUPR>`ifdef{W}  |
 <IFDEF_FALSE,IFDEF_SUPR>`ifndef{W} { ifdef_enter(); yy_push_state(IFDEF_SUPR); }
 
-<IFDEF_TRUE>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* { BEGIN(IFDEF_SUPR); }
+<IFDEF_TRUE>`elsif{W}  { prev_state = YYSTATE; BEGIN(ELSIF_SUPR); }
+<IFDEF_FALSE>`elsif{W} { prev_state = YYSTATE; BEGIN(ELSIF_NAME); }
+<IFDEF_SUPR>`elsif{W}  { prev_state = YYSTATE; BEGIN(ELSIF_SUPR); }
 
-<IFDEF_FALSE>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
-    char* name = strchr(yytext, '`'); assert(name);
+<IFDEF_TRUE>`else  { BEGIN(IFDEF_SUPR); }
+<IFDEF_FALSE>`else { BEGIN(IFDEF_TRUE); }
+<IFDEF_SUPR>`else  {}
 
-    name += 6;
-    name += strspn(name, " \t\b\f");
-
-    if (is_defined(name))
+<IFDEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]* {
+    if (is_defined(yytext))
         BEGIN(IFDEF_TRUE);
     else
         BEGIN(IFDEF_FALSE);
 }
 
-<IFDEF_SUPR>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {  }
+<IFNDEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]* {
+    if (!is_defined(yytext))
+        BEGIN(IFDEF_TRUE);
+    else
+        BEGIN(IFDEF_FALSE);
+}
 
-<IFDEF_TRUE>`else  { BEGIN(IFDEF_SUPR); }
-<IFDEF_FALSE>`else { BEGIN(IFDEF_TRUE); }
-<IFDEF_SUPR>`else  {}
+<ELSIF_NAME>[a-zA-Z_][a-zA-Z0-9_$]* {
+    if (is_defined(yytext))
+        BEGIN(IFDEF_TRUE);
+    else
+        BEGIN(IFDEF_FALSE);
+}
+
+<ELSIF_SUPR>[a-zA-Z_][a-zA-Z0-9_$]* {
+    BEGIN(IFDEF_SUPR);
+}
 
 <IFDEF_FALSE,IFDEF_SUPR>"//"[^\r\n]* {}
 
@@ -462,25 +464,45 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <IFDEF_FALSE,IFDEF_TRUE,IFDEF_SUPR>`endif { ifdef_leave(); yy_pop_state(); }
 
+<IFDEF_NAME>(\n|\r) |
+<IFDEF_NAME>. |
 `ifdef {
     error_count += 1;
     fprintf(stderr, "%s:%u: `ifdef without a macro name - ignored.\n",
             istack->path, istack->lineno+1);
+    if (YY_START == IFDEF_NAME) {
+        ifdef_leave();
+        yy_pop_state();
+        unput(yytext[0]);
+    }
 }
 
+<IFNDEF_NAME>(\n|\r) |
+<IFNDEF_NAME>. |
 `ifndef {
     error_count += 1;
     fprintf(stderr, "%s:%u: `ifndef without a macro name - ignored.\n",
             istack->path, istack->lineno+1);
+    if (YY_START == IFNDEF_NAME) {
+        ifdef_leave();
+        yy_pop_state();
+        unput(yytext[0]);
+    }
 }
 
+<ELSIF_NAME,ELSIF_SUPR>(\n|\r) |
+<ELSIF_NAME,ELSIF_SUPR>. |
 `elsif {
     error_count += 1;
     fprintf(stderr, "%s:%u: `elsif without a macro name - ignored.\n",
             istack->path, istack->lineno+1);
+    if (YY_START != INITIAL) {
+        BEGIN(prev_state);
+        unput(yytext[0]);
+    }
 }
 
-`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
+<INITIAL>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
     error_count += 1;
     fprintf(stderr, "%s:%u: `elsif without a matching `ifdef - ignored.\n",
             istack->path, istack->lineno+1);
@@ -516,15 +538,23 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
   /* Stringified version of macro expansion. This is an Icarus extension.
      When expanding macro text, the SV usage of `` takes precedence. */
 ``[a-zA-Z_][a-zA-Z0-9_$]* {
-    assert(istack->file);
-    assert(do_expand_stringify_flag == 0);
-    do_expand_stringify_flag = 1;
-    fputc('"', yyout);
-    if (macro_needs_args(yytext+2))
-        yy_push_state(MA_START);
-    else
-        do_expand(0);
+    if (istack->file) {
+        assert(do_expand_stringify_flag == 0);
+        do_expand_stringify_flag = 1;
+        fputc('"', yyout);
+        if (macro_needs_args(yytext+2))
+            yy_push_state(MA_START);
+        else
+            do_expand(0);
+    } else {
+        REJECT;
+    }
 }
+
+  /* If we are expanding a macro, remove the SV `` delimiter, otherwise
+   * leave it to be handled by the normal rules.
+   */
+`` { if (istack->file) REJECT; }
 
   /* If we are expanding a macro, handle the SV `" override. This avoids
    * entering CSTRING state, thus allowing nested macro expansions.
