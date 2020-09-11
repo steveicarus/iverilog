@@ -69,13 +69,6 @@ using namespace std;
  * it uses the %disable/fork or %wait/fork opcodes. The i_am_detached
  * flag and detached_children set are used for this relationship.
  *
- * Children placed into a task or function scope are given special
- * treatment, which is required to make task/function calls that they
- * represent work correctly. These task/function children are copied
- * into a task_func_children set to mark them for this handling. %join
- * operations will guarantee that task/function threads are joined first,
- * before any non-task/function threads.
- *
  * It is a programming error for a thread that created threads to not
  * %join (or %join/detach) as many as it created before it %ends. The
  * children set will get messed up otherwise.
@@ -284,8 +277,6 @@ struct vthread_s {
       set<struct vthread_s*>children;
 	/* This points to the detached children of the thread. */
       set<struct vthread_s*>detached_children;
-	/* No more than 1 of the children are tasks or functions. */
-      set<vthread_s*>task_func_children;
 	/* This points to my parent, if I have one. */
       struct vthread_s*parent;
 	/* This points to the containing scope. */
@@ -373,7 +364,6 @@ void vthread_s::debug_dump(ostream&fd, const char*label)
       fd << "**** Done ****" << endl;
 }
 
-static bool test_joinable(vthread_t thr, vthread_t child);
 static void do_join(vthread_t thr, vthread_t child);
 
 __vpiScope* vthread_scope(struct vthread_s*thr)
@@ -1439,13 +1429,10 @@ static bool do_callf_void(vthread_t thr, vthread_t child)
         // Execute the function. This SHOULD run the function to completion,
         // but there are some exceptional situations where it won't.
       assert(child->parent_scope->get_type_code() == vpiFunction);
-      thr->task_func_children.insert(child);
       child->is_scheduled = 1;
       child->i_am_in_function = 1;
       vthread_run(child);
       running_thread = thr;
-
-      assert(test_joinable(thr, child));
 
       if (child->i_have_ended) {
 	    do_join(thr, child);
@@ -2639,7 +2626,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
       }
 
       vthread_t parent = thr->parent;
-      if (parent && parent->i_am_joining && test_joinable(parent, thr)) {
+      if (parent && parent->i_am_joining) {
 	      // If a parent is waiting in a %join, wake it up. Note
 	      // that it is possible to be waiting in a %join yet
 	      // already scheduled if multiple child threads are
@@ -3060,13 +3047,6 @@ bool of_END(vthread_t thr, vvp_code_t)
 	    vthread_t tmp = thr->parent;
 	    assert(! thr->i_am_detached);
 
-	      // Detect that the parent is waiting on a task or function
-	      // thread. These threads must be reaped first. If the
-	      // parent is waiting on a task or function (other than me)
-	      // then go into zombie state to be picked up later.
-	    if (! test_joinable(tmp, thr))
-		  return false;
-
 	    tmp->i_am_joining = 0;
 	    schedule_vthread(tmp, 0, true);
 	    do_join(tmp, thr);
@@ -3376,18 +3356,6 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
 
       child->parent = thr;
       thr->children.insert(child);
-
-      switch (cp->scope->get_type_code()) {
-          case vpiFunction:
-	      // Functions should be started by the %callf opcodes, and
-	      // NOT by the %fork instruction
-	    assert(0);
-          case vpiTask:
-	    thr->task_func_children.insert(child);
-	    break;
-          default:
-	    break;
-      }
 
       if (thr->i_am_in_function) {
 	    child->is_scheduled = 1;
@@ -3719,21 +3687,9 @@ bool of_JMP1XZ(vthread_t thr, vvp_code_t cp)
  * children know to wake me when they finish.
  */
 
-static bool test_joinable(vthread_t thr, vthread_t child)
-{
-      set<vthread_t>::iterator cur = thr->task_func_children.find(child);
-      if (! thr->task_func_children.empty() && cur == thr->task_func_children.end())
-	    return false;
-
-      return true;
-}
-
 static void do_join(vthread_t thr, vthread_t child)
 {
       assert(child->parent == thr);
-
-	/* Remove the thread from the task/function set if needed. */
-      thr->task_func_children.erase(child);
 
         /* If the immediate child thread is in an automatic scope... */
       if (child->wt_context) {
@@ -3765,9 +3721,6 @@ static bool do_join_opcode(vthread_t thr)
 	    if (! curp->i_have_ended)
 		  continue;
 
-	    if (! test_joinable(thr, curp))
-		  continue;
-
 	      // found something!
 	    do_join(thr, curp);
 	    return true;
@@ -3792,7 +3745,6 @@ bool of_JOIN_DETACH(vthread_t thr, vvp_code_t cp)
 {
       unsigned long count = cp->number;
 
-      assert(thr->task_func_children.empty());
       assert(count == thr->children.size());
 
       while (! thr->children.empty()) {
@@ -6752,8 +6704,6 @@ static bool do_exec_ufunc(vthread_t thr, vvp_code_t cp, vthread_t child)
       child->i_am_in_function = 1;
       vthread_run(child);
       running_thread = thr;
-
-      assert(test_joinable(thr, child));
 
       if (child->i_have_ended) {
 	    do_join(thr, child);
