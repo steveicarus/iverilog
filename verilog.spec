@@ -1,6 +1,5 @@
 #norootforbuild
 #
-%define rev_date 20150815
 # Normally, the suff-ix is %nil, meaning the suffix is to not be used.
 # But if the builder wants to make a suffixed package, he may set this
 # to a value (i.e. -test) to cause suffixes to be put in all the right
@@ -10,11 +9,11 @@
 #
 Summary: Icarus Verilog
 Name: verilog%{suff}
-Version: 11.0.%{rev_date}
+Version: 11.0
 Release: 0
 License: GPL
 Group: Productivity/Scientific/Electronics
-Source: verilog%{suff}-%{rev_date}.tar.gz
+Source: verilog%{suff}-%{version}.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
 
@@ -32,7 +31,7 @@ engineering formats, including simulation. It strives to be true
 to the IEEE-1364 standard.
 
 %prep
-%setup -n verilog%{suff}-%{rev_date}
+%setup -n verilog%{suff}-%{version}
 
 %build
 if test X%{suff} != X
@@ -92,17 +91,11 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) %{_libdir}/ivl%{suff}/pcb.tgt
 %attr(-,root,root) %{_libdir}/ivl%{suff}/pcb.conf
 %attr(-,root,root) %{_libdir}/ivl%{suff}/pcb-s.conf
-%attr(-,root,root) %{_libdir}/ivl%{suff}/system.sft
 %attr(-,root,root) %{_libdir}/ivl%{suff}/system.vpi
-%attr(-,root,root) %{_libdir}/ivl%{suff}/va_math.sft
 %attr(-,root,root) %{_libdir}/ivl%{suff}/va_math.vpi
-%attr(-,root,root) %{_libdir}/ivl%{suff}/v2005_math.sft
 %attr(-,root,root) %{_libdir}/ivl%{suff}/v2005_math.vpi
-%attr(-,root,root) %{_libdir}/ivl%{suff}/v2009.sft
 %attr(-,root,root) %{_libdir}/ivl%{suff}/v2009.vpi
-%attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl_sys.sft
 %attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl_sys.vpi
-%attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl_textio.sft
 %attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl_textio.vpi
 %attr(-,root,root) %{_libdir}/ivl%{suff}/vpi_debug.vpi
 %attr(-,root,root) %{_libdir}/ivl%{suff}/cadpli.vpl
