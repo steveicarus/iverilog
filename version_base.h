@@ -10,7 +10,7 @@
  * This will be appended to the version. Use this to mark development
  * versions and the like.
  */
-# define VERSION_EXTRA   ""
+# define VERSION_EXTRA   " (stable)"
 
 # define VERSION_STRINGIFY(x) #x
 # define VERSION_STR(a,b,extra) VERSION_STRINGIFY(a.b) extra
