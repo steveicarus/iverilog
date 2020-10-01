@@ -966,7 +966,11 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	      // block. Code within this scope thus has access to the
 	      // genvar as a constant.
 	    {
-		  verinum genvar_verinum(genvar);
+		  verinum genvar_verinum;
+		  if (gn_strict_expr_width_flag)
+			genvar_verinum = verinum(genvar, integer_width);
+		  else
+			genvar_verinum = verinum(genvar);
 		  genvar_verinum.has_sign(true);
 		  NetEConstParam*gp = new NetEConstParam(scope,
 							 loop_index,
