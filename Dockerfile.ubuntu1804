@@ -1,36 +1,34 @@
-ARG IMAGE="alpine:3.12"
+ARG IMAGE="ubuntu:18.04"
 # Note that some commands such as 'apk add' won't work in arbitrary images.  For instance,
-# 'apk add' works fine under alpine, but not under Ubuntu (at least not by default.)
-# In other words, the following 'apk add' sections assume an alpine based image or a derivitive
+# 'apt-get' works fine under ubuntu, but not under alpine (at least not by default.)
+# In other words, the following 'apt-get' sections assume a debian based image or a derivitive
 
 FROM $IMAGE as base
 
-RUN apk add --no-cache \
-        bzip2 \
-        libbz2 \
-        libgcc \
-        libhistory \
-        libstdc++ \
-        make \
-        readline \
-        zlib
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get -y update && \
+    apt-get install -y \
+        make && \
+    rm -rf /var/lib/apt/lists/*
 
 FROM base as builder
 
-RUN apk add --no-cache \
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get -y update && \
+    apt-get install -y \
         autoconf \
-        build-base \
+        automake \
         bison \
-        bzip2-dev \
+        build-essential \
         flex \
         git \
-	gperf \
-        readline-dev \
-        zlib-dev
+        gperf 
 
 COPY . .
 
-RUN sh autoconf.sh && \
+RUN bash autoconf.sh && \
     ./configure && \
     make && \
     make install
