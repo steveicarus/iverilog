@@ -2321,7 +2321,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
-    tf_port_list ')' ';'
+    tf_port_list_opt ')' ';'
     block_item_decls_opt
     statement_or_null_list_opt
     K_endtask
@@ -2329,6 +2329,10 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	current_task_set_statement(@3, $10);
 	pform_set_this_class(@3, current_task);
 	pform_pop_scope();
+	if (generation_flag < GN_VER2005 && $6 == 0) {
+	      cerr << @3 << ": warning: task definition for \"" << $3
+		   << "\" has an empty port declaration list!" << endl;
+	}
 	current_task = 0;
 	if ($10) delete $10;
       }
@@ -2347,46 +2351,6 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 		                 "SystemVerilog.");
 	      }
 	      delete[]$13;
-	}
-	delete[]$3;
-      }
-
-  | K_task lifetime_opt IDENTIFIER '(' ')' ';'
-      { assert(current_task == 0);
-	current_task = pform_push_task_scope(@1, $3, $2);
-      }
-    block_item_decls_opt
-    statement_or_null_list
-    K_endtask
-      { current_task->set_ports(0);
-	current_task_set_statement(@3, $9);
-	pform_set_this_class(@3, current_task);
-	if (! current_task->method_of()) {
-	      cerr << @3 << ": warning: task definition for \"" << $3
-		   << "\" has an empty port declaration list!" << endl;
-	}
-	pform_pop_scope();
-	current_task = 0;
-	if ($9->size() > 1 && !gn_system_verilog()) {
-	      yyerror(@9, "error: Task body with multiple statements requires SystemVerilog.");
-	}
-	delete $9;
-      }
-    endlabel_opt
-      { // Last step: check any closing name. This is done late so
-	// that the parser can look ahead to detect the present
-	// endlabel_opt but still have the pform_endmodule() called
-	// early enough that the lexor can know we are outside the
-	// module.
-	if ($12) {
-	      if (strcmp($3,$12) != 0) {
-		    yyerror(@12, "error: End label doesn't match task name");
-	      }
-	      if (! gn_system_verilog()) {
-		    yyerror(@12, "error: Task end labels require "
-		                 "SystemVerilog.");
-	      }
-	      delete[]$12;
 	}
 	delete[]$3;
       }
