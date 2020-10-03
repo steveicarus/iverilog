@@ -37,12 +37,13 @@ RUN sh autoconf.sh && \
 
 FROM builder as test-builder
 
-# WORKDIR /iverilog
 RUN make check
 
-FROM base as release-candidate
+FROM base as test-release-candidate
 
 COPY --from=builder /usr/local /usr/local/
+
+FROM test-release-candidate as release-candidate
 
 RUN adduser --disabled-password ic
 USER ic
@@ -56,19 +57,34 @@ ENTRYPOINT [ "make" ]
 # image before it is finally released.  A failure here would stop the process so that
 # a faulty image is not released.
 #
-# The make and make clean lines below fail if iverilog/dockerfiles/test isn't available
-# and older release branches like v10_3 do not have this directory, so we need a
-# layer that does have it to copy from.  We create that layer as test-branch here:
-# FROM builder as test-branch
-# WORKDIR /iverilog
-# ARG TEST_BRANCH=master
-# RUN git checkout ${TEST_BRANCH}
-#
-# FROM release-candidate-entrypoint-make as test-release-candidate-entrypoint-make
-# COPY --from=test-branch /iverilog/dockerfiles/test /home/ic/
-# 
-# RUN make
-# RUN make clean
+# We create a layer that contains the tests as builder-iverilog-regression-test here:
+
+FROM builder as builder-iverilog-regression-test-base
+
+ARG REGRESSION_TEST_URL=https://github.com/steveicarus/ivtest.git
+RUN git clone ${REGRESSION_TEST_URL} ivtest
+
+FROM builder-iverilog-regression-test-base as builder-iverilog-regression-test
+
+WORKDIR ivtest
+RUN perl vvp_reg.pl
+RUN perl vpi_reg.pl
+
+FROM test-release-candidate as test-release-candidate-perl
+
+RUN apk add --no-cache \
+    musl \
+    perl
+
+RUN adduser --disabled-password ic
+USER ic
+WORKDIR /home/ic
+
+COPY --from=builder-iverilog-regression-test-base /ivtest /home/ic/
+
+RUN perl vvp_reg.pl
+# RUN perl vpi_reg.pl
+# RUN perl vhdl_reg.pl
 
 FROM release-candidate-entrypoint-make as iverilog-make
 
@@ -76,11 +92,6 @@ FROM release-candidate as iverilog
 
 # Below are some sample commands to build docker images.
 # 
-# The following builds iverilog from the source in the current directory
 # docker build  . -t iverilog
 #
-# The following builds the latest code from the Thirsty2/iverilog fork master branch
-# docker build --build-arg IVERILOG_REPO_URL=https://github.com/Thirsty2/iverilog.git --build-arg TEST_BRANCH=add-dockerfile . -t iverilog
-#
-# The following won't work until the pull request is accepted, but should work afterwards to build the master branch of steveicarus/iverilog
-# docker build . -t iverilog
+# docker build --target iverilog-make . -t iverilog-make
