@@ -3,7 +3,7 @@
  * Edit this definition in version_base.in to define the base version
  * number for the compiled result.
  */
-# define VERSION_MAJOR  11
+# define VERSION_MAJOR  12
 # define VERSION_MINOR   0
 
 /*
