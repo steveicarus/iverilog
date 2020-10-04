@@ -23,6 +23,7 @@
 # include  <string>
 # include  <vector>
 # include  <valarray>
+# include  <memory>
 # include  "netlist.h"
 # include  "verinum.h"
 # include  "LineInfo.h"
@@ -1010,6 +1011,26 @@ class PECastType  : public PExpr {
       data_type_t* target_;
       ivl_type_t target_type_;
       PExpr* base_;
+};
+
+/*
+ * Support the SystemVerilog sign cast.
+ */
+class PECastSign : public PExpr {
+
+    public:
+      explicit PECastSign(bool signed_flag, PExpr *base);
+      ~PECastSign() = default;
+
+      void dump(std::ostream &out) const;
+
+      NetExpr* elaborate_expr(Design *des, NetScope *scope,
+			      unsigned expr_wid, unsigned flags) const;
+
+      unsigned test_width(Design *des, NetScope *scope, width_mode_t &mode);
+
+    private:
+      std::unique_ptr<PExpr> base_;
 };
 
 /*

@@ -1006,6 +1006,26 @@ NetExpr*PEBPower::elaborate_expr_leaf(Design*, NetExpr*lp, NetExpr*rp,
       return tmp;
 }
 
+static unsigned int sign_cast_width(Design*des, NetScope*scope, PExpr &expr,
+				    PExpr::width_mode_t&mode)
+{
+      unsigned int width;
+
+      // The argument type/width is self-determined, but affects
+      // the result width.
+      PExpr::width_mode_t arg_mode = PExpr::SIZED;
+      width = expr.test_width(des, scope, arg_mode);
+
+      if ((arg_mode >= PExpr::EXPAND) && type_is_vectorable(expr.expr_type())) {
+	    if (mode < PExpr::LOSSLESS)
+		  mode = PExpr::LOSSLESS;
+	    if (width < integer_width)
+		  width = integer_width;
+     }
+
+     return width;
+}
+
 NetExpr*PEBShift::elaborate_expr_leaf(Design*des, NetExpr*lp, NetExpr*rp,
 				      unsigned expr_wid) const
 {
@@ -1193,20 +1213,10 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 	    if (expr == 0)
 		  return 0;
 
-              // The argument type/width is self-determined, but affects
-              // the result width.
-            width_mode_t arg_mode = SIZED;
-	    expr_width_  = expr->test_width(des, scope, arg_mode);
+	    expr_width_  = sign_cast_width(des, scope, *expr, mode);
 	    expr_type_   = expr->expr_type();
             min_width_   = expr->min_width();
             signed_flag_ = (name[1] == 's');
-
-            if ((arg_mode >= EXPAND) && type_is_vectorable(expr_type_)) {
-                  if (mode < LOSSLESS)
-                        mode = LOSSLESS;
-                  if (expr_width_ < integer_width)
-                        expr_width_ = integer_width;
-            }
 
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: " << name
@@ -3490,6 +3500,38 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
       cerr << get_fileline() << ": sorry: This cast operation is not yet supported." << endl;
       des->errors += 1;
       return 0;
+}
+
+unsigned PECastSign::test_width(Design *des, NetScope *scope, width_mode_t &mode)
+{
+      ivl_assert(*this, base_);
+
+      expr_width_ = sign_cast_width(des, scope, *base_, mode);
+      expr_type_  = base_->expr_type();
+      min_width_  = base_->min_width();
+
+      if (!type_is_vectorable(base_->expr_type())) {
+	    cerr << get_fileline() << ": error: Cast base expression "
+		    "must be a vector type." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      return expr_width_;
+}
+
+NetExpr* PECastSign::elaborate_expr(Design *des, NetScope *scope,
+				    unsigned expr_wid, unsigned flags) const
+{
+      ivl_assert(*this, base_);
+
+      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
+
+      NetExpr *sub = base_->elaborate_expr(des, scope, expr_width_, flags);
+      if (!sub)
+	    return nullptr;
+
+      return cast_to_width(sub, expr_wid, signed_flag_, *this);
 }
 
 unsigned PEConcat::test_width(Design*des, NetScope*scope, width_mode_t&)

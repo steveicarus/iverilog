@@ -420,6 +420,15 @@ void PECastType::dump(ostream &out) const
       out << ")";
 }
 
+void PECastSign::dump(ostream &out) const
+{
+      if (!signed_flag_)
+	    out << "un";
+      out << "signed'(";
+      base_->dump(out);
+      out << ")";
+}
+
 void PEEvent::dump(ostream&out) const
 {
       switch (type_) {
