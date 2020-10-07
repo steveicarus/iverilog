@@ -11,7 +11,6 @@ RUN apk add --no-cache \
         libgcc \
         libhistory \
         libstdc++ \
-        make \
         readline \
         zlib
 
@@ -35,63 +34,51 @@ RUN sh autoconf.sh && \
     make && \
     make install
 
-FROM builder as test-builder
+FROM builder as builder-iverilog-regression-test
 
 RUN make check
-
-FROM base as test-release-candidate
-
-COPY --from=builder /usr/local /usr/local/
-
-FROM test-release-candidate as release-candidate
-
-RUN adduser --disabled-password ic
-USER ic
-WORKDIR /home/ic
-
-FROM release-candidate as release-candidate-entrypoint-make
-
-ENTRYPOINT [ "make" ]
-
-# This commented section or something similar may be used to test the release candidate
-# image before it is finally released.  A failure here would stop the process so that
-# a faulty image is not released.
-#
-# We create a layer that contains the tests as builder-iverilog-regression-test here:
-
-FROM builder as builder-iverilog-regression-test-base
 
 ARG REGRESSION_TEST_URL=https://github.com/steveicarus/ivtest.git
 RUN git clone ${REGRESSION_TEST_URL} ivtest
 
-FROM builder-iverilog-regression-test-base as builder-iverilog-regression-test
+# Running the tests here was useful for troubleshooting, but we also run them below
+# in a lighter weight image so it is not necessary to run them here anymore
+# WORKDIR ivtest
+# RUN perl vvp_reg.pl
+# RUN perl vpi_reg.pl
 
-WORKDIR ivtest
+FROM base as release-candidate
+
+COPY --from=builder /usr/local /usr/local/
+
+FROM release-candidate as iverilog-vpi
+
+RUN apk add --no-cache \
+     build-base
+
+FROM iverilog-vpi as test-iverilog-vpi
+
+RUN apk add --no-cache \
+     perl
+
+COPY --from=builder-iverilog-regression-test /ivtest /ivtest
+
+WORKDIR /ivtest
 RUN perl vvp_reg.pl
 RUN perl vpi_reg.pl
 
-FROM test-release-candidate as test-release-candidate-perl
-
-RUN apk add --no-cache \
-    musl \
-    perl
-
-RUN adduser --disabled-password ic
-USER ic
-WORKDIR /home/ic
-
-COPY --from=builder-iverilog-regression-test-base /ivtest /home/ic/
-
-RUN perl vvp_reg.pl
-# RUN perl vpi_reg.pl
-# RUN perl vhdl_reg.pl
-
-FROM release-candidate-entrypoint-make as iverilog-make
-
 FROM release-candidate as iverilog
-
+#
 # Below are some sample commands to build docker images.
 # 
+# The vpi_reg.pl script wont run in this 87.5 MB image which does not contain perl or c/c++
 # docker build  . -t iverilog
 #
-# docker build --target iverilog-make . -t iverilog-make
+# This is a larger 298 MB image with c/c++ compilers through build-base
+# docker build --target iverilog-vpi . -t iverilog-vpi
+#
+# This is a larger 343 MB image with c/c++ compilers throubh build-base and perl
+# docker build --target test-iverilog-vpi . -t iverilog-perl
+#
+# This is a larger 598 MB image with full featured compiler, git, and full build results 
+# docker build --target builder . -t iverilog-builder

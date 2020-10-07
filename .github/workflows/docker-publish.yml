@@ -17,7 +17,6 @@ on:
 env:
   # TODO: Change variable to your image's name.
   IMAGE_NAME: iverilog
-  IMAGE_NAME_MAKE: iverilog-make
 
 jobs:
   # Push image to GitHub Packages.
@@ -32,20 +31,15 @@ jobs:
       - name: Build image
         run: docker build --build-arg GITHUB_WORKSPACE=$GITHUB_WORKSPACE . --file Dockerfile --tag $IMAGE_NAME
 
-      - name: Build image with entrypoint make
-        run: docker build --build-arg GITHUB_WORKSPACE=$GITHUB_WORKSPACE --target iverilog-make . --file Dockerfile --tag $IMAGE_NAME_MAKE
-
       - name: Log into registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
 
       - name: Push images
         run: |
           IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
-          IMAGE_ID_MAKE=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME_MAKE
 
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-          IMAGE_ID_MAKE=$(echo $IMAGE_ID_MAKE | tr '[A-Z]' '[a-z]')
 
           # Strip git ref prefix from version
           VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
@@ -61,6 +55,3 @@ jobs:
 
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
-
-          docker tag $IMAGE_NAME_MAKE $IMAGE_ID_MAKE:$VERSION
-          docker push $IMAGE_ID_MAKE:$VERSION
