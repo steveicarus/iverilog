@@ -186,9 +186,11 @@ static int ma_parenthesis_level = 0;
 
 %x PPINCLUDE
 %x DEF_NAME
+%x DEF_ESC
 %x DEF_ARG
 %x DEF_SEP
 %x DEF_TXT
+%x MN_ESC
 %x MA_START
 %x MA_ADD
 %x CCOMMENT
@@ -338,6 +340,11 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <DEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]*"("{W}? { BEGIN(DEF_ARG); def_start(); }
 <DEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]*{W}?    { BEGIN(DEF_TXT); def_start(); }
 
+<DEF_NAME>\\ { BEGIN(DEF_ESC); }
+
+<DEF_ESC>[^ \t\b\f\n\r]+{W}"("{W}? { BEGIN(DEF_ARG); def_start(); }
+<DEF_ESC>[^ \t\b\f\n\r]+{W}        { BEGIN(DEF_TXT); def_start(); }
+
   /* define arg: <name> = <text> */
 <DEF_ARG>[a-zA-Z_][a-zA-Z0-9_$]*{W}*"="[^,\)]*{W}? { BEGIN(DEF_SEP); def_add_arg(); }
   /* define arg: <name> */
@@ -352,7 +359,7 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <DEF_ARG,DEF_SEP>(\n|"\r\n"|"\n\r"|\r){W}? { istack->lineno += 1; fputc('\n', yyout); }
 
-<DEF_NAME,DEF_ARG,DEF_SEP>. {
+<DEF_NAME,DEF_ESC,DEF_ARG,DEF_SEP>. {
     emit_pathline(istack);
     fprintf(stderr, "error: malformed `define directive.\n");
     error_count += 1;
@@ -533,6 +540,24 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
         yy_push_state(MA_START);
     else
         do_expand(0);
+}
+
+`\\ { yy_push_state(MN_ESC); }
+
+<MN_ESC>[^ \t\b\f\n\r]+ {
+    yy_pop_state();
+    if (macro_needs_args(yytext))
+        yy_push_state(MA_START);
+    else
+        do_expand(0);
+}
+
+<MN_ESC>. {
+    yy_pop_state();
+    unput(yytext[0]);
+    emit_pathline(istack);
+    fprintf(stderr, "error: malformed macro name.\n");
+    error_count += 1;
 }
 
   /* Stringified version of macro expansion. This is an Icarus extension.
@@ -825,8 +850,13 @@ static void def_add_arg(void)
 
       /* This can happen because we are also processing "argv[0]", the
 	 macro name, as a pseudo-argument. The lexor will match that
-	 as name(, so chop off the ( here. */
-    if (yytext[length -  1] == '(') length--;
+	 as name(, so chop off the ( here. If we have an escaped name,
+	 we also need to strip off the white space that terminates the
+	 name. */
+    if (yytext[length -  1] == '(') {
+	length--;
+	while (isspace((int)yytext[length - 1])) length--;
+    }
 
     yytext[length] = 0;
 
