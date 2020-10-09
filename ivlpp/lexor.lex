@@ -154,9 +154,9 @@ static void ifdef_leave(void)
         result = (rc == 0) ? YY_NULL : rc;                              \
     } else {                                                            \
         /* We are expanding a macro. Handle the SV `` delimiter.        \
-           If the delimiter terminates a compiler directive, leave      \
+           If the delimiter terminates a defined macro usage, leave     \
            it in place, otherwise remove it now. */                     \
-        if (yytext[0] != '`') {                                         \
+        if (!(yytext[0] == '`' && is_defined(yytext+1))) {              \
             while ((istack->str[0] == '`') &&                           \
                    (istack->str[1] == '`')) {                           \
                 istack->str += 2;                                       \
