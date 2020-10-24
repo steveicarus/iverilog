@@ -297,7 +297,7 @@ void parm_to_defparam_list(const string&param)
 
     // Is it a decimal number?
     num = (value[0] == '-') ? value + 1 : value;
-    if (is_dec_digit_str(num)) {
+    if (num[0] != '\0' && is_dec_digit_str(num)) {
 	verinum *val = make_unsized_dec(num);
 	if (value[0] == '-') *val = -(*val);
 	PExpr* ndec = new PENumber(val);
