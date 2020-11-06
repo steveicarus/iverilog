@@ -86,14 +86,14 @@ FROM release-candidate as iverilog
 #
 # Below are some sample commands to build using ubuntu:20.04 as a base image
 #
-# The vpi_reg.pl script wont run in this 121 MB image which does not contain perl or c/c++
+# The vpi_reg.pl script wont run in this 154 MB image which does not contain perl or c/c++
 # docker build -f Dockerfile.ubuntu --build-arg IMAGE="ubuntu:20.04" . -t iverilog
 #
-# This is a larger 364 MB image with c/c++ compilers through build-essential
+# This is a larger 428 MB image with c/c++ compilers through build-essential
 # docker build  -f Dockerfile.ubuntu --build-arg IMAGE="ubuntu:20.04" --target iverilog-vpi . -t iverilog-vpi
 #
-# This is a larger 382 MB image with c/c++ compilers throubh build-essential and perl
+# This is a larger 445 MB image with c/c++ compilers throubh build-essential and perl
 # docker build  -f Dockerfile.ubuntu --build-arg IMAGE="ubuntu:20.04" --target test-iverilog-vpi . -t iverilog-perl
 #
-# This is a larger 665 MB image with full featured compiler, git, and full build results 
+# This is a larger 812 MB image with full featured compiler, git, and full build results 
 # docker build  -f Dockerfile.ubuntu --build-arg IMAGE="ubuntu:20.04" --target builder . -t iverilog-builder
