@@ -591,22 +591,7 @@ void vvp_queue_real::insert(unsigned idx, double value, unsigned max_size)
 		       << max_size << "]." << endl;
 		  queue.pop_back();
 	    }
-	      // Inserting at the beginning
-	    if (idx == 0)
-		  queue.push_front(value);
-	      // Inserting in the middle
-	    else {
-		  std::deque<double>::iterator pos;
-		  unsigned middle = queue.size()/2;
-		  if (idx < middle) {
-			pos = queue.begin();
-			for (unsigned count = 0; count < idx; ++count) ++pos;
-		  } else {
-			pos = queue.end();
-			for (unsigned count = queue.size(); count > idx; --count) --pos;
-		  }
-		  queue.insert(pos, value);
-	    }
+	    queue.insert(queue.begin()+idx, value);
       }
 }
 
@@ -635,17 +620,8 @@ void vvp_queue_real::push_front(double value, unsigned max_size)
 
 void vvp_queue_real::erase(unsigned idx)
 {
-      std::deque<double>::iterator pos;
-      unsigned middle = queue.size()/2;
-      if (idx < middle) {
-	    pos = queue.begin();
-	    for (unsigned count = 0; count < idx; ++count) ++pos;
-      } else {
-	    pos = queue.end();
-	    for (unsigned count = queue.size(); count > idx; --count) --pos;
-      }
-
-      queue.erase(pos);
+      assert(queue.size() > idx);
+      queue.erase(queue.begin()+idx);
 }
 
 void vvp_queue_real::erase_tail(unsigned idx)
@@ -727,22 +703,7 @@ void vvp_queue_string::insert(unsigned idx, const string&value, unsigned max_siz
 		       << max_size << "]." << endl;
 		  queue.pop_back();
 	    }
-	      // Inserting at the beginning
-	    if (idx == 0)
-		  queue.push_front(value);
-	      // Inserting in the middle
-	    else {
-		  std::deque<string>::iterator pos;
-		  unsigned middle = queue.size()/2;
-		  if (idx < middle) {
-			pos = queue.begin();
-			for (unsigned count = 0; count < idx; ++count) ++pos;
-		  } else {
-			pos = queue.end();
-			for (unsigned count = queue.size(); count > idx; --count) --pos;
-		  }
-		  queue.insert(pos, value);
-	    }
+	    queue.insert(queue.begin()+idx, value);
       }
 }
 
@@ -771,17 +732,8 @@ void vvp_queue_string::push_front(const string&value, unsigned max_size)
 
 void vvp_queue_string::erase(unsigned idx)
 {
-      std::deque<std::string>::iterator pos;
-      unsigned middle = queue.size()/2;
-      if (idx < middle) {
-	    pos = queue.begin();
-	    for (unsigned count = 0; count < idx; ++count) ++pos;
-      } else {
-	    pos = queue.end();
-	    for (unsigned count = queue.size(); count > idx; --count) --pos;
-      }
-
-      queue.erase(pos);
+      assert(queue.size() > idx);
+      queue.erase(queue.begin()+idx);
 }
 
 void vvp_queue_string::erase_tail(unsigned idx)
@@ -863,22 +815,7 @@ void vvp_queue_vec4::insert(unsigned idx, const vvp_vector4_t&value, unsigned ma
 		       << value.size() << "]> [" << max_size << "]." << endl;
 		  queue.pop_back();
 	    }
-	      // Inserting at the beginning
-	    if (idx == 0)
-		  queue.push_front(value);
-	      // Inserting in the middle
-	    else {
-		  std::deque<vvp_vector4_t>::iterator pos;
-		  unsigned middle = queue.size()/2;
-		  if (idx < middle) {
-			pos = queue.begin();
-			for (unsigned count = 0; count < idx; ++count) ++pos;
-		  } else {
-			pos = queue.end();
-			for (unsigned count = queue.size(); count > idx; --count) --pos;
-		  }
-		  queue.insert(pos, value);
-	    }
+	    queue.insert(queue.begin()+idx, value);
       }
 }
 
@@ -907,17 +844,8 @@ void vvp_queue_vec4::push_front(const vvp_vector4_t&value, unsigned max_size)
 
 void vvp_queue_vec4::erase(unsigned idx)
 {
-      std::deque<vvp_vector4_t>::iterator pos;
-      unsigned middle = queue.size()/2;
-      if (idx < middle) {
-	    pos = queue.begin();
-	    for (unsigned count = 0; count < idx; ++count) ++pos;
-      } else {
-	    pos = queue.end();
-	    for (unsigned count = queue.size(); count > idx; --count) --pos;
-      }
-
-      queue.erase(pos);
+      assert(queue.size() > idx);
+      queue.erase(queue.begin()+idx);
 }
 
 void vvp_queue_vec4::erase_tail(unsigned idx)
