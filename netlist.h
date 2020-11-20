@@ -4401,21 +4401,29 @@ class NetEConcat  : public NetExpr {
  * If the base expression is null, then this expression node can be
  * used to express width expansion, signed or unsigned depending on
  * the has_sign() flag.
+ *
+ * An alternative form of this expression node is used for dynamic
+ * array word selects and for packed struct member selects. In this
+ * case use_type indicates the type of the selected element/member.
  */
 class NetESelect  : public NetExpr {
 
     public:
       NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
                  ivl_select_type_t sel_type = IVL_SEL_OTHER);
+      NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
+                 ivl_type_t use_type);
       ~NetESelect();
 
       const NetExpr*sub_expr() const;
       const NetExpr*select() const;
       ivl_select_type_t select_type() const;
 
-	// The type of a NetESelect is the base type of the
-	// sub-expression.
+	// The type of a bit/part select is the base type of the
+	// sub-expression. The type of an array/member select is
+	// the base type of the element/member.
       virtual ivl_variable_type_t expr_type() const;
+      virtual const netenum_t* enumeration() const;
 
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                                   bool nested_func = false) const;
@@ -4431,6 +4439,7 @@ class NetESelect  : public NetExpr {
     private:
       NetExpr*expr_;
       NetExpr*base_;
+      ivl_type_t use_type_;
       ivl_select_type_t sel_type_;
 };
 

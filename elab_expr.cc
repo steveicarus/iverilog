@@ -1958,6 +1958,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
       unsigned long use_width = struct_type->packed_width();
 
       pform_name_t completed_path;
+      ivl_type_t member_type = 0;
       do {
 	    const name_component_t member_comp = member_path.front();
 	    const perm_string&member_name = member_comp.name;
@@ -1985,28 +1986,29 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		  des->errors += 1;
 		  return 0;
 	    }
+	    member_type = member->net_type;
 	    if (debug_elaborate) {
 		  cerr << li->get_fileline() << ": check_for_struct_members: "
-		       << "Member type: " << *(member->net_type)
-		       << " (" << typeid(*(member->net_type)).name() << ")"
+		       << "Member type: " << *member_type
+		       << " (" << typeid(*member_type).name() << ")"
 		       << endl;
 	    }
 
 	    off += tmp_off;
-	    ivl_assert(*li, use_width >= (unsigned long)member->net_type->packed_width());
-	    use_width = member->net_type->packed_width();
+	    ivl_assert(*li, use_width >= (unsigned long)member_type->packed_width());
+	    use_width = member_type->packed_width();
 
 	      // At this point, off and use_width are the part select
 	      // expressed by the member_comp, which is a member of the
 	      // struct. We can further refine the part select with any
 	      // indices that might be present.
 
-	    if (const netstruct_t*tmp_struct = dynamic_cast<const netstruct_t*>(member->net_type)) {
+	    if (const netstruct_t*tmp_struct = dynamic_cast<const netstruct_t*>(member_type)) {
 		    // If the member is itself a struct, then get
 		    // ready to go on to the next iteration.
 		  struct_type = tmp_struct;
 
-	    } else if (const netenum_t*tmp_enum = dynamic_cast<const netenum_t*> (member->net_type)) {
+	    } else if (const netenum_t*tmp_enum = dynamic_cast<const netenum_t*> (member_type)) {
 
 		    // If the element is an enum, then we don't have
 		    // anything special to do.
@@ -2017,7 +2019,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		  }
 		  struct_type = 0;
 
-	    } else if (const netvector_t*mem_vec = dynamic_cast<const netvector_t*>(member->net_type)) {
+	    } else if (const netvector_t*mem_vec = dynamic_cast<const netvector_t*>(member_type)) {
 
 		  if (debug_elaborate) {
 			cerr << li->get_fileline() << ": check_for_struct_members: "
@@ -2104,7 +2106,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		    // there is no next struct type.
 		  struct_type = 0;
 
-	    } else if (const netparray_t*array = dynamic_cast<const netparray_t*>(member->net_type)) {
+	    } else if (const netparray_t*array = dynamic_cast<const netparray_t*>(member_type)) {
 
 		    // If the member is a parray, then the elements
 		    // are themselves packed object, including
@@ -2178,7 +2180,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	    } else {
 		    // Unknown type?
 		  cerr << li->get_fileline() << ": internal error: "
-		       << "Unexpected member type? " << *(member->net_type)
+		       << "Unexpected member type? " << *member_type
 		       << endl;
 		  des->errors += 1;
 		  struct_type = 0;
@@ -2224,7 +2226,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 
       NetESignal*sig = new NetESignal(net);
       NetExpr   *base = packed_base? packed_base : make_const_val(off);
-      NetESelect*sel = new NetESelect(sig, base, use_width);
+      NetESelect*sel = new NetESelect(sig, base, use_width, member_type);
 
       if (debug_elaborate) {
 	    cerr << li->get_fileline() << ": check_for_struct_member: "
@@ -5395,7 +5397,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": debug: "
 		       << "Bit select of a dynamic array becomes NetESelect." << endl;
 	    }
-	    NetESelect*res = new NetESelect(net, mux, darray->element_width());
+	    NetESelect*res = new NetESelect(net, mux, darray->element_width(), darray->element_type());
 	    res->set_line(*net);
 	    return res;
       }
@@ -5597,13 +5599,15 @@ NetExpr* PEIdent::elaborate_expr_net_bit_last_(Design*, NetScope*,
       }
 
       unsigned use_width = 1;
+      ivl_type_t use_type = 0;
       if (const netdarray_t*darray = net->sig()->darray_type()) {
 	    use_width = darray->element_width();
+	    use_type = darray->element_type();
       }
 
       NetELast*mux = new NetELast(net->sig());
       mux->set_line(*this);
-      NetESelect*ss = new NetESelect(net, mux, use_width);
+      NetESelect*ss = new NetESelect(net, mux, use_width, use_type);
       ss->set_line(*this);
       return ss;
 }
