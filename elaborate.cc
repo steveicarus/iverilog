@@ -110,6 +110,18 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    return;
       }
 
+      if (lval->enumeration()) {
+	    if (! rval_expr->enumeration()) {
+		  cerr << get_fileline() << ": error: "
+		          "This assignment requires an explicit cast." << endl;
+		  des->errors += 1;
+	    } else if (! lval->enumeration()->matches(rval_expr->enumeration())) {
+		  cerr << get_fileline() << ": error: "
+		          "Enumeration type mismatch in assignment." << endl;
+		  des->errors += 1;
+	    }
+      }
+
       NetNet*rval = rval_expr->synthesize(des, scope, rval_expr);
 
       if (rval == 0) {
