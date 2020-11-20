@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -403,7 +403,14 @@ ivl_variable_type_t NetEProperty::expr_type() const
 
 NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
                        ivl_select_type_t sel_type)
-: expr_(exp), base_(base), sel_type_(sel_type)
+: expr_(exp), base_(base), use_type_(0), sel_type_(sel_type)
+{
+      expr_width(wid);
+}
+
+NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
+                       ivl_type_t use_type)
+: expr_(exp), base_(base), use_type_(use_type), sel_type_(IVL_SEL_OTHER)
 {
       expr_width(wid);
 }
@@ -431,6 +438,9 @@ ivl_select_type_t NetESelect::select_type() const
 
 ivl_variable_type_t NetESelect::expr_type() const
 {
+      if (use_type_)
+	    return use_type_->base_type();
+
       ivl_variable_type_t type = expr_->expr_type();
 
 	// Special case: If the sub-expression is an IVL_VT_STRING,
@@ -439,20 +449,12 @@ ivl_variable_type_t NetESelect::expr_type() const
       if (type == IVL_VT_STRING && expr_width()==8)
 	    return IVL_VT_BOOL;
 
-      if (type != IVL_VT_DARRAY)
-	    return type;
+      return type;
+}
 
-      ivl_assert(*this, type == IVL_VT_DARRAY);
-
-	// Special case: If the expression is a DARRAY, then the
-	// sub-expression must be a NetESignal and the type of the
-	// NetESelect expression is the element type of the arrayed signal.
-      NetESignal*sig = dynamic_cast<NetESignal*>(expr_);
-      ivl_assert(*this, sig);
-      const netarray_t*array_type = dynamic_cast<const netarray_t*> (sig->sig()->net_type());
-      ivl_assert(*this, array_type);
-
-      return array_type->element_type()->base_type();
+const netenum_t* NetESelect::enumeration() const
+{
+      return dynamic_cast<const netenum_t*> (use_type_);
 }
 
 bool NetESelect::has_width() const
