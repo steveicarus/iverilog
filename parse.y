@@ -5279,14 +5279,14 @@ module_item
       { pform_endgenerate(false); }
 
   | generate_if
-    generate_block_opt
+    generate_block
     K_else
       { pform_start_generate_else(@1); }
     generate_block
       { pform_endgenerate(true); }
 
   | generate_if
-    generate_block_opt %prec less_than_K_else
+    generate_block %prec less_than_K_else
       { pform_endgenerate(true); }
 
   | K_case '(' expression ')'
@@ -5324,50 +5324,51 @@ module_item
      module items. These rules try to catch them at a point where a
      reasonable error message can be produced. */
 
-	| error ';'
-		{ yyerror(@2, "error: invalid module item.");
-		  yyerrok;
-		}
+  | error ';'
+      { yyerror(@2, "error: invalid module item.");
+	yyerrok;
+      }
 
-	| K_assign error '=' expression ';'
-		{ yyerror(@1, "error: syntax error in left side "
-			  "of continuous assignment.");
-		  yyerrok;
-		}
+  | K_assign error '=' expression ';'
+      { yyerror(@1, "error: syntax error in left side of "
+	            "continuous assignment.");
+	yyerrok;
+      }
 
-	| K_assign error ';'
-		{ yyerror(@1, "error: syntax error in "
-			  "continuous assignment");
-		  yyerrok;
-		}
+   | K_assign error ';'
+      { yyerror(@1, "error: syntax error in continuous assignment");
+	yyerrok;
+      }
 
-	| K_function error K_endfunction endlabel_opt
-		{ yyerror(@1, "error: I give up on this "
-			  "function definition.");
-		  if ($4) {
-			if (!gn_system_verilog()) {
-			      yyerror(@4, "error: Function end names require "
-			                  "SystemVerilog.");
-			}
-			delete[]$4;
-		  }
-		  yyerrok;
-		}
+  | K_function error K_endfunction endlabel_opt
+      { yyerror(@1, "error: I give up on this function definition.");
+	if ($4) {
+	    if (!gn_system_verilog()) {
+		  yyerror(@4, "error: Function end names require "
+		              "SystemVerilog.");
+	    }
+	    delete[]$4;
+	}
+	yyerrok;
+      }
 
   /* These rules are for the Icarus Verilog specific $attribute
      extensions. Then catch the parameters of the $attribute keyword. */
 
-	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
-		{ perm_string tmp3 = lex_strings.make($3);
-		  perm_string tmp5 = lex_strings.make($5);
-		  pform_set_attrib(tmp3, tmp5, $7);
-		  delete[] $3;
-		  delete[] $5;
-		}
-	| KK_attribute '(' error ')' ';'
-		{ yyerror(@1, "error: Malformed $attribute parameter list."); }
+  | KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
+      { perm_string tmp3 = lex_strings.make($3);
+	perm_string tmp5 = lex_strings.make($5);
+	pform_set_attrib(tmp3, tmp5, $7);
+	delete[] $3;
+	delete[] $5;
+      }
+  | KK_attribute '(' error ')' ';'
+      { yyerror(@1, "error: Malformed $attribute parameter list."); }
 
-	;
+  | ';'
+      { }
+
+  ;
 
 module_item_list
   : module_item_list module_item
@@ -5387,9 +5388,9 @@ generate_case_items
   ;
 
 generate_case_item
-  : expression_list_proper ':' { pform_generate_case_item(@1, $1); } generate_block_opt
+  : expression_list_proper ':' { pform_generate_case_item(@1, $1); } generate_block
       { pform_endgenerate(false); }
-  | K_default ':' { pform_generate_case_item(@1, 0); } generate_block_opt
+  | K_default ':' { pform_generate_case_item(@1, 0); } generate_block
       { pform_endgenerate(false); }
   ;
 
@@ -5450,9 +5451,6 @@ generate_block
 	delete[]$3;
       }
   ;
-
-generate_block_opt : generate_block | ';' ;
-
 
   /* A net declaration assignment allows the programmer to combine the
      net declaration and the continuous assignment into a single
