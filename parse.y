@@ -1364,6 +1364,8 @@ description /* IEEE1800-2005: A.1.2 */
 	delete[] $3;
 	delete[] $5;
       }
+  | ';'
+      { }
   ;
 
 description_list
