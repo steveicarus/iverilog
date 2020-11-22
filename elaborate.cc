@@ -3002,6 +3002,25 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 
       for (unsigned idx = 0 ;  idx < list_.size() ;  idx += 1) {
 	    assert(list_[idx]);
+
+	      // Detect the error that a super.new() statement is in the
+	      // midst of a block. Report the error. Continue on with the
+	      // elaboration so that other errors might be found.
+	    if (PChainConstructor*supernew = dynamic_cast<PChainConstructor*> (list_[idx])) {
+	          if (debug_elaborate) {
+		        cerr << get_fileline() << ": PBlock::elaborate: "
+			     << "Found super.new statement, idx=" << idx << ", "
+			     << " at " << supernew->get_fileline() << "."
+			     << endl;
+		  }
+		  if (idx > 0) {
+		        des->errors += 1;
+			cerr << supernew->get_fileline() << ": error: "
+			     << "super.new(...) must be the first statement in a block."
+			     << endl;
+		  }
+	    }
+
 	    NetProc*tmp = list_[idx]->elaborate(des, nscope);
 	      // If the statement fails to elaborate, then simply
 	      // ignore it. Presumably, the elaborate for the
@@ -3266,7 +3285,7 @@ NetProc* PChainConstructor::elaborate(Design*des, NetScope*scope) const
 
 	// Need the "this" variable for the current constructor. We're
 	// going to pass this to the chained constructor.
-      NetNet*var_this = scope->find_signal(perm_string::literal("@"));
+      NetNet*var_this = scope->find_signal(perm_string::literal(THIS_TOKEN));
 
 	// If super.new is an implicit constructor, then there are no
 	// arguments (other than "this" to worry about, so make a
@@ -3728,7 +3747,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	/* Add the implicit this reference when requested. */
       if (add_this_flag) {
 	    assert(use_path.empty());
-	    use_path.push_front(name_component_t(perm_string::literal("@")));
+	    use_path.push_front(name_component_t(perm_string::literal(THIS_TOKEN)));
       }
 
 	// There is no signal to search for so this cannot be a method.
