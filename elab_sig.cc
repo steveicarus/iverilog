@@ -578,10 +578,10 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	      // source code for the definition may be:
 	      //   function new(...);
 	      //   endfunction
-	      // In this case, the "@" port is the synthetic "this"
-	      // argument and we also use it as a return value at the
-	      // same time.
-	    ret_sig = scope->find_signal(perm_string::literal("@"));
+	      // In this case, the "@" port (THIS_TOKEN) is the synthetic
+	      // "this" argument and we also use it as a return value at
+	      // the same time.
+	    ret_sig = scope->find_signal(perm_string::literal(THIS_TOKEN));
 	    ivl_assert(*this, ret_sig);
 
 	    if (debug_elaborate)

@@ -109,7 +109,7 @@ void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net)
 	    return;
 
       list<perm_string>*this_name = new list<perm_string>;
-      this_name->push_back(perm_string::literal("@"));
+      this_name->push_back(perm_string::literal(THIS_TOKEN));
       vector<pform_tf_port_t>*this_port = pform_make_task_ports(loc,
 						       NetNet::PINPUT,
 						       pform_cur_class->type,

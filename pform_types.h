@@ -381,6 +381,14 @@ inline perm_string peek_tail_name(const pform_name_t&that)
       return that.back().name;
 }
 
+/*
+ * In pform names, the "super" and "this" keywords are converted to
+ * These tokens so that they don't interfere with the namespace and
+ * are handled specially.
+ */
+# define SUPER_TOKEN "#"
+# define THIS_TOKEN  "@"
+
 extern std::ostream& operator<< (std::ostream&out, const pform_name_t&);
 extern std::ostream& operator<< (std::ostream&out, const name_component_t&that);
 extern std::ostream& operator<< (std::ostream&out, const index_component_t&that);

@@ -68,7 +68,7 @@ static LexicalScope::lifetime_t var_lifetime;
 
 static pform_name_t* pform_create_this(void)
 {
-      name_component_t name (perm_string::literal("@"));
+      name_component_t name (perm_string::literal(THIS_TOKEN));
       pform_name_t*res = new pform_name_t;
       res->push_back(name);
       return res;
@@ -76,7 +76,7 @@ static pform_name_t* pform_create_this(void)
 
 static pform_name_t* pform_create_super(void)
 {
-      name_component_t name (perm_string::literal("#"));
+      name_component_t name (perm_string::literal(SUPER_TOKEN));
       pform_name_t*res = new pform_name_t;
       res->push_back(name);
       return res;
@@ -6897,6 +6897,9 @@ statement_item /* This is roughly statement_item in the LRM */
   | implicit_class_handle '.' K_new '(' expression_list_with_nuls ')' ';'
       { PChainConstructor*tmp = new PChainConstructor(*$5);
 	FILE_NAME(tmp, @3);
+	if (peek_head_name(*$1) == THIS_TOKEN) {
+	  yyerror(@1, "error: this.new is invalid syntax. Did you mean super.new?");
+	}
 	delete $1;
 	$$ = tmp;
       }

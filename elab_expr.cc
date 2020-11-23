@@ -2601,7 +2601,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	/* Add the implicit this reference when requested. */
       if (add_this_flag) {
 	    assert(use_path.empty());
-	    use_path.push_front(name_component_t(perm_string::literal("@")));
+	    use_path.push_front(name_component_t(perm_string::literal(THIS_TOKEN)));
       }
 
 	// If there is no object to the left of the method name, then
@@ -3906,7 +3906,7 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
       NetScope*scope_method = find_method_containing_scope(*this, scope);
       ivl_assert(*this, scope_method);
 
-      NetNet*this_net = scope_method->find_signal(perm_string::literal("@"));
+      NetNet*this_net = scope_method->find_signal(perm_string::literal(THIS_TOKEN));
       if (this_net == 0) {
 	    cerr << get_fileline() << ": internal error: "
 		 << "Unable to find 'this' port of " << scope_path(scope_method)
@@ -5766,7 +5766,7 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 
 	      // The return value of the initializer is the "this"
 	      // variable, instead of the "new&" scope name.
-	    NetNet*res1 = new1_scope->find_signal(perm_string::literal("@"));
+	    NetNet*res1 = new1_scope->find_signal(perm_string::literal(THIS_TOKEN));
 	    ivl_assert(*this, res1);
 
 	    NetESignal*eres = new NetESignal(res1);
@@ -5853,7 +5853,7 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 
 	// The return value for the constructor is actually the "this"
 	// variable, instead of the "new" scope name.
-      NetNet*res = new_scope->find_signal(perm_string::literal("@"));
+      NetNet*res = new_scope->find_signal(perm_string::literal(THIS_TOKEN));
       ivl_assert(*this, res);
 
       NetESignal*eres = new NetESignal(res);

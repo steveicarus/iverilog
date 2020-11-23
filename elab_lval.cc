@@ -378,7 +378,7 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
       NetScope*scope_method = find_method_containing_scope(*this, scope);
       ivl_assert(*this, scope_method);
 
-      NetNet*this_net = scope_method->find_signal(perm_string::literal("@"));
+      NetNet*this_net = scope_method->find_signal(perm_string::literal(THIS_TOKEN));
       if (this_net == 0) {
 	    cerr << get_fileline() << ": internal error: "
 		 << "Unable to find 'this' port of " << scope_path(scope_method)
