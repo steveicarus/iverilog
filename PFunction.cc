@@ -43,7 +43,7 @@ void PFunction::set_statement(Statement*s)
 
 void PFunction::push_statement_front(Statement*stmt)
 {
-	// This can only happen after the statement is initially set.
+        // This should not be possible.
       ivl_assert(*this, statement_);
 
 	// Get the PBlock of the statement. If it is not a PBlock,
@@ -75,7 +75,8 @@ PChainConstructor* PFunction::extract_chain_constructor()
       PChainConstructor*res = 0;
 
       if ((res = dynamic_cast<PChainConstructor*> (statement_))) {
-	    statement_ = 0;
+	    statement_ = new PBlock(PBlock::BL_SEQ);
+	    statement_->set_line(*this);
 
       } else if (PBlock*blk = dynamic_cast<PBlock*>(statement_)) {
 	    res = blk->extract_chain_constructor();
