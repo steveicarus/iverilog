@@ -3555,8 +3555,10 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	      // For SystemVerilog this may be a few other things.
 	    if (gn_system_verilog()) {
 		  NetProc *tmp;
-		    // This could be a method attached to a signal?
-		  tmp = elaborate_method_(des, scope);
+		    // This could be a method attached to a signal
+		    // or defined in this object?
+		  bool try_implicit_this = scope->get_class_scope() && path_.size() == 1;
+		  tmp = elaborate_method_(des, scope, try_implicit_this);
 		  if (tmp) return tmp;
 		    // Or it could be a function call ignoring the return?
 		  tmp = elaborate_function_(des, scope);
