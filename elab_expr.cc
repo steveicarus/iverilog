@@ -110,6 +110,7 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
       switch (lv_type) {
 	  case IVL_VT_DARRAY:
 	  case IVL_VT_QUEUE:
+	  case IVL_VT_CLASS:
 	      // For these types, use a different elab_and_eval that
 	      // uses the lv_net_type. We should eventually transition
 	      // all the types to this new form.
@@ -126,12 +127,6 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 	  case IVL_VT_VOID:
 	  case IVL_VT_NO_TYPE:
 	    ivl_assert(*expr, 0);
-	    break;
-	  case IVL_VT_CLASS:
-	    cerr << expr->get_fileline() << ": sorry: "
-		 << "I do not know how to elaborate r-value as IVL_VT_CLASS." << endl;
-	    des->errors += 1;
-	    return 0;
 	    break;
       }
 
