@@ -38,6 +38,7 @@ HOSTCFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 BUILDCC = @CC_FOR_BUILD@
 BUILDEXT = @BUILD_EXEEXT@
 CXX = @CXX@
+DLLTOOL = @DLLTOOL@
 INSTALL = @INSTALL@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -118,8 +119,22 @@ Makefile: $(srcdir)/Makefile.in
 dep:
 	mkdir dep
 
+ifeq (@WIN32@,yes)
+# To support cocotb, we export the VPI functions directly. This allows
+# cocotb to build VPI modules without using our vpi_user.h and libvpi.a.
+# This requires making the vvp.exe in two steps. The first step makes
+# a vvp.exe that dlltool can use to make an export library, and the
+# second step makes a vvp.exe that really exports those things.
+vvp@EXEEXT@: $O $(srcdir)/vvp.def
+	$(CXX) -o vvp$(suffix)@EXEEXT@ $(LDFLAGS) $O $(dllib) $(LIBS)
+	$(DLLTOOL) --dllname vvp$(suffix)@EXEEXT@ --def $(srcdir)/vvp.def \
+		--output-exp vvp.exp
+	rm -f vvp$(suffix)@EXEEXT@
+	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ vvp.exp $(LDFLAGS) $O $(dllib) $(LIBS)
+else
 vvp@EXEEXT@: $O
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $O $(LIBS) $(dllib)
+endif
 
 %.o: %.cc config.h
 	$(CXX) $(CPPFLAGS) -DIVL_SUFFIX='"$(suffix)"' $(MDIR1) $(MDIR2) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
