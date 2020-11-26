@@ -491,8 +491,9 @@ This opcode divides the left operand by the right operand. If the
 right operand is 0, then the result is NaN.
 
 
-* dup/real
-* dup/vec4
+* %dup/real
+* %dup/vec4
+* %dup/obj
 
 These opcodes duplicate the value on the top of the stack for the
 corresponding type.

@@ -45,8 +45,6 @@ class vvp_darray : public vvp_object {
       virtual void set_word(unsigned adr, const vvp_object_t&value);
       virtual void get_word(unsigned adr, vvp_object_t&value);
 
-      virtual void shallow_copy(const vvp_object*obj);
-
       virtual vvp_vector4_t get_bitstream(bool as_vec4);
 };
 
@@ -60,6 +58,7 @@ template <class TYPE> class vvp_darray_atom : public vvp_darray {
       void set_word(unsigned adr, const vvp_vector4_t&value);
       void get_word(unsigned adr, vvp_vector4_t&value);
       void shallow_copy(const vvp_object*obj);
+      vvp_object* duplicate(void) const;
       vvp_vector4_t get_bitstream(bool as_vec4);
 
     private:
@@ -77,6 +76,7 @@ class vvp_darray_vec4 : public vvp_darray {
       void set_word(unsigned adr, const vvp_vector4_t&value);
       void get_word(unsigned adr, vvp_vector4_t&value);
       void shallow_copy(const vvp_object*obj);
+      vvp_object* duplicate(void) const;
       vvp_vector4_t get_bitstream(bool as_vec4);
 
     private:
@@ -112,6 +112,7 @@ class vvp_darray_real : public vvp_darray {
       void set_word(unsigned adr, double value);
       void get_word(unsigned adr, double&value);
       void shallow_copy(const vvp_object*obj);
+      vvp_object* duplicate(void) const;
       vvp_vector4_t get_bitstream(bool as_vec4);
 
     private:
@@ -128,6 +129,7 @@ class vvp_darray_string : public vvp_darray {
       void set_word(unsigned adr, const std::string&value);
       void get_word(unsigned adr, std::string&value);
       void shallow_copy(const vvp_object*obj);
+      vvp_object* duplicate(void) const;
 
     private:
       std::vector<std::string> array_;
@@ -143,6 +145,7 @@ class vvp_darray_object : public vvp_darray {
       void set_word(unsigned adr, const vvp_object_t&value);
       void get_word(unsigned adr, vvp_object_t&value);
       void shallow_copy(const vvp_object*obj);
+      //virtual vvp_object* duplicate(void) const;
 
     private:
       std::vector<vvp_object_t> array_;

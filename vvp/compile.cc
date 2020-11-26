@@ -159,6 +159,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%div",      of_DIV,     0, {OA_NONE,   OA_NONE,     OA_NONE} },
       { "%div/s",    of_DIV_S,   0, {OA_NONE,   OA_NONE,     OA_NONE} },
       { "%div/wr",   of_DIV_WR,  0, {OA_NONE,   OA_NONE,     OA_NONE} },
+      { "%dup/obj",  of_DUP_OBJ, 0, {OA_NONE,   OA_NONE,     OA_NONE} },
       { "%dup/real", of_DUP_REAL,0, {OA_NONE,   OA_NONE,     OA_NONE} },
       { "%dup/vec4", of_DUP_VEC4,0, {OA_NONE,   OA_NONE,     OA_NONE} },
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },

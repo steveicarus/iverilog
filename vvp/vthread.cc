@@ -3002,6 +3002,19 @@ bool of_DIV_WR(vthread_t thr, vvp_code_t)
       return true;
 }
 
+/*
+ * %dup/obj
+ * %dup/real
+ * %dup/vec4
+ *
+ * Push a duplicate of the object on the appropriate stack.
+ */
+bool of_DUP_OBJ(vthread_t thr, vvp_code_t)
+{
+      thr->push_object(thr->peek_object().duplicate());
+      return true;
+}
+
 bool of_DUP_REAL(vthread_t thr, vvp_code_t)
 {
       thr->push_real(thr->peek_real(0));
@@ -5596,6 +5609,17 @@ bool of_RETLOAD_VEC4(vthread_t thr, vvp_code_t cp)
       return retload<vvp_vector4_t>(thr, cp);
 }
 
+/*
+ * %scopy
+ *
+ * Pop the top item from the object stack, and shallow_copy() that item into
+ * the new top of the object stack. This will copy at many items as needed
+ * from the source object to fill the target object. If the target object is
+ * larger then the source object, then some items will be left unchanged.
+ *
+ * The object may be any kind of object that supports shallow_copy(),
+ * including dynamic arrays and class objects.
+ */
 bool of_SCOPY(vthread_t thr, vvp_code_t)
 {
       vvp_object_t tmp;
