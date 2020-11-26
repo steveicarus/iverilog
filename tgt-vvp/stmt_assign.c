@@ -954,7 +954,7 @@ static int show_stmt_assign_darray_pattern(ivl_statement_t net)
 
 // FIXME: At the moment we reallocate the array space.
 //        This probably should be a resize to avoid values glitching
-	/* Allocate at least enough space for the array patter. */
+	/* Allocate at least enough space for the array pattern. */
       fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", size_reg, ivl_expr_parms(rval));
 	/* This can not have have a X/Z value so clear flag 4. */
       fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
@@ -1038,12 +1038,36 @@ static int show_stmt_assign_sig_darray(ivl_statement_t net)
 		 elements of the l-value. */
 	    errors += show_stmt_assign_darray_pattern(net);
 
-      } else {
-	      /* There is no l-value mux, so this must be an
-		 assignment to the array as a whole. Evaluate the
-		 "object", and store the evaluated result. */
+      } else if (ivl_expr_type(rval) == IVL_EX_NEW) {
+	    // There is no l-value mux, and the r-value expression is
+	    // a "new" expression. Handle this by simply storing the
+	    // new object to the lval.
 	    errors += draw_eval_object(rval);
-	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", var);
+	    fprintf(vvp_out, "    %%store/obj v%p_0; %s:%u: %s = new ...\n",
+		    var, ivl_stmt_file(net), ivl_stmt_lineno(net),
+		    ivl_signal_basename(var));
+
+      } else if (ivl_expr_type(rval) == IVL_EX_SIGNAL) {
+
+	    // There is no l-value mux, and the r-value expression is
+	    // a "signal" expression. Store a duplicate into the lvalue
+	    // By using the %dup/obj. Remember to pop the rvalue that
+	    // is no longer needed.
+	    errors += draw_eval_object(rval);
+	    fprintf(vvp_out, "    %%dup/obj;\n");
+	    fprintf(vvp_out, "    %%store/obj v%p_0; %s:%u: %s = <signal>\n",
+		    var, ivl_stmt_file(net), ivl_stmt_lineno(net),
+		    ivl_signal_basename(var));
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+
+      } else {
+	    // There is no l-value mux, so this must be an
+	    // assignment to the array as a whole. Evaluate the
+	    // "object", and store the evaluated result.
+	    errors += draw_eval_object(rval);
+	    fprintf(vvp_out, "    %%store/obj v%p_0; %s:%u: %s = <expr type %d>\n",
+		    var, ivl_stmt_file(net), ivl_stmt_lineno(net),
+		    ivl_signal_basename(var), ivl_expr_type(rval));
       }
 
       return errors;

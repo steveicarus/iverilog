@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,5 +37,13 @@ vvp_object::~vvp_object()
 
 void vvp_object::shallow_copy(const vvp_object*)
 {
+      cerr << "XXXX shallow_copy(vvp_object_t) not implemented for " << typeid(*this).name() << endl;
       assert(0);
+}
+
+vvp_object* vvp_object::duplicate(void) const
+{
+      cerr << "XXXX duplicate() not implemented for " << typeid(*this).name() << endl;
+      assert(0);
+      return 0;
 }

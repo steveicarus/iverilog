@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_object_H
 #define IVL_vvp_object_H
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,6 +33,7 @@ class vvp_object {
       virtual ~vvp_object() =0;
 
       virtual void shallow_copy(const vvp_object*that);
+      virtual vvp_object* duplicate(void) const;
 
       static void cleanup(void);
 
@@ -63,6 +64,9 @@ class vvp_object_t {
 
       inline void shallow_copy(const vvp_object_t&that)
           { ref_->shallow_copy(that.ref_); }
+      inline vvp_object_t duplicate(void) const
+          { return vvp_object_t(ref_->duplicate()); }
+
       template <class T> T*peek(void) const;
 
     private:

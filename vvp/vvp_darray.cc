@@ -67,11 +67,6 @@ void vvp_darray::get_word(unsigned, vvp_object_t&)
       cerr << "XXXX get_word(vvp_object_t) not implemented for " << typeid(*this).name() << endl;
 }
 
-void vvp_darray::shallow_copy(const vvp_object*)
-{
-      cerr << "XXXX shallow_copy(vvp_object_t) not implemented for " << typeid(*this).name() << endl;
-}
-
 vvp_vector4_t vvp_darray::get_bitstream(bool)
 {
       cerr << "XXXX get_bitstream() not implemented for " << typeid(*this).name() << endl;
@@ -120,6 +115,15 @@ template <class TYPE> void vvp_darray_atom<TYPE>::shallow_copy(const vvp_object*
       unsigned num_items = min(array_.size(), that->array_.size());
       for (unsigned idx = 0 ; idx < num_items ; idx += 1)
 	    array_[idx] = that->array_[idx];
+}
+
+template <class TYPE> vvp_object* vvp_darray_atom<TYPE>::duplicate(void) const
+{
+      vvp_darray_atom<TYPE>*that = new vvp_darray_atom<TYPE>(array_.size());
+      for (size_t idx = 0 ; idx < array_.size() ; idx += 1)
+	    that->array_[idx] = array_[idx];
+
+      return that;
 }
 
 template <class TYPE> vvp_vector4_t vvp_darray_atom<TYPE>::get_bitstream(bool)
@@ -190,6 +194,16 @@ void vvp_darray_vec4::shallow_copy(const vvp_object*obj)
       unsigned num_items = min(array_.size(), that->array_.size());
       for (unsigned idx = 0 ; idx < num_items ; idx += 1)
 	    array_[idx] = that->array_[idx];
+}
+
+vvp_object* vvp_darray_vec4::duplicate(void) const
+{
+      vvp_darray_vec4*that = new vvp_darray_vec4(array_.size(), word_wid_);
+
+      for (size_t idx = 0 ; idx < array_.size() ; idx += 1)
+	    that->array_[idx] = array_[idx];
+
+      return that;
 }
 
 vvp_vector4_t vvp_darray_vec4::get_bitstream(bool as_vec4)
@@ -344,6 +358,16 @@ void vvp_darray_real::shallow_copy(const vvp_object*obj)
 	    array_[idx] = that->array_[idx];
 }
 
+vvp_object* vvp_darray_real::duplicate(void) const
+{
+      vvp_darray_real*that = new vvp_darray_real(array_.size());
+
+      for (size_t idx = 0 ; idx < array_.size() ; idx += 1)
+	    that->array_[idx] = array_[idx];
+
+      return that;
+}
+
 vvp_vector4_t vvp_darray_real::get_bitstream(bool)
 {
       const unsigned word_wid = sizeof(double) * 8;
@@ -404,6 +428,16 @@ void vvp_darray_string::shallow_copy(const vvp_object*obj)
       unsigned num_items = min(array_.size(), that->array_.size());
       for (unsigned idx = 0 ; idx < num_items ; idx += 1)
 	    array_[idx] = that->array_[idx];
+}
+
+vvp_object* vvp_darray_string::duplicate(void) const
+{
+      vvp_darray_string*that = new vvp_darray_string(array_.size());
+
+      for (size_t idx = 0 ; idx < array_.size() ; idx += 1)
+	    that->array_[idx] = array_[idx];
+
+      return that;
 }
 
 vvp_queue::~vvp_queue()
