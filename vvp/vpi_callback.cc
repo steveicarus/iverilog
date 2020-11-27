@@ -514,7 +514,9 @@ void vpiEndOfCompile(void) {
       while (EndOfCompile) {
 	    cur = EndOfCompile;
 	    EndOfCompile = dynamic_cast<simulator_callback*>(cur->next);
-	    (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    if (cur->cb_data.cb_rtn != 0) {
+	        (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    }
 	    delete cur;
       }
 
@@ -534,7 +536,9 @@ void vpiStartOfSim(void) {
       while (StartOfSimulation) {
 	    cur = StartOfSimulation;
 	    StartOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
-	    (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    if (cur->cb_data.cb_rtn != 0) {
+	        (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    }
 	    delete cur;
       }
 
@@ -553,10 +557,12 @@ void vpiPostsim(void) {
       while (EndOfSimulation) {
 	    cur = EndOfSimulation;
 	    EndOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
-	      /* Only set the time if it is not NULL. */
-	    if (cur->cb_data.time)
-	          vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
-	    (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    if (cur->cb_data.cb_rtn != 0) {
+	        /* Only set the time if it is not NULL. */
+	        if (cur->cb_data.time)
+	            vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
+	        (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    }
 	    delete cur;
       }
 
@@ -577,7 +583,9 @@ void vpiNextSimTime(void)
       while (NextSimTime) {
 	    cur = NextSimTime;
 	    NextSimTime = dynamic_cast<simulator_callback*>(cur->next);
-	    (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    if (cur->cb_data.cb_rtn != 0) {
+	        (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    }
 	    delete cur;
       }
 
