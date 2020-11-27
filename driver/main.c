@@ -1379,7 +1379,7 @@ int main(int argc, char **argv)
 
 	    cfreset(fp, command_filename);
 	    rc = cfparse();
-	    if (rc != 0) {
+	    if (rc != 0 || command_file_errors > 0) {
 		  fprintf(stderr, "%s: parsing failed in base command "
 		          "file %s.\n", argv[0], command_filename);
 		  return 1;

@@ -21,6 +21,9 @@
 
 # include  <stddef.h>
 
+  /* Count errors in the command file. */
+extern int command_file_errors;
+
   /* This is the integer-width argument that will be passed to ivl. */
 extern unsigned integer_width;
 

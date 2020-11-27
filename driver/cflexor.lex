@@ -45,6 +45,17 @@ typedef struct t_cmdfile {
 s_cmdfile cmdfile_stack[MAX_CMDFILE_DEPTH];
 int cmdfile_stack_ptr = 0;
 
+# define PROCESS_EOF \
+  if (--cmdfile_stack_ptr < 0) {		\
+    free(current_file);				\
+    yyterminate();				\
+  } else {					\
+    yy_delete_buffer(YY_CURRENT_BUFFER);	\
+    yy_switch_to_buffer(cmdfile_stack[cmdfile_stack_ptr].buffer); \
+    free(current_file);                         \
+    current_file = cmdfile_stack[cmdfile_stack_ptr].cmdfile; \
+  }
+
 %}
 
 %x CCOMMENT
@@ -59,11 +70,25 @@ int cmdfile_stack_ptr = 0;
 <LCOMMENT>.    { yymore(); }
 <LCOMMENT>\n   { cflloc.first_line += 1; BEGIN(comment_enter); }
 
+<LCOMMENT><<EOF>> {
+      fprintf(stderr, "%s:%d: ERROR: Comment not terminated.\n"<
+	      current_file, cflloc.first_line);
+      command_file_errors += 1;
+      BEGIN(0);
+      PROCESS_EOF }
+
   /* Accept C style comments. */
 "/*" { comment_enter = YY_START; BEGIN(CCOMMENT); }
 <CCOMMENT>.    { yymore(); }
 <CCOMMENT>\n   { cflloc.first_line += 1; yymore(); }
 <CCOMMENT>"*/" { BEGIN(comment_enter); }
+
+<CCOMMENT><<EOF>> {
+      fprintf(stderr, "%s:%d: ERROR: Comment not terminated.\n"<
+	      current_file, cflloc.first_line);
+      command_file_errors += 1;
+      BEGIN(0);
+      PROCESS_EOF }
 
   /* Accept shell type comments. */
 ^"#".* { ; }
@@ -119,6 +144,13 @@ int cmdfile_stack_ptr = 0;
       cflloc.first_line += 1;
       BEGIN(0); }
 
+<PLUS_ARGS><<EOF>> {
+      BEGIN(0);
+      fprintf(stderr, "%s:%d: ERROR: Plusargs statement not terminated.\n",
+	      current_file, cflloc.first_line);
+      command_file_errors += 1;
+      PROCESS_EOF }
+
   /* Notice the -a flag. */
 "-a" { return TOK_Da; }
 
@@ -159,21 +191,19 @@ int cmdfile_stack_ptr = 0;
       cflval.text = trim_trailing_white(yytext, 0);
       BEGIN(0);
       return TOK_STRING; }
+<FILE_NAME><<EOF>> {
+      cflval.text = trim_trailing_white(yytext, 0);
+      BEGIN(0);
+      fprintf(stderr, "%s:%d: ERROR: File name not terminated.\n",
+	      current_file, cflloc.first_line);
+      command_file_errors += 1;
+      PROCESS_EOF }
 
   /* Fallback match. */
 . { return yytext[0]; }
 
   /* At the end of file switch back to the previous buffer. */
-<<EOF>> {
-      if (--cmdfile_stack_ptr < 0) {
-	    free(current_file);
-	    yyterminate();
-      } else {
-	    yy_delete_buffer(YY_CURRENT_BUFFER);
-	    yy_switch_to_buffer(cmdfile_stack[cmdfile_stack_ptr].buffer);
-	    free(current_file);
-	    current_file = cmdfile_stack[cmdfile_stack_ptr].cmdfile;
-      } }
+<<EOF>> { PROCESS_EOF }
 
 %%
 
@@ -241,6 +271,7 @@ void switch_to_command_file(const char *file)
 
 void cfreset(FILE*fd, const char*path)
 {
+      command_file_errors = 0;
       yyin = fd;
       yyrestart(fd);
       current_file = strdup(path);
