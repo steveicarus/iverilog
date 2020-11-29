@@ -1,0 +1,73 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+
+
+  lin:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [
+          '18.04',
+          '20.04'
+        ]
+    runs-on: ubuntu-${{ matrix.os }}
+    name: '🐧 Ubuntu'
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt update -qq
+        sudo apt install -y make g++ git bison flex gperf libreadline-dev autoconf
+
+    - name: Build and test
+      run: |
+        git clone https://github.com/steveicarus/ivtest.git
+        export PATH=$HOME/bin:$PATH
+        autoconf
+        ./configure --prefix=$HOME
+        make install
+        make check
+        cd ivtest
+        perl vvp_reg.pl
+        diff regression_report-devel.txt regression_report.txt
+        perl vpi_reg.pl
+
+
+  win:
+    runs-on: windows-latest
+    name: '🧊 Windows'
+    steps:
+
+    - run: git config --global core.autocrlf input
+
+    - uses: actions/checkout@v2
+
+    - name: Build and test
+      shell: bash
+      run: |
+        git clone https://github.com/steveicarus/ivtest.git
+        choco uninstall -y mingw
+        choco upgrade --no-progress -y msys2
+        export msys2='cmd //C RefreshEnv.cmd '
+        export msys2+='& set MSYS=winsymlinks:nativestrict '
+        export msys2+='& C:\\msys64\\msys2_shell.cmd -defterm -no-start'
+        export mingw64="$msys2 -mingw64 -full-path -here -c "\"\$@"\" --"
+        export msys2+=" -msys2 -c "\"\$@"\" --"
+        $msys2 pacman --sync --noconfirm --needed base-devel mingw-w64-x86_64-toolchain
+        $mingw64 ./autoconf.sh
+        $mingw64 ./configure
+        $mingw64 make install
+        $mingw64 make check
+        cd ivtest
+        $mingw64 perl update_msys2_report.pl
+        $mingw64 perl vvp_reg.pl
+        diff --strip-trailing-cr regression_report-msys2.txt regression_report.txt
+        $mingw64 perl vpi_reg.pl
