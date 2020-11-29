@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -533,11 +533,12 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	  case vpiFunction:   stype = FST_ST_VCD_FUNCTION; break;
 	  case vpiGenScope:   stype = FST_ST_VCD_GENERATE; break;
 	  case vpiModule:     stype = FST_ST_VCD_MODULE; break;
+	  case vpiPackage:    stype = FST_ST_VCD_PACKAGE; break;
 	  case vpiTask:       stype = FST_ST_VCD_TASK; break;
 
 	  default:
 	    vpi_printf("FST warning: $dumpvars: Unsupported argument "
-	               "type (%s)\n", vpi_get_str(vpiType, item));
+	               "type (%s).\n", vpi_get_str(vpiType, item));
 	    return;
       }
 
@@ -662,6 +663,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    break;
 
 	  case vpiModule:
+	  case vpiPackage:
 	  case vpiGenScope:
 	  case vpiFunction:
 	  case vpiTask:

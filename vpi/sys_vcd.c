@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -561,11 +561,12 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	  case vpiNamedFork:  type = "fork"; break;
 	  case vpiFunction:   type = "function"; break;
 	  case vpiModule:     type = "module"; break;
+	  case vpiPackage:    type = "package"; break;
 	  case vpiTask:       type = "task"; break;
 
 	  default:
 	    vpi_printf("VCD warning: $dumpvars: Unsupported argument "
-	               "type (%s)\n", vpi_get_str(vpiType, item));
+	               "type (%s).\n", vpi_get_str(vpiType, item));
 	    return;
       }
 
@@ -730,6 +731,11 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		    /* Sort any signals that we added above. */
 		  fprintf(dump_file, "$upscope $end\n");
 	    }
+	    break;
+
+	  case vpiPackage:
+	    vpi_printf("VCD warning: $dumpvars: Package (%s) is not dumpable "
+	               "with VCD.\n", vpi_get_str(vpiFullName, item));
 	    break;
       }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -761,9 +761,14 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    }
 	    break;
 
+	  case vpiPackage:
+	    vpi_printf("LXT2 warning: $dumpvars: Package (%s) is not dumpable "
+	               "with LXT2.\n", vpi_get_str(vpiFullName, item));
+	    break;
+
 	  default:
 	    vpi_printf("LXT2 warning: $dumpvars: Unsupported parameter "
-	               "type (%s)\n", vpi_get_str(vpiType, item));
+	               "type (%s).\n", vpi_get_str(vpiType, item));
       }
 
 }
