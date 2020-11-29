@@ -54,8 +54,6 @@ jobs:
       shell: bash
       run: |
         git clone https://github.com/steveicarus/ivtest.git
-        choco uninstall -y mingw
-        choco upgrade --no-progress -y msys2
         export msys2='cmd //C RefreshEnv.cmd '
         export msys2+='& set MSYS=winsymlinks:nativestrict '
         export msys2+='& C:\\msys64\\msys2_shell.cmd -defterm -no-start'
