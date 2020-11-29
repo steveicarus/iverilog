@@ -73,3 +73,55 @@ jobs:
 
     - name: Test
       run: ./.github/test.sh
+
+
+  msys2:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: [
+          { msystem: MINGW64, arch: x86_64 },
+          { msystem: MINGW32, arch: i686   }
+        ]
+    name: '🟪 MSYS2 · ${{ matrix.msystem }}'
+    defaults:
+      run:
+        shell: msys2 {0}
+    env:
+      MINGW_INSTALLS: ${{ matrix.msystem }}
+    steps:
+
+    - run: git config --global core.autocrlf input
+      shell: bash
+
+    - uses: actions/checkout@v2
+
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{ matrix.msystem }}
+        install: >
+          tcsh
+          git
+          base-devel
+          mingw-w64-${{ matrix.arch }}-toolchain
+        update: true
+
+    - name: Build
+      run: |
+        cd msys2
+        makepkg-mingw --noconfirm --noprogressbar -sCLf
+
+    - name: Install
+      run: pacman -U --noconfirm msys2/*.zst
+
+    - name: Test
+      run: |
+        git clone https://github.com/albertxie/iverilog-tutorial
+        cd iverilog-tutorial/code_samples
+        iverilog -o simple.vvp simple.v simple_tb.v
+        vvp simple.vvp
+
+        git clone git://github.com/steveicarus/ivtest.git
+        cd ivtest
+        ./regress
