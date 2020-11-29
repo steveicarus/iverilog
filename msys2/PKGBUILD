@@ -1,0 +1,37 @@
+_realname=iverilog
+pkgbase=mingw-w64-${_realname}
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
+pkgver=ci
+pkgrel=1
+pkgdesc="Icarus Verilog, a Verilog simulation and synthesis tool (mingw-w64)"
+arch=('any')
+url="http://iverilog.icarus.com/"
+license=('GPLv2+')
+depends=("${MINGW_PACKAGE_PREFIX}-readline"
+         "${MINGW_PACKAGE_PREFIX}-gcc-libs")
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
+             "${MINGW_PACKAGE_PREFIX}-ghostscript")
+
+source=()
+sha256sums=()
+
+build() {
+  cd "${srcdir}"/../..
+  sh autoconf.sh
+  ./configure \
+    --prefix="${MINGW_PREFIX}" \
+    --host="$CARCH"-w64-mingw32
+  make
+}
+
+check() {
+  cd "${srcdir}"/../..
+  make check
+}
+
+package() {
+  cd "${srcdir}"/../..
+  make DESTDIR="${pkgdir}" install
+  mkdir -p "${pkgdir}${MINGW_PREFIX}/share/doc/${_realname}"
+  mv "${pkgdir}${MINGW_PREFIX}"/*.pdf "${pkgdir}${MINGW_PREFIX}/share/doc/${_realname}"
+}
