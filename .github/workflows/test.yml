@@ -27,14 +27,16 @@ jobs:
         sudo apt update -qq
         sudo apt install -y make g++ git bison flex gperf libreadline-dev autoconf
 
-    - name: Build and test
+    - name: Build
       run: |
-        export PATH=$HOME/bin:$PATH
         autoconf
         ./configure --prefix=$HOME
         make install
         make check
 
+    - name: Test
+      run: |
+        export PATH=$HOME/bin:$PATH
         sh .github/test.sh
 
 
