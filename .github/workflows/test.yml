@@ -29,16 +29,13 @@ jobs:
 
     - name: Build and test
       run: |
-        git clone https://github.com/steveicarus/ivtest.git
         export PATH=$HOME/bin:$PATH
         autoconf
         ./configure --prefix=$HOME
         make install
         make check
-        cd ivtest
-        perl vvp_reg.pl
-        diff regression_report-devel.txt regression_report.txt
-        perl vpi_reg.pl
+
+        sh .github/test.sh
 
 
   win:
@@ -62,8 +59,6 @@ jobs:
     - name: Build and test
       shell: bash
       run: |
-        git clone https://github.com/steveicarus/ivtest.git
-
         export msys2='cmd //C RefreshEnv.cmd '
         export msys2+='& set MSYS=winsymlinks:nativestrict '
         export msys2+='& C:\\msys64\\msys2_shell.cmd -defterm -no-start'
@@ -74,8 +69,5 @@ jobs:
         $mingw64 ./configure
         $mingw64 make install
         $mingw64 make check
-        cd ivtest
-        $mingw64 perl update_msys2_report.pl
-        $mingw64 perl vvp_reg.pl
-        diff --strip-trailing-cr regression_report-msys2.txt regression_report.txt
-        $mingw64 perl vpi_reg.pl
+
+        sh .github/test.sh
