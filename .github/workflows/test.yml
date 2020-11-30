@@ -61,9 +61,6 @@ jobs:
       run: |
         export mingw64='cmd //C RefreshEnv.cmd & set MSYS=winsymlinks:nativestrict & C:\\msys64\\msys2_shell.cmd -defterm -no-start -mingw64 -full-path -here -c "$@" --'
 
-        $mingw64 ./autoconf.sh
-        $mingw64 ./configure
-        $mingw64 make install
-        $mingw64 make check
+        $mingw64 ./.github/build.sh
 
         $mingw64 ./.github/test.sh
