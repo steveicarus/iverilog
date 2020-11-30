@@ -35,7 +35,7 @@ jobs:
         make check
 
     - name: Test
-      run: sh .github/test.sh
+      run: ./.github/test.sh
 
 
   win:
@@ -59,15 +59,11 @@ jobs:
     - name: Build and test
       shell: bash
       run: |
-        export msys2='cmd //C RefreshEnv.cmd '
-        export msys2+='& set MSYS=winsymlinks:nativestrict '
-        export msys2+='& C:\\msys64\\msys2_shell.cmd -defterm -no-start'
-        export mingw64="$msys2 -mingw64 -full-path -here -c "\"\$@"\" --"
-        export msys2+=" -msys2 -c "\"\$@"\" --"
+        export mingw64='cmd //C RefreshEnv.cmd & set MSYS=winsymlinks:nativestrict & C:\\msys64\\msys2_shell.cmd -defterm -no-start -mingw64 -full-path -here -c "$@" --'
 
         $mingw64 ./autoconf.sh
         $mingw64 ./configure
         $mingw64 make install
         $mingw64 make check
 
-        sh .github/test.sh
+        $mingw64 ./.github/test.sh
