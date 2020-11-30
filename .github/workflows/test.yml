@@ -17,7 +17,7 @@ jobs:
           '20.04'
         ]
     runs-on: ubuntu-${{ matrix.os }}
-    name: '🐧 Ubuntu'
+    name: '🐧 Ubuntu ${{ matrix.os }}'
     steps:
 
     - uses: actions/checkout@v2
