@@ -456,7 +456,6 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       NetNet*       sig = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
-      perm_string method_name;
 
       symbol_search(this, des, scope, path_, sig, par, eve);
 
@@ -468,33 +467,16 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    return 0;
       }
 
-	// Break the path_ into the tail name and the prefix. For
-	// example, a name "a.b.c" is broken into name_tail="c" and
-	// path_prefix="a.b".
-      const name_component_t&path_tail = path_.back();
-      pform_name_t path_prefix = path_;
-      path_prefix.pop_back();
-
-	/* If the signal is not found, check to see if this is a
-	   member of a struct. Take the name of the form "a.b.member",
-	   remove the member and store it into method_name, and retry
-	   the search with "a.b". */
-      if (sig == 0 && path_.size() >= 2) {
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
-			"Symbol not found, try again with path_prefix=" << path_prefix
-		       << " and method_name=" << path_tail.name << endl;
-	    }
-	    method_name = path_tail.name;
-	    symbol_search(this, des, scope, path_prefix, sig, par, eve);
-
-	      // Whoops, not a struct signal, so give up on this avenue.
-	    if (sig && sig->struct_type() == 0) {
-		  cerr << get_fileline() << ": XXXXX: sig=" << sig->name()
-		       << " is found, but not a struct with member " << method_name << endl;
-		  method_name = perm_string();
-		  sig = 0;
-	    }
+      pform_name_t base_path = path_;
+      pform_name_t member_path;
+      while (sig == 0 && base_path.size() > 0) {
+	    symbol_search(this, des, scope, base_path, sig, par, eve);
+	    // Found it!
+	    if (sig != 0) break;
+	    // Not found. Try to pop another name off the base_path
+	    // and push it to the front of the member_path.
+	    member_path.push_front( base_path.back() );
+	    base_path.pop_back();
       }
 
       if (sig == 0) {
@@ -504,18 +486,27 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      assert(sig);
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "Found l-value path_=" << path_
+		 << " as sig=" << sig->name()
+		 << " base_path=" << base_path
+		 << " member_path=" << member_path
+		 << " unpacked_dimensions()=" << sig->unpacked_dimensions()
+		 << endl;
+      }
 
-	/* If this is SystemVerilog and the variable is not yet
-	   assigned by anything, then convert it to an unresolved
-	   wire. */
+
+      // If this is SystemVerilog and the variable is not yet
+      // assigned by anything, then convert it to an unresolved
+      // wire.
       if (gn_var_can_be_uwire()
 	  && (sig->type() == NetNet::REG)
 	  && (sig->peek_lref() == 0) ) {
 	    sig->type(NetNet::UNRESOLVED_WIRE);
       }
 
-	/* Don't allow registers as assign l-values. */
+      // Don't allow registers as assign l-values.
       if (sig->type() == NetNet::REG) {
 	    cerr << get_fileline() << ": error: reg " << sig->name()
 		 << "; cannot be driven by primitives"
@@ -524,61 +515,135 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    return 0;
       }
 
-	// Default part select is the entire word.
+      // Some parts below need the tail component. This is a convenient
+      // reference to it.
+      const name_component_t&path_tail = path_.back();
+
+      // Default part select is the entire word.
       unsigned midx = sig->vector_width()-1, lidx = 0;
-	// The default word select is the first.
+      // The default word select is the first.
       long widx = 0;
-	// Set this to true if we calculate the word index. This is
-	// used to distinguish between unpacked array assignment and
-	// array word assignment.
+      // Set this to true if we calculate the word index. This is
+      // used to distinguish between unpacked array assignment and
+      // array word assignment.
       bool widx_flag = false;
 
       list<long> unpacked_indices_const;
 
+      // Detect the net is a structure and there was a method path
+      // detected. We have already broken the path_ into the path to
+      // the net, and the path of member names. For example, if the
+      // path_ is a.b.x.y, we have determined that a.b is a reference
+      // to the net, and that x.y are the member_path. So in this case
+      // we handle the member_path.
       const netstruct_t*struct_type = 0;
-      if ((struct_type = sig->struct_type()) && !method_name.nil()) {
-
-	      // Detect the variable is a structure and there was a
-	      // method name detected. We've already found that
-	      // the path_ is <>.sig.method_name and signal
-	      // (NetNet). We also know that sig is struct_type(), so
-	      // look for a method named method_name.
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
-		       << "Signal " << sig->name() << " is a structure, "
-		       << "try to match member " << method_name << endl;
-
-	    unsigned long member_off = 0;
-	    const struct netstruct_t::member_t*member = struct_type->packed_member(method_name, member_off);
-	    ivl_assert(*this, member);
+      if ((struct_type = sig->struct_type()) && !member_path.empty()) {
 
 	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
-		       << "Member " << method_name
-		       << " has type " << *member->net_type << "." << endl;
-		  cerr << get_fileline() << ":                                : "
-		       << "Tail name has " << path_tail.index.size() << " indices." << endl;
+	          cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
+		       << "Signal " << sig->name() << " is a structure, "
+		       << "try to match member path " << member_path << endl;
 	    }
 
-	      // Rewrite a member select of a packed structure as a
-	      // part select of the base variable.
+	    unsigned long member_off = 0;
+	    unsigned long member_width = sig->vector_width();
+
+	    // Might be an array of structs, like a.b[N].x.y. (A packed
+	    // array.) Handle that here by taking a part select that
+	    // reflects the array index.
+	    if (sig->packed_dimensions() > 1) {
+		  list<index_component_t>tmp_index = base_path.back().index;
+		  index_component_t member_select;
+		  member_select.sel = index_component_t::SEL_BIT;
+		  member_select.msb = new PENumber(new verinum(member_off));
+		  tmp_index.push_back(member_select);
+		  NetExpr*packed_base = collapse_array_indices(des, scope, sig, tmp_index);
+		  if (debug_elaborate) {
+		        cerr << get_fileline() << ": " << __func__ << ": "
+			     << "packed_base=" << *packed_base
+			     << endl;
+		  }
+
+		  long tmp;
+		  if (packed_base && eval_as_long(tmp, packed_base)) {
+		        member_off = tmp;
+			member_width = struct_type->packed_width();
+			delete packed_base;
+			packed_base = 0;
+		  }
+
+		  // Only support constant dimensions here.
+		  ivl_assert(*this, packed_base == 0);
+	    }
+
+	    // Now run through the member names, possibly nested, to take
+	    // further part selects reflected by the member name. So for
+	    // example, (.x.y) member x has an offset and width within the
+	    // containing vector, and member y an offset and width within
+	    // that.
+	    pform_name_t use_path = member_path;
+	    while (! use_path.empty()) {
+	          const name_component_t member_comp = use_path.front();
+	          const perm_string&member_name = member_comp.name;
+
+		  unsigned long tmp_off;
+		  const struct netstruct_t::member_t*member = struct_type->packed_member(member_name, tmp_off);
+		  ivl_assert(*this, member);
+		  member_off += tmp_off;
+		  member_width = member->net_type->packed_width();
+
+		  if (const netstruct_t*tmp_struct = dynamic_cast<const netstruct_t*> (member->net_type)) {
+		        struct_type = tmp_struct;
+		  } else {
+		        struct_type = 0;
+		  }
+
+		  use_path.pop_front();
+	    }
+
+	    // Look for part selects on the final member. For example if
+	    // the path is a.b.x.y[3:0], the end of the member_path will
+	    // have an index that needs to be handled.
+	    // For now, assume there is unly a single part/bit select, and
+	    // assume it's constant.
+	    if (member_path.back().index.size() > 0) {
+		  list<index_component_t>tmp_index = member_path.back().index;
+		  if (debug_elaborate) {
+		        cerr << get_fileline() << ": " << __func__ << ": "
+			     << "Process trailing bit/part select. "
+			     << "index.size()=" << tmp_index.size()
+			     << endl;
+		  }
+		  ivl_assert(*this, tmp_index.size() == 1);
+		  const index_component_t&tail_sel = tmp_index.back();
+		  ivl_assert(*this, tail_sel.sel == index_component_t::SEL_PART || tail_sel.sel == index_component_t::SEL_BIT);
+		  long tmp_off;
+		  unsigned long tmp_wid;
+		  bool rc = calculate_part(this, des, scope, tail_sel, tmp_off, tmp_wid);
+		  ivl_assert(*this, rc);
+		  member_off += tmp_off;
+		  member_width = tmp_wid;
+	    }
+
+	    if (debug_elaborate) {
+	          cerr << get_fileline() << ": " << __func__ << ": "
+		       << "Final, calculated member " << member_path
+		       << " offset=" << member_off
+		       << " width=" << member_width
+		       << endl;
+	    }
+
+	    // Rewrite a member select of a packed structure as a
+	    // part select of the base variable.
 	    lidx = member_off;
-	    midx = lidx + member->net_type->packed_width() - 1;
+	    midx = lidx + member_width - 1;
 
-	      // The dimensions of the tail of the prefix must match
-	      // the dimensions of the signal at this point. (The sig
-	      // has a packed dimension for the packed struct size.)
-	      // For example, if the path_=a[<m>][<n>].member, then
-	      // sig must have 3 packed dimensions: one for the struct
-	      // members and two actual packed dimensions.
-	    ivl_assert(*this, path_prefix.back().index.size()+1 == sig->packed_dimensions());
-
-	      // Elaborate an expression from the packed indices and
-	      // the member offset (into the structure) to get a
-	      // canonical expression into the packed signal vector.
+	    // Elaborate an expression from the packed indices and
+	    // the member offset (into the structure) to get a
+	    // canonical expression into the packed signal vector.
 	    NetExpr*packed_base = 0;
 	    if (sig->packed_dimensions() > 1) {
-		  list<index_component_t>tmp_index = path_prefix.back().index;
+		  list<index_component_t>tmp_index = base_path.back().index;
 		  index_component_t member_select;
 		  member_select.sel = index_component_t::SEL_BIT;
 		  member_select.msb = new PENumber(new verinum(member_off));
@@ -590,36 +655,6 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 			     << "packed_base=" << *packed_base
 			     << ", member_off=" << member_off << endl;
 		  }
-	    }
-
-	    long tmp;
-	    if (packed_base && eval_as_long(tmp, packed_base)) {
-		  lidx = tmp;
-		  midx = lidx + member->net_type->packed_width() - 1;
-		  delete packed_base;
-		  packed_base = 0;
-	    }
-
-	      // Currently, only support const dimensions here.
-	    ivl_assert(*this, packed_base == 0);
-
-	      // Now the lidx/midx values get us to the member. Next
-	      // up, deal with bit/part selects from the member
-	      // itself.
-	      //XXXXivl_assert(*this, member->packed_dims.size() <= 1);
-	    ivl_assert(*this, path_tail.index.size() <= 1);
-	    if (! path_tail.index.empty()) {
-		  long tmp_off;
-		  unsigned long tmp_wid;
-		  const index_component_t&tail_sel = path_tail.index.back();
-		  ivl_assert(*this, tail_sel.sel == index_component_t::SEL_PART || tail_sel.sel == index_component_t::SEL_BIT);
-		  bool rc = calculate_part(this, des, scope, tail_sel, tmp_off, tmp_wid);
-		  ivl_assert(*this, rc);
-		  if (debug_elaborate)
-			cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
-			     << "tmp_off=" << tmp_off << ", tmp_wid=" << tmp_wid << endl;
-		  lidx += tmp_off;
-		  midx = lidx + tmp_wid - 1;
 	    }
 
       } else if (gn_system_verilog() && sig->unpacked_dimensions() > 0 && path_tail.index.empty()) {

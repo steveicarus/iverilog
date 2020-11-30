@@ -232,8 +232,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
 	// We are processing the tail of a string of names. For
 	// example, the Verilog may be "a.b.c", so we are processing
-	// "c" at this point. (Note that if method_name is not nil,
-	// then this is "a.b.c.method" and "a.b.c" is a struct or class.)
+	// "c" at this point.
       const name_component_t&name_tail = path_.back();
 
 	// Use the last index to determine what kind of select
