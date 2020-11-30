@@ -41,6 +41,8 @@ jobs:
   win:
     runs-on: windows-latest
     name: '🧊 Windows'
+    defaults:
+      shell: bash
     steps:
 
     - run: git config --global core.autocrlf input
@@ -56,11 +58,11 @@ jobs:
           mingw-w64-x86_64-toolchain
         update: true
 
-    - name: Build and test
-      shell: bash
-      run: |
-        export mingw64='cmd //C RefreshEnv.cmd & set MSYS=winsymlinks:nativestrict & C:\\msys64\\msys2_shell.cmd -defterm -no-start -mingw64 -full-path -here -c "$@" --'
+    - name: Add .github to PATH
+      run: echo "$(cygpath -w $(pwd)/.github)" >> $GITHUB_PATH
 
-        $mingw64 ./.github/build.sh
+    - name: Build
+      run: mingw64 ./.github/build.sh
 
-        $mingw64 ./.github/test.sh
+    - name: Test
+      run: mingw64 ./.github/test.sh
