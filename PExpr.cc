@@ -72,7 +72,7 @@ NetNet* PExpr::elaborate_bi_net(Design*, NetScope*) const
       return 0;
 }
 
-bool PExpr::is_collapsible_net(Design*, NetScope*) const
+bool PExpr::is_collapsible_net(Design*, NetScope*, NetNet::PortType) const
 {
       return false;
 }

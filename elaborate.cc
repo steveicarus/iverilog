@@ -1446,8 +1446,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    assert(prts_vector_width % instance.size() == 0);
 
 	    if (!prts.empty() && (prts[0]->port_type() == NetNet::PINPUT)
-                && prts[0]->pin(0).nexus()->drivers_present()
-                && pins[idx]->is_collapsible_net(des, scope)) {
+	        && prts[0]->pin(0).nexus()->drivers_present()
+	        && pins[idx]->is_collapsible_net(des, scope,
+	                                         prts[0]->port_type())) {
                   prts[0]->port_type(NetNet::PINOUT);
 
 		  cerr << pins[idx]->get_fileline() << ": warning: input port "
@@ -1455,9 +1456,10 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    }
 
 	    if (!prts.empty() && (prts[0]->port_type() == NetNet::POUTPUT)
-                && (prts[0]->type() != NetNet::REG)
-                && prts[0]->pin(0).nexus()->has_floating_input()
-                && pins[idx]->is_collapsible_net(des, scope)) {
+	        && (prts[0]->type() != NetNet::REG)
+	        && prts[0]->pin(0).nexus()->has_floating_input()
+	        && pins[idx]->is_collapsible_net(des, scope,
+	                                         prts[0]->port_type())) {
                   prts[0]->port_type(NetNet::PINOUT);
 
 		  cerr << pins[idx]->get_fileline() << ": warning: output port "

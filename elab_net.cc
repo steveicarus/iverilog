@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -168,7 +168,8 @@ NetNet* PEConcat::elaborate_bi_net(Design*des, NetScope*scope) const
       return elaborate_lnet_common_(des, scope, true);
 }
 
-bool PEConcat::is_collapsible_net(Design*des, NetScope*scope) const
+bool PEConcat::is_collapsible_net(Design*des, NetScope*scope,
+                                  NetNet::PortType port_type) const
 {
       assert(scope);
 
@@ -183,7 +184,7 @@ bool PEConcat::is_collapsible_net(Design*des, NetScope*scope) const
 	    if (parms_[idx] == 0)
                   return false;
 
-	    if (!parms_[idx]->is_collapsible_net(des, scope))
+	    if (!parms_[idx]->is_collapsible_net(des, scope, port_type))
                   return false;
       }
 
@@ -1065,7 +1066,8 @@ NetNet*PEIdent::elaborate_unpacked_net(Design*des, NetScope*scope) const
       return sig;
 }
 
-bool PEIdent::is_collapsible_net(Design*des, NetScope*scope) const
+bool PEIdent::is_collapsible_net(Design*des, NetScope*scope,
+                                 NetNet::PortType port_type) const
 {
       assert(scope);
 
@@ -1086,9 +1088,10 @@ bool PEIdent::is_collapsible_net(Design*des, NetScope*scope) const
 	/* If this is SystemVerilog and the variable is not yet
 	   assigned by anything, then convert it to an unresolved
 	   wire. */
-      if (gn_var_can_be_uwire()
-	  && (sig->type() == NetNet::REG)
-	  && (sig->peek_eref() == 0) ) {
+      if (gn_var_can_be_uwire() &&
+          (sig->type() == NetNet::REG) &&
+          (sig->peek_eref() == 0) &&
+          (port_type == NetNet::POUTPUT)) {
 	    sig->type(NetNet::UNRESOLVED_WIRE);
       }
 

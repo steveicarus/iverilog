@@ -1,7 +1,7 @@
 #ifndef IVL_PExpr_H
 #define IVL_PExpr_H
 /*
- * Copyright (c) 1998-2019 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2020 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -181,7 +181,8 @@ class PExpr : public LineInfo {
         // structural net that can have multiple drivers. This is
         // used to test whether an input port connection can be
         // collapsed to a single wire.
-      virtual bool is_collapsible_net(Design*des, NetScope*scope) const;
+      virtual bool is_collapsible_net(Design*des, NetScope*scope,
+                                      NetNet::PortType port_type) const;
 
 	// This method returns true if that expression is the same as
 	// this expression. This method is used for comparing
@@ -256,7 +257,8 @@ class PEConcat : public PExpr {
 					 NetScope*scope,
 					 bool is_cassign,
 					 bool is_force) const;
-      virtual bool is_collapsible_net(Design*des, NetScope*scope) const;
+      virtual bool is_collapsible_net(Design*des, NetScope*scope,
+                                      NetNet::PortType port_type) const;
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
 				     bool bidirectional_flag) const;
@@ -377,7 +379,8 @@ class PEIdent : public PExpr {
 
       verinum* eval_const(Design*des, NetScope*sc) const;
 
-      virtual bool is_collapsible_net(Design*des, NetScope*scope) const;
+      virtual bool is_collapsible_net(Design*des, NetScope*scope,
+                                      NetNet::PortType port_type) const;
 
       const PPackage* package() const { return package_; }
 
