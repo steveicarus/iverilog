@@ -103,9 +103,9 @@ jobs:
         wrap() { echo "::group::$@"; "$@"; echo '::endgroup::'; }
         wrap ./autoconf.sh
         wrap ./configure
-        wrap make install
+        wrap mingw32-make install
         which iverilog
-        wrap make check
+        wrap mingw32-make check
 
     - name: 🟪 Build and check
       if: matrix.build == 'pkgbuild'
