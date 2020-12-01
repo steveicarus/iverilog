@@ -62,8 +62,14 @@ jobs:
           mingw-w64-x86_64-toolchain
         update: true
 
-    - name: Build
-      run: ./.github/build.sh
+    - name: Build, install and check
+      run: |
+        wrap() { echo "::group::$@"; "$@"; echo '::endgroup::'; }
+        wrap ./autoconf.sh
+        wrap ./configure
+        wrap make install
+        which iverilog
+        wrap make check
 
     - name: Test
       run: ./.github/test.sh
