@@ -8,7 +8,6 @@ jobs:
 
 
   lin:
-
     strategy:
       fail-fast: false
       matrix:
@@ -42,10 +41,15 @@ jobs:
     runs-on: windows-latest
     name: '🧊 Windows'
     defaults:
-      shell: bash
+      run:
+        shell: mingw64 {0}
     steps:
 
-    - run: git config --global core.autocrlf input
+    - name: Setup
+      shell: bash
+      run: |
+        git config --global core.autocrlf input
+        echo "$(cygpath -w $(pwd)/.github/bin)" >> $GITHUB_PATH
 
     - uses: actions/checkout@v2
 
@@ -58,11 +62,8 @@ jobs:
           mingw-w64-x86_64-toolchain
         update: true
 
-    - name: Add .github to PATH
-      run: echo "$(cygpath -w $(pwd)/.github)" >> $GITHUB_PATH
-
     - name: Build
-      run: mingw64 ./.github/build.sh
+      run: ./.github/build.sh
 
     - name: Test
-      run: mingw64 ./.github/test.sh
+      run: ./.github/test.sh
