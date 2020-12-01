@@ -39,10 +39,38 @@ jobs:
 
   win:
     runs-on: windows-latest
-    name: '🧊 Windows'
+    strategy:
+      fail-fast: false
+      matrix:
+        include: [
+          {
+            label: '🧊 Windows',
+            msystem: MINGW64,
+            arch: x86_64,
+            release: false,
+            shell: mingw64,
+          },
+          {
+            label: '🟪 MSYS2',
+            msystem: MINGW64,
+            arch: x86_64,
+            release: true,
+            shell: msys2,
+          },
+          {
+            label: '🟪 MSYS2',
+            msystem: MINGW32,
+            arch: i686,
+            release: true,
+            shell: msys2,
+          }
+        ]
+    name: ${{ matrix.label }} · ${{ matrix.msystem}}
     defaults:
       run:
-        shell: mingw64 {0}
+        shell: ${{ matrix.shell }} {0}
+    env:
+      MINGW_INSTALLS: ${{ matrix.msystem }}
     steps:
 
     - name: Setup
@@ -55,14 +83,16 @@ jobs:
 
     - uses: msys2/setup-msys2@v2
       with:
-        release: false
-        msystem: MINGW64
+        release: ${{ matrix.release }}
+        msystem: ${{ matrix.msystem }}
         install: >
+          git
           base-devel
-          mingw-w64-x86_64-toolchain
+          mingw-w64-${{ matrix.arch }}-toolchain
         update: true
 
-    - name: Build, install and check
+    - name: 🧊 Build, install and check
+      if: matrix.shell == 'mingw64'
       run: |
         wrap() { echo "::group::$@"; "$@"; echo '::endgroup::'; }
         wrap ./autoconf.sh
@@ -71,47 +101,14 @@ jobs:
         which iverilog
         wrap make check
 
-    - name: Test
-      run: ./.github/test.sh
-
-
-  msys2:
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include: [
-          { msystem: MINGW64, arch: x86_64 },
-          { msystem: MINGW32, arch: i686   }
-        ]
-    name: '🟪 MSYS2 · ${{ matrix.msystem }}'
-    defaults:
-      run:
-        shell: msys2 {0}
-    env:
-      MINGW_INSTALLS: ${{ matrix.msystem }}
-    steps:
-
-    - run: git config --global core.autocrlf input
-      shell: bash
-
-    - uses: actions/checkout@v2
-
-    - uses: msys2/setup-msys2@v2
-      with:
-        msystem: ${{ matrix.msystem }}
-        install: >
-          git
-          base-devel
-          mingw-w64-${{ matrix.arch }}-toolchain
-        update: true
-
-    - name: Build
+    - name: 🟪 Build and check
+      if: matrix.shell == 'msys2'
       run: |
         cd msys2
         makepkg-mingw --noconfirm --noprogressbar -sCLf
 
-    - name: Install
+    - name: 🟪 Install
+      if: matrix.shell == 'msys2'
       run: pacman -U --noconfirm msys2/*.zst
 
     - name: Test
