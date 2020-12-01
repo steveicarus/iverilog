@@ -501,15 +501,18 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 	    emit_expr(scope, oper2, ivl_expr_width(oper2), 0, 1, 0);
 	    break;
 	case 'q': // The arguments have already been reduced
-	    fprintf(vlog_out, "~");
+	    fprintf(vlog_out, "{~");
 	    emit_expr(scope, oper1, ivl_expr_width(oper1), 0, 1, 0);
 	    fprintf(vlog_out, " | ");
 	    emit_expr(scope, oper2, ivl_expr_width(oper2), 0, 1, 0);
+	    fprintf(vlog_out, "}");
 	    break;
 	case 'Q': // The arguments have already been reduced
+	    fprintf(vlog_out, "{");
 	    emit_expr(scope, oper1, ivl_expr_width(oper1), 0, 1, 0);
 	    fprintf(vlog_out, " ~^ ");
 	    emit_expr(scope, oper2, ivl_expr_width(oper2), 0, 1, 0);
+	    fprintf(vlog_out, "}");
 	    break;
 	case 'R':
 	    if (! allow_signed) {
