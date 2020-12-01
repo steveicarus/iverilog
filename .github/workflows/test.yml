@@ -42,35 +42,41 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: [
+        shell: [
+          mingw64,
+          msys2
+        ]
+        build: [
+          manual,
+          pkgbuild
+        ]
+        task: [
           {
-            label: '🧊 Windows',
+            label: '🧊',
             msystem: MINGW64,
             arch: x86_64,
             release: false,
-            shell: mingw64,
           },
           {
-            label: '🟪 MSYS2',
+            label: '🟪',
             msystem: MINGW64,
             arch: x86_64,
             release: true,
-            shell: msys2,
           },
           {
-            label: '🟪 MSYS2',
+            label: '🟪',
             msystem: MINGW32,
             arch: i686,
             release: true,
-            shell: msys2,
           }
         ]
-    name: ${{ matrix.label }} · ${{ matrix.msystem}}
+    name: ${{ matrix.task.label }} ${{ matrix.task.msystem}} · ${{ matrix.shell }} · ${{ matrix.build }}
     defaults:
       run:
         shell: ${{ matrix.shell }} {0}
     env:
-      MINGW_INSTALLS: ${{ matrix.msystem }}
+      MINGW_INSTALLS: ${{ matrix.task.msystem }}
+      MSYSTEM: ${{ matrix.task.msystem }}
     steps:
 
     - name: Setup
@@ -83,16 +89,16 @@ jobs:
 
     - uses: msys2/setup-msys2@v2
       with:
-        release: ${{ matrix.release }}
-        msystem: ${{ matrix.msystem }}
+        release: ${{ matrix.task.release }}
+        msystem: ${{ matrix.task.msystem }}
         install: >
           git
           base-devel
-          mingw-w64-${{ matrix.arch }}-toolchain
+          mingw-w64-${{ matrix.task.arch }}-toolchain
         update: true
 
     - name: 🧊 Build, install and check
-      if: matrix.shell == 'mingw64'
+      if: matrix.build == 'manual'
       run: |
         wrap() { echo "::group::$@"; "$@"; echo '::endgroup::'; }
         wrap ./autoconf.sh
@@ -102,13 +108,13 @@ jobs:
         wrap make check
 
     - name: 🟪 Build and check
-      if: matrix.shell == 'msys2'
+      if: matrix.build == 'pkgbuild'
       run: |
         cd msys2
         makepkg-mingw --noconfirm --noprogressbar -sCLf
 
     - name: 🟪 Install
-      if: matrix.shell == 'msys2'
+      if: matrix.build == 'pkgbuild'
       run: pacman -U --noconfirm msys2/*.zst
 
     - name: Test
