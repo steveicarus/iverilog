@@ -21,17 +21,17 @@ build() {
   ./configure \
     --prefix="${MINGW_PREFIX}" \
     --host="$CARCH"-w64-mingw32
-  make
+  mingw32-make
 }
 
 check() {
   cd "${srcdir}"/../..
-  make check
+  mingw32-make check
 }
 
 package() {
   cd "${srcdir}"/../..
-  make DESTDIR="${pkgdir}" install
+  mingw32-make DESTDIR="${pkgdir}" install
   mkdir -p "${pkgdir}${MINGW_PREFIX}/share/doc/${_realname}"
   mv "${pkgdir}${MINGW_PREFIX}"/*.pdf "${pkgdir}${MINGW_PREFIX}/share/doc/${_realname}"
 }
