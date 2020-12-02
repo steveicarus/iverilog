@@ -320,9 +320,7 @@ void sync_cb::run_run()
       if (cur->cb_data.cb_rtn != 0) {
 	    assert(vpi_mode_flag == VPI_MODE_NONE);
 	    vpi_mode_flag = sync_flag? VPI_MODE_ROSYNC : VPI_MODE_RWSYNC;
-	    vpip_cur_task = dynamic_cast<__vpiSysTaskCall*>(cur->cb_data.obj);
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    vpip_cur_task = 0;
 	    vpi_mode_flag = VPI_MODE_NONE;
       }
 
