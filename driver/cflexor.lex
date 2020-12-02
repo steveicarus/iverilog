@@ -71,7 +71,7 @@ int cmdfile_stack_ptr = 0;
 <LCOMMENT>\n   { cflloc.first_line += 1; BEGIN(comment_enter); }
 
 <LCOMMENT><<EOF>> {
-      fprintf(stderr, "%s:%d: ERROR: Comment not terminated.\n"<
+      fprintf(stderr, "%s:%d: ERROR: Comment not terminated.\n",
 	      current_file, cflloc.first_line);
       command_file_errors += 1;
       BEGIN(0);
@@ -84,7 +84,7 @@ int cmdfile_stack_ptr = 0;
 <CCOMMENT>"*/" { BEGIN(comment_enter); }
 
 <CCOMMENT><<EOF>> {
-      fprintf(stderr, "%s:%d: ERROR: Comment not terminated.\n"<
+      fprintf(stderr, "%s:%d: ERROR: Comment not terminated.\n",
 	      current_file, cflloc.first_line);
       command_file_errors += 1;
       BEGIN(0);
