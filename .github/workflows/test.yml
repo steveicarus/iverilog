@@ -46,10 +46,6 @@ jobs:
           mingw64,
           msys2
         ]
-        build: [
-          manual,
-          pkgbuild
-        ]
         task: [
           {
             label: '🧊',
@@ -70,7 +66,7 @@ jobs:
             release: true,
           }
         ]
-    name: ${{ matrix.task.label }} ${{ matrix.task.msystem}} · ${{ matrix.shell }} · ${{ matrix.build }}
+    name: ${{ matrix.task.label }} ${{ matrix.task.msystem}} · ${{ matrix.shell }}
     defaults:
       run:
         shell: ${{ matrix.shell }} {0}
@@ -98,7 +94,7 @@ jobs:
         update: true
 
     - name: 🧊 Build, install and check
-      if: matrix.build == 'manual'
+      if: matrix.shell == 'mingw64'
       run: |
         wrap() { echo "::group::$@"; "$@"; echo '::endgroup::'; }
         wrap ./autoconf.sh
@@ -108,13 +104,13 @@ jobs:
         wrap mingw32-make check
 
     - name: 🟪 Build and check
-      if: matrix.build == 'pkgbuild'
+      if: matrix.shell == 'msys2'
       run: |
         cd msys2
         makepkg-mingw --noconfirm --noprogressbar -sCLf
 
     - name: 🟪 Install
-      if: matrix.build == 'pkgbuild'
+      if: matrix.shell == 'msys2'
       run: pacman -U --noconfirm msys2/*.zst
 
     - name: Test
