@@ -2105,9 +2105,9 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
                                 ivl_logic_delay(nlogic, 2),
                                 dly_count);
 // HERE: The name has the location information encoded in it. We need to
-//       remove this and rebuild the instance array. For now we just strip
-//       this encoding and create an zero based range. Need to skip the
-//       local names _s<digits>.
+//       remove this and rebuild the instance array. For now we just make
+//       this encoding a real name and create a zero based range. Need to
+//       skip the local names _s<digits>.
 //       This can also be an escaped id.
       name = ivl_logic_basename(nlogic);
       if (name && *name) {
@@ -2115,11 +2115,17 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	    unsigned lp = strlen(name) - 1;
 	    unsigned width = ivl_logic_width(nlogic);
 	    if (fixed_name[lp] == '>') {
+		  fixed_name[lp] = 0;
+		  while (fixed_name[lp] != '.') {
+			assert(lp > 0);
+			lp -= 1;
+		  }
+		  fixed_name[lp] = '_';
 		  while (fixed_name[lp] != '<') {
 			assert(lp > 0);
 			lp -= 1;
 		  }
-		  fixed_name[lp] = 0;
+		  fixed_name[lp] = '_';
 	    }
 	    fprintf(vlog_out, " ");
 	    emit_id(fixed_name);
