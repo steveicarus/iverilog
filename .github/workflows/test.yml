@@ -26,7 +26,7 @@ jobs:
         sudo apt update -qq
         sudo apt install -y make g++ git bison flex gperf libreadline-dev autoconf
 
-    - name: Build
+    - name: Build, install and check
       run: |
         autoconf
         ./configure
@@ -42,75 +42,38 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shell: [
-          mingw64,
-          msys2
+        include: [
+          { msystem: MINGW64, arch: x86_64 },
+          { msystem: MINGW32, arch: i686 }
         ]
-        task: [
-          {
-            label: '🧊',
-            msystem: MINGW64,
-            arch: x86_64,
-            release: false,
-          },
-          {
-            label: '🟪',
-            msystem: MINGW64,
-            arch: x86_64,
-            release: true,
-          },
-          {
-            label: '🟪',
-            msystem: MINGW32,
-            arch: i686,
-            release: true,
-          }
-        ]
-    name: ${{ matrix.task.label }} ${{ matrix.task.msystem}} · ${{ matrix.shell }}
+    name: 🟪 ${{ matrix.msystem}} · ${{ matrix.arch }}
     defaults:
       run:
-        shell: ${{ matrix.shell }} {0}
+        shell: msys2 {0}
     env:
-      MINGW_INSTALLS: ${{ matrix.task.msystem }}
-      MSYSTEM: ${{ matrix.task.msystem }}
+      MINGW_INSTALLS: ${{ matrix.msystem }}
     steps:
 
-    - name: Setup
+    - run: git config --global core.autocrlf input
       shell: bash
-      run: |
-        git config --global core.autocrlf input
-        echo "$(cygpath -w $(pwd)/.github/bin)" >> $GITHUB_PATH
 
     - uses: actions/checkout@v2
 
     - uses: msys2/setup-msys2@v2
       with:
-        release: ${{ matrix.task.release }}
-        msystem: ${{ matrix.task.msystem }}
+        msystem: ${{ matrix.msystem }}
+        update: true
         install: >
           git
           base-devel
-          mingw-w64-${{ matrix.task.arch }}-toolchain
-        update: true
+          mingw-w64-${{ matrix.arch }}-toolchain
 
-    - name: 🧊 Build, install and check
-      if: matrix.shell == 'mingw64'
-      run: |
-        wrap() { echo "::group::$@"; "$@"; echo '::endgroup::'; }
-        wrap ./autoconf.sh
-        wrap ./configure
-        wrap mingw32-make install
-        which iverilog
-        wrap mingw32-make check
-
-    - name: 🟪 Build and check
-      if: matrix.shell == 'msys2'
+    - name: Build and check
       run: |
         cd msys2
         makepkg-mingw --noconfirm --noprogressbar -sCLf
 
-    - name: 🟪 Install
-      if: matrix.shell == 'msys2'
+    - name: Install
       run: pacman -U --noconfirm msys2/*.zst
 
     - name: Test
