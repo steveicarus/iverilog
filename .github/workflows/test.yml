@@ -78,3 +78,8 @@ jobs:
 
     - name: Test
       run: ./.github/test.sh
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.msystem }}-${{ matrix.arch }}
+        path: msys2/*.zst
