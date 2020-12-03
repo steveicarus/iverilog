@@ -8,7 +8,6 @@ jobs:
 
 
   lin:
-
     strategy:
       fail-fast: false
       matrix:
@@ -27,7 +26,7 @@ jobs:
         sudo apt update -qq
         sudo apt install -y make g++ git bison flex gperf libreadline-dev autoconf
 
-    - name: Build
+    - name: Build, install and check
       run: |
         autoconf
         ./configure
@@ -40,30 +39,47 @@ jobs:
 
   win:
     runs-on: windows-latest
-    name: '🧊 Windows'
+    strategy:
+      fail-fast: false
+      matrix:
+        include: [
+          { msystem: MINGW64, arch: x86_64 },
+          { msystem: MINGW32, arch: i686 }
+        ]
+    name: 🟪 ${{ matrix.msystem}} · ${{ matrix.arch }}
+    defaults:
+      run:
+        shell: msys2 {0}
+    env:
+      MINGW_INSTALLS: ${{ matrix.msystem }}
     steps:
 
     - run: git config --global core.autocrlf input
+      shell: bash
 
     - uses: actions/checkout@v2
 
     - uses: msys2/setup-msys2@v2
       with:
-        release: false
-        msystem: MINGW64
-        install: >
-          base-devel
-          mingw-w64-x86_64-toolchain
+        msystem: ${{ matrix.msystem }}
         update: true
+        install: >
+          git
+          base-devel
+          mingw-w64-${{ matrix.arch }}-toolchain
 
-    - name: Build and test
-      shell: bash
+    - name: Build and check
       run: |
-        export mingw64='cmd //C RefreshEnv.cmd & set MSYS=winsymlinks:nativestrict & C:\\msys64\\msys2_shell.cmd -defterm -no-start -mingw64 -full-path -here -c "$@" --'
+        cd msys2
+        makepkg-mingw --noconfirm --noprogressbar -sCLf
 
-        $mingw64 ./autoconf.sh
-        $mingw64 ./configure
-        $mingw64 make install
-        $mingw64 make check
+    - name: Install
+      run: pacman -U --noconfirm msys2/*.zst
 
-        $mingw64 ./.github/test.sh
+    - name: Test
+      run: ./.github/test.sh
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.msystem }}-${{ matrix.arch }}
+        path: msys2/*.zst
