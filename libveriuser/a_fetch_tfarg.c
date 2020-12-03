@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2009 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2020 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -55,7 +55,7 @@ double acc_fetch_itfarg(PLI_INT32 n, handle obj)
 
 double acc_fetch_tfarg(PLI_INT32 n)
 {
-      return acc_fetch_itfarg_int(n, vpi_handle(vpiSysTfCall,0));
+      return acc_fetch_itfarg_int(n, cur_instance);
 }
 
 
@@ -90,7 +90,7 @@ PLI_INT32 acc_fetch_itfarg_int(PLI_INT32 n, handle obj)
 
 PLI_INT32 acc_fetch_tfarg_int(PLI_INT32 n)
 {
-      return acc_fetch_itfarg_int(n, vpi_handle(vpiSysTfCall,0));
+      return acc_fetch_itfarg_int(n, cur_instance);
 }
 
 
@@ -126,5 +126,5 @@ char *acc_fetch_itfarg_str(PLI_INT32 n, handle obj)
 
 char *acc_fetch_tfarg_str(PLI_INT32 n)
 {
-      return acc_fetch_itfarg_str(n, vpi_handle(vpiSysTfCall,0));
+      return acc_fetch_itfarg_str(n, cur_instance);
 }

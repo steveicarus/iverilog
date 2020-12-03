@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,17 +20,17 @@
 #include  <assert.h>
 #include  <veriuser.h>
 #include  <vpi_user.h>
+#include  "priv.h"
 
 PLI_INT32 tf_typep(PLI_INT32 narg)
 {
-      vpiHandle sys_h, argv, arg_h = 0;
+      vpiHandle argv, arg_h = 0;
       int rtn;
 
       assert(narg > 0);
 
       /* get task/func handle */
-      sys_h = vpi_handle(vpiSysTfCall, 0);
-      argv = vpi_iterate(vpiArgument, sys_h);
+      argv = vpi_iterate(vpiArgument, cur_instance);
 
       /* find nth arg */
       while (narg > 0) {

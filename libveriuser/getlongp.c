@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2012 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2020 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,13 +22,14 @@
 #include  <assert.h>
 #include  <veriuser.h>
 #include  <vpi_user.h>
+#include  "priv.h"
 
 /*
  * tf_getlongp implemented using VPI interface
  */
 int tf_getlongp(int *highvalue, int n)
 {
-      vpiHandle sys_h, sys_i, arg_h = 0;
+      vpiHandle sys_i, arg_h = 0;
       s_vpi_value value;
       int len, rtn;
 
@@ -36,8 +37,7 @@ int tf_getlongp(int *highvalue, int n)
       assert(n > 0);
 
       /* get task/func handle */
-      sys_h = vpi_handle(vpiSysTfCall, 0);
-      sys_i = vpi_iterate(vpiArgument, sys_h);
+      sys_i = vpi_iterate(vpiArgument, cur_instance);
 
       /* find nth arg */
       while (n > 0) {

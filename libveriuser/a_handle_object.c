@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,8 +25,7 @@ static vpiHandle search_scope = 0;
 
 handle acc_handle_object(const char*name)
 {
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle scope = search_scope? search_scope : vpi_handle(vpiScope, sys);
+      vpiHandle scope = search_scope? search_scope : vpi_handle(vpiScope, cur_instance);
       vpiHandle res = vpi_handle_by_name(name, scope);
 
       if (pli_trace) {

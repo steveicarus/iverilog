@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,14 +26,13 @@ char* tf_spname(void)
 {
       char*rtn;
 
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle scope = vpi_handle(vpiScope, sys);
+      vpiHandle scope = vpi_handle(vpiScope, cur_instance);
 
       rtn = __acc_newstring(vpi_get_str(vpiFullName, scope));
 
       if (pli_trace) {
 	    fprintf(pli_trace, "%s: tf_spname() --> %s\n",
-		    vpi_get_str(vpiName,sys), rtn);
+		    vpi_get_str(vpiName, cur_instance), rtn);
       }
 
       return rtn;
@@ -46,5 +45,5 @@ char *tf_imipname(void *obj)
 
 char *tf_mipname(void)
 {
-      return tf_imipname(vpi_handle(vpiSysTfCall,0));
+      return tf_imipname(cur_instance);
 }

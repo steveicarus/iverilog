@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2009 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2020 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -72,7 +72,7 @@ out:
 
 PLI_INT32 tf_getp(PLI_INT32 n)
 {
-      int rtn = tf_igetp(n, vpi_handle(vpiSysTfCall, 0));
+      int rtn = tf_igetp(n, cur_instance);
 
       return rtn;
 }
@@ -119,7 +119,7 @@ out:
 
 double tf_getrealp(PLI_INT32 n)
 {
-      double rtn = tf_igetrealp(n, vpi_handle(vpiSysTfCall, 0));
+      double rtn = tf_igetrealp(n, cur_instance);
 
       return rtn;
 }
@@ -176,7 +176,7 @@ out:
 
 char *tf_strgetp(PLI_INT32 n, PLI_INT32 fmt)
 {
-      char *rtn = tf_istrgetp(n, fmt, vpi_handle(vpiSysTfCall, 0));
+      char *rtn = tf_istrgetp(n, fmt, cur_instance);
 
       return rtn;
 }

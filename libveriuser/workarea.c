@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,6 +21,7 @@
 # include  <vpi_user.h>
 # include  <stdlib.h>
 # include  "ivl_alloc.h"
+#include  "priv.h"
 
 /*
  * Keep a list of sys handle to work area bindings.
@@ -35,14 +36,12 @@ static struct workarea_cell*area_list = 0;
 
 PLI_INT32 tf_setworkarea(void*workarea)
 {
-      vpiHandle sys;
       struct workarea_cell*cur;
 
-      sys = vpi_handle(vpiSysTfCall, 0);
       cur = area_list;
 
       while (cur) {
-	    if (cur->sys == sys) {
+	    if (cur->sys == cur_instance) {
 		  cur->area = workarea;
 		  return 0;
 	    }
@@ -52,7 +51,7 @@ PLI_INT32 tf_setworkarea(void*workarea)
 
       cur = calloc(1, sizeof (struct workarea_cell));
       cur->next = area_list;
-      cur->sys = sys;
+      cur->sys = cur_instance;
       cur->area = workarea;
       area_list = cur;
 
@@ -62,13 +61,11 @@ PLI_INT32 tf_setworkarea(void*workarea)
 PLI_BYTE8* tf_getworkarea(void)
 {
       struct workarea_cell*cur;
-      vpiHandle sys;
 
-      sys = vpi_handle(vpiSysTfCall, 0);
       cur = area_list;
 
       while (cur) {
-	    if (cur->sys == sys) {
+	    if (cur->sys == cur_instance) {
 		  return cur->area;
 	    }
 

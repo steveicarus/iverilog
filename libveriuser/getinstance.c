@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2020 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,11 +19,12 @@
 
 #include  <veriuser.h>
 #include  <vpi_user.h>
+#include  "priv.h"
 
 /*
  * tf_getinstance implemented using VPI interface
  */
 PLI_BYTE8* tf_getinstance(void)
 {
-      return (PLI_BYTE8 *)vpi_handle(vpiSysTfCall, 0 /* NULL */);
+      return (PLI_BYTE8 *)cur_instance;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2020 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,13 +21,14 @@
 #include  <assert.h>
 #include  <veriuser.h>
 #include  <vpi_user.h>
+#include  "priv.h"
 
 /*
  * tf_putlongp implemented using VPI interface
  */
 void tf_putlongp(int n, int lowvalue, int highvalue)
 {
-      vpiHandle sys_h, sys_i, arg_h = 0;
+      vpiHandle sys_i, arg_h = 0;
       s_vpi_value val;
       int type;
       char str[20];
@@ -36,10 +37,9 @@ void tf_putlongp(int n, int lowvalue, int highvalue)
       assert(n >= 0);
 
       /* get task/func handle */
-      sys_h = vpi_handle(vpiSysTfCall, 0);
-      sys_i = vpi_iterate(vpiArgument, sys_h);
+      sys_i = vpi_iterate(vpiArgument, cur_instance);
 
-      type = vpi_get(vpiType, sys_h);
+      type = vpi_get(vpiType, cur_instance);
 
       /* verify function */
       assert(!(n == 0 && type != vpiSysFuncCall));
@@ -49,7 +49,7 @@ void tf_putlongp(int n, int lowvalue, int highvalue)
 	    if (!(arg_h = vpi_scan(sys_i))) assert(0);
 	    n--;
       }
-      if (!arg_h) arg_h = sys_h;
+      if (!arg_h) arg_h = cur_instance;
 
       /* fill in vpi_value */
       sprintf(str, "%x%08x", highvalue, lowvalue);
