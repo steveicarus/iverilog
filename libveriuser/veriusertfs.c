@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2018 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2020 Michael Ruff (mruff at chiaro.com)
  *                         Michael Runyan (mrunyan at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
@@ -34,11 +34,12 @@
 # include "ivl_alloc.h"
 
 /*
- * local structure used to hold the persistent veriusertfs data
- * and anything else we decide to put in here, like workarea data.
+ * Data to be passed to the callback function via the VPI callback
+ * user data pointer.
  */
 typedef struct t_pli_data {
       p_tfcell	tf;		/* pointer to veriusertfs cell */
+      vpiHandle call_handle;	/* handle returned by vpiSysTfCall */
       int	paramvc;	/* parameter number for misctf */
 } s_pli_data, *p_pli_data;
 
@@ -53,6 +54,21 @@ static PLI_INT32 callback(p_cb_data);
  */
 static p_pli_data* udata_store = 0;
 static unsigned udata_count = 0;
+
+static p_pli_data new_pli_data(p_tfcell tf, vpiHandle call_handle, int paramvc)
+{
+      p_pli_data data = calloc(1, sizeof(s_pli_data));
+      data->tf = tf;
+      data->call_handle = call_handle;
+      data->paramvc = paramvc;
+
+      udata_count += 1;
+      udata_store = (p_pli_data*)realloc(udata_store,
+                    udata_count*sizeof(p_pli_data*));
+      udata_store[udata_count-1] = data;
+
+      return data;
+}
 
 static PLI_INT32 sys_end_of_simulation(p_cb_data cb_data)
 {
@@ -80,7 +96,6 @@ void veriusertfs_register_table(p_tfcell vtable)
       const char*path;
       p_tfcell tf;
       s_vpi_systf_data tf_data;
-      p_pli_data data;
 
       if (!pli_trace && (path = getenv("PLI_TRACE"))) {
 	    static char trace_buf[1024];
@@ -106,12 +121,6 @@ void veriusertfs_register_table(p_tfcell vtable)
 			tf->tfname);
 	    }
 
-	    /* squirrel away veriusertfs in persistent user_data */
-	    data = calloc(1, sizeof(s_pli_data));
-	    udata_count += 1;
-	    udata_store = (p_pli_data*)realloc(udata_store,
-	                  udata_count*sizeof(p_pli_data*));
-	    udata_store[udata_count-1] = data;
 	    if (need_EOS_cb) {
 		  s_cb_data cb_data;
 
@@ -123,7 +132,6 @@ void veriusertfs_register_table(p_tfcell vtable)
 
 		  need_EOS_cb = 0;
 	    }
-	    data->tf = tf;
 
 	      /* Build a VPI system task/function structure, and point
 		 it to the pli_data that represents this
@@ -152,7 +160,7 @@ void veriusertfs_register_table(p_tfcell vtable)
 	    tf_data.compiletf = compiletf;
 	    tf_data.calltf = calltf;
 	    tf_data.sizetf = sizetf;
-	    tf_data.user_data = (char *)data;
+	    tf_data.user_data = (PLI_BYTE8*)tf;
 
 	    if (pli_trace) {
 		  fprintf(pli_trace, "Registering system %s:\n",
@@ -183,50 +191,49 @@ void veriusertfs_register_table(p_tfcell vtable)
  */
 static PLI_INT32 compiletf(ICARUS_VPI_CONST PLI_BYTE8*data)
 {
-      p_pli_data pli;
       p_tfcell tf;
+      p_pli_data pli;
       s_cb_data cb_data;
-      vpiHandle call_h, arg_i, arg_h;
+      vpiHandle arg_i, arg_h;
       int rtn = 0;
 
       /* cast back from opaque */
-      pli = (p_pli_data)data;
-      tf = pli->tf;
+      tf = (p_tfcell)data;
 
       /* get call handle */
-      call_h = vpi_handle(vpiSysTfCall, NULL);
+      cur_instance = vpi_handle(vpiSysTfCall, NULL);
 
-	/* Attach the pli_data structure to the vpi handle of the
+      /* build callback user data for this instance */
+      pli = new_pli_data(tf, cur_instance, 0);
+
+	/* Attach the pli_data structure to the VPI handle of the
 	   system task. This is how I manage the map from vpiHandle to
-	   PLI1 pli data. We do it here (instead of during register)
+	   PLI1 user data. We do it here (instead of during register)
 	   because this is the first that I have both the vpiHandle
-	   and the pli_data. */
-      vpi_put_userdata(call_h, pli);
+	   and the user data. */
+      vpi_put_userdata(cur_instance, pli);
 
       /* default cb_data */
       memset(&cb_data, 0, sizeof(s_cb_data));
       cb_data.cb_rtn = callback;
-      cb_data.user_data = data;
+      cb_data.user_data = (PLI_BYTE8*)pli;
 
       /* register EOS misctf callback */
       cb_data.reason = cbEndOfSimulation;
-      cb_data.obj = call_h;
       vpi_register_cb(&cb_data);
 
 	/* If there is a misctf function, then create a value change
 	   callback for all the arguments. In the tf_* API, misctf
 	   functions get value change callbacks, controlled by the
 	   tf_asyncon and tf_asyncoff functions. */
-      if (tf->misctf && ((arg_i = vpi_iterate(vpiArgument, call_h)) != NULL)) {
+      if (tf->misctf && ((arg_i = vpi_iterate(vpiArgument, cur_instance)) != NULL)) {
 	    int paramvc = 1;
 
 	    cb_data.reason = cbValueChange;
 	    while ((arg_h = vpi_scan(arg_i)) != NULL) {
 		  /* replicate user_data for each instance */
-		  p_pli_data dp = calloc(1, sizeof(s_pli_data));
-		  memcpy(dp, cb_data.user_data, sizeof(s_pli_data));
-		  dp->paramvc = paramvc++;
-		  cb_data.user_data = (char *)dp;
+		  p_pli_data dp = new_pli_data(tf, cur_instance, paramvc++);
+		  cb_data.user_data = (PLI_BYTE8*)dp;
 		  cb_data.obj = arg_h;
 		  vpi_register_cb(&cb_data);
 	    }
@@ -255,6 +262,7 @@ static PLI_INT32 compiletf(ICARUS_VPI_CONST PLI_BYTE8*data)
 	    tf->misctf(tf->data, reason_endofcompile, 0);
       }
 
+      cur_instance = 0;
       return rtn;
 }
 
@@ -264,12 +272,13 @@ static PLI_INT32 compiletf(ICARUS_VPI_CONST PLI_BYTE8*data)
 static PLI_INT32 calltf(ICARUS_VPI_CONST PLI_BYTE8*data)
 {
       int rc = 0;
-      p_pli_data pli;
       p_tfcell tf;
 
       /* cast back from opaque */
-      pli = (p_pli_data)data;
-      tf = pli->tf;
+      tf = (p_tfcell)data;
+
+      /* get call handle */
+      cur_instance = vpi_handle(vpiSysTfCall, NULL);
 
       /* execute calltf */
       if (tf->calltf) {
@@ -281,6 +290,7 @@ static PLI_INT32 calltf(ICARUS_VPI_CONST PLI_BYTE8*data)
 	    rc = tf->calltf(tf->data, reason_calltf);
       }
 
+      cur_instance = 0;
       return rc;
 }
 
@@ -290,12 +300,13 @@ static PLI_INT32 calltf(ICARUS_VPI_CONST PLI_BYTE8*data)
 static PLI_INT32 sizetf(ICARUS_VPI_CONST PLI_BYTE8*data)
 {
       int rc = 32;
-      p_pli_data pli;
       p_tfcell tf;
 
       /* cast back from opaque */
-      pli = (p_pli_data)data;
-      tf = pli->tf;
+      tf = (p_tfcell)data;
+
+      /* get call handle */
+      cur_instance = vpi_handle(vpiSysTfCall, NULL);
 
       /* execute sizetf */
       if (tf->sizetf) {
@@ -307,6 +318,7 @@ static PLI_INT32 sizetf(ICARUS_VPI_CONST PLI_BYTE8*data)
 	    rc = tf->sizetf(tf->data, reason_sizetf);
       }
 
+      cur_instance = 0;
       return rc;
 }
 
@@ -329,7 +341,9 @@ static PLI_INT32 callback(p_cb_data data)
 
 	/* cast back from opaque */
       pli = (p_pli_data)data->user_data;
+
       tf = pli->tf;
+      cur_instance = pli->call_handle;
 
       switch (data->reason) {
 	  case cbValueChange:
@@ -362,6 +376,7 @@ static PLI_INT32 callback(p_cb_data data)
       /* execute misctf */
       rc = (tf->misctf) ? tf->misctf(tf->data, reason, paramvc) : 0;
 
+      cur_instance = 0;
       return rc;
 }
 
@@ -378,7 +393,7 @@ PLI_INT32 tf_isynchronize(void*obj)
       cb.cb_rtn = callback;
       cb.obj = sys;
       cb.time = &ti;
-      cb.user_data = (char *)pli;
+      cb.user_data = (PLI_BYTE8*)pli;
 
       vpi_register_cb(&cb);
 
@@ -405,7 +420,7 @@ PLI_INT32 tf_irosynchronize(void*obj)
       cb.cb_rtn = callback;
       cb.obj = sys;
       cb.time = &ti;
-      cb.user_data = (char *)pli;
+      cb.user_data = (PLI_BYTE8*)pli;
 
       vpi_register_cb(&cb);
 
@@ -439,7 +454,7 @@ PLI_INT32 tf_isetrealdelay(double dly, void*obj)
       cb.cb_rtn = callback;
       cb.obj = sys;
       cb.time = &ti;
-      cb.user_data = (char *)pli;
+      cb.user_data = (PLI_BYTE8*)pli;
 
       vpi_register_cb(&cb);
 

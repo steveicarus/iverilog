@@ -1,7 +1,7 @@
 #ifndef IVL_priv_H
 #define IVL_priv_H
 /*
- * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,14 @@
  */
 
 # include  <stdio.h>
+# include  "vpi_user.h"
+
+/*
+ * The VPI handle for the current task/function instance. This is the
+ * handle returned by vpi_handle(vpiSysTfCall, 0) when the task/function
+ * is compiled or called, but we also need it when executing a callback.
+ */
+extern vpiHandle cur_instance;
 
 /*
  * This function implements the acc_ string buffer, by adding the
