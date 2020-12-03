@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2012 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2020 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,6 +19,7 @@
 
 #include  <acc_user.h>
 #include  <vpi_user.h>
+#include  "priv.h"
 
 /*
  * acc_handle_tfarg implemented using VPI interface
@@ -28,10 +29,9 @@ handle acc_handle_tfarg(int n)
       vpiHandle rtn_h = 0;
 
       if (n > 0) {
-	    vpiHandle sys_h, sys_i;
+	    vpiHandle sys_i;
 
-	    sys_h = vpi_handle(vpiSysTfCall, 0 /* NULL */);
-	    sys_i = vpi_iterate(vpiArgument, sys_h);
+	    sys_i = vpi_iterate(vpiArgument, cur_instance);
 
 	    /* find nth arg */
 	    while (n > 0) {
@@ -52,5 +52,5 @@ handle acc_handle_tfarg(int n)
 
 handle acc_handle_tfinst(void)
 {
-      return vpi_handle(vpiSysTfCall, 0);
+      return cur_instance;
 }

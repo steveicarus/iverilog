@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2009 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2020 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -87,7 +87,7 @@ PLI_INT32 tf_iputp(PLI_INT32 n, PLI_INT32 value, void *obj)
 
 PLI_INT32 tf_putp(PLI_INT32 n, PLI_INT32 value)
 {
-      int rtn = tf_iputp(n, value, vpi_handle(vpiSysTfCall, 0));
+      int rtn = tf_iputp(n, value, cur_instance);
 
       return rtn;
 }
@@ -136,7 +136,7 @@ out:
 
 PLI_INT32 tf_putrealp(PLI_INT32 n, double value)
 {
-      int rtn = tf_iputrealp(n, value, vpi_handle(vpiSysTfCall, 0));
+      int rtn = tf_iputrealp(n, value, cur_instance);
 
       return rtn;
 }

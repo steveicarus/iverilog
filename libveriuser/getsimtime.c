@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2014 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2020 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,7 +46,7 @@ scale(int high, int low, void*obj)
       vpiHandle use_obj = obj;
       if (use_obj == 0) {
 	      /* If object is not passed in, then use current scope. */
-	    vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+	    vpiHandle hand = vpi_handle(vpiScope, cur_instance);
 	    use_obj = hand;
       } else {
 	      /* If object IS passed in, make sure it is a scope. If
@@ -145,7 +145,7 @@ void tf_unscale_longdelay(void*obj, PLI_INT32 low, PLI_INT32 high,
 			  PLI_INT32 *alow, PLI_INT32 *ahigh)
 {
       ivl_u64_t unscaled;
-      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+      vpiHandle hand = vpi_handle(vpiScope, cur_instance);
 
       (void)obj; /* Parameter is not used. */
 
@@ -160,7 +160,7 @@ void tf_unscale_longdelay(void*obj, PLI_INT32 low, PLI_INT32 high,
 
 void tf_scale_realdelay(void*obj, double real, double *areal)
 {
-      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+      vpiHandle hand = vpi_handle(vpiScope, cur_instance);
 
       (void)obj; /* Parameter is not used. */
 
@@ -170,7 +170,7 @@ void tf_scale_realdelay(void*obj, double real, double *areal)
 
 void tf_unscale_realdelay(void*obj, double real, double *areal)
 {
-      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+      vpiHandle hand = vpi_handle(vpiScope, cur_instance);
 
       (void)obj; /* Parameter is not used. */
 
@@ -182,15 +182,13 @@ PLI_INT32 tf_gettimeprecision(void)
 {
       PLI_INT32 rc;
       vpiHandle hand;
-      vpiHandle sys = vpi_handle(vpiSysTfCall,0);
-      assert(sys);
 
-      hand = vpi_handle(vpiScope, sys);
+      hand = vpi_handle(vpiScope, cur_instance);
       rc = vpi_get(vpiTimePrecision, hand);
 
       if (pli_trace)
 	    fprintf(pli_trace, "tf_gettimeprecision(<%s>) --> %d\n",
-		    vpi_get_str(vpiName, sys), (int)rc);
+		    vpi_get_str(vpiName, cur_instance), (int)rc);
 
       return rc;
 }
@@ -221,7 +219,7 @@ PLI_INT32 tf_igettimeprecision(void*obj)
 
 PLI_INT32 tf_gettimeunit()
 {
-      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+      vpiHandle hand = vpi_handle(vpiScope, cur_instance);
       return vpi_get(vpiTimeUnit, hand);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2020 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,7 @@
 #include  <vpi_user.h>
 #include  <stdio.h>
 #include "veriuser.h"
+#include  "priv.h"
 
 /*
  * tf_nump implemented using VPI interface
@@ -41,6 +42,5 @@ int tf_inump(void *obj)
 
 int tf_nump(void)
 {
-      vpiHandle sys_h = vpi_handle(vpiSysTfCall, 0 /* NULL */);
-      return tf_inump(sys_h);
+      return tf_inump(cur_instance);
 }
