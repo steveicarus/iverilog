@@ -21,7 +21,7 @@ build() {
   ./configure \
     --prefix="${MINGW_PREFIX}" \
     --host="$CARCH"-w64-mingw32
-  mingw32-make LDFLAGS="-pipe"
+  mingw32-make
 }
 
 check() {
