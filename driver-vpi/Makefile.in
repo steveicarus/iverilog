@@ -99,7 +99,7 @@ install: all installdirs installfiles
 F = ./iverilog-vpi@EXEEXT@
 
 installfiles: $(F) | installdirs
-	$(INSTALL_PROGRAM) ./iverilog-vpi@EXEEXT@ "$(bindir)/iverilog-vpi$(suffix)@EXEEXT@"
+	$(INSTALL_PROGRAM) ./iverilog-vpi@EXEEXT@ "$(DESTDIR)$(bindir)/iverilog-vpi$(suffix)@EXEEXT@"
 ifeq (@WIN32@,yes)
 ifneq ($(HOSTCC),$(CC))
 	$(INSTALL_PROGRAM) $(shell $(HOSTCC) --print-file-name=libwinpthread-1.dll) "$(DESTDIR)$(bindir)"
@@ -109,7 +109,7 @@ endif
 endif
 
 installdirs: $(srcdir)/../mkinstalldirs
-	$(srcdir)/../mkinstalldirs "$(bindir)"
+	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)"
 
 uninstall:
-	rm -f $(bindir)/iverilog-vpi$(suffix)@EXEEXT@
+	rm -f $(DESTDIR)$(bindir)/iverilog-vpi$(suffix)@EXEEXT@
