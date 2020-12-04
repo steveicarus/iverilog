@@ -1050,20 +1050,20 @@ template <class T> class vvp_sub_pointer_t {
       vvp_sub_pointer_t(T*ptr__, unsigned port__)
       {
 	    bits_ = reinterpret_cast<uintptr_t> (ptr__);
-	    assert( (bits_  &  3) == 0 );
-	    assert( (port__ & ~3) == 0 );
+	    assert( (bits_  &  UINTPTR_C(3)) == 0 );
+	    assert( (port__ & ~UINTPTR_C(3)) == 0 );
 	    bits_ |= port__;
       }
 
       ~vvp_sub_pointer_t() { }
 
       T* ptr()
-      { return reinterpret_cast<T*> (bits_ & ~3UL); }
+      { return reinterpret_cast<T*> (bits_ & ~UINTPTR_C(3)); }
 
       const T* ptr() const
-      { return reinterpret_cast<const T*> (bits_ & ~3UL); }
+      { return reinterpret_cast<const T*> (bits_ & ~UINTPTR_C(3)); }
 
-      unsigned  port() const { return bits_ & 3; }
+      unsigned  port() const { return bits_ & UINTPTR_C(3); }
 
       bool nil() const { return bits_ == 0; }
 
