@@ -135,6 +135,7 @@ CXXFLAGS="$iverilog_temp_cxxflags"
 AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(unsigned long)
 AC_CHECK_SIZEOF(unsigned)
+AC_CHECK_SIZEOF(void *)
 
 # vvp uses these...
 AC_CHECK_LIB(termcap, tputs)
