@@ -1,7 +1,7 @@
 _realname=iverilog
 pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=11-ci
+pkgver=11.ci
 pkgrel=1
 pkgdesc="Icarus Verilog, a Verilog simulation and synthesis tool (mingw-w64)"
 arch=('any')
