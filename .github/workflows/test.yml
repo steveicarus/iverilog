@@ -1,0 +1,85 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+
+
+  lin:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [
+          '18.04',
+          '20.04'
+        ]
+    runs-on: ubuntu-${{ matrix.os }}
+    name: '🐧 Ubuntu ${{ matrix.os }}'
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt update -qq
+        sudo apt install -y make g++ git bison flex gperf libreadline-dev autoconf
+
+    - name: Build, install and check
+      run: |
+        autoconf
+        ./configure
+        sudo make install
+        make check
+
+    - name: Test
+      run: ./.github/test.sh
+
+
+  win:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: [
+          { msystem: MINGW64, arch: x86_64 },
+          { msystem: MINGW32, arch: i686 }
+        ]
+    name: 🟪 ${{ matrix.msystem}} · ${{ matrix.arch }}
+    defaults:
+      run:
+        shell: msys2 {0}
+    env:
+      MINGW_INSTALLS: ${{ matrix.msystem }}
+    steps:
+
+    - run: git config --global core.autocrlf input
+      shell: bash
+
+    - uses: actions/checkout@v2
+
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{ matrix.msystem }}
+        update: true
+        install: >
+          git
+          base-devel
+          mingw-w64-${{ matrix.arch }}-toolchain
+
+    - name: Build and check
+      run: |
+        cd msys2
+        makepkg-mingw --noconfirm --noprogressbar -sCLf
+
+    - name: Install
+      run: pacman -U --noconfirm msys2/*.zst
+
+    - name: Test
+      run: ./.github/test.sh
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.msystem }}-${{ matrix.arch }}
+        path: msys2/*.zst
