@@ -5296,14 +5296,18 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
       }
       assert(def);
 
-      ivl_assert(*this, statement_);
-      NetProc*st = statement_->elaborate(des, scope);
-      if (st == 0) {
-	    cerr << statement_->get_fileline() << ": error: Unable to elaborate "
-		  "statement in function " << scope->basename() << "." << endl;
-            scope->is_const_func(true); // error recovery
-	    des->errors += 1;
-	    return;
+      NetProc*st;
+      if (statement_ == 0) {
+	    st = new NetBlock(NetBlock::SEQU, 0);
+      } else {
+	    st = statement_->elaborate(des, scope);
+	    if (st == 0) {
+		  cerr << statement_->get_fileline() << ": error: Unable to elaborate "
+			  "statement in function " << scope->basename() << "." << endl;
+		  scope->is_const_func(true); // error recovery
+		  des->errors += 1;
+		  return;
+	    }
       }
 
 	// Handle any variable initialization statements in this scope.
