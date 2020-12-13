@@ -3788,7 +3788,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
       if (const netclass_t*class_type = net->class_type()) {
 	    NetScope*task = class_type->method_from_name(method_name);
 	    if (task == 0) {
-		  cerr << get_fileline() << ": internal error: "
+		  cerr << get_fileline() << ": error: "
 		       << "Can't find task " << method_name
 		       << " in class " << class_type->get_name() << endl;
 		  des->errors += 1;
