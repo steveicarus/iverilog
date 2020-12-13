@@ -863,7 +863,6 @@ static unsigned has_func_disable(ivl_scope_t scope, ivl_statement_t stmt)
 	case IVL_ST_FORK:
 	case IVL_ST_FORK_JOIN_ANY:
 	case IVL_ST_FORK_JOIN_NONE:
-	case IVL_ST_UTASK:
 	case IVL_ST_WAIT:
 	    assert(0);
 	    break;
@@ -877,6 +876,7 @@ static unsigned has_func_disable(ivl_scope_t scope, ivl_statement_t stmt)
 	case IVL_ST_FREE:
 	case IVL_ST_RELEASE:
 	case IVL_ST_STASK:
+	case IVL_ST_UTASK: // this will be generated for a SV void function
 	case IVL_ST_TRIGGER:
 	    break;
 	  /* Look for a disable in each block statement. */
