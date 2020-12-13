@@ -3849,7 +3849,14 @@ NetProc* PCallTask::elaborate_void_function_(Design*des, NetScope*scope,
 		 << endl;
       }
 
-      ivl_assert(*this, dscope->elab_stage() >= 3);
+	// If we haven't already elaborated the function, do so now.
+	// This allows elaborate_build_call_ to elide the function call
+	// if the function body is empty.
+      if (dscope->elab_stage() < 3) {
+	    const PFunction*pfunc = dscope->func_pform();
+	    ivl_assert(*this, pfunc);
+	    pfunc->elaborate(des, dscope);
+      }
       return elaborate_build_call_(des, scope, dscope, 0);
 }
 
