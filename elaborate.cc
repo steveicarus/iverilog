@@ -3926,8 +3926,13 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	   task, all the assignments, etc. Just return a no-op. */
 
       if (const NetBlock*tp = dynamic_cast<const NetBlock*>(def->proc())) {
-	    if (tp->proc_first() == 0)
+	    if (tp->proc_first() == 0) {
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PCallTask::elaborate_build_call_: "
+			     << "Eliding call to empty task " << task->basename() << endl;
+		  }
 		  return block;
+	    }
       }
 
         /* If this is an automatic task, generate a statement to
