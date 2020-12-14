@@ -326,11 +326,19 @@ static void show_signal_expression(ivl_expr_t net, unsigned ind)
       ivl_expr_t word = ivl_expr_oper1(net);
 
       ivl_signal_t sig = ivl_expr_signal(net);
-      const char*vt_sig = data_type_string(ivl_signal_data_type(sig));
+      ivl_variable_type_t data_type = ivl_signal_data_type(sig);
+      const char*vt_sig = data_type_string(data_type);
       unsigned dimensions = ivl_signal_dimensions(sig);
       unsigned word_count = ivl_signal_array_count(sig);
 
-      if (dimensions == 0 && word_count != 1) {
+      if (data_type==IVL_VT_QUEUE) {
+	    if (dimensions != 0) {
+		  fprintf(out, "%*sERROR: Queue objects expect dimensions==0, got %u.\n",
+			  ind, "", dimensions);
+		  stub_errors += 1;
+	    }
+
+      } else if (dimensions == 0 && word_count != 1) {
 	    fprintf(out, "%*sERROR: Word count = %u for non-array object\n",
 		    ind, "", word_count);
 	    stub_errors += 1;
@@ -353,7 +361,7 @@ static void show_signal_expression(ivl_expr_t net, unsigned ind)
 	/* If this is not an array, then the expression with must
 	   match the signal width. We have IVL_EX_SELECT expressions
 	   for casting signal widths. */
-      if (dimensions == 0 && ivl_signal_width(sig) != width) {
+      if (dimensions == 0 && data_type!=IVL_VT_QUEUE && ivl_signal_width(sig) != width) {
 	    fprintf(out, "%*sERROR: Expression width (%u) doesn't match ivl_signal_width(sig)=%u\n",
 		    ind+2, "", width, ivl_signal_width(sig));
 	    stub_errors += 1;

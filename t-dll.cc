@@ -2599,7 +2599,6 @@ void dll_target::signal(const NetNet*net)
       obj->discipline = net->get_discipline();
 
       obj->array_dimensions_ = net->unpacked_dimensions();
-      assert(obj->array_dimensions_ == net->unpacked_dimensions());
 
       switch (net->port_type()) {
 
@@ -2678,6 +2677,18 @@ void dll_target::signal(const NetNet*net)
 
       obj->nattr = net->attr_cnt();
       obj->attr = fill_in_attributes(net);
+
+      // Special case: IVL_VT_QUEUE objects don't normally show up in the
+      // network,  but can in certain special cases. In these cases, it is the
+      // object itself and not the array elements that is in the network. of
+      // course, only do this if there is at least one link to this signal.
+      if (obj->net_type->base_type()==IVL_VT_QUEUE && net->is_linked()) {
+	    const Nexus*nex = net->pin(0).nexus();
+	    ivl_nexus_t tmp = nexus_sig_make(obj, 0);
+	    tmp->nexus_ = nex;
+	    tmp->name_ = 0;
+	    nex->t_cookie(tmp);
+      }
 
 	/* Get the nexus objects for all the pins of the signal. If
 	   the signal has only one pin, then write the single
