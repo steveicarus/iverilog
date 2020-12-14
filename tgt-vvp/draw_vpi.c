@@ -384,6 +384,10 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			args[idx].stack = 0;
 			break;
 		  }
+		case IVL_EX_NULL:
+		  snprintf(buffer, sizeof buffer, "null");
+		  args[idx].text = strdup(buffer);
+		  continue;
 		    /* Everything else will need to be evaluated and
 		       passed as a constant to the vpi task. */
 		default:
@@ -424,6 +428,8 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  buffer[0] = 0;
 		  break;
 		default:
+		  fprintf(stderr, "%s:%d: Sorry, cannot generate code for argument %d.\n",
+		                  ivl_expr_file(expr), ivl_expr_lineno(expr), idx+1);
 		  fprintf(vvp_out, "\nXXXX Unexpected argument: call_string=<%s>, arg=%u, type=%d\n",
 			  call_string, idx, ivl_expr_value(expr));
 		  fflush(vvp_out);

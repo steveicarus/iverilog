@@ -1,7 +1,7 @@
 #ifndef IVL_vpi_priv_H
 #define IVL_vpi_priv_H
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -887,6 +887,16 @@ class __vpiRealConst : public __vpiHandle {
 vpiHandle vpip_make_real_const(double value);
 vpiHandle vpip_make_real_param(char*name, double value, bool local_flag,
                                long file_idx, long lineno);
+
+class __vpiNullConst : public __vpiHandle {
+    public:
+      explicit __vpiNullConst();
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+};
+
+vpiHandle vpip_make_null_const();
 
 /*
  *  This one looks like a constant, but really is a vector in the current

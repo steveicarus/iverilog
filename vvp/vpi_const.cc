@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -395,7 +395,6 @@ void __vpiBinaryConst::vpi_get_value(p_vpi_value val)
       }
 }
 
-
 /*
  * Make a VPI constant from a vector string. The string is normally a
  * ASCII string, with each letter a 4-value bit. The first character
@@ -757,6 +756,99 @@ vpiHandle vpip_make_real_param(char*name, double value,
       return obj;
 }
 
+/*
+ * Make a VPI null constant
+ */
+inline __vpiNullConst::__vpiNullConst()
+{ }
+
+int __vpiNullConst::get_type_code(void) const
+{ return vpiConstant; }
+
+int __vpiNullConst::vpi_get(int code)
+{
+      switch (code) {
+	  case vpiLineNo:
+	    return 0;  // Not implemented for now!
+
+	  case vpiSize:
+	    return 32;
+
+	  case vpiConstType:
+	    return vpiNullConst;
+
+	  case vpiSigned:
+	    return 0;
+
+          case vpiAutomatic:
+	    return 0;
+
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
+          case _vpiFromThr:
+	      return _vpiNoThr;
+#endif
+
+	  default:
+	    fprintf(stderr, "vvp error: get %d not supported "
+		    "by vpiNullConst\n", code);
+	    assert(0);
+	    return 0;
+      }
+}
+
+void __vpiNullConst::vpi_get_value(p_vpi_value val)
+{
+      char*rbuf = (char *) need_result_buf(64 + 1, RBUF_VAL);
+
+      switch (val->format) {
+
+	  case vpiObjTypeVal:
+	    val->format = vpiStringVal;
+	  case vpiBinStrVal:
+	  case vpiDecStrVal:
+	  case vpiOctStrVal:
+	  case vpiHexStrVal:
+	  case vpiStringVal:
+	    sprintf(rbuf, "null");
+	    val->value.str = rbuf;
+	    break;
+
+          case vpiScalarVal:
+	    val->value.scalar = vpi0;
+	    break;
+
+	  case vpiIntVal:
+	    val->value.integer = 0;
+	    break;
+
+	  case vpiVectorVal:
+	    val->value.vector = (p_vpi_vecval)
+	                        need_result_buf(2*sizeof(s_vpi_vecval),
+	                        RBUF_VAL);
+	    for (unsigned idx = 0; idx < 2; idx += 1) {
+		  val->value.vector[idx].aval = 0;
+		  val->value.vector[idx].bval = 0;
+	    }
+	    break;
+
+	  case vpiRealVal:
+	    val->value.real = 0.0;
+	    break;
+
+	  default:
+	    fprintf(stderr, "vvp error: format %d not supported "
+		    "by vpiNullConst\n", (int)val->format);
+	    val->format = vpiSuppressVal;
+	    break;
+      }
+}
+
+vpiHandle vpip_make_null_const()
+{
+      struct __vpiNullConst*obj = new __vpiNullConst;
+      return obj;
+}
+
 #ifdef CHECK_WITH_VALGRIND
 void constant_delete(vpiHandle item)
 {
@@ -773,6 +865,9 @@ void constant_delete(vpiHandle item)
 	    break;
 	  case vpiRealConst:
 	    delete dynamic_cast<__vpiRealConst*>(item);
+	    break;
+	  case vpiNullConst:
+	    delete dynamic_cast<__vpiNullConst*>(item);
 	    break;
 	  default:
 	    assert(0);

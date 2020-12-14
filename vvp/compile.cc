@@ -631,6 +631,11 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 	    // check for memory word  M<mem,base,wid>
       }
 
+      if (strcmp(label(), "null") == 0) {
+	    val.ptr = vpip_make_null_const();
+	    sym_set_value(sym_vpi, label(), val);
+      }
+
       if (val.ptr) {
 	    *handle = (vpiHandle) val.ptr;
 	    return true;

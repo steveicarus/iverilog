@@ -1,7 +1,7 @@
 #ifndef SV_VPI_USER_H
 #define SV_VPI_USER_H
 /*
- * Copyright (c) 2010-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -71,6 +71,9 @@ EXTERN_C_START
 
 /********* Many-to-One ***********/
 #define vpiMember           742
+
+/********* generic object properties ***********/
+#define vpiNullConst         11
 
 /********* task/function properties **********/
 #define vpiOtherFunc          6
