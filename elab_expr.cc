@@ -2623,6 +2623,27 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  return sys_expr;
 	    }
 
+	    if (method_name == "atoi") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atoi",
+						     IVL_VT_BOOL, integer_width, 1);
+		  sys_expr->parm(0, new NetESignal(net));
+		  return sys_expr;
+	    }
+
+	    if (method_name == "atoreal") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atoreal",
+						     IVL_VT_REAL, 1, 1);
+		  sys_expr->parm(0, new NetESignal(net));
+		  return sys_expr;
+	    }
+
+	    if (method_name == "atohex") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atohex",
+						     IVL_VT_BOOL, integer_width, 1);
+		  sys_expr->parm(0, new NetESignal(net));
+		  return sys_expr;
+	    }
+
 	    if (method_name == "substr") {
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$substr",
 						     IVL_VT_STRING, 1, 3);
