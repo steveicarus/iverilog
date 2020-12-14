@@ -915,12 +915,10 @@ bool dll_target::proc_wait(const NetEvWait*net)
 			      break;
 			}
 
-			for (unsigned bit = 0
-				   ; bit < pr->pin_count()
-				   ; bit += 1) {
+			for (unsigned bit = 0; bit < pr->pin_count(); bit += 1) {
 			      ivl_nexus_t nex = (ivl_nexus_t)
 				    pr->pin(bit).nexus()->t_cookie();
-			      assert(nex);
+			      ivl_assert(*ev, nex);
 			      ev_tmp->pins[base+bit] = nex;
 			}
 		  }

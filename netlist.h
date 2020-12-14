@@ -215,7 +215,7 @@ class NetPins : public LineInfo {
       void dump_node_pins(ostream&, unsigned, const char**pin_names =0) const;
       void set_default_dir(Link::DIR d);
 
-      bool is_linked();
+      bool is_linked() const;
       bool pins_are_virtual(void) const;
       void devirtualize_pins(void);
 
