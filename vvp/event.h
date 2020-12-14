@@ -264,6 +264,8 @@ class vvp_fun_anyedge_sa : public vvp_fun_anyedge {
 
       void recv_string(vvp_net_ptr_t port, const std::string&bit,
 		       vvp_context_t context);
+      void recv_object(vvp_net_ptr_t port, vvp_object_t bit,
+		       vvp_context_t context);
 
     private:
       vthread_t threads_;

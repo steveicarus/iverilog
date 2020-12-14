@@ -1245,9 +1245,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       } else if (netdarray) {
 
 	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: Create signal " << wtype
-		       << " dynamic array "
-		       << name_ << " in scope " << scope_path(scope) << endl;
+	          cerr << get_fileline() << ": PWire::elaborate_sig: "
+		       << "Create signal " << wtype
+		       << " dynamic array " << name_
+		       << " in scope " << scope_path(scope) << endl;
 	    }
 
 	    ivl_assert(*this, packed_dimensions.empty());

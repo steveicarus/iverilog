@@ -224,7 +224,7 @@ void NetPins::set_default_dir(Link::DIR d)
        default_dir_ = d;
 }
 
-bool NetPins::is_linked(void)
+bool NetPins::is_linked(void) const
 {
       bool linked_flag = false;
       if (pins_ == NULL) return false;
