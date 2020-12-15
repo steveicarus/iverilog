@@ -804,6 +804,7 @@ void __vpiNullConst::vpi_get_value(p_vpi_value val)
 
 	  case vpiObjTypeVal:
 	    val->format = vpiStringVal;
+	    // fall through
 	  case vpiBinStrVal:
 	  case vpiDecStrVal:
 	  case vpiOctStrVal:
