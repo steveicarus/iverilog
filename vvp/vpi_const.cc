@@ -845,7 +845,7 @@ void __vpiNullConst::vpi_get_value(p_vpi_value val)
 
 vpiHandle vpip_make_null_const()
 {
-      struct __vpiNullConst*obj = new __vpiNullConst;
+      __vpiNullConst*obj = new __vpiNullConst;
       return obj;
 }
 

@@ -631,7 +631,7 @@ void vvp_fun_anyedge_sa::recv_string(vvp_net_ptr_t port, const std::string&bit,
  * An anyedge receiving an object should do nothing with it, but should
  * trigger waiting threads.
  */
-void vvp_fun_anyedge_sa::recv_object(vvp_net_ptr_t port, vvp_object_t bit,
+void vvp_fun_anyedge_sa::recv_object(vvp_net_ptr_t port, vvp_object_t,
 				     vvp_context_t)
 {
       run_waiting_threads_(threads_);
