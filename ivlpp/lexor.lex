@@ -1082,15 +1082,15 @@ static void do_define(void)
 
     define_continue_flag = 0;
 
-    /* Look for comments in the definition, and remove them. The
-     * "//" style comments go to the end of the line and terminate
-     * the definition, but the multi-line comments are simply cut
-     * out, and the define continues.
-     */
+    /* Look for comments in the definition, and remove them. */
     cp = strchr(yytext, '/');
 
     while (cp && *cp) {
         if (cp[1] == '/') {
+            if (cp[strlen(cp) - 1] == '\\') {
+                define_continue_flag = 1;
+                *cp++ = '\\';
+            }
             *cp = 0;
             break;
         }
