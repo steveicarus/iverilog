@@ -245,6 +245,13 @@ class PCallTask  : public Statement {
 				      NetNet*net,
 				      perm_string method_name,
 				      const char*sys_task_name) const;
+      NetProc*elaborate_method_func_(NetScope*scope,
+				     NetNet*net,
+				     ivl_variable_type_t type,
+				     unsigned width,
+				     bool signed_flag,
+				     perm_string method_name,
+				     const char*sys_task_name) const;
       bool test_task_calls_ok_(Design*des, NetScope*scope) const;
 
       PPackage*package_;
