@@ -3715,6 +3715,38 @@ NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
       return sys;
 }
 
+/*
+ * This is used for array/queue function methods called as tasks.
+ */
+NetProc* PCallTask::elaborate_method_func_(NetScope*scope,
+                                           NetNet*net,
+                                           ivl_variable_type_t type,
+                                           unsigned width,
+                                           bool signed_flag,
+					   perm_string method_name,
+                                           const char*sys_task_name) const
+{
+      cerr << get_fileline() << ": warning: method function '"
+           << method_name << "' is being called as a task." << endl;
+
+	// Generate the function.
+      NetESFunc*sys_expr = new NetESFunc(sys_task_name, type, width, 1);
+      sys_expr->set_line(*this);
+      NetESignal*arg = new NetESignal(net);
+      arg->set_line(*net);
+      sys_expr->parm(0, arg);
+	// Create a L-value that matches the function return type.
+      NetNet*tmp;
+      netvector_t*tmp_vec = new netvector_t(type, width-1, 0, signed_flag);
+      tmp = new NetNet(scope, scope->local_symbol(), NetNet::REG, tmp_vec);
+      tmp->set_line(*this);
+      NetAssign_*lv = new NetAssign_(tmp);
+	// Generate an assign to the fake L-value.
+      NetAssign*cur = new NetAssign(lv, sys_expr);
+      cur->set_line(*this);
+      return cur;
+}
+
 NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
                                       bool add_this_flag) const
 {
@@ -3746,13 +3778,21 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
       if (net == 0)
 	    return 0;
 
-	// Is this a delete method for dynamic arrays?
-      if (net->darray_type() && method_name=="delete") {
-	    return elaborate_sys_task_method_(des, scope, net, method_name,
-					      "$ivl_darray_method$delete");
+	// Is this a delete method for dynamic arrays or queues?
+      if (net->darray_type()) {
+	    if (method_name=="delete")
+		  return elaborate_sys_task_method_(des, scope, net, method_name,
+		                                    "$ivl_darray_method$delete");
+	    else if (method_name=="size")
+		    // This returns an int. It could be removed, but keep for now.
+		  return elaborate_method_func_(scope, net,
+		                                IVL_VT_BOOL, 32,
+		                                true, method_name,
+		                                "$size");
       }
 
       if (net->queue_type()) {
+	    const netdarray_t*use_darray = net->darray_type();
 	    if (method_name == "push_back")
 		  return elaborate_queue_method_(des, scope, net, method_name,
 						 "$ivl_queue_method$push_back");
@@ -3762,6 +3802,18 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	    else if (method_name == "insert")
 		  return elaborate_queue_method_(des, scope, net, method_name,
 						 "$ivl_queue_method$insert");
+	    else if (method_name == "pop_front")
+		  return elaborate_method_func_(scope, net,
+		                                use_darray->element_base_type(),
+		                                use_darray->element_width(),
+		                                false, method_name,
+		                                "$ivl_queue_method$pop_front");
+	    else if (method_name == "pop_back")
+		  return elaborate_method_func_(scope, net,
+		                                use_darray->element_base_type(),
+		                                use_darray->element_width(),
+		                                false, method_name,
+		                                "$ivl_queue_method$pop_back");
       }
 
       if (const netclass_t*class_type = net->class_type()) {
