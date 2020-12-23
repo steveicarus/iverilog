@@ -468,7 +468,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
       netclass_t*use_base_class = 0;
       if (base_class) {
-	    use_base_class = scope->find_class(base_class->name);
+	    use_base_class = scope->find_class(des, base_class->name);
 	    if (use_base_class == 0) {
 		  cerr << pclass->get_fileline() << ": error: "
 		       << "Base class " << base_class->name

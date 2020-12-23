@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -702,7 +702,7 @@ NetNet* NetScope::find_signal(perm_string key)
 	    return 0;
 }
 
-netclass_t*NetScope::find_class(perm_string name)
+netclass_t*NetScope::find_class(const Design*des, perm_string name)
 {
 	// Special case: The scope itself is the class that we are
 	// looking for. This may happen for example when elaborating
@@ -715,20 +715,25 @@ netclass_t*NetScope::find_class(perm_string name)
       if (cur != classes_.end())
 	    return cur->second;
 
+        // Try the imports.
+      NetScope*import_scope = find_import(des, name);
+      if (import_scope)
+            return import_scope->find_class(des, name);
+
       if (up_==0 && type_==CLASS) {
 	    assert(class_def_);
 
 	    NetScope*def_parent = class_def_->definition_scope();
-	    return def_parent->find_class(name);
+	    return def_parent->find_class(des, name);
       }
 
 	// Try looking up for the class.
       if (up_!=0 && type_!=MODULE)
-	    return up_->find_class(name);
+	    return up_->find_class(des, name);
 
 	// Try the compilation unit.
       if (unit_ != 0)
-	    return unit_->find_class(name);
+	    return unit_->find_class(des, name);
 
 	// Nowhere left to try...
       return 0;
