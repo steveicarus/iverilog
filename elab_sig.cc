@@ -198,7 +198,7 @@ static void elaborate_sig_classes(Design*des, NetScope*scope,
 {
       for (map<perm_string,PClass*>::const_iterator cur = classes.begin()
 		 ; cur != classes.end() ; ++ cur) {
-	    netclass_t*use_class = scope->find_class(cur->second->pscope_name());
+	    netclass_t*use_class = scope->find_class(des, cur->second->pscope_name());
 	    use_class->elaborate_sig(des, cur->second);
       }
 }

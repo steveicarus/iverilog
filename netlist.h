@@ -1015,7 +1015,7 @@ class NetScope : public Definitions, public Attrib {
       void rem_signal(NetNet*);
       NetNet* find_signal(perm_string name);
 
-      netclass_t* find_class(perm_string name);
+      netclass_t* find_class(const Design*des, perm_string name);
 
 	/* The unit(), parent(), and child() methods allow users of
 	   NetScope objects to locate nearby scopes. */
