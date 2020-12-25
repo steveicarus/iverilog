@@ -407,10 +407,6 @@ class PEIdent : public PExpr {
 	// flag is set to *false*.
       bool calculate_parts_(Design*, NetScope*, long&msb, long&lsb, bool&defined) const;
       NetExpr* calculate_up_do_base_(Design*, NetScope*, bool need_const) const;
-      bool calculate_param_range_(Design*, NetScope*,
-				  const NetExpr*msb_ex, long&msb,
-				  const NetExpr*lsb_ex, long&lsb,
-				  long length) const;
 
       bool calculate_up_do_width_(Design*, NetScope*, unsigned long&wid) const;
 
@@ -450,37 +446,32 @@ class PEIdent : public PExpr {
 				    NetScope*scope,
 				    const NetExpr*par,
 				    NetScope*found_in,
-				    const NetExpr*par_msb,
-				    const NetExpr*par_lsb,
+				    ivl_type_t par_type,
 				    unsigned expr_wid,
                                     unsigned flags) const;
       NetExpr*elaborate_expr_param_bit_(Design*des,
 					NetScope*scope,
 					const NetExpr*par,
 					NetScope*found_in,
-					const NetExpr*par_msb,
-					const NetExpr*par_lsb,
+					ivl_type_t par_type,
                                         bool need_const) const;
       NetExpr*elaborate_expr_param_part_(Design*des,
 					 NetScope*scope,
 					 const NetExpr*par,
 					 NetScope*found_in,
-					 const NetExpr*par_msb,
-					 const NetExpr*par_lsb,
+					 ivl_type_t par_type,
 				         unsigned expr_wid) const;
       NetExpr*elaborate_expr_param_idx_up_(Design*des,
 					   NetScope*scope,
 					   const NetExpr*par,
 					   NetScope*found_in,
-					   const NetExpr*par_msb,
-					   const NetExpr*par_lsb,
+					   ivl_type_t par_type,
                                            bool need_const) const;
       NetExpr*elaborate_expr_param_idx_do_(Design*des,
 					   NetScope*scope,
 					   const NetExpr*par,
 					   NetScope*found_in,
-					   const NetExpr*par_msb,
-					   const NetExpr*par_lsb,
+					   ivl_type_t par_type,
                                            bool need_const) const;
       NetExpr*elaborate_expr_net(Design*des,
 				 NetScope*scope,

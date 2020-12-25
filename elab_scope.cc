@@ -65,11 +65,26 @@ void set_scope_timescale(Design*des, NetScope*scope, PScope*pscope)
 
 typedef map<perm_string,LexicalScope::param_expr_t*>::const_iterator mparm_it_t;
 
-static void collect_parm_item_(Design*des, NetScope*scope, perm_string name,
-			       const LexicalScope::param_expr_t&cur,
-                               bool is_annotatable,
-                               bool local_flag)
+static void collect_parm_item(Design*des, NetScope*scope, perm_string name,
+			      const LexicalScope::param_expr_t&cur,
+			      bool is_annotatable, bool local_flag)
 {
+      if (debug_scopes) {
+	    cerr << cur.get_fileline() << ": " << __func__  << ": "
+		 << "parameter " << name << " ";
+	    if (cur.data_type)
+		  cerr << *cur.data_type;
+	    else
+		  cerr << "(nil type)";
+	    ivl_assert(cur, cur.expr);
+	    cerr << " = " << *cur.expr << "; ";
+	    if (cur.range)
+		  cerr << "with ranges ";
+	    else
+		  cerr << "without ranges ";
+	    cerr << "; in scope " << scope_path(scope) << endl;
+      }
+
       NetScope::range_t*range_list = 0;
       for (LexicalScope::range_t*range = cur.range ; range ; range = range->next) {
 	    NetScope::range_t*tmp = new NetScope::range_t;
@@ -104,38 +119,57 @@ static void collect_parm_item_(Design*des, NetScope*scope, perm_string name,
 	    range_list = tmp;
       }
 
+      // The type of the parameter, if unspecified in the source, will come
+      // from the type of the value assigned to it. Therefore, if the type is
+      // not yet known, don't try to guess here, put the type guess off. Also
+      // don't try to elaborate it here, because there may be references to
+      // other parameters still being located during scope elaboration.
+      scope->set_parameter(name, is_annotatable, cur.expr, cur.data_type, local_flag, range_list, cur);
 
-      scope->set_parameter(name, is_annotatable, cur.expr, cur.type, cur.msb,
-			   cur.lsb, cur.signed_flag, local_flag, range_list, cur);
 }
 
-static void collect_scope_parameters_(Design*des, NetScope*scope,
+static void collect_scope_parameters(Design*des, NetScope*scope,
       const map<perm_string,LexicalScope::param_expr_t*>&parameters)
 {
+      if (debug_scopes) {
+	    cerr << scope->get_fileline() << ": " << __func__ << ": "
+		 << "collect parameters for " << scope_path(scope) << "." << endl;
+      }
+
       for (mparm_it_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  ++ cur ) {
 
-	    collect_parm_item_(des, scope, cur->first, *(cur->second), false, false);
+	    collect_parm_item(des, scope, cur->first, *(cur->second), false, false);
       }
 }
 
-static void collect_scope_localparams_(Design*des, NetScope*scope,
+static void collect_scope_localparams(Design*des, NetScope*scope,
       const map<perm_string,LexicalScope::param_expr_t*>&localparams)
 {
+      if (debug_scopes) {
+	    cerr << scope->get_fileline() << ": " << __func__ << ": "
+		 << "collect localparams for " << scope_path(scope) << "." << endl;
+      }
+
       for (mparm_it_t cur = localparams.begin()
 		 ; cur != localparams.end() ;  ++ cur ) {
 
-	    collect_parm_item_(des, scope, cur->first, *(cur->second), false, true);
+	    collect_parm_item(des, scope, cur->first, *(cur->second), false, true);
       }
 }
 
-static void collect_scope_specparams_(Design*des, NetScope*scope,
+static void collect_scope_specparams(Design*des, NetScope*scope,
       const map<perm_string,LexicalScope::param_expr_t*>&specparams)
 {
+      if (debug_scopes) {
+	    cerr << scope->get_fileline() << ": " << __func__ << ": "
+		 << "collect specparams for " << scope_path(scope) << "." << endl;
+      }
+
       for (mparm_it_t cur = specparams.begin()
 		 ; cur != specparams.end() ;  ++ cur ) {
 
-	    collect_parm_item_(des, scope, cur->first, *(cur->second), true, false);
+	    collect_parm_item(des, scope, cur->first, *(cur->second), true, false);
       }
 }
 
@@ -356,6 +390,13 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 static void elaborate_scope_enumerations(Design*des, NetScope*scope,
 					 const set<enum_type_t*>&enum_types)
 {
+      if (debug_scopes) {
+	    cerr << scope->get_fileline() << ": " << __func__ << ": "
+		 << "Elaborate " << enum_types.size() << " enumerations"
+		 << " in scope " << scope_path(scope) << "."
+		 << endl;
+      }
+
       for (set<enum_type_t*>::const_iterator cur = enum_types.begin()
 		 ; cur != enum_types.end() ; ++ cur) {
 	    enum_type_t*curp = *cur;
@@ -564,15 +605,27 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 static void elaborate_scope_classes(Design*des, NetScope*scope,
 				    const vector<PClass*>&classes)
 {
+      if (debug_scopes) {
+	    cerr << scope->get_fileline() << ": " << __func__ << ": "
+		 << "Elaborate " << classes.size() << " classes"
+		 << " in scope " << scope_path(scope) << "."
+		 << endl;
+      }
+
       for (size_t idx = 0 ; idx < classes.size() ; idx += 1) {
 	    blend_class_constructors(classes[idx]);
 	    elaborate_scope_class(des, scope, classes[idx]);
       }
 }
 
-static void replace_scope_parameters_(NetScope*scope, const LineInfo&loc,
-			              const Module::replace_t&replacements)
+static void replace_scope_parameters(NetScope*scope, const LineInfo&loc,
+				     const Module::replace_t&replacements)
 {
+      if (debug_scopes) {
+	    cerr << scope->get_fileline() << ": " << __func__ << ": "
+		 << "Replace scope parameters for " << scope_path(scope) << "." << endl;
+      }
+
       for (Module::replace_t::const_iterator cur = replacements.begin()
 		 ; cur != replacements.end() ;  ++ cur ) {
 
@@ -712,8 +765,8 @@ bool PPackage::elaborate_scope(Design*des, NetScope*scope)
 
       scope->add_typedefs(&typedefs);
 
-      collect_scope_parameters_(des, scope, parameters);
-      collect_scope_localparams_(des, scope, localparams);
+      collect_scope_parameters(des, scope, parameters);
+      collect_scope_localparams(des, scope, localparams);
 
       if (debug_scopes) {
 	    cerr << get_fileline() << ": PPackage::elaborate_scope: "
@@ -751,23 +804,17 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// will be evaluated later, once all parameter overrides for this
 	// module have been done.
 
-      collect_scope_parameters_(des, scope, parameters);
+      collect_scope_parameters(des, scope, parameters);
 
-      collect_scope_localparams_(des, scope, localparams);
+      collect_scope_localparams(des, scope, localparams);
 
-      collect_scope_specparams_(des, scope, specparams);
+      collect_scope_specparams(des, scope, specparams);
 
 	// Run parameter replacements that were collected from the
 	// containing scope and meant for me.
 
-      replace_scope_parameters_(scope, *this, replacements);
+      replace_scope_parameters(scope, *this, replacements);
 
-      if (debug_scopes) {
-	    cerr << get_fileline() << ": Module::elaborate_scope: "
-		 << "Elaborate " << enum_sets.size() << " enumerations"
-		 << " in scope " << scope_path(scope) << "."
-		 << endl;
-      }
       elaborate_scope_enumerations(des, scope, enum_sets);
 
       assert(classes.size() == classes_lexical.size());
@@ -796,7 +843,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// we can not do that until defparams are run, so push it off
 	// into an elaborate work item.
       if (debug_scopes)
-	    cerr << get_fileline() << ": debug: "
+	    cerr << get_fileline() << ": " << __func__ << ": "
 		 << "Schedule generates within " << scope_path(scope)
 		 << " for elaboration after defparams." << endl;
 
@@ -1216,7 +1263,7 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
         // needed to evaluate the parameter expressions. The expressions
 	// will be evaluated later, once all parameter overrides for this
 	// module have been done.
-      collect_scope_localparams_(des, scope, localparams);
+      collect_scope_localparams(des, scope, localparams);
 
 	// Run through the defparams for this scope and save the result
 	// in a table for later final override.
@@ -1564,9 +1611,9 @@ void PFunction::elaborate_scope(Design*des, NetScope*scope) const
 	// Scan the parameters in the function, and store the information
         // needed to evaluate the parameter expressions.
 
-      collect_scope_parameters_(des, scope, parameters);
+      collect_scope_parameters(des, scope, parameters);
 
-      collect_scope_localparams_(des, scope, localparams);
+      collect_scope_localparams(des, scope, localparams);
 
 	// Scan through all the named events in this scope.
       elaborate_scope_events_(des, scope, events);
@@ -1584,9 +1631,9 @@ void PTask::elaborate_scope(Design*des, NetScope*scope) const
 	// Scan the parameters in the task, and store the information
         // needed to evaluate the parameter expressions.
 
-      collect_scope_parameters_(des, scope, parameters);
+      collect_scope_parameters(des, scope, parameters);
 
-      collect_scope_localparams_(des, scope, localparams);
+      collect_scope_localparams(des, scope, localparams);
 
 	// Scan through all the named events in this scope.
       elaborate_scope_events_(des, scope, events);
@@ -1634,9 +1681,9 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 	      // Scan the parameters in the scope, and store the information
 	      // needed to evaluate the parameter expressions.
 
-            collect_scope_parameters_(des, my_scope, parameters);
+            collect_scope_parameters(des, my_scope, parameters);
 
-            collect_scope_localparams_(des, my_scope, localparams);
+            collect_scope_localparams(des, my_scope, localparams);
 
               // Scan through all the named events in this scope.
             elaborate_scope_events_(des, my_scope, events);

@@ -35,9 +35,8 @@ class PSpecPath;
 
 extern void lex_end_table();
 
-static list<pform_range_t>* param_active_range = 0;
-static bool param_active_signed = false;
-static ivl_variable_type_t param_active_type = IVL_VT_LOGIC;
+static data_type_t* param_data_type = 0;
+static list<pform_range_t>* specparam_active_range = 0;
 
 /* Port declaration lists use this structure for context. */
 static struct {
@@ -649,7 +648,6 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <nettype>  net_type net_type_opt
 %type <gatetype> gatetype switchtype
 %type <porttype> port_direction port_direction_opt
-%type <vartype> bit_logic bit_logic_opt
 %type <vartype> integer_vector_type
 %type <parmvalue> parameter_value_opt
 
@@ -5484,17 +5482,6 @@ net_decl_assigns
 		}
 	;
 
-bit_logic
-  : K_logic { $$ = IVL_VT_LOGIC; }
-  | K_bool  { $$ = IVL_VT_BOOL; /* Icarus misc */}
-  | K_bit   { $$ = IVL_VT_BOOL; /* IEEE1800 / IEEE1364-2009 */}
-  ;
-
-bit_logic_opt
-  : bit_logic
-  |         { $$ = IVL_VT_NO_TYPE; }
-  ;
-
 net_type
 	: K_wire    { $$ = NetNet::WIRE; }
 	| K_tri     { $$ = NetNet::TRI; }
@@ -5514,42 +5501,12 @@ net_type
 	| K_uwire   { $$ = NetNet::UNRESOLVED_WIRE; }
 	;
 
-param_type
-  : bit_logic_opt unsigned_signed_opt dimensions_opt
-      { param_active_range = $3;
-	param_active_signed = $2;
-	if (($1 == IVL_VT_NO_TYPE) && ($3 != 0))
-	      param_active_type = IVL_VT_LOGIC;
-	else
-	      param_active_type = $1;
-      }
-  | K_integer signed_unsigned_opt
-      { param_active_range = make_range_from_width(integer_width);
-	param_active_signed = $2;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | K_time unsigned_signed_opt
-      { param_active_range = make_range_from_width(64);
-	param_active_signed = $2;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | real_or_realtime
-      { param_active_range = 0;
-	param_active_signed = true;
-	param_active_type = IVL_VT_REAL;
-      }
-  | atom2_type signed_unsigned_opt
-      { param_active_range = make_range_from_width($1);
-	param_active_signed = $2;
-	param_active_type = IVL_VT_BOOL;
-      }
-  | TYPE_IDENTIFIER
-      { pform_set_type_referenced(@1, $1.text);
-	pform_set_param_from_type(@1, $1.type, $1.text, param_active_range,
-	                          param_active_signed, param_active_type);
-	delete[]$1.text;
-      }
-  ;
+  /* The param_type rule is just the data_type_or_implicit rule wrapped
+     with an assignment to para_data_type with the figured data type.
+     This is used by parameter_assign, which is found to the right of
+     the param_type in various rules. */
+
+param_type : data_type_or_implicit { param_data_type = $1; } 
 
   /* parameter and localparam assignment lists are broken into
      separate BNF so that I can call slightly different parameter
@@ -5569,8 +5526,7 @@ localparam_assign_list
 parameter_assign
   : IDENTIFIER '=' expression parameter_value_ranges_opt
       { PExpr*tmp = $3;
-	pform_set_parameter(@1, lex_strings.make($1), param_active_type,
-			    param_active_signed, param_active_range, tmp, $4);
+	pform_set_parameter(@1, lex_strings.make($1), param_data_type, tmp, $4);
 	delete[]$1;
       }
   ;
@@ -5578,8 +5534,7 @@ parameter_assign
 localparam_assign
   : IDENTIFIER '=' expression
       { PExpr*tmp = $3;
-	pform_set_localparam(@1, lex_strings.make($1), param_active_type,
-			     param_active_signed, param_active_range, tmp);
+	pform_set_localparam(@1, lex_strings.make($1), param_data_type, tmp);
 	delete[]$1;
       }
   ;
@@ -6305,7 +6260,7 @@ specparam
 	: IDENTIFIER '=' expression
 		{ PExpr*tmp = $3;
 		  pform_set_specparam(@1, lex_strings.make($1),
-		                      param_active_range, tmp);
+		                      specparam_active_range, tmp);
 		  delete[]$1;
 		}
 	| IDENTIFIER '=' expression ':' expression ':' expression
@@ -6344,7 +6299,7 @@ specparam
 		        min_typ_max_warn -= 1;
 		  }
 		  pform_set_specparam(@1, lex_strings.make($1),
-		                      param_active_range, tmp);
+		                      specparam_active_range, tmp);
 		  delete[]$1;
 		}
 	| PATHPULSE_IDENTIFIER '=' expression
@@ -6366,9 +6321,9 @@ specparam_list
 specparam_decl
   : specparam_list
   | dimensions
-      { param_active_range = $1; }
+      { specparam_active_range = $1; }
     specparam_list
-      { param_active_range = 0; }
+      { specparam_active_range = 0; }
   ;
 
 spec_polarity

@@ -3168,8 +3168,7 @@ LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
 }
 
 void pform_set_parameter(const struct vlltype&loc,
-			 perm_string name, ivl_variable_type_t type,
-			 bool signed_flag, list<pform_range_t>*range, PExpr*expr,
+			 perm_string name, data_type_t*data_type, PExpr*expr,
 			 LexicalScope::range_t*value_range)
 {
       LexicalScope*scope = lexical_scope;
@@ -3190,20 +3189,7 @@ void pform_set_parameter(const struct vlltype&loc,
       scope->parameters[name] = parm;
 
       parm->expr = expr;
-
-      parm->type = type;
-      if (range) {
-	    assert(range->size() == 1);
-	    pform_range_t&rng = range->front();
-	    assert(rng.first);
-	    assert(rng.second);
-	    parm->msb = rng.first;
-	    parm->lsb = rng.second;
-      } else {
-	    parm->msb = 0;
-	    parm->lsb = 0;
-      }
-      parm->signed_flag = signed_flag;
+      parm->data_type = data_type;
       parm->range = value_range;
 
 	// Only a Module keeps the position of the parameter.
@@ -3212,8 +3198,7 @@ void pform_set_parameter(const struct vlltype&loc,
 }
 
 void pform_set_localparam(const struct vlltype&loc,
-			  perm_string name, ivl_variable_type_t type,
-			  bool signed_flag, list<pform_range_t>*range, PExpr*expr)
+			  perm_string name, data_type_t*data_type, PExpr*expr)
 {
       LexicalScope*scope = lexical_scope;
       if (is_compilation_unit(scope) && !gn_system_verilog()) {
@@ -3229,20 +3214,7 @@ void pform_set_localparam(const struct vlltype&loc,
       scope->localparams[name] = parm;
 
       parm->expr = expr;
-
-      parm->type = type;
-      if (range) {
-	    assert(range->size() == 1);
-	    pform_range_t&rng = range->front();
-	    assert(rng.first);
-	    assert(rng.second);
-	    parm->msb = rng.first;
-	    parm->lsb = rng.second;
-      } else {
-	    parm->msb  = 0;
-	    parm->lsb  = 0;
-      }
-      parm->signed_flag = signed_flag;
+      parm->data_type = data_type;
       parm->range = 0;
 }
 
@@ -3261,22 +3233,13 @@ void pform_set_specparam(const struct vlltype&loc, perm_string name,
       pform_cur_module.front()->specparams[name] = parm;
 
       parm->expr = expr;
+      parm->range = 0;
 
       if (range) {
 	    assert(range->size() == 1);
-	    pform_range_t&rng = range->front();
-	    assert(rng.first);
-	    assert(rng.second);
-	    parm->type = IVL_VT_LOGIC;
-	    parm->msb = rng.first;
-	    parm->lsb = rng.second;
-      } else {
-	    parm->type = IVL_VT_NO_TYPE;
-	    parm->msb  = 0;
-	    parm->lsb  = 0;
+	    parm->data_type = new vector_type_t(IVL_VT_LOGIC, false, range);
+	    parm->range = 0;
       }
-      parm->signed_flag = false;
-      parm->range = 0;
 }
 
 void pform_set_defparam(const pform_name_t&name, PExpr*expr)

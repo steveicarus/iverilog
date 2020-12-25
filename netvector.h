@@ -78,6 +78,7 @@ class netvector_t : public ivl_type_s {
       static netvector_t atom2u8;
       static netvector_t scalar_bool;
       static netvector_t scalar_logic;
+      static const netvector_t*integer_type();
 
     private:
       bool test_compatibility(ivl_type_t that) const;

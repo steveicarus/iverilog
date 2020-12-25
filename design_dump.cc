@@ -1465,14 +1465,8 @@ void NetScope::dump(ostream&o) const
 		  else
 			o << "    parameter ";
 
-		  o << pp->second.type << " ";
-
-		  if ((*pp).second.signed_flag)
-			o << "signed ";
-
-		  if ((*pp).second.msb)
-			o << "[" << *(*pp).second.msb
-			  << ":" << *(*pp).second.lsb << "] ";
+		  if (pp->second.ivl_type)
+			pp->second.ivl_type->debug_dump(o);
 
 		  o << (*pp).first << " = ";
 		  if (pp->second.val)

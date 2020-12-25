@@ -3780,8 +3780,8 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 
       NetNet *net;
       const NetExpr *par;
+      ivl_type_t par_type = 0;
       NetEvent *eve;
-      const NetExpr *ex1, *ex2;
 
 	/* Add the implicit this reference when requested. */
       if (add_this_flag) {
@@ -3796,8 +3796,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	// resolve to a class object. Note that the "this" symbol
 	// (internally represented as "@") is handled by there being a
 	// "this" object in the instance scope.
-      symbol_search(this, des, scope, use_path,
-		    net, par, eve, ex1, ex2);
+      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
 
       if (net == 0)
 	    return 0;

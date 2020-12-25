@@ -29,6 +29,8 @@
  */
 
 # include  "netlist.h"
+# include  "netscalar.h"
+# include  "netvector.h"
 # include  "util.h"
 # include  "compiler.h"
 # include  "netmisc.h"
@@ -508,55 +510,70 @@ void Design::evaluate_parameters()
 
 void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 {
-      long msb = 0;
-      long lsb = 0;
-      bool range_flag = false;
-
-	/* Evaluate the msb expression, if it is present. */
-      PExpr*msb_expr = (*cur).second.msb_expr;
-      if (msb_expr) {
-            (*cur).second.msb = elab_and_eval(des, this, msb_expr, -1, true);
-	    if (! eval_as_long(msb, (*cur).second.msb)) {
-		  cerr << (*cur).second.val->get_fileline()
-		       << ": error: Unable to evaluate msb expression "
-		       << "for parameter " << (*cur).first << ": "
-		       << *(*cur).second.msb << endl;
-		  des->errors += 1;
-		  return;
-	    }
-
-	    range_flag = true;
-      }
-
-	/* Evaluate the lsb expression, if it is present. */
-      PExpr*lsb_expr = (*cur).second.lsb_expr;
-      if (lsb_expr) {
-            (*cur).second.lsb = elab_and_eval(des, this, lsb_expr, -1, true);
-	    if (! eval_as_long(lsb, (*cur).second.lsb)) {
-		  cerr << (*cur).second.val->get_fileline()
-		       << ": error: Unable to evaluate lsb expression "
-		       << "for parameter " << (*cur).first << ": "
-		       << *(*cur).second.lsb << endl;
-		  des->errors += 1;
-		  return;
-	    }
-
-	    range_flag = true;
-      }
-
 	/* Evaluate the parameter expression. */
       PExpr*val_expr = (*cur).second.val_expr;
       NetScope*val_scope = (*cur).second.val_scope;
 
+      // The param_type may be nil if the parameter has no declared type. In
+      // this case, we'll try to take our type from the r-value.
+      ivl_type_t param_type = cur->second.ivl_type;
+
+      // Most parameter declarations are packed vectors, of the form:
+      //   parameter [H:L] foo == bar;
+      // so get the netvector_t. Note that this may also be the special
+      // case of a netvector_t with no dimensions, that exists only to carry
+      // signed-ness, e.g.:
+      //  parameter signed foo = bar;
+      // (Scalars are handled differently, not by a netvector_t with no
+      // dimensions.)
+      const netvector_t* param_vect = dynamic_cast<const netvector_t*> (param_type);
+
+      if (debug_elaborate) {
+	    cerr << val_expr->get_fileline() << ": " << __func__ << ": "
+		 << "parameter=" << cur->first << endl;
+	    if (param_type)
+		  cerr << val_expr->get_fileline() << ": " << __func__ << ": "
+		       << "param_type=" << *param_type << endl;
+	    else
+		  cerr << val_expr->get_fileline() << ": " << __func__ << ": "
+		       << "param_type=(nil)" << endl;
+	    cerr << val_expr->get_fileline() << ": " << __func__ << ": "
+		 << "val_expr=" << *val_expr << endl;
+      }
+
+      ivl_variable_type_t use_type;
       int lv_width = -2;
-      if (range_flag)
-	    lv_width = (msb >= lsb) ? 1 + msb - lsb : 1 + lsb - msb;
+      if (param_type) {
+	    use_type = param_type->base_type();
+	    // Is this a netvector_t with no dimenions?
+	    if (param_vect && param_vect->packed_dims().size()==0)
+		  lv_width = -2;
+	    else if (param_type->packed())
+		  lv_width = param_type->packed_width();
+      } else {
+	    use_type = val_expr->expr_type();
+      }
+
+      if (debug_elaborate) {
+	    cerr << val_expr->get_fileline() << ": " << __func__ << ": "
+		 << "use_type = " << use_type << endl;
+      }
 
       NetExpr*expr = elab_and_eval(des, val_scope, val_expr, lv_width, true,
-                                   (*cur).second.is_annotatable,
-                                   (*cur).second.type);
+                                   cur->second.is_annotatable, use_type);
       if (! expr)
             return;
+
+      // Make sure to carry the signed-ness from a vector type.
+      if (param_vect)
+	    expr->cast_signed(param_vect->get_signed());
+
+      if (debug_elaborate) {
+	    cerr << val_expr->get_fileline() << ": " << __func__ << ": "
+		 << "expr = " << *expr << endl;
+	    cerr << val_expr->get_fileline() << ": " << __func__ << ": "
+		 << "expr type = " << expr->expr_type() << endl;
+      }
 
       switch (expr->expr_type()) {
 	  case IVL_VT_REAL:
@@ -566,6 +583,13 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 		       << (*cur).first << " value: " << *expr << endl;
 		  des->errors += 1;
 		  return;
+	    }
+
+	    // If the parameter has no type, then infer its type from the
+	    // r-value expression.
+	    if (param_type==0) {
+		  param_type = &netreal_t::type_real;
+		  cur->second.ivl_type = param_type;
 	    }
 	    break;
 
@@ -579,17 +603,20 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 		  return;
 	    }
 
-	      // If the parameter has type or range information, then
-	      // make sure the type is set right. Note that if the
-	      // parameter doesn't have an explicit type or range,
-	      // then it will get the signedness from the expression itself.
-	    if (cur->second.type != IVL_VT_NO_TYPE) {
-		  expr->cast_signed(cur->second.signed_flag);
-	    } else if (cur->second.signed_flag) {
-		  expr->cast_signed(true);
+	    // If the parameter has no type, then infer its type from the
+	    // r-value expression.
+	    if (param_type==0) {
+		  param_type = new netvector_t(expr->expr_type(), expr->expr_width()-1,
+					       0, expr->has_sign());
+		  cur->second.ivl_type = param_type;
 	    }
 
-	    if (!range_flag && !expr->has_width()) {
+	    if (param_type->base_type() != IVL_VT_NO_TYPE)
+		  expr->cast_signed(param_type->get_signed());
+
+	    if (!expr->has_width()) {
+		  expr = pad_to_width(expr, integer_width, *expr);
+	    } else if (param_type->slice_dimensions().size()==0 && !expr->has_width()) {
 		  expr = pad_to_width(expr, integer_width, *expr);
 	    }
 	    break;
@@ -597,18 +624,25 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	  default:
 	    cerr << expr->get_fileline()
 		 << ": internal error: "
-		 << "Unhandled expression type?" << endl;
+		 << "Unhandled expression type "
+		 << expr->expr_type() << "?" << endl;
+	    cerr << expr->get_fileline()
+		 << ":               : "
+		 << "param_type: " << *param_type << endl;
 	    des->errors += 1;
 	    return;
       }
+
+      // By the time we're done with the above, we should certainly know the
+      // type of the parameter.
+      ivl_assert(*expr, cur->second.ivl_type);
 
       cur->second.val = expr;
 
 	// If there are no value ranges to test the value against,
 	// then we are done.
-      if ((*cur).second.range == 0) {
+      if ((*cur).second.range == 0)
 	    return;
-      }
 
       NetEConst*val = dynamic_cast<NetEConst*>((*cur).second.val);
       ivl_assert(*(*cur).second.val, (*cur).second.val);
@@ -671,10 +705,12 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
 {
       PExpr*val_expr = (*cur).second.val_expr;
       NetScope*val_scope = (*cur).second.val_scope;
+      ivl_type_t param_type = cur->second.ivl_type;
 
+      ivl_assert(*val_expr, param_type);
       NetExpr*expr = elab_and_eval(des, val_scope, val_expr, -1, true,
-                                   (*cur).second.is_annotatable,
-                                   (*cur).second.type);
+                                   cur->second.is_annotatable,
+                                   param_type->base_type());
       if (! expr)
             return;
 
@@ -755,18 +791,37 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
 
 void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
 {
-	// If the parameter has already been evaluated, quietly return.
+      ivl_type_t param_type = cur->second.ivl_type;
+
+      // If the parameter type is present, then elaborate it now.
+      if (cur->second.val_type) {
+	    param_type = cur->second.val_type->elaborate_type(des, cur->second.val_scope);
+	    cur->second.ivl_type = param_type;
+	    cur->second.val_type = 0;
+      }
+
+      // If the parameter has already been evaluated, quietly return.
       if (cur->second.val_expr == 0)
             return;
+
+      // Guess the varaiable type of the parameter. If the parameter has no
+      // given type, then guess the type from the expression and use that to
+      // evaluate.
+      ivl_variable_type_t use_type;
+      if (param_type)
+	    use_type = param_type->base_type();
+      else
+	    use_type = cur->second.val_expr->expr_type();
 
       if (cur->second.solving) {
             cerr << cur->second.get_fileline() << ": error: "
 	         << "Recursive parameter reference found involving "
                  << cur->first << "." << endl;
 	    des->errors += 1;
+
       } else {
             cur->second.solving = true;
-            switch (cur->second.type) {
+            switch (use_type) {
                 case IVL_VT_NO_TYPE:
                 case IVL_VT_BOOL:
                 case IVL_VT_LOGIC:
@@ -779,7 +834,7 @@ void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
 
                 default:
                   cerr << cur->second.get_fileline() << ": internal error: "
-                       << "Unexpected expression type " << cur->second.type
+                       << "Unexpected expression type " << use_type
                        << "." << endl;
                   cerr << cur->second.get_fileline() << ":               : "
                        << "Parameter name: " << cur->first << endl;

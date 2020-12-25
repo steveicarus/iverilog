@@ -1333,11 +1333,10 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 
       NetNet *net = 0;
       const NetExpr *par;
+      ivl_type_t par_type = 0;
       NetEvent *eve;
-      const NetExpr *ex1, *ex2;
 
-      symbol_search(this, des, scope, use_path,
-		    net, par, eve, ex1, ex2);
+      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
 
       const netdarray_t*use_darray = 0;
 
@@ -1354,7 +1353,7 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 
 	    net = 0;
 	    symbol_search(this, des, scope, tmp_path,
-			  net, par, eve, ex1, ex2);
+			  net, par, eve, par_type);
 	    if (net && net->class_type()) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PECallFunction::test_width_method_: "
@@ -2647,11 +2646,10 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 
       NetNet *net = 0;
       const NetExpr *par;
+      ivl_type_t par_type;
       NetEvent *eve;
-      const NetExpr *ex1, *ex2;
 
-      symbol_search(this, des, scope, use_path,
-		    net, par, eve, ex1, ex2);
+      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
 
       if (net == 0)
 	    return 0;
@@ -3429,33 +3427,6 @@ NetExpr* PEIdent::calculate_up_do_base_(Design*des, NetScope*scope,
       return tmp;
 }
 
-bool PEIdent::calculate_param_range_(Design*, NetScope*,
-				     const NetExpr*par_msb, long&par_msv,
-				     const NetExpr*par_lsb, long&par_lsv,
-				     long length) const
-{
-      if (par_msb == 0) {
-	      // If the parameter doesn't have an explicit range, then
-	      // just return range values of [length-1:0].
-	    ivl_assert(*this, par_lsb == 0);
-	    par_msv = length-1;
-	    par_lsv = 0;
-	    return true;
-      }
-
-      const NetEConst*tmp = dynamic_cast<const NetEConst*> (par_msb);
-      ivl_assert(*this, tmp);
-
-      par_msv = tmp->value().as_long();
-
-      tmp = dynamic_cast<const NetEConst*> (par_lsb);
-      ivl_assert(*this, tmp);
-
-      par_lsv = tmp->value().as_long();
-
-      return true;
-}
-
 unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
 {
       if (!gn_system_verilog())
@@ -3475,9 +3446,9 @@ unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
 
       NetNet*net = 0;
       const NetExpr*par = 0;
+      ivl_type_t par_type = 0;
       NetEvent*eve = 0;
-      const NetExpr*ex1 = 0, *ex2 = 0;
-      symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
+      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
       if (net == 0) {
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": PEIdent::test_width_method_: "
@@ -3521,9 +3492,8 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
       NetNet*       net = 0;
       const NetExpr*par = 0;
+      ivl_type_t    par_type = 0;
       NetEvent*     eve = 0;
-
-      const NetExpr*ex1, *ex2;
 
       NetScope*use_scope = scope;
       if (package_) {
@@ -3536,8 +3506,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       }
 
       NetScope*found_in = symbol_search(this, des, use_scope, path_,
-					net, par, eve,
-                                        ex1, ex2);
+					net, par, eve, par_type);
 
 	// If there is a part/bit select expression, then process it
 	// here. This constrains the results no matter what kind the
@@ -3713,7 +3682,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    use_path.pop_back();
 
 	    ivl_assert(*this, net == 0);
-	    symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
+	    symbol_search(this, des, scope, use_path, net, par, eve, par_type);
 
 	      // Check to see if we have a net and if so is it a structure?
 	    if (net != 0) {
@@ -3775,8 +3744,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       NetNet*       net = 0;
       const NetExpr*par = 0;
+      ivl_type_t    par_type = 0;
       NetEvent*     eve = 0;
-      const NetExpr*ex1, *ex2;
 
       NetScope*use_scope = scope;
       if (package_) {
@@ -3788,9 +3757,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    return tmp;
       }
 
-      /* NetScope*found_in = */ symbol_search(this, des, use_scope, path_,
-					      net, par, eve,
-					      ex1, ex2);
+      symbol_search(this, des, use_scope, path_, net, par, eve, par_type);
 
       if (net == 0 && gn_system_verilog() && path_.size() >= 2) {
 	      // NOTE: this is assuming the member_path is only one
@@ -3802,7 +3769,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    use_path.pop_back();
 
 	    ivl_assert(*this, net == 0);
-	    symbol_search(this, des, use_scope, use_path, net, par, eve, ex1, ex2);
+	    symbol_search(this, des, use_scope, use_path, net, par, eve, par_type);
 
 	    if (net == 0) {
 		    // Nope, no struct/class with member.
@@ -4051,9 +4018,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       NetNet*       net = 0;
       const NetExpr*par = 0;
+      ivl_type_t    par_type = 0;
       NetEvent*     eve = 0;
-
-      const NetExpr*ex1, *ex2;
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PEIdent::elaborate_expr: "
@@ -4112,7 +4078,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       NetScope*found_in = 0;
       while (net==0 && par==0 && eve==0 && base_path.size()>0) {
 	    found_in = symbol_search(this, des, use_scope, base_path,
-				     net, par, eve, ex1, ex2);
+				     net, par, eve, par_type);
 	    if (net) break;
 	    if (par) break;
 	    if (eve) break;
@@ -4144,7 +4110,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    }
 
 	    NetExpr*tmp = elaborate_expr_param_(des, scope, par, found_in,
-                                                ex1, ex2, expr_wid, flags);
+                                                par_type, expr_wid, flags);
 
             if (!tmp) return 0;
 
@@ -4463,17 +4429,15 @@ static verinum param_part_select_bits(const verinum&par_val, long wid,
 NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 					    const NetExpr*par,
 					    NetScope*found_in,
-					    const NetExpr*par_msb,
-					    const NetExpr*par_lsb,
+					    ivl_type_t par_type,
                                             bool need_const) const
 {
       const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
       ivl_assert(*this, par_ex);
 
       long par_msv, par_lsv;
-      if(! calculate_param_range_(des, scope, par_msb, par_msv,
-                                  par_lsb, par_lsv,
-                                  par_ex->value().len())) return 0;
+      if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
+				 par_ex->value().len())) return 0;
 
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
@@ -4559,8 +4523,7 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 					     const NetExpr*par,
 					     NetScope*,
-					     const NetExpr*par_msb,
-					     const NetExpr*par_lsb,
+					     ivl_type_t par_type,
                                              unsigned expr_wid) const
 {
       long msv, lsv;
@@ -4574,9 +4537,8 @@ NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 
 
       long par_msv, par_lsv;
-      if (! calculate_param_range_(des, scope, par_msb, par_msv,
-                                   par_lsb, par_lsv,
-                                   par_ex->value().len())) return 0;
+      if (! calculate_param_range(*this, par_type, par_msv, par_lsv,
+				  par_ex->value().len())) return 0;
 
       if (! parts_defined_flag) {
 	    if (warn_ob_select) {
@@ -4685,17 +4647,15 @@ static void warn_param_ob(long par_msv, long par_lsv, bool defined,
 NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 					       const NetExpr*par,
 					       NetScope*found_in,
-					       const NetExpr*par_msb,
-					       const NetExpr*par_lsb,
+					       ivl_type_t par_type,
                                                bool need_const) const
 {
       const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
       ivl_assert(*this, par_ex);
 
       long par_msv, par_lsv;
-      if(! calculate_param_range_(des, scope, par_msb, par_msv,
-                                  par_lsb, par_lsv,
-                                  par_ex->value().len())) return 0;
+      if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
+				 par_ex->value().len())) return 0;
 
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
       if (base == 0) return 0;
@@ -4737,8 +4697,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 	    if (warn_ob_select) {
                   bool defined = true;
 		    // Check to see if the parameter has a defined range.
-                  if (par_msb == 0) {
-			assert(par_lsb == 0);
+                  if (par_type == 0) {
 			defined = false;
                   }
 		    // Get the parameter values width.
@@ -4769,17 +4728,15 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 					       const NetExpr*par,
 					       NetScope*found_in,
-					       const NetExpr*par_msb,
-					       const NetExpr*par_lsb,
+					       ivl_type_t par_type,
                                                bool need_const) const
 {
       const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
       ivl_assert(*this, par_ex);
 
       long par_msv, par_lsv;
-      if(! calculate_param_range_(des, scope, par_msb, par_msv,
-                                  par_lsb, par_lsv,
-                                  par_ex->value().len())) return 0;
+      if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
+				 par_ex->value().len())) return 0;
 
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
       if (base == 0) return 0;
@@ -4821,8 +4778,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 	    if (warn_ob_select) {
                   bool defined = true;
 		    // Check to see if the parameter has a defined range.
-                  if (par_msb == 0) {
-			assert(par_lsb == 0);
+                  if (par_type == 0) {
 			defined = false;
                   }
 		    // Get the parameter values width.
@@ -4860,8 +4816,7 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 					NetScope*scope,
 					const NetExpr*par,
 					NetScope*found_in,
-					const NetExpr*par_msb,
-					const NetExpr*par_lsb,
+					ivl_type_t par_type,
 					unsigned expr_wid, unsigned flags) const
 {
       bool need_const = NEED_CONST & flags;
@@ -4894,19 +4849,19 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 
       if (use_sel == index_component_t::SEL_BIT)
 	    return elaborate_expr_param_bit_(des, scope, par, found_in,
-					     par_msb, par_lsb, need_const);
+					     par_type, need_const);
 
       if (use_sel == index_component_t::SEL_PART)
 	    return elaborate_expr_param_part_(des, scope, par, found_in,
-					      par_msb, par_lsb, expr_wid);
+					      par_type, expr_wid);
 
       if (use_sel == index_component_t::SEL_IDX_UP)
 	    return elaborate_expr_param_idx_up_(des, scope, par, found_in,
-						par_msb, par_lsb, need_const);
+						par_type, need_const);
 
       if (use_sel == index_component_t::SEL_IDX_DO)
 	    return elaborate_expr_param_idx_do_(des, scope, par, found_in,
-						par_msb, par_lsb, need_const);
+						par_type, need_const);
 
       NetExpr*tmp = 0;
 
