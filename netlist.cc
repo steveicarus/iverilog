@@ -2974,7 +2974,12 @@ DelayType NetTaskDef::delay_type(bool print_delay) const
 
 DelayType NetUTask::delay_type(bool print_delay) const
 {
-      return task()->task_def()->delay_type(print_delay);
+	// Is this a void function call in a final block?
+      if (task()->type() == NetScope::FUNC) {
+	    return NO_DELAY;
+      } else {
+	    return task()->task_def()->delay_type(print_delay);
+      }
 }
 
 static bool do_expr_event_match(const NetExpr*expr, const NetEvWait*evwt)
