@@ -5523,14 +5523,14 @@ param_type
 	else
 	      param_active_type = $1;
       }
-  | K_integer
+  | K_integer signed_unsigned_opt
       { param_active_range = make_range_from_width(integer_width);
-	param_active_signed = true;
+	param_active_signed = $2;
 	param_active_type = IVL_VT_LOGIC;
       }
-  | K_time
+  | K_time unsigned_signed_opt
       { param_active_range = make_range_from_width(64);
-	param_active_signed = false;
+	param_active_signed = $2;
 	param_active_type = IVL_VT_LOGIC;
       }
   | real_or_realtime
@@ -5538,9 +5538,9 @@ param_type
 	param_active_signed = true;
 	param_active_type = IVL_VT_REAL;
       }
-  | atom2_type
+  | atom2_type signed_unsigned_opt
       { param_active_range = make_range_from_width($1);
-	param_active_signed = true;
+	param_active_signed = $2;
 	param_active_type = IVL_VT_BOOL;
       }
   | TYPE_IDENTIFIER
