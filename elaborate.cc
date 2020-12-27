@@ -3602,6 +3602,9 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	/* Handle non-automatic tasks with no parameters specially. There is
            no need to make a sequential block to hold the generated code. */
       if ((parm_count == 0) && !task->is_auto()) {
+	      // Check if a task call is allowed in this context.
+	    test_task_calls_ok_(des, scope);
+
 	    NetUTask*cur = new NetUTask(task);
 	    cur->set_line(*this);
 	    return cur;
@@ -3866,7 +3869,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
  * If during elaboration we determine (for sure) that we are calling a
  * task (and not just a void function) then this method tests if that
  * task call is allowed in the current context. If so, return true. If
- * not, print and error message and return false;
+ * not, print an error message and return false;
  */
 bool PCallTask::test_task_calls_ok_(Design*des, NetScope*scope) const
 {
