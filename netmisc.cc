@@ -858,6 +858,13 @@ static NetExpr* do_elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 
       pe->test_width(des, scope, mode);
 
+      if (pe->expr_type() == IVL_VT_CLASS) {
+	    cerr << pe->get_fileline() << ": Error: "
+	         << "Class/null r-value not allowed in this context." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
         // Get the final expression width. If the expression is unsized,
         // this may be different from the value returned by test_width().
       unsigned expr_width = pe->expr_width();

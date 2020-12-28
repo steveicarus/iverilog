@@ -1398,10 +1398,21 @@ void draw_eval_vec4(ivl_expr_t expr)
 	    draw_property_vec4(expr);
 	    return;
 
+	  case IVL_EX_NULL:
+	    fprintf(stderr, "%s:%u: Error: 'null' used in an expression\n",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr));
+	    fprintf(vvp_out, "; Error 'null' used in an expression\n");
+	    vvp_errors += 1;
+	    return;
+
 	  default:
 	    break;
       }
 
-      fprintf(stderr, "XXXX Evaluate VEC4 expression (%d)\n", ivl_expr_type(expr));
-      fprintf(vvp_out, "; XXXX Evaluate VEC4 expression (%d)\n", ivl_expr_type(expr));
+      fprintf(stderr, "%s:%u: Sorry: cannot evaluate VEC4 expression (%d)\n",
+                      ivl_expr_file(expr), ivl_expr_lineno(expr),
+                      ivl_expr_type(expr));
+      fprintf(vvp_out, "; Sorry: cannot evaluate VEC4 expression (%d)\n",
+                       ivl_expr_type(expr));
+      vvp_errors += 1;
 }

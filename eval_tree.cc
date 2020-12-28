@@ -404,7 +404,6 @@ NetEConst* NetEBComp::eval_leeq_(const NetExpr*le, const NetExpr*re) const
 {
       if (le->expr_type() == IVL_VT_REAL || re->expr_type() == IVL_VT_REAL)
 	    return eval_leeq_real_(le, re, true);
-//      assert(expr_type() == IVL_VT_LOGIC);
 
       const NetEConst*r = dynamic_cast<const NetEConst*>(re);
       if (r == 0) return 0;
@@ -414,12 +413,6 @@ NetEConst* NetEBComp::eval_leeq_(const NetExpr*le, const NetExpr*re) const
 	    NetEConst*res = new NetEConst(verinum(verinum::Vx, 1));
 	    ivl_assert(*this, res);
 	    return res;
-      }
-
-      if (le->expr_width() == 0) {
-	    cerr << get_fileline() << ": internal error: Something wrong "
-		 << "with the left side width of <= ?" << endl;
-	    cerr << get_fileline() << ":               : " << *this << endl;
       }
 
       if (NetEConst*tmp = must_be_leeq_(le, rv, true)) {
