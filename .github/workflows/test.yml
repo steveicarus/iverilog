@@ -6,6 +6,34 @@ on:
 
 jobs:
 
+  mac:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [
+          '10.15'
+        ]
+    runs-on: macos-${{ matrix.os }}
+    name: '🍏 macos ${{ matrix.os }}'
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        brew install bison
+
+    - name: Build, install and check
+      run: |
+        export PATH="/usr/local/opt/bison/bin:$PATH"
+        autoconf
+        ./configure
+        sudo make install
+        make check
+
+    - name: Test
+      run: ./.github/test.sh
+
 
   lin:
     strategy:
