@@ -277,6 +277,13 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       ivl_variable_type_t l_type =  left_->expr_type();
       ivl_variable_type_t r_type = right_->expr_type();
 
+      if (l_type == IVL_VT_CLASS || r_type == IVL_VT_CLASS) {
+	    cerr << get_fileline() << ": error: "
+	         << "Class/null is not allowed with the '"
+	         << human_readable_op(op_) << "' operator." << endl;
+	    des->errors += 1;
+      }
+
       if (l_type == IVL_VT_REAL || r_type == IVL_VT_REAL)
 	    expr_type_ = IVL_VT_REAL;
       else if (l_type == IVL_VT_LOGIC || r_type == IVL_VT_LOGIC)
@@ -622,6 +629,34 @@ unsigned PEBComp::test_width(Design*des, NetScope*scope, width_mode_t&)
 		 << r_width_ << " bits." << endl;
       }
 
+      switch (op_) {
+	case 'e': /* == */
+	case 'n': /* != */
+	case 'E': /* === */
+	case 'N': /* !== */
+	      // FIXME: A class variable/array inside a class is not
+	      //        reported correctly so this cannot be used.
+#if 0
+	    if ((l_type == IVL_VT_CLASS || r_type == IVL_VT_CLASS) &&
+	        l_type != r_type) {
+		  cerr << get_fileline() << ": error: "
+		       << "Both arguments ("<< l_type << ", " << r_type
+		       << ") must be class/null for '"
+		       << human_readable_op(op_) << "' operator." << endl;
+		  des->errors += 1;
+	    }
+#endif
+	    break;
+	default:
+	    if (l_type == IVL_VT_CLASS || r_type == IVL_VT_CLASS) {
+		  cerr << get_fileline() << ": error: "
+		       << "Class/null is not allowed with the '"
+		       << human_readable_op(op_) << "' operator." << endl;
+		  des->errors += 1;
+	    }
+      }
+
+
       return expr_width_;
 }
 
@@ -754,6 +789,13 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       expr_width_  = left_->test_width(des, scope, l_mode);
       expr_type_   = left_->expr_type();
       signed_flag_ = left_->has_sign();
+
+      if (expr_type_ == IVL_VT_CLASS || right_->expr_type() == IVL_VT_CLASS) {
+	    cerr << get_fileline() << ": error: "
+	         << "Class/null is not allowed with the '"
+	         << human_readable_op(op_) << "' operator." << endl;
+	    des->errors += 1;
+      }
 
       if (mode==SIZED)
 	    mode = l_mode;
@@ -6282,6 +6324,16 @@ NetExpr*PETypename::elaborate_expr(Design*des, NetScope*,
 
 unsigned PEUnary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
+	// Evaluate the expression width to get the correct type information
+      expr_width_  = expr_->test_width(des, scope, mode);
+
+      if (expr_->expr_type() == IVL_VT_CLASS) {
+	    cerr << get_fileline() << ": error: "
+	    << "Class/null is not allowed with the '"
+	    << human_readable_op(op_) << "' operator." << endl;
+	    des->errors += 1;
+      }
+
       switch (op_) {
 	  case '&': // Reduction AND
 	  case '|': // Reduction OR
@@ -6311,7 +6363,6 @@ unsigned PEUnary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
             return expr_width_;
       }
 
-      expr_width_  = expr_->test_width(des, scope, mode);
       expr_type_   = expr_->expr_type();
       min_width_   = expr_->min_width();
       signed_flag_ = expr_->has_sign();
