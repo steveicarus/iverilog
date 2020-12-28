@@ -506,26 +506,19 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 	    ivl_parameter_t cur_par = &scop->param[idx];
 	    cur_par->basename = cur_pit->first;
             cur_par->local = cur_pit->second.local_flag;
-	      /* Either both the MSB and LSB expressions are provided or
-	       * neither are provided. */
-	    if (cur_pit->second.msb) {
-		  assert(cur_pit->second.lsb);
-		  /* The MSB and LSB expressions must be integral constants. */
-		  const NetEConst *msbc =
-		         dynamic_cast<const NetEConst*>(cur_pit->second.msb);
-		  const NetEConst *lsbc =
-		         dynamic_cast<const NetEConst*>(cur_pit->second.lsb);
-		  assert(msbc);
-		  assert(lsbc);
-		  cur_par->msb = msbc->value().as_long();
-		  cur_par->lsb = lsbc->value().as_long();
-	    } else {
-		  assert(! cur_pit->second.lsb);
-		  cur_par->msb = cur_pit->second.val->expr_width() - 1;
-		  assert(cur_par->msb >= 0);
-		  cur_par->lsb = 0;
+	    calculate_param_range(cur_pit->second,
+				  cur_pit->second.ivl_type,
+				  cur_par->msb, cur_par->lsb,
+				  cur_pit->second.val->expr_width());
+
+	    if (cur_pit->second.ivl_type == 0) {
+		  cerr << "?:?: internal error: "
+		       << "No type for parameter " << cur_pit->first
+		       << " in scope " << net->fullname() << "?" << endl;
 	    }
-	    cur_par->signed_flag = cur_pit->second.signed_flag;
+	    assert(cur_pit->second.ivl_type);
+
+	    cur_par->signed_flag = cur_pit->second.ivl_type->get_signed();
 	    cur_par->scope = scop;
 	    FILE_NAME(cur_par, &(cur_pit->second));
 

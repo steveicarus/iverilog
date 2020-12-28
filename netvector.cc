@@ -18,6 +18,7 @@
  */
 
 # include  "netvector.h"
+# include  "compiler.h"
 # include  <iostream>
 
 using namespace std;
@@ -30,6 +31,17 @@ netvector_t netvector_t::atom2s16 (IVL_VT_BOOL, 15, 0, true);
 netvector_t netvector_t::atom2u16 (IVL_VT_BOOL, 15, 0, false);
 netvector_t netvector_t::atom2s8  (IVL_VT_BOOL,  7, 0, true);
 netvector_t netvector_t::atom2u8  (IVL_VT_BOOL,  7, 0, false);
+
+static netvector_t* save_integer_type = 0;
+const netvector_t* netvector_t::integer_type()
+{
+      if (save_integer_type)
+	    return save_integer_type;
+
+      save_integer_type = new netvector_t(IVL_VT_LOGIC, integer_width-1, 0, true);
+      save_integer_type->set_isint(true);
+      return save_integer_type;
+}
 
 //netvector_t netvector_t::scalar_bool (IVL_VT_BOOL);
 netvector_t netvector_t::scalar_logic (IVL_VT_LOGIC);

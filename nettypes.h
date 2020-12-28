@@ -27,6 +27,7 @@
 # include  <cassert>
 
 class netrange_t;
+class LineInfo;
 
 /*
  * This is a fully abstract type that is a type that can be attached
@@ -134,6 +135,15 @@ extern std::ostream&operator << (std::ostream&out, const std::list<netrange_t>&r
 extern std::ostream&operator << (std::ostream&out, const std::vector<netrange_t>&rlist);
 
 extern unsigned long netrange_width(const std::vector<netrange_t>&dims);
+
+/*
+ * There are a few cases where we need to know about the single-level
+ * dimensions of a parameter declaration, for example:
+ *
+ *   parameter [msv:lsv] foo ...;
+ */
+extern bool calculate_param_range(const LineInfo&line, ivl_type_t par_type,
+				  long&par_msv, long&par_lsv, long length);
 
 /*
  * Take as input a list of packed dimensions and a list of prefix

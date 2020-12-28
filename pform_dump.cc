@@ -165,6 +165,12 @@ void data_type_t::pform_dump(ostream&out, unsigned indent) const
       out << setw(indent) << "" << typeid(*this).name() << endl;
 }
 
+ostream& data_type_t::debug_dump(ostream&out) const
+{
+      out << typeid(*this).name();
+      return out;
+}
+
 void void_type_t::pform_dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "void" << endl;
@@ -211,6 +217,25 @@ void vector_type_t::pform_dump(ostream&fd, unsigned indent) const
 	    }
       }
       fd << endl;
+}
+
+ostream& vector_type_t::debug_dump(ostream&fd) const
+{
+      if (signed_flag)
+	    fd << "signed ";
+      if (pdims==nullptr) {
+	    fd << "/* vector_type_t nil */";
+	    return fd;
+      }
+
+      for (list<pform_range_t>::iterator cur = pdims->begin()
+		 ; cur != pdims->end() ; ++cur) {
+	    fd << "[";
+	    if (cur->first)  fd << *(cur->first);
+	    if (cur->second) fd << ":" << *(cur->second);
+	    fd << "]";
+      }
+      return fd;
 }
 
 void class_type_t::pform_dump(ostream&out, unsigned indent) const
@@ -1389,14 +1414,12 @@ void LexicalScope::dump_parameters_(ostream&out, unsigned indent) const
       typedef map<perm_string,param_expr_t*>::const_iterator parm_iter_t;
       for (parm_iter_t cur = parameters.begin()
 		 ; cur != parameters.end() ; ++ cur ) {
-	    out << setw(indent) << "" << "parameter "
-                << (*cur).second->type << " ";
-	    if ((*cur).second->signed_flag)
-		  out << "signed ";
-	    if ((*cur).second->msb)
-		  out << "[" << *(*cur).second->msb << ":"
-		      << *(*cur).second->lsb << "] ";
-	    out << (*cur).first << " = ";
+	    out << setw(indent) << "" << "parameter ";
+	    if (cur->second->data_type)
+	          cur->second->data_type->debug_dump(out);
+	    else
+		  out << "(nil type)";
+	    out << " " << (*cur).first << " = ";
 	    if ((*cur).second->expr)
 		  out << *(*cur).second->expr;
 	    else
@@ -1439,9 +1462,10 @@ void LexicalScope::dump_localparams_(ostream&out, unsigned indent) const
       for (parm_iter_t cur = localparams.begin()
 		 ; cur != localparams.end() ; ++ cur ) {
 	    out << setw(indent) << "" << "localparam ";
-	    if ((*cur).second->msb)
-		  out << "[" << *(*cur).second->msb << ":"
-		      << *(*cur).second->lsb << "] ";
+	    if (cur->second->data_type) {
+		  cur->second->data_type->debug_dump(out);
+		  out << " ";
+	    }
 	    out << (*cur).first << " = ";
 	    if ((*cur).second->expr)
 		  out << *(*cur).second->expr << ";" << endl;
@@ -1544,9 +1568,11 @@ void Module::dump_specparams_(ostream&out, unsigned indent) const
       for (parm_iter_t cur = specparams.begin()
 		 ; cur != specparams.end() ; ++ cur ) {
 	    out << setw(indent) << "" << "specparam ";
-	    if ((*cur).second->msb)
-		  out << "[" << *(*cur).second->msb << ":"
-		      << *(*cur).second->lsb << "] ";
+	    if (cur->second->data_type)
+		  cur->second->data_type->debug_dump(out);
+	    else
+		  out << "(nil type)";
+
 	    out << (*cur).first << " = ";
 	    if ((*cur).second->expr)
 		  out << *(*cur).second->expr << ";" << endl;

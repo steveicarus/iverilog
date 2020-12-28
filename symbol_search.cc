@@ -31,8 +31,7 @@ struct symbol_search_results {
 	    scope = 0;
 	    net = 0;
 	    par_val = 0;
-	    par_msb = 0;
-	    par_lsb = 0;
+	    par_type = 0;
 	    eve = 0;
       }
 
@@ -52,8 +51,7 @@ struct symbol_search_results {
 	// If this was a parameter, the value expression and the
 	// optional value dimensions.
       const NetExpr*par_val;
-      const NetExpr*par_msb;
-      const NetExpr*par_lsb;
+      ivl_type_t par_type;
 	// If this is a named event, ...
       NetEvent*eve;
 };
@@ -129,7 +127,7 @@ static bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  return true;
 	    }
 
-	    if (const NetExpr*par = scope->get_parameter(des, path_tail.name, res->par_msb, res->par_lsb)) {
+	    if (const NetExpr*par = scope->get_parameter(des, path_tail.name, res->par_type)) {
 		  res->scope = scope;
 		  res->par_val = par;
 		  return true;
@@ -191,14 +189,13 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		       NetNet*&net,
 		       const NetExpr*&par,
 		       NetEvent*&eve,
-		       const NetExpr*&ex1, const NetExpr*&ex2)
+		       ivl_type_t&par_type)
 {
       symbol_search_results recurse;
       bool flag = symbol_search(li, des, scope, path, &recurse);
       net = recurse.net;
       par = recurse.par_val;
-      ex1 = recurse.par_msb;
-      ex2 = recurse.par_lsb;
+      par_type = recurse.par_type;
       eve = recurse.eve;
       if (! flag) {
 	    return 0;

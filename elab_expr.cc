@@ -1333,11 +1333,10 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 
       NetNet *net = 0;
       const NetExpr *par;
+      ivl_type_t par_type = 0;
       NetEvent *eve;
-      const NetExpr *ex1, *ex2;
 
-      symbol_search(this, des, scope, use_path,
-		    net, par, eve, ex1, ex2);
+      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
 
       const netdarray_t*use_darray = 0;
 
@@ -1354,7 +1353,7 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 
 	    net = 0;
 	    symbol_search(this, des, scope, tmp_path,
-			  net, par, eve, ex1, ex2);
+			  net, par, eve, par_type);
 	    if (net && net->class_type()) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PECallFunction::test_width_method_: "
@@ -2641,20 +2640,58 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    use_path.push_front(name_component_t(perm_string::literal(THIS_TOKEN)));
       }
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "use_path: " << use_path << endl;
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "method_name: " << method_name << endl;
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "expr_wid: " << expr_wid << endl;
+      }
+
 	// If there is no object to the left of the method name, then
 	// give up on the idea of looking for an object method.
       if (use_path.empty()) return 0;
 
       NetNet *net = 0;
       const NetExpr *par;
+      ivl_type_t par_type;
       NetEvent *eve;
-      const NetExpr *ex1, *ex2;
 
-      symbol_search(this, des, scope, use_path,
-		    net, par, eve, ex1, ex2);
+      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
 
-      if (net == 0)
-	    return 0;
+      if (debug_elaborate) {
+	    if (net) {
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "net: " << net->name() << endl;
+	    }
+	    if (par) {
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "par: " << *par << endl;
+	    }
+	    if (par_type) {
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "par_type: " << *par_type << endl;
+	    }
+      }
+
+      // If we found a net with a method...
+      if (net)
+	    return elaborate_expr_method_net_(des, scope, net, expr_wid);
+
+      // If we found a parameter with a method...
+      if (par)
+	    return elaborate_expr_method_par_(des, scope, par, par_type, expr_wid);
+
+      return 0;
+}
+
+NetExpr* PECallFunction::elaborate_expr_method_net_(Design*des, NetScope*scope,
+						    NetNet*net, unsigned expr_wid) const
+{
+      pform_name_t use_path = path_;
+      perm_string method_name = peek_tail_name(use_path);
+      use_path.pop_back();
 
       if (net->data_type() == IVL_VT_STRING) {
 
@@ -2811,6 +2848,70 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    return call;
       }
 
+      return 0;
+}
+
+NetExpr* PECallFunction::elaborate_expr_method_par_(Design*, NetScope*scope,
+						    const NetExpr*par,
+						    ivl_type_t par_type,
+						    unsigned expr_wid) const
+{
+      pform_name_t use_path = path_;
+      perm_string method_name = peek_tail_name(use_path);
+      use_path.pop_back();
+
+      // If the parameter is of type string, then look for the standard string
+      // method. Return an error if not found. Since we are assured that the
+      // expression is a constant string, it should be able to calculate the
+      // result at compile time.
+      if (dynamic_cast<const netstring_t*>(par_type)) {
+	    
+	    const NetECString*par_string = dynamic_cast<const NetECString*>(par);
+	    ivl_assert(*par, par_string);
+	    string par_value = par_string->value().as_string();
+
+	    if (method_name == "len") {
+		  NetEConst*use_val = make_const_val(par_value.size());
+		  use_val->set_line(*this);
+		  return pad_to_width(use_val, expr_wid, *this);
+	    }
+
+	    if (method_name == "atoi") {
+		  NetEConst*use_val = make_const_val(atoi(par_value.c_str()));
+		  use_val->set_line(*this);
+		  return pad_to_width(use_val, expr_wid, true, *this);
+	    }
+
+	    if (method_name == "atoreal") {
+		  NetECReal*use_val = new NetECReal(verireal(par_value.c_str()));
+		  use_val->set_line(*this);
+		  return use_val;
+	    }
+
+	    if (method_name == "atohex") {
+		  NetEConst*use_val = make_const_val(strtoul(par_value.c_str(),0,16));
+		  use_val->set_line(*this);
+		  return pad_to_width(use_val, expr_wid, true, *this);
+	    }
+
+	    // Returning 0 here will cause the caller to print an error
+	    // message and increment the error count, so there is no need to
+	    // increment des->error_count here.
+	    cerr << get_fileline() << ": error: "
+		 << "Unknown or unsupport string method: " << method_name
+		 << endl;
+	    return 0;
+      }
+
+      // If we haven't figured out what to do with this method by now,
+      // something went wrong.
+      cerr << get_fileline() << ": sorry: Don't know how to handle methods of parameters of type:" << endl;
+      cerr << get_fileline() << ":      : " << *par_type << endl;
+      cerr << get_fileline() << ":      : in scope " << scope_path(scope) << endl;
+
+      // Returning 0 here will cause the caller to print an error message and
+      // increment the error count, so there is no need to increment
+      // des->error_count here.
       return 0;
 }
 
@@ -3429,33 +3530,6 @@ NetExpr* PEIdent::calculate_up_do_base_(Design*des, NetScope*scope,
       return tmp;
 }
 
-bool PEIdent::calculate_param_range_(Design*, NetScope*,
-				     const NetExpr*par_msb, long&par_msv,
-				     const NetExpr*par_lsb, long&par_lsv,
-				     long length) const
-{
-      if (par_msb == 0) {
-	      // If the parameter doesn't have an explicit range, then
-	      // just return range values of [length-1:0].
-	    ivl_assert(*this, par_lsb == 0);
-	    par_msv = length-1;
-	    par_lsv = 0;
-	    return true;
-      }
-
-      const NetEConst*tmp = dynamic_cast<const NetEConst*> (par_msb);
-      ivl_assert(*this, tmp);
-
-      par_msv = tmp->value().as_long();
-
-      tmp = dynamic_cast<const NetEConst*> (par_lsb);
-      ivl_assert(*this, tmp);
-
-      par_lsv = tmp->value().as_long();
-
-      return true;
-}
-
 unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
 {
       if (!gn_system_verilog())
@@ -3475,9 +3549,9 @@ unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
 
       NetNet*net = 0;
       const NetExpr*par = 0;
+      ivl_type_t par_type = 0;
       NetEvent*eve = 0;
-      const NetExpr*ex1 = 0, *ex2 = 0;
-      symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
+      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
       if (net == 0) {
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": PEIdent::test_width_method_: "
@@ -3521,9 +3595,8 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
       NetNet*       net = 0;
       const NetExpr*par = 0;
+      ivl_type_t    par_type = 0;
       NetEvent*     eve = 0;
-
-      const NetExpr*ex1, *ex2;
 
       NetScope*use_scope = scope;
       if (package_) {
@@ -3536,8 +3609,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       }
 
       NetScope*found_in = symbol_search(this, des, use_scope, path_,
-					net, par, eve,
-                                        ex1, ex2);
+					net, par, eve, par_type);
 
 	// If there is a part/bit select expression, then process it
 	// here. This constrains the results no matter what kind the
@@ -3713,7 +3785,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    use_path.pop_back();
 
 	    ivl_assert(*this, net == 0);
-	    symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
+	    symbol_search(this, des, scope, use_path, net, par, eve, par_type);
 
 	      // Check to see if we have a net and if so is it a structure?
 	    if (net != 0) {
@@ -3775,8 +3847,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       NetNet*       net = 0;
       const NetExpr*par = 0;
+      ivl_type_t    par_type = 0;
       NetEvent*     eve = 0;
-      const NetExpr*ex1, *ex2;
 
       NetScope*use_scope = scope;
       if (package_) {
@@ -3788,9 +3860,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    return tmp;
       }
 
-      /* NetScope*found_in = */ symbol_search(this, des, use_scope, path_,
-					      net, par, eve,
-					      ex1, ex2);
+      symbol_search(this, des, use_scope, path_, net, par, eve, par_type);
 
       if (net == 0 && gn_system_verilog() && path_.size() >= 2) {
 	      // NOTE: this is assuming the member_path is only one
@@ -3802,7 +3872,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    use_path.pop_back();
 
 	    ivl_assert(*this, net == 0);
-	    symbol_search(this, des, use_scope, use_path, net, par, eve, ex1, ex2);
+	    symbol_search(this, des, use_scope, use_path, net, par, eve, par_type);
 
 	    if (net == 0) {
 		    // Nope, no struct/class with member.
@@ -4051,9 +4121,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       NetNet*       net = 0;
       const NetExpr*par = 0;
+      ivl_type_t    par_type = 0;
       NetEvent*     eve = 0;
-
-      const NetExpr*ex1, *ex2;
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PEIdent::elaborate_expr: "
@@ -4112,7 +4181,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       NetScope*found_in = 0;
       while (net==0 && par==0 && eve==0 && base_path.size()>0) {
 	    found_in = symbol_search(this, des, use_scope, base_path,
-				     net, par, eve, ex1, ex2);
+				     net, par, eve, par_type);
 	    if (net) break;
 	    if (par) break;
 	    if (eve) break;
@@ -4144,7 +4213,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    }
 
 	    NetExpr*tmp = elaborate_expr_param_(des, scope, par, found_in,
-                                                ex1, ex2, expr_wid, flags);
+                                                par_type, expr_wid, flags);
 
             if (!tmp) return 0;
 
@@ -4463,17 +4532,15 @@ static verinum param_part_select_bits(const verinum&par_val, long wid,
 NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 					    const NetExpr*par,
 					    NetScope*found_in,
-					    const NetExpr*par_msb,
-					    const NetExpr*par_lsb,
+					    ivl_type_t par_type,
                                             bool need_const) const
 {
       const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
       ivl_assert(*this, par_ex);
 
       long par_msv, par_lsv;
-      if(! calculate_param_range_(des, scope, par_msb, par_msv,
-                                  par_lsb, par_lsv,
-                                  par_ex->value().len())) return 0;
+      if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
+				 par_ex->value().len())) return 0;
 
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
@@ -4559,8 +4626,7 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 					     const NetExpr*par,
 					     NetScope*,
-					     const NetExpr*par_msb,
-					     const NetExpr*par_lsb,
+					     ivl_type_t par_type,
                                              unsigned expr_wid) const
 {
       long msv, lsv;
@@ -4574,9 +4640,8 @@ NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 
 
       long par_msv, par_lsv;
-      if (! calculate_param_range_(des, scope, par_msb, par_msv,
-                                   par_lsb, par_lsv,
-                                   par_ex->value().len())) return 0;
+      if (! calculate_param_range(*this, par_type, par_msv, par_lsv,
+				  par_ex->value().len())) return 0;
 
       if (! parts_defined_flag) {
 	    if (warn_ob_select) {
@@ -4685,17 +4750,15 @@ static void warn_param_ob(long par_msv, long par_lsv, bool defined,
 NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 					       const NetExpr*par,
 					       NetScope*found_in,
-					       const NetExpr*par_msb,
-					       const NetExpr*par_lsb,
+					       ivl_type_t par_type,
                                                bool need_const) const
 {
       const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
       ivl_assert(*this, par_ex);
 
       long par_msv, par_lsv;
-      if(! calculate_param_range_(des, scope, par_msb, par_msv,
-                                  par_lsb, par_lsv,
-                                  par_ex->value().len())) return 0;
+      if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
+				 par_ex->value().len())) return 0;
 
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
       if (base == 0) return 0;
@@ -4737,8 +4800,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 	    if (warn_ob_select) {
                   bool defined = true;
 		    // Check to see if the parameter has a defined range.
-                  if (par_msb == 0) {
-			assert(par_lsb == 0);
+                  if (par_type == 0) {
 			defined = false;
                   }
 		    // Get the parameter values width.
@@ -4769,17 +4831,15 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 					       const NetExpr*par,
 					       NetScope*found_in,
-					       const NetExpr*par_msb,
-					       const NetExpr*par_lsb,
+					       ivl_type_t par_type,
                                                bool need_const) const
 {
       const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
       ivl_assert(*this, par_ex);
 
       long par_msv, par_lsv;
-      if(! calculate_param_range_(des, scope, par_msb, par_msv,
-                                  par_lsb, par_lsv,
-                                  par_ex->value().len())) return 0;
+      if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
+				 par_ex->value().len())) return 0;
 
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
       if (base == 0) return 0;
@@ -4821,8 +4881,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 	    if (warn_ob_select) {
                   bool defined = true;
 		    // Check to see if the parameter has a defined range.
-                  if (par_msb == 0) {
-			assert(par_lsb == 0);
+                  if (par_type == 0) {
 			defined = false;
                   }
 		    // Get the parameter values width.
@@ -4860,11 +4919,17 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 					NetScope*scope,
 					const NetExpr*par,
 					NetScope*found_in,
-					const NetExpr*par_msb,
-					const NetExpr*par_lsb,
+					ivl_type_t par_type,
 					unsigned expr_wid, unsigned flags) const
 {
       bool need_const = NEED_CONST & flags;
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "Parameter: " << path_ << endl;
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "par_type: " << *par_type << endl;
+      }
 
       if (need_const && !(ANNOTATABLE & flags)) {
             perm_string name = peek_tail_name(path_);
@@ -4894,19 +4959,19 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 
       if (use_sel == index_component_t::SEL_BIT)
 	    return elaborate_expr_param_bit_(des, scope, par, found_in,
-					     par_msb, par_lsb, need_const);
+					     par_type, need_const);
 
       if (use_sel == index_component_t::SEL_PART)
 	    return elaborate_expr_param_part_(des, scope, par, found_in,
-					      par_msb, par_lsb, expr_wid);
+					      par_type, expr_wid);
 
       if (use_sel == index_component_t::SEL_IDX_UP)
 	    return elaborate_expr_param_idx_up_(des, scope, par, found_in,
-						par_msb, par_lsb, need_const);
+						par_type, need_const);
 
       if (use_sel == index_component_t::SEL_IDX_DO)
 	    return elaborate_expr_param_idx_do_(des, scope, par, found_in,
-						par_msb, par_lsb, need_const);
+						par_type, need_const);
 
       NetExpr*tmp = 0;
 
@@ -6079,16 +6144,19 @@ unsigned PEString::test_width(Design*, NetScope*, width_mode_t&)
       return expr_width_;
 }
 
-NetEConst* PEString::elaborate_expr(Design*, NetScope*, ivl_type_t, unsigned)const
+NetEConst* PEString::elaborate_expr(Design*, NetScope*, ivl_type_t, unsigned) const
 {
-      verinum val(value());
-      NetEConst*tmp = new NetEConst(val);
+      NetECString*tmp = new NetECString(value());
       tmp->cast_signed(signed_flag_);
       tmp->set_line(*this);
 
       return tmp;
 }
 
+/*
+ * When the expression is being elaborated with a width, then we are trying to
+ * make a vector, so create a NetEConst with the basic types.
+ */
 NetEConst* PEString::elaborate_expr(Design*, NetScope*,
 				    unsigned expr_wid, unsigned) const
 {

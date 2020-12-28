@@ -31,6 +31,7 @@
 # include  "netclass.h"
 # include  "netdarray.h"
 # include  "netqueue.h"
+# include  "netscalar.h"
 # include  "netvector.h"
 # include  "ivl_assert.h"
 # include  "PExpr.h"
@@ -235,6 +236,17 @@ ostream& netqueue_t::debug_dump(ostream&fd) const
       fd << "queue of ";
       if (max_idx_ >= 0) fd << "(maximum of " << max_idx_+1 << " elements) ";
       fd << *element_type();
+      return fd;
+}
+
+ostream& netreal_t::debug_dump(ostream&fd) const
+{
+      fd << "real";
+      return fd;
+}
+ostream& netstring_t::debug_dump(ostream&fd) const
+{
+      fd << "string";
       return fd;
 }
 
@@ -1465,14 +1477,8 @@ void NetScope::dump(ostream&o) const
 		  else
 			o << "    parameter ";
 
-		  o << pp->second.type << " ";
-
-		  if ((*pp).second.signed_flag)
-			o << "signed ";
-
-		  if ((*pp).second.msb)
-			o << "[" << *(*pp).second.msb
-			  << ":" << *(*pp).second.lsb << "] ";
+		  if (pp->second.ivl_type)
+			pp->second.ivl_type->debug_dump(o);
 
 		  o << (*pp).first << " = ";
 		  if (pp->second.val)

@@ -320,6 +320,19 @@ const NetScope* NetECRealParam::scope() const
       return scope_;
 }
 
+NetECString::NetECString(const std::string& val)
+: NetEConst(verinum(val))
+{
+}
+
+NetECString::~NetECString()
+{
+}
+
+ivl_variable_type_t NetECString::expr_type() const
+{
+      return IVL_VT_STRING;
+}
 
 NetELast::NetELast(NetNet*s)
 : sig_(s)

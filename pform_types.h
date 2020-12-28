@@ -141,11 +141,14 @@ class data_type_t : public PNamedItem {
     public:
       inline explicit data_type_t() { }
       virtual ~data_type_t() = 0;
-	// This method is used to figure out the base type of a packed
-	// compound object. Return IVL_VT_NO_TYPE if the type is not packed.
+      // This method is used to figure out the base type of a packed
+      // compound object. Return IVL_VT_NO_TYPE if the type is not packed.
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
-	// This method is used by the pform dumper to diagnostic dump.
+      // This method is used by the pform dumper to diagnostic dump. The
+      //  pform_dump dumps type type in pform format, and the debug_dump
+      // prints the output in a linear form.
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
+      virtual std::ostream& debug_dump(std::ostream&out) const;
 
       ivl_type_s* elaborate_type(Design*des, NetScope*scope);
 
@@ -237,6 +240,7 @@ struct vector_type_t : public data_type_t {
       : base_type(bt), signed_flag(sf), reg_flag(false), integer_flag(false), implicit_flag(false), pdims(pd) { }
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
+      virtual std::ostream& debug_dump(std::ostream&out) const;
       ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
 
       ivl_variable_type_t base_type;
@@ -388,6 +392,11 @@ inline perm_string peek_tail_name(const pform_name_t&that)
  */
 # define SUPER_TOKEN "#"
 # define THIS_TOKEN  "@"
+
+static inline std::ostream& operator<< (std::ostream&out, const data_type_t&that)
+{
+      return that.debug_dump(out);
+}
 
 extern std::ostream& operator<< (std::ostream&out, const pform_name_t&);
 extern std::ostream& operator<< (std::ostream&out, const name_component_t&that);
