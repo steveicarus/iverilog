@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2020 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright CERN 2015
  * @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -556,7 +556,7 @@ int ReportStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
     out << "\" (" << get_fileline() << ")\");";
 
     if(severity_ == FAILURE)
-        out << "$finish();";
+        out << "$finish(0);";
 
     out << std::endl;
 
