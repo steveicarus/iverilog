@@ -1252,6 +1252,7 @@ class NetScope : public Definitions, public Attrib {
     private:
       void evaluate_parameter_logic_(Design*des, param_ref_t cur);
       void evaluate_parameter_real_(Design*des, param_ref_t cur);
+      void evaluate_parameter_string_(Design*des, param_ref_t cur);
       void evaluate_parameter_(Design*des, param_ref_t cur);
 
     private:
@@ -2217,6 +2218,15 @@ class NetECReal  : public NetExpr {
 
     private:
       verireal value_;
+};
+
+class NetECString  : public NetEConst {
+    public:
+      explicit NetECString(const std::string& val);
+      ~NetECString();
+
+      // The type of a string is IVL_VT_STRING
+      ivl_variable_type_t expr_type() const;
 };
 
 class NetECRealParam  : public NetECReal {

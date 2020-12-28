@@ -789,6 +789,41 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
       }
 }
 
+/*
+ * Evaluate a parameter that is forced to type string. This comes to pass when
+ * the input is something like this:
+ *
+ *     parameter string foo = <expr>;
+ *
+ * The param_type should be netstring_t, the val_expr is the pform of the
+ * input <expr>, and we try to elaborate/evaluate down to a IVL_VT_STRING
+ * expression.
+ */
+void NetScope::evaluate_parameter_string_(Design*des, param_ref_t cur)
+{
+      PExpr*val_expr = (*cur).second.val_expr;
+      NetScope*val_scope = (*cur).second.val_scope;
+      ivl_type_t param_type = cur->second.ivl_type;
+
+      ivl_assert(cur->second, val_expr);
+      ivl_assert(cur->second, param_type);
+
+      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, param_type, true);
+      if (! expr)
+	    return;
+
+      cur->second.val = expr;
+
+      if (debug_elaborate) {
+	    cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+		 << "Parameter type: " << *param_type << endl;
+	    cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+		 << "Parameter value: " << *val_expr << endl;
+	    cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+		 << "Elaborated value: " << *expr << endl;
+      }
+}
+
 void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
 {
       ivl_type_t param_type = cur->second.ivl_type;
@@ -832,12 +867,19 @@ void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
                   evaluate_parameter_real_(des, cur);
                   break;
 
+		case IVL_VT_STRING:
+		  evaluate_parameter_string_(des, cur);
+		  break;
+
                 default:
                   cerr << cur->second.get_fileline() << ": internal error: "
-                       << "Unexpected expression type " << use_type
+                       << "Unexpected parameter type " << use_type
                        << "." << endl;
                   cerr << cur->second.get_fileline() << ":               : "
                        << "Parameter name: " << cur->first << endl;
+		  if (param_type)
+			cerr << cur->second.get_fileline() << ":               : "
+			     << "Parameter ivl_type: " << *param_type << endl;
                   cerr << cur->second.get_fileline() << ":               : "
                        << "Expression is: " << *cur->second.val_expr << endl;
                   ivl_assert(cur->second, 0);

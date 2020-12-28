@@ -2640,6 +2640,15 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    use_path.push_front(name_component_t(perm_string::literal(THIS_TOKEN)));
       }
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "use_path: " << use_path << endl;
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "method_name: " << method_name << endl;
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "expr_wid: " << expr_wid << endl;
+      }
+
 	// If there is no object to the left of the method name, then
 	// give up on the idea of looking for an object method.
       if (use_path.empty()) return 0;
@@ -2651,8 +2660,38 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 
       symbol_search(this, des, scope, use_path, net, par, eve, par_type);
 
-      if (net == 0)
-	    return 0;
+      if (debug_elaborate) {
+	    if (net) {
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "net: " << net->name() << endl;
+	    }
+	    if (par) {
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "par: " << *par << endl;
+	    }
+	    if (par_type) {
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "par_type: " << *par_type << endl;
+	    }
+      }
+
+      // If we found a net with a method...
+      if (net)
+	    return elaborate_expr_method_net_(des, scope, net, expr_wid);
+
+      // If we found a parameter with a method...
+      if (par)
+	    return elaborate_expr_method_par_(des, scope, par, par_type, expr_wid);
+
+      return 0;
+}
+
+NetExpr* PECallFunction::elaborate_expr_method_net_(Design*des, NetScope*scope,
+						    NetNet*net, unsigned expr_wid) const
+{
+      pform_name_t use_path = path_;
+      perm_string method_name = peek_tail_name(use_path);
+      use_path.pop_back();
 
       if (net->data_type() == IVL_VT_STRING) {
 
@@ -2809,6 +2848,70 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    return call;
       }
 
+      return 0;
+}
+
+NetExpr* PECallFunction::elaborate_expr_method_par_(Design*, NetScope*scope,
+						    const NetExpr*par,
+						    ivl_type_t par_type,
+						    unsigned expr_wid) const
+{
+      pform_name_t use_path = path_;
+      perm_string method_name = peek_tail_name(use_path);
+      use_path.pop_back();
+
+      // If the parameter is of type string, then look for the standard string
+      // method. Return an error if not found. Since we are assured that the
+      // expression is a constant string, it should be able to calculate the
+      // result at compile time.
+      if (dynamic_cast<const netstring_t*>(par_type)) {
+	    
+	    const NetECString*par_string = dynamic_cast<const NetECString*>(par);
+	    ivl_assert(*par, par_string);
+	    string par_value = par_string->value().as_string();
+
+	    if (method_name == "len") {
+		  NetEConst*use_val = make_const_val(par_value.size());
+		  use_val->set_line(*this);
+		  return pad_to_width(use_val, expr_wid, *this);
+	    }
+
+	    if (method_name == "atoi") {
+		  NetEConst*use_val = make_const_val(atoi(par_value.c_str()));
+		  use_val->set_line(*this);
+		  return pad_to_width(use_val, expr_wid, true, *this);
+	    }
+
+	    if (method_name == "atoreal") {
+		  NetECReal*use_val = new NetECReal(verireal(par_value.c_str()));
+		  use_val->set_line(*this);
+		  return use_val;
+	    }
+
+	    if (method_name == "atohex") {
+		  NetEConst*use_val = make_const_val(strtoul(par_value.c_str(),0,16));
+		  use_val->set_line(*this);
+		  return pad_to_width(use_val, expr_wid, true, *this);
+	    }
+
+	    // Returning 0 here will cause the caller to print an error
+	    // message and increment the error count, so there is no need to
+	    // increment des->error_count here.
+	    cerr << get_fileline() << ": error: "
+		 << "Unknown or unsupport string method: " << method_name
+		 << endl;
+	    return 0;
+      }
+
+      // If we haven't figured out what to do with this method by now,
+      // something went wrong.
+      cerr << get_fileline() << ": sorry: Don't know how to handle methods of parameters of type:" << endl;
+      cerr << get_fileline() << ":      : " << *par_type << endl;
+      cerr << get_fileline() << ":      : in scope " << scope_path(scope) << endl;
+
+      // Returning 0 here will cause the caller to print an error message and
+      // increment the error count, so there is no need to increment
+      // des->error_count here.
       return 0;
 }
 
@@ -4821,6 +4924,13 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 {
       bool need_const = NEED_CONST & flags;
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "Parameter: " << path_ << endl;
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "par_type: " << *par_type << endl;
+      }
+
       if (need_const && !(ANNOTATABLE & flags)) {
             perm_string name = peek_tail_name(path_);
             if (found_in->make_parameter_unannotatable(name)) {
@@ -6034,16 +6144,19 @@ unsigned PEString::test_width(Design*, NetScope*, width_mode_t&)
       return expr_width_;
 }
 
-NetEConst* PEString::elaborate_expr(Design*, NetScope*, ivl_type_t, unsigned)const
+NetEConst* PEString::elaborate_expr(Design*, NetScope*, ivl_type_t, unsigned) const
 {
-      verinum val(value());
-      NetEConst*tmp = new NetEConst(val);
+      NetECString*tmp = new NetECString(value());
       tmp->cast_signed(signed_flag_);
       tmp->set_line(*this);
 
       return tmp;
 }
 
+/*
+ * When the expression is being elaborated with a width, then we are trying to
+ * make a vector, so create a NetEConst with the basic types.
+ */
 NetEConst* PEString::elaborate_expr(Design*, NetScope*,
 				    unsigned expr_wid, unsigned) const
 {

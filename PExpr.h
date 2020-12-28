@@ -935,11 +935,12 @@ class PECallFunction : public PExpr {
       NetExpr*elaborate_expr_method_(Design*des, NetScope*scope,
 				     unsigned expr_wid,
 				     bool add_this_flag = false) const;
-#if 0
-      NetExpr*elaborate_expr_string_method_(Design*des, NetScope*scope) const;
-      NetExpr*elaborate_expr_enum_method_(Design*des, NetScope*scope,
-					  unsigned expr_wid) const;
-#endif
+      NetExpr*elaborate_expr_method_net_(Design*des, NetScope*scope,
+					 NetNet*net, unsigned expr_wid) const;
+      NetExpr*elaborate_expr_method_par_(Design*des, NetScope*scope,
+					 const NetExpr *par, ivl_type_t par_type,
+					 unsigned expr_wid) const;
+
 
       NetExpr* elaborate_sfunc_(Design*des, NetScope*scope,
                                 unsigned expr_wid,

@@ -29,6 +29,8 @@ class netreal_t : public ivl_type_s {
 
       ivl_variable_type_t base_type() const;
 
+      std::ostream& debug_dump(std::ostream&) const;
+
     public:
       static netreal_t type_real;
       static netreal_t type_shortreal;
@@ -41,6 +43,8 @@ class netstring_t : public ivl_type_s {
       ~netstring_t();
 
       ivl_variable_type_t base_type() const;
+
+      std::ostream& debug_dump(std::ostream&) const;
 
     public:
       static netstring_t type_string;

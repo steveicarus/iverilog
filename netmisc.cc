@@ -1004,7 +1004,7 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 		       ivl_type_t lv_net_type, bool need_const)
 {
       if (debug_elaborate) {
-	    cerr << pe->get_fileline() << ": elab_and_eval: "
+	    cerr << pe->get_fileline() << ": " << __func__ << ": "
 		 << "pe=" << *pe
 		 << ", lv_net_type=" << *lv_net_type << endl;
       }
