@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -223,7 +223,7 @@ ostream& vector_type_t::debug_dump(ostream&fd) const
 {
       if (signed_flag)
 	    fd << "signed ";
-      if (pdims==nullptr) {
+      if (!pdims.get()) {
 	    fd << "/* vector_type_t nil */";
 	    return fd;
       }
