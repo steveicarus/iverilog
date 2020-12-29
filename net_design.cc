@@ -828,9 +828,10 @@ void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
 {
       ivl_type_t param_type = cur->second.ivl_type;
 
-      // If the parameter type is present, then elaborate it now.
+      // If the parameter type is present, then elaborate it now. Elaborate
+      // the type in the current scope, and not the scope of the expression.
       if (cur->second.val_type) {
-	    param_type = cur->second.val_type->elaborate_type(des, cur->second.val_scope);
+	    param_type = cur->second.val_type->elaborate_type(des, this);
 	    cur->second.ivl_type = param_type;
 	    cur->second.val_type = 0;
       }
