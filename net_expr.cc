@@ -22,6 +22,7 @@
 # include  "netenum.h"
 # include  "netclass.h"
 # include  "netdarray.h"
+# include  "netscalar.h"
 # include  "compiler.h"
 # include  "netmisc.h"
 # include  <iostream>
@@ -495,6 +496,8 @@ NetESFunc::NetESFunc(const char*n, ivl_type_t rtype, unsigned np)
 	    type_ = IVL_VT_DARRAY;
       else if (dynamic_cast<const netclass_t*>(rtype))
 	    type_ = IVL_VT_CLASS;
+      else if (dynamic_cast<const netstring_t*>(rtype))
+	    type_ = IVL_VT_STRING;
       else
 	    ivl_assert(*this, 0);
 }

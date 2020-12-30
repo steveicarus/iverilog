@@ -1205,8 +1205,8 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
             signed_flag_ = false;
 
 	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: test_width"
-		       << " of " << name << " returns test_width"
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "test_width of " << name << " returns test_width"
 		       << " of compiler integer." << endl;
 
 	    return expr_width_;
@@ -1228,8 +1228,8 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
             signed_flag_ = false;
 
 	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: test_width"
-		       << " of $is_signed returns test_width"
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "test_width of $is_signed returns test_width"
 		       << " of 1." << endl;
 
 	    return expr_width_;
@@ -1247,8 +1247,8 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
       is_overridden_ = sfunc_info->override_flag;
 
       if (debug_elaborate)
-	    cerr << get_fileline() << ": debug: test_width "
-		 << "of system function " << name
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "test_width of system function " << name
 		 << " returns wid=" << expr_width_
 		 << ", type=" << expr_type_ << "." << endl;
 
@@ -1279,16 +1279,16 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 
 	    if (test_width_method_(des, scope, mode)) {
 		  if (debug_elaborate)
-			cerr << get_fileline() << ": debug: test_width "
-			     << "of method returns width " << expr_width_
+			cerr << get_fileline() << ": PECallFunction::" << __func__ << ": "
+			     << "test_width of method returns width " << expr_width_
 			     << ", type=" << expr_type_
 			     << "." << endl;
 		  return expr_width_;
 	    }
 
 	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: test_width "
-		       << "cannot find definition of " << path_
+		  cerr << get_fileline() << ": PECallFunction::" << __func__ << ": "
+		       << "test_width cannot find definition of " << path_
 		       << " in " << scope_path(scope) << "." << endl;
 	    return 0;
       }
@@ -1303,8 +1303,8 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
             signed_flag_ = res->get_signed();
 
 	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: test_width "
-		       << "of function returns width " << expr_width_
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "test_width of function returns width " << expr_width_
 		       << ", type=" << expr_type_
 		       << "." << endl;
 
@@ -1331,6 +1331,13 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
       perm_string method_name = peek_tail_name(use_path);
       use_path.pop_back();
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "use_path=" << use_path
+		 << ", method_name=" << method_name
+		 << endl;
+      }
+
       NetNet *net = 0;
       const NetExpr *par;
       ivl_type_t par_type = 0;
@@ -1338,6 +1345,16 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 
       symbol_search(this, des, scope, use_path, net, par, eve, par_type);
 
+      if (debug_elaborate && net!=0) {
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "net=" << net->name() << endl;
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "net->data_type()=" << net->data_type() << endl;
+	    if (net->net_type())
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "net->net_type()=" << *net->net_type() << endl;
+      }
+      
       const netdarray_t*use_darray = 0;
 
       if (net != 0)
@@ -1419,6 +1436,33 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 	    signed_flag_= false;
 
 	    return expr_width_;
+      }
+
+      // If the net is an enumeration, and the method is one of the standard
+      // methods, then we know the size.
+      if (const netenum_t*enum_type = net->enumeration()) {
+	    if (method_name=="first" || method_name=="last"
+		|| method_name=="prev" || method_name=="next") {
+		  expr_type_  = IVL_VT_BOOL;
+		  expr_width_ = enum_type->packed_width();
+		  min_width_  = expr_width_;
+		  signed_flag_= enum_type->get_signed();
+		  return expr_width_;
+	    }
+	    if (method_name=="num") {
+		  expr_type_  = IVL_VT_BOOL;
+		  expr_width_ = 32;
+		  min_width_  = expr_width_;
+		  signed_flag_= true;
+		  return expr_width_;
+	    }
+	    if (method_name=="name") {
+		  expr_type_  = IVL_VT_STRING;
+		  expr_width_ = 1;
+		  min_width_  = 1;
+		  signed_flag_= false;
+		  return expr_width_;
+	    }
       }
 
       if (const netclass_t*class_type = net->class_type()) {
@@ -1733,8 +1777,27 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
                                        unsigned rtn_wid,
                                        PExpr*parg, unsigned args)
 {
-	// The "num()" method returns the number of elements.
+      if (debug_elaborate) {
+	    cerr << li->get_fileline() << ": " << __func__ << ": "
+		 << "Check for method " << method_name
+		 << " of enumeration at " << netenum->get_fileline()
+		 << endl;
+	    cerr << li->get_fileline() << ": " << __func__ << ": "
+		 << "use_path=" << use_path << endl;
+	    cerr << li->get_fileline() << ": " << __func__ << ": "
+		 << "rtn_wid=" << rtn_wid << endl;
+	    cerr << li->get_fileline() << ": " << __func__ << ": "
+		 << "expr=" << *expr << endl;
+      }
+
+      // First, look for some special methods that can be replace with
+      // constant literals. These get properties of the enumeration type, and
+      // so can be fully evaluated at compile time.
+
       if (method_name == "num") {
+	    // The "num()" method returns the number of elements. This is
+	    // actually a static constant, and can be replaced at compile time
+	    // with a constant value.
 	    if (args != 0) {
 		  cerr << li->get_fileline() << ": error: enumeration "
 		          "method " << use_path << ".num() does not "
@@ -1747,8 +1810,10 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    return tmp;
       }
 
-	// The "first()" method returns the first enumeration value.
       if (method_name == "first") {
+	    // The "first()" method returns the first enumeration value. This
+	    // doesn't actually care about the constant value, and instead
+	    // returns as a constant literal the first value of the enumeration.
 	    if (args != 0) {
 		  cerr << li->get_fileline() << ": error: enumeration "
 		          "method " << use_path << ".first() does not "
@@ -1763,8 +1828,10 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    return tmp;
       }
 
-	// The "last()" method returns the first enumeration value.
       if (method_name == "last") {
+	    // The "last()" method returns the first enumeration value. This
+	    // doesn't actually care about the constant value, and instead
+	    // returns as a constant literal the last value of the enumeration.
 	    if (args != 0) {
 		  cerr << li->get_fileline() << ": error: enumeration "
 		          "method " << use_path << ".last() does not "
@@ -1801,32 +1868,27 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    }
       }
 
-	// The "name()" method returns the name of the current
-	// enumeration value.
       if (method_name == "name") {
+	    // The "name()" method returns the name of the current enumeration
+	    // value. The generated system task takes the enumeration
+	    // definition and the enumeration value. The return value is the
+	    // string name of the enumeration.
 	    if (args != 0) {
 		  cerr << li->get_fileline() << ": error: enumeration "
 		          "method " << use_path << ".name() does not "
 		          "take an argument." << endl;
 		  des->errors += 1;
 	    }
-	    sys_expr = new NetESFunc("$ivl_enum_method$name", IVL_VT_STRING,
-	                             rtn_wid, 2);
+
+	    // Generate the internal system function. Make sure the return
+	    // value is "string" type.
+	    sys_expr = new NetESFunc("$ivl_enum_method$name",
+				     &netstring_t::type_string, 2);
 	    sys_expr->parm(0, new NetENetenum(netenum));
 	    sys_expr->parm(1, expr);
 
-	      /* The compiler/code generators need to be fixed to support a
-	       * string return value. In some contexts we could use the
-	       * expression width, but that doesn't always work. */
-	    if (rtn_wid == 0) {
-		  cerr << li->get_fileline() << ": sorry: Enumeration method "
-		          "name() is not currently supported in this context "
-		          "(self-determined)." << endl;
-		  des->errors += 1;
-	    }
-
-	// The "next()" method returns the next enumeration value.
       } else if (method_name == "next") {
+	    // The "next()" method returns the next enumeration value.
 	    if (args > 1) {
 		  cerr << li->get_fileline() << ": error: enumeration "
 		          "method " << use_path << ".next() take at "
@@ -1839,8 +1901,8 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    sys_expr->parm(1, expr);
 	    if (args != 0) sys_expr->parm(2, count);
 
-	// The "prev()" method returns the previous enumeration value.
       } else if (method_name == "prev") {
+	    // The "prev()" method returns the previous enumeration value.
 	    if (args > 1) {
 		  cerr << li->get_fileline() << ": error: enumeration "
 		          "method " << use_path << ".prev() take at "
@@ -1853,8 +1915,8 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    sys_expr->parm(1, expr);
 	    if (args != 0) sys_expr->parm(2, count);
 
-	// This is an unknown enumeration method.
       } else {
+	    // This is an unknown enumeration method.
 	    cerr << li->get_fileline() << ": error: Unknown enumeration "
 	            "method " << use_path << "." << method_name << "()."
 	         << endl;
@@ -1865,7 +1927,7 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
       sys_expr->set_line(*li);
 
       if (debug_elaborate) {
-	    cerr << li->get_fileline() << ": debug: Generate "
+	    cerr << li->get_fileline() << ": " << __func__ << ": Generate "
 	         << sys_expr->name() << "(" << use_path << ")" << endl;
       }
 
@@ -4927,8 +4989,12 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": " << __func__ << ": "
 		 << "Parameter: " << path_ << endl;
-	    cerr << get_fileline() << ": " << __func__ << ": "
-		 << "par_type: " << *par_type << endl;
+	    if (par_type)
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "par_type: " << *par_type << endl;
+	    else
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "par_type: <nil>" << endl;
       }
 
       if (need_const && !(ANNOTATABLE & flags)) {
