@@ -2577,7 +2577,7 @@ void pform_module_define_port(const struct vlltype&li,
 	    signed_flag = true;
 	    prange = 0;
 
-	    if (rtype->type_code != real_type_t::REAL) {
+	    if (rtype->type_code() != real_type_t::REAL) {
 		  VLerror(li, "sorry: Only real (not shortreal) supported here (%s:%d).",
 			  __FILE__, __LINE__);
 	    }

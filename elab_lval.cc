@@ -225,6 +225,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    cerr << get_fileline() << ": PEIdent::elaborate_lval: "
 		 << "Found l-value path_=" << path_
 		 << " as reg=" << reg->name()
+		 << ", reg->type()=" << reg->type()
 		 << " base_path=" << base_path
 		 << ", member_path=" << member_path
 		 << " unpacked_dimensions()=" << reg->unpacked_dimensions() << endl;

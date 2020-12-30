@@ -210,6 +210,8 @@ struct atom2_type_t : public data_type_t {
       int type_code;
       bool signed_flag;
 
+      virtual std::ostream& debug_dump(std::ostream&out) const;
+
       ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
 };
 
@@ -288,11 +290,17 @@ struct uarray_type_t : public array_base_t {
 };
 
 struct real_type_t : public data_type_t {
+ public:
       enum type_t { REAL, SHORTREAL };
-      inline explicit real_type_t(type_t tc) : type_code(tc) { }
-      type_t type_code;
+      inline explicit real_type_t(type_t tc) : type_code_(tc) { }
+      virtual std::ostream& debug_dump(std::ostream&out) const;
 
       ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
+
+      inline type_t type_code() const { return type_code_; }
+
+ private:
+      type_t type_code_;
 };
 
 struct string_type_t : public data_type_t {
