@@ -1066,8 +1066,9 @@ NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
       pe->test_width(des, scope, mode);
 
       if (debug_elaborate) {
-            cerr << pe->get_fileline() << ": debug: test_width of "
-                 << name << " argument " << (arg_idx+1) << " " << *pe << endl;
+	    cerr << pe->get_fileline() << ": " << __func__ << ": "
+		 << "test_width of " << name
+                 << " argument " << (arg_idx+1) << " " << *pe << endl;
             cerr << pe->get_fileline() << ":        "
                  << "returns type=" << pe->expr_type()
                  << ", width=" << pe->expr_width()

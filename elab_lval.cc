@@ -222,13 +222,23 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       ivl_assert(*this, reg);
 
       if (debug_elaborate) {
-	    cerr << get_fileline() << ": PEIdent::elaborate_lval: "
+	    cerr << get_fileline() << ": " << __func__ << ": "
 		 << "Found l-value path_=" << path_
-		 << " as reg=" << reg->name()
-		 << ", reg->type()=" << reg->type()
+		 << " as reg=" << reg->name() << endl;
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "reg->type()=" << reg->type()
+		 << ", reg->unpacked_dimensions()=" << reg->unpacked_dimensions()
+		 << endl;
+	    if (reg->net_type())
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "reg->net_type()=" << *reg->net_type() << endl;
+	    else
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "reg->net_type()=<nil>" << endl;
+	    cerr << get_fileline() << ": " << __func__ << ": "
 		 << " base_path=" << base_path
 		 << ", member_path=" << member_path
-		 << " unpacked_dimensions()=" << reg->unpacked_dimensions() << endl;
+		 << endl;
       }
 
 	// We are processing the tail of a string of names. For
