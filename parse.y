@@ -4623,6 +4623,8 @@ port_declaration
 		      // here.
 	      } else if (dynamic_cast<atom2_type_t*> ($4)) {
 		    use_type = NetNet::IMPLICIT_REG;
+	      } else if (dynamic_cast<real_type_t*> ($4)) {
+		    use_type = NetNet::IMPLICIT_REG;
 	      } else if (dynamic_cast<struct_type_t*> ($4)) {
 		    use_type = NetNet::IMPLICIT_REG;
 	      } else if (dynamic_cast<enum_type_t*> ($4)) {
