@@ -1884,7 +1884,9 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    // value is "string" type.
 	    sys_expr = new NetESFunc("$ivl_enum_method$name",
 				     &netstring_t::type_string, 2);
-	    sys_expr->parm(0, new NetENetenum(netenum));
+	    NetENetenum* def = new NetENetenum(netenum);
+	    def->set_line(*li);
+	    sys_expr->parm(0, def);
 	    sys_expr->parm(1, expr);
 
       } else if (method_name == "next") {
@@ -1897,7 +1899,9 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    }
 	    sys_expr = new NetESFunc("$ivl_enum_method$next", netenum,
 	                             2 + (args != 0));
-	    sys_expr->parm(0, new NetENetenum(netenum));
+	    NetENetenum* def = new NetENetenum(netenum);
+	    def->set_line(*li);
+	    sys_expr->parm(0, def);
 	    sys_expr->parm(1, expr);
 	    if (args != 0) sys_expr->parm(2, count);
 
@@ -1911,7 +1915,9 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    }
 	    sys_expr = new NetESFunc("$ivl_enum_method$prev", netenum,
 	                             2 + (args != 0));
-	    sys_expr->parm(0, new NetENetenum(netenum));
+	    NetENetenum* def = new NetENetenum(netenum);
+	    def->set_line(*li);
+	    sys_expr->parm(0, def);
 	    sys_expr->parm(1, expr);
 	    if (args != 0) sys_expr->parm(2, count);
 
@@ -2501,6 +2507,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					ivl_type_t type, unsigned flags) const
 {
+//cerr << "HERE: " << scope->basename() << ", " << *type << endl;
       const netdarray_t*darray = dynamic_cast<const netdarray_t*>(type);
       assert(darray);
       return elaborate_expr(des, scope, darray->element_type()->packed_width(), flags);
