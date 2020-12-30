@@ -175,7 +175,7 @@ ivl_type_s* vector_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 
 ivl_type_s* real_type_t::elaborate_type_raw(Design*, NetScope*) const
 {
-      switch (type_code) {
+      switch (type_code_) {
 	  case REAL:
 	    return &netreal_t::type_real;
 	  case SHORTREAL:

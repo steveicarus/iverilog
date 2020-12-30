@@ -171,6 +171,16 @@ ostream& data_type_t::debug_dump(ostream&out) const
       return out;
 }
 
+ostream& atom2_type_t::debug_dump(ostream&out) const
+{
+      if (signed_flag)
+	    out << "signed-";
+      else
+	    out << "unsigned-";
+      out << "int(" << type_code << ")";
+      return out;
+}
+
 void void_type_t::pform_dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "void" << endl;
@@ -181,6 +191,19 @@ void parray_type_t::pform_dump(ostream&out, unsigned indent) const
       out << setw(indent) << "" << "Packed array " << "[...]"
 	  << " of:" << endl;
       base_type->pform_dump(out, indent+4);
+}
+
+ostream& real_type_t::debug_dump(ostream&out) const
+{
+      switch (type_code_) {
+	  case REAL:
+	    out << "real";
+	    break;
+	  case SHORTREAL:
+	    out << "shortreal";
+	    break;
+      }
+      return out;
 }
 
 void struct_type_t::pform_dump(ostream&out, unsigned indent) const
@@ -563,7 +586,7 @@ void PWire::dump(ostream&out, unsigned ind) const
 	    out << " scalar";
       }
       if (set_data_type_) {
-	    out << " set_data_type_=" << typeid(*set_data_type_).name();
+	    out << " set_data_type_=" << *set_data_type_;
       }
 
       if (discipline_) {
