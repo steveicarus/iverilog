@@ -60,6 +60,13 @@ class ivl_type_s {
 };
 
 /*
+ * Convenience functions for making ivl_type_t objects from various inputs.
+ */
+extern ivl_type_t make_ivl_type(ivl_variable_type_t vt, 
+				const std::vector<netrange_t>&packed_dimensions,
+				bool signed_flag =false, bool isint_flag =false);
+
+/*
  * There are a couple types of array types. This class represents the
  * common bits of array types.
  */

@@ -111,6 +111,7 @@ O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
     load_module.o netlist.o netmisc.o nettypes.o net_analog.o net_assign.o \
     net_design.o netclass.o netdarray.o \
     netenum.o netparray.o netqueue.o netscalar.o netstruct.o netvector.o \
+    make_ivl_type.o \
     net_event.o net_expr.o net_func.o \
     net_func_eval.o net_link.o net_modulo.o \
     net_nex_input.o net_nex_output.o net_proc.o net_scope.o net_tran.o \

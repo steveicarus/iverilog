@@ -111,8 +111,12 @@ struct index_component_t {
 };
 
 struct name_component_t {
-      explicit name_component_t(perm_string n) : name(n) { }
+      inline name_component_t() { }
+      inline explicit name_component_t(perm_string n) : name(n) { }
       ~name_component_t() { }
+
+      // Return true if this component is nil.
+      inline bool empty() const { return name.nil(); }
 
       perm_string name;
       std::list<index_component_t>index;

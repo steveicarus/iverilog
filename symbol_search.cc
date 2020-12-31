@@ -20,78 +20,77 @@
 
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "compiler.h"
 # include  "ivl_assert.h"
 
 
 /*
- * Search for the hierarchical name.
+ * Search for the hierarchical name. The path may have multiple components. If
+ * that's the case, then recursively pull the path apart until we find the
+ * first item in the path, look that up, and work our way up. In most cases,
+ * the path will be a string of scopes, with an object at the end. But if we
+ * find an object before the end, then the tail will have to be figured out by
+ * the initial caller.
  */
-struct symbol_search_results {
-      inline symbol_search_results() {
-	    scope = 0;
-	    net = 0;
-	    par_val = 0;
-	    par_type = 0;
-	    eve = 0;
-      }
 
-      inline bool is_scope() const {
-	    if (net) return false;
-	    if (eve) return false;
-	    if (par_val) return false;
-	    if (scope) return true;
-	    return false;
-      }
-
-	// Scope where symbol was located. This is set in all cases,
-	// assuming the search succeeded.
-      NetScope*scope;
-	// If this was a net, the signal itself.
-      NetNet*net;
-	// If this was a parameter, the value expression and the
-	// optional value dimensions.
-      const NetExpr*par_val;
-      ivl_type_t par_type;
-	// If this is a named event, ...
-      NetEvent*eve;
-};
-
-static bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
-			  pform_name_t path, struct symbol_search_results*res,
-			  NetScope*start_scope = 0)
+bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
+		   pform_name_t path, struct symbol_search_results*res,
+		   NetScope*start_scope)
 {
       assert(scope);
       bool prefix_scope = false;
-      bool recurse_flag = false;
+
+      if (debug_elaborate) {
+	    cerr << li->get_fileline() << ": symbol_search: "
+		 << "scope: " << scope_path(scope) << endl;
+	    cerr << li->get_fileline() << ": symbol_search: "
+		 << "path: " << path << endl;
+	    if (start_scope)
+		  cerr << li->get_fileline() << ": symbol_search: "
+		       << "start_scope: " << scope_path(start_scope) << endl;
+      }
 
       assert(li);
       ivl_assert(*li, ! path.empty());
       name_component_t path_tail = path.back();
       path.pop_back();
 
-	// If this is a recursive call, then we need to know that so
-	// that we can enable the search for scopes. Set the
-	// recurse_flag to true if this is a recurse.
+      // If this is a recursive call, then we need to know that so
+      // that we can enable the search for scopes. Set the
+      // recurse_flag to true if this is a recurse.
       if (start_scope==0)
 	    start_scope = scope;
-      else
-	    recurse_flag = true;
 
-	// If there are components ahead of the tail, symbol_search
-	// recursively. Ideally, the result is a scope that we search
-	// for the tail key, but there are other special cases as well.
+      // If there are components ahead of the tail, symbol_search
+      // recursively. Ideally, the result is a scope that we search
+      // for the tail key, but there are other special cases as well.
       if (! path.empty()) {
-	    symbol_search_results recurse;
-	    bool flag = symbol_search(li, des, scope, path, &recurse, start_scope);
+	    bool flag = symbol_search(li, des, scope, path, res, start_scope);
 	    if (! flag)
 		  return false;
 
-	      // The prefix is found to be a scope, so switch to that
-	      // scope, set the hier_path to turn off upwards searches,
-	      // and continue our search for the tail.
-	    if (recurse.is_scope()) {
-		  scope = recurse.scope;
+	    // The prefix is found to be something besides a scope. Put the
+	    // tail into the path_tail of the result, and return success. The
+	    // caller needs to deal with that tail bit. Note that the
+	    // path_tail is a single item, but we might have been called
+	    // recursively, so the complete tail will be built up as we unwind.
+	    if (res->is_found() && !res->is_scope()) {
+		  if (!path_tail.empty())
+			res->path_tail.push_back(path_tail);
+		  return true;
+	    }
+
+	    // The prefix is found to be a scope, so switch to that
+	    // scope, set the hier_path to turn off upwards searches,
+	    // and continue our search for the tail.
+	    if (res->is_scope()) {
+		  scope = res->scope;
 		  prefix_scope = true;
+
+		  if (debug_scopes || debug_elaborate) {
+			cerr << li->get_fileline() << ": symbol_search: "
+			     << "Prefix scope " << scope_path(scope) << endl;
+		  }
 
 		  if (scope->is_auto()) {
 			cerr << li->get_fileline() << ": error: Hierarchical "
@@ -99,13 +98,34 @@ static bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			      "`" << path_tail.name << "' in path `" << path << "'" << endl;
 			des->errors += 1;
 		  }
+
 	    } else {
-		    // Prefix is present, but is NOT a scope. Fail!
+		  // Prefix is present, but is NOT a scope. Fail! Actually, this
+		  // should not happen, since this is the "not found" case, and we
+		  // should have returned already.
+		  assert(0);
 		  return false;
 	    }
       }
 
+      bool passed_module_boundary = false;
+
+      // At this point, we've stripped right-most components until the search
+      // found the scope part of the path, or there is no scope part of the
+      // path. For example, if the path in was s1.s2.x, we found the scope
+      // s1.s2, res->is_scope() is true, and path_tail is x. We look for x
+      // now. The preceeding code set prefix_scope=true to ease our test below.
+      //
+      // If the input was x (without prefixes) then we don't know if x is a
+      // scope or item. In this case, res->is_found() is false and we may need
+      // to scan upwards to find the scope or item.
       while (scope) {
+	    if (debug_scopes || debug_elaborate) {
+		  cerr << li->get_fileline() << ": symbol_search: "
+		       << "Looking for " << path_tail
+		       << " in scope " << scope_path(scope)
+		       << " prefix_scope=" << prefix_scope << endl;
+	    }
             if (scope->genvar_tmp.str() && path_tail.name == scope->genvar_tmp)
                   return false;
 
@@ -115,22 +135,39 @@ static bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  return false;
 	    }
 
-	    if (NetNet*net = scope->find_signal(path_tail.name)) {
-		  res->scope = scope;
-		  res->net = net;
-		  return true;
-	    }
+	    // These items cannot be seen outside the bounding module where
+	    // the search starts. But we continue searching up because scope
+	    // names can match. For example:
+	    //
+	    //    module top;
+	    //        int not_ok;
+	    //        dut foo(...);
+	    //    endmodule
+	    //    module dut;
+	    //        ... not_ok; // <-- Should NOT match.
+	    //        ... top.not_ok; // Matches.
+	    //    endmodule
+	    if (!passed_module_boundary) {
+		  if (NetNet*net = scope->find_signal(path_tail.name)) {
+			res->scope = scope;
+			res->net = net;
+			res->path_item = path_tail;
+			return true;
+		  }
 
-	    if (NetEvent*eve = scope->find_event(path_tail.name)) {
-		  res->scope = scope;
-		  res->eve = eve;
-		  return true;
-	    }
+		  if (NetEvent*eve = scope->find_event(path_tail.name)) {
+			res->scope = scope;
+			res->eve = eve;
+			res->path_item = path_tail;
+			return true;
+		  }
 
-	    if (const NetExpr*par = scope->get_parameter(des, path_tail.name, res->par_type)) {
-		  res->scope = scope;
-		  res->par_val = par;
-		  return true;
+		  if (const NetExpr*par = scope->get_parameter(des, path_tail.name, res->par_type)) {
+		    res->scope = scope;
+		    res->par_val = par;
+		    res->path_item = path_tail;
+		    return true;
+		  }
 	    }
 
 	    if (NetScope*import_scope = scope->find_import(des, path_tail.name)) {
@@ -138,42 +175,91 @@ static bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  continue;
 	    }
 
-	    if (recurse_flag) {
+	    // Could not find an object. Maybe this is a child scope name? If
+	    // so, evaluate the path conponents to find the exact scope this
+	    // refers to. This item might be:
+	    //     <scope>.s
+	    //     <scope>.s[n]
+	    // etc. The scope->child_byname tests if the name exists, and if
+	    // it does, the eval_path_component() evaluates any [n]
+	    // expressions to constants to generate an hname_t object for a
+	    // more complete scope name search. Note that the index
+	    // expressions for scope names must be constant.
+	    if (scope->child_byname(path_tail.name)) {
 		  bool flag = false;
 		  hname_t path_item = eval_path_component(des, start_scope, path_tail, flag);
 		  if (flag) {
 			cerr << li->get_fileline() << ": XXXXX: Errors evaluating scope index" << endl;
-		  } else if (NetScope*chld = des->find_scope(scope, path_item)) {
+		  } else if (NetScope*chld = scope->child(path_item)) {
 			res->scope = chld;
+			res->path_item = path_tail;
 			return true;
 		  }
 	    }
 
-	      // Don't scan up if we are searching within a prefixed scope.
+	    // Don't scan up if we are searching within a prefixed scope.
 	    if (prefix_scope)
 		  break;
 
-	      // Don't scan up past a module boundary.
-	    if (scope->type()==NetScope::MODULE && !scope->nested_module())
-		  scope = 0;
-	    else
-		  scope = scope->parent();
+	    // Special case: We can match the module name of a parent
+	    // module. That means if the current scope is a module of type
+	    // "mod", then "mod" matches the current scope. This is fairly
+	    // obscure, but looks like this:
+	    //
+	    //  module foo;
+	    //    reg x;
+	    //    ... foo.x; // This matches x in myself.
+	    //  endmodule
+	    //
+	    // This feature recurses, so code in subscopes of foo can refer to
+	    // foo by the name "foo" as well. In general, anything within
+	    // "foo" can use the name "foo" to reference it.
+	    if (scope->type()==NetScope::MODULE && scope->module_name()==path_tail.name) {
+		  res->scope = scope;
+		  res->path_item = path_tail;
+		  return true;
+	    }
 
-	      // Last chance - try the compilation unit.
+	    // If there is no prefix, then we are free to scan upwards looking
+	    // for a scope name. Note that only scopes can be searched for up
+	    // past module boundaries. To handle that, set a flag to indicate
+	    // that we passed a module boundary on the way up.
+	    if (scope->type()==NetScope::MODULE && !scope->nested_module())
+		  passed_module_boundary = true;
+
+	    scope = scope->parent();
+
+	    // Last chance - try the compilation unit. Note that modules may
+	    // reference nets/variables in the compilation unit, even if they
+	    // cannot reference variables in containing scope.
+	    //
+	    //    int ok = 1;
+	    //    module top;
+	    //        int not_ok = 2;
+	    //        dut foo();
+	    //    endmodule
+	    //
+	    //    module dut;
+	    //        ... = ok; // This reference is OK
+	    //        ... = not_ok; // This reference is NOT OK.
+	    //    endmodule
 	    if (scope == 0 && start_scope != 0) {
 		  scope = start_scope->unit();
 		  start_scope = 0;
+		  passed_module_boundary = false;
 	    }
       }
 
-	// Last chance: this is a single name, so it might be the name
-	// of a root scope. Ask the design if this is a root
-	// scope. This is only possible if there is no prefix.
+
+      // Last chance: this is a single name, so it might be the name
+      // of a root scope. Ask the design if this is a root
+      // scope. This is only possible if there is no prefix.
       if (prefix_scope==false) {
 	    hname_t path_item (path_tail.name);
 	    scope = des->find_scope(path_item);
 	    if (scope) {
 		  res->scope = scope;
+		  res->path_item = path_tail;
 		  return true;
 	    }
       }
@@ -193,6 +279,23 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 {
       symbol_search_results recurse;
       bool flag = symbol_search(li, des, scope, path, &recurse);
+
+      net = 0;
+      par = 0;
+      par_type = 0;
+      eve = 0;
+
+      // The compatible version doesn't know how to handle unmatched tail
+      // components, so report them as errors.
+      if (! recurse.path_tail.empty()) {
+	    if (debug_elaborate) {
+		  cerr << li->get_fileline() << ": symbol_search (compat): "
+		       << "path_tail items found: " << recurse.path_tail << endl;
+	    }
+	    return 0;
+      }
+
+      // Convert the extended results to the compatible results.
       net = recurse.net;
       par = recurse.par_val;
       par_type = recurse.par_type;
@@ -200,9 +303,6 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       if (! flag) {
 	    return 0;
       }
-
-      if (recurse.is_scope())
-	    return recurse.scope;
 
       return recurse.scope;
 }
