@@ -55,15 +55,23 @@ char* yytext_string_filter(const char*str, size_t str_len)
 {
       if (str == 0) return 0;
       char*buf = new char[str_len+1];
-      for (size_t idx = 0 ; idx < str_len ; idx += 1) {
-	    if (str[idx] == 0) {
+      size_t didx = 0;
+      for (size_t sidx = 0 ; sidx < str_len ; sidx += 1, didx += 1) {
+	    if (str[sidx] == 0) {
 		  VLerror(yylloc, "error: Found nil (\\000) in string literal, replacing with space (\\015) character.");
-		  buf[idx] = ' ';
+		  buf[didx] = ' ';
+	    } else if (str[sidx] == '\\') { /* Skip \\\n */
+		  if ((sidx+1 < str_len) && (str[sidx+1] == '\n')) {
+			sidx += 1;
+			didx -= 1;
+		  } else {
+			buf[didx] = str[sidx];
+		  }
 	    } else {
-		  buf[idx] = str[idx];
+		  buf[didx] = str[sidx];
 	    }
       }
-      buf[str_len] = 0;
+      buf[didx] = 0;
       return buf;
 }
 
@@ -246,14 +254,16 @@ TU [munpf]
 \"            { BEGIN(CSTRING); }
 <CSTRING>\\\\ { yymore(); /* Catch \\, which is a \ escaping itself */ }
 <CSTRING>\\\" { yymore(); /* Catch \", which is an escaped quote */ }
+<CSTRING>\\\n { yymore(); /* Catch \\n, which will be filtered out */
+		yylloc.first_line += 1; }
 <CSTRING>\n   { BEGIN(0);
-                yylval.text = yytext_string_filter(yytext, yyleng);
-		VLerror(yylloc, "Missing close quote of string.");
+		yylval.text = yytext_string_filter(yytext, yyleng);
+		VLerror(yylloc, "Missing closing quote for string.");
 		yylloc.first_line += 1;
 		return STRING; }
 <CSTRING>\"   { BEGIN(0);
-      yylval.text = yytext_string_filter(yytext, yyleng);
-		yylval.text[strlen(yytext)-1] = 0;
+		yylval.text = yytext_string_filter(yytext, yyleng);
+		yylval.text[strlen(yylval.text)-1] = 0;
 		return STRING; }
 <CSTRING>.    { yymore(); }
 
