@@ -28,14 +28,18 @@ void darray_new(ivl_type_t element_type, unsigned size_reg)
       ivl_variable_type_t type = ivl_type_base(element_type);
 
       if ((type == IVL_VT_BOOL) || (type == IVL_VT_LOGIC)) {
-	    int msb, lsb;
 	      // bool objects are vectorable, but for now only support
 	      // a single dimensions.
-	    assert(ivl_type_packed_dimensions(element_type) == 1);
-	    msb = ivl_type_packed_msb(element_type, 0);
-	    lsb = ivl_type_packed_lsb(element_type, 0);
-	    wid = msb>=lsb ? msb - lsb : lsb - msb;
-	    wid += 1;
+	    assert(ivl_type_packed_dimensions(element_type) <= 1);
+	    if (ivl_type_packed_dimensions(element_type) == 1) {
+		  int msb, lsb;
+		  msb = ivl_type_packed_msb(element_type, 0);
+		  lsb = ivl_type_packed_lsb(element_type, 0);
+		  wid = msb>=lsb ? msb - lsb : lsb - msb;
+		  wid += 1;
+	    } else {
+		  wid = 1;
+	    }
 	    signed_char = ivl_type_signed(element_type) ? "s" : "";
       } else {
 	      // REAL or STRING objects are not packable.
