@@ -1,7 +1,7 @@
 #ifndef IVL_expression_H
 #define IVL_expression_H
 /*
- * Copyright (c) 2011-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2015 / Stephen Williams (steve@icarus.com),
  * Copyright CERN 2016
  * @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -290,6 +290,10 @@ class ExpAggregate : public Expression {
 	        choice = other.choice ? new choice_t(*other.choice) : NULL;
 	        expr = safe_clone(other.expr);
 	    }
+
+# if __cplusplus >= 201103L
+	    constexpr choice_element& operator = (const choice_element&that) = default;
+# endif
 
 	    choice_t*choice;
 	    Expression*expr;

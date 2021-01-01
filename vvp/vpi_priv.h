@@ -1,7 +1,7 @@
 #ifndef IVL_vpi_priv_H
 #define IVL_vpi_priv_H
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -160,6 +160,9 @@ class __vpiDecConst : public __vpiHandle {
     public:
       explicit __vpiDecConst(int val =0);
       __vpiDecConst(const __vpiDecConst&that);
+# if __cplusplus >= 201103L
+      constexpr __vpiDecConst& operator = (const __vpiDecConst&that) = default;
+# endif
       int get_type_code(void) const;
       int vpi_get(int code);
       void vpi_get_value(p_vpi_value val);
