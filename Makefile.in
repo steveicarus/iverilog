@@ -202,7 +202,7 @@ stamp-_pli_types-h: $(srcdir)/_pli_types.h.in config.status
 	./config.status _pli_types.h
 _pli_types.h: stamp-_pli_types-h
 
-$(srcdir)/configure: $(srcdir)/configure.in $(srcdir)/aclocal.m4
+$(srcdir)/configure: $(srcdir)/configure.ac $(srcdir)/aclocal.m4
 	cd $(srcdir) && autoconf
 
 config.status: $(srcdir)/configure

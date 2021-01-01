@@ -1,21 +1,19 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(netlist.h)
-AC_CONFIG_HEADER(config.h)
-AC_CONFIG_HEADER(_pli_types.h)
-AC_CONFIG_HEADER(vhdlpp/vhdlpp_config.h)
-AC_CONFIG_HEADER(vvp/config.h)
-AC_CONFIG_HEADER(vpi/vpi_config.h)
-AC_CONFIG_HEADER(libveriuser/config.h)
-AC_CONFIG_HEADER(tgt-vvp/vvp_config.h)
-AC_CONFIG_HEADER(tgt-vhdl/vhdl_config.h)
-AC_CONFIG_HEADER(tgt-pcb/pcb_config.h)
+AC_INIT
+AC_CONFIG_SRCDIR([netlist.h])
+AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([_pli_types.h])
+AC_CONFIG_HEADERS([vhdlpp/vhdlpp_config.h])
+AC_CONFIG_HEADERS([vvp/config.h])
+AC_CONFIG_HEADERS([vpi/vpi_config.h])
+AC_CONFIG_HEADERS([libveriuser/config.h])
+AC_CONFIG_HEADERS([tgt-vvp/vvp_config.h])
+AC_CONFIG_HEADERS([tgt-vhdl/vhdl_config.h])
+AC_CONFIG_HEADERS([tgt-pcb/pcb_config.h])
 
 AC_CANONICAL_HOST
 dnl Checks for programs.
 AC_PROG_CC
-# AC_PROG_CC_C99 is only available in autoconf version 2.60 and later.
-AC_PREREQ([2.60])
-AC_PROG_CC_C99
 AC_PROG_CXX
 AC_PROG_RANLIB
 AC_CHECK_TOOL(LD, ld, false)
@@ -92,7 +90,7 @@ fi
 
 AC_LANG(C++)
 
-AC_ARG_WITH([m32], [AC_HELP_STRING([--with-m32], [Compile 32-bit on x86_64])],
+AC_ARG_WITH([m32], [AS_HELP_STRING([--with-m32],[Compile 32-bit on x86_64])],
             [ with_m32=yes ],[ with_m32=no ])
 
 AS_IF( [test "x$with_m32" = xyes],
@@ -170,8 +168,7 @@ AC_FUNC_ALLOCA
 AC_FUNC_FSEEKO
 
 # valgrind checks
-AC_ARG_WITH([valgrind], [AC_HELP_STRING([--with-valgrind],
-                                        [Add valgrind hooks])],
+AC_ARG_WITH([valgrind], [AS_HELP_STRING([--with-valgrind],[Add valgrind hooks])],
             [], [check_valgrind=yes])
 
 AS_IF([test "x$check_valgrind" = xyes],
@@ -182,14 +179,11 @@ AS_IF([test "x$check_valgrind" = xyes],
                        [AC_MSG_ERROR([Could not find <valgrind/memcheck.h>])])])
 
 AC_MSG_CHECKING(for sys/times)
-AC_TRY_LINK(
-#include <unistd.h>
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>
 #include <sys/times.h>
-,{clock_t a = times(0)/sysconf(_SC_CLK_TCK);},
-do_times=yes
-AC_DEFINE([HAVE_TIMES], [1], [The times system call is available in the host operating system.]),
-do_times=no
-)
+]], [[{clock_t a = times(0)/sysconf(_SC_CLK_TCK);}]])],[do_times=yes
+AC_DEFINE(HAVE_TIMES, 1, The times system call is available in the host operating system.)],[do_times=no
+])
 AC_MSG_RESULT($do_times)
 
 # --
@@ -262,7 +256,7 @@ AC_CHECK_FUNCS(fopen64)
 # The following math functions may be defined in the math library so look
 # in the default libraries first and then look in -lm for them. On some
 # systems we may need to use the compiler in C99 mode to get a definition.
-# We requested C99 mode earlier with AC_PROG_CC_C99.
+# Modern versions of autoconf will enable C99 if it is available.
 AC_SEARCH_LIBS([lround], [m], [AC_DEFINE([HAVE_LROUND], [1])])
 AC_SEARCH_LIBS([llround], [m], [AC_DEFINE([HAVE_LLROUND], [1])])
 AC_SEARCH_LIBS([nan], [m], [AC_DEFINE([HAVE_NAN], [1])])
@@ -337,4 +331,5 @@ AC_MSG_ERROR(cannot configure white space in libdir: $libdir)
 fi
 AC_MSG_RESULT(ok)
 AX_PROG_CC_FOR_BUILD
-AC_OUTPUT(Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile tgt-blif/Makefile tgt-sizer/Makefile)
+AC_CONFIG_FILES([Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile tgt-blif/Makefile tgt-sizer/Makefile])
+AC_OUTPUT
