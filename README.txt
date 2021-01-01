@@ -72,7 +72,7 @@ If you are building from git, you will also need software to generate
 the configure scripts.
 
 	- autoconf 2.53 or later
-	  This generates configure scripts from configure.in. The 2.53
+	  This generates configure scripts from configure.ac. The 2.53
 	  or later versions are known to work, autoconf 2.13 is
 	  reported to *not* work.
 
