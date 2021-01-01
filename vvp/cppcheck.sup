@@ -1,6 +1,6 @@
 // The new() operator is always used to allocate space for this class and
 // pool is defined there.
-uninitVar:vvp_net.cc:167
+uninitVar:vvp_net.cc:190
 
 // These functions are not used by Icarus
 // vpi_chk_error()
@@ -8,7 +8,7 @@ unusedFunction:vpi_priv.cc:193
 // vpi_compare_objects()
 unusedFunction:vpi_priv.cc:209
 // vpi_control()
-unusedFunction:vpi_priv.cc:1556
+unusedFunction:vpi_priv.cc:1628
 // vpi_flush()
 unusedFunction:vpi_priv.cc:1519
 // vpi_fopen()
@@ -42,6 +42,6 @@ unusedFunction:vpi_tasks.cc:990
 // vpi_remove_cb()
 unusedFunction:vpi_callback.cc:601
 // vpi_sim_control()
-unusedFunction:vpi_priv.cc:1548
+unusedFunction:vpi_priv.cc:1620
 // vpi_vprintf()
 unusedFunction:vpi_priv.cc:1505
