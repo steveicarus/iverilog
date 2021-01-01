@@ -461,7 +461,7 @@ void vvp_fun_muxz::run_run()
 	  default:
 	      {
 		    unsigned min_size = a_.size();
-		    unsigned max_size = a_.size();
+		    unsigned max_size = min_size;
 		    if (b_.size() < min_size)
 			  min_size = b_.size();
 		    if (b_.size() > max_size)

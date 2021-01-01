@@ -516,7 +516,7 @@ vvp_queue_real::~vvp_queue_real()
 /*
  * Helper functions used while copying multiple elements into a queue.
  */
-static void print_copy_is_too_big(size_t src_size, unsigned max_size, string qtype)
+static void print_copy_is_too_big(size_t src_size, unsigned max_size, const string&qtype)
 {
       cerr << get_fileline()
            << "Warning: queue<" << qtype << "> is bounded to have at most "

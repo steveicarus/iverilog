@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -62,9 +62,9 @@ vvp_island::~vvp_island()
       if (!at_EOS) assert(0);
 
       while (branches_) {
-	    vvp_island_branch *next = branches_->next_branch;
+	    vvp_island_branch *next_br = branches_->next_branch;
 	    delete branches_;
-	    branches_ = next;
+	    branches_ = next_br;
       }
 }
 

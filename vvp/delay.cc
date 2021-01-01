@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2016 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2005-2020 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -166,13 +166,13 @@ vvp_fun_delay::vvp_fun_delay(vvp_net_t*n, unsigned width, const vvp_delay_t&d)
 	// to simulation time units.
       __vpiScope*scope = vpip_peek_current_scope();
 
-      int pow = scope->time_units - scope->time_precision;
+      int powr = scope->time_units - scope->time_precision;
       round_ = 1;
-      for (int lp = 0; lp < pow; lp += 1) round_ *= 10;
+      for (int lp = 0; lp < powr; lp += 1) round_ *= 10;
 
-      pow = scope->time_precision - vpip_get_time_precision();
+      powr = scope->time_precision - vpip_get_time_precision();
       scale_ = 1;
-      for (int lp = 0; lp < pow; lp += 1) scale_ *= 10;
+      for (int lp = 0; lp < powr; lp += 1) scale_ *= 10;
 }
 
 vvp_fun_delay::~vvp_fun_delay()

@@ -1,7 +1,7 @@
 #ifndef IVL_schedule_H
 #define IVL_schedule_H
 /*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -55,7 +55,7 @@ extern void schedule_assign_vector(vvp_net_ptr_t ptr,
 extern void schedule_assign_array_word(vvp_array_t mem,
 				       unsigned word_address,
 				       unsigned off,
-				       vvp_vector4_t val,
+				       const vvp_vector4_t&val,
 				       vvp_time64_t delay);
 
 extern void schedule_assign_array_word(vvp_array_t mem,
@@ -85,7 +85,7 @@ extern void schedule_propagate_vector(vvp_net_t*ptr,
  * creates an event in the active queue.
  */
 extern void schedule_set_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&val);
-extern void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector8_t val);
+extern void schedule_set_vector(vvp_net_ptr_t ptr, const vvp_vector8_t&val);
 extern void schedule_set_vector(vvp_net_ptr_t ptr, double val);
 
 /*
@@ -104,8 +104,8 @@ extern void schedule_t0_trigger(vvp_net_ptr_t ptr);
  * variable, but still allows the initial value to be driven
  * (propagated as events) through the rest of the net.
  */
-extern void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector4_t val);
-extern void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector8_t val);
+extern void schedule_init_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&val);
+extern void schedule_init_vector(vvp_net_ptr_t ptr, const vvp_vector8_t&val);
 extern void schedule_init_vector(vvp_net_ptr_t ptr, double val);
 /*
  * The schedule_init_propagate function is similar to the above but

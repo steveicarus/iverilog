@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2020 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -561,36 +561,36 @@ unsigned long multiply_with_carry(unsigned long a, unsigned long b,
 void vvp_send_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&val)
 {
       while (vvp_net_t*cur = ptr.ptr()) {
-	    vvp_net_ptr_t next = cur->port[ptr.port()];
+	    vvp_net_ptr_t next_val = cur->port[ptr.port()];
 
 	    if (cur->fun)
 		  cur->fun->recv_vec8(ptr, val);
 
-	    ptr = next;
+	    ptr = next_val;
       }
 }
 
 void vvp_send_real(vvp_net_ptr_t ptr, double val, vvp_context_t context)
 {
       while (vvp_net_t*cur = ptr.ptr()) {
-	    vvp_net_ptr_t next = cur->port[ptr.port()];
+	    vvp_net_ptr_t next_val = cur->port[ptr.port()];
 
 	    if (cur->fun)
 		  cur->fun->recv_real(ptr, val, context);
 
-	    ptr = next;
+	    ptr = next_val;
       }
 }
 
 void vvp_send_long(vvp_net_ptr_t ptr, long val)
 {
       while (vvp_net_t*cur = ptr.ptr()) {
-	    vvp_net_ptr_t next = cur->port[ptr.port()];
+	    vvp_net_ptr_t next_val = cur->port[ptr.port()];
 
 	    if (cur->fun)
 		  cur->fun->recv_long(ptr, val);
 
-	    ptr = next;
+	    ptr = next_val;
       }
 }
 
@@ -598,12 +598,12 @@ void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
                       unsigned base, unsigned wid)
 {
       while (vvp_net_t*cur = ptr.ptr()) {
-	    vvp_net_ptr_t next = cur->port[ptr.port()];
+	    vvp_net_ptr_t next_val = cur->port[ptr.port()];
 
 	    if (cur->fun)
 		  cur->fun->recv_long_pv(ptr, val, base, wid);
 
-	    ptr = next;
+	    ptr = next_val;
       }
 }
 
@@ -3441,7 +3441,7 @@ void vvp_wide_fun_core::recv_real_from_inputs(unsigned)
 }
 
 void vvp_wide_fun_core::dispatch_vec4_from_input_(unsigned port,
-						   vvp_vector4_t bit)
+						  const vvp_vector4_t&bit)
 {
       assert(port < nports_);
       if (port_values_ == 0) port_values_ = new vvp_vector4_t [nports_];

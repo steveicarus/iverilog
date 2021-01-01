@@ -987,20 +987,20 @@ void compile_event(char*label, char*type, unsigned argc, struct symb_s*argv)
 
       } else {
 
-	    vvp_fun_edge::edge_t edge = vvp_edge_none;
+	    vvp_fun_edge::edge_t edge_type = vvp_edge_none;
 
 	    if (strcmp(type,"posedge") == 0)
-		  edge = vvp_edge_posedge;
+		  edge_type = vvp_edge_posedge;
 	    else if (strcmp(type,"negedge") == 0)
-		  edge = vvp_edge_negedge;
+		  edge_type = vvp_edge_negedge;
 
 	    assert(argc <= 4);
 	    free(type);
 
             if (vpip_peek_current_scope()->is_automatic()) {
-                  fun = new vvp_fun_edge_aa(edge);
+                  fun = new vvp_fun_edge_aa(edge_type);
             } else {
-                  fun = new vvp_fun_edge_sa(edge);
+                  fun = new vvp_fun_edge_sa(edge_type);
             }
 
       }

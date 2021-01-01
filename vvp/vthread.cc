@@ -483,7 +483,7 @@ inline static string get_queue_type(string&)
       return "queue<string>";
 }
 
-inline static string get_queue_type(vvp_vector4_t value)
+inline static string get_queue_type(const vvp_vector4_t&value)
 {
       ostringstream buf;
       buf << "queue<vector[" << value.size() << "]>";
@@ -496,12 +496,12 @@ inline static void print_queue_value(double value)
       cerr << value;
 }
 
-inline static void print_queue_value(string value)
+inline static void print_queue_value(const string&value)
 {
       cerr << "\"" << value << "\"";
 }
 
-inline static void print_queue_value(vvp_vector4_t value)
+inline static void print_queue_value(const vvp_vector4_t&value)
 {
       cerr << value;
 }
@@ -1077,7 +1077,7 @@ bool of_ASSIGN_VEC4(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_ptr_t ptr (cp->net, 0);
       unsigned delay = cp->bit_idx[0];
-      vvp_vector4_t&val = thr->peek_vec4();
+      const vvp_vector4_t&val = thr->peek_vec4();
 
       schedule_assign_vector(ptr, 0, 0, val, delay);
       thr->pop_vec4(1);
@@ -1121,7 +1121,6 @@ bool of_ASSIGN_VEC4_A_D(vthread_t thr, vvp_code_t cp)
       }
       if (off+wid > array_wid) {
 	    val = val.subvalue(0, array_wid-off);
-	    wid = val.size();
       }
 
       schedule_assign_array_word(cp->array, adr, off, val, del);
@@ -1164,7 +1163,6 @@ bool of_ASSIGN_VEC4_A_E(vthread_t thr, vvp_code_t cp)
       }
       if (off+wid > array_wid) {
 	    val = val.subvalue(0, array_wid-off);
-	    wid = val.size();
       }
 
       if (thr->ecount == 0) {
@@ -1213,7 +1211,6 @@ bool of_ASSIGN_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
       }
       if (off+wid > sig->value_size()) {
 	    val = val.subvalue(0, sig->value_size()-off);
-	    wid = val.size();
       }
 
       schedule_assign_vector(ptr, off, sig->value_size(), val, del);
@@ -1255,7 +1252,6 @@ bool of_ASSIGN_VEC4_OFF_E(vthread_t thr, vvp_code_t cp)
       }
       if (off+wid > sig->value_size()) {
 	    val = val.subvalue(0, sig->value_size()-off);
-	    wid = val.size();
       }
 
       if (thr->ecount == 0) {
@@ -1809,7 +1805,7 @@ bool of_CMPIE(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = cp->number;
 
-      vvp_vector4_t&lval = thr->peek_vec4();
+      const vvp_vector4_t&lval = thr->peek_vec4();
 
 	// I expect that most of the bits of an immediate value are
 	// going to be zero, so start the result vector with all zero
@@ -1827,7 +1823,7 @@ bool of_CMPINE(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = cp->number;
 
-      vvp_vector4_t&lval = thr->peek_vec4();
+      const vvp_vector4_t&lval = thr->peek_vec4();
 
 	// I expect that most of the bits of an immediate value are
 	// going to be zero, so start the result vector with all zero
@@ -1944,7 +1940,7 @@ bool of_CMPIS(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = cp->number;
 
-      vvp_vector4_t&lval = thr->peek_vec4();
+      const vvp_vector4_t&lval = thr->peek_vec4();
 
 	// I expect that most of the bits of an immediate value are
 	// going to be zero, so start the result vector with all zero
@@ -2080,7 +2076,7 @@ bool of_CMPIU(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = cp->number;
 
-      vvp_vector4_t&lval = thr->peek_vec4();
+      const vvp_vector4_t&lval = thr->peek_vec4();
 
 	// I expect that most of the bits of an immediate value are
 	// going to be zero, so start the result vector with all zero
@@ -5813,7 +5809,7 @@ inline static string get_darray_type(string&)
       return "darray<string>";
 }
 
-inline static string get_darray_type(vvp_vector4_t value)
+inline static string get_darray_type(const vvp_vector4_t&value)
 {
       ostringstream buf;
       buf << "darray<vector[" << value.size() << "]>";
@@ -5975,17 +5971,17 @@ static void pop_prop_val(vthread_t thr, vvp_vector4_t&val, unsigned wid)
       val.resize(wid);
 }
 
-static void set_val(vvp_cobject*cobj, size_t pid, double&val)
+static void set_val(vvp_cobject*cobj, size_t pid, const double&val)
 {
       cobj->set_real(pid, val);
 }
 
-static void set_val(vvp_cobject*cobj, size_t pid, string&val)
+static void set_val(vvp_cobject*cobj, size_t pid, const string&val)
 {
       cobj->set_string(pid, val);
 }
 
-static void set_val(vvp_cobject*cobj, size_t pid, vvp_vector4_t&val)
+static void set_val(vvp_cobject*cobj, size_t pid, const vvp_vector4_t&val)
 {
       cobj->set_vec4(pid, val);
 }
@@ -6202,12 +6198,12 @@ bool of_STORE_QOBJ_V(vthread_t thr, vvp_code_t cp)
       return store_qobj<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
 }
 
-static void vvp_send(vthread_t thr, vvp_net_ptr_t ptr, double&val)
+static void vvp_send(vthread_t thr, vvp_net_ptr_t ptr, const double&val)
 {
       vvp_send_real(ptr, val, thr->wt_context);
 }
 
-static void vvp_send(vthread_t thr, vvp_net_ptr_t ptr, string&val)
+static void vvp_send(vthread_t thr, vvp_net_ptr_t ptr, const string&val)
 {
       vvp_send_string(ptr, val, thr->wt_context);
 }
@@ -6358,7 +6354,7 @@ bool of_STORE_VEC4A(vthread_t thr, vvp_code_t cp)
       unsigned adr_index = cp->bit_idx[0];
       unsigned off_index = cp->bit_idx[1];
 
-      vvp_vector4_t&value = thr->peek_vec4();
+      const vvp_vector4_t&value = thr->peek_vec4();
 
       long adr = adr_index? thr->words[adr_index].w_int : 0;
       long off = off_index? thr->words[off_index].w_int : 0;

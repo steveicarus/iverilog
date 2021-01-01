@@ -894,7 +894,7 @@ void schedule_propagate_vector(vvp_net_t*net,
 void schedule_assign_array_word(vvp_array_t mem,
 				unsigned word_addr,
 				unsigned off,
-				vvp_vector4_t val,
+				const vvp_vector4_t&val,
 				vvp_time64_t delay)
 {
       struct assign_array_word_s*cur = new struct assign_array_word_s;
@@ -926,7 +926,7 @@ void schedule_set_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       schedule_event_(cur, 0, SEQ_ACTIVE);
 }
 
-void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+void schedule_set_vector(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 {
       struct assign_vector8_event_s*cur = new struct assign_vector8_event_s;
       cur->ptr = ptr;
@@ -942,7 +942,7 @@ void schedule_set_vector(vvp_net_ptr_t ptr, double bit)
       schedule_event_(cur, 0, SEQ_ACTIVE);
 }
 
-void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void schedule_init_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       struct assign_vector4_event_s*cur = new struct assign_vector4_event_s(bit);
       cur->ptr = ptr;
@@ -951,7 +951,7 @@ void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       schedule_init_event(cur);
 }
 
-void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+void schedule_init_vector(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 {
       struct assign_vector8_event_s*cur = new struct assign_vector8_event_s;
       cur->ptr = ptr;
