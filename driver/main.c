@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -184,7 +184,7 @@ int verbose_flag = 0;
 FILE *fp;
 
 char line[MAXSIZE];
-char tmp[MAXSIZE];
+char tmp[MAXSIZE+24];
 
 static char ivl_root[MAXSIZE];
 
