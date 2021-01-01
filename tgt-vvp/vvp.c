@@ -102,7 +102,7 @@ int allocate_flag(void)
       int idx;
       for (idx = 0 ; idx < FLAGS_COUNT ; idx += 1) {
 	    int word = idx / 32;
-	    uint32_t mask = 1 << (idx%32);
+	    uint32_t mask = 1U << (idx%32);
 	    if (allocate_flag_mask[word] & mask)
 		  continue;
 

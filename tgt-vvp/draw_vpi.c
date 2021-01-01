@@ -428,7 +428,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  buffer[0] = 0;
 		  break;
 		default:
-		  fprintf(stderr, "%s:%d: Sorry, cannot generate code for argument %d.\n",
+		  fprintf(stderr, "%s:%u: Sorry, cannot generate code for argument %u.\n",
 		                  ivl_expr_file(expr), ivl_expr_lineno(expr), idx+1);
 		  fprintf(vvp_out, "\nXXXX Unexpected argument: call_string=<%s>, arg=%u, type=%d\n",
 			  call_string, idx, ivl_expr_value(expr));

@@ -1784,7 +1784,7 @@ static int show_insert_method(ivl_statement_t net)
       int idx = allocate_word();
       assert(idx >= 0);
 	/* Save the queue maximum index value to an integer register. */
-      fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", idx, ivl_signal_array_count(var));
+      fprintf(vvp_out, "    %%ix/load %d, %u, 0;\n", idx, ivl_signal_array_count(var));
 
       ivl_type_t element_type = ivl_type_element(var_type);
 
@@ -1795,17 +1795,17 @@ static int show_insert_method(ivl_statement_t net)
       switch (ivl_type_base(element_type)) {
 	  case IVL_VT_REAL:
 	    draw_eval_real(parm2);
-	    fprintf(vvp_out, "    %%qinsert/real v%p_0, %u;\n",
+	    fprintf(vvp_out, "    %%qinsert/real v%p_0, %d;\n",
 	            var, idx);
 	    break;
 	  case IVL_VT_STRING:
 	    draw_eval_string(parm2);
-	    fprintf(vvp_out, "    %%qinsert/str v%p_0, %u;\n",
+	    fprintf(vvp_out, "    %%qinsert/str v%p_0, %d;\n",
 	            var, idx);
 	    break;
 	  default:
 	    draw_eval_vec4(parm2);
-	    fprintf(vvp_out, "    %%qinsert/v v%p_0, %u, %u;\n",
+	    fprintf(vvp_out, "    %%qinsert/v v%p_0, %d, %u;\n",
 	            var, idx,
 	            width_of_packed_type(element_type));
 	    break;
@@ -1837,7 +1837,7 @@ static int show_push_frontback_method(ivl_statement_t net, bool is_front)
       int idx = allocate_word();
       assert(idx >= 0);
 	/* Save the queue maximum index value to an integer register. */
-      fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", idx, ivl_signal_array_count(var));
+      fprintf(vvp_out, "    %%ix/load %d, %u, 0;\n", idx, ivl_signal_array_count(var));
 
       ivl_type_t element_type = ivl_type_element(var_type);
 
@@ -1845,17 +1845,17 @@ static int show_push_frontback_method(ivl_statement_t net, bool is_front)
       switch (ivl_type_base(element_type)) {
 	  case IVL_VT_REAL:
 	    draw_eval_real(parm1);
-	    fprintf(vvp_out, "    %%store/%s/r v%p_0, %u;\n",
+	    fprintf(vvp_out, "    %%store/%s/r v%p_0, %d;\n",
 	            type_code, var, idx);
 	    break;
 	  case IVL_VT_STRING:
 	    draw_eval_string(parm1);
-	    fprintf(vvp_out, "    %%store/%s/str v%p_0, %u;\n",
+	    fprintf(vvp_out, "    %%store/%s/str v%p_0, %d;\n",
 	            type_code, var, idx);
 	    break;
 	  default:
 	    draw_eval_vec4(parm1);
-	    fprintf(vvp_out, "    %%store/%s/v v%p_0, %u, %u;\n",
+	    fprintf(vvp_out, "    %%store/%s/v v%p_0, %d, %u;\n",
 	            type_code, var, idx,
 	            width_of_packed_type(element_type));
 	    break;

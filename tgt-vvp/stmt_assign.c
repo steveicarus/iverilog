@@ -1130,8 +1130,8 @@ static int show_stmt_assign_queue_pattern(ivl_signal_t var, ivl_expr_t rval,
 	    int del_idx = allocate_word();
 	    assert(del_idx >= 0);
 	      /* Save the first queue element to delete. */
-	    fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", del_idx, max_elems);
-	    fprintf(vvp_out, "    %%delete/tail v%p_0, %u;\n", var, del_idx);
+	    fprintf(vvp_out, "    %%ix/load %d, %u, 0;\n", del_idx, max_elems);
+	    fprintf(vvp_out, "    %%delete/tail v%p_0, %d;\n", var, del_idx);
 	    clr_word(del_idx);
       }
 
@@ -1159,7 +1159,7 @@ static int show_stmt_assign_sig_queue(ivl_statement_t net)
       int idx = allocate_word();
       assert(idx >= 0);
         /* Save the queue maximum index value to an integer register. */
-      fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", idx, ivl_signal_array_count(var));
+      fprintf(vvp_out, "    %%ix/load %d, %u, 0;\n", idx, ivl_signal_array_count(var));
 
       if (ivl_expr_type(rval) == IVL_EX_NULL) {
 	    errors += draw_eval_object(rval);
