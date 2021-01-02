@@ -56,7 +56,7 @@ distclean: clean
 	rm -f Makefile config.log
 
 cppcheck: $(O:.o=.cc)
-	cppcheck --enable=all --std=posix --std=c99 --std=c++03 -f \
+	cppcheck --enable=all --std=c99 --std=c++03 -f \
 	         --suppressions-list=$(srcdir)/cppcheck.sup \
 	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 

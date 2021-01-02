@@ -60,7 +60,7 @@ distclean: clean
 	rm -f stamp-vhdl_config-h vhdl_config.h
 
 cppcheck: $(O:.o=.cc)
-	cppcheck --enable=all --std=posix --std=c99 --std=c++03 -f \
+	cppcheck --enable=all --std=c99 --std=c++03 -f \
 	         --suppressions-list=$(srcdir)/cppcheck.sup \
 	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 

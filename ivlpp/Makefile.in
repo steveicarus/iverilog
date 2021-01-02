@@ -60,7 +60,7 @@ distclean: clean
 	rm -f Makefile config.log
 
 cppcheck: $(O:.o=.c)
-	cppcheck --enable=all --std=posix --std=c99 --std=c++03 -f $(INCLUDE_PATH) $^
+	cppcheck --enable=all --std=c99 --std=c++03 -f $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status
 	cd ..; ./config.status --file=ivlpp/$@

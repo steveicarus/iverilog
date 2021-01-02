@@ -61,11 +61,12 @@ distclean: clean
 	rm -f stamp-pcb_config-h pcb_config.h
 
 cppcheck: $(O:.o=.cc)
-	cppcheck --enable=all --std=posix --std=c99 --std=c++03 -f \
+	cppcheck --enable=all --std=c99 --std=c++03 -f \
 	         --suppressions-list=$(srcdir)/cppcheck.sup \
 	         -UYY_USER_INIT \
 	         -UYYPARSE_PARAM -UYYPRINT -Ushort -Usize_t -Uyyoverflow \
 	         -UYYTYPE_INT8 -UYYTYPE_INT16 -UYYTYPE_UINT8 -UYYTYPE_UINT16 \
+	         -UYYSTYPE -U__SIZE_TYPE__ -Ufree \
 	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status

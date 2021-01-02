@@ -103,11 +103,12 @@ distclean: clean
 # The -U flag is used to skip checking paths that depend on that define having
 # an explicit value (i.e. the define is expected to be real code).
 cppcheck: $(O:.o=.c) $(OPP:.o=.cc) $(M:.o=.c) $(V:.o=.c)
-	cppcheck --enable=all --std=posix --std=c99 --std=c++03 -f \
+	cppcheck --enable=all --std=c99 --std=c++03 -f \
 	         --suppressions-list=$(srcdir)/cppcheck.sup \
 	         -UYY_USER_INIT \
 	         -UYYPARSE_PARAM -UYYPRINT -Ushort -Uyyoverflow \
 	         -UYYTYPE_INT8 -UYYTYPE_INT16 -UYYTYPE_UINT8 -UYYTYPE_UINT16 \
+	         -UYYLTYPE -UYYSTYPE -U__SIZE_TYPE__ -Umalloc -Usize_t -Ufree  \
 	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status

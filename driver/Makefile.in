@@ -67,10 +67,11 @@ distclean: clean
 	rm -f Makefile config.log
 
 cppcheck: $(O:.o=.c)
-	cppcheck --enable=all --std=posix --std=c99 --std=c++03 -f \
+	cppcheck --enable=all --std=c99 --std=c++03 -f \
 	         -UYY_USER_INIT \
 	         -UYYPARSE_PARAM -UYYPRINT -Ushort -Uyyoverflow \
 	         -UYYTYPE_INT8 -UYYTYPE_INT16 -UYYTYPE_UINT8 -UYYTYPE_UINT16 \
+	         -UYYSTYPE -U__SIZE_TYPE__ -Umalloc -Usize_t -Ufree \
 	         $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status
