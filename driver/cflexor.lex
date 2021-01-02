@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -71,7 +71,7 @@ int cmdfile_stack_ptr = 0;
 <LCOMMENT>\n   { cflloc.first_line += 1; BEGIN(comment_enter); }
 
 <LCOMMENT><<EOF>> {
-      fprintf(stderr, "%s:%d: ERROR: Comment not terminated.\n",
+      fprintf(stderr, "%s:%u: ERROR: Comment not terminated.\n",
 	      current_file, cflloc.first_line);
       command_file_errors += 1;
       BEGIN(0);
@@ -84,7 +84,7 @@ int cmdfile_stack_ptr = 0;
 <CCOMMENT>"*/" { BEGIN(comment_enter); }
 
 <CCOMMENT><<EOF>> {
-      fprintf(stderr, "%s:%d: ERROR: Comment not terminated.\n",
+      fprintf(stderr, "%s:%u: ERROR: Comment not terminated.\n",
 	      current_file, cflloc.first_line);
       command_file_errors += 1;
       BEGIN(0);
@@ -146,7 +146,7 @@ int cmdfile_stack_ptr = 0;
 
 <PLUS_ARGS><<EOF>> {
       BEGIN(0);
-      fprintf(stderr, "%s:%d: ERROR: Plusargs statement not terminated.\n",
+      fprintf(stderr, "%s:%u: ERROR: Plusargs statement not terminated.\n",
 	      current_file, cflloc.first_line);
       command_file_errors += 1;
       PROCESS_EOF }
@@ -194,7 +194,7 @@ int cmdfile_stack_ptr = 0;
 <FILE_NAME><<EOF>> {
       cflval.text = trim_trailing_white(yytext, 0);
       BEGIN(0);
-      fprintf(stderr, "%s:%d: ERROR: File name not terminated.\n",
+      fprintf(stderr, "%s:%u: ERROR: File name not terminated.\n",
 	      current_file, cflloc.first_line);
       command_file_errors += 1;
       PROCESS_EOF }
@@ -233,7 +233,7 @@ void switch_to_command_file(const char *file)
 
       if (cmdfile_stack_ptr >= MAX_CMDFILE_DEPTH) {
 	    fprintf(stderr, "Error: command files nested too deeply (%d) "
-                    "at %s:%d.\n", MAX_CMDFILE_DEPTH, current_file,
+                    "at %s:%u.\n", MAX_CMDFILE_DEPTH, current_file,
                     cflloc.first_line);
 	    exit(1);
       }
@@ -260,7 +260,7 @@ void switch_to_command_file(const char *file)
       yyin = fopen(path, "r");
       if (yyin == NULL) {
 	    fprintf(stderr, "Error: unable to read nested command file (%s) "
-                    "at %s:%d.\n", path, current_file, cflloc.first_line);
+                    "at %s:%u.\n", path, current_file, cflloc.first_line);
 	    exit(1);
       }
 

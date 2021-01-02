@@ -1,6 +1,6 @@
 /*
+ * Copyright (c) 2015-2021 Martin Whitaker
  * Copyright (c) 2002 Gus Baldauf (gus@picturel.com)
- * Copyright (c) 2015 Martin Whitaker
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -241,13 +241,13 @@ static int GetRegistryKey(char *key, char **value)
 
 	lrv = RegQueryValueEx(hkKey, key, NULL, &regKeyType, NULL, &regKeySize);
 	if ((lrv != ERROR_SUCCESS) || (regKeyType != REG_SZ) || (!regKeySize)) {
-		lrv = RegCloseKey(hkKey);
+		RegCloseKey(hkKey);
 		return 0;
 	}
 
 	regKeyBuffer = (char *) malloc(regKeySize+1);
 	if (!regKeyBuffer) {
-		lrv = RegCloseKey(hkKey);
+		RegCloseKey(hkKey);
 		fprintf(stderr, "error: out of memory\n");
 		myExit(4);
 	}
@@ -257,7 +257,7 @@ static int GetRegistryKey(char *key, char **value)
 	lrv = RegQueryValueEx(hkKey, key, NULL, &regKeyType,
 	                      (unsigned char *) regKeyBuffer, &regKeySize);
 	if ((lrv != ERROR_SUCCESS) || (regKeyType != REG_SZ) || (!regKeySize)) {
-		lrv = RegCloseKey(hkKey);
+		RegCloseKey(hkKey);
 		free(regKeyBuffer);
 		return 0;
 	}

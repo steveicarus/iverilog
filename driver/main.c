@@ -382,7 +382,6 @@ static int t_preprocess_only(void)
 	    snprintf(tmp, sizeof tmp, " > \"%s\"", opath);
 	    cmd = realloc(cmd, ncmd+strlen(tmp)+1);
 	    strcpy(cmd+ncmd, tmp);
-	    ncmd += strlen(tmp);
       }
 
       if (verbose_flag)
@@ -483,7 +482,6 @@ static int t_compile(void)
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
       strcpy(cmd+ncmd, tmp);
-      ncmd += rc;
 
 
       if (verbose_flag)

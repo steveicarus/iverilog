@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -44,21 +44,18 @@ int acc_configure(PLI_INT32 config_param, const char*value)
 			  value);
 	    }
 
-	    rc = 1;
+	    rc = 0;
 	    if (strcmp(value,"acc_set_scope") == 0) {
 		  vpi_printf("XXXX acc_configure argument: Sorry: "
 			     "(accEnableArgs, %s\n", value);
-		  rc = 0;
 
 	    } else if (strcmp(value,"no_acc_set_scope") == 0) {
 		  vpi_printf("XXXX acc_configure argument: Sorry: "
 			     "(accEnableArgs, %s\n", value);
-		  rc = 0;
 
 	    } else {
 		  vpi_printf("XXXX acc_configure argument error. "
 			     "(accEnableArgs, %s(invalid)\n", value);
-		  rc = 0;
 	    }
 
 	    break;
