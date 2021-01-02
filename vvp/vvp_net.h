@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_net_H
 #define IVL_vvp_net_H
 /*
- * Copyright (c) 2004-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -674,7 +674,7 @@ class vvp_vector2_t {
 	// is true and there are X or Z bits, then the result becomes
 	// a NaN value. If enable_NaN is false then X or Z bits are
 	// converted to 0 as per the standard Verilog rules.
-      vvp_vector2_t(const vvp_vector4_t&that, bool allow_NaN = false);
+      explicit vvp_vector2_t(const vvp_vector4_t&that, bool allow_NaN = false);
 	// Make from a native long and a specified width.
       vvp_vector2_t(unsigned long val, unsigned wid);
 	// Make with the width, and filled with 1 or 0 bits.

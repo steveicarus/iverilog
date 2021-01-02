@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -210,18 +210,11 @@ void __vpiArray::get_word_value(struct __vpiArrayWord*word, p_vpi_value vp)
             case vpiHexStrVal:
             case vpiScalarVal:
             case vpiIntVal:
-            {
-                vvp_vector4_t v;
-                vals->get_word(index, v);
-                vpip_vec4_get_value(v, vals_width, signed_flag, vp);
-            }
-            break;
-
             case vpiVectorVal:
             {
                 vvp_vector4_t v;
                 vals->get_word(index, v);
-                vpip_vec2_get_value(v, vals_width, signed_flag, vp);
+                vpip_vec4_get_value(v, vals_width, signed_flag, vp);
             }
             break;
 
@@ -1460,7 +1453,7 @@ value_callback*vpip_array_word_change(p_cb_data data)
       struct __vpiArray*parent = 0;
       array_word_value_callback*cbh = 0;
       if (struct __vpiArrayWord*word = array_var_word_from_handle(data->obj)) {
-	    parent = (__vpiArray*) word->get_parent();
+	    parent = static_cast<__vpiArray*>(word->get_parent());
 	    unsigned addr = word->get_index();
 	    cbh = new array_word_value_callback(data);
 	    cbh->word_addr = addr;

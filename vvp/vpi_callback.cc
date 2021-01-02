@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -691,7 +691,8 @@ void callback_execute(struct __vpiCallback*cur)
 	  case vpiScaledRealTime: {
 	    cur->cb_data.time->real =
 	         vpip_time_to_scaled_real(schedule_simtime(),
-	             (__vpiScope *) vpi_handle(vpiScope, cur->cb_data.obj));
+	             static_cast<__vpiScope *>(vpi_handle(vpiScope,
+	                                                  cur->cb_data.obj)));
 	    break;
 	  }
 	  case vpiSuppressTime:

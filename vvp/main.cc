@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,6 +31,7 @@
 # include  <cstdlib>
 # include  <cstring>
 # include  <unistd.h>
+# include  <cassert>
 #ifdef CHECK_WITH_VALGRIND
 # include  <pthread.h>
 #endif
@@ -155,6 +156,7 @@ void verify_version(char*ivl_ver, char*commit)
       if (rc == 2) {
 	    file_extra[0] = 0;
 	    rc = sscanf(ivl_ver, "%d.%d %127s", &file_major, &file_minor, file_extra);
+	    assert((rc == 2) || (rc == 3));
 	    file_minor2 = 0;
       }
       delete[] ivl_ver;

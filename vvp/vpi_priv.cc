@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -111,7 +111,8 @@ unsigned vpip_size(__vpiSignal *sig)
 __vpiScope* vpip_scope(__vpiSignal*sig)
 {
       if (sig->is_netarray)
-	    return  (__vpiScope*) vpi_handle(vpiScope, sig->within.parent);
+	    return static_cast<__vpiScope*>(vpi_handle(vpiScope,
+	                                               sig->within.parent));
       else
 	    return sig->within.scope;
 }
@@ -119,7 +120,8 @@ __vpiScope* vpip_scope(__vpiSignal*sig)
 __vpiScope* vpip_scope(__vpiRealVar*sig)
 {
       if (sig->is_netarray)
-	    return  (__vpiScope*) vpi_handle(vpiScope, sig->within.parent);
+	    return static_cast<__vpiScope*>(vpi_handle(vpiScope,
+	                                               sig->within.parent));
       else
 	    return sig->within.scope;
 }

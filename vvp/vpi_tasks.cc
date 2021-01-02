@@ -601,8 +601,9 @@ void def_table_delete(void)
 }
 #endif
 
-struct __vpiSystfIterator : public __vpiHandle {
-      __vpiSystfIterator();
+class __vpiSystfIterator : public __vpiHandle {
+    public:
+      explicit __vpiSystfIterator(unsigned idx);
       int get_type_code(void) const;
       vpiHandle vpi_index(int idx);
       free_object_fun_t free_object_fun(void);
@@ -612,7 +613,7 @@ struct __vpiSystfIterator : public __vpiHandle {
 
 static vpiHandle systf_iterator_scan(vpiHandle ref, int)
 {
-      struct __vpiSystfIterator*obj = dynamic_cast<__vpiSystfIterator*>(ref);
+      __vpiSystfIterator*obj = dynamic_cast<__vpiSystfIterator*>(ref);
 
       if (obj->next >= def_count) {
 	    vpi_free_object(ref);
@@ -634,13 +635,13 @@ static vpiHandle systf_iterator_scan(vpiHandle ref, int)
 
 static int systf_iterator_free_object(vpiHandle ref)
 {
-      struct __vpiSystfIterator*obj = dynamic_cast<__vpiSystfIterator*>(ref);
+      __vpiSystfIterator*obj = dynamic_cast<__vpiSystfIterator*>(ref);
       delete obj;
       return 1;
 }
 
-inline __vpiSystfIterator::__vpiSystfIterator()
-{ }
+inline __vpiSystfIterator::__vpiSystfIterator(unsigned idx)
+{ next = idx; }
 
 int __vpiSystfIterator::get_type_code(void) const
 { return vpiIterator; }
@@ -664,7 +665,7 @@ vpiHandle vpip_make_systf_iterator(void)
       }
       if (!have_user_defn) return 0;
 
-      struct __vpiSystfIterator*res = new __vpiSystfIterator;
+      __vpiSystfIterator*res = new __vpiSystfIterator(idx);
       res->next = idx;
       return res;
 }

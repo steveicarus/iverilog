@@ -1,7 +1,7 @@
 #ifndef IVL_arith_H
 #define IVL_arith_H
 /*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -42,7 +42,7 @@ class vvp_arith_  : public vvp_net_fun_t {
                         vvp_context_t ctx);
 
     protected:
-      void dispatch_operand_(vvp_net_ptr_t ptr, vvp_vector4_t bit);
+      void dispatch_operand_(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
 
     protected:
       unsigned wid_;

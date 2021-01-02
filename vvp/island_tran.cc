@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,7 +46,7 @@ struct vvp_island_branch_tran : public vvp_island_branch {
       vvp_island_branch_tran(vvp_net_t*en__, bool active_high__,
                              unsigned width__, unsigned part__,
                              unsigned offset__, bool resistive__);
-      bool run_test_enabled();
+      void run_test_enabled();
       void run_resolution();
       void run_output();
 
@@ -85,11 +85,10 @@ void vvp_island_tran::run_island()
 	// Test to see if any of the branches are enabled. This loop
 	// tests the enabled inputs for all the branches and caches
 	// the results in the state for each branch.
-      bool runnable = false;
       for (vvp_island_branch*cur = branches_ ; cur ; cur = cur->next_branch) {
 	    vvp_island_branch_tran*tmp = dynamic_cast<vvp_island_branch_tran*>(cur);
 	    assert(tmp);
-	    runnable |= tmp->run_test_enabled();
+	    tmp->run_test_enabled();
       }
 
 	// Now resolve all the branches in the island.
@@ -184,7 +183,7 @@ void vvp_island_tran::count_drivers(vvp_island_port*port, unsigned bit_idx,
       count_drivers_(endpoint, false, bit_idx, counts);
 }
 
-bool vvp_island_branch_tran::run_test_enabled()
+void vvp_island_branch_tran::run_test_enabled()
 {
       vvp_island_port*ep = en? dynamic_cast<vvp_island_port*> (en->fun) : 0;
 
@@ -192,7 +191,7 @@ bool vvp_island_branch_tran::run_test_enabled()
 	// tran branch. Assume it is always enabled.
       if (ep == 0) {
 	    state = tran_enabled;
-	    return true;
+	    return;
       }
 
 	// Get the input that is driving this enable.
@@ -229,7 +228,6 @@ bool vvp_island_branch_tran::run_test_enabled()
 	    state = tran_unknown;
 	    break;
       }
-      return (state != tran_disabled);
 }
 
 // The IEEE standard does not specify the behaviour when a tranif control

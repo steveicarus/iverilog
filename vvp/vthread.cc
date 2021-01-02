@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2654,7 +2654,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
  */
 bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 {
-      __vpiScope*scope = (__vpiScope*)cp->handle;
+      __vpiScope*scope = static_cast<__vpiScope*>(cp->handle);
 
       bool disabled_myself_flag = false;
 
@@ -3954,8 +3954,11 @@ bool of_LOAD_VEC4(vthread_t thr, vvp_code_t cp)
       if (sig == 0) {
 	    cerr << thr->get_fileline()
 	         << "%load/v error: Net arg not a signal? "
-		 << (net->fil ? typeid(*net->fil).name() : typeid(*net->fun).name()) << endl;
+		 << (net->fil ? typeid(*net->fil).name() :
+	                        typeid(*net->fun).name())
+	         << endl;
 	    assert(sig);
+	    return true;
       }
 
 	// Extract the value from the signal and directly into the

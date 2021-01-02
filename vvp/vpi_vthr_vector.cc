@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -50,12 +50,17 @@ extern const char hex_digits[256];
 extern const char oct_digits[64];
 
 
-struct __vpiVThrWord : public __vpiHandle {
-      __vpiVThrWord();
+class __vpiVThrWord : public __vpiHandle {
+    public:
+      explicit __vpiVThrWord(unsigned base);
       int get_type_code(void) const;
       int vpi_get(int code);
       void vpi_get_value(p_vpi_value val);
 
+      int get_subtype() const { return subtype; };
+      unsigned get_index() const { return index; };
+
+    private:
       const char* name;
       int subtype;
       unsigned index;
@@ -63,12 +68,12 @@ struct __vpiVThrWord : public __vpiHandle {
 
 static int vthr_word_get(int code, vpiHandle ref)
 {
-      struct __vpiVThrWord*rfp = dynamic_cast<__vpiVThrWord*>(ref);
+      __vpiVThrWord*rfp = dynamic_cast<__vpiVThrWord*>(ref);
 
       switch (code) {
 
 	  case vpiConstType:
-	    return rfp->subtype;
+	    return rfp->get_subtype();
 
 #if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
 	  case _vpiFromThr:
@@ -91,7 +96,7 @@ static double vlg_round(double rval)
 
 static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 {
-      struct __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(ref);
+      __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(ref);
       char *rbuf = (char *) need_result_buf(66, RBUF_VAL);
 
       double val = 0.0;
@@ -102,7 +107,8 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	   will not have access to the proper value. Punt and return a
 	   0.0 value instead. */
       if (vpip_current_vthread)
-	    val = vthread_get_real_stack(vpip_current_vthread, obj->index);
+	    val = vthread_get_real_stack(vpip_current_vthread,
+	                                 obj->get_index());
 
       switch (vp->format) {
 
@@ -174,8 +180,12 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
       }
 }
 
-inline __vpiVThrWord::__vpiVThrWord()
-{ }
+inline __vpiVThrWord::__vpiVThrWord(unsigned base)
+{
+      name = vpip_name_string("W<>");
+      subtype = vpiRealConst;
+      index = base;
+}
 
 int __vpiVThrWord::get_type_code(void) const
 { return vpiConstant; }
@@ -188,14 +198,9 @@ void __vpiVThrWord::vpi_get_value(p_vpi_value val)
 
 vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 {
-      struct __vpiVThrWord*obj = new __vpiVThrWord;
-
       assert(type[0] == 'r');
-
-      obj->name = vpip_name_string("W<>");
-      obj->subtype = vpiRealConst;
       assert(base < 65536);
-      obj->index = base;
+      __vpiVThrWord*obj = new __vpiVThrWord(base);
 
       return obj;
 }
@@ -449,7 +454,6 @@ void __vpiVThrVec4Stack::vpi_get_value_octstr_(p_vpi_value vp, const vvp_vector4
       if (owid > 0) {
 	    owid -= 1;
 	    rbuf[owid] = oct_digits[oval];
-	    oval = 0;
       }
       vp->value.str = rbuf;
 }
@@ -490,7 +494,6 @@ void __vpiVThrVec4Stack::vpi_get_value_hexstr_(p_vpi_value vp, const vvp_vector4
       if (hwid > 0) {
 	    hwid -= 1;
 	    rbuf[hwid] = hex_digits[hval];
-	    hval = 0;
       }
       vp->value.str = rbuf;
 }

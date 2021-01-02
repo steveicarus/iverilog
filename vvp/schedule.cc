@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -74,6 +74,7 @@ void event_s::single_step_display(void)
 struct event_time_s {
       event_time_s() {
 	    count_time_events += 1;
+	    delay = 0;
 	    start = 0;
 	    active = 0;
 	    inactive = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -109,18 +109,11 @@ void __vpiDarrayVar::get_word_value(struct __vpiArrayWord*word, p_vpi_value vp)
       case vpiHexStrVal:
       case vpiScalarVal:
       case vpiIntVal:
-      {
-          vvp_vector4_t v;
-          aobj->get_word(index, v);             // width == 1?
-          vpip_vec4_get_value(v, 1, false, vp);                 // TODO sign?
-      }
-      break;
-
-      case vpiVectorVal:        // TODO vpip_vec2_ or vpip_vec4_?
+      case vpiVectorVal:
       {
           vvp_vector4_t v;
           aobj->get_word(index, v);
-          vpip_vec2_get_value(v, v.size(), false, vp);   // TODO sign?
+          vpip_vec4_get_value(v, v.size(), false, vp);  // TODO sign?
       }
       break;
 
