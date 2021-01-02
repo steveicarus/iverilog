@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2021 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ static int32_t get_int32_from_bits(const char *bits, unsigned nbits,
 // HERE: Need to emit 1 instead of -1 for some of the constants.
 //      if (is_signed && (nbits > 1) && (msb == '1') && (trim_wid < 32U)) {
       if (is_signed && (msb == '1') && (trim_wid < 32U)) {
-	    value |= ~(((int32_t)1 << trim_wid) - (int32_t)1);
+	    value |= ~(((uint32_t)1 << trim_wid) - (uint32_t)1);
       }
       *result_type = 0;
       return value;
@@ -309,7 +309,7 @@ int64_t get_int64_from_number(ivl_expr_t expr, int *result_type)
       }
 	/* Sign extend as needed. */
       if (is_signed && (msb == '1') && (trim_wid < 64U)) {
-	    value |= ~(((int64_t)1 << trim_wid) - (int64_t)1);
+	    value |= ~(((uint64_t)1 << trim_wid) - (uint64_t)1);
       }
       *result_type = 0;
       return value;

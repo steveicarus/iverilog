@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -553,7 +553,7 @@ static void lpm_show_mux(ivl_lpm_t net)
       edif_cellref_t ref;
       edif_joint_t jnt;
 
-      unsigned idx, rdx;
+      unsigned idx;
 
       char cellname[32];
 
@@ -626,6 +626,7 @@ static void lpm_show_mux(ivl_lpm_t net)
       }
 
       for (idx = 0 ;  idx < wid_z ;  idx += 1) {
+	    unsigned rdx;
 	    for (rdx = 0 ;  rdx < wid_r ;  rdx += 1) {
 		  unsigned pin;
 

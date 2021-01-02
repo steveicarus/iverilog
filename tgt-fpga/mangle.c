@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,9 +30,7 @@ static size_t xnf_mangle_scope_name(ivl_scope_t net, char*buf, size_t nbuf)
       if (parent) {
 	    cnt = xnf_mangle_scope_name(parent, buf, nbuf);
 	    buf += cnt;
-	    nbuf -= cnt;
 	    *buf++ = '/';
-	    nbuf -= 1;
 	    cnt += 1;
       }
 

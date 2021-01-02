@@ -1,7 +1,7 @@
 /*
  *  VHDL variable and signal types.
  *
- *  Copyright (C) 2008-2013  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2021  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -188,7 +188,7 @@ vhdl_type *vhdl_type::type_for(int width, bool issigned,
       return vhdl_type::nunsigned(width, lsb);
 }
 
-vhdl_type *vhdl_type::array_of(vhdl_type *b, std::string &n, int m, int l)
+vhdl_type *vhdl_type::array_of(vhdl_type *b, const std::string &n, int m, int l)
 {
    return new vhdl_type(b, n, m, l);
 }

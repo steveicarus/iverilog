@@ -1,7 +1,7 @@
 /*
  *  VHDL variable and signal types.
  *
- *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2021  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ enum vhdl_type_name_t {
 class vhdl_type : public vhdl_element {
 public:
    // Scalar constructor
-   vhdl_type(vhdl_type_name_t name, int msb = 0, int lsb = 0)
+   explicit vhdl_type(vhdl_type_name_t name, int msb = 0, int lsb = 0)
       : name_(name), msb_(msb), lsb_(lsb), base_(NULL) {}
 
    // Array constructor
@@ -84,7 +84,7 @@ public:
 
    static vhdl_type *type_for(int width, bool issigned,
                               int lsb=0, bool unresolved=false);
-   static vhdl_type *array_of(vhdl_type *b, std::string &n, int m, int l);
+   static vhdl_type *array_of(vhdl_type *b, const std::string &n, int m, int l);
 protected:
    vhdl_type_name_t name_;
    int msb_, lsb_;

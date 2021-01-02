@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008-2013  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2021  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ typedef set<vhdl_var_ref*> vhdl_var_set_t;
 
 class vhdl_expr : public vhdl_element {
 public:
-   vhdl_expr(const vhdl_type* type, bool isconst=false)
+   explicit vhdl_expr(const vhdl_type* type, bool isconst=false)
       : type_(type), isconst_(isconst) {}
    virtual ~vhdl_expr();
 
@@ -227,7 +227,7 @@ enum time_unit_t {
 
 class vhdl_const_time : public vhdl_expr {
 public:
-   vhdl_const_time(uint64_t value, time_unit_t units = TIME_UNIT_NS)
+   explicit vhdl_const_time(uint64_t value, time_unit_t units = TIME_UNIT_NS)
       : vhdl_expr(vhdl_type::time(), true), value_(value), units_(units) {}
    void emit(std::ostream &of, int level) const;
 private:
@@ -464,8 +464,8 @@ enum vhdl_severity_t {
 
 class vhdl_report_stmt : public vhdl_seq_stmt {
 public:
-   vhdl_report_stmt(vhdl_expr *text,
-                    vhdl_severity_t severity = SEVERITY_NOTE);
+   explicit vhdl_report_stmt(vhdl_expr *text,
+                             vhdl_severity_t severity = SEVERITY_NOTE);
    virtual ~vhdl_report_stmt() {}
 
    virtual void emit(ostream& of, int level) const;
@@ -602,8 +602,8 @@ private:
  */
 class vhdl_decl : public vhdl_element {
 public:
-   vhdl_decl(const string& name, const vhdl_type *type = NULL,
-             vhdl_expr *initial = NULL)
+   explicit vhdl_decl(const string& name, const vhdl_type *type = NULL,
+                      vhdl_expr *initial = NULL)
       : name_(name), type_(type), initial_(initial),
         has_initial_(initial != NULL) {}
    virtual ~vhdl_decl();

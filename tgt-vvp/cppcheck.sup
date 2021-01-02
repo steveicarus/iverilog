@@ -2,7 +2,7 @@
 // are not used here.
 
 // target_design()
-unusedFunction:vvp.c:148
+unusedFunction:vvp.c:152
 
 // target_query()
-unusedFunction:vvp.c:246
+unusedFunction:vvp.c:250

@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2021  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ public:
    virtual void emit(std::ostream &of, int level=0) const = 0;
    void print() const;
 
-   void set_comment(std::string comment);
+   void set_comment(const std::string&comment);
 
    static int free_all_objects();
    static size_t total_allocated();

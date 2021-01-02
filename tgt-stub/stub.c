@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1427,7 +1427,7 @@ static void show_signal(ivl_signal_t net)
 
 	    fprintf(out, "  %s %s %s", type, sign, port);
 	    show_type_of_signal(net);
-	    fprintf(out, " %s[word=%u, adr=%d]  <width=%u%s> <discipline=%s> ",
+	    fprintf(out, " %s[word=%u, adr=%u]  <width=%u%s> <discipline=%s> ",
 		    ivl_signal_basename(net),
 		    idx, ivl_signal_array_base(net)+idx,
 		    ivl_signal_width(net),

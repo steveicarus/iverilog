@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -75,7 +75,7 @@ static void show_branch_access_expression(ivl_expr_t net, unsigned ind)
       }
 
       ivl_discipline_t tb_disc = discipline_of_nexus(tb);
-      if (ta_disc == 0) {
+      if (tb_disc == 0) {
 	    fprintf(out, "%*sERROR: Reference terminal of branch has no discipline\n",
 		    ind, "");
 	    stub_errors += 1;

@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008-2011  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2021  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ vector<vhdl_element*> vhdl_element::allocated_;
 // Just a counter of total bytes allocated for statistics
 size_t vhdl_element::total_alloc_(0);
 
-void vhdl_element::set_comment(std::string comment)
+void vhdl_element::set_comment(const std::string&comment)
 {
    comment_ = comment;
 }

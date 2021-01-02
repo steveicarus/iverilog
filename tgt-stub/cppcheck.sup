@@ -2,7 +2,7 @@
 // are not used here.
 
 // target_design()
-unusedFunction:stub.c:1774
+unusedFunction:stub.c:1837
 
 // target_query()
-unusedFunction:stub.c:1844
+unusedFunction:stub.c:1907
