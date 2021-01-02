@@ -50,17 +50,17 @@ IfSequential::IfSequential(Expression*cond, std::list<SequentialStmt*>*tr,
 IfSequential::~IfSequential()
 {
       delete cond_;
-      while (if_.size() > 0) {
+      while (!if_.empty()) {
 	    SequentialStmt*cur = if_.front();
 	    if_.pop_front();
 	    delete cur;
       }
-      while (elsif_.size() > 0) {
+      while (!elsif_.empty()) {
 	    IfSequential::Elsif*cur = elsif_.front();
 	    elsif_.pop_front();
 	    delete cur;
       }
-      while (else_.size() > 0) {
+      while (!else_.empty()) {
 	    SequentialStmt*cur = else_.front();
 	    else_.pop_front();
 	    delete cur;
@@ -101,7 +101,7 @@ IfSequential::Elsif::Elsif(Expression*cond, std::list<SequentialStmt*>*tr)
 IfSequential::Elsif::~Elsif()
 {
       delete cond_;
-      while (if_.size() > 0) {
+      while (!if_.empty()) {
 	    SequentialStmt*cur = if_.front();
 	    if_.pop_front();
 	    delete cur;
@@ -133,7 +133,7 @@ CaseSeqStmt::CaseSeqStmt(Expression*cond, list<CaseSeqStmt::CaseStmtAlternative*
 CaseSeqStmt::~CaseSeqStmt()
 {
       delete cond_;
-      while(alt_.size() > 0) {
+      while(!alt_.empty()) {
 	    CaseSeqStmt::CaseStmtAlternative* cur = alt_.front();
 	    alt_.pop_front();
 	    delete cur;
@@ -156,7 +156,7 @@ CaseSeqStmt::CaseStmtAlternative::CaseStmtAlternative(std::list<Expression*>*exp
 CaseSeqStmt::CaseStmtAlternative::~CaseStmtAlternative()
 {
       delete exp_;
-      while(stmts_.size() > 0) {
+      while(!stmts_.empty()) {
 	    SequentialStmt* cur = stmts_.front();
 	    stmts_.pop_front();
 	    delete cur;
@@ -194,7 +194,7 @@ ProcedureCall::~ProcedureCall()
     if(!param_list_)
         return;
 
-    while(param_list_->size() > 0) {
+    while(!param_list_->empty()) {
         named_expr_t* cur = param_list_->front();
         param_list_->pop_front();
         delete cur;
@@ -227,7 +227,7 @@ LoopStatement::LoopStatement(perm_string name, list<SequentialStmt*>* stmts)
 
 LoopStatement::~LoopStatement()
 {
-    while(stmts_.size() > 0) {
+    while(!stmts_.empty()) {
         SequentialStmt* cur = stmts_.front();
         stmts_.pop_front();
         delete cur;

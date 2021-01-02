@@ -1,7 +1,7 @@
 #ifndef IVL_vtype_H
 #define IVL_vtype_H
 /*
- * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2014 / Stephen Williams (steve@icarus.com),
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
@@ -161,7 +161,7 @@ class VTypePrimitive : public VType {
       enum type_t { BIT, INTEGER, NATURAL, REAL, STDLOGIC, TIME };
 
     public:
-      VTypePrimitive(type_t tt, bool packed = false);
+      explicit VTypePrimitive(type_t tt, bool packed = false);
       ~VTypePrimitive();
 
       VType*clone() const { return new VTypePrimitive(*this); }

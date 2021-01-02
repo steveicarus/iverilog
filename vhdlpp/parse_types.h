@@ -1,7 +1,7 @@
 #ifndef IVL_parse_types_H
 #define IVL_parse_types_H
 /*
- * Copyright (c) 2011-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -78,7 +78,7 @@ struct adding_term {
 // (VHDL-2008 6.4.2.5)
 class file_open_info_t {
     public:
-      file_open_info_t(ExpString*filename__, ExpName*kind__ = NULL)
+      explicit file_open_info_t(ExpString*filename__, ExpName*kind__ = NULL)
         : kind_(kind__), filename_(filename__) {
           // By default files are opened in read-only mode
           if(!kind_) kind_ = new ExpName(perm_string::literal("read_mode"));

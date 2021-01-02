@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -250,7 +250,7 @@ int CondSignalAssignment::elaborate(Entity*ent, Architecture*arc)
         // Visitor to extract signal names occurring in the conditional
         // statements to create the sensitivity list
       struct name_extractor_t : public ExprVisitor {
-          name_extractor_t(list<const ExpName*>& name_list)
+          explicit name_extractor_t(list<const ExpName*>& name_list)
               : name_list_(name_list) {}
           void operator() (Expression*s) {
               if(const ExpName*name = dynamic_cast<const ExpName*>(s))

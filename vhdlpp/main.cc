@@ -168,7 +168,7 @@ int main(int argc, char*argv[])
 	    debug_log_file.open(debug_log_path);
       }
 
-      if ( (rc = mkdir(work_path, 0777)) < 0 ) {
+      if ( (mkdir(work_path, 0777)) < 0 ) {
 	    if (errno != EEXIST) {
 		  fprintf(stderr, "Icarus Verilog VHDL unable to create work directory %s, errno=%d\n", work_path, errno);
 		  return -1;
@@ -176,7 +176,7 @@ int main(int argc, char*argv[])
 	    struct stat stat_buf;
 	    rc = stat(work_path, &stat_buf);
 
-	    if (!S_ISDIR(stat_buf.st_mode)) {
+	    if (rc || !S_ISDIR(stat_buf.st_mode)) {
 		  fprintf(stderr, "Icarus Verilog VHDL work path `%s' is not a directory.\n", work_path);
 		  return -1;
 	    }

@@ -1,5 +1,5 @@
 /*
- * Copyright CERN 2015
+ * Copyright CERN 2015-2021
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -90,7 +90,6 @@ void generate_global_types(ActiveScope*res)
 
 void delete_global_types()
 {
-    typedef_context_t typedef_ctx;
     for(map<perm_string, VTypeDef*>::iterator cur = std_types.begin();
             cur != std_types.end(); ++cur) {
         delete cur->second->peek_definition();

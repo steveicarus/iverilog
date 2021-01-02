@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright CERN 2016
  * @author Maciej Suminski <maciej.suminski@cern.ch>
@@ -455,7 +455,7 @@ int emit_packages(void)
 	    errors += emit_packages(cur->first, cur->second.packages);
       }
 
-      return 0;
+      return errors;
 }
 
 static int elaborate_library_packages(map<perm_string,Package*>packages)

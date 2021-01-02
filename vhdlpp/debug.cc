@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2014 CERN
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
@@ -151,7 +151,7 @@ void ScopeBase::dump_scope(ostream&out) const
 	// Dump subprograms
       out << "   -- Imported Subprograms" << endl;
       for (map<perm_string,SubHeaderList>::const_iterator cur = use_subprograms_.begin()
-		 ; cur != cur_subprograms_.end() ; ++ cur) {
+		 ; cur != use_subprograms_.end() ; ++cur) {
 	    const SubHeaderList& subp_list = cur->second;
 
 	    for(SubHeaderList::const_iterator it = subp_list.begin();

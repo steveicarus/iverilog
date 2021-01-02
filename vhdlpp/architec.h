@@ -1,7 +1,7 @@
 #ifndef IVL_architec_H
 #define IVL_architec_H
 /*
- * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -249,7 +249,7 @@ class ComponentInstantiation  : public Architecture::Statement {
 
 class StatementList : public Architecture::Statement {
     public:
-      StatementList(std::list<SequentialStmt*>*statement_list);
+      explicit StatementList(std::list<SequentialStmt*>*statement_list);
       virtual ~StatementList();
 
       int elaborate(Entity*ent, Architecture*arc) {
@@ -274,7 +274,7 @@ class StatementList : public Architecture::Statement {
 // but we can still use it during the translation process.
 class InitialStatement : public StatementList {
     public:
-      InitialStatement(std::list<SequentialStmt*>*statement_list)
+      explicit InitialStatement(std::list<SequentialStmt*>*statement_list)
           : StatementList(statement_list) {}
 
       int emit(ostream&out, Entity*entity, ScopeBase*scope);
@@ -285,7 +285,7 @@ class InitialStatement : public StatementList {
 // but we can still use it during the translation process.
 class FinalStatement : public StatementList {
     public:
-      FinalStatement(std::list<SequentialStmt*>*statement_list)
+      explicit FinalStatement(std::list<SequentialStmt*>*statement_list)
           : StatementList(statement_list) {}
 
       int emit(ostream&out, Entity*entity, ScopeBase*scope);

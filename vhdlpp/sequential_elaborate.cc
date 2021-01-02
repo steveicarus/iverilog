@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -203,8 +203,8 @@ int ProcedureCall::elaborate(Entity*ent, ScopeBase*scope)
       }
 
 	// Elaborate arguments
-      size_t idx = 0;
       if(param_list_) {
+	    size_t idx = 0;
 	    for(list<named_expr_t*>::iterator cur = param_list_->begin()
 		 ; cur != param_list_->end() ; ++cur) {
 		errors += def_->elaborate_argument((*cur)->expr(), idx, ent, scope);
