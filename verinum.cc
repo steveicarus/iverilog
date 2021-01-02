@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -593,8 +593,8 @@ unsigned verinum::significant_bits() const
       unsigned sbits = nbits_;
 
       if (has_sign_) {
-	    V sign_bit = bits_[sbits-1];
-	    while ((sbits > 1) && (bits_[sbits-2] == sign_bit))
+	    V sgn_bit = bits_[sbits-1];
+	    while ((sbits > 1) && (bits_[sbits-2] == sgn_bit))
 		  sbits -= 1;
       } else {
 	    while ((sbits > 1) && (bits_[sbits-1] == verinum::V0))
@@ -1326,17 +1326,17 @@ verinum operator >> (const verinum&that, unsigned shift)
 
       unsigned len = that.len();
 
-      verinum::V sign_bit = that.has_sign() ? that.get(len-1) : verinum::V0;
+      verinum::V sgn_bit = that.has_sign() ? that.get(len-1) : verinum::V0;
 
       if (shift >= len) {
 	    if (!has_len_flag) len = 1;
-	    verinum result(sign_bit, len, has_len_flag);
+	    verinum result(sgn_bit, len, has_len_flag);
 	    result.has_sign(that.has_sign());
 	    return result;
       }
 
       if (!has_len_flag) len -= shift;
-      verinum result(sign_bit, len, has_len_flag);
+      verinum result(sgn_bit, len, has_len_flag);
       result.has_sign(that.has_sign());
 
       for (unsigned idx = shift ;  idx < that.len() ;  idx += 1)

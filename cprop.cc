@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -42,14 +42,14 @@ struct cprop_functor  : public functor_t {
 
       virtual void signal(Design*des, NetNet*obj);
       virtual void lpm_add_sub(Design*des, NetAddSub*obj);
-      virtual void lpm_compare(Design*des, NetCompare*obj);
+      virtual void lpm_compare(Design*des, const NetCompare*obj);
       virtual void lpm_concat(Design*des, NetConcat*obj);
       virtual void lpm_ff(Design*des, NetFF*obj);
       virtual void lpm_logic(Design*des, NetLogic*obj);
       virtual void lpm_mux(Design*des, NetMux*obj);
       virtual void lpm_part_select(Design*des, NetPartSelect*obj);
 
-      void lpm_compare_eq_(Design*des, NetCompare*obj);
+      void lpm_compare_eq_(Design*des, const NetCompare*obj);
  };
 
 void cprop_functor::signal(Design*, NetNet*)
@@ -60,7 +60,7 @@ void cprop_functor::lpm_add_sub(Design*, NetAddSub*)
 {
 }
 
-void cprop_functor::lpm_compare(Design*des, NetCompare*obj)
+void cprop_functor::lpm_compare(Design*des, const NetCompare*obj)
 {
       if (obj->pin_AEB().is_linked()) {
 	    assert( ! obj->pin_AGB().is_linked() );
@@ -74,7 +74,7 @@ void cprop_functor::lpm_compare(Design*des, NetCompare*obj)
       }
 }
 
-void cprop_functor::lpm_compare_eq_(Design*, NetCompare*)
+void cprop_functor::lpm_compare_eq_(Design*, const NetCompare*)
 {
 }
 
@@ -295,11 +295,11 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
       if (off < sig_width)
 	    part_count += 1;
 
-      NetConcat*concat = new NetConcat(scope, scope->local_symbol(),
+      NetConcat*cncat = new NetConcat(scope, scope->local_symbol(),
 				       sig_width, part_count);
-      concat->set_line(*obj);
-      des->add_node(concat);
-      connect(concat->pin(0), obj->pin(1));
+      cncat->set_line(*obj);
+      des->add_node(cncat);
+      connect(cncat->pin(0), obj->pin(1));
 
       off = 0;
       size_t concat_pin = 1;
@@ -307,20 +307,20 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
 	    NetPartSelect*cobj = obj_set[idx];
 	    if (cobj->base() > off) {
 		  NetNet*zzz = make_const_z(des, scope, cobj->base()-off);
-		  connect(concat->pin(concat_pin), zzz->pin(0));
+		  connect(cncat->pin(concat_pin), zzz->pin(0));
 		  concat_pin += 1;
 		  off = cobj->base();
 	    }
-	    connect(concat->pin(concat_pin), cobj->pin(0));
+	    connect(cncat->pin(concat_pin), cobj->pin(0));
 	    concat_pin += 1;
 	    off += cobj->width();
       }
       if (off < sig_width) {
 	    NetNet*zzz = make_const_z(des, scope, sig_width-off);
-	    connect(concat->pin(concat_pin), zzz->pin(0));
+	    connect(cncat->pin(concat_pin), zzz->pin(0));
 	    concat_pin += 1;
       }
-      ivl_assert(*obj, concat_pin == concat->pin_count());
+      ivl_assert(*obj, concat_pin == cncat->pin_count());
 
       for (size_t idx = 0 ; idx < obj_set.size() ; idx += 1) {
 	    delete obj_set[idx];
@@ -392,7 +392,7 @@ void cprop_dc_functor::lpm_const(Design*, NetConst*obj)
 		  unsigned pin;
 		  clnk->cur_link(cur, pin);
 
-		  NetNet*tmp = dynamic_cast<NetNet*>(cur);
+		  const NetNet*tmp = dynamic_cast<NetNet*>(cur);
 		  if (tmp == 0)
 			continue;
 

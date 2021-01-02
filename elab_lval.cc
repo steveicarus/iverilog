@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -189,7 +189,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	   and reg will remain nil. */
       pform_name_t base_path = path_;
       pform_name_t member_path;
-      while (reg == 0 && base_path.size() > 0) {
+      while (reg == 0 && !base_path.empty()) {
 	    symbol_search(this, des, use_scope, base_path, reg, par, eve);
 	      // Found it!
 	    if (reg != 0) break;
@@ -285,7 +285,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
 	// If we find that the matched variable is a packed struct,
 	// then we can handled it with the net_packed_member_ method.
-      if (reg->struct_type() && member_path.size() > 0) {
+      if (reg->struct_type() && !member_path.empty()) {
 	    NetAssign_*lv = new NetAssign_(reg);
 	    elaborate_lval_net_packed_member_(des, use_scope, lv, member_path);
 	    return lv;
@@ -293,7 +293,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
 	// If the variable is a class object, then handle it with the
 	// net_class_member_ method.
-      if (reg->class_type() && member_path.size() > 0 && gn_system_verilog()) {
+      if (reg->class_type() && !member_path.empty() && gn_system_verilog()) {
 	    NetAssign_*lv = elaborate_lval_net_class_member_(des, use_scope, reg, member_path);
 	    return lv;
       }
@@ -302,7 +302,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	// Past this point, we should have taken care of the cases
 	// where the name is a member/method of a struct/class.
 	// XXXX ivl_assert(*this, method_name.nil());
-      ivl_assert(*this, member_path.size() == 0);
+      ivl_assert(*this, member_path.empty());
 
       bool need_const_idx = is_cassign || is_force || (reg->type()==NetNet::UNRESOLVED_WIRE);
 
@@ -1125,7 +1125,7 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 	      // class type.
 	    class_type = dynamic_cast<const netclass_t*>(ptype);
 
-      } while (member_path.size() > 0);
+      } while (!member_path.empty());
 
 
       return lv;
@@ -1289,7 +1289,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 		    // In any case, this should be the tail of the
 		    // member_path, because the array element of this
 		    // kind of array cannot be a struct.
-		  if (member_comp.index.size() > 0) {
+		  if (!member_comp.index.empty()) {
 			  // These are the dimensions defined by the type
 			const vector<netrange_t>&mem_packed_dims = mem_vec->packed_dims();
 
@@ -1356,7 +1356,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 		    // possibly iterate through more of the member_path.
 
 		  ivl_assert(*this, array->packed());
-		  ivl_assert(*this, member_comp.index.size() > 0);
+		  ivl_assert(*this, !member_comp.index.empty());
 
 		    // These are the dimensions defined by the type
 		  const vector<netrange_t>&mem_packed_dims = array->static_dimensions();
@@ -1448,7 +1448,6 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 		       << endl;
 		  des->errors += 1;
 		  return false;
-		  struct_type = 0;
 	    }
 
 	      // Complete this component of the path, mark it
@@ -1456,7 +1455,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 	    completed_path .push_back(member_comp);
 	    member_path.pop_front();
 
-      } while (member_path.size() > 0 && struct_type != 0);
+      } while (!member_path.empty() && struct_type != 0);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PEIdent::elaborate_lval_net_packed_member_: "

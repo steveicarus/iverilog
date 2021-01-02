@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1480,7 +1480,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	    hname_t use_name (get_name());
 
 	    if (instance_array) {
-		  int instance_idx = idx;
+		  int instance_idx;
 		  if (instance_low < instance_high)
 			instance_idx = instance_low + idx;
 		  else

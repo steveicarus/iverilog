@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2020 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2021 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -31,8 +31,8 @@
 # include  <typeinfo>
 
 PExpr::PExpr()
+: expr_type_(IVL_VT_NO_TYPE)
 {
-      expr_type_   = IVL_VT_NO_TYPE;
       expr_width_  = 0;
       min_width_   = 0;
       signed_flag_ = false;

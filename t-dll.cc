@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -105,8 +105,8 @@ inline const char*dlerror(void)
 #endif
 
 ivl_scope_s::ivl_scope_s()
+: func_type(IVL_VT_NO_TYPE)
 {
-      func_type = IVL_VT_NO_TYPE;
       func_signed = false;
       func_width = 0;
 }
@@ -2845,14 +2845,14 @@ void dll_target::test_version(const char*target_name)
 	    return;
       }
 
-      target_query_f target_query = (target_query_f)ivl_dlsym(dll_, LU "target_query" TU);
-      if (target_query == 0) {
+      target_query_f targ_query = (target_query_f)ivl_dlsym(dll_, LU "target_query" TU);
+      if (targ_query == 0) {
 	    cerr << "Target " << target_name
 		 << " has no version hooks." << endl;
 	    return;
       }
 
-      const char*version_string = (*target_query) ("version");
+      const char*version_string = (*targ_query) ("version");
       if (version_string == 0) {
 	    cerr << "Target " << target_name
 		 << " has no version string" << endl;

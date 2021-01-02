@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -218,7 +218,7 @@ bool NetProc::evaluate_function(const LineInfo&,
 }
 
 void NetAssign::eval_func_lval_op_real_(const LineInfo&loc,
-					verireal&lv, verireal&rv) const
+					verireal&lv, const verireal&rv) const
 {
       switch (op_) {
 	  case '+':

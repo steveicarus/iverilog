@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -470,7 +470,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 
       pform_name_t base_path = path_;
       pform_name_t member_path;
-      while (sig == 0 && base_path.size() > 0) {
+      while (sig == 0 && !base_path.empty()) {
 	    symbol_search(this, des, scope, base_path, sig, par, eve);
 	    // Found it!
 	    if (sig != 0) break;
@@ -642,14 +642,13 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    // Elaborate an expression from the packed indices and
 	    // the member offset (into the structure) to get a
 	    // canonical expression into the packed signal vector.
-	    NetExpr*packed_base = 0;
 	    if (sig->packed_dimensions() > 1) {
 		  list<index_component_t>tmp_index = base_path.back().index;
 		  index_component_t member_select;
 		  member_select.sel = index_component_t::SEL_BIT;
 		  member_select.msb = new PENumber(new verinum(member_off));
 		  tmp_index.push_back(member_select);
-		  packed_base = collapse_array_indices(des, scope, sig, tmp_index);
+		  NetExpr*packed_base = collapse_array_indices(des, scope, sig, tmp_index);
 
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "

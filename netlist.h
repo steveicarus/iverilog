@@ -1,7 +1,7 @@
 #ifndef IVL_netlist_H
 #define IVL_netlist_H
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2975,7 +2975,7 @@ class NetAssign : public NetAssignBase {
 				     map<perm_string,LocalVar>&ctx) const;
 
     private:
-      void eval_func_lval_op_real_(const LineInfo&loc, verireal&lv, verireal&rv) const;
+      void eval_func_lval_op_real_(const LineInfo&loc, verireal&lv, const verireal&rv) const;
       void eval_func_lval_op_(const LineInfo&loc, verinum&lv, verinum&rv) const;
       bool eval_func_lval_(const LineInfo&loc, map<perm_string,LocalVar>&ctx,
 			   const NetAssign_*lval, NetExpr*rval_result) const;

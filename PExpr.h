@@ -1,7 +1,7 @@
 #ifndef IVL_PExpr_H
 #define IVL_PExpr_H
 /*
- * Copyright (c) 1998-2020 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2021 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -231,7 +231,7 @@ class PEAssignPattern : public PExpr {
 class PEConcat : public PExpr {
 
     public:
-      PEConcat(const list<PExpr*>&p, PExpr*r =0);
+      explicit PEConcat(const list<PExpr*>&p, PExpr*r =0);
       ~PEConcat();
 
       virtual verinum* eval_const(Design*des, NetScope*sc) const;

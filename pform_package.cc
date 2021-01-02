@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -57,8 +57,6 @@ void pform_end_package_declaration(const struct vlltype&loc)
 	    msg << "Package " << use_name << " was already declared here: "
 		<< test->second->get_fileline() << ends;
 	    VLerror(msg.str().c_str());
-      } else {
-	    pform_packages[use_name] = pform_cur_package;
       }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -780,12 +780,12 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
       osig->set_line(*this);
       osig->local_flag(true);
 
-      NetConcat*concat = new NetConcat(scope, scope->local_symbol(),
+      NetConcat*cncat = new NetConcat(scope, scope->local_symbol(),
 				       osig->vector_width(),
 				       num_parms * repeat());
-      concat->set_line(*this);
-      des->add_node(concat);
-      connect(concat->pin(0), osig->pin(0));
+      cncat->set_line(*this);
+      des->add_node(cncat);
+      connect(cncat->pin(0), osig->pin(0));
 
       unsigned count_input_width = 0;
       unsigned cur_pin = 1;
@@ -793,7 +793,7 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
 		  unsigned concat_item = parms_.size()-idx-1;
 		  if (tmp[concat_item] == 0) continue;
-		  connect(concat->pin(cur_pin), tmp[concat_item]->pin(0));
+		  connect(cncat->pin(cur_pin), tmp[concat_item]->pin(0));
 		  cur_pin += 1;
 		  count_input_width += tmp[concat_item]->vector_width();
 	    }

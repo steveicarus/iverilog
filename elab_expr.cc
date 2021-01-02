@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -817,7 +817,7 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
               // type and width of the right operand.
             long r_val = LONG_MAX;
             if (r_width < sizeof(long)*8) {
-                  r_val = (1L << r_width) - 1L;
+                  r_val = (1UL << r_width) - 1UL;
                   if ((op_ == 'p') && right_->has_sign())
                         r_val >>= 1;
             }
@@ -2148,7 +2148,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		    // In any case, this should be the tail of the
 		    // member_path, because the array element of this
 		    // kind of array cannot be a struct.
-		  if (member_comp.index.size() > 0) {
+		  if (!member_comp.index.empty()) {
 			  // These are the dimensions defined by the type
 			const vector<netrange_t>&mem_packed_dims = mem_vec->packed_dims();
 
@@ -2219,7 +2219,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		    // variable, then stepping to the element type to
 		    // possibly iterate through more of the member_path.
 		  ivl_assert(*li, array->packed());
-		  ivl_assert(*li, member_comp.index.size() > 0);
+		  ivl_assert(*li, !member_comp.index.empty());
 
 		    // These are the dimensions defined by the type
 		  const vector<netrange_t>&mem_packed_dims = array->static_dimensions();
@@ -2295,7 +2295,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	    completed_path .push_back(member_comp);
 	    member_path.pop_front();
 
-      } while (member_path.size() > 0 && struct_type != 0);
+      } while (!member_path.empty() && struct_type != 0);
 
 	// The dimensions in the expression must match the packed
 	// dimensions that are declared for the variable. For example,
@@ -3362,14 +3362,14 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
       }
 
 	/* Make the empty concat expression. */
-      NetEConcat*concat = new NetEConcat(parm_cnt, repeat_count_, expr_type_);
-      concat->set_line(*this);
+      NetEConcat*cncat = new NetEConcat(parm_cnt, repeat_count_, expr_type_);
+      cncat->set_line(*this);
 
 	/* Remove any zero width constants. */
       unsigned off = 0;
       for (unsigned idx = 0 ;  idx < parm_cnt ;  idx += 1) {
 	    while (parms[off+idx] == 0) off += 1;
-	    concat->set(idx, parms[off+idx]);
+	    cncat->set(idx, parms[off+idx]);
       }
 
       if (wid_sum == 0 && expr_type_ != IVL_VT_STRING) {
@@ -3377,11 +3377,11 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	         << "may not have zero width in this context." << endl;
 	    des->errors += 1;
 	    concat_depth -= 1;
-	    delete concat;
+	    delete cncat;
 	    return 0;
       }
 
-      NetExpr*tmp = pad_to_width(concat, expr_wid, signed_flag_, *this);
+      NetExpr*tmp = pad_to_width(cncat, expr_wid, signed_flag_, *this);
 
       concat_depth -= 1;
       return tmp;
@@ -4248,7 +4248,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       pform_name_t base_path = path_;
       pform_name_t member_path;
       NetScope*found_in = 0;
-      while (net==0 && par==0 && eve==0 && base_path.size()>0) {
+      while (net==0 && par==0 && eve==0 && !base_path.empty()) {
 	    found_in = symbol_search(this, des, use_scope, base_path,
 				     net, par, eve, par_type);
 	    if (net) break;
@@ -4274,7 +4274,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	// the parameter value.
       if (par != 0) {
 
-	    if (member_path.size() > 0) {
+	    if (!member_path.empty()) {
 		  cerr << get_fileline() << ": error: Paramater name " << base_path
 		       << " can't have member names (member_path=" << member_path << ")."
 		       << endl;
@@ -4313,7 +4313,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	      // If this is a struct, and there are members in the
 	      // member_path, then generate an expression that
 	      // reflects the member selection.
-	    if (net->struct_type() && member_path.size() > 0) {
+	    if (net->struct_type() && !member_path.empty()) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
 			     << "Ident " << base_path
@@ -4330,7 +4330,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	      // If this is an array object, and there are members in
 	      // the member_path, check for array properties.
-	    if (net->darray_type() && member_path.size() > 0) {
+	    if (net->darray_type() && !member_path.empty()) {
                   if (debug_elaborate) {
                         cerr << get_fileline() << ": PEIdent::elaborate_expr: "
                              << "Ident " << base_path
@@ -4354,7 +4354,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	      // If this is a queue object, and there are members in
 	      // the member_path, check for array properties.
-	    if (net->queue_type() && member_path.size() > 0) {
+	    if (net->queue_type() && !member_path.empty()) {
                   if (debug_elaborate) {
                         cerr << get_fileline() << ": PEIdent::elaborate_expr: "
                              << "Ident " << base_path
@@ -4392,7 +4392,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  }
 	    }
 
-	    if (net->class_type() && member_path.size() > 0) {
+	    if (net->class_type() && !member_path.empty()) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
 			     << "Ident " << base_path
@@ -4406,7 +4406,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 							net, member_comp);
 	    }
 
-	    if (net->enumeration() && member_path.size() > 0) {
+	    if (net->enumeration() && !member_path.empty()) {
 		  const netenum_t*netenum = net->enumeration();
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
@@ -4425,7 +4425,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 						expr, expr_wid, NULL, 0);
 	    }
 
-	    ivl_assert(*this, member_path.size() == 0);
+	    ivl_assert(*this, member_path.empty());
 	    NetExpr*tmp = elaborate_expr_net(des, scope, net, found_in,
                                              expr_wid, flags);
 
@@ -4462,7 +4462,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
                   scope->is_const_func(false);
             }
 
-	    if (member_path.size() > 0) {
+	    if (!member_path.empty()) {
 		  cerr << get_fileline() << ": error: Event name " << base_path
 		       << " can't have member names (member_path=" << member_path << ")"
 		       << endl;

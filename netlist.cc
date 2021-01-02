@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -3189,7 +3189,6 @@ bool NetBlock::check_synth(ivl_process_type_t pr_type,
       for (const NetProc*cur = proc_first(); cur; cur = proc_next(cur)) {
 	    result |= cur->check_synth(pr_type, scope);
       }
-      scope = save_scope;
       return result;
 }
 

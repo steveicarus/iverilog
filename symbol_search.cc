@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -185,7 +185,7 @@ static bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
  * Compatibility version. Remove me!
  */
 NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
-                       pform_name_t path,
+                       const pform_name_t&path,
 		       NetNet*&net,
 		       const NetExpr*&par,
 		       NetEvent*&eve,

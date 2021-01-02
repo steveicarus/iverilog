@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -99,7 +99,7 @@ ostream& operator<< (ostream&out, const name_component_t&that)
 ostream& operator<< (ostream&o, const pform_name_t&that)
 {
       pform_name_t::const_iterator cur;
-      if (that.size() == 0) {
+      if (that.empty()) {
 	    o << "<nil>";
 	    return o;
       }

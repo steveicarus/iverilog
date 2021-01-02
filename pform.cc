@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1415,7 +1415,7 @@ void pform_endmodule(const char*name, bool inside_celldefine,
 	// bar module. Try to find the foo module in the stack, and
 	// print error messages as we go.
       if (strcmp(name, mod_name) != 0) {
-	    while (pform_cur_module.size() > 0) {
+	    while (!pform_cur_module.empty()) {
 		  Module*tmp_module = pform_cur_module.front();
 		  perm_string tmp_name = tmp_module->mod_name();
 		  pform_cur_module.pop_front();

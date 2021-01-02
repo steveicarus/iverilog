@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1471,7 +1471,11 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // that connects to the port.
 
 	    NetNet*sig = 0;
-	    NetNet::PortType ptype = prts[0]->port_type();
+	    NetNet::PortType ptype;
+	    if (prts.empty())
+		   ptype = NetNet::NOT_A_PORT;
+	    else
+		   ptype = prts[0]->port_type();
 	    if (prts.empty() || (ptype == NetNet::PINPUT)) {
 
 		    // Special case: If the input port is an unpacked
@@ -1787,7 +1791,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			  /* This may not be correct! */
 			as_signed = prts[0]->get_signed() && sig->get_signed();
 			break;
-		      case NetNet::PREF:
+		    case NetNet::PREF:
 			ivl_assert(*this, 0);
 			break;
 		    default:
@@ -2174,6 +2178,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 		       << "port of " << udp->name_
 		       << " is " << udp->ports[0] << "." << endl;
 		  des->errors += 1;
+		  return;
 	    } else {
 		  connect(sig->pin(0), net->pin(0));
 	    }
@@ -2642,9 +2647,8 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 			cerr << get_fileline() << ": PAssign::elaborate: "
 			     << "lv->word() = <nil>" << endl;
 	    }
-	    ivl_type_t use_lv_type = lv_net_type;
 	    ivl_assert(*this, lv->word());
-	    use_lv_type = utype->element_type();
+	    ivl_type_t use_lv_type = utype->element_type();
 
 	    ivl_assert(*this, use_lv_type);
 	    rv = elaborate_rval_(des, scope, use_lv_type);

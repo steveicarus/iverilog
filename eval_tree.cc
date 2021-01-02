@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2039,7 +2039,7 @@ NetEConst* NetESFunc::evaluate_isunknown_(const NetExpr* arg) const
       return res;
 }
 
-static bool is_onehot(verinum&value, bool zero_is_okay)
+static bool is_onehot(const verinum&value, bool zero_is_okay)
 {
       bool found_a_one = false;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -50,7 +50,7 @@ void functor_t::lpm_add_sub(Design*, NetAddSub*)
 {
 }
 
-void functor_t::lpm_compare(Design*, NetCompare*)
+void functor_t::lpm_compare(Design*, const NetCompare*)
 {
 }
 
