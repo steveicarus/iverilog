@@ -62,8 +62,6 @@ void pform_end_package_declaration(const struct vlltype&loc)
 	    msg << "Package " << use_name << " was already declared here: "
 		<< test->second->get_fileline() << ends;
 	    VLerror(msg.str().c_str());
-      } else {
-	    pform_packages[use_name] = pform_cur_package;
       }
 
 
