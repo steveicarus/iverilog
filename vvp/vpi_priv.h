@@ -161,7 +161,7 @@ class __vpiDecConst : public __vpiHandle {
       explicit __vpiDecConst(int val =0);
       __vpiDecConst(const __vpiDecConst&that);
 # if __cplusplus >= 201103L
-      constexpr __vpiDecConst& operator = (const __vpiDecConst&that) = default;
+      __vpiDecConst& operator = (const __vpiDecConst&that) = default;
 # endif
       int get_type_code(void) const;
       int vpi_get(int code);
