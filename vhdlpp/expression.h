@@ -292,7 +292,7 @@ class ExpAggregate : public Expression {
 	    }
 
 # if __cplusplus >= 201103L
-	    constexpr choice_element& operator = (const choice_element&that) = default;
+	    choice_element& operator = (const choice_element&that) = default;
 # endif
 
 	    choice_t*choice;
