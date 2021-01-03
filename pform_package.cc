@@ -29,9 +29,14 @@
 using namespace std;
 
 /*
- * This is a map of packages that have been defined.
+ * This is a list of packages in the order that they were defined.
  */
-map<perm_string,PPackage*> pform_packages;
+vector<PPackage*> pform_packages;
+
+/*
+ * This allows us to easily check for name collisions.
+ */
+static map<perm_string,PPackage*> packages_by_name;
 
 static PPackage*pform_cur_package = 0;
 
@@ -51,8 +56,8 @@ void pform_end_package_declaration(const struct vlltype&loc)
       ivl_assert(loc, pform_cur_package);
       perm_string use_name = pform_cur_package->pscope_name();
 
-      map<perm_string,PPackage*>::const_iterator test = pform_packages.find(use_name);
-      if (test != pform_packages.end()) {
+      map<perm_string,PPackage*>::const_iterator test = packages_by_name.find(use_name);
+      if (test != packages_by_name.end()) {
 	    ostringstream msg;
 	    msg << "Package " << use_name << " was already declared here: "
 		<< test->second->get_fileline() << ends;
@@ -60,7 +65,8 @@ void pform_end_package_declaration(const struct vlltype&loc)
       }
 
 
-      pform_packages[use_name] = pform_cur_package;
+      packages_by_name[use_name] = pform_cur_package;
+      pform_packages.push_back(pform_cur_package);
       pform_cur_package = 0;
       pform_pop_scope();
 }
@@ -152,8 +158,8 @@ data_type_t* pform_test_type_identifier(PPackage*pkg, const char*txt)
 PPackage* pform_test_package_identifier(const char*pkg_name)
 {
       perm_string use_name = lex_strings.make(pkg_name);
-      map<perm_string,PPackage*>::const_iterator pcur = pform_packages.find(use_name);
-      if (pcur == pform_packages.end())
+      map<perm_string,PPackage*>::const_iterator pcur = packages_by_name.find(use_name);
+      if (pcur == packages_by_name.end())
 	    return 0;
 
       assert(pcur->second);
