@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -740,7 +740,7 @@ netclass_t*NetScope::find_class(const Design*des, perm_string name)
 	    return up_->find_class(des, name);
 
 	// Try the compilation unit.
-      if (unit_ != 0)
+      if (unit_ != 0 && this != unit_)
 	    return unit_->find_class(des, name);
 
 	// Nowhere left to try...
