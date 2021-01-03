@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -1142,9 +1142,9 @@ int main(int argc, char*argv[])
 		  pform_dump(out, *pac);
 	    }
 	    out << "PFORM DUMP PACKAGES:" << endl;
-	    for (map<perm_string,PPackage*>::iterator pac = pform_packages.begin()
+	    for (vector<PPackage*>::iterator pac = pform_packages.begin()
 		       ; pac != pform_packages.end() ; ++ pac) {
-		  pform_dump(out, pac->second);
+		  pform_dump(out, *pac);
 	    }
 	    out << "PFORM DUMP MODULES:" << endl;
 	    for (map<perm_string,Module*>::iterator mod = pform_modules.begin()

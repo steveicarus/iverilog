@@ -6742,18 +6742,18 @@ static void check_timescales()
 	    if (some_explicit && some_implicit)
 		  break;
       }
-      map<perm_string,PPackage*>::iterator pkg;
+      vector<PPackage*>::iterator pkg;
       if (gn_system_verilog() && !(some_explicit && some_implicit)) {
 	    for (pkg = pform_packages.begin(); pkg != pform_packages.end(); ++pkg) {
-		  const PPackage*pp = (*pkg).second;
+		  const PPackage*pp = *pkg;
 		  check_timescales(some_explicit, some_implicit, pp);
 		  if (some_explicit && some_implicit)
 			break;
 	    }
       }
       if (gn_system_verilog() && !(some_explicit && some_implicit)) {
-	    for (unsigned idx = 0; idx < pform_units.size(); idx += 1) {
-		  const PPackage*pp = pform_units[idx];
+	    for (pkg = pform_units.begin(); pkg != pform_units.end(); ++pkg) {
+		  const PPackage*pp = *pkg;
 		    // We don't need a timescale if the compilation unit
 		    // contains no items outside a design element.
 		  if (pp->parameters.empty() &&
@@ -6804,15 +6804,15 @@ static void check_timescales()
 	    return;
 
       for (pkg = pform_packages.begin(); pkg != pform_packages.end(); ++pkg) {
-	    PPackage*pp = (*pkg).second;
+	    PPackage*pp = *pkg;
 	    if (pp->has_explicit_timescale())
 		  continue;
-	    cerr << "       :   -- package " << (*pkg).first
+	    cerr << "       :   -- package " << pp->pscope_name()
 		 << " declared here: " << pp->get_fileline() << endl;
       }
 
-      for (unsigned idx = 0; idx < pform_units.size(); idx += 1) {
-	    PPackage*pp = pform_units[idx];
+      for (pkg = pform_units.begin(); pkg != pform_units.end(); ++pkg) {
+	    PPackage*pp = *pkg;
 	    if (pp->has_explicit_timescale())
 		  continue;
 
@@ -6868,8 +6868,9 @@ Design* elaborate(list<perm_string>roots)
 	// Elaborate the compilation unit scopes. From here on, these are
 	// treated as an additional set of packages.
       if (gn_system_verilog()) {
-	    for (i = 0; i < pform_units.size(); i += 1) {
-		  PPackage*unit = pform_units[i];
+	    for (vector<PPackage*>::iterator pkg = pform_units.begin()
+		       ; pkg != pform_units.end() ; ++pkg) {
+		  PPackage*unit = *pkg;
 		  NetScope*scope = des->make_package_scope(unit->pscope_name(), 0, true);
 		  scope->set_line(unit);
 		  scope->add_imports(&unit->explicit_imports);
@@ -6880,6 +6881,7 @@ Design* elaborate(list<perm_string>roots)
 
 		  pack_elems[i].pack = unit;
 		  pack_elems[i].scope = scope;
+		  i += 1;
 
 		  unit_scopes[unit] = scope;
 	    }
@@ -6890,20 +6892,19 @@ Design* elaborate(list<perm_string>roots)
 	// in SystemVerilog, packages are not allowed to refer to
 	// the compilation unit scope, but the VHDL preprocessor
 	// assumes they can.
-      for (map<perm_string,PPackage*>::iterator pac = pform_packages.begin()
-		 ; pac != pform_packages.end() ; ++ pac) {
+      for (vector<PPackage*>::iterator pkg = pform_packages.begin()
+		 ; pkg != pform_packages.end() ; ++pkg) {
+	    PPackage*pack = *pkg;
+	    NetScope*unit_scope = unit_scopes[pack->parent_scope()];
+	    NetScope*scope = des->make_package_scope(pack->pscope_name(), unit_scope, false);
+	    scope->set_line(pack);
+	    scope->add_imports(&pack->explicit_imports);
+	    set_scope_timescale(des, scope, pack);
 
-	    ivl_assert(*pac->second, pac->first == pac->second->pscope_name());
-	    NetScope*unit_scope = unit_scopes[pac->second->parent_scope()];
-	    NetScope*scope = des->make_package_scope(pac->first, unit_scope, false);
-	    scope->set_line(pac->second);
-	    scope->add_imports(&pac->second->explicit_imports);
-	    set_scope_timescale(des, scope, pac->second);
-
-	    elaborator_work_item_t*es = new elaborate_package_t(des, scope, pac->second);
+	    elaborator_work_item_t*es = new elaborate_package_t(des, scope, pack);
 	    des->elaboration_work_list.push_back(es);
 
-	    pack_elems[i].pack = pac->second;
+	    pack_elems[i].pack = pack;
 	    pack_elems[i].scope = scope;
 	    i += 1;
       }
