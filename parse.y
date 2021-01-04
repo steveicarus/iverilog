@@ -864,6 +864,13 @@ class_items /* IEEE1800-2005: A.1.2 */
   | class_item
   ;
 
+pure_virtual_method_decl /* IEEE1800-2012: A.1.9 */
+  : K_pure K_virtual K_task IDENTIFIER ';'
+  | K_pure K_virtual K_task IDENTIFIER '(' tf_port_list_opt ')' ';'
+  | K_pure K_virtual K_function data_type_or_implicit_or_void IDENTIFIER ';'
+  | K_pure K_virtual K_function data_type_or_implicit_or_void IDENTIFIER '(' tf_port_list_opt ')' ';'
+  ;
+
 class_item /* IEEE1800-2005: A.1.8 */
 
     /* IEEE1800 A.1.8: class_constructor_declaration */
@@ -906,6 +913,11 @@ class_item /* IEEE1800-2005: A.1.8 */
 
   | method_qualifier_opt function_declaration
       { /* The function_declaration rule puts this into the class */ }
+
+  | pure_virtual_method_decl
+      { yywarn(@1, "OOP Pure Virtual methods are supported as parse-only. "
+                   "No enforcement is done for a concrete class to define these further");
+      }
 
     /* External class method definitions... */
 
@@ -1811,7 +1823,7 @@ loop_variables /* IEEE1800-2005: A.6.8 */
       }
   ;
 
-method_qualifier /* IEEE1800-2005: A.1.8 */
+method_qualifier /* IEEE1800-2012: A.1.9 */
   : K_virtual
   | class_item_qualifier
   ;
