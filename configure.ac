@@ -14,6 +14,8 @@ AC_CONFIG_HEADERS([tgt-pcb/pcb_config.h])
 AC_CANONICAL_HOST
 dnl Checks for programs.
 AC_PROG_CC
+AC_PREREQ([2.62])
+m4_version_prereq([2.70], [], [AC_PROG_CC_C99])
 AC_PROG_CXX
 AC_PROG_RANLIB
 AC_CHECK_TOOL(LD, ld, false)
@@ -256,7 +258,8 @@ AC_CHECK_FUNCS(fopen64)
 # The following math functions may be defined in the math library so look
 # in the default libraries first and then look in -lm for them. On some
 # systems we may need to use the compiler in C99 mode to get a definition.
-# Modern versions of autoconf will enable C99 if it is available.
+# autoconf >= 2.70 will enable C99 if it is available. For older autoconf
+# versions, we requested C99 mode earlier with AC_PROG_CC_C99.
 AC_SEARCH_LIBS([lround], [m], [AC_DEFINE([HAVE_LROUND], [1])])
 AC_SEARCH_LIBS([llround], [m], [AC_DEFINE([HAVE_LLROUND], [1])])
 AC_SEARCH_LIBS([nan], [m], [AC_DEFINE([HAVE_NAN], [1])])
