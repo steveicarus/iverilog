@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -197,6 +197,19 @@ const vvp_fun_edge::edge_t vvp_edge_negedge
       | VVP_EDGE(BIT4_1,BIT4_Z)
       | VVP_EDGE(BIT4_X,BIT4_0)
       | VVP_EDGE(BIT4_Z,BIT4_0)
+      ;
+
+const vvp_fun_edge::edge_t vvp_edge_edge
+      = VVP_EDGE(BIT4_0,BIT4_1)
+      | VVP_EDGE(BIT4_1,BIT4_0)
+      | VVP_EDGE(BIT4_0,BIT4_X)
+      | VVP_EDGE(BIT4_X,BIT4_0)
+      | VVP_EDGE(BIT4_0,BIT4_Z)
+      | VVP_EDGE(BIT4_Z,BIT4_0)
+      | VVP_EDGE(BIT4_X,BIT4_1)
+      | VVP_EDGE(BIT4_1,BIT4_X)
+      | VVP_EDGE(BIT4_Z,BIT4_1)
+      | VVP_EDGE(BIT4_1,BIT4_Z)
       ;
 
 const vvp_fun_edge::edge_t vvp_edge_none    = 0;
@@ -975,7 +988,7 @@ void compile_event(char*label, char*type, unsigned argc, struct symb_s*argv)
 	    return;
       }
 
-      if (strcmp(type,"edge") == 0) {
+      if (strcmp(type,"anyedge") == 0) {
 
 	    free(type);
 
@@ -993,6 +1006,8 @@ void compile_event(char*label, char*type, unsigned argc, struct symb_s*argv)
 		  edge_type = vvp_edge_posedge;
 	    else if (strcmp(type,"negedge") == 0)
 		  edge_type = vvp_edge_negedge;
+	    else if (strcmp(type,"edge") == 0)
+		  edge_type = vvp_edge_edge;
 
 	    assert(argc <= 4);
 	    free(type);

@@ -4665,6 +4665,11 @@ cerr << endl;
 				      NetEvProbe::NEGEDGE, pins);
 		  break;
 
+		case PEEvent::EDGE:
+		  pr = new NetEvProbe(scope, scope->local_symbol(), ev,
+				      NetEvProbe::EDGE, pins);
+		  break;
+
 		case PEEvent::ANYEDGE:
 		  pr = new NetEvProbe(scope, scope->local_symbol(), ev,
 				      NetEvProbe::ANYEDGE, pins);

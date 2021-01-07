@@ -1,7 +1,7 @@
 #ifndef IVL_t_dll_H
 #define IVL_t_dll_H
 /*
- * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -217,7 +217,7 @@ struct ivl_event_s {
       ivl_scope_t scope;
       perm_string file;
       unsigned lineno;
-      unsigned nany, nneg, npos;
+      unsigned nany, nneg, npos, nedg;
       ivl_nexus_t*pins;
 };
 

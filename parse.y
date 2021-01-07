@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -3425,6 +3425,13 @@ event_expression
 		}
 	| K_negedge expression
 		{ PEEvent*tmp = new PEEvent(PEEvent::NEGEDGE, $2);
+		  FILE_NAME(tmp, @1);
+		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
+		  (*tl)[0] = tmp;
+		  $$ = tl;
+		}
+	| K_edge expression
+		{ PEEvent*tmp = new PEEvent(PEEvent::EDGE, $2);
 		  FILE_NAME(tmp, @1);
 		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
 		  (*tl)[0] = tmp;

@@ -1,7 +1,7 @@
 #ifndef IVL_event_H
 #define IVL_event_H
 /*
- * Copyright (c) 2004-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -166,6 +166,7 @@ class vvp_fun_edge : public vvp_net_fun_t, public waitable_hooks_s {
       edge_t edge_;
 };
 
+extern const vvp_fun_edge::edge_t vvp_edge_edge;
 extern const vvp_fun_edge::edge_t vvp_edge_posedge;
 extern const vvp_fun_edge::edge_t vvp_edge_negedge;
 extern const vvp_fun_edge::edge_t vvp_edge_none;

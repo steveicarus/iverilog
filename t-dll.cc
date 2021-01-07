@@ -914,6 +914,7 @@ void dll_target::event(const NetEvent*net)
       obj->nany = 0;
       obj->nneg = 0;
       obj->npos = 0;
+      obj->nedg = 0;
 
       if (net->nprobe() >= 1) {
 
@@ -928,6 +929,9 @@ void dll_target::event(const NetEvent*net)
 			break;
 		      case NetEvProbe::POSEDGE:
 			obj->npos += pr->pin_count();
+			break;
+		      case NetEvProbe::EDGE:
+			obj->nedg += pr->pin_count();
 			break;
 		  }
 	    }

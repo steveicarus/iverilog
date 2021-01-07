@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
@@ -364,6 +364,19 @@ extern "C" ivl_nexus_t ivl_event_any(ivl_event_t net, unsigned idx)
       assert(net);
       assert(idx < net->nany);
       return net->pins[idx];
+}
+
+extern "C" unsigned ivl_event_nedg(ivl_event_t net)
+{
+      assert(net);
+      return net->nedg;
+}
+
+extern "C" ivl_nexus_t ivl_event_edg(ivl_event_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->nedg);
+      return net->pins[net->nany + net->nneg + net->npos + idx];
 }
 
 extern "C" unsigned ivl_event_nneg(ivl_event_t net)

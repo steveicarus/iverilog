@@ -1,7 +1,7 @@
 #ifndef IVL_ivl_target_H
 #define IVL_ivl_target_H
 /*
- * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -767,6 +767,9 @@ extern ivl_scope_t ivl_event_scope(ivl_event_t net);
 
 extern unsigned    ivl_event_nany(ivl_event_t net);
 extern ivl_nexus_t ivl_event_any(ivl_event_t net, unsigned idx);
+
+extern unsigned    ivl_event_nedg(ivl_event_t net);
+extern ivl_nexus_t ivl_event_edg(ivl_event_t net, unsigned idx);
 
 extern unsigned    ivl_event_nneg(ivl_event_t net);
 extern ivl_nexus_t ivl_event_neg(ivl_event_t net, unsigned idx);

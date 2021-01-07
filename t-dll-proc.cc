@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -370,6 +370,7 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 			unsigned iany = 0;
 			unsigned ineg = ev_tmp->nany;
 			unsigned ipos = ineg + ev_tmp->nneg;
+			unsigned iedg = ipos + ev_tmp->npos;
 
 			for (unsigned idx = 0;  idx < ev->nprobe();  idx += 1) {
 			      const NetEvProbe*pr = ev->probe(idx);
@@ -387,6 +388,10 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 				  case NetEvProbe::POSEDGE:
 				    base = ipos;
 				    ipos += pr->pin_count();
+				    break;
+				  case NetEvProbe::EDGE:
+				    base = iedg;
+				    iedg += pr->pin_count();
 				    break;
 			      }
 
@@ -895,6 +900,7 @@ bool dll_target::proc_wait(const NetEvWait*net)
 		  unsigned iany = 0;
 		  unsigned ineg = ev_tmp->nany;
 		  unsigned ipos = ineg + ev_tmp->nneg;
+		  unsigned iedg = ipos + ev_tmp->npos;
 
 		  for (unsigned idx = 0 ;  idx < ev->nprobe() ;  idx += 1) {
 			const NetEvProbe*pr = ev->probe(idx);
@@ -912,6 +918,10 @@ bool dll_target::proc_wait(const NetEvWait*net)
 			    case NetEvProbe::POSEDGE:
 			      base = ipos;
 			      ipos += pr->pin_count();
+			      break;
+			    case NetEvProbe::EDGE:
+			      base = iedg;
+			      iedg += pr->pin_count();
 			      break;
 			}
 

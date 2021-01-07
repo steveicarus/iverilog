@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1284,6 +1284,9 @@ void NetEvProbe::dump_node(ostream&o, unsigned ind) const
 	    break;
 	  case NEGEDGE:
 	    o << "negedge ";
+	    break;
+	  case EDGE:
+	    o << "edge ";
 	    break;
       }
       o << setw(ind) << "" << "-> " << event_->name() << "; " << endl;

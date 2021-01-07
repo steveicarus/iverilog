@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1153,6 +1153,7 @@ static void draw_event_in_scope(ivl_event_t obj)
       unsigned nany = ivl_event_nany(obj);
       unsigned nneg = ivl_event_nneg(obj);
       unsigned npos = ivl_event_npos(obj);
+      unsigned nedg = ivl_event_nedg(obj);
 
       unsigned cnt = 0;
 
@@ -1165,6 +1166,9 @@ static void draw_event_in_scope(ivl_event_t obj)
 
       if (npos > 0)
 	    cnt += (npos+ntmp-1) / ntmp;
+
+      if (nedg > 0)
+	    cnt += (nedg+ntmp-1) / ntmp;
 
       if (cnt == 0) {
 	      /* If none are needed, then this is a named event. The
@@ -1189,7 +1193,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 			strncpy(tmp[sub-idx], draw_input_from_net(nex), sizeof(tmp[0]));
 		  }
 
-		  fprintf(vvp_out, "E_%p/%u .event edge", obj, ecnt);
+		  fprintf(vvp_out, "E_%p/%u .event anyedge", obj, ecnt);
 		  for (sub = idx ;  sub < top ;  sub += 1)
 			fprintf(vvp_out, ", %s", tmp[sub-idx]);
 
@@ -1232,6 +1236,24 @@ static void draw_event_in_scope(ivl_event_t obj)
 		  fprintf(vvp_out, ";\n");
 	    }
 
+	    for (idx = 0 ;  idx < nedg ;  idx += ntmp, ecnt += 1) {
+		  unsigned sub, top;
+
+		  top = idx + ntmp;
+		  if (nedg < top)
+			top = nedg;
+		  for (sub = idx ;  sub < top ;  sub += 1) {
+			ivl_nexus_t nex = ivl_event_edg(obj, sub);
+			strncpy(tmp[sub-idx], draw_input_from_net(nex), sizeof(tmp[0]));
+		  }
+
+		  fprintf(vvp_out, "E_%p/%u .event edge", obj, ecnt);
+		  for (sub = idx ;  sub < top ;  sub += 1)
+			fprintf(vvp_out, ", %s", tmp[sub-idx]);
+
+		  fprintf(vvp_out, ";\n");
+	    }
+
 	    assert(ecnt == cnt);
 
 	    fprintf(vvp_out, "E_%p .event/or", obj);
@@ -1243,15 +1265,15 @@ static void draw_event_in_scope(ivl_event_t obj)
 	    fprintf(vvp_out, ";\n");
 
       } else {
-	    unsigned num_input_strings = nany + nneg + npos;
+	    unsigned num_input_strings = nany + nneg + npos + nedg;
 	    unsigned idx;
 	    const char*edge = 0;
 
 	    assert(num_input_strings <= ntmp);
 
 	    if (nany > 0) {
-		  assert((nneg + npos) == 0);
-		  edge = "edge";
+		  assert((nneg + npos + nedg) == 0);
+		  edge = "anyedge";
 
 		  for (idx = 0 ;  idx < nany ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_any(obj, idx);
@@ -1259,7 +1281,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 		  }
 
 	    } else if (nneg > 0) {
-		  assert((nany + npos) == 0);
+		  assert((nany + npos + nedg) == 0);
 		  edge = "negedge";
 
 		  for (idx = 0 ;  idx < nneg ;  idx += 1) {
@@ -1267,12 +1289,20 @@ static void draw_event_in_scope(ivl_event_t obj)
 			strncpy(tmp[idx], draw_input_from_net(nex), sizeof(tmp[0]));
 		  }
 
-	    } else {
-		  assert((nany + nneg) == 0);
+	    } else if (npos > 0) {
+		  assert((nany + nneg + nedg) == 0);
 		  edge = "posedge";
 
 		  for (idx = 0 ;  idx < npos ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_pos(obj, idx);
+			strncpy(tmp[idx], draw_input_from_net(nex), sizeof(tmp[0]));
+		  }
+	    } else {
+		  assert((nany + nneg + npos) == 0);
+		  edge = "edge";
+
+		  for (idx = 0 ;  idx < nedg ;  idx += 1) {
+			ivl_nexus_t nex = ivl_event_edg(obj, idx);
 			strncpy(tmp[idx], draw_input_from_net(nex), sizeof(tmp[0]));
 		  }
 	    }

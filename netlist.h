@@ -3522,7 +3522,7 @@ class NetEvProbe  : public NetNode {
       friend class NetEvent;
 
     public:
-      enum edge_t { ANYEDGE, POSEDGE, NEGEDGE };
+      enum edge_t { ANYEDGE, POSEDGE, NEGEDGE, EDGE };
 
       explicit NetEvProbe(NetScope*s, perm_string n,
 			  NetEvent*tgt, edge_t t, unsigned p);

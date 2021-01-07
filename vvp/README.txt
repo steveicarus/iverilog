@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -458,9 +458,9 @@ itself in the notification list of the event and suspends. The
 <symbols_list> is a set of inputs that can trigger the event.
 
 The <type> describes the conditions needed to trigger the event. It
-may be posedge, negedge or edge. If the type is instead a "name"
-string, then this is a named event which receives events by the %set
-instruction instead of from the output of a functor.
+may be posedge, negedge, edge or anyedge. If the type is instead a
+"name" string, then this is a named event which receives events by
+the %set instruction instead of from the output of a functor.
 
 If the event has inputs (a requirement unless it is a named event)
 then it has up to 4 symbols that address functors. The event then

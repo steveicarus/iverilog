@@ -281,7 +281,7 @@ class PEConcat : public PExpr {
 class PEEvent : public PExpr {
 
     public:
-      enum edge_t {ANYEDGE, POSEDGE, NEGEDGE, POSITIVE};
+      enum edge_t {ANYEDGE, POSEDGE, NEGEDGE, EDGE, POSITIVE};
 
 	// Use this constructor to create events based on edges or levels.
       PEEvent(edge_t t, PExpr*e);

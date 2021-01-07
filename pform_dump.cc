@@ -406,6 +406,9 @@ void PEEvent::dump(ostream&out) const
 	  case PEEvent::NEGEDGE:
 	    out << "negedge ";
 	    break;
+	  case PEEvent::EDGE:
+	    out << "edge ";
+	    break;
 	  case PEEvent::POSITIVE:
 	    out << "positive ";
 	    break;
