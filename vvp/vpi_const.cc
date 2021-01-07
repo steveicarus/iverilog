@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -333,6 +333,7 @@ vpiHandle vpip_make_string_param(char*name, char*text,
 
 
 inline __vpiBinaryConst::__vpiBinaryConst()
+signed_flag(0), sized_flag(0)
 { }
 
 int __vpiBinaryConst::get_type_code(void) const
@@ -403,9 +404,6 @@ void __vpiBinaryConst::vpi_get_value(p_vpi_value val)
 vpiHandle vpip_make_binary_const(unsigned wid, const char*bits)
 {
       struct __vpiBinaryConst*obj = new __vpiBinaryConst;
-
-      obj->signed_flag = 0;
-      obj->sized_flag = 0;
 
       const char*bp = bits;
       if (*bp == 's') {

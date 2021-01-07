@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1999-2017,2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -177,8 +177,8 @@ static void make_bin_value(void)
 
       cur = vecval;
       while ((width < word_max) && (end > beg)) {
-	    int aval = 0;
-	    int bval = 0;
+	    PLI_UINT32 aval = 0;
+	    PLI_UINT32 bval = 0;
 
 	    end -= 1;
 	    if (*end == '_') continue;
