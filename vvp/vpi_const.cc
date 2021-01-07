@@ -333,7 +333,7 @@ vpiHandle vpip_make_string_param(char*name, char*text,
 
 
 inline __vpiBinaryConst::__vpiBinaryConst()
-signed_flag(0), sized_flag(0)
+: signed_flag(0), sized_flag(0)
 { }
 
 int __vpiBinaryConst::get_type_code(void) const
