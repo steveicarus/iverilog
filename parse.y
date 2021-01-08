@@ -3851,6 +3851,39 @@ expr_primary
 	$$ = tmp;
 	delete $1;
       }
+  /* These are array methods that cannot be matched with the above rule */
+  | hierarchy_identifier '.' K_and
+      { pform_name_t * nm = $1;
+	nm->push_back(name_component_t(lex_strings.make("and")));
+	PEIdent*tmp = pform_new_ident(@1, *nm);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	delete nm;
+      }
+  | hierarchy_identifier '.' K_or
+      { pform_name_t * nm = $1;
+	nm->push_back(name_component_t(lex_strings.make("or")));
+	PEIdent*tmp = pform_new_ident(@1, *nm);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	delete nm;
+      }
+  | hierarchy_identifier '.' K_unique
+      { pform_name_t * nm = $1;
+	nm->push_back(name_component_t(lex_strings.make("unique")));
+	PEIdent*tmp = pform_new_ident(@1, *nm);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	delete nm;
+      }
+  | hierarchy_identifier '.' K_xor
+      { pform_name_t * nm = $1;
+	nm->push_back(name_component_t(lex_strings.make("xor")));
+	PEIdent*tmp = pform_new_ident(@1, *nm);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	delete nm;
+      }
 
   | PACKAGE_IDENTIFIER K_SCOPE_RES hierarchy_identifier
       { $$ = pform_package_ident(@2, $1, $3);
@@ -5524,7 +5557,7 @@ net_type
      This is used by parameter_assign, which is found to the right of
      the param_type in various rules. */
 
-param_type : data_type_or_implicit { param_data_type = $1; } 
+param_type : data_type_or_implicit { param_data_type = $1; }
 
   /* parameter and localparam assignment lists are broken into
      separate BNF so that I can call slightly different parameter

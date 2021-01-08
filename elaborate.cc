@@ -3816,6 +3816,31 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 		                                IVL_VT_BOOL, 32,
 		                                true, method_name,
 		                                "$size");
+	    else if (method_name=="reverse") {
+		  cerr << get_fileline() << ": sorry: 'reverse()' "
+		          "array sorting method is not currently supported."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    } else if (method_name=="sort") {
+		  cerr << get_fileline() << ": sorry: 'sort()' "
+		          "array sorting method is not currently supported."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    } else if (method_name=="rsort") {
+		  cerr << get_fileline() << ": sorry: 'rsort()' "
+		          "array sorting method is not currently supported."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    } else if (method_name=="shuffle") {
+		  cerr << get_fileline() << ": sorry: 'shuffle()' "
+		          "array sorting method is not currently supported."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
       }
 
       if (net->queue_type()) {

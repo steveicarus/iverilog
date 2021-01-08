@@ -1354,7 +1354,7 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": " << __func__ << ": "
 		       << "net->net_type()=" << *net->net_type() << endl;
       }
-      
+
       const netdarray_t*use_darray = 0;
 
       if (net != 0)
@@ -2934,7 +2934,7 @@ NetExpr* PECallFunction::elaborate_expr_method_par_(Design*, NetScope*scope,
       // expression is a constant string, it should be able to calculate the
       // result at compile time.
       if (dynamic_cast<const netstring_t*>(par_type)) {
-	    
+
 	    const NetECString*par_string = dynamic_cast<const NetECString*>(par);
 	    ivl_assert(*par, par_string);
 	    string par_value = par_string->value().as_string();
@@ -4349,6 +4349,98 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 			fun->parm(0, arg);
 			return fun;
+		  } else if (member_comp.name == "find") {
+			cerr << get_fileline() << ": sorry: 'find()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "find_index") {
+			cerr << get_fileline() << ": sorry: 'find_index()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "find_first") {
+			cerr << get_fileline() << ": sorry: 'find_first()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "find_first_index") {
+			cerr << get_fileline() << ": sorry: 'find_first_index()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "find_last") {
+			cerr << get_fileline() << ": sorry: 'find_last()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "find_last_index") {
+			cerr << get_fileline() << ": sorry: 'find_last_index()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "min") {
+			cerr << get_fileline() << ": sorry: 'min()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "max") {
+			cerr << get_fileline() << ": sorry: 'max()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "unique") {
+			cerr << get_fileline() << ": sorry: 'unique()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "unique_index") {
+			cerr << get_fileline() << ": sorry: 'unique_index()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+// FIXME: Check this is a real or integral type.
+		  } else if (member_comp.name == "sum") {
+			cerr << get_fileline() << ": sorry: 'sum()' "
+			        "array reduction method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "product") {
+			cerr << get_fileline() << ": sorry: 'product()' "
+			        "array reduction method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+// FIXME: Check this is only an integral type.
+		  } else if (member_comp.name == "and") {
+			cerr << get_fileline() << ": sorry: 'and()' "
+			        "array reduction method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "or") {
+			cerr << get_fileline() << ": sorry: 'or()' "
+			        "array reduction method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "xor") {
+			cerr << get_fileline() << ": sorry: 'xor()' "
+			        "array reduction method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
 		  }
 	    }
 
