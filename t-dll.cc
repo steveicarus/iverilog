@@ -936,7 +936,7 @@ void dll_target::event(const NetEvent*net)
 		  }
 	    }
 
-	    unsigned npins = obj->nany + obj->nneg + obj->npos;
+	    unsigned npins = obj->nany + obj->nneg + obj->npos + obj->nedg;
 	    obj->pins = (ivl_nexus_t*)calloc(npins, sizeof(ivl_nexus_t));
 
       } else {
