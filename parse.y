@@ -1236,6 +1236,15 @@ data_type /* IEEE1800-2005: A.2.2.1 */
      absent. The context may need that information to decide to resort
      to left context. */
 
+scalar_vector_opt /*IEEE1800-2005: optional support for packed array */
+  : K_vectored
+      { /* Ignore */ }
+  | K_scalared
+      { /* Ignore */ }
+  |
+      { /* Ignore */ }
+  ;
+
 data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
   : data_type
       { $$ = $1; }
@@ -1245,10 +1254,10 @@ data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | dimensions
-      { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, $1);
+  | scalar_vector_opt dimensions
+      { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, $2);
 	tmp->implicit_flag = true;
-	FILE_NAME(tmp, @1);
+	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
   |
