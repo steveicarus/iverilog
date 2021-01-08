@@ -1134,7 +1134,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  continue;
 	    }
 
-	      // Cannot handle dynamic arrays of arrays yet.
+	      // Cannot handle dynamic arrays/queues of arrays yet.
 	    ivl_assert(*this, netdarray==0);
 
 	    long index_l, index_r;
