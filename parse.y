@@ -2617,6 +2617,9 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
   | '[' ']'
       { list<pform_range_t> *tmp = new list<pform_range_t>;
 	pform_range_t index (0,0);
+	if (!gn_system_verilog()) {
+	      yyerror("error: Dynamic array declaration require SystemVerilog.");
+	}
 	tmp->push_back(index);
 	$$ = tmp;
       }
@@ -2625,7 +2628,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
 	list<pform_range_t> *tmp = new list<pform_range_t>;
 	pform_range_t index (new PENull,0);
 	if (!gn_system_verilog()) {
-	      yyerror("error: Queue declarations require SystemVerilog.");
+	      yyerror("error: Queue declaration require SystemVerilog.");
 	}
 	tmp->push_back(index);
 	$$ = tmp;
