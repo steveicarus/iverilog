@@ -2658,7 +2658,10 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    rv = elaborate_rval_(des, scope, lv_net_type, lv->expr_type(), count_lval_width(lv));
       }
 
-      if (rv == 0) return 0;
+      if (rv == 0) {
+	    delete lv;
+	    return 0;
+      }
       assert(rv);
 
       if (count_) assert(event_);

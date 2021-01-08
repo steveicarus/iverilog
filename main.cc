@@ -1317,10 +1317,14 @@ int main(int argc, char*argv[])
 		  cerr << "error: Code generation had "
 		       << emit_rc << " error(s)."
 		       << endl;
+		  delete des;
+		  EOC_cleanup();
 		  return 1;
 	    }
 	    if (emit_rc < 0) {
 		  cerr << "error: Code generator failure: " << emit_rc << endl;
+		  delete des;
+		  EOC_cleanup();
 		  return -1;
 	    }
 	    assert(emit_rc);
@@ -1362,7 +1366,10 @@ int main(int argc, char*argv[])
 	    cerr << "***" << endl;
       }
 
-      return des? des->errors : 1;
+      int rtn = des? des->errors : 1;
+      delete des;
+      EOC_cleanup();
+      return rtn;
 }
 
 static void find_module_mention(map<perm_string,bool>&check_map, Module*mod)
