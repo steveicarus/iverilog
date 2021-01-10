@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)";
+  "Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -360,7 +360,7 @@ int main(int argc, char*argv[])
 	  case 'V':
 	    fprintf(stdout, "Icarus Verilog Preprocessor version "
 		    VERSION " (" VERSION_TAG ")\n\n");
-	    fprintf(stdout, "%s\n", COPYRIGHT);
+	    fprintf(stdout, "%s\n\n", COPYRIGHT);
 	    fputs(NOTICE, stdout);
 	    return 0;
 

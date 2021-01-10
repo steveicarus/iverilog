@@ -1,6 +1,6 @@
 
 const char COPYRIGHT[] =
-      "Copyright (c) 2011-2015 Stephen Williams (steve@icarus.com)\n"
+      "Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)\n"
       "Copyright CERN 2012 / Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
