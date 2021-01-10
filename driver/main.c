@@ -355,15 +355,15 @@ static int t_version_only(void)
 
 static void build_preprocess_command(int e_flag)
 {
-      snprintf(tmp, sizeof tmp, "%s%civlpp %s%s%s -F\"%s\" -f\"%s\" -p\"%s\"%s",
+      snprintf(tmp, sizeof tmp, "%s%civlpp%s%s%s -F\"%s\" -f\"%s\" -p\"%s\"%s",
 	       ivlpp_dir, sep,
                verbose_flag ? " -v" : "",
 	       e_flag ? "" : " -L",
-               strchr(warning_flags, 'r') ? " -Wredef-all " :
-               strchr(warning_flags, 'R') ? " -Wredef-chg " : "",
+               strchr(warning_flags, 'r') ? " -Wredef-all" :
+               strchr(warning_flags, 'R') ? " -Wredef-chg" : "",
                defines_path, source_path,
 	       compiled_defines_path,
-	       e_flag ? "" : " | ");
+	       e_flag ? "" : " |");
 }
 
 static int t_preprocess_only(void)
