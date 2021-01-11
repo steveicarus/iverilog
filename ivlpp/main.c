@@ -461,6 +461,11 @@ int main(int argc, char*argv[])
 	    fclose(precomp_out);
       }
 
+      if (error_count) {
+	    if (out_path) fprintf(stderr, "%s: had (%u) errors.\n", argv[0], error_count);
+	    fprintf(out, "// Icarus preprocessor had (%u) errors.\n", error_count);
+      }
+
       if (out_path) fclose(out);
 
 	/* Free the source and include directory lists. */

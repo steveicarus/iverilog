@@ -1,7 +1,7 @@
 #ifndef IVL_compiler_H
 #define IVL_compiler_H
 /*
- * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -307,5 +307,7 @@ extern bool load_vpi_module(const char*path);
  * warning message.
  */
 extern ivl_sfunc_as_task_t def_sfunc_as_task;
+
+extern void pre_process_failed(const char*text);
 
 #endif /* IVL_compiler_H */

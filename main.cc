@@ -91,6 +91,7 @@ static void signals_handler(int sig)
 
 /* Count errors detected in flag processing. */
 unsigned flag_errors = 0;
+static unsigned long pre_process_fail_count = 0;
 
 const char*basedir = strdup(".");
 
@@ -1161,6 +1162,12 @@ int main(int argc, char*argv[])
 	    return rc;
       }
 
+      if (pre_process_fail_count) {
+	    cerr << "Preprocessor failed with " << pre_process_fail_count
+	         << " errors." << endl;
+	    return pre_process_fail_count;
+      }
+
 
 	/* If the user did not give specific module(s) to start with,
 	   then look for modules that are not instantiated anywhere.  */
@@ -1406,4 +1413,15 @@ static void find_module_mention(map<perm_string,bool>&check_map, PGenerate*schm)
 		 ; cur != schm->generate_schemes.end() ; ++ cur ) {
 	    find_module_mention(check_map, *cur);
       }
+}
+
+void pre_process_failed(const char*text)
+{
+      const char*num_start = strchr(text, '(') + 1;
+      unsigned long res;
+      char*rem;
+      res = strtoul(num_start, &rem, 10);
+      assert(res > 0);
+      assert(rem[0] == ')');
+      pre_process_fail_count += res;
 }
