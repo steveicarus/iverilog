@@ -817,6 +817,7 @@ static void check_for_max_args(void)
     if (def_argc == MAX_DEF_ARG) {
         emit_pathline(istack);
         fprintf(stderr, "error: too many macro arguments - aborting\n");
+        error_count += 1;
         exit(1);
     }
 }
@@ -1460,6 +1461,7 @@ static void expand_using_args(void)
     if (def_argc > cur_macro->argc) {
         emit_pathline(istack);
         fprintf(stderr, "error: too many arguments for `%s\n", cur_macro->name);
+        error_count += 1;
         return;
     }
     while (def_argc < cur_macro->argc) {
@@ -1470,6 +1472,7 @@ static void expand_using_args(void)
 	}
         emit_pathline(istack);
         fprintf(stderr, "error: too few arguments for `%s\n", cur_macro->name);
+        error_count += 1;
         return;
     }
     assert(def_argc == cur_macro->argc);
@@ -1694,6 +1697,7 @@ static void include_filename(void)
         emit_pathline(istack);
         fprintf(stderr,
                 "error: malformed `include directive. Extra junk on line?\n");
+        error_count += 1;
         exit(1);
     }
 
