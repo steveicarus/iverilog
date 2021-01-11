@@ -1,7 +1,7 @@
 %option prefix="yy"
 %{
 /*
- * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -249,9 +249,9 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <PCOMENT>`{keywords} {
     emit_pathline(istack);
+    fprintf(stderr, "error: macro expansion cannot be directive keywords "
+                    "('%s').\n", yytext);
     error_count += 1;
-    fprintf(stderr, "error: macro names cannot be directive keywords "
-            "('%s'); replaced with nothing.\n", yytext);
 }
 
 <PCOMENT>`[a-zA-Z][a-zA-Z0-9_$]* {
@@ -279,9 +279,10 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <PPINCLUDE>`{keywords} {
     emit_pathline(istack);
+    fprintf(stderr, "error: macro expansion cannot be directive keywords "
+                    "('%s').\n", yytext);
     error_count += 1;
-    fprintf(stderr, "error: macro names cannot be directive keywords "
-            "('%s'); replaced with nothing.\n", yytext);
+    BEGIN(ERROR_LINE);
 }
 
 <PPINCLUDE>`[a-zA-Z][a-zA-Z0-9_]* {
@@ -331,10 +332,10 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <DEF_NAME>{keywords}{W}? {
     emit_pathline(istack);
+    fprintf(stderr, "error: malformed `define directive: macro names "
+                    "cannot be directive keywords ('%s')\n", yytext);
     error_count += 1;
     BEGIN(ERROR_LINE);
-    fprintf(stderr, "error: malformed `define directive: macro names "
-            "cannot be directive keywords\n");
 }
 
 <DEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]*"("{W}? { BEGIN(DEF_ARG); def_start(); }
@@ -361,7 +362,7 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <DEF_NAME,DEF_ESC,DEF_ARG,DEF_SEP>. {
     emit_pathline(istack);
-    fprintf(stderr, "error: malformed `define directive.\n");
+    fprintf(stderr, "error: malformed `define directive ('%s').\n", yytext);
     error_count += 1;
     BEGIN(ERROR_LINE);
 }
@@ -474,9 +475,9 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <IFDEF_NAME>(\n|\r) |
 <IFDEF_NAME>. |
 `ifdef {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `ifdef without a macro name.\n");
     error_count += 1;
-    fprintf(stderr, "%s:%u: `ifdef without a macro name - ignored.\n",
-            istack->path, istack->lineno+1);
     if (YY_START == IFDEF_NAME) {
         ifdef_leave();
         yy_pop_state();
@@ -487,9 +488,9 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <IFNDEF_NAME>(\n|\r) |
 <IFNDEF_NAME>. |
 `ifndef {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `ifndef without a macro name.\n");
     error_count += 1;
-    fprintf(stderr, "%s:%u: `ifndef without a macro name - ignored.\n",
-            istack->path, istack->lineno+1);
     if (YY_START == IFNDEF_NAME) {
         ifdef_leave();
         yy_pop_state();
@@ -500,9 +501,9 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <ELSIF_NAME,ELSIF_SUPR>(\n|\r) |
 <ELSIF_NAME,ELSIF_SUPR>. |
 `elsif {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `elsif without a macro name.\n");
     error_count += 1;
-    fprintf(stderr, "%s:%u: `elsif without a macro name - ignored.\n",
-            istack->path, istack->lineno+1);
     if (YY_START != INITIAL) {
         BEGIN(prev_state);
         unput(yytext[0]);
@@ -510,28 +511,28 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 }
 
 <INITIAL>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `elsif without a matching `ifdef.\n");
     error_count += 1;
-    fprintf(stderr, "%s:%u: `elsif without a matching `ifdef - ignored.\n",
-            istack->path, istack->lineno+1);
 }
 
 `else {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `else without a matching `ifdef.\n");
     error_count += 1;
-    fprintf(stderr, "%s:%u: `else without a matching `ifdef - ignored.\n",
-            istack->path, istack->lineno+1);
 }
 
 `endif {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `endif without a matching `ifdef.\n");
     error_count += 1;
-    fprintf(stderr, "%s:%u: `endif without a matching `ifdef - ignored.\n",
-            istack->path, istack->lineno+1);
 }
 
 `{keywords} {
     emit_pathline(istack);
+    fprintf(stderr, "error: macro expansion cannot be directive keywords "
+                    "('%s').\n", yytext);
     error_count += 1;
-    fprintf(stderr, "error: macro names cannot be directive keywords "
-            "('%s'); replaced with nothing.\n", yytext);
 }
 
  /* This pattern notices macros and arranges for them to be replaced. */
@@ -601,7 +602,6 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <MA_START>. {
     emit_pathline(istack);
-
     fprintf(stderr, "error: missing argument list for `%s.\n", macro_name());
     error_count += 1;
 
@@ -1156,11 +1156,12 @@ static void do_define(void)
      */
     if ((def_argc > 1) && strchr(head, ARG_MARK)) {
         emit_pathline(istack);
-        error_count += 1;
         def_argc = 0;
 
         fprintf(stderr, "error: implementation restriction - "
-	        "macro text may not contain a %s character\n", _STR2(ARG_MARK));
+                        "macro text may not contain a %s character\n",
+                        _STR2(ARG_MARK));
+        error_count += 1;
     }
 
     /* Look for formal argument names in the definition, and replace
@@ -1831,11 +1832,11 @@ static void lexor_done(void)
         ifdef_stack = cur->next;
 
         fprintf(stderr, "%s:%u: error: This `ifdef lacks an `endif.\n",
-                cur->path, cur->lineno+1);
+                        cur->path, cur->lineno+1);
+        error_count += 1;
 
         free(cur->path);
         free(cur);
-        error_count += 1;
     }
 }
 

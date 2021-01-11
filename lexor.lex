@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -167,6 +167,7 @@ TU [munpf]
      that flag to attach implicit attributes to "initial" and
      "always" statements. */
 
+"// Icarus preprocessor had ("[0-9]+") errors."\n { pre_process_failed(yytext); }
 "//"{W}*"synthesis"{W}+"translate_on"{W}*\n { pform_mc_translate_on(true); }
 "//"{W}*"synthesis"{W}+"translate_off"{W}*\n { pform_mc_translate_on(false); }
 "//" { comment_enter = YY_START; BEGIN(LCOMMENT); }
