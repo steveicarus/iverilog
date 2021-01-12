@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2020 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2021 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -918,6 +918,18 @@ static ivl_signal_t nexus_is_signal(ivl_scope_t scope, ivl_nexus_t nex,
       return 0;
 }
 
+static void emit_part_name(ivl_scope_t scope, ivl_signal_t sig,
+                           unsigned array_word)
+{
+      emit_scope_call_path(scope, ivl_signal_scope(sig));
+      emit_id(ivl_signal_basename(sig));
+      if (ivl_signal_dimensions(sig)) {
+	    int array_idx = (int) array_word + ivl_signal_array_base(sig);
+	    fprintf(vlog_out, "[%d]", array_idx);
+      }
+
+}
+
 static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm,
                                  unsigned sign_extend)
 {
@@ -950,29 +962,25 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm,
       }
 
       if (sign_extend) fprintf(vlog_out, "(");
-      emit_scope_call_path(scope, ivl_signal_scope(sig));
-      emit_id(ivl_signal_basename(sig));
-      if (ivl_signal_dimensions(sig)) {
-	    int array_idx = (int) array_word + ivl_signal_array_base(sig);
-	    fprintf(vlog_out, "[%d]", array_idx);
-      }
 
       if (sign_extend) {
 	    assert(base != lsb);
 // HERE: This looks wrong.
 	    if (msb >= lsb) base += lsb;
 	    else base = lsb - base;
+	    emit_part_name(scope, sig, array_word);
 	    fprintf(vlog_out, " >>> %d)", base);
 	    return;
       }
 
       if (width == 1) {
+	    emit_part_name(scope, sig, array_word);
 	    ivl_nexus_t sel = ivl_lpm_data(lpm, 1);
 	    if (sel) {
 		  fprintf(vlog_out, "[");
-// HERE: Need to scale the select nexus.
 		  if ((msb >= lsb) && (lsb == 0)) {
 			emit_nexus_as_ca(scope, sel, 0, 0);
+// HERE: Need to scale the select nexus.
 		  } else {
 			fprintf(stderr, "%s:%u: vlog95 sorry: Non-zero based "
 			                "variable part selects are not "
@@ -989,17 +997,36 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm,
 		  else base = lsb - base;
 		  fprintf(vlog_out, "%d", base);
 	    }
+	    fprintf(vlog_out, "]");
       } else {
-	    fprintf(vlog_out, "[");
-// HERE: No support for an indexed part select.
 	    ivl_nexus_t sel = ivl_lpm_data(lpm, 1);
 	    if (sel) {
-		  fprintf(stderr, "%s:%u: vlog95 sorry: Variable indexed part "
-		                  "selects are not supported.\n",
-		                  ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
-		  vlog_errors += 1;
-		  fprintf(vlog_out, "<missing>:<missing>");
+		  if ((msb >= lsb) && (lsb == 0)) {
+			unsigned idx;
+			fprintf(vlog_out, "{");
+			for (idx = width-1; idx > 0; idx -= 1) {
+			      emit_part_name(scope, sig, array_word);
+			      fprintf(vlog_out, "[");
+			      emit_nexus_as_ca(scope, sel, 0, 0);
+			      fprintf(vlog_out, "+%u],", idx);
+			}
+			emit_part_name(scope, sig, array_word);
+			fprintf(vlog_out, "[");
+			emit_nexus_as_ca(scope, sel, 0, 0);
+			fprintf(vlog_out, "]}");
+// HERE: Need to scale the select nexus.
+		  } else {
+			fprintf(stderr, "%s:%u: vlog95 sorry: Non-zero based "
+			                "variable part selects are not "
+			                "supported.\n", ivl_lpm_file(lpm),
+			                ivl_lpm_lineno(lpm));
+			vlog_errors += 1;
+			emit_part_name(scope, sig, array_word);
+			fprintf(vlog_out, "[<missing>]");
+		  }
 	    } else {
+		  emit_part_name(scope, sig, array_word);
+		  fprintf(vlog_out, "[");
 		  if (msb >= lsb) {
 			base += lsb;
 			fprintf(vlog_out, "%d:%d", base+(int)width-1, base);
@@ -1007,9 +1034,9 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm,
 			base = lsb - base;
 			fprintf(vlog_out, "%d:%d", base-(int)width+1, base);
 		  }
+		  fprintf(vlog_out, "]");
 	    }
       }
-      fprintf(vlog_out, "]");
 }
 
 // HERE: No support for trigger. Is this actually needed?
