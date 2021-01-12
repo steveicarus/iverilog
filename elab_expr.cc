@@ -5588,31 +5588,38 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 	    NetExpr*ex;
 	    if (base_c->value().is_defined()) {
 		  long lsv = base_c->value().as_long();
+		  long offset = 0;
+		    // Get the signal range.
+		  const vector<netrange_t>&packed = net->sig()->packed_dims();
+		  ivl_assert(*this, packed.size() == prefix_indices.size()+1);
+
+		    // We want the last range, which is where we work.
+		  const netrange_t&rng = packed.back();
+		  if (rng.get_msb() > rng.get_lsb()) {
+			offset = -wid + 1;
+		  }
+
+		  long rel_base = net->sig()->sb_to_idx(prefix_indices, lsv);
 
 		    // If the part select covers exactly the entire
 		    // vector, then do not bother with it. Return the
 		    // signal itself.
-		  if (net->sig()->sb_to_idx(prefix_indices,lsv) == (signed) (wid-1) &&
-		      wid == net->vector_width()) {
+		  if (rel_base == (long) (wid-1) && wid == net->vector_width()) {
 			delete base;
 			net->cast_signed(false);
 			return net;
 		  }
 
-		  long offset = 0;
-		  if (net->msi() > net->lsi()) {
-			offset = -wid + 1;
-		  }
 		    // Otherwise, make a part select that covers the right
 		    // range.
-		  ex = new NetEConst(verinum(net->sig()->sb_to_idx(prefix_indices,lsv) + offset));
+		  rel_base += offset;
+		  ex = new NetEConst(verinum(rel_base));
 		  if (warn_ob_select) {
-			long rel_base = net->sig()->sb_to_idx(prefix_indices,lsv) + offset;
 			if (rel_base < 0) {
 			      cerr << get_fileline() << ": warning: "
 			           << net->name();
 			      if (net->word_index()) cerr << "[]";
-			      cerr << "[" << lsv << "+:" << wid
+			      cerr << "[" << lsv << "-:" << wid
 			           << "] is selecting before vector." << endl;
 			}
 			if (rel_base + wid > net->vector_width()) {
@@ -5643,7 +5650,11 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 	    return ss;
       }
 
-      base = normalize_variable_base(base, net->msi(), net->lsi(), wid, false);
+      ivl_assert(*this, prefix_indices.size()+1 == net->sig()->packed_dims().size());
+
+	// Convert the non-constant part select index expression into
+	// an expression that returns a canonical base.
+      base = normalize_variable_part_base(prefix_indices, base, net->sig(), wid, false);
 
       NetESelect*ss = new NetESelect(net, base, wid, IVL_SEL_IDX_DOWN);
       ss->set_line(*this);
