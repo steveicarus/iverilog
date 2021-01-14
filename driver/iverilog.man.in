@@ -1,4 +1,4 @@
-.TH iverilog 1 "Aug 10th, 2020" "" "Version %M.%n%E"
+.TH iverilog 1 "Jan 14th, 2021" "" "Version %M.%n%E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -583,8 +583,12 @@ The following macros are predefined by the compiler:
 This is always defined when compiling with Icarus Verilog.
 
 .TP 8
+.B __ICARUS_SYNTH__ = 1
+This is defined when synthesis is enabled.
+
+.TP 8
 .B __VAMS_ENABLE__ = 1
-This is defined if Verilog\-AMS is enabled.
+This is defined when Verilog\-AMS is enabled.
 
 .SH ENVIRONMENT
 .PP
@@ -633,7 +637,7 @@ Tips on using, debugging, and developing the compiler can be found at
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002\-2020 Stephen Williams
+Copyright \(co  2002\-2021 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

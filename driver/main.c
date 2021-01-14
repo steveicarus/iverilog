@@ -1116,8 +1116,6 @@ int main(int argc, char **argv)
       }
 
       fprintf(defines_file, "D:__ICARUS__=1\n");
-      if (strcmp(gen_verilog_ams,"verilog-ams") == 0)
-	    fprintf(defines_file, "D:__VAMS_ENABLE__=1\n");
 
 	/* Create another temporary file for passing configuration
 	   information to ivl. */
@@ -1300,6 +1298,11 @@ int main(int argc, char **argv)
 		  return 1;
 	    }
       }
+
+      if (strcmp(gen_verilog_ams,"verilog-ams") == 0)
+	    fprintf(defines_file, "D:__VAMS_ENABLE__=1\n");
+      if (synth_flag)
+	    fprintf(defines_file, "D:__ICARUS_SYNTH__=1\n");
 
       if (vpi_dir == 0)
 	    vpi_dir = base;
