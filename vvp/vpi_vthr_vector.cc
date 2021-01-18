@@ -247,6 +247,8 @@ int __vpiVThrStrStack::vpi_get(int code)
 	  case _vpiFromThr:
 	    return _vpiString;
 #endif
+	  case vpiSize:
+	    return vthread_get_str_stack(vpip_current_vthread, depth_).size();
 	  default:
 	    return 0;
       }
