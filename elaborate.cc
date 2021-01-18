@@ -3371,7 +3371,8 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
       assert(scope);
 
       if (debug_elaborate)
-	    cerr << get_fileline() << ": debug: Elaborate condition statement"
+	    cerr << get_fileline() << ":  PCondit::elaborate: "
+		 << "Elaborate condition statement"
 		 << " with conditional: " << *expr_ << endl;
 
 	// Elaborate and try to evaluate the conditional expression.

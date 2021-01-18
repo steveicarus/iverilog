@@ -621,7 +621,7 @@ unsigned PEBComp::test_width(Design*des, NetScope*scope, width_mode_t&)
       }
 
       if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: "
+	    cerr << get_fileline() << ": PEBComp::test_width: "
 		 << "Comparison expression operands are "
 		 << l_type << " " << l_width << " bits and "
 		 << r_type << " " << r_width << " bits. Resorting to "
@@ -668,6 +668,17 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
       ivl_assert(*this, left_);
       ivl_assert(*this, right_);
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEBComp::elaborate_expr: "
+		 << "Left expression: " << *left_ << endl;
+	    cerr << get_fileline() << ": PEBComp::elaborate_expr: "
+		 << "Right expression: " << *right_ << endl;
+	    cerr << get_fileline() << ": PEBComp::elaborate_expr: "
+		 << "op_: " << human_readable_op(op_)
+		 << ", expr_wid=" << expr_wid
+		 << ", flags=0x" << hex << flags << dec << endl;
+      }
+
         // Propagate the comparison type (signed/unsigned) down to
         // the operands.
       if (type_is_vectorable(left_->expr_type()) && !left_->has_sign())
@@ -676,7 +687,16 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 	    left_->cast_signed(false);
 
       NetExpr*lp =  left_->elaborate_expr(des, scope, l_width_, flags);
+      if (lp && debug_elaborate) {
+	    cerr << get_fileline() << ": PEBComp::elaborate_expr: "
+		 << "Elaborated left_: " << *lp << endl;
+      }
       NetExpr*rp = right_->elaborate_expr(des, scope, r_width_, flags);
+      if (rp && debug_elaborate) {
+	    cerr << get_fileline() << ": PEBComp::elaborate_expr: "
+		 << "Elaborated right_: " << *rp << endl;
+      }
+
       if ((lp == 0) || (rp == 0)) {
 	    delete lp;
 	    delete rp;
@@ -1255,152 +1275,149 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
       return expr_width_;
 }
 
-unsigned PECallFunction::test_width(Design*des, NetScope*scope,
-                                    width_mode_t&mode)
+/*
+ * Get the function definition from the scope that we believe to be a
+ * function. If it is not, return 0. If it is, handle the special case that we
+ * may be still elaborating things. For example:
+ *
+ *    localparam foo = func(...)
+ *
+ * In this case, the function is not necessarily elaborated yet, and we need
+ * to force enough elaboration that we can get a definition.
+ */
+static NetFuncDef* find_function_definition(Design*des, NetScope*scope,
+					    NetScope*func)
 {
-      if (peek_tail_name(path_)[0] == '$')
-	    return test_width_sfunc_(des, scope, mode);
-
-	// The width of user defined functions depends only on the
-	// width of the return value. The arguments are entirely
-	// self-determined.
-      NetFuncDef*def = des->find_function(scope, path_);
-      if (def == 0) {
-	      // If this is an access function, then the width and
-	      // type are known by definition.
-	    if (find_access_function(path_)) {
-		  expr_type_   = IVL_VT_REAL;
-		  expr_width_  = 1;
-		  min_width_   = 1;
-                  signed_flag_ = true;
-
-		  return expr_width_;
+      if (func && (func->type() == NetScope::FUNC)) {
+	    if (func->elab_stage() < 2) {
+		  func->need_const_func(true);
+		  const PFunction*pfunc = func->func_pform();
+		  assert(pfunc);
+		  pfunc->elaborate_sig(des, func);
 	    }
-
-	    if (test_width_method_(des, scope, mode)) {
-		  if (debug_elaborate)
-			cerr << get_fileline() << ": PECallFunction::" << __func__ << ": "
-			     << "test_width of method returns width " << expr_width_
-			     << ", type=" << expr_type_
-			     << "." << endl;
-		  return expr_width_;
-	    }
-
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": PECallFunction::" << __func__ << ": "
-		       << "test_width cannot find definition of " << path_
-		       << " in " << scope_path(scope) << "." << endl;
-	    return 0;
+	    return func->func_def();
       }
-
-      NetScope*dscope = def->scope();
-      assert(dscope);
-
-      if (NetNet*res = dscope->find_signal(dscope->basename())) {
-	    expr_type_   = res->data_type();
-	    expr_width_  = res->vector_width();
-            min_width_   = expr_width_;
-            signed_flag_ = res->get_signed();
-
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": " << __func__ << ": "
-		       << "test_width of function returns width " << expr_width_
-		       << ", type=" << expr_type_
-		       << "." << endl;
-
-	    return expr_width_;
-      }
-
-      ivl_assert(*this, 0);
       return 0;
 }
 
 unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
-					    width_mode_t&)
+					    symbol_search_results&search_results,
+					    width_mode_t&mode)
 {
       if (!gn_system_verilog())
 	    return 0;
 
-	// This is only useful if the path is at least 2 elements. For
-	// example, foo.bar() is a method, bar() is not.
-      if (path_.size() < 2)
-	    return 0;
-
-      perm_string member_name;
-      pform_name_t use_path = path_;
-      perm_string method_name = peek_tail_name(use_path);
-      use_path.pop_back();
-
       if (debug_elaborate) {
-	    cerr << get_fileline() << ": " << __func__ << ": "
-		 << "use_path=" << use_path
-		 << ", method_name=" << method_name
-		 << endl;
+	    cerr << get_fileline() << ": PECallFunction::test_width_method_: "
+		 << "search_results.path_item: " << search_results.path_item << endl;
+	    cerr << get_fileline() << ": PECallFunction::test_width_method_: "
+		 << "search_results.path_tail: " << search_results.path_tail << endl;
+	    if (search_results.net)
+		  cerr << get_fileline() << ": PECallFunction::test_width_method_: "
+		       << "search_results.net->data_type: " << search_results.net->data_type() << endl;
+	    if (search_results.net && search_results.net->net_type())
+		  cerr << get_fileline() << ": PECallFunction::test_width_method_: "
+		       << "search_results.net->net_type: " << *search_results.net->net_type() << endl;
       }
 
-      NetNet *net = 0;
-      const NetExpr *par;
-      ivl_type_t par_type = 0;
-      NetEvent *eve;
-
-      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
-
-      if (debug_elaborate && net!=0) {
-	    cerr << get_fileline() << ": " << __func__ << ": "
-		 << "net=" << net->name() << endl;
-	    cerr << get_fileline() << ": " << __func__ << ": "
-		 << "net->data_type()=" << net->data_type() << endl;
-	    if (net->net_type())
-		  cerr << get_fileline() << ": " << __func__ << ": "
-		       << "net->net_type()=" << *net->net_type() << endl;
-      }
-
-      const netdarray_t*use_darray = 0;
-
-      if (net != 0)
-	    use_darray = net->darray_type();
-
-	// Net is not found, but maybe it is a member of a
-	// struct or class. Try to locate net without the member
-	// name and test if it is a type that has members.
-      if (net == 0 && use_path.size() >= 2) {
-	    pform_name_t tmp_path = use_path;
-	    member_name = peek_tail_name(tmp_path);
-	    tmp_path.pop_back();
-
-	    net = 0;
-	    symbol_search(this, des, scope, tmp_path,
-			  net, par, eve, par_type);
-	    if (net && net->class_type()) {
-		  if (debug_elaborate) {
-			cerr << get_fileline() << ": PECallFunction::test_width_method_: "
-			     << "Found net=" << tmp_path
-			     << ", member_name=" << member_name
-			     << ", method_name=" << method_name
-			     << endl;
-		  }
-
-		  const netclass_t* class_type = net->class_type();
-		  int midx = class_type->property_idx_from_name(member_name);
-		  ivl_type_t  member_type = 0;
-		  if (midx >= 0) member_type = class_type->get_prop_type(midx);
-
-		  use_darray = dynamic_cast<const netdarray_t*> (member_type);
-
-	    } else {
-		  member_name = perm_string();
-		  net = 0;
+      // Don't support multiple chained methods yet.
+      if (search_results.path_tail.size() > 1) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PECallFunction::test_width_method_: "
+		       << "Chained path tail (" << search_results.path_tail
+		       << ") not supported." << endl;
 	    }
+	    return 0;
       }
 
-	// After all, no sign of a net match. Give up.
-      if (net == 0)
+      ivl_assert(*this, search_results.path_tail.size() == 1);
+      perm_string method_name = search_results.path_tail.back().name;
+
+      // Dynamic array variable without a select expression. The method
+      // applies to the array itself, and not to the object that might be
+      // indexed from it. So return
+      // the expr_width for the return value of the queue method. For example:
+      //    <scope>.x.size();
+      // In this example, x is a dynamic array.
+      if (search_results.net && search_results.net->data_type()==IVL_VT_DARRAY
+	  && search_results.path_item.index.empty()) {
+
+	    NetNet*net = search_results.net;
+	    const netdarray_t*darray = net->darray_type();
+	    ivl_assert(*this, darray);
+
+	    if (method_name == "size") {
+		  expr_type_  = IVL_VT_BOOL;
+		  expr_width_ = 32;
+		  min_width_  = expr_width_;
+		  signed_flag_= true;
+		  return expr_width_;
+	    }
+
 	    return 0;
+      }
 
-	// Look for built in string attributes.
-      if (net->data_type()==IVL_VT_STRING) {
+      // Queue variable without a select expression. The method applies to the
+      // queue, and not to the object that might be indexed from it. So return
+      // the expr_width for the return value of the queue method. For example:
+      //    <scope>.x.size();
+      // In this example, x is a queue.
+      if (search_results.net && search_results.net->data_type()==IVL_VT_QUEUE
+	  && search_results.path_item.index.empty()) {
 
-	    if (method_name == "len") {
+	    NetNet*net = search_results.net;
+	    const netdarray_t*darray = net->darray_type();
+	    ivl_assert(*this, darray);
+
+	    if (method_name == "size") {
+		  expr_type_  = IVL_VT_BOOL;
+		  expr_width_ = 32;
+		  min_width_  = expr_width_;
+		  signed_flag_= true;
+		  return expr_width_;
+	    }
+
+	    if (method_name=="pop_back" || method_name=="pop_front") {
+		  expr_type_  = darray->element_base_type();
+		  expr_width_ = darray->element_width();
+		  min_width_  = expr_width_;
+		  signed_flag_= darray->get_signed();
+		  return expr_width_;
+	    }
+
+	    return 0;
+      }
+
+      // Queue variable with a select expression. The type of this expression
+      // is the type of the object that will interpret the method. For
+      // example:
+      //    <scope>.x[e].len()
+      // If for example x is a queue of strings, then x[e] is a string and
+      // x[e].len() is the length of the string.
+      if (search_results.net
+	  && (search_results.net->data_type()==IVL_VT_QUEUE || search_results.net->data_type()==IVL_VT_DARRAY)
+	  && search_results.path_item.index.size()) {
+
+	    NetNet*net = search_results.net;
+	    const netdarray_t*darray = net->darray_type();
+	    ivl_assert(*this, darray);
+
+	    if (darray->element_base_type()==IVL_VT_STRING && method_name=="atohex") {
+		  expr_type_  = IVL_VT_BOOL;
+		  expr_width_ = integer_width;
+		  min_width_  = integer_width;
+		  signed_flag_ = true;
+		  return expr_width_;
+	    }
+
+	    if (darray->element_base_type()==IVL_VT_STRING && method_name=="atoi") {
+		  expr_type_  = IVL_VT_BOOL;
+		  expr_width_ = integer_width;
+		  min_width_  = integer_width;
+		  return expr_width_;
+	    }
+
+	    if (darray->element_base_type()==IVL_VT_STRING && method_name=="len") {
 		  expr_type_  = IVL_VT_BOOL;
 		  expr_width_ = 32;
 		  min_width_  = 32;
@@ -1409,38 +1426,11 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 	    }
       }
 
-	// function int size()
-      if (use_darray && method_name == "size") {
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": PECallFunction::test_width_method_: "
-		       << "Match darray size() method." << endl;
-	    }
+      // Enumeration variable. Check for the various enumeration methods.
+      if (search_results.net && search_results.net->enumeration()) {
+	    NetNet*net = search_results.net;
+	    const netenum_t*enum_type = net->enumeration();
 
-	    expr_type_  = IVL_VT_BOOL;
-	    expr_width_ = 32;
-	    min_width_  = expr_width_;
-	    signed_flag_= true;
-	    return expr_width_;
-      }
-
-      if (use_darray && (method_name == "pop_back" || method_name=="pop_front")) {
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": PECallFunction::test_width_method_: "
-		       << "Detected " << method_name << " method"
-		       << " of dynamic arrays." << endl;
-	    }
-
-	    expr_type_  = use_darray->element_base_type();
-	    expr_width_ = use_darray->element_width();
-	    min_width_  = expr_width_;
-	    signed_flag_= false;
-
-	    return expr_width_;
-      }
-
-      // If the net is an enumeration, and the method is one of the standard
-      // methods, then we know the size.
-      if (const netenum_t*enum_type = net->enumeration()) {
 	    if (method_name=="first" || method_name=="last"
 		|| method_name=="prev" || method_name=="next") {
 		  expr_type_  = IVL_VT_BOOL;
@@ -1463,34 +1453,194 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 		  signed_flag_= false;
 		  return expr_width_;
 	    }
+	    return 0;
       }
 
-      if (const netclass_t*class_type = net->class_type()) {
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": PECallFunction::test_width_method_: "
-		       << "Try to find method " << method_name
-		       << " of class " << class_type->get_name() << endl;
-	    }
+      // Class variables. In this case, the search found the class instance,
+      // and the scope is the scope where the instance lives. The class method
+      // in turn defines it's own scope. Use that to find the return value.
+      if (search_results.net && search_results.net->data_type()==IVL_VT_CLASS) {
+	    NetNet*net = search_results.net;
+	    const netclass_t*class_type = net->class_type();
+	    ivl_assert(*this, class_type);
+	    NetScope*method = class_type->method_from_name(method_name);
 
-	    NetScope*func = class_type->method_from_name(method_name);
-	    if (func == 0) {
+	    if (method == 0) {
 		  return 0;
 	    }
 
-	      // Get the function result size be getting the details
-	      // from the variable in the function scope that has the
-	      // name of the function.
-	    if (NetNet*res = func->find_signal(method_name)) {
-		  expr_type_ = res->data_type();
-		  expr_width_= res->vector_width();
-		  min_width_ = expr_width_;
-		  signed_flag_ = res->get_signed();
-		  return expr_width_;
-	    } else {
-		  ivl_assert(*this, 0);
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PECallFunction::test_width_method_: "
+		       << "Found method " << scope_path(method) << "(...)" << endl;
 	    }
+
+	    // Get the return value of the method function.
+	    if (NetNet*res = method->find_signal(method->basename())) {
+		  expr_type_   = res->data_type();
+		  expr_width_  = res->vector_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = res->get_signed();
+
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PECallFunction::test_width_method_: "
+			     << "test_width of class method returns width " << expr_width_
+			     << ", type=" << expr_type_
+			     << "." << endl;
+		  }
+		  return expr_width_;
+	    }
+	    return 0;
       }
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PECallFunction::test_width_method_: "
+		 << "I give up." << endl;
+      }
+      return 0;
+}
+
+unsigned PECallFunction::test_width(Design*des, NetScope*scope,
+                                    width_mode_t&mode)
+{
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PECallFunction::test_width: "
+		 << "path_: " << path_ << endl;
+	    cerr << get_fileline() << ": PECallFunction::test_width: "
+		 << "mode: " << width_mode_name(mode) << endl;
+      }
+
+      if (peek_tail_name(path_)[0] == '$')
+	    return test_width_sfunc_(des, scope, mode);
+
+      // Search for the symbol. This should turn up a scope.
+      symbol_search_results search_results;
+      bool search_flag = symbol_search(this, des, scope, path_, &search_results);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PECallFunction::test_width: "
+		 << "search_flag: " << (search_flag? "true" : "false") << endl;
+	    if (search_results.scope)
+		  cerr << get_fileline() << ": PECallFunction::test_width: "
+		       << "search_results.scope: " << scope_path(search_results.scope) << endl;
+	    if (search_results.net)
+		  cerr << get_fileline() << ": PECallFunction::test_width: "
+		       << "search_results.net: " << search_results.net->name() << endl;
+	    cerr << get_fileline() << ": PECallFunction::test_width: "
+		 << "search_results.path_item: " << search_results.path_item << endl;
+	    cerr << get_fileline() << ": PECallFunction::test_width: "
+		 << "search_results.path_tail: " << search_results.path_tail << endl;
+      }
+
+      // Nothing found? Return nothing.
+      if (!search_flag) {
+	    expr_width_ = 0;
+	    min_width_ = 0;
+	    signed_flag_ = false;
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PECallFunction::test_width: "
+		       << "Not found, returning nil width results." << endl;
+	    }
+	    return expr_width_;
+      }
+
+      // Catch the special case that this is not a scope, but that we
+      // are in fact in a function calling ourself recursively. For
+      // example:
+      //
+      //   function integer factoral;
+      //      input integer n;
+      //      begin
+      //        if (n > 1)
+      //          factorial = n * factorial(n-1); <== HERE
+      //        else
+      //          factorial = n;
+      //      end
+      //    endfunction
+      //
+      // In this case, the call to factorial within itself will find the
+      // net "factorial", but we can notice that the scope is a function
+      // with the same name as the function.
+      if (test_function_return_value(search_results)) {
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PECallFunction::test_width: "
+		       << "Net " << search_results.net->name()
+		       << " is actually a function call to " << scope_path(search_results.scope)
+		       << "." << endl;
+	    }
+
+	    NetNet*res = search_results.net;
+	    expr_type_   = res->data_type();
+	    expr_width_  = res->vector_width();
+            min_width_   = expr_width_;
+            signed_flag_ = res->get_signed();
+
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": PECallFunction::test_width: "
+		       << "test_width of function returns width " << dec << expr_width_
+		       << ", type=" << expr_type_
+		       << "." << endl;
+
+	    return expr_width_;
+
+      }
+
+      // If the symbol is found, but is not a scope...
+      if (!search_results.is_scope()) {
+
+	    if (!search_results.path_tail.empty()) {
+		  return test_width_method_(des, scope, search_results, mode);
+	    }
+
+	    // I don't know what to do about this.
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PECallFunction::test_width: "
+		       << "I don't know how to handle non-scopes here." << endl;
+	    }
+	    return 0;
+      }
+
+
+      NetFuncDef*def = find_function_definition(des, scope, search_results.scope);
+      if (def == 0) {
+	    // If this is an access function, then the width and
+	    // type are known by definition.
+	    if (find_access_function(path_)) {
+		  expr_type_   = IVL_VT_REAL;
+		  expr_width_  = 1;
+		  min_width_   = 1;
+                  signed_flag_ = true;
+
+		  return expr_width_;
+	    }
+
+	    // I don't know what to do about this.
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PECallFunction::test_width: "
+		       << "Scope is not a function." << endl;
+	    }
+	    return 0;
+      }
+
+      NetScope*dscope = def->scope();
+      assert(dscope);
+
+      if (NetNet*res = dscope->find_signal(dscope->basename())) {
+	    expr_type_   = res->data_type();
+	    expr_width_  = res->vector_width();
+            min_width_   = expr_width_;
+            signed_flag_ = res->get_signed();
+
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": PECallFunction::test_width: "
+		       << "test_width of function returns width " << expr_width_
+		       << ", type=" << expr_type_
+		       << "." << endl;
+
+	    return expr_width_;
+      }
+
+      ivl_assert(*this, 0);
       return 0;
 }
 
@@ -2429,6 +2579,17 @@ NetExpr* PECallFunction::elaborate_expr_pkg_(Design*des, NetScope*scope,
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					unsigned expr_wid, unsigned flags) const
 {
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
+		 << "path_: " << path_ << endl;
+	    cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
+		 << "expr_wid: " << expr_wid << endl;
+	    if (package_)
+		  cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
+		       << "package_: " << package_->pscope_name()
+		       << " at " << package_->get_fileline() << endl;
+      }
+
       if (package_)
 	    return elaborate_expr_pkg_(des, scope, expr_wid, flags);
 
@@ -2437,7 +2598,69 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       if (peek_tail_name(path_)[0] == '$')
 	    return elaborate_sfunc_(des, scope, expr_wid, flags);
 
-      NetFuncDef*def = des->find_function(scope, path_);
+      // Search for the symbol. This should turn up a scope.
+      symbol_search_results search_results;
+      bool search_flag = symbol_search(this, des, scope, path_, &search_results);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
+		 << "search_flag: " << (search_flag? "true" : "false") << endl;
+	    if (search_results.scope)
+		  cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
+		       << "search_results.scope: " << scope_path(search_results.scope) << endl;
+	    if (search_results.net)
+		  cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
+		       << "search_results.net: " << search_results.net->name() << endl;
+	    if (search_results.par_val)
+		  cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
+		       << "search_results.par_val: " << *search_results.par_val << endl;
+	    cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
+		 << "search_results.path_item: " << search_results.path_item << endl;
+	    cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
+		 << "search_results.path_tail: " << search_results.path_tail << endl;
+      }
+
+      // If the symbol is not found at all...
+      if (!search_flag) {
+	    cerr << get_fileline() << ": error: No function named `" << path_
+		 << "' found in this context (" << scope_path(scope) << ")."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      // If the symbol is found, but is not a scope...
+      if (! search_results.is_scope() && !test_function_return_value(search_results)) {
+
+	    // Maybe this is a method of an object? Give it a try.
+	    if (!search_results.path_tail.empty()) {
+		  NetExpr*tmp = elaborate_expr_method_(des, scope, search_results, expr_wid);
+		  if (tmp) {
+			if (debug_elaborate) {
+			      cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
+				   << "Elaborated method: " << *tmp << endl;
+			}
+			return tmp;
+		  } else {
+			cerr << get_fileline() << ": error: "
+			     << "Object " << scope_path(search_results.scope)
+			     << "." << search_results.path_item
+			     << " has no method \"" << search_results.path_tail
+			     << "(...)\"." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+	    }
+
+	    cerr << get_fileline() << ": error: Object " << search_results.path_item
+		 << " in " << scope_path(search_results.scope)
+		 << " is not a function." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      // If the symbol is found, but is not a _function_ scope...
+      NetFuncDef*def = search_results.scope->func_def();
       if (def == 0) {
 	      // Not a user defined function. Maybe it is an access
 	      // function for a nature? If so then elaborate it that
@@ -2446,13 +2669,6 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	    if (access_nature)
 		  return elaborate_access_func_(des, scope, access_nature,
                                                 expr_wid);
-
-	      // Maybe this is a method attached to a signal? If this
-	      // is SystemVerilog then try that possibility.
-	    if (gn_system_verilog()) {
-		  NetExpr*tmp = elaborate_expr_method_(des, scope, expr_wid);
-		  if (tmp) return tmp;
-	    }
 
 	      // Nothing was found so report this as an error.
 	    cerr << get_fileline() << ": error: No function named `" << path_
@@ -2463,18 +2679,33 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       }
 
       ivl_assert(*this, def);
-      NetScope*dscope = def->scope();
-      ivl_assert(*this, dscope);
+      ivl_assert(*this, def->scope() == search_results.scope);
+      NetScope*dscope = search_results.scope;
 
-       /* In SystemVerilog a method calling another method in the
-        * current class needs to be elaborated as a method with an
-        * implicit this added.  */
+      // In SystemVerilog, a method calling another method in the current
+      // class needs to be elaborated as a method with an implicit "this"
+      // added. This is a special case. If we detect this case, then
+      // synthesize a new symbol_search_results thast properly reflects the
+      // implicit "this", and treat this item as a class method.
       if (gn_system_verilog() && (path_.size() == 1)) {
            const NetScope *c_scope = scope->get_class_scope();
            if (c_scope && (c_scope == dscope->get_class_scope())) {
-                 NetExpr*tmp = elaborate_expr_method_(des, scope, expr_wid,
-		                                      true);
-                 assert(tmp);
+		 if (debug_elaborate) {
+		       cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
+			    << "Found a class method calling another method." << endl;
+		       cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
+			    << "scope: " << scope_path(scope) << endl;
+		       cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
+			    << "c_scope: " << scope_path(c_scope) << endl;
+		 }
+		 symbol_search_results use_search_results;
+		 use_search_results.scope = scope;
+		 use_search_results.path_tail.push_back(search_results.path_item);
+		 use_search_results.path_item = name_component_t(perm_string::literal(THIS_TOKEN));
+		 use_search_results.net = scope->find_signal(perm_string::literal(THIS_TOKEN));
+		 ivl_assert(*this, use_search_results.net);
+
+		 NetExpr*tmp = elaborate_expr_method_(des, scope, use_search_results, expr_wid);
                  return tmp;
            }
       }
@@ -2695,100 +2926,268 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
       return parm_errors;
 }
 
+/*
+ * Look for a method of a given object. The search_results gives us the
+ * information we need to look into this case: The net is the object that will
+ * have its method applied, and the path_tail is the method we are looking
+ * for. The method name is to be interpreted based on the type of the item. So
+ * for example if the object is:
+ *
+ *     <scope>.x.len()
+ *
+ * Then net refers to object named x, and path_item is "x". The method is
+ * "len" in path_tail, and if x is a string object, we can handle the case.
+ */
 NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
-						unsigned expr_wid,
-						bool add_this_flag) const
+						symbol_search_results&search_results,
+						unsigned expr_wid) const
 {
-      pform_name_t use_path = path_;
-      perm_string method_name = peek_tail_name(use_path);
-      use_path.pop_back();
+      if (!gn_system_verilog()) {
+	    cerr << get_fileline() << ": error: "
+		 << "Enable SystemVerilog to support object methods." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
-	/* Add the implicit this reference when requested. */
-      if (add_this_flag) {
-	    assert(use_path.empty());
-	    use_path.push_front(name_component_t(perm_string::literal(THIS_TOKEN)));
+      if (search_results.path_tail.size() > 1) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "Method name nesting is not supported yet." << endl;
+	    cerr << get_fileline() << ":      : "
+		 << "method path: " << search_results.path_tail << endl;
+	    return 0;
       }
 
       if (debug_elaborate) {
-	    cerr << get_fileline() << ": " << __func__ << ": "
-		 << "use_path: " << use_path << endl;
-	    cerr << get_fileline() << ": " << __func__ << ": "
-		 << "method_name: " << method_name << endl;
-	    cerr << get_fileline() << ": " << __func__ << ": "
-		 << "expr_wid: " << expr_wid << endl;
+	    cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
+		 << "search_results.scope: " << scope_path(search_results.scope) << endl;
+	    cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
+		 << "search_results.path_item: " << search_results.path_item << endl;
+	    cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
+		 << "search_results.path_tail: " << search_results.path_tail << endl;
+	    if (search_results.net)
+		  cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
+		       << "search_results.net->data_type: " << search_results.net->data_type() << endl;
+	    if (search_results.net && search_results.net->net_type())
+		  cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
+		       << "search_results.net->net_type: " << *search_results.net->net_type() << endl;
+	    if (search_results.par_val)
+		  cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
+		       << "search_results.par_val: " << *search_results.par_val << endl;
+	    if (search_results.par_type)
+		  cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
+		       << "search_results.par_type: " << *search_results.par_type << endl;
       }
 
-	// If there is no object to the left of the method name, then
-	// give up on the idea of looking for an object method.
-      if (use_path.empty()) return 0;
-
-      NetNet *net = 0;
-      const NetExpr *par;
-      ivl_type_t par_type;
-      NetEvent *eve;
-
-      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
-
-      if (debug_elaborate) {
-	    if (net) {
-		  cerr << get_fileline() << ": " << __func__ << ": "
-		       << "net: " << net->name() << endl;
-	    }
-	    if (par) {
-		  cerr << get_fileline() << ": " << __func__ << ": "
-		       << "par: " << *par << endl;
-	    }
-	    if (par_type) {
-		  cerr << get_fileline() << ": " << __func__ << ": "
-		       << "par_type: " << *par_type << endl;
-	    }
+      if (search_results.par_val && search_results.par_type) {
+	    return elaborate_expr_method_par_(des, scope, search_results, expr_wid);
       }
 
-      // If we found a net with a method...
-      if (net)
-	    return elaborate_expr_method_net_(des, scope, net, expr_wid);
+      NetExpr* sub_expr = 0;
+      if (search_results.net) {
+	    NetESignal*tmp = new NetESignal(search_results.net);
+	    tmp->set_line(*this);
+	    sub_expr = tmp;
+      }
 
-      // If we found a parameter with a method...
-      if (par)
-	    return elaborate_expr_method_par_(des, scope, par, par_type, expr_wid);
+      // Queue variable with a select expression. The type of this expression
+      // is the type of the object that will interpret the method. For
+      // example:
+      //    <scope>.x[e].len()
+      // If x is a queue of strings, then x[e] is a string. Elaborate the x[e]
+      // expression and pass that to the len() method.
+      if (search_results.net && search_results.net->data_type()==IVL_VT_QUEUE
+	  && search_results.path_item.index.size()==1) {
 
-      return 0;
-}
+	    NetNet*net = search_results.net;
+	    const netdarray_t*darray = net->darray_type();
+	    const index_component_t&use_index = search_results.path_item.index.back();
+	    ivl_assert(*this, use_index.msb != 0);
+	    ivl_assert(*this, use_index.lsb == 0);
+	    
+	    NetExpr*mux = elab_and_eval(des, scope, use_index.msb, -1, false);
+	    if (!mux)
+		  return 0;
 
-NetExpr* PECallFunction::elaborate_expr_method_net_(Design*des, NetScope*scope,
-						    NetNet*net, unsigned expr_wid) const
-{
-      pform_name_t use_path = path_;
-      perm_string method_name = peek_tail_name(use_path);
-      use_path.pop_back();
+	    NetESelect*tmp = new NetESelect(sub_expr, mux, darray->element_width(), darray->element_type());
+	    tmp->set_line(*this);
+	    sub_expr = tmp;
+      }
 
-      if (net->data_type() == IVL_VT_STRING) {
+      if (debug_elaborate && sub_expr) {
+	    cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
+		 << "sub_expr->expr_type: " << sub_expr->expr_type() << endl;
+	    if (sub_expr->net_type())
+		  cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
+		       << "sub_expr->net_type: " << *sub_expr->net_type() << endl;
+      }
+
+      ivl_assert(*this, sub_expr);
+
+      // Dynamic array methods. This handles the case that the located signal
+      // is a dynamic array, and there is no index.
+      if (search_results.net && search_results.net->data_type()==IVL_VT_DARRAY
+	  && search_results.path_item.index.size()==0) {
+
+	    // Get the method name that we are looking for.
+	    perm_string method_name = search_results.path_tail.back().name;
+
+	    if (method_name == "size") {
+		  if (parms_.size() != 0) {
+			cerr << get_fileline() << ": error: size() method "
+			     << "takes no arguments" << endl;
+			des->errors += 1;
+		  }
+		  NetESFunc*sys_expr = new NetESFunc("$size", IVL_VT_BOOL, 32, 1);
+		  sys_expr->set_line(*this);
+		  sys_expr->parm(0, sub_expr);
+		  return sys_expr;
+	    }
+
+	    cerr << get_fileline() << ": error: Method " << method_name
+		 << " is not a dynamic array method." << endl;
+	    return 0;
+      }
+
+      // Queue methods. This handles the case that the located signal is a
+      // QUEUE object, and there is a method.
+      if (search_results.net && search_results.net->data_type()==IVL_VT_QUEUE
+	  && search_results.path_item.index.size()==0) {
+
+	    // Get the method name that we are looking for.
+	    perm_string method_name = search_results.path_tail.back().name;
+
+	    if (method_name == "size") {
+		  if (parms_.size() != 0) {
+			cerr << get_fileline() << ": error: size() method "
+			     << "takes no arguments" << endl;
+			des->errors += 1;
+		  }
+		  NetESFunc*sys_expr = new NetESFunc("$size", IVL_VT_BOOL, 32, 1);
+		  sys_expr->set_line(*this);
+		  sys_expr->parm(0, sub_expr);
+		  return sys_expr;
+	    }
+
+	    if (method_name == "pop_back") {
+		  if (parms_.size() != 0) {
+			cerr << get_fileline() << ": error: pop_back() method "
+			     << "takes no arguments" << endl;
+			des->errors += 1;
+		  }
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_queue_method$pop_back",
+						     expr_type_, expr_width_, 1);
+		  sys_expr->set_line(*this);
+		  sys_expr->parm(0, sub_expr);
+		  return sys_expr;
+	    }
+
+	    if (method_name == "pop_front") {
+		  if (parms_.size() != 0) {
+			cerr << get_fileline() << ": error: pop_front() method "
+			     << "takes no arguments" << endl;
+			des->errors += 1;
+		  }
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_queue_method$pop_front",
+						     expr_type_, expr_width_, 1);
+		  sys_expr->set_line(*this);
+		  sys_expr->parm(0, sub_expr);
+		  return sys_expr;
+	    }
+
+	    cerr << get_fileline() << ": error: Method " << method_name
+		 << " is not a queue method." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      // Enumeration methods.
+      if (search_results.net && search_results.net->enumeration()) {
+
+	    NetNet*net = search_results.net;
+	    const netenum_t*netenum = net->enumeration();
+
+	    // Get the method name that we are looking for.
+	    perm_string method_name = search_results.path_tail.back().name;
+
+	    PExpr*tmp = parms_.size() ? parms_[0] : 0;
+	    return check_for_enum_methods(this, des, scope,
+					  netenum, path_,
+					  method_name, sub_expr,
+					  expr_wid, tmp,
+					  parms_.size());
+      }
+
+      // Class methods. Generate function call to the class method.
+      if (sub_expr->expr_type()==IVL_VT_CLASS) {
+
+	    // Get the method name that we are looking for.
+	    perm_string method_name = search_results.path_tail.back().name;
+
+	    NetNet*net = search_results.net;
+	    const netclass_t*class_type = net->class_type();
+	    ivl_assert(*this, class_type);
+	    NetScope*method = class_type->method_from_name(method_name);
+
+	    if (method == 0) {
+		  cerr << get_fileline() << ": Error: " << method_name
+		       << " is not a method of class " << class_type->get_name()
+		       << "." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    NetFuncDef*def = method->func_def();
+	    ivl_assert(*this, def);
+
+	    NetNet*res = method->find_signal(method->basename());
+	    ivl_assert(*this, res);
+
+	    vector<NetExpr*>parms;
+
+	    NetESignal*ethis = new NetESignal(net);
+	    ethis->set_line(*this);
+	    parms.push_back(ethis);
+
+	    parms.resize(1 + parms_.size());
+	    elaborate_arguments_(des, scope, def, false, parms, 1);
+
+	    NetESignal*eres = new NetESignal(res);
+	    NetEUFunc*call = new NetEUFunc(scope, method, eres, parms, false);
+	    call->set_line(*this);
+	    return call;
+      }
+
+      // String methods.
+      if (sub_expr->expr_type()==IVL_VT_STRING) {
+
+	    // Get the method name that we are looking for.
+	    perm_string method_name = search_results.path_tail.back().name;
 
 	    if (method_name == "len") {
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$len",
 						     IVL_VT_BOOL, 32, 1);
-		  sys_expr->parm(0, new NetESignal(net));
+		  sys_expr->parm(0, sub_expr);
 		  return sys_expr;
 	    }
 
 	    if (method_name == "atoi") {
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atoi",
 						     IVL_VT_BOOL, integer_width, 1);
-		  sys_expr->parm(0, new NetESignal(net));
+		  sys_expr->parm(0, sub_expr);
 		  return sys_expr;
 	    }
 
 	    if (method_name == "atoreal") {
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atoreal",
 						     IVL_VT_REAL, 1, 1);
-		  sys_expr->parm(0, new NetESignal(net));
+		  sys_expr->parm(0, sub_expr);
 		  return sys_expr;
 	    }
 
 	    if (method_name == "atohex") {
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atohex",
 						     IVL_VT_BOOL, integer_width, 1);
-		  sys_expr->parm(0, new NetESignal(net));
+		  sys_expr->parm(0, sub_expr);
 		  return sys_expr;
 	    }
 
@@ -2798,7 +3197,7 @@ NetExpr* PECallFunction::elaborate_expr_method_net_(Design*des, NetScope*scope,
 		  sys_expr->set_line(*this);
 
 		    // First argument is the source string.
-		  sys_expr->parm(0, new NetESignal(net));
+		  sys_expr->parm(0, sub_expr);
 
 		  ivl_assert(*this, parms_.size() == 2);
 		  NetExpr*tmp;
@@ -2813,133 +3212,43 @@ NetExpr* PECallFunction::elaborate_expr_method_net_(Design*des, NetScope*scope,
 
 		  return sys_expr;
 	    }
-      }
 
-      if (const netenum_t*netenum = net->enumeration()) {
-	      // We may need the net expression for the
-	      // enumeration variable so get it.
-	    NetESignal*expr = new NetESignal(net);
-	    expr->set_line(*this);
-	      // This expression cannot be a select!
-	    assert(use_path.back().index.empty());
-
-	    PExpr*tmp = parms_.size() ? parms_[0] : 0;
-	    return check_for_enum_methods(this, des, scope,
-					  netenum, use_path,
-					  method_name, expr,
-					  expr_wid, tmp,
-					  parms_.size());
-      }
-
-      if (net->darray_type()) {
-
-	    if (method_name == "size") {
-		  if (parms_.size() != 0) {
-			cerr << get_fileline() << ": error: size() method "
-			     << "takes no arguments" << endl;
-			des->errors += 1;
-		  }
-		  NetESFunc*sys_expr = new NetESFunc("$size",
-						     IVL_VT_BOOL, 32, 1);
-		  sys_expr->set_line(*this);
-
-		  NetESignal*arg = new NetESignal(net);
-		  arg->set_line(*net);
-
-		  sys_expr->parm(0, arg);
-		  return sys_expr;
-	    }
-      }
-
-      if (net->queue_type()) {
-	    if (method_name == "pop_back") {
-		  if (parms_.size() != 0) {
-			cerr << get_fileline() << ": error: pop_back() method "
-			     << "takes no arguments" << endl;
-			des->errors += 1;
-		  }
-		  NetESFunc*sys_expr = new NetESFunc("$ivl_queue_method$pop_back",
-						     expr_type_,
-						     expr_width_, 1);
-		  sys_expr->set_line(*this);
-
-		  NetESignal*arg = new NetESignal(net);
-		  arg->set_line(*net);
-
-		  sys_expr->parm(0, arg);
-		  return sys_expr;
-	    }
-
-	    if (method_name == "pop_front") {
-		  if (parms_.size() != 0) {
-			cerr << get_fileline() << ": error: pop_front() method "
-			     << "takes no arguments" << endl;
-			des->errors += 1;
-		  }
-		  NetESFunc*sys_expr = new NetESFunc("$ivl_queue_method$pop_front",
-						     expr_type_,
-						     expr_width_, 1);
-		  sys_expr->set_line(*this);
-
-		  NetESignal*arg = new NetESignal(net);
-		  arg->set_line(*net);
-
-		  sys_expr->parm(0, arg);
-		  return sys_expr;
-	    }
-
-      }
-
-      if (const netclass_t*class_type = net->class_type()) {
-	    NetScope*func = class_type->method_from_name(method_name);
-	    if (func == 0) {
-		  return 0;
-	    }
-
-	    NetFuncDef*def = func->func_def();
-	    ivl_assert(*this, def);
-
-	    NetNet*res = func->find_signal(func->basename());
-	    ivl_assert(*this, res);
-
-	    vector<NetExpr*>parms;
-
-	    NetESignal*ethis = new NetESignal(net);
-	    ethis->set_line(*this);
-	    parms.push_back(ethis);
-
-	    parms.resize(1 + parms_.size());
-	    elaborate_arguments_(des, scope, def, false, parms, 1);
-
-	    NetESignal*eres = new NetESignal(res);
-	    NetEUFunc*call = new NetEUFunc(scope, func, eres, parms, false);
-	    call->set_line(*this);
-	    return call;
+	    cerr << get_fileline() << ": error: Method " << method_name
+		 << " is not a string method." << endl;
+	    return 0;
       }
 
       return 0;
 }
 
-NetExpr* PECallFunction::elaborate_expr_method_par_(Design*, NetScope*scope,
-						    const NetExpr*par,
-						    ivl_type_t par_type,
+/*
+ * Handle parameters differently because some must constant elimination is
+ * possible here. We know by definition that the par_val is a constant
+ * expression of some sort (it's a parameter value) and most methods are
+ * stable in the sense that they generate a constant value for a constant input.
+ */
+NetExpr* PECallFunction::elaborate_expr_method_par_(Design*des, NetScope*scope,
+						    symbol_search_results&search_results,
 						    unsigned expr_wid) const
 {
-      pform_name_t use_path = path_;
-      perm_string method_name = peek_tail_name(use_path);
-      use_path.pop_back();
+      ivl_assert(*this, search_results.par_val);
+      ivl_assert(*this, search_results.par_type);
+
+      const NetExpr*par_val = search_results.par_val;
+      ivl_type_t par_type = search_results.par_type;
+      perm_string method_name = search_results.path_tail.back().name;
 
       // If the parameter is of type string, then look for the standard string
-      // method. Return an error if not found. Since we are assured that the
+      // methods. Return an error if not found. Since we are assured that the
       // expression is a constant string, it should be able to calculate the
       // result at compile time.
       if (dynamic_cast<const netstring_t*>(par_type)) {
 
-	    const NetECString*par_string = dynamic_cast<const NetECString*>(par);
-	    ivl_assert(*par, par_string);
+	    const NetECString*par_string = dynamic_cast<const NetECString*>(par_val);
+	    ivl_assert(*par_val, par_string);
 	    string par_value = par_string->value().as_string();
 
-	    if (method_name == "len") {
+	    if (method_name=="len") {
 		  NetEConst*use_val = make_const_val(par_value.size());
 		  use_val->set_line(*this);
 		  return pad_to_width(use_val, expr_wid, *this);
@@ -2978,9 +3287,7 @@ NetExpr* PECallFunction::elaborate_expr_method_par_(Design*, NetScope*scope,
       cerr << get_fileline() << ":      : " << *par_type << endl;
       cerr << get_fileline() << ":      : in scope " << scope_path(scope) << endl;
 
-      // Returning 0 here will cause the caller to print an error message and
-      // increment the error count, so there is no need to increment
-      // des->error_count here.
+      des->errors += 1;
       return 0;
 }
 
@@ -3970,6 +4277,11 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	         << path_ << "' in `" << scope_path(use_scope) << "'" << endl;
 	    des->errors += 1;
 	    return 0;
+      }
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+		 << "Found net " << net->name() << " for expr " << *this << endl;
       }
 
       if (const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype)) {
@@ -6261,23 +6573,22 @@ unsigned PENumber::test_width(Design*, NetScope*, width_mode_t&mode)
       return expr_width_;
 }
 
-NetExpr* PENumber::elaborate_expr(Design*des, NetScope*, ivl_type_t ntype, unsigned) const
+NetExpr* PENumber::elaborate_expr(Design*, NetScope*, ivl_type_t ntype, unsigned) const
 {
-        // Icarus allows dynamic arrays to be initialised with a single value.
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PENumber::elaborate_expr: "
+		 << "expression: " << *this << endl;
+	    if (ntype)
+		  cerr << get_fileline() << ": PENumber::elaborate_expr: "
+		       << "ntype=" << *ntype << endl;
+      }
+
+      // Icarus allows dynamic arrays to be initialised with a single value.
       if (const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype))
             ntype = array_type->element_type();
 
-      const netvector_t*use_type = dynamic_cast<const netvector_t*> (ntype);
-      if (use_type == 0) {
-	    cerr << get_fileline() << ": internal error: "
-		 << "I don't know how cast numbers to this type."
-		 << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
-	// Special case: If the context type is REAL, then cast the
-	// vector value to a real and return a NetECReal.
+      // Special case: If the context type is REAL, then cast the
+      // vector value to a real and return a NetECReal.
       if (ntype->base_type() == IVL_VT_REAL) {
 	    verireal val (value_->as_long());
 	    NetECReal*tmp = new NetECReal(val);
@@ -6286,8 +6597,8 @@ NetExpr* PENumber::elaborate_expr(Design*des, NetScope*, ivl_type_t ntype, unsig
       }
 
       verinum use_val = value();
-      use_val .has_sign( use_type->get_signed() );
-      use_val = cast_to_width(use_val, use_type->packed_width());
+      use_val.has_sign( ntype->get_signed() );
+      use_val = cast_to_width(use_val, ntype->packed_width());
 
       NetEConst*tmp = new NetEConst(use_val);
       tmp->set_line(*this);

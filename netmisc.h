@@ -24,6 +24,93 @@
 class netsarray_t;
 
 /*
+ * Search for a hierarchical name. The input path is one or more name
+ * components (name_component_t) which describe a path to the object. The
+ * simplest case is the path is a single name_component_t. This is the most
+ * usual case. More complex cases might include a string of name components
+ * that end in an item or scope, like this:
+ *
+ *   a.b[1].c
+ *
+ * In this case, the "path input would include a.b.c, with index expressions
+ * on name_component_t for "b". In this case, usually "c" is the found item
+ * and "a" and "b" are scopes that lead up to the item.
+ *
+ * The search will stop when it finds a component in the path that is an
+ * object of some sort (other then a scope. So for example, if a.b is an
+ * array, then the search for a.b[1].c will stop at a.b, leave b[1] in
+ * path_item, and "c" in path_tail. It is up to the caller to then note that
+ * "c" must be a method of some sort.
+ */
+struct symbol_search_results {
+      inline symbol_search_results() {
+	    scope = 0;
+	    net = 0;
+	    par_val = 0;
+	    par_type = 0;
+	    eve = 0;
+      }
+
+      inline bool is_scope() const {
+	    if (net) return false;
+	    if (eve) return false;
+	    if (par_val) return false;
+	    if (scope) return true;
+	    return false;
+      }
+
+      inline bool is_found() const {
+	    if (net) return true;
+	    if (eve) return true;
+	    if (par_val) return true;
+	    if (scope) return true;
+	    return false;
+      }
+
+	// Scope where symbol was located. This is set in all cases,
+	// assuming the search succeeded.
+      NetScope*scope;
+	// If this was a net, the signal itself.
+      NetNet*net;
+	// If this was a parameter, the value expression and the
+	// optional value dimensions.
+      const NetExpr*par_val;
+      ivl_type_t par_type;
+	// If this is a named event, ...
+      NetEvent*eve;
+
+      // Store bread crumbs of the search here. The path_tail is the parts of
+      // the original path that were not found, or are after an object (and so
+      // are probably members or methods.)
+      pform_name_t path_tail;
+      // The path_item is the final name (possibly before the path_tail items)
+      // that identifies the object. This name may contain index
+      // expressions. Parts of the path left of the path_item name scopes, and
+      // should have all been resolved into the "scope" member above. If the
+      // search result is a scope, then this path_item is also the name of the
+      // scope identified.
+      name_component_t path_item;
+};
+
+/*
+ * Test the search results and return true if this represents a function
+ * return value. That will be the case if the object is a net, the scope
+ * containing the object is a FUNCtion, and the containing scope and the
+ * object have the same name.
+ */
+static inline bool test_function_return_value(const symbol_search_results&search_results)
+{
+      if (!search_results.net) return false;
+      if (search_results.scope->type()!=NetScope::FUNC) return false;
+      if (search_results.net->name() != search_results.scope->basename()) return false;
+      return true;
+}
+
+extern bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
+			  pform_name_t path, struct symbol_search_results*res,
+			  NetScope*start_scope = 0);
+
+/*
  * Search for a symbol using the "start" scope as the starting
  * point. If the path includes a scope part, then locate the
  * scope first.

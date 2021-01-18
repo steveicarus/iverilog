@@ -35,6 +35,7 @@ class NetNet;
 class NetExpr;
 class NetScope;
 class PPackage;
+struct symbol_search_results;
 
 /*
  * The PExpr class hierarchy supports the description of
@@ -932,14 +933,13 @@ class PECallFunction : public PExpr {
 
       NetExpr*elaborate_expr_pkg_(Design*des, NetScope*scope,
 				  unsigned expr_wid, unsigned flags)const;
-      NetExpr*elaborate_expr_method_(Design*des, NetScope*scope,
-				     unsigned expr_wid,
-				     bool add_this_flag = false) const;
-      NetExpr*elaborate_expr_method_net_(Design*des, NetScope*scope,
-					 NetNet*net, unsigned expr_wid) const;
-      NetExpr*elaborate_expr_method_par_(Design*des, NetScope*scope,
-					 const NetExpr *par, ivl_type_t par_type,
-					 unsigned expr_wid) const;
+
+      NetExpr* elaborate_expr_method_(Design*des, NetScope*scope,
+				      symbol_search_results&search_results,
+				      unsigned expr_wid) const;
+      NetExpr* elaborate_expr_method_par_(Design*des, NetScope*scope,
+					  symbol_search_results&search_results,
+					  unsigned expr_wid) const;
 
 
       NetExpr* elaborate_sfunc_(Design*des, NetScope*scope,
@@ -950,6 +950,7 @@ class PECallFunction : public PExpr {
       unsigned test_width_sfunc_(Design*des, NetScope*scope,
 			         width_mode_t&mode);
       unsigned test_width_method_(Design*des, NetScope*scope,
+				  symbol_search_results&search_results,
 				  width_mode_t&mode);
 
       NetExpr*elaborate_base_(Design*des, NetScope*scope, NetScope*dscope,
