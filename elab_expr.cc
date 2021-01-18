@@ -1285,7 +1285,7 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
  * In this case, the function is not necessarily elaborated yet, and we need
  * to force enough elaboration that we can get a definition.
  */
-static NetFuncDef* find_function_definition(Design*des, NetScope*scope,
+static NetFuncDef* find_function_definition(Design*des, NetScope*,
 					    NetScope*func)
 {
       if (func && (func->type() == NetScope::FUNC)) {
@@ -1300,9 +1300,9 @@ static NetFuncDef* find_function_definition(Design*des, NetScope*scope,
       return 0;
 }
 
-unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
+unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 					    symbol_search_results&search_results,
-					    width_mode_t&mode)
+					    width_mode_t&)
 {
       if (!gn_system_verilog())
 	    return 0;
