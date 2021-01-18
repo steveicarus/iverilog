@@ -1,7 +1,7 @@
 #ifndef IVL_PTask_H
 #define IVL_PTask_H
 /*
- * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -156,6 +156,33 @@ class PFunction : public PTaskFunc {
       data_type_t* return_type_;
       Statement *statement_;
       bool is_auto_;
+};
+
+// A let is like a simple function that is expanded in the compiler
+class PLet : public PTaskFunc {
+    public:
+      typedef struct let_port {
+	    data_type_t*type_;
+	    perm_string name_;
+	    list<pform_range_t>*range_;
+	    PExpr*def_;
+
+	    void dump(ostream&, unsigned) const;
+      } let_port_t;
+
+// FIXME: Should the port list be a vector. Check once implemented completely
+      explicit PLet(perm_string name, LexicalScope*parent,
+                    list<let_port_t*>*ports, PExpr*expr);
+      ~PLet();
+
+      void elaborate_sig(Design*des, NetScope*scope) const { (void)des; (void)scope; }
+      void elaborate(Design*des, NetScope*scope) const { (void)des; (void)scope; }
+
+      void dump(ostream&, unsigned) const;
+
+    private:
+      list<let_port_t*>*ports_;
+      PExpr*expr_;
 };
 
 #endif /* IVL_PTask_H */

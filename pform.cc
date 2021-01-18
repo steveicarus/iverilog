@@ -3273,6 +3273,46 @@ void pform_set_param_from_type(const struct vlltype&loc,
            << data_type->get_fileline() <<  "." << endl;
       error_count += 1;
 }
+
+void pform_make_let(const struct vlltype&loc,
+                    perm_string name,
+                    list<PLet::let_port*>*ports,
+                    PExpr*expr)
+{
+      LexicalScope*scope =  pform_peek_scope();
+
+      cerr << loc.get_fileline() << ": sorry: let declarations ("
+           << name << ") are not currently supported." << endl;
+      error_count += 1;
+
+      PLet*res = new PLet(name, scope, ports, expr);
+      FILE_NAME(res, loc);
+
+/*
+      cerr << "Found: ";
+      res->dump(cerr, 0);
+*/
+
+      delete res;
+      delete ports;
+      delete expr;
+}
+
+PLet::let_port_t* pform_make_let_port(data_type_t*data_type,
+                                      perm_string name,
+                                      list<pform_range_t>*range,
+                                      PExpr*def)
+{
+      PLet::let_port_t*res = new PLet::let_port_t;
+
+      res->type_ = data_type;
+      res->name_ = name;
+      res->range_ = range;
+      res->def_ = def;
+
+      return res;
+}
+
 /*
  * Specify paths.
  */

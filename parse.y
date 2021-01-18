@@ -394,6 +394,9 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       LexicalScope::range_t* value_range;
       vector<Module::port_t*>*mports;
 
+      list<PLet::let_port_t*>*let_port_lst;
+      PLet::let_port_t*let_port_itm;
+
       named_number_t* named_number;
       list<named_number_t>* named_numbers;
 
@@ -613,11 +616,13 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
 %type <gate>  gate_instance
 %type <gates> gate_instance_list
+%type <let_port_lst> let_port_list_opt let_port_list
+%type <let_port_itm> let_port_item
 
 %type <pform_name> hierarchy_identifier implicit_class_handle
 %type <expr>  assignment_pattern expression expr_mintypmax
 %type <expr>  expr_primary_or_typename expr_primary
-%type <expr>  class_new dynamic_array_new
+%type <expr>  class_new dynamic_array_new let_default_opt
 %type <expr>  inc_or_dec_expression inside_expression lpvalue
 %type <expr>  branch_probe_expression streaming_concatenation
 %type <expr>  delay_value delay_value_simple
@@ -629,7 +634,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <decl_assignments> list_of_variable_decl_assignments
 
 %type <data_type>  data_type data_type_or_implicit data_type_or_implicit_or_void
-%type <data_type>  simple_type_or_string
+%type <data_type>  simple_type_or_string let_formal_type
 %type <class_type> class_identifier
 %type <struct_member>  struct_union_member
 %type <struct_members> struct_union_member_list
@@ -5169,6 +5174,11 @@ module_item
 	yyerrok;
       }
 
+  | K_let IDENTIFIER let_port_list_opt '=' expression ';'
+      { perm_string tmp2 = lex_strings.make($2);
+        pform_make_let(@1, tmp2, $3, $5);
+      }
+
   /* Maybe this is a discipline declaration? If so, then the lexor
      will see the discipline name as an identifier. We match it to the
      discipline or type name semantically. */
@@ -5422,6 +5432,50 @@ module_item
   | ';'
       { }
 
+  ;
+
+let_port_list_opt
+  : '(' let_port_list ')'
+      { $$ = $2; }
+  | '(' ')'
+      { $$ = 0; }
+  |
+      { $$ = 0; }
+  ;
+
+let_port_list
+  : let_port_item
+      { list<PLet::let_port_t*>*tmp = new list<PLet::let_port_t*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
+  | let_port_list ',' let_port_item
+      { list<PLet::let_port_t*>*tmp = $1;
+        tmp->push_back($3);
+        $$ = tmp;
+      }
+  ;
+
+  // FIXME: What about the attributes?
+let_port_item
+  : attribute_list_opt let_formal_type IDENTIFIER dimensions_opt let_default_opt
+      { perm_string tmp3 = lex_strings.make($3);
+        $$ = pform_make_let_port($2, tmp3, $4, $5);
+      }
+  ;
+
+let_default_opt
+  : '=' expression
+      { $$ = $2; }
+  |
+      { $$ = 0; }
+  ;
+
+let_formal_type
+  : data_type_or_implicit
+      { $$ = $1; }
+  | K_untyped
+      { $$ = 0; }
   ;
 
 module_item_list

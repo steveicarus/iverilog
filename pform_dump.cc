@@ -1144,6 +1144,33 @@ void PFunction::dump(ostream&out, unsigned ind) const
 	    out << setw(ind+2) << "" << "/* NOOP */" << endl;
 }
 
+void PLet::let_port_t::dump(ostream&out, unsigned) const
+{
+      if (type_) out << *type_ << " ";
+      out << name_;
+	// FIXME: This has not been tested and is likely wrong!
+      if (range_) out << " " << range_;
+      if (def_) out << "=" << *def_;
+}
+
+void PLet::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "let ";
+      out << pscope_name();
+      if (ports_) {
+	    out << "(";
+	    typedef std::list<let_port_t*>::const_iterator port_itr_t;
+	    port_itr_t idx = ports_->begin();
+	    (*idx)->dump(out, 0);
+	    for (++idx; idx != ports_->end(); ++idx ) {
+		  out << ", ";
+		  (*idx)->dump(out, 0);
+	    }
+	    out << ")";
+      }
+      out << " = " << *expr_ << ";" << endl;
+}
+
 void PRelease::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "release " << *lval_ << "; /* "
