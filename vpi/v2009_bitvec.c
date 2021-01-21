@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2018  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2018-2021  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@ static PLI_INT32 countbits_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("$countbits() requires at least two arguments.\n");
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -48,6 +49,7 @@ static PLI_INT32 countbits_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("The first argument to $countbits() must be numeric.\n");
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -58,6 +60,7 @@ static PLI_INT32 countbits_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("$countbits() requires at least one control bit "
 	               "argument.\n");
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -67,6 +70,7 @@ static PLI_INT32 countbits_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("Control bit argument %d to $countbits() must "
 		             "be numeric.\n", cb_count);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }
 	    ++cb_count;

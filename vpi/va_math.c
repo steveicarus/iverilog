@@ -2,7 +2,7 @@
  *  Verilog-A math library for Icarus Verilog
  *  http://www.icarus.com/eda/verilog/
  *
- *  Copyright (C) 2007-2014  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2007-2021  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -157,6 +157,7 @@ static void va_error_message(vpiHandle callh, const char *format,
     vpi_printf("%s:%d: error: ", vpi_get_str(vpiFile, callh),
                (int)vpi_get(vpiLineNo, callh));
     vpi_printf(format, name);
+    vpip_set_return_value(1);
     vpi_control(vpiFinish, 1);
 }
 

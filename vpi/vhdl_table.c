@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -108,6 +108,7 @@ static PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*data)
 	               (int)vpi_get(vpiLineNo, sys));
 	    vpi_printf("(compiler error) %s requires a single argument.\n",
 	               attr_func_names[type]);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -143,6 +144,7 @@ static PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*data)
 	    vpi_printf("(compiler error) %s only takes a single argument.\n",
 	               attr_func_names[type]);
 	    vpi_free_object(argv);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 

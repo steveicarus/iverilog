@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,6 +34,7 @@ static PLI_INT32 dobject_size_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a dynamic array, queue or string "
 	               "argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -55,6 +56,7 @@ static PLI_INT32 dobject_size_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s argument must be a dynamic array, queue or "
 		             "string.\n", name);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }
 	    break;
@@ -63,6 +65,7 @@ static PLI_INT32 dobject_size_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s argument must be a dynamic array, queue or string, "
 	               "given a %s.\n", name, vpi_get_str(vpiType, arg));
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -71,6 +74,7 @@ static PLI_INT32 dobject_size_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s has too many arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    vpi_free_object(argv);
       }

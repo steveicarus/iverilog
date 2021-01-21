@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2012-2018  Martin Whitaker. (icarus@martin-whitaker.me.uk)
+ *  Copyright (C) 2012-2021  Martin Whitaker. (icarus@martin-whitaker.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,6 +45,7 @@ static void check_net_arg(vpiHandle arg, vpiHandle callh, const char *name)
                  (int)vpi_get(vpiLineNo, callh));
       vpi_printf("%s's first argument must be a scalar net or "
                  "a bit-select of a vector net.\n", name);
+      vpip_set_return_value(1);
       vpi_control(vpiFinish, 1);
 }
 
@@ -75,6 +76,7 @@ static void check_var_arg(vpiHandle arg, vpiHandle callh, const char *name,
                  (int)vpi_get(vpiLineNo, callh));
       vpi_printf("%s's %s argument must be a variable.\n",
                  name, arg_name);
+      vpip_set_return_value(1);
       vpi_control(vpiFinish, 1);
 }
 
@@ -99,6 +101,7 @@ static PLI_INT32 sys_countdrivers_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires at least one argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }

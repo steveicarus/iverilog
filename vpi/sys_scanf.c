@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -244,6 +244,7 @@ static int scan_format_float(vpiHandle callh, vpiHandle argv,
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s() ran out of variables for %%%c format code.",
 	               name, code);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -309,6 +310,7 @@ static int scan_format_float_time(vpiHandle callh, vpiHandle argv,
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s() ran out of variables for %%t format code.", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -386,6 +388,7 @@ static int scan_format_base(vpiHandle callh, vpiHandle argv,
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s() ran out of variables for %%%c format code.",
 	               name, code);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    free(strval);
 	    return 0;
@@ -445,6 +448,7 @@ static int scan_format_char(vpiHandle callh, vpiHandle argv,
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s() ran out of variables for %%c format code.", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -565,6 +569,7 @@ static int scan_format_decimal(vpiHandle callh, vpiHandle argv,
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s() ran out of variables for %%d format code.", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    free(strval);
 	    return 0;
@@ -624,6 +629,7 @@ static int scan_format_module_path(vpiHandle callh, vpiHandle argv,
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s() ran out of variables for %%m format code.", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -703,6 +709,7 @@ static int scan_format_string(vpiHandle callh, vpiHandle argv,
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s() ran out of variables for %%s format code.", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    free(strval);
 	    return 0;
@@ -774,6 +781,7 @@ static int scan_format_two_state(vpiHandle callh, vpiHandle argv,
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s() ran out of variables for %%u format code.", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -913,6 +921,7 @@ static int scan_format_four_state(vpiHandle callh, vpiHandle argv,
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s() ran out of variables for %%z format code.", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -1203,6 +1212,7 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv,
 			           (int)vpi_get(vpiLineNo, callh));
 			vpi_printf("%s() format code '%%%c' is not "
 			           "currently supported.\n", name, code);
+			vpip_set_return_value(1);
 			vpi_control(vpiFinish, 1);
 			break;
 
@@ -1222,6 +1232,7 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv,
 			           (int)vpi_get(vpiLineNo, callh));
 			vpi_printf("%s() was given an invalid format code: "
 			           "%%%c\n", name, code);
+			vpip_set_return_value(1);
 			vpi_control(vpiFinish, 1);
 			break;
 		  }
@@ -1330,6 +1341,7 @@ static PLI_INT32 sys_fscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires at least three argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -1339,12 +1351,16 @@ static PLI_INT32 sys_fscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's first argument (fd) must be numeric.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    vpi_free_object(argv);
 	    return 0;
       }
 
-      if (sys_check_args(callh, argv, name)) vpi_control(vpiFinish, 1);
+      if (sys_check_args(callh, argv, name)) {
+	    vpip_set_return_value(1);
+	    vpi_control(vpiFinish, 1);
+      }
       return 0;
 }
 
@@ -1391,6 +1407,7 @@ static PLI_INT32 sys_sscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires at least three argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -1410,12 +1427,16 @@ static PLI_INT32 sys_sscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's first argument must be a register or a string.\n",
 	               name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    vpi_free_object(argv);
 	    return 0;
       }
 
-      if (sys_check_args(callh, argv, name)) vpi_control(vpiFinish, 1);
+      if (sys_check_args(callh, argv, name)) {
+	    vpip_set_return_value(1);
+	    vpi_control(vpiFinish, 1);
+      }
       return 0;
 }
 

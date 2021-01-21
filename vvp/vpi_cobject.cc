@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 Picture Elements, Inc.
+ * Copyright (c) 2012-2021 Picture Elements, Inc.
  *    Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -33,14 +33,84 @@ __vpiCobjectVar::__vpiCobjectVar(__vpiScope*sc, const char*na, vvp_net_t*ne)
 int __vpiCobjectVar::get_type_code(void) const
 { return vpiClassVar; }
 
-int __vpiCobjectVar::vpi_get(int)
+int __vpiCobjectVar::vpi_get(int code)
 {
-      return 0;
+      switch (code) {
+	case vpiLineNo:
+	    return 0;  // Not implemented for now!
+
+	case vpiSize:
+	    return 64;
+
+	case vpiConstType:
+	    return vpiNullConst;
+
+	case vpiSigned:
+	    return 0;
+
+	case vpiAutomatic:
+	    return 0;
+
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
+	case _vpiFromThr:
+	    return _vpiNoThr;
+#endif
+
+	default:
+	    fprintf(stderr, "vvp error: get %d not supported "
+	                    "by vpiClassVar\n", code);
+	    assert(0);
+	    return 0;
+      }
 }
 
 void __vpiCobjectVar::vpi_get_value(p_vpi_value val)
 {
-      val->format = vpiSuppressVal;
+// FIXME: We need to get the assigned object address if one is assigned.
+//fprintf(stderr, "HERE: %p\n", get_net());
+      char*rbuf = (char *) need_result_buf(64 + 1, RBUF_VAL);
+
+      switch (val->format) {
+	case vpiObjTypeVal:
+	    val->format = vpiStringVal;
+	    // fall through
+	case vpiBinStrVal:
+	case vpiDecStrVal:
+	case vpiOctStrVal:
+	case vpiHexStrVal:
+	case vpiStringVal:
+	    sprintf(rbuf, "    null");
+	    val->value.str = rbuf;
+	    break;
+
+	case vpiScalarVal:
+	    val->value.scalar = vpi0;
+	    break;
+
+	case vpiIntVal:
+	    val->value.integer = 0;
+	    break;
+
+	case vpiVectorVal:
+	    val->value.vector = (p_vpi_vecval)
+	                        need_result_buf(2*sizeof(s_vpi_vecval),
+	                        RBUF_VAL);
+	    for (unsigned idx = 0; idx < 2; idx += 1) {
+		  val->value.vector[idx].aval = 0;
+		  val->value.vector[idx].bval = 0;
+	    }
+	    break;
+
+	case vpiRealVal:
+	    val->value.real = 0.0;
+	    break;
+
+	default:
+	    fprintf(stderr, "vvp error: format %d not supported "
+	                    "by vpiClassVar\n", (int)val->format);
+	    val->format = vpiSuppressVal;
+	    break;
+      }
 }
 
 vpiHandle vpip_make_cobject_var(const char*name, vvp_net_t*net)

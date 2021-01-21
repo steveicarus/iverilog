@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2012  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2021  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,6 +48,7 @@ static PLI_INT32 task_not_implemented_compiletf(ICARUS_VPI_CONST PLI_BYTE8* name
       vpi_printf("SORRY: %s:%d: task %s() is not currently implemented.\n",
                  vpi_get_str(vpiFile, callh), (int)vpi_get(vpiLineNo, callh),
                  name);
+      vpip_set_return_value(1);
       vpi_control(vpiFinish, 1);
       return 0;
 }
@@ -63,6 +64,7 @@ static PLI_INT32 missing_optional_compiletf(ICARUS_VPI_CONST PLI_BYTE8* name)
       vpi_printf("SORRY: %s:%d: %s() is not available in Icarus Verilog.\n",
                  vpi_get_str(vpiFile, callh), (int)vpi_get(vpiLineNo, callh),
                  name);
+      vpip_set_return_value(1);
       vpi_control(vpiFinish, 1);
       return 0;
 }

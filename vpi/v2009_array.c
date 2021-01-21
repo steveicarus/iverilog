@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2013  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2013-2021  Cary R. (cygcary@yahoo.com)
  *  Copyright (C) 2014  Stephen Williams (steve@icarus.com)
  *  Copyright (C) 2014  CERN
  *  @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -33,6 +33,7 @@ static PLI_INT32 one_array_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires an array argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -45,6 +46,7 @@ static PLI_INT32 one_array_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s has too many arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -90,6 +92,7 @@ static PLI_INT32 array_int_opt_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
             if(argc == MAX_ARGC)
                 vpi_free_object(argv);
 
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 0);
             return 0;
       }
@@ -104,6 +107,7 @@ static PLI_INT32 func_not_implemented_compiletf(ICARUS_VPI_CONST PLI_BYTE8* name
       vpi_printf("SORRY: %s:%d: function %s() is not currently implemented.\n",
                  vpi_get_str(vpiFile, callh), (int)vpi_get(vpiLineNo, callh),
                  name);
+      vpip_set_return_value(1);
       vpi_control(vpiFinish, 1);
       return 0;
 }
@@ -119,6 +123,7 @@ static PLI_INT32 array_get_property(int property, ICARUS_VPI_CONST PLI_BYTE8*nam
             vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s requires an array argument.\n", name);
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
             return 0;
       }
@@ -129,6 +134,7 @@ static PLI_INT32 array_get_property(int property, ICARUS_VPI_CONST PLI_BYTE8*nam
       if(dim != 0) {
           vpi_printf("SORRY: %s:%d: multiple dimensions are not handled yet.\n",
                    vpi_get_str(vpiFile, callh), (int)vpi_get(vpiLineNo, callh));
+	  vpip_set_return_value(1);
           vpi_control(vpiFinish, 1);
       }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2018  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2021  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,6 +44,7 @@ static PLI_INT32 simparam_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name_ext)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("$simparam%s requires a string argument.\n", name_ext);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -55,6 +56,7 @@ static PLI_INT32 simparam_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name_ext)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("The first argument to $simparam%s must be a string.\n",
 	                name_ext);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -69,6 +71,7 @@ static PLI_INT32 simparam_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name_ext)
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("When provided, the second argument to $simparam%s"
 		             "must be a string.\n", name_ext);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }
 	/* For the rest the default must be numeric. */
@@ -78,6 +81,7 @@ static PLI_INT32 simparam_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name_ext)
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("When provided, the second argument to $simparam%s"
 		             "must be numeric.\n", name_ext);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }
       }
@@ -99,6 +103,7 @@ static PLI_INT32 simparam_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name_ext)
 	               msg, name_ext);
             vpi_printf("%*s Found %u extra argument%s.\n",
 	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
       }
 

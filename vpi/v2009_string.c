@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,6 +35,7 @@ static PLI_INT32 one_string_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a string argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -47,6 +48,7 @@ static PLI_INT32 one_string_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s has too many arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }

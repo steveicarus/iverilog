@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,6 +37,7 @@ static PLI_INT32 ivl_enum_method_next_prev_compiletf(ICARUS_VPI_CONST PLI_BYTE8*
 	    vpi_printf("%s:%d: compiler error: ", vpi_get_str(vpiFile, sys),
 	               (int) vpi_get(vpiLineNo,sys));
 	    vpi_printf("No arguments given for enum method %s().\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -48,6 +49,7 @@ static PLI_INT32 ivl_enum_method_next_prev_compiletf(ICARUS_VPI_CONST PLI_BYTE8*
 	               (int) vpi_get(vpiLineNo,sys));
 	    vpi_printf("No enumeration type argument given for enum "
 	               "method %s().\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -57,6 +59,7 @@ static PLI_INT32 ivl_enum_method_next_prev_compiletf(ICARUS_VPI_CONST PLI_BYTE8*
 	    vpi_printf("The first argument to enum method %s() must be an "
 	               "enumeration type, found a %s.\n", name,
 	               vpi_get_str(vpiType, arg_enum));
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -67,6 +70,7 @@ static PLI_INT32 ivl_enum_method_next_prev_compiletf(ICARUS_VPI_CONST PLI_BYTE8*
 	               (int) vpi_get(vpiLineNo,sys));
 	    vpi_printf("No enumeration variable argument given for enum "
 	               "method %s().\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -85,6 +89,7 @@ static PLI_INT32 ivl_enum_method_next_prev_compiletf(ICARUS_VPI_CONST PLI_BYTE8*
 	    vpi_printf("The second argument to enum method %s() must be an "
 	               "enumeration variable, found a %s.\n", name,
 	               vpi_get_str(vpiType, arg_var));
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -116,6 +121,7 @@ static PLI_INT32 ivl_enum_method_next_prev_compiletf(ICARUS_VPI_CONST PLI_BYTE8*
 		  vpi_printf("The second argument to enum method %s() must be "
 		             "numeric, found a %s.\n", name,
 		             vpi_get_str(vpiType, arg_count));
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }
       }
@@ -127,6 +133,7 @@ static PLI_INT32 ivl_enum_method_next_prev_compiletf(ICARUS_VPI_CONST PLI_BYTE8*
 	    vpi_printf("%s:%d: compiler error: ", vpi_get_str(vpiFile, sys),
 	               (int) vpi_get(vpiLineNo,sys));
 	    vpi_printf("Extra argument(s) given to enum method %s().\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -139,6 +146,7 @@ static PLI_INT32 ivl_enum_method_next_prev_compiletf(ICARUS_VPI_CONST PLI_BYTE8*
 	               "the enum variable width (%d).\n", name,
 	               (int) vpi_get(vpiSize, sys),
 	               (int) vpi_get(vpiSize, arg_var));
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -366,6 +374,7 @@ static PLI_INT32 ivl_enum_method_name_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("%s:%d: compiler error: ", vpi_get_str(vpiFile, sys),
 	               (int) vpi_get(vpiLineNo,sys));
 	    vpi_printf("No arguments given for enum method %s().\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -377,6 +386,7 @@ static PLI_INT32 ivl_enum_method_name_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	               (int) vpi_get(vpiLineNo,sys));
 	    vpi_printf("No enumeration type argument given for enum "
 	               "method %s().\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -386,6 +396,7 @@ static PLI_INT32 ivl_enum_method_name_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("The first argument to enum method %s() must be an "
 	               "enumeration type, found a %s.\n", name,
 	               vpi_get_str(vpiType, arg_enum));
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -396,6 +407,7 @@ static PLI_INT32 ivl_enum_method_name_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	               (int) vpi_get(vpiLineNo,sys));
 	    vpi_printf("No enumeration variable argument given for enum "
 	               "method %s().\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -414,6 +426,7 @@ static PLI_INT32 ivl_enum_method_name_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("The second argument to enum method %s() must be an "
 	               "enumeration variable, found a %s.\n", name,
 	               vpi_get_str(vpiType, arg_var));
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -423,6 +436,7 @@ static PLI_INT32 ivl_enum_method_name_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("%s:%d: compiler error: ", vpi_get_str(vpiFile, sys),
 	               (int) vpi_get(vpiLineNo,sys));
 	    vpi_printf("Extra argument(s) given to enum method %s().\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 CERN
+ * Copyright (c) 2015-2021 CERN
  * @author Maciej Suminski <maciej.suminski@cern.ch>
  *
  *    This source code is free software; you can redistribute it
@@ -69,7 +69,10 @@ static int is_integer_var(vpiHandle obj)
     PLI_INT32 type = vpi_get(vpiType, obj);
 
     return (type == vpiIntegerVar || type == vpiShortIntVar ||
-         type == vpiIntVar || type == vpiLongIntVar);
+            type == vpiIntVar || type == vpiLongIntVar ||
+              /* In vlog95 translation this is a signed 32-bit register. */
+            (type == vpiReg && vpi_get(vpiSigned, obj) &&
+             vpi_get(vpiSize, obj) == 32));
 }
 
 static int is_const(vpiHandle obj)
@@ -333,6 +336,7 @@ static PLI_INT32 ivlh_file_open_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
         vpi_printf("%s() function is available in following variants:\n", name);
         vpi_printf("* (file f: text; filename: in string, file_open_kind: in mode)\n");
         vpi_printf("* (status: out file_open_status, file f: text; filename: in string, file_open_kind: in mode)\n");
+	vpip_set_return_value(1);
         vpi_control(vpiFinish, 1);
     }
 
@@ -450,6 +454,7 @@ static PLI_INT32 ivlh_readwriteline_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
     if(argv == 0) {
         show_error_line(callh);
         vpi_printf("%s requires two arguments.\n", name);
+	vpip_set_return_value(1);
         vpi_control(vpiFinish, 1);
         return 0;
     }
@@ -458,6 +463,7 @@ static PLI_INT32 ivlh_readwriteline_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
     if(!arg || !is_integer_var(arg)) {
         show_error_line(callh);
         vpi_printf("%s's first argument must be an integer variable (file handle).\n", name);
+	vpip_set_return_value(1);
         vpi_control(vpiFinish, 1);
     }
 
@@ -465,6 +471,7 @@ static PLI_INT32 ivlh_readwriteline_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
     if(!arg || !is_string_obj(arg)) {
         show_error_line(callh);
         vpi_printf("%s's second argument must be a string.\n", name);
+	vpip_set_return_value(1);
         vpi_control(vpiFinish, 1);
     }
 
@@ -601,6 +608,7 @@ static PLI_INT32 ivlh_read_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
     if(argv == 0) {
         show_error_line(callh);
         vpi_printf("%s requires three arguments.\n", name);
+	vpip_set_return_value(1);
         vpi_control(vpiFinish, 1);
         return 0;
     }
@@ -609,6 +617,7 @@ static PLI_INT32 ivlh_read_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
     if(!arg || !is_string_obj(arg)) {
         show_error_line(callh);
         vpi_printf("%s's first argument must be a string.\n", name);
+	vpip_set_return_value(1);
         vpi_control(vpiFinish, 1);
     }
 
@@ -616,6 +625,7 @@ static PLI_INT32 ivlh_read_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
     if(!arg || is_constant_obj(arg)) {
         show_error_line(callh);
         vpi_printf("%s's second argument must be a variable.\n", name);
+	vpip_set_return_value(1);
         vpi_control(vpiFinish, 1);
         return 0;
     }
@@ -624,6 +634,7 @@ static PLI_INT32 ivlh_read_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
     if(!arg) {
         show_error_line(callh);
         vpi_printf("%s's third argument must be an integer.\n", name);
+	vpip_set_return_value(1);
         vpi_control(vpiFinish, 1);
         return 0;
     }
@@ -771,6 +782,7 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     } else {
         show_error_line(callh);
         vpi_printf("%s failed.\n", name);
+	/*vpip_set_return_value(1);*/
         /*vpi_control(vpiFinish, 1);*/
     }
 
@@ -788,6 +800,7 @@ static PLI_INT32 ivlh_write_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
     if(argv == 0) {
         show_error_line(callh);
         vpi_printf("%s requires three arguments.\n", name);
+	vpip_set_return_value(1);
         vpi_control(vpiFinish, 1);
         return 0;
     }
@@ -796,6 +809,7 @@ static PLI_INT32 ivlh_write_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
     if(!arg || !is_string_obj(arg)) {
         show_error_line(callh);
         vpi_printf("%s's first argument must be a string.\n", name);
+	vpip_set_return_value(1);
         vpi_control(vpiFinish, 1);
     }
 
@@ -803,6 +817,7 @@ static PLI_INT32 ivlh_write_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
     if(!arg) {
         show_error_line(callh);
         vpi_printf("%s requires three arguments.\n", name);
+	vpip_set_return_value(1);
         vpi_control(vpiFinish, 1);
         return 0;
     }
@@ -811,6 +826,7 @@ static PLI_INT32 ivlh_write_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
     if(!arg) {
         show_error_line(callh);
         vpi_printf("%s's third argument must be an integer.\n", name);
+	vpip_set_return_value(1);
         vpi_control(vpiFinish, 1);
         return 0;
     }
@@ -972,6 +988,7 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     } else {
         show_error_line(callh);
         vpi_printf("%s failed.\n", name);
+	/*vpip_set_return_value(1);*/
         /*vpi_control(vpiFinish, 1);*/
     }
 

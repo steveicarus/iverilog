@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2018 Michael Ruff (mruff  at chiaro.com)
+ * Copyright (c) 2003-2021 Michael Ruff (mruff  at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -87,6 +87,7 @@ static void error_message(vpiHandle callh, const char* msg)
     vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                (int)vpi_get(vpiLineNo, callh));
     vpi_printf(msg, vpi_get_str(vpiName, callh));
+    vpip_set_return_value(1);
     vpi_control(vpiFinish, 1);
 }
 

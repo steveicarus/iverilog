@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2014  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2011-2021  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -148,6 +148,7 @@ static PLI_INT32 sys_table_model_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires at least two arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -167,6 +168,7 @@ static PLI_INT32 sys_table_model_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a file name argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -177,6 +179,7 @@ static PLI_INT32 sys_table_model_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s file name argument must be a constant string.\n",
 	               name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -190,6 +193,7 @@ static PLI_INT32 sys_table_model_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 		            (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s control string argument must be a constant "
 		             "string.\n", name);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 		  return 0;
 	    }
@@ -283,6 +287,7 @@ static unsigned parse_extrap(vpiHandle callh, p_table_mod table, unsigned idx,
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("Unknown extrapolation code '%c' for dimension "
 	               "%u: %s\n", **extrap, idx+1, control);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 1;
       }
@@ -318,6 +323,7 @@ static unsigned parse_extrap(vpiHandle callh, p_table_mod table, unsigned idx,
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("Unknown high extrapolation code '%c' for dimension "
 	               "%u: %s\n", **extrap, idx+1, control);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 1;
       }
@@ -365,6 +371,7 @@ static unsigned initialize_control_fields(vpiHandle callh, p_table_mod table,
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("Control string dependent selector is "
 		             "invalid: %s.\n", cp);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 		  return 1;
 	    }
@@ -376,6 +383,7 @@ static unsigned initialize_control_fields(vpiHandle callh, p_table_mod table,
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("Control string dependent value is "
 		             "to large: %lu.\n", val);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 		  return 1;
 	    }
@@ -396,6 +404,7 @@ static unsigned initialize_control_fields(vpiHandle callh, p_table_mod table,
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("Not enough control field(s) (%u) for the dimension(s) "
 	               "(%u).", num_fields, table->dims);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 1;
       }
@@ -462,6 +471,7 @@ static unsigned initialize_control_fields(vpiHandle callh, p_table_mod table,
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("Unknown interpolation code '%c' for dimension "
 		             "%u: %s\n", *cp, idx+1, control);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 		  return 1;
 	    }
@@ -472,6 +482,7 @@ static unsigned initialize_control_fields(vpiHandle callh, p_table_mod table,
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("Extra control characters found for dimension "
 		             "%u: %s\n", idx+1, control);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 		  return 1;
 	    }
@@ -487,6 +498,7 @@ static unsigned initialize_control_fields(vpiHandle callh, p_table_mod table,
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("Usable control field(s) (%u) do not match dimension(s) "
 	               "(%u).", (num_fields - num_ignore), table->dims);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 1;
       }
@@ -662,6 +674,7 @@ static PLI_INT32 sys_table_model_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	/* If this is the first call then build the data structure. */
       if ((table->have_fname == 0) &&
           initialize_table_model(callh, name, table)) {
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }

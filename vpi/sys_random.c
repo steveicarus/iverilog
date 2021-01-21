@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -387,6 +387,7 @@ static unsigned is_seed_obj(vpiHandle obj, vpiHandle callh, const char *name)
 			vpi_printf("%s's seed variable is less than 32 bits "
 			           " (%d).\n", name,
 			           (int)vpi_get(vpiSize, obj));
+			vpip_set_return_value(1);
 			vpi_control(vpiFinish, 1);
 		  } else rtn = 1;
 		  break;
@@ -395,6 +396,7 @@ static unsigned is_seed_obj(vpiHandle obj, vpiHandle callh, const char *name)
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s's seed must be an integer/time"
 		             " variable or a register.\n", name);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
       }
 
@@ -412,6 +414,7 @@ static PLI_INT32 sys_rand_two_args_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires two arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -423,6 +426,7 @@ static PLI_INT32 sys_rand_two_args_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires two arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -435,6 +439,7 @@ static PLI_INT32 sys_rand_two_args_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s second argument must be numeric.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -456,6 +461,7 @@ PLI_INT32 sys_rand_three_args_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires three arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -472,6 +478,7 @@ PLI_INT32 sys_rand_three_args_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires three arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -484,6 +491,7 @@ PLI_INT32 sys_rand_three_args_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s second argument must be numeric.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -493,6 +501,7 @@ PLI_INT32 sys_rand_three_args_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s third argument must be numeric.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -564,6 +573,7 @@ static PLI_INT32 sys_urandom_range_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       /* Check that there are arguments. */
       if (argv == 0) {
             vpi_printf("ERROR: %s requires one or two arguments.\n", name);
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
             return 0;
       }
@@ -579,6 +589,7 @@ static PLI_INT32 sys_urandom_range_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       arg = vpi_scan(argv);
       if (arg != 0) {
             vpi_printf("ERROR: %s takes at most two argument.\n", name);
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
             return 0;
       }

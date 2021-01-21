@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -144,6 +144,7 @@ void check_for_extra_args(vpiHandle argv, vpiHandle callh, const char *name,
 	               opt ? "at most ": "", arg_str);
             vpi_printf("%*s Found %u extra argument%s.\n",
                        (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
       }
 }
@@ -343,6 +344,7 @@ PLI_INT32 sys_no_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
             vpi_printf("%s %s does not take an argument.\n", msg, name);
             vpi_printf("%*s Found %u extra argument%s.\n",
 	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
       }
 
@@ -360,6 +362,7 @@ PLI_INT32 sys_one_numeric_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
             vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s requires a single numeric argument.\n", name);
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
             return 0;
       }
@@ -368,6 +371,7 @@ PLI_INT32 sys_one_numeric_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
             vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s's argument must be numeric.\n", name);
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
       }
 
@@ -390,6 +394,7 @@ PLI_INT32 sys_one_opt_numeric_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
             vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s's argument must be numeric.\n", name);
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
       }
 
@@ -411,6 +416,7 @@ PLI_INT32 sys_two_numeric_args_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
             vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s requires two numeric arguments.\n", name);
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
             return 0;
       }
@@ -419,6 +425,7 @@ PLI_INT32 sys_two_numeric_args_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
             vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s's first argument must be numeric.\n", name);
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
       }
 
@@ -427,6 +434,7 @@ PLI_INT32 sys_two_numeric_args_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
             vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s requires a second (numeric) argument.\n", name);
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
             return 0;
       }
@@ -435,6 +443,7 @@ PLI_INT32 sys_two_numeric_args_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
             vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s's second argument must be numeric.\n", name);
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
       }
 
@@ -455,6 +464,7 @@ PLI_INT32 sys_one_string_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
             vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s requires a single string argument.\n", name);
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
             return 0;
       }
@@ -462,6 +472,7 @@ PLI_INT32 sys_one_string_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
             vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s's argument must be a string.\n", name);
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
       }
 

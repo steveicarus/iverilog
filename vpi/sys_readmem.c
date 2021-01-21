@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -205,6 +205,7 @@ static PLI_INT32 sys_mem_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires two arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -213,6 +214,7 @@ static PLI_INT32 sys_mem_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's first argument must be a file name (string).\n",
 	               name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -222,6 +224,7 @@ static PLI_INT32 sys_mem_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a second (memory) argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -230,6 +233,7 @@ static PLI_INT32 sys_mem_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's second argument must be a memory.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -242,6 +246,7 @@ static PLI_INT32 sys_mem_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's third argument must be a start address "
 	               "(numeric).\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -254,6 +259,7 @@ static PLI_INT32 sys_mem_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's fourth argument must be a finish address "
 	               "(numeric).\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 

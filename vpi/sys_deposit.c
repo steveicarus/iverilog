@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2000 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -33,6 +33,7 @@ static PLI_INT32 sys_deposit_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires two arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -44,6 +45,7 @@ static PLI_INT32 sys_deposit_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires two arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -60,6 +62,7 @@ static PLI_INT32 sys_deposit_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("invalid target type (%s) for %s.\n",
 		             vpi_get_str(vpiType, target), name);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
       }
 

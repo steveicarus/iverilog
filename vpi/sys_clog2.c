@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2014  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2021  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -78,6 +78,7 @@ static PLI_INT32 sys_clog2_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("$clog2 requires one numeric argument.\n");
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -88,6 +89,7 @@ static PLI_INT32 sys_clog2_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("The first argument to $clog2 must be numeric.\n");
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -107,6 +109,7 @@ static PLI_INT32 sys_clog2_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
             vpi_printf("%s $clog2 takes at most one argument.\n", msg);
             vpi_printf("%*s Found %u extra argument%s.\n",
 	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	    vpip_set_return_value(1);
             vpi_control(vpiFinish, 1);
       }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2018  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2011-2021  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -529,6 +529,7 @@ static void check_var_arg_32(vpiHandle arg, vpiHandle callh,
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s's %s (variable) argument must be 32 bits.\n",
 		             name, desc);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }
 	case vpiIntegerVar:
@@ -539,6 +540,7 @@ static void check_var_arg_32(vpiHandle arg, vpiHandle callh,
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's %s argument must be a 32 bit variable.\n",
 	               name, desc);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 }
@@ -561,6 +563,7 @@ static void check_var_arg_large(vpiHandle arg, vpiHandle callh,
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s's %s (variable) argument must have at least "
 		             "32 bits.\n", name, desc);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }
 	case vpiIntegerVar:
@@ -572,6 +575,7 @@ static void check_var_arg_large(vpiHandle arg, vpiHandle callh,
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's %s argument must be a variable.\n", name, desc);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 }
@@ -604,6 +608,7 @@ static unsigned check_numeric_args(vpiHandle argv, unsigned count,
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s requires a %s (<= 32 bit numeric) argument.\n",
 		             name, loc);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 		  return 1;
 	    }
@@ -614,6 +619,7 @@ static unsigned check_numeric_args(vpiHandle argv, unsigned count,
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s's %s argument must be numeric (<= 32 bits).\n",
 		             name, loc);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }
       }
@@ -811,6 +817,7 @@ static PLI_INT32 sys_q_initialize_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires four arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -825,6 +832,7 @@ static PLI_INT32 sys_q_initialize_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a fourth (variable) argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -928,6 +936,7 @@ static PLI_INT32 sys_q_add_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires four arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -942,6 +951,7 @@ static PLI_INT32 sys_q_add_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a fourth (variable) argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -1023,6 +1033,7 @@ static PLI_INT32 sys_q_remove_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires four arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -1033,6 +1044,7 @@ static PLI_INT32 sys_q_remove_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's first argument must be numeric (<= 32 bits).\n",
 	               name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -1042,6 +1054,7 @@ static PLI_INT32 sys_q_remove_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a second (variable) argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -1054,6 +1067,7 @@ static PLI_INT32 sys_q_remove_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a third (variable) argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -1066,6 +1080,7 @@ static PLI_INT32 sys_q_remove_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a fourth (variable) argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -1157,6 +1172,7 @@ static PLI_INT32 sys_q_full_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires two arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -1167,6 +1183,7 @@ static PLI_INT32 sys_q_full_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's first argument must be numeric (<= 32 bits).\n",
 	               name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -1176,6 +1193,7 @@ static PLI_INT32 sys_q_full_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a second (variable) argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -1248,6 +1266,7 @@ static PLI_INT32 sys_q_exam_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires four arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -1261,6 +1280,7 @@ static PLI_INT32 sys_q_exam_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a third (variable) argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -1274,6 +1294,7 @@ static PLI_INT32 sys_q_exam_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a fourth (variable) argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }

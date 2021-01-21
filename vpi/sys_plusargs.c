@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -83,6 +83,7 @@ static PLI_INT32 sys_value_plusargs_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires two arguments.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -94,6 +95,7 @@ static PLI_INT32 sys_value_plusargs_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's first argument must be a string.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -103,6 +105,7 @@ static PLI_INT32 sys_value_plusargs_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's requires a second variable argument.\n", name);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -126,6 +129,7 @@ static PLI_INT32 sys_value_plusargs_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's second argument must be a variable, found a %s.\n",
 		       name, vpi_get_str(vpiType, arg));
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -163,6 +167,7 @@ static PLI_INT32 sys_value_plusargs_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 	    vpi_printf("%s %s is missing a format code.\n", msg, name);
 	    vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ", fmt.value.str);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -203,6 +208,7 @@ static PLI_INT32 sys_value_plusargs_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 	    vpi_printf("%s %s has an invalid format string:\n", msg, name);
 	    vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ", fmt.value.str);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }

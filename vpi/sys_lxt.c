@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -450,6 +450,7 @@ static void open_dumpfile(vpiHandle callh)
 	    vpi_printf("LXT Error: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("Unable to open %s for output.\n", dump_path);
+	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    free(dump_path);
 	    dump_path = 0;
