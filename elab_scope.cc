@@ -1534,8 +1534,21 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 		  for (;;) {
 			if (jdx == overrides_->end())
 			      break;
-			if (cur == mod->param_names.end())
+			  // If we reached here we have more overrides than
+			  // module parameters, so print a warning.
+			if (cur == mod->param_names.end()) {
+			      cerr << get_fileline() << ": warning: "
+			              "ignoring "
+			           << overrides_->size() -
+			              mod->param_names.size()
+			           << " extra parameter override(s) for "
+			              "instance '" << use_name
+			           << "' of module '" << mod->mod_name()
+			           << "' which expects "
+			           << mod->param_names.size()
+			           << " parameter(s)." << endl;
 			      break;
+			}
 
 		          // No expression means that the parameter is not
 		          // replaced at all.
