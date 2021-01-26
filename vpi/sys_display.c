@@ -312,8 +312,11 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
   size = strlen(result) + 1; /* fallback value if errors */
   switch (fmt) {
 
-    case '%':
     case '\0':
+      vpi_printf("WARNING: %s:%d: a single %% at the end of format string "
+                 "%s%s will be displayed as '%%'.\n",
+                 info->filename, info->lineno, info->name, fmtb);
+    case '%':
       if (ljust != 0  || plus != 0 || ld_zero != 0 || width != -1 ||
           prec != -1) {
         vpi_printf("WARNING: %s:%d: invalid format %s%s.\n",
