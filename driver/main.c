@@ -1059,7 +1059,11 @@ static void find_ivl_root(void)
 	    find_ivl_root_failed("command path exceeds size of string buffer.");
       }
       if (len <= 0) {
-	    find_ivl_root_failed("couldn't get command path from OS.");
+	      // We've failed, but we may yet find a -B option on the command line.
+	      // Use the built-in path so the user sees a sensible error message.
+	    assert(strlen(IVL_ROOT) < sizeof ivl_root);
+	    strcpy(ivl_root, IVL_ROOT);
+	    return;
       }
       s = strrchr(ivl_root, sep);
       if (s == 0) {
