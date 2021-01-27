@@ -201,12 +201,13 @@ static int ma_parenthesis_level = 0;
 
 %x IFDEF_NAME
 %x IFNDEF_NAME
+%s IFDEF_TRUE
+%x IFDEF_FALSE
+%x IFDEF_SUPR
 %x ELSIF_NAME
 %x ELSIF_SUPR
-
-%x IFDEF_FALSE
-%s IFDEF_TRUE
-%x IFDEF_SUPR
+%s ELSE_TRUE
+%x ELSE_SUPR
 
 W        [ \t\b\f]+
 
@@ -214,7 +215,7 @@ W        [ \t\b\f]+
  * older versions of flex (at least 2.5.31); they are supposed to
  * be implied, according to the flex manual.
  */
-keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
+keywords (include|define|undef|ifdef|ifndef|else|elsif|endif)
 
 %%
 
@@ -417,16 +418,16 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
     yy_push_state(IFNDEF_NAME);
 }
 
-<IFDEF_FALSE,IFDEF_SUPR>`ifdef{W}  |
-<IFDEF_FALSE,IFDEF_SUPR>`ifndef{W} { ifdef_enter(); yy_push_state(IFDEF_SUPR); }
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>`ifdef{W}  |
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>`ifndef{W} { ifdef_enter(); yy_push_state(IFDEF_SUPR); }
 
-<IFDEF_TRUE>`elsif{W}  { prev_state = YYSTATE; BEGIN(ELSIF_SUPR); }
-<IFDEF_FALSE>`elsif{W} { prev_state = YYSTATE; BEGIN(ELSIF_NAME); }
+<IFDEF_TRUE>`elsif{W}  |
 <IFDEF_SUPR>`elsif{W}  { prev_state = YYSTATE; BEGIN(ELSIF_SUPR); }
+<IFDEF_FALSE>`elsif{W} { prev_state = YYSTATE; BEGIN(ELSIF_NAME); }
 
-<IFDEF_TRUE>`else  { BEGIN(IFDEF_SUPR); }
-<IFDEF_FALSE>`else { BEGIN(IFDEF_TRUE); }
-<IFDEF_SUPR>`else  {}
+<IFDEF_TRUE>`else  |
+<IFDEF_SUPR>`else  { BEGIN(ELSE_SUPR); }
+<IFDEF_FALSE>`else { BEGIN(ELSE_TRUE); }
 
 <IFDEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]* {
     if (is_defined(yytext))
@@ -453,9 +454,9 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
     BEGIN(IFDEF_SUPR);
 }
 
-<IFDEF_FALSE,IFDEF_SUPR>"//"[^\r\n]* {}
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>"//"[^\r\n]* {}
 
-<IFDEF_FALSE,IFDEF_SUPR>"/*" { comment_enter = YY_START; BEGIN(IFCCOMMENT); }
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>"/*" { comment_enter = YY_START; BEGIN(IFCCOMMENT); }
 
 <IFCCOMMENT>[^\r\n] {}
 <IFCCOMMENT>\n\r    |
@@ -464,13 +465,13 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <IFCCOMMENT>\r      { istack->lineno += 1; fputc('\n', yyout); }
 <IFCCOMMENT>"*/"    { BEGIN(comment_enter); }
 
-<IFDEF_FALSE,IFDEF_SUPR>[^\r\n] {  }
-<IFDEF_FALSE,IFDEF_SUPR>\n\r    |
-<IFDEF_FALSE,IFDEF_SUPR>\r\n    |
-<IFDEF_FALSE,IFDEF_SUPR>\n      |
-<IFDEF_FALSE,IFDEF_SUPR>\r      { istack->lineno += 1; fputc('\n', yyout); }
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>[^\r\n] {  }
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>\n\r    |
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>\r\n    |
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>\n      |
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>\r      { istack->lineno += 1; fputc('\n', yyout); }
 
-<IFDEF_FALSE,IFDEF_TRUE,IFDEF_SUPR>`endif { ifdef_leave(); yy_pop_state(); }
+<IFDEF_FALSE,IFDEF_TRUE,IFDEF_SUPR,ELSE_TRUE,ELSE_SUPR>`endif { ifdef_leave(); yy_pop_state(); }
 
 <IFDEF_NAME>(\n|\r) |
 <IFDEF_NAME>. |
@@ -508,6 +509,20 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
         BEGIN(prev_state);
         unput(yytext[0]);
     }
+}
+
+<ELSE_TRUE,ELSE_SUPR>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `elsif after a matching `else.\n");
+    error_count += 1;
+    BEGIN(ELSE_SUPR);
+}
+
+<ELSE_TRUE,ELSE_SUPR>`else {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `else after a matching `else.\n");
+    error_count += 1;
+    BEGIN(ELSE_SUPR);
 }
 
 <INITIAL>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
