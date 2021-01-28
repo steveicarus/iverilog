@@ -27,13 +27,13 @@ jobs:
       run: |
         brew install bison
 
-    - name: Build, install and check
+    - name: Build, check and install
       run: |
         export PATH="/usr/local/opt/bison/bin:$PATH"
         autoconf
         ./configure
-        sudo make install
         make check
+        sudo make install
 
     - name: Test
       run: ./.github/test.sh
@@ -58,12 +58,12 @@ jobs:
         sudo apt update -qq
         sudo apt install -y make g++ git bison flex gperf libreadline-dev autoconf
 
-    - name: Build, install and check
+    - name: Build, check and install
       run: |
         autoconf
         ./configure
-        sudo make install
         make check
+        sudo make install
 
     - name: Test
       run: ./.github/test.sh
