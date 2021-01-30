@@ -179,6 +179,8 @@ TU [munpf]
 
 "/*" { comment_enter = YY_START; BEGIN(CCOMMENT); }
 <CCOMMENT>.    { ; }
+  /* Check for a possible nested comment. */
+<CCOMMENT>"/*" { VLerror(yylloc, "error: Possible nested comment."); }
 <CCOMMENT>\n   { yylloc.first_line += 1; }
 <CCOMMENT>"*/" { BEGIN(comment_enter); }
 
@@ -259,7 +261,7 @@ TU [munpf]
 		yylloc.first_line += 1; }
 <CSTRING>\n   { BEGIN(0);
 		yylval.text = yytext_string_filter(yytext, yyleng);
-		VLerror(yylloc, "Missing closing quote for string.");
+		VLerror(yylloc, "error: Missing closing quote for string.");
 		yylloc.first_line += 1;
 		return STRING; }
 <CSTRING>\"   { BEGIN(0);
