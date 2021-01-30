@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -6645,7 +6645,7 @@ static void check_event_probe_width(const LineInfo *info, const NetEvProbe *prb)
       assert(prb->pin(0).is_linked());
       if (prb->edge() == NetEvProbe::ANYEDGE) return;
       if (prb->pin(0).nexus()->vector_width() > 1) {
-	    cerr << info->get_fileline() << " Warning: Synthesis wants "
+	    cerr << info->get_fileline() << " warning: Synthesis wants "
                     "the sensitivity list expressions for '";
 	    switch (prb->edge()) {
 	      case NetEvProbe::POSEDGE:
@@ -6675,7 +6675,7 @@ static void check_ff_sensitivity(const NetProc* statement)
 		  const NetEvProbe *prb = evt->probe(cprb);
 		  check_event_probe_width(evwt, prb);
 		  if (prb->edge() == NetEvProbe::ANYEDGE) {
-			cerr << evwt->get_fileline() << " Warning: Synthesis "
+			cerr << evwt->get_fileline() << " warning: Synthesis "
 			        "requires the sensitivity list of an "
 			        "always_ff process to only be edge "
 			        "sensitive. ";
