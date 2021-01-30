@@ -1243,6 +1243,9 @@ NetExpr* NetETernary::eval_tree()
 		       << *false_val_ << endl;
 	    }
 
+	      // Elaborate the alternate expression to check for errors.
+	    eval_expr(true_val_);
+
 	    if (expr_type() == IVL_VT_REAL &&
 	        false_val_->expr_type() != IVL_VT_REAL) {
 		  verireal f;
@@ -1264,6 +1267,9 @@ NetExpr* NetETernary::eval_tree()
 		  cerr << get_fileline() << ":      : Selecting true case: "
 		       << *true_val_ << endl;
 	    }
+
+	      // Elaborate the alternate expression to check for errors.
+	    eval_expr(false_val_);
 
 	    if (expr_type() == IVL_VT_REAL &&
 	        true_val_->expr_type() != IVL_VT_REAL) {

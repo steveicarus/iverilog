@@ -6758,11 +6758,8 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 	/* Make sure the condition expression reduces to a single bit. */
       con = condition_reduce(con);
 
-	// Verilog doesn't say that we must do short circuit
-	// evaluation of ternary expressions, but it doesn't disallow
-	// it. The disadvantage of doing this is that semantic errors
-	// in the unused clause will be missed, but people don't seem
-	// to mind, and do appreciate the optimization available here.
+	// Verilog doesn't say that we must do short circuit evaluation
+	// of ternary expressions, but it doesn't disallow it.
       if (NetEConst*tmp = dynamic_cast<NetEConst*> (con)) {
 	    verinum cval = tmp->value();
 	    ivl_assert(*this, cval.len()==1);
@@ -6774,6 +6771,13 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 			        "elaborate TRUE clause of ternary."
 			     << endl;
 
+		    // Evaluate the alternate expression to find any errors.
+		  NetExpr*dmy = elab_and_eval_alternative_(des, scope, fal_,
+		                                           expr_wid, flags,
+		                                           true);
+		  delete dmy;
+
+		  delete con;
 		  return elab_and_eval_alternative_(des, scope, tru_,
                                                     expr_wid, flags, true);
 	    }
@@ -6786,6 +6790,13 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 			        "elaborate FALSE clause of ternary."
 			<< endl;
 
+		    // Evaluate the alternate expression to find any errors.
+		  NetExpr*dmy = elab_and_eval_alternative_(des, scope, tru_,
+		                                           expr_wid, flags,
+		                                           true);
+		  delete dmy;
+
+		  delete con;
 		  return elab_and_eval_alternative_(des, scope, fal_,
                                                     expr_wid, flags, true);
 	    }
