@@ -1,7 +1,7 @@
 #ifndef IVL_nettypes_H
 #define IVL_nettypes_H
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -62,7 +62,7 @@ class ivl_type_s {
 /*
  * Convenience functions for making ivl_type_t objects from various inputs.
  */
-extern ivl_type_t make_ivl_type(ivl_variable_type_t vt, 
+extern ivl_type_t make_ivl_type(ivl_variable_type_t vt,
 				const std::vector<netrange_t>&packed_dimensions,
 				bool signed_flag =false, bool isint_flag =false);
 

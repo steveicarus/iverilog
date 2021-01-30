@@ -3003,7 +3003,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    const index_component_t&use_index = search_results.path_item.index.back();
 	    ivl_assert(*this, use_index.msb != 0);
 	    ivl_assert(*this, use_index.lsb == 0);
-	    
+
 	    NetExpr*mux = elab_and_eval(des, scope, use_index.msb, -1, false);
 	    if (!mux)
 		  return 0;

@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
@@ -22,7 +21,7 @@
 # include  "netscalar.h"
 # include  "netvector.h"
 
-ivl_type_t make_ivl_type(ivl_variable_type_t vt, 
+ivl_type_t make_ivl_type(ivl_variable_type_t vt,
 			 const std::vector<netrange_t>&packed_dimensions,
 			 bool signed_flag, bool isint_flag)
 {
