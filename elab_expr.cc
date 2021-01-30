@@ -5809,6 +5809,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 		  }
 
 		  long rel_base = net->sig()->sb_to_idx(prefix_indices, lsv);
+		  rel_base += offset;
 
 		    // If the part select covers exactly the entire
 		    // vector, then do not bother with it. Return the
@@ -5821,7 +5822,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 
 		    // Otherwise, make a part select that covers the right
 		    // range.
-		  ex = new NetEConst(verinum(rel_base + offset));
+		  ex = new NetEConst(verinum(rel_base));
 		  if (warn_ob_select) {
 			if (rel_base < 0) {
 			      cerr << get_fileline() << ": warning: "
@@ -5912,11 +5913,12 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 		  }
 
 		  long rel_base = net->sig()->sb_to_idx(prefix_indices, lsv);
+		  rel_base += offset;
 
 		    // If the part select covers exactly the entire
 		    // vector, then do not bother with it. Return the
 		    // signal itself.
-		  if (rel_base == (long) (wid-1) && wid == net->vector_width()) {
+		  if (rel_base == (long)(wid-1) && wid == net->vector_width()) {
 			delete base;
 			net->cast_signed(false);
 			return net;
@@ -5924,7 +5926,6 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 
 		    // Otherwise, make a part select that covers the right
 		    // range.
-		  rel_base += offset;
 		  ex = new NetEConst(verinum(rel_base));
 		  if (warn_ob_select) {
 			if (rel_base < 0) {
