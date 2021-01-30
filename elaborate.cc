@@ -2561,18 +2561,17 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
 }
 
 /*
- * Assignments within program blocks can only write to certain types
- * of variables. We can only write to:
- *    - variables in a program block
- *    - static properties of a class
+ * Assignments within program blocks are supposed to be run
+ * in the Reactive region, but that is currently not supported
+ * so find out if we are assigning to something outside a
+ * program block and print a warning for that.
  */
 static bool lval_not_program_variable(const NetAssign_*lv)
 {
       while (lv) {
 	    NetScope*sig_scope = lv->scope();
-	    if (! sig_scope->program_block() && sig_scope->type()!=NetScope::CLASS)
-		  return true;
-
+//	    NetScope*sig_scope = lv->sig()->scope(); // FIXME: The is had this line
+	    if (! sig_scope->program_block()) return true;
 	    lv = lv->more;
       }
       return false;
@@ -2593,9 +2592,10 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
       if (lv == 0) return 0;
 
       if (scope->program_block() && lval_not_program_variable(lv)) {
-	    cerr << get_fileline() << ": error: Blocking assignments to "
-		 << "non-program variables are not allowed." << endl;
-	    des->errors += 1;
+	    cerr << get_fileline() << ": warning: Program blocking "
+	            "assignments are not currently scheduled in the "
+	            "Reactive region."
+	         << endl;
       }
 
 	/* If there is an internal delay expression, elaborate it. */
@@ -2797,22 +2797,6 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 }
 
 /*
- * Return true if any lvalue parts are in a program block scope.
- */
-static bool lval_is_program_variable(const NetAssign_*lv)
-{
-      while (lv) {
-	    NetScope*sig_scope = lv->sig()->scope();
-	    if (sig_scope->program_block())
-		  return true;
-
-	    lv = lv->more;
-      }
-
-      return false;
-}
-
-/*
  * Elaborate non-blocking assignments. The statement is of the general
  * form:
  *
@@ -2848,12 +2832,11 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
 
-      if (scope->program_block() && lval_is_program_variable(lv)) {
-	    cerr << get_fileline() << ": error: Non-blocking assignments to "
-		 << "program variables are not allowed." << endl;
-	    des->errors += 1;
-	      // This is an error, but we can let elaboration continue
-	      // because it would necessarily trigger other errors.
+      if (scope->program_block() && lval_not_program_variable(lv)) {
+	    cerr << get_fileline() << ": warning: Program non-blocking "
+	            "assignments are not currently scheduled in the "
+	            "Reactive-NBA region."
+	         << endl;
       }
 
       NetExpr*rv = elaborate_rval_(des, scope, 0, lv->expr_type(), count_lval_width(lv));
@@ -6703,7 +6686,7 @@ static void check_event_probe_width(const LineInfo *info, const NetEvProbe *prb)
       assert(prb->pin(0).is_linked());
       if (prb->edge() == NetEvProbe::ANYEDGE) return;
       if (prb->pin(0).nexus()->vector_width() > 1) {
-	    cerr << info->get_fileline() << " Warning: Synthesis wants "
+	    cerr << info->get_fileline() << " warning: Synthesis wants "
                     "the sensitivity list expressions for '";
 	    switch (prb->edge()) {
 	      case NetEvProbe::POSEDGE:
@@ -6733,7 +6716,7 @@ static void check_ff_sensitivity(const NetProc* statement)
 		  const NetEvProbe *prb = evt->probe(cprb);
 		  check_event_probe_width(evwt, prb);
 		  if (prb->edge() == NetEvProbe::ANYEDGE) {
-			cerr << evwt->get_fileline() << " Warning: Synthesis "
+			cerr << evwt->get_fileline() << " warning: Synthesis "
 			        "requires the sensitivity list of an "
 			        "always_ff process to only be edge "
 			        "sensitive. ";
