@@ -5215,8 +5215,10 @@ static void warn_param_ob(long par_msv, long par_lsv, bool defined,
 	/* Is this a select after the end of the parameter? */
       if (par_base + (long)wid - 1 > par_max) {
 	    cerr << info->get_fileline() << ": warning: " << name << "["
-	         << par_base << "+:" << wid << "] is selecting after vector."
-	         << endl;
+	         << par_base;
+	    if (up) cerr << "+:";
+	    else cerr << "-:";
+	    cerr << wid << "] is selecting after vector." << endl;
       }
 }
 
