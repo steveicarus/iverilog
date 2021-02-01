@@ -316,6 +316,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
       vpi_printf("WARNING: %s:%d: a single %% at the end of format string "
                  "%s%s will be displayed as '%%'.\n",
                  info->filename, info->lineno, info->name, fmtb);
+      // fallthrough
     case '%':
       if (ljust != 0  || plus != 0 || ld_zero != 0 || width != -1 ||
           prec != -1) {
@@ -2158,7 +2159,7 @@ static PLI_INT32 sys_severity_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpi_get_time(0, &now);
       now64 = timerec_to_time64(&now);
 
-      vpi_printf("\n%*s  Time: %" PLI_UINT64_FMT " Scope: %s\n",
+      vpi_printf("\n%*s  Time: %" PLI_UINT64_FMT "  Scope: %s\n",
                  (int)strlen(sstr), " ", now64,
                  vpi_get_str(vpiFullName, scope));
 

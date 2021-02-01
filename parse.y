@@ -5359,6 +5359,18 @@ module_item
     K_endcase
       { pform_endgenerate(true); }
 
+  /* Elaboration system tasks. */
+  | SYSTEM_IDENTIFIER '(' expression_list_with_nuls ')' ';'
+      { pform_make_elab_task(@1, lex_strings.make($1), *$3);
+	delete[]$1;
+	delete $3;
+      }
+  | SYSTEM_IDENTIFIER ';'
+      { list<PExpr*>pt;
+	pform_make_elab_task(@1, lex_strings.make($1), pt);
+	delete[]$1;
+      }
+
   | modport_declaration
 
   /* 1364-2001 and later allow specparam declarations outside specify blocks. */

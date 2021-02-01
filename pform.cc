@@ -1694,6 +1694,16 @@ void pform_endgenerate(bool end_conditional)
       pform_cur_generate = parent_generate;
 }
 
+void pform_make_elab_task(const struct vlltype&li,
+                          perm_string name,
+                          const list<PExpr*>&params)
+{
+      PCallTask*elab_task = new PCallTask(name, params);
+      FILE_NAME(elab_task, li);
+
+      lexical_scope->elab_tasks.push_back(elab_task);
+}
+
 MIN_TYP_MAX min_typ_max_flag = TYP;
 unsigned min_typ_max_warn = 10;
 

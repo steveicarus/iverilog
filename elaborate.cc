@@ -29,6 +29,7 @@
 
 # include  <typeinfo>
 # include  <cstdlib>
+# include  <cstring>
 # include  <iostream>
 # include  <sstream>
 # include  <list>
@@ -2570,7 +2571,6 @@ static bool lval_not_program_variable(const NetAssign_*lv)
 {
       while (lv) {
 	    NetScope*sig_scope = lv->scope();
-//	    NetScope*sig_scope = lv->sig()->scope(); // FIXME: The is had this line
 	    if (! sig_scope->program_block()) return true;
 	    lv = lv->more;
       }
@@ -4177,6 +4177,107 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
       }
 
       return block;
+}
+
+static bool check_parm_is_const(NetExpr*param)
+{
+// FIXME: Are these actually needed and are others needed?
+//      if (dynamic_cast<NetEConstEnum*>(param)) { cerr << "Enum" << endl; return; }
+//      if (dynamic_cast<NetECString*>(param)) { cerr << "String" << endl; return; }
+      if (dynamic_cast<NetEConstParam*>(param)) return true;
+      if (dynamic_cast<NetECReal*>(param)) return true;
+      if (dynamic_cast<NetECRealParam*>(param)) return true;
+      if (dynamic_cast<NetEConst*>(param)) return true;
+
+      return false;
+}
+
+/* Elaborate an elaboration task. */
+bool PCallTask::elaborate_elab(Design*des, NetScope*scope) const
+{
+      assert(scope);
+      assert(path_.size() == 1);
+
+      unsigned parm_count = parms_.size();
+
+        /* Catch the special case that the elaboration task has no
+           parameters. The "()" string will be parsed as a single
+           empty parameter, when we really mean no parameters at all. */
+      if ((parm_count== 1) && (parms_[0] == 0))
+            parm_count = 0;
+
+      perm_string name = peek_tail_name(path_);
+
+      if (!gn_system_verilog()) {
+	    cerr << get_fileline() << ": error: Elaboration task '"
+	         << name << "' requires SystemVerilog." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      if (name != "$fatal" &&
+          name != "$error" &&
+          name != "$warning" &&
+          name != "$info") {
+	    cerr << get_fileline() << ": error: '" << name
+	         << "' is not a valid elaboration task." << endl;
+	    des->errors += 1;
+	    return true;
+      }
+
+      vector<NetExpr*>eparms (parm_count);
+
+      bool const_parms = true;
+      for (unsigned idx = 0 ;  idx < parm_count ;  idx += 1) {
+            PExpr*ex = parms_[idx];
+            if (ex != 0) {
+                  eparms[idx] = elab_sys_task_arg(des, scope, name, idx, ex);
+		  if (!check_parm_is_const(eparms[idx])) {
+			cerr << get_fileline() << ": error: Elaboration task "
+			     << name << " parameter [" << idx+1 << "] '"
+			     << *eparms[idx] << "' is not constant." << endl;
+			des->errors += 1;
+			const_parms = false;
+		  }
+            } else {
+                  eparms[idx] = 0;
+            }
+      }
+      if (!const_parms) return true;
+
+	/* Drop the $ and convert to upper case for the severity string */
+      string sstr = name.str()+1;
+      transform(sstr.begin(), sstr.end(), sstr.begin(), ::toupper);
+
+      cerr << sstr << ": " << get_fileline() << ":";
+      if (parm_count != 0) {
+	    cerr << " ";
+/*
+	    cerr << *eparms[0];
+	    for (unsigned idx = 1; idx < parm_count; idx += 1) {
+	    cerr << ", " << *eparms[idx];
+	    }
+*/
+// FIXME: Need to actually handle this.
+	    cerr << "sorry: Elaboration tasks with arguments "
+	            "are not currently supported.";
+	    des->errors += 1;
+      }
+      cerr << endl;
+
+      cerr << string(sstr.size(), ' ') << "  During elaboration  Scope: "
+           << scope->fullname() << endl;
+
+	// For a fatal mark as an error and fail elaboration.
+      if (name == "$fatal") {
+	    des->errors += 1;
+	    return false;
+      }
+
+	// For an error just set it as an error.
+      if (name == "$error") des->errors += 1;
+
+      return true;
 }
 
 /*
@@ -6111,6 +6212,12 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 		 ; sp != specify_paths.end() ; ++ sp ) {
 
 	    (*sp)->elaborate(des, scope);
+      }
+
+	// Elaborate the elaboration tasks.
+      for (list<PCallTask*>::const_iterator et = elab_tasks.begin()
+		 ; et != elab_tasks.end() ; ++ et ) {
+	    result_flag &= (*et)->elaborate_elab(des, scope);
       }
 
       return result_flag;

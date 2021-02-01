@@ -313,6 +313,10 @@ extern void pform_endgenerate(bool end_conditional);
  */
 extern PGenerate* pform_parent_generate(void);
 
+extern void pform_make_elab_task(const struct vlltype&li,
+                                 perm_string name,
+                                 const std::list<PExpr*>&params);
+
 extern void pform_set_typedef(perm_string name, data_type_t*data_type,
 			      std::list<pform_range_t>*unp_ranges);
 

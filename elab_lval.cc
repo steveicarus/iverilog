@@ -990,7 +990,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 			      cerr << wid << "] is selecting after vector." << endl;
 			}
 		  }
-	    } else {
+	    } else if (warn_ob_select) {
 		  cerr << get_fileline() << ": warning: L-value indexed part "
 		       << "select of " << reg->name();
 		  if (reg->unpacked_dimensions() > 0) cerr << "[]";

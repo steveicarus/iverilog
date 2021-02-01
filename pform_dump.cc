@@ -1435,6 +1435,11 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 	    (*idx)->dump(out, indent+2);
       }
 
+      for (list<PCallTask*>::const_iterator idx = elab_tasks.begin()
+		 ; idx != elab_tasks.end() ; ++ idx ) {
+	    (*idx)->dump(out, indent+2);
+      }
+
       typedef map<perm_string,LineInfo*>::const_iterator genvar_iter_t;
       for (genvar_iter_t cur = genvars.begin()
 		 ; cur != genvars.end() ; ++ cur ) {
@@ -1739,6 +1744,11 @@ void Module::dump(ostream&out) const
 
       for (list<AProcess*>::const_iterator idx = analog_behaviors.begin()
 		 ; idx != analog_behaviors.end() ; ++ idx) {
+	    (*idx)->dump(out, 4);
+      }
+
+      for (list<PCallTask*>::const_iterator idx = elab_tasks.begin()
+		 ; idx != elab_tasks.end() ; ++ idx ) {
 	    (*idx)->dump(out, 4);
       }
 

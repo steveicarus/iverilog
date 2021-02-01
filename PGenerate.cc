@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -61,6 +61,7 @@ void PGenerate::probe_for_direct_nesting_(void)
       if (! genvars.empty()) return;
       if (! behaviors.empty()) return;
       if (! analog_behaviors.empty()) return;
+      if (! elab_tasks.empty()) return;
 
       if (generate_schemes.empty()) return;
 

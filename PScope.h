@@ -1,7 +1,7 @@
 #ifndef IVL_PScope_H
 #define IVL_PScope_H
 /*
- * Copyright (c) 2008-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,6 +37,7 @@ class PClass;
 class PTask;
 class PWire;
 class Statement;
+class PCallTask;
 
 class Design;
 class NetScope;
@@ -132,6 +133,9 @@ class LexicalScope {
 	// Behaviors (processes) in this scope
       list<PProcess*> behaviors;
       list<AProcess*> analog_behaviors;
+
+	// The elaboration tasks in this scope
+      list<PCallTask*> elab_tasks;
 
 	// Enumeration sets.
       std::set<enum_type_t*> enum_sets;

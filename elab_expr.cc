@@ -4628,7 +4628,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    if (net->struct_type() && !member_path.empty()) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-			     << "Ident " << base_path
+			        "Ident " << base_path
 			     << " look for struct member " << member_path
 			     << endl;
 		  }
@@ -4644,10 +4644,10 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	      // the member_path, check for array properties.
 	    if (net->darray_type() && !member_path.empty()) {
                   if (debug_elaborate) {
-                        cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-                             << "Ident " << base_path
-                             << " looking for array property " << member_path
-                             << endl;
+			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+			        "Ident " << base_path
+			     << " looking for array property " << member_path
+			     << endl;
                   }
 
 		  ivl_assert(*this, member_path.size() == 1);
@@ -4796,10 +4796,27 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  }
 	    }
 
+	    if ((net->data_type() == IVL_VT_STRING) && !member_path.empty()) {
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+			        "Ident " << base_path
+			     << " looking for string property " << member_path
+			     << endl;
+		  }
+
+		  ivl_assert(*this, member_path.size() == 1);
+		  const name_component_t member_comp = member_path.front();
+		  cerr << get_fileline() << ": sorry: String method '"
+		       << member_comp.name << "' currently requires ()."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
 	    if (net->class_type() && !member_path.empty()) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-			     << "Ident " << base_path
+			        "Ident " << base_path
 			     << " look for class property " << member_path
 			     << endl;
 		  }
@@ -4814,7 +4831,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  const netenum_t*netenum = net->enumeration();
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-			     << "Ident " << base_path
+			        "Ident " << base_path
 			     << " look for enumeration method " << member_path
 			     << endl;
 		  }
@@ -4837,7 +4854,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-		       << "Expression as net. expr_wid=" << expr_wid
+		          "Expression as net. expr_wid=" << expr_wid
 		       << ", tmp->expr_width()=" << tmp->expr_width()
 		       << ", tmp=" << *tmp << endl;
 	    }
@@ -4970,7 +4987,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	// I cannot interpret this identifier. Error message.
       cerr << get_fileline() << ": error: Unable to bind wire/reg/memory "
-	    "`" << path_ << "' in `" << scope_path(scope) << "'" << endl;
+              "`" << path_ << "' in `" << scope_path(scope) << "'" << endl;
       des->errors += 1;
       return 0;
 }
