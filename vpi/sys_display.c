@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2115,7 +2115,7 @@ static PLI_INT32 sys_severity_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpi_get_time(0, &now);
       now64 = timerec_to_time64(&now);
 
-      vpi_printf("\n%*s  Time: %" PLI_UINT64_FMT " Scope: %s\n",
+      vpi_printf("\n%*s  Time: %" PLI_UINT64_FMT "  Scope: %s\n",
                  (int)strlen(sstr), " ", now64,
                  vpi_get_str(vpiFullName, scope));
 
