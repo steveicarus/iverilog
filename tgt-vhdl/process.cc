@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for processes.
  *
- *  Copyright (C) 2008-2013  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2021  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,6 +27,27 @@
 #include <sstream>
 
 /*
+ * Check to see if the process should have a name.
+ */
+static const char * get_process_name(ivl_process_t proc)
+{
+   const char* name = "";
+   // Look for always @(...) begin : <name> to find the name
+   if (ivl_process_type(proc) == IVL_PR_ALWAYS) {
+      ivl_statement_t stmt = ivl_process_stmt(proc);
+      if (ivl_statement_type(stmt) == IVL_ST_WAIT) {
+	 stmt = ivl_stmt_sub_stmt(stmt);
+	 if (ivl_statement_type(stmt) == IVL_ST_BLOCK) {
+	    ivl_scope_t proc_scope = ivl_stmt_block_scope(stmt);
+	    if (proc_scope) name = ivl_scope_basename(proc_scope);
+	 }
+      }
+   }
+
+   return name;
+}
+
+/*
  * Convert a Verilog process to VHDL and add it to the architecture
  * of the given entity.
  */
@@ -38,7 +59,7 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    // architecture. This needs to be done first or the
    // parent link won't be valid (and draw_stmt needs this
    // to add information to the architecture)
-   vhdl_process *vhdl_proc = new vhdl_process();
+   vhdl_process *vhdl_proc = new vhdl_process(get_process_name(proc));
    ent->get_arch()->add_stmt(vhdl_proc);
 
    // If this is an initial process, push signal initialisation
