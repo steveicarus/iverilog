@@ -594,6 +594,7 @@ extern void parm_to_defparam_list(const string&param);
  */
 extern bool get_time_unit(const char*cp, int &unit);
 extern int  pform_get_timeunit();
+extern int  pform_get_timeprec();
 extern void pform_set_timeunit(const char*txt, bool initial_decl);
 extern void pform_set_timeprec(const char*txt, bool initial_decl);
 /*

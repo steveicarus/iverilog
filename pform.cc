@@ -1213,6 +1213,13 @@ int pform_get_timeunit()
       return scopex->time_unit;
 }
 
+int pform_get_timeprec()
+{
+      PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
+      assert(scopex);
+      return scopex->time_precision;
+}
+
 void pform_set_timeprec(const char*txt, bool initial_decl)
 {
       int val;

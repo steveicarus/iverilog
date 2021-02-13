@@ -3195,7 +3195,7 @@ delay_value_simple
 	: DEC_NUMBER
 		{ verinum*tmp = $1;
 		  if (tmp == 0) {
-			yyerror(@1, "internal error: delay.");
+			yyerror(@1, "internal error: decimal delay.");
 			$$ = 0;
 		  } else {
 			$$ = new PENumber(tmp);
@@ -3206,7 +3206,7 @@ delay_value_simple
 	| REALTIME
 		{ verireal*tmp = $1;
 		  if (tmp == 0) {
-			yyerror(@1, "internal error: delay.");
+			yyerror(@1, "internal error: real time delay.");
 			$$ = 0;
 		  } else {
 			$$ = new PEFNumber(tmp);
@@ -3225,7 +3225,7 @@ delay_value_simple
 		  based_size = 0;
 		  $$         = 0;
 		  if ($1 == 0 || !get_time_unit($1, unit))
-			yyerror(@1, "internal error: delay.");
+			yyerror(@1, "internal error: time literal delay.");
 		  else {
 			double p = pow(10.0,
 			               (double)(unit - pform_get_timeunit()));
@@ -3832,10 +3832,18 @@ expr_primary
           based_size = 0;
           $$         = 0;
           if ($1 == 0 || !get_time_unit($1, unit))
-              yyerror(@1, "internal error: delay.");
+              yyerror(@1, "internal error: time literal.");
           else {
               double p = pow(10.0, (double)(unit - pform_get_timeunit()));
               double time = atof($1) * p;
+              // The time value needs to be rounded at the correct digit
+              // since this is a normal real value and not a delay that
+              // will be rounded later. This style of rounding is not safe
+              // for all real values!
+              int rdigit = pform_get_timeunit() - pform_get_timeprec();
+              assert(rdigit >= 0);
+              double scale = pow(10.0, (double)rdigit);
+              time = round(time*scale)/scale;
 
               verireal *v = new verireal(time);
               $$ = new PEFNumber(v);
