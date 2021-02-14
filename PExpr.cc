@@ -386,6 +386,18 @@ PEIdent::~PEIdent()
 {
 }
 
+static bool find_enum_constant(LexicalScope*scope, perm_string name)
+{
+      for (set<enum_type_t*,netenum_t*>::const_iterator cur = scope->enum_sets.begin() ;
+           cur != scope->enum_sets.end() ; ++ cur) {
+	    for (list<named_pexpr_t>::const_iterator idx = (*cur)->names->begin() ;
+                 idx != (*cur)->names->end() ; ++ idx) {
+                  if (idx->name == name) return true;
+            }
+      }
+      return false;
+}
+
 void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 {
         /* We create an implicit wire if:
@@ -408,6 +420,8 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
                   if (ss->genvars.find(name) != ss->genvars.end())
                         return;
                   if (ss->events.find(name) != ss->events.end())
+                        return;
+                  if (find_enum_constant(ss, name))
                         return;
                   /* Strictly speaking, we should also check for name clashes
                      with tasks, functions, named blocks, module instances,
