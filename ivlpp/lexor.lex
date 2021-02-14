@@ -1,7 +1,7 @@
 %option prefix="yy"
 %{
 /*
- * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -50,7 +50,7 @@ static void  do_expand(int use_args);
 static const char* do_magic(const char*name);
 static const char* macro_name(void);
 
-static void include_filename(void);
+static void include_filename(int macro_str);
 static void do_include(void);
 
 static int load_next_input(void);
@@ -288,7 +288,8 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
     if (macro_needs_args(yytext+1)) yy_push_state(MA_START); else do_expand(0);
 }
 
-<PPINCLUDE>\"[^\"]*\" { include_filename(); }
+<PPINCLUDE>\"[^\"]*\"   { include_filename(0); }  /* A normal (") string */
+<PPINCLUDE>`\"[^\"]*`\" { include_filename(1); }  /* A macro (`") string */
 
 <PPINCLUDE>[ \t\b\f] { ; }
 
@@ -1687,7 +1688,7 @@ static void output_init(void)
     }
 }
 
-static void include_filename(void)
+static void include_filename(int macro_str)
 {
     if(standby) {
         emit_pathline(istack);
@@ -1697,8 +1698,8 @@ static void include_filename(void)
     }
 
     standby = malloc(sizeof(struct include_stack_t));
-    standby->path = strdup(yytext+1);
-    standby->path[strlen(standby->path)-1] = 0;
+    standby->path = strdup(yytext+1+macro_str);
+    standby->path[strlen(standby->path)-1-macro_str] = 0;
     standby->lineno = 0;
     standby->comment = NULL;
 }
