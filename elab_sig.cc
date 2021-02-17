@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -720,8 +720,19 @@ void PTaskFunc::elaborate_sig_ports_(Design*des, NetScope*scope,
 	      // that expression here.
 	    if (ports_->at(idx).defe != 0) {
 		  if (tmp->port_type() == NetNet::PINPUT) {
-			tmp_def = elab_and_eval(des, scope, ports_->at(idx).defe,
-						-1, scope->need_const_func());
+			  // Elaborate a class port default in the context of
+			  // the class type.
+			if (tmp->data_type() == IVL_VT_CLASS) {
+			      tmp_def = elab_and_eval(des, scope,
+			                              ports_->at(idx).defe,
+			                              tmp->net_type(),
+			                              scope->need_const_func());
+			} else {
+			      tmp_def = elab_and_eval(des, scope,
+			                              ports_->at(idx).defe,
+			                              -1,
+			                              scope->need_const_func());
+			}
 			if (tmp_def == 0) {
 			      cerr << get_fileline()
 				   << ": error: Unable to evaluate "

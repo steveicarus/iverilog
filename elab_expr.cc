@@ -634,9 +634,6 @@ unsigned PEBComp::test_width(Design*des, NetScope*scope, width_mode_t&)
 	case 'n': /* != */
 	case 'E': /* === */
 	case 'N': /* !== */
-	      // FIXME: A class variable/array inside a class is not
-	      //        reported correctly so this cannot be used.
-#if 0
 	    if ((l_type == IVL_VT_CLASS || r_type == IVL_VT_CLASS) &&
 	        l_type != r_type) {
 		  cerr << get_fileline() << ": error: "
@@ -645,7 +642,6 @@ unsigned PEBComp::test_width(Design*des, NetScope*scope, width_mode_t&)
 		       << human_readable_op(op_) << "' operator." << endl;
 		  des->errors += 1;
 	    }
-#endif
 	    break;
 	default:
 	    if (l_type == IVL_VT_CLASS || r_type == IVL_VT_CLASS) {
@@ -3924,10 +3920,11 @@ unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
       }
 
       NetNet*net = 0;
+      ivl_type_t cls_val = 0;
       const NetExpr*par = 0;
       ivl_type_t par_type = 0;
       NetEvent*eve = 0;
-      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
+      symbol_search(this, des, scope, use_path, net, par, eve, par_type, cls_val);
       if (net == 0) {
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": PEIdent::test_width_method_: "
@@ -3970,6 +3967,7 @@ unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
 unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
       NetNet*       net = 0;
+      ivl_type_t    cls_val = 0;
       const NetExpr*par = 0;
       ivl_type_t    par_type = 0;
       NetEvent*     eve = 0;
@@ -3985,7 +3983,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       }
 
       NetScope*found_in = symbol_search(this, des, use_scope, path_,
-					net, par, eve, par_type);
+					net, par, eve, par_type, cls_val);
 
 	// If there is a part/bit select expression, then process it
 	// here. This constrains the results no matter what kind the
@@ -4060,6 +4058,15 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 		  signed_flag_ = net->get_signed();
 		  break;
 	    }
+	    return expr_width_;
+      }
+
+	// Look for a class property.
+      if (gn_system_verilog() && cls_val) {
+	    expr_type_   = cls_val->base_type();
+	    expr_width_  = cls_val->packed_width();
+	    min_width_   = expr_width_;
+	    signed_flag_ = cls_val->get_signed();
 	    return expr_width_;
       }
 
@@ -4161,7 +4168,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    use_path.pop_back();
 
 	    ivl_assert(*this, net == 0);
-	    symbol_search(this, des, scope, use_path, net, par, eve, par_type);
+	    symbol_search(this, des, scope, use_path, net, par, eve, par_type, cls_val);
 
 	      // Check to see if we have a net and if so is it a structure?
 	    if (net != 0) {
@@ -4222,6 +4229,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       bool need_const = NEED_CONST & flags;
 
       NetNet*       net = 0;
+      ivl_type_t    cls_val = 0;
       const NetExpr*par = 0;
       ivl_type_t    par_type = 0;
       NetEvent*     eve = 0;
@@ -4236,7 +4244,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    return tmp;
       }
 
-      symbol_search(this, des, use_scope, path_, net, par, eve, par_type);
+      symbol_search(this, des, use_scope, path_, net, par, eve, par_type, cls_val);
 
       if (net == 0 && gn_system_verilog() && path_.size() >= 2) {
 	      // NOTE: this is assuming the member_path is only one
@@ -4248,7 +4256,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    use_path.pop_back();
 
 	    ivl_assert(*this, net == 0);
-	    symbol_search(this, des, use_scope, use_path, net, par, eve, par_type);
+	    symbol_search(this, des, use_scope, use_path, net, par, eve,
+	                  par_type, cls_val);
 
 	    if (net == 0) {
 		    // Nope, no struct/class with member.
@@ -4501,6 +4510,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       assert(scope);
 
       NetNet*       net = 0;
+      ivl_type_t    cls_val = 0;
       const NetExpr*par = 0;
       ivl_type_t    par_type = 0;
       NetEvent*     eve = 0;
@@ -4562,7 +4572,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       NetScope*found_in = 0;
       while (net==0 && par==0 && eve==0 && !base_path.empty()) {
 	    found_in = symbol_search(this, des, use_scope, base_path,
-				     net, par, eve, par_type);
+				     net, par, eve, par_type, cls_val);
 	    if (net) break;
 	    if (par) break;
 	    if (eve) break;

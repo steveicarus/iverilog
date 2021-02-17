@@ -19,6 +19,8 @@
  */
 
 # include  "netlist.h"
+# include  "netclass.h"
+# include  "netparray.h"
 # include  "netmisc.h"
 # include  "compiler.h"
 # include  "ivl_assert.h"
@@ -168,6 +170,21 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		    res->path_item = path_tail;
 		    return true;
 		  }
+
+		    // Static items are just normal signals and are found above.
+		  if (scope->type() == NetScope::CLASS) {
+			netclass_t*clsnet = scope->find_class(des, scope->basename());
+			int pidx = clsnet->property_idx_from_name(path_tail.name);
+			if (pidx >= 0) {
+			      ivl_type_t prop_type = clsnet->get_prop_type(pidx);
+			      const netuarray_t*tmp_ua = dynamic_cast<const netuarray_t*>(prop_type);
+			      if (tmp_ua) prop_type = tmp_ua->element_type();
+			      res->scope = scope;
+			      res->cls_val = prop_type;
+			      res->path_item = path_tail;
+			      return true;
+			}
+		  }
 	    }
 
 	    if (NetScope*import_scope = scope->find_import(des, path_tail.name)) {
@@ -275,12 +292,14 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		       NetNet*&net,
 		       const NetExpr*&par,
 		       NetEvent*&eve,
-		       ivl_type_t&par_type)
+		       ivl_type_t&par_type,
+		       ivl_type_t&cls_val)
 {
       symbol_search_results recurse;
       bool flag = symbol_search(li, des, scope, path, &recurse);
 
       net = 0;
+      cls_val = 0;
       par = 0;
       par_type = 0;
       eve = 0;
@@ -297,6 +316,7 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 
       // Convert the extended results to the compatible results.
       net = recurse.net;
+      cls_val = recurse.cls_val;
       par = recurse.par_val;
       par_type = recurse.par_type;
       eve = recurse.eve;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -858,16 +858,12 @@ static NetExpr* do_elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 
       pe->test_width(des, scope, mode);
 
-	// FIXME: A class variable/array inside a class is not
-	//        reported correctly so this cannot be used.
-#if 0
       if (pe->expr_type() == IVL_VT_CLASS) {
 	    cerr << pe->get_fileline() << ": Error: "
 	         << "Class/null r-value not allowed in this context." << endl;
 	    des->errors += 1;
 	    return 0;
       }
-#endif
 
         // Get the final expression width. If the expression is unsized,
         // this may be different from the value returned by test_width().

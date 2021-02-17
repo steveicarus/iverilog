@@ -447,11 +447,13 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 bool PEIdent::has_aa_term(Design*des, NetScope*scope) const
 {
       NetNet*       net = 0;
+      ivl_type_t    cls_val;
       const NetExpr*par = 0;
       ivl_type_t    par_type;
       NetEvent*     eve = 0;
 
-      scope = symbol_search(this, des, scope, path_, net, par, eve, par_type);
+      scope = symbol_search(this, des, scope, path_, net, par, eve,
+                            par_type, cls_val);
 
       if (scope)
             return scope->is_auto();
