@@ -1263,6 +1263,13 @@ void PTrigger::dump(ostream&out, unsigned ind) const
       out << setw(ind) << "" << "-> " << event_ << ";" << endl;
 }
 
+void PNBTrigger::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "->> ";
+      if (dly_) out << "#" << *dly_ << " ";
+      out << event_ << ";" << endl;
+}
+
 void PWhile::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "while (" << *cond_ << ")" << endl;

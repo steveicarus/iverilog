@@ -590,6 +590,19 @@ class PTrigger  : public Statement {
       pform_name_t event_;
 };
 
+class PNBTrigger  : public Statement {
+    public:
+      explicit PNBTrigger(const pform_name_t&ev, PExpr*dly);
+      ~PNBTrigger();
+
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      pform_name_t event_;
+      PExpr*dly_;
+};
+
 class PWhile  : public Statement {
 
     public:

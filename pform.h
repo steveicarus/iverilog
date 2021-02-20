@@ -250,6 +250,9 @@ extern PEIdent* pform_new_ident(const struct vlltype&loc, const pform_name_t&nam
 
 extern PTrigger* pform_new_trigger(const struct vlltype&loc, PPackage*pkg,
 				   const pform_name_t&name);
+extern PNBTrigger* pform_new_nb_trigger(const struct vlltype&loc,
+				        const list<PExpr*>*dly,
+				        const pform_name_t&name);
 
 /*
  * Enter/exit name scopes. The push_scope function pushes the scope

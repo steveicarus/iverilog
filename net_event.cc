@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -260,6 +260,39 @@ NetEvTrig::~NetEvTrig()
 }
 
 const NetEvent* NetEvTrig::event() const
+{
+      return event_;
+}
+
+NetEvNBTrig::NetEvNBTrig(NetEvent*ev, NetExpr*dly)
+: event_(ev), dly_(dly)
+{
+      enext_ = event_->nb_trig_;
+      event_->nb_trig_ = this;
+}
+
+NetEvNBTrig::~NetEvNBTrig()
+{
+      if (event_->nb_trig_ == this) {
+	    event_->nb_trig_ = enext_;
+
+      } else {
+	    NetEvNBTrig*cur = event_->nb_trig_;
+	    while (cur->enext_ != this) {
+		  assert(cur->enext_);
+		  cur = cur->enext_;
+	    }
+
+	    cur->enext_ = this->enext_;
+      }
+}
+
+const NetExpr* NetEvNBTrig::delay() const
+{
+      return dly_;
+}
+
+const NetEvent* NetEvNBTrig::event() const
 {
       return event_;
 }

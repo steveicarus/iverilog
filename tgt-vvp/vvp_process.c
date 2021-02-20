@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1284,21 +1284,8 @@ static int show_stmt_delay(ivl_statement_t net, ivl_scope_t sscope)
       return rc;
 }
 
-/*
- * The delayx statement is slightly more complex in that it is
- * necessary to calculate the delay first. Load the calculated delay
- * into and index register and use the %delayx instruction to do the
- * actual delay.
- */
-static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
+static void draw_expr_into_idx(ivl_expr_t expr, int use_idx)
 {
-      int rc = 0;
-      ivl_expr_t expr = ivl_stmt_delay_expr(net);
-      ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
-
-      show_stmt_file_line(net, "Delay statement.");
-
-      int use_idx = allocate_word();
       switch (ivl_expr_value(expr)) {
 
 	  case IVL_VT_BOOL:
@@ -1317,6 +1304,25 @@ static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
 	  default:
 	    assert(0);
       }
+}
+
+
+/*
+ * The delayx statement is slightly more complex in that it is
+ * necessary to calculate the delay first. Load the calculated delay
+ * into and index register and use the %delayx instruction to do the
+ * actual delay.
+ */
+static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
+{
+      int rc = 0;
+      ivl_expr_t expr = ivl_stmt_delay_expr(net);
+      ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
+
+      show_stmt_file_line(net, "Delay statement.");
+
+      int use_idx = allocate_word();
+      draw_expr_into_idx(expr, use_idx);
 
       fprintf(vvp_out, "    %%delayx %d;\n", use_idx);
       clr_word(use_idx);
@@ -1640,6 +1646,34 @@ static int show_stmt_trigger(ivl_statement_t net)
       show_stmt_file_line(net, "Event trigger statement.");
 
       fprintf(vvp_out, "    %%event E_%p;\n", ev);
+      return 0;
+}
+
+/*
+ * The non-blocking trigger statement is straight forward. All we have to
+ * do is write a single bit of fake data to the event object.
+ */
+static int show_stmt_nb_trigger(ivl_statement_t net)
+{
+      ivl_event_t ev = ivl_stmt_events(net, 0);
+      assert(ev);
+
+      show_stmt_file_line(net, "Non-blocking event trigger statement.");
+
+      ivl_expr_t expr = ivl_stmt_delay_expr(net);
+      int use_idx = allocate_word();
+      if (expr) {
+	    draw_expr_into_idx(expr, use_idx);
+      } else {
+	    fprintf(vvp_out, "    %%ix/load %d, 0, 0;\n", use_idx);
+      }
+
+      fprintf(vvp_out, "    %%event/nb E_%p, %d;\n", ev, use_idx);
+      clr_word(use_idx);
+	// FIXME: VVP needs to be updated to correctly support %event/nb
+      fprintf(stderr, "%s:%u: vvp.tgt sorry: ->> is not currently supported.\n",
+                      ivl_stmt_file(net), ivl_stmt_lineno(net));
+      vvp_errors += 1;
       return 0;
 }
 
@@ -2381,6 +2415,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 
 	  case IVL_ST_TRIGGER:
 	    rc += show_stmt_trigger(net);
+	    break;
+
+	  case IVL_ST_NB_TRIGGER:
+	    rc += show_stmt_nb_trigger(net);
 	    break;
 
 	  case IVL_ST_UTASK:

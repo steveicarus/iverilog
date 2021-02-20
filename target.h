@@ -1,7 +1,7 @@
 #ifndef IVL_target_H
 #define IVL_target_H
 /*
- * Copyright (c) 1998-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -143,6 +143,7 @@ struct target_t {
       virtual bool proc_release(const NetRelease*);
       virtual void proc_repeat(const NetRepeat*);
       virtual bool proc_trigger(const NetEvTrig*);
+      virtual bool proc_nb_trigger(const NetEvNBTrig*);
       virtual void proc_stask(const NetSTask*);
       virtual void proc_utask(const NetUTask*);
       virtual bool proc_wait(const NetEvWait*);

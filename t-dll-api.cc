@@ -2834,6 +2834,9 @@ extern "C" ivl_expr_t ivl_stmt_delay_expr(ivl_statement_t net)
 	  case IVL_ST_DELAYX:
 	    return net->u_.delayx_.expr;
 
+	  case IVL_ST_NB_TRIGGER:
+	    return net->u_.wait_.delay;
+
 	  default:
 	    assert(0);
 	    return 0;
@@ -2864,11 +2867,14 @@ extern "C" unsigned ivl_stmt_nevent(ivl_statement_t net)
 	  case IVL_ST_ASSIGN_NB:
 	    return net->u_.assign_.nevent;
 
-	  case IVL_ST_WAIT:
-	    return net->u_.wait_.nevent;
+	  case IVL_ST_NB_TRIGGER:
+	    return 1;
 
 	  case IVL_ST_TRIGGER:
 	    return 1;
+
+	  case IVL_ST_WAIT:
+	    return net->u_.wait_.nevent;
 
 	  default:
 	    assert(0);
@@ -2887,16 +2893,20 @@ extern "C" ivl_event_t ivl_stmt_events(ivl_statement_t net, unsigned idx)
 	    else
 		  return net->u_.assign_.events[idx];
 
+	  case IVL_ST_NB_TRIGGER:
+	    assert(idx == 0);
+	    return net->u_.wait_.event;
+
+	  case IVL_ST_TRIGGER:
+	    assert(idx == 0);
+	    return net->u_.wait_.event;
+
 	  case IVL_ST_WAIT:
 	    assert(idx < net->u_.wait_.nevent);
 	    if (net->u_.wait_.nevent == 1)
 		  return net->u_.wait_.event;
 	    else
 		  return net->u_.wait_.events[idx];
-
-	  case IVL_ST_TRIGGER:
-	    assert(idx == 0);
-	    return net->u_.wait_.event;
 
 	  default:
 	    assert(0);

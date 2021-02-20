@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -416,12 +416,21 @@ PReturn::~PReturn()
       delete expr_;
 }
 
-PTrigger::PTrigger(PPackage*pkg, const pform_name_t&e)
-: package_(pkg), event_(e)
+PTrigger::PTrigger(PPackage*pkg, const pform_name_t&ev)
+: package_(pkg), event_(ev)
 {
 }
 
 PTrigger::~PTrigger()
+{
+}
+
+PNBTrigger::PNBTrigger(const pform_name_t&ev, PExpr*dly)
+: event_(ev), dly_(dly)
+{
+}
+
+PNBTrigger::~PNBTrigger()
 {
 }
 

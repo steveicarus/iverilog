@@ -3260,6 +3260,13 @@ bool NetEvTrig::check_synth(ivl_process_type_t pr_type,
       return false;
 }
 
+bool NetEvNBTrig::check_synth(ivl_process_type_t pr_type,
+                              const NetScope* /* scope */ ) const
+{
+      print_synth_warning(this, "A non-blocking event trigger", pr_type);
+      return false;
+}
+
 // The delay check above has already marked this as an error.
 bool NetEvWait::check_synth(ivl_process_type_t pr_type,
                             const NetScope* scope) const

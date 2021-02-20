@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2016 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2021 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -421,6 +421,13 @@ bool target_t::proc_trigger(const NetEvTrig*tr)
 {
       cerr << tr->get_fileline() << ": error: target (" << typeid(*this).name()
 	   <<  "): Unhandled event trigger." << endl;
+      return false;
+}
+
+bool target_t::proc_nb_trigger(const NetEvNBTrig*tr)
+{
+      cerr << tr->get_fileline() << ": error: target (" << typeid(*this).name()
+	   <<  "): Unhandled non-blocking event trigger." << endl;
       return false;
 }
 

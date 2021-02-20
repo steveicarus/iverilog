@@ -1300,6 +1300,13 @@ void NetEvTrig::dump(ostream&o, unsigned ind) const
 	<< "// " << get_fileline() << endl;
 }
 
+void NetEvNBTrig::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "->> " ;
+      if (dly_) o << "#" << *dly_ << " ";
+      o << event_->name() << "; " << "// " << get_fileline() << endl;
+}
+
 void NetEvWait::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "";

@@ -478,7 +478,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %token K_CONTRIBUTE
 %token K_PO_POS K_PO_NEG K_POW
 %token K_PSTAR K_STARP K_DOTSTAR
-%token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER K_LEQUIV
+%token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER K_NB_TRIGGER K_LEQUIV
 %token K_SCOPE_RES
 %token K_edge_descriptor
 
@@ -692,7 +692,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
 %token K_TAND
 %nonassoc K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
-%nonassoc K_XOR_EQ K_LS_EQ K_RS_EQ K_RSS_EQ
+%nonassoc K_XOR_EQ K_LS_EQ K_RS_EQ K_RSS_EQ K_NB_TRIGGER
 %right K_TRIGGER K_LEQUIV
 %right '?' ':' K_inside
 %left K_LOR
@@ -6716,15 +6716,36 @@ statement_item /* This is roughly statement_item in the LRM */
 		}
   | K_TRIGGER hierarchy_identifier ';'
       { PTrigger*tmp = pform_new_trigger(@2, 0, *$2);
-	FILE_NAME(tmp, @1);
 	delete $2;
 	$$ = tmp;
       }
   | K_TRIGGER PACKAGE_IDENTIFIER K_SCOPE_RES hierarchy_identifier
       { PTrigger*tmp = pform_new_trigger(@4, $2, *$4);
-	FILE_NAME(tmp, @1);
 	delete $4;
 	$$ = tmp;
+      }
+    /* FIXME: Does this need support for package resolution like above? */
+  | K_NB_TRIGGER hierarchy_identifier ';'
+      { PNBTrigger*tmp = pform_new_nb_trigger(@2, 0, *$2);
+	delete $2;
+	$$ = tmp;
+      }
+  | K_NB_TRIGGER delay1 hierarchy_identifier ';'
+      { PNBTrigger*tmp = pform_new_nb_trigger(@3, $2, *$3);
+	delete $3;
+	$$ = tmp;
+      }
+  | K_NB_TRIGGER event_control hierarchy_identifier ';'
+      { PNBTrigger*tmp = pform_new_nb_trigger(@3, 0, *$3);
+	delete $3;
+	$$ = tmp;
+        yywarn(@1, "Sorry: ->> with event control is not currently supported.");
+      }
+  | K_NB_TRIGGER K_repeat '(' expression ')' event_control hierarchy_identifier ';'
+      { PNBTrigger*tmp = pform_new_nb_trigger(@7, 0, *$7);
+	delete $7;
+	$$ = tmp;
+        yywarn(@1, "Sorry: ->> with repeat event control is not currently supported.");
       }
 
   | procedural_assertion_statement { $$ = $1; }

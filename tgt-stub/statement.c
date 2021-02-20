@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -256,6 +256,39 @@ static void show_stmt_trigger(ivl_statement_t net, unsigned ind)
       unsigned idx;
 
       fprintf(out, "%*s->", ind, "");
+
+      for (idx = 0 ;  idx < cnt ;  idx += 1) {
+	    ivl_event_t event = ivl_stmt_events(net, idx);
+	    fprintf(out, " %s", ivl_event_basename(event));
+      }
+
+	/* The compiler should make exactly one target event, so if we
+	   find more or less, then print some error text. */
+      if (cnt != 1) {
+	    fprintf(out, " /* ERROR: Expect one target event, got %u */", cnt);
+      }
+
+      fprintf(out, ";\n");
+}
+
+/*
+ * A non-blocking trigger statement is the "->> name;" syntax in Verilog,
+ * where a non-blocking trigger signal is sent to a named event. The trigger
+ * statement is actually a very simple object.
+ */
+static void show_stmt_nb_trigger(ivl_statement_t net, unsigned ind)
+{
+      unsigned cnt = ivl_stmt_nevent(net);
+      unsigned idx;
+
+      fprintf(out, "%*s->>", ind, "");
+
+      ivl_expr_t delay = ivl_stmt_delay_expr(net);
+      if (delay) {
+	    fprintf(out, " #(");
+	    show_expression(ivl_stmt_delay_expr(net), ind+4);
+	    fprintf(out, ")");
+      }
 
       for (idx = 0 ;  idx < cnt ;  idx += 1) {
 	    ivl_event_t event = ivl_stmt_events(net, idx);
@@ -535,6 +568,10 @@ void show_statement(ivl_statement_t net, unsigned ind)
 
 	  case IVL_ST_TRIGGER:
 	    show_stmt_trigger(net, ind);
+	    break;
+
+	  case IVL_ST_NB_TRIGGER:
+	    show_stmt_nb_trigger(net, ind);
 	    break;
 
 	  case IVL_ST_UTASK:

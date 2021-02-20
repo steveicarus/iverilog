@@ -128,6 +128,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void proc_repeat(const NetRepeat*);
       void proc_stask(const NetSTask*);
       bool proc_trigger(const NetEvTrig*);
+      bool proc_nb_trigger(const NetEvNBTrig*);
       void proc_utask(const NetUTask*);
       bool proc_wait(const NetEvWait*);
       void proc_while(const NetWhile*);
@@ -863,13 +864,14 @@ struct ivl_statement_s {
 		  ivl_scope_t def;
 	    } utask_;
 
-	    struct { /* IVL_ST_TRIGGER IVL_ST_WAIT */
+	    struct { /* IVL_ST_TRIGGER IVL_ST_NB_TRIGGER IVL_ST_WAIT */
 		  unsigned needs_t0_trigger;
 		  unsigned nevent;
 		  union {
 			ivl_event_t event;
 			ivl_event_t*events;
 		  };
+		  ivl_expr_t delay;
 		  ivl_statement_t stmt_;
 	    } wait_;
 

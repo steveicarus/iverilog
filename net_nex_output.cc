@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -131,6 +131,10 @@ void NetDoWhile::nex_output(NexusSet&out)
 }
 
 void NetEvTrig::nex_output(NexusSet&)
+{
+}
+
+void NetEvNBTrig::nex_output(NexusSet&)
 {
 }
 

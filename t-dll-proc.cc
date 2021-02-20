@@ -825,6 +825,38 @@ bool dll_target::proc_trigger(const NetEvTrig*net)
 	    }
       }
 
+      return true;
+}
+
+bool dll_target::proc_nb_trigger(const NetEvNBTrig*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
+
+      stmt_cur_->type_ = IVL_ST_NB_TRIGGER;
+      stmt_cur_->u_.wait_.nevent = 1;
+      stmt_cur_->u_.wait_.delay = 0;
+
+      if (const NetExpr*expr = net->delay()) {
+	    assert(expr_ == 0);
+	    expr->expr_scan(this);
+	    stmt_cur_->u_.wait_.delay = expr_;
+	    expr_ = 0;
+      }
+
+	/* Locate the event by name. Save the ivl_event_t in the
+	   statement so that the generator can find it easily. */
+      const NetEvent*ev = net->event();
+      ivl_scope_t ev_scope = lookup_scope_(ev->scope());
+
+      for (unsigned idx = 0 ;  idx < ev_scope->nevent_ ;  idx += 1) {
+	    const char*ename = ivl_event_basename(ev_scope->event_[idx]);
+	    if (strcmp(ev->name(), ename) == 0) {
+		  stmt_cur_->u_.wait_.event = ev_scope->event_[idx];
+		  break;
+	    }
+      }
 
       return true;
 }

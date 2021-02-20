@@ -73,6 +73,7 @@ class NetFuncDef;
 class NetRamDq;
 class NetTaskDef;
 class NetEvTrig;
+class NetEvNBTrig;
 class NetEvWait;
 class PClass;
 class PExpr;
@@ -3346,6 +3347,11 @@ class NetDoWhile  : public NetProc {
  * turn awakens the waiting threads. Each NetEvTrig object references
  * exactly one event object.
  *
+ * The NetEvNBTrig class represents non-blocking trigger statements.
+ * Executing this statement causes the referenced event to be triggered
+ * at some time in the future, which in turn awakens the waiting threads.
+ * Each NetEvNBTrig object references exactly one event object.
+ *
  * The NetEvProbe class is the structural equivalent of the NetEvTrig,
  * in that it is a node and watches bit values that it receives. It
  * checks for edges then if appropriate triggers the associated
@@ -3358,6 +3364,7 @@ class NetEvent : public LineInfo {
       friend class NetScope;
       friend class NetEvProbe;
       friend class NetEvTrig;
+      friend class NetEvNBTrig;
       friend class NetEvWait;
       friend class NetEEvent;
 
@@ -3416,6 +3423,9 @@ class NetEvent : public LineInfo {
 	// Use these methods to list the triggers attached to me.
       NetEvTrig* trig_;
 
+	// Use these methods to list the non-blocking triggers attached to me.
+      NetEvNBTrig* nb_trig_;
+
 	// Use This member to count references by NetEvWait objects.
       unsigned waitref_;
       struct wcell_ {
@@ -3453,6 +3463,31 @@ class NetEvTrig  : public NetProc {
       NetEvent*event_;
 	// This is used to place me in the NetEvents lists of triggers.
       NetEvTrig*enext_;
+};
+
+class NetEvNBTrig  : public NetProc {
+
+      friend class NetEvent;
+
+    public:
+      explicit NetEvNBTrig(NetEvent*tgt, NetExpr*dly);
+      ~NetEvNBTrig();
+
+      const NetExpr*delay() const;
+      const NetEvent*event() const;
+
+      virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
+                                  bool nested_func = false) const;
+      virtual void nex_output(NexusSet&);
+      virtual bool emit_proc(struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
+
+    private:
+      NetEvent*event_;
+      NetExpr*dly_;
+	// This is used to place me in the NetEvents lists of triggers.
+      NetEvNBTrig*enext_;
 };
 
 class NetEvWait  : public NetProc {

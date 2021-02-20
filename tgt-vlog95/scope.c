@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2020 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2021 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -878,6 +878,7 @@ static unsigned has_func_disable(ivl_scope_t scope, ivl_statement_t stmt)
 	case IVL_ST_STASK:
 	case IVL_ST_UTASK: // this will be generated for a SV void function
 	case IVL_ST_TRIGGER:
+	case IVL_ST_NB_TRIGGER:
 	    break;
 	  /* Look for a disable in each block statement. */
 	case IVL_ST_BLOCK:

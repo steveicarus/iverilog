@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -387,6 +387,11 @@ bool NetEvProbe::emit_node(struct target_t*tgt) const
 bool NetEvTrig::emit_proc(struct target_t*tgt) const
 {
       return tgt->proc_trigger(this);
+}
+
+bool NetEvNBTrig::emit_proc(struct target_t*tgt) const
+{
+      return tgt->proc_nb_trigger(this);
 }
 
 bool NetEvWait::emit_proc(struct target_t*tgt) const

@@ -752,6 +752,24 @@ PTrigger* pform_new_trigger(const struct vlltype&loc, PPackage*pkg,
       return tmp;
 }
 
+PNBTrigger* pform_new_nb_trigger(const struct vlltype&loc,
+			         const list<PExpr*>*dly,
+			         const pform_name_t&name)
+{
+      if (gn_system_verilog())
+	    check_potential_imports(loc, name.front().name, false);
+
+      PExpr*tmp_dly = 0;
+      if (dly) {
+	    assert(dly->size() == 1);
+	    tmp_dly = dly->front();
+      }
+
+      PNBTrigger*tmp = new PNBTrigger(name, tmp_dly);
+      FILE_NAME(tmp, loc);
+      return tmp;
+}
+
 PGenerate* pform_parent_generate(void)
 {
       return pform_cur_generate;

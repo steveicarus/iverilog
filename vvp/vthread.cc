@@ -3106,6 +3106,18 @@ bool of_EVENT(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %event/nb <var-label>, <delay>
+ */
+bool of_EVENT_NB(vthread_t thr, vvp_code_t cp)
+{
+      vvp_time64_t delay;
+
+      delay = thr->words[cp->bit_idx[0]].w_uint;
+      schedule_propagate_event(cp->net, delay);
+      return true;
+}
+
 bool of_EVCTL(vthread_t thr, vvp_code_t cp)
 {
       assert(thr->event == 0 && thr->ecount == 0);

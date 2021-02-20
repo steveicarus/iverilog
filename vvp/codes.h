@@ -1,7 +1,7 @@
 #ifndef IVL_codes_H
 #define IVL_codes_H
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -112,6 +112,7 @@ extern bool of_DUP_REAL(vthread_t thr, vvp_code_t code);
 extern bool of_DUP_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
 extern bool of_EVENT(vthread_t thr, vvp_code_t code);
+extern bool of_EVENT_NB(vthread_t thr, vvp_code_t code);
 extern bool of_EVCTL(vthread_t thr, vvp_code_t code);
 extern bool of_EVCTLC(vthread_t thr, vvp_code_t code);
 extern bool of_EVCTLI(vthread_t thr, vvp_code_t code);

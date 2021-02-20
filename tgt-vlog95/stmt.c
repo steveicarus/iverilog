@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2020 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2021 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1427,6 +1427,26 @@ static void emit_stmt_trigger(ivl_scope_t scope, ivl_statement_t stmt)
       fprintf(vlog_out, "\n");
 }
 
+static void emit_stmt_nb_trigger(ivl_scope_t scope, ivl_statement_t stmt)
+{
+      fprintf(vlog_out, "%*c->> ", get_indent(), ' ');
+      ivl_expr_t delay = ivl_stmt_delay_expr(stmt);
+      if (delay) {
+	    fprintf(vlog_out, "#(");
+	    emit_scaled_delayx(scope, delay, 1);
+	    fprintf(vlog_out, ") ");
+      }
+      assert(ivl_stmt_nevent(stmt) == 1);
+      emit_event(scope, stmt);
+      fprintf(vlog_out, ";");
+      emit_stmt_file_line(stmt);
+      fprintf(vlog_out, "\n");
+      fprintf(stderr, "%s:%u: vlog95 sorry: wait fork is not currently "
+                      "translated.\n",
+                      ivl_stmt_file(stmt), ivl_stmt_lineno(stmt));
+      vlog_errors += 1;
+}
+
 /*
  * A user defined task call with arguments is generated as a block with
  * input assignments, a simple call and then output assignments. This is
@@ -1595,6 +1615,9 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 	    break;
 	case IVL_ST_TRIGGER:
 	    emit_stmt_trigger(scope, stmt);
+	    break;
+	case IVL_ST_NB_TRIGGER:
+	    emit_stmt_nb_trigger(scope, stmt);
 	    break;
 	case IVL_ST_UTASK:
 	    emit_stmt_utask(scope, stmt);

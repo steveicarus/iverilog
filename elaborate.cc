@@ -5780,6 +5780,38 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
       return trig;
 }
 
+NetProc* PNBTrigger::elaborate(Design*des, NetScope*scope) const
+{
+      assert(scope);
+
+      NetNet*       sig = 0;
+      const NetExpr*par = 0;
+      NetEvent*     eve = 0;
+
+      NetScope*found_in = symbol_search(this, des, scope, event_,
+					sig, par, eve);
+
+      if (found_in == 0) {
+	    cerr << get_fileline() << ": error: event <" << event_ << ">"
+		 << " not found." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (eve == 0) {
+	    cerr << get_fileline() << ": error:  <" << event_ << ">"
+		 << " is not a named event." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetExpr*dly = 0;
+      if (dly_) dly = elab_and_eval(des, scope, dly_, -1);
+      NetEvNBTrig*trig = new NetEvNBTrig(eve, dly);
+      trig->set_line(*this);
+      return trig;
+}
+
 /*
  * The while loop is fairly directly represented in the netlist.
  */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -517,6 +517,7 @@ that this information has been cleared. You can get an assert if
 this information is not managed correctly.
 
 * %event <functor-label>
+* %event/nb <functor-label>
 
 This instruction is used to send a pulse to an event object. The
 <functor-label> is an event variable. This instruction simply writes

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -471,6 +471,11 @@ NexusSet* NetDoWhile::nex_input(bool rem_out, bool always_sens, bool nested_func
 }
 
 NexusSet* NetEvTrig::nex_input(bool, bool, bool) const
+{
+      return new NexusSet;
+}
+
+NexusSet* NetEvNBTrig::nex_input(bool, bool, bool) const
 {
       return new NexusSet;
 }

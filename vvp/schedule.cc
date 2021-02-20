@@ -892,6 +892,19 @@ void schedule_propagate_vector(vvp_net_t*net,
       schedule_event_(cur, delay, SEQ_NBASSIGN);
 }
 
+// FIXME: This needs to create a non-blocking event, but only one per time slot.
+//        Is schedule_event_ or execution actually filtering since the net is
+//        already X because this is not triggering?
+void schedule_propagate_event(vvp_net_t*net,
+                              vvp_time64_t delay)
+{
+      vvp_vector4_t tmp (1, BIT4_X);
+      struct propagate_vector4_event_s*cur
+	    = new struct propagate_vector4_event_s(tmp);
+      cur->net = net;
+      schedule_event_(cur, delay, SEQ_NBASSIGN);
+}
+
 void schedule_assign_array_word(vvp_array_t mem,
 				unsigned word_addr,
 				unsigned off,

@@ -226,6 +226,7 @@ TU [munpf]
 "^~" { return K_NXOR; }
 "~&" { return K_NAND; }
 "->" { return K_TRIGGER; }
+"->>" { return K_NB_TRIGGER; }
 "+:" { return K_PO_POS; }
 "-:" { return K_PO_NEG; }
 "<+" { return K_CONTRIBUTE; }

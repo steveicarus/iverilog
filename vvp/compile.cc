@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -167,7 +167,8 @@ static const struct opcode_table_s opcode_table[] = {
       { "%evctl/c",of_EVCTLC, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%evctl/i",of_EVCTLI, 2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%evctl/s",of_EVCTLS, 2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
-      { "%event",  of_EVENT,  1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
+      { "%event",    of_EVENT,    1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
+      { "%event/nb", of_EVENT_NB, 2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },
       { "%flag_get/vec4", of_FLAG_GET_VEC4, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%flag_inv",      of_FLAG_INV,      1, {OA_BIT1,   OA_NONE, OA_NONE} },
       { "%flag_mov",      of_FLAG_MOV,      2, {OA_BIT1,   OA_BIT2, OA_NONE} },

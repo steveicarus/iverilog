@@ -426,6 +426,7 @@ typedef enum ivl_statement_type_e {
       IVL_ST_FORK_JOIN_ANY  = 28,
       IVL_ST_FORK_JOIN_NONE = 29,
       IVL_ST_FREE    = 26,
+      IVL_ST_NB_TRIGGER = 31,
       IVL_ST_RELEASE = 17,
       IVL_ST_REPEAT  = 18,
       IVL_ST_STASK   = 19,
