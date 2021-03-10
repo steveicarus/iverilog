@@ -4634,6 +4634,22 @@ port_declaration
 	delete[]$4;
 	$$ = ptmp;
       }
+  | attribute_list_opt K_input net_type_opt data_type_or_implicit IDENTIFIER '=' expression
+      { if (!gn_system_verilog()) {
+	      yyerror("error: Default port values require SystemVerilog.");
+	}
+	Module::port_t*ptmp;
+	perm_string name = lex_strings.make($5);
+	data_type_t*use_type = $4;
+	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
+	ptmp->default_value = $7;
+	pform_module_define_port(@2, name, NetNet::PINPUT, $3, use_type, $1);
+	port_declaration_context.port_type = NetNet::PINPUT;
+	port_declaration_context.port_net_type = $3;
+	port_declaration_context.data_type = $4;
+	delete[]$5;
+	$$ = ptmp;
+      }
   | attribute_list_opt K_inout net_type_opt data_type_or_implicit IDENTIFIER dimensions_opt
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
@@ -5972,6 +5988,7 @@ port_reference
 	  Module::port_t*ptmp = new Module::port_t;
 	  ptmp->name = perm_string();
 	  ptmp->expr.push_back(wtmp);
+	  ptmp->default_value = 0;
 
 	  delete[]$1;
 	  $$ = ptmp;
@@ -5995,6 +6012,7 @@ port_reference
 	  Module::port_t*ptmp = new Module::port_t;
 	  ptmp->name = perm_string();
 	  ptmp->expr.push_back(tmp);
+	  ptmp->default_value = 0;
 	  delete[]$1;
 	  $$ = ptmp;
 	}
@@ -6006,6 +6024,7 @@ port_reference
 	  FILE_NAME(wtmp, @1);
 	  ptmp->name = lex_strings.make($1);
 	  ptmp->expr.push_back(wtmp);
+	  ptmp->default_value = 0;
 	  delete[]$1;
 	  $$ = ptmp;
 	}

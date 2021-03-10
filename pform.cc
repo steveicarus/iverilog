@@ -1394,6 +1394,7 @@ Module::port_t* pform_module_port_reference(perm_string name,
       FILE_NAME(tmp, file, lineno);
       ptmp->name = name;
       ptmp->expr.push_back(tmp);
+      ptmp->default_value = 0;
 
       return ptmp;
 }

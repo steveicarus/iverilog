@@ -1,7 +1,7 @@
 #ifndef IVL_Module_H
 #define IVL_Module_H
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -60,11 +60,13 @@ class Module : public PScopeExtra, public PNamedItem {
 	   objects. Each port has a name and an ordered list of
 	   wires. The name is the means that the outside uses to
 	   access the port, the wires are the internal connections to
-	   the port. */
+	   the port. In SystemVerilog, input ports may also have a
+	   default value. */
     public:
       struct port_t {
 	    perm_string name;
 	    vector<PEIdent*> expr;
+	    PExpr*default_value;
       };
 
     public:
@@ -147,6 +149,8 @@ class Module : public PScopeExtra, public PNamedItem {
 
       // Return port name ("" for undeclared port)
       perm_string get_port_name(unsigned idx) const;
+
+      PExpr* get_port_default_value(unsigned idx) const;
 
       PGate* get_gate(perm_string name);
 

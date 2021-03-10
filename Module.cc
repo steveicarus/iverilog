@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -104,6 +104,11 @@ perm_string Module::get_port_name(unsigned idx) const
       return ports[idx]->name;
 }
 
+PExpr* Module::get_port_default_value(unsigned idx) const
+{
+      assert(idx < ports.size());
+      return ports[idx] ? ports[idx]->default_value : 0;
+}
 
 
 PGate* Module::get_gate(perm_string name)

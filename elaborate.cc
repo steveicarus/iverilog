@@ -1323,9 +1323,15 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	    perm_string port_name = rmod->get_port_name(idx);
 
-	      // Skip unconnected module ports. This happens when a
-	      // null parameter is passed in.
+	      // If the port is unconnected, substitute the default
+	      // value. The parser ensures that a default value only
+	      // exists for input ports.
+	    if (pins[idx] == 0)
+		  pins[idx] = rmod->get_port_default_value(idx);
 
+	      // Skip unconnected module ports. This happens when a
+	      // null parameter is passed in and there is no default 
+	      // value.
 	    if (pins[idx] == 0) {
 
 		  if (pins_fromwc[idx]) {
