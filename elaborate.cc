@@ -1320,14 +1320,20 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
       for (unsigned idx = 0 ;  idx < pins.size() ;  idx += 1) {
 	    bool unconnected_port = false;
+	    bool using_default = false;
 
 	    perm_string port_name = rmod->get_port_name(idx);
 
 	      // If the port is unconnected, substitute the default
 	      // value. The parser ensures that a default value only
 	      // exists for input ports.
-	    if (pins[idx] == 0)
-		  pins[idx] = rmod->get_port_default_value(idx);
+	    if (pins[idx] == 0) {
+		  PExpr*default_value = rmod->get_port_default_value(idx);
+		  if (default_value) {
+			pins[idx] = default_value;
+			using_default = true;
+		  }
+	    }
 
 	      // Skip unconnected module ports. This happens when a
 	      // null parameter is passed in and there is no default 
@@ -1511,10 +1517,11 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		       port is actually empty on the inside. We assume
 		       in that case that the port is input. */
 
-		  NetExpr*tmp_expr = elab_and_eval(des, scope, pins[idx], -1);
+		  NetExpr*tmp_expr = elab_and_eval(des, scope, pins[idx], -1, using_default);
 		  if (tmp_expr == 0) {
 			cerr << pins[idx]->get_fileline()
-			     << ": error: Failed to elaborate port expression."
+			     << ": error: Failed to elaborate port "
+			     << (using_default ? "default value." : "expression.")
 			     << endl;
 			des->errors += 1;
 			continue;
