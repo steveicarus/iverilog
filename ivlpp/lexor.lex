@@ -33,6 +33,8 @@
 static void output_init(void);
 #define YY_USER_INIT output_init()
 
+static void  handle_line_directive(void);
+
 static void  def_start(void);
 static void  def_add_arg(void);
 static void  def_finish(void);
@@ -215,10 +217,17 @@ W        [ \t\b\f]+
  * older versions of flex (at least 2.5.31); they are supposed to
  * be implied, according to the flex manual.
  */
-keywords (include|define|undef|ifdef|ifndef|else|elsif|endif)
+keywords (line|include|define|undef|ifdef|ifndef|else|elsif|endif)
 
 %%
 
+ /* Recognize and handle the `line directive. Also pass it through to
+  * the output so the main compiler is aware of the change.
+  */
+^[ \t]?"`line"[ \t]+.+ { handle_line_directive(); ECHO; }
+
+ /* Detect single line comments, passing them directly to the output.
+  */
 "//"[^\r\n]* { ECHO; }
 
  /* detect multiline, c-style comments, passing them directly to the
@@ -693,6 +702,87 @@ keywords (include|define|undef|ifdef|ifndef|else|elsif|endif)
 <<EOF>> { if (!load_next_input()) yyterminate(); }
 
 %%
+/*
+ * Parse a `line directive and set the current file name and line
+ * number accordingly. This ensures we restore the correct name
+ * and line number when returning from an include file or macro
+ * expansion. Ignore an invalid directive - the main compiler
+ * will report the error.
+ */
+static void handle_line_directive(void)
+{
+    char *cp;
+    char *cpr;
+    unsigned long lineno;
+    char*fn_start;
+    char*fn_end;
+
+      /* Skip any leading space. */
+    cp = strchr(yytext, '`');
+      /* Skip the `line directive. */
+    assert(strncmp(cp, "`line", 5) == 0);
+    cp += 5;
+
+      /* strtoul skips leading space. */
+    lineno = strtoul(cp, &cpr, 10);
+    if (cp == cpr || lineno == 0) {
+        return;
+    }
+    cp = cpr;
+
+      /* Skip the space between the line number and the file name. */
+    cpr += strspn(cp, " \t");
+    if (cp == cpr) {
+        return;
+    }
+    cp = cpr;
+
+      /* Find the starting " and skip it. */
+    fn_start = strchr(cp, '"');
+    if (cp != fn_start) {
+        return;
+    }
+    fn_start += 1;
+
+      /* Find the last ". */
+    fn_end = strrchr(fn_start, '"');
+    if (!fn_end) {
+        return;
+    }
+
+      /* Skip the space after the file name. */
+    cp = fn_end + 1;
+    cpr = cp;
+    cpr += strspn(cp, " \t");
+    if (cp == cpr) {
+        return;
+    }
+    cp = cpr;
+
+      /* Check that the level is correct, we do not need the level. */
+    if (strspn(cp, "012") != 1) {
+        return;
+    }
+    cp += 1;
+
+      /* Verify that only space is left. */
+    cp += strspn(cp, " \t");
+    if ((size_t)(cp-yytext) != strlen(yytext)) {
+        return;
+    }
+
+      /* Update the current file name and line number. Subtract 1 from
+         the line number because `line sets the number for the next
+         line, and 1 because our line numbers are zero-based. This
+         will underflow on line 1, but that's OK because we are using
+         unsigned arithmetic. */
+    assert(istack);
+    realloc(istack->path, fn_end-fn_start+1);
+    strncpy(istack->path, fn_start, fn_end-fn_start);
+    istack->path[fn_end-fn_start] = '\0';
+    istack->lineno = lineno - 2;
+}
+
  /* Defined macros are kept in this table for convenient lookup. As
   * `define directives are matched (and the do_define() function
   * called) the tree is built up to match names with values. If a
