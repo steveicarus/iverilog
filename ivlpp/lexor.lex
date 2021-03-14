@@ -777,7 +777,7 @@ static void handle_line_directive(void)
          will underflow on line 1, but that's OK because we are using
          unsigned arithmetic. */
     assert(istack);
-    realloc(istack->path, fn_end-fn_start+1);
+    istack->path = realloc(istack->path, fn_end-fn_start+1);
     strncpy(istack->path, fn_start, fn_end-fn_start);
     istack->path[fn_end-fn_start] = '\0';
     istack->lineno = lineno - 2;
