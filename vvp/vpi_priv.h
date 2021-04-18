@@ -329,7 +329,7 @@ extern void vpip_attach_to_current_scope(vpiHandle obj);
 extern __vpiScope* vpip_peek_context_scope(void);
 extern unsigned vpip_add_item_to_context(automatic_hooks_s*item,
                                          __vpiScope*scope);
-extern vpiHandle vpip_make_root_iterator(void);
+extern vpiHandle vpip_make_root_iterator(int type_code);
 extern void vpip_make_root_iterator(class __vpiHandle**&table,
 				    unsigned&ntable);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,10 +35,11 @@ using namespace std;
 
 static vector<vpiHandle> vpip_root_table;
 
-vpiHandle vpip_make_root_iterator(void)
+static vpiHandle make_subset_iterator_(int type_code, vector<vpiHandle>&table);
+
+vpiHandle vpip_make_root_iterator(int type_code)
 {
-      return vpip_make_iterator(vpip_root_table.size(),
-				&vpip_root_table[0], false);
+      return make_subset_iterator_(type_code, vpip_root_table);
 }
 
 void vpip_make_root_iterator(__vpiHandle**&table, unsigned&ntable)
@@ -291,22 +292,22 @@ static int compare_types(int code, int type)
       return 0;
 }
 
-static vpiHandle module_iter_subset(int code, __vpiScope*ref)
+static vpiHandle make_subset_iterator_(int type_code, vector<vpiHandle>&table)
 {
       unsigned mcnt = 0, ncnt = 0;
       vpiHandle*args;
 
-      for (unsigned idx = 0 ;  idx < ref->intern.size() ;  idx += 1)
-	    if (compare_types(code, ref->intern[idx]->get_type_code()))
+      for (unsigned idx = 0; idx < table.size(); idx += 1)
+	    if (compare_types(type_code, table[idx]->get_type_code()))
 		  mcnt += 1;
 
       if (mcnt == 0)
 	    return 0;
 
       args = (vpiHandle*)calloc(mcnt, sizeof(vpiHandle));
-      for (unsigned idx = 0 ;  idx < ref->intern.size() ;  idx += 1)
-	    if (compare_types(code, ref->intern[idx]->get_type_code()))
-		  args[ncnt++] = ref->intern[idx];
+      for (unsigned idx = 0; idx < table.size(); idx += 1)
+	    if (compare_types(type_code, table[idx]->get_type_code()))
+		  args[ncnt++] = table[idx];
 
       assert(ncnt == mcnt);
 
@@ -324,7 +325,7 @@ static vpiHandle module_iter(int code, vpiHandle obj)
       __vpiScope*ref = dynamic_cast<__vpiScope*>(obj);
       assert(ref);
 
-      return module_iter_subset(code, ref);
+      return make_subset_iterator_(code, ref->intern);
 }
 
 

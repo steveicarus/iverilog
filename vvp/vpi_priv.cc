@@ -1239,7 +1239,9 @@ static vpiHandle vpi_iterate_global(int type)
 {
       switch (type) {
 	  case vpiModule:
-	    return vpip_make_root_iterator();
+	    // fallthrough
+	  case vpiPackage:
+	    return vpip_make_root_iterator(type);
 
 	  case vpiUdpDefn:
 	    return vpip_make_udp_iterator();
