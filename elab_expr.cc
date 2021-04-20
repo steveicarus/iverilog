@@ -5243,19 +5243,36 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 	    NetExpr*ex;
 	    if (base_c->value().is_defined()) {
 		  long lsv = base_c->value().as_long();
-		  long offset = 0;
+		  long rel_base = 0;
 		    // Get the signal range.
 		  const vector<netrange_t>&packed = net->sig()->packed_dims();
-		  ivl_assert(*this, packed.size() == prefix_indices.size()+1);
+		  if (prefix_indices.size()+1 < net->sig()->packed_dims().size()) {
+			  // Here we are selecting one or more sub-arrays.
+			  // Make this work by finding the indexed sub-arrays and
+			  // creating a generated slice that spans the whole range.
+			long loff, moff;
+			unsigned long lwid, mwid;
+			bool lrc;
+			lrc = net->sig()->sb_to_slice(prefix_indices, lsv, moff, mwid);
+			ivl_assert(*this, lrc);
+			lrc = net->sig()->sb_to_slice(prefix_indices, lsv+(wid/mwid)-1, loff, lwid);
+			ivl_assert(*this, lrc);
+			ivl_assert(*this, lwid == mwid);
 
-		    // We want the last range, which is where we work.
-		  const netrange_t&rng = packed.back();
-		  if (rng.get_msb() < rng.get_lsb()) {
-			offset = -wid + 1;
+			if (moff > loff) {
+			      rel_base = loff;
+			} else {
+			      rel_base = moff;
+			}
+		  } else {
+		        long offset = 0;
+		          // We want the last range, which is where we work.
+		        const netrange_t&rng = packed.back();
+		        if (rng.get_msb() < rng.get_lsb()) {
+			      offset = -wid + 1;
+		        }
+		        rel_base = net->sig()->sb_to_idx(prefix_indices, lsv) + offset;
 		  }
-
-		  long rel_base = net->sig()->sb_to_idx(prefix_indices, lsv);
-		  rel_base += offset;
 
 		    // If the part select covers exactly the entire
 		    // vector, then do not bother with it. Return the
@@ -5347,19 +5364,36 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 	    NetExpr*ex;
 	    if (base_c->value().is_defined()) {
 		  long lsv = base_c->value().as_long();
-		  long offset = 0;
+		  long rel_base = 0;
 		    // Get the signal range.
 		  const vector<netrange_t>&packed = net->sig()->packed_dims();
-		  ivl_assert(*this, packed.size() == prefix_indices.size()+1);
+		  if (prefix_indices.size()+1 < net->sig()->packed_dims().size()) {
+			  // Here we are selecting one or more sub-arrays.
+			  // Make this work by finding the indexed sub-arrays and
+			  // creating a generated slice that spans the whole range.
+			long loff, moff;
+			unsigned long lwid, mwid;
+			bool lrc;
+			lrc = net->sig()->sb_to_slice(prefix_indices, lsv, moff, mwid);
+			ivl_assert(*this, lrc);
+			lrc = net->sig()->sb_to_slice(prefix_indices, lsv-(wid/mwid)+1, loff, lwid);
+			ivl_assert(*this, lrc);
+			ivl_assert(*this, lwid == mwid);
 
-		    // We want the last range, which is where we work.
-		  const netrange_t&rng = packed.back();
-		  if (rng.get_msb() > rng.get_lsb()) {
-			offset = -wid + 1;
-		  }
-
-		  long rel_base = net->sig()->sb_to_idx(prefix_indices, lsv);
-		  rel_base += offset;
+			if (moff > loff) {
+			      rel_base = loff;
+			} else {
+			      rel_base = moff;
+			}
+		  } else {
+		        long offset = 0;
+		          // We want the last range, which is where we work.
+		        const netrange_t&rng = packed.back();
+		        if (rng.get_msb() > rng.get_lsb()) {
+			      offset = -wid + 1;
+		        }
+		        rel_base = net->sig()->sb_to_idx(prefix_indices, lsv) + offset;
+                  }
 
 		    // If the part select covers exactly the entire
 		    // vector, then do not bother with it. Return the
