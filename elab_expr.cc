@@ -3595,6 +3595,15 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       }
 
       if (use_width != UINT_MAX) {
+	      // We have a bit/part select. Account for any remaining dimensions
+	      // beyond the indexed dimension.
+	    size_t use_depth = name_tail.index.size();
+	    if (net) {
+		  if (use_depth >= net->unpacked_dimensions())
+			use_depth -= net->unpacked_dimensions();
+		  use_width *= net->slice_width(use_depth);
+	    }
+
 	    expr_type_   = IVL_VT_LOGIC; // Assume bit/parts selects are logic
 	    expr_width_  = use_width;
 	    min_width_   = use_width;
