@@ -5133,11 +5133,19 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	      // range.
 	    long loff, moff;
 	    unsigned long lwid, mwid;
-	    bool lrc;
+	    bool lrc, mrc;
 	    lrc = net->sig()->sb_to_slice(prefix_indices, lsv, loff, lwid);
-	    ivl_assert(*this, lrc);
-	    lrc = net->sig()->sb_to_slice(prefix_indices, msv, moff, mwid);
-	    ivl_assert(*this, lrc);
+	    mrc = net->sig()->sb_to_slice(prefix_indices, msv, moff, mwid);
+	    if (!mrc || !lrc) {
+		  cerr << get_fileline() << ": error: ";
+		  cerr << "Part-select [" << msv << ":" << lsv;
+		  cerr << "] exceeds the declared bounds for ";
+		  cerr << net->sig()->name();
+		  if (net->sig()->unpacked_dimensions() > 0) cerr << "[]";
+		  cerr << "." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
 	    ivl_assert(*this, lwid == mwid);
 
 	    if (moff > loff) {
@@ -5250,14 +5258,25 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 			  // Here we are selecting one or more sub-arrays.
 			  // Make this work by finding the indexed sub-arrays and
 			  // creating a generated slice that spans the whole range.
+			unsigned long swid = net->sig()->slice_width(prefix_indices.size()+1);
+			ivl_assert(*this, swid > 0);
 			long loff, moff;
 			unsigned long lwid, mwid;
-			bool lrc;
-			lrc = net->sig()->sb_to_slice(prefix_indices, lsv, moff, mwid);
-			ivl_assert(*this, lrc);
-			lrc = net->sig()->sb_to_slice(prefix_indices, lsv+(wid/mwid)-1, loff, lwid);
-			ivl_assert(*this, lrc);
-			ivl_assert(*this, lwid == mwid);
+			bool lrc, mrc;
+			mrc = net->sig()->sb_to_slice(prefix_indices, lsv, moff, mwid);
+			lrc = net->sig()->sb_to_slice(prefix_indices, lsv+(wid/swid)-1, loff, lwid);
+			if (!mrc || !lrc) {
+			      cerr << get_fileline() << ": error: ";
+			      cerr << "Part-select [" << lsv << "+:" << (wid/swid);
+			      cerr << "] exceeds the declared bounds for ";
+			      cerr << net->sig()->name();
+			      if (net->sig()->unpacked_dimensions() > 0) cerr << "[]";
+			      cerr << "." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			ivl_assert(*this, mwid == swid);
+			ivl_assert(*this, lwid == swid);
 
 			if (moff > loff) {
 			      rel_base = loff;
@@ -5371,14 +5390,25 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 			  // Here we are selecting one or more sub-arrays.
 			  // Make this work by finding the indexed sub-arrays and
 			  // creating a generated slice that spans the whole range.
+			unsigned long swid = net->sig()->slice_width(prefix_indices.size()+1);
+			ivl_assert(*this, swid > 0);
 			long loff, moff;
 			unsigned long lwid, mwid;
-			bool lrc;
-			lrc = net->sig()->sb_to_slice(prefix_indices, lsv, moff, mwid);
-			ivl_assert(*this, lrc);
-			lrc = net->sig()->sb_to_slice(prefix_indices, lsv-(wid/mwid)+1, loff, lwid);
-			ivl_assert(*this, lrc);
-			ivl_assert(*this, lwid == mwid);
+			bool lrc, mrc;
+			mrc = net->sig()->sb_to_slice(prefix_indices, lsv, moff, mwid);
+			lrc = net->sig()->sb_to_slice(prefix_indices, lsv-(wid/swid)+1, loff, lwid);
+			if (!mrc || !lrc) {
+			      cerr << get_fileline() << ": error: ";
+			      cerr << "Part-select [" << lsv << "-:" << (wid/swid);
+			      cerr << "] exceeds the declared bounds for ";
+			      cerr << net->sig()->name();
+			      if (net->sig()->unpacked_dimensions() > 0) cerr << "[]";
+			      cerr << "." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			ivl_assert(*this, mwid == swid);
+			ivl_assert(*this, lwid == swid);
 
 			if (moff > loff) {
 			      rel_base = loff;

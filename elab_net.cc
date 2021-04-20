@@ -269,14 +269,27 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 			// creating a generated slice that spans the whole range.
 		      long loff, moff;
 		      unsigned long lwid, mwid;
-		      bool lrc;
-		      lrc = sig->sb_to_slice(prefix_indices, midx_val, moff, mwid);
-		      ivl_assert(*this, lrc);
+		      bool mrc, lrc;
+		      mrc = sig->sb_to_slice(prefix_indices, midx_val, moff, mwid);
 		      if (index_tail.sel == index_component_t::SEL_IDX_UP)
 			    lrc = sig->sb_to_slice(prefix_indices, midx_val+wid-1, loff, lwid);
 		      else
 			    lrc = sig->sb_to_slice(prefix_indices, midx_val-wid+1, loff, lwid);
-		      ivl_assert(*this, lrc);
+		      if (!mrc || !lrc) {
+			    cerr << get_fileline() << ": error: ";
+			    cerr << "Part-select [" << midx_val;
+			    if (index_tail.sel == index_component_t::SEL_IDX_UP) {
+				  cerr << "+:";
+			    } else {
+				  cerr << "-:";
+			    }
+			    cerr << wid << "] exceeds the declared bounds for ";
+			    cerr << sig->name();
+			    if (sig->unpacked_dimensions() > 0) cerr << "[]";
+			    cerr << "." << endl;
+			    des->errors += 1;
+			    return 0;
+		      }
 		      ivl_assert(*this, lwid == mwid);
 
 		      if (moff > loff) {
@@ -363,11 +376,19 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		      // range.
 		      long loff, moff;
 		      unsigned long lwid, mwid;
-		      bool lrc;
+		      bool lrc, mrc;
 		      lrc = sig->sb_to_slice(prefix_indices, lsb, loff, lwid);
-		      ivl_assert(*this, lrc);
-		      lrc = sig->sb_to_slice(prefix_indices, msb, moff, mwid);
-		      ivl_assert(*this, lrc);
+		      mrc = sig->sb_to_slice(prefix_indices, msb, moff, mwid);
+		      if (!mrc || !lrc) {
+			    cerr << get_fileline() << ": error: ";
+			    cerr << "Part-select [" << msb << ":" << lsb;
+			    cerr << "] exceeds the declared bounds for ";
+			    cerr << sig->name();
+			    if (sig->unpacked_dimensions() > 0) cerr << "[]";
+			    cerr << "." << endl;
+			    des->errors += 1;
+			    return 0;
+		      }
 		      ivl_assert(*this, lwid == mwid);
 
 		      if (moff > loff) {
