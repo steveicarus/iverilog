@@ -263,49 +263,74 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		}
 
 		long midx_val = tmp->value().as_long();
-		midx = sig->sb_to_idx(prefix_indices, midx_val);
 		delete tmp_ex;
+		if (prefix_indices.size()+1 < sig->packed_dims().size()) {
+			// Here we are selecting one or more sub-arrays.
+			// Make this work by finding the indexed sub-arrays and
+			// creating a generated slice that spans the whole range.
+		      long loff, moff;
+		      unsigned long lwid, mwid;
+		      bool lrc;
+		      lrc = sig->sb_to_slice(prefix_indices, midx_val, moff, mwid);
+		      ivl_assert(*this, lrc);
+		      if (index_tail.sel == index_component_t::SEL_IDX_UP)
+			    lrc = sig->sb_to_slice(prefix_indices, midx_val+wid-1, loff, lwid);
+		      else
+			    lrc = sig->sb_to_slice(prefix_indices, midx_val-wid+1, loff, lwid);
+		      ivl_assert(*this, lrc);
+		      ivl_assert(*this, lwid == mwid);
 
-		if (index_tail.sel == index_component_t::SEL_IDX_UP)
-		      lidx = sig->sb_to_idx(prefix_indices, midx_val+wid-1);
-		else
-		      lidx = sig->sb_to_idx(prefix_indices, midx_val-wid+1);
-
-		if (midx < lidx) {
-		      long tmpx = midx;
-		      midx = lidx;
-		      lidx = tmpx;
-		}
-
-		  /* Warn about an indexed part select that is out of range. */
-		if (warn_ob_select && (lidx < 0)) {
-		      cerr << get_fileline() << ": warning: " << sig->name();
-		      if (sig->unpacked_dimensions() > 0) cerr << "[]";
-		      cerr << "[" << midx_val;
-		      if (index_tail.sel == index_component_t::SEL_IDX_UP) {
-			    cerr << "+:";
+		      if (moff > loff) {
+			    lidx = loff;
+			    midx = moff + mwid - 1;
 		      } else {
-			    cerr << "-:";
+			    lidx = moff;
+			    midx = loff + lwid - 1;
 		      }
-		      cerr << wid << "] is selecting before vector." << endl;
-		}
-		if (warn_ob_select && (midx >= (long)sig->vector_width())) {
-		      cerr << get_fileline() << ": warning: " << sig->name();
-		      if (sig->unpacked_dimensions() > 0) {
-			    cerr << "[]";
-		      }
-		      cerr << "[" << midx_val;
-		      if (index_tail.sel == index_component_t::SEL_IDX_UP) {
-			    cerr << "+:";
-		      } else {
-			    cerr << "-:";
-		      }
-		      cerr << wid << "] is selecting after vector." << endl;
-		}
+		} else {
+		      midx = sig->sb_to_idx(prefix_indices, midx_val);
 
-		  /* This is completely out side the signal so just skip it. */
-		if (lidx >= (long)sig->vector_width() || midx < 0) {
-		      return false;
+		      if (index_tail.sel == index_component_t::SEL_IDX_UP)
+			    lidx = sig->sb_to_idx(prefix_indices, midx_val+wid-1);
+		      else
+			    lidx = sig->sb_to_idx(prefix_indices, midx_val-wid+1);
+
+		      if (midx < lidx) {
+			    long tmpx = midx;
+			    midx = lidx;
+			    lidx = tmpx;
+		      }
+
+			/* Warn about an indexed part select that is out of range. */
+		      if (warn_ob_select && (lidx < 0)) {
+			    cerr << get_fileline() << ": warning: " << sig->name();
+			    if (sig->unpacked_dimensions() > 0) cerr << "[]";
+			    cerr << "[" << midx_val;
+			    if (index_tail.sel == index_component_t::SEL_IDX_UP) {
+				  cerr << "+:";
+			    } else {
+				  cerr << "-:";
+			    }
+			    cerr << wid << "] is selecting before vector." << endl;
+		      }
+		      if (warn_ob_select && (midx >= (long)sig->vector_width())) {
+			    cerr << get_fileline() << ": warning: " << sig->name();
+			    if (sig->unpacked_dimensions() > 0) {
+				  cerr << "[]";
+			    }
+			    cerr << "[" << midx_val;
+			    if (index_tail.sel == index_component_t::SEL_IDX_UP) {
+				  cerr << "+:";
+			    } else {
+				  cerr << "-:";
+			    }
+			    cerr << wid << "] is selecting after vector." << endl;
+		      }
+
+			/* This is completely out side the signal so just skip it. */
+		      if (lidx >= (long)sig->vector_width() || midx < 0) {
+			    return false;
+		      }
 		}
 
 		break;

@@ -948,21 +948,45 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 	      // we will handle it in the code generator.
 	    if (base_c->value().is_defined()) {
 		  long lsv = base_c->value().as_long();
-		  long offset = 0;
+		  long rel_base = 0;
 		    // Get the signal range.
 		  const vector<netrange_t>&packed = reg->packed_dims();
-		  ivl_assert(*this, packed.size() == prefix_indices.size()+1);
+		  if (prefix_indices.size()+1 < reg->packed_dims().size()) {
+			  // Here we are selecting one or more sub-arrays.
+			  // Make this work by finding the indexed sub-arrays and
+			  // creating a generated slice that spans the whole range.
+			long loff, moff;
+			unsigned long lwid, mwid;
+			bool lrc;
+			lrc = reg->sb_to_slice(prefix_indices, lsv, moff, mwid);
+			ivl_assert(*this, lrc);
+			if (use_sel == index_component_t::SEL_IDX_UP)
+			      lrc = reg->sb_to_slice(prefix_indices, lsv+wid-1, loff, lwid);
+			else
+			      lrc = reg->sb_to_slice(prefix_indices, lsv-wid+1, loff, lwid);
+			ivl_assert(*this, lrc);
+			ivl_assert(*this, lwid == mwid);
 
-		    // We want the last range, which is where we work.
-		  const netrange_t&rng = packed.back();
-		  if (((rng.get_msb() < rng.get_lsb()) &&
-                       use_sel == index_component_t::SEL_IDX_UP) ||
-		      ((rng.get_msb() > rng.get_lsb()) &&
-		       use_sel == index_component_t::SEL_IDX_DO)) {
-			offset = -wid + 1;
+			if (moff > loff) {
+			      rel_base = loff;
+			      wid = moff + mwid - loff;
+			} else {
+			      rel_base = moff;
+			      wid = loff + lwid - moff;
+			}
+		  } else {
+			long offset = 0;
+			  // We want the last range, which is where we work.
+			const netrange_t&rng = packed.back();
+			if (((rng.get_msb() < rng.get_lsb()) &&
+			     use_sel == index_component_t::SEL_IDX_UP) ||
+			    ((rng.get_msb() > rng.get_lsb()) &&
+			     use_sel == index_component_t::SEL_IDX_DO)) {
+			      offset = -wid + 1;
+			}
+			rel_base = reg->sb_to_idx(prefix_indices,lsv) + offset;
 		  }
 		  delete base;
-		  long rel_base = reg->sb_to_idx(prefix_indices,lsv) + offset;
 		    /* If we cover the entire lvalue just skip the select. */
 		  if (rel_base == 0 && wid == reg->vector_width()) return true;
 		  base = new NetEConst(verinum(rel_base));
