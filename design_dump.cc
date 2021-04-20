@@ -109,6 +109,9 @@ ostream& operator << (ostream&o, ivl_variable_type_t val)
 	  case IVL_VT_STRING:
 	    o << "string";
 	    break;
+	  case IVL_VT_UARRAY:
+	    o << "uarray";
+	    break;
 	  case IVL_VT_DARRAY:
 	    o << "darray";
 	    break;
@@ -1661,6 +1664,19 @@ void NetEAccess::dump(ostream&o) const
 }
 
 void NetEArrayPattern::dump(ostream&fd) const
+{
+      fd << "'{";
+      if (items_.size() >= 1) {
+	    if (items_[0]) fd << *items_[0];
+      }
+      for (size_t idx = 1 ; idx < items_.size() ; idx += 1) {
+	    fd << ", ";
+	    if (items_[idx]) fd << *items_[idx];
+      }
+      fd << "}";
+}
+
+void NetEArrayPatternParam::dump(ostream&fd) const
 {
       fd << "'{";
       if (items_.size() >= 1) {

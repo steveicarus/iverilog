@@ -43,6 +43,17 @@ NetEArrayPattern*NetEArrayPattern::dup_expr() const
       return res;
 }
 
+NetEArrayPatternParam*NetEArrayPatternParam::dup_expr() const
+{
+      vector<NetExpr*>tmp (items_.size());
+      for (size_t idx = 0 ; idx < tmp.size() ; idx += 1)
+	    tmp[idx] = items_[idx]->dup_expr();
+
+      NetEArrayPatternParam*res = new NetEArrayPatternParam(scope_, name_, net_type(), tmp);
+      res->set_line(*this);
+      return res;
+}
+
 NetEBinary* NetEBinary::dup_expr() const
 {
       ivl_assert(*this, 0);

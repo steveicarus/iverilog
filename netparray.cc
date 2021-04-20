@@ -76,3 +76,8 @@ vector<netrange_t> netuarray_t::slice_dimensions() const
 {
       return static_dimensions();
 }
+
+ivl_variable_type_t netuarray_t::base_type(void) const
+{
+      return IVL_VT_UARRAY;
+}

@@ -60,6 +60,9 @@ void show_net_type(ivl_type_t net_type)
 	  case IVL_VT_STRING:
 	    fprintf(out, "string");
 	    break;
+	  case IVL_VT_UARRAY:
+	    fprintf(out, "uarray");
+	    break;
 	  case IVL_VT_DARRAY:
 	    show_net_type_darray(net_type);
 	    break;
@@ -117,6 +120,9 @@ void show_type_of_signal(ivl_signal_t net)
 	    break;
 	  case IVL_VT_STRING:
 	    fprintf(out, "string");
+	    break;
+	  case IVL_VT_UARRAY:
+	    fprintf(out, "uarray");
 	    break;
 	  case IVL_VT_DARRAY:
 	      /* The DARRAY type MUST be described by an

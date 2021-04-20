@@ -508,6 +508,31 @@ void Design::evaluate_parameters()
       }
 }
 
+void NetScope::evaluate_parameter_array_(Design*des, param_ref_t cur)
+{
+      PExpr*val_expr = (*cur).second.val_expr;
+      NetScope*val_scope = (*cur).second.val_scope;
+      ivl_type_t param_type = cur->second.ivl_type;
+
+      ivl_assert(cur->second, val_expr);
+      ivl_assert(cur->second, param_type);
+
+      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, param_type, true);
+      if (! expr)
+	    return;
+
+      cur->second.val = expr;
+
+      if (debug_elaborate) {
+	    cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+		 << "Parameter type: " << *param_type << endl;
+	    cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+		 << "Parameter value: " << *val_expr << endl;
+	    cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+		 << "Elaborated value: " << *expr << endl;
+      }
+
+}
 void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 {
 	/* Evaluate the parameter expression. */
@@ -840,7 +865,7 @@ void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
       if (cur->second.val_expr == 0)
             return;
 
-      // Guess the varaiable type of the parameter. If the parameter has no
+      // Guess the variable type of the parameter. If the parameter has no
       // given type, then guess the type from the expression and use that to
       // evaluate.
       ivl_variable_type_t use_type;
@@ -849,6 +874,14 @@ void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
       else
 	    use_type = cur->second.val_expr->expr_type();
 
+      if (debug_elaborate) {
+         cerr << cur->second.get_fileline() << ": evaluating parameter " << cur->first
+            << ", param_type: " << param_type;
+         if (param_type) 
+            cerr << "(base type: " << param_type->base_type() << ")";
+         cerr << ", use_type: " << use_type
+               << "." << endl;
+      }
       if (cur->second.solving) {
             cerr << cur->second.get_fileline() << ": error: "
 	         << "Recursive parameter reference found involving "
@@ -868,9 +901,13 @@ void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
                   evaluate_parameter_real_(des, cur);
                   break;
 
-		case IVL_VT_STRING:
-		  evaluate_parameter_string_(des, cur);
-		  break;
+                case IVL_VT_UARRAY:
+                  evaluate_parameter_array_(des, cur);
+                  break;
+
+                case IVL_VT_STRING:
+                  evaluate_parameter_string_(des, cur);
+                  break;
 
                 default:
                   cerr << cur->second.get_fileline() << ": internal error: "

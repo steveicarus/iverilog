@@ -1251,6 +1251,7 @@ class NetScope : public Definitions, public Attrib {
       std::map<perm_string,LocalVar> loop_index_tmp;
 
     private:
+      void evaluate_parameter_array_(Design*des, param_ref_t cur);
       void evaluate_parameter_logic_(Design*des, param_ref_t cur);
       void evaluate_parameter_real_(Design*des, param_ref_t cur);
       void evaluate_parameter_string_(Design*des, param_ref_t cur);
@@ -2094,6 +2095,7 @@ class NetExpr  : public LineInfo {
 class NetEArrayPattern  : public NetExpr {
 
     public:
+      NetEArrayPattern(unsigned w, std::vector<NetExpr*>&items);
       NetEArrayPattern(ivl_type_t lv_type, std::vector<NetExpr*>&items);
       ~NetEArrayPattern();
 
@@ -2107,8 +2109,28 @@ class NetEArrayPattern  : public NetExpr {
       NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                           bool nested_func = false) const;
 
-    private:
+    protected:
       std::vector<NetExpr*> items_;
+};
+
+class NetEArrayPatternParam  : public NetEArrayPattern {
+
+    public:
+      explicit NetEArrayPatternParam(NetScope*scope, perm_string name,
+			      ivl_type_t lv_type, std::vector<NetExpr*>&items);
+      ~NetEArrayPatternParam();
+
+      perm_string name() const;
+      const NetScope*scope() const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual void dump(ostream&) const;
+
+      virtual NetEArrayPatternParam* dup_expr() const;
+
+    private:
+      NetScope*scope_;
+      perm_string name_;
 };
 
 /*

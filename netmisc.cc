@@ -1023,10 +1023,11 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 	      // Catch some special cases.
 	    switch (cast_type) {
 		case IVL_VT_DARRAY:
+		case IVL_VT_UARRAY:
 		case IVL_VT_QUEUE:
 		  if (NetESignal*net = dynamic_cast<NetESignal*>(tmp)) {
 			ivl_variable_type_t type = net->expr_type();
-			if ((type == IVL_VT_DARRAY) || (type == IVL_VT_QUEUE))
+			if ((type == IVL_VT_UARRAY) || (type == IVL_VT_DARRAY) || (type == IVL_VT_QUEUE))
 			      return tmp;
 		  }
 		  if (dynamic_cast<PEAssignPattern*>(pe))
@@ -1826,36 +1827,52 @@ void check_for_inconsistent_delays(NetScope*scope)
 bool calculate_param_range(const LineInfo&line, ivl_type_t par_type,
 			   long&par_msv, long&par_lsv, long length)
 {
-      const netvector_t*vector_type = dynamic_cast<const netvector_t*> (par_type);
-      if (vector_type == 0) {
-	    // If the parameter doesn't have an explicit range, then
-	    // just return range values of [length-1:0].
-	    par_msv = length-1;
-	    par_lsv = 0;
-	    return true;
+      switch(par_type->base_type()) {
+         case IVL_VT_VECTOR: {
+            const netvector_t*vector_type = dynamic_cast<const netvector_t*> (par_type);
+
+            ivl_assert(line, vector_type->packed());
+            const std::vector<netrange_t>& packed_dims = vector_type->packed_dims();
+
+            // This is a netvector_t with 0 dimensions, then the parameter was
+            // declared with a statement like this:
+            //
+            //    parameter signed foo = <value>;
+            //
+            // The netvector_t is just here to carry the signed-ness, which we don't
+            // even need here. So act like the type is defined by the r-value
+            // length.
+            if (packed_dims.size() == 0) {
+             par_msv = length-1;
+             par_lsv = 0;
+             return true;
+            }
+            ivl_assert(line, packed_dims.size() == 1);
+
+            netrange_t use_range = packed_dims[0];
+            par_msv = use_range.get_msb();
+            par_lsv = use_range.get_lsb();
+
+            return true;
+          }
+          case IVL_VT_UARRAY: {
+            const netsarray_t*array_type = dynamic_cast<const netsarray_t*> (par_type);
+
+            ivl_assert(line, array_type);
+            const std::vector<netrange_t>& unpacked_dims = array_type->static_dimensions();
+            ivl_assert(line, unpacked_dims.size() == 1);
+
+            netrange_t use_range = unpacked_dims[0];
+            par_msv = use_range.get_msb();
+            par_lsv = use_range.get_lsb();
+            return true;
+          }
+
+          default:
+             // If the parameter doesn't have an explicit range, then
+             // just return range values of [length-1:0].
+             par_msv = length-1;
+             par_lsv = 0;
+             return true;
       }
-
-      ivl_assert(line, vector_type->packed());
-      const std::vector<netrange_t>& packed_dims = vector_type->packed_dims();
-
-      // This is a netvector_t with 0 dimensions, then the parameter was
-      // declared with a statement like this:
-      //
-      //    parameter signed foo = <value>;
-      //
-      // The netvector_t is just here to carry the signed-ness, which we don't
-      // even need here. So act like the type is defined by the r-value
-      // length.
-      if (packed_dims.size() == 0) {
-	    par_msv = length-1;
-	    par_lsv = 0;
-	    return true;
-      }
-      ivl_assert(line, packed_dims.size() == 1);
-
-      netrange_t use_range = packed_dims[0];
-      par_msv = use_range.get_msb();
-      par_lsv = use_range.get_lsb();
-
-      return true;
 }

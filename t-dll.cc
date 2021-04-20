@@ -559,6 +559,14 @@ void dll_target::make_scope_param_expr(ivl_parameter_t cur_par, NetExpr*etmp)
 	    assert(expr_->type_ == IVL_EX_REALNUM);
 	    expr_->u_.real_.parameter = cur_par;
 
+      } else if (const NetEArrayPattern*ea = dynamic_cast<const NetEArrayPattern*>(etmp)) {
+
+       return;
+	    //expr_uarray(er);
+	    //assert(expr_);
+	    //assert(expr_->type_ == IVL_EX_ARRAY_PATTERN);
+	    //expr_->u_.array_pattern_.parameter = cur_par;
+
       }
 
       if (expr_ == 0) {

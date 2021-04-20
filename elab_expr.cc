@@ -109,6 +109,7 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
       int context_wid = -1;
       switch (lv_type) {
 	  case IVL_VT_DARRAY:
+	  case IVL_VT_UARRAY:
 	  case IVL_VT_QUEUE:
 	  case IVL_VT_CLASS:
 	      // For these types, use a different elab_and_eval that
@@ -186,11 +187,11 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
  */
 unsigned PEAssignPattern::test_width(Design*, NetScope*, width_mode_t&)
 {
-      expr_type_  = IVL_VT_DARRAY;
-      expr_width_ = 1;
-      min_width_  = 1;
+      expr_type_  = IVL_VT_UARRAY;
+      expr_width_ = parms_.size();
+      min_width_  = expr_width_;
       signed_flag_= false;
-      return 1;
+      return expr_width_;
 }
 
 NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
@@ -208,7 +209,8 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
       }
 
       if (ntype->base_type()==IVL_VT_DARRAY ||
-          ntype->base_type()==IVL_VT_QUEUE)
+          ntype->base_type()==IVL_VT_QUEUE ||
+          ntype->base_type()==IVL_VT_UARRAY)
 	    return elaborate_expr_darray_(des, scope, ntype, flags);
 
       cerr << get_fileline() << ": sorry: I don't know how to elaborate "
@@ -222,7 +224,7 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 NetExpr*PEAssignPattern::elaborate_expr_darray_(Design*des, NetScope*scope,
 						ivl_type_t ntype, unsigned flags) const
 {
-      const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype);
+      const netarray_t*array_type = dynamic_cast<const netarray_t*> (ntype);
       ivl_assert(*this, array_type);
 
 	// This is an array pattern, so run through the elements of
@@ -3558,6 +3560,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
       switch (ntype->base_type()) {
 	  case IVL_VT_QUEUE:
 // FIXME: Does a DARRAY support a zero size?
+	  case IVL_VT_UARRAY:
 	  case IVL_VT_DARRAY:
 	    if (parms_.size() == 0) {
 		  NetENull*tmp = new NetENull;
@@ -3728,6 +3731,7 @@ bool PEIdent::calculate_packed_indices_(Design*des, NetScope*scope, NetNet*net,
       switch (net->data_type()) {
 	  case IVL_VT_STRING:
 	  case IVL_VT_DARRAY:
+	  case IVL_VT_UARRAY:
 	  case IVL_VT_QUEUE:
 	    dimensions += 1;
 	  default:
@@ -4061,6 +4065,27 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    return expr_width_;
       }
 
+      if (par != 0 && par->expr_type() == IVL_VT_UARRAY) {
+            const netuarray_t*array = dynamic_cast<const netuarray_t*> (par->net_type());
+            ivl_assert(*this, array);
+	    switch (use_sel) {
+		case index_component_t::SEL_BIT:
+		case index_component_t::SEL_BIT_LAST:
+		  expr_type_   = array->element_type()->base_type();
+		  expr_width_  = array->element_type()->packed_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = array->element_type()->get_signed();
+		  break;
+		default:
+		  expr_type_   = array->base_type();
+		  expr_width_  = array->static_dimensions()[0].width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = false;
+		  break;
+	    }
+	    return expr_width_;
+      }
+
 	// Look for a class property.
       if (gn_system_verilog() && cls_val) {
 	    expr_type_   = cls_val->base_type();
@@ -4254,6 +4279,10 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       }
 
       symbol_search(this, des, use_scope, path_, net, par, eve, par_type, cls_val);
+
+      if (par != 0) {
+         return (NetExpr *)par;
+      }
 
       if (net == 0 && gn_system_verilog() && path_.size() >= 2) {
 	      // NOTE: this is assuming the member_path is only one
@@ -4615,9 +4644,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    NetExpr*tmp = elaborate_expr_param_(des, scope, par, found_in,
                                                 par_type, expr_wid, flags);
 
-            if (!tmp) return 0;
+       if (!tmp) return 0;
 
-            return pad_to_width(tmp, expr_wid, signed_flag_, *this);
+       return pad_to_width(tmp, expr_wid, signed_flag_, *this);
       }
 
 	// If the identifier names a signal (a variable or a net)
@@ -5132,6 +5161,78 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
       return tmp;
 }
 
+NetExpr* PEIdent::elaborate_expr_param_word_(Design*des, NetScope*scope,
+					    const NetExpr*par,
+					    NetScope*found_in,
+					    ivl_type_t par_type,
+                                            bool need_const) const
+{
+      const NetEArrayPattern*par_ex = dynamic_cast<const NetEArrayPattern*> (par);
+      ivl_assert(*this, par_ex);
+      const netuarray_t*array = dynamic_cast<const netuarray_t*> (par->net_type());
+      if (!array) {
+         cerr << get_fileline() << "tried to get a word from non-array expression" << endl;
+         return 0;
+      }
+
+      long par_msv, par_lsv;
+      if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
+				 par_ex->item_size())) return 0;
+
+      const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, !name_tail.index.empty());
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.msb);
+      ivl_assert(*this, !index_tail.lsb);
+
+      NetExpr*sel = elab_and_eval(des, scope, index_tail.msb, -1, need_const);
+      if (sel == 0) return 0;
+
+      if (debug_elaborate)
+	    cerr << get_fileline() << ": debug: Calculate bit select "
+		 << "[" << *sel << "] from range "
+		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
+
+      perm_string name = peek_tail_name(path_);
+
+	// Handle the special case that the selection is constant. In this
+	// case, just precalculate the entire constant result.
+      NetEConst*sel_c = dynamic_cast<NetEConst*> (sel);
+      if (!sel_c) {
+         cerr << get_fileline() << "tried to get a word with non constant selector" << endl;
+         return 0;
+      }
+	   // Special case: If the bit select is constant and not fully
+	   // defined, then we know that the result must be 1'bx.
+	   if (! sel_c->value().is_defined()) {
+		 if (warn_ob_select) {
+		  cerr << get_fileline() << ": warning: "
+		          "Constant undefined bit select ["
+		       << sel_c->value() << "] for parameter '"
+		       << name << "'." << endl;
+		  cerr << get_fileline() << ":        : "
+		          "Replacing select with a constant 1'bx."
+		       << endl;
+		 }
+
+	// This is a convenience function for getting the width of an
+	// element. Strictly speaking it's not necessary.
+		 NetEConst*res = make_const_x(array->element_type()->packed_width());
+		 res->set_line(*this);
+		 return res;
+	   }
+	     // Calculate the canonical index value.
+	   long sel_v = sel_c->value().as_long();
+	   if (par_msv >= par_lsv) sel_v = par_msv - sel_v - par_lsv; 
+           else sel_v -= par_msv;
+
+	     // Select a bit from the parameter.
+           NetExpr*res = (NetExpr *)(par_ex->item(sel_v)->dup_expr());
+	   //NetEConst*res = new NetEConst(rtn);
+	   res->set_line(*this);
+           return res;
+}
+
 NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 					     const NetExpr*par,
 					     NetScope*,
@@ -5458,6 +5559,7 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 
       const name_component_t&name_tail = path_.back();
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
+      // FIXME: this won't work with multidimensional array
       if (!name_tail.index.empty())
 	    use_sel = name_tail.index.back().sel;
 
@@ -5473,8 +5575,13 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
       ivl_assert(*this, use_sel != index_component_t::SEL_BIT_LAST);
 
       if (use_sel == index_component_t::SEL_BIT)
-	    return elaborate_expr_param_bit_(des, scope, par, found_in,
-					     par_type, need_const);
+       if (par->expr_type() == IVL_VT_UARRAY) {
+          return elaborate_expr_param_word_(des, scope, par, found_in,
+                       par_type, need_const);
+       } else {
+          return elaborate_expr_param_bit_(des, scope, par, found_in,
+                       par_type, need_const);
+       }
 
       if (use_sel == index_component_t::SEL_PART)
 	    return elaborate_expr_param_part_(des, scope, par, found_in,
@@ -5530,6 +5637,19 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 			     << "Elaborate parameter <" << name
 			     << "> as constant " << *tmp << endl;
 	    }
+
+       const NetEArrayPattern*atmp = dynamic_cast<const NetEArrayPattern*>(par);
+       if (atmp) {
+         std::vector<NetExpr*> items(atmp->item_size());
+         for (unsigned i = 0; i < atmp->item_size(); i++) {
+            items[i] = (NetExpr*)atmp->item(i)->dup_expr();
+         }
+         tmp = new NetEArrayPatternParam(found_in, name, atmp->net_type(), items);
+         if (debug_elaborate)
+          cerr << get_fileline() << ": debug: "
+               << "Elaborate parameter <" << name
+               << "> as constant " << *tmp << endl;
+       }
 	      /* The numeric parameter value needs to have the file and line
 	       * information for the actual parameter not the expression. */
 	    assert(tmp);
