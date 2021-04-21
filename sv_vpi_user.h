@@ -1,7 +1,7 @@
 #ifndef SV_VPI_USER_H
 #define SV_VPI_USER_H
 /*
- * Copyright (c) 2010-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -44,6 +44,8 @@ EXTERN_C_START
 
 /********* OBJECT TYPES ***********/
 #define vpiPackage          600
+#define vpiInterface        601
+#define vpiProgram          602
 #define vpiArrayType        606
 #define   vpiStaticArray      1
 #define   vpiDynamicArray     2
@@ -71,6 +73,9 @@ EXTERN_C_START
 
 /********* Many-to-One ***********/
 #define vpiMember           742
+
+/********* One-to-One and One-to-Many ***********/
+#define vpiInstance         745
 
 /********* generic object properties ***********/
 #define vpiNullConst         11

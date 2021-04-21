@@ -278,6 +278,13 @@ static int compare_types(int code, int type)
 	     type == vpiNamedFork) )
 	    return 1;
 
+      if ( code == vpiInstance &&
+	    (type == vpiModule ||
+	     type == vpiProgram ||
+	     type == vpiInterface ||
+	     type == vpiPackage) )
+	    return 1;
+
       if ( code == vpiVariables &&
 	     (type == vpiIntegerVar  ||
 	      type == vpiBitVar      ||
