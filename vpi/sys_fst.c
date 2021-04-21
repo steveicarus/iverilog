@@ -824,10 +824,10 @@ static PLI_INT32 sys_dumpvars_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
       if (!depth) depth = 10000;
 
-        /* This dumps all the modules in the design if none are given. */
+        /* This dumps all the instances in the design if none are given. */
       if (!argv || !(item = vpi_scan(argv))) {
-	    argv = vpi_iterate(vpiModule, 0x0);
-	    assert(argv);  /* There must be at least one top level module. */
+	    argv = vpi_iterate(vpiInstance, 0x0);
+	    assert(argv);  /* There must be at least one top level instance. */
 	    item = vpi_scan(argv);
       }
 
