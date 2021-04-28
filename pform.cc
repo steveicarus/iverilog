@@ -2535,6 +2535,7 @@ void pform_module_define_port(const struct vlltype&li,
 			      bool keep_attr)
 {
       struct_type_t*struct_type = 0;
+      enum_type_t*enum_type = 0;
       ivl_variable_type_t data_type = IVL_VT_NO_TYPE;
       bool signed_flag = false;
 
@@ -2587,10 +2588,10 @@ void pform_module_define_port(const struct vlltype&li,
 	    signed_flag = false;
 	    prange = 0;
 
-      } else if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(vtype)) {
+      } else if ((enum_type = dynamic_cast<enum_type_t*>(vtype))) {
 	    data_type = enum_type->base_type;
 	    signed_flag = enum_type->signed_flag;
-	    prange = enum_type->range.get();
+	    prange = 0;
 
       } else if (vtype) {
 	    VLerror(li, "sorry: Given type %s not supported here (%s:%d).",
@@ -2609,6 +2610,9 @@ void pform_module_define_port(const struct vlltype&li,
 
       if (struct_type) {
 	    cur->set_data_type(struct_type);
+
+      } else if (enum_type) {
+	    cur->set_data_type(enum_type);
 
       } else if (prange == 0) {
 	    cur->set_range_scalar((type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
