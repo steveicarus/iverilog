@@ -731,7 +731,31 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
       NetScope*val_scope = (*cur).second.val_scope;
       ivl_type_t param_type = cur->second.ivl_type;
 
+	ivl_assert(cur->second, val_expr);
       ivl_assert(*val_expr, param_type);
+	
+	// If this parameter is an array, then we need to process it directly
+	// with the new method
+	const netuarray_t* param_array = dynamic_cast<const netuarray_t*>(param_type);
+	if (param_array) {
+
+		NetExpr*expr = elab_and_eval(des, val_scope, val_expr, param_type, true);
+		if (! expr)
+		    return;
+
+		cur->second.val = expr;
+
+		if (debug_elaborate) {
+			cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+				<< "Parameter type: " << *param_type << endl;
+			cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+				<< "Parameter value: " << *val_expr << endl;
+			cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+				<< "Elaborated value: " << *expr << endl;
+		}
+		return;
+	}
+
       NetExpr*expr = elab_and_eval(des, val_scope, val_expr, -1, true,
                                    cur->second.is_annotatable,
                                    param_type->base_type());

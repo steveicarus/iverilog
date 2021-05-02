@@ -215,8 +215,15 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 	    return tmp;
       }
 
-      const netarray_t*array_type = dynamic_cast<const netarray_t*> (ntype);
+      const netsarray_t*array_type = dynamic_cast<const netsarray_t*> (ntype);
 	if (array_type) {
+
+		if (array_type->static_dimensions().size() > 1) {
+			des->errors += 1;
+			cerr << get_fileline() << ": sorry: I don't know how to elaborate "
+				<< "multi-dimensions assignment patterns." << endl;
+			return 0;
+		}
 
 		// This is an array pattern, so run through the elements of
 		// the expression and elaborate each as if they are
@@ -686,12 +693,12 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
       NetExpr*lp =  left_->elaborate_expr(des, scope, l_width_, flags);
       if (lp && debug_elaborate) {
 	    cerr << get_fileline() << ": PEBComp::elaborate_expr: "
-		 << "Elaborated left_: " << *lp << endl;
+		 << "Elaborated left_: " << *lp << ", width_: " << l_width_ << endl;
       }
       NetExpr*rp = right_->elaborate_expr(des, scope, r_width_, flags);
       if (rp && debug_elaborate) {
 	    cerr << get_fileline() << ": PEBComp::elaborate_expr: "
-		 << "Elaborated right_: " << *rp << endl;
+		 << "Elaborated right_: " << *rp << ", width_: " << r_width_ << endl;
       }
 
       if ((lp == 0) || (rp == 0)) {
@@ -4065,24 +4072,28 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       if (par != 0) {
             const netuarray_t*array = dynamic_cast<const netuarray_t*> (par->net_type());
 		if (array) {
-			switch (use_sel) {
-				case index_component_t::SEL_BIT:
-				case index_component_t::SEL_BIT_LAST:
-					expr_type_   = array->element_type()->base_type();
-					expr_width_  = array->element_type()->packed_width();
-					min_width_   = expr_width_;
-					signed_flag_ = array->element_type()->get_signed();
-					break;
-				default:
-					expr_type_   = array->base_type();
-					expr_width_  = array->static_dimensions()[0].width();
-					min_width_   = expr_width_;
-					signed_flag_ = false;
-					break;
-			}
-			return expr_width_;
-		}
-	}
+                  switch (use_sel) {
+                    case index_component_t::SEL_BIT:
+                    case index_component_t::SEL_BIT_LAST:
+                      expr_type_   = array->element_type()->base_type();
+                      if (expr_type_ == IVL_VT_STRING) {
+                        des->errors += 1;
+                        cerr << get_fileline() << ": sorry, I do not yet support string array parameters properly" << endl;
+                      }
+                      expr_width_  = array->element_type()->packed_width();
+                      min_width_   = expr_width_;
+                      signed_flag_ = array->element_type()->get_signed();
+                      break;
+                    default:
+                      expr_type_   = array->base_type();
+                      expr_width_  = array->static_dimensions()[0].width();
+                      min_width_   = expr_width_;
+                      signed_flag_ = false;
+                      break;
+                  }
+                  return expr_width_;
+            }
+      }
 
 	// Look for a class property.
       if (gn_system_verilog() && cls_val) {
@@ -5166,7 +5177,6 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 
 		    // Select a bit from the parameter.
 		    NetExpr*res = (NetExpr *)(par_aex->item(sel_v)->dup_expr());
-		    //NetEConst*res = new NetEConst(rtn);
 		    res->set_line(*this);
 		    return res;
 	    }
@@ -5513,15 +5523,6 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
       // FIXME: this won't work with multidimensional array
       if (!name_tail.index.empty())
 	    use_sel = name_tail.index.back().sel;
-
-      if (par->expr_type() == IVL_VT_REAL &&
-          use_sel != index_component_t::SEL_NONE) {
-	    perm_string name = peek_tail_name(path_);
-	    cerr << get_fileline() << ": error: "
-	         << "can not select part of real parameter: " << name << endl;
-	    des->errors += 1;
-	    return 0;
-      }
 
       ivl_assert(*this, use_sel != index_component_t::SEL_BIT_LAST);
 
