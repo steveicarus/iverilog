@@ -215,10 +215,10 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 	    return tmp;
       }
 
-      const netsarray_t*array_type = dynamic_cast<const netsarray_t*> (ntype);
+      const netarray_t*array_type = dynamic_cast<const netarray_t*> (ntype);
 	if (array_type) {
 
-		if (array_type->static_dimensions().size() > 1) {
+		if (array_type->slice_dimensions().size() > 1) {
 			des->errors += 1;
 			cerr << get_fileline() << ": sorry: I don't know how to elaborate "
 				<< "multi-dimensions assignment patterns." << endl;
@@ -5520,9 +5520,18 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 
       const name_component_t&name_tail = path_.back();
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
-      // FIXME: this won't work with multidimensional array
       if (!name_tail.index.empty())
 	    use_sel = name_tail.index.back().sel;
+
+      if (par->expr_type() == IVL_VT_REAL &&
+          use_sel != index_component_t::SEL_NONE &&
+          dynamic_cast<const NetEArrayPattern*>(par) == 0) {
+	    perm_string name = peek_tail_name(path_);
+	    cerr << get_fileline() << ": error: "
+	         << "can not select part of real parameter: " << name << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       ivl_assert(*this, use_sel != index_component_t::SEL_BIT_LAST);
 
