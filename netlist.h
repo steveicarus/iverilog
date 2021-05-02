@@ -1251,7 +1251,6 @@ class NetScope : public Definitions, public Attrib {
       std::map<perm_string,LocalVar> loop_index_tmp;
 
     private:
-      void evaluate_parameter_array_(Design*des, param_ref_t cur);
       void evaluate_parameter_logic_(Design*des, param_ref_t cur);
       void evaluate_parameter_real_(Design*des, param_ref_t cur);
       void evaluate_parameter_string_(Design*des, param_ref_t cur);

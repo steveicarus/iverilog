@@ -86,11 +86,6 @@ class netuarray_t : public netsarray_t {
 			   ivl_type_t etype);
       ~netuarray_t();
 
-	// This is the "base_type()" virtual method of the
-	// nettype_base_t. The ivl_target api expects this to return
-	// IVL_VT_DARRAY for dynamic arrays?
-      ivl_variable_type_t base_type() const;
-
     public:
 	// Virtual methods from the ivl_type_s type...
       std::vector<netrange_t> slice_dimensions() const;

@@ -222,10 +222,6 @@ class PEAssignPattern : public PExpr {
 				     unsigned expr_wid,
                                      unsigned flags) const;
     private:
-      NetExpr* elaborate_expr_darray_(Design*des, NetScope*scope,
-				      ivl_type_t type, unsigned flags) const;
-
-    private:
       std::vector<PExpr*>parms_;
 };
 
@@ -451,12 +447,6 @@ class PEIdent : public PExpr {
 				    unsigned expr_wid,
                                     unsigned flags) const;
       NetExpr*elaborate_expr_param_bit_(Design*des,
-					NetScope*scope,
-					const NetExpr*par,
-					NetScope*found_in,
-					ivl_type_t par_type,
-                                        bool need_const) const;
-      NetExpr*elaborate_expr_param_word_(Design*des,
 					NetScope*scope,
 					const NetExpr*par,
 					NetScope*found_in,

@@ -109,9 +109,6 @@ ostream& operator << (ostream&o, ivl_variable_type_t val)
 	  case IVL_VT_STRING:
 	    o << "string";
 	    break;
-	  case IVL_VT_UARRAY:
-	    o << "uarray";
-	    break;
 	  case IVL_VT_DARRAY:
 	    o << "darray";
 	    break;

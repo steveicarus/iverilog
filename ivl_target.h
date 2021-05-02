@@ -460,10 +460,9 @@ typedef enum ivl_variable_type_e ENUM_UNSIGNED_INT {
       IVL_VT_BOOL    = 3,
       IVL_VT_LOGIC   = 4,
       IVL_VT_STRING  = 5,
-      IVL_VT_UARRAY  = 6,  /* Array (esp. unpacked array) */
-      IVL_VT_DARRAY  = 7,  /* Array (esp. dynamic array) */
-      IVL_VT_CLASS   = 8,  /* SystemVerilog class instances */
-      IVL_VT_QUEUE   = 9,  /* SystemVerilog queue instances */
+      IVL_VT_DARRAY  = 6,  /* Array (esp. dynamic array) */
+      IVL_VT_CLASS   = 7,  /* SystemVerilog class instances */
+      IVL_VT_QUEUE   = 8,  /* SystemVerilog queue instances */
       IVL_VT_VECTOR = IVL_VT_LOGIC /* For compatibility */
 } ivl_variable_type_t;
 

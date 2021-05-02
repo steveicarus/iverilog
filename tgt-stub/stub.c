@@ -169,9 +169,6 @@ const char*data_type_string(ivl_variable_type_t vtype)
 	  case IVL_VT_STRING:
 	    vt = "string";
 	    break;
-	  case IVL_VT_UARRAY:
-	    vt = "uarray";
-	    break;
 	  case IVL_VT_DARRAY:
 	    vt = "darray";
 	    break;

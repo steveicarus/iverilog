@@ -31,6 +31,7 @@
 # include  "netlist.h"
 # include  "netscalar.h"
 # include  "netvector.h"
+# include  "netparray.h"
 # include  "util.h"
 # include  "compiler.h"
 # include  "netmisc.h"
@@ -508,31 +509,6 @@ void Design::evaluate_parameters()
       }
 }
 
-void NetScope::evaluate_parameter_array_(Design*des, param_ref_t cur)
-{
-      PExpr*val_expr = (*cur).second.val_expr;
-      NetScope*val_scope = (*cur).second.val_scope;
-      ivl_type_t param_type = cur->second.ivl_type;
-
-      ivl_assert(cur->second, val_expr);
-      ivl_assert(cur->second, param_type);
-
-      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, param_type, true);
-      if (! expr)
-	    return;
-
-      cur->second.val = expr;
-
-      if (debug_elaborate) {
-	    cerr << cur->second.get_fileline() << ": " << __func__ << ": "
-		 << "Parameter type: " << *param_type << endl;
-	    cerr << cur->second.get_fileline() << ": " << __func__ << ": "
-		 << "Parameter value: " << *val_expr << endl;
-	    cerr << cur->second.get_fileline() << ": " << __func__ << ": "
-		 << "Elaborated value: " << *expr << endl;
-      }
-
-}
 void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 {
 	/* Evaluate the parameter expression. */
@@ -542,6 +518,29 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
       // The param_type may be nil if the parameter has no declared type. In
       // this case, we'll try to take our type from the r-value.
       ivl_type_t param_type = cur->second.ivl_type;
+
+	// If this parameter is an array, then we need to process it directly
+	// with the new method
+	const netuarray_t* param_array = dynamic_cast<const netuarray_t*>(param_type);
+	if (param_array) {
+		ivl_assert(cur->second, val_expr);
+
+		NetExpr*expr = elab_and_eval(des, val_scope, val_expr, param_type, true);
+		if (! expr)
+		    return;
+
+		cur->second.val = expr;
+
+		if (debug_elaborate) {
+			cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+				<< "Parameter type: " << *param_type << endl;
+			cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+				<< "Parameter value: " << *val_expr << endl;
+			cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+				<< "Elaborated value: " << *expr << endl;
+		}
+		return;
+	}
 
       // Most parameter declarations are packed vectors, of the form:
       //   parameter [H:L] foo == bar;
@@ -899,10 +898,6 @@ void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
 
                 case IVL_VT_REAL:
                   evaluate_parameter_real_(des, cur);
-                  break;
-
-                case IVL_VT_UARRAY:
-                  evaluate_parameter_array_(des, cur);
                   break;
 
                 case IVL_VT_STRING:

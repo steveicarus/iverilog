@@ -427,7 +427,6 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  str_stack_need += 1;
 		  buffer[0] = 0;
 		  break;
-		case IVL_VT_UARRAY:
 		case IVL_VT_DARRAY:
         fprintf(stderr, "%s:%u: Unsupported array argument\n", ivl_expr_file(expr), ivl_expr_lineno(expr));
 		default:
