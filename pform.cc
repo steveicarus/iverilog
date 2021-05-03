@@ -2571,6 +2571,7 @@ void pform_module_define_port(const struct vlltype&li,
 			      bool keep_attr)
 {
       struct_type_t*struct_type = 0;
+      parray_type_t*packed_type = 0;
       enum_type_t*enum_type = 0;
       ivl_variable_type_t data_type = IVL_VT_NO_TYPE;
       bool signed_flag = false;
@@ -2629,6 +2630,11 @@ void pform_module_define_port(const struct vlltype&li,
 	    signed_flag = enum_type->signed_flag;
 	    prange = 0;
 
+      } else if (packed_type = dynamic_cast<parray_type_t*> (vtype)) {
+	    data_type = packed_type->figure_packed_base_type();
+	    signed_flag = false;
+	    prange = packed_type->dims.get();
+
       } else if (vtype) {
 	    VLerror(li, "sorry: Given type %s not supported here (%s:%d).",
 		    typeid(*vtype).name(), __FILE__, __LINE__);
@@ -2644,7 +2650,9 @@ void pform_module_define_port(const struct vlltype&li,
 
       cur->set_signed(signed_flag);
 
-      if (struct_type) {
+      if (packed_type) {
+	    cur->set_data_type(packed_type);
+      } else if (struct_type) {
 	    cur->set_data_type(struct_type);
 
       } else if (enum_type) {
