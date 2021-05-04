@@ -3442,6 +3442,9 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
 		  break;
 	    }
       }
+      if (dynamic_cast<const struct_type_t*>(target_)) {
+          tmp = cast_to_int4(sub, expr_width_);
+      }
       if (tmp) {
 	    if (tmp == sub) {
 		    // We already had the correct base type, so we just need to
