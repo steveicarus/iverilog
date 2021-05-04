@@ -1132,7 +1132,9 @@ constraint_declaration /* IEEE1800-2005: A.1.9 */
 constraint_expression /* IEEE1800-2005 A.1.9 */
   : expression ';'
   | expression K_dist '{' '}' ';'
-  | expression K_TRIGGER constraint_set
+  // FIXME: This causes a conflict with the logical implication operator
+  // production in `expression`.
+  // | expression K_TRIGGER constraint_set
   | K_if '(' expression ')' constraint_set %prec less_than_K_else
   | K_if '(' expression ')' constraint_set K_else constraint_set
   | K_foreach '(' IDENTIFIER '[' loop_variables ']' ')' constraint_set
@@ -3688,14 +3690,11 @@ expression
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
-/*
-  FIXME: This creates shift/reduce issues that need to be solved
   | expression K_TRIGGER attribute_list_opt expression
       { PEBinary*tmp = new PEBLogic('q', $1, $4);
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
-*/
   | expression K_LEQUIV attribute_list_opt expression
       { PEBinary*tmp = new PEBLogic('Q', $1, $4);
 	FILE_NAME(tmp, @2);
