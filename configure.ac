@@ -14,6 +14,7 @@ AC_CONFIG_HEADERS([tgt-pcb/pcb_config.h])
 AC_CANONICAL_HOST
 dnl Checks for programs.
 AC_PROG_CC
+AX_PROG_CC_FOR_BUILD
 AC_PREREQ([2.62])
 m4_version_prereq([2.70], [], [AC_PROG_CC_C99])
 AC_PROG_CXX
@@ -333,6 +334,5 @@ then
 AC_MSG_ERROR(cannot configure white space in libdir: $libdir)
 fi
 AC_MSG_RESULT(ok)
-AX_PROG_CC_FOR_BUILD
 AC_CONFIG_FILES([Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile tgt-blif/Makefile tgt-sizer/Makefile])
 AC_OUTPUT
