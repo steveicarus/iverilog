@@ -543,7 +543,7 @@ void indices_to_expressions(Design*des, NetScope*scope,
 	    }
 	    ivl_assert(*loc, cur->msb);
 
-	    NetExpr*word_index = elab_and_eval_lossless(des, scope, cur->msb, -2, need_const);
+	    NetExpr*word_index = elab_and_eval(des, scope, cur->msb, -1, need_const);
 
 	    if (word_index == 0)
 		  flags.invalid = true;
