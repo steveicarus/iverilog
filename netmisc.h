@@ -376,12 +376,6 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 			      ivl_variable_type_t cast_type =IVL_VT_NO_TYPE,
 			      bool force_unsigned =false);
 
-extern NetExpr* elab_and_eval_lossless(Design*des, NetScope*scope,
-			      PExpr*pe, int context_width,
-                              bool need_const =false,
-                              bool annotatable =false,
-			      ivl_variable_type_t cast_type =IVL_VT_NO_TYPE);
-
 /*
  * This form of elab_and_eval uses the ivl_type_t to carry type
  * information instead of the piecemeal form. We should transition to
