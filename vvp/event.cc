@@ -780,7 +780,8 @@ void vvp_fun_anyedge_aa::recv_string(vvp_net_ptr_t port, const std::string&bit,
       }
 }
 
-vvp_fun_event_or::vvp_fun_event_or()
+vvp_fun_event_or::vvp_fun_event_or(vvp_net_t*base_net)
+: base_net_(base_net)
 {
 }
 
@@ -788,8 +789,8 @@ vvp_fun_event_or::~vvp_fun_event_or()
 {
 }
 
-vvp_fun_event_or_sa::vvp_fun_event_or_sa()
-: threads_(0)
+vvp_fun_event_or_sa::vvp_fun_event_or_sa(vvp_net_t*base_net)
+: vvp_fun_event_or(base_net), threads_(0)
 {
 }
 
@@ -805,15 +806,15 @@ vthread_t vvp_fun_event_or_sa::add_waiting_thread(vthread_t thread)
       return tmp;
 }
 
-void vvp_fun_event_or_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+void vvp_fun_event_or_sa::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&bit,
                                     vvp_context_t)
 {
       run_waiting_threads_(threads_);
-      vvp_net_t*net = port.ptr();
-      net->send_vec4(bit, 0);
+      base_net_->send_vec4(bit, 0);
 }
 
-vvp_fun_event_or_aa::vvp_fun_event_or_aa()
+vvp_fun_event_or_aa::vvp_fun_event_or_aa(vvp_net_t*base_net)
+: vvp_fun_event_or(base_net)
 {
       context_scope_ = vpip_peek_context_scope();
       context_idx_ = vpip_add_item_to_context(this, context_scope_);
@@ -864,8 +865,7 @@ void vvp_fun_event_or_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                   (vvp_get_context_item(context, context_idx_));
 
             run_waiting_threads_(state->threads);
-            vvp_net_t*net = port.ptr();
-            net->send_vec4(bit, context);
+            base_net_->send_vec4(bit, context);
       } else {
             context = context_scope_->live_contexts;
             while (context) {
@@ -1032,20 +1032,25 @@ void compile_event(char*label, char*type, unsigned argc, struct symb_s*argv)
 
 static void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
 {
-      vvp_net_t* ptr = new vvp_net_t;
+      vvp_net_t*base_net = new vvp_net_t;
       if (vpip_peek_current_scope()->is_automatic()) {
-            ptr->fun = new vvp_fun_event_or_aa;
+            base_net->fun = new vvp_fun_event_or_aa(base_net);
       } else {
-            ptr->fun = new vvp_fun_event_or_sa;
+            base_net->fun = new vvp_fun_event_or_sa(base_net);
       }
-      define_functor_symbol(label, ptr);
+      define_functor_symbol(label, base_net);
       free(label);
 
-	/* This is a very special case. Point all the source inputs to
-	   the same input. It doesn't matter that the streams get
-	   tangled because data values are irrelevant. */
+	/* This is a simplified version of a wide functor. We don't
+	   care about the data values or what port they arrived on,
+	   so we can use a single shared functor. */
+      vvp_net_t*curr_net = base_net;
       for (unsigned idx = 0 ;  idx < argc ;  idx += 1) {
-	    input_connect(ptr, 0, argv[idx].text);
+	    if (idx > 0 && (idx % 4) == 0) {
+		  curr_net = new vvp_net_t;
+		  curr_net->fun = base_net->fun;
+	    }
+	    input_connect(curr_net, idx % 4, argv[idx].text);
       }
       free(argv);
 }
