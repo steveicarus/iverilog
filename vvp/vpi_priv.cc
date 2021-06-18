@@ -497,7 +497,7 @@ int vpip_time_units_from_handle(vpiHandle obj)
 
 	  default:
 	    fprintf(stderr, "ERROR: vpip_time_units_from_handle called with "
-		    "object handle type=%u\n", obj->get_type_code());
+		    "object handle type=%d\n", obj->get_type_code());
 	    assert(0);
 	    return 0;
       }
@@ -529,7 +529,7 @@ int vpip_time_precision_from_handle(vpiHandle obj)
 
 	  default:
 	    fprintf(stderr, "ERROR: vpip_time_precision_from_handle called "
-		    "with object handle type=%u\n", obj->get_type_code());
+		    "with object handle type=%d\n", obj->get_type_code());
 	    assert(0);
 	    return 0;
       }
