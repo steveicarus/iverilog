@@ -1336,7 +1336,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    }
 
 	      // Skip unconnected module ports. This happens when a
-	      // null parameter is passed in and there is no default 
+	      // null parameter is passed in and there is no default
 	      // value.
 	    if (pins[idx] == 0) {
 
@@ -4206,6 +4206,58 @@ static bool check_parm_is_const(NetExpr*param)
       return false;
 }
 
+static bool get_value_as_long(const NetExpr*expr, long&val)
+{
+      switch(expr->expr_type()) {
+	  case IVL_VT_REAL: {
+	    const NetECReal*c = dynamic_cast<const NetECReal*> (expr);
+	    assert(c);
+	    verireal tmp = c->value();
+	    val = tmp.as_long();
+	    break;
+	  }
+
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC: {
+	    const NetEConst*c = dynamic_cast<const NetEConst*>(expr);
+	    assert(c);
+	    verinum tmp = c->value();
+	    if (tmp.is_string()) return false;
+	    val = tmp.as_long();
+	    break;
+	  }
+
+	  default:
+	    return false;
+      }
+
+      return true;
+}
+
+static bool get_value_as_string(const NetExpr*expr, string&str)
+{
+      switch(expr->expr_type()) {
+	  case IVL_VT_REAL:
+	    return false;
+	    break;
+
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC: {
+	    const NetEConst*c = dynamic_cast<const NetEConst*>(expr);
+	    assert(c);
+	    verinum tmp = c->value();
+	    if (!tmp.is_string()) return false;
+	    str = tmp.as_string();
+	    break;
+	  }
+
+	  default:
+	    return false;
+      }
+
+      return true;
+}
+
 /* Elaborate an elaboration task. */
 bool PCallTask::elaborate_elab(Design*des, NetScope*scope) const
 {
@@ -4248,7 +4300,7 @@ bool PCallTask::elaborate_elab(Design*des, NetScope*scope) const
                   eparms[idx] = elab_sys_task_arg(des, scope, name, idx, ex);
 		  if (!check_parm_is_const(eparms[idx])) {
 			cerr << get_fileline() << ": error: Elaboration task "
-			     << name << " parameter [" << idx+1 << "] '"
+			     << name << "() parameter [" << idx+1 << "] '"
 			     << *eparms[idx] << "' is not constant." << endl;
 			des->errors += 1;
 			const_parms = false;
@@ -4259,23 +4311,51 @@ bool PCallTask::elaborate_elab(Design*des, NetScope*scope) const
       }
       if (!const_parms) return true;
 
-	/* Drop the $ and convert to upper case for the severity string */
+	// Drop the $ and convert to upper case for the severity string
       string sstr = name.str()+1;
       transform(sstr.begin(), sstr.end(), sstr.begin(), ::toupper);
 
       cerr << sstr << ": " << get_fileline() << ":";
       if (parm_count != 0) {
-	    cerr << " ";
+	    unsigned param_start = 0;
+	      // Drop the finish number, but check it is actually valid!
+	    if (name == "$fatal") {
+		  long finish_num = 1;
+		  if (!get_value_as_long(eparms[0],finish_num)) {
+			cerr << endl;
+			cerr << get_fileline() << ": error: Elaboration task "
+			        "$fatal() finish number argument must be "
+			        "numeric." << endl;;
+			des->errors += 1;
+			cerr << string(sstr.size()+1, ' ');
+		  } else if ((finish_num < 0) || (finish_num > 2)) {
+			cerr << endl;
+			cerr << get_fileline() << ": error: Elaboration task "
+			        "$fatal() finish number argument must be in "
+			        "the range [0-2], given '" << finish_num
+			     << "'." << endl;;
+			des->errors += 1;
+			cerr << string(sstr.size()+1, ' ');
+		  }
+		  param_start += 1;
+	    }
+
+	      // FIXME: For now just handle a single string value.
+	    string str;
+	    if ((parm_count == param_start + 1) && (get_value_as_string(eparms[param_start], str))) {
+		  cerr << " " << str;
+	    } else if (param_start < parm_count) {
+		  cerr << endl;
+		  cerr << get_fileline() << ": sorry: Elaboration tasks "
+		          "currently only support a single string argument.";
+		  des->errors += 1;
+	    }
 /*
 	    cerr << *eparms[0];
 	    for (unsigned idx = 1; idx < parm_count; idx += 1) {
 	    cerr << ", " << *eparms[idx];
 	    }
 */
-// FIXME: Need to actually handle this.
-	    cerr << "sorry: Elaboration tasks with arguments "
-	            "are not currently supported.";
-	    des->errors += 1;
       }
       cerr << endl;
 
