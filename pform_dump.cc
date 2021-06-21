@@ -884,15 +884,19 @@ void PCase::dump(ostream&out, unsigned ind) const
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
 	    PCase::Item*cur = (*items_)[idx];
 
-	    if (! cur->expr.empty()) {
+	    if (cur->expr.empty()) {
 		  out << setw(ind+2) << "" << "default:";
 
 	    } else {
 		  list<PExpr*>::iterator idx_exp = cur->expr.begin();
-		  out << setw(ind+2) << "" << *idx_exp;
+		  out << setw(ind+2) << "";
+		  (*idx_exp)->dump(out);
 
-		  for( ; idx_exp != cur->expr.end() ; ++idx_exp)
-			out << ", " << *idx_exp;
+		  for (++idx_exp ; idx_exp != cur->expr.end() ; ++idx_exp) {
+			out << ", ";
+			(*idx_exp)->dump(out);
+		  }
+
 
 		  out << ":";
 	    }
