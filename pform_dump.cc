@@ -948,7 +948,6 @@ void PCase::dump(ostream&out, unsigned ind) const
 			(*idx_exp)->dump(out);
 		  }
 
-
 		  out << ":";
 	    }
 
