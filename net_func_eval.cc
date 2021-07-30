@@ -360,13 +360,8 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 
 	    long base = base_const->value().as_long();
 
-	    list<long>prefix (0);
-	    base = lval->sig()->sb_to_idx(prefix, base);
-
 	    if (old_lval == 0)
 		  old_lval = make_const_x(lval->sig()->vector_width());
-
-	    ivl_assert(loc, base + lval->lwidth() <= old_lval->expr_width());
 
 	    NetEConst*lval_const = dynamic_cast<NetEConst*>(old_lval);
 	    ivl_assert(loc, lval_const);
@@ -377,15 +372,20 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 
 	    verinum lpart(verinum::Vx, lval->lwidth());
 	    if (op_) {
-		  for (unsigned idx = 0 ; idx < lpart.len() ; idx += 1)
-			lpart.set(idx, lval_v[base+idx]);
-
+		  for (unsigned idx = 0 ; idx < lpart.len() ; idx += 1) {
+			long ldx = base + idx;
+			if (ldx >= 0 && ldx < lval_v.len())
+			      lpart.set(idx, lval_v[ldx]);
+		  }
 		  eval_func_lval_op_(loc, lpart, rval_v);
 	    } else {
 		  lpart = cast_to_width(rval_v, lval->lwidth());
 	    }
-	    for (unsigned idx = 0 ; idx < lpart.len() ; idx += 1)
-		  lval_v.set(idx+base, lpart[idx]);
+	    for (unsigned idx = 0 ; idx < lpart.len() ; idx += 1) {
+		  long ldx = base + idx;
+		  if (ldx >= 0 && ldx < lval_v.len())
+			lval_v.set(idx+base, lpart[idx]);
+	    }
 
 	    delete base_result;
 	    delete rval_result;
@@ -960,8 +960,11 @@ NetExpr* NetESelect::evaluate_function(const LineInfo&loc,
       }
 
       verinum res (verinum::Vx, expr_width());
-      for (unsigned idx = 0 ; idx < res.len() ; idx += 1)
-	    res.set(idx, sub[base+idx]);
+      for (unsigned idx = 0 ; idx < res.len() ; idx += 1) {
+	    long sdx = base + idx;
+	    if (sdx >= 0 && sdx < sub.len())
+		  res.set(idx, sub[sdx]);
+      }
 
       NetEConst*res_const = new NetEConst(res);
       return res_const;
