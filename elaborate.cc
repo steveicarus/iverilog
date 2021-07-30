@@ -1201,7 +1201,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // Handle wildcard named port
 		  if (pins_[idx].name[0] == '*') {
 			for (unsigned j = 0 ; j < nexp ; j += 1) {
-			      if ((!pins[j]) && (!pins_is_explicitly_not_connected[j])) {
+			      if (rmod->ports[j] && !pins[j] && !pins_is_explicitly_not_connected[j]) {
 				    pins_fromwc[j] = true;
 				    NetNet*       net = 0;
 				    const NetExpr*par = 0;
