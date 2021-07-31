@@ -478,7 +478,7 @@ static PPackage*find_potential_import(const struct vlltype&loc, LexicalScope*sco
       assert(scope);
 
       PPackage*found_pkg = 0;
-      for (set<PPackage*>::const_iterator cur_pkg = scope->potential_imports.begin();
+      for (list<PPackage*>::const_iterator cur_pkg = scope->potential_imports.begin();
 	      cur_pkg != scope->potential_imports.end(); ++cur_pkg) {
 	    PPackage*search_pkg = *cur_pkg;
 	    map<perm_string,PNamedItem*>::const_iterator cur_sym

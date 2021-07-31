@@ -71,7 +71,7 @@ class LexicalScope {
 	// Packages that are wildcard imported. When identifiers from
 	// these packages are referenced, they will be added to the
 	// explicit imports (IEEE 1800-2012 26.3).
-      std::set<PPackage*>potential_imports;
+      std::list<PPackage*>potential_imports;
 
 	// A task or function call may reference a task or function defined
 	// later in the scope. So here we stash the potential imports for
