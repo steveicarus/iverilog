@@ -4516,13 +4516,7 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
 NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 				 unsigned expr_wid, unsigned flags) const
 {
-      assert(scope);
-
-      NetNet*       net = 0;
-      ivl_type_t    cls_val = 0;
-      const NetExpr*par = 0;
-      ivl_type_t    par_type = 0;
-      NetEvent*     eve = 0;
+      ivl_assert(*this, scope);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PEIdent::elaborate_expr: "
@@ -4567,53 +4561,27 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    ivl_assert(*this, use_scope);
       }
 
-
 	// Find the net/parameter/event object that this name refers
 	// to. The path_ may be a scoped path, and may include method
 	// or member name parts. For example, main.a.b.c may refer to
 	// a net called "b" in the scope "main.a" and with a member
-	// named "c". This loop tries to figure that out and the
-	// result is the complete path_ split into a base_path (that
-	// locates the object) and the member_path that selects parts
-	// in the object.
-      pform_name_t base_path = path_;
-      pform_name_t member_path;
-      NetScope*found_in = 0;
-      while (net==0 && par==0 && eve==0 && !base_path.empty()) {
-	    found_in = symbol_search(this, des, use_scope, base_path,
-				     net, par, eve, par_type, cls_val);
-	    if (net) break;
-	    if (par) break;
-	    if (eve) break;
-	      // Not found. Try to pop another name off the base_path
-	      // and push it to the front of the member path.
-	    member_path.push_front( base_path.back() );
-	    base_path.pop_back();
-      }
-
-      if (debug_elaborate) {
-	    cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-		 << "Symbol search found base_path=" << base_path
-		 << ", member_path=" << member_path
-		 << ", par=" << par
-		 << ", net=" << net
-		 << ", eve=" << eve
-		 << endl;
-      }
+	// named "c". symbol_search() handles this for us.
+      symbol_search_results sr;
+      symbol_search(this, des, use_scope, path_, &sr);
 
 	// If the identifier name is a parameter name, then return
 	// the parameter value.
-      if (par != 0) {
+      if (sr.par_val != 0) {
 
-	    if (!member_path.empty()) {
-		  cerr << get_fileline() << ": error: Paramater name " << base_path
-		       << " can't have member names (member_path=" << member_path << ")."
-		       << endl;
+	    if (!sr.path_tail.empty()) {
+		  cerr << get_fileline() << ": error: Parameter name "
+		       << sr.path_head << " can't have member names ("
+		       << sr.path_tail << ")." << endl;
 		  des->errors += 1;
 	    }
 
-	    NetExpr*tmp = elaborate_expr_param_(des, scope, par, found_in,
-                                                par_type, expr_wid, flags);
+	    NetExpr*tmp = elaborate_expr_param_(des, scope, sr.par_val, sr.scope,
+                                                sr.par_type, expr_wid, flags);
 
             if (!tmp) return 0;
 
@@ -4622,7 +4590,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	// If the identifier names a signal (a variable or a net)
 	// then create a NetESignal node to handle it.
-      if (net != 0) {
+      if (sr.net != 0) {
             if (NEED_CONST & flags) {
                   cerr << get_fileline() << ": error: A reference to a wire "
                           "or reg (`" << path_ << "') is not allowed in "
@@ -4630,7 +4598,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	          des->errors += 1;
                   return 0;
             }
-            if (net->scope()->type() == NetScope::MODULE) {
+            if (sr.net->scope()->type() == NetScope::MODULE) {
                   if (scope->need_const_func()) {
                         cerr << get_fileline() << ": error: A reference to a "
                                 "non-local wire or reg (`" << path_ << "') is "
@@ -4644,39 +4612,39 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	      // If this is a struct, and there are members in the
 	      // member_path, then generate an expression that
 	      // reflects the member selection.
-	    if (net->struct_type() && !member_path.empty()) {
+	    if (sr.net->struct_type() && !sr.path_tail.empty()) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-			        "Ident " << base_path
-			     << " look for struct member " << member_path
+			        "Ident " << sr.path_head
+			     << " look for struct member " << sr.path_tail
 			     << endl;
 		  }
 
 		  NetExpr*tmp = check_for_struct_members(this, des, use_scope,
-							 net, base_path.back().index,
-							 member_path);
+							 sr.net, sr.path_head.back().index,
+							 sr.path_tail);
 		  if (!tmp) return 0;
 		  else return pad_to_width(tmp, expr_wid, signed_flag_, *this);
 	    }
 
 	      // If this is an array object, and there are members in
-	      // the member_path, check for array properties.
-	    if (net->darray_type() && !member_path.empty()) {
+	      // the sr.path_tail, check for array properties.
+	    if (sr.net->darray_type() && !sr.path_tail.empty()) {
                   if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-			        "Ident " << base_path
-			     << " looking for array property " << member_path
+			        "Ident " << sr.path_head
+			     << " looking for array property " << sr.path_tail
 			     << endl;
                   }
 
-		  ivl_assert(*this, member_path.size() == 1);
-		  const name_component_t member_comp = member_path.front();
+		  ivl_assert(*this, sr.path_tail.size() == 1);
+		  const name_component_t member_comp = sr.path_tail.front();
 		  if (member_comp.name == "size") {
 			NetESFunc*fun = new NetESFunc("$size", IVL_VT_BOOL, 32, 1);
 			fun->set_line(*this);
 
-			NetESignal*arg = new NetESignal(net);
-			arg->set_line(*net);
+			NetESignal*arg = new NetESignal(sr.net);
+			arg->set_line(*sr.net);
 
 			fun->parm(0, arg);
 			return fun;
@@ -4776,18 +4744,18 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    }
 
 	      // If this is a queue object, and there are members in
-	      // the member_path, check for array properties.
-	    if (net->queue_type() && !member_path.empty()) {
+	      // the sr.path_tail, check for array properties.
+	    if (sr.net->queue_type() && !sr.path_tail.empty()) {
                   if (debug_elaborate) {
                         cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-                             << "Ident " << base_path
-                             << " looking for queue property " << member_path
+                             << "Ident " << sr.path_head
+                             << " looking for queue property " << sr.path_tail
                              << endl;
                   }
 
-		  ivl_assert(*this, member_path.size() == 1);
-		  const name_component_t member_comp = member_path.front();
-		  const netqueue_t*queue = net->queue_type();
+		  ivl_assert(*this, sr.path_tail.size() == 1);
+		  const name_component_t member_comp = sr.path_tail.front();
+		  const netqueue_t*queue = sr.net->queue_type();
 		  ivl_variable_type_t qelem_type = queue->element_base_type();
 		  unsigned qelem_width = queue->element_width();
 		  if (member_comp.name == "pop_back") {
@@ -4795,8 +4763,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			                              qelem_type, qelem_width, 1);
 			fun->set_line(*this);
 
-			NetESignal*arg = new NetESignal(net);
-			arg->set_line(*net);
+			NetESignal*arg = new NetESignal(sr.net);
+			arg->set_line(*sr.net);
 
 			fun->parm(0, arg);
 			return fun;
@@ -4807,24 +4775,24 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			                              qelem_type, qelem_width, 1);
 			fun->set_line(*this);
 
-			NetESignal*arg = new NetESignal(net);
-			arg->set_line(*net);
+			NetESignal*arg = new NetESignal(sr.net);
+			arg->set_line(*sr.net);
 
 			fun->parm(0, arg);
 			return fun;
 		  }
 	    }
 
-	    if ((net->data_type() == IVL_VT_STRING) && !member_path.empty()) {
+	    if ((sr.net->data_type() == IVL_VT_STRING) && !sr.path_tail.empty()) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-			        "Ident " << base_path
-			     << " looking for string property " << member_path
+			        "Ident " << sr.path_head
+			     << " looking for string property " << sr.path_tail
 			     << endl;
 		  }
 
-		  ivl_assert(*this, member_path.size() == 1);
-		  const name_component_t member_comp = member_path.front();
+		  ivl_assert(*this, sr.path_tail.size() == 1);
+		  const name_component_t member_comp = sr.path_tail.front();
 		  cerr << get_fileline() << ": sorry: String method '"
 		       << member_comp.name << "' currently requires ()."
 		       << endl;
@@ -4832,41 +4800,42 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  return 0;
 	    }
 
-	    if (net->class_type() && !member_path.empty()) {
+	    if (sr.net->class_type() && !sr.path_tail.empty()) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-			        "Ident " << base_path
-			     << " look for class property " << member_path
+			        "Ident " << sr.path_head
+			     << " look for class property " << sr.path_tail
 			     << endl;
 		  }
 
-		  ivl_assert(*this, member_path.size() == 1);
-		  const name_component_t member_comp = member_path.front();
+		  ivl_assert(*this, sr.path_tail.size() == 1);
+		  const name_component_t member_comp = sr.path_tail.front();
 		  return check_for_class_property(this, des, use_scope,
-							net, member_comp);
+							sr.net, member_comp);
 	    }
 
-	    if (net->enumeration() && !member_path.empty()) {
-		  const netenum_t*netenum = net->enumeration();
+	    if (sr.net->enumeration() && !sr.path_tail.empty()) {
+		  const netenum_t*netenum = sr.net->enumeration();
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-			        "Ident " << base_path
-			     << " look for enumeration method " << member_path
+			        "Ident " << sr.path_head
+			     << " look for enumeration method " << sr.path_tail
 			     << endl;
 		  }
 
-		  NetESignal*expr = new NetESignal(net);
+		  NetESignal*expr = new NetESignal(sr.net);
 		  expr->set_line(*this);
-		  ivl_assert(*this, member_path.size() == 1);
-		  const name_component_t member_comp = member_path.front();
+		  ivl_assert(*this, sr.path_tail.size() == 1);
+		  const name_component_t member_comp = sr.path_tail.front();
 		  ivl_assert(*this, member_comp.index.empty());
 		  return check_for_enum_methods(this, des, use_scope,
-						netenum, base_path, member_comp.name,
+						netenum, sr.path_head,
+						member_comp.name,
 						expr, expr_wid, NULL, 0);
 	    }
 
-	    ivl_assert(*this, member_path.empty());
-	    NetExpr*tmp = elaborate_expr_net(des, scope, net, found_in,
+	    ivl_assert(*this, sr.path_tail.empty());
+	    NetExpr*tmp = elaborate_expr_net(des, scope, sr.net, sr.scope,
                                              expr_wid, flags);
 
             if (!tmp) return 0;
@@ -4883,7 +4852,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	// If the identifier is a named event
         // then create a NetEEvent node to handle it.
-      if (eve != 0) {
+      if (sr.eve != 0) {
             if (NEED_CONST & flags) {
                   cerr << get_fileline() << ": error: A reference to a named "
                           "event (`" << path_ << "') is not allowed in a "
@@ -4891,7 +4860,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	          des->errors += 1;
                   return 0;
             }
-            if (eve->scope() != scope) {
+            if (sr.eve->scope() != scope) {
                   if (scope->need_const_func()) {
                         cerr << get_fileline() << ": error: A reference to a "
                                 "non-local named event (`" << path_ << "') is "
@@ -4902,14 +4871,14 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
                   scope->is_const_func(false);
             }
 
-	    if (!member_path.empty()) {
-		  cerr << get_fileline() << ": error: Event name " << base_path
-		       << " can't have member names (member_path=" << member_path << ")"
-		       << endl;
+	    if (!sr.path_tail.empty()) {
+		  cerr << get_fileline() << ": error: Event name "
+		       << sr.path_head << " can't have member names ("
+		       << sr.path_tail << ")" << endl;
 		  des->errors += 1;
 	    }
 
-	    NetEEvent*tmp = new NetEEvent(eve);
+	    NetEEvent*tmp = new NetEEvent(sr.eve);
 	    tmp->set_line(*this);
 	    return tmp;
       }
