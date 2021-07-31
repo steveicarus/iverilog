@@ -3966,12 +3966,6 @@ unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
 
 unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
-      NetNet*       net = 0;
-      ivl_type_t    cls_val = 0;
-      const NetExpr*par = 0;
-      ivl_type_t    par_type = 0;
-      NetEvent*     eve = 0;
-
       NetScope*use_scope = scope;
       if (package_) {
 	    use_scope = des->find_package(package_->pscope_name());
@@ -3982,8 +3976,8 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    return tmp;
       }
 
-      NetScope*found_in = symbol_search(this, des, use_scope, path_,
-					net, par, eve, par_type, cls_val);
+      symbol_search_results sr;
+      symbol_search(this, des, use_scope, path_, &sr);
 
 	// If there is a part/bit select expression, then process it
 	// here. This constrains the results no matter what kind the
@@ -3994,7 +3988,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       if (!name_tail.index.empty()) {
 	    const index_component_t&index_tail = name_tail.index.back();
 	      // Skip full array word net selects.
-	    if (!net || (name_tail.index.size() > net->unpacked_dimensions())) {
+	    if (!sr.net || (name_tail.index.size() > sr.net->unpacked_dimensions())) {
 		  use_sel = index_tail.sel;
 	    }
       }
@@ -4029,7 +4023,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 		// slice width will be. If not, then assume it will be a
 		// simple bit select. If the net only has a single dimension
 		// then this is still a simple bit select.
-	      if ((net == 0) || (net->packed_dimensions() <= 1))
+	      if ((sr.net == 0) || (sr.net->packed_dimensions() <= 1))
 		    use_width = 1;
 	      break;
 	  case index_component_t::SEL_BIT_LAST:
@@ -4042,31 +4036,31 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    ivl_assert(*this, 0);
       }
 
-      if (const netdarray_t*darray = net ? net->darray_type() : 0) {
+      if (const netdarray_t*darray = sr.net ? sr.net->darray_type() : 0) {
 	    switch (use_sel) {
 		case index_component_t::SEL_BIT:
 		case index_component_t::SEL_BIT_LAST:
 		  expr_type_   = darray->element_base_type();
 		  expr_width_  = darray->element_width();
 		  min_width_   = expr_width_;
-		  signed_flag_ = net->get_signed();
+		  signed_flag_ = sr.net->get_signed();
 		  break;
 		default:
-		  expr_type_   = net->data_type();
-		  expr_width_  = net->vector_width();
+		  expr_type_   = sr.net->data_type();
+		  expr_width_  = sr.net->vector_width();
 		  min_width_   = expr_width_;
-		  signed_flag_ = net->get_signed();
+		  signed_flag_ = sr.net->get_signed();
 		  break;
 	    }
 	    return expr_width_;
       }
 
 	// Look for a class property.
-      if (gn_system_verilog() && cls_val) {
-	    expr_type_   = cls_val->base_type();
-	    expr_width_  = cls_val->packed_width();
+      if (gn_system_verilog() && sr.cls_val) {
+	    expr_type_   = sr.cls_val->base_type();
+	    expr_width_  = sr.cls_val->packed_width();
 	    min_width_   = expr_width_;
-	    signed_flag_ = cls_val->get_signed();
+	    signed_flag_ = sr.cls_val->get_signed();
 	    return expr_width_;
       }
 
@@ -4074,10 +4068,10 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	      // We have a bit/part select. Account for any remaining dimensions
 	      // beyond the indexed dimension.
 	    size_t use_depth = name_tail.index.size();
-	    if (net) {
-		  if (use_depth >= net->unpacked_dimensions())
-			use_depth -= net->unpacked_dimensions();
-		  use_width *= net->slice_width(use_depth);
+	    if (sr.net) {
+		  if (use_depth >= sr.net->unpacked_dimensions())
+			use_depth -= sr.net->unpacked_dimensions();
+		  use_width *= sr.net->slice_width(use_depth);
 	    }
 
 	    expr_type_   = IVL_VT_LOGIC; // Assume bit/parts selects are logic
@@ -4089,14 +4083,56 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       }
 
 	// The width of a signal expression is the width of the signal.
-      if (net != 0) {
+      if (sr.net != 0) {
+	      // If this net is a struct, the path tail may be
+	      // a struct member. If it is, then we know the
+	      // width of this identifier by knowing the width
+	      // of the member. We don't even need to know
+	      // anything about positions in containing arrays.
+	    if (sr.net->struct_type() != 0 && !sr.path_tail.empty()) {
+
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": debug: PEIdent::test_width: "
+			     << "Net " << sr.path_head << " is a struct, "
+			     << "checking width of member " << sr.path_tail << endl;
+		  }
+
+		  const netstruct_t::member_t*mem;
+		  unsigned long unused;
+		  mem = get_struct_member(this, des, scope, sr.net,
+					  peek_tail_name(sr.path_tail), unused);
+		  if (mem) {
+			expr_type_   = mem->data_type();
+			expr_width_  = mem->net_type->packed_width();
+			min_width_   = expr_width_;
+			signed_flag_ = mem->get_signed();
+			return expr_width_;
+		  }
+	    }
+
+	      // Similarly, if this net is an object, the path tail may
+	      // be a class property.
+	    if (sr.net->class_type() != 0 && !sr.path_tail.empty()) {
+		  const netclass_t*class_type = sr.net->class_type();
+		  perm_string pname = peek_tail_name(sr.path_tail);
+		  int pidx = class_type->property_idx_from_name(pname);
+		  if (pidx >= 0) {
+			ivl_type_t ptype = class_type->get_prop_type(pidx);
+			expr_type_   = ptype->base_type();
+			expr_width_  = ptype->packed_width();
+			min_width_   = expr_width_;
+			signed_flag_ = ptype->get_signed();
+			return expr_width_;
+		  }
+	    }
+
 	    size_t use_depth = name_tail.index.size();
 	      // Account for unpacked dimensions by assuming that the
 	      // unpacked dimensions are consumed first, so subtract
 	      // the unpacked dimensions from the dimension depth
 	      // useable for making the slice.
-	    if (use_depth >= net->unpacked_dimensions()) {
-		  use_depth -= net->unpacked_dimensions();
+	    if (use_depth >= sr.net->unpacked_dimensions()) {
+		  use_depth -= sr.net->unpacked_dimensions();
 
 	    } else {
 		    // In this case, we have a slice of an unpacked
@@ -4105,19 +4141,19 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 		  use_depth = 0;
 	    }
 
-	    expr_type_   = net->data_type();
-	    expr_width_  = net->slice_width(use_depth);
+	    expr_type_   = sr.net->data_type();
+	    expr_width_  = sr.net->slice_width(use_depth);
 	    min_width_   = expr_width_;
-	    signed_flag_ = net->get_signed();
+	    signed_flag_ = sr.net->get_signed();
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": PEIdent::test_width: "
-		       << net->name() << " is a net, "
+		       << sr.net->name() << " is a net, "
 		       << "type=" << expr_type_
 		       << ", width=" << expr_width_
 		       << ", signed_=" << (signed_flag_ ? "true" : "false")
 		       << ", use_depth=" << use_depth
-		       << ", packed_dimensions=" << net->packed_dimensions()
-		       << ", unpacked_dimensions=" << net->unpacked_dimensions()
+		       << ", packed_dimensions=" << sr.net->packed_dimensions()
+		       << ", unpacked_dimensions=" << sr.net->unpacked_dimensions()
 		       << endl;
 	    }
 	    return expr_width_;
@@ -4125,7 +4161,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
 	// The width of an enumeration literal is the width of the
 	// enumeration base.
-      if (const NetEConstEnum*par_enum = dynamic_cast<const NetEConstEnum*> (par)) {
+      if (const NetEConstEnum*par_enum = dynamic_cast<const NetEConstEnum*> (sr.par_val)) {
 	    const netenum_t*use_enum = par_enum->enumeration();
 	    ivl_assert(*this, use_enum != 0);
 
@@ -4139,13 +4175,13 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
 	// The width of a parameter is the width of the parameter value
         // (as evaluated earlier).
-      if (par != 0) {
-	    expr_type_   = par->expr_type();
-	    expr_width_  = par->expr_width();
+      if (sr.par_val != 0) {
+	    expr_type_   = sr.par_val->expr_type();
+	    expr_width_  = sr.par_val->expr_width();
             min_width_   = expr_width_;
-            signed_flag_ = par->has_sign();
+            signed_flag_ = sr.par_val->has_sign();
 
-            if (!par->has_width() && (mode < LOSSLESS))
+            if (!sr.par_val->has_width() && (mode < LOSSLESS))
                   mode = LOSSLESS;
 
 	    return expr_width_;
@@ -4168,57 +4204,6 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
             }
 
             return expr_width_;
-      }
-
-	// If this is SystemVerilog then maybe this is a structure element.
-      if (gn_system_verilog() && found_in==0 && path_.size() >= 2) {
-	    pform_name_t use_path = path_;
-	    perm_string method_name = peek_tail_name(use_path);
-	    use_path.pop_back();
-
-	    ivl_assert(*this, net == 0);
-	    symbol_search(this, des, scope, use_path, net, par, eve, par_type, cls_val);
-
-	      // Check to see if we have a net and if so is it a structure?
-	    if (net != 0) {
-		    // If this net is a struct, the method name may be
-		    // a struct member. If it is, then we know the
-		    // width of this identifier my knowing the width
-		    // of the member. We don't even need to know
-		    // anything about positions in containing arrays.
-		  if (net->struct_type() != 0) {
-
-			if (debug_elaborate) {
-			      cerr << get_fileline() << ": debug: PEIdent::test_width: "
-				   << "Net " << use_path << " is a struct, "
-				   << "checking width of member " << method_name << endl;
-			}
-
-			const netstruct_t::member_t*mem;
-			unsigned long unused;
-			mem = get_struct_member(this, des, scope, net,
-			                        method_name, unused);
-			if (mem) {
-			      expr_type_   = mem->data_type();
-			      expr_width_  = mem->net_type->packed_width();
-			      min_width_   = expr_width_;
-			      signed_flag_ = mem->get_signed();
-			      return expr_width_;
-			}
-		  }
-
-		  if (const netclass_t*class_type = net->class_type()) {
-			int pidx = class_type->property_idx_from_name(method_name);
-			if (pidx >= 0) {
-			      ivl_type_t ptype = class_type->get_prop_type(pidx);
-			      expr_type_   = ptype->base_type();
-			      expr_width_  = ptype->packed_width();
-			      min_width_   = expr_width_;
-			      signed_flag_ = ptype->get_signed();
-			      return expr_width_;
-			}
-		  }
-	    }
       }
 
 	// Not a net, and not a parameter? Give up on the type, but
