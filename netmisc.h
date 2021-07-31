@@ -38,8 +38,8 @@ class netsarray_t;
  *
  * The search will stop when it finds a component in the path that is an
  * object of some sort (other then a scope. So for example, if a.b is an
- * array, then the search for a.b[1].c will stop at a.b, leave b[1] in
- * path_item, and "c" in path_tail. It is up to the caller to then note that
+ * array, then the search for a.b[1].c will stop at a.b, leave a.b[1] in
+ * path_head, and "c" in path_tail. It is up to the caller to then note that
  * "c" must be a method of some sort.
  */
 struct symbol_search_results {
@@ -84,17 +84,16 @@ struct symbol_search_results {
 	// If this is a named event, ...
       NetEvent*eve;
 
-      // Store bread crumbs of the search here. The path_tail is the parts of
-      // the original path that were not found, or are after an object (and so
-      // are probably members or methods.)
+        // Store bread crumbs of the search here. The path_tail is the parts
+        // of the original path that were not found, or are after an object
+        // (and so are probably members or methods).
       pform_name_t path_tail;
-      // The path_item is the final name (possibly before the path_tail items)
-      // that identifies the object. This name may contain index
-      // expressions. Parts of the path left of the path_item name scopes, and
-      // should have all been resolved into the "scope" member above. If the
-      // search result is a scope, then this path_item is also the name of the
-      // scope identified.
-      name_component_t path_item;
+        // The path_head is the parts of the original path that were found.
+        // The last item in path_head is the final name (possibly before the
+        // path_tail items) that identifies the object. This name may contain
+        // index expressions. If the search result is a scope, then this name
+        // is also the name of the scope identified.
+      pform_name_t path_head;
 };
 
 /*

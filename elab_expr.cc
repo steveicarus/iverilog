@@ -1305,7 +1305,7 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PECallFunction::test_width_method_: "
-		 << "search_results.path_item: " << search_results.path_item << endl;
+		 << "search_results.path_head: " << search_results.path_head << endl;
 	    cerr << get_fileline() << ": PECallFunction::test_width_method_: "
 		 << "search_results.path_tail: " << search_results.path_tail << endl;
 	    if (search_results.net)
@@ -1336,7 +1336,7 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
       //    <scope>.x.size();
       // In this example, x is a dynamic array.
       if (search_results.net && search_results.net->data_type()==IVL_VT_DARRAY
-	  && search_results.path_item.index.empty()) {
+	  && search_results.path_head.back().index.empty()) {
 
 	    NetNet*net = search_results.net;
 	    const netdarray_t*darray = net->darray_type();
@@ -1359,7 +1359,7 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
       //    <scope>.x.size();
       // In this example, x is a queue.
       if (search_results.net && search_results.net->data_type()==IVL_VT_QUEUE
-	  && search_results.path_item.index.empty()) {
+	  && search_results.path_head.back().index.empty()) {
 
 	    NetNet*net = search_results.net;
 	    const netdarray_t*darray = net->darray_type();
@@ -1392,7 +1392,7 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
       // x[e].len() is the length of the string.
       if (search_results.net
 	  && (search_results.net->data_type()==IVL_VT_QUEUE || search_results.net->data_type()==IVL_VT_DARRAY)
-	  && search_results.path_item.index.size()) {
+	  && search_results.path_head.back().index.size()) {
 
 	    NetNet*net = search_results.net;
 	    const netdarray_t*darray = net->darray_type();
@@ -1522,7 +1522,7 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": PECallFunction::test_width: "
 		       << "search_results.net: " << search_results.net->name() << endl;
 	    cerr << get_fileline() << ": PECallFunction::test_width: "
-		 << "search_results.path_item: " << search_results.path_item << endl;
+		 << "search_results.path_head: " << search_results.path_head << endl;
 	    cerr << get_fileline() << ": PECallFunction::test_width: "
 		 << "search_results.path_tail: " << search_results.path_tail << endl;
       }
@@ -2611,7 +2611,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
 		       << "search_results.par_val: " << *search_results.par_val << endl;
 	    cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
-		 << "search_results.path_item: " << search_results.path_item << endl;
+		 << "search_results.path_head: " << search_results.path_head << endl;
 	    cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
 		 << "search_results.path_tail: " << search_results.path_tail << endl;
       }
@@ -2640,7 +2640,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		  } else {
 			cerr << get_fileline() << ": error: "
 			     << "Object " << scope_path(search_results.scope)
-			     << "." << search_results.path_item
+			     << "." << search_results.path_head.back()
 			     << " has no method \"" << search_results.path_tail
 			     << "(...)\"." << endl;
 			des->errors += 1;
@@ -2648,7 +2648,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		  }
 	    }
 
-	    cerr << get_fileline() << ": error: Object " << search_results.path_item
+	    cerr << get_fileline() << ": error: Object " << search_results.path_head.back()
 		 << " in " << scope_path(search_results.scope)
 		 << " is not a function." << endl;
 	    des->errors += 1;
@@ -2696,8 +2696,8 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		 }
 		 symbol_search_results use_search_results;
 		 use_search_results.scope = scope;
-		 use_search_results.path_tail.push_back(search_results.path_item);
-		 use_search_results.path_item = name_component_t(perm_string::literal(THIS_TOKEN));
+		 use_search_results.path_tail.push_back(search_results.path_head.back());
+		 use_search_results.path_head.push_back(name_component_t(perm_string::literal(THIS_TOKEN)));
 		 use_search_results.net = scope->find_signal(perm_string::literal(THIS_TOKEN));
 		 ivl_assert(*this, use_search_results.net);
 
@@ -2931,7 +2931,7 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
  *
  *     <scope>.x.len()
  *
- * Then net refers to object named x, and path_item is "x". The method is
+ * Then net refers to object named x, and path_head is "<scope>.x". The method is
  * "len" in path_tail, and if x is a string object, we can handle the case.
  */
 NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
@@ -2957,7 +2957,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
 		 << "search_results.scope: " << scope_path(search_results.scope) << endl;
 	    cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
-		 << "search_results.path_item: " << search_results.path_item << endl;
+		 << "search_results.path_head: " << search_results.path_head << endl;
 	    cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
 		 << "search_results.path_tail: " << search_results.path_tail << endl;
 	    if (search_results.net)
@@ -2992,11 +2992,11 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
       // If x is a queue of strings, then x[e] is a string. Elaborate the x[e]
       // expression and pass that to the len() method.
       if (search_results.net && search_results.net->data_type()==IVL_VT_QUEUE
-	  && search_results.path_item.index.size()==1) {
+	  && search_results.path_head.back().index.size()==1) {
 
 	    NetNet*net = search_results.net;
 	    const netdarray_t*darray = net->darray_type();
-	    const index_component_t&use_index = search_results.path_item.index.back();
+	    const index_component_t&use_index = search_results.path_head.back().index.back();
 	    ivl_assert(*this, use_index.msb != 0);
 	    ivl_assert(*this, use_index.lsb == 0);
 
@@ -3022,7 +3022,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
       // Dynamic array methods. This handles the case that the located signal
       // is a dynamic array, and there is no index.
       if (search_results.net && search_results.net->data_type()==IVL_VT_DARRAY
-	  && search_results.path_item.index.size()==0) {
+	  && search_results.path_head.back().index.size()==0) {
 
 	    // Get the method name that we are looking for.
 	    perm_string method_name = search_results.path_tail.back().name;
@@ -3047,7 +3047,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
       // Queue methods. This handles the case that the located signal is a
       // QUEUE object, and there is a method.
       if (search_results.net && search_results.net->data_type()==IVL_VT_QUEUE
-	  && search_results.path_item.index.size()==0) {
+	  && search_results.path_head.back().index.size()==0) {
 
 	    // Get the method name that we are looking for.
 	    perm_string method_name = search_results.path_tail.back().name;
