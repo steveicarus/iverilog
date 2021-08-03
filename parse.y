@@ -5426,7 +5426,7 @@ generate_item_list
   ;
 
 generate_item_list_opt
-  : generate_item_list
+  : { pform_generate_single_item = false; } generate_item_list
   |
   ;
 
@@ -5437,7 +5437,9 @@ generate_item_list_opt
      only need to take note here of the scope name, if any. */
 
 generate_block
-  : module_item
+  : { pform_generate_single_item = true; }
+    module_item
+    { pform_generate_single_item = false; }
   | K_begin generate_item_list_opt K_end
   | K_begin ':' IDENTIFIER generate_item_list_opt K_end endlabel_opt
       { pform_generate_block_name($3);

@@ -1046,8 +1046,7 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 		 << " value=" << test->value() << ": Generate scope="
 		 << use_name << endl;
 
-      probe_for_direct_nesting_();
-      if (direct_nested_) {
+      if (directly_nested) {
 	    if (debug_scopes)
 		  cerr << get_fileline() << ": debug: Generate condition "
 		       << (else_flag? "(else)" : "(if)")
@@ -1145,8 +1144,7 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 	// The name of the scope to generate, whatever that item is.
       hname_t use_name (item->scope_name);
 
-      item->probe_for_direct_nesting_();
-      if (item->direct_nested_) {
+      if (item->directly_nested) {
 	    if (debug_scopes)
 		  cerr << get_fileline() << ": debug: Generate case item " << scope_name
 		       << " detected direct nesting." << endl;

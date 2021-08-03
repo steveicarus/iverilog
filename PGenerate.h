@@ -1,7 +1,7 @@
 #ifndef IVL_PGenerate_H
 #define IVL_PGenerate_H
 /*
- * Copyright (c) 2006-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -69,6 +69,8 @@ class PGenerate : public PNamedItem, public LexicalScope {
 		     GS_CASE, GS_CASE_ITEM, GS_NBLOCK};
       scheme_t scheme_type;
 
+      bool directly_nested;
+
 	// generate loops have an index variable and three
 	// expressions: for (index = <init>; <test>; index=<step>)
 	// the index is local if it was declared in the init expression,
@@ -117,13 +119,6 @@ class PGenerate : public PNamedItem, public LexicalScope {
       bool generate_scope_condit_(Design*des, NetScope*container, bool else_flag);
       bool generate_scope_case_(Design*des, NetScope*container);
       bool generate_scope_nblock_(Design*des, NetScope*container);
-
-	// Call probe during elaborate_scope to calculate the
-	// direct_nested_ flag. It is OK to store the direct_nested_
-	// information here because "direct nested" is a property of
-	// the lexical generate code.
-      void probe_for_direct_nesting_(void);
-      bool direct_nested_;
 
 	// Elaborate_scope within a generated scope.
       void elaborate_subscope_(Design*des, NetScope*scope);

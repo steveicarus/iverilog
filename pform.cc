@@ -349,6 +349,10 @@ static unsigned scope_generate_counter = 1;
      always within a module. */
 static PGenerate*pform_cur_generate = 0;
 
+  /* This indicates whether a new generate construct can be directly
+     nested in the current generate construct. */
+bool pform_generate_single_item = false;
+
   /* Blocks within the same conditional generate construct may have
      the same name. Here we collect the set of names used in each
      construct, so they can be added to the local scope without
@@ -1344,6 +1348,8 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
       allow_timeunit_decl = true;
       allow_timeprec_decl = true;
 
+      pform_generate_single_item = false;
+
       add_local_symbol(lexical_scope, lex_name, cur_module);
 
       lexical_scope = cur_module;
@@ -1485,6 +1491,22 @@ void pform_genvars(const struct vlltype&li, list<perm_string>*names)
       delete names;
 }
 
+static void detect_directly_nested_generate()
+{
+      if (pform_cur_generate && pform_generate_single_item)
+	    switch (pform_cur_generate->scheme_type) {
+		case PGenerate::GS_CASE_ITEM:
+		  // fallthrough
+		case PGenerate::GS_CONDIT:
+		  // fallthrough
+		case PGenerate::GS_ELSE:
+		  pform_cur_generate->directly_nested = true;
+		  break;
+		default:
+		  break;
+	    }
+}
+
 void pform_start_generate_for(const struct vlltype&li,
 			      bool local_index,
 			      char*ident1, PExpr*init,
@@ -1512,6 +1534,8 @@ void pform_start_generate_for(const struct vlltype&li,
 
 void pform_start_generate_if(const struct vlltype&li, PExpr*test)
 {
+      detect_directly_nested_generate();
+
       PGenerate*gen = new PGenerate(lexical_scope, scope_generate_counter++);
       lexical_scope = gen;
 
@@ -1556,6 +1580,8 @@ void pform_start_generate_else(const struct vlltype&li)
  */
 void pform_start_generate_case(const struct vlltype&li, PExpr*expr)
 {
+      detect_directly_nested_generate();
+
       PGenerate*gen = new PGenerate(lexical_scope, scope_generate_counter++);
       lexical_scope = gen;
 
@@ -1613,6 +1639,8 @@ void pform_generate_case_item(const struct vlltype&li, list<PExpr*>*expr_list)
       lexical_scope = gen;
 
       FILE_NAME(gen, li);
+
+      gen->directly_nested = pform_cur_generate->directly_nested;
 
       pform_cur_generate = gen;
 

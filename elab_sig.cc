@@ -429,7 +429,7 @@ bool PGModule::elaborate_sig_udp_(Design*des, NetScope*scope, PUdp*udp) const
 
 bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 {
-      if (direct_nested_)
+      if (directly_nested)
 	    return elaborate_sig_direct_(des, container);
 
       bool flag = true;
@@ -448,7 +448,7 @@ bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 	    for (generate_it_t cur = generate_schemes.begin()
 		       ; cur != generate_schemes.end() ; ++ cur ) {
 		  PGenerate*item = *cur;
-		  if (item->direct_nested_ || !item->scope_list_.empty()) {
+		  if (item->directly_nested || !item->scope_list_.empty()) {
 			flag &= item->elaborate_sig(des, container);
 		  }
 	    }
@@ -496,12 +496,12 @@ bool PGenerate::elaborate_sig_direct_(Design*des, NetScope*container) const
 		  for (generate_it_t icur = item->generate_schemes.begin()
 			     ; icur != item->generate_schemes.end() ; ++ icur ) {
 			PGenerate*case_item = *icur;
-			if (case_item->direct_nested_ || !case_item->scope_list_.empty()) {
+			if (case_item->directly_nested || !case_item->scope_list_.empty()) {
 			      flag &= case_item->elaborate_sig(des, container);
 			}
 		  }
 	    } else {
-		  if (item->direct_nested_ || !item->scope_list_.empty()) {
+		  if (item->directly_nested || !item->scope_list_.empty()) {
 			  // Found the item, and it is direct nested.
 			flag &= item->elaborate_sig(des, container);
 		  }

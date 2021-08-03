@@ -6126,7 +6126,7 @@ void netclass_t::elaborate(Design*des, PClass*pclass)
 
 bool PGenerate::elaborate(Design*des, NetScope*container) const
 {
-      if (direct_nested_)
+      if (directly_nested)
 	    return elaborate_direct_(des, container);
 
       bool flag = true;
@@ -6151,7 +6151,7 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 	    for (generate_it_t cur = generate_schemes.begin()
 		       ; cur != generate_schemes.end() ; ++ cur ) {
 		  PGenerate*item = *cur;
-		  if (item->direct_nested_ || !item->scope_list_.empty()) {
+		  if (item->directly_nested || !item->scope_list_.empty()) {
 			flag &= item->elaborate(des, container);
 		  }
 	    }
@@ -6213,7 +6213,7 @@ bool PGenerate::elaborate_direct_(Design*des, NetScope*container) const
 		  cerr << get_fileline() << ": PGenerate::elaborate_direct_: "
 		       << "item->scope_name=" << item->scope_name
 		       << ", item->scheme_type=" << item->scheme_type
-		       << ", item->direct_nested_=" << item->direct_nested_
+		       << ", item->directly_nested=" << item->directly_nested
 		       << ", item->scope_list_.size()=" << item->scope_list_.size()
 		       << "." << endl;
 	    }
@@ -6226,12 +6226,12 @@ bool PGenerate::elaborate_direct_(Design*des, NetScope*container) const
 		  for (generate_it_t icur = item->generate_schemes.begin()
 			     ; icur != item->generate_schemes.end() ; ++ icur ) {
 			PGenerate*case_item = *icur;
-			if (case_item->direct_nested_ || !case_item->scope_list_.empty()) {
+			if (case_item->directly_nested || !case_item->scope_list_.empty()) {
 			      flag &= case_item->elaborate(des, container);
 			}
 		  }
 	    } else {
-		  if (item->direct_nested_ || !item->scope_list_.empty()) {
+		  if (item->directly_nested || !item->scope_list_.empty()) {
 			  // Found the item, and it is direct nested.
 			flag &= item->elaborate(des, container);
 		  }
