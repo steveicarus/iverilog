@@ -294,6 +294,13 @@ extern verinum* pform_verinum_with_size(verinum*s, verinum*val,
  */
 extern void pform_genvars(const struct vlltype&li, list<perm_string>*names);
 
+/*
+ * This flag is set by the parser to indicate the current generate block
+ * was not enclosed in a begin-end pair. This is a pre-requisite for
+ * directly nesting generate constructs.
+ */
+extern bool pform_generate_single_item;
+
 extern void pform_start_generate_for(const struct vlltype&li,
 				     bool local_index,
 				     char*ident1,
