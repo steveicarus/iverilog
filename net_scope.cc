@@ -345,8 +345,9 @@ bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
       while (use_prefix.size() <= max_pad_attempts) {
 	      // Try this name...
 	    string tmp = use_prefix + suffix;
-	    hname_t new_name(lex_strings.make(tmp.c_str()), name_.peek_numbers());
-	    if (!up_->child(new_name)) {
+	    perm_string base_name = lex_strings.make(tmp.c_str());
+	    hname_t new_name(base_name, name_.peek_numbers());
+	    if (!up_->child(new_name) && !up_->symbol_exists(base_name)) {
 		    // Ah, this name is unique. Rename myself, and
 		    // change my name in the parent scope.
 		  name_ = new_name;
@@ -802,6 +803,20 @@ const NetScope* NetScope::child_byname(perm_string name) const
 }
 
 
+bool NetScope::symbol_exists(perm_string sym)
+{
+      if (signals_map_.find(sym) != signals_map_.end())
+            return true;
+      if (parameters.find(sym) != parameters.end())
+            return true;
+      if (genvars_.find(sym) != genvars_.end())
+            return true;
+      if (classes_.find(sym) != classes_.end())
+          return true;
+
+      return false;
+}
+
 perm_string NetScope::local_symbol()
 {
       perm_string sym;
@@ -810,16 +825,8 @@ perm_string NetScope::local_symbol()
 	    res << "_ivl_" << (lcounter_++);
 	    perm_string sym_tmp = lex_strings.make(res.str());
 
-	      // If the name already exists as a signal, try again.
-	    if (signals_map_.find(sym_tmp) != signals_map_.end())
-		  continue;
-	      // If the name already exists as a parameter, try again.
-	    if (parameters.find(sym_tmp) != parameters.end())
-		  continue;
-	    if (genvars_.find(sym_tmp) != genvars_.end())
-		  continue;
-	      // If the name already exists as a class, try again.
-	    if (classes_.find(sym_tmp) != classes_.end())
+	      // If the name already exists, try again.
+	    if (symbol_exists(sym_tmp))
 		  continue;
 
 	      // No collisions, this is the one.
