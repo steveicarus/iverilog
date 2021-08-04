@@ -1165,6 +1165,8 @@ class NetScope : public Definitions, public Attrib {
 	// Look for defparams that never matched, and print warnings.
       void residual_defparams(class Design*);
 
+      bool symbol_exists(perm_string sym);
+
 	/* This method generates a non-hierarchical name that is
 	   guaranteed to be unique within this scope. */
       perm_string local_symbol();
