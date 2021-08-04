@@ -56,7 +56,8 @@ class LexicalScope {
     public:
       enum lifetime_t { INHERITED, STATIC, AUTOMATIC };
 
-      explicit LexicalScope(LexicalScope*parent) : default_lifetime(INHERITED), parent_(parent) { }
+      explicit LexicalScope(LexicalScope*parent)
+        : default_lifetime(INHERITED), generate_counter(0), parent_(parent) { }
 	// A virtual destructor is so that dynamic_cast can work.
       virtual ~LexicalScope() { }
 
@@ -139,6 +140,11 @@ class LexicalScope {
 
 	// Enumeration sets.
       std::set<enum_type_t*> enum_sets;
+
+        // A count of the generate constructs in this scope. This is
+        // used to automatically name unnamed generate blocks, as
+        // specified in the LRM.
+      unsigned generate_counter;
 
       LexicalScope* parent_scope() const { return parent_; }
 

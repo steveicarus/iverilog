@@ -341,10 +341,6 @@ bool pform_library_flag = false;
  */
 static unsigned scope_unnamed_block_with_decl = 1;
 
-  /* increment this for generate schemes within a module, and set it
-     to zero when a new module starts. */
-static unsigned scope_generate_counter = 1;
-
   /* This tracks the current generate scheme being processed. This is
      always within a module. */
 static PGenerate*pform_cur_generate = 0;
@@ -1379,10 +1375,6 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
 
       lexical_scope = cur_module;
 
-	/* The generate scheme numbering starts with *1*, not
-	   zero. That's just the way it is, thanks to the standard. */
-      scope_generate_counter = 1;
-
       pform_bind_attributes(cur_module->attributes, attr);
 }
 
@@ -1517,7 +1509,7 @@ void pform_genvars(const struct vlltype&li, list<perm_string>*names)
       delete names;
 }
 
-static void detect_directly_nested_generate()
+static unsigned detect_directly_nested_generate()
 {
       if (pform_cur_generate && pform_generate_single_item)
 	    switch (pform_cur_generate->scheme_type) {
@@ -1527,10 +1519,12 @@ static void detect_directly_nested_generate()
 		  // fallthrough
 		case PGenerate::GS_ELSE:
 		  pform_cur_generate->directly_nested = true;
-		  break;
+		  return pform_cur_generate->id_number;
 		default:
 		  break;
 	    }
+
+      return ++lexical_scope->generate_counter;
 }
 
 void pform_start_generate_for(const struct vlltype&li,
@@ -1539,7 +1533,7 @@ void pform_start_generate_for(const struct vlltype&li,
 			      PExpr*test,
 			      char*ident2, PExpr*next)
 {
-      PGenerate*gen = new PGenerate(lexical_scope, scope_generate_counter++);
+      PGenerate*gen = new PGenerate(lexical_scope, ++lexical_scope->generate_counter);
       lexical_scope = gen;
 
       FILE_NAME(gen, li);
@@ -1560,9 +1554,9 @@ void pform_start_generate_for(const struct vlltype&li,
 
 void pform_start_generate_if(const struct vlltype&li, PExpr*test)
 {
-      detect_directly_nested_generate();
+      unsigned id_number = detect_directly_nested_generate();
 
-      PGenerate*gen = new PGenerate(lexical_scope, scope_generate_counter++);
+      PGenerate*gen = new PGenerate(lexical_scope, id_number);
       lexical_scope = gen;
 
       FILE_NAME(gen, li);
@@ -1586,7 +1580,7 @@ void pform_start_generate_else(const struct vlltype&li)
       PGenerate*cur = pform_cur_generate;
       pform_endgenerate(false);
 
-      PGenerate*gen = new PGenerate(lexical_scope, scope_generate_counter++);
+      PGenerate*gen = new PGenerate(lexical_scope, cur->id_number);
       lexical_scope = gen;
 
       FILE_NAME(gen, li);
@@ -1606,9 +1600,9 @@ void pform_start_generate_else(const struct vlltype&li)
  */
 void pform_start_generate_case(const struct vlltype&li, PExpr*expr)
 {
-      detect_directly_nested_generate();
+      unsigned id_number = detect_directly_nested_generate();
 
-      PGenerate*gen = new PGenerate(lexical_scope, scope_generate_counter++);
+      PGenerate*gen = new PGenerate(lexical_scope, id_number);
       lexical_scope = gen;
 
       FILE_NAME(gen, li);
@@ -1629,7 +1623,7 @@ void pform_start_generate_case(const struct vlltype&li, PExpr*expr)
  */
 void pform_start_generate_nblock(const struct vlltype&li, char*name)
 {
-      PGenerate*gen = new PGenerate(lexical_scope, scope_generate_counter++);
+      PGenerate*gen = new PGenerate(lexical_scope, ++lexical_scope->generate_counter);
       lexical_scope = gen;
 
       FILE_NAME(gen, li);
