@@ -950,8 +950,16 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	      // Check that the loop_index variable was declared in a
 	      // genvar statement.
 	    NetScope*cscope = container;
-	    while (cscope && !cscope->find_genvar(loop_index))
+	    while (cscope && !cscope->find_genvar(loop_index)) {
+		  if (cscope->symbol_exists(loop_index)) {
+			cerr << get_fileline() << ": error: "
+			     << "generate loop variable '" << loop_index
+			     << "' is not a genvar in this scope." << endl;
+			des->errors += 1;
+			return false;
+		  }
 		  cscope = cscope->parent();
+            }
 	    if (!cscope) {
 		  cerr << get_fileline() << ": error: genvar is missing for "
 			  "generate \"loop\" variable '" << loop_index << "'."
