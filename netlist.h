@@ -1281,7 +1281,7 @@ class NetScope : public Definitions, public Attrib {
 
       const map<perm_string,PPackage*>*imports_;
 
-      const map<perm_string,data_type_t*>*typedefs_;
+      map<perm_string,data_type_t*>typedefs_;
 
       NetEvent *events_;
 

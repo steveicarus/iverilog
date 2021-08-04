@@ -119,7 +119,6 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, NetScope*in_u
   is_interface_(interface), is_unit_(compilation_unit), unit_(in_unit), up_(up)
 {
       imports_ = 0;
-      typedefs_ = 0;
       events_ = 0;
       lcounter_ = 0;
       is_auto_ = false;
@@ -244,7 +243,7 @@ NetScope*NetScope::find_import(const Design*des, perm_string name)
 void NetScope::add_typedefs(const map<perm_string,data_type_t*>*typedefs)
 {
       if (!typedefs->empty())
-	    typedefs_ = typedefs;
+	    typedefs_ = *typedefs;
 }
 
 NetScope*NetScope::find_typedef_scope(const Design*des, data_type_t*type)
@@ -253,7 +252,7 @@ NetScope*NetScope::find_typedef_scope(const Design*des, data_type_t*type)
 
       NetScope *cur_scope = this;
       while (cur_scope) {
-	    if (cur_scope->typedefs_ && cur_scope->typedefs_->find(type->name) != cur_scope->typedefs_->end())
+	    if (cur_scope->typedefs_.find(type->name) != cur_scope->typedefs_.end())
 		  return cur_scope;
 	    NetScope*import_scope = cur_scope->find_import(des, type->name);
 	    if (import_scope)
@@ -820,6 +819,8 @@ bool NetScope::symbol_exists(perm_string sym)
       if (genvars_.find(sym) != genvars_.end())
             return true;
       if (classes_.find(sym) != classes_.end())
+          return true;
+      if (typedefs_.find(sym) != typedefs_.end())
           return true;
 
       return false;
