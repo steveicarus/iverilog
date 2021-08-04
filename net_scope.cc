@@ -822,6 +822,8 @@ bool NetScope::symbol_exists(perm_string sym)
           return true;
       if (typedefs_.find(sym) != typedefs_.end())
           return true;
+      if (find_event(sym))
+          return true;
 
       return false;
 }
