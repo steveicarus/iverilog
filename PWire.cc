@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -132,7 +132,13 @@ ivl_variable_type_t PWire::get_data_type() const
 
 void PWire::set_signed(bool flag)
 {
-      signed_ = flag;
+	// For a non-ANSI style port declaration where the data type is
+	// specified in a corresponding variable declaration, the signed
+	// attribute may be attached to either the port declaration or to
+	// the variable declaration (IEEE 1364-2005 section 12.3.3). The
+	// signal is signed if either the port or the variable is signed.
+	// Handle that here.
+      signed_ = signed_ || flag;
 }
 
 bool PWire::get_signed() const
