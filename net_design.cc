@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -645,8 +645,8 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	    return;
 
       NetEConst*val = dynamic_cast<NetEConst*>((*cur).second.val);
-      ivl_assert(*(*cur).second.val, (*cur).second.val);
-      ivl_assert(*(*cur).second.val, val);
+      ivl_assert(*expr, (*cur).second.val);
+      ivl_assert(*expr, val);
 
       verinum value = val->value();
 
