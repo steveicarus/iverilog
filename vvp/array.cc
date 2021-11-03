@@ -724,6 +724,9 @@ double __vpiArray::get_word_r(unsigned address)
 	    return val;
       }
 
+      if (address >= get_size())
+	    return 0.0;
+
       assert(nets);
       vpiHandle word = nets[address];
       struct __vpiRealVar*vsig = dynamic_cast<__vpiRealVar*>(word);
