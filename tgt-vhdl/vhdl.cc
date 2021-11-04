@@ -1,7 +1,7 @@
 /*
  *  VHDL code generator for Icarus Verilog.
  *
- *  Copyright (C) 2008-2020  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2021  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,6 +30,8 @@
 #include <cassert>
 #include <cstring>
 #include <cstdlib>
+
+using namespace std;
 
 static const char*version_string =
 "Icarus Verilog VHDL Code Generator " VERSION " (" VERSION_TAG ")\n\n"
