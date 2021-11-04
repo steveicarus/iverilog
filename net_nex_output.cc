@@ -26,6 +26,8 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 
+using namespace std;
+
 void NetProc::nex_output(NexusSet&)
 {
       cerr << get_fileline()

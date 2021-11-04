@@ -22,6 +22,8 @@
 # include  "netlist.h"
 # include  "ivl_assert.h"
 
+using namespace std;
+
 /*
  * NOTE: The name_ is perm-allocated by the caller.
  */

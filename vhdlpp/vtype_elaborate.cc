@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -20,6 +20,8 @@
 
 # include  "vtype.h"
 # include  "expression.h"
+
+using namespace std;
 
 int VType::elaborate(Entity*, ScopeBase*) const
 {

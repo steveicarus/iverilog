@@ -61,7 +61,7 @@ class PExpr : public LineInfo {
       PExpr();
       virtual ~PExpr();
 
-      virtual void dump(ostream&) const;
+      virtual void dump(std::ostream&) const;
 
         // This method tests whether the expression contains any identifiers
         // that have not been previously declared in the specified scope or
@@ -204,7 +204,7 @@ class PExpr : public LineInfo {
       PExpr& operator= (const PExpr&);
 };
 
-ostream& operator << (ostream&, const PExpr&);
+std::ostream& operator << (std::ostream&, const PExpr&);
 
 class PEAssignPattern : public PExpr {
     public:
@@ -232,11 +232,11 @@ class PEAssignPattern : public PExpr {
 class PEConcat : public PExpr {
 
     public:
-      explicit PEConcat(const list<PExpr*>&p, PExpr*r =0);
+      explicit PEConcat(const std::list<PExpr*>&p, PExpr*r =0);
       ~PEConcat();
 
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
-      virtual void dump(ostream&) const;
+      virtual void dump(std::ostream&) const;
 
       virtual void declare_implicit_nets(LexicalScope*scope, NetNet::Type type);
 
@@ -264,7 +264,7 @@ class PEConcat : public PExpr {
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
 				     bool bidirectional_flag) const;
     private:
-      vector<PExpr*>parms_;
+      std::vector<PExpr*>parms_;
       std::valarray<width_mode_t>width_modes_;
 
       PExpr*repeat_;
@@ -292,7 +292,7 @@ class PEEvent : public PExpr {
       edge_t type() const;
       PExpr* expr() const;
 
-      virtual void dump(ostream&) const;
+      virtual void dump(std::ostream&) const;
 
       virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
@@ -325,7 +325,7 @@ class PEFNumber : public PExpr {
 				     unsigned expr_wid,
                                      unsigned flags) const;
 
-      virtual void dump(ostream&) const;
+      virtual void dump(std::ostream&) const;
 
     private:
       verireal*value_;
@@ -343,7 +343,7 @@ class PEIdent : public PExpr {
 	// current identifier.
       void append_name(perm_string);
 
-      virtual void dump(ostream&) const;
+      virtual void dump(std::ostream&) const;
 
       virtual void declare_implicit_nets(LexicalScope*scope, NetNet::Type type);
 
@@ -535,7 +535,7 @@ class PENewArray : public PExpr {
       explicit PENewArray (PExpr*s, PExpr*i);
       ~PENewArray();
 
-      virtual void dump(ostream&) const;
+      virtual void dump(std::ostream&) const;
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
@@ -559,7 +559,7 @@ class PENewClass : public PExpr {
 
       ~PENewClass();
 
-      virtual void dump(ostream&) const;
+      virtual void dump(std::ostream&) const;
 	// Class objects don't have a useful width, but the expression
 	// is IVL_VT_CLASS.
       virtual unsigned test_width(Design*des, NetScope*scope,
@@ -584,7 +584,7 @@ class PENewCopy : public PExpr {
       explicit PENewCopy(PExpr*src);
       ~PENewCopy();
 
-      virtual void dump(ostream&) const;
+      virtual void dump(std::ostream&) const;
 	// Class objects don't have a useful width, but the expression
 	// is IVL_VT_CLASS.
       virtual unsigned test_width(Design*des, NetScope*scope,
@@ -604,7 +604,7 @@ class PENull : public PExpr {
       explicit PENull();
       ~PENull();
 
-      virtual void dump(ostream&) const;
+      virtual void dump(std::ostream&) const;
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
@@ -622,7 +622,7 @@ class PENumber : public PExpr {
 
       const verinum& value() const;
 
-      virtual void dump(ostream&) const;
+      virtual void dump(std::ostream&) const;
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
 
@@ -656,8 +656,8 @@ class PEString : public PExpr {
       explicit PEString(char*s);
       ~PEString();
 
-      string value() const;
-      virtual void dump(ostream&) const;
+      std::string value() const;
+      virtual void dump(std::ostream&) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
@@ -678,7 +678,7 @@ class PETypename : public PExpr {
       explicit PETypename(data_type_t*data_type);
       ~PETypename();
 
-      virtual void dump(ostream&) const;
+      virtual void dump(std::ostream&) const;
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
@@ -696,7 +696,7 @@ class PEUnary : public PExpr {
       explicit PEUnary(char op, PExpr*ex);
       ~PEUnary();
 
-      virtual void dump(ostream&out) const;
+      virtual void dump(std::ostream&out) const;
 
       virtual void declare_implicit_nets(LexicalScope*scope, NetNet::Type type);
 
@@ -728,7 +728,7 @@ class PEBinary : public PExpr {
       explicit PEBinary(char op, PExpr*l, PExpr*r);
       ~PEBinary();
 
-      virtual void dump(ostream&out) const;
+      virtual void dump(std::ostream&out) const;
 
       virtual void declare_implicit_nets(LexicalScope*scope, NetNet::Type type);
 
@@ -853,7 +853,7 @@ class PETernary : public PExpr {
       explicit PETernary(PExpr*e, PExpr*t, PExpr*f);
       ~PETernary();
 
-      virtual void dump(ostream&out) const;
+      virtual void dump(std::ostream&out) const;
 
       virtual void declare_implicit_nets(LexicalScope*scope, NetNet::Type type);
 
@@ -885,7 +885,7 @@ class PETernary : public PExpr {
  */
 class PECallFunction : public PExpr {
     public:
-      explicit PECallFunction(const pform_name_t&n, const vector<PExpr *> &parms);
+      explicit PECallFunction(const pform_name_t&n, const std::vector<PExpr *> &parms);
 	// Call function defined in package.
       explicit PECallFunction(PPackage*pkg, perm_string n, const std::vector<PExpr *> &parms);
       explicit PECallFunction(PPackage*pkg, perm_string n, const std::list<PExpr *> &parms);
@@ -894,16 +894,16 @@ class PECallFunction : public PExpr {
       explicit PECallFunction(PPackage*pkg, const pform_name_t&n, const std::vector<PExpr *> &parms);
 
 	// Call of system function (name is not hierarchical)
-      explicit PECallFunction(perm_string n, const vector<PExpr *> &parms);
+      explicit PECallFunction(perm_string n, const std::vector<PExpr *> &parms);
       explicit PECallFunction(perm_string n);
 
 	// std::list versions. Should be removed!
-      explicit PECallFunction(const pform_name_t&n, const list<PExpr *> &parms);
-      explicit PECallFunction(perm_string n, const list<PExpr *> &parms);
+      explicit PECallFunction(const pform_name_t&n, const std::list<PExpr *> &parms);
+      explicit PECallFunction(perm_string n, const std::list<PExpr *> &parms);
 
       ~PECallFunction();
 
-      virtual void dump(ostream &) const;
+      virtual void dump(std::ostream &) const;
 
       virtual void declare_implicit_nets(LexicalScope*scope, NetNet::Type type);
 
@@ -971,7 +971,7 @@ class PECastSize  : public PExpr {
       explicit PECastSize(PExpr*size, PExpr*base);
       ~PECastSize();
 
-      void dump(ostream &out) const;
+      void dump(std::ostream &out) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     unsigned expr_wid,
@@ -994,7 +994,7 @@ class PECastType  : public PExpr {
       explicit PECastType(data_type_t*target, PExpr*base);
       ~PECastType();
 
-      void dump(ostream &out) const;
+      void dump(std::ostream &out) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     ivl_type_t type, unsigned flags) const;

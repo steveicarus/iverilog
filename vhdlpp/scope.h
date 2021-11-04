@@ -1,7 +1,7 @@
 #ifndef IVL_scope_H
 #define IVL_scope_H
 /*
- * Copyright (c) 2011-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -36,7 +36,7 @@ class SubprogramHeader;
 class VType;
 class SequentialStmt;
 
-typedef list<SubprogramHeader*> SubHeaderList;
+typedef std::list<SubprogramHeader*> SubHeaderList;
 
 template<typename T>
 struct delete_object{
@@ -45,7 +45,7 @@ struct delete_object{
 
 template<typename T>
 struct delete_pair_second{
-    void operator()(pair<perm_string, T*> item){ delete item.second; }
+    void operator()(std::pair<perm_string, T*> item){ delete item.second; }
 };
 
 class ScopeBase {
@@ -75,7 +75,7 @@ class ScopeBase {
       void transfer_from(ScopeBase&ref, transfer_type_t what = ALL);
 
       inline void bind_subprogram(perm_string name, SubprogramHeader*obj)
-      { map<perm_string, SubHeaderList>::iterator it;
+      { std::map<perm_string, SubHeaderList>::iterator it;
         if((it = use_subprograms_.find(name)) != use_subprograms_.end() )
             it->second.remove(obj);
         cur_subprograms_[name].push_back(obj);
@@ -95,11 +95,11 @@ class ScopeBase {
         finalizers_.push_back(s);
       }
 
-      void dump_scope(ostream&out) const;
+      void dump_scope(std::ostream&out) const;
 
 	// Looks for a subprogram with specified name and parameter types.
       SubprogramHeader*match_subprogram(perm_string name,
-                                        const list<const VType*>*params) const;
+                                        const std::list<const VType*>*params) const;
 
       perm_string peek_name() const { return name_; }
 
@@ -112,11 +112,11 @@ class ScopeBase {
       void cleanup();
 
       //containers' cleaning helper functions
-      template<typename T> void delete_all(list<T*>& c)
+      template<typename T> void delete_all(std::list<T*>& c)
       {
           for_each(c.begin(), c.end(), ::delete_object<T>());
       }
-      template<typename T> void delete_all(map<perm_string, T*>& c)
+      template<typename T> void delete_all(std::map<perm_string, T*>& c)
       {
           for_each(c.begin(), c.end(), ::delete_pair_second<T>());
       }
@@ -186,8 +186,8 @@ class Scope : public ScopeBase {
 
     protected:
 	// Helper method for emitting signals in the scope.
-      int emit_signals(ostream&out, Entity*ent, ScopeBase*scope);
-      int emit_variables(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit_signals(std::ostream&out, Entity*ent, ScopeBase*scope);
+      int emit_variables(std::ostream&out, Entity*ent, ScopeBase*scope);
 };
 
 /*
@@ -226,28 +226,28 @@ class ActiveScope : public ScopeBase {
        * done in ScopeBase::cleanup() function .*/
 
       void bind_name(perm_string name, Signal*obj)
-      { map<perm_string, Signal*>::iterator it;
+      { std::map<perm_string, Signal*>::iterator it;
         if((it = old_signals_.find(name)) != old_signals_.end() )
             old_signals_.erase(it);
         new_signals_[name] = obj;
       }
 
       void bind_name(perm_string name, Variable*obj)
-      { map<perm_string, Variable*>::iterator it;
+      { std::map<perm_string, Variable*>::iterator it;
         if((it = old_variables_.find(name)) != old_variables_.end() )
             old_variables_.erase(it);
         new_variables_[name] = obj;
       }
 
       void bind_name(perm_string name, ComponentBase*obj)
-      { map<perm_string, ComponentBase*>::iterator it;
+      { std::map<perm_string, ComponentBase*>::iterator it;
         if((it = old_components_.find(name)) != old_components_.end() )
             old_components_.erase(it);
         new_components_[name] = obj;
       }
 
       void bind_name(perm_string name, const VType* t)
-      { map<perm_string, const VType*>::iterator it;
+      { std::map<perm_string, const VType*>::iterator it;
         if((it = use_types_.find(name)) != use_types_.end() )
             use_types_.erase(it);
         cur_types_[name] = t;
@@ -266,7 +266,7 @@ class ActiveScope : public ScopeBase {
       { use_types_[name] = t; }
 
       void bind_name(perm_string name, const VType*obj, Expression*val)
-      { map<perm_string, const_t*>::iterator it;
+      { std::map<perm_string, const_t*>::iterator it;
         if((it = use_constants_.find(name)) != use_constants_.end() )
             use_constants_.erase(it);
         cur_constants_[name] = new const_t(obj, val);

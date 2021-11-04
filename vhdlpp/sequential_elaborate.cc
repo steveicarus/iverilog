@@ -24,6 +24,8 @@
 # include  "subprogram.h"
 # include  "std_types.h"
 
+using namespace std;
+
 int SequentialStmt::elaborate(Entity*, ScopeBase*)
 {
       return 0;

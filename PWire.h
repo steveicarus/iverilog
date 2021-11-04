@@ -1,7 +1,7 @@
 #ifndef IVL_PWire_H
 #define IVL_PWire_H
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,7 +28,7 @@
 #ifdef HAVE_IOSFWD
 # include  <iosfwd>
 #else
-class ostream;
+# include  <iostream>
 #endif
 
 class PExpr;
@@ -87,10 +87,10 @@ class PWire : public PNamedItem {
       void set_discipline(ivl_discipline_t);
       ivl_discipline_t get_discipline(void) const;
 
-      map<perm_string,PExpr*> attributes;
+      std::map<perm_string,PExpr*> attributes;
 
 	// Write myself to the specified stream.
-      void dump(ostream&out, unsigned ind=4) const;
+      void dump(std::ostream&out, unsigned ind=4) const;
 
       NetNet* elaborate_sig(Design*, NetScope*scope) const;
 

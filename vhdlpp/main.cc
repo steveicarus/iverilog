@@ -22,6 +22,8 @@ const char COPYRIGHT[] =
 # include  "version_base.h"
 # include  "version_tag.h"
 
+using namespace std;
+
 /*
  * Usage:  vhdlpp [flags] sourcefile...
  * Flags:

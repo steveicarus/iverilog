@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,6 +28,8 @@
 # include  <typeinfo>
 # include  <cstdlib>
 # include  "ivl_alloc.h"
+
+using namespace std;
 
 void Nexus::connect(Link&r)
 {

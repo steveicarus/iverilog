@@ -25,6 +25,8 @@
 # include  <typeinfo>
 # include  <cassert>
 
+using namespace std;
+
 int Architecture::elaborate(Entity*entity)
 {
       int errors = 0;

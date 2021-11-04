@@ -37,6 +37,7 @@
 # include  "netvector.h"
 # include  "ivl_assert.h"
 
+using namespace std;
 
 ostream& operator<< (ostream&o, NetNet::Type t)
 {

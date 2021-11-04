@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,6 +25,8 @@
 # include  "PExpr.h"
 # include  "verinum.h"
 # include  "netmisc.h"
+
+using namespace std;
 
 PDelays::PDelays()
 {

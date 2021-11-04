@@ -38,6 +38,8 @@
 # include  <iomanip>
 # include  <typeinfo>
 
+using namespace std;
+
 ostream& operator << (ostream&out, const PExpr&obj)
 {
       obj.dump(out);

@@ -97,7 +97,7 @@ class PTask  : public PTaskFunc {
 
       bool is_auto() const { return is_auto_; };
 
-      void dump(ostream&, unsigned) const;
+      void dump(std::ostream&, unsigned) const;
 
       SymbolType symbol_type() const;
 
@@ -148,7 +148,7 @@ class PFunction : public PTaskFunc {
 
       bool is_auto() const { return is_auto_; };
 
-      void dump(ostream&, unsigned) const;
+      void dump(std::ostream&, unsigned) const;
 
       SymbolType symbol_type() const;
 
@@ -164,24 +164,24 @@ class PLet : public PTaskFunc {
       typedef struct let_port {
 	    data_type_t*type_;
 	    perm_string name_;
-	    list<pform_range_t>*range_;
+	    std::list<pform_range_t>*range_;
 	    PExpr*def_;
 
-	    void dump(ostream&, unsigned) const;
+	    void dump(std::ostream&, unsigned) const;
       } let_port_t;
 
 // FIXME: Should the port list be a vector. Check once implemented completely
       explicit PLet(perm_string name, LexicalScope*parent,
-                    list<let_port_t*>*ports, PExpr*expr);
+                    std::list<let_port_t*>*ports, PExpr*expr);
       ~PLet();
 
       void elaborate_sig(Design*des, NetScope*scope) const { (void)des; (void)scope; }
       void elaborate(Design*des, NetScope*scope) const { (void)des; (void)scope; }
 
-      void dump(ostream&, unsigned) const;
+      void dump(std::ostream&, unsigned) const;
 
     private:
-      list<let_port_t*>*ports_;
+      std::list<let_port_t*>*ports_;
       PExpr*expr_;
 };
 

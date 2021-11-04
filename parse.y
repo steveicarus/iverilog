@@ -31,12 +31,14 @@
 # include  <cstring>
 # include  <sstream>
 
+using namespace std;
+
 class PSpecPath;
 
 extern void lex_end_table();
 
 static data_type_t* param_data_type = 0;
-static list<pform_range_t>* specparam_active_range = 0;
+static std::list<pform_range_t>* specparam_active_range = 0;
 
 /* Port declaration lists use this structure for context. */
 static struct {
@@ -91,7 +93,7 @@ static unsigned args_after_notifier;
 /* The rules sometimes push attributes into a global context where
    sub-rules may grab them. This makes parser rules a little easier to
    write in some cases. */
-static list<named_pexpr_t>*attributes_in_context = 0;
+static std::list<named_pexpr_t>*attributes_in_context = 0;
 
 /* Later version of bison (including 1.35) will not compile in stack
    extension if the output is compiled with C++ and either the YYSTYPE
@@ -131,15 +133,15 @@ static list<named_pexpr_t>*attributes_in_context = 0;
 static const struct str_pair_t pull_strength = { IVL_DR_PULL,  IVL_DR_PULL };
 static const struct str_pair_t str_strength = { IVL_DR_STRONG, IVL_DR_STRONG };
 
-static list<pform_port_t>* make_port_list(char*id, list<pform_range_t>*udims, PExpr*expr)
+static std::list<pform_port_t>* make_port_list(char*id, std::list<pform_range_t>*udims, PExpr*expr)
 {
-      list<pform_port_t>*tmp = new list<pform_port_t>;
+      std::list<pform_port_t>*tmp = new std::list<pform_port_t>;
       tmp->push_back(pform_port_t(lex_strings.make(id), udims, expr));
       delete[]id;
       return tmp;
 }
-static list<pform_port_t>* make_port_list(list<pform_port_t>*tmp,
-                                          char*id, list<pform_range_t>*udims, PExpr*expr)
+static std::list<pform_port_t>* make_port_list(list<pform_port_t>*tmp,
+                                          char*id, std::list<pform_range_t>*udims, PExpr*expr)
 {
       tmp->push_back(pform_port_t(lex_strings.make(id), udims, expr));
       delete[]id;
@@ -152,20 +154,20 @@ list<pform_range_t>* make_range_from_width(uint64_t wid)
       range.first  = new PENumber(new verinum(wid-1, integer_width));
       range.second = new PENumber(new verinum((uint64_t)0, integer_width));
 
-      list<pform_range_t>*rlist = new list<pform_range_t>;
+      std::list<pform_range_t>*rlist = new std::list<pform_range_t>;
       rlist->push_back(range);
       return rlist;
 }
 
-static list<perm_string>* list_from_identifier(char*id)
+static std::list<perm_string>* list_from_identifier(char*id)
 {
-      list<perm_string>*tmp = new list<perm_string>;
+      std::list<perm_string>*tmp = new std::list<perm_string>;
       tmp->push_back(lex_strings.make(id));
       delete[]id;
       return tmp;
 }
 
-static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
+static std::list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 {
       tmp->push_back(lex_strings.make(id));
       delete[]id;
@@ -174,15 +176,15 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 
 list<pform_range_t>* copy_range(list<pform_range_t>* orig)
 {
-      list<pform_range_t>*copy = 0;
+      std::list<pform_range_t>*copy = 0;
 
       if (orig)
-	    copy = new list<pform_range_t> (*orig);
+	    copy = new std::list<pform_range_t> (*orig);
 
       return copy;
 }
 
-template <class T> void append(vector<T>&out, const vector<T>&in)
+template <class T> void append(vector<T>&out, const std::vector<T>&in)
 {
       for (size_t idx = 0 ; idx < in.size() ; idx += 1)
 	    out.push_back(in[idx]);
@@ -206,7 +208,7 @@ static void strip_tail_items(list<PExpr*>*lst)
  */
 static PECallFunction*make_call_function(perm_string tn, PExpr*arg)
 {
-      vector<PExpr*> parms(1);
+      std::vector<PExpr*> parms(1);
       parms[0] = arg;
       PECallFunction*tmp = new PECallFunction(tn, parms);
       return tmp;
@@ -214,16 +216,16 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg)
 
 static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 {
-      vector<PExpr*> parms(2);
+      std::vector<PExpr*> parms(2);
       parms[0] = arg1;
       parms[1] = arg2;
       PECallFunction*tmp = new PECallFunction(tn, parms);
       return tmp;
 }
 
-static list<named_pexpr_t>* make_named_numbers(perm_string name, long first, long last, PExpr*val =0)
+static std::list<named_pexpr_t>* make_named_numbers(perm_string name, long first, long last, PExpr*val =0)
 {
-      list<named_pexpr_t>*lst = new list<named_pexpr_t>;
+      std::list<named_pexpr_t>*lst = new std::list<named_pexpr_t>;
       named_pexpr_t tmp;
 	// We are counting up.
       if (first <= last) {
@@ -249,9 +251,9 @@ static list<named_pexpr_t>* make_named_numbers(perm_string name, long first, lon
       return lst;
 }
 
-static list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
+static std::list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
 {
-      list<named_pexpr_t>*lst = new list<named_pexpr_t>;
+      std::list<named_pexpr_t>*lst = new std::list<named_pexpr_t>;
       named_pexpr_t tmp;
       tmp.name = name;
       tmp.parm = val;
@@ -281,7 +283,7 @@ static long check_enum_seq_value(const YYLTYPE&loc, verinum *arg, bool zero_ok)
       return value;
 }
 
-static void current_task_set_statement(const YYLTYPE&loc, vector<Statement*>*s)
+static void current_task_set_statement(const YYLTYPE&loc, std::vector<Statement*>*s)
 {
       if (s == 0) {
 	      /* if the statement list is null, then the parser
@@ -319,7 +321,7 @@ static void current_task_set_statement(const YYLTYPE&loc, vector<Statement*>*s)
       current_task->set_statement(tmp);
 }
 
-static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>*s)
+static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statement*>*s)
 {
       if (s == 0) {
 	      /* if the statement list is null, then the parser
@@ -368,11 +370,11 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 	/* text items are C strings allocated by the lexor using
 	   strdup. They can be put into lists with the texts type. */
       char*text;
-      list<perm_string>*perm_strings;
+      std::list<perm_string>*perm_strings;
 
-      list<pform_port_t>*port_list;
+      std::list<pform_port_t>*port_list;
 
-      vector<pform_tf_port_t>* tf_ports;
+      std::vector<pform_tf_port_t>* tf_ports;
 
       pform_name_t*pform_name;
 
@@ -380,7 +382,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
       hname_t*hier;
 
-      list<string>*strings;
+      std::list<std::string>*strings;
 
       struct str_pair_t drive;
 
@@ -392,21 +394,21 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
       Module::port_t *mport;
       LexicalScope::range_t* value_range;
-      vector<Module::port_t*>*mports;
+      std::vector<Module::port_t*>*mports;
 
-      list<PLet::let_port_t*>*let_port_lst;
+      std::list<PLet::let_port_t*>*let_port_lst;
       PLet::let_port_t*let_port_itm;
 
       named_number_t* named_number;
-      list<named_number_t>* named_numbers;
+      std::list<named_number_t>* named_numbers;
 
       named_pexpr_t*named_pexpr;
-      list<named_pexpr_t>*named_pexprs;
+      std::list<named_pexpr_t>*named_pexprs;
       struct parmvalue_t*parmvalue;
-      list<pform_range_t>*ranges;
+      std::list<pform_range_t>*ranges;
 
       PExpr*expr;
-      list<PExpr*>*exprs;
+      std::list<PExpr*>*exprs;
 
       svector<PEEvent*>*event_expr;
 
@@ -418,20 +420,20 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       PBlock::BL_TYPE join_keyword;
 
       PWire*wire;
-      vector<PWire*>*wires;
+      std::vector<PWire*>*wires;
 
       PEventStatement*event_statement;
       Statement*statement;
-      vector<Statement*>*statement_list;
+      std::vector<Statement*>*statement_list;
 
       net_decl_assign_t*net_decl_assign;
       enum_type_t*enum_type;
 
       decl_assignment_t*decl_assignment;
-      list<decl_assignment_t*>*decl_assignments;
+      std::list<decl_assignment_t*>*decl_assignments;
 
       struct_member_t*struct_member;
-      list<struct_member_t*>*struct_members;
+      std::list<struct_member_t*>*struct_members;
       struct_type_t*struct_type;
 
       data_type_t*data_type;
@@ -447,7 +449,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
       struct {
 	    data_type_t*type;
-	    list<PExpr*>*exprs;
+	    std::list<PExpr*>*exprs;
       } class_declaration_extends;
 
       struct {
@@ -460,7 +462,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       verireal* realtime;
 
       PSpecPath* specpath;
-      list<index_component_t> *dimensions;
+      std::list<index_component_t> *dimensions;
 
       LexicalScope::lifetime_t lifetime;
 };
@@ -984,7 +986,7 @@ class_item_qualifier_opt
 
 class_new /* IEEE1800-2005 A.2.4 */
   : K_new '(' expression_list_with_nuls ')'
-      { list<PExpr*>*expr_list = $3;
+      { std::list<PExpr*>*expr_list = $3;
 	strip_tail_items(expr_list);
 	PENewClass*tmp = new PENewClass(*expr_list);
 	FILE_NAME(tmp, @1);
@@ -1200,14 +1202,14 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	$$ = tmp;
       }
   | K_integer signed_unsigned_opt
-      { list<pform_range_t>*pd = make_range_from_width(integer_width);
+      { std::list<pform_range_t>*pd = make_range_from_width(integer_width);
 	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $2, pd);
 	tmp->reg_flag = true;
 	tmp->integer_flag = true;
 	$$ = tmp;
       }
   | K_time unsigned_signed_opt
-      { list<pform_range_t>*pd = make_range_from_width(64);
+      { std::list<pform_range_t>*pd = make_range_from_width(64);
 	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $2, pd);
 	tmp->reg_flag = !gn_system_verilog();
 	$$ = tmp;
@@ -1762,12 +1764,12 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 /* TODO: Replace register_variable_list with list_of_variable_decl_assignments. */
 list_of_variable_decl_assignments /* IEEE1800-2005 A.2.3 */
   : variable_decl_assignment
-      { list<decl_assignment_t*>*tmp = new list<decl_assignment_t*>;
+      { std::list<decl_assignment_t*>*tmp = new std::list<decl_assignment_t*>;
 	tmp->push_back($1);
 	$$ = tmp;
       }
   | list_of_variable_decl_assignments ',' variable_decl_assignment
-      { list<decl_assignment_t*>*tmp = $1;
+      { std::list<decl_assignment_t*>*tmp = $1;
 	tmp->push_back($3);
 	$$ = tmp;
       }
@@ -1812,13 +1814,13 @@ variable_decl_assignment /* IEEE1800-2005 A.2.3 */
 
 loop_variables /* IEEE1800-2005: A.6.8 */
   : loop_variables ',' IDENTIFIER
-      { list<perm_string>*tmp = $1;
+      { std::list<perm_string>*tmp = $1;
 	tmp->push_back(lex_strings.make($3));
 	delete[]$3;
 	$$ = tmp;
       }
   | IDENTIFIER
-      { list<perm_string>*tmp = new list<perm_string>;
+      { std::list<perm_string>*tmp = new std::list<perm_string>;
 	tmp->push_back(lex_strings.make($1));
 	delete[]$1;
 	$$ = tmp;
@@ -2127,7 +2129,7 @@ simple_immediate_assertion_statement /* IEEE1800-2012 A.6.10 */
   : assert_or_assume '(' expression ')' statement_or_null %prec less_than_K_else
       {
 	if (gn_supported_assertions_flag) {
-	      list<PExpr*>arg_list;
+	      std::list<PExpr*>arg_list;
 	      PCallTask*tmp1 = new PCallTask(lex_strings.make("$error"), arg_list);
 	      FILE_NAME(tmp1, @1);
 	      PCondit*tmp2 = new PCondit($3, $5, tmp1);
@@ -2213,14 +2215,14 @@ simple_type_or_string /* IEEE1800-2005: A.2.2.1 */
 	$$ = tmp;
       }
   | K_integer
-      { list<pform_range_t>*pd = make_range_from_width(integer_width);
+      { std::list<pform_range_t>*pd = make_range_from_width(integer_width);
 	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, true, pd);
 	tmp->reg_flag = true;
 	tmp->integer_flag = true;
 	$$ = tmp;
       }
   | K_time
-      { list<pform_range_t>*pd = make_range_from_width(64);
+      { std::list<pform_range_t>*pd = make_range_from_width(64);
 	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, pd);
 	tmp->reg_flag = !gn_system_verilog();
 	$$ = tmp;
@@ -2400,7 +2402,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 
 tf_port_declaration /* IEEE1800-2005: A.2.7 */
   : port_direction K_reg_opt unsigned_signed_opt dimensions_opt list_of_identifiers ';'
-      { vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1,
+      { std::vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1,
 						$2 ? IVL_VT_LOGIC :
 						     IVL_VT_NO_TYPE,
 						$3, $4, $5);
@@ -2411,7 +2413,7 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
      shape. Generate a range ([31:0]) to make it work. */
 
   | port_direction K_integer list_of_identifiers ';'
-      { list<pform_range_t>*range_stub = make_range_from_width(integer_width);
+      { std::list<pform_range_t>*range_stub = make_range_from_width(integer_width);
 	vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, true,
 						    range_stub, $3, true);
 	$$ = tmp;
@@ -2420,7 +2422,7 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
   /* Ports can be time with a width of [63:0] (unsigned). */
 
   | port_direction K_time list_of_identifiers ';'
-      { list<pform_range_t>*range_stub = make_range_from_width(64);
+      { std::list<pform_range_t>*range_stub = make_range_from_width(64);
 	vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, false,
 						   range_stub, $3);
 	$$ = tmp;
@@ -2429,7 +2431,7 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
   /* Ports can be real or realtime. */
 
   | port_direction real_or_realtime list_of_identifiers ';'
-      { vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1, IVL_VT_REAL, true,
+      { std::vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1, IVL_VT_REAL, true,
 						   0, $3);
 	$$ = tmp;
       }
@@ -2438,7 +2440,7 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
   /* Ports can be string. */
 
   | port_direction K_string list_of_identifiers ';'
-      { vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1, IVL_VT_STRING, true,
+      { std::vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1, IVL_VT_STRING, true,
 						   0, $3);
 	$$ = tmp;
       }
@@ -2457,7 +2459,7 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
 tf_port_item /* IEEE1800-2005: A.2.7 */
 
   : port_direction_opt data_type_or_implicit IDENTIFIER dimensions_opt tf_port_item_expr_opt
-      { vector<pform_tf_port_t>*tmp;
+      { std::vector<pform_tf_port_t>*tmp;
 	NetNet::PortType use_port_type = $1;
         if ((use_port_type == NetNet::PIMPLICIT) && (gn_system_verilog() || ($2 == 0)))
               use_port_type = port_declaration_context.port_type;
@@ -2538,7 +2540,7 @@ tf_port_list /* IEEE1800-2005: A.2.7 */
 
 tf_port_item_list
   : tf_port_item_list ',' tf_port_item
-      { vector<pform_tf_port_t>*tmp;
+      { std::vector<pform_tf_port_t>*tmp;
 	if ($1 && $3) {
 	      size_t s1 = $1->size();
 	      tmp = $1;
@@ -2602,7 +2604,7 @@ value_range /* IEEE1800-2005: A.8.3 */
 
 variable_dimension /* IEEE1800-2005: A.2.5 */
   : '[' expression ':' expression ']'
-      { list<pform_range_t> *tmp = new list<pform_range_t>;
+      { std::list<pform_range_t> *tmp = new std::list<pform_range_t>;
 	pform_range_t index ($2,$4);
 	tmp->push_back(index);
 	$$ = tmp;
@@ -2614,13 +2616,13 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
 	      cerr << @2 << ": warning: Use of SystemVerilog [size] dimension. "
 		   << "Use at least -g2005-sv to remove this warning." << endl;
 	}
-	list<pform_range_t> *tmp = new list<pform_range_t>;
+	list<pform_range_t> *tmp = new std::list<pform_range_t>;
 	pform_range_t index ($2,0);
 	tmp->push_back(index);
 	$$ = tmp;
       }
   | '[' ']'
-      { list<pform_range_t> *tmp = new list<pform_range_t>;
+      { std::list<pform_range_t> *tmp = new std::list<pform_range_t>;
 	pform_range_t index (0,0);
 	if (!gn_system_verilog()) {
 	      yyerror("error: Dynamic array declaration require SystemVerilog.");
@@ -2630,7 +2632,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
       }
   | '[' '$' ']'
       { // SystemVerilog queue
-	list<pform_range_t> *tmp = new list<pform_range_t>;
+	list<pform_range_t> *tmp = new std::list<pform_range_t>;
 	pform_range_t index (new PENull,0);
 	if (!gn_system_verilog()) {
 	      yyerror("error: Queue declaration require SystemVerilog.");
@@ -2640,7 +2642,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
       }
   | '[' '$' ':' expression ']'
       { // SystemVerilog queue with a max size
-	list<pform_range_t> *tmp = new list<pform_range_t>;
+	list<pform_range_t> *tmp = new std::list<pform_range_t>;
 	pform_range_t index (new PENull,$4);
 	if (!gn_system_verilog()) {
 	      yyerror("error: Queue declarations require SystemVerilog.");
@@ -2678,7 +2680,7 @@ attribute_instance_list
   | K_PSTAR attribute_list K_STARP { $$ = $2; }
   | attribute_instance_list K_PSTAR K_STARP { $$ = $1; }
   | attribute_instance_list K_PSTAR attribute_list K_STARP
-      { list<named_pexpr_t>*tmp = $1;
+      { std::list<named_pexpr_t>*tmp = $1;
 	if (tmp) {
 	    tmp->splice(tmp->end(), *$3);
 	    delete $3;
@@ -2689,13 +2691,13 @@ attribute_instance_list
 
 attribute_list
   : attribute_list ',' attribute
-      { list<named_pexpr_t>*tmp = $1;
+      { std::list<named_pexpr_t>*tmp = $1;
         tmp->push_back(*$3);
 	delete $3;
 	$$ = tmp;
       }
   | attribute
-      { list<named_pexpr_t>*tmp = new list<named_pexpr_t>;
+      { std::list<named_pexpr_t>*tmp = new std::list<named_pexpr_t>;
         tmp->push_back(*$1);
 	delete $1;
 	$$ = tmp;
@@ -2929,7 +2931,7 @@ enum_name_list
       { $$ = $1;
       }
   | enum_name_list ',' enum_name
-      { list<named_pexpr_t>*lst = $1;
+      { std::list<named_pexpr_t>*lst = $1;
 	lst->splice(lst->end(), *$3);
 	delete $3;
 	$$ = lst;
@@ -3033,12 +3035,12 @@ struct_data_type
      in IEEE 1800-2012 A.2.2.1. */
 struct_union_member_list
   : struct_union_member_list struct_union_member
-      { list<struct_member_t*>*tmp = $1;
+      { std::list<struct_member_t*>*tmp = $1;
 	tmp->push_back($2);
 	$$ = tmp;
       }
   | struct_union_member
-      { list<struct_member_t*>*tmp = new list<struct_member_t*>;
+      { std::list<struct_member_t*>*tmp = new std::list<struct_member_t*>;
 	tmp->push_back($1);
 	$$ = tmp;
       }
@@ -3126,12 +3128,12 @@ defparam_assign_list
 
 delay1
 	: '#' delay_value_simple
-		{ list<PExpr*>*tmp = new list<PExpr*>;
+		{ std::list<PExpr*>*tmp = new std::list<PExpr*>;
 		  tmp->push_back($2);
 		  $$ = tmp;
 		}
 	| '#' '(' delay_value ')'
-		{ list<PExpr*>*tmp = new list<PExpr*>;
+		{ std::list<PExpr*>*tmp = new std::list<PExpr*>;
 		  tmp->push_back($3);
 		  $$ = tmp;
 		}
@@ -3139,23 +3141,23 @@ delay1
 
 delay3
 	: '#' delay_value_simple
-		{ list<PExpr*>*tmp = new list<PExpr*>;
+		{ std::list<PExpr*>*tmp = new std::list<PExpr*>;
 		  tmp->push_back($2);
 		  $$ = tmp;
 		}
 	| '#' '(' delay_value ')'
-		{ list<PExpr*>*tmp = new list<PExpr*>;
+		{ std::list<PExpr*>*tmp = new std::list<PExpr*>;
 		  tmp->push_back($3);
 		  $$ = tmp;
 		}
 	| '#' '(' delay_value ',' delay_value ')'
-		{ list<PExpr*>*tmp = new list<PExpr*>;
+		{ std::list<PExpr*>*tmp = new std::list<PExpr*>;
 		  tmp->push_back($3);
 		  tmp->push_back($5);
 		  $$ = tmp;
 		}
 	| '#' '(' delay_value ',' delay_value ',' delay_value ')'
-		{ list<PExpr*>*tmp = new list<PExpr*>;
+		{ std::list<PExpr*>*tmp = new std::list<PExpr*>;
 		  tmp->push_back($3);
 		  tmp->push_back($5);
 		  tmp->push_back($7);
@@ -3170,12 +3172,12 @@ delay3_opt
 
 delay_value_list
   : delay_value
-      { list<PExpr*>*tmp = new list<PExpr*>;
+      { std::list<PExpr*>*tmp = new std::list<PExpr*>;
 	tmp->push_back($1);
 	$$ = tmp;
       }
   | delay_value_list ',' delay_value
-      { list<PExpr*>*tmp = $1;
+      { std::list<PExpr*>*tmp = $1;
 	tmp->push_back($3);
 	$$ = tmp;
       }
@@ -3759,22 +3761,22 @@ expr_mintypmax
 
 expression_list_with_nuls
   : expression_list_with_nuls ',' expression
-      { list<PExpr*>*tmp = $1;
+      { std::list<PExpr*>*tmp = $1;
 	if (tmp->empty()) tmp->push_back(0);
 	tmp->push_back($3);
 	$$ = tmp;
       }
   | expression
-      { list<PExpr*>*tmp = new list<PExpr*>;
+      { std::list<PExpr*>*tmp = new std::list<PExpr*>;
 	tmp->push_back($1);
 	$$ = tmp;
       }
   |
-      { list<PExpr*>*tmp = new list<PExpr*>;
+      { std::list<PExpr*>*tmp = new std::list<PExpr*>;
 	$$ = tmp;
       }
   | expression_list_with_nuls ','
-      { list<PExpr*>*tmp = $1;
+      { std::list<PExpr*>*tmp = $1;
 	if (tmp->empty()) tmp->push_back(0);
 	tmp->push_back(0);
 	$$ = tmp;
@@ -3783,12 +3785,12 @@ expression_list_with_nuls
 
 expression_list_proper
   : expression_list_proper ',' expression
-      { list<PExpr*>*tmp = $1;
+      { std::list<PExpr*>*tmp = $1;
         tmp->push_back($3);
         $$ = tmp;
       }
   | expression
-      { list<PExpr*>*tmp = new list<PExpr*>;
+      { std::list<PExpr*>*tmp = new std::list<PExpr*>;
 	tmp->push_back($1);
 	$$ = tmp;
       }
@@ -3911,7 +3913,7 @@ expr_primary
      call. It can also be a call to a class method (function). */
 
   | hierarchy_identifier attribute_list_opt '(' expression_list_with_nuls ')'
-      { list<PExpr*>*expr_list = $4;
+      { std::list<PExpr*>*expr_list = $4;
 	strip_tail_items(expr_list);
 	PECallFunction*tmp = pform_make_call_function(@1, *$1, *expr_list);
 	delete $1;
@@ -3947,7 +3949,7 @@ expr_primary
       }
   | SYSTEM_IDENTIFIER '('  ')'
       { perm_string tn = lex_strings.make($1);
-	const vector<PExpr*>empty;
+	const std::vector<PExpr*>empty;
 	PECallFunction*tmp = new PECallFunction(tn, empty);
 	FILE_NAME(tmp, @1);
 	delete[]$1;
@@ -4183,7 +4185,7 @@ expr_primary
   | '{' '}'
       { // This is the empty queue syntax.
 	if (gn_system_verilog()) {
-	      list<PExpr*> empty_list;
+	      std::list<PExpr*> empty_list;
 	      PEConcat*tmp = new PEConcat(empty_list);
 	      FILE_NAME(tmp, @1);
 	      $$ = tmp;
@@ -4251,7 +4253,7 @@ function_item_list
   | function_item_list function_item
       { /* */
 	if ($1 && $2) {
-	      vector<pform_tf_port_t>*tmp = $1;
+	      std::vector<pform_tf_port_t>*tmp = $1;
 	      size_t s1 = tmp->size();
 	      tmp->resize(s1 + $2->size());
 	      for (size_t idx = 0 ; idx < $2->size() ; idx += 1)
@@ -4551,13 +4553,13 @@ list_of_variable_port_identifiers
 
 list_of_ports
 	: port_opt
-		{ vector<Module::port_t*>*tmp
-			  = new vector<Module::port_t*>(1);
+		{ std::vector<Module::port_t*>*tmp
+			  = new std::vector<Module::port_t*>(1);
 		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}
 	| list_of_ports ',' port_opt
-	        { vector<Module::port_t*>*tmp = $1;
+	        { std::vector<Module::port_t*>*tmp = $1;
 		  tmp->push_back($3);
 		  $$ = tmp;
 		}
@@ -4565,13 +4567,13 @@ list_of_ports
 
 list_of_port_declarations
 	: port_declaration
-		{ vector<Module::port_t*>*tmp
-			  = new vector<Module::port_t*>(1);
+		{ std::vector<Module::port_t*>*tmp
+			  = new std::vector<Module::port_t*>(1);
 		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}
 	| list_of_port_declarations ',' port_declaration
-	        { vector<Module::port_t*>*tmp = $1;
+	        { std::vector<Module::port_t*>*tmp = $1;
 		  tmp->push_back($3);
 		  $$ = tmp;
 		}
@@ -4580,7 +4582,7 @@ list_of_port_declarations
 		  perm_string name = lex_strings.make($3);
 		  ptmp = pform_module_port_reference(name, @3.text,
 						     @3.first_line);
-		  vector<Module::port_t*>*tmp = $1;
+		  std::vector<Module::port_t*>*tmp = $1;
 		  tmp->push_back(ptmp);
 
 		    /* Get the port declaration details, the port type
@@ -4844,7 +4846,7 @@ lpvalue
 
 cont_assign
   : lpvalue '=' expression
-      { list<PExpr*>*tmp = new list<PExpr*>;
+      { std::list<PExpr*>*tmp = new std::list<PExpr*>;
 	tmp->push_back($1);
 	tmp->push_back($3);
 	$$ = tmp;
@@ -4853,7 +4855,7 @@ cont_assign
 
 cont_assign_list
   : cont_assign_list ',' cont_assign
-      { list<PExpr*>*tmp = $1;
+      { std::list<PExpr*>*tmp = $1;
 	tmp->splice(tmp->end(), *$3);
 	delete $3;
 	$$ = tmp;
@@ -5390,7 +5392,7 @@ module_item
 	delete $3;
       }
   | SYSTEM_IDENTIFIER ';'
-      { list<PExpr*>pt;
+      { std::list<PExpr*>pt;
 	pform_make_elab_task(@1, lex_strings.make($1), pt);
 	delete[]$1;
       }
@@ -5481,12 +5483,12 @@ let_port_list_opt
 
 let_port_list
   : let_port_item
-      { list<PLet::let_port_t*>*tmp = new list<PLet::let_port_t*>;
+      { std::list<PLet::let_port_t*>*tmp = new std::list<PLet::let_port_t*>;
 	tmp->push_back($1);
 	$$ = tmp;
       }
   | let_port_list ',' let_port_item
-      { list<PLet::let_port_t*>*tmp = $1;
+      { std::list<PLet::let_port_t*>*tmp = $1;
         tmp->push_back($3);
         $$ = tmp;
       }
@@ -5751,7 +5753,7 @@ parameter_value_opt
 		  FILE_NAME(tmp, @1);
 
 		  struct parmvalue_t*lst = new struct parmvalue_t;
-		  lst->by_order = new list<PExpr*>;
+		  lst->by_order = new std::list<PExpr*>;
 		  lst->by_order->push_back(tmp);
 		  lst->by_name = 0;
 		  $$ = lst;
@@ -5763,7 +5765,7 @@ parameter_value_opt
 		  FILE_NAME(tmp, @1);
 
 		  struct parmvalue_t*lst = new struct parmvalue_t;
-		  lst->by_order = new list<PExpr*>;
+		  lst->by_order = new std::list<PExpr*>;
 		  lst->by_order->push_back(tmp);
 		  lst->by_name = 0;
 		  $$ = lst;
@@ -5796,13 +5798,13 @@ parameter_value_byname
 
 parameter_value_byname_list
   : parameter_value_byname
-      { list<named_pexpr_t>*tmp = new list<named_pexpr_t>;
+      { std::list<named_pexpr_t>*tmp = new std::list<named_pexpr_t>;
 	tmp->push_back(*$1);
 	delete $1;
 	$$ = tmp;
       }
   | parameter_value_byname_list ',' parameter_value_byname
-      { list<named_pexpr_t>*tmp = $1;
+      { std::list<named_pexpr_t>*tmp = $1;
 	tmp->push_back(*$3);
 	delete $3;
 	$$ = tmp;
@@ -5914,13 +5916,13 @@ port_name
 
 port_name_list
   : port_name_list ',' port_name
-      { list<named_pexpr_t>*tmp = $1;
+      { std::list<named_pexpr_t>*tmp = $1;
         tmp->push_back(*$3);
 	delete $3;
 	$$ = tmp;
       }
   | port_name
-      { list<named_pexpr_t>*tmp = new list<named_pexpr_t>;
+      { std::list<named_pexpr_t>*tmp = new std::list<named_pexpr_t>;
         tmp->push_back(*$1);
 	delete $1;
 	$$ = tmp;
@@ -5929,24 +5931,24 @@ port_name_list
 
 port_conn_expression_list_with_nuls
   : port_conn_expression_list_with_nuls ',' attribute_list_opt expression
-      { list<PExpr*>*tmp = $1;
+      { std::list<PExpr*>*tmp = $1;
 	tmp->push_back($4);
 	delete $3;
 	$$ = tmp;
       }
   | attribute_list_opt expression
-      { list<PExpr*>*tmp = new list<PExpr*>;
+      { std::list<PExpr*>*tmp = new std::list<PExpr*>;
 	tmp->push_back($2);
 	delete $1;
 	$$ = tmp;
       }
   |
-      { list<PExpr*>*tmp = new list<PExpr*>;
+      { std::list<PExpr*>*tmp = new std::list<PExpr*>;
         tmp->push_back(0);
 	$$ = tmp;
       }
   | port_conn_expression_list_with_nuls ','
-      { list<PExpr*>*tmp = $1;
+      { std::list<PExpr*>*tmp = $1;
 	tmp->push_back(0);
 	$$ = tmp;
       }
@@ -6054,7 +6056,7 @@ dimensions
   : variable_dimension
       { $$ = $1; }
   | dimensions variable_dimension
-      { list<pform_range_t> *tmp = $1;
+      { std::list<pform_range_t> *tmp = $1;
 	if ($2) {
 	      tmp->splice(tmp->end(), *$2);
 	      delete $2;
@@ -6108,13 +6110,13 @@ register_variable
 
 register_variable_list
 	: register_variable
-		{ list<perm_string>*tmp = new list<perm_string>;
+		{ std::list<perm_string>*tmp = new std::list<perm_string>;
 		  tmp->push_back(lex_strings.make($1));
 		  $$ = tmp;
 		  delete[]$1;
 		}
 	| register_variable_list ',' register_variable
-		{ list<perm_string>*tmp = $1;
+		{ std::list<perm_string>*tmp = $1;
 		  tmp->push_back(lex_strings.make($3));
 		  $$ = tmp;
 		  delete[]$3;
@@ -6133,13 +6135,13 @@ net_variable
 
 net_variable_list
 	: net_variable
-		{ list<perm_string>*tmp = new list<perm_string>;
+		{ std::list<perm_string>*tmp = new std::list<perm_string>;
 		  tmp->push_back(lex_strings.make($1));
 		  $$ = tmp;
 		  delete[]$1;
 		}
 	| net_variable_list ',' net_variable
-		{ list<perm_string>*tmp = $1;
+		{ std::list<perm_string>*tmp = $1;
 		  tmp->push_back(lex_strings.make($3));
 		  $$ = tmp;
 		  delete[]$3;
@@ -6285,7 +6287,7 @@ specify_edge_path_decl
 	: specify_edge_path '=' '(' delay_value_list ')'
                 { $$ = pform_assign_path_delay($1, $4); }
 	| specify_edge_path '=' delay_value_simple
-                { list<PExpr*>*tmp = new list<PExpr*>;
+                { std::list<PExpr*>*tmp = new std::list<PExpr*>;
 		  tmp->push_back($3);
 		  $$ = pform_assign_path_delay($1, tmp);
 		}
@@ -6322,7 +6324,7 @@ specify_simple_path_decl
 	: specify_simple_path '=' '(' delay_value_list ')'
                 { $$ = pform_assign_path_delay($1, $4); }
 	| specify_simple_path '=' delay_value_simple
-                { list<PExpr*>*tmp = new list<PExpr*>;
+                { std::list<PExpr*>*tmp = new std::list<PExpr*>;
 		  tmp->push_back($3);
 		  $$ = pform_assign_path_delay($1, tmp);
 		}
@@ -6348,7 +6350,7 @@ specify_simple_path
 
 specify_path_identifiers
 	: IDENTIFIER
-		{ list<perm_string>*tmp = new list<perm_string>;
+		{ std::list<perm_string>*tmp = new std::list<perm_string>;
 		  tmp->push_back(lex_strings.make($1));
 		  $$ = tmp;
 		  delete[]$1;
@@ -6359,7 +6361,7 @@ specify_path_identifiers
 				   "in path declarations. The declaration "
 				   "will be applied to the whole vector.");
 		  }
-		  list<perm_string>*tmp = new list<perm_string>;
+		  std::list<perm_string>*tmp = new std::list<perm_string>;
 		  tmp->push_back(lex_strings.make($1));
 		  $$ = tmp;
 		  delete[]$1;
@@ -6370,13 +6372,13 @@ specify_path_identifiers
 				   "in path declarations. The declaration "
 				   "will be applied to the whole vector.");
 		  }
-		  list<perm_string>*tmp = new list<perm_string>;
+		  std::list<perm_string>*tmp = new std::list<perm_string>;
 		  tmp->push_back(lex_strings.make($1));
 		  $$ = tmp;
 		  delete[]$1;
 		}
 	| specify_path_identifiers ',' IDENTIFIER
-		{ list<perm_string>*tmp = $1;
+		{ std::list<perm_string>*tmp = $1;
 		  tmp->push_back(lex_strings.make($3));
 		  $$ = tmp;
 		  delete[]$3;
@@ -6387,7 +6389,7 @@ specify_path_identifiers
 				   "in path declarations. The declaration "
 				   "will be applied to the whole vector.");
 		  }
-		  list<perm_string>*tmp = $1;
+		  std::list<perm_string>*tmp = $1;
 		  tmp->push_back(lex_strings.make($3));
 		  $$ = tmp;
 		  delete[]$3;
@@ -6398,7 +6400,7 @@ specify_path_identifiers
 				   "in path declarations. The declaration "
 				   "will be applied to the whole vector.");
 		  }
-		  list<perm_string>*tmp = $1;
+		  std::list<perm_string>*tmp = $1;
 		  tmp->push_back(lex_strings.make($3));
 		  $$ = tmp;
 		  delete[]$3;
@@ -6960,7 +6962,7 @@ statement_item /* This is roughly statement_item in the LRM */
 		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER ';'
-		{ list<PExpr*>pt;
+		{ std::list<PExpr*>pt;
 		  PCallTask*tmp = new PCallTask(lex_strings.make($1), pt);
 		  FILE_NAME(tmp,@1);
 		  delete[]$1;
@@ -7006,7 +7008,7 @@ statement_item /* This is roughly statement_item in the LRM */
       }
 
   | hierarchy_identifier ';'
-      { list<PExpr*>pt;
+      { std::list<PExpr*>pt;
 	PCallTask*tmp = pform_make_call_task(@1, *$1, pt);
 	delete $1;
 	$$ = tmp;
@@ -7112,12 +7114,12 @@ statement_or_null_list_opt
 
 statement_or_null_list
   : statement_or_null_list statement_or_null
-      { vector<Statement*>*tmp = $1;
+      { std::vector<Statement*>*tmp = $1;
 	if ($2) tmp->push_back($2);
 	$$ = tmp;
       }
   | statement_or_null
-      { vector<Statement*>*tmp = new vector<Statement*>(0);
+      { std::vector<Statement*>*tmp = new std::vector<Statement*>(0);
 	if ($1) tmp->push_back($1);
 	$$ = tmp;
       }
@@ -7131,13 +7133,13 @@ analog_statement
   /* Task items are, other than the statement, task port items and
      other block items. */
 task_item
-  : block_item_decl  { $$ = new vector<pform_tf_port_t>(0); }
+  : block_item_decl  { $$ = new std::vector<pform_tf_port_t>(0); }
   | tf_port_declaration   { $$ = $1; }
   ;
 
 task_item_list
   : task_item_list task_item
-      { vector<pform_tf_port_t>*tmp = $1;
+      { std::vector<pform_tf_port_t>*tmp = $1;
 	size_t s1 = tmp->size();
 	tmp->resize(s1 + $2->size());
 	for (size_t idx = 0 ; idx < $2->size() ; idx += 1)
@@ -7203,13 +7205,13 @@ udp_comb_entry
 
 udp_comb_entry_list
 	: udp_comb_entry
-		{ list<string>*tmp = new list<string>;
+		{ std::list<string>*tmp = new std::list<string>;
 		  tmp->push_back($1);
 		  delete[]$1;
 		  $$ = tmp;
 		}
 	| udp_comb_entry_list udp_comb_entry
-		{ list<string>*tmp = $1;
+		{ std::list<string>*tmp = $1;
 		  tmp->push_back($2);
 		  delete[]$2;
 		  $$ = tmp;
@@ -7218,13 +7220,13 @@ udp_comb_entry_list
 
 udp_sequ_entry_list
 	: udp_sequ_entry
-		{ list<string>*tmp = new list<string>;
+		{ std::list<string>*tmp = new std::list<string>;
 		  tmp->push_back($1);
 		  delete[]$1;
 		  $$ = tmp;
 		}
 	| udp_sequ_entry_list udp_sequ_entry
-		{ list<string>*tmp = $1;
+		{ std::list<string>*tmp = $1;
 		  tmp->push_back($2);
 		  delete[]$2;
 		  $$ = tmp;
@@ -7323,7 +7325,7 @@ udp_port_decl
   | K_output IDENTIFIER ';'
       { perm_string pname = lex_strings.make($2);
 	PWire*pp = new PWire(pname, NetNet::IMPLICIT, NetNet::POUTPUT, IVL_VT_LOGIC);
-	vector<PWire*>*tmp = new vector<PWire*>(1);
+	vector<PWire*>*tmp = new std::vector<PWire*>(1);
 	(*tmp)[0] = pp;
 	$$ = tmp;
 	delete[]$2;
@@ -7331,7 +7333,7 @@ udp_port_decl
   | K_reg IDENTIFIER ';'
       { perm_string pname = lex_strings.make($2);
 	PWire*pp = new PWire(pname, NetNet::REG, NetNet::PIMPLICIT, IVL_VT_LOGIC);
-	vector<PWire*>*tmp = new vector<PWire*>(1);
+	vector<PWire*>*tmp = new std::vector<PWire*>(1);
 	(*tmp)[0] = pp;
 	$$ = tmp;
 	delete[]$2;
@@ -7339,7 +7341,7 @@ udp_port_decl
   | K_reg K_output IDENTIFIER ';'
       { perm_string pname = lex_strings.make($3);
 	PWire*pp = new PWire(pname, NetNet::REG, NetNet::POUTPUT, IVL_VT_LOGIC);
-	vector<PWire*>*tmp = new vector<PWire*>(1);
+	vector<PWire*>*tmp = new std::vector<PWire*>(1);
 	(*tmp)[0] = pp;
 	$$ = tmp;
 	delete[]$3;
@@ -7350,7 +7352,7 @@ udp_port_decls
   : udp_port_decl
       { $$ = $1; }
   | udp_port_decls udp_port_decl
-      { vector<PWire*>*tmp = $1;
+      { std::vector<PWire*>*tmp = $1;
 	size_t s1 = $1->size();
 	tmp->resize(s1+$2->size());
 	for (size_t idx = 0 ; idx < $2->size() ; idx += 1)
@@ -7362,13 +7364,13 @@ udp_port_decls
 
 udp_port_list
   : IDENTIFIER
-      { list<perm_string>*tmp = new list<perm_string>;
+      { std::list<perm_string>*tmp = new std::list<perm_string>;
 	tmp->push_back(lex_strings.make($1));
 	delete[]$1;
 	$$ = tmp;
       }
   | udp_port_list ',' IDENTIFIER
-      { list<perm_string>*tmp = $1;
+      { std::list<perm_string>*tmp = $1;
 	tmp->push_back(lex_strings.make($3));
 	delete[]$3;
 	$$ = tmp;
@@ -7384,13 +7386,13 @@ udp_initial_expr_opt
 
 udp_input_declaration_list
         : K_input IDENTIFIER
-		{ list<perm_string>*tmp = new list<perm_string>;
+		{ std::list<perm_string>*tmp = new std::list<perm_string>;
 		  tmp->push_back(lex_strings.make($2));
 		  $$ = tmp;
 		  delete[]$2;
 		}
 	| udp_input_declaration_list ',' K_input IDENTIFIER
-		{ list<perm_string>*tmp = $1;
+		{ std::list<perm_string>*tmp = $1;
 		  tmp->push_back(lex_strings.make($4));
 		  $$ = tmp;
 		  delete[]$4;

@@ -61,6 +61,8 @@ const char NOTICE[] =
 # include  "discipline.h"
 # include  "t-dll.h"
 
+using namespace std;
+
 #if defined(__MINGW32__) && !defined(HAVE_GETOPT_H)
 extern "C" int getopt(int argc, char*argv[], const char*fmt);
 extern "C" int optind;

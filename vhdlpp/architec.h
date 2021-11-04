@@ -53,8 +53,8 @@ class Architecture : public Scope, public LineInfo {
 	    virtual ~Statement() =0;
 
 	    virtual int elaborate(Entity*ent, Architecture*arc);
-	    virtual int emit(ostream&out, Entity*ent, Architecture*arc);
-	    virtual void dump(ostream&out, int indent = 0) const;
+	    virtual int emit(std::ostream&out, Entity*ent, Architecture*arc);
+	    virtual void dump(std::ostream&out, int indent = 0) const;
       };
 
     public:
@@ -100,10 +100,10 @@ class Architecture : public Scope, public LineInfo {
 	// of the specified entity. This method is used by the
 	// elaborate code to display generated code to the specified
 	// output.
-      int emit(ostream&out, Entity*entity);
+      int emit(std::ostream&out, Entity*entity);
 
 	// The dump method writes a debug display to the given output.
-      void dump(ostream&out, perm_string of_entity, int indent = 0) const;
+      void dump(std::ostream&out, perm_string of_entity, int indent = 0) const;
 
     private:
       perm_string name_;
@@ -143,8 +143,8 @@ class GenerateStatement : public Architecture::Statement {
 
     protected:
       int elaborate_statements(Entity*ent, Architecture*arc);
-      int emit_statements(ostream&out, Entity*ent, Architecture*arc);
-      void dump_statements(ostream&out, int indent) const;
+      int emit_statements(std::ostream&out, Entity*ent, Architecture*arc);
+      void dump_statements(std::ostream&out, int indent) const;
 
     private:
       perm_string name_;
@@ -159,8 +159,8 @@ class ForGenerate : public GenerateStatement {
       ~ForGenerate();
 
       int elaborate(Entity*ent, Architecture*arc);
-      int emit(ostream&out, Entity*entity, Architecture*arc);
-      void dump(ostream&out, int ident =0) const;
+      int emit(std::ostream&out, Entity*entity, Architecture*arc);
+      void dump(std::ostream&out, int ident =0) const;
 
     private:
       perm_string genvar_;
@@ -176,7 +176,7 @@ class IfGenerate : public GenerateStatement {
       ~IfGenerate();
 
       int elaborate(Entity*ent, Architecture*arc);
-      int emit(ostream&out, Entity*entity, Architecture*arc);
+      int emit(std::ostream&out, Entity*entity, Architecture*arc);
 
     private:
       Expression*cond_;
@@ -194,8 +194,8 @@ class SignalAssignment  : public Architecture::Statement {
       ~SignalAssignment();
 
       virtual int elaborate(Entity*ent, Architecture*arc);
-      virtual int emit(ostream&out, Entity*entity, Architecture*arc);
-      virtual void dump(ostream&out, int ident =0) const;
+      virtual int emit(std::ostream&out, Entity*entity, Architecture*arc);
+      virtual void dump(std::ostream&out, int ident =0) const;
 
     private:
       ExpName*lval_;
@@ -209,8 +209,8 @@ class CondSignalAssignment : public Architecture::Statement {
       ~CondSignalAssignment();
 
       int elaborate(Entity*ent, Architecture*arc);
-      int emit(ostream&out, Entity*entity, Architecture*arc);
-      void dump(ostream&out, int ident =0) const;
+      int emit(std::ostream&out, Entity*entity, Architecture*arc);
+      void dump(std::ostream&out, int ident =0) const;
 
     private:
       ExpName*lval_;
@@ -230,8 +230,8 @@ class ComponentInstantiation  : public Architecture::Statement {
       ~ComponentInstantiation();
 
       virtual int elaborate(Entity*ent, Architecture*arc);
-      virtual int emit(ostream&out, Entity*entity, Architecture*arc);
-      virtual void dump(ostream&out, int indent =0) const;
+      virtual int emit(std::ostream&out, Entity*entity, Architecture*arc);
+      virtual void dump(std::ostream&out, int indent =0) const;
 
 	// Returns the expression that initializes a generic (or NULL if not found).
       Expression*find_generic_map(perm_string by_name) const;
@@ -256,13 +256,13 @@ class StatementList : public Architecture::Statement {
           return elaborate(ent, static_cast<ScopeBase*>(arc));
       }
 
-      int emit(ostream&out, Entity*ent, Architecture*arc) {
+      int emit(std::ostream&out, Entity*ent, Architecture*arc) {
           return emit(out, ent, static_cast<ScopeBase*>(arc));
       }
 
       virtual int elaborate(Entity*ent, ScopeBase*scope);
-      virtual int emit(ostream&out, Entity*entity, ScopeBase*scope);
-      virtual void dump(ostream&out, int indent =0) const;
+      virtual int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
+      virtual void dump(std::ostream&out, int indent =0) const;
 
       std::list<SequentialStmt*>& stmt_list() { return statements_; }
 
@@ -277,8 +277,8 @@ class InitialStatement : public StatementList {
       explicit InitialStatement(std::list<SequentialStmt*>*statement_list)
           : StatementList(statement_list) {}
 
-      int emit(ostream&out, Entity*entity, ScopeBase*scope);
-      void dump(ostream&out, int indent =0) const;
+      int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
+      void dump(std::ostream&out, int indent =0) const;
 };
 
 // There is no direct VHDL counterpart to SV 'final' statement,
@@ -288,8 +288,8 @@ class FinalStatement : public StatementList {
       explicit FinalStatement(std::list<SequentialStmt*>*statement_list)
           : StatementList(statement_list) {}
 
-      int emit(ostream&out, Entity*entity, ScopeBase*scope);
-      void dump(ostream&out, int indent =0) const;
+      int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
+      void dump(std::ostream&out, int indent =0) const;
 };
 
 class ProcessStatement : public StatementList, public Scope {
@@ -302,8 +302,8 @@ class ProcessStatement : public StatementList, public Scope {
       ~ProcessStatement();
 
       int elaborate(Entity*ent, Architecture*arc);
-      int emit(ostream&out, Entity*entity, Architecture*arc);
-      void dump(ostream&out, int indent =0) const;
+      int emit(std::ostream&out, Entity*entity, Architecture*arc);
+      void dump(std::ostream&out, int indent =0) const;
 
     private:
       perm_string iname_;

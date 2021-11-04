@@ -1,7 +1,7 @@
 #ifndef IVL_PDelays_H
 #define IVL_PDelays_H
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,12 +24,6 @@
 # include  <list>
 # include  <iostream>
 
-#ifdef __GNUC__
-#if __GNUC__ > 2
-using namespace std;
-#endif
-#endif
-
 class Design;
 class NetScope;
 class NetExpr;
@@ -49,7 +43,7 @@ class PDelays {
 	   this object takes ownership of the expressions, and will
 	   delete it in the destructor. */
       void set_delay(PExpr*);
-      void set_delays(const list<PExpr*>*del, bool delete_flag=true);
+      void set_delays(const std::list<PExpr*>*del, bool delete_flag=true);
 
       unsigned delay_count() const;
 
@@ -59,7 +53,7 @@ class PDelays {
 		       NetExpr*&decay_time,
 		       bool as_nets_flag =false) const;
 
-      void dump_delays(ostream&out) const;
+      void dump_delays(std::ostream&out) const;
 
     private:
       PExpr* delay_[3];
@@ -70,6 +64,6 @@ class PDelays {
       PDelays& operator= (const PDelays&);
 };
 
-ostream& operator << (ostream&o, const PDelays&);
+std::ostream& operator << (std::ostream&o, const PDelays&);
 
 #endif /* IVL_PDelays_H */

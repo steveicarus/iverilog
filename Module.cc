@@ -24,6 +24,8 @@
 # include  "PWire.h"
 # include  <cassert>
 
+using namespace std;
+
 list<Module::named_expr_t> Module::user_defparms;
 
 /* n is a permallocated string. */

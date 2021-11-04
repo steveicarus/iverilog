@@ -1,7 +1,7 @@
 #ifndef IVL_HName_H
 #define IVL_HName_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,7 +36,7 @@
 
 class hname_t {
 
-      friend ostream& operator<< (ostream&out, const hname_t&that);
+      friend std::ostream& operator<< (std::ostream&out, const hname_t&that);
 
     public:
       hname_t ();
@@ -92,14 +92,14 @@ inline size_t hname_t::has_numbers() const
       return number_.size();
 }
 
-extern ostream& operator<< (ostream&, const hname_t&);
+extern std::ostream& operator<< (std::ostream&, const hname_t&);
 
 inline bool operator != (const hname_t&l, const hname_t&r)
 { return ! (l == r); }
 
-inline ostream& operator<< (ostream&out, const list<hname_t>&ll)
+inline std::ostream& operator<< (std::ostream&out, const std::list<hname_t>&ll)
 {
-      list<hname_t>::const_iterator cur = ll.begin();
+      std::list<hname_t>::const_iterator cur = ll.begin();
       out << *cur;
       ++ cur;
       while (cur != ll.end()) {

@@ -1,7 +1,7 @@
 #ifndef IVL_pform_types_H
 #define IVL_pform_types_H
 /*
- * Copyright (c) 2007-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -82,12 +82,12 @@ typedef std::pair<PExpr*,PExpr*> pform_range_t;
  * declarations.
  */
 struct pform_port_t {
-      pform_port_t(perm_string n, list<pform_range_t>*ud, PExpr*e)
+      pform_port_t(perm_string n, std::list<pform_range_t>*ud, PExpr*e)
 	: name(n), udims(ud), expr(e) { }
       ~pform_port_t() { }
 
       perm_string name;
-      list<pform_range_t>*udims;
+      std::list<pform_range_t>*udims;
       PExpr*expr;
 };
 
@@ -187,14 +187,14 @@ struct enum_type_t : public data_type_t {
       ivl_variable_type_t base_type;
       bool signed_flag;
       bool integer_flag; // True if "integer" was used
-      std::unique_ptr< list<pform_range_t> > range;
-      std::unique_ptr< list<named_pexpr_t> > names;
+      std::unique_ptr< std::list<pform_range_t> > range;
+      std::unique_ptr< std::list<named_pexpr_t> > names;
       LineInfo li;
 };
 
 struct struct_member_t : public LineInfo {
       std::unique_ptr<data_type_t> type;
-      std::unique_ptr< list<decl_assignment_t*> > names;
+      std::unique_ptr< std::list<decl_assignment_t*> > names;
       void pform_dump(std::ostream&out, unsigned indent) const;
 };
 
@@ -205,7 +205,7 @@ struct struct_type_t : public data_type_t {
 
       bool packed_flag;
       bool union_flag;
-      std::unique_ptr< list<struct_member_t*> > members;
+      std::unique_ptr< std::list<struct_member_t*> > members;
 };
 
 struct atom2_type_t : public data_type_t {
@@ -254,7 +254,7 @@ struct vector_type_t : public data_type_t {
       bool reg_flag; // True if "reg" was used
       bool integer_flag; // True if "integer" was used
       bool implicit_flag; // True if this type is implicitly logic/reg
-      std::unique_ptr< list<pform_range_t> > pdims;
+      std::unique_ptr< std::list<pform_range_t> > pdims;
 };
 
 struct array_base_t : public data_type_t {
@@ -263,7 +263,7 @@ struct array_base_t : public data_type_t {
       : base_type(btype), dims(pd) { }
 
       data_type_t*base_type;
-      std::unique_ptr< list<pform_range_t> > dims;
+      std::unique_ptr< std::list<pform_range_t> > dims;
 };
 
 /*

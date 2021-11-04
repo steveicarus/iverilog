@@ -110,33 +110,33 @@ class LexicalScope {
 
 	    SymbolType symbol_type() const;
       };
-      map<perm_string,param_expr_t*>parameters;
-      map<perm_string,param_expr_t*>localparams;
+      std::map<perm_string,param_expr_t*>parameters;
+      std::map<perm_string,param_expr_t*>localparams;
 
 	// Defined types in the scope.
-      map<perm_string,data_type_t*>typedefs;
+      std::map<perm_string,data_type_t*>typedefs;
 
 	// Named events in the scope.
-      map<perm_string,PEvent*>events;
+      std::map<perm_string,PEvent*>events;
 
 	// Nets and variables (wires) in the scope
-      map<perm_string,PWire*>wires;
+      std::map<perm_string,PWire*>wires;
       PWire* wires_find(perm_string name);
 
         // Genvars in the scope. These will only be present in module
         // scopes, but are listed here to allow them to be found when
         // creating implicit nets.
-      map<perm_string,LineInfo*> genvars;
+      std::map<perm_string,LineInfo*> genvars;
 
 	// Variable initializations in this scope
-      vector<Statement*> var_inits;
+      std::vector<Statement*> var_inits;
 
 	// Behaviors (processes) in this scope
-      list<PProcess*> behaviors;
-      list<AProcess*> analog_behaviors;
+      std::list<PProcess*> behaviors;
+      std::list<AProcess*> analog_behaviors;
 
 	// The elaboration tasks in this scope
-      list<PCallTask*> elab_tasks;
+      std::list<PCallTask*> elab_tasks;
 
 	// Enumeration sets.
       std::set<enum_type_t*> enum_sets;
@@ -151,19 +151,19 @@ class LexicalScope {
       virtual bool var_init_needs_explicit_lifetime() const;
 
     protected:
-      void dump_typedefs_(ostream&out, unsigned indent) const;
+      void dump_typedefs_(std::ostream&out, unsigned indent) const;
 
-      void dump_parameters_(ostream&out, unsigned indent) const;
+      void dump_parameters_(std::ostream&out, unsigned indent) const;
 
-      void dump_localparams_(ostream&out, unsigned indent) const;
+      void dump_localparams_(std::ostream&out, unsigned indent) const;
 
-      void dump_enumerations_(ostream&out, unsigned indent) const;
+      void dump_enumerations_(std::ostream&out, unsigned indent) const;
 
-      void dump_events_(ostream&out, unsigned indent) const;
+      void dump_events_(std::ostream&out, unsigned indent) const;
 
-      void dump_wires_(ostream&out, unsigned indent) const;
+      void dump_wires_(std::ostream&out, unsigned indent) const;
 
-      void dump_var_inits_(ostream&out, unsigned indent) const;
+      void dump_var_inits_(std::ostream&out, unsigned indent) const;
 
       bool elaborate_var_inits_(Design*des, NetScope*scope) const;
 
@@ -234,9 +234,9 @@ class PScopeExtra : public PScope {
       bool time_prec_is_local;
 
     protected:
-      void dump_classes_(ostream&out, unsigned indent) const;
-      void dump_tasks_(ostream&out, unsigned indent) const;
-      void dump_funcs_(ostream&out, unsigned indent) const;
+      void dump_classes_(std::ostream&out, unsigned indent) const;
+      void dump_tasks_(std::ostream&out, unsigned indent) const;
+      void dump_funcs_(std::ostream&out, unsigned indent) const;
 };
 
 #endif /* IVL_PScope_H */

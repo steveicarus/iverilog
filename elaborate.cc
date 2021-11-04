@@ -52,6 +52,7 @@
 # include  "compiler.h"
 # include  "ivl_assert.h"
 
+using namespace std;
 
 // Implemented in elab_scope.cc
 extern void set_scope_timescale(Design*des, NetScope*scope, PScope*pscope);

@@ -147,7 +147,7 @@ extern unsigned long array_size_limit;
 extern const char*basedir;
 
 /* This is an ordered list of library suffixes to search. */
-extern list<const char*>library_suff;
+extern std::list<const char*>library_suff;
 extern int build_library_index(const char*path, bool key_case_sensitive);
 
 /* This is the generation of Verilog that the compiler is asked to
@@ -244,14 +244,14 @@ extern int lexor_keyword_mask;
   /* This is the string to use to invoke the preprocessor. */
 extern char*ivlpp_string;
 
-extern map<perm_string,unsigned> missing_modules;
+extern std::map<perm_string,unsigned> missing_modules;
 
   /* Files that are library files are in this map. The lexor compares
      file names as it processes `line directives, and if the file name
      matches an entry in this table, it will turn on the
      library_active_flag so that modules know that they are in a
      library. */
-extern map<perm_string,bool> library_file_map;
+extern std::map<perm_string,bool> library_file_map;
 
 /*
  * the lex_strings are perm_strings made up of tokens from the source

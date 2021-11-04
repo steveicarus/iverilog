@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,6 +22,8 @@
 # include  "pform.h"
 # include  "parse_misc.h"
 # include  "AStatement.h"
+
+using namespace std;
 
 AContrib* pform_contribution_statement(const struct vlltype&loc,
 					 PExpr*lval, PExpr*rval)

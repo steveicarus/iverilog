@@ -33,6 +33,8 @@
 # include  <limits>
 # include  <ivl_assert.h>
 
+using namespace std;
+
 int SequentialStmt::emit(ostream&out, Entity*, ScopeBase*)
 {
       out << " // " << get_fileline() << ": internal error: "

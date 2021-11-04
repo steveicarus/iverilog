@@ -1,7 +1,7 @@
 #ifndef IVL_verinum_H
 #define IVL_verinum_H
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,10 +25,8 @@
 #ifdef HAVE_IOSFWD
 # include  <iosfwd>
 #else
-class ostream;
+# include  <iostream>
 #endif
-
-using namespace std;
 
 /*
  * Numbers in Verilog are multibit strings, where each bit has 4
@@ -42,7 +40,7 @@ class verinum {
       enum V { V0 = 0, V1, Vx, Vz };
 
       verinum();
-      explicit verinum(const string&str);
+      explicit verinum(const std::string&str);
       verinum(const V*v, unsigned nbits, bool has_len =true);
       explicit verinum(V, unsigned nbits =1, bool has_len =true);
       verinum(uint64_t val, unsigned bits);
@@ -110,7 +108,7 @@ class verinum {
 
       signed long   as_long() const;
       double as_double() const;
-      string as_string() const;
+      std::string as_string() const;
     private:
       void signed_trim();
 
@@ -154,8 +152,8 @@ extern verinum cast_to_width(const verinum&, unsigned width);
    needed to accurately represent the contained value, signed or not. */
 extern verinum trim_vnum(const verinum&);
 
-extern ostream& operator<< (ostream&, const verinum&);
-extern ostream& operator<< (ostream&, verinum::V);
+extern std::ostream& operator<< (std::ostream&, const verinum&);
+extern std::ostream& operator<< (std::ostream&, verinum::V);
 
 inline verinum::V bit4_z2x(verinum::V bit)
 { return bit<2? bit : verinum::Vx; /* Relies on V0 and V1 being <2 */}

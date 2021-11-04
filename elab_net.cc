@@ -32,6 +32,8 @@
 # include  <iostream>
 # include  "ivl_assert.h"
 
+using namespace std;
+
 /*
  * The concatenation is also OK an an l-value. This method elaborates
  * it as a structural l-value. The return values is the *input* net of

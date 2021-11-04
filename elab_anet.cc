@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,6 +28,8 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  <iostream>
+
+using namespace std;
 
 NetNet* PExpr::elaborate_anet(Design*des, NetScope*scope) const
 {
@@ -163,4 +165,3 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 
       return sig;
 }
-

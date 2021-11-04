@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,8 @@
 # include "config.h"
 # include  "PTask.h"
 # include  <cassert>
+
+using namespace std;
 
 PTaskFunc::PTaskFunc(perm_string n, LexicalScope*p)
 : PScope(n,p), this_type_(0), ports_(0)

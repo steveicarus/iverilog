@@ -29,6 +29,8 @@
 # include  "ivl_assert.h"
 # include  "netmisc.h"
 
+using namespace std;
+
 NetExpr* NetExpr::eval_tree()
 {
       return 0;

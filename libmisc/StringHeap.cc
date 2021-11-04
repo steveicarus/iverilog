@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,6 +28,8 @@
 static char **string_pool = NULL;
 static unsigned string_pool_count = 0;
 #endif
+
+using namespace std;
 
 static const unsigned DEFAULT_CELL_SIZE = 0x10000;
 

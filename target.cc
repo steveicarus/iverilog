@@ -24,6 +24,8 @@
 # include  "target.h"
 # include  <typeinfo>
 
+using namespace std;
+
 target_t::~target_t()
 {
 }

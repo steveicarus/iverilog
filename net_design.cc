@@ -39,6 +39,8 @@
 # include  <sstream>
 # include  "ivl_assert.h"
 
+using namespace std;
+
 Design:: Design()
     : errors(0), nodes_(0), procs_(0), aprocs_(0)
 {

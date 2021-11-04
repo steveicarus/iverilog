@@ -25,6 +25,7 @@
 # include  "compiler.h"
 # include  "ivl_assert.h"
 
+using namespace std;
 
 /*
  * Search for the hierarchical name. The path may have multiple components. If

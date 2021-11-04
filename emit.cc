@@ -33,6 +33,8 @@
 # include  <cassert>
 # include  <cstring>
 
+using namespace std;
+
 bool NetNode::emit_node(struct target_t*) const
 {
       cerr << "EMIT: Gate type? " << typeid(*this).name() << endl;

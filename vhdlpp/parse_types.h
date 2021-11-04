@@ -31,7 +31,7 @@ class named_expr_t {
 
       perm_string name() const { return name_; }
       Expression* expr() const { return expr_; }
-      void dump(ostream&out, int indent) const;
+      void dump(std::ostream&out, int indent) const;
     private:
       perm_string name_;
       Expression* expr_;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,6 +22,8 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "ivl_assert.h"
+
+using namespace std;
 
 /*
  * Scan the link for drivers. If there are only constant drivers, then

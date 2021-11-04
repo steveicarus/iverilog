@@ -1,7 +1,7 @@
 #ifndef IVL_parse_misc_H
 #define IVL_parse_misc_H
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -64,7 +64,7 @@ extern void VLwarn(const YYLTYPE&loc, const char*msg);
 
 extern void destroy_lexor();
 
-extern ostream& operator << (ostream&, const YYLTYPE&loc);
+extern std::ostream& operator << (std::ostream&, const YYLTYPE&loc);
 
 extern unsigned error_count, warn_count;
 extern unsigned long based_size;

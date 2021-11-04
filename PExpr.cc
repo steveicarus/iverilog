@@ -30,6 +30,8 @@
 # include  "util.h"
 # include  <typeinfo>
 
+using namespace std;
+
 PExpr::PExpr()
 : expr_type_(IVL_VT_NO_TYPE)
 {
