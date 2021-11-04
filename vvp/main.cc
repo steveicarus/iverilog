@@ -49,6 +49,8 @@ const char COPYRIGHT[] =
 # include  <windows.h>
 #endif
 
+using namespace std;
+
 ofstream debug_file;
 
 #if defined(__MINGW32__) && !defined(HAVE_GETOPT_H)

@@ -35,6 +35,8 @@
 # include  "ivl_alloc.h"
 #endif
 
+using namespace std;
+
 unsigned long count_assign_events = 0;
 unsigned long count_gen_events = 0;
 unsigned long count_thread_events = 0;

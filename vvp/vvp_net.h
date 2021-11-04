@@ -34,13 +34,10 @@
 #ifdef HAVE_IOSFWD
 # include  <iosfwd>
 #else
-class ostream;
+# include  <iostream>
 #endif
 
 # include  "ivl_alloc.h"
-
-using namespace std;
-
 
 /* Data types */
 class  vvp_scalar_t;
@@ -186,7 +183,7 @@ inline vvp_bit4_t operator & (vvp_bit4_t a, vvp_bit4_t b)
 
 
 extern vvp_bit4_t operator ^ (vvp_bit4_t a, vvp_bit4_t b);
-extern ostream& operator<< (ostream&o, vvp_bit4_t a);
+extern std::ostream& operator<< (std::ostream&o, vvp_bit4_t a);
 
   /* Return >0, ==0 or <0 if the from-to transition represents a
      posedge, no edge, or negedge. */
@@ -529,7 +526,7 @@ inline vvp_vector4_t operator ~ (const vvp_vector4_t&that)
       return res;
 }
 
-extern ostream& operator << (ostream&, const vvp_vector4_t&);
+extern std::ostream& operator << (std::ostream&, const vvp_vector4_t&);
 
 extern vvp_bit4_t compare_gtge(const vvp_vector4_t&a,
 			       const vvp_vector4_t&b,
@@ -739,7 +736,7 @@ extern vvp_vector4_t c4string_to_vector4(const char*str);
 extern bool crstring_test(const char*str);
 extern double crstring_to_double(const char*str);
 
-extern ostream& operator<< (ostream&, const vvp_vector2_t&);
+extern std::ostream& operator<< (std::ostream&, const vvp_vector2_t&);
 
 inline vvp_vector2_t::vvp_vector2_t(const vvp_vector2_t&that)
 {
@@ -892,7 +889,7 @@ inline vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b)
       return fully_featured_resolv_(a,b);
 }
 
-extern ostream& operator<< (ostream&, vvp_scalar_t);
+extern std::ostream& operator<< (std::ostream&, vvp_scalar_t);
 
 /*
  * This class is a way to carry vectors of strength modeled
@@ -976,7 +973,7 @@ extern bool c8string_test(const char*str);
 extern vvp_vector8_t c8string_to_vector8(const char*str);
 
   /* Print a vector8 value to a stream. */
-extern ostream& operator<< (ostream&, const vvp_vector8_t&);
+extern std::ostream& operator<< (std::ostream&, const vvp_vector8_t&);
 
 inline vvp_vector8_t::vvp_vector8_t(unsigned size__)
 : size_(size__)
@@ -1075,7 +1072,7 @@ template <class T> class vvp_sub_pointer_t {
 };
 
 typedef vvp_sub_pointer_t<vvp_net_t> vvp_net_ptr_t;
-template <class T> ostream& operator << (ostream&out, vvp_sub_pointer_t<T> val)
+template <class T> std::ostream& operator << (std::ostream&out, vvp_sub_pointer_t<T> val)
 { out << val.ptr() << "[" << val.port() << "]"; return out; }
 
 /*

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,6 +40,8 @@
 # include  "udp.h"
 # include  "ivl_alloc.h"
 #endif
+
+using namespace std;
 
 /* This is the size of an unsigned long in bits. This is just a
    convenience macro. */

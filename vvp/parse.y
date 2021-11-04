@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-202` Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,6 +28,8 @@
 # include  <cassert>
 # include  "ivl_alloc.h"
 # include  "version_base.h"
+
+using namespace std;
 
 /*
  * These are bits in the lexor.

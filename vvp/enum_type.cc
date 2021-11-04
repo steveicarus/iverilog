@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,6 +24,8 @@
 #endif
 # include  <iostream>
 # include  <cassert>
+
+using namespace std;
 
 struct enumconst_s : public __vpiHandle {
       enumconst_s();

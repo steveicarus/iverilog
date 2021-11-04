@@ -36,6 +36,8 @@
 # include  <cassert>
 # include  "ivl_alloc.h"
 
+using namespace std;
+
 unsigned long count_net_arrays = 0;
 unsigned long count_net_array_words = 0;
 unsigned long count_var_arrays = 0;

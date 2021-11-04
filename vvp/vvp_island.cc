@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,6 +31,8 @@
 # include  <cstdlib>
 # include  <cstring>
 # include "ivl_alloc.h"
+
+using namespace std;
 
 static bool at_EOS = false;
 

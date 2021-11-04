@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2021 Stephen Williams (steve@icarus.com)
  *
  * (This is a rewrite of code that was ...
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>)
@@ -34,6 +34,8 @@
 #include "vvp_cleanup.h"
 #include "ivl_alloc.h"
 #endif
+
+using namespace std;
 
 // We may need these later when we build the VPI interface to
 // UDP definitions.
