@@ -25,6 +25,8 @@
 # include  <cstdlib>
 # include  <cmath>
 
+using namespace std;
+
 vvp_arith_::vvp_arith_(unsigned wid)
 : wid_(wid), op_a_(wid), op_b_(wid), x_val_(wid)
 {

@@ -1,7 +1,7 @@
 #ifndef IVL_udp_H
 #define IVL_udp_H
 /*
- * Copyright (c) 2005-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2021 Stephen Williams (steve@icarus.com)
  *
  * (This is a rewrite of code that was ...
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>)
@@ -109,7 +109,7 @@ struct udp_levels_table {
       unsigned long mask1;
       unsigned long maskx;
 };
-extern ostream& operator<< (ostream&o, const struct udp_levels_table&t);
+extern std::ostream& operator<< (std::ostream&o, const struct udp_levels_table&t);
 
 class vvp_udp_comb_s : public vvp_udp_s {
 

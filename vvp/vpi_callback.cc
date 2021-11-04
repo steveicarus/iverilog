@@ -37,6 +37,9 @@
 # include  <cstdio>
 # include  <cassert>
 # include  <cstdlib>
+
+using namespace std;
+
 /*
  * Callback handles are created when the VPI function registers a
  * callback. The handle is stored by the run time, and it triggered

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,6 +25,8 @@
 # include  <stdint.h>
 # include  <iostream>
 # include  <cassert>
+
+using namespace std;
 
 struct vvp_fun_part_state_s {
       vvp_fun_part_state_s() : bitsr(0.0) {}

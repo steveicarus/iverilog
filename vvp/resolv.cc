@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,6 +25,7 @@
 # include  <algorithm>
 # include  <cassert>
 
+using namespace std;
 
 /*
  * The core functor for a resolver node stores all the input values
