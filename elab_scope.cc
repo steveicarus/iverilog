@@ -54,6 +54,7 @@
 # include  <cassert>
 # include  "ivl_assert.h"
 
+using namespace std;
 
 void set_scope_timescale(Design*des, NetScope*scope, PScope*pscope)
 {

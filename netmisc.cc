@@ -30,6 +30,7 @@
 # include  "compiler.h"
 # include  "ivl_assert.h"
 
+using namespace std;
 
 NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
 {

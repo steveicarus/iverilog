@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -26,6 +26,8 @@
 # include  "ivl_assert.h"
 # include  <list>
 # include  <iterator>
+
+using namespace std;
 
 Package::Package(perm_string n, const ActiveScope&ref)
 : Scope(ref), name_(n)

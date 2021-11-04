@@ -1,7 +1,7 @@
 #ifndef IVL_ivl_assert_H
 #define IVL_ivl_assert_H
 /*
- * Copyright (c) 2007-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,9 +24,9 @@
 #define ivl_assert(tok, expression)  \
       do { \
 	    if (! (expression)) { \
-		  cerr << (tok).get_fileline() << ": assert: " \
-		       << __FILE__ << ":" << __LINE__ \
-		       << ": failed assertion " << #expression << endl; \
+		  std::cerr << (tok).get_fileline() << ": assert: " \
+			    << __FILE__ << ":" << __LINE__ \
+			    << ": failed assertion " << #expression << std::endl; \
 		  abort(); \
 	    } \
       } while (0)

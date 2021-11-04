@@ -41,6 +41,8 @@
 # include  "util.h"
 # include  "ivl_assert.h"
 
+using namespace std;
+
 bool type_is_vectorable(ivl_variable_type_t type)
 {
       switch (type) {

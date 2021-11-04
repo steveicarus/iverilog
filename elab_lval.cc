@@ -36,6 +36,8 @@
 # include  <climits>
 # include  "ivl_assert.h"
 
+using namespace std;
+
 /*
  * These methods generate a NetAssign_ object for the l-value of the
  * assignment. This is common code for the = and <= statements.

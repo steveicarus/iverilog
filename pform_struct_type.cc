@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,8 @@
 # include  "pform.h"
 # include  "parse_misc.h"
 # include  "ivl_assert.h"
+
+using namespace std;
 
 ivl_variable_type_t struct_type_t::figure_packed_base_type(void) const
 {

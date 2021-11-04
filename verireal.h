@@ -1,7 +1,7 @@
 #ifndef IVL_verireal_H
 #define IVL_verireal_H
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,10 +23,8 @@
 #ifdef HAVE_IOSFWD
 # include  <iosfwd>
 #else
-class ostream;
+# include  <iostream>
 #endif
-
-using namespace std;
 
 class verinum;
 
@@ -39,7 +37,7 @@ class verinum;
 
 class verireal {
 
-      friend ostream& operator<< (ostream&, const verireal&);
+      friend std::ostream& operator<< (std::ostream&, const verireal&);
       friend verireal operator+ (const verireal&, const verireal&);
       friend verireal operator- (const verireal&, const verireal&);
       friend verireal operator* (const verireal&, const verireal&);
@@ -73,7 +71,7 @@ class verireal {
       double value_;
 };
 
-extern ostream& operator<< (ostream&, const verireal&);
+extern std::ostream& operator<< (std::ostream&, const verireal&);
 extern verireal operator* (const verireal&, const verireal&);
 extern verireal operator/ (const verireal&, const verireal&);
 extern verireal operator/ (const verireal&, const verinum&);

@@ -35,6 +35,8 @@
 # include  "ivl_assert.h"
 # include  "PExpr.h"
 
+using namespace std;
+
 static ostream& operator<< (ostream&o, NetBlock::Type t)
 {
       switch (t) {

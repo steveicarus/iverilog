@@ -575,7 +575,7 @@ struct ivl_udp_s {
       ccharp_t*table; // zero terminated array of pointers
       perm_string file;
       unsigned lineno;
-      string*ports;
+      std::string*ports;
 };
 
 /*
@@ -616,7 +616,7 @@ struct ivl_nexus_ptr_s {
  */
 struct ivl_nexus_s {
       ivl_nexus_s() : ptrs_(1), nexus_(0), name_(0), private_data(0) { }
-      vector<ivl_nexus_ptr_s>ptrs_;
+      std::vector<ivl_nexus_ptr_s>ptrs_;
       const Nexus*nexus_;
       const char*name_;
       void*private_data;

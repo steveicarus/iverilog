@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,8 @@
 # include  "sequential.h"
 # include  "expression.h"
 # include  <cassert>
+
+using namespace std;
 
 template<typename T>
 inline static void visit_stmt_list(std::list<T*>& stmts, SeqStmtVisitor& func)

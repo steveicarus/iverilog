@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2000-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,6 +35,8 @@
 # include  "netmisc.h"
 # include  "functor.h"
 # include  <cassert>
+
+using namespace std;
 
 struct syn_token_t {
       int token;

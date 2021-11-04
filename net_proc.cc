@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,6 +23,8 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "ivl_assert.h"
+
+using namespace std;
 
 NetBlock::NetBlock(Type t, NetScope*ss)
 : type_(t), subscope_(ss), last_(0)

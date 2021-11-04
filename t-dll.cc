@@ -34,6 +34,8 @@
 # include  "ivl_assert.h"
 # include  "ivl_alloc.h"
 
+using namespace std;
+
 struct dll_target dll_target_obj;
 
 #if defined(__WIN32__)

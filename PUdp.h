@@ -1,7 +1,7 @@
 #ifndef IVL_PUdp_H
 #define IVL_PUdp_H
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@picturel.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@picturel.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -53,20 +53,20 @@ class PUdp : public LineInfo {
     public:
       explicit PUdp(perm_string n, unsigned nports);
 
-      svector<string>ports;
+      svector<std::string>ports;
       unsigned find_port(const char*name);
 
       bool sequential;
 
-      svector<string>tinput;
+      svector<std::string>tinput;
       svector<char>  tcurrent;
       svector<char>  toutput;
 
       verinum::V initial;
 
-      map<string,PExpr*> attributes;
+      std::map<std::string,PExpr*> attributes;
 
-      void dump(ostream&out) const;
+      void dump(std::ostream&out) const;
 
       perm_string name_;
     private:

@@ -1,7 +1,7 @@
 #ifndef IVL_sequential_H
 #define IVL_sequential_H
 /*
- * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -42,8 +42,8 @@ class SequentialStmt  : public LineInfo {
 
     public:
       virtual int elaborate(Entity*ent, ScopeBase*scope);
-      virtual int emit(ostream&out, Entity*entity, ScopeBase*scope);
-      virtual void dump(ostream&out, int indent) const;
+      virtual int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
+      virtual void dump(std::ostream&out, int indent) const;
       virtual void write_to_stream(std::ostream&fd);
 
       // Recursively visits a tree of sequential statements.
@@ -56,18 +56,18 @@ class SequentialStmt  : public LineInfo {
  */
 class LoopStatement : public SequentialStmt {
     public:
-      LoopStatement(perm_string block_name, list<SequentialStmt*>*);
+      LoopStatement(perm_string block_name, std::list<SequentialStmt*>*);
       virtual ~LoopStatement();
 
       inline perm_string loop_name() const { return name_; }
 
-      void dump(ostream&out, int indent)  const;
+      void dump(std::ostream&out, int indent)  const;
       void visit(SeqStmtVisitor& func);
 
     protected:
       int elaborate_substatements(Entity*ent, ScopeBase*scope);
       int emit_substatements(std::ostream&out, Entity*ent, ScopeBase*scope);
-      void write_to_stream_substatements(ostream&fd);
+      void write_to_stream_substatements(std::ostream&fd);
 
     private:
       perm_string name_;
@@ -83,13 +83,13 @@ class IfSequential  : public SequentialStmt {
 	    ~Elsif();
 
 	    int elaborate(Entity*entity, ScopeBase*scope);
-	    int condition_emit(ostream&out, Entity*entity, ScopeBase*scope);
-	    int statement_emit(ostream&out, Entity*entity, ScopeBase*scope);
+	    int condition_emit(std::ostream&out, Entity*entity, ScopeBase*scope);
+	    int statement_emit(std::ostream&out, Entity*entity, ScopeBase*scope);
 
-	    void condition_write_to_stream(ostream&fd);
-	    void statement_write_to_stream(ostream&fd);
+	    void condition_write_to_stream(std::ostream&fd);
+	    void statement_write_to_stream(std::ostream&fd);
 
-	    void dump(ostream&out, int indent) const;
+	    void dump(std::ostream&out, int indent) const;
 	    void visit(SeqStmtVisitor& func);
 
 	  private:
@@ -108,9 +108,9 @@ class IfSequential  : public SequentialStmt {
 
     public:
       int elaborate(Entity*ent, ScopeBase*scope);
-      int emit(ostream&out, Entity*entity, ScopeBase*scope);
+      int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
-      void dump(ostream&out, int indent) const;
+      void dump(std::ostream&out, int indent) const;
       void visit(SeqStmtVisitor& func);
 
       const Expression*peek_condition() const { return cond_; }
@@ -136,9 +136,9 @@ class ReturnStmt  : public SequentialStmt {
 
     public:
       int elaborate(Entity*ent, ScopeBase*scope);
-      int emit(ostream&out, Entity*entity, ScopeBase*scope);
+      int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
-      void dump(ostream&out, int indent) const;
+      void dump(std::ostream&out, int indent) const;
 
       const Expression*peek_expr() const { return val_; };
       void cast_to(const VType*type);
@@ -154,9 +154,9 @@ class SignalSeqAssignment  : public SequentialStmt {
 
     public:
       int elaborate(Entity*ent, ScopeBase*scope);
-      int emit(ostream&out, Entity*entity, ScopeBase*scope);
+      int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
-      void dump(ostream&out, int indent) const;
+      void dump(std::ostream&out, int indent) const;
 
     private:
       Expression*lval_;
@@ -172,7 +172,7 @@ class CaseSeqStmt : public SequentialStmt {
             void dump(std::ostream& out, int indent) const;
 	    int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
 	    int elaborate(Entity*ent, ScopeBase*scope);
-	    int emit(ostream&out, Entity*entity, ScopeBase*scope);
+	    int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
             void write_to_stream(std::ostream&fd);
 	    void visit(SeqStmtVisitor& func);
 
@@ -189,9 +189,9 @@ class CaseSeqStmt : public SequentialStmt {
       ~CaseSeqStmt();
 
     public:
-      void dump(ostream&out, int indent) const;
+      void dump(std::ostream&out, int indent) const;
       int elaborate(Entity*ent, ScopeBase*scope);
-      int emit(ostream&out, Entity*entity, ScopeBase*scope);
+      int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
       void visit(SeqStmtVisitor& func);
 
@@ -208,8 +208,8 @@ class ProcedureCall : public SequentialStmt {
       ~ProcedureCall();
 
       int elaborate(Entity*ent, ScopeBase*scope);
-      int emit(ostream&out, Entity*entity, ScopeBase*scope);
-      void dump(ostream&out, int indent) const;
+      int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
+      void dump(std::ostream&out, int indent) const;
 
     private:
       perm_string name_;
@@ -224,9 +224,9 @@ class VariableSeqAssignment  : public SequentialStmt {
 
     public:
       int elaborate(Entity*ent, ScopeBase*scope);
-      int emit(ostream&out, Entity*entity, ScopeBase*scope);
+      int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
-      void dump(ostream&out, int indent) const;
+      void dump(std::ostream&out, int indent) const;
 
     private:
       Expression*lval_;
@@ -236,13 +236,13 @@ class VariableSeqAssignment  : public SequentialStmt {
 class WhileLoopStatement : public LoopStatement {
     public:
       WhileLoopStatement(perm_string loop_name,
-			 Expression*, list<SequentialStmt*>*);
+			 Expression*, std::list<SequentialStmt*>*);
       ~WhileLoopStatement();
 
       int elaborate(Entity*ent, ScopeBase*scope);
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(std::ostream&out, Entity*ent, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
-      void dump(ostream&out, int indent) const;
+      void dump(std::ostream&out, int indent) const;
 
     private:
       Expression* cond_;
@@ -251,18 +251,18 @@ class WhileLoopStatement : public LoopStatement {
 class ForLoopStatement : public LoopStatement {
     public:
       ForLoopStatement(perm_string loop_name,
-		       perm_string index, ExpRange*, list<SequentialStmt*>*);
+		       perm_string index, ExpRange*, std::list<SequentialStmt*>*);
       ~ForLoopStatement();
 
       int elaborate(Entity*ent, ScopeBase*scope);
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(std::ostream&out, Entity*ent, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
-      void dump(ostream&out, int indent) const;
+      void dump(std::ostream&out, int indent) const;
 
     private:
       // Emits for-loop which direction is determined at run-time.
       // It is used for 'range & 'reverse_range attributes.
-      int emit_runtime_(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit_runtime_(std::ostream&out, Entity*ent, ScopeBase*scope);
 
       perm_string it_;
       ExpRange* range_;
@@ -270,13 +270,13 @@ class ForLoopStatement : public LoopStatement {
 
 class BasicLoopStatement : public LoopStatement {
     public:
-      BasicLoopStatement(perm_string lname, list<SequentialStmt*>*);
+      BasicLoopStatement(perm_string lname, std::list<SequentialStmt*>*);
       ~BasicLoopStatement();
 
       int elaborate(Entity*ent, ScopeBase*scope);
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(std::ostream&out, Entity*ent, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
-      void dump(ostream&out, int indent) const;
+      void dump(std::ostream&out, int indent) const;
 };
 
 class ReportStmt : public SequentialStmt {
@@ -286,16 +286,16 @@ class ReportStmt : public SequentialStmt {
       ReportStmt(Expression*message, severity_t severity);
       virtual ~ReportStmt() {}
 
-      void dump(ostream&out, int indent) const;
+      void dump(std::ostream&out, int indent) const;
       int elaborate(Entity*ent, ScopeBase*scope);
-      int emit(ostream&out, Entity*entity, ScopeBase*scope);
+      int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
 
       inline Expression*message() const { return msg_; }
       inline severity_t severity() const { return severity_; }
 
     protected:
-      void dump_sev_msg(ostream&out, int indent) const;
+      void dump_sev_msg(std::ostream&out, int indent) const;
 
       Expression*msg_;
       severity_t severity_;
@@ -306,9 +306,9 @@ class AssertStmt : public ReportStmt {
       AssertStmt(Expression*condition, Expression*message,
                  ReportStmt::severity_t severity = ReportStmt::ERROR);
 
-      void dump(ostream&out, int indent) const;
+      void dump(std::ostream&out, int indent) const;
       int elaborate(Entity*ent, ScopeBase*scope);
-      int emit(ostream&out, Entity*entity, ScopeBase*scope);
+      int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
 
     private:
@@ -322,9 +322,9 @@ class WaitForStmt : public SequentialStmt {
     public:
       explicit WaitForStmt(Expression*delay);
 
-      void dump(ostream&out, int indent) const;
+      void dump(std::ostream&out, int indent) const;
       int elaborate(Entity*ent, ScopeBase*scope);
-      int emit(ostream&out, Entity*entity, ScopeBase*scope);
+      int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
 
     private:
@@ -336,9 +336,9 @@ class WaitStmt : public SequentialStmt {
       typedef enum { ON, UNTIL, FINAL } wait_type_t;
       WaitStmt(wait_type_t typ, Expression*expression);
 
-      void dump(ostream&out, int indent) const;
+      void dump(std::ostream&out, int indent) const;
       int elaborate(Entity*ent, ScopeBase*scope);
-      int emit(ostream&out, Entity*entity, ScopeBase*scope);
+      int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
       void write_to_stream(std::ostream&fd);
 
       inline wait_type_t type() const { return type_; }

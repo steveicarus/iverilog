@@ -31,6 +31,8 @@
 # include  <sstream>
 # include  "ivl_assert.h"
 
+using namespace std;
+
 class PExpr;
 
 Definitions::Definitions()

@@ -6,7 +6,7 @@
 %parse-param {perm_string parse_library_name}
 %{
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2016 / Stephen Williams (steve@icarus.com),
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
@@ -50,6 +50,8 @@
 # include  "parse_types.h"
 # include  <ivl_assert.h>
 # include  <assert.h>
+
+using namespace std;
 
 inline void FILE_NAME(LineInfo*tmp, const struct yyltype&where)
 {

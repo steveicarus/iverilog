@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,6 +23,8 @@
 # include  <cstdarg>
 # include  <cstdio>
 # include  <iostream>
+
+using namespace std;
 
 extern const char*vl_file;
 unsigned error_count = 0;
@@ -75,4 +77,3 @@ int VLwrap()
 {
       return -1;
 }
-

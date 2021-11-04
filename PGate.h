@@ -1,7 +1,7 @@
 #ifndef IVL_PGate_H
 #define IVL_PGate_H
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -50,13 +50,13 @@ class Module;
 class PGate : public PNamedItem {
 
     public:
-      explicit PGate(perm_string name, list<PExpr*>*pins,
-		     const list<PExpr*>*del);
+      explicit PGate(perm_string name, std::list<PExpr*>*pins,
+		     const std::list<PExpr*>*del);
 
-      explicit PGate(perm_string name, list<PExpr*>*pins,
+      explicit PGate(perm_string name, std::list<PExpr*>*pins,
 		     PExpr*del);
 
-      explicit PGate(perm_string name, list<PExpr*>*pins);
+      explicit PGate(perm_string name, std::list<PExpr*>*pins);
 
       virtual ~PGate();
 
@@ -81,9 +81,9 @@ class PGate : public PNamedItem {
       void strength0(ivl_drive_t);
       void strength1(ivl_drive_t);
 
-      map<perm_string,PExpr*> attributes;
+      std::map<perm_string,PExpr*> attributes;
 
-      virtual void dump(ostream&out, unsigned ind =4) const;
+      virtual void dump(std::ostream&out, unsigned ind =4) const;
       virtual void elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*sc) const;
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
@@ -91,19 +91,19 @@ class PGate : public PNamedItem {
       SymbolType symbol_type() const;
 
     protected:
-      const vector<PExpr*>& get_pins() const { return pins_; }
+      const std::vector<PExpr*>& get_pins() const { return pins_; }
 
-      void dump_pins(ostream&out) const;
-      void dump_delays(ostream&out) const;
+      void dump_pins(std::ostream&out) const;
+      void dump_delays(std::ostream&out) const;
 
     private:
       perm_string name_;
       PDelays delay_;
-      vector<PExpr*>pins_;
+      std::vector<PExpr*>pins_;
 
       ivl_drive_t str0_, str1_;
 
-      void set_pins_(list<PExpr*>*pins);
+      void set_pins_(std::list<PExpr*>*pins);
 
     private: // not implemented
       PGate(const PGate&);
@@ -117,11 +117,11 @@ class PGate : public PNamedItem {
 class PGAssign  : public PGate {
 
     public:
-      explicit PGAssign(list<PExpr*>*pins);
-      explicit PGAssign(list<PExpr*>*pins, list<PExpr*>*dels);
+      explicit PGAssign(std::list<PExpr*>*pins);
+      explicit PGAssign(std::list<PExpr*>*pins, std::list<PExpr*>*dels);
       ~PGAssign();
 
-      void dump(ostream&out, unsigned ind =4) const;
+      void dump(std::ostream&out, unsigned ind =4) const;
       virtual void elaborate(Design*des, NetScope*scope) const;
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
@@ -150,10 +150,10 @@ class PGBuiltin  : public PGate {
 
     public:
       explicit PGBuiltin(Type t, perm_string name,
-			 list<PExpr*>*pins,
-			 list<PExpr*>*del);
+			 std::list<PExpr*>*pins,
+			 std::list<PExpr*>*del);
       explicit PGBuiltin(Type t, perm_string name,
-			 list<PExpr*>*pins,
+			 std::list<PExpr*>*pins,
 			 PExpr*del);
       ~PGBuiltin();
 
@@ -161,7 +161,7 @@ class PGBuiltin  : public PGate {
       const char * gate_name() const;
       void set_range(PExpr*msb, PExpr*lsb);
 
-      virtual void dump(ostream&out, unsigned ind =4) const;
+      virtual void dump(std::ostream&out, unsigned ind =4) const;
       virtual void elaborate(Design*, NetScope*scope) const;
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
@@ -197,7 +197,7 @@ class PGModule  : public PGate {
 	// If the binding of ports is by position, this constructor
 	// builds everything all at once.
       explicit PGModule(perm_string type, perm_string name,
-			list<PExpr*>*pins);
+			std::list<PExpr*>*pins);
 
 	// If the binding of ports is by name, this constructor takes
 	// the bindings and stores them for later elaboration.
@@ -212,16 +212,16 @@ class PGModule  : public PGate {
 
 	// Parameter overrides can come as an ordered list, or a set
 	// of named expressions.
-      void set_parameters(list<PExpr*>*o);
+      void set_parameters(std::list<PExpr*>*o);
       void set_parameters(named<PExpr*>*pa, unsigned npa);
 
 	// Modules can be instantiated in ranges. The parser uses this
 	// method to pass the range to the pform.
       void set_range(PExpr*msb, PExpr*lsb);
 
-      map<perm_string,PExpr*> attributes;
+      std::map<perm_string,PExpr*> attributes;
 
-      virtual void dump(ostream&out, unsigned ind =4) const;
+      virtual void dump(std::ostream&out, unsigned ind =4) const;
       virtual void elaborate(Design*, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*sc) const;
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
@@ -233,7 +233,7 @@ class PGModule  : public PGate {
     private:
       Module*bound_type_;
       perm_string type_;
-      list<PExpr*>*overrides_;
+      std::list<PExpr*>*overrides_;
       named<PExpr*>*pins_;
       unsigned npins_;
 

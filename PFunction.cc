@@ -23,6 +23,8 @@
 # include <cassert>
 # include "ivl_assert.h"
 
+using namespace std;
+
 PFunction::PFunction(perm_string name, LexicalScope*parent, bool is_auto__)
 : PTaskFunc(name, parent), statement_(0)
 {

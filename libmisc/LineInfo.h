@@ -1,7 +1,7 @@
 #ifndef IVL_LineInfo_H
 #define IVL_LineInfo_H
 /*
- * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,8 +22,6 @@
 # include  "StringHeap.h"
 # include  <string>
 
-using namespace std;
-
 /*
  * This class holds line information for an internal object.
  *
@@ -40,7 +38,7 @@ class LineInfo {
       virtual ~LineInfo();
 
 	// Get a fully formatted file/lineno
-      string get_fileline() const;
+      std::string get_fileline() const;
 	// Set the file/line from another LineInfo object.
       void set_line(const LineInfo&that);
 

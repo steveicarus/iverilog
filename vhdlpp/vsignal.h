@@ -1,7 +1,7 @@
 #ifndef IVL_vsignal_H
 #define IVL_vsignal_H
 /*
- * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,7 +40,7 @@ class SigVarBase : public LineInfo {
 	// l-value of a sequential assignment.
       void count_ref_sequ();
 
-      void dump(ostream&out, int indent = 0) const;
+      void dump(std::ostream&out, int indent = 0) const;
 
 	// Elaborates type & initializer expressions.
       void elaborate(Entity*ent, ScopeBase*scope);
@@ -70,7 +70,7 @@ class Signal : public SigVarBase {
     public:
       Signal(perm_string name, const VType*type, Expression*init_expr);
 
-      int emit(ostream&out, Entity*ent, ScopeBase*scope, bool initalize = true);
+      int emit(std::ostream&out, Entity*ent, ScopeBase*scope, bool initalize = true);
 };
 
 class Variable : public SigVarBase {
@@ -78,7 +78,7 @@ class Variable : public SigVarBase {
     public:
       Variable(perm_string name, const VType*type, Expression*init_expr = NULL);
 
-      int emit(ostream&out, Entity*ent, ScopeBase*scope, bool initialize = true);
+      int emit(std::ostream&out, Entity*ent, ScopeBase*scope, bool initialize = true);
       void write_to_stream(std::ostream&fd);
 };
 

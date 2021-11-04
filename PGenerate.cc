@@ -21,6 +21,8 @@
 # include  "PWire.h"
 # include  "ivl_assert.h"
 
+using namespace std;
+
 PGenerate::PGenerate(LexicalScope*parent, unsigned id)
 : LexicalScope(parent), id_number(id)
 {

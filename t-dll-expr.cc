@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -29,6 +29,8 @@
 # include  <cstdlib>
 # include  "ivl_alloc.h"
 # include  "ivl_assert.h"
+
+using namespace std;
 
 /*
  * This is a little convenience function for converting a NetExpr

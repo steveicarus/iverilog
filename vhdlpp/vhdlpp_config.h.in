@@ -19,14 +19,6 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#if defined(__cplusplus)
-#  if !defined(__GNUC__)
-     using namespace std;
-#  elif (__GNUC__ == 3)
-     using namespace std;
-#  endif
-#endif
-
 # undef HAVE_GETOPT_H
 # undef HAVE_INTTYPES_H
 # undef HAVE_LIBIBERTY_H

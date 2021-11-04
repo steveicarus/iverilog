@@ -22,6 +22,8 @@
 # include  "PExpr.h"
 # include  <cassert>
 
+using namespace std;
+
 PWire::PWire(perm_string n,
 	     NetNet::Type t,
 	     NetNet::PortType pt,

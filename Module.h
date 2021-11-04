@@ -64,7 +64,7 @@ class Module : public PScopeExtra, public PNamedItem {
     public:
       struct port_t {
 	    perm_string name;
-	    vector<PEIdent*> expr;
+	    std::vector<PEIdent*> expr;
       };
 
     public:
@@ -97,15 +97,15 @@ class Module : public PScopeExtra, public PNamedItem {
 	/* specparams are simpler than other parameters, in that they
 	   can have a range, but not an explicit type. The restrictions
 	   are enforced by the parser. */
-      map<perm_string,param_expr_t*>specparams;
+      std::map<perm_string,param_expr_t*>specparams;
 
 	/* The module also has defparam assignments which don't create
 	   new parameters within the module, but may be used to set
 	   values within this module (when instantiated) or in other
 	   instantiated modules. */
-      typedef pair<pform_name_t,PExpr*> named_expr_t;
-      list<named_expr_t>defparms;
-      static list<named_expr_t>user_defparms;
+      typedef std::pair<pform_name_t,PExpr*> named_expr_t;
+      std::list<named_expr_t>defparms;
+      static std::list<named_expr_t>user_defparms;
 
         /* Parameters may be overridden at instantiation time;
            the overrides do not contain explicit parameter names,
@@ -113,17 +113,17 @@ class Module : public PScopeExtra, public PNamedItem {
            appear in the instantiated module.  Therefore a
            list of names in module-order is needed to pass from
            a parameter-index to its name. */
-      list<perm_string> param_names;
+      std::list<perm_string> param_names;
 
 	/* This is an array of port descriptors, which is in turn a
 	   named array of PEident pointers. */
-      vector<port_t*> ports;
+      std::vector<port_t*> ports;
 
-      map<perm_string,PExpr*> attributes;
+      std::map<perm_string,PExpr*> attributes;
 
 	/* The module has a list of generate schemes that appear in
 	   the module definition. These are used at elaboration time. */
-      list<PGenerate*> generate_schemes;
+      std::list<PGenerate*> generate_schemes;
 
 	/* Nested modules are placed here, and are not elaborated
 	   unless they are instantiated, implicitly or explicitly. */
@@ -132,9 +132,9 @@ class Module : public PScopeExtra, public PNamedItem {
 	/* An interface can contain one or more named modport lists.
            The parser will ensure these don't appear in modules or
            program blocks. */
-      map<perm_string,PModport*> modports;
+      std::map<perm_string,PModport*> modports;
 
-      list<PSpecPath*> specify_paths;
+      std::list<PSpecPath*> specify_paths;
 
 	// The mod_name() is the name of the module type.
       perm_string mod_name() const { return pscope_name(); }
@@ -142,7 +142,7 @@ class Module : public PScopeExtra, public PNamedItem {
       void add_gate(PGate*gate);
 
       unsigned port_count() const;
-      const vector<PEIdent*>& get_port(unsigned idx) const;
+      const std::vector<PEIdent*>& get_port(unsigned idx) const;
       unsigned find_port(const char*name) const;
 
       // Return port name ("" for undeclared port)
@@ -150,12 +150,12 @@ class Module : public PScopeExtra, public PNamedItem {
 
       PGate* get_gate(perm_string name);
 
-      const list<PGate*>& get_gates() const;
+      const std::list<PGate*>& get_gates() const;
 
-      void dump(ostream&out) const;
+      void dump(std::ostream&out) const;
       bool elaborate(Design*, NetScope*scope) const;
 
-      typedef map<perm_string,PExpr*> replace_t;
+      typedef std::map<perm_string,PExpr*> replace_t;
       bool elaborate_scope(Design*, NetScope*scope, const replace_t&rep);
 
       bool elaborate_sig(Design*, NetScope*scope) const;
@@ -163,8 +163,8 @@ class Module : public PScopeExtra, public PNamedItem {
       SymbolType symbol_type() const;
 
     private:
-      void dump_specparams_(ostream&out, unsigned indent) const;
-      list<PGate*> gates_;
+      void dump_specparams_(std::ostream&out, unsigned indent) const;
+      std::list<PGate*> gates_;
 
     private: // Not implemented
       Module(const Module&);

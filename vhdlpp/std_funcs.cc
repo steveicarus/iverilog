@@ -1,5 +1,5 @@
 /*
- * Copyright CERN 2016-2018
+ * Copyright CERN 2016-2021
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -21,6 +21,8 @@
 #include "std_funcs.h"
 #include "std_types.h"
 #include "scope.h"
+
+using namespace std;
 
 static std::map<perm_string,SubHeaderList> std_subprograms;
 

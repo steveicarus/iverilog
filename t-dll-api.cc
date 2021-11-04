@@ -32,6 +32,8 @@
 # include  <cstring>
 # include  "ivl_alloc.h"
 
+using namespace std;
+
 static StringHeap api_strings;
 
 /* THE FOLLOWING ARE FUNCTIONS THAT ARE CALLED FROM THE TARGET. */

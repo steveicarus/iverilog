@@ -1,7 +1,7 @@
 #ifndef IVL_netclass_H
 #define IVL_netclass_H
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -110,7 +110,7 @@ class netclass_t : public ivl_type_s {
       bool emit_defs(struct target_t*tgt) const;
 
       std::ostream& debug_dump(std::ostream&fd) const;
-      void dump_scope(ostream&fd) const;
+      void dump_scope(std::ostream&fd) const;
 
     private:
       perm_string name_;

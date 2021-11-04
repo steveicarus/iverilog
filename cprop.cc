@@ -28,6 +28,7 @@
 # include  "compiler.h"
 # include  "ivl_assert.h"
 
+using namespace std;
 
 /*
  * The cprop function below invokes constant propagation where

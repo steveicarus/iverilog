@@ -21,6 +21,8 @@
 #include "std_types.h"
 #include "scope.h"
 
+using namespace std;
+
 static map<perm_string, VTypeDef*> std_types;
 // this list contains enums used by typedefs in the std_types map
 static list<const VTypeEnum*> std_enums;
@@ -141,4 +143,3 @@ bool is_global_type(perm_string name)
 
       return std_types.count(name) > 0;
 }
-

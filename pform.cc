@@ -45,6 +45,8 @@
 # include  "ivl_assert.h"
 # include  "ivl_alloc.h"
 
+using namespace std;
+
 /*
  * The "// synthesis translate_on/off" meta-comments cause this flag
  * to be turned off or on. The pform_make_behavior and similar

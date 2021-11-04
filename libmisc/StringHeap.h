@@ -1,7 +1,7 @@
 #ifndef IVL_StringHeap_H
 #define IVL_StringHeap_H
 /*
- * Copyright (c) 2002-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,8 +20,6 @@
  */
 
 # include  <string>
-
-using namespace std;
 
 class perm_string {
 
@@ -61,7 +59,7 @@ extern bool operator >  (perm_string a, perm_string b);
 extern bool operator <  (perm_string a, perm_string b);
 extern bool operator >= (perm_string a, perm_string b);
 extern bool operator <= (perm_string a, perm_string b);
-extern ostream& operator << (ostream&out, perm_string that);
+extern std::ostream& operator << (std::ostream&out, perm_string that);
 
 /*
  * The string heap is a way to permanently allocate strings
@@ -100,7 +98,7 @@ class StringHeapLex  : private StringHeap {
 
       const char*add(const char*);
       perm_string make(const char*);
-      perm_string make(const string&);
+      perm_string make(const std::string&);
 
       unsigned add_count() const;
       unsigned add_hit_count() const;

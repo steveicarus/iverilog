@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Martin Whitaker (icarus@martin-whitaker.me.uk)
+ * Copyright (c) 2016-2021 Martin Whitaker (icarus@martin-whitaker.me.uk)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,6 +26,7 @@
 # include  "compiler.h"
 # include  "ivl_assert.h"
 
+using namespace std;
 
 /*
  * The exposenodes functor is primarily provided for use by the vlog95

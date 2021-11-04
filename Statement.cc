@@ -23,6 +23,8 @@
 # include  "PExpr.h"
 # include  "ivl_assert.h"
 
+using namespace std;
+
 Statement::~Statement()
 {
 }

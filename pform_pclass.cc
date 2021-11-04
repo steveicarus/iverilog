@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,8 @@
 # include  "pform.h"
 # include  "PClass.h"
 # include  "parse_misc.h"
+
+using namespace std;
 
 /*
  * The functions here help the parser put together class type declarations.

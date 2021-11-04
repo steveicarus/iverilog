@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,8 @@
 # include  "pform.h"
 # include  "parse_misc.h"
 # include  "ivl_assert.h"
+
+using namespace std;
 
 static void pform_set_string_type(const struct vlltype&li, const string_type_t*, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {

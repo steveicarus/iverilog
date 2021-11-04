@@ -27,6 +27,8 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 
+using namespace std;
+
 NexusSet* NetExpr::nex_input(bool, bool, bool) const
 {
       cerr << get_fileline()

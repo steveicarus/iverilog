@@ -27,6 +27,8 @@
 # include  <iostream>
 # include  "ivl_assert.h"
 
+using namespace std;
+
 NetExpr::NetExpr(unsigned w)
 : net_type_(0), width_(w), signed_flag_(false)
 {

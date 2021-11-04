@@ -32,6 +32,8 @@
 # include  <iomanip>
 # include  <typeinfo>
 
+using namespace std;
+
 static ostream& operator << (ostream&out, port_mode_t that)
 {
       switch (that) {

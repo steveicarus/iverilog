@@ -22,6 +22,7 @@
 # include  "netmisc.h"
 # include  "ivl_assert.h"
 
+using namespace std;
 
 /*
  * Search for the hierarchical name.

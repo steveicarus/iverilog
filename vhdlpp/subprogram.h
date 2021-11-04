@@ -1,7 +1,7 @@
 #ifndef IVL_subprogram_H
 #define IVL_subprogram_H
 /*
- * Copyright (c) 2013-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright CERN 2015
  * @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -46,7 +46,7 @@ class SubprogramBody : public LineInfo, public ScopeBase {
       inline bool empty_statements() const { return !statements_ || statements_->empty(); }
 
       int elaborate();
-      int emit(ostream&out, Entity*ent, ScopeBase*scope);
+      int emit(std::ostream&out, Entity*ent, ScopeBase*scope);
 
 	// Emit body as it would show up in a package.
       int emit_package(std::ostream&fd);

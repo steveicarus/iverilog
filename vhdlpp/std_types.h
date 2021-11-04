@@ -1,5 +1,5 @@
 /*
- * Copyright CERN 2015
+ * Copyright CERN 2015-2021
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -22,7 +22,7 @@
 
 class ActiveScope;
 
-void emit_std_types(ostream&out);
+void emit_std_types(std::ostream&out);
 void generate_global_types(ActiveScope*res);
 bool is_global_type(perm_string type_name);
 void delete_global_types();

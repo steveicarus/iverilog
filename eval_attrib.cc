@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,6 +23,8 @@
 # include  "netlist.h"
 # include  <iostream>
 # include  <cassert>
+
+using namespace std;
 
 /*
  * The evaluate_attributes function evaluates the attribute

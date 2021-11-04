@@ -37,6 +37,8 @@
 # include  "discipline.h"
 # include  <list>
 
+using namespace std;
+
 # define YY_USER_INIT reset_lexor();
 # define yylval VLlval
 

@@ -97,7 +97,7 @@ class PTask  : public PTaskFunc {
 
       bool is_auto() const { return is_auto_; };
 
-      void dump(ostream&, unsigned) const;
+      void dump(std::ostream&, unsigned) const;
 
       SymbolType symbol_type() const;
 
@@ -148,7 +148,7 @@ class PFunction : public PTaskFunc {
 
       bool is_auto() const { return is_auto_; };
 
-      void dump(ostream&, unsigned) const;
+      void dump(std::ostream&, unsigned) const;
 
       SymbolType symbol_type() const;
 
