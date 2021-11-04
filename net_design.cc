@@ -647,7 +647,6 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	    return;
 
       NetEConst*val = dynamic_cast<NetEConst*>((*cur).second.val);
-      ivl_assert(*expr, (*cur).second.val);
       ivl_assert(*expr, val);
 
       verinum value = val->value();
