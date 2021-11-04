@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for statements.
  *
- *  Copyright (C) 2008-2018  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2021  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@
 #include <limits>
 #include <set>
 #include <algorithm>
+
+using namespace std;
 
 static void emit_wait_for_0(vhdl_procedural *proc, stmt_container *container,
                             ivl_statement_t stmt, vhdl_expr *expr);
