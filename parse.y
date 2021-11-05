@@ -4215,15 +4215,15 @@ function_item
   /* A gate_instance is a module instantiation or a built in part
      type. In any case, the gate has a set of connections to ports. */
 gate_instance
-	: IDENTIFIER '(' port_conn_expression_list_with_nuls ')'
-		{ lgate*tmp = new lgate;
-		  tmp->name = $1;
-		  tmp->parms = $3;
-		  tmp->file  = @1.text;
-		  tmp->lineno = @1.first_line;
-		  delete[]$1;
-		  $$ = tmp;
-		}
+  : IDENTIFIER '(' port_conn_expression_list_with_nuls ')'
+      { lgate*tmp = new lgate;
+	tmp->name = $1;
+	tmp->parms = $3;
+	tmp->file  = @1.text;
+	tmp->lineno = @1.first_line;
+	delete[]$1;
+	$$ = tmp;
+      }
 
   | IDENTIFIER dimensions '(' port_conn_expression_list_with_nuls ')'
       { lgate*tmp = new lgate;
@@ -4240,14 +4240,14 @@ gate_instance
 	$$ = tmp;
       }
 
-	| '(' port_conn_expression_list_with_nuls ')'
-		{ lgate*tmp = new lgate;
-		  tmp->name = "";
-		  tmp->parms = $2;
-		  tmp->file  = @1.text;
-		  tmp->lineno = @1.first_line;
-		  $$ = tmp;
-		}
+  | '(' port_conn_expression_list_with_nuls ')'
+      { lgate*tmp = new lgate;
+	tmp->name = "";
+	tmp->parms = $2;
+	tmp->file  = @1.text;
+	tmp->lineno = @1.first_line;
+	$$ = tmp;
+      }
 
   /* Degenerate modules can have no ports. */
 
@@ -4296,49 +4296,49 @@ gate_instance
 	$$ = tmp;
       }
 
-	| IDENTIFIER '(' error ')'
-		{ lgate*tmp = new lgate;
-		  tmp->name = $1;
-		  tmp->parms = 0;
-		  tmp->parms_by_name = 0;
-		  tmp->file  = @1.text;
-		  tmp->lineno = @1.first_line;
-		  yyerror(@2, "error: Syntax error in instance port "
-			  "expression(s).");
-		  delete[]$1;
-		  $$ = tmp;
-		}
+  | IDENTIFIER '(' error ')'
+      { lgate*tmp = new lgate;
+	tmp->name = $1;
+	tmp->parms = 0;
+	tmp->parms_by_name = 0;
+	tmp->file  = @1.text;
+	tmp->lineno = @1.first_line;
+	yyerror(@2, "error: Syntax error in instance port "
+	        "expression(s).");
+	delete[]$1;
+	$$ = tmp;
+      }
 
-	| IDENTIFIER dimensions '(' error ')'
-		{ lgate*tmp = new lgate;
-		  tmp->name = $1;
-		  tmp->parms = 0;
-		  tmp->parms_by_name = 0;
-		  tmp->file  = @1.text;
-		  tmp->lineno = @1.first_line;
-		  yyerror(@3, "error: Syntax error in instance port "
-			  "expression(s).");
-		  delete[]$1;
-		  $$ = tmp;
-		}
-	;
+  | IDENTIFIER dimensions '(' error ')'
+      { lgate*tmp = new lgate;
+	tmp->name = $1;
+	tmp->parms = 0;
+	tmp->parms_by_name = 0;
+	tmp->file  = @1.text;
+	tmp->lineno = @1.first_line;
+	yyerror(@3, "error: Syntax error in instance port "
+	        "expression(s).");
+	delete[]$1;
+	$$ = tmp;
+      }
+  ;
 
 gate_instance_list
-	: gate_instance_list ',' gate_instance
-		{ svector<lgate>*tmp1 = $1;
-		  lgate*tmp2 = $3;
-		  svector<lgate>*out = new svector<lgate> (*tmp1, *tmp2);
-		  delete tmp1;
-		  delete tmp2;
-		  $$ = out;
-		}
-	| gate_instance
-		{ svector<lgate>*tmp = new svector<lgate>(1);
-		  (*tmp)[0] = *$1;
-		  delete $1;
-		  $$ = tmp;
-		}
-	;
+  : gate_instance_list ',' gate_instance
+      { svector<lgate>*tmp1 = $1;
+	lgate*tmp2 = $3;
+	svector<lgate>*out = new svector<lgate> (*tmp1, *tmp2);
+	delete tmp1;
+	delete tmp2;
+	$$ = out;
+      }
+  | gate_instance
+      { svector<lgate>*tmp = new svector<lgate>(1);
+        (*tmp)[0] = *$1;
+	delete $1;
+	$$ = tmp;
+      }
+  ;
 
 gatetype
 	: K_and  { $$ = PGBuiltin::AND; }
