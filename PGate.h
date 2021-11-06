@@ -60,6 +60,9 @@ class PGate : public PNamedItem {
 
       virtual ~PGate();
 
+      void set_ranges(std::list<pform_range_t>*ranges);
+      bool is_array() const { return ranges_ != 0; }
+
       perm_string get_name() const { return name_; }
 
 	// This evaluates the delays as far as possible, but returns
@@ -93,13 +96,19 @@ class PGate : public PNamedItem {
     protected:
       const std::vector<PExpr*>& get_pins() const { return pins_; }
 
+      unsigned calculate_array_size_(Design*, NetScope*,
+				     long&high, long&low) const;
+
       void dump_pins(std::ostream&out) const;
       void dump_delays(std::ostream&out) const;
+      void dump_ranges(std::ostream&out) const;
 
     private:
       perm_string name_;
       PDelays delay_;
       std::vector<PExpr*>pins_;
+
+      std::list<pform_range_t>*ranges_;
 
       ivl_drive_t str0_, str1_;
 
@@ -159,16 +168,12 @@ class PGBuiltin  : public PGate {
 
       Type type() const { return type_; }
       const char * gate_name() const;
-      void set_range(PExpr*msb, PExpr*lsb);
 
       virtual void dump(std::ostream&out, unsigned ind =4) const;
       virtual void elaborate(Design*, NetScope*scope) const;
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
     private:
-      unsigned calculate_array_count_(Design*, NetScope*,
-				      long&high, long&low) const;
-
       void calculate_gate_and_lval_count_(unsigned&gate_count,
                                           unsigned&lval_count) const;
 
@@ -179,8 +184,6 @@ class PGBuiltin  : public PGate {
       bool check_delay_count(Design*des) const;
 
       Type type_;
-      PExpr*msb_;
-      PExpr*lsb_;
 };
 
 /*
@@ -215,10 +218,6 @@ class PGModule  : public PGate {
       void set_parameters(std::list<PExpr*>*o);
       void set_parameters(named<PExpr*>*pa, unsigned npa);
 
-	// Modules can be instantiated in ranges. The parser uses this
-	// method to pass the range to the pform.
-      void set_range(PExpr*msb, PExpr*lsb);
-
       std::map<perm_string,PExpr*> attributes;
 
       virtual void dump(std::ostream&out, unsigned ind =4) const;
@@ -241,16 +240,9 @@ class PGModule  : public PGate {
       named<PExpr*>*parms_;
       unsigned nparms_;
 
-	// Arrays of modules are give if these are set.
-      PExpr*msb_;
-      PExpr*lsb_;
-
       friend class delayed_elaborate_scope_mod_instances;
       void elaborate_mod_(Design*, Module*mod, NetScope*scope) const;
       void elaborate_udp_(Design*, PUdp  *udp, NetScope*scope) const;
-      unsigned calculate_instance_count_(Design*, NetScope*,
-                                         long&high, long&low,
-                                         perm_string name) const;
       void elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const;
       void elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*sc) const;
       bool elaborate_sig_mod_(Design*des, NetScope*scope, Module*mod) const;

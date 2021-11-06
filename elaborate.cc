@@ -62,6 +62,44 @@ void PGate::elaborate(Design*, NetScope*) const
 	    typeid(*this).name() << endl;
 }
 
+unsigned PGate::calculate_array_size_(Design*des, NetScope*scope,
+				      long&high, long&low) const
+{
+      if (ranges_ && ranges_->size() > 1) {
+	    if (gn_system_verilog()) {
+		  cerr << get_fileline() << ": sorry: Multi-dimensional"
+		       << " arrays of instances are not yet supported." << endl;
+	    } else {
+		  cerr << get_fileline() << ": error: Multi-dimensional"
+		       << " arrays of instances require SystemVerilog." << endl;
+	    }
+	    des->errors += 1;
+	    return 0;
+      }
+
+      unsigned size = 1;
+      high = 0;
+      low = 0;
+
+      if (ranges_) {
+	    if (!evaluate_range(des, scope, this, ranges_->front(), high, low))
+		return 0;
+
+	    if (high > low)
+		  size = high - low + 1;
+	    else
+		  size = low - high + 1;
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: PGate: Make array "
+		       << "[" << high << ":" << low << "]" << " of "
+		       << size << " instances for " << get_name() << endl;
+	    }
+      }
+
+      return size;
+}
+
 /*
  * Elaborate the continuous assign. (This is *not* the procedural
  * assign.) Elaborate the lvalue and rvalue, and do the assignment.
@@ -231,61 +269,6 @@ void PGAssign::elaborate_unpacked_array_(Design*des, NetScope*scope, NetNet*lval
       ivl_assert(*this, rval_net->pin_count() == lval->pin_count());
 
       assign_unpacked_with_bufz(des, scope, this, lval, rval_net);
-}
-
-unsigned PGBuiltin::calculate_array_count_(Design*des, NetScope*scope,
-					   long&high, long&low) const
-{
-      unsigned count = 1;
-      high = 0;
-      low = 0;
-
-	/* If the Verilog source has a range specification for the
-	   gates, then I am expected to make more than one
-	   gate. Figure out how many are desired. */
-      if (msb_) {
-	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_, -1, true);
-	    NetExpr*lsb_exp = elab_and_eval(des, scope, lsb_, -1, true);
-
-	    NetEConst*msb_con = dynamic_cast<NetEConst*>(msb_exp);
-	    NetEConst*lsb_con = dynamic_cast<NetEConst*>(lsb_exp);
-
-	    if (msb_con == 0) {
-		  cerr << get_fileline() << ": error: Unable to evaluate "
-			"expression " << *msb_ << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    if (lsb_con == 0) {
-		  cerr << get_fileline() << ": error: Unable to evaluate "
-			"expression " << *lsb_ << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    verinum msb = msb_con->value();
-	    verinum lsb = lsb_con->value();
-
-	    delete msb_exp;
-	    delete lsb_exp;
-
-	    if (msb.as_long() > lsb.as_long())
-		  count = msb.as_long() - lsb.as_long() + 1;
-	    else
-		  count = lsb.as_long() - msb.as_long() + 1;
-
-	    low = lsb.as_long();
-	    high = msb.as_long();
-
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: PGBuiltin: Make array "
-		       << "[" << high << ":" << low << "]" << " of "
-		       << count << " gates for " << get_name() << endl;
-	    }
-      }
-
-      return count;
 }
 
 void PGBuiltin::calculate_gate_and_lval_count_(unsigned&gate_count,
@@ -723,7 +706,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	   the count is 1, and high==low==0. */
 
       long low=0, high=0;
-      unsigned array_count = calculate_array_count_(des, scope, high, low);
+      unsigned array_count = calculate_array_size_(des, scope, high, low);
       if (array_count == 0) return;
 
       unsigned gate_count = 0, lval_count = 0;
@@ -854,10 +837,10 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
                     // to be the exact width required (this will be checked
                     // later). But if this is a single instance, consensus
                     // is that we just take the LSB of the port expression.
-		  NetExpr*tmp = elab_and_eval(des, scope, ex, msb_ ? -1 : 1);
+		  NetExpr*tmp = elab_and_eval(des, scope, ex, is_array() ? -1 : 1);
                   if (tmp == 0)
                         continue;
-                  if (msb_ == 0 && tmp->expr_width() != 1)
+                  if (!is_array() && tmp->expr_width() != 1)
                         tmp = new NetESelect(tmp, make_const_0(1), 1,
                                              IVL_SEL_IDX_UP);
 		  sig = tmp->synthesize(des, scope, tmp);
@@ -1969,62 +1952,6 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 }
 
-unsigned PGModule::calculate_instance_count_(Design*des, NetScope*scope,
-                                             long&high, long&low,
-                                             perm_string name) const
-{
-      unsigned count = 1;
-      high = 0;
-      low = 0;
-
-	/* If the Verilog source has a range specification for the UDP, then
-	 * I am expected to make more than one gate. Figure out how many are
-	 * desired. */
-      if (msb_) {
-	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_, -1, true);
-	    NetExpr*lsb_exp = elab_and_eval(des, scope, lsb_, -1, true);
-
-	    NetEConst*msb_con = dynamic_cast<NetEConst*>(msb_exp);
-	    NetEConst*lsb_con = dynamic_cast<NetEConst*>(lsb_exp);
-
-	    if (msb_con == 0) {
-		  cerr << get_fileline() << ": error: Unable to evaluate "
-			"expression " << *msb_ << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    if (lsb_con == 0) {
-		  cerr << get_fileline() << ": error: Unable to evaluate "
-			"expression " << *lsb_ << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    verinum msb = msb_con->value();
-	    verinum lsb = lsb_con->value();
-
-	    delete msb_exp;
-	    delete lsb_exp;
-
-	    if (msb.as_long() > lsb.as_long())
-		  count = msb.as_long() - lsb.as_long() + 1;
-	    else
-		  count = lsb.as_long() - msb.as_long() + 1;
-
-	    low = lsb.as_long();
-	    high = msb.as_long();
-
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: PGModule: Make range "
-		       << "[" << high << ":" << low << "]" << " of "
-		       << count << " UDPs for " << name << endl;
-	    }
-      }
-
-      return count;
-}
-
 /*
  * From a UDP definition in the source, make a NetUDP
  * object. Elaborate the pin expressions as netlists, then connect
@@ -2056,8 +1983,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
       }
 
       long low = 0, high = 0;
-      unsigned inst_count = calculate_instance_count_(des, scope, high, low,
-                                                      my_name);
+      unsigned inst_count = calculate_array_size_(des, scope, high, low);
       if (inst_count == 0) return;
 
       if (inst_count != 1) {

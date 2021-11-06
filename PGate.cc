@@ -41,7 +41,7 @@ void PGate::set_pins_(list<PExpr*>*pins)
 }
 
 PGate::PGate(perm_string name, list<PExpr*>*pins, const list<PExpr*>*del)
-: name_(name), pins_(pins? pins->size() : 0)
+: name_(name), pins_(pins? pins->size() : 0), ranges_(0)
 {
       if (pins) set_pins_(pins);
       if (del) delay_.set_delays(del);
@@ -50,7 +50,7 @@ PGate::PGate(perm_string name, list<PExpr*>*pins, const list<PExpr*>*del)
 }
 
 PGate::PGate(perm_string name, list<PExpr*>*pins, PExpr*del)
-: name_(name), pins_(pins? pins->size() : 0)
+: name_(name), pins_(pins? pins->size() : 0), ranges_(0)
 {
       if (pins) set_pins_(pins);
       if (del) delay_.set_delay(del);
@@ -59,7 +59,7 @@ PGate::PGate(perm_string name, list<PExpr*>*pins, PExpr*del)
 }
 
 PGate::PGate(perm_string name, list<PExpr*>*pins)
-: name_(name), pins_(pins? pins->size() : 0)
+: name_(name), pins_(pins? pins->size() : 0), ranges_(0)
 {
       if (pins) set_pins_(pins);
       str0_ = IVL_DR_STRONG;
@@ -68,6 +68,12 @@ PGate::PGate(perm_string name, list<PExpr*>*pins)
 
 PGate::~PGate()
 {
+}
+
+void PGate::set_ranges(list<pform_range_t>*ranges)
+{
+      assert(ranges_ == 0);
+      ranges_ = ranges;
 }
 
 ivl_drive_t PGate::strength0() const
@@ -143,29 +149,20 @@ PGAssign::~PGAssign()
 PGBuiltin::PGBuiltin(Type t, perm_string name,
 		     list<PExpr*>*pins,
 		     list<PExpr*>*del)
-: PGate(name, pins, del), type_(t), msb_(0), lsb_(0)
+: PGate(name, pins, del), type_(t)
 {
 }
 
 PGBuiltin::PGBuiltin(Type t, perm_string name,
 		     list<PExpr*>*pins,
 		     PExpr*del)
-: PGate(name, pins, del), type_(t), msb_(0), lsb_(0)
+: PGate(name, pins, del), type_(t)
 {
 }
 
 
 PGBuiltin::~PGBuiltin()
 {
-}
-
-void PGBuiltin::set_range(PExpr*msb, PExpr*lsb)
-{
-      assert(msb_ == 0);
-      assert(lsb_ == 0);
-
-      msb_ = msb;
-      lsb_ = lsb;
 }
 
 const char* PGBuiltin::gate_name() const
@@ -268,20 +265,20 @@ const char* PGBuiltin::gate_name() const
 
 PGModule::PGModule(perm_string type, perm_string name, list<PExpr*>*pins)
 : PGate(name, pins), bound_type_(0), type_(type), overrides_(0), pins_(0),
-  npins_(0), parms_(0), nparms_(0), msb_(0), lsb_(0)
+  npins_(0), parms_(0), nparms_(0)
 {
 }
 
 PGModule::PGModule(perm_string type, perm_string name,
 		   named<PExpr*>*pins, unsigned npins)
 : PGate(name, 0), bound_type_(0), type_(type), overrides_(0), pins_(pins),
-  npins_(npins), parms_(0), nparms_(0), msb_(0), lsb_(0)
+  npins_(npins), parms_(0), nparms_(0)
 {
 }
 
 PGModule::PGModule(Module*type, perm_string name)
 : PGate(name, 0), bound_type_(type), overrides_(0), pins_(0),
-  npins_(0), parms_(0), nparms_(0), msb_(0), lsb_(0)
+  npins_(0), parms_(0), nparms_(0)
 {
 }
 
@@ -301,15 +298,6 @@ void PGModule::set_parameters(named<PExpr*>*pa, unsigned npa)
       assert(overrides_ == 0);
       parms_ = pa;
       nparms_ = npa;
-}
-
-void PGModule::set_range(PExpr*msb, PExpr*lsb)
-{
-      assert(msb_ == 0);
-      assert(lsb_ == 0);
-
-      msb_ = msb;
-      lsb_ = lsb;
 }
 
 perm_string PGModule::get_type() const

@@ -105,14 +105,14 @@ struct net_decl_assign_t {
 /* The lgate is gate instantiation information. */
 struct lgate {
       explicit inline lgate(int =0)
-      : parms(0), parms_by_name(0), file(NULL), lineno(0)
+      : parms(0), parms_by_name(0), ranges(0), file(NULL), lineno(0)
       { }
 
       std::string name;
       std::list<PExpr*>*parms;
       std::list<named_pexpr_t>*parms_by_name;
 
-      pform_range_t range;
+      std::list<pform_range_t>*ranges;
 
       const char* file;
       unsigned lineno;

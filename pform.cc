@@ -2224,8 +2224,7 @@ static void pform_makegate(PGBuiltin::Type type,
 
       perm_string dev_name = lex_strings.make(info.name);
       PGBuiltin*cur = new PGBuiltin(type, dev_name, info.parms, delay);
-      if (info.range.first)
-	    cur->set_range(info.range.first, info.range.second);
+      cur->set_ranges(info.ranges);
 
 	// The pform_makegates() that calls me will take care of
 	// deleting the attr pointer, so tell the
@@ -2290,7 +2289,7 @@ static void pform_make_modgate(perm_string type,
 			       perm_string name,
 			       struct parmvalue_t*overrides,
 			       list<PExpr*>*wires,
-			       PExpr*msb, PExpr*lsb,
+			       list<pform_range_t>*ranges,
 			       const char*fn, unsigned ln,
 			       std::list<named_pexpr_t>*attr)
 {
@@ -2301,7 +2300,7 @@ static void pform_make_modgate(perm_string type,
 
       PGModule*cur = new PGModule(type, name, wires);
       FILE_NAME(cur, fn, ln);
-      cur->set_range(msb,lsb);
+      cur->set_ranges(ranges);
 
       if (overrides && overrides->by_name) {
 	    unsigned cnt = overrides->by_name->size();
@@ -2333,7 +2332,7 @@ static void pform_make_modgate(perm_string type,
 			       perm_string name,
 			       struct parmvalue_t*overrides,
 			       list<named_pexpr_t>*bind,
-			       PExpr*msb, PExpr*lsb,
+			       list<pform_range_t>*ranges,
 			       const char*fn, unsigned ln,
 			       std::list<named_pexpr_t>*attr)
 {
@@ -2348,7 +2347,7 @@ static void pform_make_modgate(perm_string type,
 
       PGModule*cur = new PGModule(type, name, pins, npins);
       FILE_NAME(cur, fn, ln);
-      cur->set_range(msb,lsb);
+      cur->set_ranges(ranges);
 
       if (overrides && overrides->by_name) {
 	    unsigned cnt = overrides->by_name->size();
@@ -2416,8 +2415,7 @@ void pform_make_modgates(const struct vlltype&loc,
 
 	    if (cur.parms_by_name) {
 		  pform_make_modgate(type, cur_name, overrides,
-				     cur.parms_by_name,
-				     cur.range.first, cur.range.second,
+				     cur.parms_by_name, cur.ranges,
 				     cur.file, cur.lineno, attr);
 
 	    } else if (cur.parms) {
@@ -2430,15 +2428,13 @@ void pform_make_modgates(const struct vlltype&loc,
 			cur.parms = new list<PExpr*>;
 		  }
 		  pform_make_modgate(type, cur_name, overrides,
-				     cur.parms,
-				     cur.range.first, cur.range.second,
+				     cur.parms, cur.ranges,
 				     cur.file, cur.lineno, attr);
 
 	    } else {
 		  list<PExpr*>*wires = new list<PExpr*>;
 		  pform_make_modgate(type, cur_name, overrides,
-				     wires,
-				     cur.range.first, cur.range.second,
+				     wires, cur.ranges,
 				     cur.file, cur.lineno, attr);
 	    }
       }

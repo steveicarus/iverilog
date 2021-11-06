@@ -626,6 +626,17 @@ void PGate::dump_delays(ostream&out) const
       delay_.dump_delays(out);
 }
 
+void PGate::dump_ranges(ostream&out) const
+{
+      for (list<pform_range_t>::iterator cur = ranges_->begin()
+		 ; cur != ranges_->end() ; ++cur) {
+	    out << "[";
+	    if (cur->first)  out << *(cur->first);
+	    if (cur->second) out << ":" << *(cur->second);
+	    out << "]";
+      }
+}
+
 void PGate::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << typeid(*this).name() << " ";
@@ -688,11 +699,7 @@ void PGBuiltin::dump(ostream&out, unsigned ind) const
       out << "(" << strength0() << "0 " << strength1() << "1) ";
       dump_delays(out);
       out << " " << get_name();
-
-      if (msb_) {
-	    out << " [" << *msb_ << ":" << *lsb_ << "]";
-      }
-
+      dump_ranges(out);
       out << "(";
       dump_pins(out);
       out << ");" << endl;
@@ -733,16 +740,7 @@ void PGModule::dump(ostream&out, unsigned ind) const
       }
 
       out << get_name();
-
-	// If the module is arrayed, print the index expressions.
-      if (msb_ || lsb_) {
-	    out << "[";
-	    if (msb_) out << *msb_;
-	    out << ":";
-	    if (lsb_) out << *lsb_;
-	    out << "]";
-      }
-
+      dump_ranges(out);
       out << "(";
       if (pins_) {
 	    out << "." << pins_[0].name << "(";

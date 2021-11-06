@@ -1366,7 +1366,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	    return;
       }
 
-      if (msb_ || lsb_) {
+      if (is_array()) {
 	      // If there are expressions to evaluate in order to know
 	      // the actual number of instances that will be
 	      // instantiated, then we have to delay further scope
@@ -1396,41 +1396,17 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
  */
 void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*sc) const
 {
-      NetExpr*mse = msb_ ? elab_and_eval(des, sc, msb_, -1, true) : 0;
-      NetExpr*lse = lsb_ ? elab_and_eval(des, sc, lsb_, -1, true) : 0;
-      NetEConst*msb = dynamic_cast<NetEConst*> (mse);
-      NetEConst*lsb = dynamic_cast<NetEConst*> (lse);
-
-      assert( (msb == 0) || (lsb != 0) );
-
       long instance_low  = 0;
       long instance_high = 0;
-      long instance_count  = 1;
-      bool instance_array = false;
-
-      if (msb) {
-	    instance_array = true;
-	    instance_high = msb->value().as_long();
-	    instance_low  = lsb->value().as_long();
-	    if (instance_high > instance_low)
-		  instance_count = instance_high - instance_low + 1;
-	    else
-		  instance_count = instance_low - instance_high + 1;
-
-	    delete mse;
-	    delete lse;
-      }
+      long instance_count = calculate_array_size_(des, sc, instance_high, instance_low);
+      if (instance_count == 0)
+	    return;
 
       NetScope::scope_vec_t instances (instance_count);
-      if (debug_scopes) {
-	    cerr << get_fileline() << ": debug: Create " << instance_count
-		 << " instances of " << get_name()
-		 << "." << endl;
-      }
 
-	    struct attrib_list_t*attrib_list;
-	    unsigned attrib_list_n = 0;
-	    attrib_list = evaluate_attributes(attributes, attrib_list_n, des, sc);
+      struct attrib_list_t*attrib_list;
+      unsigned attrib_list_n = 0;
+      attrib_list = evaluate_attributes(attributes, attrib_list_n, des, sc);
 
 	// Run through the module instances, and make scopes out of
 	// them. Also do parameter overrides that are done on the
@@ -1439,8 +1415,8 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 
 	    hname_t use_name (get_name());
 
-	    if (instance_array) {
-		  int instance_idx = idx;
+	    if (is_array()) {
+		  int instance_idx;
 		  if (instance_low < instance_high)
 			instance_idx = instance_low + idx;
 		  else
