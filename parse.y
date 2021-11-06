@@ -4290,16 +4290,12 @@ gate_instance
 
   | IDENTIFIER dimensions '(' port_conn_expression_list_with_nuls ')'
       { lgate*tmp = new lgate;
-	list<pform_range_t>*rng = $2;
 	tmp->name = $1;
 	tmp->parms = $4;
-	tmp->range = rng->front();
-	rng->pop_front();
-	assert(rng->empty());
+	tmp->ranges = $2;
 	tmp->file  = @1.text;
 	tmp->lineno = @1.first_line;
 	delete[]$1;
-	delete rng;
 	$$ = tmp;
       }
 
@@ -4316,17 +4312,13 @@ gate_instance
 
   | IDENTIFIER dimensions
       { lgate*tmp = new lgate;
-	list<pform_range_t>*rng = $2;
 	tmp->name = $1;
 	tmp->parms = 0;
 	tmp->parms_by_name = 0;
-	tmp->range = rng->front();
-	rng->pop_front();
-	assert(rng->empty());
+	tmp->ranges = $2;
 	tmp->file  = @1.text;
 	tmp->lineno = @1.first_line;
 	delete[]$1;
-	delete rng;
 	$$ = tmp;
       }
 
@@ -4345,17 +4337,13 @@ gate_instance
 
   | IDENTIFIER dimensions '(' port_name_list ')'
       { lgate*tmp = new lgate;
-	list<pform_range_t>*rng = $2;
 	tmp->name = $1;
 	tmp->parms = 0;
 	tmp->parms_by_name = $4;
-	tmp->range = rng->front();
-	rng->pop_front();
-	assert(rng->empty());
+	tmp->ranges = $2;
 	tmp->file  = @1.text;
 	tmp->lineno = @1.first_line;
 	delete[]$1;
-	delete rng;
 	$$ = tmp;
       }
 
@@ -4377,6 +4365,7 @@ gate_instance
 	tmp->name = $1;
 	tmp->parms = 0;
 	tmp->parms_by_name = 0;
+	tmp->ranges = $2;
 	tmp->file  = @1.text;
 	tmp->lineno = @1.first_line;
 	yyerror(@3, "error: Syntax error in instance port "
