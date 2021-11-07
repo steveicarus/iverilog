@@ -272,7 +272,7 @@ void PWire::set_unpacked_idx(const list<pform_range_t>&ranges)
 
 void PWire::set_data_type(data_type_t*type)
 {
-      assert(set_data_type_ == 0);
+      assert(set_data_type_ == 0 || set_data_type_ == type);
       set_data_type_ = type;
 
       if (vector_type_t*tmp = dynamic_cast<vector_type_t*>(type)) {
