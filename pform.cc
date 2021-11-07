@@ -2748,11 +2748,7 @@ void pform_makewire(const vlltype&li, perm_string name,
 		    list<named_pexpr_t>*attr)
 {
       PWire*cur = pform_get_or_make_wire(li, name, type, pt, dt);
-
-      if (! cur) {
-	    cur = new PWire(name, type, pt, dt);
-	    FILE_NAME(cur, li.text, li.first_line);
-      }
+      assert(cur);
 
       bool flag;
       switch (dt) {
