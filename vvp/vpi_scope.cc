@@ -64,6 +64,7 @@ static void delete_sub_scopes(__vpiScope *scope)
 		case vpiFunction:
 		case vpiTask:
 		  contexts_delete(lscope);
+		  // fallthrough
 		case vpiModule:
 		case vpiGenScope:
 		case vpiNamedBegin:
