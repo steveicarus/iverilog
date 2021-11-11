@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -371,7 +371,7 @@ void compile_ufunc_vec4(char*label, char*code, unsigned wid,
       free(portv);
 }
 #ifdef CHECK_WITH_VALGRIND
-static map<ufunc_core*, bool> ufunc_map;
+static std::map<ufunc_core*, bool> ufunc_map;
 
 void exec_ufunc_delete(vvp_code_t euf_code)
 {
@@ -380,7 +380,7 @@ void exec_ufunc_delete(vvp_code_t euf_code)
 
 void ufunc_pool_delete(void)
 {
-      map<ufunc_core*, bool>::iterator iter;
+      std::map<ufunc_core*, bool>::iterator iter;
       for (iter = ufunc_map.begin(); iter != ufunc_map.end(); ++ iter ) {
 	    delete iter->first;
       }
