@@ -259,12 +259,18 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    use_sel = name_tail.index.back().sel;
 
 	// Special case: The l-value is an entire memory, or array
-	// slice. This is, in fact, an error in l-values. Detect the
-	// situation by noting if the index count is less than the
-	// array dimensions (unpacked).
+	// slice. Detect the situation by noting if the index count
+	// is less than the array dimensions (unpacked).
       if (reg->unpacked_dimensions() > name_tail.index.size()) {
-	    cerr << get_fileline() << ": error: Cannot assign to array "
-		 << path_ << ". Did you forget a word index?" << endl;
+	    if (gn_system_verilog()) {
+		  cerr << get_fileline() << ": sorry: Assignment to an entire"
+		        " array or to an array slice is not yet supported."
+		       << endl;
+	    } else {
+		  cerr << get_fileline() << ": error: Assignment to an entire"
+		        " array or to an array slice requires SystemVerilog."
+		       << endl;
+	    }
 	    des->errors += 1;
 	    return 0;
       }
