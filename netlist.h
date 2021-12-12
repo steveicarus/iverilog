@@ -3068,6 +3068,8 @@ class NetBreak : public NetProc {
     public:
       virtual void dump(std::ostream&, unsigned ind) const;
       virtual bool emit_proc(struct target_t*) const;
+      bool evaluate_function(const LineInfo &loc,
+			     std::map<perm_string,LocalVar> &ctx) const final;
 };
 
 /*
@@ -3222,6 +3224,8 @@ class NetContinue : public NetProc {
     public:
       virtual void dump(std::ostream&, unsigned ind) const;
       virtual bool emit_proc(struct target_t*) const;
+      bool evaluate_function(const LineInfo &loc,
+			     std::map<perm_string,LocalVar> &ctx) const final;
 };
 
 /*
