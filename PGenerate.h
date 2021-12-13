@@ -115,6 +115,7 @@ class PGenerate : public PNamedItem, public LexicalScope {
       SymbolType symbol_type() const;
 
     private:
+      void check_for_valid_genvar_value_(long value);
       bool generate_scope_loop_(Design*des, NetScope*container);
       bool generate_scope_condit_(Design*des, NetScope*container, bool else_flag);
       bool generate_scope_case_(Design*des, NetScope*container);

@@ -895,6 +895,18 @@ bool PGenerate::generate_scope(Design*des, NetScope*container)
       }
 }
 
+void PGenerate::check_for_valid_genvar_value_(long value)
+{
+      if (generation_flag < GN_VER2005 && value < 0) {
+	    cerr << get_fileline() << ": warning: A negative value (" << value
+		 << ") has been assigned to genvar '" << loop_index << "'."
+		 << endl;
+	    cerr << get_fileline() << ":        : This is illegal in "
+		    "Verilog-2001. Use at least -g2005 to remove this warning."
+		 << endl;
+      }
+}
+
 /*
  * This is the elaborate scope method for a generate loop.
  */
@@ -939,6 +951,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
       }
 
       genvar = init->value().as_long();
+      check_for_valid_genvar_value_(genvar);
       delete init_ex;
 
       if (debug_scopes)
@@ -1009,6 +1022,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 		       << genvar << " to " << step->value().as_long() << endl;
 
 	    genvar = step->value().as_long();
+	    check_for_valid_genvar_value_(genvar);
 	    container->genvar_tmp_val = genvar;
 	    delete step;
 	    delete test_ex;
