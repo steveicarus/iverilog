@@ -971,7 +971,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
       }
 
 	// We're going to need a genvar...
-      int genvar;
+      long genvar;
 
 	// The initial value for the genvar does not need (nor can it
 	// use) the genvar itself, so we can evaluate this expression
