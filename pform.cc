@@ -3110,7 +3110,7 @@ PExpr* pform_genvar_inc_dec(const struct vlltype&loc, const char*name, bool inc_
       }
 
       PExpr*lval = new PEIdent(lex_strings.make(name));
-      PExpr*rval = new PENumber(new verinum((uint64_t)1, 1));
+      PExpr*rval = new PENumber(new verinum(1));
       FILE_NAME(lval, loc);
       FILE_NAME(rval, loc);
 
