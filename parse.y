@@ -38,6 +38,7 @@ class PSpecPath;
 extern void lex_end_table();
 
 static data_type_t* param_data_type = 0;
+static bool param_is_local = false;
 static std::list<pform_range_t>* specparam_active_range = 0;
 
 /* Port declaration lists use this structure for context. */
@@ -2040,8 +2041,7 @@ package_import_item_list
 
 package_item /* IEEE1800-2005 A.1.10 */
   : timeunits_declaration
-  | K_parameter param_type parameter_assign_list ';'
-  | K_localparam param_type localparam_assign_list ';'
+  | parameter_or_localparam param_type parameter_assign_list ';'
   | type_declaration
   | function_declaration
   | task_declaration
@@ -2773,8 +2773,7 @@ block_item_decl
       { if ($2) pform_make_events($2, @1.text, @1.first_line);
       }
 
-  | K_parameter param_type parameter_assign_list ';'
-  | K_localparam param_type localparam_assign_list ';'
+  | parameter_or_localparam param_type parameter_assign_list ';'
 
   /* Blocks can have type declarations. */
 
@@ -2797,11 +2796,11 @@ block_item_decl
 	yyerrok;
       }
 
-  | K_parameter error ';'
+  | parameter error ';'
       { yyerror(@1, "error: syntax error in parameter list.");
 	yyerrok;
       }
-  | K_localparam error ';'
+  | localparam error ';'
       { yyerror(@1, "error: syntax error localparam list.");
 	yyerrok;
       }
@@ -5003,22 +5002,20 @@ module_parameter_port_list_opt
   | '#' '(' module_parameter_port_list ')'
   ;
 
-module_parameter_port_list
-  : K_parameter param_type parameter_assign
-  | K_localparam param_type localparam_assign
+module_parameter
+  : parameter param_type parameter_assign
+  | localparam param_type parameter_assign
       { if (!gn_system_verilog()) {
 	      yyerror(@1, "error: Local parameters in module parameter "
 			  "port lists requires SystemVerilog.");
 	}
-      }
-  | module_parameter_port_list ',' parameter_assign
-  | module_parameter_port_list ',' K_parameter param_type parameter_assign
-  | module_parameter_port_list ',' K_localparam param_type localparam_assign
-      { if (!gn_system_verilog()) {
-	      yyerror(@3, "error: Local parameters in module parameter "
-			  "port lists requires SystemVerilog.");
 	}
-      }
+  ;
+
+module_parameter_port_list
+  : module_parameter
+  | module_parameter_port_list ',' module_parameter
+  | module_parameter_port_list ',' parameter_assign
   ;
 
 module_item
@@ -5663,6 +5660,14 @@ net_type
 
 param_type : data_type_or_implicit { param_data_type = $1; }
 
+parameter : K_parameter { param_is_local = false; };
+localparam : K_localparam { param_is_local = true; };
+
+parameter_or_localparam
+  : parameter
+  | localparam
+  ;
+
   /* parameter and localparam assignment lists are broken into
      separate BNF so that I can call slightly different parameter
      handling code. localparams parse the same as parameters, they
@@ -5673,25 +5678,11 @@ parameter_assign_list
   | parameter_assign_list ',' parameter_assign
   ;
 
-localparam_assign_list
-  : localparam_assign
-  | localparam_assign_list ',' localparam_assign
-  ;
-
 parameter_assign
   : IDENTIFIER '=' expression parameter_value_ranges_opt
       { PExpr*tmp = $3;
-	pform_set_parameter(@1, lex_strings.make($1), false, param_data_type,
-			    tmp, $4);
-	delete[]$1;
-      }
-  ;
-
-localparam_assign
-  : IDENTIFIER '=' expression parameter_value_ranges_opt
-      { PExpr*tmp = $3;
-	pform_set_parameter(@1, lex_strings.make($1), true, param_data_type,
-			    tmp, $4);
+	pform_set_parameter(@1, lex_strings.make($1), param_is_local,
+			    param_data_type, tmp, $4);
 	delete[]$1;
       }
   ;
