@@ -2415,6 +2415,13 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
       for (idx = 0 ;  idx < ivl_scope_params(net) ;  idx += 1) {
 	    ivl_parameter_t par = ivl_scope_param(net, idx);
+
+	      // Skip type parameters for now. Support for type parameters
+	      // should be added together with support for quering types through
+	      // VPI.
+	    if (ivl_parameter_is_type(par))
+		  continue;
+
 	    ivl_expr_t pex = ivl_parameter_expr(par);
 	    switch (ivl_expr_type(pex)) {
 		case IVL_EX_STRING:

@@ -509,10 +509,7 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 	    cur_par->basename = cur_pit->first;
 	    cur_par->local = cur_pit->second.local_flag ||
 			     !cur_pit->second.overridable;
-	    calculate_param_range(cur_pit->second,
-				  cur_pit->second.ivl_type,
-				  cur_par->msb, cur_par->lsb,
-				  cur_pit->second.val->expr_width());
+	    cur_par->is_type = cur_pit->second.type_flag;
 
 	    if (cur_pit->second.ivl_type == 0) {
 		  cerr << "?:?: internal error: "
@@ -525,14 +522,23 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 	    cur_par->scope = scop;
 	    FILE_NAME(cur_par, &(cur_pit->second));
 
-	    NetExpr*etmp = cur_pit->second.val;
-	    if (etmp == 0) {
-		  cerr << "?:?: internal error: What is the parameter "
-		       << "expression for " << cur_pit->first
-		       << " in " << net->fullname() << "?" << endl;
+	      // Type parameters don't have a range or expression
+	    if (!cur_pit->second.type_flag) {
+		  calculate_param_range(cur_pit->second,
+					cur_pit->second.ivl_type,
+					cur_par->msb, cur_par->lsb,
+					cur_pit->second.val->expr_width());
+
+		  NetExpr*etmp = cur_pit->second.val;
+		  if (etmp == 0) {
+			cerr << "?:?: internal error: What is the parameter "
+			     << "expression for " << cur_pit->first
+			     << " in " << net->fullname() << "?" << endl;
+		  }
+		  assert(etmp);
+		  make_scope_param_expr(cur_par, etmp);
 	    }
-	    assert(etmp);
-	    make_scope_param_expr(cur_par, etmp);
+
 	    idx += 1;
       }
 }

@@ -433,7 +433,7 @@ void NetScope::run_defparams(Design*des)
 		  continue;
 	    }
 
-	    targ_scope->replace_parameter(des, perm_name, val, this);
+	    targ_scope->replace_parameter(des, perm_name, val, this, true);
       }
 
 	// If some of the defparams didn't find a scope in the name,
@@ -468,7 +468,7 @@ void NetScope::run_defparams_later(Design*des)
 		  continue;
 	    }
 
-	    targ_scope->replace_parameter(des, name, val, this);
+	    targ_scope->replace_parameter(des, name, val, this, true);
 
 	      // We'll need to re-evaluate parameters in this scope
 	    target_scopes.insert(targ_scope);
@@ -814,20 +814,31 @@ void NetScope::evaluate_parameter_string_(Design*des, param_ref_t cur)
       }
 }
 
-void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
+void NetScope::evaluate_type_parameter_(Design *des, param_ref_t cur)
 {
-      ivl_type_t param_type = cur->second.ivl_type;
+      const PETypename *type_expr = dynamic_cast<const PETypename*>(cur->second.val_expr);
+      if (!type_expr) {
+	    cerr << this->get_fileline() << ": error: "
+		 << "Type parameter `" << cur->first << "` value `"
+	         << *cur->second.val_expr << "` is not a type."
+		 << endl;
+	    des->errors++;
 
-      // If the parameter type is present, then elaborate it now. Elaborate
-      // the type in the current scope, and not the scope of the expression.
-      if (cur->second.val_type) {
-	    param_type = cur->second.val_type->elaborate_type(des, this);
-	    cur->second.ivl_type = param_type;
-	    cur->second.val_type = 0;
+	    // Recover
+	    cur->second.ivl_type = netvector_t::integer_type();
+	    return;
       }
 
+      data_type_t *type = type_expr->get_type();
+      NetScope *type_scope = cur->second.val_scope;
+      cur->second.ivl_type = type->elaborate_type(des, type_scope);
+}
+
+void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
+{
+
       // If the parameter has already been evaluated, quietly return.
-      if (cur->second.val != 0)
+      if (cur->second.val || cur->second.ivl_type)
             return;
 
       if (cur->second.val_expr == 0) {
@@ -838,6 +849,21 @@ void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
 
 	    cur->second.val = new NetEConst(verinum(verinum::Vx));
 	    return;
+      }
+
+      if (cur->second.type_flag) {
+	    evaluate_type_parameter_(des, cur);
+	    return;
+      }
+
+      ivl_type_t param_type = cur->second.ivl_type;
+
+      // If the parameter type is present, then elaborate it now. Elaborate
+      // the type in the current scope, and not the scope of the expression.
+      if (cur->second.val_type) {
+	    param_type = cur->second.val_type->elaborate_type(des, this);
+	    cur->second.ivl_type = param_type;
+	    cur->second.val_type = 0;
       }
 
       // Guess the varaiable type of the parameter. If the parameter has no

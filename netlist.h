@@ -44,6 +44,7 @@
 # include  "HName.h"
 # include  "LineInfo.h"
 # include  "Attrib.h"
+# include  "PScope.h"
 # include  "PUdp.h"
 
 #ifdef HAVE_IOSFWD
@@ -952,10 +953,8 @@ class NetScope : public Definitions, public Attrib {
 
       struct range_t;
       void set_parameter(perm_string name, bool is_annotatable,
-			 PExpr*val, data_type_t*data_type,
-			 bool local_flag, bool overridable,
-			 NetScope::range_t*range_list,
-			 const LineInfo&file_line);
+			 const LexicalScope::param_expr_t &param,
+			 NetScope::range_t *range_list);
       void set_parameter(perm_string name, NetExpr*val,
 			 const LineInfo&file_line);
 
@@ -968,7 +967,8 @@ class NetScope : public Definitions, public Attrib {
 	   expression with a new expression, without affecting the
 	   range or signed_flag. Return false if the name does not
 	   exist. */
-      void replace_parameter(Design *des, perm_string name, PExpr*val, NetScope*scope);
+      void replace_parameter(Design *des, perm_string name, PExpr*val,
+			     NetScope*scope, bool defparam = false);
 
 	/* This is used to ensure the value of a parameter cannot be
 	   changed at run-time. This is required if a specparam is used
@@ -1213,11 +1213,19 @@ class NetScope : public Definitions, public Attrib {
 	    // Is this a localparam?
 	    bool local_flag;
 	    // Can it be overriden?
-	    bool overridable;
+	    bool overridable = false;
+	    // Is it a type parameter
+	    bool type_flag = false;
 	    // range constraints
 	    struct range_t*range;
-	    // Expression value and type (elaborated versoins of val_expr/val_type)
+
+	    // Expression value. Elaborated version of val_expr.
+	    // For type parameters this will always be 0.
 	    NetExpr*val;
+
+	    // For non-type parameter this contains the elaborate type of the
+	    // parameter itself. For type parameters this contains the
+	    // elaborated assigned type value.
 	    ivl_type_t ivl_type;
       };
       std::map<perm_string,param_expr_t>parameters;
@@ -1240,6 +1248,7 @@ class NetScope : public Definitions, public Attrib {
       std::map<perm_string,LocalVar> loop_index_tmp;
 
     private:
+      void evaluate_type_parameter_(Design*des, param_ref_t cur);
       void evaluate_parameter_logic_(Design*des, param_ref_t cur);
       void evaluate_parameter_real_(Design*des, param_ref_t cur);
       void evaluate_parameter_string_(Design*des, param_ref_t cur);

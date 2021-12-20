@@ -638,6 +638,7 @@ struct ivl_parameter_s {
       long          lsb;
       bool  signed_flag;
       bool        local;
+      bool      is_type;
       perm_string file;
       unsigned lineno;
 };

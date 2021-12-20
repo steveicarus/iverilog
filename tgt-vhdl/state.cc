@@ -264,6 +264,14 @@ static bool same_scope_type_name(ivl_scope_t a, ivl_scope_t b)
                  ivl_parameter_basename(param_b)) != 0)
          return false;
 
+      if (ivl_parameter_local(param_a) && ivl_parameter_local(param_b))
+	    continue;
+
+      // If this is a type parameter consider the scopes not equal since we do
+      // not have support for comparing the actual types yet.
+      if (ivl_parameter_is_type(param_a) || ivl_parameter_is_type(param_b))
+	    return false;
+
       ivl_expr_t value_a = ivl_parameter_expr(param_a);
       ivl_expr_t value_b = ivl_parameter_expr(param_b);
 
