@@ -21,6 +21,7 @@
 # include  "util.h"
 # include  "PExpr.h"
 # include  "netlist.h"
+# include  "netmisc.h"
 # include  <iostream>
 # include  <cassert>
 
@@ -52,23 +53,25 @@ attrib_list_t* evaluate_attributes(const map<perm_string,PExpr*>&att,
 	      /* If the attribute value is given in the source, then
 		 evaluate it as a constant. If the value is not
 		 given, then assume the value is 1. */
-	    verinum*tmp = 0;
 	    if (exp) {
-		  tmp = exp->eval_const(des, scope);
-                  if (tmp == 0) {
+		  NetExpr *tmp = elab_and_eval(des, scope, exp, -1, true);
+		  if (!tmp)
+			continue;
+
+		  if (NetEConst *ce = dynamic_cast<NetEConst*>(tmp)) {
+			table[idx].val = ce->value();
+		  } else if (NetECReal *cer = dynamic_cast<NetECReal*>(tmp)) {
+			table[idx].val = verinum(cer->value().as_long());
+		  } else {
 			cerr << exp->get_fileline() << ": error: ``"
 			     << *exp << "'' is not a constant expression."
 			     << endl;
 			des->errors += 1;
-                  }
-            }
-	    if (tmp == 0)
-		  tmp = new verinum(1);
-
-	    assert(tmp);
-
-	    table[idx].val = *tmp;
-	    delete tmp;
+		  }
+		  delete tmp;
+	    } else {
+		  table[idx].val = verinum(1);
+	    }
       }
 
       assert(idx == natt);
