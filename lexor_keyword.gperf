@@ -322,7 +322,7 @@ type,			GN_KEYWORDS_1800_2005,		K_type
 typedef,		GN_KEYWORDS_1800_2005,		K_typedef
 union,			GN_KEYWORDS_1800_2005,		K_union
 unique,			GN_KEYWORDS_1800_2005,		K_unique
-unique0,		GN_KEYWORDS_1800_2009,		K_unique
+unique0,		GN_KEYWORDS_1800_2009,		K_unique0
 units,			GN_KEYWORDS_VAMS_2_3,		K_units
 # Reserved for future use!
 unsigned,		GN_KEYWORDS_1364_2001,		K_unsigned
