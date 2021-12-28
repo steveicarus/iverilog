@@ -278,22 +278,39 @@ static int draw_condition_binary_le(ivl_expr_t expr)
 
 static int draw_condition_binary_lor(ivl_expr_t expr)
 {
+      unsigned label_out = local_count++;
+
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
 
       int lx = draw_eval_condition(le);
+      int tmp_flag = lx;
+
+      /* Short circuit right hand side if necessary */
+      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %d;\n", thread_count, label_out, lx);
 
       if (lx < 8) {
-	    int tmp = allocate_flag();
-	    fprintf(vvp_out, "    %%flag_mov %d, %d;\n", tmp, lx);
-	    lx = tmp;
+	  tmp_flag = allocate_flag();
+	  fprintf(vvp_out, "    %%flag_mov %d, %d;\n", tmp_flag, lx);
       }
 
       int rx = draw_eval_condition(re);
 
-      fprintf(vvp_out, "    %%flag_or %d, %d;\n", rx, lx);
-      clr_flag(lx);
-      return rx;
+      /*
+       * The flag needs to be in the same position regardless of whether the
+       * right side is short-cicuited or not.
+       */
+      if (lx == tmp_flag) {
+	  fprintf(vvp_out, "    %%flag_or %d, %d;\n", lx, rx);
+      } else {
+	  fprintf(vvp_out, "    %%flag_or %d, %d;\n", rx, tmp_flag);
+	  if (lx != rx)
+	      fprintf(vvp_out, "    %%flag_mov %d, %d;\n", lx, rx);
+	  clr_flag(tmp_flag);
+      }
+      fprintf(vvp_out, "T_%u.%u;\n", thread_count, label_out);
+      clr_flag(rx);
+      return lx;
 }
 
 static int draw_condition_binary(ivl_expr_t expr)
