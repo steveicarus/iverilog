@@ -432,8 +432,22 @@ static void draw_binary_vec4_lequiv(ivl_expr_t expr)
       assert(ivl_expr_width(expr) == 1);
 }
 
-static void draw_binary_vec4_land(ivl_expr_t expr)
+static void draw_binary_vec4_logical(ivl_expr_t expr, char op)
 {
+      const char *opcode;
+
+      switch (op) {
+	  case 'a':
+	    opcode = "and";
+	    break;
+	  case 'o':
+	    opcode = "or";
+	    break;
+	  default:
+	    assert(0);
+	    break;
+      }
+
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
 
@@ -449,7 +463,7 @@ static void draw_binary_vec4_land(ivl_expr_t expr)
       if (ivl_expr_width(re) > 1)
 	    fprintf(vvp_out, "    %%or/r;\n");
 
-      fprintf(vvp_out, "    %%and;\n");
+      fprintf(vvp_out, "    %%%s;\n", opcode);
 
       if (ivl_expr_width(expr) > 1)
 	    fprintf(vvp_out, "    %%pad/u %u;\n", ivl_expr_width(expr));
@@ -632,29 +646,6 @@ static void draw_binary_vec4_le(ivl_expr_t expr)
       }
 }
 
-static void draw_binary_vec4_lor(ivl_expr_t expr)
-{
-      ivl_expr_t le = ivl_expr_oper1(expr);
-      ivl_expr_t re = ivl_expr_oper2(expr);
-
-	/* Push the left expression. Reduce it to a single bit if
-	   necessary. */
-      draw_eval_vec4(le);
-      if (ivl_expr_width(le) > 1)
-	    fprintf(vvp_out, "    %%or/r;\n");
-
-	/* Now push the right expression. Again, reduce to a single
-	   bit if necessary. */
-      draw_eval_vec4(re);
-      if (ivl_expr_width(re) > 1)
-	    fprintf(vvp_out, "    %%or/r;\n");
-
-      fprintf(vvp_out, "    %%or;\n");
-
-      if (ivl_expr_width(expr) > 1)
-	    fprintf(vvp_out, "    %%pad/u %u;\n", ivl_expr_width(expr));
-}
-
 static void draw_binary_vec4_lrs(ivl_expr_t expr)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
@@ -695,7 +686,8 @@ static void draw_binary_vec4(ivl_expr_t expr)
 {
       switch (ivl_expr_opcode(expr)) {
 	  case 'a': /* Logical && */
-	    draw_binary_vec4_land(expr);
+	  case 'o': /* || (logical or) */
+	    draw_binary_vec4_logical(expr, ivl_expr_opcode(expr));
 	    break;
 
 	  case '+':
@@ -736,10 +728,6 @@ static void draw_binary_vec4(ivl_expr_t expr)
 	  case 'r': /* >> */
 	  case 'R': /* >>> */
 	    draw_binary_vec4_lrs(expr);
-	    break;
-
-	  case 'o': /* || (logical or) */
-	    draw_binary_vec4_lor(expr);
 	    break;
 
 	  case 'q': /* -> (logical implication) */
