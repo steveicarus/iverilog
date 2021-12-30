@@ -9,7 +9,8 @@ url="http://iverilog.icarus.com/"
 license=('GPLv2+')
 depends=("${MINGW_PACKAGE_PREFIX}-readline"
          "${MINGW_PACKAGE_PREFIX}-gcc-libs")
-makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
+makedepends=("autoconf"
+             "${MINGW_PACKAGE_PREFIX}-gcc"
              "${MINGW_PACKAGE_PREFIX}-ghostscript")
 
 source=()
