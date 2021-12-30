@@ -511,16 +511,11 @@ class PEIdent : public PExpr {
 				       NetESignal*net,
 				       NetScope*found,
 				       unsigned expr_wid) const;
-      NetExpr*elaborate_expr_net_idx_up_(Design*des,
-				         NetScope*scope,
-				         NetESignal*net,
-				         NetScope*found,
-                                         bool need_const) const;
-      NetExpr*elaborate_expr_net_idx_do_(Design*des,
-				         NetScope*scope,
-				         NetESignal*net,
-				         NetScope*found,
-                                         bool need_const) const;
+      NetExpr*elaborate_expr_net_idx_up_do_(Design*des,
+					    NetScope*scope,
+					    NetESignal*net,
+					    NetScope*found,
+					    bool up, bool need_const) const;
       NetExpr*elaborate_expr_net_bit_(Design*des,
 				      NetScope*scope,
 				      NetESignal*net,
