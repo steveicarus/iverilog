@@ -811,6 +811,36 @@ NetEConst* NetEBLogic::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
       const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
       const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
+
+      // If the left side is constant and the right side is short circuited
+      // replace the expression with a constant
+      if (rc == 0 && lc != 0) {
+	    verinum v = lc->value();
+	    verinum::V res = verinum::Vx;
+	    switch (op_) {
+		case 'a': // Logical AND (&&)
+		  if (v.is_zero())
+			res = verinum::V0;
+		  break;
+		case 'o': // Logical OR (||)
+		  if (! v.is_zero() && v.is_defined())
+			res = verinum::V1;
+		  break;
+		case 'q': // Logical implication (->)
+		  if (v.is_zero())
+			res = verinum::V1;
+		  break;
+		default:
+		  break;
+	    }
+	    if (res != verinum::Vx) {
+		  NetEConst*tmp = new NetEConst(verinum(res, 1));
+		  ivl_assert(*this, tmp);
+		  eval_debug(this, tmp, false);
+		  return tmp;
+	    }
+      }
+
       if (lc == 0 || rc == 0) return 0;
 
       verinum::V lv = verinum::V0;
