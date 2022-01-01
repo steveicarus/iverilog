@@ -759,31 +759,8 @@ static void store_real_to_lval(ivl_lval_t lval)
       ivl_expr_t word_ex = ivl_lval_idx(lval);
       int word_ix = allocate_word();
 
-	/* If the word index is a constant, then we can write
-	   directly to the word and save the index calculation.
-	   Out-of-bounds and undefined indices are converted to
-	   a canonical index of 'bx during elaboration, and we
-	   don't try to optimise that case. */
-      if (word_ex && number_is_immediate(word_ex, IMM_WID, 0) &&
-	  !number_is_unknown(word_ex)) {
-	    unsigned long use_word = get_number_immediate(word_ex);
-	    assert(use_word < ivl_signal_array_count(var));
-	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n",
-		    word_ix, use_word);
-	    fprintf(vvp_out, "    %%store/reala v%p, %d;\n",
-		    var, word_ix);
-
-      } else {
-	    unsigned do_store = transient_id++;
-	    unsigned end_store = transient_id++;
-	    draw_eval_expr_into_integer(word_ex, word_ix);
-	    fprintf(vvp_out, "    %%jmp/0 t_%u, 4;\n", do_store);
-	    fprintf(vvp_out, "    %%pop/real 1;\n");
-	    fprintf(vvp_out, "    %%jmp t_%u;\n", end_store);
-	    fprintf(vvp_out, "t_%u ;\n", do_store);
-	    fprintf(vvp_out, "    %%store/reala v%p, %d;\n", var, word_ix);
-	    fprintf(vvp_out, "t_%u ;\n", end_store);
-      }
+      draw_eval_expr_into_integer(word_ex, word_ix);
+      fprintf(vvp_out, "    %%store/reala v%p, %d;\n", var, word_ix);
 
       clr_word(word_ix);
 }
