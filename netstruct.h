@@ -34,8 +34,8 @@ class netstruct_t : public LineInfo, public ivl_type_s {
 	    ivl_type_t net_type;
 	    inline ivl_variable_type_t data_type() const
 	    { return net_type->base_type(); };
-	      // We need to keep the individual element sign information.
-	    bool get_signed() const { return false; };
+	    bool get_signed() const
+	    { return net_type->get_signed(); }
       };
 
     public:
