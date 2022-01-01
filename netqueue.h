@@ -38,9 +38,6 @@ class netqueue_t : public netdarray_t {
 	// IVL_VT_QUEUE for queues.
       ivl_variable_type_t base_type() const;
 
-	// Use the packed width to pass the element width
-      long packed_width(void) const { return element_type()->packed_width(); }
-
       long max_idx(void) const { return max_idx_; }
 
       std::ostream& debug_dump(std::ostream&) const;
