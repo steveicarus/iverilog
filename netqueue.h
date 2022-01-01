@@ -38,9 +38,6 @@ class netqueue_t : public netdarray_t {
 	// IVL_VT_QUEUE for queues.
       ivl_variable_type_t base_type() const;
 
-	// A queue may have a type that is signed.
-      inline bool get_signed() const { return element_type()->get_signed(); }
-
 	// Use the packed width to pass the element width
       long packed_width(void) const { return element_type()->packed_width(); }
 
