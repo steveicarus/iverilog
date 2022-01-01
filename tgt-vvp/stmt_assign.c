@@ -147,9 +147,9 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 
 	    fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
 	    draw_eval_vec4(part_off_ex);
-	    fprintf(vvp_out, "    %%flag_mov %u, 4;\n", slice->u_.part_select_dynamic.x_flag);
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
 	    fprintf(vvp_out, "    %%ix/vec4 %d;\n", slice->u_.part_select_dynamic.word_idx_reg);
+	    fprintf(vvp_out, "    %%flag_mov %u, 4;\n", slice->u_.part_select_dynamic.x_flag);
 	    fprintf(vvp_out, "    %%part/u %u;\n", wid);
 
       } else if (ivl_signal_dimensions(sig) > 0 && word_ix == 0) {
