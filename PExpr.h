@@ -172,7 +172,8 @@ class PExpr : public LineInfo {
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
 					 bool is_cassign,
-					 bool is_force) const;
+					 bool is_force,
+					 bool is_init = false) const;
 
 	// This method returns true if the expression represents a
         // structural net that can have multiple drivers. This is
@@ -262,7 +263,8 @@ class PEConcat : public PExpr {
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
 					 bool is_cassign,
-					 bool is_force) const;
+					 bool is_force,
+					 bool is_init = false) const;
       virtual bool is_collapsible_net(Design*des, NetScope*scope,
                                       NetNet::PortType port_type) const;
     private:
@@ -361,7 +363,8 @@ class PEIdent : public PExpr {
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
 					 bool is_cassign,
-					 bool is_force) const;
+					 bool is_force,
+					 bool is_init = false) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     ivl_type_t type, unsigned flags) const;
@@ -647,7 +650,8 @@ class PENumber : public PExpr {
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
 					 bool is_cassign,
-					 bool is_force) const;
+					 bool is_force,
+					 bool is_init = false) const;
 
     private:
       verinum*const value_;

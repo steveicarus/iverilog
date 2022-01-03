@@ -29,8 +29,9 @@ Statement::~Statement()
 {
 }
 
-PAssign_::PAssign_(PExpr*lval__, PExpr*ex, bool is_constant)
-: event_(0), count_(0), lval_(lval__), rval_(ex), is_constant_(is_constant)
+PAssign_::PAssign_(PExpr*lval__, PExpr*ex, bool is_constant, bool is_init)
+: event_(0), count_(0), lval_(lval__), rval_(ex), is_constant_(is_constant),
+  is_init_(is_init)
 {
       delay_ = 0;
 }
@@ -73,8 +74,8 @@ PAssign::PAssign(PExpr*lval__, PExpr*cnt, PEventStatement*d, PExpr*ex)
 {
 }
 
-PAssign::PAssign(PExpr*lval__, PExpr*ex, bool is_constant)
-: PAssign_(lval__, ex, is_constant), op_(0)
+PAssign::PAssign(PExpr*lval__, PExpr*ex, bool is_constant, bool is_init)
+: PAssign_(lval__, ex, is_constant, is_init), op_(0)
 {
 }
 

@@ -556,6 +556,12 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		 << endl;
       }
 
+      if (sig->get_const()) {
+	    cerr << get_fileline() << ": error: Continuous assignment to const"
+	         << " signal `" << sig->name() << "` is not allowed." << endl;
+	    des->errors++;
+	    return nullptr;
+      }
 
       // If this is SystemVerilog and the variable is not yet
       // assigned by anything, then convert it to an unresolved

@@ -951,11 +951,13 @@ PCallTask* pform_make_call_task(const struct vlltype&loc,
 
 void pform_make_var(const struct vlltype&loc,
 		    std::list<decl_assignment_t*>*assign_list,
-		    data_type_t*data_type, std::list<named_pexpr_t>*attr)
+		    data_type_t*data_type, std::list<named_pexpr_t>*attr,
+		    bool is_const)
 {
       static const struct str_pair_t str = { IVL_DR_STRONG, IVL_DR_STRONG };
 
-      pform_makewire(loc, 0, str, assign_list, NetNet::REG, data_type, attr);
+      pform_makewire(loc, 0, str, assign_list, NetNet::REG, data_type, attr,
+		     is_const);
 }
 
 void pform_make_foreach_declarations(const struct vlltype&loc,
@@ -2494,7 +2496,7 @@ void pform_make_var_init(const struct vlltype&li,
 
       PEIdent*lval = new PEIdent(name);
       FILE_NAME(lval, li);
-      PAssign*ass = new PAssign(lval, expr, !gn_system_verilog());
+      PAssign*ass = new PAssign(lval, expr, !gn_system_verilog(), true);
       FILE_NAME(ass, li);
 
       lexical_scope->var_inits.push_back(ass);
@@ -2646,7 +2648,8 @@ void pform_makewire(const struct vlltype&li,
 		    std::list<decl_assignment_t*>*assign_list,
 		    NetNet::Type type,
 		    data_type_t*data_type,
-		    list<named_pexpr_t>*attr)
+		    list<named_pexpr_t>*attr,
+		    bool is_const)
 {
       if (is_compilation_unit(lexical_scope) && !gn_system_verilog()) {
 	    VLerror(li, "error: Variable declarations must be contained within a module.");
@@ -2662,7 +2665,7 @@ void pform_makewire(const struct vlltype&li,
 	    wires->push_back(wire);
       }
 
-      pform_set_data_type(li, data_type, wires, type, attr);
+      pform_set_data_type(li, data_type, wires, type, attr, is_const);
 
       while (! assign_list->empty()) {
 	    decl_assignment_t*first = assign_list->front();
@@ -3224,7 +3227,7 @@ void pform_set_port_type(const struct vlltype&li,
  */
 void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
 			 std::vector<PWire*> *wires, NetNet::Type net_type,
-			 list<named_pexpr_t>*attr)
+			 list<named_pexpr_t>*attr, bool is_const)
 {
       if (data_type == 0) {
 	    VLerror(li, "internal error: data_type==0.");
@@ -3245,6 +3248,7 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
 	    ivl_assert(li, rc);
 
 	    wire->set_data_type(data_type);
+	    wire->set_const(is_const);
 
 	    pform_bind_attributes(wire->attributes, attr, true);
       }

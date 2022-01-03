@@ -702,6 +702,9 @@ class NetNet  : public NetObj, public PortType {
 	   signed. Otherwise, it is unsigned. */
       bool get_signed() const;
 
+      void set_const(bool is_const) { is_const_ = is_const; }
+      bool get_const() const { return is_const_; }
+
       bool get_scalar() const;
 
       inline const ivl_type_s* net_type(void) const { return net_type_; }
@@ -807,6 +810,9 @@ class NetNet  : public NetObj, public PortType {
       ivl_type_t net_type_;
       netuarray_t *array_type_ = nullptr;
       ivl_discipline_t discipline_;
+
+        // Whether the net is variable declared with the const keyword.
+      bool is_const_ = false;
 
       std::vector<netrange_t> unpacked_dims_;
 

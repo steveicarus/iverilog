@@ -350,12 +350,14 @@ extern void pform_makewire(const struct vlltype&li,
 			   std::list<decl_assignment_t*>*assign_list,
 			   NetNet::Type type,
 			   data_type_t*data_type,
-			   std::list<named_pexpr_t>*attr = 0);
+			   std::list<named_pexpr_t>*attr = 0,
+			   bool is_const = false);
 
 extern void pform_make_var(const struct vlltype&loc,
 			   std::list<decl_assignment_t*>*assign_list,
 			   data_type_t*data_type,
-			   std::list<named_pexpr_t>*attr = 0);
+			   std::list<named_pexpr_t>*attr = 0,
+			   bool is_const = false);
 
 extern void pform_make_var_init(const struct vlltype&li,
 				perm_string name, PExpr*expr);
@@ -374,7 +376,8 @@ extern void pform_set_data_type(const struct vlltype&li,
 				data_type_t *data_type,
 				std::vector<PWire*> *wires,
 				NetNet::Type net_type,
-				std::list<named_pexpr_t>*attr);
+				std::list<named_pexpr_t>*attr,
+				bool is_const = false);
 
 extern void pform_set_string_type(const struct vlltype&li, const string_type_t*string_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
 

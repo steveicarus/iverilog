@@ -76,7 +76,7 @@ using namespace std;
  * is to try to make a net elaboration, and see if the result is
  * suitable for assignment.
  */
-NetAssign_* PExpr::elaborate_lval(Design*, NetScope*, bool, bool) const
+NetAssign_* PExpr::elaborate_lval(Design*, NetScope*, bool, bool, bool) const
 {
       cerr << get_fileline() << ": Assignment l-value too complex." << endl;
       return 0;
@@ -98,7 +98,8 @@ NetAssign_* PExpr::elaborate_lval(Design*, NetScope*, bool, bool) const
 NetAssign_* PEConcat::elaborate_lval(Design*des,
 				     NetScope*scope,
 				     bool is_cassign,
-				     bool is_force) const
+				     bool is_force,
+				     bool is_init) const
 {
       if (repeat_) {
 	    cerr << get_fileline() << ": error: Repeat concatenations make "
@@ -119,7 +120,7 @@ NetAssign_* PEConcat::elaborate_lval(Design*des,
 	    }
 
 	    NetAssign_*tmp = parms_[idx]->elaborate_lval(des, scope,
-							 is_cassign, is_force);
+							 is_cassign, is_force, is_init);
 
 	      /* If the l-value doesn't elaborate, the error was
 		 already detected and printed. We just skip it and let
@@ -157,7 +158,8 @@ NetAssign_* PEConcat::elaborate_lval(Design*des,
 NetAssign_* PEIdent::elaborate_lval(Design*des,
 				    NetScope*scope,
 				    bool is_cassign,
-				    bool is_force) const
+				    bool is_force,
+				    bool is_init) const
 {
 
       if (debug_elaborate) {
@@ -211,6 +213,13 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 		 << " base_path=" << base_path
 		 << ", member_path=" << member_path
 		 << endl;
+      }
+
+      if (reg->get_const() && !is_init) {
+	    cerr << get_fileline() << ": error: Assignment to const signal `"
+	         << reg->name() << "` is not allowed." << endl;
+	    des->errors++;
+	    return nullptr;
       }
 
       return elaborate_lval_var_(des, scope, is_force, is_cassign, reg,
@@ -1535,7 +1544,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
       return false;
 }
 
-NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool, bool) const
+NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool, bool, bool) const
 {
       cerr << get_fileline() << ": error: Constant values not allowed "
 	   << "in l-value expressions." << endl;
