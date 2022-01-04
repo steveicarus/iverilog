@@ -2923,13 +2923,13 @@ void pform_makewire(const struct vlltype&li,
  * constraints as those of tasks, so this works fine. Functions have
  * no output or inout ports.
  */
-vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
-				     NetNet::PortType pt,
-				     ivl_variable_type_t vtype,
-				     bool signed_flag,
-				     list<pform_range_t>*range,
-				     list<perm_string>*names,
-				     bool isint)
+static vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
+						     NetNet::PortType pt,
+						     ivl_variable_type_t vtype,
+						     bool signed_flag,
+						     list<pform_range_t>*range,
+						     list<perm_string>*names,
+						     bool isint = false)
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
       assert(names);
@@ -2999,7 +2999,8 @@ static vector<pform_tf_port_t>*do_make_task_ports(const struct vlltype&loc,
 vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 				      NetNet::PortType pt,
 				      data_type_t*vtype,
-				      list<perm_string>*names)
+				      list<perm_string>*names,
+				      bool allow_implicit)
 {
       vector<pform_tf_port_t>*ret = NULL;
       std::list<pform_range_t>*unpacked_dims = NULL;
@@ -3017,7 +3018,11 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
       }
 
       if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype)) {
-	    ret = pform_make_task_ports(loc, pt, vec_type->base_type,
+	    ivl_variable_type_t base_type = vec_type->base_type;
+	    if (allow_implicit && vec_type->implicit_flag)
+		base_type = IVL_VT_NO_TYPE;
+
+	    ret = pform_make_task_ports(loc, pt, base_type,
 					 vec_type->signed_flag,
 					 copy_range(vec_type->pdims.get()),
 					 names, vec_type->integer_flag);

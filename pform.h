@@ -492,20 +492,11 @@ extern void pform_make_pgassign_list(std::list<PExpr*>*alist,
 				     struct str_pair_t str,
 				     const char* fn, unsigned lineno);
 
-/* Given a port type and a list of names, make a list of wires that
-   can be used as task port information. */
-extern std::vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
-					     NetNet::PortType pt,
-					     ivl_variable_type_t vtype,
-					     bool signed_flag,
-					     std::list<pform_range_t>*range,
-					     std::list<perm_string>*names,
-					     bool isint = false);
-
 extern std::vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 					     NetNet::PortType pt,
 					     data_type_t*vtype,
-					     std::list<perm_string>*names);
+					     std::list<perm_string>*names,
+					     bool allow_implicit = false);
 
 /*
  * The parser uses this function to convert a unary
