@@ -1046,7 +1046,7 @@ static void find_ivl_root(void)
 	   if the user has overridden $(bindir) or $(libdir), but there's
 	   not a lot we can do in that case.
  */
-#ifdef __MINGW32__
+#if defined(__MINGW32__)
       char tmppath[MAXSIZE];
       len = GetModuleFileName(NULL, tmppath, sizeof tmppath);
       if (len >= (ssize_t) sizeof ivl_root) {
@@ -1054,6 +1054,9 @@ static void find_ivl_root(void)
       }
 	/* Convert to a short name to remove any embedded spaces. */
       len = GetShortPathName(tmppath, ivl_root, sizeof ivl_root);
+#elif defined(__APPLE__)
+	  uint32_t size = sizeof ivl_root;
+	  len = _NSGetExecutablePath(ivl_root, &size) + 1;
 #else
       len = readlink("/proc/self/exe", ivl_root, sizeof ivl_root);
 #endif
