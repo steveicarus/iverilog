@@ -677,7 +677,7 @@ class NetNet  : public NetObj, public PortType {
 	// This form is the more generic form of the constructor. For
 	// now, the unpacked type is not buried into an ivl_type_s object.
       explicit NetNet(NetScope*s, perm_string n, Type t,
-		      const std::list<netrange_t>&unpacked,
+		      const netranges_t &unpacked,
 		      ivl_type_t type);
 
       explicit NetNet(NetScope*s, perm_string n, Type t, ivl_type_t type);

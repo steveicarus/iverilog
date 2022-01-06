@@ -28,12 +28,6 @@ class netvector_t : public ivl_type_s {
     public:
       explicit netvector_t(const netranges_t&packed, ivl_variable_type_t type);
 
-	// This is a variant of the vector form. Some code processes
-	// the list of packed ranges as a list, but we will store them
-	// as a vector in this constructor.
-      explicit netvector_t(const std::list<netrange_t>&packed,
-			   ivl_variable_type_t type);
-
 	// special case: there is a single packed dimension and we
 	// know it in the form [<msb>:<lsb>]. This step saves me
 	// creating a netrange_t for this single item.

@@ -397,21 +397,6 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
       return base;
 }
 
-/*
- * This method is how indices should work except that the base should
- * be a vector of expressions that matches the size of the dims list,
- * so that we can generate an expression based on the entire packed
- * vector. For now, we assert that there is only one set of dimensions.
- */
-NetExpr *normalize_variable_base(NetExpr *base,
-				 const list<netrange_t>&dims,
-				 unsigned long wid, bool is_up)
-{
-      ivl_assert(*base, dims.size() == 1);
-      const netrange_t&rng = dims.back();
-      return normalize_variable_base(base, rng.get_msb(), rng.get_lsb(), wid, is_up);
-}
-
 NetExpr *normalize_variable_bit_base(const list<long>&indices, NetExpr*base,
 				     const NetNet*reg)
 {

@@ -148,7 +148,6 @@ class netrange_t {
       long lsb_;
 };
 
-extern std::ostream&operator << (std::ostream&out, const std::list<netrange_t>&rlist);
 extern std::ostream&operator << (std::ostream&out, const netranges_t&rlist);
 
 extern unsigned long netrange_width(const netranges_t &dims,

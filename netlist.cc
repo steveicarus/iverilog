@@ -518,19 +518,9 @@ void NetNet::initialize_dir_()
       }
 }
 
-static unsigned calculate_count(const list<netrange_t>&unpacked)
+static unsigned calculate_count(const netranges_t &unpacked)
 {
-      unsigned long sum = 1;
-      for (list<netrange_t>::const_iterator cur = unpacked.begin()
-		 ; cur != unpacked.end() ; ++cur) {
-	      // Special case: If there are any undefined dimensions,
-	      // then give up on trying to create pins for the net.
-	    if (! cur->defined())
-		  return 0;
-
-	    sum *= cur->width();
-      }
-
+      unsigned long sum = netrange_width(unpacked);
       if (sum >= UINT_MAX)
 	    return 0;
 
@@ -564,11 +554,11 @@ void NetNet::calculate_slice_widths_from_packed_dims_(void)
 }
 
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
-	       const list<netrange_t>&unpacked, ivl_type_t use_net_type)
+	       const netranges_t&unpacked, ivl_type_t use_net_type)
 : NetObj(s, n, calculate_count(unpacked)),
     type_(t), port_type_(NOT_A_PORT),
     local_flag_(false), net_type_(use_net_type),
-    discipline_(0), unpacked_dims_(unpacked.begin(), unpacked.end()),
+    discipline_(0), unpacked_dims_(unpacked),
     eref_count_(0), lref_count_(0)
 {
       calculate_slice_widths_from_packed_dims_();
