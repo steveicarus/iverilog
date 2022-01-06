@@ -2601,7 +2601,7 @@ void dll_target::signal(const NetNet*net)
 	   ivl_signal_t object. */
 
       { size_t idx = 0;
-	vector<netrange_t>::const_iterator cur;
+	netranges_t::const_iterator cur;
 	obj->packed_dims.resize(net->packed_dims().size());
 	for (cur = net->packed_dims().begin(), idx = 0
 		   ; cur != net->packed_dims().end() ; ++cur, idx += 1) {
@@ -2717,7 +2717,7 @@ void dll_target::signal(const NetNet*net)
 	   next encounter the nexus. */
 
       if (obj->array_dimensions_ == 1) {
-	    const vector<netrange_t>& dims = net->unpacked_dims();
+	    const netranges_t& dims = net->unpacked_dims();
 	    if (dims[0].get_msb() < dims[0].get_lsb()) {
 		  obj->array_base = dims[0].get_msb();
 		  obj->array_addr_swapped = false;

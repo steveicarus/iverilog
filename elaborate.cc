@@ -5414,7 +5414,7 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
 		  return 0;
 	    }
 
-	    const std::vector<netrange_t>&dims = atype->static_dimensions();
+	    const netranges_t&dims = atype->static_dimensions();
 	    if (dims.size() < index_vars_.size()) {
 		  cerr << get_fileline() << ": error: "
 		       << "class " << class_scope->get_name()
@@ -5447,7 +5447,7 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
 		 << " packed dimensions." << endl;
       }
 
-      std::vector<netrange_t>dims = array_sig->unpacked_dims();
+      netranges_t dims = array_sig->unpacked_dims();
       if (array_sig->packed_dimensions() > 0) {
             dims.insert(dims.end(), array_sig->packed_dims().begin(), array_sig->packed_dims().end());
       }
@@ -5523,7 +5523,7 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
  * and possibly do some optimizations.
  */
 NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
-					   const vector<netrange_t>&dims) const
+					   const netranges_t&dims) const
 {
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PForeach::elaborate_static_array_: "

@@ -29,6 +29,8 @@
 class netrange_t;
 class LineInfo;
 
+typedef std::vector<netrange_t> netranges_t;
+
 /*
  * This is a fully abstract type that is a type that can be attached
  * to a NetNet object.
@@ -38,7 +40,7 @@ class ivl_type_s {
       virtual ~ivl_type_s() =0;
       virtual bool packed(void) const;
       virtual long packed_width(void) const;
-      virtual std::vector<netrange_t> slice_dimensions() const;
+      virtual netranges_t slice_dimensions() const;
 
 	// Some types have a base variable type. This is the bit type
 	// for packed data types, or IVL_VT_DARRAY or IVL_VT_CLASS for
@@ -67,7 +69,7 @@ class ivl_type_s {
  * Convenience functions for making ivl_type_t objects from various inputs.
  */
 extern ivl_type_t make_ivl_type(ivl_variable_type_t vt,
-				const std::vector<netrange_t>&packed_dimensions,
+				const netranges_t&packed_dimensions,
 				bool signed_flag =false, bool isint_flag =false);
 
 /*
@@ -147,12 +149,11 @@ class netrange_t {
 };
 
 extern std::ostream&operator << (std::ostream&out, const std::list<netrange_t>&rlist);
-extern std::ostream&operator << (std::ostream&out, const std::vector<netrange_t>&rlist);
+extern std::ostream&operator << (std::ostream&out, const netranges_t&rlist);
 
-extern unsigned long netrange_width(const std::vector<netrange_t>&dims,
+extern unsigned long netrange_width(const netranges_t &dims,
 				    unsigned int base_width = 1);
-extern bool netrange_equivalent(const std::vector<netrange_t> &a,
-			        const std::vector<netrange_t> &b);
+extern bool netrange_equivalent(const netranges_t &a, const netranges_t &b);
 
 /*
  * There are a few cases where we need to know about the single-level
@@ -168,7 +169,7 @@ extern bool calculate_param_range(const LineInfo&line, ivl_type_t par_type,
  * indices, and calculate the offset/width of the resulting slice into
  * the packed array.
  */
-extern bool prefix_to_slice(const std::vector<netrange_t>&dims,
+extern bool prefix_to_slice(const netranges_t&dims,
 			    const std::list<long>&prefix, long sb,
 			    long&loff, unsigned long&lwid);
 

@@ -26,8 +26,7 @@
 class netvector_t : public ivl_type_s {
 
     public:
-      explicit netvector_t(const std::vector<netrange_t>&packed,
-			   ivl_variable_type_t type);
+      explicit netvector_t(const netranges_t&packed, ivl_variable_type_t type);
 
 	// This is a variant of the vector form. Some code processes
 	// the list of packed ranges as a list, but we will store them
@@ -60,11 +59,11 @@ class netvector_t : public ivl_type_s {
       bool get_implicit() const { return implicit_; }
 
       ivl_variable_type_t base_type() const;
-      const std::vector<netrange_t>&packed_dims() const;
+      const netranges_t&packed_dims() const;
 
       bool packed(void) const;
       long packed_width() const;
-      std::vector<netrange_t> slice_dimensions() const;
+      netranges_t slice_dimensions() const;
 
       std::ostream& debug_dump(std::ostream&) const;
 
@@ -89,20 +88,20 @@ class netvector_t : public ivl_type_s {
       bool test_equivalence(ivl_type_t that) const;
 
     private:
-      std::vector<netrange_t> packed_dims_;
+      netranges_t packed_dims_;
       ivl_variable_type_t type_;
       bool signed_    : 1;
       bool isint_     : 1;		// original type of integer
       bool implicit_  : 1;
 };
 
-inline netvector_t::netvector_t(const std::vector<netrange_t>&pd,
+inline netvector_t::netvector_t(const netranges_t &pd,
 				ivl_variable_type_t type)
 : packed_dims_(pd), type_(type), signed_(false), isint_(false), implicit_(false)
 {
 }
 
-inline const std::vector<netrange_t>& netvector_t::packed_dims() const
+inline const netranges_t& netvector_t::packed_dims() const
 {
       return packed_dims_;
 }

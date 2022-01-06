@@ -217,7 +217,7 @@ class PEAssignPattern : public PExpr {
       NetExpr* elaborate_expr_packed_(Design *des, NetScope *scope,
 				      ivl_variable_type_t base_type,
 				      unsigned int width,
-				      const std::vector<netrange_t> &dims,
+				      const netranges_t &dims,
 				      unsigned int cur_dim,
 				      bool need_const) const;
       NetExpr* elaborate_expr_struct_(Design *des, NetScope *scope,
@@ -228,7 +228,7 @@ class PEAssignPattern : public PExpr {
 				     bool need_const, bool up) const;
       NetExpr* elaborate_expr_uarray_(Design *des, NetScope *scope,
 				      const netuarray_t *uarray_type,
-				      const std::vector<netrange_t> &dims,
+				      const netranges_t &dims,
 				      unsigned int cur_dim,
 				      bool need_const) const;
 

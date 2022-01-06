@@ -82,7 +82,7 @@ long netvector_t::packed_width() const
       return netrange_width(packed_dims_);
 }
 
-vector<netrange_t> netvector_t::slice_dimensions() const
+netranges_t netvector_t::slice_dimensions() const
 {
       return packed_dims_;
 }

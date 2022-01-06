@@ -723,9 +723,9 @@ class NetNet  : public NetObj, public PortType {
 	   first range in the list (front) is the left-most range in
 	   the Verilog declaration. These packed dims are compressed
 	   to represent the dimensions of all the subtypes. */
-      const std::vector<netrange_t>& packed_dims() const { return slice_dims_; }
+      const netranges_t& packed_dims() const { return slice_dims_; }
 
-      const std::vector<netrange_t>& unpacked_dims() const { return unpacked_dims_; }
+      const netranges_t& unpacked_dims() const { return unpacked_dims_; }
 
 	/* The vector_width returns the bit width of the packed array,
 	   vector or scalar that is this NetNet object.  */
@@ -813,7 +813,7 @@ class NetNet  : public NetObj, public PortType {
         // Whether the net is variable declared with the const keyword.
       bool is_const_ = false;
 
-      std::vector<netrange_t> unpacked_dims_;
+      netranges_t unpacked_dims_;
 
 	// These are the widths of the various slice depths. There is
 	// one entry in this vector for each packed dimension. The
@@ -821,7 +821,7 @@ class NetNet  : public NetObj, public PortType {
 	//
 	// For example: slice_wids_[0] is vector_width().
       void calculate_slice_widths_from_packed_dims_(void);
-      std::vector<netrange_t> slice_dims_;
+      netranges_t slice_dims_;
       std::vector<unsigned long> slice_wids_;
 
       unsigned eref_count_;

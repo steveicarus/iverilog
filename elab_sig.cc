@@ -936,13 +936,13 @@ void PWhile::elaborate_sig(Design*des, NetScope*scope) const
 	    statement_->elaborate_sig(des, scope);
 }
 
-bool test_ranges_eeq(const vector<netrange_t>&lef, const vector<netrange_t>&rig)
+bool test_ranges_eeq(const netranges_t&lef, const netranges_t&rig)
 {
       if (lef.size() != rig.size())
 	    return false;
 
-      vector<netrange_t>::const_iterator lcur = lef.begin();
-      vector<netrange_t>::const_iterator rcur = rig.begin();
+      netranges_t::const_iterator lcur = lef.begin();
+      netranges_t::const_iterator rcur = rig.begin();
       while (lcur != lef.end()) {
 	    if (lcur->get_msb() != rcur->get_msb())
 		  return false;
@@ -957,7 +957,7 @@ bool test_ranges_eeq(const vector<netrange_t>&lef, const vector<netrange_t>&rig)
 }
 
 ivl_type_t PWire::elaborate_type(Design*des, NetScope*scope,
-			         const std::vector<netrange_t>&packed_dimensions) const
+			         const netranges_t &packed_dimensions) const
 {
       vector_type_t *vec_type = dynamic_cast<vector_type_t*>(set_data_type_.get());
       if (set_data_type_ && !vec_type) {
@@ -1028,7 +1028,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       unsigned wid = 1;
-      vector<netrange_t>packed_dimensions;
+      netranges_t packed_dimensions;
 
       des->errors += error_cnt_;
 
@@ -1051,7 +1051,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    }
 
 	    bool dimensions_ok = true;
-	    vector<netrange_t> plist, nlist;
+	    netranges_t plist, nlist;
 	    /* If they exist get the port definition MSB and LSB */
 	    if (port_set_ && !port_.empty()) {
 		  if (debug_elaborate) {

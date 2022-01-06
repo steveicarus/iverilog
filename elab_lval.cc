@@ -749,7 +749,7 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 	    }
       }
 
-      const vector<netrange_t>&packed = reg->packed_dims();
+      const netranges_t&packed = reg->packed_dims();
 
       long loff, moff;
       long wid;
@@ -874,7 +874,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 		  long lsv = base_c->value().as_long();
 		  long rel_base = 0;
 		    // Get the signal range.
-		  const vector<netrange_t>&packed = reg->packed_dims();
+		  const netranges_t&packed = reg->packed_dims();
 		  if (prefix_indices.size()+1 < reg->packed_dims().size()) {
 			  // Here we are selecting one or more sub-arrays.
 			  // Make this work by finding the indexed sub-arrays and
@@ -1114,7 +1114,7 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 	    }
 
 	    if (const netuarray_t *tmp_ua = dynamic_cast<const netuarray_t*>(ptype)) {
-		  const std::vector<netrange_t> &dims = tmp_ua->static_dimensions();
+		  const auto &dims = tmp_ua->static_dimensions();
 
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
@@ -1313,7 +1313,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 		    // kind of array cannot be a struct.
 		  if (!member_comp.index.empty()) {
 			  // These are the dimensions defined by the type
-			const vector<netrange_t>&mem_packed_dims = mem_vec->packed_dims();
+			const netranges_t&mem_packed_dims = mem_vec->packed_dims();
 
 			if (member_comp.index.size() > mem_packed_dims.size()) {
 			      cerr << get_fileline() << ": error: "
@@ -1382,7 +1382,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 		  ivl_assert(*this, !member_comp.index.empty());
 
 		    // These are the dimensions defined by the type
-		  const vector<netrange_t>&mem_packed_dims = array->static_dimensions();
+		  const netranges_t&mem_packed_dims = array->static_dimensions();
 
 		  if (member_comp.index.size() != mem_packed_dims.size()) {
 			cerr << get_fileline() << ": error: "

@@ -415,7 +415,7 @@ NetExpr *normalize_variable_base(NetExpr *base,
 NetExpr *normalize_variable_bit_base(const list<long>&indices, NetExpr*base,
 				     const NetNet*reg)
 {
-      const vector<netrange_t>&packed_dims = reg->packed_dims();
+      const netranges_t&packed_dims = reg->packed_dims();
       ivl_assert(*base, indices.size()+1 == packed_dims.size());
 
 	// Get the canonical offset of the slice within which we are
@@ -431,7 +431,7 @@ NetExpr *normalize_variable_part_base(const list<long>&indices, NetExpr*base,
 				      const NetNet*reg,
 				      unsigned long wid, bool is_up)
 {
-      const vector<netrange_t>&packed_dims = reg->packed_dims();
+      const netranges_t&packed_dims = reg->packed_dims();
       ivl_assert(*base, indices.size()+1 == packed_dims.size());
 
 	// Get the canonical offset of the slice within which we are
@@ -446,10 +446,10 @@ NetExpr *normalize_variable_part_base(const list<long>&indices, NetExpr*base,
 NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,
 				       const NetNet*reg, unsigned long&lwid)
 {
-      const vector<netrange_t>&packed_dims = reg->packed_dims();
+      const netranges_t&packed_dims = reg->packed_dims();
       ivl_assert(*base, indices.size() < packed_dims.size());
 
-      vector<netrange_t>::const_iterator pcur = packed_dims.end();
+      netranges_t::const_iterator pcur = packed_dims.end();
       for (size_t idx = indices.size() ; idx < packed_dims.size(); idx += 1) {
 	    -- pcur;
       }
@@ -563,8 +563,7 @@ void indices_to_expressions(Design*des, NetScope*scope,
       }
 }
 
-static void make_strides(const vector<netrange_t>&dims,
-			 vector<long>&stride)
+static void make_strides(const netranges_t&dims, vector<long>&stride)
 {
       stride[dims.size()-1] = 1;
       for (size_t idx = stride.size()-1 ; idx > 0 ; --idx) {
@@ -581,7 +580,7 @@ static void make_strides(const vector<netrange_t>&dims,
  * word. If any of the indices are out of bounds, return nil instead
  * of an expression.
  */
-static NetExpr* normalize_variable_unpacked(const vector<netrange_t>&dims, list<long>&indices)
+static NetExpr* normalize_variable_unpacked(const netranges_t&dims, list<long>&indices)
 {
 	// Make strides for each index. The stride is the distance (in
 	// words) to the next element in the canonical array.
@@ -614,17 +613,17 @@ static NetExpr* normalize_variable_unpacked(const vector<netrange_t>&dims, list<
 
 NetExpr* normalize_variable_unpacked(const NetNet*net, list<long>&indices)
 {
-      const vector<netrange_t>&dims = net->unpacked_dims();
+      const netranges_t&dims = net->unpacked_dims();
       return normalize_variable_unpacked(dims, indices);
 }
 
 NetExpr* normalize_variable_unpacked(const netsarray_t*stype, list<long>&indices)
 {
-      const vector<netrange_t>&dims = stype->static_dimensions();
+      const netranges_t&dims = stype->static_dimensions();
       return normalize_variable_unpacked(dims, indices);
 }
 
-NetExpr* normalize_variable_unpacked(const LineInfo&loc, const vector<netrange_t>&dims, list<NetExpr*>&indices)
+NetExpr* normalize_variable_unpacked(const LineInfo&loc, const netranges_t&dims, list<NetExpr*>&indices)
 {
 	// Make strides for each index. The stride is the distance (in
 	// words) to the next element in the canonical array.
@@ -711,13 +710,13 @@ NetExpr* normalize_variable_unpacked(const LineInfo&loc, const vector<netrange_t
 
 NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
 {
-      const vector<netrange_t>&dims = net->unpacked_dims();
+      const netranges_t&dims = net->unpacked_dims();
       return normalize_variable_unpacked(*net, dims, indices);
 }
 
 NetExpr* normalize_variable_unpacked(const LineInfo&loc, const netsarray_t*stype, list<NetExpr*>&indices)
 {
-      const vector<netrange_t>&dims = stype->static_dimensions();
+      const netranges_t&dims = stype->static_dimensions();
       return normalize_variable_unpacked(loc, dims, indices);
 }
 
@@ -1159,8 +1158,7 @@ bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
 }
 
 bool evaluate_ranges(Design*des, NetScope*scope, const LineInfo*li,
-		     vector<netrange_t>&llist,
-		     const list<pform_range_t>&rlist)
+		     netranges_t&llist, const list<pform_range_t>&rlist)
 {
       bool dimensions_ok = true;
 
@@ -1587,8 +1585,8 @@ NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
 	    return *exprs.begin();
       }
 
-      const std::vector<netrange_t>&pdims = net->packed_dims();
-      std::vector<netrange_t>::const_iterator pcur = pdims.begin();
+      const netranges_t&pdims = net->packed_dims();
+      netranges_t::const_iterator pcur = pdims.begin();
 
       list<NetExpr*>::iterator ecur = exprs.begin();
       NetExpr* base = 0;
@@ -1881,7 +1879,7 @@ bool calculate_param_range(const LineInfo&line, ivl_type_t par_type,
       }
 
       ivl_assert(line, vector_type->packed());
-      const std::vector<netrange_t>& packed_dims = vector_type->packed_dims();
+      const netranges_t& packed_dims = vector_type->packed_dims();
 
       // This is a netvector_t with 0 dimensions, then the parameter was
       // declared with a statement like this:
