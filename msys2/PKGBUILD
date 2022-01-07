@@ -10,6 +10,7 @@ license=('GPLv2+')
 depends=("${MINGW_PACKAGE_PREFIX}-readline"
          "${MINGW_PACKAGE_PREFIX}-gcc-libs")
 makedepends=("autoconf"
+             "man-db"
              "${MINGW_PACKAGE_PREFIX}-gcc"
              "${MINGW_PACKAGE_PREFIX}-ghostscript")
 
