@@ -3575,8 +3575,6 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
 
       cur->set_signed(enum_type->signed_flag);
 
-      assert(enum_type->range.get() != 0);
-      assert(enum_type->range->size() == 1);
 	//XXXXcur->set_range(*enum_type->range, SR_NET);
 	// If this is an integer enumeration switch the wire to an integer.
       if (enum_type->integer_flag) {
@@ -3593,9 +3591,6 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
 	// By definition, the base type can only be IVL_VT_LOGIC or
 	// IVL_VT_BOOL.
       assert(enum_type->base_type==IVL_VT_LOGIC || enum_type->base_type==IVL_VT_BOOL);
-
-      assert(enum_type->range.get() != 0);
-      assert(enum_type->range->size() == 1);
 
 	// Add the file and line information to the enumeration type.
       FILE_NAME(&(enum_type->li), li);
