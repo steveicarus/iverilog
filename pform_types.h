@@ -182,6 +182,8 @@ struct enum_type_t : public data_type_t {
 	// Return the elaborated version of the type.
       virtual ivl_type_s*elaborate_type_raw(Design*des, NetScope*scope) const;
 
+      ivl_variable_type_t figure_packed_base_type() const;
+
       SymbolType symbol_type() const;
 
       ivl_variable_type_t base_type;
@@ -217,6 +219,8 @@ struct atom2_type_t : public data_type_t {
       virtual std::ostream& debug_dump(std::ostream&out) const;
 
       ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
+
+      ivl_variable_type_t figure_packed_base_type() const;
 };
 
 extern atom2_type_t size_type;
