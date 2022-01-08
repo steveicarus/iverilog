@@ -1213,52 +1213,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       NetNet*sig = 0;
 
-      if (class_type_t*class_type = dynamic_cast<class_type_t*>(set_data_type_)) {
-	      // If this is a class variable, then the class type
-	      // should already have been elaborated. All we need to
-	      // do right now is locate the netclass_t object for the
-	      // class, and use that to build the net.
-
-	    ivl_assert(*this, class_type->save_elaborated_type);
-	    netclass_t*use_type = class_type->save_elaborated_type;
-
-	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_type);
-
-      } else if (struct_type_t*struct_type = dynamic_cast<struct_type_t*>(set_data_type_)) {
-	      // If this is a struct type, then build the net with the
-	      // struct type.
-	    ivl_type_s*tmp_type = struct_type->elaborate_type(des, scope);
-	    netstruct_t*use_type = dynamic_cast<netstruct_t*>(tmp_type);
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: Create signal " << wtype;
-		  if (use_type->packed())
-			cerr << " " << use_type->packed_width() << " bit packed struct ";
-		  else
-			cerr << " struct <> ";
-		  cerr << name_;
-		  cerr << " in scope " << scope_path(scope) << endl;
-	    }
-
-	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_type);
-
-      } else if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(set_data_type_)) {
-	    list<named_pexpr_t>::const_iterator sample_name = enum_type->names->begin();
-	    const netenum_t*use_enum = base_type_scope->find_enumeration_for_name(des, sample_name->name);
-
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": PWire::elaborate_sig: "
-		       << "Create signal " << wtype
-		       << " enumeration "
-		       << name_ << " in scope " << scope_path(scope)
-		       << " with packed_dimensions=" << packed_dimensions
-		       << " and packed_width=" << use_enum->packed_width() << endl;
-	    }
-
-	    ivl_assert(*this, packed_dimensions.empty());
-	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_enum);
-
-
-      } else if (netdarray) {
+      if (netdarray) {
 
 	    if (debug_elaborate) {
 	          cerr << get_fileline() << ": PWire::elaborate_sig: "
@@ -1272,43 +1227,22 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    ivl_assert(*this, unpacked_dimensions.empty());
 	    sig = new NetNet(scope, name_, wtype, netdarray);
 
-      } else if (dynamic_cast<string_type_t*>(set_data_type_)) {
+      } else if (dynamic_cast<struct_type_t*>(set_data_type_) ||
+		 dynamic_cast<enum_type_t*>(set_data_type_) ||
+		 dynamic_cast<string_type_t*>(set_data_type_) ||
+		 dynamic_cast<class_type_t*>(set_data_type_) ||
+		 dynamic_cast<parray_type_t*>(set_data_type_)) {
 
-	    // Signal declared as: string foo;
+	    ivl_type_t use_type = set_data_type_->elaborate_type(des, scope);
 	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": " << __func__ << ": "
-		       << "Create signal " << wtype
-		       << " string "
-		       << name_ << " in scope " << scope_path(scope)
-		       << endl;
-	    }
-
-	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions,
-			     &netstring_t::type_string);
-
-      } else if (parray_type_t*parray_type = dynamic_cast<parray_type_t*>(set_data_type_)) {
-	      // The pform gives us a parray_type_t for packed arrays
-	      // that show up in type definitions. This can be handled
-	      // a lot like packed dimensions from other means.
-
-	      // The trick here is that the parray type has an
-	      // arbitrary sub-type, and not just a scalar bit...
-	    ivl_type_t tmp_type = parray_type->elaborate_type(des, scope);
-	    const netparray_t*use_type = dynamic_cast<const netparray_t*>(tmp_type);
-	      // Should not be getting packed dimensions other than
-	      // through the parray type declaration.
-	    ivl_assert(*this, packed_dimensions.empty());
-
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: Create signal " << wtype
-		       << " parray=" << use_type->static_dimensions()
+		  cerr << get_fileline() << ": debug: Create signal "
+		       << wtype << " " << *set_data_type_
 		       << " " << name_ << unpacked_dimensions
 		       << " in scope " << scope_path(scope) << endl;
 	    }
 
+	    ivl_assert(*this, packed_dimensions.empty());
 	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_type);
-
-
       } else {
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": PWire::elaborate_sig: "
