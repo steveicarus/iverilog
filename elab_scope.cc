@@ -181,17 +181,14 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 					enum_type_t*enum_type)
 {
       std::vector<netrange_t> ranges;
+      netrange_t range;
       bool rc_flag;
 
       if (enum_type->range.get())
 	    evaluate_ranges(des, scope, enum_type, ranges, *enum_type->range);
 
-      long msb = 0;
-      long lsb = 0;
-
       if (!ranges.empty()) {
-	    msb = ranges.front().get_msb();
-	    lsb = ranges.front().get_lsb();
+	    range = ranges.front();
 	    if (ranges.size() > 1) {
 		  cerr << enum_type->get_fileline() << ": error: "
 		       << "Enum type must not have more than 1 packed dimension."
@@ -202,7 +199,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 
       netenum_t*use_enum = new netenum_t(enum_type->base_type,
 					 enum_type->signed_flag,
-					 enum_type->integer_flag, msb, lsb,
+					 enum_type->integer_flag, range,
 					 enum_type->names->size(),
 					 enum_type);
 
