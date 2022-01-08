@@ -32,6 +32,7 @@
 # include  "netdarray.h"
 # include  "netenum.h"
 # include  "netparray.h"
+# include  "netscalar.h"
 # include  "netqueue.h"
 # include  "netstruct.h"
 # include  "netvector.h"

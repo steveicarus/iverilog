@@ -2569,7 +2569,6 @@ void pform_module_define_port(const struct vlltype&li,
 			      list<named_pexpr_t>*attr,
 			      bool keep_attr)
 {
-      data_type_t*packed_type = 0;
       ivl_variable_type_t data_type = IVL_VT_NO_TYPE;
       bool signed_flag = false;
 
@@ -2601,6 +2600,7 @@ void pform_module_define_port(const struct vlltype&li,
 	    data_type = vec_type->base_type;
 	    signed_flag = vec_type->signed_flag;
 	    prange = vec_type->pdims.get();
+	    vtype = 0;
       } else if (real_type_t*rtype = dynamic_cast<real_type_t*>(vtype)) {
 	    data_type = IVL_VT_REAL;
 	    signed_flag = true;
@@ -2614,7 +2614,6 @@ void pform_module_define_port(const struct vlltype&li,
       } else if (vtype) {
 	    if (vtype->figure_packed_base_type() != IVL_VT_NO_TYPE) {
 		  data_type = vtype->figure_packed_base_type();
-		  packed_type = vtype;
 	    } else {
 		  VLerror(li, "sorry: Given type %s not supported here (%s:%d).",
 			  typeid(*vtype).name(), __FILE__, __LINE__);
@@ -2631,10 +2630,10 @@ void pform_module_define_port(const struct vlltype&li,
 
       cur->set_signed(signed_flag);
 
-      if (packed_type) {
-	    cur->set_data_type(packed_type);
+      if (vtype)
+	    cur->set_data_type(vtype);
 
-      } else if (prange == 0) {
+      if (prange == 0) {
 	    cur->set_range_scalar((type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
 
       } else {
@@ -2966,8 +2965,7 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
       }
 
       if (/*real_type_t*real_type = */ dynamic_cast<real_type_t*> (vtype)) {
-	    ret = pform_make_task_ports(loc, pt, IVL_VT_REAL,
-					 true, 0, ports);
+	    ret = do_make_task_ports(loc, pt, IVL_VT_REAL, vtype, ports);
       }
 
       if (dynamic_cast<string_type_t*> (vtype)) {
@@ -3442,7 +3440,6 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
       }
 
       else if (/*real_type_t*real_type =*/ dynamic_cast<real_type_t*> (data_type)) {
-	    pform_set_net_range(names, 0, true, 0);
 	    vt = IVL_VT_REAL;
       }
 
