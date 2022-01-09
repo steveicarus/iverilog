@@ -58,36 +58,3 @@ ivl_variable_type_t struct_type_t::figure_packed_base_type(void) const
 
       return base_type;
 }
-
-/*
- * When we parse a packed struct, we can early on (right here) figure
- * out the base type of the packed variable. Elaboration, later on,
- * well figure out the rest.
- */
-static void pform_set_packed_struct(const struct vlltype&li, struct_type_t*struct_type, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
-{
-      ivl_variable_type_t base_type = struct_type->figure_packed_base_type();
-
-      PWire*net = pform_get_make_wire_in_scope(li, name, net_type, NetNet::NOT_A_PORT, base_type);
-      assert(net);
-      pform_bind_attributes(net->attributes, attr, true);
-}
-
-static void pform_set_struct_type(const struct vlltype&li, struct_type_t*struct_type, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
-{
-      if (struct_type->packed_flag) {
-	    pform_set_packed_struct(li, struct_type, name, net_type, attr);
-	    return;
-      }
-
-	// For now, can only handle packed structs. The parser generates
-	// a "sorry" message, so no need to do anything here.
-}
-
-void pform_set_struct_type(const struct vlltype&li, struct_type_t*struct_type, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
-{
-      for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end() ; ++ cur) {
-	    pform_set_struct_type(li, struct_type, *cur, net_type, attr);
-      }
-}
