@@ -1254,21 +1254,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions,
 			     &netstring_t::type_string);
 
-      } else if (set_data_type_==0 && data_type_==IVL_VT_STRING) {
-
-	    // Signal declared as: string foo;
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": PWire::elaborate_sig: "
-		       << "Create signal " << wtype
-		       << " string "
-		       << name_ << " in scope " << scope_path(scope)
-		       << " without set_data_type_"
-		       << endl;
-	    }
-
-	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions,
-			     &netstring_t::type_string);
-
       } else if (parray_type_t*parray_type = dynamic_cast<parray_type_t*>(set_data_type_)) {
 	      // The pform gives us a parray_type_t for packed arrays
 	      // that show up in type definitions. This can be handled
@@ -1314,6 +1299,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 			     << " defaults to data type " << use_data_type << endl;
 		  }
 	    }
+
+	    ivl_assert(*this, use_data_type == IVL_VT_LOGIC ||
+			      use_data_type == IVL_VT_BOOL ||
+			      use_data_type == IVL_VT_REAL);
 
 	    netvector_t*vec = new netvector_t(packed_dimensions, use_data_type);
 	    vec->set_signed(get_signed());

@@ -3044,8 +3044,7 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
       }
 
       if (dynamic_cast<string_type_t*> (vtype)) {
-	    ret = pform_make_task_ports(loc, pt, IVL_VT_STRING,
-					 false, 0, ports);
+	    ret = do_make_task_ports(loc, pt, IVL_VT_STRING, vtype, ports);
       }
 
       if (class_type_t*class_type = dynamic_cast<class_type_t*> (vtype)) {
