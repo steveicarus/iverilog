@@ -3549,9 +3549,6 @@ static void pform_set_integer_2atom(const struct vlltype&li, uint64_t width, boo
 template <class T> static void pform_set2_data_type(const struct vlltype&li, T*data_type, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
       ivl_variable_type_t base_type = data_type->figure_packed_base_type();
-      if (base_type == IVL_VT_NO_TYPE) {
-	    VLerror(li, "Compound type is not PACKED in this context.");
-      }
 
       PWire*net = pform_get_make_wire_in_scope(li, name, net_type, NetNet::NOT_A_PORT, base_type);
       assert(net);

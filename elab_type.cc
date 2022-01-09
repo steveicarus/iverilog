@@ -158,6 +158,18 @@ ivl_type_s* parray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
       if (dims.get())
 	    evaluate_ranges(des, scope, this, packed, *dims);
 
+      if (base_type->figure_packed_base_type() == IVL_VT_NO_TYPE) {
+		cerr << this->get_fileline() << " error: Packed array ";
+		if (!name.nil())
+		      cerr << "`" << name << "` ";
+		cerr << "base-type `";
+		if (base_type->name.nil())
+		      cerr << *base_type;
+		else
+		      cerr << base_type->name;
+		cerr << "` is not packed." << endl;
+		des->errors++;
+      }
       ivl_type_t etype = base_type->elaborate_type(des, scope);
 
       return new netparray_t(packed, etype);
