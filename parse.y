@@ -3036,12 +3036,12 @@ struct_data_type
 struct_union_member_list
   : struct_union_member_list struct_union_member
       { std::list<struct_member_t*>*tmp = $1;
-	tmp->push_back($2);
+	if ($2) tmp->push_back($2);
 	$$ = tmp;
       }
   | struct_union_member
       { std::list<struct_member_t*>*tmp = new std::list<struct_member_t*>;
-	tmp->push_back($1);
+	if ($1) tmp->push_back($1);
 	$$ = tmp;
       }
   ;
