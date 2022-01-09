@@ -3588,9 +3588,6 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
 	// IVL_VT_BOOL.
       assert(enum_type->base_type==IVL_VT_LOGIC || enum_type->base_type==IVL_VT_BOOL);
 
-	// Add the file and line information to the enumeration type.
-      FILE_NAME(&(enum_type->li), li);
-
 	// Now apply the checked enumeration type to the variables
 	// that are being declared with this type.
       for (list<perm_string>::iterator cur = names->begin()

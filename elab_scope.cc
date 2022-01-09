@@ -203,7 +203,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 					 enum_type->names->size(),
 					 enum_type);
 
-      use_enum->set_line(enum_type->li);
+      use_enum->set_line(*enum_type);
       scope->add_enumeration_set(enum_type, use_enum);
 
       size_t name_idx = 0;
