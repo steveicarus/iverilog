@@ -2824,36 +2824,6 @@ void pform_makewire(const vlltype&li, perm_string name,
 }
 
 /*
- * This form takes a list of names and some type information, and
- * generates a bunch of variables/nets. We use the basic
- * pform_makewire above.
- */
-void pform_makewire(const vlltype&li,
-		    list<pform_range_t>*range,
-		    bool signed_flag,
-		    list<perm_string>*names,
-		    NetNet::Type type,
-		    NetNet::PortType pt,
-		    ivl_variable_type_t dt,
-		    list<named_pexpr_t>*attr,
-		    PWSRType rt)
-{
-      for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end() ; ++ cur ) {
-	    perm_string txt = *cur;
-	    pform_makewire(li, txt, type, pt, dt, attr);
-	    /* This has already been done for real variables. */
-	    if (dt != IVL_VT_REAL) {
-		  pform_set_net_range(txt, type, range, signed_flag, dt, rt, 0);
-	    }
-      }
-
-      delete names;
-      delete range;
-      delete attr;
-}
-
-/*
  * This form makes nets with delays and continuous assignments.
  */
 void pform_makewire(const vlltype&li,
