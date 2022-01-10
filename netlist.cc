@@ -716,14 +716,6 @@ bool NetNet::get_signed() const
       return net_type_->get_signed();
 }
 
-bool NetNet::get_isint() const
-{
-      if (const netvector_t*vec = dynamic_cast<const netvector_t*> (net_type_))
-	    return vec->get_isint();
-      else
-	    return false;
-}
-
 bool NetNet::get_scalar() const
 {
       if (const netvector_t*vec = dynamic_cast<const netvector_t*> (net_type_))
