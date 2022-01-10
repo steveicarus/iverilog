@@ -183,9 +183,8 @@ extern void pform_module_define_port(const struct vlltype&li,
 				     data_type_t*vtype,
 				     std::list<named_pexpr_t>*attr);
 
-extern Module::port_t* pform_module_port_reference(perm_string name,
-						   const char*file,
-						   unsigned lineno);
+extern Module::port_t* pform_module_port_reference(const struct vlltype&loc,
+						   perm_string name);
 extern void pform_endmodule(const char*, bool inside_celldefine,
                             Module::UCDriveType uc_drive_def);
 
@@ -204,17 +203,16 @@ extern void pform_set_constructor_return(PFunction*net);
 extern void pform_end_class_declaration(const struct vlltype&loc);
 extern bool pform_in_class();
 
-extern void pform_make_udp(perm_string name, std::list<perm_string>*parms,
+extern void pform_make_udp(const struct vlltype&loc, perm_string name,
+			   std::list<perm_string>*parms,
 			   std::vector<PWire*>*decl, std::list<std::string>*table,
-			   Statement*init,
-			   const char*file, unsigned lineno);
+			   Statement*init);
 
-extern void pform_make_udp(perm_string name,
+extern void pform_make_udp(const struct vlltype&loc, perm_string name,
 			   bool sync_flag, perm_string out_name,
 			   PExpr*sync_init,
 			   std::list<perm_string>*parms,
-			   std::list<std::string>*table,
-			   const char*file, unsigned lineno);
+			   std::list<std::string>*table);
 /*
  * Package related functions.
  */
@@ -462,8 +460,8 @@ extern void pform_mc_translate_on(bool flag);
 
 extern std::vector<PWire*>* pform_make_udp_input_ports(std::list<perm_string>*);
 
-extern void pform_make_events(std::list<perm_string>*names,
-			      const char*file, unsigned lineno);
+extern void pform_make_events(const struct vlltype&loc,
+			      std::list<perm_string>*names);
 /*
  * The makegate function creates a new gate (which need not have a
  * name) and connects it to the specified wires.
@@ -482,10 +480,10 @@ extern void pform_make_modgates(const struct vlltype&loc,
 				std::list<named_pexpr_t>*attr);
 
 /* Make a continuous assignment node, with optional bit- or part- select. */
-extern void pform_make_pgassign_list(std::list<PExpr*>*alist,
+extern void pform_make_pgassign_list(const struct vlltype&loc,
+				     std::list<PExpr*>*alist,
 				     std::list<PExpr*>*del,
-				     struct str_pair_t str,
-				     const char* fn, unsigned lineno);
+				     struct str_pair_t str);
 
 extern std::vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 					     NetNet::PortType pt,
