@@ -3535,14 +3535,6 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
       PWire*cur = pform_get_make_wire_in_scope(li, name, net_type, NetNet::NOT_A_PORT, enum_type->base_type);
       assert(cur);
 
-      cur->set_signed(enum_type->signed_flag);
-
-	//XXXXcur->set_range(*enum_type->range, SR_NET);
-	// If this is an integer enumeration switch the wire to an integer.
-      if (enum_type->integer_flag) {
-	    bool res = cur->set_wire_type(NetNet::INTEGER);
-	    assert(res);
-      }
       pform_bind_attributes(cur->attributes, attr, true);
 }
 
