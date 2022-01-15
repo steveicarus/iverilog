@@ -1,0 +1,10 @@
+datain =     x dataout =      X expected =      X ... CHECK PASSED
+datain =  4095 dataout =  16380 expected =  16380 ... CHECK PASSED
+datain =     0 dataout =      0 expected =      0 ... CHECK PASSED
+datain =  8191 dataout =  32764 expected =  32764 ... CHECK PASSED
+datain =  4096 dataout =  16384 expected =  16384 ... CHECK PASSED
+datain = -4097 dataout = -16388 expected = -16388 ... CHECK PASSED
+datain = -8192 dataout = -32768 expected = -32768 ... CHECK PASSED
+datain =    -1 dataout =     -4 expected =     -4 ... CHECK PASSED
+datain = -4096 dataout = -16384 expected = -16384 ... CHECK PASSED
+TEST PASSED :-)

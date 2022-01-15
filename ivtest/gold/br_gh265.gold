@@ -1,0 +1,2 @@
+./ivltests/br_gh265.v:8: error: The expression '(8'd1)<<('sd4)' cannot be implicitly cast to the target type.
+Elaboration failed

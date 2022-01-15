@@ -1,0 +1,8 @@
+Compiling vpi/br_gh496.c...
+Making br_gh496.vpi from  br_gh496.o...
+package $unit
+package p1
+package p2
+module m1
+module m2
+module test

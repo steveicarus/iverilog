@@ -1,0 +1,16 @@
+./ivltests/sv_queue_real.v:32: Warning: skipping delete(0) on empty queue.
+./ivltests/sv_queue_real.v:36: Warning: pop_front() on empty queue<real>.
+./ivltests/sv_queue_real.v:42: Warning: pop_back() on empty queue<real>.
+./ivltests/sv_queue_real.v:53: Warning: skipping out of range delete(3) on queue of size 3.
+./ivltests/sv_queue_real.v:54: Warning: skipping queue delete() with negative index.
+./ivltests/sv_queue_real.v:55: Warning: skipping queue delete() with undefined index.
+./ivltests/sv_queue_real.v:129: Warning: cannot assign to a negative queue<real> index (-1). 10 was not added.
+./ivltests/sv_queue_real.v:130: Warning: cannot assign to an undefined queue<real> index. 10 was not added.
+./ivltests/sv_queue_real.v:131: Warning: assigning to queue<real>[4] is outside of size (3). 10 was not added.
+./ivltests/sv_queue_real.v:134: Warning: cannot assign to a negative queue<real> index (-1). 10 was not added.
+./ivltests/sv_queue_real.v:136: Warning: cannot assign to an undefined queue<real> index. 10 was not added.
+./ivltests/sv_queue_real.v:138: Warning: assigning to queue<real>[4] is outside of size (3). 10 was not added.
+./ivltests/sv_queue_real.v:150: Warning: cannot insert at a negative queue<real> index (-1). 10 was not added.
+./ivltests/sv_queue_real.v:151: Warning: cannot insert at an undefined queue<real> index. 10 was not added.
+./ivltests/sv_queue_real.v:152: Warning: inserting to queue<real>[5] is outside of size (4). 10 was not added.
+PASSED

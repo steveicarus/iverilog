@@ -1,0 +1,4 @@
+vlog95.v:14: Error: System task/function $this_icarus_call_should_not_exist() is not defined by any module.
+vlog95.v:16: Error: $sscanf() is a system function, it cannot be called as a task.
+vlog95.v:17: Error: $display() is a system task, it cannot be called as a function.
+vsim: Program not runnable, 3 errors.

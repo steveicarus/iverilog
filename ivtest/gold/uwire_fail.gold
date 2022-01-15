@@ -1,0 +1,2 @@
+./ivltests/uwire_fail.v:5: error: Unresolved net/uwire two cannot have multiple drivers.
+1 error(s) during elaboration.

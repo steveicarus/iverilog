@@ -1,0 +1,5 @@
+ivltests/real_concat_invalid2.v:5: error: concatenation operand can not be real: 2.00000
+ivltests/real_concat_invalid2.v:5: error: concatenation operand can not be real: 1.00000
+ivltests/real_concat_invalid2.v:4: error: concatenation operand can not be real: <top.rpar1>
+ivltests/real_concat_invalid2.v:4: error: concatenation operand can not be real: <top.rpar2>
+5 error(s) during elaboration.

@@ -1,0 +1,2 @@
+./ivltests/undef.v:23: warning: macro a undefined (and assumed null) at this point.
+PASSED

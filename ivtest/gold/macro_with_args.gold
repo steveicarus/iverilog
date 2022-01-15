@@ -1,0 +1,4 @@
+first..last first,last last..first
+(a)..(c) (a,b,c) (c)..(a)
+sumsqr(3,4)  = 25
+sumsqr(5,12) = 169

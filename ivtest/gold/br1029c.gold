@@ -1,0 +1,2 @@
+./ivltests/br1029c.v:3: error: The argument to $signed must be a vector type.
+Elaboration failed

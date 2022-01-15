@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 
-git clone https://github.com/steveicarus/ivtest.git || exit 1
+echo "Using the bundled ivtest to run regression tests."
+echo " pwd = $(pwd)"
+
 cd ivtest
 
 version=devel

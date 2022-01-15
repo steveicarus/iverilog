@@ -1,0 +1,964 @@
+# This test list is used to override other test lists when using
+# the Icarus Verilog vlog95 target.
+
+#
+# Copyright (c) 1999-2021 Guy Hutchison (ghutchis@pacbell.net)
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+#
+# Format of the file
+#
+# testname		testtype		directory
+#
+# The <testname> is the verilog file name minus an extension.
+#
+# The <testtype> can be one of the following:
+#
+# normal:  Normal results expected, i.e it should compile and execute
+#          producing at least a single line with PASSED.
+#
+# CO:      Compile Only - Compile the file to the default output type.
+#
+# CN:      Compile Null - Compile with the null target. Similar to CO.
+#
+# CE:      Compile with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# RE:      Runtime with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# EF:      Expected Fail - We EXPECT this test to fail - only use
+#                          with older versions of Icarus.
+#
+# TE:      Translation Error - We EXPECT the translated code to fail -
+#                              only supported in the vlog95 checker.
+#
+# NI:      Not implemented. Only use for version specific tests.
+#
+# <directory> is where the <testname>.v file is located.
+#
+# An optional fourth and fifth argument can be supplied.
+#
+# The fourth argument may be one of the following.
+#
+#   modulename                       - Defines the top level module
+#   gold=filename                    - Compare a gold file against the
+#                                      generated log file.
+#   unordered=filename               - Compare a gold file against the
+#                                      generated log file, allowing for lines
+#                                      to appear in any order
+#   diff=filename1:filename2:skip_ln - Compare the two files for equality.
+#                                      Skip the first <skip_ln> lines or none.
+#
+# If a <modulename> is given you can supply a fifth argument for the
+# gold or diff commands.
+#
+
+# Verilog 95 does not support automatic tasks or functions.
+always_comb_rfunc	CE			ivltests
+automatic_error11	CE			ivltests
+automatic_error12	CE			ivltests
+automatic_error13	CE			ivltests
+automatic_events	CE			ivltests
+automatic_events2	CE			ivltests
+automatic_events3	CE			ivltests
+automatic_task		CE			ivltests
+automatic_task2		CE			ivltests
+automatic_task3		CE			ivltests
+br942			CE			ivltests
+br_gh531		CE			ivltests
+def_nettype		CE			ivltests
+func_init_var1		CE,-pallowsigned=1	ivltests
+func_init_var2		CE,-pallowsigned=1	ivltests
+func_init_var3		CE,-pallowsigned=1	ivltests
+nested_func		CE			ivltests
+pr2169870		CE			ivltests
+pr2172606b		CE			ivltests
+pr2276163		CE			ivltests
+pr2929913		CE			ivltests
+real_events		CE			ivltests
+recursive_func		CE			ivltests
+recursive_task		CE			ivltests
+task_init_var1		CE,-pallowsigned=1	ivltests
+task_init_var2		CE,-pallowsigned=1	ivltests
+task_init_var3		CE,-pallowsigned=1	ivltests
+test_work14		CE			ivltests
+vhdl_elab_range		CE			ivltests
+vhdl_notfunc_stdlogic	CE			ivltests
+vhdl_procedure		CE			ivltests
+vhdl_range_func		CE			ivltests
+vhdl_report		CE			ivltests
+vhdl_subprogram		CE			ivltests
+vhdl_unbounded_func	CE			ivltests
+
+# Verilog 95 does not support real nets.
+array_lval_select4a	CE			ivltests  # Also net arrays
+array_lval_select4b	CE			ivltests  # Also net arrays
+array_lval_select5	CE			ivltests  # Also net arrays
+array_lval_select6	CE			ivltests  # Also net arrays
+br_gh456		CE,-g2009,-pallowsigned=1	ivltests
+ca_64delay		CE			ivltests  # Also net arrays
+ca_time_real		CE			ivltests
+ca_var_delay		CE			ivltests
+cast_real		CE,-pallowsigned=1	ivltests
+cast_real_signed	CE,-pallowsigned=1	ivltests
+cast_real_unsigned	CE			ivltests
+sv_cast_integer		normal,-g2005-sv,-pallowsigned=1	ivltests
+sv_cast_integer2	normal,-g2005-sv,-pallowsigned=1	ivltests
+sv_cast_string		CE			ivltests
+clog2			CE			ivltests  # Also big int
+delayed_sfunc		CE			ivltests
+implicit_cast4		CE,-g2009,-pallowsigned=1	ivltests
+implicit_cast5		CE,-g2009,-pallowsigned=1	ivltests
+implicit_cast6		CE,-g2009,-pallowsigned=1	ivltests
+implicit_cast12		CE,-g2009,-pallowsigned=1	ivltests
+implicit_cast13		CE,-g2009,-pallowsigned=1	ivltests
+pr1861212c		CE			ivltests
+pr1864110a		CE			ivltests
+pr1864110b		CE			ivltests
+pr1864110c		CE			ivltests
+pr1864115		CE			ivltests
+pr1873372		CE			ivltests
+pr1880003		CE			ivltests
+pr1898293		CE			ivltests
+pr2123158		CE			ivltests
+pr2123190		CE			ivltests
+pr2453002b		CE			ivltests
+pr2456943		CE			ivltests
+pr2806474		CE			ivltests
+pr2976242		CE			ivltests
+pr2976242b		CE			ivltests
+real8			CE			ivltests
+real_mod_in_ca		CE			ivltests
+real_pulse_clean	CE			ivltests
+real_pwr_in_ca		CE			ivltests  # Also power operator
+real_wire_array		CE			ivltests
+real_wire_force_rel	CE			ivltests
+tern8			CE			ivltests
+v2005_math		CE			ivltests
+vams_abs2		CE,-gverilog-ams,-pallowsigned=1	ivltests
+vhdl_real		CE,-g2009,ivltests/vhdl_real.vhd	ivltests
+vhdl_unbounded		CE,-g2009,ivltests/vhdl_unbounded.vhd	ivltests
+wreal			CE			ivltests
+
+# Real modulus is an Icarus extension.
+pr1528093		CE			ivltests
+
+# IEEE 1364-1995 does not support the general power operator.
+br_gh9			CE			ivltests
+br_gh244a		CE			ivltests
+br_gh244b		CE			ivltests
+ca_pow_signed		CE,-pallowsigned=1	ivltests
+br_mw20171108		CE,-pallowsigned=1	ivltests
+ca_pow_synth		CE			ivltests
+ca_pow_unsigned		CE			ivltests
+constfunc3		CE			ivltests
+pow_ca_signed		CE			ivltests
+pow_ca_unsigned		CE			ivltests
+pow_reg_signed		CE			ivltests
+pow_reg_unsigned	CE			ivltests
+pow_signed		CE			ivltests
+pow_unsigned		CE			ivltests
+pow-ca			CE,-pallowsigned=1	ivltests
+pow-proc		CE,-pallowsigned=1	ivltests
+pr2352834		CE,-pallowsigned=1	ivltests
+pr2823711		CE			ivltests
+pr2909386b		CE,-pallowsigned=1	ivltests
+rl_pow			CE			ivltests
+vhdl_pow_rem		CE,-g2005-sv,-pallowsigned=1,ivltests/vhdl_pow_rem.vhd	ivltests
+
+# IEEE 1364-1995 does not support these SV functions
+sf_countbits		RE,-g2012		ivltests
+sf_countbits_fail	RE,-g2012		ivltests
+sf_countones		RE,-g2009		ivltests
+sf_countones_fail	RE,-g2009		ivltests
+sf_isunknown		RE,-g2005-sv		ivltests
+sf_isunknown_fail	RE,-g2005-sv		ivltests
+sf_onehot		RE,-g2005-sv		ivltests
+sf_onehot_fail		RE,-g2005-sv		ivltests
+sf_onehot0		RE,-g2005-sv		ivltests
+sf_onehot0_fail		RE,-g2005-sv		ivltests
+
+# IEEE 1364-1995 only supports register arrays.
+array_lval_select1	normal,-DVLOG95		ivltests
+array_lval_select2	normal,-DVLOG95		ivltests
+array_lval_select3a	TE,-DVLOG95		ivltests
+array_lval_select3b	CE,-DVLOG95		ivltests
+array_lval_select3c	normal,-DVLOG95		ivltests
+array_select		CE,-pallowsigned=1	ivltests
+array_select_a		CE			ivltests
+array_unpacked_sysfunct	CE,-g2005-sv	ivltests
+array_word_width2	CE			ivltests
+br1008			CE			ivltests
+br1019			CE			ivltests
+br_gh556		CE,-g2009		ivltests
+br_ml20171017		CE			ivltests
+genvar_scopes		CE			ivltests
+meminit2		CE			ivltests
+memsynth4		CE,-S			ivltests  # Synthesized net array
+negative_genvar		CE			ivltests
+pr1565544		CE			ivltests
+pr1657307		CE			ivltests
+pr1695322		CE			ivltests
+pr1701855b		CE			ivltests
+pr1703346		CE			ivltests
+pr1740476b		CE			ivltests
+pr1758122		CE,-g2001-noconfig	ivltests
+pr1799904		CE			ivltests
+pr1820472		CE			ivltests
+pr1868792		CE			ivltests
+pr1876798		CE			ivltests
+pr1903324		CE			ivltests
+pr2011429		CE			ivltests
+pr2076391		CE,-pallowsigned=1	ivltests
+pr2201909		CE			ivltests
+pr2201909b		CE			ivltests
+pr2166311		CE			ivltests
+pr2715748		CE			ivltests  # Also real net
+pr2815398b		CE			ivltests
+pr3054101g		CE			ivltests
+pr3054101h		CE			ivltests
+pr3592746		CE			ivltests
+real_array		CE			ivltests
+real_array_nb		CE,-pallowsigned=1	ivltests
+scan-invalid		CE			ivltests
+sel_rval_bit_ob		CE			ivltests
+sel_rval_part_ob	CE			ivltests
+signed_net_display	CE,-pallowsigned=1	ivltests
+sv_unpacked_port	CE,-g2009		ivltests
+sv_unpacked_port2	CE,-g2009,-pallowsigned=1	ivltests
+sv_unpacked_wire	CE,-g2009		ivltests
+sv_unpacked_wire2	CE,-g2009,-pallowsigned=1	ivltests
+
+# A zero replication in a CA is not supported.
+concat4			EF			ivltests
+
+# SystemVerilog final blocks are not supported.
+br_gh443		CE,-g2009		ivltests
+final			CE,-g2009		ivltests
+final2			CE,-g2009		ivltests
+program_hello		CE,-g2009		ivltests
+program2		CE,-g2009,-pallowsigned=1	ivltests
+program2b		CE,-g2009,-pallowsigned=1	ivltests
+program3		CE,-g2009		ivltests
+program3a		CE,-g2009		ivltests
+program4		CE,-g2009		ivltests
+
+# No support for the SystemVerilog string data type.
+array_string		CE,-g2009,-pallowsigned=1	ivltests
+br932a			CE,-g2009		ivltests
+br932b			CE,-g2009		ivltests
+br_gh4			CE,-g2009		ivltests
+br_gh175		CE,-g2009,-pallowsigned=1	ivltests
+br_gh194		CE,-g2009		ivltests
+br_gh365		CE,-g2009		ivltests
+br_gh453		CE,-g2009,-pallowsigned=1	ivltests
+br_ml20180309a		CE,-g2009		ivltests
+br_ml20180309b		CE,-g2009		ivltests
+ivlh_textio		CE,-g2005-sv		ivltests
+plus_arg_string		CE,-g2009		ivltests
+sformatf		CE,-g2009		ivltests
+string_events		CE,-g2009		ivltests
+string_index		CE,-g2005-sv		ivltests
+sv_macro		CE,-g2009,-pallowsigned=1	ivltests
+sv_string1		CE,-g2009		ivltests
+sv_string2		CE,-g2009		ivltests
+sv_string3		CE,-g2009		ivltests
+sv_string4		CE,-g2009		ivltests
+sv_string5		CE,-g2009		ivltests
+vhdl_string_lim		CE,-g2005-sv,-pallowsigned=1,ivltests/vhdl_string_lim.vhd	ivltests
+vhdl_textio_write	CE,-g2005-sv,-pallowsigned=1,ivltests/vhdl_textio_write.vhd	ivltests
+vhdl_textio_read	CE,-g2005-sv,-pallowsigned=1,ivltests/vhdl_textio_read.vhd	ivltests
+
+# SystemVerilog dynamic arrays and new operator.
+always_comb_warn	CE,-g2009,-pallowsigned=1	ivltests
+always_ff_warn		CE,-g2009,-pallowsigned=1	ivltests
+always_latch_warn	CE,-g2009,-pallowsigned=1	ivltests
+br962			CE,-g2009		ivltests
+br963			CE,-g2009		ivltests
+br_gh164a		CE,-g2009,-pallowsigned=1	ivltests
+br_gh164b		CE,-g2009,-pallowsigned=1	ivltests
+br_gh164c		CE,-g2009,-pallowsigned=1	ivltests
+br_gh164d		CE,-g2009,-pallowsigned=1	ivltests
+br_gh164e		CE,-g2009,-pallowsigned=1	ivltests
+br_gh383a		CE,-g2012,		ivltests
+br_gh383b		CE,-g2012,		ivltests
+br_gh383c		CE,-g2012,-pallowsigned=1	ivltests
+br_gh383d		CE,-g2012,-pallowsigned=1	ivltests
+br_gh460		CE,-g2012		ivltests
+br_ml20191221		CE,-g2009,-pallowsigned=1	ivltests
+sv_array_assign_pattern2	CE,-g2009,-pallowsigned=1	ivltests
+sv_cast_darray		CE,-g2005-sv,-pallowsigned=1	ivltests
+sv_darray1		CE,-g2009,-pallowsigned=1	ivltests
+sv_darray2		CE,-g2009,-pallowsigned=1	ivltests
+sv_darray3		CE,-g2009,-pallowsigned=1	ivltests
+sv_darray4		CE,-g2009,-pallowsigned=1	ivltests
+sv_darray5		CE,-g2009,-pallowsigned=1	ivltests
+sv_darray5b		CE,-g2009,-pallowsigned=1	ivltests
+sv_darray6		CE,-g2009,-pallowsigned=1	ivltests  # Also string
+sv_darray_args1		CE,-g2009,-pallowsigned=1	ivltests
+sv_darray_args2		CE,-g2009,-pallowsigned=1	ivltests
+sv_darray_args2b	CE,-g2009,-pallowsigned=1	ivltests
+sv_darray_args3		CE,-g2009,-pallowsigned=1	ivltests
+sv_darray_args4		CE,-g2009,-pallowsigned=1	ivltests  # Also string
+sv_darray_decl_assign	CE,-g2009,-pallowsigned=1	ivltests
+sv_darray_function	CE,-g2009,-pallowsigned=1	ivltests
+sv_darray_signed	CE,-g2009,-pallowsigned=1	ivltests  # Also string
+sv_darray_word_size	CE,-g2009		ivltests
+sv_new_array_error	CE,-g2009,		ivltests
+unp_array_typedef	CE,-g2009,-pallowsigned=1	ivltests  # Also string
+
+# SystemVerilog classes, new and null operators.
+br959			CE,-g2009		ivltests
+br1003a			CE,-g2009		ivltests
+br1004			CE,-g2009		ivltests
+br_gh104a		CE,-g2009		ivltests
+br_gh167a		CE,-g2009		ivltests
+br_gh167b		CE,-g2009		ivltests
+br_gh177a		CE,-g2009		ivltests
+br_gh177b		CE,-g2009		ivltests
+br_gh388		CE,-g2009		ivltests
+br_gh390b		CE,-g2009		ivltests
+br_gh391		CE,-g2009		ivltests
+br_gh437		CE,-g2009		ivltests
+br_gh445		CE,-g2009		ivltests
+br_gh461		CE,-g2009		ivltests
+sv_class1		CE,-g2009		ivltests
+sv_class2		CE,-g2009		ivltests
+sv_class3		CE,-g2009		ivltests
+sv_class4		CE,-g2009		ivltests
+sv_class5		CE,-g2009		ivltests
+sv_class6		CE,-g2009		ivltests
+sv_class7		CE,-g2009		ivltests
+sv_class8		CE,-g2009		ivltests
+sv_class9		CE,-g2009		ivltests  # Also dynamic array
+sv_class10		CE,-g2009		ivltests
+sv_class11		CE,-g2009		ivltests
+sv_class12		CE,-g2009		ivltests
+sv_class13		CE,-g2009		ivltests
+sv_class14		CE,-g2009		ivltests
+sv_class15		CE,-g2009		ivltests
+sv_class16		CE,-g2009		ivltests
+sv_class17		CE,-g2009		ivltests
+sv_class18		CE,-g2009		ivltests
+sv_class19		CE,-g2009		ivltests
+sv_class20		CE,-g2009		ivltests
+sv_class21		CE,-g2009		ivltests
+sv_class22		CE,-g2009		ivltests
+sv_class23		CE,-g2009		ivltests
+sv_class24		CE,-g2009		ivltests
+sv_end_label		CE,-g2009		ivltests  # Also generate
+sv_foreach2		CE,-g2009,-pallowsigned=1	ivltests
+sv_foreach3		CE,-g2009		ivltests
+sv_foreach4		CE,-g2009		ivltests
+sv_pkg_class		CE,-g2009		ivltests
+sv_port_default1	CE,-g2009		ivltests
+sv_port_default2	CE,-g2009,-pallowsigned=1	ivltests
+sv_port_default3	CE,-g2009		ivltests
+sv_port_default4	CE,-g2009,-pallowsigned=1	ivltests
+sv_port_default5	CE,-g2009		ivltests
+sv_port_default6	CE,-g2009,-pallowsigned=1	ivltests
+sv_port_default7	CE,-g2009,-pallowsigned=1	ivltests
+sv_port_default8	CE,-g2009,-pallowsigned=1	ivltests
+sv_port_default9	CE,-g2009		ivltests
+sv_root_class		CE,-g2009		ivltests
+sv_unit2b		CE,-g2009		ivltests
+sv_unit3b		CE,-g2009		ivltests
+sv_unit4b		CE,-g2009		ivltests
+
+# These variable assignments are converted to wire definitions that are
+# assigned from both a continuous assignment and a procedural assignment.
+# This is not supported in 1364-1995 so the translated code will fail.
+sv_uwire1		TE,-g2009		ivltests
+sv_uwire2		TE,-g2009		ivltests
+vvp_recv_vec4_pv	TE,-g2009,-pallowsigned=1	ivltests
+
+# SystemVerilog requires that variable initialization that is part of a
+# declaration is performed before the start of simulation. When standard
+# Verilog is selected, Icarus ensures that combinatorial always blocks
+# are started before initial blocks, so these tests will fail.
+sv_var_init1		EF,-g2009		ivltests
+# This test should fail the same way, but there is an unresolved bug in
+# translation.
+sv_var_init2		TE,-g2009		ivltests
+
+# No support for these SystemVerilog features
+always4A		CE,-g2009		ivltests  # join_any
+always4B		CE,-g2009		ivltests  # join_none
+br936			CE,-g2009,-pallowsigned=1	ivltests  # join_any
+br_gh165		CE,-g2009		ivltests  # join_*
+br_gh368		CE,-g2009		ivltests  # join_*
+br_gh412		CE,-g2009		ivltests  # queues
+br_gh414		CE,-g2009,-pallowsigned=1	ivltests  # strings
+br_gh436		CE,-g2012,-pallowsigned=1	ivltests  # queues/strings
+br_mw20200501		CE,-g2009		ivltests  # queues
+disable_fork_cmd	CE,-g2009		ivltests  # disable fork and join_*
+enum_next		CE,-g2009,-pallowsigned=1	ivltests  # enum
+enum_test1		CE,-g2009		ivltests  # enum
+fork_join_any		CE,-g2009,-pallowsigned=1	ivltests  # join_any
+fork_join_dis		CE,-g2009,-pallowsigned=1	ivltests  # join_any
+fork_join_none		CE,-g2009,-pallowsigned=1	ivltests  # join_none
+logical_short_circuit	CE,-g2012		ivltests # ++
+plus_5			CE,-g2009,-pallowsigned=1	ivltests  # ++/--
+pr3366217f		CE,-g2009,-pallowsigned=1	ivltests  # enum
+pr3366217h		CE,-g2009,-pallowsigned=1	ivltests  # enum
+pr3366217i		CE,-g2009		ivltests  # enum
+pr3390385		CE,-g2009		ivltests  # ++
+pr3390385b		CE,-g2009		ivltests  # ++
+pr3390385c		CE,-g2009		ivltests  # ++
+pr3390385d		CE,-g2009		ivltests  # ++
+pr3462145		CE,-g2009		ivltests  # ++
+wait_fork		CE,-g2009		ivltests  # wait fork and join_*
+wild_cmp_err		CE,-g2009		ivltests  # ==?/!=?
+wild_cmp_err2		CE,-g2009		ivltests  # ==?/!=?
+wild_cmp_net		CE,-g2009		ivltests  # ==?/!=?
+wild_cmp_var		CE,-g2009		ivltests  # ==?/!=?
+
+# No support for the SystemVerilog two state types (initial value problems).
+br_gh337		EF,-g2009,-pallowsigned=1	ivltests
+ibit_test		EF,-g2009		ivltests
+ibyte_test		EF,-g2009		ivltests
+iint_test		EF,-g2009		ivltests
+ilongint_test		EF,-g2009		ivltests
+ishortint_test		EF,-g2009		ivltests
+sbyte_test		EF,-g2009,-pallowsigned=1	ivltests
+sint_test		EF,-g2009,-pallowsigned=1	ivltests
+slongint_test		EF,-g2009,-pallowsigned=1	ivltests
+sshortint_test		EF,-g2009,-pallowsigned=1	ivltests
+ubyte_test		EF,-g2009,-pallowsigned=1	ivltests
+uint_test		EF,-g2009,-pallowsigned=1	ivltests
+ulongint_test		EF,-g2009,-pallowsigned=1	ivltests
+ushortint_test		EF,-g2009,-pallowsigned=1	ivltests
+# These have four state to two state cast problems
+br_gh99e		EF,-g2009		ivltests
+implicit_cast1		EF,-g2009,-pallowsigned=1	ivltests
+implicit_cast2		EF,-g2009,-pallowsigned=1	ivltests
+implicit_cast3		EF,-g2009,-pallowsigned=1	ivltests
+implicit_cast8		EF,-g2009,-pallowsigned=1	ivltests
+implicit_cast10		EF,-g2009,-pallowsigned=1	ivltests
+implicit_cast11		EF,-g2009,-pallowsigned=1	ivltests
+
+# These tests have unresolved failures that still need to be looked at.
+# The following two have problem getting the correct net/expression
+# information from the nexus. pr1723367 is the real torture test.
+partselsynth		TE,-S  ivltests
+pr1723367		TE,-gno-io-range-error	ivltests gold=pr1723367.gold
+# There is a separate driver for each bit of byte_value.
+generate_multi_loop	NI			ivltests  # Assert
+# There are multiple drivers on the nexus. A local pulldown and the actual
+# input driver.
+pr3194155		NI			ivltests  # Asserts
+# This is caused because the two port are cross coupled. This creates a
+# recursive call that never ends and blows over the stack limit.
+pr3452808		NI			ivltests  # Seg. faults
+# Translating selects of a non-zero based vector/array cast the base select
+# expression to $signed(). The normalization is already removed, but the code
+# cannot currently determine if the $signed() is from the normalization or
+# from the original code.
+bitsel5			CE			ivltests
+# Translating selects with the LSB > MSB are also normalized and the code
+# cannot determine if the $signed() should be removed or not.
+pr751			CE,-Wsensitivity-entire-vector	ivltests # gold=pr751.gold
+# This has a port connect issue and a failure because the actual port is cast
+# from 4-state to 2-state and the port information is removed on the 4-state
+# side (the actual port). I'm not sure why the enum is not a bit or other
+# 2-state variable, but when that is done there is a compile error.
+vhdl_var_init		CE,-g2009,vhdl_var_init.vhd	ivltests
+# This refers to a signal in a parent scope that is driven by a constant,
+# which hits the unhandled out_of_scope_drive clause in emit_nexus_as_ca.
+vhdl_range_func		TE,-g2005-sv,-pallowsigned=1,ivltests/vhdl_range_func_pkg.vhd,ivltests/vhdl_range_func.vhd,	ivltests
+# This casts a signed value to a larger size (requiring sign extension, then uses
+# the cast value in an unsigned expression with an even larger width (requiring
+# zero padding. I can't think how to do this in standard Verilog without using
+# an intermediate variable.
+size_cast4		EF,-g2009,-pallowsigned=1	ivltests
+# Similarly, this needs an intermediate variable assignment to produce the
+# correct result.
+br_gh219		EF,-g2009,-pallowsigned=1	ivltests
+# This has a gate output connected to a VP part select. The translator
+# creates a CA for the part select, but has nothing to connect it to.
+# It leaves the gate output unconnected.
+rise_fall_decay2	CE			ivltests
+# The code generator is generating unnecessary calls to $unsigned.
+array_packed_2d		normal,-g2009,-pallowsigned=1	ivltests gold=array_packed_2d.gold
+br_gh112c		normal,-g2009,-pallowsigned=1	ivltests
+br_gh112d		normal,-g2009,-pallowsigned=1	ivltests
+# This generates a very larg (65536 bit) constant, and the parser can't cope.
+br_gh162		TE			ivltests
+
+# New tests that need to be looked at go here.
+vhdl_concat_func	EF,-g2005-sv,-pallowsigned=1,ivltests/vhdl_concat_func.vhd		ivltests
+vhdl_resize		EF,-g2005-sv,-pallowsigned=1,ivltests/vhdl_resize.vhd		ivltests
+
+# Size (spacing) difference since -4 is used for the second value.
+# Should this be $signed(<sized_value>) if it is not an integer?
+pr2159630		EF,-pallowsigned=1	ivltests gold=pr2159630.gold
+
+# No support for most Verilog-A constructs
+analog1			CE,-gverilog-ams	ivltests
+analog2			CE,-gverilog-ams	ivltests
+
+# These tests have generate scopes that are not currently supported.
+br955			CE			ivltests
+br988			CE			ivltests
+br_gh345		CE			ivltests
+br_gh567		CE,-g2001,-pallowsigned=1	ivltests
+br_gh568		CE,-g2009,-pallowsigned=1	ivltests
+complex_lidx		CE			ivltests
+defparam3		CE			ivltests
+defparam4		CE			ivltests
+gen_case_opt1		CE			ivltests
+gen_case_opt2		CE			ivltests
+gen_case_opt3		CE			ivltests
+genloop			CE			ivltests
+generate_case		CE			ivltests
+generate_case2		CE			ivltests
+generate_case3		CE			ivltests
+genvar_inc_dec		CE,-g2009		ivltests # also integer arrays
+packeda2		CE,-g2009,-pallowsigned=1	ivltests
+pr1565699b		CE			ivltests
+pr1623097		CE			ivltests
+pr1676071		CE			ivltests
+pr1691599b		CE			ivltests
+pr1695309		CE			ivltests
+pr1704726b		CE			ivltests
+pr1755629		CE			ivltests
+pr1828642		CE			ivltests
+pr1956211		CE			ivltests
+pr1960625		CE			ivltests
+pr1988302		CE			ivltests
+pr1988310		CE			ivltests
+pr2018235a		CE			ivltests
+pr2091455		CE			ivltests
+pr2109179		CE			ivltests
+pr2138682		CE			ivltests
+pr2257003		CE			ivltests
+pr2257003b		CE			ivltests
+pr2306259		CE			ivltests
+pr2350934		CE			ivltests
+pr2350934b		CE			ivltests
+pr2350988		CE			ivltests
+pr2355304		CE			ivltests
+pr2728812a		CE			ivltests
+pr2815398a		CE			ivltests
+pr2815398a_std		CE			ivltests
+pr2909414		CE			ivltests
+pr2924354		CE			ivltests
+pr3011327		CE			ivltests
+pr3409749		CE			ivltests
+pr3437290b		CE			ivltests
+pr3527694		CE			ivltests
+pr3534422		CE			ivltests
+pr3557493		CE			ivltests
+scoped_events		CE			ivltests
+sv_packed_port1		CE,-g2009		ivltests
+sv_packed_port2		CE,-g2009		ivltests
+br_gh433		CE,-g2009,-pallowsigned=1	ivltests
+sv_queue1		CE,-g2009,-pallowsigned=1	ivltests
+sv_queue2		CE,-g2009,-pallowsigned=1	ivltests
+sv_queue3		CE,-g2009		ivltests
+sv_queue_real		CE,-g2009		ivltests
+sv_queue_real_bounded	CE,-g2009		ivltests
+sv_queue_real_fail	CE,-g2009		ivltests
+sv_queue_string		CE,-g2009		ivltests
+sv_queue_string_bounded	CE,-g2009		ivltests
+sv_queue_string_fail	CE,-g2009		ivltests
+sv_queue_vec		CE,-g2009,-pallowsigned=1	ivltests
+sv_queue_vec_bounded	CE,-g2009,-pallowsigned=1	ivltests
+sv_queue_vec_fail	CE,-g2009,-pallowsigned=1	ivltests
+test_forgen		CE,-g2009,ivltests/forgen.vhd	ivltests
+test_gxor		CE,-g2009,-pallowsigned=1,ivltests/gxor.vhd	ivltests
+test_varray1		CE,-g2009,-pallowsigned=1,ivltests/varray1.vhd	ivltests
+unnamed_generate_block	CE			ivltests
+
+# Currently part selects in a CA with a non-zero base are not supported.
+always_ff_warn_sens	CE,-g2009		ivltests
+bitsel6			CE			ivltests
+bitsel7			CE			ivltests
+pr3054101a		CE			ivltests
+pr3054101b		CE			ivltests
+
+# Currently variable indexed part selects in a CA with a non-zero base are not supported.
+pr2835632b		CE			ivltests  # Also scale expr. problems
+pr3054101c		CE			ivltests
+pr3054101d		CE,-pallowsigned=1	ivltests
+pr3054101e		CE			ivltests  # Also scale expr. problems
+pr3054101f		CE			ivltests  # Also scale expr. problems
+signed_part		CE,-pallowsigned=1	ivltests
+
+# Currently no support for tran_VP (inout ports and tranif gates).
+bitsel10		CE			ivltests  # Also uses a logic bufif0
+br918c			CE			ivltests  # Also uses a logic pullup
+br965			CE			ivltests
+br_gh127b		CE			ivltests
+br_gh127c		CE			ivltests
+br_gh127e		CE			ivltests
+br_gh127f		CE			ivltests
+br_gh315		CE,-gspecify		ivltests
+br_gh316c		CE,-gspecify		ivltests
+br_gh356a		CE,-gspecify		ivltests
+br_gh356b		CE,-gspecify		ivltests
+countdrivers3		CE			ivltests  # also uses a logic bufif1
+inout			TE			ivltests  # Duplicate names
+inout2			CE			ivltests
+inout3			CE			ivltests
+inout4			CE			ivltests
+pr1444055		CE			ivltests
+pr1478121		CE			ivltests
+pr2219441		CE			ivltests
+pr3296466a		CE			ivltests
+pr3296466b		CE			ivltests  # Also some nexus problems.
+pr3296466d		CE			ivltests
+rise_fall_delay3	CE			ivltests  # Uses tranif1 gates
+tri2			CE			ivltests
+
+# The Icarus compiler does not support arrayed UDP instance. These are
+# created in the synthesis process.
+basicexpr		TE,-S			ivltests
+basicstate		TE,-S			ivltests
+basicstate2		TE,-S			ivltests
+br993a			TE,-S			ivltests
+br993b			TE,-S			ivltests
+br994			TE,-S			ivltests
+br_gh99v		TE,-S			ivltests
+br_gh99w		TE,-S			ivltests
+br_gh99x		TE,-S			ivltests
+casesynth1		TE,-S			ivltests
+casesynth2		TE,-S			ivltests
+casesynth3		TE,-S			ivltests
+casesynth7		TE,-S			ivltests
+conditsynth1		TE,-S			ivltests
+conditsynth2		TE,-S			ivltests
+conditsynth3		TE,-S			ivltests
+dffsynth6		TE,-S			ivltests
+dffsynth9		TE,-S			ivltests
+dffsynth10		TE,-S			ivltests
+inside_synth2		TE,-S			ivltests
+multireg		TE,-S			ivltests
+shiftl			TE,-S			ivltests
+ufuncsynth1		TE,-S			ivltests
+pr685			TE,-S			ivltests
+
+# The translator doesn't currently support multi-bit asynchronous set values.
+# These are created in the synthesis process.
+dffsynth7		CE,-S			ivltests
+dffsynth11		CE,-S			ivltests
+sqrt32synth		CE,-S			ivltests
+
+# The converter generates a complex expression for $strobe and Icarus does not
+# currently support this. The translation is correct.
+pr1830834		EF			ivltests
+
+# This test relies on variable initialisation occurring before any other
+# process runs. Check that it at least compiles cleanly.
+vhdl_loop		CO,-g2005-sv,-pallowsigned=1,ivltests/vhdl_loop.vhd		ivltests
+
+# These tests have different output because of file name/line, etc. differences.
+br916a			normal			ivltests gold=br916a-vlog95.gold
+br916b			normal			ivltests gold=br916b-vlog95.gold
+br1003b			normal,-g2009		ivltests gold=br1003b-vlog95.gold
+br1003c			normal,-g2009		ivltests gold=br1003c-vlog95.gold
+br1003d			normal,-g2009		ivltests gold=br1003d-vlog95.gold
+br1007			normal,-Wselect-range	ivltests gold=br1007-vlog95.gold
+br_gh230		RE			ivltests gold=br_gh230-vlog95.gold
+eofmt_percent		normal			ivltests gold=eofmt_percent-vlog95.gold
+fatal_et_al		normal			ivltests gold=fatal_et_al-vlog95.gold
+fdisplay3		RE			ivltests gold=fdisplay3-vlog95.gold
+fdisplay_fail_fd	normal			ivltests gold=fdisplay_fail_fd-vlog95.gold
+fdisplay_fail_mcd	normal			ivltests gold=fdisplay_fail_mcd-vlog95.gold
+format			RE			ivltests gold=format-vlog95.gold
+fread-error		RE			ivltests gold=fread-error-vlog95.gold
+fscanf_u_warn		normal			ivltests gold=fscanf_u_warn-vlog95.gold
+fscanf_z_warn		normal			ivltests gold=fscanf_z_warn-vlog95.gold
+localparam_type		normal			ivltests gold=parameter_type-vlog95.gold
+parameter_type		normal			ivltests gold=parameter_type-vlog95.gold
+mem1			normal			ivltests gold=mem1-vlog95.gold
+pic			normal			contrib  gold=pic-vlog95.gold
+pr910			normal			ivltests gold=pr910-vlog95.gold
+pr1698820		normal			ivltests gold=pr1698820-vlog95.gold
+pr1819452		normal			ivltests gold=pr1819452-vlog95.gold
+pr2509349a		normal			ivltests gold=pr2509349a-vlog95.gold
+pr2509349b		normal			ivltests gold=pr2509349b-vlog95.gold
+pr2800985b		RE			ivltests gold=pr2800985b-vlog95.gold
+queue_fail		RE			ivltests gold=queue_fail-vlog95.gold
+readmem-invalid		RE			ivltests gold=readmem-invalid-vlog95.gold
+# Because the lower module has a parameter it is given a unique name that
+# does not match what the code is looking for. If we can verify that there
+# is only a single instance or that the instance has the original or at
+# least all the instances have the same value we may be able to use the
+# original name.
+simparam		EF			ivltests
+sv_immediate_assert	normal,-g2009		ivltests gold=sv_immediate_assert-vlog95.gold
+sv_immediate_assume	normal,-g2009		ivltests gold=sv_immediate_assume-vlog95.gold
+swrite			normal			ivltests gold=swrite-vlog95.gold
+sys_func_task_error	RE			ivltests gold=sys_func_task_error-vlog95.gold
+# In Verilog 95 a system function cannot be called as a task.
+sys_func_as_task	RE,-g2009		ivltests
+warn_opt_sys_tf		RE			ivltests gold=warn_opt_sys_tf-vlog95.gold
+writemem-error		normal			ivltests gold=writemem-error-vlog95.gold
+writemem-invalid	RE			ivltests gold=writemem-invalid-vlog95.gold
+
+# For Verilog 95 signed is supported as an option (-pallowsigned=1).
+array6			normal,-pallowsigned=1	ivltests
+assign_op_type		normal,-g2009,-pallowsigned=1	ivltests
+bitp1			normal,-g2009,-pallowsigned=1	ivltests
+bits			normal,-g2009,-pallowsigned=1	ivltests
+bits2			normal,-g2009,-pallowsigned=1	ivltests
+br884			normal,-g2009,-pallowsigned=1	ivltests
+br917a			normal,-g2009,-pallowsigned=1	ivltests
+br917b			normal,-g2009,-pallowsigned=1	ivltests
+br917c			normal,-g2009,-pallowsigned=1	ivltests
+br917d			normal,-g2009,-pallowsigned=1	ivltests
+br943_944		normal,-g2009,-pallowsigned=1,ivltests/br943_944.vhd	ivltests
+br985			normal,-g2009,-pallowsigned=1,ivltests/br985.vhd	ivltests
+br1025			normal,-g2009,-pallowsigned=1	ivltests
+br_gh8			normal,-pallowsigned=1	ivltests
+br_gh99c		normal,-gverilog-ams,-pallowsigned=1	ivltests
+br_gh99r		normal,-pallowsigned=1	ivltests
+br_gh112e		normal,-g2009,-pallowsigned=1	ivltests
+br_gh112f		normal,-g2009,-pallowsigned=1	ivltests
+br_gh129		normal,-g2009,-pallowsigned=1	ivltests
+br_gh198		normal,-pallowsigned=1	ivltests gold=br_gh198.gold
+br_gh199a		normal,-pallowsigned=1	ivltests
+br_gh199b		normal,-pallowsigned=1	ivltests
+br_gh231		normal,-g2009,-pallowsigned=1	ivltests
+br_gh281		normal,-g2009,-pallowsigned=1	ivltests
+br_gh281b		normal,-g2009,-pallowsigned=1	ivltests
+br_gh283a		normal,-pallowsigned=1	ivltests
+br_gh283b		normal,-pallowsigned=1	ivltests
+br_gh283c		normal,-pallowsigned=1	ivltests
+br_gh289b		normal,-g2009,-pallowsigned=1	ivltests
+br_gh477		normal,-g2009,-pallowsigned=1	ivltests
+br_gh540		normal,-g2009,-pallowsigned=1	ivltests
+ca_mult			normal,-pallowsigned=1	ivltests gold=ca_mult.gold
+cast_int		normal,-pallowsigned=1	ivltests
+cast_int_ams		normal,-gverilog-ams,-pallowsigned=1	ivltests
+cfunc_assign_op_vec	normal,-g2009,-pallowsigned=1	ivltests
+constfunc4		normal,-pallowsigned=1	ivltests
+constfunc4_ams		normal,-gverilog-ams,-pallowsigned=1	ivltests
+constfunc6		normal,-pallowsigned=1	ivltests
+constfunc6_ams		normal,-pallowsigned=1	ivltests
+constfunc7		normal,-pallowsigned=1	ivltests
+constfunc13		normal,-pallowsigned=1	ivltests
+constfunc14		normal,-pallowsigned=1	ivltests
+enum_elem_ranges	normal,-g2009,-pallowsigned=1	ivltests
+enum_value_expr		normal,-g2009,-pallowsigned=1	ivltests
+enum_values		normal,-g2009,-pallowsigned=1	ivltests
+enum_ports		normal,-g2005-sv,-pallowsigned=1	ivltests
+extend			normal,-pallowsigned=1	ivltests
+first_last_num		normal,-g2009,-pallowsigned=1	ivltests
+fr49			normal,-g2009,-pallowsigned=1	ivltests
+function12		normal,-g2005-sv,-pallowsigned=1	ivltests gold=function12.gold
+implicit_cast7		normal,-g2009,-pallowsigned=1	ivltests
+implicit_cast9		normal,-g2009,-pallowsigned=1	ivltests
+inc_dec_stmt		normal,-g2009,-pallowsigned=1	ivltests
+int_param		normal,-g2009,-pallowsigned=1	ivltests
+iuint1			normal,-g2009,-pallowsigned=1	ivltests
+logp2			normal,-g2009,-pallowsigned=1	ivltests
+mixed_width_case	normal,-pallowsigned=1	ivltests
+mod_inst_pkg		normal,-g2009,-pallowsigned=1	ivltests
+packeda			normal,-g2009,-pallowsigned=1	ivltests
+pr1033			normal,-pallowsigned=1	ivltests gold=pr1033.gold
+pr1380261		normal,-pallowsigned=1	ivltests
+pr1494799		normal,-pallowsigned=1	ivltests gold=pr1494799.gold
+pr1589497		normal,-pallowsigned=1	ivltests gold=pr1589497.gold
+pr1603313		normal,-pallowsigned=1	ivltests
+pr1717361		normal,-pallowsigned=1	ivltests
+pr1719055		normal,-pallowsigned=1	ivltests gold=pr1719055.gold
+pr1793749		normal,-pallowsigned=1	ivltests gold=pr1793749.gold
+pr1879226		normal,-pallowsigned=1	ivltests
+pr1883052		normal,-pallowsigned=1	ivltests
+pr1883052b		normal,-pallowsigned=1	ivltests
+pr1950282		normal,-pallowsigned=1	ivltests
+pr1958801		normal,-pallowsigned=1	ivltests
+pr1993479		normal,-pallowsigned=1	ivltests gold=pr1993479.gold
+pr2030767		normal,-pallowsigned=1	ivltests
+pr2117473		normal,-pallowsigned=1	ivltests
+pr2121536		normal,-pallowsigned=1	ivltests
+pr2121536b		normal,-pallowsigned=1	ivltests
+pr2152011		normal,-pallowsigned=1	ivltests gold=pr2152011.gold
+pr2233180		normal,-pallowsigned=1	ivltests
+pr2233180b		normal,-pallowsigned=1	ivltests
+pr2233180c		normal,-pallowsigned=1	ivltests
+pr2233192		normal,-pallowsigned=1	ivltests
+pr2233192b		normal,-pallowsigned=1	ivltests
+pr2233192c		normal,-pallowsigned=1	ivltests
+pr2425055b		normal,-pallowsigned=1	ivltests
+pr2425055c		normal,-pallowsigned=1	ivltests
+pr2722330a		normal,-pallowsigned=1	ivltests
+pr2722330b		normal,-pallowsigned=1	ivltests
+pr2909555		normal,-pallowsigned=1	ivltests
+pr2913416		normal,-pallowsigned=1	ivltests
+pr2913438b		normal,-pallowsigned=1	ivltests
+pr2922063		normal,-pallowsigned=1	ivltests
+pr2922063a		normal,-pallowsigned=1	ivltests
+pr2922063b		normal,-pallowsigned=1	ivltests
+pr2986528		normal,-pallowsigned=1	ivltests
+pr2998515		normal,-pallowsigned=1	ivltests
+pr3104254		normal,-pallowsigned=1	ivltests
+pr3284821		normal,-pallowsigned=1	ivltests
+pr3292735		normal,-pallowsigned=1	ivltests
+pr3366217e		normal,-g2009,-pallowsigned=1	ivltests
+pr748			normal,-pallowsigned=1	ivltests
+pull371			normal,-g2009,-pallowsigned=1	ivltests
+pull371b		normal,-g2009,-pallowsigned=1	ivltests
+sf1289			normal,-g2009,-pallowsigned=1	ivltests
+shift2			normal,-pallowsigned=1	ivltests
+shift3			normal,-pallowsigned=1	ivltests
+shift5			normal,-pallowsigned=1	ivltests gold=shift5.gold
+signed1			normal,-pallowsigned=1	ivltests
+signed4			normal,-pallowsigned=1	ivltests gold=signed4.gold
+signed6			normal,-pallowsigned=1	ivltests
+signed7			normal,-pallowsigned=1	ivltests
+signed8			normal,-pallowsigned=1	ivltests
+signed9			normal,-pallowsigned=1	ivltests
+signed12		normal,-pallowsigned=1	ivltests gold=signed12.gold
+signed_a		normal,-pallowsigned=1	ivltests
+signed_pv		normal,-pallowsigned=1	ivltests
+simple_byte		normal,-g2009,-pallowsigned=1	ivltests
+simple_int		normal,-g2009,-pallowsigned=1	ivltests
+simple_longint		normal,-g2009,-pallowsigned=1	ivltests
+simple_shortint		normal,-g2009,-pallowsigned=1	ivltests
+size_cast3		normal,-g2009,-pallowsigned=1	ivltests
+size_cast5		normal,-g2009,-pallowsigned=1	ivltests
+struct_packed_array	normal,-g2009,-pallowsigned=1	ivltests
+struct_packed_array2	normal,-g2009,-pallowsigned=1	ivltests
+sv_for_variable  normal,-g2009,-pallowsigned=1	ivltests
+sv_foreach1		normal,-g2009,-pallowsigned=1	ivltests
+sv_foreach5		normal,-g2009,-pallowsigned=1	ivltests
+sv_package		normal,-g2009,-pallowsigned=1	ivltests
+sv_package2		normal,-g2009,-pallowsigned=1	ivltests
+sv_package5		normal,-g2009,-pallowsigned=1	ivltests
+sv_port_default10	normal,-g2009,-pallowsigned=1	ivltests
+sv_port_default11	normal,-g2009,-pallowsigned=1	ivltests
+sv_root_func		normal,-g2009,-pallowsigned=1	ivltests gold=sv_root_func.gold
+sv_root_task		normal,-g2009,-pallowsigned=1	ivltests gold=sv_root_task.gold
+test_dispwided		normal,-pallowsigned=1	ivltests gold=test_dispwided.gold
+test_inc_dec		normal,-g2009,-pallowsigned=1	ivltests
+test_enumsystem		normal,-g2009,-pallowsigned=1,ivltests/enumsystem.vhd	ivltests
+vhdl_boolean		normal,-g2009,-pallowsigned=1,ivltests/vhdl_boolean.vhd	ivltests
+vhdl_file_open		normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_file_open.vhd		ivltests
+vhdl_prefix_array	normal,-g2009,-pallowsigned=1,ivltests/vhdl_prefix_array.vhd	ivltests
+vhdl_range		normal,-g2009,-pallowsigned=1,ivltests/vhdl_range_pkg.vhd,ivltests/vhdl_range.vhd	ivltests
+vhdl_range_func		normal,-g2009,-pallowsigned=1,ivltests/vhdl_range_func_pkg.vhd,ivltests/vhdl_range_func.vhd	ivltests
+vhdl_rtoi		normal,-g2009,-pallowsigned=1,ivltests/vhdl_rtoi.vhd	ivltests
+vhdl_shift		normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_shift.vhd	ivltests
+vhdl_to_integer		normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_to_integer.vhd	ivltests
+test_system		normal,-g2009,-pallowsigned=1,ivltests/system.vhd	ivltests
+test_tliteral		normal,-g2009,-pallowsigned=1	ivltests
+vhdl_test8		normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_test8.vhd	ivltests
+vhdl_test9		normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_test9.vhd	ivltests
+two_state_display	normal,-g2009,-pallowsigned=1	ivltests gold=two_state_display.gold
+undefined_shift		normal,-pallowsigned=1	ivltests
+vams_abs1		normal,-gverilog-ams,-pallowsigned=1	ivltests
+vhdl_concurrent_assert	normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_concurrent_assert.vhd	ivltests gold=vhdl_concurrent_assert.gold
+vhdl_const_record	normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_const_record.vhd	ivltests
+vhdl_delay_assign	normal,-g2005-sv,-pallowsigned=1,-fivltests/vhdl_timescale_1ns.cfg,ivltests/vhdl_delay_assign.vhd	ivltests
+vhdl_elab_range		normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_elab_range.vhd		ivltests
+vhdl_image_attr		normal,-g2005-sv,-pallowsigned=1,-fivltests/vhdl_timescale_1ns.cfg,ivltests/vhdl_image_attr.vhd	ivltests gold=vhdl_image_attr.gold
+vhdl_process_scope	normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_process_scope.vhd	ivltests
+vhdl_sadd23_bit		normal,-g2009,-pallowsigned=1,ivltests/vhdl_sadd23_bit.vhd	ivltests
+vhdl_sdiv23_bit		normal,-g2009,-pallowsigned=1,ivltests/vhdl_sdiv23_bit.vhd	ivltests
+vhdl_ssub23_bit		normal,-g2009,-pallowsigned=1,ivltests/vhdl_ssub23_bit.vhd	ivltests
+vhdl_smul23_bit		normal,-g2009,-pallowsigned=1,ivltests/vhdl_smul23_bit.vhd	ivltests
+vhdl_sadd23_stdlogic	normal,-g2009,-pallowsigned=1,ivltests/vhdl_sadd23_stdlogic.vhd ivltests
+vhdl_sdiv23_stdlogic	normal,-g2009,-pallowsigned=1,ivltests/vhdl_sdiv23_stdlogic.vhd ivltests
+vhdl_ssub23_stdlogic	normal,-g2009,-pallowsigned=1,ivltests/vhdl_ssub23_stdlogic.vhd ivltests
+vhdl_smul23_stdlogic	normal,-g2009,-pallowsigned=1,ivltests/vhdl_smul23_stdlogic.vhd ivltests
+vhdl_test3		normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_test3.vhd	ivltests gold=vhdl_test3.gold
+vhdl_report		normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_report_pkg.vhd,ivltests/vhdl_report.vhd	ivltests gold=vhdl_report.gold
+vhdl_subprogram		normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_subprogram_pkg.vhd,ivltests/vhdl_subprogram.vhd	ivltests
+vhdl_subtypes		normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_subtypes_pkg.vhd,ivltests/vhdl_subtypes.vhd	ivltests
+vhdl_unary_minus	normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_unary_minus.vhd	ivltests
+vhdl_unbounded_func	normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_unbounded_func_pkg.vhd,ivltests/vhdl_unbounded_func.vhd	ivltests
+vhdl_var_init		normal,-g2009,-pallowsigned=1,ivltests/vhdl_var_init.vhd	ivltests
+vhdl_while		normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_while.vhd	ivltests
+
+# $signed() and $unsigned() in the compiler are always supported and they
+# are supported in general if the -pallowsigned=1 flag is provided.
+br919			normal,-pallowsigned=1	ivltests
+br968			normal,-pallowsigned=1	ivltests
+concat3			normal,-pallowsigned=1	ivltests
+l_equiv			normal,-g2005-sv,-pallowsigned=1	ivltests
+l_equiv_ca		normal,-g2005-sv,-pallowsigned=1	ivltests
+mult2			normal,-pallowsigned=1	ivltests
+pr757			normal,-pallowsigned=1	ivltests
+pr1002			normal,-pallowsigned=1	ivltests gold=pr1002.gold
+pr1002a			normal,-pallowsigned=1	ivltests gold=pr1002a.gold
+pr1522570		normal,-pallowsigned=1	ivltests
+pr1698499		normal,-pallowsigned=1	ivltests gold=pr1698499.gold
+pr1793749b		normal,-pallowsigned=1	ivltests gold=pr1793749b.gold
+pr1795005a		normal,-pallowsigned=1	ivltests gold=pr1795005a.gold
+pr1795005b		normal,-pallowsigned=1	ivltests gold=pr1795005b.gold
+pr1823732		normal,-pallowsigned=1	ivltests gold=pr1823732.gold
+pr1841300		normal,-pallowsigned=1	ivltests gold=pr1841300.gold
+pr1845683		normal,-pallowsigned=1	ivltests gold=pr1845683.gold
+pr1960558		normal,-pallowsigned=1	ivltests gold=pr1960558.gold
+pr1960619		normal,-pallowsigned=1	ivltests gold=pr1960619.gold
+pr1963240		normal,-pallowsigned=1	ivltests gold=pr1963240.gold
+pr1990164		normal,-pallowsigned=1	ivltests
+pr2136787		normal,-pallowsigned=1	ivltests gold=pr2136787.gold
+pr2138979		normal,-pallowsigned=1	ivltests
+pr2138979b		normal,-pallowsigned=1	ivltests gold=pr2138979b.gold
+pr2138979c		normal,-pallowsigned=1	ivltests gold=pr2138979c.gold
+# This one still has CA $signed() problems. The $signed() is not added when
+# the value is not sign extended.
+pr2138979d		EF,-pallowsigned=1	ivltests gold=pr2138979d.gold
+pr2722339a		normal,-pallowsigned=1	ivltests
+pr2722339b		normal,-pallowsigned=1	ivltests
+pr2901556		normal,-pallowsigned=1	ivltests
+pr2913404		normal,-pallowsigned=1	ivltests
+pr3077640		normal,-pallowsigned=1	ivltests
+select_padding		normal,-pallowsigned=1	ivltests
+shift4			normal,-pallowsigned=1	ivltests
+signed5			normal,-pallowsigned=1	ivltests
+signed10		normal,-pallowsigned=1	ivltests gold=signed10.gold
+signed13		normal,-pallowsigned=1	ivltests
+# Also tests have different output because of file name/line, etc. differences.
+readmem-error		normal,-pallowsigned=1	ivltests gold=readmem-error-vlog95.gold
+
+# Translating a down index part select require -pallowsigned=1 to get the
+# index calculation to be 100% correct when the select expression is not
+# already signed.
+param_select3		normal,-pallowsigned=1	ivltests
+select5			normal,-pallowsigned=1	ivltests
+
+# Translating a parameter with the LSB > MSB requires -pallowsigned=1 to get
+# the index calculation correct.
+pr487			normal,-pallowsigned=1	ivltests gold=pr487.gold
+
+# Support for greater than 32 bit integer constants is an Icarus extension.
+# If the -pallowsigned=1 flag is given then they can be converted correctly.
+big_int			normal,-pallowsigned=1	ivltests
+pr2673846		normal,-pallowsigned=1	ivltests
+pr2029336		normal,-pallowsigned=1	ivltests diff=work/pr2029336.out:gold/pr2029336.gold
+urand			normal,-pallowsigned=1	ivltests gold=urand.gold
+
+# The synthesized caseZ compare is not supported.
+casesynth6		normal			ivltests
+
+# Tests that require 4-state dynamic arrays
+#unp_array_typedef	CE,-g2005-sv	ivltests
+#sv_darray_word_size	CE,-g2005-sv,-pallowsigned=1	ivltests
+#sv_darray_function	CE,-g2005-sv,-pallowsigned=1	ivltests
+
+# Priority and unique case statements are converted to ordinary case
+# statements, so no warnings are generated.
+case_priority		normal,-g2009		ivltests gold=case_priority-vlog95.gold
+case_unique		normal,-g2009		ivltests gold=case_unique-vlog95.gold
+
+# An error is reported for both compiler passes
+br_gh377		normal,-Ptest.name=	ivltests gold=br_gh377-vlog95.gold

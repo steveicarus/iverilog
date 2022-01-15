@@ -1,0 +1,4 @@
+SORRY: vlog95.v:13: currently only simple signals or constant expressions may be passed to $monitor.
+NOTE: You can work around this by assigning the desired expression to an
+      intermediate net (using a continuous assignment) and passing that net
+      to $monitor.

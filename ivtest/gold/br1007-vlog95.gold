@@ -1,0 +1,10 @@
+./ivltests/br1007.v:15: warning: bit select value[5] is out of range.
+./ivltests/br1007.v:20: warning: Part select value[5:5] is out of range.
+./ivltests/br1007.v:25: warning: Part select value[5:4] is out of range.
+vlog95.v:17: warning: bit select value[5] is out of range.
+vlog95.v:20: warning: bit select value[5] is out of range.
+vlog95.v:23: warning: Part select value[5:4] is out of range.
+0000
+0000
+1000
+PASSED

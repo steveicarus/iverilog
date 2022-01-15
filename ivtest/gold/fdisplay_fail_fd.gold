@@ -1,0 +1,1 @@
+WARNING: ./ivltests/fdisplay_fail_fd.v:4: invalid file descriptor (0x8000000f) given to $fdisplay().

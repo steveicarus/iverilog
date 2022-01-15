@@ -1,0 +1,20 @@
+Compiling vpi/force.c...
+Making br_gh73b.vpi from  force.o...
+peek    : zz
+display : zz zzzz
+force   : 10
+peek    : 10
+display : 10 z10z
+release : zz
+display : zz zzzz
+force   : 10
+peek    : 10
+display : 10 z10z
+poke    : 0
+peek    : 10
+display : 10 z10z
+release : 00
+display : 00 z00z
+poke    : 1
+peek    : 01
+display : 01 z01z

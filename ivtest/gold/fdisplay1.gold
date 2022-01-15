@@ -1,0 +1,5 @@
+message to stdout (from $display)
+
+another message (via fwrite)  to stdout
+ (via fdisplay)
+a = 01011010 at 5

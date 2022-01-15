@@ -1,0 +1,35 @@
+Compiling vpi/pr723.c...
+Making pr723.vpi from  pr723.o...
+Open some files
+open MCD      returned 00000002
+open MCD      returned 00000004
+open MCD      returned 00000008
+open MCD      returned 00000010
+open FD ('r') returned 80000003
+open FD ('r') returned 80000004
+open FD ('w') returned 80000005
+open FD ('w') returned 80000006
+open FD ('a') returned 80000007
+open FD ('a') returned 80000008
+MCD 01: stdout
+MCD 02: /dev/null
+MCD 03: /dev/null
+MCD 04: /dev/null
+MCD 05: /dev/null
+FP  00: stdin
+FP  01: stdout
+FP  02: stderr
+FP  03: /dev/null
+FP  04: /dev/null
+FP  05: /dev/null
+FP  06: /dev/null
+FP  07: /dev/null
+FP  08: /dev/null
+write to MCD 1
+write to FD 2
+write to FD 1
+Close some files
+MCD 01: stdout
+FP  00: stdin
+FP  01: stdout
+FP  02: stderr

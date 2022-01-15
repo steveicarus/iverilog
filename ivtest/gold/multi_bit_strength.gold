@@ -1,0 +1,5 @@
+All three lines should match:
+-----------------------------
+St0_Pu1_Pu1_St0 (reference)
+St0_Pu1_Pu1_St0 (display)
+St0_Pu1_Pu1_St0 (swrite)

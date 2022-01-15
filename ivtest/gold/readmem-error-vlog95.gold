@@ -1,0 +1,26 @@
+WARNING: vlog95.v:20: $readmemb's file name argument (vpiReg) is not a valid string.
+WARNING: vlog95.v:21: $readmemb's file name argument (vpiIntegerVar) is not a valid string.
+WARNING: vlog95.v:26: $readmemb's file name argument contains non-printable characters.
+                      "ivltests/readmemb.tx\002"
+WARNING: vlog95.v:29: $readmemb's third argument (start address) is a real value.
+WARNING: vlog95.v:33: $readmemb's fourth argument (finish address) is a real value.
+ERROR: vlog95.v:36: $readmemb: Start address -1 is out of bounds for memory 'top.array[0:7]'!
+ERROR: vlog95.v:38: $readmemb: Start address 7 is out of bounds for memory 'top.array2[8:15]'!
+ERROR: vlog95.v:40: $readmemb: Finish address 8 is out of bounds for memory 'top.array[0:7]'!
+ERROR: vlog95.v:42: $readmemb: Finish address 16 is out of bounds for memory 'top.array2[8:15]'!
+WARNING: vlog95.v:45: $readmemb(ivltests/readmemb.txt): Too many words in the file for the requested range [0:6].
+WARNING: vlog95.v:48: $readmemb(ivltests/readmemb.txt): Not enough words in the file for the requested range [-1:7].
+ERROR: vlog95.v:51: $readmemb(ivltests/readmem-error.txt): Invalid input character: u
+WARNING: vlog95.v:53: $readmemh's file name argument (vpiReg) is not a valid string.
+WARNING: vlog95.v:54: $readmemh's file name argument (vpiIntegerVar) is not a valid string.
+WARNING: vlog95.v:59: $readmemh's file name argument contains non-printable characters.
+                      "ivltests/readmemh.tx\002"
+WARNING: vlog95.v:62: $readmemh's third argument (start address) is a real value.
+WARNING: vlog95.v:66: $readmemh's fourth argument (finish address) is a real value.
+ERROR: vlog95.v:69: $readmemh: Start address -1 is out of bounds for memory 'top.array[0:7]'!
+ERROR: vlog95.v:71: $readmemh: Start address 7 is out of bounds for memory 'top.array2[8:15]'!
+ERROR: vlog95.v:73: $readmemh: Finish address 8 is out of bounds for memory 'top.array[0:7]'!
+ERROR: vlog95.v:75: $readmemh: Finish address 16 is out of bounds for memory 'top.array2[8:15]'!
+WARNING: vlog95.v:78: $readmemh(ivltests/readmemh.txt): Too many words in the file for the requested range [0:6].
+WARNING: vlog95.v:81: $readmemh(ivltests/readmemh.txt): Not enough words in the file for the requested range [-1:7].
+ERROR: vlog95.v:84: $readmemh(ivltests/readmem-error.txt): Invalid input character: u

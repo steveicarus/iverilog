@@ -1,0 +1,10 @@
+Running first test.
+
+PASS! top.memory.memory[0] set correctly.
+top.memory.memory[0] = f
+
+Running second test.
+
+top.memory.memory[1] = f
+PASS! top.memory.memory[1] set correctly.
+top.memory.memory[1] = f

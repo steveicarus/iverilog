@@ -1,0 +1,15 @@
+                   0 Pu:0/0 St:0/0 Y:z,HiZ
+                 100 Pu:0/x St:0/0 Y:x,PuL
+                 200 Pu:0/0 St:0/x Y:x,StL
+                 300 Pu:1/x St:0/0 Y:x,PuH
+                 400 Pu:0/0 St:1/x Y:x,StH
+                 500 Pu:0/1 St:0/0 Y:0,Pu0
+                 600 Pu:0/0 St:0/1 Y:0,St0
+                 700 Pu:1/1 St:0/0 Y:1,Pu1
+                 800 Pu:0/0 St:1/1 Y:1,St1
+                 900 Pu:x/1 St:0/0 Y:x,PuX
+                1000 Pu:0/0 St:x/1 Y:x,StX
+                1100 Pu:0/1 St:0/x Y:0,650
+                1200 Pu:x/1 St:0/x Y:x,65X
+                1300 Pu:1/1 St:1/x Y:1,651
+                1400 Pu:x/1 St:1/x Y:x,56X

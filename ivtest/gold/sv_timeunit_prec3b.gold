@@ -1,0 +1,9 @@
+Time scale of (check_tu_nest) is 10us / 1us
+Time scale of (check_tp_nest) is 100us / 10us
+Time scale of (check_tup_nest) is 10us / 10us
+Time scale of (check_tpu_nest) is 10us / 10us
+
+Time scale of (check_tu_nest.nested) is 100us / 1us
+Time scale of (check_tp_nest.nested) is 100us / 1us
+Time scale of (check_tup_nest.nested) is 100us / 1us
+Time scale of (check_tpu_nest.nested) is 100us / 1us

@@ -1,0 +1,67 @@
+./ivltests/pr1862744b.v:56: warning: condition expression of for-loop is constant.
+./ivltests/pr1862744b.v:59: warning: condition expression of for-loop is constant.
+./ivltests/pr1862744b.v:119: error: always process does not have any delay.
+./ivltests/pr1862744b.v:119:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:104: warning: always process may not have any delay.
+./ivltests/pr1862744b.v:104:        : A runtime infinite loop may be possible.
+./ivltests/pr1862744b.v:103: error: always process does not have any delay.
+./ivltests/pr1862744b.v:103:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:102: error: always process does not have any delay.
+./ivltests/pr1862744b.v:102:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:95: warning: always process may not have any delay.
+./ivltests/pr1862744b.v:95:        : A runtime infinite loop may be possible.
+./ivltests/pr1862744b.v:89: warning: always process may not have any delay.
+./ivltests/pr1862744b.v:89:        : A runtime infinite loop may be possible.
+./ivltests/pr1862744b.v:86: warning: always process may not have any delay.
+./ivltests/pr1862744b.v:86:        : A runtime infinite loop may be possible.
+./ivltests/pr1862744b.v:83: error: always process does not have any delay.
+./ivltests/pr1862744b.v:83:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:80: warning: always process may not have any delay.
+./ivltests/pr1862744b.v:80:        : A runtime infinite loop may be possible.
+./ivltests/pr1862744b.v:77: error: always process does not have any delay.
+./ivltests/pr1862744b.v:77:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:74: error: always process does not have any delay.
+./ivltests/pr1862744b.v:74:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:71: warning: always process may not have any delay.
+./ivltests/pr1862744b.v:71:        : A runtime infinite loop may be possible.
+./ivltests/pr1862744b.v:68: error: always process does not have any delay.
+./ivltests/pr1862744b.v:68:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:65: error: always process does not have any delay.
+./ivltests/pr1862744b.v:65:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:62: error: always process does not have any delay.
+./ivltests/pr1862744b.v:62:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:59: error: always process does not have any delay.
+./ivltests/pr1862744b.v:59:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:56: error: always process does not have any delay.
+./ivltests/pr1862744b.v:56:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:53: warning: always process may not have any delay.
+./ivltests/pr1862744b.v:53:        : A runtime infinite loop may be possible.
+./ivltests/pr1862744b.v:50: error: always process does not have any delay.
+./ivltests/pr1862744b.v:50:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:47: error: always process does not have any delay.
+./ivltests/pr1862744b.v:47:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:44: warning: always process may not have any delay.
+./ivltests/pr1862744b.v:44:        : A runtime infinite loop may be possible.
+./ivltests/pr1862744b.v:41: error: always process does not have any delay.
+./ivltests/pr1862744b.v:41:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:38: error: always process does not have any delay.
+./ivltests/pr1862744b.v:38:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:35: warning: always process may not have any delay.
+./ivltests/pr1862744b.v:35:        : A runtime infinite loop may be possible.
+./ivltests/pr1862744b.v:32: warning: always process may not have any delay.
+./ivltests/pr1862744b.v:32:        : A runtime infinite loop may be possible.
+./ivltests/pr1862744b.v:29: warning: always process may not have any delay.
+./ivltests/pr1862744b.v:29:        : A runtime infinite loop may be possible.
+./ivltests/pr1862744b.v:26: error: always process does not have any delay.
+./ivltests/pr1862744b.v:26:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:23: error: always process does not have any delay.
+./ivltests/pr1862744b.v:23:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:20: error: always process does not have any delay.
+./ivltests/pr1862744b.v:20:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:17: warning: always process may not have any delay.
+./ivltests/pr1862744b.v:17:        : A runtime infinite loop may be possible.
+./ivltests/pr1862744b.v:14: error: always process does not have any delay.
+./ivltests/pr1862744b.v:14:      : A runtime infinite loop will occur.
+./ivltests/pr1862744b.v:11: error: always process does not have any delay.
+./ivltests/pr1862744b.v:11:      : A runtime infinite loop will occur.
+Elaboration failed

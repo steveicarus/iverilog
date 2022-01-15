@@ -1,0 +1,6 @@
+Compiling vpi/br_gh59.c...
+Making br_gh59.vpi from  br_gh59.o...
+zz z zz 0
+01 0 01 500
+01 1 zz 1000
+01 0 01 2000

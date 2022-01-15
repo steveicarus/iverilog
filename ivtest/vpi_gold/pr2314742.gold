@@ -1,0 +1,10 @@
+Compiling vpi/pr2314742.c...
+Making pr2314742.vpi from  pr2314742.o...
+*** Registering XXX PLI functions.
++++ in XXX_REGISTER
+                   0 The value of A is: 00000000
+                   0 The value of B is: 00000000
+                   0 The value of C is: 00000000
+                  10 The value of A is: 01010101
+                  20 The value of B is: x1x1x1x1
+                  30 The value of C is: 0xz101xz

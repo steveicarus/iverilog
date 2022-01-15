@@ -1,0 +1,7 @@
+Compiling vpi/pr686.c...
+Making pr686.vpi from  pr686.o...
+foo should be 0:  1
+Callback time=1 foo=1
+foo should be 1:  1
+Callback time=5 foo=1
+foo is finally  2

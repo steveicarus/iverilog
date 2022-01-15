@@ -1,0 +1,3 @@
+./ivltests/sys_func_as_task.v:7: Warning: Calling system function $sscanf() as a task.
+./ivltests/sys_func_as_task.v:7:          The functions return value will be ignored.
+PASSED

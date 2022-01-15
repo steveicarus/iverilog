@@ -1,0 +1,4 @@
+mux2.vhd:52:5:@0ms:(report note): 'U'
+mux2.vhd:52:5:@0ms:(report note): '1'
+mux2.vhd:52:5:@1ms:(report note): '0'
+mux2.vhd:52:5:@2ms:(report note): '1'

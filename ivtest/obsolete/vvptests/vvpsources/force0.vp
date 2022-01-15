@@ -1,0 +1,28 @@
+#! /home/drjury/stephan/icarus/lib/ivl/../../bin/vvp
+:vpi_time_precision + 0;
+:vpi_module "system";
+S_ftest .scope module, "ftest";
+V_ftest.a .net "a", 0, 0, C<0>;
+V_ftest.b .net "b", 0, 0, C<0>;
+V_ftest._L4 .net "_L4", 0, 0, C<1>;
+
+fofu .force V_ftest.a, C<1> ;
+
+    .scope S_ftest;
+T_0 ;
+
+    %force fofu, 1 ;
+
+    %delay 1;
+    %load  8, V_ftest.b[0];
+    %cmp/u 8, 0, 1;
+    %inv 6, 1;
+    %mov 8, 6, 1;
+    %jmp/0xz  T_0.0, 8;
+    %vpi_call "$display", "FAILED: %b %b", V_ftest.a, V_ftest.b;
+    %jmp T_0.1;
+T_0.0 ;
+    %vpi_call "$display", "PASSED: %b %b", V_ftest.a, V_ftest.b;
+T_0.1 ;
+    %end;
+    .thread T_0;

@@ -1,0 +1,8 @@
+         1
+         2
+The result for $fdisplay(          1, ...) is           3
+The result for $fwrite(          1, ...) is           4
+The $fstrobe(          1, ...) ran.
+         3
+         4
+PASSED

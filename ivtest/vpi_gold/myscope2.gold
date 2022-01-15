@@ -1,0 +1,12 @@
+Compiling vpi/myscope2.c...
+Making myscope2.vpi from  myscope2.o...
+... ise_startup(reason=1)
+... ise_vls_misc(reason=16)
+... ise_vls_misc(reason=8)
+... sn_calltf(reason=8)
+high_time=0, low_time=0
+... sn_calltf(reason=3)
+high_time=0, low_time=10
+... ise_vls_misc(reason=9)
+... sn_calltf(reason=9)
+high_time=0, low_time=170

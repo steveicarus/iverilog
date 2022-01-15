@@ -1,0 +1,5 @@
+./ivltests/pr751.v:10: warning: @* is sensitive to all bits in 'in[0:3]'.
+                   0 xxxx[xx]: x
+                  10 0100[xx]: x
+                  20 0100[00]: 0
+                  30 0100[01]: 1

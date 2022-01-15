@@ -1,0 +1,27 @@
+ivltests/real_concat_invalid1.v:5: error: concatenation operand can not be real: 2.00000
+ivltests/real_concat_invalid1.v:5: error: concatenation operand can not be real: 1.00000
+ivltests/real_concat_invalid1.v:5: error: Concatenation may not have zero width in this context.
+ivltests/real_concat_invalid1.v:5: error: Unable to elaborate r-value: {2.00000, 1.00000}
+ivltests/real_concat_invalid1.v:6: error: concatenation operand can not be real: rvar1
+ivltests/real_concat_invalid1.v:6: error: concatenation operand can not be real: rvar2
+ivltests/real_concat_invalid1.v:6: error: Concatenation may not have zero width in this context.
+ivltests/real_concat_invalid1.v:6: error: Unable to elaborate r-value: {rvar1, rvar2}
+ivltests/real_concat_invalid1.v:8: error: concatenation operand can not be real: 2.00000
+ivltests/real_concat_invalid1.v:8: error: concatenation operand can not be real: 1.00000
+ivltests/real_concat_invalid1.v:8: error: Concatenation may not have zero width in this context.
+ivltests/real_concat_invalid1.v:8: error: Unable to elaborate r-value: {2.00000, 1.00000}
+ivltests/real_concat_invalid1.v:9: error: concatenation operand can not be real: rvar1
+ivltests/real_concat_invalid1.v:9: error: concatenation operand can not be real: rvar2
+ivltests/real_concat_invalid1.v:9: error: Concatenation may not have zero width in this context.
+ivltests/real_concat_invalid1.v:9: error: Unable to elaborate r-value: {rvar1, rvar2}
+ivltests/real_concat_invalid1.v:11: error: concatenation operand can no be real: wrcon5
+ivltests/real_concat_invalid1.v:11: error: concatenation operand can no be real: wrcon6
+ivltests/real_concat_invalid1.v:14: error: concatenation operand can not be real: 2.00000
+ivltests/real_concat_invalid1.v:14: error: concatenation operand can not be real: 1.00000
+ivltests/real_concat_invalid1.v:14: error: Concatenation may not have zero width in this context.
+ivltests/real_concat_invalid1.v:15: error: concatenation operand can not be real: rvar1
+ivltests/real_concat_invalid1.v:15: error: concatenation operand can not be real: rvar2
+ivltests/real_concat_invalid1.v:15: error: Concatenation may not have zero width in this context.
+ivltests/real_concat_invalid1.v:17: error: concatenation operand can not be real: rvar1
+ivltests/real_concat_invalid1.v:17: error: concatenation operand can not be real: rvar2
+26 error(s) during elaboration.

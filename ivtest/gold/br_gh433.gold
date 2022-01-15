@@ -1,0 +1,4 @@
+./ivltests/br_gh433.v:8: warning: method function 'pop_back' is being called as a task.
+./ivltests/br_gh433.v:16: warning: method function 'pop_front' is being called as a task.
+./ivltests/br_gh433.v:22: warning: method function 'size' is being called as a task.
+PASSED

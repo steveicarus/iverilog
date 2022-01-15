@@ -1,0 +1,2 @@
+./ivltests/br921.v:6: warning: User function 'test_fcn' is being called as a task.
+PASSED

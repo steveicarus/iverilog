@@ -1,0 +1,4 @@
+WARNING: vlog95.v:17: $readmempath could not find directory "/no_dir"!
+WARNING: vlog95.v:17: $readmempath could not find directory "no_dir2"!
+WARNING: vlog95.v:17: $readmempath's path element "vsim" is not a directory!
+PASSED

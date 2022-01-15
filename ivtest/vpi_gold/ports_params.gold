@@ -1,0 +1,13 @@
+Compiling vpi/ports_params.c...
+Making ports_params.vpi from  ports_params.o...
+PARAM NAME=ADC_OFFSET type=2 value=(REAL)-16 local=no
+PARAM NAME=ADC_RANGE type=2 value=(REAL)32 local=no
+PARAM NAME=CLOCK_INTERVAL type=3 value=(INT)1000 local=no
+PARAM NAME=DAC_OFFSET type=2 value=(REAL)-8 local=no
+PARAM NAME=DAC_RANGE type=2 value=(REAL)16 local=no
+PARAM NAME=STARTUP_DELAY type=3 value=(INT)2000000 local=no
+PARAM NAME=UPDATE_FREQ_MHZ type=2 value=(REAL)1 local=no
+PORT name=V_load_adc index=0 dir=1 size=16
+PORT name=V_load_valid index=1 dir=1 size=1
+PORT name=pwm index=2 dir=2 size=1
+PORT name=V_src index=3 dir=2 size=8

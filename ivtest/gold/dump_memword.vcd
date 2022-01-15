@@ -1,0 +1,19 @@
+$date
+	Wed Jun  4 10:37:42 2008
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1s
+$end
+$scope module top $end
+$var reg 8 ! \arr[4] [7:0] $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpvars
+b0 !
+$end
+#1
+b11111111 !

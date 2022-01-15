@@ -1,0 +1,3 @@
+x = 3 (should be 3)
+y = -3 (should be -3)
+x = 253 (should be 253)

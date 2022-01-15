@@ -1,0 +1,20 @@
+# test  testbench arch=? part=?     gold_file
+eqne  eqne_tb   virtex  XC2S15-VQ100  -
+eqne  eqne_tb   virtex2 XC2V40        -
+ge2  ge2_tb   virtex  XC2S15-VQ100  ge2.gold
+ge2  ge2_tb   virtex2 XC2V40        ge2.gold
+ge8  ge8_tb   virtex  XC2S15-VQ100  -
+ge8  ge8_tb   virtex2 XC2V40        -
+onehot16 onehot16_tb  virtex  XC2S15-VQ100  -
+onehot16 onehot16_tb  virtex2 XC2V40        -
+sub8 sub8_tb  virtex  XC2S15-VQ100  -
+sub8 sub8_tb  virtex2 XC2V40        -
+sqrt sqrt_tb  virtex  XC2S15-VQ100  -
+sqrt sqrt_tb  virtex2 XC2V40-CS144  -
+timer timer_tb  virtex  XC2S15  -
+timer timer_tb  virtex2 XC2V40  -
+cell_ld	cell_ld_tb	virtex2 XC2V40		-
+ornor4	ornor4_tb	virtex  XC2S15-VQ100	-
+ornor7	ornor7_tb	virtex  XC2S15-VQ100	-
+ornor8	ornor8_tb	virtex  XC2S15-VQ100	-
+bufifab	bufifab_tb	virtex	XC2S15-VQ100	-

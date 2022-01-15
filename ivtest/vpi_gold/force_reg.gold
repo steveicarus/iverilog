@@ -1,0 +1,20 @@
+Compiling vpi/force.c...
+Making force_reg.vpi from  force.o...
+peek    : xx
+display : xx
+force   : 10
+peek    : 10
+display : 10
+release : 10
+display : 10
+force   : 10
+peek    : 10
+display : 10
+poke    : 0
+peek    : 10
+display : 10
+release : 10
+display : 10
+poke    : 1
+peek    : 01
+display : 01

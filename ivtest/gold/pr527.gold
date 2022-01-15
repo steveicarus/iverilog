@@ -1,0 +1,34 @@
+
+expecting junk,junkbus to be 1 at T=1
+then changing to 0 at T=2
+then junk is 0 from T=3 to T=11, while
+junkbus changes to 2 at T=5 and remains 2 through to T=16
+junk changes to 2 at T=12
+then 2 from T=13 to T=14
+then changing to 3 at T=15
+then 3 from T=16 on
+junkbus changes to 3 at T=17 and remains 3 from then on
+
+time: 0, a: 01, junk: 01, junkbus: 01
+time: 1, a: 01, junk: 01, junkbus: 01
+time: 2, a: 01, junk: 00, junkbus: 00
+time: 3, a: 01, junk: 00, junkbus: 00
+time: 4, a: 01, junk: 00, junkbus: 00
+time: 5, a: 10, junk: 00, junkbus: 10
+time: 6, a: 10, junk: 00, junkbus: 10
+time: 7, a: 10, junk: 00, junkbus: 10
+time: 8, a: 10, junk: 00, junkbus: 10
+time: 9, a: 10, junk: 00, junkbus: 10
+time: 10, a: 10, junk: 00, junkbus: 10
+time: 11, a: 10, junk: 00, junkbus: 10
+time: 12, a: 10, junk: 10, junkbus: 10
+time: 13, a: 10, junk: 10, junkbus: 10
+time: 14, a: 10, junk: 10, junkbus: 10
+time: 15, a: 11, junk: 11, junkbus: 10
+time: 16, a: 11, junk: 11, junkbus: 10
+time: 17, a: 11, junk: 11, junkbus: 11
+time: 18, a: 11, junk: 11, junkbus: 11
+time: 19, a: 11, junk: 11, junkbus: 11
+
+	--------- force test passed ---------
+

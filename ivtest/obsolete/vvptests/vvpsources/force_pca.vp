@@ -1,0 +1,202 @@
+#! /home/drjury/stephan/icarus/lib/ivl/../../bin/vvp
+:vpi_time_precision + 0;
+:vpi_module "system";
+S .scope module, "test";
+V.force_expr .var "force_expr", 1, 0;
+V.pca_expr .var "pca_expr", 1, 0;
+V.tgt .var "tgt", 1, 0;
+S.test .scope task, "test.test", S;
+V.test.errors .var "errors", 0, 0;
+V.test.expect .var "expect", 1, 0;
+
+fofu .force V.tgt, V.force_expr[0], V.force_expr[1];
+
+TD.test ;
+    %delay 1;
+    %load  8, V.tgt[0];
+    %load  9, V.tgt[1];
+    %load  10, V.test.expect[0];
+    %load  11, V.test.expect[1];
+    %cmp/u 8, 10, 2;
+    %inv 6, 1;
+    %mov 8, 6, 1;
+    %jmp/0xz  T_0.0, 8;
+    %vpi_call "$display", "%b FAILED: expect %b", V.tgt, V.test.expect;
+    %set V.test.errors[0], 1;
+    %jmp T_0.1;
+T_0.0 ;
+    %vpi_call "$display", "%b", V.tgt;
+T_0.1 ;
+    %end;
+    .scope S;
+T_1 ;
+    %set V.test.errors[0], 0;
+    %end;
+    .thread T_1;
+    .scope S;
+T_2 ;
+    %vpi_call "$dumpvars";
+    %set V.tgt[0], 0;
+    %set V.tgt[1], 0;
+    %set V.pca_expr[0], 1;
+    %set V.pca_expr[1], 0;
+    %set V.force_expr[0], 0;
+    %set V.force_expr[1], 0;
+    %set V.test.expect[0], 0;
+    %set V.test.expect[1], 0;
+    %fork TD.test, S.test;
+    %join;
+
+ %cassign V.tgt[0], V.pca_expr[0];
+ %cassign V.tgt[1], V.pca_expr[1];
+
+    %load  8, V.pca_expr[0];
+    %load  9, V.pca_expr[1];
+    %set V.test.expect[0], 8;
+    %set V.test.expect[1], 9;
+    %fork TD.test, S.test;
+    %join;
+    %set V.pca_expr[0], 1;
+    %set V.pca_expr[1], 1;
+    %load  8, V.pca_expr[0];
+    %load  9, V.pca_expr[1];
+    %set V.test.expect[0], 8;
+    %set V.test.expect[1], 9;
+    %fork TD.test, S.test;
+    %join;
+
+ %force fofu, 2;
+
+    %load  8, V.force_expr[0];
+    %load  9, V.force_expr[1];
+    %set V.test.expect[0], 8;
+    %set V.test.expect[1], 9;
+    %fork TD.test, S.test;
+    %join;
+    %set V.force_expr[0], 0;
+    %set V.force_expr[1], 1;
+    %load  8, V.force_expr[0];
+    %load  9, V.force_expr[1];
+    %set V.test.expect[0], 8;
+    %set V.test.expect[1], 9;
+    %fork TD.test, S.test;
+    %join;
+
+ %release V.tgt[0];
+ %release V.tgt[1];
+
+    %load  8, V.pca_expr[0];
+    %load  9, V.pca_expr[1];
+    %set V.test.expect[0], 8;
+    %set V.test.expect[1], 9;
+    %fork TD.test, S.test;
+    %join;
+
+ %deassign V.tgt[0], 2;
+
+    %load  8, V.pca_expr[0];
+    %load  9, V.pca_expr[1];
+    %set V.test.expect[0], 8;
+    %set V.test.expect[1], 9;
+    %fork TD.test, S.test;
+    %join;
+
+    %set V.pca_expr[0], 1;
+    %set V.pca_expr[1], 0;
+    %set V.test.expect[0], 1;
+    %set V.test.expect[1], 1;
+    %fork TD.test, S.test;
+    %join;
+
+ %cassign V.tgt[0], V.pca_expr[0];
+ %cassign V.tgt[1], V.pca_expr[1];
+
+    %load  8, V.pca_expr[0];
+    %load  9, V.pca_expr[1];
+    %set V.test.expect[0], 8;
+    %set V.test.expect[1], 9;
+    %fork TD.test, S.test;
+    %join;
+
+ %force fofu, 2;
+
+    %load  8, V.force_expr[0];
+    %load  9, V.force_expr[1];
+    %set V.test.expect[0], 8;
+    %set V.test.expect[1], 9;
+    %fork TD.test, S.test;
+    %join;
+
+ %deassign V.tgt[0], 2;
+
+    %load  8, V.force_expr[0];
+    %load  9, V.force_expr[1];
+    %set V.test.expect[0], 8;
+    %set V.test.expect[1], 9;
+    %fork TD.test, S.test;
+    %join;
+
+ %release V.tgt[0];
+ %release V.tgt[1];
+
+    %load  8, V.pca_expr[0];
+    %load  9, V.pca_expr[1];
+    %set V.test.expect[0], 8;
+    %set V.test.expect[1], 9;
+    %fork TD.test, S.test;
+    %join;
+
+    %set V.force_expr[0], 1;
+    %set V.force_expr[1], 1;
+
+ %force fofu, 2;
+
+    %load  8, V.force_expr[0];
+    %load  9, V.force_expr[1];
+    %set V.test.expect[0], 8;
+    %set V.test.expect[1], 9;
+    %fork TD.test, S.test;
+    %join;
+
+ %cassign V.tgt[0], V.pca_expr[0];
+ %cassign V.tgt[1], V.pca_expr[1];
+
+    %load  8, V.force_expr[0];
+    %load  9, V.force_expr[1];
+    %set V.test.expect[0], 8;
+    %set V.test.expect[1], 9;
+    %fork TD.test, S.test;
+    %join;
+
+ %release V.tgt[0];
+ %release V.tgt[1];
+
+    %load  8, V.pca_expr[0];
+    %load  9, V.pca_expr[1];
+    %set V.test.expect[0], 8;
+    %set V.test.expect[1], 9;
+    %fork TD.test, S.test;
+    %join;
+
+ %deassign V.tgt[0], 2;
+
+    %load  8, V.pca_expr[0];
+    %load  9, V.pca_expr[1];
+    %set V.test.expect[0], 8;
+    %set V.test.expect[1], 9;
+    %fork TD.test, S.test;
+    %join;
+
+
+    %load  8, V.test.errors[0];
+    %mov 4, 8, 1;
+    %mov 8, 1, 1;
+    %jmp/0xz T_2.0, 4;
+    %mov 8, 0, 1;
+T_2.0 ;
+    %jmp/0xz  T_2.1, 8;
+    %vpi_call "$display", "PASSED";
+T_2.1 ;
+    %vpi_call "$finish";
+    %end;
+    .thread T_2;

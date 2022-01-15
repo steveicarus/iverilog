@@ -1,0 +1,4 @@
+./ivltests/gate_connect2.v:10: error: Expression width 32 does not match width 1 of logic gate array port 2.
+./ivltests/gate_connect2.v:11: error: Expression width 2 does not match width 1 of logic gate array port 2.
+./ivltests/gate_connect2.v:12: error: Expression width 2 does not match width 1 of logic gate array port 2.
+3 error(s) during elaboration.

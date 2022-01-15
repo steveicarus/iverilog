@@ -1,0 +1,4 @@
+./ivltests/pr3366217b.v:3: error: Enumeration name nega has a negative value.
+./ivltests/pr3366217b.v:3: error: Enumeration name b has an inferred value that overflowed.
+./ivltests/pr3366217b.v:3: error: Enumeration name c has an inferred value that overflowed.
+4 error(s) during elaboration.

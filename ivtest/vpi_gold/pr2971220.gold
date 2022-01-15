@@ -1,0 +1,19 @@
+Compiling vpi/pr2971220.c...
+Making pr2971220.vpi from  pr2971220.o...
+--> registered task as: $check_sys_task.
+--> registered func as: $check_sys_func.
+Hello from $hello at vpi/pr2971220.v:4.
+registered as: vpiUserSystf - $check_sys_task
+  vpiUserDefn: is defined.
+  vpi_get_systf_info: passed.
+  vpi_get_systf_info (callh): passed.
+Looking for all user defined system tasks/functions:
+  Found task vpiUserSystf - $check_sys_task *****> caller.
+  Found function (vpiIntFunc) vpiUserSystf - $check_sys_func.
+  Found task vpiUserSystf - $hello.
+Done.
+registered as: vpiUserSystf - $check_sys_func
+  vpiUserDefn: is defined.
+  vpi_get_systf_info: passed.
+  vpi_get_systf_info (callh): passed.
+Hello from $hello at vpi/pr2971220.v:7.

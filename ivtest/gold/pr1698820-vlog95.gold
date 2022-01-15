@@ -1,0 +1,9 @@
+The variable is 10
+The variable is 01010
+The variable is 12
+The variable is 0a
+The variable is 10
+The variable is 01010
+The variable is 12
+The variable is 0a
+WARNING: vlog95.v:25: could not close MCD STDOUT (0x1) in $fclose().

@@ -1,0 +1,10 @@
+./ivltests/sv_queue_string_fail.v:4: error: queue 'q_str1' bound must be positive (-1)!
+./ivltests/sv_queue_string_fail.v:5: error: queue 'q_str2' bound is undefined!
+./ivltests/sv_queue_string_fail.v:6: error: A reference to a wire or reg (`bound') is not allowed in a constant expression.
+./ivltests/sv_queue_string_fail.v:6: error: queue 'q_str3' bound must be a constant!
+./ivltests/sv_queue_string_fail.v:9: error: size() method takes no arguments
+./ivltests/sv_queue_string_fail.v:10: error: pop_front() method takes no arguments
+./ivltests/sv_queue_string_fail.v:11: error: pop_back() method takes no arguments
+./ivltests/sv_queue_string_fail.v:12: error: push_front() method requires a single argument.
+./ivltests/sv_queue_string_fail.v:13: error: push_back() method requires a single argument.
+9 error(s) during elaboration.

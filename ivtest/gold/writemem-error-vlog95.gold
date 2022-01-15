@@ -1,0 +1,20 @@
+WARNING: vlog95.v:22: $writememb's file name argument (vpiReg) is not a valid string.
+WARNING: vlog95.v:23: $writememb's file name argument (vpiIntegerVar) is not a valid string.
+WARNING: vlog95.v:30: $writememb's file name argument contains non-printable characters.
+                      "work/writemem.tx\002"
+WARNING: vlog95.v:33: $writememb's third argument (start address) is a real value.
+WARNING: vlog95.v:38: $writememb's fourth argument (finish address) is a real value.
+ERROR: vlog95.v:42: $writememb: Start address -1 is out of bounds for memory 'top.check[0:7]'!
+ERROR: vlog95.v:46: $writememb: Start address 7 is out of bounds for memory 'top.array2[8:15]'!
+ERROR: vlog95.v:50: $writememb: Finish address 8 is out of bounds for memory 'top.check[0:7]'!
+ERROR: vlog95.v:54: $writememb: Finish address 16 is out of bounds for memory 'top.array2[8:15]'!
+WARNING: vlog95.v:63: $writememh's file name argument (vpiReg) is not a valid string.
+WARNING: vlog95.v:64: $writememh's file name argument (vpiIntegerVar) is not a valid string.
+WARNING: vlog95.v:71: $writememh's file name argument contains non-printable characters.
+                      "work/writemem.tx\002"
+WARNING: vlog95.v:74: $writememh's third argument (start address) is a real value.
+WARNING: vlog95.v:79: $writememh's fourth argument (finish address) is a real value.
+ERROR: vlog95.v:83: $writememh: Start address -1 is out of bounds for memory 'top.check[0:7]'!
+ERROR: vlog95.v:87: $writememh: Start address 7 is out of bounds for memory 'top.array2[8:15]'!
+ERROR: vlog95.v:91: $writememh: Finish address 8 is out of bounds for memory 'top.check[0:7]'!
+ERROR: vlog95.v:95: $writememh: Finish address 16 is out of bounds for memory 'top.array2[8:15]'!

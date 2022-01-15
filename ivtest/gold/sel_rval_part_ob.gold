@@ -1,0 +1,225 @@
+./ivltests/sel_rval_part_ob.v:57: warning: Part select pvar0[33:32] is selecting after the parameter pvar0[31:0].
+./ivltests/sel_rval_part_ob.v:57:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:62: warning: Part select pvar0[32:31] is selecting after the parameter pvar0[31:0].
+./ivltests/sel_rval_part_ob.v:62:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:68: warning: Part select [-1:-2] is selecting before the parameter pvar0[31:0].
+./ivltests/sel_rval_part_ob.v:68:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:73: warning: Part select [0:-1] is selecting before the parameter pvar0[31:0].
+./ivltests/sel_rval_part_ob.v:73:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:79: warning: Undefined part select [1'bx:'sd1] for parameter 'pvar0'.
+./ivltests/sel_rval_part_ob.v:79:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:85: warning: Undefined part select ['sd1:1'bx] for parameter 'pvar0'.
+./ivltests/sel_rval_part_ob.v:85:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:91: warning: Undefined part select [1'bz:'sd1] for parameter 'pvar0'.
+./ivltests/sel_rval_part_ob.v:91:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:97: warning: Undefined part select ['sd1:1'bz] for parameter 'pvar0'.
+./ivltests/sel_rval_part_ob.v:97:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:112: warning: Part select pvar1[33:32] is selecting after the parameter pvar1[31:0].
+./ivltests/sel_rval_part_ob.v:112:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:117: warning: Part select pvar1[32:31] is selecting after the parameter pvar1[31:0].
+./ivltests/sel_rval_part_ob.v:117:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:123: warning: Part select [-1:-2] is selecting before the parameter pvar1[31:0].
+./ivltests/sel_rval_part_ob.v:123:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:128: warning: Part select [0:-1] is selecting before the parameter pvar1[31:0].
+./ivltests/sel_rval_part_ob.v:128:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:134: warning: Undefined part select [1'bx:'sd1] for parameter 'pvar1'.
+./ivltests/sel_rval_part_ob.v:134:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:140: warning: Undefined part select ['sd1:1'bx] for parameter 'pvar1'.
+./ivltests/sel_rval_part_ob.v:140:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:146: warning: Undefined part select [1'bz:'sd1] for parameter 'pvar1'.
+./ivltests/sel_rval_part_ob.v:146:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:152: warning: Undefined part select ['sd1:1'bz] for parameter 'pvar1'.
+./ivltests/sel_rval_part_ob.v:152:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:167: warning: Part select pvar2[33:32] is selecting after the parameter pvar2[31:0].
+./ivltests/sel_rval_part_ob.v:167:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:172: warning: Part select pvar2[32:31] is selecting after the parameter pvar2[31:0].
+./ivltests/sel_rval_part_ob.v:172:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:178: warning: Part select [-1:-2] is selecting before the parameter pvar2[31:0].
+./ivltests/sel_rval_part_ob.v:178:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:183: warning: Part select [0:-1] is selecting before the parameter pvar2[31:0].
+./ivltests/sel_rval_part_ob.v:183:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:189: warning: Undefined part select [1'bx:'sd1] for parameter 'pvar2'.
+./ivltests/sel_rval_part_ob.v:189:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:195: warning: Undefined part select ['sd1:1'bx] for parameter 'pvar2'.
+./ivltests/sel_rval_part_ob.v:195:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:201: warning: Undefined part select [1'bz:'sd1] for parameter 'pvar2'.
+./ivltests/sel_rval_part_ob.v:201:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:207: warning: Undefined part select ['sd1:1'bz] for parameter 'pvar2'.
+./ivltests/sel_rval_part_ob.v:207:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:217: warning: Part select pvar3[5:4] is selecting after the parameter pvar3[3:0].
+./ivltests/sel_rval_part_ob.v:217:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:222: warning: Part select pvar3[4:3] is selecting after the parameter pvar3[3:0].
+./ivltests/sel_rval_part_ob.v:222:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:228: warning: Part select [-1:-2] is selecting before the parameter pvar3[3:0].
+./ivltests/sel_rval_part_ob.v:228:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:233: warning: Part select [0:-1] is selecting before the parameter pvar3[3:0].
+./ivltests/sel_rval_part_ob.v:233:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:239: warning: Undefined part select [1'bx:'sd1] for parameter 'pvar3'.
+./ivltests/sel_rval_part_ob.v:239:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:245: warning: Undefined part select ['sd1:1'bx] for parameter 'pvar3'.
+./ivltests/sel_rval_part_ob.v:245:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:251: warning: Undefined part select [1'bz:'sd1] for parameter 'pvar3'.
+./ivltests/sel_rval_part_ob.v:251:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:257: warning: Undefined part select ['sd1:1'bz] for parameter 'pvar3'.
+./ivltests/sel_rval_part_ob.v:257:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:267: warning: Part select pvar4[6:5] is selecting after the parameter pvar4[4:1].
+./ivltests/sel_rval_part_ob.v:267:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:272: warning: Part select pvar4[5:4] is selecting after the parameter pvar4[4:1].
+./ivltests/sel_rval_part_ob.v:272:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:278: warning: Part select [0:-1] is selecting before the parameter pvar4[4:1].
+./ivltests/sel_rval_part_ob.v:278:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:283: warning: Part select [1:0] is selecting before the parameter pvar4[4:1].
+./ivltests/sel_rval_part_ob.v:283:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:289: warning: Undefined part select [1'bx:'sd1] for parameter 'pvar4'.
+./ivltests/sel_rval_part_ob.v:289:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:295: warning: Undefined part select ['sd1:1'bx] for parameter 'pvar4'.
+./ivltests/sel_rval_part_ob.v:295:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:301: warning: Undefined part select [1'bz:'sd1] for parameter 'pvar4'.
+./ivltests/sel_rval_part_ob.v:301:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:307: warning: Undefined part select ['sd1:1'bz] for parameter 'pvar4'.
+./ivltests/sel_rval_part_ob.v:307:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:317: warning: Part select pvar5[-1:0] is selecting after the parameter pvar5[1:4].
+./ivltests/sel_rval_part_ob.v:317:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:322: warning: Part select pvar5[0:1] is selecting after the parameter pvar5[1:4].
+./ivltests/sel_rval_part_ob.v:322:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:328: warning: Part select [5:6] is selecting before the parameter pvar5[1:4].
+./ivltests/sel_rval_part_ob.v:328:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:333: warning: Part select [4:5] is selecting before the parameter pvar5[1:4].
+./ivltests/sel_rval_part_ob.v:333:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:339: warning: Undefined part select [1'bx:'sd1] for parameter 'pvar5'.
+./ivltests/sel_rval_part_ob.v:339:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:345: warning: Undefined part select ['sd1:1'bx] for parameter 'pvar5'.
+./ivltests/sel_rval_part_ob.v:345:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:351: warning: Undefined part select [1'bz:'sd1] for parameter 'pvar5'.
+./ivltests/sel_rval_part_ob.v:351:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:357: warning: Undefined part select ['sd1:1'bz] for parameter 'pvar5'.
+./ivltests/sel_rval_part_ob.v:357:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:368: warning: Part select [6:5] is selecting after the vector rvar[4:1].
+./ivltests/sel_rval_part_ob.v:368:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:373: warning: Part select [5:4] is selecting after the vector rvar[4:1].
+./ivltests/sel_rval_part_ob.v:373:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:378: warning: Part select [0:-1] is selecting before the vector rvar[4:1].
+./ivltests/sel_rval_part_ob.v:378:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:383: warning: Part select [1:0] is selecting before the vector rvar[4:1].
+./ivltests/sel_rval_part_ob.v:383:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:388: warning: Undefined part select [1'bx:'sd1] for vector 'rvar'.
+./ivltests/sel_rval_part_ob.v:388:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:393: warning: Undefined part select ['sd1:1'bx] for vector 'rvar'.
+./ivltests/sel_rval_part_ob.v:393:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:398: warning: Undefined part select [1'bz:'sd1] for vector 'rvar'.
+./ivltests/sel_rval_part_ob.v:398:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:403: warning: Undefined part select ['sd1:1'bz] for vector 'rvar'.
+./ivltests/sel_rval_part_ob.v:403:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:412: warning: Part select [-1:0] is selecting after the vector rvar2[1:4].
+./ivltests/sel_rval_part_ob.v:412:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:417: warning: Part select [0:1] is selecting after the vector rvar2[1:4].
+./ivltests/sel_rval_part_ob.v:417:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:423: warning: Part select [5:6] is selecting before the vector rvar2[1:4].
+./ivltests/sel_rval_part_ob.v:423:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:428: warning: Part select [4:5] is selecting before the vector rvar2[1:4].
+./ivltests/sel_rval_part_ob.v:428:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:434: warning: Undefined part select [1'bx:'sd1] for vector 'rvar2'.
+./ivltests/sel_rval_part_ob.v:434:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:440: warning: Undefined part select ['sd1:1'bx] for vector 'rvar2'.
+./ivltests/sel_rval_part_ob.v:440:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:446: warning: Undefined part select [1'bz:'sd1] for vector 'rvar2'.
+./ivltests/sel_rval_part_ob.v:446:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:451: warning: Undefined part select ['sd1:1'bz] for vector 'rvar2'.
+./ivltests/sel_rval_part_ob.v:451:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:461: warning: Part select [6:5] is selecting after the array word ravar[][4:1].
+./ivltests/sel_rval_part_ob.v:461:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:466: warning: Part select [5:4] is selecting after the array word ravar[][4:1].
+./ivltests/sel_rval_part_ob.v:466:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:472: warning: Part select [0:-1] is selecting before the array word ravar[][4:1].
+./ivltests/sel_rval_part_ob.v:472:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:477: warning: Part select [1:0] is selecting before the array word ravar[][4:1].
+./ivltests/sel_rval_part_ob.v:477:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:483: warning: Undefined part select [1'bx:'sd1] for array word 'ravar[]'.
+./ivltests/sel_rval_part_ob.v:483:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:489: warning: Undefined part select ['sd1:1'bx] for array word 'ravar[]'.
+./ivltests/sel_rval_part_ob.v:489:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:495: warning: Undefined part select [1'bz:'sd1] for array word 'ravar[]'.
+./ivltests/sel_rval_part_ob.v:495:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:500: warning: Undefined part select ['sd1:1'bz] for array word 'ravar[]'.
+./ivltests/sel_rval_part_ob.v:500:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:509: warning: Part select [-1:0] is selecting after the array word ravar2[][1:4].
+./ivltests/sel_rval_part_ob.v:509:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:514: warning: Part select [0:1] is selecting after the array word ravar2[][1:4].
+./ivltests/sel_rval_part_ob.v:514:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:520: warning: Part select [5:6] is selecting before the array word ravar2[][1:4].
+./ivltests/sel_rval_part_ob.v:520:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:525: warning: Part select [4:5] is selecting before the array word ravar2[][1:4].
+./ivltests/sel_rval_part_ob.v:525:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:531: warning: Undefined part select [1'bx:'sd1] for array word 'ravar2[]'.
+./ivltests/sel_rval_part_ob.v:531:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:537: warning: Undefined part select ['sd1:1'bx] for array word 'ravar2[]'.
+./ivltests/sel_rval_part_ob.v:537:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:543: warning: Undefined part select [1'bz:'sd1] for array word 'ravar2[]'.
+./ivltests/sel_rval_part_ob.v:543:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:549: warning: Undefined part select ['sd1:1'bz] for array word 'ravar2[]'.
+./ivltests/sel_rval_part_ob.v:549:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:560: warning: Part select [6:5] is selecting after the vector wvar[4:1].
+./ivltests/sel_rval_part_ob.v:560:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:565: warning: Part select [5:4] is selecting after the vector wvar[4:1].
+./ivltests/sel_rval_part_ob.v:565:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:570: warning: Part select [0:-1] is selecting before the vector wvar[4:1].
+./ivltests/sel_rval_part_ob.v:570:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:575: warning: Part select [1:0] is selecting before the vector wvar[4:1].
+./ivltests/sel_rval_part_ob.v:575:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:580: warning: Undefined part select [1'bx:'sd1] for vector 'wvar'.
+./ivltests/sel_rval_part_ob.v:580:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:585: warning: Undefined part select ['sd1:1'bx] for vector 'wvar'.
+./ivltests/sel_rval_part_ob.v:585:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:590: warning: Undefined part select [1'bz:'sd1] for vector 'wvar'.
+./ivltests/sel_rval_part_ob.v:590:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:595: warning: Undefined part select ['sd1:1'bz] for vector 'wvar'.
+./ivltests/sel_rval_part_ob.v:595:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:604: warning: Part select [-1:0] is selecting after the vector wvar2[1:4].
+./ivltests/sel_rval_part_ob.v:604:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:609: warning: Part select [0:1] is selecting after the vector wvar2[1:4].
+./ivltests/sel_rval_part_ob.v:609:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:614: warning: Part select [5:6] is selecting before the vector wvar2[1:4].
+./ivltests/sel_rval_part_ob.v:614:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:619: warning: Part select [4:5] is selecting before the vector wvar2[1:4].
+./ivltests/sel_rval_part_ob.v:619:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:624: warning: Undefined part select [1'bx:'sd1] for vector 'wvar2'.
+./ivltests/sel_rval_part_ob.v:624:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:629: warning: Undefined part select ['sd1:1'bx] for vector 'wvar2'.
+./ivltests/sel_rval_part_ob.v:629:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:634: warning: Undefined part select [1'bz:'sd1] for vector 'wvar2'.
+./ivltests/sel_rval_part_ob.v:634:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:639: warning: Undefined part select ['sd1:1'bz] for vector 'wvar2'.
+./ivltests/sel_rval_part_ob.v:639:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:649: warning: Part select [6:5] is selecting after the array word wavar[][4:1].
+./ivltests/sel_rval_part_ob.v:649:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:654: warning: Part select [5:4] is selecting after the array word wavar[][4:1].
+./ivltests/sel_rval_part_ob.v:654:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:660: warning: Part select [0:-1] is selecting before the array word wavar[][4:1].
+./ivltests/sel_rval_part_ob.v:660:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:665: warning: Part select [1:0] is selecting before the array word wavar[][4:1].
+./ivltests/sel_rval_part_ob.v:665:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:671: warning: Undefined part select [1'bx:'sd1] for array word 'wavar[]'.
+./ivltests/sel_rval_part_ob.v:671:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:677: warning: Undefined part select ['sd1:1'bx] for array word 'wavar[]'.
+./ivltests/sel_rval_part_ob.v:677:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:683: warning: Undefined part select [1'bz:'sd1] for array word 'wavar[]'.
+./ivltests/sel_rval_part_ob.v:683:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:689: warning: Undefined part select ['sd1:1'bz] for array word 'wavar[]'.
+./ivltests/sel_rval_part_ob.v:689:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:699: warning: Part select [-1:0] is selecting after the array word wavar2[][1:4].
+./ivltests/sel_rval_part_ob.v:699:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:705: warning: Part select [0:1] is selecting after the array word wavar2[][1:4].
+./ivltests/sel_rval_part_ob.v:705:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:711: warning: Part select [5:6] is selecting before the array word wavar2[][1:4].
+./ivltests/sel_rval_part_ob.v:711:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:717: warning: Part select [4:5] is selecting before the array word wavar2[][1:4].
+./ivltests/sel_rval_part_ob.v:717:        : Replacing the out of bound bits with 'bx.
+./ivltests/sel_rval_part_ob.v:723: warning: Undefined part select [1'bx:'sd1] for array word 'wavar2[]'.
+./ivltests/sel_rval_part_ob.v:723:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:729: warning: Undefined part select ['sd1:1'bx] for array word 'wavar2[]'.
+./ivltests/sel_rval_part_ob.v:729:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:735: warning: Undefined part select [1'bz:'sd1] for array word 'wavar2[]'.
+./ivltests/sel_rval_part_ob.v:735:        : Replacing select with a constant 'bx.
+./ivltests/sel_rval_part_ob.v:741: warning: Undefined part select ['sd1:1'bz] for array word 'wavar2[]'.
+./ivltests/sel_rval_part_ob.v:741:        : Replacing select with a constant 'bx.
+PASSED

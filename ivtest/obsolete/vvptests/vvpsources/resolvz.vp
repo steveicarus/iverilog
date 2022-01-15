@@ -1,0 +1,84 @@
+:vpi_module "system";
+
+; Copyright (c) 2001  Stephen Williams (steve@icarus.com)
+;
+;    This source code is free software; you can redistribute it
+;    and/or modify it in source code form under the terms of the GNU
+;    General Public License as published by the Free Software
+;    Foundation; either version 2 of the License, or (at your option)
+;    any later version.
+;
+;    This program is distributed in the hope that it will be useful,
+;    but WITHOUT ANY WARRANTY; without even the implied warranty of
+;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;    GNU General Public License for more details.
+;
+;    You should have received a copy of the GNU General Public License
+;    along with this program; if not, write to the Free Software
+;    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+
+
+; This program tests the .resolv functor. It works by sending a few
+; variables into the .resolv object and watching what it does.
+
+main    .scope  module, "main" ;
+
+main.a	.var	"a", 0, 0;
+main.b	.var	"b", 0, 0;
+
+main.x	.resolv	tri, main.a, main.b, C<z>, C<z>;
+main.out .net	"out", 0, 0, main.x;
+
+code	;
+	%set	main.a, 3;	a = 1'bz
+	%set	main.b, 3;	b = 1'bz
+	%delay	1;
+	%load	8, main.x;
+	%cmp/u	8, 3, 1;	if (x !== 1'bz) ...
+	%jmp/1	is_a_z, 6;
+
+	%vpi_call "$display", "FAILED (z) -- main.x = %b", main.out;
+	%vpi_call "$finish";
+	%end;
+is_a_z	;			... endif
+
+	%set	main.a, 1;	a = 1'b1;
+	%delay	1;
+	%load	8, main.x;
+	%cmp/u	8, 1, 1;	if (x !== 1'b1) ...
+	%jmp/1	is_a_1, 6;
+
+	%vpi_call "$display", "FAILED (1) -- main.x = %b", main.out;
+	%vpi_call "$finish";
+	%end;
+is_a_1	;
+
+	%set	main.b, 0;	b = 1'b0;
+	%delay	1;
+	%load	8, main.x;
+	%cmp/u	8, 2, 1;	if (x !== 1'bx) ...
+	%jmp/1	is_a_x, 6;
+
+	%vpi_call "$display", "FAILED (x) -- main.x = %b", main.out;
+	%vpi_call "$finish";
+	%end;
+is_a_x	;
+
+
+	%set	main.a, 0;	a = 1'bz;
+	%delay	1;
+	%load	8, main.x;
+	%cmp/u	8, 0, 1;	if (x !== 1'b0) ...
+	%jmp/1	is_a_0, 6;
+
+	%vpi_call "$display", "FAILED (0) -- main.x = %b", main.out;
+	%vpi_call "$finish";
+	%end;
+is_a_0	;
+
+; Done. If I get here, it passed all the tests.
+
+	%vpi_call "$display", "PASSED";
+	%end;
+
+	.thread	code;

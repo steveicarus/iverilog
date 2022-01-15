@@ -1,0 +1,3 @@
+./ivltests/casesynth7.v:17: warning: A latch has been inferred for 'o'.
+./ivltests/casesynth7.v:17: warning: The latch enable is connected to a synthesized expression. The latch may be sensitive to glitches.
+PASSED

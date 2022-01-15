@@ -1,0 +1,7 @@
+ERROR: vlog95.v:17: $fread's first argument must be a reg or memory.
+ERROR: vlog95.v:18: $fread requires a second (file descriptor) argument.
+ERROR: vlog95.v:19: $fread's second argument must be numeric.
+ERROR: vlog95.v:20: $fread's third argument must be numeric.
+ERROR: vlog95.v:21: $fread's fourth argument must be numeric.
+ERROR: vlog95.v:22: $fread takes at most four arguments.
+                    Found 1 extra argument.

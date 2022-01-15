@@ -1,0 +1,10 @@
+Compiling vpi/realtime.c...
+Making realtime.vpi from  realtime.o...
+time = 12346.000000
+calltf from test2 12346.000000, 12346.000000
+time = 14692.000000
+calltf from test2 14692.000000, 14692.000000
+time = 12345.678900
+calltf from test 12345678900000.000000, 12345.678900
+time = 14691.357810
+calltf from test 14691357810000.000000, 14691.357810

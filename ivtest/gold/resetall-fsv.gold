@@ -1,0 +1,10 @@
+warning: Some design elements have no explicit time unit and/or
+       : time precision. This may cause confusing timing results.
+       : Affected design elements are:
+       :   -- module top_default declared here: ./ivltests/resetall.v:1
+       :   -- module top_resetall declared here: ./ivltests/resetall.v:20
+Time scale of (top_default) is 1s / 1s
+Time scale of (top_timescale) is 1ns / 1ns
+Time scale of (top_resetall) is 1s / 1s
+Time scale of (top_timescale2) is 1ms / 1ms
+Time scale of (top_timescale3) is 1us / 1us
