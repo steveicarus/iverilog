@@ -1,0 +1,81 @@
+./ivltests/pr1833024.v:43: error: can not select part of scalar: a
+./ivltests/pr1833024.v:44: error: can not select part of scalar: a
+./ivltests/pr1833024.v:45: error: can not select part of scalar: a
+./ivltests/pr1833024.v:46: error: can not select part of scalar: a
+./ivltests/pr1833024.v:10: error: can not select part of scalar: svar
+./ivltests/pr1833024.v:10: error: Unable to elaborate r-value: svar['sd0]
+./ivltests/pr1833024.v:11: error: can not select part of scalar: svar
+./ivltests/pr1833024.v:11: error: Unable to elaborate r-value: svar['sd0:'sd0]
+./ivltests/pr1833024.v:12: error: can not select part of scalar: svar
+./ivltests/pr1833024.v:12: error: Unable to elaborate r-value: svar['sd0+:'sd1]
+./ivltests/pr1833024.v:13: error: can not select part of scalar: svar
+./ivltests/pr1833024.v:13: error: Unable to elaborate r-value: svar['sd0-:'sd1]
+./ivltests/pr1833024.v:15: error: can not select part of scalar array word: sarr[32'sd0]
+./ivltests/pr1833024.v:15: error: Unable to elaborate r-value: sarr['sd0]['sd0]
+./ivltests/pr1833024.v:16: error: can not select part of scalar array word: sarr[32'sd0]
+./ivltests/pr1833024.v:16: error: Unable to elaborate r-value: sarr['sd0]['sd0:'sd0]
+./ivltests/pr1833024.v:17: error: can not select part of scalar array word: sarr[32'sd0]
+./ivltests/pr1833024.v:17: error: Unable to elaborate r-value: sarr['sd0]['sd0+:'sd1]
+./ivltests/pr1833024.v:18: error: can not select part of scalar array word: sarr[32'sd0]
+./ivltests/pr1833024.v:18: error: Unable to elaborate r-value: sarr['sd0]['sd0-:'sd1]
+./ivltests/pr1833024.v:20: error: can not select part of scalar: wsbslv
+./ivltests/pr1833024.v:21: error: can not select part of scalar: wspslv
+./ivltests/pr1833024.v:22: error: can not select part of scalar: wsuplv
+./ivltests/pr1833024.v:23: error: can not select part of scalar: wsdolv
+./ivltests/pr1833024.v:25: error: can not select part of scalar array word: wsarr[0]
+./ivltests/pr1833024.v:26: error: can not select part of scalar array word: wsarr[0]
+./ivltests/pr1833024.v:27: error: can not select part of scalar array word: wsarr[0]
+./ivltests/pr1833024.v:28: error: can not select part of scalar array word: wsarr[0]
+./ivltests/pr1833024.v:30: error: can not select part of scalar: wsbstr
+./ivltests/pr1833024.v:31: error: can not select part of scalar: wspstr
+./ivltests/pr1833024.v:32: error: can not select part of scalar: wsuptr
+./ivltests/pr1833024.v:33: error: can not select part of scalar: wsdotr
+./ivltests/pr1833024.v:35: error: can not select part of scalar: wsbstr
+./ivltests/pr1833024.v:35: error: Failed to elaborate port expression.
+./ivltests/pr1833024.v:35: error: can not select part of scalar: wspstr
+./ivltests/pr1833024.v:35: error: Failed to elaborate port expression.
+./ivltests/pr1833024.v:35: error: can not select part of scalar: wsuptr
+./ivltests/pr1833024.v:35: error: Failed to elaborate port expression.
+./ivltests/pr1833024.v:35: error: can not select part of scalar: wsdotr
+./ivltests/pr1833024.v:35: error: Failed to elaborate port expression.
+./ivltests/pr1833024.v:36: error: can not select part of scalar: wsbstr
+./ivltests/pr1833024.v:36: error: Output port expression must support continuous assignment.
+./ivltests/pr1833024.v:36:      : Port 1 (arg1) of submod2 is connected to wsbstr['sd0]
+./ivltests/pr1833024.v:36: error: can not select part of scalar: wspstr
+./ivltests/pr1833024.v:36: error: Output port expression must support continuous assignment.
+./ivltests/pr1833024.v:36:      : Port 2 (arg2) of submod2 is connected to wspstr['sd0:'sd0]
+./ivltests/pr1833024.v:36: error: can not select part of scalar: wsuptr
+./ivltests/pr1833024.v:36: error: Output port expression must support continuous assignment.
+./ivltests/pr1833024.v:36:      : Port 3 (arg3) of submod2 is connected to wsuptr['sd0+:'sd1]
+./ivltests/pr1833024.v:36: error: can not select part of scalar: wsdotr
+./ivltests/pr1833024.v:36: error: Output port expression must support continuous assignment.
+./ivltests/pr1833024.v:36:      : Port 4 (arg4) of submod2 is connected to wsdotr['sd0-:'sd1]
+./ivltests/pr1833024.v:37: error: can not select part of scalar: wsbstr
+./ivltests/pr1833024.v:37: error: Inout port expression must support continuous assignment.
+./ivltests/pr1833024.v:37:      : Port 1 (arg1) of submod3 is connected to wsbstr['sd0]
+./ivltests/pr1833024.v:37: error: can not select part of scalar: wspstr
+./ivltests/pr1833024.v:37: error: Inout port expression must support continuous assignment.
+./ivltests/pr1833024.v:37:      : Port 2 (arg2) of submod3 is connected to wspstr['sd0:'sd0]
+./ivltests/pr1833024.v:37: error: can not select part of scalar: wsuptr
+./ivltests/pr1833024.v:37: error: Inout port expression must support continuous assignment.
+./ivltests/pr1833024.v:37:      : Port 3 (arg3) of submod3 is connected to wsuptr['sd0+:'sd1]
+./ivltests/pr1833024.v:37: error: can not select part of scalar: wsdotr
+./ivltests/pr1833024.v:37: error: Inout port expression must support continuous assignment.
+./ivltests/pr1833024.v:37:      : Port 4 (arg4) of submod3 is connected to wsdotr['sd0-:'sd1]
+./ivltests/pr1833024.v:51: error: can not select part of scalar: svar
+./ivltests/pr1833024.v:52: error: can not select part of scalar: svar
+./ivltests/pr1833024.v:53: error: can not select part of scalar: svar
+./ivltests/pr1833024.v:54: error: can not select part of scalar: svar
+./ivltests/pr1833024.v:56: error: can not select part of scalar array word: sarr[32'sd0]
+./ivltests/pr1833024.v:57: error: can not select part of scalar array word: sarr[32'sd0]
+./ivltests/pr1833024.v:58: error: can not select part of scalar array word: sarr[32'sd0]
+./ivltests/pr1833024.v:59: error: can not select part of scalar array word: sarr[32'sd0]
+./ivltests/pr1833024.v:61: error: can not select part of scalar: sout
+./ivltests/pr1833024.v:62: error: can not select part of scalar: sout
+./ivltests/pr1833024.v:63: error: can not select part of scalar: sout
+./ivltests/pr1833024.v:64: error: can not select part of scalar: sout
+./ivltests/pr1833024.v:66: error: can not select part of scalar array word: sarr[32'sd0]
+./ivltests/pr1833024.v:67: error: can not select part of scalar array word: sarr[32'sd0]
+./ivltests/pr1833024.v:68: error: can not select part of scalar array word: sarr[32'sd0]
+./ivltests/pr1833024.v:69: error: can not select part of scalar array word: sarr[32'sd0]
+72 error(s) during elaboration.

@@ -1,0 +1,18 @@
+(DELAYFILE
+  (SDFVERSION "3.0")
+  (DESIGN "test")
+  (VOLTAGE 3.70:3.30:3.00)
+  (PROCESS "fast:typ:slow")
+  (TEMPERATURE 25.00:55.00:100.00)
+  (TIMESCALE 1ns)
+
+  (CELL
+    (CELLTYPE "my_buf")
+    (INSTANCE dut)
+    (DELAY
+      (ABSOLUTE
+      (IOPATH a z (1.0:2.0:3.0) (2.0:3.0:4.0))
+      )
+    )
+  )
+)

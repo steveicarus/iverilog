@@ -1,0 +1,346 @@
+hello1	      normal	ivltests
+
+mux2          normal  vhdl_tests diff=log/mux2.log:vhdl_gold/mux2.gold
+dff           normal  vhdl_tests
+counter       normal  vhdl_tests
+assign        normal  vhdl_tests
+blocking      normal  vhdl_tests
+constassign   normal  vhdl_tests
+readout       normal  vhdl_tests
+autof         normal  vhdl_tests
+generics      normal  vhdl_tests
+
+partpv        CO      vhdl_tests
+
+case1         normal  ivltests
+case2         normal  ivltests
+case3         normal  ivltests
+case4         normal  ivltests
+case5         normal  ivltests
+case6         normal  ivltests
+case7         normal  ivltests
+
+case3.8A      normal  ivltests
+case3.8B      normal  ivltests
+case3.8C      normal  ivltests
+case3.8D      normal  ivltests
+
+blocksynth1   normal  ivltests
+casesynth1    normal  ivltests
+casesynth2    normal  ivltests
+casesynth3    normal  ivltests
+casex_synth   normal  ivltests
+
+dffsynth      normal  ivltests
+dffsynth2     normal  ivltests
+dffsynth4     normal  ivltests
+
+inside_synth3 normal  ivltests
+
+memsynth1     normal  ivltests
+memsynth2     normal  ivltests
+memsynth3     normal  ivltests
+memsynth4     normal  ivltests
+memsynth5     normal  ivltests
+memsynth7     normal  ivltests
+memsynth8     normal  ivltests
+memsynth9     normal  ivltests
+
+multireg      normal  ivltests
+condit1       normal  ivltests
+conditsynth1  normal  ivltests
+conditsynth2  normal  ivltests
+conditsynth3  normal  ivltests
+basiclatch    normal  ivltests
+basicstate    normal  ivltests
+basicstate2   normal  ivltests
+
+ssetclr1      normal  ivltests
+ssetclr2      normal  ivltests
+ssetclr3      normal  ivltests
+
+always3.1.11A normal  ivltests
+always3.1.11B normal  ivltests
+
+always3.1.1C  normal  ivltests
+always3.1.1D  normal  ivltests
+always3.1.1E  normal  ivltests
+always3.1.1F  normal  ivltests
+
+always3.1.4A  normal  ivltests
+always3.1.4D  normal  ivltests
+always3.1.4E  normal  ivltests
+always3.1.4G  normal  ivltests
+
+always3.1.5A  normal  ivltests
+always3.1.5B  normal  ivltests
+always3.1.5C  normal  ivltests
+always3.1.5D  normal  ivltests
+always3.1.5E  normal  ivltests
+always3.1.5F  normal  ivltests
+
+always3.1.6D  normal  ivltests
+
+always3.1.7A  normal  ivltests
+always3.1.7B  normal  ivltests
+always3.1.7C  normal  ivltests
+always3.1.7D  normal  ivltests
+
+always3.1.8A  normal  ivltests
+
+function3.11B normal  ivltests
+function3.11C normal  ivltests
+function3.11D normal  ivltests
+function3.11F normal  ivltests
+
+module3.12A   normal  ivltests
+module3.12B   normal  ivltests
+muxtest       normal  ivltests
+
+ptest001      normal  ivltests
+ptest002      normal  ivltests
+ptest003      normal  ivltests
+ptest004      normal  ivltests
+ptest005      normal  ivltests
+ptest006      normal  ivltests
+ptest007      normal  ivltests
+ptest008      normal  ivltests
+ptest009      normal  ivltests
+ptest010      normal  ivltests
+
+qmark         normal  ivltests
+qmark1        normal  ivltests
+qmark3        normal  ivltests
+qmark5        normal  ivltests
+qmark6        normal  ivltests
+
+sdw_always1   normal  ivltests
+sdw_always2   normal  ivltests
+sdw_always3   normal  ivltests
+sdw_assign    normal  ivltests
+sdw_function1 normal  ivltests
+sdw_function2 noraml  ivltests
+sdw_function3 normal  ivltests
+sdw_function4 normal  ivltests
+sdw_function5 normal  ivltests
+sdw_task1     normal  ivltests
+sdw_task2     normal  ivltests
+sdw_int       normal  ivltests
+sdw_lvalconcat2 normal ivltests
+sdw_param1    normal  ivltests
+sdw_param2    normal  ivltests
+sdw_stmt002   normal  ivltests
+sdw_array     normal  ivltests
+sdw_instmod1  normal  ivltests
+sdw_instmod2  normal  ivltests
+sdw_lvalconcat normal ivltests
+
+task3.14A     normal  ivltests
+task3.14B     normal  ivltests
+task3.14C     normal  ivltests
+task3.14D     normal  ivltests
+task3.14E     normal  ivltests
+
+z1            normal  ivltests
+z2            normal  ivltests
+landor1       normal  ivltests
+land2         normal  ivltests
+land3         normal  ivltests
+contrib8.1    normal  ivltests
+contrib8.2    normal  ivltests
+contrib8.4    normal  ivltests
+dff1          normal  ivltests
+fifo          normal  contrib
+gencrc        normal  contrib
+idiv2         normal  ivltests
+event_list2   normal  ivltests
+timescale1    normal  ivltests
+
+integer1lt    normal  ivltests
+integer2le    normal  ivltests
+integer3gt    normal  ivltests
+integer4ge    normal  ivltests
+
+time1         normal  ivltests
+time3         normal  ivltests
+time8         normal  ivltests
+
+wireadd1      normal  ivltests
+wiresl        normal  ivltests
+wiresr        normal  ivltests
+wiresub1      normal  ivltests
+wirexor1      normal  ivltests
+wirele        normal  ivltests
+wirege        normal  ivltests
+wireeq        normal  ivltests
+
+andnot1       normal  ivltests
+constmult     normal  ivltests
+constadd      normal  ivltests
+constadd2     normal  ivltests
+constadd3     normal  ivltests
+consttern     normal  ivltests
+talu          normal  ivltests
+
+udp_bufg      normal  ivltests
+udp_bufg2     normal  ivltests
+
+unary_not     normal  ivltests
+unary_and     normal  ivltests
+unary_nand    normal  ivltests
+unary_nand2   normal  ivltests
+unary_or      normal  ivltests
+unary_nor     normal  ivltests
+unary_nor2    normal  ivltests
+unary_xor     normal  ivltests
+unary_xnor1   normal  ivltests
+unary_xnor2   normal  ivltests
+unary_minus   normal  ivltests
+unary_minus2  normal  ivltests
+unary_minus3  normal  ivltests
+unary_minus4  normal  ivltests
+
+pr2224949     normal  ivltests
+pr2281479     normal  ivltests
+pr2281519     CO      vhdl_tests
+pr2147135a    CO      vhdl_tests
+pr2147135b    CO      vhdl_tests
+pr2391405     CO      vhdl_tests
+pr2362426     normal  vhdl_tests
+
+ga_and        normal  ivltests
+ga_or         normal  ivltests
+ga_xor        normal  ivltests
+ga_nand       normal  ivltests
+ga_nor        normal  ivltests
+ga_xnor       normal  ivltests
+
+binary_nand   normal  ivltests
+binary_nor    normal  ivltests
+rptconcat     normal  ivltests
+rptconcat2    normal  ivltests
+
+inout         normal  ivltests
+modparam      normal  ivltests
+port-test2    normal  ivltests
+scope2        normal  ivltests
+scope2b       normal  ivltests
+
+tri0          normal  ivltests
+tri0b         normal  ivltests
+tri1          normal  ivltests
+
+posedge       normal  ivltests
+nblkorder     normal  ivltests
+task_inpad    normal  ivltests
+cond_band     normal  ivltests
+cond_wide     normal  ivltests
+cond_wide2    normal  ivltests
+wildsense     normal  ivltests
+wildsense2    normal  ivltests
+assign_mem1   normal  ivltests
+meminit       normal  ivltests
+meminit2      normal  ivltests
+task_noop     normal  ivltests
+task_bypath   normal  ivltests
+task_iotypes  normal  ivltests
+assign_nb1    normal  ivltests
+assign_nb2    normal  ivltests
+assign_delay  normal  ivltests
+define1       normal  ivltests
+
+delay2        normal  ivltests
+delay3        normal  ivltests
+delay4        normal  ivltests
+delay5        normal  ivltests
+delay_assign_nb normal ivltests
+delay_assign_nb2 normal ivltests
+ldelay1       normal  ivltests
+ldelay2       normal  ivltests
+ldelay3       normal  ivltests
+ldelay5       normal  ivltests
+
+wireland      normal  ivltests
+param_concat  normal  ivltests
+param_select  normal  ivltests
+param_select2 normal  ivltests
+param_select3 normal  ivltests
+param_times   normal  ivltests
+
+function1     normal  ivltests diff=log/function1.log:vhdl_gold/function1.gold
+function_exp  normal  ivltests
+
+addsr         normal  ivltests
+tern1         normal  ivltests
+tern4         normal  ivltests
+tern6         normal  ivltests
+tern7         normal  ivltests
+tern9         normal  ivltests
+tern10        normal  ivltests
+bnot          normal  ivltests
+stask_parm1   normal  ivltests
+task_omemw2   normal  ivltests
+
+lh_varindx2   normal  ivltests
+lh_varindx4   normal  ivltests
+lh_varindx5   normal  ivltests
+lh_catadd     normal  ivltests
+
+signed1       normal  ivltests
+signed2       normal  ivltests
+signed3       normal  ivltests
+signed4       noraml  ivltests diff=log/signed4.log:vhdl_gold/signed4.gold
+signed5       normal  ivltests
+signed6       normal  ivltests
+signed7       normal  ivltests
+signed9       normal  ivltests
+signed11      normal  ivltests
+
+repeat2       normal  ivltests
+decl_assign1  normal  ivltests
+
+shift2        normal  ivltests
+
+
+# Out of order from here
+
+pr1903520     normal  ivltests
+pr142         normal  ivltests
+
+bitsel        normal  ivltests diff=log/bitsel.log:vhdl_gold/bitsel.gold
+bitsel2       normal  ivltests
+bitsel3       normal  ivltests
+bitsel4       normal  ivltests
+bitsel5       normal  ivltests
+
+select        normal  ivltests
+uwire         normal  ivltests
+xnor_test     normal  ivltests
+
+pr2202846a    normal  ivltests
+pr2202846b    normal  ivltests
+pr2202846c    normal  ivltests
+
+pr2489116     normal  vhdl_tests
+pr2489237     CO      vhdl_tests
+pr2516774     normal  vhdl_tests
+pr2516774b    CO      vhdl_tests
+pr2527366     CO      vhdl_tests
+pr2529315     CO      vhdl_tests
+pr2529315b    CO      vhdl_tests
+pr2531370     CO      vhdl_tests
+pr2526768     normal  vhdl_tests
+pr2536040     CO      vhdl_tests
+pr2541625     normal  vhdl_tests
+pr2534491     normal  vhdl_tests
+pr2554173     CO      vhdl_tests
+pr2555813     CO      vhdl_tests
+pr2555813b    CO      vhdl_tests
+pr2554029     CO      vhdl_tests
+pr2554124     CO      vhdl_tests
+simple_gen    normal  vhdl_tests diff=log/simple_gen.log:vhdl_gold/simple_gen.gold
+pr2911213     normal  vhdl_tests
+reserved      normal  vhdl_tests
+pr2555831     normal  vhdl_tests
+pr2661101     normal  vhdl_tests
+pr3397689     normal  vhdl_tests

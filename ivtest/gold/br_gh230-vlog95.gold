@@ -1,0 +1,1 @@
+ERROR: vlog95.v:13: $dumpvars cannot dump a vpiPartSelect.

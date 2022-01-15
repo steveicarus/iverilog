@@ -1,0 +1,325 @@
+# This test list is used to override other test lists when using
+# Icarus Verilog v10.
+
+#
+# Copyright (c) 1999-2015 Guy Hutchison (ghutchis@pacbell.net)
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+#
+# Format of the file
+#
+# testname		testtype		directory
+#
+# The <testname> is the verilog file name minus an extension.
+#
+# The <testtype> can be one of the following:
+#
+# normal:  Normal results expected, i.e it should compile and execute
+#          producing at least a single line with PASSED.
+#
+# CO:      Compile Only - Compile the file to the default output type.
+#
+# CN:      Compile Null - Compile with the null target. Similar to CO.
+#
+# CE:      Compile with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# RE:      Runtime with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# EF:      Expected Fail - We EXPECT this test to fail - only use
+#                          with older versions of Icarus.
+#
+# TE:      Translation Error - We EXPECT the translated code to fail -
+#                              only supported in the vlog95 checker.
+#
+# NI:      Not implemented. Only use for version specific tests.
+#
+# <directory> is where the <testname>.v file is located.
+#
+# An optional fourth and fifth argument can be supplied.
+#
+# The fourth argument may be one of the following.
+#
+#   modulename                       - Defines the top level module
+#   gold=filename                    - Compare a gold file against the
+#                                      generated log file.
+#   unordered=filename               - Compare a gold file against the
+#                                      generated log file, allowing for lines
+#                                      to appear in any order
+#   diff=filename1:filename2:skip_ln - Compare the two files for equality.
+#                                      Skip the first <skip_ln> lines or none.
+#
+# If a <modulename> is given you can supply a fifth argument for the
+# gold or diff commands.
+#
+
+# Different error messages.
+br975			CE,-g2009		ivltests gold=br975-v10.gold
+pr1704726a		CE			ivltests gold=pr1704726a-v10.gold
+pr1704726c		CE			ivltests gold=pr1704726c-v10.gold
+pr1704726d		CE			ivltests gold=pr1704726d-v10.gold
+# The fix to give a sensible error message has not been backported.
+br_gh265		CE,-g2009		ivltests
+# The enhanced error message has not been backported.
+pr1698820		normal			ivltests gold=pr1698820-v10.gold
+
+# Different warning messages.
+fdisplay_fail_fd	normal			ivltests gold=fdisplay_fail_fd-v10.gold
+fdisplay_fail_mcd	normal			ivltests gold=fdisplay_fail_mcd-v10.gold
+
+# The fix for type elaboration in the correct scope hasn't been backported.
+br_gh289a               NI
+br_gh289b               EF,-g2009		ivltests
+br_gh289c               EF,-g2009		ivltests
+
+# The fix for class access to enclosing scopes hasn't been backported.
+br1003a			normal,-g2009		ivltests gold=br1003a-v10.gold
+br_ml20191221		CE,-g2009		ivltests
+
+# The fix for void functions hasn't been backported.
+br_gh281		NI
+br_gh281b		NI
+function10		NI
+function11		NI
+function12		NI
+
+# The fix for nested structs on the LHS of an assignment hasn't been backported.
+gh161a		        NI
+
+# The VVP runtime doesn't support return statements in automatic functions.
+# It's possible this could be fixed, but for now mark this as not implemented.
+# We can't mark it as EF, because it causes a runtime assertion failure.
+func_init_var2		NI
+
+# The fix for the assertion failure on an illegal SV cast causes enum_test1 to fail.
+# It's possible this could be fixed, but for now mark this as not implemented.
+# We can't mark it as CE, because it causes a compiler assertion failure.
+br_ml20180227           NI
+
+# The timescale parsing rework hasn't been backported to v10.
+# sv_timeunit_prec3b and sv_timeunit_prec4b fail at the compilation stage,
+# so are marked as NI to distinguish them from expected errors.
+resetall		normal,-Wtimescale	ivltests gold=resetall-v10.gold
+br1003b			normal,-g2009		ivltests gold=br1003b-v10.gold
+br1003c			normal,-g2009		ivltests gold=br1003c-v10.gold
+sv_timeunit_prec3b	NI
+sv_timeunit_prec4b	NI
+sv_timeunit_prec_fail1	CE,-g2005-sv,\
+  ./ivltests/sv_timeunit_prec_fail1a.v,\
+  ./ivltests/sv_timeunit_prec_fail1b.v,\
+  ./ivltests/sv_timeunit_prec_fail1c.v,\
+  ./ivltests/sv_timeunit_prec_fail1d.v,\
+  ./ivltests/sv_timeunit_prec_fail1e.v,		ivltests gold=sv_timeunit_prec_fail1-v10.gold
+sv_timeunit_prec_fail2	CE,-g2009,\
+  ./ivltests/sv_timeunit_prec_fail2a.v,\
+  ./ivltests/sv_timeunit_prec_fail2b.v,\
+  ./ivltests/sv_timeunit_prec_fail2c.v,		ivltests gold=sv_timeunit_prec_fail2-v10.gold
+# nor has the support for separate compilation units.
+sv_unit1c		NI
+sv_unit2b		NI
+sv_unit3b		NI
+sv_unit4b		NI
+
+# The macro redefinition warnings haven't been backported to v10
+macro_redefinition	NI
+macro_replacement	NI
+
+# The fix for casting strings to vectors uses new VVP instructions,
+# so can't be backported.
+br_ml20180309a          NI
+br_ml20180309b          NI
+
+# The fix for uninitialised 2-state function return values uses new
+# VVP syntax, so can't be backported.
+br_gh337		NI
+
+# The fix for string values in event expressions hasn't been backported.
+br_gh365		NI
+string_events		NI
+
+# The enhanced support for `` and `" hasn't been backported.
+br_gh366		EF			ivltests gold=br_gh366.gold
+sv_macro3		EF			ivltests gold=sv_macro3.gold
+
+# The fix for join_any inside a task hasn't been backported.
+br_gh368		NI
+
+# V10 does not support analog functionality
+analog1			NI
+analog2			NI
+
+# V10 does not support this VHDL functionality
+ivlh_textio		NI
+test_when_else		NI
+vhdl_concurrent_assert	NI
+vhdl_delay_assign	NI
+vhdl_elab_range		NI
+vhdl_eval_cond		NI
+vhdl_file_open		NI
+vhdl_image_attr		NI
+vhdl_lfcr		NI
+vhdl_loop		NI
+vhdl_multidim_array	NI
+vhdl_now		NI
+vhdl_pow_rem		NI
+vhdl_process_scope	NI
+vhdl_range		NI
+vhdl_resize		NI
+vhdl_shift		NI
+vhdl_string		NI
+vhdl_string_lim		NI
+vhdl_subtypes		NI
+vhdl_textio_write	NI
+vhdl_textio_read	NI
+vhdl_unary_minus	NI
+vhdl_wait		NI
+vhdl_while		NI
+
+# V10 does not support this SystemVerilog functionality
+always_comb		NI
+always_comb_fail	NI
+always_comb_fail3	NI
+always_comb_fail4	NI
+always_comb_no_sens	NI
+always_comb_rfunc	NI
+always_comb_trig	NI
+always_comb_warn	NI
+always_ff		NI
+always_ff_fail		NI
+always_ff_fail2		NI
+always_ff_fail3		NI
+always_ff_fail4		NI
+always_ff_no_sens	NI
+always_ff_warn		NI
+always_ff_warn_sens	NI
+always_latch		NI
+always_latch_fail	NI
+always_latch_fail3	NI
+always_latch_fail4	NI
+always_latch_no_sens	NI
+always_latch_trig	NI
+always_latch_warn	NI
+br1004                  NI
+br_gh226		CE,-g2009		ivltests
+br_gh177a		NI
+br_gh177b		NI
+br_gh277b		NI
+case_priority		NI
+case_unique		NI
+genvar_inc_dec		NI
+gh161b			NI
+l_equiv			NI
+l_equiv_ca		NI
+l_equiv_const		NI
+sf_countbits		NI
+sf_countbits_fail	NI
+sf_countones		NI
+sf_countones_fail	NI
+sf_isunknown		NI
+sf_isunknown_fail	NI
+sf_onehot		NI
+sf_onehot_fail		NI
+sf_onehot0		NI
+sf_onehot0_fail		NI
+sformatf		NI
+sv_darray_decl_assign   NI
+sv_deferred_assert1	NI
+sv_deferred_assert2	NI
+sv_deferred_assume1	NI
+sv_deferred_assume2	NI
+sv_immediate_assert	NI
+sv_immediate_assume	NI
+sv_new_array_error      NI
+sv_param_port_list	NI
+sv_queue_real		NI
+sv_queue_real_bounded	NI
+sv_queue_real_fail	NI
+sv_queue_string		NI
+sv_queue_string_bounded	NI
+sv_queue_string_fail	NI
+sv_queue_vec		NI
+sv_queue_vec_bounded	NI
+sv_queue_vec_fail	NI
+sv_wildcard_import1     NI
+sv_wildcard_import2     NI
+sv_wildcard_import3     NI
+sv_wildcard_import4     NI
+sv_wildcard_import5     NI
+sv_wildcard_import6     NI
+sv_wildcard_import7     NI
+vvp_recv_vec4_pv	CE,-g2009		ivltests
+wild_cmp_const		NI
+wild_cmp_err		NI
+wild_cmp_err2		NI
+wild_cmp_net		NI
+wild_cmp_var		NI
+# and has non-standard support for this
+sv_cast_darray          NI
+sv_cast_darray-v10      normal,-g2009		ivltests
+
+# V10 doesn't support rtran switches
+rtran			NI
+rtranif0		NI
+rtranif1		NI
+
+# V10 doesn't support this by default
+br1000			normal,-gshared-loop-index	ivltests
+
+# V10 does not support these SDF elements
+br_ml20190814           EF,-gspecify            ivltests
+
+# V10 has incomplete synthesis support
+br993a			CE,-S			ivltests
+br993b			CE,-S			ivltests
+br_gh115		CE,-S			ivltests
+basiclatch		normal			ivltests
+blocksynth2		normal			ivltests
+blocksynth3		normal			ivltests
+case1			normal			ivltests
+case2			normal			ivltests
+case4			normal			ivltests
+case5			normal			ivltests
+case5-syn-fail		normal			ivltests
+case6			normal			ivltests
+casesynth1		normal			ivltests
+casesynth2		normal			ivltests
+casesynth3		normal			ivltests
+casesynth7		NI
+casex_synth		normal			ivltests
+condit1			normal			ivltests
+conditsynth1		normal			ivltests
+conditsynth2		normal			ivltests
+conditsynth3		normal			ivltests
+dffsynth		normal			ivltests
+dffsynth3		normal			ivltests
+dffsynth4		normal			ivltests
+dffsynth9		normal			ivltests
+dffsynth10		normal			ivltests
+dffsynth11		normal			ivltests
+inside_synth		normal			ivltests
+inside_synth3		normal			ivltests
+memsynth1		normal			ivltests
+memsynth2		normal			ivltests
+memsynth3		normal			ivltests
+memsynth5		normal			ivltests
+memsynth6		normal			ivltests
+memsynth7		normal			ivltests
+memsynth9		normal			ivltests
+mix_reset		normal			ivltests
+multireg		normal			ivltests
+sqrt32synth		normal			ivltests
+ssetclr3		normal			ivltests

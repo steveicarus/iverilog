@@ -1,0 +1,7 @@
+Using normal math routines.
+Result:  1
+Modulus: 00000000
+
+Using wide math routines.
+Result:  1
+Modulus: 00000000000000000

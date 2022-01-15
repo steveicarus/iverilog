@@ -1,0 +1,6 @@
+fail=x0x0, good=x0x0, en=0 at 1
+fail=0000, good=0000, en=0 at 2
+fail=0000, good=0000, en=1 at 11
+fail=0101, good=0101, en=1 at 12
+fail=1010, good=1010, en=0 at 31
+fail=0000, good=0000, en=0 at 32

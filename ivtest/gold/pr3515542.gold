@@ -1,0 +1,6 @@
+./ivltests/pr3515542.v:5: error: Unbased SystemVerilog literal cannot have a size.
+./ivltests/pr3515542.v:6: error: Unbased SystemVerilog literal cannot have a size.
+./ivltests/pr3515542.v:7: error: Unbased SystemVerilog literal cannot have a size.
+./ivltests/pr3515542.v:8: error: Unbased SystemVerilog literal cannot have a size.
+./ivltests/pr3515542.v:9: error: Unbased SystemVerilog literal cannot have a size.
+./ivltests/pr3515542.v:10: error: Unbased SystemVerilog literal cannot have a size.

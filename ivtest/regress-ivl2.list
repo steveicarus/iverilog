@@ -1,0 +1,97 @@
+# This test list contains tests that give different results when iverilog
+# is run without the -gstrict-expr-width option or vvp is run without the
+# -compatible option.
+
+#
+# Copyright (c) 1999-2014 Guy Hutchison (ghutchis@pacbell.net)
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+#
+# Format of the file
+#
+# testname		testtype		directory
+#
+# The <testname> is the verilog file name minus an extension.
+#
+# The <testtype> can be one of the following:
+#
+# normal:  Normal results expected, i.e it should compile and execute
+#          producing at least a single line with PASSED.
+#
+# CO:      Compile Only - Compile the file to the default output type.
+#
+# CN:      Compile Null - Compile with the null target. Similar to CO.
+#
+# CE:      Compile with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# RE:      Runtime with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# EF:      Expected Fail - We EXPECT this test to fail - only use
+#                          with older versions of Icarus.
+#
+# TE:      Translation Error - We EXPECT the translated code to fail -
+#                              only supported in the vlog95 checker.
+#
+# NI:      Not implemented. Only use for version specific tests.
+#
+# <directory> is where the <testname>.v file is located.
+#
+# An optional fourth and fifth argument can be supplied.
+#
+# The fourth argument may be one of the following.
+#
+#   modulename                       - Defines the top level module
+#   gold=filename                    - Compare a gold file against the
+#                                      generated log file.
+#   unordered=filename               - Compare a gold file against the
+#                                      generated log file, allowing for lines
+#                                      to appear in any order
+#   diff=filename1:filename2:skip_ln - Compare the two files for equality.
+#                                      Skip the first <skip_ln> lines or none.
+#
+# If a <modulename> is given you can supply a fifth argument for the
+# gold or diff commands.
+#
+
+#------------------------------------------------------------------------------
+# Differences when iverilog is run without -gstrict-expr-width
+#------------------------------------------------------------------------------
+
+# The standard requires oversized unsized constant numbers to be truncated.
+# These tests are specifically testing that such numbers aren't truncated.
+pr903			normal			ivltests
+pr1388974		normal			ivltests
+
+# The standard doesn't support lossless expressions.
+br_gh13a		normal			ivltests gold=br_gh13a.gold
+param-width		normal			ivltests gold=param-width-ivl.gold
+
+#------------------------------------------------------------------------------
+# Differences when vvp is run without -compatible
+#------------------------------------------------------------------------------
+
+# Different output when real numbers are displayed without a format specifier.
+br_gh383d		normal,-g2012		ivltests gold=br_gh383d-ivl.gold
+ca_time_real		normal			ivltests gold=ca_time_real-ivl.gold
+delayed_sfunc		normal,-gspecify	ivltests gold=delayed_sfunc-ivl.gold
+localparam_type		normal			ivltests gold=parameter_type-ivl.gold
+parameter_type		normal			ivltests gold=parameter_type-ivl.gold
+pr1701890		normal			ivltests gold=pr1701890-ivl.gold
+pr1864110a		normal			ivltests gold=pr1864110a-ivl.gold
+pr1864110b		normal			ivltests gold=pr1864110b-ivl.gold
+pr1864115		normal			ivltests gold=pr1864115-ivl.gold

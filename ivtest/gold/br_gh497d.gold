@@ -1,0 +1,13 @@
+./ivltests/br_gh497d.v:16: error: Part-select [-2+:2] exceeds the declared bounds for array1.
+./ivltests/br_gh497d.v:19: error: Part-select [4+:2] exceeds the declared bounds for array1.
+./ivltests/br_gh497d.v:21: error: Part-select [-1+:2] exceeds the declared bounds for array1.
+./ivltests/br_gh497d.v:23: error: Part-select [3+:2] exceeds the declared bounds for array2.
+./ivltests/br_gh497d.v:25: error: Part-select [-1-:2] exceeds the declared bounds for array3.
+./ivltests/br_gh497d.v:28: error: Part-select [5-:2] exceeds the declared bounds for array3.
+./ivltests/br_gh497d.v:30: error: Part-select [0-:2] exceeds the declared bounds for array4.
+./ivltests/br_gh497d.v:32: error: Part-select [4-:2] exceeds the declared bounds for array4.
+./ivltests/br_gh497d.v:34: error: Part-select [-1:-2] exceeds the declared bounds for array5.
+./ivltests/br_gh497d.v:37: error: Part-select [5:4] exceeds the declared bounds for array5.
+./ivltests/br_gh497d.v:39: error: Part-select [0:-1] exceeds the declared bounds for array6.
+./ivltests/br_gh497d.v:41: error: Part-select [4:3] exceeds the declared bounds for array6.
+12 error(s) during elaboration.

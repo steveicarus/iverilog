@@ -1,0 +1,33 @@
+# Lines that start with '#' are comments.
+#
+# This file is for the development branch of Icarus Verilog.
+#
+# The following files will be ignored by git.
+
+# The log and work directories
+ivl_vhdl_work/
+log/
+work/
+vpi_log/
+vhdl/
+
+# The normal regression output files.
+
+regression_report.txt
+vhdl_regression_report.txt
+
+# These should be cleaned up, but ignore them as well.
+*~
+*.o
+*.vpi
+*.tmp
+src/vcddiff
+vsim
+vlog95.v
+tmp_blif.blif
+tmp_blif.v
+tmp_blif.vvp
+
+# Some tests do not work out of the work directory, so
+# ignore these files that they leave in the home directory.
+dump.vcd

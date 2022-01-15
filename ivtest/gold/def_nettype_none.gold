@@ -1,0 +1,2 @@
+./ivltests/def_nettype_none.v:16: error: Net b is not defined in this context.
+1 error(s) during elaboration.

@@ -1,0 +1,61 @@
+:vpi_time_precision + 0;
+:vpi_module "system";
+
+
+; Copyright (c) 2001  Stephen Williams (steve@icarus.com)
+;
+;    This source code is free software; you can redistribute it
+;    and/or modify it in source code form under the terms of the GNU
+;    General Public License as published by the Free Software
+;    Foundation; either version 2 of the License, or (at your option)
+;    any later version.
+;
+;    This program is distributed in the hope that it will be useful,
+;    but WITHOUT ANY WARRANTY; without even the implied warranty of
+;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;    GNU General Public License for more details.
+;
+;    You should have received a copy of the GNU General Public License
+;    along with this program; if not, write to the Free Software
+;    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+
+;
+; This program tests the indexed %assign statement.
+;
+
+S_main .scope module, "main";
+
+V_test	.var	"test", 3, 0;
+
+start	%set	V_test[0], 0;
+	%set	V_test[1], 0;
+	%set	V_test[2], 0;
+	%set	V_test[3], 0;
+
+	%ix/load   0, 3;
+	%assign/x0 V_test, 1, 1;
+
+	%delay	2;
+
+	%load	8,  V_test[0];
+	%load	9,  V_test[1];
+	%load	10, V_test[2];
+	%load	11, V_test[3];
+
+	%mov	12, 0, 1;
+	%mov	13, 0, 1;
+	%mov	14, 0, 1;
+	%mov	15, 1, 1;
+
+	%cmp/u	8, 12, 4;
+	%jmp/1	passed, 6;
+
+	%vpi_call "$display", "FAILED";
+	%vpi_call "$finish";
+	%end;
+
+passed	%vpi_call "$display", "PASSED";
+	%vpi_call "$finish";
+	%end;
+
+	.thread start;

@@ -1,0 +1,2 @@
+./ivltests/always_comb_no_sens.v:5: warning: always_comb process has no sensitivities.
+PASSED

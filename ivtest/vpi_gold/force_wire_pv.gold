@@ -1,0 +1,20 @@
+Compiling vpi/force.c...
+Making force_wire_pv.vpi from  force.o...
+peek    : zz
+display :zzzz
+force   : 10
+peek    : 10
+display :z10z
+release : zz
+display :zzzz
+force   : 10
+peek    : 10
+display :z10z
+poke    : 0
+peek    : 10
+display :z10z
+release : 00
+display :z00z
+poke    : 1
+peek    : 01
+display :z01z

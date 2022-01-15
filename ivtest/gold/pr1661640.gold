@@ -1,0 +1,9 @@
+Hello world!
+Hello world!
+
+hello1; escaped NL:
+Hello world!
+0048656c6c6f20776f726c64210a
+hello2; octal NL:
+Hello world!
+0048656c6c6f20776f726c64210a

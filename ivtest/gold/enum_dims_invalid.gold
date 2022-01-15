@@ -1,0 +1,8 @@
+ivltests/enum_dims_invalid.v:13: error: An unsized dimension is not allowed here.
+ivltests/enum_dims_invalid.v:17: error: Dimension size must be greater than zero.
+ivltests/enum_dims_invalid.v:17       : This size expression violates the rule: -('sd1)
+ivltests/enum_dims_invalid.v:9: error: A queue dimension is not allowed here.
+ivltests/enum_dims_invalid.v:21: error: Dimension size must be greater than zero.
+ivltests/enum_dims_invalid.v:21       : This size expression violates the rule: 'sd0
+ivltests/enum_dims_invalid.v:25: error: Enum type must not have more than 1 packed dimension.
+6 error(s) during elaboration.

@@ -1,0 +1,55 @@
+(DELAYFILE
+
+(SDFVERSION "3.0" )
+
+(DESIGN "top")
+
+(DATE "Tue Aug 13 18:03:42 2019")
+
+(VENDOR "XILINX")
+
+(PROGRAM "Vivado")
+
+(VERSION "2019.1")
+
+(DIVIDER /)
+
+(TIMESCALE 1ps)
+
+(CELL
+
+  (CELLTYPE "BUFGCE")
+
+  (INSTANCE clk_IBUF_BUFG_inst)
+
+  (DELAY
+
+    (PATHPULSEPERCENT (30.0))
+
+    (ABSOLUTE
+
+      (IOPATH I O (40.0:47.0:47.0) (40.0:47.0:47.0))
+
+    )
+
+  )
+
+    (TIMINGCHECK
+
+      (SETUPHOLD (posedge CE) (posedge I) (84.0:275.0:275.0) (0.0:0.0:0.0))
+
+      (SETUPHOLD (negedge CE) (posedge I) (84.0:275.0:275.0) (0.0:0.0:0.0))
+
+      (PERIOD (posedge I) (1499.0:1499.0:1499.0))
+
+      (PERIOD (negedge I) (1499.0:1499.0:1499.0))
+
+      (WIDTH (negedge CE) (550.0:550.0:550.0))
+
+      (WIDTH (posedge CE) (550.0:550.0:550.0))
+
+    )
+
+)
+
+)

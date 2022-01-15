@@ -1,0 +1,21 @@
+x x  x x  x x  x x  StX StX  StX StX  StX StX
+------------------
+0 0  0 z  0 z  0 z  St0 HiZ  St0 HiZ  St0 HiZ
+0 1  1 z  1 z  1 z  St1 HiZ  St1 HiZ  St1 HiZ
+0 x  x z  x z  x z  StX HiZ  StX HiZ  StX HiZ
+0 z  x z  z z  z z  StX HiZ  HiZ HiZ  HiZ HiZ
+------------------
+1 0  z 0  z 0  z 0  HiZ St0  HiZ St0  HiZ St0
+1 1  z 1  z 1  z 1  HiZ St1  HiZ St1  HiZ St1
+1 x  z x  z x  z x  HiZ StX  HiZ StX  HiZ StX
+1 z  z x  z z  z z  HiZ StX  HiZ HiZ  HiZ HiZ
+------------------
+x 0  x x  x x  x x  StL StL  StL StL  StL StL
+x 1  x x  x x  x x  StH StH  StH StH  StH StH
+x x  x x  x x  x x  StX StX  StX StX  StX StX
+x z  x x  z z  z z  StX StX  HiZ HiZ  HiZ HiZ
+------------------
+z 0  x x  x x  x x  StL StL  StL StL  StL StL
+z 1  x x  x x  x x  StH StH  StH StH  StH StH
+z x  x x  x x  x x  StX StX  StX StX  StX StX
+z z  x x  z z  z z  StX StX  HiZ HiZ  HiZ HiZ

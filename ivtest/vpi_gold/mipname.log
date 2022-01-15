@@ -1,0 +1,8 @@
+Compiling vpi/mipname.c...
+Making mipname.vpi from  mipname.o...
+tf_mipname()		-> test.t2.t3
+tf_imipname(inst)	-> test.t2.t3
+tf_mipname()		-> test.t2
+tf_imipname(inst)	-> test.t2
+tf_mipname()		-> test
+tf_imipname(inst)	-> test

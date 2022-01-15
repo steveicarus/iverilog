@@ -1,0 +1,11 @@
+                   0 d=0, clk=0, set=0, clr=0, q=x
+                  10 d=1, clk=0, set=0, clr=0, q=x
+                  20 d=1, clk=0, set=1, clr=0, q=x
+                  24 d=1, clk=0, set=1, clr=0, q=1
+                  30 d=1, clk=0, set=0, clr=0, q=1
+                  40 d=1, clk=0, set=0, clr=1, q=1
+                  43 d=1, clk=0, set=0, clr=1, q=0
+                  50 d=1, clk=0, set=0, clr=0, q=0
+                  60 d=1, clk=1, set=0, clr=0, q=0
+                  66 d=1, clk=1, set=0, clr=0, q=1
+                  70 d=0, clk=1, set=0, clr=0, q=1

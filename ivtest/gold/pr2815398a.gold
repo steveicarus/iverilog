@@ -1,0 +1,2 @@
+./ivltests/pr2815398a.v:65: warning: returning 'bx for out of bounds array access dummy[7].
+PASSED

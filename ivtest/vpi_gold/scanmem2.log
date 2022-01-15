@@ -1,0 +1,22 @@
+Compiling vpi/scanmem2.cc...
+Making scanmem2.vpi from  scanmem2.o...
+Registering Callbacks
+MemPoke Callback
+  Found m_poke (5 deep x 76 bits)
+0: f00cafababedeabbeef
+1: 70850123451113459662575
+2: 17001453725653733652737357
+3: 1111000000001100101011111010101110101011111011011110101010111011111011101111
+4: f00cafababedeabbeef
+MemPeek Callback
+  Found m_peek (5 deep x 76 bits)
+0: 1111000000001100101011111010101110101011111011011110101010111011111011101111
+1: 17001453725653733652737357
+2: 70850123451113459662575
+3: f00cafababedeabbeef
+4: 1111000000001100101011111010101110101011111011011110101010111011111011101111
+0: m_poke <=> m_peek, 0xf00cafababedeabbeef <=> 0xf00cafababedeabbeef        
+1: m_poke <=> m_peek, 0xf00cafababedeabbeef <=> 0xf00cafababedeabbeef        
+2: m_poke <=> m_peek, 0xf00cafababedeabbeef <=> 0xf00cafababedeabbeef        
+3: m_poke <=> m_peek, 0xf00cafababedeabbeef <=> 0xf00cafababedeabbeef        
+4: m_poke <=> m_peek, 0xf00cafababedeabbeef <=> 0xf00cafababedeabbeef        

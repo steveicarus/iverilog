@@ -1,0 +1,12 @@
+  0.00 ns - cdn=x, cp=0, d=1, qr=x, qp=x
+ 10.00 ns - cdn=0, cp=0, d=1, qr=x, qp=x
+ 10.30 ns - cdn=0, cp=0, d=1, qr=0, qp=0
+ 20.00 ns - cdn=1, cp=0, d=1, qr=0, qp=0
+ 30.00 ns - cdn=1, cp=1, d=1, qr=0, qp=0
+ 30.60 ns - cdn=1, cp=1, d=1, qr=1, qp=1
+ 40.00 ns - cdn=1, cp=0, d=0, qr=1, qp=1
+ 50.00 ns - cdn=1, cp=1, d=0, qr=1, qp=1
+ 50.70 ns - cdn=1, cp=1, d=0, qr=0, qp=0
+ 60.00 ns - cdn=1, cp=0, d=1, qr=0, qp=0
+ 70.00 ns - cdn=1, cp=1, d=1, qr=0, qp=0
+ 70.60 ns - cdn=1, cp=1, d=1, qr=1, qp=1

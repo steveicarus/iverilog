@@ -1,0 +1,19 @@
+Compiling vpi/by_index.c...
+Making by_index.vpi from  by_index.o...
+The index is 3
+The type is vpiRegBit
+val[3] => 1 == 1
+The index is 4
+The type is vpiNetBit
+wval[4] => 0 == 0
+The index is 5
+The type is vpiMemoryWord
+r_arr[5] => 5.25 == 5.25
+The index is 2
+The type is vpiMemoryWord
+i_arr[2] => 1 == 1
+Original value is 01010101
+     New value is 01010110
+Original net value is 1010
+     New net value is 0110
+     net value is now 1001

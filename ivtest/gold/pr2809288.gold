@@ -1,0 +1,2 @@
+./ivltests/pr2809288.v:5: error: genvar is missing for generate "loop" variable 'i'.
+1 error(s) during elaboration.

@@ -1,0 +1,7 @@
+./ivltests/br_gh440.v:44: error: Class/null is not allowed with the '|' operator.
+./ivltests/br_gh440.v:45: error: Class/null is not allowed with the '<<(<)' operator.
+./ivltests/br_gh440.v:46: error: Class/null is not allowed with the '<<(<)' operator.
+./ivltests/br_gh440.v:48: error: Class/null is not allowed with the '<=' operator.
+./ivltests/br_gh440.v:49: error: Class/null is not allowed with the '<=' operator.
+./ivltests/br_gh440.v:50: error: Class/null is not allowed with the '!' operator.
+6 error(s) during elaboration.

@@ -1,0 +1,29 @@
+Compiling vpi/memwide.cc...
+Making memwide.vpi from  memwide.o...
+!!!C++:     Registering Callbacks
+!!!C++:    event_trigger fullname is test.event_trigger
+!!!C++:     Registered Value Change Callback for event_trigger
+!!!VERILOG: big_reg=xxxxxxxxx
+            my_mem[1]=xxxxxxxxx
+!!!C++:     callback
+!!!C++:    big_reg fullname is test.big_reg
+!!!C++:    big_reg size is 33
+Vec 0) ffffffff ffffffff
+Vec 1) 00000001 00000001
+!!!C++:    my_mem fullname is test.my_mem
+!!!C++:    my_mem[1] size is 33
+!!!C++:    fullname is test.my_mem[1]
+Vec 0) ffffffff ffffffff
+Vec 1) 00000001 00000001
+!!!VERILOG: big_reg=123456789
+            my_mem[1]=154329876
+!!!C++:     callback
+!!!C++:    big_reg fullname is test.big_reg
+!!!C++:    big_reg size is 33
+Vec 0) 23456789 00000000
+Vec 1) 00000001 00000000
+!!!C++:    my_mem fullname is test.my_mem
+!!!C++:    my_mem[1] size is 33
+!!!C++:    fullname is test.my_mem[1]
+Vec 0) 54329876 00000000
+Vec 1) 00000001 00000000

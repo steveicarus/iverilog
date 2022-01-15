@@ -1,0 +1,7 @@
+ 7'dx: xxxxxxx,  7'dz: zzzzzzz,  7'd?: zzzzzzz
+  'dx: xxxxxxx,   'dz: zzzzzzz,   'd?: zzzzzzz
+ 2'dx: 00000xx,  2'dz: 00000zz,  2'd?: 00000zz
+7'sdx: xxxxxxx, 7'sdz: zzzzzzz, 7'sd?: zzzzzzz
+ 'sdx: xxxxxxx,  'sdz: zzzzzzz,  'sd?: zzzzzzz
+2'sdx: xxxxxxx, 2'sdz: zzzzzzz, 2'sd?: zzzzzzz
+7'dx_: xxxxxxx, 7'dz_: zzzzzzz, 7'd?_: zzzzzzz

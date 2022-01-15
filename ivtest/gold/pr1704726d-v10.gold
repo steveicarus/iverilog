@@ -1,0 +1,13 @@
+./ivltests/pr1704726d.v:82: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726d.v:12: error: signal and parameter in 'top' have the same name 'name0_s'.
+./ivltests/pr1704726d.v:21: error: signal and genvar in 'top' have the same name 'name0_v'.
+./ivltests/pr1704726d.v:27: error: signal and task in 'top' have the same name 'name1_st'.
+./ivltests/pr1704726d.v:34: error: signal and function in 'top' have the same name 'name2_sf'.
+./ivltests/pr1704726d.v:38: error: signal and module <test> instance in 'top' have the same name 'name3_si'.
+./ivltests/pr1704726d.v:44: error: signal and sequential block in 'top' have the same name 'name4_sb'.
+./ivltests/pr1704726d.v:48: error: signal and named event in 'top' have the same name 'name5_se'.
+./ivltests/pr1704726d.v:57: error: signal and generate block in 'top' have the same name 'name6_sgl'.
+./ivltests/pr1704726d.v:65: error: signal and generate block in 'top' have the same name 'name7_sgi'.
+./ivltests/pr1704726d.v:78: error: signal and generate block in 'top' have the same name 'name8_sgc'.
+./ivltests/pr1704726d.v:86: error: signal and generate block in 'top' have the same name 'name9_sgb'.
+11 error(s) during elaboration.

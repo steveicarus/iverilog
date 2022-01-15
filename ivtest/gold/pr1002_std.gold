@@ -1,0 +1,9 @@
+datain =   4095 dataout =   1023 expected =   1023 ... CHECK PASSED
+datain =      0 dataout =      0 expected =      0 ... CHECK PASSED
+datain =   8191 dataout =   2047 expected =   2047 ... CHECK PASSED
+datain =   4096 dataout =   1024 expected =   1024 ... CHECK PASSED
+datain =  -4097 dataout =  -1025 expected =  -1025 ... CHECK PASSED
+datain =  -8192 dataout =  -2048 expected =  -2048 ... CHECK PASSED
+datain =     -1 dataout =     -1 expected =     -1 ... CHECK PASSED
+datain =  -4096 dataout =  -1024 expected =  -1024 ... CHECK PASSED
+TEST PASSED :-)

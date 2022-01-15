@@ -1,0 +1,16 @@
+./ivltests/br_gh79.v:6: syntax error
+./ivltests/br_gh79.v:6: error: malformed statement
+./ivltests/br_gh79.v:7: syntax error
+./ivltests/br_gh79.v:7: error: malformed statement
+./ivltests/br_gh79.v:9: syntax error
+./ivltests/br_gh79.v:9: error: malformed statement
+./ivltests/br_gh79.v:10: syntax error
+./ivltests/br_gh79.v:10: error: malformed statement
+./ivltests/br_gh79.v:12: syntax error
+./ivltests/br_gh79.v:12: error: malformed statement
+./ivltests/br_gh79.v:13: syntax error
+./ivltests/br_gh79.v:13: error: malformed statement
+./ivltests/br_gh79.v:15: syntax error
+./ivltests/br_gh79.v:15: error: malformed statement
+./ivltests/br_gh79.v:16: syntax error
+./ivltests/br_gh79.v:16: error: malformed statement

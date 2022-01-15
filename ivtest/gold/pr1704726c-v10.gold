@@ -1,0 +1,66 @@
+./ivltests/pr1704726c.v:517: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:527: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:538: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:551: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:559: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:569: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:577: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:584: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:589: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:4: error: parameter and genvar in 'top' have the same name 'name_v'.
+./ivltests/pr1704726c.v:5: error: localparam and genvar in 'top' have the same name 'name_lpv'.
+./ivltests/pr1704726c.v:46: error: task and parameter in 'top' have the same name 'name_t'.
+./ivltests/pr1704726c.v:60: error: task and genvar in 'top' have the same name 'name_tv'.
+./ivltests/pr1704726c.v:68: error: function and parameter in 'top' have the same name 'name_f'.
+./ivltests/pr1704726c.v:77: error: function and task in 'top' have the same name 'name_ft'.
+./ivltests/pr1704726c.v:92: error: function and genvar in 'top' have the same name 'name_fv'.
+./ivltests/pr1704726c.v:101: error: module <test> instance and parameter in 'top' have the same name 'name_i'.
+./ivltests/pr1704726c.v:107: error: module <test> instance and task in 'top' have the same name 'name_it'.
+./ivltests/pr1704726c.v:114: error: module <test> instance and function in 'top' have the same name 'name_if'.
+./ivltests/pr1704726c.v:123: error: module <test> instance and genvar in 'top' have the same name 'name_iv'.
+./ivltests/pr1704726c.v:127: error: module <test> instance and module <test> instance in 'top' have the same name 'name_ii'.
+./ivltests/pr1704726c.v:133: error: named block and parameter in 'top' have the same name 'name_b'.
+./ivltests/pr1704726c.v:141: error: named block and task in 'top' have the same name 'name_bt'.
+./ivltests/pr1704726c.v:150: error: named block and function in 'top' have the same name 'name_bf'.
+./ivltests/pr1704726c.v:161: error: named block and genvar in 'top' have the same name 'name_bv'.
+./ivltests/pr1704726c.v:167: error: named block and module <test> instance in 'top' have the same name 'name_bi'.
+./ivltests/pr1704726c.v:175: error: named block and sequential block in 'top' have the same name 'name_bb'.
+./ivltests/pr1704726c.v:183: error: named event and parameter in 'top' have the same name 'name_e'.
+./ivltests/pr1704726c.v:215: error: named event and sequential block in 'top' have the same name 'name_eb'.
+./ivltests/pr1704726c.v:196: error: named event and function in 'top' have the same name 'name_ef'.
+./ivltests/pr1704726c.v:209: error: named event and module <test> instance in 'top' have the same name 'name_ei'.
+./ivltests/pr1704726c.v:189: error: named event and task in 'top' have the same name 'name_et'.
+./ivltests/pr1704726c.v:205: error: named event and genvar in 'top' have the same name 'name_ev'.
+./ivltests/pr1704726c.v:226: error: generate "loop" and parameter in 'top' have the same name 'name_gl'.
+./ivltests/pr1704726c.v:236: error: generate "loop" and task in 'top' have the same name 'name_glt'.
+./ivltests/pr1704726c.v:247: error: generate "loop" and function in 'top' have the same name 'name_glf'.
+./ivltests/pr1704726c.v:260: error: generate "loop" and genvar in 'top' have the same name 'name_glv'.
+./ivltests/pr1704726c.v:268: error: generate "loop" and module <test> instance in 'top' have the same name 'name_gli'.
+./ivltests/pr1704726c.v:278: error: generate "loop" and sequential block in 'top' have the same name 'name_glb'.
+./ivltests/pr1704726c.v:286: error: generate "loop" and named event in 'top' have the same name 'name_gle'.
+./ivltests/pr1704726c.v:298: error: generate "loop" and generate block in 'top' have the same name 'name_glgl'.
+./ivltests/pr1704726c.v:308: error: generate "if" and parameter in 'top' have the same name 'name_gi'.
+./ivltests/pr1704726c.v:318: error: generate "if" and task in 'top' have the same name 'name_git'.
+./ivltests/pr1704726c.v:329: error: generate "if" and function in 'top' have the same name 'name_gif'.
+./ivltests/pr1704726c.v:342: error: generate "if" and genvar in 'top' have the same name 'name_giv'.
+./ivltests/pr1704726c.v:350: error: generate "if" and module <test> instance in 'top' have the same name 'name_gii'.
+./ivltests/pr1704726c.v:360: error: generate "if" and sequential block in 'top' have the same name 'name_gib'.
+./ivltests/pr1704726c.v:368: error: generate "if" and named event in 'top' have the same name 'name_gie'.
+./ivltests/pr1704726c.v:380: error: generate "if" and generate block in 'top' have the same name 'name_gigi'.
+./ivltests/pr1704726c.v:390: error: generate "case" and parameter in 'top' have the same name 'name_gc'.
+./ivltests/pr1704726c.v:405: error: generate "case" and task in 'top' have the same name 'name_gct'.
+./ivltests/pr1704726c.v:421: error: generate "case" and function in 'top' have the same name 'name_gcf'.
+./ivltests/pr1704726c.v:439: error: generate "case" and genvar in 'top' have the same name 'name_gcv'.
+./ivltests/pr1704726c.v:452: error: generate "case" and module <test> instance in 'top' have the same name 'name_gci'.
+./ivltests/pr1704726c.v:467: error: generate "case" and sequential block in 'top' have the same name 'name_gcb'.
+./ivltests/pr1704726c.v:480: error: generate "case" and named event in 'top' have the same name 'name_gce'.
+./ivltests/pr1704726c.v:502: error: generate "case" and generate block in 'top' have the same name 'name_gcgc'.
+./ivltests/pr1704726c.v:517: error: generate "block" and parameter in 'top' have the same name 'name_gb'.
+./ivltests/pr1704726c.v:527: error: generate "block" and task in 'top' have the same name 'name_gbt'.
+./ivltests/pr1704726c.v:538: error: generate "block" and function in 'top' have the same name 'name_gbf'.
+./ivltests/pr1704726c.v:551: error: generate "block" and genvar in 'top' have the same name 'name_gbv'.
+./ivltests/pr1704726c.v:559: error: generate "block" and module <test> instance in 'top' have the same name 'name_gbi'.
+./ivltests/pr1704726c.v:569: error: generate "block" and sequential block in 'top' have the same name 'name_gbb'.
+./ivltests/pr1704726c.v:577: error: generate "block" and named event in 'top' have the same name 'name_gbe'.
+./ivltests/pr1704726c.v:589: error: generate "block" and generate block in 'top' have the same name 'name_gbgb'.
+57 error(s) during elaboration.

@@ -1,0 +1,9 @@
+./ivltests/br_gh127a.v:21: warning: Port 2 (in) of copy expects 2 bits, got 1.
+./ivltests/br_gh127a.v:21:        : Padding 1 high bits of the port.
+./ivltests/br_gh127a.v:23: warning: Port 2 (in) of copy expects 2 bits, got 3.
+./ivltests/br_gh127a.v:23:        : Pruning 1 high bits of the expression.
+00 : 0 00 : 00 00 : 000 00
+01 : 1 01 : 01 01 : 001 01
+10 : 0 00 : 10 10 : 010 10
+11 : 1 01 : 11 11 : 011 11
+PASSED

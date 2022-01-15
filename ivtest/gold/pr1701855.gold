@@ -1,0 +1,5 @@
+Time scale of (top) is 1us / 1ns
+Time scale of (top) is 1us / 1ns
+Time scale of (top.dut) is 10ns / 10ps
+Time scale of (top.dut.dut) is 1ns / 10ps
+Time scale of (othertop) is 1ms / 1us

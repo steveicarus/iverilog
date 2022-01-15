@@ -1,0 +1,5 @@
+	Line           1 matches           3 args: 00000000 00000001 00000002
+	Line           2 matches           3 args: 00000003 00000004 00000005
+	Line           3 matches           2 args: 00000006 00000007 00000005
+	Line           4 matches           0 args: 00000006 00000007 00000005
+	Line           5 matches           3 args: 00000009 0000000a 0000000b

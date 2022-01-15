@@ -1,0 +1,16 @@
+Compiling vpi/scopes.c...
+Making scopes.vpi from  scopes.o...
+top0 is type vpiModule
+  lvl1 is type vpiModule
+    f_foo is type vpiFunction
+    lvl2 is type vpiModule
+      lvl3 is type vpiModule
+        my_fork is type vpiNamedFork
+  my_init is type vpiNamedBegin
+  t_bar is type vpiTask
+top1 is type vpiModule
+  lvl1 is type vpiModule
+    lvl2 is type vpiModule
+      lvl3 is type vpiModule
+        my_fork is type vpiNamedFork
+top2 is type vpiModule

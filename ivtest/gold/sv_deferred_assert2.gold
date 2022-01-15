@@ -1,0 +1,8 @@
+./ivltests/sv_deferred_assert2.v:8: sorry: Deferred assertions are not supported. Try -gno-assertions or -gsupported-assertions to turn this message off.
+./ivltests/sv_deferred_assert2.v:9: sorry: Deferred assertions are not supported. Try -gno-assertions or -gsupported-assertions to turn this message off.
+./ivltests/sv_deferred_assert2.v:10: sorry: Deferred assertions are not supported. Try -gno-assertions or -gsupported-assertions to turn this message off.
+./ivltests/sv_deferred_assert2.v:11: sorry: Deferred assertions are not supported. Try -gno-assertions or -gsupported-assertions to turn this message off.
+./ivltests/sv_deferred_assert2.v:12: sorry: Deferred assertions are not supported. Try -gno-assertions or -gsupported-assertions to turn this message off.
+./ivltests/sv_deferred_assert2.v:13: sorry: Deferred assertions are not supported. Try -gno-assertions or -gsupported-assertions to turn this message off.
+./ivltests/sv_deferred_assert2.v:14: sorry: Deferred assertions are not supported. Try -gno-assertions or -gsupported-assertions to turn this message off.
+./ivltests/sv_deferred_assert2.v:16: sorry: Deferred assertions are not supported. Try -gno-assertions or -gsupported-assertions to turn this message off.

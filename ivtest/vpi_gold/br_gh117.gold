@@ -1,0 +1,19 @@
+Compiling vpi/br_gh117.c...
+Making br_gh117.vpi from  br_gh117.o...
+Register callbacks
+After delay - current time 0
+Read write  - current time 1
+Read only   - current time 9
+After delay - current time 10
+Read write  - current time 11
+Read only   - current time 19
+After delay - current time 20
+Read write  - current time 21
+Read only   - current time 29
+After delay - current time 30
+Read write  - current time 31
+Read only   - current time 39
+After delay - current time 40
+Read write  - current time 41
+Read only   - current time 49
+Finish sim  - current time 50

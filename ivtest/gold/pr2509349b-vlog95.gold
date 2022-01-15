@@ -1,0 +1,3 @@
+WARNING: vlog95.v:14: $readmempath's argument (vpiReg) is not a valid string.
+WARNING: vlog95.v:17: $readmempath's argument contains non-printable characters.
+                      "tes\002"

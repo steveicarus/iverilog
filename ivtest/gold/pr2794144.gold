@@ -1,0 +1,3 @@
+./ivltests/pr2794144.v:8: error: '~' '|'  is not a valid expression. Please use operator '~|' instead.
+./ivltests/pr2794144.v:9: error: '~' '&'  is not a valid expression. Please use operator '~&' instead.
+./ivltests/pr2794144.v:10: error: '~' '^'  is not a valid expression. Please use operator '~^' instead.

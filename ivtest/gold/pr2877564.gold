@@ -1,0 +1,2 @@
+./ivltests/pr2877564.v:2: error: Unable to bind parameter `ASDF' in `testbench'
+1 error(s) during elaboration.

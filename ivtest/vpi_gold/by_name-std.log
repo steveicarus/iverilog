@@ -1,0 +1,23 @@
+Compiling vpi/by_name.c...
+Making by_name.vpi from  by_name.o...
+Looking up top0: Found name = top0, type = 32
+Looking up top0.t_my: Found name = t_my, type = 59
+Looking up top0.f_my: Found name = f_my, type = 20
+Looking up top0.r: Found name = r, type = 48
+Looking up top0.t: Found name = t, type = 63
+Looking up top0.e: Found name = e, type = 34
+Looking up top0.i: Found name = i, type = 25
+Looking up top0.init: Found name = init, type = 33
+Looking up top0.lvl1_0: Found name = lvl1_0, type = 32
+Looking up top0.lvl1_1: Found name = lvl1_1, type = 32
+Looking up top0.lvl1_0.lvl2.t_my: Found name = t_my, type = 59
+Looking up top0.lvl1_0.lvl2.f_my: Found name = f_my, type = 20
+Looking up top0.lvl1_0.lvl2.r: Found name = r, type = 48
+Looking up top0.lvl1_0.lvl2.t: Found name = t, type = 63
+Looking up top0.lvl1_0.lvl2.e: Found name = e, type = 34
+Looking up top0.lvl1_0.lvl2.i: Found name = i, type = 25
+Looking up top0.lvl1_0.lvl2.init: Found name = init, type = 33
+Looking up top1: Found name = top1, type = 32
+Looking up noexsist: *** Not found ***
+Looking up top1.noexsist: *** Not found ***
+Looking up top1.lvl1.noexsist: *** Not found ***

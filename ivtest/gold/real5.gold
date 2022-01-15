@@ -1,0 +1,1 @@
+max foo period( posedge FOOCLK:0.050ns, 40000 : 0.000ns );

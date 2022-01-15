@@ -1,0 +1,5 @@
+./ivltests/sv_wildcard_import4.v:24: error: 'p1' has already been imported into this scope from package 'my_package'.
+./ivltests/sv_wildcard_import4.v:25: error: 'p2' has already been imported into this scope from package 'my_package'.
+./ivltests/sv_wildcard_import4.v:27: error: 'word' has already been imported into this scope from package 'my_package'.
+./ivltests/sv_wildcard_import4.v:29: error: 'v' has already been imported into this scope from package 'my_package'.
+./ivltests/sv_wildcard_import4.v:31: error: 'e' has already been imported into this scope from package 'my_package'.

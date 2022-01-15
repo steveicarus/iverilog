@@ -1,0 +1,5 @@
+./ivltests/pr2848986.v:6: error: An event 'evt' can not be a user function argument.
+./ivltests/pr2848986.v:6: internal error: Failed to synthesize expression: top.func(<event=evt>)
+./ivltests/pr2848986.v:25: error: An event 'evt' can not be a user function argument.
+./ivltests/pr2848986.v:26: error: An event 'evt' can not be a user task argument.
+4 error(s) during elaboration.

@@ -1,0 +1,152 @@
+#==========
+# This file controls how the individual VPI tests are run. The verilog
+# file must be named <test_name>.v. The output log file is named
+# <test_name>.log. The verilog and C/C++ files are located in the
+# "vpi" directory and the gold files are located in the "vpi_gold"
+# directory. The NI (Not Implemented) type is only available for
+# version specific tests. It is ignored by the default case!
+#
+# The basic steps for each test are:
+#   iverilog-vpi --name <test_name> <compiler_options> <C/C++_file>
+#   iverilog -o sim_file <test_name>.v
+#   vvp -M . -m <test_name> sim_file
+#   diff <the output from the above commands> <gold log file>
+#   remove temporary files.
+#
+# The following are the recognized fields:
+#
+#ver:test name   type   C/C++ file    gold log file       compiler options
+#
+# The compiler option field is optional and when present will contain
+# all subsequent fields.
+#==========
+
+#==========
+# For testing with other simulators
+#==========
+
+# Icarus returns vpiReg instead of vpiTimeVar.
+vstd:by_name		normal			by_name.c		by_name-std.log
+
+# This test uses an Icarus language extension ($simparam).
+vstd:check_version	NI			check_version.c		check_version.gold
+
+# Icarus generates spurious value change callback triggers at T=0.
+vstd:memwide		normal			memwide.cc		memwide-std.log
+vstd:nulls1		normal			nulls1.c		nulls1-std.log
+
+# Icarus outputs warning messages.
+vstd:pr723		normal			pr723.c			pr723-std.log
+
+# This test uses an Icarus language extension (wire real).
+vstd:pr2966059		NI			pr2966059.c		pr2966059.gold
+
+# This test has a non-deterministic output order. The gold file needs
+# to be adjusted to match the simulator being used.
+vstd:scopes		normal			scopes.c		scopes-std.log
+
+
+#==========
+# MSYS2 exceptions
+#==========
+
+# This still needs investigating.
+msys2:pr723		NI			pr723.c			pr723.log
+
+
+#==========
+# V10 exceptions
+#==========
+
+# V10 exceptions
+v10:br_gh117		NI			br_gh117.c		br_gh117.gold
+v10:br_ml20191013	NI			br_ml20191013.c		br_ml20191013.gold
+v10:by_index		NI			by_index.c		by_index.gold
+v10:pr723		normal			pr723.c			pr723-v10.log
+v10:spec_delays		normal,-gspecify	spec_delays.c		spec_delays.log -DIVERILOG_V10
+
+
+#==========
+# V11 exceptions
+#==========
+
+
+#==========
+# The default case.
+#==========
+
+br_gh59			normal			br_gh59.c		br_gh59.gold
+br_gh73a		normal			force.c			br_gh73a.gold
+br_gh73b		normal			force.c			br_gh73b.gold
+br_gh117		normal			br_gh117.c		br_gh117.gold
+br_gh141		normal			br_gh141.c		br_gh141.gold
+br_gh169a		normal			br_gh169.c		br_gh169a.gold
+br_gh169b		normal,-g2009		br_gh169.c		br_gh169b.gold
+br_gh184		normal			start_of_simtime1.c	br_gh184.gold
+br_gh235		normal,-g2009		br_gh235.c		br_gh235.gold
+br_gh308		normal			br_gh308.c		br_gh308.gold
+br_gh317		normal			br_gh317.c		br_gh317.gold
+br_gh496		normal,-g2009		br_gh496.c		br_gh496.gold
+br_ml20191013		normal			br_ml20191013.c		br_ml20191013.gold
+by_index		normal			by_index.c		by_index.gold
+by_name			normal			by_name.c		by_name.log
+callback1		normal			callback1.c		callback1.log
+celldefine		normal			celldefine.c		celldefine.gold
+check_version		normal			check_version.c		check_version.gold
+display_array		normal,-g2009		display_array.c		display_array.gold
+event1			normal			event1.c		event1.log
+event2			normal			event2.c		event2.log
+final			normal,-g2009		final.c			final.gold
+find_sig		normal			find_sig.c		find_sig.gold
+force_reg		normal			force.c			force_reg.gold
+force_reg_pv		normal			force.c			force_reg_pv.gold
+force_reg_real		normal			force_real.c		force_reg_real.gold
+force_wire		normal			force.c			force_wire.gold
+force_wire_pv		normal			force.c			force_wire_pv.gold
+force_wire_real		normal			force_real.c		force_wire_real.gold
+genblk_named		normal			genblk_names.c		genblk_named.gold
+genblk_unnamed		normal			genblk_names.c		genblk_unnamed.gold
+genblk_direct		normal,-g2009		genblk_names.c		genblk_direct.gold
+getp			normal			getp.c			getp.log
+hello_poke		normal			hello_poke.c		hello_poke.log
+hello_tf		normal			hello_tf.c		hello_tf.log
+hello_vpi		normal			hello_vpi.c		hello.log
+listparams		normal			listparams.c		listparams.log
+memmon			normal,-g1995		memmon.c		memmon.log
+memwide			normal			memwide.cc		memwide.log
+mipname			normal			mipname.c		mipname.log
+myscope			normal			myscope.c		myscope.gold
+myscope2		normal			myscope2.c		myscope2.gold
+nulls1			normal			nulls1.c		nulls1.log
+pokevent		normal			pokevent.cc		pokevent.log
+pokereg			normal			pokereg.cc		pokereg.log
+ports_params		normal			ports_params.c		ports_params.gold
+pr521			normal			pr521.c			pr521.log
+pr686			normal			pr686.c			pr686.log
+pr723			normal			pr723.c			pr723.log
+pr1693971		normal			pr1693971.c		pr1693971.log
+pr2048463		normal			pr2048463.c		pr2048463.log
+pr2314742		normal			pr2314742.c		pr2314742.gold
+pr2966059		normal,-gno-xtypes	pr2966059.c		pr2966059.gold
+pr2971220		normal			pr2971220.c		pr2971220.gold
+putp			normal			putp.c			putp.log
+putp2			normal			putp2.c			putp2.log
+putvalue		normal			putvalue.c		putvalue.log
+range1			normal			range1.c		range1.gold
+realcb			normal			realcb.c		realcb.log
+realtime		normal			realtime.c		realtime.log
+realtime2		normal			realtime2.c		realtime2.log
+ro_synch		normal			ro_synch.c		ro_synch.gold
+scanmem			normal			scanmem.cc		scanmem.log
+scanmem2		normal			scanmem2.cc		scanmem2.log
+scanmem3		normal			scanmem3.cc		scanmem3.log
+scopes			normal			scopes.c		scopes.log
+spec_delays		normal,-gspecify	spec_delays.c		spec_delays.log
+start_of_simtime1	normal			start_of_simtime1.c	start_of_simtime1.log
+timescale		normal			timescale.c		timescale.log
+
+# Add new tests in alphabetic/numeric order. If the test needs
+# a compile option or a different log file to run with an older
+# version or if it uses something not implemented (NI) by other
+# versions of the program it will also need a version specific
+# line above.

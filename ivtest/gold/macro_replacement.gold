@@ -1,0 +1,1 @@
+./ivltests/macro_replacement.v:5: warning: redefinition of macro MACRO from value '1' to '2'

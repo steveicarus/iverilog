@@ -1,0 +1,16 @@
+./ivltests/sv_queue_string.v:32: Warning: skipping delete(0) on empty queue.
+./ivltests/sv_queue_string.v:36: Warning: pop_front() on empty queue<string>.
+./ivltests/sv_queue_string.v:42: Warning: pop_back() on empty queue<string>.
+./ivltests/sv_queue_string.v:53: Warning: skipping out of range delete(3) on queue of size 3.
+./ivltests/sv_queue_string.v:54: Warning: skipping queue delete() with negative index.
+./ivltests/sv_queue_string.v:55: Warning: skipping queue delete() with undefined index.
+./ivltests/sv_queue_string.v:129: Warning: cannot assign to a negative queue<string> index (-1). "Will not write" was not added.
+./ivltests/sv_queue_string.v:130: Warning: cannot assign to an undefined queue<string> index. "Will not write" was not added.
+./ivltests/sv_queue_string.v:131: Warning: assigning to queue<string>[4] is outside of size (3). "Will not write" was not added.
+./ivltests/sv_queue_string.v:134: Warning: cannot assign to a negative queue<string> index (-1). "Will not write" was not added.
+./ivltests/sv_queue_string.v:136: Warning: cannot assign to an undefined queue<string> index. "Will not write" was not added.
+./ivltests/sv_queue_string.v:138: Warning: assigning to queue<string>[4] is outside of size (3). "Will not write" was not added.
+./ivltests/sv_queue_string.v:150: Warning: cannot insert at a negative queue<string> index (-1). "Will not be added" was not added.
+./ivltests/sv_queue_string.v:151: Warning: cannot insert at an undefined queue<string> index. "Will not be added" was not added.
+./ivltests/sv_queue_string.v:152: Warning: inserting to queue<string>[5] is outside of size (4). "Will not be added" was not added.
+PASSED

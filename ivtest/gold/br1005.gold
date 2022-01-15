@@ -1,0 +1,2 @@
+./ivltests/br1005.v:2: sorry: SV queues inside classes are not yet supported.
+2 error(s) during elaboration.
