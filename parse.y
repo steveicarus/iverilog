@@ -1186,6 +1186,13 @@ packed_array_data_type /* IEEE1800-2005: A.2.2.1 */
 	delete[]$1.text;
 	$$ = $1.type;
       }
+  | PACKAGE_IDENTIFIER K_SCOPE_RES
+      { lex_in_package_scope($1); }
+    TYPE_IDENTIFIER
+      { lex_in_package_scope(0);
+	$$ = $4.type;
+	delete[]$4.text;
+      }
   ;
 
 data_type /* IEEE1800-2005: A.2.2.1 */
@@ -1232,13 +1239,6 @@ data_type /* IEEE1800-2005: A.2.2.1 */
         } else {
 	      $$ = $1;
         }
-      }
-  | PACKAGE_IDENTIFIER K_SCOPE_RES
-      { lex_in_package_scope($1); }
-    TYPE_IDENTIFIER
-      { lex_in_package_scope(0);
-	$$ = $4.type;
-	delete[]$4.text;
       }
   | K_string
       { string_type_t*tmp = new string_type_t;
