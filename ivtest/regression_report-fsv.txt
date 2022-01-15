@@ -2013,6 +2013,9 @@ test_mos_strength_reduction: Passed.
             enum_base_range: Passed.
            enum_elem_ranges: Passed.
           enum_dims_invalid: Passed - CE.
+             enum_in_struct: Passed.
+              enum_in_class: Passed.
+    enum_in_class_name_coll: Passed - CE.
                   enum_next: Passed.
                  enum_ports: Passed.
                  enum_test1: Passed.
@@ -2562,4 +2565,4 @@ test_mos_strength_reduction: Passed.
                 ufuncsynth1: Passed.
 ============================================================================
 Test results:
-  Total=2560, Passed=2540, Failed=17, Not Implemented=3, Expected Fail=0
+  Total=2563, Passed=2543, Failed=17, Not Implemented=3, Expected Fail=0

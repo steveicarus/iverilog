@@ -827,7 +827,7 @@ static void pform_put_wire_in_scope(perm_string name, PWire*net)
       lexical_scope->wires[name] = net;
 }
 
-static void pform_put_enum_type_in_scope(enum_type_t*enum_set)
+void pform_put_enum_type_in_scope(enum_type_t*enum_set)
 {
       if (lexical_scope->enum_sets.count(enum_set))
             return;
@@ -888,9 +888,6 @@ void pform_set_typedef(perm_string name, data_type_t*data_type, std::list<pform_
       ivl_assert(*data_type, ref == 0);
       ref = data_type;
       ref->name = name;
-
-      if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(data_type))
-	    pform_put_enum_type_in_scope(enum_type);
 }
 
 void pform_set_type_referenced(const struct vlltype&loc, const char*name)
@@ -3591,10 +3588,6 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
 
 	// Add the file and line information to the enumeration type.
       FILE_NAME(&(enum_type->li), li);
-
-	// If this is an anonymous enumeration, attach it to the current scope.
-      if (enum_type->name.nil())
-	    pform_put_enum_type_in_scope(enum_type);
 
 	// Now apply the checked enumeration type to the variables
 	// that are being declared with this type.

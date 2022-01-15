@@ -336,6 +336,8 @@ br_gh391		CE,-g2009		ivltests
 br_gh437		CE,-g2009		ivltests
 br_gh445		CE,-g2009		ivltests
 br_gh461		CE,-g2009		ivltests
+enum_in_class		CE,-g2005-sv		ivltests
+enum_in_class_name_coll	CE,-g2005-sv		ivltests
 sv_class1		CE,-g2009		ivltests
 sv_class2		CE,-g2009		ivltests
 sv_class3		CE,-g2009		ivltests
