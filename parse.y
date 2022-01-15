@@ -2907,6 +2907,7 @@ enum_data_type /* IEEE 1800-2012 A.2.2.1 */
       { enum_type_t*enum_type = $2;
 	FILE_NAME(enum_type, @1);
 	enum_type->names.reset($4);
+	pform_put_enum_type_in_scope(enum_type);
 	$$ = enum_type;
       }
   ;

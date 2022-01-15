@@ -613,4 +613,6 @@ extern void pform_set_timeprec(const char*txt, bool initial_decl);
 extern bool allow_timeunit_decl;
 extern bool allow_timeprec_decl;
 
+void pform_put_enum_type_in_scope(enum_type_t*enum_set);
+
 #endif /* IVL_pform_H */
