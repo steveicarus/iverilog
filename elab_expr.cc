@@ -3351,25 +3351,25 @@ NetExpr* PECastSize::elaborate_expr(Design*des, NetScope*scope,
 
 unsigned PECastType::test_width(Design*des, NetScope*scope, width_mode_t&)
 {
-      ivl_type_t t = target_->elaborate_type(des, scope);
+      target_type_ = target_->elaborate_type(des, scope);
 
       width_mode_t tmp_mode = PExpr::SIZED;
       base_->test_width(des, scope, tmp_mode);
 
-      if (const netdarray_t*use_darray = dynamic_cast<const netdarray_t*>(t)) {
+      if (const netdarray_t*use_darray = dynamic_cast<const netdarray_t*>(target_type_)) {
 	    expr_type_  = use_darray->element_base_type();
 	    expr_width_ = use_darray->element_width();
 
-      } else if (const netstring_t*use_string = dynamic_cast<const netstring_t*>(t)) {
+      } else if (const netstring_t*use_string = dynamic_cast<const netstring_t*>(target_type_)) {
 	    expr_type_  = use_string->base_type();
 	    expr_width_ = 8;
 
       } else {
-	    expr_type_  = t->base_type();
-	    expr_width_ = t->packed_width();
+	    expr_type_  = target_type_->base_type();
+	    expr_width_ = target_type_->packed_width();
       }
       min_width_   = expr_width_;
-      signed_flag_ = t->get_signed();
+      signed_flag_ = target_type_->get_signed();
 
       return expr_width_;
 }
@@ -3427,11 +3427,8 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
       }
 
       NetExpr*tmp = 0;
-      if (dynamic_cast<const atom2_type_t*>(target_)) {
-	    tmp = cast_to_int2(sub, expr_width_);
-      }
-      if (const vector_type_t*vec = dynamic_cast<const vector_type_t*>(target_)) {
-	    switch (vec->base_type) {
+      if (target_type_ && target_type_->packed()) {
+	    switch (target_type_->base_type()) {
 		case IVL_VT_BOOL:
 		  tmp = cast_to_int2(sub, expr_width_);
 		  break;

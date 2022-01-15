@@ -1007,6 +1007,7 @@ class PECastType  : public PExpr {
 
     private:
       data_type_t* target_;
+      ivl_type_t target_type_;
       PExpr* base_;
 };
 
