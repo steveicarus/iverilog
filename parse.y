@@ -457,6 +457,11 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 	    PExpr*expr;
       } genvar_iter;
 
+      struct {
+	    bool packed_flag;
+	    bool signed_flag;
+      } packed_signing;
+
       verinum* number;
 
       verireal* realtime;
@@ -571,7 +576,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <number>  number pos_neg_number
 %type <flag>    signing unsigned_signed_opt signed_unsigned_opt
 %type <flag>    import_export
-%type <flag>    K_genvar_opt K_packed_opt K_reg_opt K_static_opt K_virtual_opt
+%type <flag>    K_genvar_opt K_reg_opt K_static_opt K_virtual_opt
 %type <flag>    udp_reg_opt edge_operator
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
@@ -642,6 +647,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <struct_member>  struct_union_member
 %type <struct_members> struct_union_member_list
 %type <struct_type>    struct_data_type
+%type <packed_signing> packed_signing
 
 %type <class_declaration_extends> class_declaration_extends_opt
 
@@ -2988,38 +2994,54 @@ enum_name
       }
   ;
 
-struct_data_type
-  : K_struct K_packed_opt '{' struct_union_member_list '}'
+/* `signed` and `unsigned` are only valid if preceded by `packed` */
+packed_signing /* IEEE 1800-2012 A.2.2.1 */
+  : K_packed unsigned_signed_opt
+      { $$.packed_flag = true;
+        $$.signed_flag = $2;
+      }
+  |
+      { $$.packed_flag = false;
+        $$.signed_flag = false;
+      }
+  ;
+
+struct_data_type /* IEEE 1800-2012 A.2.2.1 */
+  : K_struct packed_signing '{' struct_union_member_list '}'
       { struct_type_t*tmp = new struct_type_t;
 	FILE_NAME(tmp, @1);
-	tmp->packed_flag = $2;
+	tmp->packed_flag = $2.packed_flag;
+	tmp->signed_flag = $2.signed_flag;
 	tmp->union_flag = false;
 	tmp->members .reset($4);
 	$$ = tmp;
       }
-  | K_union K_packed_opt '{' struct_union_member_list '}'
+  | K_union packed_signing '{' struct_union_member_list '}'
       { struct_type_t*tmp = new struct_type_t;
 	FILE_NAME(tmp, @1);
-	tmp->packed_flag = $2;
+	tmp->packed_flag = $2.packed_flag;
+	tmp->signed_flag = $2.signed_flag;
 	tmp->union_flag = true;
 	tmp->members .reset($4);
 	$$ = tmp;
       }
-  | K_struct K_packed_opt '{' error '}'
+  | K_struct packed_signing '{' error '}'
       { yyerror(@3, "error: Errors in struct member list.");
 	yyerrok;
 	struct_type_t*tmp = new struct_type_t;
 	FILE_NAME(tmp, @1);
-	tmp->packed_flag = $2;
+	tmp->packed_flag = $2.packed_flag;
+	tmp->signed_flag = $2.signed_flag;
 	tmp->union_flag = false;
 	$$ = tmp;
       }
-  | K_union K_packed_opt '{' error '}'
+  | K_union packed_signing '{' error '}'
       { yyerror(@3, "error: Errors in union member list.");
 	yyerrok;
 	struct_type_t*tmp = new struct_type_t;
 	FILE_NAME(tmp, @1);
-	tmp->packed_flag = $2;
+	tmp->packed_flag = $2.packed_flag;
+	tmp->signed_flag = $2.signed_flag;
 	tmp->union_flag = true;
 	$$ = tmp;
       }
@@ -7453,7 +7475,6 @@ unique_priority
      collect those rules here. */
 
 K_genvar_opt   : K_genvar    { $$ = true; } | { $$ = false; } ;
-K_packed_opt   : K_packed    { $$ = true; } | { $$ = false; } ;
 K_reg_opt      : K_reg       { $$ = true; } | { $$ = false; } ;
 K_static_opt   : K_static    { $$ = true; } | { $$ = false; } ;
 K_virtual_opt  : K_virtual   { $$ = true; } | { $$ = false; } ;

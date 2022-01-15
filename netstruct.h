@@ -51,6 +51,10 @@ class netstruct_t : public LineInfo, public ivl_type_s {
       void packed(bool flag);
       bool packed(void) const;
 
+        // When the struct is accessed as a primary it can be signed or unsigned
+      void set_signed(bool flag) { signed_ = flag; }
+      bool get_signed(void) const { return signed_; }
+
 	// Append a new member to the struct/union. This must be done
 	// after the union_flag and packed settings are set. This
 	// function does error checking, and the "des" argument is
@@ -74,6 +78,7 @@ class netstruct_t : public LineInfo, public ivl_type_s {
     private:
       bool union_;
       bool packed_;
+      bool signed_;
       std::vector<member_t>members_;
 };
 

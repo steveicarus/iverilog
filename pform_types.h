@@ -207,6 +207,7 @@ struct struct_type_t : public data_type_t {
 
       bool packed_flag;
       bool union_flag;
+      bool signed_flag;
       std::unique_ptr< std::list<struct_member_t*> > members;
 };
 
