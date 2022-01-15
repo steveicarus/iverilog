@@ -600,7 +600,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <expr> tf_port_item_expr_opt value_range_expression
 
 %type <named_pexprs> enum_name_list enum_name
-%type <enum_type> enum_data_type
+%type <enum_type> enum_data_type enum_base_type
 
 %type <tf_ports> function_item function_item_list function_item_list_opt
 %type <tf_ports> task_item task_item_list task_item_list_opt
@@ -2863,65 +2863,50 @@ type_declaration
      for an optional base type. The default base type is "int", but it
      can be any of the integral or vector types. */
 
-enum_data_type
-  : K_enum '{' enum_name_list '}'
+enum_base_type /* IEEE 1800-2012 A.2.2.1 */
+  :
       { enum_type_t*enum_type = new enum_type_t;
-	FILE_NAME(enum_type, @1);
-	enum_type->names .reset($3);
 	enum_type->base_type = IVL_VT_BOOL;
 	enum_type->signed_flag = true;
 	enum_type->integer_flag = false;
 	enum_type->range.reset(make_range_from_width(32));
 	$$ = enum_type;
       }
-  | K_enum atom2_type signed_unsigned_opt '{' enum_name_list '}'
+  | atom2_type signed_unsigned_opt
       { enum_type_t*enum_type = new enum_type_t;
-	FILE_NAME(enum_type, @1);
-	enum_type->names .reset($5);
 	enum_type->base_type = IVL_VT_BOOL;
-	enum_type->signed_flag = $3;
+	enum_type->signed_flag = $2;
 	enum_type->integer_flag = false;
-	enum_type->range.reset(make_range_from_width($2));
+	enum_type->range.reset(make_range_from_width($1));
 	$$ = enum_type;
       }
-  | K_enum K_integer signed_unsigned_opt '{' enum_name_list '}'
+  | K_integer signed_unsigned_opt
       { enum_type_t*enum_type = new enum_type_t;
-	FILE_NAME(enum_type, @1);
-	enum_type->names .reset($5);
 	enum_type->base_type = IVL_VT_LOGIC;
-	enum_type->signed_flag = $3;
+	enum_type->signed_flag = $2;
 	enum_type->integer_flag = true;
 	enum_type->range.reset(make_range_from_width(integer_width));
 	$$ = enum_type;
       }
-  | K_enum K_logic unsigned_signed_opt dimensions_opt '{' enum_name_list '}'
-      { enum_type_t*enum_type = new enum_type_t;
-	FILE_NAME(enum_type, @1);
-	enum_type->names .reset($6);
-	enum_type->base_type = IVL_VT_LOGIC;
-	enum_type->signed_flag = $3;
+  | integer_vector_type unsigned_signed_opt dimensions_opt
+      { ivl_variable_type_t use_vtype = $1;
+	if (use_vtype == IVL_VT_NO_TYPE)
+	      use_vtype = IVL_VT_LOGIC;
+
+	enum_type_t*enum_type = new enum_type_t;
+	enum_type->base_type = use_vtype;
+	enum_type->signed_flag = $2;
 	enum_type->integer_flag = false;
-	enum_type->range.reset($4 ? $4 : make_range_from_width(1));
+	enum_type->range.reset($3 ? $3 : make_range_from_width(1));
 	$$ = enum_type;
       }
-  | K_enum K_reg unsigned_signed_opt dimensions_opt '{' enum_name_list '}'
-      { enum_type_t*enum_type = new enum_type_t;
+  ;
+
+enum_data_type /* IEEE 1800-2012 A.2.2.1 */
+  : K_enum enum_base_type '{' enum_name_list '}'
+      { enum_type_t*enum_type = $2;
 	FILE_NAME(enum_type, @1);
-	enum_type->names .reset($6);
-	enum_type->base_type = IVL_VT_LOGIC;
-	enum_type->signed_flag = $3;
-	enum_type->integer_flag = false;
-	enum_type->range.reset($4 ? $4 : make_range_from_width(1));
-	$$ = enum_type;
-      }
-  | K_enum K_bit unsigned_signed_opt dimensions_opt '{' enum_name_list '}'
-      { enum_type_t*enum_type = new enum_type_t;
-	FILE_NAME(enum_type, @1);
-	enum_type->names .reset($6);
-	enum_type->base_type = IVL_VT_BOOL;
-	enum_type->signed_flag = $3;
-	enum_type->integer_flag = false;
-	enum_type->range.reset($4 ? $4 : make_range_from_width(1));
+	enum_type->names.reset($4);
 	$$ = enum_type;
       }
   ;
