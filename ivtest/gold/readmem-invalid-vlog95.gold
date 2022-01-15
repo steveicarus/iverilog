@@ -1,0 +1,18 @@
+ERROR: vlog95.v:14: $readmemb requires two arguments.
+ERROR: vlog95.v:15: $readmemb's first argument must be a file name (string).
+ERROR: vlog95.v:15: $readmemb requires a second (memory) argument.
+ERROR: vlog95.v:16: $readmemb requires a second (memory) argument.
+ERROR: vlog95.v:17: $readmemb's second argument must be a memory.
+ERROR: vlog95.v:18: $readmemb's third argument must be a start address (numeric).
+ERROR: vlog95.v:19: $readmemb's fourth argument must be a finish address (numeric).
+ERROR: vlog95.v:20: $readmemb takes at most four arguments.
+                    Found 1 extra argument.
+ERROR: vlog95.v:21: $readmemh requires two arguments.
+ERROR: vlog95.v:22: $readmemh's first argument must be a file name (string).
+ERROR: vlog95.v:22: $readmemh requires a second (memory) argument.
+ERROR: vlog95.v:23: $readmemh requires a second (memory) argument.
+ERROR: vlog95.v:24: $readmemh's second argument must be a memory.
+ERROR: vlog95.v:25: $readmemh's third argument must be a start address (numeric).
+ERROR: vlog95.v:26: $readmemh's fourth argument must be a finish address (numeric).
+ERROR: vlog95.v:27: $readmemh takes at most four arguments.
+                    Found 1 extra argument.

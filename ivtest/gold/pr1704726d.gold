@@ -1,0 +1,23 @@
+./ivltests/pr1704726d.v:12: error: 'name0_s' has already been declared in this scope.
+./ivltests/pr1704726d.v:4:      : It was declared here as a parameter.
+./ivltests/pr1704726d.v:21: error: 'name0_v' has already been declared in this scope.
+./ivltests/pr1704726d.v:15:      : It was declared here as a genvar.
+./ivltests/pr1704726d.v:27: error: 'name1_st' has already been declared in this scope.
+./ivltests/pr1704726d.v:24:      : It was declared here as a task.
+./ivltests/pr1704726d.v:34: error: 'name2_sf' has already been declared in this scope.
+./ivltests/pr1704726d.v:30:      : It was declared here as a function.
+./ivltests/pr1704726d.v:38: error: 'name3_si' has already been declared in this scope.
+./ivltests/pr1704726d.v:37:      : It was declared here as an instance name.
+./ivltests/pr1704726d.v:44: error: 'name4_sb' has already been declared in this scope.
+./ivltests/pr1704726d.v:41:      : It was declared here as a named block.
+./ivltests/pr1704726d.v:48: error: 'name5_se' has already been declared in this scope.
+./ivltests/pr1704726d.v:47:      : It was declared here as an event.
+./ivltests/pr1704726d.v:57: error: 'name6_sgl' has already been declared in this scope.
+./ivltests/pr1704726d.v:53:      : It was declared here as a generate block.
+./ivltests/pr1704726d.v:65: error: 'name7_sgi' has already been declared in this scope.
+./ivltests/pr1704726d.v:61:      : It was declared here as a generate block.
+./ivltests/pr1704726d.v:78: error: 'name8_sgc' has already been declared in this scope.
+./ivltests/pr1704726d.v:70:      : It was declared here as a generate block.
+./ivltests/pr1704726d.v:82: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726d.v:86: error: 'name9_sgb' has already been declared in this scope.
+./ivltests/pr1704726d.v:82:      : It was declared here as a generate block.

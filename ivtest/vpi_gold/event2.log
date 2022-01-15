@@ -1,0 +1,6 @@
+Compiling vpi/event2.c...
+Making event2.vpi from  event2.o...
+Callback @ 10.0
+Callback @ 20.0
+Callback @ 30.0
+vpi_remove_cb returned 1 @ 30.0

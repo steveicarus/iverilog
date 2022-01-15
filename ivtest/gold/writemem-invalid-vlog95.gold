@@ -1,0 +1,18 @@
+ERROR: vlog95.v:14: $writememb requires two arguments.
+ERROR: vlog95.v:15: $writememb's first argument must be a file name (string).
+ERROR: vlog95.v:15: $writememb requires a second (memory) argument.
+ERROR: vlog95.v:16: $writememb requires a second (memory) argument.
+ERROR: vlog95.v:17: $writememb's second argument must be a memory.
+ERROR: vlog95.v:18: $writememb's third argument must be a start address (numeric).
+ERROR: vlog95.v:19: $writememb's fourth argument must be a finish address (numeric).
+ERROR: vlog95.v:20: $writememb takes at most four arguments.
+                    Found 1 extra argument.
+ERROR: vlog95.v:21: $writememh requires two arguments.
+ERROR: vlog95.v:22: $writememh's first argument must be a file name (string).
+ERROR: vlog95.v:22: $writememh requires a second (memory) argument.
+ERROR: vlog95.v:23: $writememh requires a second (memory) argument.
+ERROR: vlog95.v:24: $writememh's second argument must be a memory.
+ERROR: vlog95.v:25: $writememh's third argument must be a start address (numeric).
+ERROR: vlog95.v:26: $writememh's fourth argument must be a finish address (numeric).
+ERROR: vlog95.v:27: $writememh takes at most four arguments.
+                    Found 1 extra argument.

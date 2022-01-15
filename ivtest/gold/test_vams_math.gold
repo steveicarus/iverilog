@@ -1,0 +1,328 @@
+Using +0 = 0.000000, -0 = -0.000000, nan = nan, inf = inf and -inf = -inf.
+
+NaN != comparison works correctly.
+NaN == comparison works correctly.
+
+--- Checking the sqrt function ---
+The square root of  2.0 is 1.414214.
+The square root of  1.0 is 1.000000.
+The square root of  0.0 is 0.000000.
+The square root of -0.0 is -0.000000.
+The square root of -1.0 is nan.
+The square root of  inf is inf.
+The square root of -inf is nan.
+The square root of  nan is nan.
+
+--- Checking the ln function ---
+The natural log of 10.0 is 2.302585.
+The natural log of  1.0 is 0.000000.
+The natural log of  0.5 is -0.693147.
+The natural log of  0.0 is -inf.
+The natural log of -0.0 is -inf.
+The natural log of -1.0 is nan.
+The natural log of  inf is inf.
+The natural log of -inf is nan.
+The natural log of  nan is nan.
+
+--- Checking the log function ---
+The log base 10 of 10.0 is 1.000000.
+The log base 10 of  1.0 is 0.000000.
+The log base 10 of  0.5 is -0.301030.
+The log base 10 of  0.0 is -inf.
+The log base 10 of -0.0 is -inf.
+The log base 10 of -1.0 is nan.
+The log base 10 of  inf is inf.
+The log base 10 of -inf is nan.
+The log base 10 of  nan is nan.
+
+--- Checking the exp function ---
+The exponential of  1.0 is 2.718282.
+The exponential of  0.0 is 1.000000.
+The exponential of -0.0 is 1.000000.
+The exponential of -1.0 is 0.367879.
+The exponential of  inf is inf.
+The exponential of -inf is 0.000000.
+The exponential of  nan is nan.
+
+--- Checking the abs function ---
+The absolute value of  1.0 is 1.000000.
+The absolute value of  0.0 is 0.000000.
+The absolute value of -0.0 is 0.000000.
+The absolute value of -1.0 is 1.000000.
+The absolute value of  inf is inf.
+The absolute value of -inf is inf.
+The absolute value of  nan is nan.
+
+--- Checking the ceil function ---
+The ceiling of  2.1 is 3.000000.
+The ceiling of  0.5 is 1.000000.
+The ceiling of -0.5 is 0.000000.
+The ceiling of -1.1 is -1.000000.
+The ceiling of  inf is inf.
+The ceiling of -inf is -inf.
+The ceiling of  nan is nan.
+
+--- Checking the floor function ---
+The floor of  2.1 is 2.000000.
+The floor of  0.5 is 0.000000.
+The floor of -0.5 is -1.000000.
+The floor of -1.1 is -2.000000.
+The floor of  inf is inf.
+The floor of -inf is -inf.
+The floor of  nan is nan.
+
+--- Checking the sin function ---
+The sin of  4.0 is -0.756802.
+The sin of  1.0 is 0.841471.
+The sin of  0.0 is 0.000000.
+The sin of -0.0 is -0.000000.
+The sin of -1.0 is -0.841471.
+The sin of -4.0 is 0.756802.
+The sin of  inf is nan.
+The sin of -inf is nan.
+The sin of  nan is nan.
+
+--- Checking the cos function ---
+The cos of  4.0 is -0.653644.
+The cos of  1.0 is 0.540302.
+The cos of  0.0 is 1.000000.
+The cos of -0.0 is 1.000000.
+The cos of -1.0 is 0.540302.
+The cos of -4.0 is -0.653644.
+The cos of  inf is nan.
+The cos of -inf is nan.
+The cos of  nan is nan.
+
+--- Checking the tan function ---
+The tan of   4.0 is 1.157821.
+The tan of   1.0 is 1.557408.
+The tan of   0.0 is 0.000000.
+The tan of  -0.0 is -0.000000.
+The tan of  -1.0 is -1.557408.
+The tan of  -4.0 is -1.157821.
+The tan of  pi/2 is 1.633e+16.
+The tan of -pi/2 is -1.633e+16.
+The tan of   inf is nan.
+The tan of  -inf is nan.
+The tan of   nan is nan.
+
+--- Checking the asin function ---
+The asin of  1.1 is nan.
+The asin of  1.0 is 1.570796.
+The asin of  0.5 is 0.523599.
+The asin of  0.0 is 0.000000.
+The asin of -0.0 is -0.000000.
+The asin of -0.5 is -0.523599.
+The asin of -1.0 is -1.570796.
+The asin of -1.1 is nan.
+The asin of  inf is nan.
+The asin of -inf is nan.
+The asin of  nan is nan.
+
+--- Checking the acos function ---
+The acos of  1.1 is nan.
+The acos of  1.0 is 0.000000.
+The acos of  0.5 is 1.047198.
+The acos of  0.0 is 1.570796.
+The acos of -0.0 is 1.570796.
+The acos of -0.5 is 2.094395.
+The acos of -1.0 is 3.141593.
+The acos of -1.1 is nan.
+The acos of  inf is nan.
+The acos of -inf is nan.
+The acos of  nan is nan.
+
+--- Checking the atan function ---
+The atan of  2.0 is 1.107149.
+The atan of  0.5 is 0.463648.
+The atan of  0.0 is 0.000000.
+The atan of -0.0 is -0.000000.
+The atan of -0.5 is -0.463648.
+The atan of -2.0 is -1.107149.
+The atan of  inf is 1.570796.
+The atan of -inf is -1.570796.
+The atan of  nan is nan.
+
+--- Checking the sinh function ---
+The sinh of  2.0 is 3.626860.
+The sinh of  1.0 is 1.175201.
+The sinh of  0.5 is 0.521095.
+The sinh of  0.0 is 0.000000.
+The sinh of -0.0 is -0.000000.
+The sinh of -0.5 is -0.521095.
+The sinh of -1.0 is -1.175201.
+The sinh of -2.0 is -3.626860.
+The sinh of  inf is inf.
+The sinh of -inf is -inf.
+The sinh of  nan is nan.
+
+--- Checking the cosh function ---
+The cosh of  2.0 is 3.762196.
+The cosh of  1.0 is 1.543081.
+The cosh of  0.5 is 1.127626.
+The cosh of  0.0 is 1.000000.
+The cosh of -0.0 is 1.000000.
+The cosh of -0.5 is 1.127626.
+The cosh of -1.0 is 1.543081.
+The cosh of -2.0 is 3.762196.
+The cosh of  inf is inf.
+The cosh of -inf is inf.
+The cosh of  nan is nan.
+
+--- Checking the tanh function ---
+The tanh of  2.0 is 0.964028.
+The tanh of  1.0 is 0.761594.
+The tanh of  0.5 is 0.462117.
+The tanh of  0.0 is 0.000000.
+The tanh of -0.0 is -0.000000.
+The tanh of -0.5 is -0.462117.
+The tanh of -1.0 is -0.761594.
+The tanh of -2.0 is -0.964028.
+The tanh of  inf is 1.000000.
+The tanh of -inf is -1.000000.
+The tanh of  nan is nan.
+
+--- Checking the asinh function ---
+The asinh of  2.0 is 1.443635.
+The asinh of  1.0 is 0.881374.
+The asinh of  0.5 is 0.481212.
+The asinh of  0.0 is 0.000000.
+The asinh of -0.0 is -0.000000.
+The asinh of -0.5 is -0.481212.
+The asinh of -1.0 is -0.881374.
+The asinh of -2.0 is -1.443635.
+The asinh of  inf is inf.
+The asinh of -inf is -inf.
+The asinh of  nan is nan.
+
+--- Checking the acosh function ---
+The acosh of  2.0 is 1.316958.
+The acosh of  1.0 is 0.000000.
+The acosh of  0.5 is nan.
+The acosh of  0   is nan.
+The acosh of -0   is nan.
+The acosh of -0.5 is nan.
+The acosh of -1.0 is nan.
+The acosh of -2.0 is nan.
+The acosh of  inf is inf.
+The acosh of -inf is nan.
+The acosh of  nan is nan.
+
+--- Checking the atanh function ---
+The atanh of  2.0 is nan.
+The atanh of  1.0 is inf.
+The atanh of  0.5 is 0.549306.
+The atanh of  0.0 is 0.000000.
+The atanh of -0.0 is -0.000000.
+The atanh of -0.5 is -0.549306.
+The atanh of -1.0 is -inf.
+The atanh of -2.0 is nan.
+The atanh of  inf is nan.
+The atanh of -inf is nan.
+The atanh of  nan is nan.
+
+--- Checking the min function ---
+The minimum of  1.0 and  2.0 is 1.000000.
+The minimum of  2.0 and  1.0 is 1.000000.
+The minimum of  1.0 and -1.0 is -1.000000.
+The minimum of -1.0 and -2.0 is -2.000000.
+The minimum of  2.0 and  inf is 2.000000.
+The minimum of  inf and  2.0 is 2.000000.
+The minimum of  2.0 and -inf is -inf.
+The minimum of -inf and  2.0 is -inf.
+The minimum of  2.0 and  nan is 2.000000.
+The minimum of  nan and  2.0 is 2.000000.
+
+--- Checking the max function ---
+The maximum of  1.0 and  2.0 is 2.000000.
+The maximum of  2.0 and  1.0 is 2.000000.
+The maximum of  1.0 and -1.0 is 1.000000.
+The maximum of -1.0 and -2.0 is -1.000000.
+The maximum of  2.0 and  inf is inf.
+The maximum of  inf and  2.0 is inf.
+The maximum of  2.0 and -inf is 2.000000.
+The maximum of -inf and  2.0 is 2.000000.
+The maximum of  2.0 and  nan is 2.000000.
+The maximum of  nan and  2.0 is 2.000000.
+
+--- Checking the pow function ---
+ 0.0 to the power of   0.0 is 1.000000.
+ 1.0 to the power of   0.0 is 1.000000.
+-1.0 to the power of   0.0 is 1.000000.
+ 0.0 to the power of   1.0 is 0.000000.
+ 1.0 to the power of   1.0 is 1.000000.
+-1.0 to the power of   1.0 is -1.000000.
+ 8.0 to the power of   1/3 is 2.000000.
+ 8.0 to the power of  -1/3 is 0.500000.
+ 2.0 to the power of   3.0 is 8.000000.
+ 2.0 to the power of  5000 is inf.
+-2.0 to the power of  5001 is -inf.
+ 2.0 to the power of -5000 is 0.000000.
+ inf to the power of   0.0 is 1.000000.
+-inf to the power of   0.0 is 1.000000.
+ inf to the power of   1.0 is inf.
+-inf to the power of   1.0 is -inf.
+ inf to the power of   2.0 is inf.
+-inf to the power of   2.0 is inf.
+ 1.0 to the power of   inf is 1.000000.
+-1.0 to the power of   inf is 1.000000.
+ 0.5 to the power of   inf is 0.000000.
+ 2.0 to the power of   inf is inf.
+ 1.0 to the power of  -inf is 1.000000.
+-1.0 to the power of  -inf is 1.000000.
+ 0.5 to the power of  -inf is inf.
+ 2.0 to the power of  -inf is 0.000000.
+-1.0 to the power of  -1/3 is nan.
+ 1.0 to the power of   nan is 1.000000.
+ nan to the power of   1.0 is nan.
+ nan to the power of   0.0 is 1.000000.
+ nan to the power of   nan is nan.
+
+--- Checking the atan2 function ---
+The atan of  0.0/ 0.0 is 0.000000.
+The atan of -0.0/ 0.0 is -0.000000.
+The atan of  0.0/-0.0 is 3.141593.
+The atan of -0.0/-0.0 is -3.141593.
+The atan of  0.0/ 1.0 is 0.000000.
+The atan of  1.0/ 0.0 is 1.570796.
+The atan of  1.0/ 1.0 is 0.785398.
+The atan of  0.0/-1.0 is 3.141593.
+The atan of -1.0/ 0.0 is -1.570796.
+The atan of -1.0/-1.0 is -2.356194.
+The atan of  inf/ 0.0 is 1.570796.
+The atan of  0.0/ inf is 0.000000.
+The atan of  inf/ inf is 0.785398.
+The atan of -inf/ 0.0 is -1.570796.
+The atan of  0.0/-inf is 3.141593.
+The atan of -inf/-inf is -2.356194.
+The atan of  nan/ 0.0 is nan.
+The atan of  nan/ 1.0 is nan.
+The atan of  1.0/ nan is nan.
+
+--- Checking the hypot function ---
+The distance to (  0.0,  0.0) is 0.000000.
+The distance to (  2.0,  0.0) is 2.000000.
+The distance to ( -2.0,  0.0) is 2.000000.
+The distance to (  0.0,  2.0) is 2.000000.
+The distance to (  0.0, -2.0) is 2.000000.
+The distance to (  inf,  0.0) is inf.
+The distance to (  0.0,  inf) is inf.
+The distance to ( -inf,  0.0) is inf.
+The distance to (  nan,  0.0) is nan.
+The distance to (  0.0,  nan) is nan.
+
+--- Checking the mathematical constants ---
+        Pi is 3.1415926535897931.
+      2*Pi is 6.2831853071795862.
+      Pi/2 is 1.5707963267948966.
+      Pi/4 is 0.7853981633974483.
+      1/Pi is 0.3183098861837907.
+      2/Pi is 0.6366197723675814.
+2/sqrt(Pi) is 1.1283791670955126.
+         e is 2.7182818284590451.
+   log2(e) is 1.4426950408889634.
+  log10(e) is 0.4342944819032518.
+   loge(2) is 0.6931471805599453.
+  loge(10) is 2.3025850929940459.
+   sqrt(2) is 1.4142135623730951.
+ 1/sqrt(2) is 0.7071067811865476.

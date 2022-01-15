@@ -1,0 +1,2 @@
+./ivltests/indef_width_concat.v:4: error: Concatenation operand "'sd2" has indefinite width.
+1 error(s) during elaboration.

@@ -1,0 +1,6 @@
+case 0
+case 1
+WARNING: ./ivltests/case_priority.v:12: value is unhandled for priority or unique case statement
+         Time: 50000  Scope: main
+case 3
+PASSED

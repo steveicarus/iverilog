@@ -1,0 +1,3 @@
+./ivltests/pr3366217g.v:3: error: Enumeration name blue and green have the same value: 32'sd2
+./ivltests/pr3366217g.v:4: error: Enumeration name third and first have the same value: 32'sd2
+3 error(s) during elaboration.

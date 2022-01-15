@@ -1,0 +1,163 @@
+# This test list contains tests that exercise the Icarus synthesis
+# functionality. The test framework automatically adds the -S option
+# for compiler versions that support synthesis.
+
+#
+# Copyright (c) 1999-2014 Guy Hutchison (ghutchis@pacbell.net)
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+#
+# Format of the file
+#
+# testname		testtype		directory
+#
+# The <testname> is the verilog file name minus an extension.
+#
+# The <testtype> can be one of the following:
+#
+# normal:  Normal results expected, i.e it should compile and execute
+#          producing at least a single line with PASSED.
+#
+# CO:      Compile Only - Compile the file to the default output type.
+#
+# CN:      Compile Null - Compile with the null target. Similar to CO.
+#
+# CE:      Compile with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# RE:      Runtime with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# EF:      Expected Fail - We EXPECT this test to fail - only use
+#                          with older versions of Icarus.
+#
+# TE:      Translation Error - We EXPECT the translated code to fail -
+#                              only supported in the vlog95 checker.
+#
+# NI:      Not implemented. Only use for version specific tests.
+#
+# <directory> is where the <testname>.v file is located.
+#
+# An optional fourth and fifth argument can be supplied.
+#
+# The fourth argument may be one of the following.
+#
+#   modulename                       - Defines the top level module
+#   gold=filename                    - Compare a gold file against the
+#                                      generated log file.
+#   unordered=filename               - Compare a gold file against the
+#                                      generated log file, allowing for lines
+#                                      to appear in any order
+#   diff=filename1:filename2:skip_ln - Compare the two files for equality.
+#                                      Skip the first <skip_ln> lines or none.
+#
+# If a <modulename> is given you can supply a fifth argument for the
+# gold or diff commands.
+#
+
+# We no longer support the ivl_full_case attribute. This is a dangerous
+# thing to use, as it results in synthesis vs. simulation mismatches.
+#full_case		normal			ivltests
+#full_case2		normal			ivltests
+
+basicexpr		normal			ivltests
+basicexpr2		normal			ivltests
+basicexpr3		normal			ivltests
+basicexpr4		normal			ivltests
+basiclatch		normal			ivltests
+basicreg		normal			ivltests
+basicstate		normal			ivltests
+basicstate2		normal			ivltests
+blocksynth1		normal			ivltests
+blocksynth2		normal			ivltests
+blocksynth3		normal			ivltests
+br993a			normal			ivltests
+br993b			normal			ivltests
+br994			normal			ivltests
+br995			CE			ivltests
+br_gh99v		normal			ivltests
+br_gh99w		normal			ivltests
+br_gh99x		normal			ivltests
+br_gh115		normal			ivltests
+br_gh306a		CE			ivltests
+br_gh306b		CE			ivltests
+case1			normal			ivltests
+case2			normal			ivltests
+case3			normal			ivltests
+case4			normal			ivltests
+case5			normal			ivltests
+case5-syn-fail		CE			ivltests
+case6			normal			ivltests
+case7			normal			ivltests
+case_wo_default		normal			ivltests
+casesynth1		normal			ivltests
+casesynth2		normal			ivltests
+casesynth3		normal			ivltests
+casesynth4		normal			ivltests
+casesynth5		normal			ivltests
+casesynth6		normal			ivltests
+casesynth7		normal			ivltests gold=casesynth7.gold
+casesynth8		CE			ivltests
+casesynth9		normal			ivltests
+casex_synth		normal			ivltests
+condit1			normal			ivltests
+conditsynth1		normal			ivltests
+conditsynth2		normal			ivltests
+conditsynth3		normal			ivltests
+dffsynth		normal			ivltests
+dffsynth2		normal			ivltests
+dffsynth3		normal			ivltests
+dffsynth4		normal			ivltests
+dffsynth5		normal			ivltests
+dffsynth6		normal			ivltests
+dffsynth7		normal			ivltests
+dffsynth8		CE			ivltests
+dffsynth9		normal			ivltests
+dffsynth10		normal			ivltests
+dffsynth11		normal			ivltests
+ff_dual_enable		normal			ivltests
+for_loop_synth		normal			ivltests
+for_loop_synth2		normal			ivltests
+if_part_no_else		normal			ivltests
+if_part_no_else2	normal			ivltests
+inside_synth		normal			ivltests
+inside_synth2		normal			ivltests
+inside_synth3		normal			ivltests
+land5			normal			ivltests
+lcatsynth		normal			ivltests
+memsynth1		normal			ivltests
+memsynth2		normal			ivltests
+memsynth3		normal			ivltests
+memsynth4		normal			ivltests
+memsynth5		normal			ivltests
+memsynth6		normal			ivltests
+memsynth7		normal			ivltests
+memsynth8		normal			ivltests
+memsynth9		normal			ivltests
+mix_reset		normal			ivltests
+multireg		normal			ivltests
+not_a_latch1		normal			ivltests
+not_a_latch2		normal			ivltests
+partselsynth		normal			ivltests
+pr519			normal			ivltests
+pr685			normal			ivltests
+shiftl			normal			ivltests
+sqrt32synth		normal			ivltests
+ssetclr1		normal			ivltests
+ssetclr2		normal			ivltests
+ssetclr3		normal			ivltests
+synth_if_no_else	normal			ivltests
+ufuncsynth1		normal			ivltests

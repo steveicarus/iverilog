@@ -1,0 +1,4 @@
+WARNING: ./ivltests/pr2509349a.v:10: $readmempath could not find directory "/no_dir"!
+WARNING: ./ivltests/pr2509349a.v:10: $readmempath could not find directory "no_dir2"!
+WARNING: ./ivltests/pr2509349a.v:10: $readmempath's path element "vsim" is not a directory!
+PASSED

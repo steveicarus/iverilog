@@ -1,0 +1,15 @@
+----- Using real times -----
+The time one unit ago was        :                    0
+The time one unit ago was        :                    0
+The time now is                  :                    1
+One time unit from now it will be:                    2
+The time at 20 will be           :                   20
+The time at 40 will be           :                   40
+
+----- Using integer times -----
+The time one unit ago was        :                  100
+The time one unit ago was        :                  100
+The time now is                  :                  101
+One time unit from now it will be:                  102
+The time at 120 will be          :                  120
+The time at 140 will be          :                  140

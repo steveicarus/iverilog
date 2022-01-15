@@ -1,0 +1,15 @@
+OKAY: dat = 00000000, exp_dat = 0
+OKAY: dat = 00000001, exp_dat = 1
+OKAY: dat = 00000002, exp_dat = 2
+OKAY: dat = 00000003, exp_dat = 3
+OKAY: dat = 00000004, exp_dat = 4
+OKAY: dat = 00000005, exp_dat = 5
+OKAY: dat = 00000006, exp_dat = 6
+OKAY: dat = 00000007, exp_dat = 7
+OKAY: dat = 00000008, exp_dat = 8
+OKAY: dat = 00000009, exp_dat = 9
+OKAY: dat = 0000000a, exp_dat = a
+OKAY: dat = 0000000b, exp_dat = b
+OKAY: dat = 0000000c, exp_dat = c
+OKAY: dat = 0000000d, exp_dat = d
+OKAY: dat = 0000000e, exp_dat = e

@@ -1,0 +1,4 @@
+VCD info: dumpfile work/vcd-dup.vcd opened for output.
+VCD warning: skipping signal test.m2.c1, it was previously included.
+VCD warning: ignoring signals in previously scanned scope test.m1.
+VCD warning: $dumpvars ignored, previously called at simtime 0

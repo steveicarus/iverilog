@@ -1,0 +1,13 @@
+(DELAYFILE
+  (SDFVERSION "OVI 2.1")
+  (TIMESCALE 1ns)
+  (CELL
+    (CELLTYPE "sml_sdf")
+    (INSTANCE dut_s)
+    (DELAY
+      (ABSOLUTE
+        (IOPATH in out (1.134) (0.0))
+       )
+    )
+  )
+)

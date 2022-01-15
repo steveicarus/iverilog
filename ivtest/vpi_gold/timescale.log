@@ -1,0 +1,24 @@
+Compiling vpi/timescale.c...
+Making timescale.vpi from  timescale.o...
+Module nsns
+	tf_gettime()			-> 456
+	tf_strgettime()			-> 456
+	tf_getlongtime()		-> 0/456
+	tf_igetlongtime(inst)		-> 0/456
+	tf_getlongsimtime()		-> 0/456
+	tf_gettimeprecision()		-> -9
+	tf_igettimeprecision(inst)	-> -9
+	tf_gettimeunit()		-> -9
+	tf_gettimeunit(inst)		-> -9
+	tf_gettimeunit(0)		-> -9
+Module usns
+	tf_gettime()			-> 123
+	tf_strgettime()			-> 123000
+	tf_getlongtime()		-> 0/123
+	tf_igetlongtime(inst)		-> 0/123
+	tf_getlongsimtime()		-> 0/123000
+	tf_gettimeprecision()		-> -9
+	tf_igettimeprecision(inst)	-> -9
+	tf_gettimeunit()		-> -6
+	tf_gettimeunit(inst)		-> -6
+	tf_gettimeunit(0)		-> -9

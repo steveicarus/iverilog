@@ -1,0 +1,32 @@
+Compiling vpi/scanmem3.cc...
+Making scanmem3.vpi from  scanmem3.o...
+Registering Callbacks
+MemPoke Callback
+  Found m_poke (8 deep x 8 bits)
+  0: x001x001
+  1: 0x2
+  2: 3
+  3: x4
+  4: x101x101
+  5: 0x6
+  6: 7
+  7: x8
+MemPeek Callback
+  Found m_peek (8 deep x 8 bits)
+  0: 'b_x001x001, 'o_XX1, 'd_X, 'h_XX
+  1: 'b_00xxx010, 'o_0x2, 'd_X, 'h_XX
+  2: 'b_00000011, 'o_003, 'd_3, 'h_03
+  3: 'b_xxxx0100, 'o_xX4, 'd_X, 'h_x4
+  4: 'b_x101x101, 'o_XX5, 'd_X, 'h_XX
+  5: 'b_00xxx110, 'o_0x6, 'd_X, 'h_XX
+  6: 'b_00000111, 'o_007, 'd_7, 'h_07
+  7: 'b_xxxx1000, 'o_xX0, 'd_X, 'h_x8
+Verilog compare m_poke <=> m_peek
+  0: 'b_x001x001 <=> 'b_x001x001        
+  1: 'b_00xxx010 <=> 'b_00xxx010        
+  2: 'b_00000011 <=> 'b_00000011        
+  3: 'b_xxxx0100 <=> 'b_xxxx0100        
+  4: 'b_x101x101 <=> 'b_x101x101        
+  5: 'b_00xxx110 <=> 'b_00xxx110        
+  6: 'b_00000111 <=> 'b_00000111        
+  7: 'b_xxxx1000 <=> 'b_xxxx1000        

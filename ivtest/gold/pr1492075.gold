@@ -1,0 +1,11 @@
+clkb=0 at                    0
+clkb=1 at                  900
+clkb=0 at                 2100
+clkb=1 at                 2900
+clkb=0 at                 4100
+clkb=1 at                 4900
+clkb=0 at                 6100
+clkb=1 at                 6900
+clkb=0 at                 8100
+clkb=1 at                 8900
+clkb=0 at                10100

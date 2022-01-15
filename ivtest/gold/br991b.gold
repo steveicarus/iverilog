@@ -1,0 +1,11 @@
+./ivltests/br991b.v:23: error: always process does not have any delay.
+./ivltests/br991b.v:23:      : A runtime infinite loop will occur.
+./ivltests/br991b.v:19: error: always process does not have any delay.
+./ivltests/br991b.v:19:      : A runtime infinite loop will occur.
+./ivltests/br991b.v:15: error: always process does not have any delay.
+./ivltests/br991b.v:15:      : A runtime infinite loop will occur.
+./ivltests/br991b.v:11: error: always process does not have any delay.
+./ivltests/br991b.v:11:      : A runtime infinite loop will occur.
+./ivltests/br991b.v:7: error: always process does not have any delay.
+./ivltests/br991b.v:7:      : A runtime infinite loop will occur.
+Elaboration failed

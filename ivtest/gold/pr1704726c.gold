@@ -1,0 +1,121 @@
+./ivltests/pr1704726c.v:24: error: 'name_v' has already been declared in this scope.
+./ivltests/pr1704726c.v:4:      : It was declared here as a parameter.
+./ivltests/pr1704726c.v:32: error: 'name_lpv' has already been declared in this scope.
+./ivltests/pr1704726c.v:5:      : It was declared here as a parameter.
+./ivltests/pr1704726c.v:46: error: 'name_t' has already been declared in this scope.
+./ivltests/pr1704726c.v:7:      : It was declared here as a parameter.
+./ivltests/pr1704726c.v:60: error: 'name_tv' has already been declared in this scope.
+./ivltests/pr1704726c.v:54:      : It was declared here as a genvar.
+./ivltests/pr1704726c.v:68: error: 'name_f' has already been declared in this scope.
+./ivltests/pr1704726c.v:8:      : It was declared here as a parameter.
+./ivltests/pr1704726c.v:77: error: 'name_ft' has already been declared in this scope.
+./ivltests/pr1704726c.v:74:      : It was declared here as a task.
+./ivltests/pr1704726c.v:92: error: 'name_fv' has already been declared in this scope.
+./ivltests/pr1704726c.v:86:      : It was declared here as a genvar.
+./ivltests/pr1704726c.v:101: error: 'name_i' has already been declared in this scope.
+./ivltests/pr1704726c.v:9:      : It was declared here as a parameter.
+./ivltests/pr1704726c.v:107: error: 'name_it' has already been declared in this scope.
+./ivltests/pr1704726c.v:104:      : It was declared here as a task.
+./ivltests/pr1704726c.v:114: error: 'name_if' has already been declared in this scope.
+./ivltests/pr1704726c.v:110:      : It was declared here as a function.
+./ivltests/pr1704726c.v:123: error: 'name_iv' has already been declared in this scope.
+./ivltests/pr1704726c.v:117:      : It was declared here as a genvar.
+./ivltests/pr1704726c.v:127: error: 'name_ii' has already been declared in this scope.
+./ivltests/pr1704726c.v:126:      : It was declared here as an instance name.
+./ivltests/pr1704726c.v:133: error: 'name_b' has already been declared in this scope.
+./ivltests/pr1704726c.v:10:      : It was declared here as a parameter.
+./ivltests/pr1704726c.v:141: error: 'name_bt' has already been declared in this scope.
+./ivltests/pr1704726c.v:138:      : It was declared here as a task.
+./ivltests/pr1704726c.v:150: error: 'name_bf' has already been declared in this scope.
+./ivltests/pr1704726c.v:146:      : It was declared here as a function.
+./ivltests/pr1704726c.v:161: error: 'name_bv' has already been declared in this scope.
+./ivltests/pr1704726c.v:155:      : It was declared here as a genvar.
+./ivltests/pr1704726c.v:167: error: 'name_bi' has already been declared in this scope.
+./ivltests/pr1704726c.v:166:      : It was declared here as an instance name.
+./ivltests/pr1704726c.v:175: error: 'name_bb' has already been declared in this scope.
+./ivltests/pr1704726c.v:172:      : It was declared here as a named block.
+./ivltests/pr1704726c.v:183: error: 'name_e' has already been declared in this scope.
+./ivltests/pr1704726c.v:15:      : It was declared here as a parameter.
+./ivltests/pr1704726c.v:189: error: 'name_et' has already been declared in this scope.
+./ivltests/pr1704726c.v:186:      : It was declared here as a task.
+./ivltests/pr1704726c.v:196: error: 'name_ef' has already been declared in this scope.
+./ivltests/pr1704726c.v:192:      : It was declared here as a function.
+./ivltests/pr1704726c.v:205: error: 'name_ev' has already been declared in this scope.
+./ivltests/pr1704726c.v:199:      : It was declared here as a genvar.
+./ivltests/pr1704726c.v:209: error: 'name_ei' has already been declared in this scope.
+./ivltests/pr1704726c.v:208:      : It was declared here as an instance name.
+./ivltests/pr1704726c.v:215: error: 'name_eb' has already been declared in this scope.
+./ivltests/pr1704726c.v:212:      : It was declared here as a named block.
+./ivltests/pr1704726c.v:226: error: 'name_gl' has already been declared in this scope.
+./ivltests/pr1704726c.v:11:      : It was declared here as a parameter.
+./ivltests/pr1704726c.v:236: error: 'name_glt' has already been declared in this scope.
+./ivltests/pr1704726c.v:232:      : It was declared here as a task.
+./ivltests/pr1704726c.v:247: error: 'name_glf' has already been declared in this scope.
+./ivltests/pr1704726c.v:242:      : It was declared here as a function.
+./ivltests/pr1704726c.v:260: error: 'name_glv' has already been declared in this scope.
+./ivltests/pr1704726c.v:253:      : It was declared here as a genvar.
+./ivltests/pr1704726c.v:268: error: 'name_gli' has already been declared in this scope.
+./ivltests/pr1704726c.v:266:      : It was declared here as an instance name.
+./ivltests/pr1704726c.v:278: error: 'name_glb' has already been declared in this scope.
+./ivltests/pr1704726c.v:274:      : It was declared here as a named block.
+./ivltests/pr1704726c.v:286: error: 'name_gle' has already been declared in this scope.
+./ivltests/pr1704726c.v:284:      : It was declared here as an event.
+./ivltests/pr1704726c.v:298: error: 'name_glgl' has already been declared in this scope.
+./ivltests/pr1704726c.v:293:      : It was declared here as a generate block.
+./ivltests/pr1704726c.v:308: error: 'name_gi' has already been declared in this scope.
+./ivltests/pr1704726c.v:12:      : It was declared here as a parameter.
+./ivltests/pr1704726c.v:318: error: 'name_git' has already been declared in this scope.
+./ivltests/pr1704726c.v:314:      : It was declared here as a task.
+./ivltests/pr1704726c.v:329: error: 'name_gif' has already been declared in this scope.
+./ivltests/pr1704726c.v:324:      : It was declared here as a function.
+./ivltests/pr1704726c.v:342: error: 'name_giv' has already been declared in this scope.
+./ivltests/pr1704726c.v:335:      : It was declared here as a genvar.
+./ivltests/pr1704726c.v:350: error: 'name_gii' has already been declared in this scope.
+./ivltests/pr1704726c.v:348:      : It was declared here as an instance name.
+./ivltests/pr1704726c.v:360: error: 'name_gib' has already been declared in this scope.
+./ivltests/pr1704726c.v:356:      : It was declared here as a named block.
+./ivltests/pr1704726c.v:368: error: 'name_gie' has already been declared in this scope.
+./ivltests/pr1704726c.v:366:      : It was declared here as an event.
+./ivltests/pr1704726c.v:380: error: 'name_gigi' has already been declared in this scope.
+./ivltests/pr1704726c.v:375:      : It was declared here as a generate block.
+./ivltests/pr1704726c.v:391: error: 'name_gc' has already been declared in this scope.
+./ivltests/pr1704726c.v:13:      : It was declared here as a parameter.
+./ivltests/pr1704726c.v:406: error: 'name_gct' has already been declared in this scope.
+./ivltests/pr1704726c.v:401:      : It was declared here as a task.
+./ivltests/pr1704726c.v:422: error: 'name_gcf' has already been declared in this scope.
+./ivltests/pr1704726c.v:416:      : It was declared here as a function.
+./ivltests/pr1704726c.v:440: error: 'name_gcv' has already been declared in this scope.
+./ivltests/pr1704726c.v:432:      : It was declared here as a genvar.
+./ivltests/pr1704726c.v:453: error: 'name_gci' has already been declared in this scope.
+./ivltests/pr1704726c.v:450:      : It was declared here as an instance name.
+./ivltests/pr1704726c.v:468: error: 'name_gcb' has already been declared in this scope.
+./ivltests/pr1704726c.v:463:      : It was declared here as a named block.
+./ivltests/pr1704726c.v:481: error: 'name_gce' has already been declared in this scope.
+./ivltests/pr1704726c.v:478:      : It was declared here as an event.
+./ivltests/pr1704726c.v:503: error: 'name_gcgc' has already been declared in this scope.
+./ivltests/pr1704726c.v:493:      : It was declared here as a generate block.
+./ivltests/pr1704726c.v:517: error: 'name_gb' has already been declared in this scope.
+./ivltests/pr1704726c.v:14:      : It was declared here as a parameter.
+./ivltests/pr1704726c.v:517: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:527: error: 'name_gbt' has already been declared in this scope.
+./ivltests/pr1704726c.v:523:      : It was declared here as a task.
+./ivltests/pr1704726c.v:527: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:538: error: 'name_gbf' has already been declared in this scope.
+./ivltests/pr1704726c.v:533:      : It was declared here as a function.
+./ivltests/pr1704726c.v:538: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:551: error: 'name_gbv' has already been declared in this scope.
+./ivltests/pr1704726c.v:544:      : It was declared here as a genvar.
+./ivltests/pr1704726c.v:551: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:559: error: 'name_gbi' has already been declared in this scope.
+./ivltests/pr1704726c.v:557:      : It was declared here as an instance name.
+./ivltests/pr1704726c.v:559: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:569: error: 'name_gbb' has already been declared in this scope.
+./ivltests/pr1704726c.v:565:      : It was declared here as a named block.
+./ivltests/pr1704726c.v:569: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:577: error: 'name_gbe' has already been declared in this scope.
+./ivltests/pr1704726c.v:575:      : It was declared here as an event.
+./ivltests/pr1704726c.v:577: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:584: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726c.v:589: error: 'name_gbgb' has already been declared in this scope.
+./ivltests/pr1704726c.v:584:      : It was declared here as a generate block.
+./ivltests/pr1704726c.v:589: warning: Anachronistic use of named begin/end to surround generate schemes.

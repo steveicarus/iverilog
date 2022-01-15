@@ -1,0 +1,31 @@
+#!/bin/sh
+echo "VVP valgrind errors."
+echo "-------------------------"
+fgrep "ERROR SUMMARY" log/*.log | fgrep -v " 0 errors" || echo "No Errors."
+
+tail -n8 log/*.log | fgrep "definitely lost" | fgrep -v " 0 bytes" || \
+  echo "No \"definitely lost\" memory in vvp."
+
+tail -n8 log/*.log | fgrep "indirectly lost" | fgrep -v " 0 bytes" || \
+  echo "No \"indirectly lost\" memory in vvp."
+
+tail -n8 log/*.log | fgrep "possibly lost" | fgrep -v " 0 bytes" || \
+  echo "No \"possibly lost\" memory in vvp."
+
+# egrep "^\*\*[0-9]+\*\*" log/*.log || echo "No \"missed deletes\" in vvp."
+
+echo ""
+echo "VPI valgrind errors."
+echo "-------------------------"
+fgrep "ERROR SUMMARY" vpi_log/*.log | fgrep -v " 0 errors" || echo "No Errors."
+
+tail -n8 vpi_log/*.log | fgrep "definitely lost" | fgrep -v " 0 bytes" || \
+  echo "No \"definitely lost\" memory in vvp."
+
+tail -n8 vpi_log/*.log | fgrep "indirectly lost" | fgrep -v " 0 bytes" || \
+  echo "No \"indirectly lost\" memory in vvp."
+
+tail -n8 vpi_log/*.log | fgrep "possibly lost" | fgrep -v " 0 bytes" || \
+  echo "No \"possibly lost\" memory in vvp."
+
+# egrep "^\*\*[0-9]+\*\*" vpi_log/*.log || echo "No \"missed deletes\" in vvp."

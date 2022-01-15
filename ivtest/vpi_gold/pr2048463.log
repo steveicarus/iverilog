@@ -1,0 +1,27 @@
+Compiling vpi/pr2048463.c...
+Making pr2048463.vpi from  pr2048463.o...
+
+Adding monitors to all nets in module addbit:
+
+At time 0.00:	 test.i1.a = 0
+At time 0.00:	 test.i1.b = 0
+At time 0.00:	 test.i1.ci = 0
+At time 1.00:	 test.i1.n1 = 0
+At time 2.00:	 test.i1.n2 = 0
+At time 3.00:	 test.i1.n3 = 0
+At time 5.00:	 test.i1.sum = 0
+At time 7.00:	 test.i1.co = 0
+At time 10.00:	 test.i1.a = 1
+At time 11.00:	 test.i1.n1 = 1
+At time 15.00:	 test.i1.sum = 1
+At time 20.00:	 test.i1.a = 0
+At time 21.00:	 test.i1.n1 = 0
+At time 25.00:	 test.i1.sum = 0
+At time 30.00:	 test.i1.b = 1
+At time 31.00:	 test.i1.n1 = 1
+At time 35.00:	 test.i1.sum = 1
+At time 40.00:	 test.i1.a = 1
+At time 41.00:	 test.i1.n1 = 0
+At time 42.00:	 test.i1.n2 = 1
+At time 45.00:	 test.i1.sum = 0
+At time 46.00:	 test.i1.co = 1

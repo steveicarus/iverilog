@@ -1,0 +1,4 @@
+a= 7, b= 0, c= 1 -> old= x, new= 1
+a=15, b= 0, c= 2 -> old= x, new= 2
+a= 7, b= 0, c= 3 -> old= 1, new= 3
+a=15, b= 0, c= 4 -> old= 2, new= 4

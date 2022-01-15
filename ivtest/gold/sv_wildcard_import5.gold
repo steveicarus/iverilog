@@ -1,0 +1,7 @@
+./ivltests/sv_wildcard_import5.v:50: error: Ambiguous use of 'word'. It is exported by both 'my_package1' and by 'my_package2'.
+./ivltests/sv_wildcard_import5.v:53: error: Ambiguous use of 'e'. It is exported by both 'my_package1' and by 'my_package2'.
+./ivltests/sv_wildcard_import5.v:53: error: Ambiguous use of 'v'. It is exported by both 'my_package1' and by 'my_package2'.
+./ivltests/sv_wildcard_import5.v:53: error: Ambiguous use of 'p1'. It is exported by both 'my_package1' and by 'my_package2'.
+./ivltests/sv_wildcard_import5.v:53: error: Ambiguous use of 'p2'. It is exported by both 'my_package1' and by 'my_package2'.
+./ivltests/sv_wildcard_import5.v:54: error: Ambiguous use of 'f'. It is exported by both 'my_package1' and by 'my_package2'.
+./ivltests/sv_wildcard_import5.v:54: error: Ambiguous use of 'h'. It is exported by both 'my_package1' and by 'my_package2'.

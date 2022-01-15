@@ -1,0 +1,3 @@
+./ivltests/pr3366217c.v:3: error: Enumeration name b has an inferred value that overflowed.
+./ivltests/pr3366217c.v:3: error: Enumeration name c has an inferred value that overflowed.
+3 error(s) during elaboration.

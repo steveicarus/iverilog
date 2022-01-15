@@ -1,0 +1,8 @@
+./ivltests/br975.v:12: error: 'w1' has already been declared in this scope.
+./ivltests/br975.v:11:      : It was declared here as a net.
+./ivltests/br975.v:15: error: 'd1' has already been declared in this scope.
+./ivltests/br975.v:14:      : It was declared here as a variable.
+./ivltests/br975.v:18: error: 'e1' has already been declared in this scope.
+./ivltests/br975.v:17:      : It was declared here as a variable.
+./ivltests/br975.v:21: error: 'r1' has already been declared in this scope.
+./ivltests/br975.v:20:      : It was declared here as a variable.

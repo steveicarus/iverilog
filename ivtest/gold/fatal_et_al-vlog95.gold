@@ -1,0 +1,7 @@
+INFO: vlog95.v:12: This is the $info message.
+      Time: 1  Scope: top
+WARNING: vlog95.v:13: This is the $warning message.
+         Time: 2  Scope: top
+ERROR: vlog95.v:14: This is the $error message.
+       Time: 3  Scope: top
+Check that the messages are correct.

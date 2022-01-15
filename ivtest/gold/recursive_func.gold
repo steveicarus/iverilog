@@ -1,0 +1,6 @@
+factorial 3 = 6
+factorial 4 = 24
+factorial 5 = 120
+factorial 6 = 720
+factorial 7 = 5040
+factorial 8 = 40320

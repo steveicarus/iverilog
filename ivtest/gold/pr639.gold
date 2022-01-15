@@ -1,0 +1,13 @@
+integer & real periods: 'd15 'd15
+integer & real periods (15.00, 15.20): 't15.00ns 't15.20ns
+......... 15.2 should be displayed as 15.20 in its timeformat.
+integer & real periods: 'b1111 'b1111
+integer & real periods: 'hf 'hf
+	$time is in ns
+	time (1, 1h):  'd1, 't1.00ns, 'h1
+	$simtime is in 10 ps
+	simtime (100, 64h):  'd100, 't100.00ns, 'h64
+		**********************************************
+		****** time precision test PASSED *******
+		**********************************************
+

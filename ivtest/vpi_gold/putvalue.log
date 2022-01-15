@@ -1,0 +1,17 @@
+Compiling vpi/putvalue.c...
+Making putvalue.vpi from  putvalue.o...
+<monitor> r = x
+<display> r = 0 @ 0
+<monitor> r = 0
+<display> r = 1 @ 1000
+<monitor> r = 1
+<display> r = 0 @ 2000
+<monitor> r = 0
+<display> r = 1 @ 3000
+<monitor> r = 1
+<display> r = 0 @ 40000000
+<monitor> r = 0
+<display> r = 1 @ 50000000
+<monitor> r = 1
+<display> r = 0 @ 60000000
+<monitor> r = 0

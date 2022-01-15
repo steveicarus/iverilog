@@ -1,0 +1,9 @@
+./ivltests/pr3194155.v:13: warning: input port x is coerced to inout.
+./ivltests/pr3194155.v:14: warning: input port x is coerced to inout.
+x(1) : 0
+x(2) : 1
+x(3) : 0
+x(4) : 0
+x(5) : 0
+y    : 0
+z    : 0

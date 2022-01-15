@@ -1,0 +1,37 @@
+./ivltests/br_gh497f.v:12: error: Part-select [-2+:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:12: error: Part-select [-2+:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:12: error: Unable to elaborate condition expression.
+./ivltests/br_gh497f.v:13: error: Part-select [-1+:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:13: error: Part-select [-1+:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:13: error: Unable to elaborate condition expression.
+./ivltests/br_gh497f.v:17: error: Part-select [3+:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:17: error: Part-select [3+:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:17: error: Unable to elaborate condition expression.
+./ivltests/br_gh497f.v:18: error: Part-select [4+:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:18: error: Part-select [4+:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:18: error: Unable to elaborate condition expression.
+./ivltests/br_gh497f.v:20: error: Part-select [-1-:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:20: error: Part-select [-1-:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:20: error: Unable to elaborate condition expression.
+./ivltests/br_gh497f.v:21: error: Part-select [0-:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:21: error: Part-select [0-:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:21: error: Unable to elaborate condition expression.
+./ivltests/br_gh497f.v:25: error: Part-select [4-:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:25: error: Part-select [4-:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:25: error: Unable to elaborate condition expression.
+./ivltests/br_gh497f.v:26: error: Part-select [5-:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:26: error: Part-select [5-:2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:26: error: Unable to elaborate condition expression.
+./ivltests/br_gh497f.v:28: error: Part-select [-1:-2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:28: error: Part-select [-1:-2] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:28: error: Unable to elaborate condition expression.
+./ivltests/br_gh497f.v:29: error: Part-select [0:-1] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:29: error: Part-select [0:-1] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:29: error: Unable to elaborate condition expression.
+./ivltests/br_gh497f.v:33: error: Part-select [4:3] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:33: error: Part-select [4:3] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:33: error: Unable to elaborate condition expression.
+./ivltests/br_gh497f.v:34: error: Part-select [5:4] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:34: error: Part-select [5:4] exceeds the declared bounds for array.
+./ivltests/br_gh497f.v:34: error: Unable to elaborate condition expression.
+36 error(s) during elaboration.

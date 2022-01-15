@@ -1,0 +1,45 @@
+Compiling vpi/pr723.c...
+Making pr723.vpi from  pr723.o...
+Open some files
+open MCD      returned 00000002
+open MCD      returned 00000004
+open MCD      returned 00000008
+open MCD      returned 00000010
+open FD ('r') returned 80000003
+open FD ('r') returned 80000004
+open FD ('w') returned 80000005
+open FD ('w') returned 80000006
+open FD ('a') returned 80000007
+open FD ('a') returned 80000008
+MCD 01: stdout
+MCD 02: /dev/null
+MCD 03: /dev/null
+MCD 04: /dev/null
+MCD 05: /dev/null
+FP  00: stdin
+FP  01: stdout
+FP  02: stderr
+FP  03: /dev/null
+FP  04: /dev/null
+FP  05: /dev/null
+FP  06: /dev/null
+FP  07: /dev/null
+FP  08: /dev/null
+write to MCD 1
+write to FD 2
+write to FD 1
+Close some files
+WARNING: vpi/pr723.v:47: could not close MCD STDOUT (0x1) in $fclose().
+WARNING: vpi/pr723.v:48: invalid MCD (0x2) given to $fclose().
+WARNING: vpi/pr723.v:49: invalid MCD (0x40000000) given to $fclose().
+WARNING: vpi/pr723.v:51: could not close file descriptor STDIN (0x80000000) in $fclose().
+WARNING: vpi/pr723.v:52: could not close file descriptor STDOUT (0x80000001) in $fclose().
+WARNING: vpi/pr723.v:53: could not close file descriptor STDERR (0x80000002) in $fclose().
+WARNING: vpi/pr723.v:54: invalid file descriptor (0x80000003) given to $fclose().
+WARNING: vpi/pr723.v:57: invalid file descriptor (0x81ca1ca0) given to $fclose().
+MCD 01: stdout
+FP  00: stdin
+FP  01: stdout
+FP  02: stderr
+WARNING: vpi/pr723.v:63: invalid MCD (0x40000000) given to $fdisplay().
+WARNING: vpi/pr723.v:64: invalid file descriptor (0x8000000f) given to $fdisplay().

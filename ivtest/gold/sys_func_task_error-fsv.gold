@@ -1,0 +1,5 @@
+./ivltests/sys_func_task_error.v:7: Error: System task/function $this_icarus_call_should_not_exist() is not defined by any module.
+./ivltests/sys_func_task_error.v:10: Warning: Calling system function $sscanf() as a task.
+./ivltests/sys_func_task_error.v:10:          The functions return value will be ignored.
+./ivltests/sys_func_task_error.v:12: Error: $display() is a system task, it cannot be called as a function.
+vsim: Program not runnable, 2 errors.

@@ -1,0 +1,10 @@
+Compiling vpi/realtime2.c...
+Making realtime2.vpi from  realtime2.o...
+$time = 57
+calltf from test2 57.000000, 57.000000
+$time = 136
+calltf from test2 136.000000, 136.000000
+$time = 12000
+calltf from test 12346.000000, 12.346000
+$time = 47000
+calltf from test 46914.000000, 46.914000

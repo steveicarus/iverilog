@@ -1,0 +1,5 @@
+Hello World
+uvm_object::new(uvm_object)
+uvm_object::Print: m_name=uvm_object
+uvm_object::new(uvm_report_object)
+uvm_object::Print: m_name=uvm_report_object

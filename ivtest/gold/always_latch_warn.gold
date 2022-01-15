@@ -1,0 +1,53 @@
+./ivltests/always_latch_warn.v:20: warning: An event (int2) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:20: warning: An event (int1) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:21: warning: A non-integral variable (intrl) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:23: warning: An event trigger statement cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:24: warning: Assinging to a non-integral variable (rl) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:25: warning: Assinging to a non-integral variable (rl) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:26: warning: Assinging to a non-integral variable (ar) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:27: warning: A for statement must have a constant initial value to be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:27: warning: A for statement must compare against a constant value to be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:27: warning: A for statement must have a constant step value to be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:27: warning: System task ($display) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:28: warning: A for statement must use the index (idx) in the condition expression to be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:28: warning: A for statement must use the index (idx) in the step expression to be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:28: warning: System task ($display) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:29: warning: A for statement step must be an assignment to the index variable (idx) to be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:29: warning: System task ($display) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:30: warning: A for statement step must be a simple assignment statement to be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:30: warning: System task ($display) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:31: warning: A for statement step does not support operator 'l' it must be +/- to be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:31: warning: System task ($display) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:32: warning: A for statement step must be a simple binary +/- to be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:32: warning: System task ($display) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:33: warning: System task ($display) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:34: warning: Dynamic array delete method cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:35: warning: System task ($display) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:14: warning: An event (tevt) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:13: warning: A non-integral variable (trl) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:12: warning: user task (a_task) must be automatic to be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:16: warning: System task ($display) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:37: warning: A procedural assign statement cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:38: warning: A procedural deassign statement cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:39: warning: A do/while statement cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:39: warning: System task ($display) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:41: warning: A force statement cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:42: warning: A release statement cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:43: warning: A while statement cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:44: warning: System task ($display) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:47: warning: A repeat statement cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:47: warning: System task ($display) cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:48: warning: A disable statement can only be synthesized when disabling an enclosing block in an always_latch process.
+./ivltests/always_latch_warn.v:49: warning: A forever statement cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:50: warning: System task ($display) cannot be synthesized in an always_latch process.
+For: 0
+array size: 2
+array size: 0
+user task
+do/while
+while
+repeat
+repeat
+forever
+Expect compile warnings!
+PASSED

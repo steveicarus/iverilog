@@ -1,0 +1,24 @@
+(DELAYFILE
+  (TIMESCALE 1ns)
+
+  (CELL
+    (CELLTYPE "CLK_BUF")
+    (INSTANCE L1)
+    (DELAY
+      (ABSOLUTE
+      (IOPATH in out (0.12::0.25) (0.11::0.25))
+      )
+    )
+  )
+
+  (CELL
+    (CELLTYPE "CLK_BUF")
+    (INSTANCE L2)
+    (DELAY
+      (ABSOLUTE
+      (IOPATH in out (0.20::0.48) (0.19::0.44))
+      )
+    )
+  )
+
+)

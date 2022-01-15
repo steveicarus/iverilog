@@ -1,0 +1,11 @@
+./ivltests/pr2815398b.v:39: warning: ignoring out of bounds l-value array access arr[8].
+./ivltests/pr2815398b.v:39: warning: ignoring out of bounds l-value array access arr[9].
+./ivltests/pr2815398b.v:39: warning: ignoring out of bounds l-value array access arr[10].
+./ivltests/pr2815398b.v:39: warning: ignoring out of bounds l-value array access arr[11].
+./ivltests/pr2815398b.v:39: warning: ignoring out of bounds l-value array access arr[12].
+./ivltests/pr2815398b.v:39: warning: ignoring out of bounds l-value array access arr[13].
+./ivltests/pr2815398b.v:39: warning: ignoring out of bounds l-value array access arr[14].
+./ivltests/pr2815398b.v:39: warning: ignoring out of bounds l-value array access arr[15].
+./ivltests/pr2815398b.v:26: warning: ignoring out of bounds l-value array access arr[20].
+./ivltests/pr2815398b.v:27: warning: ignoring out of bounds l-value array access arr[-1].
+PASSED

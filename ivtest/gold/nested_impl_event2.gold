@@ -1,0 +1,2 @@
+./ivltests/nested_impl_event2.v:9: warning: @* found no sensitivities so it will never trigger.
+Triggered 1 at 30

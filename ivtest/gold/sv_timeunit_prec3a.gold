@@ -1,0 +1,28 @@
+Time scale of (check_100s) is 100s / 100s
+Time scale of (check_10s) is 10s / 10s
+Time scale of (check_1s) is 1s / 1s
+Time scale of (check_100ms) is 100ms / 100ms
+Time scale of (check_10ms) is 10ms / 10ms
+Time scale of (check_1ms) is 1ms / 1ms
+Time scale of (check_100us) is 100us / 100us
+Time scale of (check_10us) is 10us / 10us
+Time scale of (check_1us) is 1us / 1us
+Time scale of (check_100ns) is 100ns / 100ns
+Time scale of (check_10ns) is 10ns / 10ns
+Time scale of (check_1ns) is 1ns / 1ns
+Time scale of (check_100ps) is 100ps / 100ps
+Time scale of (check_10ps) is 10ps / 10ps
+Time scale of (check_1ps) is 1ps / 1ps
+Time scale of (check_100fs) is 100fs / 100fs
+Time scale of (check_10fs) is 10fs / 10fs
+Time scale of (check_1fs) is 1fs / 1fs
+
+Time scale of (check_tu) is 10us / 1us
+Time scale of (check_tp) is 100us / 10us
+Time scale of (check_tup) is 10us / 10us
+Time scale of (check_tpu) is 10us / 10us
+
+Time scale of (check_tu_d) is 10us / 1us
+Time scale of (check_tp_d) is 100us / 10us
+Time scale of (check_tup_d) is 10us / 10us
+Time scale of (check_tpu_d) is 10us / 10us

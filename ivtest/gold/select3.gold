@@ -1,0 +1,16 @@
+dut[00] = 0
+dut[01] = 1
+dut[02] = 0
+dut[03] = 1
+dut[04] = 0
+dut[05] = 1
+dut[06] = 0
+dut[07] = 1
+dut[08] = 1
+dut[09] = 0
+dut[0a] = 1
+dut[0b] = 0
+dut[0c] = 1
+dut[0d] = 0
+dut[0e] = 1
+dut[0f] = 0

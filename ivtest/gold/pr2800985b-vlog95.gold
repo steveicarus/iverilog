@@ -1,0 +1,6 @@
+ERROR: vlog95.v:18: $ferror's fd (first) argument must be numeric.
+ERROR: vlog95.v:19: $ferror requires a second (register) argument.
+ERROR: vlog95.v:20: $ferror's second argument must be a reg (>=640 bits).
+ERROR: vlog95.v:21: $ferror's second argument must have 640 bit or more.
+ERROR: vlog95.v:22: $ferror takes two arguments.
+                    Found 1 extra argument.

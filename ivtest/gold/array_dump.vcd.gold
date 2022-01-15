@@ -1,0 +1,29 @@
+$date
+	Tue Apr 21 18:40:22 2009
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1s
+$end
+$scope module top $end
+$var reg 8 ! \array[0] [7:0] $end
+$upscope $end
+$scope module top $end
+$var reg 8 " \array[1] [7:0] $end
+$upscope $end
+$scope module top $end
+$var reg 8 # \array[2] [7:0] $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpvars
+bx #
+bx "
+bx !
+$end
+#1
+b1010101 #
+b0 "
+b11111111 !

@@ -1,0 +1,1 @@
+WARNING: vlog95.v:11: invalid file descriptor (0x8000000f) given to $fdisplay().

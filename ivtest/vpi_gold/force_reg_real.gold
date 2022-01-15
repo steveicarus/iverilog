@@ -1,0 +1,20 @@
+Compiling vpi/force_real.c...
+Making force_reg_real.vpi from  force_real.o...
+peek    : 0.000000
+display : 0.000000
+force   : 3.000000
+peek    : 3.000000
+display : 3.000000
+release : 3.000000
+display : 3.000000
+force   : 3.000000
+peek    : 3.000000
+display : 3.000000
+poke    : 1.000000
+peek    : 3.000000
+display : 3.000000
+release : 3.000000
+display : 3.000000
+poke    : 2.000000
+peek    : 2.000000
+display : 2.000000

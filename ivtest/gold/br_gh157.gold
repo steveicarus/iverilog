@@ -1,0 +1,2 @@
+./ivltests/br_gh157.v:13: warning: parameter x not found in test.dut.
+2

@@ -1,0 +1,19 @@
+ivltests/packed_dims_invalid_class.v:10: error: A queue dimension is not allowed here.
+ivltests/packed_dims_invalid_class.v:4: error: An unsized dimension is not allowed here.
+ivltests/packed_dims_invalid_class.v:12: error: A queue dimension is not allowed here.
+ivltests/packed_dims_invalid_class.v:14: error: Dimension size must be greater than zero.
+ivltests/packed_dims_invalid_class.v:14       : This size expression violates the rule: 'sd0
+ivltests/packed_dims_invalid_class.v:5: error: Dimension size must be greater than zero.
+ivltests/packed_dims_invalid_class.v:5       : This size expression violates the rule: 'sd0
+ivltests/packed_dims_invalid_class.v:16: error: Dimension size must be greater than zero.
+ivltests/packed_dims_invalid_class.v:16       : This size expression violates the rule: 'sd0
+ivltests/packed_dims_invalid_class.v:18: error: Dimension size must be greater than zero.
+ivltests/packed_dims_invalid_class.v:18       : This size expression violates the rule: -('sd1)
+ivltests/packed_dims_invalid_class.v:6: error: Dimension size must be greater than zero.
+ivltests/packed_dims_invalid_class.v:6       : This size expression violates the rule: -('sd1)
+ivltests/packed_dims_invalid_class.v:20: error: Dimension size must be greater than zero.
+ivltests/packed_dims_invalid_class.v:20       : This size expression violates the rule: -('sd1)
+ivltests/packed_dims_invalid_class.v:22: error: A queue dimension is not allowed here.
+ivltests/packed_dims_invalid_class.v:7: error: A queue dimension is not allowed here.
+ivltests/packed_dims_invalid_class.v:24: error: A queue dimension is not allowed here.
+13 error(s) during elaboration.

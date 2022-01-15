@@ -1,0 +1,7 @@
+clk=0: ena=0, enb=0, wea=0, web=0 --> out=0
+clk=1: ena=0, enb=0, wea=0, web=0 --> out=0
+clk=0: ena=1, enb=1, wea=0, web=0 --> out=0
+clk=1: ena=1, enb=1, wea=0, web=0 --> out=0
+clk=0: ena=1, enb=1, wea=1, web=1 --> out=0
+clk=1: ena=1, enb=1, wea=1, web=1 --> out=1
+clk=0: ena=1, enb=1, wea=1, web=1 --> out=1

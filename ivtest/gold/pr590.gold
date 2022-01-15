@@ -1,0 +1,9 @@
+
+ starting the testbench
+
+out: 0000, in: 0000
+                  10..................clock tickling
+out: 0011, in: 0010
+                  30..................clock tickling
+                  50..................clock tickling
+                  70..................clock tickling

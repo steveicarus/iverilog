@@ -1,0 +1,3 @@
+#!/bin/csh
+limit coredumpsize 0
+./vvp_reg.pl

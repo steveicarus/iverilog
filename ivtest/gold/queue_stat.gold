@@ -1,0 +1,42 @@
+----- INIT -----
+Queue statistics at time 0
+    0, x, 0, x, x, x
+----- ADD -----
+Queue statistics at time 0
+    1, x, 1, x, 0, 0
+----- ADD -----
+Queue statistics at time 1
+    2, 1, 2, x, 1, 0
+----- ADD -----
+Queue statistics at time 2
+    3, 1, 3, x, 2, 1
+----- REMOVE -----
+Queue statistics at time 3
+    2, 1, 3, 3, 2, 2
+Queue statistics at time 4
+    2, 1, 3, 3, 3, 2
+----- ADD -----
+Queue statistics at time 5
+    3, 1, 3, 3, 4, 2
+----- REMOVE TWO -----
+Queue statistics at time 6
+    1, 1, 3, 3, 1, 3
+----- REMOVE -----
+Queue statistics at time 7
+    0, 1, 3, 2, x, 3
+----- ADD -----
+Queue statistics at time 8
+    1, 2, 3, 2, 0, 2
+----- REMOVE -----
+Queue statistics at time 9
+    0, 2, 3, 1, x, 3
+----- ADD -----
+Queue statistics at time 16
+    1, 3, 3, 1, 0, 2
+----- ADD -----
+Queue statistics at time 17
+    2, 2, 3, 1, 1, 2
+----- ADD -----
+Queue statistics at time 18
+    3, 2, 3, 1, 2, 2
+PASSED

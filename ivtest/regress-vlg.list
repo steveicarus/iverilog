@@ -1,0 +1,1723 @@
+# This test list contains tests that should work using any simulator that
+# supports standard Verilog (1364-2005).
+
+#
+# Copyright (c) 1999-2021 Guy Hutchison (ghutchis@pacbell.net)
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+#
+# Format of the file
+#
+# testname		testtype		directory
+#
+# The <testname> is the verilog file name minus an extension.
+#
+# The <testtype> can be one of the following:
+#
+# normal:  Normal results expected, i.e it should compile and execute
+#          producing at least a single line with PASSED.
+#
+# CO:      Compile Only - Compile the file to the default output type.
+#
+# CN:      Compile Null - Compile with the null target. Similar to CO.
+#
+# CE:      Compile with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# RE:      Runtime with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# EF:      Expected Fail - We EXPECT this test to fail - only use
+#                          with older versions of Icarus.
+#
+# TE:      Translation Error - We EXPECT the translated code to fail -
+#                              only supported in the vlog95 checker.
+#
+# NI:      Not implemented. Only use for version specific tests.
+#
+# <directory> is where the <testname>.v file is located.
+#
+# An optional fourth and fifth argument can be supplied.
+#
+# The fourth argument may be one of the following.
+#
+#   modulename                       - Defines the top level module
+#   gold=filename                    - Compare a gold file against the
+#                                      generated log file.
+#   unordered=filename               - Compare a gold file against the
+#                                      generated log file, allowing for lines
+#                                      to appear in any order
+#   diff=filename1:filename2:skip_ln - Compare the two files for equality.
+#                                      Skip the first <skip_ln> lines or none.
+#
+# If a <modulename> is given you can supply a fifth argument for the
+# gold or diff commands.
+#
+
+addsr			normal			ivltests # Finds problems with >> using different sizes
+addwide			normal			ivltests
+always3.1.1A		CE			ivltests
+always3.1.1B		CE			ivltests
+always3.1.1C		normal			ivltests
+always3.1.1D		normal			ivltests
+always3.1.1E		normal			ivltests
+always3.1.1F		normal			ivltests
+always3.1.1G		normal			ivltests
+always3.1.1H		normal			ivltests
+always3.1.1I		normal			ivltests
+always3.1.1J		normal			ivltests
+always3.1.1K		normal			ivltests
+always3.1.2A		CE			ivltests
+always3.1.2B		CE			ivltests
+always3.1.2C		CE			ivltests
+always3.1.2D		CE			ivltests
+always3.1.2E		CE,-Ttyp		ivltests
+always3.1.2F		CE,-Ttyp		ivltests
+always3.1.2G		CE			ivltests
+always3.1.2H		CE			ivltests
+always3.1.2I		CE			ivltests
+always3.1.3A		CE			ivltests
+always3.1.3B		CE			ivltests
+always3.1.3B2		normal			ivltests
+always3.1.3C		CE			ivltests
+always3.1.3D		CE			ivltests
+always3.1.3D2		normal			ivltests
+always3.1.3E		CE			ivltests
+always3.1.3E2		normal			ivltests
+always3.1.3F		CE			ivltests
+always3.1.3F2		normal			ivltests
+always3.1.3G		CE			ivltests
+always3.1.3H		CE			ivltests
+always3.1.3J		CE			ivltests
+always3.1.4A		normal			ivltests
+always3.1.4B		normal			ivltests
+always3.1.4C		normal			ivltests
+always3.1.4D		normal			ivltests
+always3.1.4E		normal			ivltests
+always3.1.4F		normal			ivltests
+always3.1.4G		normal			ivltests
+always3.1.4H		normal			ivltests
+always3.1.4I		normal			ivltests
+always3.1.5A		normal			ivltests
+always3.1.5B		normal			ivltests
+always3.1.5C		normal			ivltests
+always3.1.5D		normal			ivltests
+always3.1.5E		normal			ivltests
+always3.1.5F		normal			ivltests
+always3.1.6A		normal			ivltests
+always3.1.6B		normal			ivltests
+always3.1.6C		normal			ivltests
+always3.1.6D		normal			ivltests
+always3.1.7A		normal			ivltests
+always3.1.7B		normal			ivltests
+always3.1.7C		normal			ivltests
+always3.1.7D		normal			ivltests
+always3.1.8A		normal			ivltests
+always3.1.9A		CE			ivltests
+always3.1.9B		CE			ivltests
+always3.1.9C		normal			ivltests # always #1 disable taskname
+always3.1.9D		normal			ivltests # always #1 disable blockid
+always3.1.10A		CE			ivltests
+always3.1.11A		normal			ivltests
+always3.1.11B		normal			ivltests
+always3.1.12A		normal			ivltests # always fork join
+always3.1.12B		normal			ivltests # always fork: block_id join
+always3.1.12C		normal			ivltests
+always_star_array_lval	normal			ivltests gold=always_star_array_lval.gold
+andnot1			normal			ivltests
+arith-unknown		normal			ivltests
+array4			normal			ivltests
+array5			CE			ivltests
+array6			normal			ivltests
+array7			normal			ivltests
+array_lval_select1	normal			ivltests
+array_lval_select2	normal			ivltests
+array_lval_select3b	CE			ivltests
+array_lval_select3c	normal			ivltests
+array_lval_select4a	normal			ivltests
+array_lval_select4b	CE			ivltests
+array_lval_select5	normal			ivltests
+array_lval_select6	normal			ivltests
+array_packed_2d		normal			ivltests gold=array_packed_2d.gold
+array_select		normal			ivltests
+array_select_a		normal			ivltests
+array_word_check	normal			ivltests gold=array_word_check.gold
+array_word_width	normal			ivltests gold=array_word_width.gold
+array_word_width2	normal			ivltests
+assign3.2A		normal			ivltests
+assign3.2B		normal			ivltests
+assign3.2C		normal			ivltests
+assign3.2D		normal			ivltests
+assign3.2E		normal			ivltests
+assign_add		normal			ivltests
+assign_deassign_pv	normal			ivltests
+assign_delay		normal			ivltests # continuous assign with a delay
+assign_deq		normal			ivltests # continuous assign with ==
+assign_ge		normal			ivltests # continuous assign with >=
+assign_le		normal			ivltests # continuous assign with <=
+assign_mem1		normal			ivltests
+assign_mem2		normal			ivltests # Const prop/dead signal elimination
+assign_nb1		normal			ivltests # Assign a constant to a single bit array (pmonta)
+assign_nb2		normal			ivltests # Assign a constant to a single bit array (pmonta)
+assign_neq		normal			ivltests # continuous assign with !=
+attrib			normal			ivltests
+attrib01_module		normal			ivltests
+attrib02_port_decl	normal			ivltests
+attrib03_parameter	normal			ivltests
+attrib04_net_var	normal			ivltests
+attrib05_port_conn	normal			ivltests
+attrib06_operator_suffix normal			ivltests
+attrib07_func_call	normal			ivltests
+attrib08_mod_inst	normal			ivltests
+attrib09_case		normal			ivltests
+automatic_error1	CE			ivltests
+automatic_error2	CE			ivltests
+automatic_error3	CE			ivltests
+automatic_error5	CE			ivltests
+automatic_error6	CE			ivltests
+automatic_error7	CE			ivltests
+automatic_error8	CE			ivltests
+automatic_error9	CE			ivltests
+automatic_error10	CE			ivltests
+automatic_error11	RE			ivltests gold=automatic_error11.gold
+automatic_error12	RE			ivltests gold=automatic_error12.gold
+automatic_error13	RE			ivltests gold=automatic_error13.gold
+automatic_events	normal			ivltests gold=automatic_events.gold
+automatic_events2	normal			ivltests gold=automatic_events.gold
+automatic_events3	normal			ivltests gold=automatic_events3.gold
+automatic_task		normal			ivltests gold=automatic_task.gold
+automatic_task2		normal			ivltests gold=automatic_task2.gold
+automatic_task3		normal			ivltests gold=automatic_task3.gold
+bitwidth		normal			ivltests
+bitwidth2		normal			ivltests
+blankport		normal			ivltests main # PR 204 Stephan Boettcher -
+block_only_with_var_def normal			ivltests
+bnot			normal			ivltests # test triggered an overzealous assert in vvm
+br605a			normal			ivltests
+br605b			normal			ivltests
+br916a			normal			ivltests gold=br916a.gold
+br916b			normal			ivltests gold=br916b.gold
+br918a			normal			ivltests
+br918b			normal			ivltests
+br918c			normal			ivltests
+br918d			normal			ivltests
+br919			normal			ivltests
+br924			CE			ivltests
+br930			CO			ivltests
+br931			normal			ivltests
+br935			normal			ivltests
+br937			normal,+string=0123456789	ivltests
+br946			normal			ivltests
+br947			normal			ivltests gold=br947.gold
+br948			normal			ivltests
+br955			normal			ivltests
+br960a			normal,-gspecify	ivltests gold=br960a.gold
+br960b			normal,-gspecify	ivltests gold=br960b.gold
+br960c			normal,-gspecify	ivltests gold=br960c.gold
+br960d			normal,-gspecify	ivltests gold=br960d.gold
+br961			normal			ivltests
+br961a			CE			ivltests
+br965			normal			ivltests
+br967			normal			ivltests
+br968			normal			ivltests
+br971			normal			ivltests
+br972			normal			ivltests
+br977			normal			ivltests
+br982			CE			ivltests
+br982a			CE			ivltests
+br982b			CE			ivltests
+br988			normal			ivltests
+br990			normal			ivltests
+br991a			normal			ivltests
+br999			normal			ivltests
+br1000			normal			ivltests
+br1001			normal			ivltests
+br1006			normal,-gspecify	ivltests
+br1007			normal,-Wselect-range	ivltests gold=br1007.gold
+br1008			normal			ivltests gold=br1008.gold
+br1015a			CE			ivltests
+br1019			normal			ivltests
+br1027			normal			ivltests
+br1027a			CE			ivltests gold=br1027a.gold
+br1027c			CE			ivltests gold=br1027c.gold
+br1027e			CE			ivltests gold=br1027e.gold
+br1029a			normal			ivltests gold=br1029a.gold
+br1029b			normal			ivltests gold=br1029a.gold
+br1029c			CE			ivltests gold=br1029c.gold
+br_gh6			normal			ivltests
+br_gh7			normal			ivltests
+br_gh8			normal			ivltests
+br_gh9			normal			ivltests
+br_gh11			CO			ivltests
+br_gh12			normal			ivltests
+br_gh13			normal			ivltests
+br_gh14			normal			ivltests
+br_gh15			normal			ivltests
+br_gh18			normal			ivltests
+br_gh19			normal			ivltests
+br_gh19a		normal			ivltests
+br_gh19b		normal			ivltests
+br_gh22			normal			ivltests
+br_gh25a		CE			ivltests
+br_gh25b		CE			ivltests
+br_gh26			CE			ivltests
+br_gh28			normal			ivltests
+br_gh30			normal			ivltests
+br_gh33			normal			ivltests gold=br_gh33.gold
+br_gh37			normal			ivltests
+br_gh60a		CE			ivltests
+br_gh62			CE			ivltests gold=br_gh62.gold
+br_gh79			CE			ivltests gold=br_gh79.gold
+br_gh99a		normal			ivltests
+br_gh99b		normal			ivltests
+br_gh99d		normal			ivltests
+br_gh99f		normal			ivltests
+br_gh99g		normal			ivltests
+br_gh99h		normal			ivltests
+br_gh99i		normal			ivltests
+br_gh99j		normal			ivltests
+br_gh99k		normal			ivltests
+br_gh99l		normal			ivltests
+br_gh99m		normal			ivltests
+br_gh99o		normal			ivltests
+br_gh99p		normal			ivltests
+br_gh99q		normal			ivltests
+br_gh99r		normal			ivltests
+br_gh99s		normal			ivltests
+br_gh99t		normal			ivltests
+br_gh99u		normal			ivltests
+br_gh103		normal			ivltests
+br_gh127a		normal			ivltests gold=br_gh127a.gold
+br_gh127b		normal			ivltests gold=br_gh127b.gold
+br_gh127c		normal			ivltests gold=br_gh127c.gold
+br_gh127d		normal			ivltests gold=br_gh127d.gold
+br_gh127e		normal			ivltests gold=br_gh127e.gold
+br_gh127f		normal			ivltests gold=br_gh127f.gold
+br_gh142		CE			ivltests
+br_gh152		CE			ivltests
+br_gh157		normal			ivltests gold=br_gh157.gold
+br_gh162		normal			ivltests
+br_gh163		CE			ivltests
+br_gh198		normal			ivltests gold=br_gh198.gold
+br_gh199a		normal			ivltests
+br_gh199b		normal			ivltests
+br_gh209		normal			ivltests diff=work/br_gh209.dat:gold/br_gh209.dat
+br_gh230		RE			ivltests gold=br_gh230.gold
+br_gh244a		normal			ivltests
+br_gh244b		normal			ivltests
+br_gh277a		normal			ivltests
+br_gh283a		normal			ivltests
+br_gh283b		normal			ivltests
+br_gh283c		normal			ivltests
+br_gh309		normal			ivltests
+br_gh315		normal,-gspecify	ivltests
+br_gh316a		normal,-gspecify	ivltests
+br_gh316b		normal,-gspecify	ivltests
+br_gh316c		normal,-gspecify	ivltests
+br_gh330		normal			ivltests
+br_gh345		normal			ivltests
+br_gh356a		normal,-gspecify	ivltests
+br_gh356b		normal,-gspecify	ivltests
+br_gh435		normal			ivltests
+br_gh484		normal			ivltests
+br_gh497a		normal			ivltests
+br_gh497c		normal			ivltests
+br_gh497e		normal			ivltests
+br_gh508b		normal			ivltests
+br_gh515		normal			ivltests
+br_gh531		normal			ivltests gold=br_gh531.gold
+br_gh533		CE			ivltests
+br_gh567		normal,-g2001		ivltests gold=br_gh567.gold
+br_ml20150315		normal			ivltests gold=br_ml_20150315.gold
+br_ml20150321		CE			ivltests
+br_ml20150606		normal			ivltests
+br_mw20171108		normal			ivltests
+br_ml20190806a		normal			ivltests
+br_ml20190806b		normal			ivltests
+br_ml20190814		normal,-gspecify	ivltests gold=br_ml20190814.gold
+bufif			normal			ivltests # Validate bufif0, bufif1
+busbug			normal			ivltests gold=busbug.gold
+ca_force		normal			ivltests
+ca_func			normal,-gstrict-ca-eval ivltests
+ca_mult			normal			ivltests gold=ca_mult.gold
+ca_pow_synth		normal			ivltests
+ca_pow_unsigned		normal			ivltests
+ca_real_logical		normal			ivltests
+ca_time			normal			ivltests gold=ca_time.gold
+case3.8A		normal			ivltests
+case3.8B		normal			ivltests
+case3.8C		normal			ivltests
+case3.8D		normal			ivltests # test case for x and z exact match in labels.
+casex3.9A		normal			ivltests
+casex3.9B		normal			ivltests
+casex3.9C		normal			ivltests
+casex3.9D		normal			ivltests
+casex3.9E		normal			ivltests
+casez3.10A		normal			ivltests
+casez3.10B		normal			ivltests
+casez3.10C		normal			ivltests
+casez3.10D		normal			ivltests
+casez3.10E		normal			ivltests # Use ? and z in label
+cast_int		normal			ivltests
+check_constant_1	CE			ivltests
+check_constant_2	CE			ivltests
+check_constant_3	CE,-g1995		ivltests
+check_constant_4	CE			ivltests
+check_constant_5	CE			ivltests
+check_constant_6	CE			ivltests
+check_constant_7	CE			ivltests
+check_constant_8	CE			ivltests
+check_constant_9	CE			ivltests
+check_constant_10	CE			ivltests
+check_constant_11	CE			ivltests
+check_constant_12	CE			ivltests
+check_constant_13	CE			ivltests
+check_constant_14	CE			ivltests
+check_constant_15	CE			ivltests
+check_constant_16	CE			ivltests
+check_constant_17	CE			ivltests
+check_constant_18	CE			ivltests
+check_constant_19	CE			ivltests
+check_constant_20	CE			ivltests
+cmos			normal			ivltests gold=cmos.gold
+comment1		CE			ivltests # PR410/411
+comp1000		normal			ivltests gold=comp1000.gold
+comp1001		normal			ivltests gold=comp1001.gold
+comp1001_fail3		normal			ivltests
+comp1001_fail4		normal			ivltests
+comp1001_fail5		normal			ivltests
+complex_lidx		normal			ivltests
+con_tri			normal			ivltests # Contrib by S Williams
+concat3			normal			ivltests
+concat4			normal			ivltests
+concat_zero_wid_fail	CE			ivltests
+concat_zero_wid_fail2	normal			ivltests
+cond_band		normal			ivltests # Bitwise and in if condition
+cond_wide		normal			ivltests # condition is a wide value
+cond_wide2		normal			ivltests # condition is a wide value
+const			normal			ivltests # PR 122 - Steve Tell - const without length spec.
+const2			normal			ivltests # Some cases that the DCM module trips.
+const3			normal			ivltests
+const4			normal			ivltests
+constadd		normal			ivltests
+constadd2		normal			ivltests
+constadd3		normal			ivltests
+constfunc1		normal			ivltests
+constfunc2		normal			ivltests
+constfunc3		normal			ivltests
+constfunc4		normal			ivltests
+constfunc5		normal			ivltests
+constfunc6		normal			ivltests
+constfunc7		normal			ivltests
+constfunc9		normal			ivltests
+constfunc10		normal			ivltests
+constfunc11		normal			ivltests
+constfunc12		normal			ivltests
+constfunc13		normal			ivltests
+constfunc14		normal			ivltests
+constfunc15		normal			ivltests
+constmult		normal			ivltests
+consttern		normal			ivltests
+contrib8.1		normal			ivltests
+contrib8.2		normal			ivltests test # Add the 4th optional argument -s test
+contrib8.3		CE			ivltests
+contrib8.4		normal			ivltests
+contrib8.5		normal			ivltests # Add the 4th optional argument -s test
+countdrivers1		normal			ivltests
+countdrivers2		normal			ivltests
+countdrivers3		normal			ivltests
+countdrivers4		normal			ivltests
+countdrivers5		normal			ivltests
+cprop			normal			ivltests
+credence20041209	normal			ivltests
+dangling_port		normal			ivltests # PR#209: dangling port optimization (VVP)
+dcomp1			normal			ivltests gold=dcomp1.gold
+deassign3.4A		normal			ivltests
+decl_assign1		normal			ivltests
+def_nettype		normal			ivltests
+def_nettype_none	CE			ivltests gold=def_nettype_none.gold
+define1			normal			ivltests # Use defined value for reg def and reg assign
+defparam		normal			ivltests main # defparams with list
+defparam2		normal			ivltests gold=defparam2.gold
+defparam3		normal			ivltests gold=defparam3.gold
+defparam3.5		normal			ivltests # defparam(single)
+defparam4		normal			ivltests gold=defparam4.gold
+delay			normal			ivltests gold=delay.gold
+delay2			normal			ivltests
+delay3			normal			ivltests
+delay4			normal			ivltests
+delay5			normal			ivltests
+delay_assign_nb		normal			ivltests
+delay_assign_nb2	normal			ivltests
+delay_var		normal			ivltests gold=delay_var.gold
+delayed_comp_reduct	normal			ivltests
+dff1			normal			ivltests # Contrib by S Williams
+disable3.6A		normal			ivltests
+disable3.6B		normal			ivltests
+disable_cleanup		normal			ivltests
+disable_fork		normal			ivltests
+disblock		normal			ivltests # PR280
+disblock2		normal			ivltests gold=disblock2.gold
+disp_dec		normal			ivltests gold=disp_dec.gold
+disp_dec2		normal			ivltests gold=disp_dec2.gold
+disp_leading_z		normal			ivltests gold=disp_leading_z.gold
+disp_parm		normal			ivltests gold=disp_parm.gold
+disp_part		normal			ivltests gold=disp_part.gold
+div16			normal			contrib  test_div16 # Uses $random and divide operator (Tom Coonan)
+dotinid			normal			ivltests # escaped names with . dots
+drive_strength		normal			ivltests # Contributed test
+drive_strength1		normal			ivltests
+drive_strength2		normal			ivltests gold=drive_strength2.gold
+drive_strength3		normal			ivltests
+dummy7			normal			ivltests gold=dummy7.gold
+dump_memword		normal			ivltests diff=work/test.vcd:gold/dump_memword.vcd:2
+dumpvars		normal			ivltests # PR#174: dumpvars non-hierarchical arguments
+eeq			normal			ivltests # === and !== in structural context
+else1			normal			ivltests # ifdef with else
+else2			normal			ivltests # compound ifdef with else
+else3			normal			ivltests # compound ifdef compound else
+elsif_test		normal			ivltests
+eq			normal			ivltests
+escape1			normal			ivltests # \$modulename in defparam and if()
+escape2a		CO			ivltests
+escape2b		CO			ivltests
+escape2c		CO			ivltests
+escape3			normal			ivltests
+escape4			normal			ivltests
+escape4b		normal			ivltests
+event2			normal			ivltests
+event3			normal			ivltests gold=event3.gold
+event3.15		normal			ivltests # Validate event lists, and -> operator.
+event_array		CE			ivltests
+event_list		normal			ivltests # Contrib by S Williams
+event_list2		normal			ivltests # Contrib by S Williams
+event_list3		normal			ivltests gold=event_list3.gold
+extend			normal			ivltests
+fdisplay1		normal			ivltests gold=fdisplay1.gold
+fdisplay2		normal			ivltests diff=work/fdisplay2.out:gold/fdisplay2.out
+fdisplay3		RE			ivltests gold=fdisplay3.gold
+fdisplay_fail_fd	normal			ivltests gold=fdisplay_fail_fd.gold
+fdisplay_fail_mcd	normal			ivltests gold=fdisplay_fail_mcd.gold
+fifo			normal			contrib
+fopen1			normal			ivltests # Test basic fopen operation
+fopen2			normal			ivltests # Test basic fopen operation
+for3.16A		normal			ivltests
+force1			normal			ivltests
+force2			normal			ivltests
+force3.17A		normal			ivltests
+force3.17B		normal			ivltests
+force3.17C		normal			ivltests
+force_lval_part		normal			ivltests
+force_release_reg_pv	normal			ivltests
+force_release_wire8_pv	normal			ivltests
+force_release_wire_pv	normal			ivltests
+fork1			normal			ivltests # Validate 3 way fork with simple assignments.
+fork3.19A		normal			ivltests
+fork3.19B		normal			ivltests
+format			normal			ivltests gold=format.gold
+fr47			normal			ivltests
+fread			normal			ivltests
+fread-error		RE			ivltests gold=fread-error.gold
+fscanf_u		normal			ivltests
+fscanf_u_warn		normal			ivltests gold=fscanf_u_warn.gold
+fscanf_z		normal			ivltests
+fscanf_z_warn		normal			ivltests gold=fscanf_z_warn.gold
+function1		normal			ivltests gold=function1.gold
+function2		normal			ivltests
+function3		normal			ivltests
+function3.11B		normal			ivltests
+function3.11C		normal			ivltests
+function3.11D		normal			ivltests
+function3.11F		normal			ivltests
+function4		CE			ivltests # Functions must have at least one argument
+function5		CO			ivltests # PR 184
+function6		normal			ivltests
+function7		normal			ivltests
+function8		normal			ivltests
+function9		normal			ivltests
+function_exp		normal			ivltests # Contrib by S Williams
+ga_and			normal			ivltests
+ga_mod			normal			ivltests main
+ga_mod1			normal			ivltests main
+ga_mod2			normal			ivltests main
+ga_nand			normal			ivltests
+ga_nor			normal			ivltests
+ga_or			normal			ivltests
+ga_xnor			normal			ivltests
+ga_xor			normal			ivltests
+galan			normal			ivltests # Ternary test with varying size lhs vs rhs
+gate_connect1		normal			ivltests
+gate_connect2		CE			ivltests gold=gate_connect2.gold
+gen_case_opt1		normal			ivltests
+gen_case_opt2		normal			ivltests
+gen_case_opt3		normal			ivltests
+gencrc			normal			contrib  # 32/16 bit crc
+generate_case		normal			ivltests
+generate_case2		normal			ivltests
+generate_case3		normal			ivltests
+generate_multi_loop	normal			ivltests gold=generate_multi_loop.gold
+genloop			normal			ivltests
+genvar_scopes		normal			ivltests
+hello1			normal			ivltests
+hier_ref_error		CE			ivltests
+hierspace		normal			ivltests # whitespace.around .dots. in. hierarchical .names
+idiv1			normal			ivltests # Contrib by S Williams
+idiv2			normal			ivltests # Int div within an expression
+idiv3			normal			ivltests gold=idiv3.gold
+ifdef1			normal			ivltests # ifdef with no define
+ifdef2			normal			ivltests # ifdef with define
+ifdef3			normal			ivltests # compound ifdef with 1 define
+ifdef4			normal			ivltests # compound ifdef with 2 defines
+ifdef_fail		CE			ivltests
+include1		normal			ivltests # include file 1 level deep
+include2		normal			ivltests # include file 2 levels deep
+include3		normal			ivltests # include file 3 levels deep
+indef_width_concat	CE			ivltests gold=indef_width_concat.gold
+initmod			normal			ivltests gold=initmod.gold
+initmod2		normal			ivltests gold=initmod2.gold
+inout			normal			ivltests # modname(a,a); inout a;
+inout2			normal			ivltests
+inout3			normal			ivltests
+inout4			normal			ivltests
+int_not_signext		normal			ivltests gold=int_not_signext.gold
+integer1lt		normal			ivltests
+integer2le		normal			ivltests
+integer3gt		normal			ivltests
+integer4ge		normal			ivltests
+integer5		normal			ivltests
+itor_rtoi		normal			ivltests gold=itor_rtoi.gold
+land2			normal			ivltests
+land3			normal			ivltests
+land4			normal			ivltests gold=land4.gold
+landor1			normal			ivltests
+ldelay1			normal			ivltests
+ldelay2			normal			ivltests
+ldelay3			normal			ivltests
+ldelay4			normal			ivltests
+ldelay5			normal			ivltests
+lh_catadd		normal			ivltests
+lh_memcat		normal			ivltests gold=lh_memcat.gold
+lh_memcat2		normal			ivltests
+lh_memcat3		normal			ivltests
+lh_varindx		normal			ivltests
+lh_varindx2		normal			ivltests
+lh_varindx4		normal			ivltests
+lh_varindx5		normal			ivltests
+localparam_type		normal			ivltests gold=parameter_type.gold
+long_div		normal			ivltests gold=long_div.gold
+macro2			normal			ivltests
+macro_redefinition	normal,-Wmacro-redefinition	ivltests gold=macro_redefinition.gold
+macro_replacement	normal,-Wmacro-replacement	ivltests gold=macro_replacement.gold
+macsub			normal			ivltests
+mangle			normal			ivltests
+mangle_1		normal			ivltests
+many_drivers		normal			ivltests # net with many drivers
+mcl2			normal			ivltests gold=mcl2.gold
+mem1			normal			ivltests gold=mem1.gold
+mem2port		normal			ivltests # memory ports with constant address
+memassign		normal			ivltests # PR 126 - daavid Leask - assign bus part fm memory item
+memidx			normal			ivltests # PR 221
+memidxrng		normal			ivltests # PR 271 memory address range checks
+meminit			normal			ivltests
+meminit2		normal			ivltests
+memport_bs		normal			ivltests # PR#303
+memref			normal			ivltests
+mhead_task		normal			ivltests # Verify hierarchical task name in another mod.
+mixed_type_div_mod	normal			ivltests
+mixed_width_case	normal			ivltests
+modparam		normal			ivltests top # Override parameter via passed down value
+module3.12A		normal			ivltests main
+module3.12B		normal			ivltests
+modulus			normal			ivltests # wire % and reg % operators
+modulus2		normal			ivltests # reg % operators
+monitor			normal			ivltests gold=monitor.gold
+monitor2		normal			ivltests gold=monitor2.gold
+monitor3		normal			ivltests gold=monitor3.gold
+mult1			normal			ivltests # wire * and reg * operators
+mult16			normal			contrib  mul16 # Contributed by Tom Coonan - has $random
+mult2			normal			ivltests # wire * and reg * operators
+multi_bit_strength	normal			ivltests gold=multi_bit_strength.gold
+multi_driver_delay	normal			ivltests
+multiply_large		normal			ivltests # Takes care of PR222
+muxtest			normal			ivltests # Validates that X sel and inputs same, output not X
+named_event_no_edges	CE			ivltests
+nb_assign		normal			ivltests
+nb_delay		normal			ivltests
+nblkorder		normal			ivltests # Validates Non-blocking order determinism
+negative_genvar		normal			ivltests
+negvalue		normal			ivltests gold=negvalue.gold
+neq1			normal			ivltests gold=neq1.gold
+nested_func		normal			ivltests gold=nested_func.gold
+nested_impl_event1	normal			ivltests gold=nested_impl_event1.gold
+nested_impl_event2	normal			ivltests gold=nested_impl_event2.gold
+no_if_statement		CE			ivltests
+no_timescale_in_module	CE			ivltests
+npmos			normal			ivltests
+npmos2			normal			ivltests
+onehot			normal			contrib  # one hot design
+p_monta			normal			ivltests
+par_mismatch		CE,-gspecify		ivltests
+param-extend		normal			ivltests
+param-width		normal			ivltests gold=param-width.gold
+param_add		normal			ivltests # Addition in param declar
+param_and		normal			ivltests # bitwise &
+param_and2		normal			ivltests # logical && in param declar
+param_band		normal			ivltests # Bitwise and in param declar
+param_binv		normal			ivltests # Bit vector inv in param declar
+param_bor		normal			ivltests # Bitwise OR in param declar
+param_concat		normal			ivltests # param has concat value (pmonta)
+param_eq3		normal			ivltests # Bit equiv in param declar
+param_expr		normal			ivltests # & in param declar
+param_mod		normal			ivltests # Modulus in param declar
+param_select		normal			ivltests # bit and part select of parameters.
+param_select2		normal			ivltests # bit and part select of parameters.
+param_select3		normal			ivltests # bit and part select of parameters.
+param_string		normal			ivltests # parameter storing a string.
+param_tern		normal			ivltests
+param_tern2		normal			ivltests
+param_test1		normal			ivltests gold=param_test1.gold
+param_test2		normal			ivltests gold=param_test2.gold
+param_test3		normal			ivltests gold=param_test3.gold # PR#293
+param_test4		normal			ivltests
+param_times		normal			ivltests # param has multiplication.
+parameter_type		normal			ivltests gold=parameter_type.gold
+patch1268		normal			ivltests
+pca1			normal			ivltests # Procedural Continuous Assignment in a mux
+pic			normal			contrib  pictest gold=pic.gold
+port-test2		normal			ivltests # Port declaration syntax checks
+port-test3		CE			ivltests # Port declaration syntax checks
+port-test4a		CE			ivltests # Port declaration input duplication checks (PR394)
+port-test4b		CE			ivltests # Port declaration output duplication checks (PR394)
+port-test5		normal			ivltests # demonstrates 2001 module port syntax
+port-test6		normal			ivltests # demonstrates 2001 module port syntax
+port-test7		normal			ivltests # demonstrates 2001 module port syntax
+posedge			normal			ivltests # Contrib by S Williams
+pow-ca			normal			ivltests
+pow-const		normal			ivltests
+pow-proc		normal			ivltests
+pow_ca_signed		normal			ivltests
+pow_ca_unsigned		normal			ivltests
+pow_reg_signed		normal			ivltests
+pow_reg_unsigned	normal			ivltests
+pow_signed		normal			ivltests
+pow_unsigned		normal			ivltests
+pr136			normal			ivltests # PR136 param foo_size 8 * 4
+pr142			normal			ivltests # Test for PR142
+pr183			CO,-gno-specify		ivltests
+pr224			normal			ivltests # reg [3:0] ack; ... @(posedge ack)
+pr224a			normal			ivltests # reg [3:0] ack; ... @(posedge ack[p])
+pr243			normal			ivltests gold=pr243.gold
+pr245			normal			ivltests gold=pr245.gold
+pr245_std		normal			ivltests gold=pr245.gold
+pr273			normal			ivltests # Non-constant bit select in ordered list.
+pr298			normal			ivltests gold=pr298.gold
+pr304			normal			ivltests # test for PR304
+pr307			normal			ivltests # wide adds
+pr307a			normal			ivltests # wide adds
+pr312			normal			ivltests
+pr338			CO			ivltests # pr 338 - constant zz see also constadd2.v
+pr355			normal			ivltests
+pr377			normal			ivltests gold=pr377.gold
+pr434			normal			ivltests gold=pr434.gold
+pr445			normal			ivltests
+pr478			normal			ivltests
+pr487			normal			ivltests gold=pr487.gold
+pr492			normal			ivltests gold=pr492.gold
+pr508			normal			ivltests
+pr509			normal			ivltests
+pr509b			normal			ivltests
+pr511			normal			ivltests
+pr513			normal			ivltests
+pr522			normal			ivltests gold=pr522.gold
+pr524			normal			ivltests gold=pr524.gold
+pr527			normal			ivltests gold=pr527.gold
+pr528			normal			ivltests gold=pr528.gold
+pr528b			normal			ivltests gold=pr528b.gold
+pr529			normal			ivltests
+pr530a			normal			ivltests gold=pr530.gold
+pr530b			normal			ivltests gold=pr530.gold
+pr530c			normal			ivltests gold=pr530.gold
+pr531a			normal			ivltests gold=pr531a.gold
+pr531b			normal			ivltests gold=pr531a.gold
+pr532			normal			ivltests gold=pr532.gold
+pr532b			normal			ivltests gold=pr532.gold
+pr533			normal			ivltests gold=pr533.gold
+pr538			normal			ivltests gold=pr538.gold
+pr540			normal			ivltests gold=pr540.gold
+pr540b			normal			ivltests gold=pr540b.gold
+pr540c			normal			ivltests gold=pr540c.gold
+pr541			normal			ivltests gold=pr541.gold
+pr542			normal			ivltests gold=pr542.gold
+pr544			normal			ivltests gold=pr544.gold
+pr547			normal			ivltests gold=pr547.gold
+pr556			normal			ivltests gold=pr556.gold
+pr564			normal			ivltests
+pr569			normal			ivltests gold=pr569.gold
+pr572			normal			ivltests gold=pr572.gold
+pr572b			normal			ivltests gold=pr572.gold
+pr578			normal			ivltests
+pr584			normal			ivltests gold=pr584.gold
+pr585			normal			ivltests
+pr587			normal			ivltests
+pr590			normal			ivltests gold=pr590.gold
+pr594			normal			ivltests gold=pr594.gold
+pr596			normal			ivltests gold=pr596.gold
+pr602			normal			ivltests
+pr617			normal			ivltests
+pr632			normal			ivltests gold=pr632.gold
+pr673			normal			ivltests gold=pr673.gold
+pr675			normal			ivltests
+pr678			normal			ivltests
+pr690			normal			ivltests
+pr693			normal			ivltests gold=pr693.gold
+pr699			normal			ivltests
+pr699b			normal			ivltests
+pr704			normal			ivltests # Uses ivltests/pr704.hex
+pr707			normal			ivltests
+pr708			normal			ivltests
+pr710			normal			ivltests
+pr718			normal			ivltests
+pr722			normal			ivltests
+pr729			normal			ivltests gold=pr729.gold
+pr734			normal			ivltests
+pr735			normal			ivltests
+pr748			normal			ivltests
+pr751			normal,-Wsensitivity-entire-vector	ivltests gold=pr751.gold
+pr757			normal			ivltests
+pr772			normal			ivltests
+pr810			normal			ivltests
+pr812			normal			ivltests gold=pr812.gold
+pr820			normal			ivltests gold=pr820.gold
+pr823			normal			ivltests
+pr841			normal			ivltests
+pr842			normal			ivltests
+pr848			normal			ivltests
+pr856			normal			ivltests
+pr859			normal			ivltests
+pr860			normal			ivltests
+pr872			normal			ivltests
+pr902			normal			ivltests gold=pr902.gold
+pr905			normal			ivltests gold=pr905.gold
+pr910			normal			ivltests gold=pr910.gold
+pr913			normal			ivltests
+pr923			normal			ivltests gold=pr923.gold
+pr938			normal			ivltests gold=pr938.gold
+pr938b			normal			ivltests gold=pr938.gold
+pr938b_std		normal			ivltests gold=pr938.gold
+pr941			normal			ivltests
+pr973			normal			ivltests
+pr978			normal			ivltests
+pr985			normal			ivltests gold=pr985.gold
+pr987			normal			ivltests gold=pr987.gold
+pr990			normal			ivltests
+pr991			normal			ivltests gold=pr991.gold
+pr993			normal			ivltests gold=pr993.gold
+pr995			normal			ivltests gold=pr995.gold
+pr1002			normal			ivltests gold=pr1002.gold
+pr1002a			normal			ivltests gold=pr1002a.gold
+pr1007			normal			ivltests
+pr1008			normal			ivltests gold=pr1008.gold
+pr1022			normal			ivltests
+pr1024			normal			ivltests
+pr1026			normal			ivltests gold=pr1026.gold
+pr1029			normal			ivltests
+pr1032			normal			ivltests
+pr1033			normal			ivltests gold=pr1033.gold
+pr1065			normal			ivltests gold=pr1065.gold
+pr1072			normal			ivltests
+pr1077			normal,-g2		ivltests gold=pr1077.gold
+pr1087			normal			ivltests
+pr1101			normal			ivltests
+pr1115			normal			ivltests
+pr1353345		normal			ivltests
+pr1353345b		normal			ivltests
+pr1367855		normal			ivltests
+pr1380261		normal			ivltests
+pr1403406		normal			ivltests gold=pr1403406.gold
+pr1403406a		normal,-fivltests/pr1403406-1.cf				ivltests gold=pr1403406a.gold
+pr1403406b		normal,-fivltests/pr1403406-1.cf,-fivltests/pr1403406-2.cf	ivltests gold=pr1403406b.gold
+pr1421777		normal			ivltests
+pr1444055		normal			ivltests
+pr1449749a		normal			ivltests
+pr1455873		normal			ivltests
+pr1465769		normal			ivltests
+pr1467825		CO,-gno-specify		ivltests
+pr1474283		normal			ivltests
+pr1474316		normal			ivltests
+pr1474318		normal			ivltests
+pr1476440		normal			ivltests gold=pr1476440.gold
+pr1477190		normal			ivltests
+pr1478121		normal			ivltests
+pr1478988		normal			ivltests
+pr1489568		normal			ivltests
+pr1489570		normal			ivltests
+pr1491355		normal			ivltests
+pr1492075		normal			ivltests gold=pr1492075.gold
+pr1508882		normal			ivltests
+pr1510724		normal			ivltests
+pr1515168		normal			ivltests
+pr1520314		CO			ivltests
+pr1522570		normal			ivltests
+pr1530426		normal			ivltests
+pr1561597		normal			ivltests
+pr1565544		normal			ivltests
+pr1565699b		normal			ivltests
+pr1570451		normal			ivltests
+pr1570451b		normal			ivltests
+pr1570635		normal			ivltests
+pr1570635b		normal			ivltests
+pr1574175		normal			ivltests gold=pr1574175.gold
+pr1581580		normal			ivltests
+pr1587634		CO,-Ttyp		ivltests
+pr1587669		normal,-gspecify	ivltests gold=pr1587669.gold
+pr1589497		normal			ivltests gold=pr1589497.gold
+pr1598445		normal			ivltests
+pr1601896		normal			ivltests
+pr1601898		normal			ivltests
+pr1603313		normal			ivltests
+pr1603918		normal			ivltests
+pr1612693		normal			ivltests
+pr1623097		normal			ivltests gold=pr1623097.gold
+pr1625912		normal			ivltests
+pr1628288		normal			ivltests gold=pr1628288.gold
+pr1628300		normal			ivltests gold=pr1628300.gold
+pr1629683		normal			ivltests gold=pr1629683.gold
+pr1632861		normal			ivltests gold=pr1632861.gold
+pr1634526		normal			ivltests gold=pr1634526.gold
+pr1636409		normal			ivltests gold=pr1636409.gold
+pr1637208		normal			ivltests
+pr1638985		normal			ivltests gold=pr1638985.gold
+pr1639060		normal			ivltests gold=pr1639060.gold
+pr1639064		normal			ivltests gold=pr1639064.gold
+pr1639064b		normal			ivltests gold=pr1639064b.gold
+pr1639968		normal			ivltests gold=pr1639968.gold
+pr1639971		normal			ivltests gold=pr1639971.gold
+pr1645277		normal			ivltests gold=pr1645277.gold
+pr1645518		normal			ivltests gold=pr1645518.gold
+pr1648365		normal			ivltests gold=pr1648365.gold
+pr1650842		normal			ivltests
+pr1657307		normal			ivltests
+pr1661640		normal			ivltests gold=pr1661640.gold
+pr1662508		normal			ivltests
+pr1664684		normal			ivltests gold=pr1664684.gold
+pr1675789		normal			ivltests
+pr1675789b		normal			ivltests
+pr1676071		normal			ivltests
+pr1676836		normal			ivltests
+pr1682887		normal			ivltests
+pr1687193		normal			ivltests gold=pr1687193.gold
+pr1688717		normal			ivltests gold=pr1688717.gold
+pr1690058		normal			ivltests
+pr1691599b		normal			ivltests
+pr1691709		normal			ivltests
+pr1693890		normal			ivltests
+pr1693921		normal			ivltests
+pr1694413		normal			ivltests
+pr1694427		normal			ivltests
+pr1695257		CO			ivltests
+pr1695309		normal			ivltests
+pr1695322		normal			ivltests
+pr1695334		normal			ivltests
+pr1696137		normal			ivltests
+pr1697250		normal			ivltests
+pr1697732		normal			ivltests
+pr1698499		normal			ivltests gold=pr1698499.gold
+pr1698658		normal			ivltests gold=pr1698658.gold
+pr1698659		normal			ivltests gold=pr1698659.gold
+pr1698820		normal			ivltests gold=pr1698820.gold
+pr1699444		normal			ivltests gold=pr1699444.gold
+pr1699519		normal			ivltests gold=pr1699519.gold
+pr1701855		normal			ivltests gold=pr1701855.gold
+pr1701855b		normal			ivltests gold=pr1701855b.gold
+pr1701889		normal			ivltests gold=pr1701889.gold
+pr1701890		normal			ivltests gold=pr1701890.gold
+pr1701921		normal			ivltests
+pr1702593		normal			ivltests gold=pr1702593.gold
+pr1703120		normal			ivltests gold=pr1703120.gold
+pr1703346		normal			ivltests
+pr1703959		normal			ivltests
+pr1704013		CE			ivltests
+pr1704726a		CE			ivltests gold=pr1704726a.gold
+pr1704726b		normal			ivltests
+pr1704726c		CE			ivltests gold=pr1704726c.gold
+pr1704726d		CE			ivltests gold=pr1704726d.gold
+pr1705027		CO			ivltests
+pr1716276		normal			ivltests
+pr1717361		normal			ivltests
+pr1719055		normal			ivltests gold=pr1719055.gold
+pr1723367		normal,-gno-io-range-error	ivltests gold=pr1723367.gold
+pr1735724		CE			ivltests
+pr1735822		normal			ivltests
+pr1735836		normal			ivltests gold=pr1735836.gold
+pr1740476b		normal			ivltests
+pr1742910		normal			ivltests
+pr1745005		normal			ivltests
+pr1746401		normal			ivltests
+pr1746848		normal			ivltests gold=pr1746848.gold
+pr1752353		normal			ivltests
+pr1752823a		normal			ivltests gold=pr1752823a.gold
+pr1752823b		normal			ivltests gold=pr1752823b.gold
+pr1755593		normal			ivltests
+pr1755629		normal			ivltests
+pr1758122		normal,-g2001-noconfig	ivltests gold=pr1758122.gold
+pr1758135		normal			ivltests gold=pr1758135.gold
+pr1763333		CE			ivltests
+pr1770199		normal			ivltests gold=pr1770199.gold
+pr1776485		normal			ivltests
+pr1777103		normal			ivltests
+pr1780480		normal			ivltests gold=pr1780480.gold
+pr1784984		normal			ivltests
+pr1787394a		normal			ivltests gold=pr1787394a.gold
+pr1787394b		normal			ivltests gold=pr1787394a.gold
+pr1787423		normal			ivltests gold=pr1787423.gold
+pr1787423b		normal			ivltests
+pr1787423c		normal			ivltests
+pr1792108		normal			ivltests gold=pr1792108.gold
+pr1792152		normal			ivltests gold=pr1792152.gold
+pr1792734		normal			ivltests gold=pr1792734.gold
+pr1793157		normal			ivltests gold=pr1793157.gold
+pr1794362		normal			ivltests
+pr1795005a		normal			ivltests gold=pr1795005a.gold
+pr1795005b		normal			ivltests gold=pr1795005b.gold
+pr1799904		normal			ivltests gold=pr1799904.gold
+pr1804877		normal			ivltests gold=pr1804877.gold
+pr1805837		normal			ivltests gold=pr1805837.gold
+pr1812297		normal			ivltests
+pr1819452		normal			ivltests gold=pr1819452.gold
+pr1820472		normal			ivltests gold=pr1820472.gold
+pr1822658		normal			ivltests
+pr1823732		normal			ivltests gold=pr1823732.gold
+pr1828642		normal			ivltests gold=pr1828642.gold
+pr1830834		normal			ivltests gold=pr1830834.gold
+pr1831724		normal			ivltests gold=pr1831724.gold
+pr1832097a		normal			ivltests
+pr1832097b		normal			ivltests
+pr1833024		CE			ivltests gold=pr1833024.gold
+pr1833754		CE			ivltests
+pr1841300		normal			ivltests gold=pr1841300.gold
+pr1845683		normal			ivltests gold=pr1845683.gold
+pr1851310		normal			ivltests gold=pr1851310.gold
+pr1855504		normal			ivltests gold=pr1855504.gold
+pr1861212a		normal			ivltests gold=pr1861212.gold
+pr1862744a		normal,-Winfloop	ivltests
+pr1862744b		CE,-Winfloop		ivltests gold=pr1862744b.gold
+pr1866215		normal			ivltests gold=pr1866215.gold
+pr1866215b		normal			ivltests gold=pr1866215b.gold
+pr1867161a		normal			ivltests gold=pr1867161a.gold
+pr1867161b		normal			ivltests gold=pr1867161b.gold
+pr1867332		CO			ivltests
+pr1868792		normal			ivltests
+pr1868991a		normal			ivltests
+pr1868991b		CO			ivltests
+pr1869769		normal			ivltests
+pr1869772		normal			ivltests
+pr1869781		normal			ivltests
+pr1873146		normal			ivltests
+pr1875866		normal			ivltests
+pr1875866b		normal			ivltests
+pr1876798		normal			ivltests gold=pr1876798.gold
+pr1877740		normal			ivltests
+pr1877743		normal,-gspecify	ivltests
+pr1878909		normal			ivltests
+pr1879226		normal			ivltests
+pr1883052		normal			ivltests
+pr1883052b		normal			ivltests
+pr1885847		normal			ivltests gold=pr1885847.gold
+pr1887168		normal			ivltests gold=pr1887168.gold
+pr1892959		normal			ivltests
+pr1892959b		normal			ivltests
+pr1898983		normal			ivltests gold=pr1898983.gold
+pr1901125		normal			ivltests
+pr1903157		CO			ivltests
+pr1903324		normal			ivltests
+pr1903343		normal			ivltests gold=pr1903343.gold
+pr1903520		normal			ivltests
+pr1907192		normal			ivltests
+pr1912843		normal			ivltests
+pr1913918a		normal			ivltests
+pr1913918b		normal			ivltests
+pr1913918c		normal			ivltests
+pr1913937		normal			ivltests
+pr1916261		normal			ivltests
+pr1916261a		CE			ivltests
+pr1921332		CO			ivltests
+pr1924845		normal			ivltests
+pr1925356		normal			ivltests
+pr1925363a		CE			ivltests
+pr1925363b		CE			ivltests
+pr1932444		normal			ivltests
+pr1934744		normal			ivltests
+pr1936363		normal			ivltests gold=pr1936363.gold
+pr1938138		CE			ivltests
+pr1939165		normal			ivltests
+pr1946411		normal			ivltests
+pr1948110		normal			ivltests
+pr1948342		normal			ivltests
+pr1949025		normal			ivltests gold=pr1949025.gold
+pr1950282		normal			ivltests
+pr1956211		normal			ivltests
+pr1958801		normal			ivltests
+pr1960545		normal			ivltests gold=pr1960545.gold
+pr1960548		normal			ivltests gold=pr1960548.gold
+pr1960558		normal			ivltests gold=pr1960558.gold
+pr1960575		normal			ivltests gold=pr1960575.gold
+pr1960596		normal			ivltests gold=pr1960596.gold
+pr1960619		normal			ivltests gold=pr1960619.gold
+pr1960625		normal			ivltests
+pr1960633		normal			ivltests
+pr1963240		normal			ivltests gold=pr1963240.gold
+pr1963960		normal			ivltests
+pr1963962		normal			ivltests gold=pr1963962.gold
+pr1971662a		CE			ivltests
+pr1971662b		CE			ivltests
+pr1978358		normal			ivltests
+pr1978358b		normal			ivltests
+pr1978358c		normal			ivltests
+pr1978358d		normal			ivltests
+pr1983762		normal			ivltests
+pr1985582		normal			ivltests gold=pr1985582.gold
+pr1988302		normal			ivltests
+pr1988302b		CE			ivltests
+pr1988310		normal			ivltests
+pr1990029		normal			ivltests
+pr1990164		normal			ivltests
+pr1990269		normal			ivltests
+pr1992244		normal			ivltests
+pr1992729		normal			ivltests
+pr1993479		normal			ivltests gold=pr1993479.gold
+pr2001162		normal			ivltests gold=pr2001162.gold
+pr2011429		normal			ivltests
+pr2013758		normal			ivltests
+pr2014673		normal			ivltests
+pr2015466		normal			ivltests
+pr2018235a		normal			ivltests
+pr2018235b		normal			ivltests
+pr2018305		normal			ivltests
+pr2019553		normal			ivltests
+pr2029336		normal			ivltests diff=work/pr2029336.out:gold/pr2029336.gold
+pr2030767		normal			ivltests
+pr2036953		normal			ivltests
+pr2038048		normal			ivltests
+pr2039632		CE			ivltests
+pr2039694		normal			ivltests gold=pr2039694.gold
+pr2043324		normal			ivltests
+pr2043585		normal,-Wsensitivity-entire-array	ivltests gold=pr2043585.gold
+pr2051694		CE			ivltests
+pr2051975		CE			ivltests
+pr2053944		normal			ivltests gold=pr2053944.gold
+pr2076363		normal			ivltests
+pr2076391		normal			ivltests gold=pr2076391.gold
+pr2076425		normal			ivltests
+pr2085984		normal			ivltests
+pr2091455		normal			ivltests gold=pr2091455.gold
+pr2109179		normal			ivltests
+pr2117473		normal			ivltests
+pr2117488		normal			ivltests
+pr2119622		normal			ivltests gold=pr2119622.gold
+pr2121536		normal			ivltests
+pr2121536b		normal			ivltests
+pr2123190		normal			ivltests
+pr2132552		normal			ivltests gold=pr2132552.gold
+pr2136787		normal			ivltests gold=pr2136787.gold
+pr2138682		normal			ivltests gold=pr2138682.gold
+pr2138979		normal			ivltests
+pr2138979b		normal			ivltests gold=pr2138979b.gold
+pr2138979c		normal			ivltests gold=pr2138979c.gold
+pr2138979d		normal			ivltests gold=pr2138979d.gold
+pr2139593		normal			ivltests
+pr2146620		normal			ivltests gold=pr2146620.gold
+pr2146620b		normal			ivltests gold=pr2146620b.gold
+pr2146620c		normal			ivltests
+pr2146824		normal			ivltests gold=pr2146824.gold
+pr2148401		normal			ivltests
+pr2152011		normal			ivltests gold=pr2152011.gold
+pr2159630		normal			ivltests gold=pr2159630.gold
+pr2166188		normal			ivltests
+pr2166311		normal			ivltests
+pr2169870		normal			ivltests gold=pr2169870.gold
+pr2172606		normal			ivltests
+pr2172606b		normal			ivltests
+pr2181249		normal			ivltests
+pr2190323		normal			ivltests
+pr2201909		normal			ivltests
+pr2201909b		normal			ivltests
+pr2202706		normal,+option=0123456789abcdef	ivltests
+pr2202706b		normal,+option		ivltests
+pr2202706c		normal,+hex=123456789abcdef_x_z,+oct=1234567_x_z,+bin=101_x_z,+dec=123456789_,+dec_x=x,+dec_z=z_,+neg=-1_00,+real=12.3456789,+neg_real=-23.456e+3,+real_inf=Inf,+bad_num=not_a_num,+warn_real=9.825units	ivltests
+pr2202846a		normal			ivltests
+pr2202846b		normal			ivltests
+pr2202846c		normal			ivltests
+pr2208681		normal			ivltests
+pr2215342		normal,-grelative-include	ivltests
+pr2219441		normal			ivltests
+pr2219441b		normal			ivltests
+pr2224845		normal			ivltests
+pr2224949		normal			ivltests
+pr2233180		normal			ivltests
+pr2233180b		normal			ivltests
+pr2233180c		normal			ivltests
+pr2233192		normal			ivltests
+pr2233192b		normal			ivltests
+pr2233192c		normal			ivltests
+pr2248925		normal			ivltests gold=pr2248925.gold
+pr2251119		normal			ivltests gold=pr2251119.gold
+pr2257003		normal			ivltests
+pr2257003b		normal			ivltests
+pr2270035		normal			ivltests
+pr2276163		normal			ivltests
+pr2281479		normal			ivltests
+pr2305307		normal			ivltests
+pr2305307b		normal			ivltests
+pr2305307c		normal			ivltests
+pr2306259		normal			ivltests
+pr2350934		normal			ivltests
+pr2350934b		normal			ivltests
+pr2350988		normal			ivltests
+pr2352834		normal			ivltests
+pr2355304		normal			ivltests
+pr2355304b		normal			ivltests
+pr2358264		normal			ivltests
+pr2358848		normal			ivltests
+pr2395378a		CE			ivltests
+pr2395378b		CE			ivltests
+pr2395378c		CE			ivltests
+pr2395835		normal			ivltests
+pr2425055a		normal			ivltests
+pr2425055b		normal			ivltests
+pr2425055c		normal			ivltests
+pr2428890		normal			ivltests
+pr2428890b		normal			ivltests
+pr2434688		normal			ivltests
+pr2434688b		normal			ivltests
+pr2450244		normal			ivltests
+pr2453002		normal			ivltests
+pr2459681		normal			ivltests
+pr2470181a		normal			ivltests
+pr2470181b		normal			ivltests
+pr2503208		normal			ivltests
+pr2528915		CE			ivltests
+pr2533175		normal			ivltests
+pr2579479		normal			ivltests
+pr2580730		normal			ivltests gold=pr2580730.gold
+pr2593733		normal			ivltests
+pr2597278		normal			ivltests
+pr2597278b		CE			ivltests
+pr2605006		normal			ivltests
+pr2673846		normal			ivltests
+pr2688910		normal			ivltests
+pr2709097		normal			ivltests
+pr2715547		normal			ivltests
+pr2715558		normal			ivltests gold=pr2715558.gold
+pr2715558b		normal			ivltests gold=pr2715558b.gold
+pr2721213		normal			ivltests
+pr2722330a		normal			ivltests
+pr2722330b		normal			ivltests
+pr2722339a		normal			ivltests
+pr2722339b		normal			ivltests
+pr2723712		normal			ivltests
+pr2725700a		normal			ivltests
+pr2725700b		normal			ivltests
+pr2725700c		normal			ivltests
+pr2728032		normal			ivltests
+pr2728547		normal			ivltests
+pr2728812a		normal			ivltests
+pr2728812b		CE,-pRECURSIVE_MOD_LIMIT=5	ivltests
+pr2728812c		CE			ivltests
+pr2745281		normal			ivltests
+pr2781595		normal			ivltests
+pr2785294		normal			ivltests gold=pr2785294.gold
+pr2788686		normal			ivltests
+pr2790236		normal			ivltests
+pr2792883		CE			ivltests
+pr2792897		normal			ivltests
+pr2792897		normal			ivltests
+pr2794144		CE			ivltests gold=pr2794144.gold
+pr2800985a		normal			ivltests
+pr2800985b		RE			ivltests gold=pr2800985b.gold
+pr2801134		normal			ivltests
+pr2801662		normal			ivltests
+pr2809288		CE			ivltests gold=pr2809288.gold
+pr2815398a		normal			ivltests gold=pr2815398a.gold
+pr2815398a_std		normal			ivltests
+pr2815398b		normal			ivltests gold=pr2815398b.gold
+pr2818823		normal			ivltests
+pr2823414		CE			ivltests gold=pr2823414.gold
+pr2823711		normal			ivltests
+pr2824189		normal			ivltests
+pr2829776		normal			ivltests
+pr2829776b		normal,-gspecify	ivltests
+pr2832234		normal			ivltests
+pr2834340		normal			ivltests
+pr2834340b		normal			ivltests
+pr2835632a		normal			ivltests
+pr2835632b		normal			ivltests
+pr2837451		normal			ivltests
+pr2842185		normal			ivltests
+pr2842621		normal			ivltests gold=pr2842621.gold
+pr2842621_std		normal			ivltests
+pr2848986		CE			ivltests gold=pr2848986.gold
+pr2849783		normal			ivltests
+pr2849783		normal			ivltests
+pr2865563		normal			ivltests
+pr2877564		CE			ivltests gold=pr2877564.gold
+pr2883958		normal			ivltests
+pr2885048		normal			ivltests
+pr2890322		normal			ivltests
+pr2901556		normal			ivltests
+pr2909386a		normal			ivltests
+pr2909386b		normal			ivltests
+pr2909414		normal			ivltests
+pr2909555		normal			ivltests
+pr2913404		normal			ivltests
+pr2913416		normal			ivltests
+pr2913438a		normal			ivltests
+pr2913438b		normal			ivltests
+pr2913927		normal			ivltests
+pr2918095		normal			ivltests
+pr2922063		normal			ivltests
+pr2922063a		normal			ivltests
+pr2922063b		normal			ivltests
+pr2924354		normal			ivltests gold=pr2924354.gold
+pr2929913		normal			ivltests
+pr2930506		normal			ivltests
+pr2937417		normal			ivltests
+pr2937417b		normal			ivltests
+pr2937417c		normal			ivltests
+pr2941939		normal			ivltests
+pr2943394		normal			ivltests
+pr2951657		normal			ivltests
+pr2969724		normal			ivltests
+pr2971207		normal			ivltests
+pr2972866		normal,-Tmax,-gspecify	ivltests gold=pr2972866.gold
+pr2973532		normal			ivltests
+pr2974051		normal			ivltests
+pr2974216		normal			ivltests
+pr2974216b		normal			ivltests
+pr2974294		normal			ivltests
+pr2985542		normal			ivltests
+pr2986497		CO			ivltests
+pr2986528		normal			ivltests
+pr2991457		normal			ivltests
+pr2991457b		normal			ivltests
+pr2994193		normal			ivltests
+pr2998515		normal			ivltests
+pr3011327		normal			ivltests
+pr3012758		normal			ivltests
+pr3015421		CE			ivltests gold=pr3015421.gold
+pr3022502		normal			ivltests
+pr3024131		normal			ivltests
+pr3039548		normal			ivltests gold=pr3039548.gold
+pr3044843		normal			ivltests
+pr3054101a		normal			ivltests gold=pr3054101a.gold
+pr3054101b		normal			ivltests gold=pr3054101a.gold
+pr3054101c		normal			ivltests gold=pr3054101c.gold
+pr3054101d		normal			ivltests gold=pr3054101c.gold
+pr3054101e		normal			ivltests gold=pr3054101e.gold
+pr3054101f		normal			ivltests gold=pr3054101e.gold
+pr3054101g		normal			ivltests gold=pr3054101g.gold
+pr3054101h		normal			ivltests gold=pr3054101g.gold
+pr3061015a		CE			ivltests
+pr3061015b		CE			ivltests
+pr3061015c		CE			ivltests
+pr3064375		normal			ivltests gold=pr3064375.gold
+pr3064511		normal			ivltests
+pr3077640		normal			ivltests
+pr3078759		CO,-gspecify		ivltests
+pr3098439		normal			ivltests
+pr3098439a		normal			ivltests
+pr3098439b		normal			ivltests
+pr3103880		normal			ivltests
+pr3104254		normal			ivltests
+pr3112073a		CE			ivltests
+pr3149494		normal			ivltests gold=pr3149494.gold
+pr3190941		CE			ivltests gold=pr3190941.gold
+pr3190948		normal			ivltests
+pr3194155		normal			ivltests gold=pr3194155.gold
+pr3197861		normal			ivltests
+pr3197917		normal			ivltests
+pr3270320		CE			ivltests
+pr3284821		normal			ivltests
+pr3292735		normal			ivltests
+pr3296466a		normal			ivltests
+pr3296466b		normal			ivltests
+pr3296466c		normal			ivltests
+pr3296466d		normal			ivltests
+pr3306516		normal,-gspecify	ivltests
+pr3309391		normal			ivltests
+pr3368642		normal			ivltests
+pr3409749		normal			ivltests
+pr3437290a		normal			ivltests
+pr3437290b		normal			ivltests
+pr3437290c		normal			ivltests
+pr3441576		normal			ivltests gold=pr3441576.gold
+pr3445452		normal			ivltests
+pr3452808		normal			ivltests
+pr3465541		normal			ivltests
+pr3477107		normal			ivltests
+pr3499807		normal			ivltests gold=pr3499807.gold
+pr3522653		normal			ivltests gold=pr3522653.gold
+pr3527022		normal			ivltests
+pr3527694		normal			ivltests gold=pr3527694.gold
+pr3534422		normal			ivltests
+pr3539372		normal			ivltests
+pr3549328		CE			ivltests
+pr3557493		normal			ivltests
+pr3561350		normal			ivltests
+pr3563412		normal			ivltests
+pr3571573		normal			ivltests gold=pr3571573.gold
+pr3582052		normal			ivltests
+pr3587570		normal			ivltests
+pr3592746		normal			ivltests
+prng			normal			ivltests
+ptest001		normal			ivltests
+ptest002		normal			ivltests
+ptest003		normal			ivltests
+ptest004		normal			ivltests
+ptest005		normal			ivltests
+ptest006		normal			ivltests
+ptest007		normal			ivltests
+ptest008		normal			ivltests
+ptest009		normal			ivltests
+ptest010		normal			ivltests
+ptest011		normal			ivltests
+pullupdown		normal			ivltests # Contributed test
+pullupdown2		normal			ivltests # Contributed test
+pullupdown3		normal			ivltests # Contributed test
+pv_undef_sig_sel	normal			ivltests
+qmark			normal			ivltests
+qmark1			normal			ivltests
+qmark3			normal			ivltests
+qmark5			normal			ivltests
+qmark6			normal			ivltests
+queue			normal			ivltests
+queue_fail		RE			ivltests gold=queue_fail.gold
+queue_stat		normal			ivltests gold=queue_stat.gold
+ram16x1			normal			ivltests # Sitting here for a long time?
+readmem-error		normal			ivltests gold=readmem-error.gold
+readmem-invalid		RE			ivltests gold=readmem-invalid.gold
+readmemb1		normal			ivltests # basic $readmemb - uses readmemh1.dat
+readmemb2		normal			ivltests # $readmemb w/ short data file - readmemh2.dat
+readmemb3		normal			ivltests # $readmemb 0-3 with long dfile - readmemh1.dat
+readmemh1		normal			ivltests # basic $readmemh - uses readmemh1.dat
+readmemh1a		normal			ivltests # basic $readmemh with @addr - uses readmemh1a.dat
+readmemh2		normal			ivltests # $readmemh w/ short data file - readmemh2.dat
+readmemh3		normal			ivltests # $readmemh 0-3 with long dfile - readmemh1.dat
+readmemh4		normal			ivltests # $readmemh - comments in data file
+readmemh5		CE			ivltests # Should be error for readmemh(romimg,rom[0:7])
+real			normal			ivltests
+real2			normal			ivltests
+real3			normal			ivltests
+real5			normal			ivltests gold=real5.gold
+real6			normal			ivltests
+real7			normal			ivltests
+real9			normal			ivltests
+real10			normal			ivltests
+real11			normal			ivltests
+real_assign_deassign	normal			ivltests
+real_concat_invalid2	CE			ivltests
+real_delay		normal,-gspecify	ivltests gold=real_delay.gold
+real_events		normal			ivltests gold=real_events.gold
+real_force_rel		normal			ivltests
+real_invalid_ops	CE			ivltests gold=real_invalid_ops.gold
+real_logical		normal			ivltests
+real_reg_force_rel	normal			ivltests
+recursive_func		normal			ivltests gold=recursive_func.gold
+recursive_task		normal			ivltests gold=recursive_task.gold
+redef_net_error 	CE			ivltests
+redef_reg_error 	CE			ivltests
+repeat2			normal			ivltests
+repeat_expr_probe	normal			ivltests
+repl_zero_wid_fail	CE			ivltests
+repl_zero_wid_pass	normal			ivltests
+resetall		normal,-Wtimescale	ivltests gold=resetall.gold
+resetall2		normal,-Wtimescale	ivltests gold=resetall2.gold
+resolv1			normal			ivltests # PR#300
+rise_fall_decay1	normal			ivltests
+rise_fall_decay2	normal			ivltests
+rise_fall_delay1	normal			ivltests
+rise_fall_delay2	normal			ivltests
+rise_fall_delay3	normal			ivltests
+rl_pow			normal			ivltests
+rnpmos			normal			ivltests
+rnpmos2			normal			ivltests
+rop			normal			ivltests
+rptconcat		normal			ivltests # Repeat concatenation operation.
+rtran			normal			ivltests gold=rtran.gold
+rtranif0		normal			ivltests gold=rtranif0.gold
+rtranif1		normal			ivltests gold=rtranif1.gold
+scan-invalid		RE			ivltests gold=scan-invalid.gold
+scanf			normal			ivltests
+scanf2			normal			ivltests
+scanf3			normal			ivltests
+scanf4			normal			ivltests
+sched1			normal			ivltests
+sched2			normal			ivltests
+schedule		normal			ivltests
+scope1			normal			ivltests # scope of var into a task
+scope2			normal			ivltests # scope of var stops at module boundaries
+scope2b			CE,-g1			ivltests # broken version of scope2
+scope4			normal			ivltests
+scope5			normal			ivltests
+scoped_events		normal			ivltests gold=scoped_events.gold
+sdf1			normal,-gspecify	ivltests gold=sdf1.gold
+sdf2			normal,-gspecify	ivltests gold=sdf1.gold
+sdf3			normal,-gspecify	ivltests gold=sdf1.gold
+sdf4			normal,-gspecify	ivltests gold=sdf1.gold
+sdf5			normal,-gspecify	ivltests gold=sdf5.gold
+sdf6			normal,-gspecify	ivltests gold=sdf6.gold
+sdf7			normal,-gspecify	ivltests gold=sdf7.gold
+sdf8			normal,-gspecify	ivltests gold=sdf8.gold
+sdf_del_max		normal,-gspecify,-Tmax	ivltests
+sdf_del_min		normal,-gspecify,-Tmin	ivltests
+sdf_del_typ		normal,-gspecify,-Ttyp	ivltests
+sdf_esc_id		normal,-gspecify	ivltests gold=sdf1.gold
+sdw_always1		normal			ivltests
+sdw_always2		normal			ivltests
+sdw_always3		normal			ivltests
+sdw_array		normal			ivltests
+sdw_assign		normal			ivltests
+sdw_dsbl		normal			ivltests
+sdw_force		normal			ivltests
+sdw_function1		normal			ivltests
+sdw_function2		normal			ivltests
+sdw_function3		normal			ivltests
+sdw_function4		normal			ivltests # function with if from George Gallant bug rpt
+sdw_function5		normal			ivltests # function with if from George Gallant bug rpt
+sdw_instmod1		normal			ivltests
+sdw_instmod2		normal			ivltests
+sdw_int			normal			ivltests
+sdw_lvalconcat		normal			ivltests
+sdw_param1		normal			ivltests
+sdw_param2		normal			ivltests
+sdw_release		normal			ivltests
+sdw_stmt002		normal			ivltests
+sdw_task1		normal			ivltests
+sdw_task2		normal			ivltests
+sel_rval_bit_ob		normal,-Wselect-range	ivltests gold=sel_rval_bit_ob.gold
+sel_rval_part_ob	normal,-Wselect-range	ivltests gold=sel_rval_part_ob.gold
+select			normal			ivltests # structural word select
+select2			normal			ivltests # structural bit select
+select3			normal			ivltests gold=select3.gold
+select4			normal			ivltests # structural bit select
+select5			normal			ivltests # structural bit select
+select6			normal			ivltests
+select7			normal			ivltests
+select8			normal			ivltests
+select_padding		normal			ivltests
+shellho1		normal			ivltests top gold=shellho1.gold
+shift1			normal			ivltests gold=shift1.gold
+shift2			normal			ivltests
+shift3			normal			ivltests
+shift4			normal			ivltests
+shift5			normal			ivltests gold=shift5.gold
+shift_pad		normal			ivltests
+signed1			normal			ivltests
+signed2			normal			ivltests
+signed3			normal			ivltests
+signed4			normal			ivltests gold=signed4.gold
+signed5			normal			ivltests
+signed6			normal			ivltests
+signed7			normal			ivltests
+signed8			normal			ivltests
+signed9			normal			ivltests
+signed10		normal			ivltests gold=signed10.gold
+signed11		normal			ivltests
+signed12		normal			ivltests gold=signed12.gold
+signed13		normal			ivltests
+signed_a		normal			ivltests
+signed_equality		normal			ivltests
+signed_net_display	normal			ivltests
+signed_part		normal			ivltests
+signed_pv		normal			ivltests
+sp2			normal			ivltests diff=work/sp2.inv:gold/sp2.inv
+specify1		CO			ivltests
+specify2		normal,-gspecify	ivltests
+specify3		normal,-gspecify	ivltests gold=specify3.gold
+specify4		normal,-gspecify	ivltests gold=specify4.gold
+specify5		normal,-gspecify	ivltests gold=specify5.gold
+specify_01		normal,-gspecify	ivltests test # Yet another version of specify
+sqrt32			normal			ivltests
+sscanf_u		normal			ivltests
+sscanf_z		normal			ivltests
+stask_parm1		normal			ivltests
+stask_parm2		normal			ivltests gold=stask_parm2.gold
+stask_sens_null_arg	normal			ivltests
+string1			normal			ivltests
+string2			normal			ivltests
+string3			normal			ivltests
+string4			normal			ivltests gold=string4.gold
+string5			normal			ivltests gold=string5.gold
+string7			normal			ivltests gold=string7.gold
+string8			normal			ivltests gold=string8.gold
+string9			normal			ivltests gold=string9.gold
+string10		normal			ivltests gold=string10.gold
+string11		normal			ivltests gold=string11.gold
+string12		normal			ivltests
+supply1			normal			ivltests
+supply2			normal			ivltests
+switch_primitives	normal			ivltests gold=switch_primitives.gold
+sys_func_task_error	RE			ivltests gold=sys_func_task_error.gold
+talu			normal			ivltests
+task-scope		normal			ivltests
+task3.14A		normal			ivltests
+task3.14B		normal			ivltests
+task3.14C		normal			ivltests
+task3.14D		normal			ivltests
+task3.14E		normal			ivltests
+task3.14F		normal			ivltests
+task_bypath		normal			ivltests # task enabled by complete path name.
+task_inpad		normal			ivltests # Validates input of task should pad w/ 0
+task_iotypes		normal			ivltests # task ports with types.
+task_iotypes2		normal			ivltests # task ports with types.
+task_mem		normal			ivltests
+task_noop		normal			ivltests # Task with no contents.
+task_noop2		CO			ivltests # Task *really* with no contents.
+task_omemw2		normal			ivltests
+task_omemw3		CO			ivltests # Pass bit selected from vector to task
+task_port_size		normal			ivltests # truncate task port connections
+task_scope		normal			ivltests
+tern1			normal			ivltests # Finds problems with ?: using different sizes
+tern2			CO			ivltests # make sure ?: is recognized by -tnull
+tern4			normal			ivltests
+tern5			normal			ivltests gold=tern5.gold
+tern6			normal			ivltests
+tern7			normal			ivltests
+tern9			normal			ivltests
+tern10			normal			ivltests
+test_bufif0		normal			ivltests
+test_bufif1		normal			ivltests
+test_disphob		normal			ivltests gold=test_disphob.gold
+test_dispwided		normal			ivltests gold=test_dispwided.gold
+test_extended		normal			ivltests gold=test_extended.gold
+test_mos_strength_reduction	normal		ivltests
+test_nmos		normal			ivltests
+test_notif0		normal			ivltests
+test_notif1		normal			ivltests
+test_pmos		normal			ivltests
+test_rnmos		normal			ivltests
+test_rpmos		normal			ivltests
+test_width		normal			ivltests gold=test_width.gold
+time1			normal			ivltests
+time2			normal			ivltests # Tests posedge vector uses vector[0]
+time3			normal			ivltests
+time4			normal			ivltests
+time5			normal			ivltests
+time7			normal			ivltests # gold=time7.gold
+time8			normal			ivltests
+timeform1		normal			ivltests gold=timeform1.gold
+timeform2		normal			ivltests gold=timeform2.gold
+timescale1		normal			ivltests
+timescale2		normal			ivltests
+timescale3		CE			ivltests
+tran			normal			ivltests gold=tran.gold
+tranif0			normal			ivltests gold=tranif0.gold
+tranif1			normal			ivltests gold=tranif1.gold
+tran-keeper		normal			ivltests
+tri0			normal			ivltests
+tri0b			normal			ivltests
+tri1			normal			ivltests
+tri2			normal			ivltests
+tri3			normal			ivltests
+triand			normal			ivltests
+trior			normal			ivltests
+types1			normal			ivltests
+udp_bufg		normal			ivltests
+udp_bufg2		normal			ivltests
+udp_bx			normal			ivltests gold=udp_bx.gold
+udp_delay_fail		CE			ivltests
+udp_dff			normal			ivltests
+udp_dff_std		normal			ivltests
+udp_eval_arg		normal			ivltests
+udp_jkff		normal			ivltests
+udp_real_delay		normal			ivltests
+udp_sched		normal			ivltests
+udp_x			normal			ivltests
+unary_and		normal			ivltests # Unary And &(vect)
+unary_lnot1		normal			ivltests
+unary_lnot2		normal			ivltests
+unary_lnot3		normal			ivltests
+unary_minus		normal			ivltests # Unary minus -(vect)
+unary_minus1		normal			ivltests # From 272 directly.
+unary_minus2		normal			ivltests
+unary_minus3		normal			ivltests
+unary_minus4		normal			ivltests
+unary_nand		normal			ivltests # Unary nand ~&(vect)
+unary_nand2		normal			ivltests # Unary nand ~&(vect)
+unary_nor		normal			ivltests # Unary nor ~|(vect)
+unary_nor2		normal			ivltests # Unary nor ~|(vect)
+unary_not		normal			ivltests # Unary not ~
+unary_or		normal			ivltests # Unary or  |(vect)
+unary_xnor1		normal			ivltests # Unary xnor ~^(vect)
+unary_xnor2		normal			ivltests # Unary xnor ^~(vect)
+unary_xor		normal			ivltests # Unary or  ^(vect)
+uncon_drive		normal			ivltests
+undef			normal			ivltests gold=undef.gold
+undef_lval_select	normal			ivltests
+undef_lval_select2	normal			ivltests
+undef_lval_select3a	normal			ivltests
+undef_lval_select3b	CE			ivltests
+undef_lval_select3c	CE			ivltests
+undef_lval_select4a	normal			ivltests
+undef_lval_select4b	CE			ivltests
+undef_lval_select4c	CE			ivltests
+undef_lval_select5	normal			ivltests
+undefined_shift		normal			ivltests
+urand_r			normal			ivltests gold=urand_r.gold
+urand_r2		normal			ivltests gold=urand_r.gold
+urand_r3		normal			ivltests gold=urand_r.gold
+uwire			normal			ivltests
+uwire2			normal			ivltests
+uwire_fail		CE			ivltests gold=uwire_fail.gold
+vardly			normal			ivltests
+varlsfht		normal			ivltests # variable << in wire
+varlsfht1		normal			ivltests # variable << in always
+varlsfht2		normal			ivltests # variable << in function
+varrshft		normal			ivltests # variable >> in wire
+varrshft1		normal			ivltests # variable >> in always
+varrshft2		normal			ivltests # variable >> in function
+vcd-dup			normal			ivltests diff=work/vcd-dup.vcd:gold/vcd-dup.vcd.gold:2
+vector			normal			ivltests gold=vector.gold
+verify_two_var_delays	normal			ivltests
+vvp_scalar_value	normal			ivltests
+wait1			normal			ivltests
+wait2			normal			ivltests
+wait3			normal			ivltests gold=wait3.gold
+warn_opt_sys_tf		RE			ivltests gold=warn_opt_sys_tf.gold
+wildsense		normal			ivltests # Wildcard sensitivity list.
+wildsense2		normal			ivltests # Wildcard sensitivity list.
+wireadd1		normal			ivltests
+wireeq			normal			ivltests
+wirege			normal			ivltests
+wireland		normal			ivltests # assign a && (b ? 0 : 1) (pmonta)
+wirele			normal			ivltests
+wiremod1		normal			ivltests
+wiresl			normal			ivltests
+wiresl2			normal			ivltests gold=wiresl2.gold
+wiresr			normal			ivltests
+wiresub1		normal			ivltests
+wirexor1		normal			ivltests
+writemem-error		normal			ivltests gold=writemem-error.gold
+writemem-invalid	RE			ivltests gold=writemem-invalid.gold
+writememb1		normal			ivltests # pr#400
+writememb2		normal			ivltests # pr#400
+writememh1		normal			ivltests # pr#334
+writememh2		normal			ivltests # pr#400
+xnor_test		normal			ivltests # ~^ in an IF()
+z1			normal			ivltests foo
+z2			normal			ivltests foo
+zero_repl		normal			ivltests
+zero_repl_fail		CE			ivltests
+cmpi			normal			ivltests

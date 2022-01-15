@@ -1,0 +1,6 @@
+4'bxxxx =  x
+4'bzzxx =  X
+4'bzzzz =  z
+4'b00zz =  Z
+4'b0000 =  0
+4'b0011 =  3

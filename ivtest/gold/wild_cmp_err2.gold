@@ -1,0 +1,25 @@
+./ivltests/wild_cmp_err2.v:9: error: ==? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err2.v:9: error: Unable to elaborate r-value: (rl)w(rv)
+./ivltests/wild_cmp_err2.v:10: error: ==? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err2.v:10: error: Unable to elaborate r-value: (lv)w(rl)
+./ivltests/wild_cmp_err2.v:11: error: !=? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err2.v:11: error: Unable to elaborate r-value: (rl)W(rv)
+./ivltests/wild_cmp_err2.v:12: error: !=? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err2.v:12: error: Unable to elaborate r-value: (lv)W(rl)
+./ivltests/wild_cmp_err2.v:13: error: ==? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err2.v:13: error: Unable to elaborate r-value: (st)w(rv)
+./ivltests/wild_cmp_err2.v:14: error: ==? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err2.v:14: error: Unable to elaborate r-value: (lv)w(st)
+./ivltests/wild_cmp_err2.v:15: error: !=? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err2.v:15: error: Unable to elaborate r-value: (st)W(rv)
+./ivltests/wild_cmp_err2.v:16: error: !=? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err2.v:16: error: Unable to elaborate r-value: (lv)W(st)
+./ivltests/wild_cmp_err2.v:19: error: ==? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err2.v:20: error: ==? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err2.v:21: error: !=? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err2.v:22: error: !=? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err2.v:23: error: ==? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err2.v:24: error: ==? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err2.v:25: error: !=? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err2.v:26: error: !=? operator may only have INTEGRAL operands.
+24 error(s) during elaboration.

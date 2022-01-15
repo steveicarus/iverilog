@@ -1,0 +1,89 @@
+ivltests/real_select_invalid.v:10: error: can not select part of real parameter: rpar
+ivltests/real_select_invalid.v:10: error: Unable to elaborate r-value: rpar['sd0]
+ivltests/real_select_invalid.v:11: error: can not select part of real parameter: rpar
+ivltests/real_select_invalid.v:11: error: Unable to elaborate r-value: rpar['sd0:'sd0]
+ivltests/real_select_invalid.v:12: error: can not select part of real parameter: rpar
+ivltests/real_select_invalid.v:12: error: Unable to elaborate r-value: rpar['sd0+:'sd1]
+ivltests/real_select_invalid.v:13: error: can not select part of real parameter: rpar
+ivltests/real_select_invalid.v:13: error: Unable to elaborate r-value: rpar['sd0-:'sd1]
+ivltests/real_select_invalid.v:15: error: can not select part of real: rvar
+ivltests/real_select_invalid.v:15: error: Unable to elaborate r-value: rvar['sd0]
+ivltests/real_select_invalid.v:16: error: can not select part of real: rvar
+ivltests/real_select_invalid.v:16: error: Unable to elaborate r-value: rvar['sd0:'sd0]
+ivltests/real_select_invalid.v:17: error: can not select part of real: rvar
+ivltests/real_select_invalid.v:17: error: Unable to elaborate r-value: rvar['sd0+:'sd1]
+ivltests/real_select_invalid.v:18: error: can not select part of real: rvar
+ivltests/real_select_invalid.v:18: error: Unable to elaborate r-value: rvar['sd0-:'sd1]
+ivltests/real_select_invalid.v:20: error: can not select part of real array word: rarr['sd0]
+ivltests/real_select_invalid.v:20: error: Unable to elaborate r-value: rarr['sd0]['sd0]
+ivltests/real_select_invalid.v:21: error: can not select part of real array word: rarr['sd0]
+ivltests/real_select_invalid.v:21: error: Unable to elaborate r-value: rarr['sd0]['sd0:'sd0]
+ivltests/real_select_invalid.v:22: error: can not select part of real array word: rarr['sd0]
+ivltests/real_select_invalid.v:22: error: Unable to elaborate r-value: rarr['sd0]['sd0+:'sd1]
+ivltests/real_select_invalid.v:23: error: can not select part of real array word: rarr['sd0]
+ivltests/real_select_invalid.v:23: error: Unable to elaborate r-value: rarr['sd0]['sd0-:'sd1]
+ivltests/real_select_invalid.v:25: error: can not select part of real: wrbslv
+ivltests/real_select_invalid.v:26: error: can not select part of real: wrpslv
+ivltests/real_select_invalid.v:27: error: can not select part of real: wruplv
+ivltests/real_select_invalid.v:28: error: can not select part of real: wrdolv
+ivltests/real_select_invalid.v:30: error: can not select part of real array word: wrarr[0]
+ivltests/real_select_invalid.v:31: error: can not select part of real array word: wrarr[0]
+ivltests/real_select_invalid.v:32: error: can not select part of real array word: wrarr[0]
+ivltests/real_select_invalid.v:33: error: can not select part of real array word: wrarr[0]
+ivltests/real_select_invalid.v:35: error: can not select part of real: wrbstr
+ivltests/real_select_invalid.v:36: error: can not select part of real: wrpstr
+ivltests/real_select_invalid.v:37: error: can not select part of real: wruptr
+ivltests/real_select_invalid.v:38: error: can not select part of real: wrdotr
+ivltests/real_select_invalid.v:40: error: can not select part of real: wrbstr
+ivltests/real_select_invalid.v:40: internal error: Port expression too complicated for elaboration.
+ivltests/real_select_invalid.v:40: error: can not select part of real: wrpstr
+ivltests/real_select_invalid.v:40: internal error: Port expression too complicated for elaboration.
+ivltests/real_select_invalid.v:40: error: can not select part of real: wruptr
+ivltests/real_select_invalid.v:40: internal error: Port expression too complicated for elaboration.
+ivltests/real_select_invalid.v:40: error: can not select part of real: wrdotr
+ivltests/real_select_invalid.v:40: internal error: Port expression too complicated for elaboration.
+ivltests/real_select_invalid.v:41: error: can not select part of real: wrbstr
+ivltests/real_select_invalid.v:41: error: Output port expression must support continuous assignment.
+ivltests/real_select_invalid.v:41:      : Port of submod2 is arg1
+ivltests/real_select_invalid.v:41: error: can not select part of real: wrpstr
+ivltests/real_select_invalid.v:41: error: Output port expression must support continuous assignment.
+ivltests/real_select_invalid.v:41:      : Port of submod2 is arg2
+ivltests/real_select_invalid.v:41: error: can not select part of real: wruptr
+ivltests/real_select_invalid.v:41: error: Output port expression must support continuous assignment.
+ivltests/real_select_invalid.v:41:      : Port of submod2 is arg3
+ivltests/real_select_invalid.v:41: error: can not select part of real: wrdotr
+ivltests/real_select_invalid.v:41: error: Output port expression must support continuous assignment.
+ivltests/real_select_invalid.v:41:      : Port of submod2 is arg4
+ivltests/real_select_invalid.v:42: error: can not select part of real: wrbstr
+ivltests/real_select_invalid.v:42: error: Inout port expression must support continuous assignment.
+ivltests/real_select_invalid.v:42:      : Port of submod3 is arg1
+ivltests/real_select_invalid.v:42: error: can not select part of real: wrpstr
+ivltests/real_select_invalid.v:42: error: Inout port expression must support continuous assignment.
+ivltests/real_select_invalid.v:42:      : Port of submod3 is arg2
+ivltests/real_select_invalid.v:42: error: can not select part of real: wruptr
+ivltests/real_select_invalid.v:42: error: Inout port expression must support continuous assignment.
+ivltests/real_select_invalid.v:42:      : Port of submod3 is arg3
+ivltests/real_select_invalid.v:42: error: can not select part of real: wrdotr
+ivltests/real_select_invalid.v:42: error: Inout port expression must support continuous assignment.
+ivltests/real_select_invalid.v:42:      : Port of submod3 is arg4
+ivltests/real_select_invalid.v:45: error: can not select part of real parameter: rpar
+ivltests/real_select_invalid.v:46: error: can not select part of real parameter: rpar
+ivltests/real_select_invalid.v:47: error: can not select part of real parameter: rpar
+ivltests/real_select_invalid.v:48: error: can not select part of real parameter: rpar
+ivltests/real_select_invalid.v:50: error: can not select part of real: rvar
+ivltests/real_select_invalid.v:51: error: can not select part of real: rvar
+ivltests/real_select_invalid.v:52: error: can not select part of real: rvar
+ivltests/real_select_invalid.v:53: error: can not select part of real: rvar
+ivltests/real_select_invalid.v:55: error: can not select part of real array word: rarr['sd0]
+ivltests/real_select_invalid.v:56: error: can not select part of real array word: rarr['sd0]
+ivltests/real_select_invalid.v:57: error: can not select part of real array word: rarr['sd0]
+ivltests/real_select_invalid.v:58: error: can not select part of real array word: rarr['sd0]
+ivltests/real_select_invalid.v:60: error: can not select part of real: rout
+ivltests/real_select_invalid.v:61: error: can not select part of real: rout
+ivltests/real_select_invalid.v:62: error: can not select part of real: rout
+ivltests/real_select_invalid.v:63: error: can not select part of real: rout
+ivltests/real_select_invalid.v:65: error: can not select part of real array word: rarr['sd0]
+ivltests/real_select_invalid.v:66: error: can not select part of real array word: rarr['sd0]
+ivltests/real_select_invalid.v:67: error: can not select part of real array word: rarr['sd0]
+ivltests/real_select_invalid.v:68: error: can not select part of real array word: rarr['sd0]
+76 error(s) during elaboration.

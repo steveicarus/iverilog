@@ -1,0 +1,8 @@
+./ivltests/br_gh62.v:13: error: the number of indices (3) is greater than the number of dimensions (2).
+./ivltests/br_gh62.v:14: error: the number of indices (3) is greater than the number of dimensions (2).
+./ivltests/br_gh62.v:15: error: the number of indices (3) is greater than the number of dimensions (2).
+./ivltests/br_gh62.v:16: error: the number of indices (2) is greater than the number of dimensions (1).
+./ivltests/br_gh62.v:17: error: the number of indices (2) is greater than the number of dimensions (1).
+./ivltests/br_gh62.v:18: error: the number of indices (2) is greater than the number of dimensions (1).
+./ivltests/br_gh62.v:19: error: the number of indices (2) is greater than the number of dimensions (1).
+7 error(s) during elaboration.

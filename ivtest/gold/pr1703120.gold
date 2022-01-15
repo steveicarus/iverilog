@@ -1,0 +1,19 @@
+--- Printing as real ---
+1/0 is 0.000000. (Should be 0 -- x prints as 0)
+1/0.0 is inf. (Should be inf)
+1.0/0 is inf. (Should be inf)
+1.0/0.0 is inf. (should be inf)
+1/integer zero is 0.000000. (Should be 0 -- x prints as 0)
+1/real zero is inf. (should be inf)
+1.0/integer zero is inf. (Should be inf)
+1.0/real zero is inf.
+
+--- Printing as integer ---
+1/0 is           x (Should be x)
+1/0.0 is inf
+1.0/0 is inf
+1.0/0.0 is inf
+1/integer zero is           x. (Should be x)
+1/real zero is inf.
+1.0/integer zero is inf.
+1.0/real zero is inf.

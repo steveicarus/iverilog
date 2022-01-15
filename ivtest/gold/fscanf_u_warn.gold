@@ -1,0 +1,8 @@
+WARNING: ./ivltests/fscanf_u_warn.v:16: $fscanf() only found 2 of 4 bytes needed by %u format code.
+WARNING: ./ivltests/fscanf_u_warn.v:29: $fscanf() only found 2 of 8 bytes needed by %u format code.
+WARNING: ./ivltests/fscanf_u_warn.v:42: $fscanf() only found 4 of 8 bytes needed by %u format code.
+WARNING: ./ivltests/fscanf_u_warn.v:55: $fscanf() only found 6 of 8 bytes needed by %u format code.
+WARNING: ./ivltests/fscanf_u_warn.v:68: $fscanf() only found 2 of 4 bytes needed by %u format code.
+WARNING: ./ivltests/fscanf_u_warn.v:82: $fscanf() only found 2 of 4 bytes needed by %u format code.
+WARNING: ./ivltests/fscanf_u_warn.v:110: $fscanf() only found 2 of 4 bytes needed by %u format code.
+PASSED

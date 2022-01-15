@@ -1,0 +1,2 @@
+./ivltests/sv_new_array_error.v:3: error: The new array constructor may only be used in an assignment to a dynamic array.
+Elaboration failed

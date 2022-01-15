@@ -1,0 +1,10 @@
+                   0 reset0=x, reset1=x, reset2=x, reset3=x
+                  10 reset0=0, reset1=0, reset2=0, reset3=0
+                  75 reset0=1, reset1=0, reset2=0, reset3=0
+                 105 reset0=0, reset1=0, reset2=0, reset3=0
+                 165 reset0=0, reset1=1, reset2=0, reset3=0
+                 195 reset0=0, reset1=0, reset2=0, reset3=0
+                 225 reset0=0, reset1=0, reset2=1, reset3=0
+                 255 reset0=0, reset1=0, reset2=0, reset3=0
+                 285 reset0=0, reset1=0, reset2=0, reset3=1
+                 315 reset0=0, reset1=0, reset2=0, reset3=0

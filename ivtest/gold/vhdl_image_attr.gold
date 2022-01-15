@@ -1,0 +1,4 @@
+** Note: integer'image test: 10 (ivltests/vhdl_image_attr.vhd:38)
+** Note: real'image test: 12.340000 (ivltests/vhdl_image_attr.vhd:39)
+** Note: character'image test: 'o' (ivltests/vhdl_image_attr.vhd:40)
+** Note: time'image test: 10 ns (ivltests/vhdl_image_attr.vhd:41)

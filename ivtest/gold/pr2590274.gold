@@ -1,0 +1,4 @@
+warning: Found both default and `timescale based delays. Use
+       : -Wtimescale to find the module(s) with no `timescale.
+The time in w_time is: 1.000000e-09
+The time in wo_time is: 1.000000e+00

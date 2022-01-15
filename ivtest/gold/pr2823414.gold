@@ -1,0 +1,2 @@
+./ivltests/pr2823414.v:10: error: Enable of unknown task ``fail_at_line_10''.
+Elaboration failed

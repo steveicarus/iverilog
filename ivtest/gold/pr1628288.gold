@@ -1,0 +1,36 @@
+  Reading bit 7
+  Reading bit 6
+  Reading bit 5
+  Reading bit 4
+  Reading bit 3
+  Reading bit 2
+  Reading bit 1
+  Reading bit 0
+Read(0) 01010101 from the bit stream.
+  Reading bit 7
+  Reading bit 6
+  Reading bit 5
+  Reading bit 4
+  Reading bit 3
+  Reading bit 2
+  Reading bit 1
+  Reading bit 0
+Read(1) 10101010 from the bit stream.
+  Reading bit 7
+  Reading bit 6
+  Reading bit 5
+  Reading bit 4
+  Reading bit 3
+  Reading bit 2
+  Reading bit 1
+  Reading bit 0
+Read(2) 01010101 from the bit stream.
+  Reading bit 7
+  Reading bit 6
+  Reading bit 5
+  Reading bit 4
+  Reading bit 3
+  Reading bit 2
+  Reading bit 1
+  Reading bit 0
+Read(3) 10101010 from the bit stream.

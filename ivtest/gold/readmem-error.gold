@@ -1,0 +1,26 @@
+WARNING: ./ivltests/readmem-error.v:18: $readmemb's file name argument (vpiReg) is not a valid string.
+WARNING: ./ivltests/readmem-error.v:19: $readmemb's file name argument (vpiIntegerVar) is not a valid string.
+WARNING: ./ivltests/readmem-error.v:33: $readmemb's file name argument contains non-printable characters.
+                                        "ivltests/readmemb.tx\002"
+WARNING: ./ivltests/readmem-error.v:38: $readmemb's third argument (start address) is a real value.
+WARNING: ./ivltests/readmem-error.v:49: $readmemb's fourth argument (finish address) is a real value.
+ERROR: ./ivltests/readmem-error.v:59: $readmemb: Start address -1 is out of bounds for memory 'top.array[0:7]'!
+ERROR: ./ivltests/readmem-error.v:67: $readmemb: Start address 7 is out of bounds for memory 'top.array2[8:15]'!
+ERROR: ./ivltests/readmem-error.v:75: $readmemb: Finish address 8 is out of bounds for memory 'top.array[0:7]'!
+ERROR: ./ivltests/readmem-error.v:83: $readmemb: Finish address 16 is out of bounds for memory 'top.array2[8:15]'!
+WARNING: ./ivltests/readmem-error.v:93: $readmemb(ivltests/readmemb.txt): Too many words in the file for the requested range [0:6].
+WARNING: ./ivltests/readmem-error.v:105: $readmemb(ivltests/readmemb.txt): Not enough words in the file for the requested range [-1:7].
+ERROR: ./ivltests/readmem-error.v:118: $readmemb(ivltests/readmem-error.txt): Invalid input character: u
+WARNING: ./ivltests/readmem-error.v:123: $readmemh's file name argument (vpiReg) is not a valid string.
+WARNING: ./ivltests/readmem-error.v:124: $readmemh's file name argument (vpiIntegerVar) is not a valid string.
+WARNING: ./ivltests/readmem-error.v:138: $readmemh's file name argument contains non-printable characters.
+                                         "ivltests/readmemh.tx\002"
+WARNING: ./ivltests/readmem-error.v:143: $readmemh's third argument (start address) is a real value.
+WARNING: ./ivltests/readmem-error.v:154: $readmemh's fourth argument (finish address) is a real value.
+ERROR: ./ivltests/readmem-error.v:164: $readmemh: Start address -1 is out of bounds for memory 'top.array[0:7]'!
+ERROR: ./ivltests/readmem-error.v:172: $readmemh: Start address 7 is out of bounds for memory 'top.array2[8:15]'!
+ERROR: ./ivltests/readmem-error.v:180: $readmemh: Finish address 8 is out of bounds for memory 'top.array[0:7]'!
+ERROR: ./ivltests/readmem-error.v:188: $readmemh: Finish address 16 is out of bounds for memory 'top.array2[8:15]'!
+WARNING: ./ivltests/readmem-error.v:198: $readmemh(ivltests/readmemh.txt): Too many words in the file for the requested range [0:6].
+WARNING: ./ivltests/readmem-error.v:210: $readmemh(ivltests/readmemh.txt): Not enough words in the file for the requested range [-1:7].
+ERROR: ./ivltests/readmem-error.v:223: $readmemh(ivltests/readmem-error.txt): Invalid input character: u

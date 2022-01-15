@@ -1,0 +1,4 @@
+./ivltests/br975.v:12: error: duplicate declaration for net or variable 'w1' in 'bug'.
+./ivltests/br975.v:15: error: duplicate declaration for net or variable 'd1' in 'bug'.
+./ivltests/br975.v:18: error: duplicate declaration for net or variable 'e1' in 'bug'.
+./ivltests/br975.v:21: error: duplicate declaration for net or variable 'r1' in 'bug'.

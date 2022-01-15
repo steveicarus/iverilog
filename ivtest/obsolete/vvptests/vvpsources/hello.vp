@@ -1,0 +1,8 @@
+#! /usr/bin/env vvp
+:vpi_module "system";
+S_main .scope module, "main";
+    .scope S_main;
+T_0 ;
+    %vpi_call "$display", "PASSED";
+    %end;
+    .thread T_0;

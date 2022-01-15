@@ -1,0 +1,10 @@
+dl:ls32b-             1 ps
+rl:ls32b-             2 ps
+rg:ls32b-             3 ps
+ar:ls32b-             4 ps
+ps:ls32b-             5 ps
+dl:gt32b- 1000000000000 ps
+rl:gt32b- 2000000000000 ps
+rg:gt32b- 3000000000000 ps
+ar:gt32b- 4000000000000 ps
+ps:gt32b- 5000000000000 ps
