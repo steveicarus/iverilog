@@ -1,0 +1,3 @@
+./ivltests/pr3015421.v:7: syntax error
+./ivltests/pr3015421.v:7: error: Syntax error defining function.
+./ivltests/pr3015421.v:16: syntax error

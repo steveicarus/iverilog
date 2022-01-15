@@ -1,0 +1,26 @@
+./ivltests/pr1704726a.v:8: error: 'name_pp' has already been declared in this scope.
+./ivltests/pr1704726a.v:7:      : It was declared here as a parameter.
+./ivltests/pr1704726a.v:11: error: 'name_pl' has already been declared in this scope.
+./ivltests/pr1704726a.v:10:      : It was declared here as a parameter.
+./ivltests/pr1704726a.v:14: error: 'name_lp' has already been declared in this scope.
+./ivltests/pr1704726a.v:13:      : It was declared here as a parameter.
+./ivltests/pr1704726a.v:17: error: 'name_ll' has already been declared in this scope.
+./ivltests/pr1704726a.v:16:      : It was declared here as a parameter.
+./ivltests/pr1704726a.v:24: error: 'name_vv' has already been declared in this scope.
+./ivltests/pr1704726a.v:23:      : It was declared here as a genvar.
+./ivltests/pr1704726a.v:33: error: 'name_tt' has already been declared in this scope.
+./ivltests/pr1704726a.v:30:      : It was declared here as a task.
+./ivltests/pr1704726a.v:43: error: 'name_tt' has already been declared in this scope.
+./ivltests/pr1704726a.v:40:      : It was declared here as a task.
+./ivltests/pr1704726a.v:39: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726a.v:57: error: 'name_ff' has already been declared in this scope.
+./ivltests/pr1704726a.v:53:      : It was declared here as a function.
+./ivltests/pr1704726a.v:64: error: 'task_blk' has already been declared in this scope.
+./ivltests/pr1704726a.v:39:      : It was declared here as a generate block.
+./ivltests/pr1704726a.v:69: error: 'name_ff' has already been declared in this scope.
+./ivltests/pr1704726a.v:65:      : It was declared here as a function.
+./ivltests/pr1704726a.v:64: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726a.v:81: error: 'name_ee' has already been declared in this scope.
+./ivltests/pr1704726a.v:80:      : It was declared here as an event.
+./ivltests/pr1704726a.v:87: error: 'name_ss' has already been declared in this scope.
+./ivltests/pr1704726a.v:86:      : It was declared here as a parameter.

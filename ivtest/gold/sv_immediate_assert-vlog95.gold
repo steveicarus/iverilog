@@ -1,0 +1,8 @@
+ERROR: vlog95.v:24: 
+       Time: 0  Scope: test
+Check 4 : this should be displayed
+Check 5 : this should be displayed
+ERROR: vlog95.v:32: 
+       Time: 0  Scope: test
+Check 7 : this should be displayed
+Check 8 : this should be displayed

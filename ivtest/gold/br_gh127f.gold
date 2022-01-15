@@ -1,0 +1,15 @@
+./ivltests/br_gh127f.v:21: warning: input port out is coerced to inout.
+./ivltests/br_gh127f.v:21: warning: Port 1 (out) of copy expects 2 bits, got 1.
+./ivltests/br_gh127f.v:21:        : Leaving 1 high bits of the port unconnected.
+./ivltests/br_gh127f.v:21: warning: output port in is coerced to inout.
+./ivltests/br_gh127f.v:22: warning: input port out is coerced to inout.
+./ivltests/br_gh127f.v:22: warning: output port in is coerced to inout.
+./ivltests/br_gh127f.v:23: warning: input port out is coerced to inout.
+./ivltests/br_gh127f.v:23: warning: Port 1 (out) of copy expects 2 bits, got 3.
+./ivltests/br_gh127f.v:23:        : Leaving 1 high bits of the expression dangling.
+./ivltests/br_gh127f.v:23: warning: output port in is coerced to inout.
+00 : 00 0 : 00 00 : 00 z00
+01 : 01 1 : 01 01 : 01 z01
+10 : 10 0 : 10 10 : 10 z10
+11 : 11 1 : 11 11 : 11 z11
+PASSED

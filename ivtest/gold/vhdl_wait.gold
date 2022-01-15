@@ -1,0 +1,3 @@
+** Note: final wait test (ivltests/vhdl_wait.vhd:33)
+** Note: wait 1 completed (ivltests/vhdl_wait.vhd:39)
+wait 1 acknowledged

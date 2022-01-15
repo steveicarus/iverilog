@@ -1,0 +1,44 @@
+Compiling vpi/pr2966059.c...
+Making pr2966059.vpi from  pr2966059.o...
+vpi_get_value (<N/A>):
+  format = 9
+   value = 1
+vpi_get_value (ip):
+  format = 9
+   value = 1
+vpi_get_value (<N/A>):
+  format = 7
+   value = 0
+vpi_get_value (rp):
+  format = 7
+   value = 2
+vpi_get_value (<N/A>):
+  format = 8
+   value = 3
+vpi_get_value (sp):
+  format = 8
+   value = 3
+vpi_get_value (rlval):
+  format = 7
+   value = 0
+vpi_get_value (<N/A>):
+  format = 7
+   value = 0
+vpi_get_value (wreal):
+  format = 7
+   value = 0
+vpi_get_value (<N/A>):
+  format = 7
+   value = 0
+vpi_get_value (rval):
+  format = 9
+   value = x
+vpi_get_value (<N/A>):
+  format = 9
+   value = x
+vpi_get_value (wval):
+  format = 9
+   value = z
+vpi_get_value (<N/A>):
+  format = 9
+   value = x

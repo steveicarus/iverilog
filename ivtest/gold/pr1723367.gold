@@ -1,0 +1,43 @@
+./ivltests/pr1723367.v:131: warning: Scalar port ``a'' has a vectored net declaration [7:0].
+./ivltests/pr1723367.v:138: warning: Scalar port ``a'' has a vectored net declaration [7:0].
+./ivltests/pr1723367.v:141: warning: Scalar port ``b'' has a vectored net declaration [15:0].
+./ivltests/pr1723367.v:148: warning: Scalar port ``a'' has a vectored net declaration [7:0].
+./ivltests/pr1723367.v:156: warning: Scalar port ``a'' has a vectored net declaration [7:0].
+./ivltests/pr1723367.v:167: warning: Scalar port ``a'' has a vectored net declaration [7:0].
+./ivltests/pr1723367.v:174: warning: Scalar port ``a'' has a vectored net declaration [7:0].
+./ivltests/pr1723367.v:177: warning: Scalar port ``b'' has a vectored net declaration [15:0].
+./ivltests/pr1723367.v:184: warning: Scalar port ``a'' has a vectored net declaration [7:0].
+./ivltests/pr1723367.v:192: warning: Scalar port ``a'' has a vectored net declaration [7:0].
+./ivltests/pr1723367.v:203: warning: Scalar port ``a'' has a vectored net declaration [7:0].
+./ivltests/pr1723367.v:212: warning: Scalar port ``a'' has a vectored net declaration [7:0].
+./ivltests/pr1723367.v:215: warning: Scalar port ``b'' has a vectored net declaration [31:0].
+./ivltests/pr1723367.v:246: warning: Scalar port ``a'' has a vectored net declaration [15:0].
+./ivltests/pr1723367.v:253: warning: Scalar port ``a'' has a vectored net declaration [7:0].
+./ivltests/pr1723367.v:256: warning: Scalar port ``b'' has a vectored net declaration [31:0].
+./ivltests/pr1723367.v:282: warning: Scalar port ``a'' has a vectored net declaration [15:0].
+./ivltests/pr1723367.v:289: warning: Scalar port ``a'' has a vectored net declaration [7:0].
+./ivltests/pr1723367.v:292: warning: Scalar port ``b'' has a vectored net declaration [15:0].
+./ivltests/pr1723367.v:307: warning: Scalar port ``a'' has a vectored net declaration [15:0].
+sum[          1] = 0101010101100000
+sum[          2] = 0101010101100000
+sum[          3] = 0101010101100000
+sum[          4] = 0101010101100000
+sum[          5] = 0101010101100000
+sum[          6] = 0101010101100000
+sum[          7] = 0101010101100000
+sum[          8] = 0101010101100000
+sum[          9] = 0101010101100000
+sum[         10] = 0101010101100000
+sum[         11] = 0101010101100000
+sum[         12] = 0101010101100000
+sum[         13] = 0101010101100000
+sum[         14] = 0101010101100000
+sum[         15] = 0101010101100000
+sum[         16] = 0101010101100000
+sum[         17] = 0101010101100000
+sum[         18] = 0101010101100000
+sum[         19] = 0101010101100000
+sum[         20] = 0101010101100000
+sum[         21] = 0101010101100000
+sum[         22] = 0101010101100000
+sum[         23] = 0101010101100000

@@ -1,0 +1,3 @@
+signed4.vhd:22:5:@0ms:(report note): x = 3 (should be 3)
+signed4.vhd:24:5:@0ms:(report note): y = -3 (should be -3)
+signed4.vhd:28:5:@0ms:(report note): x = 253 (should be 253)

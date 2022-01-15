@@ -1,0 +1,75 @@
+# $Log: elist,v $
+# Revision 1.19  2004/01/21 04:52:30  stevewilliams
+#  Add pr904
+#
+# Revision 1.18  2002/11/21 21:16:51  stevewilliams
+#  Add array5 as an error test.
+#
+# Revision 1.17  2002/11/13 03:26:33  stevewilliams
+#  Add tests pr564, pr581 and pr585.
+#
+# Revision 1.16  2002/11/02 01:11:16  stevewilliams
+#  Add pr567 to elist
+#
+# Revision 1.15  2002/11/02 01:02:32  stevewilliams
+#  memory names in messages no longer have scope.
+#
+# Revision 1.14  2002/04/22 00:50:54  stevewilliams
+#  Add the implicit1 test to the elist.
+#
+# Revision 1.13  2002/04/13 02:39:57  stevewilliams
+#  Add the memidx2 test of mem index errors.
+#
+# Revision 1.12  2002/04/12 02:56:57  stevewilliams
+#  Fix typos in elist file.
+#
+# Revision 1.11  2002/04/12 02:51:52  stevewilliams
+#  Add range3 to error test.
+#
+# Revision 1.10  2002/01/23 05:57:41  stevewilliams
+#  Fix scope2.v implicit wire error.
+#
+# Revision 1.9  2001/05/25 02:17:54  stevewilliams
+#  add port-test3 test.
+#
+# Revision 1.8  2001/02/13 03:35:31  stevewilliams
+#  Add cond_wide test (PR#143)
+#
+# Revision 1.7  2001/02/09 03:01:20  stevewilliams
+#  Add test for PR#133.
+#
+# Revision 1.6  2000/12/07 02:24:54  stevewilliams
+#  Get add32 error message right.
+#
+# Revision 1.5  2000/12/07 01:41:13  ka6s
+# Add the $log feature to the comments here to allow automatic update logging.
+#
+#
+readmemh5 ivltests main
+./ivltests/readmemh5.v:35: error: part select of a memory: array
+function3.11E ivltests test
+./ivltests/function3.11E.v:30: parse error
+add32 contrib main
+./contrib/add32.v:14: error: sum is not a reg in this context.
+range1	ivltests main
+./ivltests/range1.v:44: error: bit/part select thing[9:9] is out of range.
+range2	ivltests bug
+./ivltests/range2.v:9: error: bit/part select [3:2] out of range for din
+range3	ivltests simple
+./ivltests/range3.v:26: error: Signal ``b'' declared both as a vector and a scalar.
+port-test3 ivltests BENCH
+./ivltests/port-test3.v:16: error: data in  module CPU declared as inout and as a reg type.
+scope2b	ivltests main
+./ivltests/scope2b.v:30: error: Net q is not defined in this context.
+memidx2	ivltests main
+./ivltests/memidx2.v:14: error: memory mem needs an index in this context.
+implicit1 ivltests Counter56
+./ivltests/implicit1.v:25: error: Counter56.CounterReset not defined in this scope.
+pr567 ivltests test
+./ivltests/pr567.v:3: error: Assign to memory "blah" requires a word select index.
+pr581	ivltests main
+./ivltests/pr581.v:14: error: memories (data) cannot be l-values in continuous assignments.
+array5	ivltests test
+./ivltests/array5.v:14: error: Part select expressions must be constant.
+pr904   ivltests err
+./ivltests/pr904.v:26: error: Missing expression 3 of concatenation list.

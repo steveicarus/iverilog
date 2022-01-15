@@ -1,0 +1,326 @@
+# This test list contains tests that use Icarus specific language extensions
+# and tests for known Icarus limitations and deviations.
+
+# NOTE: This isn't a complete list - some tests adapt themselves if the
+# __ICARUS__ macro is defined.
+
+#
+# Copyright (c) 1999-2021 Guy Hutchison (ghutchis@pacbell.net)
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+#
+# Format of the file
+#
+# testname		testtype		directory
+#
+# The <testname> is the verilog file name minus an extension.
+#
+# The <testtype> can be one of the following:
+#
+# normal:  Normal results expected, i.e it should compile and execute
+#          producing at least a single line with PASSED.
+#
+# CO:      Compile Only - Compile the file to the default output type.
+#
+# CN:      Compile Null - Compile with the null target. Similar to CO.
+#
+# CE:      Compile with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# RE:      Runtime with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# EF:      Expected Fail - We EXPECT this test to fail - only use
+#                          with older versions of Icarus.
+#
+# TE:      Translation Error - We EXPECT the translated code to fail -
+#                              only supported in the vlog95 checker.
+#
+# NI:      Not implemented. Only use for version specific tests.
+#
+# <directory> is where the <testname>.v file is located.
+#
+# An optional fourth and fifth argument can be supplied.
+#
+# The fourth argument may be one of the following.
+#
+#   modulename                       - Defines the top level module
+#   gold=filename                    - Compare a gold file against the
+#                                      generated log file.
+#   unordered=filename               - Compare a gold file against the
+#                                      generated log file, allowing for lines
+#                                      to appear in any order
+#   diff=filename1:filename2:skip_ln - Compare the two files for equality.
+#                                      Skip the first <skip_ln> lines or none.
+#
+# If a <modulename> is given you can supply a fifth argument for the
+# gold or diff commands.
+#
+
+#------------------------------------------------------------------------------
+# Icarus pre-processor extensions
+#------------------------------------------------------------------------------
+
+# Escaped defines ``
+macro_str_esc		normal			ivltests gold=macro_str_esc.gold
+macro_with_args		normal			ivltests gold=macro_with_args.gold
+mcl1			normal			ivltests gold=mcl1.gold
+pr622			normal			ivltests gold=pr622.gold
+pr639			normal			ivltests gold=pr639.gold
+pr1741212		normal			ivltests gold=pr1741212.gold
+pr1912112		normal			ivltests gold=pr1912112.gold
+pr1925360		normal			ivltests
+repeat1			normal			ivltests
+
+# This just checks whether the pre-processor runs successfully
+pr2002443		CO,-E			ivltests
+
+#------------------------------------------------------------------------------
+# Icarus language extensions
+#------------------------------------------------------------------------------
+
+# $abs, $min and $max to match VAMS abs, min and max
+constfunc6_ams		normal			ivltests
+non-polymorphic-abs	normal			ivltests
+pr3270320_ams		CE			ivltests
+test_va_math		normal,-mva_math	ivltests gold=test_va_math.gold
+va_math			normal			ivltests
+
+# $abstime from VAMS
+abstime			normal			ivltests
+pr2590274a		normal			ivltests gold=pr2590274.gold
+pr2590274b		normal			ivltests gold=pr2590274.gold
+pr2590274c		normal,-gspecify	ivltests gold=pr2590274.gold
+
+# $bits
+bitsel			normal			ivltests gold=bitsel.gold
+bitsel10		normal			ivltests
+bitsel2			normal			ivltests
+bitsel3			normal			ivltests
+bitsel4			normal			ivltests
+bitsel5			normal			ivltests
+bitsel6			normal			ivltests
+bitsel7			normal			ivltests
+bitsel8			normal			ivltests # pr615
+bitsel9			normal			ivltests # pr617
+bitwidth3		normal			ivltests
+clog2			normal			ivltests
+clog2-signal		normal			ivltests
+param_vec		normal			ivltests
+param_vec2		normal			ivltests
+pr498			normal			ivltests
+pr721			normal			ivltests
+pr809			normal			ivltests
+pr809b			normal			ivltests
+pr979			normal			ivltests gold=pr979.gold
+pr1000			normal			ivltests
+pr1609611		normal			ivltests
+pr1750870		normal			ivltests
+pr1765789		normal			ivltests
+pr1771903		normal			ivltests gold=pr1771903.gold
+pr1793749		normal			ivltests gold=pr1793749.gold
+pr1793749b		normal			ivltests gold=pr1793749b.gold
+pr1861212b		normal			ivltests gold=pr1861212.gold
+pr1864110c		normal			ivltests gold=pr1864110c.gold
+pr1864115		normal			ivltests gold=pr1864115.gold
+pr2806449		normal			ivltests
+pr2877555		normal			ivltests
+real4			normal			ivltests
+realtobits		normal			ivltests
+specparam1		normal			ivltests
+specparam2		normal			ivltests
+tern3			normal			ivltests gold=tern3.gold
+v2005_math		normal			ivltests
+
+# $deposit
+deposit			normal			ivltests
+deposit_wire		normal			ivltests
+sysargs			normal			ivltests
+
+# $fatal
+fatal_et_al		normal			ivltests gold=fatal_et_al.gold
+fatal_et_al2		RE			ivltests gold=fatal_et_al2.gold
+
+# $finish_and_return
+plus_arg_string		normal,-g2009,\
+  +img=test_image.file				ivltests
+
+# $fopena, $fopenr and $fopenw
+fileio			normal			ivltests gold=fileio.gold
+
+# $is_signed
+pr1494799		normal			ivltests gold=pr1494799.gold
+pr2428890c		normal			ivltests
+
+# $ivl_darray_method$to_vec & $ivl_darray_method$from_vec
+sv_cast_darray		normal,-g2005-sv	ivltests
+
+# $ivl_to_unsigned
+br978			normal			ivltests
+br_ml20150424		normal			ivltests
+
+# $readmempath
+pr2509349a		normal			ivltests gold=pr2509349a.gold
+pr2509349b		normal			ivltests gold=pr2509349b.gold
+
+# $simparam
+simparam		normal			ivltests
+
+# $simtime
+blocking_repeat_ec	normal			ivltests
+ca_time_smtm		normal			ivltests gold=ca_time_smtm.gold
+nb_array_pv		normal			ivltests
+nb_ec_array		normal			ivltests
+nb_ec_array_pv		normal			ivltests
+nb_ec_pv		normal			ivltests
+nb_ec_pv2		normal			ivltests
+nb_ec_real		normal			ivltests
+nb_ec_vector		normal			ivltests
+pr2486350		normal			ivltests gold=pr2486350.gold
+pr534			normal			ivltests gold=pr534.gold
+stime			normal			ivltests gold=stime.gold
+swrite			normal			ivltests gold=swrite.gold
+time6			normal			ivltests
+time6b			normal			ivltests # Rewrote time6 to pass with XL
+time6c			normal			ivltests gold=time6c.gold
+
+# $sizeof
+concat1			normal			ivltests # PR#327,372
+concat2			normal			ivltests # PR#282
+constconcat1		normal			ivltests
+constconcat2		normal			ivltests
+rptconcat2		normal			ivltests # Repeat concatenation operation.
+sdw_lvalconcat2		normal			ivltests
+
+# bool type
+bool1			normal			ivltests
+compare_bool_reg	normal			ivltests
+constfunc8		normal			ivltests
+
+# Binary ~& and ~| operators
+binary_nand		normal			ivltests
+binary_nor		normal			ivltests
+
+# real modulus
+pr1528093		normal			ivltests
+
+# wire real
+br_gh456		normal,-g2012		ivltests
+ca_64delay		normal			ivltests gold=ca_64delay.gold
+ca_time_real		normal			ivltests gold=ca_time_real.gold
+ca_var_delay		normal			ivltests
+cast_real_signed	normal			ivltests
+cast_real_unsigned	normal			ivltests
+delayed_sfunc		normal,-gspecify	ivltests gold=delayed_sfunc.gold
+pr1861212c		normal			ivltests gold=pr1861212.gold
+pr1864110a		normal			ivltests gold=pr1864110a.gold
+pr1864110b		normal			ivltests gold=pr1864110b.gold
+pr1873372		normal			ivltests gold=pr1873372.gold
+pr1880003		normal			ivltests
+pr1898293		normal			ivltests
+pr2123158		normal			ivltests
+pr2453002b		normal			ivltests
+pr2456943		normal			ivltests
+pr2715748		normal			ivltests gold=pr2715748.gold
+pr2806474		normal			ivltests
+pr2976242		normal			ivltests
+pr2976242b		normal			ivltests
+pr2976242c		CE			ivltests gold=pr2976242c.gold
+real8			normal			ivltests
+real_array		normal			ivltests
+real_array_nb		normal			ivltests
+real_concat_invalid1	CE			ivltests
+real_mod_in_ca		normal			ivltests
+real_op_fail		CE			ivltests
+real_pulse_clean	normal			ivltests
+real_pwr_in_ca		normal			ivltests
+real_select_invalid	CE			ivltests
+real_wire_array		normal			ivltests
+real_wire_force_rel	normal			ivltests
+tern8			normal			ivltests
+
+# Two-state wires
+br_gh99e		normal,-g2009		ivltests
+pull371			normal,-g2012		ivltests
+sv-2val-nets		normal,-g2009		ivltests
+
+# Left aligned formats
+pr2476430		normal			ivltests
+
+# A % at the end of the format string is displayed a a %
+eofmt_percent		normal			ivltests gold=eofmt_percent.gold
+
+# Command line parameters
+br_gh377		normal,-Ptest.name=	ivltests gold=br_gh377.gold
+cmdline_parm1		normal,-Pmain.foo=2	ivltests
+
+# Dumping array words
+array_dump		normal			ivltests diff=work/array_dump.vcd:gold/array_dump.vcd.gold:2
+pr2859628		normal			ivltests diff=work/pr2859628.vcd:gold/pr2859628.vcd.gold:2
+
+# Icarus supports integer values larger than 32-bits
+big_int			normal			ivltests # PR#405
+ca_pow_signed		normal			ivltests
+urand			normal			ivltests gold=urand.gold
+
+# Avoiding time-0 races
+race			normal			ivltests
+
+#------------------------------------------------------------------------------
+# Icarus limitations
+#------------------------------------------------------------------------------
+
+# Limited support for event expressions in automatic scopes
+automatic_error4	CE			ivltests
+
+# These are not currently supported in Icarus
+# Also update the regress-fsv.list since it has these marked as normal
+array_lval_select3a	CE			ivltests
+br605a			EF			ivltests
+br605b			EF			ivltests
+br971			EF			ivltests
+br1005			CE,-g2009		ivltests
+br1015b			CE,-g2009		ivltests
+br_gh130b		CE,-g2009		ivltests
+br_gh386d		CE,-g2009		ivltests
+br_ml20150315b		CE,-g2009		ivltests
+sv_deferred_assert1	CE,-g2009		ivltests gold=sv_deferred_assert1.gold
+sv_deferred_assert2	CE,-g2009		ivltests gold=sv_deferred_assert2.gold
+sv_deferred_assume1	CE,-g2009		ivltests gold=sv_deferred_assume1.gold
+sv_deferred_assume2	CE,-g2009		ivltests gold=sv_deferred_assume2.gold
+
+#------------------------------------------------------------------------------
+# Icarus deviations
+#------------------------------------------------------------------------------
+
+# Icarus still allows (implicit) declaration after use in some circumstances.
+pr1909940		normal			ivltests
+pr1909940b		normal			ivltests
+
+# Icarus allows hierarchical references to unnamed generate blocks.
+# We should add a warning about this, as it's not strictly allowed.
+unnamed_generate_block	normal			ivltests gold=unnamed_generate_block.gold
+
+#------------------------------------------------------------------------------
+# Implementation defined behaviour
+#------------------------------------------------------------------------------
+
+# From IEEE 1364-2005 section 5.2.1:
+#   NOTE 2 -- Bit-select or part-select indices that are outside of the declared
+#   range may be flagged as a compile time error.
+br_gh497b		CE			ivltests gold=br_gh497b.gold
+br_gh497d		CE			ivltests gold=br_gh497d.gold
+br_gh497f		CE			ivltests gold=br_gh497f.gold

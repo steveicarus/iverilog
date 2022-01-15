@@ -1,0 +1,51 @@
+Testing $itor() in a constant context.
+  $itor(10)   = 10
+  $itor(1'bx) = 0
+  $itor(1'bx) = 0
+  $itor(10.4) = 10
+  $itor(10.5) = 11
+  $itor(-1.4) = -1
+  $itor(-1.5) = -2
+  $itor(NaN)  = 0
+  $itor(+inf) = 0
+  $itor(-inf) = 0
+
+Testing $itor() in a variable context.
+  $itor(10)   = 10
+  $itor(1'bx) = 0
+  $itor(1'bx) = 0
+  $itor(10.4) = 10
+  $itor(10.5) = 11
+  $itor(-1.4) = -1
+  $itor(-1.5) = -2
+  $itor(NaN)  = 0
+  $itor(+inf) = 0
+  $itor(-inf) = 0
+
+Testing $rtoi() in a constant context.
+  $rtoi(1.1)  = 1
+  $rtoi(1.9)  = 1
+  $rtoi(-1.1) = -1
+  $rtoi(-1.9) = -1
+  Overflow(0) = 0
+  Overflow(1) = 1
+  $rtoi(NaN)  = x
+  $rtoi(+inf) = x
+  $rtoi(-inf) = x
+  $rtoi(1)    = 1
+  $rtoi(1'bx) = 0
+  $rtoi(1'bz) = 0
+
+Testing $rtoi() in a variable context.
+  $rtoi(1.1)  = 1
+  $rtoi(1.9)  = 1
+  $rtoi(-1.1) = -1
+  $rtoi(-1.9) = -1
+  Overflow(0) = 0
+  Overflow(1) = 1
+  $rtoi(NaN)  = x
+  $rtoi(+inf) = x
+  $rtoi(-inf) = x
+  $rtoi(1)    = 1
+  $rtoi(1'bx) = 0
+  $rtoi(1'bz) = 0

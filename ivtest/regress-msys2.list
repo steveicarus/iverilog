@@ -1,0 +1,71 @@
+# This test list is used to override other test lists when running
+# on Windows using MSYS2.
+
+#
+# Copyright (c) 1999-2015 Guy Hutchison (ghutchis@pacbell.net)
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+#
+# Format of the file
+#
+# testname		testtype		directory
+#
+# The <testname> is the verilog file name minus an extension.
+#
+# The <testtype> can be one of the following:
+#
+# normal:  Normal results expected, i.e it should compile and execute
+#          producing at least a single line with PASSED.
+#
+# CO:      Compile Only - Compile the file to the default output type.
+#
+# CN:      Compile Null - Compile with the null target. Similar to CO.
+#
+# CE:      Compile with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# RE:      Runtime with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# EF:      Expected Fail - We EXPECT this test to fail - only use
+#                          with older versions of Icarus.
+#
+# TE:      Translation Error - We EXPECT the translated code to fail -
+#                              only supported in the vlog95 checker.
+#
+# NI:      Not implemented. Only use for version specific tests.
+#
+# <directory> is where the <testname>.v file is located.
+#
+# An optional fourth and fifth argument can be supplied.
+#
+# The fourth argument may be one of the following.
+#
+#   modulename                       - Defines the top level module
+#   gold=filename                    - Compare a gold file against the
+#                                      generated log file.
+#   unordered=filename               - Compare a gold file against the
+#                                      generated log file, allowing for lines
+#                                      to appear in any order
+#   diff=filename1:filename2:skip_ln - Compare the two files for equality.
+#                                      Skip the first <skip_ln> lines or none.
+#
+# If a <modulename> is given you can supply a fifth argument for the
+# gold or diff commands.
+#
+
+# Warning about non-existent /tmp directory
+pr2509349a		normal			ivltests gold=pr2509349a-msys2.gold

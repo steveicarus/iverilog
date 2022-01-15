@@ -1,0 +1,13 @@
+(DELAYFILE
+  (TIMESCALE 1ns)
+
+  (CELL
+    (CELLTYPE "TBUF_X2")
+    (INSTANCE dut)
+    (DELAY (ABSOLUTE
+      (IOPATH A Z (0.2) (0.3) (0.4))
+      (IOPATH EN Z (1.2) (1.3) (1.4))
+    ))
+  )
+
+)

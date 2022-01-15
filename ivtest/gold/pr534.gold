@@ -1,0 +1,12 @@
+
+		==> CHECK THIS DISPLAY ==>
+
+pci_clk_period:			 15
+pci_clk_period:			 1500
+after setting timeformat:
+pci_clk_period:			 15
+pci_clk_period:			 15.00ns
+		**********************************************
+		****** time representation test OK     *******
+		**********************************************
+

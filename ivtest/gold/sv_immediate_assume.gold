@@ -1,0 +1,8 @@
+ERROR: ./ivltests/sv_immediate_assume.v:7: 
+       Time: 0  Scope: test
+Check 4 : this should be displayed
+Check 5 : this should be displayed
+ERROR: ./ivltests/sv_immediate_assume.v:11: 
+       Time: 0  Scope: test
+Check 7 : this should be displayed
+Check 8 : this should be displayed

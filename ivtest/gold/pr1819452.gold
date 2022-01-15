@@ -1,0 +1,21 @@
+Found:  in_0 currently at byte 5
+Found:  in_1 currently at byte 10
+Found:  in_2 currently at byte 15
+Found:  in_3 currently at byte 20
+Found:  in_4 currently at byte 25
+Found:  in_5 currently at byte 30
+Found:  in_6 currently at byte 35
+Found:  in_7 currently at byte 40
+Found:  in_8 currently at byte 45
+Found:  in_9 currently at byte 50
+Found: in_10 currently at byte 56
+Found:  in_0 currently at byte 5
+Found:  in_0 currently at byte 5
+Found:    10 currently at byte 56
+Found: in_10 currently at byte 56
+WARNING: ./ivltests/pr1819452.v:34: invalid file descriptor (0xffffffff) given to $fseek.
+Check fseek EOF = -1
+WARNING: ./ivltests/pr1819452.v:37: invalid file descriptor (0xffffffff) given to $ftell.
+Check ftell EOF = -1
+WARNING: ./ivltests/pr1819452.v:40: invalid file descriptor (0xffffffff) given to $rewind.
+Check rewind EOF = -1

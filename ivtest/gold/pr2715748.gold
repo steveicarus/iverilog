@@ -1,0 +1,6 @@
+Real -1, Realtime 1
+Real as int -1, Realtime as int 1
+Real net 2
+Real net as int 2
+Passed %f put
+Passed %d put

@@ -1,0 +1,43 @@
+Vec:    9
+Bit:   0
+Byte:     0
+Short:      0
+Int:             0
+Long:                     0
+Monitor results:
+Time:          0
+  Bit:   0
+  Byte:     0
+  Short:      0
+  Int:             0
+  Long:                     0
+Time:          1
+  Bit:   1
+  Byte:     0
+  Short:      0
+  Int:             0
+  Long:                     0
+Time:          2
+  Bit:   1
+  Byte:     1
+  Short:      0
+  Int:             0
+  Long:                     0
+Time:          3
+  Bit:   1
+  Byte:     1
+  Short:      1
+  Int:             0
+  Long:                     0
+Time:          4
+  Bit:   1
+  Byte:     1
+  Short:      1
+  Int:             1
+  Long:                     0
+Time:          5
+  Bit:   1
+  Byte:     1
+  Short:      1
+  Int:             1
+  Long:                     1

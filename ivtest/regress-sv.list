@@ -1,0 +1,591 @@
+# This test list contains tests that should work using any simulator that
+# supports SystemVerilog (1800-2012).
+
+#
+# Copyright (c) 1999-2021 Guy Hutchison (ghutchis@pacbell.net)
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+#
+# Format of the file
+#
+# testname		testtype		directory
+#
+# The <testname> is the verilog file name minus an extension.
+#
+# The <testtype> can be one of the following:
+#
+# normal:  Normal results expected, i.e it should compile and execute
+#          producing at least a single line with PASSED.
+#
+# CO:      Compile Only - Compile the file to the default output type.
+#
+# CN:      Compile Null - Compile with the null target. Similar to CO.
+#
+# CE:      Compile with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# RE:      Runtime with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# EF:      Expected Fail - We EXPECT this test to fail - only use
+#                          with older versions of Icarus.
+#
+# TE:      Translation Error - We EXPECT the translated code to fail -
+#                              only supported in the vlog95 checker.
+#
+# NI:      Not implemented. Only use for version specific tests.
+#
+# <directory> is where the <testname>.v file is located.
+#
+# An optional fourth and fifth argument can be supplied.
+#
+# The fourth argument may be one of the following.
+#
+#   modulename                       - Defines the top level module
+#   gold=filename                    - Compare a gold file against the
+#                                      generated log file.
+#   unordered=filename               - Compare a gold file against the
+#                                      generated log file, allowing for lines
+#                                      to appear in any order
+#   diff=filename1:filename2:skip_ln - Compare the two files for equality.
+#                                      Skip the first <skip_ln> lines or none.
+#
+# If a <modulename> is given you can supply a fifth argument for the
+# gold or diff commands.
+#
+
+always4A		CE,-g2005-sv		ivltests
+always4B		CE,-g2005-sv		ivltests
+always_comb		normal,-g2005-sv	ivltests
+always_comb_fail	CE,-g2005-sv		ivltests
+always_comb_fail3	CE,-g2005-sv		ivltests
+always_comb_fail4	CE,-g2005-sv		ivltests
+always_comb_no_sens	nornal,-g2005-sv	ivltests gold=always_comb_no_sens.gold
+always_comb_rfunc	nornal,-g2005-sv	ivltests
+always_comb_trig	normal,-g2005-sv	ivltests
+always_comb_warn	normal,-g2005-sv	ivltests gold=always_comb_warn.gold
+always_ff		normal,-g2005-sv	ivltests
+always_ff_fail		CE,-g2005-sv		ivltests
+always_ff_fail2		CE,-g2005-sv		ivltests
+always_ff_fail3		CE,-g2005-sv		ivltests
+always_ff_fail4		CE,-g2005-sv		ivltests
+always_ff_no_sens	CE,-g2005-sv		ivltests
+always_ff_warn		normal,-g2005-sv	ivltests gold=always_ff_warn.gold
+always_ff_warn_sens	normal,-g2005-sv	ivltests gold=always_ff_warn_sens.gold
+always_latch		normal,-g2005-sv	ivltests
+always_latch_fail	CE,-g2005-sv		ivltests
+always_latch_fail3	CE,-g2005-sv		ivltests
+always_latch_fail4	CE,-g2005-sv		ivltests
+always_latch_no_sens	CE,-g2005-sv		ivltests
+always_latch_trig	normal,-g2005-sv	ivltests
+always_latch_warn	normal,-g2005-sv	ivltests gold=always_latch_warn.gold
+array_size		normal,-g2005-sv	ivltests # test [size] arrays
+array_string		normal,-g2009		ivltests
+array_unpacked_sysfunct	normal,-g2005-sv	ivltests
+array_packed		normal,-g2005-sv	ivltests
+assign_op_concat	normal,-g2009		ivltests
+assign_op_type		normal,-g2009		ivltests
+bitp1			normal,-g2005-sv	ivltests
+bits			normal,-g2005-sv	ivltests
+bits2			normal,-g2005-sv	ivltests
+br884			normal,-g2009		ivltests
+br917a			normal,-g2009		ivltests
+br917b			normal,-g2009		ivltests
+br917c			normal,-g2009		ivltests
+br917d			normal,-g2009		ivltests
+br921			normal,-g2009		ivltests gold=br921.gold
+br932a			normal,-g2009		ivltests
+br932b			normal,-g2009		ivltests
+br936			normal,-g2009		ivltests
+br956			normal,-g2009		ivltests
+br959			normal,-g2009		ivltests
+br962			normal,-g2009		ivltests
+br963			normal,-g2009		ivltests
+br973			normal,-g2009		ivltests
+br974a			normal,-g2009		ivltests
+br974b			normal,-g2009		ivltests
+br974c			normal,-g2009		ivltests
+br975			CE,-g2009		ivltests gold=br975.gold
+br979			normal,-g2009		ivltests
+br991b			CE,-g2009		ivltests gold=br991b.gold
+br1003a			normal,-g2009		ivltests gold=br1003a.gold
+br1003b			normal,-g2009		ivltests gold=br1003b.gold
+br1003c			normal,-g2009		ivltests gold=br1003c.gold
+br1003d			normal,-g2009		ivltests gold=br1003d.gold
+br1004			normal,-g2009		ivltests
+br1005			normal,-g2009		ivltests gold=br1005.gold
+br1015b			normal,-g2009		ivltests
+br1025			normal,-g2009		ivltests
+br1027b			normal,-g2009		ivltests gold=br1027b.gold
+br1027d			normal,-g2009		ivltests gold=br1027d.gold
+br1027f			normal,-g2009		ivltests gold=br1027f.gold
+br_gh4			normal,-g2009		ivltests
+br_gh4a			normal,-g2009		ivltests
+br_gh72a		normal,-g2009		ivltests gold=br_gh72a.gold
+br_gh72b		normal,-g2009		ivltests gold=br_gh72b.gold
+br_gh72b_fail		CE,-g2009		ivltests gold=br_gh72b_fail.gold
+br_gh104a		normal,-g2009		ivltests
+br_gh104b		normal,-g2009		ivltests
+br_gh105a		normal,-g2009		ivltests gold=br_gh105a.gold
+br_gh105b		normal,-g2009		ivltests gold=br_gh105b.gold
+br_gh112a		normal,-g2009		ivltests
+br_gh112b		normal,-g2009		ivltests
+br_gh112c		normal,-g2009		ivltests
+br_gh112d		normal,-g2009		ivltests
+br_gh112e		normal,-g2009		ivltests
+br_gh112f		normal,-g2009		ivltests
+br_gh129		normal,-g2009		ivltests
+br_gh130a		CE,-g2009		ivltests
+br_gh165		normal,-g2009		ivltests gold=br_gh165.gold
+br_gh164a		normal,-g2009		ivltests
+br_gh164b		normal,-g2009		ivltests
+br_gh164c		normal,-g2009		ivltests
+br_gh164d		normal,-g2009		ivltests
+br_gh164e		normal,-g2009		ivltests
+br_gh167a		normal,-g2009		ivltests
+br_gh167b		normal,-g2009		ivltests
+br_gh177a		normal,-g2009		ivltests
+br_gh177b		normal,-g2009		ivltests
+br_gh194		normal,-g2009		ivltests
+br_gh219		normal,-g2009		ivltests
+br_gh220		normal,-g2009		ivltests
+br_gh224		normal,-g2009		ivltests
+br_gh226		normal,-g2009		ivltests
+br_gh231		normal,-g2009		ivltests
+br_gh243		normal,-g2009		ivltests
+br_gh265		CE,-g2009		ivltests gold=br_gh265.gold
+br_gh277b		normal,-g2009		ivltests
+br_gh280		normal,-g2009		ivltests
+br_gh281		normal,-g2012		ivltests
+br_gh281b		normal,-g2012		ivltests
+br_gh289a		normal,-g2009		ivltests
+br_gh289b		normal,-g2009		ivltests
+br_gh289c		normal,-g2009		ivltests
+br_gh289d		normal,-g2009		ivltests gold=br_gh289d.gold
+br_gh337		normal,-g2009		ivltests
+br_gh361		normal,-g2009		ivltests
+br_gh365		normal,-g2009		ivltests gold=br_gh365.gold
+br_gh366		normal,-g2009		ivltests gold=br_gh366.gold
+br_gh368		normal,-g2009		ivltests gold=br_gh368.gold
+br_gh374		normal,-g2009		ivltests gold=br_gh374.gold
+br_gh386a		normal,-g2009		ivltests
+br_gh386b		normal,-g2009		ivltests
+br_gh386c		CE,-g2009		ivltests
+br_gh388		normal,-g2009		ivltests gold=br_gh388.gold
+br_gh391		normal,-g2009		ivltests gold=br_gh391.gold
+br_gh411		normal,-g2009		ivltests
+br_gh418		normal,-g2009		ivltests
+br_gh433		normal,-g2009		ivltests gold=br_gh433.gold
+br_gh437		normal,-g2009		ivltests
+br_gh440		CE,-g2009		ivltests gold=br_gh440.gold
+br_gh443		normal,-g2009		ivltests
+br_gh445		normal,-g2009		ivltests
+br_gh461		normal,-g2009		ivltests
+br_gh477		normal,-g2009		ivltests
+br_gh478		normal,-g2009		ivltests
+br_gh498		normal,-g2009		ivltests
+br_gh508a		normal,-g2009		ivltests
+br_gh527		normal,-g2009		ivltests
+br_gh530		CO,-g2009		ivltests
+br_gh540		normal,-g2009		ivltests
+br_gh553		normal,-g2009		ivltests
+br_gh556		normal,-g2009		ivltests
+br_gh568		normal,-g2009		ivltests
+br_ml20171017		normal,-g2009		ivltests
+br_ml20180227		CE,-g2009		ivltests
+br_ml20180309a		normal,-g2009		ivltests
+br_ml20180309b		normal,-g2009		ivltests
+br_ml20181012a		CE,-g2009		ivltests
+br_ml20181012b		CE,-g2009		ivltests
+br_ml20181012c		CE,-g2009		ivltests
+br_ml20181012d		CE,-g2009		ivltests
+br_ml20191221		normal,-g2009		ivltests
+br_mw20200501		normal,-g2009		ivltests
+case_priority		normal,-g2005-sv	ivltests gold=case_priority.gold
+case_unique		normal,-g2005-sv	ivltests gold=case_unique.gold
+cast_real		normal,-g2005-sv	ivltests
+cfunc_assign_op_mixed	normal,-g2009		ivltests
+cfunc_assign_op_pv	normal,-g2009		ivltests
+cfunc_assign_op_real	normal,-g2009		ivltests
+cfunc_assign_op_vec	normal,-g2009		ivltests
+clkgen_bit		normal,-g2009		ivltests
+clkgen_logic		normal,-g2009		ivltests
+clkgen_net		normal,-g2009		ivltests
+clkgen_reg		normal,-g2009		ivltests
+disable_fork_cmd	normal,-g2009		ivltests
+display_bug		normal,-g2009		ivltests gold=display_bug.gold
+edge			normal,-g2009		ivltests
+enum_base_range		normal,-g2005-sv	ivltests
+enum_elem_ranges	normal,-g2005-sv	ivltests
+enum_dims_invalid	CE,-g2005-sv		ivltests
+enum_next		normal,-g2005-sv	ivltests
+enum_ports		normal,-g2005-sv	ivltests
+enum_test1		normal,-g2005-sv	ivltests
+enum_test2		normal,-g2005-sv	ivltests
+enum_test3		CE,-g2005-sv		ivltests
+enum_test4		normal,-g2005-sv	ivltests
+enum_test5		CE,-g2005-sv		ivltests
+enum_test6		CE,-g2005-sv		ivltests
+enum_test7		CE,-g2005-sv		ivltests
+enum_test8		normal,-g2005-sv	ivltests
+enum_value_expr		normal,-g2005-sv	ivltests
+enum_values		normal,-g2005-sv	ivltests
+escaped_macro_name	normal,-g2009	        ivltests gold=escaped_macro_name.gold
+extra_semicolon		normal,-g2005-sv	ivltests
+fileline		normal,-g2009		ivltests gold=fileline.gold
+fileline2		normal,-g2009		ivltests gold=fileline2.gold
+final			normal,-g2005-sv	ivltests gold=final.gold
+final2			normal,-g2005-sv	ivltests gold=final2.gold
+first_last_num		normal,-g2005-sv	ivltests
+fork_join_any		normal,-g2009		ivltests
+fork_join_dis		normal,-g2009		ivltests
+fork_join_none		normal,-g2009		ivltests
+fr49			normal,-g2009		ivltests
+func_init_var1		normal,-g2009		ivltests
+func_init_var2		normal,-g2009		ivltests
+func_init_var3		normal,-g2009		ivltests
+function10		CO,-g2005-sv		ivltests
+function11		CE,-g2005-sv		ivltests
+function12		normal,-g2005-sv	ivltests gold=function12.gold
+genvar_inc_dec		normal,-g2009		ivltests
+ibit_test		normal,-g2005-sv	ivltests
+ibyte_test		normal,-g2005-sv	ivltests
+iint_test		normal,-g2005-sv	ivltests
+ilongint_test		normal,-g2005-sv	ivltests
+implicit_cast1		normal,-g2009		ivltests
+implicit_cast2		normal,-g2009		ivltests
+implicit_cast3		normal,-g2009		ivltests
+implicit_cast4		normal,-g2009		ivltests
+implicit_cast5		normal,-g2009		ivltests
+implicit_cast6		normal,-g2009		ivltests
+implicit_cast7		normal,-g2009		ivltests
+implicit_cast8		normal,-g2009		ivltests
+implicit_cast9		normal,-g2009		ivltests
+implicit_cast10		normal,-g2009		ivltests
+implicit_cast11		normal,-g2009		ivltests
+implicit_cast12		normal,-g2009		ivltests
+implicit_cast13		normal,-g2009		ivltests
+implicit-port1		normal,-g2005-sv	ivltests # SystemVerilog implicit port connections
+implicit-port2		CE,-g2005-sv		ivltests
+implicit-port3		CE,-g2005-sv		ivltests
+implicit-port4		normal,-g2005-sv	ivltests
+implicit-port5		normal,-g2005-sv	ivltests
+implicit-port6		CE,-g2005-sv		ivltests
+implicit-port7		normal,-g2005-sv	ivltests
+inc_dec_stmt		normal,-g2009		ivltests
+int_param		normal,-g2009		ivltests
+ishortint_test		normal,-g2005-sv	ivltests
+iuint1			normal,-g2005-sv	ivltests
+l_equiv			normal,-g2005-sv	ivltests
+l_equiv_ca		normal,-g2005-sv	ivltests
+l_equiv_const		normal,-g2005-sv	ivltests
+line_directive		normal,-g2009,-I./ivltests	ivltests gold=line_directive.gold
+localparam_query	normal,-g2005-sv	ivltests
+localparam_type2	normal,-g2009		ivltests
+logical_short_circuit	normal,-g2012		ivltests
+logp2			normal,-g2005-sv	ivltests
+mod_inst_pkg		normal,-g2009		ivltests
+named_begin		normal,-g2009		ivltests
+named_begin_fail	CE,-g2009		ivltests
+named_fork		normal,-g2009		ivltests
+named_fork_fail		CE,-g2009		ivltests
+packeda			normal,-g2009		ivltests
+packeda2		normal,-g2009		ivltests
+parameter_type2		normal,-g2009		ivltests
+parpkg_test		normal,-g2009		ivltests
+parpkg_test2		normal,-g2009		ivltests
+parpkg_test3		normal,-g2009		ivltests
+part_sel_port		normal,-g2005-sv	ivltests
+plus_5			normal,-g2009		ivltests
+pr3366114		normal,-g2009		ivltests
+pr3366217a		CE,-g2005-sv		ivltests gold=pr3366217a.gold
+pr3366217b		CE,-g2005-sv		ivltests gold=pr3366217b.gold
+pr3366217c		CE,-g2005-sv		ivltests gold=pr3366217c.gold
+pr3366217d		CE,-g2005-sv		ivltests gold=pr3366217d.gold
+pr3366217e		normal,-g2005-sv	ivltests
+pr3366217f		normal,-g2005-sv	ivltests gold=pr3366217f.gold
+pr3366217g		CE,-g2005-sv		ivltests unordered=pr3366217g.gold
+pr3366217h		normal,-g2005-sv	ivltests
+pr3366217i		normal,-g2005-sv	ivltests
+pr3390385		normal,-g2009		ivltests
+pr3390385b		normal,-g2009		ivltests
+pr3390385c		normal,-g2009		ivltests
+pr3390385d		normal,-g2009		ivltests
+pr3462145		normal,-g2009		ivltests
+pr3515542		CE,-g2005-sv		ivltests gold=pr3515542.gold
+pr3534333		normal,-g2005-sv	ivltests
+pr3576165		normal,-g2009		ivltests
+program2		normal,-g2009		ivltests
+program2b		normal,-g2009		ivltests
+program3		normal,-g2009		ivltests
+program3a		normal,-g2009		ivltests
+program3b		CE,-g2009		ivltests
+program4		normal,-g2009		ivltests
+program5a		CE,-g2009		ivltests
+program5b		CE,-g2009		ivltests
+program_hello		normal,-g2009		ivltests
+program_hello2		CE,-g2009		ivltests
+sbyte_test		normal,-g2005-sv	ivltests
+scalar_vector		normal,-g2005-sv	ivltests
+sf_countbits		normal,-g2012		ivltests
+sf_countbits_fail	RE,-g2012		ivltests gold=sf_countbits_fail.gold
+sf_countones		normal,-g2009		ivltests
+sf_countones_fail	RE,-g2009		ivltests gold=sf_countones_fail.gold
+sf_isunknown		normal,-g2005-sv	ivltests
+sf_isunknown_fail	RE,-g2005-sv	ivltests gold=sf_isunknown_fail.gold
+sf_onehot		normal,-g2005-sv	ivltests
+sf_onehot_fail		RE,-g2005-sv	ivltests gold=sf_onehot_fail.gold
+sf_onehot0		normal,-g2005-sv	ivltests
+sf_onehot0_fail		RE,-g2005-sv	ivltests gold=sf_onehot0_fail.gold
+sformatf		normal,-g2009		ivltests
+simple_byte		normal,-g2005-sv	ivltests
+simple_int		normal,-g2005-sv	ivltests
+simple_longint		normal,-g2005-sv	ivltests
+simple_shortint		normal,-g2005-sv	ivltests
+sint_test		normal,-g2005-sv	ivltests
+size_cast		normal,-g2009		ivltests
+size_cast2		normal,-g2005-sv	ivltests
+size_cast3		normal,-g2009		ivltests
+size_cast4		normal,-g2009		ivltests
+size_cast5		normal,-g2009		ivltests
+slongint_test		normal,-g2005-sv	ivltests
+sshortint_test		normal,-g2005-sv	ivltests
+string_events		normal,-g2009		ivltests gold=string_events.gold
+string_index		normal,-g2005-sv	ivltests
+struct1			normal,-g2009		ivltests
+struct2			normal,-g2009		ivltests
+struct3			normal,-g2009		ivltests
+struct3b		normal,-g2009		ivltests
+struct4			normal,-g2009		ivltests
+struct5			normal,-g2009		ivltests
+struct6			normal,-g2009		ivltests
+struct7			normal,-g2009		ivltests
+struct8			normal,-g2009		ivltests
+struct9			normal,-g2009		ivltests
+struct_packed_array	normal,-g2009		ivltests
+struct_packed_array2	normal,-g2009		ivltests
+struct_packed_sysfunct	normal,-g2009		ivltests
+struct_packed_write_read2	normal,-g2009	ivltests
+sv-constants		normal,-g2005-sv	ivltests
+sv_array_assign_pattern2	normal,-g2009	ivltests
+sv_cast_integer		normal,-g2005-sv	ivltests
+sv_cast_integer2		normal,-g2005-sv	ivltests
+sv_cast_string		normal,-g2005-sv	ivltests
+sv_class1		normal,-g2009		ivltests
+sv_class2		normal,-g2009		ivltests
+sv_class3		normal,-g2009		ivltests
+sv_class4		normal,-g2009		ivltests
+sv_class5		normal,-g2009		ivltests
+sv_class6		normal,-g2009		ivltests
+sv_class7		normal,-g2009		ivltests
+sv_class8		normal,-g2009		ivltests
+sv_class9		normal,-g2009		ivltests
+sv_class10		normal,-g2009		ivltests
+sv_class11		normal,-g2009		ivltests
+sv_class12		normal,-g2009		ivltests
+sv_class13		normal,-g2009		ivltests
+sv_class14		normal,-g2009		ivltests
+sv_class15		normal,-g2009		ivltests
+sv_class16		normal,-g2009		ivltests
+sv_class17		normal,-g2009		ivltests
+sv_class18		normal,-g2009		ivltests
+sv_class19		normal,-g2009		ivltests
+sv_class20		normal,-g2009		ivltests
+sv_class21		normal,-g2009		ivltests
+sv_class22		normal,-g2009		ivltests
+sv_class23		normal,-g2009		ivltests
+sv_class24		normal,-g2009		ivltests
+sv_darray1		normal,-g2009		ivltests
+sv_darray2		normal,-g2009		ivltests
+sv_darray3		normal,-g2009		ivltests
+sv_darray4		normal,-g2009		ivltests
+sv_darray5		normal,-g2009		ivltests
+sv_darray5b		normal,-g2009		ivltests
+sv_darray6		normal,-g2009		ivltests
+sv_darray_args1		normal,-g2009		ivltests
+sv_darray_args2		normal,-g2009		ivltests
+sv_darray_args2b	normal,-g2009		ivltests
+sv_darray_args3		normal,-g2009		ivltests
+sv_darray_args4		normal,-g2009		ivltests
+sv_darray_decl_assign	normal,-g2009		ivltests
+sv_darray_function	normal,-g2009		ivltests
+sv_darray_signed	normal,-g2009		ivltests
+sv_darray_word_size	normal,-g2005-sv	ivltests
+sv_default_port_value1	normal,-g2009		ivltests
+sv_default_port_value2	normal,-g2009		ivltests
+sv_default_port_value3	CE,-g2009		ivltests gold=sv_default_port_value3.gold
+sv_deferred_assert1	normal,-g2009		ivltests gold=sv_deferred_assert1.gold
+sv_deferred_assert2	normal,-g2009		ivltests gold=sv_deferred_assert2.gold
+sv_deferred_assume1	normal,-g2009		ivltests gold=sv_deferred_assume1.gold
+sv_deferred_assume2	normal,-g2009		ivltests gold=sv_deferred_assume2.gold
+sv_end_label		normal,-g2005-sv	ivltests
+sv_end_label_fail	CE,-g2009		ivltests gold=sv_end_label_fail.gold
+sv_end_labels		normal,-g2009		ivltests
+sv_end_labels_bad	CE,-g2009		ivltests gold=sv_end_labels_bad.gold
+sv_enum1		normal,-g2009		ivltests
+sv_for_variable		normal,-g2009		ivltests
+sv_foreach1		normal,-g2009		ivltests
+sv_foreach2		normal,-g2009		ivltests
+sv_foreach3		normal,-g2009		ivltests
+sv_foreach4		normal,-g2009		ivltests
+sv_foreach5		normal,-g2009		ivltests
+sv_immediate_assert	normal,-g2009		ivltests gold=sv_immediate_assert.gold
+sv_immediate_assume	normal,-g2009		ivltests gold=sv_immediate_assume.gold
+sv_macro		normal,-g2009		ivltests
+sv_macro2		normal,-g2009		ivltests gold=sv_macro2.gold
+sv_macro3a		normal,-g2009		ivltests gold=sv_macro3.gold
+sv_macro3b		normal,-g2009		ivltests gold=sv_macro3.gold
+sv_new_array_error	CE,-g2009		ivltests gold=sv_new_array_error.gold
+sv_package		normal,-g2009		ivltests
+sv_package2		normal,-g2009		ivltests
+sv_package3		normal,-g2009		ivltests
+sv_package4		normal,-g2009		ivltests
+sv_package5		normal,-g2009		ivltests
+sv_packed_port1		normal,-g2009		ivltests
+sv_packed_port2		normal,-g2009		ivltests
+sv_param_port_list	normal,-g2009		ivltests
+sv_pkg_class		normal,-g2009		ivltests gold=sv_pkg_class.gold
+sv_port_default1	normal,-g2009		ivltests
+sv_port_default2	normal,-g2009		ivltests
+sv_port_default3	normal,-g2009		ivltests
+sv_port_default4	normal,-g2009		ivltests
+sv_port_default5	normal,-g2009		ivltests
+sv_port_default6	normal,-g2009		ivltests
+sv_port_default7	normal,-g2009		ivltests
+sv_port_default8	normal,-g2009		ivltests
+sv_port_default9	normal,-g2009		ivltests
+sv_port_default10	normal,-g2009		ivltests
+sv_port_default11	normal,-g2009		ivltests
+sv_port_default12	normal,-g2009		ivltests
+sv_port_default13	CE,-g2009		ivltests
+sv_port_default14	CE,-g2009		ivltests
+sv_queue1		normal,-g2009		ivltests
+sv_queue2		normal,-g2009		ivltests
+sv_queue3		normal,-g2009		ivltests
+sv_queue_real		normal,-g2009,-pfileline=1	ivltests gold=sv_queue_real.gold
+sv_queue_real_bounded	normal,-g2009,-pfileline=1	ivltests gold=sv_queue_real_bounded.gold
+sv_queue_real_fail	CE,-g2009		ivltests gold=sv_queue_real_fail.gold
+sv_queue_string		normal,-g2009,-pfileline=1	ivltests gold=sv_queue_string.gold
+sv_queue_string_bounded	normal,-g2009,-pfileline=1	ivltests gold=sv_queue_string_bounded.gold
+sv_queue_string_fail	CE,-g2009		ivltests gold=sv_queue_string_fail.gold
+sv_queue_vec		normal,-g2009,-pfileline=1	ivltests gold=sv_queue_vec.gold
+sv_queue_vec_bounded	normal,-g2009,-pfileline=1	ivltests gold=sv_queue_vec_bounded.gold
+sv_queue_vec_fail	CE,-g2009		ivltests gold=sv_queue_vec_fail.gold
+sv_root_class		normal,-g2009		ivltests gold=sv_root_class.gold
+sv_root_func		normal,-g2009		ivltests gold=sv_root_func.gold
+sv_root_task		normal,-g2009		ivltests gold=sv_root_task.gold
+sv_string1		normal,-g2009		ivltests
+sv_string2		normal,-g2009		ivltests
+sv_string3		normal,-g2009		ivltests
+sv_string4		normal,-g2009		ivltests
+sv_string5		normal,-g2009		ivltests
+sv_timeunit_prec1	normal,-g2005-sv	ivltests
+sv_timeunit_prec2	normal,-g2009		ivltests
+sv_timeunit_prec3a	normal,-g2005-sv	ivltests gold=sv_timeunit_prec3a.gold
+sv_timeunit_prec3b	normal,-g2005-sv	ivltests gold=sv_timeunit_prec3b.gold
+sv_timeunit_prec3c	normal,-g2005-sv	ivltests gold=sv_timeunit_prec3c.gold
+sv_timeunit_prec3d	normal,-g2005-sv	ivltests gold=sv_timeunit_prec3d.gold
+sv_timeunit_prec4a	normal,-g2009		ivltests gold=sv_timeunit_prec4a.gold
+sv_timeunit_prec4b	normal,-g2009		ivltests gold=sv_timeunit_prec4b.gold
+sv_timeunit_prec_fail1	CE,-g2005-sv,-u,\
+  ./ivltests/sv_timeunit_prec_fail1a.v,\
+  ./ivltests/sv_timeunit_prec_fail1b.v,\
+  ./ivltests/sv_timeunit_prec_fail1c.v,\
+  ./ivltests/sv_timeunit_prec_fail1d.v,\
+  ./ivltests/sv_timeunit_prec_fail1e.v,		ivltests gold=sv_timeunit_prec_fail1.gold
+sv_timeunit_prec_fail2	CE,-g2009,-u,\
+  ./ivltests/sv_timeunit_prec_fail2a.v,\
+  ./ivltests/sv_timeunit_prec_fail2b.v,\
+  ./ivltests/sv_timeunit_prec_fail2c.v,		ivltests gold=sv_timeunit_prec_fail2.gold
+sv_typedef_scope	normal,-g2009		ivltests
+sv_union1		normal,-g2009		ivltests
+sv_union1b		normal,-g2009		ivltests
+sv_union2		normal,-g2009		ivltests
+sv_union2b		normal,-g2009		ivltests
+sv_union3		normal,-g2009		ivltests
+sv_union3b		normal,-g2009		ivltests
+sv_union4b		normal,-g2009		ivltests
+sv_unit1b		normal,-g2009,-DMACRO1=1,-DMACRO2=2,\
+  ./ivltests/sv_unit1a.v			ivltests gold=sv_unit1b.gold
+sv_unit1c		normal,-g2009,-DMACRO1=1,-DMACRO2=2,-u,\
+  ./ivltests/sv_unit1a.v			ivltests gold=sv_unit1c.gold
+sv_unit2b		normal,-g2009,-u,\
+  ./ivltests/sv_unit2a.v			ivltests gold=sv_unit2b.gold
+sv_unit3b		normal,-g2009,-u,\
+  ./ivltests/sv_unit3a.v			ivltests gold=sv_unit3b.gold
+sv_unit4b		normal,-g2009,-u,\
+  ./ivltests/sv_unit4a.v			ivltests gold=sv_unit3b.gold
+sv_unpacked_port	normal,-g2009		ivltests
+sv_unpacked_port2	normal,-g2009		ivltests
+sv_unpacked_wire	normal,-g2009		ivltests
+sv_unpacked_wire2	normal,-g2009		ivltests
+sv_uwire1		normal,-g2009		ivltests
+sv_uwire2		normal,-g2009		ivltests
+sv_uwire3		normal,-g2009		ivltests
+sv_uwire4		normal,-g2009		ivltests
+sv_var_init1		normal,-g2009		ivltests
+sv_var_init2		normal,-g2009		ivltests
+sv_wildcard_import1	normal,-g2009		ivltests
+sv_wildcard_import2	normal,-g2009		ivltests
+sv_wildcard_import3	normal,-g2009		ivltests
+sv_wildcard_import4	CE,-g2009		ivltests gold=sv_wildcard_import4.gold
+sv_wildcard_import5	CE,-g2009		ivltests unordered=sv_wildcard_import5.gold
+sv_wildcard_import6	normal,-g2009		ivltests
+sv_wildcard_import7	normal,-g2009		ivltests
+sys_func_as_task	normal,-g2005-sv	ivltests gold=sys_func_as_task.gold
+task_init_assign	normal,-g2009		ivltests
+task_init_var1		normal,-g2009		ivltests
+task_init_var2		normal,-g2009		ivltests
+task_init_var3		normal,-g2009		ivltests
+task_scope2		normal,-g2009		ivltests
+test_inc_dec		normal,-g2009		ivltests
+test_tliteral		normal,-g2009		ivltests
+timeliteral		normal,-g2009		ivltests
+two_state_display	normal,-g2005-sv	ivltests gold=two_state_display.gold
+ubyte_test		normal,-g2005-sv	ivltests
+uint_test		normal,-g2005-sv	ivltests
+ulongint_test		normal,-g2005-sv	ivltests
+undef_lval_select_SV	normal,-g2009		ivltests
+unp_array_typedef	normal,-g2005-sv	ivltests
+packed_dims_invalid_class CE,-g2005-sv		ivltests
+packed_dims_invalid_module CE,-g2005-sv		ivltests
+ushortint_test		normal,-g2005-sv	ivltests
+vvp_recv_vec4_pv	normal,-g2005-sv	ivltests
+wait_fork		normal,-g2009		ivltests
+sf1289			normal,-g2012		ivltests
+wild_cmp_const		normal,-g2009		ivltests
+wild_cmp_net		normal,-g2009		ivltests
+wild_cmp_var		normal,-g2009		ivltests
+wild_cmp_err		CE,-g2009		ivltests gold=wild_cmp_err.gold
+wild_cmp_err2		CE,-g2009		ivltests gold=wild_cmp_err2.gold
+gh161a			normal,-g2012		ivltests
+gh161b			normal,-g2012		ivltests
+pull371b		normal,-g2012		ivltests
+
+br_gh175		normal,-g2012		ivltests
+br_gh307		normal,-g2012		ivltests
+br_gh383a		normal,-g2012		ivltests gold=br_gh383a.gold
+br_gh383b		normal,-g2012		ivltests gold=br_gh383b.gold
+br_gh383c		normal,-g2012		ivltests gold=br_gh383c.gold
+br_gh383d		normal,-g2012		ivltests gold=br_gh383d.gold
+br_gh390a		CE,-g2012		ivltests
+br_gh390b		normal,-g2012		ivltests gold=br_gh390b.gold
+br_gh412		normal,-g2012		ivltests
+br_gh414		normal,-g2012		ivltests
+br_gh436		normal,-g2012		ivltests gold=br_gh436.gold
+br_gh451		normal,-g2012,-Ptest.foo=4	ivltests gold=br_gh451.gold
+br_gh453		normal,-g2012		ivltests
+br_gh460		normal,-g2012		ivltests

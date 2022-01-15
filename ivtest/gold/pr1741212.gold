@@ -1,0 +1,36 @@
+cos(MATH_PI_OVER_3): 0.500000
+sin(MATH_PI_OVER_3): 0.866025
+sign(-10): 1.000000
+realmax(MATH_PI,MATH_E): 3.141593
+realmin(MATH_PI,MATH_E): 2.718282
+mod(MATH_PI,MATH_E): 0.423311
+ceil(-MATH_PI): -3.000000
+ceil(4.0): 4.000000
+ceil(3.99999999999999): 4.000000
+pow(MATH_PI,2): 9.869604
+gaussian(1.0,1.0): 0.694156
+round(MATH_PI): 3.000000
+trunc(-MATH_PI): -3.000000
+ceil(-MATH_PI): -3.000000
+floor(MATH_PI): 3.000000
+round(e): 3.000000
+ceil(-e): -2.000000
+exp(MATH_PI): 23.140693
+log2(MATH_PI): 1.651496
+log_base(pow(2,32),2): 32.000000
+ln(0.1): -2.302585
+cbrt(7): 1.912931
+cos(6.2831853071): -1.000000
+sin(-6.2831853071): 0.000000
+sinh(2.7182818284): 7.544137
+cosh(6.2831853071): 267.746761
+arctan_xy(-4,3): 2.498092
+arctan(MATH_PI): 1.262627
+arctan(-MATH_E/2): -0.936472
+arctan(MATH_PI_OVER_2): 1.003885
+arctan(1/7) = 0.141897
+arctan(3/79) = 0.037956
+pi/4 ?= 0.785398
+arcsin(1.0): 1.570796
+cos(pi/2): 0.000000
+arccos(cos(pi/2)): 1.570796

@@ -1,0 +1,4 @@
+./ivltests/pr3190941.v:9: error: expression not valid in assign l-value: 4'bxxxx
+./ivltests/pr3190941.v:9: error: Output port expression must support continuous assignment.
+./ivltests/pr3190941.v:9:      : Port 1 (x) of m1 is connected to {4'bxxxx, y}
+2 error(s) during elaboration.

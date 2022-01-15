@@ -1,0 +1,6 @@
+testcase_defparam.test_defparam_a.U_test foo =           2
+testcase_defparam.test_defparam_b.U_test foo =           2
+testcase_defparam.test_defparam_c.U_test foo =           2
+testcase_inline.test_inline_a.U_test foo =           2
+testcase_inline.test_inline_b.U_test foo =           2
+testcase_inline.test_inline_c.U_test foo =           2

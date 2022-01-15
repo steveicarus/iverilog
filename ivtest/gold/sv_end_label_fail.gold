@@ -1,0 +1,15 @@
+./ivltests/sv_end_label_fail.v:4: error: End label doesn't match begin name
+./ivltests/sv_end_label_fail.v:7: error: End label doesn't match fork name
+./ivltests/sv_end_label_fail.v:10: error: End label doesn't match fork name
+./ivltests/sv_end_label_fail.v:13: error: End label doesn't match fork name
+./ivltests/sv_end_label_fail.v:16: error: End label doesn't match task name
+./ivltests/sv_end_label_fail.v:19: error: End label doesn't match task name
+./ivltests/sv_end_label_fail.v:23: error: End label doesn't match function name
+./ivltests/sv_end_label_fail.v:26: error: End label doesn't match function name
+./ivltests/sv_end_label_fail.v:28: error: End label doesn't match module name.
+./ivltests/sv_end_label_fail.v:38: error: End label doesn't match begin name
+./ivltests/sv_end_label_fail.v:40: error: End label doesn't match module name.
+./ivltests/sv_end_label_fail.v:43: error: End label doesn't match package name
+./ivltests/sv_end_label_fail.v:47: error: Class end label doesn't match class name.
+./ivltests/sv_end_label_fail.v:48: error: End label doesn't match program name.
+./ivltests/sv_end_label_fail.v:64: error: End label doesn't match primitive name

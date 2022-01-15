@@ -1,0 +1,27 @@
+(DELAYFILE
+  (SDFVERSION "OVI 2.1")
+  (DESIGN "xor_rtl")
+  (DATE "Tue Mar 30 13:04:55 PDT 2010")
+  (VENDOR "Icarus Test")
+  (PROGRAM "Hand Coded")
+  (VERSION "0.0")
+  (DIVIDER /)
+  (VOLTAGE 3.30)
+  (PROCESS "nom_pvt")
+  (TEMPERATURE 25.00)
+  (TIMESCALE 1ns)
+  (CELL
+    (CELLTYPE "XOR20")
+    (INSTANCE dut)
+    (DELAY
+      (ABSOLUTE
+      (IOPATH A Q (2.0) (3.0))
+      (IOPATH B Q () ())
+      )
+    )
+  )
+  (CELL
+    (CELLTYPE "TIE_HIGH")
+    (INSTANCE src)
+  )
+)

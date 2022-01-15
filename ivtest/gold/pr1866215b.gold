@@ -1,0 +1,9 @@
+./ivltests/pr1866215b.v:26: warning: Port 1 (CH) of C expects 7 bits, got 6.
+./ivltests/pr1866215b.v:26:        : Padding 1 high bits of the port.
+./ivltests/pr1866215b.v:26: warning: Port 3 (SH) of C expects 8 bits, got 7.
+./ivltests/pr1866215b.v:26:        : Padding 1 high bits of the port.
+./ivltests/pr1866215b.v:10: warning: Port 1 (CH) of B expects 6 bits, got 16.
+./ivltests/pr1866215b.v:10:        : Pruning 10 high bits of the expression.
+./ivltests/pr1866215b.v:10: warning: Port 3 (SH) of B expects 7 bits, got 16.
+./ivltests/pr1866215b.v:10:        : Pruning 9 high bits of the expression.
+CH=3f, CL=55555555, SH=7f, SL=aaaaaaaa

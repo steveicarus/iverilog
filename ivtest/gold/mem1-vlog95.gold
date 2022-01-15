@@ -1,0 +1,33 @@
+WARNING: vlog95.v:24: $readmemb: The behaviour for reg[...] mem[N:0]; $readmemb("...", mem); changed in the 1364-2005 standard. To avoid ambiguity, use mem[0:N] or explicit range parameters $readmemb("...", mem, start, stop);. Defaulting to 1364-2005 behavior.
+mem[          0] = 000100
+mem[          1] = 000200
+mem[          2] = 000400
+mem[          3] = 000801
+mem[          4] = 001000
+mem[          5] = 002000
+mem[          6] = 004000
+mem[          7] = 008000
+mem[          8] = 010000
+mem[          9] = 020000
+mem[         10] = 040000
+mem[         11] = 080000
+mem[         12] = 100000
+mem[         13] = 200002
+mem[         14] = 400000
+mem[         15] = 800000
+         0 000100
+         1 000200
+         2 000400
+         3 000801
+         4 001000
+         5 002000
+         6 004000
+         7 008000
+         8 010000
+         9 020000
+        10 040000
+        11 080000
+        12 100000
+        13 200002
+        14 400000
+        15 800000

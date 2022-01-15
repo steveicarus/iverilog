@@ -1,0 +1,18 @@
+Compiling vpi/getp.c...
+Making getp.vpi from  getp.o...
+tf_getp(1)		-> 1
+tf_igetp(1,inst)	-> 1
+tf_getrealp(1)		-> 1.000000
+tf_igetrealp(1,inst)	-> 1.000000
+tf_getp(2)		-> 10
+tf_igetp(2,inst)	-> 10
+tf_getrealp(2)		-> 9.600000
+tf_igetrealp(2,inst)	-> 9.600000
+tf_getp(3)		-> 3
+tf_igetp(3,inst)	-> 3
+tf_getrealp(3)		-> 3.000000
+tf_igetrealp(3,inst)	-> 3.000000
+tf_getp(4)		-> 0
+tf_igetp(4,inst)	-> 0
+tf_getrealp(4)		-> 0.000000
+tf_igetrealp(4,inst)	-> 0.000000

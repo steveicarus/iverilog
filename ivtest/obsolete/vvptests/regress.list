@@ -1,0 +1,46 @@
+#
+# Copyright (c) 1999 Guy Hutchison (ghutchis@pacbell.net)
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+#
+# Format of the file
+#
+# testname	testtype	directory
+#
+# Note that no  extension is required for the testname, and that the
+# sregress.pl logic requires that the FIRST test in the list not be a
+# CO class test.
+#
+# Testtype can be one of
+#
+# normal:	Normal results expected, i.e it should compile an execute
+#               to a PASSED
+# CO:		Compile only - Examine the logfile for any errors - shouldn't
+#               be any.
+# CE:		Compile with Errors - We EXPECT errors - we're checking
+#               illegal syntax
+#
+# The third arguement is the directory, and forth optional is one of
+# modulename - Defines the top level module
+# gold=filename - Compare a gold file against the generated log file.
+# diff=filename1:filename2 - Compare the two files for equality.
+#
+assignx0 normal	vvpsources
+hello	 normal	vvpsources
+resolvz	 normal	vvpsources
+force	normal vvpsources
+force0	normal vvpsources
+force_pca normal vvpsources

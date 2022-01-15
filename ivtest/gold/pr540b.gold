@@ -1,0 +1,9 @@
+Check disable:
+***** simple block           PASSED *****
+***** block with loop        PASSED *****
+***** forked block           PASSED *****
+***** task with loop         PASSED *****
+***** task with forked block PASSED *****
+***** one forked block       PASSED *****
+***** the other forked block PASSED *****
+

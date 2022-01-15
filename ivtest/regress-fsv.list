@@ -1,0 +1,124 @@
+# This test list contains tests that should work using any simulator that
+# supports SystemVerilog (1800-2012).
+
+#
+# Copyright (c) 1999-2021 Guy Hutchison (ghutchis@pacbell.net)
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+#
+# Format of the file
+#
+# testname		testtype		directory
+#
+# The <testname> is the verilog file name minus an extension.
+#
+# The <testtype> can be one of the following:
+#
+# normal:  Normal results expected, i.e it should compile and execute
+#          producing at least a single line with PASSED.
+#
+# CO:      Compile Only - Compile the file to the default output type.
+#
+# CN:      Compile Null - Compile with the null target. Similar to CO.
+#
+# CE:      Compile with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# RE:      Runtime with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# EF:      Expected Fail - We EXPECT this test to fail - only use
+#                          with older versions of Icarus.
+#
+# TE:      Translation Error - We EXPECT the translated code to fail -
+#                              only supported in the vlog95 checker.
+#
+# NI:      Not implemented. Only use for version specific tests.
+#
+# <directory> is where the <testname>.v file is located.
+#
+# An optional fourth and fifth argument can be supplied.
+#
+# The fourth argument may be one of the following.
+#
+#   modulename                       - Defines the top level module
+#   gold=filename                    - Compare a gold file against the
+#                                      generated log file.
+#   unordered=filename               - Compare a gold file against the
+#                                      generated log file, allowing for lines
+#                                      to appear in any order
+#   diff=filename1:filename2:skip_ln - Compare the two files for equality.
+#                                      Skip the first <skip_ln> lines or none.
+#
+# If a <modulename> is given you can supply a fifth argument for the
+# gold or diff commands.
+#
+
+# Some constructs/usage are not errors in SystemVerilog
+br1015a			normal			ivltests
+br1027a			normal			ivltests gold=br1027a-fsv.gold
+br1027c			normal			ivltests gold=br1027c-fsv.gold
+br1027e			normal			ivltests gold=br1027e-fsv.gold
+br_gh25a		normal			ivltests
+br_gh25b		normal			ivltests
+br_gh567		normal			ivltests
+check_constant_3	normal			ivltests
+function4		normal			ivltests
+pr1963962		normal			ivltests gold=pr1963962-fsv.gold
+pr3015421		CE			ivltests gold=pr3015421-fsv.gold
+resetall		normal,-Wtimescale	ivltests gold=resetall-fsv.gold
+scope2b			normal			ivltests
+sys_func_task_error	RE			ivltests gold=sys_func_task_error-fsv.gold
+
+# We do not run synthesis when forcing SystemVerilog so these pass
+br995			normal			ivltests
+br_gh306a		normal			ivltests
+br_gh306b		normal			ivltests
+case5-syn-fail		normal			ivltests
+casesynth7		normal			ivltests
+casesynth8		normal			ivltests
+dffsynth		normal			ivltests
+dffsynth8		normal			ivltests
+memsynth1		normal			ivltests
+memsynth2		normal			ivltests
+memsynth3		normal			ivltests
+memsynth5		normal			ivltests
+memsynth6		normal			ivltests
+memsynth7		normal			ivltests
+memsynth9		normal			ivltests
+mix_reset		normal			ivltests
+
+# These use $abstime() and will actually run correctly with -g2012 (different
+# results), but since this file is loaded in sv-tests mark them as NI instead
+# of creating the correct gold file
+pr2590274a		NI			ivltests
+pr2590274b		NI			ivltests
+pr2590274c		NI			ivltests
+
+# These are not supported in Icarus, but are valid SystemVerilog
+array_lval_select3a	normal			ivltests
+br605a			normal			ivltests
+br605b			normal			ivltests
+br971			normal			ivltests
+br1005			normal			ivltests
+br1015b			normal			ivltests
+br_gh130b		normal			ivltests
+br_gh386d		normal			ivltests
+br_ml20150315b		normal			ivltests
+sv_deferred_assert1	normal			ivltests
+sv_deferred_assert2	normal			ivltests
+sv_deferred_assume1	normal			ivltests
+sv_deferred_assume2	normal			ivltests

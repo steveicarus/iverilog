@@ -1,0 +1,2 @@
+./ivltests/macro_redefinition.v:4: warning: redefinition of macro MACRO from value '1' to '1'
+./ivltests/macro_redefinition.v:5: warning: redefinition of macro MACRO from value '1' to '2'

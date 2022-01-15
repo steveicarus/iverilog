@@ -1,0 +1,9 @@
+top.test1.not1.test2_0 big_width: 00000012
+top.test1.not1.test2_1 big_width: 00000012
+top.test2_top big_width: 00000012
+top.test1.not1.test2_0.test3_0 wide: 00000012, width1:00000012, width2:00000012
+top.test1.not1.test2_0.test3_1 wide: 00000012, width1:00000012, width2:00000012
+top.test1.not1.test2_1.test3_0 wide: 00000012, width1:00000012, width2:00000012
+top.test1.not1.test2_1.test3_1 wide: 00000012, width1:00000012, width2:00000012
+top.test2_top.test3_0 wide: 00000012, width1:00000012, width2:00000012
+top.test2_top.test3_1 wide: 00000012, width1:00000012, width2:00000012

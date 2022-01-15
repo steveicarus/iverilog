@@ -1,0 +1,10 @@
+WARNING: ./ivltests/swrite.v:210: %l currently unsupported $swrite<%l>.
+WARNING: ./ivltests/swrite.v:212: %L currently unsupported $swrite<%L>.
+WARNING: ./ivltests/swrite.v:275: $swrite returned a value with an embedded NULL (see %u/%z).
+WARNING: ./ivltests/swrite.v:277: $swrite returned a value with an embedded NULL (see %u/%z).
+WARNING: ./ivltests/swrite.v:299: $swrite returned a value with an embedded NULL (see %u/%z).
+WARNING: ./ivltests/swrite.v:301: $swrite returned a value with an embedded NULL (see %u/%z).
+WARNING: ./ivltests/swrite.v:304: $swrite returned a value with an embedded NULL (see %u/%z).
+WARNING: ./ivltests/swrite.v:318: missing argument for $sformat<%s>.
+WARNING: ./ivltests/swrite.v:320: $sformat has 1 extra argument(s).
+All tests passed.

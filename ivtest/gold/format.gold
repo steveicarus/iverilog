@@ -1,0 +1,6 @@
+>16<
+>  16<
+>010<
+> 010<
+WARNING: ./ivltests/format.v:12: missing argument for $display<%d>.
+  16, <%d>

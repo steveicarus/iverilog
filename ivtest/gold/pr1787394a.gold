@@ -1,0 +1,6 @@
+These should all produce:
+x StL x StL
+-----------
+c=x(StL), d=x(StL), b=0, nctl=0, pctl=x
+c=x(StL), d=x(StL), b=0, nctl=x, pctl=x
+c=x(StH), d=x(StH), b=1, nctl=x, pctl=x

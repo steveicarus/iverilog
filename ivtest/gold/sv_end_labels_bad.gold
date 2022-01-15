@@ -1,0 +1,2 @@
+./ivltests/sv_end_labels_bad.v:14: error: End label doesn't match begin name
+./ivltests/sv_end_labels_bad.v:16: error: End label doesn't match module name.

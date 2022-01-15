@@ -1,0 +1,195 @@
+$date
+	Fri Oct 16 08:46:35 2009
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1s
+$end
+$scope module test $end
+$var wire 1 ! c2 $end
+$var wire 1 " c1 $end
+$var reg 1 # a $end
+$var reg 1 $ b1 $end
+$var reg 1 % b2 $end
+$scope module m1 $end
+$var wire 1 # a $end
+$var wire 1 $ b $end
+$var wire 1 " c $end
+$var wire 1 & c2 $end
+$var wire 1 ' c1 $end
+$upscope $end
+$scope module m2 $end
+$var wire 1 # a $end
+$var wire 1 % b $end
+$var wire 1 ! c $end
+$var wire 1 ( c2 $end
+$var wire 1 ) c1 $end
+$upscope $end
+$scope task set $end
+$var reg 3 * bits [2:0] $end
+$var reg 1 + t1 $end
+$upscope $end
+$upscope $end
+$scope module test $end
+$scope module m1 $end
+$scope module mm1 $end
+$var wire 1 , c1 $end
+$upscope $end
+$upscope $end
+$upscope $end
+$scope module test $end
+$scope module m1 $end
+$scope module mm1 $end
+$var wire 1 - a $end
+$var wire 1 ' c $end
+$upscope $end
+$scope module mm2 $end
+$var wire 1 . a $end
+$var wire 1 & c $end
+$var wire 1 / c1 $end
+$upscope $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpvars
+x/
+x.
+0-
+1,
+x+
+bx *
+1)
+x(
+1'
+x&
+x%
+x$
+0#
+x"
+x!
+$end
+#1
+0+
+b0 *
+#2
+0"
+0!
+1&
+1/
+1(
+0.
+0$
+0%
+#4
+b1 *
+#5
+1!
+0(
+1%
+#7
+b10 *
+#8
+1"
+0!
+0&
+0/
+1(
+1.
+1$
+0%
+#9
+$dumpoff
+x/
+x.
+x-
+x,
+x+
+bx *
+x)
+x(
+x'
+x&
+x%
+x$
+x#
+x"
+x!
+$end
+#15
+$dumpon
+0/
+1.
+0-
+1,
+0+
+b100 *
+1)
+0(
+1'
+0&
+0%
+0$
+1#
+1"
+1!
+$end
+#16
+1+
+b101 *
+#17
+0!
+0)
+1%
+#19
+b110 *
+#20
+0"
+1!
+0'
+0,
+1)
+1-
+1$
+0%
+#22
+b111 *
+#23
+0!
+0)
+1%
+#25
+b0 *
+#26
+1'
+1,
+1&
+1/
+1)
+1(
+0-
+0.
+0#
+0$
+0%
+#27
+$dumpall
+1/
+0.
+0-
+1,
+1+
+b0 *
+1)
+1(
+1'
+1&
+0%
+0$
+0#
+0"
+0!
+$end
+#28

@@ -1,0 +1,12 @@
+Compiling vpi/br_gh169.c...
+Making br_gh169a.vpi from  br_gh169.o...
+scope test
+  wire test.a
+  wire test.c
+  wire test.b
+scope test.dut1
+  wire test.dut1.i1
+  reg  test.dut1.o1
+scope test.dut2
+  wire test.dut2.i2
+  reg  test.dut2.o2

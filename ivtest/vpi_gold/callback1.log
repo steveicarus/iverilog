@@ -1,0 +1,10 @@
+Compiling vpi/callback1.c...
+Making callback1.vpi from  callback1.o...
+Registering Callbacks
+EndOfCompile EOC
+EndOfCompile EOC
+StartOfSimulation SOS
+StartOfSimulation SOS
+Hello World
+EndOfSimulation EOS
+EndOfSimulation EOS

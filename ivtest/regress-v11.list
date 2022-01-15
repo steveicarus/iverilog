@@ -1,0 +1,156 @@
+# This test list is used to override other test lists when using
+# Icarus Verilog v11.
+
+#
+# Copyright (c) 1999-2021 Guy Hutchison (ghutchis@pacbell.net)
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+#
+# Format of the file
+#
+# testname		testtype		directory
+#
+# The <testname> is the verilog file name minus an extension.
+#
+# The <testtype> can be one of the following:
+#
+# normal:  Normal results expected, i.e it should compile and execute
+#          producing at least a single line with PASSED.
+#
+# CO:      Compile Only - Compile the file to the default output type.
+#
+# CN:      Compile Null - Compile with the null target. Similar to CO.
+#
+# CE:      Compile with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# RE:      Runtime with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# EF:      Expected Fail - We EXPECT this test to fail - only use
+#                          with older versions of Icarus.
+#
+# TE:      Translation Error - We EXPECT the translated code to fail -
+#                              only supported in the vlog95 checker.
+#
+# NI:      Not implemented. Only use for version specific tests.
+#
+# <directory> is where the <testname>.v file is located.
+#
+# An optional fourth and fifth argument can be supplied.
+#
+# The fourth argument may be one of the following.
+#
+#   modulename                       - Defines the top level module
+#   gold=filename                    - Compare a gold file against the
+#                                      generated log file.
+#   unordered=filename               - Compare a gold file against the
+#                                      generated log file, allowing for lines
+#                                      to appear in any order
+#   diff=filename1:filename2:skip_ln - Compare the two files for equality.
+#                                      Skip the first <skip_ln> lines or none.
+#
+# If a <modulename> is given you can supply a fifth argument for the
+# gold or diff commands.
+#
+
+# v11 does not print a warning for too many parameter overrides
+param_test3		normal		ivltests
+eofmt_percent		normal		ivltests gold=eofmt_percent-v11.gold
+
+# v11 does not fail during elaboration for these tests
+pr1916261a		normal		ivltests
+comment1		normal		ivltests
+
+# v11 has not been updated to support this.
+line_directive		EF,-I./ivltests	ivltests gold=line_directive.gold
+program2b		CE,-g2009	ivltests
+program3a		CE,-g2009	ivltests
+sv_default_port_value1	CE,-g2009	ivltests
+sv_default_port_value2	CE,-g2009	ivltests
+sv_default_port_value3	CE,-g2009	ivltests
+
+# v11 does not check for as many issues as devel.
+br_gh440		CE,-g2009	ivltests gold=br_gh440-v11.gold
+
+# v11 has incomplete synthesis support
+dffsynth		CE,-S		ivltests
+memsynth1		CE,-S		ivltests
+memsynth2		CE,-S		ivltests
+memsynth3		CE,-S		ivltests
+memsynth5		CE,-S		ivltests
+memsynth6		CE,-S		ivltests
+memsynth7		CE,-S		ivltests
+memsynth9		CE,-S		ivltests
+mix_reset		CE,-S		ivltests
+
+# These tests pass, but synthesis is creating unnecessary latches.
+case1			normal		ivltests
+case2			normal		ivltests
+casex_synth		normal		ivltests
+
+# For V11 vvp does not fail for these tests
+automatic_error11	normal		ivltests gold=automatic_error11.gold
+automatic_error12	normal		ivltests gold=automatic_error12.gold
+automatic_error13	normal		ivltests gold=automatic_error13.gold
+br_gh230		normal		ivltests gold=br_gh230.gold
+fdisplay3		normal		ivltests gold=fdisplay3.gold
+fread-error		normal		ivltests gold=fread-error.gold
+pr2800985b		normal		ivltests gold=pr2800985b.gold
+queue_fail		normal		ivltests gold=queue_fail.gold
+readmem-invalid		normal		ivltests gold=readmem-invalid.gold
+scan-invalid		normal		ivltests gold=scan-invalid.gold
+warn_opt_sys_tf		normal		ivltests gold=warn_opt_sys_tf.gold
+writemem-invalid	normal		ivltests gold=writemem-invalid.gold
+sf_countbits_fail	normal,-g2012	ivltests gold=sf_countbits_fail.gold
+sf_countones_fail	normal,-g2009	ivltests gold=sf_countones_fail.gold
+sf_isunknown_fail	normal,-g2009	ivltests gold=sf_isunknown_fail.gold
+sf_onehot_fail		normal,-g2009	ivltests gold=sf_onehot_fail.gold
+sf_onehot0_fail		normal,-g2009	ivltests gold=sf_onehot0_fail.gold
+
+# These tests are not implemented for v11
+analog1			NI		ivltests
+analog2			NI		ivltests
+br605a			NI		ivltests
+br605b			NI		ivltests
+br971			NI		ivltests
+br_gh72b_fail		NI		ivltests
+br_gh175		NI		ivltests
+br_gh307		NI		ivltests
+br_gh383a		NI		ivltests
+br_gh383b		NI		ivltests
+br_gh383c		NI		ivltests
+br_gh383d		NI		ivltests
+br_gh390a		NI		ivltests
+br_gh390b		NI		ivltests
+br_gh412		NI		ivltests
+br_gh414		NI		ivltests
+br_gh436		NI		ivltests
+br_gh453		NI		ivltests
+br_gh460		NI		ivltests
+br_gh478		NI		ivltests
+br_gh527		NI		ivltests
+edge			NI		ivltests
+fileline2		NI		ivltests
+ifdef_fail		NI		ivltests
+scalar_vector		NI		ivltests
+string12		NI		ivltests
+sv_deferred_assert1	NI		ivltests
+sv_deferred_assert2	NI		ivltests
+sv_deferred_assume1	NI		ivltests
+sv_deferred_assume2	NI		ivltests
+timeliteral		NI		ivltests
+vhdl_multidim_array	NI		ivltests

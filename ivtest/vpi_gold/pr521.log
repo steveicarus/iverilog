@@ -1,0 +1,6 @@
+Compiling vpi/pr521.c...
+Making pr521.vpi from  pr521.o...
+Passing parameter to PLI routine: 0x43
+PLI Parameter received 0x43
+Passing parameter to PLI routine: 0x43
+PLI Parameter received 0x43

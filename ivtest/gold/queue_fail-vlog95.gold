@@ -1,0 +1,70 @@
+ERROR: vlog95.v:24: $q_initialize requires four arguments.
+ERROR: vlog95.v:25: $q_initialize requires a second (<= 32 bit numeric) argument.
+ERROR: vlog95.v:26: $q_initialize requires a second (<= 32 bit numeric) argument.
+ERROR: vlog95.v:27: $q_initialize's first argument must be numeric (<= 32 bits).
+ERROR: vlog95.v:27: $q_initialize requires a second (<= 32 bit numeric) argument.
+ERROR: vlog95.v:28: $q_initialize requires a third (<= 32 bit numeric) argument.
+ERROR: vlog95.v:29: $q_initialize requires a third (<= 32 bit numeric) argument.
+ERROR: vlog95.v:30: $q_initialize's second argument must be numeric (<= 32 bits).
+ERROR: vlog95.v:30: $q_initialize requires a third (<= 32 bit numeric) argument.
+ERROR: vlog95.v:31: $q_initialize requires a fourth (variable) argument.
+ERROR: vlog95.v:32: $q_initialize's third argument must be numeric (<= 32 bits).
+ERROR: vlog95.v:32: $q_initialize requires a fourth (variable) argument.
+ERROR: vlog95.v:33: $q_initialize's fourth argument must be a 32 bit variable.
+ERROR: vlog95.v:34: $q_initialize's fourth (variable) argument must be 32 bits.
+ERROR: vlog95.v:35: $q_initialize takes four arguments.
+                    Found 1 extra argument.
+ERROR: vlog95.v:36: $q_add requires four arguments.
+ERROR: vlog95.v:37: $q_add requires a second (<= 32 bit numeric) argument.
+ERROR: vlog95.v:38: $q_add requires a second (<= 32 bit numeric) argument.
+ERROR: vlog95.v:39: $q_add's first argument must be numeric (<= 32 bits).
+ERROR: vlog95.v:39: $q_add requires a second (<= 32 bit numeric) argument.
+ERROR: vlog95.v:40: $q_add requires a third (<= 32 bit numeric) argument.
+ERROR: vlog95.v:41: $q_add's second argument must be numeric (<= 32 bits).
+ERROR: vlog95.v:41: $q_add requires a third (<= 32 bit numeric) argument.
+ERROR: vlog95.v:42: $q_add requires a fourth (variable) argument.
+ERROR: vlog95.v:43: $q_add's third argument must be numeric (<= 32 bits).
+ERROR: vlog95.v:43: $q_add requires a fourth (variable) argument.
+ERROR: vlog95.v:44: $q_add's fourth (variable) argument must be 32 bits.
+ERROR: vlog95.v:45: $q_add takes four arguments.
+                    Found 1 extra argument.
+ERROR: vlog95.v:46: $q_remove requires four arguments.
+ERROR: vlog95.v:47: $q_remove requires a second (variable) argument.
+ERROR: vlog95.v:48: $q_remove requires a second (variable) argument.
+ERROR: vlog95.v:49: $q_remove's first argument must be numeric (<= 32 bits).
+ERROR: vlog95.v:49: $q_remove requires a second (variable) argument.
+ERROR: vlog95.v:50: $q_remove requires a third (variable) argument.
+ERROR: vlog95.v:51: $q_remove's second argument must be a 32 bit variable.
+ERROR: vlog95.v:51: $q_remove requires a third (variable) argument.
+ERROR: vlog95.v:52: $q_remove requires a fourth (variable) argument.
+ERROR: vlog95.v:53: $q_remove's third argument must be a 32 bit variable.
+ERROR: vlog95.v:53: $q_remove requires a fourth (variable) argument.
+ERROR: vlog95.v:54: $q_remove's fourth (variable) argument must be 32 bits.
+ERROR: vlog95.v:55: $q_remove's second (variable) argument must be 32 bits.
+ERROR: vlog95.v:55: $q_remove's third (variable) argument must be 32 bits.
+ERROR: vlog95.v:56: $q_remove takes four arguments.
+                    Found 1 extra argument.
+ERROR: vlog95.v:57: $q_full requires a second (variable) argument.
+ERROR: vlog95.v:58: $q_full requires a second (variable) argument.
+ERROR: vlog95.v:59: $q_full's first argument must be numeric (<= 32 bits).
+ERROR: vlog95.v:59: $q_full requires a second (variable) argument.
+ERROR: vlog95.v:60: $q_full's second (variable) argument must be 32 bits.
+ERROR: vlog95.v:61: $q_full takes two arguments.
+                    Found 1 extra argument.
+ERROR: vlog95.v:62: $q_exam requires four arguments.
+ERROR: vlog95.v:63: $q_exam requires a second (<= 32 bit numeric) argument.
+ERROR: vlog95.v:64: $q_exam requires a second (<= 32 bit numeric) argument.
+ERROR: vlog95.v:65: $q_exam's first argument must be numeric (<= 32 bits).
+ERROR: vlog95.v:65: $q_exam requires a second (<= 32 bit numeric) argument.
+ERROR: vlog95.v:66: $q_exam requires a third (variable) argument.
+ERROR: vlog95.v:67: $q_exam requires a third (variable) argument.
+ERROR: vlog95.v:68: $q_exam's second argument must be numeric (<= 32 bits).
+ERROR: vlog95.v:68: $q_exam requires a third (variable) argument.
+ERROR: vlog95.v:69: $q_exam requires a fourth (variable) argument.
+ERROR: vlog95.v:70: $q_exam's third (variable) argument must have at least 32 bits.
+ERROR: vlog95.v:70: $q_exam requires a fourth (variable) argument.
+ERROR: vlog95.v:71: $q_exam's third argument must be a variable.
+ERROR: vlog95.v:71: $q_exam requires a fourth (variable) argument.
+ERROR: vlog95.v:72: $q_exam's fourth (variable) argument must be 32 bits.
+ERROR: vlog95.v:73: $q_exam takes two arguments.
+                    Found 1 extra argument.

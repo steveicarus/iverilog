@@ -1,0 +1,209 @@
+# This test list contains tests that should work using any simulator that
+# supports standard VHDL.
+
+#
+# Copyright (c) 1999-2014 Guy Hutchison (ghutchis@pacbell.net)
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+#
+# Format of the file
+#
+# testname		testtype		directory
+#
+# The <testname> is the verilog file name minus an extension.
+#
+# The <testtype> can be one of the following:
+#
+# normal:  Normal results expected, i.e it should compile and execute
+#          producing at least a single line with PASSED.
+#
+# CO:      Compile Only - Compile the file to the default output type.
+#
+# CN:      Compile Null - Compile with the null target. Similar to CO.
+#
+# CE:      Compile with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# RE:      Runtime with Errors - We EXPECT errors - we're checking
+#                                illegal syntax
+#
+# EF:      Expected Fail - We EXPECT this test to fail - only use
+#                          with older versions of Icarus.
+#
+# TE:      Translation Error - We EXPECT the translated code to fail -
+#                              only supported in the vlog95 checker.
+#
+# NI:      Not implemented. Only use for version specific tests.
+#
+# <directory> is where the <testname>.v file is located.
+#
+# An optional fourth and fifth argument can be supplied.
+#
+# The fourth argument may be one of the following.
+#
+#   modulename                       - Defines the top level module
+#   gold=filename                    - Compare a gold file against the
+#                                      generated log file.
+#   unordered=filename               - Compare a gold file against the
+#                                      generated log file, allowing for lines
+#                                      to appear in any order
+#   diff=filename1:filename2:skip_ln - Compare the two files for equality.
+#                                      Skip the first <skip_ln> lines or none.
+#
+# If a <modulename> is given you can supply a fifth argument for the
+# gold or diff commands.
+#
+
+br942			normal,-g2005-sv,ivltests/br942.vhd			ivltests
+br943_944		normal,-g2005-sv,ivltests/br943_944.vhd			ivltests
+br985			normal,-g2005-sv,ivltests/br985.vhd			ivltests
+br986			normal,-g2005-sv,ivltests/br986.vhd			ivltests
+br987			normal,-g2005-sv,ivltests/br987.vhd			ivltests
+ivlh_event		normal,-mvhdl_sys					ivltests gold=ivlh_event.gold
+ivlh_rising_falling	normal,-mvhdl_sys					ivltests gold=ivlh_rising_falling.gold
+ivlh_textio		normal,-mvhdl_textio,-g2005-sv				ivltests
+test_dec2to4		normal,-g2005-sv,ivltests/dec2to4.vhd			ivltests
+test_enumsystem		normal,-g2005-sv,ivltests/enumsystem.vhd		ivltests
+test_forgen		normal,-g2005-sv,ivltests/forgen.vhd			ivltests
+test_gxor		normal,-g2005-sv,ivltests/gxor.vhd			ivltests
+test_mux2to1		normal,-g2005-sv,ivltests/mux2to1.vhd			ivltests
+test_signal_init_assign normal,-g2005-sv,ivltests/signal_init_assign.vhd	ivltests
+test_system		normal,-g2005-sv,ivltests/system.vhd			ivltests
+test_timebase		normal,-g2005-sv,ivltests/timebase.vhd			ivltests
+test_varray1		normal,-g2005-sv,ivltests/varray1.vhd			ivltests
+test_when_else		normal,-g2005-sv,ivltests/when_else.vhd			ivltests
+test_work14		normal,-g2005-sv,ivltests/work14_pkg.vhd,ivltests/work14.vhd	ivltests
+vhdl_and104_stdlogic	normal,-g2005-sv,ivltests/vhdl_and104_stdlogic.vhd	ivltests
+vhdl_and23_bit		normal,-g2005-sv,ivltests/vhdl_and23_bit.vhd		ivltests
+vhdl_and_gate		normal,-g2005-sv,ivltests/vhdl_and_gate.vhd		ivltests
+vhdl_andg_bit		normal,-g2005-sv,ivltests/vhdl_andg_bit.vhd		ivltests
+vhdl_andg_stdlogic	normal,-g2005-sv,ivltests/vhdl_andg_stdlogic.vhd	ivltests
+vhdl_array_of_array	normal,-g2005-sv,ivltests/vhdl_array_of_array.vhd	ivltests
+vhdl_case_multi		normal,-g2005-sv,ivltests/vhdl_case_multi.vhd		ivltests
+vhdl_boolean		normal,-g2005-sv,ivltests/vhdl_boolean.vhd		ivltests
+vhdl_concat		normal,-g2005-sv,ivltests/vhdl_concat.vhd		ivltests
+vhdl_concat_func	normal,-g2005-sv,ivltests/vhdl_concat_func.vhd		ivltests
+vhdl_concurrent_assert	normal,-g2005-sv,ivltests/vhdl_concurrent_assert.vhd	ivltests gold=vhdl_concurrent_assert.gold
+vhdl_const_package	normal,-g2005-sv,ivltests/vhdl_const_package_pkg.vhd,ivltests/vhdl_const_package.vhd	ivltests
+vhdl_const_record	normal,-g2005-sv,ivltests/vhdl_const_record.vhd		ivltests
+vhdl_const_array	normal,-g2005-sv,ivltests/vhdl_const_array_pkg.vhd,ivltests/vhdl_const_array.vhd	ivltests
+vhdl_delay_assign	normal,-g2005-sv,-fivltests/vhdl_timescale_1ns.cfg,ivltests/vhdl_delay_assign.vhd	ivltests
+vhdl_elab_range		normal,-g2005-sv,ivltests/vhdl_elab_range.vhd		ivltests
+vhdl_eval_cond		normal,-g2005-sv,ivltests/vhdl_eval_cond.vhd		ivltests
+vhdl_expr1		normal,-g2005-sv,ivltests/vhdl_expr1.vhd		ivltests
+vhdl_generic_eval	normal,-g2005-sv,ivltests/vhdl_generic_eval.vhd		ivltests
+vhdl_fa4_test1		normal,-g2005-sv,ivltests/vhdl_fa4_test1.vhd		ivltests
+vhdl_fa4_test2		normal,-g2005-sv,ivltests/vhdl_fa4_test2.vhd		ivltests
+vhdl_fa4_test3		normal,-g2005-sv,ivltests/vhdl_fa4_test3.vhd		ivltests
+vhdl_fa4_test4		normal,-g2005-sv,ivltests/vhdl_fa4_test4.vhd		ivltests
+vhdl_file_open		normal,-g2005-sv,ivltests/vhdl_file_open.vhd		ivltests
+vhdl_generic_default	normal,-g2005-sv,ivltests/vhdl_generic_default.vhd	ivltests
+vhdl_init		normal,-g2005-sv,ivltests/vhdl_init.vhd			ivltests
+vhdl_image_attr		normal,-g2005-sv,-fivltests/vhdl_timescale_1ns.cfg,ivltests/vhdl_image_attr.vhd	ivltests gold=vhdl_image_attr.gold
+vhdl_inout		normal,-g2005-sv,ivltests/vhdl_inout.vhd		ivltests
+vhdl_labeled_assign	normal,-g2005-sv,ivltests/vhdl_labeled_assign.vhd	ivltests
+vhdl_lfcr		normal,-g2005-sv,ivltests/vhdl_lfcr.vhd			ivltests gold=vhdl_lfcr.gold
+vhdl_logic		normal,-g2005-sv,ivltests/vhdl_logic.vhd		ivltests
+vhdl_loop		normal,-g2005-sv,ivltests/vhdl_loop.vhd		ivltests
+vhdl_multidim_array	normal,-g2005-sv,ivltests/vhdl_multidim_array.vhd	ivltests
+vhdl_nand104_stdlogic	normal,-g2005-sv,ivltests/vhdl_nand104_stdlogic.vhd	ivltests
+vhdl_nand23_bit		normal,-g2005-sv,ivltests/vhdl_nand23_bit.vhd		ivltests
+vhdl_nandg_bit		normal,-g2005-sv,ivltests/vhdl_nandg_bit.vhd		ivltests
+vhdl_nandg_stdlogic	normal,-g2005-sv,ivltests/vhdl_nandg_stdlogic.vhd	ivltests
+vhdl_nor104_stdlogic	normal,-g2005-sv,ivltests/vhdl_nor104_stdlogic.vhd	ivltests
+vhdl_nor23_bit		normal,-g2005-sv,ivltests/vhdl_nor23_bit.vhd		ivltests
+vhdl_norg_bit		normal,-g2005-sv,ivltests/vhdl_norg_bit.vhd		ivltests
+vhdl_norg_stdlogic	normal,-g2005-sv,ivltests/vhdl_norg_stdlogic.vhd	ivltests
+vhdl_not104_stdlogic	normal,-g2005-sv,ivltests/vhdl_not104_stdlogic.vhd	ivltests
+vhdl_not23_bit		normal,-g2005-sv,ivltests/vhdl_not23_bit.vhd		ivltests
+vhdl_notfunc_stdlogic	normal,-g2005-sv,ivltests/vhdl_notfunc_stdlogic.vhd	ivltests
+vhdl_notg_bit		normal,-g2005-sv,ivltests/vhdl_notg_bit.vhd		ivltests
+vhdl_notg_stdlogic	normal,-g2005-sv,ivltests/vhdl_notg_stdlogic.vhd	ivltests
+vhdl_now		normal,-g2005-sv,ivltests/vhdl_now.vhd			ivltests  gold=vhdl_now.gold
+vhdl_or104_stdlogic	normal,-g2005-sv,ivltests/vhdl_or104_stdlogic.vhd	ivltests
+vhdl_or23_bit		normal,-g2005-sv,ivltests/vhdl_or23_bit.vhd		ivltests
+vhdl_org_bit		normal,-g2005-sv,ivltests/vhdl_org_bit.vhd		ivltests
+vhdl_org_stdlogic	normal,-g2005-sv,ivltests/vhdl_org_stdlogic.vhd		ivltests
+vhdl_pow_rem		normal,-g2005-sv,ivltests/vhdl_pow_rem.vhd		ivltests
+vhdl_prefix_array	normal,-g2005-sv,ivltests/vhdl_prefix_array.vhd		ivltests
+vhdl_procedure		normal,-g2005-sv,ivltests/vhdl_procedure.vhd		ivltests  gold=vhdl_procedure.gold
+vhdl_process_scope	normal,-g2005-sv,ivltests/vhdl_process_scope.vhd	ivltests
+vhdl_rand23_bit		normal,-g2005-sv,ivltests/vhdl_rand23_bit.vhd		ivltests
+vhdl_range		normal,-g2005-sv,ivltests/vhdl_range_pkg.vhd,ivltests/vhdl_range.vhd	ivltests
+vhdl_range_func		normal,-g2005-sv,ivltests/vhdl_range_func_pkg.vhd,ivltests/vhdl_range_func.vhd,	ivltests
+vhdl_real		normal,-g2005-sv,ivltests/vhdl_real.vhd			ivltests
+vhdl_record_elab	normal,-g2005-sv,ivltests/vhdl_record_elab_pkg.vhd,ivltests/vhdl_record_elab.vhd	ivltests
+vhdl_reduce		normal,-g2005-sv,ivltests/vhdl_reduce.vhd		ivltests
+vhdl_report		normal,-g2005-sv,ivltests/vhdl_report_pkg.vhd,ivltests/vhdl_report.vhd	ivltests gold=vhdl_report.gold
+vhdl_resize		normal,-g2005-sv,ivltests/vhdl_resize.vhd		ivltests
+vhdl_rtoi		normal,-g2005-sv,ivltests/vhdl_rtoi.vhd			ivltests
+vhdl_sa1_test1		normal,-g2005-sv,ivltests/vhdl_sa1_test1.vhd		ivltests
+vhdl_sa1_test2		normal,-g2005-sv,ivltests/vhdl_sa1_test2.vhd		ivltests
+vhdl_sa1_test3		normal,-g2005-sv,-mvhdl_sys,ivltests/vhdl_sa1_test3.vhd	ivltests
+vhdl_sadd23_bit		normal,-g2005-sv,ivltests/vhdl_sadd23_bit.vhd		ivltests
+vhdl_sadd23_stdlogic	normal,-g2005-sv,ivltests/vhdl_sadd23_stdlogic.vhd	ivltests
+vhdl_sdiv23_bit		normal,-g2005-sv,ivltests/vhdl_sdiv23_bit.vhd		ivltests
+vhdl_sdiv23_stdlogic	normal,-g2005-sv,ivltests/vhdl_sdiv23_stdlogic.vhd	ivltests
+vhdl_selected		normal,-g2005-sv,ivltests/vhdl_selected.vhd		ivltests
+vhdl_shift		normal,-g2005-sv,ivltests/vhdl_shift.vhd		ivltests
+vhdl_signals		normal,-g2005-sv,ivltests/vhdl_signals.vhd		ivltests
+vhdl_smul23_bit		normal,-g2005-sv,ivltests/vhdl_smul23_bit.vhd		ivltests
+vhdl_smul23_stdlogic	normal,-g2005-sv,ivltests/vhdl_smul23_stdlogic.vhd	ivltests
+vhdl_ssub23_bit		normal,-g2005-sv,ivltests/vhdl_ssub23_bit.vhd		ivltests
+vhdl_ssub23_stdlogic	normal,-g2005-sv,ivltests/vhdl_ssub23_stdlogic.vhd	ivltests
+vhdl_struct_array	normal,-g2005-sv,ivltests/vhdl_struct_array.vhd		ivltests
+vhdl_subtypes		normal,-g2005-sv,ivltests/vhdl_subtypes_pkg.vhd,ivltests/vhdl_subtypes.vhd	ivltests
+vhdl_subprogram		normal,-g2005-sv,ivltests/vhdl_subprogram_pkg.vhd,ivltests/vhdl_subprogram.vhd	ivltests
+vhdl_string		normal,-g2005-sv,ivltests/vhdl_string.vhd		ivltests gold=vhdl_string.gold
+vhdl_string_lim		normal,-g2005-sv,ivltests/vhdl_string_lim.vhd		ivltests
+vhdl_test1		normal,-g2005-sv,ivltests/vhdl_test1.vhd		ivltests
+vhdl_test2		normal,-g2005-sv,ivltests/vhdl_test2.vhd		ivltests
+vhdl_test3		normal,-g2005-sv,ivltests/vhdl_test3.vhd		ivltests gold=vhdl_test3.gold
+vhdl_test4		normal,-g2005-sv,ivltests/vhdl_test4.vhd		ivltests
+vhdl_test5		normal,-g2005-sv,ivltests/vhdl_test5.vhd		ivltests
+vhdl_test6		normal,-g2005-sv,ivltests/vhdl_test6.vhd		ivltests
+vhdl_test7		normal,-g2005-sv,ivltests/vhdl_test7.vhd		ivltests
+vhdl_test8		normal,-g2005-sv,ivltests/vhdl_test8.vhd		ivltests
+vhdl_test9		normal,-g2005-sv,ivltests/vhdl_test9.vhd		ivltests
+# vhdl_textio_write creates the test data for vhdl_textio_read, so it has to be run first
+vhdl_textio_write	normal,-g2005-sv,ivltests/vhdl_textio_write.vhd		ivltests
+vhdl_textio_read	normal,-g2005-sv,ivltests/vhdl_textio_read.vhd		ivltests
+vhdl_time		normal,-g2005-sv,-fivltests/vhdl_timescale_1ns.cfg,ivltests/vhdl_time_pkg.vhd,ivltests/vhdl_time.vhd	ivltests gold=vhdl_time.gold
+vhdl_to_integer		normal,-g2005-sv,ivltests/vhdl_to_integer.vhd		ivltests
+vhdl_uadd23_bit		normal,-g2005-sv,ivltests/vhdl_uadd23_bit.vhd		ivltests
+vhdl_uadd23_stdlogic	normal,-g2005-sv,ivltests/vhdl_uadd23_stdlogic.vhd	ivltests
+vhdl_udiv23_bit		normal,-g2005-sv,ivltests/vhdl_udiv23_bit.vhd		ivltests
+vhdl_udiv23_stdlogic	normal,-g2005-sv,ivltests/vhdl_udiv23_stdlogic.vhd	ivltests
+vhdl_umul23_bit		normal,-g2005-sv,ivltests/vhdl_umul23_bit.vhd		ivltests
+vhdl_umul23_stdlogic	normal,-g2005-sv,ivltests/vhdl_umul23_stdlogic.vhd	ivltests
+vhdl_unary_minus	normal,-g2005-sv,ivltests/vhdl_unary_minus.vhd		ivltests
+vhdl_unbounded		normal,-g2005-sv,ivltests/vhdl_unbounded.vhd		ivltests
+vhdl_unbounded_func	normal,-g2005-sv,ivltests/vhdl_unbounded_func_pkg.vhd,ivltests/vhdl_unbounded_func.vhd	ivltests
+vhdl_usub23_bit		normal,-g2005-sv,ivltests/vhdl_usub23_bit.vhd		ivltests
+vhdl_usub23_stdlogic	normal,-g2005-sv,ivltests/vhdl_usub23_stdlogic.vhd	ivltests
+vhdl_var_init		normal,-g2005-sv,ivltests/vhdl_var_init.vhd		ivltests
+vhdl_wait		normal,-g2005-sv,ivltests/vhdl_wait.vhd	ivltests gold=vhdl_wait.gold
+vhdl_while		normal,-g2005-sv,ivltests/vhdl_while.vhd		ivltests
+vhdl_xnor104_stdlogic	normal,-g2005-sv,ivltests/vhdl_xnor104_stdlogic.vhd	ivltests
+vhdl_xnor104_stdlogic	normal,-g2005-sv,ivltests/vhdl_xnor104_stdlogic.vhd	ivltests
+vhdl_xnor23_bit		normal,-g2005-sv,ivltests/vhdl_xnor23_bit.vhd		ivltests
+vhdl_xnorg_bit		normal,-g2005-sv,ivltests/vhdl_xnorg_bit.vhd		ivltests
+vhdl_xnorg_stdlogic	normal,-g2005-sv,ivltests/vhdl_xnorg_stdlogic.vhd	ivltests
+vhdl_xor23_bit		normal,-g2005-sv,ivltests/vhdl_xor23_bit.vhd		ivltests
+vhdl_xorg_bit		normal,-g2005-sv,ivltests/vhdl_xorg_bit.vhd		ivltests
+vhdl_xorg_stdlogic	normal,-g2005-sv,ivltests/vhdl_xorg_stdlogic.vhd	ivltests
+work7			normal,-g2009,-fivltests/work7.cfg			ivltests
+work7b			normal,-g2009,-fivltests/work7b.cfg			ivltests

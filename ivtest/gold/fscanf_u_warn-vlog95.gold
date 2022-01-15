@@ -1,0 +1,8 @@
+WARNING: vlog95.v:27: $fscanf() only found 2 of 4 bytes needed by %u format code.
+WARNING: vlog95.v:38: $fscanf() only found 2 of 8 bytes needed by %u format code.
+WARNING: vlog95.v:49: $fscanf() only found 4 of 8 bytes needed by %u format code.
+WARNING: vlog95.v:60: $fscanf() only found 6 of 8 bytes needed by %u format code.
+WARNING: vlog95.v:71: $fscanf() only found 2 of 4 bytes needed by %u format code.
+WARNING: vlog95.v:83: $fscanf() only found 2 of 4 bytes needed by %u format code.
+WARNING: vlog95.v:110: $fscanf() only found 2 of 4 bytes needed by %u format code.
+PASSED

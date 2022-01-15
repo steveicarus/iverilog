@@ -1,0 +1,6 @@
+Compiling vpi/realcb.c...
+Making realcb.vpi from  realcb.o...
+watchreal: x = 1.000000
+watchreal: y = 2.000000
+watchreal: x = 1.500000
+watchreal: y = 5.100000

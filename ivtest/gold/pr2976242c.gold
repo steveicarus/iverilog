@@ -1,0 +1,8 @@
+./ivltests/pr2976242c.v:43: error: Port out of module io_real_to_vec is declared as a real inout port.
+./ivltests/pr2976242c.v:11: error: Cannot connect an arrayed instance of module vec_to_real to real signal r_vec.
+./ivltests/pr2976242c.v:14: error: When automatically converting a real port of an arrayed instance to a bit signal
+./ivltests/pr2976242c.v:14:      : the signal width (5) must be an integer multiple of the instance count (2).
+./ivltests/pr2976242c.v:15: error: An arrayed instance of arr_real cannot have a real port (port 1 : out) connected to a real signal (r_arr).
+./ivltests/pr2976242c.v:18: error: Cannot automatically connect bit based inout port 1 (out) of module io_vec_to_real to real signal r_io.
+./ivltests/pr2976242c.v:21: error: No support for connecting real inout ports (port 1 (out) of module io_real_to_vec).
+6 error(s) during elaboration.

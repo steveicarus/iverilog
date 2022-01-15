@@ -1,0 +1,9 @@
+./ivltests/always_ff_warn_sens.v:53 warning: Synthesis wants the sensitivity list expressions for 'posedge rst' to be a single bit.
+./ivltests/always_ff_warn_sens.v:45 warning: Synthesis requires the sensitivity list of an always_ff process to only be edge sensitive. &rst is missing a pos/negedge.
+./ivltests/always_ff_warn_sens.v:37 warning: Synthesis requires the sensitivity list of an always_ff process to only be edge sensitive. ~rst[] is missing a pos/negedge.
+./ivltests/always_ff_warn_sens.v:29 warning: Synthesis requires the sensitivity list of an always_ff process to only be edge sensitive. ~|rst is missing a pos/negedge.
+./ivltests/always_ff_warn_sens.v:21 warning: Synthesis requires the sensitivity list of an always_ff process to only be edge sensitive. rst[] is missing a pos/negedge.
+./ivltests/always_ff_warn_sens.v:13 warning: Synthesis requires the sensitivity list of an always_ff process to only be edge sensitive. rst[] is missing a pos/negedge.
+./ivltests/always_ff_warn_sens.v:8 warning: Synthesis requires the sensitivity list of an always_ff process to only be edge sensitive. clk is missing a pos/negedge.
+Expect compile warnings!
+PASSED

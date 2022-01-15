@@ -1,0 +1,2 @@
+./ivltests/pr3441576.v:3: warning: @* found no sensitivities so it will never trigger.
+foo is x

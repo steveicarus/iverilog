@@ -1,0 +1,9 @@
+test1 increment; reading counter as 0
+test2 increment; reading counter as 1
+test1 increment; reading counter as 2
+test2 increment; reading counter as 3
+test1 increment; reading counter as 4
+test2 increment; reading counter as 5
+test1 increment; reading counter as 6
+test2 increment; reading counter as 7
+time 52; the counter is 8

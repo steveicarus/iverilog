@@ -1,0 +1,8 @@
+1: rising_edge(a)
+2: rising_edge(b)
+3: falling_edge(a)
+4: falling_edge(b)
+7: rising_edge(a)
+8: rising_edge(b)
+11: falling_edge(a)
+12: falling_edge(b)

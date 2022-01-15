@@ -1,0 +1,20 @@
+Compiling vpi/br_ml20191013.c...
+Making br_ml20191013.vpi from  br_ml20191013.o...
+
+$pow PLI compiletf function.
+
+
+$pow PLI compiletf function.
+
+
+$pow StartOfSim callback.
+
+Start simulation pow_test.v
+
+$pow PLI calltf function.
+
+$pow(2,3) returns          8
+
+$pow PLI calltf function.
+
+$pow(a,b) returns          1 (a=1 b=0)

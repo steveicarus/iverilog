@@ -1,0 +1,9 @@
+                   0 clk=0, data=1111, clear=1111, state=0000
+                  10 clk=0, data=1111, clear=0000, state=0000
+                  20 clk=1, data=1111, clear=0000, state=0000
+                  21 clk=1, data=1111, clear=0000, state=1111
+                  30 clk=0, data=1111, clear=0010, state=1101
+                  40 clk=0, data=1010, clear=0000, state=1101
+                  50 clk=1, data=1010, clear=0000, state=1101
+                  51 clk=1, data=1010, clear=0000, state=1010
+                  60 clk=0, data=1010, clear=0000, state=1010

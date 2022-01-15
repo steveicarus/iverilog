@@ -1,0 +1,7 @@
+main thread started at time 0
+main thread continued at time 5
+task 1 finished at time 1001
+task 2 finished at time 1002
+task 3 finished at time 1006
+main thread finished at time 1006
+task 4 finished at time 1007

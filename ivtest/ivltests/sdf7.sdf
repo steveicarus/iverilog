@@ -1,0 +1,27 @@
+ /* C-style comments. */
+
+(DELAYFILE
+(SDFVERSION "OVI 2.1")
+(DESIGN "xor_rtl")
+(DATE "Mon Feb  9 17:54:11 2009")
+(VENDOR "Icarus Test")
+(PROGRAM "Hand Coded")
+(VERSION "0.0")
+(DIVIDER /)
+(VOLTAGE 3.30:3.30:3.30)
+(PROCESS "nom_pvt")
+(TEMPERATURE 25.00:25.00:25.00)
+(TIMESCALE 1ns)
+
+(CELL  // C++ style comment
+  (CELLTYPE "XOR20")
+  (INSTANCE dut)
+  (DELAY
+    (ABSOLUTE
+    (IOPATH A Q () (3.0:3.0:3.0))
+    (IOPATH B Q () (3.0:3.0:3.0))
+    )
+  )
+)
+
+)

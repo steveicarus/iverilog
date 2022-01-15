@@ -1,0 +1,14 @@
+Compiling vpi/pr1693971.c...
+Making pr1693971.vpi from  pr1693971.o...
+
+$my_pow PLI compiletf function.
+
+
+$my_pow PLI compiletf function.
+
+
+$my_pow StartOfSim callback.
+
+Start simulation pow_test.v
+$my_pow(2,3) returns          8
+$my_pow(a,b) returns          1 (a=1 b=0)

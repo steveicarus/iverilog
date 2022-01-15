@@ -1,0 +1,14 @@
+./ivltests/pr1704726a.v:8: error: duplicate definition for parameter 'name_pp' in 'top'.
+./ivltests/pr1704726a.v:11: error: parameter and localparam in 'top' have the same name 'name_pl'.
+./ivltests/pr1704726a.v:14: error: localparam and parameter in 'top' have the same name 'name_lp'.
+./ivltests/pr1704726a.v:17: error: duplicate definition for localparam 'name_ll' in 'top'.
+./ivltests/pr1704726a.v:24: error: genvar 'name_vv' has already been declared.
+./ivltests/pr1704726a.v:23:        the previous declaration is here.
+./ivltests/pr1704726a.v:33: error: duplicate definition for task 'name_tt' in 'top'.
+./ivltests/pr1704726a.v:43: error: duplicate definition for task 'name_tt' in 'top' (generate).
+./ivltests/pr1704726a.v:39: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726a.v:57: error: duplicate definition for function 'name_ff' in 'top'.
+./ivltests/pr1704726a.v:69: error: duplicate definition for function 'name_ff' in 'top' (generate).
+./ivltests/pr1704726a.v:64: warning: Anachronistic use of named begin/end to surround generate schemes.
+./ivltests/pr1704726a.v:81: error: duplicate definition for named event 'name_ee' in 'top'.
+./ivltests/pr1704726a.v:87: error: duplicate definition for specparam 'name_ss' in 'top'.

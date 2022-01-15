@@ -1,0 +1,6 @@
+should be 00 -- data1=00  data2=00  data3=00  data4=00
+
+should be 11 -- data1=11  data2=11  data3=11  data4=11
+
+should be 22 -- data1=22  data2=22  data3=22  data4=22
+

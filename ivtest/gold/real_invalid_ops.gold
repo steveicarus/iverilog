@@ -1,0 +1,69 @@
+./ivltests/real_invalid_ops.v:6: error: & operator may not have a REAL operand.
+./ivltests/real_invalid_ops.v:6: error: Unable to elaborate r-value: &(var1)
+./ivltests/real_invalid_ops.v:7: error: | operator may not have a REAL operand.
+./ivltests/real_invalid_ops.v:7: error: Unable to elaborate r-value: |(var1)
+./ivltests/real_invalid_ops.v:8: error: ^ operator may not have a REAL operand.
+./ivltests/real_invalid_ops.v:8: error: Unable to elaborate r-value: ^(var1)
+./ivltests/real_invalid_ops.v:9: error: ~& operator may not have a REAL operand.
+./ivltests/real_invalid_ops.v:9: error: Unable to elaborate r-value: A(var1)
+./ivltests/real_invalid_ops.v:10: error: ~| operator may not have a REAL operand.
+./ivltests/real_invalid_ops.v:10: error: Unable to elaborate r-value: N(var1)
+./ivltests/real_invalid_ops.v:11: error: ~^ operator may not have a REAL operand.
+./ivltests/real_invalid_ops.v:11: error: Unable to elaborate r-value: X(var1)
+./ivltests/real_invalid_ops.v:12: error: ~^ operator may not have a REAL operand.
+./ivltests/real_invalid_ops.v:12: error: Unable to elaborate r-value: X(var1)
+./ivltests/real_invalid_ops.v:14: error: & operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:14: error: Unable to elaborate r-value: (var1)&(var2)
+./ivltests/real_invalid_ops.v:15: error: | operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:15: error: Unable to elaborate r-value: (var1)|(var2)
+./ivltests/real_invalid_ops.v:16: error: ^ operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:16: error: Unable to elaborate r-value: (var1)^(var2)
+./ivltests/real_invalid_ops.v:17: error: ~& operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:17: error: Unable to elaborate r-value: (var1)A(var2)
+./ivltests/real_invalid_ops.v:18: error: ~| operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:18: error: Unable to elaborate r-value: (var1)O(var2)
+./ivltests/real_invalid_ops.v:19: error: ~^ operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:19: error: Unable to elaborate r-value: (var1)X(var2)
+./ivltests/real_invalid_ops.v:20: error: ~^ operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:20: error: Unable to elaborate r-value: (var1)X(var2)
+./ivltests/real_invalid_ops.v:22: error: === operator may not have REAL or STRING operands.
+./ivltests/real_invalid_ops.v:22: error: Unable to elaborate r-value: (var1)===(var2)
+./ivltests/real_invalid_ops.v:23: error: !== operator may not have REAL or STRING operands.
+./ivltests/real_invalid_ops.v:23: error: Unable to elaborate r-value: (var1)!==(var2)
+./ivltests/real_invalid_ops.v:25: error: <<(<) operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:25: error: Unable to elaborate r-value: (var1)<<(var2)
+./ivltests/real_invalid_ops.v:26: error: <<(<) operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:26: error: Unable to elaborate r-value: (var1)<<(var2)
+./ivltests/real_invalid_ops.v:27: error: >> operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:27: error: Unable to elaborate r-value: (var1)>>(var2)
+./ivltests/real_invalid_ops.v:28: error: >>> operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:28: error: Unable to elaborate r-value: (var1)>>>(var2)
+./ivltests/real_invalid_ops.v:30: error: Concatenation operand can not be real: var1
+./ivltests/real_invalid_ops.v:30: error: Unable to elaborate r-value: {var1}
+./ivltests/real_invalid_ops.v:31: error: Concatenation repeat expression can not be REAL.
+./ivltests/real_invalid_ops.v:31: error: Concatenation operand can not be real: var1
+./ivltests/real_invalid_ops.v:31: error: Unable to elaborate r-value: {2.00000{var1}}
+./ivltests/real_invalid_ops.v:40: error: & operator may not have a REAL operand.
+./ivltests/real_invalid_ops.v:41: error: | operator may not have a REAL operand.
+./ivltests/real_invalid_ops.v:42: error: ^ operator may not have a REAL operand.
+./ivltests/real_invalid_ops.v:43: error: ~& operator may not have a REAL operand.
+./ivltests/real_invalid_ops.v:44: error: ~| operator may not have a REAL operand.
+./ivltests/real_invalid_ops.v:45: error: ~^ operator may not have a REAL operand.
+./ivltests/real_invalid_ops.v:46: error: ~^ operator may not have a REAL operand.
+./ivltests/real_invalid_ops.v:48: error: & operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:49: error: | operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:50: error: ^ operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:51: error: ~& operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:52: error: ~| operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:53: error: ~^ operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:54: error: ~^ operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:56: error: === operator may not have REAL or STRING operands.
+./ivltests/real_invalid_ops.v:57: error: !== operator may not have REAL or STRING operands.
+./ivltests/real_invalid_ops.v:59: error: <<(<) operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:60: error: <<(<) operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:61: error: >> operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:62: error: >>> operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:64: error: Concatenation operand can not be real: var1
+./ivltests/real_invalid_ops.v:65: error: Concatenation repeat expression can not be REAL.
+./ivltests/real_invalid_ops.v:65: error: Concatenation operand can not be real: var1
+68 error(s) during elaboration.
