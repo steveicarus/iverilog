@@ -42,6 +42,7 @@ Running compiler/VVP tests for Icarus Verilog version: 11.
             sf_onehot0_fail: Passed.
                     analog1: Not Implemented.
                     analog2: Not Implemented.
+               array_packed: Not Implemented.
                      br605a: Not Implemented.
                      br605b: Not Implemented.
                       br971: Not Implemented.
@@ -62,8 +63,11 @@ Running compiler/VVP tests for Icarus Verilog version: 11.
                    br_gh478: Not Implemented.
                    br_gh527: Not Implemented.
                        edge: Not Implemented.
+          enum_dims_invalid: Not Implemented.
                   fileline2: Not Implemented.
                  ifdef_fail: Not Implemented.
+  packed_dims_invalid_class: Not Implemented.
+ packed_dims_invalid_module: Not Implemented.
               scalar_vector: Not Implemented.
                    string12: Not Implemented.
         sv_deferred_assert1: Not Implemented.
@@ -2557,4 +2561,4 @@ test_mos_strength_reduction: Passed.
                 ufuncsynth1: Passed.
 ============================================================================
 Test results:
-  Total=2555, Passed=2522, Failed=0, Not Implemented=32, Expected Fail=1
+  Total=2559, Passed=2522, Failed=0, Not Implemented=36, Expected Fail=1

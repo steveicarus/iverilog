@@ -124,6 +124,7 @@ sf_onehot0_fail		normal,-g2009	ivltests gold=sf_onehot0_fail.gold
 # These tests are not implemented for v11
 analog1			NI		ivltests
 analog2			NI		ivltests
+array_packed		NI		ivltests
 br605a			NI		ivltests
 br605b			NI		ivltests
 br971			NI		ivltests
@@ -144,8 +145,11 @@ br_gh460		NI		ivltests
 br_gh478		NI		ivltests
 br_gh527		NI		ivltests
 edge			NI		ivltests
+enum_dims_invalid	NI		ivltests
 fileline2		NI		ivltests
 ifdef_fail		NI		ivltests
+packed_dims_invalid_class NI		ivltests
+packed_dims_invalid_module NI		ivltests
 scalar_vector		NI		ivltests
 string12		NI		ivltests
 sv_deferred_assert1	NI		ivltests
