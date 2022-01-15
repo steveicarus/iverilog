@@ -180,22 +180,26 @@ static void collect_scope_specparams(Design*des, NetScope*scope,
 static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 					enum_type_t*enum_type)
 {
+      std::vector<netrange_t> ranges;
+      netrange_t range;
       bool rc_flag;
-      assert(enum_type->range->size() == 1);
-      pform_range_t&range = enum_type->range->front();
-      NetExpr*msb_ex = elab_and_eval(des, scope, range.first, -1);
-      NetExpr*lsb_ex = elab_and_eval(des, scope, range.second, -1);
 
-      long msb = 0;
-      rc_flag = eval_as_long(msb, msb_ex);
-      assert(rc_flag);
-      long lsb = 0;
-      rc_flag = eval_as_long(lsb, lsb_ex);
-      assert(rc_flag);
+      if (enum_type->range.get())
+	    evaluate_ranges(des, scope, enum_type, ranges, *enum_type->range);
+
+      if (!ranges.empty()) {
+	    range = ranges.front();
+	    if (ranges.size() > 1) {
+		  cerr << enum_type->get_fileline() << ": error: "
+		       << "Enum type must not have more than 1 packed dimension."
+		       << endl;
+		  des->errors++;
+	    }
+      }
 
       netenum_t*use_enum = new netenum_t(enum_type->base_type,
 					 enum_type->signed_flag,
-					 enum_type->integer_flag, msb, lsb,
+					 enum_type->integer_flag, range,
 					 enum_type->names->size(),
 					 enum_type);
 

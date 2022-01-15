@@ -24,10 +24,10 @@
 using namespace std;
 
 netenum_t::netenum_t(ivl_variable_type_t btype, bool signed_flag,
-		     bool integer_flag, long msb, long lsb, size_t name_count,
+		     bool integer_flag, const netrange_t &range, size_t name_count,
 		     enum_type_t*enum_type)
 : base_type_(btype), enum_type_(enum_type), signed_flag_(signed_flag),
-  integer_flag_(integer_flag), msb_(msb), lsb_(lsb),
+  integer_flag_(integer_flag), range_(range),
   names_(name_count), bits_(name_count)
 {
 }
@@ -56,26 +56,19 @@ bool netenum_t::packed() const
 
 long netenum_t::packed_width() const
 {
-      if (msb_ >= lsb_)
-	    return msb_ - lsb_ + 1;
-      else
-	    return lsb_ - msb_ + 1;
+	return range_.width();
 }
 
 vector<netrange_t> netenum_t::slice_dimensions() const
 {
-      vector<netrange_t> tmp (1);
-      tmp[0] = netrange_t(msb_, lsb_);
-      return tmp;
+      return vector<netrange_t>(1, range_);
 }
-
 
 bool netenum_t::insert_name(size_t name_idx, perm_string name, const verinum&val)
 {
       std::pair<std::map<perm_string,verinum>::iterator, bool> res;
 
-      assert((msb_-lsb_+1) > 0);
-      assert(val.has_len() && val.len() == (unsigned)(msb_-lsb_+1));
+      assert(val.has_len() && val.len() == packed_width());
 
 	// Insert a map of the name to the value. This also gets a
 	// flag that returns true if the  name is unique, or false
