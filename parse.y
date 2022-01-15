@@ -637,6 +637,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 
 %type <data_type>  data_type data_type_or_implicit data_type_or_implicit_or_void
 %type <data_type>  simple_type_or_string let_formal_type
+%type <data_type>  packed_array_data_type
 %type <class_type> class_identifier
 %type <struct_member>  struct_union_member
 %type <struct_members> struct_union_member_list
@@ -1170,6 +1171,23 @@ data_declaration /* IEEE1800-2005: A.2.1.3 */
   | attribute_list_opt package_import_declaration
   ;
 
+/* Data types that can have packed dimensions directly attached to it */
+packed_array_data_type /* IEEE1800-2005: A.2.2.1 */
+  : enum_data_type
+      { $$ = $1; }
+  | struct_data_type
+      { if (!$1->packed_flag) {
+	      yyerror(@1, "sorry: Unpacked structs not supported.");
+	}
+	$$ = $1;
+      }
+  | TYPE_IDENTIFIER
+      { pform_set_type_referenced(@1, $1.text);
+	delete[]$1.text;
+	$$ = $1.type;
+      }
+  ;
+
 data_type /* IEEE1800-2005: A.2.2.1 */
   : integer_vector_type unsigned_signed_opt dimensions_opt
       { ivl_variable_type_t use_vtype = $1;
@@ -1188,14 +1206,6 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | struct_data_type
-      { if (!$1->packed_flag) {
-	      yyerror(@1, "sorry: Unpacked structs not supported.");
-	}
-	$$ = $1;
-      }
-  | enum_data_type
-      { $$ = $1; }
   | atom2_type signed_unsigned_opt
       { atom2_type_t*tmp = new atom2_type_t($1, $2);
 	FILE_NAME(tmp, @1);
@@ -1214,14 +1224,14 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	tmp->reg_flag = !gn_system_verilog();
 	$$ = tmp;
       }
-  | TYPE_IDENTIFIER dimensions_opt
-      { pform_set_type_referenced(@1, $1.text);
-	if ($2) {
-	      parray_type_t*tmp = new parray_type_t($1.type, $2);
+  | packed_array_data_type dimensions_opt
+      { if ($2) {
+	      parray_type_t*tmp = new parray_type_t($1, $2);
 	      FILE_NAME(tmp, @1);
 	      $$ = tmp;
-	} else $$ = $1.type;
-	delete[]$1.text;
+        } else {
+	      $$ = $1;
+        }
       }
   | PACKAGE_IDENTIFIER K_SCOPE_RES
       { lex_in_package_scope($1); }
