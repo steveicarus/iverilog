@@ -1,0 +1,8 @@
+./ivltests/struct_invalid_member.v:9: syntax error
+./ivltests/struct_invalid_member.v:9: Error in struct/union member.
+./ivltests/struct_invalid_member.v:10: syntax error
+./ivltests/struct_invalid_member.v:10: Error in struct/union member.
+./ivltests/struct_invalid_member.v:11: syntax error
+./ivltests/struct_invalid_member.v:11: Error in struct/union member.
+./ivltests/struct_invalid_member.v:12: syntax error
+./ivltests/struct_invalid_member.v:12: Error in struct/union member.
