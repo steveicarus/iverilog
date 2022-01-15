@@ -1,6 +1,10 @@
 // Check that packed arrays of all sorts get elaborated without an error and
 // that the resulting type has the right packed width.
 
+package p;
+  typedef logic [2:0] vector;
+endpackage
+
 module test;
 
 typedef bit bit2;
@@ -8,6 +12,7 @@ typedef logic [1:0] vector;
 
 bit2 [1:0] b;
 vector [2:0] l;
+p::vector [3:0] scoped_pa;
 
 typedef enum logic [7:0] {
   A
@@ -68,6 +73,7 @@ initial begin
   // Packed arrays of basic types
   failed |= $bits(b) !== 2;
   failed |= $bits(l) !== 2 * 3;
+  failed |= $bits(scoped_pa) !== 3 * 4;
 
   // Packed arrays of enums
   failed |= $bits(e) !== 8;
