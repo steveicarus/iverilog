@@ -68,9 +68,10 @@ if ($#ARGV != -1) {
         &read_regression_list("regress-synth.list", $ver, $force_sv, "-S");
     }
 }
-&execute_regression($suffix, $strict, $with_valg);
+$failed = &execute_regression($suffix, $strict, $with_valg);
 &close_report_file;
 
+exit $failed;
 
 #
 #  execute_regression sequentially compiles and executes each test in
@@ -262,4 +263,6 @@ sub execute_regression {
 
     # Remove remaining temporary files
     system("rm -f *.tmp ivltests/*.tmp");
+
+    return($failed)
 }
