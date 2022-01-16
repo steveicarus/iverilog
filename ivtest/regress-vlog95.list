@@ -838,6 +838,7 @@ size_cast3		normal,-g2009,-pallowsigned=1	ivltests
 size_cast5		normal,-g2009,-pallowsigned=1	ivltests
 struct_packed_array	normal,-g2009,-pallowsigned=1	ivltests
 struct_packed_array2	normal,-g2009,-pallowsigned=1	ivltests
+struct_signed		normal,-g2009,-pallowsigned=1	ivltests
 sv_for_variable  normal,-g2009,-pallowsigned=1	ivltests
 sv_foreach1		normal,-g2009,-pallowsigned=1	ivltests
 sv_foreach5		normal,-g2009,-pallowsigned=1	ivltests

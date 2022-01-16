@@ -664,6 +664,7 @@ Running vlog95 compiler/VVP tests for Icarus Verilog version: 12.
                  size_cast5: Passed.
         struct_packed_array: Passed.
        struct_packed_array2: Passed.
+              struct_signed: Passed.
             sv_for_variable: Passed.
                 sv_foreach1: Passed.
                 sv_foreach5: Passed.
@@ -2565,4 +2566,4 @@ test_mos_strength_reduction: Passed.
            synth_if_no_else: Passed.
 ============================================================================
 Test results:
-  Total=2563, Passed=2524, Failed=2, Not Implemented=3, Expected Fail=34
+  Total=2564, Passed=2525, Failed=2, Not Implemented=3, Expected Fail=34
