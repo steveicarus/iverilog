@@ -3447,7 +3447,7 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
                     // the signedness pushed down from the main expression.
 		  tmp = cast_to_width(sub, expr_width_, sub->has_sign(), *this);
 	    }
-	    return pad_to_width(tmp, expr_wid, signed_flag_, *this);
+	    return pad_to_width(tmp, expr_wid, signed_flag_, *this, target_type_);
       }
 
       if (dynamic_cast<const string_type_t*>(target_)) {
