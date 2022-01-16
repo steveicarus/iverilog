@@ -118,7 +118,8 @@ vhdl_labeled_assign	normal,-g2005-sv,ivltests/vhdl_labeled_assign.vhd	ivltests
 vhdl_lfcr		normal,-g2005-sv,ivltests/vhdl_lfcr.vhd			ivltests gold=vhdl_lfcr.gold
 vhdl_logic		normal,-g2005-sv,ivltests/vhdl_logic.vhd		ivltests
 vhdl_loop		normal,-g2005-sv,ivltests/vhdl_loop.vhd		ivltests
-vhdl_multidim_array	normal,-g2005-sv,ivltests/vhdl_multidim_array.vhd	ivltests
+#vhdl_multidim_array	normal,-g2005-sv,ivltests/vhdl_multidim_array.vhd	ivltests
+vhdl_multidim_array	NI							ivltests
 vhdl_nand104_stdlogic	normal,-g2005-sv,ivltests/vhdl_nand104_stdlogic.vhd	ivltests
 vhdl_nand23_bit		normal,-g2005-sv,ivltests/vhdl_nand23_bit.vhd		ivltests
 vhdl_nandg_bit		normal,-g2005-sv,ivltests/vhdl_nandg_bit.vhd		ivltests
