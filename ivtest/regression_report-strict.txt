@@ -2154,6 +2154,7 @@ test_mos_strength_reduction: Passed.
      struct_packed_sysfunct: Passed.
   struct_packed_write_read2: Passed.
       struct_invalid_member: Passed - CE.
+              struct_signed: Passed.
                sv-constants: Passed.
    sv_array_assign_pattern2: Passed.
             sv_cast_integer: Passed.
@@ -2562,4 +2563,4 @@ test_mos_strength_reduction: Passed.
                 ufuncsynth1: Passed.
 ============================================================================
 Test results:
-  Total=2560, Passed=2554, Failed=3, Not Implemented=0, Expected Fail=3
+  Total=2561, Passed=2555, Failed=3, Not Implemented=0, Expected Fail=3

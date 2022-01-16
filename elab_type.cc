@@ -180,6 +180,7 @@ netstruct_t* struct_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
       netstruct_t*res = new netstruct_t;
 
       res->packed(packed_flag);
+      res->set_signed(signed_flag);
 
       if (union_flag)
 	    res->union_flag(true);
