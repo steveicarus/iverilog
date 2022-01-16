@@ -1969,8 +1969,7 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 		  des->errors += 1;
 	    }
 	    netenum_t::iterator item = netenum->first_name();
-	    NetEConstEnum*tmp = new NetEConstEnum(scope, item->first,
-	                                          netenum, item->second);
+	    NetEConstEnum*tmp = new NetEConstEnum(item->first, netenum, item->second);
 	    tmp->set_line(*li);
 	    delete expr; // The elaborated enum variable is not needed.
 	    return tmp;
@@ -1987,8 +1986,7 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 		  des->errors += 1;
 	    }
 	    netenum_t::iterator item = netenum->last_name();
-	    NetEConstEnum*tmp = new NetEConstEnum(scope, item->first,
-	                                          netenum, item->second);
+	    NetEConstEnum*tmp = new NetEConstEnum(item->first, netenum, item->second);
 	    tmp->set_line(*li);
 	    delete expr; // The elaborated enum variable is not needed.
 	    return tmp;

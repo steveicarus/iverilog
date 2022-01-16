@@ -2153,8 +2153,8 @@ class NetEConst  : public NetExpr {
 class NetEConstEnum  : public NetEConst {
 
     public:
-      explicit NetEConstEnum(Definitions*scope, perm_string name,
-			     const netenum_t*enum_set, const verinum&val);
+      explicit NetEConstEnum(perm_string name, const netenum_t*enum_set,
+			     const verinum&val);
       ~NetEConstEnum();
 
       perm_string name() const;
@@ -2166,7 +2166,6 @@ class NetEConstEnum  : public NetEConst {
       virtual NetEConstEnum* dup_expr() const;
 
     private:
-      Definitions*scope_;
       const netenum_t*enum_set_;
       perm_string name_;
 };
