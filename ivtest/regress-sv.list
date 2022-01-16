@@ -149,6 +149,7 @@ br_gh112e		normal,-g2009		ivltests
 br_gh112f		normal,-g2009		ivltests
 br_gh129		normal,-g2009		ivltests
 br_gh130a		CE,-g2009		ivltests
+br_gh130b		normal,-g2009		ivltests
 br_gh165		normal,-g2009		ivltests gold=br_gh165.gold
 br_gh164a		normal,-g2009		ivltests
 br_gh164b		normal,-g2009		ivltests
@@ -184,6 +185,7 @@ br_gh374		normal,-g2009		ivltests gold=br_gh374.gold
 br_gh386a		normal,-g2009		ivltests
 br_gh386b		normal,-g2009		ivltests
 br_gh386c		CE,-g2009		ivltests
+br_gh386d		normal,-g2009		ivltests
 br_gh388		normal,-g2009		ivltests gold=br_gh388.gold
 br_gh391		normal,-g2009		ivltests gold=br_gh391.gold
 br_gh411		normal,-g2009		ivltests

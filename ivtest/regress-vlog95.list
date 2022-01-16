@@ -733,6 +733,7 @@ br_gh99r		normal,-pallowsigned=1	ivltests
 br_gh112e		normal,-g2009,-pallowsigned=1	ivltests
 br_gh112f		normal,-g2009,-pallowsigned=1	ivltests
 br_gh129		normal,-g2009,-pallowsigned=1	ivltests
+br_gh130b		normal,-g2009,-pallowsigned=1	ivltests
 br_gh198		normal,-pallowsigned=1	ivltests gold=br_gh198.gold
 br_gh199a		normal,-pallowsigned=1	ivltests
 br_gh199b		normal,-pallowsigned=1	ivltests
@@ -743,6 +744,7 @@ br_gh283a		normal,-pallowsigned=1	ivltests
 br_gh283b		normal,-pallowsigned=1	ivltests
 br_gh283c		normal,-pallowsigned=1	ivltests
 br_gh289b		normal,-g2009,-pallowsigned=1	ivltests
+br_gh386d		normal,-g2009,-pallowsigned=1	ivltests
 br_gh477		normal,-g2009,-pallowsigned=1	ivltests
 br_gh540		normal,-g2009,-pallowsigned=1	ivltests
 ca_mult			normal,-pallowsigned=1	ivltests gold=ca_mult.gold

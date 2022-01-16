@@ -115,8 +115,6 @@ br605b			normal			ivltests
 br971			normal			ivltests
 br1005			normal			ivltests
 br1015b			normal			ivltests
-br_gh130b		normal			ivltests
-br_gh386d		normal			ivltests
 br_ml20150315b		normal			ivltests
 sv_deferred_assert1	normal			ivltests
 sv_deferred_assert2	normal			ivltests
