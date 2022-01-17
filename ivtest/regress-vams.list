@@ -67,8 +67,10 @@
 # gold or diff commands.
 #
 
-analog1			normal,-gverilog-ams	ivltests
-analog2			normal,-gverilog-ams	ivltests
+#analog1			normal,-gverilog-ams	ivltests
+#analog2			normal,-gverilog-ams	ivltests
+analog1			NI			ivltests
+analog2			NI			ivltests
 br_gh99c		normal,-gverilog-ams	ivltests
 cast_int_ams		normal,-gverilog-ams	ivltests
 constfunc4_ams		normal,-gverilog-ams	ivltests
