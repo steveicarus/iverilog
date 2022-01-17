@@ -19,15 +19,16 @@
 
 # include "config.h"
 
+# include  "netenum.h"
 # include  "netlist.h"
 # include  "netvector.h"
 # include  "netmisc.h"
 
 
 NetExpr*pad_to_width(NetExpr*expr, unsigned wid, bool signed_flag,
-		     const LineInfo&info)
+		     const LineInfo&info, ivl_type_t use_type)
 {
-      if (wid <= expr->expr_width()) {
+      if (wid <= expr->expr_width() && !use_type) {
 	    expr->cast_signed(signed_flag);
 	    return expr;
       }
@@ -38,13 +39,19 @@ NetExpr*pad_to_width(NetExpr*expr, unsigned wid, bool signed_flag,
 	    verinum oval = tmp->value();
 	    oval.has_sign(signed_flag);
 	    oval = pad_to_width(oval, wid);
-	    tmp = new NetEConst(oval);
+	    if (const netenum_t *enum_type = dynamic_cast<const netenum_t *>(use_type)) {
+		  // The name of the enum is set to <nil> here, but the name is
+		  // only used in debugging output, so this is ok
+		  tmp = new NetEConstEnum(perm_string(), enum_type, oval);
+	    } else {
+		  tmp = new NetEConst(oval);
+	    }
 	    tmp->set_line(info);
 	    delete expr;
 	    return tmp;
       }
 
-      NetESelect*tmp = new NetESelect(expr, 0, wid);
+      NetESelect*tmp = new NetESelect(expr, 0, wid, use_type);
       tmp->cast_signed(signed_flag);
       tmp->set_line(info);
       return tmp;

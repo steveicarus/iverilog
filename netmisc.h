@@ -161,13 +161,13 @@ inline NetScope* symbol_search(const LineInfo*li,
  * signed_flag.
  */
 extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid, bool signed_flag,
-			    const LineInfo&info);
+			    const LineInfo&info, ivl_type_t use_type = 0);
 /*
  * This version determines the extension method from the base expression type.
  */
-inline NetExpr*pad_to_width(NetExpr*expr, unsigned wid, const LineInfo&info)
+inline NetExpr*pad_to_width(NetExpr*expr, unsigned wid, const LineInfo&info, ivl_type_t use_type = 0)
 {
-      return pad_to_width(expr, wid, expr->has_sign(), info);
+      return pad_to_width(expr, wid, expr->has_sign(), info, use_type);
 }
 
 /*

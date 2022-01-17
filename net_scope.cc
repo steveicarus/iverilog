@@ -55,7 +55,7 @@ bool Definitions::add_enumeration_name(netenum_t*enum_set, perm_string name)
       netenum_t::iterator enum_val = enum_set->find_name(name);
       assert(enum_val != enum_set->end_name());
 
-      NetEConstEnum*val = new NetEConstEnum(this, name, enum_set, enum_val->second);
+      NetEConstEnum*val = new NetEConstEnum(name, enum_set, enum_val->second);
 
       pair<map<perm_string,NetEConstEnum*>::iterator, bool> cur;
       cur = enum_names_.insert(make_pair(name,val));
