@@ -118,6 +118,7 @@ cast_real_signed	CE,-pallowsigned=1	ivltests
 cast_real_unsigned	CE			ivltests
 sv_cast_integer		normal,-g2005-sv,-pallowsigned=1	ivltests
 sv_cast_integer2	normal,-g2005-sv,-pallowsigned=1	ivltests
+sv_cast_packed_struct	normal,-g2005-sv,-pallowsigned=1	ivltests
 sv_cast_string		CE			ivltests
 clog2			CE			ivltests  # Also big int
 delayed_sfunc		CE			ivltests
