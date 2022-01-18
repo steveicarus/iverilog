@@ -241,10 +241,6 @@ ivl_type_t uarray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 
 	// Special case: if the dimension is null:nil. this is a queue.
       if (dynamic_cast<PENull*>(cur->first)) {
-	    cerr << get_fileline() << ": sorry: "
-		 << "SV queues inside classes are not yet supported." << endl;
-	    des->errors += 1;
-
 	      // FIXME: Need to set the max size if cur->second is defined
 	    ivl_type_s*res = new netqueue_t(btype, -1);
 	    return res;
