@@ -66,9 +66,9 @@ verireal::~verireal()
 {
 }
 
-long verireal::as_long(int shift) const
+long verireal::as_long() const
 {
-      double out = value_ * pow(10.0,shift);
+      double out = value_;
       double outf;
 
       if (out >= 0.0) {
@@ -133,13 +133,6 @@ verireal operator/ (const verireal&l, const verireal&r)
       return res;
 }
 
-verireal operator/ (const verireal&l, const verinum&r)
-{
-      verireal res;
-      res.value_ = l.value_ / (double)r.as_long();
-      return res;
-}
-
 verireal operator% (const verireal&l, const verireal&r)
 {
       verireal res;
@@ -148,22 +141,6 @@ verireal operator% (const verireal&l, const verireal&r)
 	// the correct state before doing the operation.
       assert(gn_icarus_misc_flag);
       res.value_ = fmod(l.value_, r.value_);
-      return res;
-}
-
-verireal operator% (const verireal&l, const verinum&r)
-{
-      verireal res;
-	// See above.
-      assert(gn_icarus_misc_flag);
-      res.value_ = fmod(l.value_, (double)r.as_long());
-      return res;
-}
-
-verireal pow (const verireal&l, const verireal&r)
-{
-      verireal res;
-      res.value_ = pow(l.value_, r.value_);
       return res;
 }
 

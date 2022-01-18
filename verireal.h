@@ -42,10 +42,7 @@ class verireal {
       friend verireal operator- (const verireal&, const verireal&);
       friend verireal operator* (const verireal&, const verireal&);
       friend verireal operator/ (const verireal&, const verireal&);
-      friend verireal operator/ (const verireal&, const verinum&);
       friend verireal operator% (const verireal&, const verireal&);
-      friend verireal operator% (const verireal&, const verinum&);
-      friend verireal pow(const verireal&, const verireal&);
 
 	// Unary minus.
       friend verireal operator- (const verireal&);
@@ -57,12 +54,12 @@ class verireal {
       explicit verireal(double val);
       ~verireal();
 
-	/* Return the value of the floating point number as an
-	   integer, rounded as needed. The shift is the power of 10 to
-	   multiply the value before calculating the result. So for
-	   example if the value is 2.5 and shift == 1, the result
-	   is 25. */
-      long as_long(int shift =0) const;
+      // Return the value of the floating point number as an
+      // integer, rounded as needed. The shift is the power of 10 to
+      // multiply the value before calculating the result. So for
+      // example if the value is 2.5 and shift == 1, the result
+      // is 25.
+      long as_long() const;
       int64_t as_long64(int shift =0) const;
 
       double as_double() const;
@@ -74,10 +71,7 @@ class verireal {
 extern std::ostream& operator<< (std::ostream&, const verireal&);
 extern verireal operator* (const verireal&, const verireal&);
 extern verireal operator/ (const verireal&, const verireal&);
-extern verireal operator/ (const verireal&, const verinum&);
 extern verireal operator% (const verireal&, const verireal&);
-extern verireal operator% (const verireal&, const verinum&);
-extern verireal pow(const verireal&, const verireal&);
 extern verireal operator- (const verireal&);
 
 #endif /* IVL_verireal_H */
