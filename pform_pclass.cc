@@ -86,6 +86,7 @@ void pform_class_property(const struct vlltype&loc,
 
 	    pform_cur_class->type->properties[curp->name]
 		  = class_type_t::prop_info_t(property_qual,use_type);
+	    FILE_NAME(&pform_cur_class->type->properties[curp->name], loc);
 
 	    if (PExpr*rval = curp->expr.release()) {
 		  PExpr*lval = new PEIdent(curp->name);

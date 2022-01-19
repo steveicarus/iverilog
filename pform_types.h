@@ -336,7 +336,7 @@ struct class_type_t : public data_type_t {
       std::list<PExpr*>base_args;
 
 	// This is a map of the properties. Map the name to the type.
-      struct prop_info_t {
+      struct prop_info_t : public LineInfo {
 	    inline prop_info_t() : qual(property_qualifier_t::make_none()), type(0) { }
 	    inline prop_info_t(property_qualifier_t q, data_type_t*t) : qual(q), type(t) { }
 	    property_qualifier_t qual;
