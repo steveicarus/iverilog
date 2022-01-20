@@ -96,12 +96,6 @@ struct parmvalue_t {
 struct str_pair_t { ivl_drive_t str0, str1; };
 
 
-struct net_decl_assign_t {
-      perm_string name;
-      PExpr*expr;
-      struct net_decl_assign_t*next;
-};
-
 /* The lgate is gate instantiation information. */
 struct lgate {
       explicit inline lgate(int =0)
@@ -360,12 +354,6 @@ extern void pform_makewire(const struct vlltype&li, perm_string name,
 			   std::list<named_pexpr_t>*attr);
 
 /* This form handles assignment declarations. */
-extern void pform_makewire(const struct vlltype&li,
-			   std::list<PExpr*>*delay,
-			   str_pair_t str,
-			   net_decl_assign_t*assign_list,
-			   NetNet::Type type,
-			   data_type_t*data_type);
 
 extern void pform_makewire(const struct vlltype&li,
 			   std::list<PExpr*>*delay,

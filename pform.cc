@@ -2823,54 +2823,6 @@ void pform_makewire(const vlltype&li, perm_string name,
       }
 }
 
-/*
- * This form makes nets with delays and continuous assignments.
- */
-void pform_makewire(const vlltype&li,
-		    list<PExpr*>*delay,
-		    str_pair_t str,
-		    net_decl_assign_t*decls,
-		    NetNet::Type type,
-		    data_type_t*data_type)
-{
-	// The decls pointer is a circularly linked list.
-      net_decl_assign_t*first = decls->next;
-
-      list<perm_string>*names = new list<perm_string>;
-
-	// Go through the circularly linked list non-destructively.
-      do {
-	    pform_makewire(li, first->name, type, NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
-	    names->push_back(first->name);
-	    first = first->next;
-      } while (first != decls->next);
-
-	// The pform_set_data_type function will delete the names list.
-      pform_set_data_type(li, data_type, names, type, 0);
-
-	// This time, go through the list, deleting cells as I'm done.
-      first = decls->next;
-      decls->next = 0;
-      while (first) {
-	    net_decl_assign_t*next = first->next;
-	    PWire*cur = pform_get_wire_in_scope(first->name);
-	    if (cur != 0) {
-		  PEIdent*lval = new PEIdent(first->name);
-		  FILE_NAME(lval, li.text, li.first_line);
-		  PGAssign*ass = pform_make_pgassign(lval, first->expr,
-						     delay, str);
-		  FILE_NAME(ass, li.text, li.first_line);
-	    }
-
-	    delete first;
-	    first = next;
-      }
-}
-
-/*
- * This should eventually replace the form above that takes a
- * net_decl_assign_t argument.
- */
 void pform_makewire(const struct vlltype&li,
 		    std::list<PExpr*>*delay,
 		    str_pair_t str,

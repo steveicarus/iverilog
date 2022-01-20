@@ -439,7 +439,6 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
       Statement*statement;
       std::vector<Statement*>*statement_list;
 
-      net_decl_assign_t*net_decl_assign;
       enum_type_t*enum_type;
 
       decl_assignment_t*decl_assignment;
@@ -610,7 +609,8 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <perm_strings> list_of_identifiers loop_variables
 %type <port_list> list_of_port_identifiers list_of_variable_port_identifiers
 
-%type <net_decl_assign> net_decl_assign net_decl_assigns
+%type <decl_assignments> net_decl_assigns
+%type <decl_assignment> net_decl_assign
 
 %type <mport> port port_opt port_reference port_reference_list
 %type <mport> port_declaration
@@ -5523,10 +5523,9 @@ generate_block
 
 net_decl_assign
   : IDENTIFIER '=' expression
-      { net_decl_assign_t*tmp = new net_decl_assign_t;
-	tmp->next = tmp;
+      { decl_assignment_t*tmp = new decl_assignment_t;
 	tmp->name = lex_strings.make($1);
-	tmp->expr = $3;
+	tmp->expr.reset($3);
 	delete[]$1;
 	$$ = tmp;
       }
@@ -5534,14 +5533,15 @@ net_decl_assign
 
 net_decl_assigns
 	: net_decl_assigns ',' net_decl_assign
-		{ net_decl_assign_t*tmp = $1;
-		  $3->next = tmp->next;
-		  tmp->next = $3;
-		  $$ = tmp;
-		}
+      { std::list<decl_assignment_t*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
 	| net_decl_assign
-		{ $$ = $1;
-		}
+      { std::list<decl_assignment_t*>*tmp = new std::list<decl_assignment_t*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
 	;
 
 net_type
