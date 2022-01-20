@@ -2634,6 +2634,8 @@ void pform_module_define_port(const struct vlltype&li,
 	    return;
       }
 
+      pform_check_net_data_type(li, type, vtype);
+
 	// Packed ranges
       list<pform_range_t>*prange = 0;
 	// Unpacked dimensions
@@ -3746,6 +3748,37 @@ bool pform_requires_sv(const struct vlltype&loc, const char *feature)
       VLerror(loc, "error: %s requires SystemVerilog.", feature);
 
       return false;
+}
+
+void pform_check_net_data_type(const struct vlltype&loc, NetNet::Type net_type,
+			       const data_type_t *data_type)
+{
+      // For SystemVerilog the type is checked during elaboration since due to
+      // forward typedefs and type parameters the actual type might not be known
+      // yet.
+      if (gn_system_verilog())
+	    return;
+
+      switch (net_type) {
+      case NetNet::REG:
+      case NetNet::IMPLICIT_REG:
+	    return;
+      default:
+	    break;
+      }
+
+      if (!data_type)
+	    return;
+
+      const vector_type_t*vec_type = dynamic_cast<const vector_type_t*>(data_type);
+      if (vec_type && vec_type->implicit_flag)
+	    return;
+
+      const real_type_t*rtype = dynamic_cast<const real_type_t*>(data_type);
+      if (rtype && rtype->type_code() == real_type_t::REAL)
+	    return;
+
+      pform_requires_sv(loc, "Net data type");
 }
 
 FILE*vl_input = 0;

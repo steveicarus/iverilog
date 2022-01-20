@@ -90,6 +90,90 @@ void Statement::elaborate_sig(Design*, NetScope*) const
 {
 }
 
+static void sig_check_data_type(Design*des, NetScope*scope,
+			        PWire *wire, NetNet *sig)
+{
+      ivl_type_t type = sig->net_type();
+
+      if (!type)
+	    return;
+
+      if (type->packed()) {
+	    switch (type->base_type()) {
+	    case IVL_VT_LOGIC: // 4-state packed is allowed by the standard
+	    case IVL_VT_BOOL: // Icarus allows 2-state packed as an extension
+		  return;
+	    default:
+		  break;
+	    }
+      }
+
+      // Icarus allows real nets as an extension
+      if (type->base_type() == IVL_VT_REAL)
+	    return;
+
+      if (wire->symbol_type() == PNamedItem::NET) {
+	    cerr << wire->get_fileline() << ": error: Net `"
+	         << wire->basename() << "` can not be of type `"
+		 << sig->data_type() << "`." << endl;
+	    des->errors++;
+      } else if (scope->type() == NetScope::MODULE &&
+	         sig->port_type() != NetNet::NOT_A_PORT) {
+	    // Module ports only support wire types a the moment
+	    cerr << wire->get_fileline() << ": sorry: Port `"
+	         << wire->basename() << "` of module `"
+	         << scope->module_name()
+	         << "` with type `" << sig->data_type()
+		 << "` is not supported."
+	         << endl;
+	    des->errors++;
+      }
+}
+
+static void sig_check_port_type(Design*des, NetScope*scope,
+			        PWire *wire, NetNet *sig)
+{
+      if (sig->port_type() == NetNet::PREF) {
+	    cerr << wire->get_fileline() << ": sorry: "
+		 << "Reference ports not supported yet." << endl;
+	    des->errors += 1;
+      }
+
+      // Some extra checks for module ports
+      if (scope->type() != NetScope::MODULE)
+	    return;
+
+	/* If the signal is an input and is also declared as a
+	   reg, then report an error. */
+
+      if (sig->port_type() == NetNet::PINPUT &&
+	  sig->type() == NetNet::REG) {
+	    cerr << wire->get_fileline() << ": error: Port `"
+		 << wire->basename() << "` of module `"
+		 << scope->module_name()
+		 << "` is declared as input and as a reg type." << endl;
+	    des->errors += 1;
+      }
+
+      if (sig->port_type() == NetNet::PINOUT &&
+	  sig->type() == NetNet::REG) {
+	    cerr << wire->get_fileline() << ": error: Port `"
+		 << wire->basename() << "` of module `"
+		 << scope->module_name()
+		 << "` is declared as inout and as a reg type." << endl;
+	    des->errors += 1;
+      }
+
+      if (sig->port_type() == NetNet::PINOUT &&
+	  sig->data_type() == IVL_VT_REAL) {
+	    cerr << wire->get_fileline() << ": error: Port `"
+		 << wire->basename() << "` of module `"
+		 << scope->module_name()
+		 << "` is declared as a real inout port." << endl;
+	    des->errors += 1;
+      }
+}
+
 bool PScope::elaborate_sig_wires_(Design*des, NetScope*scope) const
 {
       bool flag = true;
@@ -100,53 +184,11 @@ bool PScope::elaborate_sig_wires_(Design*des, NetScope*scope) const
 	    PWire*cur = (*wt).second;
 	    NetNet*sig = cur->elaborate_sig(des, scope);
 
-	    if (sig && (sig->scope() == scope)
-		&& (sig->port_type() == NetNet::PREF)) {
+	    if (!sig || sig->scope() != scope)
+		  continue;
 
-		  cerr << cur->get_fileline() << ": sorry: "
-		       << "Reference ports not supported yet." << endl;
-		  des->errors += 1;
-	    }
-
-
-	      /* If the signal is an input and is also declared as a
-		 reg, then report an error. */
-
-	    if (sig && (sig->scope() == scope)
-		&& (scope->type() == NetScope::MODULE)
-		&& (sig->port_type() == NetNet::PINPUT)
-		&& (sig->type() == NetNet::REG)) {
-
-		  cerr << cur->get_fileline() << ": error: Port "
-		       << cur->basename() << " of module "
-		       << scope->module_name()
-		       << " is declared as input and as a reg type." << endl;
-		  des->errors += 1;
-	    }
-
-	    if (sig && (sig->scope() == scope)
-		&& (scope->type() == NetScope::MODULE)
-		&& (sig->port_type() == NetNet::PINOUT)
-		&& (sig->type() == NetNet::REG)) {
-
-		  cerr << cur->get_fileline() << ": error: Port "
-		       << cur->basename() << " of module "
-		       << scope->module_name()
-		       << " is declared as inout and as a reg type." << endl;
-		  des->errors += 1;
-	    }
-
-	    if (sig && (sig->scope() == scope)
-		&& (scope->type() == NetScope::MODULE)
-		&& (sig->port_type() == NetNet::PINOUT)
-		&& (sig->data_type() == IVL_VT_REAL)) {
-
-		  cerr << cur->get_fileline() << ": error: Port "
-		       << cur->basename() << " of module "
-		       << scope->module_name()
-		       << " is declared as a real inout port." << endl;
-		  des->errors += 1;
-	    }
+	    sig_check_data_type(des, scope, cur, sig);
+	    sig_check_port_type(des, scope, cur, sig);
 
       }
 

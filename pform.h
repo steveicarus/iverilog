@@ -587,4 +587,7 @@ bool pform_requires_sv(const struct vlltype&loc, const char *feature);
 void pform_start_parameter_port_list();
 void pform_end_parameter_port_list();
 
+void pform_check_net_data_type(const struct vlltype&loc, NetNet::Type net_type,
+			       const data_type_t *data_type);
+
 #endif /* IVL_pform_H */

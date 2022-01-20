@@ -4891,6 +4891,7 @@ module_item
   | attribute_list_opt net_type data_type_or_implicit delay3_opt net_variable_list ';'
 
       { data_type_t*data_type = $3;
+        pform_check_net_data_type(@2, $2, $3);
 	if (data_type == 0) {
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
 	      FILE_NAME(data_type, @2);
@@ -4925,6 +4926,7 @@ module_item
 
   | attribute_list_opt net_type data_type_or_implicit delay3_opt net_decl_assigns ';'
       { data_type_t*data_type = $3;
+        pform_check_net_data_type(@2, $2, $3);
 	if (data_type == 0) {
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
 	      FILE_NAME(data_type, @2);
@@ -4938,6 +4940,7 @@ module_item
 
   | attribute_list_opt net_type data_type_or_implicit drive_strength net_decl_assigns ';'
       { data_type_t*data_type = $3;
+        pform_check_net_data_type(@2, $2, $3);
 	if (data_type == 0) {
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
 	      FILE_NAME(data_type, @2);
