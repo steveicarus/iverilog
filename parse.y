@@ -6593,11 +6593,6 @@ statement_item /* This is roughly statement_item in the LRM */
      name. These are handled by pushing the scope name, then matching
      the declarations. The scope is popped at the end of the block. */
 
-  | K_begin K_end
-      { PBlock*tmp = new PBlock(PBlock::BL_SEQ);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
   /* In SystemVerilog an unnamed block can contain variable declarations. */
   | K_begin
       { PBlock*tmp = pform_push_block_scope(@1, 0, PBlock::BL_SEQ);
@@ -6618,7 +6613,7 @@ statement_item /* This is roughly statement_item in the LRM */
 	    delete tmp;
 	}
       }
-    statement_or_null_list K_end
+    statement_or_null_list_opt K_end
       { PBlock*tmp;
 	if ($3) {
 	    pform_pop_scope();
