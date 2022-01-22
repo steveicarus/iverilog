@@ -1660,7 +1660,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	decl_assignment_t*tmp_assign = new decl_assignment_t;
 	tmp_assign->name = lex_strings.make($4);
 	assign_list.push_back(tmp_assign);
-	pform_makewire(@4, 0, str_strength, &assign_list, NetNet::REG, $3);
+	pform_make_var(@4, &assign_list, $3);
       }
     statement_or_null
       { pform_name_t tmp_hident;

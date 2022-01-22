@@ -989,11 +989,18 @@ PCallTask* pform_make_call_task(const struct vlltype&loc,
       return tmp;
 }
 
-void pform_make_foreach_declarations(const struct vlltype&loc,
-				     std::list<perm_string>*loop_vars)
+void pform_make_var(const struct vlltype&loc,
+		    std::list<decl_assignment_t*>*assign_list,
+		    data_type_t*data_type, std::list<named_pexpr_t>*attr)
 {
       static const struct str_pair_t str = { IVL_DR_STRONG, IVL_DR_STRONG };
 
+      pform_makewire(loc, 0, str, assign_list, NetNet::REG, data_type, attr);
+}
+
+void pform_make_foreach_declarations(const struct vlltype&loc,
+				     std::list<perm_string>*loop_vars)
+{
       list<decl_assignment_t*>assign_list;
       for (list<perm_string>::const_iterator cur = loop_vars->begin()
 		 ; cur != loop_vars->end() ; ++ cur) {
@@ -1002,7 +1009,7 @@ void pform_make_foreach_declarations(const struct vlltype&loc,
 	    assign_list.push_back(tmp_assign);
       }
 
-      pform_makewire(loc, 0, str, &assign_list, NetNet::REG, &size_type);
+      pform_make_var(loc, &assign_list, &size_type);
 }
 
 PForeach* pform_make_foreach(const struct vlltype&loc,

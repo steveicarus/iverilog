@@ -363,6 +363,11 @@ extern void pform_makewire(const struct vlltype&li,
 			   data_type_t*data_type,
 			   std::list<named_pexpr_t>*attr = 0);
 
+extern void pform_make_var(const struct vlltype&loc,
+			   std::list<decl_assignment_t*>*assign_list,
+			   data_type_t*data_type,
+			   std::list<named_pexpr_t>*attr = 0);
+
 extern void pform_make_var_init(const struct vlltype&li,
 				perm_string name, PExpr*expr);
 
