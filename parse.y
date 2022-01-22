@@ -101,6 +101,29 @@ static pform_name_t* pform_create_super(void)
       return res;
 }
 
+static void check_net_decl_assigns(const struct vlltype&loc,
+				   const std::list<decl_assignment_t*>*assign_list)
+{
+      if (gn_system_verilog())
+	    return;
+
+      bool has_initializer = false;
+      bool has_no_initializer = false;
+
+      for (const auto*cur : *assign_list) {
+	    if (cur->expr)
+		  has_initializer = true;
+	    else
+		  has_no_initializer = true;
+
+	    if (has_initializer && has_no_initializer) {
+		  pform_requires_sv(loc, "Mixing initialized and uninitialized "
+					 "net declaration entries");
+		  return;
+	    }
+      }
+}
+
 /* The rules sometimes push attributes into a global context where
    sub-rules may grab them. This makes parser rules a little easier to
    write in some cases. */
@@ -720,9 +743,6 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <wires>   udp_port_decl udp_port_decls
 %type <statement> udp_initial udp_init_opt
 
-%type <wire> net_variable
-%type <wires> net_variable_list
-
 %type <text> event_variable label_opt class_declaration_endlabel_opt
 %type <text> block_identifier_opt
 %type <text> identifier_name
@@ -730,9 +750,6 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <identifiers> list_of_identifiers
 %type <perm_strings> loop_variables
 %type <port_list> list_of_port_identifiers list_of_variable_port_identifiers
-
-%type <decl_assignments> net_decl_assigns
-%type <decl_assignment> net_decl_assign
 
 %type <mport> port port_opt port_reference port_reference_list
 %type <mport> port_declaration
@@ -780,7 +797,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <expr>  assignment_pattern expression expression_opt expr_mintypmax
 %type <expr>  expr_primary_or_typename expr_primary
 %type <expr>  class_new dynamic_array_new
-%type <expr>  var_decl_initializer_opt initializer_opt
+%type <expr>  net_decl_initializer_opt var_decl_initializer_opt initializer_opt
 %type <expr>  inc_or_dec_expression inside_expression lpvalue
 %type <expr>  branch_probe_expression streaming_concatenation
 %type <expr>  delay_value delay_value_simple
@@ -788,8 +805,8 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <exprs> expression_list_with_nuls expression_list_proper
 %type <exprs> cont_assign cont_assign_list
 
-%type <decl_assignment> variable_decl_assignment
-%type <decl_assignments> list_of_variable_decl_assignments
+%type <decl_assignment> net_decl_assign variable_decl_assignment
+%type <decl_assignments> net_decl_assigns list_of_variable_decl_assignments
 
 %type <data_type>  data_type data_type_opt data_type_or_implicit data_type_or_implicit_or_void
 %type <data_type>  data_type_or_implicit_no_opt
@@ -4983,70 +5000,30 @@ module_item
   /* Modules can contain further sub-module definitions. */
   : module
 
-  | attribute_list_opt net_type data_type_or_implicit delay3_opt net_variable_list ';'
-
-      { data_type_t*data_type = $3;
-        pform_check_net_data_type(@2, $2, $3);
-	if (data_type == 0) {
-	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
-	      FILE_NAME(data_type, @2);
-	}
-	pform_set_data_type(@2, data_type, $5, $2, $1);
-	if ($4 != 0) {
-	      yyerror(@2, "sorry: Net delays not supported.");
-	      delete $4;
-	}
-	delete $1;
-      }
-
-  | attribute_list_opt K_wreal delay3 net_variable_list ';'
-      { real_type_t*tmpt = new real_type_t(real_type_t::REAL);
-	pform_set_data_type(@2, tmpt, $4, NetNet::WIRE, $1);
-	if ($3 != 0) {
-	      yyerror(@3, "sorry: Net delays not supported.");
-	      delete $3;
-	}
-	delete $1;
-      }
-
-  | attribute_list_opt K_wreal net_variable_list ';'
-      { real_type_t*tmpt = new real_type_t(real_type_t::REAL);
-	pform_set_data_type(@2, tmpt, $3, NetNet::WIRE, $1);
-	delete $1;
-      }
-
   /* Very similar to the rule above, but this takes a list of
      net_decl_assigns, which are <name> = <expr> assignment
      declarations. */
 
-  | attribute_list_opt net_type data_type_or_implicit delay3_opt net_decl_assigns ';'
-      { data_type_t*data_type = $3;
-        pform_check_net_data_type(@2, $2, $3);
-	if (data_type == 0) {
-	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
-	      FILE_NAME(data_type, @2);
-	}
-	pform_makewire(@2, $4, str_strength, $5, $2, data_type, $1);
-	delete $1;
-      }
-
-  /* This form doesn't have the range, but does have strengths. This
-     gives strength to the assignment drivers. */
-
-  | attribute_list_opt net_type drive_strength data_type_or_implicit net_decl_assigns ';'
+  | attribute_list_opt net_type drive_strength_opt data_type_or_implicit delay3_opt net_decl_assigns ';'
       { data_type_t*data_type = $4;
         pform_check_net_data_type(@2, $2, $4);
+	check_net_decl_assigns(@6, $6);
 	if (data_type == 0) {
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
 	      FILE_NAME(data_type, @2);
 	}
-	pform_makewire(@2, 0, $3, $5, $2, data_type, $1);
+	pform_makewire(@2, $5, $3, $6, $2, data_type, $1);
 	delete $1;
       }
 
-  | attribute_list_opt K_wreal net_decl_assigns ';'
+  | attribute_list_opt K_wreal delay3_opt net_decl_assigns ';'
       { real_type_t*data_type = new real_type_t(real_type_t::REAL);
-	pform_makewire(@2, 0, str_strength, $3, NetNet::WIRE, data_type, $1);
+	check_net_decl_assigns(@4, $4);
+	if ($3) {
+	      yyerror(@2, "error: wreal net does not support delay.");
+	      delete $3;
+	}
+	pform_makewire(@2, 0, str_strength, $4, NetNet::WIRE, data_type, $1);
 	delete $1;
       }
 
@@ -5550,10 +5527,21 @@ generate_block
      Note that the continuous assignment statement is generated as a
      side effect, and all I pass up is the name of the l-value. */
 
+net_decl_initializer_opt
+ : '=' expression { $$ = $2; }
+ | { $$ = 0; }
+ ;
+
 net_decl_assign
-  : IDENTIFIER '=' expression
+  : IDENTIFIER dimensions_opt net_decl_initializer_opt
       { decl_assignment_t*tmp = new decl_assignment_t;
 	tmp->name = { lex_strings.make($1), @1.lexical_pos };
+	if ($2) {
+	      tmp->index = *$2;
+	      if ($3)
+		    pform_requires_sv(@$, "Assignment of net array during declaration");
+	      delete $2;
+	}
 	tmp->expr.reset($3);
 	delete[]$1;
 	$$ = tmp;
@@ -6023,26 +6011,6 @@ dimensions
 	      delete $2;
 	}
 	$$ = tmp;
-      }
-  ;
-
-net_variable
-  : IDENTIFIER dimensions_opt
-      { pform_ident_t name = { lex_strings.make($1), @1.lexical_pos };
-	$$ = pform_makewire(@1, name, NetNet::IMPLICIT, $2);
-	delete [] $1;
-      }
-  ;
-
-net_variable_list
-  : net_variable
-      { std::vector<PWire*> *tmp = new std::vector<PWire*>;
-	tmp->push_back($1);
-	$$ = tmp;
-      }
-  | net_variable_list ',' net_variable
-      { $1->push_back($3);
-	$$ = $1;
       }
   ;
 

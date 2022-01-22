@@ -49,6 +49,10 @@
 
 using namespace std;
 
+static void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
+			        std::vector<PWire*> *wires, NetNet::Type net_type,
+			        list<named_pexpr_t>*attr, bool is_const = false);
+
 /*
  * The "// synthesis translate_on/off" meta-comments cause this flag
  * to be turned off or on. The pform_make_behavior and similar
@@ -2724,6 +2728,8 @@ void pform_makewire(const struct vlltype&li,
 			PGAssign*ass = pform_make_pgassign(lval, expr, delay, str);
 			FILE_NAME(ass, li);
 		  }
+	    } else if (delay) {
+		  VLerror(li, "sorry: net delays not supported.");
 	    }
 	    delete first;
       }
@@ -3272,9 +3278,9 @@ void pform_set_port_type(const struct vlltype&li,
  * This function detects the derived class for the given type and
  * dispatches the type to the proper subtype function.
  */
-void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
-			 std::vector<PWire*> *wires, NetNet::Type net_type,
-			 list<named_pexpr_t>*attr, bool is_const)
+static void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
+			        std::vector<PWire*> *wires, NetNet::Type net_type,
+			        list<named_pexpr_t>*attr, bool is_const)
 {
       if (data_type == 0) {
 	    VLerror(li, "internal error: data_type==0.");

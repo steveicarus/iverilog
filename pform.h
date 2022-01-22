@@ -384,13 +384,6 @@ extern void pform_set_port_type(const struct vlltype&li,
 				data_type_t*dt,
 				std::list<named_pexpr_t>*attr);
 
-extern void pform_set_data_type(const struct vlltype&li,
-				data_type_t *data_type,
-				std::vector<PWire*> *wires,
-				NetNet::Type net_type,
-				std::list<named_pexpr_t>*attr,
-				bool is_const = false);
-
 extern void pform_set_string_type(const struct vlltype&li, const string_type_t*string_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
 
 extern void pform_set_class_type(const struct vlltype&li, class_type_t*class_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*addr);
