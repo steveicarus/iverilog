@@ -603,9 +603,9 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <statement> udp_initial udp_init_opt
 %type <expr>    udp_initial_expr_opt
 
-%type <text> register_variable net_variable event_variable label_opt class_declaration_endlabel_opt
+%type <text> net_variable event_variable label_opt class_declaration_endlabel_opt
 %type <text> block_identifier_opt
-%type <perm_strings> register_variable_list net_variable_list event_variable_list
+%type <perm_strings> net_variable_list event_variable_list
 %type <perm_strings> list_of_identifiers loop_variables
 %type <port_list> list_of_port_identifiers list_of_variable_port_identifiers
 
@@ -645,6 +645,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <expr>  assignment_pattern expression expr_mintypmax
 %type <expr>  expr_primary_or_typename expr_primary
 %type <expr>  class_new dynamic_array_new let_default_opt
+%type <expr>  var_decl_initializer_opt
 %type <expr>  inc_or_dec_expression inside_expression lpvalue
 %type <expr>  branch_probe_expression streaming_concatenation
 %type <expr>  delay_value delay_value_simple
@@ -1767,7 +1768,6 @@ loop_statement /* IEEE1800-2005: A.6.8 */
   ;
 
 
-/* TODO: Replace register_variable_list with list_of_variable_decl_assignments. */
 list_of_variable_decl_assignments /* IEEE1800-2005 A.2.3 */
   : variable_decl_assignment
       { std::list<decl_assignment_t*>*tmp = new std::list<decl_assignment_t*>;
@@ -1781,37 +1781,29 @@ list_of_variable_decl_assignments /* IEEE1800-2005 A.2.3 */
       }
   ;
 
+var_decl_initializer_opt
+ : '=' expression { $$ = $2; }
+ | '=' class_new { $$ = $2; }
+ | '=' dynamic_array_new { $$ = $2; }
+ | { $$ = 0; }
+ ;
+
 variable_decl_assignment /* IEEE1800-2005 A.2.3 */
-  : IDENTIFIER dimensions_opt
-      { decl_assignment_t*tmp = new decl_assignment_t;
+  : IDENTIFIER dimensions_opt var_decl_initializer_opt
+      { if ($3 && pform_peek_scope()->var_init_needs_explicit_lifetime()
+	    && (var_lifetime == LexicalScope::INHERITED)) {
+	      cerr << @1 << ": warning: Static variable initialization requires "
+			    "explicit lifetime in this context." << endl;
+	      warn_count += 1;
+	}
+
+	decl_assignment_t*tmp = new decl_assignment_t;
 	tmp->name = lex_strings.make($1);
 	if ($2) {
 	      tmp->index = *$2;
 	      delete $2;
 	}
-	delete[]$1;
-	$$ = tmp;
-      }
-  | IDENTIFIER '=' expression
-      { decl_assignment_t*tmp = new decl_assignment_t;
-	tmp->name = lex_strings.make($1);
-	tmp->expr .reset($3);
-	delete[]$1;
-	$$ = tmp;
-      }
-  | IDENTIFIER '=' class_new
-      { decl_assignment_t*tmp = new decl_assignment_t;
-	tmp->name = lex_strings.make($1);
-	tmp->expr .reset($3);
-	delete[]$1;
-	$$ = tmp;
-      }
-  | IDENTIFIER dimensions '=' dynamic_array_new
-      { decl_assignment_t*tmp = new decl_assignment_t;
-	tmp->name = lex_strings.make($1);
-	tmp->index = *$2;
-	tmp->expr .reset($4);
-	delete $2;
+	tmp->expr.reset($3);
 	delete[]$1;
 	$$ = tmp;
       }
@@ -2682,21 +2674,22 @@ block_item_decl
   /* variable declarations. Note that data_type can be 0 if we are
      recovering from an error. */
 
-  : data_type register_variable_list ';'
-      { if ($1) pform_set_data_type(@1, $1, $2, NetNet::REG, attributes_in_context);
+  : data_type list_of_variable_decl_assignments ';'
+      { if ($1) pform_make_var(@1, $2, $1, attributes_in_context);
       }
 
-  | variable_lifetime data_type register_variable_list ';'
-      { if ($2) pform_set_data_type(@2, $2, $3, NetNet::REG, attributes_in_context);
+  | variable_lifetime data_type list_of_variable_decl_assignments ';'
+      { if ($2) pform_make_var(@2, $3, $2, attributes_in_context);
 	var_lifetime = LexicalScope::INHERITED;
       }
 
-  | K_reg data_type register_variable_list ';'
-      { if ($2) pform_set_data_type(@2, $2, $3, NetNet::REG, attributes_in_context);
+  /* The extra `reg` is not valid (System)Verilog, this is a iverilog extension. */
+  | K_reg data_type list_of_variable_decl_assignments ';'
+      { if ($2) pform_make_var(@2, $3, $2, attributes_in_context);
       }
 
-  | variable_lifetime K_reg data_type register_variable_list ';'
-      { if ($3) pform_set_data_type(@3, $3, $4, NetNet::REG, attributes_in_context);
+  | variable_lifetime K_reg data_type list_of_variable_decl_assignments ';'
+      { if ($3) pform_make_var(@3, $4, $3, attributes_in_context);
 	var_lifetime = LexicalScope::INHERITED;
       }
 
@@ -5967,64 +5960,6 @@ dimensions
 	$$ = tmp;
       }
   ;
-
-  /* The register_variable rule is matched only when I am parsing
-     variables in a "reg" definition. I therefore know that I am
-     creating registers and I do not need to let the containing rule
-     handle it. The register variable list simply packs them together
-     so that bit ranges can be assigned. */
-register_variable
-  : IDENTIFIER dimensions_opt
-      { perm_string name = lex_strings.make($1);
-	pform_makewire(@1, name, NetNet::REG,
-		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
-	pform_set_reg_idx(name, $2);
-	$$ = $1;
-      }
-  | IDENTIFIER dimensions_opt '=' expression
-      { if (pform_peek_scope()->var_init_needs_explicit_lifetime()
-	    && (var_lifetime == LexicalScope::INHERITED)) {
-	      cerr << @3 << ": warning: Static variable initialization requires "
-			    "explicit lifetime in this context." << endl;
-	      warn_count += 1;
-	}
-	perm_string name = lex_strings.make($1);
-	pform_makewire(@1, name, NetNet::REG,
-		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
-	pform_set_reg_idx(name, $2);
-	pform_make_var_init(@1, name, $4);
-	$$ = $1;
-      }
-  | IDENTIFIER dimensions_opt '=' dynamic_array_new
-      { if (pform_peek_scope()->var_init_needs_explicit_lifetime()
-	    && (var_lifetime == LexicalScope::INHERITED)) {
-	      cerr << @3 << ": warning: Static variable initialization requires "
-			    "explicit lifetime in this context." << endl;
-	      warn_count += 1;
-	}
-	perm_string name = lex_strings.make($1);
-	pform_makewire(@1, name, NetNet::REG,
-		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
-	pform_set_reg_idx(name, $2);
-	pform_make_var_init(@1, name, $4);
-	$$ = $1;
-      }
-  ;
-
-register_variable_list
-	: register_variable
-		{ std::list<perm_string>*tmp = new std::list<perm_string>;
-		  tmp->push_back(lex_strings.make($1));
-		  $$ = tmp;
-		  delete[]$1;
-		}
-	| register_variable_list ',' register_variable
-		{ std::list<perm_string>*tmp = $1;
-		  tmp->push_back(lex_strings.make($3));
-		  $$ = tmp;
-		  delete[]$3;
-		}
-	;
 
 net_variable
   : IDENTIFIER dimensions_opt
