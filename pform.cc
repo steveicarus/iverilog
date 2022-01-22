@@ -2828,7 +2828,8 @@ void pform_makewire(const struct vlltype&li,
 		    str_pair_t str,
 		    std::list<decl_assignment_t*>*assign_list,
 		    NetNet::Type type,
-		    data_type_t*data_type)
+		    data_type_t*data_type,
+		    list<named_pexpr_t>*attr)
 {
       if (is_compilation_unit(lexical_scope) && !gn_system_verilog()) {
 	    VLerror(li, "error: variable declarations must be contained within a module.");
@@ -2845,7 +2846,7 @@ void pform_makewire(const struct vlltype&li,
 	    names->push_back(curp->name);
       }
 
-      pform_set_data_type(li, data_type, names, type, 0);
+      pform_set_data_type(li, data_type, names, type, attr);
 
       while (! assign_list->empty()) {
 	    decl_assignment_t*first = assign_list->front();

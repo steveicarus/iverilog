@@ -1182,7 +1182,7 @@ data_declaration /* IEEE1800-2005: A.2.1.3 */
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
 	      FILE_NAME(data_type, @2);
 	}
-	pform_makewire(@2, 0, str_strength, $3, NetNet::IMPLICIT_REG, data_type);
+	pform_makewire(@2, 0, str_strength, $3, NetNet::IMPLICIT_REG, data_type, $1);
       }
   | attribute_list_opt K_event event_variable_list ';'
       { if ($3) pform_make_events($3, @2.text, @2.first_line);
@@ -4987,12 +4987,8 @@ module_item
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
 	      FILE_NAME(data_type, @2);
 	}
-	pform_makewire(@2, $4, str_strength, $5, $2, data_type);
-	if ($1) {
-	      yywarn(@2, "Attributes are not supported on net declaration "
-		     "assignments and will be discarded.");
-	      delete $1;
-	}
+	pform_makewire(@2, $4, str_strength, $5, $2, data_type, $1);
+	delete $1;
       }
 
   /* This form doesn't have the range, but does have strengths. This
@@ -5004,22 +5000,14 @@ module_item
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
 	      FILE_NAME(data_type, @2);
 	}
-	pform_makewire(@2, 0, $4, $5, $2, data_type);
-	if ($1) {
-	      yywarn(@2, "Attributes are not supported on net declaration "
-		     "assignments and will be discarded.");
-	      delete $1;
-	}
+	pform_makewire(@2, 0, $4, $5, $2, data_type, $1);
+	delete $1;
       }
 
   | attribute_list_opt K_wreal net_decl_assigns ';'
       { real_type_t*data_type = new real_type_t(real_type_t::REAL);
-        pform_makewire(@2, 0, str_strength, $3, NetNet::WIRE, data_type);
-	if ($1) {
-	      yywarn(@2, "Attributes are not supported on net declaration "
-		     "assignments and will be discarded.");
-	      delete $1;
-	}
+	pform_makewire(@2, 0, str_strength, $3, NetNet::WIRE, data_type, $1);
+	delete $1;
       }
 
 	| K_trireg charge_strength_opt dimensions_opt delay3_opt list_of_identifiers ';'
