@@ -1,0 +1,4 @@
+./ivltests/struct_line_info.v:7: error: Member r of packed struct/union must be packed.
+./ivltests/struct_line_info.v:12: error: Member r of packed struct/union must be packed.
+./ivltests/struct_line_info.v:17: error: Member r of packed struct/union must be packed.
+3 error(s) during elaboration.
