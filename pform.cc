@@ -3223,15 +3223,16 @@ LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
 }
 
 void pform_set_parameter(const struct vlltype&loc,
-			 perm_string name, data_type_t*data_type, PExpr*expr,
+			 perm_string name, bool is_local, data_type_t*data_type, PExpr*expr,
 			 LexicalScope::range_t*value_range)
 {
       LexicalScope*scope = lexical_scope;
       if (is_compilation_unit(scope) && !gn_system_verilog()) {
-	    VLerror(loc, "error: parameter declarations must be contained within a module.");
+	    VLerror(loc, "error: %s declarations must be contained within a module.",
+		         is_local ? "localparam" : "parameter");
 	    return;
       }
-      if (scope == pform_cur_generate) {
+      if (scope == pform_cur_generate && !is_local) {
             VLerror("parameter declarations are not permitted in generate blocks");
             return;
       }
@@ -3241,36 +3242,20 @@ void pform_set_parameter(const struct vlltype&loc,
       FILE_NAME(parm, loc);
 
       add_local_symbol(scope, name, parm);
-      scope->parameters[name] = parm;
 
       parm->expr = expr;
       parm->data_type = data_type;
       parm->range = value_range;
 
-	// Only a Module keeps the position of the parameter.
-      if ((dynamic_cast<Module*>(scope)) && (scope == pform_cur_module.front()))
-            pform_cur_module.front()->param_names.push_back(name);
-}
+      if (is_local) {
+	    scope->localparams[name] = parm;
+      } else {
+	    scope->parameters[name] = parm;
 
-void pform_set_localparam(const struct vlltype&loc,
-			  perm_string name, data_type_t*data_type, PExpr*expr)
-{
-      LexicalScope*scope = lexical_scope;
-      if (is_compilation_unit(scope) && !gn_system_verilog()) {
-	    VLerror(loc, "error: localparam declarations must be contained within a module.");
-	    return;
+	    // Only a Module keeps the position of the parameter.
+	    if ((dynamic_cast<Module*>(scope)) && (scope == pform_cur_module.front()))
+		  pform_cur_module.front()->param_names.push_back(name);
       }
-
-      assert(expr);
-      Module::param_expr_t*parm = new Module::param_expr_t();
-      FILE_NAME(parm, loc);
-
-      add_local_symbol(scope, name, parm);
-      scope->localparams[name] = parm;
-
-      parm->expr = expr;
-      parm->data_type = data_type;
-      parm->range = 0;
 }
 
 void pform_set_specparam(const struct vlltype&loc, perm_string name,

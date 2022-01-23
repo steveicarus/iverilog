@@ -5681,7 +5681,8 @@ localparam_assign_list
 parameter_assign
   : IDENTIFIER '=' expression parameter_value_ranges_opt
       { PExpr*tmp = $3;
-	pform_set_parameter(@1, lex_strings.make($1), param_data_type, tmp, $4);
+	pform_set_parameter(@1, lex_strings.make($1), false, param_data_type,
+			    tmp, $4);
 	delete[]$1;
       }
   ;
@@ -5689,7 +5690,8 @@ parameter_assign
 localparam_assign
   : IDENTIFIER '=' expression
       { PExpr*tmp = $3;
-	pform_set_localparam(@1, lex_strings.make($1), param_data_type, tmp);
+	pform_set_parameter(@1, lex_strings.make($1), true, param_data_type,
+			    tmp, 0);
 	delete[]$1;
       }
   ;
