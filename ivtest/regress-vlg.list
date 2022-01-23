@@ -1675,6 +1675,7 @@ undef_lval_select4b	CE			ivltests
 undef_lval_select4c	CE			ivltests
 undef_lval_select5	normal			ivltests
 undefined_shift		normal			ivltests
+unnamed_block_var_decl	CE			ivltests
 urand_r			normal			ivltests gold=urand_r.gold
 urand_r2		normal			ivltests gold=urand_r.gold
 urand_r3		normal			ivltests gold=urand_r.gold
