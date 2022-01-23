@@ -653,7 +653,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <decl_assignment> variable_decl_assignment
 %type <decl_assignments> list_of_variable_decl_assignments
 
-%type <data_type>  data_type data_type_or_implicit data_type_or_implicit_or_void
+%type <data_type>  data_type data_type_opt data_type_or_implicit data_type_or_implicit_or_void
 %type <data_type>  simple_type_or_string let_formal_type
 %type <data_type>  packed_array_data_type
 %type <data_type>  ps_type_identifier
@@ -1263,6 +1263,11 @@ data_type /* IEEE1800-2005: A.2.2.1 */
       }
   ;
 
+/* Data type or nothing, but not implicit */
+data_type_opt
+  : data_type { $$ = $1; }
+  | { $$ = 0; }
+
   /* The data_type_or_implicit rule is a little more complex then the
      rule documented in the IEEE format syntax in order to allow for
      signaling the special case that the data_type is completely
@@ -1279,7 +1284,7 @@ scalar_vector_opt /*IEEE1800-2005: optional support for packed array */
   ;
 
 data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
-  : data_type
+  : data_type_opt
       { $$ = $1; }
   | signing dimensions_opt
       { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $1, $2);
@@ -1293,8 +1298,6 @@ data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
-  |
-      { $$ = 0; }
   ;
 
 
@@ -4912,8 +4915,23 @@ module_parameter
 
 module_parameter_port_list
   : module_parameter
+  | data_type_opt
+    { param_data_type = $1;
+      param_is_local = false;
+    }
+    parameter_assign
+    { pform_requires_sv(@3, "Omitting initial `parameter` in parameter port "
+			    "list");
+    }
   | module_parameter_port_list ',' module_parameter
-  | module_parameter_port_list ',' parameter_assign
+  | module_parameter_port_list ',' data_type_opt
+    { if ($3) {
+	    pform_requires_sv(@3, "Omitting `parameter`/`localparam` before "
+				  "data type in parameter port list");
+	    param_data_type = $3;
+      }
+    }
+    parameter_assign
   ;
 
 module_item
