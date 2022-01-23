@@ -237,6 +237,7 @@ enum_in_struct		normal,-g2005-sv	ivltests
 enum_in_class		normal,-g2005-sv	ivltests
 enum_in_class_name_coll	CE,-g2005-sv		ivltests
 enum_next		normal,-g2005-sv	ivltests
+enum_order		normal,-g2005-sv	ivltests
 enum_ports		normal,-g2005-sv	ivltests
 enum_test1		normal,-g2005-sv	ivltests
 enum_test2		normal,-g2005-sv	ivltests

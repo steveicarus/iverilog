@@ -393,7 +393,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 }
 
 static void elaborate_scope_enumerations(Design*des, NetScope*scope,
-					 const set<enum_type_t*>&enum_types)
+					 const vector<enum_type_t*>&enum_types)
 {
       if (debug_scopes) {
 	    cerr << scope->get_fileline() << ": " << __func__ << ": "
@@ -402,7 +402,7 @@ static void elaborate_scope_enumerations(Design*des, NetScope*scope,
 		 << endl;
       }
 
-      for (set<enum_type_t*>::const_iterator cur = enum_types.begin()
+      for (vector<enum_type_t*>::const_iterator cur = enum_types.begin()
 		 ; cur != enum_types.end() ; ++ cur) {
 	    enum_type_t*curp = *cur;
 	    elaborate_scope_enumeration(des, scope, curp);

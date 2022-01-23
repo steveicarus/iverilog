@@ -829,8 +829,10 @@ static void pform_put_wire_in_scope(perm_string name, PWire*net)
 
 void pform_put_enum_type_in_scope(enum_type_t*enum_set)
 {
-      if (lexical_scope->enum_sets.count(enum_set))
-            return;
+      if (std::find(lexical_scope->enum_sets.begin(),
+		    lexical_scope->enum_sets.end(), enum_set) !=
+          lexical_scope->enum_sets.end())
+	    return;
 
       set<perm_string> enum_names;
       list<named_pexpr_t>::const_iterator cur;
@@ -846,7 +848,7 @@ void pform_put_enum_type_in_scope(enum_type_t*enum_set)
 	    }
       }
 
-      lexical_scope->enum_sets.insert(enum_set);
+      lexical_scope->enum_sets.push_back(enum_set);
 }
 
 PWire*pform_get_make_wire_in_scope(const struct vlltype&, perm_string name,

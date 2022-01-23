@@ -139,7 +139,7 @@ class LexicalScope {
       std::list<PCallTask*> elab_tasks;
 
 	// Enumeration sets.
-      std::set<enum_type_t*> enum_sets;
+      std::vector<enum_type_t*> enum_sets;
 
         // A count of the generate constructs in this scope. This is
         // used to automatically name unnamed generate blocks, as
