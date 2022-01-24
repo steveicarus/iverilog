@@ -236,6 +236,7 @@ enum_dims_invalid	CE,-g2005-sv		ivltests
 enum_in_struct		normal,-g2005-sv	ivltests
 enum_in_class		normal,-g2005-sv	ivltests
 enum_in_class_name_coll	CE,-g2005-sv		ivltests
+enum_line_info		CE,-g2005-sv		ivltests gold=enum_line_info.gold
 enum_next		normal,-g2005-sv	ivltests
 enum_order		normal,-g2005-sv	ivltests
 enum_ports		normal,-g2005-sv	ivltests
@@ -381,6 +382,7 @@ struct6			normal,-g2009		ivltests
 struct7			normal,-g2009		ivltests
 struct8			normal,-g2009		ivltests
 struct9			normal,-g2009		ivltests
+struct_line_info	CE,-g2009		ivltests gold=struct_line_info.gold
 struct_packed_array	normal,-g2009		ivltests
 struct_packed_array2	normal,-g2009		ivltests
 struct_packed_sysfunct	normal,-g2009		ivltests

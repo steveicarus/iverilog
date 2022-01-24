@@ -191,7 +191,6 @@ struct enum_type_t : public data_type_t {
       bool integer_flag; // True if "integer" was used
       std::unique_ptr< std::list<pform_range_t> > range;
       std::unique_ptr< std::list<named_pexpr_t> > names;
-      LineInfo li;
 };
 
 struct struct_member_t : public LineInfo {

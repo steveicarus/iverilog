@@ -1,0 +1,5 @@
+./ivltests/enum_line_info.v:7: error: Enumeration name B and A have the same value: 1'd0
+./ivltests/enum_line_info.v:12: error: Enumeration name D and C have the same value: 1'd0
+./ivltests/enum_line_info.v:17: error: Enumeration name F and E have the same value: 1'd0
+./ivltests/enum_line_info.v:22: error: Enumeration name H and G have the same value: 1'd0
+5 error(s) during elaboration.
