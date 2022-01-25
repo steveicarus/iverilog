@@ -3236,8 +3236,13 @@ void pform_set_parameter(const struct vlltype&loc,
       bool overridable = !is_local;
 
       if (scope == pform_cur_generate && !is_local) {
-            VLerror("parameter declarations are not permitted in generate blocks");
-            return;
+	    if (!gn_system_verilog()) {
+		  VLerror(loc, "parameter declarations are not permitted in generate blocks");
+		  return;
+	    }
+	    // SystemVerilog allows `parameter` in generate blocks, but it has
+	    // the same semantics as `localparam` in that scope.
+	    overridable = false;
       }
 
       assert(expr);
