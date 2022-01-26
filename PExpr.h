@@ -222,10 +222,6 @@ class PEAssignPattern : public PExpr {
 				     unsigned expr_wid,
                                      unsigned flags) const;
     private:
-      NetExpr* elaborate_expr_darray_(Design*des, NetScope*scope,
-				      ivl_type_t type, unsigned flags) const;
-
-    private:
       std::vector<PExpr*>parms_;
 };
 

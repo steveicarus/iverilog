@@ -75,6 +75,11 @@ const netenum_t*NetExpr::enumeration() const
       return 0;
 }
 
+NetEArrayPattern::NetEArrayPattern(unsigned w, vector<NetExpr*>&items)
+: NetExpr(w), items_(items)
+{
+}
+
 NetEArrayPattern::NetEArrayPattern(ivl_type_t lv_type, vector<NetExpr*>&items)
 : NetExpr(lv_type), items_(items)
 {
@@ -84,6 +89,24 @@ NetEArrayPattern::~NetEArrayPattern()
 {
       for (size_t idx = 0 ; idx < items_.size() ; idx += 1)
 	    delete items_[idx];
+}
+NetEArrayPatternParam::NetEArrayPatternParam(NetScope*s, perm_string n, ivl_type_t lv_type, vector<NetExpr*>&items)
+: NetEArrayPattern(lv_type, items), scope_(s), name_(n)
+{
+}
+
+NetEArrayPatternParam::~NetEArrayPatternParam()
+{
+}
+
+perm_string NetEArrayPatternParam::name() const
+{
+      return name_;
+}
+
+const NetScope* NetEArrayPatternParam::scope() const
+{
+      return scope_;
 }
 
 /*

@@ -186,13 +186,21 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
  * supported, can assign to packed arrays and structs, unpacked arrays
  * and dynamic arrays.
  */
-unsigned PEAssignPattern::test_width(Design*, NetScope*, width_mode_t&)
+unsigned PEAssignPattern::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
-      expr_type_  = IVL_VT_DARRAY;
-      expr_width_ = 1;
-      min_width_  = 1;
-      signed_flag_= false;
-      return 1;
+	if (parms_.size() > 0) {
+		parms_[0]->test_width(des, scope, mode);
+		expr_type_ = parms_[0]->expr_type();
+		expr_width_ = parms_.size();
+		min_width_  = expr_width_;
+		signed_flag_= parms_[0]->has_sign();
+	} else {
+		expr_type_  = IVL_VT_DARRAY;
+		expr_width_ = 1;
+		min_width_  = 1;
+		signed_flag_= false;
+	}
+      return expr_width_;
 }
 
 NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
@@ -209,9 +217,30 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 	    return tmp;
       }
 
-      if (ntype->base_type()==IVL_VT_DARRAY ||
-          ntype->base_type()==IVL_VT_QUEUE)
-	    return elaborate_expr_darray_(des, scope, ntype, flags);
+      const netarray_t*array_type = dynamic_cast<const netarray_t*> (ntype);
+	if (array_type) {
+
+		if (array_type->slice_dimensions().size() > 1) {
+			des->errors += 1;
+			cerr << get_fileline() << ": sorry: I don't know how to elaborate "
+				<< "multi-dimensions assignment patterns." << endl;
+			return 0;
+		}
+
+		// This is an array pattern, so run through the elements of
+		// the expression and elaborate each as if they are
+		// element_type expressions.
+		ivl_type_t elem_type = array_type->element_type();
+		vector<NetExpr*> elem_exprs (parms_.size());
+		for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
+		    NetExpr*tmp = parms_[idx]->elaborate_expr(des, scope, elem_type, flags);
+		    elem_exprs[idx] = tmp;
+		}
+
+		NetEArrayPattern*res = new NetEArrayPattern(array_type, elem_exprs);
+		res->set_line(*this);
+		return res;
+	}
 
       cerr << get_fileline() << ": sorry: I don't know how to elaborate "
 	   << "assignment_pattern expressions yet." << endl;
@@ -219,27 +248,6 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 	   << endl;
       des->errors += 1;
       return 0;
-}
-
-NetExpr*PEAssignPattern::elaborate_expr_darray_(Design*des, NetScope*scope,
-						ivl_type_t ntype, unsigned flags) const
-{
-      const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype);
-      ivl_assert(*this, array_type);
-
-	// This is an array pattern, so run through the elements of
-	// the expression and elaborate each as if they are
-	// element_type expressions.
-      ivl_type_t elem_type = array_type->element_type();
-      vector<NetExpr*> elem_exprs (parms_.size());
-      for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
-	    NetExpr*tmp = parms_[idx]->elaborate_expr(des, scope, elem_type, flags);
-	    elem_exprs[idx] = tmp;
-      }
-
-      NetEArrayPattern*res = new NetEArrayPattern(array_type, elem_exprs);
-      res->set_line(*this);
-      return res;
 }
 
 NetExpr* PEAssignPattern::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
@@ -687,12 +695,12 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
       NetExpr*lp =  left_->elaborate_expr(des, scope, l_width_, flags);
       if (lp && debug_elaborate) {
 	    cerr << get_fileline() << ": PEBComp::elaborate_expr: "
-		 << "Elaborated left_: " << *lp << endl;
+		 << "Elaborated left_: " << *lp << ", width_: " << l_width_ << endl;
       }
       NetExpr*rp = right_->elaborate_expr(des, scope, r_width_, flags);
       if (rp && debug_elaborate) {
 	    cerr << get_fileline() << ": PEBComp::elaborate_expr: "
-		 << "Elaborated right_: " << *rp << endl;
+		 << "Elaborated right_: " << *rp << ", width_: " << r_width_ << endl;
       }
 
       if ((lp == 0) || (rp == 0)) {
@@ -4052,6 +4060,32 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    return expr_width_;
       }
 
+      if (par != 0) {
+            const netuarray_t*array = dynamic_cast<const netuarray_t*> (par->net_type());
+		if (array) {
+                  switch (use_sel) {
+                    case index_component_t::SEL_BIT:
+                    case index_component_t::SEL_BIT_LAST:
+                      expr_type_   = array->element_type()->base_type();
+                      if (expr_type_ == IVL_VT_STRING) {
+                        des->errors += 1;
+                        cerr << get_fileline() << ": sorry, I do not yet support string array parameters properly" << endl;
+                      }
+                      expr_width_  = array->element_type()->packed_width();
+                      min_width_   = expr_width_;
+                      signed_flag_ = array->element_type()->get_signed();
+                      break;
+                    default:
+                      expr_type_   = array->base_type();
+                      expr_width_  = array->static_dimensions()[0].width();
+                      min_width_   = expr_width_;
+                      signed_flag_ = false;
+                      break;
+                  }
+                  return expr_width_;
+            }
+      }
+
 	// Look for a class property.
       if (gn_system_verilog() && sr.cls_val) {
 	    expr_type_   = sr.cls_val->base_type();
@@ -4236,6 +4270,10 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       }
 
       symbol_search(this, des, use_scope, path_, net, par, eve, par_type, cls_val);
+
+      if (par != 0) {
+         return (NetExpr *)par;
+      }
 
       if (net == 0 && gn_system_verilog() && path_.size() >= 2) {
 	      // NOTE: this is assuming the member_path is only one
@@ -4565,9 +4603,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    NetExpr*tmp = elaborate_expr_param_(des, scope, sr.par_val, sr.scope,
                                                 sr.par_type, expr_wid, flags);
 
-            if (!tmp) return 0;
+       if (!tmp) return 0;
 
-            return pad_to_width(tmp, expr_wid, signed_flag_, *this);
+       return pad_to_width(tmp, expr_wid, signed_flag_, *this);
       }
 
 	// If the identifier names a signal (a variable or a net)
@@ -4995,12 +5033,25 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 					    ivl_type_t par_type,
                                             bool need_const) const
 {
-      const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
-      ivl_assert(*this, par_ex);
-
       long par_msv, par_lsv;
-      if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
-				 par_ex->value().len())) return 0;
+	const NetEArrayPattern*par_aex;
+      const NetEConst*par_cex = dynamic_cast<const NetEConst*> (par);
+	if(!par_cex) {
+		par_aex = dynamic_cast<const NetEArrayPattern*> (par);
+		if (par_aex) {
+			const netuarray_t*array = dynamic_cast<const netuarray_t*> (par->net_type());
+			if (!array) {
+				cerr << get_fileline() << "tried to get a word from non-array expression" << endl;
+				return 0;
+			}
+		} else {
+			cerr << get_fileline() << "cannot select element from provided expression" << endl;
+		}
+	}
+	int par_len = par_cex ? par_cex->value().len() : par_aex->item_size();
+
+      if(! calculate_param_range(*this, par_type, par_msv, par_lsv, par_len)) 
+		return 0;
 
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
@@ -5038,43 +5089,54 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 		  return res;
 	    }
 	      // Calculate the canonical index value.
-	    long sel_v = sel_c->value().as_long();
-	    if (par_msv >= par_lsv) sel_v -= par_lsv;
-	    else sel_v = par_lsv - sel_v;
+	    if (par_cex) {
+		    long sel_v = sel_c->value().as_long();
+		    if (par_msv >= par_lsv) sel_v -= par_lsv;
+		    else sel_v = par_lsv - sel_v;
 
-	      // Select a bit from the parameter.
-	    verinum par_v = par_ex->value();
-	    verinum::V rtn = verinum::Vx;
+		    // Select a bit from the parameter.
+		    verinum par_v = par_cex->value();
+		    verinum::V rtn = verinum::Vx;
 
-	      // A constant in range select.
-	    if ((sel_v >= 0) && ((unsigned long) sel_v < par_v.len())) {
-		  rtn = par_v[sel_v];
-	      // An unsized after select.
-	    } else if ((sel_v >= 0) && (! par_v.has_len())) {
-		  if (par_v.has_sign()) rtn = par_v[par_v.len()-1];
-		  else rtn = verinum::V0;
-	    } else if (warn_ob_select) {
-		  cerr << get_fileline() << ": warning: "
-		          "Constant bit select [" << sel_c->value().as_long()
-		       << "] is ";
-		  if (sel_v < 0) cerr << "before ";
-		  else cerr << "after ";
-		  cerr << name << "[";
-		  if (par_v.has_len()) cerr << par_msv;
-		  else cerr << "<inf>";
-		  cerr << ":" << par_lsv << "]." << endl;
-		  cerr << get_fileline() << ":        : "
-		          "Replacing select with a constant 1'bx." << endl;
+		    // A constant in range select.
+		    if ((sel_v >= 0) && ((unsigned long) sel_v < par_v.len())) {
+			    rtn = par_v[sel_v];
+			    // An unsized after select.
+		    } else if ((sel_v >= 0) && (! par_v.has_len())) {
+			    if (par_v.has_sign()) rtn = par_v[par_v.len()-1];
+			    else rtn = verinum::V0;
+		    } else if (warn_ob_select) {
+			    cerr << get_fileline() << ": warning: "
+				    "Constant bit select [" << sel_c->value().as_long()
+				    << "] is ";
+			    if (sel_v < 0) cerr << "before ";
+			    else cerr << "after ";
+			    cerr << name << "[";
+			    if (par_v.has_len()) cerr << par_msv;
+			    else cerr << "<inf>";
+			    cerr << ":" << par_lsv << "]." << endl;
+			    cerr << get_fileline() << ":        : "
+				    "Replacing select with a constant 1'bx." << endl;
+		    }
+		    NetEConst*res = new NetEConst(verinum(rtn, 1));
+		    res->set_line(*this);
+		    return res;
+	    } else {
+		    long sel_v = sel_c->value().as_long();
+		    if (par_msv >= par_lsv) sel_v = par_msv - sel_v - par_lsv; 
+		    else sel_v -= par_msv;
+
+		    // Select a bit from the parameter.
+		    NetExpr*res = (NetExpr *)(par_aex->item(sel_v)->dup_expr());
+		    res->set_line(*this);
+		    return res;
 	    }
-	    NetEConst*res = new NetEConst(verinum(rtn, 1));
-	    res->set_line(*this);
-	    return res;
       }
 
       sel = normalize_variable_base(sel, par_msv, par_lsv, 1, true);
 
 	/* Create a parameter reference for the variable select. */
-      NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_ex->value());
+      NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_cex->value());
       NetScope::param_ref_t pref = found_in->find_parameter(name);
       ptmp->set_line((*pref).second);
 
@@ -5413,7 +5475,8 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	    use_sel = name_tail.index.back().sel;
 
       if (par->expr_type() == IVL_VT_REAL &&
-          use_sel != index_component_t::SEL_NONE) {
+          use_sel != index_component_t::SEL_NONE &&
+          dynamic_cast<const NetEArrayPattern*>(par) == 0) {
 	    perm_string name = peek_tail_name(path_);
 	    cerr << get_fileline() << ": error: "
 	         << "can not select part of real parameter: " << name << endl;
@@ -5424,8 +5487,8 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
       ivl_assert(*this, use_sel != index_component_t::SEL_BIT_LAST);
 
       if (use_sel == index_component_t::SEL_BIT)
-	    return elaborate_expr_param_bit_(des, scope, par, found_in,
-					     par_type, need_const);
+          return elaborate_expr_param_bit_(des, scope, par, found_in,
+                       par_type, need_const);
 
       if (use_sel == index_component_t::SEL_PART)
 	    return elaborate_expr_param_part_(des, scope, par, found_in,
@@ -5481,6 +5544,19 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 			     << "Elaborate parameter <" << name
 			     << "> as constant " << *tmp << endl;
 	    }
+
+       const NetEArrayPattern*atmp = dynamic_cast<const NetEArrayPattern*>(par);
+       if (atmp) {
+         std::vector<NetExpr*> items(atmp->item_size());
+         for (unsigned i = 0; i < atmp->item_size(); i++) {
+            items[i] = (NetExpr*)atmp->item(i)->dup_expr();
+         }
+         tmp = new NetEArrayPatternParam(found_in, name, atmp->net_type(), items);
+         if (debug_elaborate)
+          cerr << get_fileline() << ": debug: "
+               << "Elaborate parameter <" << name
+               << "> as constant " << *tmp << endl;
+       }
 	      /* The numeric parameter value needs to have the file and line
 	       * information for the actual parameter not the expression. */
 	    assert(tmp);

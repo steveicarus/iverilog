@@ -31,6 +31,7 @@
 # include  "netlist.h"
 # include  "netscalar.h"
 # include  "netvector.h"
+# include  "netparray.h"
 # include  "util.h"
 # include  "compiler.h"
 # include  "netmisc.h"
@@ -520,6 +521,29 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
       // this case, we'll try to take our type from the r-value.
       ivl_type_t param_type = cur->second.ivl_type;
 
+	// If this parameter is an array, then we need to process it directly
+	// with the new method
+	const netuarray_t* param_array = dynamic_cast<const netuarray_t*>(param_type);
+	if (param_array) {
+		ivl_assert(cur->second, val_expr);
+
+		NetExpr*expr = elab_and_eval(des, val_scope, val_expr, param_type, true);
+		if (! expr)
+		    return;
+
+		cur->second.val = expr;
+
+		if (debug_elaborate) {
+			cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+				<< "Parameter type: " << *param_type << endl;
+			cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+				<< "Parameter value: " << *val_expr << endl;
+			cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+				<< "Elaborated value: " << *expr << endl;
+		}
+		return;
+	}
+
       // Most parameter declarations are packed vectors, of the form:
       //   parameter [H:L] foo == bar;
       // so get the netvector_t. Note that this may also be the special
@@ -708,7 +732,31 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
       NetScope*val_scope = (*cur).second.val_scope;
       ivl_type_t param_type = cur->second.ivl_type;
 
+	ivl_assert(cur->second, val_expr);
       ivl_assert(*val_expr, param_type);
+	
+	// If this parameter is an array, then we need to process it directly
+	// with the new method
+	const netuarray_t* param_array = dynamic_cast<const netuarray_t*>(param_type);
+	if (param_array) {
+
+		NetExpr*expr = elab_and_eval(des, val_scope, val_expr, param_type, true);
+		if (! expr)
+		    return;
+
+		cur->second.val = expr;
+
+		if (debug_elaborate) {
+			cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+				<< "Parameter type: " << *param_type << endl;
+			cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+				<< "Parameter value: " << *val_expr << endl;
+			cerr << cur->second.get_fileline() << ": " << __func__ << ": "
+				<< "Elaborated value: " << *expr << endl;
+		}
+		return;
+	}
+
       NetExpr*expr = elab_and_eval(des, val_scope, val_expr, -1, true,
                                    cur->second.is_annotatable,
                                    param_type->base_type());
@@ -841,7 +889,7 @@ void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
       if (cur->second.val_expr == 0)
             return;
 
-      // Guess the varaiable type of the parameter. If the parameter has no
+      // Guess the variable type of the parameter. If the parameter has no
       // given type, then guess the type from the expression and use that to
       // evaluate.
       ivl_variable_type_t use_type;
@@ -850,6 +898,14 @@ void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
       else
 	    use_type = cur->second.val_expr->expr_type();
 
+      if (debug_elaborate) {
+         cerr << cur->second.get_fileline() << ": evaluating parameter " << cur->first
+            << ", param_type: " << param_type;
+         if (param_type) 
+            cerr << "(base type: " << param_type->base_type() << ")";
+         cerr << ", use_type: " << use_type
+               << "." << endl;
+      }
       if (cur->second.solving) {
             cerr << cur->second.get_fileline() << ": error: "
 	         << "Recursive parameter reference found involving "
@@ -869,9 +925,9 @@ void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
                   evaluate_parameter_real_(des, cur);
                   break;
 
-		case IVL_VT_STRING:
-		  evaluate_parameter_string_(des, cur);
-		  break;
+                case IVL_VT_STRING:
+                  evaluate_parameter_string_(des, cur);
+                  break;
 
                 default:
                   cerr << cur->second.get_fileline() << ": internal error: "

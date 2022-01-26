@@ -755,6 +755,21 @@ assertion_item /* IEEE1800-2012: A.6.10 */
   | deferred_immediate_assertion_item
   ;
 
+array_pattern_item_list
+  : array_pattern_item_list ',' array_pattern_key ':' expression
+  | array_pattern_key ':' expression
+  ;
+
+array_pattern_key
+  : expression
+  | assignment_pattern_key
+  ;
+
+assignment_pattern_key
+  : simple_type_or_string
+  | K_default
+  ;
+
 assignment_pattern /* IEEE1800-2005: A.6.7.1 */
   : K_LP expression_list_proper '}'
       { PEAssignPattern*tmp = new PEAssignPattern(*$2);
@@ -762,6 +777,10 @@ assignment_pattern /* IEEE1800-2005: A.6.7.1 */
 	delete $2;
 	$$ = tmp;
       }
+  | K_LP array_pattern_item_list '}'
+      { yyerror(@1, "Unsupported array pattern list");}
+  | K_LP expr_primary '{' expression_list_proper '}' '}'
+      { yyerror(@1, "Unsupported concatenation");}
   | K_LP '}'
       { PEAssignPattern*tmp = new PEAssignPattern;
 	FILE_NAME(tmp, @1);
@@ -5679,17 +5698,27 @@ localparam_assign_list
   ;
 
 parameter_assign
-  : IDENTIFIER '=' expression parameter_value_ranges_opt
-      { PExpr*tmp = $3;
-	pform_set_parameter(@1, lex_strings.make($1), param_data_type, tmp, $4);
+  : IDENTIFIER dimensions_opt '=' expression parameter_value_ranges_opt
+      { PExpr*tmp = $4;
+   if ($2) {
+      uarray_type_t *array_type = new uarray_type_t(param_data_type, $2);
+	   pform_set_parameter(@1, lex_strings.make($1), array_type, tmp, $5);
+   } else {
+	   pform_set_parameter(@1, lex_strings.make($1), param_data_type, tmp, $5);
+   }
 	delete[]$1;
       }
   ;
 
 localparam_assign
-  : IDENTIFIER '=' expression
-      { PExpr*tmp = $3;
-	pform_set_localparam(@1, lex_strings.make($1), param_data_type, tmp);
+  : IDENTIFIER dimensions_opt '=' expression
+      { PExpr*tmp = $4;
+   if ($2) {
+      uarray_type_t *array_type = new uarray_type_t(param_data_type, $2);
+      pform_set_localparam(@1, lex_strings.make($1), array_type, tmp);
+   } else {
+      pform_set_localparam(@1, lex_strings.make($1), param_data_type, tmp);
+   }
 	delete[]$1;
       }
   ;

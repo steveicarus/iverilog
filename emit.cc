@@ -595,6 +595,11 @@ void NetEArrayPattern::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_array_pattern(this);
 }
 
+void NetEArrayPatternParam::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_array_pattern(this);
+}
+
 void NetEBinary::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_binary(this);
