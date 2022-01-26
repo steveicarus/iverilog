@@ -19,6 +19,10 @@ sha256sums=()
 
 build() {
   cd "${srcdir}"/../..
+  if [ "$GITHUB_ACTIONS" == "true" ]; then
+    export CC="ccache gcc"
+    export CXX="ccache g++"
+  fi
   sh autoconf.sh
   ./configure \
     --prefix="${MINGW_PREFIX}" \

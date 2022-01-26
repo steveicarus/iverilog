@@ -19,6 +19,8 @@ jobs:
         ]
     runs-on: macos-${{ matrix.os }}
     name: '🍏 macos ${{ matrix.os }}'
+    env:
+      CCACHE_DIR: /Users/runner/ccache
     steps:
 
     - uses: actions/checkout@v2
@@ -27,13 +29,30 @@ jobs:
       run: |
         brew install bison
 
+    - name: restore ccache
+      uses: actions/cache@v2
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: ccache-mac-${{ matrix.os }}-${{ github.sha }}
+        restore-keys: |
+          ccache-mac-${{ matrix.os }}-
+
+    - name: ccache setup
+      run: |
+        mkdir -p ${{ env.CCACHE_DIR }}
+        brew install ccache
+        ccache -M 500M
+        ccache -v -s
+        ccache -z
+
     - name: Build, check and install
       run: |
-        export PATH="/usr/local/opt/bison/bin:$PATH"
+        export PATH="/usr/local/opt/ccache/libexec:/usr/local/opt/bison/bin:$PATH"
         autoconf
         ./configure
         make check
         sudo make install
+        ccache -v -s
 
     - name: Test
       run: ./.github/test.sh
@@ -49,6 +68,8 @@ jobs:
         ]
     runs-on: ubuntu-${{ matrix.os }}
     name: '🐧 Ubuntu ${{ matrix.os }}'
+    env:
+      CCACHE_DIR: /home/runner/ccache
     steps:
 
     - uses: actions/checkout@v2
@@ -56,14 +77,28 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update -qq
-        sudo apt install -y make g++ git bison flex gperf libreadline-dev autoconf
+        sudo apt install -y make g++ git bison flex gperf libreadline-dev autoconf ccache
+
+    - name: restore ccache
+      uses: actions/cache@v2
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: ccache-lin-${{ matrix.os }}-${{ github.sha }}
+        restore-keys: |
+          ccache-lin-${{ matrix.os }}-
 
     - name: Build, check and install
       run: |
+        mkdir -p ${{ env.CCACHE_DIR }}
+        ccache -M 500M
+        export PATH="/usr/lib/ccache:$PATH"
+        ccache -s
+        ccache -z
         autoconf
         ./configure
         make check
         sudo make install
+        ccache -s
 
     - name: Test
       run: ./.github/test.sh
@@ -84,6 +119,7 @@ jobs:
         shell: msys2 {0}
     env:
       MINGW_INSTALLS: ${{ matrix.msystem }}
+      CCACHE_DIR: "D:/a/ccache"
     steps:
 
     - run: git config --global core.autocrlf input
@@ -99,11 +135,25 @@ jobs:
           git
           base-devel
           mingw-w64-${{ matrix.arch }}-toolchain
+          mingw-w64-${{ matrix.arch }}-ccache
+
+    - name: restore ccache
+      uses: actions/cache@v2
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: ccache-win-${{ matrix.arch }}-${{ github.sha }}
+        restore-keys: |
+          ccache-win-${{ matrix.arch }}-
 
     - name: Build and check
       run: |
+        mkdir -p ${{ env.CCACHE_DIR }}
+        ccache -M 500M
+        ccache -v -s
+        ccache -z
         cd msys2
         makepkg-mingw --noconfirm --noprogressbar -sCLf
+        ccache -v -s
 
     - name: Install
       run: pacman -U --noconfirm msys2/*.zst
