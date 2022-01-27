@@ -383,6 +383,7 @@ struct7			normal,-g2009		ivltests
 struct8			normal,-g2009		ivltests
 struct9			normal,-g2009		ivltests
 struct_line_info	CE,-g2009		ivltests gold=struct_line_info.gold
+struct_member_signed	normal,-g2009		ivltests
 struct_packed_array	normal,-g2009		ivltests
 struct_packed_array2	normal,-g2009		ivltests
 struct_packed_sysfunct	normal,-g2009		ivltests
