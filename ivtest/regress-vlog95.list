@@ -839,6 +839,7 @@ simple_longint		normal,-g2009,-pallowsigned=1	ivltests
 simple_shortint		normal,-g2009,-pallowsigned=1	ivltests
 size_cast3		normal,-g2009,-pallowsigned=1	ivltests
 size_cast5		normal,-g2009,-pallowsigned=1	ivltests
+struct_member_signed	normal,-g2009,-pallowsigned=1	ivltests
 struct_packed_array	normal,-g2009,-pallowsigned=1	ivltests
 struct_packed_array2	normal,-g2009,-pallowsigned=1	ivltests
 struct_signed		normal,-g2009,-pallowsigned=1	ivltests
