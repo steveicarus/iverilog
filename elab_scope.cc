@@ -623,7 +623,7 @@ static void elaborate_scope_classes(Design*des, NetScope*scope,
       }
 }
 
-static void replace_scope_parameters(NetScope*scope, const LineInfo&loc,
+static void replace_scope_parameters(Design *des, NetScope*scope, const LineInfo&loc,
 				     const Module::replace_t&replacements)
 {
       if (debug_scopes) {
@@ -649,13 +649,7 @@ static void replace_scope_parameters(NetScope*scope, const LineInfo&loc,
 		  cerr << loc.get_fileline() << ":      : "
 		       << "Type=" << val->expr_type() << endl;
 	    }
-	    bool flag = scope->replace_parameter((*cur).first, val,
-                                                 scope->parent());
-	    if (! flag) {
-		  cerr << val->get_fileline() << ": warning: parameter "
-		       << (*cur).first << " not found in "
-		       << scope_path(scope) << "." << endl;
-	    }
+	    scope->replace_parameter(des, (*cur).first, val, scope->parent());
       }
 }
 
@@ -818,7 +812,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// Run parameter replacements that were collected from the
 	// containing scope and meant for me.
 
-      replace_scope_parameters(scope, *this, replacements);
+      replace_scope_parameters(des, scope, *this, replacements);
 
       elaborate_scope_enumerations(des, scope, enum_sets);
 

@@ -983,7 +983,7 @@ class NetScope : public Definitions, public Attrib {
 	   expression with a new expression, without affecting the
 	   range or signed_flag. Return false if the name does not
 	   exist. */
-      bool replace_parameter(perm_string name, PExpr*val, NetScope*scope);
+      void replace_parameter(Design *des, perm_string name, PExpr*val, NetScope*scope);
 
 	/* This is used to ensure the value of a parameter cannot be
 	   changed at run-time. This is required if a specparam is used

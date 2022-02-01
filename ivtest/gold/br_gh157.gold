@@ -1,2 +1,2 @@
-./ivltests/br_gh157.v:13: warning: parameter x not found in test.dut.
-2
+./ivltests/br_gh157.v:13: error: Cannot override localparam `x` in `test.dut`.
+1 error(s) during elaboration.
