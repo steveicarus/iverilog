@@ -308,7 +308,7 @@ br_gh127e		normal			ivltests gold=br_gh127e.gold
 br_gh127f		normal			ivltests gold=br_gh127f.gold
 br_gh142		CE			ivltests
 br_gh152		CE			ivltests
-br_gh157		normal			ivltests gold=br_gh157.gold
+br_gh157		CE			ivltests gold=br_gh157.gold
 br_gh162		normal			ivltests
 br_gh163		CE			ivltests
 br_gh198		normal			ivltests gold=br_gh198.gold
@@ -736,6 +736,7 @@ pr445			normal			ivltests
 pr478			normal			ivltests
 pr487			normal			ivltests gold=pr487.gold
 pr492			normal			ivltests gold=pr492.gold
+pr498b			CE			ivltests gold=pr498b.gold
 pr508			normal			ivltests
 pr509			normal			ivltests
 pr509b			normal			ivltests

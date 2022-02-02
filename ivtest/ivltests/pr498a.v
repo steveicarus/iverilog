@@ -20,7 +20,6 @@
 
 module main;
    test tt();
-   defparam foo = 3; /* This should generate a warning. */
    defparam tt.foo = 4;
 endmodule // main
 

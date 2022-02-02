@@ -433,13 +433,7 @@ void NetScope::run_defparams(Design*des)
 		  continue;
 	    }
 
-	    bool flag = targ_scope->replace_parameter(perm_name, val, this);
-	    if (! flag) {
-		  cerr << val->get_fileline() << ": warning: parameter "
-		       << perm_name << " not found in "
-		       << scope_path(targ_scope) << "." << endl;
-	    }
-
+	    targ_scope->replace_parameter(des, perm_name, val, this);
       }
 
 	// If some of the defparams didn't find a scope in the name,
@@ -474,12 +468,7 @@ void NetScope::run_defparams_later(Design*des)
 		  continue;
 	    }
 
-	    bool flag = targ_scope->replace_parameter(name, val, this);
-	    if (! flag) {
-		  cerr << val->get_fileline() << ": warning: parameter "
-		       << name << " not found in "
-		       << scope_path(targ_scope) << "." << endl;
-	    }
+	    targ_scope->replace_parameter(des, name, val, this);
 
 	      // We'll need to re-evaluate parameters in this scope
 	    target_scopes.insert(targ_scope);

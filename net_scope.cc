@@ -25,6 +25,7 @@
 # include  "netclass.h"
 # include  "netenum.h"
 # include  "netvector.h"
+# include  "PExpr.h"
 # include  "PPackage.h"
 # include  <cstring>
 # include  <cstdlib>
@@ -381,18 +382,27 @@ bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
  * Return false if the parameter does not already exist.
  * A parameter is not automatically created.
  */
-bool NetScope::replace_parameter(perm_string key, PExpr*val, NetScope*scope)
+void NetScope::replace_parameter(Design *des, perm_string key, PExpr*val, NetScope*scope)
 {
-      if (parameters.find(key) == parameters.end())
-	    return false;
+      if (parameters.find(key) == parameters.end()) {
+	    cerr << val->get_fileline() << ": error: parameter `"
+	         << key << "` not found in `"
+	         << scope_path(this) << "`." << endl;
+	    des->errors++;
+	    return;
+      }
 
       param_expr_t&ref = parameters[key];
-      if (ref.local_flag)
-	    return false;
+      if (ref.local_flag) {
+	    cerr << val->get_fileline() << ": error: "
+	         << "Cannot override localparam `" << key << "` in `"
+	         << scope_path(this) << "`." << endl;
+	    des->errors++;
+	    return;
+      }
 
       ref.val_expr = val;
       ref.val_scope = scope;
-      return true;
 }
 
 bool NetScope::make_parameter_unannotatable(perm_string key)

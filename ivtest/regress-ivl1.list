@@ -121,7 +121,7 @@ clog2			normal			ivltests
 clog2-signal		normal			ivltests
 param_vec		normal			ivltests
 param_vec2		normal			ivltests
-pr498			normal			ivltests
+pr498a			normal			ivltests
 pr721			normal			ivltests
 pr809			normal			ivltests
 pr809b			normal			ivltests
