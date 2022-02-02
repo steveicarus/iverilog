@@ -301,6 +301,7 @@ l_equiv_ca		normal,-g2005-sv	ivltests
 l_equiv_const		normal,-g2005-sv	ivltests
 line_directive		normal,-g2009,-I./ivltests	ivltests gold=line_directive.gold
 localparam_implicit	normal,-g2005-sv	ivltests
+localparam_implicit2	CE,-g2005-sv	ivltests
 localparam_query	normal,-g2005-sv	ivltests
 localparam_type2	normal,-g2009		ivltests
 logical_short_circuit	normal,-g2012		ivltests
