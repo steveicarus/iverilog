@@ -22,8 +22,8 @@ module b;
   a #(
     .A(10),
     .B(20),
-    // Cannot override localparam .C(30),
-    // Cannot override localparam .D(40),
+    .C(30), // This will cause an error
+    .D(40), // This will cause an error
     .E(50)
   ) i_a();
 
