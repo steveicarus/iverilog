@@ -4868,10 +4868,22 @@ module
      keyword. The syntax for modules programs, and interfaces is
      almost identical, so let semantics sort out the differences. */
 module_start
-  : K_module      { $$ = K_module; }
-  | K_macromodule { $$ = K_module; }
-  | K_program     { $$ = K_program; }
-  | K_interface   { $$ = K_interface; }
+  : K_module
+      { pform_error_in_generate(@1, "module declaration");
+        $$ = K_module;
+      }
+  | K_macromodule
+      { pform_error_in_generate(@1, "module declaration");
+        $$ = K_module;
+      }
+  | K_program
+      { pform_error_in_generate(@1, "program declaration");
+        $$ = K_program;
+      }
+  | K_interface
+      { pform_error_in_generate(@1, "interface declaration");
+        $$ = K_interface;
+      }
   ;
 
 module_end
@@ -5262,6 +5274,7 @@ module_item
   | attribute_list_opt assertion_item
 
   | timeunits_declaration
+      { pform_error_in_generate(@1, "timeunit declaration"); }
 
   | class_declaration
 
@@ -5330,8 +5343,9 @@ module_item
 
   | attribute_list_opt K_specparam
       { if (pform_in_interface())
-	      yyerror(@1, "error: specparam declarations are not allowed "
+	      yyerror(@2, "error: specparam declarations are not allowed "
 			  "in interfaces.");
+        pform_error_in_generate(@2, "specparam declaration");
       }
     specparam_decl ';'
 
@@ -5341,7 +5355,9 @@ module_item
       { if (pform_in_interface())
 	      yyerror(@1, "error: specify blocks are not allowed "
 			  "in interfaces.");
+        pform_error_in_generate(@1, "specify block");
       }
+
     specify_item_list_opt K_endspecify
 
   | K_specify error K_endspecify
