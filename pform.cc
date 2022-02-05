@@ -1384,6 +1384,7 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
 void pform_start_parameter_port_list()
 {
       pform_in_parameter_port_list = true;
+      pform_peek_scope()->has_parameter_port_list = true;
 }
 
 void pform_end_parameter_port_list()
@@ -3264,6 +3265,13 @@ void pform_set_parameter(const struct vlltype&loc,
 	    overridable = false;
       }
 
+      bool in_module = dynamic_cast<Module*>(scope) &&
+		       scope == pform_cur_module.front();
+
+      if (!pform_in_parameter_port_list && in_module &&
+          scope->has_parameter_port_list)
+	    overridable = false;
+
       Module::param_expr_t*parm = new Module::param_expr_t();
       FILE_NAME(parm, loc);
 
@@ -3278,8 +3286,7 @@ void pform_set_parameter(const struct vlltype&loc,
       scope->parameters[name] = parm;
 
       // Only a module keeps the position of the parameter.
-      if (overridable &&
-          (dynamic_cast<Module*>(scope)) && (scope == pform_cur_module.front()))
+      if (overridable && in_module)
 	    pform_cur_module.front()->param_names.push_back(name);
 }
 
