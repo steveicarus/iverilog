@@ -290,7 +290,9 @@ static void check_end_label(const struct vlltype&loc, const char *type,
       if (!end)
 	    return;
 
-      if (strcmp(begin, end) != 0)
+      if (!begin)
+	    yyerror(loc, "error: unnamed %s must not have end label.", type);
+      else if (strcmp(begin, end) != 0)
 	    yyerror(loc, "error: %s end label `%s` doesn't match %s name"
 	                 " `%s`.", type, end, type, begin);
 
@@ -606,7 +608,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <statement> udp_initial udp_init_opt
 %type <expr>    udp_initial_expr_opt
 
-%type <text> register_variable net_variable event_variable endlabel_opt class_declaration_endlabel_opt
+%type <text> register_variable net_variable event_variable label_opt class_declaration_endlabel_opt
 %type <text> block_identifier_opt
 %type <perm_strings> register_variable_list net_variable_list event_variable_list
 %type <perm_strings> list_of_identifiers loop_variables
@@ -1467,7 +1469,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	pform_pop_scope();
 	current_function = 0;
       }
-    endlabel_opt
+    label_opt
       { // Last step: check any closing name.
 	check_end_label(@11, "function", $4, $11);
 	delete[]$4;
@@ -1491,7 +1493,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	      yyerror(@4, "error: Empty parenthesis syntax requires SystemVerilog.");
 	}
       }
-    endlabel_opt
+    label_opt
       { // Last step: check any closing name.
 	check_end_label(@14, "function", $4, $14);
 	delete[]$4;
@@ -1509,7 +1511,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	yyerror(@1, "error: Syntax error defining function.");
 	yyerrok;
       }
-    endlabel_opt
+    label_opt
       { // Last step: check any closing name.
 	check_end_label(@8, "function", $4, $8);
 	delete[]$4;
@@ -1980,7 +1982,7 @@ package_declaration /* IEEE1800-2005 A.1.2 */
     timeunits_declaration_opt
       { pform_set_scope_timescale(@1); }
     package_item_list_opt
-    K_endpackage endlabel_opt
+    K_endpackage label_opt
       { pform_end_package_declaration(@1);
 	check_end_label(@10, "package", $3, $10);
 	delete[]$3;
@@ -2308,10 +2310,10 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	}
 	delete $7;
       }
-    endlabel_opt
+    label_opt
       { // Last step: check any closing name. This is done late so
 	// that the parser can look ahead to detect the present
-	// endlabel_opt but still have the pform_endmodule() called
+	// label_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
 	check_end_label(@10, "task", $3, $10);
@@ -2337,10 +2339,10 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	current_task = 0;
 	if ($10) delete $10;
       }
-    endlabel_opt
+    label_opt
       { // Last step: check any closing name. This is done late so
 	// that the parser can look ahead to detect the present
-	// endlabel_opt but still have the pform_endmodule() called
+	// label_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
 	check_end_label(@13, "task", $3, $13);
@@ -2354,10 +2356,10 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	      current_task = 0;
 	}
       }
-    endlabel_opt
+    label_opt
       { // Last step: check any closing name. This is done late so
 	// that the parser can look ahead to detect the present
-	// endlabel_opt but still have the pform_endmodule() called
+	// label_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
 	check_end_label(@7, "task", $3, $7);
@@ -4872,10 +4874,10 @@ module
 	}
 	pform_endmodule($4, in_celldefine, ucd);
       }
-    endlabel_opt
+    label_opt
       { // Last step: check any closing name. This is done late so
 	// that the parser can look ahead to detect the present
-	// endlabel_opt but still have the pform_endmodule() called
+	// label_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
 	switch ($2) {
@@ -4912,7 +4914,7 @@ module_end
   | K_endinterface { $$ = K_interface; }
   ;
 
-endlabel_opt
+label_opt
   : ':' IDENTIFIER { $$ = $2; }
   |                { $$ = 0; }
   ;
@@ -5385,7 +5387,7 @@ module_item
 	yyerrok;
       }
 
-  | K_function error K_endfunction endlabel_opt
+  | K_function error K_endfunction label_opt
       { yyerror(@1, "error: I give up on this function definition.");
 	if ($4) {
 	    if (!gn_system_verilog()) {
@@ -5525,11 +5527,11 @@ generate_block
   : { pform_generate_single_item = true; }
     module_item
     { pform_generate_single_item = false; }
-  | K_begin generate_item_list_opt K_end
-  | K_begin ':' IDENTIFIER generate_item_list_opt K_end endlabel_opt
-      { pform_generate_block_name($3);
-	check_end_label(@6, "block", $3, $6);
-	delete[]$3;
+  | K_begin label_opt generate_item_list_opt K_end label_opt
+      { if ($2)
+	    pform_generate_block_name($2);
+	check_end_label(@5, "block", $2, $5);
+	delete[]$2;
       }
   ;
 
@@ -6516,28 +6518,30 @@ statement_item /* This is roughly statement_item in the LRM */
      the declarations. The scope is popped at the end of the block. */
 
   /* In SystemVerilog an unnamed block can contain variable declarations. */
-  | K_begin
-      { PBlock*tmp = pform_push_block_scope(@1, 0, PBlock::BL_SEQ);
+  | K_begin label_opt
+      { PBlock*tmp = pform_push_block_scope(@1, $2, PBlock::BL_SEQ);
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
-      { if ($3) {
-	    if (! gn_system_verilog()) {
-		  yyerror("error: Variable declaration in unnamed block "
-		          "requires SystemVerilog.");
+      { if (!$2) {
+	    if ($4) {
+		  if (! gn_system_verilog()) {
+			yyerror("error: Variable declaration in unnamed block "
+				"requires SystemVerilog.");
+		  }
+	    } else {
+		  /* If there are no declarations in the scope then just delete it. */
+		  pform_pop_scope();
+		  assert(! current_block_stack.empty());
+		  PBlock*tmp = current_block_stack.top();
+		  current_block_stack.pop();
+		  delete tmp;
 	    }
-	} else {
-	    /* If there are no declarations in the scope then just delete it. */
-	    pform_pop_scope();
-	    assert(! current_block_stack.empty());
-	    PBlock*tmp = current_block_stack.top();
-	    current_block_stack.pop();
-	    delete tmp;
 	}
       }
-    statement_or_null_list_opt K_end
+    statement_or_null_list_opt K_end label_opt
       { PBlock*tmp;
-	if ($3) {
+	if ($2 || $4) {
 	    pform_pop_scope();
 	    assert(! current_block_stack.empty());
 	    tmp = current_block_stack.top();
@@ -6546,24 +6550,10 @@ statement_item /* This is roughly statement_item in the LRM */
 	    tmp = new PBlock(PBlock::BL_SEQ);
 	    FILE_NAME(tmp, @1);
 	}
-	if ($5) tmp->set_statement(*$5);
-	delete $5;
-	$$ = tmp;
-      }
-  | K_begin ':' IDENTIFIER
-      { PBlock*tmp = pform_push_block_scope(@1, $3, PBlock::BL_SEQ);
-	current_block_stack.push(tmp);
-      }
-    block_item_decls_opt
-    statement_or_null_list_opt K_end endlabel_opt
-      { pform_pop_scope();
-	assert(! current_block_stack.empty());
-	PBlock*tmp = current_block_stack.top();
-	current_block_stack.pop();
 	if ($6) tmp->set_statement(*$6);
 	delete $6;
-	check_end_label(@8, "block", $3, $8);
-	delete[]$3;
+	check_end_label(@8, "block", $2, $8);
+	delete[]$2;
 	$$ = tmp;
       }
 
@@ -6573,56 +6563,44 @@ statement_item /* This is roughly statement_item in the LRM */
      code generator can do the right thing. */
 
   /* In SystemVerilog an unnamed block can contain variable declarations. */
-  | K_fork
-      { PBlock*tmp = pform_push_block_scope(@1, 0, PBlock::BL_PAR);
+  | K_fork label_opt
+      { PBlock*tmp = pform_push_block_scope(@1, $2, PBlock::BL_PAR);
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
-      { if ($3) {
-	    if (! gn_system_verilog()) {
-		  yyerror("error: Variable declaration in unnamed block "
-		          "requires SystemVerilog.");
+      {
+        if (!$2) {
+	    if ($4) {
+		  if (! gn_system_verilog()) {
+			yyerror("error: Variable declaration in unnamed block "
+				"requires SystemVerilog.");
+		  }
+	    } else {
+		  /* If there are no declarations in the scope then just delete it. */
+		  pform_pop_scope();
+		  assert(! current_block_stack.empty());
+		  PBlock*tmp = current_block_stack.top();
+		  current_block_stack.pop();
+		  delete tmp;
 	    }
-	} else {
-	    /* If there are no declarations in the scope then just delete it. */
-	    pform_pop_scope();
-	    assert(! current_block_stack.empty());
-	    PBlock*tmp = current_block_stack.top();
-	    current_block_stack.pop();
-	    delete tmp;
 	}
       }
-    statement_or_null_list_opt join_keyword
+    statement_or_null_list_opt join_keyword label_opt
       { PBlock*tmp;
-	if ($3) {
+	if ($2 || $4) {
 	    pform_pop_scope();
 	    assert(! current_block_stack.empty());
 	    tmp = current_block_stack.top();
 	    current_block_stack.pop();
-	    tmp->set_join_type($6);
+	    tmp->set_join_type($7);
 	} else {
-	    tmp = new PBlock($6);
+	    tmp = new PBlock($7);
 	    FILE_NAME(tmp, @1);
 	}
-	if ($5) tmp->set_statement(*$5);
-	delete $5;
-	$$ = tmp;
-      }
-  | K_fork ':' IDENTIFIER
-      { PBlock*tmp = pform_push_block_scope(@1, $3, PBlock::BL_PAR);
-	current_block_stack.push(tmp);
-      }
-    block_item_decls_opt
-    statement_or_null_list_opt join_keyword endlabel_opt
-      { pform_pop_scope();
-        assert(! current_block_stack.empty());
-	PBlock*tmp = current_block_stack.top();
-	current_block_stack.pop();
-	tmp->set_join_type($7);
 	if ($6) tmp->set_statement(*$6);
 	delete $6;
-	check_end_label(@8, "fork", $3, $8);
-	delete[]$3;
+	check_end_label(@8, "fork", $2, $8);
+	delete[]$2;
 	$$ = tmp;
       }
 
@@ -7309,7 +7287,7 @@ udp_primitive
 	    udp_port_decls
 	    udp_init_opt
 	    udp_body
-	  K_endprimitive endlabel_opt
+	  K_endprimitive label_opt
 
 		{ perm_string tmp2 = lex_strings.make($2);
 		  pform_make_udp(tmp2, $4, $7, $9, $8,
@@ -7326,7 +7304,7 @@ udp_primitive
 	    '(' K_output udp_reg_opt IDENTIFIER udp_initial_expr_opt ','
 	    udp_input_declaration_list ')' ';'
 	    udp_body
-	  K_endprimitive endlabel_opt
+	  K_endprimitive label_opt
 
 		{ perm_string tmp2 = lex_strings.make($2);
 		  perm_string tmp6 = lex_strings.make($6);
