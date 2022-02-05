@@ -3213,6 +3213,9 @@ void pform_set_parameter(const struct vlltype&loc,
           scope->has_parameter_port_list)
 	    overridable = false;
 
+      if (pform_in_class())
+	    overridable = false;
+
       Module::param_expr_t*parm = new Module::param_expr_t();
       FILE_NAME(parm, loc);
 
