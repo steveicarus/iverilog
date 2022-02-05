@@ -612,4 +612,6 @@ extern bool allow_timeprec_decl;
 
 void pform_put_enum_type_in_scope(enum_type_t*enum_set);
 
+bool pform_requires_sv(const struct vlltype&loc, const char *feature);
+
 #endif /* IVL_pform_H */
