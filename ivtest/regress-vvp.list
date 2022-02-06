@@ -36,3 +36,7 @@ struct_packed_write_read2	vvp_tests/struct_packed_write_read2.json
 sv_foreach9			vvp_tests/sv_foreach9.json
 sv_foreach10			vvp_tests/sv_foreach10.json
 sdf_header			vvp_tests/sdf_header.json
+task_return1			vvp_tests/task_return1.json
+task_return2			vvp_tests/task_return2.json
+task_return_fail1		vvp_tests/task_return_fail1.json
+task_return_fail2		vvp_tests/task_return_fail2.json

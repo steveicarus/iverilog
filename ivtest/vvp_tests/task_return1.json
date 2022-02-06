@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "task_return1.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
