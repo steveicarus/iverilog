@@ -6652,11 +6652,6 @@ statement_item /* This is roughly statement_item in the LRM */
      need to do is remember that this is a parallel block so that the
      code generator can do the right thing. */
 
-  | K_fork join_keyword
-      { PBlock*tmp = new PBlock($2);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
   /* In SystemVerilog an unnamed block can contain variable declarations. */
   | K_fork
       { PBlock*tmp = pform_push_block_scope(@1, 0, PBlock::BL_PAR);
@@ -6677,7 +6672,7 @@ statement_item /* This is roughly statement_item in the LRM */
 	    delete tmp;
 	}
       }
-    statement_or_null_list join_keyword
+    statement_or_null_list_opt join_keyword
       { PBlock*tmp;
 	if ($3) {
 	    pform_pop_scope();
