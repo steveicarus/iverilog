@@ -83,6 +83,7 @@ resetall		normal,-Wtimescale	ivltests gold=resetall-fsv.gold
 scope2b			normal			ivltests
 sys_func_task_error	RE			ivltests gold=sys_func_task_error-fsv.gold
 unnamed_block_var_decl	normal			ivltests
+unnamed_fork_var_decl	normal			ivltests
 
 # We do not run synthesis when forcing SystemVerilog so these pass
 br995			normal			ivltests
