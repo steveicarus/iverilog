@@ -644,6 +644,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <data_type>  data_type data_type_or_implicit data_type_or_implicit_or_void
 %type <data_type>  simple_type_or_string let_formal_type
 %type <data_type>  packed_array_data_type
+%type <data_type>  ps_type_identifier
 %type <class_type> class_identifier
 %type <struct_member>  struct_union_member
 %type <struct_members> struct_union_member_list
@@ -1178,17 +1179,8 @@ data_declaration /* IEEE1800-2005: A.2.1.3 */
   | attribute_list_opt package_import_declaration
   ;
 
-/* Data types that can have packed dimensions directly attached to it */
-packed_array_data_type /* IEEE1800-2005: A.2.2.1 */
-  : enum_data_type
-      { $$ = $1; }
-  | struct_data_type
-      { if (!$1->packed_flag) {
-	      yyerror(@1, "sorry: Unpacked structs not supported.");
-	}
-	$$ = $1;
-      }
-  | TYPE_IDENTIFIER
+ps_type_identifier /* IEEE1800-2017: A.9.3 */
+ : TYPE_IDENTIFIER
       { pform_set_type_referenced(@1, $1.text);
 	delete[]$1.text;
 	$$ = $1.type;
@@ -1200,6 +1192,18 @@ packed_array_data_type /* IEEE1800-2005: A.2.2.1 */
 	$$ = $4.type;
 	delete[]$4.text;
       }
+
+/* Data types that can have packed dimensions directly attached to it */
+packed_array_data_type /* IEEE1800-2005: A.2.2.1 */
+  : enum_data_type
+      { $$ = $1; }
+  | struct_data_type
+      { if (!$1->packed_flag) {
+	      yyerror(@1, "sorry: Unpacked structs not supported.");
+	}
+	$$ = $1;
+      }
+  | ps_type_identifier
   ;
 
 data_type /* IEEE1800-2005: A.2.2.1 */
@@ -2243,23 +2247,12 @@ simple_type_or_string /* IEEE1800-2005: A.2.2.1 */
 	tmp->reg_flag = !gn_system_verilog();
 	$$ = tmp;
       }
-  | TYPE_IDENTIFIER
-      { pform_set_type_referenced(@1, $1.text);
-	$$ = $1.type;
-	delete[]$1.text;
-      }
-  | PACKAGE_IDENTIFIER K_SCOPE_RES
-      { lex_in_package_scope($1); }
-    TYPE_IDENTIFIER
-      { lex_in_package_scope(0);
-	$$ = $4.type;
-	delete[]$4.text;
-      }
   | K_string
       { string_type_t*tmp = new string_type_t;
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  | ps_type_identifier
   ;
 
 statement /* IEEE1800-2005: A.6.4 */
