@@ -851,17 +851,13 @@ class_declaration_endlabel_opt
      a data_type. */
 
 class_declaration_extends_opt /* IEEE1800-2005: A.1.2 */
-  : K_extends TYPE_IDENTIFIER
-      { pform_set_type_referenced(@2, $2.text);
-	$$.type = $2.type;
-	$$.exprs= 0;
-	delete[]$2.text;
+  : K_extends ps_type_identifier
+      { $$.type  = $2;
+	$$.exprs = 0;
       }
-  | K_extends TYPE_IDENTIFIER '(' expression_list_with_nuls ')'
-      { pform_set_type_referenced(@2, $2.text);
-	$$.type  = $2.type;
+  | K_extends ps_type_identifier '(' expression_list_with_nuls ')'
+      { $$.type  = $2;
 	$$.exprs = $4;
-	delete[]$2.text;
       }
   |
       { $$.type = 0; $$.exprs = 0; }
