@@ -1,0 +1,3 @@
+./ivltests/sv_end_labels_unnamed.v:7: error: unnamed block must not have end label.
+./ivltests/sv_end_labels_unnamed.v:11: error: unnamed block must not have end label.
+./ivltests/sv_end_labels_unnamed.v:14: error: unnamed fork must not have end label.
