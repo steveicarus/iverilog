@@ -101,6 +101,7 @@ assign_op_type		normal,-g2009		ivltests
 bitp1			normal,-g2005-sv	ivltests
 bits			normal,-g2005-sv	ivltests
 bits2			normal,-g2005-sv	ivltests
+bits3			normal,-g2005-sv	ivltests
 br884			normal,-g2009		ivltests
 br917a			normal,-g2009		ivltests
 br917b			normal,-g2009		ivltests
