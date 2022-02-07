@@ -1727,9 +1727,25 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 
 	    uint64_t use_width = 0;
 	    if (PETypename*type_expr = dynamic_cast<PETypename*>(expr)) {
-		  ivl_type_t tmp_type = type_expr->get_type()->elaborate_type(des, scope);
-		  ivl_assert(*this, tmp_type);
-		  use_width = tmp_type->packed_width();
+		  ivl_type_t data_type = type_expr->get_type()->elaborate_type(des, scope);
+		  ivl_assert(*this, data_type);
+		  use_width = 1;
+		  while (const netuarray_t *utype =
+			 dynamic_cast<const netuarray_t*>(data_type)) {
+			const vector<netrange_t> &dims = utype->static_dimensions();
+			for (size_t i = 0; i < dims.size(); i++)
+			      use_width *= dims[i].width();
+			data_type = utype->element_type();
+		  }
+		  if (!data_type->packed()) {
+			use_width = 0;
+			cerr << get_fileline() << ": error: "
+			     << "Invalid data type for $bits()."
+			     << endl;
+			des->errors++;
+		  } else {
+			use_width *= data_type->packed_width();
+		  }
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PECallFunction::elaborate_sfunc_: "
 			     << " Packed width of type argument is " << use_width << endl;
