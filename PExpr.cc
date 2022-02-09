@@ -415,8 +415,6 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
             while (ss) {
                   if (ss->wires.find(name) != ss->wires.end())
                         return;
-                  if (ss->localparams.find(name) != ss->localparams.end())
-                        return;
                   if (ss->parameters.find(name) != ss->parameters.end())
                         return;
                   if (ss->genvars.find(name) != ss->genvars.end())

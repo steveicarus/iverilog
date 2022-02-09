@@ -3246,16 +3246,14 @@ void pform_set_parameter(const struct vlltype&loc,
       parm->expr = expr;
       parm->data_type = data_type;
       parm->range = value_range;
+      parm->local_flag = is_local;
 
-      if (is_local) {
-	    scope->localparams[name] = parm;
-      } else {
-	    scope->parameters[name] = parm;
+      scope->parameters[name] = parm;
 
-	    // Only a Module keeps the position of the parameter.
-	    if ((dynamic_cast<Module*>(scope)) && (scope == pform_cur_module.front()))
-		  pform_cur_module.front()->param_names.push_back(name);
-      }
+      // Only a module keeps the position of the parameter.
+      if (!is_local &&
+          (dynamic_cast<Module*>(scope)) && (scope == pform_cur_module.front()))
+	    pform_cur_module.front()->param_names.push_back(name);
 }
 
 void pform_set_specparam(const struct vlltype&loc, perm_string name,

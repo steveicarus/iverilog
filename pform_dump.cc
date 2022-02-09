@@ -863,8 +863,6 @@ void PBlock::dump(ostream&out, unsigned ind) const
       if (pscope_name() != 0) {
             dump_parameters_(out, ind+2);
 
-            dump_localparams_(out, ind+2);
-
             dump_events_(out, ind+2);
 
 	    dump_wires_(out, ind+2);
@@ -1133,8 +1131,6 @@ void PFunction::dump(ostream&out, unsigned ind) const
 
       dump_parameters_(out, ind+2);
 
-      dump_localparams_(out, ind+2);
-
       dump_events_(out, ind+2);
 
       dump_wires_(out, ind+2);
@@ -1206,8 +1202,6 @@ void PTask::dump(ostream&out, unsigned ind) const
       dump_ports_(out, ind+2);
 
       dump_parameters_(out, ind+2);
-
-      dump_localparams_(out, ind+2);
 
       dump_events_(out, ind+2);
 
@@ -1412,7 +1406,7 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 
       out << endl;
 
-      dump_localparams_(out, indent+2);
+      dump_parameters_(out, indent+2);
 
       typedef list<PGenerate::named_expr_t>::const_iterator parm_hiter_t;
       for (parm_hiter_t cur = defparms.begin()
@@ -1482,7 +1476,11 @@ void LexicalScope::dump_parameters_(ostream&out, unsigned indent) const
       typedef map<perm_string,param_expr_t*>::const_iterator parm_iter_t;
       for (parm_iter_t cur = parameters.begin()
 		 ; cur != parameters.end() ; ++ cur ) {
-	    out << setw(indent) << "" << "parameter ";
+	    out << setw(indent) << "";
+	    if (cur->second->local_flag)
+		  out << "localparam ";
+	    else
+		  out << "parameter ";
 	    if (cur->second->data_type)
 	          cur->second->data_type->debug_dump(out);
 	    else
@@ -1521,24 +1519,6 @@ void LexicalScope::dump_parameters_(ostream&out, unsigned indent) const
 			out << "]";
 	    }
 	    out << ";" << endl;
-      }
-}
-
-void LexicalScope::dump_localparams_(ostream&out, unsigned indent) const
-{
-      typedef map<perm_string,param_expr_t*>::const_iterator parm_iter_t;
-      for (parm_iter_t cur = localparams.begin()
-		 ; cur != localparams.end() ; ++ cur ) {
-	    out << setw(indent) << "" << "localparam ";
-	    if (cur->second->data_type) {
-		  cur->second->data_type->debug_dump(out);
-		  out << " ";
-	    }
-	    out << (*cur).first << " = ";
-	    if ((*cur).second->expr)
-		  out << *(*cur).second->expr << ";" << endl;
-	    else
-		  out << "/* ERROR */;" << endl;
       }
 }
 
@@ -1695,8 +1675,6 @@ void Module::dump(ostream&out) const
 
       dump_parameters_(out, 4);
 
-      dump_localparams_(out, 4);
-
       dump_specparams_(out, 4);
 
       dump_enumerations_(out, 4);
@@ -1847,7 +1825,6 @@ void pform_dump(std::ostream&out, const PPackage*pac)
 void PPackage::pform_dump(std::ostream&out) const
 {
       out << "package " << pscope_name() << endl;
-      dump_localparams_(out, 4);
       dump_parameters_(out, 4);
       dump_typedefs_(out, 4);
       dump_enumerations_(out, 4);
