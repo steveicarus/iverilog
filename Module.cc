@@ -139,3 +139,19 @@ PNamedItem::SymbolType Module::symbol_type() const
 
       return MODULE;
 }
+
+bool Module::can_be_toplevel() const
+{
+      // Don't choose library modules.
+      if (library_flag)
+	    return false;
+
+      // Don't choose modules with parameters without default value
+      for (std::map<perm_string,param_expr_t*>::const_iterator cur =
+	    parameters.begin(); cur != parameters.end(); cur++) {
+	    if (cur->second->expr == 0)
+		  return false;
+      }
+
+      return true;
+}

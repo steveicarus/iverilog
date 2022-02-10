@@ -386,6 +386,9 @@ static unsigned pform_timescale_line;
 bool allow_timeunit_decl = true;
 bool allow_timeprec_decl = true;
 
+// Track whether the current parameter declaration is in a parameter port list
+static bool pform_in_parameter_port_list = false;
+
 static inline void FILE_NAME(LineInfo*obj, const char*file, unsigned lineno)
 {
       obj->set_lineno(lineno);
@@ -1376,6 +1379,16 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
       lexical_scope = cur_module;
 
       pform_bind_attributes(cur_module->attributes, attr);
+}
+
+void pform_start_parameter_port_list()
+{
+      pform_in_parameter_port_list = true;
+}
+
+void pform_end_parameter_port_list()
+{
+      pform_in_parameter_port_list = false;
 }
 
 /*
@@ -3228,6 +3241,17 @@ void pform_set_parameter(const struct vlltype&loc,
 	    return;
       }
 
+      if (expr == 0) {
+	    if (is_local) {
+		  VLerror(loc, "error: localparam must have a value.");
+	    } else if (!pform_in_parameter_port_list) {
+		  VLerror(loc, "error: parameter declared outside parameter "
+			        "port list must have a default value.");
+	    } else {
+		  pform_requires_sv(loc, "parameter without default value");
+	    }
+      }
+
       bool overridable = !is_local;
 
       if (scope == pform_cur_generate && !is_local) {
@@ -3240,7 +3264,6 @@ void pform_set_parameter(const struct vlltype&loc,
 	    overridable = false;
       }
 
-      assert(expr);
       Module::param_expr_t*parm = new Module::param_expr_t();
       FILE_NAME(parm, loc);
 

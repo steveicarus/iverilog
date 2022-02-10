@@ -1485,11 +1485,9 @@ void LexicalScope::dump_parameters_(ostream&out, unsigned indent) const
 	          cur->second->data_type->debug_dump(out);
 	    else
 		  out << "(nil type)";
-	    out << " " << (*cur).first << " = ";
 	    if ((*cur).second->expr)
-		  out << *(*cur).second->expr;
-	    else
-		  out << "/* ERROR */";
+		  out << " " << (*cur).first << " = "
+		      << *(*cur).second->expr;
 	    for (LexicalScope::range_t*tmp = (*cur).second->range
 		       ; tmp ; tmp = tmp->next) {
 		  if (tmp->exclude_flag)
