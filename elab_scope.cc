@@ -126,7 +126,7 @@ static void collect_parm_item(Design*des, NetScope*scope, perm_string name,
       // don't try to elaborate it here, because there may be references to
       // other parameters still being located during scope elaboration.
       scope->set_parameter(name, is_annotatable, cur.expr, cur.data_type,
-			   cur.local_flag, range_list, cur);
+			   cur.local_flag, cur.overridable, range_list, cur);
 
 }
 

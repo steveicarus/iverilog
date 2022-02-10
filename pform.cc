@@ -3232,6 +3232,9 @@ void pform_set_parameter(const struct vlltype&loc,
 		         is_local ? "localparam" : "parameter");
 	    return;
       }
+
+      bool overridable = !is_local;
+
       if (scope == pform_cur_generate && !is_local) {
             VLerror("parameter declarations are not permitted in generate blocks");
             return;
@@ -3247,11 +3250,12 @@ void pform_set_parameter(const struct vlltype&loc,
       parm->data_type = data_type;
       parm->range = value_range;
       parm->local_flag = is_local;
+      parm->overridable = overridable;
 
       scope->parameters[name] = parm;
 
       // Only a module keeps the position of the parameter.
-      if (!is_local &&
+      if (overridable &&
           (dynamic_cast<Module*>(scope)) && (scope == pform_cur_module.front()))
 	    pform_cur_module.front()->param_names.push_back(name);
 }

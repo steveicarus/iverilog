@@ -101,7 +101,7 @@ class LexicalScope {
 	   this map. */
       struct param_expr_t : public PNamedItem {
             inline param_expr_t() : data_type(0), expr(0), range(0),
-	                            local_flag(false) { }
+				    local_flag(false), overridable(true) { }
 	      // Type information.
 	    data_type_t*data_type;
 	      // Value expression
@@ -110,6 +110,8 @@ class LexicalScope {
 	    range_t*range;
 	      // Whether it is a local parameter
 	    bool local_flag;
+	      // Whether the parameter can be overridden
+	    bool overridable;
 
 	    SymbolType symbol_type() const;
       };
