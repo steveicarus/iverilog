@@ -100,18 +100,22 @@ class LexicalScope {
 	   is elaborated. During parsing, I put the parameters into
 	   this map. */
       struct param_expr_t : public PNamedItem {
-            inline param_expr_t() : data_type(0), expr(0), range(0) { }
+            inline param_expr_t() : data_type(0), expr(0), range(0),
+				    local_flag(false), overridable(true) { }
 	      // Type information.
 	    data_type_t*data_type;
 	      // Value expression
 	    PExpr*expr;
 	      // If there are range constraints, list them here
 	    range_t*range;
+	      // Whether it is a local parameter
+	    bool local_flag;
+	      // Whether the parameter can be overridden
+	    bool overridable;
 
 	    SymbolType symbol_type() const;
       };
       std::map<perm_string,param_expr_t*>parameters;
-      std::map<perm_string,param_expr_t*>localparams;
 
 	// Defined types in the scope.
       std::map<perm_string,data_type_t*>typedefs;
@@ -154,8 +158,6 @@ class LexicalScope {
       void dump_typedefs_(std::ostream&out, unsigned indent) const;
 
       void dump_parameters_(std::ostream&out, unsigned indent) const;
-
-      void dump_localparams_(std::ostream&out, unsigned indent) const;
 
       void dump_enumerations_(std::ostream&out, unsigned indent) const;
 

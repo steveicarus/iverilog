@@ -968,7 +968,7 @@ class NetScope : public Definitions, public Attrib {
       struct range_t;
       void set_parameter(perm_string name, bool is_annotatable,
 			 PExpr*val, data_type_t*data_type,
-			 bool local_flag,
+			 bool local_flag, bool overridable,
 			 NetScope::range_t*range_list,
 			 const LineInfo&file_line);
       void set_parameter(perm_string name, NetExpr*val,
@@ -1227,6 +1227,8 @@ class NetScope : public Definitions, public Attrib {
 	    bool is_annotatable;
 	    // Is this a localparam?
 	    bool local_flag;
+	    // Can it be overriden?
+	    bool overridable;
 	    // range constraints
 	    struct range_t*range;
 	    // Expression value and type (elaborated versoins of val_expr/val_type)

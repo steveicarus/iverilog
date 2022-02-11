@@ -6958,7 +6958,6 @@ static void check_timescales()
 		    // We don't need a timescale if the compilation unit
 		    // contains no items outside a design element.
 		  if (pp->parameters.empty() &&
-		      pp->localparams.empty() &&
 		      pp->wires.empty() &&
 		      pp->tasks.empty() &&
 		      pp->funcs.empty() &&
@@ -7018,7 +7017,6 @@ static void check_timescales()
 		  continue;
 
 	    if (pp->parameters.empty() &&
-		pp->localparams.empty() &&
 		pp->wires.empty() &&
 		pp->tasks.empty() &&
 		pp->funcs.empty() &&

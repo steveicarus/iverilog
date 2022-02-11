@@ -305,7 +305,7 @@ const netenum_t*NetScope::find_enumeration_for_name(const Design*des, perm_strin
  */
 void NetScope::set_parameter(perm_string key, bool is_annotatable,
 			     PExpr*val, data_type_t*val_type,
-			     bool local_flag,
+			     bool local_flag, bool overridable,
 			     NetScope::range_t*range_list,
 			     const LineInfo&file_line)
 {
@@ -315,6 +315,7 @@ void NetScope::set_parameter(perm_string key, bool is_annotatable,
       ref.val_type = val_type;
       ref.val_scope = this;
       ref.local_flag = local_flag;
+      ref.overridable = overridable;
       ivl_assert(file_line, ref.range == 0);
       ref.range = range_list;
       ref.val = 0;
@@ -397,6 +398,15 @@ void NetScope::replace_parameter(Design *des, perm_string key, PExpr*val, NetSco
 	    cerr << val->get_fileline() << ": error: "
 	         << "Cannot override localparam `" << key << "` in `"
 	         << scope_path(this) << "`." << endl;
+	    des->errors++;
+	    return;
+      }
+      if (!ref.overridable) {
+	    cerr << val->get_fileline() << ": error: "
+		 << "Cannot override parameter `" << key << "` in `"
+		 << scope_path(this) << "`. Parameter cannot be overriden "
+		 << "in the scope it has been declared in."
+		 << endl;
 	    des->errors++;
 	    return;
       }

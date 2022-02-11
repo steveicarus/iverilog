@@ -68,7 +68,7 @@ typedef map<perm_string,LexicalScope::param_expr_t*>::const_iterator mparm_it_t;
 
 static void collect_parm_item(Design*des, NetScope*scope, perm_string name,
 			      const LexicalScope::param_expr_t&cur,
-			      bool is_annotatable, bool local_flag)
+			      bool is_annotatable)
 {
       if (debug_scopes) {
 	    cerr << cur.get_fileline() << ": " << __func__  << ": "
@@ -125,7 +125,8 @@ static void collect_parm_item(Design*des, NetScope*scope, perm_string name,
       // not yet known, don't try to guess here, put the type guess off. Also
       // don't try to elaborate it here, because there may be references to
       // other parameters still being located during scope elaboration.
-      scope->set_parameter(name, is_annotatable, cur.expr, cur.data_type, local_flag, range_list, cur);
+      scope->set_parameter(name, is_annotatable, cur.expr, cur.data_type,
+			   cur.local_flag, cur.overridable, range_list, cur);
 
 }
 
@@ -140,22 +141,7 @@ static void collect_scope_parameters(Design*des, NetScope*scope,
       for (mparm_it_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  ++ cur ) {
 
-	    collect_parm_item(des, scope, cur->first, *(cur->second), false, false);
-      }
-}
-
-static void collect_scope_localparams(Design*des, NetScope*scope,
-      const map<perm_string,LexicalScope::param_expr_t*>&localparams)
-{
-      if (debug_scopes) {
-	    cerr << scope->get_fileline() << ": " << __func__ << ": "
-		 << "collect localparams for " << scope_path(scope) << "." << endl;
-      }
-
-      for (mparm_it_t cur = localparams.begin()
-		 ; cur != localparams.end() ;  ++ cur ) {
-
-	    collect_parm_item(des, scope, cur->first, *(cur->second), false, true);
+	    collect_parm_item(des, scope, cur->first, *(cur->second), false);
       }
 }
 
@@ -170,7 +156,7 @@ static void collect_scope_specparams(Design*des, NetScope*scope,
       for (mparm_it_t cur = specparams.begin()
 		 ; cur != specparams.end() ;  ++ cur ) {
 
-	    collect_parm_item(des, scope, cur->first, *(cur->second), true, false);
+	    collect_parm_item(des, scope, cur->first, *(cur->second), true);
       }
 }
 
@@ -765,7 +751,6 @@ bool PPackage::elaborate_scope(Design*des, NetScope*scope)
       scope->add_typedefs(&typedefs);
 
       collect_scope_parameters(des, scope, parameters);
-      collect_scope_localparams(des, scope, localparams);
 
       if (debug_scopes) {
 	    cerr << get_fileline() << ": PPackage::elaborate_scope: "
@@ -804,8 +789,6 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// module have been done.
 
       collect_scope_parameters(des, scope, parameters);
-
-      collect_scope_localparams(des, scope, localparams);
 
       collect_scope_specparams(des, scope, specparams);
 
@@ -1278,11 +1261,11 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 	    scope->add_genvar((*cur).first, (*cur).second);
       }
 
-	// Scan the localparams in this scope, and store the information
+	// Scan the parameters in this scope, and store the information
         // needed to evaluate the parameter expressions. The expressions
 	// will be evaluated later, once all parameter overrides for this
 	// module have been done.
-      collect_scope_localparams(des, scope, localparams);
+      collect_scope_parameters(des, scope, parameters);
 
 	// Run through the defparams for this scope and save the result
 	// in a table for later final override.
@@ -1621,8 +1604,6 @@ void PFunction::elaborate_scope(Design*des, NetScope*scope) const
 
       collect_scope_parameters(des, scope, parameters);
 
-      collect_scope_localparams(des, scope, localparams);
-
 	// Scan through all the named events in this scope.
       elaborate_scope_events_(des, scope, events);
 
@@ -1640,8 +1621,6 @@ void PTask::elaborate_scope(Design*des, NetScope*scope) const
         // needed to evaluate the parameter expressions.
 
       collect_scope_parameters(des, scope, parameters);
-
-      collect_scope_localparams(des, scope, localparams);
 
 	// Scan through all the named events in this scope.
       elaborate_scope_events_(des, scope, events);
@@ -1690,8 +1669,6 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 	      // needed to evaluate the parameter expressions.
 
             collect_scope_parameters(des, my_scope, parameters);
-
-            collect_scope_localparams(des, my_scope, localparams);
 
               // Scan through all the named events in this scope.
             elaborate_scope_events_(des, my_scope, events);
