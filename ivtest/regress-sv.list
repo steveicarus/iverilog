@@ -452,6 +452,7 @@ sv_end_label		normal,-g2005-sv	ivltests
 sv_end_label_fail	CE,-g2009		ivltests gold=sv_end_label_fail.gold
 sv_end_labels		normal,-g2009		ivltests
 sv_end_labels_bad	CE,-g2009		ivltests gold=sv_end_labels_bad.gold
+sv_end_labels_unnamed	CE,-g2009		ivltests gold=sv_end_labels_unnamed.gold
 sv_enum1		normal,-g2009		ivltests
 sv_for_variable		normal,-g2009		ivltests
 sv_foreach1		normal,-g2009		ivltests
