@@ -696,6 +696,7 @@ param_test4		normal			ivltests
 param_times		normal			ivltests # param has multiplication.
 parameter_type		normal			ivltests gold=parameter_type.gold
 parameter_in_generate1	CE			ivltests
+parameter_no_default	CE			ivltests
 parameter_omit1		CE			ivltests
 parameter_omit2		CE			ivltests
 parameter_omit3		CE			ivltests
