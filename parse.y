@@ -3743,12 +3743,10 @@ expr_primary_or_typename
 
   /* There are a few special cases (notably $bits argument) where the
      expression may be a type name. Let the elaborator sort this out. */
-  | TYPE_IDENTIFIER
-      { pform_set_type_referenced(@1, $1.text);
-	PETypename*tmp = new PETypename($1.type);
-	FILE_NAME(tmp,@1);
+  | data_type
+      { PETypename*tmp = new PETypename($1);
+	FILE_NAME(tmp, @1);
 	$$ = tmp;
-	delete[]$1.text;
       }
 
   ;
