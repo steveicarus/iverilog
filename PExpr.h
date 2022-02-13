@@ -173,11 +173,6 @@ class PExpr : public LineInfo {
 					 bool is_cassign,
 					 bool is_force) const;
 
-	// This attempts to evaluate a constant expression, and return
-	// a verinum as a result. If the expression cannot be
-	// evaluated, return 0.
-      virtual verinum* eval_const(Design*des, NetScope*sc) const;
-
 	// This method returns true if the expression represents a
         // structural net that can have multiple drivers. This is
         // used to test whether an input port connection can be
@@ -235,7 +230,6 @@ class PEConcat : public PExpr {
       explicit PEConcat(const std::list<PExpr*>&p, PExpr*r =0);
       ~PEConcat();
 
-      virtual verinum* eval_const(Design*des, NetScope*sc) const;
       virtual void dump(std::ostream&) const;
 
       virtual void declare_implicit_nets(LexicalScope*scope, NetNet::Type type);
@@ -312,11 +306,6 @@ class PEFNumber : public PExpr {
 
       const verireal& value() const;
 
-	/* The eval_const method as applied to a floating point number
-	   gets the *integer* value of the number. This accounts for
-	   any rounding that is needed to get the value. */
-      virtual verinum* eval_const(Design*des, NetScope*sc) const;
-
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
@@ -377,8 +366,6 @@ class PEIdent : public PExpr {
 	// method only applies to Ident expressions because only Ident
 	// expressions can can be unpacked arrays.
       NetNet* elaborate_unpacked_net(Design*des, NetScope*sc) const;
-
-      verinum* eval_const(Design*des, NetScope*sc) const;
 
       virtual bool is_collapsible_net(Design*des, NetScope*scope,
                                       NetNet::PortType port_type) const;
@@ -635,8 +622,6 @@ class PENumber : public PExpr {
 					 bool is_cassign,
 					 bool is_force) const;
 
-      virtual verinum* eval_const(Design*des, NetScope*sc) const;
-
       virtual bool is_the_same(const PExpr*that) const;
 
     private:
@@ -667,7 +652,6 @@ class PEString : public PExpr {
 
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				       unsigned expr_wid, unsigned) const;
-      verinum* eval_const(Design*, NetScope*) const;
 
     private:
       char*text_;
@@ -708,7 +692,6 @@ class PEUnary : public PExpr {
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     unsigned expr_wid,
                                      unsigned flags) const;
-      virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
     public:
       inline char get_op() const { return op_; }
@@ -740,7 +723,6 @@ class PEBinary : public PExpr {
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     unsigned expr_wid,
                                      unsigned flags) const;
-      virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
     protected:
       char op_;
@@ -865,7 +847,6 @@ class PETernary : public PExpr {
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 		                     unsigned expr_wid,
                                      unsigned flags) const;
-      virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
     private:
       NetExpr* elab_and_eval_alternative_(Design*des, NetScope*scope,

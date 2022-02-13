@@ -183,6 +183,7 @@ attrib06_operator_suffix normal			ivltests
 attrib07_func_call	normal			ivltests
 attrib08_mod_inst	normal			ivltests
 attrib09_case		normal			ivltests
+attrib_expr		normal			ivltests
 automatic_error1	CE			ivltests
 automatic_error2	CE			ivltests
 automatic_error3	CE			ivltests
