@@ -1187,8 +1187,7 @@ int main(int argc, char*argv[])
 	    for (mod = pform_modules.begin()
 		       ; mod != pform_modules.end() ; ++ mod ) {
 
-		    /* Don't choose library modules. */
-		  if ((*mod).second->library_flag)
+		  if (!(*mod).second->can_be_toplevel())
 			continue;
 
 		    /* Don't choose modules instantiated in other

@@ -4901,7 +4901,11 @@ module_port_list_opt
      that the port declarations may use them. */
 module_parameter_port_list_opt
   :
-  | '#' '(' module_parameter_port_list ')'
+  | '#' '('
+    { pform_start_parameter_port_list(); }
+    module_parameter_port_list
+    { pform_end_parameter_port_list(); }
+    ')'
   ;
 
 module_parameter
@@ -5580,7 +5584,12 @@ parameter_assign_list
   ;
 
 parameter_assign
-  : IDENTIFIER '=' expression parameter_value_ranges_opt
+  : IDENTIFIER parameter_value_ranges_opt
+      { pform_set_parameter(@1, lex_strings.make($1), param_is_local,
+			    param_data_type, 0, $2);
+	delete[]$1;
+      }
+  | IDENTIFIER '=' expression parameter_value_ranges_opt
       { PExpr*tmp = $3;
 	pform_set_parameter(@1, lex_strings.make($1), param_is_local,
 			    param_data_type, tmp, $4);

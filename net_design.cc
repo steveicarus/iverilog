@@ -827,8 +827,18 @@ void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
       }
 
       // If the parameter has already been evaluated, quietly return.
-      if (cur->second.val_expr == 0)
+      if (cur->second.val != 0)
             return;
+
+      if (cur->second.val_expr == 0) {
+	    cerr << this->get_fileline() << ": error: "
+	         << "Missing value for parameter `"
+	         << cur->first << "`." << endl;
+	    des->errors += 1;
+
+	    cur->second.val = new NetEConst(verinum(verinum::Vx));
+	    return;
+      }
 
       // Guess the varaiable type of the parameter. If the parameter has no
       // given type, then guess the type from the expression and use that to

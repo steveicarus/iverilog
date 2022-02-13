@@ -166,6 +166,8 @@ class Module : public PScopeExtra, public PNamedItem {
 
       SymbolType symbol_type() const;
 
+      bool can_be_toplevel() const;
+
     private:
       void dump_specparams_(std::ostream&out, unsigned indent) const;
       std::list<PGate*> gates_;
