@@ -309,9 +309,8 @@ static void current_task_set_statement(const YYLTYPE&loc, std::vector<Statement*
 		 detected the case that there are no statements in the
 		 task. If this is SystemVerilog, handle it as an
 		 an empty block. */
-	    if (!gn_system_verilog()) {
-		  yyerror(loc, "error: Support for empty tasks requires SystemVerilog.");
-	    }
+	    pform_requires_sv(loc, "Task body with no statements");
+
 	    PBlock*tmp = new PBlock(PBlock::BL_SEQ);
 	    FILE_NAME(tmp, loc);
 	    current_task->set_statement(tmp);
@@ -330,9 +329,7 @@ static void current_task_set_statement(const YYLTYPE&loc, std::vector<Statement*
 	    return;
       }
 
-      if (!gn_system_verilog()) {
-	    yyerror(loc, "error: Task body with multiple statements requires SystemVerilog.");
-      }
+      pform_requires_sv(loc, "Task body with multiple statements");
 
       PBlock*tmp = new PBlock(PBlock::BL_SEQ);
       FILE_NAME(tmp, loc);
@@ -347,9 +344,8 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 		 detected the case that there are no statements in the
 		 task. If this is SystemVerilog, handle it as an
 		 an empty block. */
-	    if (!gn_system_verilog()) {
-		  yyerror(loc, "error: Support for empty functions requires SystemVerilog.");
-	    }
+	    pform_requires_sv(loc, "Function body with no statements");
+
 	    PBlock*tmp = new PBlock(PBlock::BL_SEQ);
 	    FILE_NAME(tmp, loc);
 	    current_function->set_statement(tmp);
@@ -368,9 +364,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 	    return;
       }
 
-      if (!gn_system_verilog()) {
-	    yyerror(loc, "error: Function body with multiple statements requires SystemVerilog.");
-      }
+      pform_requires_sv(loc, "Function body with multiple statements");
 
       PBlock*tmp = new PBlock(PBlock::BL_SEQ);
       FILE_NAME(tmp, loc);
@@ -659,7 +653,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <decl_assignment> variable_decl_assignment
 %type <decl_assignments> list_of_variable_decl_assignments
 
-%type <data_type>  data_type data_type_or_implicit data_type_or_implicit_or_void
+%type <data_type>  data_type data_type_opt data_type_or_implicit data_type_or_implicit_or_void
 %type <data_type>  simple_type_or_string let_formal_type
 %type <data_type>  packed_array_data_type
 %type <data_type>  ps_type_identifier
@@ -1269,6 +1263,11 @@ data_type /* IEEE1800-2005: A.2.2.1 */
       }
   ;
 
+/* Data type or nothing, but not implicit */
+data_type_opt
+  : data_type { $$ = $1; }
+  | { $$ = 0; }
+
   /* The data_type_or_implicit rule is a little more complex then the
      rule documented in the IEEE format syntax in order to allow for
      signaling the special case that the data_type is completely
@@ -1285,7 +1284,7 @@ scalar_vector_opt /*IEEE1800-2005: optional support for packed array */
   ;
 
 data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
-  : data_type
+  : data_type_opt
       { $$ = $1; }
   | signing dimensions_opt
       { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $1, $2);
@@ -1299,8 +1298,6 @@ data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
-  |
-      { $$ = 0; }
   ;
 
 
@@ -1489,8 +1486,8 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	pform_set_this_class(@4, current_function);
 	pform_pop_scope();
 	current_function = 0;
-	if ($7==0 && !gn_system_verilog()) {
-	      yyerror(@4, "error: Empty parenthesis syntax requires SystemVerilog.");
+	if ($7 == 0) {
+	      pform_requires_sv(@4, "Empty parenthesis syntax");
 	}
       }
     label_opt
@@ -2042,8 +2039,8 @@ port_direction /* IEEE1800-2005 A.1.3 */
   | K_inout  { $$ = NetNet::PINOUT; }
   | K_ref
       { $$ = NetNet::PREF;
-        if (!gn_system_verilog()) {
-	      yyerror(@1, "error: Reference ports (ref) require SystemVerilog.");
+
+	if (!pform_requires_sv(@1, "Reference port (ref)")) {
 	      $$ = NetNet::PINPUT;
 	}
       }
@@ -2265,11 +2262,10 @@ stream_operator
 streaming_concatenation /* IEEE1800-2005: A.8.1 */
   : '{' stream_operator '{' stream_expression_list '}' '}'
       { /* streaming concatenation is a SystemVerilog thing. */
-	if (gn_system_verilog()) {
+	if (pform_requires_sv(@2, "Streaming concatenation")) {
 	      yyerror(@2, "sorry: Streaming concatenation not supported.");
 	      $$ = 0;
 	} else {
-	      yyerror(@2, "error: Streaming concatenation requires SystemVerilog");
 	      $$ = 0;
 	}
       }
@@ -2294,8 +2290,8 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	pform_set_this_class(@3, current_task);
 	pform_pop_scope();
 	current_task = 0;
-	if ($7 && $7->size() > 1 && !gn_system_verilog()) {
-	      yyerror(@7, "error: Task body with multiple statements requires SystemVerilog.");
+	if ($7 && $7->size() > 1) {
+	      pform_requires_sv(@7, "Task body with multiple statements");
 	}
 	delete $7;
       }
@@ -2452,10 +2448,8 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	      tmp = pform_make_task_ports(@3, use_port_type, $2, ilist);
 	}
 	if ($4 != 0) {
-	      if (gn_system_verilog()) {
+	      if (pform_requires_sv(@4, "Task/function port with unpacked dimensions")) {
 		    pform_set_reg_idx(name, $4);
-	      } else {
-		    yyerror(@4, "error: Task/function port with unpacked dimensions requires SystemVerilog.");
 	      }
 	}
 
@@ -2479,10 +2473,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 
 tf_port_item_expr_opt
   : '=' expression
-      { if (! gn_system_verilog()) {
-	      yyerror(@1, "error: Task/function default arguments require "
-	                  "SystemVerilog.");
-	}
+      { pform_requires_sv(@$, "Task/function default argument");
 	$$ = $2;
       }
   |   { $$ = 0; }
@@ -2582,9 +2573,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
   | '[' ']'
       { std::list<pform_range_t> *tmp = new std::list<pform_range_t>;
 	pform_range_t index (0,0);
-	if (!gn_system_verilog()) {
-	      yyerror("error: Dynamic array declaration require SystemVerilog.");
-	}
+	pform_requires_sv(@$, "Dynamic array declaration");
 	tmp->push_back(index);
 	$$ = tmp;
       }
@@ -2592,9 +2581,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
       { // SystemVerilog queue
 	list<pform_range_t> *tmp = new std::list<pform_range_t>;
 	pform_range_t index (new PENull,0);
-	if (!gn_system_verilog()) {
-	      yyerror("error: Queue declaration require SystemVerilog.");
-	}
+	pform_requires_sv(@$, "Queue declaration");
 	tmp->push_back(index);
 	$$ = tmp;
       }
@@ -2602,9 +2589,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
       { // SystemVerilog queue with a max size
 	list<pform_range_t> *tmp = new std::list<pform_range_t>;
 	pform_range_t index (new PENull,$4);
-	if (!gn_system_verilog()) {
-	      yyerror("error: Queue declarations require SystemVerilog.");
-	}
+	pform_requires_sv(@$, "Queue declaration");
 	tmp->push_back(index);
 	$$ = tmp;
       }
@@ -2612,10 +2597,8 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
 
 variable_lifetime
   : lifetime
-      { if (!gn_system_verilog()) {
-	      yyerror(@1, "error: overriding the default variable lifetime "
-			  "requires SystemVerilog.");
-	} else if ($1 != pform_peek_scope()->default_lifetime) {
+      { if (pform_requires_sv(@1, "Overriding default variable lifetime") &&
+	    $1 != pform_peek_scope()->default_lifetime) {
 	      yyerror(@1, "sorry: overriding the default variable lifetime "
 			  "is not yet supported.");
 	}
@@ -3913,9 +3896,7 @@ expr_primary
 	FILE_NAME(tmp, @1);
 	delete[]$1;
 	$$ = tmp;
-	if (!gn_system_verilog()) {
-	      yyerror(@1, "error: Empty function argument list requires SystemVerilog.");
-	}
+	pform_requires_sv(@1, "Empty function argument list");
       }
 
   | implicit_class_handle
@@ -4158,24 +4139,22 @@ expr_primary
 
   | expr_primary '\'' '(' expression ')'
       { PExpr*base = $4;
-	if (gn_system_verilog()) {
+	if (pform_requires_sv(@1, "Size cast")) {
 	      PECastSize*tmp = new PECastSize($1, base);
 	      FILE_NAME(tmp, @1);
 	      $$ = tmp;
 	} else {
-	      yyerror(@1, "error: Size cast requires SystemVerilog.");
 	      $$ = base;
 	}
       }
 
   | simple_type_or_string '\'' '(' expression ')'
       { PExpr*base = $4;
-	if (gn_system_verilog()) {
+	if (pform_requires_sv(@1, "Type cast")) {
 	      PECastType*tmp = new PECastType($1, base);
 	      FILE_NAME(tmp, @1);
 	      $$ = tmp;
 	} else {
-	      yyerror(@1, "error: Type cast requires SystemVerilog.");
 	      $$ = base;
 	}
       }
@@ -4409,12 +4388,9 @@ hierarchy_identifier
 	  $$ = tmp;
 	}
     | hierarchy_identifier '[' '$' ']'
-        { pform_name_t * tmp = $1;
+        { pform_requires_sv(@3, "Last element expression ($)");
+          pform_name_t * tmp = $1;
 	  name_component_t&tail = tmp->back();
-	  if (! gn_system_verilog()) {
-		yyerror(@3, "error: Last element expression ($) "
-			"requires SystemVerilog. Try enabling SystemVerilog.");
-	  }
 	  index_component_t itmp;
 	  itmp.sel = index_component_t::SEL_BIT_LAST;
 	  itmp.msb = 0;
@@ -4585,9 +4561,7 @@ port_declaration
 	$$ = ptmp;
       }
   | attribute_list_opt K_input net_type_opt data_type_or_implicit IDENTIFIER '=' expression
-      { if (!gn_system_verilog()) {
-	      yyerror("error: Default port values require SystemVerilog.");
-	}
+      { pform_requires_sv(@6, "Default port value");
 	Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	data_type_t*use_type = $4;
@@ -4935,17 +4909,29 @@ module_parameter_port_list_opt
 module_parameter
   : parameter param_type parameter_assign
   | localparam param_type parameter_assign
-      { if (!gn_system_verilog()) {
-	      yyerror(@1, "error: Local parameters in module parameter "
-			  "port lists requires SystemVerilog.");
-	}
-	}
+      { pform_requires_sv(@1, "Local parameter in module parameter port list");
+      }
   ;
 
 module_parameter_port_list
   : module_parameter
+  | data_type_opt
+    { param_data_type = $1;
+      param_is_local = false;
+    }
+    parameter_assign
+    { pform_requires_sv(@3, "Omitting initial `parameter` in parameter port "
+			    "list");
+    }
   | module_parameter_port_list ',' module_parameter
-  | module_parameter_port_list ',' parameter_assign
+  | module_parameter_port_list ',' data_type_opt
+    { if ($3) {
+	    pform_requires_sv(@3, "Omitting `parameter`/`localparam` before "
+				  "data type in parameter port list");
+	    param_data_type = $3;
+      }
+    }
+    parameter_assign
   ;
 
 module_item
@@ -5379,10 +5365,7 @@ module_item
   | K_function error K_endfunction label_opt
       { yyerror(@1, "error: I give up on this function definition.");
 	if ($4) {
-	    if (!gn_system_verilog()) {
-		  yyerror(@4, "error: Function end names require "
-		              "SystemVerilog.");
-	    }
+	    pform_requires_sv(@4, "Function end label");
 	    delete[]$4;
 	}
 	yyerrok;
@@ -6514,10 +6497,7 @@ statement_item /* This is roughly statement_item in the LRM */
     block_item_decls_opt
       { if (!$2) {
 	    if ($4) {
-		  if (! gn_system_verilog()) {
-			yyerror("error: Variable declaration in unnamed block "
-				"requires SystemVerilog.");
-		  }
+		  pform_requires_sv(@4, "Variable declaration in unnamed block");
 	    } else {
 		  /* If there are no declarations in the scope then just delete it. */
 		  pform_pop_scope();
@@ -6560,10 +6540,7 @@ statement_item /* This is roughly statement_item in the LRM */
       {
         if (!$2) {
 	    if ($4) {
-		  if (! gn_system_verilog()) {
-			yyerror("error: Variable declaration in unnamed block "
-				"requires SystemVerilog.");
-		  }
+		  pform_requires_sv(@4, "Variable declaration in unnamed block");
 	    } else {
 		  /* If there are no declarations in the scope then just delete it. */
 		  pform_pop_scope();
@@ -6847,9 +6824,7 @@ statement_item /* This is roughly statement_item in the LRM */
   | hierarchy_identifier K_with '{' constraint_block_item_list_opt '}' ';'
       { /* ....randomize with { <constraints> } */
 	if ($1 && peek_tail_name(*$1) == "randomize") {
-	      if (!gn_system_verilog())
-		    yyerror(@2, "error: Randomize with constraint requires SystemVerilog.");
-	      else
+	      if (pform_requires_sv(@2, "Randomize with constraint"))
 		    yyerror(@2, "sorry: Randomize with constraint not supported.");
 	} else {
 	      yyerror(@2, "error: Constraint block can only be applied to randomize method.");

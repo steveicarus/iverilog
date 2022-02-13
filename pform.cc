@@ -1334,10 +1334,9 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
 	    error_count += 1;
       }
 
-      if (lifetime != LexicalScope::INHERITED && !gn_system_verilog()) {
-	    cerr << loc << ": error: Default subroutine lifetimes "
-		    "require SystemVerilog." << endl;
-	    error_count += 1;
+
+      if (lifetime != LexicalScope::INHERITED) {
+	    pform_requires_sv(loc, "Default subroutine lifetime");
       }
 
       if (gn_system_verilog() && ! pform_cur_module.empty()) {
@@ -3138,11 +3137,7 @@ PAssign* pform_compressed_assign_from_inc_dec(const struct vlltype&loc, PExpr*ex
 
 PExpr* pform_genvar_inc_dec(const struct vlltype&loc, const char*name, bool inc_flag)
 {
-      if (!gn_system_verilog()) {
-	    cerr << loc << ": error: Increment/decrement operators "
-		    "require SystemVerilog." << endl;
-	    error_count += 1;
-      }
+      pform_requires_sv(loc, "Increment/decrement operator");
 
       PExpr*lval = new PEIdent(lex_strings.make(name));
       PExpr*rval = new PENumber(new verinum(1));
@@ -3760,6 +3755,15 @@ void pform_add_modport_port(const struct vlltype&loc,
       pform_cur_modport->simple_ports[name] = make_pair(port_type, expr);
 }
 
+bool pform_requires_sv(const struct vlltype&loc, const char *feature)
+{
+      if (gn_system_verilog())
+	    return true;
+
+      VLerror(loc, "error: %s requires SystemVerilog.", feature);
+
+      return false;
+}
 
 FILE*vl_input = 0;
 extern void reset_lexor();
