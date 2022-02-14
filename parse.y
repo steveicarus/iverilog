@@ -3403,6 +3403,7 @@ event_expression
 		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
 		  (*tl)[0] = tmp;
 		  $$ = tl;
+		  pform_requires_sv(@1, "Edge event");
 		}
 	| expression
 		{ PEEvent*tmp = new PEEvent(PEEvent::ANYEDGE, $1);
