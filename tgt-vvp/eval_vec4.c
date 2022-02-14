@@ -409,11 +409,26 @@ static void draw_binary_vec4_compare(ivl_expr_t expr)
       }
 }
 
+/*
+ * Handle the logical implication:
+ *    <le> -> <re>
+ * which is the same as the expression
+ *    !<le> || <re>
+ *
+ */
 static void draw_binary_vec4_limpl(ivl_expr_t expr)
 {
-      fprintf(stderr, "vvp.tgt sorry: No support for logical implication (%s:%u).\n",
-                      ivl_expr_file(expr), ivl_expr_lineno(expr));
-      assert(0);
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+
+      /* The arguments should have alreacy been reduced. */
+      assert(ivl_expr_width(le) == 1);
+      assert(ivl_expr_width(re) == 1);
+
+      draw_eval_vec4(le);
+      fprintf(vvp_out, "    %%inv;\n");
+      draw_eval_vec4(re);
+      fprintf(vvp_out, "    %%or;\n");
 }
 
 static void draw_binary_vec4_lequiv(ivl_expr_t expr)

@@ -249,6 +249,15 @@ TU [munpf]
 "'{" { return K_LP; }
 "::" { return K_SCOPE_RES; }
 
+  /* This is horrible. The Verilog systax uses "->" in a lot of places.
+     The trickiest is in constraints, where it is not an operator at all
+     but a constraint implication. This only turns up as a problem when
+     the "->" is followed by a constraint_expression_list. If that shows
+     up, then there will be a "{" to the right of the "->". In that case,
+     turn the "->" into a K_CONSTRAINT_IMPL so that the parser can be
+     written without the shift/reduce conflict. Ugh! */
+"->"/{W}*"{" { return gn_system_verilog()? K_CONSTRAINT_IMPL :  K_TRIGGER; }
+
   /* Watch out for the tricky case of (*). Cannot parse this as "(*"
      and ")", but since I know that this is really ( * ), replace it
      with "*" and return that. */

@@ -502,6 +502,8 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %token K_SCOPE_RES
 %token K_edge_descriptor
 
+%token K_CONSTRAINT_IMPL
+
  /* The base tokens from 1364-1995. */
 %token K_always K_and K_assign K_begin K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
@@ -1148,10 +1150,14 @@ constraint_declaration /* IEEE1800-2005: A.1.9 */
 constraint_expression /* IEEE1800-2005 A.1.9 */
   : expression ';'
   | expression K_dist '{' '}' ';'
-  | expression K_TRIGGER constraint_set
+  | expression constraint_trigger
   | K_if '(' expression ')' constraint_set %prec less_than_K_else
   | K_if '(' expression ')' constraint_set K_else constraint_set
   | K_foreach '(' IDENTIFIER '[' loop_variables ']' ')' constraint_set
+  ;
+
+constraint_trigger
+  : K_CONSTRAINT_IMPL '{' constraint_expression_list '}'
   ;
 
 constraint_expression_list /* */
@@ -3632,14 +3638,12 @@ expression
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
-/*
-  FIXME: This creates shift/reduce issues that need to be solved
   | expression K_TRIGGER attribute_list_opt expression
       { PEBinary*tmp = new PEBLogic('q', $1, $4);
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
-*/
+
   | expression K_LEQUIV attribute_list_opt expression
       { PEBinary*tmp = new PEBLogic('Q', $1, $4);
 	FILE_NAME(tmp, @2);
