@@ -675,7 +675,7 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 %type <tf_ports> tf_port_declaration tf_port_item tf_port_item_list
 %type <tf_ports> tf_port_list tf_port_list_opt tf_port_list_parens_opt
 
-%type <named_pexpr> modport_simple_port port_name parameter_value_byname
+%type <named_pexpr> named_expression named_expression_opt port_name
 %type <named_pexprs> port_name_list parameter_value_byname_list
 %type <exprs> port_conn_expression_list_with_nuls
 
@@ -1975,7 +1975,7 @@ modport_item
 modport_ports_list
   : modport_ports_declaration
   | modport_ports_list ',' modport_ports_declaration
-  | modport_ports_list ',' modport_simple_port
+  | modport_ports_list ',' named_expression
       { if (last_modport_port.type == MP_SIMPLE) {
 	      pform_add_modport_port(@3, last_modport_port.direction,
 				     $3->name, $3->parm);
@@ -2009,7 +2009,7 @@ modport_ports_declaration
 	delete[] $3;
 	delete $1;
       }
-  | attribute_list_opt port_direction modport_simple_port
+  | attribute_list_opt port_direction named_expression
       { last_modport_port.type = MP_SIMPLE;
 	last_modport_port.direction = $2;
 	pform_add_modport_port(@3, $2, $3->name, $3->parm);
@@ -2035,16 +2035,6 @@ modport_ports_declaration
 	yyerror(@3, "sorry: modport clocking declaration is not yet supported.");
 	delete[] $3;
 	delete $1;
-      }
-  ;
-
-modport_simple_port
-  : '.' IDENTIFIER '(' expression ')'
-      { named_pexpr_t*tmp = new named_pexpr_t;
-	tmp->name = lex_strings.make($2);
-	tmp->parm = $4;
-	delete[]$2;
-	$$ = tmp;
       }
   ;
 
@@ -5550,7 +5540,7 @@ parameter_value_opt
       { $$ = 0; }
   ;
 
-parameter_value_byname
+named_expression
   : '.' IDENTIFIER '(' expression ')'
       { named_pexpr_t*tmp = new named_pexpr_t;
 	tmp->name = lex_strings.make($2);
@@ -5558,6 +5548,9 @@ parameter_value_byname
 	delete[]$2;
 	$$ = tmp;
       }
+
+named_expression_opt
+  : named_expression
   | '.' IDENTIFIER '(' ')'
       { named_pexpr_t*tmp = new named_pexpr_t;
 	tmp->name = lex_strings.make($2);
@@ -5568,13 +5561,13 @@ parameter_value_byname
   ;
 
 parameter_value_byname_list
-  : parameter_value_byname
+  : named_expression_opt
       { std::list<named_pexpr_t>*tmp = new std::list<named_pexpr_t>;
 	tmp->push_back(*$1);
 	delete $1;
 	$$ = tmp;
       }
-  | parameter_value_byname_list ',' parameter_value_byname
+  | parameter_value_byname_list ',' named_expression_opt
       { std::list<named_pexpr_t>*tmp = $1;
 	tmp->push_back(*$3);
 	delete $3;
@@ -5643,25 +5636,13 @@ port_opt
      looking for the ports of a module declaration. */
 
 port_name
-  : attribute_list_opt '.' IDENTIFIER '(' expression ')'
-      { named_pexpr_t*tmp = new named_pexpr_t;
-	tmp->name = lex_strings.make($3);
-	tmp->parm = $5;
-	delete[]$3;
-	delete $1;
-	$$ = tmp;
+  : attribute_list_opt named_expression_opt
+      { delete $1;
+	$$ = $2;
       }
   | attribute_list_opt '.' IDENTIFIER '(' error ')'
       { yyerror(@3, "error: Invalid port connection expression.");
 	named_pexpr_t*tmp = new named_pexpr_t;
-	tmp->name = lex_strings.make($3);
-	tmp->parm = 0;
-	delete[]$3;
-	delete $1;
-	$$ = tmp;
-      }
-  | attribute_list_opt '.' IDENTIFIER '(' ')'
-      { named_pexpr_t*tmp = new named_pexpr_t;
 	tmp->name = lex_strings.make($3);
 	tmp->parm = 0;
 	delete[]$3;
