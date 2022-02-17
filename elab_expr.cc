@@ -3637,7 +3637,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
       unsigned wid_sum = 0;
       unsigned parm_cnt = 0;
       unsigned parm_errors = 0;
-      svector<NetExpr*> parms(parms_.size());
+      std::vector<NetExpr*> parms(parms_.size());
 
 	/* Elaborate all the parameters and attach them to the concat node. */
       for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {

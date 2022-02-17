@@ -852,7 +852,7 @@ void PCase::elaborate_sig(Design*des, NetScope*scope) const
       if (items_ == 0)
 	    return;
 
-      for (unsigned idx = 0 ; idx < items_->count() ; idx += 1) {
+      for (unsigned idx = 0 ; idx < items_->size() ; idx += 1) {
 	    if ( (*items_)[idx]->stat )
 		  (*items_)[idx]->stat ->elaborate_sig(des,scope);
       }

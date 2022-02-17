@@ -1965,7 +1965,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 
 		  assert(else_ != 0);
 		  flag = else_->synth_sync(des, scope, ff, nex_map,
-					   nex_out, svector<NetEvProbe*>(0))
+					   nex_out, std::vector<NetEvProbe*>())
 			&& flag;
 		  DEBUG_SYNTH2_EXIT("NetCondit",flag)
 		  return flag;

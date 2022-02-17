@@ -46,7 +46,7 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 {
       assert(scope);
 
-      svector<NetNet*>nets (parms_.size());
+      std::vector<NetNet*> nets(parms_.size());
       unsigned width = 0;
       unsigned errors = 0;
 
@@ -57,11 +57,11 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
       }
 
 	/* Elaborate the operands of the concatenation. */
-      for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < nets.size() ;  idx += 1) {
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Elaborate subexpression "
-		       << idx << " of " << nets.count() << " l-values: "
+		       << idx << " of " << nets.size() << " l-values: "
 		       << *parms_[idx] << endl;
 	    }
 
@@ -117,7 +117,7 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 		       << endl;
 	    }
 
-	    for (unsigned idx = 0 ; idx < nets.count() ; idx += 1) {
+	    for (unsigned idx = 0 ; idx < nets.size() ; idx += 1) {
 		  unsigned wid = nets[idx]->vector_width();
 		  unsigned off = width - wid;
 		  NetTran*ps = new NetTran(scope, scope->local_symbol(),
@@ -141,7 +141,7 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 
 	    NetPartSelect::dir_t part_dir = NetPartSelect::VP;
 
-	    for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
+	    for (unsigned idx = 0 ;  idx < nets.size() ;  idx += 1) {
 		  unsigned wid = nets[idx]->vector_width();
 		  unsigned off = width - wid;
 		  NetPartSelect*ps = new NetPartSelect(osig, off, wid, part_dir);

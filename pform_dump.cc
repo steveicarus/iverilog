@@ -950,7 +950,7 @@ void PCase::dump(ostream&out, unsigned ind) const
       out << " (" << *expr_ << ") /* " << get_fileline() << " */" << endl;
       dump_attributes_map(out, attributes, ind+2);
 
-      for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < items_->size() ;  idx += 1) {
 	    PCase::Item*cur = (*items_)[idx];
 
 	    if (cur->expr.empty()) {
@@ -1050,16 +1050,16 @@ void PDoWhile::dump(ostream&out, unsigned ind) const
 
 void PEventStatement::dump(ostream&out, unsigned ind) const
 {
-      if (expr_.count() == 0) {
+      if (expr_.size() == 0) {
 	    out << setw(ind) << "" << "@* ";
 
-      } else if ((expr_.count() == 1) && (expr_[0] == 0)) {
+      } else if ((expr_.size() == 1) && (expr_[0] == 0)) {
 	    out << setw(ind) << "" << "wait fork ";
 
       } else {
 	    out << setw(ind) << "" << "@(" << *(expr_[0]);
-	    if (expr_.count() > 1)
-		  for (unsigned idx = 1 ;  idx < expr_.count() ;  idx += 1)
+	    if (expr_.size() > 1)
+		  for (unsigned idx = 1 ;  idx < expr_.size() ;  idx += 1)
 			out << " or " << *(expr_[idx]);
 
 	    out << ")";
@@ -1077,13 +1077,13 @@ void PEventStatement::dump_inline(ostream&out) const
 {
       assert(statement_ == 0);
 
-      if (expr_.count() == 0) {
+      if (expr_.size() == 0) {
 	    out << "@* ";
 
       } else {
 	    out << "@(" << *(expr_[0]);
-	    if (expr_.count() > 1)
-		  for (unsigned idx = 1 ;  idx < expr_.count() ;  idx += 1)
+	    if (expr_.size() > 1)
+		  for (unsigned idx = 1 ;  idx < expr_.size() ;  idx += 1)
 			out << " or " << *(expr_[idx]);
 
 	    out << ")";
@@ -1775,7 +1775,7 @@ void pform_dump(ostream&out, Module*mod)
 void PUdp::dump(ostream&out) const
 {
       out << "primitive " << name_ << "(" << ports[0];
-      for (unsigned idx = 1 ;  idx < ports.count() ;  idx += 1)
+      for (unsigned idx = 1 ;  idx < ports.size() ;  idx += 1)
 	    out << ", " << ports[idx];
       out << ");" << endl;
 
@@ -1783,7 +1783,7 @@ void PUdp::dump(ostream&out) const
 	    out << "    reg " << ports[0] << ";" << endl;
 
       out << "    table" << endl;
-      for (unsigned idx = 0 ;  idx < tinput.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < tinput.size() ;  idx += 1) {
 	    out << "     ";
 	    for (unsigned chr = 0 ;  chr < tinput[idx].length() ;  chr += 1)
 		  out << " " << tinput[idx][chr];

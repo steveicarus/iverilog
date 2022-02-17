@@ -31,7 +31,7 @@ NetUDP::NetUDP(NetScope*s, perm_string n, unsigned pins, PUdp *u)
       for (unsigned idx = 1 ;  idx < pins ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
       }
-      table_idx = udp->tinput.count()-1;
+      table_idx = udp->tinput.size() - 1;
 }
 
 bool NetUDP::first(string&inp, char&out) const
@@ -44,7 +44,7 @@ bool NetUDP::next(string&inp, char&out) const
 {
       table_idx++;
 
-      if (table_idx >= udp->tinput.count()) return false;
+      if (table_idx >= udp->tinput.size()) return false;
 
       if (is_sequential()) {
 	    inp = string("") + udp->tcurrent[table_idx] +
@@ -84,11 +84,11 @@ char NetUDP::get_initial() const
 
 unsigned NetUDP::port_count() const
 {
-      return udp->ports.count();
+      return udp->ports.size();
 }
 
 string NetUDP::port_name(unsigned idx) const
 {
-      assert(idx < udp->ports.count());
+      assert(idx < udp->ports.size());
       return udp->ports[idx];
 }

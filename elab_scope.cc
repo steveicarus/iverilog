@@ -1704,7 +1704,7 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 void PCase::elaborate_scope(Design*des, NetScope*scope) const
 {
       assert(items_);
-      for (unsigned idx = 0 ;  idx < (*items_).count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < (*items_).size() ;  idx += 1) {
 	    assert( (*items_)[idx] );
 
 	    if (Statement*sp = (*items_)[idx]->stat)

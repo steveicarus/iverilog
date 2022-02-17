@@ -208,7 +208,7 @@ const pform_name_t& PCallTask::path() const
       return path_;
 }
 
-PCase::PCase(ivl_case_quality_t q, NetCase::TYPE t, PExpr*ex, svector<PCase::Item*>*l)
+PCase::PCase(ivl_case_quality_t q, NetCase::TYPE t, PExpr*ex, std::vector<PCase::Item*>*l)
 : quality_(q), type_(t), expr_(ex), items_(l)
 {
 }
@@ -216,7 +216,7 @@ PCase::PCase(ivl_case_quality_t q, NetCase::TYPE t, PExpr*ex, svector<PCase::Ite
 PCase::~PCase()
 {
       delete expr_;
-      for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < items_->size() ;  idx += 1)
 	    if ((*items_)[idx]->stat) delete (*items_)[idx]->stat;
 
       delete[]items_;
@@ -300,10 +300,10 @@ PDoWhile::~PDoWhile()
       delete statement_;
 }
 
-PEventStatement::PEventStatement(const svector<PEEvent*>&ee)
+PEventStatement::PEventStatement(const std::vector<PEEvent*>&ee)
 : expr_(ee), statement_(0), always_sens_(false)
 {
-      assert(expr_.count() > 0);
+      assert(expr_.size() > 0);
 }
 
 
@@ -331,7 +331,7 @@ void PEventStatement::set_statement(Statement*st)
 bool PEventStatement::has_aa_term(Design*des, NetScope*scope)
 {
       bool flag = false;
-      for (unsigned idx = 0 ; idx < expr_.count() ; idx += 1) {
+      for (unsigned idx = 0 ; idx < expr_.size() ; idx += 1) {
 	    flag = expr_[idx]->has_aa_term(des, scope) || flag;
       }
       return flag;

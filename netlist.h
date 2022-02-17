@@ -2626,7 +2626,7 @@ class NetUDP  : public NetNode {
 	   return false when the scan is done. */
       bool first(std::string&inp, char&out) const;
       bool next(std::string&inp, char&out) const;
-      unsigned rows() const { return udp->tinput.count(); }
+      unsigned rows() const { return udp->tinput.size(); }
 
       unsigned nin() const { return pin_count()-1; }
       bool is_sequential() const { return udp->sequential; }

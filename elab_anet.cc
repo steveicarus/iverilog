@@ -48,7 +48,7 @@ NetNet* PEConcat::elaborate_anet(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      svector<NetNet*>nets (parms_.count());
+      std::vector<NetNet*> nets(parms_.count());
       unsigned pins = 0;
       unsigned errors = 0;
 

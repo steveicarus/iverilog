@@ -445,13 +445,13 @@ extern void pform_makegates(const struct vlltype&loc,
 			    PGBuiltin::Type type,
 			    struct str_pair_t str,
 			    std::list<PExpr*>*delay,
-			    svector<lgate>*gates,
+			    std::vector<lgate>*gates,
 			    std::list<named_pexpr_t>*attr);
 
 extern void pform_make_modgates(const struct vlltype&loc,
 				perm_string type,
 				struct parmvalue_t*overrides,
-				svector<lgate>*gates,
+				std::vector<lgate>*gates,
 				std::list<named_pexpr_t>*attr);
 
 /* Make a continuous assignment node, with optional bit- or part- select. */
