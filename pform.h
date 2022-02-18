@@ -96,12 +96,6 @@ struct parmvalue_t {
 struct str_pair_t { ivl_drive_t str0, str1; };
 
 
-struct net_decl_assign_t {
-      perm_string name;
-      PExpr*expr;
-      struct net_decl_assign_t*next;
-};
-
 /* The lgate is gate instantiation information. */
 struct lgate {
       explicit inline lgate(int =0)
@@ -361,38 +355,20 @@ extern void pform_makewire(const struct vlltype&li, perm_string name,
 			   ivl_variable_type_t,
 			   std::list<named_pexpr_t>*attr);
 
-/* This form handles simple declarations */
-extern void pform_makewire(const struct vlltype&li,
-			   std::list<pform_range_t>*range,
-			   bool signed_flag,
-			   std::list<perm_string>*names,
-			   NetNet::Type type,
-			   NetNet::PortType,
-			   ivl_variable_type_t,
-			   std::list<named_pexpr_t>*attr,
-			   PWSRType rt = SR_NET);
-
 /* This form handles assignment declarations. */
-extern void pform_makewire(const struct vlltype&li,
-			   std::list<PExpr*>*delay,
-			   str_pair_t str,
-			   net_decl_assign_t*assign_list,
-			   NetNet::Type type,
-			   data_type_t*data_type);
 
 extern void pform_makewire(const struct vlltype&li,
 			   std::list<PExpr*>*delay,
 			   str_pair_t str,
 			   std::list<decl_assignment_t*>*assign_list,
 			   NetNet::Type type,
-			   data_type_t*data_type);
+			   data_type_t*data_type,
+			   std::list<named_pexpr_t>*attr = 0);
 
-/* This form handles nets declared as structures. (See pform_struct_type.cc) */
-extern void pform_makewire(const struct vlltype&li,
-			   struct_type_t*struct_type,
-			   NetNet::PortType,
-			   std::list<perm_string>*names,
-			   std::list<named_pexpr_t>*attr);
+extern void pform_make_var(const struct vlltype&loc,
+			   std::list<decl_assignment_t*>*assign_list,
+			   data_type_t*data_type,
+			   std::list<named_pexpr_t>*attr = 0);
 
 extern void pform_make_var_init(const struct vlltype&li,
 				perm_string name, PExpr*expr);

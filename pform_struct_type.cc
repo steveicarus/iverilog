@@ -91,32 +91,3 @@ void pform_set_struct_type(const struct vlltype&li, struct_type_t*struct_type, l
 	    pform_set_struct_type(li, struct_type, *cur, net_type, attr);
       }
 }
-
-static void pform_makewire(const struct vlltype&li,
-			   struct_type_t*struct_type,
-			   NetNet::PortType ptype,
-			   perm_string name,
-			   list<named_pexpr_t>*)
-{
-      ivl_variable_type_t base_type = struct_type->figure_packed_base_type();
-
-      PWire*cur = pform_get_make_wire_in_scope(li, name, NetNet::WIRE, ptype, base_type);
-      assert(cur);
-      FILE_NAME(cur, li);
-      cur->set_data_type(struct_type);
-}
-
-void pform_makewire(const struct vlltype&li,
-		    struct_type_t*struct_type,
-		    NetNet::PortType ptype,
-		    list<perm_string>*names,
-		    list<named_pexpr_t>*attr)
-{
-      for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end() ; ++ cur ) {
-	    perm_string txt = *cur;
-	    pform_makewire(li, struct_type, ptype, txt, attr);
-      }
-
-      delete names;
-}

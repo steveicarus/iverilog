@@ -998,11 +998,18 @@ PCallTask* pform_make_call_task(const struct vlltype&loc,
       return tmp;
 }
 
-void pform_make_foreach_declarations(const struct vlltype&loc,
-				     std::list<perm_string>*loop_vars)
+void pform_make_var(const struct vlltype&loc,
+		    std::list<decl_assignment_t*>*assign_list,
+		    data_type_t*data_type, std::list<named_pexpr_t>*attr)
 {
       static const struct str_pair_t str = { IVL_DR_STRONG, IVL_DR_STRONG };
 
+      pform_makewire(loc, 0, str, assign_list, NetNet::REG, data_type, attr);
+}
+
+void pform_make_foreach_declarations(const struct vlltype&loc,
+				     std::list<perm_string>*loop_vars)
+{
       list<decl_assignment_t*>assign_list;
       for (list<perm_string>::const_iterator cur = loop_vars->begin()
 		 ; cur != loop_vars->end() ; ++ cur) {
@@ -1011,7 +1018,7 @@ void pform_make_foreach_declarations(const struct vlltype&loc,
 	    assign_list.push_back(tmp_assign);
       }
 
-      pform_makewire(loc, 0, str, &assign_list, NetNet::REG, &size_type);
+      pform_make_var(loc, &assign_list, &size_type);
 }
 
 PForeach* pform_make_foreach(const struct vlltype&loc,
@@ -2835,90 +2842,13 @@ void pform_makewire(const vlltype&li, perm_string name,
       }
 }
 
-/*
- * This form takes a list of names and some type information, and
- * generates a bunch of variables/nets. We use the basic
- * pform_makewire above.
- */
-void pform_makewire(const vlltype&li,
-		    list<pform_range_t>*range,
-		    bool signed_flag,
-		    list<perm_string>*names,
-		    NetNet::Type type,
-		    NetNet::PortType pt,
-		    ivl_variable_type_t dt,
-		    list<named_pexpr_t>*attr,
-		    PWSRType rt)
-{
-      for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end() ; ++ cur ) {
-	    perm_string txt = *cur;
-	    pform_makewire(li, txt, type, pt, dt, attr);
-	    /* This has already been done for real variables. */
-	    if (dt != IVL_VT_REAL) {
-		  pform_set_net_range(txt, type, range, signed_flag, dt, rt, 0);
-	    }
-      }
-
-      delete names;
-      delete range;
-      delete attr;
-}
-
-/*
- * This form makes nets with delays and continuous assignments.
- */
-void pform_makewire(const vlltype&li,
-		    list<PExpr*>*delay,
-		    str_pair_t str,
-		    net_decl_assign_t*decls,
-		    NetNet::Type type,
-		    data_type_t*data_type)
-{
-	// The decls pointer is a circularly linked list.
-      net_decl_assign_t*first = decls->next;
-
-      list<perm_string>*names = new list<perm_string>;
-
-	// Go through the circularly linked list non-destructively.
-      do {
-	    pform_makewire(li, first->name, type, NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
-	    names->push_back(first->name);
-	    first = first->next;
-      } while (first != decls->next);
-
-	// The pform_set_data_type function will delete the names list.
-      pform_set_data_type(li, data_type, names, type, 0);
-
-	// This time, go through the list, deleting cells as I'm done.
-      first = decls->next;
-      decls->next = 0;
-      while (first) {
-	    net_decl_assign_t*next = first->next;
-	    PWire*cur = pform_get_wire_in_scope(first->name);
-	    if (cur != 0) {
-		  PEIdent*lval = new PEIdent(first->name);
-		  FILE_NAME(lval, li.text, li.first_line);
-		  PGAssign*ass = pform_make_pgassign(lval, first->expr,
-						     delay, str);
-		  FILE_NAME(ass, li.text, li.first_line);
-	    }
-
-	    delete first;
-	    first = next;
-      }
-}
-
-/*
- * This should eventually replace the form above that takes a
- * net_decl_assign_t argument.
- */
 void pform_makewire(const struct vlltype&li,
 		    std::list<PExpr*>*delay,
 		    str_pair_t str,
 		    std::list<decl_assignment_t*>*assign_list,
 		    NetNet::Type type,
-		    data_type_t*data_type)
+		    data_type_t*data_type,
+		    list<named_pexpr_t>*attr)
 {
       if (is_compilation_unit(lexical_scope) && !gn_system_verilog()) {
 	    VLerror(li, "error: variable declarations must be contained within a module.");
@@ -2935,7 +2865,7 @@ void pform_makewire(const struct vlltype&li,
 	    names->push_back(curp->name);
       }
 
-      pform_set_data_type(li, data_type, names, type, 0);
+      pform_set_data_type(li, data_type, names, type, attr);
 
       while (! assign_list->empty()) {
 	    decl_assignment_t*first = assign_list->front();
