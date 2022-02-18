@@ -269,6 +269,8 @@ function10		CO,-g2005-sv		ivltests
 function11		CE,-g2005-sv		ivltests
 function12		normal,-g2005-sv	ivltests gold=function12.gold
 genvar_inc_dec		normal,-g2009		ivltests
+generate_module		CE,-g2005-sv		ivltests
+generate_timeunit	CE,-g2005-sv		ivltests
 ibit_test		normal,-g2005-sv	ivltests
 ibyte_test		normal,-g2005-sv	ivltests
 iint_test		normal,-g2005-sv	ivltests

@@ -570,6 +570,8 @@ generate_case		normal			ivltests
 generate_case2		normal			ivltests
 generate_case3		normal			ivltests
 generate_multi_loop	normal			ivltests gold=generate_multi_loop.gold
+generate_specify	CE,-g2005-sv		ivltests
+generate_specparam	CE,-g2005-sv		ivltests
 genloop			normal			ivltests
 genvar_scopes		normal			ivltests
 hello1			normal			ivltests

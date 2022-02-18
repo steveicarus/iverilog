@@ -780,6 +780,15 @@ PGenerate* pform_parent_generate(void)
       return pform_cur_generate;
 }
 
+bool pform_error_in_generate(const vlltype&loc, const char *type)
+{
+	if (!pform_parent_generate())
+		return false;
+
+	VLerror(loc, "error: %s is not allowed in generate block.", type);
+	return true;
+}
+
 void pform_bind_attributes(map<perm_string,PExpr*>&attributes,
 			   list<named_pexpr_t>*attr, bool keep_attrs)
 {
@@ -1212,7 +1221,8 @@ void pform_set_timeunit(const char*txt, bool initial_decl)
       if (get_time_unit_prec(txt, val, true)) return;
 
       PScopeExtra*scope = dynamic_cast<PScopeExtra*>(lexical_scope);
-      assert(scope);
+      if (!scope)
+	    return;
 
       if (initial_decl) {
             scope->time_unit = val;
@@ -1249,7 +1259,8 @@ void pform_set_timeprec(const char*txt, bool initial_decl)
       if (get_time_unit_prec(txt, val, false)) return;
 
       PScopeExtra*scope = dynamic_cast<PScopeExtra*>(lexical_scope);
-      assert(scope);
+      if (!scope)
+	    return;
 
       if (initial_decl) {
             scope->time_precision = val;
@@ -3295,7 +3306,11 @@ void pform_set_specparam(const struct vlltype&loc, perm_string name,
 {
       assert(! pform_cur_module.empty());
       Module*scope = pform_cur_module.front();
-      assert(scope == lexical_scope);
+      if (scope != lexical_scope) {
+	    delete range;
+	    delete expr;
+	    return;
+      }
 
       assert(expr);
       Module::param_expr_t*parm = new Module::param_expr_t();
