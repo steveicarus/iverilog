@@ -317,11 +317,12 @@ named_fork_fail		CE,-g2009		ivltests
 packeda			normal,-g2009		ivltests
 packeda2		normal,-g2009		ivltests
 parameter_in_generate2	CE,-g2005-sv		ivltests
-parameter_invalid_override CE,-g2005-sv		ivltests gold=parameter_invalid_override.gold
 parameter_no_default	CE,-g2005-sv		ivltests
 parameter_no_default_fail1 CE			ivltests
 parameter_no_default_fail2 CE			ivltests
 parameter_no_default_toplvl normal,-g2005-sv	ivltests
+parameter_override_invalid7 CE,-g2005-sv	ivltests
+parameter_override_invalid8 CE,-g2005-sv	ivltests
 parameter_type2		normal,-g2009		ivltests
 parpkg_test		normal,-g2009		ivltests
 parpkg_test2		normal,-g2009		ivltests

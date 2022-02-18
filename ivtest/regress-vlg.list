@@ -703,6 +703,12 @@ parameter_omit3		CE			ivltests
 parameter_omit_invalid1	CE			ivltests
 parameter_omit_invalid2	CE			ivltests
 parameter_omit_invalid3	CE			ivltests
+parameter_override_invalid1 CE			ivltests
+parameter_override_invalid2 CE			ivltests
+parameter_override_invalid3 CE			ivltests
+parameter_override_invalid4 CE			ivltests
+parameter_override_invalid5 CE			ivltests
+parameter_override_invalid6 CE			ivltests
 patch1268		normal			ivltests
 pca1			normal			ivltests # Procedural Continuous Assignment in a mux
 pic			normal			contrib  pictest gold=pic.gold

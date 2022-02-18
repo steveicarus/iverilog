@@ -116,6 +116,7 @@ class LexicalScope {
 	    SymbolType symbol_type() const;
       };
       std::map<perm_string,param_expr_t*>parameters;
+      bool has_parameter_port_list;
 
 	// Defined types in the scope.
       std::map<perm_string,data_type_t*>typedefs;
