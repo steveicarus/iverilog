@@ -364,6 +364,7 @@ sv_class22		CE,-g2009		ivltests
 sv_class23		CE,-g2009		ivltests
 sv_class24		CE,-g2009		ivltests
 sv_class_extends_scoped	CE,-g2009		ivltests
+sv_class_new_init	CE,-g2009		ivltests
 sv_end_label		CE,-g2009		ivltests  # Also generate
 sv_foreach2		CE,-g2009,-pallowsigned=1	ivltests
 sv_foreach3		CE,-g2009		ivltests

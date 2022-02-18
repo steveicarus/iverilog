@@ -433,6 +433,7 @@ sv_class22		normal,-g2009		ivltests
 sv_class23		normal,-g2009		ivltests
 sv_class24		normal,-g2009		ivltests
 sv_class_extends_scoped	normal,-g2009		ivltests
+sv_class_new_init	normal,-g2009		ivltests
 sv_darray1		normal,-g2009		ivltests
 sv_darray2		normal,-g2009		ivltests
 sv_darray3		normal,-g2009		ivltests
