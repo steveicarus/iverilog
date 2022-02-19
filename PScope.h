@@ -57,7 +57,8 @@ class LexicalScope {
       enum lifetime_t { INHERITED, STATIC, AUTOMATIC };
 
       explicit LexicalScope(LexicalScope*parent)
-        : default_lifetime(INHERITED), generate_counter(0), parent_(parent) { }
+        : default_lifetime(INHERITED), has_parameter_port_list(false),
+	  generate_counter(0), parent_(parent) { }
 	// A virtual destructor is so that dynamic_cast can work.
       virtual ~LexicalScope() { }
 
