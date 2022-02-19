@@ -106,8 +106,8 @@ void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net)
       if (pform_cur_class == 0)
 	    return;
 
-      list<perm_string>*this_name = new list<perm_string>;
-      this_name->push_back(perm_string::literal(THIS_TOKEN));
+      list<pform_port_t>*this_name = new list<pform_port_t>;
+      this_name->push_back(pform_port_t(perm_string::literal(THIS_TOKEN), 0, 0));
       vector<pform_tf_port_t>*this_port = pform_make_task_ports(loc,
 						       NetNet::PINPUT,
 						       pform_cur_class->type,

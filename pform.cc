@@ -2928,16 +2928,15 @@ static vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 						     ivl_variable_type_t vtype,
 						     bool signed_flag,
 						     list<pform_range_t>*range,
-						     list<perm_string>*names,
+						     list<pform_port_t>*ports,
 						     bool isint = false)
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
-      assert(names);
+      assert(ports);
       vector<pform_tf_port_t>*res = new vector<pform_tf_port_t>(0);
-      for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end() ; ++ cur ) {
-
-	    perm_string name = *cur;
+      for (list<pform_port_t>::iterator cur = ports->begin()
+		 ; cur != ports->end() ; ++ cur ) {
+	    perm_string &name = cur->name;
 
 	      /* Look for a preexisting wire. If it exists, set the
 		 port direction. If not, create it. */
@@ -2961,6 +2960,11 @@ static vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 		  curw->set_range(*range, SR_PORT);
 	    }
 
+	    if (cur->udims) {
+		  if (pform_requires_sv(loc, "Task/function port with unpacked dimensions"))
+			curw->set_unpacked_idx(*cur->udims);
+	    }
+
 	    res->push_back(pform_tf_port_t(curw));
       }
 
@@ -2972,15 +2976,16 @@ static vector<pform_tf_port_t>*do_make_task_ports(const struct vlltype&loc,
 					 NetNet::PortType pt,
 					 ivl_variable_type_t var_type,
 					 data_type_t*data_type,
-					 list<perm_string>*names)
+					 list<pform_port_t>*ports)
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
-      assert(names);
+      assert(ports);
       vector<pform_tf_port_t>*res = new vector<pform_tf_port_t>(0);
 
-      for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end() ; ++cur) {
-	    perm_string name = *cur;
+      for (list<pform_port_t>::iterator cur = ports->begin()
+		 ; cur != ports->end() ; ++cur) {
+	    perm_string &name = cur->name;
+
 	    PWire*curw = pform_get_wire_in_scope(name);
 	    if (curw) {
 		  curw->set_port_type(pt);
@@ -2991,6 +2996,11 @@ static vector<pform_tf_port_t>*do_make_task_ports(const struct vlltype&loc,
 		  pform_put_wire_in_scope(name, curw);
 	    }
 
+	    if (cur->udims) {
+		  if (pform_requires_sv(loc, "Task/function port with unpacked dimensions"))
+			curw->set_unpacked_idx(*cur->udims);
+	    }
+
 	    res->push_back(pform_tf_port_t(curw));
       }
       return res;
@@ -2999,7 +3009,7 @@ static vector<pform_tf_port_t>*do_make_task_ports(const struct vlltype&loc,
 vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 				      NetNet::PortType pt,
 				      data_type_t*vtype,
-				      list<perm_string>*names,
+				      list<pform_port_t>*ports,
 				      bool allow_implicit)
 {
       vector<pform_tf_port_t>*ret = NULL;
@@ -3014,7 +3024,7 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 	    list<pform_range_t>*range_tmp = make_range_from_width(atype->type_code);
 	    ret = pform_make_task_ports(loc, pt, IVL_VT_BOOL,
 					 atype->signed_flag,
-					 range_tmp, names);
+					 range_tmp, ports);
       }
 
       if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype)) {
@@ -3025,36 +3035,36 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 	    ret = pform_make_task_ports(loc, pt, base_type,
 					 vec_type->signed_flag,
 					 copy_range(vec_type->pdims.get()),
-					 names, vec_type->integer_flag);
+					 ports, vec_type->integer_flag);
       }
 
       if (/*real_type_t*real_type = */ dynamic_cast<real_type_t*> (vtype)) {
 	    ret = pform_make_task_ports(loc, pt, IVL_VT_REAL,
-					 true, 0, names);
+					 true, 0, ports);
       }
 
       if (dynamic_cast<string_type_t*> (vtype)) {
 	    ret = pform_make_task_ports(loc, pt, IVL_VT_STRING,
-					 false, 0, names);
+					 false, 0, ports);
       }
 
       if (class_type_t*class_type = dynamic_cast<class_type_t*> (vtype)) {
-	    ret = do_make_task_ports(loc, pt, IVL_VT_CLASS, class_type, names);
+	    ret = do_make_task_ports(loc, pt, IVL_VT_CLASS, class_type, ports);
       }
 
       if (! ret) {
-	    ret = do_make_task_ports(loc, pt, IVL_VT_NO_TYPE, vtype, names);
+	    ret = do_make_task_ports(loc, pt, IVL_VT_NO_TYPE, vtype, ports);
       }
 
       if (unpacked_dims) {
-	    for (list<perm_string>::iterator cur = names->begin()
-                    ; cur != names->end() ; ++ cur ) {
-		PWire*wire = pform_get_wire_in_scope(*cur);
+	    for (list<pform_port_t>::iterator cur = ports->begin()
+                    ; cur != ports->end() ; ++ cur ) {
+		PWire*wire = pform_get_wire_in_scope(cur->name);
 		wire->set_unpacked_idx(*unpacked_dims);
 	    }
       }
 
-      delete names;
+      delete ports;
       return ret;
 }
 

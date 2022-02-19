@@ -2346,7 +2346,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 
 
 tf_port_declaration /* IEEE1800-2005: A.2.7 */
-  : port_direction data_type_or_implicit list_of_identifiers ';'
+  : port_direction data_type_or_implicit list_of_port_identifiers ';'
       { $$ = pform_make_task_ports(@1, $1, $2, $3, true);
       }
   ;
@@ -2367,8 +2367,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	NetNet::PortType use_port_type = $1;
         if ((use_port_type == NetNet::PIMPLICIT) && (gn_system_verilog() || ($2 == 0)))
               use_port_type = port_declaration_context.port_type;
-	perm_string name = lex_strings.make($3);
-	list<perm_string>* ilist = list_from_identifier($3);
+	list<pform_port_t>* port_list = make_port_list($3, $4, 0);
 
 	if (use_port_type == NetNet::PIMPLICIT) {
 	      yyerror(@1, "error: missing task/function port direction.");
@@ -2383,7 +2382,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	      }
 	      tmp = pform_make_task_ports(@3, use_port_type,
 					  port_declaration_context.data_type,
-					  ilist);
+					  port_list);
 
 	} else {
 		// Otherwise, the decorations for this identifier
@@ -2395,12 +2394,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 		    FILE_NAME($2, @3);
 	      }
 	      port_declaration_context.data_type = $2;
-	      tmp = pform_make_task_ports(@3, use_port_type, $2, ilist);
-	}
-	if ($4 != 0) {
-	      if (pform_requires_sv(@4, "Task/function port with unpacked dimensions")) {
-		    pform_set_reg_idx(name, $4);
-	      }
+	      tmp = pform_make_task_ports(@3, use_port_type, $2, port_list);
 	}
 
 	$$ = tmp;

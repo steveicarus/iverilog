@@ -495,7 +495,7 @@ extern void pform_make_pgassign_list(std::list<PExpr*>*alist,
 extern std::vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 					     NetNet::PortType pt,
 					     data_type_t*vtype,
-					     std::list<perm_string>*names,
+					     std::list<pform_port_t>*ports,
 					     bool allow_implicit = false);
 
 /*
