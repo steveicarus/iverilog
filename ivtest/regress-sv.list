@@ -711,6 +711,15 @@ sv_timeunit_prec_fail2	CE,-g2009,-u,\
   ./ivltests/sv_timeunit_prec_fail2a.v,\
   ./ivltests/sv_timeunit_prec_fail2b.v,\
   ./ivltests/sv_timeunit_prec_fail2c.v,		ivltests gold=sv_timeunit_prec_fail2.gold
+sv_type_param1		normal,-g2005-sv	ivltests
+sv_type_param2		normal,-g2005-sv	ivltests
+sv_type_param3		normal,-g2005-sv	ivltests
+sv_type_param4		normal,-g2005-sv	ivltests
+sv_type_param5		normal,-g2005-sv	ivltests
+sv_type_param6		normal,-g2005-sv	ivltests
+sv_type_param7		normal,-g2005-sv	ivltests
+sv_type_param_fail1	CE,-g2005-sv		ivltests
+sv_type_param_fail2	CE,-g2005-sv		ivltests
 sv_typedef_array_base1	normal,-g2009		ivltests
 sv_typedef_array_base2	normal,-g2009		ivltests
 sv_typedef_array_base3	normal,-g2009		ivltests
