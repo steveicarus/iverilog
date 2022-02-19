@@ -5091,8 +5091,7 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 
 	/* Create a parameter reference for the variable select. */
       NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_ex->value());
-      NetScope::param_ref_t pref = found_in->find_parameter(name);
-      ptmp->set_line((*pref).second);
+      ptmp->set_line(found_in->get_parameter_line_info(name));
 
       NetExpr*tmp = new NetESelect(ptmp, sel, 1);
       tmp->set_line(*this);
@@ -5298,8 +5297,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 
 	/* Create a parameter reference for the variable select. */
       NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_ex->value());
-      NetScope::param_ref_t pref = found_in->find_parameter(name);
-      ptmp->set_line((*pref).second);
+      ptmp->set_line(found_in->get_parameter_line_info(name));
 
       NetExpr*tmp = new NetESelect(ptmp, base, wid, IVL_SEL_IDX_UP);
       tmp->set_line(*this);
@@ -5380,8 +5378,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 
 	/* Create a parameter reference for the variable select. */
       NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_ex->value());
-      NetScope::param_ref_t pref = found_in->find_parameter(name);
-      ptmp->set_line((*pref).second);
+      ptmp->set_line(found_in->get_parameter_line_info(name));
 
       NetExpr*tmp = new NetESelect(ptmp, base, wid, IVL_SEL_IDX_DOWN);
       tmp->set_line(*this);
@@ -5500,8 +5497,7 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	      /* The numeric parameter value needs to have the file and line
 	       * information for the actual parameter not the expression. */
 	    assert(tmp);
-	    NetScope::param_ref_t pref = found_in->find_parameter(name);
-	    tmp->set_line((*pref).second);
+	    tmp->set_line(found_in->get_parameter_line_info(name));
       }
 
       return tmp;

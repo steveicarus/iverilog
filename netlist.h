@@ -1239,7 +1239,7 @@ class NetScope : public Definitions, public Attrib {
 
       typedef std::map<perm_string,param_expr_t>::iterator param_ref_t;
 
-      param_ref_t find_parameter(perm_string name);
+      LineInfo get_parameter_line_info(perm_string name) const;
 
 	/* Module instance arrays are collected here for access during
 	   the multiple elaboration passes. */

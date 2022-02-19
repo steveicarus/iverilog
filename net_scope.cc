@@ -460,18 +460,18 @@ const NetExpr* NetScope::get_parameter(Design*des, perm_string key,
       return tmp;
 }
 
-NetScope::param_ref_t NetScope::find_parameter(perm_string key)
+LineInfo NetScope::get_parameter_line_info(perm_string key) const
 {
-      map<perm_string,param_expr_t>::iterator idx;
+      map<perm_string,param_expr_t>::const_iterator idx;
 
       idx = parameters.find(key);
-      if (idx != parameters.end()) return idx;
+      if (idx != parameters.end()) return idx->second;
 
 	// To get here the parameter must already exist, so we should
 	// never get here.
       assert(0);
 	// But return something to avoid a compiler warning.
-      return idx;
+      return LineInfo();
 }
 
 void NetScope::print_type(ostream&stream) const
