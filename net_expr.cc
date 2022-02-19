@@ -304,7 +304,7 @@ ivl_variable_type_t NetECReal::expr_type() const
       return IVL_VT_REAL;
 }
 
-NetECRealParam::NetECRealParam(NetScope*s, perm_string n, const verireal&v)
+NetECRealParam::NetECRealParam(const NetScope*s, perm_string n, const verireal&v)
 : NetECReal(v), scope_(s), name_(n)
 {
 }
