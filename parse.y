@@ -622,8 +622,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <named_pexprs> enum_name_list enum_name
 %type <enum_type> enum_data_type enum_base_type
 
-%type <tf_ports> function_item function_item_list function_item_list_opt
-%type <tf_ports> task_item task_item_list task_item_list_opt
+%type <tf_ports> tf_item_declaration tf_item_list tf_item_list_opt
 %type <tf_ports> tf_port_declaration tf_port_item tf_port_item_list tf_port_list tf_port_list_opt
 
 %type <named_pexpr> modport_simple_port port_name parameter_value_byname
@@ -896,7 +895,7 @@ class_item /* IEEE1800-2005: A.1.8 */
 	current_function = pform_push_constructor_scope(@3);
       }
     '(' tf_port_list_opt ')' ';'
-    function_item_list_opt
+    tf_item_list_opt
     statement_or_null_list_opt
     K_endfunction endnew_opt
       { current_function->set_ports($6);
@@ -1466,7 +1465,8 @@ function_declaration /* IEEE1800-2005: A.2.6 */
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
-    function_item_list_opt statement_or_null_list_opt
+    tf_item_list_opt
+    statement_or_null_list_opt
     K_endfunction
       { current_function->set_ports($7);
 	current_function->set_return($3);
@@ -2275,7 +2275,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
-    task_item_list_opt
+    tf_item_list_opt
     statement_or_null_list_opt
     K_endtask
       { current_task->set_ports($6);
@@ -4119,22 +4119,19 @@ expr_primary
       }
   ;
 
-  /* A function_item_list borrows the task_port_item run to match
+  /* A tf_item_list is shared between functions and tasks to match
      declarations of ports. We check later to make sure there are no
-     output or inout ports actually used.
-
-     The function_item is the same as tf_item_declaration. */
-function_item_list_opt
-  : function_item_list { $$ = $1; }
-  |                    { $$ = 0; }
+     output or inout ports actually used for functions. */
+tf_item_list_opt /* IEEE1800-2017: A.2.7 */
+  : tf_item_list { $$ = $1; }
+  |              { $$ = 0; }
   ;
 
-function_item_list
-  : function_item
+tf_item_list /* IEEE1800-2017: A.2.7 */
+  : tf_item_declaration
       { $$ = $1; }
-  | function_item_list function_item
-      { /* */
-	if ($1 && $2) {
+  | tf_item_list tf_item_declaration
+      { if ($1 && $2) {
 	      std::vector<pform_tf_port_t>*tmp = $1;
 	      size_t s1 = tmp->size();
 	      tmp->resize(s1 + $2->size());
@@ -4150,11 +4147,9 @@ function_item_list
       }
  ;
 
-function_item
-  : tf_port_declaration
-      { $$ = $1; }
-  | block_item_decl
-      { $$ = 0; }
+tf_item_declaration /* IEEE1800-2017: A.2.7 */
+  : tf_port_declaration { $$ = $1; }
+  | block_item_decl     { $$ = 0; }
   ;
 
   /* A gate_instance is a module instantiation or a built in part
@@ -6874,34 +6869,6 @@ analog_statement
   : branch_probe_expression K_CONTRIBUTE expression ';'
       { $$ = pform_contribution_statement(@2, $1, $3); }
   ;
-
-  /* Task items are, other than the statement, task port items and
-     other block items. */
-task_item
-  : block_item_decl  { $$ = new std::vector<pform_tf_port_t>(0); }
-  | tf_port_declaration   { $$ = $1; }
-  ;
-
-task_item_list
-  : task_item_list task_item
-      { std::vector<pform_tf_port_t>*tmp = $1;
-	size_t s1 = tmp->size();
-	tmp->resize(s1 + $2->size());
-	for (size_t idx = 0 ; idx < $2->size() ; idx += 1)
-	      tmp->at(s1 + idx) = $2->at(idx);
-	delete $2;
-	$$ = tmp;
-      }
-  | task_item
-      { $$ = $1; }
-  ;
-
-task_item_list_opt
-	: task_item_list
-		{ $$ = $1; }
-	|
-		{ $$ = 0; }
-	;
 
 tf_port_list_opt
   : tf_port_list { $$ = $1; }
