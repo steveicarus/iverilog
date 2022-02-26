@@ -891,14 +891,14 @@ class_item /* IEEE1800-2005: A.1.8 */
       { assert(current_function==0);
 	current_function = pform_push_constructor_scope(@3);
       }
-    '(' tf_port_list_opt ')' ';'
+    tf_port_list_parens_opt ';'
     block_item_decls_opt
     statement_or_null_list_opt
     K_endfunction endnew_opt
-      { current_function->set_ports($6);
+      { current_function->set_ports($5);
 	pform_set_constructor_return(current_function);
 	pform_set_this_class(@3, current_function);
-	current_function_set_statement(@3, $10);
+	current_function_set_statement(@3, $8);
 	pform_pop_scope();
 	current_function = 0;
       }
@@ -6656,8 +6656,8 @@ statement_item /* This is roughly statement_item in the LRM */
        beginning of a constructor, but let the elaborator figure that
        out. */
 
-  | implicit_class_handle '.' K_new '(' expression_list_with_nuls ')' ';'
-      { PChainConstructor*tmp = new PChainConstructor(*$5);
+  | implicit_class_handle '.' K_new argument_list_parens_opt ';'
+      { PChainConstructor*tmp = new PChainConstructor(*$4);
 	FILE_NAME(tmp, @3);
 	if (peek_head_name(*$1) == THIS_TOKEN) {
 	  yyerror(@1, "error: this.new is invalid syntax. Did you mean super.new?");
