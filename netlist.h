@@ -705,10 +705,6 @@ class NetNet  : public NetObj, public PortType {
 	   signed. Otherwise, it is unsigned. */
       bool get_signed() const;
 
-	/* Used to maintain original type of net since integers are
-	   implemented as 'reg signed [31:0]' in Icarus */
-      bool get_isint() const;
-
       bool get_scalar() const;
 
       inline const ivl_type_s* net_type(void) const { return net_type_; }
