@@ -39,6 +39,24 @@ FILE*vpi_trace = 0;
 static s_vpi_vlog_info  vpi_vlog_info;
 static s_vpi_error_info vpip_last_error = { 0, 0, 0, 0, 0, 0, 0 };
 
+const char* direction_as_string(int dir)
+{
+      switch (dir) {
+	  case vpiInput:
+	    return "input";
+	  case vpiOutput:
+	    return "output";
+	  case vpiInout:
+	    return "inout";
+	  case vpiMixedIO:
+	    return "mixed io";
+	  case vpiNoDirection:
+	    return "no direction";
+	  default:
+	    return "INVALID-DIRECTION";
+      }
+}
+
 __vpiHandle::~__vpiHandle()
 { }
 
@@ -307,7 +325,7 @@ static const char* vpi_property_str(PLI_INT32 code)
       return buf;
 }
 
-static const char* vpi_type_values(PLI_INT32 code)
+const char* vpi_type_as_string(PLI_INT32 code)
 {
       static char buf[32];
       switch (code) {
@@ -400,7 +418,7 @@ PLI_INT32 vpi_get(int property, vpiHandle ref)
       if (property == vpiType) {
 	    if (vpi_trace) {
 		  fprintf(vpi_trace, "vpi_get(vpiType, %p) --> %s\n",
-			  ref, vpi_type_values(ref->get_type_code()));
+			  ref, vpi_type_as_string(ref->get_type_code()));
 	    }
 
 	    if (ref->get_type_code() == vpiMemory && is_net_array(ref))
@@ -444,7 +462,7 @@ char* vpi_get_str(PLI_INT32 property, vpiHandle ref)
       if (property == vpiType) {
 	    if (vpi_trace) {
 		  fprintf(vpi_trace, "vpi_get(vpiType, %p) --> %s\n",
-			  ref, vpi_type_values(ref->get_type_code()));
+			  ref, vpi_type_as_string(ref->get_type_code()));
 	    }
 
             PLI_INT32 type;
@@ -452,7 +470,7 @@ char* vpi_get_str(PLI_INT32 property, vpiHandle ref)
 		  type = vpiNetArray;
 	    else
 		  type = ref->get_type_code();
-	    return (char *)vpi_type_values(type);
+	    return (char *)vpi_type_as_string(type);
       }
 
       char*res = ref->vpi_get_str(property);

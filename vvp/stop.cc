@@ -232,6 +232,11 @@ static void cmd_list(unsigned, char*[])
 	    struct __vpiSignal*sig;
 
 	    switch (table[idx]->get_type_code()) {
+		case vpiPackage:
+		  scope = dynamic_cast<__vpiScope*>(table[idx]);
+		  printf("package : %s\n", scope->scope_name());
+		  break;
+
 		case vpiModule:
 		  scope = dynamic_cast<__vpiScope*>(table[idx]);
 		  printf("module  : %s\n", scope->scope_name());
@@ -292,9 +297,15 @@ static void cmd_list(unsigned, char*[])
 			       sig->msb.get_value(), sig->lsb.get_value());
 		  break;
 
+		case vpiPort:
+		  printf("port    : %s -- %s\n",
+			 vpi_get_str(vpiName, table[idx]),
+			 direction_as_string(vpi_get(vpiDirection, table[idx])));
+		  break;
+
 		default:
-		  printf("%8d: <vpi handle>\n",
-			 table[idx]->get_type_code());
+		  printf("%8s: <vpi handle>\n",
+			 vpi_type_as_string(table[idx]->get_type_code()));
 		  break;
 	    }
 
@@ -324,8 +335,6 @@ static void cmd_push(unsigned argc, char* argv[])
 	    __vpiHandle**table;
 	    unsigned ntable;
 
-	    __vpiScope*child = 0;
-
 	    if (stop_current_scope) {
 		  table = &stop_current_scope->intern[0];
 		  ntable = stop_current_scope->intern.size();
@@ -333,18 +342,18 @@ static void cmd_push(unsigned argc, char* argv[])
 		  vpip_make_root_iterator(table, ntable);
 	    }
 
-	    child = 0;
-	    unsigned tmp;
-	    for (tmp = 0 ;  tmp < ntable ;  tmp += 1) {
-		  if (table[tmp]->get_type_code() != vpiModule)
+	    __vpiScope*child = 0;
+	    for (unsigned tmp = 0 ;  tmp < ntable ;  tmp += 1) {
+		  // Try to convert this item to a scope. If this is not a
+		  // scope, then continue.
+		  __vpiScope*scope = dynamic_cast<__vpiScope*>(table[tmp]);
+		  if (scope == 0)
 			continue;
 
-		  __vpiScope*cp = dynamic_cast<__vpiScope*>(table[tmp]);
-
-		    /* This is a scope, and the name matches, then
-		       report that I found the child. */
-		  if (strcmp(cp->scope_name(), argv[idx]) == 0) {
-			child = cp;
+		  // This is a scope, and the name matches, then
+		  // report that I found the child.
+		  if (strcmp(scope->scope_name(), argv[idx]) == 0) {
+			child = scope;
 			break;
 		  }
 	    }
@@ -403,6 +412,9 @@ static void cmd_where(unsigned, char*[])
 	    switch (cur->get_type_code()) {
 		case vpiModule:
 		  printf("module %s\n", cur->scope_name());
+		  break;
+		case vpiGenScope:
+		  printf("generate %s\n", cur->scope_name());
 		  break;
 		default:
 		  printf("scope (%d) %s;\n", cur->get_type_code(), cur->scope_name());
@@ -464,7 +476,8 @@ static void cmd_help(unsigned, char*[])
 
       printf("\nIf the command name starts with a '$' character, it\n"
 	     "is taken to be the name of a system task, and a call is\n"
-	     "built up and executed.\n");
+	     "built up and executed. For example, \"$display foo\" will\n"
+	     "call the function as $display(foo).\n");
 }
 
 
