@@ -639,7 +639,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <let_port_lst> let_port_list_opt let_port_list
 %type <let_port_itm> let_port_item
 
-%type <pform_name> hierarchy_identifier implicit_class_handle
+%type <pform_name> hierarchy_identifier implicit_class_handle class_hierarchy_identifier
 %type <expr>  assignment_pattern expression expr_mintypmax
 %type <expr>  expr_primary_or_typename expr_primary
 %type <expr>  class_new dynamic_array_new let_default_opt
@@ -1534,6 +1534,15 @@ import_export /* IEEE1800-2012: A.2.9 */
 implicit_class_handle /* IEEE1800-2005: A.8.4 */
   : K_this  { $$ = pform_create_this(); }
   | K_super { $$ = pform_create_super(); }
+  ;
+
+/* `this` or `super` followed by an identifier */
+class_hierarchy_identifier
+  : implicit_class_handle '.' hierarchy_identifier
+      { $1->splice($1->end(), *$3);
+	delete $3;
+	$$ = $1;
+      }
   ;
 
   /* SystemVerilog adds support for the increment/decrement
@@ -3759,17 +3768,11 @@ expr_primary
 	delete $2;
 	$$ = tmp;
       }
-  | implicit_class_handle '.' hierarchy_identifier '(' expression_list_with_nuls ')'
-      { pform_name_t*t_name = $1;
-	while (! $3->empty()) {
-	      t_name->push_back($3->front());
-	      $3->pop_front();
-	}
-	list<PExpr*>*expr_list = $5;
+  | class_hierarchy_identifier '(' expression_list_with_nuls ')'
+      { list<PExpr*>*expr_list = $3;
 	strip_tail_items(expr_list);
-	PECallFunction*tmp = pform_make_call_function(@1, *t_name, *expr_list);
+	PECallFunction*tmp = pform_make_call_function(@1, *$1, *expr_list);
 	delete $1;
-	delete $3;
 	$$ = tmp;
       }
   | SYSTEM_IDENTIFIER '(' expression_list_proper ')'
@@ -3803,16 +3806,10 @@ expr_primary
 	$$ = tmp;
       }
 
-  | implicit_class_handle '.' hierarchy_identifier
-      { pform_name_t*t_name = $1;
-	while (! $3->empty()) {
-	      t_name->push_back($3->front());
-	      $3->pop_front();
-	}
-	PEIdent*tmp = new PEIdent(*t_name);
-	FILE_NAME(tmp,@1);
+  | class_hierarchy_identifier
+      { PEIdent*tmp = new PEIdent(*$1);
+	FILE_NAME(tmp, @1);
 	delete $1;
-	delete $3;
 	$$ = tmp;
       }
 
@@ -4610,17 +4607,11 @@ lpvalue
 	delete $1;
       }
 
-  | implicit_class_handle '.' hierarchy_identifier
-      { pform_name_t*t_name = $1;
-	while (!$3->empty()) {
-	      t_name->push_back($3->front());
-	      $3->pop_front();
-	}
-	PEIdent*tmp = new PEIdent(*t_name);
+  | class_hierarchy_identifier
+      { PEIdent*tmp = new PEIdent(*$1);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete $1;
-	delete $3;
       }
 
   | '{' expression_list_proper '}'
@@ -6650,17 +6641,11 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
 
-  | implicit_class_handle '.' hierarchy_identifier '(' expression_list_with_nuls ')' ';'
-      { pform_name_t*t_name = $1;
-	while (! $3->empty()) {
-	      t_name->push_back($3->front());
-	      $3->pop_front();
-	}
-	PCallTask*tmp = new PCallTask(*t_name, *$5);
+  | class_hierarchy_identifier '(' expression_list_with_nuls ')' ';'
+      { PCallTask*tmp = new PCallTask(*$1, *$3);
 	FILE_NAME(tmp, @1);
 	delete $1;
 	delete $3;
-	delete $5;
 	$$ = tmp;
       }
 
