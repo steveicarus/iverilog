@@ -892,7 +892,7 @@ class_item /* IEEE1800-2005: A.1.8 */
 	current_function = pform_push_constructor_scope(@3);
       }
     '(' tf_port_list_opt ')' ';'
-    tf_item_list_opt
+    block_item_decls_opt
     statement_or_null_list_opt
     K_endfunction endnew_opt
       { current_function->set_ports($6);
