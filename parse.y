@@ -621,7 +621,8 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <data_type> enum_data_type enum_base_type
 
 %type <tf_ports> tf_item_declaration tf_item_list tf_item_list_opt
-%type <tf_ports> tf_port_declaration tf_port_item tf_port_item_list tf_port_list tf_port_list_opt
+%type <tf_ports> tf_port_declaration tf_port_item tf_port_item_list
+%type <tf_ports> tf_port_list tf_port_list_opt tf_port_list_parens_opt
 
 %type <named_pexpr> modport_simple_port port_name parameter_value_byname
 %type <named_pexprs> port_name_list parameter_value_byname_list
@@ -928,25 +929,14 @@ class_item /* IEEE1800-2005: A.1.8 */
 
     /* External class method definitions... */
 
-  | K_extern method_qualifier_opt K_function K_new ';'
-      { yyerror(@1, "sorry: External constructors are not yet supported."); }
-  | K_extern method_qualifier_opt K_function K_new '(' tf_port_list_opt ')' ';'
+  | K_extern method_qualifier_opt K_function K_new tf_port_list_parens_opt ';'
       { yyerror(@1, "sorry: External constructors are not yet supported."); }
   | K_extern method_qualifier_opt K_function data_type_or_implicit_or_void
-    IDENTIFIER ';'
+    IDENTIFIER tf_port_list_parens_opt ';'
       { yyerror(@1, "sorry: External methods are not yet supported.");
 	delete[] $5;
       }
-  | K_extern method_qualifier_opt K_function data_type_or_implicit_or_void
-    IDENTIFIER '(' tf_port_list_opt ')' ';'
-      { yyerror(@1, "sorry: External methods are not yet supported.");
-	delete[] $5;
-      }
-  | K_extern method_qualifier_opt K_task IDENTIFIER ';'
-      { yyerror(@1, "sorry: External methods are not yet supported.");
-	delete[] $4;
-      }
-  | K_extern method_qualifier_opt K_task IDENTIFIER '(' tf_port_list_opt ')' ';'
+  | K_extern method_qualifier_opt K_task IDENTIFIER tf_port_list_parens_opt ';'
       { yyerror(@1, "sorry: External methods are not yet supported.");
 	delete[] $4;
       }
@@ -1937,10 +1927,8 @@ modport_simple_port
   ;
 
 modport_tf_port
-  : K_task IDENTIFIER
-  | K_task IDENTIFIER '(' tf_port_list_opt ')'
-  | K_function data_type_or_implicit_or_void IDENTIFIER
-  | K_function data_type_or_implicit_or_void IDENTIFIER '(' tf_port_list_opt ')'
+  : K_task IDENTIFIER tf_port_list_parens_opt
+  | K_function data_type_or_implicit_or_void IDENTIFIER tf_port_list_parens_opt
   ;
 
 non_integer_type /* IEEE1800-2005: A.2.2.1 */
@@ -6816,6 +6804,13 @@ tf_port_list_opt
   : tf_port_list { $$ = $1; }
   |                     { $$ = 0; }
   ;
+
+  /* A task or function prototype can be declared with the task/function name
+   * followed by a port list in parenthesis or or just the task/function name by
+   * itself. When a port list is used it might be empty. */
+tf_port_list_parens_opt
+  : '(' tf_port_list_opt ')' { $$ = $2; }
+  | { $$ = 0; }
 
   /* Note that the lexor notices the "table" keyword and starts
      the UDPTABLE state. It needs to happen there so that all the
