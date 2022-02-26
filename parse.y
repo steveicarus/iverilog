@@ -649,6 +649,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt delay_value_list
 %type <exprs> expression_list_with_nuls expression_list_proper
+%type <exprs> argument_list_parens_opt
 %type <exprs> cont_assign cont_assign_list
 
 %type <decl_assignment> variable_decl_assignment
@@ -862,13 +863,9 @@ class_declaration_endlabel_opt
      a data_type. */
 
 class_declaration_extends_opt /* IEEE1800-2005: A.1.2 */
-  : K_extends ps_type_identifier
+  : K_extends ps_type_identifier argument_list_parens_opt
       { $$.type  = $2;
-	$$.exprs = 0;
-      }
-  | K_extends ps_type_identifier '(' expression_list_with_nuls ')'
-      { $$.type  = $2;
-	$$.exprs = $4;
+	$$.exprs = $3;
       }
   |
       { $$.type = 0; $$.exprs = 0; }
@@ -992,12 +989,12 @@ class_item_qualifier_opt
   ;
 
 class_new /* IEEE1800-2005 A.2.4 */
-  : K_new '(' expression_list_with_nuls ')'
-      { std::list<PExpr*>*expr_list = $3;
+  : K_new argument_list_parens_opt
+      { std::list<PExpr*>*expr_list = $2;
 	strip_tail_items(expr_list);
 	PENewClass*tmp = new PENewClass(*expr_list);
 	FILE_NAME(tmp, @1);
-	delete $3;
+	delete $2;
 	$$ = tmp;
       }
   | K_new hierarchy_identifier
@@ -1006,11 +1003,6 @@ class_new /* IEEE1800-2005 A.2.4 */
 	PENewCopy*tmp = new PENewCopy(tmpi);
 	FILE_NAME(tmp, @1);
 	delete $2;
-	$$ = tmp;
-      }
-  | K_new
-      { PENewClass*tmp = new PENewClass;
-	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   ;
@@ -3625,6 +3617,13 @@ expression_list_with_nuls
       }
 	;
 
+  /* A task or function can be invoked with the task/function name followed by
+   * an argument list in parenthesis or with just the task/function name by
+   * itself. When an argument list is used it might be empty. */
+argument_list_parens_opt
+  : '(' expression_list_with_nuls ')' { $$ = $2; }
+  | { $$ = new std::list<PExpr*>; }
+
 expression_list_proper
   : expression_list_proper ',' expression
       { std::list<PExpr*>*tmp = $1;
@@ -5181,15 +5180,10 @@ module_item
       { pform_endgenerate(true); }
 
   /* Elaboration system tasks. */
-  | SYSTEM_IDENTIFIER '(' expression_list_with_nuls ')' ';'
-      { pform_make_elab_task(@1, lex_strings.make($1), *$3);
+  | SYSTEM_IDENTIFIER argument_list_parens_opt ';'
+      { pform_make_elab_task(@1, lex_strings.make($1), *$2);
 	delete[]$1;
-	delete $3;
-      }
-  | SYSTEM_IDENTIFIER ';'
-      { std::list<PExpr*>pt;
-	pform_make_elab_task(@1, lex_strings.make($1), pt);
-	delete[]$1;
+	delete $2;
       }
 
   | modport_declaration
@@ -6626,25 +6620,18 @@ statement_item /* This is roughly statement_item in the LRM */
 		  FILE_NAME(tmp,@1);
 		  $$ = tmp;
 		}
-	| SYSTEM_IDENTIFIER '(' expression_list_with_nuls ')' ';'
-                { PCallTask*tmp = new PCallTask(lex_strings.make($1), *$3);
+	| SYSTEM_IDENTIFIER argument_list_parens_opt ';'
+		{ PCallTask*tmp = new PCallTask(lex_strings.make($1), *$2);
 		  FILE_NAME(tmp,@1);
 		  delete[]$1;
-		  delete $3;
-		  $$ = tmp;
-		}
-	| SYSTEM_IDENTIFIER ';'
-		{ std::list<PExpr*>pt;
-		  PCallTask*tmp = new PCallTask(lex_strings.make($1), pt);
-		  FILE_NAME(tmp,@1);
-		  delete[]$1;
+		  delete $2;
 		  $$ = tmp;
 		}
 
-  | hierarchy_identifier '(' expression_list_with_nuls ')' ';'
-      { PCallTask*tmp = pform_make_call_task(@1, *$1, *$3);
+  | hierarchy_identifier argument_list_parens_opt ';'
+      { PCallTask*tmp = pform_make_call_task(@1, *$1, *$2);
 	delete $1;
-	delete $3;
+	delete $2;
 	$$ = tmp;
       }
 
@@ -6674,13 +6661,6 @@ statement_item /* This is roughly statement_item in the LRM */
 	delete $1;
 	delete $3;
 	delete $5;
-	$$ = tmp;
-      }
-
-  | hierarchy_identifier ';'
-      { std::list<PExpr*>pt;
-	PCallTask*tmp = pform_make_call_task(@1, *$1, pt);
-	delete $1;
 	$$ = tmp;
       }
 
