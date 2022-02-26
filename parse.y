@@ -590,7 +590,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <number>  number pos_neg_number
 %type <flag>    signing unsigned_signed_opt signed_unsigned_opt
 %type <flag>    import_export
-%type <flag>    K_genvar_opt K_reg_opt K_static_opt K_virtual_opt
+%type <flag>    K_genvar_opt K_static_opt K_virtual_opt
 %type <flag>    udp_reg_opt edge_operator
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
@@ -2106,13 +2106,6 @@ random_qualifier /* IEEE1800-2005 A.1.8 */
   | K_randc { $$ = property_qualifier_t::make_randc(); }
   ;
 
-  /* real and realtime are exactly the same so save some code
-   * with a common matching rule. */
-real_or_realtime
-	: K_real
-	| K_realtime
-	;
-
 signing /* IEEE1800-2005: A.2.2.1 */
   : K_signed   { $$ = true; }
   | K_unsigned { $$ = false; }
@@ -2355,50 +2348,9 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 
 
 tf_port_declaration /* IEEE1800-2005: A.2.7 */
-  : port_direction K_reg_opt unsigned_signed_opt dimensions_opt list_of_identifiers ';'
-      { std::vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1,
-						$2 ? IVL_VT_LOGIC :
-						     IVL_VT_NO_TYPE,
-						$3, $4, $5);
-	$$ = tmp;
+  : port_direction data_type_or_implicit list_of_port_identifiers ';'
+      { $$ = pform_make_task_ports(@1, $1, $2, $3, true);
       }
-
-  /* When the port is an integer, infer a signed vector of the integer
-     shape. Generate a range ([31:0]) to make it work. */
-
-  | port_direction K_integer list_of_identifiers ';'
-      { std::list<pform_range_t>*range_stub = make_range_from_width(integer_width);
-	vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, true,
-						    range_stub, $3, true);
-	$$ = tmp;
-      }
-
-  /* Ports can be time with a width of [63:0] (unsigned). */
-
-  | port_direction K_time list_of_identifiers ';'
-      { std::list<pform_range_t>*range_stub = make_range_from_width(64);
-	vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, false,
-						   range_stub, $3);
-	$$ = tmp;
-      }
-
-  /* Ports can be real or realtime. */
-
-  | port_direction real_or_realtime list_of_identifiers ';'
-      { std::vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1, IVL_VT_REAL, true,
-						   0, $3);
-	$$ = tmp;
-      }
-
-
-  /* Ports can be string. */
-
-  | port_direction K_string list_of_identifiers ';'
-      { std::vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1, IVL_VT_STRING, true,
-						   0, $3);
-	$$ = tmp;
-      }
-
   ;
 
 
@@ -2417,8 +2369,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	NetNet::PortType use_port_type = $1;
         if ((use_port_type == NetNet::PIMPLICIT) && (gn_system_verilog() || ($2 == 0)))
               use_port_type = port_declaration_context.port_type;
-	perm_string name = lex_strings.make($3);
-	list<perm_string>* ilist = list_from_identifier($3);
+	list<pform_port_t>* port_list = make_port_list($3, $4, 0);
 
 	if (use_port_type == NetNet::PIMPLICIT) {
 	      yyerror(@1, "error: missing task/function port direction.");
@@ -2433,7 +2384,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	      }
 	      tmp = pform_make_task_ports(@3, use_port_type,
 					  port_declaration_context.data_type,
-					  ilist);
+					  port_list);
 
 	} else {
 		// Otherwise, the decorations for this identifier
@@ -2445,12 +2396,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 		    FILE_NAME($2, @3);
 	      }
 	      port_declaration_context.data_type = $2;
-	      tmp = pform_make_task_ports(@3, use_port_type, $2, ilist);
-	}
-	if ($4 != 0) {
-	      if (pform_requires_sv(@4, "Task/function port with unpacked dimensions")) {
-		    pform_set_reg_idx(name, $4);
-	      }
+	      tmp = pform_make_task_ports(@3, use_port_type, $2, port_list);
 	}
 
 	$$ = tmp;
@@ -7249,6 +7195,5 @@ unique_priority
      collect those rules here. */
 
 K_genvar_opt   : K_genvar    { $$ = true; } | { $$ = false; } ;
-K_reg_opt      : K_reg       { $$ = true; } | { $$ = false; } ;
 K_static_opt   : K_static    { $$ = true; } | { $$ = false; } ;
 K_virtual_opt  : K_virtual   { $$ = true; } | { $$ = false; } ;

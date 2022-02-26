@@ -95,6 +95,8 @@ recursive_task		CE			ivltests
 task_init_var1		CE,-pallowsigned=1	ivltests
 task_init_var2		CE,-pallowsigned=1	ivltests
 task_init_var3		CE,-pallowsigned=1	ivltests
+task_port_types1	CE,-pallowsigned=1	ivltests
+task_port_types2	CE,-pallowsigned=1	ivltests
 test_work14		CE			ivltests
 vhdl_elab_range		CE			ivltests
 vhdl_notfunc_stdlogic	CE			ivltests
