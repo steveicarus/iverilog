@@ -6641,11 +6641,11 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
 
-  | class_hierarchy_identifier '(' expression_list_with_nuls ')' ';'
-      { PCallTask*tmp = new PCallTask(*$1, *$3);
+  | class_hierarchy_identifier argument_list_parens_opt ';'
+      { PCallTask*tmp = new PCallTask(*$1, *$2);
 	FILE_NAME(tmp, @1);
 	delete $1;
-	delete $3;
+	delete $2;
 	$$ = tmp;
       }
 
