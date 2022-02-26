@@ -188,3 +188,9 @@ bool netclass_t::test_scope_is_method(const NetScope*scope) const
       else
 	    return true;
 }
+
+const NetExpr* netclass_t::get_parameter(Design *des, perm_string name,
+					 ivl_type_t &par_type) const
+{
+      return class_scope_->get_parameter(des, name, par_type);
+}

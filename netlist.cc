@@ -2391,7 +2391,7 @@ void NetEConst::trim()
       expr_width(value_.len());
 }
 
-NetEConstParam::NetEConstParam(NetScope*s, perm_string n, const verinum&v)
+NetEConstParam::NetEConstParam(const NetScope*s, perm_string n, const verinum&v)
 : NetEConst(v), scope_(s), name_(n)
 {
       cast_signed_base_(v.has_sign());

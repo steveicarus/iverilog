@@ -2516,15 +2516,24 @@ static NetExpr* class_static_property_expression(const LineInfo*li,
       return expr;
 }
 
-static NetExpr* check_for_class_property(const LineInfo*li,
-					 Design*des, NetScope*scope,
-					 NetNet*net,
-					 const name_component_t&comp)
+NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
+					      NetNet*net,
+					      const name_component_t&comp,
+					      unsigned expr_wid,
+					      unsigned flags) const
 {
       const netclass_t*class_type = net->class_type();
+
+      ivl_type_t par_type;
+      const NetExpr *par_val = class_type->get_parameter(des, comp.name, par_type);
+      if (par_val)
+	    return elaborate_expr_param_(des, scope, par_val,
+				         class_type->class_scope(), par_type,
+				         expr_wid, flags);
+
       int pidx = class_type->property_idx_from_name(comp.name);
       if (pidx < 0) {
-	    cerr << li->get_fileline() << ": error: "
+	    cerr << get_fileline() << ": error: "
 		 << "Class " << class_type->get_name()
 		 << " has no property " << comp.name << "." << endl;
 	    des->errors += 1;
@@ -2532,7 +2541,7 @@ static NetExpr* check_for_class_property(const LineInfo*li,
       }
 
       if (debug_elaborate) {
-	    cerr << li->get_fileline() << ": check_for_class_property: "
+	    cerr << get_fileline() << ": check_for_class_property: "
 		 << "Property " << comp.name
 		 << " of net " << net->name()
 		 << ", context scope=" << scope_path(scope)
@@ -2541,7 +2550,7 @@ static NetExpr* check_for_class_property(const LineInfo*li,
 
       property_qualifier_t qual = class_type->get_prop_qual(pidx);
       if (qual.test_local() && ! class_type->test_scope_is_method(scope)) {
-	    cerr << li->get_fileline() << ": error: "
+	    cerr << get_fileline() << ": error: "
 		 << "Local property " << class_type->get_prop_name(pidx)
 		 << " is not accessible in this context."
 		 << " (scope=" << scope_path(scope) << ")" << endl;
@@ -2550,12 +2559,12 @@ static NetExpr* check_for_class_property(const LineInfo*li,
 
       if (qual.test_static()) {
 	    perm_string prop_name = lex_strings.make(class_type->get_prop_name(pidx));
-	    return class_static_property_expression(li, class_type,
+	    return class_static_property_expression(this, class_type,
 						    prop_name);
       }
 
       NetEProperty*tmp = new NetEProperty(net, comp.name);
-      tmp->set_line(*li);
+      tmp->set_line(*this);
       return tmp;
 }
 
@@ -3977,6 +3986,33 @@ unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
       return 0;
 }
 
+unsigned PEIdent::test_width_parameter_(const NetExpr *par, width_mode_t&mode)
+{
+	// The width of an enumeration literal is the width of the
+	// enumeration base.
+      if (const NetEConstEnum*par_enum = dynamic_cast<const NetEConstEnum*> (par)) {
+	    const netenum_t*use_enum = par_enum->enumeration();
+	    ivl_assert(*this, use_enum != 0);
+
+	    expr_type_   = use_enum->base_type();
+	    expr_width_  = use_enum->packed_width();
+	    min_width_   = expr_width_;
+	    signed_flag_ = par_enum->has_sign();
+
+	    return expr_width_;
+      }
+
+      expr_type_   = par->expr_type();
+      expr_width_  = par->expr_width();
+      min_width_   = expr_width_;
+      signed_flag_ = par->has_sign();
+
+      if (!par->has_width() && (mode < LOSSLESS))
+	    mode = LOSSLESS;
+
+      return expr_width_;
+}
+
 unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
       NetScope*use_scope = scope;
@@ -4128,6 +4164,11 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    if (sr.net->class_type() != 0 && !sr.path_tail.empty()) {
 		  const netclass_t*class_type = sr.net->class_type();
 		  perm_string pname = peek_tail_name(sr.path_tail);
+		  ivl_type_t par_type;
+		  const NetExpr *par = class_type->get_parameter(des, pname, par_type);
+		  if (par)
+			return test_width_parameter_(par, mode);
+
 		  int pidx = class_type->property_idx_from_name(pname);
 		  if (pidx >= 0) {
 			ivl_type_t ptype = class_type->get_prop_type(pidx);
@@ -4172,33 +4213,10 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    return expr_width_;
       }
 
-	// The width of an enumeration literal is the width of the
-	// enumeration base.
-      if (const NetEConstEnum*par_enum = dynamic_cast<const NetEConstEnum*> (sr.par_val)) {
-	    const netenum_t*use_enum = par_enum->enumeration();
-	    ivl_assert(*this, use_enum != 0);
-
-	    expr_type_   = use_enum->base_type();
-	    expr_width_  = use_enum->packed_width();
-	    min_width_   = expr_width_;
-	    signed_flag_ = par_enum->has_sign();
-
-	    return expr_width_;
-      }
-
 	// The width of a parameter is the width of the parameter value
         // (as evaluated earlier).
-      if (sr.par_val != 0) {
-	    expr_type_   = sr.par_val->expr_type();
-	    expr_width_  = sr.par_val->expr_width();
-            min_width_   = expr_width_;
-            signed_flag_ = sr.par_val->has_sign();
-
-            if (!sr.par_val->has_width() && (mode < LOSSLESS))
-                  mode = LOSSLESS;
-
-	    return expr_width_;
-      }
+      if (sr.par_val != 0)
+	    return test_width_parameter_(sr.par_val, mode);
 
       if (path_.size() == 1
 	  && scope->genvar_tmp.str()
@@ -4283,8 +4301,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			     << " look for property " << member_comp << endl;
 		  }
 
-		  return check_for_class_property(this, des, scope,
-						  net, member_comp);
+		  return elaborate_expr_class_field_(des, scope, net,
+						     member_comp, 0, flags);
 	    }
       }
 
@@ -4578,8 +4596,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	    NetExpr*tmp = elaborate_expr_param_(des, scope, sr.par_val, sr.scope,
-                                                sr.par_type, expr_wid, flags);
+	    NetExpr*tmp = elaborate_expr_param_or_specparam_(des, scope, sr.par_val,
+							     sr.scope, sr.par_type,
+							     expr_wid, flags);
 
             if (!tmp) return 0;
 
@@ -4808,8 +4827,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 		  ivl_assert(*this, sr.path_tail.size() == 1);
 		  const name_component_t member_comp = sr.path_tail.front();
-		  return check_for_class_property(this, des, use_scope,
-							sr.net, member_comp);
+		  return elaborate_expr_class_field_(des, use_scope,
+						     sr.net, member_comp,
+						     expr_wid, flags);
 	    }
 
 	    if (sr.net->enumeration() && !sr.path_tail.empty()) {
@@ -5007,7 +5027,7 @@ static verinum param_part_select_bits(const verinum&par_val, long wid,
 
 NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 					    const NetExpr*par,
-					    NetScope*found_in,
+					    const NetScope*found_in,
 					    ivl_type_t par_type,
                                             bool need_const) const
 {
@@ -5091,8 +5111,7 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 
 	/* Create a parameter reference for the variable select. */
       NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_ex->value());
-      NetScope::param_ref_t pref = found_in->find_parameter(name);
-      ptmp->set_line((*pref).second);
+      ptmp->set_line(found_in->get_parameter_line_info(name));
 
       NetExpr*tmp = new NetESelect(ptmp, sel, 1);
       tmp->set_line(*this);
@@ -5101,7 +5120,7 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 
 NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 					     const NetExpr*par,
-					     NetScope*,
+					     const NetScope*,
 					     ivl_type_t par_type,
                                              unsigned expr_wid) const
 {
@@ -5227,7 +5246,7 @@ static void warn_param_ob(long par_msv, long par_lsv, bool defined,
 
 NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 					       const NetExpr*par,
-					       NetScope*found_in,
+					       const NetScope*found_in,
 					       ivl_type_t par_type,
                                                bool need_const) const
 {
@@ -5298,8 +5317,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 
 	/* Create a parameter reference for the variable select. */
       NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_ex->value());
-      NetScope::param_ref_t pref = found_in->find_parameter(name);
-      ptmp->set_line((*pref).second);
+      ptmp->set_line(found_in->get_parameter_line_info(name));
 
       NetExpr*tmp = new NetESelect(ptmp, base, wid, IVL_SEL_IDX_UP);
       tmp->set_line(*this);
@@ -5308,7 +5326,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 
 NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 					       const NetExpr*par,
-					       NetScope*found_in,
+					       const NetScope*found_in,
 					       ivl_type_t par_type,
                                                bool need_const) const
 {
@@ -5380,13 +5398,37 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 
 	/* Create a parameter reference for the variable select. */
       NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_ex->value());
-      NetScope::param_ref_t pref = found_in->find_parameter(name);
-      ptmp->set_line((*pref).second);
+      ptmp->set_line(found_in->get_parameter_line_info(name));
 
       NetExpr*tmp = new NetESelect(ptmp, base, wid, IVL_SEL_IDX_DOWN);
       tmp->set_line(*this);
       return tmp;
 }
+
+NetExpr* PEIdent::elaborate_expr_param_or_specparam_(Design*des,
+						     NetScope*scope,
+						     const NetExpr*par,
+						     NetScope*found_in,
+						     ivl_type_t par_type,
+						     unsigned expr_wid,
+						     unsigned flags) const
+{
+      bool need_const = NEED_CONST & flags;
+
+      if (need_const && !(ANNOTATABLE & flags)) {
+            perm_string name = peek_tail_name(path_);
+            if (found_in->make_parameter_unannotatable(name)) {
+                  cerr << get_fileline() << ": warning: specparam '" << name
+                       << "' is being used in a constant expression." << endl;
+                  cerr << get_fileline() << ":        : This will prevent it "
+                          "being annotated at run time." << endl;
+            }
+      }
+
+      return elaborate_expr_param_(des, scope, par, found_in, par_type,
+			           expr_wid, flags);
+}
+
 
 /*
  * Handle the case that the identifier is a parameter reference. The
@@ -5396,7 +5438,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 					NetScope*scope,
 					const NetExpr*par,
-					NetScope*found_in,
+					const NetScope*found_in,
 					ivl_type_t par_type,
 					unsigned expr_wid, unsigned flags) const
 {
@@ -5411,16 +5453,6 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	    else
 		  cerr << get_fileline() << ": " << __func__ << ": "
 		       << "par_type: <nil>" << endl;
-      }
-
-      if (need_const && !(ANNOTATABLE & flags)) {
-            perm_string name = peek_tail_name(path_);
-            if (found_in->make_parameter_unannotatable(name)) {
-                  cerr << get_fileline() << ": warning: specparam '" << name
-                       << "' is being used in a constant expression." << endl;
-                  cerr << get_fileline() << ":        : This will prevent it "
-                          "being annotated at run time." << endl;
-            }
       }
 
       const name_component_t&name_tail = path_.back();
@@ -5500,8 +5532,7 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	      /* The numeric parameter value needs to have the file and line
 	       * information for the actual parameter not the expression. */
 	    assert(tmp);
-	    NetScope::param_ref_t pref = found_in->find_parameter(name);
-	    tmp->set_line((*pref).second);
+	    tmp->set_line(found_in->get_parameter_line_info(name));
       }
 
       return tmp;

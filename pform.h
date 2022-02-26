@@ -202,6 +202,7 @@ extern void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net);
 extern void pform_set_constructor_return(PFunction*net);
 
 extern void pform_end_class_declaration(const struct vlltype&loc);
+extern bool pform_in_class();
 
 extern void pform_make_udp(perm_string name, std::list<perm_string>*parms,
 			   std::vector<PWire*>*decl, std::list<std::string>*table,

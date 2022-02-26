@@ -430,35 +430,42 @@ class PEIdent : public PExpr {
 				       NetAssign_*) const;
 
     private:
+      NetExpr*elaborate_expr_param_or_specparam_(Design*des,
+						 NetScope*scope,
+						 const NetExpr*par,
+						 NetScope*found_in,
+						 ivl_type_t par_type,
+						 unsigned expr_wid,
+						 unsigned flags) const;
       NetExpr*elaborate_expr_param_(Design*des,
 				    NetScope*scope,
 				    const NetExpr*par,
-				    NetScope*found_in,
+				    const NetScope*found_in,
 				    ivl_type_t par_type,
 				    unsigned expr_wid,
                                     unsigned flags) const;
       NetExpr*elaborate_expr_param_bit_(Design*des,
 					NetScope*scope,
 					const NetExpr*par,
-					NetScope*found_in,
+					const NetScope*found_in,
 					ivl_type_t par_type,
                                         bool need_const) const;
       NetExpr*elaborate_expr_param_part_(Design*des,
 					 NetScope*scope,
 					 const NetExpr*par,
-					 NetScope*found_in,
+					 const NetScope*found_in,
 					 ivl_type_t par_type,
 				         unsigned expr_wid) const;
       NetExpr*elaborate_expr_param_idx_up_(Design*des,
 					   NetScope*scope,
 					   const NetExpr*par,
-					   NetScope*found_in,
+					   const NetScope*found_in,
 					   ivl_type_t par_type,
                                            bool need_const) const;
       NetExpr*elaborate_expr_param_idx_do_(Design*des,
 					   NetScope*scope,
 					   const NetExpr*par,
-					   NetScope*found_in,
+					   const NetScope*found_in,
 					   ivl_type_t par_type,
                                            bool need_const) const;
       NetExpr*elaborate_expr_net(Design*des,
@@ -504,8 +511,15 @@ class PEIdent : public PExpr {
 					   unsigned expr_wid,
 					   unsigned flags) const;
 
+      NetExpr *elaborate_expr_class_field_(Design*des, NetScope*scope,
+					   NetNet*net,
+					   const name_component_t&comp,
+					   unsigned expr_wid,
+					   unsigned flags) const;
+
       unsigned test_width_method_(Design*des, NetScope*scope, width_mode_t&mode);
 
+      unsigned test_width_parameter_(const NetExpr *par, width_mode_t&mode);
 
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,

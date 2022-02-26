@@ -524,6 +524,8 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
       class_scope->add_typedefs(&pclass->typedefs);
 
+      collect_scope_parameters(des, class_scope, pclass->parameters);
+
 	// Elaborate enum types declared in the class. We need these
 	// now because enumeration constants can be used during scope
 	// elaboration.

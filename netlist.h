@@ -1239,7 +1239,7 @@ class NetScope : public Definitions, public Attrib {
 
       typedef std::map<perm_string,param_expr_t>::iterator param_ref_t;
 
-      param_ref_t find_parameter(perm_string name);
+      LineInfo get_parameter_line_info(perm_string name) const;
 
 	/* Module instance arrays are collected here for access during
 	   the multiple elaboration passes. */
@@ -2175,7 +2175,7 @@ class NetEConstEnum  : public NetEConst {
 class NetEConstParam  : public NetEConst {
 
     public:
-      explicit NetEConstParam(NetScope*scope, perm_string name,
+      explicit NetEConstParam(const NetScope*scope, perm_string name,
 			      const verinum&val);
       ~NetEConstParam();
 
@@ -2188,7 +2188,7 @@ class NetEConstParam  : public NetEConst {
       virtual NetEConstParam* dup_expr() const;
 
     private:
-      NetScope*scope_;
+      const NetScope*scope_;
       perm_string name_;
 };
 
@@ -2236,7 +2236,7 @@ class NetECString  : public NetEConst {
 class NetECRealParam  : public NetECReal {
 
     public:
-      explicit NetECRealParam(NetScope*scope, perm_string name,
+      explicit NetECRealParam(const NetScope*scope, perm_string name,
 			      const verireal&val);
       ~NetECRealParam();
 
@@ -2249,7 +2249,7 @@ class NetECRealParam  : public NetECReal {
       virtual NetECRealParam* dup_expr() const;
 
     private:
-      NetScope*scope_;
+      const NetScope*scope_;
       perm_string name_;
 };
 

@@ -978,6 +978,8 @@ class_item /* IEEE1800-2005: A.1.8 */
 	yyerrok;
       }
 
+  | parameter_declaration
+
   | error ';'
       { yyerror(@2, "error: invalid class item.");
 	yyerrok;
@@ -2016,7 +2018,7 @@ package_import_item_list
 
 package_item /* IEEE1800-2005 A.1.10 */
   : timeunits_declaration
-  | parameter_or_localparam param_type parameter_assign_list ';'
+  | parameter_declaration
   | type_declaration
   | function_declaration
   | task_declaration
@@ -2697,7 +2699,7 @@ block_item_decl
       { if ($2) pform_make_events($2, @1.text, @1.first_line);
       }
 
-  | parameter_or_localparam param_type parameter_assign_list ';'
+  | parameter_declaration
 
   /* Blocks can have type declarations. */
 
@@ -5569,6 +5571,9 @@ param_type : data_type_or_implicit { param_data_type = $1; }
 
 parameter : K_parameter { param_is_local = false; };
 localparam : K_localparam { param_is_local = true; };
+
+parameter_declaration
+  : parameter_or_localparam param_type parameter_assign_list ';'
 
 parameter_or_localparam
   : parameter

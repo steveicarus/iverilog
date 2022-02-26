@@ -164,3 +164,8 @@ void pform_end_class_declaration(const struct vlltype&loc)
       pform_cur_class = 0;
       pform_pop_scope();
 }
+
+bool pform_in_class()
+{
+      return pform_cur_class != 0;
+}

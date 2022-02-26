@@ -38,7 +38,7 @@ initial begin
 
   // Not yet supported
   // c.e2 = C::A;
-  // c.e2 = c.A;
+  c.e2 = c.A;
 
   // Check that they have the numerical value from the right scope
   if (c.e1 == 1 && c.e2 == 10) begin

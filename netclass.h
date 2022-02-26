@@ -27,6 +27,7 @@
 # include  <map>
 
 class Design;
+class NetExpr;
 class NetNet;
 class NetScope;
 class PClass;
@@ -111,6 +112,9 @@ class netclass_t : public ivl_type_s {
 
       std::ostream& debug_dump(std::ostream&fd) const;
       void dump_scope(std::ostream&fd) const;
+
+      const NetExpr* get_parameter(Design *des, perm_string name,
+				   ivl_type_t &par_type) const;
 
     private:
       perm_string name_;
