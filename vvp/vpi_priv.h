@@ -65,6 +65,18 @@ extern vpiHandle vpip_build_file_line(char*description,
                                       long file_idx, long lineno);
 
 /*
+ * vpi_type_values returns the text form of the vpi type. If the type name
+ * is unknown, then return the number stringified. Note that the return
+ * value may return to a static buffer.
+ */
+extern const char* vpi_type_as_string(PLI_INT32 code);
+
+/*
+ * Return the port direction as a string.
+ */
+extern const char* direction_as_string(int dir);
+
+/*
  * Private VPI properties that are only used in the cleanup code.
  */
 #if defined(CHECK_WITH_VALGRIND) && !defined(BR916_STOPGAP_FIX)
