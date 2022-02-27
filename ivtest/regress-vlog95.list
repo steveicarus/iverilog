@@ -780,6 +780,10 @@ iuint1			normal,-g2009,-pallowsigned=1	ivltests
 logp2			normal,-g2009,-pallowsigned=1	ivltests
 mixed_width_case	normal,-pallowsigned=1	ivltests
 mod_inst_pkg		normal,-g2009,-pallowsigned=1	ivltests
+module_output_port_sv_var1 normal,-g2005-sv,-pallowsigned=1	ivltests
+module_output_port_sv_var2 normal,-g2005-sv,-pallowsigned=1	ivltests
+module_output_port_var1 normal,-pallowsigned=1			ivltests
+module_output_port_var2 normal,-pallowsigned=1			ivltests
 packeda			normal,-g2009,-pallowsigned=1	ivltests
 pr1033			normal,-pallowsigned=1	ivltests gold=pr1033.gold
 pr1380261		normal,-pallowsigned=1	ivltests

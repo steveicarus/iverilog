@@ -4563,13 +4563,7 @@ port_declaration
 		      // output ports are implicitly (on the inside)
 		      // variables because "reg" is not valid syntax
 		      // here.
-	      } else if (dynamic_cast<atom2_type_t*> ($4)) {
-		    use_type = NetNet::IMPLICIT_REG;
-	      } else if (dynamic_cast<real_type_t*> ($4)) {
-		    use_type = NetNet::IMPLICIT_REG;
-	      } else if (dynamic_cast<struct_type_t*> ($4)) {
-		    use_type = NetNet::IMPLICIT_REG;
-	      } else if (dynamic_cast<enum_type_t*> ($4)) {
+	      } else if ($4) {
 		    use_type = NetNet::IMPLICIT_REG;
 	      }
 	}
@@ -5021,13 +5015,8 @@ module_item
 		// output ports are implicitly (on the inside)
 		// variables because "reg" is not valid syntax
 		// here.
-	} else if (dynamic_cast<atom2_type_t*> ($3)) {
+	} else if ($3) {
 	      use_type = NetNet::IMPLICIT_REG;
-	} else if (dynamic_cast<struct_type_t*> ($3)) {
-	      use_type = NetNet::IMPLICIT_REG;
-	} else if (enum_type_t*etype = dynamic_cast<enum_type_t*> ($3)) {
-	      if(etype->base_type == IVL_VT_LOGIC)
-		  use_type = NetNet::IMPLICIT_REG;
 	}
 	if (use_type == NetNet::NONE)
 	      pform_set_port_type(@2, $4, NetNet::POUTPUT, $3, $1);

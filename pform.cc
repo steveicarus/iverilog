@@ -2620,8 +2620,7 @@ void pform_module_define_port(const struct vlltype&li,
 			      list<named_pexpr_t>*attr,
 			      bool keep_attr)
 {
-      struct_type_t*struct_type = 0;
-      enum_type_t*enum_type = 0;
+      data_type_t*packed_type = 0;
       ivl_variable_type_t data_type = IVL_VT_NO_TYPE;
       bool signed_flag = false;
 
@@ -2669,19 +2668,14 @@ void pform_module_define_port(const struct vlltype&li,
 			  __FILE__, __LINE__);
 	    }
 
-      } else if ((struct_type = dynamic_cast<struct_type_t*>(vtype))) {
-	    data_type = struct_type->figure_packed_base_type();
-	    signed_flag = false;
-	    prange = 0;
-
-      } else if ((enum_type = dynamic_cast<enum_type_t*>(vtype))) {
-	    data_type = enum_type->base_type;
-	    signed_flag = enum_type->signed_flag;
-	    prange = 0;
-
       } else if (vtype) {
-	    VLerror(li, "sorry: Given type %s not supported here (%s:%d).",
-		    typeid(*vtype).name(), __FILE__, __LINE__);
+	    if (vtype->figure_packed_base_type() != IVL_VT_NO_TYPE) {
+		  data_type = vtype->figure_packed_base_type();
+		  packed_type = vtype;
+	    } else {
+		  VLerror(li, "sorry: Given type %s not supported here (%s:%d).",
+			  typeid(*vtype).name(), __FILE__, __LINE__);
+	    }
       }
 
 
@@ -2694,11 +2688,8 @@ void pform_module_define_port(const struct vlltype&li,
 
       cur->set_signed(signed_flag);
 
-      if (struct_type) {
-	    cur->set_data_type(struct_type);
-
-      } else if (enum_type) {
-	    cur->set_data_type(enum_type);
+      if (packed_type) {
+	    cur->set_data_type(packed_type);
 
       } else if (prange == 0) {
 	    cur->set_range_scalar((type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
