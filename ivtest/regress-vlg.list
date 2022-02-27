@@ -644,6 +644,8 @@ mixed_width_case	normal			ivltests
 modparam		normal			ivltests top # Override parameter via passed down value
 module3.12A		normal			ivltests main
 module3.12B		normal			ivltests
+module_output_port_var1	normal			ivltests
+module_output_port_var2	normal			ivltests
 modulus			normal			ivltests # wire % and reg % operators
 modulus2		normal			ivltests # reg % operators
 monitor			normal			ivltests gold=monitor.gold

@@ -312,6 +312,8 @@ localparam_type2	normal,-g2009		ivltests
 logical_short_circuit	normal,-g2012		ivltests
 logp2			normal,-g2005-sv	ivltests
 mod_inst_pkg		normal,-g2009		ivltests
+module_output_port_sv_var1 normal,-g2005-sv	ivltests
+module_output_port_sv_var2 normal,-g2005-sv	ivltests
 named_begin		normal,-g2009		ivltests
 named_begin_fail	CE,-g2009		ivltests
 named_fork		normal,-g2009		ivltests
