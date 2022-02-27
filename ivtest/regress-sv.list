@@ -622,3 +622,4 @@ br_gh436		normal,-g2012		ivltests gold=br_gh436.gold
 br_gh451		normal,-g2012,-Ptest.foo=4	ivltests gold=br_gh451.gold
 br_gh453		normal,-g2012		ivltests
 br_gh460		normal,-g2012		ivltests
+issue576		normal,-g2012		ivltests
