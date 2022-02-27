@@ -3502,7 +3502,14 @@ bool NetSTask::check_synth(ivl_process_type_t pr_type,
       return false;
 }
 
-bool NetTaskDef::check_synth(ivl_process_type_t pr_type,
+/*
+ * This function is called to make sure the task/function can be used
+ * in a context where it must be synthesizable, such as in an always_comb
+ * or always_ff.
+ *
+ * If this is a function, then the function must be void.
+ */
+bool NetBaseDef::check_synth(ivl_process_type_t pr_type,
                              const NetScope* /* scope */) const
 {
       bool result = false;
@@ -3522,7 +3529,13 @@ bool NetTaskDef::check_synth(ivl_process_type_t pr_type,
 bool NetUTask::check_synth(ivl_process_type_t pr_type,
                            const NetScope* scope) const
 {
-      return task()->task_def()->check_synth(pr_type, scope);
+      const NetScope* task_scope = task();
+      if (task_scope->type() == NetScope::FUNC) {
+	    // This can happen if this a void function.
+	    return task_scope->func_def()->check_synth(pr_type, scope);
+      } else {
+	    return task_scope->task_def()->check_synth(pr_type, scope);
+      }
 }
 
 bool NetWhile::check_synth(ivl_process_type_t pr_type,
