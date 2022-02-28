@@ -67,29 +67,49 @@ int target_design(ivl_design_t des)
 {
       const char*blif_path = ivl_design_flag(des, "-o");
 
+      vector<ivl_scope_t> root_modules;
+
 	// Locate the root scope for the design. Note that the BLIF
 	// format implies that there is a single root of the model.
       ivl_scope_t*roots;
       unsigned nroots;
       ivl_design_roots(des, &roots, &nroots);
-      if (nroots != 1) {
-	    fprintf(stderr, "BLIF: The BLIF code generator requires that there be only one root scope.\n");
+
+      for (unsigned idx = 0 ; idx < nroots ; idx += 1) {
+	    if (ivl_scope_type(roots[idx]) == IVL_SCT_MODULE) {
+		  root_modules.push_back(roots[idx]);
+		  continue;
+	    }
+	    if (ivl_scope_type(roots[idx]) == IVL_SCT_PACKAGE) {
+		  fprintf(stderr, "Skipping package scope %s (%s:%u)\n",
+			  ivl_scope_name(roots[idx]), ivl_scope_file(roots[idx]),
+			  ivl_scope_lineno(roots[idx]));
+		  continue;
+	    }
+
+	    fprintf(stderr, "BLIF: Don't know how to handle root scope %s (%s:%u)\n",
+		    ivl_scope_name(roots[idx]), ivl_scope_file(roots[idx]),
+		    ivl_scope_lineno(roots[idx]));
+      }
+
+      if (root_modules.size() != 1) {
+	    fprintf(stderr, "BLIF: The BLIF code generator requires that there be only one root module scope. Found these root modules:\n");
+	    for (size_t idx = 0 ; idx < root_modules.size() ; idx += 1) {
+		  fprintf(stderr, "    %s  (%s:%u)\n",
+			  ivl_scope_name(root_modules[idx]),
+			  ivl_scope_file(root_modules[idx]),
+			  ivl_scope_lineno(root_modules[idx]));
+	    }
 	    return 1;
       }
 
-      assert(roots[0]);
-
-      if (ivl_scope_type(roots[0]) != IVL_SCT_MODULE) {
-	    fprintf(stderr, "BLIF: The root scope %s must be a module.\n", ivl_scope_basename(roots[0]));
-	    return 1;
-      }
 
 	// Detect processes and dispatch them.
       ivl_design_process(des, &process_scan_fun, 0);
 
 	// Emit to the destination file.
       assert(blif_path);
-      emit_blif(blif_path, des, roots[0]);
+      emit_blif(blif_path, des, root_modules[0]);
 
       return blif_errors;
 }
