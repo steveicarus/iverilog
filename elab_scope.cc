@@ -692,7 +692,8 @@ static void elaborate_scope_func(Design*des, NetScope*scope, PFunction*task)
 
       if (debug_scopes) {
 	    cerr << task->get_fileline() << ": elaborate_scope_func: "
-		 << "Elaborate task scope " << scope_path(task_scope) << endl;
+		 << "Elaborate function scope " << scope_path(task_scope)
+		 << endl;
       }
 
       task->elaborate_scope(des, task_scope);
@@ -1589,7 +1590,7 @@ void PEvent::elaborate_scope(Design*, NetScope*scope) const
 
 void PFunction::elaborate_scope(Design*des, NetScope*scope) const
 {
-      assert(scope->type() == NetScope::FUNC);
+      ivl_assert(*this, scope->type() == NetScope::FUNC);
 
         // Save a reference to the pform representation of the function
         // in case we need to perform early elaboration.

@@ -863,6 +863,8 @@ class NetBaseDef {
 	//const string& name() const;
       const NetProc*proc() const;
 
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
+
     private:
       NetScope*scope_;
       std::vector<NetNet*>ports_;
@@ -3863,7 +3865,6 @@ class NetTaskDef : public NetBaseDef {
 
       void dump(std::ostream&, unsigned) const;
       DelayType delay_type(bool print_delay=false) const;
-      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
 
     private: // not implemented
       NetTaskDef(const NetTaskDef&);
