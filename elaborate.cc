@@ -45,6 +45,7 @@
 # include  "netvector.h"
 # include  "netdarray.h"
 # include  "netparray.h"
+# include  "netscalar.h"
 # include  "netclass.h"
 # include  "netmisc.h"
 # include  "util.h"
@@ -3721,6 +3722,14 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	    use_path.push_front(name_component_t(perm_string::literal(THIS_TOKEN)));
       }
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PCallTask::elaborate_method_: "
+		 << "use_path=" << use_path
+		 << ", method_name=" << method_name
+		 << ", add_this_flag=" << add_this_flag
+		 << endl;
+      }
+
 	// There is no signal to search for so this cannot be a method.
       if (use_path.empty()) return 0;
 
@@ -3732,6 +3741,38 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 
       if (net == 0)
 	    return 0;
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PCallTask::elaborate_method_: "
+		 << "Try to match method " << method_name
+		 << " of object " << net->name()
+		 << "." << endl;
+	    if (net->net_type())
+		  cerr << get_fileline() << ": PCallTask::elaborate_method_: "
+		       << net->name() << ".net_type() --> "
+		       << *net->net_type() << endl;
+	    cerr << get_fileline() << ": PCallTask::elaborate_method_: "
+		 << net->name() << ".data_type() --> " << net->data_type() << endl;
+      }
+
+      // Is this a method of a "string" type?
+      if (dynamic_cast<const netstring_t*>(net->net_type())) {
+	    if (method_name=="itoa")
+		  return elaborate_sys_task_method_(des, scope, net, method_name,
+						    "$ivl_string_method$itoa");
+	    else if (method_name=="hextoa")
+		  return elaborate_sys_task_method_(des, scope, net, method_name,
+						    "$ivl_string_method$hextoa");
+	    else if (method_name=="octtoa")
+		  return elaborate_sys_task_method_(des, scope, net, method_name,
+						    "$ivl_string_method$octtoa");
+	    else if (method_name=="bintoa")
+		  return elaborate_sys_task_method_(des, scope, net, method_name,
+						    "$ivl_string_method$bintoa");
+	    else if (method_name=="realtoa")
+		  return elaborate_sys_task_method_(des, scope, net, method_name,
+						    "$ivl_string_method$realtoa");
+      }
 
 	// Is this a delete method for dynamic arrays or queues?
       if (net->darray_type()) {
