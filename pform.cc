@@ -2652,9 +2652,6 @@ void pform_module_define_port(const struct vlltype&li,
 	    data_type = vec_type->base_type;
 	    signed_flag = vec_type->signed_flag;
 	    prange = vec_type->pdims.get();
-	    if (vec_type->reg_flag)
-		  type = NetNet::REG;
-
       } else if (atom2_type_t*atype = dynamic_cast<atom2_type_t*>(vtype)) {
 	    data_type = IVL_VT_BOOL;
 	    signed_flag = atype->signed_flag;

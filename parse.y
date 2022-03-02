@@ -1221,14 +1221,7 @@ packed_array_data_type /* IEEE1800-2005: A.2.2.1 */
 
 data_type /* IEEE1800-2005: A.2.2.1 */
   : integer_vector_type unsigned_signed_opt dimensions_opt
-      { ivl_variable_type_t use_vtype = $1;
-	bool reg_flag = false;
-	if (use_vtype == IVL_VT_NO_TYPE) {
-	      use_vtype = IVL_VT_LOGIC;
-	      reg_flag = true;
-	}
-	vector_type_t*tmp = new vector_type_t(use_vtype, $2, $3);
-	tmp->reg_flag = reg_flag;
+      { vector_type_t*tmp = new vector_type_t($1, $2, $3);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
@@ -1245,14 +1238,12 @@ data_type /* IEEE1800-2005: A.2.2.1 */
   | K_integer signed_unsigned_opt
       { std::list<pform_range_t>*pd = make_range_from_width(integer_width);
 	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $2, pd);
-	tmp->reg_flag = true;
 	tmp->integer_flag = true;
 	$$ = tmp;
       }
   | K_time unsigned_signed_opt
       { std::list<pform_range_t>*pd = make_range_from_width(64);
 	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $2, pd);
-	tmp->reg_flag = !gn_system_verilog();
 	$$ = tmp;
       }
   | packed_array_data_type dimensions_opt
@@ -1595,7 +1586,7 @@ inside_expression /* IEEE1800-2005 A.8.3 */
   ;
 
 integer_vector_type /* IEEE1800-2005: A.2.2.1 */
-  : K_reg   { $$ = IVL_VT_NO_TYPE; } /* Usually a synonym for logic. */
+  : K_reg   { $$ = IVL_VT_LOGIC; } /* A synonym for logic. */
   | K_bit   { $$ = IVL_VT_BOOL; }
   | K_logic { $$ = IVL_VT_LOGIC; }
   | K_bool  { $$ = IVL_VT_BOOL; } /* Icarus Verilog xtypes extension */
@@ -2179,14 +2170,7 @@ simple_immediate_assertion_statement /* IEEE1800-2012 A.6.10 */
 
 simple_type_or_string /* IEEE1800-2005: A.2.2.1 */
   : integer_vector_type
-      { ivl_variable_type_t use_vtype = $1;
-	bool reg_flag = false;
-	if (use_vtype == IVL_VT_NO_TYPE) {
-	      use_vtype = IVL_VT_LOGIC;
-	      reg_flag = true;
-	}
-	vector_type_t*tmp = new vector_type_t(use_vtype, false, 0);
-	tmp->reg_flag = reg_flag;
+      { vector_type_t*tmp = new vector_type_t($1, false, 0);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
@@ -2203,14 +2187,12 @@ simple_type_or_string /* IEEE1800-2005: A.2.2.1 */
   | K_integer
       { std::list<pform_range_t>*pd = make_range_from_width(integer_width);
 	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, true, pd);
-	tmp->reg_flag = true;
 	tmp->integer_flag = true;
 	$$ = tmp;
       }
   | K_time
       { std::list<pform_range_t>*pd = make_range_from_width(64);
 	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, pd);
-	tmp->reg_flag = !gn_system_verilog();
 	$$ = tmp;
       }
   | K_string
@@ -2776,12 +2758,8 @@ enum_base_type /* IEEE 1800-2012 A.2.2.1 */
 	$$ = enum_type;
       }
   | integer_vector_type unsigned_signed_opt dimensions_opt
-      { ivl_variable_type_t use_vtype = $1;
-	if (use_vtype == IVL_VT_NO_TYPE)
-	      use_vtype = IVL_VT_LOGIC;
-
-	enum_type_t*enum_type = new enum_type_t;
-	enum_type->base_type = use_vtype;
+      { enum_type_t*enum_type = new enum_type_t;
+	enum_type->base_type = $1;
 	enum_type->signed_flag = $2;
 	enum_type->integer_flag = false;
 	enum_type->range.reset($3 ? $3 : make_range_from_width(1));
@@ -4552,9 +4530,7 @@ port_declaration
 	NetNet::Type use_type = $3;
 	if (use_type == NetNet::IMPLICIT) {
 	      if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($4)) {
-		    if (dtype->reg_flag)
-			  use_type = NetNet::REG;
-		    else if (dtype->implicit_flag)
+		    if (dtype->implicit_flag)
 			  use_type = NetNet::IMPLICIT;
 		    else
 			  use_type = NetNet::IMPLICIT_REG;
@@ -4596,14 +4572,7 @@ port_declaration
 	perm_string name = lex_strings.make($5);
 	NetNet::Type use_type = $3;
 	if (use_type == NetNet::IMPLICIT) {
-	      if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($4)) {
-		    if (dtype->reg_flag)
-			  use_type = NetNet::REG;
-		    else
-			  use_type = NetNet::IMPLICIT_REG;
-	      } else {
-		    use_type = NetNet::IMPLICIT_REG;
-	      }
+	      use_type = NetNet::IMPLICIT_REG;
 	}
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, $4, $1);
@@ -5009,8 +4978,6 @@ module_item
 	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
 	      if (dtype->implicit_flag)
 		    use_type = NetNet::NONE;
-	      else if (dtype->reg_flag)
-		    use_type = NetNet::REG;
 	      else
 		    use_type = NetNet::IMPLICIT_REG;
 
