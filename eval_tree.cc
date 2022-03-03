@@ -71,7 +71,7 @@ static bool get_real_arg_(const NetExpr*expr, verireal&val)
 	    return false;
 
 	  default:
-	    assert(0);
+	    ivl_assert(*expr, 0);
       }
 
       return true;
@@ -364,7 +364,7 @@ NetEConst* NetEBComp::must_be_leeq_(const NetExpr*le, const verinum&rv, bool eq_
 	// or 'z' values.
       if (le->expr_type() == IVL_VT_LOGIC) return 0;
 
-      assert(le->expr_width() > 0);
+      ivl_assert(*le, le->expr_width() > 0);
       verinum lv (verinum::V1, le->expr_width());
       if (le->has_sign() && rv.has_sign()) {
 	      // If the expression is signed, then the largest
@@ -771,7 +771,7 @@ NetExpr* NetEBDiv::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 NetExpr* NetEBDiv::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 {
       if (expr_type() == IVL_VT_REAL) return eval_tree_real_(l,r);
-      assert(expr_type() == IVL_VT_LOGIC);
+      ivl_assert(*this, expr_type() == IVL_VT_LOGIC);
 
       const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
       const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
@@ -807,7 +807,7 @@ NetEConst* NetEBLogic::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 {
 	// NetEBLogic arguments should have already been reduced so real is not possible.
       ivl_assert(*this, (l->expr_type() != IVL_VT_REAL) && (r->expr_type() != IVL_VT_REAL));
-      assert(expr_type() == IVL_VT_LOGIC);
+      ivl_assert(*this, expr_type() == IVL_VT_LOGIC);
 
       const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
       const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
@@ -943,7 +943,7 @@ NetExpr* NetEBMinMax::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 NetExpr* NetEBMinMax::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 {
       if (expr_type() == IVL_VT_REAL) return eval_tree_real_(l,r);
-      assert(expr_type() == IVL_VT_LOGIC);
+      ivl_assert(*this, expr_type() == IVL_VT_LOGIC);
 
       const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
       const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
@@ -996,7 +996,7 @@ NetExpr* NetEBMult::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 NetExpr* NetEBMult::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 {
       if (expr_type() == IVL_VT_REAL) return eval_tree_real_(l,r);
-      assert(expr_type() == IVL_VT_LOGIC);
+      ivl_assert(*this, expr_type() == IVL_VT_LOGIC);
 
       const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
       const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
@@ -1034,7 +1034,7 @@ NetExpr* NetEBPow::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 NetExpr* NetEBPow::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 {
       if (expr_type() == IVL_VT_REAL) return eval_tree_real_(l,r);
-      assert(expr_type() == IVL_VT_LOGIC);
+      ivl_assert(*this, expr_type() == IVL_VT_LOGIC);
 
       const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
       const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
@@ -1117,7 +1117,7 @@ NetEConst* NetEConcat::eval_tree()
 	      // Finally, try to evaluate the parameter expression
 	      // that is here. If I succeed, reset the parameter to
 	      // the evaluated value.
-	    assert(parms_[idx]);
+	    ivl_assert(*this, parms_[idx]);
 	    NetExpr*expr = parms_[idx]->eval_tree();
 	    if (expr) {
 		  expr->set_line(*parms_[idx]);
@@ -1250,7 +1250,7 @@ static void print_ternary_cond(NetExpr*expr)
 	    cerr << c->value() << endl;
 	    return;
       }
-      assert(0);
+      ivl_assert(*expr, 0);
 }
 
 /*
@@ -1468,7 +1468,7 @@ NetExpr* NetEUnary::eval_arguments_(const NetExpr*ex) const
 	    break;
 
 	  case '!':
-	    assert(0);
+	    ivl_assert(*this, 0);
 	  default:
 	    return 0;
       }
@@ -2043,7 +2043,7 @@ NetEConst* NetESFunc::evaluate_dimensions_(const NetExpr*arg) const
 	       * make these routines work correct add one if this is a
 	       * string data type. */
 	    if (sig->data_type() == IVL_VT_STRING) {
-		  assert(sig->packed_dimensions() == 0);
+		  ivl_assert(*this, sig->packed_dimensions() == 0);
 		  res += 1;
 	    }
       }
@@ -2172,7 +2172,7 @@ static bool get_array_info(const NetExpr*arg, long dim,
                            long &left, long &right, bool&defer)
 {
       if (const NetEConstParam*param = dynamic_cast<const NetEConstParam*>(arg)) {
-	assert(dim == 1);
+	ivl_assert(*arg, dim == 1);
 	left = param->expr_width() - 1;
 	right = 0;
 	return false;
@@ -2257,7 +2257,7 @@ NetEConst* NetESFunc::evaluate_array_funcs_(ID id,
 	    break;
 	default:
 	    res = 0;
-	    assert(0);
+	    ivl_assert(*this, 0);
       }
 	/* Return the result as an integer sized constant. */
       return new NetEConst(verinum(verinum(res), integer_width));
