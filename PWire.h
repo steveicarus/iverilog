@@ -130,6 +130,13 @@ class PWire : public PNamedItem {
     private: // not implemented
       PWire(const PWire&);
       PWire& operator= (const PWire&);
+
+      ivl_type_t elaborate_type(Design*des, NetScope*scope,
+			        const std::vector<netrange_t>&packed_dimensions) const;
+      ivl_type_t elaborate_darray_type(Design*des, NetScope*scope,
+				       const char *darray_type,
+				       const std::vector<netrange_t>&packed_dimensions)
+				       const;
 };
 
 #endif /* IVL_PWire_H */

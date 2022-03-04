@@ -934,6 +934,64 @@ bool test_ranges_eeq(const vector<netrange_t>&lef, const vector<netrange_t>&rig)
       return true;
 }
 
+ivl_type_t PWire::elaborate_type(Design*des, NetScope*scope,
+			         const std::vector<netrange_t>&packed_dimensions) const
+{
+      if (dynamic_cast<struct_type_t*>(set_data_type_) ||
+	  dynamic_cast<enum_type_t*>(set_data_type_) ||
+	  dynamic_cast<string_type_t*>(set_data_type_) ||
+	  dynamic_cast<class_type_t*>(set_data_type_) ||
+	  dynamic_cast<parray_type_t*>(set_data_type_)) {
+	    ivl_type_t use_type = set_data_type_->elaborate_type(des, scope);
+	    ivl_assert(*this, packed_dimensions.empty());
+	    return use_type;
+      }
+
+      // Fallback method. Create vector type.
+
+      ivl_variable_type_t use_data_type = data_type_;
+      if (use_data_type == IVL_VT_NO_TYPE) {
+	    use_data_type = IVL_VT_LOGIC;
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PWire::elaborate_sig: "
+		       << "Signal " << name_
+		       << " in scope " << scope_path(scope)
+		       << " defaults to data type " << use_data_type << endl;
+	    }
+      }
+
+      ivl_assert(*this, use_data_type == IVL_VT_LOGIC ||
+			use_data_type == IVL_VT_BOOL ||
+			use_data_type == IVL_VT_REAL);
+
+      netvector_t*vec = new netvector_t(packed_dimensions, use_data_type);
+      vec->set_signed(get_signed());
+      vec->set_isint(get_isint());
+
+      return vec;
+}
+
+ivl_type_t PWire::elaborate_darray_type(Design*des, NetScope*scope,
+					const char *darray_type,
+					const std::vector<netrange_t>&packed_dimensions)
+					const
+{
+      ivl_type_t type = elaborate_type(des, scope, packed_dimensions);
+
+      if (dynamic_cast<const netvector_t*>(type) ||
+	  dynamic_cast<const netparray_t*>(type) ||
+	  dynamic_cast<const netreal_t*>(type) ||
+	  dynamic_cast<const netstring_t*>(type))
+	  return type;
+
+      cerr << get_fileline() << ": Sorry: "
+           << darray_type << " of type `" << *type
+	   << "` is not yet supported." << endl;
+      des->errors++;
+
+      // Return something to recover
+      return new netvector_t(IVL_VT_LOGIC);
+}
 
 /*
  * Elaborate a source wire. The "wire" is the declaration of wires,
@@ -1100,19 +1158,21 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // dimensions, then turn this into a dynamic array and
 	      // put all the packed dimensions there.
 	    if (use_lidx==0 && use_ridx==0) {
-		  ivl_type_t vec = make_ivl_type(data_type_, packed_dimensions,
-						 get_signed());
+		  ivl_type_t base_type = elaborate_darray_type(des, scope,
+						  "Dynamic array",
+						  packed_dimensions);
 		  packed_dimensions.clear();
 		  ivl_assert(*this, netdarray==0);
-		  netdarray = new netdarray_t(vec);
+		  netdarray = new netdarray_t(base_type);
 		  continue;
 	    }
 
 	      // Special case: Detect the mark for a QUEUE
 	      // declaration, which is the dimensions [null:max_idx].
 	    if (dynamic_cast<PENull*>(use_lidx)) {
-		  ivl_type_t vec = make_ivl_type(data_type_, packed_dimensions,
-						 get_signed());
+		  ivl_type_t base_type = elaborate_darray_type(des, scope,
+						  "Queue",
+						  packed_dimensions);
 		  packed_dimensions.clear();
 		  ivl_assert(*this, netdarray==0);
 		  long max_idx;
@@ -1144,7 +1204,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 			      }
 			}
 		  } else max_idx = -1;
-		  netdarray = new netqueue_t(vec, max_idx);
+		  netdarray = new netqueue_t(base_type, max_idx);
 		  continue;
 	    }
 
@@ -1227,13 +1287,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    ivl_assert(*this, unpacked_dimensions.empty());
 	    sig = new NetNet(scope, name_, wtype, netdarray);
 
-      } else if (dynamic_cast<struct_type_t*>(set_data_type_) ||
-		 dynamic_cast<enum_type_t*>(set_data_type_) ||
-		 dynamic_cast<string_type_t*>(set_data_type_) ||
-		 dynamic_cast<class_type_t*>(set_data_type_) ||
-		 dynamic_cast<parray_type_t*>(set_data_type_)) {
+      } else {
+	    ivl_type_t use_type = elaborate_type(des, scope,
+						 packed_dimensions);
 
-	    ivl_type_t use_type = set_data_type_->elaborate_type(des, scope);
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal "
 		       << wtype << " " << *set_data_type_
@@ -1241,41 +1298,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		       << " in scope " << scope_path(scope) << endl;
 	    }
 
-	    ivl_assert(*this, packed_dimensions.empty());
 	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_type);
-      } else {
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": PWire::elaborate_sig: "
-		       << "Create vector signal " << wtype
-		       << " data_type=" << data_type_;
-		  if (!packed_dimensions.empty()) {
-			cerr << " " << packed_dimensions;
-		  }
-		  cerr << " " << name_ << unpacked_dimensions;
-		  cerr << " in scope " << scope_path(scope) << endl;
-	    }
-
-	    ivl_variable_type_t use_data_type = data_type_;
-	    if (use_data_type == IVL_VT_NO_TYPE) {
-		  use_data_type = IVL_VT_LOGIC;
-		  if (debug_elaborate) {
-			cerr << get_fileline() << ": PWire::elaborate_sig: "
-			     << "Signal " << name_
-			     << " in scope " << scope_path(scope)
-			     << " defaults to data type " << use_data_type << endl;
-		  }
-	    }
-
-	    ivl_assert(*this, use_data_type == IVL_VT_LOGIC ||
-			      use_data_type == IVL_VT_BOOL ||
-			      use_data_type == IVL_VT_REAL);
-
-	    netvector_t*vec = new netvector_t(packed_dimensions, use_data_type);
-	    vec->set_signed(get_signed());
-	    vec->set_isint(get_isint());
-	    packed_dimensions.clear();
-	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, vec);
-
       }
 
       if (wtype == NetNet::WIRE) sig->devirtualize_pins();
