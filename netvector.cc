@@ -47,13 +47,13 @@ const netvector_t* netvector_t::integer_type()
 netvector_t netvector_t::scalar_logic (IVL_VT_LOGIC);
 
 netvector_t::netvector_t(ivl_variable_type_t type, long msb, long lsb, bool flag)
-: type_(type), signed_(flag), isint_(false), is_scalar_(false)
+: type_(type), signed_(flag), isint_(false)
 {
       packed_dims_.push_back(netrange_t(msb,lsb));
 }
 
 netvector_t::netvector_t(ivl_variable_type_t type)
-: type_(type), signed_(false), isint_(false), is_scalar_(false)
+: type_(type), signed_(false), isint_(false)
 {
 }
 

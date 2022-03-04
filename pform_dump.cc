@@ -587,7 +587,7 @@ void PWire::dump(ostream&out, unsigned ind) const
       if (get_isint()) {
 	    out << " integer";
       }
-      if (get_scalar()) {
+      if (is_scalar_) {
 	    out << " scalar";
       }
       if (set_data_type_) {
