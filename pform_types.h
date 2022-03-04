@@ -233,12 +233,7 @@ extern atom2_type_t size_type;
  *   bit unsigned foo
  *   reg foo
  *
- * There are a few special cases:
- *
- * For the most part, Verilog treats "logic" and "reg" as synonyms,
- * but there are a few cases where the parser needs to know the
- * difference. So "reg_flag" is set to true if the IVL_VT_LOGIC type
- * is due to the "reg" keyword.
+ * There is one special case:
  *
  * If there are no reg/logic/bit/bool keywords, then Verilog will
  * assume the type is logic, but the context may need to know about
@@ -247,7 +242,7 @@ extern atom2_type_t size_type;
 struct vector_type_t : public data_type_t {
       inline explicit vector_type_t(ivl_variable_type_t bt, bool sf,
 				    std::list<pform_range_t>*pd)
-      : base_type(bt), signed_flag(sf), reg_flag(false), integer_flag(false), implicit_flag(false), pdims(pd) { }
+      : base_type(bt), signed_flag(sf), integer_flag(false), implicit_flag(false), pdims(pd) { }
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
       virtual std::ostream& debug_dump(std::ostream&out) const;
@@ -255,7 +250,6 @@ struct vector_type_t : public data_type_t {
 
       ivl_variable_type_t base_type;
       bool signed_flag;
-      bool reg_flag; // True if "reg" was used
       bool integer_flag; // True if "integer" was used
       bool implicit_flag; // True if this type is implicitly logic/reg
       std::unique_ptr< std::list<pform_range_t> > pdims;

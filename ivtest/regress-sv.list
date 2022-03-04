@@ -318,6 +318,10 @@ named_begin		normal,-g2009		ivltests
 named_begin_fail	CE,-g2009		ivltests
 named_fork		normal,-g2009		ivltests
 named_fork_fail		CE,-g2009		ivltests
+net_class_fail		CE,-g2005-sv		ivltests
+net_darray_fail		CE,-g2005-sv		ivltests
+net_queue_fail		CE,-g2005-sv		ivltests
+net_string_fail		CE,-g2005-sv		ivltests
 packeda			normal,-g2009		ivltests
 packeda2		normal,-g2009		ivltests
 parameter_in_generate2	CE,-g2005-sv		ivltests

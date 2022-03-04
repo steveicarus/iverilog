@@ -77,6 +77,8 @@ br_gh25b		normal			ivltests
 br_gh567		normal			ivltests
 check_constant_3	normal			ivltests
 function4		normal			ivltests
+module_inout_port_type	normal			ivltests
+module_input_port_type	normal			ivltests
 parameter_in_generate1	normal			ivltests
 parameter_no_default	normal			ivltests
 parameter_omit1		normal			ivltests
