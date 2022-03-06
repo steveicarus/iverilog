@@ -81,6 +81,18 @@ static string process_verilog_string_quotes(const string&str)
 			res = res + '\t';
 			idx += 1;
 			break;
+		      case 'v':
+			res = res + '\v';
+			idx += 1;
+			break;
+		      case 'f':
+			res = res + '\f';
+			idx += 1;
+			break;
+		      case 'a':
+			res = res + '\a';
+			idx += 1;
+			break;
 		      case '0':
 		      case '1':
 		      case '2':
@@ -96,6 +108,27 @@ static string process_verilog_string_quotes(const string&str)
 				   && str[idx+odx] <= '7') {
 				  byte_val = 8*byte_val + str[idx+odx]-'0';
 				  odx += 1;
+			    }
+			    idx += odx;
+			    res = res + byte_val;
+			    break;
+		      }
+		      case 'x': {
+			    char byte_val = 0;
+			    int odx = 1;
+			    while (odx < 3 && idx+odx < str_len) {
+				  if (str[idx+odx] >= '0' && str[idx+odx] <= '9') {
+					byte_val = 16*byte_val + str[idx+odx]-'0';
+					odx += 1;
+				  } else if  (str[idx+odx] >= 'a' && str[idx+odx] <= 'f') {
+					byte_val = 16*byte_val + str[idx+odx]-'a'+10;
+					odx += 1;
+				  } else if  (str[idx+odx] >= 'A' && str[idx+odx] <= 'F') {
+					byte_val = 16*byte_val + str[idx+odx]-'A'+10;
+					odx += 1;
+				  } else {
+					break;
+				  }
 			    }
 			    idx += odx;
 			    res = res + byte_val;

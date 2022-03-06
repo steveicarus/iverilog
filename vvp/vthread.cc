@@ -364,6 +364,56 @@ void vthread_s::debug_dump(ostream&fd, const char*label)
       fd << "**** Done ****" << endl;
 }
 
+/*
+ * This function converts the text format of the string by interpreting
+ * any octal characters (\nnn) to their single byte value. We do this here
+ * because the text value in the vvp_code_t is stored as a C string. This
+ * converts it to a C++ string that can hold binary values. We only have
+ * to handle the octal escapes because the main compiler takes care of all
+ * the other string special characters and normalizes the strings to use
+ * only this format.
+ */
+static string filter_string(const char*text)
+{
+      vector<char> tmp (strlen(text)+1);
+      size_t dst = 0;
+      for (const char*ptr = text ; *ptr ; ptr += 1) {
+	    // Not an escape? Move on.
+	    if (*ptr != '\\') {
+		  tmp[dst++] = *ptr;
+		  continue;
+	    }
+
+	    // Now we know that *ptr is pointing to a \ character and we
+	    // have an octal sequence coming up. Advance the ptr and start
+	    // processing octal digits.
+	    ptr += 1;
+	    if (*ptr == 0)
+		  break;
+
+	    char byte = 0;
+	    int cnt = 3;
+	    while (*ptr && cnt > 0 && *ptr >= '0' && *ptr <= '7') {
+		  byte *= 8;
+		  byte += *ptr - '0';
+		  cnt -= 1;
+		  ptr += 1;
+	    }
+	    tmp[dst++] = byte;
+
+	    // After the while loop above, the ptr points to the next character,
+	    // but the for-loop condition is assuming that ptr points to the last
+	    // character, since it has the ptr+=1.
+	    ptr -= 1;
+      }
+
+      // Put a nul byte at the end of the built up string, but really we are
+      // using the known length in the string constructor.
+      tmp[dst] = 0;
+      string res (&tmp[0], dst);
+      return res;
+}
+
 static void do_join(vthread_t thr, vthread_t child);
 
 __vpiScope* vthread_scope(struct vthread_s*thr)
@@ -2264,7 +2314,7 @@ bool of_CONCAT_STR(vthread_t thr, vvp_code_t)
 bool of_CONCATI_STR(vthread_t thr, vvp_code_t cp)
 {
       const char*text = cp->text;
-      thr->peek_str(0).append(text);
+      thr->peek_str(0).append(filter_string(text));
       return true;
 }
 
@@ -5012,7 +5062,7 @@ bool of_PUSHI_REAL(vthread_t thr, vvp_code_t cp)
 bool of_PUSHI_STR(vthread_t thr, vvp_code_t cp)
 {
       const char*text = cp->text;
-      thr->push_str(string(text));
+      thr->push_str(filter_string(text));
       return true;
 }
 
