@@ -531,6 +531,8 @@ sv_string3		normal,-g2009		ivltests
 sv_string4		normal,-g2009		ivltests
 sv_string5		normal,-g2009		ivltests
 sv_string6		normal,-g2009		ivltests
+sv_string7		normal,-g2009		ivltests
+sv_string7b		normal,-g2009		ivltests
 sv_timeunit_prec1	normal,-g2005-sv	ivltests
 sv_timeunit_prec2	normal,-g2009		ivltests
 sv_timeunit_prec3a	normal,-g2005-sv	ivltests gold=sv_timeunit_prec3a.gold
