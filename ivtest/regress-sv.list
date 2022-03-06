@@ -322,6 +322,7 @@ net_class_fail		CE,-g2005-sv		ivltests
 net_darray_fail		CE,-g2005-sv		ivltests
 net_queue_fail		CE,-g2005-sv		ivltests
 net_string_fail		CE,-g2005-sv		ivltests
+package_vec_part_select	normal,-g2005-sv	ivltests
 packeda			normal,-g2009		ivltests
 packeda2		normal,-g2009		ivltests
 parameter_in_generate2	CE,-g2005-sv		ivltests

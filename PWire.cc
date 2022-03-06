@@ -160,11 +160,6 @@ bool PWire::get_isint() const
       return false;
 }
 
-bool PWire::get_scalar() const
-{
-      return is_scalar_;
-}
-
 void PWire::set_range_scalar(PWSRType type)
 {
       is_scalar_ = true;

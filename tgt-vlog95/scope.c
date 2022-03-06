@@ -696,7 +696,8 @@ static int find_tfb_process(ivl_process_t proc, ivl_scope_t scope)
 	       * processes that are used to set local variables. */
 	    assert(ivl_process_type(proc) == IVL_PR_INITIAL);
 	      /* Find the module scope for this task/function. */
-	    while (ivl_scope_type(mod_scope) != IVL_SCT_MODULE) {
+	    while (ivl_scope_type(mod_scope) != IVL_SCT_MODULE &&
+		   ivl_scope_type(mod_scope) != IVL_SCT_PACKAGE) {
 		  mod_scope = ivl_scope_parent(mod_scope);
 		  assert(mod_scope);
 	    }
@@ -1154,7 +1155,9 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    for (idx = 0; idx < count; idx += 1) {
 		  emit_tran(scope, ivl_scope_switch(scope, idx));
 	    }
+      }
 
+      if (sc_type == IVL_SCT_MODULE || sc_type == IVL_SCT_PACKAGE) {
 	      /* Output any initial blocks for tasks or functions or named
 	       * blocks defined in this module. Used to initialize local
 	       * variables. */

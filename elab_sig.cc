@@ -645,7 +645,6 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		  }
 	    } else {
 		  netvector_t*tmp = new netvector_t(IVL_VT_LOGIC);
-		  tmp->set_scalar(true);
 		  ret_type = tmp;
 	    }
 
@@ -951,28 +950,20 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       const long warn_dimension_size = 1 << 30;
 
       NetNet::Type wtype = type_;
-      bool is_implicit_scalar = false;
-      if (wtype == NetNet::IMPLICIT) {
+      if (wtype == NetNet::IMPLICIT)
 	    wtype = NetNet::WIRE;
-	    is_implicit_scalar = true;
-      }
+
 	// Certain contexts, such as arguments to functions, presume
 	// "reg" instead of "wire". The parser reports these as
-	// IMPLICIT_REG. Also, certain cases, such as:
-	//   fun(string arg1) ...
-	// are implicitly NOT scalar, so detect that case here.
-      if (wtype == NetNet::IMPLICIT_REG) {
+	// IMPLICIT_REG.
+      if (wtype == NetNet::IMPLICIT_REG)
 	    wtype = NetNet::REG;
-	    if (data_type_!=IVL_VT_STRING)
-		  is_implicit_scalar = true;
-      }
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PWire::elaborate_sig: "
 		 << "Signal " << basename()
 		 << ", wtype=" << wtype
 		 << ", data_type_=" << data_type_
-		 << ", is_implicit_scalar=" << (is_implicit_scalar?"true":"false")
 		 << ", unpacked_.size()=" << unpacked_.size()
 		 << endl;
       }
@@ -1015,7 +1006,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  dimensions_ok &= evaluate_ranges(des, scope, this, plist, port_);
 		  nlist = plist;
 		    /* An implicit port can have a range so note that here. */
-		  is_implicit_scalar = false;
 	    }
             assert(port_set_ || port_.empty());
 
@@ -1324,7 +1314,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  cerr << get_fileline() << ": PWire::elaborate_sig: "
 		       << "Create vector signal " << wtype
 		       << " data_type=" << data_type_;
-		  if (!get_scalar()) {
+		  if (!packed_dimensions.empty()) {
 			cerr << " " << packed_dimensions;
 		  }
 		  cerr << " " << name_ << unpacked_dimensions;
@@ -1349,8 +1339,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    netvector_t*vec = new netvector_t(packed_dimensions, use_data_type);
 	    vec->set_signed(get_signed());
 	    vec->set_isint(get_isint());
-	    if (is_implicit_scalar) vec->set_scalar(true);
-	    else vec->set_scalar(get_scalar());
 	    packed_dimensions.clear();
 	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, vec);
 

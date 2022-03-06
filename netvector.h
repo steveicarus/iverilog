@@ -54,8 +54,7 @@ class netvector_t : public ivl_type_s {
       inline void set_isint(bool flag) { isint_ = flag; }
       inline bool get_isint(void) const { return isint_; }
 
-      inline void set_scalar(bool flag) { is_scalar_ = flag; }
-      inline bool get_scalar(void) const { return is_scalar_; }
+      inline bool get_scalar(void) const { return packed_dims_.empty(); }
 
       ivl_variable_type_t base_type() const;
       const std::vector<netrange_t>&packed_dims() const;
@@ -88,13 +87,11 @@ class netvector_t : public ivl_type_s {
       ivl_variable_type_t type_;
       bool signed_    : 1;
       bool isint_     : 1;		// original type of integer
-      bool is_scalar_ : 1;
 };
 
 inline netvector_t::netvector_t(const std::vector<netrange_t>&pd,
 				ivl_variable_type_t type)
-: packed_dims_(pd), type_(type), signed_(false), isint_(false),
-  is_scalar_(false)
+: packed_dims_(pd), type_(type), signed_(false), isint_(false)
 {
 }
 
