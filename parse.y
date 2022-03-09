@@ -2628,13 +2628,12 @@ block_item_decl
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
 
-  | K_integer error ';'
-      { yyerror(@1, "error: syntax error in integer variable list.");
+  | data_type error ';'
+      { yyerror(@1, "error: syntax error in variable list.");
 	yyerrok;
       }
-
-  | K_time error ';'
-      { yyerror(@1, "error: syntax error in time variable list.");
+  | K_event error ';'
+      { yyerror(@1, "error: syntax error in event variable list.");
 	yyerrok;
       }
 
