@@ -2511,7 +2511,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
       }
   ;
 
-variable_lifetime
+variable_lifetime_opt
   : lifetime
       { if (pform_requires_sv(@1, "Overriding default variable lifetime") &&
 	    $1 != pform_peek_scope()->default_lifetime) {
@@ -2520,6 +2520,7 @@ variable_lifetime
 	}
 	var_lifetime = $1;
       }
+  |
   ;
 
   /* Verilog-2001 supports attribute lists, which can be attached to a
@@ -2592,21 +2593,13 @@ block_item_decl
   /* variable declarations. Note that data_type can be 0 if we are
      recovering from an error. */
 
-  : data_type list_of_variable_decl_assignments ';'
-      { if ($1) pform_make_var(@1, $2, $1, attributes_in_context);
-      }
-
-  | variable_lifetime data_type list_of_variable_decl_assignments ';'
+  : variable_lifetime_opt data_type list_of_variable_decl_assignments ';'
       { if ($2) pform_make_var(@2, $3, $2, attributes_in_context);
 	var_lifetime = LexicalScope::INHERITED;
       }
 
   /* The extra `reg` is not valid (System)Verilog, this is a iverilog extension. */
-  | K_reg data_type list_of_variable_decl_assignments ';'
-      { if ($2) pform_make_var(@2, $3, $2, attributes_in_context);
-      }
-
-  | variable_lifetime K_reg data_type list_of_variable_decl_assignments ';'
+  | variable_lifetime_opt K_reg data_type list_of_variable_decl_assignments ';'
       { if ($3) pform_make_var(@3, $4, $3, attributes_in_context);
 	var_lifetime = LexicalScope::INHERITED;
       }
@@ -2628,7 +2621,7 @@ block_item_decl
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
 
-  | data_type error ';'
+  | variable_lifetime_opt data_type error ';'
       { yyerror(@1, "error: syntax error in variable list.");
 	yyerrok;
       }
