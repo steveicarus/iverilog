@@ -33,6 +33,7 @@
 # include  "ivl_alloc.h"
 
 static char *dump_path = NULL;
+static int dump_no_date = 0;
 static struct fstContext *dump_file = NULL;
 
 static struct t_vpi_time zero_delay = { vpiSimTime, 0, 0, 0.0 };
@@ -399,7 +400,10 @@ static void open_dumpfile(vpiHandle callh)
 		  prec -= 1;
 	    }
 
-	    fstWriterSetDate(dump_file, asctime(localtime(&walltime)));
+		if (!dump_no_date)
+			fstWriterSetDate(dump_file, asctime(localtime(&walltime)));
+		else
+			fstWriterSetDate(dump_file, "");
 	    fstWriterSetVersion(dump_file, "Icarus Verilog");
 	    sprintf(scale_buf, "\t%u%s\n", scale, units_names[udx]);
 	    fstWriterSetTimescaleFromString(dump_file, scale_buf);
@@ -918,7 +922,9 @@ void sys_fst_register(void)
 		  lxm_optimum_mode = LXM_BOTH;
 	    } else if (strcmp(vlog_info.argv[idx],"-fst-speed-space") == 0) {
 		  lxm_optimum_mode = LXM_BOTH;
-	    }
+		} else if (strcmp(vlog_info.argv[idx],"-no-date") == 0) {
+		  dump_no_date = 1;
+		}
       }
 
       /* All the compiletf routines are located in vcd_priv.c. */

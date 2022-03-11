@@ -33,6 +33,7 @@
 
 static char *dump_path = NULL;
 static FILE *dump_file = NULL;
+static int   dump_no_date = 0;
 
 static struct t_vpi_time zero_delay = { vpiSimTime, 0, 0, 0.0 };
 
@@ -436,9 +437,11 @@ static void open_dumpfile(vpiHandle callh)
 		  prec -= 1;
 	    }
 
-	    fprintf(dump_file, "$date\n");
-	    fprintf(dump_file, "\t%s",asctime(localtime(&walltime)));
-	    fprintf(dump_file, "$end\n");
+		if (!dump_no_date) {
+			fprintf(dump_file, "$date\n");
+			fprintf(dump_file, "\t%s",asctime(localtime(&walltime)));
+			fprintf(dump_file, "$end\n");
+		}
 	    fprintf(dump_file, "$version\n");
 	    fprintf(dump_file, "\tIcarus Verilog\n");
 	    fprintf(dump_file, "$end\n");
@@ -880,6 +883,17 @@ void sys_vcd_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;
+      int idx;
+      struct t_vpi_vlog_info vlog_info;
+
+      /* Scan the extended arguments */
+      vpi_get_vlog_info(&vlog_info);
+
+      for (idx = 0 ;  idx < vlog_info.argc ;  idx += 1) {
+        if (strcmp(vlog_info.argv[idx],"-no-date") == 0) {
+          dump_no_date = 1;
+        }
+      }
 
       /* All the compiletf routines are located in vcd_priv.c. */
 
