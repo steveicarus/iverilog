@@ -4102,8 +4102,7 @@ gate_instance
       { lgate*tmp = new lgate;
 	tmp->name = $1;
 	tmp->parms = $3;
-	tmp->file  = @1.text;
-	tmp->lineno = @1.first_line;
+	FILE_NAME(tmp, @1);
 	delete[]$1;
 	$$ = tmp;
       }
@@ -4113,8 +4112,7 @@ gate_instance
 	tmp->name = $1;
 	tmp->parms = $4;
 	tmp->ranges = $2;
-	tmp->file  = @1.text;
-	tmp->lineno = @1.first_line;
+	FILE_NAME(tmp, @1);
 	delete[]$1;
 	$$ = tmp;
       }
@@ -4123,8 +4121,7 @@ gate_instance
       { lgate*tmp = new lgate;
 	tmp->name = "";
 	tmp->parms = $2;
-	tmp->file  = @1.text;
-	tmp->lineno = @1.first_line;
+	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
 
@@ -4136,8 +4133,7 @@ gate_instance
 	tmp->parms = 0;
 	tmp->parms_by_name = 0;
 	tmp->ranges = $2;
-	tmp->file  = @1.text;
-	tmp->lineno = @1.first_line;
+	FILE_NAME(tmp, @1);
 	delete[]$1;
 	$$ = tmp;
       }
@@ -4149,8 +4145,7 @@ gate_instance
 	tmp->name = $1;
 	tmp->parms = 0;
 	tmp->parms_by_name = $3;
-	tmp->file  = @1.text;
-	tmp->lineno = @1.first_line;
+	FILE_NAME(tmp, @1);
 	delete[]$1;
 	$$ = tmp;
       }
@@ -4161,8 +4156,7 @@ gate_instance
 	tmp->parms = 0;
 	tmp->parms_by_name = $4;
 	tmp->ranges = $2;
-	tmp->file  = @1.text;
-	tmp->lineno = @1.first_line;
+	FILE_NAME(tmp, @1);
 	delete[]$1;
 	$$ = tmp;
       }
@@ -4172,8 +4166,7 @@ gate_instance
 	tmp->name = $1;
 	tmp->parms = 0;
 	tmp->parms_by_name = 0;
-	tmp->file  = @1.text;
-	tmp->lineno = @1.first_line;
+	FILE_NAME(tmp, @1);
 	yyerror(@2, "error: Syntax error in instance port "
 	        "expression(s).");
 	delete[]$1;
@@ -4186,8 +4179,7 @@ gate_instance
 	tmp->parms = 0;
 	tmp->parms_by_name = 0;
 	tmp->ranges = $2;
-	tmp->file  = @1.text;
-	tmp->lineno = @1.first_line;
+	FILE_NAME(tmp, @1);
 	yyerror(@3, "error: Syntax error in instance port "
 	        "expression(s).");
 	delete[]$1;

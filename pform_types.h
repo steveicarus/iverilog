@@ -75,6 +75,19 @@ typedef named<PExpr*> named_pexpr_t;
  */
 typedef std::pair<PExpr*,PExpr*> pform_range_t;
 
+/* The lgate is gate instantiation information. */
+struct lgate : public LineInfo {
+      explicit lgate(int = 0)
+      : parms(0), parms_by_name(0), ranges(0)
+      { }
+
+      std::string name;
+      std::list<PExpr*>*parms;
+      std::list<named_pexpr_t>*parms_by_name;
+
+      std::list<pform_range_t>*ranges;
+};
+
 /*
  * The pform_port_t holds the name and optional unpacked dimensions
  * and initialization expression for a single port in a list of port
