@@ -2742,7 +2742,7 @@ static PWire* pform_get_or_make_wire(const vlltype&li, perm_string name,
  * this one to create the wire and stash it.
  */
 void pform_makewire(const vlltype&li, perm_string name, NetNet::Type type,
-		    ivl_variable_type_t dt)
+		    ivl_variable_type_t dt, std::list<pform_range_t> *indices)
 {
       PWire*cur = pform_get_or_make_wire(li, name, type, NetNet::NOT_A_PORT,
 					 dt);
@@ -2765,6 +2765,9 @@ void pform_makewire(const vlltype&li, perm_string name, NetNet::Type type,
 	  default:
 	    break;
       }
+
+      if (indices && !indices->empty())
+	    cur->set_unpacked_idx(*indices);
 }
 
 void pform_makewire(const struct vlltype&li,
@@ -2785,8 +2788,7 @@ void pform_makewire(const struct vlltype&li,
       for (list<decl_assignment_t*>::iterator cur = assign_list->begin()
 		 ; cur != assign_list->end() ; ++ cur) {
 	    decl_assignment_t* curp = *cur;
-	    pform_makewire(li, curp->name, type, IVL_VT_NO_TYPE);
-	    pform_set_reg_idx(curp->name, &curp->index);
+	    pform_makewire(li, curp->name, type, IVL_VT_NO_TYPE, &curp->index);
 	    names->push_back(curp->name);
       }
 
@@ -3066,22 +3068,6 @@ void pform_set_type_attrib(perm_string name, const string&key,
       }
 
       (*udp).second ->attributes[key] = new PEString(value);
-}
-
-/*
- * This function attaches a memory index range to an existing
- * register. (The named wire must be a register.
- */
-void pform_set_reg_idx(perm_string name, list<pform_range_t>*indices)
-{
-      PWire*cur = lexical_scope->wires_find(name);
-      if (cur == 0) {
-	    VLerror("internal error: name is not a valid memory for index.");
-	    return;
-      }
-
-      if (indices && !indices->empty())
-	    cur->set_unpacked_idx(*indices);
 }
 
 LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
