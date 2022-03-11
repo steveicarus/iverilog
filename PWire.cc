@@ -98,11 +98,9 @@ bool PWire::set_port_type(NetNet::PortType pt)
 
       switch (port_type_) {
 	  case NetNet::PIMPLICIT:
+	  case NetNet::NOT_A_PORT:
 	    port_type_ = pt;
 	    return true;
-
-	  case NetNet::NOT_A_PORT:
-	    return false;
 
 	  default:
 	    if (port_type_ != pt)
