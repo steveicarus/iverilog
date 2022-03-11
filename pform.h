@@ -144,7 +144,6 @@ extern PWire* pform_get_wire_in_scope(perm_string name);
 extern PWire* pform_get_make_wire_in_scope(const struct vlltype&li,
                                            perm_string name,
                                            NetNet::Type net_type,
-                                           NetNet::PortType port_type,
                                            ivl_variable_type_t vt_type);
 
 /*
@@ -350,9 +349,7 @@ extern PForeach* pform_make_foreach(const struct vlltype&loc,
  */
 extern void pform_makewire(const struct vlltype&li, perm_string name,
 			   NetNet::Type type,
-			   NetNet::PortType pt,
-			   ivl_variable_type_t,
-			   std::list<named_pexpr_t>*attr);
+			   ivl_variable_type_t dt);
 
 /* This form handles assignment declarations. */
 

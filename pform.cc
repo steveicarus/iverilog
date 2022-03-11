@@ -2741,12 +2741,11 @@ static PWire* pform_get_or_make_wire(const vlltype&li, perm_string name,
  * the variable/net. Other forms of pform_makewire ultimately call
  * this one to create the wire and stash it.
  */
-void pform_makewire(const vlltype&li, perm_string name,
-		    NetNet::Type type, NetNet::PortType pt,
-		    ivl_variable_type_t dt,
-		    list<named_pexpr_t>*attr)
+void pform_makewire(const vlltype&li, perm_string name, NetNet::Type type,
+		    ivl_variable_type_t dt)
 {
-      PWire*cur = pform_get_or_make_wire(li, name, type, pt, dt);
+      PWire*cur = pform_get_or_make_wire(li, name, type, NetNet::NOT_A_PORT,
+					 dt);
       assert(cur);
 
       bool flag;
@@ -2765,13 +2764,6 @@ void pform_makewire(const vlltype&li, perm_string name,
 	    break;
 	  default:
 	    break;
-      }
-
-      if (attr) {
-	    for (list<named_pexpr_t>::iterator attr_cur = attr->begin()
-		       ; attr_cur != attr->end() ;  ++attr_cur) {
-		  cur->attributes[attr_cur->name] = attr_cur->parm;
-	    }
       }
 }
 
@@ -2793,7 +2785,7 @@ void pform_makewire(const struct vlltype&li,
       for (list<decl_assignment_t*>::iterator cur = assign_list->begin()
 		 ; cur != assign_list->end() ; ++ cur) {
 	    decl_assignment_t* curp = *cur;
-	    pform_makewire(li, curp->name, type, NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
+	    pform_makewire(li, curp->name, type, IVL_VT_NO_TYPE);
 	    pform_set_reg_idx(curp->name, &curp->index);
 	    names->push_back(curp->name);
       }

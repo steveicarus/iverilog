@@ -195,8 +195,7 @@ void pform_attach_discipline(const struct vlltype&loc,
 	    PWire* cur_net = pform_get_wire_in_scope(*cur);
 	    if (cur_net == 0) {
 		    /* Not declared yet, declare it now. */
-		  pform_makewire(loc, *cur, NetNet::WIRE,
-				 NetNet::NOT_A_PORT, IVL_VT_REAL, 0);
+		  pform_makewire(loc, *cur, NetNet::WIRE, IVL_VT_REAL);
 		  cur_net = pform_get_wire_in_scope(*cur);
 		  assert(cur_net);
 	    }
