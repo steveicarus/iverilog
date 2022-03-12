@@ -452,6 +452,7 @@ sv_darray4		normal,-g2009		ivltests
 sv_darray5		normal,-g2009		ivltests
 sv_darray5b		normal,-g2009		ivltests
 sv_darray6		normal,-g2009		ivltests
+sv_darray7		normal,-g2009		ivltests
 sv_darray_args1		normal,-g2009		ivltests
 sv_darray_args2		normal,-g2009		ivltests
 sv_darray_args2b	normal,-g2009		ivltests
