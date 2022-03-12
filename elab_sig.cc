@@ -1042,7 +1042,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 			           << "'' has a vectored net declaration "
 				   << nlist << "." << endl;
 			      des->errors += 1;
-			      return 0;
 			}
 		  }
 
@@ -1054,7 +1053,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 			     << " has a scalar net declaration at "
 			     << get_fileline() << "." << endl;
 			des->errors += 1;
-			return 0;
 		  }
 
 		  /* Both vectored, but they have different ranges. */
@@ -1066,7 +1064,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 			     << " at " << net_.front().first->get_fileline()
 			     << " that does not match." << endl;
 			des->errors += 1;
-			return 0;
 		  }
             }
 
