@@ -465,12 +465,6 @@ extern std::vector<PWire*>* pform_make_udp_input_ports(std::list<perm_string>*);
 extern void pform_make_events(std::list<perm_string>*names,
 			      const char*file, unsigned lineno);
 /*
- * Make real datum objects.
- */
-extern void pform_make_reals(std::list<perm_string>*names,
-			     const char*file, unsigned lineno);
-
-/*
  * The makegate function creates a new gate (which need not have a
  * name) and connects it to the specified wires.
  */
