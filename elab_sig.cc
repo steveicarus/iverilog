@@ -941,7 +941,8 @@ ivl_type_t PWire::elaborate_type(Design*des, NetScope*scope,
 	  dynamic_cast<enum_type_t*>(set_data_type_) ||
 	  dynamic_cast<string_type_t*>(set_data_type_) ||
 	  dynamic_cast<class_type_t*>(set_data_type_) ||
-	  dynamic_cast<parray_type_t*>(set_data_type_)) {
+	  dynamic_cast<parray_type_t*>(set_data_type_) ||
+	  dynamic_cast<atom2_type_t*>(set_data_type_)) {
 	    ivl_type_t use_type = set_data_type_->elaborate_type(des, scope);
 	    ivl_assert(*this, packed_dimensions.empty());
 	    return use_type;
