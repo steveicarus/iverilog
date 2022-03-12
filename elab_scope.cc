@@ -543,7 +543,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       for (map<perm_string, class_type_t::prop_info_t>::iterator cur = use_type->properties.begin()
 		 ; cur != use_type->properties.end() ; ++ cur) {
 
-	    ivl_type_s*tmp = cur->second.type->elaborate_type(des, class_scope);
+	    ivl_type_t tmp = cur->second.type->elaborate_type(des, class_scope);
 	    ivl_assert(*pclass, tmp);
 	    if (debug_scopes) {
 		  cerr << pclass->get_fileline() << ": elaborate_scope_class: "

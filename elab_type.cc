@@ -38,7 +38,7 @@ using namespace std;
  * Elaborations of types may vary depending on the scope that it is
  * done in, so keep a per-scope cache of the results.
  */
-ivl_type_s* data_type_t::elaborate_type(Design*des, NetScope*scope)
+ivl_type_t data_type_t::elaborate_type(Design*des, NetScope*scope)
 {
 	// User-defined types must be elaborated in the context
 	// where they were defined.
@@ -48,16 +48,16 @@ ivl_type_s* data_type_t::elaborate_type(Design*des, NetScope*scope)
       ivl_assert(*this, scope);
       Definitions*use_definitions = scope;
 
-      map<Definitions*,ivl_type_s*>::iterator pos = cache_type_elaborate_.lower_bound(use_definitions);
+      map<Definitions*,ivl_type_t>::iterator pos = cache_type_elaborate_.lower_bound(use_definitions);
 	  if (pos != cache_type_elaborate_.end() && pos->first == use_definitions)
 	     return pos->second;
 
-      ivl_type_s*tmp = elaborate_type_raw(des, scope);
-      cache_type_elaborate_.insert(pos, pair<NetScope*,ivl_type_s*>(scope, tmp));
+      ivl_type_t tmp = elaborate_type_raw(des, scope);
+      cache_type_elaborate_.insert(pos, pair<NetScope*,ivl_type_t>(scope, tmp));
       return tmp;
 }
 
-ivl_type_s* data_type_t::elaborate_type_raw(Design*des, NetScope*) const
+ivl_type_t data_type_t::elaborate_type_raw(Design*des, NetScope*) const
 {
       cerr << get_fileline() << ": internal error: "
 	   << "Elaborate method not implemented for " << typeid(*this).name()
@@ -66,7 +66,7 @@ ivl_type_s* data_type_t::elaborate_type_raw(Design*des, NetScope*) const
       return 0;
 }
 
-ivl_type_s* atom2_type_t::elaborate_type_raw(Design*des, NetScope*) const
+ivl_type_t atom2_type_t::elaborate_type_raw(Design*des, NetScope*) const
 {
       switch (type_code) {
 	  case 64:
@@ -101,7 +101,7 @@ ivl_type_s* atom2_type_t::elaborate_type_raw(Design*des, NetScope*) const
       }
 }
 
-ivl_type_s* class_type_t::elaborate_type_raw(Design*, NetScope*) const
+ivl_type_t class_type_t::elaborate_type_raw(Design*, NetScope*) const
 {
       ivl_assert(*this, save_elaborated_type);
       return save_elaborated_type;
@@ -113,17 +113,16 @@ ivl_type_s* class_type_t::elaborate_type_raw(Design*, NetScope*) const
  * available at the right time. At that time, the netenum_t* object is
  * stashed in the scope so that I can retrieve it here.
  */
-ivl_type_s* enum_type_t::elaborate_type_raw(Design*, NetScope*scope) const
+ivl_type_t enum_type_t::elaborate_type_raw(Design*, NetScope*scope) const
 {
       ivl_assert(*this, scope);
-      ivl_type_s*tmp = scope->enumeration_for_key(this);
-      if (tmp == 0 && scope->unit()) {
+      ivl_type_t tmp = scope->enumeration_for_key(this);
+      if (tmp == 0 && scope->unit())
 	    tmp = scope->unit()->enumeration_for_key(this);
-}
       return tmp;
 }
 
-ivl_type_s* vector_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
+ivl_type_t vector_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 {
       vector<netrange_t> packed;
       if (pdims.get())
@@ -136,7 +135,7 @@ ivl_type_s* vector_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
       return tmp;
 }
 
-ivl_type_s* real_type_t::elaborate_type_raw(Design*, NetScope*) const
+ivl_type_t real_type_t::elaborate_type_raw(Design*, NetScope*) const
 {
       switch (type_code_) {
 	  case REAL:
@@ -147,12 +146,12 @@ ivl_type_s* real_type_t::elaborate_type_raw(Design*, NetScope*) const
       return 0;
 }
 
-ivl_type_s* string_type_t::elaborate_type_raw(Design*, NetScope*) const
+ivl_type_t string_type_t::elaborate_type_raw(Design*, NetScope*) const
 {
       return &netstring_t::type_string;
 }
 
-ivl_type_s* parray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
+ivl_type_t parray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 {
       vector<netrange_t>packed;
       if (dims.get())
@@ -175,7 +174,7 @@ ivl_type_s* parray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
       return new netparray_t(packed, etype);
 }
 
-netstruct_t* struct_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
+ivl_type_t struct_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 {
       netstruct_t*res = new netstruct_t;
 
@@ -213,7 +212,7 @@ netstruct_t* struct_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
       return res;
 }
 
-ivl_type_s* uarray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
+ivl_type_t uarray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 {
 
       ivl_type_t btype = base_type->elaborate_type(des, scope);

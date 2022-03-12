@@ -47,7 +47,6 @@ class Definitions;
 class PExpr;
 class PWire;
 class Statement;
-class ivl_type_s;
 class netclass_t;
 class netenum_t;
 typedef named<verinum> named_number_t;
@@ -154,7 +153,7 @@ class data_type_t : public PNamedItem {
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
       virtual std::ostream& debug_dump(std::ostream&out) const;
 
-      ivl_type_s* elaborate_type(Design*des, NetScope*scope);
+      ivl_type_t elaborate_type(Design*des, NetScope*scope);
 
       virtual SymbolType symbol_type() const;
 
@@ -162,10 +161,10 @@ class data_type_t : public PNamedItem {
 
     private:
 	// Elaborate the type to an ivl_type_s type.
-      virtual ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
+      virtual ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
 
 	// Keep per-scope elaboration results cached.
-      std::map<Definitions*,ivl_type_s*> cache_type_elaborate_;
+      std::map<Definitions*,ivl_type_t> cache_type_elaborate_;
 };
 
 struct void_type_t : public data_type_t {
@@ -180,7 +179,7 @@ struct void_type_t : public data_type_t {
  */
 struct enum_type_t : public data_type_t {
 	// Return the elaborated version of the type.
-      virtual ivl_type_s*elaborate_type_raw(Design*des, NetScope*scope) const;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
 
       ivl_variable_type_t figure_packed_base_type() const;
 
@@ -202,7 +201,7 @@ struct struct_member_t : public LineInfo {
 struct struct_type_t : public data_type_t {
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
-      virtual netstruct_t* elaborate_type_raw(Design*des, NetScope*scope) const;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
 
       bool packed_flag;
       bool union_flag;
@@ -218,7 +217,7 @@ struct atom2_type_t : public data_type_t {
 
       virtual std::ostream& debug_dump(std::ostream&out) const;
 
-      ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
 
       ivl_variable_type_t figure_packed_base_type() const;
 };
@@ -246,7 +245,7 @@ struct vector_type_t : public data_type_t {
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
       virtual std::ostream& debug_dump(std::ostream&out) const;
-      ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
 
       ivl_variable_type_t base_type;
       bool signed_flag;
@@ -276,7 +275,7 @@ struct parray_type_t : public array_base_t {
 
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
-      virtual ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
 };
 
 /*
@@ -288,7 +287,7 @@ struct uarray_type_t : public array_base_t {
 
     public:
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
-      virtual ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
 };
 
 struct real_type_t : public data_type_t {
@@ -297,7 +296,7 @@ struct real_type_t : public data_type_t {
       inline explicit real_type_t(type_t tc) : type_code_(tc) { }
       virtual std::ostream& debug_dump(std::ostream&out) const;
 
-      ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
 
       inline type_t type_code() const { return type_code_; }
 
@@ -309,7 +308,7 @@ struct string_type_t : public data_type_t {
       inline explicit string_type_t() { }
       ~string_type_t();
 
-      ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
 };
 
 struct class_type_t : public data_type_t {
@@ -346,7 +345,7 @@ struct class_type_t : public data_type_t {
 	// without waiting for any constructor.
       std::vector<Statement*> initialize_static;
 
-      ivl_type_s* elaborate_type_raw(Design*, NetScope*) const;
+      ivl_type_t elaborate_type_raw(Design*, NetScope*) const;
 	// The save_elaborated_type member must be set to the pointer
 	// to the netclass_t object that is created to represent this
 	// type. The elaborate_type_raw() method uses this pointer,
