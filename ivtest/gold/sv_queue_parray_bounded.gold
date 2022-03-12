@@ -1,0 +1,9 @@
+./ivltests/sv_queue_parray_bounded.v:61: Warning: Array pattern assignment has more elements (4) than bounded queue 'q_tst' supports (3).
+         Only using first 3 elements.
+./ivltests/sv_queue_parray_bounded.v:38: Warning: push_back(40'b0000000000000000000000000000000001100100) skipped for already full bounded queue<vector[40]> [3].
+./ivltests/sv_queue_parray_bounded.v:45: Warning: push_front(40'b0000000000000000000000000000000000000101) removed 40'b0000000000000000000000000000000000000011 from already full bounded queue<vector[40]> [3].
+./ivltests/sv_queue_parray_bounded.v:46: Warning: assigning to queue<vector>[3] is outside bound (3). 40'b0000000000000000000000000000000000000011 was not added.
+./ivltests/sv_queue_parray_bounded.v:53: Warning: inserting to queue<vector[40]>[3] is outside bound (3). 40'b0000000000000000000000000000000000001010 was not added.
+./ivltests/sv_queue_parray_bounded.v:54: Warning: insert(1, 40'b0000000000000000000000000000000000000010) removed 40'b0000000000000000000000000000000000000010 from already full bounded queue<vector[40]> [3].
+./ivltests/sv_queue_parray_bounded.v:69: Warning: queue<vector> is bounded to have at most 3 elements, source has 4 elements.
+PASSED

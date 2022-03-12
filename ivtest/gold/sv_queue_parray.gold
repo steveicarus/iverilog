@@ -1,0 +1,16 @@
+./ivltests/sv_queue_parray.v:35: Warning: skipping delete(0) on empty queue.
+./ivltests/sv_queue_parray.v:39: Warning: pop_front() on empty queue<vector[40]>.
+./ivltests/sv_queue_parray.v:45: Warning: pop_back() on empty queue<vector[40]>.
+./ivltests/sv_queue_parray.v:56: Warning: skipping out of range delete(3) on queue of size 3.
+./ivltests/sv_queue_parray.v:57: Warning: skipping queue delete() with negative index.
+./ivltests/sv_queue_parray.v:58: Warning: skipping queue delete() with undefined index.
+./ivltests/sv_queue_parray.v:132: Warning: cannot assign to a negative queue<vector[40]> index (-1). 40'b0000000000000000000000000000000000001010 was not added.
+./ivltests/sv_queue_parray.v:133: Warning: cannot assign to an undefined queue<vector[40]> index. 40'b0000000000000000000000000000000000001010 was not added.
+./ivltests/sv_queue_parray.v:134: Warning: assigning to queue<vector>[4] is outside of size (3). 40'b0000000000000000000000000000000000001010 was not added.
+./ivltests/sv_queue_parray.v:137: Warning: cannot assign to a negative queue<vector[40]> index (-1). 40'b0000000000000000000000000000000000001010 was not added.
+./ivltests/sv_queue_parray.v:139: Warning: cannot assign to an undefined queue<vector[40]> index. 40'b0000000000000000000000000000000000001010 was not added.
+./ivltests/sv_queue_parray.v:141: Warning: assigning to queue<vector>[4] is outside of size (3). 40'b0000000000000000000000000000000000001010 was not added.
+./ivltests/sv_queue_parray.v:153: Warning: cannot insert at a negative queue<vector[40]> index (-1). 40'b0000000000000000000000000000000000001010 was not added.
+./ivltests/sv_queue_parray.v:154: Warning: cannot insert at an undefined queue<vector[40]> index. 40'b0000000000000000000000000000000000001010 was not added.
+./ivltests/sv_queue_parray.v:155: Warning: inserting to queue<vector[40]>[5] is outside of size (4). 40'b0000000000000000000000000000000000001010 was not added.
+PASSED
