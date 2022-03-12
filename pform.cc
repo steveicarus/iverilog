@@ -2862,8 +2862,7 @@ static vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 						     ivl_variable_type_t vtype,
 						     bool signed_flag,
 						     list<pform_range_t>*range,
-						     list<pform_port_t>*ports,
-						     bool isint = false)
+						     list<pform_port_t>*ports)
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
       assert(ports);
@@ -2884,10 +2883,6 @@ static vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 	    }
 
 	    curw->set_signed(signed_flag);
-		if (isint) {
-			bool flag = curw->set_wire_type(NetNet::INTEGER);
-			assert(flag);
-		}
 
 	      /* If there is a range involved, it needs to be set. */
 	    if (range) {
@@ -2954,8 +2949,9 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
             vtype = uarray->base_type;
       }
 
-      if (dynamic_cast<atom2_type_t*> (vtype)) {
-	    ret = do_make_task_ports(loc, pt, IVL_VT_BOOL, vtype, ports);
+      if (dynamic_cast<atom_type_t*> (vtype)) {
+	    ret = do_make_task_ports(loc, pt, vtype->figure_packed_base_type(),
+				      vtype, ports);
       }
 
       if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype)) {
@@ -2966,7 +2962,7 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 	    ret = pform_make_task_ports(loc, pt, base_type,
 					 vec_type->signed_flag,
 					 copy_range(vec_type->pdims.get()),
-					 ports, vec_type->integer_flag);
+					 ports);
       }
 
       if (/*real_type_t*real_type = */ dynamic_cast<real_type_t*> (vtype)) {
@@ -3440,9 +3436,6 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
             data_type = uarray_type->base_type;
 
       if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (data_type)) {
-	    if (net_type==NetNet::REG && vec_type->integer_flag)
-		  net_type=NetNet::INTEGER;
-
 	    pform_set_net_range(names, vec_type->pdims.get(),
 				vec_type->signed_flag, 0);
 	    vt = vec_type->base_type;

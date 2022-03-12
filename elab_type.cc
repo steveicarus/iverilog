@@ -66,28 +66,37 @@ ivl_type_t data_type_t::elaborate_type_raw(Design*des, NetScope*) const
       return 0;
 }
 
-ivl_type_t atom2_type_t::elaborate_type_raw(Design*des, NetScope*) const
+ivl_type_t atom_type_t::elaborate_type_raw(Design*des, NetScope*) const
 {
       switch (type_code) {
-	  case 64:
+	  case INTEGER:
+	    return netvector_t::integer_type(signed_flag);
+
+	  case TIME:
+	    if (signed_flag)
+		  return &netvector_t::time_signed;
+	    else
+		  return &netvector_t::time_unsigned;
+
+	  case LONGINT:
 	    if (signed_flag)
 		  return &netvector_t::atom2s64;
 	    else
 		  return &netvector_t::atom2u64;
 
-	  case 32:
+	  case INT:
 	    if (signed_flag)
 		  return &netvector_t::atom2s32;
 	    else
 		  return &netvector_t::atom2u32;
 
-	  case 16:
+	  case SHORTINT:
 	    if (signed_flag)
 		  return &netvector_t::atom2s16;
 	    else
 		  return &netvector_t::atom2u16;
 
-	  case 8:
+	  case BYTE:
 	    if (signed_flag)
 		  return &netvector_t::atom2s8;
 	    else
@@ -95,7 +104,7 @@ ivl_type_t atom2_type_t::elaborate_type_raw(Design*des, NetScope*) const
 
 	  default:
 	    cerr << get_fileline() << ": internal error: "
-		 << "atom2_type_t type_code=" << type_code << "." << endl;
+		 << "atom_type_t type_code=" << type_code << "." << endl;
 	    des->errors += 1;
 	    return 0;
       }

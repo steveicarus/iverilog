@@ -208,10 +208,20 @@ struct struct_type_t : public data_type_t {
       std::unique_ptr< std::list<struct_member_t*> > members;
 };
 
-struct atom2_type_t : public data_type_t {
-      inline explicit atom2_type_t(int tc, bool flag)
-      : type_code(tc), signed_flag(flag) { }
-      int type_code;
+struct atom_type_t : public data_type_t {
+      enum type_code {
+	    INTEGER,
+	    TIME,
+	    BYTE,
+	    SHORTINT,
+	    INT,
+	    LONGINT
+      };
+
+      explicit atom_type_t(enum type_code tc, bool flag) : type_code(tc),
+							   signed_flag(flag) { }
+
+      enum type_code type_code;
       bool signed_flag;
 
       virtual std::ostream& debug_dump(std::ostream&out) const;
@@ -221,7 +231,7 @@ struct atom2_type_t : public data_type_t {
       ivl_variable_type_t figure_packed_base_type() const;
 };
 
-extern atom2_type_t size_type;
+extern atom_type_t size_type;
 
 /*
  * The vector_type_t class represents types in the old Verilog

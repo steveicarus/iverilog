@@ -664,7 +664,7 @@ struct PortInfo
 class NetNet  : public NetObj, public PortType {
 
     public:
-      enum Type ENUM_UNSIGNED_INT { NONE, IMPLICIT, IMPLICIT_REG, INTEGER, WIRE, TRI, TRI1,
+      enum Type ENUM_UNSIGNED_INT { NONE, IMPLICIT, IMPLICIT_REG, WIRE, TRI, TRI1,
 		  SUPPLY0, SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG,
 		  UNRESOLVED_WIRE };
 

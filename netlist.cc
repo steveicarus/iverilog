@@ -51,9 +51,6 @@ ostream& operator<< (ostream&o, NetNet::Type t)
 	  case NetNet::IMPLICIT_REG:
 	    o << "reg /*implicit*/";
 	    break;
-	  case NetNet::INTEGER:
-	    o << "integer";
-	    break;
 	  case NetNet::REG:
 	    o << "reg";
 	    break;
