@@ -1048,7 +1048,7 @@ pr1832097a		normal			ivltests
 pr1832097b		normal			ivltests
 pr1833024		CE			ivltests gold=pr1833024.gold
 pr1833754		CE			ivltests
-pr1841300		normal			ivltests gold=pr1841300.gold
+pr1841300		normal,-gno-io-range-error ivltests gold=pr1841300.gold
 pr1845683		normal			ivltests gold=pr1845683.gold
 pr1851310		normal			ivltests gold=pr1851310.gold
 pr1855504		normal			ivltests gold=pr1855504.gold
@@ -1116,7 +1116,7 @@ pr1960548		normal			ivltests gold=pr1960548.gold
 pr1960558		normal			ivltests gold=pr1960558.gold
 pr1960575		normal			ivltests gold=pr1960575.gold
 pr1960596		normal			ivltests gold=pr1960596.gold
-pr1960619		normal			ivltests gold=pr1960619.gold
+pr1960619		normal,-gno-io-range-error ivltests gold=pr1960619.gold
 pr1960625		normal			ivltests
 pr1960633		normal			ivltests
 pr1963240		normal			ivltests gold=pr1963240.gold
@@ -1139,7 +1139,7 @@ pr1990269		normal			ivltests
 pr1992244		normal			ivltests
 pr1992729		normal			ivltests
 pr1993479		normal			ivltests gold=pr1993479.gold
-pr2001162		normal			ivltests gold=pr2001162.gold
+pr2001162		normal,-gno-io-range-error ivltests gold=pr2001162.gold
 pr2011429		normal			ivltests
 pr2013758		normal			ivltests
 pr2014673		normal			ivltests
