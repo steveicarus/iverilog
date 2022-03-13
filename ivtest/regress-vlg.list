@@ -1610,6 +1610,7 @@ task_noop		normal			ivltests # Task with no contents.
 task_noop2		CO			ivltests # Task *really* with no contents.
 task_omemw2		normal			ivltests
 task_omemw3		CO			ivltests # Pass bit selected from vector to task
+task_port_range_mismatch CE			ivltests
 task_port_size		normal			ivltests # truncate task port connections
 task_scope		normal			ivltests
 tern1			normal			ivltests # Finds problems with ?: using different sizes
