@@ -43,7 +43,8 @@ module unp_array_typedef();
     real_unparray real_unparr;
     int_darray int_darr;
     int_unparray int_unparr;
-    word_darray word_darr;
+    // TODO at the moment dynamic arrays of struct are not supported
+    // word_darray word_darr;
     word_unparray word_unparr;
 
 initial begin
