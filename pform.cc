@@ -1415,13 +1415,12 @@ void pform_end_parameter_port_list()
  * reference. This is a name without a .X(...), so the internal name
  * should be generated to be the same as the X.
  */
-Module::port_t* pform_module_port_reference(perm_string name,
-					    const char*file,
-					    unsigned lineno)
+Module::port_t* pform_module_port_reference(const struct vlltype&loc,
+					    perm_string name)
 {
       Module::port_t*ptmp = new Module::port_t;
       PEIdent*tmp = new PEIdent(name);
-      FILE_NAME(tmp, file, lineno);
+      FILE_NAME(tmp, loc);
       ptmp->name = name;
       ptmp->expr.push_back(tmp);
       ptmp->default_value = 0;
@@ -1836,7 +1835,7 @@ template <> inline svector<perm_string>::svector(unsigned size)
 }
 
 static void process_udp_table(PUdp*udp, list<string>*table,
-			      const char*file, unsigned lineno)
+			      const struct vlltype&loc)
 {
       const bool synchronous_flag = udp->sequential;
 
@@ -1872,7 +1871,7 @@ static void process_udp_table(PUdp*udp, list<string>*table,
 		   output string. */
 	      if (synchronous_flag) {
 		    if (tmp.size() != 4) {
-			  cerr << file<<":"<<lineno << ": error: "
+			  cerr << loc << ": error: "
 			       << "Invalid table format for"
 			       << " sequential primitive." << endl;
 			  error_count += 1;
@@ -1883,7 +1882,7 @@ static void process_udp_table(PUdp*udp, list<string>*table,
 		    tmp = tmp.substr(2);
 
 	      } else if (tmp.size() != 2) {
-		  cerr << file<<":"<<lineno << ": error: "
+		  cerr << loc << ": error: "
 		       << "Invalid table format for"
 		       << " combinational primitive." << endl;
 		  error_count += 1;
@@ -1901,10 +1900,9 @@ static void process_udp_table(PUdp*udp, list<string>*table,
       udp->toutput  = output;
 }
 
-void pform_make_udp(perm_string name, list<perm_string>*parms,
-		    vector<PWire*>*decl, list<string>*table,
-		    Statement*init_expr,
-		    const char*file, unsigned lineno)
+void pform_make_udp(const struct vlltype&loc, perm_string name,
+		    list<perm_string>*parms, vector<PWire*>*decl,
+		    list<string>*table, Statement*init_expr)
 {
       unsigned local_errors = 0;
       assert(!parms->empty());
@@ -1968,10 +1966,10 @@ void pform_make_udp(perm_string name, list<perm_string>*parms,
       assert(pins.count() > 0);
       do {
 	    if (pins[0] == 0) {
-		  cerr << file<<":"<<lineno << ": error: "
+		  cerr << loc << ": error: "
 		       << "Output port of primitive " << name
 		       << " missing output declaration." << endl;
-		  cerr << file<<":"<<lineno << ":      : "
+		  cerr << loc << ":      : "
 		       << "Try: output " << pin_names[0] << ";"
 		       << endl;
 		  error_count += 1;
@@ -1979,10 +1977,10 @@ void pform_make_udp(perm_string name, list<perm_string>*parms,
 		  break;
 	    }
 	    if (pins[0]->get_port_type() != NetNet::POUTPUT) {
-		  cerr << file<<":"<<lineno << ": error: "
+		  cerr << loc << ": error: "
 		       << "The first port of a primitive"
 		       << " must be an output." << endl;
-		  cerr << file<<":"<<lineno << ":      : "
+		  cerr << loc << ":      : "
 		       << "Try: output " << pin_names[0] << ";"
 		       << endl;
 		  error_count += 1;
@@ -1993,11 +1991,11 @@ void pform_make_udp(perm_string name, list<perm_string>*parms,
 
       for (unsigned idx = 1 ;  idx < pins.count() ;  idx += 1) {
 	    if (pins[idx] == 0) {
-		  cerr << file<<":"<<lineno << ": error: "
+		  cerr << loc << ": error: "
 		       << "Port " << (idx+1)
 		       << " of primitive " << name << " missing"
 		       << " input declaration." << endl;
-		  cerr << file<<":"<<lineno << ":      : "
+		  cerr << loc << ":      : "
 		       << "Try: input " << pin_names[idx] << ";"
 		       << endl;
 		  error_count += 1;
@@ -2005,14 +2003,14 @@ void pform_make_udp(perm_string name, list<perm_string>*parms,
 		  continue;
 	    }
 	    if (pins[idx]->get_port_type() != NetNet::PINPUT) {
-		  cerr << file<<":"<<lineno << ": error: "
+		  cerr << loc << ": error: "
 		       << "Input port " << (idx+1)
 		       << " of primitive " << name
 		       << " has an output (or missing) declaration." << endl;
-		  cerr << file<<":"<<lineno << ":      : "
+		  cerr << loc << ":      : "
 		       << "Note that only the first port can be an output."
 		       << endl;
-		  cerr << file<<":"<<lineno << ":      : "
+		  cerr << loc << ":      : "
 		       << "Try \"input " << name << ";\""
 		       << endl;
 		  error_count += 1;
@@ -2021,11 +2019,11 @@ void pform_make_udp(perm_string name, list<perm_string>*parms,
 	    }
 
 	    if (pins[idx]->get_wire_type() == NetNet::REG) {
-		  cerr << file<<":"<<lineno << ": error: "
+		  cerr << loc << ": error: "
 		       << "Port " << (idx+1)
 		       << " of primitive " << name << " is an input port"
 		       << " with a reg declaration." << endl;
-		  cerr << file<<":"<<lineno << ":      : "
+		  cerr << loc << ":      : "
 		       << "primitive inputs cannot be reg."
 		       << endl;
 		  error_count += 1;
@@ -2072,7 +2070,7 @@ void pform_make_udp(perm_string name, list<perm_string>*parms,
 
       } else {
 	    PUdp*udp = new PUdp(name, parms->size());
-	    FILE_NAME(udp, file, lineno);
+	    FILE_NAME(udp, loc);
 
 	      // Detect sequential udp.
 	    if (pins[0]->get_wire_type() == NetNet::REG)
@@ -2082,7 +2080,7 @@ void pform_make_udp(perm_string name, list<perm_string>*parms,
 	    for (unsigned idx = 0 ;  idx < pins.count() ;  idx += 1)
 		  udp->ports[idx] = pins[idx]->basename();
 
-	    process_udp_table(udp, table, file, lineno);
+	    process_udp_table(udp, table, loc);
 	    udp->initial  = init;
 
 	    pform_primitives[name] = udp;
@@ -2096,10 +2094,10 @@ void pform_make_udp(perm_string name, list<perm_string>*parms,
       delete init_expr;
 }
 
-void pform_make_udp(perm_string name, bool synchronous_flag,
-		    perm_string out_name, PExpr*init_expr,
-		    list<perm_string>*parms, list<string>*table,
-		    const char*file, unsigned lineno)
+void pform_make_udp(const struct vlltype&loc, perm_string name,
+		    bool synchronous_flag, perm_string out_name,
+		    PExpr*init_expr, list<perm_string>*parms,
+		    list<string>*table)
 {
 
       svector<PWire*> pins(parms->size() + 1);
@@ -2108,7 +2106,7 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
       pins[0] = new PWire(out_name,
 			  synchronous_flag? NetNet::REG : NetNet::WIRE,
 			  NetNet::POUTPUT, IVL_VT_LOGIC);
-      FILE_NAME(pins[0], file, lineno);
+      FILE_NAME(pins[0], loc);
 
 	/* Make the PWire objects for the input ports. */
       { list<perm_string>::iterator cur;
@@ -2119,7 +2117,7 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
 	      assert(idx < pins.count());
 	      pins[idx] = new PWire(*cur, NetNet::WIRE,
 				    NetNet::PINPUT, IVL_VT_LOGIC);
-	      FILE_NAME(pins[idx], file, lineno);
+	      FILE_NAME(pins[idx], loc);
 	}
 	assert(idx == pins.count());
       }
@@ -2153,7 +2151,7 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
 
       } else {
 	    PUdp*udp = new PUdp(name, pins.count());
-	    FILE_NAME(udp, file, lineno);
+	    FILE_NAME(udp, loc);
 
 	      // Detect sequential udp.
 	    udp->sequential = synchronous_flag;
@@ -2164,7 +2162,7 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
 
 	    assert(udp);
 	    assert(table);
-	    process_udp_table(udp, table, file, lineno);
+	    process_udp_table(udp, table, loc);
 	    udp->initial  = init;
 
 	    pform_primitives[name] = udp;
@@ -2243,21 +2241,21 @@ static void pform_set_net_range(list<perm_string>*names,
  * This is invoked to make a named event. This is the declaration of
  * the event, and not necessarily the use of it.
  */
-static void pform_make_event(perm_string name, const char*fn, unsigned ln)
+static void pform_make_event(const struct vlltype&loc, perm_string name)
 {
       PEvent*event = new PEvent(name);
-      FILE_NAME(event, fn, ln);
+      FILE_NAME(event, loc);
 
       add_local_symbol(lexical_scope, name, event);
       lexical_scope->events[name] = event;
 }
 
-void pform_make_events(list<perm_string>*names, const char*fn, unsigned ln)
+void pform_make_events(const struct vlltype&loc, list<perm_string>*names)
 {
       list<perm_string>::iterator cur;
       for (cur = names->begin() ;  cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
-	    pform_make_event(txt, fn, ln);
+	    pform_make_event(loc, txt);
       }
 
       delete names;
@@ -2539,18 +2537,17 @@ static PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
       return cur;
 }
 
-void pform_make_pgassign_list(list<PExpr*>*alist,
+void pform_make_pgassign_list(const struct vlltype&loc,
+			      list<PExpr*>*alist,
 			      list<PExpr*>*del,
-			      struct str_pair_t str,
-			      const char* fn,
-			      unsigned lineno)
+			      struct str_pair_t str)
 {
       assert(alist->size() % 2 == 0);
       while (! alist->empty()) {
 	    PExpr*lval = alist->front(); alist->pop_front();
 	    PExpr*rval = alist->front(); alist->pop_front();
 	    PGAssign*tmp = pform_make_pgassign(lval, rval, del, str);
-	    FILE_NAME(tmp, fn, lineno);
+	    FILE_NAME(tmp, loc);
       }
 }
 
@@ -2773,7 +2770,7 @@ static PWire* pform_get_or_make_wire(const vlltype&li, perm_string name,
 			    << ".";
 			VLerror(msg.str().c_str());
 		  }
-		  FILE_NAME(cur, li.text, li.first_line);
+		  FILE_NAME(cur, li);
 	    }
 	    return cur;
       }
@@ -2785,7 +2782,7 @@ static PWire* pform_get_or_make_wire(const vlltype&li, perm_string name,
 	// remain in the local symbol map.
 
       cur = new PWire(name, type, ptype, dtype);
-      FILE_NAME(cur, li.text, li.first_line);
+      FILE_NAME(cur, li);
 
       pform_put_wire_in_scope(name, cur);
 
@@ -2865,9 +2862,9 @@ void pform_makewire(const struct vlltype&li,
                         pform_make_var_init(li, first->name, expr);
                   } else {
 		        PEIdent*lval = new PEIdent(first->name);
-		        FILE_NAME(lval, li.text, li.first_line);
+		        FILE_NAME(lval, li);
 		        PGAssign*ass = pform_make_pgassign(lval, expr, delay, str);
-		        FILE_NAME(ass, li.text, li.first_line);
+		        FILE_NAME(ass, li);
                   }
             }
 	    delete first;
@@ -3345,7 +3342,7 @@ extern PSpecPath* pform_make_specify_path(const struct vlltype&li,
 					  bool full_flag, list<perm_string>*dst)
 {
       PSpecPath*path = new PSpecPath(src->size(), dst->size(), pol, full_flag);
-      FILE_NAME(path, li.text, li.first_line);
+      FILE_NAME(path, li);
 
       unsigned idx;
       list<perm_string>::const_iterator cur;
@@ -3405,13 +3402,13 @@ extern void pform_module_specify_path(PSpecPath*obj)
 }
 
 
-static void pform_set_port_type(perm_string name, NetNet::PortType pt,
-				const char*file, unsigned lineno)
+static void pform_set_port_type(const struct vlltype&li,
+				perm_string name, NetNet::PortType pt)
 {
       PWire*cur = pform_get_wire_in_scope(name);
       if (cur == 0) {
 	    cur = new PWire(name, NetNet::IMPLICIT, NetNet::PIMPLICIT, IVL_VT_NO_TYPE);
-	    FILE_NAME(cur, file, lineno);
+	    FILE_NAME(cur, li);
 	    pform_put_wire_in_scope(name, cur);
       }
 
@@ -3422,14 +3419,14 @@ static void pform_set_port_type(perm_string name, NetNet::PortType pt,
 	    break;
 
 	  case NetNet::NOT_A_PORT:
-	    cerr << file << ":" << lineno << ": error: "
+	    cerr << li << ": error: "
 		 << "port " << name << " is not in the port list."
 		 << endl;
 	    error_count += 1;
 	    break;
 
 	  default:
-	    cerr << file << ":" << lineno << ": error: "
+	    cerr << li << ": error: "
 		 << "port " << name << " already has a port declaration."
 		 << endl;
 	    error_count += 1;
@@ -3460,14 +3457,14 @@ void pform_set_port_type(const struct vlltype&li,
       for (list<pform_port_t>::iterator cur = ports->begin()
 		 ; cur != ports->end() ; ++ cur ) {
 
-	    pform_set_port_type(cur->name, pt, li.text, li.first_line);
+	    pform_set_port_type(li, cur->name, pt);
 	    pform_set_net_range(cur->name, NetNet::NONE, range, signed_flag,
 				IVL_VT_NO_TYPE, SR_PORT, attr);
 	    if (cur->udims) {
-		  cerr << li.text << ":" << li.first_line << ": warning: "
+		  cerr << li << ": warning: "
 		       << "Array dimensions in incomplete port declarations "
 		       << "are currently ignored." << endl;
-		  cerr << li.text << ":" << li.first_line << ":        : "
+		  cerr << li << ":        : "
 		       << "The dimensions specified in the net or variable "
 		       << "declaration will be used." << endl;
 		  delete cur->udims;
@@ -3478,7 +3475,7 @@ void pform_set_port_type(const struct vlltype&li,
 	    }
       }
       if (have_init_expr) {
-	    cerr << li.text << ":" << li.first_line << ": error: "
+	    cerr << li << ": error: "
 		 << "Incomplete port declarations cannot be initialized."
 		 << endl;
 	    error_count += 1;
@@ -3663,8 +3660,7 @@ PProcess* pform_make_behavior(ivl_process_type_t type, Statement*st,
 	// always_latch statements.
       if ((type == IVL_PR_ALWAYS_COMB) || (type == IVL_PR_ALWAYS_LATCH)) {
 	    PEventStatement *tmp = new PEventStatement(true);
-	    tmp->set_file(st->get_file());
-	    tmp->set_lineno(st->get_lineno());
+	    tmp->set_line(*st);
 	    tmp->set_statement(st);
 	    st = tmp;
       }

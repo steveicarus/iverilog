@@ -1190,7 +1190,7 @@ data_declaration /* IEEE1800-2005: A.2.1.3 */
 	pform_makewire(@2, 0, str_strength, $3, NetNet::IMPLICIT_REG, data_type, $1);
       }
   | attribute_list_opt K_event event_variable_list ';'
-      { if ($3) pform_make_events($3, @2.text, @2.first_line);
+      { if ($3) pform_make_events(@2, $3);
       }
   | attribute_list_opt package_import_declaration
   ;
@@ -2627,7 +2627,7 @@ block_item_decl
       }
 
   | K_event event_variable_list ';'
-      { if ($2) pform_make_events($2, @1.text, @1.first_line);
+      { if ($2) pform_make_events(@1, $2);
       }
 
   | parameter_declaration
@@ -4424,8 +4424,7 @@ list_of_port_declarations
 	| list_of_port_declarations ',' IDENTIFIER
 		{ Module::port_t*ptmp;
 		  perm_string name = lex_strings.make($3);
-		  ptmp = pform_module_port_reference(name, @3.text,
-						     @3.first_line);
+		  ptmp = pform_module_port_reference(@3, name);
 		  std::vector<Module::port_t*>*tmp = $1;
 		  tmp->push_back(ptmp);
 
@@ -4456,7 +4455,7 @@ port_declaration
 	perm_string name = lex_strings.make($5);
 	data_type_t*use_type = $4;
 	if ($6) use_type = new uarray_type_t(use_type, $6);
-	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
+	ptmp = pform_module_port_reference(@2, name);
 	pform_module_define_port(@2, name, NetNet::PINPUT, $3, use_type, $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
 	port_declaration_context.port_net_type = $3;
@@ -4468,8 +4467,7 @@ port_declaration
     K_input K_wreal IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($4);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
+	ptmp = pform_module_port_reference(@2, name);
 	real_type_t*real_type = new real_type_t(real_type_t::REAL);
 	FILE_NAME(real_type, @3);
 	pform_module_define_port(@2, name, NetNet::PINPUT,
@@ -4485,7 +4483,7 @@ port_declaration
 	Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	data_type_t*use_type = $4;
-	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
+	ptmp = pform_module_port_reference(@2, name);
 	ptmp->default_value = $7;
 	pform_module_define_port(@2, name, NetNet::PINPUT, $3, use_type, $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
@@ -4497,7 +4495,7 @@ port_declaration
   | attribute_list_opt K_inout net_type_opt data_type_or_implicit IDENTIFIER dimensions_opt
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
-	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
+	ptmp = pform_module_port_reference(@2, name);
 	pform_module_define_port(@2, name, NetNet::PINOUT, $3, $4, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = $3;
@@ -4513,8 +4511,7 @@ port_declaration
     K_inout K_wreal IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($4);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
+	ptmp = pform_module_port_reference(@2, name);
 	real_type_t*real_type = new real_type_t(real_type_t::REAL);
 	FILE_NAME(real_type, @3);
 	pform_module_define_port(@2, name, NetNet::PINOUT,
@@ -4546,7 +4543,7 @@ port_declaration
 		    use_type = NetNet::IMPLICIT_REG;
 	      }
 	}
-	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
+	ptmp = pform_module_port_reference(@2, name);
 	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, use_dtype, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = use_type;
@@ -4558,8 +4555,7 @@ port_declaration
     K_output K_wreal IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($4);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
+	ptmp = pform_module_port_reference(@2, name);
 	real_type_t*real_type = new real_type_t(real_type_t::REAL);
 	FILE_NAME(real_type, @3);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
@@ -4577,7 +4573,7 @@ port_declaration
 	if (use_type == NetNet::IMPLICIT) {
 	      use_type = NetNet::IMPLICIT_REG;
 	}
-	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
+	ptmp = pform_module_port_reference(@2, name);
 	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, $4, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = use_type;
@@ -5125,7 +5121,7 @@ module_item
      cont_assign_list. */
 
 	| K_assign drive_strength_opt delay3_opt cont_assign_list ';'
-		{ pform_make_pgassign_list($4, $3, $2, @1.text, @1.first_line); }
+		{ pform_make_pgassign_list(@1, $4, $3, $2); }
 
   /* Always and initial items are behavioral processes. */
 
@@ -5789,7 +5785,7 @@ port_reference
     : IDENTIFIER
         { Module::port_t*ptmp;
 	  perm_string name = lex_strings.make($1);
-	  ptmp = pform_module_port_reference(name, @1.text, @1.first_line);
+	  ptmp = pform_module_port_reference(@1, name);
 	  delete[]$1;
 	  $$ = ptmp;
 	}
@@ -6611,7 +6607,6 @@ statement_item /* This is roughly statement_item in the LRM */
   | lpvalue '=' K_repeat '(' expression ')' event_control expression ';'
       { PAssign*tmp = new PAssign($1,$5,$7,$8);
 	FILE_NAME(tmp,@1);
-	tmp->set_lineno(@1.first_line);
 	$$ = tmp;
       }
   | lpvalue K_LE event_control expression ';'
@@ -7085,9 +7080,7 @@ udp_primitive
 	  K_endprimitive label_opt
 
 		{ perm_string tmp2 = lex_strings.make($2);
-		  pform_make_udp(tmp2, $4, $7, $9, $8,
-				 @2.text, @2.first_line);
-
+		  pform_make_udp(@2, tmp2, $4, $7, $9, $8);
 		  check_end_label(@11, "primitive", $2, $11);
 		  delete[]$2;
 		}
@@ -7103,9 +7096,7 @@ udp_primitive
 
 		{ perm_string tmp2 = lex_strings.make($2);
 		  perm_string tmp6 = lex_strings.make($6);
-		  pform_make_udp(tmp2, $5, tmp6, $7, $9, $12,
-				 @2.text, @2.first_line);
-
+		  pform_make_udp(@2, tmp2, $5, tmp6, $7, $9, $12);
 		  check_end_label(@14, "primitive", $2, $14);
 		  delete[]$2;
 		  delete[]$6;
