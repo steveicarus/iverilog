@@ -648,6 +648,7 @@ module_inout_port_type	CE			ivltests
 module_input_port_type	CE			ivltests
 module_output_port_var1	normal			ivltests
 module_output_port_var2	normal			ivltests
+module_port_range_mismatch CE			ivltests
 modulus			normal			ivltests # wire % and reg % operators
 modulus2		normal			ivltests # reg % operators
 monitor			normal			ivltests gold=monitor.gold
