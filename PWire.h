@@ -57,7 +57,8 @@ class PWire : public PNamedItem {
       PWire(perm_string name,
 	    NetNet::Type t,
 	    NetNet::PortType pt,
-	    ivl_variable_type_t dt);
+	    ivl_variable_type_t dt,
+	    PWSRType rt = SR_NET);
 
 	// Return a hierarchical name.
       perm_string basename() const;
@@ -74,7 +75,6 @@ class PWire : public PNamedItem {
       bool set_data_type(ivl_variable_type_t dt);
       ivl_variable_type_t get_data_type() const;
 
-      void set_range_scalar(PWSRType type);
       void set_range(const std::list<pform_range_t>&ranges, PWSRType type);
 
       void set_unpacked_idx(const std::list<pform_range_t>&ranges);
@@ -93,6 +93,11 @@ class PWire : public PNamedItem {
       NetNet* elaborate_sig(Design*, NetScope*scope) const;
 
       SymbolType symbol_type() const;
+
+      bool is_net() const { return net_set_; };
+      bool is_port() const { return port_set_; };
+      void set_net(NetNet::Type t);
+      void set_port(NetNet::PortType pt);
 
     private:
       perm_string name_;
