@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1881,17 +1881,16 @@ static void draw_lpm_shiftl(ivl_lpm_t net)
       const char* signed_flag = ivl_lpm_signed(net)? "s" : "";
       const char*dly = draw_lpm_output_delay(net, IVL_VT_LOGIC);
 
+      const char *lval = draw_net_input(ivl_lpm_data(net, 0));
+      const char *rval = draw_net_input(ivl_lpm_data(net, 1));
+
       if (ivl_lpm_type(net) == IVL_LPM_SHIFTR)
 	    fprintf(vvp_out, "L_%p%s .shift/r%s %u", net, dly, signed_flag,
 	            width);
       else
 	    fprintf(vvp_out, "L_%p%s .shift/l %u", net, dly, width);
 
-      fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net, 0)));
-
-      fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net, 1)));
-
-      fprintf(vvp_out, ";\n");
+      fprintf(vvp_out, ", %s, %s;\n", lval, rval);
 }
 
 static void draw_type_string_of_nex(ivl_nexus_t nex)
