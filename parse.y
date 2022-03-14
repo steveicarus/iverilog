@@ -7007,7 +7007,7 @@ udp_port_decl
 	$$ = tmp;
 	delete[]$2;
       }
-  | K_reg K_output IDENTIFIER ';'
+  | K_output K_reg IDENTIFIER ';'
       { perm_string pname = lex_strings.make($3);
 	PWire*pp = new PWire(pname, NetNet::REG, NetNet::POUTPUT, IVL_VT_LOGIC);
 	vector<PWire*>*tmp = new std::vector<PWire*>(1);
