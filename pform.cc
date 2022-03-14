@@ -2152,10 +2152,8 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
  * and the name that I receive only has the tail component.
  */
 static void pform_set_net_range(perm_string name,
-				NetNet::Type net_type,
 				const list<pform_range_t>*range,
 				bool signed_flag,
-				ivl_variable_type_t dt,
 				PWSRType rt,
 				std::list<named_pexpr_t>*attr)
 {
@@ -2163,20 +2161,6 @@ static void pform_set_net_range(perm_string name,
       if (cur == 0) {
 	    VLerror("error: name is not a valid net.");
 	    return;
-      }
-
-	// If this is not implicit ("implicit" meaning we don't
-	// know what the type is yet) then set the type now.
-      if (net_type != NetNet::IMPLICIT && net_type != NetNet::NONE) {
-	    bool rc = cur->set_wire_type(net_type);
-	    if (rc == false) {
-		  ostringstream msg;
-		  msg << name << " " << net_type
-		      << " definition conflicts with " << cur->get_wire_type()
-		      << " definition at " << cur->get_fileline()
-		      << ".";
-		  VLerror(msg.str().c_str());
-	    }
       }
 
       if (range == 0) {
@@ -2189,23 +2173,18 @@ static void pform_set_net_range(perm_string name,
       }
       cur->set_signed(signed_flag);
 
-      if (dt != IVL_VT_NO_TYPE)
-	    cur->set_data_type(dt);
-
       pform_bind_attributes(cur->attributes, attr, true);
 }
 
 static void pform_set_net_range(list<perm_string>*names,
 				list<pform_range_t>*range,
 				bool signed_flag,
-				ivl_variable_type_t dt,
-				NetNet::Type net_type,
 				std::list<named_pexpr_t>*attr)
 {
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
-	    pform_set_net_range(txt, net_type, range, signed_flag, dt, SR_NET, attr);
+	    pform_set_net_range(txt, range, signed_flag, SR_NET, attr);
       }
 
 }
@@ -3431,8 +3410,7 @@ void pform_set_port_type(const struct vlltype&li,
 		 ; cur != ports->end() ; ++ cur ) {
 
 	    pform_set_port_type(li, cur->name, pt);
-	    pform_set_net_range(cur->name, NetNet::NONE, range, signed_flag,
-				IVL_VT_NO_TYPE, SR_PORT, attr);
+	    pform_set_net_range(cur->name, range, signed_flag, SR_PORT, attr);
 	    if (cur->udims) {
 		  cerr << li << ": warning: "
 		       << "Array dimensions in incomplete port declarations "
@@ -3509,13 +3487,12 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
 		  net_type=NetNet::INTEGER;
 
 	    pform_set_net_range(names, vec_type->pdims.get(),
-				vec_type->signed_flag,
-				IVL_VT_NO_TYPE, NetNet::NONE, 0);
+				vec_type->signed_flag, 0);
 	    vt = vec_type->base_type;
       }
 
       else if (/*real_type_t*real_type =*/ dynamic_cast<real_type_t*> (data_type)) {
-	    pform_set_net_range(names, 0, true, IVL_VT_NO_TYPE, NetNet::NONE, 0);
+	    pform_set_net_range(names, 0, true, 0);
 	    vt = IVL_VT_REAL;
       }
 
