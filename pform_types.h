@@ -178,6 +178,8 @@ struct void_type_t : public data_type_t {
  * until it is elaborated in a scope.
  */
 struct enum_type_t : public data_type_t {
+      explicit enum_type_t(data_type_t *btype) : base_type(btype) { }
+
 	// Return the elaborated version of the type.
       ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
 
@@ -185,10 +187,7 @@ struct enum_type_t : public data_type_t {
 
       SymbolType symbol_type() const;
 
-      ivl_variable_type_t base_type;
-      bool signed_flag;
-      bool integer_flag; // True if "integer" was used
-      std::unique_ptr< std::list<pform_range_t> > range;
+      data_type_t *base_type;
       std::unique_ptr< std::list<named_pexpr_t> > names;
 };
 

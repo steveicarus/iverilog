@@ -21,6 +21,8 @@
 # include  "config.h"
 # include  "compiler.h"
 # include  "netmisc.h"
+# include  "netvector.h"
+# include  "netparray.h"
 # include  <cstring>
 # include  <iostream>
 # include  <cstdlib>
@@ -166,27 +168,31 @@ static void collect_scope_specparams(Design*des, NetScope*scope,
 static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 					enum_type_t*enum_type)
 {
-      std::vector<netrange_t> ranges;
-      netrange_t range;
+      ivl_type_t base_type;
       bool rc_flag;
 
-      if (enum_type->range.get())
-	    evaluate_ranges(des, scope, enum_type, ranges, *enum_type->range);
+      base_type = enum_type->base_type->elaborate_type(des, scope);
 
-      if (!ranges.empty()) {
-	    range = ranges.front();
-	    if (ranges.size() > 1) {
-		  cerr << enum_type->get_fileline() << ": error: "
-		       << "Enum type must not have more than 1 packed dimension."
-		       << endl;
-		  des->errors++;
-	    }
+      const struct netvector_t *vec_type = dynamic_cast<const netvector_t*>(base_type);
+
+      if (!vec_type && !dynamic_cast<const netparray_t*>(base_type)) {
+	    cerr << enum_type->get_fileline() << ": error: "
+		 << "Invalid enum base type `" << *base_type << "`."
+		 << endl;
+	    des->errors++;
+      } else if (base_type->slice_dimensions().size() > 1) {
+	    cerr << enum_type->get_fileline() << ": error: "
+		 << "Enum type must not have more than 1 packed dimension."
+		 << endl;
+	    des->errors++;
       }
 
-      netenum_t*use_enum = new netenum_t(enum_type->base_type,
-					 enum_type->signed_flag,
-					 enum_type->integer_flag, range,
-					 enum_type->names->size());
+      bool integer_flag = false;
+      if (vec_type)
+	    integer_flag = vec_type->get_isint();
+
+      netenum_t*use_enum = new netenum_t(base_type, enum_type->names->size(),
+				         integer_flag);
 
       use_enum->set_line(*enum_type);
       scope->add_enumeration_set(enum_type, use_enum);
@@ -196,20 +202,21 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       long raw_width = use_enum->packed_width();
       assert(raw_width > 0);
       unsigned enum_width = (unsigned)raw_width;
+      bool is_signed = use_enum->get_signed();
 	// Define the default start value and the increment value to be the
 	// correct type for this enumeration.
       verinum cur_value ((uint64_t)0, enum_width);
-      cur_value.has_sign(enum_type->signed_flag);
+      cur_value.has_sign(is_signed);
       verinum one_value ((uint64_t)1, enum_width);
-      one_value.has_sign(enum_type->signed_flag);
+      one_value.has_sign(is_signed);
 	// Find the maximum allowed enumeration value.
       verinum max_value (0);
-      if (enum_type->signed_flag) {
+      if (is_signed) {
 	    max_value = pow(verinum(2), verinum(enum_width-1)) - one_value;
       } else {
 	    max_value = pow(verinum(2), verinum(enum_width)) - one_value;
       }
-      max_value.has_sign(enum_type->signed_flag);
+      max_value.has_sign(is_signed);
 	// Variable to indicate when a defined value wraps.
       bool implicit_wrapped = false;
 	// Process the enumeration definition.
@@ -234,7 +241,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		  implicit_wrapped = false;
 
 		    // A 2-state value can not have a constant with X/Z bits.
-		  if (enum_type->base_type==IVL_VT_BOOL &&
+		  if (use_enum->base_type() == IVL_VT_BOOL &&
 		      ! cur_value.is_defined()) {
 			cerr << use_enum->get_fileline()
 			     << ": error: Enumeration name " << cur->name
@@ -259,7 +266,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		    // value does not have a defined width.
 		  if (((cur_value.len() != enum_width) ||
 		       ! cur_value.has_len()) &&
-		      ! enum_type->signed_flag && cur_value.is_negative()) {
+		      ! is_signed && cur_value.is_negative()) {
 			cerr << use_enum->get_fileline()
 			     << ": error: Enumeration name " << cur->name
 			     << " has a negative value." << endl;
@@ -282,7 +289,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 			      if (cur_value[idx] != cur_value[check_width]) {
 				      // If this is an unsigned enumeration
 				      // then zero padding is okay.
-				    if (! enum_type->signed_flag &&
+				    if (!is_signed &&
 				        (idx == enum_width) &&
 				        (cur_value[idx] == verinum::V0)) {
 					  check_width += 1;
@@ -328,7 +335,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		    // At this point the value has the correct size and needs
 		    // to have the correct sign attribute set.
 		  cur_value.has_len(true);
-		  cur_value.has_sign(enum_type->signed_flag);
+		  cur_value.has_sign(is_signed);
 
 	    } else if (! cur_value.is_defined()) {
 		  cerr << use_enum->get_fileline()
