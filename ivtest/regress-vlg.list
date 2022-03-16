@@ -650,6 +650,10 @@ module3.12A		normal			ivltests main
 module3.12B		normal			ivltests
 module_inout_port_type	CE			ivltests
 module_input_port_type	CE			ivltests
+module_nonansi_integer1	normal			ivltests
+module_nonansi_integer2	normal			ivltests
+module_nonansi_time1	normal			ivltests
+module_nonansi_time2	normal			ivltests
 module_nonansi_vec1	normal			ivltests
 module_nonansi_vec2	normal			ivltests
 module_output_port_var1	normal			ivltests
