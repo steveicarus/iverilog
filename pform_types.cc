@@ -33,37 +33,6 @@ string_type_t::~string_type_t()
 {
 }
 
-ivl_variable_type_t data_type_t::figure_packed_base_type(void) const
-{
-      return IVL_VT_NO_TYPE;
-}
-
-ivl_variable_type_t parray_type_t::figure_packed_base_type(void) const
-{
-      return base_type->figure_packed_base_type();
-}
-
-ivl_variable_type_t vector_type_t::figure_packed_base_type(void) const
-{
-      return base_type;
-}
-
-ivl_variable_type_t enum_type_t::figure_packed_base_type() const
-{
-      return base_type->figure_packed_base_type();
-}
-
-ivl_variable_type_t atom_type_t::figure_packed_base_type() const
-{
-      switch (type_code) {
-	  case TIME:
-	  case INT:
-	    return IVL_VT_LOGIC;
-	  default:
-	    return IVL_VT_BOOL;
-      }
-}
-
 atom_type_t size_type (atom_type_t::INT, true);
 
 PNamedItem::SymbolType enum_type_t::symbol_type() const

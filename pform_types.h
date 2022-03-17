@@ -155,9 +155,6 @@ class data_type_t : public PNamedItem {
     public:
       inline explicit data_type_t() { }
       virtual ~data_type_t() = 0;
-      // This method is used to figure out the base type of a packed
-      // compound object. Return IVL_VT_NO_TYPE if the type is not packed.
-      virtual ivl_variable_type_t figure_packed_base_type(void)const;
       // This method is used by the pform dumper to diagnostic dump. The
       //  pform_dump dumps type type in pform format, and the debug_dump
       // prints the output in a linear form.
@@ -194,8 +191,6 @@ struct enum_type_t : public data_type_t {
 	// Return the elaborated version of the type.
       ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
 
-      ivl_variable_type_t figure_packed_base_type() const;
-
       SymbolType symbol_type() const;
 
       data_type_t *base_type;
@@ -209,7 +204,6 @@ struct struct_member_t : public LineInfo {
 };
 
 struct struct_type_t : public data_type_t {
-      virtual ivl_variable_type_t figure_packed_base_type(void)const;
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
       ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
 
@@ -238,8 +232,6 @@ struct atom_type_t : public data_type_t {
       virtual std::ostream& debug_dump(std::ostream&out) const;
 
       ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
-
-      ivl_variable_type_t figure_packed_base_type() const;
 };
 
 extern atom_type_t size_type;
@@ -262,7 +254,6 @@ struct vector_type_t : public data_type_t {
       inline explicit vector_type_t(ivl_variable_type_t bt, bool sf,
 				    std::list<pform_range_t>*pd)
       : base_type(bt), signed_flag(sf), integer_flag(false), implicit_flag(false), pdims(pd) { }
-      virtual ivl_variable_type_t figure_packed_base_type(void)const;
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
       virtual std::ostream& debug_dump(std::ostream&out) const;
       ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
@@ -293,7 +284,6 @@ struct parray_type_t : public array_base_t {
       inline explicit parray_type_t(data_type_t*btype, std::list<pform_range_t>*pd)
       : array_base_t(btype, pd) { }
 
-      virtual ivl_variable_type_t figure_packed_base_type(void)const;
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
       ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
 };
