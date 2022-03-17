@@ -35,7 +35,7 @@ class PExpr;
 
 class netclass_t : public ivl_type_s {
     public:
-      netclass_t(perm_string class_name, netclass_t*par);
+      netclass_t(perm_string class_name, const netclass_t*super);
       ~netclass_t();
 
 	// Set the property of the class during elaboration. Set the
@@ -120,7 +120,7 @@ class netclass_t : public ivl_type_s {
       perm_string name_;
 	// If this is derived from another base class, point to it
 	// here.
-      netclass_t*super_;
+      const netclass_t*super_;
 	// Map property names to property table index.
       std::map<perm_string,size_t> properties_;
 	// Vector of properties.
