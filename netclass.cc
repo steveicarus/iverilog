@@ -32,7 +32,8 @@ netclass_t::~netclass_t()
 {
 }
 
-bool netclass_t::set_property(perm_string pname, property_qualifier_t qual, ivl_type_s*ptype)
+bool netclass_t::set_property(perm_string pname, property_qualifier_t qual,
+			      ivl_type_t ptype)
 {
       map<perm_string,size_t>::const_iterator cur;
       cur = properties_.find(pname);
