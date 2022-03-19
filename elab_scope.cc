@@ -186,8 +186,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       netenum_t*use_enum = new netenum_t(enum_type->base_type,
 					 enum_type->signed_flag,
 					 enum_type->integer_flag, range,
-					 enum_type->names->size(),
-					 enum_type);
+					 enum_type->names->size());
 
       use_enum->set_line(*enum_type);
       scope->add_enumeration_set(enum_type, use_enum);
