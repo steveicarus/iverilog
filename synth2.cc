@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1847,7 +1847,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 
 		  if (!all_bits_driven(tmp_masks[pin])) {
 			cerr << get_fileline() << ": sorry: Not all bits of '"
-			     << nex_map[idx].lnk.nexus()->pick_any_net()->name()
+			     << nex_map[pin].lnk.nexus()->pick_any_net()->name()
 			     << "' are asynchronously set or reset. This is "
 			     << "not currently supported in synthesis." << endl;
 			des->errors += 1;
