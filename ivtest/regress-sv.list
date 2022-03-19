@@ -232,6 +232,10 @@ disable_fork_cmd	normal,-g2009		ivltests
 display_bug		normal,-g2009		ivltests gold=display_bug.gold
 edge			normal,-g2009		ivltests
 enum_base_range		normal,-g2005-sv	ivltests
+enum_compatibility1	normal,-g2005-sv	ivltests
+enum_compatibility2	normal,-g2005-sv	ivltests
+enum_compatibility3	normal,-g2005-sv	ivltests
+enum_compatibility_fail	CE,-g2005-sv	ivltests
 enum_elem_ranges	normal,-g2005-sv	ivltests
 enum_dims_invalid	CE,-g2005-sv		ivltests
 enum_in_struct		normal,-g2005-sv	ivltests
