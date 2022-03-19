@@ -1748,6 +1748,11 @@ static void draw_lpm_concat(ivl_lpm_t net)
 static void draw_lpm_ff(ivl_lpm_t net)
 {
       ivl_nexus_t nex;
+      const char*clk_in;
+      const char*d_in;
+      const char*e_in;
+      const char*clr_in;
+      const char*set_in;
 
 	/* Sync set/clear control is not currently supported. This is not
 	 * a problem, as synthesis can incorporate this in the D input
@@ -1760,12 +1765,47 @@ static void draw_lpm_ff(ivl_lpm_t net)
 
       unsigned width = ivl_lpm_width(net);
       char*edge = ivl_lpm_negedge(net) ? "n" : "p";
-      if (ivl_lpm_async_clr(net)) {
+
+      nex = ivl_lpm_clk(net);
+      assert(nex);
+      assert(width_of_nexus(nex) == 1);
+      clk_in = draw_net_input(nex);
+
+      nex = ivl_lpm_data(net,0);
+      assert(nex);
+      assert(width_of_nexus(nex) == width);
+      d_in = draw_net_input(nex);
+
+      nex = ivl_lpm_enable(net);
+      if (nex) {
+	    assert(width_of_nexus(nex) == 1);
+	    e_in = draw_net_input(nex);
+      } else {
+	    e_in = ", C4<1>";
+      }
+
+      nex = ivl_lpm_async_clr(net);
+      if (nex) {
+	    assert(width_of_nexus(nex) == 1);
+	    clr_in = draw_net_input(nex);
+      } else {
+	    clr_in = 0;
+      }
+
+      nex = ivl_lpm_async_set(net);
+      if (nex) {
+	    assert(width_of_nexus(nex) == 1);
+	    set_in = draw_net_input(nex);
+      } else {
+	    set_in = 0;
+      }
+
+      if (clr_in) {
 	      /* Synthesis doesn't currently support both set and clear.
 		 If it ever does, it might be better to implement the
 		 flip-flop as a UDP. See tgt-vlog95 for an example of
 		 how to do this. */
-	    if (ivl_lpm_async_set(net)) {
+	    if (set_in) {
 		  fprintf(stderr, "%s:%u:vvp.tgt: sorry: No support for a DFF "
 		                  "with both an async. set and clear.\n",
 		                  ivl_lpm_file(net), ivl_lpm_lineno(net));
@@ -1778,33 +1818,15 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	    fprintf(vvp_out, "L_%p .dff/%s %u ", net, edge, width);
       }
 
-      nex = ivl_lpm_data(net,0);
-      assert(nex);
-      fprintf(vvp_out, "%s", draw_net_input(nex));
-      assert(width_of_nexus(nex) == width);
+      fprintf(vvp_out, "%s, %s, %s", d_in, clk_in, e_in);
 
-      nex = ivl_lpm_clk(net);
-      assert(nex);
-      assert(width_of_nexus(nex) == 1);
-      fprintf(vvp_out, ", %s", draw_net_input(nex));
-
-      nex = ivl_lpm_enable(net);
-      if (nex) {
-	    assert(width_of_nexus(nex) == 1);
-	    fprintf(vvp_out, ", %s", draw_net_input(nex));
-      } else {
-	    fprintf(vvp_out, ", C4<1>");
+      if (clr_in) {
+	    fprintf(vvp_out, ", %s", clr_in);
       }
 
-      if ( (nex = ivl_lpm_async_clr(net)) ) {
-	    assert(width_of_nexus(nex) == 1);
-	    fprintf(vvp_out, ", %s", draw_net_input(nex));
-      }
-
-      if ( (nex = ivl_lpm_async_set(net)) ) {
+      if (set_in) {
 	    ivl_expr_t val = ivl_lpm_aset_value(net);
-	    assert(width_of_nexus(nex) == 1);
-	    fprintf(vvp_out, ", %s", draw_net_input(nex));
+	    fprintf(vvp_out, ", %s", set_in);
 	    if (val) {
 		  unsigned nbits = ivl_expr_width(val);
 		  const char*bits = ivl_expr_bits(val);
@@ -1828,21 +1850,22 @@ static void draw_lpm_ff(ivl_lpm_t net)
 static void draw_lpm_latch(ivl_lpm_t net)
 {
       ivl_nexus_t nex;
+      const char*d_in;
+      const char*e_in;
 
       unsigned width = ivl_lpm_width(net);
-      fprintf(vvp_out, "L_%p .latch %u ", net, width);
 
       nex = ivl_lpm_data(net,0);
       assert(nex);
-      fprintf(vvp_out, "%s", draw_net_input(nex));
       assert(width_of_nexus(nex) == width);
+      d_in = draw_net_input(nex);
 
       nex = ivl_lpm_enable(net);
       assert(nex);
       assert(width_of_nexus(nex) == 1);
-      fprintf(vvp_out, ", %s", draw_net_input(nex));
+      e_in = draw_net_input(nex);
 
-      fprintf(vvp_out, ";\n");
+      fprintf(vvp_out, "L_%p .latch %u %s, %s;\n", net, width, d_in, e_in);
 }
 
 static void draw_lpm_shiftl(ivl_lpm_t net)
@@ -1932,6 +1955,13 @@ static void draw_lpm_sfunc(ivl_lpm_t net)
       ivl_variable_type_t dt = data_type_of_nexus(ivl_lpm_q(net));
       const char*dly = draw_lpm_output_delay(net, dt);
 
+	/* Get all the input labels that I will use for net signals that
+	   connect to the inputs of the function. */
+      unsigned ninp = ivl_lpm_size(net);
+      const char**input_strings = calloc(ninp, sizeof(char*));
+      for (idx = 0 ;  idx < ninp ;  idx += 1)
+	    input_strings[idx] = draw_net_input(ivl_lpm_data(net, idx));
+
 	/* Because vvp uses a wide functor for the output of a system
 	 * function we need to define the output delay net when needed,
 	 * otherwise it will not be cleaned up correctly (gives a
@@ -1967,7 +1997,7 @@ static void draw_lpm_sfunc(ivl_lpm_t net)
       fprintf(vvp_out, "\"");
 
       for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 1) {
-	    fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,idx)));
+	    fprintf(vvp_out, ", %s", input_strings[idx]);
       }
 
       fprintf(vvp_out, ";\n");
@@ -2059,6 +2089,7 @@ static void draw_lpm_part(ivl_lpm_t net)
       unsigned width, base;
       ivl_nexus_t sel;
 
+      const char*input = draw_net_input(ivl_lpm_data(net, 0));
       const char*dly = draw_lpm_output_delay(net, IVL_VT_LOGIC);
 
       width = ivl_lpm_width(net);
@@ -2066,14 +2097,13 @@ static void draw_lpm_part(ivl_lpm_t net)
       sel = ivl_lpm_data(net,1);
 
       if (sel == 0) {
-	    fprintf(vvp_out, "L_%p%s .part %s",
-		    net, dly, draw_net_input(ivl_lpm_data(net, 0)));
+	    fprintf(vvp_out, "L_%p%s .part %s", net, dly, input);
 	    fprintf(vvp_out, ", %u, %u;\n", base, width);
       } else {
 	    const char*sel_symbol = draw_net_input(sel);
 	    fprintf(vvp_out, "L_%p%s .part/v%s %s", net, dly,
 	                     (ivl_lpm_signed(net) ? ".s" : ""),
-	                     draw_net_input(ivl_lpm_data(net,0)));
+	                     input);
 	    fprintf(vvp_out, ", %s", sel_symbol);
 	    fprintf(vvp_out, ", %u;\n", width);
       }
@@ -2089,9 +2119,9 @@ static void draw_lpm_part_pv(ivl_lpm_t net)
       unsigned base  = ivl_lpm_base(net);
       unsigned signal_width = width_of_nexus(ivl_lpm_q(net));
 
-      fprintf(vvp_out, "L_%p .part/pv %s",
-	      net, draw_net_input(ivl_lpm_data(net, 0)));
+      const char*input = draw_net_input(ivl_lpm_data(net, 0));
 
+      fprintf(vvp_out, "L_%p .part/pv %s", net, input);
       fprintf(vvp_out, ", %u, %u, %u;\n", base, width, signal_width);
 }
 
@@ -2100,28 +2130,28 @@ static void draw_lpm_part_pv(ivl_lpm_t net)
  */
 static void draw_lpm_re(ivl_lpm_t net, const char*type)
 {
+      const char*input = draw_net_input(ivl_lpm_data(net, 0));
       const char*dly = draw_lpm_output_delay(net, IVL_VT_LOGIC);
 
-      fprintf(vvp_out, "L_%p%s .reduce/%s %s;\n", net, dly,
-	      type, draw_net_input(ivl_lpm_data(net,0)));
+      fprintf(vvp_out, "L_%p%s .reduce/%s %s;\n", net, dly, type, input);
 }
 
 static void draw_lpm_repeat(ivl_lpm_t net)
 {
+      const char*input = draw_net_input(ivl_lpm_data(net, 0));
       const char*dly = draw_lpm_output_delay(net, IVL_VT_LOGIC);
 
       fprintf(vvp_out, "L_%p%s .repeat %u, %u, %s;\n", net, dly,
-	      ivl_lpm_width(net), ivl_lpm_size(net),
-	      draw_net_input(ivl_lpm_data(net,0)));
+	      ivl_lpm_width(net), ivl_lpm_size(net), input);
 }
 
 static void draw_lpm_sign_ext(ivl_lpm_t net)
 {
+      const char*input = draw_net_input(ivl_lpm_data(net, 0));
       const char*dly = draw_lpm_output_delay(net, IVL_VT_LOGIC);
 
       fprintf(vvp_out, "L_%p%s .extend/s %u, %s;\n",
-	      net, dly, ivl_lpm_width(net),
-	      draw_net_input(ivl_lpm_data(net,0)));
+	      net, dly, ivl_lpm_width(net), input);
 }
 
 static void draw_lpm_in_scope(ivl_lpm_t net)
