@@ -715,10 +715,8 @@ bool NetNet::get_signed() const
 
 bool NetNet::get_scalar() const
 {
-      if (const netvector_t*vec = dynamic_cast<const netvector_t*> (net_type_))
-	    return vec->get_scalar();
-      else
-	    return false;
+      ivl_assert(*this, net_type_);
+      return net_type_->get_scalar();
 }
 
 const netenum_t*NetNet::enumeration(void) const

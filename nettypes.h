@@ -45,6 +45,7 @@ class ivl_type_s {
 	// those specific types.
       virtual ivl_variable_type_t base_type() const;
       virtual bool get_signed() const;
+      virtual bool get_scalar() const;
 
 	// Return true if "that" type is compatible with this
 	// type. Compatible means the types are essentially the same.
