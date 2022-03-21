@@ -29,14 +29,12 @@
 
 class NetScope;
 
-struct enum_type_t;
-
 class netenum_t : public LineInfo, public ivl_type_s {
 
     public:
       explicit netenum_t(ivl_variable_type_t base_type, bool signed_flag,
 			 bool isint_flag, const netrange_t &range,
-			 size_t name_count, enum_type_t*enum_type);
+			 size_t name_count);
       ~netenum_t();
 
       virtual ivl_variable_type_t base_type() const;
@@ -74,7 +72,6 @@ class netenum_t : public LineInfo, public ivl_type_s {
 
     private:
       ivl_variable_type_t base_type_;
-      enum_type_t*enum_type_;
       bool signed_flag_;
       bool integer_flag_;
       netrange_t range_;

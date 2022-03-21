@@ -24,11 +24,9 @@
 using namespace std;
 
 netenum_t::netenum_t(ivl_variable_type_t btype, bool signed_flag,
-		     bool integer_flag, const netrange_t &range, size_t name_count,
-		     enum_type_t*enum_type)
-: base_type_(btype), enum_type_(enum_type), signed_flag_(signed_flag),
-  integer_flag_(integer_flag), range_(range),
-  names_(name_count), bits_(name_count)
+		     bool integer_flag, const netrange_t &range, size_t name_count)
+: base_type_(btype), signed_flag_(signed_flag), integer_flag_(integer_flag),
+  range_(range), names_(name_count), bits_(name_count)
 {
 }
 
@@ -159,5 +157,5 @@ perm_string netenum_t::bits_at(size_t idx) const
 
 bool netenum_t::matches(const netenum_t*other) const
 {
-      return enum_type_ == other->enum_type_;
+      return this == other;
 }
