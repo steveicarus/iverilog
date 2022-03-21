@@ -3413,16 +3413,10 @@ static void pform_set_port_type(const struct vlltype&li,
       }
 
       switch (cur->get_port_type()) {
+	  case NetNet::NOT_A_PORT:
 	  case NetNet::PIMPLICIT:
 	    if (! cur->set_port_type(pt))
 		  VLerror("error setting port direction.");
-	    break;
-
-	  case NetNet::NOT_A_PORT:
-	    cerr << li << ": error: "
-		 << "port " << name << " is not in the port list."
-		 << endl;
-	    error_count += 1;
 	    break;
 
 	  default:
