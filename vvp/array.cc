@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1121,8 +1121,8 @@ void vvp_fun_arrayport_sa::check_word_change(unsigned long addr)
 class vvp_fun_arrayport_aa  : public vvp_fun_arrayport, public automatic_hooks_s {
 
     public:
-      explicit vvp_fun_arrayport_aa(vvp_array_t mem, vvp_net_t*net);
-      explicit vvp_fun_arrayport_aa(vvp_array_t mem, vvp_net_t*net, long addr);
+      explicit vvp_fun_arrayport_aa(__vpiScope*context_scope, vvp_array_t mem, vvp_net_t*net);
+      explicit vvp_fun_arrayport_aa(__vpiScope*context_scope, vvp_array_t mem, vvp_net_t*net, long addr);
       ~vvp_fun_arrayport_aa();
 
       void alloc_instance(vvp_context_t context);
@@ -1143,18 +1143,16 @@ class vvp_fun_arrayport_aa  : public vvp_fun_arrayport, public automatic_hooks_s
       unsigned context_idx_;
 };
 
-vvp_fun_arrayport_aa::vvp_fun_arrayport_aa(vvp_array_t mem, vvp_net_t*net)
-: vvp_fun_arrayport(mem, net)
+vvp_fun_arrayport_aa::vvp_fun_arrayport_aa(__vpiScope*context_scope, vvp_array_t mem, vvp_net_t*net)
+: vvp_fun_arrayport(mem, net), context_scope_(context_scope)
 {
-      context_scope_ = vpip_peek_context_scope();
-      context_idx_ = vpip_add_item_to_context(this, context_scope_);
+      context_idx_ = vpip_add_item_to_context(this, context_scope);
 }
 
-vvp_fun_arrayport_aa::vvp_fun_arrayport_aa(vvp_array_t mem, vvp_net_t*net, long addr)
-: vvp_fun_arrayport(mem, net, addr)
+vvp_fun_arrayport_aa::vvp_fun_arrayport_aa(__vpiScope*context_scope, vvp_array_t mem, vvp_net_t*net, long addr)
+: vvp_fun_arrayport(mem, net, addr), context_scope_(context_scope)
 {
-      context_scope_ = vpip_peek_context_scope();
-      context_idx_ = vpip_add_item_to_context(this, context_scope_);
+      context_idx_ = vpip_add_item_to_context(this, context_scope);
 }
 
 vvp_fun_arrayport_aa::~vvp_fun_arrayport_aa()
@@ -1369,6 +1367,7 @@ class array_port_resolv_list_t : public resolv_list_s {
       explicit array_port_resolv_list_t(char* lab, bool use_addr__,
                                         long addr__);
 
+      __vpiScope*context_scope;
       vvp_net_t*ptr;
       bool use_addr;
       long addr;
@@ -1381,6 +1380,10 @@ array_port_resolv_list_t::array_port_resolv_list_t(char *lab, bool use_addr__,
                                                    long addr__)
 : resolv_list_s(lab), use_addr(use_addr__), addr(addr__)
 {
+      if (vpip_peek_current_scope()->is_automatic())
+            context_scope = vpip_peek_context_scope();
+      else
+            context_scope = 0;
       ptr = new vvp_net_t;
 }
 
@@ -1394,13 +1397,13 @@ bool array_port_resolv_list_t::resolve(bool mes)
 
       vvp_fun_arrayport*fun;
       if (use_addr)
-            if (vpip_peek_current_scope()->is_automatic())
-                  fun = new vvp_fun_arrayport_aa(mem, ptr, addr);
+            if (context_scope)
+                  fun = new vvp_fun_arrayport_aa(context_scope, mem, ptr, addr);
             else
                   fun = new vvp_fun_arrayport_sa(mem, ptr, addr);
       else
-            if (vpip_peek_current_scope()->is_automatic())
-                  fun = new vvp_fun_arrayport_aa(mem, ptr);
+            if (context_scope)
+                  fun = new vvp_fun_arrayport_aa(context_scope, mem, ptr);
             else
                   fun = new vvp_fun_arrayport_sa(mem, ptr);
       ptr->fun = fun;
