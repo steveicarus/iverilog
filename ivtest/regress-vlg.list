@@ -341,6 +341,7 @@ br_gh515		normal			ivltests
 br_gh531		normal			ivltests gold=br_gh531.gold
 br_gh533		CE			ivltests
 br_gh567		normal,-g2001		ivltests gold=br_gh567.gold
+br_gh621		normal			ivltests
 br_gh632		normal			ivltests
 br_gh632b		normal,-S		ivltests
 br_gh632c		normal			ivltests
