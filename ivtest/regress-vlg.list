@@ -1679,6 +1679,7 @@ udp_dff			normal			ivltests
 udp_dff_std		normal			ivltests
 udp_eval_arg		normal			ivltests
 udp_jkff		normal			ivltests
+udp_output_reg		normal			ivltests
 udp_real_delay		normal			ivltests
 udp_sched		normal			ivltests
 udp_x			normal			ivltests
