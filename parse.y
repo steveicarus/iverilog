@@ -916,11 +916,8 @@ class_item /* IEEE1800-2005: A.1.8 */
 
     /* IEEEE1800-2017: A.1.9 Class items: class_item ::= { property_qualifier} data_declaration */
 
-  | property_qualifier_opt K_typedef data_type IDENTIFIER dimensions_opt ';'
-      { perm_string name = lex_strings.make($4);
-	delete[]$4;
-	pform_set_typedef(name, $3, $5);
-      }
+    /* TODO: Restrict the access based on the property qualifier. */
+  | property_qualifier_opt type_declaration
 
     /* IEEE1800-1017: A.1.9 Class items: Class methods... */
 
