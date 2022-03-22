@@ -2685,13 +2685,13 @@ type_declaration
   /* If the IDENTIFIER already is a typedef, it is possible for this
      code to override the definition, but only if the typedef is
      inherited from a different scope. */
-  | K_typedef data_type TYPE_IDENTIFIER ';'
+  | K_typedef data_type TYPE_IDENTIFIER dimensions_opt ';'
       { perm_string name = lex_strings.make($3.text);
 	if (pform_test_type_identifier_local(name)) {
 	      yyerror(@3, "error: Typedef identifier \"%s\" is already a type name.", $3.text);
-
+	      delete $4;
 	} else {
-	      pform_set_typedef(name, $2, NULL);
+	      pform_set_typedef(name, $2, $4);
 	}
 	delete[]$3.text;
       }
