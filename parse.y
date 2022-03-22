@@ -824,20 +824,9 @@ class_identifier
      the class name is detected by the lexor as a TYPE_IDENTIFIER if it
      does indeed match a name. */
 class_declaration_endlabel_opt
-  : ':' TYPE_IDENTIFIER
-      { class_type_t*tmp = dynamic_cast<class_type_t*> ($2.type);
-	if (tmp == 0) {
-	      yyerror(@2, "error: class declaration endlabel \"%s\" is not a class name\n", $2.text);
-	      $$ = 0;
-	} else {
-	      $$ = strdupnew(tmp->name.str());
-	}
-	delete[]$2.text;
-      }
-  | ':' IDENTIFIER
-      { $$ = $2; }
-  |
-      { $$ = 0; }
+  : ':' TYPE_IDENTIFIER { $$ = $2.text; }
+  | ':' IDENTIFIER { $$ = $2; }
+  | { $$ = 0; }
   ;
 
   /* This rule implements [ extends class_type ] in the
