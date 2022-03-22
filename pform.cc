@@ -2536,13 +2536,6 @@ void pform_make_var_init(const struct vlltype&li,
 	    return;
       }
 
-      PWire*cur = pform_get_wire_in_scope(name);
-      if (cur == 0) {
-	    VLerror(li, "internal error: var_init to non-register?");
-	    delete expr;
-	    return;
-      }
-
       PEIdent*lval = new PEIdent(name);
       FILE_NAME(lval, li);
       PAssign*ass = new PAssign(lval, expr, !gn_system_verilog());
