@@ -568,7 +568,9 @@ sv_timeunit_prec_fail2	CE,-g2009,-u,\
   ./ivltests/sv_timeunit_prec_fail2a.v,\
   ./ivltests/sv_timeunit_prec_fail2b.v,\
   ./ivltests/sv_timeunit_prec_fail2c.v,		ivltests gold=sv_timeunit_prec_fail2.gold
-sv_typedef_scope	normal,-g2009		ivltests
+sv_typedef_scope1	normal,-g2009		ivltests
+sv_typedef_scope2	normal,-g2009		ivltests
+sv_typedef_scope3	normal,-g2009		ivltests
 sv_union1		normal,-g2009		ivltests
 sv_union1b		normal,-g2009		ivltests
 sv_union2		normal,-g2009		ivltests
