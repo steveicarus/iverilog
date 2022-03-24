@@ -439,6 +439,14 @@ pr3390385b		CE,-g2009		ivltests  # ++
 pr3390385c		CE,-g2009		ivltests  # ++
 pr3390385d		CE,-g2009		ivltests  # ++
 pr3462145		CE,-g2009		ivltests  # ++
+sv_typedef_darray_base1	CE,-g2009		ivltests  # Dyanmic array
+sv_typedef_darray_base2	CE,-g2009		ivltests  # Dyanmic array
+sv_typedef_darray_base3	CE,-g2009		ivltests  # Dyanmic array
+sv_typedef_darray_base4	CE,-g2009		ivltests  # Dyanmic array
+sv_typedef_queue_base1	CE,-g2009		ivltests  # queue
+sv_typedef_queue_base2	CE,-g2009		ivltests  # queue
+sv_typedef_queue_base3	CE,-g2009		ivltests  # queue
+sv_typedef_queue_base4	CE,-g2009		ivltests  # queue
 wait_fork		CE,-g2009		ivltests  # wait fork and join_*
 wild_cmp_err		CE,-g2009		ivltests  # ==?/!=?
 wild_cmp_err2		CE,-g2009		ivltests  # ==?/!=?
