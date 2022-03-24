@@ -18,6 +18,7 @@
  */
 
 # include  "PExpr.h"
+# include  "PScope.h"
 # include  "pform_types.h"
 # include  "netlist.h"
 # include  "netclass.h"
@@ -40,10 +41,7 @@ using namespace std;
  */
 ivl_type_t data_type_t::elaborate_type(Design*des, NetScope*scope)
 {
-	// User-defined types must be elaborated in the context
-	// where they were defined.
-      if (!name.nil())
-	    scope = scope->find_typedef_scope(des, this);
+      scope = find_scope(des, scope);
 
       ivl_assert(*this, scope);
       Definitions*use_definitions = scope;
@@ -55,6 +53,11 @@ ivl_type_t data_type_t::elaborate_type(Design*des, NetScope*scope)
       ivl_type_t tmp = elaborate_type_raw(des, scope);
       cache_type_elaborate_.insert(pos, pair<NetScope*,ivl_type_t>(scope, tmp));
       return tmp;
+}
+
+NetScope *data_type_t::find_scope(Design *, NetScope *scope) const
+{
+	return scope;
 }
 
 ivl_type_t data_type_t::elaborate_type_raw(Design*des, NetScope*) const
@@ -112,8 +115,6 @@ ivl_type_t atom_type_t::elaborate_type_raw(Design*des, NetScope*) const
 
 ivl_type_t class_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 {
-      if (save_elaborated_type)
-	    return save_elaborated_type;
       return scope->find_class(des, name);
 }
 
@@ -365,4 +366,27 @@ ivl_type_t uarray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
       ivl_type_t btype = base_type->elaborate_type(des, scope);
 
       return elaborate_array_type(des, scope, *this, btype, *dims.get());
+}
+
+ivl_type_t typeref_t::elaborate_type_raw(Design*des, NetScope*s) const
+{
+      if (!s) {
+	    // Try to recover
+	    return new netvector_t(IVL_VT_LOGIC);
+      }
+
+      return type->elaborate_type(des, s);
+}
+
+NetScope *typeref_t::find_scope(Design *des, NetScope *s) const
+{
+        // If a scope has been specified use that as a starting point for the
+	// search
+      if (scope)
+	    s = des->find_package(scope->pscope_name());
+
+      if (!type->name.nil())
+	    s = s->find_typedef_scope(des, type);
+
+      return s;
 }

@@ -50,7 +50,7 @@ void pform_start_class_declaration(const struct vlltype&loc,
       pform_cur_class = class_scope;
 
       assert(type->base_type == 0);
-      type->base_type = base_type;
+      type->base_type.reset(base_type);
 
       assert(type->base_args.empty());
       if (base_exprs) {

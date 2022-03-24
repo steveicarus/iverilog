@@ -123,7 +123,7 @@ class PWire : public PNamedItem {
 
 	// This is the complex type of the wire. the data_type_ may
 	// modify how this is interpreted.
-      data_type_t*set_data_type_;
+      std::unique_ptr<data_type_t> set_data_type_;
 
       ivl_discipline_t discipline_;
 

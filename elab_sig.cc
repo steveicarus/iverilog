@@ -939,10 +939,10 @@ bool test_ranges_eeq(const vector<netrange_t>&lef, const vector<netrange_t>&rig)
 ivl_type_t PWire::elaborate_type(Design*des, NetScope*scope,
 			         const std::vector<netrange_t>&packed_dimensions) const
 {
-      if (set_data_type_ && !dynamic_cast<vector_type_t*>(set_data_type_)) {
-	    ivl_type_t use_type = set_data_type_->elaborate_type(des, scope);
+      vector_type_t *vec_type = dynamic_cast<vector_type_t*>(set_data_type_.get());
+      if (set_data_type_ && !vec_type) {
 	    ivl_assert(*this, packed_dimensions.empty());
-	    return use_type;
+	    return set_data_type_->elaborate_type(des, scope);
       }
 
       // Fallback method. Create vector type.
@@ -1003,10 +1003,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       unsigned wid = 1;
       vector<netrange_t>packed_dimensions;
 
-      NetScope *type_scope = scope;
-      if (set_data_type_ && !set_data_type_->name.nil())
-            type_scope = type_scope->find_typedef_scope(des, set_data_type_);
-
       des->errors += error_cnt_;
 
       if (port_set_ || net_set_) {
@@ -1046,7 +1042,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 			cerr << get_fileline() << ": PWire::elaborate_sig: "
 			     << "Evaluate ranges for net " << basename() << endl;
 		  }
-		  dimensions_ok &= evaluate_ranges(des, type_scope, this, nlist, net_);
+		  dimensions_ok &= evaluate_ranges(des, scope, this, nlist, net_);
 	    }
             assert(net_set_ || net_.empty());
 
@@ -1147,10 +1143,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    wtype = NetNet::WIRE;
       }
 
-      ivl_type_t type = elaborate_type(des, type_scope, packed_dimensions);
+      ivl_type_t type = elaborate_type(des, scope, packed_dimensions);
 	// Create the type for the unpacked dimensions. If the
 	// unpacked_dimensions are empty this will just return the base type.
-      type = elaborate_array_type(des, type_scope, *this, type, unpacked_);
+      type = elaborate_array_type(des, scope, *this, type, unpacked_);
 
       list<netrange_t> unpacked_dimensions;
 	// If this is an unpacked array extract the base type and unpacked

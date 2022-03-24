@@ -27,6 +27,7 @@
 # include  "pform.h"
 # include  "Statement.h"
 # include  "PSpec.h"
+# include  "PPackage.h"
 # include  <stack>
 # include  <cstring>
 # include  <sstream>
@@ -1167,12 +1168,14 @@ ps_type_identifier /* IEEE1800-2017: A.9.3 */
  : TYPE_IDENTIFIER
       { pform_set_type_referenced(@1, $1.text);
 	delete[]$1.text;
-	$$ = $1.type;
+	$$ = new typeref_t($1.type);
+	FILE_NAME($$, @1);
       }
   | package_scope TYPE_IDENTIFIER
       { lex_in_package_scope(0);
-	$$ = $2.type;
-	delete[]$2.text;
+	$$ = new typeref_t($2.type, $1);
+	FILE_NAME($$, @2);
+	delete[] $2.text;
       }
   ;
 
