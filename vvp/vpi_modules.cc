@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -151,7 +151,11 @@ void vpip_load_module(const char*name)
 
       ivl_dll_t dll = 0;
       buf[0] = 0;                     /* terminate the string */
+#ifdef __MINGW32__
+      if (strchr(name, '\\') || strchr(name, '/')) {
+#else
       if (strchr(name, sep)) {
+#endif
 	      /* If the name has at least one directory character in
 		 it, then assume it is a complete name, maybe including any
 		 possible .vpi suffix. */
