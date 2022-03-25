@@ -177,7 +177,7 @@ void vpip_load_module(const char*name)
 
 		  if (rc != 0) {
 			fprintf(stderr, "%s: Unable to find module file `%s' "
-				"or `%s.vpi'.\n", name,name,buf);
+				"or `%s.vpi'.\n", name, name, name);
 			return;
 		  }
 	    } else {
