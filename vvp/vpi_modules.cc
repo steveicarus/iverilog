@@ -64,12 +64,18 @@ void vpip_add_env_and_default_module_paths()
       if (disable_default_paths)
 	    return;
 
+#ifdef __MINGW32__
+      const char path_sep = ';';
+#else
+      const char path_sep = ':';
+#endif
+
       if (char *var = ::getenv("IVERILOG_VPI_MODULE_PATH")) {
             char *ptr = var;
             char *end = var+strlen(var);
             int len = 0;
             while (ptr <= end) {
-                  if (*ptr == 0 || *ptr == ':' || *ptr == ';') {
+                  if (*ptr == 0 || *ptr == path_sep) {
                         if (len > 0) {
                               vpip_add_module_path(strndup(var, len));
                         }

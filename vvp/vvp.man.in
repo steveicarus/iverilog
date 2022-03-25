@@ -1,4 +1,4 @@
-.TH vvp 1 "May 10th, 2015" "" "Version %M.%n %E"
+.TH vvp 1 "March 25th, 2022" "" "Version %M.%n %E"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
@@ -171,7 +171,7 @@ output, a time-saver for regression tests.
 This adds additional components to the VPI module search path. Paths
 specified in this way are searched after paths specified with \-M, but
 before the default search path. Multiple paths can be separated with
-colons or semicolons.
+colons (semicolons if using Windows).
 
 .SH INTERACTIVE MODE
 .PP
@@ -196,7 +196,7 @@ iverilog\-vpi(1),
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2001\-2015 Stephen Williams
+Copyright \(co  2001\-2022 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0
