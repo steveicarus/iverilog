@@ -140,9 +140,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		 << ", pin_count=" << lval->pin_count() << endl;
       }
 
-      NetExpr*rval_expr = elaborate_rval_expr(des, scope, lval->net_type(),
-					      lval->data_type(),
-					      lval->vector_width(), pin(1));
+      NetExpr*rval_expr = elaborate_rval_expr(des, scope, lval->net_type(), pin(1));
 
       if (rval_expr == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate r-value: "
@@ -3253,8 +3251,6 @@ NetProc* PChainConstructor::elaborate(Design*des, NetScope*scope) const
 			PExpr*tmp = parms_[idx-1];
 			parms[idx] = elaborate_rval_expr(des, scope,
 							 def->port(idx)->net_type(),
-							 def->port(idx)->data_type(),
-							 def->port(idx)->vector_width(),
 							 tmp, false);
 			continue;
 		  }
@@ -4029,7 +4025,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
 	    if (parms_idx < parms_.size() && parms_[parms_idx]) {
 		  rv = elaborate_rval_expr(des, scope, port->net_type(),
-					   lv_type, wid, parms_ [parms_idx]);
+					   parms_ [parms_idx]);
 		  if (NetEEvent*evt = dynamic_cast<NetEEvent*> (rv)) {
 			cerr << evt->get_fileline() << ": error: An event '"
 			     << evt->event()->name() << "' can not be a user "
@@ -5453,7 +5449,6 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	/* Make the r-value of the initial assignment, and size it
 	   properly. Then use it to build the assignment statement. */
       initial_expr = elaborate_rval_expr(des, scope, sig->net_type(),
-					 sig->data_type(), sig->vector_width(),
 					 expr1_);
 
       if (debug_elaborate && initial_expr) {
@@ -5700,12 +5695,9 @@ NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
 
       NetNet*res = target->find_signal(target->basename());
       ivl_assert(*this, res);
-      ivl_variable_type_t lv_type = res->data_type();
-      unsigned long wid = res->vector_width();
       NetAssign_*lv = new NetAssign_(res);
 
-      NetExpr*val = elaborate_rval_expr(des, scope, res->net_type(),
-					lv_type, wid, expr_);
+      NetExpr*val = elaborate_rval_expr(des, scope, res->net_type(), expr_);
 
       NetBlock*proc = new NetBlock(NetBlock::SEQU, 0);
       proc->set_line( *this );

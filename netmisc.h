@@ -408,6 +408,13 @@ extern NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 				    unsigned lv_width, PExpr*expr,
 				    bool need_const =false,
 				    bool force_unsigned =false);
+/*
+ * Same as above, but lv_width and lv_type are derived from the lv_net_type.
+ */
+extern NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
+				    ivl_type_t lv_net_type, PExpr*expr,
+				    bool need_const = false,
+				    bool force_unsigned = false);
 
 extern bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
                            const pform_range_t&range,
