@@ -72,7 +72,7 @@ ivl_variable_type_t NetExpr::expr_type() const
 
 const netenum_t*NetExpr::enumeration() const
 {
-      return 0;
+      return dynamic_cast<const netenum_t*>(net_type_);
 }
 
 NetEArrayPattern::NetEArrayPattern(ivl_type_t lv_type, vector<NetExpr*>&items)
@@ -464,15 +464,14 @@ const netenum_t* NetESelect::enumeration() const
 
 NetESFunc::NetESFunc(const char*n, ivl_variable_type_t t,
 		     unsigned width, unsigned np, bool is_overridden)
-: name_(0), type_(t), enum_type_(0), parms_(np), is_overridden_(is_overridden)
+: name_(0), type_(t), parms_(np), is_overridden_(is_overridden)
 {
       name_ = lex_strings.add(n);
       expr_width(width);
 }
 
 NetESFunc::NetESFunc(const char*n, ivl_type_t rtype, unsigned np)
-: NetExpr(rtype), name_(0), type_(rtype->base_type()),
-  enum_type_(dynamic_cast<const netenum_t*>(rtype)), parms_(np),
+: NetExpr(rtype), name_(0), type_(rtype->base_type()), parms_(np),
   is_overridden_(false)
 {
       name_ = lex_strings.add(n);
@@ -521,11 +520,6 @@ NetExpr* NetESFunc::parm(unsigned idx)
 ivl_variable_type_t NetESFunc::expr_type() const
 {
       return type_;
-}
-
-const netenum_t* NetESFunc::enumeration() const
-{
-      return enum_type_;
 }
 
 NetEShallowCopy::NetEShallowCopy(NetExpr*arg1, NetExpr*arg2)

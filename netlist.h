@@ -4663,7 +4663,6 @@ class NetESFunc  : public NetExpr {
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                                   bool nested_func = false) const;
-      virtual const netenum_t* enumeration() const;
       virtual void dump(std::ostream&) const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -4739,7 +4738,6 @@ class NetESFunc  : public NetExpr {
 
       const char* name_;
       ivl_variable_type_t type_;
-      const netenum_t*enum_type_;
       std::vector<NetExpr*>parms_;
       bool is_overridden_;
 
