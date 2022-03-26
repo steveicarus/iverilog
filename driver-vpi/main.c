@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 Martin Whitaker
+ * Copyright (c) 2015-2022 Martin Whitaker
  * Copyright (c) 2002 Gus Baldauf (gus@picturel.com)
  *
  *    This source code is free software; you can redistribute it
@@ -564,10 +564,10 @@ static void compile(char *pSource, char *pFlags, char **pObject, int *compile_er
 		assignn(&src, ptr1, len);
 
 		  /* Build the object file name */
-		ostart = strrchr(ptr1, '/');
-		if (ostart == NULL) ostart = ptr1;
+		ostart = strrchr(src, '/');
+		if (ostart == NULL) ostart = src;
 		else ostart += 1;
-		olen = strrchr(ptr1, '.') - ostart;
+		olen = strrchr(ostart, '.') - ostart;
 		assignn(&obj, ostart, olen);
 		append(&obj, ".o");
 
