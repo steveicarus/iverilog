@@ -364,6 +364,10 @@ struct class_type_t : public data_type_t {
       virtual SymbolType symbol_type() const;
 };
 
+ivl_type_t elaborate_array_type(Design *des, NetScope *scope,
+			        const LineInfo &li, ivl_type_t base_type,
+			        const std::list<pform_range_t> &dims);
+
 /*
  * The pform_name_t is the general form for a hierarchical
  * identifier. It is an ordered list of name components. Each name

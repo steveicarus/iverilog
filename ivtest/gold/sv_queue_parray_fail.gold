@@ -1,7 +1,7 @@
-./ivltests/sv_queue_parray_fail.v:7: error: queue 'q_vec1' bound must be positive (-1)!
-./ivltests/sv_queue_parray_fail.v:8: error: queue 'q_vec2' bound is undefined!
+./ivltests/sv_queue_parray_fail.v:7: error: queue bound must be positive (-1).
+./ivltests/sv_queue_parray_fail.v:8: error: queue bound must be defined.
 ./ivltests/sv_queue_parray_fail.v:9: error: A reference to a wire or reg (`bound') is not allowed in a constant expression.
-./ivltests/sv_queue_parray_fail.v:9: error: queue 'q_vec3' bound must be a constant!
+./ivltests/sv_queue_parray_fail.v:9: error: queue bound must be constant.
 ./ivltests/sv_queue_parray_fail.v:12: error: size() method takes no arguments
 ./ivltests/sv_queue_parray_fail.v:13: error: pop_front() method takes no arguments
 ./ivltests/sv_queue_parray_fail.v:14: error: pop_back() method takes no arguments
