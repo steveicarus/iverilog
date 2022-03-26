@@ -2856,7 +2856,7 @@ class NetAssign_ {
 	// Get the expression type of the l-value. This may be
 	// different from the type of the contained signal if for
 	// example a darray is indexed.
-      const ivl_type_s* net_type() const;
+      ivl_type_t net_type() const;
 
 	// Return the enumeration type of this l-value, or nil if it's
 	// not an enumeration.

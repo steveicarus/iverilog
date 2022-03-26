@@ -22,6 +22,7 @@
 # include  "netlist.h"
 # include  "netclass.h"
 # include  "netdarray.h"
+# include  "netparray.h"
 # include  "netenum.h"
 # include  "ivl_assert.h"
 
@@ -116,105 +117,64 @@ unsigned NetAssign_::lwidth() const
 	// the type of the member. If this returns nil, then resort to
 	// the lwid_ value.
       ivl_type_t ntype = net_type();
-      if (ntype == 0)
-	    return lwid_;
+      if (ntype)
+	    return ntype->packed_width();
 
-	// If the type is a darray, and there is a word index, then we
-	// actually want the width of the elements.
-      if (const netdarray_t*darray = dynamic_cast<const netdarray_t*> (ntype)) {
-	    if (word_ == 0)
-		  return 1;
-	    else
-		  return darray->element_width();
-      }
-
-      return ntype->packed_width();
+      return lwid_;
 }
 
 ivl_variable_type_t NetAssign_::expr_type() const
 {
       ivl_type_t ntype = net_type();
-      if (const netdarray_t*darray = dynamic_cast<const netdarray_t*>(ntype)) {
-	    if (word_ == 0)
-		  return IVL_VT_DARRAY;
-	    else
-		  return darray->element_base_type();
-      }
 
       if (sig_ && sig_->data_type()==IVL_VT_STRING && base_!=0)
 	    return IVL_VT_BOOL;
 
-      if (ntype) return ntype->base_type();
+      if (ntype)
+	    return ntype->base_type();
 
       ivl_assert(*this, sig_);
       return sig_->data_type();
 }
 
-const ivl_type_s* NetAssign_::net_type() const
+ivl_type_t NetAssign_::net_type() const
 {
+	// This is a concatenation or a part select, it does not have a type
+      if (more || base_)
+	    return nullptr;
+
+      ivl_type_t ntype;
       if (nest_) {
-	    const ivl_type_s*ntype = nest_->net_type();
-	    if (member_.nil())
-		  return ntype;
+	    ntype = nest_->net_type();
+      } else {
+	    ivl_assert(*this, sig_);
 
-	    if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(ntype)) {
-		  return class_type->get_prop_type(member_idx_);
-	    }
+	      // We don't have types for array signals yet.
+	    if (sig_->unpacked_dimensions() && !word_)
+		  return nullptr;
 
-	    if (const netdarray_t*darray = dynamic_cast<const netdarray_t*> (ntype)) {
-		  if (word_ == 0)
-			return ntype;
-		  else
-			return darray->element_type();
-	    }
-
-	    return 0;
+	    ntype = sig_->net_type();
       }
 
-      if (const netclass_t*class_type = sig_->class_type()) {
-	    if (member_.nil())
-		  return sig_->net_type();
-
-	    return class_type->get_prop_type(member_idx_);
+      if (!member_.nil()) {
+	    const netclass_t *class_type = dynamic_cast<const netclass_t*>(ntype);
+	    ivl_assert(*this, class_type);
+	    ntype = class_type->get_prop_type(member_idx_);
       }
 
-      if (const netdarray_t*darray = dynamic_cast<const netdarray_t*> (sig_->net_type())) {
-	    if (word_ == 0)
-		  return sig_->net_type();
-	    else
-		  return darray->element_type();
+      if (word_) {
+	    if (const netdarray_t *darray = dynamic_cast<const netdarray_t*>(ntype))
+		  ntype = darray->element_type();
+	    else if (const netuarray_t *uarray = dynamic_cast<const netuarray_t*>(ntype))
+		  ntype = uarray->element_type();
       }
 
-      return 0;
+      return ntype;
 }
 
 const netenum_t*NetAssign_::enumeration() const
 {
-      const netenum_t*tmp = 0;
-      ivl_type_t ntype = net_type();
-      if (ntype == 0) {
-
-	    ivl_assert(*this, sig_);
-
-	      // If the base signal is not an enumeration, return nil.
-	    if ( (tmp = sig_->enumeration()) == 0 )
-		  return 0;
-
-      } else {
-	    tmp = dynamic_cast<const netenum_t*>(ntype);
-	    if (tmp == 0)
-		  return 0;
-      }
-
-	// Part select of an enumeration is not an enumeration.
-      if (base_ != 0)
-	    return 0;
-
-	// Concatenation of enumerations is not an enumeration.
-      if (more != 0)
-	    return 0;
-
-      return tmp;
+      return dynamic_cast<const netenum_t*>(net_type());
 }
 
 perm_string NetAssign_::name() const
