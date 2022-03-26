@@ -111,6 +111,7 @@ getp			normal			getp.c			getp.log
 hello_poke		normal			hello_poke.c		hello_poke.log
 hello_tf		normal			hello_tf.c		hello_tf.log
 hello_vpi		normal			hello_vpi.c		hello.log
+hello_vpi2		normal			hello_vpi2.c		hello2.log		vpi/hello_vpi1.c
 listparams		normal			listparams.c		listparams.log
 memmon			normal,-g1995		memmon.c		memmon.log
 memwide			normal			memwide.cc		memwide.log
