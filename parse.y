@@ -915,11 +915,8 @@ class_item /* IEEE1800-2005: A.1.8 */
 
     /* IEEEE1800-2017: A.1.9 Class items: class_item ::= { property_qualifier} data_declaration */
 
-  | property_qualifier_opt K_typedef data_type IDENTIFIER dimensions_opt ';'
-      { perm_string name = lex_strings.make($4);
-	delete[]$4;
-	pform_set_typedef(name, $3, $5);
-      }
+    /* TODO: Restrict the access based on the property qualifier. */
+  | property_qualifier_opt type_declaration
 
     /* IEEE1800-1017: A.1.9 Class items: Class methods... */
 
@@ -2690,13 +2687,13 @@ type_declaration
   /* If the IDENTIFIER already is a typedef, it is possible for this
      code to override the definition, but only if the typedef is
      inherited from a different scope. */
-  | K_typedef data_type TYPE_IDENTIFIER ';'
+  | K_typedef data_type TYPE_IDENTIFIER dimensions_opt ';'
       { perm_string name = lex_strings.make($3.text);
 	if (pform_test_type_identifier_local(name)) {
 	      yyerror(@3, "error: Typedef identifier \"%s\" is already a type name.", $3.text);
-
+	      delete $4;
 	} else {
-	      pform_set_typedef(name, $2, NULL);
+	      pform_set_typedef(name, $2, $4);
 	}
 	delete[]$3.text;
       }
