@@ -101,10 +101,11 @@ ivl_type_t atom2_type_t::elaborate_type_raw(Design*des, NetScope*) const
       }
 }
 
-ivl_type_t class_type_t::elaborate_type_raw(Design*, NetScope*) const
+ivl_type_t class_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 {
-      ivl_assert(*this, save_elaborated_type);
-      return save_elaborated_type;
+      if (save_elaborated_type)
+	    return save_elaborated_type;
+      return scope->find_class(des, name);
 }
 
 /*

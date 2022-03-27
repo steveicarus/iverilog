@@ -478,6 +478,7 @@ sv_class_empty_item	normal,-g2009		ivltests
 sv_class_extends_scoped	normal,-g2009		ivltests
 sv_class_localparam	normal,-g2009		ivltests
 sv_class_new_init	normal,-g2009		ivltests
+sv_class_in_module_decl	normal,-g2009		ivltests
 sv_darray1		normal,-g2009		ivltests
 sv_darray2		normal,-g2009		ivltests
 sv_darray3		normal,-g2009		ivltests

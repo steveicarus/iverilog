@@ -496,29 +496,30 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 		 << endl;
       }
 
-      class_type_t*base_class = dynamic_cast<class_type_t*> (use_type->base_type);
-      if (use_type->base_type && !base_class) {
-	    cerr << pclass->get_fileline() << ": error: "
-		 << "Base type of " << use_type->name
-		 << " is not a class." << endl;
-	    des->errors += 1;
-      }
 
-      netclass_t*use_base_class = 0;
-      if (base_class) {
-	    use_base_class = base_class->save_elaborated_type;
-	    if (use_base_class == 0) {
+      const netclass_t*use_base_class = 0;
+      if (use_type->base_type) {
+	    ivl_type_t base_type = use_type->base_type->elaborate_type(des, scope);
+	    use_base_class = dynamic_cast<const netclass_t *>(base_type);
+	    if (!use_base_class) {
 		  cerr << pclass->get_fileline() << ": error: "
-		       << "Base class " << base_class->name
-		       << " not found." << endl;
+		       << "Base type of " << use_type->name
+		       << " is not a class." << endl;
 		  des->errors += 1;
 	    }
       }
 
       netclass_t*use_class = new netclass_t(use_type->name, use_base_class);
 
-      ivl_assert(*pclass, use_type->save_elaborated_type == 0);
-      use_type->save_elaborated_type = use_class;
+      // If this is a package we need to remember the elaborated type so that
+      // scoped type references work. Since there is only one instance for each
+      // package this works. For classes defined in modules there might be
+      // multiple instances though. Each module instance will have its own class
+      // type instance, so the same does not work there.
+      if (scope->type() == NetScope::PACKAGE) {
+	    ivl_assert(*pclass, use_type->save_elaborated_type == 0);
+	    use_type->save_elaborated_type = use_class;
+      }
 
       NetScope*class_scope = new NetScope(scope, hname_t(pclass->pscope_name()),
 					  NetScope::CLASS, scope->unit());
