@@ -231,7 +231,27 @@ clkgen_reg		normal,-g2009		ivltests
 disable_fork_cmd	normal,-g2009		ivltests
 display_bug		normal,-g2009		ivltests gold=display_bug.gold
 edge			normal,-g2009		ivltests
+enum_base_atom2		normal,-g2005-sv	ivltests
+enum_base_fail_array	CE,-g2005-sv		ivltests
+enum_base_fail_darray	CE,-g2005-sv		ivltests
+enum_base_fail_darray	CE,-g2005-sv		ivltests
+enum_base_fail_enum	CE,-g2005-sv		ivltests
+enum_base_fail_queue	CE,-g2005-sv		ivltests
+enum_base_fail_range1	CE,-g2005-sv		ivltests
+enum_base_fail_range2	CE,-g2005-sv		ivltests
+enum_base_fail_range3	CE,-g2005-sv		ivltests
+enum_base_fail_real1	CE,-g2005-sv		ivltests
+enum_base_fail_real2	CE,-g2005-sv		ivltests
+enum_base_fail_string1	CE,-g2005-sv		ivltests
+enum_base_fail_string2	CE,-g2005-sv		ivltests
+enum_base_fail_struct	CE,-g2005-sv		ivltests
+enum_base_integer	normal,-g2005-sv	ivltests
+enum_base_none		normal,-g2005-sv	ivltests
 enum_base_range		normal,-g2005-sv	ivltests
+enum_base_scalar	normal,-g2005-sv	ivltests
+enum_base_time		normal,-g2005-sv	ivltests
+enum_base_typename1	normal,-g2005-sv	ivltests
+enum_base_typename2	normal,-g2005-sv	ivltests
 enum_compatibility1	normal,-g2005-sv	ivltests
 enum_compatibility2	normal,-g2005-sv	ivltests
 enum_compatibility3	normal,-g2005-sv	ivltests

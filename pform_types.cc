@@ -50,7 +50,7 @@ ivl_variable_type_t vector_type_t::figure_packed_base_type(void) const
 
 ivl_variable_type_t enum_type_t::figure_packed_base_type() const
 {
-      return base_type;
+      return base_type->figure_packed_base_type();
 }
 
 ivl_variable_type_t atom2_type_t::figure_packed_base_type() const

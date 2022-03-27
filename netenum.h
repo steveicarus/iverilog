@@ -32,9 +32,8 @@ class NetScope;
 class netenum_t : public LineInfo, public ivl_type_s {
 
     public:
-      explicit netenum_t(ivl_variable_type_t base_type, bool signed_flag,
-			 bool isint_flag, const netrange_t &range,
-			 size_t name_count);
+      explicit netenum_t(ivl_type_t base_type, size_t name_count,
+			 bool integer_flag);
       ~netenum_t();
 
       virtual ivl_variable_type_t base_type() const;
@@ -71,10 +70,8 @@ class netenum_t : public LineInfo, public ivl_type_s {
       bool matches(const netenum_t*other) const;
 
     private:
-      ivl_variable_type_t base_type_;
-      bool signed_flag_;
+      ivl_type_t base_type_;
       bool integer_flag_;
-      netrange_t range_;
 
       std::map<perm_string,verinum> names_map_;
       std::vector<perm_string> names_;
@@ -82,7 +79,7 @@ class netenum_t : public LineInfo, public ivl_type_s {
 };
 
 inline ivl_variable_type_t netenum_t::base_type() const
-{ return base_type_; }
+{ return base_type_->base_type(); }
 
 inline size_t netenum_t::size() const { return names_.size(); }
 

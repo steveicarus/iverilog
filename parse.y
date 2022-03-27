@@ -439,8 +439,6 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
       Statement*statement;
       std::vector<Statement*>*statement_list;
 
-      enum_type_t*enum_type;
-
       decl_assignment_t*decl_assignment;
       std::list<decl_assignment_t*>*decl_assignments;
 
@@ -620,7 +618,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <expr> tf_port_item_expr_opt value_range_expression
 
 %type <named_pexprs> enum_name_list enum_name
-%type <enum_type> enum_data_type enum_base_type
+%type <data_type> enum_data_type enum_base_type
 
 %type <tf_ports> tf_item_declaration tf_item_list tf_item_list_opt
 %type <tf_ports> tf_port_declaration tf_port_item tf_port_item_list tf_port_list tf_port_list_opt
@@ -659,6 +657,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <data_type>  simple_type_or_string let_formal_type
 %type <data_type>  packed_array_data_type
 %type <data_type>  ps_type_identifier
+%type <data_type>  simple_packed_type
 %type <class_type> class_identifier
 %type <struct_member>  struct_union_member
 %type <struct_members> struct_union_member_list
@@ -1222,14 +1221,9 @@ packed_array_data_type /* IEEE1800-2005: A.2.2.1 */
   | ps_type_identifier
   ;
 
-data_type /* IEEE1800-2005: A.2.2.1 */
+simple_packed_type /* Integer and vector types */
   : integer_vector_type unsigned_signed_opt dimensions_opt
       { vector_type_t*tmp = new vector_type_t($1, $2, $3);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | non_integer_type
-      { real_type_t*tmp = new real_type_t($1);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
@@ -1247,6 +1241,17 @@ data_type /* IEEE1800-2005: A.2.2.1 */
   | K_time unsigned_signed_opt
       { std::list<pform_range_t>*pd = make_range_from_width(64);
 	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $2, pd);
+	$$ = tmp;
+      }
+  ;
+
+data_type /* IEEE1800-2005: A.2.2.1 */
+  : simple_packed_type
+      { $$ = $1;
+      }
+  | non_integer_type
+      { real_type_t*tmp = new real_type_t($1);
+	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   | packed_array_data_type dimensions_opt
@@ -2736,43 +2741,26 @@ type_declaration
      can be any of the integral or vector types. */
 
 enum_base_type /* IEEE 1800-2012 A.2.2.1 */
-  :
-      { enum_type_t*enum_type = new enum_type_t;
-	enum_type->base_type = IVL_VT_BOOL;
-	enum_type->signed_flag = true;
-	enum_type->integer_flag = false;
-	enum_type->range.reset(make_range_from_width(32));
-	$$ = enum_type;
+  : simple_packed_type
+      { $$ = $1;
       }
-  | atom2_type signed_unsigned_opt
-      { enum_type_t*enum_type = new enum_type_t;
-	enum_type->base_type = IVL_VT_BOOL;
-	enum_type->signed_flag = $2;
-	enum_type->integer_flag = false;
-	enum_type->range.reset(make_range_from_width($1));
-	$$ = enum_type;
+  | ps_type_identifier dimensions_opt
+      { if ($2) {
+	      $$ = new parray_type_t($1, $2);
+	      FILE_NAME($$, @1);
+        } else {
+	      $$ = $1;
+        }
       }
-  | K_integer signed_unsigned_opt
-      { enum_type_t*enum_type = new enum_type_t;
-	enum_type->base_type = IVL_VT_LOGIC;
-	enum_type->signed_flag = $2;
-	enum_type->integer_flag = true;
-	enum_type->range.reset(make_range_from_width(integer_width));
-	$$ = enum_type;
-      }
-  | integer_vector_type unsigned_signed_opt dimensions_opt
-      { enum_type_t*enum_type = new enum_type_t;
-	enum_type->base_type = $1;
-	enum_type->signed_flag = $2;
-	enum_type->integer_flag = false;
-	enum_type->range.reset($3 ? $3 : make_range_from_width(1));
-	$$ = enum_type;
+   |
+      { $$ = new atom2_type_t(32, true);
+        FILE_NAME($$, @0);
       }
   ;
 
 enum_data_type /* IEEE 1800-2012 A.2.2.1 */
   : K_enum enum_base_type '{' enum_name_list '}'
-      { enum_type_t*enum_type = $2;
+      { enum_type_t*enum_type = new enum_type_t($2);
 	FILE_NAME(enum_type, @1);
 	enum_type->names.reset($4);
 	pform_put_enum_type_in_scope(enum_type);
