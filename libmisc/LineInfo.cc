@@ -27,11 +27,6 @@ LineInfo::LineInfo()
 {
 }
 
-LineInfo::LineInfo(const LineInfo&that) :
-    file_(that.file_), lineno_(that.lineno_)
-{
-}
-
 LineInfo::~LineInfo()
 {
 }
