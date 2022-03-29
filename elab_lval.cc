@@ -393,6 +393,13 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
       if (pidx < 0)
 	    return 0;
 
+      property_qualifier_t qual = class_type->get_prop_qual(pidx);
+
+	// Static properties are handled as normal signals. Regular symbol
+	// search will find it.
+      if (qual.test_static())
+	    return 0;
+
       NetScope*scope_method = find_method_containing_scope(*this, scope);
       ivl_assert(*this, scope_method);
 
@@ -428,7 +435,6 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
 	// Detect assignment to constant properties. Note that the
 	// initializer constructor MAY assign to constant properties,
 	// as this is how the property gets its value.
-      property_qualifier_t qual = class_type->get_prop_qual(pidx);
       if (qual.test_const()) {
 	    if (class_type->get_prop_initialized(pidx)) {
 		  cerr << get_fileline() << ": error: "
