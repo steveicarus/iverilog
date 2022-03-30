@@ -487,6 +487,9 @@ sv_class_extends_scoped	normal,-g2009		ivltests
 sv_class_localparam	normal,-g2009		ivltests
 sv_class_new_init	normal,-g2009		ivltests
 sv_class_in_module_decl	normal,-g2009		ivltests
+sv_class_static_prop1	normal,-g2009		ivltests
+sv_class_static_prop2	normal,-g2009		ivltests
+sv_class_static_prop3	normal,-g2009		ivltests
 sv_class_super1		normal,-g2009		ivltests
 sv_class_super2		normal,-g2009		ivltests
 sv_class_task1		normal,-g2009		ivltests
