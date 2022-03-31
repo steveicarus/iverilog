@@ -174,14 +174,26 @@ class data_type_t : public PNamedItem {
 };
 
 struct typedef_t : public PNamedItem {
-      explicit typedef_t(perm_string n) : name(n) { };
+      explicit typedef_t(perm_string n) : basic_type(ANY), name(n) { };
 
       ivl_type_t elaborate_type(Design*des, NetScope*scope);
+
+      enum basic_type {
+	    ANY,
+	    ENUM,
+	    STRUCT,
+	    UNION,
+	    CLASS
+      };
 
       bool set_data_type(data_type_t *t);
       const data_type_t *get_data_type() const { return data_type.get(); }
 
+      bool set_basic_type(basic_type bt);
+      enum basic_type get_basic_type() const { return basic_type; }
+
 protected:
+      enum basic_type basic_type;
       std::unique_ptr<data_type_t> data_type;
 public:
       perm_string name;
@@ -447,5 +459,6 @@ static inline std::ostream& operator<< (std::ostream&out, const data_type_t&that
 extern std::ostream& operator<< (std::ostream&out, const pform_name_t&);
 extern std::ostream& operator<< (std::ostream&out, const name_component_t&that);
 extern std::ostream& operator<< (std::ostream&out, const index_component_t&that);
+extern std::ostream& operator<< (std::ostream&out, enum typedef_t::basic_type bt);
 
 #endif /* IVL_pform_types_H */

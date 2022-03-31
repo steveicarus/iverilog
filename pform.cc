@@ -858,19 +858,40 @@ void pform_put_enum_type_in_scope(enum_type_t*enum_set)
       lexical_scope->enum_sets.push_back(enum_set);
 }
 
-void pform_set_typedef(const struct vlltype&loc, perm_string name,
-		       data_type_t*data_type,
-		       std::list<pform_range_t>*unp_ranges)
+static typedef_t *pform_get_typedef(const struct vlltype&loc, perm_string name)
 {
-      if(unp_ranges)
-	    data_type = new uarray_type_t(data_type, unp_ranges);
-
       typedef_t *&td = lexical_scope->typedefs[name];
       if (!td) {
 	    td = new typedef_t(name);
 	    FILE_NAME(td, loc);
 	    add_local_symbol(lexical_scope, name, td);
       }
+      return td;
+}
+
+void pform_forward_typedef(const struct vlltype&loc, perm_string name,
+			   enum typedef_t::basic_type basic_type)
+{
+      typedef_t *td = pform_get_typedef(loc, name);
+
+      if (!td->set_basic_type(basic_type)) {
+	    cout << loc << " error: Incompatible basic type `" << basic_type
+	         << "` for `" << name
+		 << "`. Previously declared in this scope as `"
+		 << td->get_basic_type() << "` at " << td->get_fileline() << "."
+	         << endl;
+	    error_count++;
+      }
+}
+
+void pform_set_typedef(const struct vlltype&loc, perm_string name,
+		       data_type_t*data_type,
+		       std::list<pform_range_t>*unp_ranges)
+{
+      typedef_t *td = pform_get_typedef(loc, name);
+
+      if(unp_ranges)
+	    data_type = new uarray_type_t(data_type, unp_ranges);
 
       if (!td->set_data_type(data_type)) {
 	    cerr << loc << " error: Type identifier `" << name
