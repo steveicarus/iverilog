@@ -145,32 +145,19 @@ int giveme5(int input) {
     return output;
 }
 
+const int MAX_KERNEL_SIZE = 8;
+int kernel_size = 8;
+int kernel[MAX_KERNEL_SIZE + 1];
+
 void cpp_memread(int i, int *p_mem_req, int *p_mem_addr, int *p_mem_data)   
 {
     *p_mem_req = 0;
     *p_mem_addr = 0;
     *p_mem_data = 0;
-    switch(i) {
-        case 0:
-            *p_mem_req = 1;
-            *p_mem_addr = 1;
-            *p_mem_data = 222;
-            break;
-        case 1:
-            *p_mem_req = 1;
-            *p_mem_addr = 2;
-            *p_mem_data = 333;
-            break;
-        case 2:
-            *p_mem_req = 1;
-            *p_mem_addr = 3;
-            *p_mem_data = 444;
-            break;
-        case 3:
-            *p_mem_req = 1;
-            *p_mem_addr = 5;
-            *p_mem_data = 555;
-            break;
+    if(i < kernel_size) {
+        *p_mem_req = 1;
+        *p_mem_addr = i;
+        *p_mem_data = kernel[i];
     }
 }
 
@@ -178,6 +165,12 @@ int main(int argc, char *argv[]) {
     hello_register();
     giveme5_register();
     cpp_memread_register();
+
+    kernel[0] = 111;
+    kernel[1] = 321;
+    kernel[2] = 444;
+    kernel_size = 3;
+
     compile();
     return 0;
 }
