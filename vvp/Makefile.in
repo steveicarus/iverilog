@@ -72,7 +72,7 @@ VPI = vpi_modules.o vpi_bit.o vpi_callback.o vpi_cobject.o vpi_const.o vpi_darra
 
 O = main.o parse.o parse_misc.o lexor.o arith.o array_common.o array.o bufif.o compile.o \
     concat.o dff.o class_type.o enum_type.o extend.o file_line.o latch.o npmos.o part.o \
-    permaheap.o reduce.o resolv.o \
+    permaheap.o reduce.o resolv.o lib_entry.o \
     sfunc.o stop.o \
     substitute.o \
     symbols.o ufunc.o codes.o vthread.o schedule.o \
@@ -80,7 +80,7 @@ O = main.o parse.o parse_misc.o lexor.o arith.o array_common.o array.o bufif.o c
     vvp_object.o vvp_cobject.o vvp_darray.o event.o logic.o delay.o \
     words.o island_tran.o $(VPI)
 
-all: dep vvp@EXEEXT@ vvp.man
+all: dep vvp@EXEEXT@ vvp.man vvp.so
 
 check: all
 ifeq (@WIN32@,yes)
@@ -131,10 +131,16 @@ vvp@EXEEXT@: $O $(srcdir)/vvp.def
 	$(DLLTOOL) --dllname vvp$(suffix)@EXEEXT@ --def $(srcdir)/vvp.def \
 		--output-exp vvp.exp
 	rm -f vvp$(suffix)@EXEEXT@
+	echo vvp exe ext vvp$(suffix)@EXEEXT@
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ vvp.exp $(LDFLAGS) $O $(dllib) $(LIBS)
 else
 vvp@EXEEXT@: $O
+	echo vvp exe ext vvp@EXEEXT@ CXX $(CXX)
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $O $(LIBS) $(dllib)
+
+vvp.so: $O
+	echo vvp exe ext vvp@EXEEXT@
+	$(CXX) -shared $(LDFLAGS) -o libvvp.so $O $(LIBS) $(dllib)
 endif
 
 %.o: %.cc config.h
