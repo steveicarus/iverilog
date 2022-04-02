@@ -18,9 +18,61 @@
 #endif
 
 #if defined(HAVE_SYS_RESOURCE_H)
-# include  <sys/time.h>
-# include  <sys/resource.h>
-#endif // defined(HAVE_SYS_RESOURCE_H)
+static void my_getrusage(struct rusage *a)
+{
+  getrusage(RUSAGE_SELF, a);
+
+#if defined(LINUX)
+  {
+    FILE *statm;
+    unsigned siz, rss, shd;
+    long page_size = sysconf(_SC_PAGESIZE);
+    if (page_size == -1)
+      page_size = 0;
+    statm = fopen("/proc/self/statm", "r");
+    if (!statm)
+    {
+      perror("/proc/self/statm");
+      return;
+    }
+    /* Given that these are in pages we'll limit the value to
+     * what will fit in a 32 bit integer to prevent undefined
+     * behavior in fscanf(). */
+    if (3 == fscanf(statm, "%9u %9u %9u", &siz, &rss, &shd))
+    {
+      a->ru_maxrss = page_size * siz;
+      a->ru_idrss = page_size * rss;
+      a->ru_ixrss = page_size * shd;
+    }
+    fclose(statm);
+  }
+#endif
+}
+
+static void print_rusage(struct rusage *a, struct rusage *b)
+{
+  double delta = a->ru_utime.tv_sec + a->ru_utime.tv_usec / 1E6 + a->ru_stime.tv_sec + a->ru_stime.tv_usec / 1E6 - b->ru_utime.tv_sec - b->ru_utime.tv_usec / 1E6 - b->ru_stime.tv_sec - b->ru_stime.tv_usec / 1E6;
+
+  vpi_mcd_printf(1,
+                 " ... %G seconds,"
+                 " %.1f/%.1f/%.1f KBytes size/rss/shared\n",
+                 delta,
+                 a->ru_maxrss / 1024.0,
+                 (a->ru_idrss + a->ru_isrss) / 1024.0,
+                 a->ru_ixrss / 1024.0);
+}
+
+#else // ! defined(HAVE_SYS_RESOURCE_H)
+
+// Provide dummies
+struct rusage
+{
+  int x;
+};
+inline static void my_getrusage(struct rusage *) {}
+inline static void print_rusage(struct rusage *, struct rusage *){};
+
+#endif // ! defined(HAVE_SYS_RESOURCE_H)
 
 #if defined(HAVE_GETOPT_H)
 # include  <getopt.h>
@@ -143,18 +195,12 @@ extern const char*module_tab[64];
 extern void vpip_mcd_init(FILE *log);
 extern void vvp_vpi_init(void);
 
-void compile() {
-      // int opt;
-      // unsigned flag_errors = 0;
-      const char*design_path = 0;
+void simulate(const char *const design_path) {
       struct rusage cycles[3];
-      // const char *logfile_name = 0x0;
       FILE *logfile = 0x0;
       extern void vpi_set_vlog_info(int, char**);
       extern bool stop_is_finish;
       extern int  stop_is_finish_exit_code;
-
-      design_path = "hello.vvp";
 
       vpip_add_env_and_default_module_paths();
 

@@ -37,6 +37,7 @@ HOSTCFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 
 BUILDCC = @CC_FOR_BUILD@
 BUILDEXT = @BUILD_EXEEXT@
+SOEXT = .so
 CXX = @CXX@
 DLLTOOL = @DLLTOOL@
 INSTALL = @INSTALL@
@@ -99,7 +100,7 @@ endif
 
 clean:
 	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc
-	rm -rf dep vvp@EXEEXT@ parse.output vvp.man vvp.ps vvp.pdf vvp.exp
+	rm -rf dep vvp@EXEEXT@ vvp@SOEXT@ parse.output vvp.man vvp.ps vvp.pdf vvp.exp
 
 distclean: clean
 	rm -f Makefile config.log
@@ -131,16 +132,13 @@ vvp@EXEEXT@: $O $(srcdir)/vvp.def
 	$(DLLTOOL) --dllname vvp$(suffix)@EXEEXT@ --def $(srcdir)/vvp.def \
 		--output-exp vvp.exp
 	rm -f vvp$(suffix)@EXEEXT@
-	echo vvp exe ext vvp$(suffix)@EXEEXT@
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ vvp.exp $(LDFLAGS) $O $(dllib) $(LIBS)
 else
 vvp@EXEEXT@: $O
-	echo vvp exe ext vvp@EXEEXT@ CXX $(CXX)
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $O $(LIBS) $(dllib)
 
-vvp.so: $O
-	echo vvp exe ext vvp@EXEEXT@
-	$(CXX) -shared $(LDFLAGS) -o libvvp.so $O $(LIBS) $(dllib)
+vvp@SOEXT@: $O
+	$(CXX) -shared $(LDFLAGS) -o libvvp@SOEXT@ $O $(LIBS) $(dllib)
 endif
 
 %.o: %.cc config.h
