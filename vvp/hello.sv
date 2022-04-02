@@ -11,7 +11,7 @@ module main();
 
     reg [31:0] n_cpp_in;
 
-    reg [31:0] mem [1024];
+    reg [31:0] mem [16];
 
     task tick();
         #5 clk = 0;
@@ -39,11 +39,6 @@ module main();
 
         rst <= 0;
         tick();
-
-        $hello;
-        cpp_in = 23;
-        $giveme5(cpp_in, cpp_out);
-        $display("cpp_out %0d", cpp_out);
 
         tick();
         for(int i = 0; i < 4; i++) begin
