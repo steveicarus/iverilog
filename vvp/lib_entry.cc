@@ -18,6 +18,21 @@
 #endif
 
 #if defined(HAVE_SYS_RESOURCE_H)
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif // defined(HAVE_SYS_RESOURCE_H)
+
+#if defined(HAVE_GETOPT_H)
+#include <getopt.h>
+#endif
+
+#if defined(__MINGW32__)
+#include <windows.h>
+#endif
+
+using namespace std;
+
+#if defined(HAVE_SYS_RESOURCE_H)
 static void my_getrusage(struct rusage *a)
 {
   getrusage(RUSAGE_SELF, a);
@@ -73,16 +88,6 @@ inline static void my_getrusage(struct rusage *) {}
 inline static void print_rusage(struct rusage *, struct rusage *){};
 
 #endif // ! defined(HAVE_SYS_RESOURCE_H)
-
-#if defined(HAVE_GETOPT_H)
-# include  <getopt.h>
-#endif
-
-#if defined(__MINGW32__)
-# include  <windows.h>
-#endif
-
-using namespace std;
 
 // ofstream debug_file;
 
