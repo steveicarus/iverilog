@@ -37,7 +37,6 @@ HOSTCFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 
 BUILDCC = @CC_FOR_BUILD@
 BUILDEXT = @BUILD_EXEEXT@
-SOEXT = .so
 CXX = @CXX@
 DLLTOOL = @DLLTOOL@
 INSTALL = @INSTALL@
@@ -81,7 +80,11 @@ O = main.o parse.o parse_misc.o lexor.o arith.o array_common.o array.o bufif.o c
     vvp_object.o vvp_cobject.o vvp_darray.o event.o logic.o delay.o \
     words.o island_tran.o $(VPI)
 
-all: dep vvp@EXEEXT@ vvp.man vvp.so
+ifeq (@WIN32@,yes)
+all: dep vvp@EXEEXT@ vvp.man
+else
+all: dep vvp@EXEEXT@ vvp.man libvvp.so
+endif
 
 check: all
 ifeq (@WIN32@,yes)
@@ -137,8 +140,8 @@ else
 vvp@EXEEXT@: $O
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $O $(LIBS) $(dllib)
 
-vvp@SOEXT@: $O
-	$(CXX) -shared $(LDFLAGS) -o libvvp@SOEXT@ $O $(LIBS) $(dllib)
+libvvp.so: $O
+	$(CXX) -shared $(LDFLAGS) -o libvvp.so $O $(LIBS) $(dllib)
 endif
 
 %.o: %.cc config.h

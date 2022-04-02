@@ -92,34 +92,6 @@ extern "C" int optind;
 extern "C" const char*optarg;
 #endif
 
-static void my_getrusage(struct rusage *a)
-{
-      getrusage(RUSAGE_SELF, a);
-
-#     if defined(LINUX)
-      {
-        FILE *statm;
-        unsigned siz, rss, shd;
-        long page_size = sysconf(_SC_PAGESIZE);
-        if (page_size==-1) page_size=0;
-        statm = fopen("/proc/self/statm", "r");
-        if (!statm) {
-          perror("/proc/self/statm");
-          return;
-        }
-          /* Given that these are in pages we'll limit the value to
-           * what will fit in a 32 bit integer to prevent undefined
-           * behavior in fscanf(). */
-        if (3 == fscanf(statm, "%9u %9u %9u", &siz, &rss, &shd)) {
-          a->ru_maxrss = page_size * siz;
-          a->ru_idrss  = page_size * rss;
-          a->ru_ixrss  = page_size * shd;
-        }
-        fclose(statm);
-      }
-#     endif
-}
-
 static void final_cleanup()
 {
       vvp_object::cleanup();
@@ -164,27 +136,6 @@ static void final_cleanup()
 // HERE: Is this portable? Does it break anything?
       pthread_exit(NULL);
 #endif
-}
-
-static void print_rusage(struct rusage *a, struct rusage *b)
-{
-      double delta = a->ru_utime.tv_sec
-        +        a->ru_utime.tv_usec/1E6
-        +        a->ru_stime.tv_sec
-        +        a->ru_stime.tv_usec/1E6
-        -        b->ru_utime.tv_sec
-        -        b->ru_utime.tv_usec/1E6
-        -        b->ru_stime.tv_sec
-        -        b->ru_stime.tv_usec/1E6
-        ;
-
-      vpi_mcd_printf(1,
-          " ... %G seconds,"
-          " %.1f/%.1f/%.1f KBytes size/rss/shared\n",
-          delta,
-          a->ru_maxrss/1024.0,
-          (a->ru_idrss+a->ru_isrss)/1024.0,
-          a->ru_ixrss/1024.0 );
 }
 
 static bool have_ivl_version = false;
