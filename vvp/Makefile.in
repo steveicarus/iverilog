@@ -212,8 +212,14 @@ installman: vvp.man installdirs
 installpdf: vvp.pdf installdirs
 	$(INSTALL_DATA) vvp.pdf "$(DESTDIR)$(prefix)/vvp$(suffix).pdf"
 
+ifeq (@WIN32@,yes)
 installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
+else
+installfiles: $(F) | installdirs
+	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
+	$(INSTALL_PROGRAM) ./libvvp.so "$(DESTDIR)$(libdir)/libvvp.so"
+endif
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" "$(DESTDIR)$(INSTALL_DOCDIR)"
