@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,34 +25,35 @@
 # include  <math.h>
 # include  <limits.h>
 
-#if ULONG_MAX > 4294967295UL
-# define UNIFORM_MAX INT_MAX
-# define UNIFORM_MIN INT_MIN
-#else
-# define UNIFORM_MAX LONG_MAX
-# define UNIFORM_MIN LONG_MIN
-#endif
+/*
+ * The following code is largely copied from the IEEE standard (section 17.9.3
+ * in IEEE 1364-2005, Annex N in IEEE 1800-2017). The code in the IEEE standard
+ * predates the widespread availability of 64-bit processors, so assumes 'long'
+ * is a 32 bit value (https://accellera.mantishub.io/view.php?id=1136). So we
+ * replace 'long' with 'int32_t' to ensure correct and consistent behaviour
+ * regardless of how the code is built.
+ */
 
-static double uniform(long *seed, long start, long end);
-static double normal(long *seed, long mean, long deviation);
-static double exponential(long *seed, long mean);
-static long poisson(long *seed, long mean);
-static double chi_square(long *seed, long deg_of_free);
-static double t(long *seed, long deg_of_free);
-static double erlangian(long *seed, long k, long mean);
+static double uniform(int32_t *seed, int32_t start, int32_t end);
+static double normal(int32_t *seed, int32_t mean, int32_t deviation);
+static double exponential(int32_t *seed, int32_t mean);
+static int32_t poisson(int32_t *seed, int32_t mean);
+static double chi_square(int32_t *seed, int32_t deg_of_free);
+static double t(int32_t *seed, int32_t deg_of_free);
+static double erlangian(int32_t *seed, int32_t k, int32_t mean);
 
-static long rtl_dist_chi_square(long *seed, long df)
+static int32_t rtl_dist_chi_square(int32_t *seed, int32_t df)
 {
       double r;
-      long i;
+      int32_t i;
 
       if (df > 0) {
             r = chi_square(seed, df);
             if (r >= 0) {
-                  i = (long) (r + 0.5);
+                  i = (int32_t) (r + 0.5);
             } else {
                   r = -r;
-                  i = (long) (r + 0.5);
+                  i = (int32_t) (r + 0.5);
                   i = -i;
             }
       } else {
@@ -64,18 +65,18 @@ static long rtl_dist_chi_square(long *seed, long df)
       return i;
 }
 
-static long rtl_dist_erlang(long *seed, long k, long mean)
+static int32_t rtl_dist_erlang(int32_t *seed, int32_t k, int32_t mean)
 {
       double r;
-      long i;
+      int32_t i;
 
       if (k > 0) {
             r = erlangian(seed, k, mean);
             if (r >= 0) {
-                  i = (long) (r + 0.5);
+                  i = (int32_t) (r + 0.5);
             } else {
                   r = -r;
-                  i = (long) (r + 0.5);
+                  i = (int32_t) (r + 0.5);
                   i = -i;
             }
       } else {
@@ -87,18 +88,18 @@ static long rtl_dist_erlang(long *seed, long k, long mean)
       return i;
 }
 
-static long rtl_dist_exponential(long *seed, long mean)
+static int32_t rtl_dist_exponential(int32_t *seed, int32_t mean)
 {
       double r;
-      long i;
+      int32_t i;
 
       if (mean > 0) {
             r = exponential(seed, mean);
             if (r >= 0) {
-                  i = (long) (r + 0.5);
+                  i = (int32_t) (r + 0.5);
             } else {
                   r = -r;
-                  i = (long) (r + 0.5);
+                  i = (int32_t) (r + 0.5);
                   i = -i;
             }
       } else {
@@ -110,26 +111,26 @@ static long rtl_dist_exponential(long *seed, long mean)
       return i;
 }
 
-static long rtl_dist_normal(long *seed, long mean, long sd)
+static int32_t rtl_dist_normal(int32_t *seed, int32_t mean, int32_t sd)
 {
       double r;
-      long i;
+      int32_t i;
 
       r = normal(seed, mean, sd);
       if (r >= 0) {
-            i = (long) (r + 0.5);
+            i = (int32_t) (r + 0.5);
       } else {
             r = -r;
-            i = (long) (r + 0.5);
+            i = (int32_t) (r + 0.5);
             i = -i;
       }
 
       return i;
 }
 
-static long rtl_dist_poisson(long *seed, long mean)
+static int32_t rtl_dist_poisson(int32_t *seed, int32_t mean)
 {
-      long i;
+      int32_t i;
 
       if (mean > 0) {
             i = poisson(seed, mean);
@@ -142,18 +143,18 @@ static long rtl_dist_poisson(long *seed, long mean)
       return i;
 }
 
-static long rtl_dist_t(long *seed, long df)
+static int32_t rtl_dist_t(int32_t *seed, int32_t df)
 {
       double r;
-      long i;
+      int32_t i;
 
       if (df > 0) {
             r = t(seed, df);
             if (r >= 0) {
-                  i = (long) (r + 0.5);
+                  i = (int32_t) (r + 0.5);
             } else {
                   r = -r;
-                  i = (long) (r + 0.5);
+                  i = (int32_t) (r + 0.5);
                   i = -i;
             }
       } else {
@@ -165,36 +166,30 @@ static long rtl_dist_t(long *seed, long df)
       return i;
 }
 
-/* copied from IEEE1364-2001, with slight modifications for 64bit machines. */
-static long rtl_dist_uniform(long *seed, long start, long end)
+static int32_t rtl_dist_uniform(int32_t *seed, int32_t start, int32_t end)
 {
       double r;
-      long i;
+      int32_t i;
 
-      if (start >= end) return(start);
+      if (start >= end) return start;
 
-      /* NOTE: The cast of r to i can overflow and generate strange
-         values, so cast to unsigned long first. This eliminates
-         the underflow and gets the twos complement value. That in
-         turn can be cast to the long value that is expected. */
-
-      if (end != UNIFORM_MAX) {
+      if (end != INT32_MAX) {
             end++;
             r = uniform(seed, start, end);
             if (r >= 0) {
-                  i = (unsigned long) r;
+                  i = (int32_t) r;
             } else {
-	          i = - ( (unsigned long) (-(r - 1)) );
+	          i = (int32_t) (r - 1);
             }
             if (i < start) i = start;
             if (i >= end) i = end - 1;
-      } else if (start != UNIFORM_MIN) {
+      } else if (start != INT32_MIN) {
             start--;
-            r = uniform( seed, start, end) + 1.0;
+            r = uniform(seed, start, end) + 1.0;
             if (r >= 0) {
-                  i = (unsigned long) r;
+                  i = (int32_t) r;
             } else {
-	          i = - ( (unsigned long) (-(r - 1)) );
+	          i = (int32_t) (r - 1);
             }
             if (i <= start) i = start + 1;
             if (i > end) i = end;
@@ -203,25 +198,20 @@ static long rtl_dist_uniform(long *seed, long start, long end)
             r = r * 4294967296.0 - 2147483648.0;
 
             if (r >= 0) {
-                  i = (unsigned long) r;
+                  i = (int32_t) r;
             } else {
-	            /* At least some compilers will notice that (r-1)
-		       is <0 when castling to unsigned long and
-		       replace the result with a zero. This causes
-		       much wrongness, so do the casting to the
-		       positive version and invert it back. */
-	          i = - ( (unsigned long) (-(r - 1)) );
+	          i = (int32_t) (r - 1);
             }
       }
 
       return i;
 }
 
-static double uniform(long *seed, long start, long end )
+static double uniform(int32_t *seed, int32_t start, int32_t end)
 {
       double d = 0.00000011920928955078125;
       double a, b, c;
-      unsigned long oldseed, newseed;
+      uint32_t oldseed, newseed;
 
       oldseed = *seed;
       if (oldseed == 0)
@@ -243,14 +233,7 @@ static double uniform(long *seed, long start, long end )
        */
       newseed = 69069 * oldseed + 1;
 
-      /* Emulate a 32-bit unsigned long, even if the native machine
-       * uses wider words.
-       */
-#if ULONG_MAX > 4294967295UL
-      newseed = newseed & 4294967295UL;
-#endif
       *seed = newseed;
-
 
 #if 0
       /* Cadence-donated conversion from unsigned int to double */
@@ -265,14 +248,13 @@ static double uniform(long *seed, long start, long end )
       c = 1.0 + (newseed >> 9) * 0.00000011920928955078125;
 #endif
 
-
       c = c + (c*d);
       c = ((b - a) * (c - 1.0)) + a;
 
       return c;
 }
 
-static double normal(long *seed, long mean, long deviation)
+static double normal(int32_t *seed, int32_t mean, int32_t deviation)
 {
       double v1, v2, s;
 
@@ -289,7 +271,7 @@ static double normal(long *seed, long mean, long deviation)
       return s * v1 + v2;
 }
 
-static double exponential(long *seed, long mean)
+static double exponential(int32_t *seed, int32_t mean)
 {
       double n;
 
@@ -301,9 +283,9 @@ static double exponential(long *seed, long mean)
       return n;
 }
 
-static long poisson(long *seed, long mean)
+static int32_t poisson(int32_t *seed, int32_t mean)
 {
-      long n;
+      int32_t n;
       double p, q;
 
       n = 0;
@@ -318,10 +300,10 @@ static long poisson(long *seed, long mean)
       return n;
 }
 
-static double chi_square(long *seed, long deg_of_free)
+static double chi_square(int32_t *seed, int32_t deg_of_free)
 {
       double x;
-      long k;
+      int32_t k;
 
       if (deg_of_free % 2) {
             x = normal(seed, 0, 1);
@@ -336,7 +318,7 @@ static double chi_square(long *seed, long deg_of_free)
       return x;
 }
 
-static double t( long *seed, long deg_of_free)
+static double t( int32_t *seed, int32_t deg_of_free)
 {
       double x, chi2, dv, root;
 
@@ -348,10 +330,10 @@ static double t( long *seed, long deg_of_free)
       return x;
 }
 
-static double erlangian(long *seed, long k, long mean)
+static double erlangian(int32_t *seed, int32_t k, int32_t mean)
 {
       double x, a, b;
-      long i;
+      int32_t i;
 
       x = 1.0;
       for (i = 1; i <= k; i++) {
@@ -533,8 +515,8 @@ static PLI_INT32 sys_random_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed = 0;
       s_vpi_value val;
-      static long i_seed = 0;
-      long a_seed;
+      static int32_t i_seed = 0;
+      int32_t a_seed;
 
       (void)name; /* Parameter is not used. */
 
@@ -599,16 +581,16 @@ static PLI_INT32 sys_urandom_range_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 }
 
 /* From SystemVerilog. */
-static unsigned long urandom(long *seed, unsigned long max, unsigned long min)
+static uint32_t urandom(int32_t *seed, uint32_t max, uint32_t min)
 {
-      static long i_seed = 0;
-      unsigned long result;
-      long max_i, min_i;
+      static int32_t i_seed = 0;
+      int32_t max_i, min_i;
+      uint32_t result;
 
-      max_i =  max + INT_MIN;
-      min_i =  min + INT_MIN;
+      max_i = max + INT32_MIN;
+      min_i = min + INT32_MIN;
       if (seed != 0) i_seed = *seed;
-      result = rtl_dist_uniform(&i_seed, min_i, max_i) - INT_MIN;
+      result = (uint32_t)rtl_dist_uniform(&i_seed, min_i, max_i) - INT32_MIN;
       if (seed != 0) *seed = i_seed;
       return result;
 }
@@ -618,7 +600,7 @@ static PLI_INT32 sys_urandom_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed = 0;
       s_vpi_value val;
-      long i_seed;
+      int32_t i_seed;
 
       (void)name; /* Parameter is not used. */
 
@@ -636,9 +618,9 @@ static PLI_INT32 sys_urandom_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 
       /* Calculate and return the result. */
       if (seed) {
-            val.value.integer = urandom(&i_seed, UINT_MAX, 0);
+            val.value.integer = urandom(&i_seed, UINT32_MAX, 0);
       } else {
-            val.value.integer = urandom(0, UINT_MAX, 0);
+            val.value.integer = urandom(0, UINT32_MAX, 0);
       }
       vpi_put_value(callh, &val, 0, vpiNoDelay);
 
@@ -656,7 +638,7 @@ static PLI_INT32 sys_urandom_range_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, maxval, minval;
       s_vpi_value val;
-      unsigned long i_maxval, i_minval;
+      uint32_t i_maxval, i_minval;
 
       (void)name; /* Parameter is not used. */
 
@@ -681,7 +663,7 @@ static PLI_INT32 sys_urandom_range_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 
       /* Swap the two arguments if they are out of order. */
       if (i_minval > i_maxval) {
-            unsigned long tmp = i_minval;
+            uint32_t tmp = i_minval;
             i_minval = i_maxval;
             i_maxval = tmp;
       }
@@ -696,7 +678,7 @@ static PLI_INT32 sys_dist_uniform_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed, start, end;
       s_vpi_value val;
-      long i_seed, i_start, i_end;
+      int32_t i_seed, i_start, i_end;
 
       (void)name; /* Parameter is not used. */
 
@@ -733,7 +715,7 @@ static PLI_INT32 sys_dist_normal_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed, mean, sd;
       s_vpi_value val;
-      long i_seed, i_mean, i_sd;
+      int32_t i_seed, i_mean, i_sd;
 
       (void)name; /* Parameter is not used. */
 
@@ -770,7 +752,7 @@ static PLI_INT32 sys_dist_exponential_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed, mean;
       s_vpi_value val;
-      long i_seed, i_mean;
+      int32_t i_seed, i_mean;
 
       (void)name; /* Parameter is not used. */
 
@@ -803,7 +785,7 @@ static PLI_INT32 sys_dist_poisson_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed, mean;
       s_vpi_value val;
-      long i_seed, i_mean;
+      int32_t i_seed, i_mean;
 
       (void)name; /* Parameter is not used. */
 
@@ -836,7 +818,7 @@ static PLI_INT32 sys_dist_chi_square_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed, df;
       s_vpi_value val;
-      long i_seed, i_df;
+      int32_t i_seed, i_df;
 
       (void)name; /* Parameter is not used. */
 
@@ -869,7 +851,7 @@ static PLI_INT32 sys_dist_t_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed, df;
       s_vpi_value val;
-      long i_seed, i_df;
+      int32_t i_seed, i_df;
 
       (void)name; /* Parameter is not used. */
 
@@ -902,7 +884,7 @@ static PLI_INT32 sys_dist_erlang_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed, k, mean;
       s_vpi_value val;
-      long i_seed, i_k, i_mean;
+      int32_t i_seed, i_k, i_mean;
 
       (void)name; /* Parameter is not used. */
 
