@@ -487,28 +487,13 @@ NetESFunc::NetESFunc(const char*n, ivl_variable_type_t t,
 }
 
 NetESFunc::NetESFunc(const char*n, ivl_type_t rtype, unsigned np)
-: NetExpr(rtype), name_(0), type_(IVL_VT_NO_TYPE), enum_type_(0), parms_(np), is_overridden_(false)
+: NetExpr(rtype), name_(0), type_(rtype->base_type()),
+  enum_type_(dynamic_cast<const netenum_t*>(rtype)), parms_(np),
+  is_overridden_(false)
 {
       name_ = lex_strings.add(n);
       expr_width(rtype->packed_width());
-	// FIXME: For now, assume that all uses of this constructor
-	// are for the IVL_VT_DARRAY type. Eventually, the type_
-	// member will go away.
-      if (dynamic_cast<const netdarray_t*>(rtype))
-	    type_ = IVL_VT_DARRAY;
-      else if (dynamic_cast<const netclass_t*>(rtype))
-	    type_ = IVL_VT_CLASS;
-      else if (dynamic_cast<const netstring_t*>(rtype))
-	    type_ = IVL_VT_STRING;
-      else
-	    ivl_assert(*this, 0);
-}
-
-NetESFunc::NetESFunc(const char*n, const netenum_t*enum_type, unsigned np)
-: name_(0), type_(enum_type->base_type()), enum_type_(enum_type), parms_(np), is_overridden_(false)
-{
-      name_ = lex_strings.add(n);
-      expr_width(enum_type->packed_width());
+      cast_signed_base_(rtype->get_signed());
 }
 
 NetESFunc::~NetESFunc()

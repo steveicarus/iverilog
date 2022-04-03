@@ -3058,7 +3058,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			     << "takes no arguments" << endl;
 			des->errors += 1;
 		  }
-		  NetESFunc*sys_expr = new NetESFunc("$size", IVL_VT_BOOL, 32, 1);
+		  NetESFunc*sys_expr = new NetESFunc("$size", &netvector_t::atom2u32, 1);
 		  sys_expr->set_line(*this);
 		  sys_expr->parm(0, sub_expr);
 		  return sys_expr;
@@ -3076,19 +3076,20 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 
 	    // Get the method name that we are looking for.
 	    perm_string method_name = search_results.path_tail.back().name;
-
 	    if (method_name == "size") {
 		  if (parms_.size() != 0) {
 			cerr << get_fileline() << ": error: size() method "
 			     << "takes no arguments" << endl;
 			des->errors += 1;
 		  }
-		  NetESFunc*sys_expr = new NetESFunc("$size", IVL_VT_BOOL, 32, 1);
+		  NetESFunc*sys_expr = new NetESFunc("$size", &netvector_t::atom2u32, 1);
 		  sys_expr->set_line(*this);
 		  sys_expr->parm(0, sub_expr);
 		  return sys_expr;
 	    }
 
+	    const netqueue_t*queue = search_results.net->queue_type();
+	    ivl_type_t element_type = queue->element_type();
 	    if (method_name == "pop_back") {
 		  if (parms_.size() != 0) {
 			cerr << get_fileline() << ": error: pop_back() method "
@@ -3096,7 +3097,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			des->errors += 1;
 		  }
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_queue_method$pop_back",
-						     expr_type_, expr_width_, 1);
+						     element_type, 1);
 		  sys_expr->set_line(*this);
 		  sys_expr->parm(0, sub_expr);
 		  return sys_expr;
@@ -3109,7 +3110,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			des->errors += 1;
 		  }
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_queue_method$pop_front",
-						     expr_type_, expr_width_, 1);
+						     element_type, 1);
 		  sys_expr->set_line(*this);
 		  sys_expr->parm(0, sub_expr);
 		  return sys_expr;
@@ -3186,35 +3187,35 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 
 	    if (method_name == "len") {
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$len",
-						     IVL_VT_BOOL, 32, 1);
+						     &netvector_t::atom2u32, 1);
 		  sys_expr->parm(0, sub_expr);
 		  return sys_expr;
 	    }
 
 	    if (method_name == "atoi") {
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atoi",
-						     IVL_VT_BOOL, integer_width, 1);
+						     netvector_t::integer_type(), 1);
 		  sys_expr->parm(0, sub_expr);
 		  return sys_expr;
 	    }
 
 	    if (method_name == "atoreal") {
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atoreal",
-						     IVL_VT_REAL, 1, 1);
+						     &netreal_t::type_real, 1);
 		  sys_expr->parm(0, sub_expr);
 		  return sys_expr;
 	    }
 
 	    if (method_name == "atohex") {
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atohex",
-						     IVL_VT_BOOL, integer_width, 1);
+						     netvector_t::integer_type(), 1);
 		  sys_expr->parm(0, sub_expr);
 		  return sys_expr;
 	    }
 
 	    if (method_name == "substr") {
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$substr",
-						     IVL_VT_STRING, 1, 3);
+						     &netstring_t::type_string, 3);
 		  sys_expr->set_line(*this);
 
 		    // First argument is the source string.
@@ -4657,7 +4658,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  ivl_assert(*this, sr.path_tail.size() == 1);
 		  const name_component_t member_comp = sr.path_tail.front();
 		  if (member_comp.name == "size") {
-			NetESFunc*fun = new NetESFunc("$size", IVL_VT_BOOL, 32, 1);
+			NetESFunc*fun = new NetESFunc("$size",
+						      &netvector_t::atom2s32,
+						      1);
 			fun->set_line(*this);
 
 			NetESignal*arg = new NetESignal(sr.net);
@@ -4773,11 +4776,10 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  ivl_assert(*this, sr.path_tail.size() == 1);
 		  const name_component_t member_comp = sr.path_tail.front();
 		  const netqueue_t*queue = sr.net->queue_type();
-		  ivl_variable_type_t qelem_type = queue->element_base_type();
-		  unsigned qelem_width = queue->element_width();
+		  ivl_type_t element_type = queue->element_type();
 		  if (member_comp.name == "pop_back") {
 			NetESFunc*fun = new NetESFunc("$ivl_queue_method$pop_back",
-			                              qelem_type, qelem_width, 1);
+			                              element_type, 1);
 			fun->set_line(*this);
 
 			NetESignal*arg = new NetESignal(sr.net);
@@ -4789,7 +4791,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 		  if (member_comp.name == "pop_front") {
 			NetESFunc*fun = new NetESFunc("$ivl_queue_method$pop_front",
-			                              qelem_type, qelem_width, 1);
+			                              element_type, 1);
 			fun->set_line(*this);
 
 			NetESignal*arg = new NetESignal(sr.net);

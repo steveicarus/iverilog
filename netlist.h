@@ -4635,7 +4635,6 @@ class NetESFunc  : public NetExpr {
       NetESFunc(const char*name, ivl_variable_type_t t,
 		unsigned width, unsigned nprms, bool is_overridden =false);
       NetESFunc(const char*name, ivl_type_t rtype, unsigned nprms);
-      NetESFunc(const char*name, const netenum_t*enum_type, unsigned nprms);
       ~NetESFunc();
 
       const char* name() const;
