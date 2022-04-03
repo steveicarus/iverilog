@@ -1435,6 +1435,7 @@ queue			normal			ivltests
 queue_fail		RE			ivltests gold=queue_fail.gold
 queue_stat		normal			ivltests gold=queue_stat.gold
 ram16x1			normal			ivltests # Sitting here for a long time?
+random			normal			ivltests gold=random.gold
 readmem-error		normal			ivltests gold=readmem-error.gold
 readmem-invalid		RE			ivltests gold=readmem-invalid.gold
 readmemb1		normal			ivltests # basic $readmemb - uses readmemh1.dat
