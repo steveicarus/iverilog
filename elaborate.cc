@@ -47,6 +47,7 @@
 # include  "netenum.h"
 # include  "netvector.h"
 # include  "netdarray.h"
+# include  "netqueue.h"
 # include  "netparray.h"
 # include  "netscalar.h"
 # include  "netclass.h"
@@ -4099,19 +4100,7 @@ NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
 		 << "() method requires a single argument." << endl;
 	    des->errors += 1;
       }
-
-	// Get the context width if this is a logic type.
-      ivl_variable_type_t base_type = net->darray_type()->element_base_type();
-      int context_width = -1;
-      switch (base_type) {
-	  case IVL_VT_BOOL:
-	  case IVL_VT_LOGIC:
-	    context_width = net->darray_type()->element_width();
-	    break;
-	  default:
-	    break;
-      }
-
+      ivl_type_t element_type = net->queue_type()->element_type();
       vector<NetExpr*>argv (nparms+1);
       argv[0] = sig;
 
@@ -4123,8 +4112,8 @@ NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
 		       << "() methods first argument is missing." << endl;
 		  des->errors += 1;
 	    } else {
-		  argv[1] = elab_and_eval(des, scope, args[0], context_width,
-		                          false, false, base_type);
+		  argv[1] = elaborate_rval_expr(des, scope, element_type,
+						args[0]);
 	    }
       } else {
 	    if (nparms == 0 || !args[0]) {
@@ -4133,8 +4122,9 @@ NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
 		       << "() methods first argument is missing." << endl;
 		  des->errors += 1;
 	    } else {
-		  argv[1] = elab_and_eval(des, scope, args[0], context_width,
-		                          false, false, IVL_VT_LOGIC);
+		  argv[1] = elaborate_rval_expr(des, scope,
+						netvector_t::integer_type(),
+						args[0]);
 	    }
 
 	    if (nparms < 2 || !args[1]) {
@@ -4143,8 +4133,8 @@ NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
 		       << "() methods second argument is missing." << endl;
 		  des->errors += 1;
 	    } else {
-		  argv[2] = elab_and_eval(des, scope, args[1], context_width,
-		                          false, false, base_type);
+		  argv[2] = elaborate_rval_expr(des, scope, element_type,
+						args[1]);
 	    }
       }
 
