@@ -117,7 +117,9 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 		 << endl;
       }
 
+      NetExpr *rval;
       int context_wid = -1;
+      bool fallback = true;
       switch (lv_type) {
 	  case IVL_VT_DARRAY:
 	  case IVL_VT_QUEUE:
@@ -125,8 +127,11 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 	      // For these types, use a different elab_and_eval that
 	      // uses the lv_net_type. We should eventually transition
 	      // all the types to this new form.
-	    if (lv_net_type)
-		  return elab_and_eval(des, scope, expr, lv_net_type, need_const);
+	    if (lv_net_type) {
+		  rval = elab_and_eval(des, scope, expr, lv_net_type, need_const);
+		  fallback = false;
+	    }
+
 	    break;
 	  case IVL_VT_REAL:
 	  case IVL_VT_STRING:
@@ -141,8 +146,26 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 	    break;
       }
 
-      return elab_and_eval(des, scope, expr, context_wid, need_const,
-			   false, lv_type, force_unsigned);
+      if (fallback) {
+	    rval = elab_and_eval(des, scope, expr, context_wid, need_const,
+				 false, lv_type, force_unsigned);
+      }
+
+      const netenum_t *lval_enum = dynamic_cast<const netenum_t*>(lv_net_type);
+      if (lval_enum) {
+	    const netenum_t *rval_enum = rval->enumeration();
+	    if (!rval_enum) {
+	      cerr << expr->get_fileline() << ": error: "
+			      "This assignment requires an explicit cast." << endl;
+	      des->errors += 1;
+	    } else if (!lval_enum->matches(rval_enum)) {
+	      cerr << expr->get_fileline() << ": error: "
+			      "Enumeration type mismatch in assignment." << endl;
+	      des->errors += 1;
+	    }
+      }
+
+      return rval;
 }
 
 /*
@@ -4351,6 +4374,14 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       symbol_search_results sr;
       symbol_search(this, des, use_scope, path_, &sr);
+
+	// If the identifier name is a parameter name, then return
+	// the parameter value.
+      if (sr.par_val) {
+	    return elaborate_expr_param_or_specparam_(des, scope, sr.par_val,
+						      use_scope, sr.type, 0,
+						      flags);
+      }
 
       if (!sr.net) {
             cerr << get_fileline() << ": error: Unable to bind variable `"

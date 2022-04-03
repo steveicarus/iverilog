@@ -150,18 +150,6 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    return;
       }
 
-      if (lval->enumeration()) {
-	    if (! rval_expr->enumeration()) {
-		  cerr << get_fileline() << ": error: "
-		          "This assignment requires an explicit cast." << endl;
-		  des->errors += 1;
-	    } else if (! lval->enumeration()->matches(rval_expr->enumeration())) {
-		  cerr << get_fileline() << ": error: "
-		          "Enumeration type mismatch in assignment." << endl;
-		  des->errors += 1;
-	    }
-      }
-
       NetNet*rval = rval_expr->synthesize(des, scope, rval_expr);
 
       if (rval == 0) {
@@ -2395,7 +2383,8 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 {
       ivl_assert(*this, rval_);
 
-      NetExpr*rv = elab_and_eval(des, scope, rval_, net_type, is_constant_);
+      NetExpr*rv = elaborate_rval_expr(des, scope, net_type, rval_,
+				       is_constant_);
 
       if (!is_constant_ || !rv) return rv;
 
@@ -2416,10 +2405,6 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 {
       ivl_assert(*this, rval_);
 
-	// Don't have a good value for the lv_net_type argument to
-	// elaborate_rval_expr, so punt and pass nil. In the future we
-	// should look into fixing calls to this method to pass a
-	// net_type instead of the separate lv_width/lv_type values.
       NetExpr*rv = elaborate_rval_expr(des, scope, lv_net_type, lv_type, lv_width,
 				       rval(), is_constant_, force_unsigned);
 
@@ -2790,18 +2775,6 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    return bl;
       }
 
-      if (lv->enumeration()) {
-	    if (! rv->enumeration()) {
-		  cerr << get_fileline() << ": error: "
-		          "This assignment requires an explicit cast." << endl;
-		  des->errors += 1;
-	    } else if (! lv->enumeration()->matches(rv->enumeration())) {
-		  cerr << get_fileline() << ": error: "
-		          "Enumeration type mismatch in assignment." << endl;
-		  des->errors += 1;
-	    }
-      }
-
       NetAssign*cur = new NetAssign(lv, rv);
       cur->set_line(*this);
 
@@ -2851,7 +2824,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	         << endl;
       }
 
-      NetExpr*rv = elaborate_rval_(des, scope, 0, lv->expr_type(), count_lval_width(lv));
+      NetExpr*rv = elaborate_rval_(des, scope, lv->net_type(), lv->expr_type(), count_lval_width(lv));
       if (rv == 0) return 0;
 
       NetExpr*delay = 0;
@@ -4497,11 +4470,7 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
       unsigned lwid = count_lval_width(lval);
       ivl_variable_type_t ltype = lval->expr_type();
 
-	// Need to figure out a better thing to do about the
-	// lv_net_type argument to elaborate_rval_expr here. This
-	// would entail getting the NetAssign_ to give us an
-	// ivl_type_t as needed.
-      NetExpr*rexp = elaborate_rval_expr(des, scope, 0, ltype, lwid, expr_);
+      NetExpr*rexp = elaborate_rval_expr(des, scope, lval->net_type(), ltype, lwid, expr_);
       if (rexp == 0)
 	    return 0;
 
