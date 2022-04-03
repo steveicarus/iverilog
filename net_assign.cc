@@ -172,11 +172,6 @@ ivl_type_t NetAssign_::net_type() const
       return ntype;
 }
 
-const netenum_t*NetAssign_::enumeration() const
-{
-      return dynamic_cast<const netenum_t*>(net_type());
-}
-
 perm_string NetAssign_::name() const
 {
       if (sig_) {
