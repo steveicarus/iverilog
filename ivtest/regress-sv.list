@@ -554,6 +554,8 @@ sv_queue_parray_fail	CE,-g2009		ivltests gold=sv_queue_parray_fail.gold
 sv_queue_real		normal,-g2009,-pfileline=1	ivltests gold=sv_queue_real.gold
 sv_queue_real_bounded	normal,-g2009,-pfileline=1	ivltests gold=sv_queue_real_bounded.gold
 sv_queue_real_fail	CE,-g2009		ivltests gold=sv_queue_real_fail.gold
+sv_queue_signed1	normal,-g2009		ivltests
+sv_queue_signed2	normal,-g2009		ivltests
 sv_queue_string		normal,-g2009,-pfileline=1	ivltests gold=sv_queue_string.gold
 sv_queue_string_bounded	normal,-g2009,-pfileline=1	ivltests gold=sv_queue_string_bounded.gold
 sv_queue_string_fail	CE,-g2009		ivltests gold=sv_queue_string_fail.gold
