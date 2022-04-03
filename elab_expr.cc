@@ -91,8 +91,8 @@ static NetBranch* find_existing_implicit_branch(NetNet*sig, NetNet*gnd)
       return 0;
 }
 
-NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
-			     PExpr*expr, bool need_const, bool force_unsigned)
+NetExpr* elaborate_rval_expr(Design *des, NetScope *scope, ivl_type_t lv_net_type,
+			     PExpr *expr, bool need_const, bool force_unsigned)
 {
       return elaborate_rval_expr(des, scope, lv_net_type,
 				 lv_net_type->base_type(),
@@ -236,13 +236,16 @@ NetExpr*PEAssignPattern::elaborate_expr_darray_(Design*des, NetScope*scope,
       const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype);
       ivl_assert(*this, array_type);
 
+      bool need_const = NEED_CONST & flags;
+
 	// This is an array pattern, so run through the elements of
 	// the expression and elaborate each as if they are
 	// element_type expressions.
       ivl_type_t elem_type = array_type->element_type();
       vector<NetExpr*> elem_exprs (parms_.size());
       for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
-	    NetExpr*tmp = parms_[idx]->elaborate_expr(des, scope, elem_type, flags);
+	    NetExpr*tmp = elaborate_rval_expr(des, scope, elem_type,
+					      parms_[idx], need_const);
 	    elem_exprs[idx] = tmp;
       }
 
