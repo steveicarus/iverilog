@@ -384,6 +384,8 @@ sv_class_extends_scoped	CE,-g2009		ivltests
 sv_class_localparam	CE,-g2009		ivltests
 sv_class_new_init	CE,-g2009		ivltests
 sv_class_in_module_decl	CE,-g2009		ivltests
+sv_class_method_signed1	CE,-g2009,-pallowsigned=1	ivltests
+sv_class_method_signed2	CE,-g2009,-pallowsigned=1	ivltests
 sv_class_static_prop1	CE,-g2009		ivltests
 sv_class_static_prop2	CE,-g2009		ivltests
 sv_class_static_prop3	CE,-g2009		ivltests
@@ -438,6 +440,10 @@ br_gh436		CE,-g2012,-pallowsigned=1	ivltests  # queues/strings
 br_gh672		CE,-g2009		ivltests  # join_none
 br_mw20200501		CE,-g2009		ivltests  # queues
 disable_fork_cmd	CE,-g2009		ivltests  # disable fork and join_*
+enum_method_signed1	CE,-g2009,-pallowsigned=1	ivltests
+enum_method_signed2	CE,-g2009,-pallowsigned=1	ivltests
+enum_method_signed3	CE,-g2009,-pallowsigned=1	ivltests
+enum_method_signed4	CE,-g2009,-pallowsigned=1	ivltests
 enum_next		CE,-g2009,-pallowsigned=1	ivltests  # enum
 enum_test1		CE,-g2009		ivltests  # enum
 fork_join_any		CE,-g2009,-pallowsigned=1	ivltests  # join_any
@@ -611,6 +617,10 @@ br_gh433		CE,-g2009,-pallowsigned=1	ivltests
 sv_queue1		CE,-g2009,-pallowsigned=1	ivltests
 sv_queue2		CE,-g2009,-pallowsigned=1	ivltests
 sv_queue3		CE,-g2009		ivltests
+sv_queue_method_signed1	CE,-g2009,-pallowsigned=1	ivltests
+sv_queue_method_signed2	CE,-g2009,-pallowsigned=1	ivltests
+sv_queue_method_signed3	CE,-g2009,-pallowsigned=1	ivltests
+sv_queue_method_signed4	CE,-g2009,-pallowsigned=1	ivltests
 sv_queue_real		CE,-g2009		ivltests
 sv_queue_real_bounded	CE,-g2009		ivltests
 sv_queue_real_fail	CE,-g2009		ivltests
