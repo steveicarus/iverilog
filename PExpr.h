@@ -430,6 +430,9 @@ class PEIdent : public PExpr {
 				       NetAssign_*) const;
 
     private:
+      NetExpr* elaborate_expr_(Design *des, NetScope *scope,
+			      unsigned expr_wid, unsigned flags) const;
+
       NetExpr*elaborate_expr_param_or_specparam_(Design*des,
 						 NetScope*scope,
 						 const NetExpr*par,

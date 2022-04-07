@@ -4540,6 +4540,18 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
 NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 				 unsigned expr_wid, unsigned flags) const
 {
+      NetExpr *result;
+
+      result = elaborate_expr_(des, scope, expr_wid, flags);
+      if (!result || !type_is_vectorable(expr_type_))
+	    return result;
+
+      return pad_to_width(result, expr_wid, signed_flag_, *this);
+}
+
+NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
+				 unsigned expr_wid, unsigned flags) const
+{
       ivl_assert(*this, scope);
 
       if (debug_elaborate) {
@@ -4604,13 +4616,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	    NetExpr*tmp = elaborate_expr_param_or_specparam_(des, scope, sr.par_val,
-							     sr.scope, sr.par_type,
-							     expr_wid, flags);
-
-            if (!tmp) return 0;
-
-            return pad_to_width(tmp, expr_wid, signed_flag_, *this);
+	    return elaborate_expr_param_or_specparam_(des, scope, sr.par_val,
+						      sr.scope, sr.par_type,
+						      expr_wid, flags);
       }
 
 	// If the identifier names a signal (a variable or a net)
@@ -4645,11 +4653,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			     << endl;
 		  }
 
-		  NetExpr*tmp = check_for_struct_members(this, des, use_scope,
-							 sr.net, sr.path_head.back().index,
-							 sr.path_tail);
-		  if (!tmp) return 0;
-		  else return pad_to_width(tmp, expr_wid, signed_flag_, *this);
+		  return check_for_struct_members(this, des, use_scope, sr.net,
+						  sr.path_head.back().index,
+						  sr.path_tail);
 	    }
 
 	      // If this is an array object, and there are members in
@@ -4674,9 +4680,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			arg->set_line(*sr.net);
 
 			fun->parm(0, arg);
-			if (!fun)
-			      return 0;
-			return pad_to_width(fun, expr_wid, signed_flag_, *this);
+			return fun;
 		  } else if (member_comp.name == "find") {
 			cerr << get_fileline() << ": sorry: 'find()' "
 			        "array location method is not currently "
@@ -4795,9 +4799,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			arg->set_line(*sr.net);
 
 			fun->parm(0, arg);
-			if (!fun || !type_is_vectorable(expr_type_))
-			      return fun;
-			return pad_to_width(fun, expr_wid, signed_flag_, *this);
+			return fun;
 		  }
 
 		  if (member_comp.name == "pop_front") {
@@ -4809,9 +4811,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			arg->set_line(*sr.net);
 
 			fun->parm(0, arg);
-			if (!fun || !type_is_vectorable(expr_type_))
-			      return fun;
-			return pad_to_width(fun, expr_wid, signed_flag_, *this);
+			return fun;
 		  }
 	    }
 
@@ -4861,13 +4861,10 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  ivl_assert(*this, sr.path_tail.size() == 1);
 		  const name_component_t member_comp = sr.path_tail.front();
 		  ivl_assert(*this, member_comp.index.empty());
-		  NetExpr *tmp = check_for_enum_methods(this, des, use_scope,
+		  return check_for_enum_methods(this, des, use_scope,
 						netenum, sr.path_head,
 						member_comp.name,
 						expr, NULL, 0);
-		  if (!tmp)
-			return 0;
-		  return pad_to_width(tmp, expr_wid, signed_flag_, *this);
 	    }
 
 	    ivl_assert(*this, sr.path_tail.empty());
@@ -4883,7 +4880,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		       << ", tmp=" << *tmp << endl;
 	    }
 
-            return pad_to_width(tmp, expr_wid, signed_flag_, *this);
+            return tmp;
       }
 
 	// If the identifier is a named event
@@ -5514,8 +5511,6 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 		       << "Elaborate parameter <" << path_
 		       << "> as enumeration constant." << *etmp << endl;
 	    tmp = etmp->dup_expr();
-            tmp = pad_to_width(tmp, expr_wid, signed_flag_, *this);
-
       } else {
 	    perm_string name = peek_tail_name(path_);
 
