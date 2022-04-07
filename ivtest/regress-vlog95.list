@@ -386,6 +386,10 @@ sv_class_new_init	CE,-g2009		ivltests
 sv_class_in_module_decl	CE,-g2009		ivltests
 sv_class_method_signed1	CE,-g2009,-pallowsigned=1	ivltests
 sv_class_method_signed2	CE,-g2009,-pallowsigned=1	ivltests
+sv_class_property_signed1	CE,-g2009,-pallowsigned=1	ivltests
+sv_class_property_signed2	CE,-g2009,-pallowsigned=1	ivltests
+sv_class_property_signed3	CE,-g2009,-pallowsigned=1	ivltests
+sv_class_property_signed4	CE,-g2009,-pallowsigned=1	ivltests
 sv_class_static_prop1	CE,-g2009		ivltests
 sv_class_static_prop2	CE,-g2009		ivltests
 sv_class_static_prop3	CE,-g2009		ivltests
