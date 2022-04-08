@@ -3965,6 +3965,16 @@ unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
 	    }
       }
 
+      if (const struct netqueue_t *queue = net->queue_type()) {
+	    if (member_name == "pop_back" || member_name == "pop_front") {
+		  expr_type_ = queue->element_base_type();
+		  expr_width_ = queue->element_width();
+		  min_width_ = expr_width_;
+		  signed_flag_ = queue->get_signed();
+		  return expr_width_;
+	    }
+      }
+
 	// Look for the enumeration attributes.
       if (const netenum_t*netenum = net->enumeration()) {
 	    if (member_name == "num") {
