@@ -529,6 +529,8 @@ sv_package2		normal,-g2009		ivltests
 sv_package3		normal,-g2009		ivltests
 sv_package4		normal,-g2009		ivltests
 sv_package5		normal,-g2009		ivltests
+sv_package_implicit_var1	CE,-g2009	ivltests
+sv_package_implicit_var2	CE,-g2009	ivltests
 sv_packed_port1		normal,-g2009		ivltests
 sv_packed_port2		normal,-g2009		ivltests
 sv_param_port_list	normal,-g2009		ivltests
