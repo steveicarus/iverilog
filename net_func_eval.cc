@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -339,7 +339,7 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 
 	    word = word_const->value().as_long();
 
-	    if (word >= var->nwords)
+	    if (word < 0 || word >= var->nwords)
 		  return true;
 
 	    old_lval = var->array[word];
@@ -999,7 +999,7 @@ NetExpr* NetESignal::evaluate_function(const LineInfo&loc,
 
 	    int word = word_const->value().as_long();
 
-	    if (word_const->value().is_defined() && (word < var->nwords))
+	    if (word_const->value().is_defined() && (word >= 0) && (word < var->nwords))
 		  value = var->array[word];
       } else {
 	    value = var->value;
