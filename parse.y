@@ -1161,7 +1161,7 @@ constraint_set /* IEEE1800-2005 A.1.9 */
   ;
 
 data_declaration /* IEEE1800-2005: A.2.1.3 */
-  : attribute_list_opt data_type_or_implicit list_of_variable_decl_assignments ';'
+  : attribute_list_opt data_type list_of_variable_decl_assignments ';'
       { data_type_t*data_type = $2;
 	if (data_type == 0) {
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
