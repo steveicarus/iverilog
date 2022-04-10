@@ -1029,9 +1029,13 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       unsigned wid = 1;
       vector<netrange_t>packed_dimensions;
 
-      NetScope*base_type_scope = scope;
+      NetScope*array_type_scope = scope;
+      if (uarray_type_ && !uarray_type_->name.nil())
+            array_type_scope = array_type_scope->find_typedef_scope(des, uarray_type_);
+
+      NetScope*base_type_scope = array_type_scope;
       if (set_data_type_ && !set_data_type_->name.nil())
-            base_type_scope = scope->find_typedef_scope(des, set_data_type_);
+            base_type_scope = base_type_scope->find_typedef_scope(des, set_data_type_);
 
       des->errors += error_cnt_;
 
@@ -1142,10 +1146,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       list<netrange_t>unpacked_dimensions;
       netdarray_t*netdarray = 0;
 
-      NetScope*array_type_scope = scope;
-      if (uarray_type_ && !uarray_type_->name.nil())
-            array_type_scope = scope->find_typedef_scope(des, uarray_type_);
-
       for (list<pform_range_t>::const_iterator cur = unpacked_.begin()
 		 ; cur != unpacked_.end() ; ++cur) {
 	    PExpr*use_lidx = cur->first;
@@ -1155,7 +1155,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // dimensions, then turn this into a dynamic array and
 	      // put all the packed dimensions there.
 	    if (use_lidx==0 && use_ridx==0) {
-		  ivl_type_t base_type = elaborate_darray_type(des, scope,
+		  ivl_type_t base_type = elaborate_darray_type(des,
+						  array_type_scope,
 						  "Dynamic array",
 						  packed_dimensions);
 		  packed_dimensions.clear();
@@ -1167,7 +1168,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // Special case: Detect the mark for a QUEUE
 	      // declaration, which is the dimensions [null:max_idx].
 	    if (dynamic_cast<PENull*>(use_lidx)) {
-		  ivl_type_t base_type = elaborate_darray_type(des, scope,
+		  ivl_type_t base_type = elaborate_darray_type(des,
+						  array_type_scope,
 						  "Queue",
 						  packed_dimensions);
 		  packed_dimensions.clear();
@@ -1285,7 +1287,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    sig = new NetNet(scope, name_, wtype, netdarray);
 
       } else {
-	    ivl_type_t use_type = elaborate_type(des, scope,
+	    ivl_type_t use_type = elaborate_type(des, array_type_scope,
 						 packed_dimensions);
 
 	    if (debug_elaborate) {
