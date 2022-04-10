@@ -173,13 +173,36 @@ ostream& data_type_t::debug_dump(ostream&out) const
       return out;
 }
 
-ostream& atom2_type_t::debug_dump(ostream&out) const
+ostream& atom_type_t::debug_dump(ostream&out) const
 {
       if (signed_flag)
-	    out << "signed-";
+	    out << "signed ";
       else
-	    out << "unsigned-";
-      out << "int(" << type_code << ")";
+	    out << "unsigned ";
+
+      switch (type_code) {
+      case INTEGER:
+	    out << "integer";
+	    break;
+      case TIME:
+	    out << "time";
+	    break;
+      case LONGINT:
+	    out << "longint";
+	    break;
+      case INT:
+	    out << "int";
+	    break;
+      case SHORTINT:
+	    out << "shortint";
+	    break;
+      case BYTE:
+	    out << "byte";
+	    break;
+      default:
+	    assert(0);
+	    break;
+      }
       return out;
 }
 
@@ -583,9 +606,6 @@ void PWire::dump(ostream&out, unsigned ind) const
 
       if (signed_) {
 	    out << " signed";
-      }
-      if (get_isint()) {
-	    out << " integer";
       }
       if (is_scalar_) {
 	    out << " scalar";

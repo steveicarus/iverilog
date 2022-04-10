@@ -2601,11 +2601,6 @@ void pform_module_define_port(const struct vlltype&li,
 	    data_type = vec_type->base_type;
 	    signed_flag = vec_type->signed_flag;
 	    prange = vec_type->pdims.get();
-      } else if (atom2_type_t*atype = dynamic_cast<atom2_type_t*>(vtype)) {
-	    data_type = IVL_VT_BOOL;
-	    signed_flag = atype->signed_flag;
-	    prange = make_range_from_width(atype->type_code);
-
       } else if (real_type_t*rtype = dynamic_cast<real_type_t*>(vtype)) {
 	    data_type = IVL_VT_REAL;
 	    signed_flag = true;
@@ -2867,8 +2862,7 @@ static vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 						     ivl_variable_type_t vtype,
 						     bool signed_flag,
 						     list<pform_range_t>*range,
-						     list<pform_port_t>*ports,
-						     bool isint = false)
+						     list<pform_port_t>*ports)
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
       assert(ports);
@@ -2889,10 +2883,6 @@ static vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 	    }
 
 	    curw->set_signed(signed_flag);
-		if (isint) {
-			bool flag = curw->set_wire_type(NetNet::INTEGER);
-			assert(flag);
-		}
 
 	      /* If there is a range involved, it needs to be set. */
 	    if (range) {
@@ -2959,11 +2949,9 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
             vtype = uarray->base_type;
       }
 
-      if (atom2_type_t*atype = dynamic_cast<atom2_type_t*> (vtype)) {
-	    list<pform_range_t>*range_tmp = make_range_from_width(atype->type_code);
-	    ret = pform_make_task_ports(loc, pt, IVL_VT_BOOL,
-					 atype->signed_flag,
-					 range_tmp, ports);
+      if (dynamic_cast<atom_type_t*> (vtype)) {
+	    ret = do_make_task_ports(loc, pt, vtype->figure_packed_base_type(),
+				      vtype, ports);
       }
 
       if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype)) {
@@ -2974,7 +2962,7 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 	    ret = pform_make_task_ports(loc, pt, base_type,
 					 vec_type->signed_flag,
 					 copy_range(vec_type->pdims.get()),
-					 ports, vec_type->integer_flag);
+					 ports);
       }
 
       if (/*real_type_t*real_type = */ dynamic_cast<real_type_t*> (vtype)) {
@@ -3431,30 +3419,6 @@ void pform_set_port_type(const struct vlltype&li,
       delete attr;
 }
 
-static void pform_set_integer_2atom(uint64_t width, bool signed_flag, perm_string name)
-{
-      PWire*cur = pform_get_wire_in_scope(name);
-      assert(cur);
-
-      cur->set_signed(signed_flag);
-
-      pform_range_t rng;
-      rng.first = new PENumber(new verinum(width-1, integer_width));
-      rng.second = new PENumber(new verinum((uint64_t)0, integer_width));
-      list<pform_range_t>rlist;
-      rlist.push_back(rng);
-      cur->set_range(rlist, SR_NET);
-}
-
-static void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names)
-{
-      for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end() ; ++ cur ) {
-	    perm_string txt = *cur;
-	    pform_set_integer_2atom(width, signed_flag, txt);
-      }
-}
-
 /*
  * This function detects the derived class for the given type and
  * dispatches the type to the proper subtype function.
@@ -3471,15 +3435,7 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
       if (uarray_type)
             data_type = uarray_type->base_type;
 
-      if (atom2_type_t*atom2_type = dynamic_cast<atom2_type_t*> (data_type)) {
-	    pform_set_integer_2atom(atom2_type->type_code, atom2_type->signed_flag, names);
-	    vt = IVL_VT_BOOL;
-      }
-
-      else if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (data_type)) {
-	    if (net_type==NetNet::REG && vec_type->integer_flag)
-		  net_type=NetNet::INTEGER;
-
+      if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (data_type)) {
 	    pform_set_net_range(names, vec_type->pdims.get(),
 				vec_type->signed_flag, 0);
 	    vt = vec_type->base_type;

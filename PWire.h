@@ -70,7 +70,6 @@ class PWire : public PNamedItem {
 
       void set_signed(bool flag);
       bool get_signed() const;
-      bool get_isint() const;
 
       bool set_data_type(ivl_variable_type_t dt);
       ivl_variable_type_t get_data_type() const;
@@ -101,7 +100,6 @@ class PWire : public PNamedItem {
       NetNet::PortType port_type_;
       ivl_variable_type_t data_type_;
       bool signed_;
-      bool isint_;		// original type of integer
 
 	// These members hold expressions for the bit width of the
 	// wire. If they do not exist, the wire is 1 bit wide. If they

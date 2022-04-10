@@ -32,15 +32,18 @@ netvector_t netvector_t::atom2u16 (IVL_VT_BOOL, 15, 0, false);
 netvector_t netvector_t::atom2s8  (IVL_VT_BOOL,  7, 0, true);
 netvector_t netvector_t::atom2u8  (IVL_VT_BOOL,  7, 0, false);
 
-static netvector_t* save_integer_type = 0;
-const netvector_t* netvector_t::integer_type()
-{
-      if (save_integer_type)
-	    return save_integer_type;
+netvector_t netvector_t::time_signed (IVL_VT_LOGIC, 63, 0, true);
+netvector_t netvector_t::time_unsigned (IVL_VT_LOGIC, 63, 0, false);
 
-      save_integer_type = new netvector_t(IVL_VT_LOGIC, integer_width-1, 0, true);
-      save_integer_type->set_isint(true);
-      return save_integer_type;
+static netvector_t* save_integer_type[2];
+const netvector_t* netvector_t::integer_type(bool is_signed)
+{
+      if (save_integer_type[is_signed])
+	    return save_integer_type[is_signed];
+
+      save_integer_type[is_signed] = new netvector_t(IVL_VT_LOGIC, integer_width-1, 0, is_signed);
+      save_integer_type[is_signed]->set_isint(true);
+      return save_integer_type[is_signed];
 }
 
 //netvector_t netvector_t::scalar_bool (IVL_VT_BOOL);

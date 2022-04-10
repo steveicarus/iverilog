@@ -380,6 +380,8 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
       char letter;
       int  int_val;
 
+      enum atom_type_t::type_code atom_type;
+
 	/* text items are C strings allocated by the lexor using
 	   strdup. They can be put into lists with the texts type. */
       char*text;
@@ -707,7 +709,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <real_type> non_integer_type
 %type <int_val> assert_or_assume
 %type <int_val> deferred_mode
-%type <int_val> atom2_type
+%type <atom_type> atom_type
 %type <int_val> module_start module_end
 
 %type <lifetime> lifetime lifetime_opt
@@ -1206,20 +1208,14 @@ simple_packed_type /* Integer and vector types */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | atom2_type signed_unsigned_opt
-      { atom2_type_t*tmp = new atom2_type_t($1, $2);
+  | atom_type signed_unsigned_opt
+      { atom_type_t*tmp = new atom_type_t($1, $2);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | K_integer signed_unsigned_opt
-      { std::list<pform_range_t>*pd = make_range_from_width(integer_width);
-	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $2, pd);
-	tmp->integer_flag = true;
-	$$ = tmp;
-      }
   | K_time unsigned_signed_opt
-      { std::list<pform_range_t>*pd = make_range_from_width(64);
-	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $2, pd);
+      { atom_type_t*tmp = new atom_type_t(atom_type_t::TIME, $2);
+	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   ;
@@ -2173,20 +2169,14 @@ simple_type_or_string /* IEEE1800-2005: A.2.2.1 */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | atom2_type
-      { atom2_type_t*tmp = new atom2_type_t($1, true);
+  | atom_type
+      { atom_type_t*tmp = new atom_type_t($1, true);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | K_integer
-      { std::list<pform_range_t>*pd = make_range_from_width(integer_width);
-	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, true, pd);
-	tmp->integer_flag = true;
-	$$ = tmp;
-      }
   | K_time
-      { std::list<pform_range_t>*pd = make_range_from_width(64);
-	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, pd);
+      { atom_type_t*tmp = new atom_type_t(atom_type_t::TIME, false);
+	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   | K_string
@@ -2739,7 +2729,7 @@ enum_base_type /* IEEE 1800-2012 A.2.2.1 */
         }
       }
    |
-      { $$ = new atom2_type_t(32, true);
+      { $$ = new atom_type_t(atom_type_t::INT, true);
         FILE_NAME($$, @0);
       }
   ;
@@ -4588,11 +4578,12 @@ signed_unsigned_opt
    * In some places we can take any of the 4 2-value atom-type
    * names. All the context needs to know if that type is its width.
    */
-atom2_type
-  : K_byte     { $$ = 8; }
-  | K_shortint { $$ = 16; }
-  | K_int      { $$ = 32; }
-  | K_longint  { $$ = 64; }
+atom_type
+  : K_byte     { $$ = atom_type_t::BYTE; }
+  | K_shortint { $$ = atom_type_t::SHORTINT; }
+  | K_int      { $$ = atom_type_t::INT; }
+  | K_longint  { $$ = atom_type_t::LONGINT; }
+  | K_integer  { $$ = atom_type_t::INTEGER; }
   ;
 
   /* An lpvalue is the expression that can go on the left side of a

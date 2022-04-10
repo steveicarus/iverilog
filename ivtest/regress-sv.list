@@ -340,6 +340,8 @@ logp2			normal,-g2005-sv	ivltests
 mod_inst_pkg		normal,-g2009		ivltests
 module_nonansi_enum1	normal,-g2005-sv	ivltests
 module_nonansi_enum2	normal,-g2005-sv	ivltests
+module_nonansi_int1	normal,-g2005-sv	ivltests
+module_nonansi_int2	normal,-g2005-sv	ivltests
 module_nonansi_parray1	normal,-g2005-sv	ivltests
 module_nonansi_parray2	normal,-g2005-sv	ivltests
 module_nonansi_real1	normal,-g2005-sv	ivltests

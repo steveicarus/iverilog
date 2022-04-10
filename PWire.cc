@@ -29,16 +29,11 @@ PWire::PWire(perm_string n,
 	     NetNet::PortType pt,
 	     ivl_variable_type_t dt)
 : name_(n), type_(t), port_type_(pt), data_type_(dt),
-  signed_(false), isint_(false),
+  signed_(false),
   port_set_(false), net_set_(false), is_scalar_(false),
   error_cnt_(0), uarray_type_(0), set_data_type_(0),
   discipline_(0)
 {
-      if (t == NetNet::INTEGER) {
-	    type_ = NetNet::REG;
-	    signed_ = true;
-	    isint_ = true;
-      }
 }
 
 NetNet::Type PWire::get_wire_type() const
@@ -64,18 +59,9 @@ bool PWire::set_wire_type(NetNet::Type t)
 		  type_ = t;
 		  return true;
 	    }
-	    if (t == NetNet::INTEGER) {
-		  type_ = NetNet::REG;
-		  isint_ = true;
-		  return true;
-	    }
 	    if (t == NetNet::IMPLICIT_REG) return true;
 	    return false;
 	  case NetNet::REG:
-	    if (t == NetNet::INTEGER) {
-		  isint_ = true;
-		  return true;
-	    }
 	    if (t == NetNet::REG) return true;
 	    return false;
 	  default:
@@ -144,18 +130,6 @@ void PWire::set_signed(bool flag)
 bool PWire::get_signed() const
 {
       return signed_;
-}
-
-bool PWire::get_isint() const
-{
-      if (isint_)
-	    return true;
-
-      if (vector_type_t*tmp = dynamic_cast<vector_type_t*>(set_data_type_)) {
-	    return tmp->integer_flag;
-      }
-
-      return false;
 }
 
 void PWire::set_range_scalar(PWSRType type)
@@ -267,11 +241,6 @@ void PWire::set_data_type(data_type_t*type)
 {
       assert(set_data_type_ == 0 || set_data_type_ == type);
       set_data_type_ = type;
-
-      if (vector_type_t*tmp = dynamic_cast<vector_type_t*>(type)) {
-	    if (tmp->integer_flag)
-		  isint_ = true;
-      }
 }
 
 void PWire::set_discipline(ivl_discipline_t d)
@@ -289,7 +258,6 @@ PNamedItem::SymbolType PWire::symbol_type() const
 {
       switch (type_) {
           case NetNet::IMPLICIT_REG:
-          case NetNet::INTEGER:
           case NetNet::REG:
             return VAR;
           default:

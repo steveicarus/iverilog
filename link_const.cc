@@ -293,7 +293,7 @@ vector<bool> Nexus::driven_mask(void) const
 	      // information from this node, move on.
 	    if (const NetNet*sig = dynamic_cast<const NetNet*> (obj)) {
 		  NetNet::Type sig_type = sig->type();
-		  if (sig_type==NetNet::INTEGER || sig_type==NetNet::REG) {
+		  if (sig_type==NetNet::REG) {
 			for (size_t idx = 0 ; idx < mask.size() ; idx += 1)
 			      mask[idx] = true;
 			return mask;
