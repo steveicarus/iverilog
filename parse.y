@@ -621,7 +621,8 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <data_type> enum_data_type enum_base_type
 
 %type <tf_ports> tf_item_declaration tf_item_list tf_item_list_opt
-%type <tf_ports> tf_port_declaration tf_port_item tf_port_item_list tf_port_list tf_port_list_opt
+%type <tf_ports> tf_port_declaration tf_port_item tf_port_item_list
+%type <tf_ports> tf_port_list tf_port_list_opt tf_port_list_parens_opt
 
 %type <named_pexpr> modport_simple_port port_name parameter_value_byname
 %type <named_pexprs> port_name_list parameter_value_byname_list
@@ -638,7 +639,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <let_port_lst> let_port_list_opt let_port_list
 %type <let_port_itm> let_port_item
 
-%type <pform_name> hierarchy_identifier implicit_class_handle
+%type <pform_name> hierarchy_identifier implicit_class_handle class_hierarchy_identifier
 %type <expr>  assignment_pattern expression expr_mintypmax
 %type <expr>  expr_primary_or_typename expr_primary
 %type <expr>  class_new dynamic_array_new let_default_opt
@@ -648,6 +649,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt delay_value_list
 %type <exprs> expression_list_with_nuls expression_list_proper
+%type <exprs> argument_list_parens_opt
 %type <exprs> cont_assign cont_assign_list
 
 %type <decl_assignment> variable_decl_assignment
@@ -861,13 +863,9 @@ class_declaration_endlabel_opt
      a data_type. */
 
 class_declaration_extends_opt /* IEEE1800-2005: A.1.2 */
-  : K_extends ps_type_identifier
+  : K_extends ps_type_identifier argument_list_parens_opt
       { $$.type  = $2;
-	$$.exprs = 0;
-      }
-  | K_extends ps_type_identifier '(' expression_list_with_nuls ')'
-      { $$.type  = $2;
-	$$.exprs = $4;
+	$$.exprs = $3;
       }
   |
       { $$.type = 0; $$.exprs = 0; }
@@ -893,14 +891,14 @@ class_item /* IEEE1800-2005: A.1.8 */
       { assert(current_function==0);
 	current_function = pform_push_constructor_scope(@3);
       }
-    '(' tf_port_list_opt ')' ';'
-    tf_item_list_opt
+    tf_port_list_parens_opt ';'
+    block_item_decls_opt
     statement_or_null_list_opt
     K_endfunction endnew_opt
-      { current_function->set_ports($6);
+      { current_function->set_ports($5);
 	pform_set_constructor_return(current_function);
 	pform_set_this_class(@3, current_function);
-	current_function_set_statement(@3, $10);
+	current_function_set_statement(@3, $8);
 	pform_pop_scope();
 	current_function = 0;
       }
@@ -928,25 +926,14 @@ class_item /* IEEE1800-2005: A.1.8 */
 
     /* External class method definitions... */
 
-  | K_extern method_qualifier_opt K_function K_new ';'
-      { yyerror(@1, "sorry: External constructors are not yet supported."); }
-  | K_extern method_qualifier_opt K_function K_new '(' tf_port_list_opt ')' ';'
+  | K_extern method_qualifier_opt K_function K_new tf_port_list_parens_opt ';'
       { yyerror(@1, "sorry: External constructors are not yet supported."); }
   | K_extern method_qualifier_opt K_function data_type_or_implicit_or_void
-    IDENTIFIER ';'
+    IDENTIFIER tf_port_list_parens_opt ';'
       { yyerror(@1, "sorry: External methods are not yet supported.");
 	delete[] $5;
       }
-  | K_extern method_qualifier_opt K_function data_type_or_implicit_or_void
-    IDENTIFIER '(' tf_port_list_opt ')' ';'
-      { yyerror(@1, "sorry: External methods are not yet supported.");
-	delete[] $5;
-      }
-  | K_extern method_qualifier_opt K_task IDENTIFIER ';'
-      { yyerror(@1, "sorry: External methods are not yet supported.");
-	delete[] $4;
-      }
-  | K_extern method_qualifier_opt K_task IDENTIFIER '(' tf_port_list_opt ')' ';'
+  | K_extern method_qualifier_opt K_task IDENTIFIER tf_port_list_parens_opt ';'
       { yyerror(@1, "sorry: External methods are not yet supported.");
 	delete[] $4;
       }
@@ -1002,12 +989,12 @@ class_item_qualifier_opt
   ;
 
 class_new /* IEEE1800-2005 A.2.4 */
-  : K_new '(' expression_list_with_nuls ')'
-      { std::list<PExpr*>*expr_list = $3;
+  : K_new argument_list_parens_opt
+      { std::list<PExpr*>*expr_list = $2;
 	strip_tail_items(expr_list);
 	PENewClass*tmp = new PENewClass(*expr_list);
 	FILE_NAME(tmp, @1);
-	delete $3;
+	delete $2;
 	$$ = tmp;
       }
   | K_new hierarchy_identifier
@@ -1016,11 +1003,6 @@ class_new /* IEEE1800-2005 A.2.4 */
 	PENewCopy*tmp = new PENewCopy(tmpi);
 	FILE_NAME(tmp, @1);
 	delete $2;
-	$$ = tmp;
-      }
-  | K_new
-      { PENewClass*tmp = new PENewClass;
-	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   ;
@@ -1554,6 +1536,15 @@ implicit_class_handle /* IEEE1800-2005: A.8.4 */
   | K_super { $$ = pform_create_super(); }
   ;
 
+/* `this` or `super` followed by an identifier */
+class_hierarchy_identifier
+  : implicit_class_handle '.' hierarchy_identifier
+      { $1->splice($1->end(), *$3);
+	delete $3;
+	$$ = $1;
+      }
+  ;
+
   /* SystemVerilog adds support for the increment/decrement
      expressions, which look like a++, --a, etc. These are primaries
      but are in their own rules because they can also be
@@ -1937,10 +1928,8 @@ modport_simple_port
   ;
 
 modport_tf_port
-  : K_task IDENTIFIER
-  | K_task IDENTIFIER '(' tf_port_list_opt ')'
-  | K_function data_type_or_implicit_or_void IDENTIFIER
-  | K_function data_type_or_implicit_or_void IDENTIFIER '(' tf_port_list_opt ')'
+  : K_task IDENTIFIER tf_port_list_parens_opt
+  | K_function data_type_or_implicit_or_void IDENTIFIER tf_port_list_parens_opt
   ;
 
 non_integer_type /* IEEE1800-2005: A.2.2.1 */
@@ -3637,6 +3626,13 @@ expression_list_with_nuls
       }
 	;
 
+  /* A task or function can be invoked with the task/function name followed by
+   * an argument list in parenthesis or with just the task/function name by
+   * itself. When an argument list is used it might be empty. */
+argument_list_parens_opt
+  : '(' expression_list_with_nuls ')' { $$ = $2; }
+  | { $$ = new std::list<PExpr*>; }
+
 expression_list_proper
   : expression_list_proper ',' expression
       { std::list<PExpr*>*tmp = $1;
@@ -3772,17 +3768,11 @@ expr_primary
 	delete $2;
 	$$ = tmp;
       }
-  | implicit_class_handle '.' hierarchy_identifier '(' expression_list_with_nuls ')'
-      { pform_name_t*t_name = $1;
-	while (! $3->empty()) {
-	      t_name->push_back($3->front());
-	      $3->pop_front();
-	}
-	list<PExpr*>*expr_list = $5;
+  | class_hierarchy_identifier '(' expression_list_with_nuls ')'
+      { list<PExpr*>*expr_list = $3;
 	strip_tail_items(expr_list);
-	PECallFunction*tmp = pform_make_call_function(@1, *t_name, *expr_list);
+	PECallFunction*tmp = pform_make_call_function(@1, *$1, *expr_list);
 	delete $1;
-	delete $3;
 	$$ = tmp;
       }
   | SYSTEM_IDENTIFIER '(' expression_list_proper ')'
@@ -3816,16 +3806,10 @@ expr_primary
 	$$ = tmp;
       }
 
-  | implicit_class_handle '.' hierarchy_identifier
-      { pform_name_t*t_name = $1;
-	while (! $3->empty()) {
-	      t_name->push_back($3->front());
-	      $3->pop_front();
-	}
-	PEIdent*tmp = new PEIdent(*t_name);
-	FILE_NAME(tmp,@1);
+  | class_hierarchy_identifier
+      { PEIdent*tmp = new PEIdent(*$1);
+	FILE_NAME(tmp, @1);
 	delete $1;
-	delete $3;
 	$$ = tmp;
       }
 
@@ -4623,17 +4607,11 @@ lpvalue
 	delete $1;
       }
 
-  | implicit_class_handle '.' hierarchy_identifier
-      { pform_name_t*t_name = $1;
-	while (!$3->empty()) {
-	      t_name->push_back($3->front());
-	      $3->pop_front();
-	}
-	PEIdent*tmp = new PEIdent(*t_name);
+  | class_hierarchy_identifier
+      { PEIdent*tmp = new PEIdent(*$1);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete $1;
-	delete $3;
       }
 
   | '{' expression_list_proper '}'
@@ -5193,15 +5171,10 @@ module_item
       { pform_endgenerate(true); }
 
   /* Elaboration system tasks. */
-  | SYSTEM_IDENTIFIER '(' expression_list_with_nuls ')' ';'
-      { pform_make_elab_task(@1, lex_strings.make($1), *$3);
+  | SYSTEM_IDENTIFIER argument_list_parens_opt ';'
+      { pform_make_elab_task(@1, lex_strings.make($1), *$2);
 	delete[]$1;
-	delete $3;
-      }
-  | SYSTEM_IDENTIFIER ';'
-      { std::list<PExpr*>pt;
-	pform_make_elab_task(@1, lex_strings.make($1), pt);
-	delete[]$1;
+	delete $2;
       }
 
   | modport_declaration
@@ -6638,25 +6611,18 @@ statement_item /* This is roughly statement_item in the LRM */
 		  FILE_NAME(tmp,@1);
 		  $$ = tmp;
 		}
-	| SYSTEM_IDENTIFIER '(' expression_list_with_nuls ')' ';'
-                { PCallTask*tmp = new PCallTask(lex_strings.make($1), *$3);
+	| SYSTEM_IDENTIFIER argument_list_parens_opt ';'
+		{ PCallTask*tmp = new PCallTask(lex_strings.make($1), *$2);
 		  FILE_NAME(tmp,@1);
 		  delete[]$1;
-		  delete $3;
-		  $$ = tmp;
-		}
-	| SYSTEM_IDENTIFIER ';'
-		{ std::list<PExpr*>pt;
-		  PCallTask*tmp = new PCallTask(lex_strings.make($1), pt);
-		  FILE_NAME(tmp,@1);
-		  delete[]$1;
+		  delete $2;
 		  $$ = tmp;
 		}
 
-  | hierarchy_identifier '(' expression_list_with_nuls ')' ';'
-      { PCallTask*tmp = pform_make_call_task(@1, *$1, *$3);
+  | hierarchy_identifier argument_list_parens_opt ';'
+      { PCallTask*tmp = pform_make_call_task(@1, *$1, *$2);
 	delete $1;
-	delete $3;
+	delete $2;
 	$$ = tmp;
       }
 
@@ -6675,24 +6641,11 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
 
-  | implicit_class_handle '.' hierarchy_identifier '(' expression_list_with_nuls ')' ';'
-      { pform_name_t*t_name = $1;
-	while (! $3->empty()) {
-	      t_name->push_back($3->front());
-	      $3->pop_front();
-	}
-	PCallTask*tmp = new PCallTask(*t_name, *$5);
+  | class_hierarchy_identifier argument_list_parens_opt ';'
+      { PCallTask*tmp = new PCallTask(*$1, *$2);
 	FILE_NAME(tmp, @1);
 	delete $1;
-	delete $3;
-	delete $5;
-	$$ = tmp;
-      }
-
-  | hierarchy_identifier ';'
-      { std::list<PExpr*>pt;
-	PCallTask*tmp = pform_make_call_task(@1, *$1, pt);
-	delete $1;
+	delete $2;
 	$$ = tmp;
       }
 
@@ -6703,8 +6656,8 @@ statement_item /* This is roughly statement_item in the LRM */
        beginning of a constructor, but let the elaborator figure that
        out. */
 
-  | implicit_class_handle '.' K_new '(' expression_list_with_nuls ')' ';'
-      { PChainConstructor*tmp = new PChainConstructor(*$5);
+  | implicit_class_handle '.' K_new argument_list_parens_opt ';'
+      { PChainConstructor*tmp = new PChainConstructor(*$4);
 	FILE_NAME(tmp, @3);
 	if (peek_head_name(*$1) == THIS_TOKEN) {
 	  yyerror(@1, "error: this.new is invalid syntax. Did you mean super.new?");
@@ -6816,6 +6769,13 @@ tf_port_list_opt
   : tf_port_list { $$ = $1; }
   |                     { $$ = 0; }
   ;
+
+  /* A task or function prototype can be declared with the task/function name
+   * followed by a port list in parenthesis or or just the task/function name by
+   * itself. When a port list is used it might be empty. */
+tf_port_list_parens_opt
+  : '(' tf_port_list_opt ')' { $$ = $2; }
+  | { $$ = 0; }
 
   /* Note that the lexor notices the "table" keyword and starts
      the UDPTABLE state. It needs to happen there so that all the
