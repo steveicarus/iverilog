@@ -1469,7 +1469,7 @@ real_force_rel		normal			ivltests
 real_invalid_ops	CE			ivltests gold=real_invalid_ops.gold
 real_logical		normal			ivltests
 real_reg_force_rel	normal			ivltests
-recursive_func		normal			ivltests gold=recursive_func.gold
+recursive_func1		normal			ivltests gold=recursive_func.gold
 recursive_task		normal			ivltests gold=recursive_task.gold
 redef_net_error 	CE			ivltests
 redef_reg_error 	CE			ivltests

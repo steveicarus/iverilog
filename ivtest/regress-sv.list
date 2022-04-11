@@ -402,6 +402,7 @@ program5a		CE,-g2009		ivltests
 program5b		CE,-g2009		ivltests
 program_hello		normal,-g2009		ivltests
 program_hello2		CE,-g2009		ivltests
+recursive_func2		normal,-g2005-sv	ivltests gold=recursive_func.gold
 sbyte_test		normal,-g2005-sv	ivltests
 scalar_vector		normal,-g2005-sv	ivltests
 sf_countbits		normal,-g2012		ivltests

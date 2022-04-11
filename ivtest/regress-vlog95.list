@@ -90,7 +90,8 @@ pr2172606b		CE			ivltests
 pr2276163		CE			ivltests
 pr2929913		CE			ivltests
 real_events		CE			ivltests
-recursive_func		CE			ivltests
+recursive_func1		CE			ivltests
+recursive_func2		CE			ivltests
 recursive_task		CE			ivltests
 task_init_var1		CE,-pallowsigned=1	ivltests
 task_init_var2		CE,-pallowsigned=1	ivltests
