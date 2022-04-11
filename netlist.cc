@@ -2159,6 +2159,7 @@ NetEUFunc::NetEUFunc(NetScope*scope, NetScope*def, NetESignal*res,
 : scope_(scope), func_(def), result_sig_(res), parms_(p), need_const_(nc)
 {
       expr_width(result_sig_->expr_width());
+      cast_signed_base_(result_sig_->has_sign());
 }
 
 NetEUFunc::~NetEUFunc()

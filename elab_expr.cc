@@ -1873,8 +1873,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 }
 
 NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
-						ivl_nature_t nature,
-                                                unsigned expr_wid) const
+						ivl_nature_t nature) const
 {
 	// An access function must have 1 or 2 arguments.
       ivl_assert(*this, parms_.size()==2 || parms_.size()==1);
@@ -1925,8 +1924,7 @@ NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
 
       NetExpr*tmp = new NetEAccess(branch, nature);
       tmp->set_line(*this);
-
-      return pad_to_width(tmp, expr_wid, signed_flag_, *this);
+      return tmp;
 }
 
 /*
@@ -1938,7 +1936,6 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
                                        const pform_name_t&use_path,
                                        perm_string method_name,
                                        NetExpr*expr,
-                                       unsigned rtn_wid,
                                        PExpr*parg, unsigned args)
 {
       if (debug_elaborate) {
@@ -1948,8 +1945,6 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 		 << endl;
 	    cerr << li->get_fileline() << ": " << __func__ << ": "
 		 << "use_path=" << use_path << endl;
-	    cerr << li->get_fileline() << ": " << __func__ << ": "
-		 << "rtn_wid=" << rtn_wid << endl;
 	    cerr << li->get_fileline() << ": " << __func__ << ": "
 		 << "expr=" << *expr << endl;
       }
@@ -2569,7 +2564,6 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
 }
 
 NetExpr* PECallFunction::elaborate_expr_pkg_(Design*des, NetScope*scope,
-					     unsigned expr_wid,
 					     unsigned flags) const
 {
       if (debug_elaborate) {
@@ -2594,7 +2588,7 @@ NetExpr* PECallFunction::elaborate_expr_pkg_(Design*des, NetScope*scope,
       if (! check_call_matches_definition_(des, dscope))
 	    return 0;
 
-      return elaborate_base_(des, scope, dscope, expr_wid, flags);
+      return elaborate_base_(des, scope, dscope, flags);
 }
 
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
@@ -2611,13 +2605,23 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		       << " at " << package_->get_fileline() << endl;
       }
 
-      if (package_)
-	    return elaborate_expr_pkg_(des, scope, expr_wid, flags);
-
-      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
-
       if (peek_tail_name(path_)[0] == '$')
 	    return elaborate_sfunc_(des, scope, expr_wid, flags);
+
+      NetExpr *result = elaborate_expr_(des, scope, flags);
+      if (!result || !type_is_vectorable(expr_type_))
+	    return result;
+
+      return pad_to_width(result, expr_wid, signed_flag_, *this);
+}
+
+NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
+					 unsigned flags) const
+{
+      if (package_)
+	    return elaborate_expr_pkg_(des, scope, flags);
+
+      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
 
       // Search for the symbol. This should turn up a scope.
       symbol_search_results search_results;
@@ -2655,7 +2659,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 
 	    // Maybe this is a method of an object? Give it a try.
 	    if (!search_results.path_tail.empty()) {
-		  NetExpr*tmp = elaborate_expr_method_(des, scope, search_results, expr_wid);
+		  NetExpr*tmp = elaborate_expr_method_(des, scope, search_results);
 		  if (tmp) {
 			if (debug_elaborate) {
 			      cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
@@ -2688,8 +2692,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	      // way.
 	    ivl_nature_t access_nature = find_access_function(path_);
 	    if (access_nature)
-		  return elaborate_access_func_(des, scope, access_nature,
-                                                expr_wid);
+		  return elaborate_access_func_(des, scope, access_nature);
 
 	      // Nothing was found so report this as an error.
 	    cerr << get_fileline() << ": error: No function named `" << path_
@@ -2726,8 +2729,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		 use_search_results.net = scope->find_signal(perm_string::literal(THIS_TOKEN));
 		 ivl_assert(*this, use_search_results.net);
 
-		 NetExpr*tmp = elaborate_expr_method_(des, scope, use_search_results, expr_wid);
-                 return tmp;
+		 return elaborate_expr_method_(des, scope, use_search_results);
            }
       }
 
@@ -2753,7 +2755,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
             scope->is_const_func(false);
       }
 
-      return elaborate_base_(des, scope, dscope, expr_wid, flags);
+      return elaborate_base_(des, scope, dscope, flags);
 }
 
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
@@ -2766,7 +2768,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 }
 
 NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*dscope,
-					 unsigned expr_wid, unsigned flags) const
+					 unsigned flags) const
 {
 
       if (! check_call_matches_definition_(des, dscope))
@@ -2845,11 +2847,7 @@ NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*ds
 	    NetESignal*eres = new NetESignal(res);
 	    NetEUFunc*func = new NetEUFunc(scope, dscope, eres, parms, need_const);
 	    func->set_line(*this);
-
-	    if(res->darray_type())
-	        return func;
-
-            return pad_to_width(func, expr_wid, signed_flag_, *this);
+	    return func;
       }
 
       cerr << get_fileline() << ": internal error: Unable to locate "
@@ -2960,8 +2958,8 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
  * "len" in path_tail, and if x is a string object, we can handle the case.
  */
 NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
-						symbol_search_results&search_results,
-						unsigned expr_wid) const
+						symbol_search_results&search_results)
+						const
 {
       if (!gn_system_verilog()) {
 	    cerr << get_fileline() << ": error: "
@@ -3000,7 +2998,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
       }
 
       if (search_results.par_val && search_results.par_type) {
-	    return elaborate_expr_method_par_(des, scope, search_results, expr_wid);
+	    return elaborate_expr_method_par_(des, scope, search_results);
       }
 
       NetExpr* sub_expr = 0;
@@ -3135,8 +3133,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    return check_for_enum_methods(this, des, scope,
 					  netenum, path_,
 					  method_name, sub_expr,
-					  expr_wid, tmp,
-					  parms_.size());
+					  tmp, parms_.size());
       }
 
       // Class methods. Generate function call to the class method.
@@ -3250,8 +3247,8 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
  * stable in the sense that they generate a constant value for a constant input.
  */
 NetExpr* PECallFunction::elaborate_expr_method_par_(Design*des, NetScope*scope,
-						    symbol_search_results&search_results,
-						    unsigned expr_wid) const
+						    symbol_search_results&search_results)
+						    const
 {
       ivl_assert(*this, search_results.par_val);
       ivl_assert(*this, search_results.par_type);
@@ -3273,13 +3270,13 @@ NetExpr* PECallFunction::elaborate_expr_method_par_(Design*des, NetScope*scope,
 	    if (method_name=="len") {
 		  NetEConst*use_val = make_const_val(par_value.size());
 		  use_val->set_line(*this);
-		  return pad_to_width(use_val, expr_wid, *this);
+		  return use_val;
 	    }
 
 	    if (method_name == "atoi") {
 		  NetEConst*use_val = make_const_val(atoi(par_value.c_str()));
 		  use_val->set_line(*this);
-		  return pad_to_width(use_val, expr_wid, true, *this);
+		  return use_val;
 	    }
 
 	    if (method_name == "atoreal") {
@@ -3291,7 +3288,7 @@ NetExpr* PECallFunction::elaborate_expr_method_par_(Design*des, NetScope*scope,
 	    if (method_name == "atohex") {
 		  NetEConst*use_val = make_const_val(strtoul(par_value.c_str(),0,16));
 		  use_val->set_line(*this);
-		  return pad_to_width(use_val, expr_wid, true, *this);
+		  return use_val;
 	    }
 
 	    // Returning 0 here will cause the caller to print an error
@@ -4677,7 +4674,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			arg->set_line(*sr.net);
 
 			fun->parm(0, arg);
-			return fun;
+			if (!fun)
+			      return 0;
+			return pad_to_width(fun, expr_wid, signed_flag_, *this);
 		  } else if (member_comp.name == "find") {
 			cerr << get_fileline() << ": sorry: 'find()' "
 			        "array location method is not currently "
@@ -4796,7 +4795,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			arg->set_line(*sr.net);
 
 			fun->parm(0, arg);
-			return fun;
+			if (!fun || !type_is_vectorable(expr_type_))
+			      return fun;
+			return pad_to_width(fun, expr_wid, signed_flag_, *this);
 		  }
 
 		  if (member_comp.name == "pop_front") {
@@ -4808,7 +4809,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			arg->set_line(*sr.net);
 
 			fun->parm(0, arg);
-			return fun;
+			if (!fun || !type_is_vectorable(expr_type_))
+			      return fun;
+			return pad_to_width(fun, expr_wid, signed_flag_, *this);
 		  }
 	    }
 
@@ -4858,10 +4861,13 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  ivl_assert(*this, sr.path_tail.size() == 1);
 		  const name_component_t member_comp = sr.path_tail.front();
 		  ivl_assert(*this, member_comp.index.empty());
-		  return check_for_enum_methods(this, des, use_scope,
+		  NetExpr *tmp = check_for_enum_methods(this, des, use_scope,
 						netenum, sr.path_head,
 						member_comp.name,
-						expr, expr_wid, NULL, 0);
+						expr, NULL, 0);
+		  if (!tmp)
+			return 0;
+		  return pad_to_width(tmp, expr_wid, signed_flag_, *this);
 	    }
 
 	    ivl_assert(*this, sr.path_tail.empty());

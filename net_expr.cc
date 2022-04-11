@@ -561,6 +561,7 @@ ivl_variable_type_t NetEShallowCopy::expr_type() const
 NetEAccess::NetEAccess(NetBranch*br, ivl_nature_t nat)
 : branch_(br), nature_(nat)
 {
+      cast_signed_base_(true);
 }
 
 NetEAccess::~NetEAccess()
