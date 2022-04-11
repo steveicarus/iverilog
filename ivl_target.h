@@ -21,6 +21,7 @@
 
 # include  <inttypes.h>
 # include  <stddef.h>
+# include  <stdbool.h>
 
 /* Re the _CLASS define: clang++ wants this to be class to match the
  * definition, but clang (the C) compiler needs it to be a struct
@@ -2259,6 +2260,8 @@ extern uint64_t ivl_stmt_delay_val(ivl_statement_t net);
 extern unsigned    ivl_stmt_needs_t0_trigger(ivl_statement_t net);
 extern unsigned    ivl_stmt_nevent(ivl_statement_t net);
 extern ivl_event_t ivl_stmt_events(ivl_statement_t net, unsigned idx);
+  /* IVL_ST_DISABLE */
+extern bool ivl_stmt_flow_control(ivl_statement_t net);
   /* IVL_ST_CONTRIB */
 extern ivl_expr_t ivl_stmt_lexp(ivl_statement_t net);
   /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_DEASSIGN

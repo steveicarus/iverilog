@@ -2713,6 +2713,11 @@ extern "C" ivl_scope_t ivl_stmt_call(ivl_statement_t net)
       }
 }
 
+extern "C" bool ivl_stmt_flow_control(ivl_statement_t net)
+{
+      return net->u_.disable_.flow_control;
+}
+
 extern "C" unsigned ivl_stmt_case_count(ivl_statement_t net)
 {
       assert(net);

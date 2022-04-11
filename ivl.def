@@ -292,8 +292,9 @@ ivl_stmt_delay_expr
 ivl_stmt_delay_val
 ivl_stmt_events
 ivl_stmt_file
-ivl_stmt_lineno
+ivl_stmt_flow_control
 ivl_stmt_lexp
+ivl_stmt_lineno
 ivl_stmt_lval
 ivl_stmt_lvals
 ivl_stmt_lwidth
