@@ -154,6 +154,7 @@ extern void pform_module_define_port(const struct vlltype&li,
 				     NetNet::PortType,
 				     NetNet::Type type,
 				     data_type_t*vtype,
+				     std::list<pform_range_t>*urange,
 				     std::list<named_pexpr_t>*attr,
 				     bool keep_attr =false);
 extern void pform_module_define_port(const struct vlltype&li,
