@@ -2719,6 +2719,30 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * Similar to `of_DISABLE`. But will only disable a single thread of the
+ * specified scope. The disabled thread will be the thread closest to the
+ * current thread in thread hierarchy. This can either be the current thread,
+ * either the thread itself or one of its parents.
+ * This is used for SystemVerilog flow control instructions like `return`,
+ * `continue` and `break`.
+ */
+
+bool of_DISABLE_FLOW(vthread_t thr, vvp_code_t cp)
+{
+      __vpiScope*scope = static_cast<__vpiScope*>(cp->handle);
+      vthread_t cur = thr;
+
+      while (cur && cur->parent_scope != scope)
+	    cur = cur->parent;
+
+      assert(cur);
+      if (cur)
+	    return !do_disable(cur, thr);
+
+      return false;
+}
+
+/*
  * Implement the %disable/fork (SystemVerilog) instruction by disabling
  * all the detached children of the given thread.
  */
