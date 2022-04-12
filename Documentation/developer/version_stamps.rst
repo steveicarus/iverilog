@@ -1,6 +1,6 @@
 
 Files With Version Information
-=============================
+==============================
 
 These are the only files that have version information in them:
 
