@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -426,9 +426,11 @@ bool dll_target::proc_block(const NetBlock*net)
 	    return true;
       }
 
-	/* If there is exactly one statement, there is no need for the
-	   block wrapper, generate the contained statement instead. */
-      if ((count == 1) && (net->subscope() == 0)) {
+	/* If there is exactly one statement and the block is not a
+	   fork/join_none, there is no need for the block wrapper,
+	   generate the contained statement instead. */
+      if ((count == 1) && (net->subscope() == 0) &&
+	  (net->type() != NetBlock::PARA_JOIN_NONE)) {
 	    return net->proc_first()->emit_proc(this);
       }
 
