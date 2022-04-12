@@ -657,6 +657,7 @@ bool dll_target::proc_disable(const NetDisable*net)
       FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_DISABLE;
+      stmt_cur_->u_.disable_.flow_control = net->flow_control();
       const NetScope* dis_scope = net->target();
 	/* A normal disable. */
       if (dis_scope) stmt_cur_->u_.disable_.scope = lookup_scope_(dis_scope);

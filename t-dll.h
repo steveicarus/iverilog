@@ -843,6 +843,7 @@ struct ivl_statement_s {
 
 	    struct { /* IVL_ST_DISABLE */
 		  ivl_scope_t scope;
+		  bool flow_control;
 	    } disable_;
 
 	    struct { /* IVL_ST_FOREVER */

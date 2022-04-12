@@ -469,6 +469,17 @@ This instruction terminates threads that are part of a specific
 scope. The label identifies the scope in question, and the threads are
 the threads that are currently within that scope.
 
+* %disable/flow <scope-label>
+
+This instruction is similar to `%disable` except that it will only disable a
+single thread of the specified scope. The disabled thread will be the thread
+closest to the current thread in the thread hierarchy. This can either be thread
+itself or one of its parents.
+
+It is used to implement flow control statements called from within a thread that
+only affect the thread or its parents. E.g. SystemVerilog `return`, `continue`
+or `break`.
+
 * %disable/fork
 
 This instruction terminates all the detached children for the current

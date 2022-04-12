@@ -3272,10 +3272,11 @@ class NetDeassign : public NetAssignBase {
 class NetDisable  : public NetProc {
 
     public:
-      explicit NetDisable(NetScope*tgt);
+      explicit NetDisable(NetScope*tgt, bool flow_control = false);
       ~NetDisable();
 
       const NetScope*target() const;
+      bool flow_control() const { return flow_control_; }
 
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                                   bool nested_func = false) const;
@@ -3288,6 +3289,11 @@ class NetDisable  : public NetProc {
 
     private:
       NetScope*target_;
+       // If false all threads in the target_ scope are disabled. If true only
+       // the closest thread in thread hierachy of the target_ scope is
+       // disabled. The latter is used to implement flow control statements like
+       // `return`.
+      bool flow_control_;
 
     private: // not implemented
       NetDisable(const NetDisable&);

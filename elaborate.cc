@@ -5691,7 +5691,7 @@ NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  return 0;
 	    }
-	    NetDisable*disa = new NetDisable(target);
+	    NetDisable*disa = new NetDisable(target, true);
 	    disa->set_line( *this );
 	    return disa;
       }
@@ -5720,7 +5720,7 @@ NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
       assn->set_line( *this );
       proc->append(assn);
 
-      NetDisable*disa = new NetDisable(target);
+      NetDisable*disa = new NetDisable(target, true);
       disa->set_line( *this );
       proc->append( disa );
 
