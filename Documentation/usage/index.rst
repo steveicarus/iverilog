@@ -8,7 +8,12 @@ Icarus Verilog.
 .. toctree::
    :maxdepth: 1
 
+   installation
    getting_started
+   simulation
    command_line_flags
+   command_files
    verilog_attributes
    vvp_flags
+   vpi
+   ivl_target
