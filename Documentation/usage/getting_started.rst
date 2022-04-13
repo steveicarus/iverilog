@@ -18,7 +18,9 @@ So let us start. Given that you are going to use Icarus Verilog as part of
 your design process, the first thing to do as a designer is learn how to
 compile and execute even the most trivial design. For the purposes of
 simulation, we use as our example the most trivial simulation, a simple Hello,
-World program. ::
+World program.
+
+.. code-block:: verilog
 
   module hello;
     initial 
@@ -59,7 +61,9 @@ modules that are instantiated within others, and it becomes convenient to
 organize them into multiple files. A common convention is to write one
 moderate sized module per file (or group related tiny modules into a single
 file) then combine the files of the design together during compilation. For
-example, the counter model in counter.v::
+example, the counter model in counter.v
+
+.. code-block:: verilog
 
   module counter(output, clk, reset);
 
@@ -79,7 +83,9 @@ example, the counter model in counter.v::
 
   endmodule // counter
 
-and the test bench in counter_tb.v::
+and the test bench in counter_tb.v
+
+.. code-block:: verilog
 
   module test;
 
