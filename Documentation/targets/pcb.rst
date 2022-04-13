@@ -33,7 +33,7 @@ Flags
 Attributes Summary
 ------------------
 
-Attributes are attached to various constructs using the Verilog "(* *)"
+Attributes are attached to various constructs using the Verilog "(\* \*)"
 attribute syntax.
 
 * ivl_black_box

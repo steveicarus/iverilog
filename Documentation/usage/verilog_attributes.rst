@@ -3,10 +3,10 @@ Verilog Attributes
 ==================
 
 This is a description of the various attributes that the Icarus Verilog tools
-understand. The attributes are attached to objects using the "(* ... *)"
+understand. The attributes are attached to objects using the "(\* ... \*)"
 syntax, which is described by the Verilog LRM.
 
-Attributes that start with "ivl_" are Icarus Verilog specific are are probably
+Attributes that start with "ivl\_" are Icarus Verilog specific are are probably
 ignored by other tools.
 
 Optimizations
