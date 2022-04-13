@@ -13,4 +13,6 @@ Icarus Verilog. The code generator is selected by the "-t" command line flag.
    vvp
    stub
    null
-
+   vhdl
+   verilog95
+   pcb
