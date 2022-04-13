@@ -258,7 +258,9 @@ world into the program at run time. Arguments can be entered on the command
 line, and larger amounts of data can be read from files. The simplest method
 is to take arguments from the command line.
 
-Consider this running example of a square root calculator::
+Consider this running example of a square root calculator
+
+.. code-block:: verilog
 
   module sqrt32(clk, rdy, reset, x, .y(acc));
     input  clk;
@@ -317,7 +319,9 @@ different input values on the run time command line without recompiling the
 simulation.
 
 This example demonstrates the use of the "$value$plusargs" to access command
-line arguments of a simulation::
+line arguments of a simulation
+
+.. code-block:: verilog
 
   module main;
 
@@ -362,7 +366,9 @@ run is "81". This gets assigned to "x" by the "$value$plusargs" function,
 which returns TRUE, and the simulation continues from there.
 
 If two arguments have to be passed to the testbench then the main module would
-be modified as follows::
+be modified as follows
+
+.. code-block:: verilog
 
   module main;
 
@@ -428,7 +434,9 @@ input values, then rerun the simulation without compiling it again. The
 advantage of this technique is that we can accumulate a large set of test
 input values, and run the lot as a batch.
 
-This example::
+This example
+
+.. code-block:: verilog
 
   module main;
 
