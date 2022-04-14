@@ -383,6 +383,9 @@ sv_class_extends_scoped	CE,-g2009		ivltests
 sv_class_localparam	CE,-g2009		ivltests
 sv_class_new_init	CE,-g2009		ivltests
 sv_class_in_module_decl	CE,-g2009		ivltests
+sv_class_static_prop1	CE,-g2009		ivltests
+sv_class_static_prop2	CE,-g2009		ivltests
+sv_class_static_prop3	CE,-g2009		ivltests
 sv_class_super1		CE,-g2009		ivltests
 sv_class_super2		CE,-g2009		ivltests
 sv_class_task1		CE,-g2009		ivltests
