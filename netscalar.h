@@ -28,6 +28,8 @@ class netreal_t : public ivl_type_s {
       ~netreal_t();
 
       ivl_variable_type_t base_type() const;
+      bool get_signed() const { return true; }
+      bool get_scalar() const { return true; }
 
       std::ostream& debug_dump(std::ostream&) const;
 

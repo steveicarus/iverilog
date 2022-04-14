@@ -158,6 +158,7 @@ real_wire_force_rel	CE			ivltests
 tern8			CE			ivltests
 v2005_math		CE			ivltests
 vams_abs2		CE,-gverilog-ams,-pallowsigned=1	ivltests
+vams_abs3		CE,-gverilog-ams,-pallowsigned=1	ivltests
 vhdl_real		CE,-g2009,ivltests/vhdl_real.vhd	ivltests
 vhdl_unbounded		CE,-g2009,ivltests/vhdl_unbounded.vhd	ivltests
 wreal			CE			ivltests

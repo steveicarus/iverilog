@@ -81,6 +81,7 @@ value_range2		normal,-gverilog-ams	ivltests
 value_range3		CE,-gverilog-ams	ivltests
 vams_abs1		normal,-gverilog-ams	ivltests
 vams_abs2		normal,-gverilog-ams	ivltests
+vams_abs3		normal,-gverilog-ams	ivltests
 wreal			normal,-gverilog-ams	ivltests
 # Verilog functions added in a VAMS simulator
 constfunc6_ams		normal			ivltests

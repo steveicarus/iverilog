@@ -937,12 +937,7 @@ bool test_ranges_eeq(const vector<netrange_t>&lef, const vector<netrange_t>&rig)
 ivl_type_t PWire::elaborate_type(Design*des, NetScope*scope,
 			         const std::vector<netrange_t>&packed_dimensions) const
 {
-      if (dynamic_cast<struct_type_t*>(set_data_type_) ||
-	  dynamic_cast<enum_type_t*>(set_data_type_) ||
-	  dynamic_cast<string_type_t*>(set_data_type_) ||
-	  dynamic_cast<class_type_t*>(set_data_type_) ||
-	  dynamic_cast<parray_type_t*>(set_data_type_) ||
-	  dynamic_cast<atom_type_t*>(set_data_type_)) {
+      if (set_data_type_ && !dynamic_cast<vector_type_t*>(set_data_type_)) {
 	    ivl_type_t use_type = set_data_type_->elaborate_type(des, scope);
 	    ivl_assert(*this, packed_dimensions.empty());
 	    return use_type;
@@ -962,8 +957,7 @@ ivl_type_t PWire::elaborate_type(Design*des, NetScope*scope,
       }
 
       ivl_assert(*this, use_data_type == IVL_VT_LOGIC ||
-			use_data_type == IVL_VT_BOOL ||
-			use_data_type == IVL_VT_REAL);
+			use_data_type == IVL_VT_BOOL);
 
       netvector_t*vec = new netvector_t(packed_dimensions, use_data_type);
       vec->set_signed(get_signed());

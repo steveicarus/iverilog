@@ -56,6 +56,11 @@ bool ivl_type_s::get_signed() const
       return false;
 }
 
+bool ivl_type_s::get_scalar() const
+{
+      return false;
+}
+
 bool ivl_type_s::type_compatible(ivl_type_t that) const
 {
       if (this == that)

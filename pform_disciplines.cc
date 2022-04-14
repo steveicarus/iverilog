@@ -209,7 +209,9 @@ void pform_attach_discipline(const struct vlltype&loc,
 		  error_count += 1;
 
 	    } else {
-		  cur_net->set_data_type(IVL_VT_REAL);
+		  data_type_t *type = new real_type_t(real_type_t::REAL);
+		  FILE_NAME(type, loc);
+		  cur_net->set_data_type(type);
 		  cur_net->set_discipline(discipline);
 	    }
       }
