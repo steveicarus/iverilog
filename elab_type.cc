@@ -49,7 +49,20 @@ ivl_type_t data_type_t::elaborate_type(Design*des, NetScope*scope)
 	  if (pos != cache_type_elaborate_.end() && pos->first == use_definitions)
 	     return pos->second;
 
-      ivl_type_t tmp = elaborate_type_raw(des, scope);
+      ivl_type_t tmp;
+      if (elaborating) {
+	    des->errors++;
+	    cerr << get_fileline() << ": error: "
+	         << "Circular type definition found involving `" << *this << "`."
+		 << endl;
+	    // Try to recover
+	    tmp = netvector_t::integer_type();
+      } else {
+	    elaborating = true;
+	    tmp = elaborate_type_raw(des, scope);
+	    elaborating = false;
+      }
+
       cache_type_elaborate_.insert(pos, pair<NetScope*,ivl_type_t>(scope, tmp));
       return tmp;
 }

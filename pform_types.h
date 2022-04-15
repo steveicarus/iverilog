@@ -167,6 +167,8 @@ class data_type_t : public PNamedItem {
       virtual ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
       virtual NetScope *find_scope(Design* des, NetScope *scope) const;
 
+      bool elaborating = false;
+
 	// Keep per-scope elaboration results cached.
       std::map<Definitions*,ivl_type_t> cache_type_elaborate_;
 };
