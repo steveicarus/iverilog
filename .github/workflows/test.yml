@@ -56,7 +56,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update -qq
-        sudo apt install -y make g++ git bison flex gperf libreadline-dev autoconf
+        sudo apt install -y make g++ git bison flex gperf libreadline-dev autoconf python3-sphinx
 
     - name: Build, check and install
       run: |
@@ -68,6 +68,10 @@ jobs:
     - name: Test
       run: ./.github/test.sh
 
+    - name: Documentation
+      run: |
+        cd Documentation
+        make html
 
   win:
     runs-on: windows-latest

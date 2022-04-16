@@ -17,3 +17,4 @@ Icarus Verilog.
    vvp_flags
    vpi
    ivl_target
+   reporting_issues
