@@ -674,6 +674,7 @@ sv_typedef_darray_base1	normal,-g2009		ivltests
 sv_typedef_darray_base2	normal,-g2009		ivltests
 sv_typedef_darray_base3	normal,-g2009		ivltests
 sv_typedef_darray_base4	normal,-g2009		ivltests
+sv_typedef_nested_array normal,-g2009		ivltests
 sv_typedef_queue_base1	normal,-g2009		ivltests
 sv_typedef_queue_base2	normal,-g2009		ivltests
 sv_typedef_queue_base3	normal,-g2009		ivltests
