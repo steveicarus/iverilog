@@ -8,5 +8,6 @@ Icarus Verilog.
 .. toctree::
    :maxdepth: 1
 
+   getting_started
    version_stamps
 
