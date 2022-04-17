@@ -704,6 +704,7 @@ sv_typedef_array_base1	normal,-g2009		ivltests
 sv_typedef_array_base2	normal,-g2009		ivltests
 sv_typedef_array_base3	normal,-g2009		ivltests
 sv_typedef_array_base4	normal,-g2009		ivltests
+sv_typedef_chained	normal,-g2009		ivltests
 sv_typedef_darray_base1	normal,-g2009		ivltests
 sv_typedef_darray_base2	normal,-g2009		ivltests
 sv_typedef_darray_base3	normal,-g2009		ivltests
