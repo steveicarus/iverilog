@@ -549,6 +549,9 @@ template <class T> static unsigned calculate_count(T*type)
 void NetNet::calculate_slice_widths_from_packed_dims_(void)
 {
       ivl_assert(*this, net_type_);
+      if (!net_type_->packed())
+	    return;
+
       slice_dims_ = net_type_->slice_dimensions();
 
 	// Special case: There are no actual packed dimensions, so
@@ -598,42 +601,10 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
       s->add_signal(this);
 }
 
-/*
- * When we create a netnet for a packed struct, create a single
- * vector with the msb_/lsb_ chosen to name enough bits for the entire
- * packed structure.
- */
-NetNet::NetNet(NetScope*s, perm_string n, Type t, netstruct_t*ty)
+NetNet::NetNet(NetScope*s, perm_string n, Type t, ivl_type_t type)
 : NetObj(s, n, 1),
     type_(t), port_type_(NOT_A_PORT),
-    local_flag_(false), net_type_(ty),
-    discipline_(0),
-    eref_count_(0), lref_count_(0)
-{
-	//XXXX packed_dims_.push_back(netrange_t(calculate_count(ty)-1, 0));
-      calculate_slice_widths_from_packed_dims_();
-
-      initialize_dir_();
-
-      s->add_signal(this);
-}
-
-NetNet::NetNet(NetScope*s, perm_string n, Type t, netdarray_t*ty)
-: NetObj(s, n, 1),
-    type_(t), port_type_(NOT_A_PORT),
-    local_flag_(false), net_type_(ty),
-    discipline_(0),
-    eref_count_(0), lref_count_(0)
-{
-      initialize_dir_();
-
-      s->add_signal(this);
-}
-
-NetNet::NetNet(NetScope*s, perm_string n, Type t, netvector_t*ty)
-: NetObj(s, n, 1),
-    type_(t), port_type_(NOT_A_PORT),
-    local_flag_(false), net_type_(ty),
+    local_flag_(false), net_type_(type),
     discipline_(0),
     eref_count_(0), lref_count_(0)
 {
@@ -2188,6 +2159,7 @@ NetEUFunc::NetEUFunc(NetScope*scope, NetScope*def, NetESignal*res,
 : scope_(scope), func_(def), result_sig_(res), parms_(p), need_const_(nc)
 {
       expr_width(result_sig_->expr_width());
+      cast_signed_base_(result_sig_->has_sign());
 }
 
 NetEUFunc::~NetEUFunc()

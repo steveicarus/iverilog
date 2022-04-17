@@ -430,6 +430,9 @@ class PEIdent : public PExpr {
 				       NetAssign_*) const;
 
     private:
+      NetExpr* elaborate_expr_(Design *des, NetScope *scope,
+			      unsigned expr_wid, unsigned flags) const;
+
       NetExpr*elaborate_expr_param_or_specparam_(Design*des,
 						 NetScope*scope,
 						 const NetExpr*par,
@@ -926,22 +929,25 @@ class PECallFunction : public PExpr {
 
       NetExpr* cast_to_width_(NetExpr*expr, unsigned wid) const;
 
+      NetExpr* elaborate_expr_(Design *des, NetScope *scope,
+			       unsigned flags) const;
+
       NetExpr*elaborate_expr_pkg_(Design*des, NetScope*scope,
-				  unsigned expr_wid, unsigned flags)const;
+				  unsigned flags)const;
 
       NetExpr* elaborate_expr_method_(Design*des, NetScope*scope,
-				      symbol_search_results&search_results,
-				      unsigned expr_wid) const;
+				      symbol_search_results&search_results)
+				      const;
       NetExpr* elaborate_expr_method_par_(Design*des, NetScope*scope,
-					  symbol_search_results&search_results,
-					  unsigned expr_wid) const;
+					  symbol_search_results&search_results)
+					  const;
 
 
       NetExpr* elaborate_sfunc_(Design*des, NetScope*scope,
                                 unsigned expr_wid,
                                 unsigned flags) const;
-      NetExpr* elaborate_access_func_(Design*des, NetScope*scope, ivl_nature_t,
-                                      unsigned expr_wid) const;
+      NetExpr* elaborate_access_func_(Design*des, NetScope*scope, ivl_nature_t)
+                                      const;
       unsigned test_width_sfunc_(Design*des, NetScope*scope,
 			         width_mode_t&mode);
       unsigned test_width_method_(Design*des, NetScope*scope,
@@ -949,7 +955,7 @@ class PECallFunction : public PExpr {
 				  width_mode_t&mode);
 
       NetExpr*elaborate_base_(Design*des, NetScope*scope, NetScope*dscope,
-			      unsigned expr_wid, unsigned flags) const;
+			      unsigned flags) const;
 
       unsigned elaborate_arguments_(Design*des, NetScope*scope,
 				    NetFuncDef*def, bool need_const,

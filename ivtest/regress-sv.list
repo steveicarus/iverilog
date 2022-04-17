@@ -265,6 +265,10 @@ enum_in_struct		normal,-g2005-sv	ivltests
 enum_in_class		normal,-g2005-sv	ivltests
 enum_in_class_name_coll	CE,-g2005-sv		ivltests
 enum_line_info		CE,-g2005-sv		ivltests gold=enum_line_info.gold
+enum_method_signed1	normal,-g2005-sv	ivltests
+enum_method_signed2	normal,-g2005-sv	ivltests
+enum_method_signed3	normal,-g2005-sv	ivltests
+enum_method_signed4	normal,-g2005-sv	ivltests
 enum_next		normal,-g2005-sv	ivltests
 enum_order		normal,-g2005-sv	ivltests
 enum_ports		normal,-g2005-sv	ivltests
@@ -488,6 +492,12 @@ sv_class_extends_scoped	normal,-g2009		ivltests
 sv_class_localparam	normal,-g2009		ivltests
 sv_class_new_init	normal,-g2009		ivltests
 sv_class_in_module_decl	normal,-g2009		ivltests
+sv_class_method_signed1	normal,-g2009		ivltests
+sv_class_method_signed2	normal,-g2009		ivltests
+sv_class_property_signed1	normal,-g2009	ivltests
+sv_class_property_signed2	normal,-g2009	ivltests
+sv_class_property_signed3	normal,-g2009	ivltests
+sv_class_property_signed4	normal,-g2009	ivltests
 sv_class_static_prop1	normal,-g2009		ivltests
 sv_class_static_prop2	normal,-g2009		ivltests
 sv_class_static_prop3	normal,-g2009		ivltests
@@ -571,6 +581,10 @@ sv_queue_parray_fail	CE,-g2009		ivltests gold=sv_queue_parray_fail.gold
 sv_queue_real		normal,-g2009,-pfileline=1	ivltests gold=sv_queue_real.gold
 sv_queue_real_bounded	normal,-g2009,-pfileline=1	ivltests gold=sv_queue_real_bounded.gold
 sv_queue_real_fail	CE,-g2009		ivltests gold=sv_queue_real_fail.gold
+sv_queue_method_signed1	normal,-g2009		ivltests
+sv_queue_method_signed2	normal,-g2009		ivltests
+sv_queue_method_signed3	normal,-g2009		ivltests
+sv_queue_method_signed4	normal,-g2009		ivltests
 sv_queue_string		normal,-g2009,-pfileline=1	ivltests gold=sv_queue_string.gold
 sv_queue_string_bounded	normal,-g2009,-pfileline=1	ivltests gold=sv_queue_string_bounded.gold
 sv_queue_string_fail	CE,-g2009		ivltests gold=sv_queue_string_fail.gold

@@ -679,12 +679,7 @@ class NetNet  : public NetObj, public PortType {
 		      const std::list<netrange_t>&unpacked,
 		      ivl_type_t type);
 
-	// This form builds a NetNet from its record/enum/darray
-	// definition. They should probably be replaced with a single
-	// version that takes an ivl_type_s* base.
-      explicit NetNet(NetScope*s, perm_string n, Type t, netstruct_t*type);
-      explicit NetNet(NetScope*s, perm_string n, Type t, netdarray_t*type);
-      explicit NetNet(NetScope*s, perm_string n, Type t, netvector_t*type);
+      explicit NetNet(NetScope*s, perm_string n, Type t, ivl_type_t type);
 
       virtual ~NetNet();
 
@@ -4646,7 +4641,6 @@ class NetESFunc  : public NetExpr {
       NetESFunc(const char*name, ivl_variable_type_t t,
 		unsigned width, unsigned nprms, bool is_overridden =false);
       NetESFunc(const char*name, ivl_type_t rtype, unsigned nprms);
-      NetESFunc(const char*name, const netenum_t*enum_type, unsigned nprms);
       ~NetESFunc();
 
       const char* name() const;

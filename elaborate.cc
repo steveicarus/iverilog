@@ -3676,9 +3676,7 @@ NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
  */
 NetProc* PCallTask::elaborate_method_func_(NetScope*scope,
                                            NetNet*net,
-                                           ivl_variable_type_t type,
-                                           unsigned width,
-                                           bool signed_flag,
+					   ivl_type_t type,
 					   perm_string method_name,
                                            const char*sys_task_name) const
 {
@@ -3686,15 +3684,14 @@ NetProc* PCallTask::elaborate_method_func_(NetScope*scope,
            << method_name << "' is being called as a task." << endl;
 
 	// Generate the function.
-      NetESFunc*sys_expr = new NetESFunc(sys_task_name, type, width, 1);
+      NetESFunc*sys_expr = new NetESFunc(sys_task_name, type, 1);
       sys_expr->set_line(*this);
       NetESignal*arg = new NetESignal(net);
       arg->set_line(*net);
       sys_expr->parm(0, arg);
 	// Create a L-value that matches the function return type.
       NetNet*tmp;
-      netvector_t*tmp_vec = new netvector_t(type, width-1, 0, signed_flag);
-      tmp = new NetNet(scope, scope->local_symbol(), NetNet::REG, tmp_vec);
+      tmp = new NetNet(scope, scope->local_symbol(), NetNet::REG, type);
       tmp->set_line(*this);
       NetAssign_*lv = new NetAssign_(tmp);
 	// Generate an assign to the fake L-value.
@@ -3782,9 +3779,8 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	    else if (method_name=="size")
 		    // This returns an int. It could be removed, but keep for now.
 		  return elaborate_method_func_(scope, net,
-		                                IVL_VT_BOOL, 32,
-		                                true, method_name,
-		                                "$size");
+		                                &netvector_t::atom2s32,
+		                                method_name, "$size");
 	    else if (method_name=="reverse") {
 		  cerr << get_fileline() << ": sorry: 'reverse()' "
 		          "array sorting method is not currently supported."
@@ -3825,15 +3821,13 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 						 "$ivl_queue_method$insert");
 	    else if (method_name == "pop_front")
 		  return elaborate_method_func_(scope, net,
-		                                use_darray->element_base_type(),
-		                                use_darray->element_width(),
-		                                false, method_name,
+		                                use_darray->element_type(),
+		                                method_name,
 		                                "$ivl_queue_method$pop_front");
 	    else if (method_name == "pop_back")
 		  return elaborate_method_func_(scope, net,
-		                                use_darray->element_base_type(),
-		                                use_darray->element_width(),
-		                                false, method_name,
+		                                use_darray->element_type(),
+		                                method_name,
 		                                "$ivl_queue_method$pop_back");
       }
 
@@ -5324,12 +5318,12 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
       idx_exp->set_line(*this);
 
 	// Make an initialization expression for the index.
-      NetESFunc*init_expr = new NetESFunc("$low", IVL_VT_BOOL, 32, 1);
+      NetESFunc*init_expr = new NetESFunc("$low", &netvector_t::atom2s32, 1);
       init_expr->set_line(*this);
       init_expr->parm(0, array_exp);
 
 	// Make a condition expression: idx <= $high(array)
-      NetESFunc*high_exp = new NetESFunc("$high", IVL_VT_BOOL, 32, 1);
+      NetESFunc*high_exp = new NetESFunc("$high", &netvector_t::atom2s32, 1);
       high_exp->set_line(*this);
       high_exp->parm(0, array_exp);
 
