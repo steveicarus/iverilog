@@ -50,7 +50,7 @@
 using namespace std;
 
 static void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
-			        std::vector<PWire*> *wires, NetNet::Type net_type,
+			        std::vector<PWire*> *wires,
 			        list<named_pexpr_t>*attr, bool is_const = false);
 
 /*
@@ -2713,7 +2713,7 @@ void pform_makewire(const struct vlltype&li,
 	    wires->push_back(wire);
       }
 
-      pform_set_data_type(li, data_type, wires, type, attr, is_const);
+      pform_set_data_type(li, data_type, wires, attr, is_const);
 
       while (! assign_list->empty()) {
 	    decl_assignment_t*first = assign_list->front();
@@ -3279,7 +3279,7 @@ void pform_set_port_type(const struct vlltype&li,
  * dispatches the type to the proper subtype function.
  */
 static void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
-			        std::vector<PWire*> *wires, NetNet::Type net_type,
+			        std::vector<PWire*> *wires,
 			        list<named_pexpr_t>*attr, bool is_const)
 {
       if (data_type == 0) {
@@ -3294,11 +3294,6 @@ static void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
 	    PWire *wire = *it;
 
 	    pform_set_net_range(wire, vec_type);
-
-	    // If these fail there is a bug somewhere else. pform_set_data_type()
-	    // is only ever called on a fresh wire that already exists.
-	    bool rc = wire->set_wire_type(net_type);
-	    ivl_assert(li, rc);
 
 	    wire->set_data_type(data_type);
 	    wire->set_const(is_const);
