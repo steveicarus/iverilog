@@ -347,10 +347,10 @@ extern PForeach* pform_make_foreach(const struct vlltype&loc,
  * The makewire functions announce to the pform code new wires. These
  * go into a module that is currently opened.
  */
-extern void pform_makewire(const struct vlltype&li, perm_string name,
-			   NetNet::Type type,
-			   ivl_variable_type_t dt,
-			   std::list<pform_range_t> *indices);
+extern PWire *pform_makewire(const struct vlltype&li, perm_string name,
+			     NetNet::Type type,
+			     ivl_variable_type_t dt,
+			     std::list<pform_range_t> *indices);
 
 /* This form handles assignment declarations. */
 
@@ -380,7 +380,11 @@ extern void pform_set_port_type(const struct vlltype&li,
 				data_type_t*dt,
 				std::list<named_pexpr_t>*attr);
 
-extern void pform_set_data_type(const struct vlltype&li, data_type_t*, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
+extern void pform_set_data_type(const struct vlltype&li,
+				data_type_t *data_type,
+				std::vector<PWire*> *wires,
+				NetNet::Type net_type,
+				std::list<named_pexpr_t>*attr);
 
 extern void pform_set_string_type(const struct vlltype&li, const string_type_t*string_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
 
