@@ -5168,7 +5168,7 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
 	// better way to get a reasonable lv_net_type value, and that
 	// probably will involve NetAssign_ having a method for
 	// synthesizing one as needed.
-      NetExpr*rexp = elaborate_rval_expr(des, scope, 0, ltype, lwid, expr_);
+      NetExpr*rexp = elaborate_rval_expr(des, scope, lval->net_type(), ltype, lwid, expr_);
       if (rexp == 0)
 	    return 0;
 
