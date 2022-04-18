@@ -968,18 +968,21 @@ static int show_stmt_assign_darray_pattern(ivl_statement_t net)
 		case IVL_VT_LOGIC:
 		  draw_eval_vec4(ivl_expr_parm(rval,idx));
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%store/dar/vec4 v%p_0;\n", var);
 		  break;
 
 		case IVL_VT_REAL:
 		  draw_eval_real(ivl_expr_parm(rval,idx));
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%store/dar/r v%p_0;\n", var);
 		  break;
 
 		case IVL_VT_STRING:
 		  draw_eval_string(ivl_expr_parm(rval,idx));
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%store/dar/str v%p_0;\n", var);
 		  break;
 
@@ -1102,6 +1105,7 @@ static int show_stmt_assign_queue_pattern(ivl_signal_t var, ivl_expr_t rval,
 		case IVL_VT_LOGIC:
 		  draw_eval_vec4(ivl_expr_parm(rval,idx));
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%store/qdar/v v%p_0, %d, %u;\n", var, max_idx,
 		                   width_of_packed_type(element_type));
 		  break;
@@ -1109,12 +1113,14 @@ static int show_stmt_assign_queue_pattern(ivl_signal_t var, ivl_expr_t rval,
 		case IVL_VT_REAL:
 		  draw_eval_real(ivl_expr_parm(rval,idx));
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%store/qdar/r v%p_0, %d;\n", var, max_idx);
 		  break;
 
 		case IVL_VT_STRING:
 		  draw_eval_string(ivl_expr_parm(rval,idx));
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%store/qdar/str v%p_0, %d;\n", var, max_idx);
 		  break;
 

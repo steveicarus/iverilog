@@ -91,6 +91,15 @@ static NetBranch* find_existing_implicit_branch(NetNet*sig, NetNet*gnd)
       return 0;
 }
 
+NetExpr* elaborate_rval_expr(Design *des, NetScope *scope, ivl_type_t lv_net_type,
+			     PExpr *expr, bool need_const, bool force_unsigned)
+{
+      return elaborate_rval_expr(des, scope, lv_net_type,
+				 lv_net_type->base_type(),
+				 lv_net_type->packed_width(),
+				 expr, need_const, force_unsigned);
+}
+
 NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 			     ivl_variable_type_t lv_type, unsigned lv_width,
 			     PExpr*expr, bool need_const, bool force_unsigned)
@@ -227,13 +236,16 @@ NetExpr*PEAssignPattern::elaborate_expr_darray_(Design*des, NetScope*scope,
       const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype);
       ivl_assert(*this, array_type);
 
+      bool need_const = NEED_CONST & flags;
+
 	// This is an array pattern, so run through the elements of
 	// the expression and elaborate each as if they are
 	// element_type expressions.
       ivl_type_t elem_type = array_type->element_type();
       vector<NetExpr*> elem_exprs (parms_.size());
       for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
-	    NetExpr*tmp = parms_[idx]->elaborate_expr(des, scope, elem_type, flags);
+	    NetExpr*tmp = elaborate_rval_expr(des, scope, elem_type,
+					      parms_[idx], need_const);
 	    elem_exprs[idx] = tmp;
       }
 
@@ -2009,7 +2021,7 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
       NetExpr* count = 0;
       if (args != 0 && parg) {
 	    count = elaborate_rval_expr(des, scope, &netvector_t::atom2u32,
-					IVL_VT_BOOL, 32, parg);
+					parg);
 	    if (count == 0) {
 		  cerr << li->get_fileline() << ": error: unable to elaborate "
 		          "enumeration method argument " << use_path << "."
@@ -2897,8 +2909,6 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
 	    if (tmp) {
 		  parms[pidx] = elaborate_rval_expr(des, scope,
 						    def->port(pidx)->net_type(),
-						    def->port(pidx)->data_type(),
-						    (unsigned)def->port(pidx)->vector_width(),
 						    tmp, need_const);
 		  if (parms[pidx] == 0) {
 			parm_errors += 1;
@@ -3222,11 +3232,11 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  NetExpr*tmp;
 
 		  tmp = elaborate_rval_expr(des, scope, &netvector_t::atom2u32,
-					    IVL_VT_BOOL, 32, parms_[0], false);
+					    parms_[0], false);
 		  sys_expr->parm(1, tmp);
 
 		  tmp = elaborate_rval_expr(des, scope, &netvector_t::atom2u32,
-					    IVL_VT_BOOL, 32, parms_[1], false);
+					    parms_[1], false);
 		  sys_expr->parm(2, tmp);
 
 		  return sys_expr;
@@ -6546,8 +6556,6 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 		  PExpr*tmp = parms_[idx-1];
 		  parms[idx] = elaborate_rval_expr(des, scope,
 						   def->port(idx)->net_type(),
-						   def->port(idx)->data_type(),
-						   def->port(idx)->vector_width(),
 						   tmp, false);
 		  if (parms[idx] == 0)
 			parm_errors += 1;
