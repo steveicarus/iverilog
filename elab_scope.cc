@@ -50,6 +50,7 @@
 # include  "netlist.h"
 # include  "netclass.h"
 # include  "netenum.h"
+# include  "netqueue.h"
 # include  "parse_api.h"
 # include  "util.h"
 # include  <typeinfo>
@@ -557,6 +558,13 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 		       << "  Property " << cur->first
 		       << " type=" << *tmp << endl;
 	    }
+
+	    if (dynamic_cast<const netqueue_t *> (tmp)) {
+		  cerr << cur->second.get_fileline() << ": sorry: "
+		       << "Queues inside classes are not yet supported." << endl;
+		  des->errors++;
+	    }
+
 	    use_class->set_property(cur->first, cur->second.qual, tmp);
 
       }

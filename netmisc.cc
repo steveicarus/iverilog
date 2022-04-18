@@ -985,16 +985,17 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
       if (tmp == 0) return 0;
 
       ivl_variable_type_t cast_type = ivl_type_base(lv_net_type);
-      if ((cast_type != IVL_VT_NO_TYPE) && (cast_type != tmp->expr_type())) {
+      ivl_variable_type_t expr_type = tmp->expr_type();
+      if ((cast_type != IVL_VT_NO_TYPE) && (cast_type != expr_type)) {
 	      // Catch some special cases.
 	    switch (cast_type) {
 		case IVL_VT_DARRAY:
 		case IVL_VT_QUEUE:
-		  if (NetESignal*net = dynamic_cast<NetESignal*>(tmp)) {
-			ivl_variable_type_t type = net->expr_type();
-			if ((type == IVL_VT_DARRAY) || (type == IVL_VT_QUEUE))
-			      return tmp;
-		  }
+		  if ((expr_type == IVL_VT_DARRAY) || (expr_type == IVL_VT_QUEUE))
+			return tmp;
+
+		  // This is needed to handle the special case of `'{}` which
+		  // gets elaborated to NetENull.
 		  if (dynamic_cast<PEAssignPattern*>(pe))
 			return tmp;
 		  // fall through
