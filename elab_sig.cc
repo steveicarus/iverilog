@@ -965,28 +965,6 @@ ivl_type_t PWire::elaborate_type(Design*des, NetScope*scope,
       return vec;
 }
 
-ivl_type_t PWire::elaborate_darray_type(Design*des, NetScope*scope,
-					const char *darray_type,
-					const std::vector<netrange_t>&packed_dimensions)
-					const
-{
-      ivl_type_t type = elaborate_type(des, scope, packed_dimensions);
-
-      if (dynamic_cast<const netvector_t*>(type) ||
-	  dynamic_cast<const netparray_t*>(type) ||
-	  dynamic_cast<const netreal_t*>(type) ||
-	  dynamic_cast<const netstring_t*>(type))
-	  return type;
-
-      cerr << get_fileline() << ": Sorry: "
-           << darray_type << " of type `" << *type
-	   << "` is not yet supported." << endl;
-      des->errors++;
-
-      // Return something to recover
-      return new netvector_t(IVL_VT_LOGIC);
-}
-
 /*
  * Elaborate a source wire. The "wire" is the declaration of wires,
  * registers, ports and memories. The parser has already merged the
@@ -1136,86 +1114,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       attrib_list_t*attrib_list = evaluate_attributes(attributes, nattrib,
 						      des, scope);
 
-
-      list<netrange_t>unpacked_dimensions;
-      netdarray_t*netdarray = 0;
-
-      for (list<pform_range_t>::const_iterator cur = unpacked_.begin()
-		 ; cur != unpacked_.end() ; ++cur) {
-	    PExpr*use_lidx = cur->first;
-	    PExpr*use_ridx = cur->second;
-
-	      // Special case: If we encounter an undefined
-	      // dimensions, then turn this into a dynamic array and
-	      // put all the packed dimensions there.
-	    if (use_lidx==0 && use_ridx==0) {
-		  ivl_type_t base_type = elaborate_darray_type(des,
-						  array_type_scope,
-						  "Dynamic array",
-						  packed_dimensions);
-		  packed_dimensions.clear();
-		  ivl_assert(*this, netdarray==0);
-		  netdarray = new netdarray_t(base_type);
-		  continue;
-	    }
-
-	      // Special case: Detect the mark for a QUEUE
-	      // declaration, which is the dimensions [null:max_idx].
-	    if (dynamic_cast<PENull*>(use_lidx)) {
-		  ivl_type_t base_type = elaborate_darray_type(des,
-						  array_type_scope,
-						  "Queue",
-						  packed_dimensions);
-		  packed_dimensions.clear();
-		  ivl_assert(*this, netdarray==0);
-		  long max_idx;
-		  if (use_ridx) {
-			NetExpr*tmp = elab_and_eval(des, array_type_scope, use_ridx,
-			                            -1, true);
-			NetEConst*cv = dynamic_cast<NetEConst*>(tmp);
-			if (cv == 0) {
-			      cerr << get_fileline() << ": error: queue '" << name_
-			           << "' bound must be a constant!" << endl;
-			      des->errors += 1;
-			      max_idx = -1;
-			} else {
-			      verinum res = cv->value();
-			      if (res.is_defined()) {
-				    max_idx = res.as_long();
-				    if (max_idx < 0) {
-					  cerr << get_fileline() << ": error: queue '"
-					       << name_ << "' bound must be positive ("
-					       << max_idx << ")!" << endl;
-					  des->errors += 1;
-					  max_idx = -1;
-				    }
-			      } else {
-				    cerr << get_fileline() << ": error: queue '" << name_
-				         << "' bound is undefined!" << endl;
-				    des->errors += 1;
-				    max_idx = -1;
-			      }
-			}
-		  } else max_idx = -1;
-		  netdarray = new netqueue_t(base_type, max_idx);
-		  continue;
-	    }
-
-	      // Cannot handle dynamic arrays/queues of arrays yet.
-	    ivl_assert(*this, netdarray==0);
-
-	    long index_l, index_r;
-	    evaluate_range(des, array_type_scope, this, *cur, index_l, index_r);
-
-	    if (abs(index_r - index_l) > warn_dimension_size) {
-		  cerr << get_fileline() << ": warning: Array dimension "
-		          "is greater than " << warn_dimension_size
-		       << "." << endl;
-	    }
-
-	    unpacked_dimensions.push_back(netrange_t(index_l, index_r));
-      }
-
       if (data_type_ == IVL_VT_REAL && !packed_dimensions.empty()) {
 	    cerr << get_fileline() << ": error: real ";
 	    if (wtype == NetNet::REG) cerr << "variable";
@@ -1263,36 +1161,30 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    wtype = NetNet::WIRE;
       }
 
+      ivl_type_t type = elaborate_type(des, array_type_scope, packed_dimensions);
+	// Create the type for the unpacked dimensions. If the
+	// unpacked_dimensions are empty this will just return the base type.
+      type = elaborate_array_type(des, array_type_scope, *this, type, unpacked_);
 
-      NetNet*sig = 0;
-
-      if (netdarray) {
-
-	    if (debug_elaborate) {
-	          cerr << get_fileline() << ": PWire::elaborate_sig: "
-		       << "Create signal wtype=" << wtype
-		       << " name=" << name_
-		       << " netdarray=" << *netdarray
-		       << " in scope " << scope_path(scope) << endl;
-	    }
-
-	    ivl_assert(*this, packed_dimensions.empty());
-	    ivl_assert(*this, unpacked_dimensions.empty());
-	    sig = new NetNet(scope, name_, wtype, netdarray);
-
-      } else {
-	    ivl_type_t use_type = elaborate_type(des, array_type_scope,
-						 packed_dimensions);
-
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: Create signal "
-		       << wtype << " " << *set_data_type_
-		       << " " << name_ << unpacked_dimensions
-		       << " in scope " << scope_path(scope) << endl;
-	    }
-
-	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_type);
+      list<netrange_t> unpacked_dimensions;
+	// If this is an unpacked array extract the base type and unpacked
+	// dimensions as these are separate properties of the NetNet.
+      if (const netuarray_t *atype = dynamic_cast<const netuarray_t*>(type)) {
+	    unpacked_dimensions.insert(unpacked_dimensions.begin(),
+				       atype->static_dimensions().begin(),
+				       atype->static_dimensions().end());
+	    type = atype->element_type();
       }
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: Create signal " << wtype;
+	    if (set_data_type_)
+		  cout << " " << *set_data_type_;
+	    cout << name_ << unpacked_dimensions << " in scope "
+		 << scope_path(scope) << endl;
+      }
+
+      NetNet*sig = new NetNet(scope, name_, wtype, unpacked_dimensions, type);
 
       if (wtype == NetNet::WIRE) sig->devirtualize_pins();
       sig->set_line(*this);

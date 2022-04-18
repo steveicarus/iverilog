@@ -125,7 +125,15 @@ br971			normal			ivltests
 br1005			normal			ivltests
 br1015b			normal			ivltests
 br_ml20150315b		normal			ivltests
+sv_darray_nest1		normal			ivltests
+sv_darray_nest2		normal			ivltests
+sv_darray_nest3		normal			ivltests
+sv_darray_nest4		normal			ivltests
 sv_deferred_assert1	normal			ivltests
 sv_deferred_assert2	normal			ivltests
 sv_deferred_assume1	normal			ivltests
 sv_deferred_assume2	normal			ivltests
+sv_queue_nest1		normal			ivltests
+sv_queue_nest2		normal			ivltests
+sv_queue_nest3		normal			ivltests
+sv_queue_nest4		normal			ivltests
