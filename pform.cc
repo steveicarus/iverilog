@@ -2151,42 +2151,22 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
  * only called by the parser within the scope of the net declaration,
  * and the name that I receive only has the tail component.
  */
-static void pform_set_net_range(perm_string name,
+static void pform_set_net_range(PWire *wire,
 				const list<pform_range_t>*range,
 				bool signed_flag,
-				PWSRType rt,
-				std::list<named_pexpr_t>*attr)
+				PWSRType rt = SR_NET,
+				std::list<named_pexpr_t>*attr = 0)
 {
-      PWire*cur = pform_get_wire_in_scope(name);
-      if (cur == 0) {
-	    VLerror("error: name is not a valid net.");
-	    return;
-      }
-
       if (range == 0) {
 	      /* This is the special case that we really mean a
 		 scalar. Set a fake range. */
-	    cur->set_range_scalar(rt);
-
+	    wire->set_range_scalar(rt);
       } else {
-	    cur->set_range(*range, rt);
+	    wire->set_range(*range, rt);
       }
-      cur->set_signed(signed_flag);
+      wire->set_signed(signed_flag);
 
-      pform_bind_attributes(cur->attributes, attr, true);
-}
-
-static void pform_set_net_range(list<perm_string>*names,
-				list<pform_range_t>*range,
-				bool signed_flag,
-				std::list<named_pexpr_t>*attr)
-{
-      for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end() ; ++ cur ) {
-	    perm_string txt = *cur;
-	    pform_set_net_range(txt, range, signed_flag, SR_NET, attr);
-      }
-
+      pform_bind_attributes(wire->attributes, attr, true);
 }
 
 /*
@@ -2536,13 +2516,6 @@ void pform_make_var_init(const struct vlltype&li,
 	    return;
       }
 
-      PWire*cur = pform_get_wire_in_scope(name);
-      if (cur == 0) {
-	    VLerror(li, "internal error: var_init to non-register?");
-	    delete expr;
-	    return;
-      }
-
       PEIdent*lval = new PEIdent(name);
       FILE_NAME(lval, li);
       PAssign*ass = new PAssign(lval, expr, !gn_system_verilog());
@@ -2741,8 +2714,8 @@ static PWire* pform_get_or_make_wire(const vlltype&li, perm_string name,
  * the variable/net. Other forms of pform_makewire ultimately call
  * this one to create the wire and stash it.
  */
-void pform_makewire(const vlltype&li, perm_string name, NetNet::Type type,
-		    ivl_variable_type_t dt, std::list<pform_range_t> *indices)
+PWire *pform_makewire(const vlltype&li, perm_string name, NetNet::Type type,
+		      ivl_variable_type_t dt, std::list<pform_range_t> *indices)
 {
       PWire*cur = pform_get_or_make_wire(li, name, type, NetNet::NOT_A_PORT,
 					 dt);
@@ -2768,6 +2741,8 @@ void pform_makewire(const vlltype&li, perm_string name, NetNet::Type type,
 
       if (indices && !indices->empty())
 	    cur->set_unpacked_idx(*indices);
+
+      return cur;
 }
 
 void pform_makewire(const struct vlltype&li,
@@ -2783,16 +2758,17 @@ void pform_makewire(const struct vlltype&li,
 	    return;
       }
 
-      list<perm_string>*names = new list<perm_string>;
+      std::vector<PWire*> *wires = new std::vector<PWire*>;
 
       for (list<decl_assignment_t*>::iterator cur = assign_list->begin()
 		 ; cur != assign_list->end() ; ++ cur) {
 	    decl_assignment_t* curp = *cur;
-	    pform_makewire(li, curp->name, type, IVL_VT_NO_TYPE, &curp->index);
-	    names->push_back(curp->name);
+	    PWire *wire = pform_makewire(li, curp->name, type, IVL_VT_NO_TYPE,
+					 &curp->index);
+	    wires->push_back(wire);
       }
 
-      pform_set_data_type(li, data_type, names, type, attr);
+      pform_set_data_type(li, data_type, wires, type, attr);
 
       while (! assign_list->empty()) {
 	    decl_assignment_t*first = assign_list->front();
@@ -3295,8 +3271,8 @@ extern void pform_module_specify_path(PSpecPath*obj)
 }
 
 
-static void pform_set_port_type(const struct vlltype&li,
-				perm_string name, NetNet::PortType pt)
+static PWire *pform_set_port_type(const struct vlltype&li,
+				  perm_string name, NetNet::PortType pt)
 {
       PWire*cur = pform_get_wire_in_scope(name);
       if (cur == 0) {
@@ -3320,6 +3296,7 @@ static void pform_set_port_type(const struct vlltype&li,
 	    break;
       }
 
+      return cur;
 }
 
 void pform_set_port_type(const struct vlltype&li,
@@ -3344,8 +3321,8 @@ void pform_set_port_type(const struct vlltype&li,
       for (list<pform_port_t>::iterator cur = ports->begin()
 		 ; cur != ports->end() ; ++ cur ) {
 
-	    pform_set_port_type(li, cur->name, pt);
-	    pform_set_net_range(cur->name, range, signed_flag, SR_PORT, attr);
+	    PWire *wire = pform_set_port_type(li, cur->name, pt);
+	    pform_set_net_range(wire, range, signed_flag, SR_PORT, attr);
 	    if (cur->udims) {
 		  cerr << li << ": warning: "
 		       << "Array dimensions in incomplete port declarations "
@@ -3376,7 +3353,9 @@ void pform_set_port_type(const struct vlltype&li,
  * This function detects the derived class for the given type and
  * dispatches the type to the proper subtype function.
  */
-void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
+void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
+			 std::vector<PWire*> *wires, NetNet::Type net_type,
+			 list<named_pexpr_t>*attr)
 {
       ivl_variable_type_t vt;
       if (data_type == 0) {
@@ -3388,9 +3367,8 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
       if (uarray_type)
             data_type = uarray_type->base_type;
 
-      if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (data_type)) {
-	    pform_set_net_range(names, vec_type->pdims.get(),
-				vec_type->signed_flag, 0);
+      vector_type_t*vec_type = dynamic_cast<vector_type_t*> (data_type);
+      if (vec_type) {
 	    vt = vec_type->base_type;
       }
 
@@ -3407,13 +3385,15 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
 	    vt = data_type->figure_packed_base_type();
       }
 
-      for (list<perm_string>::iterator cur = names->begin()
-	      ; cur != names->end() ; ++ cur ) {
-	    PWire*wire = pform_get_wire_in_scope(*cur);
+      for (std::vector<PWire*>::iterator it= wires->begin();
+	   it != wires->end() ; ++it) {
+	    PWire *wire = *it;
+
+	    if (vec_type)
+		  pform_set_net_range(wire, vec_type->pdims.get(), vec_type->signed_flag);
 
 	    // If these fail there is a bug somewhere else. pform_set_data_type()
 	    // is only ever called on a fresh wire that already exists.
-	    ivl_assert(li, wire);
 	    bool rc = wire->set_wire_type(net_type);
 	    ivl_assert(li, rc);
 	    rc = wire->set_data_type(vt);
@@ -3428,7 +3408,7 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
 	    pform_bind_attributes(wire->attributes, attr, true);
       }
 
-      delete names;
+      delete wires;
 }
 
 vector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)

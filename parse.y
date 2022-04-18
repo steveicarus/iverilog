@@ -603,9 +603,12 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <statement> udp_initial udp_init_opt
 %type <expr>    udp_initial_expr_opt
 
-%type <text> net_variable event_variable label_opt class_declaration_endlabel_opt
+%type <wire> net_variable
+%type <wires> net_variable_list
+
+%type <text> event_variable label_opt class_declaration_endlabel_opt
 %type <text> block_identifier_opt
-%type <perm_strings> net_variable_list event_variable_list
+%type <perm_strings> event_variable_list
 %type <perm_strings> list_of_identifiers loop_variables
 %type <port_list> list_of_port_identifiers list_of_variable_port_identifiers
 
@@ -5833,23 +5836,20 @@ dimensions
 net_variable
   : IDENTIFIER dimensions_opt
       { perm_string name = lex_strings.make($1);
-	pform_makewire(@1, name, NetNet::IMPLICIT, IVL_VT_NO_TYPE, $2);
-	$$ = $1;
+	$$ = pform_makewire(@1, name, NetNet::IMPLICIT, IVL_VT_NO_TYPE, $2);
+	delete [] $1;
       }
   ;
 
 net_variable_list
 	: net_variable
-		{ std::list<perm_string>*tmp = new std::list<perm_string>;
-		  tmp->push_back(lex_strings.make($1));
+		{ std::vector<PWire*> *tmp = new std::vector<PWire*>;
+		  tmp->push_back($1);
 		  $$ = tmp;
-		  delete[]$1;
 		}
 	| net_variable_list ',' net_variable
-		{ std::list<perm_string>*tmp = $1;
-		  tmp->push_back(lex_strings.make($3));
-		  $$ = tmp;
-		  delete[]$3;
+		{ $1->push_back($3);
+		  $$ = $1;
 		}
 	;
 
