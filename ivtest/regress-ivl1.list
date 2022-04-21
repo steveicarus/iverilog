@@ -225,6 +225,7 @@ ca_var_delay		normal			ivltests
 cast_real_signed	normal			ivltests
 cast_real_unsigned	normal			ivltests
 delayed_sfunc		normal,-gspecify	ivltests gold=delayed_sfunc.gold
+module_port_shortreal	normal,-g2005-sv	ivltests # shortreal
 pr1861212c		normal			ivltests gold=pr1861212.gold
 pr1864110a		normal			ivltests gold=pr1864110a.gold
 pr1864110b		normal			ivltests gold=pr1864110b.gold
