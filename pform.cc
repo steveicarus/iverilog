@@ -2594,12 +2594,9 @@ void pform_module_define_port(const struct vlltype&li,
 			      bool keep_attr)
 {
       ivl_variable_type_t data_type = IVL_VT_NO_TYPE;
-      bool signed_flag = false;
 
       pform_check_net_data_type(li, type, vtype);
 
-	// Packed ranges
-      list<pform_range_t>*prange = 0;
 	// Unpacked dimensions
       list<pform_range_t>*urange = 0;
 
@@ -2610,15 +2607,12 @@ void pform_module_define_port(const struct vlltype&li,
 	    vtype = uarr_type->base_type;
       }
 
-      if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype)) {
+      vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype);
+      if (vec_type) {
 	    data_type = vec_type->base_type;
-	    signed_flag = vec_type->signed_flag;
-	    prange = vec_type->pdims.get();
 	    vtype = 0;
       } else if (dynamic_cast<real_type_t*>(vtype)) {
 	    data_type = IVL_VT_REAL;
-	    signed_flag = true;
-	    prange = 0;
       } else if (vtype) {
 	    if (vtype->figure_packed_base_type() != IVL_VT_NO_TYPE) {
 		  data_type = vtype->figure_packed_base_type();
@@ -2636,13 +2630,10 @@ void pform_module_define_port(const struct vlltype&li,
       PWire *cur = pform_get_or_make_wire(li, name, type, port_kind, data_type,
 					  SR_BOTH);
 
-      cur->set_signed(signed_flag);
+      pform_set_net_range(cur, vec_type, SR_BOTH);
 
       if (vtype)
 	    cur->set_data_type(vtype);
-
-      if (prange)
-	    cur->set_range(*prange, SR_BOTH);
 
       if (urange) {
 	    cur->set_unpacked_idx(*urange);
