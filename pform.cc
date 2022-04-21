@@ -2143,16 +2143,19 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
  * and the name that I receive only has the tail component.
  */
 static void pform_set_net_range(PWire *wire,
-				const list<pform_range_t>*range,
-				bool signed_flag,
+			        const vector_type_t *vec_type,
 				PWSRType rt = SR_NET,
 				std::list<named_pexpr_t>*attr = 0)
 {
+      pform_bind_attributes(wire->attributes, attr, true);
+
+      if (!vec_type)
+	    return;
+
+      list<pform_range_t> *range = vec_type->pdims.get();
       if (range)
 	    wire->set_range(*range, rt);
-      wire->set_signed(signed_flag);
-
-      pform_bind_attributes(wire->attributes, attr, true);
+      wire->set_signed(vec_type->signed_flag);
 }
 
 /*
@@ -3235,15 +3238,7 @@ void pform_set_port_type(const struct vlltype&li,
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
 
-      list<pform_range_t>*range = 0;
-      bool signed_flag = false;
-      if (vector_type_t*vt = dynamic_cast<vector_type_t*> (dt)) {
-	    assert(vt->implicit_flag);
-	    range = vt->pdims.get();
-	    signed_flag = vt->signed_flag;
-      } else {
-	    assert(dt == 0);
-      }
+      vector_type_t *vt = dynamic_cast<vector_type_t*> (dt);
 
       bool have_init_expr = false;
       for (list<pform_port_t>::iterator cur = ports->begin()
@@ -3251,7 +3246,8 @@ void pform_set_port_type(const struct vlltype&li,
 
 	    PWire *wire = pform_get_or_make_wire(li, cur->name, NetNet::IMPLICIT, pt,
 						 IVL_VT_NO_TYPE, SR_PORT);
-	    pform_set_net_range(wire, range, signed_flag, SR_PORT, attr);
+	    pform_set_net_range(wire, vt, SR_PORT, attr);
+
 	    if (cur->udims) {
 		  cerr << li << ": warning: "
 		       << "Array dimensions in incomplete port declarations "
@@ -3318,8 +3314,7 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
 	   it != wires->end() ; ++it) {
 	    PWire *wire = *it;
 
-	    if (vec_type)
-		  pform_set_net_range(wire, vec_type->pdims.get(), vec_type->signed_flag);
+	    pform_set_net_range(wire, vec_type);
 
 	    // If these fail there is a bug somewhere else. pform_set_data_type()
 	    // is only ever called on a fresh wire that already exists.
