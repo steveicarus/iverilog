@@ -96,9 +96,6 @@ struct parmvalue_t {
 
 struct str_pair_t { ivl_drive_t str0, str1; };
 
-
-extern std::list<pform_range_t>* copy_range(std::list<pform_range_t>* orig);
-
   /* Use this function to transform the parted form of the attribute
      list to the attribute map that is used later. */
 extern void pform_bind_attributes(std::map<perm_string,PExpr*>&attributes,

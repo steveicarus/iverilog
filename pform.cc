@@ -2786,17 +2786,20 @@ void pform_makewire(const struct vlltype&li,
  * constraints as those of tasks, so this works fine. Functions have
  * no output or inout ports.
  */
-static vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
-						     NetNet::PortType pt,
-						     ivl_variable_type_t vtype,
-						     bool signed_flag,
-						     list<pform_range_t>*range,
-						     list<pform_port_t>*ports)
+static vector<pform_tf_port_t>*pform_make_task_ports_vec(const struct vlltype&loc,
+							 NetNet::PortType pt,
+						         vector_type_t *vec_type,
+							 list<pform_port_t>*ports,
+							 bool allow_implicit)
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
       assert(ports);
       vector<pform_tf_port_t>*res = new vector<pform_tf_port_t>(0);
-      PWSRType rt = vtype != IVL_VT_NO_TYPE ? SR_BOTH : SR_PORT;
+
+      PWSRType rt = SR_BOTH;
+
+      if (allow_implicit && vec_type->implicit_flag)
+	    rt = SR_PORT;
 
       for (list<pform_port_t>::iterator cur = ports->begin()
 		 ; cur != ports->end() ; ++ cur ) {
@@ -2805,12 +2808,8 @@ static vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 	      /* Look for a preexisting wire. If it exists, set the
 		 port direction. If not, create it. */
 	    PWire*curw = pform_get_or_make_wire(loc, name, NetNet::IMPLICIT_REG,
-						pt, vtype, rt);
-	    curw->set_signed(signed_flag);
-
-	      /* If there is a range involved, it needs to be set. */
-	    if (range)
-		  curw->set_range(*range, rt);
+						pt, vec_type->base_type, rt);
+	    pform_set_net_range(curw, vec_type, rt);
 
 	    if (cur->udims) {
 		  if (pform_requires_sv(loc, "Task/function port with unpacked dimensions"))
@@ -2820,7 +2819,6 @@ static vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 	    res->push_back(pform_tf_port_t(curw));
       }
 
-      delete range;
       return res;
 }
 
@@ -2874,14 +2872,8 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
       }
 
       if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype)) {
-	    ivl_variable_type_t base_type = vec_type->base_type;
-	    if (allow_implicit && vec_type->implicit_flag)
-		base_type = IVL_VT_NO_TYPE;
-
-	    ret = pform_make_task_ports(loc, pt, base_type,
-					 vec_type->signed_flag,
-					 copy_range(vec_type->pdims.get()),
-					 ports);
+	    ret = pform_make_task_ports_vec(loc, pt, vec_type, ports,
+					    allow_implicit);
       }
 
       if (/*real_type_t*real_type = */ dynamic_cast<real_type_t*> (vtype)) {
