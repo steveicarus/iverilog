@@ -438,7 +438,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 
       struct {
 	    char*text;
-	    data_type_t*type;
+	    typedef_t*type;
       } type_identifier;
 
       struct {
@@ -810,12 +810,12 @@ class_identifier
 	perm_string name = lex_strings.make($1);
 	class_type_t*tmp = new class_type_t(name);
 	FILE_NAME(tmp, @1);
-	pform_set_typedef(name, tmp, NULL);
+	pform_set_typedef(@1, name, tmp, NULL);
 	delete[]$1;
 	$$ = tmp;
       }
   | TYPE_IDENTIFIER
-      { class_type_t*tmp = dynamic_cast<class_type_t*>($1.type);
+      { class_type_t*tmp = dynamic_cast<class_type_t*>($1.type->get_data_type());
 	if (tmp == 0) {
 	      yyerror(@1, "Type name \"%s\"is not a predeclared class name.", $1.text);
 	}
@@ -2656,7 +2656,7 @@ block_item_decls_opt
 type_declaration
   : K_typedef data_type IDENTIFIER dimensions_opt ';'
       { perm_string name = lex_strings.make($3);
-	pform_set_typedef(name, $2, $4);
+	pform_set_typedef(@3, name, $2, $4);
 	delete[]$3;
       }
 
@@ -2665,12 +2665,7 @@ type_declaration
      inherited from a different scope. */
   | K_typedef data_type TYPE_IDENTIFIER dimensions_opt ';'
       { perm_string name = lex_strings.make($3.text);
-	if (pform_test_type_identifier_local(name)) {
-	      yyerror(@3, "error: Typedef identifier \"%s\" is already a type name.", $3.text);
-	      delete $4;
-	} else {
-	      pform_set_typedef(name, $2, $4);
-	}
+	pform_set_typedef(@3, name, $2, $4);
 	delete[]$3.text;
       }
 
@@ -2682,7 +2677,7 @@ type_declaration
 	perm_string name = lex_strings.make($3);
 	class_type_t*tmp = new class_type_t(name);
 	FILE_NAME(tmp, @3);
-	pform_set_typedef(name, tmp, NULL);
+	pform_set_typedef(@3, name, tmp, NULL);
 	delete[]$3;
       }
   | K_typedef K_enum   IDENTIFIER ';'
@@ -2697,7 +2692,7 @@ type_declaration
 	perm_string name = lex_strings.make($2);
 	class_type_t*tmp = new class_type_t(name);
 	FILE_NAME(tmp, @2);
-	pform_set_typedef(name, tmp, NULL);
+	pform_set_typedef(@3, name, tmp, NULL);
 	delete[]$2;
       }
 

@@ -858,18 +858,28 @@ void pform_put_enum_type_in_scope(enum_type_t*enum_set)
       lexical_scope->enum_sets.push_back(enum_set);
 }
 
-void pform_set_typedef(perm_string name, data_type_t*data_type, std::list<pform_range_t>*unp_ranges)
+void pform_set_typedef(const struct vlltype&loc, perm_string name,
+		       data_type_t*data_type,
+		       std::list<pform_range_t>*unp_ranges)
 {
       if(unp_ranges)
 	    data_type = new uarray_type_t(data_type, unp_ranges);
 
-      add_local_symbol(lexical_scope, name, data_type);
+      typedef_t *&td = lexical_scope->typedefs[name];
+      if (!td) {
+	    td = new typedef_t(name);
+	    FILE_NAME(td, loc);
+	    add_local_symbol(lexical_scope, name, td);
+      }
 
-      data_type_t*&ref = lexical_scope->typedefs[name];
-
-      ivl_assert(*data_type, ref == 0);
-      ref = data_type;
-      ref->name = name;
+      if (!td->set_data_type(data_type)) {
+	    cerr << loc << " error: Type identifier `" << name
+		 << "` has already been declared in this scope at "
+		 << td->get_data_type()->get_fileline() << "."
+		 << endl;
+	    error_count++;
+	    delete data_type;
+      }
 }
 
 void pform_set_type_referenced(const struct vlltype&loc, const char*name)
@@ -878,13 +888,13 @@ void pform_set_type_referenced(const struct vlltype&loc, const char*name)
       check_potential_imports(loc, lex_name, false);
 }
 
-data_type_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
+typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
 {
       perm_string name = lex_strings.make(txt);
 
       LexicalScope*cur_scope = lexical_scope;
       do {
-	    map<perm_string,data_type_t*>::iterator cur;
+	    LexicalScope::typedef_map_t::iterator cur;
 
 	      // First look to see if this identifier is imported from
 	      // a package. If it is, see if it is a type in that
@@ -922,24 +932,6 @@ data_type_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt
       } while (cur_scope);
 
       return 0;
-}
-
-/*
- * The parser uses this function to test if the name is a typedef in
- * the current scope. We use this to know if we can override the
- * definition because it shadows a containing scope.
- */
-bool pform_test_type_identifier_local(perm_string name)
-{
-      LexicalScope*cur_scope = lexical_scope;
-
-      map<perm_string,data_type_t*>::iterator cur;
-
-      cur = cur_scope->typedefs.find(name);
-      if (cur != cur_scope->typedefs.end())
-	    return true;
-
-      return false;
 }
 
 PECallFunction* pform_make_call_function(const struct vlltype&loc,

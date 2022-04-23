@@ -1502,10 +1502,10 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 
 void LexicalScope::dump_typedefs_(ostream&out, unsigned indent) const
 {
-      typedef map<perm_string,data_type_t*>::const_iterator iter_t;
+      typedef typedef_map_t::const_iterator iter_t;
       for (iter_t cur = typedefs.begin() ; cur != typedefs.end() ; ++ cur) {
 	    out << setw(indent) << "" << "typedef of " << cur->first << ":" << endl;
-	    cur->second->pform_dump(out, indent+4);
+	    cur->second->get_data_type()->pform_dump(out, indent+4);
       }
 }
 

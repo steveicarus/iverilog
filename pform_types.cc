@@ -44,3 +44,13 @@ PNamedItem::SymbolType class_type_t::symbol_type() const
 {
       return CLASS;
 }
+
+bool typedef_t::set_data_type(data_type_t *t)
+{
+      if (data_type.get())
+	    return false;
+
+      data_type.reset(t);
+
+      return true;
+}
