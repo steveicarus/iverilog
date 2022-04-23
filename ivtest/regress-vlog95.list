@@ -437,6 +437,7 @@ sv_port_default6	CE,-g2009,-pallowsigned=1	ivltests
 sv_port_default7	CE,-g2009,-pallowsigned=1	ivltests
 sv_port_default8	CE,-g2009,-pallowsigned=1	ivltests
 sv_port_default9	CE,-g2009		ivltests
+sv_ps_type_class1	CE,-g2009		ivltests
 sv_root_class		CE,-g2009		ivltests
 sv_typedef_scope3	CE,-g2009		ivltests
 sv_unit2b		CE,-g2009		ivltests

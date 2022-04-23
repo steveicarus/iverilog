@@ -633,6 +633,13 @@ sv_ps_function2		normal,-g2009		ivltests
 sv_ps_function3		normal,-g2009		ivltests
 sv_ps_function4		normal,-g2009		ivltests
 sv_ps_type1		normal,-g2009		ivltests
+sv_ps_type_cast1	normal,-g2009		ivltests
+sv_ps_type_cast2	normal,-g2009		ivltests
+sv_ps_type_class1	normal,-g2009		ivltests
+sv_ps_type_enum1	normal,-g2009		ivltests
+sv_ps_type_expr1	normal,-g2009		ivltests
+sv_ps_type_expr2	normal,-g2009		ivltests
+sv_ps_type_struct1	normal,-g2009		ivltests
 sv_ps_var1		normal,-g2009		ivltests
 sv_queue1		normal,-g2009		ivltests
 sv_queue2		normal,-g2009		ivltests
