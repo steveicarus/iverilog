@@ -1652,6 +1652,17 @@ task_inpad		normal			ivltests # Validates input of task should pad w/ 0
 task_iotypes		normal			ivltests # task ports with types.
 task_iotypes2		normal			ivltests # task ports with types.
 task_mem		normal			ivltests
+task_nonansi_fail1	CE			ivltests
+task_nonansi_fail2	CE			ivltests
+task_nonansi_fail3	CE			ivltests
+task_nonansi_fail4	CE			ivltests
+task_nonansi_fail5	CE			ivltests
+task_nonansi_fail6	CE			ivltests
+task_nonansi_fail7	CE			ivltests
+task_nonansi_fail8	CE			ivltests
+task_nonansi_fail9	CE			ivltests
+task_nonansi_fail10	CE			ivltests
+task_nonansi_fail11	CE			ivltests
 task_nonansi_integer1	normal			ivltests
 task_nonansi_integer2	normal			ivltests
 task_nonansi_integer_fail CE			ivltests
