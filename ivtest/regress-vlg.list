@@ -654,6 +654,19 @@ module_inout_port_list_def CE			ivltests # inout ports do not support default va
 module_inout_port_type	CE			ivltests
 module_input_port_list_def CE			ivltests # input ports only support default values in SV
 module_input_port_type	CE			ivltests
+module_nonansi_fail1	CE			ivltests
+module_nonansi_fail2	CE			ivltests
+module_nonansi_fail3	CE			ivltests
+module_nonansi_fail4	CE			ivltests
+module_nonansi_fail5	CE			ivltests
+module_nonansi_fail6	CE			ivltests
+module_nonansi_fail7	CE			ivltests
+module_nonansi_fail8	CE			ivltests
+module_nonansi_fail9	CE			ivltests
+module_nonansi_fail10	CE			ivltests
+module_nonansi_fail11	CE			ivltests
+module_nonansi_fail12	CE			ivltests
+module_nonansi_fail13	CE			ivltests
 module_nonansi_integer1	normal			ivltests
 module_nonansi_integer2	normal			ivltests
 module_nonansi_integer_fail CE			ivltests
