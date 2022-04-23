@@ -5784,7 +5784,7 @@ dimensions
 net_variable
   : IDENTIFIER dimensions_opt
       { perm_string name = lex_strings.make($1);
-	$$ = pform_makewire(@1, name, NetNet::IMPLICIT, IVL_VT_NO_TYPE, $2);
+	$$ = pform_makewire(@1, name, NetNet::IMPLICIT, $2);
 	delete [] $1;
       }
   ;

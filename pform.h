@@ -330,7 +330,6 @@ extern PForeach* pform_make_foreach(const struct vlltype&loc,
  */
 extern PWire *pform_makewire(const struct vlltype&li, perm_string name,
 			     NetNet::Type type,
-			     ivl_variable_type_t dt,
 			     std::list<pform_range_t> *indices);
 
 /* This form handles assignment declarations. */
