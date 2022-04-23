@@ -620,8 +620,6 @@ void PWire::dump(ostream&out, unsigned ind) const
 	    break;
       }
 
-      out << " " << data_type_;
-
       if (signed_) {
 	    out << " signed";
       }
