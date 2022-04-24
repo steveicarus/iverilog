@@ -1124,7 +1124,10 @@ void NetAssign::dump(ostream&o, unsigned ind) const
       if (const NetExpr*de = get_delay())
 	    o << "#(" << *de << ") ";
 
-      o << *rval() << ";" << endl;
+      if (rval())
+	    o << *rval() << ";" << endl;
+      else
+	    o << "<rval elaboration error>;" << endl;
 }
 
 void NetAssignNB::dump(ostream&o, unsigned ind) const
@@ -1142,7 +1145,10 @@ void NetAssignNB::dump(ostream&o, unsigned ind) const
 	    o << *event_;
       }
 
-      o << *rval() << ";" << endl;
+      if (rval())
+	    o << *rval() << ";" << endl;
+      else
+	    o << "rval elaboration error>;" << endl;
 
 }
 
