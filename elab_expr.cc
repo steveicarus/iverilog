@@ -3453,12 +3453,16 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
       if (sub == 0)
 	    return 0;
 
-      if (dynamic_cast<const real_type_t*>(target_)) {
-	    return cast_to_real(sub);
-      }
-
       NetExpr*tmp = 0;
-      if (target_type_ && target_type_->packed()) {
+      if (dynamic_cast<const netreal_t*>(target_type_)) {
+	    return cast_to_real(sub);
+      } else if (dynamic_cast<const netstring_t*>(target_type_)) {
+	    if (base_->expr_type() == IVL_VT_STRING)
+		  return sub; // no conversion
+	    if (base_->expr_type() == IVL_VT_LOGIC ||
+		base_->expr_type() == IVL_VT_BOOL)
+		  return sub; // handled by the target as special cases
+      } else if (target_type_ && target_type_->packed()) {
 	    switch (target_type_->base_type()) {
 		case IVL_VT_BOOL:
 		  tmp = cast_to_int2(sub, expr_width_);
@@ -3481,15 +3485,6 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
 		  tmp = cast_to_width(sub, expr_width_, sub->has_sign(), *this);
 	    }
 	    return pad_to_width(tmp, expr_wid, signed_flag_, *this, target_type_);
-      }
-
-      if (dynamic_cast<const string_type_t*>(target_)) {
-	    if (base_->expr_type() == IVL_VT_STRING)
-		  return sub; // no conversion
-
-	    if (base_->expr_type() == IVL_VT_LOGIC
-	     || base_->expr_type() == IVL_VT_BOOL)
-		  return sub; // handled by the target as special cases
       }
 
       cerr << get_fileline() << ": sorry: This cast operation is not yet supported." << endl;

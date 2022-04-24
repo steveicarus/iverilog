@@ -286,6 +286,7 @@ plus_arg_string		CE,-g2009		ivltests
 sformatf		CE,-g2009		ivltests
 string_events		CE,-g2009		ivltests
 string_index		CE,-g2005-sv		ivltests
+sv_cast_typedef		CE,-g2005-sv		ivltests
 sv_macro		CE,-g2009,-pallowsigned=1	ivltests
 sv_string1		CE,-g2009		ivltests
 sv_string2		CE,-g2009		ivltests
