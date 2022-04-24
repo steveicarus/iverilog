@@ -2574,16 +2574,10 @@ void pform_module_define_port(const struct vlltype&li,
 	    signed_flag = vec_type->signed_flag;
 	    prange = vec_type->pdims.get();
 	    vtype = 0;
-      } else if (real_type_t*rtype = dynamic_cast<real_type_t*>(vtype)) {
+      } else if (dynamic_cast<real_type_t*>(vtype)) {
 	    data_type = IVL_VT_REAL;
 	    signed_flag = true;
 	    prange = 0;
-
-	    if (rtype->type_code() != real_type_t::REAL) {
-		  VLerror(li, "sorry: Only real (not shortreal) supported here (%s:%d).",
-			  __FILE__, __LINE__);
-	    }
-
       } else if (vtype) {
 	    if (vtype->figure_packed_base_type() != IVL_VT_NO_TYPE) {
 		  data_type = vtype->figure_packed_base_type();
