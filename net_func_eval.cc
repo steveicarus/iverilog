@@ -441,8 +441,11 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 bool NetAssign::evaluate_function(const LineInfo&loc,
 				  map<perm_string,LocalVar>&context_map) const
 {
-	// Evaluate the r-value expression.
-      NetExpr*rval_result = rval()->evaluate_function(loc, context_map);
+      // Evaluate the r-value expression.
+      const NetExpr*use_rval = rval();
+      if (use_rval == 0)
+	    return false;
+      NetExpr*rval_result = use_rval->evaluate_function(loc, context_map);
       if (rval_result == 0)
 	    return false;
 
