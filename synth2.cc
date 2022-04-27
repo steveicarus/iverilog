@@ -431,7 +431,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    netvector_t*tmp_type = new netvector_t(tmp_data_type, lsig_width-1,0);
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::WIRE, NetNet::not_an_array, tmp_type);
+				    NetNet::WIRE, tmp_type);
 	    tmp->local_flag(true);
 	    tmp->set_line(*this);
 
@@ -465,7 +465,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    netvector_t*tmp_type = new netvector_t(tmp_data_type, lsig_width-1,0);
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::WIRE, NetNet::not_an_array, tmp_type);
+				    NetNet::WIRE, tmp_type);
 	    tmp->local_flag(true);
 	    tmp->set_line(*this);
 
@@ -482,7 +482,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 			     << " Found no isig, resorting to lsig." << endl;
 		  }
 		  isig = new NetNet(scope, scope->local_symbol(),
-				    NetNet::WIRE, NetNet::not_an_array, tmp_type);
+				    NetNet::WIRE, tmp_type);
 		  isig->local_flag(true);
 		  isig->set_line(*this);
 		  connect(isig->pin(0), nex_out.pin(ptr));
@@ -1397,7 +1397,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
 	      // Bind some temporary signals to carry pin type.
 	    NetNet*otmp = new NetNet(scope, scope->local_symbol(),
-				     NetNet::WIRE, NetNet::not_an_array, tmp_type);
+				     NetNet::WIRE, tmp_type);
 	    otmp->local_flag(true);
 	    otmp->set_line(*this);
 	    connect(mux->pin_Result(),otmp->pin(0));
@@ -1415,14 +1415,14 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  NetNet*itmp = statement_input.pin(idx).nexus()->pick_any_net();
 		  if (itmp == 0) {
 			itmp = new NetNet(scope, scope->local_symbol(),
-					  NetNet::WIRE, NetNet::not_an_array, tmp_type);
+					  NetNet::WIRE, tmp_type);
 			itmp->local_flag(true);
 			itmp->set_line(*this);
 			connect(itmp->pin(0), statement_input.pin(idx));
 		  }
 
 		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-					  NetNet::WIRE, NetNet::not_an_array, tmp_type);
+					  NetNet::WIRE, tmp_type);
 		  tmp->local_flag(true);
 		  tmp->set_line(*this);
 		  NetSubstitute*ps = new NetSubstitute(itmp, otmp, mux_lwidth, mux_off);

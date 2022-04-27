@@ -673,8 +673,6 @@ class NetNet  : public NetObj, public PortType {
 
       typedef PortType::Enum PortType;
 
-      static const std::list<netrange_t>not_an_array;
-
     public:
 	// This form is the more generic form of the constructor. For
 	// now, the unpacked type is not buried into an ivl_type_s object.
