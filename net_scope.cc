@@ -77,17 +77,6 @@ netenum_t* Definitions::enumeration_for_key(const enum_type_t*key) const
 }
 
 /*
- * This locates the enumeration TYPE for the given enumeration literal.
- */
-const netenum_t*Definitions::enumeration_for_name(perm_string name)
-{
-      NetEConstEnum*tmp = enum_names_[name];
-      assert(tmp != 0);
-
-      return tmp->enumeration();
-}
-
-/*
  * This locates the VALUE for the given enumeration literal.
  */
 const NetExpr* Definitions::enumeration_expr(perm_string key)
@@ -270,31 +259,6 @@ NetScope*NetScope::find_typedef_scope(const Design*des, data_type_t*type)
       }
 
       return 0;
-}
-
-/*
- * Look for the enumeration in the current scope and any parent scopes.
- */
-const netenum_t*NetScope::find_enumeration_for_name(const Design*des, perm_string name)
-{
-      NetScope *cur_scope = this;
-      while (cur_scope) {
-	    NetEConstEnum*tmp = cur_scope->enum_names_[name];
-	    if (tmp) break;
-	    NetScope*import_scope = cur_scope->find_import(des, name);
-	    if (import_scope)
-		  cur_scope = import_scope;
-	    else if (cur_scope == unit_)
-		  return 0;
-	    else
-		  cur_scope = cur_scope->parent();
-
-	    if (cur_scope == 0)
-		  cur_scope = unit_;
-      }
-
-      assert(cur_scope);
-      return cur_scope->enum_names_[name]->enumeration();
 }
 
 /*
