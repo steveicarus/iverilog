@@ -136,13 +136,34 @@ ivl_type_t class_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
  * available at the right time. At that time, the netenum_t* object is
  * stashed in the scope so that I can retrieve it here.
  */
-ivl_type_t enum_type_t::elaborate_type_raw(Design*, NetScope*scope) const
+ivl_type_t enum_type_t::elaborate_type_raw(Design *des, NetScope *scope) const
 {
-      ivl_assert(*this, scope);
-      ivl_type_t tmp = scope->enumeration_for_key(this);
-      if (tmp == 0 && scope->unit())
-	    tmp = scope->unit()->enumeration_for_key(this);
-      return tmp;
+      ivl_type_t base = base_type->elaborate_type(des, scope);
+
+      const struct netvector_t *vec_type = dynamic_cast<const netvector_t*>(base);
+
+      if (!vec_type && !dynamic_cast<const netparray_t*>(base)) {
+	    cerr << get_fileline() << ": error: "
+		 << "Invalid enum base type `" << *base << "`."
+		 << endl;
+	    des->errors++;
+      } else if (base->slice_dimensions().size() > 1) {
+	    cerr << get_fileline() << ": error: "
+		 << "Enum type must not have more than 1 packed dimension."
+		 << endl;
+	    des->errors++;
+      }
+
+      bool integer_flag = false;
+      if (vec_type)
+	    integer_flag = vec_type->get_isint();
+
+      netenum_t *type = new netenum_t(base, names->size(), integer_flag);
+      type->set_line(*this);
+
+      scope->add_enumeration_set(this, type);
+
+      return type;
 }
 
 ivl_type_t vector_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
