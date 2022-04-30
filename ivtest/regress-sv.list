@@ -499,6 +499,8 @@ sv_class_constructor_fail   CE,-g2009		ivltests
 sv_class_empty_item	normal,-g2009		ivltests
 sv_class_extends_scoped	normal,-g2009		ivltests
 sv_class_localparam	normal,-g2009		ivltests
+sv_class_new_fail1	CE,-g2009		ivltests
+sv_class_new_fail2	CE,-g2009		ivltests
 sv_class_new_init	normal,-g2009		ivltests
 sv_class_in_module_decl	normal,-g2009		ivltests
 sv_class_method_signed1	normal,-g2009		ivltests
