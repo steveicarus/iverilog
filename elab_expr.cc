@@ -6594,13 +6594,20 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
 				    ivl_type_t ntype, unsigned flags) const
 {
-      NetExpr*obj = new NetENew(ntype);
-      obj->set_line(*this);
-
 	// Find the constructor for the class. If there is no
 	// constructor then the result of this expression is the
 	// allocation alone.
       const netclass_t*ctype = dynamic_cast<const netclass_t*> (ntype);
+
+      if (!ctype) {
+	    cerr << get_fileline() << ": error: class new not allowed here. "
+		 << "Left-hand side is not of class type." << endl;
+	    des->errors++;
+	    return 0;
+      }
+
+      NetExpr*obj = new NetENew(ntype);
+      obj->set_line(*this);
 
       obj = elaborate_expr_constructor_(des, scope, ctype, obj, flags);
       return obj;
