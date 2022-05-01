@@ -389,12 +389,6 @@ bool allow_timeprec_decl = true;
 // Track whether the current parameter declaration is in a parameter port list
 static bool pform_in_parameter_port_list = false;
 
-static inline void FILE_NAME(LineInfo*obj, const char*file, unsigned lineno)
-{
-      obj->set_lineno(lineno);
-      obj->set_file(filename_strings.make(file));
-}
-
 /*
  * The lexical_scope keeps track of the current lexical scope that is
  * being parsed. The lexical scope may stack, so the current scope may
@@ -2205,8 +2199,8 @@ static void pform_makegate(PGBuiltin::Type type,
 			   list<named_pexpr_t>*attr)
 {
       if (info.parms_by_name) {
-	    cerr << info.file << ":" << info.lineno << ": Gates do not "
-		  "have port names." << endl;
+	    cerr << info.get_fileline() << ": Gates do not have port names."
+		 << endl;
 	    error_count += 1;
 	    return;
       }
@@ -2229,7 +2223,7 @@ static void pform_makegate(PGBuiltin::Type type,
 
       cur->strength0(str.str0);
       cur->strength1(str.str1);
-      FILE_NAME(cur, info.file, info.lineno);
+      cur->set_line(info);
 
       if (pform_cur_generate) {
 	    if (dev_name != "") add_local_symbol(pform_cur_generate, dev_name, cur);
@@ -2286,7 +2280,7 @@ static void pform_make_modgate(perm_string type,
 			       struct parmvalue_t*overrides,
 			       list<PExpr*>*wires,
 			       list<pform_range_t>*ranges,
-			       const char*fn, unsigned ln,
+			       const LineInfo&li,
 			       std::list<named_pexpr_t>*attr)
 {
       for (list<PExpr*>::iterator idx = wires->begin()
@@ -2295,7 +2289,7 @@ static void pform_make_modgate(perm_string type,
       }
 
       PGModule*cur = new PGModule(type, name, wires);
-      FILE_NAME(cur, fn, ln);
+      cur->set_line(li);
       cur->set_ranges(ranges);
 
       if (overrides && overrides->by_name) {
@@ -2329,7 +2323,7 @@ static void pform_make_modgate(perm_string type,
 			       struct parmvalue_t*overrides,
 			       list<named_pexpr_t>*bind,
 			       list<pform_range_t>*ranges,
-			       const char*fn, unsigned ln,
+			       const LineInfo&li,
 			       std::list<named_pexpr_t>*attr)
 {
       unsigned npins = bind->size();
@@ -2342,7 +2336,7 @@ static void pform_make_modgate(perm_string type,
       }
 
       PGModule*cur = new PGModule(type, name, pins, npins);
-      FILE_NAME(cur, fn, ln);
+      cur->set_line(li);
       cur->set_ranges(ranges);
 
       if (overrides && overrides->by_name) {
@@ -2412,7 +2406,7 @@ void pform_make_modgates(const struct vlltype&loc,
 	    if (cur.parms_by_name) {
 		  pform_make_modgate(type, cur_name, overrides,
 				     cur.parms_by_name, cur.ranges,
-				     cur.file, cur.lineno, attr);
+				     cur, attr);
 
 	    } else if (cur.parms) {
 
@@ -2425,13 +2419,13 @@ void pform_make_modgates(const struct vlltype&loc,
 		  }
 		  pform_make_modgate(type, cur_name, overrides,
 				     cur.parms, cur.ranges,
-				     cur.file, cur.lineno, attr);
+				     cur, attr);
 
 	    } else {
 		  list<PExpr*>*wires = new list<PExpr*>;
 		  pform_make_modgate(type, cur_name, overrides,
 				     wires, cur.ranges,
-				     cur.file, cur.lineno, attr);
+				     cur, attr);
 	    }
       }
 

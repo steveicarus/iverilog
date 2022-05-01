@@ -62,6 +62,7 @@ class PSpecPath;
 class PClass;
 class PPackage;
 struct vlltype;
+struct lgate;
 
 /*
  * The min:typ:max expression s selected at parse time using the
@@ -95,22 +96,6 @@ struct parmvalue_t {
 
 struct str_pair_t { ivl_drive_t str0, str1; };
 
-
-/* The lgate is gate instantiation information. */
-struct lgate {
-      explicit inline lgate(int =0)
-      : parms(0), parms_by_name(0), ranges(0), file(NULL), lineno(0)
-      { }
-
-      std::string name;
-      std::list<PExpr*>*parms;
-      std::list<named_pexpr_t>*parms_by_name;
-
-      std::list<pform_range_t>*ranges;
-
-      const char* file;
-      unsigned lineno;
-};
 
 extern std::list<pform_range_t>* make_range_from_width(uint64_t wid);
 extern std::list<pform_range_t>* copy_range(std::list<pform_range_t>* orig);
