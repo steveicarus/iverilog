@@ -247,6 +247,7 @@ pr3054101h		CE			ivltests
 pr3592746		CE			ivltests
 real_array		CE			ivltests
 real_array_nb		CE,-pallowsigned=1	ivltests
+real_array_multi_dim	CE,-pallowsigned=1	ivltests
 scan-invalid		CE			ivltests
 sel_rval_bit_ob		CE			ivltests
 sel_rval_part_ob	CE			ivltests
