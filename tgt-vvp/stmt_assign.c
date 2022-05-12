@@ -756,9 +756,6 @@ static void store_real_to_lval(ivl_lval_t lval)
 	    return;
       }
 
-	// For now, only support 1-dimensional arrays.
-      assert(ivl_signal_dimensions(var) == 1);
-
       ivl_expr_t word_ex = ivl_lval_idx(lval);
       int word_ix = allocate_word();
 
