@@ -515,8 +515,7 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
       // case of a netvector_t with no dimensions, that exists only to carry
       // signed-ness, e.g.:
       //  parameter signed foo = bar;
-      // (Scalars are handled differently, not by a netvector_t with no
-      // dimensions.)
+      // These will be marked as scalar, but also have the implict flag set.
       const netvector_t* param_vect = dynamic_cast<const netvector_t*> (param_type);
 
       if (debug_elaborate) {
@@ -536,8 +535,9 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
       int lv_width = -2;
       if (param_type) {
 	    use_type = param_type->base_type();
-	    // Is this a netvector_t with no dimenions?
-	    if (param_vect && param_vect->packed_dims().size()==0)
+	    // Is this an implicit netvector_t with no dimenions?
+	    if (param_vect && param_vect->get_implicit() &&
+	        param_vect->get_scalar())
 		  lv_width = -2;
 	    else if (param_type->packed())
 		  lv_width = param_type->packed_width();

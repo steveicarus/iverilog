@@ -141,6 +141,7 @@ ivl_type_t vector_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
       netvector_t*tmp = new netvector_t(packed, base_type);
       tmp->set_signed(signed_flag);
       tmp->set_isint(integer_flag);
+      tmp->set_implicit(implicit_flag);
 
       return tmp;
 }
