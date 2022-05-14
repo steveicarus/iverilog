@@ -129,6 +129,7 @@ sv_darray_nest1		normal			ivltests
 sv_darray_nest2		normal			ivltests
 sv_darray_nest3		normal			ivltests
 sv_darray_nest4		normal			ivltests
+sv_darray_oob_vec2	normal			ivltests
 sv_deferred_assert1	normal			ivltests
 sv_deferred_assert2	normal			ivltests
 sv_deferred_assume1	normal			ivltests
@@ -137,3 +138,4 @@ sv_queue_nest1		normal			ivltests
 sv_queue_nest2		normal			ivltests
 sv_queue_nest3		normal			ivltests
 sv_queue_nest4		normal			ivltests
+sv_queue_oob_vec2	normal			ivltests

@@ -342,6 +342,10 @@ sv_darray_args3		CE,-g2009,-pallowsigned=1	ivltests
 sv_darray_args4		CE,-g2009,-pallowsigned=1	ivltests  # Also string
 sv_darray_decl_assign	CE,-g2009,-pallowsigned=1	ivltests
 sv_darray_function	CE,-g2009,-pallowsigned=1	ivltests
+sv_darray_oob_real	CE,-g2009			ivltests
+sv_darray_oob_string	CE,-g2009			ivltests  # Also string
+sv_darray_oob_vec2	CE,-g2009			ivltests  # Also 2-state
+sv_darray_oob_vec4	CE,-g2009			ivltests
 sv_darray_signed	CE,-g2009,-pallowsigned=1	ivltests  # Also string
 sv_darray_word_size	CE,-g2009		ivltests
 sv_new_array_error	CE,-g2009,		ivltests
@@ -475,6 +479,10 @@ pr3390385d		CE,-g2009		ivltests  # ++
 pr3462145		CE,-g2009		ivltests  # ++
 sv_queue_function1	CE,-g2009,-pallowsigned=1	ivltests  # queue
 sv_queue_function2	CE,-g2009,-pallowsigned=1	ivltests  # queue
+sv_queue_oob_real	CE,-g2009			ivltests  # queue
+sv_queue_oob_string	CE,-g2009			ivltests  # queue, string
+sv_queue_oob_vec2	CE,-g2009			ivltests  # queue, 2-state
+sv_queue_oob_vec4	CE,-g2009			ivltests  # queue
 sv_typedef_darray_base1	CE,-g2009		ivltests  # Dyanmic array
 sv_typedef_darray_base2	CE,-g2009		ivltests  # Dyanmic array
 sv_typedef_darray_base3	CE,-g2009		ivltests  # Dyanmic array
