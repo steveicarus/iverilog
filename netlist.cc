@@ -819,12 +819,7 @@ bool NetNet::sb_to_slice(const list<long>&indices, long sb, long&loff, unsigned 
 
 unsigned NetNet::unpacked_count() const
 {
-      unsigned c = 1;
-      for (size_t idx = 0 ; idx < unpacked_dims_.size() ; idx += 1) {
-	    c *= unpacked_dims_[idx].width();
-      }
-
-      return c;
+      return netrange_width(unpacked_dims_);
 }
 
 void NetNet::incr_eref()

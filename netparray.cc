@@ -42,14 +42,8 @@ bool netparray_t::packed(void) const
 
 long netparray_t::packed_width(void) const
 {
-      long cur_width = element_type()->packed_width();
-
-      for (vector<netrange_t>::const_iterator cur = static_dimensions().begin()
-		 ; cur != static_dimensions().end() ; ++cur) {
-	    cur_width *= cur->width();
-      }
-
-      return cur_width;
+      return netrange_width(static_dimensions(),
+			    element_type()->packed_width());
 }
 
 vector<netrange_t> netparray_t::slice_dimensions() const
