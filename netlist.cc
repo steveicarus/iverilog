@@ -537,15 +537,6 @@ static unsigned calculate_count(const list<netrange_t>&unpacked)
       return sum;
 }
 
-template <class T> static unsigned calculate_count(T*type)
-{
-      long wid = type->packed_width();
-      if (wid >= 0)
-	    return wid;
-      else
-	    return 1;
-}
-
 void NetNet::calculate_slice_widths_from_packed_dims_(void)
 {
       ivl_assert(*this, net_type_);
