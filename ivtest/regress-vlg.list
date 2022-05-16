@@ -1463,6 +1463,7 @@ real9			normal			ivltests
 real10			normal			ivltests
 real11			normal			ivltests
 real_array_multi_dim	normal			ivltests
+real_array_store_after_cmp normal		ivltests
 real_assign_deassign	normal			ivltests
 real_concat_invalid2	CE			ivltests
 real_delay		normal,-gspecify	ivltests gold=real_delay.gold

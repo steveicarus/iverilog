@@ -96,6 +96,8 @@ array_size		normal,-g2005-sv	ivltests # test [size] arrays
 array_string		normal,-g2009		ivltests
 array_unpacked_sysfunct	normal,-g2005-sv	ivltests
 array_packed		normal,-g2005-sv	ivltests
+assign_op_after_cmp1	normal,-g2009		ivltests
+assign_op_after_cmp2	normal,-g2009		ivltests
 assign_op_concat	normal,-g2009		ivltests
 assign_op_type		normal,-g2009		ivltests
 bitp1			normal,-g2005-sv	ivltests
