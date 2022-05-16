@@ -133,10 +133,9 @@ objects.
 
 The syntax of a parameter is:
 
-	<label> .param/str <name>, <value>;
-	<label> .param/b <name>, <value> [<msb>,<lsb>];
-	<label> .param/l <name>, <value> [<msb>,<lsb>];
-	<label> .param/r <name>, <value>;
+	<label> .param/str <name> <local-flag> <file-idx> <lineno>, <value>;
+	<label> .param/l <name> <local-flag> <file-idx> <lineno>, <value>;
+	<label> .param/r <name> <local-flag> <file-idx> <lineno>, <value>;
 
 The <name> is a string that names the parameter. The name is placed in
 the current scope as a vpiParameter object. The .param suffix
@@ -144,7 +143,6 @@ specifies the parameter type.
 
 	.param/str    -- The parameter has a string value
 	.param/l      -- The parameter has a logic vector value
-	.param/b      -- The parameter has a boolean vector value
 	.param/r      -- The parameter has a real value
 
 The value, then, is appropriate for the data type. For example:
