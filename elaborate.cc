@@ -2014,7 +2014,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
       }
 
       assert(udp);
-      NetUDP*net = new NetUDP(scope, my_name, udp->ports.count(), udp);
+      NetUDP*net = new NetUDP(scope, my_name, udp->ports.size(), udp);
       net->set_line(*this);
       net->rise_time(rise_expr);
       net->fall_time(fall_expr);
@@ -2043,7 +2043,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	// ports. If this is simply positional binding in the first
 	// place, then get the binding from the base class.
       if (pins_) {
-	    unsigned nexp = udp->ports.count();
+	    unsigned nexp = udp->ports.size();
 	    pins = vector<PExpr*>(nexp);
 
 	      // Scan the bindings, matching them with port names.
@@ -2086,9 +2086,9 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 		 connections. In this case, the port count must be
 		 right. Check that is is, the get the pin list. */
 
-	    if (pin_count() != udp->ports.count()) {
+	    if (pin_count() != udp->ports.size()) {
 		  cerr << get_fileline() << ": error: Wrong number "
-			"of ports. Expecting " << udp->ports.count() <<
+			"of ports. Expecting " << udp->ports.size() <<
 			", got " << pin_count() << "."
 		       << endl;
 		  des->errors += 1;
@@ -2097,7 +2097,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 
 	      // No named bindings, just use the positional list I
 	      // already have.
-	    assert(pin_count() == udp->ports.count());
+	    assert(pin_count() == udp->ports.size());
 	    pins = get_pins();
       }
 
@@ -3046,7 +3046,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
       bool context_is_real = (expr_->expr_type() == IVL_VT_REAL);
       bool context_unsigned = !expr_->has_sign();
 
-      for (unsigned idx = 0; idx < items_->count(); idx += 1) {
+      for (unsigned idx = 0; idx < items_->size(); idx += 1) {
 
 	    PCase::Item*cur = (*items_)[idx];
 
@@ -3082,7 +3082,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 
 	    context_width = test_case_width(des, scope, expr_, context_mode);
 
-	    for (unsigned idx = 0; idx < items_->count(); idx += 1) {
+	    for (unsigned idx = 0; idx < items_->size(); idx += 1) {
 
 		  PCase::Item*cur = (*items_)[idx];
 
@@ -3126,7 +3126,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 	   be some cases that have multiple guards. Count each as a
 	   separate item. */
       unsigned icount = 0;
-      for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < items_->size() ;  idx += 1) {
 	    PCase::Item*cur = (*items_)[idx];
 
 	    if (cur->expr.empty())
@@ -3143,7 +3143,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 	   is a "default" case. Otherwise, the guard has one or more
 	   expressions, and each guard is a case. */
       unsigned inum = 0;
-      for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < items_->size() ;  idx += 1) {
 
 	    ivl_assert(*this, inum < icount);
 	    PCase::Item*cur = (*items_)[idx];
@@ -4648,7 +4648,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	/* If there are no expressions, this is a signal that it is an
 	   @* statement. Generate an expression to use. */
 
-      if (expr_.count() == 0) {
+      if (expr_.size() == 0) {
 	    assert(enet);
 	     /* For synthesis or always_comb/latch we want just the inputs,
 	      * but for the rest we want inputs and outputs that may cause
@@ -4732,7 +4732,7 @@ cerr << endl;
 
 	    expr_count = 1;
 
-      } else for (unsigned idx = 0 ;  idx < expr_.count() ;  idx += 1) {
+      } else for (unsigned idx = 0 ;  idx < expr_.size() ;  idx += 1) {
 
 	    assert(expr_[idx]->expr());
 
@@ -4889,7 +4889,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 					 NetProc*enet) const
 {
       assert(scope);
-      assert(expr_.count() == 1);
+      assert(expr_.size() == 1);
 
       if (scope->in_func()) {
 	    cerr << get_fileline() << ": error: functions cannot have "
@@ -5051,7 +5051,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 NetProc* PEventStatement::elaborate_wait_fork(Design*des, NetScope*scope) const
 {
       assert(scope);
-      assert(expr_.count() == 1);
+      assert(expr_.size() == 1);
       assert(expr_[0] == 0);
       assert(! statement_);
 
@@ -5086,7 +5086,7 @@ NetProc* PEventStatement::elaborate_wait_fork(Design*des, NetScope*scope) const
 NetProc* PEventStatement::elaborate(Design*des, NetScope*scope) const
 {
 	/* Check to see if this is a wait fork statement. */
-      if ((expr_.count() == 1) && (expr_[0] == 0))
+      if ((expr_.size() == 1) && (expr_[0] == 0))
 		  return elaborate_wait_fork(des, scope);
 
       NetProc*enet = 0;
@@ -5100,7 +5100,7 @@ NetProc* PEventStatement::elaborate(Design*des, NetScope*scope) const
 	    enet->set_line(*this);
       }
 
-      if ((expr_.count() == 1) && (expr_[0]->type() == PEEvent::POSITIVE))
+      if ((expr_.size() == 1) && (expr_[0]->type() == PEEvent::POSITIVE))
 	    return elaborate_wait(des, scope, enet);
 
       return elaborate_st(des, scope, enet);

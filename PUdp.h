@@ -20,9 +20,9 @@
  */
 
 # include  <map>
+# include  <vector>
 # include  "LineInfo.h"
 # include  "StringHeap.h"
-# include  "svector.h"
 # include  "verinum.h"
 
 class PExpr;
@@ -53,14 +53,14 @@ class PUdp : public LineInfo {
     public:
       explicit PUdp(perm_string n, unsigned nports);
 
-      svector<std::string>ports;
+      std::vector<std::string> ports;
       unsigned find_port(const char*name);
 
       bool sequential;
 
-      svector<std::string>tinput;
-      svector<char>  tcurrent;
-      svector<char>  toutput;
+      std::vector<std::string> tinput;
+      std::vector<char> tcurrent;
+      std::vector<char> toutput;
 
       verinum::V initial;
 

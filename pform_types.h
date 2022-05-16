@@ -77,9 +77,7 @@ typedef std::pair<PExpr*,PExpr*> pform_range_t;
 
 /* The lgate is gate instantiation information. */
 struct lgate : public LineInfo {
-      explicit lgate(int = 0)
-      : parms(0), parms_by_name(0), ranges(0)
-      { }
+      explicit lgate() : parms(0), parms_by_name(0), ranges(0) { }
 
       std::string name;
       std::list<PExpr*>*parms;

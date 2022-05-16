@@ -26,12 +26,12 @@ PUdp::PUdp(perm_string n, unsigned nports)
 
 unsigned PUdp::find_port(const char*name)
 {
-      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < ports.size() ;  idx += 1) {
 
 	    if (ports[idx] == name)
 		  return idx;
       }
 
-      return ports.count();
+      return ports.size();
 }
 

@@ -23,7 +23,6 @@
 # include  <vector>
 # include  <list>
 # include  "ivl_target.h"
-# include  "svector.h"
 # include  "StringHeap.h"
 # include  "PDelays.h"
 # include  "PExpr.h"
@@ -267,7 +266,7 @@ class PCase  : public Statement {
 	    Statement*stat;
       };
 
-      PCase(ivl_case_quality_t, NetCase::TYPE, PExpr*ex, svector<Item*>*);
+      PCase(ivl_case_quality_t, NetCase::TYPE, PExpr*ex, std::vector<Item*>*);
       ~PCase();
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
@@ -280,7 +279,7 @@ class PCase  : public Statement {
       NetCase::TYPE type_;
       PExpr*expr_;
 
-      svector<Item*>*items_;
+      std::vector<Item*>*items_;
 
     private: // not implemented
       PCase(const PCase&);
@@ -416,7 +415,7 @@ class PEventStatement  : public Statement {
 
     public:
 
-      explicit PEventStatement(const svector<PEEvent*>&ee);
+      explicit PEventStatement(const std::vector<PEEvent*>&ee);
       explicit PEventStatement(PEEvent*ee);
 	// Make an @* statement or make a special @* version with the items
 	// from functions added and outputs removed for always_comb/latch.
@@ -444,7 +443,7 @@ class PEventStatement  : public Statement {
       NetProc* elaborate_wait_fork(Design*des, NetScope*scope) const;
 
     private:
-      svector<PEEvent*>expr_;
+      std::vector<PEEvent*>expr_;
       Statement*statement_;
       bool always_sens_;
 };

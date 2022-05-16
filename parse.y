@@ -402,10 +402,10 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
       struct str_pair_t drive;
 
       PCase::Item*citem;
-      svector<PCase::Item*>*citems;
+      std::vector<PCase::Item*>*citems;
 
       lgate*gate;
-      svector<lgate>*gates;
+      std::vector<lgate>*gates;
 
       Module::port_t *mport;
       LexicalScope::range_t* value_range;
@@ -425,7 +425,8 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
       PExpr*expr;
       std::list<PExpr*>*exprs;
 
-      svector<PEEvent*>*event_expr;
+      PEEvent*event_expr;
+      std::vector<PEEvent*>*event_exprs;
 
       ivl_case_quality_t case_quality;
       NetNet::Type nettype;
@@ -687,7 +688,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <vartype> integer_vector_type
 %type <parmvalue> parameter_value_opt
 
-%type <event_expr> event_expression_list
+%type <event_exprs> event_expression_list
 %type <event_expr> event_expression
 %type <event_statement> event_control
 %type <statement> statement statement_item statement_or_null
@@ -2924,15 +2925,11 @@ case_item
 
 case_items
 	: case_items case_item
-		{ svector<PCase::Item*>*tmp;
-		  tmp = new svector<PCase::Item*>(*$1, $2);
-		  delete $1;
-		  $$ = tmp;
+		{ $1->push_back($2);
+		  $$ = $1;
 		}
 	| case_item
-		{ svector<PCase::Item*>*tmp = new svector<PCase::Item*>(1);
-		  (*tmp)[0] = $1;
-		  $$ = tmp;
+		{ $$ = new std::vector<PCase::Item*>(1, $1);
 		}
 	;
 
@@ -3256,18 +3253,15 @@ event_control /* A.K.A. clocking_event */
 
 event_expression_list
 	: event_expression
-		{ $$ = $1; }
+		{ $$ = new std::vector<PEEvent*>(1, $1);
+		}
 	| event_expression_list K_or event_expression
-		{ svector<PEEvent*>*tmp = new svector<PEEvent*>(*$1, *$3);
-		  delete $1;
-		  delete $3;
-		  $$ = tmp;
+		{ $1->push_back($3);
+		  $$ = $1;
 		}
 	| event_expression_list ',' event_expression
-		{ svector<PEEvent*>*tmp = new svector<PEEvent*>(*$1, *$3);
-		  delete $1;
-		  delete $3;
-		  $$ = tmp;
+		{ $1->push_back($3);
+		  $$ = $1;
 		}
 	;
 
@@ -3275,31 +3269,23 @@ event_expression
 	: K_posedge expression
 		{ PEEvent*tmp = new PEEvent(PEEvent::POSEDGE, $2);
 		  FILE_NAME(tmp, @1);
-		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
-		  (*tl)[0] = tmp;
-		  $$ = tl;
+		  $$ = tmp;
 		}
 	| K_negedge expression
 		{ PEEvent*tmp = new PEEvent(PEEvent::NEGEDGE, $2);
 		  FILE_NAME(tmp, @1);
-		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
-		  (*tl)[0] = tmp;
-		  $$ = tl;
+		  $$ = tmp;
 		}
 	| K_edge expression
 		{ PEEvent*tmp = new PEEvent(PEEvent::EDGE, $2);
 		  FILE_NAME(tmp, @1);
-		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
-		  (*tl)[0] = tmp;
-		  $$ = tl;
+		  $$ = tmp;
 		  pform_requires_sv(@1, "Edge event");
 		}
 	| expression
 		{ PEEvent*tmp = new PEEvent(PEEvent::ANYEDGE, $1);
 		  FILE_NAME(tmp, @1);
-		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
-		  (*tl)[0] = tmp;
-		  $$ = tl;
+		  $$ = tmp;
 		}
 	;
 
@@ -4189,18 +4175,13 @@ gate_instance
 
 gate_instance_list
   : gate_instance_list ',' gate_instance
-      { svector<lgate>*tmp1 = $1;
-	lgate*tmp2 = $3;
-	svector<lgate>*out = new svector<lgate> (*tmp1, *tmp2);
-	delete tmp1;
-	delete tmp2;
-	$$ = out;
+      { $1->push_back(*$3);
+	delete $3;
+	$$ = $1;
       }
   | gate_instance
-      { svector<lgate>*tmp = new svector<lgate>(1);
-        (*tmp)[0] = *$1;
+      { $$ = new std::vector<lgate>(1, *$1);
 	delete $1;
-	$$ = tmp;
       }
   ;
 

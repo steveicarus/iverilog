@@ -1796,11 +1796,6 @@ PExpr* pform_select_mtm_expr(PExpr*min, PExpr*typ, PExpr*max)
       return res;
 }
 
-template <> inline svector<perm_string>::svector(unsigned size)
-: nitems_(size), items_(new perm_string[size])
-{
-}
-
 static void process_udp_table(PUdp*udp, list<string>*table,
 			      const struct vlltype&loc)
 {
@@ -1819,18 +1814,23 @@ static void process_udp_table(PUdp*udp, list<string>*table,
 
 	   The parser doesn't check that we got the right kind here,
 	   so this loop must watch out. */
-      svector<string> input   (table->size());
-      svector<char>   current (table->size());
-      svector<char>   output  (table->size());
+      std::vector<string> &input   = udp->tinput;
+      std::vector<char>   &current = udp->tcurrent;
+      std::vector<char>   &output  = udp->toutput;
+
+      input.resize(table->size());
+      current.resize(table->size());
+      output.resize(table->size());
+
       { unsigned idx = 0;
         for (list<string>::iterator cur = table->begin()
 		   ; cur != table->end() ; ++ cur , idx += 1) {
 	      string tmp = *cur;
 
 		/* Pull the input values from the string. */
-	      assert(tmp.find(':') == (udp->ports.count() - 1));
-	      input[idx] = tmp.substr(0, udp->ports.count()-1);
-	      tmp = tmp.substr(udp->ports.count()-1);
+	      assert(tmp.find(':') == (udp->ports.size() - 1));
+	      input[idx] = tmp.substr(0, udp->ports.size()-1);
+	      tmp = tmp.substr(udp->ports.size()-1);
 
 	      assert(tmp[0] == ':');
 
@@ -1862,9 +1862,6 @@ static void process_udp_table(PUdp*udp, list<string>*table,
 	}
       }
 
-      udp->tinput   = input;
-      udp->tcurrent = current;
-      udp->toutput  = output;
 }
 
 void pform_make_udp(const struct vlltype&loc, perm_string name,
@@ -1908,8 +1905,8 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	   the parms list in the list of ports in the port list of the
 	   UDP declaration, and the defs map maps that name to a
 	   PWire* created by an input or output declaration. */
-      svector<PWire*> pins (parms->size());
-      svector<perm_string> pin_names (parms->size());
+      std::vector<PWire*> pins(parms->size());
+      std::vector<perm_string> pin_names(parms->size());
       { list<perm_string>::iterator cur;
         unsigned idx;
         for (cur = parms->begin(), idx = 0
@@ -1930,7 +1927,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	      -- An input port is declared output.
 
 	*/
-      assert(pins.count() > 0);
+      assert(pins.size() > 0);
       do {
 	    if (pins[0] == 0) {
 		  cerr << loc << ": error: "
@@ -1956,7 +1953,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	    }
       } while (0);
 
-      for (unsigned idx = 1 ;  idx < pins.count() ;  idx += 1) {
+      for (unsigned idx = 1 ;  idx < pins.size() ;  idx += 1) {
 	    if (pins[idx] == 0) {
 		  cerr << loc << ": error: "
 		       << "Port " << (idx+1)
@@ -2044,7 +2041,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 		  udp->sequential = true;
 
 	      // Make the port list for the UDP
-	    for (unsigned idx = 0 ;  idx < pins.count() ;  idx += 1)
+	    for (unsigned idx = 0 ;  idx < pins.size() ;  idx += 1)
 		  udp->ports[idx] = pins[idx]->basename();
 
 	    process_udp_table(udp, table, loc);
@@ -2067,7 +2064,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 		    list<string>*table)
 {
 
-      svector<PWire*> pins(parms->size() + 1);
+      std::vector<PWire*> pins(parms->size() + 1);
 
 	/* Make the PWire for the output port. */
       pins[0] = new PWire(out_name,
@@ -2081,12 +2078,12 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
         for (cur = parms->begin(), idx = 1
 		   ;  cur != parms->end()
 		   ;  idx += 1, ++ cur) {
-	      assert(idx < pins.count());
+	      assert(idx < pins.size());
 	      pins[idx] = new PWire(*cur, NetNet::WIRE,
 				    NetNet::PINPUT, IVL_VT_LOGIC);
 	      FILE_NAME(pins[idx], loc);
 	}
-	assert(idx == pins.count());
+	assert(idx == pins.size());
       }
 
 	/* Verify the initial expression, if present, to be sure that
@@ -2117,14 +2114,14 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	    VLerror("UDP primitive already exists.");
 
       } else {
-	    PUdp*udp = new PUdp(name, pins.count());
+	    PUdp*udp = new PUdp(name, pins.size());
 	    FILE_NAME(udp, loc);
 
 	      // Detect sequential udp.
 	    udp->sequential = synchronous_flag;
 
 	      // Make the port list for the UDP
-	    for (unsigned idx = 0 ;  idx < pins.count() ;  idx += 1)
+	    for (unsigned idx = 0 ;  idx < pins.size() ;  idx += 1)
 		  udp->ports[idx] = pins[idx]->basename();
 
 	    assert(udp);
@@ -2238,7 +2235,7 @@ void pform_makegates(const struct vlltype&loc,
 		     PGBuiltin::Type type,
 		     struct str_pair_t str,
 		     list<PExpr*>*delay,
-		     svector<lgate>*gates,
+		     std::vector<lgate>*gates,
 		     list<named_pexpr_t>*attr)
 {
       assert(! pform_cur_module.empty());
@@ -2253,7 +2250,7 @@ void pform_makegates(const struct vlltype&loc,
 	    error_count += 1;
       }
 
-      for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < gates->size() ;  idx += 1) {
 	    pform_makegate(type, str, delay, (*gates)[idx], attr);
       }
 
@@ -2369,7 +2366,7 @@ static void pform_make_modgate(perm_string type,
 void pform_make_modgates(const struct vlltype&loc,
 			 perm_string type,
 			 struct parmvalue_t*overrides,
-			 svector<lgate>*gates,
+			 std::vector<lgate>*gates,
 			 std::list<named_pexpr_t>*attr)
 {
 	// The grammer should not allow module gates to happen outside
@@ -2399,7 +2396,7 @@ void pform_make_modgates(const struct vlltype&loc,
 	    error_count += 1;
       }
 
-      for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < gates->size() ;  idx += 1) {
 	    lgate cur = (*gates)[idx];
 	    perm_string cur_name = lex_strings.make(cur.name);
 
