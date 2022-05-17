@@ -309,6 +309,7 @@ br_gh127e		normal			ivltests gold=br_gh127e.gold
 br_gh127f		normal			ivltests gold=br_gh127f.gold
 br_gh142		CE			ivltests
 br_gh152		CE			ivltests
+br_gh156		normal			ivltests diff=work/br_gh156.vcd:gold/br_gh156.vcd.gold:2
 br_gh157		CE			ivltests gold=br_gh157.gold
 br_gh162		normal			ivltests
 br_gh163		CE			ivltests

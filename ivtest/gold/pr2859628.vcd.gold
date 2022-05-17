@@ -1,5 +1,5 @@
 $date
-	Tue Sep 15 16:56:35 2009
+	Sun May 15 18:19:07 2022
 $end
 $version
 	Icarus Verilog
@@ -16,6 +16,9 @@ $scope module top $end
 $var reg 4 " \array[1] [3:0] $end
 $upscope $end
 $enddefinitions $end
+$comment Show the parameter values. $end
+$dumpall
+$end
 #0
 $dumpvars
 bx "

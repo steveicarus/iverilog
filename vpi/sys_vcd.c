@@ -37,19 +37,21 @@ static int   dump_no_date = 0;
 
 static struct t_vpi_time zero_delay = { vpiSimTime, 0, 0, 0.0 };
 
-struct vcd_info {
-      vpiHandle item;
-      vpiHandle cb;
-      struct t_vpi_time time;
-      const char *ident;
-      struct vcd_info *next;
-      struct vcd_info *dmp_next;
-      int scheduled;
-};
-
-
+/*
+ * The vcd_list is the list of all the objects that are tracked for
+ * dumping. The vcd_checkpoint goes through the list to dump the current
+ * values for everything. When the item has a value change, it is added to the
+ * vcd_dmp_list for dumping in the current time step.
+ *
+ * The vcd_const_list is a list of all of the parameters that are being
+ * dumped. This list is scanned less often, since parameters do not change
+ * values.
+ */
+DECLARE_VCD_INFO(vcd_info, const char*);
+static struct vcd_info *vcd_const_list = NULL;
 static struct vcd_info *vcd_list = NULL;
 static struct vcd_info *vcd_dmp_list = NULL;
+
 static PLI_UINT64 vcd_cur_time = 0;
 static int dump_is_off = 0;
 static long dump_limit = 0;
@@ -158,25 +160,6 @@ __inline__ static int dump_header_pending(void)
       return dumpvars_status != 2;
 }
 
-/*
- * This function writes out all the traced variables, whether they
- * changed or not.
- */
-static void vcd_checkpoint(void)
-{
-      struct vcd_info*cur;
-
-      for (cur = vcd_list ;  cur ;  cur = cur->next)
-	    show_this_item(cur);
-}
-
-static void vcd_checkpoint_x(void)
-{
-      struct vcd_info*cur;
-
-      for (cur = vcd_list ;  cur ;  cur = cur->next)
-	    show_this_item_x(cur);
-}
 
 static PLI_INT32 variable_cb_2(p_cb_data cause)
 {
@@ -232,6 +215,11 @@ static PLI_INT32 variable_cb_1(p_cb_data cause)
       return 0;
 }
 
+/*
+ * This is called at the end of the timestep where the $dumpvars task is
+ * called. This allows for values to settle for the timestep, so that the
+ * checkpoint gets the current values.
+ */
 static PLI_INT32 dumpvars_cb(p_cb_data cause)
 {
       if (dumpvars_status != 1) return 0;
@@ -244,9 +232,15 @@ static PLI_INT32 dumpvars_cb(p_cb_data cause)
       fprintf(dump_file, "$enddefinitions $end\n");
 
       if (!dump_is_off) {
+	    fprintf(dump_file, "$comment Show the parameter values. $end\n");
+	    fprintf(dump_file, "$dumpall\n");
+	    ITERATE_VCD_INFO(vcd_const_list, vcd_info, next, show_this_item);
+	    fprintf(dump_file, "$end\n");
+
 	    fprintf(dump_file, "#%" PLI_UINT64_FMT "\n", dumpvars_time);
+
 	    fprintf(dump_file, "$dumpvars\n");
-	    vcd_checkpoint();
+	    ITERATE_VCD_INFO(vcd_list, vcd_info, next, show_this_item);
 	    fprintf(dump_file, "$end\n");
       }
 
@@ -275,6 +269,12 @@ static PLI_INT32 finish_cb(p_cb_data cause)
 	    free(cur);
       }
       vcd_list = 0;
+      for (cur = vcd_const_list ; cur ; cur = next) {
+	    next = cur->next;
+	    free((char *)cur->ident);
+	    free(cur);
+      }
+      vcd_const_list = 0;
       vcd_names_delete(&vcd_tab);
       vcd_names_delete(&vcd_var);
       nexus_ident_delete();
@@ -338,7 +338,7 @@ static PLI_INT32 sys_dumpoff_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       fprintf(dump_file, "$dumpoff\n");
-      vcd_checkpoint_x();
+      ITERATE_VCD_INFO(vcd_list, vcd_info, next, show_this_item_x);
       fprintf(dump_file, "$end\n");
 
       return 0;
@@ -368,7 +368,7 @@ static PLI_INT32 sys_dumpon_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       fprintf(dump_file, "$dumpon\n");
-      vcd_checkpoint();
+      ITERATE_VCD_INFO(vcd_list, vcd_info, next, show_this_item);
       fprintf(dump_file, "$end\n");
 
       return 0;
@@ -395,7 +395,7 @@ static PLI_INT32 sys_dumpall_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       fprintf(dump_file, "$dumpall\n");
-      vcd_checkpoint();
+      ITERATE_VCD_INFO(vcd_list, vcd_info, next, show_this_item);
       fprintf(dump_file, "$end\n");
 
       return 0;
@@ -601,10 +601,6 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	/* Generate the $var or $scope commands. */
       switch (item_type) {
-	  case vpiParameter:
-	    vpi_printf("VCD sorry: $dumpvars: can not dump parameters.\n");
-	    break;
-
 	  case vpiNamedEvent:
 	  case vpiIntegerVar:
 	  case vpiBitVar:
@@ -617,7 +613,6 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	  case vpiReg:
 	  case vpiTimeVar:
 	  case vpiNet:
-
 
 	      /* If we are skipping all signal or this is in an automatic
 	       * scope then just return. */
@@ -684,6 +679,35 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    fprintf(dump_file, " $end\n");
 	    break;
 
+	  case vpiParameter:
+
+	    /* If we are skipping all pamaeters then just return. */
+            if (skip) return;
+
+	    size = vpi_get(vpiSize, item);
+
+	    /* Declare the parameter in the VCD file. */
+	    name = vpi_get_str(vpiName, item);
+	    prefix = is_escaped_id(name) ? "\\" : "";
+
+	    ident = strdup(vcdid);
+	    gen_new_vcd_id();
+
+	    /* Make an info item to go in the vcd_const_list. */
+	    info = malloc(sizeof(*info));
+	    info->item = item;
+	    info->ident = ident;
+	    info->scheduled = 0;
+	    info->dmp_next = 0;
+	    info->next = vcd_const_list;
+	    vcd_const_list = info;
+	    info->cb = NULL;
+
+	    /* Generate the $var record. Now the parameter is declared. */
+	    fprintf(dump_file, "$var %s %u %s %s%s $end\n",
+		    type, size, ident, prefix, name);
+	    break;
+
 	  case vpiModule:
 	  case vpiGenScope:
 	  case vpiFunction:
@@ -697,7 +721,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			/* Value */
 			vpiNamedEvent,
 			vpiNet,
-			/* vpiParameter, */
+			vpiParameter,
 			vpiReg,
 			vpiVariables,
 			/* Scope */
