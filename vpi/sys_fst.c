@@ -38,25 +38,16 @@ static struct fstContext *dump_file = NULL;
 
 static struct t_vpi_time zero_delay = { vpiSimTime, 0, 0, 0.0 };
 
-struct vcd_info {
-      vpiHandle item;
-      vpiHandle cb;
-      struct t_vpi_time time;
-      struct vcd_info *next;
-      struct vcd_info *dmp_next;
-      fstHandle handle;
-      int scheduled;
-};
-
-
+DECLARE_VCD_INFO(vcd_info, fstHandle);
 static struct vcd_info *vcd_list = NULL;
+static struct vcd_info *vcd_const_list = NULL;
 static struct vcd_info *vcd_dmp_list = NULL;
+
 static PLI_UINT64 vcd_cur_time = 0;
 static int dump_is_off = 0;
 static long dump_limit = 0;
 static int dump_is_full = 0;
 static int finish_status = 0;
-
 
 static enum lxm_optimum_mode_e {
       LXM_NONE  = 0,
@@ -82,11 +73,11 @@ static void show_this_item(struct vcd_info*info)
       if (type == vpiRealVar) {
 	    value.format = vpiRealVal;
 	    vpi_get_value(info->item, &value);
-	    fstWriterEmitValueChange(dump_file, info->handle, &value.value.real);
+	    fstWriterEmitValueChange(dump_file, info->ident, &value.value.real);
       } else {
 	    value.format = vpiBinStrVal;
 	    vpi_get_value(info->item, &value);
-	    fstWriterEmitValueChange(dump_file, info->handle, (type != vpiNamedEvent) ? value.value.str : "1");
+	    fstWriterEmitValueChange(dump_file, info->ident, (type != vpiNamedEvent) ? value.value.str : "1");
       }
 }
 
@@ -98,14 +89,14 @@ static void show_this_item_x(struct vcd_info*info)
       if (type == vpiRealVar) {
 	      /* Some tools dump nothing here...? */
             double mynan = strtod("NaN", NULL);
-	    fstWriterEmitValueChange(dump_file, info->handle, &mynan);
+	    fstWriterEmitValueChange(dump_file, info->ident, &mynan);
       } else if (type == vpiNamedEvent) {
 	    /* Do nothing for named events. */
       } else {
 	    int siz = vpi_get(vpiSize, info->item);
 	    char *xmem = malloc(siz);
 	    memset(xmem, 'x', siz);
-	    fstWriterEmitValueChange(dump_file, info->handle, xmem);
+	    fstWriterEmitValueChange(dump_file, info->ident, xmem);
 	    free(xmem);
       }
 }
@@ -124,26 +115,6 @@ static PLI_UINT64 dumpvars_time;
 __inline__ static int dump_header_pending(void)
 {
       return dumpvars_status != 2;
-}
-
-/*
- * This function writes out all the traced variables, whether they
- * changed or not.
- */
-static void vcd_checkpoint(void)
-{
-      struct vcd_info*cur;
-
-      for (cur = vcd_list ;  cur ;  cur = cur->next)
-	    show_this_item(cur);
-}
-
-static void vcd_checkpoint_x(void)
-{
-      struct vcd_info*cur;
-
-      for (cur = vcd_list ;  cur ;  cur = cur->next)
-	    show_this_item_x(cur);
 }
 
 static PLI_INT32 variable_cb_2(p_cb_data cause)
@@ -212,7 +183,8 @@ static PLI_INT32 dumpvars_cb(p_cb_data cause)
       if (!dump_is_off) {
 	    fstWriterEmitTimeChange(dump_file, dumpvars_time);
 	    /* nothing to do for  $dumpvars... */
-	    vcd_checkpoint();
+	    ITERATE_VCD_INFO(vcd_const_list, vcd_info, next, show_this_item);
+	    ITERATE_VCD_INFO(vcd_list, vcd_info, next, show_this_item);
 	    /* ...nothing to do for $end */
       }
 
@@ -240,6 +212,11 @@ static PLI_INT32 finish_cb(p_cb_data cause)
 	    free(cur);
       }
       vcd_list = 0;
+      for (cur = vcd_const_list ; cur ; cur = next) {
+	    next = cur->next;
+	    free(cur);
+      }
+      vcd_const_list = 0;
       vcd_names_delete(&fst_tab);
       vcd_names_delete(&fst_var);
       nexus_ident_delete();
@@ -303,7 +280,7 @@ static PLI_INT32 sys_dumpoff_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       fstWriterEmitDumpActive(dump_file, 0); /* $dumpoff */
-      vcd_checkpoint_x();
+      ITERATE_VCD_INFO(vcd_list, vcd_info, next, show_this_item_x);
 
       return 0;
 }
@@ -332,7 +309,7 @@ static PLI_INT32 sys_dumpon_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       fstWriterEmitDumpActive(dump_file, 1); /* $dumpon */
-      vcd_checkpoint();
+      ITERATE_VCD_INFO(vcd_list, vcd_info, next, show_this_item);
 
       return 0;
 }
@@ -358,7 +335,7 @@ static PLI_INT32 sys_dumpall_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       /* nothing to do for $dumpall... */
-      vcd_checkpoint();
+      ITERATE_VCD_INFO(vcd_list, vcd_info, next, show_this_item);
 
       return 0;
 }
@@ -574,10 +551,6 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	/* Generate the $var or $scope commands. */
       switch (item_type) {
-	  case vpiParameter:
-	    vpi_printf("FST sorry: $dumpvars: can not dump parameters.\n");
-	    break;
-
 	  case vpiNamedEvent:
 	  case vpiIntegerVar:
 	  case vpiBitVar:
@@ -648,7 +621,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 		  info->time.type = vpiSimTime;
 		  info->item  = item;
-		  info->handle = new_ident;
+		  info->ident = new_ident;
 		  info->scheduled = 0;
 
 		  cb.time      = &info->time;
@@ -667,6 +640,37 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	    break;
 
+	  case vpiParameter:
+
+	    /* If we are skipping all pamaeters then just return. */
+            if (skip) return;
+
+	      /* Skip this signal if it has already been included.
+	       * This can only happen for implicitly given signals. */
+	    if (vcd_names_search(&fst_var, fullname)) return;
+
+	    name = vpi_get_str(vpiName, item);
+	    if (is_escaped_id(name)) {
+		  escname = malloc(strlen(name) + 2);
+		  sprintf(escname, "\\%s", name);
+	    } else escname = strdup(name);
+
+	    size = vpi_get(vpiSize, item);
+	    dir = FST_VD_IMPLICIT;
+	    new_ident = fstWriterCreateVar(dump_file, type,
+		                                 dir, size, escname, 0);
+	    free(escname);
+
+	    info = malloc(sizeof(*info));
+	    info->item = item;
+	    info->ident = new_ident;
+	    info->scheduled = 0;
+	    info->dmp_next = 0;
+	    info->next = vcd_const_list;
+	    info->cb = NULL;
+	    vcd_const_list = info;
+	    break;
+
 	  case vpiModule:
 	  case vpiPackage:
 	  case vpiGenScope:
@@ -683,7 +687,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			/* Value */
 			vpiNamedEvent,
 			vpiNet,
-			/* vpiParameter, */
+			vpiParameter,
 			vpiReg,
 			vpiVariables,
 			/* Scope */

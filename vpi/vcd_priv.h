@@ -129,6 +129,35 @@ EXTERN void vcd_work_emit_bits(struct lxt2_wr_symbol*sym, const char*bits);
 /* The compiletf routines are common for the VCD, LXT and LXT2 dumpers. */
 EXTERN PLI_INT32 sys_dumpvars_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name);
 
+/*
+ * The vcd_list is the list of all the objects that are tracked for
+ * dumping. The vcd_checkpoint goes through the list to dump the current
+ * values for everything. When the item has a value change, it is added to the
+ * vcd_dmp_list for dumping in the current time step.
+ *
+ * The vcd_const_list is a list of all of the parameters that are being
+ * dumped. This list is scanned less often, since parameters do not change
+ * values.
+ */
+#define DECLARE_VCD_INFO(type_name, ident_type) \
+      struct type_name { \
+	    vpiHandle item; \
+	    vpiHandle cb;\
+	    struct t_vpi_time time; \
+	    struct vcd_info *next; \
+	    struct vcd_info *dmp_next; \
+	    int scheduled; \
+	    ident_type ident; \
+      }
+
+#define ITERATE_VCD_INFO(use_list, use_type, use_next, method)	\
+      do {							\
+	    struct use_type*cur;				\
+	    for (cur = use_list ; cur ; cur = cur->use_next)	\
+		  method(cur);					\
+      } while (0)
+
+
 #undef EXTERN
 
 #endif /* IVL_vcd_priv_H */

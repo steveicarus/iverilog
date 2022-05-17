@@ -47,19 +47,11 @@ static struct t_vpi_time zero_delay = { vpiSimTime, 0, 0, 0.0 };
  * dumped. This list is scanned less often, since parameters do not change
  * values.
  */
-struct vcd_info {
-      vpiHandle item;
-      vpiHandle cb;
-      struct t_vpi_time time;
-      const char *ident;
-      struct vcd_info *next;
-      struct vcd_info *dmp_next;
-      int scheduled;
-};
-
+DECLARE_VCD_INFO(vcd_info, const char*);
 static struct vcd_info *vcd_const_list = NULL;
 static struct vcd_info *vcd_list = NULL;
 static struct vcd_info *vcd_dmp_list = NULL;
+
 static PLI_UINT64 vcd_cur_time = 0;
 static int dump_is_off = 0;
 static long dump_limit = 0;
@@ -168,37 +160,6 @@ __inline__ static int dump_header_pending(void)
       return dumpvars_status != 2;
 }
 
-/*
- * This function writes out all the traced parameters. They never change, so
- * this is the only way they get written.
- */
-static void vcd_const_checkpoint(void)
-{
-      struct vcd_info *cur;
-
-      for (cur = vcd_const_list ; cur ; cur = cur->next)
-	    show_this_item(cur);
-}
-
-/*
- * This function writes out all the traced variables, whether they
- * changed or not.
- */
-static void vcd_checkpoint(void)
-{
-      struct vcd_info*cur;
-
-      for (cur = vcd_list ;  cur ;  cur = cur->next)
-	    show_this_item(cur);
-}
-
-static void vcd_checkpoint_x(void)
-{
-      struct vcd_info*cur;
-
-      for (cur = vcd_list ;  cur ;  cur = cur->next)
-	    show_this_item_x(cur);
-}
 
 static PLI_INT32 variable_cb_2(p_cb_data cause)
 {
@@ -273,13 +234,13 @@ static PLI_INT32 dumpvars_cb(p_cb_data cause)
       if (!dump_is_off) {
 	    fprintf(dump_file, "$comment Show the parameter values. $end\n");
 	    fprintf(dump_file, "$dumpall\n");
-	    vcd_const_checkpoint();
+	    ITERATE_VCD_INFO(vcd_const_list, vcd_info, next, show_this_item);
 	    fprintf(dump_file, "$end\n");
 
 	    fprintf(dump_file, "#%" PLI_UINT64_FMT "\n", dumpvars_time);
 
 	    fprintf(dump_file, "$dumpvars\n");
-	    vcd_checkpoint();
+	    ITERATE_VCD_INFO(vcd_list, vcd_info, next, show_this_item);
 	    fprintf(dump_file, "$end\n");
       }
 
@@ -377,7 +338,7 @@ static PLI_INT32 sys_dumpoff_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       fprintf(dump_file, "$dumpoff\n");
-      vcd_checkpoint_x();
+      ITERATE_VCD_INFO(vcd_list, vcd_info, next, show_this_item_x);
       fprintf(dump_file, "$end\n");
 
       return 0;
@@ -407,7 +368,7 @@ static PLI_INT32 sys_dumpon_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       fprintf(dump_file, "$dumpon\n");
-      vcd_checkpoint();
+      ITERATE_VCD_INFO(vcd_list, vcd_info, next, show_this_item);
       fprintf(dump_file, "$end\n");
 
       return 0;
@@ -434,7 +395,7 @@ static PLI_INT32 sys_dumpall_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       fprintf(dump_file, "$dumpall\n");
-      vcd_checkpoint();
+      ITERATE_VCD_INFO(vcd_list, vcd_info, next, show_this_item);
       fprintf(dump_file, "$end\n");
 
       return 0;
