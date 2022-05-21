@@ -1,5 +1,5 @@
 $date
-	Sun May 15 09:20:23 2022
+	Sat May 21 10:00:47 2022
 $end
 $version
 	Icarus Verilog
@@ -9,17 +9,21 @@ $timescale
 $end
 $scope module main $end
 $var wire 4 ! bat [3:0] $end
-$var parameter 4 " bar $end
-$var parameter 4 # foo $end
+$var real 1 " PI $end
+$var parameter 4 # bar $end
+$var parameter 4 $ foo $end
+$var real 1 % tau $end
 $upscope $end
 $enddefinitions $end
 $comment Show the parameter values. $end
 $dumpall
-b101 #
-b111 "
+b101 $
+b111 #
+r3.14 "
 $end
 #0
 $dumpvars
+r6.28 %
 b1100 !
 $end
 #1
