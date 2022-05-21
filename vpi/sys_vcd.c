@@ -115,6 +115,11 @@ static void show_this_item(struct vcd_info*info)
 	    fprintf(dump_file, "r%.16g %s\n", value.value.real, info->ident);
       } else if (type == vpiNamedEvent) {
 	    fprintf(dump_file, "1%s\n", info->ident);
+      } else if (type == vpiParameter && vpi_get(vpiConstType, info->item) == vpiRealConst) {
+
+	    value.format = vpiRealVal;
+	    vpi_get_value(info->item, &value);
+	    fprintf(dump_file, "r%.16g %s\n", value.value.real, info->ident);
       } else if (vpi_get(vpiSize, info->item) == 1) {
 	    value.format = vpiBinStrVal;
 	    vpi_get_value(info->item, &value);
@@ -533,7 +538,13 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	  case vpiNamedEvent: type = "event"; break;
 	  case vpiIntVar:
 	  case vpiIntegerVar: type = "integer"; break;
-	  case vpiParameter:  type = "parameter"; break;
+	    /* VCD doesn't support real parameters, so lie. */
+	  case vpiParameter:
+	    switch (vpi_get(vpiConstType, item)) {
+		case vpiRealConst: type = "real"; break;
+		default: type = "parameter"; break;
+	    }
+	    break;
 	    /* Icarus converts realtime to real. */
 	  case vpiRealVar:    type = "real"; break;
 	  case vpiMemoryWord:
