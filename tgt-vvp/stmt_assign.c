@@ -167,8 +167,12 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%load/vec4a v%p, 3;\n", sig);
 	    } else {
-		  assert(wid <= 32);
-		  fprintf(vvp_out, "    %%pushi/vec4 4294967295, 4294967295, %u;\n", wid);
+		  if (wid <= 32) {
+			fprintf(vvp_out, "    %%pushi/vec4 4294967295, 4294967295, %u;\n", wid);
+		  } else {
+			fprintf(vvp_out, "    %%pushi/vec4 4294967295, 4294967295, 32;\n");
+			fprintf(vvp_out, "    %%pad/s %u;\n", wid);
+		  }
 	    }
 
       } else if (ivl_signal_dimensions(sig) > 0 && word_ix != 0) {
