@@ -147,9 +147,9 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 
 	    fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
 	    draw_eval_vec4(part_off_ex);
-	    fprintf(vvp_out, "    %%flag_mov %u, 4;\n", slice->u_.part_select_dynamic.x_flag);
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
 	    fprintf(vvp_out, "    %%ix/vec4 %d;\n", slice->u_.part_select_dynamic.word_idx_reg);
+	    fprintf(vvp_out, "    %%flag_mov %u, 4;\n", slice->u_.part_select_dynamic.x_flag);
 	    fprintf(vvp_out, "    %%part/u %u;\n", wid);
 
       } else if (ivl_signal_dimensions(sig) > 0 && word_ix == 0) {
@@ -161,6 +161,7 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    if (use_word < ivl_signal_array_count(sig)) {
 		  fprintf(vvp_out, "    %%ix/load 3, %lu, 0;\n",
 			  use_word);
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%load/vec4a v%p, 3;\n", sig);
 	    } else {
 		  assert(wid <= 32);
@@ -759,31 +760,8 @@ static void store_real_to_lval(ivl_lval_t lval)
       ivl_expr_t word_ex = ivl_lval_idx(lval);
       int word_ix = allocate_word();
 
-	/* If the word index is a constant, then we can write
-	   directly to the word and save the index calculation.
-	   Out-of-bounds and undefined indices are converted to
-	   a canonical index of 'bx during elaboration, and we
-	   don't try to optimise that case. */
-      if (word_ex && number_is_immediate(word_ex, IMM_WID, 0) &&
-	  !number_is_unknown(word_ex)) {
-	    unsigned long use_word = get_number_immediate(word_ex);
-	    assert(use_word < ivl_signal_array_count(var));
-	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n",
-		    word_ix, use_word);
-	    fprintf(vvp_out, "    %%store/reala v%p, %d;\n",
-		    var, word_ix);
-
-      } else {
-	    unsigned do_store = transient_id++;
-	    unsigned end_store = transient_id++;
-	    draw_eval_expr_into_integer(word_ex, word_ix);
-	    fprintf(vvp_out, "    %%jmp/0 t_%u, 4;\n", do_store);
-	    fprintf(vvp_out, "    %%pop/real 1;\n");
-	    fprintf(vvp_out, "    %%jmp t_%u;\n", end_store);
-	    fprintf(vvp_out, "t_%u ;\n", do_store);
-	    fprintf(vvp_out, "    %%store/reala v%p, %d;\n", var, word_ix);
-	    fprintf(vvp_out, "t_%u ;\n", end_store);
-      }
+      draw_eval_expr_into_integer(word_ex, word_ix);
+      fprintf(vvp_out, "    %%store/reala v%p, %d;\n", var, word_ix);
 
       clr_word(word_ix);
 }
