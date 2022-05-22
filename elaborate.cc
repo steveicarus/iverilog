@@ -1533,6 +1533,13 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  delete tmp_expr;
 		  if (!sig->get_lineno()) sig->set_line(*this);
 
+		  if (ptype == NetNet::PINPUT && gn_var_can_be_uwire()) {
+			for (unsigned int i = 0; i < prts.size(); i++) {
+			      if (prts[i]->type() == NetNet::REG)
+				    prts[i]->type(NetNet::UNRESOLVED_WIRE);
+			}
+		  }
+
 		  if (need_bufz_for_input_port(prts)) {
 			NetBUFZ*tmp = new NetBUFZ(scope, scope->local_symbol(),
 						  sig->vector_width(), true);
