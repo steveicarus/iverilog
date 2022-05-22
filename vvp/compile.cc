@@ -216,7 +216,6 @@ static const struct opcode_table_s opcode_table[] = {
       { "%mod",    of_MOD,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%mod/s",  of_MOD_S,  0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%mod/wr", of_MOD_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%mov/wu", of_MOV_WU, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%mul",    of_MUL,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%mul/wr", of_MUL_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%muli",   of_MULI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },

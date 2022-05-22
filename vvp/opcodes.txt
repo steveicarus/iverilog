@@ -806,8 +806,6 @@ The /s form does signed %.
 
 This opcode is the real-valued modulus of the two real values.
 
-* %mov/wu <dst>, <src>
-
 * %mul
 * %muli <vala>, <valb>, <wid>
 

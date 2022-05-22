@@ -4501,18 +4501,6 @@ bool of_PARTI_U(vthread_t thr, vvp_code_t cp)
 }
 
 /*
-*  %mov/wu <dst>, <src>
-*/
-bool of_MOV_WU(vthread_t thr, vvp_code_t cp)
-{
-      unsigned dst = cp->bit_idx[0];
-      unsigned src = cp->bit_idx[1];
-
-      thr->words[dst].w_uint = thr->words[src].w_uint;
-      return true;
-}
-
-/*
  * %mul
  */
 bool of_MUL(vthread_t thr, vvp_code_t)
