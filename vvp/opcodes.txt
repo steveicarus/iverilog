@@ -341,11 +341,6 @@ values from the real-value stack and writes the comparison result to
 bits 4/5. The expressions (a < b) and (a==b) are calculated, with (b)
 popped from the stack first, then (a).
 
-* %cmp/ws <bit-l>, <bit-r>
-* %cmp/wu <bit-l>, <bit-r>
-
-[compare signed/unsigned integer words.]
-
 * %cmp/z
 * %cmp/x
 

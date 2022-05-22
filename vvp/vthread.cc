@@ -2245,34 +2245,6 @@ bool of_CMPWR(vthread_t thr, vvp_code_t)
       return true;
 }
 
-bool of_CMPWS(vthread_t thr, vvp_code_t cp)
-{
-      int64_t l = thr->words[cp->bit_idx[0]].w_int;
-      int64_t r = thr->words[cp->bit_idx[1]].w_int;
-
-      vvp_bit4_t eq = (l == r)? BIT4_1 : BIT4_0;
-      vvp_bit4_t lt = (l <  r)? BIT4_1 : BIT4_0;
-
-      thr->flags[4] = eq;
-      thr->flags[5] = lt;
-
-      return true;
-}
-
-bool of_CMPWU(vthread_t thr, vvp_code_t cp)
-{
-      uint64_t l = thr->words[cp->bit_idx[0]].w_uint;
-      uint64_t r = thr->words[cp->bit_idx[1]].w_uint;
-
-      vvp_bit4_t eq = (l == r)? BIT4_1 : BIT4_0;
-      vvp_bit4_t lt = (l <  r)? BIT4_1 : BIT4_0;
-
-      thr->flags[4] = eq;
-      thr->flags[5] = lt;
-
-      return true;
-}
-
 /*
  * %cmp/z
  */
