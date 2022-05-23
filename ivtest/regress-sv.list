@@ -99,6 +99,7 @@ array_packed		normal,-g2005-sv	ivltests
 assign_op_after_cmp1	normal,-g2009		ivltests
 assign_op_after_cmp2	normal,-g2009		ivltests
 assign_op_concat	normal,-g2009		ivltests
+assign_op_oob		normal,-g2009		ivltests
 assign_op_type		normal,-g2009		ivltests
 bitp1			normal,-g2005-sv	ivltests
 bits			normal,-g2005-sv	ivltests

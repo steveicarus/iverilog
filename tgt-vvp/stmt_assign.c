@@ -21,6 +21,7 @@
 # include  <string.h>
 # include  <assert.h>
 # include  <stdlib.h>
+# include  <limits.h>
 
 /*
  * These functions handle the blocking assignment. Use the %set
@@ -101,8 +102,10 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	   it to select the word, and pay no further heed to the
 	   expression itself. */
       if (word_ix && number_is_immediate(word_ix, IMM_WID, 0)) {
-	    assert(! number_is_unknown(word_ix));
-	    use_word = get_number_immediate(word_ix);
+	    if (number_is_unknown(word_ix))
+		  use_word = ULONG_MAX; // The largest valid index is ULONG_MAX - 1
+	    else
+		  use_word = get_number_immediate(word_ix);
 	    word_ix = 0;
       }
 
@@ -164,8 +167,12 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%load/vec4a v%p, 3;\n", sig);
 	    } else {
-		  assert(wid <= 32);
-		  fprintf(vvp_out, "    %%pushi/vec4 4294967295, 4294967295, %u;\n", wid);
+		  if (wid <= 32) {
+			fprintf(vvp_out, "    %%pushi/vec4 4294967295, 4294967295, %u;\n", wid);
+		  } else {
+			fprintf(vvp_out, "    %%pushi/vec4 4294967295, 4294967295, 32;\n");
+			fprintf(vvp_out, "    %%pad/s %u;\n", wid);
+		  }
 	    }
 
       } else if (ivl_signal_dimensions(sig) > 0 && word_ix != 0) {
@@ -321,6 +328,7 @@ static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
 		  clr_word(word_idx);
 	    } else {
 		  fprintf(vvp_out," ; Skip this slice write to v%p [%lu]\n", sig, slice->u_.memory_word_static.use_word);
+		  fprintf(vvp_out,"    %%pop/vec4 1;\n");
 	    }
 	    break;
 

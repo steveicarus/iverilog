@@ -792,6 +792,7 @@ writemem-invalid	RE			ivltests gold=writemem-invalid-vlog95.gold
 
 # For Verilog 95 signed is supported as an option (-pallowsigned=1).
 array6			normal,-pallowsigned=1	ivltests
+assign_op_oob		normal,-g2009,-pallowsigned=1	ivltests
 assign_op_type		normal,-g2009,-pallowsigned=1	ivltests
 bitp1			normal,-g2009,-pallowsigned=1	ivltests
 bits			normal,-g2009,-pallowsigned=1	ivltests
