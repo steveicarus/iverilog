@@ -53,8 +53,7 @@ class vvp_fun_part_sa  : public vvp_fun_part, public vvp_gen_event_s {
                      vvp_context_t);
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned, unsigned, unsigned,
-                        vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t);
 
     private:
       void run_run();
@@ -84,8 +83,7 @@ class vvp_fun_part_aa  : public vvp_fun_part, public automatic_hooks_s {
                      vvp_context_t context);
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned, unsigned, unsigned,
-                        vvp_context_t context);
+			unsigned base, unsigned vwid, vvp_context_t context);
 
     private:
       __vpiScope*context_scope_;
@@ -110,8 +108,7 @@ class vvp_fun_part_pv  : public vvp_net_fun_t {
                      vvp_context_t context);
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                        unsigned, unsigned, unsigned,
-                        vvp_context_t);
+                        unsigned base, unsigned vwid, vvp_context_t);
 
       void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
@@ -155,8 +152,7 @@ class vvp_fun_part_var_sa  : public vvp_fun_part_var {
                      vvp_context_t);
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned, unsigned, unsigned,
-                        vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t);
 
     private:
       int base_;
@@ -185,8 +181,7 @@ class vvp_fun_part_var_aa  : public vvp_fun_part_var, public automatic_hooks_s {
                      vvp_context_t context);
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned, unsigned, unsigned,
-                        vvp_context_t context);
+			unsigned base, unsigned vwid, vvp_context_t context);
 
     private:
       __vpiScope*context_scope_;

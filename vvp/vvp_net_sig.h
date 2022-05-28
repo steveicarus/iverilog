@@ -143,10 +143,9 @@ class vvp_fun_signal4_sa : public vvp_fun_signal_vec {
 
 	// Part select variants of above
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t);
       void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
-			unsigned base, unsigned wid, unsigned vwid);
+			unsigned base, unsigned vwid);
 
 	// Get information about the vector value.
       const vvp_vector4_t& vec4_unfiltered_value() const;
@@ -175,8 +174,7 @@ class vvp_fun_signal4_aa : public vvp_fun_signal_vec, public automatic_signal_ba
 
 	// Part select variants of above
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t);
 
 	// Get information about the vector value.
       unsigned   value_size() const;

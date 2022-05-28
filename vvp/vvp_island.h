@@ -129,11 +129,10 @@ class vvp_island_port  : public vvp_net_fun_t {
       virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                              vvp_context_t);
       virtual void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-				unsigned base, unsigned wid, unsigned vwid,
-                                vvp_context_t);
+				unsigned base, unsigned vwid, vvp_context_t);
       virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
       virtual void recv_vec8_pv(vvp_net_ptr_t p, const vvp_vector8_t&bit,
-				unsigned base, unsigned wid, unsigned vwid);
+				unsigned base, unsigned vwid);
 
 	// This is painful, but necessary. If the island is connected
 	// to a forced net, we need to rerun the calculations whenever

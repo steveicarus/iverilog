@@ -52,9 +52,9 @@ resolv_core::~resolv_core()
 }
 
 void resolv_core::recv_vec4_pv_(unsigned port, const vvp_vector4_t&bit,
-				unsigned base, unsigned wid, unsigned vwid)
+				unsigned base, unsigned vwid)
 {
-      assert(bit.size() == wid);
+      unsigned wid = bit.size();
       vvp_vector4_t res (vwid);
 
       for (unsigned idx = 0 ;  idx < base ;  idx += 1)
@@ -70,9 +70,9 @@ void resolv_core::recv_vec4_pv_(unsigned port, const vvp_vector4_t&bit,
 }
 
 void resolv_core::recv_vec8_pv_(unsigned port, const vvp_vector8_t&bit,
-				unsigned base, unsigned wid, unsigned vwid)
+				unsigned base, unsigned vwid)
 {
-      assert(bit.size() == wid);
+      unsigned wid = bit.size();
       vvp_vector8_t res (vwid);
 
       for (unsigned idx = 0 ;  idx < base ;  idx += 1)

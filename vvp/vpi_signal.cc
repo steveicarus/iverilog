@@ -795,10 +795,10 @@ vpiHandle __vpiSignal::put_bit_value(struct __vpiBit*bit, p_vpi_value vp, int fl
 
       if ((get_type_code() == vpiNet) &&
           !dynamic_cast<vvp_island_port*>(node->fun)) {
-	    node->send_vec4_pv(val, index, 1, width(),
+	    node->send_vec4_pv(val, index, width(),
 	                            vthread_get_wt_context());
       } else {
-	    vvp_send_vec4_pv(dest, val, index, 1, width(),
+	    vvp_send_vec4_pv(dest, val, index, width(),
 	                     vthread_get_wt_context());
       }
 
@@ -1534,14 +1534,14 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int flags)
 	    if (full_sig) {
 		  rfp->net->send_vec4(val, vthread_get_wt_context());
 	    } else {
-		  rfp->net->send_vec4_pv(val, base, width, sig_size,
+		  rfp->net->send_vec4_pv(val, base, sig_size,
 		                         vthread_get_wt_context());
 	    }
       } else {
 	    if (full_sig) {
 		  vvp_send_vec4(dest, val, vthread_get_wt_context());
 	    } else {
-		  vvp_send_vec4_pv(dest, val, base, width, sig_size,
+		  vvp_send_vec4_pv(dest, val, base, sig_size,
 	                           vthread_get_wt_context());
 	    }
       }

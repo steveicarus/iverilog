@@ -44,13 +44,12 @@ class resolv_core : public vvp_net_fun_t {
             { recv_vec8_(port.port(), bit); }
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t)
-            { recv_vec4_pv_(port.port(), bit, base, wid, vwid); }
+			unsigned base, unsigned vwid, vvp_context_t)
+            { recv_vec4_pv_(port.port(), bit, base, vwid); }
 
       void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
-			unsigned base, unsigned wid, unsigned vwid)
-            { recv_vec8_pv_(port.port(), bit, base, wid, vwid); }
+			unsigned base, unsigned vwid)
+            { recv_vec8_pv_(port.port(), bit, base, vwid); }
 
       virtual void count_drivers(unsigned bit_idx, unsigned counts[3]) =0;
 
@@ -60,9 +59,9 @@ class resolv_core : public vvp_net_fun_t {
       virtual void recv_vec8_(unsigned port, const vvp_vector8_t&bit) =0;
 
       void recv_vec4_pv_(unsigned port, const vvp_vector4_t&bit,
-			 unsigned base, unsigned wid, unsigned vwid);
+			 unsigned base, unsigned vwid);
       void recv_vec8_pv_(unsigned port, const vvp_vector8_t&bit,
-			 unsigned base, unsigned wid, unsigned vwid);
+			 unsigned base, unsigned vwid);
 
     protected:
       unsigned nports_;
@@ -83,15 +82,14 @@ class resolv_extend : public vvp_net_fun_t {
             { core_->recv_vec8_(port_base_ + port.port(), bit); }
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t)
+			unsigned base, unsigned vwid, vvp_context_t)
             { core_->recv_vec4_pv_(port_base_ + port.port(), bit,
-                                   base, wid, vwid); }
+                                   base, vwid); }
 
       void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
-			unsigned base, unsigned wid, unsigned vwid)
+			unsigned base, unsigned vwid)
             { core_->recv_vec8_pv_(port_base_ + port.port(), bit,
-                                   base, wid, vwid); }
+                                   base, vwid); }
 
     private:
       resolv_core*core_;

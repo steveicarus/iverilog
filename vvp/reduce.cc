@@ -40,8 +40,7 @@ class vvp_reduce_base : public vvp_net_fun_t {
       void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit,
                      vvp_context_t context);
       void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t context);
+			unsigned base, unsigned vwid, vvp_context_t context);
 
       virtual vvp_bit4_t calculate_result() const =0;
 
@@ -67,15 +66,13 @@ void vvp_reduce_base::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit,
 }
 
 void vvp_reduce_base::recv_vec4_pv(vvp_net_ptr_t prt, const vvp_vector4_t&bit,
-				   unsigned base, unsigned wid, unsigned vwid,
-                                   vvp_context_t context)
+				   unsigned base, unsigned vwid, vvp_context_t context)
 {
       if (bits_.size() == 0) {
 	    bits_ = vvp_vector4_t(vwid);
       }
       assert(bits_.size() == vwid);
 
-      assert(bit.size() == wid);
       bits_.set_vec(base, bit);
       vvp_bit4_t res = calculate_result();
       vvp_vector4_t rv (1, res);
