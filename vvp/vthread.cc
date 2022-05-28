@@ -6249,13 +6249,18 @@ bool of_STORE_VEC4A(vthread_t thr, vvp_code_t cp)
       unsigned adr_index = cp->bit_idx[0];
       unsigned off_index = cp->bit_idx[1];
 
-      const vvp_vector4_t&value = thr->peek_vec4();
-
       long adr = adr_index? thr->words[adr_index].w_int : 0;
-      long off = off_index? thr->words[off_index].w_int : 0;
+      int64_t off = off_index ? thr->words[off_index].w_int : 0;
 
 	// Suppress action if flags-4 is true.
       if (thr->flags[4] == BIT4_1) {
+	    thr->pop_vec4(1);
+	    return true;
+      }
+
+      vvp_vector4_t &value = thr->peek_vec4();
+
+      if (!resize_rval_vec(value, off, cp->array->get_word_size())) {
 	    thr->pop_vec4(1);
 	    return true;
       }
