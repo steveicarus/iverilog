@@ -1159,7 +1159,7 @@ bool of_ASSIGN_VEC4_A_D(vthread_t thr, vvp_code_t cp)
       if (off >= (long)array_wid)
 	    return true;
       if (off < 0) {
-	    if ((unsigned)-off >= array_wid)
+	    if ((unsigned)-off >= wid)
 		  return true;
 
 	    int use_off = -off;
@@ -1201,7 +1201,7 @@ bool of_ASSIGN_VEC4_A_E(vthread_t thr, vvp_code_t cp)
       if (off >= (long)array_wid)
 	    return true;
       if (off < 0) {
-	    if ((unsigned)-off >= array_wid)
+	    if ((unsigned)-off >= wid)
 		  return true;
 
 	    int use_off = -off;
