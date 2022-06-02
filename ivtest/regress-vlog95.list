@@ -212,6 +212,9 @@ array_select		CE,-pallowsigned=1	ivltests
 array_select_a		CE			ivltests
 array_unpacked_sysfunct	CE,-g2005-sv	ivltests
 array_word_width2	CE			ivltests
+assign_op_after_cmp3	CE,-g2009		ivltests
+assign_op_real_array	CE,-g2009		ivltests
+assign_op_real_array_oob CE,-g2009		ivltests
 br1008			CE			ivltests
 br1019			CE			ivltests
 br_gh556		CE,-g2009		ivltests

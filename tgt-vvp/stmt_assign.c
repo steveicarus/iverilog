@@ -648,8 +648,10 @@ static void get_real_from_lval(ivl_lval_t lval, struct real_lval_info*slice)
 	   it to select the word, and pay no further heed to the
 	   expression itself. */
       if (word_ix && number_is_immediate(word_ix, IMM_WID, 0)) {
-	    assert(! number_is_unknown(word_ix));
-	    use_word = get_number_immediate(word_ix);
+	    if (number_is_unknown(word_ix))
+		  use_word = ULONG_MAX; // The largest valid index is ULONG_MAX - 1
+	    else
+		  use_word = get_number_immediate(word_ix);
 	    word_ix = 0;
       }
 
@@ -673,7 +675,8 @@ static void get_real_from_lval(ivl_lval_t lval, struct real_lval_info*slice)
 	    if (use_word < ivl_signal_array_count(sig)) {
 		  fprintf(vvp_out, "    %%ix/load 3, %lu, 0;\n",
 			  use_word);
-		  fprintf(vvp_out, "    %%load/reala v%p, 3;\n", sig);
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+		  fprintf(vvp_out, "    %%load/ar v%p, 3;\n", sig);
 	    } else {
 		  fprintf(vvp_out, "    %%pushi/real 0, 0;\n");
 	    }
@@ -688,7 +691,7 @@ static void get_real_from_lval(ivl_lval_t lval, struct real_lval_info*slice)
 
 	    draw_eval_expr_into_integer(word_ix, slice->u_.memory_word_dynamic.word_idx_reg);
 	    fprintf(vvp_out, "    %%flag_mov %u, 4;\n", slice->u_.memory_word_dynamic.x_flag);
-	    fprintf(vvp_out, "    %%load/reala v%p, %d;\n", sig, slice->u_.memory_word_dynamic.word_idx_reg);
+	    fprintf(vvp_out, "    %%load/ar v%p, %d;\n", sig, slice->u_.memory_word_dynamic.word_idx_reg);
 
       } else {
 	    assert(0);
@@ -728,6 +731,7 @@ static void put_real_to_lval(ivl_lval_t lval, struct real_lval_info*slice)
 		  clr_word(word_idx);
 	    } else {
 		  fprintf(vvp_out," ; Skip this slice write to v%p [%lu]\n", sig, slice->u_.memory_word_static.use_word);
+		  fprintf(vvp_out,"    %%pop/real 1;\n");
 	    }
 	    break;
 
