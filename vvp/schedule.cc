@@ -195,7 +195,7 @@ void assign_vector4_event_s::run_run(void)
 {
       count_assign_events += 1;
       if (vwid > 0)
-	    vvp_send_vec4_pv(ptr, val, base, val.size(), vwid, 0);
+	    vvp_send_vec4_pv(ptr, val, base, vwid, 0);
       else
 	    vvp_send_vec4(ptr, val, 0);
 }

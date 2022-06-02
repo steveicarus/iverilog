@@ -55,13 +55,11 @@ void vvp_fun_boolean_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 }
 
 void vvp_fun_boolean_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-				    unsigned base, unsigned wid, unsigned vwid,
-                                    vvp_context_t)
+				    unsigned base, unsigned vwid, vvp_context_t)
 {
       unsigned port = ptr.port();
 
-      assert(bit.size() == wid);
-      assert(base + wid <= vwid);
+      assert(base + bit.size() <= vwid);
 
 	// Set the part for the input. If nothing changes, then break.
       bool flag = input_[port] .set_vec(base, bit);
@@ -191,14 +189,12 @@ void vvp_fun_buf::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 }
 
 void vvp_fun_buf::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-                               unsigned base, unsigned wid, unsigned vwid,
-                               vvp_context_t)
+                               unsigned base, unsigned vwid, vvp_context_t)
 {
       if (ptr.port() != 0)
 	    return;
 
-      assert(bit.size() == wid);
-      assert(base + wid <= vwid);
+      assert(base + bit.size() <= vwid);
 
 	// Set the input part. If nothing changes, then break.
       bool flag = input_.set_vec(base, bit);
@@ -244,13 +240,12 @@ void vvp_fun_bufz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 }
 
 void vvp_fun_bufz::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-                                unsigned base, unsigned wid, unsigned vwid,
-                                vvp_context_t)
+                                unsigned base, unsigned vwid, vvp_context_t)
 {
       if (ptr.port() != 0)
 	    return;
 
-      ptr.ptr()->send_vec4_pv(bit, base, wid, vwid, 0);
+      ptr.ptr()->send_vec4_pv(bit, base, vwid, 0);
 }
 
 void vvp_fun_bufz::recv_real(vvp_net_ptr_t ptr, double bit,
@@ -415,11 +410,9 @@ void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 }
 
 void vvp_fun_muxz::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-				unsigned base, unsigned wid, unsigned vwid,
-                                vvp_context_t)
+				unsigned base, unsigned vwid, vvp_context_t)
 {
-      assert(bit.size() == wid);
-      assert(base + wid <= vwid);
+      assert(base + bit.size() <= vwid);
       bool flag;
 
       switch (ptr.port()) {
@@ -434,7 +427,7 @@ void vvp_fun_muxz::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 	    if (select_ == SEL_PORT0) return; // The other port is selected.
 	    break;
 	  case 2:
-	    assert((base == 0) && (wid == 1));
+	    assert((base == 0) && (bit.size() == 1));
 	    recv_vec4(ptr, bit, 0);
 	  default:
 	    return;
@@ -517,14 +510,12 @@ void vvp_fun_not::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 }
 
 void vvp_fun_not::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-                               unsigned base, unsigned wid, unsigned vwid,
-                               vvp_context_t)
+                               unsigned base, unsigned vwid, vvp_context_t)
 {
       if (ptr.port() != 0)
 	    return;
 
-      assert(bit.size() == wid);
-      assert(base + wid <= vwid);
+      assert(base + bit.size() <= vwid);
 
 	// Set the part value. If nothing changes, then break.
       bool flag = input_.set_vec(base, bit);

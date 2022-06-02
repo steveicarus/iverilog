@@ -35,8 +35,7 @@ class vvp_fun_boolean_ : public vvp_net_fun_t, protected vvp_gen_event_s {
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit,
                      vvp_context_t);
       void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t);
 
     protected:
       vvp_vector4_t input_[4];
@@ -89,8 +88,7 @@ class vvp_fun_buf: public vvp_net_fun_t, private vvp_gen_event_s {
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit,
                      vvp_context_t);
       void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t);
 
     private:
       void run_run();
@@ -113,8 +111,7 @@ class vvp_fun_bufz: public vvp_net_fun_t {
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit,
                      vvp_context_t);
       void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t);
 	//void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
       void recv_real(vvp_net_ptr_t p, double bit,
                      vvp_context_t);
@@ -155,8 +152,7 @@ class vvp_fun_muxz : public vvp_net_fun_t, private vvp_gen_event_s {
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit,
                      vvp_context_t);
       void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t);
 
     private:
       void run_run();
@@ -199,8 +195,7 @@ class vvp_fun_not: public vvp_net_fun_t, private vvp_gen_event_s {
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit,
                      vvp_context_t);
       void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t);
 
     private:
       void run_run();

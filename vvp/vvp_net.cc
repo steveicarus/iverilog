@@ -3255,8 +3255,7 @@ void vvp_net_fun_t::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&,
 }
 
 void vvp_net_fun_t::recv_vec4_pv_(vvp_net_ptr_t p, const vvp_vector4_t&bit,
-                                  unsigned base, unsigned wid, unsigned vwid,
-                                  vvp_context_t)
+                                  unsigned base, unsigned vwid, vvp_context_t)
 {
 	// The majority of functors don't normally expect to receive part
 	// values, because the primary operands of an expression will be
@@ -3271,8 +3270,7 @@ void vvp_net_fun_t::recv_vec4_pv_(vvp_net_ptr_t p, const vvp_vector4_t&bit,
 	// code, but we still need to handle it correctly. See GitHub
 	// issue #99 and br_gh99*.v in the test suite for examples.
 
-      assert(bit.size() == wid);
-      assert(base + wid <= vwid);
+      assert(base + bit.size() <= vwid);
 
       vvp_vector4_t tmp(vwid, BIT4_Z);
       tmp.set_vec(base, bit);
@@ -3280,12 +3278,11 @@ void vvp_net_fun_t::recv_vec4_pv_(vvp_net_ptr_t p, const vvp_vector4_t&bit,
 }
 
 void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bit,
-                                 unsigned base, unsigned wid, unsigned vwid,
-                                 vvp_context_t)
+                                 unsigned base, unsigned vwid, vvp_context_t)
 {
       cerr << "internal error: " << typeid(*this).name() << ": "
 	   << "recv_vec4_pv(" << bit << ", " << base
-	   << ", " << wid << ", " << vwid << ") not implemented" << endl;
+	   << ", " << vwid << ") not implemented" << endl;
       assert(0);
 }
 
@@ -3295,12 +3292,11 @@ void vvp_net_fun_t::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 }
 
 void vvp_net_fun_t::recv_vec8_pv_(vvp_net_ptr_t p, const vvp_vector8_t&bit,
-				  unsigned base, unsigned wid, unsigned vwid)
+				  unsigned base, unsigned vwid)
 {
 	// This is the strength-aware version of recv_vec4_pv_.
 
-      assert(bit.size() == wid);
-      assert(base + wid <= vwid);
+      assert(base + bit.size() <= vwid);
 
       vvp_vector8_t tmp(vwid);
       tmp.set_vec(base, bit);
@@ -3308,9 +3304,9 @@ void vvp_net_fun_t::recv_vec8_pv_(vvp_net_ptr_t p, const vvp_vector8_t&bit,
 }
 
 void vvp_net_fun_t::recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
-				 unsigned base, unsigned wid, unsigned vwid)
+				 unsigned base, unsigned vwid)
 {
-      recv_vec4_pv(port, reduce4(bit), base, wid, vwid, 0);
+      recv_vec4_pv(port, reduce4(bit), base, vwid, 0);
 }
 
 void vvp_net_fun_t::recv_real(vvp_net_ptr_t, double bit, vvp_context_t)
@@ -3375,10 +3371,9 @@ void vvp_fun_drive::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 }
 
 void vvp_fun_drive::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-				 unsigned base, unsigned wid, unsigned vwid,
-				 vvp_context_t ctx)
+				 unsigned base, unsigned vwid, vvp_context_t ctx)
 {
-      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+      recv_vec4_pv_(ptr, bit, base, vwid, ctx);
 }
 
 /* **** vvp_wide_fun_* methods **** */
@@ -3477,10 +3472,9 @@ void vvp_wide_fun_t::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 }
 
 void vvp_wide_fun_t::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-				  unsigned base, unsigned wid, unsigned vwid,
-				  vvp_context_t ctx)
+				  unsigned base, unsigned vwid, vvp_context_t ctx)
 {
-      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+      recv_vec4_pv_(ptr, bit, base, vwid, ctx);
 }
 
 void vvp_wide_fun_t::recv_real(vvp_net_ptr_t port, double bit,

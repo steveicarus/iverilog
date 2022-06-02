@@ -1654,7 +1654,7 @@ bool of_CASSIGN_VEC4_OFF(vthread_t thr, vvp_code_t cp)
       }
 
       vvp_net_ptr_t ptr (net, 1);
-      vvp_send_vec4_pv(ptr, value, base, wid, sig->value_size(), 0);
+      vvp_send_vec4_pv(ptr, value, base, sig->value_size(), 0);
       return true;
 }
 
@@ -6429,7 +6429,7 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
       if (off==0 && val_size==(unsigned)sig_value_size)
 	    vvp_send_vec4(ptr, val, thr->wt_context);
       else
-	    vvp_send_vec4_pv(ptr, val, off, wid, sig_value_size, thr->wt_context);
+	    vvp_send_vec4_pv(ptr, val, off, sig_value_size, thr->wt_context);
 
       thr->pop_vec4(1);
       return true;

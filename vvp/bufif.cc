@@ -83,8 +83,7 @@ void vvp_fun_bufif::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 }
 
 void vvp_fun_bufif::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-			         unsigned base, unsigned wid, unsigned vwid,
-                                 vvp_context_t ctx)
+			         unsigned base, unsigned vwid, vvp_context_t ctx)
 {
-      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+      recv_vec4_pv_(ptr, bit, base, vwid, ctx);
 }

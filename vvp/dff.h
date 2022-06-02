@@ -45,8 +45,7 @@ class vvp_dff : public vvp_net_fun_t {
                      vvp_context_t);
 
       void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t ctx);
+			unsigned base, unsigned vwid, vvp_context_t ctx);
 
     private:
       virtual void recv_async(vvp_net_ptr_t port);

@@ -107,7 +107,7 @@ evctl_vector::evctl_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
 void evctl_vector::run_run()
 {
       if (wid_ != 0) {
-	    vvp_send_vec4_pv(ptr_, value_, off_, value_.size(), wid_, 0);
+	    vvp_send_vec4_pv(ptr_, value_, off_, wid_, 0);
       } else {
 	    vvp_send_vec4(ptr_, value_, 0);
       }
@@ -278,13 +278,12 @@ void vvp_fun_edge_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 }
 
 void vvp_fun_edge_sa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-				   unsigned base, unsigned wid, unsigned vwid,
-				   vvp_context_t)
+				   unsigned base, unsigned vwid, vvp_context_t)
 {
       assert(base == 0);
       if (recv_vec4_(bit, bits_[port.port()], threads_)) {
 	    vvp_net_t*net = port.ptr();
-	    net->send_vec4_pv(bit, base, wid, vwid, 0);
+	    net->send_vec4_pv(bit, base, vwid, 0);
       }
 }
 
@@ -382,7 +381,7 @@ class anyedge_vec4_value : public anyedge_value {
       bool recv_vec4(const vvp_vector4_t&bit);
 
       bool recv_vec4_pv(const vvp_vector4_t&bit, unsigned base,
-			unsigned wid, unsigned vwid);
+			unsigned vwid);
 
     private:
       vvp_vector4_t old_bits;
@@ -529,13 +528,12 @@ bool anyedge_vec4_value::recv_vec4(const vvp_vector4_t&bit)
 }
 
 bool anyedge_vec4_value::recv_vec4_pv(const vvp_vector4_t&bit, unsigned base,
-				      unsigned wid, unsigned vwid)
+				      unsigned vwid)
 {
       vvp_vector4_t tmp = old_bits;
       if (tmp.size() == 0)
 	    tmp = vvp_vector4_t(vwid, BIT4_Z);
-      assert(wid == bit.size());
-      assert(base+wid <= vwid);
+      assert(base + bit.size()<= vwid);
       assert(tmp.size() == vwid);
       tmp.set_vec(base, bit);
 
@@ -604,12 +602,11 @@ void vvp_fun_anyedge_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 }
 
 void vvp_fun_anyedge_sa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-				      unsigned base, unsigned wid, unsigned vwid,
-				      vvp_context_t)
+				      unsigned base, unsigned vwid, vvp_context_t)
 {
       anyedge_vec4_value*value = get_vec4_value(last_value_[port.port()]);
       assert(value);
-      if (value->recv_vec4_pv(bit, base, wid, vwid)) {
+      if (value->recv_vec4_pv(bit, base, vwid)) {
 	    run_waiting_threads_(threads_);
 	    vvp_net_t*net = port.ptr();
 	    net->send_vec4(bit, 0);

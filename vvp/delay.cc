@@ -335,10 +335,9 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 }
 
 void vvp_fun_delay::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-			         unsigned base, unsigned wid, unsigned vwid,
-                                 vvp_context_t ctx)
+			         unsigned base, unsigned vwid, vvp_context_t ctx)
 {
-      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+      recv_vec4_pv_(ptr, bit, base, vwid, ctx);
 }
 
 /* See the recv_vec4 comment above. */
@@ -407,9 +406,9 @@ void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 }
 
 void vvp_fun_delay::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
-			         unsigned base, unsigned wid, unsigned vwid)
+			         unsigned base, unsigned vwid)
 {
-      recv_vec8_pv_(ptr, bit, base, wid, vwid);
+      recv_vec8_pv_(ptr, bit, base, vwid);
 }
 
 void vvp_fun_delay::recv_real(vvp_net_ptr_t port, double bit,

@@ -66,12 +66,10 @@ void vvp_fun_concat::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 }
 
 void vvp_fun_concat::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                                  unsigned base, unsigned wid, unsigned vwid,
-                                  vvp_context_t)
+                                  unsigned base, unsigned vwid, vvp_context_t)
 {
-      assert(bit.size() == wid);
-
       unsigned pdx = port.port();
+      unsigned wid = bit.size();
 
       if (vwid != wid_[pdx]) {
 	    cerr << "internal error: port " << pdx
@@ -137,11 +135,10 @@ void vvp_fun_concat8::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 }
 
 void vvp_fun_concat8::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-				   unsigned base, unsigned wid, unsigned vwid,
-				   vvp_context_t)
+				   unsigned base, unsigned vwid, vvp_context_t)
 {
       vvp_vector8_t bit8 (bit, 6, 6);
-      recv_vec8_pv(port, bit8, base, wid, vwid);
+      recv_vec8_pv(port, bit8, base, vwid);
 }
 
 void vvp_fun_concat8::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
@@ -167,11 +164,10 @@ void vvp_fun_concat8::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 }
 
 void vvp_fun_concat8::recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
-				   unsigned base, unsigned wid, unsigned vwid)
+				   unsigned base, unsigned vwid)
 {
-      assert(bit.size() == wid);
-
       unsigned pdx = port.port();
+      unsigned wid = bit.size();
 
       if (vwid != wid_[pdx]) {
 	    cerr << "internal error: port " << pdx

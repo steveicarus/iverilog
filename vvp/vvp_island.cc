@@ -184,11 +184,10 @@ void vvp_island_port::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&bit,
 }
 
 void vvp_island_port::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-				   unsigned base, unsigned wid, unsigned vwid,
-                                   vvp_context_t)
+				   unsigned base, unsigned vwid, vvp_context_t)
 {
       vvp_vector8_t tmp(bit, 6, 6);
-      recv_vec8_pv(port, tmp, base, wid, vwid);
+      recv_vec8_pv(port, tmp, base, vwid);
 }
 
 
@@ -202,12 +201,12 @@ void vvp_island_port::recv_vec8(vvp_net_ptr_t, const vvp_vector8_t&bit)
 }
 
 void vvp_island_port::recv_vec8_pv(vvp_net_ptr_t, const vvp_vector8_t&bit,
-                                   unsigned base, unsigned wid, unsigned vwid)
+                                   unsigned base, unsigned vwid)
 {
       if (invalue.size() == 0) {
-	    assert(bit.size() == wid);
 	    invalue = part_expand(bit, vwid, base);
       } else {
+	    unsigned wid = bit.size();
 	    assert(invalue.size() == vwid);
 	    for (unsigned idx = 0; idx < wid ; idx += 1) {
 		  if ((base+idx) >= vwid)

@@ -222,11 +222,10 @@ void vvp_fun_signal4_sa::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 }
 
 void vvp_fun_signal4_sa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-				      unsigned base, unsigned wid, unsigned vwid,
-                                      vvp_context_t)
+				      unsigned base, unsigned vwid, vvp_context_t)
 {
-      assert(bit.size() == wid);
       assert(bits4_.size() == vwid);
+      unsigned wid = bit.size();
 
       switch (ptr.port()) {
 	  case 0: // Normal input
@@ -273,9 +272,9 @@ void vvp_fun_signal4_sa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit
 }
 
 void vvp_fun_signal4_sa::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
-				      unsigned base, unsigned wid, unsigned vwid)
+				      unsigned base, unsigned vwid)
 {
-      recv_vec4_pv(ptr, reduce4(bit), base, wid, vwid, 0);
+      recv_vec4_pv(ptr, reduce4(bit), base, vwid, 0);
 }
 
 void vvp_fun_signal_base::deassign()
@@ -389,17 +388,16 @@ void vvp_fun_signal4_aa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 }
 
 void vvp_fun_signal4_aa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-				      unsigned base, unsigned wid, unsigned vwid,
-                                      vvp_context_t context)
+				      unsigned base, unsigned vwid, vvp_context_t context)
 {
       assert(ptr.port() == 0);
-      assert(bit.size() == wid);
       assert(size_ == vwid);
       assert(context);
 
       vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
             (vvp_get_context_item(context, context_idx_));
 
+      unsigned wid = bit.size();
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
             if (base+idx >= bits4->size()) break;
             bits4->set_bit(base+idx, bit.value(idx));
@@ -1001,7 +999,7 @@ void vvp_wire_vec4::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, b
 	    release_mask(mask);
 	    needs_init_ = ! force4_.subvalue(base,wid) .eeq(bits4_.subvalue(base,wid));
 	    ptr.ptr()->send_vec4_pv(bits4_.subvalue(base,wid),
-				    base, wid, bits4_.size(), 0);
+				    base, bits4_.size(), 0);
 	    run_vpi_callbacks();
       } else {
 	      // Variables keep the current value.
@@ -1009,7 +1007,7 @@ void vvp_wire_vec4::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, b
 	    for (unsigned idx=0; idx<wid; idx += 1)
 		  res.set_bit(idx,value(base+idx));
 	    release_mask(mask);
-	    ptr.ptr()->fun->recv_vec4_pv(ptr, res, base, wid, bits4_.size(), 0);
+	    ptr.ptr()->fun->recv_vec4_pv(ptr, res, base, bits4_.size(), 0);
       }
 }
 
@@ -1167,7 +1165,7 @@ void vvp_wire_vec8::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, b
       if (net_flag) {
 	    needs_init_ = !force8_.subvalue(base,wid) .eeq((bits8_.subvalue(base,wid)));
 	    ptr.ptr()->send_vec8_pv(bits8_.subvalue(base,wid),
-				    base, wid, bits8_.size());
+				    base, bits8_.size());
 	    run_vpi_callbacks();
       } else {
 	// Variable do not know about strength so this should not be able
@@ -1175,7 +1173,7 @@ void vvp_wire_vec8::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, b
 	// hard to fix this code like was done for vvp_wire_vec4 above.
 	    assert(0);
 //	    ptr.ptr()->fun->recv_vec8_pv(ptr, force8_.subvalue(base,wid),
-//					 base, wid, force8_.size());
+//					 base, force8_.size());
       }
 }
 

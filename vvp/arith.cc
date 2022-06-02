@@ -54,10 +54,9 @@ void vvp_arith_::dispatch_operand_(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 }
 
 void vvp_arith_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-			      unsigned base, unsigned wid, unsigned vwid,
-                              vvp_context_t ctx)
+			      unsigned base, unsigned vwid, vvp_context_t ctx)
 {
-      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+      recv_vec4_pv_(ptr, bit, base, vwid, ctx);
 }
 
 vvp_arith_abs::vvp_arith_abs()
@@ -91,10 +90,9 @@ void vvp_arith_abs::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 }
 
 void vvp_arith_abs::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-				 unsigned base, unsigned wid, unsigned vwid,
-				 vvp_context_t ctx)
+				 unsigned base, unsigned vwid, vvp_context_t ctx)
 {
-      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+      recv_vec4_pv_(ptr, bit, base, vwid, ctx);
 }
 
 void vvp_arith_abs::recv_real(vvp_net_ptr_t ptr, double bit,
@@ -137,10 +135,10 @@ void vvp_arith_cast_real::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 }
 
 void vvp_arith_cast_real::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-				       unsigned base, unsigned wid, unsigned vwid,
+				       unsigned base, unsigned vwid,
 				       vvp_context_t ctx)
 {
-      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+      recv_vec4_pv_(ptr, bit, base, vwid, ctx);
 }
 
 vvp_arith_cast_vec2::vvp_arith_cast_vec2(unsigned wid)
@@ -166,10 +164,9 @@ void vvp_arith_cast_vec2::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 }
 
 void vvp_arith_cast_vec2::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-				       unsigned base, unsigned wid, unsigned vwid,
-				       vvp_context_t ctx)
+				       unsigned base, unsigned vwid, vvp_context_t ctx)
 {
-      recv_vec4_pv_(ptr, bit, base, wid, vwid, ctx);
+      recv_vec4_pv_(ptr, bit, base, vwid, ctx);
 }
 
 // Division

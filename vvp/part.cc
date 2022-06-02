@@ -78,11 +78,8 @@ void vvp_fun_part_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
  * defined behavior.
  */
 void vvp_fun_part_sa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-				   unsigned base, unsigned wid, unsigned vwid,
-                                   vvp_context_t)
+				   unsigned base, unsigned vwid, vvp_context_t)
 {
-      assert(bit.size() == wid);
-
       vvp_vector4_t tmp (vwid, BIT4_Z);
       tmp.set_vec(base_, val_);
       tmp.set_vec(base, bit);
@@ -163,12 +160,9 @@ void vvp_fun_part_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
  * defined behavior.
  */
 void vvp_fun_part_aa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-				   unsigned base, unsigned wid, unsigned vwid,
-                                   vvp_context_t context)
+				   unsigned base, unsigned vwid, vvp_context_t context)
 {
       if (context) {
-            assert(bit.size() == wid);
-
             vvp_vector4_t*val = static_cast<vvp_vector4_t*>
                   (vvp_get_context_item(context, context_idx_));
 
@@ -179,7 +173,7 @@ void vvp_fun_part_aa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       } else {
             context = context_scope_->live_contexts;
             while (context) {
-                  recv_vec4_pv(port, bit, base, wid, vwid, context);
+                  recv_vec4_pv(port, bit, base, vwid, context);
                   context = vvp_get_next_context(context);
             }
       }
@@ -207,22 +201,20 @@ void vvp_fun_part_pv::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       }
       assert(bit.size() == wid_);
 
-      port.ptr()->send_vec4_pv(bit, base_, wid_, vwid_, context);
+      port.ptr()->send_vec4_pv(bit, base_, vwid_, context);
 }
 
 void vvp_fun_part_pv::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                                 unsigned base, unsigned wid, unsigned vwid,
-                                 vvp_context_t ctx)
+                                 unsigned base, unsigned vwid, vvp_context_t ctx)
 {
       assert(port.port() == 0);
-      assert(bit.size() == wid);
-      assert(base + wid <= vwid);
+      assert(base + bit.size() <= vwid);
       assert(vwid == wid_);
 
       vvp_vector4_t tmp(wid_, BIT4_Z);
       tmp.set_vec(base, bit);
 
-      port.ptr()->send_vec4_pv(tmp, base_, wid_, vwid_, ctx);
+      port.ptr()->send_vec4_pv(tmp, base_, vwid_, ctx);
 }
 
 void vvp_fun_part_pv::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
@@ -237,7 +229,7 @@ void vvp_fun_part_pv::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
       }
       assert(bit.size() == wid_);
 
-      port.ptr()->send_vec8_pv(bit, base_, wid_, vwid_);
+      port.ptr()->send_vec8_pv(bit, base_, vwid_);
 }
 
 vvp_fun_part_var::vvp_fun_part_var(unsigned w, bool is_signed)
@@ -307,11 +299,8 @@ void vvp_fun_part_var_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 }
 
 void vvp_fun_part_var_sa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-				       unsigned base, unsigned wid, unsigned vwid,
-                                       vvp_context_t)
+				       unsigned base, unsigned vwid, vvp_context_t)
 {
-      assert(bit.size() == wid);
-
       vvp_vector4_t tmp = source_;
       if (tmp.size() == 0)
 	    tmp = vvp_vector4_t(vwid);
@@ -384,14 +373,11 @@ void vvp_fun_part_var_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 }
 
 void vvp_fun_part_var_aa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-				       unsigned base, unsigned wid, unsigned vwid,
-                                       vvp_context_t context)
+				       unsigned base, unsigned vwid, vvp_context_t context)
 {
       if (context) {
             vvp_fun_part_var_state_s*state = static_cast<vvp_fun_part_var_state_s*>
                   (vvp_get_context_item(context, context_idx_));
-
-            assert(bit.size() == wid);
 
             vvp_vector4_t tmp = state->source;
             if (tmp.size() == 0)

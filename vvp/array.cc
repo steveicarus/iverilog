@@ -617,7 +617,7 @@ void __vpiArray::set_word(unsigned address, unsigned part_off, const vvp_vector4
       struct __vpiSignal*vsig = dynamic_cast<__vpiSignal*>(word);
       assert(vsig);
 
-      vsig->node->send_vec4_pv(val, part_off, val.size(), vpip_size(vsig), 0);
+      vsig->node->send_vec4_pv(val, part_off, vpip_size(vsig), 0);
       word_change(address);
 }
 

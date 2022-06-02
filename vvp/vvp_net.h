@@ -1139,10 +1139,9 @@ class vvp_net_t {
       void send_object(vvp_object_t val, vvp_context_t context);
 
       void send_vec4_pv(const vvp_vector4_t&val,
-			unsigned base, unsigned wid, unsigned vwid,
-			vvp_context_t context);
+			unsigned base, unsigned vwid, vvp_context_t context);
       void send_vec8_pv(const vvp_vector8_t&val,
-			unsigned base, unsigned wid, unsigned vwid);
+			unsigned base, unsigned vwid);
 
 
     public: // Methods to arrange for the output of this net to be forced.
@@ -1223,10 +1222,9 @@ class vvp_net_fun_t {
 
 	// Part select variants of above
       virtual void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
-				unsigned base, unsigned wid, unsigned vwid,
-                                vvp_context_t context);
+				unsigned base, unsigned vwid, vvp_context_t context);
       virtual void recv_vec8_pv(vvp_net_ptr_t p, const vvp_vector8_t&bit,
-				unsigned base, unsigned wid, unsigned vwid);
+				unsigned base, unsigned vwid);
       virtual void recv_long_pv(vvp_net_ptr_t port, long bit,
                                 unsigned base, unsigned wid);
 
@@ -1238,10 +1236,9 @@ class vvp_net_fun_t {
 
    protected:
       void recv_vec4_pv_(vvp_net_ptr_t p, const vvp_vector4_t&bit,
-			 unsigned base, unsigned wid, unsigned vwid,
-                         vvp_context_t context);
+			 unsigned base, unsigned vwid, vvp_context_t context);
       void recv_vec8_pv_(vvp_net_ptr_t p, const vvp_vector8_t&bit,
-			 unsigned base, unsigned wid, unsigned vwid);
+			 unsigned base, unsigned vwid);
 
     public: // These objects are only permallocated.
       static void* operator new(std::size_t size) { return heap_.alloc(size); }
@@ -1392,8 +1389,7 @@ class vvp_fun_concat  : public vvp_net_fun_t {
                      vvp_context_t context);
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t);
     private:
       unsigned wid_[4];
       vvp_vector4_t val_;
@@ -1411,10 +1407,9 @@ class vvp_fun_concat8  : public vvp_net_fun_t {
       void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t);
       void recv_vec8_pv(vvp_net_ptr_t p, const vvp_vector8_t&bit,
-			unsigned base, unsigned wid, unsigned vwid);
+			unsigned base, unsigned vwid);
 
     private:
       unsigned wid_[4];
@@ -1484,8 +1479,7 @@ class vvp_fun_drive  : public vvp_net_fun_t {
 	//void recv_long(vvp_net_ptr_t port, long bit);
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t);
     private:
       unsigned char drive0_;
       unsigned char drive1_;
@@ -1507,8 +1501,7 @@ class vvp_fun_extend_signed  : public vvp_net_fun_t {
                      vvp_context_t context);
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t);
     private:
       unsigned width_;
 };
@@ -1591,8 +1584,7 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
                      vvp_context_t context);
 
       void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t context);
+			unsigned base, unsigned vwid, vvp_context_t context);
 
     private:
       vvp_wide_fun_core*core_;
@@ -1650,8 +1642,7 @@ inline void vvp_send_object(vvp_net_ptr_t ptr, vvp_object_t val, vvp_context_t c
  *
  * The ptr is the destination input port to write to.
  *
- * <val> is the vector to be written. The width of this vector must
- * exactly match the <wid> vector.
+ * <val> is the vector to be written.
  *
  * The <base> is where in the receiver the bit vector is to be
  * written. This address is given in canonical units; 0 is the LSB, 1
@@ -1663,27 +1654,27 @@ inline void vvp_send_object(vvp_net_ptr_t ptr, vvp_object_t val, vvp_context_t c
  * mirror of the destination vector.
  */
 inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
-			     unsigned base, unsigned wid, unsigned vwid,
+			     unsigned base, unsigned vwid,
 			     vvp_context_t context)
 {
       while (class vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next_val = cur->port[ptr.port()];
 
 	    if (cur->fun)
-		  cur->fun->recv_vec4_pv(ptr, val, base, wid, vwid, context);
+		  cur->fun->recv_vec4_pv(ptr, val, base, vwid, context);
 
 	    ptr = next_val;
       }
 }
 
 inline void vvp_send_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&val,
-			     unsigned base, unsigned wid, unsigned vwid)
+			     unsigned base, unsigned vwid)
 {
       while (class vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next_val = cur->port[ptr.port()];
 
 	    if (cur->fun)
-		  cur->fun->recv_vec8_pv(ptr, val, base, wid, vwid);
+		  cur->fun->recv_vec8_pv(ptr, val, base, vwid);
 
 	    ptr = next_val;
       }
@@ -1710,24 +1701,23 @@ inline void vvp_net_t::send_vec4(const vvp_vector4_t&val, vvp_context_t context)
 }
 
 inline void vvp_net_t::send_vec4_pv(const vvp_vector4_t&val,
-				    unsigned base, unsigned wid, unsigned vwid,
+				    unsigned base, unsigned vwid,
 				    vvp_context_t context)
 {
       if (fil == 0) {
-	    vvp_send_vec4_pv(out_, val, base, wid, vwid, context);
+	    vvp_send_vec4_pv(out_, val, base, vwid, context);
 	    return;
       }
 
-      assert(val.size() == wid);
       vvp_vector4_t rep;
       switch (fil->filter_vec4(val, rep, base, vwid)) {
 	  case vvp_net_fil_t::STOP:
 	    break;
 	  case vvp_net_fil_t::PROP:
-	    vvp_send_vec4_pv(out_, val, base, wid, vwid, context);
+	    vvp_send_vec4_pv(out_, val, base, vwid, context);
 	    break;
 	  case vvp_net_fil_t::REPL:
-	    vvp_send_vec4_pv(out_, rep, base, wid, vwid, context);
+	    vvp_send_vec4_pv(out_, rep, base, vwid, context);
 	    break;
       }
 }
@@ -1753,23 +1743,22 @@ inline void vvp_net_t::send_vec8(const vvp_vector8_t&val)
 }
 
 inline void vvp_net_t::send_vec8_pv(const vvp_vector8_t&val,
-				    unsigned base, unsigned wid, unsigned vwid)
+				    unsigned base, unsigned vwid)
 {
       if (fil == 0) {
-	    vvp_send_vec8_pv(out_, val, base, wid, vwid);
+	    vvp_send_vec8_pv(out_, val, base, vwid);
 	    return;
       }
 
-      assert(val.size() == wid);
       vvp_vector8_t rep;
       switch (fil->filter_vec8(val, rep, base, vwid)) {
 	  case vvp_net_fil_t::STOP:
 	    break;
 	  case vvp_net_fil_t::PROP:
-	    vvp_send_vec8_pv(out_, val, base, wid, vwid);
+	    vvp_send_vec8_pv(out_, val, base, vwid);
 	    break;
 	  case vvp_net_fil_t::REPL:
-	    vvp_send_vec8_pv(out_, rep, base, wid, vwid);
+	    vvp_send_vec8_pv(out_, rep, base, vwid);
 	    break;
       }
 }
