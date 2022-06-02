@@ -199,6 +199,11 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 	    if (ivl_expr_value(vexpr) == IVL_VT_DARRAY)
 		  return 0;
 
+	      /* Part select is always unsigned. If the expression is signed
+	       * fallback. */
+	    if (ivl_expr_signed(expr))
+		  return 0;
+
 	      /* The signal is part of an array. */
 	      /* Add &APV<> code here when it is finished. */
 	    bexpr = ivl_expr_oper2(expr);
