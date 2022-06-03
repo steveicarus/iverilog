@@ -2350,8 +2350,6 @@ bool of_CONCAT_VEC4(vthread_t thr, vvp_code_t)
  */
 bool of_CONCATI_VEC4(vthread_t thr, vvp_code_t cp)
 {
-      uint32_t vala = cp->bit_idx[0];
-      uint32_t valb = cp->bit_idx[1];
       unsigned wid  = cp->number;
 
       vvp_vector4_t&msb = thr->peek_vec4();
@@ -2360,38 +2358,7 @@ bool of_CONCATI_VEC4(vthread_t thr, vvp_code_t cp)
 	// going to be zero, so start the result vector with all zero
 	// bits. Then we only need to replace the bits that are different.
       vvp_vector4_t lsb (wid, BIT4_0);
-
-	// The %concati/vec4 can create values bigger then 32 bits, but
-	// only if the high bits are zero. So at most we need to run
-	// through the loop below 32 times. Maybe less, if the target
-	// width is less. We don't have to do anything special on that
-	// because vala/valb bits will shift away so (vala|valb) will
-	// turn to zero at or before 32 shifts.
-
-      for (unsigned idx = 0 ; idx < wid && (vala|valb) ; idx += 1) {
-	    uint32_t ba = 0;
-	      // Convert the vala/valb bits to a ba number that can be
-	      // used to select what goes into the value.
-	    ba = (valb & 1) << 1;
-	    ba |= vala & 1;
-
-	    switch (ba) {
-		case 1:
-		  lsb.set_bit(idx, BIT4_1);
-		  break;
-		case 2:
-		  lsb.set_bit(idx, BIT4_Z);
-		  break;
-		case 3:
-		  lsb.set_bit(idx, BIT4_X);
-		  break;
-		default:
-		  break;
-	    }
-
-	    vala >>= 1;
-	    valb >>= 1;
-      }
+      get_immediate_rval (cp, lsb);
 
       vvp_vector4_t res (msb.size()+lsb.size(), BIT4_X);
       res.set_vec(0, lsb);
@@ -5095,62 +5062,13 @@ bool of_PUSHI_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_PUSHI_VEC4(vthread_t thr, vvp_code_t cp)
 {
-      uint32_t vala = cp->bit_idx[0];
-      uint32_t valb = cp->bit_idx[1];
       unsigned wid  = cp->number;
 
 	// I expect that most of the bits of an immediate value are
 	// going to be zero, so start the result vector with all zero
 	// bits. Then we only need to replace the bits that are different.
       vvp_vector4_t val (wid, BIT4_0);
-
-	// Special case: Immediate zero is super easy.
-      if (vala==0 && valb==0) {
-	    thr->push_vec4(val);
-	    return true;
-      }
-
-	// Special case: If the value is defined (no X or Z) and fits
-	// in an unsigned long, then use the setarray method to write
-	// the value all in one shot.
-      if ((valb==0) && (wid <= 8*sizeof(unsigned long))) {
-	    unsigned long tmp = vala;
-	    val.setarray(0, wid, &tmp);
-	    thr->push_vec4(val);
-	    return true;
-      }
-
-	// The %pushi/vec4 can create values bigger then 32 bits, but
-	// only if the high bits are zero. So at most we need to run
-	// through the loop below 32 times. Maybe less, if the target
-	// width is less. We don't have to do anything special on that
-	// because vala/valb bits will shift away so (vala|valb) will
-	// turn to zero at or before 32 shifts.
-
-      for (unsigned idx = 0 ; idx < wid && (vala|valb) ; idx += 1) {
-	    uint32_t ba = 0;
-	      // Convert the vala/valb bits to a ba number that can be
-	      // used to select what goes into the value.
-	    ba = (valb & 1) << 1;
-	    ba |= vala & 1;
-
-	    switch (ba) {
-		case 1:
-		  val.set_bit(idx, BIT4_1);
-		  break;
-		case 2:
-		  val.set_bit(idx, BIT4_Z);
-		  break;
-		case 3:
-		  val.set_bit(idx, BIT4_X);
-		  break;
-		default:
-		  break;
-	    }
-
-	    vala >>= 1;
-	    valb >>= 1;
-      }
+      get_immediate_rval (cp, val);
 
       thr->push_vec4(val);
 
