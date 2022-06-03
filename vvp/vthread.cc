@@ -1349,8 +1349,6 @@ bool of_ASSIGN_VEC4E(vthread_t thr, vvp_code_t cp)
 	    schedule_evctl(ptr, value, 0, sig->value_size(), thr->event, thr->ecount);
       }
 
-      thr->event = 0;
-      thr->ecount = 0;
       return true;
 }
 
