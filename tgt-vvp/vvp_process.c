@@ -179,6 +179,8 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	      /* If needed use the global error state. */
 	    if (part_off_ex) {
 		  fprintf(vvp_out, "    %%flag_mov 4, %d;\n", error_flag);
+		  fprintf(vvp_out, "    %%ix/mov 3, %d;\n", word_ix_reg);
+		  clr_word(word_ix_reg);
 	    }
 	    fprintf(vvp_out, "    %%assign/vec4/a/e v%p, %d;\n", lsig, part_off_reg);
 
