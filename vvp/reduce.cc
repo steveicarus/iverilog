@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -97,12 +97,7 @@ vvp_reduce_and::~vvp_reduce_and()
 
 vvp_bit4_t vvp_reduce_and::calculate_result() const
 {
-      vvp_bit4_t res =  BIT4_1;
-
-      for (unsigned idx = 0 ;  idx < bits_.size() ;  idx += 1)
-	    res = res & bits_.value(idx);
-
-      return res;
+      return bits_.reduce_and();
 }
 
 class vvp_reduce_or  : public vvp_reduce_base {
@@ -123,12 +118,7 @@ vvp_reduce_or::~vvp_reduce_or()
 
 vvp_bit4_t vvp_reduce_or::calculate_result() const
 {
-      vvp_bit4_t res =  BIT4_0;
-
-      for (unsigned idx = 0 ;  idx < bits_.size() ;  idx += 1)
-	    res = res | bits_.value(idx);
-
-      return res;
+      return bits_.reduce_or();
 }
 
 class vvp_reduce_xor  : public vvp_reduce_base {
@@ -149,12 +139,7 @@ vvp_reduce_xor::~vvp_reduce_xor()
 
 vvp_bit4_t vvp_reduce_xor::calculate_result() const
 {
-      vvp_bit4_t res =  BIT4_0;
-
-      for (unsigned idx = 0 ;  idx < bits_.size() ;  idx += 1)
-	    res = res ^ bits_.value(idx);
-
-      return res;
+      return bits_.reduce_xor();
 }
 
 class vvp_reduce_nand  : public vvp_reduce_base {
@@ -175,12 +160,7 @@ vvp_reduce_nand::~vvp_reduce_nand()
 
 vvp_bit4_t vvp_reduce_nand::calculate_result() const
 {
-      vvp_bit4_t res =  BIT4_1;
-
-      for (unsigned idx = 0 ;  idx < bits_.size() ;  idx += 1)
-	    res = res & bits_.value(idx);
-
-      return ~res;
+      return ~bits_.reduce_and();
 }
 
 class vvp_reduce_nor  : public vvp_reduce_base {
@@ -201,12 +181,7 @@ vvp_reduce_nor::~vvp_reduce_nor()
 
 vvp_bit4_t vvp_reduce_nor::calculate_result() const
 {
-      vvp_bit4_t res =  BIT4_0;
-
-      for (unsigned idx = 0 ;  idx < bits_.size() ;  idx += 1)
-	    res = res | bits_.value(idx);
-
-      return ~res;
+      return ~bits_.reduce_or();
 }
 
 class vvp_reduce_xnor  : public vvp_reduce_base {
@@ -227,12 +202,7 @@ vvp_reduce_xnor::~vvp_reduce_xnor()
 
 vvp_bit4_t vvp_reduce_xnor::calculate_result() const
 {
-      vvp_bit4_t res =  BIT4_0;
-
-      for (unsigned idx = 0 ;  idx < bits_.size() ;  idx += 1)
-	    res = res ^ bits_.value(idx);
-
-      return ~res;
+      return ~bits_.reduce_xor();
 }
 
 static void make_reduce(char*label, vvp_net_fun_t*red, const struct symb_s&arg)

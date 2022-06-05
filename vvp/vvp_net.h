@@ -326,6 +326,10 @@ class vvp_vector4_t {
       vvp_vector4_t& operator ^= (const vvp_vector4_t&that);
       vvp_vector4_t& operator += (int64_t);
 
+      vvp_bit4_t reduce_or() const;
+      vvp_bit4_t reduce_and() const;
+      vvp_bit4_t reduce_xor() const;
+
     private:
 	// Number of vvp_bit4_t bits that can be shoved into a word.
       enum { BITS_PER_WORD = 8*sizeof(unsigned long) };
