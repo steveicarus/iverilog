@@ -505,6 +505,8 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 			ev = ivl_stmt_events(net, idx);
 			fprintf(vvp_out, ", E_%p", ev);
 		  }
+
+		  fprintf(vvp_out, ";\n");
 		  snprintf(name, sizeof(name), "Eassign_%u", cascade_counter);
 		  cascade_counter += 1;
 	    }
