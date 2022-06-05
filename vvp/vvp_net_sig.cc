@@ -333,12 +333,9 @@ const vvp_vector4_t& vvp_fun_signal4_sa::vec4_unfiltered_value() const
 
 vvp_fun_signal4_aa::vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init)
 {
-	/* To make init work we would need to save it and then use the
-	 * saved value when we ran reset_instance(). For now just make
-	 * sure it matches the value we use in reset_instance(). */
-      assert(init == BIT4_X);
       context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
       size_ = wid;
+      init_ = init;
 }
 
 vvp_fun_signal4_aa::~vvp_fun_signal4_aa()
@@ -348,7 +345,7 @@ vvp_fun_signal4_aa::~vvp_fun_signal4_aa()
 
 void vvp_fun_signal4_aa::alloc_instance(vvp_context_t context)
 {
-      vvp_set_context_item(context, context_idx_, new vvp_vector4_t(size_));
+      vvp_set_context_item(context, context_idx_, new vvp_vector4_t(size_, init_));
 }
 
 void vvp_fun_signal4_aa::reset_instance(vvp_context_t context)
@@ -356,7 +353,7 @@ void vvp_fun_signal4_aa::reset_instance(vvp_context_t context)
       vvp_vector4_t*bits = static_cast<vvp_vector4_t*>
             (vvp_get_context_item(context, context_idx_));
 
-      bits->set_to_x();
+      bits->fill_bits(init_);
 }
 
 #ifdef CHECK_WITH_VALGRIND

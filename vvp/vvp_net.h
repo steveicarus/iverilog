@@ -312,8 +312,11 @@ class vvp_vector4_t {
 	// Change all Z bits to X bits.
       void change_z2x();
 
+	// Set all bits to the specified value.
+      void fill_bits(vvp_bit4_t bit);
+
 	// Change all bits to X bits.
-      void set_to_x();
+      void set_to_x() { fill_bits(BIT4_X); }
 
 	// Display the value into the buf as a string.
       char*as_string(char*buf, size_t buf_len) const;
