@@ -677,6 +677,7 @@ named_event_no_edges	CE			ivltests
 nb_assign		normal			ivltests
 nb_delay		normal			ivltests
 nb_ec_concat		normal			ivltests
+nb_ec_multi_ev		normal			ivltests
 nblkorder		normal			ivltests # Validates Non-blocking order determinism
 negative_genvar		normal			ivltests
 negvalue		normal			ivltests gold=negvalue.gold
