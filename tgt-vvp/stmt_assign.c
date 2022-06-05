@@ -134,8 +134,7 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    } else {
 		  fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
 	    }
-	    fprintf(vvp_out, "    %%pushi/vec4 %lu, 0, 32;\n", part_off);
-	    fprintf(vvp_out, "    %%part/u %u;\n", wid);
+	    fprintf(vvp_out, "    %%parti/u %u, %lu, 32;\n", wid, part_off);
 
       } else if (ivl_signal_dimensions(sig)==0 && part_off_ex!=0 && word_ix==0) {
 

@@ -1191,8 +1191,7 @@ static void draw_unary_inc_dec(ivl_expr_t sub, bool incr, bool pre)
       if (pre) {
 	      /* prefix means we add the result first, and store the
 		 result, as well as leaving a copy on the stack. */
-	    fprintf(vvp_out, "    %%pushi/vec4 1, 0, %u;\n", wid);
-	    fprintf(vvp_out, "    %s;\n", cmd);
+	    fprintf(vvp_out, "    %si 1, 0, %u;\n", cmd, wid);
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
 	    fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", sig, wid);
 
@@ -1200,8 +1199,7 @@ static void draw_unary_inc_dec(ivl_expr_t sub, bool incr, bool pre)
 	      /* The post-fix decrement returns the non-decremented
 		 version, so there is a slight re-arrange. */
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
-	    fprintf(vvp_out, "    %%pushi/vec4 1, 0, %u;\n", wid);
-	    fprintf(vvp_out, "    %s;\n", cmd);
+	    fprintf(vvp_out, "    %si 1, 0, %u;\n", cmd, wid);
 	    fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", sig, wid);
       }
 }
@@ -1245,8 +1243,7 @@ static void draw_unary_vec4(ivl_expr_t expr)
 	  case '-':
 	    draw_eval_vec4(sub);
 	    fprintf(vvp_out, "    %%inv;\n");
-	    fprintf(vvp_out, "    %%pushi/vec4 1, 0, %u;\n", ivl_expr_width(sub));
-	    fprintf(vvp_out, "    %%add;\n");
+	    fprintf(vvp_out, "    %%addi 1, 0, %u;\n", ivl_expr_width(sub));
 	    break;
 
 	  case 'A': /* nand (~&) */
@@ -1287,13 +1284,11 @@ static void draw_unary_vec4(ivl_expr_t expr)
 
 	      /* Test if (m) < 0 */
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
-	    fprintf(vvp_out, "    %%pushi/vec4 0, 0, %u;\n", ivl_expr_width(sub));
-	    fprintf(vvp_out, "    %%cmp/s;\n");
+	    fprintf(vvp_out, "    %%cmpi/s 0, 0, %u;\n", ivl_expr_width(sub));
 	    fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 5;\n", thread_count, local_count);
 	      /* If so, calculate -(m) */
 	    fprintf(vvp_out, "    %%inv;\n");
-	    fprintf(vvp_out, "    %%pushi/vec4 1, 0, %u;\n", ivl_expr_width(sub));
-	    fprintf(vvp_out, "    %%add;\n");
+	    fprintf(vvp_out, "    %%addi 1, 0, %u;\n", ivl_expr_width(sub));
 	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_count);
 	    local_count += 1;
 	    break;
