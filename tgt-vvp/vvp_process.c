@@ -671,7 +671,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 	    switch (ivl_statement_type(net)) {
 
 		case IVL_ST_CASE:
-		  fprintf(vvp_out, "    %%cmp/u;\n");
+		  fprintf(vvp_out, "    %%cmp/e;\n");
 		  fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 6;\n",
 			  thread_count, local_base+idx);
 		  break;
