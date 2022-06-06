@@ -185,6 +185,7 @@ ca_time_smtm		normal			ivltests gold=ca_time_smtm.gold
 nb_array_pv		normal			ivltests
 nb_ec_array		normal			ivltests
 nb_ec_array_pv		normal			ivltests
+nb_ec_array_pv2		normal			ivltests
 nb_ec_pv		normal			ivltests
 nb_ec_pv2		normal			ivltests
 nb_ec_real		normal			ivltests

@@ -179,6 +179,8 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	      /* If needed use the global error state. */
 	    if (part_off_ex) {
 		  fprintf(vvp_out, "    %%flag_mov 4, %d;\n", error_flag);
+		  fprintf(vvp_out, "    %%ix/mov 3, %d;\n", word_ix_reg);
+		  clr_word(word_ix_reg);
 	    }
 	    fprintf(vvp_out, "    %%assign/vec4/a/e v%p, %d;\n", lsig, part_off_reg);
 
@@ -202,8 +204,6 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 		    lsig, part_off_reg, delay_index);
 	    clr_word(delay_index);
       }
-
-      if (nevents != 0) fprintf(vvp_out, "    %%evctl/c;\n");
 
       clr_flag(error_flag);
       if (part_off_reg)
@@ -279,7 +279,6 @@ static void assign_to_lvector(ivl_lval_t lval,
 		  draw_eval_expr_into_integer(part_off_ex, offset_index);
 		  fprintf(vvp_out, "    %s/vec4/off/e v%p_%lu, %d;\n",
 			  assign_op, sig, use_word, offset_index);
-		  fprintf(vvp_out, "    %%evctl/c;\n");
 
 		  clr_word(offset_index);
 
@@ -312,7 +311,6 @@ static void assign_to_lvector(ivl_lval_t lval,
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %s/vec4/off/e v%p_%lu, %d;\n",
 			  assign_op, sig, use_word, offset_index);
-		  fprintf(vvp_out, "    %%evctl/c;\n");
 		  clr_word(offset_index);
 
 	    } else {
@@ -346,8 +344,6 @@ static void assign_to_lvector(ivl_lval_t lval,
 	      /* Event control delay... */
 	    fprintf(vvp_out, "    %s/vec4/e v%p_%lu;\n",
 		    assign_op, sig, use_word);
-	    fprintf(vvp_out, "    %%evctl/c;\n");
-
       } else {
 	      /*
 	       * The %assign can only take a 32 bit delay. For a larger
@@ -592,6 +588,9 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 
 	}
       }
+
+      if (nevents)
+	    fprintf(vvp_out, "    %%evctl/c;\n");
 
       return 0;
 }

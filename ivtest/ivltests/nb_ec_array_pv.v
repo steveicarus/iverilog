@@ -1,3 +1,6 @@
+// Check that non-blocking event control assignment to a part select on a vector
+// array works when using an immediate index.
+
 module top;
   reg pass = 1'b1;
 
