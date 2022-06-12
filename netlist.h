@@ -2187,9 +2187,6 @@ class NetECReal  : public NetExpr {
 
       const verireal&value() const;
 
-	// This type has no self-determined width. This is false.
-      virtual bool has_width() const;
-
 	// The type of this expression is ET_REAL
       ivl_variable_type_t expr_type() const;
 
@@ -4401,7 +4398,6 @@ class NetEConcat  : public NetExpr {
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                                   bool nested_func = false) const;
-      virtual bool has_width() const;
       virtual NetEConcat* dup_expr() const;
       virtual NetEConst*  eval_tree();
       virtual NetExpr* evaluate_function(const LineInfo&loc,
@@ -4458,7 +4454,6 @@ class NetESelect  : public NetExpr {
 
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                                   bool nested_func = false) const;
-      virtual bool has_width() const;
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEConst* eval_tree();
       virtual NetExpr*evaluate_function(const LineInfo&loc,

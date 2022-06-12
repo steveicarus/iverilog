@@ -250,11 +250,6 @@ ivl_variable_type_t NetEConcat::expr_type() const
       return expr_type_;
 }
 
-bool NetEConcat::has_width() const
-{
-      return true;
-}
-
 void NetEConcat::set(unsigned idx, NetExpr*e)
 {
       assert(idx < parms_.size());
@@ -292,11 +287,6 @@ NetECReal::~NetECReal()
 const verireal& NetECReal::value() const
 {
       return value_;
-}
-
-bool NetECReal::has_width() const
-{
-      return true;
 }
 
 ivl_variable_type_t NetECReal::expr_type() const
@@ -471,11 +461,6 @@ ivl_variable_type_t NetESelect::expr_type() const
 const netenum_t* NetESelect::enumeration() const
 {
       return dynamic_cast<const netenum_t*> (use_type_);
-}
-
-bool NetESelect::has_width() const
-{
-      return true;
 }
 
 NetESFunc::NetESFunc(const char*n, ivl_variable_type_t t,
