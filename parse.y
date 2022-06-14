@@ -149,17 +149,6 @@ static std::list<pform_port_t>* make_port_list(list<pform_port_t>*tmp,
       return tmp;
 }
 
-list<pform_range_t>* make_range_from_width(uint64_t wid)
-{
-      pform_range_t range;
-      range.first  = new PENumber(new verinum(wid-1, integer_width));
-      range.second = new PENumber(new verinum((uint64_t)0, integer_width));
-
-      std::list<pform_range_t>*rlist = new std::list<pform_range_t>;
-      rlist->push_back(range);
-      return rlist;
-}
-
 static std::list<perm_string>* list_from_identifier(char*id)
 {
       std::list<perm_string>*tmp = new std::list<perm_string>;

@@ -97,7 +97,6 @@ struct parmvalue_t {
 struct str_pair_t { ivl_drive_t str0, str1; };
 
 
-extern std::list<pform_range_t>* make_range_from_width(uint64_t wid);
 extern std::list<pform_range_t>* copy_range(std::list<pform_range_t>* orig);
 
   /* Use this function to transform the parted form of the attribute
