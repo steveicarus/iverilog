@@ -1919,7 +1919,6 @@ class NetUserFunc  : public NetNode {
       NetUserFunc(NetScope*s, perm_string n, NetScope*def, NetEvWait*trigger__);
       ~NetUserFunc();
 
-      ivl_variable_type_t data_type(unsigned port) const;
       unsigned port_width(unsigned port) const;
 
       const NetScope* def() const;
