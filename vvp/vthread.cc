@@ -1135,6 +1135,50 @@ bool of_ASSIGN_VEC4(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * Resizes a vector value for a partial assignment so that the value is fully
+ * in-bounds of the target signal. Both `val` and `off` will be updated if
+ * necessary.
+ *
+ * Returns false if the value is fully out-of-bounds and the assignment should
+ * be skipped. Otherwise returns true.
+ */
+static bool resize_rval_vec(vvp_vector4_t &val, int64_t &off,
+			    unsigned int sig_wid)
+{
+      unsigned int wid = val.size();
+
+        // Fully in bounds, most likely case
+      if (off >= 0 && (uint64_t)off + wid <= sig_wid)
+	    return true;
+
+      unsigned int base = 0;
+      if (off >= 0) {
+	      // Fully out-of-bounds
+	    if ((uint64_t)off >= sig_wid)
+		  return false;
+      } else {
+	      // Fully out-of-bounds */
+	    if ((uint64_t)(-off) >= wid)
+		  return false;
+
+	      // If the index is below the vector, then only assign the high
+	      // bits that overlap with the target
+	    base = -off;
+	    wid += off;
+		off = 0;
+      }
+
+	// If the value is partly above the target, then only assign
+	// the bits that overlap
+      if ((uint64_t)off + wid > sig_wid)
+	    wid = sig_wid - (uint64_t)off;
+
+      val = val.subvalue(base, wid);
+
+      return true;
+}
+
+/*
  * %assign/vec4/a/d <arr>, <offx>, <delx>
  */
 bool of_ASSIGN_VEC4_A_D(vthread_t thr, vvp_code_t cp)
@@ -1143,35 +1187,19 @@ bool of_ASSIGN_VEC4_A_D(vthread_t thr, vvp_code_t cp)
       int del_idx = cp->bit_idx[1];
       int adr_idx = 3;
 
-      long     off = off_idx? thr->words[off_idx].w_int  : 0;
+      int64_t  off = off_idx ? thr->words[off_idx].w_int : 0;
       vvp_time64_t del = del_idx? thr->words[del_idx].w_uint : 0;
       long     adr = thr->words[adr_idx].w_int;
 
       vvp_vector4_t val = thr->pop_vec4();
-      unsigned wid = val.size();
-      const unsigned array_wid = cp->array->get_word_size();
 
 	// Abort if flags[4] is set. This can happen if the calculation
 	// into an index register failed.
       if (thr->flags[4] == BIT4_1)
 	    return true;
 
-      if (off >= (long)array_wid)
+      if (!resize_rval_vec(val, off, cp->array->get_word_size()))
 	    return true;
-      if (off < 0) {
-	    if ((unsigned)-off >= array_wid)
-		  return true;
-
-	    int use_off = -off;
-	    assert(wid > (unsigned)use_off);
-	    unsigned use_wid = wid - use_off;
-	    val = val.subvalue(use_off, use_wid);
-	    off = 0;
-	    wid = use_wid;
-      }
-      if (off+wid > array_wid) {
-	    val = val.subvalue(0, array_wid-off);
-      }
 
       schedule_assign_array_word(cp->array, adr, off, val, del);
 
@@ -1186,34 +1214,18 @@ bool of_ASSIGN_VEC4_A_E(vthread_t thr, vvp_code_t cp)
       int off_idx = cp->bit_idx[0];
       int adr_idx = 3;
 
-      long     off = off_idx? thr->words[off_idx].w_int  : 0;
+      int64_t  off = off_idx ? thr->words[off_idx].w_int : 0;
       long     adr = thr->words[adr_idx].w_int;
 
       vvp_vector4_t val = thr->pop_vec4();
-      unsigned wid = val.size();
-      const unsigned array_wid = cp->array->get_word_size();
 
 	// Abort if flags[4] is set. This can happen if the calculation
 	// into an index register failed.
       if (thr->flags[4] == BIT4_1)
 	    return true;
 
-      if (off >= (long)array_wid)
+      if (!resize_rval_vec(val, off, cp->array->get_word_size()))
 	    return true;
-      if (off < 0) {
-	    if ((unsigned)-off >= array_wid)
-		  return true;
-
-	    int use_off = -off;
-	    assert(wid > (unsigned)use_off);
-	    unsigned use_wid = wid - use_off;
-	    val = val.subvalue(use_off, use_wid);
-	    off = 0;
-	    wid = use_wid;
-      }
-      if (off+wid > array_wid) {
-	    val = val.subvalue(0, array_wid-off);
-      }
 
       if (thr->ecount == 0) {
 	    schedule_assign_array_word(cp->array, adr, off, val, 0);
@@ -1233,9 +1245,8 @@ bool of_ASSIGN_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
       unsigned off_index = cp->bit_idx[0];
       unsigned del_index = cp->bit_idx[1];
       vvp_vector4_t val = thr->pop_vec4();
-      unsigned wid = val.size();
 
-      int off = thr->words[off_index].w_int;
+      int64_t off = thr->words[off_index].w_int;
       vvp_time64_t del = thr->words[del_index].w_uint;
 
 	// Abort if flags[4] is set. This can happen if the calculation
@@ -1246,22 +1257,8 @@ bool of_ASSIGN_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
       assert(sig);
 
-      if (off >= (long)sig->value_size())
+      if (!resize_rval_vec(val, off, sig->value_size()))
 	    return true;
-      if (off < 0) {
-	    if ((unsigned)-off >= wid)
-		  return true;
-
-	    int use_off = -off;
-	    assert(wid > (unsigned)use_off);
-	    unsigned use_wid = wid - use_off;
-	    val = val.subvalue(use_off, use_wid);
-	    off = 0;
-	    wid = use_wid;
-      }
-      if (off+wid > sig->value_size()) {
-	    val = val.subvalue(0, sig->value_size()-off);
-      }
 
       schedule_assign_vector(ptr, off, sig->value_size(), val, del);
       return true;
@@ -1275,9 +1272,8 @@ bool of_ASSIGN_VEC4_OFF_E(vthread_t thr, vvp_code_t cp)
       vvp_net_ptr_t ptr (cp->net, 0);
       unsigned off_index = cp->bit_idx[0];
       vvp_vector4_t val = thr->pop_vec4();
-      unsigned wid = val.size();
 
-      int off = thr->words[off_index].w_int;
+      int64_t off = thr->words[off_index].w_int;
 
 	// Abort if flags[4] is set. This can happen if the calculation
 	// into an index register failed.
@@ -1287,22 +1283,8 @@ bool of_ASSIGN_VEC4_OFF_E(vthread_t thr, vvp_code_t cp)
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
       assert(sig);
 
-      if (off >= (long)sig->value_size())
+      if (!resize_rval_vec(val, off, sig->value_size()))
 	    return true;
-      if (off < 0) {
-	    if ((unsigned)-off >= wid)
-		  return true;
-
-	    int use_off = -off;
-	    assert((int)wid > use_off);
-	    unsigned use_wid = wid - use_off;
-	    val = val.subvalue(use_off, use_wid);
-	    off = 0;
-	    wid = use_wid;
-      }
-      if (off+wid > sig->value_size()) {
-	    val = val.subvalue(0, sig->value_size()-off);
-      }
 
       if (thr->ecount == 0) {
 	    schedule_assign_vector(ptr, off, sig->value_size(), val, 0);
@@ -5455,58 +5437,31 @@ bool of_RET_VEC4(vthread_t thr, vvp_code_t cp)
 {
       size_t index = cp->number;
       unsigned off_index = cp->bit_idx[0];
-      int wid = cp->bit_idx[1];
+      unsigned int wid = cp->bit_idx[1];
       vvp_vector4_t&val = thr->peek_vec4();
 
       vthread_t fun_thr = get_func(thr);
       assert(index < get_max(fun_thr, val));
       unsigned depth = get_depth(fun_thr, index, val);
 
-      int off = off_index? thr->words[off_index].w_int : 0;
-      const int sig_value_size = fun_thr->parent->peek_vec4(depth).size();
-
-      unsigned val_size = val.size();
+      int64_t off = off_index ? thr->words[off_index].w_int : 0;
+      unsigned int sig_value_size = fun_thr->parent->peek_vec4(depth).size();
 
       if (off_index!=0 && thr->flags[4] == BIT4_1) {
 	    thr->pop_vec4(1);
 	    return true;
       }
 
-      if (off <= -wid) {
+      if (!resize_rval_vec(val, off, sig_value_size)) {
 	    thr->pop_vec4(1);
 	    return true;
       }
 
-      if (off >= sig_value_size) {
-	    thr->pop_vec4(1);
-	    return true;
-      }
-
-	// If the index is below the vector, then only assign the high
-	// bits that overlap with the target
-      if (off < 0) {
-	    int use_off = -off;
-	    wid -= use_off;
-	    val = val.subvalue(use_off, wid);
-	    val_size = wid;
-	    off = 0;
-      }
-
-	// If the value is partly above the target, then only assign
-	// the bits that overlap
-      if ((off+wid) > sig_value_size) {
-	    wid = sig_value_size - off;
-	    val = val.subvalue(0, wid);
-	    val.resize(wid);
-	    val_size = wid;
-      }
-
-      if (off==0 && val_size==(unsigned)sig_value_size) {
+      if (off == 0 && val.size() == sig_value_size) {
 	    fun_thr->parent->poke_vec4(depth, val);
-
       } else {
 	    vvp_vector4_t tmp_dst = fun_thr->parent->peek_vec4(depth);
-	    assert(wid>=0 && val.size() == (unsigned)wid);
+	    assert(val.size() == wid);
 	    tmp_dst.set_vec(off, val);
 	    fun_thr->parent->poke_vec4(depth, tmp_dst);
       }
@@ -6247,23 +6202,22 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
       vvp_net_ptr_t ptr(cp->net, 0);
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
       unsigned off_index = cp->bit_idx[0];
-      int wid = cp->bit_idx[1];
+      unsigned int wid = cp->bit_idx[1];
 
-      int off = off_index? thr->words[off_index].w_int : 0;
-      const int sig_value_size = sig->value_size();
+      int64_t off = off_index ? thr->words[off_index].w_int : 0;
+      unsigned int sig_value_size = sig->value_size();
 
       vvp_vector4_t&val = thr->peek_vec4();
       unsigned val_size = val.size();
 
-      if ((int)val_size < wid) {
+      if (val_size < wid) {
 	    cerr << thr->get_fileline()
 	         << "XXXX Internal error: val.size()=" << val_size
 		 << ", expecting >= " << wid << endl;
       }
-      assert((int)val_size >= wid);
-      if ((int)val_size > wid) {
+      assert(val_size >= wid);
+      if (val_size > wid) {
 	    val.resize(wid);
-	    val_size = wid;
       }
 
 	// If there is a problem loading the index register, flags-4
@@ -6273,36 +6227,12 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
 	    return true;
       }
 
-      if (off <= -wid) {
-	    thr->pop_vec4(1);
-	    return true;
-      }
-      if (off >= sig_value_size) {
+      if (!resize_rval_vec(val, off, sig_value_size)) {
 	    thr->pop_vec4(1);
 	    return true;
       }
 
-	// If the index is below the vector, then only assign the high
-	// bits that overlap with the target.
-      if (off < 0) {
-	    int use_off = -off;
-	    wid -= use_off;
-	    val = val.subvalue(use_off, wid);
-	    val_size = wid;
-	    off = 0;
-      }
-
-	// If the value is partly above the target, then only assign
-	// the bits that overlap.
-      if ((off+wid) > sig_value_size) {
-	    wid = sig_value_size - off;
-	    val = val.subvalue(0, wid);
-	    val.resize(wid);
-	    val_size = wid;
-      }
-
-
-      if (off==0 && val_size==(unsigned)sig_value_size)
+      if (off == 0 && val.size() == sig_value_size)
 	    vvp_send_vec4(ptr, val, thr->wt_context);
       else
 	    vvp_send_vec4_pv(ptr, val, off, sig_value_size, thr->wt_context);
@@ -6319,13 +6249,18 @@ bool of_STORE_VEC4A(vthread_t thr, vvp_code_t cp)
       unsigned adr_index = cp->bit_idx[0];
       unsigned off_index = cp->bit_idx[1];
 
-      const vvp_vector4_t&value = thr->peek_vec4();
-
       long adr = adr_index? thr->words[adr_index].w_int : 0;
-      long off = off_index? thr->words[off_index].w_int : 0;
+      int64_t off = off_index ? thr->words[off_index].w_int : 0;
 
 	// Suppress action if flags-4 is true.
       if (thr->flags[4] == BIT4_1) {
+	    thr->pop_vec4(1);
+	    return true;
+      }
+
+      vvp_vector4_t &value = thr->peek_vec4();
+
+      if (!resize_rval_vec(value, off, cp->array->get_word_size())) {
 	    thr->pop_vec4(1);
 	    return true;
       }

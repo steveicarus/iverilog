@@ -415,6 +415,12 @@ program5a		CE,-g2009		ivltests
 program5b		CE,-g2009		ivltests
 program_hello		normal,-g2009		ivltests
 program_hello2		CE,-g2009		ivltests
+pv_wr_vec2		normal,-g2005-sv	ivltests
+pv_wr_vec2_nb		normal,-g2005-sv	ivltests
+pv_wr_vec2_nb_ec	normal,-g2005-sv	ivltests
+pv_wr_vec2a		normal,-g2005-sv	ivltests
+pv_wr_vec2a_nb		normal,-g2005-sv	ivltests
+pv_wr_vec2a_nb_ec	normal,-g2005-sv	ivltests
 recursive_func2		normal,-g2005-sv	ivltests gold=recursive_func.gold
 recursive_func_const2	normal,-g2005-sv	ivltests gold=recursive_func_const.gold
 sbyte_test		normal,-g2005-sv	ivltests

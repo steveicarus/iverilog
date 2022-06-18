@@ -1435,6 +1435,12 @@ pullupdown		normal			ivltests # Contributed test
 pullupdown2		normal			ivltests # Contributed test
 pullupdown3		normal			ivltests # Contributed test
 pv_undef_sig_sel	normal			ivltests
+pv_wr_vec4		normal			ivltests
+pv_wr_vec4_nb		normal			ivltests
+pv_wr_vec4_nb_ec	normal			ivltests
+pv_wr_vec4a		normal			ivltests
+pv_wr_vec4a_nb		normal			ivltests
+pv_wr_vec4a_nb_ec	normal			ivltests
 qmark			normal			ivltests
 qmark1			normal			ivltests
 qmark3			normal			ivltests

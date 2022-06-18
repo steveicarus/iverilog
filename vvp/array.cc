@@ -602,10 +602,21 @@ void __vpiArray::set_word(unsigned address, unsigned part_off, const vvp_vector4
 
       if (vals) {
 	    assert(nets == 0);
-	      // FIXME: For now, assume no part select of word?
-	    assert(part_off==0);
-	    assert(val.size() == vals_width);
-	    vals->set_word(address, val);
+	    if (part_off != 0 || val.size() != vals_width) {
+		  vvp_vector4_t tmp;
+		  vals->get_word(address, tmp);
+		  if ((part_off + val.size()) > tmp.size()) {
+			cerr << "part_off=" << part_off
+			     << " val.size()=" << val.size()
+			     << " vals[address].size()=" << tmp.size()
+			     << " vals_width=" << vals_width << endl;
+			assert(0);
+		  }
+		  tmp.set_vec(part_off, val);
+		  vals->set_word(address, tmp);
+	    } else {
+		  vals->set_word(address, val);
+	    }
 	    word_change(address);
 	    return;
       }
