@@ -306,11 +306,6 @@ vvp_net_fil_t::prop_t vvp_net_fil_t::filter_real(double&)
       return PROP;
 }
 
-vvp_net_fil_t::prop_t vvp_net_fil_t::filter_long(long&)
-{
-      return PROP;
-}
-
 vvp_net_fil_t::prop_t vvp_net_fil_t::filter_string(const string&)
 {
       return PROP;
@@ -579,31 +574,6 @@ void vvp_send_real(vvp_net_ptr_t ptr, double val, vvp_context_t context)
 
 	    if (cur->fun)
 		  cur->fun->recv_real(ptr, val, context);
-
-	    ptr = next_val;
-      }
-}
-
-void vvp_send_long(vvp_net_ptr_t ptr, long val)
-{
-      while (vvp_net_t*cur = ptr.ptr()) {
-	    vvp_net_ptr_t next_val = cur->port[ptr.port()];
-
-	    if (cur->fun)
-		  cur->fun->recv_long(ptr, val);
-
-	    ptr = next_val;
-      }
-}
-
-void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
-                      unsigned base, unsigned wid)
-{
-      while (vvp_net_t*cur = ptr.ptr()) {
-	    vvp_net_ptr_t next_val = cur->port[ptr.port()];
-
-	    if (cur->fun)
-		  cur->fun->recv_long_pv(ptr, val, base, wid);
 
 	    ptr = next_val;
       }
@@ -3313,20 +3283,6 @@ void vvp_net_fun_t::recv_real(vvp_net_ptr_t, double bit, vvp_context_t)
 {
       fprintf(stderr, "internal error: %s: recv_real(%f) not implemented\n",
 	      typeid(*this).name(), bit);
-      assert(0);
-}
-
-void vvp_net_fun_t::recv_long(vvp_net_ptr_t, long)
-{
-      fprintf(stderr, "internal error: %s: recv_long not implemented\n",
-	      typeid(*this).name());
-      assert(0);
-}
-
-void vvp_net_fun_t::recv_long_pv(vvp_net_ptr_t, long, unsigned, unsigned)
-{
-      fprintf(stderr, "internal error: %s: recv_long_pv not implemented\n",
-	      typeid(*this).name());
       assert(0);
 }
 

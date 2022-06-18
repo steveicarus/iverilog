@@ -1134,7 +1134,6 @@ class vvp_net_t {
       void send_vec4(const vvp_vector4_t&val, vvp_context_t context);
       void send_vec8(const vvp_vector8_t&val);
       void send_real(double val, vvp_context_t context);
-      void send_long(long val);
       void send_string(const std::string&val, vvp_context_t context);
       void send_object(vvp_object_t val, vvp_context_t context);
 
@@ -1214,7 +1213,6 @@ class vvp_net_fun_t {
       virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
       virtual void recv_real(vvp_net_ptr_t port, double bit,
                              vvp_context_t context);
-      virtual void recv_long(vvp_net_ptr_t port, long bit);
       virtual void recv_string(vvp_net_ptr_t port, const std::string&bit,
 			       vvp_context_t context);
       virtual void recv_object(vvp_net_ptr_t port, vvp_object_t bit,
@@ -1225,8 +1223,6 @@ class vvp_net_fun_t {
 				unsigned base, unsigned vwid, vvp_context_t context);
       virtual void recv_vec8_pv(vvp_net_ptr_t p, const vvp_vector8_t&bit,
 				unsigned base, unsigned vwid);
-      virtual void recv_long_pv(vvp_net_ptr_t port, long bit,
-                                unsigned base, unsigned wid);
 
 	// This method is called when the net is forced or
 	// released. This is very rarely needed; island ports use it
@@ -1290,7 +1286,6 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
       virtual prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep,
 				 unsigned base, unsigned vwid);
       virtual prop_t filter_real(double&val);
-      virtual prop_t filter_long(long&val);
       virtual prop_t filter_object(vvp_object_t&val);
       virtual prop_t filter_string(const std::string&val);
 
@@ -1476,7 +1471,6 @@ class vvp_fun_drive  : public vvp_net_fun_t {
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context);
-	//void recv_long(vvp_net_ptr_t port, long bit);
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 			unsigned base, unsigned vwid, vvp_context_t);
@@ -1607,9 +1601,6 @@ inline void vvp_send_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val, vvp_contex
 extern void vvp_send_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&val);
 extern void vvp_send_real(vvp_net_ptr_t ptr, double val,
                           vvp_context_t context);
-extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
-extern void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
-                             unsigned base, unsigned width);
 
 inline void vvp_send_string(vvp_net_ptr_t ptr, const std::string&val, vvp_context_t context)
 {
