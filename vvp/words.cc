@@ -72,14 +72,6 @@ void compile_var_real(char*label, char*name)
       __compile_var_real(label, name, 0, 0);
 }
 
-void compile_varw_real(char*label, vvp_array_t array,
-		       unsigned long addr,
-		       int msb, int lsb)
-{
-      assert(msb == 0 && lsb == 0);
-      __compile_var_real(label, 0, array, addr);
-}
-
 void compile_var_string(char*label, char*name)
 {
       vvp_net_t*net = new vvp_net_t;

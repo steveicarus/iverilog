@@ -35,8 +35,4 @@ extern vvp_array_t array_find(const char*label);
 extern value_callback* vpip_array_word_change(p_cb_data data);
 extern value_callback* vpip_array_change(p_cb_data data);
 
-/* Compile hooks */
-extern void compile_varw_real(char*label, vvp_array_t array,
-			      unsigned long array_addr,
-			      int msb, int lsb);
 #endif /* IVL_array_H */
