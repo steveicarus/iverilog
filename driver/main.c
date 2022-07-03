@@ -38,7 +38,7 @@ const char NOTICE[] =
 ;
 
 const char HELP[] =
-"Usage: iverilog [-EiSuvV] [-B base] [-c cmdfile|-f cmdfile]\n"
+"Usage: iverilog [-EiRSuvV] [-B base] [-c cmdfile|-f cmdfile]\n"
 "                [-g1995|-g2001|-g2005|-g2005-sv|-g2009|-g2012] [-g<feature>]\n"
 "                [-D macro[=defn]] [-I includedir] [-L moduledir]\n"
 "                [-M [mode=]depfile] [-m module]\n"
@@ -1088,6 +1088,10 @@ static void find_ivl_root(void)
       strcat(ivl_root, ivl_lib_suffix);
 }
 
+static void print_runtime_paths(void) {
+	printf("includedir: %s\n", IVL_INCLUDE_INSTALL_DIR);
+}
+
 int main(int argc, char **argv)
 {
       int e_flag = 0;
@@ -1157,7 +1161,7 @@ int main(int argc, char **argv)
 	}
       }
 
-      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hl:I:iL:M:m:N:o:P:p:Ss:T:t:uvVW:y:Y:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hl:I:iL:M:m:N:o:P:p:RSs:T:t:uvVW:y:Y:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -1243,6 +1247,10 @@ int main(int argc, char **argv)
 		case 'o':
 		  opath = optarg;
 		  break;
+
+		case 'R':
+		  print_runtime_paths();
+		  return 0;
 
 		case 'S':
 		  synth_flag = 1;
