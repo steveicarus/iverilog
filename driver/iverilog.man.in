@@ -4,7 +4,7 @@ iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[\-EiSuVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
+[\-EiRSuVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
 [\-Pparameter=value] [\-pflag=value] [\-dname]
 [\-g1995\:|\-g2001\:|\-g2005\:|\-g2005-sv\:|\-g2009\:|\-g2012\:|\-g<feature>]
 [\-Iincludedir] [\-Lmoduledir] [\-mmodule] [\-M[mode=]file] [\-Nfile]
@@ -270,6 +270,9 @@ indirectly execute the compiler output file.
 .TP 8
 .B -V
 Print the version of the compiler, and exit.
+.TP 8
+.B -R
+Print the runtime paths of the compiler, and exit.
 .TP 8
 .B -W\fIclass\fP
 Turn on different classes of warnings. See the \fBWARNING TYPES\fP

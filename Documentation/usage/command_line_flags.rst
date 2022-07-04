@@ -242,6 +242,11 @@ These flags affect the general behavior of the compiler.
   version information, including version details for the various components of
   the compiler.
 
+* -R
+
+  Print the runtime paths of the compiler. This can be useful to find, e.g.,
+  the include path of vpi_user.h.
+
 * -W<warning class>
 
   Enable/disable warnings. All the warning types (other then "all") can be
