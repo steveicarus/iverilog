@@ -1,0 +1,8 @@
+Compiling vpi/nextsimtime_fill_time.c...
+Making nextsimtime_fill_time.vpi from  nextsimtime_fill_time.o...
+time 0: 0
+nextsimtime: 1 vpi_get_time: 1
+time 1: 1
+nextsimtime: 4 vpi_get_time: 4
+time 4: 4
+nextsimtime: 5 vpi_get_time: 5

@@ -55,6 +55,7 @@ static PLI_INT32 test_next_calltf(PLI_BYTE8 *name)
 #endif
 {
       vpiHandle sys, argv, value;
+      static s_vpi_time dummy_time = {vpiSimTime, 0, 0, 0};
 
       (void)name;  /* Parameter is not used. */
 
@@ -67,6 +68,7 @@ static PLI_INT32 test_next_calltf(PLI_BYTE8 *name)
       for (value = vpi_scan(argv) ;  value ;  value = vpi_scan(argv)) {
 	    s_cb_data cb;
 	    cb.reason = cbNextSimTime;
+	    cb.time = &dummy_time;
 	    cb.cb_rtn = next_sim_time_callback;
 	    cb.user_data = (char*)value;
 	    vpi_register_cb(&cb);
