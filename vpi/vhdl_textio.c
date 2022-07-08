@@ -188,7 +188,7 @@ static int read_vector(const char *string, s_vpi_value *val, vpiHandle var)
  */
 static int read_time(const char *string, s_vpi_value *val, PLI_INT32 scope_unit) {
     PLI_UINT64 period;
-    char units[2];
+    char units[3];
     int time_unit, processed_chars;
 
     if(sscanf(string, "%" PLI_UINT64_FMT " %2s%n", &period, units, &processed_chars) != 2)
@@ -720,7 +720,7 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
         case FORMAT_BOOL:
         {
-            char buf[5];
+            char buf[6];
 
             val.format = vpiIntVal;
             if(sscanf(string, "%5s%n", buf, &processed_chars) == 1)
