@@ -27,6 +27,7 @@
  * reference any other modules. It is entirely self contained.
  */
 
+# include  <algorithm>
 # include  <typeinfo>
 # include  <cstdlib>
 # include  <cstring>
