@@ -1,0 +1,13 @@
+# This is the root editorconfig
+root=true
+
+# Settings for all file types
+charset = utf-8
+end_of_line = lf
+
+# Configure settings for c++ code in all subdirs
+[**.{cc,h}]
+indent_style = space
+indent_size = 6
+trim_trailing_whitespace = true
+insert_final_newline = true

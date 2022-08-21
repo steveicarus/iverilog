@@ -46,6 +46,7 @@ const char NOTICE[] =
 # include  <map>
 # include  <unistd.h>
 # include  <cstdlib>
+# include  <memory>
 #if defined(HAVE_TIMES)
 # include  <sys/times.h>
 #endif
@@ -60,6 +61,7 @@ const char NOTICE[] =
 # include  "compiler.h"
 # include  "discipline.h"
 # include  "t-dll.h"
+# include  "logging.h"
 
 using namespace std;
 
@@ -900,17 +902,15 @@ static void EOC_cleanup(void)
       filename_strings.cleanup();
 }
 
-int main(int argc, char*argv[])
-{
-      bool help_flag = false;
-      bool times_flag = false;
-      bool version_flag = false;
+static bool help_flag = false;
+static bool times_flag = false;
+static bool version_flag = false;
 
-      const char* net_path = 0;
-      const char* pf_path = 0;
-      int opt;
-
-      struct tms cycles[5];
+static const char* net_path = 0;
+static const char* pf_path = 0;
+static int opt;
+static struct tms cycles[5];
+int parse_cmdargs(int argc, char*argv[]) {
 
 #if defined(TRAP_SIGINT_FOR_DEBUG)
       signal(SIGINT, &signals_handler);
@@ -931,6 +931,9 @@ int main(int argc, char*argv[])
       flags["-o"] = strdup("a.out");
       min_typ_max_flag = TYP;
       min_typ_max_warn = 10;
+
+      // By default only errors are logged, i.e. LogSeverity::Error
+      uint8_t min_log_severity = 3;
 
       while ((opt = getopt(argc, argv, "C:F:f:hN:P:p:Vv")) != EOF) switch (opt) {
 
@@ -957,6 +960,10 @@ int main(int argc, char*argv[])
 	    break;
 	  case 'v':
 	    verbose_flag = true;
+          // A better implementation could increment a verbosity counter with every -v flag encountered
+          // the min_log_severity is then min(0, 3 - verbosity)
+          // That approach would allow to use more log levels for fine grained control of the output.
+          min_log_severity = 1;
 #          if defined(HAVE_TIMES)
 	    times_flag = true;
 #          endif
@@ -969,6 +976,8 @@ int main(int argc, char*argv[])
 	    flag_errors += 1;
 	    break;
       }
+
+      set_min_log_severity(min_log_severity);
 
       if (flag_errors)
 	    return flag_errors;
@@ -983,7 +992,7 @@ int main(int argc, char*argv[])
 
 	    dll_target_obj.test_version(flags["DLL"]);
 
-	    return 0;
+	    return -1;
       }
 
       if (help_flag) {
@@ -1005,7 +1014,7 @@ int main(int argc, char*argv[])
 "\t-V               Print version and copyright information, and exit.\n"
 
 		  ;
-	    return 0;
+	    return -1;
       }
 
       int arg = optind;
@@ -1015,8 +1024,8 @@ int main(int argc, char*argv[])
       }
 
       if (source_files.empty()) {
-	    cerr << "No input files." << endl;
-	    return 1;
+            log(LogSeverity::Error, "No input files.\n");
+            return 1;
       }
 
       separate_compilation = source_files.size() > 1;
@@ -1120,6 +1129,10 @@ int main(int argc, char*argv[])
       flag_tmp = flags["DISABLE_CONCATZ_GENERATION"];
       if (flag_tmp) disable_concatz_generation = strcmp(flag_tmp,"true")==0;
 
+      return 0;
+}
+
+int preprocess(){
 	/* Parse the input. Make the pform. */
       int rc = 0;
       for (unsigned idx = 0; idx < source_files.size(); idx += 1) {
@@ -1165,218 +1178,238 @@ int main(int argc, char*argv[])
       }
 
       if (pre_process_fail_count) {
-	    cerr << "Preprocessor failed with " << pre_process_fail_count
-	         << " errors." << endl;
-	    return pre_process_fail_count;
+            log(LogSeverity::Error, "Preprocessor failed with %lu errors.\n", pre_process_fail_count);
+            return pre_process_fail_count;
       }
 
+      return 0;
+}
 
-	/* If the user did not give specific module(s) to start with,
-	   then look for modules that are not instantiated anywhere.  */
+int find_root_module(){
+      /* If the user did not give specific module(s) to start with,
+            then look for modules that are not instantiated anywhere.  */
 
       if (roots.empty()) {
-	    map<perm_string,bool> mentioned_p;
-	    map<perm_string,Module*>::iterator mod;
-	    if (verbose_flag)
-		  cout << "LOCATING TOP-LEVEL MODULES" << endl << "  ";
-	    for (mod = pform_modules.begin()
-		       ; mod != pform_modules.end() ; ++ mod ) {
-		  find_module_mention(mentioned_p, mod->second);
-	    }
+            map<perm_string,bool> mentioned_p;
+            map<perm_string,Module*>::iterator mod;
 
-	    for (mod = pform_modules.begin()
-		       ; mod != pform_modules.end() ; ++ mod ) {
 
-		  if (!(*mod).second->can_be_toplevel())
-			continue;
+            log(LogSeverity::Info, "LOCATING TOP-LEVEL MODULES\n");
+            if (verbose_flag)
+                  cout << "  ";
 
-		    /* Don't choose modules instantiated in other
-		       modules. */
-		  if (mentioned_p[(*mod).second->mod_name()])
-			continue;
+            for (mod = pform_modules.begin()
+                  ; mod != pform_modules.end() ; ++ mod ) {
+                  find_module_mention(mentioned_p, mod->second);
+            }
 
-		    /* What's left might as well be chosen as a root. */
-		  if (verbose_flag)
-			cout << " " << (*mod).second->mod_name();
-		  roots.push_back((*mod).second->mod_name());
-	    }
-	    if (verbose_flag)
-		  cout << endl;
+            for (mod = pform_modules.begin()
+                  ; mod != pform_modules.end() ; ++ mod ) {
+
+                  if (!(*mod).second->can_be_toplevel())
+                        continue;
+
+                  /* Don't choose modules instantiated in other
+                        modules. */
+                  if (mentioned_p.find((*mod).second->mod_name()) != mentioned_p.end())
+                        continue;
+
+                  /* What's left might as well be chosen as a root. */
+                  if (verbose_flag)
+                        cout << " " << (*mod).second->mod_name();
+                  roots.push_back((*mod).second->mod_name());
+            }
+            if (verbose_flag)
+                  cout << endl;
       }
 
-	/* If there is *still* no guess for the root module, then give
-	   up completely, and complain. */
+      /* If there is *still* no guess for the root module, then give
+            up completely, and complain. */
 
       if (roots.empty()) {
-	    cerr << "No top level modules, and no -s option." << endl;
-	    return ignore_missing_modules ? 0 : 1;
+
+            log(LogSeverity::Error, "No top level modules, and no -s option.\n");
+            return ignore_missing_modules ? 0 : 1;
       }
+
+      return 0;
+}
+
+
+void handle_elaboration_errors(){
+      if (! missing_modules.empty()) {
+            cerr << "*** These modules were missing:" << endl;
+
+            map<perm_string,unsigned>::const_iterator idx;
+            for (idx = missing_modules.begin(); idx != missing_modules.end() ; ++ idx )
+            {
+                  cerr << "        " << (*idx).first
+                        << " referenced " << (*idx).second
+                        << " times."<< endl;
+            }
+
+            cerr << "***" << endl;
+      }
+
+      EOC_cleanup();
+}
+
+int elaborate(){
 
 
       if (verbose_flag) {
-	    if (times_flag) {
-		  times(cycles+1);
-		  cerr<<" ... done, "
-		      <<cycles_diff(cycles+1, cycles+0)<<" seconds."<<endl;
-	    }
-	    cout << "ELABORATING DESIGN" << endl;
+            if (times_flag) {
+                  times(cycles+1);
+                  cerr<<" ... done, "
+                        <<cycles_diff(cycles+1, cycles+0)<<" seconds.\n";
+            }
+
+            log(LogSeverity::Info, "ELABORATING DESIGN\n");
       }
 
-	/* Decide if we are going to allow system functions to be called
-	 * as tasks. */
-      if (gn_system_verilog()) {
-	    def_sfunc_as_task = IVL_SFUNC_AS_TASK_WARNING;
-      }
+      /* Decide if we are going to allow system functions to be called
+       * as tasks. */
+      if (gn_system_verilog())
+            def_sfunc_as_task = IVL_SFUNC_AS_TASK_WARNING;
 
-	/* On with the process of elaborating the module. */
-      Design*des = elaborate(roots);
+      /* On with the process of elaborating the module. */
 
-      if ((des == 0) || (des->errors > 0)) {
-	    if (des != 0) {
-		  cerr << des->errors
-		       << " error(s) during elaboration." << endl;
-		  if (net_path) {
-			ofstream out (net_path);
-			des->dump(out);
-		  }
-	    } else {
-		  cerr << "Elaboration failed" << endl;
-	    }
+      std::unique_ptr<Design> des(elaborate(roots));
 
-	    goto errors_summary;
+
+      if(des == nullptr){
+            // elaborate failed in unexpected or unspecified way
+            log(LogSeverity::Error, "Elaboration failed\n");
+            EOC_cleanup();
+            return 1;
+      } else if(des->errors > 0) {
+            log(LogSeverity::Error, "%d error(s) during elaboration.\n", des->errors);
+            // Elaboration resulted in errors
+            handle_elaboration_errors();
+            return des->errors;
       }
 
       des->set_flags(flags);
 
       switch(min_typ_max_flag) {
-	case MIN:
-	    des->set_delay_sel(Design::MIN);
-	    break;
-	case TYP:
-	    des->set_delay_sel(Design::TYP);
-	    break;
-	case MAX:
-	    des->set_delay_sel(Design::MAX);
-	    break;
-	default:
-	    assert(0);
+      case MIN:
+            des->set_delay_sel(Design::MIN);
+            break;
+      case TYP:
+            des->set_delay_sel(Design::TYP);
+            break;
+      case MAX:
+            des->set_delay_sel(Design::MAX);
+            break;
+      default:
+            assert(0);
       }
 
-	/* Done with all the pform data. Delete the modules. */
+      /* Done with all the pform data. Delete the modules. */
       for (map<perm_string,Module*>::iterator idx = pform_modules.begin()
-		 ; idx != pform_modules.end() ; ++ idx ) {
+            ; idx != pform_modules.end() ; ++ idx ) {
 
-	    delete (*idx).second;
-	    (*idx).second = 0;
+            delete (*idx).second;
+            (*idx).second = 0;
       }
 
       if (verbose_flag) {
-	    if (times_flag) {
-		  times(cycles+2);
-		  cerr<<" ... done, "
-		      <<cycles_diff(cycles+2, cycles+1)<<" seconds."<<endl;
-	    }
-	    cout << "RUNNING FUNCTORS" << endl;
+            if (times_flag) {
+                  times(cycles+2);
+                  cerr<<" ... done, "
+                  <<cycles_diff(cycles+2, cycles+1)<<" seconds."<<endl;
+            }
+            cout << "RUNNING FUNCTORS" << endl;
       }
 
       while (!net_func_queue.empty()) {
-	    net_func func = net_func_queue.front();
-	    net_func_queue.pop();
-	    if (verbose_flag)
-		  cerr<<" -F "<<net_func_to_name(func)<< " ..." <<endl;
-	    func(des);
+            net_func func = net_func_queue.front();
+            net_func_queue.pop();
+            if (verbose_flag)
+                  cerr<<" -F "<<net_func_to_name(func)<< " ..." <<endl;
+            func(des.get());
       }
 
-      if (verbose_flag) {
-	    cout << "CALCULATING ISLANDS" << endl;
-      }
+      log(LogSeverity::Info, "CALCULATING ISLANDS\n");
       des->join_islands();
 
       if (net_path) {
-	    if (verbose_flag)
-		  cerr<<" dumping netlist to " <<net_path<< "..." <<endl;
+            if (verbose_flag)
+                  cerr<<" dumping netlist to " <<net_path<< "..." <<endl;
 
-	    ofstream out (net_path);
-	    des->dump(out);
+            ofstream out (net_path);
+            des->dump(out);
       }
 
       if (des->errors) {
-	    cerr << des->errors
-		 << " error(s) in post-elaboration processing." <<
-		  endl;
-	    return des->errors;
+            log(LogSeverity::Error, "%u error(s) in post-elaboration processing.\n", des->errors);
+            return des->errors;
       }
 
       if (verbose_flag) {
-	    if (times_flag) {
-		  times(cycles+3);
-		  cerr<<" ... done, "
-		      <<cycles_diff(cycles+3, cycles+2)<<" seconds."<<endl;
-	    }
+            if (times_flag) {
+                  times(cycles+3);
+                  cerr<<" ... done, "
+                        <<cycles_diff(cycles+3, cycles+2)<<" seconds."<<endl;
+            }
       }
 
-      if (verbose_flag) {
-	    cout << "CODE GENERATION" << endl;
-      }
+      log(LogSeverity::Info, "CODE GENERATION\n");
 
       if (int emit_rc = des->emit(&dll_target_obj)) {
-	    if (emit_rc > 0) {
-		  cerr << "error: Code generation had "
-		       << emit_rc << " error(s)."
-		       << endl;
-		  delete des;
-		  EOC_cleanup();
-		  return 1;
-	    }
-	    if (emit_rc < 0) {
-		  cerr << "error: Code generator failure: " << emit_rc << endl;
-		  delete des;
-		  EOC_cleanup();
-		  return -1;
-	    }
-	    assert(emit_rc);
+            if (emit_rc > 0) {
+                  cerr << "error: Code generation had "
+                        << emit_rc << " error(s)."
+                        << endl;
+                  log(LogSeverity::Error, "error: Code generation had %d error(s).", emit_rc);
+                  EOC_cleanup();
+                  return 1;
+            }
+            if (emit_rc < 0) {
+                  log(LogSeverity::Error, "error: Code generator failure: %d\n", emit_rc);
+                  EOC_cleanup();
+                  return -1;
+            }
+            assert(emit_rc);
       }
 
       if (verbose_flag) {
-	    if (times_flag) {
-		  times(cycles+4);
-		  cerr<<" ... done, "
-		      <<cycles_diff(cycles+4, cycles+3)<<" seconds."<<endl;
-	    } else {
-		  cout << "DONE." << endl;
-	    }
+            if (times_flag) {
+                  times(cycles+4);
+                  cerr<<" ... done, "
+                        <<cycles_diff(cycles+4, cycles+3)<<" seconds."<<endl;
+            } else {
+                  cout << "DONE." << endl;
+            }
       }
 
-      if (verbose_flag) {
-	    cout << "STATISTICS" << endl;
-	    cout << "lex_string:"
-		 << " add_count=" << lex_strings.add_count()
-		 << " hit_count=" << lex_strings.add_hit_count()
-		 << endl;
-      }
 
-      delete des;
+      log(LogSeverity::Info, "STATISTICS\n");
+      log(LogSeverity::Info,
+            "lex_string: add_count=%u hit_count=%u\n",
+            lex_strings.add_count(),
+            lex_strings.add_hit_count());
+
+
       EOC_cleanup();
       return 0;
+}
 
- errors_summary:
-      if (! missing_modules.empty()) {
-	    cerr << "*** These modules were missing:" << endl;
+int main(int argc, char*argv[])
+{
+      // Note: parse_cmdargs() may return negative values if the operation was successful,
+      // but further execution of the program is not desired (e.g. after printing the help-text)
+      int errcode = parse_cmdargs(argc, argv);
+      if(errcode > 0) return errcode;
 
-	    map<perm_string,unsigned>::const_iterator idx;
-	    for (idx = missing_modules.begin()
-		       ; idx != missing_modules.end() ; ++ idx )
-		  cerr << "        " << (*idx).first
-		       << " referenced " << (*idx).second
-		       << " times."<< endl;
+      errcode = preprocess();
+      if(errcode > 0) return errcode;
 
-	    cerr << "***" << endl;
-      }
+      errcode = find_root_module();
+      if (errcode > 0) return errcode;
 
-      int rtn = des? des->errors : 1;
-      delete des;
-      EOC_cleanup();
-      return rtn;
+      errcode = elaborate();
+      return errcode;
 }
 
 static void find_module_mention(map<perm_string,bool>&check_map, Module*mod)
