@@ -842,12 +842,12 @@ void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
 
       // Guess the varaiable type of the parameter. If the parameter has no
       // given type, then guess the type from the expression and use that to
-      // evaluate.
+      // evaluate (this is currently handled in evaluate_parameter_logic_()).
       ivl_variable_type_t use_type;
       if (param_type)
 	    use_type = param_type->base_type();
       else
-	    use_type = cur->second.val_expr->expr_type();
+	    use_type = IVL_VT_NO_TYPE;
 
       if (cur->second.solving) {
             cerr << cur->second.get_fileline() << ": error: "
