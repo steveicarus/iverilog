@@ -1491,17 +1491,23 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			continue;
 		  }
 
-		    /* Input to module. elaborate the expression to
-		       the desired width. If this in an instance
-		       array, then let the net determine its own
-		       width. We use that, then, to decide how to hook
-		       it up.
+		    /* Input to module. Here we elaborate the source expression
+		       using its self-determined width. This allows us to check
+		       for and warn about port width mismatches. But in the
+		       special case that the source expression is a SV unbased
+		       unsized literal, we need to force the expression width
+		       to match the destination.
 
 		       NOTE that this also handles the case that the
 		       port is actually empty on the inside. We assume
 		       in that case that the port is input. */
 
-		  NetExpr*tmp_expr = elab_and_eval(des, scope, pins[idx], -1, using_default);
+		  int context_width = -1;
+		  if (PENumber*literal = dynamic_cast<PENumber*>(pins[idx])) {
+			if (literal->value().is_single())
+			      context_width = prts_vector_width;
+		  }
+		  NetExpr*tmp_expr = elab_and_eval(des, scope, pins[idx], context_width, using_default);
 		  if (tmp_expr == 0) {
 			cerr << pins[idx]->get_fileline()
 			     << ": error: Failed to elaborate port "
