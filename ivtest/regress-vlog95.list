@@ -942,6 +942,17 @@ sv_port_default10	normal,-g2009,-pallowsigned=1	ivltests
 sv_port_default11	normal,-g2009,-pallowsigned=1	ivltests
 sv_root_func		normal,-g2009,-pallowsigned=1	ivltests gold=sv_root_func.gold
 sv_root_task		normal,-g2009,-pallowsigned=1	ivltests gold=sv_root_task.gold
+sv_var_block		normal,-g2005-sv,-pallowsigned=1	ivltests
+sv_var_for		normal,-g2005-sv,-pallowsigned=1	ivltests
+sv_var_function		normal,-g2005-sv,-pallowsigned=1	ivltests
+sv_var_module		normal,-g2005-sv,-pallowsigned=1	ivltests
+# Inputs can not be reg in Verilog 95, so the translated code will fail
+sv_var_module_input1	TE,-g2005-sv,-pallowsigned=1		ivltests
+sv_var_module_input2	TE,-g2005-sv,-pallowsigned=1		ivltests
+sv_var_module_output1	normal,-g2005-sv,-pallowsigned=1	ivltests
+sv_var_module_output2	normal,-g2005-sv,-pallowsigned=1	ivltests
+sv_var_package		normal,-g2005-sv,-pallowsigned=1	ivltests
+sv_var_task		normal,-g2005-sv,-pallowsigned=1	ivltests
 test_dispwided		normal,-pallowsigned=1	ivltests gold=test_dispwided.gold
 test_inc_dec		normal,-g2009,-pallowsigned=1	ivltests
 test_enumsystem		normal,-g2009,-pallowsigned=1,ivltests/enumsystem.vhd	ivltests
