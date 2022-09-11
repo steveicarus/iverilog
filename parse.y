@@ -682,7 +682,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <ranges> variable_dimension
 %type <ranges> dimensions_opt dimensions
 
-%type <nettype>  net_type net_type_opt
+%type <nettype>  net_type net_type_opt net_type_or_var net_type_or_var_opt
 %type <gatetype> gatetype switchtype
 %type <porttype> port_direction port_direction_opt
 %type <vartype> integer_vector_type
@@ -1173,6 +1173,14 @@ data_declaration /* IEEE1800-2005: A.2.1.3 */
 	}
 	pform_makewire(@2, 0, str_strength, $3, NetNet::IMPLICIT_REG, data_type, $1);
       }
+  | attribute_list_opt K_var data_type_or_implicit list_of_variable_decl_assignments ';'
+      { data_type_t*data_type = $3;
+	if (data_type == 0) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      FILE_NAME(data_type, @2);
+	}
+	pform_make_var(@2, $4, data_type, $1);
+      }
   | attribute_list_opt K_event event_variable_list ';'
       { if ($3) pform_make_events(@2, $3);
       }
@@ -1638,7 +1646,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
       // statement in a synthetic named block. We can name the block
       // after the variable that we are creating, that identifier is
       // safe in the controlling scope.
-  | K_for '(' data_type IDENTIFIER '=' expression ';' expression ';' for_step ')'
+  | K_for '(' K_var_opt data_type IDENTIFIER '=' expression ';' expression ';' for_step ')'
       { static unsigned for_counter = 0;
 	char for_block_name [64];
 	snprintf(for_block_name, sizeof for_block_name, "$ivl_for_loop%u", for_counter);
@@ -1648,18 +1656,18 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 
 	list<decl_assignment_t*>assign_list;
 	decl_assignment_t*tmp_assign = new decl_assignment_t;
-	tmp_assign->name = lex_strings.make($4);
+	tmp_assign->name = lex_strings.make($5);
 	assign_list.push_back(tmp_assign);
-	pform_make_var(@4, &assign_list, $3);
+	pform_make_var(@5, &assign_list, $4);
       }
     statement_or_null
       { pform_name_t tmp_hident;
-	tmp_hident.push_back(name_component_t(lex_strings.make($4)));
+	tmp_hident.push_back(name_component_t(lex_strings.make($5)));
 
-	PEIdent*tmp_ident = pform_new_ident(@4, tmp_hident);
-	FILE_NAME(tmp_ident, @4);
+	PEIdent*tmp_ident = pform_new_ident(@5, tmp_hident);
+	FILE_NAME(tmp_ident, @5);
 
-	PForStatement*tmp_for = new PForStatement(tmp_ident, $6, $8, $10, $13);
+	PForStatement*tmp_for = new PForStatement(tmp_ident, $7, $9, $11, $14);
 	FILE_NAME(tmp_for, @1);
 
 	pform_pop_scope();
@@ -1669,7 +1677,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	current_block_stack.pop();
 	tmp_blk->set_statement(tmp_for_list);
 	$$ = tmp_blk;
-	delete[]$4;
+	delete[]$5;
       }
 
   | K_forever statement_or_null
@@ -2318,8 +2326,8 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 
 
 tf_port_declaration /* IEEE1800-2005: A.2.7 */
-  : port_direction data_type_or_implicit list_of_port_identifiers ';'
-      { $$ = pform_make_task_ports(@1, $1, $2, $3, true);
+  : port_direction K_var_opt data_type_or_implicit list_of_port_identifiers ';'
+      { $$ = pform_make_task_ports(@1, $1, $3, $4, true);
       }
   ;
 
@@ -2334,25 +2342,25 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
 
 tf_port_item /* IEEE1800-2005: A.2.7 */
 
-  : port_direction_opt data_type_or_implicit IDENTIFIER dimensions_opt tf_port_item_expr_opt
+  : port_direction_opt K_var_opt data_type_or_implicit IDENTIFIER dimensions_opt tf_port_item_expr_opt
       { std::vector<pform_tf_port_t>*tmp;
 	NetNet::PortType use_port_type = $1;
-        if ((use_port_type == NetNet::PIMPLICIT) && (gn_system_verilog() || ($2 == 0)))
+        if ((use_port_type == NetNet::PIMPLICIT) && (gn_system_verilog() || ($3 == 0)))
               use_port_type = port_declaration_context.port_type;
-	list<pform_port_t>* port_list = make_port_list($3, $4, 0);
+	list<pform_port_t>* port_list = make_port_list($4, $5, 0);
 
 	if (use_port_type == NetNet::PIMPLICIT) {
 	      yyerror(@1, "error: missing task/function port direction.");
 	      use_port_type = NetNet::PINPUT; // for error recovery
 	}
-	if (($2 == 0) && ($1==NetNet::PIMPLICIT)) {
+	if (($3 == 0) && ($1==NetNet::PIMPLICIT)) {
 		// Detect special case this is an undecorated
 		// identifier and we need to get the declaration from
 		// left context.
-	      if ($4 != 0) {
-		    yyerror(@4, "internal error: How can there be an unpacked range here?\n");
+	      if ($5 != 0) {
+		    yyerror(@5, "internal error: How can there be an unpacked range here?\n");
 	      }
-	      tmp = pform_make_task_ports(@3, use_port_type,
+	      tmp = pform_make_task_ports(@4, use_port_type,
 					  port_declaration_context.data_type,
 					  port_list);
 
@@ -2361,25 +2369,25 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 		// indicate the type. Save the type for any right
 		// context that may come later.
 	      port_declaration_context.port_type = use_port_type;
-	      if ($2 == 0) {
-		    $2 = new vector_type_t(IVL_VT_LOGIC, false, 0);
-		    FILE_NAME($2, @3);
+	      if ($3 == 0) {
+		    $3 = new vector_type_t(IVL_VT_LOGIC, false, 0);
+		    FILE_NAME($3, @4);
 	      }
-	      port_declaration_context.data_type = $2;
-	      tmp = pform_make_task_ports(@3, use_port_type, $2, port_list);
+	      port_declaration_context.data_type = $3;
+	      tmp = pform_make_task_ports(@3, use_port_type, $3, port_list);
 	}
 
 	$$ = tmp;
-	if ($5) {
+	if ($6) {
 	      assert(tmp->size()==1);
-	      tmp->front().defe = $5;
+	      tmp->front().defe = $6;
 	}
       }
 
   /* Rules to match error cases... */
 
-  | port_direction_opt data_type_or_implicit IDENTIFIER error
-      { yyerror(@3, "error: Error in task/function port item after port name %s.", $3);
+  | port_direction_opt K_var_opt data_type_or_implicit IDENTIFIER error
+      { yyerror(@3, "error: Error in task/function port item after port name %s.", $4);
 	yyerrok;
 	$$ = 0;
       }
@@ -2511,7 +2519,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
       }
   ;
 
-variable_lifetime
+variable_lifetime_opt
   : lifetime
       { if (pform_requires_sv(@1, "Overriding default variable lifetime") &&
 	    $1 != pform_peek_scope()->default_lifetime) {
@@ -2520,6 +2528,7 @@ variable_lifetime
 	}
 	var_lifetime = $1;
       }
+  |
   ;
 
   /* Verilog-2001 supports attribute lists, which can be attached to a
@@ -2592,21 +2601,23 @@ block_item_decl
   /* variable declarations. Note that data_type can be 0 if we are
      recovering from an error. */
 
-  : data_type list_of_variable_decl_assignments ';'
-      { if ($1) pform_make_var(@1, $2, $1, attributes_in_context);
+  : K_var variable_lifetime_opt data_type_or_implicit list_of_variable_decl_assignments ';'
+      { data_type_t*data_type = $3;
+	if (data_type == 0) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      FILE_NAME(data_type, @1);
+	}
+	pform_make_var(@1, $4, data_type, attributes_in_context);
+	var_lifetime = LexicalScope::INHERITED;
       }
 
-  | variable_lifetime data_type list_of_variable_decl_assignments ';'
+  | variable_lifetime_opt data_type list_of_variable_decl_assignments ';'
       { if ($2) pform_make_var(@2, $3, $2, attributes_in_context);
 	var_lifetime = LexicalScope::INHERITED;
       }
 
   /* The extra `reg` is not valid (System)Verilog, this is a iverilog extension. */
-  | K_reg data_type list_of_variable_decl_assignments ';'
-      { if ($2) pform_make_var(@2, $3, $2, attributes_in_context);
-      }
-
-  | variable_lifetime K_reg data_type list_of_variable_decl_assignments ';'
+  | variable_lifetime_opt K_reg data_type list_of_variable_decl_assignments ';'
       { if ($3) pform_make_var(@3, $4, $3, attributes_in_context);
 	var_lifetime = LexicalScope::INHERITED;
       }
@@ -2628,13 +2639,16 @@ block_item_decl
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
 
-  | K_integer error ';'
-      { yyerror(@1, "error: syntax error in integer variable list.");
+  | K_var variable_lifetime_opt data_type_or_implicit error ';'
+      { yyerror(@1, "error: syntax error in variable list.");
 	yyerrok;
       }
-
-  | K_time error ';'
-      { yyerror(@1, "error: syntax error in time variable list.");
+  | variable_lifetime_opt data_type error ';'
+      { yyerror(@1, "error: syntax error in variable list.");
+	yyerrok;
+      }
+  | K_event error ';'
+      { yyerror(@1, "error: syntax error in event variable list.");
 	yyerrok;
       }
 
@@ -4385,7 +4399,7 @@ list_of_port_declarations
         ;
 
 port_declaration
-  : attribute_list_opt K_input net_type_opt data_type_or_implicit IDENTIFIER dimensions_opt
+  : attribute_list_opt K_input net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	data_type_t*use_type = $4;
@@ -4413,7 +4427,7 @@ port_declaration
 	delete[]$4;
 	$$ = ptmp;
       }
-  | attribute_list_opt K_input net_type_opt data_type_or_implicit IDENTIFIER '=' expression
+  | attribute_list_opt K_input net_type_or_var_opt data_type_or_implicit IDENTIFIER '=' expression
       { pform_requires_sv(@6, "Default port value");
 	Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
@@ -4457,7 +4471,7 @@ port_declaration
 	delete[]$4;
 	$$ = ptmp;
       }
-  | attribute_list_opt K_output net_type_opt data_type_or_implicit IDENTIFIER dimensions_opt
+  | attribute_list_opt K_output net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	data_type_t*use_dtype = $4;
@@ -4501,7 +4515,7 @@ port_declaration
 	delete[]$4;
 	$$ = ptmp;
       }
-  | attribute_list_opt K_output net_type_opt data_type_or_implicit IDENTIFIER '=' expression
+  | attribute_list_opt K_output net_type_or_var_opt data_type_or_implicit IDENTIFIER '=' expression
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	NetNet::Type use_type = $3;
@@ -4520,13 +4534,6 @@ port_declaration
 	$$ = ptmp;
       }
   ;
-
-
-
-net_type_opt
-	: net_type { $$ = $1; }
-	| { $$ = NetNet::IMPLICIT; }
-	;
 
   /*
    * The signed_opt rule will return "true" if K_signed is present,
@@ -4864,7 +4871,7 @@ module_item
        input wire signed [h:l] <list>;
      This creates the wire and sets the port type all at once. */
 
-  | attribute_list_opt port_direction net_type data_type_or_implicit list_of_port_identifiers ';'
+  | attribute_list_opt port_direction net_type_or_var data_type_or_implicit list_of_port_identifiers ';'
       { pform_module_define_port(@2, $5, $2, $3, $4, $1); }
 
   | attribute_list_opt port_direction K_wreal list_of_port_identifiers ';'
@@ -4923,7 +4930,7 @@ module_item
 	      pform_module_define_port(@2, $4, NetNet::POUTPUT, use_type, $3, $1);
       }
 
-  | attribute_list_opt port_direction net_type data_type_or_implicit error ';'
+  | attribute_list_opt port_direction net_type_or_var data_type_or_implicit error ';'
       { yyerror(@2, "error: Invalid variable list in port declaration.");
 	if ($1) delete $1;
 	if ($4) delete $4;
@@ -5385,6 +5392,20 @@ net_type
 		    }
 	| K_uwire   { $$ = NetNet::UNRESOLVED_WIRE; }
 	;
+
+net_type_opt
+  : net_type { $$ = $1; }
+  | { $$ = NetNet::IMPLICIT; }
+  ;
+
+net_type_or_var
+  : net_type { $$ = $1; }
+  | K_var { $$ = NetNet::REG; }
+
+net_type_or_var_opt
+  : net_type_opt { $$ = $1; }
+  | K_var { $$ = NetNet::REG; }
+  ;
 
   /* The param_type rule is just the data_type_or_implicit rule wrapped
      with an assignment to para_data_type with the figured data type.
@@ -7024,3 +7045,4 @@ unique_priority
 K_genvar_opt   : K_genvar    { $$ = true; } | { $$ = false; } ;
 K_static_opt   : K_static    { $$ = true; } | { $$ = false; } ;
 K_virtual_opt  : K_virtual   { $$ = true; } | { $$ = false; } ;
+K_var_opt      : K_var | ;

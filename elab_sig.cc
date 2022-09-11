@@ -144,10 +144,12 @@ static void sig_check_port_type(Design*des, NetScope*scope,
 	    return;
 
 	/* If the signal is an input and is also declared as a
-	   reg, then report an error. */
+	   reg, then report an error. In SystemVerilog a input
+	   is allowed to be a register. It will get converted
+	   to a unresolved wire when the port is connected. */
 
       if (sig->port_type() == NetNet::PINPUT &&
-	  sig->type() == NetNet::REG) {
+	  sig->type() == NetNet::REG && !gn_var_can_be_uwire()) {
 	    cerr << wire->get_fileline() << ": error: Port `"
 		 << wire->basename() << "` of module `"
 		 << scope->module_name()
