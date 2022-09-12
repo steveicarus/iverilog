@@ -86,3 +86,15 @@ vector<netrange_t> netuarray_t::slice_dimensions() const
 {
       return static_dimensions();
 }
+
+bool netuarray_t::test_equivalence(ivl_type_t that) const
+{
+      const netuarray_t *that_a = dynamic_cast<const netuarray_t *>(that);
+      if (!that_a)
+	    return false;
+
+      if (!netrange_equivalent(static_dimensions(), that_a->static_dimensions()))
+	    return false;
+
+      return element_type()->type_equivalent(that_a->element_type());
+}

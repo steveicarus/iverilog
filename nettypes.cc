@@ -109,6 +109,20 @@ unsigned long netrange_width(const vector<netrange_t>&packed)
       return wid;
 }
 
+bool netrange_equivalent(const std::vector<netrange_t> &a,
+			 const std::vector<netrange_t> &b)
+{
+	if (a.size() != b.size())
+		return false;
+
+	for (size_t i = 0; i < a.size(); i++) {
+		if (!a[i].equivalent(b[i]))
+			return false;
+	}
+
+	return true;
+}
+
 /*
  * Given a netrange_t list (which represent packed dimensions) and a
  * prefix of calculated index values, calculate the canonical offset
