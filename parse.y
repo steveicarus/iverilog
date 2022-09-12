@@ -4448,10 +4448,13 @@ list_of_port_declarations
   ;
 
 port_declaration
-  : attribute_list_opt K_input net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt
-      { Module::port_t*ptmp;
+  : attribute_list_opt K_input net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
+      { if ($7)
+	    pform_requires_sv(@7, "Input port default value");
+	Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	ptmp = pform_module_port_reference(@2, name);
+	ptmp->default_value = $7;
 	pform_module_define_port(@2, name, NetNet::PINPUT, $3, $4, $6, nullptr,
 			         $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
@@ -4473,21 +4476,6 @@ port_declaration
 	port_declaration_context.port_net_type = NetNet::WIRE;
 	port_declaration_context.data_type = real_type;
 	delete[]$4;
-	$$ = ptmp;
-      }
-  | attribute_list_opt K_input net_type_or_var_opt data_type_or_implicit IDENTIFIER '=' expression
-      { pform_requires_sv(@6, "Default port value");
-	Module::port_t*ptmp;
-	perm_string name = lex_strings.make($5);
-	data_type_t*use_type = $4;
-	ptmp = pform_module_port_reference(@2, name);
-	ptmp->default_value = $7;
-	pform_module_define_port(@2, name, NetNet::PINPUT, $3, use_type,
-			         nullptr, $1);
-	port_declaration_context.port_type = NetNet::PINPUT;
-	port_declaration_context.port_net_type = $3;
-	port_declaration_context.data_type = $4;
-	delete[]$5;
 	$$ = ptmp;
       }
   | attribute_list_opt K_inout net_type_opt data_type_or_implicit IDENTIFIER dimensions_opt
@@ -4521,7 +4509,7 @@ port_declaration
 	delete[]$4;
 	$$ = ptmp;
       }
-  | attribute_list_opt K_output net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt
+  | attribute_list_opt K_output net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	NetNet::Type use_type = $3;
@@ -4545,6 +4533,9 @@ port_declaration
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = use_type;
 	port_declaration_context.data_type = $4;
+
+	if ($7)
+	    pform_make_var_init(@5, name, $7);
 	delete[]$5;
 	$$ = ptmp;
       }
@@ -4561,25 +4552,6 @@ port_declaration
 	port_declaration_context.port_net_type = NetNet::WIRE;
 	port_declaration_context.data_type = real_type;
 	delete[]$4;
-	$$ = ptmp;
-      }
-  | attribute_list_opt K_output net_type_or_var_opt data_type_or_implicit IDENTIFIER '=' expression
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($5);
-	NetNet::Type use_type = $3;
-	if (use_type == NetNet::IMPLICIT) {
-	      use_type = NetNet::IMPLICIT_REG;
-	}
-	ptmp = pform_module_port_reference(@2, name);
-	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, $4,
-			         nullptr, $1);
-	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = use_type;
-	port_declaration_context.data_type = $4;
-
-	pform_make_var_init(@5, name, $7);
-
-	delete[]$5;
 	$$ = ptmp;
       }
   ;
