@@ -602,7 +602,6 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <perm_strings> udp_port_list
 %type <wires>   udp_port_decl udp_port_decls
 %type <statement> udp_initial udp_init_opt
-%type <expr>    udp_initial_expr_opt
 
 %type <wire> net_variable
 %type <wires> net_variable_list
@@ -621,7 +620,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <mports> list_of_ports module_port_list_opt list_of_port_declarations module_attribute_foreign
 %type <value_range> parameter_value_range parameter_value_ranges
 %type <value_range> parameter_value_ranges_opt
-%type <expr> tf_port_item_expr_opt value_range_expression
+%type <expr> value_range_expression
 
 %type <named_pexprs> enum_name_list enum_name
 %type <data_type> enum_data_type enum_base_type
@@ -648,8 +647,8 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <pform_name> hierarchy_identifier implicit_class_handle class_hierarchy_identifier
 %type <expr>  assignment_pattern expression expr_mintypmax
 %type <expr>  expr_primary_or_typename expr_primary
-%type <expr>  class_new dynamic_array_new let_default_opt
-%type <expr>  var_decl_initializer_opt
+%type <expr>  class_new dynamic_array_new
+%type <expr>  var_decl_initializer_opt initializer_opt
 %type <expr>  inc_or_dec_expression inside_expression lpvalue
 %type <expr>  branch_probe_expression streaming_concatenation
 %type <expr>  delay_value delay_value_simple
@@ -1778,11 +1777,15 @@ list_of_variable_decl_assignments /* IEEE1800-2005 A.2.3 */
       }
   ;
 
-var_decl_initializer_opt
+initializer_opt
  : '=' expression { $$ = $2; }
+ | { $$ = nullptr; }
+ ;
+
+var_decl_initializer_opt
+ : initializer_opt
  | '=' class_new { $$ = $2; }
  | '=' dynamic_array_new { $$ = $2; }
- | { $$ = 0; }
  ;
 
 variable_decl_assignment /* IEEE1800-2005 A.2.3 */
@@ -2342,7 +2345,7 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
 
 tf_port_item /* IEEE1800-2005: A.2.7 */
 
-  : port_direction_opt K_var_opt data_type_or_implicit IDENTIFIER dimensions_opt tf_port_item_expr_opt
+  : port_direction_opt K_var_opt data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
       { std::vector<pform_tf_port_t>*tmp;
 	NetNet::PortType use_port_type = $1;
         if ((use_port_type == NetNet::PIMPLICIT) && (gn_system_verilog() || ($3 == 0)))
@@ -2379,6 +2382,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 
 	$$ = tmp;
 	if ($6) {
+	      pform_requires_sv(@6, "Task/function default argument");
 	      assert(tmp->size()==1);
 	      tmp->front().defe = $6;
 	}
@@ -2391,16 +2395,6 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	yyerrok;
 	$$ = 0;
       }
-  ;
-
-  /* This rule matches the [ = <expression> ] part of the tf_port_item rules. */
-
-tf_port_item_expr_opt
-  : '=' expression
-      { pform_requires_sv(@$, "Task/function default argument");
-	$$ = $2;
-      }
-  |   { $$ = 0; }
   ;
 
 tf_port_list /* IEEE1800-2005: A.2.7 */
@@ -2572,20 +2566,12 @@ attribute_list
 
 
 attribute
-	: IDENTIFIER
+	: IDENTIFIER initializer_opt
 		{ named_pexpr_t*tmp = new named_pexpr_t;
 		  tmp->name = lex_strings.make($1);
-		  tmp->parm = 0;
+		  tmp->parm = $2;
 		  delete[]$1;
 		  $$ = tmp;
-		}
-	| IDENTIFIER '=' expression
-		{ PExpr*tmp = $3;
-		  named_pexpr_t*tmp2 = new named_pexpr_t;
-		  tmp2->name = lex_strings.make($1);
-		  tmp2->parm = tmp;
-		  delete[]$1;
-		  $$ = tmp2;
 		}
 	;
 
@@ -2786,42 +2772,22 @@ pos_neg_number
   ;
 
 enum_name
-  : IDENTIFIER
+  : IDENTIFIER initializer_opt
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
-	$$ = make_named_number(name);
+	$$ = make_named_number(name, $2);
       }
-  | IDENTIFIER '[' pos_neg_number ']'
+  | IDENTIFIER '[' pos_neg_number ']' initializer_opt
       { perm_string name = lex_strings.make($1);
 	long count = check_enum_seq_value(@1, $3, false);
+	$$ = make_named_numbers(name, 0, count-1, $5);
 	delete[]$1;
-	$$ = make_named_numbers(name, 0, count-1);
 	delete $3;
       }
-  | IDENTIFIER '[' pos_neg_number ':' pos_neg_number ']'
+  | IDENTIFIER '[' pos_neg_number ':' pos_neg_number ']' initializer_opt
       { perm_string name = lex_strings.make($1);
 	$$ = make_named_numbers(name, check_enum_seq_value(@1, $3, true),
-	                              check_enum_seq_value(@1, $5, true));
-	delete[]$1;
-	delete $3;
-	delete $5;
-      }
-  | IDENTIFIER '=' expression
-      { perm_string name = lex_strings.make($1);
-	delete[]$1;
-	$$ = make_named_number(name, $3);
-      }
-  | IDENTIFIER '[' pos_neg_number ']' '=' expression
-      { perm_string name = lex_strings.make($1);
-	long count = check_enum_seq_value(@1, $3, false);
-	$$ = make_named_numbers(name, 0, count-1, $6);
-	delete[]$1;
-	delete $3;
-      }
-  | IDENTIFIER '[' pos_neg_number ':' pos_neg_number ']' '=' expression
-      { perm_string name = lex_strings.make($1);
-	$$ = make_named_numbers(name, check_enum_seq_value(@1, $3, true),
-	                              check_enum_seq_value(@1, $5, true), $8);
+	                              check_enum_seq_value(@1, $5, true), $7);
 	delete[]$1;
 	delete $3;
 	delete $5;
@@ -4317,14 +4283,10 @@ list_of_port_identifiers
 	;
 
 list_of_variable_port_identifiers
-	: IDENTIFIER dimensions_opt
-                { $$ = make_port_list($1, $2, 0); }
-	| IDENTIFIER dimensions_opt '=' expression
-                { $$ = make_port_list($1, $2, $4); }
-	| list_of_variable_port_identifiers ',' IDENTIFIER dimensions_opt
-                { $$ = make_port_list($1, $3, $4, 0); }
-	| list_of_variable_port_identifiers ',' IDENTIFIER dimensions_opt '=' expression
-                { $$ = make_port_list($1, $3, $4, $6); }
+	: IDENTIFIER dimensions_opt initializer_opt
+                { $$ = make_port_list($1, $2, $3); }
+	| list_of_variable_port_identifiers ',' IDENTIFIER dimensions_opt initializer_opt
+                { $$ = make_port_list($1, $3, $4, $5); }
 	;
 
 
@@ -5250,17 +5212,10 @@ let_port_list
 
   // FIXME: What about the attributes?
 let_port_item
-  : attribute_list_opt let_formal_type IDENTIFIER dimensions_opt let_default_opt
+  : attribute_list_opt let_formal_type IDENTIFIER dimensions_opt initializer_opt
       { perm_string tmp3 = lex_strings.make($3);
         $$ = pform_make_let_port($2, tmp3, $4, $5);
       }
-  ;
-
-let_default_opt
-  : '=' expression
-      { $$ = $2; }
-  |
-      { $$ = 0; }
   ;
 
 let_formal_type
@@ -5436,15 +5391,9 @@ parameter_assign_list
   ;
 
 parameter_assign
-  : IDENTIFIER parameter_value_ranges_opt
+  : IDENTIFIER initializer_opt parameter_value_ranges_opt
       { pform_set_parameter(@1, lex_strings.make($1), param_is_local,
-			    param_data_type, 0, $2);
-	delete[]$1;
-      }
-  | IDENTIFIER '=' expression parameter_value_ranges_opt
-      { PExpr*tmp = $3;
-	pform_set_parameter(@1, lex_strings.make($1), param_is_local,
-			    param_data_type, tmp, $4);
+			    param_data_type, $2, $3);
 	delete[]$1;
       }
   ;
@@ -6976,11 +6925,6 @@ udp_port_list
 
 udp_reg_opt: K_reg  { $$ = true; } | { $$ = false; };
 
-udp_initial_expr_opt
-	: '=' expression { $$ = $2; }
-	|                { $$ = 0; }
-	;
-
 udp_input_declaration_list
         : K_input IDENTIFIER
 		{ std::list<perm_string>*tmp = new std::list<perm_string>;
@@ -7017,7 +6961,7 @@ udp_primitive
 	   names and declarations are all in the parameter list. */
 
 	| K_primitive IDENTIFIER
-	    '(' K_output udp_reg_opt IDENTIFIER udp_initial_expr_opt ','
+	    '(' K_output udp_reg_opt IDENTIFIER initializer_opt ','
 	    udp_input_declaration_list ')' ';'
 	    udp_body
 	  K_endprimitive label_opt
