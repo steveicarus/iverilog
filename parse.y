@@ -4524,7 +4524,7 @@ port_declaration
 	}
 	ptmp = pform_module_port_reference(@2, name);
 	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, $4, $1);
-	port_declaration_context.port_type = NetNet::PINOUT;
+	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = use_type;
 	port_declaration_context.data_type = $4;
 
