@@ -4332,13 +4332,29 @@ list_of_port_declarations
 		  tmp->push_back($3);
 		  $$ = tmp;
 		}
-	| list_of_port_declarations ',' IDENTIFIER
+	| list_of_port_declarations ',' IDENTIFIER initializer_opt
 		{ Module::port_t*ptmp;
 		  perm_string name = lex_strings.make($3);
 		  ptmp = pform_module_port_reference(@3, name);
 		  std::vector<Module::port_t*>*tmp = $1;
 		  tmp->push_back(ptmp);
 
+		  if ($4) {
+		        switch (port_declaration_context.port_type) {
+		            case NetNet::PINOUT:
+			      yyerror(@4, "error: Default port value not allowed for inout ports.");
+			      break;
+			    case NetNet::PINPUT:
+			      pform_requires_sv(@4, "Default port value");
+			      ptmp->default_value = $4;
+			      break;
+			    case NetNet::POUTPUT:
+			      pform_make_var_init(@3, name, $4);
+			      break;
+			    default:
+			      break;
+			}
+		  }
 		    /* Get the port declaration details, the port type
 		       and what not, from context data stored by the
 		       last port_declaration rule. */
