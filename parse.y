@@ -352,6 +352,65 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
       current_function->set_statement(tmp);
 }
 
+Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
+			            NetNet::PortType port_type,
+				    NetNet::Type net_type,
+				    data_type_t *data_type,
+				    std::list<pform_range_t> *unpacked_dims,
+				    PExpr *default_value,
+				    std::list<named_pexpr_t> *attributes)
+{
+      perm_string name = lex_strings.make(id);
+      delete[] id;
+
+      Module::port_t *port = pform_module_port_reference(loc, name);
+
+      switch (port_type) {
+	  case NetNet::PINOUT:
+	    if (default_value)
+		  yyerror(loc, "error: Default port value not allowed for inout ports.");
+	    if (unpacked_dims) {
+		  yyerror(loc, "sorry: Inout ports with unpacked dimensions are not supported.");
+		  delete unpacked_dims;
+		  unpacked_dims = nullptr;
+	    }
+	    break;
+	  case NetNet::PINPUT:
+	    if (default_value) {
+		  pform_requires_sv(loc, "Input port default value");
+		  port->default_value = default_value;
+	    }
+	    break;
+	  case NetNet::POUTPUT:
+	    if (default_value)
+		  pform_make_var_init(loc, name, default_value);
+
+	      // Output types without an implicit net type but with a data type
+	      // are variables. Unlike the other port types, which are nets in
+	      // that case.
+	    if (net_type == NetNet::IMPLICIT) {
+		  if (vector_type_t*dtype = dynamic_cast<vector_type_t*> (data_type)) {
+			if (!dtype->implicit_flag)
+			      net_type = NetNet::IMPLICIT_REG;
+		  } else if (data_type) {
+			net_type = NetNet::IMPLICIT_REG;
+		  }
+	    }
+	    break;
+	  default:
+	    break;
+      }
+
+      pform_module_define_port(loc, name, port_type, net_type, data_type,
+			       unpacked_dims, attributes);
+
+      port_declaration_context.port_type = port_type;
+      port_declaration_context.port_net_type = net_type;
+      port_declaration_context.data_type = data_type;
+
+      return port;
+}
+
 %}
 
 %union {
@@ -4448,111 +4507,14 @@ list_of_port_declarations
   ;
 
 port_declaration
-  : attribute_list_opt K_input net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
-      { if ($7)
-	    pform_requires_sv(@7, "Input port default value");
-	Module::port_t*ptmp;
-	perm_string name = lex_strings.make($5);
-	ptmp = pform_module_port_reference(@2, name);
-	ptmp->default_value = $7;
-	pform_module_define_port(@2, name, NetNet::PINPUT, $3, $4, $6, nullptr,
-			         $1);
-	port_declaration_context.port_type = NetNet::PINPUT;
-	port_declaration_context.port_net_type = $3;
-	port_declaration_context.data_type = $4;
-	delete[]$5;
-	$$ = ptmp;
+  : attribute_list_opt port_direction net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
+      { $$ = module_declare_port(@2, $5, $2, $3, $4, $6, $7, $1);
       }
-  | attribute_list_opt
-    K_input K_wreal IDENTIFIER
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($4);
-	ptmp = pform_module_port_reference(@2, name);
-	real_type_t*real_type = new real_type_t(real_type_t::REAL);
+  | attribute_list_opt port_direction K_wreal IDENTIFIER
+      { real_type_t*real_type = new real_type_t(real_type_t::REAL);
 	FILE_NAME(real_type, @3);
-	pform_module_define_port(@2, name, NetNet::PINPUT, NetNet::WIRE,
-			         real_type, nullptr, $1);
-	port_declaration_context.port_type = NetNet::PINPUT;
-	port_declaration_context.port_net_type = NetNet::WIRE;
-	port_declaration_context.data_type = real_type;
-	delete[]$4;
-	$$ = ptmp;
-      }
-  | attribute_list_opt K_inout net_type_opt data_type_or_implicit IDENTIFIER dimensions_opt
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($5);
-	ptmp = pform_module_port_reference(@2, name);
-	pform_module_define_port(@2, name, NetNet::PINOUT, $3, $4, nullptr,
-			         $1);
-	port_declaration_context.port_type = NetNet::PINOUT;
-	port_declaration_context.port_net_type = $3;
-	port_declaration_context.data_type = $4;
-	delete[]$5;
-	if ($6) {
-	      yyerror(@6, "sorry: Inout ports with unpacked dimensions not supported.");
-	      delete $6;
-	}
-	$$ = ptmp;
-      }
-  | attribute_list_opt
-    K_inout K_wreal IDENTIFIER
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($4);
-	ptmp = pform_module_port_reference(@2, name);
-	real_type_t*real_type = new real_type_t(real_type_t::REAL);
-	FILE_NAME(real_type, @3);
-	pform_module_define_port(@2, name, NetNet::PINOUT, NetNet::WIRE,
-			         real_type, nullptr, $1);
-	port_declaration_context.port_type = NetNet::PINOUT;
-	port_declaration_context.port_net_type = NetNet::WIRE;
-	port_declaration_context.data_type = real_type;
-	delete[]$4;
-	$$ = ptmp;
-      }
-  | attribute_list_opt K_output net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($5);
-	NetNet::Type use_type = $3;
-	if (use_type == NetNet::IMPLICIT) {
-	      if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($4)) {
-		    if (dtype->implicit_flag)
-			  use_type = NetNet::IMPLICIT;
-		    else
-			  use_type = NetNet::IMPLICIT_REG;
-
-		      // The SystemVerilog types that can show up as
-		      // output ports are implicitly (on the inside)
-		      // variables because "reg" is not valid syntax
-		      // here.
-	      } else if ($4) {
-		    use_type = NetNet::IMPLICIT_REG;
-	      }
-	}
-	ptmp = pform_module_port_reference(@2, name);
-	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, $4, $6, $1);
-	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = use_type;
-	port_declaration_context.data_type = $4;
-
-	if ($7)
-	    pform_make_var_init(@5, name, $7);
-	delete[]$5;
-	$$ = ptmp;
-      }
-  | attribute_list_opt
-    K_output K_wreal IDENTIFIER
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($4);
-	ptmp = pform_module_port_reference(@2, name);
-	real_type_t*real_type = new real_type_t(real_type_t::REAL);
-	FILE_NAME(real_type, @3);
-	pform_module_define_port(@2, name, NetNet::POUTPUT, NetNet::WIRE,
-			         real_type, nullptr, $1);
-	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = NetNet::WIRE;
-	port_declaration_context.data_type = real_type;
-	delete[]$4;
-	$$ = ptmp;
+	$$ = module_declare_port(@4, $4, $2, NetNet::WIRE,
+				 real_type, nullptr, nullptr, $1);
       }
   ;
 
