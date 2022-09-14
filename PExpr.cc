@@ -156,6 +156,12 @@ PECastType::~PECastType()
 {
 }
 
+PECastSign::PECastSign(bool signed_flag, PExpr *base)
+: base_(base)
+{
+    signed_flag_ = signed_flag;
+}
+
 PEBComp::PEBComp(char op, PExpr*l, PExpr*r)
 : PEBinary(op, l, r)
 {

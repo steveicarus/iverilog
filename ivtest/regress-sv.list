@@ -628,6 +628,9 @@ sv_queue_vec_fail	CE,-g2009		ivltests gold=sv_queue_vec_fail.gold
 sv_root_class		normal,-g2009		ivltests gold=sv_root_class.gold
 sv_root_func		normal,-g2009		ivltests gold=sv_root_func.gold
 sv_root_task		normal,-g2009		ivltests gold=sv_root_task.gold
+sv_sign_cast1		normal,-g2005-sv	ivltests
+sv_sign_cast2		normal,-g2005-sv	ivltests
+sv_sign_cast3		normal,-g2005-sv	ivltests
 sv_string1		normal,-g2009		ivltests
 sv_string2		normal,-g2009		ivltests
 sv_string3		normal,-g2009		ivltests

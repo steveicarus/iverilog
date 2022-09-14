@@ -4045,6 +4045,16 @@ expr_primary
 	      $$ = base;
 	}
       }
+  | signing '\'' '(' expression ')'
+      { PExpr*base = $4;
+	if (pform_requires_sv(@1, "Signing cast")) {
+	      PECastSign*tmp = new PECastSign($1, base);
+	      FILE_NAME(tmp, @1);
+	      $$ = tmp;
+	} else {
+	      $$ = base;
+	}
+      }
 
   /* Aggregate literals are primaries. */
 

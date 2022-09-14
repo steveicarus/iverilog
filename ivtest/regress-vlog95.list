@@ -1034,6 +1034,9 @@ shift4			normal,-pallowsigned=1	ivltests
 signed5			normal,-pallowsigned=1	ivltests
 signed10		normal,-pallowsigned=1	ivltests gold=signed10.gold
 signed13		normal,-pallowsigned=1	ivltests
+sv_sign_cast1		normal,-g2005-sv,-pallowsigned=1 ivltests
+sv_sign_cast2		normal,-g2005-sv,-pallowsigned=1 ivltests
+sv_sign_cast3		normal,-g2005-sv,-pallowsigned=1 ivltests
 # Also tests have different output because of file name/line, etc. differences.
 readmem-error		normal,-pallowsigned=1	ivltests gold=readmem-error-vlog95.gold
 
