@@ -53,11 +53,6 @@ bool PExpr::has_aa_term(Design*, NetScope*) const
       return false;
 }
 
-bool PExpr::is_the_same(const PExpr*that) const
-{
-      return typeid(this) == typeid(that);
-}
-
 NetNet* PExpr::elaborate_lnet(Design*, NetScope*) const
 {
       cerr << get_fileline() << ": error: "
@@ -518,15 +513,6 @@ PENumber::~PENumber()
 const verinum& PENumber::value() const
 {
       return *value_;
-}
-
-bool PENumber::is_the_same(const PExpr*that) const
-{
-      const PENumber*obj = dynamic_cast<const PENumber*>(that);
-      if (obj == 0)
-	    return false;
-
-      return *value_ == *obj->value_;
 }
 
 PEString::PEString(char*s)

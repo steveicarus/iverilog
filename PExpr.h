@@ -181,11 +181,6 @@ class PExpr : public LineInfo {
       virtual bool is_collapsible_net(Design*des, NetScope*scope,
                                       NetNet::PortType port_type) const;
 
-	// This method returns true if that expression is the same as
-	// this expression. This method is used for comparing
-	// expressions that must be structurally "identical".
-      virtual bool is_the_same(const PExpr*that) const;
-
     protected:
       unsigned fix_width_(width_mode_t mode);
 
@@ -639,8 +634,6 @@ class PENumber : public PExpr {
 					 NetScope*scope,
 					 bool is_cassign,
 					 bool is_force) const;
-
-      virtual bool is_the_same(const PExpr*that) const;
 
     private:
       verinum*const value_;

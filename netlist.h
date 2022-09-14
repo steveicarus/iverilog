@@ -886,10 +886,6 @@ class Definitions {
 
       bool add_enumeration_name(netenum_t*enum_set, perm_string enum_name);
 
-	// Look up the enumeration literal in this scope. if the name
-	// is present, then return the enumeration type that declares it.
-      const netenum_t* enumeration_for_name(perm_string name);
-
 	// Look up the enumeration set that was added with the given
 	// key. This is used by enum_type_t::elaborate_type to locate
 	// a previously elaborated enumeration.
@@ -948,10 +944,6 @@ class NetScope : public Definitions, public Attrib {
 
         /* Search the scope hierarchy for the scope where 'type' was defined. */
       NetScope*find_typedef_scope(const Design*des, data_type_t*type);
-
-	/* Routine to search for the enumeration given a name. It basically
-	 * does what enumeration_for_name() does but searched the hierarchy. */
-      const netenum_t*find_enumeration_for_name(const Design*des, perm_string name);
 
 	/* Parameters exist within a scope, and these methods allow
 	   one to manipulate the set. In these cases, the name is the
@@ -1919,7 +1911,6 @@ class NetUserFunc  : public NetNode {
       NetUserFunc(NetScope*s, perm_string n, NetScope*def, NetEvWait*trigger__);
       ~NetUserFunc();
 
-      ivl_variable_type_t data_type(unsigned port) const;
       unsigned port_width(unsigned port) const;
 
       const NetScope* def() const;
@@ -2195,9 +2186,6 @@ class NetECReal  : public NetExpr {
       ~NetECReal();
 
       const verireal&value() const;
-
-	// This type has no self-determined width. This is false.
-      virtual bool has_width() const;
 
 	// The type of this expression is ET_REAL
       ivl_variable_type_t expr_type() const;
@@ -4410,7 +4398,6 @@ class NetEConcat  : public NetExpr {
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                                   bool nested_func = false) const;
-      virtual bool has_width() const;
       virtual NetEConcat* dup_expr() const;
       virtual NetEConst*  eval_tree();
       virtual NetExpr* evaluate_function(const LineInfo&loc,
@@ -4467,7 +4454,6 @@ class NetESelect  : public NetExpr {
 
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                                   bool nested_func = false) const;
-      virtual bool has_width() const;
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEConst* eval_tree();
       virtual NetExpr*evaluate_function(const LineInfo&loc,
