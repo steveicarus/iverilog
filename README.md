@@ -68,8 +68,7 @@ on a UNIX-like system:
 - termcap
   The readline library, in turn, uses termcap.
 
-	> If you are building from git, you will also need software to generate
-	the configure scripts.
+	> If you are building from git, you will also need software to generate the configure scripts.
 
 - autoconf 2.53 or later
   This generates configure scripts from configure.ac. The 2.53
@@ -83,8 +82,8 @@ Unpack the tar-ball and cd into the `verilog-#########` directory
 with the commands:
 
 ```
-	./configure
-	make
+  ./configure
+  make
 ```
 
 If you are building from git, you have to run the command below before
@@ -92,7 +91,7 @@ compiling the source. This will generate the "configure" file, which is
 automatically done when building from tarball.
 
 ```
-	sh autoconf.sh
+  sh autoconf.sh
 ```
 
 Normally, this command automatically figures out everything it needs
@@ -133,7 +132,7 @@ configure script that modify its behaviour:
 To run a simple test before installation, execute
 
 ```
-	make check
+  make check
 ```
 
 The commands printed by this run might help you in running Icarus
@@ -232,9 +231,9 @@ This is a collection of processing steps that perform
 optimizations that do not depend on the target technology. Examples of
 some useful transformations are
 
-	- eliminate null effect circuitry
-	- combinational reduction
-	- constant propagation
+- eliminate null effect circuitry
+- combinational reduction
+- constant propagation
 
 The actual functions performed are specified on the `ivl` command line by
 the `-F` flags (see below).
@@ -317,6 +316,7 @@ endmodule
 
 --------------------------------------------------------------
 ```
+
 Ensure that `iverilog` is on your search path, and the vpi library
 is available.
 
@@ -325,6 +325,7 @@ To compile the program:
 ```
 	iverilog hello.vl
 ```
+
 (The above presumes that /usr/local/include and /usr/local/lib are
 part of the compiler search path, which is usually the case for gcc.)
 
@@ -333,6 +334,7 @@ To run the program:
 ```
 	./a.out
 ```
+
 You can use the `-o` switch to name the output command to be generated
 by the compiler. See the `iverilog`(1) man page.
 
@@ -374,23 +376,25 @@ gives nonstandard (but extended) meanings to some features of the
 language that are defined. See the "extensions.txt" documentation for
 more details.
 
-    $is_signed(<expr>)
+* `$is_signed(<expr>)`
+
 	This system function returns 1 if the expression contained is
 	signed, or 0 otherwise. This is mostly of use for compiler
 	regression tests.
 
-    $sizeof(<expr>)
-    $bits(<expr>)
-	The $bits system function returns the size in bits of the
+* `$sizeof(<expr>)`, `$bits(<expr>)`
+
+	The `$bits` system function returns the size in bits of the
 	expression that is its argument. The result of this
 	function is undefined if the argument doesn't have a
 	self-determined size.
 
-	The $sizeof function is deprecated in favour of $bits, which is
+	The `$sizeof` function is deprecated in favour of `$bits`, which is
 	the same thing, but included in the SystemVerilog definition.
 
-    $simtime
-	The $simtime system function returns as a 64bit value the
+* `$simtime`
+	
+  The `$simtime` system function returns as a 64bit value the
 	simulation time, unscaled by the time units of local
 	scope. This is different from the $time and $stime functions
 	which return the scaled times. This function is added for
@@ -398,104 +402,107 @@ more details.
 	used by applications who really want the simulation time.
 
 	Note that the simulation time can be confusing if there are
-	lots of different `timescales within a design. It is not in
+	lots of different `` `timescales`` within a design. It is not in
 	general possible to predict what the simulation precision will
 	turn out to be.
 
-    $mti_random()
-    $mti_dist_uniform
+* `$mti_random()`, `$mti_dist_uniform`
+
 	These functions are similar to the IEEE1364 standard $random
 	functions, but they use the Mersenne Twister (MT19937)
 	algorithm. This is considered an excellent random number
 	generator, but does not generate the same sequence as the
 	standardized $random.
 
-    Builtin system functions
+### Builtin system functions
 
-	Certain of the system functions have well-defined meanings, so
-	can theoretically be evaluated at compile-time, instead of
-	using runtime VPI code. Doing so means that VPI cannot
-	override the definitions of functions handled in this
-	manner. On the other hand, this makes them synthesizable, and
-	also allows for more aggressive constant propagation. The
-	functions handled in this manner are:
+Certain of the system functions have well-defined meanings, so
+can theoretically be evaluated at compile-time, instead of
+using runtime VPI code. Doing so means that VPI cannot
+override the definitions of functions handled in this
+manner. On the other hand, this makes them synthesizable, and
+also allows for more aggressive constant propagation. The
+functions handled in this manner are:
 
-		$bits
-		$signed
-		$sizeof
-		$unsigned
+* `$bits`
+* `$signed`
+* `$sizeof`
+* `$unsigned`
 
-	Implementations of these system functions in VPI modules will
-	be ignored.
+Implementations of these system functions in VPI modules will be ignored.
 
-    Preprocessing Library Modules
+### Preprocessing Library Modules
 
-	Icarus Verilog does preprocess modules that are loaded from
-	libraries via the -y mechanism. However, the only macros
-	defined during the compilation of that file are those that it
-	defines itself (or includes) or that are defined in the
-	command line or command file.
+Icarus Verilog does preprocess modules that are loaded from
+libraries via the -y mechanism. However, the only macros
+defined during the compilation of that file are those that it
+defines itself (or includes) or that are defined in the
+command line or command file.
 
-	Specifically, macros defined in the non-library source files
-	are not remembered when the library module is loaded. This is
-	intentional. If it were otherwise, then compilation results
-	might vary depending on the order that libraries are loaded,
-	and that is too unpredictable.
+Specifically, macros defined in the non-library source files
+are not remembered when the library module is loaded. This is
+intentional. If it were otherwise, then compilation results
+might vary depending on the order that libraries are loaded,
+and that is too unpredictable.
 
-	It is said that some commercial compilers do allow macro
-	definitions to span library modules. That's just plain weird.
+It is said that some commercial compilers do allow macro
+definitions to span library modules. That's just plain weird.
 
-    Width in %t Time Formats
+### Width in `%t` Time Formats
 
-	Standard Verilog does not allow width fields in the %t formats
-	of display strings. For example, this is illegal:
+Standard Verilog does not allow width fields in the %t formats
+of display strings. For example, this is illegal:
 
-		$display("Time is %0t", $time);
+```
+	$display("Time is %0t", $time);
+```
 
-	Standard Verilog instead relies on the $timeformat to
-	completely specify the format.
+Standard Verilog instead relies on the $timeformat to
+completely specify the format.
 
-	Icarus Verilog allows the programmer to specify the field
-	width. The "%t" format in Icarus Verilog works exactly as it
-	does in standard Verilog. However, if the programmer chooses
-	to specify a minimum width (i.e., "%5t"), then for that display
-	Icarus Verilog will override the $timeformat minimum width and
-	use the explicit minimum width.
+Icarus Verilog allows the programmer to specify the field
+width. The `%t` format in Icarus Verilog works exactly as it
+does in standard Verilog. However, if the programmer chooses
+to specify a minimum width (i.e., `%5t`), then for that display
+Icarus Verilog will override the `$timeformat` minimum width and
+use the explicit minimum width.
 
-    vpiScope iterator on vpiScope objects.
+### vpiScope iterator on vpiScope objects.
 
-	In the VPI, the normal way to iterate over vpiScope objects
-	contained within a vpiScope object, is the vpiInternalScope
-	iterator. Icarus Verilog adds support for the vpiScope
-	iterator of a vpiScope object, that iterates over *everything*
-	the is contained in the current scope. This is useful in cases
-	where one wants to iterate over all the objects in a scope
-	without iterating over all the contained types explicitly.
+In the VPI, the normal way to iterate over vpiScope objects
+contained within a vpiScope object, is the vpiInternalScope
+iterator. Icarus Verilog adds support for the vpiScope
+iterator of a vpiScope object, that iterates over *everything*
+the is contained in the current scope. This is useful in cases
+where one wants to iterate over all the objects in a scope
+without iterating over all the contained types explicitly.
 
-    time 0 race resolution.
+### time 0 race resolution.
 
-	Combinational logic is routinely modelled using always
-	blocks. However, this can lead to race conditions if the
-	inputs to the combinational block are initialized in initial
-	statements. Icarus Verilog slightly modifies time 0 scheduling
-	by arranging for always statements with ANYEDGE sensitivity
-	lists to be scheduled before any other threads. This causes
-	combinational always blocks to be triggered when the values in
-	the sensitivity list are initialized by initial threads.
+Combinational logic is routinely modelled using always
+blocks. However, this can lead to race conditions if the
+inputs to the combinational block are initialized in initial
+statements. Icarus Verilog slightly modifies time 0 scheduling
+by arranging for always statements with ANYEDGE sensitivity
+lists to be scheduled before any other threads. This causes
+combinational always blocks to be triggered when the values in
+the sensitivity list are initialized by initial threads.
 
-    Nets with Types
+### Nets with Types
 
-	Icarus Verilog supports an extended syntax that allows nets
-	and regs to be explicitly typed. The currently supported types
-	are logic, bool and real. This implies that "logic" and "bool"
-	are new keywords. Typical syntax is:
+Icarus Verilog supports an extended syntax that allows nets
+and regs to be explicitly typed. The currently supported types
+are logic, bool and real. This implies that `logic` and `bool`
+are new keywords. Typical syntax is:
 
+```
 	wire real foo = 1.0;
 	reg logic bar, bat;
+```
+... and so forth. The syntax can be turned off by using the
+-g2 flag to iverilog, and turned on explicitly with the -g2x
+flag to iverilog.
 
-	... and so forth. The syntax can be turned off by using the
-	-g2 flag to iverilog, and turned on explicitly with the -g2x
-	flag to iverilog.
 
 ## CREDITS
 
