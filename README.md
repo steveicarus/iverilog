@@ -83,8 +83,8 @@ Unpack the tar-ball and cd into the `verilog-#########` directory
 with the commands:
 
 ```
-  ./configure
-  make
+	./configure
+	make
 ```
 
 If you are building from git, you have to run the command below before
@@ -92,7 +92,7 @@ compiling the source. This will generate the "configure" file, which is
 automatically done when building from tarball.
 
 ```
-  sh autoconf.sh
+	sh autoconf.sh
 ```
 
 Normally, this command automatically figures out everything it needs
@@ -101,31 +101,31 @@ configure script that modify its behaviour:
 
 ```
 	--prefix=<root>
-	    The default is /usr/local, which causes the tool suite to
-	    be compiled for install in /usr/local/bin,
-	    /usr/local/share/ivl, etc.
+		The default is /usr/local, which causes the tool suite to
+		be compiled for install in /usr/local/bin,
+		/usr/local/share/ivl, etc.
 
-	    I recommend that if you are configuring for precompiled
-	    binaries, use --prefix=/usr.  On Solaris systems, it is
-	    common to use --prefix=/opt.  You can configure for a non-root
-	    install with --prefix=$HOME.
+		I recommend that if you are configuring for precompiled
+		binaries, use --prefix=/usr.  On Solaris systems, it is
+		common to use --prefix=/opt.  You can configure for a non-root
+		install with --prefix=$HOME.
 
 	--enable-suffix
 	--enable-suffix=<your-suffix>
 	--disable-suffix
-	    Enable/disable changing the names of install files to use
-	    a suffix string so that this version or install can co-
-	    exist with other versions. This renames the installed
-	    commands (iverilog, iverilog-vpi, vvp) and the installed
-	    library files and include directory so that installations
-	    with the same prefix but different suffix are guaranteed
-	    to not interfere with each other.
+		Enable/disable changing the names of install files to use
+		a suffix string so that this version or install can co-
+		exist with other versions. This renames the installed
+		commands (iverilog, iverilog-vpi, vvp) and the installed
+		library files and include directory so that installations
+		with the same prefix but different suffix are guaranteed
+		to not interfere with each other.
 
 	--host=<host-type>
-	    Compile iverilog for a different platform. You can use:
-                x64_64-w64-mingw32 for building 64-bit Windows executables
-                i686-w64-mingw32 for building 32-bit Windows executables
-            Both options require installing the required mingw-w64 packages.
+		Compile iverilog for a different platform. You can use:
+				x64_64-w64-mingw32 for building 64-bit Windows executables
+				i686-w64-mingw32 for building 32-bit Windows executables
+			Both options require installing the required mingw-w64 packages.
 ```
 
 ### (Optional) Testing
@@ -133,7 +133,7 @@ configure script that modify its behaviour:
 To run a simple test before installation, execute
 
 ```
-  make check
+	make check
 ```
 
 The commands printed by this run might help you in running Icarus
@@ -148,7 +148,7 @@ with the `--prefix=<path>` flag to the configure command.) You may need
 to do this as root to gain access to installation directories.
 
 ```
-  make install
+	make install
 ```
 
 ### Uninstallation
@@ -331,7 +331,7 @@ part of the compiler search path, which is usually the case for gcc.)
 To run the program:
 
 ```
-  ./a.out
+	./a.out
 ```
 You can use the `-o` switch to name the output command to be generated
 by the compiler. See the `iverilog`(1) man page.
