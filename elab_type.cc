@@ -215,7 +215,8 @@ ivl_type_t struct_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 
 		  netstruct_t::member_t memb;
 		  memb.name = namep->name;
-		  memb.net_type = mem_vec;
+		  memb.net_type = elaborate_array_type(des, scope, *this,
+						       mem_vec, namep->index);
 		  res->append_member(des, memb);
 	    }
       }
