@@ -720,6 +720,16 @@ sv_typedef_darray_base1	normal,-g2009		ivltests
 sv_typedef_darray_base2	normal,-g2009		ivltests
 sv_typedef_darray_base3	normal,-g2009		ivltests
 sv_typedef_darray_base4	normal,-g2009		ivltests
+sv_typedef_fwd_base	normal,-g2009		ivltests
+sv_typedef_fwd_class	normal,-g2009		ivltests
+sv_typedef_fwd_union	normal,-g2009		ivltests
+sv_typedef_fwd_union_fail CE,-g2009		ivltests
+sv_typedef_fwd_enum1	normal,-g2009		ivltests
+sv_typedef_fwd_enum2	normal,-g2009		ivltests
+sv_typedef_fwd_enum3	normal,-g2009		ivltests
+sv_typedef_fwd_enum_fail CE,-g2009		ivltests
+sv_typedef_fwd_struct	normal,-g2009		ivltests
+sv_typedef_fwd_struct_fail CE,-g2009		ivltests
 sv_typedef_nested_array normal,-g2009		ivltests
 sv_typedef_queue_base1	normal,-g2009		ivltests
 sv_typedef_queue_base2	normal,-g2009		ivltests
