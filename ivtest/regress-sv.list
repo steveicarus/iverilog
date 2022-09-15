@@ -470,8 +470,11 @@ struct_line_info	CE,-g2009		ivltests gold=struct_line_info.gold
 struct_member_signed	normal,-g2009		ivltests
 struct_packed_array	normal,-g2009		ivltests
 struct_packed_array2	normal,-g2009		ivltests
+struct_packed_darray_fail CE,-g2009		ivltests
+struct_packed_queue_fail CE,-g2009		ivltests
 struct_packed_sysfunct	normal,-g2009		ivltests
 struct_packed_sysfunct2	normal,-g2009		ivltests
+struct_packed_uarray_fail CE,-g2009		ivltests
 struct_packed_write_read2	normal,-g2009	ivltests
 struct_invalid_member	CE,-g2009		ivltests gold=struct_invalid_member.gold
 struct_signed		normal,-g2009		ivltests
@@ -752,6 +755,9 @@ ubyte_test		normal,-g2005-sv	ivltests
 uint_test		normal,-g2005-sv	ivltests
 ulongint_test		normal,-g2005-sv	ivltests
 undef_lval_select_SV	normal,-g2009		ivltests
+union_packed_darray_fail CE,-g2009		ivltests
+union_packed_queue_fail	CE,-g2009		ivltests
+union_packed_uarray_fail CE,-g2009		ivltests
 unp_array_typedef	normal,-g2005-sv	ivltests
 packed_dims_invalid_class CE,-g2005-sv		ivltests
 packed_dims_invalid_module CE,-g2005-sv		ivltests
