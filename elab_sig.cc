@@ -1040,8 +1040,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 			     << "Evaluate ranges for port " << basename() << endl;
 		  }
 		  dimensions_ok &= evaluate_ranges(des, scope, this, plist, port_);
-		  nlist = plist;
-		    /* An implicit port can have a range so note that here. */
 	    }
             assert(port_set_ || port_.empty());
 
@@ -1062,9 +1060,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		       << ". Now check for consistency." << endl;
 	    }
 
-	    /* We have a port size error */
-            if (port_set_ && net_set_ && !test_ranges_eeq(plist, nlist)) {
-
+	    /* We have a port size error. Skip this if the dimensions could not
+	     * be evaluated since it will likely print nonsensical errors. */
+            if (port_set_ && net_set_ && !test_ranges_eeq(plist, nlist) &&
+	        dimensions_ok) {
 		  /* Scalar port with a vector net/etc. definition */
 		  if (port_.empty()) {
 			if (!gn_io_range_error_flag) {
@@ -1103,7 +1102,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  }
             }
 
-	    packed_dimensions = nlist;
+	    packed_dimensions = net_set_ ? nlist : plist;
 	    wid = netrange_width(packed_dimensions);
 	    if (wid > warn_dimension_size) {
 		  cerr << get_fileline() << ": warning: Vector size "
@@ -1115,17 +1114,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       unsigned nattrib = 0;
       attrib_list_t*attrib_list = evaluate_attributes(attributes, nattrib,
 						      des, scope);
-
-      if (data_type_ == IVL_VT_REAL && !packed_dimensions.empty()) {
-	    cerr << get_fileline() << ": error: real ";
-	    if (wtype == NetNet::REG) cerr << "variable";
-	    else cerr << "net";
-	    cerr << " '" << name_
-	         << "' cannot be declared as a vector, found a range "
-		 << packed_dimensions << "." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
 
 	/* If the net type is supply0 or supply1, replace it
 	   with a simple wire with a pulldown/pullup with supply

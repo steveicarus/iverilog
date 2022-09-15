@@ -18,6 +18,7 @@
  */
 
 # include "config.h"
+# include "ivl_assert.h"
 # include  "PWire.h"
 # include  "PExpr.h"
 # include  <cassert>
@@ -27,13 +28,26 @@ using namespace std;
 PWire::PWire(perm_string n,
 	     NetNet::Type t,
 	     NetNet::PortType pt,
-	     ivl_variable_type_t dt)
+	     ivl_variable_type_t dt,
+	     PWSRType rt)
 : name_(n), type_(t), port_type_(pt), data_type_(dt),
   signed_(false),
   port_set_(false), net_set_(false), is_scalar_(false),
   error_cnt_(0), uarray_type_(0), set_data_type_(0),
   discipline_(0)
 {
+      switch (rt) {
+	  case SR_PORT:
+	    port_set_ = true;
+	    break;
+	  case SR_NET:
+	    net_set_ = true;
+	    break;
+	  case SR_BOTH:
+	    port_set_ = true;
+	    net_set_ = true;
+	    break;
+      }
 }
 
 NetNet::Type PWire::get_wire_type() const
@@ -132,47 +146,23 @@ bool PWire::get_signed() const
       return signed_;
 }
 
-void PWire::set_range_scalar(PWSRType type)
+void PWire::set_port(NetNet::PortType pt)
 {
-      is_scalar_ = true;
-      switch (type) {
-	  case SR_PORT:
-	    if (port_set_) {
-		  cerr << get_fileline() << ": error: Port ``" << name_
-		       << "'' has already been declared a port." << endl;
-		  error_cnt_ += 1;
-	    } else {
-		  port_set_ = true;
-	    }
-	    return;
+      ivl_assert(*this, !port_set_);
+      port_set_ = true;
 
-	  case SR_NET:
-	    if (net_set_) {
-		  cerr << get_fileline() << ": error: Net ``" << name_
-		       << "'' has already been declared." << endl;
-		  error_cnt_ += 1;
-	    } else {
-		  net_set_ = true;
-	    }
-	    return;
+      bool rc = set_port_type(pt);
+      ivl_assert(*this, rc);
+}
 
-	  case SR_BOTH:
-	    if (port_set_ || net_set_) {
-		  if (port_set_) {
-		        cerr << get_fileline() << ": error: Port ``" << name_
-		             << "'' has already been declared a port." << endl;
-		        error_cnt_ += 1;
-		  }
-		  if (net_set_) {
-		        cerr << get_fileline() << ": error: Net ``" << name_
-		             << "'' has already been declared." << endl;
-		        error_cnt_ += 1;
-		  }
-	    } else {
-		  port_set_ = true;
-		  net_set_ = true;
-	    }
-	    return;
+void PWire::set_net(NetNet::Type t)
+{
+      ivl_assert(*this, !net_set_);
+      net_set_ = true;
+
+      if (t != NetNet::IMPLICIT) {
+	    bool rc = set_wire_type(t);
+	    ivl_assert(*this, rc);
       }
 }
 
@@ -180,49 +170,21 @@ void PWire::set_range(const list<pform_range_t>&rlist, PWSRType type)
 {
       switch (type) {
 	  case SR_PORT:
-	    if (port_set_) {
-		  cerr << get_fileline() << ": error: Port ``" << name_
-		       << "'' has already been declared a port." << endl;
-		  error_cnt_ += 1;
-	    } else {
-		  port_ = rlist;
-		  port_set_ = true;
-		  is_scalar_ = false;
-	    }
-	    return;
-
+	    if (!port_.empty())
+		  return;
+	    port_ = rlist;
+	    break;
 	  case SR_NET:
-	    if (net_set_) {
-		  cerr << get_fileline() << ": error: Net ``" << name_
-		       << "'' has already been declared." << endl;
-		  error_cnt_ += 1;
-	    } else {
-		  net_ = rlist;
-		  net_set_ = true;
-		  is_scalar_ = false;
-	    }
-	    return;
-
+	    if (!net_.empty())
+		  return;
+	    net_ = rlist;
+	    break;
 	  case SR_BOTH:
-	    if (port_set_ || net_set_) {
-		  if (port_set_) {
-		        cerr << get_fileline() << ": error: Port ``" << name_
-		             << "'' has already been declared a port." << endl;
-		        error_cnt_ += 1;
-		  }
-		  if (net_set_) {
-		        cerr << get_fileline() << ": error: Net ``" << name_
-		             << "'' has already been declared." << endl;
-		        error_cnt_ += 1;
-		  }
-	    } else {
-		  port_ = rlist;
-		  port_set_ = true;
-		  net_ = rlist;
-		  net_set_ = true;
-		  is_scalar_ = false;
-	    }
-	    return;
+	    if (!port_.empty() || !net_.empty())
+		  return;
+	    port_ = rlist;
+	    net_ = rlist;
+	    break;
       }
 }
 

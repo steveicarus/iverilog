@@ -436,7 +436,6 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
             PWire*net = new PWire(name, type, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
             net->set_file(get_file());
             net->set_lineno(get_lineno());
-            net->set_range_scalar(SR_NET);
             scope->wires[name] = net;
             if (warn_implicit) {
                   cerr << get_fileline() << ": warning: implicit "

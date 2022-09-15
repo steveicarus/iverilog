@@ -1,3 +1,5 @@
+./ivltests/pr2001162.v:36: warning: Scalar port ``l'' has a vectored net declaration [31:0].
+./ivltests/pr2001162.v:36: warning: Scalar port ``r'' has a vectored net declaration [31:0].
 test2 increment; reading counter as 0
 test1 increment; reading counter as 1
 test2 increment; reading counter as 2

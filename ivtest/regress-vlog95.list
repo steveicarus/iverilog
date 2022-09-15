@@ -1011,10 +1011,10 @@ pr1793749b		normal,-pallowsigned=1	ivltests gold=pr1793749b.gold
 pr1795005a		normal,-pallowsigned=1	ivltests gold=pr1795005a.gold
 pr1795005b		normal,-pallowsigned=1	ivltests gold=pr1795005b.gold
 pr1823732		normal,-pallowsigned=1	ivltests gold=pr1823732.gold
-pr1841300		normal,-pallowsigned=1	ivltests gold=pr1841300.gold
+pr1841300		normal,-pallowsigned=1,-gno-io-range-error ivltests gold=pr1841300.gold
 pr1845683		normal,-pallowsigned=1	ivltests gold=pr1845683.gold
 pr1960558		normal,-pallowsigned=1	ivltests gold=pr1960558.gold
-pr1960619		normal,-pallowsigned=1	ivltests gold=pr1960619.gold
+pr1960619		normal,-pallowsigned=1,-gno-io-range-error ivltests gold=pr1960619.gold
 pr1963240		normal,-pallowsigned=1	ivltests gold=pr1963240.gold
 pr1990164		normal,-pallowsigned=1	ivltests
 pr2136787		normal,-pallowsigned=1	ivltests gold=pr2136787.gold

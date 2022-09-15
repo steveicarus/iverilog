@@ -2148,13 +2148,8 @@ static void pform_set_net_range(PWire *wire,
 				PWSRType rt = SR_NET,
 				std::list<named_pexpr_t>*attr = 0)
 {
-      if (range == 0) {
-	      /* This is the special case that we really mean a
-		 scalar. Set a fake range. */
-	    wire->set_range_scalar(rt);
-      } else {
+      if (range)
 	    wire->set_range(*range, rt);
-      }
       wire->set_signed(signed_flag);
 
       pform_bind_attributes(wire->attributes, attr, true);
@@ -2516,6 +2511,68 @@ void pform_make_var_init(const struct vlltype&li,
 }
 
 /*
+ * This function makes a single signal (a wire, a reg, etc) as
+ * requested by the parser. The name is unscoped, so I attach the
+ * current scope to it (with the scoped_name function) and I try to
+ * resolve it with an existing PWire in the scope.
+ *
+ * The wire might already exist because of an implicit declaration in
+ * a module port, i.e.:
+ *
+ *     module foo (bar...
+ *
+ *         reg bar;
+ *
+ * The output (or other port direction indicator) may or may not have
+ * been seen already, so I do not do any checking with it yet. But I
+ * do check to see if the name has already been declared, as this
+ * function is called for every declaration.
+ */
+
+
+static PWire* pform_get_or_make_wire(const struct vlltype&li, perm_string name,
+				     NetNet::Type type, NetNet::PortType ptype,
+				     ivl_variable_type_t dtype, PWSRType rt)
+{
+      PWire *cur = 0;
+
+	// If this is not a full declaration check if there is already a signal
+	// with the same name that can be extended.
+      if (rt != SR_BOTH)
+	    cur = pform_get_wire_in_scope(name);
+
+	// If the wire already exists but isn't yet fully defined,
+	// carry on adding details.
+      if (rt == SR_NET && cur && !cur->is_net()) {
+	      // At the moment there can only be one location for the PWire, if
+	      // there is both a port and signal declaration use the location of
+	      // the signal.
+	    FILE_NAME(cur, li);
+	    cur->set_net(type);
+	    return cur;
+      }
+
+      if (rt == SR_PORT && cur && !cur->is_port()) {
+	    cur->set_port(ptype);
+	    return cur;
+      }
+
+	// If the wire already exists and is fully defined, this
+	// must be a redeclaration. Start again with a new wire.
+	// The error will be reported when we add the new wire
+	// to the scope. Do not delete the old wire - it will
+	// remain in the local symbol map.
+
+      cur = new PWire(name, type, ptype, dtype, rt);
+      FILE_NAME(cur, li);
+
+      pform_put_wire_in_scope(name, cur);
+
+      return cur;
+}
+
+
+/*
  * This function is used by the parser when I have port definition of
  * the form like this:
  *
@@ -2535,16 +2592,6 @@ void pform_module_define_port(const struct vlltype&li,
 {
       ivl_variable_type_t data_type = IVL_VT_NO_TYPE;
       bool signed_flag = false;
-
-      PWire*cur = pform_get_wire_in_scope(name);
-      if (cur) {
-	    ostringstream msg;
-	    msg << name << " definition conflicts with "
-		<< "definition at " << cur->get_fileline()
-		<< ".";
-	    VLerror(msg.str().c_str());
-	    return;
-      }
 
       pform_check_net_data_type(li, type, vtype);
 
@@ -2583,27 +2630,22 @@ void pform_module_define_port(const struct vlltype&li,
       if (data_type == IVL_VT_NO_TYPE)
 	    data_type = IVL_VT_LOGIC;
 
-      cur = new PWire(name, type, port_kind, data_type);
-      FILE_NAME(cur, li);
+      PWire *cur = pform_get_or_make_wire(li, name, type, port_kind, data_type,
+					  SR_BOTH);
 
       cur->set_signed(signed_flag);
 
       if (vtype)
 	    cur->set_data_type(vtype);
 
-      if (prange == 0) {
-	    cur->set_range_scalar((type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
-
-      } else {
-	    cur->set_range(*prange, (type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
-      }
+      if (prange)
+	    cur->set_range(*prange, SR_BOTH);
 
       if (urange) {
 	    cur->set_unpacked_idx(*urange);
       }
 
       pform_bind_attributes(cur->attributes, attr, keep_attr);
-      pform_put_wire_in_scope(name, cur);
 }
 
 void pform_module_define_port(const struct vlltype&li,
@@ -2634,66 +2676,6 @@ void pform_module_define_port(const struct vlltype&li,
 }
 
 /*
- * This function makes a single signal (a wire, a reg, etc) as
- * requested by the parser. The name is unscoped, so I attach the
- * current scope to it (with the scoped_name function) and I try to
- * resolve it with an existing PWire in the scope.
- *
- * The wire might already exist because of an implicit declaration in
- * a module port, i.e.:
- *
- *     module foo (bar...
- *
- *         reg bar;
- *
- * The output (or other port direction indicator) may or may not have
- * been seen already, so I do not do any checking with it yet. But I
- * do check to see if the name has already been declared, as this
- * function is called for every declaration.
- */
-
-static PWire* pform_get_or_make_wire(const vlltype&li, perm_string name,
-			      NetNet::Type type, NetNet::PortType ptype,
-			      ivl_variable_type_t dtype)
-{
-      PWire*cur = pform_get_wire_in_scope(name);
-
-	// If the wire already exists but isn't yet fully defined,
-	// carry on adding details.
-      if (cur && (cur->get_data_type() == IVL_VT_NO_TYPE ||
-                  cur->get_wire_type() == NetNet::IMPLICIT) ) {
-	      // If this is not implicit ("implicit" meaning we don't
-	      // know what the type is yet) then set the type now.
-	    if (type != NetNet::IMPLICIT) {
-		  bool rc = cur->set_wire_type(type);
-		  if (rc == false) {
-			ostringstream msg;
-			msg << name << " " << type
-			    << " definition conflicts with " << cur->get_wire_type()
-			    << " definition at " << cur->get_fileline()
-			    << ".";
-			VLerror(msg.str().c_str());
-		  }
-		  FILE_NAME(cur, li);
-	    }
-	    return cur;
-      }
-
-	// If the wire already exists and is fully defined, this
-	// must be a redeclaration. Start again with a new wire.
-	// The error will be reported when we add the new wire
-	// to the scope. Do not delete the old wire - it will
-	// remain in the local symbol map.
-
-      cur = new PWire(name, type, ptype, dtype);
-      FILE_NAME(cur, li);
-
-      pform_put_wire_in_scope(name, cur);
-
-      return cur;
-}
-
-/*
  * this is the basic form of pform_makewire. This takes a single simple
  * name, port type, net type, data type, and attributes, and creates
  * the variable/net. Other forms of pform_makewire ultimately call
@@ -2703,7 +2685,7 @@ PWire *pform_makewire(const vlltype&li, perm_string name, NetNet::Type type,
 		      ivl_variable_type_t dt, std::list<pform_range_t> *indices)
 {
       PWire*cur = pform_get_or_make_wire(li, name, type, NetNet::NOT_A_PORT,
-					 dt);
+					 dt, SR_NET);
       assert(cur);
 
       bool flag;
@@ -2717,7 +2699,6 @@ PWire *pform_makewire(const vlltype&li, perm_string name, NetNet::Type type,
 		       << " to " << dt << "." << endl;
 	    }
 	    ivl_assert(*cur, flag);
-	    cur->set_range_scalar(SR_NET);
 	    cur->set_signed(true);
 	    break;
 	  default:
@@ -2821,27 +2802,21 @@ static vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
       assert(ports);
       vector<pform_tf_port_t>*res = new vector<pform_tf_port_t>(0);
+      PWSRType rt = vtype != IVL_VT_NO_TYPE ? SR_BOTH : SR_PORT;
+
       for (list<pform_port_t>::iterator cur = ports->begin()
 		 ; cur != ports->end() ; ++ cur ) {
 	    perm_string &name = cur->name;
 
 	      /* Look for a preexisting wire. If it exists, set the
 		 port direction. If not, create it. */
-	    PWire*curw = pform_get_wire_in_scope(name);
-	    if (curw) {
-		  curw->set_port_type(pt);
-	    } else {
-		  curw = new PWire(name, NetNet::IMPLICIT_REG, pt, vtype);
-		  FILE_NAME(curw, loc);
-		  pform_put_wire_in_scope(name, curw);
-	    }
-
+	    PWire*curw = pform_get_or_make_wire(loc, name, NetNet::IMPLICIT_REG,
+						pt, vtype, rt);
 	    curw->set_signed(signed_flag);
 
 	      /* If there is a range involved, it needs to be set. */
-	    if (range) {
-		  curw->set_range(*range, SR_PORT);
-	    }
+	    if (range)
+		  curw->set_range(*range, rt);
 
 	    if (cur->udims) {
 		  if (pform_requires_sv(loc, "Task/function port with unpacked dimensions"))
@@ -2857,27 +2832,23 @@ static vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 
 static vector<pform_tf_port_t>*do_make_task_ports(const struct vlltype&loc,
 					 NetNet::PortType pt,
-					 ivl_variable_type_t var_type,
+					 ivl_variable_type_t vtype,
 					 data_type_t*data_type,
 					 list<pform_port_t>*ports)
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
       assert(ports);
       vector<pform_tf_port_t>*res = new vector<pform_tf_port_t>(0);
+      PWSRType rt = data_type ? SR_BOTH : SR_PORT;
 
       for (list<pform_port_t>::iterator cur = ports->begin()
 		 ; cur != ports->end() ; ++cur) {
 	    perm_string &name = cur->name;
 
-	    PWire*curw = pform_get_wire_in_scope(name);
-	    if (curw) {
-		  curw->set_port_type(pt);
-	    } else {
-		  curw = new PWire(name, NetNet::IMPLICIT_REG, pt, var_type);
-		  FILE_NAME(curw, loc);
+	    PWire*curw = pform_get_or_make_wire(loc, name, NetNet::IMPLICIT_REG,
+						pt, vtype, rt);
+	    if (data_type)
 		  curw->set_data_type(data_type);
-		  pform_put_wire_in_scope(name, curw);
-	    }
 
 	    if (cur->udims) {
 		  if (pform_requires_sv(loc, "Task/function port with unpacked dimensions"))
@@ -3256,34 +3227,6 @@ extern void pform_module_specify_path(PSpecPath*obj)
 }
 
 
-static PWire *pform_set_port_type(const struct vlltype&li,
-				  perm_string name, NetNet::PortType pt)
-{
-      PWire*cur = pform_get_wire_in_scope(name);
-      if (cur == 0) {
-	    cur = new PWire(name, NetNet::IMPLICIT, NetNet::PIMPLICIT, IVL_VT_NO_TYPE);
-	    FILE_NAME(cur, li);
-	    pform_put_wire_in_scope(name, cur);
-      }
-
-      switch (cur->get_port_type()) {
-	  case NetNet::NOT_A_PORT:
-	  case NetNet::PIMPLICIT:
-	    if (! cur->set_port_type(pt))
-		  VLerror("error setting port direction.");
-	    break;
-
-	  default:
-	    cerr << li << ": error: "
-		 << "port " << name << " already has a port declaration."
-		 << endl;
-	    error_count += 1;
-	    break;
-      }
-
-      return cur;
-}
-
 void pform_set_port_type(const struct vlltype&li,
 			 list<pform_port_t>*ports,
 			 NetNet::PortType pt,
@@ -3306,7 +3249,8 @@ void pform_set_port_type(const struct vlltype&li,
       for (list<pform_port_t>::iterator cur = ports->begin()
 		 ; cur != ports->end() ; ++ cur ) {
 
-	    PWire *wire = pform_set_port_type(li, cur->name, pt);
+	    PWire *wire = pform_get_or_make_wire(li, cur->name, NetNet::IMPLICIT, pt,
+						 IVL_VT_NO_TYPE, SR_PORT);
 	    pform_set_net_range(wire, range, signed_flag, SR_PORT, attr);
 	    if (cur->udims) {
 		  cerr << li << ": warning: "

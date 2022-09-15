@@ -351,7 +351,6 @@ br_gh674		normal			ivltests
 br_gh732		normal			ivltests gold=br_gh732.gold
 br_ml20150315		normal			ivltests gold=br_ml_20150315.gold
 br_ml20150321		CE			ivltests
-br_ml20150606		normal			ivltests
 br_mw20171108		normal			ivltests
 br_ml20190806a		normal			ivltests
 br_ml20190806b		normal			ivltests
@@ -655,12 +654,30 @@ module_inout_port_list_def CE			ivltests # inout ports do not support default va
 module_inout_port_type	CE			ivltests
 module_input_port_list_def CE			ivltests # input ports only support default values in SV
 module_input_port_type	CE			ivltests
+module_nonansi_fail1	CE			ivltests
+module_nonansi_fail2	CE			ivltests
+module_nonansi_fail3	CE			ivltests
+module_nonansi_fail4	CE			ivltests
+module_nonansi_fail5	CE			ivltests
+module_nonansi_fail6	CE			ivltests
+module_nonansi_fail7	CE			ivltests
+module_nonansi_fail8	CE			ivltests
+module_nonansi_fail9	CE			ivltests
+module_nonansi_fail10	CE			ivltests
+module_nonansi_fail11	CE			ivltests
+module_nonansi_fail12	CE			ivltests
+module_nonansi_fail13	CE			ivltests
 module_nonansi_integer1	normal			ivltests
 module_nonansi_integer2	normal			ivltests
+module_nonansi_integer_fail CE			ivltests
 module_nonansi_time1	normal			ivltests
 module_nonansi_time2	normal			ivltests
+module_nonansi_time_fail CE			ivltests
 module_nonansi_vec1	normal			ivltests
 module_nonansi_vec2	normal			ivltests
+module_nonansi_vec_fail1 CE			ivltests
+module_nonansi_vec_fail2 CE			ivltests
+module_nonansi_vec_fail3 CE			ivltests
 module_output_port_list_def normal		ivltests
 module_output_port_var1	normal			ivltests
 module_output_port_var2	normal			ivltests
@@ -1049,7 +1066,7 @@ pr1832097a		normal			ivltests
 pr1832097b		normal			ivltests
 pr1833024		CE			ivltests gold=pr1833024.gold
 pr1833754		CE			ivltests
-pr1841300		normal			ivltests gold=pr1841300.gold
+pr1841300		normal,-gno-io-range-error ivltests gold=pr1841300.gold
 pr1845683		normal			ivltests gold=pr1845683.gold
 pr1851310		normal			ivltests gold=pr1851310.gold
 pr1855504		normal			ivltests gold=pr1855504.gold
@@ -1117,7 +1134,7 @@ pr1960548		normal			ivltests gold=pr1960548.gold
 pr1960558		normal			ivltests gold=pr1960558.gold
 pr1960575		normal			ivltests gold=pr1960575.gold
 pr1960596		normal			ivltests gold=pr1960596.gold
-pr1960619		normal			ivltests gold=pr1960619.gold
+pr1960619		normal,-gno-io-range-error ivltests gold=pr1960619.gold
 pr1960625		normal			ivltests
 pr1960633		normal			ivltests
 pr1963240		normal			ivltests gold=pr1963240.gold
@@ -1140,7 +1157,7 @@ pr1990269		normal			ivltests
 pr1992244		normal			ivltests
 pr1992729		normal			ivltests
 pr1993479		normal			ivltests gold=pr1993479.gold
-pr2001162		normal			ivltests gold=pr2001162.gold
+pr2001162		normal,-gno-io-range-error ivltests gold=pr2001162.gold
 pr2011429		normal			ivltests
 pr2013758		normal			ivltests
 pr2014673		normal			ivltests
@@ -1635,14 +1652,31 @@ task_inpad		normal			ivltests # Validates input of task should pad w/ 0
 task_iotypes		normal			ivltests # task ports with types.
 task_iotypes2		normal			ivltests # task ports with types.
 task_mem		normal			ivltests
+task_nonansi_fail1	CE			ivltests
+task_nonansi_fail2	CE			ivltests
+task_nonansi_fail3	CE			ivltests
+task_nonansi_fail4	CE			ivltests
+task_nonansi_fail5	CE			ivltests
+task_nonansi_fail6	CE			ivltests
+task_nonansi_fail7	CE			ivltests
+task_nonansi_fail8	CE			ivltests
+task_nonansi_fail9	CE			ivltests
+task_nonansi_fail10	CE			ivltests
+task_nonansi_fail11	CE			ivltests
 task_nonansi_integer1	normal			ivltests
 task_nonansi_integer2	normal			ivltests
+task_nonansi_integer_fail CE			ivltests
 task_nonansi_real1	normal			ivltests
 task_nonansi_real2	normal			ivltests
+task_nonansi_real_fail	CE			ivltests
 task_nonansi_time1	normal			ivltests
 task_nonansi_time2	normal			ivltests
+task_nonansi_time_fail	CE			ivltests
 task_nonansi_vec1	normal			ivltests
 task_nonansi_vec2	normal			ivltests
+task_nonansi_vec_fail1	CE			ivltests
+task_nonansi_vec_fail2	CE			ivltests
+task_nonansi_vec_fail3	CE			ivltests
 task_noop		normal			ivltests # Task with no contents.
 task_noop2		CO			ivltests # Task *really* with no contents.
 task_omemw2		normal			ivltests
