@@ -195,3 +195,14 @@ const NetExpr* netclass_t::get_parameter(Design *des, perm_string name,
 {
       return class_scope_->get_parameter(des, name, par_type);
 }
+
+bool netclass_t::test_compatibility(ivl_type_t that) const
+{
+      for (const netclass_t *class_type = dynamic_cast<const netclass_t *>(that);
+	    class_type; class_type = class_type->get_super()) {
+	    if (class_type == this)
+		  return true;
+      }
+
+      return false;
+}
