@@ -18,6 +18,7 @@
  */
 
 # include  "nettypes.h"
+# include  "netenum.h"
 # include  <iostream>
 # include  <cassert>
 
@@ -69,9 +70,22 @@ bool ivl_type_s::type_compatible(ivl_type_t that) const
       return test_compatibility(that);
 }
 
-bool ivl_type_s::test_compatibility(const ivl_type_s* /*that*/) const
+bool ivl_type_s::test_compatibility(ivl_type_t that) const
 {
-      return false;
+      return test_equivalence(that);
+}
+
+bool ivl_type_s::type_equivalent(ivl_type_t that) const
+{
+      if (this == that)
+	    return true;
+
+      return test_equivalence(that);
+}
+
+bool ivl_type_s::test_equivalence(ivl_type_t) const
+{
+	return false;
 }
 
 netarray_t::~netarray_t()
@@ -166,3 +180,35 @@ bool prefix_to_slice(const std::vector<netrange_t>&dims,
       return true;
 }
 
+bool packed_types_equivalent(ivl_type_t a, ivl_type_t b)
+{
+      if (!a->packed() || !b->packed())
+	    return false;
+
+      if (a->base_type() != b->base_type())
+	    return false;
+
+      if (a->packed_width() != b->packed_width())
+	    return false;
+
+      if (a->get_signed() != b->get_signed())
+	    return false;
+
+      // Special case, even though enums are packed they are not equivalent,
+      // they are only assignment compatible to other packed types
+      if (dynamic_cast<const netenum_t*>(b))
+	    return false;
+
+      return true;
+}
+
+bool packed_type_compatible(ivl_type_t type)
+{
+      if (type->packed())
+	    return true;
+
+      if (type->base_type() == IVL_VT_REAL)
+	    return true;
+
+      return false;
+}

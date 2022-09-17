@@ -37,18 +37,22 @@ ivl_variable_type_t netdarray_t::base_type(void) const
       return IVL_VT_DARRAY;
 }
 
-bool netdarray_t::test_compatibility(ivl_type_t that) const
+bool netdarray_t::test_equivalence(ivl_type_t that) const
 {
-      ivl_type_t elem_type = 0;
-
-      if (const netdarray_t*that_da = dynamic_cast<const netdarray_t*>(that))
-	    elem_type = that_da->element_type();
-
-      if (const netqueue_t*that_q = dynamic_cast<const netqueue_t*>(that))
-            elem_type = that_q->element_type();
-
-      if (elem_type == 0)
+      // Queues and dynamic arrays are not equivalent, so check for the base
+      // type to make sure both are either dynamic array or queue.
+      if (base_type() != that->base_type())
 	    return false;
 
-      return element_type()->type_compatible(elem_type);
+      return test_compatibility(that);
+}
+
+bool netdarray_t::test_compatibility(ivl_type_t that) const
+{
+      // This will match both queues and dynamic arrays
+      const netdarray_t *that_da = dynamic_cast<const netdarray_t*>(that);
+      if (!that_da)
+	    return false;
+
+      return element_type()->type_equivalent(that_da->element_type());
 }

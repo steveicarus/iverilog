@@ -86,6 +86,7 @@ class netvector_t : public ivl_type_s {
 
     private:
       bool test_compatibility(ivl_type_t that) const;
+      bool test_equivalence(ivl_type_t that) const;
 
     private:
       std::vector<netrange_t> packed_dims_;

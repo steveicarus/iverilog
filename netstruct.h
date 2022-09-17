@@ -76,6 +76,10 @@ class netstruct_t : public LineInfo, public ivl_type_s {
       ivl_variable_type_t base_type() const;
 
     private:
+      bool test_compatibility(ivl_type_t that) const;
+      bool test_equivalence(ivl_type_t that) const;
+
+    private:
       bool union_;
       bool packed_;
       bool signed_;

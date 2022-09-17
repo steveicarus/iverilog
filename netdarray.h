@@ -49,6 +49,7 @@ class netdarray_t : public netarray_t {
 
     private:
       bool test_compatibility(ivl_type_t that) const;
+      bool test_equivalence(ivl_type_t that) const;
 };
 
 #endif /* IVL_netdarray_H */

@@ -68,6 +68,9 @@ class netparray_t : public netsarray_t {
       long packed_width(void) const;
       std::vector<netrange_t> slice_dimensions() const;
 
+    private:
+      bool test_compatibility(ivl_type_t that) const;
+      bool test_equivalence(ivl_type_t that) const;
 };
 
 inline netparray_t::netparray_t(const std::vector<netrange_t>&pd,
