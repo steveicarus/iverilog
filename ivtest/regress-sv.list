@@ -532,6 +532,7 @@ sv_class_property_signed1	normal,-g2009	ivltests
 sv_class_property_signed2	normal,-g2009	ivltests
 sv_class_property_signed3	normal,-g2009	ivltests
 sv_class_property_signed4	normal,-g2009	ivltests
+sv_class_return		normal,-g2009		ivltests
 sv_class_static_prop1	normal,-g2009		ivltests
 sv_class_static_prop2	normal,-g2009		ivltests
 sv_class_static_prop3	normal,-g2009		ivltests
