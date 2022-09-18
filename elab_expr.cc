@@ -2783,10 +2783,14 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					ivl_type_t type, unsigned flags) const
 {
-//cerr << "HERE: " << scope->basename() << ", " << *type << endl;
       const netdarray_t*darray = dynamic_cast<const netdarray_t*>(type);
-      assert(darray);
-      return elaborate_expr(des, scope, darray->element_type()->packed_width(), flags);
+      unsigned int width = 1;
+        // Icarus allows a dynamic array to be initialised with a single
+        // elementary value, in that case the expression needs to be evaluated
+        // with the rigth width.
+      if (darray)
+	    width = darray->element_type()->packed_width();
+      return elaborate_expr(des, scope, width, flags);
 }
 
 NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*dscope,
