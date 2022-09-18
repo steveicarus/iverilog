@@ -13,12 +13,8 @@ jobs:
   mac:
     strategy:
       fail-fast: false
-      matrix:
-        os: [
-          '10.15'
-        ]
-    runs-on: macos-${{ matrix.os }}
-    name: '🍏 macos ${{ matrix.os }}'
+    runs-on: macos-latest
+    name: '🍏 macOS'
     steps:
 
     - uses: actions/checkout@v2
