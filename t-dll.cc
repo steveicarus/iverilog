@@ -507,7 +507,8 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 	    assert(idx < scop->param.size());
 	    ivl_parameter_t cur_par = &scop->param[idx];
 	    cur_par->basename = cur_pit->first;
-            cur_par->local = cur_pit->second.local_flag;
+	    cur_par->local = cur_pit->second.local_flag ||
+			     !cur_pit->second.overridable;
 	    calculate_param_range(cur_pit->second,
 				  cur_pit->second.ivl_type,
 				  cur_par->msb, cur_par->lsb,

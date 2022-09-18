@@ -253,13 +253,27 @@ static void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
       }
 }
 
+static bool scope_is_unique(ivl_scope_t scope)
+{
+      unsigned int count = ivl_scope_params(scope);
+
+      for (unsigned int idx = 0; idx < count; idx++) {
+	    ivl_parameter_t par = ivl_scope_param(scope, idx);
+	    if (!ivl_parameter_local(par)) {
+		  return false;
+	    }
+      }
+
+      return true;
+}
+
 static void emit_mangled_name(ivl_scope_t scope, unsigned root)
 {
-	/* If the module has parameters and it's not a root module then it
-	 * may not be unique so we create a mangled name version instead.
-	 * The mangled name is of the form:
+	/* If the module has non-local parameters and it's not a root module then it
+	 * may not be unique so we create a mangled name version instead. The
+	 * mangled name is of the form:
 	 *   <module_name>[<full_instance_scope>]. */
-      if (ivl_scope_params(scope) && ! root) {
+      if (!root && !scope_is_unique(scope)) {
 	    char *name;
 	    size_t len = strlen(ivl_scope_name(scope)) +
 	                 strlen(ivl_scope_tname(scope)) + 3;
@@ -1244,7 +1258,7 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 			(void) emit_scope(scope_to_emit, 0);
 			  /* If we used a mangled name then the instance is
 			   * unique so don't add it to the list. */
-			if (ivl_scope_params(scope_to_emit)) continue;
+			if (!scope_is_unique(scope_to_emit)) continue;
 			add_scope_to_list(scope_to_emit);
 		  }
 		  free(scopes_to_emit);
