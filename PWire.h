@@ -73,7 +73,6 @@ class PWire : public PNamedItem {
       bool get_signed() const;
 
       bool set_data_type(ivl_variable_type_t dt);
-      ivl_variable_type_t get_data_type() const;
 
       void set_range(const std::list<pform_range_t>&ranges, PWSRType type);
 

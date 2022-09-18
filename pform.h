@@ -96,9 +96,6 @@ struct parmvalue_t {
 
 struct str_pair_t { ivl_drive_t str0, str1; };
 
-
-extern std::list<pform_range_t>* copy_range(std::list<pform_range_t>* orig);
-
   /* Use this function to transform the parted form of the attribute
      list to the attribute map that is used later. */
 extern void pform_bind_attributes(std::map<perm_string,PExpr*>&attributes,
@@ -333,7 +330,6 @@ extern PForeach* pform_make_foreach(const struct vlltype&loc,
  */
 extern PWire *pform_makewire(const struct vlltype&li, perm_string name,
 			     NetNet::Type type,
-			     ivl_variable_type_t dt,
 			     std::list<pform_range_t> *indices);
 
 /* This form handles assignment declarations. */

@@ -164,16 +164,6 @@ static std::list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*
       return tmp;
 }
 
-list<pform_range_t>* copy_range(list<pform_range_t>* orig)
-{
-      std::list<pform_range_t>*copy = 0;
-
-      if (orig)
-	    copy = new std::list<pform_range_t> (*orig);
-
-      return copy;
-}
-
 template <class T> void append(vector<T>&out, const std::vector<T>&in)
 {
       for (size_t idx = 0 ; idx < in.size() ; idx += 1)
@@ -5794,7 +5784,7 @@ dimensions
 net_variable
   : IDENTIFIER dimensions_opt
       { perm_string name = lex_strings.make($1);
-	$$ = pform_makewire(@1, name, NetNet::IMPLICIT, IVL_VT_NO_TYPE, $2);
+	$$ = pform_makewire(@1, name, NetNet::IMPLICIT, $2);
 	delete [] $1;
       }
   ;
