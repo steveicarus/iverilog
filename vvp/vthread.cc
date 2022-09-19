@@ -3000,7 +3000,14 @@ bool of_DIV_WR(vthread_t thr, vvp_code_t)
  */
 bool of_DUP_OBJ(vthread_t thr, vvp_code_t)
 {
-      thr->push_object(thr->peek_object().duplicate());
+      vvp_object_t src = thr->peek_object();
+
+        // If it is null push a new null object
+      if (src.test_nil())
+	    thr->push_object(vvp_object_t());
+      else
+	    thr->push_object(src.duplicate());
+
       return true;
 }
 
@@ -5542,7 +5549,9 @@ bool of_SCOPY(vthread_t thr, vvp_code_t)
       thr->pop_object(tmp);
 
       vvp_object_t&dest = thr->peek_object();
-      dest.shallow_copy(tmp);
+        // If it is null there is nothing to copy
+      if (!tmp.test_nil())
+	    dest.shallow_copy(tmp);
 
       return true;
 }
@@ -6099,7 +6108,12 @@ static bool store_qobj(vthread_t thr, vvp_code_t cp, unsigned wid=0)
       vvp_object_t src;
       thr->pop_object(src);
 
-      queue->copy_elems(src, max_size);
+        // If it is null just clear the queue
+      if (src.test_nil())
+	    queue->erase_tail(0);
+      else
+	    queue->copy_elems(src, max_size);
+
       return true;
 }
 
