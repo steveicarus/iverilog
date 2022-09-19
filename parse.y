@@ -700,6 +700,8 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 
 %type <genvar_iter> genvar_iteration
 
+%type <package> package_scope
+
 %token K_TAND
 %nonassoc K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
 %nonassoc K_XOR_EQ K_LS_EQ K_RS_EQ K_RSS_EQ K_NB_TRIGGER
@@ -1165,19 +1167,25 @@ data_declaration /* IEEE1800-2005: A.2.1.3 */
   | attribute_list_opt package_import_declaration
   ;
 
+package_scope
+  : PACKAGE_IDENTIFIER K_SCOPE_RES
+    { lex_in_package_scope($1);
+      $$ = $1;
+    }
+  ;
+
 ps_type_identifier /* IEEE1800-2017: A.9.3 */
  : TYPE_IDENTIFIER
       { pform_set_type_referenced(@1, $1.text);
 	delete[]$1.text;
 	$$ = $1.type;
       }
-  | PACKAGE_IDENTIFIER K_SCOPE_RES
-      { lex_in_package_scope($1); }
-    TYPE_IDENTIFIER
+  | package_scope TYPE_IDENTIFIER
       { lex_in_package_scope(0);
-	$$ = $4.type;
-	delete[]$4.text;
+	$$ = $2.type;
+	delete[]$2.text;
       }
+  ;
 
 /* Data types that can have packed dimensions directly attached to it */
 packed_array_data_type /* IEEE1800-2005: A.2.2.1 */
@@ -1977,12 +1985,19 @@ package_import_declaration /* IEEE1800-2005 A.2.1.3 */
   ;
 
 package_import_item
-  : PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER
-      { pform_package_import(@2, $1, $3);
-	delete[]$3;
+  : package_scope IDENTIFIER
+      { lex_in_package_scope(0);
+	pform_package_import(@1, $1, $2);
+	delete[]$2;
       }
-  | PACKAGE_IDENTIFIER K_SCOPE_RES '*'
-      { pform_package_import(@2, $1, 0);
+  | package_scope TYPE_IDENTIFIER
+      { lex_in_package_scope(0);
+	pform_package_import(@1, $1, $2.text);
+	delete[]$2.text;
+      }
+  | package_scope '*'
+      { lex_in_package_scope(0);
+        pform_package_import(@1, $1, 0);
       }
   ;
 
@@ -3689,9 +3704,10 @@ expr_primary
 	delete nm;
       }
 
-  | PACKAGE_IDENTIFIER K_SCOPE_RES hierarchy_identifier
-      { $$ = pform_package_ident(@2, $1, $3);
-	delete $3;
+  | package_scope hierarchy_identifier
+      { lex_in_package_scope(0);
+	$$ = pform_package_ident(@2, $1, $2);
+	delete $2;
       }
 
   /* An identifier followed by an expression list in parentheses is a
@@ -3723,11 +3739,11 @@ expr_primary
 	delete $3;
 	$$ = tmp;
       }
-  | PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER '(' expression_list_with_nuls ')'
-      { perm_string use_name = lex_strings.make($3);
+  | package_scope IDENTIFIER { lex_in_package_scope(0); } '(' expression_list_with_nuls ')'
+      { perm_string use_name = lex_strings.make($2);
 	PECallFunction*tmp = new PECallFunction($1, use_name, *$5);
-	FILE_NAME(tmp, @3);
-	delete[]$3;
+	FILE_NAME(tmp, @2);
+	delete[]$2;
 	delete $5;
 	$$ = tmp;
       }
@@ -6342,9 +6358,10 @@ statement_item /* This is roughly statement_item in the LRM */
 	delete $2;
 	$$ = tmp;
       }
-  | K_TRIGGER PACKAGE_IDENTIFIER K_SCOPE_RES hierarchy_identifier
-      { PTrigger*tmp = pform_new_trigger(@4, $2, *$4);
-	delete $4;
+  | K_TRIGGER package_scope hierarchy_identifier
+      { lex_in_package_scope(0);
+	PTrigger*tmp = pform_new_trigger(@3, $2, *$3);
+	delete $3;
 	$$ = tmp;
       }
     /* FIXME: Does this need support for package resolution like above? */
