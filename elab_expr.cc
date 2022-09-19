@@ -4377,6 +4377,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		 << "Found net " << net->name() << " for expr " << *this << endl;
       }
 
+      ivl_type_t check_type = ntype;
       if (const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype)) {
             if (array_type->type_compatible(net->net_type())) {
                   NetESignal*tmp = new NetESignal(net);
@@ -4386,10 +4387,10 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
               // Icarus allows a dynamic array to be initialised with a
               // single elementary value, so try that next.
-	    ntype = array_type->element_type();
+	    check_type = array_type->element_type();
       }
 
-      if (! ntype->type_compatible(net->net_type())) {
+      if (! check_type->type_compatible(net->net_type())) {
 	    cerr << get_fileline() << ": error: the type of the variable '"
 		 << path_ << "' doesn't match the context type." << endl;
 
