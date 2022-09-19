@@ -116,6 +116,9 @@ class netclass_t : public ivl_type_s {
       const NetExpr* get_parameter(Design *des, perm_string name,
 				   ivl_type_t &par_type) const;
 
+      void set_virtual(bool virtual_class) { virtual_class_ = virtual_class; }
+      bool is_virtual() const { return virtual_class_; }
+
     private:
       perm_string name_;
 	// If this is derived from another base class, point to it
@@ -137,6 +140,8 @@ class netclass_t : public ivl_type_s {
 
 	// This holds the context for the class type definition.
       NetScope*definition_scope_;
+
+      bool virtual_class_;
 };
 
 inline NetScope*netclass_t::definition_scope(void)
