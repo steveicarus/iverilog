@@ -3723,7 +3723,7 @@ expr_primary
 	delete $3;
 	$$ = tmp;
       }
-  | PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER '(' expression_list_proper ')'
+  | PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER '(' expression_list_with_nuls ')'
       { perm_string use_name = lex_strings.make($3);
 	PECallFunction*tmp = new PECallFunction($1, use_name, *$5);
 	FILE_NAME(tmp, @3);
