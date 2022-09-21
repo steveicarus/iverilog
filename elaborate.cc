@@ -7215,10 +7215,7 @@ Design* elaborate(list<perm_string>roots)
 
 	      // Transfer the queue to a temporary queue.
 	    list<elaborator_work_item_t*> cur_queue;
-	    while (! des->elaboration_work_list.empty()) {
-		  cur_queue.push_back(des->elaboration_work_list.front());
-		  des->elaboration_work_list.pop_front();
-	    }
+	    std::swap(cur_queue, des->elaboration_work_list);
 
 	      // Run from the temporary queue. If the temporary queue
 	      // items create new work queue items, they will show up
