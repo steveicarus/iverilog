@@ -174,8 +174,14 @@ NetScope*netclass_t::method_from_name(perm_string name) const
 
 NetNet* netclass_t::find_static_property(perm_string name) const
 {
-      NetNet*tmp = class_scope_->find_signal(name);
-      return tmp;
+      NetNet *net = class_scope_->find_signal(name);
+      if (net)
+	    return net;
+
+      if (super_)
+	    return super_->find_static_property(name);
+
+      return nullptr;
 }
 
 bool netclass_t::test_scope_is_method(const NetScope*scope) const
