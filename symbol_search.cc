@@ -23,6 +23,7 @@
 # include  "netparray.h"
 # include  "netmisc.h"
 # include  "compiler.h"
+# include  "PPackage.h"
 # include  "ivl_assert.h"
 
 using namespace std;
@@ -306,6 +307,21 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       }
 
       return false;
+}
+
+bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
+		   const pform_scoped_name_t &path,
+		   struct symbol_search_results *res)
+{
+      NetScope *search_scope = scope;
+
+      if (path.package) {
+	    search_scope = des->find_package(path.package->pscope_name());
+	    if (!search_scope)
+		  return false;
+      }
+
+      return symbol_search(li, des, search_scope, path.name, res, nullptr);
 }
 
 /*

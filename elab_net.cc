@@ -515,7 +515,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      symbol_search(this, des, scope, path_, sig, par, eve);
+      symbol_search(this, des, scope, path_.name, sig, par, eve);
 
       if (eve != 0) {
 	    cerr << get_fileline() << ": error: named events (" << path_
@@ -525,7 +525,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      pform_name_t base_path = path_;
+      pform_name_t base_path = path_.name;
       pform_name_t member_path;
       while (sig == 0 && !base_path.empty()) {
 	    symbol_search(this, des, scope, base_path, sig, par, eve);
@@ -984,7 +984,7 @@ NetNet* PEIdent::elaborate_bi_net(Design*des, NetScope*scope) const
 NetNet* PEIdent::elaborate_subport(Design*des, NetScope*scope) const
 {
       ivl_assert(*this, scope->type() == NetScope::MODULE);
-      NetNet*sig = des->find_signal(scope, path_);
+      NetNet*sig = des->find_signal(scope, path_.name);
       if (sig == 0) {
 	    cerr << get_fileline() << ": error: no wire/reg " << path_
 		 << " in module " << scope_path(scope) << "." << endl;
@@ -1118,14 +1118,8 @@ NetNet* PEIdent::elaborate_subport(Design*des, NetScope*scope) const
 
 NetNet*PEIdent::elaborate_unpacked_net(Design*des, NetScope*scope) const
 {
-      NetScope *use_scope = scope;
-      if (package_) {
-	    use_scope = des->find_package(package_->pscope_name());
-	    ivl_assert(*this, use_scope);
-      }
-
       symbol_search_results sr;
-      symbol_search(this, des, use_scope, path_, &sr);
+      symbol_search(this, des, scope, path_, &sr);
       if (!sr.net) {
 	    cerr << get_fileline() << ": error: Net " << path_
 		 << " is not defined in this context." << endl;
@@ -1153,7 +1147,7 @@ bool PEIdent::is_collapsible_net(Design*des, NetScope*scope,
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      symbol_search(this, des, scope, path_, sig, par, eve);
+      symbol_search(this, des, scope, path_.name, sig, par, eve);
 
       if (eve != 0)
             return false;

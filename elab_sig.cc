@@ -292,7 +292,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 	      // wires within the scope.
 	    map<perm_string,PWire*>::const_iterator wt;
 	    for (unsigned cc = 0 ;  cc < pp->expr.size() ;  cc += 1) {
-		  pform_name_t port_path (pp->expr[cc]->path());
+		  pform_name_t port_path (pp->expr[cc]->path().name);
 		    // A concatenated wire of a port really should not
 		    // have any hierarchy.
 		  if (port_path.size() != 1) {

@@ -109,6 +109,10 @@ extern bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			  pform_name_t path, struct symbol_search_results*res,
 			  NetScope*start_scope = 0);
 
+extern bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
+			  const pform_scoped_name_t &path,
+			  struct symbol_search_results*res);
+
 /*
  * Search for a symbol using the "start" scope as the starting
  * point. If the path includes a scope part, then locate the

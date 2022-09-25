@@ -1410,7 +1410,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  vector<PEIdent*> mport = rmod->get_port(idx);
 		  if (mport.empty()) continue;
 
-		  perm_string pname = peek_tail_name(mport[0]->path());
+		  perm_string pname = peek_tail_name(mport[0]->path().name);
 
 		  NetNet*tmp = instance[0]->find_signal(pname);
 
@@ -4872,22 +4872,11 @@ cerr << endl;
 		 skip the rest of the expression handling. */
 
 	    if (PEIdent*id = dynamic_cast<PEIdent*>(expr_[idx]->expr())) {
-		  NetNet*       sig = 0;
-		  const NetExpr*par = 0;
-		  NetEvent*     eve = 0;
+		  symbol_search_results sr;
+		  symbol_search(this, des, scope, id->path(), &sr);
 
-		  NetScope*use_scope = scope;
-		  if (id->package()) {
-			use_scope = des->find_package(id->package()->pscope_name());
-			ivl_assert(*this, use_scope);
-		  }
-
-		  NetScope*found_in = symbol_search(this, des, use_scope,
-                                                    id->path(),
-						    sig, par, eve);
-
-		  if (found_in && eve) {
-			wa->add_event(eve);
+		  if (sr.scope && sr.eve) {
+			wa->add_event(sr.eve);
 			  /* You can not look for the posedge or negedge of
 			   * an event. */
 			if (expr_[idx]->type() != PEEvent::ANYEDGE) {
@@ -4904,7 +4893,7 @@ cerr << endl;
 				    assert(0);
 			      }
 			      cerr << " can not be used with a named event ("
-			           << eve->name() << ")." << endl;
+			           << sr.eve->name() << ")." << endl;
                               des->errors += 1;
 			}
 			continue;
@@ -5593,7 +5582,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	    // If there is an initialization assignment, make the expression,
 	    // and later the initial assignment to the condition variable. The
 	    // statement in the for loop is very specifically an assignment.
-	    sig = des->find_signal(scope, id1->path());
+	    sig = des->find_signal(scope, id1->path().name);
 	    if (sig == 0) {
 		  cerr << id1->get_fileline() << ": register ``" << id1->path()
 		       << "'' unknown in " << scope_path(scope) << "." << endl;
@@ -5973,34 +5962,22 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetScope*use_scope = scope;
-      if (package_) {
-	    use_scope = des->find_package(package_->pscope_name());
-	    ivl_assert(*this, use_scope);
-      }
-
-      NetNet*       sig = 0;
-      const NetExpr*par = 0;
-      NetEvent*     eve = 0;
-
-      NetScope*found_in = symbol_search(this, des, use_scope, event_,
-					sig, par, eve);
-
-      if (found_in == 0) {
+      symbol_search_results sr;
+      if (!symbol_search(this, des, scope, event_, &sr)) {
 	    cerr << get_fileline() << ": error: event <" << event_ << ">"
 		 << " not found." << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
-      if (eve == 0) {
+      if (!sr.eve) {
 	    cerr << get_fileline() << ": error:  <" << event_ << ">"
 		 << " is not a named event." << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
-      NetEvTrig*trig = new NetEvTrig(eve);
+      NetEvTrig*trig = new NetEvTrig(sr.eve);
       trig->set_line(*this);
       return trig;
 }

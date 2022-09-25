@@ -419,7 +419,7 @@ PReturn::~PReturn()
 }
 
 PTrigger::PTrigger(PPackage*pkg, const pform_name_t&ev)
-: package_(pkg), event_(ev)
+: event_(pkg, ev)
 {
 }
 

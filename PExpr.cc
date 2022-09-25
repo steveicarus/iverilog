@@ -221,12 +221,12 @@ PEBShift::~PEBShift()
 }
 
 PECallFunction::PECallFunction(const pform_name_t&n, const vector<PExpr *> &parms)
-: package_(0), path_(n), parms_(parms), is_overridden_(false)
+: path_(n), parms_(parms), is_overridden_(false)
 {
 }
 
 PECallFunction::PECallFunction(PPackage*pkg, const pform_name_t&n, const vector<PExpr *> &parms)
-: package_(pkg), path_(n), parms_(parms), is_overridden_(false)
+: path_(pkg, n), parms_(parms), is_overridden_(false)
 {
 }
 
@@ -238,8 +238,8 @@ static pform_name_t pn_from_ps(perm_string n)
       return tmp;
 }
 
-PECallFunction::PECallFunction(PPackage*pkg, const pform_name_t&n, const list<PExpr *> &parms)
-: package_(pkg), path_(n), parms_(parms.size()), is_overridden_(false)
+PECallFunction::PECallFunction(PPackage*pkg, const pform_name_t &n, const list<PExpr *> &parms)
+: path_(pkg, n), parms_(parms.size()), is_overridden_(false)
 {
       int tmp_idx = 0;
       assert(parms_.size() == parms.size());
@@ -249,18 +249,18 @@ PECallFunction::PECallFunction(PPackage*pkg, const pform_name_t&n, const list<PE
 }
 
 PECallFunction::PECallFunction(perm_string n, const vector<PExpr*>&parms)
-: package_(0), path_(pn_from_ps(n)), parms_(parms), is_overridden_(false)
+: path_(pn_from_ps(n)), parms_(parms), is_overridden_(false)
 {
 }
 
 PECallFunction::PECallFunction(perm_string n)
-: package_(0), path_(pn_from_ps(n)), is_overridden_(false)
+: path_(pn_from_ps(n)), is_overridden_(false)
 {
 }
 
 // NOTE: Anachronism. Try to work all use of svector out.
 PECallFunction::PECallFunction(const pform_name_t&n, const list<PExpr *> &parms)
-: package_(0), path_(n), parms_(parms.size()), is_overridden_(false)
+: path_(n), parms_(parms.size()), is_overridden_(false)
 {
       int tmp_idx = 0;
       assert(parms_.size() == parms.size());
@@ -270,7 +270,7 @@ PECallFunction::PECallFunction(const pform_name_t&n, const list<PExpr *> &parms)
 }
 
 PECallFunction::PECallFunction(perm_string n, const list<PExpr*>&parms)
-: package_(0), path_(pn_from_ps(n)), parms_(parms.size()), is_overridden_(false)
+: path_(pn_from_ps(n)), parms_(parms.size()), is_overridden_(false)
 {
       int tmp_idx = 0;
       assert(parms_.size() == parms.size());
@@ -385,18 +385,18 @@ const verireal& PEFNumber::value() const
 }
 
 PEIdent::PEIdent(const pform_name_t&that)
-: package_(0), path_(that), no_implicit_sig_(false)
+: path_(that), no_implicit_sig_(false)
 {
 }
 
 PEIdent::PEIdent(perm_string s, bool no_implicit_sig)
-: package_(0), no_implicit_sig_(no_implicit_sig)
+: no_implicit_sig_(no_implicit_sig)
 {
-      path_.push_back(name_component_t(s));
+      path_.name.push_back(name_component_t(s));
 }
 
 PEIdent::PEIdent(PPackage*pkg, const pform_name_t&that)
-: package_(pkg), path_(that), no_implicit_sig_(true)
+: path_(pkg, that), no_implicit_sig_(true)
 {
 }
 
@@ -425,8 +425,10 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 	   - this is not an implicit named port connection */
      if (no_implicit_sig_)
 	    return;
-     if ((path_.size() == 1) && (path_.front().index.size() == 0)) {
-            perm_string name = path_.front().name;
+     if (path_.package)
+	    return;
+     if (path_.name.size() == 1 && path_.name.front().index.empty()) {
+            perm_string name = path_.name.front().name;
             LexicalScope*ss = scope;
             while (ss) {
                   if (ss->wires.find(name) != ss->wires.end())
