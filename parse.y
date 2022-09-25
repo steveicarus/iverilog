@@ -3776,11 +3776,10 @@ expr_primary
 	delete $3;
 	$$ = tmp;
       }
-  | package_scope IDENTIFIER { lex_in_package_scope(0); } '(' expression_list_with_nuls ')'
-      { perm_string use_name = lex_strings.make($2);
-	PECallFunction*tmp = new PECallFunction($1, use_name, *$5);
+  | package_scope hierarchy_identifier { lex_in_package_scope(0); } '(' expression_list_with_nuls ')'
+      { PECallFunction*tmp = new PECallFunction($1, *$2, *$5);
 	FILE_NAME(tmp, @2);
-	delete[]$2;
+	delete $2;
 	delete $5;
 	$$ = tmp;
       }
