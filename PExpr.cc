@@ -446,19 +446,17 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 
 bool PEIdent::has_aa_term(Design*des, NetScope*scope) const
 {
-      NetNet*       net = 0;
-      ivl_type_t    cls_val;
-      const NetExpr*par = 0;
-      ivl_type_t    par_type;
-      NetEvent*     eve = 0;
+      symbol_search_results sr;
+      if (!symbol_search(this, des, scope, path_, &sr))
+	    return false;
 
-      scope = symbol_search(this, des, scope, path_, net, par, eve,
-                            par_type, cls_val);
+      // Class properties are not considered automatic since a non-blocking
+      // assignment to an object stored in an automatic variable is supposed to
+      // capture a reference to the object, not the variable.
+      if (!sr.path_tail.empty() && sr.net && sr.net->class_type())
+	    return false;
 
-      if (scope)
-            return scope->is_auto();
-      else
-            return false;
+      return sr.scope->is_auto();
 }
 
 PENewArray::PENewArray(PExpr*size_expr, PExpr*init_expr)
