@@ -87,7 +87,12 @@ ostream& operator<< (ostream&out, const index_component_t&that)
 
 ostream& operator<< (ostream&out, const name_component_t&that)
 {
-      out << that.name.str();
+      if (that.name == THIS_TOKEN)
+	    out << "this";
+      else if (that.name == SUPER_TOKEN)
+	    out << "super";
+      else
+	    out << that.name.str();
 
       typedef std::list<index_component_t>::const_iterator index_it_t;
       for (index_it_t idx = that.index.begin()
