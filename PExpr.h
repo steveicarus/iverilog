@@ -417,6 +417,7 @@ class PEIdent : public PExpr {
                                    index_component_t::ctype_t,
 				   bool need_const_idx) const;
       NetAssign_*elaborate_lval_net_class_member_(Design*, NetScope*,
+						   const netclass_t *class_type,
 						   NetNet*,
 						   pform_name_t) const;
       bool elaborate_lval_net_packed_member_(Design*, NetScope*,
@@ -511,8 +512,7 @@ class PEIdent : public PExpr {
 					   unsigned flags) const;
 
       NetExpr *elaborate_expr_class_field_(Design*des, NetScope*scope,
-					   NetNet*net,
-					   const name_component_t&comp,
+					   const symbol_search_results &sr,
 					   unsigned expr_wid,
 					   unsigned flags) const;
 

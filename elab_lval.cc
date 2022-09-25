@@ -285,8 +285,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
 	// If the variable is a class object, then handle it with the
 	// net_class_member_ method.
-      if (reg->class_type() && !member_path.empty() && gn_system_verilog()) {
-	    NetAssign_*lv = elaborate_lval_net_class_member_(des, use_scope, reg, member_path);
+      const netclass_t *class_type = dynamic_cast<const netclass_t *>(sr.type);
+      if (class_type && !member_path.empty() && gn_system_verilog()) {
+	    NetAssign_*lv = elaborate_lval_net_class_member_(des, use_scope, class_type, reg, member_path);
 	    return lv;
       }
 
@@ -475,7 +476,7 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
       }
 
       NetAssign_*this_lval = new NetAssign_(this_net);
-      this_lval->set_property(member_name);
+      this_lval->set_property(member_name, pidx);
       if (canon_index) this_lval->set_word(canon_index);
 
       return this_lval;
@@ -1078,7 +1079,8 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
  * obj, and member_path=base.x.
  */
 NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope,
-				    NetNet*sig, pform_name_t member_path) const
+				    const netclass_t *class_type, NetNet*sig,
+				    pform_name_t member_path) const
 {
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PEIdent::elaborate_lval_net_class_member_: "
@@ -1086,7 +1088,6 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 		 << " of " << sig->name() << "." << endl;
       }
 
-      const netclass_t*class_type = sig->class_type();
       ivl_assert(*this, class_type);
 
 	// Iterate over the member_path. This handles nested class
@@ -1149,7 +1150,7 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 	    }
 
 	    lv = lv? new NetAssign_(lv) : new NetAssign_(sig);
-	    lv->set_property(method_name);
+	    lv->set_property(method_name, pidx);
 
 	      // Now get the type of the property.
 	    ivl_type_t ptype = class_type->get_prop_type(pidx);

@@ -3906,7 +3906,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 		                                "$ivl_queue_method$pop_back");
       }
 
-      if (const netclass_t*class_type = net->class_type()) {
+      if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(par_type)) {
 	    NetScope*task = class_type->method_from_name(method_name);
 	    if (task == 0) {
 		    // If an implicit this was added it is not an error if we

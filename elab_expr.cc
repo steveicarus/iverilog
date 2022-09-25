@@ -1480,8 +1480,7 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
       // and the scope is the scope where the instance lives. The class method
       // in turn defines it's own scope. Use that to find the return value.
       if (search_results.net && search_results.net->data_type()==IVL_VT_CLASS) {
-	    NetNet*net = search_results.net;
-	    const netclass_t*class_type = net->class_type();
+	    const netclass_t *class_type = dynamic_cast<const netclass_t*>(search_results.type);
 	    ivl_assert(*this, class_type);
 	    NetScope*method = class_type->method_from_name(method_name);
 
@@ -2536,12 +2535,26 @@ static NetExpr* class_static_property_expression(const LineInfo*li,
 }
 
 NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
-					      NetNet*net,
-					      const name_component_t&comp,
+					      const symbol_search_results &sr,
 					      unsigned expr_wid,
 					      unsigned flags) const
 {
-      const netclass_t*class_type = net->class_type();
+
+      const netclass_t *class_type = dynamic_cast<const netclass_t*>(sr.type);
+      const name_component_t comp = sr.path_tail.front();
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+		 << "Ident " << sr.path_head
+		 << " look for property " << comp << endl;
+      }
+
+      if (sr.path_tail.size() > 1) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "Nested member path not yet supported for class properties."
+		 << endl;
+	    return nullptr;
+      }
 
       ivl_type_t par_type;
       const NetExpr *par_val = class_type->get_parameter(des, comp.name, par_type);
@@ -2562,7 +2575,7 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": check_for_class_property: "
 		 << "Property " << comp.name
-		 << " of net " << net->name()
+		 << " of net " << sr.net->name()
 		 << ", context scope=" << scope_path(scope)
 		 << endl;
       }
@@ -2582,7 +2595,7 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
 						    prop_name);
       }
 
-      NetEProperty*tmp = new NetEProperty(net, comp.name);
+      NetEProperty*tmp = new NetEProperty(sr.net, pidx);
       tmp->set_line(*this);
       return tmp;
 }
@@ -2751,6 +2764,7 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 		 use_search_results.path_tail.push_back(search_results.path_head.back());
 		 use_search_results.path_head.push_back(name_component_t(perm_string::literal(THIS_TOKEN)));
 		 use_search_results.net = scope->find_signal(perm_string::literal(THIS_TOKEN));
+		 use_search_results.type = use_search_results.net->net_type();
 		 ivl_assert(*this, use_search_results.net);
 
 		 return elaborate_expr_method_(des, scope, use_search_results);
@@ -3026,12 +3040,12 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    if (search_results.par_val)
 		  cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
 		       << "search_results.par_val: " << *search_results.par_val << endl;
-	    if (search_results.par_type)
+	    if (search_results.type)
 		  cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
-		       << "search_results.par_type: " << *search_results.par_type << endl;
+		       << "search_results.type: " << *search_results.type << endl;
       }
 
-      if (search_results.par_val && search_results.par_type) {
+      if (search_results.par_val && search_results.type) {
 	    return elaborate_expr_method_par_(des, scope, search_results);
       }
 
@@ -3177,7 +3191,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    perm_string method_name = search_results.path_tail.back().name;
 
 	    NetNet*net = search_results.net;
-	    const netclass_t*class_type = net->class_type();
+	    const netclass_t*class_type = dynamic_cast<const netclass_t*>(search_results.type);
 	    ivl_assert(*this, class_type);
 	    NetScope*method = class_type->method_from_name(method_name);
 
@@ -3285,10 +3299,10 @@ NetExpr* PECallFunction::elaborate_expr_method_par_(Design*des, NetScope*scope,
 						    const
 {
       ivl_assert(*this, search_results.par_val);
-      ivl_assert(*this, search_results.par_type);
+      ivl_assert(*this, search_results.type);
 
       const NetExpr*par_val = search_results.par_val;
-      ivl_type_t par_type = search_results.par_type;
+      ivl_type_t par_type = search_results.type;
       perm_string method_name = search_results.path_tail.back().name;
 
       // If the parameter is of type string, then look for the standard string
@@ -4230,8 +4244,8 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
 	      // Similarly, if this net is an object, the path tail may
 	      // be a class property.
-	    if (sr.net->class_type() != 0 && !sr.path_tail.empty()) {
-		  const netclass_t*class_type = sr.net->class_type();
+	    const netclass_t *class_type = dynamic_cast<const netclass_t*>(sr.type);
+	    if (class_type && !sr.path_tail.empty()) {
 		  perm_string pname = peek_tail_name(sr.path_tail);
 		  ivl_type_t par_type;
 		  const NetExpr *par = class_type->get_parameter(des, pname, par_type);
@@ -4349,24 +4363,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  return check_for_struct_members(this, des, use_scope, net,
 						  sr.path_head.back().index,
 						  sr.path_tail);
-	    } else if (net->class_type()) {
-		  const name_component_t member_comp = sr.path_tail.front();
-
-		  if (debug_elaborate) {
-			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-			     << "Ident " << sr.path_head
-			     << " look for property " << member_comp << endl;
-		  }
-
-		  if (sr.path_tail.size() > 1) {
-			cerr << get_fileline() << ": sorry: "
-			     << "Nested member path not yet supported in this context."
-			     << endl;
-			return nullptr;
-		  }
-
-		  return elaborate_expr_class_field_(des, scope, net,
-						     member_comp, 0, flags);
+	    } else if (dynamic_cast<const netclass_t*>(sr.type)) {
+		  return elaborate_expr_class_field_(des, scope, sr, 0, flags);
 	    }
       }
 
@@ -4570,7 +4568,7 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
 		 << " canonical index: " << *canon_index << endl;
       }
 
-      NetEProperty*tmp = new NetEProperty(this_net, member_name, canon_index);
+      NetEProperty*tmp = new NetEProperty(this_net, pidx, canon_index);
       tmp->set_line(*this);
       return tmp;
 }
@@ -4667,7 +4665,7 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 	    }
 
 	    return elaborate_expr_param_or_specparam_(des, scope, sr.par_val,
-						      sr.scope, sr.par_type,
+						      sr.scope, sr.type,
 						      expr_wid, flags);
       }
 
@@ -4882,18 +4880,8 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 		  return 0;
 	    }
 
-	    if (sr.net->class_type() && !sr.path_tail.empty()) {
-		  if (debug_elaborate) {
-			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-			        "Ident " << sr.path_head
-			     << " look for class property " << sr.path_tail
-			     << endl;
-		  }
-
-		  ivl_assert(*this, sr.path_tail.size() == 1);
-		  const name_component_t member_comp = sr.path_tail.front();
-		  return elaborate_expr_class_field_(des, use_scope,
-						     sr.net, member_comp,
+	    if (dynamic_cast<const netclass_t*>(sr.type) && !sr.path_tail.empty()) {
+		  return elaborate_expr_class_field_(des, use_scope, sr,
 						     expr_wid, flags);
 	    }
 

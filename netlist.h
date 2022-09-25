@@ -2838,8 +2838,8 @@ class NetAssign_ {
                     ivl_select_type_t = IVL_SEL_OTHER);
 	// Set the member or property name if the signal type is a
 	// class.
-      void set_property(const perm_string&name);
-      inline perm_string get_property(void) const { return member_; }
+      void set_property(const perm_string&name, unsigned int idx);
+      inline int get_property_idx(void) const { return member_idx_; }
 
 	// Determine if the assigned object is signed or unsigned.
 	// This is used when determining the expression type for
@@ -2897,6 +2897,7 @@ class NetAssign_ {
       NetExpr*word_;
 	// member/property if signal is a class.
       perm_string member_;
+      int member_idx_ = -1;
 
       bool signed_;
       bool turn_sig_to_wire_on_release_;
@@ -4579,7 +4580,7 @@ class NetENull : public NetExpr {
  */
 class NetEProperty : public NetExpr {
     public:
-      NetEProperty(NetNet*n, perm_string pname, NetExpr*canon_index =0);
+      NetEProperty(NetNet*n, size_t pidx_, NetExpr*canon_index =0);
       ~NetEProperty();
 
       inline const NetNet* get_sig() const { return net_; }
