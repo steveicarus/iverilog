@@ -118,7 +118,8 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 
       NetExpr *rval;
       int context_wid = -1;
-      bool fallback = true;
+      bool typed_elab = false;
+
       switch (lv_type) {
 	  case IVL_VT_DARRAY:
 	  case IVL_VT_QUEUE:
@@ -126,11 +127,7 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 	      // For these types, use a different elab_and_eval that
 	      // uses the lv_net_type. We should eventually transition
 	      // all the types to this new form.
-	    if (lv_net_type) {
-		  rval = elab_and_eval(des, scope, expr, lv_net_type, need_const);
-		  fallback = false;
-	    }
-
+	    typed_elab = true;
 	    break;
 	  case IVL_VT_REAL:
 	  case IVL_VT_STRING:
@@ -145,7 +142,14 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 	    break;
       }
 
-      if (fallback) {
+	// Special case, PEAssignPattern is context dependend on the type and
+	// always uses the typed elaboration
+      if (dynamic_cast<PEAssignPattern*>(expr))
+	    typed_elab = true;
+
+      if (lv_net_type && typed_elab) {
+	    rval = elab_and_eval(des, scope, expr, lv_net_type, need_const);
+      } else {
 	    rval = elab_and_eval(des, scope, expr, context_wid, need_const,
 				 false, lv_type, force_unsigned);
       }
@@ -229,36 +233,45 @@ unsigned PEAssignPattern::test_width(Design*, NetScope*, width_mode_t&)
 NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 					ivl_type_t ntype, unsigned flags) const
 {
-	// Special case: If this is an empty pattern (i.e. '{}) and
-	// the expected type is a DARRAY or QUEUE, then convert this
-	// to a null handle. Internally, Icarus Verilog uses this to
-	// represent nil dynamic arrays.
-      if (parms_.size() == 0 && (ntype->base_type()==IVL_VT_DARRAY ||
-                                 ntype->base_type()==IVL_VT_QUEUE)) {
-	    NetENull*tmp = new NetENull;
-	    tmp->set_line(*this);
-	    return tmp;
+      bool need_const = NEED_CONST & flags;
+
+      if (auto darray_type = dynamic_cast<const netdarray_t*>(ntype))
+	    return elaborate_expr_darray_(des, scope, darray_type, need_const);
+
+      if (auto parray_type = dynamic_cast<const netparray_t*>(ntype)) {
+	    return elaborate_expr_packed_(des, scope, parray_type->base_type(),
+					  parray_type->packed_width(),
+					  parray_type->slice_dimensions(), 0,
+					  need_const);
       }
 
-      if (ntype->base_type()==IVL_VT_DARRAY ||
-          ntype->base_type()==IVL_VT_QUEUE)
-	    return elaborate_expr_darray_(des, scope, ntype, flags);
+      if (auto vector_type = dynamic_cast<const netvector_t*>(ntype)) {
+	    return elaborate_expr_packed_(des, scope, vector_type->base_type(),
+					  vector_type->packed_width(),
+					  vector_type->slice_dimensions(), 0,
+					  need_const);
+      }
 
       cerr << get_fileline() << ": sorry: I don't know how to elaborate "
-	   << "assignment_pattern expressions yet." << endl;
+	   << "assignment_pattern expressions for " << *ntype << " type yet." << endl;
       cerr << get_fileline() << ":      : Expression is: " << *this
 	   << endl;
       des->errors += 1;
       return 0;
 }
 
-NetExpr*PEAssignPattern::elaborate_expr_darray_(Design*des, NetScope*scope,
-						ivl_type_t ntype, unsigned flags) const
+NetExpr* PEAssignPattern::elaborate_expr_darray_(Design *des, NetScope *scope,
+					         const netdarray_t *array_type,
+					         bool need_const) const
 {
-      const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype);
-      ivl_assert(*this, array_type);
-
-      bool need_const = NEED_CONST & flags;
+	// Special case: If this is an empty pattern (i.e. '{}) then convert
+	// this to a null handle. Internally, Icarus Verilog uses this to
+	// represent nil dynamic arrays.
+      if (parms_.empty()) {
+	    NetENull *tmp = new NetENull;
+	    tmp->set_line(*this);
+	    return tmp;
+      }
 
 	// This is an array pattern, so run through the elements of
 	// the expression and elaborate each as if they are
@@ -274,6 +287,53 @@ NetExpr*PEAssignPattern::elaborate_expr_darray_(Design*des, NetScope*scope,
       NetEArrayPattern*res = new NetEArrayPattern(array_type, elem_exprs);
       res->set_line(*this);
       return res;
+}
+
+NetExpr* PEAssignPattern::elaborate_expr_packed_(Design *des, NetScope *scope,
+						 ivl_variable_type_t base_type,
+						 unsigned int width,
+						 const std::vector<netrange_t> &dims,
+						 unsigned int cur_dim,
+						 bool need_const) const
+{
+      if (dims.size() <= cur_dim) {
+	    cerr << get_fileline() << ": error: scalar type is not a valid"
+	         << " context for assignment pattern." << endl;
+	    des->errors++;
+	    return nullptr;
+      }
+
+      if (dims[cur_dim].width() != parms_.size()) {
+	    cerr << get_fileline() << ": error: Packed array assignment pattern expects "
+	         << dims[cur_dim].width() << " element(s) in this context.\n"
+	         << get_fileline() << ":      : Found "
+		 << parms_.size() << " element(s)." << endl;
+	    des->errors++;
+      }
+
+      width /= dims[cur_dim].width();
+      cur_dim++;
+
+      NetEConcat *concat = new NetEConcat(parms_.size(), 1, base_type);
+      for (size_t idx = 0; idx < parms_.size(); idx++) {
+	    NetExpr *expr;
+	    // Handle nested assignment patterns as a special case. We do not
+	    // have a good way of passing the inner dimensions through the
+	    // generic elaborate_expr() API and assigment patterns is the only
+	    // place where we need it.
+	    auto ap = dynamic_cast<PEAssignPattern*>(parms_[idx]);
+	    if (ap)
+		  expr = ap->elaborate_expr_packed_(des, scope, base_type,
+						    width, dims, cur_dim, need_const);
+	    else
+		  expr = elaborate_rval_expr(des, scope, nullptr,
+					     base_type, width,
+					     parms_[idx], need_const);
+	    if (expr)
+		  concat->set(idx, expr);
+      }
+
+      return concat;
 }
 
 NetExpr* PEAssignPattern::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
