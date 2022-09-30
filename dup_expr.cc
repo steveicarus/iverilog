@@ -148,7 +148,7 @@ NetEConst* NetEConst::dup_expr() const
 
 NetEConstEnum* NetEConstEnum::dup_expr() const
 {
-      NetEConstEnum*tmp = new NetEConstEnum(name_, enum_set_, value());
+      NetEConstEnum*tmp = new NetEConstEnum(name_, enumeration(), value());
       ivl_assert(*this, tmp);
       tmp->set_line(*this);
       return tmp;

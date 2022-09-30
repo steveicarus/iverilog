@@ -38,6 +38,10 @@ NetExpr::NetExpr(unsigned w)
 NetExpr::NetExpr(ivl_type_t t)
 : net_type_(t), width_(0), signed_flag_(false)
 {
+      if (t) {
+	    width_ = t->packed_width();
+	    signed_flag_ = t->get_signed();
+      }
 }
 
 NetExpr::~NetExpr()
@@ -47,6 +51,15 @@ NetExpr::~NetExpr()
 ivl_type_t NetExpr::net_type() const
 {
       return net_type_;
+}
+
+void NetExpr::set_net_type(ivl_type_t type)
+{
+      net_type_ = type;
+      if (type) {
+	    width_ = type->packed_width();
+	    signed_flag_ = type->get_signed();
+      }
 }
 
 void NetExpr::cast_signed(bool flag)
@@ -258,19 +271,15 @@ void NetEConcat::set(unsigned idx, NetExpr*e)
       expr_width( expr_width() + repeat_ * e->expr_width() );
 }
 
-NetEConstEnum::NetEConstEnum(perm_string n, const netenum_t*eset, const verinum&v)
-: NetEConst(v), enum_set_(eset), name_(n)
+NetEConstEnum::NetEConstEnum(perm_string n, const netenum_t *enum_set,
+			     const verinum &val)
+: NetEConst(enum_set, val), name_(n)
 {
       assert(has_width());
 }
 
 NetEConstEnum::~NetEConstEnum()
 {
-}
-
-const netenum_t*NetEConstEnum::enumeration() const
-{
-      return enum_set_;
 }
 
 NetECReal::NetECReal(const verireal&val)
@@ -356,12 +365,12 @@ const netenum_t* NetENetenum::netenum() const
 }
 
 NetENew::NetENew(ivl_type_t t)
-: obj_type_(t), size_(0), init_val_(0)
+: NetExpr(t), size_(0), init_val_(0)
 {
 }
 
 NetENew::NetENew(ivl_type_t t, NetExpr*size, NetExpr*init_val)
-: obj_type_(t), size_(size), init_val_(init_val)
+: NetExpr(t), size_(size), init_val_(init_val)
 {
 }
 
@@ -389,33 +398,23 @@ NetEProperty::NetEProperty(NetNet*net, size_t pidx, NetExpr*idx)
       assert(use_type);
 
       ivl_type_t prop_type = use_type->get_prop_type(pidx_);
-      expr_width(prop_type->packed_width());
-      cast_signed(prop_type->get_signed());
+      set_net_type(prop_type);
 }
 
 NetEProperty::~NetEProperty()
 {
 }
 
-ivl_variable_type_t NetEProperty::expr_type() const
-{
-      const netclass_t*use_type = dynamic_cast<const netclass_t*>(net_->net_type());
-      assert(use_type);
-
-      ivl_type_t prop_type = use_type->get_prop_type(pidx_);
-      return prop_type->base_type();
-}
-
 NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
                        ivl_select_type_t sel_type)
-: expr_(exp), base_(base), use_type_(0), sel_type_(sel_type)
+: expr_(exp), base_(base), sel_type_(sel_type)
 {
       expr_width(wid);
 }
 
 NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
                        ivl_type_t use_type)
-: expr_(exp), base_(base), use_type_(use_type), sel_type_(IVL_SEL_OTHER)
+: NetExpr(use_type), expr_(exp), base_(base), sel_type_(IVL_SEL_OTHER)
 {
       expr_width(wid);
 }
@@ -443,8 +442,8 @@ ivl_select_type_t NetESelect::select_type() const
 
 ivl_variable_type_t NetESelect::expr_type() const
 {
-      if (use_type_)
-	    return use_type_->base_type();
+      if (net_type())
+	    return net_type()->base_type();
 
       ivl_variable_type_t type = expr_->expr_type();
 
@@ -455,11 +454,6 @@ ivl_variable_type_t NetESelect::expr_type() const
 	    return IVL_VT_BOOL;
 
       return type;
-}
-
-const netenum_t* NetESelect::enumeration() const
-{
-      return dynamic_cast<const netenum_t*> (use_type_);
 }
 
 NetESFunc::NetESFunc(const char*n, ivl_variable_type_t t,
@@ -475,8 +469,6 @@ NetESFunc::NetESFunc(const char*n, ivl_type_t rtype, unsigned np)
   is_overridden_(false)
 {
       name_ = lex_strings.add(n);
-      expr_width(rtype->packed_width());
-      cast_signed_base_(rtype->get_signed());
 }
 
 NetESFunc::~NetESFunc()

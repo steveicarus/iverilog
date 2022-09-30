@@ -403,7 +403,7 @@ void dll_target::expr_new(const NetENew*net)
       expr_->type_   = IVL_EX_NEW;
       FILE_NAME(expr_, net);
       expr_->value_  = net->expr_type(); // May be IVL_VT_DARRAY or _CLASS
-      expr_->net_type= net->get_type();
+      expr_->net_type= net->net_type();
       expr_->u_.new_.size = size;
       expr_->u_.new_.init_val = init_val;
 }
