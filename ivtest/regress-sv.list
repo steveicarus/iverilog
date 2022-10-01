@@ -371,6 +371,7 @@ module_nonansi_struct_fail CE,-g2005-sv	ivltests
 module_output_port_sv_var1 normal,-g2005-sv	ivltests
 module_output_port_sv_var2 normal,-g2005-sv	ivltests
 module_port_typedef_array1 normal,-g2005-sv	ivltests
+module_port_typedef_vector normal,-g2005-sv	ivltests
 named_begin		normal,-g2009		ivltests
 named_begin_fail	CE,-g2009		ivltests
 named_fork		normal,-g2009		ivltests
