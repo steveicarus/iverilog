@@ -142,6 +142,11 @@ PECastSize::~PECastSize()
 {
 }
 
+bool PECastSize::has_aa_term(Design *des, NetScope *scope) const
+{
+	return base_->has_aa_term(des, scope);
+}
+
 PECastType::PECastType(data_type_t*t, PExpr*b)
 : target_(t), base_(b)
 {
@@ -151,10 +156,20 @@ PECastType::~PECastType()
 {
 }
 
+bool PECastType::has_aa_term(Design *des, NetScope *scope) const
+{
+	return base_->has_aa_term(des, scope);
+}
+
 PECastSign::PECastSign(bool signed_flag, PExpr *base)
 : base_(base)
 {
     signed_flag_ = signed_flag;
+}
+
+bool PECastSign::has_aa_term(Design *des, NetScope *scope) const
+{
+	return base_->has_aa_term(des, scope);
 }
 
 PEBComp::PEBComp(char op, PExpr*l, PExpr*r)
