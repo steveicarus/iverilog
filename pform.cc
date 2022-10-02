@@ -994,6 +994,8 @@ void pform_make_foreach_declarations(const struct vlltype&loc,
       list<decl_assignment_t*>assign_list;
       for (list<perm_string>::const_iterator cur = loop_vars->begin()
 		 ; cur != loop_vars->end() ; ++ cur) {
+	    if (cur->nil())
+		  continue;
 	    decl_assignment_t*tmp_assign = new decl_assignment_t;
 	    tmp_assign->name = lex_strings.make(*cur);
 	    assign_list.push_back(tmp_assign);

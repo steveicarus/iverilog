@@ -1799,10 +1799,20 @@ loop_variables /* IEEE1800-2005: A.6.8 */
 	delete[]$3;
 	$$ = tmp;
       }
+  | loop_variables ','
+      { std::list<perm_string>*tmp = $1;
+	tmp->push_back(perm_string());
+	$$ = tmp;
+      }
   | IDENTIFIER
       { std::list<perm_string>*tmp = new std::list<perm_string>;
 	tmp->push_back(lex_strings.make($1));
 	delete[]$1;
+	$$ = tmp;
+      }
+  |
+      { std::list<perm_string>*tmp = new std::list<perm_string>;
+	tmp->push_back(perm_string());
 	$$ = tmp;
       }
   ;
