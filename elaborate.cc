@@ -5380,7 +5380,6 @@ NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
       }
 
       ivl_assert(*this, index_vars_.size() > 0);
-      ivl_assert(*this, dims.size() >= index_vars_.size());
 
       NetProc*sub;
       if (statement_)
@@ -5388,6 +5387,15 @@ NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
       else
 	    sub = new NetBlock(NetBlock::SEQU, 0);
       NetForLoop*stmt = 0;
+
+      if (index_vars_.size() > dims.size()) {
+	    delete sub;
+	    cerr << get_fileline() << ": error: Number of foreach loop indices"
+	         << "(" << index_vars_.size() << ") must not exceed number of "
+		 << "array dimensions (" << dims.size() << ")." << endl;
+	    des->errors++;
+	    return nullptr;
+      }
 
       for (int idx_idx = index_vars_.size()-1 ; idx_idx >= 0 ; idx_idx -= 1) {
 	    const netrange_t&idx_range = dims[idx_idx];
