@@ -25,6 +25,7 @@
 # include  "ivl_target.h"
 # include  <map>
 # include  <set>
+# include  <unordered_set>
 # include  <vector>
 
 class PEvent;
@@ -67,9 +68,14 @@ class LexicalScope {
 	// Symbols that are defined or declared in this scope.
       std::map<perm_string,PNamedItem*>local_symbols;
 
-	// Symbols that are explicitly imported. Bind the imported name
-	// to the package from which the name is imported.
+	// Symbols that are explicitly imported. This contains the package where
+	// the symbol has been decelared. When using exports, this might not be
+	// the same as the package where it has been imported from.
       std::map<perm_string,PPackage*>explicit_imports;
+        // Symbols that are explicitly imported. This contains the set of
+	// packages from which the symbol has been imported. When using exports
+	// the same identifier can be imported via multiple packages.
+      std::map<perm_string,std::unordered_set<PPackage*>> explicit_imports_from;
 
 	// Packages that are wildcard imported. When identifiers from
 	// these packages are referenced, they will be added to the

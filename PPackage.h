@@ -24,6 +24,7 @@
 # include  "LineInfo.h"
 # include  "StringHeap.h"
 # include  <iostream>
+# include  <vector>
 
 /*
  * SystemVerilog supports class declarations with their own lexical
@@ -42,6 +43,13 @@ class PPackage : public PScopeExtra, public LineInfo {
       bool elaborate(Design*des, NetScope*scope) const;
 
       void pform_dump(std::ostream&out) const;
+
+      struct export_t {
+	    PPackage *pkg;
+	    perm_string name;
+      };
+
+      std::vector<export_t> exports;
 };
 
 #endif /* IVL_PPackage_H */

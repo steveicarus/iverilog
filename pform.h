@@ -203,6 +203,12 @@ extern void pform_start_package_declaration(const struct vlltype&loc,
 extern void pform_end_package_declaration(const struct vlltype&loc);
 extern void pform_package_import(const struct vlltype&loc,
 				 PPackage*pkg, const char*ident);
+extern void pform_package_export(const struct vlltype &loc, PPackage *pkg,
+			         const char *ident);
+PPackage *pform_package_importable(PPackage *pkg, perm_string name);
+PPackage *pform_find_potential_import(const struct vlltype&loc, LexicalScope*scope,
+				      perm_string name, bool tf_call, bool make_explicit);
+
 
 extern PExpr* pform_package_ident(const struct vlltype&loc,
 				  PPackage*pkg, pform_name_t*ident);

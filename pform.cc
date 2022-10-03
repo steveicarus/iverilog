@@ -472,41 +472,6 @@ static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*it
       scope->local_symbols[name] = item;
 }
 
-static PPackage*find_potential_import(const struct vlltype&loc, LexicalScope*scope,
-				      perm_string name, bool tf_call, bool make_explicit)
-{
-      assert(scope);
-
-      PPackage*found_pkg = 0;
-      for (list<PPackage*>::const_iterator cur_pkg = scope->potential_imports.begin();
-	      cur_pkg != scope->potential_imports.end(); ++cur_pkg) {
-	    PPackage*search_pkg = *cur_pkg;
-	    map<perm_string,PNamedItem*>::const_iterator cur_sym
-		= search_pkg->local_symbols.find(name);
-	    if (cur_sym != search_pkg->local_symbols.end()) {
-		  if (found_pkg && make_explicit) {
-			cerr << loc.get_fileline() << ": error: "
-				"Ambiguous use of '" << name << "'. "
-				"It is exported by both '"
-			      << found_pkg->pscope_name()
-			      << "' and by '"
-			      << search_pkg->pscope_name()
-			      << "'." << endl;
-			error_count += 1;
-		  } else {
-			found_pkg = search_pkg;
-			if (make_explicit) {
-                              if (tf_call)
-			            scope->possible_imports[name] = found_pkg;
-                              else
-			            scope->explicit_imports[name] = found_pkg;
-                        }
-		  }
-	    }
-      }
-      return found_pkg;
-}
-
 static void check_potential_imports(const struct vlltype&loc, perm_string name, bool tf_call)
 {
       LexicalScope*scope = lexical_scope;
@@ -515,7 +480,7 @@ static void check_potential_imports(const struct vlltype&loc, perm_string name, 
 		  return;
 	    if (scope->explicit_imports.find(name) != scope->explicit_imports.end())
 		  return;
-	    if (find_potential_import(loc, scope, name, tf_call, true))
+	    if (pform_find_potential_import(loc, scope, name, tf_call, true))
 		  return;
 
 	    scope = scope->parent_scope();
@@ -938,7 +903,7 @@ typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
 	    if (cur != cur_scope->typedefs.end())
 		  return cur->second;
 
-            PPackage*pkg = find_potential_import(loc, cur_scope, name, false, false);
+            PPackage*pkg = pform_find_potential_import(loc, cur_scope, name, false, false);
             if (pkg) {
 	          cur = pkg->typedefs.find(name);
 	          if (cur != pkg->typedefs.end())
