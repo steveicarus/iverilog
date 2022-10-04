@@ -219,6 +219,9 @@ class PEAssignPattern : public PExpr {
 				      const std::vector<netrange_t> &dims,
 				      unsigned int cur_dim,
 				      bool need_const) const;
+      NetExpr* elaborate_expr_struct_(Design *des, NetScope *scope,
+				      const netstruct_t *struct_type,
+				      bool need_const) const;
       NetExpr* elaborate_expr_darray_(Design *des, NetScope *scope,
 				      const netdarray_t *array_type,
 				      bool need_const) const;

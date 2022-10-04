@@ -252,6 +252,11 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 					  need_const);
       }
 
+      if (auto struct_type = dynamic_cast<const netstruct_t*>(ntype)) {
+	    return elaborate_expr_struct_(des, scope, struct_type,
+					  need_const);
+      }
+
       cerr << get_fileline() << ": sorry: I don't know how to elaborate "
 	   << "assignment_pattern expressions for " << *ntype << " type yet." << endl;
       cerr << get_fileline() << ":      : Expression is: " << *this
@@ -329,6 +334,33 @@ NetExpr* PEAssignPattern::elaborate_expr_packed_(Design *des, NetScope *scope,
 		  expr = elaborate_rval_expr(des, scope, nullptr,
 					     base_type, width,
 					     parms_[idx], need_const);
+	    if (expr)
+		  concat->set(idx, expr);
+      }
+
+      return concat;
+}
+
+NetExpr* PEAssignPattern::elaborate_expr_struct_(Design *des, NetScope *scope,
+						 const netstruct_t *struct_type,
+						 bool need_const) const
+{
+      auto &members = struct_type->members();
+
+      if (members.size() != parms_.size()) {
+	    cerr << get_fileline() << ": error: Struct assignment pattern expects "
+	         << members.size() << " element(s) in this context.\n"
+	         << get_fileline() << ":      : Found "
+		 << parms_.size() << " element(s)." << endl;
+	    des->errors++;
+      }
+
+      NetEConcat *concat = new NetEConcat(parms_.size(), 1,
+					  struct_type->base_type());
+      for (size_t idx = 0; idx < std::min(parms_.size(), members.size()); idx++) {
+	    auto expr = elaborate_rval_expr(des, scope,
+					    members[idx].net_type,
+					    parms_[idx], need_const);
 	    if (expr)
 		  concat->set(idx, expr);
       }
