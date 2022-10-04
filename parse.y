@@ -3704,6 +3704,7 @@ expr_primary
 	PECallFunction*tmp = pform_make_call_function(@1, *$1, *expr_list);
 	delete $1;
 	delete $2;
+	delete expr_list;
 	$$ = tmp;
       }
   | class_hierarchy_identifier '(' expression_list_with_nuls ')'
@@ -3711,6 +3712,7 @@ expr_primary
 	strip_tail_items(expr_list);
 	PECallFunction*tmp = pform_make_call_function(@1, *$1, *expr_list);
 	delete $1;
+	delete expr_list;
 	$$ = tmp;
       }
   | SYSTEM_IDENTIFIER '(' expression_list_proper ')'
@@ -3718,13 +3720,15 @@ expr_primary
 	PECallFunction*tmp = new PECallFunction(tn, *$3);
 	FILE_NAME(tmp, @1);
 	delete[]$1;
+	delete $3;
 	$$ = tmp;
       }
-  | PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER '(' expression_list_proper ')'
+  | PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER '(' expression_list_with_nuls ')'
       { perm_string use_name = lex_strings.make($3);
 	PECallFunction*tmp = new PECallFunction($1, use_name, *$5);
 	FILE_NAME(tmp, @3);
 	delete[]$3;
+	delete $5;
 	$$ = tmp;
       }
   | SYSTEM_IDENTIFIER '('  ')'
