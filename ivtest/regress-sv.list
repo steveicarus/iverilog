@@ -553,6 +553,10 @@ sv_darray_args2		normal,-g2009		ivltests
 sv_darray_args2b	normal,-g2009		ivltests
 sv_darray_args3		normal,-g2009		ivltests
 sv_darray_args4		normal,-g2009		ivltests
+sv_darray_copy_empty1	normal,-g2009		ivltests
+sv_darray_copy_empty2	normal,-g2009		ivltests
+sv_darray_copy_empty3	normal,-g2009		ivltests
+sv_darray_copy_empty4	normal,-g2009		ivltests
 sv_darray_decl_assign	normal,-g2009		ivltests
 sv_darray_function	normal,-g2009		ivltests
 sv_darray_oob_real	normal,-g2009		ivltests
@@ -614,6 +618,8 @@ sv_port_default14	CE,-g2009		ivltests
 sv_queue1		normal,-g2009		ivltests
 sv_queue2		normal,-g2009		ivltests
 sv_queue3		normal,-g2009		ivltests
+sv_queue_copy_empty1	normal,-g2009		ivltests
+sv_queue_copy_empty2	normal,-g2009		ivltests
 sv_queue_function1	normal,-g2009		ivltests
 sv_queue_function2	normal,-g2009		ivltests
 sv_queue_oob_real	normal,-g2009		ivltests
