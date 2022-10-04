@@ -3844,10 +3844,15 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
       if (const netclass_t*class_type = net->class_type()) {
 	    NetScope*task = class_type->method_from_name(method_name);
 	    if (task == 0) {
-		  cerr << get_fileline() << ": error: "
-		       << "Can't find task " << method_name
-		       << " in class " << class_type->get_name() << endl;
-		  des->errors += 1;
+		    // If an implicit this was added it is not an error if we
+		    // don't find a method. It might actually be a call to a
+		    // function outside of the class.
+		  if (!add_this_flag) {
+			cerr << get_fileline() << ": error: "
+			     << "Can't find task " << method_name
+			     << " in class " << class_type->get_name() << endl;
+			des->errors += 1;
+		  }
 		  return 0;
 	    }
 
