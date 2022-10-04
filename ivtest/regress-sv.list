@@ -368,6 +368,7 @@ module_nonansi_struct2	normal,-g2005-sv	ivltests
 module_nonansi_struct_fail CE,-g2005-sv	ivltests
 module_output_port_sv_var1 normal,-g2005-sv	ivltests
 module_output_port_sv_var2 normal,-g2005-sv	ivltests
+module_port_typedef_array1 normal,-g2005-sv	ivltests
 named_begin		normal,-g2009		ivltests
 named_begin_fail	CE,-g2009		ivltests
 named_fork		normal,-g2009		ivltests
@@ -673,6 +674,7 @@ sv_typedef_darray_base1	normal,-g2009		ivltests
 sv_typedef_darray_base2	normal,-g2009		ivltests
 sv_typedef_darray_base3	normal,-g2009		ivltests
 sv_typedef_darray_base4	normal,-g2009		ivltests
+sv_typedef_nested_array normal,-g2009		ivltests
 sv_typedef_queue_base1	normal,-g2009		ivltests
 sv_typedef_queue_base2	normal,-g2009		ivltests
 sv_typedef_queue_base3	normal,-g2009		ivltests

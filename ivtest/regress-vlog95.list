@@ -225,6 +225,7 @@ br_ml20171017		CE			ivltests
 genvar_scopes		CE			ivltests
 meminit2		CE			ivltests
 memsynth4		CE,-S			ivltests  # Synthesized net array
+module_port_typedef_array1 CE,-g2005-sv		ivltests  # Module port array
 negative_genvar		CE			ivltests
 pr1565544		CE			ivltests
 pr1657307		CE			ivltests
