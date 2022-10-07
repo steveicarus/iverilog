@@ -437,6 +437,7 @@ sv_class_return		CE,-g2009		ivltests
 sv_class_static_prop1	CE,-g2009		ivltests
 sv_class_static_prop2	CE,-g2009		ivltests
 sv_class_static_prop3	CE,-g2009		ivltests
+sv_class_static_prop4	CE,-g2009		ivltests
 sv_class_super1		CE,-g2009		ivltests
 sv_class_super2		CE,-g2009		ivltests
 sv_class_super3		CE,-g2009		ivltests
