@@ -529,6 +529,7 @@ sv_class_new_fail1	CE,-g2009		ivltests
 sv_class_new_fail2	CE,-g2009		ivltests
 sv_class_new_init	normal,-g2009		ivltests
 sv_class_in_module_decl	normal,-g2009		ivltests
+sv_class_method_call_void	normal,-g2009	ivltests
 sv_class_method_default1 normal,-g2009		ivltests
 sv_class_method_default2 normal,-g2009		ivltests
 sv_class_method_signed1	normal,-g2009		ivltests
