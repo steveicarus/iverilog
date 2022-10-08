@@ -897,21 +897,6 @@ static int show_stmt_assign_sig_string(ivl_statement_t net)
       return 0;
 }
 
-unsigned width_of_packed_type(ivl_type_t net)
-{
-      unsigned idx;
-      unsigned width = 1;
-      for (idx = 0 ; idx < ivl_type_packed_dimensions(net) ; idx += 1) {
-	    int lsb = ivl_type_packed_lsb(net,idx);
-	    int msb = ivl_type_packed_msb(net,idx);
-	    if (lsb <= msb)
-		  width *= msb - lsb + 1;
-	    else
-		  width *= lsb - msb + 1;
-      }
-      return width;
-}
-
 /*
  * This function handles the special case that we assign an array
  * pattern to a dynamic array. Handle this by assigning each
@@ -934,9 +919,9 @@ static int show_stmt_assign_darray_pattern(ivl_statement_t net)
 #if 0
       unsigned element_width = 1;
       if (ivl_type_base(element_type) == IVL_VT_BOOL)
-	    element_width = width_of_packed_type(element_type);
+	    element_width = ivl_type_packed_width(element_type);
       else if (ivl_type_base(element_type) == IVL_VT_LOGIC)
-	    element_width = width_of_packed_type(element_type);
+	    element_width = ivl_type_packed_width(element_type);
 #endif
 
 // FIXME: At the moment we reallocate the array space.
@@ -1094,7 +1079,7 @@ static int show_stmt_assign_queue_pattern(ivl_signal_t var, ivl_expr_t rval,
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%store/qdar/v v%p_0, %d, %u;\n", var, max_idx,
-		                   width_of_packed_type(element_type));
+		                   ivl_type_packed_width(element_type));
 		  break;
 
 		case IVL_VT_REAL:
@@ -1181,7 +1166,7 @@ static int show_stmt_assign_sig_queue(ivl_statement_t net)
 		 index register 3. */
 	    draw_eval_expr_into_integer(mux, 3);
 	    fprintf(vvp_out, "    %%store/qdar/v v%p_0, %d, %u;\n", var, idx,
-	                     width_of_packed_type(element_type));
+	                     ivl_type_packed_width(element_type));
 
       } else if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
 	      /* There is no l-value mux, but the r-value is an array
@@ -1202,7 +1187,7 @@ static int show_stmt_assign_sig_queue(ivl_statement_t net)
 		  assert(ivl_type_base(element_type) == IVL_VT_BOOL ||
 		         ivl_type_base(element_type) == IVL_VT_LOGIC);
 		  fprintf(vvp_out, "    %%store/qobj/v v%p_0, %d, %u;\n",
-		                   var, idx, width_of_packed_type(element_type));
+		                   var, idx, ivl_type_packed_width(element_type));
 	    }
       }
       clr_word(idx);

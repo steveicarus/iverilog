@@ -1847,7 +1847,7 @@ static int show_insert_method(ivl_statement_t net)
 	    draw_eval_vec4(parm2);
 	    fprintf(vvp_out, "    %%qinsert/v v%p_0, %d, %u;\n",
 	            var, idx,
-	            width_of_packed_type(element_type));
+	            ivl_type_packed_width(element_type));
 	    break;
       }
       return 0;
@@ -1897,7 +1897,7 @@ static int show_push_frontback_method(ivl_statement_t net, bool is_front)
 	    draw_eval_vec4(parm1);
 	    fprintf(vvp_out, "    %%store/%s/v v%p_0, %d, %u;\n",
 	            type_code, var, idx,
-	            width_of_packed_type(element_type));
+	            ivl_type_packed_width(element_type));
 	    break;
       }
       clr_word(idx);
