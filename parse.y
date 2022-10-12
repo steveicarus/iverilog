@@ -22,6 +22,7 @@
 
 # include "config.h"
 
+# include  <cstdarg>
 # include  "parse_misc.h"
 # include  "compiler.h"
 # include  "pform.h"

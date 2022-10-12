@@ -20,6 +20,7 @@
 
 # include "config.h"
 
+# include  <cstdarg>
 # include  "compiler.h"
 # include  "pform.h"
 # include  "parse_misc.h"

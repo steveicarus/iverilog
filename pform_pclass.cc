@@ -17,6 +17,7 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+# include  <cstdarg>
 # include  "pform.h"
 # include  "PClass.h"
 # include  "parse_misc.h"

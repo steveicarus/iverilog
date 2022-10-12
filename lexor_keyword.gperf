@@ -9,6 +9,7 @@
 %{
 /* Command-line: gperf -o -i 7 -C -k '1-4,6,9,$' -H keyword_hash -N check_identifier -t ./lexor_keyword.gperf  */
 
+#include <cstdarg>
 #include "config.h"
 #include "parse_misc.h"
 #include "parse.h"
