@@ -1642,6 +1642,9 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      if (def->is_void())
+	    return 0;
+
       NetScope*dscope = def->scope();
       assert(dscope);
 
@@ -2859,6 +2862,14 @@ NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*ds
 
       if (parm_errors)
             return 0;
+
+      if (def->is_void()) {
+	    cerr << get_fileline() << ": error: void function `"
+		 << dscope->basename() << "` can not be called in an expression."
+		 << endl;
+	    des->errors++;
+	    return nullptr;
+      }
 
 	/* Look for the return value signal for the called
 	   function. This return value is a magic signal in the scope
