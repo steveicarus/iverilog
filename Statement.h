@@ -226,6 +226,8 @@ class PCallTask  : public Statement {
 
       bool elaborate_elab(Design*des, NetScope*scope) const;
 
+      void void_cast() { void_cast_ = true; }
+
     private:
       NetProc* elaborate_sys(Design*des, NetScope*scope) const;
       NetProc* elaborate_usr(Design*des, NetScope*scope) const;
@@ -257,6 +259,7 @@ class PCallTask  : public Statement {
       PPackage*package_;
       pform_name_t path_;
       std::vector<PExpr*> parms_;
+      bool void_cast_ = false;
 };
 
 class PCase  : public Statement {
