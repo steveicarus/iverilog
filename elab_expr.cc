@@ -2709,8 +2709,7 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
       }
 
       // If the symbol is found, but is not a _function_ scope...
-      NetFuncDef*def = search_results.scope->func_def();
-      if (def == 0) {
+      if (search_results.scope->type() != NetScope::FUNC) {
 	      // Not a user defined function. Maybe it is an access
 	      // function for a nature? If so then elaborate it that
 	      // way.
@@ -2725,6 +2724,7 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return 0;
       }
+      NetFuncDef*def = search_results.scope->func_def();
 
       ivl_assert(*this, def);
       ivl_assert(*this, def->scope() == search_results.scope);
