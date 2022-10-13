@@ -255,6 +255,30 @@ NexusSet* NetETernary::nex_input(bool rem_out, bool always_sens, bool nested_fun
       return result;
 }
 
+// Get the contribution of a function call in a always_comb block
+static void func_always_sens(NetFuncDef *func, NexusSet *result,
+			     bool rem_out, bool nested_func)
+{
+	  // Avoid recursive function calls.
+	static set<NetFuncDef*> func_set;
+	if (!nested_func)
+	      func_set.clear();
+
+	if (!func_set.insert(func).second)
+	      return;
+
+	std::unique_ptr<NexusSet> tmp(func->proc()->nex_input(rem_out, true, true));
+	  // Remove the function inputs
+	std::unique_ptr<NexusSet> in(new NexusSet);
+	for (unsigned idx = 0; idx < func->port_count(); idx++) {
+	      NetNet *net = func->port(idx);
+	      assert(net->pin_count() == 1);
+	      in->add(net->pin(0).nexus(), 0, net->vector_width());
+	}
+	tmp->rem(*in);
+	result->add(*tmp);
+}
+
 NexusSet* NetEUFunc::nex_input(bool rem_out, bool always_sens, bool nested_func) const
 {
       NexusSet*result = new NexusSet;
@@ -265,31 +289,8 @@ NexusSet* NetEUFunc::nex_input(bool rem_out, bool always_sens, bool nested_func)
 	    delete tmp;
       }
 
-      if (always_sens) {
-	    NetFuncDef*func = func_->func_def();
-
-	      // Avoid recursive function calls.
-	    static set<NetFuncDef*> func_set;
-	    if (!nested_func)
-		  func_set.clear();
-
-	    if (!func_set.insert(func).second)
-		  return result;
-
-	    NexusSet*tmp = func->proc()->nex_input(rem_out, always_sens, true);
-	      // Remove the function inputs
-	    NexusSet*in = new NexusSet;
-	    for (unsigned idx = 0 ;  idx < func->port_count() ;  idx += 1) {
-		  NetNet*net = func->port(idx);
-		  assert(net->pin_count() == 1);
-		  in->add(net->pin(0).nexus(), 0, net->vector_width());
-	    }
-	    tmp->rem(*in);
-	    delete in;
-
-	    result->add(*tmp);
-	    delete tmp;
-      }
+      if (always_sens)
+	    func_always_sens(func_->func_def(), result, rem_out, nested_func);
 
       return result;
 }
@@ -613,9 +614,18 @@ NexusSet* NetSTask::nex_input(bool rem_out, bool always_sens, bool nested_func) 
  * parameters to consider, because the compiler already removed them
  * and converted them to blocking assignments.
  */
-NexusSet* NetUTask::nex_input(bool, bool, bool) const
+NexusSet* NetUTask::nex_input(bool rem_out, bool always_sens, bool nested_func) const
 {
-      return new NexusSet;
+      NexusSet *result = new NexusSet;
+
+      /*
+       * Let the contents of void functions contribute to the sensitivity list
+       * of always_comb blocks
+       */
+      if (always_sens && task_->type() == NetScope::FUNC)
+	    func_always_sens(task_->func_def(), result, rem_out, nested_func);
+
+      return result;
 }
 
 NexusSet* NetWhile::nex_input(bool rem_out, bool always_sens, bool nested_func) const
