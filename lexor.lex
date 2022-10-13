@@ -27,6 +27,7 @@
       //# define YYSTYPE lexval
 
 # include  <cstdarg>
+# include  <iostream>
 # include  "compiler.h"
 # include  "parse_misc.h"
 # include  "parse_api.h"
