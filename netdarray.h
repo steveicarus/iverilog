@@ -36,9 +36,6 @@ class netdarray_t : public netarray_t {
 	// A dynamic array may have a type that is signed.
       inline bool get_signed() const { return element_type()->get_signed(); }
 
-	// Use the packed width to pass the element width
-      long packed_width() const { return element_type()->packed_width(); }
-
 	// This is the base_type() of the element of the array. We
 	// need this in some cases in order to get the base type of
 	// the element, and not the IVL_VT_DARRAY of the array itself.
@@ -52,6 +49,7 @@ class netdarray_t : public netarray_t {
 
     private:
       bool test_compatibility(ivl_type_t that) const;
+      bool test_equivalence(ivl_type_t that) const;
 };
 
 #endif /* IVL_netdarray_H */

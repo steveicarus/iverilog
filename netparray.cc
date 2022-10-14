@@ -68,6 +68,16 @@ vector<netrange_t> netparray_t::slice_dimensions() const
       return res;
 }
 
+bool netparray_t::test_compatibility(ivl_type_t that) const
+{
+      return packed_type_compatible(that);
+}
+
+bool netparray_t::test_equivalence(ivl_type_t that) const
+{
+      return packed_types_equivalent(this, that);
+}
+
 netuarray_t::~netuarray_t()
 {
 }

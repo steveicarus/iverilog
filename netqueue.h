@@ -43,7 +43,6 @@ class netqueue_t : public netdarray_t {
       std::ostream& debug_dump(std::ostream&) const;
 
     private:
-      bool test_compatibility(ivl_type_t that) const;
       long max_idx_;
 };
 

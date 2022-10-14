@@ -3202,6 +3202,11 @@ extern "C" ivl_type_t ivl_type_element(ivl_type_t net)
       return 0;
 }
 
+extern "C" unsigned ivl_type_packed_width(ivl_type_t net)
+{
+      return net->packed_width();
+}
+
 extern "C" unsigned ivl_type_packed_dimensions(ivl_type_t net)
 {
       assert(net);

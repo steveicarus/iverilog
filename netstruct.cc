@@ -134,3 +134,16 @@ ivl_variable_type_t netstruct_t::base_type() const
 
       return IVL_VT_BOOL;
 }
+
+bool netstruct_t::test_compatibility(ivl_type_t that) const
+{
+      return packed_type_compatible(that);
+}
+
+bool netstruct_t::test_equivalence(ivl_type_t that) const
+{
+      if (!packed_)
+	    return this == that;
+
+      return packed_types_equivalent(this, that);
+}

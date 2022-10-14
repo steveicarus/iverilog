@@ -35,19 +35,3 @@ ivl_variable_type_t netqueue_t::base_type() const
 {
       return IVL_VT_QUEUE;
 }
-
-bool netqueue_t::test_compatibility(ivl_type_t that) const
-{
-      ivl_type_t elem_type = 0;
-
-      if (const netqueue_t*that_q = dynamic_cast<const netqueue_t*>(that))
-	    elem_type = that_q->element_type();
-
-      if (const netdarray_t*that_da = dynamic_cast<const netdarray_t*>(that))
-	    elem_type = that_da->element_type();
-
-      if (elem_type == 0)
-	    return false;
-
-      return element_type()->type_compatible(elem_type);
-}

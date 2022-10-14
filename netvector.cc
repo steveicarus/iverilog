@@ -89,19 +89,10 @@ vector<netrange_t> netvector_t::slice_dimensions() const
 
 bool netvector_t::test_compatibility(ivl_type_t that) const
 {
-      const netvector_t*that_st = dynamic_cast<const netvector_t*>(that);
-      if (that_st == 0)
-	    return false;
+      return packed_type_compatible(that);
+}
 
-      if (type_ != that_st->type_)
-	    return false;
-      if (packed_dims_.size() != that_st->packed_dims_.size())
-	    return false;
-
-      for (size_t idx = 0 ; idx < packed_dims_.size() ; idx += 1) {
-	    if (packed_dims_[idx] != that_st->packed_dims_[idx])
-		  return false;
-      }
-
-      return true;
+bool netvector_t::test_equivalence(const ivl_type_t that) const
+{
+      return packed_types_equivalent(this, that);
 }

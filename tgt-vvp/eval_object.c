@@ -28,7 +28,7 @@ void darray_new(ivl_type_t element_type, unsigned size_reg)
       ivl_variable_type_t type = ivl_type_base(element_type);
 
       if ((type == IVL_VT_BOOL) || (type == IVL_VT_LOGIC)) {
-	    wid = width_of_packed_type(element_type);
+	    wid = ivl_type_packed_width(element_type);
 	    signed_char = ivl_type_signed(element_type) ? "s" : "";
       } else {
 	      // REAL or STRING objects are not packable.
@@ -133,7 +133,7 @@ static int eval_darray_new(ivl_expr_t ex)
 	    switch (ivl_type_base(element_type)) {
 		case IVL_VT_BOOL:
 		case IVL_VT_LOGIC:
-		  wid = width_of_packed_type(element_type);
+		  wid = ivl_type_packed_width(element_type);
 		  for (idx = 0 ; idx < cnt ; idx += 1) {
 			draw_eval_vec4(init_expr);
 			fprintf(vvp_out, "    %%parti/%c %u, %ld, 6;\n",

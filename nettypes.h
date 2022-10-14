@@ -47,17 +47,20 @@ class ivl_type_s {
       virtual bool get_signed() const;
       virtual bool get_scalar() const;
 
-	// Return true if "that" type is compatible with this
-	// type. Compatible means the types are essentially the same.
+	// Return true if "that" type is assignment compatible with this
+	// type.
       bool type_compatible(ivl_type_t that) const;
+        // Return true if "that" type is equivalent with this type as defined by
+	// the standard
+      bool type_equivalent(ivl_type_t that) const;
 
       virtual std::ostream& debug_dump(std::ostream&) const;
 
     private:
-	// The "type_compatible" method uses this virtual method to
-	// invoke type-specific tests of compatibility. This should
-	// only be called by the type_compatible method above.
+	// The "type_compatible" and "type_equivalent" methods uses this virtual
+	// method to invoke type-specific tests of compatibility.
       virtual bool test_compatibility(ivl_type_t that) const;
+      virtual bool test_equivalence(ivl_type_t that) const;
 };
 
 /*
@@ -161,5 +164,9 @@ extern bool calculate_param_range(const LineInfo&line, ivl_type_t par_type,
 extern bool prefix_to_slice(const std::vector<netrange_t>&dims,
 			    const std::list<long>&prefix, long sb,
 			    long&loff, unsigned long&lwid);
+
+
+extern bool packed_types_equivalent(ivl_type_t a, ivl_type_t b);
+extern bool packed_type_compatible(ivl_type_t type);
 
 #endif /* IVL_nettypes_H */
