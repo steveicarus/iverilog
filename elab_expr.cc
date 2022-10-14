@@ -3185,13 +3185,13 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    NetNet*res = method->find_signal(method->basename());
 	    ivl_assert(*this, res);
 
-	    vector<NetExpr*>parms;
+	    vector<NetExpr*> parms(def->port_count());
+	    ivl_assert(*this, def->port_count() >= 1);
 
 	    NetESignal*ethis = new NetESignal(net);
 	    ethis->set_line(*this);
-	    parms.push_back(ethis);
+	    parms[0] = ethis;
 
-	    parms.resize(1 + parms_.size());
 	    elaborate_arguments_(des, scope, def, false, parms, 1);
 
 	    NetESignal*eres = new NetESignal(res);
