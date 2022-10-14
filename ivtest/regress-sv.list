@@ -104,6 +104,8 @@ assign_op_oob		normal,-g2009		ivltests
 assign_op_real_array	normal,-g2009		ivltests
 assign_op_real_array_oob normal,-g2009		ivltests
 assign_op_type		normal,-g2009		ivltests
+automatic_error14	CE,-g2005-sv		ivltests
+automatic_error15	CE,-g2005-sv		ivltests
 bitp1			normal,-g2005-sv	ivltests
 bits			normal,-g2005-sv	ivltests
 bits2			normal,-g2005-sv	ivltests
