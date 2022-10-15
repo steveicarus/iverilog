@@ -23,10 +23,6 @@
 # include  <typeinfo>
 # include  "ivl_assert.h"
 
-#if __cplusplus < 201103L
-#define unique_ptr auto_ptr
-#endif
-
 using namespace std;
 
 /*

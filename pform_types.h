@@ -33,10 +33,6 @@
 # include  <map>
 # include  <memory>
 
-#if __cplusplus < 201103L
-#define unique_ptr auto_ptr
-#endif
-
 /*
  * parse-form types.
  */
@@ -424,9 +420,5 @@ static inline std::ostream& operator<< (std::ostream&out, const data_type_t&that
 extern std::ostream& operator<< (std::ostream&out, const pform_name_t&);
 extern std::ostream& operator<< (std::ostream&out, const name_component_t&that);
 extern std::ostream& operator<< (std::ostream&out, const index_component_t&that);
-
-#if __cplusplus < 201103L
-#undef unique_ptr
-#endif
 
 #endif /* IVL_pform_types_H */
