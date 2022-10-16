@@ -1,7 +1,7 @@
 %option prefix="yy"
 %{
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -187,6 +187,7 @@ static int ma_parenthesis_level = 0;
 %option noyywrap
 
 %x PPINCLUDE
+%x PPCCOMMENT
 %x DEF_NAME
 %x DEF_ESC
 %x DEF_ARG
@@ -307,9 +308,23 @@ keywords (line|include|define|undef|ifdef|ifndef|else|elsif|endif)
   /* Catch single-line comments that share the line with an include
    * directive. And while I'm at it, I might as well preserve the
    * comment in the output stream. This will be printed after the
-   * file has been included.
+   * file has been included. For simplicity, if there is more than
+   * one comment on the line, only the first one will be preserved.
    */
-<PPINCLUDE>"//"[^\r\n]* { standby->comment = strdup(yytext); }
+<PPINCLUDE>"//"[^\r\n]*     |
+<PPINCLUDE>"/*"[^\r\n]*"*/" { if (!standby->comment) standby->comment = strdup(yytext); }
+
+  /* Now catch the start of a multi-line comment. In this case we
+   * discard the comment then execute the inclusion.
+   */
+<PPINCLUDE>"/*"     { BEGIN(PPCCOMMENT); }
+
+<PPCCOMMENT>[^\r\n] {}
+<PPCCOMMENT>\n\r    |
+<PPCCOMMENT>\r\n    |
+<PPCCOMMENT>\n      |
+<PPCCOMMENT>\r      { istack->lineno += 1; }
+<PPCCOMMENT>"*/"    { yy_pop_state(); do_include(); }
 
  /* These finish the include directive (EOF or EOL) so I revert the
   * lexor state and execute the inclusion.
