@@ -104,7 +104,7 @@ AS_IF( [test "x$with_m32" = xyes],
     [])
 
 CFLAGS="$CTARGETFLAGS $CFLAGS"
-CXXFLAGS="$CTARGETFLAGS $CXXFLAGS"
+CXXFLAGS="$CTARGETFLAGS $CXXFLAGS -std=c++11"
 LDFLAGS="$CTARGETFLAGS $LDFLAGS"
 
 # Check that we are using either the GNU compilers or the Sun compilers

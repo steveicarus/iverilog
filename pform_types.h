@@ -33,10 +33,6 @@
 # include  <map>
 # include  <memory>
 
-#if __cplusplus < 201103L
-#define unique_ptr auto_ptr
-#endif
-
 /*
  * parse-form types.
  */
@@ -45,6 +41,7 @@ class Design;
 class NetScope;
 class Definitions;
 class PExpr;
+class PScope;
 class PWire;
 class Statement;
 class netclass_t;
@@ -165,6 +162,8 @@ class data_type_t : public PNamedItem {
 
       virtual SymbolType symbol_type() const;
 
+      virtual NetScope *find_scope(Design* des, NetScope *scope) const;
+
       perm_string name;
 
     private:
@@ -173,6 +172,19 @@ class data_type_t : public PNamedItem {
 
 	// Keep per-scope elaboration results cached.
       std::map<Definitions*,ivl_type_t> cache_type_elaborate_;
+};
+
+struct typeref_t : public data_type_t {
+      explicit typeref_t(data_type_t *t, PScope *s = 0) : scope(s), type(t) {}
+
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
+      NetScope *find_scope(Design* des, NetScope *scope) const;
+
+      std::ostream& debug_dump(std::ostream&out) const;
+
+private:
+      PScope *scope;
+      data_type_t *type;
 };
 
 struct void_type_t : public data_type_t {
@@ -193,7 +205,7 @@ struct enum_type_t : public data_type_t {
 
       SymbolType symbol_type() const;
 
-      data_type_t *base_type;
+      std::unique_ptr<data_type_t> base_type;
       std::unique_ptr< std::list<named_pexpr_t> > names;
 };
 
@@ -270,7 +282,7 @@ struct array_base_t : public data_type_t {
       inline explicit array_base_t(data_type_t*btype, std::list<pform_range_t>*pd)
       : base_type(btype), dims(pd) { }
 
-      data_type_t*base_type;
+      std::unique_ptr<data_type_t> base_type;
       std::unique_ptr< std::list<pform_range_t> > dims;
 };
 
@@ -323,8 +335,7 @@ struct string_type_t : public data_type_t {
 
 struct class_type_t : public data_type_t {
 
-      inline explicit class_type_t(perm_string n)
-      : base_type(0), save_elaborated_type(0) { name = n; }
+      inline explicit class_type_t(perm_string n) { name = n; }
 
       void pform_dump(std::ostream&out, unsigned indent) const;
       void pform_dump_init(std::ostream&out, unsigned indent) const;
@@ -333,15 +344,17 @@ struct class_type_t : public data_type_t {
 	// class that we are extending. This is nil if there is no
 	// hierarchy. If there are arguments to the base class, then
 	// put them in the base_args vector.
-      data_type_t*base_type;
+      std::unique_ptr<data_type_t> base_type;
       std::list<PExpr*>base_args;
 
 	// This is a map of the properties. Map the name to the type.
       struct prop_info_t : public LineInfo {
-	    inline prop_info_t() : qual(property_qualifier_t::make_none()), type(0) { }
+	    inline prop_info_t() : qual(property_qualifier_t::make_none()) { }
 	    inline prop_info_t(property_qualifier_t q, data_type_t*t) : qual(q), type(t) { }
+	    prop_info_t(prop_info_t&&) = default;
+	    prop_info_t& operator=(prop_info_t&&) = default;
 	    property_qualifier_t qual;
-	    data_type_t* type;
+	    std::unique_ptr<data_type_t> type;
       };
       std::map<perm_string, struct prop_info_t> properties;
 
@@ -356,11 +369,6 @@ struct class_type_t : public data_type_t {
       std::vector<Statement*> initialize_static;
 
       ivl_type_t elaborate_type_raw(Design*, NetScope*) const;
-	// The save_elaborated_type member must be set to the pointer
-	// to the netclass_t object that is created to represent this
-	// type. The elaborate_type_raw() method uses this pointer,
-	// and it is used in some other situations as well.
-      netclass_t* save_elaborated_type;
 
       virtual SymbolType symbol_type() const;
 };
@@ -424,9 +432,5 @@ static inline std::ostream& operator<< (std::ostream&out, const data_type_t&that
 extern std::ostream& operator<< (std::ostream&out, const pform_name_t&);
 extern std::ostream& operator<< (std::ostream&out, const name_component_t&that);
 extern std::ostream& operator<< (std::ostream&out, const index_component_t&that);
-
-#if __cplusplus < 201103L
-#undef unique_ptr
-#endif
 
 #endif /* IVL_pform_types_H */

@@ -33,7 +33,7 @@ PWire::PWire(perm_string n,
 : name_(n), type_(t), port_type_(pt), data_type_(dt),
   signed_(false),
   port_set_(false), net_set_(false), is_scalar_(false),
-  error_cnt_(0), set_data_type_(0), discipline_(0)
+  error_cnt_(0), discipline_(0)
 {
       switch (rt) {
 	  case SR_PORT:
@@ -195,8 +195,11 @@ void PWire::set_unpacked_idx(const list<pform_range_t>&ranges)
 
 void PWire::set_data_type(data_type_t*type)
 {
-      assert(set_data_type_ == 0 || set_data_type_ == type);
-      set_data_type_ = type;
+      if (set_data_type_.get() == type)
+	    return;
+
+      assert(!set_data_type_.get());
+      set_data_type_.reset(type);
 }
 
 void PWire::set_discipline(ivl_discipline_t d)

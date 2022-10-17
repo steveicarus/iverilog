@@ -444,7 +444,7 @@ static void blend_class_constructors(PClass*pclass)
 
 	// If we do not have an explicit constructor chain, but there
 	// is a parent class, then create an implicit chain.
-      if (chain_new==0 && pclass->type->base_type!=0) {
+      if (chain_new==0 && pclass->type->base_type) {
 	    chain_new = new PChainConstructor(pclass->type->base_args);
 	    chain_new->set_line(*pclass);
       }
@@ -511,16 +511,6 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       }
 
       netclass_t*use_class = new netclass_t(use_type->name, use_base_class);
-
-      // If this is a package we need to remember the elaborated type so that
-      // scoped type references work. Since there is only one instance for each
-      // package this works. For classes defined in modules there might be
-      // multiple instances though. Each module instance will have its own class
-      // type instance, so the same does not work there.
-      if (scope->type() == NetScope::PACKAGE) {
-	    ivl_assert(*pclass, use_type->save_elaborated_type == 0);
-	    use_type->save_elaborated_type = use_class;
-      }
 
       NetScope*class_scope = new NetScope(scope, hname_t(pclass->pscope_name()),
 					  NetScope::CLASS, scope->unit());
