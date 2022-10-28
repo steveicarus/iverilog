@@ -1485,8 +1485,10 @@ static void macro_start_args(void)
      * entry for arg 0. This will be used by macro_finish_arg() to
      * calculate the buffer location for arg 1.
      */
-    def_buf_free = def_buf_size - 1;
-    def_buf[0] = 0;
+    if (def_buf) {
+      def_buf_free = def_buf_size - 1;
+      def_buf[0] = 0;
+    }
     def_argo[0] = 0;
     def_argl[0] = 0;
     def_argc = 1;
