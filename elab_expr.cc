@@ -2186,11 +2186,10 @@ bool calculate_part(const LineInfo*li, Design*des, NetScope*scope,
 	    return true;
 
 	  case index_component_t::SEL_PART:
+	    off = lsb;
 	    if (msb >= lsb) {
-		  off = lsb;
 		  wid = msb - lsb + 1;
 	    } else {
-		  off = msb;
 		  wid = lsb - msb + 1;
 	    }
 	    return true;
