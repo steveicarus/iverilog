@@ -185,7 +185,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	// expression. In this case, we will need to create a driver
 	// (later) to carry strengths.
       bool need_driver_flag = false;
-      if (dynamic_cast<NetESignal*>(rval_expr))
+      if (dynamic_cast<NetESignal*>(rval_expr) ||!rval->is_linked())
 	    need_driver_flag = true;
 
 	// expression elaboration should have caused the rval width to
