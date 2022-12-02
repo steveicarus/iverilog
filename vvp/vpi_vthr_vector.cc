@@ -132,7 +132,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiDecStrVal:
-	    if (isnan(val))
+	    if (std::isnan(val))
 		  sprintf(rbuf, "%s", "nan");
 	    else
 		  sprintf(rbuf, "%0.0f", vlg_round(val));
