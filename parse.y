@@ -704,6 +704,8 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 
 %type <package> package_scope
 
+%type <letter> compressed_operator
+
 %token K_TAND
 %nonassoc K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
 %nonassoc K_XOR_EQ K_LS_EQ K_RS_EQ K_RSS_EQ K_NB_TRIGGER
@@ -1494,6 +1496,10 @@ genvar_iteration /* IEEE1800-2012: A.4.2 */
   : IDENTIFIER '=' expression
       { $$.text = $1;
         $$.expr = $3;
+      }
+  | IDENTIFIER compressed_operator expression
+      { $$.text = $1;
+        $$.expr = pform_genvar_compressed(@1, $1, $2, $3);;
       }
   | IDENTIFIER K_INCR
       { $$.text = $1;
@@ -6633,63 +6639,27 @@ statement_item /* This is roughly statement_item in the LRM */
 
   ;
 
+compressed_operator
+  : K_PLUS_EQ  { $$ = '+'; }
+  | K_MINUS_EQ { $$ = '-'; }
+  | K_MUL_EQ   { $$ = '*'; }
+  | K_DIV_EQ   { $$ = '/'; }
+  | K_MOD_EQ   { $$ = '%'; }
+  | K_AND_EQ   { $$ = '&'; }
+  | K_OR_EQ    { $$ = '|'; }
+  | K_XOR_EQ   { $$ = '^'; }
+  | K_LS_EQ    { $$ = 'l'; }
+  | K_RS_EQ    { $$ = 'r'; }
+  | K_RSS_EQ   { $$ = 'R'; }
+  ;
+
 compressed_statement
-  : lpvalue K_PLUS_EQ expression
-      { PAssign*tmp = new PAssign($1, '+', $3);
+  : lpvalue compressed_operator expression
+      { PAssign*tmp = new PAssign($1, $2, $3);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | lpvalue K_MINUS_EQ expression
-      { PAssign*tmp = new PAssign($1, '-', $3);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | lpvalue K_MUL_EQ expression
-      { PAssign*tmp = new PAssign($1, '*', $3);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | lpvalue K_DIV_EQ expression
-      { PAssign*tmp = new PAssign($1, '/', $3);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | lpvalue K_MOD_EQ expression
-      { PAssign*tmp = new PAssign($1, '%', $3);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | lpvalue K_AND_EQ expression
-      { PAssign*tmp = new PAssign($1, '&', $3);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | lpvalue K_OR_EQ expression
-      { PAssign*tmp = new PAssign($1, '|', $3);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | lpvalue K_XOR_EQ expression
-      { PAssign*tmp = new PAssign($1, '^', $3);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | lpvalue K_LS_EQ expression
-      { PAssign  *tmp = new PAssign($1, 'l', $3);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | lpvalue K_RS_EQ expression
-      { PAssign*tmp = new PAssign($1, 'r', $3);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | lpvalue K_RSS_EQ expression
-      { PAssign  *tmp = new PAssign($1, 'R', $3);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-	;
+   ;
 
 
 statement_or_null_list_opt

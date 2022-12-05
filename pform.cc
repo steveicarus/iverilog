@@ -2873,6 +2873,30 @@ PExpr* pform_genvar_inc_dec(const struct vlltype&loc, const char*name, bool inc_
       return tmp;
 }
 
+PExpr* pform_genvar_compressed(const struct vlltype &loc, const char *name,
+			       char op, PExpr *rval)
+{
+      pform_requires_sv(loc, "Compressed assignment operator");
+
+      PExpr *lval = new PEIdent(lex_strings.make(name));
+      FILE_NAME(lval, loc);
+
+      PExpr *expr;
+      switch (op) {
+	  case 'l':
+	  case 'r':
+	  case 'R':
+	    expr = new PEBShift(op, lval, rval);
+	    break;
+	  default:
+	    expr = new PEBinary(op, lval, rval);
+	    break;
+      }
+      FILE_NAME(expr, loc);
+
+      return expr;
+}
+
 void pform_set_attrib(perm_string name, perm_string key, char*value)
 {
       if (PWire*cur = lexical_scope->wires_find(name)) {

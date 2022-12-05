@@ -477,6 +477,9 @@ extern PAssign* pform_compressed_assign_from_inc_dec(const struct vlltype&loc,
 extern PExpr* pform_genvar_inc_dec(const struct vlltype&loc, const char*name,
                                    bool inc_flag);
 
+extern PExpr* pform_genvar_compressed(const struct vlltype &loc,
+				      const char *name, char op, PExpr *rval);
+
 /*
  * These are functions that the outside-the-parser code uses the do
  * interesting things to the Verilog. The parse function reads and
