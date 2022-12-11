@@ -41,6 +41,11 @@ simulation.
   determine the return types of user-defined system functions. If specified at
   compile-time, there is no need to specify them again here.
 
+* -s
+
+  $stop right away, in the beginning of the simulation. This kicks the
+  vvp program into interactive debug mode.
+
 * -v
 
   Show verbose progress while setting up or cleaning up the runtime

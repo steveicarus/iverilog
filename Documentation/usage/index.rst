@@ -16,6 +16,7 @@ Icarus Verilog.
    verilog_attributes
    vvp_flags
    gtkwave
+   vvp_debug
    vpi
    ivl_target
    reporting_issues
