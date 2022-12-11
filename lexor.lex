@@ -369,7 +369,7 @@ TU [munpf]
 	   identifier here and interpret it in the package scope. */
       if (in_package_scope) {
 	    if (rc == IDENTIFIER) {
-		  if (data_type_t*type = pform_test_type_identifier(in_package_scope, yylval.text)) {
+		  if (typedef_t*type = pform_test_type_identifier(in_package_scope, yylval.text)) {
 			yylval.type_identifier.text = yylval.text;
 			yylval.type_identifier.type = type;
 			rc = TYPE_IDENTIFIER;
@@ -405,7 +405,7 @@ TU [munpf]
 	/* If this identifier names a previously declared type, then
 	   return this as a TYPE_IDENTIFIER instead. */
       if (rc == IDENTIFIER && gn_system_verilog()) {
-	    if (data_type_t*type = pform_test_type_identifier(yylloc, yylval.text)) {
+	    if (typedef_t*type = pform_test_type_identifier(yylloc, yylval.text)) {
 		  yylval.type_identifier.text = yylval.text;
 		  yylval.type_identifier.type = type;
 		  rc = TYPE_IDENTIFIER;
@@ -426,7 +426,7 @@ TU [munpf]
 	    }
       }
       if (gn_system_verilog()) {
-	    if (data_type_t*type = pform_test_type_identifier(yylloc, yylval.text)) {
+	    if (typedef_t*type = pform_test_type_identifier(yylloc, yylval.text)) {
 		  yylval.type_identifier.text = yylval.text;
 		  yylval.type_identifier.type = type;
 		  return TYPE_IDENTIFIER;

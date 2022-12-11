@@ -303,8 +303,11 @@ extern void pform_make_elab_task(const struct vlltype&li,
                                  perm_string name,
                                  const std::list<PExpr*>&params);
 
-extern void pform_set_typedef(perm_string name, data_type_t*data_type,
-			      std::list<pform_range_t>*unp_ranges);
+extern void pform_set_typedef(const struct vlltype&loc, perm_string name,
+			      data_type_t*data_type,
+			      std::list<pform_range_t>*unp_ranges = nullptr);
+extern void pform_forward_typedef(const struct vlltype&loc, perm_string name,
+			      enum typedef_t::basic_type basic_type);
 
 extern void pform_set_type_referenced(const struct vlltype&loc, const char*name);
 

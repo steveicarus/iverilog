@@ -120,7 +120,8 @@ class LexicalScope {
       bool has_parameter_port_list;
 
 	// Defined types in the scope.
-      std::map<perm_string,data_type_t*>typedefs;
+      typedef std::map<perm_string,typedef_t*> typedef_map_t;
+      typedef_map_t typedefs;
 
 	// Named events in the scope.
       std::map<perm_string,PEvent*>events;

@@ -143,10 +143,12 @@ PExpr* pform_package_ident(const struct vlltype&loc,
       return tmp;
 }
 
-data_type_t* pform_test_type_identifier(PPackage*pkg, const char*txt)
+typedef_t* pform_test_type_identifier(PPackage*pkg, const char*txt)
 {
       perm_string use_name = lex_strings.make(txt);
-      map<perm_string,data_type_t*>::const_iterator cur = pkg->typedefs.find(use_name);
+      LexicalScope::typedef_map_t::const_iterator cur;
+
+      cur = pkg->typedefs.find(use_name);
       if (cur != pkg->typedefs.end())
 	    return cur->second;
 

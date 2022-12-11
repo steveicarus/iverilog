@@ -438,7 +438,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 
       struct {
 	    char*text;
-	    data_type_t*type;
+	    typedef_t*type;
       } type_identifier;
 
       struct {
@@ -464,6 +464,8 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
       std::list<index_component_t> *dimensions;
 
       LexicalScope::lifetime_t lifetime;
+
+      enum typedef_t::basic_type typedef_basic_type;
 };
 
 %token <text>      IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
@@ -589,6 +591,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 
 %type <text> event_variable label_opt class_declaration_endlabel_opt
 %type <text> block_identifier_opt
+%type <text> identifier_name
 %type <perm_strings> event_variable_list
 %type <perm_strings> list_of_identifiers loop_variables
 %type <port_list> list_of_port_identifiers list_of_variable_port_identifiers
@@ -646,7 +649,6 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <data_type>  packed_array_data_type
 %type <data_type>  ps_type_identifier
 %type <data_type>  simple_packed_type
-%type <class_type> class_identifier
 %type <struct_member>  struct_union_member
 %type <struct_members> struct_union_member_list
 %type <struct_type>    struct_data_type
@@ -705,6 +707,8 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <package> package_scope
 
 %type <letter> compressed_operator
+
+%type <typedef_basic_type> typedef_basic_type
 
 %token K_TAND
 %nonassoc K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
@@ -786,15 +790,22 @@ block_identifier_opt /* */
   ;
 
 class_declaration /* IEEE1800-2005: A.1.2 */
-  : K_virtual_opt K_class lifetime_opt class_identifier class_declaration_extends_opt ';'
-      { pform_start_class_declaration(@2, $4, $5.type, $5.exprs, $3); }
+  : K_virtual_opt K_class lifetime_opt identifier_name class_declaration_extends_opt ';'
+      {
+	perm_string name = lex_strings.make($4);
+	class_type_t *class_type= new class_type_t(name);
+	FILE_NAME(class_type, @4);
+	pform_set_typedef(@4, name, class_type, nullptr);
+	pform_start_class_declaration(@2, class_type, $5.type, $5.exprs, $3);
+      }
     class_items_opt K_endclass
       { // Process a class.
 	pform_end_class_declaration(@9);
       }
     class_declaration_endlabel_opt
       { // Wrap up the class.
-	check_end_label(@11, "class", $4->name, $11);
+	check_end_label(@11, "class", $4, $11);
+	delete[] $4;
       }
   ;
 
@@ -803,33 +814,18 @@ class_constraint /* IEEE1800-2005: A.1.8 */
   | constraint_declaration
   ;
 
-class_identifier
-  : IDENTIFIER
-      { // Create a synthetic typedef for the class name so that the
-	// lexor detects the name as a type.
-	perm_string name = lex_strings.make($1);
-	class_type_t*tmp = new class_type_t(name);
-	FILE_NAME(tmp, @1);
-	pform_set_typedef(name, tmp, NULL);
-	delete[]$1;
-	$$ = tmp;
-      }
-  | TYPE_IDENTIFIER
-      { class_type_t*tmp = dynamic_cast<class_type_t*>($1.type);
-	if (tmp == 0) {
-	      yyerror(@1, "Type name \"%s\"is not a predeclared class name.", $1.text);
-	}
-	delete[]$1.text;
-	$$ = tmp;
-      }
+  // This is used in places where a new type can be declared or an existig type
+  // is referenced. E.g. typedefs.
+identifier_name
+  : IDENTIFIER { $$ = $1; }
+  | TYPE_IDENTIFIER { $$ = $1.text; }
   ;
 
   /* The endlabel after a class declaration is a little tricky because
      the class name is detected by the lexor as a TYPE_IDENTIFIER if it
      does indeed match a name. */
 class_declaration_endlabel_opt
-  : ':' TYPE_IDENTIFIER { $$ = $2.text; }
-  | ':' IDENTIFIER { $$ = $2; }
+  : ':' identifier_name { $$ = $2; }
   | { $$ = 0; }
   ;
 
@@ -2651,56 +2647,43 @@ block_item_decls_opt
 	| { $$ = false; }
 	;
 
+  /* We need to handle K_enum separately because
+   * `typedef enum <TYPE_IDENTIFIER>` can either be the start of a enum forward
+   * declaration or a enum type declaration with a type identifier as its base
+   * type. And this abmiguity can not be resolved if we reduce the K_enum to
+   * typedef_basic_type. */
+typedef_basic_type
+  : K_struct { $$ = typedef_t::STRUCT; }
+  | K_union { $$ = typedef_t::UNION; }
+  | K_class { $$ = typedef_t::CLASS; }
+  ;
+
   /* Type declarations are parsed here. The rule actions call pform
      functions that add the declaration to the current lexical scope. */
 type_declaration
-  : K_typedef data_type IDENTIFIER dimensions_opt ';'
+  : K_typedef data_type identifier_name dimensions_opt ';'
       { perm_string name = lex_strings.make($3);
-	pform_set_typedef(name, $2, $4);
+	pform_set_typedef(@3, name, $2, $4);
 	delete[]$3;
-      }
-
-  /* If the IDENTIFIER already is a typedef, it is possible for this
-     code to override the definition, but only if the typedef is
-     inherited from a different scope. */
-  | K_typedef data_type TYPE_IDENTIFIER dimensions_opt ';'
-      { perm_string name = lex_strings.make($3.text);
-	if (pform_test_type_identifier_local(name)) {
-	      yyerror(@3, "error: Typedef identifier \"%s\" is already a type name.", $3.text);
-	      delete $4;
-	} else {
-	      pform_set_typedef(name, $2, $4);
-	}
-	delete[]$3.text;
       }
 
   /* These are forward declarations... */
 
-  | K_typedef K_class  IDENTIFIER ';'
-      { // Create a synthetic typedef for the class name so that the
-	// lexor detects the name as a type.
-	perm_string name = lex_strings.make($3);
-	class_type_t*tmp = new class_type_t(name);
-	FILE_NAME(tmp, @3);
-	pform_set_typedef(name, tmp, NULL);
-	delete[]$3;
-      }
-  | K_typedef K_enum   IDENTIFIER ';'
-      { yyerror(@1, "sorry: Enum forward declarations not supported yet."); }
-  | K_typedef K_struct IDENTIFIER ';'
-      { yyerror(@1, "sorry: Struct forward declarations not supported yet."); }
-  | K_typedef K_union  IDENTIFIER ';'
-      { yyerror(@1, "sorry: Union forward declarations not supported yet."); }
-  | K_typedef          IDENTIFIER ';'
-      { // Create a synthetic typedef for the class name so that the
-	// lexor detects the name as a type.
-	perm_string name = lex_strings.make($2);
-	class_type_t*tmp = new class_type_t(name);
-	FILE_NAME(tmp, @2);
-	pform_set_typedef(name, tmp, NULL);
+  | K_typedef identifier_name ';'
+      { perm_string name = lex_strings.make($2);
+	pform_forward_typedef(@2, name, typedef_t::ANY);
 	delete[]$2;
       }
-
+  | K_typedef typedef_basic_type identifier_name ';'
+      { perm_string name = lex_strings.make($3);
+	pform_forward_typedef(@3, name, $2);
+	delete[]$3;
+      }
+  | K_typedef K_enum identifier_name ';'
+      { perm_string name = lex_strings.make($3);
+	pform_forward_typedef(@3, name, typedef_t::ENUM);
+	delete[]$3;
+      }
   | K_typedef error ';'
       { yyerror(@2, "error: Syntax error in typedef clause.");
 	yyerrok;

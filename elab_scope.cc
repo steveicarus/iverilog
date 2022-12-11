@@ -169,34 +169,11 @@ static void collect_scope_specparams(Design*des, NetScope*scope,
 static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 					enum_type_t*enum_type)
 {
-      ivl_type_t base_type;
       bool rc_flag;
 
-      base_type = enum_type->base_type->elaborate_type(des, scope);
+      enum_type->elaborate_type(des, scope);
 
-      const struct netvector_t *vec_type = dynamic_cast<const netvector_t*>(base_type);
-
-      if (!vec_type && !dynamic_cast<const netparray_t*>(base_type)) {
-	    cerr << enum_type->get_fileline() << ": error: "
-		 << "Invalid enum base type `" << *base_type << "`."
-		 << endl;
-	    des->errors++;
-      } else if (base_type->slice_dimensions().size() > 1) {
-	    cerr << enum_type->get_fileline() << ": error: "
-		 << "Enum type must not have more than 1 packed dimension."
-		 << endl;
-	    des->errors++;
-      }
-
-      bool integer_flag = false;
-      if (vec_type)
-	    integer_flag = vec_type->get_isint();
-
-      netenum_t*use_enum = new netenum_t(base_type, enum_type->names->size(),
-				         integer_flag);
-
-      use_enum->set_line(*enum_type);
-      scope->add_enumeration_set(enum_type, use_enum);
+      netenum_t *use_enum = scope->enumeration_for_key(enum_type);
 
       size_t name_idx = 0;
 	// Find the enumeration width.

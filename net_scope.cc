@@ -232,19 +232,20 @@ NetScope*NetScope::find_import(const Design*des, perm_string name)
             return 0;
 }
 
-void NetScope::add_typedefs(const map<perm_string,data_type_t*>*typedefs)
+void NetScope::add_typedefs(const map<perm_string,typedef_t*>*typedefs)
 {
       if (!typedefs->empty())
 	    typedefs_ = *typedefs;
 }
 
-NetScope*NetScope::find_typedef_scope(const Design*des, data_type_t*type)
+NetScope*NetScope::find_typedef_scope(const Design*des, const typedef_t*type)
 {
       assert(type);
 
       NetScope *cur_scope = this;
       while (cur_scope) {
-	    if (cur_scope->typedefs_.find(type->name) != cur_scope->typedefs_.end())
+	    auto it = cur_scope->typedefs_.find(type->name);
+	    if (it != cur_scope->typedefs_.end() && it->second == type)
 		  return cur_scope;
 	    NetScope*import_scope = cur_scope->find_import(des, type->name);
 	    if (import_scope)

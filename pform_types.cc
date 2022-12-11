@@ -44,3 +44,48 @@ PNamedItem::SymbolType class_type_t::symbol_type() const
 {
       return CLASS;
 }
+
+bool typedef_t::set_data_type(data_type_t *t)
+{
+      if (data_type.get())
+	    return false;
+
+      data_type.reset(t);
+
+      return true;
+}
+
+bool typedef_t::set_basic_type(enum basic_type bt)
+{
+      if (bt == ANY)
+	    return true;
+      if (basic_type != ANY && bt != basic_type)
+	    return false;
+
+      basic_type = bt;
+
+      return true;
+}
+
+std::ostream& operator<< (std::ostream&out, enum typedef_t::basic_type bt)
+{
+	switch (bt) {
+	case typedef_t::ANY:
+		out << "any";
+		break;
+	case typedef_t::ENUM:
+		out << "enum";
+		break;
+	case typedef_t::STRUCT:
+		out << "struct";
+		break;
+	case typedef_t::UNION:
+		out << "union";
+		break;
+	case typedef_t::CLASS:
+		out << "class";
+		break;
+	}
+
+	return out;
+}

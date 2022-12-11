@@ -43,14 +43,26 @@ ivl_type_t data_type_t::elaborate_type(Design*des, NetScope*scope)
 {
       scope = find_scope(des, scope);
 
-      ivl_assert(*this, scope);
       Definitions*use_definitions = scope;
 
       map<Definitions*,ivl_type_t>::iterator pos = cache_type_elaborate_.lower_bound(use_definitions);
 	  if (pos != cache_type_elaborate_.end() && pos->first == use_definitions)
 	     return pos->second;
 
-      ivl_type_t tmp = elaborate_type_raw(des, scope);
+      ivl_type_t tmp;
+      if (elaborating) {
+	    des->errors++;
+	    cerr << get_fileline() << ": error: "
+	         << "Circular type definition found involving `" << *this << "`."
+		 << endl;
+	    // Try to recover
+	    tmp = netvector_t::integer_type();
+      } else {
+	    elaborating = true;
+	    tmp = elaborate_type_raw(des, scope);
+	    elaborating = false;
+      }
+
       cache_type_elaborate_.insert(pos, pair<NetScope*,ivl_type_t>(scope, tmp));
       return tmp;
 }
@@ -124,13 +136,34 @@ ivl_type_t class_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
  * available at the right time. At that time, the netenum_t* object is
  * stashed in the scope so that I can retrieve it here.
  */
-ivl_type_t enum_type_t::elaborate_type_raw(Design*, NetScope*scope) const
+ivl_type_t enum_type_t::elaborate_type_raw(Design *des, NetScope *scope) const
 {
-      ivl_assert(*this, scope);
-      ivl_type_t tmp = scope->enumeration_for_key(this);
-      if (tmp == 0 && scope->unit())
-	    tmp = scope->unit()->enumeration_for_key(this);
-      return tmp;
+      ivl_type_t base = base_type->elaborate_type(des, scope);
+
+      const struct netvector_t *vec_type = dynamic_cast<const netvector_t*>(base);
+
+      if (!vec_type && !dynamic_cast<const netparray_t*>(base)) {
+	    cerr << get_fileline() << ": error: "
+		 << "Invalid enum base type `" << *base << "`."
+		 << endl;
+	    des->errors++;
+      } else if (base->slice_dimensions().size() > 1) {
+	    cerr << get_fileline() << ": error: "
+		 << "Enum type must not have more than 1 packed dimension."
+		 << endl;
+	    des->errors++;
+      }
+
+      bool integer_flag = false;
+      if (vec_type)
+	    integer_flag = vec_type->get_isint();
+
+      netenum_t *type = new netenum_t(base, names->size(), integer_flag);
+      type->set_line(*this);
+
+      scope->add_enumeration_set(this, type);
+
+      return type;
 }
 
 ivl_type_t vector_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
@@ -172,13 +205,8 @@ ivl_type_t parray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
       ivl_type_t etype = base_type->elaborate_type(des, scope);
       if (!etype->packed()) {
 		cerr << this->get_fileline() << " error: Packed array ";
-		if (!name.nil())
-		      cerr << "`" << name << "` ";
 		cerr << "base-type `";
-		if (base_type->name.nil())
-		      cerr << *base_type;
-		else
-		      cerr << base_type->name;
+		cerr << *base_type;
 		cerr << "` is not packed." << endl;
 		des->errors++;
       }
@@ -385,8 +413,66 @@ NetScope *typeref_t::find_scope(Design *des, NetScope *s) const
       if (scope)
 	    s = des->find_package(scope->pscope_name());
 
-      if (!type->name.nil())
-	    s = s->find_typedef_scope(des, type);
-
       return s;
+}
+
+ivl_type_t typedef_t::elaborate_type(Design *des, NetScope *scope)
+{
+      if (!data_type.get()) {
+	    cerr << get_fileline() << ": error: Undefined type `" << name << "`."
+		 << endl;
+	    des->errors++;
+
+	    // Try to recover
+	    return netvector_t::integer_type();
+      }
+
+        // Search upwards from where the type was referenced
+      scope = scope->find_typedef_scope(des, this);
+      if (!scope) {
+	    cerr << get_fileline() << ": sorry: "
+	         << "Can not find the scope type defintion `" << name << "`."
+		 << endl;
+	    des->errors++;
+
+	    // Try to recover
+	    return netvector_t::integer_type();
+      }
+
+      ivl_type_t elab_type = data_type->elaborate_type(des, scope);
+      if (!elab_type)
+	    return netvector_t::integer_type();
+
+      bool type_ok = true;
+      switch (basic_type) {
+      case ENUM:
+	    type_ok = dynamic_cast<const netenum_t *>(elab_type);
+	    break;
+      case STRUCT: {
+	    const netstruct_t *struct_type = dynamic_cast<const netstruct_t *>(elab_type);
+	    type_ok = struct_type && !struct_type->union_flag();
+	    break;
+      }
+      case UNION: {
+	    const netstruct_t *struct_type = dynamic_cast<const netstruct_t *>(elab_type);
+	    type_ok = struct_type && struct_type->union_flag();
+	    break;
+      }
+      case CLASS:
+	    type_ok = dynamic_cast<const netclass_t *>(elab_type);
+	    break;
+      default:
+	    break;
+      }
+
+      if (!type_ok) {
+	    cerr << data_type->get_fileline() << " error: "
+	         << "Unexpected type `" << *elab_type << "` for `" << name
+		 << "`. It was forward declared as `" << basic_type
+		 << "` at " << get_fileline() << "."
+		 << endl;
+	    des->errors++;
+      }
+
+      return elab_type;
 }

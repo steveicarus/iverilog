@@ -89,10 +89,8 @@ extern void lex_in_package_scope(PPackage*pkg);
  * parser detects typedefs and marks the typedef'ed identifiers as
  * type names.
  */
-extern data_type_t* pform_test_type_identifier(const YYLTYPE&loc, const char*txt);
-extern data_type_t* pform_test_type_identifier(PPackage*pkg, const char*txt);
-
-extern bool pform_test_type_identifier_local(perm_string txt);
+extern typedef_t* pform_test_type_identifier(const YYLTYPE&loc, const char*txt);
+extern typedef_t* pform_test_type_identifier(PPackage*pkg, const char*txt);
 
 /*
  * Test if this identifier is a package name. The pform needs to help
