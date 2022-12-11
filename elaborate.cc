@@ -5379,9 +5379,6 @@ NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
 		 << "Handle as array with static dimensions." << endl;
       }
 
-      ivl_assert(*this, index_vars_.size() > 0);
-      ivl_assert(*this, dims.size() >= index_vars_.size());
-
       NetProc*sub;
       if (statement_)
 	    sub = statement_->elaborate(des, scope);
@@ -5389,8 +5386,22 @@ NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
 	    sub = new NetBlock(NetBlock::SEQU, 0);
       NetForLoop*stmt = 0;
 
+      if (index_vars_.size() > dims.size()) {
+	    delete sub;
+	    cerr << get_fileline() << ": error: Number of foreach loop variables"
+	         << "(" << index_vars_.size() << ") must not exceed number of "
+		 << "array dimensions (" << dims.size() << ")." << endl;
+	    des->errors++;
+	    return nullptr;
+      }
+
       for (int idx_idx = index_vars_.size()-1 ; idx_idx >= 0 ; idx_idx -= 1) {
 	    const netrange_t&idx_range = dims[idx_idx];
+
+	      // It is possible to skip dimensions by not providing a identifier
+	      // name for it. E.g. `int x[1][2][3]; foreach(x[a,,b]) ...`
+	    if (index_vars_[idx_idx].nil())
+		  continue;
 
 	      // Get the $high and $low constant values for this slice
 	      // of the array.
@@ -5430,7 +5441,13 @@ NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
 	    sub = stmt;
       }
 
-      return stmt? stmt : sub;
+        // If there are no loop variables elide the whole block
+      if (!stmt) {
+	    delete sub;
+	    return new NetBlock(NetBlock::SEQU, 0);
+      }
+
+      return stmt;
 }
 
 /*
