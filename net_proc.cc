@@ -207,12 +207,19 @@ NetForLoop::NetForLoop(NetNet*ind, NetExpr*iexpr, NetExpr*cond, NetProc*sub, Net
 void NetForLoop::wrap_up()
 {
       NetBlock*top = new NetBlock(NetBlock::SEQU, 0);
-      top->set_line(*this);
 
-      NetAssign_*lv = new NetAssign_(index_);
-      NetAssign*set_stmt = new NetAssign(lv, init_expr_);
-      set_stmt->set_line(*init_expr_);
-      top->append(set_stmt);
+      // Handle the case that we are missing the initialization
+      // statement. This can happen for example with statments like this:
+      //   for ( ; <condition> ; <step> ) <statement> ;
+      // If the index_ and init_expr_ are present, then generate the
+      // inital assignment and push it into the sequential block
+      if (index_ || init_expr_) {
+	    top->set_line(*this);
+	    NetAssign_*lv = new NetAssign_(index_);
+	    NetAssign*set_stmt = new NetAssign(lv, init_expr_);
+	    set_stmt->set_line(*init_expr_);
+	    top->append(set_stmt);
+      }
 
       NetBlock*internal_block = new NetBlock(NetBlock::SEQU, 0);
       internal_block->set_line(*this);

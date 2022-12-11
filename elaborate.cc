@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2022 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -5434,81 +5434,111 @@ NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
 }
 
 /*
- * elaborate the for loop as the equivalent while loop. This eases the
- * task for the target code generator. The structure is:
+ * Elaborate the PForStatement as discovered by the parser into a
+ * NetForLoop object. The parser detects the:
  *
- *     begin : top
- *       name1_ = expr1_;
- *       while (cond_) begin : body
- *          statement_;
- *          name2_ = expr2_;
- *       end
- *     end
+ *  - index variable (name1_)  (optional)
+ *  - initial value (expr1_)   (only if name1_ is present)
+ *  - condition expression (cond_)
+ *  - step statement (step_)
+ *  - sub-statement (statement_)
+ *
+ * The rules that lead to the PForStatment look like:
+ *
+ *    for ( <name1_> = <expr1_> ; <cond_> ; <step_> ) <statement_>
+ *    for ( ; <cond_ ; <step_> ) <statement_>
  */
 NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 {
       NetExpr*initial_expr;
+      NetNet*sig;
+      bool error_flag = false;
       assert(scope);
 
-      const PEIdent*id1 = dynamic_cast<const PEIdent*>(name1_);
-      assert(id1);
+      if (!name1_) {
+	    // If there is no initial assignment expression, then mark that
+	    // fact with null pointers.
+	    ivl_assert(*this, !expr1_);
+	    sig = nullptr;
+	    initial_expr = nullptr;
 
-	/* make the expression, and later the initial assignment to
-	   the condition variable. The statement in the for loop is
-	   very specifically an assignment. */
-      NetNet*sig = des->find_signal(scope, id1->path());
-      if (sig == 0) {
-	    cerr << id1->get_fileline() << ": register ``" << id1->path()
-		 << "'' unknown in " << scope_path(scope) << "." << endl;
+      } else if (const PEIdent*id1 = dynamic_cast<const PEIdent*>(name1_)) {
+	    // If there is an initialization assignment, make the expression,
+	    // and later the initial assignment to the condition variable. The
+	    // statement in the for loop is very specifically an assignment.
+	    sig = des->find_signal(scope, id1->path());
+	    if (sig == 0) {
+		  cerr << id1->get_fileline() << ": register ``" << id1->path()
+		       << "'' unknown in " << scope_path(scope) << "." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    
+	    // Make the r-value of the initial assignment, and size it
+	    // properly. Then use it to build the assignment statement.
+	    initial_expr = elaborate_rval_expr(des, scope, sig->net_type(),
+					       expr1_);
+	    if (!initial_expr)
+		  error_flag = true;
+
+	    if (debug_elaborate && initial_expr) {
+		  cerr << get_fileline() << ": debug: FOR initial assign: "
+		       << sig->name() << " = " << *initial_expr << endl;
+	    }
+
+      } else {
+	    cerr << get_fileline() << ": internal error: "
+		 << "Index name " << *name1_ << " is not a PEIdent." << endl;
 	    des->errors += 1;
 	    return 0;
       }
-      assert(sig);
 
-	/* Make the r-value of the initial assignment, and size it
-	   properly. Then use it to build the assignment statement. */
-      initial_expr = elaborate_rval_expr(des, scope, sig->net_type(),
-					 expr1_);
-
-      if (debug_elaborate && initial_expr) {
-	    cerr << get_fileline() << ": debug: FOR initial assign: "
-		 << sig->name() << " = " << *initial_expr << endl;
+      // Elaborate the statement that is contained in the for
+      // loop. If there is an error, this will return 0 and I should
+      // skip the append. No need to worry, the error has been
+      // reported so it's OK that the netlist is bogus.
+      NetProc*sub;
+      if (statement_) {
+	    sub = statement_->elaborate(des, scope);
+	    if (sub == 0)
+		  error_flag = true;
+      } else {
+	    sub = new NetBlock(NetBlock::SEQU, 0);
       }
 
-	/* Elaborate the statement that is contained in the for
-	   loop. If there is an error, this will return 0 and I should
-	   skip the append. No need to worry, the error has been
-	   reported so it's OK that the netlist is bogus. */
-      NetProc*sub;
-      if (statement_)
-	    sub = statement_->elaborate(des, scope);
-      else
-	    sub = new NetBlock(NetBlock::SEQU, 0);
-
-	/* Now elaborate the for_step statement. I really should do
-	   some error checking here to make sure the step statement
-	   really does step the variable. */
+      // Now elaborate the for_step statement. I really should do
+      // some error checking here to make sure the step statement
+      // really does step the variable.
       NetProc*step = step_->elaborate(des, scope);
+      if (!step)
+	    error_flag = true;
 
-	/* Elaborate the condition expression. Try to evaluate it too,
-	   in case it is a constant. This is an interesting case
-	   worthy of a warning. */
+      // Elaborate the condition expression. Try to evaluate it too,
+      // in case it is a constant. This is an interesting case
+      // worthy of a warning.
       NetExpr*ce = elab_and_eval(des, scope, cond_, -1);
+      if (!ce)
+	    error_flag = true;
       if (dynamic_cast<NetEConst*>(ce)) {
 	    cerr << get_fileline() << ": warning: condition expression "
 		  "of for-loop is constant." << endl;
       }
 
-	/* Error recovery - if we failed to elaborate any of the loop
-	   expressions, give up now. */
-      if (initial_expr == 0 || ce == 0 || step == 0 || sub == 0) {
+      // Error recovery - if we failed to elaborate any of the loop
+      // expressions, give up now. Error counts where handled elsewhere.
+      if (error_flag) {
 	    delete initial_expr;
 	    delete ce;
 	    delete step;
 	    delete sub;
 	    return 0;
       }
-	/* All done, build up the loop. */
+
+      // All done, build up the loop. Note that sig and initial_expr may be
+      // nil. But if one is nil, then so is the other. The follow-on code
+      // can handle that case, but let's make sure with an assert that we
+      // have a consistent input.
+      ivl_assert(*this, sig || !initial_expr);
 
       NetForLoop*loop = new NetForLoop(sig, initial_expr, ce, sub, step);
       loop->set_line(*this);
