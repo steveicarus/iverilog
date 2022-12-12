@@ -676,7 +676,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <event_statement> event_control
 %type <statement> statement statement_item statement_or_null
 %type <statement> compressed_statement
-%type <statement> loop_statement for_step jump_statement
+%type <statement> loop_statement for_step for_step_opt jump_statement
 %type <statement> concurrent_assertion_statement
 %type <statement> deferred_immediate_assertion_statement
 %type <statement> simple_immediate_assertion_statement
@@ -1419,6 +1419,10 @@ for_step /* IEEE1800-2005: A.6.8 */
       { $$ = $1; }
   ;
 
+for_step_opt
+  : for_step { $$ = $1; }
+  | { $$ = nullptr; }
+  ;
 
   /* The function declaration rule matches the function declaration
      header, then pushes the function scope. This causes the
@@ -1617,7 +1621,7 @@ lifetime_opt /* IEEE1800-2005: A.2.1.3 */
   /* Loop statements are kinds of statements. */
 
 loop_statement /* IEEE1800-2005: A.6.8 */
-  : K_for '(' lpvalue '=' expression ';' expression ';' for_step ')'
+  : K_for '(' lpvalue '=' expression ';' expression ';' for_step_opt ')'
     statement_or_null
       { PForStatement*tmp = new PForStatement($3, $5, $7, $9, $11);
 	FILE_NAME(tmp, @1);
@@ -1625,7 +1629,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
       }
 
       // The initialization statement is optional.
-  | K_for '(' ';' expression ';' for_step ')'
+  | K_for '(' ';' expression ';' for_step_opt ')'
     statement_or_null
       { PForStatement*tmp = new PForStatement(nullptr, nullptr, $4, $6, $8);
 	FILE_NAME(tmp, @1);
@@ -1636,7 +1640,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
       // statement in a synthetic named block. We can name the block
       // after the variable that we are creating, that identifier is
       // safe in the controlling scope.
-  | K_for '(' K_var_opt data_type IDENTIFIER '=' expression ';' expression ';' for_step ')'
+  | K_for '(' K_var_opt data_type IDENTIFIER '=' expression ';' expression ';' for_step_opt ')'
       { static unsigned for_counter = 0;
 	char for_block_name [64];
 	snprintf(for_block_name, sizeof for_block_name, "$ivl_for_loop%u", for_counter);
@@ -1727,7 +1731,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	yyerror(@1, "error: Error in for loop step assignment.");
       }
 
-  | K_for '(' lpvalue '=' expression ';' error ';' for_step ')'
+  | K_for '(' lpvalue '=' expression ';' error ';' for_step_opt ')'
     statement_or_null
       { $$ = 0;
 	yyerror(@1, "error: Error in for loop condition expression.");

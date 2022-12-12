@@ -212,7 +212,7 @@ void NetForLoop::wrap_up()
       // statement. This can happen for example with statments like this:
       //   for ( ; <condition> ; <step> ) <statement> ;
       // If the index_ and init_expr_ are present, then generate the
-      // inital assignment and push it into the sequential block
+      // inital assignment and push it into the sequential block.
       if (index_ || init_expr_) {
 	    top->set_line(*this);
 	    NetAssign_*lv = new NetAssign_(index_);
@@ -225,7 +225,11 @@ void NetForLoop::wrap_up()
       internal_block->set_line(*this);
 
       if (statement_) internal_block->append(statement_);
-      internal_block->append(step_statement_);
+
+      // The step statement is optional. If missing, it is assumed that
+      // the programmer has added it to the regular statement. Hopefully.
+      if (step_statement_)
+	    internal_block->append(step_statement_);
 
       NetWhile*wloop = new NetWhile(condition_, internal_block);
       wloop->set_line(*this);

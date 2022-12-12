@@ -1458,6 +1458,11 @@ bool NetForLoop::synth_async(Design*des, NetScope*scope,
 	    return false;
       }
 
+      if (!step_statement_) {
+	    cerr << get_fileline() << ": sorry: Unable to synthesize for-loop without for_step statement." << endl;
+	    return false;
+      }
+
       ivl_assert(*this, index_ && init_expr_);
       if (debug_synth2) {
 	    cerr << get_fileline() << ": NetForLoop::synth_async: "

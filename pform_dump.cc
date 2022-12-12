@@ -1158,7 +1158,10 @@ void PForStatement::dump(ostream&out, unsigned ind) const
       else
 	    out << "<no-cond>";
       out << "; <for_step>)" << endl;
-      step_->dump(out, ind+6);
+      if (step_)
+	    step_->dump(out, ind+6);
+      else
+	    out << setw(ind+6) << "" << "<no for_step statement>" << endl;
       if (statement_)
 	    statement_->dump(out, ind+3);
       else
