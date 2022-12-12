@@ -433,7 +433,7 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 
                   ss = ss->parent_scope();
             }
-            PWire*net = new PWire(name, type, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
+            PWire*net = new PWire(name, type, NetNet::NOT_A_PORT);
             net->set_file(get_file());
             net->set_lineno(get_lineno());
             scope->wires[name] = net;

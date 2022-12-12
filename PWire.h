@@ -57,7 +57,6 @@ class PWire : public PNamedItem {
       PWire(perm_string name,
 	    NetNet::Type t,
 	    NetNet::PortType pt,
-	    ivl_variable_type_t dt,
 	    PWSRType rt = SR_NET);
 
 	// Return a hierarchical name.
@@ -71,8 +70,6 @@ class PWire : public PNamedItem {
 
       void set_signed(bool flag);
       bool get_signed() const;
-
-      bool set_data_type(ivl_variable_type_t dt);
 
       void set_range(const std::list<pform_range_t>&ranges, PWSRType type);
 
@@ -101,7 +98,6 @@ class PWire : public PNamedItem {
       perm_string name_;
       NetNet::Type type_;
       NetNet::PortType port_type_;
-      ivl_variable_type_t data_type_;
       bool signed_;
 
 	// These members hold expressions for the bit width of the

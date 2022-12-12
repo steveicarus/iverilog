@@ -2085,7 +2085,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	/* Make the PWire for the output port. */
       pins[0] = new PWire(out_name,
 			  synchronous_flag? NetNet::REG : NetNet::WIRE,
-			  NetNet::POUTPUT, IVL_VT_LOGIC);
+			  NetNet::POUTPUT);
       FILE_NAME(pins[0], loc);
 
 	/* Make the PWire objects for the input ports. */
@@ -2096,7 +2096,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 		   ;  idx += 1, ++ cur) {
 	      assert(idx < pins.size());
 	      pins[idx] = new PWire(*cur, NetNet::WIRE,
-				    NetNet::PINPUT, IVL_VT_LOGIC);
+				    NetNet::PINPUT);
 	      FILE_NAME(pins[idx], loc);
 	}
 	assert(idx == pins.size());
@@ -2172,7 +2172,6 @@ static void pform_set_net_range(PWire *wire,
       if (range)
 	    wire->set_range(*range, rt);
       wire->set_signed(vec_type->signed_flag);
-      wire->set_data_type(vec_type->base_type);
 }
 
 /*
@@ -2583,7 +2582,7 @@ static PWire* pform_get_or_make_wire(const struct vlltype&li, perm_string name,
 	// to the scope. Do not delete the old wire - it will
 	// remain in the local symbol map.
 
-      cur = new PWire(name, type, ptype, IVL_VT_NO_TYPE, rt);
+      cur = new PWire(name, type, ptype, rt);
       FILE_NAME(cur, li);
 
       pform_put_wire_in_scope(name, cur);
@@ -2615,10 +2614,9 @@ void pform_module_define_port(const struct vlltype&li,
 
       PWire *cur = pform_get_or_make_wire(li, name, type, port_kind, SR_BOTH);
 
-      vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype);
-      if (vec_type)
-	    pform_set_net_range(cur, vec_type, SR_BOTH);
-      else if (vtype)
+      pform_set_net_range(cur, dynamic_cast<vector_type_t*> (vtype), SR_BOTH);
+
+      if (vtype)
 	    cur->set_data_type(vtype);
 
       if (urange) {
@@ -2751,29 +2749,33 @@ void pform_makewire(const struct vlltype&li,
  * constraints as those of tasks, so this works fine. Functions have
  * no output or inout ports.
  */
-static vector<pform_tf_port_t>*pform_make_task_ports_vec(const struct vlltype&loc,
-							 NetNet::PortType pt,
-						         vector_type_t *vec_type,
-							 list<pform_port_t>*ports,
-							 bool allow_implicit)
+vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
+				      NetNet::PortType pt,
+				      data_type_t*vtype,
+				      list<pform_port_t>*ports,
+				      bool allow_implicit)
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
       assert(ports);
-      vector<pform_tf_port_t>*res = new vector<pform_tf_port_t>(0);
 
+      vector<pform_tf_port_t>*res = new vector<pform_tf_port_t>(0);
       PWSRType rt = SR_BOTH;
 
-      if (allow_implicit && vec_type->implicit_flag)
+      // If this is a non-ansi port declaration and the type is an implicit type
+      // this is only a port declaration.
+      vector_type_t*vec_type = dynamic_cast<vector_type_t*>(vtype);
+      if (allow_implicit && (!vtype || (vec_type && vec_type->implicit_flag)))
 	    rt = SR_PORT;
 
-      for (list<pform_port_t>::iterator cur = ports->begin()
-		 ; cur != ports->end() ; ++ cur ) {
+      for (list<pform_port_t>::iterator cur = ports->begin();
+	   cur != ports->end(); ++cur) {
 	    perm_string &name = cur->name;
 
-	      /* Look for a preexisting wire. If it exists, set the
-		 port direction. If not, create it. */
 	    PWire*curw = pform_get_or_make_wire(loc, name, NetNet::IMPLICIT_REG,
 						pt, rt);
+	    if (rt == SR_BOTH)
+		  curw->set_data_type(vtype);
+
 	    pform_set_net_range(curw, vec_type, rt);
 
 	    if (cur->udims) {
@@ -2784,56 +2786,8 @@ static vector<pform_tf_port_t>*pform_make_task_ports_vec(const struct vlltype&lo
 	    res->push_back(pform_tf_port_t(curw));
       }
 
-      return res;
-}
-
-static vector<pform_tf_port_t>*do_make_task_ports(const struct vlltype&loc,
-					 NetNet::PortType pt,
-					 data_type_t*data_type,
-					 list<pform_port_t>*ports)
-{
-      assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
-      assert(ports);
-      vector<pform_tf_port_t>*res = new vector<pform_tf_port_t>(0);
-      PWSRType rt = data_type ? SR_BOTH : SR_PORT;
-
-      for (list<pform_port_t>::iterator cur = ports->begin()
-		 ; cur != ports->end() ; ++cur) {
-	    perm_string &name = cur->name;
-
-	    PWire*curw = pform_get_or_make_wire(loc, name, NetNet::IMPLICIT_REG,
-						pt, rt);
-
-	    if (data_type)
-		  curw->set_data_type(data_type);
-
-	    if (cur->udims) {
-		  if (pform_requires_sv(loc, "Task/function port with unpacked dimensions"))
-			curw->set_unpacked_idx(*cur->udims);
-	    }
-
-	    res->push_back(pform_tf_port_t(curw));
-      }
-      return res;
-}
-
-vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
-				      NetNet::PortType pt,
-				      data_type_t*vtype,
-				      list<pform_port_t>*ports,
-				      bool allow_implicit)
-{
-      vector<pform_tf_port_t>*ret = NULL;
-
-      if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype)) {
-	    ret = pform_make_task_ports_vec(loc, pt, vec_type, ports,
-					    allow_implicit);
-      } else {
-	    ret = do_make_task_ports(loc, pt, vtype, ports);
-      }
-
       delete ports;
-      return ret;
+      return res;
 }
 
 /*
@@ -3275,8 +3229,7 @@ vector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
 	    perm_string txt = *cur;
 	    PWire*pp = new PWire(txt,
 				 NetNet::IMPLICIT,
-				 NetNet::PINPUT,
-				 IVL_VT_LOGIC);
+				 NetNet::PINPUT);
 	    (*out)[idx] = pp;
 	    idx += 1;
       }

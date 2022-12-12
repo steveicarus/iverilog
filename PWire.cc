@@ -28,10 +28,8 @@ using namespace std;
 PWire::PWire(perm_string n,
 	     NetNet::Type t,
 	     NetNet::PortType pt,
-	     ivl_variable_type_t dt,
 	     PWSRType rt)
-: name_(n), type_(t), port_type_(pt), data_type_(dt),
-  signed_(false),
+: name_(n), type_(t), port_type_(pt), signed_(false),
   port_set_(false), net_set_(false), is_scalar_(false),
   error_cnt_(0), discipline_(0)
 {
@@ -107,21 +105,6 @@ bool PWire::set_port_type(NetNet::PortType pt)
 	    else
 		  return true;
       }
-}
-
-bool PWire::set_data_type(ivl_variable_type_t dt)
-{
-      if (data_type_ != IVL_VT_NO_TYPE) {
-	    if (data_type_ != dt)
-		  return false;
-	    else
-		  return true;
-      }
-
-      assert(data_type_ == IVL_VT_NO_TYPE);
-      data_type_ = dt;
-
-      return true;
 }
 
 void PWire::set_signed(bool flag)
