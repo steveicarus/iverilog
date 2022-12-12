@@ -269,23 +269,22 @@ NetScope*NetScope::find_typedef_scope(const Design*des, const typedef_t*type)
  * member.
  */
 void NetScope::set_parameter(perm_string key, bool is_annotatable,
-			     PExpr*val, data_type_t*val_type,
-			     bool local_flag, bool overridable,
-			     NetScope::range_t*range_list,
-			     const LineInfo&file_line)
+			     const LexicalScope::param_expr_t &param,
+			     NetScope::range_t *range_list)
 {
       param_expr_t&ref = parameters[key];
       ref.is_annotatable = is_annotatable;
-      ref.val_expr = val;
-      ref.val_type = val_type;
+      ref.val_expr = param.expr;
+      ref.val_type = param.data_type;
       ref.val_scope = this;
-      ref.local_flag = local_flag;
-      ref.overridable = overridable;
-      ivl_assert(file_line, ref.range == 0);
+      ref.local_flag = param.local_flag;
+      ref.overridable = param.overridable;
+      ref.type_flag = param.type_flag;
+      ivl_assert(param, !ref.range);
       ref.range = range_list;
       ref.val = 0;
       ref.ivl_type = 0;
-      ref.set_line(file_line);
+      ref.set_line(param);
 }
 
 /*
@@ -348,7 +347,8 @@ bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
  * Return false if the parameter does not already exist.
  * A parameter is not automatically created.
  */
-void NetScope::replace_parameter(Design *des, perm_string key, PExpr*val, NetScope*scope)
+void NetScope::replace_parameter(Design *des, perm_string key, PExpr*val,
+			         NetScope*scope, bool defparam)
 {
       if (parameters.find(key) == parameters.end()) {
 	    cerr << val->get_fileline() << ": error: parameter `"
@@ -371,6 +371,16 @@ void NetScope::replace_parameter(Design *des, perm_string key, PExpr*val, NetSco
 		 << "Cannot override parameter `" << key << "` in `"
 		 << scope_path(this) << "`. Parameter cannot be overriden "
 		 << "in the scope it has been declared in."
+		 << endl;
+	    des->errors++;
+	    return;
+      }
+
+      if (ref.type_flag && defparam) {
+	    cerr << val->get_fileline() << ": error: "
+		 << "Cannot override type parameter `" << key << "` in `"
+		 << scope_path(this) << "`. It is not allowed to override type"
+		 << " parameters using a defparam statement."
 		 << endl;
 	    des->errors++;
 	    return;

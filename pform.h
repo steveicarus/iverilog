@@ -390,7 +390,7 @@ extern LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
 
 extern void pform_set_parameter(const struct vlltype&loc,
 				perm_string name,
-				bool is_local,
+				bool is_local, bool is_type,
 				data_type_t*data_type,
 				PExpr*expr, LexicalScope::range_t*value_range);
 extern void pform_set_specparam(const struct vlltype&loc,

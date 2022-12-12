@@ -940,9 +940,15 @@ static void create_skeleton_entity_for(ivl_scope_t scope, int depth)
    unsigned nparams = ivl_scope_params(scope);
    for (unsigned i = 0; i < nparams; i++) {
       ivl_parameter_t param = ivl_scope_param(scope, i);
-      ss << "\n  " << ivl_parameter_basename(param) << " = ";
+
+      // Type parameter usages get replaced with their actual type
+      if (ivl_parameter_is_type(param))
+	    continue;
 
       ivl_expr_t value = ivl_parameter_expr(param);
+
+      ss << "\n  " << ivl_parameter_basename(param) << " = ";
+
       switch (ivl_expr_type(value)) {
          case IVL_EX_STRING:
             ss << "\"" << ivl_expr_string(value) << "\"";

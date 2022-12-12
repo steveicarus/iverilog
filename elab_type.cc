@@ -476,3 +476,16 @@ ivl_type_t typedef_t::elaborate_type(Design *des, NetScope *scope)
 
       return elab_type;
 }
+
+ivl_type_t type_parameter_t::elaborate_type_raw(Design *des, NetScope*scope) const
+{
+      ivl_type_t type;
+
+      scope->get_parameter(des, name, type);
+
+      // Recover
+      if (!type)
+	    return netvector_t::integer_type();
+
+      return type;
+}

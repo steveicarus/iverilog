@@ -212,6 +212,13 @@ private:
       typedef_t *type;
 };
 
+struct type_parameter_t : data_type_t {
+      explicit type_parameter_t(perm_string n) : name(n) { }
+      ivl_type_t elaborate_type_raw(Design *des, NetScope *scope) const;
+
+      perm_string name;
+};
+
 struct void_type_t : public data_type_t {
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
 };

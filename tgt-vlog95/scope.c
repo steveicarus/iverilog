@@ -309,6 +309,13 @@ void emit_scope_variables(ivl_scope_t scope)
       count = ivl_scope_params(scope);
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_parameter_t par = ivl_scope_param(scope, idx);
+	      // vlog95 does not support type parameters. Places where type
+	      // parameters have been used it will be replaced with the actual
+	      // type that the module was instantiated with. Similar to
+	      // typedefs.
+	    if (ivl_parameter_is_type(par))
+		  continue;
+
 	    ivl_expr_t pex = ivl_parameter_expr(par);
 	    fprintf(vlog_out, "%*cparameter ", indent, ' ');
 	    emit_id(ivl_parameter_basename(par));

@@ -1695,6 +1695,9 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
  *    Return whether parameter was local (localparam, implicit genvar etc)
  *    or not.
  *
+ * ivl_parameter_is_type
+ *    Return whether the parameter is a type parameter or not.
+ *
  * ivl_parameter_file
  * ivl_parameter_lineno
  *    Returns the file and line where this parameter is defined
@@ -1707,6 +1710,7 @@ extern int         ivl_parameter_lsb(ivl_parameter_t net);
 extern unsigned    ivl_parameter_width(ivl_parameter_t net);
 extern int         ivl_parameter_signed(ivl_parameter_t net);
 extern int         ivl_parameter_local(ivl_parameter_t net);
+extern int         ivl_parameter_is_type(ivl_parameter_t net);
 extern const char* ivl_parameter_file(ivl_parameter_t net);
 extern unsigned    ivl_parameter_lineno(ivl_parameter_t net);
 
