@@ -1388,7 +1388,8 @@ void NetForLoop::dump(ostream&fd, unsigned ind) const
 	    fd << "<nil>";
       fd << endl;
       statement_->dump(fd, ind+4);
-      step_statement_->dump(fd, ind+4);
+      if (step_statement_)
+	    step_statement_->dump(fd, ind+4);
 }
 
 void NetFree::dump(ostream&o, unsigned ind) const

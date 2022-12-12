@@ -5457,7 +5457,7 @@ NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
  *  - index variable (name1_)  (optional)
  *  - initial value (expr1_)   (only if name1_ is present)
  *  - condition expression (cond_)
- *  - step statement (step_)
+ *  - step statement (step_)   (optional)
  *  - sub-statement (statement_)
  *
  * The rules that lead to the PForStatment look like:
@@ -5526,9 +5526,12 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       // Now elaborate the for_step statement. I really should do
       // some error checking here to make sure the step statement
       // really does step the variable.
-      NetProc*step = step_->elaborate(des, scope);
-      if (!step)
-	    error_flag = true;
+      NetProc*step = nullptr;
+      if (step_) {
+	    step = step_->elaborate(des, scope);
+	    if (!step)
+		  error_flag = true;
+      }
 
       // Elaborate the condition expression. Try to evaluate it too,
       // in case it is a constant. This is an interesting case
@@ -5544,10 +5547,10 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       // Error recovery - if we failed to elaborate any of the loop
       // expressions, give up now. Error counts where handled elsewhere.
       if (error_flag) {
-	    delete initial_expr;
-	    delete ce;
-	    delete step;
-	    delete sub;
+	    if (initial_expr) delete initial_expr;
+	    if (ce) delete ce;
+	    if (step) delete step;
+	    if (sub) delete sub;
 	    return 0;
       }
 
