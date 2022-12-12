@@ -645,6 +645,7 @@ sv_ps_type1		normal,-g2009		ivltests
 sv_ps_type_cast1	normal,-g2009		ivltests
 sv_ps_type_cast2	normal,-g2009		ivltests
 sv_ps_type_class1	normal,-g2009		ivltests
+sv_ps_type_class_prop	normal,-g2009		ivltests
 sv_ps_type_enum1	normal,-g2009		ivltests
 sv_ps_type_expr1	normal,-g2009		ivltests
 sv_ps_type_expr2	normal,-g2009		ivltests
@@ -738,6 +739,7 @@ sv_typedef_darray_base3	normal,-g2009		ivltests
 sv_typedef_darray_base4	normal,-g2009		ivltests
 sv_typedef_fwd_base	normal,-g2009		ivltests
 sv_typedef_fwd_class	normal,-g2009		ivltests
+sv_typedef_fwd_class2	normal,-g2009		ivltests
 sv_typedef_fwd_union	normal,-g2009		ivltests
 sv_typedef_fwd_union_fail CE,-g2009		ivltests
 sv_typedef_fwd_enum1	normal,-g2009		ivltests

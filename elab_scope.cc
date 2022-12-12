@@ -511,29 +511,6 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       }
       elaborate_scope_enumerations(des, class_scope, pclass->enum_sets);
 
-	// Collect the properties, elaborate them, and add them to the
-	// elaborated class definition.
-      for (map<perm_string, class_type_t::prop_info_t>::iterator cur = use_type->properties.begin()
-		 ; cur != use_type->properties.end() ; ++ cur) {
-
-	    ivl_type_t tmp = cur->second.type->elaborate_type(des, class_scope);
-	    ivl_assert(*pclass, tmp);
-	    if (debug_scopes) {
-		  cerr << pclass->get_fileline() << ": elaborate_scope_class: "
-		       << "  Property " << cur->first
-		       << " type=" << *tmp << endl;
-	    }
-
-	    if (dynamic_cast<const netqueue_t *> (tmp)) {
-		  cerr << cur->second.get_fileline() << ": sorry: "
-		       << "Queues inside classes are not yet supported." << endl;
-		  des->errors++;
-	    }
-
-	    use_class->set_property(cur->first, cur->second.qual, tmp);
-
-      }
-
       for (map<perm_string,PTask*>::iterator cur = pclass->tasks.begin()
 		 ; cur != pclass->tasks.end() ; ++cur) {
 

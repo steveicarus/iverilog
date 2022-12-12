@@ -374,8 +374,24 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 
 void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 {
+	// Collect the properties, elaborate them, and add them to the
+	// elaborated class definition.
       for (map<perm_string,struct class_type_t::prop_info_t>::iterator cur = pclass->type->properties.begin()
 		 ; cur != pclass->type->properties.end() ; ++ cur) {
+
+	    ivl_type_t use_type = cur->second.type->elaborate_type(des, class_scope_);
+	    if (debug_scopes) {
+		  cerr << pclass->get_fileline() << ": elaborate_scope_class: "
+		       << "  Property " << cur->first
+		       << " type=" << *use_type << endl;
+	    }
+
+	    if (dynamic_cast<const netqueue_t *> (use_type)) {
+		  cerr << cur->second.get_fileline() << ": sorry: "
+		       << "Queues inside classes are not yet supported." << endl;
+		  des->errors++;
+	    }
+	    set_property(cur->first, cur->second.qual, use_type);
 
 	    if (! cur->second.qual.test_static())
 		  continue;
@@ -388,7 +404,6 @@ void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 	    }
 
 	    list<netrange_t> nil_list;
-	    ivl_type_t use_type = cur->second.type->elaborate_type(des, class_scope_);
 	    /* NetNet*sig = */ new NetNet(class_scope_, cur->first, NetNet::REG,
 				    nil_list, use_type);
       }
