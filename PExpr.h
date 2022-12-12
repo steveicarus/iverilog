@@ -972,6 +972,8 @@ class PECastSize  : public PExpr {
 				     unsigned expr_wid,
                                      unsigned flags) const;
 
+      virtual bool has_aa_term(Design *des, NetScope *scope) const;
+
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
 
@@ -997,6 +999,8 @@ class PECastType  : public PExpr {
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     unsigned expr_wid, unsigned flags) const;
 
+      virtual bool has_aa_term(Design *des, NetScope *scope) const;
+
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
 
@@ -1019,6 +1023,8 @@ class PECastSign : public PExpr {
 
       NetExpr* elaborate_expr(Design *des, NetScope *scope,
 			      unsigned expr_wid, unsigned flags) const;
+
+      virtual bool has_aa_term(Design *des, NetScope *scope) const;
 
       unsigned test_width(Design *des, NetScope *scope, width_mode_t &mode);
 
