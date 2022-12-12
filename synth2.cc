@@ -1453,6 +1453,12 @@ bool NetForLoop::synth_async(Design*des, NetScope*scope,
 			     NexusSet&nex_map, NetBus&nex_out,
 			     NetBus&enables, vector<mask_t>&bitmasks)
 {
+      if (!index_) {
+	    cerr << get_fileline() << ": sorry: Unable to synthesize for-loop without explicit index variable." << endl;
+	    return false;
+      }
+
+      ivl_assert(*this, index_ && init_expr_);
       if (debug_synth2) {
 	    cerr << get_fileline() << ": NetForLoop::synth_async: "
 		 << "Index variable is " << index_->name() << endl;

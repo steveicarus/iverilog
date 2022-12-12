@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2022 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1619,6 +1619,14 @@ loop_statement /* IEEE1800-2005: A.6.8 */
   : K_for '(' lpvalue '=' expression ';' expression ';' for_step ')'
     statement_or_null
       { PForStatement*tmp = new PForStatement($3, $5, $7, $9, $11);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+
+      // The initialization statement is optional.
+  | K_for '(' ';' expression ';' for_step ')'
+    statement_or_null
+      { PForStatement*tmp = new PForStatement(nullptr, nullptr, $4, $6, $8);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
