@@ -554,6 +554,7 @@ sv_class_static_prop3	normal,-g2009		ivltests
 sv_class_super1		normal,-g2009		ivltests
 sv_class_super2		normal,-g2009		ivltests
 sv_class_task1		normal,-g2009		ivltests
+sv_class_virt_new_fail	CE,-g2009		ivltests
 sv_darray1		normal,-g2009		ivltests
 sv_darray2		normal,-g2009		ivltests
 sv_darray3		normal,-g2009		ivltests
