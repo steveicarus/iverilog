@@ -515,6 +515,9 @@ sv_typedef_queue_base1	CE,-g2009		ivltests  # queue
 sv_typedef_queue_base2	CE,-g2009		ivltests  # queue
 sv_typedef_queue_base3	CE,-g2009		ivltests  # queue
 sv_typedef_queue_base4	CE,-g2009		ivltests  # queue
+sv_void_cast1		CE,-g2009,-pallowsigned=1	ivltests # string
+sv_void_cast2		CE,-g2009,-pallowsigned=1	ivltests # string, class
+sv_void_cast3		CE,-g2009,-pallowsigned=1	ivltests # queue
 wait_fork		CE,-g2009		ivltests  # wait fork and join_*
 wild_cmp_err		CE,-g2009		ivltests  # ==?/!=?
 wild_cmp_err2		CE,-g2009		ivltests  # ==?/!=?
@@ -977,6 +980,7 @@ sv_var_module_output1	normal,-g2005-sv,-pallowsigned=1	ivltests
 sv_var_module_output2	normal,-g2005-sv,-pallowsigned=1	ivltests
 sv_var_package		normal,-g2005-sv,-pallowsigned=1	ivltests
 sv_var_task		normal,-g2005-sv,-pallowsigned=1	ivltests
+sv_void_cast4		normal,-g2009,-pallowsigned=1		ivltests
 test_dispwided		normal,-pallowsigned=1	ivltests gold=test_dispwided.gold
 test_inc_dec		normal,-g2009,-pallowsigned=1	ivltests
 test_enumsystem		normal,-g2009,-pallowsigned=1,ivltests/enumsystem.vhd	ivltests
