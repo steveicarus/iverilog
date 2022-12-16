@@ -1650,6 +1650,7 @@ task3.14D		normal			ivltests
 task3.14E		normal			ivltests
 task3.14F		normal			ivltests
 task_bypath		normal			ivltests # task enabled by complete path name.
+task_in_expr_fail	CE			ivltests
 task_inpad		normal			ivltests # Validates input of task should pad w/ 0
 task_iotypes		normal			ivltests # task ports with types.
 task_iotypes2		normal			ivltests # task ports with types.
