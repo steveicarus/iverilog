@@ -404,6 +404,8 @@ sv_class21		CE,-g2009		ivltests
 sv_class22		CE,-g2009		ivltests
 sv_class23		CE,-g2009		ivltests
 sv_class24		CE,-g2009		ivltests
+sv_class_compat1	CE,-g2009		ivltests
+sv_class_compat2	CE,-g2009		ivltests
 sv_class_constructor1	CE,-g2009		ivltests
 sv_class_empty_item	CE,-g2009		ivltests
 sv_class_extends_scoped	CE,-g2009		ivltests

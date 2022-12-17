@@ -531,6 +531,11 @@ sv_class21		normal,-g2009		ivltests
 sv_class22		normal,-g2009		ivltests
 sv_class23		normal,-g2009		ivltests
 sv_class24		normal,-g2009		ivltests
+sv_class_compat1	normal,-g2009		ivltests
+sv_class_compat2	normal,-g2009		ivltests
+sv_class_compat_fail1	CE,-g2009		ivltests
+sv_class_compat_fail2	CE,-g2009		ivltests
+sv_class_compat_fail3	CE,-g2009		ivltests
 sv_class_constructor1	normal,-g2009		ivltests
 sv_class_constructor_fail   CE,-g2009		ivltests
 sv_class_empty_item	normal,-g2009		ivltests
