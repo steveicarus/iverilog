@@ -6652,6 +6652,14 @@ NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      if (ctype->is_virtual()) {
+	    cerr << get_fileline() << ": error: "
+	         << "Can not create object of virtual class `"
+		 << ctype->get_name() << "`." << endl;
+	    des->errors++;
+	    return 0;
+      }
+
       NetExpr*obj = new NetENew(ntype);
       obj->set_line(*this);
 

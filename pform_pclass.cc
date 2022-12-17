@@ -43,7 +43,8 @@ void pform_start_class_declaration(const struct vlltype&loc,
 				   class_type_t*type,
 				   data_type_t*base_type,
 				   list<PExpr*>*base_exprs,
-				   LexicalScope::lifetime_t lifetime)
+				   LexicalScope::lifetime_t lifetime,
+				   bool virtual_class)
 {
       PClass*class_scope = pform_push_class_scope(loc, type->name, lifetime);
       class_scope->type = type;
@@ -52,6 +53,7 @@ void pform_start_class_declaration(const struct vlltype&loc,
 
       assert(type->base_type == 0);
       type->base_type.reset(base_type);
+      type->virtual_class = virtual_class;
 
       assert(type->base_args.empty());
       if (base_exprs) {

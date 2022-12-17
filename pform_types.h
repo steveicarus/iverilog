@@ -379,6 +379,8 @@ struct class_type_t : public data_type_t {
       std::unique_ptr<data_type_t> base_type;
       std::list<PExpr*>base_args;
 
+      bool virtual_class;
+
 	// This is a map of the properties. Map the name to the type.
       struct prop_info_t : public LineInfo {
 	    inline prop_info_t() : qual(property_qualifier_t::make_none()) { }

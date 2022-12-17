@@ -797,7 +797,7 @@ class_declaration /* IEEE1800-2005: A.1.2 */
 	class_type_t *class_type= new class_type_t(name);
 	FILE_NAME(class_type, @4);
 	pform_set_typedef(@4, name, class_type, nullptr);
-	pform_start_class_declaration(@2, class_type, $5.type, $5.exprs, $3);
+	pform_start_class_declaration(@2, class_type, $5.type, $5.exprs, $3, $1);
       }
     class_items_opt K_endclass
       { // Process a class.

@@ -493,6 +493,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       class_scope->set_class_def(use_class);
       use_class->set_class_scope(class_scope);
       use_class->set_definition_scope(scope);
+      use_class->set_virtual(use_type->virtual_class);
       set_scope_timescale(des, class_scope, pclass);
 
       class_scope->add_typedefs(&pclass->typedefs);
