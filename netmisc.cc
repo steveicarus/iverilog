@@ -1099,8 +1099,8 @@ bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
                   if (!dimension_ok) {
                         // bail out
                   } else if (index_l > 0) {
-                        index_l = index_l - 1;
-                        index_r = 0;
+                        index_r = index_l - 1;
+                        index_l = 0;
                   } else {
                         cerr << range.first->get_fileline() << ": error: "
                                 "Dimension size must be greater than zero." << endl;

@@ -499,6 +499,7 @@ sv_assign_pattern_func	normal,-g2005-sv	ivltests
 sv_assign_pattern_op	normal,-g2005-sv	ivltests
 sv_assign_pattern_part	normal,-g2005-sv	ivltests
 sv_array_assign_pattern2	normal,-g2009	ivltests
+sv_array_query		normal,-g2005-sv	ivltests
 sv_cast_integer		normal,-g2005-sv	ivltests
 sv_cast_integer2		normal,-g2005-sv	ivltests
 sv_cast_packed_array	normal,-g2005-sv	ivltests
