@@ -43,10 +43,9 @@ void pform_start_class_declaration(const struct vlltype&loc,
 				   class_type_t*type,
 				   data_type_t*base_type,
 				   list<PExpr*>*base_exprs,
-				   LexicalScope::lifetime_t lifetime,
 				   bool virtual_class)
 {
-      PClass*class_scope = pform_push_class_scope(loc, type->name, lifetime);
+      PClass*class_scope = pform_push_class_scope(loc, type->name);
       class_scope->type = type;
       assert(pform_cur_class == 0);
       pform_cur_class = class_scope;

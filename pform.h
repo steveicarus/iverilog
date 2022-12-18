@@ -173,7 +173,6 @@ extern void pform_start_class_declaration(const struct vlltype&loc,
 					  class_type_t*type,
 					  data_type_t*base_type,
 					  std::list<PExpr*>*base_exprs,
-					  LexicalScope::lifetime_t lifetime,
 					  bool virtual_class);
 extern void pform_class_property(const struct vlltype&loc,
 				 property_qualifier_t pq,
@@ -241,8 +240,7 @@ extern void pform_pop_scope();
  */
 extern LexicalScope* pform_peek_scope();
 
-extern PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name,
-				      LexicalScope::lifetime_t lifetime);
+extern PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name);
 
 extern PFunction*pform_push_constructor_scope(const struct vlltype&loc);
 
