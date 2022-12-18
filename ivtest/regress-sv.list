@@ -803,6 +803,13 @@ sv_var_module_output1	normal,-g2005-sv	ivltests
 sv_var_module_output2	normal,-g2005-sv	ivltests
 sv_var_package		normal,-g2005-sv	ivltests
 sv_var_task		normal,-g2005-sv	ivltests
+sv_void_cast1		normal,-g2005-sv	ivltests
+sv_void_cast2		normal,-g2005-sv	ivltests
+sv_void_cast3		normal,-g2005-sv	ivltests
+sv_void_cast4		normal,-g2005-sv	ivltests
+sv_void_cast_fail1	CE,-g2005-sv		ivltests
+sv_void_cast_fail2	CE,-g2005-sv		ivltests
+sv_void_cast_fail3	CE,-g2005-sv		ivltests
 sv_wildcard_import1	normal,-g2009		ivltests
 sv_wildcard_import2	normal,-g2009		ivltests
 sv_wildcard_import3	normal,-g2009		ivltests

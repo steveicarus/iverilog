@@ -420,6 +420,8 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
       PWire*wire;
       std::vector<PWire*>*wires;
 
+      PCallTask *subroutine_call;
+
       PEventStatement*event_statement;
       Statement*statement;
       std::vector<Statement*>*statement_list;
@@ -684,6 +686,8 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <statement_list> statement_or_null_list statement_or_null_list_opt
 
 %type <statement> analog_statement
+
+%type <subroutine_call> subroutine_call
 
 %type <join_keyword> join_keyword
 
@@ -6241,6 +6245,35 @@ spec_notifier
 		{ args_after_notifier = 0; delete[]$1; }
 	;
 
+subroutine_call
+  : hierarchy_identifier argument_list_parens_opt
+      { PCallTask*tmp = pform_make_call_task(@1, *$1, *$2);
+	delete $1;
+	delete $2;
+	$$ = tmp;
+      }
+  | class_hierarchy_identifier argument_list_parens_opt
+      { PCallTask*tmp = new PCallTask(*$1, *$2);
+	FILE_NAME(tmp, @1);
+	delete $1;
+	delete $2;
+	$$ = tmp;
+      }
+  | SYSTEM_IDENTIFIER argument_list_parens_opt
+      { PCallTask*tmp = new PCallTask(lex_strings.make($1), *$2);
+	FILE_NAME(tmp,@1);
+	delete[]$1;
+	delete $2;
+	$$ = tmp;
+      }
+  | hierarchy_identifier '(' error ')'
+      { yyerror(@3, "error: Syntax error in task arguments.");
+	list<PExpr*>pt;
+	PCallTask*tmp = pform_make_call_task(@1, *$1, pt);
+	delete $1;
+	$$ = tmp;
+      }
+  ;
 
 statement_item /* This is roughly statement_item in the LRM */
 
@@ -6592,19 +6625,13 @@ statement_item /* This is roughly statement_item in the LRM */
 		  FILE_NAME(tmp,@1);
 		  $$ = tmp;
 		}
-	| SYSTEM_IDENTIFIER argument_list_parens_opt ';'
-		{ PCallTask*tmp = new PCallTask(lex_strings.make($1), *$2);
-		  FILE_NAME(tmp,@1);
-		  delete[]$1;
-		  delete $2;
-		  $$ = tmp;
-		}
+  | K_void '\'' '(' subroutine_call ')' ';'
+      { $4->void_cast();
+	$$ = $4;
+      }
 
-  | hierarchy_identifier argument_list_parens_opt ';'
-      { PCallTask*tmp = pform_make_call_task(@1, *$1, *$2);
-	delete $1;
-	delete $2;
-	$$ = tmp;
+  | subroutine_call ';'
+      { $$ = $1;
       }
 
   | hierarchy_identifier K_with '{' constraint_block_item_list_opt '}' ';'
@@ -6619,14 +6646,6 @@ statement_item /* This is roughly statement_item in the LRM */
 	PCallTask*tmp = new PCallTask(*$1, pt);
 	FILE_NAME(tmp, @1);
 	delete $1;
-	$$ = tmp;
-      }
-
-  | class_hierarchy_identifier argument_list_parens_opt ';'
-      { PCallTask*tmp = new PCallTask(*$1, *$2);
-	FILE_NAME(tmp, @1);
-	delete $1;
-	delete $2;
 	$$ = tmp;
       }
 
@@ -6646,14 +6665,6 @@ statement_item /* This is roughly statement_item in the LRM */
 	delete $1;
 	$$ = tmp;
       }
-  | hierarchy_identifier '(' error ')' ';'
-      { yyerror(@3, "error: Syntax error in task arguments.");
-	list<PExpr*>pt;
-	PCallTask*tmp = pform_make_call_task(@1, *$1, pt);
-	delete $1;
-	$$ = tmp;
-      }
-
   | error ';'
       { yyerror(@2, "error: malformed statement");
 	yyerrok;

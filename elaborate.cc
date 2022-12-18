@@ -3390,10 +3390,14 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 
 NetProc* PCallTask::elaborate(Design*des, NetScope*scope) const
 {
-      if (peek_tail_name(path_)[0] == '$')
-	    return elaborate_sys(des, scope);
-      else
+      if (peek_tail_name(path_)[0] == '$') {
+	    if (void_cast_)
+		  return elaborate_non_void_function_(des, scope);
+	    else
+		  return elaborate_sys(des, scope);
+      } else {
 	    return elaborate_usr(des, scope);
+      }
 }
 
 /*
@@ -3690,8 +3694,10 @@ NetProc* PCallTask::elaborate_method_func_(NetScope*scope,
 					   perm_string method_name,
                                            const char*sys_task_name) const
 {
-      cerr << get_fileline() << ": warning: method function '"
-           << method_name << "' is being called as a task." << endl;
+      if (!void_cast_) {
+	    cerr << get_fileline() << ": warning: method function '"
+		 << method_name << "' is being called as a task." << endl;
+      }
 
 	// Generate the function.
       NetESFunc*sys_expr = new NetESFunc(sys_task_name, type, 1);
@@ -3896,16 +3902,8 @@ bool PCallTask::test_task_calls_ok_(Design*des, NetScope*scope) const
       return true;
 }
 
-NetProc* PCallTask::elaborate_function_(Design*des, NetScope*scope) const
+NetProc *PCallTask::elaborate_non_void_function_(Design *des, NetScope *scope) const
 {
-      NetFuncDef*func = des->find_function(scope, path_);
-	// This is not a function, so this task call cannot be a function
-	// call with a missing return assignment.
-      if (! func) return 0;
-
-      if (gn_system_verilog() && func->is_void())
-	    return elaborate_void_function_(des, scope, func);
-
 	// Generate a function call version of this task call.
       PExpr*rval = new PECallFunction(package_, path_, parms_);
       rval->set_file(get_file());
@@ -3914,10 +3912,28 @@ NetProc* PCallTask::elaborate_function_(Design*des, NetScope*scope) const
       PAssign*tmp = new PAssign(0, rval);
       tmp->set_file(get_file());
       tmp->set_lineno(get_lineno());
-      cerr << get_fileline() << ": warning: User function '"
-           << peek_tail_name(path_) << "' is being called as a task." << endl;
+      if (!void_cast_) {
+	    cerr << get_fileline() << ": warning: User function '"
+		 << peek_tail_name(path_) << "' is being called as a task." << endl;
+      }
+
 	// Elaborate the assignment to a dummy variable.
       return tmp->elaborate(des, scope);
+}
+
+NetProc* PCallTask::elaborate_function_(Design*des, NetScope*scope) const
+{
+      NetFuncDef*func = des->find_function(scope, path_);
+
+	// This is not a function, so this task call cannot be a function
+	// call with a missing return assignment.
+      if (!func)
+	    return nullptr;
+
+      if (gn_system_verilog() && func->is_void())
+	    return elaborate_void_function_(des, scope, func);
+
+      return elaborate_non_void_function_(des, scope);
 }
 
 NetProc* PCallTask::elaborate_void_function_(Design*des, NetScope*scope,
@@ -3955,14 +3971,23 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	      // that we can catch more errors.
 	    test_task_calls_ok_(des, scope);
 
+	    if (void_cast_) {
+		  cerr << get_fileline() << ": error: void casting user task '"
+		       << peek_tail_name(path_) << "' is not allowed." << endl;
+		  des->errors++;
+	    }
+
       } else if (task->type() == NetScope::FUNC) {
 	    NetFuncDef*tmp = task->func_def();
-	    if (!tmp->is_void()) {
-		  cerr << get_fileline() << ": error: "
-		       << "Calling a non-void function as a task." << endl;
-		  des->errors += 1;
-	    }
+	    if (!tmp->is_void())
+		  return elaborate_non_void_function_(des, scope);
 	    def = tmp;
+
+	    if (void_cast_) {
+		  cerr << get_fileline() << ": error: void casting user void function '"
+		       << peek_tail_name(path_) << "' is not allowed." << endl;
+		  des->errors++;
+	    }
       }
 
 	/* The caller has checked the parms_ size to make sure it
