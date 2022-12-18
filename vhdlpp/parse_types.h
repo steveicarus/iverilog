@@ -57,7 +57,7 @@ class entity_aspect_t {
 
 class instant_list_t {
     public:
-      typedef enum { ALL = 0, OTHERS, NONE } application_domain_t;
+      typedef enum { ALL = 0, OTHERS, NO_DOMAIN } application_domain_t;
 
       instant_list_t(application_domain_t d, std::list<perm_string>* l) : domain_(d), labels_(l) {}
       ~instant_list_t() { delete labels_; }

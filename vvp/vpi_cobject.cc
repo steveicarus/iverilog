@@ -68,7 +68,8 @@ void __vpiCobjectVar::vpi_get_value(p_vpi_value val)
 {
 // FIXME: We need to get the assigned object address if one is assigned.
 //fprintf(stderr, "HERE: %p\n", get_net());
-      char*rbuf = (char *) need_result_buf(64 + 1, RBUF_VAL);
+      static const size_t RBUF_USE_SIZE = 64 + 1;
+      char*rbuf = (char *) need_result_buf(RBUF_USE_SIZE, RBUF_VAL);
 
       switch (val->format) {
 	case vpiObjTypeVal:
@@ -79,7 +80,7 @@ void __vpiCobjectVar::vpi_get_value(p_vpi_value val)
 	case vpiOctStrVal:
 	case vpiHexStrVal:
 	case vpiStringVal:
-	    sprintf(rbuf, "    null");
+	    snprintf(rbuf, RBUF_USE_SIZE, "    null");
 	    val->value.str = rbuf;
 	    break;
 

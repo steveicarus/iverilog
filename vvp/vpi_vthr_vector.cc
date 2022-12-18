@@ -99,7 +99,8 @@ static double vlg_round(double rval)
 static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(ref);
-      char *rbuf = (char *) need_result_buf(66, RBUF_VAL);
+      static const size_t RBUF_USE_SIZE = 66;
+      char *rbuf = (char *) need_result_buf(RBUF_USE_SIZE, RBUF_VAL);
 
       double val = 0.0;
 
@@ -133,19 +134,19 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 
 	  case vpiDecStrVal:
 	    if (std::isnan(val))
-		  sprintf(rbuf, "%s", "nan");
+		  snprintf(rbuf, RBUF_USE_SIZE, "%s", "nan");
 	    else
-		  sprintf(rbuf, "%0.0f", vlg_round(val));
+		  snprintf(rbuf, RBUF_USE_SIZE, "%0.0f", vlg_round(val));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiOctStrVal:
-	    sprintf(rbuf, "%" PRIo64, (uint64_t)vlg_round(val));
+	    snprintf(rbuf, RBUF_USE_SIZE, "%" PRIo64, (uint64_t)vlg_round(val));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(rbuf, "%" PRIx64, (uint64_t)vlg_round(val));
+	    snprintf(rbuf, RBUF_USE_SIZE, "%" PRIx64, (uint64_t)vlg_round(val));
 	    vp->value.str = rbuf;
 	    break;
 

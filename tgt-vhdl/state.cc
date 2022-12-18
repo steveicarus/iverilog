@@ -78,7 +78,7 @@ static vhdl_entity *g_active_entity = NULL;
 
 // Set of scopes that are treated as the default examples of
 // that type. Any other scopes of the same type are ignored.
-typedef vector<ivl_scope_t> default_scopes_t;
+typedef std::vector<ivl_scope_t> default_scopes_t;
 static default_scopes_t g_default_scopes;
 
 // True if signal `sig' has already been encountered by the code
@@ -304,14 +304,13 @@ static bool same_scope_type_name(ivl_scope_t a, ivl_scope_t b)
  */
 bool seen_this_scope_type(ivl_scope_t s)
 {
-   if (find_if(g_default_scopes.begin(), g_default_scopes.end(),
-               bind1st(ptr_fun(same_scope_type_name), s))
-       == g_default_scopes.end()) {
-      g_default_scopes.push_back(s);
-      return false;
+   for (auto cur = g_default_scopes.begin() ; cur != g_default_scopes.end() ; cur++) {
+     if (same_scope_type_name(s, *cur))
+       return true;
    }
-   else
-      return true;
+
+   g_default_scopes.push_back(s);
+   return false;
 }
 
 /*

@@ -3400,9 +3400,9 @@ int pform_parse(const char*path)
 	    char unit_name[20];
 	    static unsigned nunits = 0;
 	    if (separate_compilation)
-		  sprintf(unit_name, "$unit#%u", ++nunits);
+		  snprintf(unit_name, sizeof(unit_name)-1, "$unit#%u", ++nunits);
 	    else
-		  sprintf(unit_name, "$unit");
+		  snprintf(unit_name, sizeof(unit_name)-1, "$unit");
 
 	    PPackage*unit = new PPackage(lex_strings.make(unit_name), 0);
 	    unit->default_lifetime = LexicalScope::STATIC;

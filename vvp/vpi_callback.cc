@@ -860,7 +860,8 @@ static double vlg_round(double rval)
 
 static void real_signal_value(struct t_vpi_value*vp, double rval)
 {
-      char*rbuf = (char *) need_result_buf(64 + 1, RBUF_VAL);
+      static const size_t RBUF_SIZE = 64 + 1;
+      char*rbuf = (char *) need_result_buf(RBUF_SIZE, RBUF_VAL);
 
       switch (vp->format) {
 	  case vpiObjTypeVal:
@@ -882,14 +883,14 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 
 	  case vpiDecStrVal:
 	    if (std::isnan(rval))
-		  sprintf(rbuf, "%s", "nan");
+		  snprintf(rbuf, RBUF_SIZE, "%s", "nan");
 	    else
-		  sprintf(rbuf, "%0.0f", vlg_round(rval));
+		  snprintf(rbuf, RBUF_SIZE, "%0.0f", vlg_round(rval));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(rbuf, "%" PRIx64, (uint64_t)vlg_round(rval));
+	    snprintf(rbuf, RBUF_SIZE, "%" PRIx64, (uint64_t)vlg_round(rval));
 	    vp->value.str = rbuf;
 	    break;
 

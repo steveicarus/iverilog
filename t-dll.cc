@@ -673,7 +673,7 @@ bool dll_target::start_design(const Design*des)
       if ((dll_ == 0) && (dll_path_[0] != '/')) {
 	    size_t len = strlen(basedir) + 1 + strlen(dll_path_) + 1;
 	    char*tmp = new char[len];
-	    sprintf(tmp, "%s/%s", basedir, dll_path_);
+	    snprintf(tmp, len, "%s/%s", basedir, dll_path_);
 	    dll_ = ivl_dlopen(tmp);
 	    delete[]tmp;
       }
@@ -2847,7 +2847,7 @@ void dll_target::test_version(const char*target_name)
       if ((dll_ == 0) && (target_name[0] != '/')) {
 	    size_t len = strlen(basedir) + 1 + strlen(target_name) + 1;
 	    char*tmp = new char[len];
-	    sprintf(tmp, "%s/%s", basedir, target_name);
+	    snprintf(tmp, len, "%s/%s", basedir, target_name);
 	    dll_ = ivl_dlopen(tmp);
 	    delete[]tmp;
       }
