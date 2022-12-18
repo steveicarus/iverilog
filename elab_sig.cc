@@ -1080,17 +1080,17 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	        dimensions_ok) {
 		  /* Scalar port with a vector net/etc. definition */
 		  if (port_.empty()) {
-			if (!gn_io_range_error_flag) {
-			      cerr << get_fileline()
-			           << ": warning: Scalar port ``" << name_
-			           << "'' has a vectored net declaration "
-				   << nlist << "." << endl;
-			} else {
+			if (gn_io_range_error_flag) {
 			      cerr << get_fileline()
 			           << ": error: Scalar port ``" << name_
 			           << "'' has a vectored net declaration "
 				   << nlist << "." << endl;
 			      des->errors += 1;
+			} else if (warn_anachronisms) {
+			      cerr << get_fileline()
+			           << ": warning: Scalar port ``" << name_
+			           << "'' has a vectored net declaration "
+				   << nlist << "." << endl;
 			}
 		  }
 

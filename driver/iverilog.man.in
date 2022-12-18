@@ -122,7 +122,8 @@ practice in the past to only specify the range for the net/register
 declaration and some tools still allow this. By default any mismatch is
 reported as a error. Using \fB\-gno\-io\-range\-error\fP will produce a
 warning instead of a fatal error for the case of a vectored net/register
-and a scalar port declaration.
+and a scalar port declaration. This warning is included in the
+\fBanachronisms\fP category.
 .TP 8
 .B -gstrict-ca-eval\fI|\fP-gno-strict-ca-eval
 The standard requires that if any input to a continuous assignment
