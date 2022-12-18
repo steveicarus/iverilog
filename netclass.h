@@ -119,6 +119,9 @@ class netclass_t : public ivl_type_s {
       void set_virtual(bool virtual_class) { virtual_class_ = virtual_class; }
       bool is_virtual() const { return virtual_class_; }
 
+    protected:
+      bool test_compatibility(ivl_type_t that) const;
+
     private:
       perm_string name_;
 	// If this is derived from another base class, point to it
