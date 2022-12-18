@@ -320,7 +320,7 @@ static const char* vpi_property_str(PLI_INT32 code)
           case vpiSize:
 	    return "vpiSize";
 	  default:
-	    sprintf(buf, "%d", (int)code);
+	    snprintf(buf, sizeof(buf), "%d", (int)code);
       }
       return buf;
 }
@@ -402,7 +402,7 @@ const char* vpi_type_as_string(PLI_INT32 code)
 	  case vpiUserSystf:
 	    return "vpiUserSystf";
 	  default:
-	    sprintf(buf, "%d", (int)code);
+	    snprintf(buf, sizeof(buf), "%d", (int)code);
       }
       return buf;
 }

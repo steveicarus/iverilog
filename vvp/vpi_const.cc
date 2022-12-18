@@ -137,21 +137,28 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 	    break;
 
           case vpiDecStrVal:
-	      if (size > 4){
+	    // Take the (up to 4) characters of the text, convert the characters
+	    // to a numerical value, and convert that value to a decimal string.
+	    // For example, the string "A" is ASCII 65, so the resulting string
+	    // will be "65". and the string "AB" is 65*256 + 66 == 16706, so
+	    // the resulting string is "16706". The "size" is the number of
+	    // characters of input text to put to work.
+	    if (size > 4){
 		  // We only support standard integers. Ignore other bytes...
 		  size = 4;
 		  fprintf(stderr, "Warning (vpi_const.cc): %%d on constant strings only looks "
 			  "at first 4 bytes!\n");
-	      }
-	      rbuf = (char *) need_result_buf(size + 1, RBUF_VAL);
-	      uint_value = 0;
-	      for(unsigned i=0; i<size; i += 1){
+	    }
+	    static const size_t RBUF_USE_SIZE = 12;
+	    rbuf = (char *) need_result_buf(RBUF_USE_SIZE, RBUF_VAL);
+	    uint_value = 0;
+	    for(unsigned i=0; i<size; i += 1){
 		  uint_value <<=8;
 		  uint_value += (unsigned char)(value_[i]);
-	      }
-	      sprintf(rbuf, "%u", uint_value);
-	      vp->value.str = rbuf;
-	      break;
+	    }
+	    snprintf(rbuf, RBUF_USE_SIZE, "%u", uint_value);
+	    vp->value.str = rbuf;
+	    break;
 
           case vpiBinStrVal:
 	      rbuf = (char *) need_result_buf(8 * size + 1, RBUF_VAL);
@@ -574,7 +581,8 @@ int __vpiDecConst::vpi_get(int code)
 
 void __vpiDecConst::vpi_get_value(p_vpi_value vp)
 {
-      char*rbuf = (char *) need_result_buf(64 + 1, RBUF_VAL);
+      static const size_t RBUF_USE_SIZE = 64 + 1;
+      char*rbuf = (char *) need_result_buf(RBUF_USE_SIZE, RBUF_VAL);
       char*cp = rbuf;
 
       switch (vp->format) {
@@ -586,8 +594,7 @@ void __vpiDecConst::vpi_get_value(p_vpi_value vp)
 	  }
 
           case vpiDecStrVal:
-	      sprintf(rbuf, "%d", value);
-
+	      snprintf(rbuf, RBUF_USE_SIZE, "%d", value);
 	      vp->value.str = rbuf;
 	      break;
 
@@ -601,14 +608,12 @@ void __vpiDecConst::vpi_get_value(p_vpi_value vp)
 	      break;
 
           case vpiHexStrVal:
-	      sprintf(rbuf, "%08x", value);
-
+	      snprintf(rbuf, RBUF_USE_SIZE, "%08x", value);
 	      vp->value.str = rbuf;
 	      break;
 
           case vpiOctStrVal:
-	      sprintf(rbuf, "%011x", value);
-
+	      snprintf(rbuf, RBUF_USE_SIZE, "%011x", value);
 	      vp->value.str = rbuf;
 	      break;
 
@@ -796,7 +801,8 @@ int __vpiNullConst::vpi_get(int code)
 
 void __vpiNullConst::vpi_get_value(p_vpi_value val)
 {
-      char*rbuf = (char *) need_result_buf(64 + 1, RBUF_VAL);
+      static const size_t RBUF_USE_SIZE = 64 + 1;
+      char*rbuf = (char *) need_result_buf(RBUF_USE_SIZE, RBUF_VAL);
 
       switch (val->format) {
 
@@ -808,7 +814,7 @@ void __vpiNullConst::vpi_get_value(p_vpi_value val)
 	  case vpiOctStrVal:
 	  case vpiHexStrVal:
 	  case vpiStringVal:
-	    sprintf(rbuf, "null");
+	    snprintf(rbuf, RBUF_USE_SIZE, "null");
 	    val->value.str = rbuf;
 	    break;
 

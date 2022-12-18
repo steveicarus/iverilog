@@ -106,7 +106,8 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func,
       vvp_time64_t x, simtime = schedule_simtime();
       int units = rfp->scope? rfp->scope->time_units : vpi_time_precision;
 
-      char*rbuf = (char *) need_result_buf(128, RBUF_VAL);
+      static const size_t RBUF_USE_SIZE = 128;
+      char*rbuf = (char *) need_result_buf(RBUF_USE_SIZE, RBUF_VAL);
 
 	/* Calculate the divisor needed to scale the simulation time
 	   (in time_precision units) to time units of the scope. */
@@ -162,17 +163,17 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func,
 	    break;
 
 	  case vpiDecStrVal:
-	    sprintf(rbuf, "%" TIME_FMT_U, simtime);
+	    snprintf(rbuf, RBUF_USE_SIZE, "%" TIME_FMT_U, simtime);
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiOctStrVal:
-	    sprintf(rbuf, "%" TIME_FMT_O, simtime);
+	    snprintf(rbuf, RBUF_USE_SIZE, "%" TIME_FMT_O, simtime);
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(rbuf, "%" TIME_FMT_X, simtime);
+	    snprintf(rbuf, RBUF_USE_SIZE, "%" TIME_FMT_X, simtime);
 	    vp->value.str = rbuf;
 	    break;
 

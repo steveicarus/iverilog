@@ -4023,7 +4023,7 @@ unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
 	    }
       }
 
-      if (const struct netqueue_t *queue = net->queue_type()) {
+      if (const class netqueue_t *queue = net->queue_type()) {
 	    if (member_name == "pop_back" || member_name == "pop_front") {
 		  expr_type_ = queue->element_base_type();
 		  expr_width_ = queue->element_width();
@@ -6601,7 +6601,6 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
       parms[0] = obj;
 
       int missing_parms = 0;
-      int parm_errors = 0;
       for (size_t idx = 1 ; idx < parms.size() ; idx += 1) {
 	      // While there are default arguments, check them.
 	    if (idx <= parms_.size() && parms_[idx-1]) {
@@ -6609,8 +6608,9 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 		  parms[idx] = elaborate_rval_expr(des, scope,
 						   def->port(idx)->net_type(),
 						   tmp, false);
-		  if (parms[idx] == 0)
-			parm_errors += 1;
+		  // NOTE: if elaborate_rval_expr fails, it will return a
+		  // nullptr, but it will also increment des->errors so there
+		  // is nothing we need to do here.
 
 		  continue;
 	    }
@@ -6632,7 +6632,6 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
       if (missing_parms > 0) {
 	    cerr << get_fileline() << ": error: The " << scope_path(new_scope)
 		 << " constructor call is missing arguments." << endl;
-	    parm_errors += 1;
 	    des->errors += 1;
       }
 

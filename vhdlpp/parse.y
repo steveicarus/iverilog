@@ -1563,7 +1563,7 @@ index_subtype_definition_list
 instantiation_list
   : identifier_list
      {
-  instant_list_t* tmp = new instant_list_t(instant_list_t::NONE, $1);
+  instant_list_t* tmp = new instant_list_t(instant_list_t::NO_DOMAIN, $1);
   $$ = tmp;
      }
   | K_others

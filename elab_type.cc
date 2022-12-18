@@ -140,7 +140,7 @@ ivl_type_t enum_type_t::elaborate_type_raw(Design *des, NetScope *scope) const
 {
       ivl_type_t base = base_type->elaborate_type(des, scope);
 
-      const struct netvector_t *vec_type = dynamic_cast<const netvector_t*>(base);
+      const class netvector_t *vec_type = dynamic_cast<const netvector_t*>(base);
 
       if (!vec_type && !dynamic_cast<const netparray_t*>(base)) {
 	    cerr << get_fileline() << ": error: "
