@@ -645,7 +645,7 @@ TU [munpf]
 `celldefine    { in_celldefine = true; }
 `endcelldefine { in_celldefine = false; }
 
-  /* Notice and handle the resetall directive. */
+  /* Notice and handle the `resetall directive. */
 
 `resetall {
       if (in_module) {
@@ -681,6 +681,8 @@ TU [munpf]
       VLerror(yylloc, "error: Invalid `unconnected_drive directive.");
       BEGIN(0); }
 
+  /* Notice and handle the `nounconnected_drive directive. */
+
 `nounconnected_drive {
       if (in_module) {
 	    VLerror(yylloc, "error: `nounconnected_drive directive cannot be "
@@ -709,6 +711,8 @@ TU [munpf]
 `protect                            {  }
 ^{W}?`suppress_faults{W}?.*         {  }
 ^{W}?`uselib{W}?.*                  {  }
+
+  /* Notice and handle the `begin_keywords directive. */
 
 `begin_keywords { BEGIN(PPBEGIN_KEYWORDS); }
 
@@ -776,6 +780,8 @@ TU [munpf]
 <PPBEGIN_KEYWORDS_ERROR>[^\n]+ {
       VLerror(yylloc, "error: Invalid `begin_keywords directive.");
       BEGIN(0); }
+
+  /* Notice and handle the `end_keywords directive. */
 
 `end_keywords {
       if (!keyword_mask_stack.empty()) {
