@@ -1,0 +1,10 @@
+File ./ivltests/br_gh782b.v line 10
+Time scale of (t1) is 1s / 100ms
+File ./ivltests/br_gh782b.v line 19
+Time scale of (t2) is 100ms / 10ms
+File ./ivltests/br_gh782b.v line 28
+Time scale of (t3) is 10us / 1us
+File ./ivltests/br_gh782b.v line 38
+Time scale of (t4) is 1ns / 1ps
+File ./ivltests/br_gh782b.v line 48
+Time scale of (t5) is 1ps / 1fs

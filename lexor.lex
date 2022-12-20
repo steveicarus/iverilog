@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -109,7 +109,9 @@ verinum*make_unsized_hex(const char*txt);
 
 static int dec_buf_div2(char *buf);
 
-static void process_timescale(const char*txt);
+static int get_timescale_scale(const char*cp);
+static int get_timescale_const(int scale, const char*units);
+
 static void process_ucdrive(const char*txt);
 
 static list<int> keyword_mask_stack;
@@ -119,6 +121,10 @@ static bool in_module = false;
 static bool in_UDP = false;
 bool in_celldefine = false;
 UCDriveType uc_drive = UCD_NONE;
+static int ts_state = 0;
+static int ts_scale = 0;
+static int ts_unit = 0;
+static int ts_prec = 0;
 
 /*
  * The parser sometimes needs to indicate to the lexor that the next
@@ -139,7 +145,10 @@ void lex_in_package_scope(PPackage*pkg)
 %x LCOMMENT
 %x CSTRING
 %s UDPTABLE
-%x PPTIMESCALE
+%x PPTIMESCALE_SCALE
+%x PPTIMESCALE_UNITS
+%x PPTIMESCALE_SLASH
+%x PPTIMESCALE_ERROR
 %x PPUCDRIVE
 %x PPDEFAULT_NETTYPE
 %x PPBEGIN_KEYWORDS
@@ -578,16 +587,54 @@ TU [munpf]
 
   /* Notice and handle the `timescale directive. */
 
-^{W}?`timescale { BEGIN(PPTIMESCALE); }
-<PPTIMESCALE>.* { process_timescale(yytext); }
-<PPTIMESCALE>\n {
-      if (in_module) {
-	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
-		    "`timescale directive can not be inside a module "
-		    "definition." << endl;
-	    error_count += 1;
-      }
-      yylloc.first_line += 1;
+`timescale { ts_state = 0; BEGIN(PPTIMESCALE_SCALE); }
+
+<PPTIMESCALE_SCALE>10?0? {
+      ts_scale = get_timescale_scale(yytext);
+      BEGIN(PPTIMESCALE_UNITS); }
+
+<PPTIMESCALE_SCALE>"//" { comment_enter = PPTIMESCALE_SCALE; BEGIN(LCOMMENT); }
+<PPTIMESCALE_SCALE>"/*" { comment_enter = PPTIMESCALE_SCALE; BEGIN(CCOMMENT); }
+<PPTIMESCALE_SCALE>"\n" { yylloc.first_line += 1; }
+<PPTIMESCALE_SCALE>{W}  { ; }
+<PPTIMESCALE_SCALE>.    { BEGIN(PPTIMESCALE_ERROR); }
+
+<PPTIMESCALE_UNITS>[munpf]?s {
+      if (++ts_state == 1) {
+            ts_unit = get_timescale_const(ts_scale, yytext);
+            BEGIN(PPTIMESCALE_SLASH);
+      } else {
+            ts_prec = get_timescale_const(ts_scale, yytext);
+            if (in_module) {
+                  VLerror(yylloc, "error: timescale directive cannot be inside "
+                          "a module definition.");
+            }
+            if (ts_unit < ts_prec) {
+                  VLerror(yylloc, "error: timescale unit must not be less than "
+                          "the precision.");
+            } else {
+                  pform_set_timescale(ts_unit, ts_prec, yylloc.text, yylloc.first_line);
+            }
+            BEGIN(0);
+      } }
+
+<PPTIMESCALE_UNITS>"//" { comment_enter = PPTIMESCALE_UNITS; BEGIN(LCOMMENT); }
+<PPTIMESCALE_UNITS>"/*" { comment_enter = PPTIMESCALE_UNITS; BEGIN(CCOMMENT); }
+<PPTIMESCALE_UNITS>"\n" { yylloc.first_line += 1; }
+<PPTIMESCALE_UNITS>{W}  { ; }
+<PPTIMESCALE_UNITS>.    { BEGIN(PPTIMESCALE_ERROR); }
+
+<PPTIMESCALE_SLASH>"/"  { BEGIN(PPTIMESCALE_SCALE); }
+
+<PPTIMESCALE_SLASH>"//" { comment_enter = PPTIMESCALE_SLASH; BEGIN(LCOMMENT); }
+<PPTIMESCALE_SLASH>"/*" { comment_enter = PPTIMESCALE_SLASH; BEGIN(CCOMMENT); }
+<PPTIMESCALE_SLASH>"\n" { yylloc.first_line += 1; }
+<PPTIMESCALE_SLASH>{W}  { ; }
+<PPTIMESCALE_SLASH>.    { BEGIN(PPTIMESCALE_ERROR); }
+
+  /* On error, try to recover by skipping to the end of the line. */
+<PPTIMESCALE_ERROR>[^\n]+ {
+      VLerror(yylloc, "error: Invalid `timescale directive.");
       BEGIN(0); }
 
   /* Notice and handle the `celldefine and `endcelldefine directives. */
@@ -1302,82 +1349,52 @@ verinum*make_unsized_dec(const char*ptr)
 }
 
 /*
- * Convert the string to a time unit or precision.
- * Returns true on failure.
+ * Convert a string to a scale value ("1" -> 0, "10" -> 1, "100" -> 2).
+ * We have already checked the string is valid.
  */
-static bool get_timescale_const(const char *&cp, int &res, bool is_unit)
+static int get_timescale_scale(const char *cp)
 {
-	/* Check for the 1 digit. */
-      if (*cp != '1') {
-	    if (is_unit) {
-		  VLerror(yylloc, "Invalid `timescale unit constant "
-		                  "(1st digit)");
-	    } else {
-		  VLerror(yylloc, "Invalid `timescale precision constant "
-		                  "(1st digit)");
-	    }
-	    return true;
-      }
+	/* Skip the 1 digit. */
+      assert(*cp == '1');
       cp += 1;
 
 	/* Check the number of zeros after the 1. */
-      res = strspn(cp, "0");
-      if (res > 2) {
-	    if (is_unit) {
-		  VLerror(yylloc, "Invalid `timescale unit constant "
-		                  "(number of zeros)");
-	    } else {
-		  VLerror(yylloc, "Invalid `timescale precision constant "
-		                  "(number of zeros)");
-	    }
-	    return true;
-      }
-      cp += res;
+      int scale = strspn(cp, "0");
+      assert(scale < 3);
+      cp += scale;
 
-	/* Skip any space between the digits and the scaling string. */
-      cp += strspn(cp, " \t");
-
-	/* Now process the scaling string. */
-      if (strncmp("s", cp, 1) == 0) {
-	    res -= 0;
-	    cp += 1;
-	    return false;
-
-      } else if (strncmp("ms", cp, 2) == 0) {
-	    res -= 3;
-	    cp += 2;
-	    return false;
-
-      } else if (strncmp("us", cp, 2) == 0) {
-	    res -= 6;
-	    cp += 2;
-	    return false;
-
-      } else if (strncmp("ns", cp, 2) == 0) {
-	    res -= 9;
-	    cp += 2;
-	    return false;
-
-      } else if (strncmp("ps", cp, 2) == 0) {
-	    res -= 12;
-	    cp += 2;
-	    return false;
-
-      } else if (strncmp("fs", cp, 2) == 0) {
-	    res -= 15;
-	    cp += 2;
-	    return false;
-
-      }
-
-      if (is_unit) {
-	    VLerror(yylloc, "Invalid `timescale unit scale");
-      } else {
-	    VLerror(yylloc, "Invalid `timescale precision scale");
-      }
-      return true;
+      assert(*cp == '\0');
+      return scale;
 }
 
+/*
+ * Convert a scale and a units string to a time unit or precision.
+ * We have already checked the string is valid.
+ */
+static int get_timescale_const(int scale, const char *units)
+{
+      if (strncmp("s", units, 1) == 0) {
+	    return scale;
+
+      } else if (strncmp("ms", units, 2) == 0) {
+	    return scale - 3;
+
+      } else if (strncmp("us", units, 2) == 0) {
+	    return scale - 6;
+
+      } else if (strncmp("ns", units, 2) == 0) {
+	    return scale - 9;
+
+      } else if (strncmp("ps", units, 2) == 0) {
+	    return scale - 12;
+
+      } else if (strncmp("fs", units, 2) == 0) {
+	    return scale - 15;
+
+      }
+      assert(0);
+      return 0;
+}
 
 /*
  * process either a pull0 or a pull1.
@@ -1422,58 +1439,6 @@ static void process_ucdrive(const char*txt)
       }
 
       uc_drive = ucd;
-}
-
-/*
- * The timescale parameter has the form:
- *      " <num> xs / <num> xs"
- */
-static void process_timescale(const char*txt)
-{
-      const char*cp = txt + strspn(txt, " \t");
-
-	/* Skip the space after the `timescale directive. */
-      if (cp == txt) {
-	    VLerror(yylloc, "Space required after `timescale directive.");
-	    return;
-      }
-
-      int unit = 0;
-      int prec = 0;
-
-	/* Get the time units. */
-      if (get_timescale_const(cp, unit, true)) return;
-
-	/* Skip any space after the time units, the '/' and any
-	 * space after the '/'. */
-      cp += strspn(cp, " \t");
-      if (*cp != '/') {
-	    VLerror(yylloc, "`timescale separator '/' appears to be missing.");
-	    return;
-      }
-      cp += 1;
-      cp += strspn(cp, " \t");
-
-	/* Get the time precision. */
-      if (get_timescale_const(cp, prec, false)) return;
-
-	/* Verify that only space and/or a single line comment is left. */
-      cp += strspn(cp, " \t");
-      if (strncmp(cp, "//", 2) != 0 &&
-          (size_t)(cp-yytext) != strlen(yytext)) {
-	    VLerror(yylloc, "Invalid `timescale directive (extra garbage "
-	                    "after precision).");
-	    return;
-      }
-
-	/* The time unit must be greater than or equal to the precision. */
-      if (unit < prec) {
-	    VLerror(yylloc, "error: `timescale unit must not be less than "
-	                    "the precision.");
-	    return;
-      }
-
-      pform_set_timescale(unit, prec, yylloc.text, yylloc.first_line);
 }
 
 int yywrap()
