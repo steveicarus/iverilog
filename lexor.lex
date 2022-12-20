@@ -640,22 +640,18 @@ TU [munpf]
 
   /* Notice and handle the `celldefine and `endcelldefine directives. */
 
-^{W}?`celldefine{W}?    { in_celldefine = true; }
-^{W}?`endcelldefine{W}? { in_celldefine = false; }
+`celldefine    { in_celldefine = true; }
+`endcelldefine { in_celldefine = false; }
 
   /* Notice and handle the resetall directive. */
 
-^{W}?`resetall{W}? {
+`resetall {
       if (in_module) {
-	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
-		    "`resetall directive can not be inside a module "
-		    "definition." << endl;
-	    error_count += 1;
+	    VLerror(yylloc, "error: `resetall directive cannot be inside a "
+		    "module definition.");
       } else if (in_UDP) {
-	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
-		    "`resetall directive can not be inside a UDP "
-		    "definition." << endl;
-	    error_count += 1;
+	    VLerror(yylloc, "error: `resetall directive cannot be inside a "
+		    "UDP definition.");
       } else {
 	    reset_all();
       } }
