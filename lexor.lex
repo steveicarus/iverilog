@@ -152,6 +152,7 @@ void lex_in_package_scope(PPackage*pkg)
 %x PPUCDRIVE
 %x PPUCDRIVE_ERROR
 %x PPDEFAULT_NETTYPE
+%x PPDEFAULT_NETTYPE_ERROR
 %x PPBEGIN_KEYWORDS
 %x PPBEGIN_KEYWORDS_ERROR
 %s EDGES
@@ -785,16 +786,12 @@ TU [munpf]
       }
  }
 
-  /* Notice and handle the default_nettype directive. The lexor
-     detects the default_nettype keyword, and the second part of the
-     rule collects the rest of the line and processes it. We only need
-     to look for the first work, and interpret it. */
+  /* Notice and handle the `default_nettype directive. */
 
-`default_nettype{W}? { BEGIN(PPDEFAULT_NETTYPE); }
-<PPDEFAULT_NETTYPE>.* {
+`default_nettype { BEGIN(PPDEFAULT_NETTYPE); }
+
+<PPDEFAULT_NETTYPE>[a-zA-Z0-9_]+ {
       NetNet::Type net_type;
-      size_t wordlen = strcspn(yytext, " \t\f\r\n");
-      yytext[wordlen] = 0;
   /* Add support for other wire types and better error detection. */
       if (strcmp(yytext,"wire") == 0) {
 	    net_type = NetNet::WIRE;
@@ -832,11 +829,19 @@ TU [munpf]
 	    error_count += 1;
       }
       pform_set_default_nettype(net_type, yylloc.text, yylloc.first_line);
+      BEGIN(0);
   }
-<PPDEFAULT_NETTYPE>\n {
-      yylloc.first_line += 1;
-      BEGIN(0); }
 
+<PPDEFAULT_NETTYPE>"//" { comment_enter = PPDEFAULT_NETTYPE; BEGIN(LCOMMENT); }
+<PPDEFAULT_NETTYPE>"/*" { comment_enter = PPDEFAULT_NETTYPE; BEGIN(CCOMMENT); }
+<PPDEFAULT_NETTYPE>"\n" { yylloc.first_line += 1; }
+<PPDEFAULT_NETTYPE>{W}  { ; }
+<PPDEFAULT_NETTYPE>.    { BEGIN(PPDEFAULT_NETTYPE_ERROR); }
+
+  /* On error, try to recover by skipping to the end of the line. */
+<PPDEFAULT_NETTYPE_ERROR>[^\n]+ {
+      VLerror(yylloc, "error: Invalid `default_nettype directive.");
+      BEGIN(0); }
 
   /* These are directives that are not supported by me and should have
      been handled by an external preprocessor such as ivlpp. */
