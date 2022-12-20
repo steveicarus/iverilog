@@ -894,6 +894,11 @@ TU [munpf]
 	   << endl;
   }
 
+`[a-zA-Z_]+ {
+      yywarn(yylloc, "macro replacement not supported. "
+             "Use an external preprocessor.");
+  }
+
 
 `{W} { cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
 	    << "Stray tic (`) here. Perhaps you put white space" << endl;
