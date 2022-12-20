@@ -153,6 +153,7 @@ void lex_in_package_scope(PPackage*pkg)
 %x PPUCDRIVE_ERROR
 %x PPDEFAULT_NETTYPE
 %x PPBEGIN_KEYWORDS
+%x PPBEGIN_KEYWORDS_ERROR
 %s EDGES
 %x REAL_SCALE
 
@@ -708,9 +709,9 @@ TU [munpf]
 ^{W}?`suppress_faults{W}?.*         {  }
 ^{W}?`uselib{W}?.*                  {  }
 
-^{W}?`begin_keywords{W}? { BEGIN(PPBEGIN_KEYWORDS); }
+`begin_keywords { BEGIN(PPBEGIN_KEYWORDS); }
 
-<PPBEGIN_KEYWORDS>\"[a-zA-Z0-9 -\.]*\".* {
+<PPBEGIN_KEYWORDS>\"[a-zA-Z0-9 -\.]*\" {
       keyword_mask_stack.push_front(lexor_keyword_mask);
 
       char*word = yytext+1;
@@ -764,19 +765,23 @@ TU [munpf]
       BEGIN(0);
  }
 
-<PPBEGIN_KEYWORDS>.* {
-      fprintf(stderr, "%s:%d: Malformed keywords specification: %s\n",
-	      yylloc.text, yylloc.first_line, yytext);
-      BEGIN(0);
- }
+<PPBEGIN_KEYWORDS>"//" { comment_enter = PPBEGIN_KEYWORDS; BEGIN(LCOMMENT); }
+<PPBEGIN_KEYWORDS>"/*" { comment_enter = PPBEGIN_KEYWORDS; BEGIN(CCOMMENT); }
+<PPBEGIN_KEYWORDS>"\n" { yylloc.first_line += 1; }
+<PPBEGIN_KEYWORDS>{W}  { ; }
+<PPBEGIN_KEYWORDS>.    { BEGIN(PPBEGIN_KEYWORDS_ERROR); }
 
-^{W}?`end_keywords{W}?.* {
+  /* On error, try to recover by skipping to the end of the line. */
+<PPBEGIN_KEYWORDS_ERROR>[^\n]+ {
+      VLerror(yylloc, "error: Invalid `begin_keywords directive.");
+      BEGIN(0); }
+
+`end_keywords {
       if (!keyword_mask_stack.empty()) {
 	    lexor_keyword_mask = keyword_mask_stack.front();
 	    keyword_mask_stack.pop_front();
       } else {
-	    fprintf(stderr, "%s:%d: Mismatched end_keywords directive\n",
-		    yylloc.text, yylloc.first_line);
+	    VLwarn(yylloc, "warning: Mismatched `end_keywords directive");
       }
  }
 
