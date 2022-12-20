@@ -150,6 +150,7 @@ void lex_in_package_scope(PPackage*pkg)
 %x PPTIMESCALE_SLASH
 %x PPTIMESCALE_ERROR
 %x PPUCDRIVE
+%x PPUCDRIVE_ERROR
 %x PPDEFAULT_NETTYPE
 %x PPBEGIN_KEYWORDS
 %s EDGES
@@ -660,24 +661,32 @@ TU [munpf]
       } }
 
   /* Notice and handle the `unconnected_drive directive. */
-^{W}?`unconnected_drive { BEGIN(PPUCDRIVE); }
-<PPUCDRIVE>.* { process_ucdrive(yytext); }
-<PPUCDRIVE>\n {
+
+`unconnected_drive { BEGIN(PPUCDRIVE); }
+
+<PPUCDRIVE>[a-zA-Z0-9_]+ {
+      process_ucdrive(yytext);
       if (in_module) {
-	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
-		    "`unconnected_drive directive can not be inside a "
-		    "module definition." << endl;
-	    error_count += 1;
+	    VLerror(yylloc, "error: `unconnected_drive directive cannot be "
+		    "inside a module definition.");
       }
-      yylloc.first_line += 1;
       BEGIN(0); }
 
-^{W}?`nounconnected_drive{W}? {
+<PPUCDRIVE>"//" { comment_enter = PPUCDRIVE; BEGIN(LCOMMENT); }
+<PPUCDRIVE>"/*" { comment_enter = PPUCDRIVE; BEGIN(CCOMMENT); }
+<PPUCDRIVE>"\n" { yylloc.first_line += 1; }
+<PPUCDRIVE>{W}  { ; }
+<PPUCDRIVE>.    { BEGIN(PPUCDRIVE_ERROR); }
+
+  /* On error, try to recover by skipping to the end of the line. */
+<PPUCDRIVE_ERROR>[^\n]+ {
+      VLerror(yylloc, "error: Invalid `unconnected_drive directive.");
+      BEGIN(0); }
+
+`nounconnected_drive {
       if (in_module) {
-	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
-		    "`nounconnected_drive directive can not be inside a "
-		    "module definition." << endl;
-	    error_count += 1;
+	    VLerror(yylloc, "error: `nounconnected_drive directive cannot be "
+                    "inside a module definition.");
       }
       uc_drive = UCD_NONE; }
 
@@ -1397,21 +1406,13 @@ static int get_timescale_const(int scale, const char *units)
 }
 
 /*
- * process either a pull0 or a pull1.
+ * Process either a pull0 or a pull1.
  */
 static void process_ucdrive(const char*txt)
 {
       UCDriveType ucd = UCD_NONE;
-      const char*cp = txt + strspn(txt, " \t");
 
-	/* Skip the space after the `unconnected_drive directive. */
-      if (cp == txt) {
-	    VLerror(yylloc, "Space required after `unconnected_drive "
-	                    "directive.");
-	    return;
-      }
-
-	/* Check for the pull keyword. */
+      const char*cp = txt;
       if (strncmp("pull", cp, 4) != 0) {
 	    VLerror(yylloc, "pull required for `unconnected_drive "
 	                    "directive.");
@@ -1428,13 +1429,9 @@ static void process_ucdrive(const char*txt)
 	    return;
       }
       cp += 1;
-
-	/* Verify that only space and/or a single line comment is left. */
-      cp += strspn(cp, " \t");
-      if (strncmp(cp, "//", 2) != 0 &&
-          (size_t)(cp-yytext) != strlen(yytext)) {
+      if (*cp != '\0') {
 	    VLerror(yylloc, "Invalid `unconnected_drive directive (extra "
-	                    "garbage after precision).");
+	                    "garbage after pull direction).");
 	    return;
       }
 

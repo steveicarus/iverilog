@@ -349,6 +349,7 @@ br_gh632b		normal,-S		ivltests
 br_gh632c		normal			ivltests
 br_gh674		normal			ivltests
 br_gh732		normal			ivltests gold=br_gh732.gold
+br_gh782c		normal			ivltests
 br_gh788		normal,-gno-io-range-error,-Wno-anachronisms	ivltests gold=br_gh788.gold
 br_gh793		normal			ivltests
 br_ml20150315		normal			ivltests gold=br_ml_20150315.gold
