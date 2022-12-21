@@ -1163,9 +1163,9 @@ data_declaration /* IEEE1800-2005: A.2.1.3 */
 
 package_scope
   : PACKAGE_IDENTIFIER K_SCOPE_RES
-    { lex_in_package_scope($1);
-      $$ = $1;
-    }
+      { lex_in_package_scope($1);
+        $$ = $1;
+      }
   ;
 
 ps_type_identifier /* IEEE1800-2017: A.9.3 */
@@ -1190,7 +1190,7 @@ packed_array_data_type /* IEEE1800-2005: A.2.2.1 */
   | struct_data_type
       { if (!$1->packed_flag) {
 	      yyerror(@1, "sorry: Unpacked structs not supported.");
-	}
+        }
 	$$ = $1;
       }
   | ps_type_identifier
@@ -1958,20 +1958,20 @@ non_integer_type /* IEEE1800-2005: A.2.2.1 */
   | K_shortreal { $$ = real_type_t::SHORTREAL; }
   ;
 
-number  : BASED_NUMBER
-	     { $$ = $1; based_size = 0;}
-        | DEC_NUMBER
-	     { $$ = $1; based_size = 0;}
-        | DEC_NUMBER BASED_NUMBER
-	     { $$ = pform_verinum_with_size($1,$2, @2.text, @2.first_line);
-	       based_size = 0; }
-        | UNBASED_NUMBER
-	     { $$ = $1; based_size = 0;}
-        | DEC_NUMBER UNBASED_NUMBER
-	     { yyerror(@1, "error: Unbased SystemVerilog literal cannot have "
-	                   "a size.");
-	       $$ = $1; based_size = 0;}
-	;
+number
+  : BASED_NUMBER
+      { $$ = $1; based_size = 0;}
+  | DEC_NUMBER
+      { $$ = $1; based_size = 0;}
+  | DEC_NUMBER BASED_NUMBER
+      { $$ = pform_verinum_with_size($1,$2, @2.text, @2.first_line);
+	based_size = 0; }
+  | UNBASED_NUMBER
+      { $$ = $1; based_size = 0;}
+  | DEC_NUMBER UNBASED_NUMBER
+      { yyerror(@1, "error: Unbased SystemVerilog literal cannot have a size.");
+	$$ = $1; based_size = 0;}
+  ;
 
 open_range_list /* IEEE1800-2005 A.2.11 */
   : open_range_list ',' value_range
@@ -2582,14 +2582,14 @@ attribute_list
 
 
 attribute
-	: IDENTIFIER initializer_opt
-		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make($1);
-		  tmp->parm = $2;
-		  delete[]$1;
-		  $$ = tmp;
-		}
-	;
+  : IDENTIFIER initializer_opt
+      { named_pexpr_t*tmp = new named_pexpr_t;
+	tmp->name = lex_strings.make($1);
+	tmp->parm = $2;
+	delete[]$1;
+	$$ = tmp;
+      }
+  ;
 
 
   /* The block_item_decl is used in function definitions, task
@@ -2665,14 +2665,14 @@ block_item_decl
   ;
 
 block_item_decls
-	: block_item_decl
-	| block_item_decls block_item_decl
-	;
+  : block_item_decl
+  | block_item_decls block_item_decl
+  ;
 
 block_item_decls_opt
-	: block_item_decls { $$ = true; }
-	| { $$ = false; }
-	;
+  : block_item_decls { $$ = true; }
+  | { $$ = false; }
+  ;
 
   /* We need to handle K_enum separately because
    * `typedef enum <TYPE_IDENTIFIER>` can either be the start of a enum forward
@@ -2735,7 +2735,7 @@ enum_base_type /* IEEE 1800-2012 A.2.2.1 */
 	      $$ = $1;
         }
       }
-   |
+  |
       { $$ = new atom_type_t(atom_type_t::INT, true);
         FILE_NAME($$, @0);
       }
@@ -2883,56 +2883,56 @@ struct_union_member /* IEEE 1800-2012 A.2.2.1 */
   ;
 
 case_item
-	: expression_list_proper ':' statement_or_null
-		{ PCase::Item*tmp = new PCase::Item;
-		  tmp->expr = *$1;
-		  tmp->stat = $3;
-		  delete $1;
-		  $$ = tmp;
-		}
-	| K_default ':' statement_or_null
-		{ PCase::Item*tmp = new PCase::Item;
-		  tmp->stat = $3;
-		  $$ = tmp;
-		}
-	| K_default  statement_or_null
-		{ PCase::Item*tmp = new PCase::Item;
-		  tmp->stat = $2;
-		  $$ = tmp;
-		}
-	| error ':' statement_or_null
-		{ yyerror(@2, "error: Incomprehensible case expression.");
-		  yyerrok;
-		}
-	;
+  : expression_list_proper ':' statement_or_null
+      { PCase::Item*tmp = new PCase::Item;
+	tmp->expr = *$1;
+	tmp->stat = $3;
+	delete $1;
+	$$ = tmp;
+      }
+  | K_default ':' statement_or_null
+      { PCase::Item*tmp = new PCase::Item;
+	tmp->stat = $3;
+	$$ = tmp;
+      }
+  | K_default  statement_or_null
+      { PCase::Item*tmp = new PCase::Item;
+	tmp->stat = $2;
+	$$ = tmp;
+      }
+  | error ':' statement_or_null
+      { yyerror(@2, "error: Incomprehensible case expression.");
+	yyerrok;
+      }
+  ;
 
 case_items
-	: case_items case_item
-		{ $1->push_back($2);
-		  $$ = $1;
-		}
-	| case_item
-		{ $$ = new std::vector<PCase::Item*>(1, $1);
-		}
-	;
+  : case_items case_item
+      { $1->push_back($2);
+	$$ = $1;
+      }
+  | case_item
+      { $$ = new std::vector<PCase::Item*>(1, $1);
+      }
+  ;
 
 charge_strength
-	: '(' K_small ')'
-	| '(' K_medium ')'
-	| '(' K_large ')'
-	;
+  : '(' K_small ')'
+  | '(' K_medium ')'
+  | '(' K_large ')'
+  ;
 
 charge_strength_opt
-	: charge_strength
-	|
-	;
+  : charge_strength
+  |
+  ;
 
 defparam_assign
-	: hierarchy_identifier '=' expression
-		{ pform_set_defparam(*$1, $3);
-		  delete $1;
-		}
-	;
+  : hierarchy_identifier '=' expression
+      { pform_set_defparam(*$1, $3);
+	delete $1;
+      }
+  ;
 
 defparam_assign_list
   : defparam_assign
@@ -2941,51 +2941,51 @@ defparam_assign_list
 	delete $1;
       }
   | defparam_assign_list ',' defparam_assign
-	;
+  ;
 
 delay1
-	: '#' delay_value_simple
-		{ std::list<PExpr*>*tmp = new std::list<PExpr*>;
-		  tmp->push_back($2);
-		  $$ = tmp;
-		}
-	| '#' '(' delay_value ')'
-		{ std::list<PExpr*>*tmp = new std::list<PExpr*>;
-		  tmp->push_back($3);
-		  $$ = tmp;
-		}
-	;
+  : '#' delay_value_simple
+      { std::list<PExpr*>*tmp = new std::list<PExpr*>;
+	tmp->push_back($2);
+	$$ = tmp;
+      }
+  | '#' '(' delay_value ')'
+      { std::list<PExpr*>*tmp = new std::list<PExpr*>;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
+  ;
 
 delay3
-	: '#' delay_value_simple
-		{ std::list<PExpr*>*tmp = new std::list<PExpr*>;
-		  tmp->push_back($2);
-		  $$ = tmp;
-		}
-	| '#' '(' delay_value ')'
-		{ std::list<PExpr*>*tmp = new std::list<PExpr*>;
-		  tmp->push_back($3);
-		  $$ = tmp;
-		}
-	| '#' '(' delay_value ',' delay_value ')'
-		{ std::list<PExpr*>*tmp = new std::list<PExpr*>;
-		  tmp->push_back($3);
-		  tmp->push_back($5);
-		  $$ = tmp;
-		}
-	| '#' '(' delay_value ',' delay_value ',' delay_value ')'
-		{ std::list<PExpr*>*tmp = new std::list<PExpr*>;
-		  tmp->push_back($3);
-		  tmp->push_back($5);
-		  tmp->push_back($7);
-		  $$ = tmp;
-		}
-	;
+  : '#' delay_value_simple
+      { std::list<PExpr*>*tmp = new std::list<PExpr*>;
+	tmp->push_back($2);
+	$$ = tmp;
+      }
+  | '#' '(' delay_value ')'
+      { std::list<PExpr*>*tmp = new std::list<PExpr*>;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
+  | '#' '(' delay_value ',' delay_value ')'
+      { std::list<PExpr*>*tmp = new std::list<PExpr*>;
+	tmp->push_back($3);
+	tmp->push_back($5);
+	$$ = tmp;
+      }
+  | '#' '(' delay_value ',' delay_value ',' delay_value ')'
+      { std::list<PExpr*>*tmp = new std::list<PExpr*>;
+	tmp->push_back($3);
+	tmp->push_back($5);
+	tmp->push_back($7);
+	$$ = tmp;
+      }
+  ;
 
 delay3_opt
-	: delay3 { $$ = $1; }
-	|        { $$ = 0; }
-	;
+  : delay3 { $$ = $1; }
+  |        { $$ = 0; }
+  ;
 
 delay_value_list
   : delay_value
@@ -3001,61 +3001,60 @@ delay_value_list
   ;
 
 delay_value
-	: expression
-		{ PExpr*tmp = $1;
-		  $$ = tmp;
-		}
-	| expression ':' expression ':' expression
-		{ $$ = pform_select_mtm_expr($1, $3, $5); }
-	;
+  : expression
+      { PExpr*tmp = $1;
+	$$ = tmp;
+      }
+  | expression ':' expression ':' expression
+      { $$ = pform_select_mtm_expr($1, $3, $5); }
+  ;
 
 
 delay_value_simple
-	: DEC_NUMBER
-		{ verinum*tmp = $1;
-		  if (tmp == 0) {
-			yyerror(@1, "internal error: decimal delay.");
-			$$ = 0;
-		  } else {
-			$$ = new PENumber(tmp);
-			FILE_NAME($$, @1);
-		  }
-		  based_size = 0;
-		}
-	| REALTIME
-		{ verireal*tmp = $1;
-		  if (tmp == 0) {
-			yyerror(@1, "internal error: real time delay.");
-			$$ = 0;
-		  } else {
-			$$ = new PEFNumber(tmp);
-			FILE_NAME($$, @1);
-		  }
-		}
-	| IDENTIFIER
-                { PEIdent*tmp = new PEIdent(lex_strings.make($1));
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		  delete[]$1;
-		}
-	| TIME_LITERAL
-		{ int unit;
+  : DEC_NUMBER
+      { verinum*tmp = $1;
+	if (tmp == 0) {
+	      yyerror(@1, "internal error: decimal delay.");
+	      $$ = 0;
+	} else {
+	      $$ = new PENumber(tmp);
+	      FILE_NAME($$, @1);
+	}
+	based_size = 0;
+      }
+  | REALTIME
+      { verireal*tmp = $1;
+	if (tmp == 0) {
+	      yyerror(@1, "internal error: real time delay.");
+	      $$ = 0;
+	} else {
+	      $$ = new PEFNumber(tmp);
+	      FILE_NAME($$, @1);
+	}
+      }
+  | IDENTIFIER
+      { PEIdent*tmp = new PEIdent(lex_strings.make($1));
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	delete[]$1;
+      }
+  | TIME_LITERAL
+      { int unit;
 
-		  based_size = 0;
-		  $$         = 0;
-		  if ($1 == 0 || !get_time_unit($1, unit))
-			yyerror(@1, "internal error: time literal delay.");
-		  else {
-			double p = pow(10.0,
-			               (double)(unit - pform_get_timeunit()));
-			double time = atof($1) * p;
+	based_size = 0;
+	$$         = 0;
+	if ($1 == 0 || !get_time_unit($1, unit))
+	      yyerror(@1, "internal error: time literal delay.");
+	else {
+	      double p = pow(10.0, (double)(unit - pform_get_timeunit()));
+	      double time = atof($1) * p;
 
-			verireal *v = new verireal(time);
-			$$ = new PEFNumber(v);
-			FILE_NAME($$, @1);
-		  }
-		}
-	;
+	      verireal *v = new verireal(time);
+	      $$ = new PEFNumber(v);
+	      FILE_NAME($$, @1);
+	}
+      }
+  ;
 
   /* The discipline and nature declarations used to take no ';' after
      the identifier. The 2.3 LRM adds the ';', but since there are
@@ -3162,50 +3161,52 @@ list_of_libraries
   ;
 
 drive_strength
-	: '(' dr_strength0 ',' dr_strength1 ')'
-		{ $$.str0 = $2.str0;
-		  $$.str1 = $4.str1;
-		}
-	| '(' dr_strength1 ',' dr_strength0 ')'
-		{ $$.str0 = $4.str0;
-		  $$.str1 = $2.str1;
-		}
-	| '(' dr_strength0 ',' K_highz1 ')'
-		{ $$.str0 = $2.str0;
-		  $$.str1 = IVL_DR_HiZ;
-		}
-	| '(' dr_strength1 ',' K_highz0 ')'
-		{ $$.str0 = IVL_DR_HiZ;
-		  $$.str1 = $2.str1;
-		}
-	| '(' K_highz1 ',' dr_strength0 ')'
-		{ $$.str0 = $4.str0;
-		  $$.str1 = IVL_DR_HiZ;
-		}
-	| '(' K_highz0 ',' dr_strength1 ')'
-		{ $$.str0 = IVL_DR_HiZ;
-		  $$.str1 = $4.str1;
-		}
-	;
+  : '(' dr_strength0 ',' dr_strength1 ')'
+      { $$.str0 = $2.str0;
+	$$.str1 = $4.str1;
+      }
+  | '(' dr_strength1 ',' dr_strength0 ')'
+      { $$.str0 = $4.str0;
+	$$.str1 = $2.str1;
+      }
+  | '(' dr_strength0 ',' K_highz1 ')'
+      { $$.str0 = $2.str0;
+	$$.str1 = IVL_DR_HiZ;
+      }
+  | '(' dr_strength1 ',' K_highz0 ')'
+      { $$.str0 = IVL_DR_HiZ;
+	$$.str1 = $2.str1;
+      }
+  | '(' K_highz1 ',' dr_strength0 ')'
+      { $$.str0 = $4.str0;
+	$$.str1 = IVL_DR_HiZ;
+      }
+  | '(' K_highz0 ',' dr_strength1 ')'
+      { $$.str0 = IVL_DR_HiZ;
+	$$.str1 = $4.str1;
+      }
+  ;
 
 drive_strength_opt
-	: drive_strength { $$ = $1; }
-	|                { $$.str0 = IVL_DR_STRONG; $$.str1 = IVL_DR_STRONG; }
-	;
+  : drive_strength
+      { $$ = $1; }
+  |
+      { $$.str0 = IVL_DR_STRONG; $$.str1 = IVL_DR_STRONG; }
+  ;
 
 dr_strength0
-	: K_supply0 { $$.str0 = IVL_DR_SUPPLY; }
-	| K_strong0 { $$.str0 = IVL_DR_STRONG; }
-	| K_pull0   { $$.str0 = IVL_DR_PULL; }
-	| K_weak0   { $$.str0 = IVL_DR_WEAK; }
-	;
+  : K_supply0 { $$.str0 = IVL_DR_SUPPLY; }
+  | K_strong0 { $$.str0 = IVL_DR_STRONG; }
+  | K_pull0   { $$.str0 = IVL_DR_PULL; }
+  | K_weak0   { $$.str0 = IVL_DR_WEAK; }
+  ;
 
 dr_strength1
-	: K_supply1 { $$.str1 = IVL_DR_SUPPLY; }
-	| K_strong1 { $$.str1 = IVL_DR_STRONG; }
-	| K_pull1   { $$.str1 = IVL_DR_PULL; }
-	| K_weak1   { $$.str1 = IVL_DR_WEAK; }
-	;
+  : K_supply1 { $$.str1 = IVL_DR_SUPPLY; }
+  | K_strong1 { $$.str1 = IVL_DR_STRONG; }
+  | K_pull1   { $$.str1 = IVL_DR_PULL; }
+  | K_weak1   { $$.str1 = IVL_DR_WEAK; }
+  ;
 
 clocking_event_opt /* */
   : event_control
@@ -3213,64 +3214,64 @@ clocking_event_opt /* */
   ;
 
 event_control /* A.K.A. clocking_event */
-	: '@' hierarchy_identifier
-		{ PEIdent*tmpi = pform_new_ident(@2, *$2);
-		  FILE_NAME(tmpi, @2);
-		  PEEvent*tmpe = new PEEvent(PEEvent::ANYEDGE, tmpi);
-		  PEventStatement*tmps = new PEventStatement(tmpe);
-		  FILE_NAME(tmps, @1);
-		  $$ = tmps;
-		  delete $2;
-		}
-	| '@' '(' event_expression_list ')'
-		{ PEventStatement*tmp = new PEventStatement(*$3);
-		  FILE_NAME(tmp, @1);
-		  delete $3;
-		  $$ = tmp;
-		}
-	| '@' '(' error ')'
-		{ yyerror(@1, "error: Malformed event control expression.");
-		  $$ = 0;
-		}
-	;
+  : '@' hierarchy_identifier
+      { PEIdent*tmpi = pform_new_ident(@2, *$2);
+	FILE_NAME(tmpi, @2);
+	PEEvent*tmpe = new PEEvent(PEEvent::ANYEDGE, tmpi);
+	PEventStatement*tmps = new PEventStatement(tmpe);
+	FILE_NAME(tmps, @1);
+	$$ = tmps;
+	delete $2;
+      }
+  | '@' '(' event_expression_list ')'
+      { PEventStatement*tmp = new PEventStatement(*$3);
+	FILE_NAME(tmp, @1);
+	delete $3;
+	$$ = tmp;
+      }
+  | '@' '(' error ')'
+      { yyerror(@1, "error: Malformed event control expression.");
+	$$ = 0;
+      }
+  ;
 
 event_expression_list
-	: event_expression
-		{ $$ = new std::vector<PEEvent*>(1, $1);
-		}
-	| event_expression_list K_or event_expression
-		{ $1->push_back($3);
-		  $$ = $1;
-		}
-	| event_expression_list ',' event_expression
-		{ $1->push_back($3);
-		  $$ = $1;
-		}
-	;
+  : event_expression
+      { $$ = new std::vector<PEEvent*>(1, $1);
+      }
+  | event_expression_list K_or event_expression
+      { $1->push_back($3);
+	$$ = $1;
+      }
+  | event_expression_list ',' event_expression
+      { $1->push_back($3);
+	$$ = $1;
+      }
+  ;
 
 event_expression
-	: K_posedge expression
-		{ PEEvent*tmp = new PEEvent(PEEvent::POSEDGE, $2);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_negedge expression
-		{ PEEvent*tmp = new PEEvent(PEEvent::NEGEDGE, $2);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_edge expression
-		{ PEEvent*tmp = new PEEvent(PEEvent::EDGE, $2);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		  pform_requires_sv(@1, "Edge event");
-		}
-	| expression
-		{ PEEvent*tmp = new PEEvent(PEEvent::ANYEDGE, $1);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	;
+  : K_posedge expression
+      { PEEvent*tmp = new PEEvent(PEEvent::POSEDGE, $2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_negedge expression
+      { PEEvent*tmp = new PEEvent(PEEvent::NEGEDGE, $2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_edge expression
+      { PEEvent*tmp = new PEEvent(PEEvent::EDGE, $2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	pform_requires_sv(@1, "Edge event");
+      }
+  | expression
+      { PEEvent*tmp = new PEEvent(PEEvent::ANYEDGE, $1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  ;
 
   /* A branch probe expression applies a probe function (potential or
      flow) to a branch. The branch may be implicit as a pair of nets
@@ -3516,44 +3517,44 @@ expression
   ;
 
 expr_mintypmax
-	: expression
-		{ $$ = $1; }
-	| expression ':' expression ':' expression
-		{ switch (min_typ_max_flag) {
-		      case MIN:
-			$$ = $1;
-			delete $3;
-			delete $5;
-			break;
-		      case TYP:
-			delete $1;
-			$$ = $3;
-			delete $5;
-			break;
-		      case MAX:
-			delete $1;
-			delete $3;
-			$$ = $5;
-			break;
-		  }
-		  if (min_typ_max_warn > 0) {
-		        cerr << $$->get_fileline() << ": warning: choosing ";
-		        switch (min_typ_max_flag) {
-		            case MIN:
-		              cerr << "min";
-		              break;
-		            case TYP:
-		              cerr << "typ";
-		              break;
-		            case MAX:
-		              cerr << "max";
-		              break;
-		        }
-		        cerr << " expression." << endl;
-		        min_typ_max_warn -= 1;
-		  }
-		}
-	;
+  : expression
+      { $$ = $1; }
+  | expression ':' expression ':' expression
+      { switch (min_typ_max_flag) {
+	    case MIN:
+	      $$ = $1;
+	      delete $3;
+	      delete $5;
+	      break;
+	    case TYP:
+	      delete $1;
+	      $$ = $3;
+	      delete $5;
+	      break;
+	    case MAX:
+	      delete $1;
+	      delete $3;
+	      $$ = $5;
+	      break;
+	}
+	if (min_typ_max_warn > 0) {
+	      cerr << $$->get_fileline() << ": warning: choosing ";
+	      switch (min_typ_max_flag) {
+	          case MIN:
+		    cerr << "min";
+		    break;
+		  case TYP:
+		    cerr << "typ";
+		    break;
+		  case MAX:
+		    cerr << "max";
+		    break;
+	      }
+	      cerr << " expression." << endl;
+	      min_typ_max_warn -= 1;
+	}
+      }
+  ;
 
 
   /* Many contexts take a comma separated list of expressions. Null
@@ -3586,14 +3587,16 @@ expression_list_with_nuls
 	tmp->push_back(0);
 	$$ = tmp;
       }
-	;
+  ;
 
   /* A task or function can be invoked with the task/function name followed by
    * an argument list in parenthesis or with just the task/function name by
    * itself. When an argument list is used it might be empty. */
 argument_list_parens_opt
-  : '(' expression_list_with_nuls ')' { $$ = $2; }
-  | { $$ = new std::list<PExpr*>; }
+  : '(' expression_list_with_nuls ')'
+      { $$ = $2; }
+  |
+      { $$ = new std::list<PExpr*>; }
 
 expression_list_proper
   : expression_list_proper ',' expression
@@ -3641,11 +3644,11 @@ expr_primary
   | TIME_LITERAL
       { int unit;
 
-          based_size = 0;
-          $$         = 0;
-          if ($1 == 0 || !get_time_unit($1, unit))
+        based_size = 0;
+        $$         = 0;
+        if ($1 == 0 || !get_time_unit($1, unit))
               yyerror(@1, "internal error: time literal.");
-          else {
+        else {
               double p = pow(10.0, (double)(unit - pform_get_timeunit()));
               double time = atof($1) * p;
               // The time value needs to be rounded at the correct digit
@@ -3660,7 +3663,7 @@ expr_primary
               verireal *v = new verireal(time);
               $$ = new PEFNumber(v);
               FILE_NAME($$, @1);
-          }
+        }
       }
   | SYSTEM_IDENTIFIER
       { perm_string tn = lex_strings.make($1);
@@ -4041,7 +4044,7 @@ expr_primary
 
   | K_null
       { PENull*tmp = new PENull;
-	    FILE_NAME(tmp, @1);
+	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   ;
@@ -4050,8 +4053,10 @@ expr_primary
      declarations of ports. We check later to make sure there are no
      output or inout ports actually used for functions. */
 tf_item_list_opt /* IEEE1800-2017: A.2.7 */
-  : tf_item_list { $$ = $1; }
-  |              { $$ = 0; }
+  : tf_item_list
+      { $$ = $1; }
+  |
+      { $$ = 0; }
   ;
 
 tf_item_list /* IEEE1800-2017: A.2.7 */
@@ -4184,34 +4189,34 @@ gate_instance_list
   ;
 
 gatetype
-	: K_and  { $$ = PGBuiltin::AND; }
-	| K_nand { $$ = PGBuiltin::NAND; }
-	| K_or   { $$ = PGBuiltin::OR; }
-	| K_nor  { $$ = PGBuiltin::NOR; }
-	| K_xor  { $$ = PGBuiltin::XOR; }
-	| K_xnor { $$ = PGBuiltin::XNOR; }
-	| K_buf  { $$ = PGBuiltin::BUF; }
-	| K_bufif0 { $$ = PGBuiltin::BUFIF0; }
-	| K_bufif1 { $$ = PGBuiltin::BUFIF1; }
-	| K_not    { $$ = PGBuiltin::NOT; }
-	| K_notif0 { $$ = PGBuiltin::NOTIF0; }
-	| K_notif1 { $$ = PGBuiltin::NOTIF1; }
-        ;
+  : K_and    { $$ = PGBuiltin::AND; }
+  | K_nand   { $$ = PGBuiltin::NAND; }
+  | K_or     { $$ = PGBuiltin::OR; }
+  | K_nor    { $$ = PGBuiltin::NOR; }
+  | K_xor    { $$ = PGBuiltin::XOR; }
+  | K_xnor   { $$ = PGBuiltin::XNOR; }
+  | K_buf    { $$ = PGBuiltin::BUF; }
+  | K_bufif0 { $$ = PGBuiltin::BUFIF0; }
+  | K_bufif1 { $$ = PGBuiltin::BUFIF1; }
+  | K_not    { $$ = PGBuiltin::NOT; }
+  | K_notif0 { $$ = PGBuiltin::NOTIF0; }
+  | K_notif1 { $$ = PGBuiltin::NOTIF1; }
+  ;
 
 switchtype
-	: K_nmos  { $$ = PGBuiltin::NMOS; }
-	| K_rnmos { $$ = PGBuiltin::RNMOS; }
-	| K_pmos  { $$ = PGBuiltin::PMOS; }
-	| K_rpmos { $$ = PGBuiltin::RPMOS; }
-	| K_cmos  { $$ = PGBuiltin::CMOS; }
-	| K_rcmos { $$ = PGBuiltin::RCMOS; }
-	| K_tran  { $$ = PGBuiltin::TRAN; }
-	| K_rtran { $$ = PGBuiltin::RTRAN; }
-	| K_tranif0 { $$ = PGBuiltin::TRANIF0; }
-	| K_tranif1 { $$ = PGBuiltin::TRANIF1; }
-	| K_rtranif0 { $$ = PGBuiltin::RTRANIF0; }
-	| K_rtranif1 { $$ = PGBuiltin::RTRANIF1; }
-	;
+  : K_nmos     { $$ = PGBuiltin::NMOS; }
+  | K_rnmos    { $$ = PGBuiltin::RNMOS; }
+  | K_pmos     { $$ = PGBuiltin::PMOS; }
+  | K_rpmos    { $$ = PGBuiltin::RPMOS; }
+  | K_cmos     { $$ = PGBuiltin::CMOS; }
+  | K_rcmos    { $$ = PGBuiltin::RCMOS; }
+  | K_tran     { $$ = PGBuiltin::TRAN; }
+  | K_rtran    { $$ = PGBuiltin::RTRAN; }
+  | K_tranif0  { $$ = PGBuiltin::TRANIF0; }
+  | K_tranif1  { $$ = PGBuiltin::TRANIF1; }
+  | K_rtranif0 { $$ = PGBuiltin::RTRANIF0; }
+  | K_rtranif1 { $$ = PGBuiltin::RTRANIF1; }
+  ;
 
 
   /* A general identifier is a hierarchical name, with the right most
@@ -4220,92 +4225,92 @@ switchtype
      names. */
 
 hierarchy_identifier
-    : IDENTIFIER
-        { $$ = new pform_name_t;
-	  $$->push_back(name_component_t(lex_strings.make($1)));
-	  delete[]$1;
-	}
-    | hierarchy_identifier '.' IDENTIFIER
-        { pform_name_t * tmp = $1;
-	  tmp->push_back(name_component_t(lex_strings.make($3)));
-	  delete[]$3;
-	  $$ = tmp;
-	}
-    | hierarchy_identifier '[' expression ']'
-        { pform_name_t * tmp = $1;
-	  name_component_t&tail = tmp->back();
-	  index_component_t itmp;
-	  itmp.sel = index_component_t::SEL_BIT;
-	  itmp.msb = $3;
-	  tail.index.push_back(itmp);
-	  $$ = tmp;
-	}
-    | hierarchy_identifier '[' '$' ']'
-        { pform_requires_sv(@3, "Last element expression ($)");
-          pform_name_t * tmp = $1;
-	  name_component_t&tail = tmp->back();
-	  index_component_t itmp;
-	  itmp.sel = index_component_t::SEL_BIT_LAST;
-	  itmp.msb = 0;
-	  itmp.lsb = 0;
-	  tail.index.push_back(itmp);
-	  $$ = tmp;
-	}
-    | hierarchy_identifier '[' expression ':' expression ']'
-        { pform_name_t * tmp = $1;
-	  name_component_t&tail = tmp->back();
-	  index_component_t itmp;
-	  itmp.sel = index_component_t::SEL_PART;
-	  itmp.msb = $3;
-	  itmp.lsb = $5;
-	  tail.index.push_back(itmp);
-	  $$ = tmp;
-	}
-    | hierarchy_identifier '[' expression K_PO_POS expression ']'
-        { pform_name_t * tmp = $1;
-	  name_component_t&tail = tmp->back();
-	  index_component_t itmp;
-	  itmp.sel = index_component_t::SEL_IDX_UP;
-	  itmp.msb = $3;
-	  itmp.lsb = $5;
-	  tail.index.push_back(itmp);
-	  $$ = tmp;
-	}
-    | hierarchy_identifier '[' expression K_PO_NEG expression ']'
-        { pform_name_t * tmp = $1;
-	  name_component_t&tail = tmp->back();
-	  index_component_t itmp;
-	  itmp.sel = index_component_t::SEL_IDX_DO;
-	  itmp.msb = $3;
-	  itmp.lsb = $5;
-	  tail.index.push_back(itmp);
-	  $$ = tmp;
-	}
-    ;
+  : IDENTIFIER
+      { $$ = new pform_name_t;
+	$$->push_back(name_component_t(lex_strings.make($1)));
+	delete[]$1;
+      }
+  | hierarchy_identifier '.' IDENTIFIER
+      { pform_name_t * tmp = $1;
+	tmp->push_back(name_component_t(lex_strings.make($3)));
+	delete[]$3;
+	$$ = tmp;
+      }
+  | hierarchy_identifier '[' expression ']'
+      { pform_name_t * tmp = $1;
+	name_component_t&tail = tmp->back();
+	index_component_t itmp;
+	itmp.sel = index_component_t::SEL_BIT;
+	itmp.msb = $3;
+	tail.index.push_back(itmp);
+	$$ = tmp;
+      }
+  | hierarchy_identifier '[' '$' ']'
+      { pform_requires_sv(@3, "Last element expression ($)");
+        pform_name_t * tmp = $1;
+	name_component_t&tail = tmp->back();
+	index_component_t itmp;
+	itmp.sel = index_component_t::SEL_BIT_LAST;
+	itmp.msb = 0;
+	itmp.lsb = 0;
+	tail.index.push_back(itmp);
+	$$ = tmp;
+      }
+  | hierarchy_identifier '[' expression ':' expression ']'
+      { pform_name_t * tmp = $1;
+	name_component_t&tail = tmp->back();
+	index_component_t itmp;
+	itmp.sel = index_component_t::SEL_PART;
+	itmp.msb = $3;
+	itmp.lsb = $5;
+	tail.index.push_back(itmp);
+	$$ = tmp;
+      }
+  | hierarchy_identifier '[' expression K_PO_POS expression ']'
+      { pform_name_t * tmp = $1;
+	name_component_t&tail = tmp->back();
+	index_component_t itmp;
+	itmp.sel = index_component_t::SEL_IDX_UP;
+	itmp.msb = $3;
+	itmp.lsb = $5;
+	tail.index.push_back(itmp);
+	$$ = tmp;
+      }
+  | hierarchy_identifier '[' expression K_PO_NEG expression ']'
+      { pform_name_t * tmp = $1;
+	name_component_t&tail = tmp->back();
+	index_component_t itmp;
+	itmp.sel = index_component_t::SEL_IDX_DO;
+	itmp.msb = $3;
+	itmp.lsb = $5;
+	tail.index.push_back(itmp);
+	$$ = tmp;
+      }
+  ;
 
   /* This is a list of identifiers. The result is a list of strings,
      each one of the identifiers in the list. These are simple,
      non-hierarchical names separated by ',' characters. */
 list_of_identifiers
-	: IDENTIFIER
-                { $$ = list_from_identifier($1); }
-	| list_of_identifiers ',' IDENTIFIER
-                { $$ = list_from_identifier($1, $3); }
-	;
+  : IDENTIFIER
+      { $$ = list_from_identifier($1); }
+  | list_of_identifiers ',' IDENTIFIER
+      { $$ = list_from_identifier($1, $3); }
+  ;
 
 list_of_port_identifiers
-	: IDENTIFIER dimensions_opt
-                { $$ = make_port_list($1, $2, 0); }
-	| list_of_port_identifiers ',' IDENTIFIER dimensions_opt
-                { $$ = make_port_list($1, $3, $4, 0); }
-	;
+  : IDENTIFIER dimensions_opt
+      { $$ = make_port_list($1, $2, 0); }
+  | list_of_port_identifiers ',' IDENTIFIER dimensions_opt
+      { $$ = make_port_list($1, $3, $4, 0); }
+  ;
 
 list_of_variable_port_identifiers
-	: IDENTIFIER dimensions_opt initializer_opt
-                { $$ = make_port_list($1, $2, $3); }
-	| list_of_variable_port_identifiers ',' IDENTIFIER dimensions_opt initializer_opt
-                { $$ = make_port_list($1, $3, $4, $5); }
-	;
+  : IDENTIFIER dimensions_opt initializer_opt
+      { $$ = make_port_list($1, $2, $3); }
+  | list_of_variable_port_identifiers ',' IDENTIFIER dimensions_opt initializer_opt
+      { $$ = make_port_list($1, $3, $4, $5); }
+  ;
 
 
   /* The list_of_ports and list_of_port_declarations rules are the
@@ -4325,75 +4330,68 @@ list_of_variable_port_identifiers
      the port list or in amongst the module items. */
 
 list_of_ports
-	: port_opt
-		{ std::vector<Module::port_t*>*tmp
-			  = new std::vector<Module::port_t*>(1);
-		  (*tmp)[0] = $1;
-		  $$ = tmp;
-		}
-	| list_of_ports ',' port_opt
-	        { std::vector<Module::port_t*>*tmp = $1;
-		  tmp->push_back($3);
-		  $$ = tmp;
-		}
-	;
+  : port_opt
+      { std::vector<Module::port_t*>*tmp = new std::vector<Module::port_t*>(1);
+	(*tmp)[0] = $1;
+	$$ = tmp;
+      }
+  | list_of_ports ',' port_opt
+      { std::vector<Module::port_t*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
+  ;
 
 list_of_port_declarations
-	: port_declaration
-		{ std::vector<Module::port_t*>*tmp
-			  = new std::vector<Module::port_t*>(1);
-		  (*tmp)[0] = $1;
-		  $$ = tmp;
-		}
-	| list_of_port_declarations ',' port_declaration
-	        { std::vector<Module::port_t*>*tmp = $1;
-		  tmp->push_back($3);
-		  $$ = tmp;
-		}
-	| list_of_port_declarations ',' IDENTIFIER initializer_opt
-		{ Module::port_t*ptmp;
-		  perm_string name = lex_strings.make($3);
-		  ptmp = pform_module_port_reference(@3, name);
-		  std::vector<Module::port_t*>*tmp = $1;
-		  tmp->push_back(ptmp);
+  : port_declaration
+      { std::vector<Module::port_t*>*tmp = new std::vector<Module::port_t*>(1);
+	(*tmp)[0] = $1;
+	$$ = tmp;
+      }
+  | list_of_port_declarations ',' port_declaration
+      { std::vector<Module::port_t*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
+  | list_of_port_declarations ',' IDENTIFIER initializer_opt
+      { Module::port_t*ptmp;
+	perm_string name = lex_strings.make($3);
+	ptmp = pform_module_port_reference(@3, name);
+	std::vector<Module::port_t*>*tmp = $1;
+	tmp->push_back(ptmp);
 
-		  if ($4) {
-		        switch (port_declaration_context.port_type) {
-		            case NetNet::PINOUT:
-			      yyerror(@4, "error: Default port value not allowed for inout ports.");
-			      break;
-			    case NetNet::PINPUT:
-			      pform_requires_sv(@4, "Default port value");
-			      ptmp->default_value = $4;
-			      break;
-			    case NetNet::POUTPUT:
-			      pform_make_var_init(@3, name, $4);
-			      break;
-			    default:
-			      break;
-			}
-		  }
-		    /* Get the port declaration details, the port type
-		       and what not, from context data stored by the
-		       last port_declaration rule. */
-		  pform_module_define_port(@3, name,
-					port_declaration_context.port_type,
-					port_declaration_context.port_net_type,
-					port_declaration_context.data_type,
-					nullptr, nullptr);
-		  delete[]$3;
-		  $$ = tmp;
+	if ($4) {
+	      switch (port_declaration_context.port_type) {
+		  case NetNet::PINOUT:
+		    yyerror(@4, "error: Default port value not allowed for inout ports.");
+		    break;
+		  case NetNet::PINPUT:
+		    pform_requires_sv(@4, "Default port value");
+		    ptmp->default_value = $4;
+		    break;
+		  case NetNet::POUTPUT:
+		    pform_make_var_init(@3, name, $4);
+		    break;
+		  default:
+		    break;
 		}
-	| list_of_port_declarations ','
-		{
-		  yyerror(@2, "error: Superfluous comma in port declaration list.");
-		}
-	| list_of_port_declarations ';'
-		{
-		  yyerror(@2, "error: ';' is an invalid port declaration "
-		              "separator.");
-		}
-        ;
+	}
+	  /* Get the port declaration details, the port type
+	     and what not, from context data stored by the
+	     last port_declaration rule. */
+	pform_module_define_port(@3, name,
+				 port_declaration_context.port_type,
+				 port_declaration_context.port_net_type,
+				 port_declaration_context.data_type,
+				 nullptr, nullptr);
+	delete[]$3;
+	$$ = tmp;
+      }
+  | list_of_port_declarations ','
+      { yyerror(@2, "error: Superfluous comma in port declaration list."); }
+  | list_of_port_declarations ';'
+      { yyerror(@2, "error: ';' is an invalid port declaration separator."); }
+  ;
 
 port_declaration
   : attribute_list_opt K_input net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt
@@ -4730,14 +4728,17 @@ label_opt
   ;
 
 module_attribute_foreign
-	: K_PSTAR IDENTIFIER K_integer IDENTIFIER '=' STRING ';' K_STARP { $$ = 0; }
-	| { $$ = 0; }
-	;
+  : K_PSTAR IDENTIFIER K_integer IDENTIFIER '=' STRING ';' K_STARP { $$ = 0; }
+  | { $$ = 0; }
+  ;
 
 module_port_list_opt
-  : '(' list_of_ports ')' { $$ = $2; }
-  | '(' list_of_port_declarations ')' { $$ = $2; }
-  |                       { $$ = 0; }
+  : '(' list_of_ports ')'
+      { $$ = $2; }
+  | '(' list_of_port_declarations ')'
+      { $$ = $2; }
+  |
+      { $$ = 0; }
   | '(' error ')'
       { yyerror(@2, "Errors in port declarations.");
 	yyerrok;
@@ -4751,9 +4752,9 @@ module_port_list_opt
 module_parameter_port_list_opt
   :
   | '#' '('
-    { pform_start_parameter_port_list(); }
+      { pform_start_parameter_port_list(); }
     module_parameter_port_list
-    { pform_end_parameter_port_list(); }
+      { pform_end_parameter_port_list(); }
     ')'
   ;
 
@@ -4771,28 +4772,26 @@ module_parameter
 module_parameter_port_list
   : module_parameter
   | data_type_opt
-    { param_data_type = $1;
-      param_is_local = false;
-      param_is_type = false;
-    }
+      { param_data_type = $1;
+        param_is_local = false;
+        param_is_type = false;
+      }
     parameter_assign
-    { pform_requires_sv(@3, "Omitting initial `parameter` in parameter port "
-			    "list");
-    }
+      { pform_requires_sv(@3, "Omitting initial `parameter` in parameter port "
+			      "list");
+      }
   | type_param
-    {
-      param_is_local = false;
-    }
+      { param_is_local = false; }
     parameter_assign
   | module_parameter_port_list ',' module_parameter
   | module_parameter_port_list ',' data_type_opt
-    { if ($3) {
-	    pform_requires_sv(@3, "Omitting `parameter`/`localparam` before "
-				  "data type in parameter port list");
-	    param_data_type = $3;
-	    param_is_type = false;
+      { if ($3) {
+	      pform_requires_sv(@3, "Omitting `parameter`/`localparam` before "
+				    "data type in parameter port list");
+	      param_data_type = $3;
+	      param_is_type = false;
+        }
       }
-    }
     parameter_assign
   | module_parameter_port_list ',' type_param parameter_assign
   ;
@@ -4869,11 +4868,11 @@ module_item
 	delete $1;
       }
 
-	| K_trireg charge_strength_opt dimensions_opt delay3_opt list_of_identifiers ';'
-		{ yyerror(@1, "sorry: trireg nets not supported.");
-		  delete $3;
-		  delete $4;
-		}
+  | K_trireg charge_strength_opt dimensions_opt delay3_opt list_of_identifiers ';'
+      { yyerror(@1, "sorry: trireg nets not supported.");
+	delete $3;
+	delete $4;
+      }
 
 
   /* The next two rules handle port declarations that include a net type, e.g.
@@ -5048,26 +5047,26 @@ module_item
      primitives. These devices to not have delay lists or strengths,
      but then can have parameter lists. */
 
-	| attribute_list_opt
+  | attribute_list_opt
 	  IDENTIFIER parameter_value_opt gate_instance_list ';'
-		{ perm_string tmp1 = lex_strings.make($2);
+      { perm_string tmp1 = lex_strings.make($2);
 		  pform_make_modgates(@2, tmp1, $3, $4, $1);
 		  delete[]$2;
-		}
+      }
 
         | attribute_list_opt
 	  IDENTIFIER parameter_value_opt error ';'
-		{ yyerror(@2, "error: Invalid module instantiation");
+      { yyerror(@2, "error: Invalid module instantiation");
 		  delete[]$2;
 		  if ($1) delete $1;
-		}
+      }
 
   /* Continuous assignment can have an optional drive strength, then
      an optional delay3 that applies to all the assignments in the
      cont_assign_list. */
 
-	| K_assign drive_strength_opt delay3_opt cont_assign_list ';'
-		{ pform_make_pgassign_list(@1, $4, $3, $2); }
+  | K_assign drive_strength_opt delay3_opt cont_assign_list ';'
+      { pform_make_pgassign_list(@1, $4, $3, $2); }
 
   /* Always and initial items are behavioral processes. */
 
@@ -5203,7 +5202,7 @@ module_item
 	yyerrok;
       }
 
-   | K_assign error ';'
+  | K_assign error ';'
       { yyerror(@1, "error: syntax error in continuous assignment");
 	yyerrok;
       }
@@ -5282,7 +5281,10 @@ module_item_list_opt
   |
   ;
 
-generate_if : K_if '(' expression ')' { pform_start_generate_if(@1, $3); } ;
+generate_if
+  : K_if '(' expression ')'
+      { pform_start_generate_if(@1, $3); }
+  ;
 
 generate_case_items
   : generate_case_items generate_case_item
@@ -5290,9 +5292,13 @@ generate_case_items
   ;
 
 generate_case_item
-  : expression_list_proper ':' { pform_generate_case_item(@1, $1); } generate_block
+  : expression_list_proper ':'
+      { pform_generate_case_item(@1, $1); }
+    generate_block
       { pform_endgenerate(false); }
-  | K_default ':' { pform_generate_case_item(@1, 0); } generate_block
+  | K_default ':'
+      { pform_generate_case_item(@1, 0); }
+    generate_block
       { pform_endgenerate(false); }
   ;
 
@@ -5306,9 +5312,9 @@ generate_item
 	      cerr << @1 << ": warning: Anachronistic use of begin/end to surround generate schemes." << endl;
 	}
       }
-  | K_begin ':' IDENTIFIER {
-	pform_start_generate_nblock(@1, $3);
-      } generate_item_list_opt K_end
+  | K_begin ':' IDENTIFIER
+      { pform_start_generate_nblock(@1, $3); }
+    generate_item_list_opt K_end
       { /* Detect and warn about anachronistic named begin/end use */
 	if (generation_flag > GN_VER2001 && warn_anachronisms) {
 	      warn_count += 1;
@@ -5324,7 +5330,8 @@ generate_item_list
   ;
 
 generate_item_list_opt
-  : { pform_generate_single_item = false; } generate_item_list
+  :   { pform_generate_single_item = false; }
+    generate_item_list
   |
   ;
 
@@ -5335,9 +5342,9 @@ generate_item_list_opt
      only need to take note here of the scope name, if any. */
 
 generate_block
-  : { pform_generate_single_item = true; }
+  :   { pform_generate_single_item = true; }
     module_item
-    { pform_generate_single_item = false; }
+      { pform_generate_single_item = false; }
   | K_begin label_opt generate_item_list_opt K_end label_opt
       { if ($2)
 	    pform_generate_block_name($2);
@@ -5364,49 +5371,49 @@ net_decl_assign
   ;
 
 net_decl_assigns
-	: net_decl_assigns ',' net_decl_assign
+  : net_decl_assigns ',' net_decl_assign
       { std::list<decl_assignment_t*>*tmp = $1;
 	tmp->push_back($3);
 	$$ = tmp;
       }
-	| net_decl_assign
+  | net_decl_assign
       { std::list<decl_assignment_t*>*tmp = new std::list<decl_assignment_t*>;
 	tmp->push_back($1);
 	$$ = tmp;
       }
-	;
+  ;
 
 net_type
-	: K_wire    { $$ = NetNet::WIRE; }
-	| K_tri     { $$ = NetNet::TRI; }
-	| K_tri1    { $$ = NetNet::TRI1; }
-	| K_supply0 { $$ = NetNet::SUPPLY0; }
-	| K_wand    { $$ = NetNet::WAND; }
-	| K_triand  { $$ = NetNet::TRIAND; }
-	| K_tri0    { $$ = NetNet::TRI0; }
-	| K_supply1 { $$ = NetNet::SUPPLY1; }
-	| K_wor     { $$ = NetNet::WOR; }
-	| K_trior   { $$ = NetNet::TRIOR; }
-	| K_wone    { $$ = NetNet::UNRESOLVED_WIRE;
-		      cerr << @1.text << ":" << @1.first_line << ": warning: "
-		              "'wone' is deprecated, please use 'uwire' "
-		              "instead." << endl;
-		    }
-	| K_uwire   { $$ = NetNet::UNRESOLVED_WIRE; }
-	;
+  : K_wire    { $$ = NetNet::WIRE; }
+  | K_tri     { $$ = NetNet::TRI; }
+  | K_tri1    { $$ = NetNet::TRI1; }
+  | K_supply0 { $$ = NetNet::SUPPLY0; }
+  | K_wand    { $$ = NetNet::WAND; }
+  | K_triand  { $$ = NetNet::TRIAND; }
+  | K_tri0    { $$ = NetNet::TRI0; }
+  | K_supply1 { $$ = NetNet::SUPPLY1; }
+  | K_wor     { $$ = NetNet::WOR; }
+  | K_trior   { $$ = NetNet::TRIOR; }
+  | K_wone    { $$ = NetNet::UNRESOLVED_WIRE;
+		cerr << @1.text << ":" << @1.first_line << ": warning: "
+		        "'wone' is deprecated, please use 'uwire' "
+		        "instead." << endl;
+	      }
+  | K_uwire   { $$ = NetNet::UNRESOLVED_WIRE; }
+  ;
 
 net_type_opt
   : net_type { $$ = $1; }
-  | { $$ = NetNet::IMPLICIT; }
+  |          { $$ = NetNet::IMPLICIT; }
   ;
 
 net_type_or_var
   : net_type { $$ = $1; }
-  | K_var { $$ = NetNet::REG; }
+  | K_var    { $$ = NetNet::REG; }
 
 net_type_or_var_opt
   : net_type_opt { $$ = $1; }
-  | K_var { $$ = NetNet::REG; }
+  | K_var        { $$ = NetNet::REG; }
   ;
 
   /* The param_type rule is just the data_type_or_implicit rule wrapped
@@ -5416,13 +5423,20 @@ net_type_or_var_opt
 
 param_type
   : data_type_or_implicit
-    { param_is_type = false;
-      param_data_type = $1;
-    }
+      { param_is_type = false;
+        param_data_type = $1;
+      }
   | type_param
 
-parameter : K_parameter { param_is_local = false; };
-localparam : K_localparam { param_is_local = true; };
+parameter
+  : K_parameter
+      { param_is_local = false; }
+  ;
+
+localparam
+  : K_localparam
+      { param_is_local = true; }
+  ;
 
 parameter_declaration
   : parameter_or_localparam param_type parameter_assign_list ';'
@@ -5474,9 +5488,9 @@ parameter_value_range
 
 value_range_expression
   : expression { $$ = $1; }
-  | K_inf { $$ = 0; }
-  | '+' K_inf { $$ = 0; }
-  | '-' K_inf { $$ = 0; }
+  | K_inf      { $$ = 0; }
+  | '+' K_inf  { $$ = 0; }
+  | '-' K_inf  { $$ = 0; }
   ;
 
 from_exclude : K_from { $$ = false; } | K_exclude { $$ = true; } ;
@@ -5498,66 +5512,65 @@ from_exclude : K_from { $$ = false; } | K_exclude { $$ = true; } ;
      approved by WG1364 on 6/28/1998. */
 
 parameter_value_opt
-	: '#' '(' expression_list_with_nuls ')'
-		{ struct parmvalue_t*tmp = new struct parmvalue_t;
-		  tmp->by_order = $3;
-		  tmp->by_name = 0;
-		  $$ = tmp;
-		}
-	| '#' '(' parameter_value_byname_list ')'
-		{ struct parmvalue_t*tmp = new struct parmvalue_t;
-		  tmp->by_order = 0;
-		  tmp->by_name = $3;
-		  $$ = tmp;
-		}
-	| '#' DEC_NUMBER
-		{ assert($2);
-		  PENumber*tmp = new PENumber($2);
-		  FILE_NAME(tmp, @1);
+  : '#' '(' expression_list_with_nuls ')'
+      { struct parmvalue_t*tmp = new struct parmvalue_t;
+	tmp->by_order = $3;
+	tmp->by_name = 0;
+	$$ = tmp;
+      }
+  | '#' '(' parameter_value_byname_list ')'
+      { struct parmvalue_t*tmp = new struct parmvalue_t;
+	tmp->by_order = 0;
+	tmp->by_name = $3;
+	$$ = tmp;
+      }
+  | '#' DEC_NUMBER
+      { assert($2);
+	PENumber*tmp = new PENumber($2);
+	FILE_NAME(tmp, @1);
 
-		  struct parmvalue_t*lst = new struct parmvalue_t;
-		  lst->by_order = new std::list<PExpr*>;
-		  lst->by_order->push_back(tmp);
-		  lst->by_name = 0;
-		  $$ = lst;
-		  based_size = 0;
-		}
-	| '#' REALTIME
-		{ assert($2);
-		  PEFNumber*tmp = new PEFNumber($2);
-		  FILE_NAME(tmp, @1);
+	struct parmvalue_t*lst = new struct parmvalue_t;
+	lst->by_order = new std::list<PExpr*>;
+	lst->by_order->push_back(tmp);
+	lst->by_name = 0;
+	$$ = lst;
+	based_size = 0;
+      }
+  | '#' REALTIME
+      { assert($2);
+	PEFNumber*tmp = new PEFNumber($2);
+	FILE_NAME(tmp, @1);
 
-		  struct parmvalue_t*lst = new struct parmvalue_t;
-		  lst->by_order = new std::list<PExpr*>;
-		  lst->by_order->push_back(tmp);
-		  lst->by_name = 0;
-		  $$ = lst;
-		}
-	| '#' error
-		{ yyerror(@1, "error: syntax error in parameter value "
-			  "assignment list.");
-		  $$ = 0;
-		}
-	|
-		{ $$ = 0; }
-	;
+	struct parmvalue_t*lst = new struct parmvalue_t;
+	lst->by_order = new std::list<PExpr*>;
+	lst->by_order->push_back(tmp);
+	lst->by_name = 0;
+	$$ = lst;
+      }
+  | '#' error
+      { yyerror(@1, "error: syntax error in parameter value assignment list.");
+	$$ = 0;
+      }
+  |
+      { $$ = 0; }
+  ;
 
 parameter_value_byname
-	: '.' IDENTIFIER '(' expression ')'
-		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make($2);
-		  tmp->parm = $4;
-		  delete[]$2;
-		  $$ = tmp;
-		}
-	| '.' IDENTIFIER '(' ')'
-		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make($2);
-		  tmp->parm = 0;
-		  delete[]$2;
-		  $$ = tmp;
-		}
-	;
+  : '.' IDENTIFIER '(' expression ')'
+      { named_pexpr_t*tmp = new named_pexpr_t;
+	tmp->name = lex_strings.make($2);
+	tmp->parm = $4;
+	delete[]$2;
+	$$ = tmp;
+      }
+  | '.' IDENTIFIER '(' ')'
+      { named_pexpr_t*tmp = new named_pexpr_t;
+	tmp->name = lex_strings.make($2);
+	tmp->parm = 0;
+	delete[]$2;
+	$$ = tmp;
+      }
+  ;
 
 parameter_value_byname_list
   : parameter_value_byname
@@ -5589,93 +5602,93 @@ parameter_value_byname_list
      tweaks its name as needed. */
 
 port
-	: port_reference
-		{ $$ = $1; }
+  : port_reference
+      { $$ = $1; }
 
   /* This syntax attaches an external name to the port reference so
      that the caller can bind by name to non-trivial port
      references. The port_t object gets its PWire from the
      port_reference, but its name from the IDENTIFIER. */
 
-	| '.' IDENTIFIER '(' port_reference ')'
-		{ Module::port_t*tmp = $4;
-		  tmp->name = lex_strings.make($2);
-		  delete[]$2;
-		  $$ = tmp;
-		}
+  | '.' IDENTIFIER '(' port_reference ')'
+      { Module::port_t*tmp = $4;
+	tmp->name = lex_strings.make($2);
+	delete[]$2;
+	$$ = tmp;
+      }
 
   /* A port can also be a concatenation of port references. In this
      case the port does not have a name available to the outside, only
      positional parameter passing is possible here. */
 
-	| '{' port_reference_list '}'
-		{ Module::port_t*tmp = $2;
-		  tmp->name = perm_string();
-		  $$ = tmp;
-		}
+  | '{' port_reference_list '}'
+      { Module::port_t*tmp = $2;
+	tmp->name = perm_string();
+	$$ = tmp;
+      }
 
   /* This attaches a name to a port reference concatenation list so
      that parameter passing be name is possible. */
 
-	| '.' IDENTIFIER '(' '{' port_reference_list '}' ')'
-		{ Module::port_t*tmp = $5;
-		  tmp->name = lex_strings.make($2);
-		  delete[]$2;
-		  $$ = tmp;
-		}
-	;
+  | '.' IDENTIFIER '(' '{' port_reference_list '}' ')'
+      { Module::port_t*tmp = $5;
+	tmp->name = lex_strings.make($2);
+	delete[]$2;
+	$$ = tmp;
+      }
+  ;
 
 port_opt
-	: port { $$ = $1; }
-	| { $$ = 0; }
-	;
+  : port { $$ = $1; }
+  |      { $$ = 0; }
+  ;
 
   /* The port_name rule is used with a module is being *instantiated*,
      and not when it is being declared. See the port rule if you are
      looking for the ports of a module declaration. */
 
 port_name
-	: attribute_list_opt '.' IDENTIFIER '(' expression ')'
-		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make($3);
-		  tmp->parm = $5;
-		  delete[]$3;
-		  delete $1;
-		  $$ = tmp;
-		}
-	| attribute_list_opt '.' IDENTIFIER '(' error ')'
-		{ yyerror(@3, "error: invalid port connection expression.");
-		  named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make($3);
-		  tmp->parm = 0;
-		  delete[]$3;
-		  delete $1;
-		  $$ = tmp;
-		}
-	| attribute_list_opt '.' IDENTIFIER '(' ')'
-		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make($3);
-		  tmp->parm = 0;
-		  delete[]$3;
-		  delete $1;
-		  $$ = tmp;
-		}
-	| attribute_list_opt '.' IDENTIFIER
-		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make($3);
-		  tmp->parm = new PEIdent(lex_strings.make($3), true);
-		  FILE_NAME(tmp->parm, @1);
-		  delete[]$3;
-		  delete $1;
-		  $$ = tmp;
-		}
-	| K_DOTSTAR
-		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make("*");
-		  tmp->parm = 0;
-		  $$ = tmp;
-		}
-	;
+  : attribute_list_opt '.' IDENTIFIER '(' expression ')'
+      { named_pexpr_t*tmp = new named_pexpr_t;
+	tmp->name = lex_strings.make($3);
+	tmp->parm = $5;
+	delete[]$3;
+	delete $1;
+	$$ = tmp;
+      }
+  | attribute_list_opt '.' IDENTIFIER '(' error ')'
+      { yyerror(@3, "error: invalid port connection expression.");
+	named_pexpr_t*tmp = new named_pexpr_t;
+	tmp->name = lex_strings.make($3);
+	tmp->parm = 0;
+	delete[]$3;
+	delete $1;
+	$$ = tmp;
+      }
+  | attribute_list_opt '.' IDENTIFIER '(' ')'
+      { named_pexpr_t*tmp = new named_pexpr_t;
+	tmp->name = lex_strings.make($3);
+	tmp->parm = 0;
+	delete[]$3;
+	delete $1;
+	$$ = tmp;
+      }
+  | attribute_list_opt '.' IDENTIFIER
+      { named_pexpr_t*tmp = new named_pexpr_t;
+	tmp->name = lex_strings.make($3);
+	tmp->parm = new PEIdent(lex_strings.make($3), true);
+	FILE_NAME(tmp->parm, @1);
+	delete[]$3;
+	delete $1;
+	$$ = tmp;
+      }
+  | K_DOTSTAR
+      { named_pexpr_t*tmp = new named_pexpr_t;
+	tmp->name = lex_strings.make("*");
+	tmp->parm = 0;
+	$$ = tmp;
+      }
+  ;
 
 port_name_list
   : port_name_list ',' port_name
@@ -5728,90 +5741,86 @@ port_conn_expression_list_with_nuls
      port_t object to pass it up to the module declaration code. */
 
 port_reference
+  : IDENTIFIER
+      { Module::port_t*ptmp;
+	perm_string name = lex_strings.make($1);
+	ptmp = pform_module_port_reference(@1, name);
+	delete[]$1;
+	$$ = ptmp;
+      }
+  | IDENTIFIER '[' expression ':' expression ']'
+      { index_component_t itmp;
+	itmp.sel = index_component_t::SEL_PART;
+	itmp.msb = $3;
+	itmp.lsb = $5;
 
-    : IDENTIFIER
-        { Module::port_t*ptmp;
-	  perm_string name = lex_strings.make($1);
-	  ptmp = pform_module_port_reference(@1, name);
-	  delete[]$1;
-	  $$ = ptmp;
-	}
+	name_component_t ntmp (lex_strings.make($1));
+	ntmp.index.push_back(itmp);
 
-    | IDENTIFIER '[' expression ':' expression ']'
-	{ index_component_t itmp;
-	  itmp.sel = index_component_t::SEL_PART;
-	  itmp.msb = $3;
-	  itmp.lsb = $5;
+	pform_name_t pname;
+	pname.push_back(ntmp);
 
-	  name_component_t ntmp (lex_strings.make($1));
-	  ntmp.index.push_back(itmp);
+	PEIdent*wtmp = new PEIdent(pname);
+	FILE_NAME(wtmp, @1);
 
-	  pform_name_t pname;
-	  pname.push_back(ntmp);
+	Module::port_t*ptmp = new Module::port_t;
+	ptmp->name = perm_string();
+	ptmp->expr.push_back(wtmp);
+	ptmp->default_value = 0;
 
-	  PEIdent*wtmp = new PEIdent(pname);
-	  FILE_NAME(wtmp, @1);
+	delete[]$1;
+	$$ = ptmp;
+      }
+  | IDENTIFIER '[' expression ']'
+      { index_component_t itmp;
+	itmp.sel = index_component_t::SEL_BIT;
+	itmp.msb = $3;
+	itmp.lsb = 0;
 
-	  Module::port_t*ptmp = new Module::port_t;
-	  ptmp->name = perm_string();
-	  ptmp->expr.push_back(wtmp);
-	  ptmp->default_value = 0;
+	name_component_t ntmp (lex_strings.make($1));
+	ntmp.index.push_back(itmp);
 
-	  delete[]$1;
-	  $$ = ptmp;
-	}
+	pform_name_t pname;
+	pname.push_back(ntmp);
 
-    | IDENTIFIER '[' expression ']'
-	{ index_component_t itmp;
-	  itmp.sel = index_component_t::SEL_BIT;
-	  itmp.msb = $3;
-	  itmp.lsb = 0;
+	PEIdent*tmp = new PEIdent(pname);
+	FILE_NAME(tmp, @1);
 
-	  name_component_t ntmp (lex_strings.make($1));
-	  ntmp.index.push_back(itmp);
-
-	  pform_name_t pname;
-	  pname.push_back(ntmp);
-
-	  PEIdent*tmp = new PEIdent(pname);
-	  FILE_NAME(tmp, @1);
-
-	  Module::port_t*ptmp = new Module::port_t;
-	  ptmp->name = perm_string();
-	  ptmp->expr.push_back(tmp);
-	  ptmp->default_value = 0;
-	  delete[]$1;
-	  $$ = ptmp;
-	}
-
-    | IDENTIFIER '[' error ']'
-        { yyerror(@1, "error: invalid port bit select");
-	  Module::port_t*ptmp = new Module::port_t;
-	  PEIdent*wtmp = new PEIdent(lex_strings.make($1));
-	  FILE_NAME(wtmp, @1);
-	  ptmp->name = lex_strings.make($1);
-	  ptmp->expr.push_back(wtmp);
-	  ptmp->default_value = 0;
-	  delete[]$1;
-	  $$ = ptmp;
-	}
-    ;
+	Module::port_t*ptmp = new Module::port_t;
+	ptmp->name = perm_string();
+	ptmp->expr.push_back(tmp);
+	ptmp->default_value = 0;
+	delete[]$1;
+	$$ = ptmp;
+      }
+  | IDENTIFIER '[' error ']'
+      { yyerror(@1, "error: invalid port bit select");
+	Module::port_t*ptmp = new Module::port_t;
+	PEIdent*wtmp = new PEIdent(lex_strings.make($1));
+	FILE_NAME(wtmp, @1);
+	ptmp->name = lex_strings.make($1);
+	ptmp->expr.push_back(wtmp);
+	ptmp->default_value = 0;
+	delete[]$1;
+	$$ = ptmp;
+      }
+  ;
 
 
 port_reference_list
-	: port_reference
-		{ $$ = $1; }
-	| port_reference_list ',' port_reference
-		{ Module::port_t*tmp = $1;
-		  append(tmp->expr, $3->expr);
-		  delete $3;
-		  $$ = tmp;
-		}
-	;
+  : port_reference
+      { $$ = $1; }
+  | port_reference_list ',' port_reference
+      { Module::port_t*tmp = $1;
+	append(tmp->expr, $3->expr);
+	delete $3;
+	$$ = tmp;
+      }
+  ;
 
   /* The range is a list of variable dimensions. */
 dimensions_opt
-  : { $$ = 0; }
+  :            { $$ = 0; }
   | dimensions { $$ = $1; }
   ;
 
@@ -5837,16 +5846,16 @@ net_variable
   ;
 
 net_variable_list
-	: net_variable
-		{ std::vector<PWire*> *tmp = new std::vector<PWire*>;
-		  tmp->push_back($1);
-		  $$ = tmp;
-		}
-	| net_variable_list ',' net_variable
-		{ $1->push_back($3);
-		  $$ = $1;
-		}
-	;
+  : net_variable
+      { std::vector<PWire*> *tmp = new std::vector<PWire*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
+  | net_variable_list ',' net_variable
+      { $1->push_back($3);
+	$$ = $1;
+      }
+  ;
 
 event_variable
   : IDENTIFIER dimensions_opt
@@ -5866,303 +5875,303 @@ event_variable_list
   ;
 
 specify_item
-	: K_specparam specparam_decl ';'
-	| specify_simple_path_decl ';'
-                { pform_module_specify_path($1);
-		}
-	| specify_edge_path_decl ';'
-		{ pform_module_specify_path($1);
-		}
-	| K_if '(' expression ')' specify_simple_path_decl ';'
-                { PSpecPath*tmp = $5;
-		  if (tmp) {
-			tmp->conditional = true;
-			tmp->condition = $3;
-		  }
-		  pform_module_specify_path(tmp);
-		}
-	| K_if '(' expression ')' specify_edge_path_decl ';'
-                { PSpecPath*tmp = $5;
-		  if (tmp) {
-			tmp->conditional = true;
-			tmp->condition = $3;
-		  }
-		  pform_module_specify_path(tmp);
-		}
-	| K_ifnone specify_simple_path_decl ';'
-                { PSpecPath*tmp = $2;
-		  if (tmp) {
-			tmp->conditional = true;
-			tmp->condition = 0;
-		  }
-		  pform_module_specify_path(tmp);
-		}
-	| K_ifnone specify_edge_path_decl ';'
-		{ yywarn(@1, "Sorry: ifnone with an edge-sensitive path is "
-		              "not supported.");
-		  yyerrok;
-		}
-	| K_Sfullskew '(' spec_reference_event ',' spec_reference_event
+  : K_specparam specparam_decl ';'
+  | specify_simple_path_decl ';'
+      { pform_module_specify_path($1); }
+  | specify_edge_path_decl ';'
+      { pform_module_specify_path($1); }
+  | K_if '(' expression ')' specify_simple_path_decl ';'
+      { PSpecPath*tmp = $5;
+	if (tmp) {
+	      tmp->conditional = true;
+	      tmp->condition = $3;
+	}
+	pform_module_specify_path(tmp);
+      }
+  | K_if '(' expression ')' specify_edge_path_decl ';'
+      { PSpecPath*tmp = $5;
+	if (tmp) {
+	      tmp->conditional = true;
+	      tmp->condition = $3;
+	}
+	pform_module_specify_path(tmp);
+      }
+  | K_ifnone specify_simple_path_decl ';'
+      { PSpecPath*tmp = $2;
+	if (tmp) {
+	      tmp->conditional = true;
+	      tmp->condition = 0;
+	}
+	pform_module_specify_path(tmp);
+      }
+  | K_ifnone specify_edge_path_decl ';'
+      { yywarn(@1, "Sorry: ifnone with an edge-sensitive path is not supported.");
+	yyerrok;
+      }
+  | K_Sfullskew '(' spec_reference_event ',' spec_reference_event
+    ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
+      { delete $7;
+	delete $9;
+      }
+  | K_Shold '(' spec_reference_event ',' spec_reference_event
+    ',' delay_value spec_notifier_opt ')' ';'
+      { delete $7;
+      }
+  | K_Snochange '(' spec_reference_event ',' spec_reference_event
 	  ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
-		{ delete $7;
-		  delete $9;
-		}
-	| K_Shold '(' spec_reference_event ',' spec_reference_event
-	  ',' delay_value spec_notifier_opt ')' ';'
-		{ delete $7;
-		}
-	| K_Snochange '(' spec_reference_event ',' spec_reference_event
-	  ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
-		{ delete $7;
-		  delete $9;
-		}
-	| K_Speriod '(' spec_reference_event ',' delay_value
-	  spec_notifier_opt ')' ';'
-		{ delete $5;
-		}
-	| K_Srecovery '(' spec_reference_event ',' spec_reference_event
-	  ',' delay_value spec_notifier_opt ')' ';'
-		{ delete $7;
-		}
-	| K_Srecrem '(' spec_reference_event ',' spec_reference_event
-	  ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
-		{ delete $7;
-		  delete $9;
-		}
-	| K_Sremoval '(' spec_reference_event ',' spec_reference_event
-	  ',' delay_value spec_notifier_opt ')' ';'
-		{ delete $7;
-		}
-	| K_Ssetup '(' spec_reference_event ',' spec_reference_event
-	  ',' delay_value spec_notifier_opt ')' ';'
-		{ delete $7;
-		}
-	| K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
-	  ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
-		{ delete $7;
-		  delete $9;
-		}
-	| K_Sskew '(' spec_reference_event ',' spec_reference_event
-	  ',' delay_value spec_notifier_opt ')' ';'
-		{ delete $7;
-		}
-	| K_Stimeskew '(' spec_reference_event ',' spec_reference_event
-	  ',' delay_value spec_notifier_opt ')' ';'
-		{ delete $7;
-		}
-	| K_Swidth '(' spec_reference_event ',' delay_value ',' expression
-	  spec_notifier_opt ')' ';'
-		{ delete $5;
-		  delete $7;
-		}
-	| K_Swidth '(' spec_reference_event ',' delay_value ')' ';'
-		{ delete $5;
-		}
-	| K_pulsestyle_onevent specify_path_identifiers ';'
-		{ delete $2;
-		}
-	| K_pulsestyle_ondetect specify_path_identifiers ';'
-		{ delete $2;
-		}
-	| K_showcancelled specify_path_identifiers ';'
-		{ delete $2;
-		}
-	| K_noshowcancelled specify_path_identifiers ';'
-		{ delete $2;
-		}
-	;
+      { delete $7;
+	delete $9;
+      }
+  | K_Speriod '(' spec_reference_event ',' delay_value
+    spec_notifier_opt ')' ';'
+      { delete $5;
+      }
+  | K_Srecovery '(' spec_reference_event ',' spec_reference_event
+    ',' delay_value spec_notifier_opt ')' ';'
+      { delete $7;
+      }
+  | K_Srecrem '(' spec_reference_event ',' spec_reference_event
+    ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
+      { delete $7;
+	 delete $9;
+      }
+  | K_Sremoval '(' spec_reference_event ',' spec_reference_event
+    ',' delay_value spec_notifier_opt ')' ';'
+      { delete $7;
+      }
+  | K_Ssetup '(' spec_reference_event ',' spec_reference_event
+    ',' delay_value spec_notifier_opt ')' ';'
+      { delete $7;
+      }
+  | K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
+    ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
+      { delete $7;
+	delete $9;
+      }
+  | K_Sskew '(' spec_reference_event ',' spec_reference_event
+    ',' delay_value spec_notifier_opt ')' ';'
+      { delete $7;
+      }
+  | K_Stimeskew '(' spec_reference_event ',' spec_reference_event
+    ',' delay_value spec_notifier_opt ')' ';'
+      { delete $7;
+      }
+  | K_Swidth '(' spec_reference_event ',' delay_value ',' expression
+    spec_notifier_opt ')' ';'
+      { delete $5;
+	delete $7;
+      }
+  | K_Swidth '(' spec_reference_event ',' delay_value ')' ';'
+      { delete $5;
+      }
+  | K_pulsestyle_onevent specify_path_identifiers ';'
+      { delete $2;
+      }
+  | K_pulsestyle_ondetect specify_path_identifiers ';'
+      { delete $2;
+      }
+  | K_showcancelled specify_path_identifiers ';'
+      { delete $2;
+      }
+  | K_noshowcancelled specify_path_identifiers ';'
+      { delete $2;
+      }
+  ;
 
 specify_item_list
-	: specify_item
-	| specify_item_list specify_item
-	;
+  : specify_item
+  | specify_item_list specify_item
+  ;
 
 specify_item_list_opt
-	: /* empty */
-		{  }
-	| specify_item_list
-		{  }
+  : /* empty */
+      {  }
+  | specify_item_list
+      {  }
 
 specify_edge_path_decl
-	: specify_edge_path '=' '(' delay_value_list ')'
-                { $$ = pform_assign_path_delay($1, $4); }
-	| specify_edge_path '=' delay_value_simple
-                { std::list<PExpr*>*tmp = new std::list<PExpr*>;
-		  tmp->push_back($3);
-		  $$ = pform_assign_path_delay($1, tmp);
-		}
-	;
+  : specify_edge_path '=' '(' delay_value_list ')'
+      { $$ = pform_assign_path_delay($1, $4); }
+  | specify_edge_path '=' delay_value_simple
+      { std::list<PExpr*>*tmp = new std::list<PExpr*>;
+	tmp->push_back($3);
+	$$ = pform_assign_path_delay($1, tmp);
+      }
+  ;
 
-edge_operator : K_posedge { $$ = true; } | K_negedge { $$ = false; } ;
+edge_operator
+  : K_posedge { $$ = true; }
+  | K_negedge { $$ = false; }
+  ;
 
 specify_edge_path
-	: '('               specify_path_identifiers spec_polarity
-	      K_EG '(' specify_path_identifiers polarity_operator expression ')' ')'
-                    { int edge_flag = 0;
-		      $$ = pform_make_specify_edge_path(@1, edge_flag, $2, $3, false, $6, $8); }
-	| '(' edge_operator specify_path_identifiers spec_polarity
-	      K_EG '(' specify_path_identifiers polarity_operator expression ')' ')'
-                    { int edge_flag = $2? 1 : -1;
-		      $$ = pform_make_specify_edge_path(@1, edge_flag, $3, $4, false, $7, $9);}
-	| '('               specify_path_identifiers spec_polarity
-	      K_SG  '(' specify_path_identifiers polarity_operator expression ')' ')'
-                    { int edge_flag = 0;
-		      $$ = pform_make_specify_edge_path(@1, edge_flag, $2, $3, true, $6, $8); }
-	| '(' edge_operator specify_path_identifiers spec_polarity
-	      K_SG '(' specify_path_identifiers polarity_operator expression ')' ')'
-                    { int edge_flag = $2? 1 : -1;
-		      $$ = pform_make_specify_edge_path(@1, edge_flag, $3, $4, true, $7, $9); }
-	;
+  : '('               specify_path_identifiers spec_polarity
+    K_EG '(' specify_path_identifiers polarity_operator expression ')' ')'
+      { int edge_flag = 0;
+	$$ = pform_make_specify_edge_path(@1, edge_flag, $2, $3, false, $6, $8);
+      }
+  | '(' edge_operator specify_path_identifiers spec_polarity
+    K_EG '(' specify_path_identifiers polarity_operator expression ')' ')'
+      { int edge_flag = $2? 1 : -1;
+	$$ = pform_make_specify_edge_path(@1, edge_flag, $3, $4, false, $7, $9);
+      }
+  | '('               specify_path_identifiers spec_polarity
+    K_SG  '(' specify_path_identifiers polarity_operator expression ')' ')'
+      { int edge_flag = 0;
+	$$ = pform_make_specify_edge_path(@1, edge_flag, $2, $3, true, $6, $8);
+      }
+  | '(' edge_operator specify_path_identifiers spec_polarity
+    K_SG '(' specify_path_identifiers polarity_operator expression ')' ')'
+      { int edge_flag = $2? 1 : -1;
+	$$ = pform_make_specify_edge_path(@1, edge_flag, $3, $4, true, $7, $9);
+      }
+  ;
 
 polarity_operator
-        : K_PO_POS
-	| K_PO_NEG
-	| ':'
-	;
+  : K_PO_POS
+  | K_PO_NEG
+  | ':'
+  ;
 
 specify_simple_path_decl
-	: specify_simple_path '=' '(' delay_value_list ')'
-                { $$ = pform_assign_path_delay($1, $4); }
-	| specify_simple_path '=' delay_value_simple
-                { std::list<PExpr*>*tmp = new std::list<PExpr*>;
-		  tmp->push_back($3);
-		  $$ = pform_assign_path_delay($1, tmp);
-		}
-	| specify_simple_path '=' '(' error ')'
-		{ yyerror(@3, "Syntax error in delay value list.");
-		  yyerrok;
-		  $$ = 0;
-		}
-	;
+  : specify_simple_path '=' '(' delay_value_list ')'
+      { $$ = pform_assign_path_delay($1, $4); }
+  | specify_simple_path '=' delay_value_simple
+      { std::list<PExpr*>*tmp = new std::list<PExpr*>;
+	tmp->push_back($3);
+	$$ = pform_assign_path_delay($1, tmp);
+      }
+  | specify_simple_path '=' '(' error ')'
+      { yyerror(@3, "Syntax error in delay value list.");
+	yyerrok;
+	$$ = 0;
+      }
+  ;
 
 specify_simple_path
-	: '(' specify_path_identifiers spec_polarity
-              K_EG specify_path_identifiers ')'
-                { $$ = pform_make_specify_path(@1, $2, $3, false, $5); }
-	| '(' specify_path_identifiers spec_polarity
-              K_SG specify_path_identifiers ')'
-                { $$ = pform_make_specify_path(@1, $2, $3, true, $5); }
-	| '(' error ')'
-		{ yyerror(@1, "Invalid simple path");
-		  yyerrok;
-		}
-	;
+  : '(' specify_path_identifiers spec_polarity K_EG specify_path_identifiers ')'
+      { $$ = pform_make_specify_path(@1, $2, $3, false, $5); }
+  | '(' specify_path_identifiers spec_polarity K_SG specify_path_identifiers ')'
+      { $$ = pform_make_specify_path(@1, $2, $3, true, $5); }
+  | '(' error ')'
+      { yyerror(@1, "Invalid simple path");
+	yyerrok;
+      }
+  ;
 
 specify_path_identifiers
-	: IDENTIFIER
-		{ std::list<perm_string>*tmp = new std::list<perm_string>;
-		  tmp->push_back(lex_strings.make($1));
-		  $$ = tmp;
-		  delete[]$1;
-		}
-	| IDENTIFIER '[' expr_primary ']'
-		{ if (gn_specify_blocks_flag) {
-			yywarn(@4, "Bit selects are not currently supported "
-				   "in path declarations. The declaration "
-				   "will be applied to the whole vector.");
-		  }
-		  std::list<perm_string>*tmp = new std::list<perm_string>;
-		  tmp->push_back(lex_strings.make($1));
-		  $$ = tmp;
-		  delete[]$1;
-		}
-	| IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
-		{ if (gn_specify_blocks_flag) {
-			yywarn(@4, "Part selects are not currently supported "
-				   "in path declarations. The declaration "
-				   "will be applied to the whole vector.");
-		  }
-		  std::list<perm_string>*tmp = new std::list<perm_string>;
-		  tmp->push_back(lex_strings.make($1));
-		  $$ = tmp;
-		  delete[]$1;
-		}
-	| specify_path_identifiers ',' IDENTIFIER
-		{ std::list<perm_string>*tmp = $1;
-		  tmp->push_back(lex_strings.make($3));
-		  $$ = tmp;
-		  delete[]$3;
-		}
-	| specify_path_identifiers ',' IDENTIFIER '[' expr_primary ']'
-		{ if (gn_specify_blocks_flag) {
-			yywarn(@4, "Bit selects are not currently supported "
-				   "in path declarations. The declaration "
-				   "will be applied to the whole vector.");
-		  }
-		  std::list<perm_string>*tmp = $1;
-		  tmp->push_back(lex_strings.make($3));
-		  $$ = tmp;
-		  delete[]$3;
-		}
-	| specify_path_identifiers ',' IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
-		{ if (gn_specify_blocks_flag) {
-			yywarn(@4, "Part selects are not currently supported "
-				   "in path declarations. The declaration "
-				   "will be applied to the whole vector.");
-		  }
-		  std::list<perm_string>*tmp = $1;
-		  tmp->push_back(lex_strings.make($3));
-		  $$ = tmp;
-		  delete[]$3;
-		}
-	;
+  : IDENTIFIER
+      { std::list<perm_string>*tmp = new std::list<perm_string>;
+	tmp->push_back(lex_strings.make($1));
+	$$ = tmp;
+	delete[]$1;
+      }
+  | IDENTIFIER '[' expr_primary ']'
+      { if (gn_specify_blocks_flag) {
+	      yywarn(@4, "Bit selects are not currently supported "
+			 "in path declarations. The declaration "
+			 "will be applied to the whole vector.");
+	}
+	std::list<perm_string>*tmp = new std::list<perm_string>;
+	tmp->push_back(lex_strings.make($1));
+	$$ = tmp;
+	delete[]$1;
+      }
+  | IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
+      { if (gn_specify_blocks_flag) {
+	      yywarn(@4, "Part selects are not currently supported "
+			 "in path declarations. The declaration "
+			 "will be applied to the whole vector.");
+	}
+	std::list<perm_string>*tmp = new std::list<perm_string>;
+	tmp->push_back(lex_strings.make($1));
+	$$ = tmp;
+	delete[]$1;
+      }
+  | specify_path_identifiers ',' IDENTIFIER
+      { std::list<perm_string>*tmp = $1;
+	tmp->push_back(lex_strings.make($3));
+	$$ = tmp;
+	delete[]$3;
+      }
+  | specify_path_identifiers ',' IDENTIFIER '[' expr_primary ']'
+      { if (gn_specify_blocks_flag) {
+	      yywarn(@4, "Bit selects are not currently supported "
+			 "in path declarations. The declaration "
+			 "will be applied to the whole vector.");
+	}
+	std::list<perm_string>*tmp = $1;
+	tmp->push_back(lex_strings.make($3));
+	$$ = tmp;
+	delete[]$3;
+      }
+  | specify_path_identifiers ',' IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
+      { if (gn_specify_blocks_flag) {
+	      yywarn(@4, "Part selects are not currently supported "
+			 "in path declarations. The declaration "
+			 "will be applied to the whole vector.");
+	}
+	std::list<perm_string>*tmp = $1;
+	tmp->push_back(lex_strings.make($3));
+	$$ = tmp;
+	delete[]$3;
+      }
+  ;
 
 specparam
-	: IDENTIFIER '=' expression
-		{ PExpr*tmp = $3;
-		  pform_set_specparam(@1, lex_strings.make($1),
-		                      specparam_active_range, tmp);
-		  delete[]$1;
-		}
-	| IDENTIFIER '=' expression ':' expression ':' expression
-                { PExpr*tmp = 0;
-		  switch (min_typ_max_flag) {
-		      case MIN:
-			tmp = $3;
-			delete $5;
-			delete $7;
-			break;
-		      case TYP:
-			delete $3;
-			tmp = $5;
-			delete $7;
-			break;
-		      case MAX:
-			delete $3;
-			delete $5;
-			tmp = $7;
-			break;
-		  }
-		  if (min_typ_max_warn > 0) {
-		        cerr << tmp->get_fileline() << ": warning: choosing ";
-		        switch (min_typ_max_flag) {
-		            case MIN:
-		              cerr << "min";
-		              break;
-		            case TYP:
-		              cerr << "typ";
-		              break;
-		            case MAX:
-		              cerr << "max";
-		              break;
-		        }
-		        cerr << " expression." << endl;
-		        min_typ_max_warn -= 1;
-		  }
-		  pform_set_specparam(@1, lex_strings.make($1),
-		                      specparam_active_range, tmp);
-		  delete[]$1;
-		}
-	| PATHPULSE_IDENTIFIER '=' expression
-		{ delete[]$1;
-		  delete $3;
-		}
-	| PATHPULSE_IDENTIFIER '=' '(' expression ',' expression ')'
-		{ delete[]$1;
-		  delete $4;
-		  delete $6;
-		}
-	;
+  : IDENTIFIER '=' expression
+      { PExpr*tmp = $3;
+	pform_set_specparam(@1, lex_strings.make($1), specparam_active_range, tmp);
+	delete[]$1;
+      }
+  | IDENTIFIER '=' expression ':' expression ':' expression
+      { PExpr*tmp = 0;
+	switch (min_typ_max_flag) {
+	    case MIN:
+	      tmp = $3;
+	      delete $5;
+	      delete $7;
+	      break;
+	    case TYP:
+	      delete $3;
+	      tmp = $5;
+	      delete $7;
+	      break;
+	    case MAX:
+	      delete $3;
+	      delete $5;
+	      tmp = $7;
+	      break;
+	}
+	if (min_typ_max_warn > 0) {
+	      cerr << tmp->get_fileline() << ": warning: choosing ";
+	      switch (min_typ_max_flag) {
+	          case MIN:
+		    cerr << "min";
+		    break;
+		  case TYP:
+		    cerr << "typ";
+		    break;
+		  case MAX:
+		    cerr << "max";
+		    break;
+	      }
+	      cerr << " expression." << endl;
+	      min_typ_max_warn -= 1;
+	}
+	pform_set_specparam(@1, lex_strings.make($1), specparam_active_range, tmp);
+	delete[]$1;
+      }
+  | PATHPULSE_IDENTIFIER '=' expression
+      { delete[]$1;
+	delete $3;
+      }
+  | PATHPULSE_IDENTIFIER '=' '(' expression ',' expression ')'
+      { delete[]$1;
+	delete $4;
+	delete $6;
+      }
+  ;
 
 specparam_list
   : specparam
@@ -6178,36 +6187,36 @@ specparam_decl
   ;
 
 spec_polarity
-	: '+'  { $$ = '+'; }
-	| '-'  { $$ = '-'; }
-	|      { $$ = 0;   }
-	;
+  : '+'  { $$ = '+'; }
+  | '-'  { $$ = '-'; }
+  |      { $$ = 0;   }
+  ;
 
 spec_reference_event
   : K_posedge expression
-    { delete $2; }
+      { delete $2; }
   | K_negedge expression
-    { delete $2; }
+      { delete $2; }
   | K_posedge expr_primary K_TAND expression
-    { delete $2;
-      delete $4;
-    }
+      { delete $2;
+        delete $4;
+      }
   | K_negedge expr_primary K_TAND expression
-    { delete $2;
-      delete $4;
-    }
+      { delete $2;
+        delete $4;
+      }
   | K_edge '[' edge_descriptor_list ']' expr_primary
-    { delete $5; }
+      { delete $5; }
   | K_edge '[' edge_descriptor_list ']' expr_primary K_TAND expression
-    { delete $5;
-      delete $7;
-    }
+      { delete $5;
+        delete $7;
+      }
   | expr_primary K_TAND expression
-    { delete $1;
-      delete $3;
-    }
+      { delete $1;
+        delete $3;
+      }
   | expr_primary
-    { delete $1; }
+      { delete $1; }
   ;
 
   /* The edge_descriptor is detected by the lexor as the various
@@ -6220,30 +6229,31 @@ edge_descriptor_list
   ;
 
 spec_notifier_opt
-	: /* empty */
-		{  }
-	| spec_notifier
-		{  }
-	;
+  : /* empty */
+      {  }
+  | spec_notifier
+      {  }
+  ;
 spec_notifier
-	: ','
-		{ args_after_notifier = 0; }
-	| ','  hierarchy_identifier
-		{ args_after_notifier = 0; delete $2; }
-	| spec_notifier ','
-		{  args_after_notifier += 1; }
-	| spec_notifier ',' hierarchy_identifier
-		{ args_after_notifier += 1;
-		  if (args_after_notifier >= 3)  {
-                    cerr << @3 << ": warning: timing checks are not supported "
-		                  "and delayed signal \"" << *$3
-		         << "\" will not be driven." << endl;
-		  }
-                  delete $3; }
+  : ','
+      { args_after_notifier = 0; }
+  | ','  hierarchy_identifier
+      { args_after_notifier = 0; delete $2; }
+  | spec_notifier ','
+      {  args_after_notifier += 1; }
+  | spec_notifier ',' hierarchy_identifier
+      { args_after_notifier += 1;
+	if (args_after_notifier >= 3)  {
+              cerr << @3 << ": warning: timing checks are not supported "
+		            "and delayed signal \"" << *$3
+		   << "\" will not be driven." << endl;
+	}
+        delete $3;
+      }
   /* How do we match this path? */
-	| IDENTIFIER
-		{ args_after_notifier = 0; delete[]$1; }
-	;
+  | IDENTIFIER
+      { args_after_notifier = 0; delete[]$1; }
+  ;
 
 subroutine_call
   : hierarchy_identifier argument_list_parens_opt
@@ -6282,32 +6292,32 @@ statement_item /* This is roughly statement_item in the LRM */
      off. This is stronger than any other assign, but weaker than the
      force assignments. */
 
-	: K_assign lpvalue '=' expression ';'
-		{ PCAssign*tmp = new PCAssign($2, $4);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
+  : K_assign lpvalue '=' expression ';'
+      { PCAssign*tmp = new PCAssign($2, $4);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
 
-	| K_deassign lpvalue ';'
-		{ PDeassign*tmp = new PDeassign($2);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
+  | K_deassign lpvalue ';'
+      { PDeassign*tmp = new PDeassign($2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
 
 
   /* Force and release statements are similar to assignments,
      syntactically, but they will be elaborated differently. */
 
-	| K_force lpvalue '=' expression ';'
-		{ PForce*tmp = new PForce($2, $4);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_release lpvalue ';'
-		{ PRelease*tmp = new PRelease($2);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
+  | K_force lpvalue '=' expression ';'
+      { PForce*tmp = new PForce($2, $4);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_release lpvalue ';'
+      { PRelease*tmp = new PRelease($2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
 
   /* begin-end blocks come in a variety of forms, including named and
      anonymous. The named blocks can also carry their own reg
@@ -6322,28 +6332,28 @@ statement_item /* This is roughly statement_item in the LRM */
       }
     block_item_decls_opt
       { if (!$2) {
-	    if ($4) {
-		  pform_requires_sv(@4, "Variable declaration in unnamed block");
-	    } else {
-		  /* If there are no declarations in the scope then just delete it. */
-		  pform_pop_scope();
-		  assert(! current_block_stack.empty());
-		  PBlock*tmp = current_block_stack.top();
-		  current_block_stack.pop();
-		  delete tmp;
-	    }
+	      if ($4) {
+		    pform_requires_sv(@4, "Variable declaration in unnamed block");
+	      } else {
+		    /* If there are no declarations in the scope then just delete it. */
+		    pform_pop_scope();
+		    assert(! current_block_stack.empty());
+		    PBlock*tmp = current_block_stack.top();
+		    current_block_stack.pop();
+		    delete tmp;
+	      }
 	}
       }
     statement_or_null_list_opt K_end label_opt
       { PBlock*tmp;
 	if ($2 || $4) {
-	    pform_pop_scope();
-	    assert(! current_block_stack.empty());
-	    tmp = current_block_stack.top();
-	    current_block_stack.pop();
+	      pform_pop_scope();
+	      assert(! current_block_stack.empty());
+	      tmp = current_block_stack.top();
+	      current_block_stack.pop();
 	} else {
-	    tmp = new PBlock(PBlock::BL_SEQ);
-	    FILE_NAME(tmp, @1);
+	      tmp = new PBlock(PBlock::BL_SEQ);
+	      FILE_NAME(tmp, @1);
 	}
 	if ($6) tmp->set_statement(*$6);
 	delete $6;
@@ -6365,29 +6375,29 @@ statement_item /* This is roughly statement_item in the LRM */
     block_item_decls_opt
       {
         if (!$2) {
-	    if ($4) {
-		  pform_requires_sv(@4, "Variable declaration in unnamed block");
-	    } else {
-		  /* If there are no declarations in the scope then just delete it. */
-		  pform_pop_scope();
-		  assert(! current_block_stack.empty());
-		  PBlock*tmp = current_block_stack.top();
-		  current_block_stack.pop();
-		  delete tmp;
-	    }
+	      if ($4) {
+		    pform_requires_sv(@4, "Variable declaration in unnamed block");
+	      } else {
+		    /* If there are no declarations in the scope then just delete it. */
+		    pform_pop_scope();
+		    assert(! current_block_stack.empty());
+		    PBlock*tmp = current_block_stack.top();
+		    current_block_stack.pop();
+		    delete tmp;
+	      }
 	}
       }
     statement_or_null_list_opt join_keyword label_opt
       { PBlock*tmp;
 	if ($2 || $4) {
-	    pform_pop_scope();
-	    assert(! current_block_stack.empty());
-	    tmp = current_block_stack.top();
-	    current_block_stack.pop();
-	    tmp->set_join_type($7);
+	      pform_pop_scope();
+	      assert(! current_block_stack.empty());
+	      tmp = current_block_stack.top();
+	      current_block_stack.pop();
+	      tmp->set_join_type($7);
 	} else {
-	    tmp = new PBlock($7);
-	    FILE_NAME(tmp, @1);
+	      tmp = new PBlock($7);
+	      FILE_NAME(tmp, @1);
 	}
 	if ($6) tmp->set_statement(*$6);
 	delete $6;
@@ -6396,18 +6406,18 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
 
-	| K_disable hierarchy_identifier ';'
-		{ PDisable*tmp = new PDisable(*$2);
-		  FILE_NAME(tmp, @1);
-		  delete $2;
-		  $$ = tmp;
-		}
-	| K_disable K_fork ';'
-		{ pform_name_t tmp_name;
-		  PDisable*tmp = new PDisable(tmp_name);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
+  | K_disable hierarchy_identifier ';'
+      { PDisable*tmp = new PDisable(*$2);
+	FILE_NAME(tmp, @1);
+	delete $2;
+	$$ = tmp;
+      }
+  | K_disable K_fork ';'
+      { pform_name_t tmp_name;
+	PDisable*tmp = new PDisable(tmp_name);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
   | K_TRIGGER hierarchy_identifier ';'
       { PTrigger*tmp = pform_new_trigger(@2, 0, *$2);
 	delete $2;
@@ -6443,11 +6453,14 @@ statement_item /* This is roughly statement_item in the LRM */
         yywarn(@1, "Sorry: ->> with repeat event control is not currently supported.");
       }
 
-  | procedural_assertion_statement { $$ = $1; }
+  | procedural_assertion_statement
+      { $$ = $1; }
 
-  | loop_statement { $$ = $1; }
+  | loop_statement
+      { $$ = $1; }
 
-  | jump_statement { $$ = $1; }
+  | jump_statement
+      { $$ = $1; }
 
   | unique_priority K_case '(' expression ')' case_items K_endcase
       { PCase*tmp = new PCase($1, NetCase::EQ, $4, $6);
@@ -6471,24 +6484,24 @@ statement_item /* This is roughly statement_item in the LRM */
   | unique_priority K_casez '(' expression ')' error K_endcase
       { yyerrok; }
 
-	| K_if '(' expression ')' statement_or_null %prec less_than_K_else
-		{ PCondit*tmp = new PCondit($3, $5, 0);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_if '(' expression ')' statement_or_null K_else statement_or_null
-		{ PCondit*tmp = new PCondit($3, $5, $7);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_if '(' error ')' statement_or_null %prec less_than_K_else
-		{ yyerror(@1, "error: Malformed conditional expression.");
-		  $$ = $5;
-		}
-	| K_if '(' error ')' statement_or_null K_else statement_or_null
-		{ yyerror(@1, "error: Malformed conditional expression.");
-		  $$ = $5;
-		}
+  | K_if '(' expression ')' statement_or_null %prec less_than_K_else
+      { PCondit*tmp = new PCondit($3, $5, 0);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_if '(' expression ')' statement_or_null K_else statement_or_null
+      { PCondit*tmp = new PCondit($3, $5, $7);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_if '(' error ')' statement_or_null %prec less_than_K_else
+      { yyerror(@1, "error: Malformed conditional expression.");
+	$$ = $5;
+      }
+  | K_if '(' error ')' statement_or_null K_else statement_or_null
+      { yyerror(@1, "error: Malformed conditional expression.");
+	$$ = $5;
+      }
   /* SystemVerilog adds the compressed_statement */
 
   | compressed_statement ';'
@@ -6612,19 +6625,19 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
 
-	| K_wait '(' expression ')' statement_or_null
-		{ PEventStatement*tmp;
-		  PEEvent*etmp = new PEEvent(PEEvent::POSITIVE, $3);
-		  tmp = new PEventStatement(etmp);
-		  FILE_NAME(tmp,@1);
-		  tmp->set_statement($5);
-		  $$ = tmp;
-		}
-	| K_wait K_fork ';'
-		{ PEventStatement*tmp = new PEventStatement((PEEvent*)0);
-		  FILE_NAME(tmp,@1);
-		  $$ = tmp;
-		}
+  | K_wait '(' expression ')' statement_or_null
+      { PEventStatement*tmp;
+	PEEvent*etmp = new PEEvent(PEEvent::POSITIVE, $3);
+	tmp = new PEventStatement(etmp);
+	FILE_NAME(tmp,@1);
+	tmp->set_statement($5);
+	$$ = tmp;
+      }
+  | K_wait K_fork ';'
+      { PEventStatement*tmp = new PEventStatement((PEEvent*)0);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
   | K_void '\'' '(' subroutine_call ')' ';'
       { $4->void_cast();
 	$$ = $4;
@@ -6660,7 +6673,7 @@ statement_item /* This is roughly statement_item in the LRM */
       { PChainConstructor*tmp = new PChainConstructor(*$4);
 	FILE_NAME(tmp, @3);
 	if (peek_head_name(*$1) == THIS_TOKEN) {
-	  yyerror(@1, "error: this.new is invalid syntax. Did you mean super.new?");
+	      yyerror(@1, "error: this.new is invalid syntax. Did you mean super.new?");
 	}
 	delete $1;
 	$$ = tmp;
@@ -6695,7 +6708,6 @@ compressed_statement
       }
    ;
 
-
 statement_or_null_list_opt
   : statement_or_null_list
       { $$ = $1; }
@@ -6723,7 +6735,7 @@ analog_statement
 
 tf_port_list_opt
   : tf_port_list { $$ = $1; }
-  |                     { $$ = 0; }
+  |              { $$ = 0; }
   ;
 
   /* A task or function prototype can be declared with the task/function name
@@ -6731,7 +6743,7 @@ tf_port_list_opt
    * itself. When a port list is used it might be empty. */
 tf_port_list_parens_opt
   : '(' tf_port_list_opt ')' { $$ = $2; }
-  | { $$ = 0; }
+  |                          { $$ = 0; }
 
   /* Note that the lexor notices the "table" keyword and starts
      the UDPTABLE state. It needs to happen there so that all the
@@ -6756,135 +6768,141 @@ udp_body
   ;
 
 udp_entry_list
-	: udp_comb_entry_list
-	| udp_sequ_entry_list
-	;
+  : udp_comb_entry_list
+  | udp_sequ_entry_list
+  ;
 
 udp_comb_entry
-	: udp_input_list ':' udp_output_sym ';'
-		{ char*tmp = new char[strlen($1)+3];
-		  strcpy(tmp, $1);
-		  char*tp = tmp+strlen(tmp);
-		  *tp++ = ':';
-		  *tp++ = $3;
-		  *tp++ = 0;
-		  delete[]$1;
-		  $$ = tmp;
-		}
-	;
+  : udp_input_list ':' udp_output_sym ';'
+      { char*tmp = new char[strlen($1)+3];
+	strcpy(tmp, $1);
+	char*tp = tmp+strlen(tmp);
+	*tp++ = ':';
+	*tp++ = $3;
+	*tp++ = 0;
+	delete[]$1;
+	$$ = tmp;
+      }
+  ;
 
 udp_comb_entry_list
-	: udp_comb_entry
-		{ std::list<string>*tmp = new std::list<string>;
-		  tmp->push_back($1);
-		  delete[]$1;
-		  $$ = tmp;
-		}
-	| udp_comb_entry_list udp_comb_entry
-		{ std::list<string>*tmp = $1;
-		  tmp->push_back($2);
-		  delete[]$2;
-		  $$ = tmp;
-		}
-	;
+  : udp_comb_entry
+      { std::list<string>*tmp = new std::list<string>;
+	tmp->push_back($1);
+	delete[]$1;
+	$$ = tmp;
+      }
+  | udp_comb_entry_list udp_comb_entry
+      { std::list<string>*tmp = $1;
+	tmp->push_back($2);
+	delete[]$2;
+	$$ = tmp;
+      }
+  ;
 
 udp_sequ_entry_list
-	: udp_sequ_entry
-		{ std::list<string>*tmp = new std::list<string>;
-		  tmp->push_back($1);
-		  delete[]$1;
-		  $$ = tmp;
-		}
-	| udp_sequ_entry_list udp_sequ_entry
-		{ std::list<string>*tmp = $1;
-		  tmp->push_back($2);
-		  delete[]$2;
-		  $$ = tmp;
-		}
-	;
+  : udp_sequ_entry
+      { std::list<string>*tmp = new std::list<string>;
+	tmp->push_back($1);
+	delete[]$1;
+	$$ = tmp;
+      }
+  | udp_sequ_entry_list udp_sequ_entry
+      { std::list<string>*tmp = $1;
+	tmp->push_back($2);
+	delete[]$2;
+	$$ = tmp;
+      }
+  ;
 
 udp_sequ_entry
-	: udp_input_list ':' udp_input_sym ':' udp_output_sym ';'
-		{ char*tmp = new char[strlen($1)+5];
-		  strcpy(tmp, $1);
-		  char*tp = tmp+strlen(tmp);
-		  *tp++ = ':';
-		  *tp++ = $3;
-		  *tp++ = ':';
-		  *tp++ = $5;
-		  *tp++ = 0;
-		  $$ = tmp;
-		}
-	;
+  : udp_input_list ':' udp_input_sym ':' udp_output_sym ';'
+      { char*tmp = new char[strlen($1)+5];
+	strcpy(tmp, $1);
+	char*tp = tmp+strlen(tmp);
+	*tp++ = ':';
+	*tp++ = $3;
+	*tp++ = ':';
+	*tp++ = $5;
+	*tp++ = 0;
+	$$ = tmp;
+      }
+  ;
 
 udp_initial
-	: K_initial IDENTIFIER '=' number ';'
-		{ PExpr*etmp = new PENumber($4);
-		  PEIdent*itmp = new PEIdent(lex_strings.make($2));
-		  PAssign*atmp = new PAssign(itmp, etmp);
-		  FILE_NAME(atmp, @2);
-		  delete[]$2;
-		  $$ = atmp;
-		}
-	;
+  : K_initial IDENTIFIER '=' number ';'
+      { PExpr*etmp = new PENumber($4);
+	PEIdent*itmp = new PEIdent(lex_strings.make($2));
+	PAssign*atmp = new PAssign(itmp, etmp);
+	FILE_NAME(atmp, @2);
+	delete[]$2;
+	$$ = atmp;
+      }
+  ;
 
 udp_init_opt
-	: udp_initial  { $$ = $1; }
-	|              { $$ = 0; }
-	;
+  : udp_initial { $$ = $1; }
+  |             { $$ = 0; }
+  ;
 
 udp_input_list
-	: udp_input_sym
-		{ char*tmp = new char[2];
-		  tmp[0] = $1;
-		  tmp[1] = 0;
-		  $$ = tmp;
-		}
-	| udp_input_list udp_input_sym
-		{ char*tmp = new char[strlen($1)+2];
-		  strcpy(tmp, $1);
-		  char*tp = tmp+strlen(tmp);
-		  *tp++ = $2;
-		  *tp++ = 0;
-		  delete[]$1;
-		  $$ = tmp;
-		}
-	;
+  : udp_input_sym
+      { char*tmp = new char[2];
+	tmp[0] = $1;
+	tmp[1] = 0;
+	$$ = tmp;
+      }
+  | udp_input_list udp_input_sym
+      { char*tmp = new char[strlen($1)+2];
+	strcpy(tmp, $1);
+	char*tp = tmp+strlen(tmp);
+	*tp++ = $2;
+	*tp++ = 0;
+	delete[]$1;
+	$$ = tmp;
+      }
+  ;
 
 udp_input_sym
-	: '0' { $$ = '0'; }
-	| '1' { $$ = '1'; }
-	| 'x' { $$ = 'x'; }
-	| '?' { $$ = '?'; }
-	| 'b' { $$ = 'b'; }
-	| '*' { $$ = '*'; }
-	| '%' { $$ = '%'; }
-	| 'f' { $$ = 'f'; }
-	| 'F' { $$ = 'F'; }
-	| 'l' { $$ = 'l'; }
-	| 'h' { $$ = 'h'; }
-	| 'B' { $$ = 'B'; }
-	| 'r' { $$ = 'r'; }
-	| 'R' { $$ = 'R'; }
-	| 'M' { $$ = 'M'; }
-	| 'n' { $$ = 'n'; }
-	| 'N' { $$ = 'N'; }
-	| 'p' { $$ = 'p'; }
-	| 'P' { $$ = 'P'; }
-	| 'Q' { $$ = 'Q'; }
-	| 'q' { $$ = 'q'; }
-	| '_' { $$ = '_'; }
-	| '+' { $$ = '+'; }
-        | DEC_NUMBER { yyerror(@1, "internal error: Input digits parse as decimal number!"); $$ = '0'; }
-	;
+  : '0' { $$ = '0'; }
+  | '1' { $$ = '1'; }
+  | 'x' { $$ = 'x'; }
+  | '?' { $$ = '?'; }
+  | 'b' { $$ = 'b'; }
+  | '*' { $$ = '*'; }
+  | '%' { $$ = '%'; }
+  | 'f' { $$ = 'f'; }
+  | 'F' { $$ = 'F'; }
+  | 'l' { $$ = 'l'; }
+  | 'h' { $$ = 'h'; }
+  | 'B' { $$ = 'B'; }
+  | 'r' { $$ = 'r'; }
+  | 'R' { $$ = 'R'; }
+  | 'M' { $$ = 'M'; }
+  | 'n' { $$ = 'n'; }
+  | 'N' { $$ = 'N'; }
+  | 'p' { $$ = 'p'; }
+  | 'P' { $$ = 'P'; }
+  | 'Q' { $$ = 'Q'; }
+  | 'q' { $$ = 'q'; }
+  | '_' { $$ = '_'; }
+  | '+' { $$ = '+'; }
+  | DEC_NUMBER
+        { yyerror(@1, "internal error: Input digits parse as decimal number!");
+          $$ = '0';
+        }
+  ;
 
 udp_output_sym
-	: '0' { $$ = '0'; }
-	| '1' { $$ = '1'; }
-	| 'x' { $$ = 'x'; }
-	| '-' { $$ = '-'; }
-        | DEC_NUMBER { yyerror(@1, "internal error: Output digits parse as decimal number!"); $$ = '0'; }
-	;
+  : '0' { $$ = '0'; }
+  | '1' { $$ = '1'; }
+  | 'x' { $$ = 'x'; }
+  | '-' { $$ = '-'; }
+  | DEC_NUMBER
+        { yyerror(@1, "internal error: Output digits parse as decimal number!");
+          $$ = '0';
+        }
+  ;
 
   /* Port declarations create wires for the inputs and the output. The
      makes for these ports are scoped within the UDP, so there is no
@@ -6947,57 +6965,57 @@ udp_port_list
       }
   ;
 
-udp_reg_opt: K_reg  { $$ = true; } | { $$ = false; };
+udp_reg_opt
+  : K_reg  { $$ = true; }
+  |        { $$ = false; };
 
 udp_input_declaration_list
-        : K_input IDENTIFIER
-		{ std::list<perm_string>*tmp = new std::list<perm_string>;
-		  tmp->push_back(lex_strings.make($2));
-		  $$ = tmp;
-		  delete[]$2;
-		}
-	| udp_input_declaration_list ',' K_input IDENTIFIER
-		{ std::list<perm_string>*tmp = $1;
-		  tmp->push_back(lex_strings.make($4));
-		  $$ = tmp;
-		  delete[]$4;
-		}
-	;
+  : K_input IDENTIFIER
+      { std::list<perm_string>*tmp = new std::list<perm_string>;
+	tmp->push_back(lex_strings.make($2));
+	$$ = tmp;
+	delete[]$2;
+      }
+  | udp_input_declaration_list ',' K_input IDENTIFIER
+      { std::list<perm_string>*tmp = $1;
+	tmp->push_back(lex_strings.make($4));
+	$$ = tmp;
+	delete[]$4;
+      }
+  ;
 
 udp_primitive
         /* This is the syntax for primitives that uses the IEEE1364-1995
 	   format. The ports are simply names in the port list, and the
 	   declarations are in the body. */
 
-	: K_primitive IDENTIFIER '(' udp_port_list ')' ';'
-	    udp_port_decls
-	    udp_init_opt
-	    udp_body
-	  K_endprimitive label_opt
-
-		{ perm_string tmp2 = lex_strings.make($2);
-		  pform_make_udp(@2, tmp2, $4, $7, $9, $8);
-		  check_end_label(@11, "primitive", $2, $11);
-		  delete[]$2;
-		}
+  : K_primitive IDENTIFIER '(' udp_port_list ')' ';'
+    udp_port_decls
+    udp_init_opt
+    udp_body
+    K_endprimitive label_opt
+      { perm_string tmp2 = lex_strings.make($2);
+	pform_make_udp(@2, tmp2, $4, $7, $9, $8);
+	check_end_label(@11, "primitive", $2, $11);
+	delete[]$2;
+      }
 
         /* This is the syntax for IEEE1364-2001 format definitions. The port
 	   names and declarations are all in the parameter list. */
 
-	| K_primitive IDENTIFIER
-	    '(' K_output udp_reg_opt IDENTIFIER initializer_opt ','
-	    udp_input_declaration_list ')' ';'
-	    udp_body
-	  K_endprimitive label_opt
-
-		{ perm_string tmp2 = lex_strings.make($2);
-		  perm_string tmp6 = lex_strings.make($6);
-		  pform_make_udp(@2, tmp2, $5, tmp6, $7, $9, $12);
-		  check_end_label(@14, "primitive", $2, $14);
-		  delete[]$2;
-		  delete[]$6;
-		}
-	;
+  | K_primitive IDENTIFIER
+    '(' K_output udp_reg_opt IDENTIFIER initializer_opt ','
+    udp_input_declaration_list ')' ';'
+    udp_body
+    K_endprimitive label_opt
+      { perm_string tmp2 = lex_strings.make($2);
+	perm_string tmp6 = lex_strings.make($6);
+	pform_make_udp(@2, tmp2, $5, tmp6, $7, $9, $12);
+	check_end_label(@14, "primitive", $2, $14);
+	delete[]$2;
+	delete[]$6;
+      }
+  ;
 
 unique_priority
   :             { $$ = IVL_CASE_QUALITY_BASIC; }
@@ -7010,7 +7028,22 @@ unique_priority
      presence is significant. This is a fairly common pattern so
      collect those rules here. */
 
-K_genvar_opt   : K_genvar    { $$ = true; } | { $$ = false; } ;
-K_static_opt   : K_static    { $$ = true; } | { $$ = false; } ;
-K_virtual_opt  : K_virtual   { $$ = true; } | { $$ = false; } ;
-K_var_opt      : K_var | ;
+K_genvar_opt
+ : K_genvar { $$ = true; }
+ |          { $$ = false; }
+ ;
+
+K_static_opt
+ : K_static { $$ = true; }
+ |          { $$ = false; }
+ ;
+
+K_virtual_opt
+  : K_virtual { $$ = true; }
+  |           { $$ = false; }
+  ;
+
+K_var_opt
+  : K_var
+  |
+  ;
