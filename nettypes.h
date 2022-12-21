@@ -137,6 +137,10 @@ class netrange_t {
 	return false;
       }
 
+      bool equivalent(const netrange_t &that) const {
+	    return width() == that.width();
+      }
+
     private:
       long msb_;
       long lsb_;
@@ -146,6 +150,8 @@ extern std::ostream&operator << (std::ostream&out, const std::list<netrange_t>&r
 extern std::ostream&operator << (std::ostream&out, const std::vector<netrange_t>&rlist);
 
 extern unsigned long netrange_width(const std::vector<netrange_t>&dims);
+extern bool netrange_equivalent(const std::vector<netrange_t> &a,
+			        const std::vector<netrange_t> &b);
 
 /*
  * There are a few cases where we need to know about the single-level

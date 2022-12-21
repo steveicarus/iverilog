@@ -260,16 +260,64 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 }
 
+NetNet *elaborate_unpacked_array(Design *des, NetScope *scope, const LineInfo &loc,
+			         const NetNet *lval, PExpr *expr)
+{
+      PEIdent* ident = dynamic_cast<PEIdent*> (expr);
+      if (!ident) {
+	    des->errors++;
+	    if (dynamic_cast<PEConcat*> (expr)) {
+		  cout << loc.get_fileline() << ": sorry: Continuous assignment"
+		       << " of array concatenation is not yet supported."
+		       << endl;
+	    } else if (dynamic_cast<PEAssignPattern*> (expr)) {
+		  cout << loc.get_fileline() << ": sorry: Continuous assignment"
+		       << " of assignment pattern is not yet supported." << endl;
+	    } else {
+		  cout << loc.get_fileline() << ": error: Can not assign"
+		       << " non-array expression `" << *expr << "` to array."
+		       << endl;
+	    }
+	    return nullptr;
+      }
+
+      NetNet *expr_net = ident->elaborate_unpacked_net(des, scope);
+      if (!expr_net)
+	    return nullptr;
+
+      auto const &lval_dims = lval->unpacked_dims();
+      auto const &expr_dims = expr_net->unpacked_dims();
+
+      if (expr_dims.empty()) {
+	    cerr << loc.get_fileline() << ": error: Can not assign"
+	         << " non-array identifier `" << *expr << "` to array."
+		 << endl;
+	    des->errors++;
+	    return nullptr;
+      }
+
+      if (!netrange_equivalent(lval_dims, expr_dims)) {
+	    cerr << loc.get_fileline() << ": error: Unpacked dimensions"
+		 << " are not compatible in array assignment." << endl;
+	    des->errors++;
+	    return nullptr;
+      }
+
+      if (!lval->net_type()->type_equivalent(expr_net->net_type())) {
+	    cerr << loc.get_fileline() << ": error: Element types are not"
+	         << " compatible in array assignment." << endl;
+	    des->errors++;
+	    return nullptr;
+      }
+
+      return expr_net;
+}
+
 void PGAssign::elaborate_unpacked_array_(Design*des, NetScope*scope, NetNet*lval) const
 {
-      PEIdent*rval_pident = dynamic_cast<PEIdent*> (pin(1));
-      ivl_assert(*this, rval_pident);
-
-      NetNet*rval_net = rval_pident->elaborate_unpacked_net(des, scope);
-
-      ivl_assert(*this, rval_net->pin_count() == lval->pin_count());
-
-      assign_unpacked_with_bufz(des, scope, this, lval, rval_net);
+      NetNet *rval_net = elaborate_unpacked_array(des, scope, *this, lval, pin(1));
+      if (rval_net)
+	    assign_unpacked_with_bufz(des, scope, lval, lval, rval_net);
 }
 
 void PGBuiltin::calculate_gate_and_lval_count_(unsigned&gate_count,
@@ -1147,6 +1195,29 @@ static void isolate_and_connect(Design*des, NetScope*scope, const PGModule*mod,
       }
 }
 
+void elaborate_unpacked_port(Design *des, NetScope *scope, NetNet *port_net,
+			     PExpr *expr, NetNet::PortType port_type,
+			     Module *mod, unsigned int port_idx)
+{
+      NetNet *expr_net = elaborate_unpacked_array(des, scope, *expr, port_net,
+						  expr);
+      if (!expr_net) {
+	    perm_string port_name = mod->get_port_name(port_idx);
+	    cerr << expr->get_fileline() << ":      : Port "
+		<< port_idx+1 << " (" << port_name << ") of "
+	        << mod->mod_name() << " is connected to "
+	        << *expr << endl;
+
+	    return;
+      }
+
+      ivl_assert(*port_net, expr_net->pin_count() == port_net->pin_count());
+      if (port_type == NetNet::POUTPUT)
+	    assign_unpacked_with_bufz(des, scope, port_net, expr_net, port_net);
+      else
+	    assign_unpacked_with_bufz(des, scope, port_net, port_net, expr_net);
+}
+
 /*
  * Instantiate a module by recursively elaborating it. Set the path of
  * the recursive elaboration so that signal names get properly
@@ -1481,13 +1552,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // differently.
 		  if (prts.size() >= 1 && prts[0]->pin_count()>1) {
 			ivl_assert(*this, prts.size()==1);
-
-			PEIdent*rval_pident = dynamic_cast<PEIdent*> (pins[idx]);
-			ivl_assert(*this, rval_pident);
-
-			NetNet*rval_net = rval_pident->elaborate_unpacked_net(des, scope);
-			ivl_assert(*this, rval_net->pin_count() == prts[0]->pin_count());
-			assign_unpacked_with_bufz(des, scope, this, prts[0], rval_net);
+			elaborate_unpacked_port(des, scope, prts[0], pins[idx],
+						ptype, rmod, idx);
 			continue;
 		  }
 
@@ -1650,15 +1716,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // "r-value" expression, but since this is an
 		    // output port, we assign to it from the internal object.
 		  if (prts[0]->pin_count() > 1) {
-			ivl_assert(*this, prts.size()==1);
-
-			PEIdent*rval_pident = dynamic_cast<PEIdent*>(pins[idx]);
-			ivl_assert(*this, rval_pident);
-
-			NetNet*rval_net = rval_pident->elaborate_unpacked_net(des, scope);
-			ivl_assert(*this, rval_net->pin_count() == prts[0]->pin_count());
-
-			assign_unpacked_with_bufz(des, scope, this, rval_net, prts[0]);
+			elaborate_unpacked_port(des, scope, prts[0], pins[idx],
+						ptype, rmod, idx);
 			continue;
 		  }
 

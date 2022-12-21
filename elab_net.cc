@@ -1107,8 +1107,20 @@ NetNet*PEIdent::elaborate_unpacked_net(Design*des, NetScope*scope) const
       perm_string method_name;
 
       symbol_search(this, des, scope, path_, sig, par, eve);
+      if (!sig) {
+	    cerr << get_fileline() << ": error: Net " << path_
+		 << " is not defined in this context." << endl;
+	    des->errors += 1;
+	    return nullptr;
+      }
 
-      ivl_assert(*this, sig);
+      const name_component_t&name_tail = path_.back();
+      if (name_tail.index.size() != 0) {
+	    cerr << get_fileline() << ": sorry: Array slices are not yet "
+	         << "supported for continuous assignment." << endl;
+	    des->errors += 1;
+	    return nullptr;
+      }
 
       return sig;
 }

@@ -92,6 +92,9 @@ class netuarray_t : public netsarray_t {
     public:
 	// Virtual methods from the ivl_type_s type...
       std::vector<netrange_t> slice_dimensions() const;
+
+    private:
+      bool test_equivalence(ivl_type_t that) const;
 };
 
 inline netuarray_t::netuarray_t(const std::vector<netrange_t>&pd,
