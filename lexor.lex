@@ -693,7 +693,7 @@ TU [munpf]
   /* These are directives that I do not yet support. I think that IVL
      should handle these, not an external preprocessor. */
   /* From 1364-2005 Chapter 19. */
-^{W}?`pragme{W}?.*                  {  }
+^{W}?`pragma{W}?.*                  {  }
 
   /* From 1364-2005 Annex D. */
 ^{W}?`default_decay_time{W}?.*      {  }
