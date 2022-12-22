@@ -1794,7 +1794,7 @@ PExpr* pform_select_mtm_expr(PExpr*min, PExpr*typ, PExpr*max)
       }
 
       if (min_typ_max_warn > 0) {
-	    cerr << res->get_fileline() << ": warning: choosing ";
+	    cerr << res->get_fileline() << ": warning: Choosing ";
 	    switch (min_typ_max_flag) {
 		case MIN:
 		  cerr << "min";

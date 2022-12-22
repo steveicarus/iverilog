@@ -3538,7 +3538,7 @@ expr_mintypmax
 	      break;
 	}
 	if (min_typ_max_warn > 0) {
-	      cerr << $$->get_fileline() << ": warning: choosing ";
+	      cerr << $$->get_fileline() << ": warning: Choosing ";
 	      switch (min_typ_max_flag) {
 	          case MIN:
 		    cerr << "min";
@@ -5905,7 +5905,7 @@ specify_item
 	pform_module_specify_path(tmp);
       }
   | K_ifnone specify_edge_path_decl ';'
-      { yywarn(@1, "Sorry: ifnone with an edge-sensitive path is not supported.");
+      { yywarn(@1, "sorry: ifnone with an edge-sensitive path is not supported.");
 	yyerrok;
       }
   | K_Sfullskew '(' spec_reference_event ',' spec_reference_event
@@ -6144,7 +6144,7 @@ specparam
 	      break;
 	}
 	if (min_typ_max_warn > 0) {
-	      cerr << tmp->get_fileline() << ": warning: choosing ";
+	      cerr << tmp->get_fileline() << ": warning: Choosing ";
 	      switch (min_typ_max_flag) {
 	          case MIN:
 		    cerr << "min";
@@ -6244,7 +6244,7 @@ spec_notifier
   | spec_notifier ',' hierarchy_identifier
       { args_after_notifier += 1;
 	if (args_after_notifier >= 3)  {
-              cerr << @3 << ": warning: timing checks are not supported "
+              cerr << @3 << ": warning: Timing checks are not supported "
 		            "and delayed signal \"" << *$3
 		   << "\" will not be driven." << endl;
 	}
@@ -6444,13 +6444,13 @@ statement_item /* This is roughly statement_item in the LRM */
       { PNBTrigger*tmp = pform_new_nb_trigger(@3, 0, *$3);
 	delete $3;
 	$$ = tmp;
-        yywarn(@1, "Sorry: ->> with event control is not currently supported.");
+        yywarn(@1, "sorry: ->> with event control is not currently supported.");
       }
   | K_NB_TRIGGER K_repeat '(' expression ')' event_control hierarchy_identifier ';'
       { PNBTrigger*tmp = pform_new_nb_trigger(@7, 0, *$7);
 	delete $7;
 	$$ = tmp;
-        yywarn(@1, "Sorry: ->> with repeat event control is not currently supported.");
+        yywarn(@1, "sorry: ->> with repeat event control is not currently supported.");
       }
 
   | procedural_assertion_statement
