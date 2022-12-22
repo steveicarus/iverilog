@@ -70,7 +70,7 @@ void VLerror(const YYLTYPE&loc, const char*msg, ...)
 void VLwarn(const YYLTYPE&loc, const char*msg)
 {
       warn_count += 1;
-      cerr << loc << ": warning: " << msg << endl;
+      cerr << loc << ": " << msg << endl;
 }
 
 int VLwrap()

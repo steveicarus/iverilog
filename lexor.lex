@@ -899,7 +899,7 @@ TU [munpf]
   }
 
 `[a-zA-Z_]+ {
-      yywarn(yylloc, "macro replacement not supported. "
+      yywarn(yylloc, "warning: macro replacement not supported. "
              "Use an external preprocessor.");
   }
 
@@ -941,7 +941,8 @@ static unsigned truncate_to_integer_width(verinum::V*bits, unsigned size)
 
       for (unsigned idx = integer_width; idx < size; idx += 1) {
 	    if (bits[idx] != pad) {
-		  yywarn(yylloc, "Unsized numeric constant truncated to integer width.");
+		  yywarn(yylloc, "warning: Unsized numeric constant truncated "
+                                 "to integer width.");
 		  break;
 	    }
       }
@@ -985,7 +986,7 @@ verinum*make_unsized_binary(const char*txt)
       }
 
       if ((based_size > 0) && (size > based_size)) yywarn(yylloc,
-          "extra digits given for sized binary constant.");
+          "warning: extra digits given for sized binary constant.");
 
       verinum::V*bits = new verinum::V[size];
 
@@ -1050,7 +1051,7 @@ verinum*make_unsized_octal(const char*txt)
             int rem = based_size % 3;
 	    if (rem != 0) based_size += 3 - rem;
 	    if (size > based_size) yywarn(yylloc,
-	        "extra digits given for sized octal constant.");
+	        "warning: extra digits given for sized octal constant.");
       }
 
       verinum::V*bits = new verinum::V[size];
@@ -1119,7 +1120,7 @@ verinum*make_unsized_hex(const char*txt)
             int rem = based_size % 4;
 	    if (rem != 0) based_size += 4 - rem;
 	    if (size > based_size) yywarn(yylloc,
-	        "extra digits given for sized hex constant.");
+	        "warning: extra digits given for sized hex constant.");
       }
 
       verinum::V*bits = new verinum::V[size];

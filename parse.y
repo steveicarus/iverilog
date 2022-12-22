@@ -6068,7 +6068,7 @@ specify_path_identifiers
       }
   | IDENTIFIER '[' expr_primary ']'
       { if (gn_specify_blocks_flag) {
-	      yywarn(@4, "Bit selects are not currently supported "
+	      yywarn(@4, "warning: Bit selects are not currently supported "
 			 "in path declarations. The declaration "
 			 "will be applied to the whole vector.");
 	}
@@ -6079,7 +6079,7 @@ specify_path_identifiers
       }
   | IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
       { if (gn_specify_blocks_flag) {
-	      yywarn(@4, "Part selects are not currently supported "
+	      yywarn(@4, "warning: Part selects are not currently supported "
 			 "in path declarations. The declaration "
 			 "will be applied to the whole vector.");
 	}
@@ -6096,7 +6096,7 @@ specify_path_identifiers
       }
   | specify_path_identifiers ',' IDENTIFIER '[' expr_primary ']'
       { if (gn_specify_blocks_flag) {
-	      yywarn(@4, "Bit selects are not currently supported "
+	      yywarn(@4, "warning: Bit selects are not currently supported "
 			 "in path declarations. The declaration "
 			 "will be applied to the whole vector.");
 	}
@@ -6107,7 +6107,7 @@ specify_path_identifiers
       }
   | specify_path_identifiers ',' IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
       { if (gn_specify_blocks_flag) {
-	      yywarn(@4, "Part selects are not currently supported "
+	      yywarn(@4, "warning: Part selects are not currently supported "
 			 "in path declarations. The declaration "
 			 "will be applied to the whole vector.");
 	}

@@ -2048,7 +2048,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 
 	// Put the primitive into the primitives table
       if (pform_primitives[name]) {
-	    VLwarn("UDP primitive already exists.");
+	    VLwarn("warning: UDP primitive already exists.");
 
       } else {
 	    PUdp*udp = new PUdp(name, parms->size());
