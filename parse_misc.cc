@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -67,7 +67,7 @@ void VLerror(const YYLTYPE&loc, const char*msg, ...)
       based_size = 0; /* Clear the base information if we have an error. */
 }
 
-void yywarn(const YYLTYPE&loc, const char*msg)
+void VLwarn(const YYLTYPE&loc, const char*msg)
 {
       warn_count += 1;
       cerr << loc << ": warning: " << msg << endl;
