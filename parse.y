@@ -250,16 +250,16 @@ static long check_enum_seq_value(const YYLTYPE&loc, verinum *arg, bool zero_ok)
 	// We can never have an undefined value in an enumeration name
 	// declaration sequence.
       if (! arg->is_defined()) {
-	    yyerror(loc, "error: undefined value used in enum name sequence.");
+	    yyerror(loc, "error: Undefined value used in enum name sequence.");
 	// We can never have a negative value in an enumeration name
 	// declaration sequence.
       } else if (arg->is_negative()) {
-	    yyerror(loc, "error: negative value used in enum name sequence.");
+	    yyerror(loc, "error: Negative value used in enum name sequence.");
       } else {
 	    value = arg->as_ulong();
 	      // We cannot have a zero enumeration name declaration count.
 	    if (! zero_ok && (value == 0)) {
-		  yyerror(loc, "error: zero count used in enum name sequence.");
+		  yyerror(loc, "error: Zero count used in enum name sequence.");
 		  value = 1;
 	    }
       }
@@ -273,7 +273,7 @@ static void check_end_label(const struct vlltype&loc, const char *type,
 	    return;
 
       if (!begin)
-	    yyerror(loc, "error: unnamed %s must not have end label.", type);
+	    yyerror(loc, "error: Unnamed %s must not have end label.", type);
       else if (strcmp(begin, end) != 0)
 	    yyerror(loc, "error: %s end label `%s` doesn't match %s name"
 	                 " `%s`.", type, end, type, begin);
@@ -946,7 +946,7 @@ class_item /* IEEE1800-2005: A.1.8 */
   | ';'
 
   | error ';'
-      { yyerror(@2, "error: invalid class item.");
+      { yyerror(@2, "error: Invalid class item.");
 	yyerrok;
       }
 
@@ -1892,7 +1892,7 @@ modport_ports_list
 	      pform_add_modport_port(@3, last_modport_port.direction,
 				     lex_strings.make($3), 0);
 	} else if (last_modport_port.type != MP_TF) {
-	      yyerror(@3, "error: list of identifiers not allowed here.");
+	      yyerror(@3, "error: List of identifiers not allowed here.");
 	}
 	delete[] $3;
       }
@@ -2369,7 +2369,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	list<pform_port_t>* port_list = make_port_list($4, $5, 0);
 
 	if (use_port_type == NetNet::PIMPLICIT) {
-	      yyerror(@1, "error: missing task/function port direction.");
+	      yyerror(@1, "error: Missing task/function port direction.");
 	      use_port_type = NetNet::PINPUT; // for error recovery
 	}
 	if (($3 == 0) && ($1==NetNet::PIMPLICIT)) {
@@ -2533,7 +2533,7 @@ variable_lifetime_opt
   : lifetime
       { if (pform_requires_sv(@1, "Overriding default variable lifetime") &&
 	    $1 != pform_peek_scope()->default_lifetime) {
-	      yyerror(@1, "sorry: overriding the default variable lifetime "
+	      yyerror(@1, "sorry: Overriding the default variable lifetime "
 			  "is not yet supported.");
 	}
 	var_lifetime = $1;
@@ -2642,24 +2642,24 @@ block_item_decl
      trailing semi-colon to resync the parser. */
 
   | K_var variable_lifetime_opt data_type_or_implicit error ';'
-      { yyerror(@1, "error: syntax error in variable list.");
+      { yyerror(@1, "error: Syntax error in variable list.");
 	yyerrok;
       }
   | variable_lifetime_opt data_type error ';'
-      { yyerror(@1, "error: syntax error in variable list.");
+      { yyerror(@1, "error: Syntax error in variable list.");
 	yyerrok;
       }
   | K_event error ';'
-      { yyerror(@1, "error: syntax error in event variable list.");
+      { yyerror(@1, "error: Syntax error in event variable list.");
 	yyerrok;
       }
 
   | parameter error ';'
-      { yyerror(@1, "error: syntax error in parameter list.");
+      { yyerror(@1, "error: Syntax error in parameter list.");
 	yyerrok;
       }
   | localparam error ';'
-      { yyerror(@1, "error: syntax error localparam list.");
+      { yyerror(@1, "error: Syntax error localparam list.");
 	yyerrok;
       }
   ;
@@ -2876,7 +2876,7 @@ struct_union_member /* IEEE 1800-2012 A.2.2.1 */
 	$$ = tmp;
       }
   | error ';'
-      { yyerror(@2, "Error in struct/union member.");
+      { yyerror(@2, "error: Error in struct/union member.");
 	yyerrok;
 	$$ = 0;
       }
@@ -4591,7 +4591,7 @@ lpvalue
       }
 
   | streaming_concatenation
-      { yyerror(@1, "sorry: streaming concatenation not supported in l-values.");
+      { yyerror(@1, "sorry: Streaming concatenation not supported in l-values.");
 	$$ = 0;
       }
   ;
@@ -4811,7 +4811,7 @@ module_item
 	}
 	pform_set_data_type(@2, data_type, $5, $2, $1);
 	if ($4 != 0) {
-	      yyerror(@2, "sorry: net delays not supported.");
+	      yyerror(@2, "sorry: Net delays not supported.");
 	      delete $4;
 	}
 	delete $1;
@@ -4821,7 +4821,7 @@ module_item
       { real_type_t*tmpt = new real_type_t(real_type_t::REAL);
 	pform_set_data_type(@2, tmpt, $4, NetNet::WIRE, $1);
 	if ($3 != 0) {
-	      yyerror(@3, "sorry: net delays not supported.");
+	      yyerror(@3, "sorry: Net delays not supported.");
 	      delete $3;
 	}
 	delete $1;
@@ -5183,7 +5183,7 @@ module_item
     specify_item_list_opt K_endspecify
 
   | K_specify error K_endspecify
-      { yyerror(@1, "error: syntax error in specify block");
+      { yyerror(@1, "error: Syntax error in specify block");
 	yyerrok;
       }
 
@@ -5192,18 +5192,18 @@ module_item
      reasonable error message can be produced. */
 
   | error ';'
-      { yyerror(@2, "error: invalid module item.");
+      { yyerror(@2, "error: Invalid module item.");
 	yyerrok;
       }
 
   | K_assign error '=' expression ';'
-      { yyerror(@1, "error: syntax error in left side of "
+      { yyerror(@1, "error: Syntax error in left side of "
 	            "continuous assignment.");
 	yyerrok;
       }
 
   | K_assign error ';'
-      { yyerror(@1, "error: syntax error in continuous assignment");
+      { yyerror(@1, "error: Syntax error in continuous assignment");
 	yyerrok;
       }
 
@@ -5548,7 +5548,7 @@ parameter_value_opt
 	$$ = lst;
       }
   | '#' error
-      { yyerror(@1, "error: syntax error in parameter value assignment list.");
+      { yyerror(@1, "error: Syntax error in parameter value assignment list.");
 	$$ = 0;
       }
   |
@@ -5657,7 +5657,7 @@ port_name
 	$$ = tmp;
       }
   | attribute_list_opt '.' IDENTIFIER '(' error ')'
-      { yyerror(@3, "error: invalid port connection expression.");
+      { yyerror(@3, "error: Invalid port connection expression.");
 	named_pexpr_t*tmp = new named_pexpr_t;
 	tmp->name = lex_strings.make($3);
 	tmp->parm = 0;
@@ -5794,7 +5794,7 @@ port_reference
 	$$ = ptmp;
       }
   | IDENTIFIER '[' error ']'
-      { yyerror(@1, "error: invalid port bit select");
+      { yyerror(@1, "error: Invalid port bit select");
 	Module::port_t*ptmp = new Module::port_t;
 	PEIdent*wtmp = new PEIdent(lex_strings.make($1));
 	FILE_NAME(wtmp, @1);
@@ -6679,7 +6679,7 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
   | error ';'
-      { yyerror(@2, "error: malformed statement");
+      { yyerror(@2, "error: Malformed statement");
 	yyerrok;
 	$$ = new PNoop;
       }

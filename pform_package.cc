@@ -60,9 +60,9 @@ void pform_end_package_declaration(const struct vlltype&loc)
       map<perm_string,PPackage*>::const_iterator test = packages_by_name.find(use_name);
       if (test != packages_by_name.end()) {
 	    ostringstream msg;
-	    msg << "Package " << use_name << " was already declared here: "
+	    msg << "error: Package " << use_name << " was already declared here: "
 		<< test->second->get_fileline() << ends;
-	    VLerror(msg.str().c_str());
+	    VLerror(loc, msg.str().c_str());
       }
 
 

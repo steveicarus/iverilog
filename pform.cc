@@ -569,7 +569,7 @@ void pform_set_scope_timescale(const struct vlltype&loc)
 
       if (gn_system_verilog() && (scope->time_unit < scope->time_precision)) {
 	    if (scope->time_unit_is_local || scope->time_prec_is_local) {
-		  VLerror("error: a timeprecision is missing or is too large!");
+		  VLerror("error: A timeprecision is missing or is too large!");
 	    }
       } else {
             assert(scope->time_unit >= scope->time_precision);
@@ -1093,7 +1093,7 @@ bool get_time_unit(const char*cp, int &unit)
 	bool        rc = true;
 
 	if (strchr(cp, '_')) {
-		VLerror(yylloc, "Invalid timeunit constant ('_' is not "
+		VLerror(yylloc, "error: Invalid timeunit constant ('_' is not "
 				"supported).");
 		return false;
 	}
@@ -1118,7 +1118,7 @@ bool get_time_unit(const char*cp, int &unit)
 		rc = false;
 
 		ostringstream msg;
-		msg << "Invalid timeunit scale '" << cp << "'.";
+		msg << "error: Invalid timeunit scale '" << cp << "'.";
 		VLerror(msg.str().c_str());
 	}
 
@@ -1134,11 +1134,11 @@ static bool get_time_unit_prec(const char*cp, int &res, bool is_unit)
 	/* We do not support a '_' in these time constants. */
       if (strchr(cp, '_')) {
 	    if (is_unit) {
-		  VLerror(yylloc, "Invalid timeunit constant ('_' is not "
-		                  "supported).");
+		  VLerror(yylloc, "error: Invalid timeunit constant ('_' "
+		                  "is not supported).");
 	    } else {
-		  VLerror(yylloc, "Invalid timeprecision constant ('_' is not "
-		                  "supported).");
+		  VLerror(yylloc, "error: Invalid timeprecision constant ('_' "
+		                  "is not supported).");
 	    }
 	    return true;
       }
@@ -1146,9 +1146,11 @@ static bool get_time_unit_prec(const char*cp, int &res, bool is_unit)
 	/* Check for the 1 digit. */
       if (*cp != '1') {
 	    if (is_unit) {
-		  VLerror(yylloc, "Invalid timeunit constant (1st digit).");
+		  VLerror(yylloc, "error: Invalid timeunit constant "
+                                  "(1st digit).");
 	    } else {
-		  VLerror(yylloc, "Invalid timeprecision constant (1st digit).");
+		  VLerror(yylloc, "error: Invalid timeprecision constant "
+                                  "(1st digit).");
 	    }
 	    return true;
       }
@@ -1158,11 +1160,11 @@ static bool get_time_unit_prec(const char*cp, int &res, bool is_unit)
       res = strspn(cp, "0");
       if (res > 2) {
 	    if (is_unit) {
-		  VLerror(yylloc, "Invalid timeunit constant (number of "
-		                  "zeros).");
+		  VLerror(yylloc, "error: Invalid timeunit constant "
+		                  "(number of zeros).");
 	    } else {
-		  VLerror(yylloc, "Invalid timeprecision constant (number of "
-		                  "zeros).");
+		  VLerror(yylloc, "error: Invalid timeprecision constant "
+		                  "(number of zeros).");
 	    }
 	    return true;
       }
@@ -1196,7 +1198,7 @@ static bool get_time_unit_prec(const char*cp, int &res, bool is_unit)
       }
 
       ostringstream msg;
-      msg << "Invalid ";
+      msg << "error: Invalid ";
       if (is_unit) msg << "timeunit";
       else msg << "timeprecision";
       msg << " scale '" << cp << "'.";
@@ -1220,10 +1222,10 @@ void pform_set_timeunit(const char*txt, bool initial_decl)
             scope->time_unit_is_default = false;
             allow_timeunit_decl = false;
       } else if (!scope->time_unit_is_local) {
-            VLerror(yylloc, "error: repeat timeunit found and the initial "
+            VLerror(yylloc, "error: Repeat timeunit found and the initial "
                             "timeunit for this scope is missing.");
       } else if (scope->time_unit != val) {
-            VLerror(yylloc, "error: repeat timeunit does not match the "
+            VLerror(yylloc, "error: Repeat timeunit does not match the "
                             "initial timeunit for this scope.");
       }
 }
@@ -1258,10 +1260,10 @@ void pform_set_timeprec(const char*txt, bool initial_decl)
             scope->time_prec_is_default = false;
             allow_timeprec_decl = false;
       } else if (!scope->time_prec_is_local) {
-            VLerror(yylloc, "error: repeat timeprecision found and the initial "
+            VLerror(yylloc, "error: Repeat timeprecision found and the initial "
                             "timeprecision for this scope is missing.");
       } else if (scope->time_precision != val) {
-            VLerror(yylloc, "error: repeat timeprecision does not match the "
+            VLerror(yylloc, "error: Repeat timeprecision does not match the "
                             "initial timeprecision for this scope.");
       }
 }
@@ -1458,7 +1460,7 @@ void pform_endmodule(const char*name, bool inside_celldefine,
 		  perm_string tmp_name = tmp_module->mod_name();
 		  pform_cur_module.pop_front();
 		  ostringstream msg;
-		  msg << "Module " << mod_name
+		  msg << "error: Module " << mod_name
 		      << " was nested within " << tmp_name
 		      << " but broken.";
 		  VLerror(msg.str().c_str());
@@ -1492,7 +1494,7 @@ void pform_endmodule(const char*name, bool inside_celldefine,
 
       if (test != use_module_map.end()) {
 	    ostringstream msg;
-	    msg << "Module " << name << " was already declared here: "
+	    msg << "error: Module " << name << " was already declared here: "
 		<< test->second->get_fileline() << endl;
 	    VLerror(msg.str().c_str());
       } else {
@@ -2127,7 +2129,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 
 	// Put the primitive into the primitives table
       if (pform_primitives[name]) {
-	    VLerror("UDP primitive already exists.");
+	    VLerror("error: UDP primitive already exists.");
 
       } else {
 	    PUdp*udp = new PUdp(name, pins.size());
@@ -2210,7 +2212,7 @@ static void pform_makegate(PGBuiltin::Type type,
 			   list<named_pexpr_t>*attr)
 {
       if (info.parms_by_name) {
-	    cerr << info.get_fileline() << ": Gates do not have port names."
+	    cerr << info.get_fileline() << ": error: Gates do not have port names."
 		 << endl;
 	    error_count += 1;
 	    return;
@@ -2515,7 +2517,7 @@ void pform_make_var_init(const struct vlltype&li,
 			 perm_string name, PExpr*expr)
 {
       if (! pform_at_module_level() && !gn_system_verilog()) {
-	    VLerror(li, "error: variable declaration assignments are only "
+	    VLerror(li, "error: Variable declaration assignments are only "
                         "allowed at the module level.");
 	    delete expr;
 	    return;
@@ -2678,7 +2680,7 @@ void pform_makewire(const struct vlltype&li,
 		    list<named_pexpr_t>*attr)
 {
       if (is_compilation_unit(lexical_scope) && !gn_system_verilog()) {
-	    VLerror(li, "error: variable declarations must be contained within a module.");
+	    VLerror(li, "error: Variable declarations must be contained within a module.");
 	    return;
       }
 
@@ -2876,7 +2878,7 @@ void pform_set_attrib(perm_string name, perm_string key, char*value)
 
       } else {
 	    delete[] value;
-	    VLerror("Unable to match name for setting attribute.");
+	    VLerror("error: Unable to match name for setting attribute.");
 
       }
 }
@@ -2890,7 +2892,7 @@ void pform_set_type_attrib(perm_string name, const string&key,
 {
       map<perm_string,PUdp*>::const_iterator udp = pform_primitives.find(name);
       if (udp == pform_primitives.end()) {
-	    VLerror("type name is not (yet) defined.");
+	    VLerror("error: Type name is not (yet) defined.");
 	    delete[] value;
 	    return;
       }
@@ -2923,7 +2925,7 @@ static void pform_set_type_parameter(const struct vlltype&loc, perm_string name,
       pform_requires_sv(loc, "Type parameter");
 
       if (value_range)
-	    VLerror(loc, "error: type parameter must not have value range.");
+	    VLerror(loc, "error: Type parameter must not have value range.");
 
       type_parameter_t *type = new type_parameter_t(name);
       pform_set_typedef(loc, name, type, 0);
