@@ -827,10 +827,8 @@ TU [munpf]
 	    net_type = NetNet::NONE;
 
       } else {
-	    cerr << yylloc.text << ":" << yylloc.first_line
-		 << ": error: Net type " << yytext
-		 << " is not a valid (or supported)"
-		 << " default net type." << endl;
+	    VLerror(yylloc, "error: Net type '%s' is not a valid (or supported) "
+		            "default net type.", yytext);
 	    net_type = NetNet::WIRE;
 	    error_count += 1;
       }
@@ -906,27 +904,21 @@ TU [munpf]
   }
 
 
-`{W} { cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
-	    << "Stray tic (`) here. Perhaps you put white space" << endl;
-       cerr << yylloc.text << ":" << yylloc.first_line << ":      : "
-	    << "between the tic and preprocessor directive?"
-	    << endl;
-       error_count += 1; }
+`{W} { VLerror(yylloc, "error: Stray tic (`) here. Perhaps you put white "
+                       "space between the tic and preprocessor directive?"); }
 
 . { return yytext[0]; }
 
   /* Final catchall. something got lost or mishandled. */
   /* XXX Should we tell the user something about the lexical state? */
 
-<*>.|\n {   cerr << yylloc.text << ":" << yylloc.first_line
-	   << ": error: unmatched character (";
+<*>.|\n {
       if (isprint(yytext[0]))
-	    cerr << yytext[0];
+            VLerror(yylloc, "error: Unmatched character (%c).", yytext[0]);
       else
-	    cerr << "hex " << hex << ((unsigned char) yytext[0]);
-
-      cerr << ")" << endl;
-      error_count += 1; }
+            VLerror(yylloc, "error: Unmatched character (0x%x).",
+			    (unsigned char) yytext[0]);
+}
 
 %%
 
@@ -985,7 +977,7 @@ verinum*make_unsized_binary(const char*txt)
 	    if (*idx != '_') size += 1;
 
       if (size == 0) {
-	    VLerror(yylloc, "Numeric literal has no digits in it.");
+	    VLerror(yylloc, "error: Numeric literal has no digits in it.");
 	    verinum*out = new verinum();
 	    out->has_sign(sign_flag);
 	    out->is_single(single_flag);
@@ -1431,7 +1423,7 @@ static void process_ucdrive(const char*txt)
 
       const char*cp = txt;
       if (strncmp("pull", cp, 4) != 0) {
-	    VLerror(yylloc, "pull required for `unconnected_drive "
+	    VLerror(yylloc, "error: pull required for `unconnected_drive "
 	                    "directive.");
 	    return;
       }
@@ -1439,16 +1431,14 @@ static void process_ucdrive(const char*txt)
       if (*cp == '0') ucd = UCD_PULL0;
       else if (*cp == '1') ucd = UCD_PULL1;
       else {
-	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
-		    "`unconnected_drive does not support 'pull" << *cp
-	         << "'." << endl;
-	    error_count += 1;
+	    VLerror(yylloc, "error: `unconnected_drive does not support "
+                            "'pull%c'.", *cp);
 	    return;
       }
       cp += 1;
       if (*cp != '\0') {
-	    VLerror(yylloc, "Invalid `unconnected_drive directive (extra "
-	                    "garbage after pull direction).");
+	    VLerror(yylloc, "error: Invalid `unconnected_drive directive "
+	                    "(extra garbage after pull direction).");
 	    return;
       }
 
@@ -1479,7 +1469,7 @@ static void line_directive()
 	/* Find the starting " and skip it. */
       char*fn_start = strchr(cp, '"');
       if (cp != fn_start) {
-	    VLerror(yylloc, "Invalid #line directive (file name start).");
+	    VLerror(yylloc, "error: Invalid #line directive (file name start).");
 	    return;
       }
       fn_start += 1;
@@ -1487,7 +1477,7 @@ static void line_directive()
 	/* Find the last ". */
       char*fn_end = strrchr(fn_start, '"');
       if (!fn_end) {
-	    VLerror(yylloc, "Invalid #line directive (file name end).");
+	    VLerror(yylloc, "error: Invalid #line directive (file name end).");
 	    return;
       }
 
@@ -1502,8 +1492,8 @@ static void line_directive()
       cpr = cp;
       cpr += strspn(cp, " \t");
       if (cp == cpr) {
-	    VLerror(yylloc, "Invalid #line directive (missing space after "
-	                    "file name).");
+	    VLerror(yylloc, "error: Invalid #line directive (missing space "
+	                    "after file name).");
 	    delete[] buf;
 	    return;
       }
@@ -1512,7 +1502,7 @@ static void line_directive()
 	/* Get the line number and verify that it is correct. */
       unsigned long lineno = strtoul(cp, &cpr, 10);
       if (cp == cpr) {
-	    VLerror(yylloc, "Invalid line number for #line directive.");
+	    VLerror(yylloc, "error: Invalid line number for #line directive.");
 	    delete[] buf;
 	    return;
       }
@@ -1521,8 +1511,8 @@ static void line_directive()
 	/* Verify that only space is left. */
       cpr += strspn(cp, " \t");
       if ((size_t)(cpr-yytext) != strlen(yytext)) {
-	    VLerror(yylloc, "Invalid #line directive (extra garbage after "
-	                    "line number).");
+	    VLerror(yylloc, "error: Invalid #line directive (extra garbage "
+	                    "after line number).");
 	    delete[] buf;
 	    return;
       }
@@ -1549,7 +1539,7 @@ static void line_directive2()
 	/* strtoul skips leading space. */
       unsigned long lineno = strtoul(cp, &cpr, 10);
       if (cp == cpr) {
-	    VLerror(yylloc, "Invalid line number for `line directive.");
+	    VLerror(yylloc, "error: Invalid line number for `line directive.");
 	    return;
       }
       lineno -= 1;
@@ -1558,8 +1548,8 @@ static void line_directive2()
 	/* Skip the space between the line number and the file name. */
       cpr += strspn(cp, " \t");
       if (cp == cpr) {
-	    VLerror(yylloc, "Invalid `line directive (missing space after "
-	                    "line number).");
+	    VLerror(yylloc, "error: Invalid `line directive (missing space "
+	                    "after line number).");
 	    return;
       }
       cp = cpr;
@@ -1567,7 +1557,7 @@ static void line_directive2()
 	/* Find the starting " and skip it. */
       char*fn_start = strchr(cp, '"');
       if (cp != fn_start) {
-	    VLerror(yylloc, "Invalid `line directive (file name start).");
+	    VLerror(yylloc, "error: Invalid `line directive (file name start).");
 	    return;
       }
       fn_start += 1;
@@ -1575,7 +1565,7 @@ static void line_directive2()
 	/* Find the last ". */
       char*fn_end = strrchr(fn_start, '"');
       if (!fn_end) {
-	    VLerror(yylloc, "Invalid `line directive (file name end).");
+	    VLerror(yylloc, "error: Invalid `line directive (file name end).");
 	    return;
       }
 
@@ -1584,15 +1574,15 @@ static void line_directive2()
       cpr = cp;
       cpr += strspn(cp, " \t");
       if (cp == cpr) {
-	    VLerror(yylloc, "Invalid `line directive (missing space after "
-	                    "file name).");
+	    VLerror(yylloc, "error: Invalid `line directive (missing space "
+	                    "after file name).");
 	    return;
       }
       cp = cpr;
 
 	/* Check that the level is correct, we do not need the level. */
       if (strspn(cp, "012") != 1) {
-	    VLerror(yylloc, "Invalid level for `line directive.");
+	    VLerror(yylloc, "error: Invalid level for `line directive.");
 	    return;
       }
       cp += 1;
@@ -1601,8 +1591,8 @@ static void line_directive2()
       cp += strspn(cp, " \t");
       if (strncmp(cp, "//", 2) != 0 &&
           (size_t)(cp-yytext) != strlen(yytext)) {
-	    VLerror(yylloc, "Invalid `line directive (extra garbage after "
-	                    "level).");
+	    VLerror(yylloc, "error: Invalid `line directive (extra garbage "
+	                    "after level).");
 	    return;
       }
 
