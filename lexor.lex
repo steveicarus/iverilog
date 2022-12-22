@@ -509,9 +509,8 @@ TU [munpf]
 }
 \'[01xzXZ] {
       if (!gn_system_verilog()) {
-	    cerr << yylloc.text << ":" << yylloc.first_line << ": warning: "
-		 << "Using SystemVerilog 'N bit vector.  Use at least "
-		 << "-g2005-sv to remove this warning." << endl;
+	    VLwarn(yylloc, "warning: Using SystemVerilog 'N bit vector. "
+                           "Use at least -g2005-sv to remove this warning.");
       }
       generation_t generation_save = generation_flag;
       generation_flag = GN_VER2005_SV;
@@ -851,55 +850,39 @@ TU [munpf]
      been handled by an external preprocessor such as ivlpp. */
 
 ^{W}?`define{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `define not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `define not supported. Use an external preprocessor.");
   }
 
 ^{W}?`else{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `else not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `else not supported. Use an external preprocessor.");
   }
 
 ^{W}?`elsif{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `elsif not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `elsif not supported. Use an external preprocessor.");
   }
 
 ^{W}?`endif{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `endif not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `endif not supported. Use an external preprocessor.");
   }
 
 ^{W}?`ifdef{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `ifdef not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `ifdef not supported. Use an external preprocessor.");
   }
 
 ^{W}?`ifndef{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `ifndef not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `ifndef not supported. Use an external preprocessor.");
   }
 
 ^`include{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `include not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `include not supported. Use an external preprocessor.");
   }
 
 ^`undef{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `undef not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `undef not supported. Use an external preprocessor.");
   }
 
 `[a-zA-Z_]+ {
-      yywarn(yylloc, "warning: macro replacement not supported. "
+      VLwarn(yylloc, "warning: Macro replacement not supported. "
              "Use an external preprocessor.");
   }
 
@@ -941,7 +924,7 @@ static unsigned truncate_to_integer_width(verinum::V*bits, unsigned size)
 
       for (unsigned idx = integer_width; idx < size; idx += 1) {
 	    if (bits[idx] != pad) {
-		  yywarn(yylloc, "warning: Unsized numeric constant truncated "
+		  VLwarn(yylloc, "warning: Unsized numeric constant truncated "
                                  "to integer width.");
 		  break;
 	    }
@@ -985,8 +968,8 @@ verinum*make_unsized_binary(const char*txt)
 	    return out;
       }
 
-      if ((based_size > 0) && (size > based_size)) yywarn(yylloc,
-          "warning: extra digits given for sized binary constant.");
+      if ((based_size > 0) && (size > based_size)) VLwarn(yylloc,
+          "warning: Extra digits given for sized binary constant.");
 
       verinum::V*bits = new verinum::V[size];
 
@@ -1050,8 +1033,8 @@ verinum*make_unsized_octal(const char*txt)
       if (based_size > 0) {
             int rem = based_size % 3;
 	    if (rem != 0) based_size += 3 - rem;
-	    if (size > based_size) yywarn(yylloc,
-	        "warning: extra digits given for sized octal constant.");
+	    if (size > based_size) VLwarn(yylloc,
+	        "warning: Extra digits given for sized octal constant.");
       }
 
       verinum::V*bits = new verinum::V[size];
@@ -1119,8 +1102,8 @@ verinum*make_unsized_hex(const char*txt)
       if (based_size > 0) {
             int rem = based_size % 4;
 	    if (rem != 0) based_size += 4 - rem;
-	    if (size > based_size) yywarn(yylloc,
-	        "warning: extra digits given for sized hex constant.");
+	    if (size > based_size) VLwarn(yylloc,
+	        "warning: Extra digits given for sized hex constant.");
       }
 
       verinum::V*bits = new verinum::V[size];
