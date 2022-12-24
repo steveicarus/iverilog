@@ -46,7 +46,6 @@ struct symbol_search_results {
       inline symbol_search_results() {
 	    scope = 0;
 	    net = 0;
-	    cls_val = 0;
 	    par_val = 0;
 	    type = 0;
 	    eve = 0;
@@ -55,7 +54,6 @@ struct symbol_search_results {
       inline bool is_scope() const {
 	    if (net) return false;
 	    if (eve) return false;
-	    if (cls_val) return false;
 	    if (par_val) return false;
 	    if (scope) return true;
 	    return false;
@@ -64,7 +62,6 @@ struct symbol_search_results {
       inline bool is_found() const {
 	    if (net) return true;
 	    if (eve) return true;
-	    if (cls_val) return true;
 	    if (par_val) return true;
 	    if (scope) return true;
 	    return false;
@@ -75,8 +72,6 @@ struct symbol_search_results {
       NetScope*scope;
 	// If this was a net, the signal itself.
       NetNet*net;
-	// For a class property we only have type information.
-      ivl_type_t cls_val;
 	// If this was a parameter, the value expression and the
 	// optional value dimensions.
       const NetExpr*par_val;

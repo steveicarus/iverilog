@@ -2601,7 +2601,37 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
 						    prop_name);
       }
 
-      NetEProperty*tmp = new NetEProperty(sr.net, pidx);
+      NetExpr *canon_index = nullptr;
+      ivl_type_t tmp_type = class_type->get_prop_type(pidx);
+      if (const netuarray_t *tmp_ua = dynamic_cast<const netuarray_t*>(tmp_type)) {
+	    const std::vector<netrange_t> &dims = tmp_ua->static_dimensions();
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_expr_class_member_: "
+		       << "Property " << class_type->get_prop_name(pidx)
+		       << " has " << dims.size() << " dimensions, "
+		       << " got " << comp.index.size() << " indices." << endl;
+	    }
+
+	    if (dims.size() != comp.index.size()) {
+		  cerr << get_fileline() << ": error: "
+		       << "Got " << comp.index.size() << " indices, "
+		       << "expecting " << dims.size()
+		       << " to index the property " << class_type->get_prop_name(pidx) << "." << endl;
+		  des->errors++;
+	    } else {
+		  canon_index = make_canonical_index(des, scope, this,
+						     comp.index, tmp_ua, false);
+	    }
+      }
+
+      if (debug_elaborate && canon_index) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr_class_member_: "
+		 << "Property " << class_type->get_prop_name(pidx)
+		 << " canonical index: " << *canon_index << endl;
+      }
+
+      NetEProperty *tmp = new NetEProperty(sr.net, pidx, canon_index);
       tmp->set_line(*this);
       return tmp;
 }
@@ -4166,13 +4196,32 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    return expr_width_;
       }
 
-	// Look for a class property.
-      if (gn_system_verilog() && sr.cls_val) {
-	    expr_type_   = sr.cls_val->base_type();
-	    expr_width_  = sr.cls_val->packed_width();
-	    min_width_   = expr_width_;
-	    signed_flag_ = sr.cls_val->get_signed();
-	    return expr_width_;
+      if (sr.net) {
+	      // Similarly, if this net is an object, the path tail may
+	      // be a class property.
+	    const netclass_t *class_type = dynamic_cast<const netclass_t*>(sr.type);
+	    if (class_type && !sr.path_tail.empty()) {
+		  perm_string pname = peek_tail_name(sr.path_tail);
+		  ivl_type_t par_type;
+		  const NetExpr *par = class_type->get_parameter(des, pname, par_type);
+		  if (par)
+			return test_width_parameter_(par, mode);
+
+		  int pidx = class_type->property_idx_from_name(pname);
+		  if (pidx >= 0) {
+			const name_component_t member_comp = sr.path_tail.front();
+			ivl_type_t ptype = class_type->get_prop_type(pidx);
+			if (!member_comp.index.empty()) {
+			      const netuarray_t*tmp_ua = dynamic_cast<const netuarray_t*>(ptype);
+			      if (tmp_ua) ptype = tmp_ua->element_type();
+			}
+			expr_type_   = ptype->base_type();
+			expr_width_  = ptype->packed_width();
+			min_width_   = expr_width_;
+			signed_flag_ = ptype->get_signed();
+			return expr_width_;
+		  }
+	    }
       }
 
       if (use_width != UINT_MAX) {
@@ -4217,27 +4266,6 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 			expr_width_  = mem->net_type->packed_width();
 			min_width_   = expr_width_;
 			signed_flag_ = mem->get_signed();
-			return expr_width_;
-		  }
-	    }
-
-	      // Similarly, if this net is an object, the path tail may
-	      // be a class property.
-	    const netclass_t *class_type = dynamic_cast<const netclass_t*>(sr.type);
-	    if (class_type && !sr.path_tail.empty()) {
-		  perm_string pname = peek_tail_name(sr.path_tail);
-		  ivl_type_t par_type;
-		  const NetExpr *par = class_type->get_parameter(des, pname, par_type);
-		  if (par)
-			return test_width_parameter_(par, mode);
-
-		  int pidx = class_type->property_idx_from_name(pname);
-		  if (pidx >= 0) {
-			ivl_type_t ptype = class_type->get_prop_type(pidx);
-			expr_type_   = ptype->base_type();
-			expr_width_  = ptype->packed_width();
-			min_width_   = expr_width_;
-			signed_flag_ = ptype->get_signed();
 			return expr_width_;
 		  }
 	    }
@@ -4319,10 +4347,6 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       if (package_) {
 	    use_scope = des->find_package(package_->pscope_name());
 	    ivl_assert(*this, use_scope);
-      }
-
-      if (NetExpr* tmp = elaborate_expr_class_member_(des, scope, 0, flags)) {
-	    return tmp;
       }
 
       symbol_search_results sr;
@@ -4455,105 +4479,6 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 }
 
 /*
- * Guess that the path_ is the name of a member of a containing class,
- * and see how that works. If it turns out that the current scope is
- * not a method, or the name is not in the parent class, then
- * fail. Otherwise, return a NetEProperty.
- */
-NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
-					       unsigned, unsigned) const
-{
-      if (!gn_system_verilog())
-	    return 0;
-      if (scope->parent() == 0)
-	    return 0;
-      if (path_.size() != 1)
-	    return 0;
-
-      const netclass_t*class_type = find_class_containing_scope(*this, scope);
-      if (class_type == 0)
-	    return 0;
-
-      const name_component_t&name_comp = path_.back();
-
-      perm_string member_name = name_comp.name;
-      int pidx = class_type->property_idx_from_name(member_name);
-      if (pidx < 0)
-	    return 0;
-
-      NetScope*scope_method = find_method_containing_scope(*this, scope);
-      ivl_assert(*this, scope_method);
-
-      NetNet*this_net = scope_method->find_signal(perm_string::literal(THIS_TOKEN));
-      if (this_net == 0) {
-	    cerr << get_fileline() << ": internal error: "
-		 << "Unable to find 'this' port of " << scope_path(scope_method)
-		 << "." << endl;
-	    return 0;
-      }
-
-      if (debug_elaborate) {
-	    cerr << get_fileline() << ": PEIdent::elaborate_expr_class_member: "
-		 << "Found member " << member_name
-		 << " is a member of class " << class_type->get_name()
-		 << ", context scope=" << scope_path(scope)
-		 << ", type=" << *class_type->get_prop_type(pidx)
-		 << ", so making a NetEProperty." << endl;
-      }
-
-      property_qualifier_t qual = class_type->get_prop_qual(pidx);
-      if (qual.test_local() && ! class_type->test_scope_is_method(scope)) {
-	    cerr << get_fileline() << ": error: "
-		 << "Local property " << class_type->get_prop_name(pidx)
-		 << " is not accessible in this context."
-		 << " (scope=" << scope_path(scope) << ")" << endl;
-	    des->errors += 1;
-      }
-
-      if (qual.test_static()) {
-	    return class_static_property_expression(this, class_type, member_name);
-      }
-
-      NetExpr*canon_index = 0;
-      ivl_type_t tmp_type = class_type->get_prop_type(pidx);
-      if (const netuarray_t*tmp_ua = dynamic_cast<const netuarray_t*>(tmp_type)) {
-
-	    const std::vector<netrange_t>&dims = tmp_ua->static_dimensions();
-
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": PEIdent::elaborate_expr_class_member_: "
-		       << "Property " << class_type->get_prop_name(pidx)
-		       << " has " << dims.size() << " dimensions, "
-		       << " got " << name_comp.index.size() << " indices." << endl;
-	    }
-
-	    if (dims.size() != name_comp.index.size()) {
-		  cerr << get_fileline() << ": error: "
-		       << "Got " << name_comp.index.size() << " indices, "
-		       << "expecting " << dims.size()
-		       << " to index the property " << class_type->get_prop_name(pidx) << "." << endl;
-		  des->errors += 1;
-
-	    } else {
-
-		  canon_index = make_canonical_index(des, scope, this,
-						     name_comp.index, tmp_ua, false);
-	    }
-      }
-
-      if (debug_elaborate && canon_index) {
-	    cerr << get_fileline() << ": PEIdent::elaborate_expr_class_member_: "
-		 << "Property " << class_type->get_prop_name(pidx)
-		 << " canonical index: " << *canon_index << endl;
-      }
-
-      NetEProperty*tmp = new NetEProperty(this_net, pidx, canon_index);
-      tmp->set_line(*this);
-      return tmp;
-}
-
-
-/*
  * Elaborate an identifier in an expression. The identifier can be a
  * parameter name, a signal name or a memory name. It can also be a
  * scope name (Return a NetEScope) but only certain callers can use
@@ -4585,17 +4510,6 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 	    cerr << get_fileline() << ": PEIdent::elaborate_expr: "
 		 << "path_=" << path_
 		 << endl;
-      }
-
-	// Special case: Detect the special situation that this name
-	// is the name of a variable in the class, and this is a class
-	// method. We sense that this might be the case by noting that
-	// the parent scope of where we are working is a
-	// NetScope::CLASS, the path_ is a single component, and the
-	// name is a property of the class. If that turns out to be
-	// the case, then handle this specially.
-      if (NetExpr*tmp = elaborate_expr_class_member_(des, scope, expr_wid, flags)) {
-	    return tmp;
       }
 
       if (path_.size() > 1) {
