@@ -93,7 +93,7 @@ int __vpiStringConst::vpi_get(int code)
 {
       switch (code) {
           case vpiSize:
-	    return strlen(value_)*8;
+	    return value_len_ * 8;
 
           case vpiSigned:
 	      return 0;
@@ -121,7 +121,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 {
       unsigned uint_value;
       p_vpi_vecval vecp;
-      unsigned size = strlen(value_);
+      unsigned size = value_len_;
       char*rbuf = 0;
       char*cp;
 
@@ -131,9 +131,22 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 	    vp->format = vpiStringVal;
 	    // fallthrough
 	  case vpiStringVal:
+	    cp = value_;
 	    rbuf = (char *) need_result_buf(size + 1, RBUF_VAL);
-	    strcpy(rbuf, value_);
 	    vp->value.str = rbuf;
+
+	    for (unsigned int i = 0; i < size; i++) {
+		  // Ignore leading null-bytes and replace other null-bytes with space.
+		  // The LRM is not entirely clear on how null bytes should be handled.
+		  // This is the implementation chosen for iverilog.
+		  if (*cp)
+			*rbuf++ = *cp;
+		  else if (rbuf != vp->value.str)
+			*rbuf++ = ' ';
+
+		  cp++;
+	    }
+	    *rbuf = '\0';
 	    break;
 
           case vpiDecStrVal:
