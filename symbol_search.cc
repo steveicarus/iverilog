@@ -311,14 +311,12 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		       NetNet*&net,
 		       const NetExpr*&par,
 		       NetEvent*&eve,
-		       ivl_type_t&par_type,
-		       ivl_type_t&cls_val)
+		       ivl_type_t&par_type)
 {
       symbol_search_results recurse;
       bool flag = symbol_search(li, des, scope, path, &recurse);
 
       net = 0;
-      cls_val = 0;
       par = 0;
       par_type = 0;
       eve = 0;
@@ -335,7 +333,6 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 
       // Convert the extended results to the compatible results.
       net = recurse.net;
-      cls_val = recurse.cls_val;
       par = recurse.par_val;
       par_type = recurse.type;
       eve = recurse.eve;

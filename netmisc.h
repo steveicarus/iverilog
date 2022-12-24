@@ -136,8 +136,7 @@ extern NetScope* symbol_search(const LineInfo*li,
 			       NetNet*&net,       /* net/reg */
 			       const NetExpr*&par,/* parameter/expr */
 			       NetEvent*&eve,     /* named event */
-			       ivl_type_t&par_type,
-			       ivl_type_t&cls_val);
+			       ivl_type_t&par_type);
 
 inline NetScope* symbol_search(const LineInfo*li,
                                Design*des,
@@ -148,9 +147,8 @@ inline NetScope* symbol_search(const LineInfo*li,
 			       NetEvent*&eve      /* named event */)
 {
       ivl_type_t par_type;
-      ivl_type_t cls_val;
       return symbol_search(li, des, start, path, net, par, eve,
-                           par_type, cls_val);
+                           par_type);
 }
 
 /*

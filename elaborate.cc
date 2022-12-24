@@ -3812,7 +3812,6 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
       use_path.pop_back();
 
       NetNet *net;
-      ivl_type_t cls_val = 0;
       const NetExpr *par;
       ivl_type_t par_type = 0;
       NetEvent *eve;
@@ -3838,7 +3837,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	// resolve to a class object. Note that the "this" symbol
 	// (internally represented as "@") is handled by there being a
 	// "this" object in the instance scope.
-      symbol_search(this, des, scope, use_path, net, par, eve, par_type, cls_val);
+      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
 
       if (net == 0)
 	    return 0;
