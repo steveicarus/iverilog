@@ -4322,12 +4322,6 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 {
       bool need_const = NEED_CONST & flags;
 
-      NetNet*       net = 0;
-      ivl_type_t    cls_val = 0;
-      const NetExpr*par = 0;
-      ivl_type_t    par_type = 0;
-      NetEvent*     eve = 0;
-
       NetScope*use_scope = scope;
       if (package_) {
 	    use_scope = des->find_package(package_->pscope_name());
@@ -4338,48 +4332,42 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    return tmp;
       }
 
-      symbol_search(this, des, use_scope, path_, net, par, eve, par_type, cls_val);
+      symbol_search_results sr;
+      symbol_search(this, des, use_scope, path_, &sr);
 
-      if (net == 0 && gn_system_verilog() && path_.size() >= 2) {
-	      // NOTE: this is assuming the member_path is only one
-	      // component long, and that the use_path will wind up
-	      // being the path to the variable. This is not
-	      // necessarily true. Should fix this.
-	    pform_name_t use_path = path_;
-	    name_component_t member_comp = use_path.back();
-	    use_path.pop_back();
+      if (!sr.net) {
+            cerr << get_fileline() << ": error: Unable to bind variable `"
+	         << path_ << "' in `" << scope_path(use_scope) << "'" << endl;
+	    des->errors++;
+	    return nullptr;
+      }
 
-	    ivl_assert(*this, net == 0);
-	    symbol_search(this, des, use_scope, use_path, net, par, eve,
-	                  par_type, cls_val);
+      NetNet *net = sr.net;
 
-	    if (net == 0) {
-		    // Nope, no struct/class with member.
+      if (!sr.path_tail.empty()) {
+	    if (net->struct_type()) {
+		  return check_for_struct_members(this, des, use_scope, net,
+						  sr.path_head.back().index,
+						  sr.path_tail);
+	    } else if (net->class_type()) {
+		  const name_component_t member_comp = sr.path_tail.front();
 
-	    } else if (net->struct_type() != 0) {
-		  pform_name_t member_path;
-		  member_path.push_back( member_comp );
-		  return check_for_struct_members(this, des, use_scope,
-						  net, use_path.back().index,
-						  member_path);
-
-	    } else if (net->class_type()!=0) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
-			     << "Ident " << use_path
+			     << "Ident " << sr.path_head
 			     << " look for property " << member_comp << endl;
+		  }
+
+		  if (sr.path_tail.size() > 1) {
+			cerr << get_fileline() << ": sorry: "
+			     << "Nested member path not yet supported in this context."
+			     << endl;
+			return nullptr;
 		  }
 
 		  return elaborate_expr_class_field_(des, scope, net,
 						     member_comp, 0, flags);
 	    }
-      }
-
-      if (net == 0) {
-            cerr << get_fileline() << ": error: Unable to bind variable `"
-	         << path_ << "' in `" << scope_path(use_scope) << "'" << endl;
-	    des->errors += 1;
-	    return 0;
       }
 
       if (debug_elaborate) {

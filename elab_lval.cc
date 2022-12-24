@@ -159,9 +159,6 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 				    bool is_cassign,
 				    bool is_force) const
 {
-      NetNet*       reg = 0;
-      const NetExpr*par = 0;
-      NetEvent*     eve = 0;
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PEIdent::elaborate_lval: "
@@ -182,25 +179,12 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    ivl_assert(*this, use_scope);
       }
 
-	/* Try to find the base part of the path that names the
-	   variable. The remainer is the member path. For example, if
-	   the path is a.b.c.d, and a.b is the path to a variable,
-	   then a.b becomes the base_path and c.d becomes the
-	   member_path. If we cannot find the variable with any
-	   prefix, then the base_path will be empty after this loop
-	   and reg will remain nil. */
-      pform_name_t base_path = path_;
-      pform_name_t member_path;
-      while (reg == 0 && !base_path.empty()) {
-	    symbol_search(this, des, use_scope, base_path, reg, par, eve);
-	      // Found it!
-	    if (reg != 0) break;
-	      // Not found. Try to pop another name off the base_path
-	      // and push it to the front of the member_path.
-	    member_path.push_front( base_path.back() );
-	    base_path.pop_back();
-      }
+      symbol_search_results sr;
+      symbol_search(this, des, use_scope, path_, &sr);
 
+      NetNet *reg = sr.net;
+      pform_name_t &base_path = sr.path_head;
+      pform_name_t &member_path = sr.path_tail;
 
 	/* The l-value must be a variable. If not, then give up and
 	   print a useful error message. */
