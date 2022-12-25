@@ -488,8 +488,8 @@ PENewClass::PENewClass(void)
 {
 }
 
-PENewClass::PENewClass(const list<PExpr*>&p)
-: parms_(p.size())
+PENewClass::PENewClass(const list<PExpr*>&p, data_type_t *class_type)
+: parms_(p.size()), class_type_(class_type)
 {
       size_t tmp_idx = 0;
       for (list<PExpr*>::const_iterator cur = p.begin()

@@ -6662,6 +6662,32 @@ NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      if (class_type_) {
+	    ivl_type_t elab_class_type = class_type_->elaborate_type(des,
+								     scope);
+	    ctype = dynamic_cast<const netclass_t*> (elab_class_type);
+	    if (!ctype) {
+		  cerr << get_fileline() << ": error: Incompatible type in"
+		       << " typed constructor call.\n"
+		       << get_fileline() << ":      : Constructor type `"
+		       << *elab_class_type << "` is not a class type."
+		       << endl;
+		  des->errors++;
+		  return nullptr;
+	    }
+
+	    if (!ntype->type_compatible(ctype)) {
+		  cerr << get_fileline() << ": error: Incompatible type in"
+		       << " typed constructor call.\n"
+		       << get_fileline() << ":      : Constructor type `"
+		       << *ctype
+		       << "` is not compatible with the target type `"
+		       << *ntype << "`." << endl;
+		  des->errors++;
+		  return nullptr;
+	    }
+      }
+
       if (ctype->is_virtual()) {
 	    cerr << get_fileline() << ": error: "
 	         << "Can not create object of virtual class `"
@@ -6670,7 +6696,7 @@ NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      NetExpr*obj = new NetENew(ntype);
+      NetExpr*obj = new NetENew(ctype);
       obj->set_line(*this);
 
       obj = elaborate_expr_constructor_(des, scope, ctype, obj, flags);

@@ -555,7 +555,8 @@ class PENewClass : public PExpr {
 	// New without (or with default) constructor
       explicit PENewClass ();
 	// New with constructor arguments
-      explicit PENewClass (const std::list<PExpr*>&p);
+      explicit PENewClass (const std::list<PExpr*>&p,
+			   data_type_t *class_type = nullptr);
 
       ~PENewClass();
 
@@ -577,6 +578,7 @@ class PENewClass : public PExpr {
 
     private:
       std::vector<PExpr*>parms_;
+      data_type_t *class_type_;
 };
 
 class PENewCopy : public PExpr {
