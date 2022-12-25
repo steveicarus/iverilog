@@ -1,7 +1,7 @@
 #ifndef IVL_parse_misc_H
 #define IVL_parse_misc_H
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,7 +57,6 @@ extern YYLTYPE yylloc;
  */
 extern int  VLlex();
 extern void VLerror(const char*msg);
-extern void VLerror(const YYLTYPE&loc, va_list ap);
 extern void VLerror(const YYLTYPE&loc, const char*msg, ...) __attribute__((format(printf,2,3)));
 #define yywarn VLwarn
 extern void VLwarn(const char*msg);

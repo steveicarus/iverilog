@@ -509,9 +509,8 @@ TU [munpf]
 }
 \'[01xzXZ] {
       if (!gn_system_verilog()) {
-	    cerr << yylloc.text << ":" << yylloc.first_line << ": warning: "
-		 << "Using SystemVerilog 'N bit vector.  Use at least "
-		 << "-g2005-sv to remove this warning." << endl;
+	    VLwarn(yylloc, "warning: Using SystemVerilog 'N bit vector. "
+                           "Use at least -g2005-sv to remove this warning.");
       }
       generation_t generation_save = generation_flag;
       generation_flag = GN_VER2005_SV;
@@ -827,10 +826,8 @@ TU [munpf]
 	    net_type = NetNet::NONE;
 
       } else {
-	    cerr << yylloc.text << ":" << yylloc.first_line
-		 << ": error: Net type " << yytext
-		 << " is not a valid (or supported)"
-		 << " default net type." << endl;
+	    VLerror(yylloc, "error: Net type '%s' is not a valid (or supported) "
+		            "default net type.", yytext);
 	    net_type = NetNet::WIRE;
 	    error_count += 1;
       }
@@ -853,80 +850,58 @@ TU [munpf]
      been handled by an external preprocessor such as ivlpp. */
 
 ^{W}?`define{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `define not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `define not supported. Use an external preprocessor.");
   }
 
 ^{W}?`else{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `else not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `else not supported. Use an external preprocessor.");
   }
 
 ^{W}?`elsif{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `elsif not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `elsif not supported. Use an external preprocessor.");
   }
 
 ^{W}?`endif{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `endif not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `endif not supported. Use an external preprocessor.");
   }
 
 ^{W}?`ifdef{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `ifdef not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `ifdef not supported. Use an external preprocessor.");
   }
 
 ^{W}?`ifndef{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `ifndef not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `ifndef not supported. Use an external preprocessor.");
   }
 
 ^`include{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `include not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `include not supported. Use an external preprocessor.");
   }
 
 ^`undef{W}?.* {
-      cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": warning: `undef not supported. Use an external preprocessor."
-	   << endl;
+      VLwarn(yylloc, "warning: `undef not supported. Use an external preprocessor.");
   }
 
 `[a-zA-Z_]+ {
-      yywarn(yylloc, "macro replacement not supported. "
+      VLwarn(yylloc, "warning: Macro replacement not supported. "
              "Use an external preprocessor.");
   }
 
 
-`{W} { cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
-	    << "Stray tic (`) here. Perhaps you put white space" << endl;
-       cerr << yylloc.text << ":" << yylloc.first_line << ":      : "
-	    << "between the tic and preprocessor directive?"
-	    << endl;
-       error_count += 1; }
+`{W} { VLerror(yylloc, "error: Stray tic (`) here. Perhaps you put white "
+                       "space between the tic and preprocessor directive?"); }
 
 . { return yytext[0]; }
 
   /* Final catchall. something got lost or mishandled. */
   /* XXX Should we tell the user something about the lexical state? */
 
-<*>.|\n {   cerr << yylloc.text << ":" << yylloc.first_line
-	   << ": error: unmatched character (";
+<*>.|\n {
       if (isprint(yytext[0]))
-	    cerr << yytext[0];
+            VLerror(yylloc, "error: Unmatched character (%c).", yytext[0]);
       else
-	    cerr << "hex " << hex << ((unsigned char) yytext[0]);
-
-      cerr << ")" << endl;
-      error_count += 1; }
+            VLerror(yylloc, "error: Unmatched character (0x%x).",
+			    (unsigned char) yytext[0]);
+}
 
 %%
 
@@ -949,7 +924,8 @@ static unsigned truncate_to_integer_width(verinum::V*bits, unsigned size)
 
       for (unsigned idx = integer_width; idx < size; idx += 1) {
 	    if (bits[idx] != pad) {
-		  yywarn(yylloc, "Unsized numeric constant truncated to integer width.");
+		  VLwarn(yylloc, "warning: Unsized numeric constant truncated "
+                                 "to integer width.");
 		  break;
 	    }
       }
@@ -985,15 +961,15 @@ verinum*make_unsized_binary(const char*txt)
 	    if (*idx != '_') size += 1;
 
       if (size == 0) {
-	    VLerror(yylloc, "Numeric literal has no digits in it.");
+	    VLerror(yylloc, "error: Numeric literal has no digits in it.");
 	    verinum*out = new verinum();
 	    out->has_sign(sign_flag);
 	    out->is_single(single_flag);
 	    return out;
       }
 
-      if ((based_size > 0) && (size > based_size)) yywarn(yylloc,
-          "extra digits given for sized binary constant.");
+      if ((based_size > 0) && (size > based_size)) VLwarn(yylloc,
+          "warning: Extra digits given for sized binary constant.");
 
       verinum::V*bits = new verinum::V[size];
 
@@ -1057,8 +1033,8 @@ verinum*make_unsized_octal(const char*txt)
       if (based_size > 0) {
             int rem = based_size % 3;
 	    if (rem != 0) based_size += 3 - rem;
-	    if (size > based_size) yywarn(yylloc,
-	        "extra digits given for sized octal constant.");
+	    if (size > based_size) VLwarn(yylloc,
+	        "warning: Extra digits given for sized octal constant.");
       }
 
       verinum::V*bits = new verinum::V[size];
@@ -1126,8 +1102,8 @@ verinum*make_unsized_hex(const char*txt)
       if (based_size > 0) {
             int rem = based_size % 4;
 	    if (rem != 0) based_size += 4 - rem;
-	    if (size > based_size) yywarn(yylloc,
-	        "extra digits given for sized hex constant.");
+	    if (size > based_size) VLwarn(yylloc,
+	        "warning: Extra digits given for sized hex constant.");
       }
 
       verinum::V*bits = new verinum::V[size];
@@ -1431,7 +1407,7 @@ static void process_ucdrive(const char*txt)
 
       const char*cp = txt;
       if (strncmp("pull", cp, 4) != 0) {
-	    VLerror(yylloc, "pull required for `unconnected_drive "
+	    VLerror(yylloc, "error: pull required for `unconnected_drive "
 	                    "directive.");
 	    return;
       }
@@ -1439,16 +1415,14 @@ static void process_ucdrive(const char*txt)
       if (*cp == '0') ucd = UCD_PULL0;
       else if (*cp == '1') ucd = UCD_PULL1;
       else {
-	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
-		    "`unconnected_drive does not support 'pull" << *cp
-	         << "'." << endl;
-	    error_count += 1;
+	    VLerror(yylloc, "error: `unconnected_drive does not support "
+                            "'pull%c'.", *cp);
 	    return;
       }
       cp += 1;
       if (*cp != '\0') {
-	    VLerror(yylloc, "Invalid `unconnected_drive directive (extra "
-	                    "garbage after pull direction).");
+	    VLerror(yylloc, "error: Invalid `unconnected_drive directive "
+	                    "(extra garbage after pull direction).");
 	    return;
       }
 
@@ -1479,7 +1453,7 @@ static void line_directive()
 	/* Find the starting " and skip it. */
       char*fn_start = strchr(cp, '"');
       if (cp != fn_start) {
-	    VLerror(yylloc, "Invalid #line directive (file name start).");
+	    VLerror(yylloc, "error: Invalid #line directive (file name start).");
 	    return;
       }
       fn_start += 1;
@@ -1487,7 +1461,7 @@ static void line_directive()
 	/* Find the last ". */
       char*fn_end = strrchr(fn_start, '"');
       if (!fn_end) {
-	    VLerror(yylloc, "Invalid #line directive (file name end).");
+	    VLerror(yylloc, "error: Invalid #line directive (file name end).");
 	    return;
       }
 
@@ -1502,8 +1476,8 @@ static void line_directive()
       cpr = cp;
       cpr += strspn(cp, " \t");
       if (cp == cpr) {
-	    VLerror(yylloc, "Invalid #line directive (missing space after "
-	                    "file name).");
+	    VLerror(yylloc, "error: Invalid #line directive (missing space "
+	                    "after file name).");
 	    delete[] buf;
 	    return;
       }
@@ -1512,7 +1486,7 @@ static void line_directive()
 	/* Get the line number and verify that it is correct. */
       unsigned long lineno = strtoul(cp, &cpr, 10);
       if (cp == cpr) {
-	    VLerror(yylloc, "Invalid line number for #line directive.");
+	    VLerror(yylloc, "error: Invalid line number for #line directive.");
 	    delete[] buf;
 	    return;
       }
@@ -1521,8 +1495,8 @@ static void line_directive()
 	/* Verify that only space is left. */
       cpr += strspn(cp, " \t");
       if ((size_t)(cpr-yytext) != strlen(yytext)) {
-	    VLerror(yylloc, "Invalid #line directive (extra garbage after "
-	                    "line number).");
+	    VLerror(yylloc, "error: Invalid #line directive (extra garbage "
+	                    "after line number).");
 	    delete[] buf;
 	    return;
       }
@@ -1549,7 +1523,7 @@ static void line_directive2()
 	/* strtoul skips leading space. */
       unsigned long lineno = strtoul(cp, &cpr, 10);
       if (cp == cpr) {
-	    VLerror(yylloc, "Invalid line number for `line directive.");
+	    VLerror(yylloc, "error: Invalid line number for `line directive.");
 	    return;
       }
       lineno -= 1;
@@ -1558,8 +1532,8 @@ static void line_directive2()
 	/* Skip the space between the line number and the file name. */
       cpr += strspn(cp, " \t");
       if (cp == cpr) {
-	    VLerror(yylloc, "Invalid `line directive (missing space after "
-	                    "line number).");
+	    VLerror(yylloc, "error: Invalid `line directive (missing space "
+	                    "after line number).");
 	    return;
       }
       cp = cpr;
@@ -1567,7 +1541,7 @@ static void line_directive2()
 	/* Find the starting " and skip it. */
       char*fn_start = strchr(cp, '"');
       if (cp != fn_start) {
-	    VLerror(yylloc, "Invalid `line directive (file name start).");
+	    VLerror(yylloc, "error: Invalid `line directive (file name start).");
 	    return;
       }
       fn_start += 1;
@@ -1575,7 +1549,7 @@ static void line_directive2()
 	/* Find the last ". */
       char*fn_end = strrchr(fn_start, '"');
       if (!fn_end) {
-	    VLerror(yylloc, "Invalid `line directive (file name end).");
+	    VLerror(yylloc, "error: Invalid `line directive (file name end).");
 	    return;
       }
 
@@ -1584,15 +1558,15 @@ static void line_directive2()
       cpr = cp;
       cpr += strspn(cp, " \t");
       if (cp == cpr) {
-	    VLerror(yylloc, "Invalid `line directive (missing space after "
-	                    "file name).");
+	    VLerror(yylloc, "error: Invalid `line directive (missing space "
+	                    "after file name).");
 	    return;
       }
       cp = cpr;
 
 	/* Check that the level is correct, we do not need the level. */
       if (strspn(cp, "012") != 1) {
-	    VLerror(yylloc, "Invalid level for `line directive.");
+	    VLerror(yylloc, "error: Invalid level for `line directive.");
 	    return;
       }
       cp += 1;
@@ -1601,8 +1575,8 @@ static void line_directive2()
       cp += strspn(cp, " \t");
       if (strncmp(cp, "//", 2) != 0 &&
           (size_t)(cp-yytext) != strlen(yytext)) {
-	    VLerror(yylloc, "Invalid `line directive (extra garbage after "
-	                    "level).");
+	    VLerror(yylloc, "error: Invalid `line directive (extra garbage "
+	                    "after level).");
 	    return;
       }
 
