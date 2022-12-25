@@ -928,9 +928,6 @@ class PECallFunction : public PExpr {
       NetExpr* elaborate_expr_(Design *des, NetScope *scope,
 			       unsigned flags) const;
 
-      NetExpr*elaborate_expr_pkg_(Design*des, NetScope*scope,
-				  unsigned flags)const;
-
       NetExpr* elaborate_expr_method_(Design*des, NetScope*scope,
 				      symbol_search_results&search_results)
 				      const;
