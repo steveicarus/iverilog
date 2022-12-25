@@ -602,11 +602,10 @@ static void pform_set_scope_timescale(PScope*scope, const PScope*parent)
       scope->time_prec_is_default = parent->time_prec_is_default;
 }
 
-PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name,
-			       LexicalScope::lifetime_t lifetime)
+PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
 {
       PClass*class_scope = new PClass(name, lexical_scope);
-      class_scope->default_lifetime = find_lifetime(lifetime);
+      class_scope->default_lifetime = LexicalScope::AUTOMATIC;
       FILE_NAME(class_scope, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);

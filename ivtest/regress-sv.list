@@ -565,8 +565,11 @@ sv_class_in_module_decl	normal,-g2009		ivltests
 sv_class_method_call_void	normal,-g2009	ivltests
 sv_class_method_default1 normal,-g2009		ivltests
 sv_class_method_default2 normal,-g2009		ivltests
+sv_class_method_lt_static1	CE,-g2009	ivltests
+sv_class_method_lt_static2	CE,-g2009	ivltests
 sv_class_method_signed1	normal,-g2009		ivltests
 sv_class_method_signed2	normal,-g2009		ivltests
+sv_class_method_var_init	normal,-g2009	ivltests
 sv_class_property_signed1	normal,-g2009	ivltests
 sv_class_property_signed2	normal,-g2009	ivltests
 sv_class_property_signed3	normal,-g2009	ivltests

@@ -517,7 +517,14 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
 	    hname_t use_name (cur->first);
 	    NetScope*method_scope = new NetScope(class_scope, use_name, NetScope::TASK);
+
 	      // Task methods are always automatic...
+	    if (!cur->second->is_auto()) {
+		  cerr << "error: Lifetime of method `"
+		       << scope_path(method_scope)
+		       << "` must not be static" << endl;
+		  des->errors += 1;
+	    }
 	    method_scope->is_auto(true);
 	    method_scope->set_line(cur->second);
 	    method_scope->add_imports(&cur->second->explicit_imports);
@@ -536,7 +543,14 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
 	    hname_t use_name (cur->first);
 	    NetScope*method_scope = new NetScope(class_scope, use_name, NetScope::FUNC);
+
 	      // Function methods are always automatic...
+	    if (!cur->second->is_auto()) {
+		  cerr << "error: Lifetime of method `"
+		       << scope_path(method_scope)
+		       << "` must not be static" << endl;
+		  des->errors += 1;
+	    }
 	    method_scope->is_auto(true);
 	    method_scope->set_line(cur->second);
 	    method_scope->add_imports(&cur->second->explicit_imports);

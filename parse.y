@@ -796,12 +796,22 @@ block_identifier_opt /* */
 
 class_declaration /* IEEE1800-2005: A.1.2 */
   : K_virtual_opt K_class lifetime_opt identifier_name class_declaration_extends_opt ';'
-      {
+      { /* Up to 1800-2017 the grammar in the LRM allowed an optional lifetime
+	 * qualifier for class declarations. But the LRM never specified what
+	 * this qualifier should do. Starting with 1800-2023 the qualifier has
+	 * been removed from the grammar. Allow it for backwards compatibility,
+	 * but print a warning.
+	 */
+	if ($3 != LexicalScope::INHERITED) {
+	      cerr << @1 << ": warning: Class lifetime qualifier is deprecated "
+			    "and has no effect." << endl;
+	      warn_count += 1;
+	}
 	perm_string name = lex_strings.make($4);
 	class_type_t *class_type= new class_type_t(name);
 	FILE_NAME(class_type, @4);
 	pform_set_typedef(@4, name, class_type, nullptr);
-	pform_start_class_declaration(@2, class_type, $5.type, $5.exprs, $3, $1);
+	pform_start_class_declaration(@2, class_type, $5.type, $5.exprs, $1);
       }
     class_items_opt K_endclass
       { // Process a class.
