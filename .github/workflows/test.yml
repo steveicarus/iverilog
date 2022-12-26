@@ -99,6 +99,7 @@ jobs:
         install: >
           git
           base-devel
+          gperf
           mingw-w64-${{ matrix.arch }}-toolchain
 
     - name: Build and check
