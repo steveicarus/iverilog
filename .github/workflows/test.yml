@@ -1,10 +1,11 @@
 name: test
 
 on:
-  # Every push onto the main branch triggers a retest.
+  # Every push onto the main branch and releases triggers a retest.
   push:
     branches:
       - master
+      - v12-branch
   # All pull_requests trigger a retest.
   pull_request:
 
