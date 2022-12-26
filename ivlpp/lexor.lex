@@ -1215,9 +1215,7 @@ static void do_define(void)
             }
             *cp = 0;
             break;
-        }
-
-        if (cp[1] == '*') {
+        } else if (cp[1] == '*') {
             tail = strstr(cp+2, "*/");
 
             if (tail == 0) {
@@ -1229,10 +1227,11 @@ static void do_define(void)
             }
 
             memmove(cp, tail+2, strlen(tail+2)+1);
-            continue;
+        } else {
+	    cp++;
         }
 
-        cp = strchr(cp+1, '/');
+        cp = strchr(cp, '/');
     }
 
     /* Trim trailing white space. */
