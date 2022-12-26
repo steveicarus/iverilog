@@ -638,6 +638,7 @@ macro_args		CO,-yivltests			ivltests
 macro_comment1		normal			ivltests
 macro_comment2		normal			ivltests
 macro_comment3		normal			ivltests
+macro_comment_multiline	normal			ivltests
 macro_redefinition	normal,-Wmacro-redefinition	ivltests gold=macro_redefinition.gold
 macro_replacement	normal,-Wmacro-replacement	ivltests gold=macro_replacement.gold
 macsub			normal			ivltests
