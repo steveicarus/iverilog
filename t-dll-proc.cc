@@ -179,8 +179,6 @@ bool dll_target::make_single_lval_(const LineInfo*li, struct ivl_lval_s*cur, con
 
       cur->width_ = asn->lwidth();
 
-      ivl_type_t nest_type = 0;
-
       if (asn->sig()) {
 	    cur->type_ = IVL_LVAL_REG;
 	    cur->n.sig = find_signal(des_, asn->sig());
@@ -188,7 +186,6 @@ bool dll_target::make_single_lval_(const LineInfo*li, struct ivl_lval_s*cur, con
       } else {
 	    const NetAssign_*asn_nest = asn->nest();
 	    ivl_assert(*li, asn_nest);
-	    nest_type = asn_nest->net_type();
 	    struct ivl_lval_s*cur_nest = new struct ivl_lval_s;
 	    make_single_lval_(li, cur_nest, asn_nest);
 
@@ -209,22 +206,7 @@ bool dll_target::make_single_lval_(const LineInfo*li, struct ivl_lval_s*cur, con
 	    expr_ = 0;
       }
 
-      cur->property_idx = -1;
-      perm_string pname = asn->get_property();
-      if (!pname.nil()) {
-	    const netclass_t*use_type;
-	    switch (cur->type_) {
-		case IVL_LVAL_LVAL:
-		  assert(nest_type);
-		  use_type = dynamic_cast<const netclass_t*> (nest_type);
-		  break;
-		default:
-		  use_type = dynamic_cast<const netclass_t*> (cur->n.sig->net_type);
-		  break;
-	    }
-	    assert(use_type);
-	    cur->property_idx = use_type->property_idx_from_name(pname);
-      }
+      cur->property_idx = asn->get_property_idx();
 
       return flag;
 }

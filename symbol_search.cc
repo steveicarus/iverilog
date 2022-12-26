@@ -132,12 +132,6 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
             if (scope->genvar_tmp.str() && path_tail.name == scope->genvar_tmp)
                   return false;
 
-	    if (path_tail.name == "#") {
-		  cerr << li->get_fileline() << ": sorry: "
-		       << "Implicit class handle \"super\" not supported." << endl;
-		  return false;
-	    }
-
 	    // These items cannot be seen outside the bounding module where
 	    // the search starts. But we continue searching up because scope
 	    // names can match. For example:
@@ -151,10 +145,26 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	    //        ... top.not_ok; // Matches.
 	    //    endmodule
 	    if (!passed_module_boundary) {
+		  // Special case `super` keyword. Return the `this` object, but
+		  // with the type of the base class.
+		  if (path_tail.name == "#") {
+			if (NetNet *net = scope->find_signal(perm_string::literal(THIS_TOKEN))) {
+			      const netclass_t *class_type = dynamic_cast<const netclass_t*>(net->net_type());
+			      path.push_back(path_tail);
+			      res->scope = scope;
+			      res->net = net;
+			      res->type = class_type->get_super();
+			      res->path_head = path;
+			      return true;
+			}
+			return false;
+		  }
+
 		  if (NetNet*net = scope->find_signal(path_tail.name)) {
 			path.push_back(path_tail);
 			res->scope = scope;
 			res->net = net;
+			res->type = net->net_type();
 			res->path_head = path;
 			return true;
 		  }
@@ -167,7 +177,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			return true;
 		  }
 
-		  if (const NetExpr*par = scope->get_parameter(des, path_tail.name, res->par_type)) {
+		  if (const NetExpr*par = scope->get_parameter(des, path_tail.name, res->type)) {
 		    path.push_back(path_tail);
 		    res->scope = scope;
 		    res->par_val = par;
@@ -326,7 +336,7 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       net = recurse.net;
       cls_val = recurse.cls_val;
       par = recurse.par_val;
-      par_type = recurse.par_type;
+      par_type = recurse.type;
       eve = recurse.eve;
       if (! flag) {
 	    return 0;

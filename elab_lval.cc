@@ -159,9 +159,6 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 				    bool is_cassign,
 				    bool is_force) const
 {
-      NetNet*       reg = 0;
-      const NetExpr*par = 0;
-      NetEvent*     eve = 0;
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PEIdent::elaborate_lval: "
@@ -182,25 +179,12 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    ivl_assert(*this, use_scope);
       }
 
-	/* Try to find the base part of the path that names the
-	   variable. The remainer is the member path. For example, if
-	   the path is a.b.c.d, and a.b is the path to a variable,
-	   then a.b becomes the base_path and c.d becomes the
-	   member_path. If we cannot find the variable with any
-	   prefix, then the base_path will be empty after this loop
-	   and reg will remain nil. */
-      pform_name_t base_path = path_;
-      pform_name_t member_path;
-      while (reg == 0 && !base_path.empty()) {
-	    symbol_search(this, des, use_scope, base_path, reg, par, eve);
-	      // Found it!
-	    if (reg != 0) break;
-	      // Not found. Try to pop another name off the base_path
-	      // and push it to the front of the member_path.
-	    member_path.push_front( base_path.back() );
-	    base_path.pop_back();
-      }
+      symbol_search_results sr;
+      symbol_search(this, des, use_scope, path_, &sr);
 
+      NetNet *reg = sr.net;
+      pform_name_t &base_path = sr.path_head;
+      pform_name_t &member_path = sr.path_tail;
 
 	/* The l-value must be a variable. If not, then give up and
 	   print a useful error message. */
@@ -301,8 +285,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
 	// If the variable is a class object, then handle it with the
 	// net_class_member_ method.
-      if (reg->class_type() && !member_path.empty() && gn_system_verilog()) {
-	    NetAssign_*lv = elaborate_lval_net_class_member_(des, use_scope, reg, member_path);
+      const netclass_t *class_type = dynamic_cast<const netclass_t *>(sr.type);
+      if (class_type && !member_path.empty() && gn_system_verilog()) {
+	    NetAssign_*lv = elaborate_lval_net_class_member_(des, use_scope, class_type, reg, member_path);
 	    return lv;
       }
 
@@ -491,7 +476,7 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
       }
 
       NetAssign_*this_lval = new NetAssign_(this_net);
-      this_lval->set_property(member_name);
+      this_lval->set_property(member_name, pidx);
       if (canon_index) this_lval->set_word(canon_index);
 
       return this_lval;
@@ -1094,7 +1079,8 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
  * obj, and member_path=base.x.
  */
 NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope,
-				    NetNet*sig, pform_name_t member_path) const
+				    const netclass_t *class_type, NetNet*sig,
+				    pform_name_t member_path) const
 {
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PEIdent::elaborate_lval_net_class_member_: "
@@ -1102,7 +1088,6 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 		 << " of " << sig->name() << "." << endl;
       }
 
-      const netclass_t*class_type = sig->class_type();
       ivl_assert(*this, class_type);
 
 	// Iterate over the member_path. This handles nested class
@@ -1165,7 +1150,7 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 	    }
 
 	    lv = lv? new NetAssign_(lv) : new NetAssign_(sig);
-	    lv->set_property(method_name);
+	    lv->set_property(method_name, pidx);
 
 	      // Now get the type of the property.
 	    ivl_type_t ptype = class_type->get_prop_type(pidx);

@@ -158,10 +158,7 @@ const ivl_type_s* NetAssign_::net_type() const
 		  return ntype;
 
 	    if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(ntype)) {
-		  int pidx = class_type->property_idx_from_name(member_);
-		  ivl_assert(*this, pidx >= 0);
-		  ivl_type_t tmp = class_type->get_prop_type(pidx);
-		  return tmp;
+		  return class_type->get_prop_type(member_idx_);
 	    }
 
 	    if (const netdarray_t*darray = dynamic_cast<const netdarray_t*> (ntype)) {
@@ -178,10 +175,7 @@ const ivl_type_s* NetAssign_::net_type() const
 	    if (member_.nil())
 		  return sig_->net_type();
 
-	    int pidx = class_type->property_idx_from_name(member_);
-	    ivl_assert(*sig_, pidx >= 0);
-	    ivl_type_t tmp = class_type->get_prop_type(pidx);
-	    return tmp;
+	    return class_type->get_prop_type(member_idx_);
       }
 
       if (const netdarray_t*darray = dynamic_cast<const netdarray_t*> (sig_->net_type())) {
@@ -246,10 +240,10 @@ void NetAssign_::set_part(NetExpr*base, unsigned wid,
       sel_type_ = sel_type;
 }
 
-void NetAssign_::set_property(const perm_string&mname)
+void NetAssign_::set_property(const perm_string&mname, unsigned idx)
 {
-	//ivl_assert(*sig_, sig_->class_type());
       member_ = mname;
+      member_idx_ = idx;
 }
 
 /*

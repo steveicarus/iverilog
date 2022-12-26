@@ -1554,15 +1554,16 @@ import_export /* IEEE1800-2012: A.2.9 */
   ;
 
 implicit_class_handle /* IEEE1800-2005: A.8.4 */
-  : K_this  { $$ = pform_create_this(); }
-  | K_super { $$ = pform_create_super(); }
+  : K_this '.' { $$ = pform_create_this(); }
+  | K_super '.' { $$ = pform_create_super(); }
+  | K_this '.' K_super '.' { $$ = pform_create_super(); }
   ;
 
 /* `this` or `super` followed by an identifier */
 class_hierarchy_identifier
-  : implicit_class_handle '.' hierarchy_identifier
-      { $1->splice($1->end(), *$3);
-	delete $3;
+  : implicit_class_handle hierarchy_identifier
+      { $1->splice($1->end(), *$2);
+	delete $2;
 	$$ = $1;
       }
   ;
@@ -3793,10 +3794,9 @@ expr_primary
 	pform_requires_sv(@1, "Empty function argument list");
       }
 
-  | implicit_class_handle
-      { PEIdent*tmp = new PEIdent(*$1);
+  | K_this
+      { PEIdent*tmp = new PEIdent(perm_string::literal(THIS_TOKEN));
 	FILE_NAME(tmp,@1);
-	delete $1;
 	$$ = tmp;
       }
 
@@ -6693,8 +6693,8 @@ statement_item /* This is roughly statement_item in the LRM */
        beginning of a constructor, but let the elaborator figure that
        out. */
 
-  | implicit_class_handle '.' K_new argument_list_parens_opt ';'
-      { PChainConstructor*tmp = new PChainConstructor(*$4);
+  | implicit_class_handle K_new argument_list_parens_opt ';'
+      { PChainConstructor*tmp = new PChainConstructor(*$3);
 	FILE_NAME(tmp, @3);
 	if (peek_head_name(*$1) == THIS_TOKEN) {
 	      yyerror(@1, "error: this.new is invalid syntax. Did you mean super.new?");

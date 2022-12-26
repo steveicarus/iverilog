@@ -48,7 +48,7 @@ struct symbol_search_results {
 	    net = 0;
 	    cls_val = 0;
 	    par_val = 0;
-	    par_type = 0;
+	    type = 0;
 	    eve = 0;
       }
 
@@ -80,7 +80,7 @@ struct symbol_search_results {
 	// If this was a parameter, the value expression and the
 	// optional value dimensions.
       const NetExpr*par_val;
-      ivl_type_t par_type;
+      ivl_type_t type;
 	// If this is a named event, ...
       NetEvent*eve;
 
