@@ -83,7 +83,7 @@ jobs:
       run:
         shell: msys2 {0}
     env:
-      MINGW_INSTALLS: ${{ matrix.msystem }}
+      MINGW_ARCH: ${{ matrix.msystem }}
     steps:
 
     - run: git config --global core.autocrlf input
@@ -98,6 +98,7 @@ jobs:
         install: >
           git
           base-devel
+          gperf
           mingw-w64-${{ matrix.arch }}-toolchain
 
     - name: Build and check
