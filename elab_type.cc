@@ -242,6 +242,13 @@ ivl_type_t struct_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 		       ; cur_name != curp->names->end() ;  ++ cur_name) {
 		  decl_assignment_t*namep = *cur_name;
 
+		  if (packed_flag && namep->expr) {
+			cerr << namep->expr->get_fileline() << " error: "
+			     << "Packed structs must not have default member values."
+			     << endl;
+			des->errors++;
+		  }
+
 		  netstruct_t::member_t memb;
 		  memb.name = namep->name;
 		  memb.net_type = elaborate_array_type(des, scope, *this,
