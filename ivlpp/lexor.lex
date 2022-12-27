@@ -1130,12 +1130,14 @@ void free_macros(void)
  * variables. When the define is over, the def_finish() function
  * executes the define and clears this text. The define_continue_flag
  * is set if do_define detects that the definition is to be continued
- * on the next line.
+ * on the next line. The define_comment_flag is set when a multi-line comment is
+ * active in a define.
  */
 static char*  define_text = 0;
 static size_t define_cnt = 0;
 
 static int define_continue_flag = 0;
+static int define_comment_flag = 0;
 
 /*
  * The do_magic function puts the expansions of magic macros into
@@ -1190,6 +1192,33 @@ static char *find_arg(char*ptr, char*head, char*arg)
 }
 
 /*
+ * Returns 1 if the comment continues on the next line
+ */
+static int do_define_multiline_comment(char *replace_start,
+				       const char *search_start)
+{
+    char *tail = strstr(search_start, "*/");
+
+    if (!tail) {
+        if (search_start[strlen(search_start) - 1] == '\\') {
+            define_continue_flag = 1;
+            define_comment_flag = 1;
+            *replace_start++ = '\\';
+        } else {
+            define_comment_flag = 0;
+            fprintf(stderr, "%s:%u: Unterminated comment in define\n",
+                    istack->path, istack->lineno+1);
+        }
+        *replace_start = '\0';
+        return 1;
+    }
+    define_comment_flag = 0;
+    tail += 2;
+    memmove(replace_start, tail, strlen(tail) + 1);
+    return 0;
+}
+
+/*
  * Collect the definition. Normally, this returns 0. If there is a
  * continuation, then return 1 and this function may be called again
  * to collect another line of the definition.
@@ -1204,6 +1233,12 @@ static void do_define(void)
 
     define_continue_flag = 0;
 
+    /* Are we in an multi-line comment? Look for the end */
+    if (define_comment_flag) {
+        if (do_define_multiline_comment(yytext, yytext))
+            return;
+    }
+
     /* Look for comments in the definition, and remove them. */
     cp = strchr(yytext, '/');
 
@@ -1215,24 +1250,14 @@ static void do_define(void)
             }
             *cp = 0;
             break;
-        }
-
-        if (cp[1] == '*') {
-            tail = strstr(cp+2, "*/");
-
-            if (tail == 0) {
-                *cp = 0;
-                fprintf(stderr, "%s:%u: Unterminated comment in define\n",
-		        istack->path, istack->lineno+1
-                );
+        } else if (cp[1] == '*') {
+            if (do_define_multiline_comment(cp, cp + 2))
                 break;
-            }
+        } else {
+	    cp++;
+	}
 
-            memmove(cp, tail+2, strlen(tail+2)+1);
-            continue;
-        }
-
-        cp = strchr(cp+1, '/');
+        cp = strchr(cp, '/');
     }
 
     /* Trim trailing white space. */
