@@ -3363,9 +3363,12 @@ unsigned PECastSize::test_width(Design*des, NetScope*scope, width_mode_t&)
       ivl_assert(*this, size_);
       ivl_assert(*this, base_);
 
+      expr_width_ = 0;
+
       NetExpr*size_ex = elab_and_eval(des, scope, size_, -1, true);
       NetEConst*size_ce = dynamic_cast<NetEConst*>(size_ex);
-      expr_width_ = size_ce ? size_ce->value().as_ulong() : 0;
+      if (size_ce && !size_ce->value().is_negative())
+	    expr_width_ = size_ce->value().as_ulong();
       delete size_ex;
       if (expr_width_ == 0) {
 	    cerr << get_fileline() << ": error: Cast size expression "
