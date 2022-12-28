@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2021 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2022 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1085,7 +1085,7 @@ static void emit_stmt_delayx(ivl_scope_t scope, ivl_statement_t stmt)
       emit_stmt(scope, ivl_stmt_sub_stmt(stmt));
 }
 
-static unsigned is_func_disable(ivl_scope_t scope, ivl_scope_t disable_scope)
+static unsigned is_func_disable(ivl_scope_t scope, const ivl_scope_t disable_scope)
 {
       assert(func_rtn_name);
 	/* Find the enclosing function scope. */

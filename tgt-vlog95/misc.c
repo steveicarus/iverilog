@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2020 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2022 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -420,7 +420,7 @@ void emit_scaled_expr(ivl_scope_t scope, ivl_expr_t expr, int msb, int lsb)
       }
 }
 
-static unsigned find_signal_in_nexus(ivl_scope_t scope, ivl_nexus_t nex)
+static unsigned find_signal_in_nexus(const ivl_scope_t scope, ivl_nexus_t nex)
 {
       ivl_signal_t use_sig = 0;
       unsigned is_driver = 0;

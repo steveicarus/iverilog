@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2014-2022 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2014 CERN
  * @author Maciej Suminski <maciej.suminski@cern.ch>
  *
@@ -116,24 +116,24 @@ char* __vpiArrayWord::as_word_t::vpi_get_str(int code)
 {
       struct __vpiArrayWord*obj = array_var_word_from_handle(this);
       assert(obj);
-      struct __vpiArrayBase*parent = obj->get_parent();
-      return parent->get_word_str(obj, code);
+      struct __vpiArrayBase*my_parent = obj->get_parent();
+      return my_parent->get_word_str(obj, code);
 }
 
 void __vpiArrayWord::as_word_t::vpi_get_value(p_vpi_value vp)
 {
       struct __vpiArrayWord*obj = array_var_word_from_handle(this);
       assert(obj);
-      struct __vpiArrayBase*parent = obj->get_parent();
-      return parent->get_word_value(obj, vp);
+      struct __vpiArrayBase*my_parent = obj->get_parent();
+      return my_parent->get_word_value(obj, vp);
 }
 
 vpiHandle __vpiArrayWord::as_word_t::vpi_put_value(p_vpi_value vp, int flags)
 {
       struct __vpiArrayWord*obj = array_var_word_from_handle(this);
       assert(obj);
-      struct __vpiArrayBase*parent = obj->get_parent();
-      parent->put_word_value(obj, vp, flags);
+      struct __vpiArrayBase*my_parent = obj->get_parent();
+      my_parent->put_word_value(obj, vp, flags);
       return this;
 }
 
@@ -141,7 +141,7 @@ vpiHandle __vpiArrayWord::as_word_t::vpi_handle(int code)
 {
       struct __vpiArrayWord*obj = array_var_word_from_handle(this);
       assert(obj);
-      struct __vpiArrayBase*parent = obj->get_parent();
+      struct __vpiArrayBase*my_parent = obj->get_parent();
 
       switch (code) {
 
@@ -149,19 +149,19 @@ vpiHandle __vpiArrayWord::as_word_t::vpi_handle(int code)
 	    return &(obj->as_index);
 
 	  case vpiLeftRange:
-	    return parent->get_left_range();
+	    return my_parent->get_left_range();
 
 	  case vpiRightRange:
-	    return parent->get_right_range();
+	    return my_parent->get_right_range();
 
 	  case vpiParent:
-	    return dynamic_cast<vpiHandle>(parent);
+	    return dynamic_cast<vpiHandle>(my_parent);
 
 	  case vpiScope:
-	    return parent->get_scope();
+	    return my_parent->get_scope();
 
 	  case vpiModule:
-	    return vpip_module(parent->get_scope());
+	    return vpip_module(my_parent->get_scope());
       }
 
       return 0;

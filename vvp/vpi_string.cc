@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -92,7 +92,7 @@ vpiHandle __vpiStringVar::vpi_put_value(p_vpi_value val, int)
 vpiHandle vpip_make_string_var(const char*name, vvp_net_t*net)
 {
       __vpiScope*scope = vpip_peek_current_scope();
-      const char*use_name = name ? vpip_name_string(name) : 0;
+      const char*use_name = name ? vpip_name_string(name) : NULL;
 
       __vpiStringVar*obj = new __vpiStringVar(scope, use_name, net);
 

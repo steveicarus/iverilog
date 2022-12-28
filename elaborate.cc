@@ -3422,8 +3422,8 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 
 	// Well, I actually need to generate code to handle the
 	// conditional, so elaborate.
-      NetProc*i = if_? if_->elaborate(des, scope) : 0;
-      NetProc*e = else_? else_->elaborate(des, scope) : 0;
+      NetProc*i = if_? if_->elaborate(des, scope) : NULL;
+      NetProc*e = else_? else_->elaborate(des, scope) : NULL;
 
 	// Detect the special cases that the if or else statements are
 	// empty blocks. If this is the case, remove the blocks as

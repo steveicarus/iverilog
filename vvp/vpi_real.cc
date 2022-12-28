@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -86,10 +86,10 @@ static vpiHandle real_var_get_handle(int code, vpiHandle ref)
       switch (code) {
 
 	  case vpiParent:
-	    return rfp->is_netarray ? rfp->within.parent : 0;
+	    return rfp->is_netarray ? rfp->within.parent : NULL;
 
 	  case vpiIndex:
-	    return rfp->is_netarray ? rfp->id.index : 0;
+	    return rfp->is_netarray ? rfp->id.index : NULL;
 
 	  case vpiScope:
 	    return vpip_scope(rfp);
@@ -107,7 +107,7 @@ static vpiHandle real_var_iterate(int code, vpiHandle ref)
       assert(rfp);
 
       if (code == vpiIndex) {
-	    return rfp->is_netarray ? rfp->id.index->vpi_iterate(code) : 0;
+	    return rfp->is_netarray ? rfp->id.index->vpi_iterate(code) : NULL;
       }
 
       return 0;
@@ -183,7 +183,7 @@ static vpiHandle vpip_make_real_(__vpiScope*scope, const char*name,
 {
       struct __vpiRealVar*obj = new __vpiRealVar;
 
-      obj->id.name = name ? vpip_name_string(name) : 0;
+      obj->id.name = name ? vpip_name_string(name) : NULL;
       obj->is_netarray = 0;
       obj->is_wire = is_wire;
       obj->net = net;

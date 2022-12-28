@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2022 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -183,7 +183,6 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       symbol_search(this, des, use_scope, path_, &sr);
 
       NetNet *reg = sr.net;
-      pform_name_t &base_path = sr.path_head;
       pform_name_t &member_path = sr.path_tail;
 
 	/* The l-value must be a variable. If not, then give up and
@@ -221,6 +220,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    else
 		  cerr << get_fileline() << ": " << __func__ << ": "
 		       << "reg->net_type()=<nil>" << endl;
+	    const pform_name_t &base_path = sr.path_head;
 	    cerr << get_fileline() << ": " << __func__ << ": "
 		 << " base_path=" << base_path
 		 << ", member_path=" << member_path

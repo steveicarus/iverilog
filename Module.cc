@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -148,7 +148,7 @@ bool Module::can_be_toplevel() const
 
       // Don't choose modules with parameters without default value
       for (std::map<perm_string,param_expr_t*>::const_iterator cur =
-	    parameters.begin(); cur != parameters.end(); cur++) {
+	    parameters.begin(); cur != parameters.end(); ++cur) {
 	    if (cur->second->expr == 0)
 		  return false;
       }

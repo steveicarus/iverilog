@@ -1,7 +1,7 @@
 #ifndef IVL_netlist_H
 #define IVL_netlist_H
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2022 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -4061,7 +4061,7 @@ class NetProcTop  : public LineInfo, public Attrib {
     private:
       bool tie_off_floating_inputs_(Design*des,
 				    NexusSet&nex_map, NetBus&nex_in,
-				    std::vector<NetProc::mask_t>&bitmasks,
+				    const std::vector<NetProc::mask_t>&bitmasks,
 				    bool is_ff_input);
 
       const ivl_process_type_t type_;

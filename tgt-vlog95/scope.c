@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2021 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2022 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -171,7 +171,7 @@ static unsigned emit_and_free_net_const_list(ivl_scope_t scope)
       return idx;
 }
 
-static void save_net_constants(ivl_scope_t scope, ivl_signal_t sig)
+static void save_net_constants(const ivl_scope_t scope, ivl_signal_t sig)
 {
       ivl_nexus_t nex = ivl_signal_nex(sig, 0);
       unsigned idx, count = ivl_nexus_ptrs(nex);
@@ -397,7 +397,7 @@ static void emit_module_ports(ivl_scope_t scope)
       fprintf(vlog_out, ")");
 }
 
-static ivl_signal_t get_port_from_nexus(ivl_scope_t scope, ivl_nexus_t nex,
+static ivl_signal_t get_port_from_nexus(const ivl_scope_t scope, ivl_nexus_t nex,
 	                                unsigned *word)
 {
       assert(nex);
@@ -1015,7 +1015,7 @@ static ivl_scope_t *scopes_to_emit = 0;
 static unsigned num_scopes_to_emit = 0;
 static unsigned emitting_scopes = 0;
 
-int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
+int emit_scope(ivl_scope_t scope, const ivl_scope_t parent)
 {
       char *package_name = 0;
       ivl_scope_type_t sc_type = ivl_scope_type(scope);

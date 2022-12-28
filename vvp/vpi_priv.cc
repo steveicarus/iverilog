@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1057,7 +1057,7 @@ void vpip_put_value_event::run_run()
 }
 
 /* Make a copy of a pointer to a time structure. */
-static t_vpi_time *timedup(t_vpi_time *val)
+static t_vpi_time *timedup(const t_vpi_time *val)
 {
       t_vpi_time *rtn;
       rtn = static_cast<t_vpi_time *> (malloc(sizeof(t_vpi_time)));
@@ -1078,7 +1078,7 @@ static t_vpi_vecval *vectordup(t_vpi_vecval *val, PLI_INT32 size)
 }
 
 /* Make a copy of a pointer to a strength structure. */
-static t_vpi_strengthval *strengthdup(t_vpi_strengthval *val)
+static t_vpi_strengthval *strengthdup(const t_vpi_strengthval *val)
 {
       t_vpi_strengthval *rtn;
       rtn = static_cast<t_vpi_strengthval *>

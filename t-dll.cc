@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2022 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -261,16 +261,16 @@ ivl_scope_t dll_target::find_scope(ivl_design_s &des, const NetScope*cur)
 
       for (unsigned idx = 0; idx < des.roots.size(); idx += 1) {
 	    assert(des.roots[idx]);
-	    ivl_scope_t scope = find_scope_from_root(des.roots[idx], cur);
-	    if (scope)
-		  return scope;
+	    ivl_scope_t scop = find_scope_from_root(des.roots[idx], cur);
+	    if (scop)
+		  return scop;
       }
 
       for (size_t idx = 0; idx < des.packages.size(); idx += 1) {
 	    assert(des.packages[idx]);
-	    ivl_scope_t scope = find_scope_from_root(des.packages[idx], cur);
-	    if (scope)
-		  return scope;
+	    ivl_scope_t scop = find_scope_from_root(des.packages[idx], cur);
+	    if (scop)
+		  return scop;
       }
 
       return 0;
@@ -287,14 +287,14 @@ ivl_scope_t dll_target::lookup_scope_(const NetScope*cur)
  */
 ivl_signal_t dll_target::find_signal(ivl_design_s &des, const NetNet*net)
 {
-      ivl_scope_t scope = find_scope(des, net->scope());
-      assert(scope);
+      ivl_scope_t scop = find_scope(des, net->scope());
+      assert(scop);
 
       perm_string nname = net->name();
 
-      for (unsigned idx = 0 ;  idx < scope->sigs_.size() ;  idx += 1) {
-	    if (strcmp(scope->sigs_[idx]->name_, nname) == 0)
-		  return scope->sigs_[idx];
+      for (unsigned idx = 0 ;  idx < scop->sigs_.size() ;  idx += 1) {
+	    if (strcmp(scop->sigs_[idx]->name_, nname) == 0)
+		  return scop->sigs_[idx];
       }
 
       assert(0);
@@ -2744,7 +2744,7 @@ void dll_target::signal(const NetNet*net)
 
       for (unsigned idx = 0 ;  idx < obj->array_words ;  idx += 1) {
 
-	    const Nexus*nex = net->pins_are_virtual() ? 0 : net->pin(idx).nexus();
+	    const Nexus*nex = net->pins_are_virtual() ? NULL : net->pin(idx).nexus();
 	    if (nex == 0) {
 		    // Special case: This pin is connected to
 		    // nothing. This can happen, for example, if the

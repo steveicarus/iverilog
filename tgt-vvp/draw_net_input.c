@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -280,7 +280,7 @@ static char* draw_net_pull(ivl_net_logic_t lptr, ivl_drive_t drive, const char*l
  * to this nexus.
  */
 
-static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
+static char* draw_net_input_drive(const ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 {
       unsigned nptr_pin = ivl_nexus_ptr_pin(nptr);
       ivl_net_const_t cptr;
@@ -817,7 +817,7 @@ const char*draw_net_input(ivl_nexus_t nex)
       return nex_data->net_input;
 }
 
-const char*draw_island_net_input(ivl_island_t island, ivl_nexus_t nex)
+const char*draw_island_net_input(const ivl_island_t island, ivl_nexus_t nex)
 {
       struct vvp_nexus_data*nex_data = (struct vvp_nexus_data*)
 	    ivl_nexus_get_private(nex);

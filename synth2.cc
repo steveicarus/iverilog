@@ -192,7 +192,7 @@ static void merge_sequential_enables(Design*des, NetScope*scope,
       }
 }
 
-static void merge_sequential_masks(NetProc::mask_t&top_mask, NetProc::mask_t&sub_mask)
+static void merge_sequential_masks(NetProc::mask_t&top_mask, const NetProc::mask_t&sub_mask)
 {
       if (sub_mask.size() == 0)
 	    return;
@@ -209,7 +209,7 @@ static void merge_sequential_masks(NetProc::mask_t&top_mask, NetProc::mask_t&sub
       }
 }
 
-static void merge_parallel_masks(NetProc::mask_t&top_mask, NetProc::mask_t&sub_mask)
+static void merge_parallel_masks(NetProc::mask_t&top_mask, const NetProc::mask_t&sub_mask)
 {
       if (sub_mask.size() == 0)
 	    return;
@@ -226,7 +226,7 @@ static void merge_parallel_masks(NetProc::mask_t&top_mask, NetProc::mask_t&sub_m
       }
 }
 
-static bool all_bits_driven(NetProc::mask_t&mask)
+static bool all_bits_driven(const NetProc::mask_t&mask)
 {
       if (mask.size() == 0)
 	    return false;
@@ -240,7 +240,7 @@ static bool all_bits_driven(NetProc::mask_t&mask)
 
 bool NetProcTop::tie_off_floating_inputs_(Design*des,
 					  NexusSet&nex_map, NetBus&nex_in,
-					  vector<NetProc::mask_t>&bitmasks,
+					  const vector<NetProc::mask_t>&bitmasks,
 					  bool is_ff_input)
 {
       bool flag = true;
@@ -1380,8 +1380,8 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  delete bpv;
 	    } else {
 		    // The part selects are of no use. Forget them.
-		  apv = 0;
-		  bpv = 0;
+		  if (apv) delete apv;
+		  if (bpv) delete bpv;
 	    }
 
 	    NetMux*mux = new NetMux(scope, scope->local_symbol(),

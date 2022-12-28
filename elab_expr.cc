@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2022 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2943,7 +2943,7 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
 
       for (unsigned idx = 0 ; idx < parm_count ; idx += 1) {
 	    unsigned pidx = idx + parm_off;
-	    PExpr*tmp = (idx < actual_count) ? parms_[idx] : 0;
+	    PExpr*tmp = (idx < actual_count) ? parms_[idx] : NULL;
 	    if (tmp) {
 		  parms[pidx] = elaborate_rval_expr(des, scope,
 						    def->port(pidx)->net_type(),
@@ -3177,7 +3177,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    // Get the method name that we are looking for.
 	    perm_string method_name = search_results.path_tail.back().name;
 
-	    PExpr*tmp = parms_.size() ? parms_[0] : 0;
+	    PExpr*tmp = parms_.size() ? parms_[0] : NULL;
 	    return check_for_enum_methods(this, des, scope,
 					  netenum, path_,
 					  method_name, sub_expr,
@@ -4171,7 +4171,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    ivl_assert(*this, 0);
       }
 
-      if (const netdarray_t*darray = sr.net ? sr.net->darray_type() : 0) {
+      if (const netdarray_t*darray = sr.net ? sr.net->darray_type() : NULL) {
 	    switch (use_sel) {
 		case index_component_t::SEL_BIT:
 		case index_component_t::SEL_BIT_LAST:

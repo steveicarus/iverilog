@@ -80,7 +80,7 @@ char* yytext_string_filter(const char*str, size_t str_len)
 
 char* strdupnew(char const *str)
 {
-       return str ? strcpy(new char [strlen(str)+1], str) : 0;
+       return str ? strcpy(new char [strlen(str)+1], str) : NULL;
 }
 
 static const char* set_file_name(char*text)

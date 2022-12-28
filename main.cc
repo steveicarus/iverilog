@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-  "Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)";
+  "Copyright (c) 1998-2022 Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1327,8 +1327,7 @@ int main(int argc, char*argv[])
 		  delete des;
 		  EOC_cleanup();
 		  return 1;
-	    }
-	    if (emit_rc < 0) {
+	    } else {
 		  cerr << "error: Code generator failure: " << emit_rc << endl;
 		  delete des;
 		  EOC_cleanup();

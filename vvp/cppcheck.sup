@@ -1,6 +1,6 @@
 // The new() operator is always used to allocate space for this class and
 // pool is defined there.
-uninitMemberVar:vvp_net.cc:190
+uninitMemberVar:vvp_net.cc:192
 
 // These functions are not used by Icarus
 // vpi_chk_error()

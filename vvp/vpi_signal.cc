@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -639,10 +639,10 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
       switch (code) {
 
 	  case vpiParent:
-	    return rfp->is_netarray? rfp->within.parent : 0;
+	    return rfp->is_netarray? rfp->within.parent : NULL;
 
 	  case vpiIndex:
-	    return rfp->is_netarray? rfp->id.index : 0;
+	    return rfp->is_netarray? rfp->id.index : NULL;
 
 	  case vpiLeftRange:
 	    return &rfp->msb;
@@ -665,7 +665,7 @@ static vpiHandle signal_iterate(int code, vpiHandle ref)
       assert(rfp);
 
       if (code == vpiIndex) {
-	    return rfp->is_netarray ? rfp->id.index->vpi_iterate(code) : 0;
+	    return rfp->is_netarray ? rfp->id.index->vpi_iterate(code) : NULL;
       }
 
       return 0;
@@ -1266,7 +1266,7 @@ static vpiHandle fill_in_net4(struct __vpiSignal*obj, __vpiScope*scope,
 			      const char*name, int msb, int lsb,
 			      bool signed_flag, vvp_net_t*node)
 {
-      obj->id.name = name? vpip_name_string(name) : 0;
+      obj->id.name = name? vpip_name_string(name) : NULL;
       obj->msb = __vpiDecConst(msb);
       obj->lsb = __vpiDecConst(lsb);
       obj->signed_flag = signed_flag? 1 : 0;

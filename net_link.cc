@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,7 +33,7 @@ using namespace std;
 
 void Nexus::connect(Link&r)
 {
-      Nexus*r_nexus = r.next_? r.find_nexus_() : 0;
+      Nexus*r_nexus = r.next_? r.find_nexus_() : NULL;
       if (this == r_nexus)
 	    return;
 

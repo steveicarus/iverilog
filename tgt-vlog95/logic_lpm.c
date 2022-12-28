@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2021 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2022 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -345,7 +345,7 @@ static void emit_driver_delay(ivl_scope_t scope, ivl_nexus_t nex)
       emit_delay(scope, rise, fall, decay, 3);
 }
 
-static unsigned is_local_nexus(ivl_scope_t scope, ivl_nexus_t nex)
+static unsigned is_local_nexus(const ivl_scope_t scope, ivl_nexus_t nex)
 {
       unsigned idx, count = ivl_nexus_ptrs(nex);
       unsigned is_local = 1;
@@ -469,7 +469,7 @@ static void emit_nexus_port_signal(ivl_scope_t scope, ivl_nexus_t nex)
       else fprintf(vlog_out, "/* Empty */");
 }
 
-static ivl_signal_t find_local_signal(ivl_scope_t scope, ivl_nexus_t nex,
+static ivl_signal_t find_local_signal(const ivl_scope_t scope, ivl_nexus_t nex,
                                       unsigned *word)
 {
       unsigned idx, count = ivl_nexus_ptrs(nex);
@@ -817,7 +817,7 @@ static void emit_lpm_concat(ivl_scope_t scope, ivl_lpm_t lpm)
 /*
  * Look for an output signal in the nexus that is driving into this scope.
  */
-static ivl_signal_t find_output_signal(ivl_scope_t scope, ivl_nexus_t nex,
+static ivl_signal_t find_output_signal(const ivl_scope_t scope, ivl_nexus_t nex,
                                        unsigned*array_word)
 {
       unsigned idx, count = ivl_nexus_ptrs(nex);
@@ -961,9 +961,8 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm,
 	    return;
       }
 
-      if (sign_extend) fprintf(vlog_out, "(");
-
       if (sign_extend) {
+	    fprintf(vlog_out, "(");
 	    assert(base != lsb);
 // HERE: This looks wrong.
 	    if (msb >= lsb) base += lsb;
@@ -1771,7 +1770,7 @@ static void emit_lpm_latch(ivl_scope_t scope, ivl_lpm_t lpm)
       need_latch_prim = 1;
 }
 
-static ivl_signal_t get_output_from_nexus(ivl_scope_t scope, ivl_nexus_t nex,
+static ivl_signal_t get_output_from_nexus(const ivl_scope_t scope, ivl_nexus_t nex,
                                           int64_t*array_idx)
 {
       ivl_signal_t use_sig = 0;
@@ -1858,8 +1857,8 @@ static void emit_lpm_part_pv(ivl_scope_t scope, ivl_lpm_t lpm)
       fprintf(vlog_out, "]");
 }
 
-static unsigned  output_is_module_instantiation_input(ivl_scope_t scope,
-                                               ivl_nexus_t nex)
+static unsigned output_is_module_instantiation_input(const ivl_scope_t scope,
+                                                     ivl_nexus_t nex)
 {
       unsigned idx, count = ivl_nexus_ptrs(nex);
       unsigned rtn = 0;

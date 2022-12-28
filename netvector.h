@@ -98,7 +98,7 @@ class netvector_t : public ivl_type_s {
 
 inline netvector_t::netvector_t(const std::vector<netrange_t>&pd,
 				ivl_variable_type_t type)
-: packed_dims_(pd), type_(type), signed_(false), isint_(false)
+: packed_dims_(pd), type_(type), signed_(false), isint_(false), implicit_(false)
 {
 }
 

@@ -1,20 +1,20 @@
 // These are correct and are used to find the base (zero) pin.
-thisSubtraction:netlist.h:5213
-thisSubtraction:netlist.h:5222
+thisSubtraction:netlist.h:5244
+thisSubtraction:netlist.h:5253
 
 // This is used when running a debugger
 // debugger_release
-knownConditionTrueFalse:main.cc:919
+knownConditionTrueFalse:main.cc:921
 
 // This are just stubs
 // vpi_control()
-unusedFunction:vpi_modules.cc:107
+unusedFunction:vpi_modules.cc:109
 // vpi_mcd_printf()
-unusedFunction:vpi_modules.cc:84
+unusedFunction:vpi_modules.cc:86
 // vpi_printf()
-unusedFunction:vpi_modules.cc:88
+unusedFunction:vpi_modules.cc:90
 // vpi_sim_control()
-unusedFunction:vpi_modules.cc:108
+unusedFunction:vpi_modules.cc:110
 
 // These are the functions that the compiler exports to the targets.
 //ivl_branch_island()

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2022 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -415,7 +415,7 @@ static void blend_class_constructors(PClass*pclass)
 	// While we're here, look for a super.new() call. If we find
 	// it, strip it out of the constructor and set it aside for
 	// when we actually call the chained constructor.
-      PChainConstructor*chain_new = use_new? use_new->extract_chain_constructor() : 0;
+      PChainConstructor*chain_new = use_new? use_new->extract_chain_constructor() : NULL;
 
 	// If we do not have an explicit constructor chain, but there
 	// is a parent class, then create an implicit chain.
@@ -457,7 +457,6 @@ static void blend_class_constructors(PClass*pclass)
 	    } else {
 		  use_new->push_statement_front(chain_new);
 	    }
-	    chain_new = 0;
       }
 }
 
@@ -1153,7 +1152,6 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
       }
 
       delete case_value_co;
-      case_value_co = 0;
 
       PGenerate*item = (cur == generate_schemes.end())? default_item : *cur;
       if (item == 0) {

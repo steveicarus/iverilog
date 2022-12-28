@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -3204,7 +3204,7 @@ bool of_FLAG_SET_IMM(vthread_t thr, vvp_code_t cp)
       assert(flag < vthread_s::FLAGS_COUNT);
       assert(vali >= 0 && vali < 4);
 
-      static vvp_bit4_t map_bit[4] = {BIT4_0, BIT4_1, BIT4_Z, BIT4_X};
+      static const vvp_bit4_t map_bit[4] = {BIT4_0, BIT4_1, BIT4_Z, BIT4_X};
       thr->flags[flag] = map_bit[vali];
       return true;
 }
@@ -5162,12 +5162,12 @@ inline void push_value(vthread_t thr, double value, unsigned)
       thr->push_real(value);
 }
 
-inline void push_value(vthread_t thr, string value, unsigned)
+inline void push_value(vthread_t thr, const string&value, unsigned)
 {
       thr->push_str(value);
 }
 
-inline void push_value(vthread_t thr, vvp_vector4_t value, unsigned wid)
+inline void push_value(vthread_t thr, const vvp_vector4_t&value, unsigned wid)
 {
       assert(wid == value.size());
       thr->push_vec4(value);
@@ -5357,7 +5357,7 @@ static void poke_val(vthread_t fun_thr, unsigned depth, double val)
       fun_thr->parent->poke_real(depth, val);
 }
 
-static void poke_val(vthread_t fun_thr, unsigned depth, string val)
+static void poke_val(vthread_t fun_thr, unsigned depth, const string&val)
 {
       fun_thr->parent->poke_str(depth, val);
 }

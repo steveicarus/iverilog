@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -373,7 +373,7 @@ static void __compile_net(char*label,
 			  int vpi_type_code, bool signed_flag, bool local_flag,
 			  unsigned argc, struct symb_s*argv)
 {
-      vvp_array_t array = array_label? array_find(array_label) : 0;
+      vvp_array_t array = array_label? array_find(array_label) : NULL;
       assert(array_label ? array!=0 : true);
 
       free(array_label);
@@ -503,7 +503,7 @@ static void __compile_real(char*label, char*name,
                            unsigned argc, struct symb_s*argv)
 {
       assert(msb == 0 && lsb == 0);
-      vvp_array_t array = array_label ? array_find(array_label) : 0;
+      vvp_array_t array = array_label ? array_find(array_label) : NULL;
       assert(array_label ? array!=0 : true);
 
       free(array_label);

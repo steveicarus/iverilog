@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -153,7 +153,7 @@ NetExpr* NetEBAdd::eval_tree()
 	// example, the expression (a + 2) - 1 can be rewritten as a + 1.
 
       NetEBAdd*se = dynamic_cast<NetEBAdd*>(left_);
-      NetEConst*lc = se? dynamic_cast<NetEConst*>(se->right_) : 0;
+      NetEConst*lc = se? dynamic_cast<NetEConst*>(se->right_) : NULL;
       NetEConst*rc = dynamic_cast<NetEConst*>(right_);
 
       if (lc != 0 && rc != 0) {

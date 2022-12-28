@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -286,7 +286,7 @@ vvp_darray*__vpiDarrayVar::get_vvp_darray() const
 vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net)
 {
       __vpiScope*scope = vpip_peek_current_scope();
-      const char*use_name = name ? vpip_name_string(name) : 0;
+      const char*use_name = name ? vpip_name_string(name) : NULL;
 
       __vpiDarrayVar*obj = new __vpiDarrayVar(scope, use_name, net);
 
@@ -332,7 +332,7 @@ void __vpiQueueVar::vpi_get_value(p_vpi_value val)
 vpiHandle vpip_make_queue_var(const char*name, vvp_net_t*net)
 {
       __vpiScope*scope = vpip_peek_current_scope();
-      const char*use_name = name ? vpip_name_string(name) : 0;
+      const char*use_name = name ? vpip_name_string(name) : NULL;
 
       __vpiQueueVar*obj = new __vpiQueueVar(scope, use_name, net);
 

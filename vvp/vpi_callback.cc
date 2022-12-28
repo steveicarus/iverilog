@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -461,7 +461,7 @@ static struct __vpiCallback* make_at_end_of_sim_time(p_cb_data data)
 
 class simulator_callback : public __vpiCallback {
     public:
-      inline explicit simulator_callback(struct t_cb_data*data)
+      inline explicit simulator_callback(const struct t_cb_data*data)
       { cb_data = *data; }
 
     public:

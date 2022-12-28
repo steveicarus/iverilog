@@ -3,177 +3,184 @@
 // problems will not be fixed.
 
 // fstapi.c from GTKWave
-asctimeCalled:fstapi.c:955
-allocaCalled:fstapi.c:2386
-unreadVariable:fstapi.c:204
-unreadVariable:fstapi.c:205
-unreadVariable:fstapi.c:1645
-unreadVariable:fstapi.c:1653
-unreadVariable:fstapi.c:1657
-unreadVariable:fstapi.c:1662
-unreadVariable:fstapi.c:1685
-unreadVariable:fstapi.c:1691
-unreadVariable:fstapi.c:1692
-unreadVariable:fstapi.c:1696
-unreadVariable:fstapi.c:2818
-unreadVariable:fstapi.c:6521
-variableScope:fstapi.c:684
-variableScope:fstapi.c:1078
-variableScope:fstapi.c:1385
-variableScope:fstapi.c:1386
-variableScope:fstapi.c:1387
-variableScope:fstapi.c:1444
-variableScope:fstapi.c:2056
-variableScope:fstapi.c:2189
-variableScope:fstapi.c:2622
-variableScope:fstapi.c:2623
-variableScope:fstapi.c:2812
-variableScope:fstapi.c:2813
-variableScope:fstapi.c:2814
-variableScope:fstapi.c:2815
-variableScope:fstapi.c:2816
-variableScope:fstapi.c:2817
-variableScope:fstapi.c:2818
-variableScope:fstapi.c:2919
-variableScope:fstapi.c:2920
-variableScope:fstapi.c:2924
-variableScope:fstapi.c:3161
-variableScope:fstapi.c:3200
-variableScope:fstapi.c:3201
-variableScope:fstapi.c:3920
-variableScope:fstapi.c:4098
-variableScope:fstapi.c:4100
-variableScope:fstapi.c:4542
-variableScope:fstapi.c:4543
-variableScope:fstapi.c:4552
-variableScope:fstapi.c:4815
-variableScope:fstapi.c:5086
-variableScope:fstapi.c:5089
-variableScope:fstapi.c:5585
-variableScope:fstapi.c:5589
-variableScope:fstapi.c:5590
-variableScope:fstapi.c:5748
-variableScope:fstapi.c:5806
-variableScope:fstapi.c:6119
-variableScope:fstapi.c:6122
-variableScope:fstapi.c:6416
-variableScope:fstapi.c:6521
-variableScope:fstapi.c:6522
-variableScope:fstapi.c:6553
-variableScope:fstapi.c:6781
-variableScope:fstapi.c:6957
-variableScope:fstapi.c:6958
-variableScope:fstapi.c:6959
+asctimeCalled:fstapi.c:965
+allocaCalled:fstapi.c:2396
+unreadVariable:fstapi.c:214
+unreadVariable:fstapi.c:215
+unreadVariable:fstapi.c:1655
+unreadVariable:fstapi.c:1663
+unreadVariable:fstapi.c:1667
+unreadVariable:fstapi.c:1672
+unreadVariable:fstapi.c:1695
+unreadVariable:fstapi.c:1701
+unreadVariable:fstapi.c:1702
+unreadVariable:fstapi.c:1706
+unreadVariable:fstapi.c:2828
+unreadVariable:fstapi.c:6555
+variableScope:fstapi.c:694
+variableScope:fstapi.c:1088
+variableScope:fstapi.c:1395
+variableScope:fstapi.c:1396
+variableScope:fstapi.c:1397
+variableScope:fstapi.c:1454
+variableScope:fstapi.c:1944
+variableScope:fstapi.c:2064
+variableScope:fstapi.c:2066
+variableScope:fstapi.c:2187
+variableScope:fstapi.c:2199
+variableScope:fstapi.c:2632
+variableScope:fstapi.c:2633
+variableScope:fstapi.c:2822
+variableScope:fstapi.c:2823
+variableScope:fstapi.c:2824
+variableScope:fstapi.c:2825
+variableScope:fstapi.c:2826
+variableScope:fstapi.c:2827
+variableScope:fstapi.c:2828
+variableScope:fstapi.c:2929
+variableScope:fstapi.c:2930
+variableScope:fstapi.c:2934
+variableScope:fstapi.c:3171
+variableScope:fstapi.c:3210
+variableScope:fstapi.c:3211
+variableScope:fstapi.c:3927
+variableScope:fstapi.c:3930
+variableScope:fstapi.c:4108
+variableScope:fstapi.c:4110
+variableScope:fstapi.c:4578
+variableScope:fstapi.c:4579
+variableScope:fstapi.c:4582
+variableScope:fstapi.c:4583
+variableScope:fstapi.c:4591
+variableScope:fstapi.c:4592
+variableScope:fstapi.c:4854
+variableScope:fstapi.c:5120
+variableScope:fstapi.c:5123
+variableScope:fstapi.c:5619
+variableScope:fstapi.c:5623
+variableScope:fstapi.c:5624
+variableScope:fstapi.c:5782
+variableScope:fstapi.c:5840
+variableScope:fstapi.c:6153
+variableScope:fstapi.c:6156
+variableScope:fstapi.c:6450
+variableScope:fstapi.c:6555
+variableScope:fstapi.c:6556
+variableScope:fstapi.c:6587
+variableScope:fstapi.c:6815
+variableScope:fstapi.c:6991
+variableScope:fstapi.c:6992
+variableScope:fstapi.c:6993
 
 // These functions are not used by Icarus
 // fstReaderClrFacProcessMask()
-unusedFunction:fstapi.c:3652
+unusedFunction:fstapi.c:3662
 // fstReaderClrFacProcessMaskAll()
-unusedFunction:fstapi.c:3681
+unusedFunction:fstapi.c:3691
 // fstReaderGetAliasCount()
-unusedFunction:fstapi.c:3744
+unusedFunction:fstapi.c:3754
 // fstReaderGetCurrentFlatScope()
-unusedFunction:fstapi.c:3490
+unusedFunction:fstapi.c:3500
 // fstReaderGetCurrentScopeLen()
-unusedFunction:fstapi.c:3587
+unusedFunction:fstapi.c:3597
 // fstReaderGetCurrentScopeUserInfo()
-unusedFunction:fstapi.c:3504
+unusedFunction:fstapi.c:3514
 // fstReaderGetDateString()
-unusedFunction:fstapi.c:3772
+unusedFunction:fstapi.c:3782
 // fstReaderGetDoubleEndianMatchState()
-unusedFunction:fstapi.c:3758
+unusedFunction:fstapi.c:3768
 // fstReaderGetDumpActivityChangeTime()
-unusedFunction:fstapi.c:3800
+unusedFunction:fstapi.c:3810
 // fstReaderGetDumpActivityChangeValue()
-unusedFunction:fstapi.c:3815
+unusedFunction:fstapi.c:3825
 // fstReaderGetEndTime()
-unusedFunction:fstapi.c:3709
+unusedFunction:fstapi.c:3719
 // fstReaderGetFacProcessMask()
-unusedFunction:fstapi.c:3615
+unusedFunction:fstapi.c:3625
 // fstReaderGetFileType()
-unusedFunction:fstapi.c:3779
+unusedFunction:fstapi.c:3789
 // fstReaderGetFseekFailed()
-unusedFunction:fstapi.c:3600
+unusedFunction:fstapi.c:3610
 // fstReaderGetMaxHandle()
-unusedFunction:fstapi.c:3737
+unusedFunction:fstapi.c:3747
 // fstReaderGetMemoryUsedByWriter()
-unusedFunction:fstapi.c:3716
+unusedFunction:fstapi.c:3726
 // fstReaderGetNumberDumpActivityChanges()
-unusedFunction:fstapi.c:3793
+unusedFunction:fstapi.c:3803
 // fstReaderGetScopeCount()
-unusedFunction:fstapi.c:3723
+unusedFunction:fstapi.c:3733
 // fstReaderGetStartTime()
-unusedFunction:fstapi.c:3702
+unusedFunction:fstapi.c:3712
 // fstReaderGetTimescale()
-unusedFunction:fstapi.c:3695
+unusedFunction:fstapi.c:3705
 // fstReaderGetTimezero()
-unusedFunction:fstapi.c:3786
+unusedFunction:fstapi.c:3796
 // fstReaderGetValueChangeSectionCount()
-unusedFunction:fstapi.c:3751
+unusedFunction:fstapi.c:3761
 // fstReaderGetValueFromHandleAtTime()
-unusedFunction:fstapi.c:6001
+unusedFunction:fstapi.c:6035
 // fstReaderGetVarCount()
-unusedFunction:fstapi.c:3730
+unusedFunction:fstapi.c:3740
 // fstReaderGetVersionString()
-unusedFunction:fstapi.c:3765
+unusedFunction:fstapi.c:3775
 // fstReaderIterBlocks()
-unusedFunction:fstapi.c:4964
+unusedFunction:fstapi.c:5003
 // fstReaderIterBlocksSetNativeDoublesOnCallback()
-unusedFunction:fstapi.c:3865
+unusedFunction:fstapi.c:3875
 // fstReaderIterateHier()
-unusedFunction:fstapi.c:4094
+unusedFunction:fstapi.c:4104
 // fstReaderIterateHierRewind()
-unusedFunction:fstapi.c:4074
+unusedFunction:fstapi.c:4084
 // fstReaderOpen()
-unusedFunction:fstapi.c:4862
+unusedFunction:fstapi.c:4901
 // fstReaderOpenForUtilitiesOnly()
-unusedFunction:fstapi.c:4854
+unusedFunction:fstapi.c:4893
 // fstReaderPushScope()
-unusedFunction:fstapi.c:3552
+unusedFunction:fstapi.c:3562
 // fstReaderResetScope()
-unusedFunction:fstapi.c:3541
+unusedFunction:fstapi.c:3551
 // fstReaderSetFacProcessMask()
-unusedFunction:fstapi.c:3634
+unusedFunction:fstapi.c:3644
 // fstReaderSetFacProcessMaskAll()
-unusedFunction:fstapi.c:3670
+unusedFunction:fstapi.c:3680
 // fstReaderSetLimitTimeRange()
-unusedFunction:fstapi.c:3830
+unusedFunction:fstapi.c:3840
 // fstReaderSetUnlimitedTimeRange()
-unusedFunction:fstapi.c:3843
+unusedFunction:fstapi.c:3853
 // fstReaderSetVcdExtensions()
-unusedFunction:fstapi.c:3854
+unusedFunction:fstapi.c:3864
 // fstUtilityExtractEnumTableFromString()
-unusedFunction:fstapi.c:6954
+unusedFunction:fstapi.c:6988
 // fstUtilityFreeEnumTable()
-unusedFunction:fstapi.c:7015
+unusedFunction:fstapi.c:7049
 // fstWriterCreateEnumTable()
-unusedFunction:fstapi.c:2807
+unusedFunction:fstapi.c:2817
 // fstWriterCreateVar2()
-unusedFunction:fstapi.c:2609
+unusedFunction:fstapi.c:2619
 // fstWriterEmitEnumTableRef()
-unusedFunction:fstapi.c:2902
+unusedFunction:fstapi.c:2912
 // fstWriterEmitValueChangeVec32()
-unusedFunction:fstapi.c:3054
+unusedFunction:fstapi.c:3064
 // fstWriterEmitValueChangeVec64()
-unusedFunction:fstapi.c:3103
+unusedFunction:fstapi.c:3113
 // fstWriterEmitVariableLengthValueChange()
-unusedFunction:fstapi.c:3154
+unusedFunction:fstapi.c:3164
 // fstWriterGetFseekFailed()
-unusedFunction:fstapi.c:2592
+unusedFunction:fstapi.c:2602
 // fstWriterSetAttrEnd()
-unusedFunction:fstapi.c:2795
+unusedFunction:fstapi.c:2805
 // fstWriterSetComment()
-unusedFunction:fstapi.c:2441
+unusedFunction:fstapi.c:2451
 // fstWriterSetEnvVar()
-unusedFunction:fstapi.c:2453
+unusedFunction:fstapi.c:2463
 // fstWriterSetFileType()
-unusedFunction:fstapi.c:2316
+unusedFunction:fstapi.c:2326
 // fstWriterSetParallelMode()
-unusedFunction:fstapi.c:2552
+unusedFunction:fstapi.c:2562
 // fstWriterSetTimezero()
-unusedFunction:fstapi.c:2517
+unusedFunction:fstapi.c:2527
 // fstWriterSetValueList()
-unusedFunction:fstapi.c:2447
+unusedFunction:fstapi.c:2457
 
 // lxt2_write.c from GTKWave
 allocaCalled:lxt2_write.c:1813
@@ -335,7 +342,7 @@ unusedFunction:lz4.c:376
 
 // The routines in sys_random.c are exact copies from IEEE1364-2005 and
 // they have scope warnings that we need to ignore.
-variableScope:sys_random.c:46
-variableScope:sys_random.c:69
-variableScope:sys_random.c:92
-variableScope:sys_random.c:147
+variableScope:sys_random.c:47
+variableScope:sys_random.c:70
+variableScope:sys_random.c:93
+variableScope:sys_random.c:148

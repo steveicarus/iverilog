@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -185,7 +185,7 @@ void vvp_island_tran::count_drivers(vvp_island_port*port, unsigned bit_idx,
 
 void vvp_island_branch_tran::run_test_enabled()
 {
-      vvp_island_port*ep = en? dynamic_cast<vvp_island_port*> (en->fun) : 0;
+      vvp_island_port*ep = en? dynamic_cast<vvp_island_port*> (en->fun) : NULL;
 
 	// If there is no ep port (no "enabled" input) then this is a
 	// tran branch. Assume it is always enabled.

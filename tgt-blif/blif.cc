@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -222,7 +222,7 @@ static void emit_blif(const char*blif_path, ivl_design_t des, ivl_scope_t model)
       fclose(fd);
 }
 
-bool scope_is_in_model(ivl_scope_t model, ivl_scope_t scope)
+bool scope_is_in_model(const ivl_scope_t model, ivl_scope_t scope)
 {
       while (scope) {
 	    if (scope==model)

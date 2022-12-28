@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2022 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1115,7 +1115,7 @@ NetNet*PEIdent::elaborate_unpacked_net(Design*des, NetScope*scope) const
       }
 
       const name_component_t&name_tail = path_.back();
-      if (name_tail.index.size() != 0) {
+      if (!name_tail.index.empty()) {
 	    cerr << get_fileline() << ": sorry: Array slices are not yet "
 	         << "supported for continuous assignment." << endl;
 	    des->errors += 1;

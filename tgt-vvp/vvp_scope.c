@@ -262,7 +262,7 @@ const char*drive_string(ivl_drive_t drive)
  * to netlist signals. This routine performs this check on the
  * given nexus.
  */
-static unsigned is_netlist_signal(ivl_net_logic_t net, ivl_nexus_t nex)
+static unsigned is_netlist_signal(const ivl_net_logic_t net, ivl_nexus_t nex)
 {
       unsigned idx, rtn;
 

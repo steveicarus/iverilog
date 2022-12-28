@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -27,7 +27,7 @@
 using namespace std;
 
 netstruct_t::netstruct_t()
-: union_(false), packed_(false)
+: union_(false), packed_(false), signed_(false)
 {
 }
 

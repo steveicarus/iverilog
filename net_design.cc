@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -829,9 +829,9 @@ void NetScope::evaluate_type_parameter_(Design *des, param_ref_t cur)
 	    return;
       }
 
-      data_type_t *type = type_expr->get_type();
+      data_type_t *ptype = type_expr->get_type();
       NetScope *type_scope = cur->second.val_scope;
-      cur->second.ivl_type = type->elaborate_type(des, type_scope);
+      cur->second.ivl_type = ptype->elaborate_type(des, type_scope);
 }
 
 void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)

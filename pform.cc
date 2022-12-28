@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2022 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1900,14 +1900,13 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	    perm_string port_name = (*decl)[idx]->basename();
 
 	    if (PWire*cur = defs[port_name]) {
-		  bool rc = true;
 		  assert((*decl)[idx]);
 		  if ((*decl)[idx]->get_port_type() != NetNet::PIMPLICIT) {
-			rc = cur->set_port_type((*decl)[idx]->get_port_type());
+			bool rc = cur->set_port_type((*decl)[idx]->get_port_type());
 			assert(rc);
 		  }
 		  if ((*decl)[idx]->get_wire_type() != NetNet::IMPLICIT) {
-			rc = cur->set_wire_type((*decl)[idx]->get_wire_type());
+			bool rc = cur->set_wire_type((*decl)[idx]->get_wire_type());
 			assert(rc);
 		  }
 
@@ -2770,7 +2769,7 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 
       for (list<pform_port_t>::iterator cur = ports->begin();
 	   cur != ports->end(); ++cur) {
-	    perm_string &name = cur->name;
+	    const perm_string &name = cur->name;
 
 	    PWire*curw = pform_get_or_make_wire(loc, name, NetNet::IMPLICIT_REG,
 						pt, rt);
@@ -2919,7 +2918,7 @@ LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
 }
 
 static void pform_set_type_parameter(const struct vlltype&loc, perm_string name,
-				     LexicalScope::range_t*value_range)
+				     const LexicalScope::range_t*value_range)
 {
       pform_requires_sv(loc, "Type parameter");
 

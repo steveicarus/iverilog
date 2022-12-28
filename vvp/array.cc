@@ -334,7 +334,7 @@ int __vpiArrayWord::as_word_t::vpi_get(int code)
 {
       struct __vpiArrayWord*obj = array_var_word_from_handle(this);
       assert(obj);
-      struct __vpiArrayBase*parent = obj->get_parent();
+      struct __vpiArrayBase*my_parent = obj->get_parent();
       t_vpi_value val;
 
       switch (code) {
@@ -342,24 +342,24 @@ int __vpiArrayWord::as_word_t::vpi_get(int code)
 	    return 0; // Not implemented for now!
 
 	  case vpiSize:
-	    return parent->get_word_size();
+	    return my_parent->get_word_size();
 
 	  case vpiLeftRange:
             val.format = vpiIntVal;
-	    parent->get_left_range()->vpi_get_value(&val);
+	    my_parent->get_left_range()->vpi_get_value(&val);
             assert(val.format == vpiIntVal);
             return val.value.integer;
 
 	  case vpiRightRange:
             val.format = vpiIntVal;
-	    parent->get_right_range()->vpi_get_value(&val);
+	    my_parent->get_right_range()->vpi_get_value(&val);
             assert(val.format == vpiIntVal);
             return val.value.integer;
 
 	  case vpiIndex:
 	    {
 		  int base_offset = 0;
-		  struct __vpiArray*base = dynamic_cast<__vpiArray*> (parent);
+		  struct __vpiArray*base = dynamic_cast<__vpiArray*> (my_parent);
 		  if (base) {
 			val.format = vpiIntVal;
 			base->first_addr.vpi_get_value(&val);
@@ -372,7 +372,7 @@ int __vpiArrayWord::as_word_t::vpi_get(int code)
 	    }
 
 	  case vpiAutomatic:
-	    return parent->get_scope()->is_automatic()? 1 : 0;
+	    return my_parent->get_scope()->is_automatic()? 1 : 0;
 
 #if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
 	  case _vpiFromThr:

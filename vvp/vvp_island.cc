@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2022 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,7 +34,9 @@
 
 using namespace std;
 
+#ifdef CHECK_WITH_VALGRIND
 static bool at_EOS = false;
+#endif
 
 void island_send_value(vvp_net_t*net, const vvp_vector8_t&val)
 {
@@ -61,7 +63,9 @@ vvp_island::vvp_island()
 vvp_island::~vvp_island()
 {
 	// We can only delete islands at the end of simulation.
+#ifdef CHECK_WITH_VALGRIND
       if (!at_EOS) assert(0);
+#endif
 
       while (branches_) {
 	    vvp_island_branch *next_br = branches_->next_branch;

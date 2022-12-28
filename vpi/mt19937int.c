@@ -1,5 +1,5 @@
 /*
- * NOTE: This code as been slightly modified to interface with the
+ * NOTE: This code has been slightly modified to interface with the
  * PLI implementations of $random. The copyright and license
  * information are given in the comment block below.
  *
@@ -89,7 +89,7 @@ genrand(struct context_s *context)
 
     if (mti >= N) { /* generate N words at one time */
 	/* mag01[x] = x * MATRIX_A  for x=0,1 */
-	static unsigned long mag01[2]={0x0, MATRIX_A};
+	static const unsigned long mag01[2]={0x0, MATRIX_A};
         int kk;
 
         if (mti == N+1)   /* if sgenrand() has not been called, */
