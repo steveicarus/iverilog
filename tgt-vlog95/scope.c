@@ -40,6 +40,19 @@ static void emit_func_return(ivl_signal_t sig)
       } else if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
 	    fprintf(vlog_out, " real");
       } else {
+	    if (ivl_signal_signed(sig)) {
+		  if (allow_signed) {
+			fprintf(vlog_out, " signed");
+		  } else {
+			fprintf(stderr, "%s:%u: vlog95 error: Signed return "
+			                "value for function `%s` is not "
+					"supported.\n",
+			                ivl_signal_file(sig),
+			                ivl_signal_lineno(sig),
+			                ivl_signal_basename(sig));
+			vlog_errors += 1;
+		  }
+	    }
 	    int msb, lsb;
 	    get_sig_msb_lsb(sig, &msb, &lsb);
 	    if (msb != 0 || lsb != 0) fprintf(vlog_out, " [%d:%d]", msb, lsb);
