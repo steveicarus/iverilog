@@ -69,6 +69,7 @@
 
 # Verilog 95 does not support automatic tasks or functions.
 always_comb_rfunc	CE			ivltests
+always_comb_void_func	CE			ivltests
 automatic_error11	CE			ivltests
 automatic_error12	CE			ivltests
 automatic_error13	CE			ivltests

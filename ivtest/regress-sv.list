@@ -76,6 +76,7 @@ always_comb_fail4	CE,-g2005-sv		ivltests
 always_comb_no_sens	nornal,-g2005-sv	ivltests gold=always_comb_no_sens.gold
 always_comb_rfunc	nornal,-g2005-sv	ivltests
 always_comb_trig	normal,-g2005-sv	ivltests
+always_comb_void_func	normal,-g2005-sv	ivltests
 always_comb_warn	normal,-g2005-sv	ivltests gold=always_comb_warn.gold
 always_ff		normal,-g2005-sv	ivltests
 always_ff_fail		CE,-g2005-sv		ivltests
@@ -465,6 +466,9 @@ size_cast2		normal,-g2005-sv	ivltests
 size_cast3		normal,-g2009		ivltests
 size_cast4		normal,-g2009		ivltests
 size_cast5		normal,-g2009		ivltests
+size_cast_fail1		CE,-g2009		ivltests
+size_cast_fail2		CE,-g2009		ivltests
+size_cast_fail3		CE,-g2009		ivltests
 slongint_test		normal,-g2005-sv	ivltests
 sshortint_test		normal,-g2005-sv	ivltests
 string_events		normal,-g2009		ivltests gold=string_events.gold
@@ -485,6 +489,7 @@ struct_member_signed	normal,-g2009		ivltests
 struct_packed_array	normal,-g2009		ivltests
 struct_packed_array2	normal,-g2009		ivltests
 struct_packed_darray_fail CE,-g2009		ivltests
+struct_packed_member_def	CE,-g2009	ivltests
 struct_packed_queue_fail CE,-g2009		ivltests
 struct_packed_sysfunct	normal,-g2009		ivltests
 struct_packed_sysfunct2	normal,-g2009		ivltests
