@@ -1,0 +1,5 @@
+warning: Found both default and explicit timescale based delays. Use
+       : -Wtimescale to find the design element(s) with no explicit
+       : timescale.
+The time in w_time is: 1.000000e-09
+The time in wo_time is: 1.000000e+00
