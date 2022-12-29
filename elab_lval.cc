@@ -279,7 +279,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	// then we can handled it with the net_packed_member_ method.
       if (reg->struct_type() && !member_path.empty()) {
 	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_packed_member_(des, use_scope, lv, member_path);
+	    elaborate_lval_net_packed_member_(des, scope, lv, member_path);
 	    return lv;
       }
 
@@ -287,7 +287,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	// net_class_member_ method.
       const netclass_t *class_type = dynamic_cast<const netclass_t *>(sr.type);
       if (class_type && !member_path.empty() && gn_system_verilog()) {
-	    NetAssign_*lv = elaborate_lval_net_class_member_(des, use_scope, class_type, reg, member_path);
+	    NetAssign_*lv = elaborate_lval_net_class_member_(des, scope, class_type, reg, member_path);
 	    return lv;
       }
 

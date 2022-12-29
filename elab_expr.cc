@@ -4369,7 +4369,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       if (!sr.path_tail.empty()) {
 	    if (net->struct_type()) {
-		  return check_for_struct_members(this, des, use_scope, net,
+		  return check_for_struct_members(this, des, scope, net,
 						  sr.path_head.back().index,
 						  sr.path_tail);
 	    } else if (dynamic_cast<const netclass_t*>(sr.type)) {
@@ -4710,7 +4710,7 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 			     << endl;
 		  }
 
-		  return check_for_struct_members(this, des, use_scope, sr.net,
+		  return check_for_struct_members(this, des, scope, sr.net,
 						  sr.path_head.back().index,
 						  sr.path_tail);
 	    }
@@ -4890,7 +4890,7 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 	    }
 
 	    if (dynamic_cast<const netclass_t*>(sr.type) && !sr.path_tail.empty()) {
-		  return elaborate_expr_class_field_(des, use_scope, sr,
+		  return elaborate_expr_class_field_(des, scope, sr,
 						     expr_wid, flags);
 	    }
 
@@ -4908,7 +4908,7 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 		  ivl_assert(*this, sr.path_tail.size() == 1);
 		  const name_component_t member_comp = sr.path_tail.front();
 		  ivl_assert(*this, member_comp.index.empty());
-		  return check_for_enum_methods(this, des, use_scope,
+		  return check_for_enum_methods(this, des, scope,
 						netenum, sr.path_head,
 						member_comp.name,
 						expr, NULL, 0);

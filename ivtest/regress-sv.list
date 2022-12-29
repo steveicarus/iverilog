@@ -692,6 +692,9 @@ sv_ps_function4		normal,-g2009		ivltests
 sv_ps_function5		normal,-g2009		ivltests
 sv_ps_function6		normal,-g2009		ivltests
 sv_ps_function7		normal,-g2009		ivltests
+sv_ps_member_sel1	normal,-g2009		ivltests
+sv_ps_member_sel2	normal,-g2009		ivltests
+sv_ps_member_sel3	normal,-g2009		ivltests
 sv_ps_type1		normal,-g2009		ivltests
 sv_ps_type_cast1	normal,-g2009		ivltests
 sv_ps_type_cast2	normal,-g2009		ivltests
