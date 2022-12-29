@@ -1531,9 +1531,15 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
       if (peek_tail_name(path_)[0] == '$')
 	    return test_width_sfunc_(des, scope, mode);
 
+      NetScope *use_scope = scope;
+      if (package_) {
+	    use_scope = des->find_package(package_->pscope_name());
+	    ivl_assert(*this, use_scope);
+      }
+
       // Search for the symbol. This should turn up a scope.
       symbol_search_results search_results;
-      bool search_flag = symbol_search(this, des, scope, path_, &search_results);
+      bool search_flag = symbol_search(this, des, use_scope, path_, &search_results);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PECallFunction::test_width: "
