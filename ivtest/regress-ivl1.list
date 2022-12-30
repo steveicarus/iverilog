@@ -75,7 +75,6 @@
 #------------------------------------------------------------------------------
 
 # Escaped defines ``
-macro_str_esc		normal			ivltests gold=macro_str_esc.gold
 macro_with_args		normal			ivltests gold=macro_with_args.gold
 mcl1			normal			ivltests gold=mcl1.gold
 pr622			normal			ivltests gold=pr622.gold

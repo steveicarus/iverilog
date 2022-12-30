@@ -22,6 +22,7 @@ jobs:
     - name: Install dependencies
       run: |
         brew install bison
+        pip3 install docopt
 
     - name: Build, check and install
       run: |
@@ -52,7 +53,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update -qq
-        sudo apt install -y make g++ git bison flex gperf libreadline-dev autoconf python3-sphinx
+        sudo apt install -y make g++ git bison flex gperf libreadline-dev autoconf python3-sphinx python3-docopt
 
     - name: Build, check and install
       run: |
@@ -99,7 +100,10 @@ jobs:
           git
           base-devel
           gperf
+          python-pip
           mingw-w64-${{ matrix.arch }}-toolchain
+
+    - uses: actions/setup-python@v4
 
     - name: Build and check
       run: |
@@ -110,7 +114,8 @@ jobs:
       run: pacman -U --noconfirm msys2/*.zst
 
     - name: Test
-      run: ./.github/test.sh
+      run: |
+        ./.github/test.sh
 
     - uses: actions/upload-artifact@v2
       with:
