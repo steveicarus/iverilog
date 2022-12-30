@@ -639,13 +639,21 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    // containing vector, and member y an offset and width within
 	    // that.
 	    pform_name_t use_path = member_path;
+
 	    while (! use_path.empty()) {
 	          const name_component_t member_comp = use_path.front();
 	          const perm_string&member_name = member_comp.name;
 
 		  unsigned long tmp_off;
+
 		  const struct netstruct_t::member_t*member = struct_type->packed_member(member_name, tmp_off);
-		  ivl_assert(*this, member);
+
+                  if(!member) {
+                    cerr << get_fileline() << ": error: missing element " << path() << endl;
+		    des->errors += 1;
+		    return 0;
+                  }
+
 		  member_off += tmp_off;
 		  member_width = member->net_type->packed_width();
 
