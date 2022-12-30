@@ -685,6 +685,7 @@ sv_port_default11	normal,-g2009		ivltests
 sv_port_default12	normal,-g2009		ivltests
 sv_port_default13	CE,-g2009		ivltests
 sv_port_default14	CE,-g2009		ivltests
+sv_ps_array_cassign	normal,-g2005-sv	ivltests
 sv_ps_function1		normal,-g2009		ivltests
 sv_ps_function2		normal,-g2009		ivltests
 sv_ps_function3		normal,-g2009		ivltests
