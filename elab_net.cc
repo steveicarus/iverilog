@@ -464,9 +464,17 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 			unsigned long tmp_lwid;
 			bool rcl = sig->sb_to_slice(prefix_indices, msb,
 						    tmp_loff, tmp_lwid);
-			ivl_assert(*this, rcl);
-			midx = tmp_loff + tmp_lwid - 1;
-			lidx = tmp_loff;
+                        if(rcl) {
+                          midx = tmp_loff + tmp_lwid - 1;
+                          lidx = tmp_loff;
+                        } else {
+                          cerr << get_fileline() << ": error: Index " << sig->name()
+                               << "[" << msb << "] is out of range."
+                               << endl;
+                          des->errors += 1;
+                          midx = 0;
+                          lidx = 0;
+                        }
 		  } else {
 			midx = sig->sb_to_idx(prefix_indices, msb);
 			if (midx >= (long)sig->vector_width()) {

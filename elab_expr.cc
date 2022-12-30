@@ -6226,7 +6226,14 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 		  unsigned long lwid;
 		  long idx;
 		  rc = net->sig()->sb_to_slice(prefix_indices, msv, idx, lwid);
-		  ivl_assert(*this, rc);
+
+                  if(!rc) {
+                    cerr << get_fileline() << ": error: Index " << net->sig()->name()
+                         << "[" << msv << "] is out of range."
+                         << endl;
+                    des->errors += 1;
+                    return 0;
+                  }
 
 		    // Make an expression out of the index
 		  NetEConst*idx_c = new NetEConst(verinum(idx));
