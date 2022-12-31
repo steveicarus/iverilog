@@ -1,4 +1,4 @@
-// testcase for Issue #823 on Github
+// Testcase for Issue #823 on Github
 
 module test;
   struct packed {logic a;} s;
