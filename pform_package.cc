@@ -62,7 +62,7 @@ void pform_end_package_declaration(const struct vlltype&loc)
 	    ostringstream msg;
 	    msg << "error: Package " << use_name << " was already declared here: "
 		<< test->second->get_fileline() << ends;
-	    VLerror(loc, msg.str().c_str());
+	    VLerror(loc, "%s", msg.str().c_str());
       }
 
 
