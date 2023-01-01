@@ -199,7 +199,10 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
       return tmp;
 }
 
-static std::list<named_pexpr_t>* make_named_numbers(perm_string name, long first, long last, PExpr*val =0)
+static std::list<named_pexpr_t>* make_named_numbers(const struct vlltype &loc,
+						    perm_string name,
+						    long first, long last,
+						    PExpr *val = nullptr)
 {
       std::list<named_pexpr_t>*lst = new std::list<named_pexpr_t>;
       named_pexpr_t tmp;
@@ -210,6 +213,7 @@ static std::list<named_pexpr_t>* make_named_numbers(perm_string name, long first
 		  buf << name.str() << idx << ends;
 		  tmp.name = lex_strings.make(buf.str());
 		  tmp.parm = val;
+		  FILE_NAME(&tmp, loc);
 		  val = 0;
 		  lst->push_back(tmp);
 	    }
@@ -220,6 +224,7 @@ static std::list<named_pexpr_t>* make_named_numbers(perm_string name, long first
 		  buf << name.str() << idx << ends;
 		  tmp.name = lex_strings.make(buf.str());
 		  tmp.parm = val;
+		  FILE_NAME(&tmp, loc);
 		  val = 0;
 		  lst->push_back(tmp);
 	    }
@@ -227,12 +232,15 @@ static std::list<named_pexpr_t>* make_named_numbers(perm_string name, long first
       return lst;
 }
 
-static std::list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
+static std::list<named_pexpr_t>* make_named_number(const struct vlltype &loc,
+						   perm_string name,
+						   PExpr *val = nullptr)
 {
       std::list<named_pexpr_t>*lst = new std::list<named_pexpr_t>;
       named_pexpr_t tmp;
       tmp.name = name;
       tmp.parm = val;
+      FILE_NAME(&tmp, loc);
       lst->push_back(tmp);
       return lst;
 }
@@ -2700,6 +2708,7 @@ attribute_list
 attribute
   : IDENTIFIER initializer_opt
       { named_pexpr_t*tmp = new named_pexpr_t;
+	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($1);
 	tmp->parm = $2;
 	delete[]$1;
@@ -2894,19 +2903,19 @@ enum_name
   : IDENTIFIER initializer_opt
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
-	$$ = make_named_number(name, $2);
+	$$ = make_named_number(@$, name, $2);
       }
   | IDENTIFIER '[' pos_neg_number ']' initializer_opt
       { perm_string name = lex_strings.make($1);
 	long count = check_enum_seq_value(@1, $3, false);
-	$$ = make_named_numbers(name, 0, count-1, $5);
+	$$ = make_named_numbers(@$, name, 0, count-1, $5);
 	delete[]$1;
 	delete $3;
       }
   | IDENTIFIER '[' pos_neg_number ':' pos_neg_number ']' initializer_opt
       { perm_string name = lex_strings.make($1);
-	$$ = make_named_numbers(name, check_enum_seq_value(@1, $3, true),
-	                              check_enum_seq_value(@1, $5, true), $7);
+	$$ = make_named_numbers(@$, name, check_enum_seq_value(@1, $3, true),
+	                                  check_enum_seq_value(@1, $5, true), $7);
 	delete[]$1;
 	delete $3;
 	delete $5;
@@ -5543,6 +5552,7 @@ parameter_value_opt
 named_expression
   : '.' IDENTIFIER '(' expression ')'
       { named_pexpr_t*tmp = new named_pexpr_t;
+	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($2);
 	tmp->parm = $4;
 	delete[]$2;
@@ -5553,6 +5563,7 @@ named_expression_opt
   : named_expression
   | '.' IDENTIFIER '(' ')'
       { named_pexpr_t*tmp = new named_pexpr_t;
+	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($2);
 	tmp->parm = 0;
 	delete[]$2;
@@ -5643,6 +5654,7 @@ port_name
   | attribute_list_opt '.' IDENTIFIER '(' error ')'
       { yyerror(@3, "error: Invalid port connection expression.");
 	named_pexpr_t*tmp = new named_pexpr_t;
+	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($3);
 	tmp->parm = 0;
 	delete[]$3;
@@ -5652,6 +5664,7 @@ port_name
   | attribute_list_opt '.' IDENTIFIER
       { pform_requires_sv(@3, "Implicit named port connections");
 	named_pexpr_t*tmp = new named_pexpr_t;
+	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($3);
 	tmp->parm = new PEIdent(lex_strings.make($3), true);
 	FILE_NAME(tmp->parm, @3);
@@ -5661,6 +5674,7 @@ port_name
       }
   | K_DOTSTAR
       { named_pexpr_t*tmp = new named_pexpr_t;
+	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make("*");
 	tmp->parm = 0;
 	$$ = tmp;

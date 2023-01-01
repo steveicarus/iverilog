@@ -2280,11 +2280,8 @@ static void pform_make_modgate(perm_string type,
 	    unsigned cnt = overrides->by_name->size();
 	    named_pexpr_t *byname = new named_pexpr_t[cnt];
 
-	    list<named_pexpr_t>::iterator by_name_cur = overrides->by_name->begin();
-	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1, ++ by_name_cur) {
-		  byname[idx].name = by_name_cur->name;
-		  byname[idx].parm = by_name_cur->parm;
-	    }
+	    std::copy(overrides->by_name->begin(), overrides->by_name->end(),
+		      byname);
 
 	    cur->set_parameters(byname, cnt);
 
@@ -2312,12 +2309,10 @@ static void pform_make_modgate(perm_string type,
 {
       unsigned npins = bind->size();
       named_pexpr_t *pins = new named_pexpr_t[npins];
-      list<named_pexpr_t>::iterator bind_cur = bind->begin();
-      for (unsigned idx = 0 ;  idx < npins ;  idx += 1,  ++bind_cur) {
-	    pins[idx].name = bind_cur->name;
-	    pins[idx].parm = bind_cur->parm;
-            pform_declare_implicit_nets(bind_cur->parm);
-      }
+      for (const auto &bind_cur : *bind)
+            pform_declare_implicit_nets(bind_cur.parm);
+
+      std::copy(bind->begin(), bind->end(), pins);
 
       PGModule*cur = new PGModule(type, name, pins, npins);
       cur->set_line(li);
@@ -2327,11 +2322,8 @@ static void pform_make_modgate(perm_string type,
 	    unsigned cnt = overrides->by_name->size();
 	    named_pexpr_t *byname = new named_pexpr_t[cnt];
 
-	    list<named_pexpr_t>::iterator by_name_cur = overrides->by_name->begin();
-	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1,  ++by_name_cur) {
-		  byname[idx].name = by_name_cur->name;
-		  byname[idx].parm = by_name_cur->parm;
-	    }
+	    std::copy(overrides->by_name->begin(), overrides->by_name->end(),
+		      byname);
 
 	    cur->set_parameters(byname, cnt);
 
