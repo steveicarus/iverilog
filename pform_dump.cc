@@ -177,6 +177,35 @@ std::ostream& operator << (std::ostream&out, ivl_dis_domain_t dom)
       return out;
 }
 
+static std::ostream& operator << (std::ostream &out, const std::vector<PExpr*> &exprs)
+{
+      for (size_t idx = 0; idx < exprs.size(); idx++) {
+	    if (idx != 0)
+		  out << ", ";
+	    if (exprs[idx])
+		  exprs[idx]->dump(out);
+      }
+
+      return out;
+}
+
+static std::ostream& operator << (std::ostream &out,
+			          const std::vector<named_pexpr_t> &exprs)
+{
+      for (size_t idx = 0; idx < exprs.size(); idx++) {
+	    if (idx != 0)
+		  out << ", ";
+	    if (!exprs[idx].name.nil())
+		  out << "." << exprs[idx].name << "(";
+	    if (exprs[idx].parm)
+		  exprs[idx].parm->dump(out);
+	    if (!exprs[idx].name.nil())
+		  out << ")";
+      }
+
+      return out;
+}
+
 void data_type_t::pform_dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << typeid(*this).name() << endl;
@@ -380,15 +409,7 @@ void PExpr::dump(ostream&out) const
 
 void PEAssignPattern::dump(ostream&out) const
 {
-      out << "'{";
-      if (parms_.size() > 0) {
-	    parms_[0]->dump(out);
-	    for (size_t idx = 1 ; idx < parms_.size() ; idx += 1) {
-		  out << ", ";
-		  parms_[idx]->dump(out);
-	    }
-      }
-      out << "}";
+      out << "'{" << parms_ << "}";
 }
 
 void PEConcat::dump(ostream&out) const
@@ -401,30 +422,14 @@ void PEConcat::dump(ostream&out) const
 	    return;
       }
 
-      out << "{";
-      if (parms_[0]) out << *parms_[0];
-      for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
-	    out << ", ";
-	    if (parms_[idx]) out << *parms_[idx];
-      }
-
-      out << "}";
+      out << "{" << parms_ << "}";
 
       if (repeat_) out << "}";
 }
 
 void PECallFunction::dump(ostream &out) const
 {
-      out << path_ << "(";
-
-      if (! parms_.empty()) {
-	    if (parms_[0]) parms_[0]->dump(out);
-	    for (unsigned idx = 1; idx < parms_.size(); ++idx) {
-		  out << ", ";
-		  if (parms_[idx]) parms_[idx]->dump(out);
-	    }
-      }
-      out << ")";
+      out << path_ << "(" << parms_ << ")";
 }
 
 void PECastSize::dump(ostream &out) const
@@ -487,15 +492,7 @@ void PENewArray::dump(ostream&out) const
 
 void PENewClass::dump(ostream&out) const
 {
-      out << "class_new(";
-      if (parms_.size() > 0) {
-	    parms_[0]->dump(out);
-	    for (size_t idx = 1 ; idx < parms_.size() ; idx += 1) {
-		  out << ", ";
-		  if (parms_[idx]) parms_[idx]->dump(out);
-	    }
-      }
-      out << ")";
+      out << "class_new(" << parms_ << ")";
 }
 
 void PENewCopy::dump(ostream&out) const
@@ -830,14 +827,7 @@ void PGModule::dump(ostream&out, unsigned ind) const
 	// If parameters are overridden by name, dump them.
       if (parms_) {
 	    assert(overrides_ == 0);
-	    out << "#(";
-	    for (unsigned idx = 0 ;  idx < nparms_ ;  idx += 1) {
-                  if (idx > 0) out << ", ";
-		  out << "." << parms_[idx].name << "(";
-                  if (parms_[idx].parm) out << *parms_[idx].parm;
-                  out << ")";
-	    }
-	    out << ") ";
+	    out << "#(" << parms_ << ") ";
       }
 
       out << get_name();
@@ -940,16 +930,7 @@ void PCallTask::dump(ostream&out, unsigned ind) const
       out << setw(ind) << "" << path_;
 
       if (! parms_.empty()) {
-	    out << "(";
-	    if (parms_[0])
-		  out << *parms_[0];
-
-	    for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
-		  out << ", ";
-		  if (parms_[idx])
-			out << *parms_[idx];
-	    }
-	    out << ")";
+	    out << "(" << parms_ << ")";
       }
 
       out << "; /* " << get_fileline() << " */" << endl;
@@ -1017,15 +998,7 @@ void PCase::dump(ostream&out, unsigned ind) const
 
 void PChainConstructor::dump(ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "" << "super.new(";
-      if (parms_.size() > 0) {
-	    if (parms_[0]) out << *parms_[0];
-      }
-      for (size_t idx = 1 ; idx < parms_.size() ; idx += 1) {
-	    out << ", ";
-	    if (parms_[idx]) out << *parms_[idx];
-      }
-      out << ");" << endl;
+      out << setw(ind) << "" << "super.new(" << parms_ << ")" <<endl;
 }
 
 void PCondit::dump(ostream&out, unsigned ind) const
