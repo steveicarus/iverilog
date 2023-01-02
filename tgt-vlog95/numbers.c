@@ -346,13 +346,9 @@ static void remove_two_chars(char* str)
 void emit_string(const char* string)
 {
       char *buffer = strdup(string);
-      char *bptr = buffer;
       char *cptr;
       fprintf(vlog_out, "\"");
-	/* Prune any leading escaped NULL bytes. */
-      while ((bptr[0] == '\\') && (bptr[1] == '0') &&
-             (bptr[2] == '0') && (bptr[3] == '0')) bptr += 4;
-      for (cptr = bptr; *cptr; cptr += 1) {
+      for (cptr = buffer; *cptr; cptr += 1) {
 	    if (*cptr == '\\') {
 		    /* Replace any \011 with \t */
 		  if ((cptr[1] == '0') && (cptr[2] == '1') &&
@@ -381,7 +377,7 @@ void emit_string(const char* string)
 		  } else cptr += 3;
 	    }
       }
-      if (*bptr) fprintf(vlog_out, "%s", bptr);
+      if (*buffer) fprintf(vlog_out, "%s", buffer);
       free(buffer);
       fprintf(vlog_out, "\"");
 }
