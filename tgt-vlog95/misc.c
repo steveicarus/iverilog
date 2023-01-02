@@ -512,8 +512,6 @@ static void emit_number_as_string(ivl_net_const_t net_const)
 		  val |= (bits[idx-bit] == '1') ?  1 << (7-bit) : 0x00;
 	    }
 
-	      /* Skip any NULL bytes. */
-	    if (val == 0) continue;
 	      /* Print some values that can be escaped. */
 	    if (val == '"') fprintf(vlog_out, "\\\"");
 	    else if (val == '\\') fprintf(vlog_out, "\\\\");
