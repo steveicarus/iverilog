@@ -635,6 +635,8 @@ static void vec4_get_value_string(const vvp_vector4_t&word_val, unsigned width,
 
 	    if (char_val != 0)
 		  *cp++ = char_val;
+	    else if (cp != rbuf)
+		  *cp++ = ' ';
       }
 
       for (unsigned idx = 0 ;  idx < nchar ;  idx += 1) {
@@ -645,8 +647,13 @@ static void vec4_get_value_string(const vvp_vector4_t&word_val, unsigned width,
 		  if (val == BIT4_1)
 			char_val |= 1 << bdx;
 	    }
+	    // Ignore leading null-bytes and replace other null-bytes with space.
+	    // The LRM is not entirely clear on how null bytes should be handled.
+	    // This is the implementation chosen for iverilog.
 	    if (char_val != 0)
 		  *cp++ = char_val;
+	    else if (cp != rbuf)
+		  *cp++ = ' ';
       }
 
       *cp = 0;
