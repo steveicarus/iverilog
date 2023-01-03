@@ -286,7 +286,8 @@ PECallFunction::~PECallFunction()
 void PECallFunction::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 {
       for (unsigned idx = 0 ; idx < parms_.size() ; idx += 1) {
-	    parms_[idx]->declare_implicit_nets(scope, type);
+	    if (parms_[idx])
+		  parms_[idx]->declare_implicit_nets(scope, type);
       }
 }
 
@@ -294,7 +295,8 @@ bool PECallFunction::has_aa_term(Design*des, NetScope*scope) const
 {
       bool flag = false;
       for (unsigned idx = 0 ; idx < parms_.size() ; idx += 1) {
-	    flag = parms_[idx]->has_aa_term(des, scope) || flag;
+	    if (parms_[idx])
+		  flag |= parms_[idx]->has_aa_term(des, scope);
       }
       return flag;
 }
