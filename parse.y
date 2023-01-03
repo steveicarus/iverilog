@@ -455,9 +455,6 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
       std::list<PLet::let_port_t*>*let_port_lst;
       PLet::let_port_t*let_port_itm;
 
-      named_number_t* named_number;
-      std::list<named_number_t>* named_numbers;
-
       named_pexpr_t*named_pexpr;
       std::list<named_pexpr_t>*named_pexprs;
       struct parmvalue_t*parmvalue;

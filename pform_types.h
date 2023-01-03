@@ -47,7 +47,6 @@ class PWire;
 class Statement;
 class netclass_t;
 class netenum_t;
-typedef named<verinum> named_number_t;
 typedef named<PExpr*> named_pexpr_t;
 
 /*
