@@ -2278,7 +2278,7 @@ static void pform_make_modgate(perm_string type,
 
       if (overrides && overrides->by_name) {
 	    unsigned cnt = overrides->by_name->size();
-	    named<PExpr*>*byname = new named<PExpr*>[cnt];
+	    named_pexpr_t *byname = new named_pexpr_t[cnt];
 
 	    list<named_pexpr_t>::iterator by_name_cur = overrides->by_name->begin();
 	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1, ++ by_name_cur) {
@@ -2311,7 +2311,7 @@ static void pform_make_modgate(perm_string type,
 			       std::list<named_pexpr_t>*attr)
 {
       unsigned npins = bind->size();
-      named<PExpr*>*pins = new named<PExpr*>[npins];
+      named_pexpr_t *pins = new named_pexpr_t[npins];
       list<named_pexpr_t>::iterator bind_cur = bind->begin();
       for (unsigned idx = 0 ;  idx < npins ;  idx += 1,  ++bind_cur) {
 	    pins[idx].name = bind_cur->name;
@@ -2325,7 +2325,7 @@ static void pform_make_modgate(perm_string type,
 
       if (overrides && overrides->by_name) {
 	    unsigned cnt = overrides->by_name->size();
-	    named<PExpr*>*byname = new named<PExpr*>[cnt];
+	    named_pexpr_t *byname = new named_pexpr_t[cnt];
 
 	    list<named_pexpr_t>::iterator by_name_cur = overrides->by_name->begin();
 	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1,  ++by_name_cur) {

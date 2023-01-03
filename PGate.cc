@@ -270,7 +270,7 @@ PGModule::PGModule(perm_string type, perm_string name, list<PExpr*>*pins)
 }
 
 PGModule::PGModule(perm_string type, perm_string name,
-		   named<PExpr*>*pins, unsigned npins)
+		   named_pexpr_t *pins, unsigned npins)
 : PGate(name, 0), bound_type_(0), type_(type), overrides_(0), pins_(pins),
   npins_(npins), parms_(0), nparms_(0)
 {
@@ -292,7 +292,7 @@ void PGModule::set_parameters(list<PExpr*>*o)
       overrides_ = o;
 }
 
-void PGModule::set_parameters(named<PExpr*>*pa, unsigned npa)
+void PGModule::set_parameters(named_pexpr_t *pa, unsigned npa)
 {
       ivl_assert(*this, parms_ == 0);
       ivl_assert(*this, overrides_ == 0);

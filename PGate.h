@@ -204,7 +204,7 @@ class PGModule  : public PGate {
 	// If the binding of ports is by name, this constructor takes
 	// the bindings and stores them for later elaboration.
       explicit PGModule(perm_string type, perm_string name,
-			named<PExpr*>*pins, unsigned npins);
+			named_pexpr_t *pins, unsigned npins);
 
 	// If the module type is known by design, then use this
 	// constructor.
@@ -215,7 +215,7 @@ class PGModule  : public PGate {
 	// Parameter overrides can come as an ordered list, or a set
 	// of named expressions.
       void set_parameters(std::list<PExpr*>*o);
-      void set_parameters(named<PExpr*>*pa, unsigned npa);
+      void set_parameters(named_pexpr_t *pa, unsigned npa);
 
       std::map<perm_string,PExpr*> attributes;
 
@@ -232,11 +232,11 @@ class PGModule  : public PGate {
       Module*bound_type_;
       perm_string type_;
       std::list<PExpr*>*overrides_;
-      named<PExpr*>*pins_;
+      named_pexpr_t *pins_;
       unsigned npins_;
 
 	// These members support parameter override by name
-      named<PExpr*>*parms_;
+      named_pexpr_t *parms_;
       unsigned nparms_;
 
       friend class delayed_elaborate_scope_mod_instances;
