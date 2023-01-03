@@ -1816,17 +1816,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 	    return cast_to_width_(sub, expr_wid);
       }
 
-	/* How many parameters are there? The Verilog language allows
-	   empty parameters in certain contexts, so the parser will
-	   allow things like func(1,,3). It will also cause func() to
-	   be interpreted as a single empty parameter.
-
-	   Functions cannot really take empty parameters, but the
-	   case ``func()'' is the same as no parameters at all. So
-	   catch that special case here. */
       unsigned nparms = parms_.size();
-      if ((nparms == 1) && (parms_[0] == 0))
-	    nparms = 0;
 
       NetESFunc*fun = new NetESFunc(name, expr_type_, expr_width_, nparms, is_overridden_);
       fun->set_line(*this);
@@ -2907,11 +2897,7 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
       const unsigned parm_count = parms.size() - parm_off;
       const unsigned actual_count = parms_.size();
 
-	/* The parser can't distinguish between a function call with
-	   no arguments and a function call with one empty argument,
-	   and always supplies one empty argument. Handle the no
-	   argument case here. */
-      if ((parm_count == 0) && (actual_count == 1) && (parms_[0] == 0))
+      if (parm_count == 0 && actual_count == 0)
 	    return 0;
 
       if (actual_count > parm_count) {

@@ -82,15 +82,6 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
 {
       assert(dscope);
 
-	/* How many parameters have I got? Normally the size of the
-	   list is correct, but there is the special case of a list of
-	   1 nil pointer. This is how the parser tells me of no
-	   parameter. In other words, ``func()'' is 1 nil parameter. */
-
-      unsigned parms_count = parms_.size();
-      if ((parms_count == 1) && (parms_[0] == 0))
-	    parms_count = 0;
-
       if (dscope->type() != NetScope::FUNC) {
 	    cerr << get_fileline() << ": error: Attempt to call scope "
 		 << scope_path(dscope) << " as a function." << endl;

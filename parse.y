@@ -174,15 +174,13 @@ template <class T> void append(vector<T>&out, const std::vector<T>&in)
 }
 
 /*
- * Look at the list and pull null pointers off the end.
+ * The parser parses an empty argument list as an argument list with an single
+ * empty argument. Fix this up here and replace it with an empty list.
  */
-static void strip_tail_items(list<PExpr*>*lst)
+static void argument_list_fixup(list<PExpr*>*lst)
 {
-      while (! lst->empty()) {
-	    if (lst->back() != 0)
-		  return;
-	    lst->pop_back();
-      }
+      if (lst->size() == 1 && !lst->front())
+	    lst->clear();
 }
 
 /*
@@ -641,7 +639,7 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt delay_value_list
 %type <exprs> expression_list_with_nuls expression_list_proper
-%type <exprs> argument_list_parens_opt
+%type <exprs> argument_list_parens argument_list_parens_opt
 %type <exprs> cont_assign cont_assign_list
 
 %type <decl_assignment> variable_decl_assignment
@@ -984,9 +982,7 @@ class_scope
 
 class_new /* IEEE1800-2005 A.2.4 */
   : K_new argument_list_parens_opt
-      { std::list<PExpr*>*expr_list = $2;
-	strip_tail_items(expr_list);
-	PENewClass*tmp = new PENewClass(*expr_list);
+      { PENewClass*tmp = new PENewClass(*$2);
 	FILE_NAME(tmp, @1);
 	delete $2;
 	$$ = tmp;
@@ -994,9 +990,7 @@ class_new /* IEEE1800-2005 A.2.4 */
     // This can't be a class_scope_opt because it will lead to shift/reduce
     // conflicts with array_new
   | class_scope K_new argument_list_parens_opt
-      { std::list<PExpr*>*expr_list = $3;
-	strip_tail_items(expr_list);
-	PENewClass *new_expr = new PENewClass(*expr_list, $1);
+      { PENewClass *new_expr = new PENewClass(*$3, $1);
 	FILE_NAME(new_expr, @2);
 	delete $3;
 	$$ = new_expr;
@@ -3620,12 +3614,22 @@ expression_list_with_nuls
       }
   ;
 
+  /* An argument list enclosed in parenthesis. The parser will parse '()' as a
+   * argument list with an single empty item. We fix this up once the list
+   * parsing is done by replacing it with the empty list.
+   */
+argument_list_parens
+  : '(' expression_list_with_nuls ')'
+      { argument_list_fixup($2);
+	$$ = $2; }
+  ;
+
   /* A task or function can be invoked with the task/function name followed by
    * an argument list in parenthesis or with just the task/function name by
    * itself. When an argument list is used it might be empty. */
 argument_list_parens_opt
-  : '(' expression_list_with_nuls ')'
-      { $$ = $2; }
+  : argument_list_parens
+      { $$ = $1; }
   |
       { $$ = new std::list<PExpr*>; }
 
@@ -3757,21 +3761,17 @@ expr_primary
      function call. If a system identifier, then a system function
      call. It can also be a call to a class method (function). */
 
-  | hierarchy_identifier attribute_list_opt '(' expression_list_with_nuls ')'
-      { std::list<PExpr*>*expr_list = $4;
-	strip_tail_items(expr_list);
-	PECallFunction*tmp = pform_make_call_function(@1, *$1, *expr_list);
+  | hierarchy_identifier attribute_list_opt argument_list_parens
+      { PECallFunction*tmp = pform_make_call_function(@1, *$1, *$3);
 	delete $1;
 	delete $2;
-	delete expr_list;
+	delete $3;
 	$$ = tmp;
       }
-  | class_hierarchy_identifier '(' expression_list_with_nuls ')'
-      { list<PExpr*>*expr_list = $3;
-	strip_tail_items(expr_list);
-	PECallFunction*tmp = pform_make_call_function(@1, *$1, *expr_list);
+  | class_hierarchy_identifier argument_list_parens
+      { PECallFunction*tmp = pform_make_call_function(@1, *$1, *$2);
 	delete $1;
-	delete expr_list;
+	delete $2;
 	$$ = tmp;
       }
   | SYSTEM_IDENTIFIER '(' expression_list_proper ')'
@@ -3782,11 +3782,11 @@ expr_primary
 	delete $3;
 	$$ = tmp;
       }
-  | package_scope hierarchy_identifier { lex_in_package_scope(0); } '(' expression_list_with_nuls ')'
-      { PECallFunction*tmp = new PECallFunction($1, *$2, *$5);
+  | package_scope hierarchy_identifier { lex_in_package_scope(0); } argument_list_parens
+      { PECallFunction*tmp = new PECallFunction($1, *$2, *$4);
 	FILE_NAME(tmp, @2);
 	delete $2;
-	delete $5;
+	delete $4;
 	$$ = tmp;
       }
   | SYSTEM_IDENTIFIER '('  ')'
