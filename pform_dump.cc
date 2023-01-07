@@ -345,15 +345,7 @@ void class_type_t::pform_dump(ostream&out, unsigned indent) const
 
       if (base_type) out << " extends <type>";
       if (! base_args.empty()) {
-	    out << " (";
-	    for (list<PExpr*>::const_iterator cur = base_args.begin()
-		       ; cur != base_args.end() ; ++cur) {
-		  const PExpr*curp = *cur;
-		  if (cur != base_args.begin())
-			out << ", ";
-		  curp->dump(out);
-	    }
-	    out << ")";
+	    out << " (" << base_args << ")";
       }
 
       out << " {";

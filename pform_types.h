@@ -377,7 +377,7 @@ struct class_type_t : public data_type_t {
 	// hierarchy. If there are arguments to the base class, then
 	// put them in the base_args vector.
       std::unique_ptr<data_type_t> base_type;
-      std::list<PExpr*>base_args;
+      std::vector<named_pexpr_t> base_args;
 
       bool virtual_class;
 

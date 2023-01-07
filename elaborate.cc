@@ -54,6 +54,7 @@
 # include  "parse_api.h"
 # include  "compiler.h"
 # include  "ivl_assert.h"
+# include "map_named_args.h"
 
 using namespace std;
 
@@ -3301,12 +3302,12 @@ NetProc* PChainConstructor::elaborate(Design*des, NetScope*scope) const
 	    vector<NetExpr*> parms (def->port_count());
 	    parms[0] = eres;
 
+	    auto args = map_named_args(des, def, parms_, 1);
 	    for (size_t idx = 1 ; idx < parms.size() ; idx += 1) {
-		  if (idx <= parms_.size() && parms_[idx-1]) {
-			PExpr*tmp = parms_[idx-1];
+		  if (args[idx - 1]) {
 			parms[idx] = elaborate_rval_expr(des, scope,
 							 def->port(idx)->net_type(),
-							 tmp, false);
+							 args[idx - 1], false);
 			continue;
 		  }
 
@@ -3480,12 +3481,19 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
       perm_string name = peek_tail_name(path_);
 
       for (unsigned idx = 0 ;  idx < parm_count ;  idx += 1) {
-	    PExpr*ex = parms_[idx];
-	    if (ex != 0) {
-		  eparms[idx] = elab_sys_task_arg(des, scope, name, idx, ex);
-	    } else {
-		  eparms[idx] = 0;
+	    auto &parm = parms_[idx];
+
+	    // System functions don't have named parameters
+	    if (!parm.name.nil()) {
+		  cerr << parm.get_fileline() << ": error: "
+		       << "The system task `" << name
+		       << "` has no argument called `" << parm.name
+		       << "`." << endl;
+		  des->errors++;
 	    }
+
+	    eparms[idx] = elab_sys_task_arg(des, scope, name, idx,
+					    parm.parm);
       }
 
 	// Special case: Specify blocks are turned off, and this is an
@@ -3615,7 +3623,8 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
 					       NetNet*net,
 					       perm_string method_name,
-					       const char*sys_task_name) const
+					       const char *sys_task_name,
+					       const std::vector<perm_string> &parm_names) const
 {
       NetESignal*sig = new NetESignal(net);
       sig->set_line(*this);
@@ -3638,17 +3647,17 @@ NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
 		       << "method takes no arguments." << endl;
 		  des->errors += 1;
 	    }
+      } else if (parm_names.size() != parms_.size()) {
+	    cerr << get_fileline() << ": error: " << method_name
+	         << "() method takes " << parm_names.size() << " arguments, got "
+		 << parms_.size() << "." << endl;
+	    des->errors++;
       }
 
+      auto args = map_named_args(des, parm_names, parms_);
       for (unsigned idx = 0 ; idx < nparms ; idx += 1) {
-	    PExpr*ex = parms_[idx];
-	    if (ex != 0) {
-		  argv[idx+1] = elab_sys_task_arg(des, scope,
-						  method_name,
-						  idx, ex);
-	    } else {
-		  argv[idx+1] = 0;
-	    }
+	    argv[idx + 1] = elab_sys_task_arg(des, scope, method_name,
+					      idx, args[idx]);
       }
 
       NetSTask*sys = new NetSTask(sys_task_name, IVL_SFUNC_AS_TASK_IGNORE, argv);
@@ -3663,7 +3672,8 @@ NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
 NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
 					    NetNet*net,
 					    perm_string method_name,
-					    const char*sys_task_name) const
+					    const char *sys_task_name,
+					    const std::vector<perm_string> &parm_names) const
 {
       NetESignal*sig = new NetESignal(net);
       sig->set_line(*this);
@@ -3696,33 +3706,38 @@ NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
 
       vector<NetExpr*>argv (nparms+1);
       argv[0] = sig;
-      if (method_name != "insert") {
-	    if ((nparms == 0) || (parms_[0] == 0)) {
-		  argv[1] = 0;
-		  cerr << get_fileline() << ": error: " << method_name
-		       << "() methods first argument is missing." << endl;
-		  des->errors += 1;
-	    } else
-		  argv[1] = elab_and_eval(des, scope, parms_[0], context_width,
-		                          false, false, base_type);
-      } else {
-	    if ((nparms == 0) || (parms_[0] == 0)) {
-		  argv[1] = 0;
-		  cerr << get_fileline() << ": error: " << method_name
-		       << "() methods first argument is missing." << endl;
-		  des->errors += 1;
-	    } else
-		  argv[1] = elab_and_eval(des, scope, parms_[0], 32,
-		                          false, false, IVL_VT_LOGIC);
 
-	    if ((nparms < 2) || (parms_[1] == 0)) {
-		  argv[2] = 0;
+      auto args = map_named_args(des, parm_names, parms_);
+      if (method_name != "insert") {
+	    if (nparms == 0 || !args[0]) {
+		  argv[1] = nullptr;
+		  cerr << get_fileline() << ": error: " << method_name
+		       << "() methods first argument is missing." << endl;
+		  des->errors += 1;
+	    } else {
+		  argv[1] = elab_and_eval(des, scope, args[0], context_width,
+		                          false, false, base_type);
+	    }
+      } else {
+	    if (nparms == 0 || !args[0]) {
+		  argv[1] = nullptr;
+		  cerr << get_fileline() << ": error: " << method_name
+		       << "() methods first argument is missing." << endl;
+		  des->errors += 1;
+	    } else {
+		  argv[1] = elab_and_eval(des, scope, args[0], context_width,
+		                          false, false, IVL_VT_LOGIC);
+	    }
+
+	    if (nparms < 2 || !args[1]) {
+		  argv[2] = nullptr;
 		  cerr << get_fileline() << ": error: " << method_name
 		       << "() methods second argument is missing." << endl;
 		  des->errors += 1;
-	    } else
-		  argv[2] = elab_and_eval(des, scope, parms_[1], context_width,
+	    } else {
+		  argv[2] = elab_and_eval(des, scope, args[1], context_width,
 		                          false, false, base_type);
+	    }
       }
 
       NetSTask*sys = new NetSTask(sys_task_name, IVL_SFUNC_AS_TASK_IGNORE, argv);
@@ -3814,34 +3829,65 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 
       // Is this a method of a "string" type?
       if (dynamic_cast<const netstring_t*>(net->net_type())) {
-	    if (method_name=="itoa")
+	    if (method_name == "itoa") {
+		  static const std::vector<perm_string> parm_names = {
+			perm_string::literal("i")
+		  };
+
 		  return elaborate_sys_task_method_(des, scope, net, method_name,
-						    "$ivl_string_method$itoa");
-	    else if (method_name=="hextoa")
+						    "$ivl_string_method$itoa",
+						    parm_names);
+	    } else if (method_name == "hextoa") {
+		  static const std::vector<perm_string> parm_names = {
+			perm_string::literal("i")
+		  };
+
 		  return elaborate_sys_task_method_(des, scope, net, method_name,
-						    "$ivl_string_method$hextoa");
-	    else if (method_name=="octtoa")
+						    "$ivl_string_method$hextoa",
+						    parm_names);
+	    } else if (method_name == "octtoa") {
+		  static const std::vector<perm_string> parm_names = {
+			perm_string::literal("i")
+		  };
+
 		  return elaborate_sys_task_method_(des, scope, net, method_name,
-						    "$ivl_string_method$octtoa");
-	    else if (method_name=="bintoa")
+						    "$ivl_string_method$octtoa",
+						    parm_names);
+	    } else if (method_name == "bintoa") {
+		  static const std::vector<perm_string> parm_names = {
+			perm_string::literal("i")
+		  };
+
 		  return elaborate_sys_task_method_(des, scope, net, method_name,
-						    "$ivl_string_method$bintoa");
-	    else if (method_name=="realtoa")
+						    "$ivl_string_method$bintoa",
+						    parm_names);
+	    } else if (method_name == "realtoa") {
+		  static const std::vector<perm_string> parm_names = {
+			perm_string::literal("r")
+		  };
+
 		  return elaborate_sys_task_method_(des, scope, net, method_name,
-						    "$ivl_string_method$realtoa");
+						    "$ivl_string_method$realtoa",
+						    parm_names);
+	    }
       }
 
 	// Is this a delete method for dynamic arrays or queues?
       if (net->darray_type()) {
-	    if (method_name=="delete")
+	    if (method_name == "delete") {
+		  static const std::vector<perm_string> parm_names = {
+			perm_string::literal("index")
+		  };
+
 		  return elaborate_sys_task_method_(des, scope, net, method_name,
-		                                    "$ivl_darray_method$delete");
-	    else if (method_name=="size")
+		                                    "$ivl_darray_method$delete",
+						    parm_names);
+	    } else if (method_name == "size") {
 		    // This returns an int. It could be removed, but keep for now.
 		  return elaborate_method_func_(scope, net,
 		                                &netvector_t::atom2s32,
 		                                method_name, "$size");
-	    else if (method_name=="reverse") {
+	    } else if (method_name == "reverse") {
 		  cerr << get_fileline() << ": sorry: 'reverse()' "
 		          "array sorting method is not currently supported."
 		       << endl;
@@ -3870,25 +3916,42 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 
       if (net->queue_type()) {
 	    const netdarray_t*use_darray = net->darray_type();
-	    if (method_name == "push_back")
+	    if (method_name == "push_back") {
+		  static const std::vector<perm_string> parm_names = {
+			perm_string::literal("item")
+		  };
+
 		  return elaborate_queue_method_(des, scope, net, method_name,
-						 "$ivl_queue_method$push_back");
-	    else if (method_name == "push_front")
+						 "$ivl_queue_method$push_back",
+						 parm_names);
+	    } else if (method_name == "push_front") {
+		  static const std::vector<perm_string> parm_names = {
+			perm_string::literal("item")
+		  };
+
 		  return elaborate_queue_method_(des, scope, net, method_name,
-						 "$ivl_queue_method$push_front");
-	    else if (method_name == "insert")
+						 "$ivl_queue_method$push_front",
+						 parm_names);
+	    } else if (method_name == "insert") {
+		  static const std::vector<perm_string> parm_names = {
+			perm_string::literal("index"),
+			perm_string::literal("item")
+		  };
+
 		  return elaborate_queue_method_(des, scope, net, method_name,
-						 "$ivl_queue_method$insert");
-	    else if (method_name == "pop_front")
+						 "$ivl_queue_method$insert",
+						 parm_names);
+	    } else if (method_name == "pop_front") {
 		  return elaborate_method_func_(scope, net,
 		                                use_darray->element_type(),
 		                                method_name,
 		                                "$ivl_queue_method$pop_front");
-	    else if (method_name == "pop_back")
+	    } else if (method_name == "pop_back") {
 		  return elaborate_method_func_(scope, net,
 		                                use_darray->element_type(),
 		                                method_name,
 		                                "$ivl_queue_method$pop_back");
+	    }
       }
 
       if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(par_type)) {
@@ -4096,9 +4159,11 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	   expression the r-value. We know by definition that the port
 	   is a reg type, so this elaboration is pretty obvious. */
 
-      for (unsigned idx = use_this?1:0 ;  idx < parm_count ;  idx += 1) {
+      unsigned int off = use_this ? 1 : 0;
 
-	    size_t parms_idx = use_this? idx-1 : idx;
+      auto args = map_named_args(des, def, parms_, off);
+      for (unsigned int idx = off; idx < parm_count; idx++) {
+	    size_t parms_idx = idx - off;
 
 	    NetNet*port = def->port(idx);
 	    ivl_assert(*this, port->port_type() != NetNet::NOT_A_PORT);
@@ -4111,9 +4176,9 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
 	    NetExpr*rv = 0;
 
-	    if (parms_idx < parms_.size() && parms_[parms_idx]) {
+	    if (args[parms_idx]) {
 		  rv = elaborate_rval_expr(des, scope, port->net_type(),
-					   parms_ [parms_idx]);
+					   args[parms_idx]);
 		  if (NetEEvent*evt = dynamic_cast<NetEEvent*> (rv)) {
 			cerr << evt->get_fileline() << ": error: An event '"
 			     << evt->event()->name() << "' can not be a user "
@@ -4161,9 +4226,9 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	   expression that can be a target to a procedural
 	   assignment, including a memory word. */
 
-      for (unsigned idx = use_this?1:0 ;  idx < parm_count ;  idx += 1) {
+      for (unsigned int idx = off; idx < parm_count; idx++) {
 
-	    size_t parms_idx = use_this? idx-1 : idx;
+	    size_t parms_idx = idx - off;
 
 	    NetNet*port = def->port(idx);
 
@@ -4179,12 +4244,12 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 		 message. Note that the elaborate_lval method already
 		 printed a detailed message for the latter case. */
 	    NetAssign_*lv = 0;
-	    if (parms_idx < parms_.size() && parms_[parms_idx]) {
-		  lv = parms_[parms_idx]->elaborate_lval(des, scope, false, false);
+	    if (args[parms_idx]) {
+		  lv = args[parms_idx]->elaborate_lval(des, scope, false, false);
 		  if (lv == 0) {
-			cerr << parms_[parms_idx]->get_fileline() << ": error: "
+			cerr << args[parms_idx]->get_fileline() << ": error: "
 			     << "I give up on task port " << (idx+1)
-			     << " expression: " << *parms_[parms_idx] << endl;
+			     << " expression: " << *args[parms_idx] << endl;
 		  }
 	    } else if (port->port_type() == NetNet::POUTPUT) {
 		    // Output ports were skipped earlier, so
@@ -4335,19 +4400,25 @@ bool PCallTask::elaborate_elab(Design*des, NetScope*scope) const
 
       bool const_parms = true;
       for (unsigned idx = 0 ;  idx < parm_count ;  idx += 1) {
-            PExpr*ex = parms_[idx];
-            if (ex != 0) {
-                  eparms[idx] = elab_sys_task_arg(des, scope, name, idx, ex);
-		  if (!check_parm_is_const(eparms[idx])) {
-			cerr << get_fileline() << ": error: Elaboration task "
-			     << name << "() parameter [" << idx+1 << "] '"
-			     << *eparms[idx] << "' is not constant." << endl;
-			des->errors += 1;
-			const_parms = false;
-		  }
-            } else {
-                  eparms[idx] = 0;
-            }
+	    auto &parm = parms_[idx];
+
+	    // Elaboration tasks don't have named parameters
+	    if (!parm.name.nil()) {
+		  cerr << parm.get_fileline() << ": error: "
+		       << "The elaboration system task `" << name
+		       << "` has no argument called `" << parm.name
+		       << "`." << endl;
+		  des->errors++;
+	    }
+
+	    eparms[idx] = elab_sys_task_arg(des, scope, name, idx, parm.parm);
+	    if (!check_parm_is_const(eparms[idx])) {
+		  cerr << get_fileline() << ": error: Elaboration task "
+		       << name << "() parameter [" << idx+1 << "] '"
+		       << *eparms[idx] << "' is not constant." << endl;
+		  des->errors += 1;
+		  const_parms = false;
+	    }
       }
       if (!const_parms) return true;
 

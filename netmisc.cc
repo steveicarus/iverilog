@@ -1046,6 +1046,9 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
                            unsigned arg_idx, PExpr*pe, bool need_const)
 {
+      if (!pe)
+	    return nullptr;
+
       PExpr::width_mode_t mode = PExpr::SIZED;
       pe->test_width(des, scope, mode);
 

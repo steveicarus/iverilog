@@ -223,9 +223,9 @@ class PBreak : public Statement {
 class PCallTask  : public Statement {
 
     public:
-      explicit PCallTask(PPackage*pkg, const pform_name_t&n, const std::list<PExpr*>&parms);
-      explicit PCallTask(const pform_name_t&n, const std::list<PExpr*>&parms);
-      explicit PCallTask(perm_string n, const std::list<PExpr*>&parms);
+      explicit PCallTask(PPackage *pkg, const pform_name_t &n, const std::list<named_pexpr_t> &parms);
+      explicit PCallTask(const pform_name_t &n, const std::list<named_pexpr_t> &parms);
+      explicit PCallTask(perm_string n, const std::list<named_pexpr_t> &parms);
       ~PCallTask();
 
       const pform_name_t& path() const;
@@ -253,11 +253,13 @@ class PCallTask  : public Statement {
       NetProc*elaborate_sys_task_method_(Design*des, NetScope*scope,
 					 NetNet*net,
 					 perm_string method_name,
-					 const char*sys_task_name) const;
+					 const char *sys_task_name,
+				         const std::vector<perm_string> &parm_names = {}) const;
       NetProc*elaborate_queue_method_(Design*des, NetScope*scope,
 				      NetNet*net,
 				      perm_string method_name,
-				      const char*sys_task_name) const;
+				      const char *sys_task_name,
+				      const std::vector<perm_string> &parm_names) const;
       NetProc*elaborate_method_func_(NetScope*scope,
 				     NetNet*net,
 				     ivl_type_t type,
@@ -267,7 +269,7 @@ class PCallTask  : public Statement {
 
       PPackage*package_;
       pform_name_t path_;
-      std::vector<PExpr*> parms_;
+      std::vector<named_pexpr_t> parms_;
       bool void_cast_ = false;
 };
 
@@ -320,17 +322,18 @@ class PCAssign  : public Statement {
  */
 class PChainConstructor : public Statement {
     public:
-      explicit PChainConstructor(const std::list<PExpr*>&parms);
+      explicit PChainConstructor(const std::list<named_pexpr_t> &parms);
+      explicit PChainConstructor(const std::vector<named_pexpr_t> &parms);
       ~PChainConstructor();
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void dump(std::ostream&out, unsigned ind) const;
 
-      inline const std::vector<PExpr*>& chain_args(void) const
+      inline const std::vector<named_pexpr_t>& chain_args(void) const
       { return parms_; }
 
     private:
-      std::vector<PExpr*> parms_;
+      std::vector<named_pexpr_t> parms_;
 };
 
 class PCondit  : public Statement {

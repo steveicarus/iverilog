@@ -166,17 +166,17 @@ PNamedItem::SymbolType PBlock::symbol_type() const
       return BLOCK;
 }
 
-PCallTask::PCallTask(const pform_name_t&n, const list<PExpr*>&p)
+PCallTask::PCallTask(const pform_name_t &n, const list<named_pexpr_t> &p)
 : package_(0), path_(n), parms_(p.begin(), p.end())
 {
 }
 
-PCallTask::PCallTask(PPackage*pkg, const pform_name_t&n, const list<PExpr*>&p)
+PCallTask::PCallTask(PPackage *pkg, const pform_name_t &n, const list<named_pexpr_t> &p)
 : package_(pkg), path_(n), parms_(p.begin(), p.end())
 {
 }
 
-PCallTask::PCallTask(perm_string n, const list<PExpr*>&p)
+PCallTask::PCallTask(perm_string n, const list<named_pexpr_t> &p)
 : package_(0), parms_(p.begin(), p.end())
 {
       path_.push_back(name_component_t(n));
@@ -216,8 +216,13 @@ PCAssign::~PCAssign()
       delete expr_;
 }
 
-PChainConstructor::PChainConstructor(const list<PExpr*>&parms)
+PChainConstructor::PChainConstructor(const list<named_pexpr_t> &parms)
 : parms_(parms.begin(), parms.end())
+{
+}
+
+PChainConstructor::PChainConstructor(const vector<named_pexpr_t> &parms)
+: parms_(parms)
 {
 }
 

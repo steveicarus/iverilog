@@ -40,6 +40,7 @@
 # include  "netscalar.h"
 # include  "util.h"
 # include  "ivl_assert.h"
+# include  "map_named_args.h"
 
 using namespace std;
 
@@ -1374,7 +1375,7 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 	      // The Icarus Verilog specific $ivlh_to_unsigned() system
 	      // task takes a second argument which is the output
 	      // size. This can be an arbitrary constant function.
-	    PExpr*pexpr = parms_[1];
+	    PExpr *pexpr = parms_[1].parm;
 	    if (pexpr == 0) {
 		  cerr << get_fileline() << ": error: "
 		       << "Missing $ivlh_to_unsigned width." << endl;
@@ -1396,7 +1397,7 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 	      // The argument width is self-determined and doesn't
 	      // affect the result width.
 	    width_mode_t arg_mode = SIZED;
-	    parms_[0]->test_width(des, scope, arg_mode);
+	    parms_[0].parm->test_width(des, scope, arg_mode);
 
 	    expr_type_  = pexpr->expr_type();
 	    expr_width_ = value;
@@ -1406,7 +1407,7 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
       }
 
       if (name=="$signed" || name=="$unsigned") {
-	    PExpr*expr = parms_[0];
+	    PExpr *expr = parms_[0].parm;
 	    if (expr == 0)
 		  return 0;
 
@@ -1423,7 +1424,7 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
       }
 
       if (name=="$sizeof" || name=="$bits") {
-	    PExpr*expr = parms_[0];
+	    PExpr *expr = parms_[0].parm;
 	    if (expr == 0)
 		  return 0;
 
@@ -1450,7 +1451,7 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
       }
 
       if (name=="$is_signed") {
-	    PExpr*expr = parms_[0];
+	    PExpr *expr = parms_[0].parm;
 	    if (expr == 0)
 		  return 0;
 
@@ -1887,6 +1888,17 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 {
       perm_string name = peek_tail_name(path_);
 
+      // System functions don't have named parameters
+      for (const auto &parm : parms_) {
+	    if (!parm.name.nil()) {
+		  des->errors++;
+		  cerr << parm.get_fileline() << ": error: "
+		       << "The system function `" << name
+		       << "` has no argument called `" << parm.name << "`."
+		       << endl;
+	    }
+      }
+
 	/* Catch the special case that the system function is the
 	   $ivl_unsigned function. In this case the second argument is
 	   the size of the expression, but should already be accounted
@@ -1894,7 +1906,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
       if (name=="$ivlh_to_unsigned") {
 	    ivl_assert(*this, parms_.size()==2);
 
-	    PExpr*expr = parms_[0];
+	    PExpr *expr = parms_[0].parm;
 	    ivl_assert(*this, expr);
 	    NetExpr*sub = expr->elaborate_expr(des, scope, expr->expr_width(), flags);
 	    return cast_to_width_(sub, expr_wid);
@@ -1904,7 +1916,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 	   function. Its argument will be evaluated as a self-determined
            expression. */
       if (name=="$signed" || name=="$unsigned") {
-	    if ((parms_.size() != 1) || (parms_[0] == 0)) {
+	    if ((parms_.size() != 1) || !parms_[0].parm) {
 		  cerr << get_fileline() << ": error: The " << name
 		       << " function takes exactly one(1) argument." << endl;
 		  des->errors += 1;
@@ -1922,7 +1934,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": PECallFunction::elaborate_sfunc_: "
 		       << name << " expression is the argument cast to expr_wid=" << expr_wid << endl;
 	    }
-	    PExpr*expr = parms_[0];
+	    PExpr *expr = parms_[0].parm;
 	    NetExpr*sub = expr->elaborate_expr(des, scope, expr_width_, flags);
 
 	    return cast_to_width_(sub, expr_wid);
@@ -1933,7 +1945,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 	   sub-expression is not used, so the expression itself can be
 	   deleted. */
       if (name=="$sizeof" || name=="$bits") {
-	    if ((parms_.size() != 1) || (parms_[0] == 0)) {
+	    if ((parms_.size() != 1) || !parms_[0].parm) {
 		  cerr << get_fileline() << ": error: The " << name
 		       << " function takes exactly one(1) argument." << endl;
 		  des->errors += 1;
@@ -1944,7 +1956,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": warning: $sizeof is deprecated."
 		       << " Use $bits() instead." << endl;
 
-	    PExpr*expr = parms_[0];
+	    PExpr *expr = parms_[0].parm;
 
 	    uint64_t use_width = 0;
 	    if (PETypename*type_expr = dynamic_cast<PETypename*>(expr)) {
@@ -1991,14 +2003,14 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 	   a single bit flag -- 1 if the expression is signed, 0
 	   otherwise. */
       if (name=="$is_signed") {
-	    if ((parms_.size() != 1) || (parms_[0] == 0)) {
+	    if ((parms_.size() != 1) || !parms_[0].parm) {
 		  cerr << get_fileline() << ": error: The " << name
 		       << " function takes exactly one(1) argument." << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
 
-	    PExpr*expr = parms_[0];
+	    PExpr *expr = parms_[0].parm;
 
 	    verinum val (expr->has_sign() ? verinum::V1 : verinum::V0, 1);
 	    NetEConst*sub = new NetEConst(val);
@@ -2039,7 +2051,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 	   expression if one is created. */
 
 	/* These functions can work in a constant context with a signal expression. */
-      if ((nparms == 1) && (dynamic_cast<PEIdent*>(parms_[0]))) {
+      if ((nparms == 1) && (dynamic_cast<PEIdent*>(parms_[0].parm))) {
 	    if (strcmp(name, "$dimensions") == 0) need_const = false;
 	    else if (strcmp(name, "$high") == 0) need_const = false;
 	    else if (strcmp(name, "$increment") == 0) need_const = false;
@@ -2053,7 +2065,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
       unsigned parm_errors = 0;
       unsigned missing_parms = 0;
       for (unsigned idx = 0 ;  idx < nparms ;  idx += 1) {
-	    PExpr*expr = parms_[idx];
+	    PExpr *expr = parms_[idx].parm;
 	    if (expr) {
 		  NetExpr*tmp = elab_sys_task_arg(des, scope, name, idx,
                                                   expr, need_const);
@@ -2092,7 +2104,7 @@ NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
       NetBranch*branch = 0;
 
       if (parms_.size() == 1) {
-	    PExpr*arg1 = parms_[0];
+	    PExpr *arg1 = parms_[0].parm;
 	    PEIdent*arg_ident = dynamic_cast<PEIdent*> (arg1);
 	    ivl_assert(*this, arg_ident);
 
@@ -2147,7 +2159,7 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
                                        const pform_scoped_name_t&use_path,
                                        perm_string method_name,
                                        NetExpr*expr,
-                                       PExpr*parg, unsigned args)
+                                       const std::vector<named_pexpr_t> &parms)
 {
       if (debug_elaborate) {
 	    cerr << li->get_fileline() << ": " << __func__ << ": "
@@ -2168,9 +2180,9 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    // The "num()" method returns the number of elements. This is
 	    // actually a static constant, and can be replaced at compile time
 	    // with a constant value.
-	    if (args != 0) {
+	    if (parms.size() != 0) {
 		  cerr << li->get_fileline() << ": error: enumeration "
-		          "method " << use_path << ".num() does not "
+		          "method " << use_path << " does not "
 		          "take an argument." << endl;
 		  des->errors += 1;
 	    }
@@ -2184,9 +2196,9 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    // The "first()" method returns the first enumeration value. This
 	    // doesn't actually care about the constant value, and instead
 	    // returns as a constant literal the first value of the enumeration.
-	    if (args != 0) {
+	    if (parms.size() != 0) {
 		  cerr << li->get_fileline() << ": error: enumeration "
-		          "method " << use_path << ".first() does not "
+		          "method " << use_path << " does not "
 		          "take an argument." << endl;
 		  des->errors += 1;
 	    }
@@ -2201,9 +2213,9 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    // The "last()" method returns the first enumeration value. This
 	    // doesn't actually care about the constant value, and instead
 	    // returns as a constant literal the last value of the enumeration.
-	    if (args != 0) {
+	    if (parms.size() != 0) {
 		  cerr << li->get_fileline() << ": error: enumeration "
-		          "method " << use_path << ".last() does not "
+		          "method " << use_path << " does not "
 		          "take an argument." << endl;
 		  des->errors += 1;
 	    }
@@ -2216,34 +2228,14 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 
       NetESFunc*sys_expr;
 
-	// Process the method argument if it is available.
-      NetExpr* count = 0;
-      if (args != 0 && parg) {
-	    count = elaborate_rval_expr(des, scope, &netvector_t::atom2u32,
-					parg);
-	    if (count == 0) {
-		  cerr << li->get_fileline() << ": error: unable to elaborate "
-		          "enumeration method argument " << use_path << "."
-		       << method_name << "(" << parg << ")." << endl;
-		  args = 0;
-		  des->errors += 1;
-	    } else if (NetEEvent*evt = dynamic_cast<NetEEvent*> (count)) {
-		  cerr << evt->get_fileline() << ": error: An event '"
-		       << evt->event()->name() << "' cannot be an enumeration "
-		          "method argument." << endl;
-		  args = 0;
-		  des->errors += 1;
-	    }
-      }
-
       if (method_name == "name") {
 	    // The "name()" method returns the name of the current enumeration
 	    // value. The generated system task takes the enumeration
 	    // definition and the enumeration value. The return value is the
 	    // string name of the enumeration.
-	    if (args != 0) {
+	    if (parms.size() != 0) {
 		  cerr << li->get_fileline() << ": error: enumeration "
-		          "method " << use_path << ".name() does not "
+		          "method " << use_path << " does not "
 		          "take an argument." << endl;
 		  des->errors += 1;
 	    }
@@ -2257,37 +2249,51 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    sys_expr->parm(0, def);
 	    sys_expr->parm(1, expr);
 
-      } else if (method_name == "next") {
-	    // The "next()" method returns the next enumeration value.
-	    if (args > 1) {
-		  cerr << li->get_fileline() << ": error: enumeration "
-		          "method " << use_path << ".next() take at "
-		          "most one argument." << endl;
-		  des->errors += 1;
-	    }
-	    sys_expr = new NetESFunc("$ivl_enum_method$next", netenum,
-	                             2 + (args != 0));
-	    NetENetenum* def = new NetENetenum(netenum);
-	    def->set_line(*li);
-	    sys_expr->parm(0, def);
-	    sys_expr->parm(1, expr);
-	    if (args != 0) sys_expr->parm(2, count);
+      } else if (method_name == "next" || method_name == "prev") {
+	    static const std::vector<perm_string> parm_names = {
+		  perm_string::literal("N"),
+	    };
+	    auto args = map_named_args(des, parm_names, parms);
 
-      } else if (method_name == "prev") {
-	    // The "prev()" method returns the previous enumeration value.
-	    if (args > 1) {
+	      // Process the method argument if it is available.
+	    NetExpr *count = nullptr;
+	    if (args.size() != 0 && args[0]) {
+		  count = elaborate_rval_expr(des, scope, &netvector_t::atom2u32,
+					      args[0]);
+		  if (!count) {
+			cerr << li->get_fileline() << ": error: unable to elaborate "
+				"enumeration method argument " << use_path << "."
+			     << method_name << "(" << args[0] << ")." << endl;
+			des->errors++;
+		  } else if (NetEEvent *evt = dynamic_cast<NetEEvent*> (count)) {
+			cerr << evt->get_fileline() << ": error: An event '"
+			     << evt->event()->name() << "' cannot be an enumeration "
+				"method argument." << endl;
+			des->errors++;
+		  }
+	    }
+
+	    // The "next()" and "prev()" methods returns the next or previous enumeration value.
+	    if (args.size() > 1) {
 		  cerr << li->get_fileline() << ": error: enumeration "
-		          "method " << use_path << ".prev() take at "
+		          "method " << use_path << " takes at "
 		          "most one argument." << endl;
 		  des->errors += 1;
 	    }
-	    sys_expr = new NetESFunc("$ivl_enum_method$prev", netenum,
-	                             2 + (args != 0));
+
+	    const char *func_name;
+	    if (method_name == "next")
+		  func_name = "$ivl_enum_method$next";
+	    else
+		  func_name = "$ivl_enum_method$prev";
+
+	    sys_expr = new NetESFunc(func_name, netenum,
+	                             2 + (count != nullptr));
 	    NetENetenum* def = new NetENetenum(netenum);
 	    def->set_line(*li);
 	    sys_expr->parm(0, def);
 	    sys_expr->parm(1, expr);
-	    if (args != 0) sys_expr->parm(2, count);
+	    if (count) sys_expr->parm(2, count);
 
       } else {
 	    // This is an unknown enumeration method.
@@ -3119,9 +3125,12 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
 	    des->errors += 1;
       }
 
+      auto args = map_named_args(des, def, parms_, parm_off);
+
       for (unsigned idx = 0 ; idx < parm_count ; idx += 1) {
 	    unsigned pidx = idx + parm_off;
-	    PExpr*tmp = (idx < actual_count) ? parms_[idx] : NULL;
+	    PExpr *tmp = args[idx];
+
 	    if (tmp) {
 		  parms[pidx] = elaborate_rval_expr(des, scope,
 						    def->port(pidx)->net_type(),
@@ -3354,12 +3363,10 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 
 	    // Get the method name that we are looking for.
 	    perm_string method_name = search_results.path_tail.back().name;
-
-	    PExpr*tmp = parms_.size() ? parms_[0] : NULL;
 	    return check_for_enum_methods(this, des, scope,
 					  netenum, path_,
 					  method_name, sub_expr,
-					  tmp, parms_.size());
+					  parms_);
       }
 
       // Class methods. Generate function call to the class method.
@@ -3437,6 +3444,17 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    }
 
 	    if (method_name == "substr") {
+		  if (parms_.size() != 2)
+			cerr << get_fileline() << ": error: Method `substr()`"
+			     << " requires 2 arguments, got " << parms_.size()
+			     << "." << endl;
+
+		  static const std::vector<perm_string> parm_names = {
+			perm_string::literal("i"),
+			perm_string::literal("j")
+		  };
+		  auto args = map_named_args(des, parm_names, parms_);
+
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$substr",
 						     &netstring_t::type_string, 3);
 		  sys_expr->set_line(*this);
@@ -3444,16 +3462,15 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		    // First argument is the source string.
 		  sys_expr->parm(0, sub_expr);
 
-		  ivl_assert(*this, parms_.size() == 2);
-		  NetExpr*tmp;
+		  for (int i = 0; i < 2; i++) {
+			if (!args[i])
+			      continue;
 
-		  tmp = elaborate_rval_expr(des, scope, &netvector_t::atom2u32,
-					    parms_[0], false);
-		  sys_expr->parm(1, tmp);
-
-		  tmp = elaborate_rval_expr(des, scope, &netvector_t::atom2u32,
-					    parms_[1], false);
-		  sys_expr->parm(2, tmp);
+			auto expr = elaborate_rval_expr(des, scope,
+						        &netvector_t::atom2u32,
+						        args[i], false);
+			sys_expr->parm(i + 1, expr);
+		  }
 
 		  return sys_expr;
 	    }
@@ -4943,7 +4960,7 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 		  return check_for_enum_methods(this, des, scope,
 						netenum, sr.path_head,
 						member_comp.name,
-						expr, NULL, 0);
+						expr, {});
 	    }
 
 	    ivl_assert(*this, sr.path_tail.empty());
@@ -6661,8 +6678,8 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 	// generate an error message. The case of too few arguments
 	// will be handled below, when we run out of arguments.
       if ((parms_.size()+1) > def->port_count()) {
-	    cerr << get_fileline() << ": error: Parm count mismatch"
-		 << " passing " << parms_.size() << " arguments "
+	    cerr << get_fileline() << ": error: Argument count mismatch."
+		 << " Passing " << parms_.size() << " arguments"
 		 << " to constructor expecting " << (def->port_count()-1)
 		 << " arguments." << endl;
 	    des->errors += 1;
@@ -6671,14 +6688,15 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
       vector<NetExpr*> parms (def->port_count());
       parms[0] = obj;
 
+      auto args = map_named_args(des, def, parms_, 1);
+
       int missing_parms = 0;
       for (size_t idx = 1 ; idx < parms.size() ; idx += 1) {
 	      // While there are default arguments, check them.
-	    if (idx <= parms_.size() && parms_[idx-1]) {
-		  PExpr*tmp = parms_[idx-1];
+	    if (args[idx - 1]) {
 		  parms[idx] = elaborate_rval_expr(des, scope,
 						   def->port(idx)->net_type(),
-						   tmp, false);
+						   args[idx - 1], false);
 		  // NOTE: if elaborate_rval_expr fails, it will return a
 		  // nullptr, but it will also increment des->errors so there
 		  // is nothing we need to do here.

@@ -570,7 +570,7 @@ class PENewClass : public PExpr {
 	// New without (or with default) constructor
       explicit PENewClass ();
 	// New with constructor arguments
-      explicit PENewClass (const std::list<PExpr*>&p,
+      explicit PENewClass (const std::list<named_pexpr_t> &p,
 			   data_type_t *class_type = nullptr);
 
       ~PENewClass();
@@ -592,7 +592,7 @@ class PENewClass : public PExpr {
 					   NetExpr*obj, unsigned flags) const;
 
     private:
-      std::vector<PExpr*>parms_;
+      std::vector<named_pexpr_t> parms_;
       data_type_t *class_type_;
 };
 
@@ -895,20 +895,20 @@ class PETernary : public PExpr {
  */
 class PECallFunction : public PExpr {
     public:
-      explicit PECallFunction(const pform_name_t&n, const std::vector<PExpr *> &parms);
+      explicit PECallFunction(const pform_name_t &n, const std::vector<named_pexpr_t> &parms);
 	// Call function defined in package.
-      explicit PECallFunction(PPackage*pkg, const pform_name_t&n, const std::list<PExpr *> &parms);
+      explicit PECallFunction(PPackage *pkg, const pform_name_t &n, const std::list<named_pexpr_t> &parms);
 
 	// Used to convert a user function called as a task
-      explicit PECallFunction(PPackage*pkg, const pform_name_t&n, const std::vector<PExpr *> &parms);
+      explicit PECallFunction(PPackage *pkg, const pform_name_t &n, const std::vector<named_pexpr_t> &parms);
 
 	// Call of system function (name is not hierarchical)
-      explicit PECallFunction(perm_string n, const std::vector<PExpr *> &parms);
+      explicit PECallFunction(perm_string n, const std::vector<named_pexpr_t> &parms);
       explicit PECallFunction(perm_string n);
 
 	// std::list versions. Should be removed!
-      explicit PECallFunction(const pform_name_t&n, const std::list<PExpr *> &parms);
-      explicit PECallFunction(perm_string n, const std::list<PExpr *> &parms);
+      explicit PECallFunction(const pform_name_t &n, const std::list<named_pexpr_t> &parms);
+      explicit PECallFunction(perm_string n, const std::list<named_pexpr_t> &parms);
 
       ~PECallFunction();
 
@@ -929,7 +929,7 @@ class PECallFunction : public PExpr {
 
     private:
       pform_scoped_name_t path_;
-      std::vector<PExpr *> parms_;
+      std::vector<named_pexpr_t> parms_;
 
         // For system functions.
       bool is_overridden_;

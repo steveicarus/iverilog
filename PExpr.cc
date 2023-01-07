@@ -215,12 +215,12 @@ PEBShift::~PEBShift()
 {
 }
 
-PECallFunction::PECallFunction(const pform_name_t&n, const vector<PExpr *> &parms)
+PECallFunction::PECallFunction(const pform_name_t &n, const vector<named_pexpr_t> &parms)
 : path_(n), parms_(parms), is_overridden_(false)
 {
 }
 
-PECallFunction::PECallFunction(PPackage*pkg, const pform_name_t&n, const vector<PExpr *> &parms)
+PECallFunction::PECallFunction(PPackage *pkg, const pform_name_t &n, const vector<named_pexpr_t> &parms)
 : path_(pkg, n), parms_(parms), is_overridden_(false)
 {
 }
@@ -233,12 +233,12 @@ static pform_name_t pn_from_ps(perm_string n)
       return tmp;
 }
 
-PECallFunction::PECallFunction(PPackage*pkg, const pform_name_t&n, const list<PExpr *> &parms)
+PECallFunction::PECallFunction(PPackage *pkg, const pform_name_t &n, const list<named_pexpr_t> &parms)
 : path_(pkg, n), parms_(parms.begin(), parms.end()), is_overridden_(false)
 {
 }
 
-PECallFunction::PECallFunction(perm_string n, const vector<PExpr*>&parms)
+PECallFunction::PECallFunction(perm_string n, const vector<named_pexpr_t> &parms)
 : path_(pn_from_ps(n)), parms_(parms), is_overridden_(false)
 {
 }
@@ -249,13 +249,13 @@ PECallFunction::PECallFunction(perm_string n)
 }
 
 // NOTE: Anachronism. Try to work all use of svector out.
-PECallFunction::PECallFunction(const pform_name_t&n, const list<PExpr *> &parms)
+PECallFunction::PECallFunction(const pform_name_t &n, const list<named_pexpr_t> &parms)
 : path_(n), parms_(parms.begin(), parms.end()), is_overridden_(false)
 {
 }
 
-PECallFunction::PECallFunction(perm_string n, const list<PExpr*>&parms)
-: package_(0), path_(pn_from_ps(n)), parms_(parms.begin(), parms.end()), is_overridden_(false)
+PECallFunction::PECallFunction(perm_string n, const list<named_pexpr_t> &parms)
+: path_(pn_from_ps(n)), parms_(parms.begin(), parms.end()), is_overridden_(false)
 {
 }
 
@@ -265,18 +265,18 @@ PECallFunction::~PECallFunction()
 
 void PECallFunction::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 {
-      for (unsigned idx = 0 ; idx < parms_.size() ; idx += 1) {
-	    if (parms_[idx])
-		  parms_[idx]->declare_implicit_nets(scope, type);
+      for (const auto &parm : parms_) {
+	    if (parm.parm)
+		  parm.parm->declare_implicit_nets(scope, type);
       }
 }
 
 bool PECallFunction::has_aa_term(Design*des, NetScope*scope) const
 {
       bool flag = false;
-      for (unsigned idx = 0 ; idx < parms_.size() ; idx += 1) {
-	    if (parms_[idx])
-		  flag |= parms_[idx]->has_aa_term(des, scope);
+      for (const auto &parm : parms_) {
+	    if (parm.parm)
+		  flag |= parm.parm->has_aa_term(des, scope);
       }
       return flag;
 }
@@ -466,7 +466,7 @@ PENewClass::PENewClass(void)
 {
 }
 
-PENewClass::PENewClass(const list<PExpr*>&p, data_type_t *class_type)
+PENewClass::PENewClass(const list<named_pexpr_t> &p, data_type_t *class_type)
 : parms_(p.begin(), p.end()), class_type_(class_type)
 {
 }

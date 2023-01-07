@@ -114,7 +114,8 @@ O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
     net_event.o net_expr.o net_func.o \
     net_func_eval.o net_link.o net_modulo.o \
     net_nex_input.o net_nex_output.o net_proc.o net_scope.o net_tran.o \
-    net_udp.o pad_to_width.o parse.o parse_misc.o pform.o pform_analog.o \
+    net_udp.o map_named_args.o \
+    pad_to_width.o parse.o parse_misc.o pform.o pform_analog.o \
     pform_disciplines.o pform_dump.o pform_package.o pform_pclass.o \
     pform_types.o \
     symbol_search.o sync.o sys_funcs.o verinum.o verireal.o vpi_modules.o target.o \
