@@ -310,6 +310,8 @@ sv_string5		CE,-g2009		ivltests
 sv_string6		CE,-g2009,-pallowsigned=1	ivltests
 sv_string7		CE,-g2009,-pallowsigned=1	ivltests
 sv_string7b		CE,-g2009,-pallowsigned=1	ivltests
+sv_string8		CE,-g2009		ivltests
+sv_string9		CE,-g2009		ivltests
 sv_ps_function6		CE,-g2009,-pallowsigned=1	ivltests
 sv_typedef_fwd_base	CE,-g2009		ivltests
 vhdl_string_lim		CE,-g2005-sv,-pallowsigned=1,ivltests/vhdl_string_lim.vhd	ivltests

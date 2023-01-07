@@ -399,7 +399,11 @@ static string filter_string(const char*text)
 		  cnt -= 1;
 		  ptr += 1;
 	    }
-	    tmp[dst++] = byte;
+
+	    // null-bytes are supposed to be removed when assigning a string
+	    // literal to a string.
+	    if (byte != '\0')
+		  tmp[dst++] = byte;
 
 	    // After the while loop above, the ptr points to the next character,
 	    // but the for-loop condition is assuming that ptr points to the last
