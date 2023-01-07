@@ -21,6 +21,7 @@
 # include "config.h"
 
 # include  "PExpr.h"
+# include  "PPackage.h"
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "netstruct.h"
@@ -1101,13 +1102,15 @@ NetNet* PEIdent::elaborate_subport(Design*des, NetScope*scope) const
 
 NetNet*PEIdent::elaborate_unpacked_net(Design*des, NetScope*scope) const
 {
-      NetNet*       sig = 0;
-      const NetExpr*par = 0;
-      NetEvent*     eve = 0;
-      perm_string method_name;
+      NetScope *use_scope = scope;
+      if (package_) {
+	    use_scope = des->find_package(package_->pscope_name());
+	    ivl_assert(*this, use_scope);
+      }
 
-      symbol_search(this, des, scope, path_, sig, par, eve);
-      if (!sig) {
+      symbol_search_results sr;
+      symbol_search(this, des, use_scope, path_, &sr);
+      if (!sr.net) {
 	    cerr << get_fileline() << ": error: Net " << path_
 		 << " is not defined in this context." << endl;
 	    des->errors += 1;
@@ -1122,7 +1125,7 @@ NetNet*PEIdent::elaborate_unpacked_net(Design*des, NetScope*scope) const
 	    return nullptr;
       }
 
-      return sig;
+      return sr.net;
 }
 
 bool PEIdent::is_collapsible_net(Design*des, NetScope*scope,
