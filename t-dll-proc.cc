@@ -462,8 +462,17 @@ bool dll_target::proc_block(const NetBlock*net)
       return flag;
 }
 
+bool dll_target::proc_break(const NetBreak*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
+      stmt_cur_->type_ = IVL_ST_BREAK;
+      return true;
+}
+
 /*
- * A case statement is in turn an array of statements with gate
+ * A. case statement is in turn an array of statements with gate
  * expressions. This builds arrays of the right size and builds the
  * ivl_expr_t and ivl_statement_s arrays for the substatements.
  */
@@ -577,6 +586,15 @@ bool dll_target::proc_condit(const NetCondit*net)
 
       stmt_cur_ = save_cur_;
       return rc_flag;
+}
+
+bool dll_target::proc_continue(const NetContinue*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
+      stmt_cur_->type_ = IVL_ST_CONTINUE;
+      return true;
 }
 
 bool dll_target::proc_deassign(const NetDeassign*net)
@@ -713,6 +731,58 @@ void dll_target::proc_forever(const NetForever*net)
 
       save_cur_->u_.forever_.stmt_ = stmt_cur_;
       stmt_cur_ = save_cur_;
+}
+
+bool dll_target::proc_forloop(const NetForLoop*net)
+{
+      ivl_statement_t tmp;
+      bool rc, res=true;
+
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
+      stmt_cur_->type_ = IVL_ST_FORLOOP;
+
+      ivl_statement_t save_cur_ = stmt_cur_;
+
+      // Note that the init statement is optional. If it is not present,
+      // then the emit_recurse_init will not generate a statement.
+      tmp = (struct ivl_statement_s*)calloc(1, sizeof(struct ivl_statement_s));
+      stmt_cur_ = tmp;
+      rc = net->emit_recurse_init(this);
+      if (stmt_cur_->type_ != IVL_ST_NONE)
+	    save_cur_->u_.forloop_.init_stmt = stmt_cur_;
+      else {
+	    free(tmp);
+	    save_cur_->u_.forloop_.init_stmt = nullptr;
+      }
+      res = res && rc;
+
+      tmp = (struct ivl_statement_s*)calloc(1, sizeof(struct ivl_statement_s));
+      stmt_cur_ = tmp;
+      rc = net->emit_recurse_stmt(this);
+      save_cur_->u_.forloop_.stmt = stmt_cur_;
+      res = res && rc;
+
+      tmp = (struct ivl_statement_s*)calloc(1, sizeof(struct ivl_statement_s));
+      stmt_cur_ = tmp;
+      rc = net->emit_recurse_step(this);
+      if (stmt_cur_->type_ != IVL_ST_NONE)
+	    save_cur_->u_.forloop_.step = stmt_cur_;
+      else {
+	    free(tmp);
+	    save_cur_->u_.forloop_.step = nullptr;
+      }
+      res = res && rc;
+
+      assert(expr_ == nullptr);
+      rc = net->emit_recurse_condition(this);
+      save_cur_->u_.forloop_.condition = expr_;
+      expr_ = nullptr;
+      res = res && rc;
+      
+      stmt_cur_ = save_cur_;
+      return res;
 }
 
 void dll_target::proc_free(const NetFree*net)

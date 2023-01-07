@@ -471,71 +471,6 @@ static void emit_assign_and_opt_opcode(ivl_scope_t scope, ivl_statement_t stmt,
 }
 
 /*
- * Icarus translated for(<assign>; <cond>; <incr_assign>) <body> into
- *
- *   begin
- *     <assign>;
- *     while (<cond>) begin
- *       <body>
- *       <incr_assign>
- *     end
- *   end
- * This routine looks for this pattern and turns it back into the
- * appropriate for loop.
- */
-static unsigned is_for_loop(ivl_scope_t scope, ivl_statement_t stmt)
-{
-      ivl_statement_t assign, while_lp, while_blk, body, incr_assign;
-
-	/* We must have two block elements. */
-      if (ivl_stmt_block_count(stmt) != 2) return 0;
-	/* The first must be an assign. */
-      assign = ivl_stmt_block_stmt(stmt, 0);
-      if (ivl_statement_type(assign) != IVL_ST_ASSIGN) return 0;
-	/* The second must be a while. */
-      while_lp = ivl_stmt_block_stmt(stmt, 1);
-      if (ivl_statement_type(while_lp) != IVL_ST_WHILE) return 0;
-	/* The while statement must be a block. */
-      while_blk = ivl_stmt_sub_stmt(while_lp);
-      if (ivl_statement_type(while_blk) != IVL_ST_BLOCK) return 0;
-	/* It must not be a named block. */
-      if (ivl_stmt_block_scope(while_blk)) return 0;
-	/* It must have two elements. */
-      if (ivl_stmt_block_count(while_blk) != 2) return 0;
-	/* The first block element (the body) can be anything. */
-      body = ivl_stmt_block_stmt(while_blk, 0);
-	/* The second block element must be the increment assign. */
-      incr_assign = ivl_stmt_block_stmt(while_blk, 1);
-      if (ivl_statement_type(incr_assign) != IVL_ST_ASSIGN) return 0;
-	/* And finally the for statements must have the same line number
-	 * as the block. */
-      if ((ivl_stmt_lineno(stmt) != ivl_stmt_lineno(assign)) ||
-          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(while_lp)) ||
-          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(while_blk)) ||
-          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(incr_assign))) {
-	    return 0;
-      }
-
-	/* The pattern matched so generate the appropriate code. */
-      fprintf(vlog_out, "%*cfor(", get_indent(), ' ');
-	/* Emit the initialization statement (no opcode is allowed). */
-      emit_assign_and_opt_opcode(scope, assign, 0);
-      fprintf(vlog_out, "; ");
-	/* Emit the condition. */
-      emit_expr(scope, ivl_stmt_cond_expr(while_lp), 0, 0, 0, 0);
-      fprintf(vlog_out, "; ");
-	/* Emit the increment statement (an opcode is allowed). */
-      emit_assign_and_opt_opcode(scope, incr_assign, 1);
-      fprintf(vlog_out, ")");
-      emit_stmt_file_line(stmt);
-	/* Now emit the body. */
-      single_indent = 1;
-      emit_stmt(scope, body);
-
-      return 1;
-}
-
-/*
  * Icarus translated <var> = repeat(<count>) <event> <value> into
  *   begin
  *    <tmp> = <value>;
@@ -1375,6 +1310,27 @@ static void emit_stmt_fork_named(ivl_scope_t scope, ivl_statement_t stmt)
                         ivl_scope_basename(my_scope));
 }
 
+static void emit_stmt_forloop(ivl_scope_t scope, ivl_statement_t stmt)
+{
+      ivl_statement_t use_init = ivl_stmt_init_stmt(stmt);
+      ivl_statement_t use_step = ivl_stmt_step_stmt(stmt);
+      ivl_statement_t use_stmt = ivl_stmt_sub_stmt(stmt);
+
+      fprintf(vlog_out, "%*cfor (", get_indent(), ' ');
+      /* Assume that the init statement is an assignment. */
+      if (use_init)
+	    emit_assign_and_opt_opcode(scope, use_init, 0);
+      fprintf(vlog_out, "; ");
+      emit_expr(scope, ivl_stmt_cond_expr(stmt), 0, 0, 0, 0);
+      fprintf(vlog_out, "; ");
+      /* Assume that the step statement is an assignment. */
+      if (use_step)
+	    emit_assign_and_opt_opcode(scope, use_step, 1);
+      fprintf(vlog_out, ")");
+      single_indent = 1;
+      emit_stmt(scope, use_stmt);
+}
+
 static void emit_stmt_release(ivl_scope_t scope, ivl_statement_t stmt)
 {
       fprintf(vlog_out, "%*crelease ", get_indent(), ' ');
@@ -1538,12 +1494,18 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 		  emit_stmt_block_named(scope, stmt);
 	    } else {
 		  if (is_delayed_or_event_assign(scope, stmt)) break;
-		  if (is_for_loop(scope, stmt)) break;
 		  if (is_repeat_event_assign(scope, stmt)) break;
 		  if (is_wait(scope, stmt)) break;
 		  if (is_utask_call_with_args(scope, stmt)) break;
 		  emit_stmt_block(scope, stmt);
 	    }
+	    break;
+	case IVL_ST_BREAK:
+	    fprintf(stderr, "%s:%u: vlog95 sorry: 'break' is not "
+	                    "currently translated.\n",
+	                    ivl_stmt_file(stmt),
+	                    ivl_stmt_lineno(stmt));
+	    vlog_errors += 1;
 	    break;
 	case IVL_ST_CASE:
 	case IVL_ST_CASER:
@@ -1556,6 +1518,13 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 	    break;
 	case IVL_ST_CONDIT:
 	    emit_stmt_condit(scope, stmt);
+	    break;
+	case IVL_ST_CONTINUE:
+	    fprintf(stderr, "%s:%u: vlog95 sorry: 'continue' is not "
+	                    "currently translated.\n",
+	                    ivl_stmt_file(stmt),
+	                    ivl_stmt_lineno(stmt));
+	    vlog_errors += 1;
 	    break;
 	case IVL_ST_DEASSIGN:
 	    emit_stmt_deassign(scope, stmt);
@@ -1577,6 +1546,9 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 	    break;
 	case IVL_ST_FOREVER:
 	    emit_stmt_forever(scope, stmt);
+	    break;
+        case IVL_ST_FORLOOP:
+	    emit_stmt_forloop(scope, stmt);
 	    break;
 	case IVL_ST_FORK:
 	    if (ivl_stmt_block_scope(stmt)) {

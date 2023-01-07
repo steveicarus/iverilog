@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2023 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -921,6 +921,11 @@ void PBlock::dump(ostream&out, unsigned ind) const
       out << setw(ind) << "" << "end" << endl;
 }
 
+void PBreak::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "break;" << endl;
+}
+
 void PCallTask::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << path_;
@@ -1025,6 +1030,11 @@ void PCondit::dump(ostream&out, unsigned ind) const
 	    out << setw(ind) << "" << "else" << endl;
 	    else_->dump(out, ind+3);
       }
+}
+
+void PContinue::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "continue;" << endl;
 }
 
 void PCAssign::dump(ostream&out, unsigned ind) const

@@ -409,18 +409,21 @@ typedef enum ivl_statement_type_e {
       IVL_ST_ASSIGN    = 2,
       IVL_ST_ASSIGN_NB = 3,
       IVL_ST_BLOCK   = 4,
+      IVL_ST_BREAK   = 32,
       IVL_ST_CASE    = 5,
       IVL_ST_CASER   = 24, /* Case statement with real expressions. */
       IVL_ST_CASEX   = 6,
       IVL_ST_CASEZ   = 7,
       IVL_ST_CASSIGN = 8,
       IVL_ST_CONDIT  = 9,
+      IVL_ST_CONTINUE= 33,
       IVL_ST_CONTRIB = 27,
       IVL_ST_DEASSIGN = 10,
       IVL_ST_DELAY   = 11,
       IVL_ST_DELAYX  = 12,
       IVL_ST_DISABLE = 13,
       IVL_ST_DO_WHILE = 30,
+      IVL_ST_FORLOOP = 34,
       IVL_ST_FORCE   = 14,
       IVL_ST_FOREVER = 15,
       IVL_ST_FORK    = 16,
@@ -2215,6 +2218,21 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  * force l-values, and also non-constant bit or part selects. The
  * compiler will assure these constraints are met.
  *
+ * - IVL_ST_FORLOOP
+ * This contains the key portions of a for loop, broken into the init
+ * statement, the sub statement, and the step statement. There is also
+ * a condition expression that the code generator must check. It is up
+ * to the target code generator to put these to use. In general, the
+ * result needs to reflect this:
+ *
+ *      ivl_stmt_init_stmt(net);
+ *      while( <ivl_stmt_cond_expr> is true ) {
+ *          ivl_stmt_sub_stmt(net);
+ *        continue_label:
+ *          ivl_stmt_step_stmt(net);
+ *      }
+ *      out_label:
+ *
  * - IVL_ST_TRIGGER
  * This represents the "-> name" statement that sends a trigger to a
  * named event. The ivl_stmt_nevent function should always return 1,
@@ -2250,7 +2268,7 @@ extern ivl_expr_t ivl_stmt_case_expr(ivl_statement_t net, unsigned i);
 extern ivl_case_quality_t ivl_stmt_case_quality(ivl_statement_t net);
   /* IVL_ST_CASE,IVL_ST_CASER,IVL_ST_CASEX,IVL_ST_CASEZ */
 extern ivl_statement_t ivl_stmt_case_stmt(ivl_statement_t net, unsigned i);
-  /* IVL_ST_CONDIT IVL_ST_CASE IVL_ST_REPEAT IVL_ST_WHILE */
+  /* IVL_ST_CONDIT IVL_ST_FORLOOP IVL_ST_CASE IVL_ST_REPEAT IVL_ST_WHILE */
 extern ivl_expr_t      ivl_stmt_cond_expr(ivl_statement_t net);
   /* IVL_ST_CONDIT */
 extern ivl_statement_t ivl_stmt_cond_false(ivl_statement_t net);
@@ -2289,9 +2307,14 @@ extern unsigned ivl_stmt_parm_count(ivl_statement_t net);
 extern ivl_expr_t ivl_stmt_rval(ivl_statement_t net);
   /* IVL_ST_STASK */
 extern ivl_sfunc_as_task_t ivl_stmt_sfunc_as_task(ivl_statement_t net);
-  /* IVL_ST_DELAY, IVL_ST_DELAYX, IVL_ST_FOREVER, IVL_ST_REPEAT
-     IVL_ST_WAIT, IVL_ST_WHILE */
+  /* IVL_ST_DELAY, IVL_ST_DELAYX, IVL_ST_FOREVER, IVL_ST_FORLOOP,
+     IVL_ST_REPEAT, IVL_ST_WAIT, IVL_ST_WHILE */
 extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
+  /* IVL_ST_FORLOOP */
+extern ivl_statement_t ivl_stmt_init_stmt(ivl_statement_t net);
+  /* IVL_ST_FORLOOP */
+extern ivl_statement_t ivl_stmt_step_stmt(ivl_statement_t net);
+
 
 /* SWITCHES
  *

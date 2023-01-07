@@ -3062,6 +3062,12 @@ class NetBlock  : public NetProc {
       NetProc*last_;
 };
 
+class NetBreak : public NetProc {
+    public:
+      virtual void dump(std::ostream&, unsigned ind) const;
+      virtual bool emit_proc(struct target_t*) const;
+};
+
 /*
  * A CASE statement in the Verilog source leads, eventually, to one of
  * these. This is different from a simple conditional because of the
@@ -3208,6 +3214,12 @@ class NetCondit  : public NetProc {
       NetExpr* expr_;
       NetProc*if_;
       NetProc*else_;
+};
+
+class NetContinue : public NetProc {
+    public:
+      virtual void dump(std::ostream&, unsigned ind) const;
+      virtual bool emit_proc(struct target_t*) const;
 };
 
 /*
@@ -3628,8 +3640,6 @@ class NetForLoop : public NetProc {
 			  NetProc*sub, NetProc*step);
       ~NetForLoop();
 
-      void wrap_up();
-
       void emit_recurse(struct target_t*) const;
 
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
@@ -3642,6 +3652,11 @@ class NetForLoop : public NetProc {
       virtual bool evaluate_function(const LineInfo&loc,
 				     std::map<perm_string,LocalVar>&ctx) const;
 
+      bool emit_recurse_init(struct target_t*) const;
+      bool emit_recurse_stmt(struct target_t*) const;
+      bool emit_recurse_step(struct target_t*) const;
+      bool emit_recurse_condition(struct expr_scan_t*) const;
+
 	// synthesize as asynchronous logic, and return true.
       bool synth_async(Design*des, NetScope*scope,
 		       NexusSet&nex_map, NetBus&nex_out,
@@ -3650,15 +3665,10 @@ class NetForLoop : public NetProc {
     private:
       NetNet*index_;
       NetExpr*init_expr_;
+      NetProc*init_statement_; // Generated form index_ and init_expr_.
       NetExpr*condition_;
       NetProc*statement_;
       NetProc*step_statement_;
-
-	// The code generator needs to see this rewritten as a while
-	// loop with synthetic statements. This is a hack that I
-	// should probably take out later as the ivl_target learns
-	// about for loops.
-      NetBlock*as_block_;
 };
 
 class NetFree   : public NetProc {

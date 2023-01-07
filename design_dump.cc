@@ -1180,6 +1180,11 @@ void NetBlock::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "end" << endl;
 }
 
+void NetBreak::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "break;" << endl;
+}
+
 void NetCase::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "";
@@ -1246,6 +1251,11 @@ void NetCondit::dump(ostream&o, unsigned ind) const
 	    o << setw(ind) << "" << "else" << endl;
 	    else_->dump(o, ind+4);
       }
+}
+
+void NetContinue::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "continue;" << endl;
 }
 
 void NetContribution::dump(ostream&o, unsigned ind) const
@@ -1386,10 +1396,26 @@ void NetForLoop::dump(ostream&fd, unsigned ind) const
 	    fd << index_->name();
       else
 	    fd << "<nil>";
+      fd << ", init_expr=";
+      if (init_expr_)
+	    fd << *init_expr_;
+      else
+	    fd << "<nil>";
+      fd << ", condition=";
+      if (condition_)
+	    fd << *condition_;
+      else
+	    fd << "<nil>";
       fd << endl;
+      fd << setw(ind+4) << "" << "Init Statement {" << endl;
+      if (init_statement_)
+	    init_statement_->dump(fd, ind+8);
+      fd << setw(ind+4) << "" << "}" << endl;
       statement_->dump(fd, ind+4);
+      fd << setw(ind+4) << "" << "Step Statement {" << endl;
       if (step_statement_)
-	    step_statement_->dump(fd, ind+4);
+	    step_statement_->dump(fd, ind+8);
+      fd << setw(ind+4) << "" << "}" << endl;
 }
 
 void NetFree::dump(ostream&o, unsigned ind) const

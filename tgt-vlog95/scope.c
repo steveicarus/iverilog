@@ -905,7 +905,9 @@ static unsigned has_func_disable(ivl_scope_t scope, ivl_statement_t stmt)
 	case IVL_ST_NOOP:
 	case IVL_ST_ALLOC:
 	case IVL_ST_ASSIGN:
+        case IVL_ST_BREAK:
 	case IVL_ST_CASSIGN:
+        case IVL_ST_CONTINUE:
 	case IVL_ST_DEASSIGN:
 	case IVL_ST_FORCE:
 	case IVL_ST_FREE:
@@ -944,6 +946,7 @@ static unsigned has_func_disable(ivl_scope_t scope, ivl_statement_t stmt)
 	  /* These have a single sub-statement so look for a disable there. */
 	case IVL_ST_DO_WHILE:
 	case IVL_ST_FOREVER:
+        case IVL_ST_FORLOOP:
 	case IVL_ST_REPEAT:
 	case IVL_ST_WHILE:
 	    rtn = has_func_disable(scope, ivl_stmt_sub_stmt(stmt));

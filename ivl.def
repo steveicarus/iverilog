@@ -294,6 +294,7 @@ ivl_stmt_delay_val
 ivl_stmt_events
 ivl_stmt_file
 ivl_stmt_flow_control
+ivl_stmt_init_stmt
 ivl_stmt_lexp
 ivl_stmt_lineno
 ivl_stmt_lval
@@ -307,6 +308,7 @@ ivl_stmt_parm
 ivl_stmt_parm_count
 ivl_stmt_rval
 ivl_stmt_sfunc_as_task
+ivl_stmt_step_stmt
 ivl_stmt_sub_stmt
 
 ivl_switch_a

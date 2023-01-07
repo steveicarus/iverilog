@@ -2810,6 +2810,10 @@ extern "C" ivl_expr_t ivl_stmt_cond_expr(ivl_statement_t net)
 	  case IVL_ST_WHILE:
 	    return net->u_.while_.cond_;
 
+	  case IVL_ST_FORLOOP:
+	    assert(net->u_.forloop_.condition); // XXXX
+	    return net->u_.forloop_.condition;
+
 	  default:
 	    assert(0);
 	    return 0;
@@ -2861,6 +2865,18 @@ extern "C" uint64_t ivl_stmt_delay_val(ivl_statement_t net)
       assert(net);
       assert(net->type_ == IVL_ST_DELAY);
       return net->u_.delay_.value;
+}
+
+extern "C" ivl_statement_t ivl_stmt_init_stmt(ivl_statement_t net)
+{
+      assert(net);
+      switch (net->type_) {
+	  case IVL_ST_FORLOOP:
+	    return net->u_.forloop_.init_stmt;
+	  default:
+	    assert(0);
+	    return 0;
+      }
 }
 
 extern "C" unsigned ivl_stmt_needs_t0_trigger(ivl_statement_t net)
@@ -3091,6 +3107,18 @@ extern "C" ivl_sfunc_as_task_t ivl_stmt_sfunc_as_task(ivl_statement_t net)
       return IVL_SFUNC_AS_TASK_ERROR;
 }
 
+extern "C" ivl_statement_t ivl_stmt_step_stmt(ivl_statement_t net)
+{
+      assert(net);
+      switch (net->type_) {
+	  case IVL_ST_FORLOOP:
+	    return net->u_.forloop_.step;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
 extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 {
       assert(net);
@@ -3101,6 +3129,8 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 	    return net->u_.delayx_.stmt_;
 	  case IVL_ST_FOREVER:
 	    return net->u_.forever_.stmt_;
+	  case IVL_ST_FORLOOP:
+	    return net->u_.forloop_.stmt;
 	  case IVL_ST_WAIT:
 	    return net->u_.wait_.stmt_;
 	  case IVL_ST_DO_WHILE:

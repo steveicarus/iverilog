@@ -1622,8 +1622,14 @@ join_keyword /* IEEE1800-2005: A.6.3 */
 
 jump_statement /* IEEE1800-2005: A.6.5 */
   : K_break ';'
-      { yyerror(@1, "sorry: break statements not supported.");
-	$$ = 0;
+      { PBreak*tmp = new PBreak;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_continue ';'
+      { PContinue*tmp = new PContinue;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   | K_return ';'
       { PReturn*tmp = new PReturn(0);

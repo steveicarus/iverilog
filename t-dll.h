@@ -113,9 +113,11 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool proc_assign(const NetAssign*);
       void proc_assign_nb(const NetAssignNB*);
       bool proc_block(const NetBlock*);
+      bool proc_break(const NetBreak*);
       void proc_case(const NetCase*);
       bool proc_cassign(const NetCAssign*);
       bool proc_condit(const NetCondit*);
+      bool proc_continue(const NetContinue*);
       bool proc_contribution(const NetContribution*);
       bool proc_deassign(const NetDeassign*);
       bool proc_delay(const NetPDelay*);
@@ -123,6 +125,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void proc_do_while(const NetDoWhile*);
       bool proc_force(const NetForce*);
       void proc_forever(const NetForever*);
+      bool proc_forloop(const NetForLoop*);
       void proc_free(const NetFree*);
       bool proc_release(const NetRelease*);
       void proc_repeat(const NetRepeat*);
@@ -850,6 +853,13 @@ struct ivl_statement_s {
 	    struct { /* IVL_ST_FOREVER */
 		  ivl_statement_t stmt_;
 	    } forever_;
+
+	    struct { /* IVL_ST_FORLOOP */
+		  ivl_statement_t init_stmt;
+		  ivl_expr_t condition;
+		  ivl_statement_t stmt;
+		  ivl_statement_t step;
+	    } forloop_;
 
 	    struct { /* IVL_ST_FREE */
 		  ivl_scope_t scope;

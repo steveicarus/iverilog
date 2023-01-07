@@ -15,9 +15,6 @@
 #    Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 #    Boston, MA 02110-1301, USA.
 #
-#ident "$Id: Makefile.in,v 1.26 2007/02/06 05:07:32 steve Exp $"
-#
-#
 SHELL = /bin/sh
 
 suffix = @install_suffix@
@@ -53,7 +50,7 @@ O = vvp.o draw_class.o draw_delay.o draw_enum.o draw_mux.o draw_net_input.o \
     eval_expr.o eval_object.o eval_real.o eval_string.o \
     eval_vec4.o \
     modpath.o stmt_assign.o \
-    vvp_process.o vvp_scope.o
+    vvp_process.o vvp_proc_loops.o vvp_scope.o
 
 all: dep vvp.tgt vvp.conf vvp-s.conf
 

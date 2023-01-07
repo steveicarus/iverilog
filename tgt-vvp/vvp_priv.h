@@ -274,5 +274,16 @@ extern unsigned thread_count;
 
 extern void darray_new(ivl_type_t element_type, unsigned size_reg);
 
+/*
+ * These are various statement code generators.
+ */
+extern int show_statement(ivl_statement_t net, ivl_scope_t sscope);
+
+extern int show_stmt_break(ivl_statement_t net, ivl_scope_t sscope);
+extern int show_stmt_continue(ivl_statement_t net, ivl_scope_t sscope);
+extern int show_stmt_forever(ivl_statement_t net, ivl_scope_t sscope);
+extern int show_stmt_forloop(ivl_statement_t net, ivl_scope_t sscope);
+extern int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope);
+extern int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope);
 
 #endif /* IVL_vvp_priv_H */
