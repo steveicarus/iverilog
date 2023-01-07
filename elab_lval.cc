@@ -227,6 +227,15 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 		 << endl;
       }
 
+      return elaborate_lval_var_(des, scope, is_force, is_cassign, reg,
+			         sr.type, member_path);
+}
+
+NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
+				        bool is_force, bool is_cassign,
+					NetNet *reg, ivl_type_t data_type,
+					pform_name_t tail_path) const
+{
 	// We are processing the tail of a string of names. For
 	// example, the Verilog may be "a.b.c", so we are processing
 	// "c" at this point.
@@ -266,7 +275,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	  && (reg->type() != NetNet::UNRESOLVED_WIRE)
 	  && !is_force) {
 	    cerr << get_fileline() << ": error: " << path_ <<
-		  " is not a valid l-value in " << scope_path(use_scope) <<
+		  " is not a valid l-value in " << scope_path(scope) <<
 		  "." << endl;
 	    cerr << reg->get_fileline() << ":      : " << path_ <<
 		  " is declared here as " << reg->type() << "." << endl;
@@ -277,25 +286,23 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
 	// If we find that the matched variable is a packed struct,
 	// then we can handled it with the net_packed_member_ method.
-      if (reg->struct_type() && !member_path.empty()) {
+      if (reg->struct_type() && !tail_path.empty()) {
 	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_packed_member_(des, scope, lv, member_path);
+	    elaborate_lval_net_packed_member_(des, scope, lv, tail_path);
 	    return lv;
       }
 
 	// If the variable is a class object, then handle it with the
 	// net_class_member_ method.
-      const netclass_t *class_type = dynamic_cast<const netclass_t *>(sr.type);
-      if (class_type && !member_path.empty() && gn_system_verilog()) {
-	    NetAssign_*lv = elaborate_lval_net_class_member_(des, scope, class_type, reg, member_path);
-	    return lv;
-      }
+      const netclass_t *class_type = dynamic_cast<const netclass_t *>(data_type);
+      if (class_type && !tail_path.empty() && gn_system_verilog())
+	    return elaborate_lval_net_class_member_(des, scope, class_type, reg, tail_path);
 
 
 	// Past this point, we should have taken care of the cases
 	// where the name is a member/method of a struct/class.
 	// XXXX ivl_assert(*this, method_name.nil());
-      ivl_assert(*this, member_path.empty());
+      ivl_assert(*this, tail_path.empty());
 
       bool need_const_idx = is_cassign || is_force || (reg->type()==NetNet::UNRESOLVED_WIRE);
 
@@ -380,10 +387,11 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
 
       property_qualifier_t qual = class_type->get_prop_qual(pidx);
 
-	// Static properties are handled as normal signals. Regular symbol
-	// search will find it.
-      if (qual.test_static())
-	    return 0;
+      if (qual.test_static()) {
+	    NetNet *sig = class_type->find_static_property(member_name);
+	    return elaborate_lval_var_(des, scope, false, false, sig,
+				       class_type, {});
+      }
 
       NetScope*scope_method = find_method_containing_scope(*this, scope);
       ivl_assert(*this, scope_method);

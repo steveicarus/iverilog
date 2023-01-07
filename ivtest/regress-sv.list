@@ -590,6 +590,7 @@ sv_class_return		normal,-g2009		ivltests
 sv_class_static_prop1	normal,-g2009		ivltests
 sv_class_static_prop2	normal,-g2009		ivltests
 sv_class_static_prop3	normal,-g2009		ivltests
+sv_class_static_prop4	normal,-g2009		ivltests
 sv_class_super1		normal,-g2009		ivltests
 sv_class_super2		normal,-g2009		ivltests
 sv_class_super3		normal,-g2009		ivltests
