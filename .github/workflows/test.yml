@@ -28,7 +28,7 @@ jobs:
         export PATH="/usr/local/opt/bison/bin:$PATH"
         autoconf
         ./configure
-        make check
+        make -j$(nproc) check
         sudo make install
 
     - name: Test
@@ -58,7 +58,7 @@ jobs:
       run: |
         autoconf
         ./configure
-        make check
+        make -j$(nproc) check
         sudo make install
 
     - name: Test
