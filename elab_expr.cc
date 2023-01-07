@@ -2606,34 +2606,6 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
       return tmp;
 }
 
-NetExpr* PECallFunction::elaborate_expr_pkg_(Design*des, NetScope*scope,
-					     unsigned flags) const
-{
-      if (debug_elaborate) {
-	    cerr << get_fileline() << ": PECallFunction::elaborate_expr_pkg_: "
-		 << "Elaborate " << path_
-		 << " as function in package " << package_->pscope_name()
-		 << "." << endl;
-      }
-
-	// Find the package that contains this definition, and use the
-	// package scope as the search starting point for the function
-	// definition.
-      NetScope*pscope = des->find_package(package_->pscope_name());
-      ivl_assert(*this, pscope);
-
-      NetFuncDef*def = des->find_function(pscope, path_);
-      ivl_assert(*this, def);
-
-      NetScope*dscope = def->scope();
-      ivl_assert(*this, dscope);
-
-      if (! check_call_matches_definition_(des, dscope))
-	    return 0;
-
-      return elaborate_base_(des, scope, dscope, flags);
-}
-
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					unsigned expr_wid, unsigned flags) const
 {
@@ -2661,14 +2633,17 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 					 unsigned flags) const
 {
-      if (package_)
-	    return elaborate_expr_pkg_(des, scope, flags);
-
       flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
+
+      NetScope *use_scope = scope;
+      if (package_) {
+	    use_scope = des->find_package(package_->pscope_name());
+	    ivl_assert(*this, use_scope);
+      }
 
       // Search for the symbol. This should turn up a scope.
       symbol_search_results search_results;
-      bool search_flag = symbol_search(this, des, scope, path_, &search_results);
+      bool search_flag = symbol_search(this, des, use_scope, path_, &search_results);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
