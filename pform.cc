@@ -3053,23 +3053,10 @@ extern PSpecPath* pform_make_specify_path(const struct vlltype&li,
 					  list<perm_string>*src, char pol,
 					  bool full_flag, list<perm_string>*dst)
 {
-      PSpecPath*path = new PSpecPath(src->size(), dst->size(), pol, full_flag);
+      PSpecPath*path = new PSpecPath(*src, *dst, pol, full_flag);
       FILE_NAME(path, li);
 
-      unsigned idx;
-      list<perm_string>::const_iterator cur;
-
-      idx = 0;
-      for (idx = 0, cur = src->begin() ;  cur != src->end() ;  ++ idx, ++ cur) {
-	    path->src[idx] = *cur;
-      }
-      ivl_assert(li, idx == path->src.size());
       delete src;
-
-      for (idx = 0, cur = dst->begin() ;  cur != dst->end() ;  ++ idx, ++ cur) {
-	    path->dst[idx] = *cur;
-      }
-      ivl_assert(li, idx == path->dst.size());
       delete dst;
 
       return path;

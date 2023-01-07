@@ -99,14 +99,8 @@ PEAssignPattern::PEAssignPattern()
 }
 
 PEAssignPattern::PEAssignPattern(const list<PExpr*>&p)
-: parms_(p.size())
+: parms_(p.begin(), p.end())
 {
-      size_t idx = 0;
-      for (list<PExpr*>::const_iterator cur = p.begin()
-		 ; cur != p.end() ; ++cur) {
-	    parms_[idx] = *cur;
-	    idx += 1;
-      }
 }
 
 PEAssignPattern::~PEAssignPattern()
@@ -239,14 +233,9 @@ static pform_name_t pn_from_ps(perm_string n)
       return tmp;
 }
 
-PECallFunction::PECallFunction(PPackage*pkg, const pform_name_t &n, const list<PExpr *> &parms)
-: path_(pkg, n), parms_(parms.size()), is_overridden_(false)
+PECallFunction::PECallFunction(PPackage*pkg, const pform_name_t&n, const list<PExpr *> &parms)
+: path_(pkg, n), parms_(parms.begin(), parms.end()), is_overridden_(false)
 {
-      int tmp_idx = 0;
-      ivl_assert(*this, parms_.size() == parms.size());
-      for (list<PExpr*>::const_iterator idx = parms.begin()
-		 ; idx != parms.end() ; ++idx)
-	    parms_[tmp_idx++] = *idx;
 }
 
 PECallFunction::PECallFunction(perm_string n, const vector<PExpr*>&parms)
@@ -261,23 +250,13 @@ PECallFunction::PECallFunction(perm_string n)
 
 // NOTE: Anachronism. Try to work all use of svector out.
 PECallFunction::PECallFunction(const pform_name_t&n, const list<PExpr *> &parms)
-: path_(n), parms_(parms.size()), is_overridden_(false)
+: path_(n), parms_(parms.begin(), parms.end()), is_overridden_(false)
 {
-      int tmp_idx = 0;
-      ivl_assert(*this, parms_.size() == parms.size());
-      for (list<PExpr*>::const_iterator idx = parms.begin()
-		 ; idx != parms.end() ; ++idx)
-	    parms_[tmp_idx++] = *idx;
 }
 
 PECallFunction::PECallFunction(perm_string n, const list<PExpr*>&parms)
-: path_(pn_from_ps(n)), parms_(parms.size()), is_overridden_(false)
+: package_(0), path_(pn_from_ps(n)), parms_(parms.begin(), parms.end()), is_overridden_(false)
 {
-      int tmp_idx = 0;
-      ivl_assert(*this, parms_.size() == parms.size());
-      for (list<PExpr*>::const_iterator idx = parms.begin()
-		 ; idx != parms.end() ; ++idx)
-	    parms_[tmp_idx++] = *idx;
 }
 
 PECallFunction::~PECallFunction()
@@ -303,14 +282,8 @@ bool PECallFunction::has_aa_term(Design*des, NetScope*scope) const
 }
 
 PEConcat::PEConcat(const list<PExpr*>&p, PExpr*r)
-: parms_(p.size()), width_modes_(SIZED, p.size()), repeat_(r)
+: parms_(p.begin(), p.end()), width_modes_(SIZED, p.size()), repeat_(r)
 {
-      int tmp_idx = 0;
-      ivl_assert(*this, parms_.size() == p.size());
-      for (list<PExpr*>::const_iterator idx = p.begin()
-		 ; idx != p.end() ; ++idx)
-	    parms_[tmp_idx++] = *idx;
-
       tested_scope_ = 0;
       repeat_count_ = 1;
 }
@@ -494,13 +467,8 @@ PENewClass::PENewClass(void)
 }
 
 PENewClass::PENewClass(const list<PExpr*>&p, data_type_t *class_type)
-: parms_(p.size()), class_type_(class_type)
+: parms_(p.begin(), p.end()), class_type_(class_type)
 {
-      size_t tmp_idx = 0;
-      for (list<PExpr*>::const_iterator cur = p.begin()
-		 ; cur != p.end() ; ++ cur) {
-	    parms_[tmp_idx++] = *cur;
-      }
 }
 
 PENewClass::~PENewClass()
