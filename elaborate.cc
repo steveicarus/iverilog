@@ -3344,7 +3344,7 @@ NetProc* PChainConstructor::elaborate(Design*des, NetScope*scope) const
 		  }
 
 		  if (NetExpr*tmp = def->port_defe(idx)) {
-			parms[idx] = tmp;
+			parms[idx] = tmp->dup_expr();
 			continue;
 		  }
 
@@ -4173,9 +4173,9 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 			        "requires SystemVerilog." << endl;
 			des->errors += 1;
 		  }
-		  rv = def->port_defe(idx);
+		  rv = def->port_defe(idx)->dup_expr();
 		  if (lv_type==IVL_VT_BOOL||lv_type==IVL_VT_LOGIC)
-			rv = pad_to_width(rv->dup_expr(), wid, *this);
+			rv = pad_to_width(rv, wid, *this);
 
 	    } else {
 		  cerr << get_fileline() << ": error: "

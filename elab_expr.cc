@@ -2954,7 +2954,7 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
 			     << "requires SystemVerilog." << endl;
 			des->errors += 1;
 		  }
-		  parms[pidx] = def->port_defe(pidx);
+		  parms[pidx] = def->port_defe(pidx)->dup_expr();
 
 	    } else {
 		  missing_parms += 1;
@@ -6573,7 +6573,7 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 	      // Ran out of explicit arguments. Is there a default
 	      // argument we can use?
 	    if (NetExpr*tmp = def->port_defe(idx)) {
-		  parms[idx] = tmp;
+		  parms[idx] = tmp->dup_expr();
 		  continue;
 	    }
 
