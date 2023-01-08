@@ -173,6 +173,8 @@ br_gh167a		normal,-g2009		ivltests
 br_gh167b		normal,-g2009		ivltests
 br_gh177a		normal,-g2009		ivltests
 br_gh177b		normal,-g2009		ivltests
+br_gh191_break		normal,-g2009		ivltests
+br_gh191_continue	normal,-g2009		ivltests
 br_gh194		normal,-g2009		ivltests
 br_gh219		normal,-g2009		ivltests
 br_gh220		normal,-g2009		ivltests
