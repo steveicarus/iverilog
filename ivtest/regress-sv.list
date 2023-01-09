@@ -313,6 +313,13 @@ fork_join_any		normal,-g2009		ivltests
 fork_join_dis		normal,-g2009		ivltests
 fork_join_none		normal,-g2009		ivltests
 fr49			normal,-g2009		ivltests
+func_empty_arg1		normal,-g2005-sv	ivltests
+func_empty_arg2		normal,-g2005-sv	ivltests
+func_empty_arg3		normal,-g2005-sv	ivltests
+func_empty_arg_fail1	CE,-g2005-sv		ivltests
+func_empty_arg_fail2	CE,-g2005-sv		ivltests
+func_empty_arg_fail3	CE,-g2005-sv		ivltests
+func_empty_arg_fail4	CE,-g2005-sv		ivltests
 func_init_var1		normal,-g2009		ivltests
 func_init_var2		normal,-g2009		ivltests
 func_init_var3		normal,-g2009		ivltests
