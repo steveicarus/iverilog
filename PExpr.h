@@ -521,7 +521,8 @@ class PEIdent : public PExpr {
 					   unsigned expr_wid,
 					   unsigned flags) const;
 
-      unsigned test_width_method_(Design*des, NetScope*scope, width_mode_t&mode);
+      unsigned test_width_method_(const symbol_search_results &sr);
+
 
       unsigned test_width_parameter_(const NetExpr *par, width_mode_t&mode);
 
@@ -886,8 +887,7 @@ class PECallFunction : public PExpr {
     public:
       explicit PECallFunction(const pform_name_t&n, const std::vector<PExpr *> &parms);
 	// Call function defined in package.
-      explicit PECallFunction(PPackage*pkg, perm_string n, const std::vector<PExpr *> &parms);
-      explicit PECallFunction(PPackage*pkg, perm_string n, const std::list<PExpr *> &parms);
+      explicit PECallFunction(PPackage*pkg, const pform_name_t&n, const std::list<PExpr *> &parms);
 
 	// Used to convert a user function called as a task
       explicit PECallFunction(PPackage*pkg, const pform_name_t&n, const std::vector<PExpr *> &parms);

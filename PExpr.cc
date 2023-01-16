@@ -238,8 +238,8 @@ static pform_name_t pn_from_ps(perm_string n)
       return tmp;
 }
 
-PECallFunction::PECallFunction(PPackage*pkg, perm_string n, const list<PExpr *> &parms)
-: package_(pkg), path_(pn_from_ps(n)), parms_(parms.size()), is_overridden_(false)
+PECallFunction::PECallFunction(PPackage*pkg, const pform_name_t&n, const list<PExpr *> &parms)
+: package_(pkg), path_(n), parms_(parms.size()), is_overridden_(false)
 {
       int tmp_idx = 0;
       assert(parms_.size() == parms.size());

@@ -3981,7 +3981,7 @@ NetExpr* PEIdent::calculate_up_do_base_(Design*des, NetScope*scope,
       return tmp;
 }
 
-unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
+unsigned PEIdent::test_width_method_(const symbol_search_results &sr)
 {
       if (!gn_system_verilog())
 	    return 0;
@@ -3998,12 +3998,7 @@ unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
 		 << " of signal " << use_path << endl;
       }
 
-      NetNet*net = 0;
-      ivl_type_t cls_val = 0;
-      const NetExpr*par = 0;
-      ivl_type_t par_type = 0;
-      NetEvent*eve = 0;
-      symbol_search(this, des, scope, use_path, net, par, eve, par_type, cls_val);
+      NetNet *net = sr.net;
       if (net == 0) {
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": PEIdent::test_width_method_: "
@@ -4088,12 +4083,12 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    ivl_assert(*this, use_scope);
       }
 
-      if (unsigned tmp = test_width_method_(des, scope, mode)) {
-	    return tmp;
-      }
-
       symbol_search_results sr;
       symbol_search(this, des, use_scope, path_, &sr);
+
+      if (unsigned tmp = test_width_method_(sr)) {
+	    return tmp;
+      }
 
 	// If there is a part/bit select expression, then process it
 	// here. This constrains the results no matter what kind the
