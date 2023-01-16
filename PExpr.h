@@ -412,7 +412,6 @@ class PEIdent : public PExpr {
 				      bool is_force, bool is_cassign,
 				      NetNet *reg, ivl_type_t data_type,
 				      pform_name_t tail_path) const;
-      NetAssign_*elaborate_lval_method_class_member_(Design*, NetScope*) const;
       NetAssign_*elaborate_lval_net_word_(Design*, NetScope*, NetNet*,
 					  bool need_const_idx) const;
       bool elaborate_lval_net_bit_(Design*, NetScope*, NetAssign_*,
@@ -510,11 +509,6 @@ class PEIdent : public PExpr {
 					   NetESignal*net,
 					   NetScope*found,
 					   bool need_const) const;
-
-      NetExpr*elaborate_expr_class_member_(Design*des,
-					   NetScope*scope,
-					   unsigned expr_wid,
-					   unsigned flags) const;
 
       NetExpr *elaborate_expr_class_field_(Design*des, NetScope*scope,
 					   const symbol_search_results &sr,

@@ -187,16 +187,21 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 
 		    // Static items are just normal signals and are found above.
 		  if (scope->type() == NetScope::CLASS) {
-			netclass_t*clsnet = scope->find_class(des, scope->basename());
+			const netclass_t *clsnet = scope->class_def();
 			int pidx = clsnet->property_idx_from_name(path_tail.name);
 			if (pidx >= 0) {
-			      ivl_type_t prop_type = clsnet->get_prop_type(pidx);
-			      const netuarray_t*tmp_ua = dynamic_cast<const netuarray_t*>(prop_type);
-			      if (tmp_ua) prop_type = tmp_ua->element_type();
-			      path.push_back(path_tail);
+			      // This is a class property being accessed in a
+			      // class method. Return `this` for the net and the
+			      // property name for the path tail.
+			      NetScope *scope_method = find_method_containing_scope(*li, start_scope);
+			      ivl_assert(*li, scope_method);
+			      res->net = scope_method->find_signal(perm_string::literal(THIS_TOKEN));
+			      ivl_assert(*li, res->net);
 			      res->scope = scope;
-			      res->cls_val = prop_type;
-			      res->path_head = path;
+			      ivl_assert(*li, path.empty());
+			      res->path_head.push_back(name_component_t(perm_string::literal(THIS_TOKEN)));
+			      res->path_tail.push_front(path_tail);
+			      res->type = clsnet;
 			      return true;
 			}
 		  }
@@ -311,14 +316,12 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		       NetNet*&net,
 		       const NetExpr*&par,
 		       NetEvent*&eve,
-		       ivl_type_t&par_type,
-		       ivl_type_t&cls_val)
+		       ivl_type_t&par_type)
 {
       symbol_search_results recurse;
       bool flag = symbol_search(li, des, scope, path, &recurse);
 
       net = 0;
-      cls_val = 0;
       par = 0;
       par_type = 0;
       eve = 0;
@@ -335,7 +338,6 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 
       // Convert the extended results to the compatible results.
       net = recurse.net;
-      cls_val = recurse.cls_val;
       par = recurse.par_val;
       par_type = recurse.type;
       eve = recurse.eve;

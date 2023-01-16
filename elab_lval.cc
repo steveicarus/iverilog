@@ -165,11 +165,6 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 		 << "Elaborate l-value ident expression: " << *this << endl;
       }
 
-	/* Try to detect the special case that we are in a method and
-	   the identifier is a member of the class. */
-      if (NetAssign_*tmp = elaborate_lval_method_class_member_(des, scope))
-	    return tmp;
-
 	/* Normally find the name in the passed scope. But if this is
 	   imported from a package, then located the variable from the
 	   package scope. */
@@ -362,132 +357,6 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
       lv->set_signed(reg->get_signed());
 
       return lv;
-}
-
-NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
-							 NetScope*scope) const
-{
-      if (!gn_system_verilog())
-	    return 0;
-      if (scope->parent() == 0 || scope->type() == NetScope::CLASS)
-	    return 0;
-      if (path_.size() != 1)
-	    return 0;
-
-      const netclass_t*class_type = find_class_containing_scope(*this, scope);
-      if (class_type == 0)
-	    return 0;
-
-      const name_component_t&name_comp = path_.back();
-
-      perm_string member_name = name_comp.name;
-      int pidx = class_type->property_idx_from_name(member_name);
-      if (pidx < 0)
-	    return 0;
-
-      property_qualifier_t qual = class_type->get_prop_qual(pidx);
-
-      if (qual.test_static()) {
-	    NetNet *sig = class_type->find_static_property(member_name);
-	    return elaborate_lval_var_(des, scope, false, false, sig,
-				       class_type, {});
-      }
-
-      NetScope*scope_method = find_method_containing_scope(*this, scope);
-      ivl_assert(*this, scope_method);
-
-      NetNet*this_net = scope_method->find_signal(perm_string::literal(THIS_TOKEN));
-      if (this_net == 0) {
-	    cerr << get_fileline() << ": internal error: "
-		 << "Unable to find 'this' port of " << scope_path(scope_method)
-		 << "." << endl;
-	    return 0;
-      }
-
-      if (debug_elaborate) {
-	    cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
-		 << "Ident " << member_name
-		 << " is a property of class " << class_type->get_name() << endl;
-      }
-
-      NetExpr*canon_index = 0;
-      if (! name_comp.index.empty()) {
-	    ivl_type_t property_type = class_type->get_prop_type(pidx);
-
-	    if (const netsarray_t* stype = dynamic_cast<const netsarray_t*> (property_type)) {
-		  canon_index = make_canonical_index(des, scope, this,
-						     name_comp.index, stype, false);
-
-	    } else {
-		  cerr << get_fileline() << ": error: "
-		       << "Index expressions don't apply to this type of property." << endl;
-		  des->errors += 1;
-	    }
-      }
-
-	// Detect assignment to constant properties. Note that the
-	// initializer constructor MAY assign to constant properties,
-	// as this is how the property gets its value.
-      if (qual.test_const()) {
-	    if (class_type->get_prop_initialized(pidx)) {
-		  cerr << get_fileline() << ": error: "
-		       << "Property " << class_type->get_prop_name(pidx)
-		       << " is constant in this method."
-		       << " (scope=" << scope_path(scope) << ")" << endl;
-		  des->errors += 1;
-
-	    } else if (scope->basename()!="new" && scope->basename()!="new@") {
-		  cerr << get_fileline() << ": error: "
-		       << "Property " << class_type->get_prop_name(pidx)
-		       << " is constant in this method."
-		       << " (scope=" << scope_path(scope) << ")" << endl;
-		  des->errors += 1;
-
-	    } else {
-
-		    // Mark this property as initialized. This is used
-		    // to know that we have initialized the constant
-		    // object so the next assignment will be marked as
-		    // illegal.
-		  class_type->set_prop_initialized(pidx);
-
-		  if (debug_elaborate) {
-			cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
-			     << "Found initializers for property " << class_type->get_prop_name(pidx) << endl;
-		  }
-	    }
-      }
-
-      ivl_type_t tmp_type = class_type->get_prop_type(pidx);
-      if (const netuarray_t*tmp_ua = dynamic_cast<const netuarray_t*>(tmp_type)) {
-
-	    const std::vector<netrange_t>&dims = tmp_ua->static_dimensions();
-
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
-		       << "Property " << class_type->get_prop_name(pidx)
-		       << " has " << dims.size() << " dimensions, "
-		       << " got " << name_comp.index.size() << " indices." << endl;
-		  if (canon_index) {
-			cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
-			     << "Canonical index is:" << *canon_index << endl;
-		  };
-	    }
-
-	    if (dims.size() != name_comp.index.size()) {
-		  cerr << get_fileline() << ": error: "
-		       << "Got " << name_comp.index.size() << " indices, "
-		       << "expecting " << dims.size()
-		       << " to index the property " << class_type->get_prop_name(pidx) << "." << endl;
-		  des->errors += 1;
-	    }
-      }
-
-      NetAssign_*this_lval = new NetAssign_(this_net);
-      this_lval->set_property(member_name, pidx);
-      if (canon_index) this_lval->set_word(canon_index);
-
-      return this_lval;
 }
 
 NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
@@ -1151,10 +1020,30 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 		  return lv;
 
 	    } else if (qual.test_const()) {
-		  cerr << get_fileline() << ": error: "
-		       << "Property " << class_type->get_prop_name(pidx)
-		       << " is constant in this context." << endl;
-		  des->errors += 1;
+		 if (class_type->get_prop_initialized(pidx)) {
+		       cerr << get_fileline() << ": error: "
+			    << "Property " << class_type->get_prop_name(pidx)
+			    << " is constant in this method."
+			    << " (scope=" << scope_path(scope) << ")" << endl;
+		       des->errors++;
+		 } else if (scope->basename() != "new" && scope->basename() != "new@") {
+		       cerr << get_fileline() << ": error: "
+			    << "Property " << class_type->get_prop_name(pidx)
+			    << " is constant in this method."
+			    << " (scope=" << scope_path(scope) << ")" << endl;
+		       des->errors++;
+		 } else {
+			 // Mark this property as initialized. This is used
+			 // to know that we have initialized the constant
+			 // object so the next assignment will be marked as
+			 // illegal.
+		       class_type->set_prop_initialized(pidx);
+
+		       if (debug_elaborate) {
+			     cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
+				  << "Found initializers for property " << class_type->get_prop_name(pidx) << endl;
+		       }
+		 }
 	    }
 
 	    lv = lv? new NetAssign_(lv) : new NetAssign_(sig);
@@ -1171,6 +1060,44 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 			des->errors += 1;
 		  }
 	    }
+	    NetExpr *canon_index = nullptr;
+	    if (!member_cur.index.empty()) {
+		  if (const netsarray_t *stype = dynamic_cast<const netsarray_t*>(ptype)) {
+			canon_index = make_canonical_index(des, scope, this,
+							   member_cur.index, stype, false);
+
+		  } else {
+			cerr << get_fileline() << ": error: "
+			     << "Index expressions don't apply to this type of property." << endl;
+			des->errors++;
+		  }
+	    }
+
+	    if (const netuarray_t *tmp_ua = dynamic_cast<const netuarray_t*>(ptype)) {
+		  const std::vector<netrange_t> &dims = tmp_ua->static_dimensions();
+
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
+			     << "Property " << class_type->get_prop_name(pidx)
+			     << " has " << dims.size() << " dimensions, "
+			     << " got " << member_cur.index.size() << " indices." << endl;
+			if (canon_index) {
+			      cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
+				   << "Canonical index is:" << *canon_index << endl;
+			}
+		  }
+
+		  if (dims.size() != member_cur.index.size()) {
+			cerr << get_fileline() << ": error: "
+			     << "Got " << member_cur.index.size() << " indices, "
+			     << "expecting " << dims.size()
+			     << " to index the property " << class_type->get_prop_name(pidx) << "." << endl;
+			des->errors++;
+		  }
+	    }
+
+	    if (canon_index)
+		  lv->set_word(canon_index);
 
 	      // If the current member is a class object, then get the
 	      // type. We may wind up iterating, and need the proper
