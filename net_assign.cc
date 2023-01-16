@@ -126,10 +126,6 @@ unsigned NetAssign_::lwidth() const
 ivl_variable_type_t NetAssign_::expr_type() const
 {
       ivl_type_t ntype = net_type();
-
-      if (sig_ && sig_->data_type()==IVL_VT_STRING && base_!=0)
-	    return IVL_VT_BOOL;
-
       if (ntype)
 	    return ntype->base_type();
 
@@ -139,9 +135,13 @@ ivl_variable_type_t NetAssign_::expr_type() const
 
 ivl_type_t NetAssign_::net_type() const
 {
-	// This is a concatenation or a part select, it does not have a type
-      if (more || base_)
+	// This is a concatenation, it does not have a type
+      if (more)
 	    return nullptr;
+
+       // Selected sub-vector can have its own data type
+      if (base_)
+	    return part_data_type_;
 
       ivl_type_t ntype;
       if (nest_) {
@@ -198,6 +198,12 @@ void NetAssign_::set_part(NetExpr*base, unsigned wid,
       base_ = base;
       lwid_ = wid;
       sel_type_ = sel_type;
+}
+
+void NetAssign_::set_part(NetExpr*base, ivl_type_t data_type)
+{
+      part_data_type_ = data_type;
+      set_part(base, part_data_type_->packed_width());
 }
 
 void NetAssign_::set_property(const perm_string&mname, unsigned idx)

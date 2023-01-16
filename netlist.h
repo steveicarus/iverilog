@@ -2836,6 +2836,11 @@ class NetAssign_ {
 	// that the expression calculates a CANONICAL bit address.
       void set_part(NetExpr* loff, unsigned wid,
                     ivl_select_type_t = IVL_SEL_OTHER);
+	// Set a part select expression for the l-value vector. Note
+	// that the expression calculates a CANONICAL bit address.
+	// The part select has a specific type and the width of the select will
+	// be that of the type.
+      void set_part(NetExpr *loff, ivl_type_t data_type);
 	// Set the member or property name if the signal type is a
 	// class.
       void set_property(const perm_string&name, unsigned int idx);
@@ -2905,6 +2910,7 @@ class NetAssign_ {
       NetExpr*base_;
       unsigned lwid_;
       ivl_select_type_t sel_type_;
+      ivl_type_t part_data_type_ = nullptr;
 };
 
 class NetAssignBase : public NetProc {
