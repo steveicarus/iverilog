@@ -465,9 +465,17 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 			unsigned long tmp_lwid;
 			bool rcl = sig->sb_to_slice(prefix_indices, msb,
 						    tmp_loff, tmp_lwid);
-			ivl_assert(*this, rcl);
-			midx = tmp_loff + tmp_lwid - 1;
-			lidx = tmp_loff;
+                        if(rcl) {
+                          midx = tmp_loff + tmp_lwid - 1;
+                          lidx = tmp_loff;
+                        } else {
+                          cerr << get_fileline() << ": error: Index " << sig->name()
+                               << "[" << msb << "] is out of range."
+                               << endl;
+                          des->errors += 1;
+                          midx = 0;
+                          lidx = 0;
+                        }
 		  } else {
 			midx = sig->sb_to_idx(prefix_indices, msb);
 			if (midx >= (long)sig->vector_width()) {
@@ -632,13 +640,21 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    // containing vector, and member y an offset and width within
 	    // that.
 	    pform_name_t use_path = member_path;
+
 	    while (! use_path.empty()) {
 	          const name_component_t member_comp = use_path.front();
 	          const perm_string&member_name = member_comp.name;
 
 		  unsigned long tmp_off;
+
 		  const struct netstruct_t::member_t*member = struct_type->packed_member(member_name, tmp_off);
-		  ivl_assert(*this, member);
+
+                  if(!member) {
+                    cerr << get_fileline() << ": error: missing element " << path() << endl;
+		    des->errors += 1;
+		    return 0;
+                  }
+
 		  member_off += tmp_off;
 		  member_width = member->net_type->packed_width();
 
