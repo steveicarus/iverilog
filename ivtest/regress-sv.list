@@ -656,6 +656,9 @@ sv_foreach8		normal,-g2009		ivltests gold=sv_foreach8.gold
 sv_foreach_fail1	CE,-g2009		ivltests
 sv_immediate_assert	normal,-g2009		ivltests gold=sv_immediate_assert.gold
 sv_immediate_assume	normal,-g2009		ivltests gold=sv_immediate_assume.gold
+sv_import_hier_fail1	CE,-g2005-sv		ivltests
+sv_import_hier_fail2	CE,-g2005-sv		ivltests
+sv_import_hier_fail3	CE,-g2005-sv		ivltests
 sv_macro		normal,-g2009		ivltests
 sv_macro2		normal,-g2009		ivltests gold=sv_macro2.gold
 sv_macro3a		normal,-g2009		ivltests gold=sv_macro3.gold

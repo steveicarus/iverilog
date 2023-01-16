@@ -202,11 +202,6 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 	    }
 
-	    if (NetScope*import_scope = scope->find_import(des, path_tail.name)) {
-		  scope = import_scope;
-		  continue;
-	    }
-
 	    // Could not find an object. Maybe this is a child scope name? If
 	    // so, evaluate the path components to find the exact scope this
 	    // refers to. This item might be:
@@ -233,6 +228,12 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	    // Don't scan up if we are searching within a prefixed scope.
 	    if (prefix_scope)
 		  break;
+
+	    // Imports are not visible through hierachical names
+	    if (NetScope*import_scope = scope->find_import(des, path_tail.name)) {
+		  scope = import_scope;
+		  continue;
+	    }
 
 	    // Special case: We can match the module name of a parent
 	    // module. That means if the current scope is a module of type
