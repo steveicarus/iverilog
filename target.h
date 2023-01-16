@@ -129,15 +129,18 @@ struct target_t {
       virtual bool proc_assign(const NetAssign*);
       virtual void proc_assign_nb(const NetAssignNB*);
       virtual bool proc_block(const NetBlock*);
+      virtual bool proc_break(const NetBreak*);
       virtual void proc_case(const NetCase*);
       virtual bool proc_cassign(const NetCAssign*);
       virtual bool proc_condit(const NetCondit*);
+      virtual bool proc_continue(const NetContinue*);
       virtual bool proc_contribution(const NetContribution*);
       virtual bool proc_deassign(const NetDeassign*);
       virtual bool proc_delay(const NetPDelay*);
       virtual bool proc_disable(const NetDisable*);
       virtual void proc_do_while(const NetDoWhile*);
       virtual bool proc_force(const NetForce*);
+      virtual bool proc_forloop(const NetForLoop*) =0;
       virtual void proc_forever(const NetForever*);
       virtual void proc_free(const NetFree*);
       virtual bool proc_release(const NetRelease*);

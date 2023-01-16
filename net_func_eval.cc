@@ -776,13 +776,58 @@ bool NetForever::evaluate_function(const LineInfo&loc,
 }
 
 /*
- * For now, resort to the block form of the statement until we learn
- * to do this directly.
+ * Process the for-loop to generate a value, as if this were in a function.
  */
 bool NetForLoop::evaluate_function(const LineInfo&loc,
 				   map<perm_string,LocalVar>&context_map) const
 {
-      return as_block_->evaluate_function(loc, context_map);
+      bool flag = true;
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": NetForLoop::evaluate_function: "
+		<< "Evaluate the for look as a function." << endl;
+      }
+
+      if (init_statement_) {
+	    bool tmp_flag = init_statement_->evaluate_function(loc, context_map);
+	    flag &= tmp_flag;
+      }
+
+      while (flag && !disable) {
+	    // Evaluate the condition expression to try and get the
+	    // condition for the loop.
+	    NetExpr*cond = condition_->evaluate_function(loc, context_map);
+	    if (cond == nullptr) {
+		  flag = false;
+		  break;
+	    }
+
+	    NetEConst*cond_const = dynamic_cast<NetEConst*> (cond);
+	    ivl_assert(loc, cond_const);
+
+	    long val = cond_const->value().as_long();
+	    delete cond;
+
+	    // If the condition is false, then break;
+	    if (val == 0)
+		  break;
+
+	    bool tmp_flag = statement_->evaluate_function(loc, context_map);
+	    flag &= tmp_flag;
+
+	    if (disable)
+		  break;
+
+	    tmp_flag = step_statement_->evaluate_function(loc, context_map);
+	    flag &= tmp_flag;
+      }
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": NetForLoop::evaluate_function: "
+		<< "Done for-loop, flag=" << (flag?"true":"false") << endl;
+      }
+
+      return flag;
 }
 
 bool NetRepeat::evaluate_function(const LineInfo&loc,

@@ -325,6 +325,13 @@ bool target_t::proc_block(const NetBlock*)
       return false;
 }
 
+bool target_t::proc_break(const NetBreak*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled proc_break." << endl;
+      return false;
+}
+
 void target_t::proc_case(const NetCase*cur)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
@@ -345,6 +352,13 @@ bool target_t::proc_condit(const NetCondit*condit)
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled conditional:" << endl;
       condit->dump(cerr, 6);
+      return false;
+}
+
+bool target_t::proc_continue(const NetContinue*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled proc_continue." << endl;
       return false;
 }
 
@@ -397,6 +411,13 @@ void target_t::proc_forever(const NetForever*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_forever." << endl;
+}
+
+bool target_t::proc_forloop(const NetForLoop*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled proc_forloop." << endl;
+      return false;
 }
 
 void target_t::proc_free(const NetFree*)

@@ -243,6 +243,11 @@ bool NetBlock::emit_proc(struct target_t*tgt) const
       return tgt->proc_block(this);
 }
 
+bool NetBreak::emit_proc(struct target_t*tgt) const
+{
+      return tgt->proc_break(this);
+}
+
 bool NetCase::emit_proc(struct target_t*tgt) const
 {
       tgt->proc_case(this);
@@ -257,6 +262,11 @@ bool NetCAssign::emit_proc(struct target_t*tgt) const
 bool NetCondit::emit_proc(struct target_t*tgt) const
 {
       return tgt->proc_condit(this);
+}
+
+bool NetContinue::emit_proc(struct target_t*tgt) const
+{
+      return tgt->proc_continue(this);
 }
 
 bool NetContribution::emit_proc(struct target_t*tgt) const
@@ -298,7 +308,31 @@ bool NetForever::emit_proc(struct target_t*tgt) const
 
 bool NetForLoop::emit_proc(struct target_t*tgt) const
 {
-      return tgt->proc_block(as_block_);
+      return tgt->proc_forloop(this);
+}
+
+bool NetForLoop::emit_recurse_init(struct target_t*tgt) const
+{
+      if (init_statement_) return init_statement_->emit_proc(tgt);
+      return true;
+}
+
+bool NetForLoop::emit_recurse_stmt(struct target_t*tgt) const
+{
+      if (statement_) return statement_->emit_proc(tgt);
+      return true;
+}
+
+bool NetForLoop::emit_recurse_step(struct target_t*tgt) const
+{
+      if (step_statement_) return step_statement_->emit_proc(tgt);
+      return true;
+}
+
+bool NetForLoop::emit_recurse_condition(struct expr_scan_t*tgt) const
+{
+      if (condition_) condition_->expr_scan(tgt);
+      return true;
 }
 
 bool NetFree::emit_proc(struct target_t*tgt) const

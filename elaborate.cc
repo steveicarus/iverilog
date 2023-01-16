@@ -3055,6 +3055,21 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
       return cur;
 }
 
+NetProc* PBreak::elaborate(Design*des, NetScope*) const
+{
+      if (!gn_system_verilog()) {
+	    cerr << get_fileline() << ": error: "
+		<< "'break' jump statement requires SystemVerilog." << endl;
+	    des->errors += 1;
+	    return nullptr;
+      }
+
+
+      NetBreak*res = new NetBreak;
+      res->set_line(*this);
+      return res;
+}
+
 static int test_case_width(Design*des, NetScope*scope, PExpr*pe,
 			   PExpr::width_mode_t&mode)
 {
@@ -3443,6 +3458,20 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
       }
 
       NetCondit*res = new NetCondit(expr, i, e);
+      res->set_line(*this);
+      return res;
+}
+
+NetProc* PContinue::elaborate(Design*des, NetScope*) const
+{
+      if (!gn_system_verilog()) {
+	    cerr << get_fileline() << ": error: "
+		<< "'continue' jump statement requires SystemVerilog." << endl;
+	    des->errors += 1;
+	    return nullptr;
+      }
+
+      NetContinue*res = new NetContinue;
       res->set_line(*this);
       return res;
 }
@@ -5445,7 +5474,6 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
 
       NetForLoop*stmt = new NetForLoop(idx_sig, init_expr, cond_expr, sub, step);
       stmt->set_line(*this);
-      stmt->wrap_up();
 
       return stmt;
 }
@@ -5520,7 +5548,6 @@ NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
 
 	    stmt = new NetForLoop(idx_sig, low_expr, cond_expr, sub, step);
 	    stmt->set_line(*this);
-	    stmt->wrap_up();
 
 	    sub = stmt;
       }
@@ -5646,7 +5673,6 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 
       NetForLoop*loop = new NetForLoop(sig, initial_expr, ce, sub, step);
       loop->set_line(*this);
-      loop->wrap_up();
       return loop;
 }
 

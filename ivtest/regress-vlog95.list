@@ -576,6 +576,9 @@ implicit_cast8		EF,-g2009,-pallowsigned=1	ivltests
 implicit_cast10		EF,-g2009,-pallowsigned=1	ivltests
 implicit_cast11		EF,-g2009,-pallowsigned=1	ivltests
 
+# break and continue statements not implemented by translator.
+br_gh191_break		NI			ivltests
+br_gh191_continue	NI			ivltests
 # These tests have unresolved failures that still need to be looked at.
 # The following two have problem getting the correct net/expression
 # information from the nexus. pr1723367 is the real torture test.

@@ -229,6 +229,15 @@ static void show_stmt_force(ivl_statement_t net, unsigned ind)
       show_expression(ivl_stmt_rval(net), ind+4);
 }
 
+static void show_stmt_forloop(ivl_statement_t net, unsigned ind)
+{
+      fprintf(out, "%*sFOR-LOOP\n", ind, "");
+      show_expression(ivl_stmt_cond_expr(net), ind+4);
+      show_statement(ivl_stmt_init_stmt(net), ind+2);
+      show_statement(ivl_stmt_sub_stmt(net), ind+2);
+      show_statement(ivl_stmt_step_stmt(net), ind+2);
+}
+
 static void show_stmt_release(ivl_statement_t net, unsigned ind)
 {
       unsigned idx;
@@ -404,6 +413,11 @@ void show_statement(ivl_statement_t net, unsigned ind)
 		break;
 	  }
 
+	  case IVL_ST_BREAK: {
+		fprintf(out, "%*sbreak;\n", ind, "");
+		break;
+	  }
+
 	  case IVL_ST_CASEX:
 	  case IVL_ST_CASEZ:
 	  case IVL_ST_CASER:
@@ -471,6 +485,11 @@ void show_statement(ivl_statement_t net, unsigned ind)
 
 		break;
 	  }
+	  case IVL_ST_CONTINUE: {
+		fprintf(out, "%*scontinue;\n", ind, "");
+		break;
+	  }
+
 
 	  case IVL_ST_CONTRIB:
 	    fprintf(out, "%*sCONTRIBUTION ( <+ )\n", ind, "");
@@ -543,6 +562,10 @@ void show_statement(ivl_statement_t net, unsigned ind)
 		fprintf(out, "%*sjoin_none\n", ind, "");
 		break;
 	  }
+
+          case IVL_ST_FORLOOP:
+	    show_stmt_forloop(net, ind);
+	    break;
 
 	  case IVL_ST_FREE:
 	    fprintf(out, "%*sfree automatic storage ...\n", ind, "");

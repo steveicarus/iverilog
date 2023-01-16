@@ -211,6 +211,12 @@ class PBlock  : public PScope, public Statement, public PNamedItem {
       std::vector<Statement*>list_;
 };
 
+class PBreak : public Statement {
+    public:
+      void dump(std::ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
+};
+
 class PCallTask  : public Statement {
 
     public:
@@ -343,6 +349,13 @@ class PCondit  : public Statement {
     private: // not implemented
       PCondit(const PCondit&);
       PCondit& operator= (const PCondit&);
+};
+
+class PContinue : public Statement {
+
+    public:
+      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
 };
 
 class PDeassign  : public Statement {

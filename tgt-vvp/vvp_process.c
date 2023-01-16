@@ -23,8 +23,6 @@
 # include  <stdlib.h>
 # include  <stdbool.h>
 
-static int show_statement(ivl_statement_t net, ivl_scope_t sscope);
-
 unsigned local_count = 0;
 unsigned thread_count = 0;
 
@@ -1414,21 +1412,6 @@ static int show_stmt_force(ivl_statement_t net)
       return 0;
 }
 
-static int show_stmt_forever(ivl_statement_t net, ivl_scope_t sscope)
-{
-      int rc = 0;
-      ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
-      unsigned lab_top = local_count++;
-
-      show_stmt_file_line(net, "Forever statement.");
-
-      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_top);
-      rc += show_statement(stmt, sscope);
-      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
-
-      return rc;
-}
-
 static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 {
       unsigned idx;
@@ -1606,40 +1589,6 @@ static int show_stmt_release(ivl_statement_t net)
       return 0;
 }
 
-static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
-{
-      int rc = 0;
-      unsigned lab_top = local_count++, lab_out = local_count++;
-      ivl_expr_t expr = ivl_stmt_cond_expr(net);
-      const char *sign = ivl_expr_signed(expr) ? "s" : "u";
-
-      show_stmt_file_line(net, "Repeat statement.");
-
-	/* Calculate the repeat count onto the top of the vec4 stack. */
-      draw_eval_vec4(expr);
-
-	/* Test that 0 < expr, escape if expr <= 0. If the expr is
-	   unsigned, then we only need to try to escape if expr==0 as
-	   it will never be <0. */
-      fprintf(vvp_out, "T_%u.%u %%dup/vec4;\n", thread_count, lab_top);
-      fprintf(vvp_out, "    %%pushi/vec4 0, 0, %u;\n", ivl_expr_width(expr));
-      fprintf(vvp_out, "    %%cmp/%s;\n", sign);
-      if (ivl_expr_signed(expr))
-	    fprintf(vvp_out, "    %%jmp/1xz T_%u.%u, 5;\n", thread_count, lab_out);
-      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n", thread_count, lab_out);
-	/* This adds -1 (all ones in 2's complement) to the count. */
-      fprintf(vvp_out, "    %%pushi/vec4 1, 0, %u;\n", ivl_expr_width(expr));
-      fprintf(vvp_out, "    %%sub;\n");
-
-      rc += show_statement(ivl_stmt_sub_stmt(net), sscope);
-
-      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
-      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
-      fprintf(vvp_out, "    %%pop/vec4 1;\n");
-
-      return rc;
-}
-
 /*
  * The trigger statement is straight forward. All we have to do is
  * write a single bit of fake data to the event object.
@@ -1747,40 +1696,6 @@ static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
       }
 
       return show_statement(ivl_stmt_sub_stmt(net), sscope);
-}
-
-static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
-{
-      int rc = 0;
-
-      unsigned top_label = local_count++;
-      unsigned out_label = local_count++;
-
-      show_stmt_file_line(net, "While statement.");
-
-	/* Start the loop. The top of the loop starts a basic block
-	   because it can be entered from above or from the bottom of
-	   the loop. */
-      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, top_label);
-
-
-	/* Draw the evaluation of the condition expression, and test
-	   the result. If the expression evaluates to false, then
-	   branch to the out label. */
-      int use_flag = draw_eval_condition(ivl_stmt_cond_expr(net));
-      fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, %d;\n",
-	      thread_count, out_label, use_flag);
-      clr_flag(use_flag);
-
-	/* Draw the body of the loop. */
-      rc += show_statement(ivl_stmt_sub_stmt(net), sscope);
-
-	/* This is the bottom of the loop. branch to the top where the
-	   test is repeated, and also draw the out label. */
-      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, top_label);
-      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, out_label);
-
-      return rc;
 }
 
 static int show_delete_method(ivl_statement_t net)
@@ -2307,7 +2222,7 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
  * switches on the statement type and draws code based on the type and
  * further specifics.
  */
-static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
+int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 {
       const ivl_statement_type_t code = ivl_statement_type(net);
       int rc = 0;
@@ -2347,6 +2262,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 	    }
 	    break;
 
+          case IVL_ST_BREAK:
+	    rc += show_stmt_break(net, sscope);
+	    break;
+
 	  case IVL_ST_CASE:
 	  case IVL_ST_CASEX:
 	  case IVL_ST_CASEZ:
@@ -2363,6 +2282,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 
 	  case IVL_ST_CONDIT:
 	    rc += show_stmt_condit(net, sscope);
+	    break;
+
+          case IVL_ST_CONTINUE:
+	    rc += show_stmt_continue(net, sscope);
 	    break;
 
 	  case IVL_ST_DEASSIGN:
@@ -2397,6 +2320,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 	  case IVL_ST_FORK_JOIN_ANY:
 	  case IVL_ST_FORK_JOIN_NONE:
 	    rc += show_stmt_fork(net, sscope);
+	    break;
+
+	  case IVL_ST_FORLOOP:
+	    rc += show_stmt_forloop(net, sscope);
 	    break;
 
 	  case IVL_ST_FREE:
