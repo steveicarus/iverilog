@@ -3344,7 +3344,7 @@ NetProc* PChainConstructor::elaborate(Design*des, NetScope*scope) const
 		  }
 
 		  if (NetExpr*tmp = def->port_defe(idx)) {
-			parms[idx] = tmp;
+			parms[idx] = tmp->dup_expr();
 			continue;
 		  }
 
@@ -3508,13 +3508,6 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
       }
 
       unsigned parm_count = parms_.size();
-
-	/* Catch the special case that the system task has no
-	   parameters. The "()" string will be parsed as a single
-	   empty parameter, when we really mean no parameters at all. */
-      if ((parm_count== 1) && (parms_[0] == 0))
-	    parm_count = 0;
-
       vector<NetExpr*>eparms (parm_count);
 
       perm_string name = peek_tail_name(path_);
@@ -3660,10 +3653,7 @@ NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
       NetESignal*sig = new NetESignal(net);
       sig->set_line(*this);
 
-	/* If there is a single NULL argument then ignore it since it is
-	 * left over from the parser and is not needed by the method. */
       unsigned nparms = parms_.size();
-      if ((nparms == 1) && (parms_[0] == 0)) nparms = 0;
 
       vector<NetExpr*>argv (1 + nparms);
       argv[0] = sig;
@@ -4172,9 +4162,9 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 			        "requires SystemVerilog." << endl;
 			des->errors += 1;
 		  }
-		  rv = def->port_defe(idx);
+		  rv = def->port_defe(idx)->dup_expr();
 		  if (lv_type==IVL_VT_BOOL||lv_type==IVL_VT_LOGIC)
-			rv = pad_to_width(rv->dup_expr(), wid, *this);
+			rv = pad_to_width(rv, wid, *this);
 
 	    } else {
 		  cerr << get_fileline() << ": error: "
@@ -4354,12 +4344,6 @@ bool PCallTask::elaborate_elab(Design*des, NetScope*scope) const
       assert(path_.size() == 1);
 
       unsigned parm_count = parms_.size();
-
-        /* Catch the special case that the elaboration task has no
-           parameters. The "()" string will be parsed as a single
-           empty parameter, when we really mean no parameters at all. */
-      if ((parm_count== 1) && (parms_[0] == 0))
-            parm_count = 0;
 
       perm_string name = peek_tail_name(path_);
 
