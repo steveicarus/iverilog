@@ -2077,6 +2077,7 @@ class NetExpr  : public LineInfo {
     protected:
       void expr_width(unsigned wid) { width_ = wid; }
       void cast_signed_base_(bool flag) { signed_flag_ = flag; }
+      void set_net_type(ivl_type_t type);
 
     private:
       ivl_type_t net_type_;
@@ -2116,6 +2117,7 @@ class NetEArrayPattern  : public NetExpr {
 class NetEConst  : public NetExpr {
 
     public:
+      explicit NetEConst(ivl_type_t type, const verinum&val);
       explicit NetEConst(const verinum&val);
       ~NetEConst();
 
@@ -2153,7 +2155,6 @@ class NetEConstEnum  : public NetEConst {
       ~NetEConstEnum();
 
       perm_string name() const;
-      const netenum_t*enumeration() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(std::ostream&) const;
@@ -2161,7 +2162,6 @@ class NetEConstEnum  : public NetEConst {
       virtual NetEConstEnum* dup_expr() const;
 
     private:
-      const netenum_t*enum_set_;
       perm_string name_;
 };
 
@@ -2836,6 +2836,11 @@ class NetAssign_ {
 	// that the expression calculates a CANONICAL bit address.
       void set_part(NetExpr* loff, unsigned wid,
                     ivl_select_type_t = IVL_SEL_OTHER);
+	// Set a part select expression for the l-value vector. Note
+	// that the expression calculates a CANONICAL bit address.
+	// The part select has a specific type and the width of the select will
+	// be that of the type.
+      void set_part(NetExpr *loff, ivl_type_t data_type);
 	// Set the member or property name if the signal type is a
 	// class.
       void set_property(const perm_string&name, unsigned int idx);
@@ -2856,11 +2861,7 @@ class NetAssign_ {
 	// Get the expression type of the l-value. This may be
 	// different from the type of the contained signal if for
 	// example a darray is indexed.
-      const ivl_type_s* net_type() const;
-
-	// Return the enumeration type of this l-value, or nil if it's
-	// not an enumeration.
-      const netenum_t*enumeration() const;
+      ivl_type_t net_type() const;
 
 	// Get the name of the underlying object.
       perm_string name() const;
@@ -2905,6 +2906,7 @@ class NetAssign_ {
       NetExpr*base_;
       unsigned lwid_;
       ivl_select_type_t sel_type_;
+      ivl_type_t part_data_type_ = nullptr;
 };
 
 class NetAssignBase : public NetProc {
@@ -3924,8 +3926,6 @@ class NetEUFunc  : public NetExpr {
 
       const NetScope* func() const;
 
-      virtual ivl_variable_type_t expr_type() const;
-      virtual const netenum_t* enumeration() const;
       virtual void dump(std::ostream&) const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -4470,7 +4470,6 @@ class NetESelect  : public NetExpr {
 	// sub-expression. The type of an array/member select is
 	// the base type of the element/member.
       virtual ivl_variable_type_t expr_type() const;
-      virtual const netenum_t* enumeration() const;
 
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                                   bool nested_func = false) const;
@@ -4485,7 +4484,6 @@ class NetESelect  : public NetExpr {
     private:
       NetExpr*expr_;
       NetExpr*base_;
-      ivl_type_t use_type_;
       ivl_select_type_t sel_type_;
 };
 
@@ -4543,7 +4541,6 @@ class NetENew : public NetExpr {
       explicit NetENew(ivl_type_t, NetExpr*size, NetExpr* init_val=0);
       ~NetENew();
 
-      inline ivl_type_t get_type() const { return obj_type_; }
       inline const NetExpr*size_expr() const { return size_; }
       inline const NetExpr*init_expr() const { return init_val_; }
 
@@ -4557,7 +4554,6 @@ class NetENew : public NetExpr {
       virtual void dump(std::ostream&os) const;
 
     private:
-      ivl_type_t obj_type_;
       NetExpr*size_;
       NetExpr*init_val_;
 };
@@ -4598,7 +4594,6 @@ class NetEProperty : public NetExpr {
       inline const NetExpr*get_index() const { return index_; }
 
     public: // Overridden methods
-      ivl_variable_type_t expr_type() const;
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEProperty* dup_expr() const;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
@@ -4663,7 +4658,6 @@ class NetESFunc  : public NetExpr {
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                                   bool nested_func = false) const;
-      virtual const netenum_t* enumeration() const;
       virtual void dump(std::ostream&) const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -4739,7 +4733,6 @@ class NetESFunc  : public NetExpr {
 
       const char* name_;
       ivl_variable_type_t type_;
-      const netenum_t*enum_type_;
       std::vector<NetExpr*>parms_;
       bool is_overridden_;
 
@@ -4969,7 +4962,6 @@ class NetESignal  : public NetExpr {
                           bool nested_func = false) const;
       NexusSet* nex_input_base(bool rem_out, bool always_sens, bool nested_func,
                                unsigned base, unsigned width) const;
-      const netenum_t*enumeration() const;
 
       virtual NetExpr*evaluate_function(const LineInfo&loc,
 					std::map<perm_string,LocalVar>&ctx) const;
@@ -4994,7 +4986,6 @@ class NetESignal  : public NetExpr {
 
     private:
       NetNet*net_;
-      const netenum_t*enum_type_;
 	// Expression to select a word from the net.
       NetExpr*word_;
 };

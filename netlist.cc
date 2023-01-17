@@ -2156,10 +2156,8 @@ const NetExpr* NetSTask::parm(unsigned idx) const
 
 NetEUFunc::NetEUFunc(NetScope*scope, NetScope*def, NetESignal*res,
                      vector<NetExpr*>&p, bool nc)
-: scope_(scope), func_(def), result_sig_(res), parms_(p), need_const_(nc)
+: NetExpr(res->net_type()), scope_(scope), func_(def), result_sig_(res), parms_(p), need_const_(nc)
 {
-      expr_width(result_sig_->expr_width());
-      cast_signed_base_(result_sig_->has_sign());
 }
 
 NetEUFunc::~NetEUFunc()
@@ -2192,22 +2190,6 @@ const NetExpr* NetEUFunc::parm(unsigned idx) const
 const NetScope* NetEUFunc::func() const
 {
       return func_;
-}
-
-ivl_variable_type_t NetEUFunc::expr_type() const
-{
-      if (result_sig_)
-	    return result_sig_->expr_type();
-
-      return IVL_VT_VOID;
-}
-
-const netenum_t* NetEUFunc::enumeration() const
-{
-      if (result_sig_)
-	    return result_sig_->enumeration();
-
-      return 0;
 }
 
 NetUTask::NetUTask(NetScope*def)
@@ -2308,6 +2290,14 @@ NetEConst::NetEConst(const verinum&val)
       cast_signed_base_(value_.has_sign());
 }
 
+NetEConst::NetEConst(ivl_type_t type, const verinum&val)
+: NetExpr(type), value_(val)
+{
+      ivl_assert(*this, type->packed());
+      ivl_assert(*this, type->packed_width() == val.len());
+      ivl_assert(*this, type->get_signed() == val.has_sign());
+}
+
 NetEConst::~NetEConst()
 {
 }
@@ -2401,11 +2391,10 @@ const NetScope* NetEScope::scope() const
 }
 
 NetESignal::NetESignal(NetNet*n)
-: NetExpr(n->vector_width()), net_(n), enum_type_(n->enumeration()), word_(0)
+: NetExpr(n->net_type()), net_(n), word_(0)
 {
       net_->incr_eref();
       set_line(*n);
-      cast_signed_base_(net_->get_signed());
 }
 
 NetESignal::NetESignal(NetNet*n, NetExpr*w)
@@ -2413,7 +2402,11 @@ NetESignal::NetESignal(NetNet*n, NetExpr*w)
 {
       net_->incr_eref();
       set_line(*n);
-      cast_signed_base_(net_->get_signed());
+
+      // If it is an array we don't have a type for it yet. But for array
+      // elements the NetNet returns the element type.
+      if (word_)
+	    set_net_type(net_->net_type());
 }
 
 NetESignal::~NetESignal()
@@ -2424,11 +2417,6 @@ NetESignal::~NetESignal()
 perm_string NetESignal::name() const
 {
       return net_->name();
-}
-
-const netenum_t* NetESignal::enumeration() const
-{
-      return enum_type_;
 }
 
 const NetExpr* NetESignal::word_index() const
