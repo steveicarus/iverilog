@@ -123,6 +123,16 @@ ostream& operator<< (ostream&o, const pform_name_t&that)
       return o;
 }
 
+ostream& operator<< (ostream &o, const pform_scoped_name_t &that)
+{
+      if (that.package) {
+	    o << that.package->pscope_name() << "::";
+      }
+
+      o << that.name;
+      return o;
+}
+
 std::ostream& operator << (std::ostream&out, ivl_process_type_t pt)
 {
       switch (pt) {
@@ -405,8 +415,6 @@ void PEConcat::dump(ostream&out) const
 
 void PECallFunction::dump(ostream &out) const
 {
-      if (package_) out << package_->pscope_name() << "::";
-
       out << path_ << "(";
 
       if (! parms_.empty()) {
@@ -509,8 +517,6 @@ void PENumber::dump(ostream&out) const
 
 void PEIdent::dump(ostream&out) const
 {
-      if (package_)
-	    out << package_->pscope_name() << "::";
       out << path_;
 }
 

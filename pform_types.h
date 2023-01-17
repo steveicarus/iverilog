@@ -42,6 +42,7 @@ class NetScope;
 class Definitions;
 class PExpr;
 class PScope;
+class PPackage;
 class PWire;
 class Statement;
 class netclass_t;
@@ -441,6 +442,18 @@ ivl_type_t elaborate_array_type(Design *des, NetScope *scope,
  */
 typedef std::list<name_component_t> pform_name_t;
 
+struct pform_scoped_name_t {
+      pform_scoped_name_t() = default;
+      pform_scoped_name_t(PPackage *p, const pform_name_t &n) : package(p),
+							        name(n) {}
+      pform_scoped_name_t(const pform_name_t &n) : name(n) {}
+
+      const name_component_t& back() const { return name.back(); }
+      size_t size() const { return name.size(); }
+
+      PPackage *package = nullptr;
+      pform_name_t name;
+};
 
 inline perm_string peek_head_name(const pform_name_t&that)
 {
@@ -450,6 +463,16 @@ inline perm_string peek_head_name(const pform_name_t&that)
 inline perm_string peek_tail_name(const pform_name_t&that)
 {
       return that.back().name;
+}
+
+inline perm_string peek_head_name(const pform_scoped_name_t &that)
+{
+      return peek_head_name(that.name);
+}
+
+inline perm_string peek_tail_name(const pform_scoped_name_t &that)
+{
+      return peek_tail_name(that.name);
 }
 
 /*
@@ -466,6 +489,7 @@ static inline std::ostream& operator<< (std::ostream&out, const data_type_t&that
 }
 
 extern std::ostream& operator<< (std::ostream&out, const pform_name_t&);
+extern std::ostream& operator<< (std::ostream&out, const pform_scoped_name_t&);
 extern std::ostream& operator<< (std::ostream&out, const name_component_t&that);
 extern std::ostream& operator<< (std::ostream&out, const index_component_t&that);
 extern std::ostream& operator<< (std::ostream&out, enum typedef_t::basic_type bt);

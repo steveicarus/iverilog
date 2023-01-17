@@ -165,17 +165,8 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 		 << "Elaborate l-value ident expression: " << *this << endl;
       }
 
-	/* Normally find the name in the passed scope. But if this is
-	   imported from a package, then located the variable from the
-	   package scope. */
-      NetScope*use_scope = scope;
-      if (package_) {
-	    use_scope = des->find_package(package_->pscope_name());
-	    ivl_assert(*this, use_scope);
-      }
-
       symbol_search_results sr;
-      symbol_search(this, des, use_scope, path_, &sr);
+      symbol_search(this, des, scope, path_, &sr);
 
       NetNet *reg = sr.net;
       pform_name_t &member_path = sr.path_tail;
@@ -183,16 +174,16 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	/* The l-value must be a variable. If not, then give up and
 	   print a useful error message. */
       if (reg == 0) {
-	    if (use_scope->type()==NetScope::FUNC
-		&& use_scope->func_def()->is_void()
-		&& use_scope->basename()==peek_tail_name(path_)) {
+	    if (scope->type()==NetScope::FUNC
+		&& scope->func_def()->is_void()
+		&& scope->basename()==peek_tail_name(path_)) {
 		  cerr << get_fileline() << ": error: "
 		       << "Cannot assign to " << path_
-		       << " because function " << scope_path(use_scope)
+		       << " because function " << scope_path(scope)
 		       << " is void." << endl;
 	    } else {
 		  cerr << get_fileline() << ": error: Could not find variable ``"
-		       << path_ << "'' in ``" << scope_path(use_scope) <<
+		       << path_ << "'' in ``" << scope_path(scope) <<
 			"''" << endl;
 	    }
 	    des->errors += 1;
@@ -1153,7 +1144,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 	// indices we may need to apply. This is to handle the case
 	// that the base is an array of structs, and not just a
 	// struct.
-      pform_name_t::const_reverse_iterator name_idx = path_.rbegin();
+      pform_name_t::const_reverse_iterator name_idx = path_.name.rbegin();
       for (size_t idx = 1 ; idx < member_path.size() ; idx += 1)
 	    ++ name_idx;
       if (name_idx->name != peek_head_name(member_path)) {

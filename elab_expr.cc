@@ -54,12 +54,11 @@ bool type_is_vectorable(ivl_variable_type_t type)
       }
 }
 
-static ivl_nature_t find_access_function(const pform_name_t&path)
+static ivl_nature_t find_access_function(const pform_scoped_name_t &path)
 {
-      if (path.size() != 1)
-	    return 0;
-      else
-	    return access_function_nature[peek_tail_name(path)];
+      if (path.package || path.name.size() != 1)
+	    return nullptr;
+      return access_function_nature[peek_tail_name(path)];
 }
 
 /*
@@ -1531,15 +1530,9 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
       if (peek_tail_name(path_)[0] == '$')
 	    return test_width_sfunc_(des, scope, mode);
 
-      NetScope *use_scope = scope;
-      if (package_) {
-	    use_scope = des->find_package(package_->pscope_name());
-	    ivl_assert(*this, use_scope);
-      }
-
       // Search for the symbol. This should turn up a scope.
       symbol_search_results search_results;
-      bool search_flag = symbol_search(this, des, use_scope, path_, &search_results);
+      bool search_flag = symbol_search(this, des, scope, path_, &search_results);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PECallFunction::test_width: "
@@ -1905,7 +1898,7 @@ NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
 	    PEIdent*arg_ident = dynamic_cast<PEIdent*> (arg1);
 	    ivl_assert(*this, arg_ident);
 
-	    const pform_name_t&path = arg_ident->path();
+	    const pform_name_t&path = arg_ident->path().name;
 	    ivl_assert(*this, path.size()==1);
 	    perm_string name = peek_tail_name(path);
 
@@ -1953,7 +1946,7 @@ NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
 static NetExpr* check_for_enum_methods(const LineInfo*li,
                                        Design*des, NetScope*scope,
                                        const netenum_t*netenum,
-                                       const pform_name_t&use_path,
+                                       const pform_scoped_name_t&use_path,
                                        perm_string method_name,
                                        NetExpr*expr,
                                        PExpr*parg, unsigned args)
@@ -2634,10 +2627,6 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		 << "path_: " << path_ << endl;
 	    cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
 		 << "expr_wid: " << expr_wid << endl;
-	    if (package_)
-		  cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
-		       << "package_: " << package_->pscope_name()
-		       << " at " << package_->get_fileline() << endl;
       }
 
       if (peek_tail_name(path_)[0] == '$')
@@ -2655,15 +2644,9 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 {
       flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
 
-      NetScope *use_scope = scope;
-      if (package_) {
-	    use_scope = des->find_package(package_->pscope_name());
-	    ivl_assert(*this, use_scope);
-      }
-
       // Search for the symbol. This should turn up a scope.
       symbol_search_results search_results;
-      bool search_flag = symbol_search(this, des, use_scope, path_, &search_results);
+      bool search_flag = symbol_search(this, des, scope, path_, &search_results);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
@@ -4004,7 +3987,7 @@ unsigned PEIdent::test_width_method_(const symbol_search_results &sr)
       if (path_.size() < 2)
 	    return 0;
 
-      pform_name_t use_path = path_;
+      pform_name_t use_path = path_.name;
       perm_string member_name = peek_tail_name(path_);
       use_path.pop_back();
 
@@ -4093,14 +4076,8 @@ unsigned PEIdent::test_width_parameter_(const NetExpr *par, width_mode_t&mode)
 
 unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
-      NetScope*use_scope = scope;
-      if (package_) {
-	    use_scope = des->find_package(package_->pscope_name());
-	    ivl_assert(*this, use_scope);
-      }
-
       symbol_search_results sr;
-      symbol_search(this, des, use_scope, path_, &sr);
+      symbol_search(this, des, scope, path_, &sr);
 
       if (unsigned tmp = test_width_method_(sr)) {
 	    return tmp;
@@ -4329,18 +4306,12 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 {
       bool need_const = NEED_CONST & flags;
 
-      NetScope*use_scope = scope;
-      if (package_) {
-	    use_scope = des->find_package(package_->pscope_name());
-	    ivl_assert(*this, use_scope);
-      }
-
       symbol_search_results sr;
-      symbol_search(this, des, use_scope, path_, &sr);
+      symbol_search(this, des, scope, path_, &sr);
 
       if (!sr.net) {
             cerr << get_fileline() << ": error: Unable to bind variable `"
-	         << path_ << "' in `" << scope_path(use_scope) << "'" << endl;
+	         << path_ << "' in `" << scope_path(scope) << "'" << endl;
 	    des->errors++;
 	    return nullptr;
       }
@@ -4516,21 +4487,13 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
             scope->is_const_func(false);
       }
 
-	// If this identifier is pulled from a package, then switch
-	// the scope we are using.
-      NetScope*use_scope = scope;
-      if (package_) {
-	    use_scope = des->find_package(package_->pscope_name());
-	    ivl_assert(*this, use_scope);
-      }
-
 	// Find the net/parameter/event object that this name refers
 	// to. The path_ may be a scoped path, and may include method
 	// or member name parts. For example, main.a.b.c may refer to
 	// a net called "b" in the scope "main.a" and with a member
 	// named "c". symbol_search() handles this for us.
       symbol_search_results sr;
-      symbol_search(this, des, use_scope, path_, &sr);
+      symbol_search(this, des, scope, path_, &sr);
 
 	// If the identifier name is a parameter name, then return
 	// the parameter value.
@@ -4888,7 +4851,7 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 	    }
       }
 
-      list<hname_t> spath = eval_scope_path(des, scope, path_);
+      list<hname_t> spath = eval_scope_path(des, scope, path_.name);
 
       ivl_assert(*this, spath.size() == path_.size());
 
@@ -6285,8 +6248,8 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       node->set_line(*this);
 
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
-      if (! path_.back().index.empty())
-	    use_sel = path_.back().index.back().sel;
+      if (! path_.name.back().index.empty())
+	    use_sel = path_.name.back().index.back().sel;
 
       if (net->get_scalar() && use_sel != index_component_t::SEL_NONE) {
 	    cerr << get_fileline() << ": error: can not select part of ";

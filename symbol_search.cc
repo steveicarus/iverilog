@@ -23,6 +23,7 @@
 # include  "netparray.h"
 # include  "netmisc.h"
 # include  "compiler.h"
+# include  "PPackage.h"
 # include  "ivl_assert.h"
 
 using namespace std;
@@ -38,10 +39,9 @@ using namespace std;
 
 bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		   pform_name_t path, struct symbol_search_results*res,
-		   NetScope*start_scope)
+		   NetScope*start_scope, bool prefix_scope)
 {
       assert(scope);
-      bool prefix_scope = false;
 
       if (debug_elaborate) {
 	    cerr << li->get_fileline() << ": symbol_search: "
@@ -68,7 +68,8 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       // recursively. Ideally, the result is a scope that we search
       // for the tail key, but there are other special cases as well.
       if (! path.empty()) {
-	    bool flag = symbol_search(li, des, scope, path, res, start_scope);
+	    bool flag = symbol_search(li, des, scope, path, res, start_scope,
+				      prefix_scope);
 	    if (! flag)
 		  return false;
 
@@ -306,6 +307,24 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       }
 
       return false;
+}
+
+bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
+		   const pform_scoped_name_t &path,
+		   struct symbol_search_results *res)
+{
+      NetScope *search_scope = scope;
+      bool prefix_scope = false;
+
+      if (path.package) {
+	    search_scope = des->find_package(path.package->pscope_name());
+	    if (!search_scope)
+		  return false;
+	    prefix_scope = true;
+      }
+
+      return symbol_search(li, des, search_scope, path.name, res, search_scope,
+			   prefix_scope);
 }
 
 /*

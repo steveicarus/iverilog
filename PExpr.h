@@ -366,13 +366,10 @@ class PEIdent : public PExpr {
       virtual bool is_collapsible_net(Design*des, NetScope*scope,
                                       NetNet::PortType port_type) const;
 
-      const PPackage* package() const { return package_; }
-
-      const pform_name_t& path() const { return path_; }
+      const pform_scoped_name_t& path() const { return path_; }
 
     private:
-      PPackage*package_;
-      pform_name_t path_;
+      pform_scoped_name_t path_;
       bool no_implicit_sig_;
 
     private:
@@ -912,8 +909,7 @@ class PECallFunction : public PExpr {
 				  width_mode_t&mode);
 
     private:
-      PPackage*package_;
-      pform_name_t path_;
+      pform_scoped_name_t path_;
       std::vector<PExpr *> parms_;
 
         // For system functions.

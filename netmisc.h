@@ -107,7 +107,11 @@ static inline bool test_function_return_value(const symbol_search_results&search
 
 extern bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			  pform_name_t path, struct symbol_search_results*res,
-			  NetScope*start_scope = 0);
+			  NetScope*start_scope = nullptr, bool prefix_scope = false);
+
+extern bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
+			  const pform_scoped_name_t &path,
+			  struct symbol_search_results*res);
 
 /*
  * Search for a symbol using the "start" scope as the starting

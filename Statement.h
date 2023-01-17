@@ -600,8 +600,7 @@ class PTrigger  : public Statement {
       virtual void dump(std::ostream&out, unsigned ind) const;
 
     private:
-      PPackage*package_;
-      pform_name_t event_;
+      pform_scoped_name_t event_;
 };
 
 class PNBTrigger  : public Statement {
