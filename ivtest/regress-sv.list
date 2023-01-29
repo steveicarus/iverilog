@@ -668,6 +668,18 @@ sv_end_labels		normal,-g2009		ivltests
 sv_end_labels_bad	CE,-g2009		ivltests gold=sv_end_labels_bad.gold
 sv_end_labels_unnamed	CE,-g2009		ivltests gold=sv_end_labels_unnamed.gold
 sv_enum1		normal,-g2009		ivltests
+sv_export1		normal,-g2009		ivltests
+sv_export2		normal,-g2009		ivltests
+sv_export3		normal,-g2009		ivltests
+sv_export4		normal,-g2009		ivltests
+sv_export5		normal,-g2009		ivltests
+sv_export6		normal,-g2009		ivltests
+sv_export_fail1		CE,-g2009		ivltests
+sv_export_fail2		CE,-g2009		ivltests
+sv_export_fail3		CE,-g2009		ivltests
+sv_export_fail4		CE,-g2009		ivltests
+sv_export_fail5		CE,-g2009		ivltests
+sv_export_fail6		CE,-g2009		ivltests
 sv_for_variable		normal,-g2009		ivltests
 sv_foreach1		normal,-g2009		ivltests
 sv_foreach2		normal,-g2009		ivltests

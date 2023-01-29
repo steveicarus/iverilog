@@ -2053,6 +2053,30 @@ package_import_item_list
   | package_import_item
   ;
 
+package_export_declaration /* IEEE1800-2017 A.2.1.3 */
+  : K_export package_export_item_list ';'
+  | K_export '*' K_SCOPE_RES '*' ';' { pform_package_export(@$, nullptr, nullptr); }
+  ;
+
+package_export_item
+  : PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { pform_package_export(@2, $1, $3);
+	delete[] $3;
+      }
+  | PACKAGE_IDENTIFIER K_SCOPE_RES TYPE_IDENTIFIER
+      { pform_package_export(@2, $1, $3.text);
+	delete[] $3.text;
+      }
+  | PACKAGE_IDENTIFIER K_SCOPE_RES '*'
+      { pform_package_export(@2, $1, nullptr);
+      }
+  ;
+
+package_export_item_list
+  : package_export_item_list ',' package_export_item
+  | package_export_item
+  ;
+
 package_item /* IEEE1800-2005 A.1.10 */
   : timeunits_declaration
   | parameter_declaration
@@ -2061,6 +2085,7 @@ package_item /* IEEE1800-2005 A.1.10 */
   | task_declaration
   | data_declaration
   | class_declaration
+  | package_export_declaration
   ;
 
 package_item_list

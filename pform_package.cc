@@ -72,6 +72,64 @@ void pform_end_package_declaration(const struct vlltype&loc)
       pform_pop_scope();
 }
 
+PPackage *pform_find_potential_import(const struct vlltype&loc, LexicalScope*scope,
+				      perm_string name, bool tf_call, bool make_explicit)
+{
+      assert(scope);
+
+      PPackage *found_pkg = nullptr;
+      for (auto search_pkg : scope->potential_imports) {
+	    PPackage *decl_pkg = pform_package_importable(search_pkg, name);
+	    if (!decl_pkg)
+		  continue;
+
+	    if (found_pkg && found_pkg != decl_pkg && make_explicit) {
+		  cerr << loc.get_fileline() << ": error: "
+			  "Ambiguous use of '" << name << "'. "
+			  "It is exported by both '"
+			<< found_pkg->pscope_name()
+			<< "' and by '"
+			<< search_pkg->pscope_name()
+			<< "'." << endl;
+		  error_count++;
+		  continue;
+	    }
+
+	    found_pkg = decl_pkg;
+	    if (make_explicit) {
+		  if (tf_call)
+			scope->possible_imports[name] = found_pkg;
+		  else {
+			scope->explicit_imports[name] = found_pkg;
+			scope->explicit_imports_from[name].insert(search_pkg);
+		  }
+	    }
+      }
+
+      return found_pkg;
+}
+
+PPackage *pform_package_importable(PPackage *pkg, perm_string name)
+{
+	if (pkg->local_symbols.find(name) != pkg->local_symbols.end())
+		  return pkg;
+
+	auto import_pkg = pkg->explicit_imports.find(name);
+	if (import_pkg == pkg->explicit_imports.end())
+		return nullptr;
+
+	for (auto &exp : pkg->exports) {
+		  // *::* will match all imports, P::* will match all imports
+		  // from a package and P::ID will match a specific identifier
+		  // from a package.
+		if ((!exp.pkg || exp.pkg == import_pkg->second) &&
+		    (exp.name.nil() || exp.name == name))
+			return import_pkg->second;
+	}
+
+	return nullptr;
+}
+
 /*
  * Do the import early, during processing. This requires that the
  * package is declared in pform ahead of time (it is) and that we can
@@ -85,9 +143,8 @@ void pform_package_import(const struct vlltype&loc, PPackage*pkg, const char*ide
 	    perm_string use_ident = lex_strings.make(ident);
 
 	      // Check that the requested symbol is available.
-	    map<perm_string,PNamedItem*>::const_iterator cur_sym
-		  = pkg->local_symbols.find(use_ident);
-	    if (cur_sym == pkg->local_symbols.end()) {
+	    PPackage *pkg_decl = pform_package_importable(pkg, use_ident);
+	    if (!pkg_decl) {
 		  cerr << loc.get_fileline() << ": error: "
 			  "'" << use_ident << "' is not exported by '"
 		       << pkg->pscope_name() << "'." << endl;
@@ -96,7 +153,7 @@ void pform_package_import(const struct vlltype&loc, PPackage*pkg, const char*ide
 	    }
 
 	      // Check for conflict with local symbol.
-	    cur_sym = scope->local_symbols.find(use_ident);
+	    auto cur_sym = scope->local_symbols.find(use_ident);
 	    if (cur_sym != scope->local_symbols.end()) {
 		  cerr << loc.get_fileline() << ": error: "
 			  "'" << use_ident << "' has already been declared "
@@ -112,17 +169,17 @@ void pform_package_import(const struct vlltype&loc, PPackage*pkg, const char*ide
 	    map<perm_string,PPackage*>::const_iterator cur_pkg
 		  = scope->explicit_imports.find(use_ident);
 	    if (cur_pkg != scope->explicit_imports.end()) {
-		  if (cur_pkg->second != pkg) {
+		  if (cur_pkg->second != pkg_decl) {
 			cerr << loc.get_fileline() << ": error: "
 				"'" << use_ident << "' has already been "
 				"imported into this scope from package '"
 			     << cur_pkg->second->pscope_name() << "'." << endl;
 			error_count += 1;
 		  }
-		  return;
 	    }
 
-	    scope->explicit_imports[use_ident] = pkg;
+	    scope->explicit_imports[use_ident] = pkg_decl;
+	    scope->explicit_imports_from[use_ident].insert(pkg);
 
       } else {
 	    list<PPackage*>::const_iterator cur_pkg
@@ -132,6 +189,43 @@ void pform_package_import(const struct vlltype&loc, PPackage*pkg, const char*ide
 	    if (cur_pkg == scope->potential_imports.end())
 		  scope->potential_imports.push_back(pkg);
       }
+}
+
+static bool pform_package_exportable(const struct vlltype &loc, PPackage *pkg,
+				     const perm_string &ident)
+{
+      auto import_pkg = pform_cur_package->explicit_imports_from.find(ident);
+      if (import_pkg != pform_cur_package->explicit_imports_from.end()) {
+	    auto &pkg_list = import_pkg->second;
+	    if (pkg_list.find(pkg) != pkg_list.end())
+		  return true;
+      }
+
+      if (pform_cur_package->local_symbols.find(ident) == pform_cur_package->local_symbols.end()) {
+	    if (pform_find_potential_import(loc, pform_cur_package,
+					    ident, false, true))
+		  return true;
+      }
+
+      cerr << loc.get_fileline() << ": error: "
+	      "`" << ident << "` has not been imported from "
+	   << pkg->pscope_name() << "." << endl;
+      error_count++;
+
+      return false;
+}
+
+void pform_package_export(const struct vlltype &loc, PPackage *pkg, const char *ident)
+{
+      assert(pform_cur_package);
+
+      perm_string use_ident;
+      if (ident) {
+	    use_ident = lex_strings.make(ident);
+	    if (!pform_package_exportable(loc, pkg, use_ident))
+		  return;
+      }
+      pform_cur_package->exports.push_back(PPackage::export_t{pkg, use_ident});
 }
 
 PExpr* pform_package_ident(const struct vlltype&loc,
