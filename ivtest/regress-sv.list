@@ -520,6 +520,11 @@ struct_packed_write_read2	normal,-g2009	ivltests
 struct_invalid_member	CE,-g2009		ivltests gold=struct_invalid_member.gold
 struct_signed		normal,-g2009		ivltests
 sv-constants		normal,-g2005-sv	ivltests
+sv_ap_parray1		normal,-g2005-sv	ivltests
+sv_ap_parray2		normal,-g2005-sv	ivltests
+sv_ap_parray_fail1	CE,-g2005-sv		ivltests
+sv_ap_parray_fail2	CE,-g2005-sv		ivltests
+sv_ap_parray_fail3	CE,-g2005-sv		ivltests
 sv_assign_pattern_cast	normal,-g2005-sv	ivltests
 sv_assign_pattern_const	normal,-g2005-sv	ivltests
 sv_assign_pattern_concat normal,-g2005-sv	ivltests
