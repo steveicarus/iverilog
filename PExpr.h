@@ -213,8 +213,18 @@ class PEAssignPattern : public PExpr {
 				     unsigned expr_wid,
                                      unsigned flags) const;
     private:
-      NetExpr* elaborate_expr_darray_(Design*des, NetScope*scope,
-				      ivl_type_t type, unsigned flags) const;
+      NetExpr* elaborate_expr_packed_(Design *des, NetScope *scope,
+				      ivl_variable_type_t base_type,
+				      unsigned int width,
+				      const std::vector<netrange_t> &dims,
+				      unsigned int cur_dim,
+				      bool need_const) const;
+      NetExpr* elaborate_expr_struct_(Design *des, NetScope *scope,
+				      const netstruct_t *struct_type,
+				      bool need_const) const;
+      NetExpr* elaborate_expr_darray_(Design *des, NetScope *scope,
+				      const netdarray_t *array_type,
+				      bool need_const) const;
 
     private:
       std::vector<PExpr*>parms_;

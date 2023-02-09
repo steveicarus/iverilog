@@ -65,6 +65,7 @@ class netstruct_t : public LineInfo, public ivl_type_s {
 	// description, and set the off value to be the offset into
 	// the packed value where the member begins.
       const struct member_t* packed_member(perm_string name, unsigned long&off) const;
+      const std::vector<member_t>& members() const { return members_; }
 
 	// Return the width (in bits) of the packed record, or -1 if
 	// the record is not packed.

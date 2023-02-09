@@ -1019,6 +1019,11 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 	    return 0;
       }
 
+      if (lv_net_type->packed())
+	    eval_expr(tmp, lv_net_type->packed_width());
+      else
+	    eval_expr(tmp, -1);
+
       return tmp;
 }
 

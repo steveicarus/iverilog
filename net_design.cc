@@ -550,8 +550,16 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 		 << "use_type = " << use_type << endl;
       }
 
-      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, lv_width, true,
-                                   cur->second.is_annotatable, use_type);
+      NetExpr *expr;
+
+      // Handle assignment patterns as a special case as they need the type to
+      // be evaluated correctly.
+      if (param_type && dynamic_cast<PEAssignPattern*>(val_expr)) {
+	    expr = elab_and_eval(des, val_scope, val_expr, param_type, true);
+      } else {
+	    expr = elab_and_eval(des, val_scope, val_expr, lv_width, true,
+				 cur->second.is_annotatable, use_type);
+      }
       if (! expr)
             return;
 
