@@ -9,5 +9,6 @@ Icarus Verilog.
    :maxdepth: 1
 
    getting_started
+   regression_tests
    version_stamps
 

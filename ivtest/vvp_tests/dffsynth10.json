@@ -1,0 +1,5 @@
+{
+    "type"   : "normal",
+    "source" : "dffsynth10.v",
+    "iverilog-args" : [ "-S" ]
+}

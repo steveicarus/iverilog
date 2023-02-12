@@ -94,9 +94,6 @@ br_gh99x		normal			ivltests
 br_gh115		normal			ivltests
 br_gh306a		CE			ivltests
 br_gh306b		CE			ivltests
-case1			normal			ivltests
-case2			normal			ivltests
-case3			normal			ivltests
 case4			normal			ivltests
 case5			normal			ivltests
 case5-syn-fail		CE			ivltests
@@ -112,22 +109,10 @@ casesynth6		normal			ivltests
 casesynth7		normal			ivltests gold=casesynth7.gold
 casesynth8		CE			ivltests
 casesynth9		normal			ivltests
-casex_synth		normal			ivltests
 condit1			normal			ivltests
 conditsynth1		normal			ivltests
 conditsynth2		normal			ivltests
 conditsynth3		normal			ivltests
-dffsynth		normal			ivltests
-dffsynth2		normal			ivltests
-dffsynth3		normal			ivltests
-dffsynth4		normal			ivltests
-dffsynth5		normal			ivltests
-dffsynth6		normal			ivltests
-dffsynth7		normal			ivltests
-dffsynth8		CE			ivltests
-dffsynth9		normal			ivltests
-dffsynth10		normal			ivltests
-dffsynth11		normal			ivltests
 ff_dual_enable		normal			ivltests
 for_loop_synth		normal			ivltests
 for_loop_synth2		normal			ivltests
@@ -138,7 +123,6 @@ inside_synth2		normal			ivltests
 inside_synth3		normal			ivltests
 land5			normal			ivltests
 lcatsynth		normal			ivltests
-memsynth1		normal			ivltests
 memsynth2		normal			ivltests
 memsynth3		normal			ivltests
 memsynth4		normal			ivltests

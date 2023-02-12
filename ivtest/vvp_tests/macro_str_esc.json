@@ -1,0 +1,5 @@
+{
+    "type"   : "normal",
+    "source" : "macro_str_esc.v",
+    "gold"   : "macro_str_esc"
+}

@@ -87,8 +87,6 @@ sv_default_port_value3	CE,-g2009	ivltests
 br_gh440		CE,-g2009	ivltests gold=br_gh440-v11.gold
 
 # v11 has incomplete synthesis support
-dffsynth		CE,-S		ivltests
-memsynth1		CE,-S		ivltests
 memsynth2		CE,-S		ivltests
 memsynth3		CE,-S		ivltests
 memsynth5		CE,-S		ivltests
@@ -96,11 +94,6 @@ memsynth6		CE,-S		ivltests
 memsynth7		CE,-S		ivltests
 memsynth9		CE,-S		ivltests
 mix_reset		CE,-S		ivltests
-
-# These tests pass, but synthesis is creating unnecessary latches.
-case1			normal		ivltests
-case2			normal		ivltests
-casex_synth		normal		ivltests
 
 # For V11 vvp does not fail for these tests
 automatic_error11	normal		ivltests gold=automatic_error11.gold

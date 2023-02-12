@@ -516,7 +516,6 @@ struct_packed_queue_fail CE,-g2009		ivltests
 struct_packed_sysfunct	normal,-g2009		ivltests
 struct_packed_sysfunct2	normal,-g2009		ivltests
 struct_packed_uarray_fail CE,-g2009		ivltests
-struct_packed_write_read2	normal,-g2009	ivltests
 struct_invalid_member	CE,-g2009		ivltests gold=struct_invalid_member.gold
 struct_signed		normal,-g2009		ivltests
 sv-constants		normal,-g2005-sv	ivltests

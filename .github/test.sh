@@ -11,4 +11,6 @@ perl vvp_reg.pl || status=1
 
 perl vpi_reg.pl || status=1
 
+python3 vvp_reg.py || status=1
+
 exit $status

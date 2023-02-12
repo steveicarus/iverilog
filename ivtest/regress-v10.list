@@ -289,8 +289,6 @@ br_gh115		CE,-S			ivltests
 basiclatch		normal			ivltests
 blocksynth2		normal			ivltests
 blocksynth3		normal			ivltests
-case1			normal			ivltests
-case2			normal			ivltests
 case4			normal			ivltests
 case5			normal			ivltests
 case5-syn-fail		normal			ivltests
@@ -299,20 +297,13 @@ casesynth1		normal			ivltests
 casesynth2		normal			ivltests
 casesynth3		normal			ivltests
 casesynth7		NI
-casex_synth		normal			ivltests
 condit1			normal			ivltests
 conditsynth1		normal			ivltests
 conditsynth2		normal			ivltests
 conditsynth3		normal			ivltests
-dffsynth		normal			ivltests
-dffsynth3		normal			ivltests
-dffsynth4		normal			ivltests
-dffsynth9		normal			ivltests
-dffsynth10		normal			ivltests
-dffsynth11		normal			ivltests
+
 inside_synth		normal			ivltests
 inside_synth3		normal			ivltests
-memsynth1		normal			ivltests
 memsynth2		normal			ivltests
 memsynth3		normal			ivltests
 memsynth5		normal			ivltests

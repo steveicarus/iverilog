@@ -99,9 +99,6 @@ br_gh306b			normal			ivltests
 case5-syn-fail			normal			ivltests
 casesynth7			normal			ivltests
 casesynth8			normal			ivltests
-dffsynth			normal			ivltests
-dffsynth8			normal			ivltests
-memsynth1			normal			ivltests
 memsynth2			normal			ivltests
 memsynth3			normal			ivltests
 memsynth5			normal			ivltests

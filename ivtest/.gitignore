@@ -10,6 +10,7 @@ log/
 work/
 vpi_log/
 vhdl/
+__pycache__/
 
 # The normal regression output files.
 

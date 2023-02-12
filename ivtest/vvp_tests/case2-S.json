@@ -1,0 +1,5 @@
+{
+    "type"   : "normal",
+    "source" : "case2.v",
+    "iverilog-args" : [ "-S" ]
+}
