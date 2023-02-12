@@ -59,10 +59,8 @@
 # gold or diff commands.
 #
 
-struct_packed_write_read normal,-g2009   ivltests
 struct_packed_value_list normal,-g2009   ivltests
 
-array_packed_write_read  normal,-g2009   ivltests
 array_packed_value_list  normal,-g2009   ivltests
 array_packed_sysfunct    normal,-g2009   ivltests
 

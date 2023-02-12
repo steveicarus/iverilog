@@ -71,3 +71,9 @@ basename of the gold files, with separate actual gold files for the iverilog
 and vvp stderr and stdout. For example, if a "normal" test includes a gold
 file, then the program is compiled and run, and the outputs are compared with
 the gold file to make sure it ran properly.
+
+iverilog-args (optional)
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+If this is specified, it is a list of strings that are passed as arguments to
+the iverilog command line.

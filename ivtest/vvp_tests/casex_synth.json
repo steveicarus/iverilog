@@ -1,0 +1,5 @@
+{
+    "type"   : "normal",
+    "source" : "casex_synth.v",
+    "iverilog-args" : [ "-S" ]
+}

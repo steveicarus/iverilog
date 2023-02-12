@@ -68,8 +68,6 @@
 #
 
 # v13 has incomplete synthesis support
-dffsynth		CE,-S			ivltests
-memsynth1		CE,-S			ivltests
 memsynth2		CE,-S			ivltests
 memsynth3		CE,-S			ivltests
 memsynth5		CE,-S			ivltests
@@ -77,8 +75,3 @@ memsynth6		CE,-S			ivltests
 memsynth7		CE,-S			ivltests
 memsynth9		CE,-S			ivltests
 mix_reset		CE,-S			ivltests
-
-# These tests pass, but synthesis is creating unnecessary latches.
-case1			normal			ivltests
-case2			normal			ivltests
-casex_synth		normal			ivltests

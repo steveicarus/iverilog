@@ -1,4 +1,26 @@
 
 # Test list files are a list of test names and the json that
 # describes the test.
-macro_str_esc vvp_tests/macro_str_esc.json
+
+array_packed_write_read		vvp_tests/array_packed_write_read.json
+case1				vvp_tests/case1.json
+case2				vvp_tests/case2.json
+case2-S				vvp_tests/case2-S.json
+case3				vvp_tests/case3.json
+casex_synth			vvp_tests/casex_synth.json
+dffsynth			vvp_tests/dffsynth.json
+dffsynth-S			vvp_tests/dffsynth-S.json
+dffsynth2			vvp_tests/dffsynth2.json
+dffsynth3			vvp_tests/dffsynth3.json
+dffsynth4			vvp_tests/dffsynth4.json
+dffsynth5			vvp_tests/dffsynth5.json
+dffsynth6			vvp_tests/dffsynth6.json
+dffsynth7			vvp_tests/dffsynth7.json
+dffsynth8			vvp_tests/dffsynth8.json
+dffsynth9			vvp_tests/dffsynth9.json
+dffsynth10			vvp_tests/dffsynth10.json
+dffsynth11			vvp_tests/dffsynth11.json
+macro_str_esc			vvp_tests/macro_str_esc.json
+memsynth1			vvp_tests/memsynth1.json
+struct_packed_write_read	vvp_tests/struct_packed_write_read.json
+struct_packed_write_read2	vvp_tests/struct_packed_write_read2.json
