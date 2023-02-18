@@ -2,7 +2,7 @@
 # the Icarus Verilog vlog95 target.
 
 #
-# Copyright (c) 1999-2021 Guy Hutchison (ghutchis@pacbell.net)
+# Copyright (c) 1999-2023 Guy Hutchison (ghutchis@pacbell.net)
 #
 #    This source code is free software; you can redistribute it
 #    and/or modify it in source code form under the terms of the GNU
@@ -294,6 +294,7 @@ br_gh175		CE,-g2009,-pallowsigned=1	ivltests
 br_gh194		CE,-g2009		ivltests
 br_gh365		CE,-g2009		ivltests
 br_gh453		CE,-g2009,-pallowsigned=1	ivltests
+br_gh800		CE,-g2009		ivltests
 br_ml20180309a		CE,-g2009		ivltests
 br_ml20180309b		CE,-g2009		ivltests
 ivlh_textio		CE,-g2005-sv		ivltests
