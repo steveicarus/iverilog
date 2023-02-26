@@ -1,7 +1,7 @@
 #ifndef IVL_vcd_priv_H
 #define IVL_vcd_priv_H
 /*
- * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2023 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -128,6 +128,15 @@ EXTERN void vcd_work_emit_bits(struct lxt2_wr_symbol*sym, const char*bits);
 
 /* The compiletf routines are common for the VCD, LXT and LXT2 dumpers. */
 EXTERN PLI_INT32 sys_dumpvars_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name);
+
+/*
+ * Common implementation of the sys_dumpfile calltf.
+ */
+EXTERN PLI_INT32 sys_dumpfile_common(const char*title, const char*suffix);
+EXTERN void vcd_set_dump_path_default(const char*text);
+EXTERN char* vcd_get_dump_path(const char*suffix);
+EXTERN void  vcd_free_dump_path(void);
+EXTERN int dumpvars_status;
 
 /*
  * The vcd_list is the list of all the objects that are tracked for

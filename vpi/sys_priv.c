@@ -104,11 +104,11 @@ char *get_filename(vpiHandle callh, const char *name, vpiHandle file)
       return strdup(val.value.str);
 }
 
-char* get_filename_with_suffix(vpiHandle callh, const char *name, vpiHandle file, const char*suff)
+/*
+ * Create a new copy of the path with the suffix appended.
+ */
+char* attach_suffix_to_filename(char *path, const char*suff)
 {
-      char*path = get_filename(callh, name, file);
-      if (path == 0) return 0;
-
 	/* If the name already has a suffix, then don't replace it or
 	   add another suffix. Just return this path. */
       char*tailp = strrchr(path, '.');
@@ -122,6 +122,14 @@ char* get_filename_with_suffix(vpiHandle callh, const char *name, vpiHandle file
       strcat(new_path, suff);
       free(path);
       return new_path;
+}
+
+char* get_filename_with_suffix(vpiHandle callh, const char *name, vpiHandle file, const char*suff)
+{
+      char*path = get_filename(callh, name, file);
+      if (path == 0) return 0;
+
+      return attach_suffix_to_filename(path, suff);
 }
 
 void check_for_extra_args(vpiHandle argv, vpiHandle callh, const char *name,

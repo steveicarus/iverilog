@@ -82,6 +82,13 @@ behavior.
   Generate LXT or LXT2format instead of VCD format waveform dumps. The LXT2
   format is more advanced.
 
+* -dumpfile=<name>
+
+  Set the default dumpfile. If unspecified, the default is "dump". This
+  command line flag allows you do change it. If no suffix is specified,
+  then the suffix will be chosen based on the dump type. In any case, the
+  $dumpfile system task overrides this flag.
+
 SDF Support
 ^^^^^^^^^^^
 
