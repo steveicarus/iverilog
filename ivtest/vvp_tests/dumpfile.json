@@ -1,0 +1,6 @@
+{
+    "type" : "normal",
+    "source" : "dumpfile.v",
+    "gold"   : "dumpfile",
+    "vvp-args-extended" : [ "-vcd", "-dumpfile=foo" ]
+}

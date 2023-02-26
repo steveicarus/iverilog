@@ -45,7 +45,9 @@ def process_test(item: list) -> str:
         'source'        : it_dict['source'],
         'modulename'    : None,
         'gold'          : it_dict.get('gold', None),
-        'diff'          : None
+        'diff'          : None,
+        'vvp_args'          : it_dict.get('vvp-args', [ ]),
+        'vvp_args_extended' : it_dict.get('vvp-args-extended', [ ])
     }
 
     if it_type == "NI":

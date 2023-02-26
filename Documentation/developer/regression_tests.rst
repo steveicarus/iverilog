@@ -77,3 +77,17 @@ iverilog-args (optional)
 
 If this is specified, it is a list of strings that are passed as arguments to
 the iverilog command line.
+
+vvp-args (optional)
+^^^^^^^^^^^^^^^^^^^^
+
+If this is specified, it is a list of strings that are passed as arguments to
+the vvp command. These arguments go before the vvp input file that is to be
+run.
+
+vvp-args-extended (optional)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If this is specified, it is a lost of strings that are passed as arguments to
+the vvp command. These are extended arguments, and are placed after the vvp
+input file that is being run. This is where you place things like plusargs.

@@ -18,7 +18,10 @@ def assemble_iverilog_cmd(source: str, it_dir: str, args: list) -> list:
 
 
 def assemble_vvp_cmd(args: list = [], plusargs: list = []) -> list:
-    res = ["vvp", os.path.join("work", "a.out")]
+    res = ["vvp"]
+    res = res + args
+    res.append(os.path.join("work", "a.out"))
+    res = res + plusargs
     return res
 
 
@@ -130,6 +133,8 @@ def do_run_normal(options : dict, expected_fail : bool) -> list:
     it_key = options['key']
     it_dir = options['directory']
     it_iverilog_args = options['iverilog_args']
+    it_vvp_args = options['vvp_args']
+    it_vvp_args_extended = options['vvp_args_extended']
     it_gold = options['gold']
     it_diff = options['diff']
 
@@ -144,7 +149,7 @@ def do_run_normal(options : dict, expected_fail : bool) -> list:
         return [1, "Failed - Compile failed"]
 
     # run the vvp command
-    vvp_cmd = assemble_vvp_cmd()
+    vvp_cmd = assemble_vvp_cmd(it_vvp_args, it_vvp_args_extended)
     vvp_res = subprocess.run(vvp_cmd, capture_output=True)
     log_results(it_key, "vvp", vvp_res);
         
