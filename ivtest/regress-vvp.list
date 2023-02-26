@@ -20,6 +20,7 @@ dffsynth8			vvp_tests/dffsynth8.json
 dffsynth9			vvp_tests/dffsynth9.json
 dffsynth10			vvp_tests/dffsynth10.json
 dffsynth11			vvp_tests/dffsynth11.json
+dumpfile			vvp_tests/dumpfile.json
 macro_str_esc			vvp_tests/macro_str_esc.json
 memsynth1			vvp_tests/memsynth1.json
 struct_packed_write_read	vvp_tests/struct_packed_write_read.json

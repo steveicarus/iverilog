@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2023 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -32,7 +32,6 @@
 # include  <time.h>
 # include  "ivl_alloc.h"
 
-static char *dump_path = NULL;
 static int dump_no_date = 0;
 static struct fstContext *dump_file = NULL;
 
@@ -114,7 +113,6 @@ struct vcd_names_list_s fst_tab = { 0, 0, 0, 0 };
 struct vcd_names_list_s fst_var = { 0, 0, 0, 0 };
 
 
-static int dumpvars_status = 0; /* 0:fresh 1:cb installed, 2:callback done */
 static PLI_UINT64 dumpvars_time;
 __inline__ static int dump_header_pending(void)
 {
@@ -224,8 +222,7 @@ static PLI_INT32 finish_cb(p_cb_data cause)
       vcd_names_delete(&fst_tab);
       vcd_names_delete(&fst_var);
       nexus_ident_delete();
-      free(dump_path);
-      dump_path = 0;
+      vcd_free_dump_path();
 
       return 0;
 }
@@ -346,18 +343,17 @@ static PLI_INT32 sys_dumpall_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 static void open_dumpfile(vpiHandle callh)
 {
-      if (dump_path == 0) dump_path = strdup("dump.fst");
+      char* use_dump_path = vcd_get_dump_path("fst");
 
-      dump_file = fstWriterCreate(dump_path, 1);
+      dump_file = fstWriterCreate(use_dump_path, 1);
 
       if (dump_file == 0) {
 	    vpi_printf("FST Error: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("Unable to open %s for output.\n", dump_path);
+	    vpi_printf("Unable to open %s for output.\n", use_dump_path);
 	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
-	    free(dump_path);
-	    dump_path = 0;
+	    vcd_free_dump_path();
 	    return;
       } else {
 	    int prec = vpi_get(vpiTimePrecision, 0);
@@ -367,7 +363,7 @@ static void open_dumpfile(vpiHandle callh)
 	    char scale_buf[65];
 
 	    vpi_printf("FST info: dumpfile %s opened for output.\n",
-	               dump_path);
+	               use_dump_path);
 
 	    time(&walltime);
 
@@ -381,10 +377,10 @@ static void open_dumpfile(vpiHandle callh)
 		  prec -= 1;
 	    }
 
-		if (!dump_no_date)
-			fstWriterSetDate(dump_file, asctime(localtime(&walltime)));
-		else
-			fstWriterSetDate(dump_file, "");
+	    if (!dump_no_date)
+		  fstWriterSetDate(dump_file, asctime(localtime(&walltime)));
+	    else
+		  fstWriterSetDate(dump_file, "");
 	    fstWriterSetVersion(dump_file, "Icarus Verilog");
 	    sprintf(scale_buf, "\t%u%s\n", scale, units_names[udx]);
 	    fstWriterSetTimescaleFromString(dump_file, scale_buf);
@@ -403,37 +399,8 @@ static void open_dumpfile(vpiHandle callh)
 
 static PLI_INT32 sys_dumpfile_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
-      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      char *path;
-
-        /* $dumpfile must be called before $dumpvars starts! */
-      if (dumpvars_status != 0) {
-	    char msg[64];
-	    snprintf(msg, sizeof(msg), "FST warning: %s:%d:",
-	             vpi_get_str(vpiFile, callh),
-	             (int)vpi_get(vpiLineNo, callh));
-	    msg[sizeof(msg)-1] = 0;
-	    vpi_printf("%s %s called after $dumpvars started,\n", msg, name);
-	    vpi_printf("%*s using existing file (%s).\n",
-	               (int) strlen(msg), " ", dump_path);
-	    vpi_free_object(argv);
-	    return 0;
-      }
-
-      path = get_filename_with_suffix(callh, name, vpi_scan(argv), "fst");
-      vpi_free_object(argv);
-      if (! path) return 0;
-
-      if (dump_path) {
-	    vpi_printf("FST warning: %s:%d: ", vpi_get_str(vpiFile, callh),
-	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("Overriding dump file %s with %s.\n", dump_path, path);
-	    free(dump_path);
-      }
-      dump_path = path;
-
-      return 0;
+      (void)name;
+      return sys_dumpfile_common("FST", "fst");
 }
 
 static PLI_INT32 sys_dumpflush_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)

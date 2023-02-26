@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2023 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,6 +26,10 @@
 #include  <assert.h>
 #include  <ctype.h>
 #include  "stringheap.h"
+
+static const char* vcd_dump_path_default = "dump";
+static char* vcd_dump_path = NULL;
+int dumpvars_status = 0; /* 0:fresh 1:cb installed, 2:callback done */
 
 int is_escaped_id(const char *name)
 {
@@ -217,6 +221,66 @@ PLI_INT32 sys_dumpvars_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
             vpi_control(vpiFinish, 1);
         }
       }
+
+      return 0;
+}
+
+void vcd_set_dump_path_default(const char*text)
+{
+      vcd_dump_path_default = text;
+}
+
+char* vcd_get_dump_path(const char*suffix)
+{
+      if (vcd_dump_path)
+	    return vcd_dump_path;
+
+      vcd_dump_path = attach_suffix_to_filename(strdup(vcd_dump_path_default), suffix);
+      return vcd_dump_path;
+}
+
+void vcd_free_dump_path(void)
+{
+      free(vcd_dump_path);
+      vcd_dump_path = NULL;
+}
+
+/*
+ * Common implementation of $dumpfile() for the various dumper types.
+ * string argument is the title to use in error messages.
+ */
+PLI_INT32 sys_dumpfile_common(const char*title, const char*suffix)
+{
+      static const char* name = "$dumpfile";
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      char *path;
+
+        /* $dumpfile must be called before $dumpvars starts! */
+      if (dumpvars_status != 0) {
+	    char msg[64];
+	    snprintf(msg, sizeof(msg), "%s warning: %s:%d:", title,
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+	    msg[sizeof(msg)-1] = 0;
+	    vpi_printf("%s %s called after $dumpvars started,\n", msg, name);
+	    vpi_printf("%*s using existing file (%s).\n",
+	               (int) strlen(msg), " ", vcd_dump_path);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+      path = get_filename_with_suffix(callh, name, vpi_scan(argv), suffix);
+      vpi_free_object(argv);
+      if (! path) return 0;
+
+      if (vcd_dump_path) {
+	    vpi_printf("%s warning: %s:%d: ", title, vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("Overriding dump file %s with %s.\n", vcd_dump_path, path);
+	    free(vcd_dump_path);
+      }
+      vcd_dump_path = path;
 
       return 0;
 }

@@ -1,0 +1,2 @@
+VCD info: dumpfile foo.vcd opened for output.
+ivltests/dumpfile.v:11: $finish called at 30 (1s)

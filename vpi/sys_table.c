@@ -19,6 +19,7 @@
 
 # include "vpi_config.h"
 # include "vpi_user.h"
+# include "vcd_priv.h"
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
@@ -149,6 +150,8 @@ static void sys_lxt_or_vcd_register(void)
 	    } else if (strcmp(vlog_info.argv[idx],"-none") == 0) {
 		  dumper = "none";
 
+	    } else if (strncmp(vlog_info.argv[idx],"-dumpfile=",10) == 0) {
+		  vcd_set_dump_path_default(vlog_info.argv[idx]+10);
 	    }
       }
 
