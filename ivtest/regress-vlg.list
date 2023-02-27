@@ -726,7 +726,6 @@ onehot			normal			contrib  # one hot design
 p_monta			normal			ivltests
 par_mismatch		CE,-gspecify		ivltests
 param-extend		normal			ivltests
-param-width		normal			ivltests gold=param-width.gold
 param_add		normal			ivltests # Addition in param declar
 param_and		normal			ivltests # bitwise &
 param_and2		normal			ivltests # logical && in param declar

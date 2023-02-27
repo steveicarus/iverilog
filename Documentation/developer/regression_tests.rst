@@ -54,6 +54,11 @@ This describes the kind of test to run. The valid values are:
   that succeeds execute it using the vvp command. If there is no gold file
   specified, then look for an output line with the "PASSED" string.
 
+* **normal-vlog95** - This is similar to the normal case, but uses
+  the -tvlog95 target in a first pass to generate simplified verilog, then a
+  regular iverilog command with the -tvvp target to generate the actual
+  executable. This tests the -tvlog95 target.
+
 * **NI** - Mark the test as not implemented. The test will be skipped without
   running or reporting an error.
 

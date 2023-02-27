@@ -3,6 +3,8 @@
 # describes the test.
 
 array_packed_write_read		vvp_tests/array_packed_write_read.json
+br_gh13a			vvp_tests/br_gh13a.json
+br_gh13a-vlog95			vvp_tests/br_gh13a-vlog95.json
 case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json
 case2-S				vvp_tests/case2-S.json
@@ -23,5 +25,11 @@ dffsynth11			vvp_tests/dffsynth11.json
 dumpfile			vvp_tests/dumpfile.json
 macro_str_esc			vvp_tests/macro_str_esc.json
 memsynth1			vvp_tests/memsynth1.json
+param-width			vvp_tests/param-width.json
+param-width-vlog95		vvp_tests/param-width-vlog95.json
+pr1388974			vvp_tests/pr1388974.json
+pr1388974-vlog95		vvp_tests/pr1388974-vlog95.json
+pr903				vvp_tests/pr903.json
+pr903-vlog95			vvp_tests/pr903-vlog95.json
 struct_packed_write_read	vvp_tests/struct_packed_write_read.json
 struct_packed_write_read2	vvp_tests/struct_packed_write_read2.json

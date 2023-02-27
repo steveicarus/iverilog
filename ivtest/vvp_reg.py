@@ -56,11 +56,17 @@ def process_test(item: list) -> str:
     elif it_type == "normal":
         res = run_ivl.run_normal(it_options)
 
+    elif it_type == "normal-vlog95":
+        res = run_ivl.run_normal_vlog95(it_options)
+
     elif it_type == "CE":
         res = run_ivl.run_CE(it_options)
 
     elif it_type == "EF":
         res = run_ivl.run_EF(it_options)
+
+    elif it_type == "EF-vlog95":
+        res = run_ivl.run_EF_vlog95(it_options)
 
     else:
         res = f"{it_key}: I don't understand the test type ({it_type})."
