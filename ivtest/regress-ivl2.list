@@ -69,19 +69,6 @@
 #
 
 #------------------------------------------------------------------------------
-# Differences when iverilog is run without -gstrict-expr-width
-#------------------------------------------------------------------------------
-
-# The standard requires oversized unsized constant numbers to be truncated.
-# These tests are specifically testing that such numbers aren't truncated.
-pr903			normal			ivltests
-pr1388974		normal			ivltests
-
-# The standard doesn't support lossless expressions.
-br_gh13a		normal			ivltests gold=br_gh13a.gold
-param-width		normal			ivltests gold=param-width-ivl.gold
-
-#------------------------------------------------------------------------------
 # Differences when vvp is run without -compatible
 #------------------------------------------------------------------------------
 

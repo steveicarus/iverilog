@@ -8,8 +8,8 @@ import os
 import sys
 import re
 
-def assemble_iverilog_cmd(source: str, it_dir: str, args: list) -> list:
-    res = ["iverilog", "-o", os.path.join("work", "a.out")]
+def assemble_iverilog_cmd(source: str, it_dir: str, args: list, outfile = "a.out") -> list:
+    res = ["iverilog", "-o", os.path.join("work", outfile)]
     res += ["-D__ICARUS_UNSIZED__"]
     res += args
     src = os.path.join(it_dir, source)
@@ -44,7 +44,9 @@ def build_runtime(it_key: str) -> None:
 
     This is called in front of tests to make sure that the directory
     structure is correct, and common temp files that might linger from
-    a previous run are removed.'''
+    a previous run are removed. We need to make sure that the directories
+    "work" and "log" are present, and the log files related to this key
+    are removed.'''
 
     try:
         os.mkdir("log")
@@ -122,71 +124,28 @@ def run_CE(options : dict) -> list:
     else:
         return [0, "Passed - CE"]
 
+def check_run_outputs(options : dict, expected_fail : bool, it_stdout : str, log_list : list) -> list:
+    '''Check the output files, and return success for failed.
+    
+    This function takes an options dictionary that describes the settings, and
+    the output from the final command. This also takes a list of log files to check
+    there there are gold files present.'''
 
-def do_run_normal(options : dict, expected_fail : bool) -> list:
-    '''Run the iverilog and vvp commands.
-
-    In this case, run the compiler to generate a vvp output file, and
-    run the vvp command to actually execute the simulation. Collect
-    the results and look for a "PASSED" string.'''
-
+    # Get the options this step needs...
     it_key = options['key']
-    it_dir = options['directory']
-    it_iverilog_args = options['iverilog_args']
-    it_vvp_args = options['vvp_args']
-    it_vvp_args_extended = options['vvp_args_extended']
     it_gold = options['gold']
     it_diff = options['diff']
 
-    build_runtime(it_key)
-
-    # Run the iverilog command
-    ivl_cmd = assemble_iverilog_cmd(options['source'], it_dir, it_iverilog_args)
-    ivl_res = subprocess.run(ivl_cmd, capture_output=True)
-
-    log_results(it_key, "iverilog", ivl_res)
-    if ivl_res.returncode != 0:
-        return [1, "Failed - Compile failed"]
-
-    # run the vvp command
-    vvp_cmd = assemble_vvp_cmd(it_vvp_args, it_vvp_args_extended)
-    vvp_res = subprocess.run(vvp_cmd, capture_output=True)
-    log_results(it_key, "vvp", vvp_res);
-        
-    if vvp_res.returncode != 0:
-        return [1, "Failed - Vvp execution failed"]
-
-    it_stdout = vvp_res.stdout.decode('ascii')
-
-    # If there is a gold file configured, the test result depends on
-    # the outputs matching the gold file.
     if it_gold is not None:
-
         compared = True
-
-        log_path = os.path.join("log",  f"{it_key}-iverilog-stdout.log")
-        gold_path = os.path.join("gold", f"{it_gold}-iverilog-stdout.gold")
-        compared_ivl_stdout = compare_files(log_path, gold_path)
-        compared = compared and compared_ivl_stdout
-
-        log_path = os.path.join("log",  f"{it_key}-iverilog-stderr.log")
-        gold_path = os.path.join("gold", f"{it_gold}-iverilog-stderr.gold")
-        compared_ivl_stderr = compare_files(log_path, gold_path)
-        compared = compared and compared_ivl_stderr
-
-        log_path = os.path.join("log",  f"{it_key}-vvp-stdout.log")
-        gold_path = os.path.join("gold", f"{it_gold}-vvp-stdout.gold")
-        compared_vvp_stdout = compare_files(log_path, gold_path)
-        compared = compared and compared_vvp_stdout
-
-        log_path = os.path.join("log",  f"{it_key}-vvp-stderr.log")
-        gold_path = os.path.join("gold", f"{it_gold}-vvp-stderr.gold")
-        compared_vvp_stderr = compare_files(log_path, gold_path)
-        compared = compared and compared_vvp_stderr
+        for log_name in log_list:
+            log_path = os.path.join("log", f"{it_key}-{log_name}.log")
+            gold_path = os.path.join("gold", f"{it_gold}-{log_name}.gold")
+            compared = compared and compare_files(log_path, gold_path)
 
         if expected_fail:
             if compared:
-                return [1, "Failed - Passed, but expected failure"]
+                return [1, "Failed = Passed, but expected failure"]
             else:
                 return [0, "Passed - Expected fail"]
         else:
@@ -194,7 +153,6 @@ def do_run_normal(options : dict, expected_fail : bool) -> list:
                 return [0, "Passed"]
             else:
                 return [1, "Failed - Gold output doesn't match actual output."]
-
 
     # If there is a diff description, then compare named files instead of
     # the log and a gold file.
@@ -224,6 +182,7 @@ def do_run_normal(options : dict, expected_fail : bool) -> list:
             else:
                 return [1, f"Failed - Files {diff_name1} and {diff_name2} differ."]
 
+
     # Otherwise, look for the PASSED output string in stdout.
     for line in it_stdout.splitlines():
         if line == "PASSED":
@@ -240,8 +199,99 @@ def do_run_normal(options : dict, expected_fail : bool) -> list:
         return [1, "Failed - No PASSED output, and no gold file"]
 
 
+def do_run_normal_vlog95(options : dict, expected_fail : bool) -> list:
+    '''Run the iverilog and vvp commands.
+
+    In this case, run the compiler with the -tvlog95 flag to generate
+    an intermediate verilog file, then run the compiler again to generate
+    a vvp out. Run that vvp output to test the simulation results. Collect
+    the results and look for a "PASSED" string.'''
+
+    it_key = options['key']
+    it_dir = options['directory']
+    it_iverilog_args = ["-tvlog95"] + options['iverilog_args']
+    it_vvp_args = options['vvp_args']
+    it_vvp_args_extended = options['vvp_args_extended']
+
+    build_runtime(it_key)
+
+    # Run the first iverilog command, to generate the intermediate verilog
+    ivl1_cmd = assemble_iverilog_cmd(options['source'], it_dir, it_iverilog_args, "a.out.v")
+    ivl1_res = subprocess.run(ivl1_cmd, capture_output=True)
+
+    log_results(it_key, "iverilog", ivl1_res)
+    if ivl1_res.returncode != 0:
+        return [1, "Failed - Compile failed"]
+
+    # Run another iverilog command to compile the code generated from the first step.
+    ivl2_cmd = assemble_iverilog_cmd("a.out.v", "work", [ ], "a.out")
+    ivl2_res = subprocess.run(ivl2_cmd, capture_output=True)
+
+    log_results(it_key, "iverilog-vlog95", ivl2_res)
+    if ivl2_res.returncode != 0:
+        return [1, "Failed - Compile of generated code failed"]
+
+    # Run the vvp command
+    vvp_cmd = assemble_vvp_cmd(it_vvp_args, it_vvp_args_extended)
+    vvp_res = subprocess.run(vvp_cmd, capture_output=True)
+    log_results(it_key, "vvp", vvp_res);
+        
+    if vvp_res.returncode != 0:
+        return [1, "Failed - Vvp execution failed"]
+
+    it_stdout = vvp_res.stdout.decode('ascii')
+    log_list = ["iverilog-stdout", "iverilog-stderr",
+                "iverilog-vlog95-stdout", "iverilog-vlog95-stderr",
+                "vvp-stdout", "vvp-stderr"]
+
+    return check_run_outputs(options, expected_fail, it_stdout, log_list)
+
+
+def do_run_normal(options : dict, expected_fail : bool) -> list:
+    '''Run the iverilog and vvp commands.
+
+    In this case, run the compiler to generate a vvp output file, and
+    run the vvp command to actually execute the simulation. Collect
+    the results and look for a "PASSED" string.'''
+
+    it_key = options['key']
+    it_dir = options['directory']
+    it_iverilog_args = options['iverilog_args']
+    it_vvp_args = options['vvp_args']
+    it_vvp_args_extended = options['vvp_args_extended']
+
+    build_runtime(it_key)
+
+    # Run the iverilog command
+    ivl_cmd = assemble_iverilog_cmd(options['source'], it_dir, it_iverilog_args)
+    ivl_res = subprocess.run(ivl_cmd, capture_output=True)
+
+    log_results(it_key, "iverilog", ivl_res)
+    if ivl_res.returncode != 0:
+        return [1, "Failed - Compile failed"]
+
+    # run the vvp command
+    vvp_cmd = assemble_vvp_cmd(it_vvp_args, it_vvp_args_extended)
+    vvp_res = subprocess.run(vvp_cmd, capture_output=True)
+    log_results(it_key, "vvp", vvp_res);
+        
+    if vvp_res.returncode != 0:
+        return [1, "Failed - Vvp execution failed"]
+
+    it_stdout = vvp_res.stdout.decode('ascii')
+    log_list = ["iverilog-stdout", "iverilog-stderr",
+                "vvp-stdout", "vvp-stderr"]
+
+    return check_run_outputs(options, expected_fail, it_stdout, log_list)
+
 def run_normal(options : dict) -> list:
     return do_run_normal(options, False)
 
 def run_EF(options : dict) -> list:
     return do_run_normal(options, True)
+
+def run_normal_vlog95(options : dict) -> list:
+    return do_run_normal_vlog95(options, False)
+
+def run_EF_vlog95(options : dict) -> list:
+    return do_run_normal_vlog95(options, True)
