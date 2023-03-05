@@ -5276,7 +5276,7 @@ static void find_property_in_class(const LineInfo&loc, const NetScope*scope, per
 /*
  * The foreach statement can be written as a for statement like so:
  *
- *     for (<idx> = $low(<array>) ; <idx> <= $high(<array>) ; <idx> += 1)
+ *     for (<idx> = $left(<array>) ; <idx> {<,>}= $right(<array>) ; <idx> {+,-}= 1)
  *          <statement_>
  *
  * The <idx> variable is already known to be in the containing named
@@ -5386,6 +5386,9 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
       NetESignal*idx_exp = new NetESignal(idx_sig);
       idx_exp->set_line(*this);
 
+	// This is a dynamic array or queue where $low is $left and $high is
+	// $right. It will always count up.
+
 	// Make an initialization expression for the index.
       NetESFunc*init_expr = new NetESFunc("$low", &netvector_t::atom2s32, 1);
       init_expr->set_line(*this);
@@ -5458,36 +5461,33 @@ NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
 
 	      // Get the $high and $low constant values for this slice
 	      // of the array.
-	    NetEConst*hig_expr = make_const_val_s(idx_range.get_msb());
-	    NetEConst*low_expr = make_const_val_s(idx_range.get_lsb());
-	    if (idx_range.get_msb() < idx_range.get_lsb()) {
-		  NetEConst*tmp = hig_expr;
-		  hig_expr = low_expr;
-		  low_expr = tmp;
-	    }
+	    NetEConst*left_expr = make_const_val_s(idx_range.get_msb());
+	    NetEConst*right_expr = make_const_val_s(idx_range.get_lsb());
 
-	    hig_expr->set_line(*this);
-	    low_expr->set_line(*this);
+	    bool up = idx_range.get_msb() < idx_range.get_lsb();
+
+	    left_expr->set_line(*this);
+	    right_expr->set_line(*this);
 
 	    pform_name_t idx_name;
 	    idx_name.push_back(name_component_t(index_vars_[idx_idx]));
 	    NetNet*idx_sig = des->find_signal(scope, idx_name);
 	    ivl_assert(*this, idx_sig);
 
-	      // Make the condition expression <idx> <= $high(slice)
+	      // Make the condition expression <idx> {<,>}= $right(slice)
 	    NetESignal*idx_expr = new NetESignal(idx_sig);
 	    idx_expr->set_line(*this);
 
-	    NetEBComp*cond_expr = new NetEBComp('L', idx_expr, hig_expr);
+	    NetEBComp*cond_expr = new NetEBComp(up ? 'L' : 'G', idx_expr, right_expr);
 	    cond_expr->set_line(*this);
 
-	      // Make the step statement: <idx> += 1
+	      // Make the step statement: <idx> {+,-}= 1
 	    NetAssign_*idx_lv = new NetAssign_(idx_sig);
 	    NetEConst*step_val = make_const_val_s(1);
-	    NetAssign*step = new NetAssign(idx_lv, '+', step_val);
+	    NetAssign*step = new NetAssign(idx_lv, up ? '+' : '-', step_val);
 	    step->set_line(*this);
 
-	    stmt = new NetForLoop(idx_sig, low_expr, cond_expr, sub, step);
+	    stmt = new NetForLoop(idx_sig, left_expr, cond_expr, sub, step);
 	    stmt->set_line(*this);
 
 	    sub = stmt;
