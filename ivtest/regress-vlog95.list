@@ -260,6 +260,8 @@ scan-invalid		CE			ivltests
 sel_rval_bit_ob		CE			ivltests
 sel_rval_part_ob	CE			ivltests
 signed_net_display	CE,-pallowsigned=1	ivltests
+sv_ap_parray4		CE,-g2005-sv		ivltests
+sv_ap_struct4		CE,-g2005-sv		ivltests
 sv_array_cassign1	CE,-g2005-sv		ivltests
 sv_array_cassign2	CE,-g2005-sv		ivltests
 sv_array_cassign3	CE,-g2005-sv		ivltests
