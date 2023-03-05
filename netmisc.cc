@@ -1628,21 +1628,75 @@ NetExpr*collapse_array_indices(Design*des, NetScope*scope, NetNet*net,
       return res;
 }
 
+
+static void assign_unpacked_with_bufz_dim(Design *des, NetScope *scope,
+					  const LineInfo *loc,
+					  NetNet *lval, NetNet *rval,
+					  const std::vector<long> &stride,
+					  unsigned int dim = 0,
+					  unsigned int idx_l = 0,
+					  unsigned int idx_r = 0)
+{
+      int inc_l, inc_r;
+      bool up_l, up_r;
+
+      const auto &l_dims = lval->unpacked_dims();
+      const auto &r_dims = rval->unpacked_dims();
+
+      up_l = l_dims[dim].get_msb() < l_dims[dim].get_lsb();
+      up_r = r_dims[dim].get_msb() < r_dims[dim].get_lsb();
+
+      inc_l = inc_r = stride[dim];
+
+      /*
+       * Arrays dimensions get connected left-to-right. This means if the
+       * left-to-right order differs for a particular dimension between the two
+       * arrays the elements for that dimension will get connected in reverse
+       * order.
+       */
+
+      if (!up_l) {
+	    /* Go to the last element and count down */
+	    idx_l += inc_l * (l_dims[dim].width() - 1);
+	    inc_l = -inc_l;
+      }
+
+      if (!up_r) {
+	    /* Go to the last element and count down */
+	    idx_r += inc_r * (r_dims[dim].width() - 1);
+	    inc_r = -inc_r;
+      }
+
+      for (unsigned int idx = 0; idx < l_dims[dim].width(); idx++) {
+	    if (dim == l_dims.size() - 1) {
+		  NetBUFZ *driver = new NetBUFZ(scope, scope->local_symbol(),
+						lval->vector_width(), false);
+		  driver->set_line(*loc);
+		  des->add_node(driver);
+
+		  connect(lval->pin(idx_l), driver->pin(0));
+		  connect(driver->pin(1), rval->pin(idx_r));
+	    } else {
+		  assign_unpacked_with_bufz_dim(des, scope, loc, lval, rval,
+						stride, dim + 1, idx_l, idx_r);
+	    }
+
+	    idx_l += inc_l;
+	    idx_r += inc_r;
+      }
+}
+
 void assign_unpacked_with_bufz(Design*des, NetScope*scope,
 			       const LineInfo*loc,
 			       NetNet*lval, NetNet*rval)
 {
       ivl_assert(*loc, lval->pin_count()==rval->pin_count());
 
-      for (unsigned idx = 0 ; idx < lval->pin_count() ; idx += 1) {
-	    NetBUFZ*driver = new NetBUFZ(scope, scope->local_symbol(),
-					 lval->vector_width(), false);
-	    driver->set_line(*loc);
-	    des->add_node(driver);
+      const auto &dims = lval->unpacked_dims();
+      vector<long> stride(dims.size());
 
-	    connect(lval->pin(idx), driver->pin(0));
-	    connect(driver->pin(1), rval->pin(idx));
-      }
+      make_strides(dims, stride);
+      assign_unpacked_with_bufz_dim(des, scope, loc, lval, rval, stride);
 }
 
 /*
