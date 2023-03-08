@@ -108,8 +108,10 @@ sdf_header_item
 
 sdfversion
   : '(' K_SDFVERSION QSTRING ')'
-    { free($3);
-    }
+      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Version: %s\n",
+					sdf_parse_path, @2.first_line, $3);
+        free($3);
+      }
   ;
 
 design_name
@@ -160,7 +162,17 @@ hierarchy_divider
 
 voltage
   : '(' K_VOLTAGE rtriple ')'
+      { /* The value must be defined. */
+      if (! $3.defined) {
+					vpi_printf("%s:%d: SDF ERROR: Chosen value not defined.\n", sdf_parse_path, @1.first_line);
+      }
+      else if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Voltage : %f\n",
+					sdf_parse_path, @2.first_line, $3.value);
+      }
   | '(' K_VOLTAGE signed_real_number ')'
+      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Voltage : %f\n",
+					sdf_parse_path, @2.first_line, $3);
+      }
   ;
 
 process
@@ -173,17 +185,27 @@ process
 
 temperature
   : '(' K_TEMPERATURE rtriple ')'
+      { /* The value must be defined. */
+      if (! $3.defined) {
+					vpi_printf("%s:%d: SDF ERROR: Chosen value not defined.\n", sdf_parse_path, @1.first_line);
+      }
+      else if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Temperature : %f\n",
+					sdf_parse_path, @2.first_line, $3.value);
+      }
   | '(' K_TEMPERATURE signed_real_number ')'
+      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Temperature : %f\n",
+					sdf_parse_path, @2.first_line, $3);
+      }
   ;
 
 time_scale
   : '(' K_TIMESCALE REAL_NUMBER IDENTIFIER ')'
-      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: TIMESCALE : %f%s\n",
+      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Timescale : %f%s\n",
 					sdf_parse_path, @2.first_line, $3, $4);
 	free($4);
       }
   | '(' K_TIMESCALE INTEGER IDENTIFIER ')'
-      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: TIMESCALE : %lu%s\n",
+      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Timescale : %lu%s\n",
 					sdf_parse_path, @2.first_line, $3, $4);
 	free($4);
       }
