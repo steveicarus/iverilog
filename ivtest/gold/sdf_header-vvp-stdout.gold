@@ -1,0 +1,10 @@
+ivltests/sdf_header.sdf:2:SDF INFO: Version: 3.0
+ivltests/sdf_header.sdf:3:SDF INFO: Design: test
+ivltests/sdf_header.sdf:4:SDF INFO: Date: Wed Mar 8 12:34:56 2023
+ivltests/sdf_header.sdf:5:SDF INFO: Vendor: No Vendor
+ivltests/sdf_header.sdf:6:SDF INFO: Program: Human
+ivltests/sdf_header.sdf:7:SDF INFO: Program Version: 1.0.0
+ivltests/sdf_header.sdf:9:SDF INFO: Voltage : 5.000000
+ivltests/sdf_header.sdf:10:SDF INFO: Process: best=0.65:nom=1.0:worst=1.8
+ivltests/sdf_header.sdf:11:SDF INFO: Temperature : 25.000000
+ivltests/sdf_header.sdf:12:SDF INFO: Timescale : 1ps

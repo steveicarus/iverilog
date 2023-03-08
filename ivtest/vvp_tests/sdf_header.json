@@ -1,0 +1,7 @@
+{
+    "type"   : "normal",
+    "source" : "sdf_header.v",
+    "gold"   : "sdf_header",
+    "iverilog-args" : [ "-gspecify" ],
+    "vvp-args-extended" : [ "-sdf-verbose" ]
+}
