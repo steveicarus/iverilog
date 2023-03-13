@@ -90,8 +90,13 @@ def compare_files(log_path, gold_path):
 
     with open(log_path, 'rt') as fd:
         a = fd.readlines()
-    with open(gold_path, 'rt') as fd:
-        b = fd.readlines()
+
+    # Allow to omit empty gold files
+    if os.path.exists(gold_path):
+        with open(gold_path, 'rt') as fd:
+            b = fd.readlines()
+    else:
+        b = []
 
     flag = a == b
     if not flag:
