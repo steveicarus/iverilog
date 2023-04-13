@@ -21,7 +21,6 @@
 # include "ivl_assert.h"
 # include  "PWire.h"
 # include  "PExpr.h"
-# include  <cassert>
 
 using namespace std;
 
@@ -59,7 +58,7 @@ perm_string PWire::basename() const
 
 bool PWire::set_wire_type(NetNet::Type t)
 {
-      assert(t != NetNet::IMPLICIT);
+      ivl_assert(*this, t != NetNet::IMPLICIT);
 
       switch (type_) {
 	  case NetNet::IMPLICIT:
@@ -90,8 +89,8 @@ NetNet::PortType PWire::get_port_type() const
 
 bool PWire::set_port_type(NetNet::PortType pt)
 {
-      assert(pt != NetNet::NOT_A_PORT);
-      assert(pt != NetNet::PIMPLICIT);
+      ivl_assert(*this, pt != NetNet::NOT_A_PORT);
+      ivl_assert(*this, pt != NetNet::PIMPLICIT);
 
       switch (port_type_) {
 	  case NetNet::PIMPLICIT:
@@ -181,13 +180,13 @@ void PWire::set_data_type(data_type_t*type)
       if (set_data_type_.get() == type)
 	    return;
 
-      assert(!set_data_type_.get());
+      ivl_assert(*this, !set_data_type_.get());
       set_data_type_.reset(type);
 }
 
 void PWire::set_discipline(ivl_discipline_t d)
 {
-      assert(discipline_ == 0);
+      ivl_assert(*this, discipline_ == 0);
       discipline_ = d;
 }
 

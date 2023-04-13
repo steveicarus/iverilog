@@ -21,6 +21,7 @@
 # include  "pform.h"
 # include  "PClass.h"
 # include  "parse_misc.h"
+# include  "ivl_assert.h"
 
 using namespace std;
 
@@ -47,14 +48,14 @@ void pform_start_class_declaration(const struct vlltype&loc,
 {
       PClass*class_scope = pform_push_class_scope(loc, type->name);
       class_scope->type = type;
-      assert(pform_cur_class == 0);
+      ivl_assert(loc, pform_cur_class == 0);
       pform_cur_class = class_scope;
 
-      assert(type->base_type == 0);
+      ivl_assert(loc, type->base_type == 0);
       type->base_type.reset(base_type);
       type->virtual_class = virtual_class;
 
-      assert(type->base_args.empty());
+      ivl_assert(loc, type->base_args.empty());
       if (base_exprs) {
 	    for (list<PExpr*>::iterator cur = base_exprs->begin()
 		       ; cur != base_exprs->end() ; ++ cur) {
@@ -69,7 +70,7 @@ void pform_class_property(const struct vlltype&loc,
 			  data_type_t*data_type,
 			  list<decl_assignment_t*>*decls)
 {
-      assert(pform_cur_class);
+      ivl_assert(loc, pform_cur_class);
 
 	// Add the non-static properties to the class type
 	// object. Unwind the list of names to make a map of name to
@@ -118,7 +119,7 @@ void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net)
 	// The pform_make_task_ports() function deletes the this_name
 	// object.
 
-      assert(this_port->at(0).defe == 0);
+      ivl_assert(loc, this_port->at(0).defe == 0);
       PWire*this_wire = this_port->at(0).port;
       delete this_port;
 
@@ -127,7 +128,7 @@ void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net)
 
 void pform_set_constructor_return(PFunction*net)
 {
-      assert(pform_cur_class);
+      ivl_assert(*net, pform_cur_class);
       net->set_return(pform_cur_class->type);
 }
 
@@ -136,14 +137,14 @@ void pform_set_constructor_return(PFunction*net)
  */
 PFunction*pform_push_constructor_scope(const struct vlltype&loc)
 {
-      assert(pform_cur_class);
+      ivl_assert(loc, pform_cur_class);
       PFunction*func = pform_push_function_scope(loc, "new", LexicalScope::AUTOMATIC);
       return func;
 }
 
 void pform_end_class_declaration(const struct vlltype&loc)
 {
-      assert(pform_cur_class);
+      ivl_assert(loc, pform_cur_class);
 
 	// If there were initializer statements, then collect them
 	// into an implicit constructor function.

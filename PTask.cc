@@ -18,8 +18,8 @@
  */
 
 # include "config.h"
-# include  "PTask.h"
-# include  <cassert>
+# include "PTask.h"
+# include "ivl_assert.h"
 
 using namespace std;
 
@@ -39,13 +39,13 @@ bool PTaskFunc::var_init_needs_explicit_lifetime() const
 
 void PTaskFunc::set_ports(vector<pform_tf_port_t>*p)
 {
-      assert(ports_ == 0);
+      ivl_assert(*this, ports_ == 0);
       ports_ = p;
 }
 
 void PTaskFunc::set_this(class_type_t*type, PWire*this_wire)
 {
-      assert(this_type_ == 0);
+      ivl_assert(*this, this_type_ == 0);
       this_type_ = type;
 
 	// Push a synthesis argument that is the "this" value.
@@ -72,7 +72,7 @@ PTask::~PTask()
 
 void PTask::set_statement(Statement*s)
 {
-      assert(statement_ == 0);
+      ivl_assert(*this, statement_ == 0);
       statement_ = s;
 }
 

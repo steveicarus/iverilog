@@ -20,7 +20,6 @@
 # include "config.h"
 # include "PTask.h"
 # include "Statement.h"
-# include <cassert>
 # include "ivl_assert.h"
 
 using namespace std;
@@ -38,8 +37,8 @@ PFunction::~PFunction()
 
 void PFunction::set_statement(Statement*s)
 {
-      assert(s != 0);
-      assert(statement_ == 0);
+      ivl_assert(*this, s != 0);
+      ivl_assert(*this, statement_ == 0);
       statement_ = s;
 }
 

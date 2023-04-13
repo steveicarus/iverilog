@@ -139,8 +139,8 @@ PChainConstructor* PBlock::extract_chain_constructor()
 
 void PBlock::set_join_type(PBlock::BL_TYPE type)
 {
-      assert(bl_type_ == BL_PAR);
-      assert(type==BL_PAR || type==BL_JOIN_NONE || type==BL_JOIN_ANY);
+      ivl_assert(*this, bl_type_ == BL_PAR);
+      ivl_assert(*this, type==BL_PAR || type==BL_JOIN_NONE || type==BL_JOIN_ANY);
       bl_type_ = type;
 }
 
@@ -173,7 +173,7 @@ PCallTask::PCallTask(const pform_name_t&n, const list<PExpr*>&p)
 	    parms_[idx] = *cur;
 	    ++cur;
       }
-      assert(cur == p.end());
+      ivl_assert(*this, cur == p.end());
 }
 
 PCallTask::PCallTask(PPackage*pkg, const pform_name_t&n, const list<PExpr*>&p)
@@ -184,7 +184,7 @@ PCallTask::PCallTask(PPackage*pkg, const pform_name_t&n, const list<PExpr*>&p)
 	    parms_[idx] = *cur;
 	    ++cur;
       }
-      assert(cur == p.end());
+      ivl_assert(*this, cur == p.end());
 }
 
 PCallTask::PCallTask(perm_string n, const list<PExpr*>&p)
@@ -195,7 +195,7 @@ PCallTask::PCallTask(perm_string n, const list<PExpr*>&p)
 	    parms_[idx] = *cur;
 	    ++cur;
       }
-      assert(cur == p.end());
+      ivl_assert(*this, cur == p.end());
       path_.push_back(name_component_t(n));
 }
 
@@ -241,7 +241,7 @@ PChainConstructor::PChainConstructor(const list<PExpr*>&parms)
 	    parms_[idx] = *cur;
 	    ++cur;
       }
-      assert(cur == parms.end());
+      ivl_assert(*this, cur == parms.end());
 }
 
 PChainConstructor::~PChainConstructor()
@@ -303,7 +303,7 @@ PDoWhile::~PDoWhile()
 PEventStatement::PEventStatement(const std::vector<PEEvent*>&ee)
 : expr_(ee), statement_(0), always_sens_(false)
 {
-      assert(expr_.size() > 0);
+      ivl_assert(*this, expr_.size() > 0);
 }
 
 

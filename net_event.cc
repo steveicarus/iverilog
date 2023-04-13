@@ -43,7 +43,7 @@ NetEvent::NetEvent(perm_string n)
 
 NetEvent::~NetEvent()
 {
-      assert(waitref_ == 0);
+      ivl_assert(*this, waitref_ == 0);
       if (scope_) scope_->rem_event(this);
       while (probes_) {
 	    NetEvProbe*tmp = probes_->enext_;
@@ -60,13 +60,13 @@ perm_string NetEvent::name() const
 
 NetScope* NetEvent::scope()
 {
-      assert(scope_);
+      ivl_assert(*this, scope_);
       return scope_;
 }
 
 const NetScope* NetEvent::scope() const
 {
-      assert(scope_);
+      ivl_assert(*this, scope_);
       return scope_;
 }
 
@@ -254,7 +254,7 @@ NetEvTrig::~NetEvTrig()
       } else {
 	    NetEvTrig*cur = event_->trig_;
 	    while (cur->enext_ != this) {
-		  assert(cur->enext_);
+		  ivl_assert(*this, cur->enext_);
 		  cur = cur->enext_;
 	    }
 
@@ -282,7 +282,7 @@ NetEvNBTrig::~NetEvNBTrig()
       } else {
 	    NetEvNBTrig*cur = event_->nb_trig_;
 	    while (cur->enext_ != this) {
-		  assert(cur->enext_);
+		  ivl_assert(*this, cur->enext_);
 		  cur = cur->enext_;
 	    }
 
@@ -320,7 +320,7 @@ NetEvProbe::~NetEvProbe()
       } else {
 	    NetEvProbe*cur = event_->probes_;
 	    while (cur->enext_ != this) {
-		  assert(cur->enext_);
+		  ivl_assert(*this, cur->enext_);
 		  cur = cur->enext_;
 	    }
 
@@ -398,10 +398,10 @@ NetEvWait::~NetEvWait()
 			tgt->wlist_ = tmp->next;
 			delete tmp;
 		  } else {
-			assert(tmp->next);
+			ivl_assert(*this, tmp->next);
 			while (tmp->next->obj != this) {
 			      tmp = tmp->next;
-			      assert(tmp->next);
+			      ivl_assert(*this, tmp->next);
 			}
 			tmp->next = tmp->next->next;
 			delete tmp;
@@ -417,7 +417,7 @@ void NetEvWait::add_event(NetEvent*tgt)
 {
 	/* A wait fork is an empty event. */
       if (! tgt) {
-	    assert(events_.empty());
+	    ivl_assert(*this, events_.empty());
 	    events_.push_back(0);
 	    return;
       }
@@ -442,20 +442,20 @@ void NetEvWait::replace_event(NetEvent*src, NetEvent*repl)
 		  break;
       }
 
-      assert(idx < events_.size());
+      ivl_assert(*this, idx < events_.size());
 
 	// First, remove me from the list held by the src NetEvent.
-      assert(src->waitref_ > 0);
+      ivl_assert(*this, src->waitref_ > 0);
       src->waitref_ -= 1;
       struct NetEvent::wcell_*tmp = src->wlist_;
       if (tmp->obj == this) {
 	    src->wlist_ = tmp->next;
 	    delete tmp;
       } else {
-	    assert(tmp->next);
+	    ivl_assert(*this, tmp->next);
 	    while (tmp->next->obj != this) {
 		  tmp = tmp->next;
-		  assert(tmp->next);
+		  ivl_assert(*this, tmp->next);
 	    }
 	    tmp->next = tmp->next->next;
 	    delete tmp;

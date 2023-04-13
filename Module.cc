@@ -22,7 +22,7 @@
 # include  "Module.h"
 # include  "PGate.h"
 # include  "PWire.h"
-# include  <cassert>
+# include  "ivl_assert.h"
 
 using namespace std;
 
@@ -60,7 +60,7 @@ unsigned Module::port_count() const
  */
 const vector<PEIdent*>& Module::get_port(unsigned idx) const
 {
-      assert(idx < ports.size());
+      ivl_assert(*this, idx < ports.size());
       static const vector<PEIdent*> zero;
 
       if (ports[idx])
@@ -71,7 +71,7 @@ const vector<PEIdent*>& Module::get_port(unsigned idx) const
 
 unsigned Module::find_port(const char*name) const
 {
-      assert(name != 0);
+      ivl_assert(*this, name != 0);
       for (unsigned idx = 0 ;  idx < ports.size() ;  idx += 1) {
 	    if (ports[idx] == 0) {
 		    /* It is possible to have undeclared ports. These
@@ -81,7 +81,7 @@ unsigned Module::find_port(const char*name) const
 		       inaccessible to binding by name. */
 		  continue;
 	    }
-	    assert(ports[idx]);
+	    ivl_assert(*this, ports[idx]);
 	    if (ports[idx]->name == name)
 		  return idx;
       }
@@ -92,7 +92,7 @@ unsigned Module::find_port(const char*name) const
 perm_string Module::get_port_name(unsigned idx) const
 {
 
-      assert(idx < ports.size());
+      ivl_assert(*this, idx < ports.size());
       if (ports[idx] == 0 || ports[idx]->name.str() == 0) {
               /* It is possible to have undeclared ports. These
                  are ports that are skipped in the declaration,
@@ -108,7 +108,7 @@ perm_string Module::get_port_name(unsigned idx) const
 
 PExpr* Module::get_port_default_value(unsigned idx) const
 {
-      assert(idx < ports.size());
+      ivl_assert(*this, idx < ports.size());
       return ports[idx] ? ports[idx]->default_value : 0;
 }
 

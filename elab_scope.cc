@@ -54,7 +54,6 @@
 # include  "parse_api.h"
 # include  "util.h"
 # include  <typeinfo>
-# include  <cassert>
 # include  "ivl_assert.h"
 
 using namespace std;
@@ -176,7 +175,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       size_t name_idx = 0;
 	// Find the enumeration width.
       long raw_width = use_enum->packed_width();
-      assert(raw_width > 0);
+      ivl_assert(*use_enum, raw_width > 0);
       unsigned enum_width = (unsigned)raw_width;
       bool is_signed = use_enum->get_signed();
 	// Define the default start value and the increment value to be the
@@ -599,7 +598,7 @@ static void replace_scope_parameters(Design *des, NetScope*scope, const LineInfo
 		       << "Missing expression in parameter replacement for "
 		       << (*cur).first << endl;;
 	    }
-	    assert(val);
+	    ivl_assert(loc, val);
 	    if (debug_scopes) {
 		  cerr << loc.get_fileline() << ": debug: "
 		       << "Replace " << (*cur).first
@@ -773,7 +772,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
       elaborate_scope_enumerations(des, scope, enum_sets);
 
-      assert(classes.size() == classes_lexical.size());
+      ivl_assert(*this, classes.size() == classes_lexical.size());
       elaborate_scope_classes(des, scope, classes_lexical);
 
 	// Run through the defparams for this module and save the result
@@ -1030,7 +1029,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    delete test_ex;
 	    test_ex = elab_and_eval(des, container, loop_test, -1, true);
 	    test = dynamic_cast<NetEConst*>(test_ex);
-	    assert(test);
+	    ivl_assert(*this, test);
       }
 
 	// Clear the genvar_tmp field in the scope to reflect that the
@@ -1112,7 +1111,7 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
       generator_it_t cur = generate_schemes.begin();
       while (cur != generate_schemes.end()) {
 	    PGenerate*item = *cur;
-	    assert( item->scheme_type == PGenerate::GS_CASE_ITEM );
+	    ivl_assert(*item, item->scheme_type == PGenerate::GS_CASE_ITEM);
 
 	      // Detect that the item is a default.
 	    if (item->item_test.size() == 0) {
@@ -1334,7 +1333,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
       }
 
 	// Missing module instance names have already been rejected.
-      assert(get_name() != "");
+      ivl_assert(*this, get_name() != "");
 
 	// check for recursive instantiation by scanning the current
 	// scope and its parents. Look for a module instantiation of
@@ -1478,7 +1477,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // is parameter 0, the second parameter 1, and so on.
 
 	    if (overrides_) {
-		  assert(parms_ == 0);
+		  ivl_assert(*this, parms_ == 0);
 		  list<perm_string>::const_iterator cur
 			= mod->param_names.begin();
 		  list<PExpr*>::const_iterator jdx = overrides_->begin();
@@ -1514,7 +1513,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // Named parameter overrides carry a name with each override
 	      // so the mapping into the replace list is much easier.
 	    if (parms_) {
-		  assert(overrides_ == 0);
+		  ivl_assert(*this, overrides_ == 0);
 		  for (unsigned jdx = 0 ;  jdx < nparms_ ;  jdx += 1) {
 		          // No expression means that the parameter is not
 		          // replaced.
@@ -1586,7 +1585,7 @@ void PFunction::elaborate_scope(Design*des, NetScope*scope) const
 
 void PTask::elaborate_scope(Design*des, NetScope*scope) const
 {
-      assert(scope->type() == NetScope::TASK);
+      ivl_assert(*this, scope->type() == NetScope::TASK);
 
       scope->add_typedefs(&typedefs);
 
@@ -1658,9 +1657,9 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
  */
 void PCase::elaborate_scope(Design*des, NetScope*scope) const
 {
-      assert(items_);
+      ivl_assert(*this, items_);
       for (unsigned idx = 0 ;  idx < (*items_).size() ;  idx += 1) {
-	    assert( (*items_)[idx] );
+	    ivl_assert(*this, (*items_)[idx]);
 
 	    if (Statement*sp = (*items_)[idx]->stat)
 		  sp -> elaborate_scope(des, scope);

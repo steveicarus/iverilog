@@ -45,7 +45,7 @@ using namespace std;
 NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 					 bool bidirectional_flag) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       std::vector<NetNet*> nets(parms_.size());
       unsigned width = 0;
@@ -152,10 +152,10 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  connect(ps->pin(1), osig->pin(0));
 		  connect(ps->pin(0), nets[idx]->pin(0));
 
-		  assert(wid <= width);
+		  ivl_assert(*this, wid <= width);
 		  width -= wid;
 	    }
-	    assert(width == 0);
+	    ivl_assert(*this, width == 0);
       }
 
       return osig;
@@ -174,7 +174,7 @@ NetNet* PEConcat::elaborate_bi_net(Design*des, NetScope*scope) const
 bool PEConcat::is_collapsible_net(Design*des, NetScope*scope,
                                   NetNet::PortType port_type) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
         // Repeat concatenations are not currently supported.
       if (repeat_)
@@ -509,7 +509,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 					bool bidirectional_flag) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       NetNet*       sig = 0;
       const NetExpr*par = 0;
@@ -1138,7 +1138,7 @@ NetNet*PEIdent::elaborate_unpacked_net(Design*des, NetScope*scope) const
 bool PEIdent::is_collapsible_net(Design*des, NetScope*scope,
                                  NetNet::PortType port_type) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       NetNet*       sig = 0;
       const NetExpr*par = 0;
@@ -1152,7 +1152,7 @@ bool PEIdent::is_collapsible_net(Design*des, NetScope*scope,
       if (sig == 0)
             return false;
 
-      assert(sig);
+      ivl_assert(*this, sig);
 
 	/* If this is SystemVerilog and the variable is not yet
 	   assigned by anything, then convert it to an unresolved

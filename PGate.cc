@@ -22,21 +22,21 @@
 # include  "PGate.h"
 # include  "PExpr.h"
 # include  "verinum.h"
-# include  <cassert>
+# include  "ivl_assert.h"
 
 using namespace std;
 
 void PGate::set_pins_(list<PExpr*>*pins)
 {
-      assert(pins);
-      assert(pins->size() == pins_.size());
+      ivl_assert(*this, pins);
+      ivl_assert(*this, pins->size() == pins_.size());
 
       for (size_t idx = 0 ; idx < pins_.size() ; idx += 1) {
 	    pins_[idx] = pins->front();
 	    pins->pop_front();
       }
 
-      assert(pins->empty());
+      ivl_assert(*this, pins->empty());
       delete pins;
 }
 
@@ -72,7 +72,7 @@ PGate::~PGate()
 
 void PGate::set_ranges(list<pform_range_t>*ranges)
 {
-      assert(ranges_ == 0);
+      ivl_assert(*this, ranges_ == 0);
       ranges_ = ranges;
 }
 
@@ -133,13 +133,13 @@ PNamedItem::SymbolType PGate::symbol_type() const
 PGAssign::PGAssign(list<PExpr*>*pins)
 : PGate(perm_string(), pins)
 {
-      assert(pin_count() == 2);
+      ivl_assert(*this, pin_count() == 2);
 }
 
 PGAssign::PGAssign(list<PExpr*>*pins, list<PExpr*>*dels)
 : PGate(perm_string(), pins, dels)
 {
-      assert(pin_count() == 2);
+      ivl_assert(*this, pin_count() == 2);
 }
 
 PGAssign::~PGAssign()
@@ -288,14 +288,14 @@ PGModule::~PGModule()
 
 void PGModule::set_parameters(list<PExpr*>*o)
 {
-      assert(overrides_ == 0);
+      ivl_assert(*this, overrides_ == 0);
       overrides_ = o;
 }
 
 void PGModule::set_parameters(named<PExpr*>*pa, unsigned npa)
 {
-      assert(parms_ == 0);
-      assert(overrides_ == 0);
+      ivl_assert(*this, parms_ == 0);
+      ivl_assert(*this, overrides_ == 0);
       parms_ = pa;
       nparms_ = npa;
 }

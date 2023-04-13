@@ -75,7 +75,7 @@ void pform_end_package_declaration(const struct vlltype&loc)
 PPackage *pform_find_potential_import(const struct vlltype&loc, LexicalScope*scope,
 				      perm_string name, bool tf_call, bool make_explicit)
 {
-      assert(scope);
+      ivl_assert(loc, scope);
 
       PPackage *found_pkg = nullptr;
       for (auto search_pkg : scope->potential_imports) {
@@ -217,7 +217,7 @@ static bool pform_package_exportable(const struct vlltype &loc, PPackage *pkg,
 
 void pform_package_export(const struct vlltype &loc, PPackage *pkg, const char *ident)
 {
-      assert(pform_cur_package);
+      ivl_assert(loc, pform_cur_package);
 
       perm_string use_ident;
       if (ident) {
@@ -231,7 +231,7 @@ void pform_package_export(const struct vlltype &loc, PPackage *pkg, const char *
 PExpr* pform_package_ident(const struct vlltype&loc,
 			   PPackage*pkg, pform_name_t*ident_name)
 {
-      assert(ident_name);
+      ivl_assert(loc, ident_name);
       PEIdent*tmp = new PEIdent(pkg, *ident_name);
       FILE_NAME(tmp, loc);
       return tmp;
