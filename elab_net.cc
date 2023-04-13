@@ -890,11 +890,8 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       if (sig->pin_count() > 1 && widx_flag) {
 	    if (widx < 0 || widx >= (long) sig->pin_count())
 		  return 0;
-
-	    netvector_t*tmp2_vec = new netvector_t(sig->data_type(),
-						   sig->vector_width()-1,0);
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    sig->type(), tmp2_vec);
+				    sig->type(), sig->net_type());
 	    tmp->set_line(*this);
 	    tmp->local_flag(true);
 	    connect(sig->pin(widx), tmp->pin(0));
