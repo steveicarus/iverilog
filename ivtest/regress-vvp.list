@@ -33,3 +33,5 @@ pr903				vvp_tests/pr903.json
 pr903-vlog95			vvp_tests/pr903-vlog95.json
 struct_packed_write_read	vvp_tests/struct_packed_write_read.json
 struct_packed_write_read2	vvp_tests/struct_packed_write_read2.json
+sv_foreach9			vvp_tests/sv_foreach9.json
+sv_foreach10			vvp_tests/sv_foreach10.json
