@@ -1,0 +1,19 @@
+(DELAYFILE
+  (SDFVERSION "3.0")
+  (DESIGN "test")
+  (DATE "Wed Mar 8 12:34:56 2023")
+  (VENDOR "No Vendor")
+  (PROGRAM "Human")
+  (VERSION "1.0.0")
+  (DIVIDER /)
+  (VOLTAGE 5.5:5.0:4.5)
+  (PROCESS "best=0.65:nom=1.0:worst=1.8")
+  (TEMPERATURE -25.0:25.0:85.0)
+  (TIMESCALE 1 ps)
+  
+  // Do nothing
+  (CELL
+        (CELLTYPE "top")
+        (INSTANCE )
+  )
+)
