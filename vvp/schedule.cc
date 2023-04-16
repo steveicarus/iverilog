@@ -855,6 +855,7 @@ void schedule_final_vthread(vthread_t thr)
       struct vthread_event_s*cur = new vthread_event_s;
 
       cur->thr = thr;
+      vthread_mark_final(thr);
       vthread_mark_scheduled(thr);
 
       schedule_final_event(cur);
