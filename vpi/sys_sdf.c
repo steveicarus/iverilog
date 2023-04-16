@@ -36,6 +36,7 @@ static vpiHandle sdf_scope;
 static vpiHandle sdf_callh = 0;
   /* The cell in process. */
 static vpiHandle sdf_cur_cell;
+static char* sdf_fname;
 
 static vpiHandle find_scope(vpiHandle scope, const char*name)
 {
@@ -61,7 +62,7 @@ static vpiHandle find_scope(vpiHandle scope, const char*name)
  * handling items discovered in the parse.
  */
 
-void sdf_select_instance(const char*celltype, const char*cellinst)
+void sdf_select_instance(const char*celltype, const char*cellinst, int sdf_line_num)
 {
       char buffer[128];
 
@@ -79,12 +80,13 @@ void sdf_select_instance(const char*celltype, const char*cellinst)
 
 	    vpiHandle tmp_scope = find_scope(scope, buffer);
 	    if (tmp_scope == 0) {
-		  vpi_printf("SDF WARNING: %s:%d: ",
+		    vpi_printf("SDF WARNING: %s:%d: ",
 		             vpi_get_str(vpiFile, sdf_callh),
 		             (int)vpi_get(vpiLineNo, sdf_callh));
-		  vpi_printf("Cannot find %s in scope %s.\n",
+		    vpi_printf("Cannot find %s in scope %s. \n",
 			     buffer, vpi_get_str(vpiFullName, scope));
-		  break;
+	      vpi_printf("SDF INFO: %s %d\n", sdf_fname, sdf_line_num);
+		    break;
 	    }
 	    assert(tmp_scope);
 	    scope = tmp_scope;
@@ -98,28 +100,31 @@ void sdf_select_instance(const char*celltype, const char*cellinst)
       else
 	    sdf_cur_cell = find_scope(scope, src);
       if (sdf_cur_cell == 0) {
-	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
+	      vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
 	               (int)vpi_get(vpiLineNo, sdf_callh));
-	    vpi_printf("Unable to find %s in scope %s.\n",
+	      vpi_printf("Unable to find %s in scope %s\n",
 		       src, vpi_get_str(vpiFullName, scope));
+	      vpi_printf("SDF INFO: %s %d\n", sdf_fname, sdf_line_num);
 	    return;
       }
 
 	/* The scope that matches should be a module. */
       if (vpi_get(vpiType,sdf_cur_cell) != vpiModule) {
-	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
+	      vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
 	               (int)vpi_get(vpiLineNo, sdf_callh));
-	    vpi_printf("Scope %s in %s is not a module.\n",
+	      vpi_printf("Scope %s in %s is not a module.\n",
 		       src, vpi_get_str(vpiFullName, scope));
+	      vpi_printf("SDF INFO: %s %d\n", sdf_fname, sdf_line_num);
       }
 
 	/* The matching scope (a module) should have the expected type. */
       if (strcmp(celltype,vpi_get_str(vpiDefName,sdf_cur_cell)) != 0) {
-	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
+	      vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
 	               (int)vpi_get(vpiLineNo, sdf_callh));
-	    vpi_printf("Module %s in %s is not a %s; it is a ", src,
+	      vpi_printf("Module %s in %s is not a %s; it is a ", src,
 		       vpi_get_str(vpiFullName, scope), celltype);
-	    vpi_printf("%s\n", vpi_get_str(vpiDefName, sdf_cur_cell));
+	      vpi_printf("%s\n", vpi_get_str(vpiDefName, sdf_cur_cell));
+	      vpi_printf("SDF INFO: %s %d\n", sdf_fname, sdf_line_num);
       }
 
 }
@@ -298,6 +303,7 @@ static PLI_INT32 sys_sdf_annotate_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       sdf_fd = fopen(fname, "r");
+      sdf_fname = fname;
       if (sdf_fd == 0) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));

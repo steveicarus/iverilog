@@ -48,7 +48,7 @@ struct sdf_delval_list_s {
       struct sdf_delay_s val[12];
 };
 
-extern void sdf_select_instance(const char*celltype, const char*inst);
+extern void sdf_select_instance(const char*celltype, const char*inst, int sdf_line_num);
 extern void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 			      const struct sdf_delval_list_s*delval);
 
