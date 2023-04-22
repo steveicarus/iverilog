@@ -36,6 +36,18 @@ module main;
       end
 
       idx = 0;
+      do begin
+	 if (idx >= 2)
+	   break;
+	 idx += 1;
+      end while (idx < 5);
+
+      if (idx != 2) begin
+	 $display("FAILED -- break from do-while loop");
+	 $finish;
+      end
+
+      idx = 0;
       repeat (5) begin
 	 if (idx >= 2)
 	   break;
