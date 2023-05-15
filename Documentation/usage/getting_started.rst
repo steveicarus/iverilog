@@ -65,11 +65,11 @@ example, the counter model in counter.v
 
 .. code-block:: verilog
 
-  module counter(output, clk, reset);
+  module counter(out, clk, reset);
 
     parameter WIDTH = 8;
 
-    output [WIDTH-1 : 0] output;
+    output [WIDTH-1 : 0] out;
     input 	       clk, reset;
 
     reg [WIDTH-1 : 0]   out;
@@ -77,9 +77,9 @@ example, the counter model in counter.v
 
     always @(posedge clk or posedge reset)
       if (reset)
-        output <= 0;
+        out <= 0;
       else
-        output <= output + 1;
+        out <= out + 1;
 
   endmodule // counter
 
