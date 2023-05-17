@@ -150,7 +150,7 @@ compiler will not include it in an implicit event_expression list it
 calculates for that statement or any enclosing statement. This allows
 the same control variable to be used in multiple processes without risk
 of entering an infinite loop caused by each process triggering all other
-processes that use the same varaible. For strict compliance with the
+processes that use the same variable. For strict compliance with the
 standards, this behaviour should be disabled.
 .TP 8
 .B -I\fIincludedir\fP

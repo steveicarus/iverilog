@@ -438,7 +438,7 @@ ivl_type_t typedef_t::elaborate_type(Design *des, NetScope *scope)
       scope = scope->find_typedef_scope(des, this);
       if (!scope) {
 	    cerr << get_fileline() << ": sorry: "
-	         << "Can not find the scope type defintion `" << name << "`."
+	         << "Can not find the scope type definition `" << name << "`."
 		 << endl;
 	    des->errors++;
 
