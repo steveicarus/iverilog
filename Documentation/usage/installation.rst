@@ -22,8 +22,8 @@ specific branch. Stable releases are placed on branches, and in particular v11
 stable releases are on the branch "v11-branch" To get the development version
 of the code follow these steps::
 
-  % git config --global user.name "Your Name Goes Here"   
-  % git config --global user.email you@yourpublicemail.example.com   
+  % git config --global user.name "Your Name Goes Here"
+  % git config --global user.email you@yourpublicemail.example.com
   % git clone https://github.com/steveicarus/iverilog.git
 
 The first two lines are optional and are used to tell git who you are. This
@@ -69,9 +69,9 @@ build instructions below for your operation system for what to do next.
 You will need autoconf and gperf installed in order for the script to work.
 If you get errors such as::
 
-  Autoconf in root...   
-  autoconf.sh: 10: autoconf: not found   
-  Precompiling lexor_keyword.gperf  
+  Autoconf in root...
+  autoconf.sh: 10: autoconf: not found
+  Precompiling lexor_keyword.gperf
   autoconf.sh: 13: gperf: not found.
 
 You will need to install download and install the autoconf and gperf tools.
@@ -108,9 +108,9 @@ Compiling on Linux/Unix
 easiest case. Given that you have the source tree from the above instructions,
 the compile and install is generally as simple as::
 
-  % ./configure  
-  % make  
-  (su to root)  
+  % ./configure
+  % make
+  (su to root)
   # make install
 
 The "make install" typically needs to be done as root so that it can install

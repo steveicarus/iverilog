@@ -1516,8 +1516,8 @@ real_reg_force_rel	normal			ivltests
 recursive_func1		normal			ivltests gold=recursive_func.gold
 recursive_func_const1	normal			ivltests gold=recursive_func_const.gold
 recursive_task		normal			ivltests gold=recursive_task.gold
-redef_net_error 	CE			ivltests
-redef_reg_error 	CE			ivltests
+redef_net_error		CE			ivltests
+redef_reg_error		CE			ivltests
 repeat2			normal			ivltests
 repeat_expr_probe	normal			ivltests
 repl_zero_wid_fail	CE			ivltests

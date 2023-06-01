@@ -2,9 +2,9 @@
 
 module testbench;
    string str;
-   int 	  val;
+   int	  val;
    real   valr;
-   
+
 
    task test_string_value(string str, string reference);
       if (str != reference) begin
@@ -12,7 +12,7 @@ module testbench;
 	 $finish;
       end
    endtask // test_string_value
-   
+
    initial begin
       val = 11;
       valr = 11.1;
@@ -51,6 +51,6 @@ module testbench;
       test_string_value(str, "-11.1");
 
       $display("PASSED");
-      
+
    end
 endmodule

@@ -124,7 +124,7 @@ list of the special records with their meaning.
   have multiple directories, separated by "+" characters.
 
 * +libdir-nocase+dir-path
-  
+
   This is the same as "+libdir+", but when searching "nocase" libraries for
   module files, case will not be taken as significant. This is useful when the
   library is on a case insensitive file system.
@@ -136,7 +136,7 @@ list of the special records with their meaning.
   variety of naming conventions.
 
 * -y dir-path
-  
+
   This is like "+libdir+" but each line takes only one path. Like "+libdir+"
   there can be multiple "-y" records to declare multiple library
   directories. This is similar to the "-y" flag on the iverilog command line.
@@ -151,19 +151,19 @@ list of the special records with their meaning.
   in releases and snapshots made after that date.
 
 * +incdir+*include-dir-path*
-  
+
   Declare a directory or list of directories to search for files included by
   the "include" compiler directive. The directories are searched in
   order. This is similar to the "-I" flag on the iverilog command line.
 
 * +define+*name=value*
-  
+
   Define the preprocessor symbol "name" to have the string value "value". If
   the value (and the "=") are omitted, then it is assumed to be the string
   "1". This is similar to the "-D" on the iverilog command line.
 
 * +timescale+*units/precision*
-  
+
   Define the default timescale. This is the timescale that is used if there is
   no other timescale directive in the Verilog source. The compiler default
   default is "+timescale+1s/1s", which this command file setting can
@@ -171,7 +171,7 @@ list of the special records with their meaning.
   timescale directive in the verilog source.
 
 * +toupper-filename
-  
+
   This token causes file names after this in the command file to be translated
   to uppercase. this helps with situations where a directory has passed
   through a DOS machine (or a FAT file system) and in the process the file
@@ -179,11 +179,11 @@ list of the special records with their meaning.
   emergencies.
 
 * +tolower-filename
-  
+
   The is the lowercase version of "+toupper-filename".
 
 * +parameter+*name=value*
-  
+
   This token causes the compiler to override a parameter value for a top-level
   module. For example, if the module main has the parameter WIDTH, set the
   width like this "+parameter+main.WIDTH=5". Note the use of the complete
@@ -191,7 +191,7 @@ list of the special records with their meaning.
   (top level) modules and a defparam may override the command file value.
 
 * +vhdl-work+*path*
-  
+
   When compiling VHDL, this token allows control over the directory to use for
   holding working package declarations. For example, "+vhdl-work+workdir" will
   cause the directory "workdir" to be used as a directory for holding working

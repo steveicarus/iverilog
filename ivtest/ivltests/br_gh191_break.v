@@ -12,7 +12,7 @@ module main;
 	 $display("FAILED -- break from for loop");
 	 $finish;
       end
-      
+
       idx = 0;
       forever begin
 	 idx += 1;

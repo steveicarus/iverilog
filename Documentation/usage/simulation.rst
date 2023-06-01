@@ -295,8 +295,8 @@ Consider this running example of a square root calculator
           bitl = 15;
        end
     endtask
-  
-    initial clear;   
+
+    initial clear;
 
     always @(reset or posedge clk)
        if (reset)
@@ -373,7 +373,7 @@ be modified as follows
   module main;
 
     reg clk, reset;
-    reg  [31:0] x; 
+    reg  [31:0] x;
     reg  [31:0] z;
     wire [15:0] y1,y2;
     wire        rdy1,rdy2;

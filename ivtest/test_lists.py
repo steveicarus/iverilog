@@ -72,5 +72,5 @@ def read_lists(paths: list) -> list:
     # Convert the result to a sorted list, and return that.
     tests_list = list(tests_dict.values())
     tests_list.sort()
-    
+
     return tests_list

@@ -14,17 +14,17 @@ General
 These flags affect the general behavior of the compiler.
 
 * -c <cmdfile>
-  
+
   This flag selects the command file to use. The command file is an
   alternative to writing a long command line with a lot of file names and
   compiler flags. See the Command File Format page for more information.
 
 * -d <flag>
-  
+
   Enable compiler debug output. These are aids for debugging Icarus Verilog,
   and this flag is not commonly used.
   The flag is one of these debug classes:
-  
+
   * scope
   * eval_tree
   * elaborate
@@ -40,15 +40,15 @@ These flags affect the general behavior of the compiler.
   The supported flags are:
 
   * 1995
-    
+
     This flag enables the IEEE1364-1995 standard.
 
   * 2001
-    
+
     This flag enables the IEEE1364-2001 standard.
 
   * 2001-noconfig
-    
+
     This flag enables the IEEE1364-2001 standard with config file support
     disabled. This eliminates the config file keywords from the language and
     so helps some programs written to older 2001 support compile.
@@ -64,17 +64,17 @@ These flags affect the general behavior of the compiler.
     support is ongoing.
 
   * 2012
-    
+
     This flag enables the IEEE1800-2012 standard, which includes
     SystemVerilog.
 
   * verilog-ams
-    
+
     This flag enables Verilog-AMS features that are supported by Icarus
     Verilog. (This is new as of 5 May 2008.)
 
   * assertions/supported-assertions/no-assertions
-    
+
     Enable or disable SystemVerilog assertions. When enabled, assertion
     statements are elaborated. When disabled, assertion statements are parsed
     but ignored. The supported-assertions option only enables assertions that
@@ -278,7 +278,7 @@ These flags affect the general behavior of the compiler.
     will print a warning at its first use.
 
   * implicit-dimensions
-    
+
     This enables warnings for the case where a port declaration or a var/net
     declaration for the same name is missing dimensions. Normally, Verilog
     allows you to do this (the undecorated declaration gets its dimensions
@@ -289,40 +289,40 @@ These flags affect the general behavior of the compiler.
     2016-02-06.
 
   * macro-redefinition
-    
+
     This enables warnings when a macro is redefined, even if the macro text
     remains the same.
 
     NOTE: The "macro-redefinition" flag was added in v11.0.
 
   * macro-replacement
-    
+
     This enables warnings when a macro is redefined and the macro text
     changes. Use no-macro-redefinition to disable this,
 
     NOTE: The "macro-replacement" flag was added in v11.0.
 
   * portbind
-    
+
     This enables warnings for ports of module instantiations that are not
     connected properly, but probably should be. Dangling input ports, for
     example, will generate a warning.
 
   * select-range
-    
+
     This enables warnings for constant out-of-bound selects. This includes
     partial or fully out-of-bound select as well as a select containing a 'bx
     or 'bz in the index.
 
   * timescale
-    
+
     This enables warnings for inconsistent use of the timescale directive. It
     detects if some modules have no timescale, or if modules inherit timescale
     from another file. Both probably mean that timescales are inconsistent,
     and simulation timing can be confusing and dependent on compilation order.
 
   * infloop
-    
+
     This enables warnings for always statements that may have runtime infinite
     loops (i.e. has paths with zero or no delay). This class of warnings is
     not included in -Wall and hence does not have a no- variant. A fatal error
@@ -352,7 +352,7 @@ These flags affect the general behavior of the compiler.
     is large.
 
   * floating-nets
-    
+
     This enables warnings for nets that are present but have no drivers.
 
     This flag was added in version 11.0 or later (and is in the master branch
@@ -389,7 +389,7 @@ flags for the typical "C" compiler, so C programmers will find them familiar.
   for other tools. For example, this command::
 
     % iverilog -E -ofoo.v -DKEY=10 src1.v src2.v
-    
+
   runs the preprocessor on the source files src1.v and src2.v and produces the
   single output file foo.v that has all the preprocessing (including header
   includes and ifdefs) processed.
@@ -421,7 +421,7 @@ Elaboration Flags
 These are flags that pass information to the elaboration steps.
 
 * -P<symbol>=<value>
-  
+
   Define a parameter using the defparam behavior to override a parameter
   values. This can only be used for parameters of root module instances.
 

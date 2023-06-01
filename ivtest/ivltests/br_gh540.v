@@ -60,5 +60,5 @@ initial begin
   else
     $display("PASSED");
 end
-  
+
 endmodule

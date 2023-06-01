@@ -5542,7 +5542,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  return 0;
 	    }
-	    
+
 	    // Make the r-value of the initial assignment, and size it
 	    // properly. Then use it to build the assignment statement.
 	    initial_expr = elaborate_rval_expr(des, scope, sig->net_type(),

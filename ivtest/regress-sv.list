@@ -755,8 +755,8 @@ sv_ps_member_sel2	normal,-g2009		ivltests
 sv_ps_member_sel3	normal,-g2009		ivltests
 sv_ps_method1		normal,-g2009		ivltests
 sv_ps_method2		normal,-g2009		ivltests
-sv_ps_method3	  	normal,-g2009		ivltests
-sv_ps_method4	  	normal,-g2009		ivltests
+sv_ps_method3		normal,-g2009		ivltests
+sv_ps_method4		normal,-g2009		ivltests
 sv_ps_type1		normal,-g2009		ivltests
 sv_ps_type_cast1	normal,-g2009		ivltests
 sv_ps_type_cast2	normal,-g2009		ivltests

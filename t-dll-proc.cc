@@ -780,7 +780,7 @@ bool dll_target::proc_forloop(const NetForLoop*net)
       save_cur_->u_.forloop_.condition = expr_;
       expr_ = nullptr;
       res = res && rc;
-      
+
       stmt_cur_ = save_cur_;
       return res;
 }

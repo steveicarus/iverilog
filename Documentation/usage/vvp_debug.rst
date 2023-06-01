@@ -78,7 +78,7 @@ terminal interrupt and drops you into the interactive prompt::
   ^C** VVP Stop(0) **
   ** Flushing output streams.
   ** Current simulation time is 533928600 ticks.
-  > 
+  >
 
 This could be useful if you suspect that your simulation is stuck in
 an infinite loop and you want to rummage around and see what's going on.

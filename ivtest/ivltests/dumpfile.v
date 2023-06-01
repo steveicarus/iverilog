@@ -9,7 +9,7 @@ module main;
       #10 clk <= 1;
       #10 clk <= 0;
       #10 $finish;
-      
+
    end
 
 endmodule // main

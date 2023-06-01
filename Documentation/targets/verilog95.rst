@@ -42,21 +42,21 @@ Structures that cannot be converted to 1995 compatible Verilog
 The following Verilog constructs are not translatable to 1995 compatible Verilog:
 
 * Automatic tasks or functions.
-  
+
 * The power operator (**). Expressions of the form (2**N)**<variable> (where N
   is a constant) can be converter to a shift.
-  
+
 * Some System Verilog constructs (e.g. final blocks, ++/-- operators,
   etc.). 2-state variables are converted to 4-state variables.
 
 Icarus extensions that cannot be translated:
 
 * Integer constants greater than 32 bits.
-  
+
 * Real valued nets.
-  
+
 * Real modulus.
-  
+
 * Most Verilog-A constructs.
 
 

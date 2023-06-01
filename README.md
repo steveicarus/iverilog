@@ -393,7 +393,7 @@ more details.
 	the same thing, but included in the SystemVerilog definition.
 
 * `$simtime`
-	
+
   The `$simtime` system function returns as a 64bit value the
 	simulation time, unscaled by the time units of local
 	scope. This is different from the $time and $stime functions

@@ -93,7 +93,7 @@ if __name__ == "__main__":
     if len(list_paths) == 0:
         list_paths = list()
         list_paths += ["regress-vvp.list"]
-        
+
     print(f"Use lists: {list_paths}")
 
     # Read the list files, to get the tests.
@@ -115,4 +115,4 @@ if __name__ == "__main__":
     print("===================================================")
     print(f"Test results: Ran {len(tests_list)}, Failed {error_count}.")
     exit(error_count)
-    
+

@@ -8,11 +8,11 @@ task print_hex;
 
   begin
     $display("%h", n);
-  end  
+  end
 endtask
 
 initial begin
   print_hex(66);
 end
-   
+
 endmodule

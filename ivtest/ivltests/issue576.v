@@ -11,5 +11,5 @@ module test;
    endfunction // fun
 
    always_comb fun;
-   
+
 endmodule

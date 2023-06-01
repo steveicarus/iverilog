@@ -13,7 +13,7 @@ module main;
       $dumpfile("work/br_gh156.vcd");
       $dumpvars(0, main);
       #1 $finish;
-      
+
    end
-   
+
 endmodule // main

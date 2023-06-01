@@ -9,7 +9,7 @@ module test;
 
   initial begin
     integer x;
-    x = f( , ); // This should fail. The function takes no arguments. 
+    x = f( , ); // This should fail. The function takes no arguments.
     $display("FAILED");
   end
 

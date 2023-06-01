@@ -23,7 +23,7 @@ World program.
 .. code-block:: verilog
 
   module hello;
-    initial 
+    initial
       begin
         $display("Hello, World");
         $finish ;
@@ -70,10 +70,10 @@ example, the counter model in counter.v
     parameter WIDTH = 8;
 
     output [WIDTH-1 : 0] out;
-    input 	       clk, reset;
+    input	       clk, reset;
 
     reg [WIDTH-1 : 0]   out;
-    wire 	       clk, reset;
+    wire	       clk, reset;
 
     always @(posedge clk or posedge reset)
       if (reset)

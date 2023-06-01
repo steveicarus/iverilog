@@ -10,7 +10,7 @@
   (PROCESS "best=0.65:nom=1.0:worst=1.8")
   (TEMPERATURE -25.0:25.0:85.0)
   (TIMESCALE 1 ps)
-  
+
   // Do nothing
   (CELL
         (CELLTYPE "top")

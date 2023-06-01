@@ -131,7 +131,7 @@ def run_CE(options : dict) -> list:
 
 def check_run_outputs(options : dict, expected_fail : bool, it_stdout : str, log_list : list) -> list:
     '''Check the output files, and return success for failed.
-    
+
     This function takes an options dictionary that describes the settings, and
     the output from the final command. This also takes a list of log files to check
     there there are gold files present.'''
@@ -240,7 +240,7 @@ def do_run_normal_vlog95(options : dict, expected_fail : bool) -> list:
     vvp_cmd = assemble_vvp_cmd(it_vvp_args, it_vvp_args_extended)
     vvp_res = subprocess.run(vvp_cmd, capture_output=True)
     log_results(it_key, "vvp", vvp_res);
-        
+
     if vvp_res.returncode != 0:
         return [1, "Failed - Vvp execution failed"]
 
@@ -279,7 +279,7 @@ def do_run_normal(options : dict, expected_fail : bool) -> list:
     vvp_cmd = assemble_vvp_cmd(it_vvp_args, it_vvp_args_extended)
     vvp_res = subprocess.run(vvp_cmd, capture_output=True)
     log_results(it_key, "vvp", vvp_res);
-        
+
     if vvp_res.returncode != 0:
         return [1, "Failed - Vvp execution failed"]
 

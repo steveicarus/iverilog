@@ -55,7 +55,7 @@ Verilog parameter override syntax. Parameters have preferred types.
   is written into the description field of the PCB Element.
 
 * value (string, default="")
-  
+
   The "value" is a text tring that describes some value for the black
   box. Like the description, the code generator does not interpret this value,
   other then to write it to the appropriate field in the PCB Element."

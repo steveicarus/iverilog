@@ -217,6 +217,6 @@ int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
       fprintf(vvp_out, "T_%u.%u ;\n", thread_count, out_label);
 
       POP_JUMPS;
-      
+
       return rc;
 }

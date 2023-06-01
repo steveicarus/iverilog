@@ -73,12 +73,12 @@ behavior.
   synonyms for turning of dumping.
 
 * -fst
-  
+
   Generate FST format outputs instead of VCD format waveform dumps. This is
   the preferred output format if using GTKWave for viewing waveforms.
 
 * -lxt/-lxt2
-  
+
   Generate LXT or LXT2format instead of VCD format waveform dumps. The LXT2
   format is more advanced.
 
@@ -96,15 +96,15 @@ The Icarus Verilog support for SDF back-annotation can take some extended
 arguments to control aspects of SDF support.
 
 * -sdf-warn
-  
+
   Print warnings during load of/annotation from an SDF file.
 
 * -sdf-info
-  
+
   Print interesting information about an SDF file while parsing it.
 
 * -sdf-verbose
-  
+
   Print warnings and info messages.
 
 Environment Variables

@@ -8,7 +8,7 @@ suite, and this suite is used by the github actions as continuous integration
 to make sure the code is always going forward.
 
 NOTE: There are scripts written in perl to run the regression tests, but they
-are bing gradually replaced with a newer set of scripts. It is the newer
+are being gradually replaced with a newer set of scripts. It is the newer
 method that is described here.
 
 Test Descriptions

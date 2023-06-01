@@ -2,7 +2,7 @@
 module main;
 
    string foo;
-   int 	  error_count;
+   int	  error_count;
 
    task check_char(input int idx, input [7:0] val);
       if (foo[idx] !== val) begin
@@ -11,7 +11,7 @@ module main;
 	 error_count = error_count+1;
       end
    endtask // check_char
-   
+
    initial begin
       // These are the special charasters in strings as defined by
       // IEEE Std 1800-2017: 5.9.1 Special characters in strings.
