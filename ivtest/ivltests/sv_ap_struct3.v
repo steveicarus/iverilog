@@ -20,7 +20,9 @@ module test;
   assign x = '{1'b1, 2.0, 2 + 1};
   assign y = '{'{1'b1, 2.0, 2 + 1}, '{4, 5, 6}};
 
-  final begin
+  // Use an inital block with a delay since a final block cannot be converted to vlog95
+  initial begin
+    #1;
     if (x === 56'h00000001000203 &&
         y === 68'h00000001000203456) begin
       $display("PASSED");
