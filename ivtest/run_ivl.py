@@ -37,7 +37,8 @@ def get_ivl_version () -> list:
     if not match:
         return None
 
-    return [int(match[1]), int(match[2])]
+    items = match.groups()
+    return [int(items[0]), int(items[1])]
 
 def build_runtime(it_key: str) -> None:
     '''Check and prepare the runtime environment for a test
@@ -68,16 +69,20 @@ def build_runtime(it_key: str) -> None:
     except FileNotFoundError:
         pass
 
+def get_log_file(key: str, title: str, stream: str) -> str:
+    res = "{key}-{title}-{stream}.log".format(key=key, title=title, stream=stream)
+    return res
+
 def log_results(key, title, res) -> None:
     ''' Write results into log files.
 
     Generate a log file with the name of the key and title, and
     put the stdout and stderr into separate files.'''
 
-    with open(os.path.join("log", f"{key}-{title}-stdout.log"), 'wb') as fd:
+    with open(os.path.join("log", get_log_file(key, title, "stdout")), 'wb') as fd:
         fd.write(res.stdout)
 
-    with open(os.path.join("log", f"{key}-{title}-stderr.log"), 'wb') as fd:
+    with open(os.path.join("log", get_log_file(key, title, "stderr")), 'wb') as fd:
         fd.write(res.stderr)
 
 
@@ -100,11 +105,14 @@ def compare_files(log_path, gold_path):
 
     flag = a == b
     if not flag:
-        print(f"{log_path} and {gold_path} differ:")
+        print("{log} and {gold} differ:".format(log=log_path, gold=gold_path))
         sys.stdout.writelines(difflib.unified_diff(a, b, log_path, gold_path))
 
     return flag
 
+def run_cmd(cmd: list) -> subprocess.CompletedProcess:
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return res
 
 def run_CE(options : dict) -> list:
     ''' Run the compiler, and expect an error
@@ -119,7 +127,7 @@ def run_CE(options : dict) -> list:
     build_runtime(it_key)
 
     cmd = assemble_iverilog_cmd(options['source'], it_dir, it_args)
-    res = subprocess.run(cmd, capture_output=True)
+    res = run_cmd(cmd)
     log_results(it_key, "iverilog", res)
 
     if res.returncode == 0:
@@ -144,8 +152,8 @@ def check_run_outputs(options : dict, expected_fail : bool, it_stdout : str, log
     if it_gold is not None:
         compared = True
         for log_name in log_list:
-            log_path = os.path.join("log", f"{it_key}-{log_name}.log")
-            gold_path = os.path.join("gold", f"{it_gold}-{log_name}.gold")
+            log_path = os.path.join("log", "{key}-{log}.log".format(key=it_key, log=log_name))
+            gold_path = os.path.join("gold", "{gold}-{log}.gold".format(gold=it_gold, log=log_name))
             compared = compared and compare_files(log_path, gold_path)
 
         if expected_fail:
@@ -185,7 +193,7 @@ def check_run_outputs(options : dict, expected_fail : bool, it_stdout : str, log
             if diff_data1 == diff_data2:
                 return [0, "Passed"]
             else:
-                return [1, f"Failed - Files {diff_name1} and {diff_name2} differ."]
+                return [1, "Failed - Files {name1} and {name2} differ.".format(name1=diff_name1, name2=diff_name2)]
 
 
     # Otherwise, look for the PASSED output string in stdout.
@@ -222,7 +230,7 @@ def do_run_normal_vlog95(options : dict, expected_fail : bool) -> list:
 
     # Run the first iverilog command, to generate the intermediate verilog
     ivl1_cmd = assemble_iverilog_cmd(options['source'], it_dir, it_iverilog_args, "a.out.v")
-    ivl1_res = subprocess.run(ivl1_cmd, capture_output=True)
+    ivl1_res = run_cmd(ivl1_cmd)
 
     log_results(it_key, "iverilog", ivl1_res)
     if ivl1_res.returncode != 0:
@@ -230,7 +238,7 @@ def do_run_normal_vlog95(options : dict, expected_fail : bool) -> list:
 
     # Run another iverilog command to compile the code generated from the first step.
     ivl2_cmd = assemble_iverilog_cmd("a.out.v", "work", [ ], "a.out")
-    ivl2_res = subprocess.run(ivl2_cmd, capture_output=True)
+    ivl2_res = run_cmd(ivl2_cmd)
 
     log_results(it_key, "iverilog-vlog95", ivl2_res)
     if ivl2_res.returncode != 0:
@@ -238,7 +246,7 @@ def do_run_normal_vlog95(options : dict, expected_fail : bool) -> list:
 
     # Run the vvp command
     vvp_cmd = assemble_vvp_cmd(it_vvp_args, it_vvp_args_extended)
-    vvp_res = subprocess.run(vvp_cmd, capture_output=True)
+    vvp_res = run_cmd(vvp_cmd)
     log_results(it_key, "vvp", vvp_res);
 
     if vvp_res.returncode != 0:
@@ -269,7 +277,7 @@ def do_run_normal(options : dict, expected_fail : bool) -> list:
 
     # Run the iverilog command
     ivl_cmd = assemble_iverilog_cmd(options['source'], it_dir, it_iverilog_args)
-    ivl_res = subprocess.run(ivl_cmd, capture_output=True)
+    ivl_res = run_cmd(ivl_cmd)
 
     log_results(it_key, "iverilog", ivl_res)
     if ivl_res.returncode != 0:
@@ -277,7 +285,7 @@ def do_run_normal(options : dict, expected_fail : bool) -> list:
 
     # run the vvp command
     vvp_cmd = assemble_vvp_cmd(it_vvp_args, it_vvp_args_extended)
-    vvp_res = subprocess.run(vvp_cmd, capture_output=True)
+    vvp_res = run_cmd(vvp_cmd)
     log_results(it_key, "vvp", vvp_res);
 
     if vvp_res.returncode != 0:

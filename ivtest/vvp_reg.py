@@ -69,14 +69,14 @@ def process_test(item: list) -> str:
         res = run_ivl.run_EF_vlog95(it_options)
 
     else:
-        res = f"{it_key}: I don't understand the test type ({it_type})."
+        res = "{key}: I don't understand the test type ({type}).".format(key=it_key, type=it_type)
         raise Exception(res)
 
     return res
 
 
 if __name__ == "__main__":
-    print(f"Running tests on platform: {sys.platform}")
+    print("Running tests on platform: {platform}".format(platform=sys.platform))
     if sys.platform == 'win32':
         args = { "<list-paths>" : [] }
     else:
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     # This returns [13, 0] or similar
     ivl_version = run_ivl.get_ivl_version()
     ivl_version_major = ivl_version[0]
-    print(f"Icarus Verilog version: {ivl_version_major}")
+    print("Icarus Verilog version: {ivl_version}".format(ivl_version=ivl_version_major))
 
     # Select the lists to use. If any list paths are given on the command
     # line, then use only those. Otherwise, use a default list.
@@ -94,7 +94,7 @@ if __name__ == "__main__":
         list_paths = list()
         list_paths += ["regress-vvp.list"]
 
-    print(f"Use lists: {list_paths}")
+    print("Use lists: {list_paths}".format(list_paths=list_paths))
 
     # Read the list files, to get the tests.
     tests_list = test_lists.read_lists(list_paths)
@@ -110,9 +110,8 @@ if __name__ == "__main__":
     for cur in tests_list:
         result = process_test(cur)
         error_count += result[0]
-        print(f"{cur[0]:>{width}}: {result[1]}")
+        print("{name:>{width}}: {result}".format(name=cur[0], width=width, result=result[1]))
 
     print("===================================================")
-    print(f"Test results: Ran {len(tests_list)}, Failed {error_count}.")
+    print("Test results: Ran {ran}, Failed {failed}.".format(ran=len(tests_list), failed=error_count))
     exit(error_count)
-

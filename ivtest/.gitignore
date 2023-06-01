@@ -32,3 +32,4 @@ tmp_blif.vvp
 # Some tests do not work out of the work directory, so
 # ignore these files that they leave in the home directory.
 dump.vcd
+foo.vcd
