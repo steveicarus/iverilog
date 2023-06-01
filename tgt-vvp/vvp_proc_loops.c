@@ -24,9 +24,9 @@
 # include  <stdlib.h>
 # include  <stdbool.h>
 
-const unsigned LABEL_NONE = UINT_MAX;
-static unsigned break_label = LABEL_NONE;
-static unsigned continue_label = LABEL_NONE;
+#define BRK_CONT_LABEL_NONE UINT_MAX
+static unsigned break_label = BRK_CONT_LABEL_NONE;
+static unsigned continue_label = BRK_CONT_LABEL_NONE;
 
 #define PUSH_JUMPS(bl, cl) do {			  \
 	    save_break_label = break_label;	  \
@@ -44,7 +44,7 @@ static unsigned continue_label = LABEL_NONE;
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 int show_stmt_break(ivl_statement_t net, ivl_scope_t sscope)
 {
-      if (break_label == LABEL_NONE) {
+      if (break_label == BRK_CONT_LABEL_NONE) {
 	    fprintf(stderr, "vvp.tgt: error: 'break' not in a loop?!\n");
 	    return 1;
       }
@@ -55,7 +55,7 @@ int show_stmt_break(ivl_statement_t net, ivl_scope_t sscope)
 
 int show_stmt_continue(ivl_statement_t net, ivl_scope_t sscope)
 {
-      if (continue_label == LABEL_NONE) {
+      if (continue_label == BRK_CONT_LABEL_NONE) {
 	    fprintf(stderr, "vvp.tgt: error: 'continue' not in a loop?!\n");
 	    return 1;
       }
