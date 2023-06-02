@@ -825,7 +825,7 @@ class NetNet  : public NetObj, public PortType {
       std::vector<bool> lref_mask_;
 
       std::vector<class NetDelaySrc*> delay_paths_;
-      int       port_index_;
+      int       port_index_ = -1;
 };
 
 /*
