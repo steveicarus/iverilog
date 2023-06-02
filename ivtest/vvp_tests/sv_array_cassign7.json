@@ -1,0 +1,6 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_array_cassign7.v",
+    "iverilog-args" : [ "-g2009" ],
+    "gold"          : "sv_array_cassign7"
+}
