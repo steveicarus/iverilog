@@ -1126,6 +1126,8 @@ int main(int argc, char*argv[])
 	    rc += pform_parse(source_files[idx]);
       }
 
+      pform_finish();
+
       if (pf_path) {
 	    ofstream out (pf_path);
 	    out << "PFORM DUMP NATURES:" << endl;

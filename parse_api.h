@@ -58,6 +58,8 @@ extern void pform_dump(std::ostream&out, const PTaskFunc*tf);
  */
 extern int pform_parse(const char*path);
 
+extern void pform_finish();
+
 extern std::string vl_file;
 
 extern void pform_set_timescale(int units, int prec, const char*file,
