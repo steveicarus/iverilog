@@ -5453,6 +5453,7 @@ bool of_RET_VEC4(vthread_t thr, vvp_code_t cp)
 
       vthread_t fun_thr = get_func(thr);
       assert(index < get_max(fun_thr, val));
+      assert(val.size() == wid);
       unsigned depth = get_depth(fun_thr, index, val);
 
       int64_t off = off_index ? thr->words[off_index].w_int : 0;
@@ -5472,7 +5473,6 @@ bool of_RET_VEC4(vthread_t thr, vvp_code_t cp)
 	    fun_thr->parent->poke_vec4(depth, val);
       } else {
 	    vvp_vector4_t tmp_dst = fun_thr->parent->peek_vec4(depth);
-	    assert(val.size() == wid);
 	    tmp_dst.set_vec(off, val);
 	    fun_thr->parent->poke_vec4(depth, tmp_dst);
       }
