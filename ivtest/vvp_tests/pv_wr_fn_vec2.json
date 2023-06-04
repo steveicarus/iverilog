@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "pv_wr_fn_vec2.v",
+    "iverilog-args" : [ "-g2009" ]
+}

@@ -31,6 +31,8 @@ pr1388974			vvp_tests/pr1388974.json
 pr1388974-vlog95		vvp_tests/pr1388974-vlog95.json
 pr903				vvp_tests/pr903.json
 pr903-vlog95			vvp_tests/pr903-vlog95.json
+pv_wr_fn_vec2			vvp_tests/pv_wr_fn_vec2.json
+pv_wr_fn_vec4			vvp_tests/pv_wr_fn_vec4.json
 struct_packed_write_read	vvp_tests/struct_packed_write_read.json
 struct_packed_write_read2	vvp_tests/struct_packed_write_read2.json
 sv_array_cassign6		vvp_tests/sv_array_cassign6.json
