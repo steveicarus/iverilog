@@ -858,6 +858,14 @@ static double vlg_round(double rval)
       }
 }
 
+static uint64_t vlg_round_to_u64(double rval)
+{
+      // Directly casting a negative double to an unsigned integer types is
+      // undefined behavior and behaves differently on different architectures.
+      // Cast to signed integer first to get the behavior we want.
+      return static_cast<uint64_t>(static_cast<int64_t>(vlg_round(rval)));
+}
+
 static void real_signal_value(struct t_vpi_value*vp, double rval)
 {
       static const size_t RBUF_SIZE = 64 + 1;
@@ -890,12 +898,12 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 	    break;
 
 	  case vpiHexStrVal:
-	    snprintf(rbuf, RBUF_SIZE, "%" PRIx64, (uint64_t)vlg_round(rval));
+	    snprintf(rbuf, RBUF_SIZE, "%" PRIx64, vlg_round_to_u64(rval));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiBinStrVal: {
-		uint64_t val = (uint64_t)vlg_round(rval);
+		uint64_t val = vlg_round_to_u64(rval);
 		unsigned len = 0;
 
 		while (val > 0) {
@@ -903,7 +911,7 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 		      val /= 2;
 		}
 
-		val = (uint64_t)vlg_round(rval);
+		val = vlg_round_to_u64(rval);
 		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
 		      rbuf[len-idx-1] = (val & 1)? '1' : '0';
 		      val /= 2;
