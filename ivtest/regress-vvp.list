@@ -23,6 +23,7 @@ dffsynth9			vvp_tests/dffsynth9.json
 dffsynth10			vvp_tests/dffsynth10.json
 dffsynth11			vvp_tests/dffsynth11.json
 dumpfile			vvp_tests/dumpfile.json
+final3				vvp_tests/final3.json
 macro_str_esc			vvp_tests/macro_str_esc.json
 memsynth1			vvp_tests/memsynth1.json
 param-width			vvp_tests/param-width.json

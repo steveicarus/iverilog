@@ -52,6 +52,11 @@ extern vthread_t vthread_new(vvp_code_t sa, __vpiScope*scope);
 extern void vthread_mark_scheduled(vthread_t thr);
 
 /*
+ * This function marks the thread as being a final procedure.
+ */
+extern void vthread_mark_final(vthread_t thr);
+
+/*
  * This function causes deletion of the currently running thread to
  * be delayed until after all sync events have been processed for the
  * time step in which the thread terminates. It is only used by the

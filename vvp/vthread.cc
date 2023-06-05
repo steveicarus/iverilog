@@ -833,6 +833,19 @@ void vthread_mark_scheduled(vthread_t thr)
       }
 }
 
+void vthread_mark_final(vthread_t thr)
+{
+      /*
+       * The behavior in a final thread is the same as in a function. Any
+       * child thread will be executed immediately rather than being
+       * scheduled.
+       */
+      while (thr != 0) {
+	    thr->i_am_in_function = 1;
+	    thr = thr->wait_next;
+      }
+}
+
 void vthread_delay_delete()
 {
       if (running_thread)
