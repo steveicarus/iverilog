@@ -5124,6 +5124,12 @@ class Design {
 	// detected. It prevents code being emitted.
       unsigned errors;
 
+      void fork_enter() { in_fork++; };
+      void fork_exit() { in_fork--; };
+      bool is_in_fork() { return in_fork != 0; }
+
+      unsigned int in_fork = 0;
+
     private:
       NetScope* find_scope_(NetScope*, const hname_t&name,
                             NetScope::TYPE type = NetScope::MODULE) const;

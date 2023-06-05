@@ -2977,6 +2977,9 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	    return tmp;
       }
 
+      if (type != NetBlock::SEQU)
+	    des->fork_enter();
+
       for (unsigned idx = 0 ;  idx < list_.size() ;  idx += 1) {
 	    assert(list_[idx]);
 
@@ -3017,6 +3020,9 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 
 	    cur->append(tmp);
       }
+
+      if (type != NetBlock::SEQU)
+	    des->fork_exit();
 
 	// Update flags in parent scope.
       if (!nscope->is_const_func())
@@ -5763,23 +5769,27 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
 NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
 {
       NetScope*target = scope;
+
+      if (des->is_in_fork()) {
+	    cerr << get_fileline() << ": error: "
+		 << "Return statement is not allowed within fork-join block." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       for (;;) {
 	    if (target == 0) {
 		  cerr << get_fileline() << ": error: "
-		       << "Return statement is not in a function." << endl;
+		       << "Return statement is not in a function or task."
+		       << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
 
 	    if (target->type() == NetScope::FUNC)
 		  break;
-
-	    if (target->type() == NetScope::TASK) {
-		  cerr << get_fileline() << ": error: "
-		       << "Cannot \"return\" from tasks." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
+	    if (target->type() == NetScope::TASK)
+		  break;
 
 	    if (target->type()==NetScope::BEGIN_END) {
 		  target = target->parent();
@@ -5791,6 +5801,19 @@ NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return 0;
       }
+
+      if (target->type() == NetScope::TASK) {
+	    if (expr_) {
+		  cerr << get_fileline() << ": error: "
+		       << "A value cannot be returned from a task." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    NetDisable *disa = new NetDisable(target, true);
+	    disa->set_line(*this);
+	    return disa;
+      }
+
       ivl_assert(*this, target->type() == NetScope::FUNC);
 
       if (target->func_def()->is_void()) {

@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "task_return_fail2.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
