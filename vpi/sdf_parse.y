@@ -108,7 +108,7 @@ sdf_header_item
 
 sdfversion
   : '(' K_SDFVERSION QSTRING ')'
-      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Version: %s\n",
+      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Version: %s\n",
 					sdf_parse_path, @2.first_line, $3);
         free($3);
       }
@@ -116,7 +116,7 @@ sdfversion
 
 design_name
   : '(' K_DESIGN QSTRING ')'
-      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Design: %s\n",
+      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Design: %s\n",
 					sdf_parse_path, @2.first_line, $3);
         free($3);
       }
@@ -124,7 +124,7 @@ design_name
 
 date
   : '(' K_DATE QSTRING ')'
-      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Date: %s\n",
+      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Date: %s\n",
 					sdf_parse_path, @2.first_line, $3);
         free($3);
       }
@@ -132,7 +132,7 @@ date
 
 vendor
   : '(' K_VENDOR QSTRING ')'
-      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Vendor: %s\n",
+      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Vendor: %s\n",
 					sdf_parse_path, @2.first_line, $3);
         free($3);
       }
@@ -140,7 +140,7 @@ vendor
 
 program_name
   : '(' K_PROGRAM QSTRING ')'
-      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Program: %s\n",
+      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Program: %s\n",
 					sdf_parse_path, @2.first_line, $3);
         free($3);
       }
@@ -148,7 +148,7 @@ program_name
 
 program_version
   : '(' K_VERSION QSTRING ')'
-      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Program Version: %s\n",
+      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Program Version: %s\n",
 					sdf_parse_path, @2.first_line, $3);
 	free($3);
       }
@@ -157,15 +157,15 @@ program_version
 hierarchy_divider
   : '(' K_DIVIDER '.' ')'
       { sdf_use_hchar = '.';
-					if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Divider: \"%c\"\n", sdf_parse_path, @1.first_line, sdf_use_hchar);
+					if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n", sdf_parse_path, @1.first_line, sdf_use_hchar);
       }
   | '(' K_DIVIDER '/' ')'
       { sdf_use_hchar = '/';
-					if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Divider: \"%c\"\n", sdf_parse_path, @1.first_line, sdf_use_hchar);
+					if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n", sdf_parse_path, @1.first_line, sdf_use_hchar);
       }
   | '(' K_DIVIDER HCHAR ')'
       { /* sdf_use_hchar no-change */
-					if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Divider: \"%c\"\n", sdf_parse_path, @1.first_line, sdf_use_hchar);
+					if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n", sdf_parse_path, @1.first_line, sdf_use_hchar);
       }
   ;
 
@@ -173,20 +173,20 @@ voltage
   : '(' K_VOLTAGE rtriple ')'
       { /* The value must be defined. */
       if (! $3.defined) {
-					vpi_printf("%s:%d: SDF ERROR: Chosen value not defined.\n", sdf_parse_path, @1.first_line);
+					vpi_printf("SDF ERROR: %s:%d: Chosen value not defined.\n", sdf_parse_path, @1.first_line);
       }
-      else if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Voltage: %f\n",
+      else if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Voltage: %f\n",
 					sdf_parse_path, @2.first_line, $3.value);
       }
   | '(' K_VOLTAGE signed_real_number ')'
-      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Voltage: %f\n",
+      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Voltage: %f\n",
 					sdf_parse_path, @2.first_line, $3);
       }
   ;
 
 process
   : '(' K_PROCESS QSTRING ')'
-      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Process: %s\n",
+      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Process: %s\n",
 					sdf_parse_path, @2.first_line, $3);
 	free($3);
       }
@@ -196,25 +196,25 @@ temperature
   : '(' K_TEMPERATURE rtriple ')'
       { /* The value must be defined. */
       if (! $3.defined) {
-					vpi_printf("%s:%d: SDF ERROR: Chosen value not defined.\n", sdf_parse_path, @1.first_line);
+					vpi_printf("SDF ERROR: %s:%d: Chosen value not defined.\n", sdf_parse_path, @1.first_line);
       }
-      else if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Temperature: %f\n",
+      else if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Temperature: %f\n",
 					sdf_parse_path, @2.first_line, $3.value);
       }
   | '(' K_TEMPERATURE signed_real_number ')'
-      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Temperature: %f\n",
+      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Temperature: %f\n",
 					sdf_parse_path, @2.first_line, $3);
       }
   ;
 
 time_scale
   : '(' K_TIMESCALE REAL_NUMBER IDENTIFIER ')'
-      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Timescale: %f%s\n",
+      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Timescale: %f%s\n",
 					sdf_parse_path, @2.first_line, $3, $4);
 	free($4);
       }
   | '(' K_TIMESCALE INTEGER IDENTIFIER ')'
-      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Timescale: %lu%s\n",
+      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Timescale: %lu%s\n",
 					sdf_parse_path, @2.first_line, $3, $4);
 	free($4);
       }
@@ -283,7 +283,7 @@ deltype
   | '(' K_ABSOLUTE del_def_list ')'
   | '(' K_INCREMENT del_def_list ')'
   | '(' error ')'
-    { vpi_printf("%s:%d: SDF ERROR: Invalid/malformed delay type\n",
+    { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed delay type\n",
 		 sdf_parse_path, @1.first_line); }
   ;
 
@@ -299,11 +299,11 @@ del_def
 	free($4);
       }
   | '(' K_IOPATH error ')'
-      { vpi_printf("%s:%d: SDF ERROR: Invalid/malformed IOPATH\n",
+      { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed IOPATH\n",
 		   sdf_parse_path, @2.first_line); }
   | '(' K_COND conditional_port_expr
     '(' K_IOPATH port_spec port_instance delval_list ')' ')'
-      { if (sdf_flag_warning) vpi_printf("%s:%d: SDF WARNING: "
+      { if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
 					 "COND not supported.\n",
 					 sdf_parse_path, @2.first_line);
 	free($6.string_val);
@@ -311,7 +311,7 @@ del_def
       }
   | '(' K_COND QSTRING conditional_port_expr
     '(' K_IOPATH port_spec port_instance delval_list ')' ')'
-      { if (sdf_flag_warning) vpi_printf("%s:%d: SDF WARNING: "
+      { if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
 					 "COND not supported.\n",
 					 sdf_parse_path, @2.first_line);
 	free($3);
@@ -319,28 +319,28 @@ del_def
 	free($8);
       }
   | '(' K_COND error ')'
-      { vpi_printf("%s:%d: SDF ERROR: Invalid/malformed COND\n",
+      { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed COND\n",
 		   sdf_parse_path, @2.first_line); }
   | '(' K_CONDELSE '(' K_IOPATH port_spec port_instance delval_list ')' ')'
-      { if (sdf_flag_warning) vpi_printf("%s:%d: SDF WARNING: "
+      { if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
 					 "CONDELSE not supported.\n",
 					 sdf_parse_path, @2.first_line);
 	free($5.string_val);
 	free($6);
       }
   | '(' K_CONDELSE error ')'
-      { vpi_printf("%s:%d: SDF ERROR: Invalid/malformed CONDELSE\n",
+      { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed CONDELSE\n",
 		   sdf_parse_path, @2.first_line); }
   /* | '(' K_INTERCONNECT port_instance port_instance delval_list ')' */
   | '(' K_INTERCONNECT port_interconnect port_interconnect delval_list ')'
-      { if (sdf_flag_warning) vpi_printf("%s:%d: SDF WARNING: "
+      { if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
 					 "INTERCONNECT not supported.\n",
 					 sdf_parse_path, @2.first_line);
 	free($3);
 	free($4);
       }
   | '(' K_INTERCONNECT error ')'
-      { vpi_printf("%s:%d: SDF ERROR: Invalid/malformed INTERCONNECT\n",
+      { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed INTERCONNECT\n",
 		   sdf_parse_path, @2.first_line); }
   ;
 
@@ -500,12 +500,12 @@ delval
       { $$ = $1; }
   | '(' rvalue rvalue ')'
       { $$ = $2;
-	vpi_printf("%s:%d: SDF WARNING: Pulse rejection limits ignored\n",
+	vpi_printf("SDF WARNING: %s:%d: Pulse rejection limits ignored\n",
 		   sdf_parse_path, @3.first_line);
       }
   | '(' rvalue rvalue rvalue ')'
       { $$ = $2;
-	vpi_printf("%s:%d: SDF WARNING: Pulse rejection limits ignored\n",
+	vpi_printf("SDF WARNING: %s:%d: Pulse rejection limits ignored\n",
 		   sdf_parse_path, @3.first_line);
       }
   ;
@@ -557,7 +557,7 @@ rtriple
 	}
 	  /* At least one of the values must be defined. */
 	if (! ($1.defined || $3.defined || $5.defined)) {
-	      vpi_printf("%s:%d: SDF ERROR: rtriple must have at least one "
+	      vpi_printf("SDF ERROR: %s:%d: rtriple must have at least one "
 	                 "defined value.\n", sdf_parse_path, @1.first_line);
 	}
       }
