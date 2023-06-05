@@ -1538,7 +1538,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // array, then there should be no sub-ports and
 		    // the r-value expression is processed
 		    // differently.
-		  if (prts.size() >= 1 && prts[0]->pin_count()>1) {
+		  if (prts.size() >= 1 && prts[0]->unpacked_dimensions() > 0) {
 			ivl_assert(*this, prts.size()==1);
 			elaborate_unpacked_port(des, scope, prts[0], pins[idx],
 						ptype, rmod, idx);
@@ -1703,7 +1703,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // differently. Note that we are calling it the
 		    // "r-value" expression, but since this is an
 		    // output port, we assign to it from the internal object.
-		  if (prts[0]->pin_count() > 1) {
+		  if (prts[0]->unpacked_dimensions() > 0) {
 			elaborate_unpacked_port(des, scope, prts[0], pins[idx],
 						ptype, rmod, idx);
 			continue;
