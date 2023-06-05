@@ -369,7 +369,7 @@ void NetScope::replace_parameter(Design *des, perm_string key, PExpr*val,
       if (!ref.overridable) {
 	    cerr << val->get_fileline() << ": error: "
 		 << "Cannot override parameter `" << key << "` in `"
-		 << scope_path(this) << "`. Parameter cannot be overriden "
+		 << scope_path(this) << "`. Parameter cannot be overridden "
 		 << "in the scope it has been declared in."
 		 << endl;
 	    des->errors++;
