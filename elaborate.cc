@@ -1317,22 +1317,20 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
       } else {
 
 	      /* Otherwise, this is a positional list of port
-		 connections. In this case, the port count must be
-		 right. Check that is is, the get the pin list. */
+		 connections. Use as many ports as provided. Trailing
+		 missing ports will be left unconnect or use the default
+		 value if one is available */
 
-	    if (pin_count() != rmod->port_count()) {
+	    if (pin_count() > rmod->port_count()) {
 		  cerr << get_fileline() << ": error: Wrong number "
-			"of ports. Expecting " << rmod->port_count() <<
+			"of ports. Expecting at most " << rmod->port_count() <<
 			", got " << pin_count() << "."
 		       << endl;
 		  des->errors += 1;
 		  return;
 	    }
 
-	      // No named bindings, just use the positional list I
-	      // already have.
-	    assert(pin_count() == rmod->port_count());
-	    pins = get_pins();
+	    std::copy(get_pins().begin(), get_pins().end(), pins.begin());
       }
 
 	// Elaborate these instances of the module. The recursive
