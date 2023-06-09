@@ -1,9 +1,6 @@
 
-NOTE: THE CONTENTS OF THIS FILE ARE BEING MOVED TO THE DOCUMENTATION
-WIKI AT http://iverilog.wikia.com. PLEASE ADD NEW ENTRIES THERE.
-
-                Icarus Verilog vs. IEEE1364
-                Copyright 2000 Stephen Williams
+IEEE1364 Notes
+==============
 
 The IEEE1364 standard is the bible that defines the correctness of the
 Icarus Verilog implementation and behavior of the compiled
@@ -19,7 +16,8 @@ and common to write programs that produce different results when run
 by different Verilog implementations.
 
 
-STANDARDIZATION ISSUES
+Standardization Issues
+----------------------
 
 These are some issues where the IEEE1364 left unclear, unspecified or
 simply wrong. I'll try to be precise as I can, and reference the
@@ -29,19 +27,19 @@ affect the language.
 
 * OBJECTS CAN BE DECLARED ANYWHERE IN THE MODULE
 
-Consider this module:
+Consider this module::
 
     module sample1;
         initial foo = 1;
-	reg foo;
-	wire tmp = bar;
-	initial #1 $display("foo = %b, bar = %b", foo, tmp);
+    reg foo;
+    wire tmp = bar;
+    initial #1 $display("foo = %b, bar = %b", foo, tmp);
     endmodule
 
-Notice that the ``reg foo;'' declaration is placed after the first
+Notice that the `reg foo;` declaration is placed after the first
 initial statement. It turns out that this is a perfectly legal module
 according to the -1995 and -2000 versions of the standard. The
-statement ``reg foo;'' is a module_item_declaration which is in turn a
+statement `reg foo;` is a module_item_declaration which is in turn a
 module_item. The BNF in the appendix of IEEE1364-1995 treats all
 module_item statements equally, so no order is imposed.
 
@@ -53,12 +51,12 @@ textually before they are referenced." Such statements simply do not
 exist. (Personally, I think it is fine that they don't.)
 
 The closest is the rules for implicit declarations of variables that
-are otherwise undeclared. In the above example, ``bar'' is implicitly
-declared and is therefore a wire. However, although ``initial foo = 1;''
+are otherwise undeclared. In the above example, `bar` is implicitly
+declared and is therefore a wire. However, although `initial foo = 1;`
 is written before foo is declared, foo *is* declared within the
 module, and declared legally by the BNF of the standard.
 
-Here is another example:
+Here is another example::
 
     module sample2;
 	initial x.foo = 1;
@@ -80,7 +78,7 @@ Icarus Verilog interprets both of these examples according to "The
 Standard As I Understand It." However, commercial tools in general
 break down with these programs. In particular, the first example
 may generate different errors depending on the tool. The most common
-error is to claim that ``foo'' is declared twice, once (implicitly) as
+error is to claim that `foo` is declared twice, once (implicitly) as
 a wire and once as a reg.
 
 So the question now becomes, "Is the standard broken, or are the tools
@@ -107,7 +105,7 @@ ordering, by requiring that modules that are used be first defined.
 * TASK AND FUNCTION PARAMETERS CANNOT HAVE EXPLICIT TYPES
 
 Consider a function negate that wants to take a signed integer value
-and return its negative:
+and return its negative::
 
 	function integer negate;
 	    input [15:0] val;
@@ -123,7 +121,7 @@ the bit pattern of a 16bit number, but that is not the point. What's
 needed is clarification on whether an input can be declared in the
 port declaration as well as in the contained block declaration.
 
-As I understand the situation, this should be allowed:
+As I understand the situation, this should be allowed::
 
 	function integer negate;
 	    input [15:0] val;
@@ -152,10 +150,10 @@ commercial tools seem to work similarly.
 
 * ROUNDING OF TIME
 
-When the `timescale directive is present, the compiler is supposed to
+When the \`timescale directive is present, the compiler is supposed to
 round fractional times (after scaling) to the nearest integer. The
 confusing bit here is that it is apparently conventional that if the
-`timescale directive is *not* present, times are rounded towards zero
+\`timescale directive is *not* present, times are rounded towards zero
 always.
 
 
@@ -173,12 +171,12 @@ take it that x is allowed, as that is what Verilog-XL does.
 
 * REPEAT LOOPS vs. REPEAT EVENT CONTROL
 
-There seems to be ambiguity in how code like this should be parsed:
+There seems to be ambiguity in how code like this should be parsed::
 
 	repeat (5) @(posedge clk) <statement>;
 
 There are two valid interpretations of this code, from the
-IEEE1364-1995 standard. One looks like this:
+IEEE1364-1995 standard. One looks like this::
 
     procedural_timing_control_statement ::=
           delay_or_event_control  statement_or_null
@@ -189,7 +187,7 @@ IEEE1364-1995 standard. One looks like this:
 
 If this interpretation is used, then the statement <statement> should
 be executed after the 5th posedge of clk. However, there is also this
-interpretation:
+interpretation::
 
     loop_statement ::=
          repeat ( expression ) statement
@@ -218,7 +216,7 @@ compiler may just as easily choose another width limit, for example
 However, it is not *required* that an implementation truncate at 32
 bits, and in fact Icarus Verilog does not truncate at all. It will
 make the unsized constant as big as it needs to be to hold the value
-accurately. This is especially useful in situations like this;
+accurately. This is especially useful in situations like this::
 
 	    reg [width-1:0] foo = 17179869183;
 
@@ -237,7 +235,7 @@ truncation point.
 
 * UNSIZED EXPRESSIONS AS PARAMETERS TO CONCATENATION {}
 
-The Verilog standard clearly states in 4.1.14:
+The Verilog standard clearly states in 4.1.14::
 
 	"Unsized constant numbers shall not be allowed in
 	concatenations. This is because the size of each
@@ -257,7 +255,7 @@ simple unsized constant is accepted there, even if all the operands of
 all the operators that make up the expression are unsized integers.
 
 This is a semantic problem. Icarus Verilog doesn't limit the size of
-integer constants. This is valid as stated in 2.5.1 Note 3:
+integer constants. This is valid as stated in 2.5.1 Note 3::
 
 	"The number of bits that make up an unsized number
 	(which is a simple decimal number or a number without
@@ -267,6 +265,8 @@ integer constants. This is valid as stated in 2.5.1 Note 3:
 Icarus Verilog will hold any integer constant, so the size will be as
 large as it needs to be, whether that is 64bits, 128bits, or
 more. With this in mind, what is the value of these expressions?
+
+::
 
 	{'h1_00_00_00_00}
 	{'h1 << 32}
@@ -301,7 +301,7 @@ generate appropriate error messages.
 
 * MODULE INSTANCE WITH WRONG SIZE PORT LIST
 
-A module declaration like this declares a module that takes three ports:
+A module declaration like this declares a module that takes three ports::
 
 	module three (a, b, c);
 	  input a, b, c;
@@ -309,7 +309,7 @@ A module declaration like this declares a module that takes three ports:
 	endmodule
 
 This is fine and obvious. It is also clear from the standard that
-these are legal instantiations of this module:
+these are legal instantiations of this module::
 
 	three u1 (x,y,z);
 	three u2 ( ,y, );
@@ -320,7 +320,7 @@ In some of the above examples, there are unconnected ports. In the
 case of u4, the pass by name connects only port b, and leaves a and c
 unconnected. u2 and u4 are the same thing, in fact, but using
 positional or by-name syntax. The next example is a little less
-obvious:
+obvious::
 
 	three u4 ();
 
@@ -331,7 +331,7 @@ positional list, then the wrong number of ports is given, but if it is
 an empty by-name list, it is an obviously valid instantiation. So it
 is fine to accept this case as valid.
 
-These are more doubtful:
+These are more doubtful::
 
 	three u5(x,y);
 	three u6(,);
@@ -351,7 +351,7 @@ other.
 
 * UNKNOWN VALUES IN L-VALUE BIT SELECTS
 
-Consider this example:
+Consider this example::
 
 	reg [7:0] vec;
 	wire [4:0] idx = <expr>;
@@ -375,7 +375,7 @@ assignment will have no effect.
 
 The interaction between blocking assignments in procedural code and
 logic gates in gate-level code and expressions is poorly defined in
-Verilog. Consider this example:
+Verilog. Consider this example::
 
    reg a;
    reg b;
@@ -438,7 +438,7 @@ bit and part selects.
 
 * EDGES OF VECTORS
 
-Consider this example:
+Consider this example::
 
    reg [ 5:0] clock;
    always @(posedge clock) [do stuff]
@@ -446,7 +446,7 @@ Consider this example:
 The IEEE1364 standard clearly states that the @(posedge clock) looks
 only at the bit clock[0] (the least significant bit) to search for
 edges. It has been pointed out by some that Verilog XL instead
-implements it as "@(posedge |clock)": it looks for a rise in the
+implements it as `@(posedge |clock)`: it looks for a rise in the
 reduction or of the vector. Cadence Design Systems technical support
 has been rumored to claim that the IEEE1364 specification is wrong,
 but NC-Verilog behaves according to the specification, and thus
@@ -462,7 +462,7 @@ matter.
 The IEEE1364 standard clearly states that in VCD files, the $dumpoff
 section checkpoints all the dumped variables as X values. For reg and
 wire bits/vectors, this obviously means 'bx values. Icarus Verilog
-does this, for example:
+does this, for example::
 
     $dumpoff
     x!
@@ -475,7 +475,7 @@ section of the VCD file. Verilog-XL dumps "r0 !" to set the real
 variables to the dead-zone value of 0.0, whereas other tools, such as
 ModelTech, ignore real variables in this section.
 
-For example (from XL):
+For example (from XL)::
 
     $dumpoff
     r0 !
@@ -485,7 +485,7 @@ For example (from XL):
 Icarus Verilog dumps NaN values for real variables in the
 $dumpoff-$end section of the VCD file. The NaN value is the IEEE754
 equivalent of an unknown value, and so better reflects the unknown
-(during the dead zone) status of the variable, like this:
+(during the dead zone) status of the variable, like this::
 
     $dumpoff
     rNaN !

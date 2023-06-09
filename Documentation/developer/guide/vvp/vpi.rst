@@ -1,10 +1,6 @@
-/*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
- *
- */
 
-
-VPI WITHIN VVP
+VPI Within VVP
+==============
 
 System tasks and functions in Verilog are implemented in Icarus
 Verilog by C routines written with VPI. This implies that the vvp
@@ -19,7 +15,8 @@ vvp only implements the ones it needs. The VPI web is added into the
 design using special pseudo-ops that create the needed objects.
 
 
-LOADING VPI MODULES
+Loading VPI Modules
+-------------------
 
 The vvp runtime loads VPI modules at runtime before the parser reads
 in the source files. This gives the modules a chance to register tasks
@@ -38,7 +35,8 @@ the system tasks and functions. The %vpi_call instruction, once compiled,
 carries the vpiHandle of the system task.
 
 
-SYSTEM TASK CALLS
+System Task Calls
+-----------------
 
 A system task call invokes a VPI routine, and makes available to that
 routine the arguments to the system task. The called routine gets
@@ -61,7 +59,8 @@ instruction then only needs to be a %vpi_call with the single parameter
 that is the vpiHandle for the call.
 
 
-SYSTEM FUNCTION CALLS
+System Function Calls
+---------------------
 
 System function calls are similar to system tasks. The only
 differences are that all the arguments are input only, and there is a
@@ -75,7 +74,8 @@ writing a wrapper thread that calls the function when inputs change,
 and that writes the output into the containing expression.
 
 
-SYSTEM TASK/FUNCTION ARGUMENTS
+System Task/Function Arguments
+------------------------------
 
 The arguments to each system task or call are not stored in the
 instruction op-code, but in the vpiSysTfCall object that the compiler
@@ -91,7 +91,8 @@ all this is done, an array of vpiHandles is passed to code to create a
 vpiSysTfCall object that has all that is needed to make the call.
 
 
-SCOPES
+Scopes
+------
 
 VPI can access scopes as objects of type vpiScope. Scopes have names
 and can also contain other sub-scopes, all of which the VPI function
@@ -99,7 +100,7 @@ can access by the vpiInternalScope reference. Therefore, the run-time
 needs to form a tree of scopes into which other scoped VPI objects are
 placed.
 
-A scope is created with a .scope directive, like so:
+A scope is created with a .scope directive, like so::
 
 	<label> .scope "name" [, <parent>];
 		.timescale <units>;
@@ -122,7 +123,7 @@ Objects that place themselves in a scope place themselves in the
 current scope. The current scope is the one that was last mentioned by
 a .scope directive. If the wrong scope is current, the label on a
 scope directive can be used to resume a scope. The syntax works like
-this:
+this::
 
 		.scope <symbol>;
 
@@ -131,7 +132,8 @@ and is used to identify the scope to be resumed. A scope resume
 directive cannot have a label.
 
 
-VARIABLES
+Variables
+---------
 
 Reg vectors (scalars are vectors of length 1) are created by .var
 statements in the source. The .var statement includes the declared
@@ -145,21 +147,23 @@ The VPI interface to variable (vpiReg objects) uses the MSB and LSB
 values that the user defined to describe the dimensions of the
 object.
 
-/*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
- *
- *    This source code is free software; you can redistribute it
- *    and/or modify it in source code form under the terms of the GNU
- *    General Public License as published by the Free Software
- *    Foundation; either version 2 of the License, or (at your option)
- *    any later version.
- *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- */
+::
+
+    /*
+     * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+     *
+     *    This source code is free software; you can redistribute it
+     *    and/or modify it in source code form under the terms of the GNU
+     *    General Public License as published by the Free Software
+     *    Foundation; either version 2 of the License, or (at your option)
+     *    any later version.
+     *
+     *    This program is distributed in the hope that it will be useful,
+     *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+     *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     *    GNU General Public License for more details.
+     *
+     *    You should have received a copy of the GNU General Public License
+     *    along with this program; if not, write to the Free Software
+     *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+     */

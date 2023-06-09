@@ -11,4 +11,5 @@ Icarus Verilog.
    getting_started
    regression_tests
    version_stamps
-
+   guide/index
+   glossary

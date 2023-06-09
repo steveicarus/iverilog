@@ -1,5 +1,6 @@
 
-LOADABLE TARGETS
+Loadable Targets
+================
 
 Icarus Verilog supports dynamically loading code generator modules to
 perform the back-end processing of the completed design. The user
@@ -12,24 +13,28 @@ compiler calls to pass the design to it, and the module in turn uses a
 collection of functions in the core (the API) to access details of the
 design.
 
-LOADING TARGET MODULES
+Loading Target Modules
+----------------------
 
 The target module loader is invoked with the ivl flag "-tdll". That
 is, the DLL loader is a linked in target type. The name of the target
 module to load is then specified with the DLL flag, i.e. "-fDLL=<path>".
 
-COMPILING TARGET MODULES
+Compiling Target Modules
+------------------------
 
 <write me>
 
-LOADABLE TARGET MODULE API
+Loadable Target Module Api
+--------------------------
 
 The target module API is defined in the ivl_target.h header file. This
 declares all the type and functions that a loadable module needs to
 access the design.
 
 
-ABOUT SPECIFIC EXPRESSION TYPES
+About Specific Expression Types
+-------------------------------
 
 In this section find notes about the various kinds of expression
 nodes. The notes here are in addition to the more general

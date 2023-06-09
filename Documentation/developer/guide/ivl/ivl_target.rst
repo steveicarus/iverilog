@@ -1,6 +1,6 @@
 
-Loadable Target API (ivl_target.h)
-==================================
+Loadable Target API (ivl_target)
+================================
 
 In addition to the standard VPI API, Icarus Verilog supports a non-standard
 loadable target module API. This API helps C programmers write modules that
@@ -104,3 +104,28 @@ Installing the Target Module
 Finally, the "empty.conf", the "empty-s.conf" and the "empty.tgt" files need
 to be installed. Where they go depends on your system, but in Linux they are
 normally installed in "/usr/lib/ivl".
+
+
+LPM Devices
+-----------
+
+All LPM devices support a small set of common LPM functions, as
+described in the ivl_target header file. The ivl_lpm_t object has a
+type enumerated by ivl_lpm_type_t, and that type is accessible via the
+ivl_lpm_type function.
+
+The following are type specific aspects of LPM devices.
+
+* IVL_LPM_UFUNC
+
+This LPM represents a user defined function. It is a way to connect
+behavioral code into a structural network. The UFUNC device has a
+vector output and a set of inputs. The ivl_lpm_define function returns
+the definition as an ivl_scope_t object.
+
+The output vector is accessible through the ivl_lpm_q, and the output
+has the width defined by ivl_lpm_width. This similar to most every
+other LPM device with outputs.
+
+There are ivl_lpm_size() input ports, each with the width
+ivl_lpm_data2_width(). The actual nexus is indexed by ivl_lpm_data2().

@@ -1,4 +1,4 @@
-Vvp Interactive Mode
+VVP Interactive Mode
 ====================
 
 The vvp command has an interactive debug mode, where you can stop the

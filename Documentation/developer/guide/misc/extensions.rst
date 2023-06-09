@@ -1,5 +1,6 @@
 
 Icarus Verilog Extensions
+=========================
 
 Icarus Verilog supports certain extensions to the baseline IEEE1364
 standard. Some of these are picked from extended variants of the
@@ -23,7 +24,7 @@ from the proposal.
 
 Extended data types separates the concept of net/variable from the
 data type. Both nets and variables can declared with any data
-type. The primitive types available are:
+type. The primitive types available are::
 
     logic  - The familiar 0, 1, x and z, optionally with strength.
     bool   - Limited to only 0 and 1
@@ -40,13 +41,13 @@ should detect the multiple drivers and report an error.
 - Declarations
 
 The declaration of a net is extended to include the type of the wire,
-with the syntax:
+with the syntax::
 
     wire <type> <wire-assignment-list>... ;
 
 The <type>, if omitted, is taken to be logic. The "wire" can be any of
 the net keywords. Wires can be logic, bool, real, or vectors of logic
-or bool. Some valid examples:
+or bool. Some valid examples::
 
     wire real foo = 1.0;
     tri logic bus[31:0];

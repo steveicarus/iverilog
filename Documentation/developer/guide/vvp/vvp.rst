@@ -1,9 +1,6 @@
-/*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
- *
- */
 
-VVP SIMULATION ENGINE
+VVP Simulation Engine
+=====================
 
 The VVP simulator takes as input source code not unlike assembly
 language for a conventional processor. It is intended to be machine
@@ -12,7 +9,8 @@ compiler, so the syntax, though readable, is not necessarily
 convenient for humans.
 
 
-GENERAL FORMAT
+General Format
+--------------
 
 The source file is a collection of statements. Each statement may have
 a label, an opcode, and operands that depend on the opcode. For some
@@ -21,7 +19,7 @@ required.
 
 Every statement is terminated by a semicolon. The semicolon is also
 the start of a comment line, so you can put comment text after the
-semicolon that terminates a statement. Like so:
+semicolon that terminates a statement. Like so::
 
 	Label .functor and, 0x5a, x, y  ; This is a comment.
 
@@ -31,7 +29,8 @@ Statements may span multiple lines, as long as there is no text (other
 then the first character of a label) in the first column of the
 continuation line.
 
-HEADER SYNTAX
+Header Syntax
+-------------
 
 Before any other non-commentary code starts, the source may contain
 some header statements. These are used for passing parameters or
@@ -57,9 +56,10 @@ expressed as a power of 10. For example, +0 is 1 second, and -9 is 1
 nanosecond. If the record is left out, then the precision is taken to
 be +0.
 
-LABELS AND SYMBOLS
+Labels and Symbols
+------------------
 
-Labels and symbols consist of the characters:
+Labels and symbols consist of the characters::
 
 	a-z
 	A-Z
@@ -88,14 +88,16 @@ There are some special symbols that in certain contexts have special
 meanings. As inputs to functors, the symbols "C<0>", "C<1>", "C<x>"
 and "C<z>" represent a constant driver of the given value.
 
-NUMBERS:
+Numbers
+-------
 
 decimal number tokens are limited to 64bits, and are unsigned. Some
 contexts may constrain the number size further.
 
-SCOPE STATEMENTS:
+Scope Statements
+----------------
 
-The syntax of a scope statement is:
+The syntax of a scope statement is::
 
 	<label> .scope <type>, <name> <type-name> <file> <lineno> ;
 
@@ -125,13 +127,14 @@ The <is-cell> flag is only useful for module instances. It is true
 
 The short form of the scope statement is only used for root scopes.
 
-PARAMETER STATEMENTS:
+Parameter Statements
+--------------------
 
 Parameters are named constants within a scope. These parameters have a
 type and value, and also a label so that they can be referenced as VPI
 objects.
 
-The syntax of a parameter is:
+The syntax of a parameter is::
 
 	<label> .param/str <name> <local-flag> <file-idx> <lineno>, <value>;
 	<label> .param/l <name> <local-flag> <file-idx> <lineno>, <value>;
@@ -139,13 +142,13 @@ The syntax of a parameter is:
 
 The <name> is a string that names the parameter. The name is placed in
 the current scope as a vpiParameter object. The .param suffix
-specifies the parameter type.
+specifies the parameter type::
 
 	.param/str    -- The parameter has a string value
 	.param/l      -- The parameter has a logic vector value
 	.param/r      -- The parameter has a real value
 
-The value, then, is appropriate for the data type. For example:
+The value, then, is appropriate for the data type. For example::
 
 	P_123 .param/str "hello", "Hello, World.";
 
@@ -153,14 +156,15 @@ The boolean and logic values can also be signed or not. If signed, the
 value is preceded by a '+' character. (Note that the value is 2s
 complement, so the '+' says only that it is signed, not positive.)
 
-FUNCTOR STATEMENTS:
+Functor Statements
+------------------
 
-A functor statement is a statement that uses the ``.functor''
+A functor statement is a statement that uses the `.functor`
 opcode. Functors are the basic structural units of a simulation, and
 include a type (in the form of a truth table) and up to four inputs. A
 label is required for functors.
 
-The general syntax of a functor is:
+The general syntax of a functor is::
 
 	<label> .functor <type>, symbol_list ;
 	<label> .functor <type> [<drive0> <drive1>], symbol_list ;
@@ -187,17 +191,20 @@ combining up to four inputs down to one output.
 
 - MUXZ
 
+::
+
      Q | A  B  S  n/a
      --+-------------
      A | *  *  0
      B | *  *  1
 
 
-DFF AND LATCH STATEMENTS:
+DFF and Latch Statements
+------------------------
 
 The Verilog language itself does not have a DFF primitive, but post
 synthesis readily creates DFF devices that are best simulated with a
-common device. Thus, there is the DFF statement to create DFF devices:
+common device. Thus, there is the DFF statement to create DFF devices::
 
         <label> .dff/p <width> <d>, <clk>, <ce>;
         <label> .dff/n <width> <d>, <clk>, <ce>;
@@ -218,7 +225,7 @@ propagate, and disables the clock until the aynchronous input is
 deasserted. Thus, they implement DFF with asynchronous clr or set.
 
 Similarly, synthesis creates D-type latches, so there is the LATCH
-statement to support this:
+statement to support this::
 
         <label> .latch <width> <d>, <en>;
 
@@ -227,7 +234,8 @@ type of datum at all. The device will transfer the input to the output
 whenever <en> is a logic 1.
 
 
-UDP STATEMENTS:
+UDP Statements
+--------------
 
 A UDP statement either defines a User Defined Primitive, or
 instantiates a previously defined UDP by creating a UDP functor.  A
@@ -254,6 +262,8 @@ UDPs may also have "-": no change.
 
 An input or current output state can be
 
+::
+
 	"1": 1
 	"0": 0
 	"x": x
@@ -265,6 +275,8 @@ An input or current output state can be
 For Sequential UDPs, at most one input state specification may be
 replaced by an edge specification.  Valid edges are:
 
+::
+
 	"*": (??)	"_": (?0)	"+": (?1)	"%": (?x)
 	"P": (0?)			"r": (01)	"Q": (0x)
 	"N": (1?)	"f": (10)			"M": (1x)
@@ -273,13 +285,13 @@ replaced by an edge specification.  Valid edges are:
 	"n": (1?) | (?0)
 	"p": (0?) | (?1)
 
-A combinatorial UDP is defined like this:
+A combinatorial UDP is defined like this::
 
 	<type> .udp/comb "<name>", <number>, "<row0>", "<row1>", ... ;
 
 <type> is a label that identifies the UDP.  <number> is the number of
 inputs.  "<name>" is there for public identification.  Sequential UDPs
-need an additional initialization value:
+need an additional initialization value::
 
 	<type> .udp/sequ "<name>", <number>, <init>, "<row0>", "<row1>", ... ;
 
@@ -287,7 +299,7 @@ need an additional initialization value:
 provide initial values for individual instances.  <init> must be a
 number 0, 1, or 2 (for 1'bx).
 
-A UDP functor instance is created so:
+A UDP functor instance is created so::
 
 	<label> .udp  <type>, <symbol_list> ;
 
@@ -296,11 +308,12 @@ defined earlier, and <symbol_list> is a list of symbols, one for each
 input of the UDP.
 
 
-VARIABLE STATEMENTS:
+Variable Statements
+-------------------
 
 A variable is a bit vector that can be written by behavioral code (so
 has no structural input) and propagates its output to a functor. The
-general syntax of a variable is:
+general syntax of a variable is::
 
 	<label> .var   "name", <msb> <lsb>; Unsigned logic variable
 	<label> .var/s "name", <msb> <lsb>; Signed logic variable
@@ -336,12 +349,13 @@ Behavioral code may also invoke %force/v statements that write to port-2
 to invoke force mode. This overrides continuous assign mode until a
 long(2) is written to port-3 to disable force mode.
 
-NET STATEMENTS:
+Net Statements
+--------------
 
 A net is similar to a variable, except that a thread cannot write to
 it (unless it uses a force) and it is given a different VPI type
 code. The syntax of a .net statement is also similar to but not
-exactly the same as the .var statement:
+exactly the same as the .var statement::
 
 	<label> .net      "name", <msb>, <lsb>, <symbol>;
 	<label> .net/s    "name", <msb>, <lsb>, <symbol>;
@@ -375,11 +389,12 @@ The .alias statements do not create new nodes, but instead create net
 names that are aliases of an existing node. This handles special cases
 where a net has different names, possibly in different scopes.
 
-CAST STATEMENTS:
+Cast Statements
+---------------
 
 Sometimes nets need to be cast from a real valued net to a bit based
 net or from a bit based net to a real valued net. These statements
-are used to perform that operation:
+are used to perform that operation::
 
 	<label> .cast/int <width>, <symbol>;
 	<label> .cast/2 <width>, <symbol>;
@@ -394,7 +409,8 @@ For .cast/real the output <label> is a real valued net. The input
 <symbol> is expected to put bit based values and for .cast/real.s
 the bits will be interpreted as a signed value.
 
-DELAY STATEMENTS:
+Delay Statements
+----------------
 
 Delay nodes are structural net delay nodes that carry and manage
 propagation delays. Delay nodes can have fixed delays or variable
@@ -402,6 +418,8 @@ delays. Fixed delay nodes have only the input that is to be
 delayed. The delay amount is given on the node line. Variable delay
 nodes have three extra inputs to receive the rise, fall and decay
 times that are used for delay.
+
+::
 
 	.delay <width> ( <rise>, <fall>, <decay> ) <input> ;
 	.delay <width> <input>, <rise>, <fall>, <decay> ;
@@ -412,20 +430,24 @@ inputs, with the first being the value to delay, and the remaining to
 be the delay values to use. <width> specifies the bit width of the
 input net, with a width of 0 used to identify a real valued net.
 
-MODULE PATH DELAY STATEMENTS:
+Module Path Delay Statements
+----------------------------
 
 A module path delay takes data from its input, then a list of module
 path delays. The <src> for each possible delay set is a trigger that
 activates the delay.
 
+::
+
         .modpath <width> <input> , [ <src> (<delays> [? <condition>]) ] ;
 
 <width> specifies the bit width of the input net.
 
-ARRAY INDEX STATEMENTS:
+Array Index Statements
+----------------------
 
 Variables can be collected into arrays. The words of the array are
-declared separately, this statement collects them together:
+declared separately, this statement collects them together::
 
 	<label> .array "name", <last> <first> ;
 
@@ -436,15 +458,18 @@ The syntax below is different, in that it creates an alias for an
 existing array. The dimensions and storage are taken from the .array
 at <src>.
 
+::
+
         <label> .array "name", <src> ;
 
 
-EVENT STATEMENTS
+Event Statements
+----------------
 
 Threads need to interact with the functors of a netlist synchronously,
 as well as asynchronously. There are cases where the web of functors
 needs to wake up a waiting thread. The web of functors signals threads
-through .event objects, that are declared like so:
+through .event objects, that are declared like so::
 
 	<label> .event <type>, <symbols_list>;
 	<label> .event "name";
@@ -470,7 +495,7 @@ events of the same edge in an event OR expression, the compiler may
 combine up to 4 into a single event.
 
 If many more events need to be combined together (for example due to
-an event or expression in the Verilog) then this form can be used:
+an event or expression in the Verilog) then this form can be used::
 
 	<label> .event/or <symbols_list>;
 
@@ -479,12 +504,15 @@ to trigger this event. Only one of the input events needs to trigger
 to make this one go.
 
 
-RESOLVER STATEMENTS:
+Resolver Statements
+-------------------
 
 Resolver statements are strength-aware functors with 4 inputs, but
 their job typically is to calculate a resolved output using strength
 resolution. The type of the functor is used to select a specific
 resolution function.
+
+::
 
 	<label> .resolv tri,  <symbols_list>;
 	<label> .resolv tri0, <symbols_list>;
@@ -494,12 +522,15 @@ The output from the resolver is vvp_vector8_t value. That is, the
 result is a vector with strength included.
 
 
-PART SELECT STATEMENTS:
+Part Select Statements
+----------------------
 
 Part select statements are functors with three inputs. They take in at
 port-0 a vector, and output a selected (likely smaller) part of that
 vector. The other inputs specify what those parts are, as a canonical
 bit number, and a width. Normally, those bits are constant values.
+
+::
 
 	<label> .part <symbol>, <base>, <wid>;
 	<label> .part/pv <symbol>, <base>, <wid>, <vector_wid>;
@@ -520,12 +551,15 @@ The .part/v variation takes a vector (or long) input on port-1 as the
 base of the part select. Thus, the part select can move around. The
 .part/v.s variation treats the vector as a signed value.
 
-PART CONCATENATION STATEMENTS:
+Part Concatenation Statements
+-----------------------------
 
 The opposite of the part select statement is the part concatenation
 statement. The .concat statement is a functor node that takes at input
 vector values and produces a single vector output that is the
 concatenation of all the inputs.
+
+::
 
         <label> .concat [W X Y Z], <symbols_list> ;
 
@@ -541,11 +575,12 @@ propagated, the bits are placed in the correct place in the output
 vector value, and a new output value is propagated.
 
 
-REPEAT VECTOR STATEMENTS:
+Repeat Vector Statements
+------------------------
 
 The repeat vector statement is similar to the concatenation statement,
 expect that the input is repeated a constant number of times. The
-format of the repeat vector statement is:
+format of the repeat vector statement is::
 
         <label> .repeat <wid>, <rept count>, <symbol> ;
 
@@ -554,15 +589,16 @@ the *output* vector. The <rept count> is the number of time the input
 vector value is repeated to make the output width. The input width is
 implicit from these numbers. The <symbol> is then the input source.
 
-SUBSTITUTION STATEMENTS:
+Substitution Statements
+-----------------------
 
 The substitution statement doesn't have a direct analog in Verilog, it
-only turns up in synthesis. It is a shorthand for forms like this:
+only turns up in synthesis. It is a shorthand for forms like this::
 
    foo = <a>;
    foo[n] = <s>;
 
-The format of the substitute statement is:
+The format of the substitute statement is::
 
         <label> .substitute <wid>, <soff> <swid>, <symbol>, <symbol> ;
 
@@ -570,10 +606,13 @@ The first <symbol> must have the width <wid>, and is passed through,
 except for the bits within [<soff> +: <swid>]. The second <symbol>
 collects a vector that goes into that part.
 
-REDUCTION LOGIC
+Reduction Logic
+---------------
 
 The reduction logic statements take in a single vector, and propagate
 a single bit.
+
+::
 
         <label> .reduce/and  <symbol> ;
         <label> .reduce/or   <symbol> ;
@@ -586,21 +625,27 @@ the device has a single input, which is a vector of any width. The
 device performs the logic on all the bits of the vector (a la Verilog)
 and produces and propagates a single bit width vector.
 
-EXPANSION LOGIC
+Expansion Logic
+---------------
 
 Sign extension nodes are the opposite of reduction logic, in that they
 take a narrow vector, or single bit, and pad it out to a wider
 vector.
+
+::
 
         <label> .expand/s <wid>, <symbol> ;
 
 The .expand/s node takes an input symbol and sign-extends it to the
 given width.
 
-FORCE STATEMENTS (old method - remove me):
+Force Statements (old method - remove me)
+-----------------------------------------
 
 A force statement creates functors that represent a Verilog force
 statement.
+
+::
 
 	<label>	.force <signal>, <symbol_list>;
 
@@ -610,7 +655,7 @@ forced on the <signal>.  The <label> identifies the force functors.
 There will be as many force functors as there are symbols in the
 <symbol_list>.
 
-To activate and deactivate a force on a single bit, use:
+To activate and deactivate a force on a single bit, use::
 
 	%force	<label>, <width>;
 	%release <signal>;
@@ -619,13 +664,14 @@ To activate and deactivate a force on a single bit, use:
 <signal> is the label of the functor that drives the signal that is
 being forced.
 
-FORCE STATEMENTS (new method - implement me):
+Force Statements (new method - implement me)
+--------------------------------------------
 
 A %force instruction, as described in the .var section, forces a
 constant value onto a .var or .net, and the matching %release releases
 that value. However, there are times when the value of a functor
 (i.e. another .net) needs to be forced onto a .var or .net. For this
-task, the %force/link instruction exists:
+task, the %force/link instruction exists::
 
 	%force/link <dst>, <src> ;
 	%release/link <dst> ;
@@ -638,19 +684,22 @@ node. The matching %release/link instruction removes the link (a
 releases the last %force/link, no matter where the link is from. A new
 %force/link will remove a previous link.
 
-The instructions:
+The instructions::
 
 	%cassign/link <dst>, <src> ;
 	%deassign/link <dst> ;
 
 are the same concept, but for the continuous assign port.
 
-STRUCTURAL ARITHMETIC STATEMENTS:
+Structural Arithmetic Statements
+--------------------------------
 
-The various Verilog arithmetic operators (+-*/%) are available to
+The various Verilog arithmetic operators (`+-*/%`) are available to
 structural contexts as two-input functors that take in vectors. All of
 these operators take two inputs and generate a fixed width output. The
 input vectors will be padded if needed to get the desired output width.
+
+::
 
 	<label> .arith/sub  <wid>, <A>, <B>;
 	<label> .arith/sum  <wid>, <A>, <B>;
@@ -667,12 +716,13 @@ output. I have not decided how to handle this.
 These devices support .s and .r suffixes. The .s means the node is a
 signed vector device, the .r a real valued device.
 
-STRUCTURAL COMPARE STATEMENTS:
+Structural Compare Statements
+-----------------------------
 
 The arithmetic statements handle various arithmetic operators that
 have wide outputs, but the comparators have single bit output, so they
 are implemented a bit differently. The syntax, however, is very
-similar:
+similar::
 
 	<label> .cmp/eeq <wid>, <A>, <B>;
 	<label> .cmp/nee <wid>, <A>, <B>;
@@ -691,10 +741,11 @@ versions do unsigned comparison, but the ".s" versions to signed
 comparisons. (Equality doesn't need to care about sign.)
 
 
-STRUCTURAL SHIFTER STATEMENTS:
+Structural Shifter Statements
+-----------------------------
 
 Variable shifts in structural context are implemented with .shift
-statements:
+statements::
 
 	<label> .shift/l <wid>, <data symbol>, <shift symbol>;
 	<label> .shift/r <wid>, <data symbol>, <shift symbol>;
@@ -706,9 +757,12 @@ data to be shifted and must have exactly the width of the output. The
 input to port 1 is the amount to shift.
 
 
-STRUCTURAL FUNCTION CALLS:
+Structural Function Calls
+-------------------------
 
 The .ufunc statements define a call to a user defined function.
+
+::
 
 	<label> .ufunc/real <flabel>, <wid>,
             <isymbols> ( <psymbols> ) <ssymbol>;
@@ -742,11 +796,14 @@ before calling the function.
 
 The <ssymbol> is the function scope name.
 
-THREAD STATEMENTS:
+Thread Statements
+-----------------
 
 Thread statements create the initial threads for a simulation. These
 represent the initial and always blocks, and possibly other causes to
 create threads at startup.
+
+::
 
 	.thread <symbol> [, <flag>]
 
@@ -756,7 +813,7 @@ created for the .thread statement, and it starts at the <symbol>
 addressed instruction.
 
 The <flag> modifies the creation/execution behavior of the
-thread. Supported flags are:
+thread. Supported flags are::
 
 	$push -- Cause the thread to be pushed in the scheduler. This
 		 only effects startup (time 0) by arranging for pushed
@@ -766,7 +823,7 @@ thread. Supported flags are:
 * Threads in general
 
 Thread statements create the initial threads of a design. These
-include the ``initial'' and ``always'' statements of the original
+include the `initial` and `always` statements of the original
 Verilog, and possibly some other synthetic threads for various
 purposes. It is also possible to create transient threads from
 behavioral code. These are needed to support such constructs as
@@ -815,7 +872,7 @@ words have a distinct address space from the bits.
 
 * Threads and scopes
 
-The Verilog ``disable'' statement deserves some special mention
+The Verilog `disable` statement deserves some special mention
 because of how it interacts with threads. In particular, threads
 throughout the design can affect (end) other threads in the design
 using the disable statement.
@@ -838,10 +895,11 @@ by the fork atomically joins that scope. Once the transient thread
 joins the scope, it stays there until it ends. Threads never change
 scopes, not even transient threads.
 
-VPI TASK/FUNCTION CALLS
+Vpi Task/Function Calls
+-----------------------
 
 Threads call vpi tasks with the %vpi_call or %vpi_func
-instructions. The formats are:
+instructions. The formats are::
 
    %vpi_call <file-index> <lineno> <name>, <args>... ;
    %vpi_call/w <file-index> <lineno> <name>, <args>... ;
@@ -870,7 +928,7 @@ value returned by a system function called as a task.
 * The &A<> argument
 
 The &A<> argument is a reference to the word of a variable array. The
-syntax is:
+syntax is::
 
    &A '<' <symbol> , <number> '>'
    &A '<' <symbol> , <base_symbol> '>'
@@ -884,7 +942,7 @@ starting at <base>). The base value may be signed or unsigned.
 
 * The &PV<> argument
 
-The &PV<> argument is a reference to part of a signal. The syntax is:
+The &PV<> argument is a reference to part of a signal. The syntax is::
 
    &PV '<' <symbol> , <base> , <width> '>'
    &PV '<' <symbol> , <base_symbol> , <width> '>'
@@ -897,7 +955,8 @@ or &A<>/&PV<> select. The third form retrieves the <base> from thread
 space using <twid> bits starting at <tbase>. The base value may be
 signed or unsigned.
 
-TRUTH TABLES
+Truth Tables
+------------
 
 The logic that a functor represents is expressed as a truth table. The
 functor has four inputs and one output. Each input and output has one
@@ -910,7 +969,7 @@ implement the logic.
 
 To implement the truth table, we need to assign 2-bit encodings for
 the 4-value signals. I choose, pseudo-randomly, the following
-encoding:
+encoding::
 
 	1'b0  : 00
 	1'b1  : 01
@@ -919,11 +978,12 @@ encoding:
 
 The table is an array of 64 bytes, each byte holding 4 2-bit
 outputs. Construct a 6-bit byte address with inputs 1, 2 and 3 like
-so:
+so::
+
 	 332211
 
 The input 0 2-bits can then be used to select which of the 4 2-bit
-pairs in the 8-bit byte are the output:
+pairs in the 8-bit byte are the output::
 
 	MSB -> zzxx1100 <- LSB
 
@@ -934,7 +994,8 @@ none needs to be given by the programmer. It is sufficient to name the
 type to get that truth table.
 
 
-EXECUTABLE INSTRUCTIONS
+Executable Instructions
+-----------------------
 
 Threads run executable code, much like a processor executes machine
 code. VVP has a variety of opcodes for executable instructions. All of
@@ -947,7 +1008,8 @@ The opcodes.txt file has a more detailed description of all the
 various instructions.
 
 
-THE RELATIONSHIP BETWEEN FUNCTORS, THREADS AND EVENTS
+The Relationship Between Functors, Threads And Events
+-----------------------------------------------------
 
 Given the above summary of the major components of vvp, some
 description of their relationship is warranted. Functors provide a
@@ -966,7 +1028,7 @@ it is connected to, and those functors in turn create new events if
 needed.
 
 Assignment events (the second of three types of events) are created
-by non-blocking assignments in behavioral code. When the ``<='' is
+by non-blocking assignments in behavioral code. When the `<=` is
 executed (a %assign in vvp) an assign event is created, which includes
 the vvp_ipoint_t pointer to the functor input to receive the value,
 as well as the value. These are distinct from propagation events because:
@@ -991,7 +1053,7 @@ the right kind of code to cause things to happen in the design. If the
 event is a propagate or assignment event, the network of functors is
 tickled; if the event is a thread schedule, then a thread is run. The
 implementation of the event queue is not important, but currently is
-implemented as a ``skip list''. That is, it is a sorted singly linked
+implemented as a `skip list`. That is, it is a sorted singly linked
 list with skip pointers that skip over delta-time events.
 
 The functor net and the threads are distinct. They communicate through
@@ -1000,7 +1062,8 @@ is concerned, the functor net is a blob of structure that it pokes and
 prods via certain functor access instructions.
 
 
-VVP COMPILATION AND EXECUTION
+VVP Compilation And Execution
+-----------------------------
 
 The vvp program operates in a few steps:
 
@@ -1023,7 +1086,7 @@ The vvp program operates in a few steps:
 
 
 The initialization step is performed by the compile_init() function in
-compile.cc. This function in turn calls all the *_init() functions in
+compile.cc. This function in turn calls all the \*_init() functions in
 other parts of the source that need initialization for compile. All
 the various sub-init functions are called <foo>_init().
 
@@ -1044,7 +1107,8 @@ the schedule_simulate() function. This does any final setup and starts
 the simulation running and the event queue running.
 
 
-HOW TO GET FROM THERE TO HERE
+How To Get From There To Here
+-----------------------------
 
 The vvp simulation engine is designed to be able to take as input a
 compiled form of Verilog. That implies that there is a compiler that
@@ -1055,22 +1119,22 @@ compiles Verilog into a form that the vvp engine can read.
 
 Gates like AND, OR and NAND are implemented simply and obviously by
 functor statements. Any logic up to 4 inputs can be implemented with a
-single functor. For example:
+single functor. For example::
 
 	and gate (out, i1, i2, i3);
 
-becomes:
+becomes::
 
 	gate	.functor and, i1, i2, i3;
 
 Notice the first parameter of the .functor is the type. The type
 includes a truth table that describes the output with a given
 input. If the gate is wider than four inputs, then cascade
-functors. For example:
+functors. For example::
 
 	and gate (out, i1, i2, i3, i4, i5, i6, i7, i8);
 
-becomes:
+becomes::
 
 	gate.0	.functor and, i1, i2, i3, i4;
 	gate.1	.functor and, i5, i6, i7, i8;
@@ -1079,16 +1143,16 @@ becomes:
 
 * reg and other variables
 
-Reg and integer are cases of what Verilog calls ``variables.''
+Reg and integer are cases of what Verilog calls `variables`.
 Variables are, simply put, things that behavioral code can assign
-to. These are not the same as ``nets,'' which include wires and the
+to. These are not the same as `nets`, which include wires and the
 like.
 
-Each bit of a variable is created by a ``.var'' statement. For example:
+Each bit of a variable is created by a `.var` statement. For example::
 
 	reg a;
 
-becomes:
+becomes::
 
 	a	.var "a", 0, 0;
 
@@ -1097,16 +1161,17 @@ becomes:
 
 Events in general are implemented as functors, but named events in
 particular have no inputs and only the event output. The way to
-generate code for these is like so:
+generate code for these is like so::
 
 	a  .event "name";
 
 This creates a functor and makes it into a mode-2 functor. Then the
-trigger statement, "-> a", cause a ``%set a, 0;'' statement be
+trigger statement, "-> a", cause a `%set a, 0;` statement be
 generated. This is sufficient to trigger the event.
 
 
-AUTOMATICALLY ALLOCATED SCOPES
+Automatically Allocated Scopes
+------------------------------
 
 If a .scope statement has a <type> of autofunction or autotask, the
 scope is flagged as being an automatically allocated scope. The functor
@@ -1159,21 +1224,23 @@ variable or event, the associated functor indirects through the
 current read or write context of the running thread, using its
 stored context index.
 
-/*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
- *
- *    This source code is free software; you can redistribute it
- *    and/or modify it in source code form under the terms of the GNU
- *    General Public License as published by the Free Software
- *    Foundation; either version 2 of the License, or (at your option)
- *    any later version.
- *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- */
+::
+
+    /*
+     * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+     *
+     *    This source code is free software; you can redistribute it
+     *    and/or modify it in source code form under the terms of the GNU
+     *    General Public License as published by the Free Software
+     *    Foundation; either version 2 of the License, or (at your option)
+     *    any later version.
+     *
+     *    This program is distributed in the hope that it will be useful,
+     *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+     *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     *    GNU General Public License for more details.
+     *
+     *    You should have received a copy of the GNU General Public License
+     *    along with this program; if not, write to the Free Software
+     *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+     */

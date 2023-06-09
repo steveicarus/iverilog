@@ -1,7 +1,6 @@
 
-CADENCE PLI1 MODULES
-
-   Copyright 2003 Stephen Williams
+Cadence PLI1 Modules
+====================
 
 With the cadpli module, Icarus Verilog is able to load PLI1
 applications that were compiled and linked to be dynamic loaded by
@@ -17,7 +16,7 @@ is invoked by the usual -m flag to iverilog or vvp. This module in
 turn scans the extended arguments, looking for +cadpli= arguments. The
 latter specify the share object and bootstrap function for running the
 module. For example, to run the module product.so, that has the
-bootstrap function "my_boot":
+bootstrap function "my_boot"::
 
     vvp -mcadpli a.out -cadpli=./product.so:my_boot
 

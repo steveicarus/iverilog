@@ -1,5 +1,6 @@
 
-WHAT IS LPM
+What Is LPM
+===========
 
 LPM (Library of Parameterized Modules) is EIS-IS standard 103-A. It is
 a standard library of abstract devices that are designed to be close
@@ -13,11 +14,12 @@ generates, because the LPM devices are translated into technology
 specific devices by the final code generator or target specific
 optimizers.
 
-INTERNAL USES OF LPM
+Internal Uses Of LPM
+--------------------
 
 Internally, Icarus Verilog uses LPM devices to represent the design in
 abstract, especially when synthesizing such functions as addition,
-flip-flops, etc. The ``synth'' functor generates LPM modules when
+flip-flops, etc. The `synth` functor generates LPM modules when
 interpreting procedural constructs. The functor generates the LPM
 objects needed to replace a behavioral description, and uses
 attributes to tag the devices with LPM properties.

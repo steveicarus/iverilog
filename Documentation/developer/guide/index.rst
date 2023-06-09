@@ -1,21 +1,24 @@
 
-Developer Quick Start for Icarus Verilog
+Developer Guide
+===============
 
-The documentation for getting, building and installing Icarus Verilog
-is kept and maintained at the iverilog documentation wiki at
-<http://iverilog.wikia.com>. See the Installation Guide for getting
-the current source from the git repository (and how to use the git
-repository) and see the Developer Guide for instructions on
-participating in the Icarus Verilog development process. That
-information will not be repeated here.
-
-What this documentation *will* cover is the gross structure of the
+The developer guide is intended to give you a gross structure of the
 Icarus Verilog compiler source. This will help orient you to the
 source code itself, so that you can find the global parts where you
 can look for even better detail.
 
+The documentation for getting, building and installing Icarus Verilog
+is kept and maintained at :doc:`Getting Started as a Contributer <../getting_started>` 
 
-* Compiler Components
+See the Installation Guide for getting the current source from the git
+repository (and how to use the git repository) and see the Developer Guide 
+for instructions on participating in the Icarus Verilog development process.
+That information will not be repeated here.
+
+Scroll down to a listing with further readings.
+
+Compiler Components
+-------------------
 
 - The compiler driver (driver/)
 
@@ -26,28 +29,29 @@ subcommands to perform the steps of compilation.
 - The preprocessor (ivlpp/)
 
 This implements the Verilog pre-processor. In Icarus Verilog, the
-compiler directives `define, `include, `ifdef and etc. are implemented
+compiler directives \`define, \`include, \`ifdef and etc. are implemented
 in an external program. The ivlpp/ directory contains the source for
 this program.
 
-- The core compiler (this directory)
+- The core compiler (root directory)
 
 The "ivl" program is the core that does all the Verilog compiler
 processing that is not handled elsewhere. This is the main core of the
 Icarus Verilog compiler, not the runtime. See below for more details
 on the core itself.
 
-- The loadable code generators (tgt-*/)
+- The loadable code generators (tgt-\*/)
 
 This core compiler, after it is finished with parsing and semantic
 analysis, uses loadable code generators to emit code for supported
-targets. The tgt-*/ directories contains the source for the target
+targets. The tgt-\*/ directories contains the source for the target
 code generators that are bundled with Icarus Verilog. The tgt-vvp/
 directory in particular contains the code generator for the vvp
 runtime.
 
 
-* Runtime Components
+Runtime Components
+------------------
 
 - The vvp runtime (vvp/)
 
@@ -75,7 +79,8 @@ PLI-1 code written for Verilog-XL. This directory contains the source
 for the module that provides the Cadence PLI interface.
 
 
-* The Core Compiler
+The Core Compiler
+-----------------
 
 The "ivl" binary is the core compiler that does the heavy lifting of
 compiling the Verilog source (including libraries) and generating the
@@ -147,3 +152,18 @@ parameters must be intermingled with the elaboration of scopes because
 the exact values of parameters may impact the scopes created (imagine
 generate schemes and instance arrays) and the created scopes in turn
 create new parameters that need override and evaluation.
+
+Further Reading
+---------------
+
+For further information on the individual parts of Icarus Verilog, see this listing:
+
+.. toctree::
+   :maxdepth: 2
+
+   ivl/index
+   vvp/index
+   tgt-vvp/tgt-vvp
+   vpi/index
+   cadpli/cadpli
+   misc/index

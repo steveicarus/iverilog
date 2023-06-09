@@ -14,9 +14,10 @@ Icarus Verilog.
    command_line_flags
    command_files
    verilog_attributes
+   ivlpp_flags
    vvp_flags
-   gtkwave
    vvp_debug
+   vhdlpp_flags
+   gtkwave
    vpi
-   ivl_target
    reporting_issues

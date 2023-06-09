@@ -1,15 +1,12 @@
 
-The following is from the README.va_math that was included with the
-initial contribution of the va_math module. I've removed the parts
-that are obviously not applicable, i.e. how to compile the library, to
-this bundled version of the library.
+Verilog-A math library
+======================
 
---------
 License.
 --------
 
   Verilog-A math library built for Icarus Verilog
-  http://www.icarus.com/eda/verilog/
+  https://github.com/steveicarus/iverilog/
 
   Copyright (C) 2007-2010  Cary R. (cygcary@yahoo.com)
 
@@ -27,15 +24,13 @@ License.
   with this program; if not, write to the Free Software Foundation, Inc.,
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-
-------------------------------------------
 Standard Verilog-A Mathematical Functions.
 ------------------------------------------
 
 The va_math VPI module implements all the standard math functions provided
 by Verilog-A as Verilog-D system functions. The names are the same except
 like all Verilog-D system functions the name must be prefixed with a '$'.
-For reference the functions are:
+For reference the functions are::
 
   $ln(x)       --  Natural logarithm
   $log10(x)    --  Decimal logarithm
@@ -68,8 +63,6 @@ any other limits placed on the arguments. Most libraries return +-Inf or
 NaN for results that cannot be represented with real numbers. All functions
 return a real result.
 
-
-------------------------------------------
 Standard Verilog-A Mathematical Constants.
 ------------------------------------------
 
@@ -77,7 +70,7 @@ The Verilog-A mathematical constants can be accessed by including the
 "constants.vams" header file. It is located in the standard include
 directory. Recent version of Icarus Verilog (0.9.devel) automatically
 add this directory to the end of the list used to find include files.
-For reference the mathematical constants are:
+For reference the mathematical constants are::
 
   `M_PI        --  Pi
   `M_TWO_PI    --  2*Pi
@@ -94,22 +87,14 @@ For reference the mathematical constants are:
   `M_SQRT2     --  sqrt(2)
   `M_SQRT1_2   --  1/sqrt(2)
 
-
-------------------
 Using the Library.
 ------------------
 
 Just add "-m va_math" to your iverilog command line/command file and
-`include the "constants.vams" file as needed.
+\`include the "constants.vams" file as needed.
 
-------
 Thanks
 ------
 
 I would like to thank Larry Doolittle for his suggestions and
 Stephen Williams for developing Icarus Verilog.
-
-
---------
-The End.
---------

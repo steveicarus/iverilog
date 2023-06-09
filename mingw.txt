@@ -1,5 +1,0 @@
-Please see the following references for instruction on building and installing
-Icarus Verilog as a native Windows application using the MinGW tools:
-
-* README.md in subdir 'msys2'
-* Icarus Verilog Wiki: http://iverilog.wikia.com/wiki/Installation_Guide#Compiling_on_MS_Windows_.28MinGW.29

@@ -1,14 +1,19 @@
 
-ATTRIBUTE NAMING CONVENTIONS
+Icarus Verilog Attributes
+=========================
+
+Attribute Naming Conventions
+----------------------------
 
 Attributes that are specific to Icarus Verilog, and are intended to be
-of use to programmers, start with the prefix "ivl_".
+of use to programmers, start with the prefix "ivl\_".
 
 Attributes with the "_ivl_" prefix are set aside for internal
 use. They may be generated internally by the compiler. They need not
 be documented here.
 
-ATTRIBUTES TO CONTROL SYNTHESIS
+Attributes To Control Synthesis
+-------------------------------
 
 The following is a summary of Verilog attributes that Icarus Verilog
 understands within Verilog source files to control synthesis
@@ -23,7 +28,7 @@ warning.)
 
 * Attributes for "always" and "initial" statements
 
-(* ivl_combinational *)
+(\* ivl_combinational \*)
 
     This attribute tells the compiler that the statement models
     combinational logic. If the compiler finds that it cannot make
@@ -34,14 +39,14 @@ warning.)
     latches or flip-flops where the user intended combinational
     logic.
 
-(* ivl_synthesis_on *)
+(\* ivl_synthesis_on \*)
 
     This attribute tells the compiler that the marked always statement
     is synthesizable. The compiler will attempt to synthesize the
     code in the marked "always" statement. If it cannot in any way
     synthesize it, then it will report an error.
 
-(* ivl_synthesis_off *)
+(\* ivl_synthesis_off \*)
 
     If this value is attached to an "always" statement, then the
     compiler will *not* synthesize the "always" statement. This can be
@@ -50,7 +55,7 @@ warning.)
 
 * Attributes for modules
 
-(* ivl_synthesis_cell *)
+(\* ivl_synthesis_cell \*)
 
     If this value is attached to a module during synthesis, that
     module will be considered a target architecture primitive, and
@@ -60,7 +65,7 @@ warning.)
 
 * Attributes for signals (wire/reg/integer/tri/etc.)
 
-(* PAD = "<pad assignment list>" *)
+(\* PAD = "<pad assignment list>" \*)
 
     If this attribute is attached to a signal that happens to be a
     root module port, then targets that support it will use the string
@@ -73,9 +78,10 @@ warning.)
 [ none defined yet ]
 
 
-MISC
+Misc
+----
 
-(* _ivl_schedule_push *)
+(\* _ivl_schedule_push \*)
 
     If this attribute is attached to a thread object (always or
     initial statement) then the vvp code generator will generate code

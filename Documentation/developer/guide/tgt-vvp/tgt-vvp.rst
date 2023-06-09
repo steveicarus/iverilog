@@ -1,7 +1,9 @@
 
-THE VVP TARGET
+The VVP Target
+==============
 
-SYMBOL NAME CONVENTIONS
+Symbol Name Conventions
+-----------------------
 
 There are some naming conventions that the vvp target uses for
 generating symbol names.
@@ -18,7 +20,8 @@ this case the symbol is attached to a functor that is the output of
 the logic device.
 
 
-GENERAL FUNCTOR WEB STRUCTURE
+General Functor Web Structure
+-----------------------------
 
 The net of gates, signals and resolvers is formed from the input
 design. The basic structure is wrapped around the nexus, which is

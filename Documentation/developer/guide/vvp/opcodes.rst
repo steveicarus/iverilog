@@ -1,11 +1,5 @@
-/*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
- *
- */
-
-
-
-EXECUTABLE INSTRUCTION OPCODES
+Executable Instruction Opcodes
+==============================
 
 Instruction opcodes all start with a % character and have 0 or more
 operands. In no case are there more than 3 operands. This chapter
@@ -32,7 +26,8 @@ experience of implementing it for strings, I'll want to change other
 types around to using this method as well. Keep this in mind whenever
 considering adding new instructions to vvp.
 
-FLAGS
+Flags
+-----
 
 There are up to 16 bits in each thread that are available for
 flags. These are used as destinations for operations that return
@@ -302,7 +297,7 @@ The results of the comparison go into flags 4, 5, 6 and 7:
 The eeq bit is set to 1 if all the bits in the vectors are exactly the
 same, or 0 otherwise. The eq bit is true if the values are logically
 the same. That is, x and z are considered equal. In other words the eq
-bit is the same as ``=='' and the eeq bit ``===''.
+bit is the same as `==` and the eeq bit `===`.
 
 The lt bit is 1 if the left vector is less than the right vector, or 0
 if greater than or equal to the right vector. It is the equivalent of
@@ -534,7 +529,9 @@ an arbitrary value to the event to trigger the event.
 This command emits the provided file and line information along with
 the description when it is executed. The output is sent to stderr and
 the format of the output is:
+
    <file>:<line>: <description>
+   
 <file> is the unsigned numeric file index.
 <line> is the unsigned line number.
 <description> is a string, if string is 0 then the following default
@@ -1338,22 +1335,23 @@ table for the xor is:
 	1 xor 1 --> 0
 	otherwise   x
 
+::
 
-/*
- * Copyright (c) 2001-2017 Stephen Williams (steve@icarus.com)
- *
- *    This source code is free software; you can redistribute it
- *    and/or modify it in source code form under the terms of the GNU
- *    General Public License as published by the Free Software
- *    Foundation; either version 2 of the License, or (at your option)
- *    any later version.
- *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- */
+    /*
+     * Copyright (c) 2001-2023 Stephen Williams (steve@icarus.com)
+     *
+     *    This source code is free software; you can redistribute it
+     *    and/or modify it in source code form under the terms of the GNU
+     *    General Public License as published by the Free Software
+     *    Foundation; either version 2 of the License, or (at your option)
+     *    any later version.
+     *
+     *    This program is distributed in the hope that it will be useful,
+     *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+     *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     *    GNU General Public License for more details.
+     *
+     *    You should have received a copy of the GNU General Public License
+     *    along with this program; if not, write to the Free Software
+     *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+     */

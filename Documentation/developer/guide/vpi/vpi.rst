@@ -1,5 +1,6 @@
 
-HOW IT WORKS
+VPI Modules in Icarus Verilog
+================================
 
 The VPI interface for Icarus Verilog works by creating from a
 collection of PLI applications a single vpi module. The vpi module
@@ -28,16 +29,18 @@ include implementations of the standard system tasks/functions. The
 additional special module names "vhdl_sys.vpi" and "vhdl_textio.vpi"
 include implementations of private functions used to support VHDL.
 
-COMPILING A VPI MODULE
+Compiling A VPI Module
+----------------------
 
-See the iverilog-vpi documentation.
+See the documentation under: :doc:`Using VPI <../../../usage/vpi>` 
 
-TRACING VPI USE
+Tracing VPI Use
+---------------
 
 The vvp command includes the ability to trace VPI calls. This is
 useful if you are trying to debug a problem with your code. To
 activate tracing simply set the VPI_TRACE environment variable, with
-the path to a file where trace text gets written. For example:
+the path to a file where trace text gets written. For example::
 
 	setenv VPI_TRACE /tmp/foo.txt
 

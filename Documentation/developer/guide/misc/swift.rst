@@ -1,5 +1,6 @@
 
-SWIFT MODEL SUPPORT FOR Icarus Verilog (PRELIMINARY)
+Swift Model Support (Preliminary)
+=================================
 
     Copyright 2003 Stephen Williams
 
@@ -24,7 +25,7 @@ When compiling your Verilog design to include a SWIFT model, you need
 to include wrappers for the model you intend to use. You may choose to
 use ncverilog or verilogxl compatible wrappers, they work the
 same. Locate your smartmodel directory, and include it in your command
-file like so:
+file like so::
 
      +libdir+.../smartmodel/sol/wrappers/verilogxl
 
@@ -42,11 +43,11 @@ support for your model.
 * Execution
 
 After your simulation is compiled, run the simulation with the vvp
-command, like this:
+command, like this::
 
       % vvp -mcadpli a.out -cadpli=$LMC_HOME/lib/x86_linux.lib/swiftpli.so:swift_boot
 
-What this command line means is:
+What this command line means is::
 
 	-mcadpli
 	   Include the cadpli compatibility module

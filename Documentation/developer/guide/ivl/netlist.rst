@@ -1,27 +1,6 @@
-/*
- * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
- *
- *    This source code is free software; you can redistribute it
- *    and/or modify it in source code form under the terms of the GNU
- *    General Public License as published by the Free Software
- *    Foundation; either version 2 of the License, or (at your option)
- *    any later version.
- *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- */
 
-
-Note that the netlist.h header contains detailed descriptions of how
-things work. This is just an overview.
-
-NETLIST FORMAT
+Netlist Format
+==============
 
 The output from the parse and elaboration steps is a "netlist" rooted
 in a Design object. Parsing translates the design described in the
@@ -35,7 +14,8 @@ translating it to a (hopefully) better netlist after each step. The
 complete netlist is then passed to the code generator, the emit
 function, where the final code (in the target format) is produced.
 
-STRUCTURAL ITEMS: NetNode and NetNet
+Structural Items: NetNode and NetNet
+------------------------------------
 
 Components and wires, memories and registers all at their base are
 either NetNode objects or NetNet objects. Even these classes are
@@ -56,7 +36,8 @@ destructors for nets and nodes automatically arrange for pins to be
 disconnected when the item is deleted, so that the netlist can be
 changed during processing.
 
-STRUCTURAL LINKS
+Structural Links
+----------------
 
 The NetNode and NetNet classes contain arrays of Link objects, one
 object per pin. Each pin is a single bit. The Link objects link to all
@@ -88,12 +69,13 @@ Currently, a link has 3 possible direction properties:
 		   three-state.)
 
 
-BEHAVIORAL ITEMS: NetProcTop, NetProc and derived classes
+Behavioral Items: NetProcTop, NetProc and derived classes
+---------------------------------------------------------
 
 Behavioral items are not in general linked to the netlist. Instead,
 they represent elaborated behavioral statements. The type of the object
 implies what the behavior of the statement does. For example, a
-NetCondit object represents an ``if'' statement, and carries a
+NetCondit object represents an `if` statement, and carries a
 condition expression and up to two alternative sub-statements.
 
 At the root of a process is a NetProcTop object. This class carries a
@@ -104,7 +86,8 @@ tree is the NetProcTop object. The Design class keeps a list of the
 elaborated NetProcTop objects. That list represents the list of
 processes in the design.
 
-INTERACTION OF BEHAVIORAL AND STRUCTURAL: NetAssign_
+Interaction Of Behavioral And Structural: NetAssign\_
+-----------------------------------------------------
 
 The behavioral statements in a Verilog design effect the structural
 aspects through assignments to registers. Registers are structural
@@ -113,26 +96,27 @@ statement through pins. This implies that the l-value of an assignment
 is structural. It also implies that the statement itself is
 structural, and indeed it is derived from NetNode.
 
-The NetAssign_ class is also derived from the NetProc class because
+The NetAssign\_ class is also derived from the NetProc class because
 what it does is brought on by executing the process. By multiple
 inheritance we have therefore that the assignment is both a NetNode
-and a NetProc. The NetAssign_ node has pins that represent the l-value
+and a NetProc. The NetAssign\_ node has pins that represent the l-value
 of the statement, and carries behavioral expressions that represent
 the r-value of the assignment.
 
-MEMORIES
+Memories
+--------
 
 The netlist form includes the NetMemory type to hold the content of a
 memory. Instances of this type represent the declaration of a memory,
 and occur once for each memory. References to the memory are managed
-by the NetEMemory and NetAssignMem_ classes.
+by the NetEMemory and NetAssignMem\_ classes.
 
 An instance of the NetEMemory class is created whenever a procedural
 expression references a memory element. The operand is the index to
 use to address (and read) the memory.
 
-An instance of the NetAssignMem_ class is created when there is a
-procedural assignment to the memory. The NetAssignMem_ object
+An instance of the NetAssignMem\_ class is created when there is a
+procedural assignment to the memory. The NetAssignMem\_ object
 represents the l-value reference (a write) to the memory. As with the
 NetEMemory class, this is a procedural reference only.
 
@@ -143,13 +127,14 @@ unconnected for now, because memories cannot appear is l-values of
 continuous assignments. However, the synthesis functor may connect
 signals to the write control lines to get a fully operational RAM.
 
-By the time elaboration completes, there may be many NetAssignMem_,
+By the time elaboration completes, there may be many NetAssignMem\_,
 NetEMemory and NetRamDq objects referencing the same NetMemory
 object. Each represents a port into the memory. It is up to the
 synthesis steps (and the target code) to figure out what to do with
 these ports.
 
-EXPRESSIONS
+Expressions
+-----------
 
 Expressions are represented as a tree of NetExpr nodes. The NetExpr
 base class contains the core methods that represent an expression
@@ -168,7 +153,8 @@ However, typical expressions the behavioral description are
 represented as a tree of NetExpr nodes. The derived class of the node
 encodes what kind of operator the node represents.
 
-EXPRESSION BIT WIDTH
+Expression Bit Width
+--------------------
 
 The expression (represented by the NetExpr class) has a bit width that
 it either explicitly specified, or implied by context or contents.
@@ -200,14 +186,17 @@ determined and please adapt. If the expression cannot reasonably
 adapt, it will return false. Otherwise, it will adjust bit widths and
 return true.
 
-XXXX I do not yet properly deal with cases where elaboration knows for
-XXXX certain that the bit width does not matter. In this case, I
-XXXX really should tell the expression node about it so that it can
-XXXX pick a practical (and optimal) width.
+::
 
-INTERACTION OF EXPRESSIONS AND STRUCTURE: NetESignal
+    I do not yet properly deal with cases where elaboration knows for
+    certain that the bit width does not matter. In this case, I
+    really should tell the expression node about it so that it can
+    pick a practical (and optimal) width.
 
-The NetAssign_ class described above is the means for processes to
+Interaction Of Expressions And Structure: NetESignal
+----------------------------------------------------
+
+The NetAssign\_ class described above is the means for processes to
 manipulate the net, but values are read from the net by NetESignal
 objects. These objects are class NetExpr because they can appear in
 expressions (and have width). They are not NetNode object, but hold
@@ -215,7 +204,8 @@ pointers to a NetNet object, which is used to retrieve values with the
 expression is evaluated.
 
 
-HIERARCHY IN NETLISTS
+Hierarchy In Netlists
+---------------------
 
 The obvious hierarchical structure of Verilog is the module. The
 Verilog program may contain any number of instantiations of modules in
@@ -236,7 +226,8 @@ boundaries. This makes coding of netlist transform functions such as
 constant propagation more effective and easier to write.
 
 
-SCOPE REPRESENTATION IN NETLISTS
+Scope Representation In Netlists
+--------------------------------
 
 In spite of the literal flattening of the design, scope information is
 preserved in the netlist, with the NetScope class. The Design class
@@ -258,7 +249,8 @@ scope. Overrides are managed during the scan, and once the scan is
 complete, defparam overrides are applied.
 
 
-TASKS IN NETLISTS
+Tasks In Netlists
+-----------------
 
 The flattening of the design does not include tasks and named
 begin-end blocks. Tasks are behavioral hierarchy (whereas modules are
@@ -268,7 +260,8 @@ recurse. (The elaboration process does reserve the right to flatten
 some task calls. C++ programmers recognize this as inlining a task.)
 
 
-TIME SCALE IN NETLISTS
+Time Scale In Netlists
+----------------------
 
 The Design class and the NetScope classes carry time scale and
 resolution information of the elaborated design. There is a global
