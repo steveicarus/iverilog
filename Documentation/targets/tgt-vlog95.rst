@@ -1,6 +1,6 @@
 
-Using The Verilog '95 Code Generator
-====================================
+The Verilog '95 Code Generator (-tvlog95)
+=========================================
 
 Icarus Verilog contains a code generator to emit 1995 compliant Verilog from
 the input Verilog netlist. This allows Icarus Verilog to function as a Verilog

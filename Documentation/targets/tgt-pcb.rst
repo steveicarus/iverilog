@@ -1,6 +1,6 @@
 
-Using the PCB code generator
-============================
+The PCB Code Generator (-tpcb)
+==============================
 
 The PCB target code generator is designed to allow a user to enter a netlist
 in Verilog format, then generate input files for the GNU PCB layout program.
