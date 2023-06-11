@@ -32,6 +32,8 @@ using namespace std;
  * to the target block.
  */
 static const NetScope*disable = 0;
+static bool loop_break;
+static bool loop_continue;
 
 static NetExpr* fix_assign_value(const NetNet*lhs, NetExpr*rhs)
 {
@@ -534,7 +536,7 @@ bool NetBlock::evaluate_function(const LineInfo&loc,
 
 	    bool cur_flag = cur->evaluate_function(loc, use_context_map);
 	    flag = flag && cur_flag;
-      } while (cur != last_ && !disable);
+      } while (cur != last_ && !disable && !loop_break && !loop_continue);
 
       if (debug_eval_tree) {
 	    cerr << get_fileline() << ": NetBlock::evaluate_function: "
@@ -710,6 +712,30 @@ bool NetDisable::evaluate_function(const LineInfo&,
       return true;
 }
 
+bool NetBreak::evaluate_function(const LineInfo&,
+			         map<perm_string, LocalVar>&) const
+{
+      loop_break = true;
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": NetBreak::evaluate_function" << endl;
+      }
+
+      return true;
+}
+
+bool NetContinue::evaluate_function(const LineInfo&,
+				    map<perm_string, LocalVar>&) const
+{
+      loop_continue = true;
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": NetContinue::evaluate_function" << endl;
+      }
+
+      return true;
+}
+
 bool NetDoWhile::evaluate_function(const LineInfo&loc,
 				   map<perm_string,LocalVar>&context_map) const
 {
@@ -725,6 +751,13 @@ bool NetDoWhile::evaluate_function(const LineInfo&loc,
 	    flag = proc_->evaluate_function(loc, context_map);
 	    if (! flag)
 		   break;
+
+	    if (loop_break) {
+		  loop_break = false;
+		  break;
+	    }
+
+	    loop_continue = false;
 
 	      // Evaluate the condition expression to try and get the
 	      // condition for the loop.
@@ -765,6 +798,13 @@ bool NetForever::evaluate_function(const LineInfo&loc,
 
       while (flag && !disable) {
 	    flag = flag && statement_->evaluate_function(loc, context_map);
+
+	    if (loop_break) {
+		  loop_break = false;
+		  break;
+	    }
+
+	    loop_continue = false;
       }
 
       if (debug_eval_tree) {
@@ -818,6 +858,13 @@ bool NetForLoop::evaluate_function(const LineInfo&loc,
 	    if (disable)
 		  break;
 
+	    if (loop_break) {
+		  loop_break = false;
+		  break;
+	    }
+
+	    loop_continue = false;
+
 	    tmp_flag = step_statement_->evaluate_function(loc, context_map);
 	    flag &= tmp_flag;
       }
@@ -854,6 +901,13 @@ bool NetRepeat::evaluate_function(const LineInfo&loc,
       while ((count > 0) && flag && !disable) {
 	    flag = flag && statement_->evaluate_function(loc, context_map);
 	    count -= 1;
+
+	    if (loop_break) {
+		  loop_break = false;
+		  break;
+	    }
+
+	    loop_continue = false;
       }
 
       if (debug_eval_tree) {
@@ -905,6 +959,13 @@ bool NetWhile::evaluate_function(const LineInfo&loc,
 	    bool tmp_flag = proc_->evaluate_function(loc, context_map);
 	    if (! tmp_flag)
 		  flag = false;
+
+	    if (loop_break) {
+		  loop_break = false;
+		  break;
+	    }
+
+	    loop_continue = false;
       }
 
       if (debug_eval_tree) {
