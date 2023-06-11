@@ -41,6 +41,7 @@ sv_array_cassign6		vvp_tests/sv_array_cassign6.json
 sv_array_cassign7		vvp_tests/sv_array_cassign7.json
 sv_foreach9			vvp_tests/sv_foreach9.json
 sv_foreach10			vvp_tests/sv_foreach10.json
+sv_wildcard_import8		vvp_tests/sv_wildcard_import8.json
 sdf_header			vvp_tests/sdf_header.json
 task_return1			vvp_tests/task_return1.json
 task_return2			vvp_tests/task_return2.json
