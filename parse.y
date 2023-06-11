@@ -2118,12 +2118,12 @@ port_direction_opt
   ;
 
 procedural_assertion_statement /* IEEE1800-2012 A.6.10 */
-  : concurrent_assertion_statement
-      { $$ = $1; }
-  | simple_immediate_assertion_statement
-      { $$ = $1; }
-  | deferred_immediate_assertion_statement
-      { $$ = $1; }
+  : block_identifier_opt concurrent_assertion_statement
+      { $$ = $2; }
+  | block_identifier_opt simple_immediate_assertion_statement
+      { $$ = $2; }
+  | block_identifier_opt deferred_immediate_assertion_statement
+      { $$ = $2; }
   ;
 
 property_expr /* IEEE1800-2012 A.2.10 */
