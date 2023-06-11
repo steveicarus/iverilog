@@ -285,5 +285,6 @@ extern int show_stmt_forever(ivl_statement_t net, ivl_scope_t sscope);
 extern int show_stmt_forloop(ivl_statement_t net, ivl_scope_t sscope);
 extern int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope);
 extern int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope);
+extern int show_stmt_do_while(ivl_statement_t net, ivl_scope_t sscope);
 
 #endif /* IVL_vvp_priv_H */

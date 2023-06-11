@@ -220,3 +220,40 @@ int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 
       return rc;
 }
+
+int show_stmt_do_while(ivl_statement_t net, ivl_scope_t sscope)
+{
+      int rc = 0;
+
+      unsigned top_label = local_count++;
+      unsigned cont_label = local_count++;
+      unsigned out_label = local_count++;
+
+      unsigned save_break_label, save_continue_label;
+      PUSH_JUMPS(out_label, cont_label);
+
+      show_stmt_file_line(net, "Do/While statement.");
+
+	/* Start the loop. The top of the loop starts a basic block
+	   because it can be entered from above or from the bottom of
+	   the loop. */
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, top_label);
+
+	/* Draw the body of the loop. */
+      rc += show_statement(ivl_stmt_sub_stmt(net), sscope);
+
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, cont_label);
+
+	/* Draw the evaluation of the condition expression, and test
+	   the result. If the expression evaluates to true, then
+	   branch to the top label. */
+      int use_flag = draw_eval_condition(ivl_stmt_cond_expr(net));
+      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %d;\n",
+	      thread_count, top_label, use_flag);
+      clr_flag(use_flag);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, out_label);
+
+      POP_JUMPS;
+
+      return rc;
+}
