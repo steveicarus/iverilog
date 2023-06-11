@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Icarus Verilog'
-copyright = '2022, Stephen Williams'
+copyright = '2023, Stephen Williams'
 author = 'Stephen Williams'
 
 # The short X.Y version
@@ -68,6 +68,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+# If no language is specified, use none
+highlight_language = 'none'
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -97,6 +99,7 @@ html_static_path = ['_static']
 #
 # html_sidebars = {}
 
+html_favicon = 'favicon.ico'
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
