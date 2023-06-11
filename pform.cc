@@ -405,17 +405,22 @@ LexicalScope* pform_peek_scope(void)
       return lexical_scope;
 }
 
-void pform_pop_scope()
+static void pform_check_possible_imports(LexicalScope *scope)
 {
-      LexicalScope*scope = lexical_scope;
-      assert(scope);
-
       map<perm_string,PPackage*>::const_iterator cur;
       for (cur = scope->possible_imports.begin(); cur != scope->possible_imports.end(); ++cur) {
             if (scope->local_symbols.find(cur->first) == scope->local_symbols.end())
                   scope->explicit_imports[cur->first] = cur->second;
       }
       scope->possible_imports.clear();
+}
+
+void pform_pop_scope()
+{
+      LexicalScope*scope = lexical_scope;
+      assert(scope);
+
+      pform_check_possible_imports(scope);
 
       lexical_scope = scope->parent_scope();
       assert(lexical_scope);
@@ -3405,4 +3410,12 @@ int pform_parse(const char*path)
 
       destroy_lexor();
       return error_count;
+}
+
+void pform_finish()
+{
+      // Wait until all parsing is done and all symbols in the unit scope are
+      // known before importing possible imports.
+      for (auto unit : pform_units)
+	    pform_check_possible_imports(unit);
 }

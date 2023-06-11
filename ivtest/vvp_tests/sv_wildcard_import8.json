@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_wildcard_import8.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
