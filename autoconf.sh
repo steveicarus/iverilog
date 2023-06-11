@@ -6,6 +6,8 @@
 # in git, so it is easiest to just run this script whenever needed
 # to generate the configure script.
 #
+# wget -O config.guess 'https://git.savannah.gnu.org/cgit/config.git/plain/config.guess'
+# wget -O config.sub 'https://git.savannah.gnu.org/cgit/config.git/plain/config.sub'
 echo "Autoconf in root..."
 autoconf -f
 
