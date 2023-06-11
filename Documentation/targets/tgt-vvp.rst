@@ -60,4 +60,4 @@ Next are some directives. The first one, `:ivl_version` specifies which version 
 Opcodes
 -------
 
-The various available opcodes can be seen in :doc:`Opcodes <../developer/guide/vvp/opcodes>` 
+The various available opcodes can be seen in :doc:`Opcodes <../developer/guide/vvp/opcodes>`

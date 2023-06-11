@@ -32,7 +32,7 @@ include implementations of private functions used to support VHDL.
 Compiling A VPI Module
 ----------------------
 
-See the documentation under: :doc:`Using VPI <../../../usage/vpi>` 
+See the documentation under: :doc:`Using VPI <../../../usage/vpi>`
 
 Tracing VPI Use
 ---------------

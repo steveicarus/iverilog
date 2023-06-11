@@ -21,7 +21,7 @@ Procedural assignments have to be given one at a time, to be
 
    always @ (posedge Clk) Y = newY;
    always @ (posedge Clk) Z = newZ;
-   
+
 rather than
 
 ::

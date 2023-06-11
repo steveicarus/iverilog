@@ -28,7 +28,7 @@ With this example code:
                 out <= !out;
             end
         end
-        
+
         assign blink = out;
 
     endmodule

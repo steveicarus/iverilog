@@ -531,7 +531,7 @@ the description when it is executed. The output is sent to stderr and
 the format of the output is:
 
    <file>:<line>: <description>
-   
+
 <file> is the unsigned numeric file index.
 <line> is the unsigned line number.
 <description> is a string, if string is 0 then the following default
