@@ -5731,7 +5731,7 @@ port_name
       { named_pexpr_t*tmp = new named_pexpr_t;
 	tmp->name = lex_strings.make($3);
 	tmp->parm = new PEIdent(lex_strings.make($3), true);
-	FILE_NAME(tmp->parm, @1);
+	FILE_NAME(tmp->parm, @3);
 	delete[]$3;
 	delete $1;
 	$$ = tmp;
