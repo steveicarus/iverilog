@@ -325,7 +325,7 @@ br_gh283a		normal			ivltests
 br_gh283b		normal			ivltests
 br_gh283c		normal			ivltests
 br_gh309		normal			ivltests
-br_gh315		normal,-gspecify	ivltests
+br_gh315		normal,-g2005-sv,-gspecify	ivltests
 br_gh316a		normal,-gspecify	ivltests
 br_gh316b		normal,-gspecify	ivltests
 br_gh316c		normal,-gspecify	ivltests

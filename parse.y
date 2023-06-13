@@ -5728,7 +5728,8 @@ port_name
 	$$ = tmp;
       }
   | attribute_list_opt '.' IDENTIFIER
-      { named_pexpr_t*tmp = new named_pexpr_t;
+      { pform_requires_sv(@3, "Implicit named port connections");
+	named_pexpr_t*tmp = new named_pexpr_t;
 	tmp->name = lex_strings.make($3);
 	tmp->parm = new PEIdent(lex_strings.make($3), true);
 	FILE_NAME(tmp->parm, @3);
