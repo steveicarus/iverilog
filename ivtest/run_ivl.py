@@ -114,6 +114,15 @@ def run_cmd(cmd: list) -> subprocess.CompletedProcess:
     res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return res
 
+def check_gold(it_key : str, it_gold : str, log_list : list) -> bool:
+    compared = True
+    for log_name in log_list:
+        log_path = os.path.join("log", "{key}-{log}.log".format(key=it_key, log=log_name))
+        gold_path = os.path.join("gold", "{gold}-{log}.gold".format(gold=it_gold, log=log_name))
+        compared = compared and compare_files(log_path, gold_path)
+
+    return compared
+
 def run_CE(options : dict) -> list:
     ''' Run the compiler, and expect an error
 
@@ -123,6 +132,7 @@ def run_CE(options : dict) -> list:
     it_key = options['key']
     it_dir = options['directory']
     it_args = options['iverilog_args']
+    it_gold = options['gold']
 
     build_runtime(it_key)
 
@@ -130,10 +140,14 @@ def run_CE(options : dict) -> list:
     res = run_cmd(cmd)
     log_results(it_key, "iverilog", res)
 
+    log_list = ["iverilog-stdout", "iverilog-stderr"]
+
     if res.returncode == 0:
         return [1, "Failed - CE (no error reported)"]
     elif res.returncode >= 256:
         return [1, "Failed - CE (execution error)"]
+    elif it_gold is not None and not check_gold(it_key, it_gold, log_list):
+        return [1, "Failed - CE (Gold output doesn't match actual output.)"]
     else:
         return [0, "Passed - CE"]
 
@@ -150,11 +164,7 @@ def check_run_outputs(options : dict, expected_fail : bool, it_stdout : str, log
     it_diff = options['diff']
 
     if it_gold is not None:
-        compared = True
-        for log_name in log_list:
-            log_path = os.path.join("log", "{key}-{log}.log".format(key=it_key, log=log_name))
-            gold_path = os.path.join("gold", "{gold}-{log}.gold".format(gold=it_gold, log=log_name))
-            compared = compared and compare_files(log_path, gold_path)
+        compared = check_gold(it_key, it_gold, log_list)
 
         if expected_fail:
             if compared:
