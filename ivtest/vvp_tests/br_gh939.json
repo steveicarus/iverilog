@@ -1,0 +1,6 @@
+{
+    "type"   : "CE",
+    "source" : "br_gh939.v",
+    "gold"   : "br_gh939",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
