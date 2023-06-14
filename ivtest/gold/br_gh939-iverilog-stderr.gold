@@ -1,0 +1,4 @@
+ivltests/br_gh939.v:10: error: Net o is not defined in this context.
+ivltests/br_gh939.v:10: error: Output port expression must support continuous assignment.
+ivltests/br_gh939.v:10:      : Port 1 (o) of M is connected to o
+2 error(s) during elaboration.
