@@ -65,6 +65,16 @@ void sdf_select_instance(const char*celltype, const char*cellinst)
 {
       char buffer[128];
 
+	/* Test for wildcard character */
+      if (cellinst == NULL) {
+	  vpi_printf("SDF WARNING: %s:%d: ",
+	             vpi_get_str(vpiFile, sdf_callh),
+	             (int)vpi_get(vpiLineNo, sdf_callh));
+	  vpi_printf("Wildcard cell instance specification (*) currently not supported.\n");
+	  sdf_cur_cell = 0;
+	  return;
+      }
+
 	/* First follow the hierarchical parts of the cellinst name to
 	   get to the cell that I'm looking for. */
       vpiHandle scope = sdf_scope;
@@ -246,7 +256,7 @@ static PLI_INT32 sys_sdf_annotate_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 	/* Check that we have a file name argument. */
       if (argv == 0) {
-	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("SDF ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a file name argument.\n", name);
 	    vpip_set_return_value(1);
@@ -254,7 +264,7 @@ static PLI_INT32 sys_sdf_annotate_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    return 0;
       }
       if (! is_string_obj(vpi_scan(argv))) {
-	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("SDF ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's file name must be a string.\n", name);
 	    vpip_set_return_value(1);
@@ -265,7 +275,7 @@ static PLI_INT32 sys_sdf_annotate_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       module = vpi_scan(argv);
       if (module == 0) return 0;
       if (vpi_get(vpiType, module) != vpiModule) {
-	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("SDF ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's second argument must be a module instance.\n",
 	               name);
@@ -275,7 +285,7 @@ static PLI_INT32 sys_sdf_annotate_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 	/* Warn the user that we only use the first two arguments. */
       if (vpi_scan(argv) != 0) {
-	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s currently only uses the first two argument.\n",
 	               name);
@@ -299,7 +309,7 @@ static PLI_INT32 sys_sdf_annotate_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
       sdf_fd = fopen(fname, "r");
       if (sdf_fd == 0) {
-	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("Unable to open SDF file \"%s\"."
 		       " Skipping this annotation.\n", fname);
