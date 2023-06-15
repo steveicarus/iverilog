@@ -82,7 +82,7 @@ char sdf_use_hchar = '.';
 source_file
   : '(' K_DELAYFILE sdf_header_list cell_list ')'
   | '(' K_DELAYFILE error ')'
-      { vpi_printf("%s:%d:SDF ERROR: Invalid DELAYFILE format\n",
+      { vpi_printf("SDF ERROR: %s:%d: Invalid DELAYFILE format\n",
 		   sdf_parse_path, @2.first_line);
       }
   ;
@@ -234,7 +234,7 @@ cell
 	if ($4) free($4);
       }
   | '(' K_CELL error ')'
-      { vpi_printf("%s:%d: Syntax error in CELL\n",
+      { vpi_printf("SDF ERROR: %s:%d: Syntax error in CELL\n",
 		   sdf_parse_path, @2.first_line); }
   ;
 
@@ -251,7 +251,7 @@ cell_instance
   | '(' K_INSTANCE '*' ')'
       { $$ = 0; }
   | '(' K_INSTANCE error ')'
-      { vpi_printf("%s:%d:SDF ERROR: Invalid/malformed INSTANCE argument\n",
+      { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed INSTANCE argument\n",
 		   sdf_parse_path, @2.first_line);
 	    $$ = strdup(""); }
   ;
@@ -264,11 +264,13 @@ timing_spec_list_opt
 timing_spec
   : '(' K_DELAY deltype_list ')'
   | '(' K_DELAY error ')'
-      { vpi_printf("%s:%d: Syntax error in CELL DELAY SPEC\n",
+      { vpi_printf("SDF ERROR: %s:%d: Syntax error in CELL DELAY SPEC\n",
 		   sdf_parse_path, @2.first_line); }
   | '(' K_TIMINGCHECK tchk_def_list ')'
+      { vpi_printf("SDF WARNING: %s:%d: TIMINGCHECK not supported.\n",
+		   sdf_parse_path, @2.first_line); }
   | '(' K_TIMINGCHECK error ')'
-      { vpi_printf("%s:%d: Syntax error in TIMINGCHECK SPEC\n",
+      { vpi_printf("SDF ERROR: %s:%d: Syntax error in TIMINGCHECK SPEC\n",
 		   sdf_parse_path, @2.first_line); }
   ;
 
@@ -587,5 +589,5 @@ signed_real_number
 
 void yyerror(const char*msg)
 {
-      vpi_printf("%s:SDF ERROR: Too many errors: %s\n", sdf_parse_path, msg);
+      vpi_printf("SDF ERROR: %s: Too many errors: %s\n", sdf_parse_path, msg);
 }
