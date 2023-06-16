@@ -265,8 +265,8 @@ ivl_variable_type_t NetEConcat::expr_type() const
 
 void NetEConcat::set(unsigned idx, NetExpr*e)
 {
-      assert(idx < parms_.size());
-      assert(parms_[idx] == 0);
+      ivl_assert(*this, idx < parms_.size());
+      ivl_assert(*this, parms_[idx] == 0);
       parms_[idx] = e;
       expr_width( expr_width() + repeat_ * e->expr_width() );
 }
@@ -275,7 +275,7 @@ NetEConstEnum::NetEConstEnum(perm_string n, const netenum_t *enum_set,
 			     const verinum &val)
 : NetEConst(enum_set, val), name_(n)
 {
-      assert(has_width());
+      ivl_assert(*this, has_width());
 }
 
 NetEConstEnum::~NetEConstEnum()
@@ -395,7 +395,7 @@ NetEProperty::NetEProperty(NetNet*net, size_t pidx, NetExpr*idx)
 : net_(net), pidx_(pidx), index_(idx)
 {
       const netclass_t*use_type = dynamic_cast<const netclass_t*>(net->net_type());
-      assert(use_type);
+      ivl_assert(*this, use_type);
 
       ivl_type_t prop_type = use_type->get_prop_type(pidx_);
       set_net_type(prop_type);
@@ -491,7 +491,7 @@ unsigned NetESFunc::nparms() const
 
 void NetESFunc::parm(unsigned idx, NetExpr*v)
 {
-      assert(idx < parms_.size());
+      ivl_assert(*this, idx < parms_.size());
       if (parms_[idx])
 	    delete parms_[idx];
       parms_[idx] = v;
@@ -499,13 +499,13 @@ void NetESFunc::parm(unsigned idx, NetExpr*v)
 
 const NetExpr* NetESFunc::parm(unsigned idx) const
 {
-      assert(idx < parms_.size());
+      ivl_assert(*this, idx < parms_.size());
       return parms_[idx];
 }
 
 NetExpr* NetESFunc::parm(unsigned idx)
 {
-      assert(idx < parms_.size());
+      ivl_assert(*this, idx < parms_.size());
       return parms_[idx];
 }
 

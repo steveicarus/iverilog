@@ -23,6 +23,7 @@
 # include  "pform.h"
 # include  "parse_misc.h"
 # include  "discipline.h"
+# include  "ivl_assert.h"
 
 using namespace std;
 
@@ -103,7 +104,7 @@ void pform_start_discipline(const char*name)
 
 void pform_discipline_domain(const struct vlltype&loc, ivl_dis_domain_t use_domain)
 {
-      assert(use_domain != IVL_DIS_NONE);
+      ivl_assert(loc, use_domain != IVL_DIS_NONE);
 
       if (discipline_domain != IVL_DIS_NONE) {
 	    cerr << loc.text << ":" << loc.first_line << ": error: "
@@ -197,7 +198,7 @@ void pform_attach_discipline(const struct vlltype&loc,
 	    if (cur_net == 0) {
 		    /* Not declared yet, declare it now. */
 		  cur_net = pform_makewire(loc, *cur, NetNet::WIRE, 0);
-		  assert(cur_net);
+		  ivl_assert(loc, cur_net);
 	    }
 
 	    if (ivl_discipline_t tmp = cur_net->get_discipline()) {

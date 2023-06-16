@@ -69,7 +69,7 @@ NetAssign_::~NetAssign_()
 		  sig_->type(NetNet::WIRE);
       }
 
-      assert( more == 0 );
+      ivl_assert(*this, more == 0 );
       delete word_;
 }
 
@@ -87,7 +87,7 @@ NetScope*NetAssign_::scope() const
 
 void NetAssign_::set_word(NetExpr*r)
 {
-      assert(word_ == 0);
+      ivl_assert(*this, word_ == 0);
       word_ = r;
 }
 
@@ -183,7 +183,7 @@ perm_string NetAssign_::name() const
 
 NetNet* NetAssign_::sig() const
 {
-      assert(sig_? nest_==0 : nest_!=0);
+      ivl_assert(*this, sig_ ? nest_ == 0 : nest_ != 0);
       return sig_;
 }
 
@@ -257,7 +257,7 @@ NetAssign_* NetAssignBase::l_val(unsigned idx)
 	    idx -= 1;
       }
 
-      assert(idx == 0);
+      ivl_assert(*this, idx == 0);
       return cur;
 }
 
@@ -272,7 +272,7 @@ const NetAssign_* NetAssignBase::l_val(unsigned idx) const
 	    idx -= 1;
       }
 
-      assert(idx == 0);
+      ivl_assert(*this, idx == 0);
       return cur;
 }
 

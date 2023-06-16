@@ -26,6 +26,7 @@
 # include  "PExpr.h"
 # include  "PWire.h"
 # include  "Module.h"
+# include  "ivl_assert.h"
 # include  "netmisc.h"
 # include  "util.h"
 # include  <typeinfo>
@@ -129,7 +130,7 @@ void PEBinary::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 
 bool PEBinary::has_aa_term(Design*des, NetScope*scope) const
 {
-      assert(left_ && right_);
+      ivl_assert(*this, left_ && right_);
       return left_->has_aa_term(des, scope) || right_->has_aa_term(des, scope);
 }
 
@@ -186,7 +187,7 @@ PEBComp::~PEBComp()
 PEBLogic::PEBLogic(char op, PExpr*l, PExpr*r)
 : PEBinary(op, l, r)
 {
-      assert(op == 'a' || op == 'o' || op == 'q' || op == 'Q');
+      ivl_assert(*this, op == 'a' || op == 'o' || op == 'q' || op == 'Q');
 }
 
 PEBLogic::~PEBLogic()
@@ -242,7 +243,7 @@ PECallFunction::PECallFunction(PPackage*pkg, const pform_name_t &n, const list<P
 : path_(pkg, n), parms_(parms.size()), is_overridden_(false)
 {
       int tmp_idx = 0;
-      assert(parms_.size() == parms.size());
+      ivl_assert(*this, parms_.size() == parms.size());
       for (list<PExpr*>::const_iterator idx = parms.begin()
 		 ; idx != parms.end() ; ++idx)
 	    parms_[tmp_idx++] = *idx;
@@ -263,7 +264,7 @@ PECallFunction::PECallFunction(const pform_name_t&n, const list<PExpr *> &parms)
 : path_(n), parms_(parms.size()), is_overridden_(false)
 {
       int tmp_idx = 0;
-      assert(parms_.size() == parms.size());
+      ivl_assert(*this, parms_.size() == parms.size());
       for (list<PExpr*>::const_iterator idx = parms.begin()
 		 ; idx != parms.end() ; ++idx)
 	    parms_[tmp_idx++] = *idx;
@@ -273,7 +274,7 @@ PECallFunction::PECallFunction(perm_string n, const list<PExpr*>&parms)
 : path_(pn_from_ps(n)), parms_(parms.size()), is_overridden_(false)
 {
       int tmp_idx = 0;
-      assert(parms_.size() == parms.size());
+      ivl_assert(*this, parms_.size() == parms.size());
       for (list<PExpr*>::const_iterator idx = parms.begin()
 		 ; idx != parms.end() ; ++idx)
 	    parms_[tmp_idx++] = *idx;
@@ -305,7 +306,7 @@ PEConcat::PEConcat(const list<PExpr*>&p, PExpr*r)
 : parms_(p.size()), width_modes_(SIZED, p.size()), repeat_(r)
 {
       int tmp_idx = 0;
-      assert(parms_.size() == p.size());
+      ivl_assert(*this, parms_.size() == p.size());
       for (list<PExpr*>::const_iterator idx = p.begin()
 		 ; idx != p.end() ; ++idx)
 	    parms_[tmp_idx++] = *idx;
@@ -354,7 +355,7 @@ PEEvent::edge_t PEEvent::type() const
 
 bool PEEvent::has_aa_term(Design*des, NetScope*scope) const
 {
-      assert(expr_);
+      ivl_assert(*this, expr_);
       return expr_->has_aa_term(des, scope);
 }
 
@@ -518,7 +519,7 @@ PENewCopy::~PENewCopy()
 PENumber::PENumber(verinum*vp)
 : value_(vp)
 {
-      assert(vp);
+      ivl_assert(*this, vp);
 }
 
 PENumber::~PENumber()
@@ -557,7 +558,7 @@ PETernary::~PETernary()
 
 void PETernary::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 {
-      assert(expr_ && tru_ && fal_);
+      ivl_assert(*this, expr_ && tru_ && fal_);
       expr_->declare_implicit_nets(scope, type);
       tru_->declare_implicit_nets(scope, type);
       fal_->declare_implicit_nets(scope, type);
@@ -565,7 +566,7 @@ void PETernary::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 
 bool PETernary::has_aa_term(Design*des, NetScope*scope) const
 {
-      assert(expr_ && tru_ && fal_);
+      ivl_assert(*this, expr_ && tru_ && fal_);
       return expr_->has_aa_term(des, scope)
            || tru_->has_aa_term(des, scope)
            || fal_->has_aa_term(des, scope);
@@ -591,13 +592,13 @@ PEUnary::~PEUnary()
 
 void PEUnary::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 {
-      assert(expr_);
+      ivl_assert(*this, expr_);
       expr_->declare_implicit_nets(scope, type);
 }
 
 bool PEUnary::has_aa_term(Design*des, NetScope*scope) const
 {
-      assert(expr_);
+      ivl_assert(*this, expr_);
       return expr_->has_aa_term(des, scope);
 }
 

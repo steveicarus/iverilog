@@ -116,7 +116,7 @@ NetNet* NetEBAdd::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    lsig = pad_to_width(des, lsig, expr_width(), *this);
 	    rsig = pad_to_width(des, rsig, expr_width(), *this);
 
-	    assert(lsig->vector_width() == rsig->vector_width());
+	    ivl_assert(*this, lsig->vector_width() == rsig->vector_width());
 	    width=lsig->vector_width();
       }
 
@@ -175,7 +175,7 @@ NetNet* NetEBBits::synthesize(Design*des, NetScope*scope, NetExpr*root)
       lsig = pad_to_width(des, lsig, width, *this);
       rsig = pad_to_width(des, rsig, width, *this);
 
-      assert(lsig->vector_width() == rsig->vector_width());
+      ivl_assert(*this, lsig->vector_width() == rsig->vector_width());
       netvector_t*osig_vec = new netvector_t(expr_type(), width-1, 0);
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, osig_vec);
@@ -206,7 +206,7 @@ NetNet* NetEBBits::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    break;
 	  default:
 	    gate = NULL;
-	    assert(0);
+	    ivl_assert(*this, 0);
       }
 
       connect(osig->pin(0), gate->pin(0));
@@ -585,10 +585,10 @@ NetNet* NetEBLogic::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
 	/* The left and right operands have already been reduced to a
 	 * single bit value, so just connect then to the logic gate. */
-      assert(lsig->pin_count() == 1);
+      ivl_assert(*this, lsig->pin_count() == 1);
       connect(lsig->pin(0), olog->pin(1));
 
-      assert(rsig->pin_count() == 1);
+      ivl_assert(*this, rsig->pin_count() == 1);
       connect(rsig->pin(0), olog->pin(2));
 
       return osig;
@@ -723,7 +723,7 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       connect(dev->pin_Result(), osig->pin(0));
 
-      assert(lsig->vector_width() == dev->width());
+      ivl_assert(*this, lsig->vector_width() == dev->width());
       connect(dev->pin_Data(), lsig->pin(0));
 
       connect(dev->pin_Distance(), rsig->pin(0));
@@ -742,7 +742,7 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    if (parms_[idx]->expr_width() == 0) {
 		    /* We need to synthesize a replication of zero. */
 		  tmp[idx] = parms_[idx]->synthesize(des, scope, root);
-		  assert(tmp[idx] == 0);
+		  ivl_assert(*this, tmp[idx] == 0);
 		  num_parms -= 1;
 	    } else {
 		  tmp[idx] = parms_[idx]->synthesize(des, scope, root);
@@ -893,7 +893,7 @@ NetNet* NetEUBits::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    break;
 	  default:
 	    gate = NULL;
-	    assert(0);
+	    ivl_assert(*this, 0);
       }
 
       connect(osig->pin(0), gate->pin(0));

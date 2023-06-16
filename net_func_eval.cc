@@ -316,7 +316,7 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 
       LocalVar*var = & ptr->second;
       while (var->nwords == -1) {
-	    assert(var->ref);
+	    ivl_assert(*this, var->ref);
 	    var = var->ref;
       }
 
@@ -342,7 +342,7 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 
 	    old_lval = var->array[word];
       } else {
-	    assert(var->nwords == 0);
+	    ivl_assert(*this, var->nwords == 0);
 	    old_lval = var->value;
       }
 
@@ -429,7 +429,7 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
       if (var->nwords > 0) {
 	    var->array[word] = rval_result;
       } else {
-	    assert(var->nwords == 0);
+	    ivl_assert(*this, var->nwords == 0);
 	    var->value = rval_result;
       }
 
@@ -1088,7 +1088,7 @@ NetExpr* NetESignal::evaluate_function(const LineInfo&loc,
 	// Follow indirect references to the actual variable.
       LocalVar*var = & ptr->second;
       while (var->nwords == -1) {
-	    assert(var->ref);
+	    ivl_assert(*this, var->ref);
 	    var = var->ref;
       }
 

@@ -1426,7 +1426,7 @@ static NetFuncDef* find_function_definition(Design*des, NetScope*,
 	    if (func->elab_stage() < 2) {
 		  func->need_const_func(true);
 		  const PFunction*pfunc = func->func_pform();
-		  assert(pfunc);
+		  ivl_assert(*func, pfunc);
 		  pfunc->elaborate_sig(des, func);
 	    }
 	    return func->func_def();
@@ -1759,7 +1759,7 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 	    return 0;
 
       NetScope*dscope = def->scope();
-      assert(dscope);
+      ivl_assert(*this, dscope);
 
       if (NetNet*res = dscope->find_signal(dscope->basename())) {
 	    expr_type_   = res->data_type();
@@ -3554,8 +3554,8 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
         unsigned use_wid = base_->test_width(des, scope, mode);
         NetExpr*base = base_->elaborate_expr(des, scope, use_wid, NO_FLAGS);
 
-        assert(vector->packed_width() > 0);
-        assert(base->expr_width() > 0);
+        ivl_assert(*this, vector->packed_width() > 0);
+        ivl_assert(*this, base->expr_width() > 0);
 
         // Find rounded up length that can fit the whole casted array of vectors
         int len = base->expr_width() + vector->packed_width() - 1;
@@ -3816,7 +3816,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 		  continue;
 	    }
 
-	    assert(parms_[idx]);
+	    ivl_assert(*this, parms_[idx]);
             unsigned wid = parms_[idx]->expr_width();
 	    NetExpr*ex = parms_[idx]->elaborate_expr(des, scope, wid, flags);
 	    if (ex == 0) continue;
@@ -5539,7 +5539,7 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	    }
 	      /* The numeric parameter value needs to have the file and line
 	       * information for the actual parameter not the expression. */
-	    assert(tmp);
+	    ivl_assert(*this, tmp);
 	    tmp->set_line(found_in->get_parameter_line_info(name));
       }
 
@@ -6406,7 +6406,7 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
 	// It's not anything else, so this must be a simple identifier
 	// expression with no part or bit select. Return the signal
 	// itself as the expression.
-      assert(use_sel == index_component_t::SEL_NONE);
+      ivl_assert(*this, use_sel == index_component_t::SEL_NONE);
 
       return node;
 }
@@ -6763,7 +6763,7 @@ NetExpr* PENumber::elaborate_expr(Design*, NetScope*, ivl_type_t ntype, unsigned
 NetEConst* PENumber::elaborate_expr(Design*, NetScope*,
 				    unsigned expr_wid, unsigned) const
 {
-      assert(value_);
+      ivl_assert(*this, value_);
       verinum val = *value_;
       if (val.has_len())
             val.has_sign(signed_flag_);

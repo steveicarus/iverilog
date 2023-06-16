@@ -107,7 +107,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  // Prefix is present, but is NOT a scope. Fail! Actually, this
 		  // should not happen, since this is the "not found" case, and we
 		  // should have returned already.
-		  assert(0);
+		  ivl_assert(*li, 0);
 		  return false;
 	    }
       }

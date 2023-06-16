@@ -151,7 +151,7 @@ void NetPins::devirtualize_pins(void)
 	    cerr << get_fileline() << ": error: pin count " << npins_ <<
 		" exceeds " << array_size_limit <<
 		" (set by -pARRAY_SIZE_LIMIT)" << endl;
-	    assert(0);
+	    ivl_assert(*this, 0);
       }
       if (debug_optimizer && npins_ > 1000) cerr << "debug: devirtualizing " << npins_ << " pins." << endl;
 
@@ -183,8 +183,8 @@ NetPins::NetPins(unsigned npins)
 NetPins::~NetPins()
 {
       if (pins_) {
-	    assert(pins_[0].node_ == this);
-	    assert(pins_[0].pin_zero_);
+	    ivl_assert(*this, pins_[0].node_ == this);
+	    ivl_assert(*this, pins_[0].pin_zero_);
 	    delete[] pins_;
       }
 }
@@ -199,8 +199,8 @@ Link& NetPins::pin(unsigned idx)
 		 << typeid(*this).name() << endl;
       }
 
-      assert(idx < npins_);
-      assert(idx == 0? (pins_[0].pin_zero_ && pins_[0].node_==this) : pins_[idx].pin_==idx);
+      ivl_assert(*this, idx < npins_);
+      ivl_assert(*this, idx == 0? (pins_[0].pin_zero_ && pins_[0].node_==this) : pins_[idx].pin_==idx);
 
       return pins_[idx];
 }
@@ -210,11 +210,11 @@ const Link& NetPins::pin(unsigned idx) const
       if (!pins_ && !disable_virtual_pins) {
 	    cerr << get_fileline() << ": internal error: pin is unexpectedly"
 	      " virtual, try again with -pDISABLE_VIRTUAL_PINS=true" << endl;
-	    assert(0);
+	    ivl_assert(*this, 0);
       }
-      assert(pins_);
-      assert(idx < npins_);
-      assert(idx == 0? (pins_[0].pin_zero_ && pins_[0].node_==this) : pins_[idx].pin_==idx);
+      ivl_assert(*this, pins_);
+      ivl_assert(*this, idx < npins_);
+      ivl_assert(*this, idx == 0? (pins_[0].pin_zero_ && pins_[0].node_==this) : pins_[idx].pin_==idx);
       return pins_[idx];
 }
 
@@ -406,7 +406,7 @@ void NetDelaySrc::set_delays(uint64_t t01, uint64_t t10, uint64_t t0z,
 
 uint64_t NetDelaySrc::get_delay(unsigned idx) const
 {
-      assert(idx < 12);
+      ivl_assert(*this, idx < 12);
       return transition_delays_[idx];
 }
 
@@ -588,7 +588,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 		 ; cur != unpacked.end() ; ++cur, idx += 1) {
 	    unpacked_dims_[idx] = *cur;
       }
-      assert(idx == unpacked_dims_.size());
+      ivl_assert(*this, idx == unpacked_dims_.size());
 
       ivl_assert(*this, s);
       if (pin_count() == 0) {
@@ -623,14 +623,14 @@ NetNet::~NetNet()
 		 << "expression references." << endl;
 	    dump_net(cerr, 4);
       }
-      assert(eref_count_ == 0);
+      ivl_assert(*this, eref_count_ == 0);
       if (lref_count_ > 0) {
 	    cerr << get_fileline() << ": internal error: attempt to delete "
 		 << "signal ``" << name() << "'' which has "
 		 << "assign references." << endl;
 	    dump_net(cerr, 4);
       }
-      assert(lref_count_ == 0);
+      ivl_assert(*this, lref_count_ == 0);
       if (scope())
 	    scope()->rem_signal(this);
 
@@ -670,7 +670,7 @@ int NetNet::get_module_port_index() const
 void NetNet::set_module_port_index(unsigned idx)
 {
     port_index_ = idx;
-    assert( port_index_ >= 0 );
+    ivl_assert(*this, port_index_ >= 0);
 }
 
 ivl_variable_type_t NetNet::data_type() const
@@ -714,7 +714,7 @@ const netstruct_t*NetNet::struct_type(void) const
 		  return 0;
       }
 
-      assert(0);
+      ivl_assert(*this, 0);
       return 0;
 }
 
@@ -769,7 +769,7 @@ void NetNet::set_discipline(ivl_discipline_t dis)
 bool NetNet::sb_is_valid(const list<long>&indices, long sb) const
 {
       ivl_assert(*this, indices.size()+1 == packed_dims().size());
-      assert(packed_dims().size() == 1);
+      ivl_assert(*this, packed_dims().size() == 1);
       const netrange_t&rng = packed_dims().back();
       if (rng.get_msb() >= rng.get_lsb())
 	    return (sb <= rng.get_msb()) && (sb >= rng.get_lsb());
@@ -838,7 +838,7 @@ void NetNet::incr_eref()
 
 void NetNet::decr_eref()
 {
-      assert(eref_count_ > 0);
+      ivl_assert(*this, eref_count_ > 0);
       eref_count_ -= 1;
 }
 
@@ -882,7 +882,7 @@ void NetNet::incr_lref()
 
 void NetNet::decr_lref()
 {
-      assert(lref_count_ > 0);
+      ivl_assert(*this, lref_count_ > 0);
       lref_count_ -= 1;
 }
 
@@ -903,7 +903,7 @@ unsigned NetNet::delay_paths(void)const
 
 const NetDelaySrc* NetNet::delay_path(unsigned idx) const
 {
-      assert(idx < delay_paths_.size());
+      ivl_assert(*this, idx < delay_paths_.size());
       return delay_paths_[idx];
 }
 
@@ -941,7 +941,7 @@ NetPartSelect::NetPartSelect(NetNet*sig, NetNet*sel,
 	    break;
 	  case NetPartSelect::PV:
 	      /* Only a vector to part can be a variable select. */
-	    assert(0);
+	    ivl_assert(*this, 0);
       }
       pin(2).set_dir(Link::INPUT);
 
@@ -1935,13 +1935,13 @@ const Link& NetMux::pin_Sel() const
 
 Link& NetMux::pin_Data(unsigned s)
 {
-      assert(s < size_);
+      ivl_assert(*this, s < size_);
       return pin(2+s);
 }
 
 const Link& NetMux::pin_Data(unsigned s) const
 {
-      assert(s < size_);
+      ivl_assert(*this, s < size_);
       return pin(2+s);
 }
 
@@ -2050,7 +2050,7 @@ NetConst::~NetConst()
 
 verinum::V NetConst::value(unsigned idx) const
 {
-      assert(idx < width());
+      ivl_assert(*this, idx < width());
       return value_[idx];
 }
 
@@ -2123,7 +2123,7 @@ NetSTask::NetSTask(const char*na, ivl_sfunc_as_task_t sfat,
 : name_(0), sfunc_as_task_(sfat), parms_(pa)
 {
       name_ = lex_strings.add(na);
-      assert(name_[0] == '$');
+      ivl_assert(*this, name_[0] == '$');
 }
 
 NetSTask::~NetSTask()
@@ -2183,7 +2183,7 @@ unsigned NetEUFunc::parm_count() const
 
 const NetExpr* NetEUFunc::parm(unsigned idx) const
 {
-      assert(idx < parms_.size());
+      ivl_assert(*this, idx < parms_.size());
       return parms_[idx];
 }
 
@@ -2610,7 +2610,7 @@ ivl_variable_type_t NetECast::expr_type() const
 	    ret = IVL_VT_BOOL;
 	    break;
 	  default:
-	    assert(0);
+	    ivl_assert(*this, 0);
       }
 
       return ret;
@@ -2776,7 +2776,7 @@ static DelayType get_loop_delay_type(const NetExpr*expr, const NetProc*proc, boo
 	     * returns three different values. */
 	  default:
 	    result = NO_DELAY;
-	    assert(0);
+	    ivl_assert(*expr, 0);
       }
 
       return result;
@@ -3123,7 +3123,7 @@ bool NetBlock::check_synth(ivl_process_type_t pr_type,
 		  cerr << "join_none";
 		  break;
 	      default:
-		  assert(0);
+		  ivl_assert(*this, 0);
 	    }
 	    cerr << " statement cannot be synthesized "
                  << get_process_type_as_string(pr_type) << endl;

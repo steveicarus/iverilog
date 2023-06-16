@@ -70,7 +70,7 @@ static bool get_const_argument(NetExpr*exp, verinum&res)
 	  }
 
 	  default:
-	    assert(0);;
+	    ivl_assert(*exp, 0);;
       }
 
       return true;
@@ -233,7 +233,7 @@ static void elaborate_sig_tasks(Design*des, NetScope*scope,
       for (mtask_it_t cur = tasks.begin()
 		 ; cur != tasks.end() ; ++ cur ) {
 	    NetScope*tscope = scope->child( hname_t((*cur).first) );
-	    assert(tscope);
+	    ivl_assert(*(*cur).second, tscope);
 	    (*cur).second->elaborate_sig(des, tscope);
       }
 }
@@ -460,7 +460,7 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 	      // I know a priori that the elaborate_scope created the scope
 	      // already, so just look it up as a child of the current scope.
 	    NetScope*my_scope = instance[idx];
-	    assert(my_scope);
+	    ivl_assert(*this, my_scope);
 
 	    if (my_scope->parent() != scope) {
 		  cerr << get_fileline() << ": internal error: "
@@ -469,7 +469,7 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 		       << " instead of " << scope_path(scope)
 		       << endl;
 	    }
-	    assert(my_scope->parent() == scope);
+	    ivl_assert(*this, my_scope->parent() == scope);
 
 	    if (! rmod->elaborate_sig(des, my_scope))
 		  flag = false;
@@ -627,7 +627,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
       scope->set_elab_stage(2);
 
       perm_string fname = scope->basename();
-      assert(scope->type() == NetScope::FUNC);
+      ivl_assert(*this, scope->type() == NetScope::FUNC);
 
       elaborate_sig_wires_(des, scope);
 
@@ -716,7 +716,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
  */
 void PTask::elaborate_sig(Design*des, NetScope*scope) const
 {
-      assert(scope->type() == NetScope::TASK);
+      ivl_assert(*this, scope->type() == NetScope::TASK);
 
       elaborate_sig_wires_(des, scope);
 
@@ -1055,7 +1055,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  }
 		  dimensions_ok &= evaluate_ranges(des, scope, this, plist, port_);
 	    }
-            assert(port_set_ || port_.empty());
+            ivl_assert(*this, port_set_ || port_.empty());
 
 	    /* If they exist get the net/etc. definition MSB and LSB */
 	    if (net_set_ && !net_.empty() && dimensions_ok) {
@@ -1066,7 +1066,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  }
 		  dimensions_ok &= evaluate_ranges(des, scope, this, nlist, net_);
 	    }
-            assert(net_set_ || net_.empty());
+            ivl_assert(*this, net_set_ || net_.empty());
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": PWire::elaborate_sig: "

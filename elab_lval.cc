@@ -807,7 +807,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       ivl_assert(*this, index_tail.lsb != 0);
 
       NetNet*reg = lv->sig();
-      assert(reg);
+      ivl_assert(*this, reg);
 
       unsigned long wid;
       calculate_up_do_width_(des, scope, wid);

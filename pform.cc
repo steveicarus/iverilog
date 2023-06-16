@@ -501,7 +501,7 @@ static void check_potential_imports(const struct vlltype&loc, perm_string name, 
 void pform_set_scope_timescale(const struct vlltype&loc)
 {
       PScopeExtra*scope = dynamic_cast<PScopeExtra*>(lexical_scope);
-      assert(scope);
+      ivl_assert(loc, scope);
 
       PScopeExtra*parent = find_nearest_scopex(scope->parent_scope());
 
@@ -542,7 +542,7 @@ void pform_set_scope_timescale(const struct vlltype&loc)
 		  VLerror("error: A timeprecision is missing or is too large!");
 	    }
       } else {
-            assert(scope->time_unit >= scope->time_precision);
+            ivl_assert(loc, scope->time_unit >= scope->time_precision);
       }
 
       if (warn_timescale && used_global_timescale
@@ -579,8 +579,8 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
       FILE_NAME(class_scope, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-      assert(scopex);
-      assert(!pform_cur_generate);
+      ivl_assert(loc, scopex);
+      ivl_assert(loc, !pform_cur_generate);
 
       pform_set_scope_timescale(class_scope, scopex);
 
@@ -618,7 +618,7 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name,
       FILE_NAME(task, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-      assert(scopex);
+      ivl_assert(loc, scopex);
       if (is_compilation_unit(scopex) && !gn_system_verilog()) {
 	    cerr << task->get_fileline() << ": error: task declarations "
 		  "must be contained within a module." << endl;
@@ -653,7 +653,7 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
       FILE_NAME(func, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-      assert(scopex);
+      ivl_assert(loc, scopex);
       if (is_compilation_unit(scopex) && !gn_system_verilog()) {
 	    cerr << func->get_fileline() << ": error: function declarations "
 		  "must be contained within a module." << endl;
@@ -730,7 +730,7 @@ PNBTrigger* pform_new_nb_trigger(const struct vlltype&loc,
 
       PExpr*tmp_dly = 0;
       if (dly) {
-	    assert(dly->size() == 1);
+	    ivl_assert(loc, dly->size() == 1);
 	    tmp_dly = dly->front();
       }
 
@@ -1559,8 +1559,8 @@ void pform_start_generate_if(const struct vlltype&li, PExpr*test)
 
 void pform_start_generate_else(const struct vlltype&li)
 {
-      assert(pform_cur_generate);
-      assert(pform_cur_generate->scheme_type == PGenerate::GS_CONDIT);
+      ivl_assert(li, pform_cur_generate);
+      ivl_assert(li, pform_cur_generate->scheme_type == PGenerate::GS_CONDIT);
 
       PGenerate*cur = pform_cur_generate;
       pform_endgenerate(false);
@@ -1637,8 +1637,8 @@ void pform_start_generate_nblock(const struct vlltype&li, char*name)
  */
 void pform_generate_case_item(const struct vlltype&li, list<PExpr*>*expr_list)
 {
-      assert(pform_cur_generate);
-      assert(pform_cur_generate->scheme_type == PGenerate::GS_CASE);
+      ivl_assert(li, pform_cur_generate);
+      ivl_assert(li, pform_cur_generate->scheme_type == PGenerate::GS_CASE);
 
       PGenerate*gen = new PGenerate(lexical_scope, pform_cur_generate->id_number);
       lexical_scope = gen;
@@ -1662,7 +1662,7 @@ void pform_generate_case_item(const struct vlltype&li, list<PExpr*>*expr_list)
 		  pform_cur_generate->item_test[idx] = *expr_cur;
 		  ++ expr_cur;
 	    }
-	    assert(expr_cur == expr_list->end());
+	    ivl_assert(li, expr_cur == expr_list->end());
       }
 }
 
@@ -1856,9 +1856,9 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 		    list<string>*table, Statement*init_expr)
 {
       unsigned local_errors = 0;
-      assert(!parms->empty());
+      ivl_assert(loc, !parms->empty());
 
-      assert(decl);
+      ivl_assert(loc, decl);
 
 	/* Put the declarations into a map, so that I can check them
 	   off with the parameters in the list. If the port is already
@@ -1870,14 +1870,14 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	    perm_string port_name = (*decl)[idx]->basename();
 
 	    if (PWire*cur = defs[port_name]) {
-		  assert((*decl)[idx]);
+		  ivl_assert(loc, (*decl)[idx]);
 		  if ((*decl)[idx]->get_port_type() != NetNet::PIMPLICIT) {
 			bool rc = cur->set_port_type((*decl)[idx]->get_port_type());
-			assert(rc);
+			ivl_assert(loc, rc);
 		  }
 		  if ((*decl)[idx]->get_wire_type() != NetNet::IMPLICIT) {
 			bool rc = cur->set_wire_type((*decl)[idx]->get_wire_type());
-			assert(rc);
+			ivl_assert(loc, rc);
 		  }
 
 	    } else {
@@ -1913,7 +1913,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	      -- An input port is declared output.
 
 	*/
-      assert(pins.size() > 0);
+      ivl_assert(loc, pins.size() > 0);
       do {
 	    if (pins[0] == 0) {
 		  cerr << loc << ": error: "
@@ -1997,19 +1997,19 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
       verinum::V init = verinum::Vx;
       if (init_expr) {
 	      // XXXX
-	    assert(pins[0]->get_wire_type() == NetNet::REG);
+	    ivl_assert(loc, pins[0]->get_wire_type() == NetNet::REG);
 
 	    PAssign*pa = dynamic_cast<PAssign*>(init_expr);
-	    assert(pa);
+	    ivl_assert(*init_expr, pa);
 
 	    const PEIdent*id = dynamic_cast<const PEIdent*>(pa->lval());
-	    assert(id);
+	    ivl_assert(*init_expr, id);
 
 	      // XXXX
-	      //assert(id->name() == pins[0]->name());
+	      //ivl_assert(*init_expr, id->name() == pins[0]->name());
 
 	    const PENumber*np = dynamic_cast<const PENumber*>(pa->rval());
-	    assert(np);
+	    ivl_assert(*init_expr, np);
 
 	    init = np->value()[0];
       }
@@ -2064,12 +2064,12 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
         for (cur = parms->begin(), idx = 1
 		   ;  cur != parms->end()
 		   ;  idx += 1, ++ cur) {
-	      assert(idx < pins.size());
+	      ivl_assert(loc, idx < pins.size());
 	      pins[idx] = new PWire(*cur, NetNet::WIRE,
 				    NetNet::PINPUT);
 	      FILE_NAME(pins[idx], loc);
 	}
-	assert(idx == pins.size());
+	ivl_assert(loc, idx == pins.size());
       }
 
 	/* Verify the initial expression, if present, to be sure that
@@ -2078,19 +2078,19 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
       verinum::V init = verinum::Vx;
       if (init_expr) {
 	      // XXXX
-	    assert(pins[0]->get_wire_type() == NetNet::REG);
+	    ivl_assert(*init_expr, pins[0]->get_wire_type() == NetNet::REG);
 
 	    PAssign*pa = dynamic_cast<PAssign*>(init_expr);
-	    assert(pa);
+	    ivl_assert(*init_expr, pa);
 
 	    const PEIdent*id = dynamic_cast<const PEIdent*>(pa->lval());
-	    assert(id);
+	    ivl_assert(*init_expr, id);
 
 	      // XXXX
-	      //assert(id->name() == pins[0]->name());
+	      //ivl_assert(*init_expr, id->name() == pins[0]->name());
 
 	    const PENumber*np = dynamic_cast<const PENumber*>(pa->rval());
-	    assert(np);
+	    ivl_assert(*init_expr, np);
 
 	    init = np->value()[0];
       }
@@ -2110,8 +2110,8 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	    for (unsigned idx = 0 ;  idx < pins.size() ;  idx += 1)
 		  udp->ports[idx] = pins[idx]->basename();
 
-	    assert(udp);
-	    assert(table);
+	    ivl_assert(loc, udp);
+	    ivl_assert(loc, table);
 	    process_udp_table(udp, table, loc);
 	    udp->initial  = init;
 
@@ -2222,7 +2222,7 @@ void pform_makegates(const struct vlltype&loc,
 		     std::vector<lgate>*gates,
 		     list<named_pexpr_t>*attr)
 {
-      assert(! pform_cur_module.empty());
+      ivl_assert(loc, !pform_cur_module.empty());
       if (pform_cur_module.front()->program_block) {
 	    cerr << loc << ": error: Gates and switches may not be instantiated in "
 		 << "program blocks." << endl;
@@ -2365,7 +2365,7 @@ void pform_make_modgates(const struct vlltype&loc,
 	    delete gates;
 	    return;
       }
-      assert(! pform_cur_module.empty());
+      ivl_assert(loc, !pform_cur_module.empty());
 
 	// Detect some more realistic errors.
 
@@ -2449,7 +2449,7 @@ void pform_make_pgassign_list(const struct vlltype&loc,
 			      list<PExpr*>*del,
 			      struct str_pair_t str)
 {
-      assert(alist->size() % 2 == 0);
+      ivl_assert(loc, alist->size() % 2 == 0);
       while (! alist->empty()) {
 	    PExpr*lval = alist->front(); alist->pop_front();
 	    PExpr*rval = alist->front(); alist->pop_front();
@@ -2631,7 +2631,7 @@ PWire *pform_makewire(const vlltype&li, perm_string name, NetNet::Type type,
 {
       PWire*cur = pform_get_or_make_wire(li, name, type, NetNet::NOT_A_PORT,
 				         SR_NET);
-      assert(cur);
+      ivl_assert(li, cur);
 
       if (indices && !indices->empty())
 	    cur->set_unpacked_idx(*indices);
@@ -2725,8 +2725,8 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 				      list<pform_port_t>*ports,
 				      bool allow_implicit)
 {
-      assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
-      assert(ports);
+      ivl_assert(loc, pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
+      ivl_assert(loc, ports);
 
       vector<pform_tf_port_t>*res = new vector<pform_tf_port_t>(0);
       PWSRType rt = SR_BOTH;
@@ -2969,7 +2969,7 @@ void pform_set_parameter(const struct vlltype&loc,
 void pform_set_specparam(const struct vlltype&loc, perm_string name,
 			 list<pform_range_t>*range, PExpr*expr)
 {
-      assert(! pform_cur_module.empty());
+      ivl_assert(loc, !pform_cur_module.empty());
       Module*scope = pform_cur_module.front();
       if (scope != lexical_scope) {
 	    delete range;
@@ -2977,7 +2977,7 @@ void pform_set_specparam(const struct vlltype&loc, perm_string name,
 	    return;
       }
 
-      assert(expr);
+      ivl_assert(loc, expr);
       Module::param_expr_t*parm = new Module::param_expr_t();
       FILE_NAME(parm, loc);
 
@@ -2988,7 +2988,7 @@ void pform_set_specparam(const struct vlltype&loc, perm_string name,
       parm->range = 0;
 
       if (range) {
-	    assert(range->size() == 1);
+	    ivl_assert(loc, range->size() == 1);
 	    parm->data_type = new vector_type_t(IVL_VT_LOGIC, false, range);
 	    parm->range = 0;
       }
@@ -3059,13 +3059,13 @@ extern PSpecPath* pform_make_specify_path(const struct vlltype&li,
       for (idx = 0, cur = src->begin() ;  cur != src->end() ;  ++ idx, ++ cur) {
 	    path->src[idx] = *cur;
       }
-      assert(idx == path->src.size());
+      ivl_assert(li, idx == path->src.size());
       delete src;
 
       for (idx = 0, cur = dst->begin() ;  cur != dst->end() ;  ++ idx, ++ cur) {
 	    path->dst[idx] = *cur;
       }
-      assert(idx == path->dst.size());
+      ivl_assert(li, idx == path->dst.size());
       delete dst;
 
       return path;
@@ -3088,7 +3088,7 @@ extern PSpecPath* pform_assign_path_delay(PSpecPath*path, list<PExpr*>*del)
       if (path == 0)
 	    return 0;
 
-      assert(path->delays.empty());
+      ivl_assert(*path, path->delays.empty());
 
       path->delays.resize(del->size());
       for (unsigned idx = 0 ;  idx < path->delays.size() ;  idx += 1) {
@@ -3116,7 +3116,7 @@ void pform_set_port_type(const struct vlltype&li,
 			 data_type_t*dt,
 			 list<named_pexpr_t>*attr)
 {
-      assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
+      ivl_assert(li, pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
 
       vector_type_t *vt = dynamic_cast<vector_type_t*> (dt);
 
@@ -3165,7 +3165,7 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
 {
       if (data_type == 0) {
 	    VLerror(li, "internal error: data_type==0.");
-	    assert(0);
+	    ivl_assert(li, 0);
       }
 
       vector_type_t*vec_type = dynamic_cast<vector_type_t*> (data_type);

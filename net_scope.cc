@@ -240,7 +240,7 @@ void NetScope::add_typedefs(const map<perm_string,typedef_t*>*typedefs)
 
 NetScope*NetScope::find_typedef_scope(const Design*des, const typedef_t*type)
 {
-      assert(type);
+      ivl_assert(*this, type);
 
       NetScope *cur_scope = this;
       while (cur_scope) {
@@ -310,8 +310,8 @@ bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
 {
 	// Find the current reference to myself in the parent scope.
       map<hname_t,NetScope*>::iterator self = up_->children_.find(name_);
-      assert(self != up_->children_.end());
-      assert(self->second == this);
+      ivl_assert(*this, self != up_->children_.end());
+      ivl_assert(*this, self->second == this);
 
 	// This is to keep the pad attempts from being stuck in some
 	// sort of infinite loop. This should not be a practical
@@ -481,33 +481,33 @@ void NetScope::print_type(ostream&stream) const
 
 void NetScope::set_task_def(NetTaskDef*def)
 {
-      assert( type_ == TASK );
-      assert( task_ == 0 );
+      ivl_assert(*this, type_ == TASK);
+      ivl_assert(*this, task_ == nullptr);
       task_ = def;
 }
 
 NetTaskDef* NetScope::task_def()
 {
-      assert( type_ == TASK );
+      ivl_assert(*this, type_ == TASK);
       return task_;
 }
 
 const NetTaskDef* NetScope::task_def() const
 {
-      assert( type_ == TASK );
+      ivl_assert(*this, type_ == TASK);
       return task_;
 }
 
 void NetScope::set_func_def(NetFuncDef*def)
 {
-      assert( type_ == FUNC );
-      assert( func_ == 0 );
+      ivl_assert(*this, type_ == FUNC);
+      ivl_assert(*this, func_ == nullptr);
       func_ = def;
 }
 
 NetFuncDef* NetScope::func_def()
 {
-      assert( type_ == FUNC );
+      ivl_assert(*this, type_ == FUNC);
       return func_;
 }
 
@@ -518,14 +518,14 @@ bool NetScope::in_func() const
 
 const NetFuncDef* NetScope::func_def() const
 {
-      assert( type_ == FUNC );
+      ivl_assert(*this, type_ == FUNC);
       return func_;
 }
 
 void NetScope::set_class_def(netclass_t*def)
 {
-      assert( type_ == CLASS );
-      assert( class_def_==0  );
+      ivl_assert(*this, type_ == CLASS);
+      ivl_assert(*this, class_def_ == nullptr);
       class_def_ = def;
 }
 
@@ -539,26 +539,26 @@ const netclass_t* NetScope::class_def(void) const
 
 void NetScope::set_module_name(perm_string n)
 {
-      assert(type_==MODULE || type_==PACKAGE);
+      ivl_assert(*this, type_==MODULE || type_==PACKAGE);
       module_name_ = n;
 }
 
 perm_string NetScope::module_name() const
 {
-      assert(type_==MODULE || type_==PACKAGE);
+      ivl_assert(*this, type_==MODULE || type_==PACKAGE);
       return module_name_;
 }
 
 void NetScope::set_num_ports(unsigned int num_ports)
 {
-    assert(type_ == MODULE);
-    assert(ports_.empty());
+    ivl_assert(*this, type_ == MODULE);
+    ivl_assert(*this, ports_.empty());
     ports_.resize( num_ports );
 }
 
 void NetScope::add_module_port_net(NetNet*subport)
 {
-      assert(type_ == MODULE);
+      ivl_assert(*this, type_ == MODULE);
       port_nets.push_back(subport);
 }
 
@@ -566,8 +566,8 @@ void NetScope::add_module_port_net(NetNet*subport)
 void NetScope::add_module_port_info( unsigned idx, perm_string name, PortType::Enum ptype,
                                 unsigned long width )
 {
-      assert(type_ == MODULE);
-      assert(ports_.size() > idx);
+      ivl_assert(*this, type_ == MODULE);
+      ivl_assert(*this, ports_.size() > idx);
       PortInfo &info = ports_[idx];
       info.name = name;
       info.type = ptype;
@@ -577,14 +577,14 @@ void NetScope::add_module_port_info( unsigned idx, perm_string name, PortType::E
 
 unsigned NetScope::module_port_nets() const
 {
-      assert(type_ == MODULE);
+      ivl_assert(*this, type_ == MODULE);
       return port_nets.size();
 }
 
 
 const std::vector<PortInfo> & NetScope::module_port_info() const
 {
-      assert(type_ == MODULE);
+      ivl_assert(*this, type_ == MODULE);
       return ports_;
 }
 
@@ -592,8 +592,8 @@ const std::vector<PortInfo> & NetScope::module_port_info() const
 
 NetNet* NetScope::module_port_net(unsigned idx) const
 {
-      assert(type_ == MODULE);
-      assert(idx < port_nets.size());
+      ivl_assert(*this, type_ == MODULE);
+      ivl_assert(*this, idx < port_nets.size());
       return port_nets[idx];
 }
 
@@ -634,7 +634,7 @@ perm_string NetScope::basename() const
 
 void NetScope::add_event(NetEvent*ev)
 {
-      assert(ev->scope_ == 0);
+      ivl_assert(*this, ev->scope_ == nullptr);
       ev->scope_ = this;
       ev->snext_ = events_;
       events_ = ev;
@@ -642,7 +642,7 @@ void NetScope::add_event(NetEvent*ev)
 
 void NetScope::rem_event(NetEvent*ev)
 {
-      assert(ev->scope_ == this);
+      ivl_assert(*this, ev->scope_ == this);
       ev->scope_ = 0;
       if (events_ == ev) {
 	    events_ = ev->snext_;
@@ -650,7 +650,7 @@ void NetScope::rem_event(NetEvent*ev)
       } else {
 	    NetEvent*cur = events_;
 	    while (cur->snext_ != ev) {
-		  assert(cur->snext_);
+		  ivl_assert(*this, cur->snext_);
 		  cur = cur->snext_;
 	    }
 	    cur->snext_ = ev->snext_;
@@ -671,7 +671,7 @@ NetEvent* NetScope::find_event(perm_string name)
 
 void NetScope::add_genvar(perm_string name, LineInfo *li)
 {
-      assert((type_ == MODULE) || (type_ == GENBLOCK));
+      ivl_assert(*li, (type_ == MODULE) || (type_ == GENBLOCK));
       genvars_[name] = li;
 }
 
@@ -690,7 +690,7 @@ void NetScope::add_signal(NetNet*net)
 
 void NetScope::rem_signal(NetNet*net)
 {
-      assert(net->scope() == this);
+      ivl_assert(*this, net->scope() == this);
       signals_map_.erase(net->name());
 }
 
@@ -726,7 +726,7 @@ netclass_t*NetScope::find_class(const Design*des, perm_string name)
             return import_scope->find_class(des, name);
 
       if (up_==0 && type_==CLASS) {
-	    assert(class_def_);
+	    ivl_assert(*this, class_def_);
 
 	    NetScope*def_parent = class_def_->definition_scope();
 	    return def_parent->find_class(des, name);
@@ -785,7 +785,7 @@ const NetScope* NetScope::get_class_scope() const
 		case NetScope::PACKAGE:
 		  return 0;
 		default:
-		  assert(0);
+		  ivl_assert(*this, 0);
 	    }
 	    scope = scope->parent();
       }

@@ -109,7 +109,7 @@ unsigned PGate::calculate_array_size_(Design*des, NetScope*scope,
  */
 void PGAssign::elaborate(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       NetExpr* rise_time, *fall_time, *decay_time;
       eval_delays(des, scope, rise_time, fall_time, decay_time, true);
@@ -117,8 +117,8 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       ivl_drive_t drive0 = strength0();
       ivl_drive_t drive1 = strength1();
 
-      assert(pin(0));
-      assert(pin(1));
+      ivl_assert(*this, pin(0));
+      ivl_assert(*this, pin(1));
 
 	/* Elaborate the l-value. */
       NetNet*lval = pin(0)->elaborate_lnet(des, scope);
@@ -895,7 +895,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
 		  if (1 == sig->vector_width() && instance_width != 1) {
 
-			assert(sig->vector_width() == 1);
+			ivl_assert(*this, sig->vector_width() == 1);
 			NetReplicate*rep
 			      = new NetReplicate(scope,
 						 scope->local_symbol(),
@@ -1216,7 +1216,7 @@ void elaborate_unpacked_port(Design *des, NetScope *scope, NetNet *port_net,
 void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 {
 
-      assert(scope);
+      ivl_assert(*this, scope);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: Instantiate module "
@@ -1403,7 +1403,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // Handle the error case where there is no internal
 		    // signal connected to the port.
 		  if (!tmp) continue;
-		  assert(tmp);
+		  ivl_assert(*this, tmp);
 
 		  if (tmp->port_type() == NetNet::PINPUT) {
 			  // If we have an unconnected input convert it
@@ -1497,7 +1497,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // We know by design that each instance has the same
 	      // width port. Therefore, the prts_pin_count must be an
 	      // even multiple of the instance count.
-	    assert(prts_vector_width % instance.size() == 0);
+	    ivl_assert(*this, prts_vector_width % instance.size() == 0);
 
 	    if (!prts.empty() && (prts[0]->port_type() == NetNet::PINPUT)
 	        && prts[0]->pin(0).nexus()->drivers_present()
@@ -1799,12 +1799,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	    }
 
-	    assert(sig);
+	    ivl_assert(*this, sig);
 
 #ifndef NDEBUG
 	    if ((! prts.empty())
 		&& (ptype != NetNet::PINPUT)) {
-		  assert(sig->type() != NetNet::REG);
+		  ivl_assert(*this, sig->type() != NetNet::REG);
 	    }
 #endif
 
@@ -2072,7 +2072,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	    return;
       }
 
-      assert(udp);
+      ivl_assert(*this, udp);
       NetUDP*net = new NetUDP(scope, my_name, udp->ports.size(), udp);
       net->set_line(*this);
       net->rise_time(rise_expr);
@@ -2156,7 +2156,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 
 	      // No named bindings, just use the positional list I
 	      // already have.
-	    assert(pin_count() == udp->ports.size());
+	    ivl_assert(*this, pin_count() == udp->ports.size());
 	    pins = get_pins();
       }
 
@@ -2264,7 +2264,7 @@ void PGModule::elaborate(Design*des, NetScope*scope) const
 	// Try a primitive type
       map<perm_string,PUdp*>::const_iterator udp = pform_primitives.find(type_);
       if (udp != pform_primitives.end()) {
-	    assert((*udp).second);
+	    ivl_assert(*this, (*udp).second);
 	    elaborate_udp_(des, (*udp).second, scope);
 	    return;
       }
@@ -2475,7 +2475,7 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
       if (dex->expr_type() == IVL_VT_REAL) {
 	      // Scale the real value.
 	    int shift = scope->time_unit() - scope->time_precision();
-	    assert(shift >= 0);
+	    ivl_assert(*expr, shift >= 0);
 	    double round = 1;
 	    for (int lp = 0; lp < shift; lp += 1) round *= 10.0;
 
@@ -2490,7 +2490,7 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 
 	      // Now scale the integer value.
 	    shift = scope->time_precision() - des->get_precision();
-	    assert(shift >= 0);
+	    ivl_assert(*expr, shift >= 0);
 	    uint64_t scale = 1;
 	    for (int lp = 0; lp < shift; lp += 1) scale *= 10;
 
@@ -2500,7 +2500,7 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 	    dex->set_line(*expr);
       } else {
 	    int shift = scope->time_unit() - des->get_precision();
-	    assert(shift >= 0);
+	    ivl_assert(*expr, shift >= 0);
 	    uint64_t scale = 1;
 	    for (int lp = 0; lp < shift; lp += 1) scale *= 10;
 
@@ -2574,7 +2574,7 @@ static bool lval_not_program_variable(const NetAssign_*lv)
 
 NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
 	/* If this is a compressed assignment, then handle the
 	   elaboration in a specialized function. */
@@ -2657,9 +2657,9 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    delete lv;
 	    return 0;
       }
-      assert(rv);
+      ivl_assert(*this, rv);
 
-      if (count_) assert(event_);
+      if (count_) ivl_assert(*this, event_);
 
 	/* Rewrite delayed assignments as assignments that are
 	   delayed. For example, a = #<d> b; becomes:
@@ -2787,7 +2787,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       if (scope->in_func()) {
 	    cerr << get_fileline() << ": error: functions cannot have non "
@@ -2827,7 +2827,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 
       NetExpr*delay = 0;
       if (delay_ != 0) {
-	    assert(count_ == 0 && event_ == 0);
+	    ivl_assert(*this, count_ == 0 && event_ == 0);
 	    delay = elaborate_delay_expr(delay_, des, scope);
       }
 
@@ -2844,7 +2844,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
                         return 0;
                   }
 
-		  assert(event_ != 0);
+		  ivl_assert(*this, event_ != 0);
 		  count = elab_and_eval(des, scope, count_, -1);
 		  if (count == 0) {
 			cerr << get_fileline() << ": Unable to elaborate "
@@ -2871,7 +2871,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 		  return 0;
 	    }
 	    event = dynamic_cast<NetEvWait*>(st) ;
-	    assert(event);
+	    ivl_assert(*this, event);
 
 	      // Some constant values are special.
 	    if (NetEConst*ce = dynamic_cast<NetEConst*>(count)) {
@@ -2906,7 +2906,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       NetBlock::Type type;
       switch (bl_type_) {
@@ -2927,7 +2927,7 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	    // cases are handled above.
 	  default:
 	    type = NetBlock::SEQU;
-	    assert(0);
+	    ivl_assert(*this, 0);
       }
 
       NetScope*nscope = 0;
@@ -2940,7 +2940,7 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  return 0;
 	    }
-	    assert(nscope);
+	    ivl_assert(*this, nscope);
       }
 
       NetBlock*cur = new NetBlock(type, nscope);
@@ -2970,7 +2970,7 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	// referenced elsewhere.
       if ((type == NetBlock::SEQU) && (list_.size() == 1) &&
           (pscope_name() == 0)) {
-	    assert(list_[0]);
+	    ivl_assert(*this, list_[0]);
 	    NetProc*tmp = list_[0]->elaborate(des, nscope);
 	    return tmp;
       }
@@ -2979,7 +2979,7 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	    des->fork_enter();
 
       for (unsigned idx = 0 ;  idx < list_.size() ;  idx += 1) {
-	    assert(list_[idx]);
+	    ivl_assert(*this, list_[idx]);
 
 	      // Detect the error that a super.new() statement is in the
 	      // midst of a block. Report the error. Continue on with the
@@ -3253,7 +3253,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 
 NetProc* PChainConstructor::elaborate(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PChainConstructor::elaborate: "
@@ -3353,7 +3353,7 @@ NetProc* PChainConstructor::elaborate(Design*des, NetScope*scope) const
 
 NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       if (debug_elaborate)
 	    cerr << get_fileline() << ":  PCondit::elaborate: "
@@ -3476,7 +3476,7 @@ NetProc* PCallTask::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       if (path_.size() > 1) {
 	    cerr << get_fileline() << ": error: Hierarchical system task names"
@@ -3548,7 +3548,7 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
  */
 NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       NetScope*pscope = scope;
       if (package_) {
@@ -3577,8 +3577,8 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      assert(task);
-      assert(task->type() == NetScope::TASK);
+      ivl_assert(*this, task);
+      ivl_assert(*this, task->type() == NetScope::TASK);
       NetTaskDef*def = task->task_def();
       if (def == 0) {
 	    cerr << get_fileline() << ": internal error: task " << path_
@@ -3587,7 +3587,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return 0;
       }
-      assert(def);
+      ivl_assert(*this, def);
 
 	/* In SystemVerilog a method calling another method in the
 	 * current class needs to be elaborated as a method with an
@@ -3596,7 +3596,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    const NetScope *c_scope = scope->get_class_scope();
 	    if (c_scope && (c_scope == task->get_class_scope())) {
 		  NetProc *tmp = elaborate_method_(des, scope, true);
-		  assert(tmp);
+		  ivl_assert(*this, tmp);
 		  return tmp;
 	    }
       }
@@ -3785,7 +3785,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 
 	/* Add the implicit this reference when requested. */
       if (add_this_flag) {
-	    assert(use_path.empty());
+	    ivl_assert(*this, use_path.empty());
 	    use_path.push_front(name_component_t(perm_string::literal(THIS_TOKEN)));
       }
 
@@ -4111,7 +4111,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	    size_t parms_idx = use_this? idx-1 : idx;
 
 	    NetNet*port = def->port(idx);
-	    assert(port->port_type() != NetNet::NOT_A_PORT);
+	    ivl_assert(*this, port->port_type() != NetNet::NOT_A_PORT);
 	    if (port->port_type() == NetNet::POUTPUT)
 		  continue;
 
@@ -4178,7 +4178,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	    NetNet*port = def->port(idx);
 
 	      /* Skip input ports. */
-	    assert(port->port_type() != NetNet::NOT_A_PORT);
+	    ivl_assert(*this, port->port_type() != NetNet::NOT_A_PORT);
 	    if (port->port_type() == NetNet::PINPUT)
 		  continue;
 
@@ -4267,7 +4267,7 @@ static bool get_value_as_long(const NetExpr*expr, long&val)
       switch(expr->expr_type()) {
 	  case IVL_VT_REAL: {
 	    const NetECReal*c = dynamic_cast<const NetECReal*> (expr);
-	    assert(c);
+	    ivl_assert(*expr, c);
 	    verireal tmp = c->value();
 	    val = tmp.as_long();
 	    break;
@@ -4276,7 +4276,7 @@ static bool get_value_as_long(const NetExpr*expr, long&val)
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC: {
 	    const NetEConst*c = dynamic_cast<const NetEConst*>(expr);
-	    assert(c);
+	    ivl_assert(*expr, c);
 	    verinum tmp = c->value();
 	    if (tmp.is_string()) return false;
 	    val = tmp.as_long();
@@ -4300,7 +4300,7 @@ static bool get_value_as_string(const NetExpr*expr, string&str)
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC: {
 	    const NetEConst*c = dynamic_cast<const NetEConst*>(expr);
-	    assert(c);
+	    ivl_assert(*expr, c);
 	    verinum tmp = c->value();
 	    if (!tmp.is_string()) return false;
 	    str = tmp.as_string();
@@ -4317,8 +4317,8 @@ static bool get_value_as_string(const NetExpr*expr, string&str)
 /* Elaborate an elaboration task. */
 bool PCallTask::elaborate_elab(Design*des, NetScope*scope) const
 {
-      assert(scope);
-      assert(path_.size() == 1);
+      ivl_assert(*this, scope);
+      ivl_assert(*this, path_.size() == 1);
 
       unsigned parm_count = parms_.size();
 
@@ -4433,7 +4433,7 @@ bool PCallTask::elaborate_elab(Design*des, NetScope*scope) const
 NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
 {
       NetCAssign*dev = 0;
-      assert(scope);
+      ivl_assert(*this, scope);
 
       if (scope->is_auto() && lval_->has_aa_term(des, scope)) {
 	    cerr << get_fileline() << ": error: automatically allocated "
@@ -4478,7 +4478,7 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
 
 NetDeassign* PDeassign::elaborate(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       if (scope->is_auto() && lval_->has_aa_term(des, scope)) {
 	    cerr << get_fileline() << ": error: automatically allocated "
@@ -4506,7 +4506,7 @@ NetDeassign* PDeassign::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PDelayStatement::elaborate(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       if (scope->in_func()) {
 	    cerr << get_fileline() << ": error: functions cannot have "
@@ -4552,7 +4552,7 @@ NetProc* PDelayStatement::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PDisable::elaborate(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
 	/* If the disable scope_ is empty then this is a SystemVerilog
 	 * disable fork statement. */
@@ -4704,7 +4704,7 @@ NetProc* PDoWhile::elaborate(Design*des, NetScope*scope) const
 NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 				       NetProc*enet) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       if (scope->in_func()) {
 	    cerr << get_fileline() << ": error: functions cannot have "
@@ -4737,7 +4737,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	   @* statement. Generate an expression to use. */
 
       if (expr_.size() == 0) {
-	    assert(enet);
+	    ivl_assert(*this, enet);
 	     /* For synthesis or always_comb/latch we want just the inputs,
 	      * but for the rest we want inputs and outputs that may cause
 	      * a value to change. */
@@ -4793,7 +4793,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 			unsigned base = nset->at(idx).base;
 cerr << get_fileline() << ": base = " << base << endl;
 // FIXME: make this work with selects that go before the base.
-			assert(base < vwid);
+			ivl_assert(*this, base < vwid);
 			if (base + wid > vwid) wid = vwid - base;
 cerr << get_fileline() << ": base = " << base << ", width = " << wid
      << ", expr width = " << vwid << endl;
@@ -4822,7 +4822,7 @@ cerr << endl;
 
       } else for (unsigned idx = 0 ;  idx < expr_.size() ;  idx += 1) {
 
-	    assert(expr_[idx]->expr());
+	    ivl_assert(*this, expr_[idx]->expr());
 
 	      /* If the expression is an identifier that matches a
 		 named event, then handle this case all at once and
@@ -4847,7 +4847,7 @@ cerr << endl;
 				    break;
 				  default:
 				    cerr << "unknown edge type!";
-				    assert(0);
+				    ivl_assert(*this, 0);
 			      }
 			      cerr << " can not be used with a named event ("
 			           << sr.eve->name() << ")." << endl;
@@ -4888,7 +4888,7 @@ cerr << endl;
 		  des->errors += 1;
 		  continue;
 	    }
-	    assert(expr);
+	    ivl_assert(*this, expr);
 
 	    delete tmp;
 
@@ -4919,7 +4919,7 @@ cerr << endl;
 
 		default:
 		  pr = NULL;
-		  assert(0);
+		  ivl_assert(*this, 0);
 	    }
 
 	    for (unsigned p = 0 ;  p < pr->pin_count() ; p += 1)
@@ -4965,8 +4965,8 @@ cerr << endl;
 NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 					 NetProc*enet) const
 {
-      assert(scope);
-      assert(expr_.size() == 1);
+      ivl_assert(*this, scope);
+      ivl_assert(*this, expr_.size() == 1);
 
       if (scope->in_func()) {
 	    cerr << get_fileline() << ": error: functions cannot have "
@@ -5009,7 +5009,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
       }
 
       if (expr->expr_width() > 1) {
-	    assert(expr->expr_width() > 1);
+	    ivl_assert(*this, expr->expr_width() > 1);
 	    NetEUReduce*cmp = new NetEUReduce('|', expr);
 	    cmp->set_line(*pe);
 	    expr = cmp;
@@ -5021,15 +5021,15 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	/* Detect the unusual case that the wait expression is
 	   constant. Constant true is OK (it becomes transparent) but
 	   constant false is almost certainly not what is intended. */
-      assert(expr->expr_width() == 1);
+      ivl_assert(*this, expr->expr_width() == 1);
       if (NetEConst*ce = dynamic_cast<NetEConst*>(expr)) {
 	    verinum val = ce->value();
-	    assert(val.len() == 1);
+	    ivl_assert(*this, val.len() == 1);
 
 	      /* Constant true -- wait(1) <s1> reduces to <s1>. */
 	    if (val[0] == verinum::V1) {
 		  delete expr;
-		  assert(enet);
+		  ivl_assert(*this, enet);
 		  return enet;
 	    }
 
@@ -5059,7 +5059,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	/* Invert the sense of the test with an exclusive NOR. In
 	   other words, if this adjusted expression returns TRUE, then
 	   wait. */
-      assert(expr->expr_width() == 1);
+      ivl_assert(*this, expr->expr_width() == 1);
       expr = new NetEBComp('N', expr, new NetEConst(verinum(verinum::V1)));
       expr->set_line(*pe);
       eval_expr(expr);
@@ -5127,10 +5127,10 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
  */
 NetProc* PEventStatement::elaborate_wait_fork(Design*des, NetScope*scope) const
 {
-      assert(scope);
-      assert(expr_.size() == 1);
-      assert(expr_[0] == 0);
-      assert(! statement_);
+      ivl_assert(*this, scope);
+      ivl_assert(*this, expr_.size() == 1);
+      ivl_assert(*this, expr_[0] == 0);
+      ivl_assert(*this, ! statement_);
 
       if (scope->in_func()) {
 	    cerr << get_fileline() << ": error: functions cannot have "
@@ -5216,7 +5216,7 @@ NetProc* PForever::elaborate(Design*des, NetScope*scope) const
 NetForce* PForce::elaborate(Design*des, NetScope*scope) const
 {
       NetForce*dev = 0;
-      assert(scope);
+      ivl_assert(*this, scope);
 
       if (scope->is_auto() && lval_->has_aa_term(des, scope)) {
 	    cerr << get_fileline() << ": error: automatically allocated "
@@ -5526,7 +5526,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       NetExpr*initial_expr;
       NetNet*sig;
       bool error_flag = false;
-      assert(scope);
+      ivl_assert(*this, scope);
 
       if (!name1_) {
 	    // If there is no initial assignment expression, then mark that
@@ -5657,7 +5657,7 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return;
       }
-      assert(def);
+      ivl_assert(*this, def);
 
       NetProc*st;
       if (statement_ == 0) {
@@ -5703,7 +5703,7 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
 
 NetProc* PRelease::elaborate(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       if (scope->is_auto() && lval_->has_aa_term(des, scope)) {
 	    cerr << get_fileline() << ": error: automatically allocated "
@@ -5724,7 +5724,7 @@ NetProc* PRelease::elaborate(Design*des, NetScope*scope) const
 
 NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
@@ -5887,7 +5887,7 @@ NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
 void PTask::elaborate(Design*des, NetScope*task) const
 {
       NetTaskDef*def = task->task_def();
-      assert(def);
+      ivl_assert(*this, def);
 
       NetProc*st;
       if (statement_ == 0) {
@@ -5934,7 +5934,7 @@ void PTask::elaborate(Design*des, NetScope*task) const
 
 NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       symbol_search_results sr;
       if (!symbol_search(this, des, scope, event_, &sr)) {
@@ -5958,7 +5958,7 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 
 NetProc* PNBTrigger::elaborate(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
       NetNet*       sig = 0;
       const NetExpr*par = 0;
@@ -6312,7 +6312,7 @@ static void elaborate_functions(Design*des, NetScope*scope,
 
 	    hname_t use_name ( (*cur).first );
 	    NetScope*fscope = scope->child(use_name);
-	    assert(fscope);
+	    ivl_assert(*(*cur).second, fscope);
 	    (*cur).second->elaborate(des, fscope);
       }
 }
@@ -6326,7 +6326,7 @@ static void elaborate_tasks(Design*des, NetScope*scope,
 
 	    hname_t use_name ( (*cur).first );
 	    NetScope*tscope = scope->child(use_name);
-	    assert(tscope);
+	    ivl_assert(*(*cur).second, tscope);
 	    (*cur).second->elaborate(des, tscope);
       }
 }
@@ -6862,7 +6862,7 @@ bool Design::check_proc_delay() const
 		  if (! wait) {
 			  // The always_comb/latch processes have an event
 			  // control added automatically by the compiler.
-			assert(pr->type() == IVL_PR_ALWAYS_FF);
+			ivl_assert(*pr, pr->type() == IVL_PR_ALWAYS_FF);
 			cerr << pr->get_fileline() << ": error: the first "
 			        "statement of an always_ff process must be "
 			        "an event control statement." << endl;
@@ -6891,7 +6891,7 @@ bool Design::check_proc_delay() const
 			              "control." << endl;
 			      result = true;
 			} else {
-			      assert(pr->type() == IVL_PR_ALWAYS_COMB);
+			      ivl_assert(*pr, pr->type() == IVL_PR_ALWAYS_COMB);
 			      cerr << pr->get_fileline() << ": warning: "
 			              "always_comb process has no "
 			              "sensitivities." << endl;
@@ -6928,17 +6928,17 @@ static void print_nexus_name(const Nexus*nex)
 		  return;
 	      // For a NetPartSelect calculate the name.
 	    } else if (const NetPartSelect*ps = dynamic_cast<const NetPartSelect*>(obj)) {
-		  assert(ps->pin_count() >= 2);
-		  assert(ps->pin(1).get_dir() == Link::INPUT);
-		  assert(ps->pin(1).is_linked());
+		  ivl_assert(*ps, ps->pin_count() >= 2);
+		  ivl_assert(*ps, ps->pin(1).get_dir() == Link::INPUT);
+		  ivl_assert(*ps, ps->pin(1).is_linked());
 		  print_nexus_name(ps->pin(1).nexus());
 		  cerr << "[]";
 		  return;
 	      // For a NetUReduce calculate the name.
 	    } else if (const NetUReduce*reduce = dynamic_cast<const NetUReduce*>(obj)) {
-		  assert(reduce->pin_count() == 2);
-		  assert(reduce->pin(1).get_dir() == Link::INPUT);
-		  assert(reduce->pin(1).is_linked());
+		  ivl_assert(*reduce, reduce->pin_count() == 2);
+		  ivl_assert(*reduce, reduce->pin(1).get_dir() == Link::INPUT);
+		  ivl_assert(*reduce, reduce->pin(1).is_linked());
 		  switch (reduce->type()) {
 		    case NetUReduce::AND:
 			cerr << "&";
@@ -6959,14 +6959,14 @@ static void print_nexus_name(const Nexus*nex)
 			cerr << "~^";
 			break;
 		    case NetUReduce::NONE:
-			assert(0);
+			ivl_assert(*reduce, 0);
 		  }
 		  print_nexus_name(reduce->pin(1).nexus());
 		  return;
 	    } else if (const NetLogic*logic = dynamic_cast<const NetLogic*>(obj)) {
-		  assert(logic->pin_count() >= 2);
-		  assert(logic->pin(1).get_dir() == Link::INPUT);
-		  assert(logic->pin(1).is_linked());
+		  ivl_assert(*logic, logic->pin_count() >= 2);
+		  ivl_assert(*logic, logic->pin(1).get_dir() == Link::INPUT);
+		  ivl_assert(*logic, logic->pin(1).is_linked());
 		  switch (logic->type()) {
 		    case NetLogic::NOT:
 			cerr << "~";
@@ -6989,17 +6989,17 @@ static void print_nexus_name(const Nexus*nex)
 
 static void print_event_probe_name(const NetEvProbe *prb)
 {
-      assert(prb->pin_count() == 1);
-      assert(prb->pin(0).get_dir() == Link::INPUT);
-      assert(prb->pin(0).is_linked());
+      ivl_assert(*prb, prb->pin_count() == 1);
+      ivl_assert(*prb, prb->pin(0).get_dir() == Link::INPUT);
+      ivl_assert(*prb, prb->pin(0).is_linked());
       print_nexus_name(prb->pin(0).nexus());
 }
 
 static void check_event_probe_width(const LineInfo *info, const NetEvProbe *prb)
 {
-      assert(prb->pin_count() == 1);
-      assert(prb->pin(0).get_dir() == Link::INPUT);
-      assert(prb->pin(0).is_linked());
+      ivl_assert(*prb, prb->pin_count() == 1);
+      ivl_assert(*prb, prb->pin(0).get_dir() == Link::INPUT);
+      ivl_assert(*prb, prb->pin(0).is_linked());
       if (prb->edge() == NetEvProbe::ANYEDGE) return;
       if (prb->pin(0).nexus()->vector_width() > 1) {
 	    cerr << info->get_fileline() << " warning: Synthesis wants "
