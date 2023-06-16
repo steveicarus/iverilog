@@ -111,15 +111,23 @@ NetEBAdd::~NetEBAdd()
 {
 }
 
+
+static ivl_variable_type_t arith_expr_type(const NetExpr *l, const NetExpr *r)
+{
+      if (l->expr_type() == IVL_VT_REAL ||
+          r->expr_type() == IVL_VT_REAL)
+	    return IVL_VT_REAL;
+
+      if (l->expr_type() == IVL_VT_LOGIC ||
+          r->expr_type() == IVL_VT_LOGIC)
+	    return IVL_VT_LOGIC;
+
+      return IVL_VT_BOOL;
+}
+
 ivl_variable_type_t NetEBAdd::expr_type() const
 {
-      if (left_->expr_type() == IVL_VT_REAL)
-	    return IVL_VT_REAL;
-
-      if (right_->expr_type() == IVL_VT_REAL)
-	    return IVL_VT_REAL;
-
-      return IVL_VT_LOGIC;
+      return arith_expr_type(left_, right_);
 }
 
 /*
@@ -171,6 +179,8 @@ ivl_variable_type_t NetEBDiv::expr_type() const
       if (right_->expr_type() == IVL_VT_REAL)
 	    return IVL_VT_REAL;
 
+      // div is always 4-state, even if both inputs are 2-state because division
+      // by 0 can yield 'x
       return IVL_VT_LOGIC;
 }
 
@@ -185,12 +195,7 @@ NetEBMinMax::~NetEBMinMax()
 
 ivl_variable_type_t NetEBMinMax::expr_type() const
 {
-      if (left_->expr_type() == IVL_VT_REAL)
-	    return IVL_VT_REAL;
-      if (right_->expr_type() == IVL_VT_REAL)
-	    return IVL_VT_REAL;
-
-      return IVL_VT_LOGIC;
+      return arith_expr_type(left_, right_);
 }
 
 NetEBMult::NetEBMult(char op__, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag)
@@ -204,13 +209,7 @@ NetEBMult::~NetEBMult()
 
 ivl_variable_type_t NetEBMult::expr_type() const
 {
-      if (left_->expr_type() == IVL_VT_REAL)
-	    return IVL_VT_REAL;
-
-      if (right_->expr_type() == IVL_VT_REAL)
-	    return IVL_VT_REAL;
-
-      return IVL_VT_LOGIC;
+      return arith_expr_type(left_, right_);
 }
 
 NetEBPow::NetEBPow(char op__, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag)
@@ -224,12 +223,7 @@ NetEBPow::~NetEBPow()
 
 ivl_variable_type_t NetEBPow::expr_type() const
 {
-      if (right_->expr_type() == IVL_VT_REAL)
-	    return IVL_VT_REAL;
-      if (left_->expr_type() == IVL_VT_REAL)
-	    return IVL_VT_REAL;
-
-      return IVL_VT_LOGIC;
+      return arith_expr_type(left_, right_);
 }
 
 NetEBShift::NetEBShift(char op__, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag)
@@ -244,6 +238,15 @@ NetEBShift::~NetEBShift()
 bool NetEBShift::has_width() const
 {
       return left_->has_width();
+}
+
+ivl_variable_type_t NetEBShift::expr_type() const
+{
+      if (left_->expr_type() == IVL_VT_LOGIC ||
+          right_->expr_type() == IVL_VT_LOGIC)
+	    return IVL_VT_LOGIC;
+
+      return IVL_VT_BOOL;
 }
 
 NetEConcat::NetEConcat(unsigned cnt, unsigned r, ivl_variable_type_t vt)

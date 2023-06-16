@@ -807,7 +807,7 @@ NetEConst* NetEBLogic::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 {
 	// NetEBLogic arguments should have already been reduced so real is not possible.
       ivl_assert(*this, (l->expr_type() != IVL_VT_REAL) && (r->expr_type() != IVL_VT_REAL));
-      ivl_assert(*this, expr_type() == IVL_VT_LOGIC);
+      ivl_assert(*this, expr_type() == IVL_VT_LOGIC || expr_type() == IVL_VT_BOOL);
 
       const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
       const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
@@ -943,7 +943,7 @@ NetExpr* NetEBMinMax::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 NetExpr* NetEBMinMax::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 {
       if (expr_type() == IVL_VT_REAL) return eval_tree_real_(l,r);
-      ivl_assert(*this, expr_type() == IVL_VT_LOGIC);
+      ivl_assert(*this, expr_type() == IVL_VT_LOGIC || expr_type() == IVL_VT_BOOL);
 
       const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
       const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
@@ -996,7 +996,7 @@ NetExpr* NetEBMult::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 NetExpr* NetEBMult::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 {
       if (expr_type() == IVL_VT_REAL) return eval_tree_real_(l,r);
-      ivl_assert(*this, expr_type() == IVL_VT_LOGIC);
+      ivl_assert(*this, expr_type() == IVL_VT_LOGIC || expr_type() == IVL_VT_BOOL);
 
       const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
       const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
@@ -1034,7 +1034,7 @@ NetExpr* NetEBPow::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 NetExpr* NetEBPow::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 {
       if (expr_type() == IVL_VT_REAL) return eval_tree_real_(l,r);
-      ivl_assert(*this, expr_type() == IVL_VT_LOGIC);
+      ivl_assert(*this, expr_type() == IVL_VT_LOGIC || expr_type() == IVL_VT_BOOL);
 
       const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
       const NetEConst*rc = dynamic_cast<const NetEConst*>(r);

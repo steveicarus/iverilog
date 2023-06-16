@@ -2257,6 +2257,15 @@ NetEBBits::~NetEBBits()
 {
 }
 
+ivl_variable_type_t NetEBBits::expr_type() const
+{
+      if (left_->expr_type() == IVL_VT_LOGIC ||
+          right_->expr_type() == IVL_VT_LOGIC)
+	    return IVL_VT_LOGIC;
+
+      return IVL_VT_BOOL;
+}
+
 NetEBinary::NetEBinary(char op__, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag)
 : op_(op__), left_(l), right_(r)
 {
@@ -2282,6 +2291,15 @@ NetEBLogic::NetEBLogic(char op__, NetExpr*l, NetExpr*r)
 
 NetEBLogic::~NetEBLogic()
 {
+}
+
+ivl_variable_type_t NetEBLogic::expr_type() const
+{
+      if (left_->expr_type() == IVL_VT_LOGIC ||
+          right_->expr_type() == IVL_VT_LOGIC)
+	    return IVL_VT_LOGIC;
+
+      return IVL_VT_BOOL;
 }
 
 NetEConst::NetEConst(const verinum&val)
