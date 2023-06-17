@@ -884,8 +884,8 @@ static int show_stmt_assign_sig_string(ivl_statement_t net)
 	    return 0;
       }
 
-      assert(ivl_expr_width(rval)==8);
       draw_eval_vec4(rval);
+      resize_vec4_wid(rval, 8);
 
 	/* Calculate the character select for the word. */
       int mux_word = allocate_word();

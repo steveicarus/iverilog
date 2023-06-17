@@ -4248,6 +4248,8 @@ class NetEBBits : public NetEBinary {
       virtual NetEBBits* dup_expr() const;
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
+      ivl_variable_type_t expr_type() const override;
+
     private:
       NetEConst* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
 };
@@ -4308,6 +4310,8 @@ class NetEBLogic : public NetEBinary {
 
       virtual NetEBLogic* dup_expr() const;
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
+
+      ivl_variable_type_t expr_type() const override;
 
     private:
       NetEConst* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
@@ -4391,6 +4395,8 @@ class NetEBShift : public NetEBinary {
 
       virtual NetEBShift* dup_expr() const;
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
+
+      ivl_variable_type_t expr_type() const override;
 
     private:
       NetEConst* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
