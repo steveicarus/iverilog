@@ -142,6 +142,11 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 	    break;
       }
 
+	// If the target is an unpacked array we want full type checking,
+	// regardless of the base type of the array.
+      if (dynamic_cast<const netuarray_t *>(lv_net_type))
+	    typed_elab = true;
+
 	// Special case, PEAssignPattern is context dependend on the type and
 	// always uses the typed elaboration
       if (dynamic_cast<PEAssignPattern*>(expr))
@@ -236,7 +241,13 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
       bool need_const = NEED_CONST & flags;
 
       if (auto darray_type = dynamic_cast<const netdarray_t*>(ntype))
-	    return elaborate_expr_darray_(des, scope, darray_type, need_const);
+	    return elaborate_expr_array_(des, scope, darray_type, need_const, true);
+
+      if (auto uarray_type = dynamic_cast<const netuarray_t*>(ntype)) {
+	    return elaborate_expr_uarray_(des, scope, uarray_type,
+					  uarray_type->static_dimensions(), 0,
+					  need_const);
+      }
 
       if (auto parray_type = dynamic_cast<const netparray_t*>(ntype)) {
 	    return elaborate_expr_packed_(des, scope, parray_type->base_type(),
@@ -265,9 +276,9 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
       return 0;
 }
 
-NetExpr* PEAssignPattern::elaborate_expr_darray_(Design *des, NetScope *scope,
-					         const netdarray_t *array_type,
-					         bool need_const) const
+NetExpr* PEAssignPattern::elaborate_expr_array_(Design *des, NetScope *scope,
+					        const netarray_t *array_type,
+					        bool need_const, bool up) const
 {
 	// Special case: If this is an empty pattern (i.e. '{}) then convert
 	// this to a null handle. Internally, Icarus Verilog uses this to
@@ -283,13 +294,85 @@ NetExpr* PEAssignPattern::elaborate_expr_darray_(Design *des, NetScope *scope,
 	// element_type expressions.
       ivl_type_t elem_type = array_type->element_type();
       vector<NetExpr*> elem_exprs (parms_.size());
+      size_t elem_idx = up ? 0 : parms_.size() - 1;
       for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
-	    NetExpr*tmp = elaborate_rval_expr(des, scope, elem_type,
-					      parms_[idx], need_const);
-	    elem_exprs[idx] = tmp;
+	    elem_exprs[elem_idx] = elaborate_rval_expr(des, scope, elem_type,
+						       parms_[idx], need_const);
+	    if (up)
+		  elem_idx++;
+	    else
+		  elem_idx--;
       }
 
       NetEArrayPattern*res = new NetEArrayPattern(array_type, elem_exprs);
+      res->set_line(*this);
+      return res;
+}
+
+NetExpr* PEAssignPattern::elaborate_expr_uarray_(Design *des, NetScope *scope,
+						 const netuarray_t *uarray_type,
+						 const std::vector<netrange_t> &dims,
+						 unsigned int cur_dim,
+						 bool need_const) const
+{
+      if (dims.size() <= cur_dim)
+	    return nullptr;
+
+      if (dims[cur_dim].width() != parms_.size()) {
+	    cerr << get_fileline() << ": error: Unpacked array assignment pattern expects "
+	         << dims[cur_dim].width() << " element(s) in this context.\n"
+	         << get_fileline() << ":      : Found "
+		 << parms_.size() << " element(s)." << endl;
+	    des->errors++;
+      }
+
+      bool up = dims[cur_dim].get_msb() < dims[cur_dim].get_lsb();
+      if  (cur_dim == dims.size() - 1) {
+	    return elaborate_expr_array_(des, scope, uarray_type, need_const, up);
+      }
+
+      cur_dim++;
+      vector<NetExpr*> elem_exprs(parms_.size());
+      size_t elem_idx = up ? 0 : parms_.size() - 1;
+      for (size_t idx = 0; idx < parms_.size(); idx++) {
+	    NetExpr *expr = nullptr;
+	    // Handle nested assignment patterns as a special case. We do not
+	    // have a good way of passing the inner dimensions through the
+	    // generic elaborate_expr() API and assigment patterns is the only
+	    // place where we need it.
+	    if (auto ap = dynamic_cast<PEAssignPattern*>(parms_[idx])) {
+		  expr = ap->elaborate_expr_uarray_(des, scope, uarray_type,
+						    dims, cur_dim, need_const);
+	    } else if (dynamic_cast<PEConcat*>(parms_[idx])) {
+		  cerr << get_fileline() << ": sorry: "
+		       << "Array concatenation is not yet supported."
+		       << endl;
+		  des->errors++;
+	    } else if (dynamic_cast<PEIdent*>(parms_[idx])) {
+		  // The only other thing that's allow in this
+		  // context is an array slice or identifier.
+		  cerr << get_fileline() << ": sorry: "
+		       << "Procedural assignment of array or array slice"
+		       << " is not yet supported." << endl;
+		  des->errors++;
+	    } else if (parms_[idx]) {
+		  cerr << get_fileline() << ": error: Expression "
+		       << *parms_[idx]
+		       << " is not compatible with this context."
+		       << " Expected array or array-like expression."
+		       << endl;
+		  des->errors++;
+	    }
+
+	    elem_exprs[elem_idx] = expr;
+
+	    if (up)
+		  elem_idx++;
+	    else
+		  elem_idx--;
+      }
+
+      NetEArrayPattern *res = new NetEArrayPattern(uarray_type, elem_exprs);
       res->set_line(*this);
       return res;
 }

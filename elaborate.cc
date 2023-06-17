@@ -251,25 +251,29 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 NetNet *elaborate_unpacked_array(Design *des, NetScope *scope, const LineInfo &loc,
 			         const NetNet *lval, PExpr *expr)
 {
+      NetNet *expr_net;
       PEIdent* ident = dynamic_cast<PEIdent*> (expr);
       if (!ident) {
-	    des->errors++;
 	    if (dynamic_cast<PEConcat*> (expr)) {
 		  cout << loc.get_fileline() << ": sorry: Continuous assignment"
 		       << " of array concatenation is not yet supported."
 		       << endl;
+		  des->errors++;
+		  return nullptr;
 	    } else if (dynamic_cast<PEAssignPattern*> (expr)) {
-		  cout << loc.get_fileline() << ": sorry: Continuous assignment"
-		       << " of assignment pattern is not yet supported." << endl;
+		  auto net_expr = elaborate_rval_expr(des, scope, lval->array_type(), expr);
+		  expr_net = net_expr->synthesize(des, scope, net_expr);
 	    } else {
 		  cout << loc.get_fileline() << ": error: Can not assign"
 		       << " non-array expression `" << *expr << "` to array."
 		       << endl;
+		  des->errors++;
+		  return nullptr;
 	    }
-	    return nullptr;
+      } else {
+	    expr_net = ident->elaborate_unpacked_net(des, scope);
       }
 
-      NetNet *expr_net = ident->elaborate_unpacked_net(des, scope);
       if (!expr_net)
 	    return nullptr;
 
@@ -2642,8 +2646,9 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 			cerr << get_fileline() << ": PAssign::elaborate: "
 			     << "lv->word() = <nil>" << endl;
 	    }
-	    ivl_assert(*this, lv->word());
-	    ivl_type_t use_lv_type = utype->element_type();
+	    ivl_type_t use_lv_type = lv_net_type;
+	    if (lv->word())
+		  use_lv_type = utype->element_type();
 
 	    ivl_assert(*this, use_lv_type);
 	    rv = elaborate_rval_(des, scope, use_lv_type);

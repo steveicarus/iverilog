@@ -86,6 +86,7 @@ struct enum_type_t;
 class netclass_t;
 class netdarray_t;
 class netparray_t;
+class netuarray_t;
 class netqueue_t;
 class netenum_t;
 class netstruct_t;
@@ -2106,6 +2107,7 @@ class NetEArrayPattern  : public NetExpr {
       NetEArrayPattern* dup_expr() const;
       NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                           bool nested_func = false) const;
+      NetNet* synthesize(Design *des, NetScope *scope, NetExpr *root);
 
     private:
       std::vector<NetExpr*> items_;

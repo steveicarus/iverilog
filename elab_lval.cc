@@ -242,8 +242,12 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 	// is less than the array dimensions (unpacked).
       if (reg->unpacked_dimensions() > name_tail.index.size()) {
 	    if (gn_system_verilog()) {
-		  cerr << get_fileline() << ": sorry: Assignment to an entire"
-		        " array or to an array slice is not yet supported."
+		  if (name_tail.index.empty()) {
+			NetAssign_*lv = new NetAssign_(reg);
+			return lv;
+		  }
+		  cerr << get_fileline() << ": sorry: Assignment to an "
+		        " array slice is not yet supported."
 		       << endl;
 	    } else {
 		  cerr << get_fileline() << ": error: Assignment to an entire"
