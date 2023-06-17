@@ -94,6 +94,10 @@ class netclass_t : public ivl_type_s {
 	// The task method scopes from the method name.
       NetScope*method_from_name(perm_string mname) const;
 
+	// Returns the constructor task method of the class. Might be nullptr if
+	// there is nothing to do in the constructor.
+      NetScope* get_constructor() const;
+
 	// Find the elaborated signal (NetNet) for a static
 	// property. Search by name. The signal is created by the
 	// elaborate_sig pass.
