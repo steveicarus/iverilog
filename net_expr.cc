@@ -401,7 +401,13 @@ NetEProperty::NetEProperty(NetNet*net, size_t pidx, NetExpr*idx)
       ivl_assert(*this, use_type);
 
       ivl_type_t prop_type = use_type->get_prop_type(pidx_);
-      set_net_type(prop_type);
+      if (idx) {
+	    auto array_type = dynamic_cast<const netarray_t*>(prop_type);
+	    ivl_assert(*this, array_type);
+	    set_net_type(array_type->element_type());
+      } else {
+	    set_net_type(prop_type);
+      }
 }
 
 NetEProperty::~NetEProperty()
