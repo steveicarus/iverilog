@@ -35,6 +35,7 @@ memsynth1			vvp_tests/memsynth1.json
 module_ordered_list1		vvp_tests/module_ordered_list1.json
 module_ordered_list2		vvp_tests/module_ordered_list2.json
 module_port_array1		vvp_tests/module_port_array1.json
+module_port_array_init1		vvp_tests/module_port_array_init1.json
 param-width			vvp_tests/param-width.json
 param-width-vlog95		vvp_tests/param-width-vlog95.json
 pr1388974			vvp_tests/pr1388974.json
