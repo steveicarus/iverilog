@@ -86,6 +86,7 @@ struct enum_type_t;
 class netclass_t;
 class netdarray_t;
 class netparray_t;
+class netuarray_t;
 class netqueue_t;
 class netenum_t;
 class netstruct_t;
@@ -709,6 +710,7 @@ class NetNet  : public NetObj, public PortType {
       const netdarray_t*darray_type(void) const;
       const netqueue_t*queue_type(void) const;
       const netclass_t*class_type(void) const;
+      const netarray_t*array_type(void) const;
 
 	/* Attach a discipline to the net. */
       ivl_discipline_t get_discipline() const;
@@ -803,6 +805,7 @@ class NetNet  : public NetObj, public PortType {
       PortType port_type_ : 3;
       bool local_flag_: 1;
       ivl_type_t net_type_;
+      netuarray_t *array_type_ = nullptr;
       ivl_discipline_t discipline_;
 
       std::vector<netrange_t> unpacked_dims_;
@@ -2104,6 +2107,7 @@ class NetEArrayPattern  : public NetExpr {
       NetEArrayPattern* dup_expr() const;
       NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                           bool nested_func = false) const;
+      NetNet* synthesize(Design *des, NetScope *scope, NetExpr *root);
 
     private:
       std::vector<NetExpr*> items_;

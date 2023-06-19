@@ -25,6 +25,7 @@
 
 # include  "netlist.h"
 # include  "netvector.h"
+# include  "netparray.h"
 # include  "netmisc.h"
 # include  "ivl_assert.h"
 
@@ -810,6 +811,58 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
       }
 
       delete[]tmp;
+      return osig;
+}
+
+NetNet *NetEArrayPattern::synthesize(Design *des, NetScope *scope, NetExpr *root)
+{
+      const netsarray_t *array_type = dynamic_cast<const netsarray_t *>(net_type());
+      ivl_assert(*this, array_type);
+
+      if (items_.empty())
+	    return nullptr;
+
+      bool failed = false;
+
+      std::unique_ptr<NetNet*[]> nets(new NetNet*[items_.size()]);
+      for (unsigned int idx = 0; idx < items_.size(); idx++) {
+	    if (!items_[idx]) {
+		  failed = true;
+		  continue;
+	    }
+	    nets[idx] = items_[idx]->synthesize(des, scope, root);
+	    if (!nets[idx])
+		  failed = true;
+      }
+
+      if (failed)
+	    return nullptr;
+
+      // Infer which dimension we are in for nested assignment patterns based on
+      // the dimensions of the element.
+      size_t dim = nets[0]->unpacked_dims().size() + 1;
+      const auto &type_dims = array_type->static_dimensions();
+
+      if (dim > type_dims.size())
+	    return nullptr;
+
+      std::list<netrange_t> dims(type_dims.end() - dim, type_dims.end());
+
+      if (dims.front().width() != items_.size())
+	    return nullptr;
+
+      perm_string path = scope->local_symbol();
+      NetNet *osig = new NetNet(scope, path, NetNet::IMPLICIT, dims,
+			        array_type->element_type());
+      osig->set_line(*this);
+      osig->local_flag(true);
+
+      unsigned int opin = 0;
+      for (unsigned int idx = 0; idx < items_.size(); idx++) {
+	    for (unsigned int net_pin = 0; net_pin < nets[idx]->pin_count(); net_pin++)
+		  connect(osig->pin(opin++), nets[idx]->pin(net_pin));
+      }
+
       return osig;
 }
 

@@ -986,7 +986,23 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 
       ivl_variable_type_t cast_type = ivl_type_base(lv_net_type);
       ivl_variable_type_t expr_type = tmp->expr_type();
-      if ((cast_type != IVL_VT_NO_TYPE) && (cast_type != expr_type)) {
+
+      bool compatible;
+        // For arrays we need strict type checking here. Long term strict type
+	// checking should be used for all expressions, but at the moment not
+	// all expressions do have a ivl_type_t attached to it.
+      if (dynamic_cast<const netuarray_t*>(lv_net_type)) {
+	    if (tmp->net_type())
+		  compatible = lv_net_type->type_compatible(tmp->net_type());
+	    else
+		  compatible = false;
+      } else if (cast_type == IVL_VT_NO_TYPE) {
+	    compatible = true;
+      } else {
+	    compatible = cast_type == expr_type;
+      }
+
+      if (!compatible) {
 	      // Catch some special cases.
 	    switch (cast_type) {
 		case IVL_VT_DARRAY:

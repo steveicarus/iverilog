@@ -149,11 +149,10 @@ ivl_type_t NetAssign_::net_type() const
       } else {
 	    ivl_assert(*this, sig_);
 
-	      // We don't have types for array signals yet.
 	    if (sig_->unpacked_dimensions() && !word_)
-		  return nullptr;
-
-	    ntype = sig_->net_type();
+		  ntype = sig_->array_type();
+	    else
+		  ntype = sig_->net_type();
       }
 
       if (!member_.nil()) {

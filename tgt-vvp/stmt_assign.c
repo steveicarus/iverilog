@@ -490,6 +490,58 @@ static void store_vec4_to_lval(ivl_statement_t net)
       }
 }
 
+static unsigned int draw_array_pattern(ivl_signal_t var, ivl_expr_t rval,
+					   unsigned int array_idx)
+{
+      ivl_type_t var_type = ivl_signal_net_type(var);
+
+      for (unsigned int idx = 0; idx < ivl_expr_parms(rval); idx += 1) {
+	    ivl_expr_t expr = ivl_expr_parm(rval, idx);
+
+	    switch (ivl_expr_type(expr)) {
+		case IVL_EX_ARRAY_PATTERN:
+		    /* Flatten nested array patterns */
+		  array_idx = draw_array_pattern(var, expr, array_idx);
+		  break;
+		default:
+		  switch (ivl_type_base(var_type)) {
+		      case IVL_VT_BOOL:
+		      case IVL_VT_LOGIC:
+			draw_eval_vec4(expr);
+			fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", array_idx);
+			fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+			fprintf(vvp_out, "    %%store/vec4a v%p, 3, 0;\n", var);
+			break;
+		      case IVL_VT_REAL:
+			draw_eval_real(expr);
+			fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", array_idx);
+			fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+			fprintf(vvp_out, "    %%store/reala v%p, 3;\n", var);
+			break;
+		      case IVL_VT_STRING:
+			draw_eval_string(expr);
+			fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", array_idx);
+			fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+			fprintf(vvp_out, "    %%store/stra v%p, 3;\n", var);
+			break;
+		      case IVL_VT_CLASS:
+			draw_eval_object(expr);
+			fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", array_idx);
+			fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+			fprintf(vvp_out, "    %%store/obja v%p, 3;\n", var);
+			break;
+		      default:
+			assert(0);
+			break;
+		  }
+		  array_idx++;
+		  break;
+	    }
+      }
+
+      return array_idx;
+}
+
 static int show_stmt_assign_vector(ivl_statement_t net)
 {
       ivl_expr_t rval = ivl_stmt_rval(net);
@@ -497,6 +549,13 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	//struct vector_info lres = {0, 0};
       struct vec_slice_info*slices = 0;
       int idx_reg;
+
+      if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
+	    ivl_lval_t lval = ivl_stmt_lval(net, 0);
+	    ivl_signal_t sig = ivl_lval_sig(lval);
+	    draw_array_pattern(sig, rval, 0);
+	    return 0;
+      }
 
 	/* If this is a compressed assignment, then get the contents
 	   of the l-value. We need these values as part of the r-value
@@ -791,6 +850,13 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
       assert(ivl_stmt_lvals(net) == 1);
       lval = ivl_stmt_lval(net, 0);
 
+      ivl_expr_t rval = ivl_stmt_rval(net);
+      if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
+	    ivl_signal_t sig = ivl_lval_sig(lval);
+	    draw_array_pattern(sig, rval, 0);
+	    return 0;
+      }
+
 	/* If this is a compressed assignment, then get the contents
 	   of the l-value. We need this value as part of the r-value
 	   calculation. */
@@ -800,7 +866,7 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
 	    get_real_from_lval(lval, slice);
       }
 
-      draw_eval_real(ivl_stmt_rval(net));
+      draw_eval_real(rval);
 
       switch (ivl_stmt_opcode(net)) {
 	  case 0:
@@ -849,6 +915,11 @@ static int show_stmt_assign_sig_string(ivl_statement_t net)
 
       assert(ivl_stmt_lvals(net) == 1);
       assert(ivl_stmt_opcode(net) == 0);
+
+      if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
+	    draw_array_pattern(var, rval, 0);
+	    return 0;
+      }
 
 	/* Special case: If the l-value signal (string) is named after
 	   its scope, and the scope is a function, then this is an
@@ -1291,6 +1362,11 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 	    }
 
       } else {
+	    if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
+		  draw_array_pattern(sig, rval, 0);
+		  return 0;
+	    }
+
 	      /* There is no property select, so evaluate the r-value
 		 as an object and assign the entire object to the
 		 variable. */

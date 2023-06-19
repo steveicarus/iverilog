@@ -598,6 +598,9 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 
       initialize_dir_();
 
+      if (!unpacked_dims_.empty())
+	    array_type_ = new netuarray_t(unpacked_dims_, net_type_);
+
       s->add_signal(this);
 }
 
@@ -731,6 +734,14 @@ const netqueue_t* NetNet::queue_type(void) const
 const netclass_t* NetNet::class_type(void) const
 {
       return dynamic_cast<const netclass_t*> (net_type_);
+}
+
+const netarray_t* NetNet::array_type() const
+{
+      if (array_type_)
+	    return array_type_;
+
+      return darray_type();
 }
 
 /*
