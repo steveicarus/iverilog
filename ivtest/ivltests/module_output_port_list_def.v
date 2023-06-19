@@ -2,7 +2,7 @@
 // output port declaration list.
 
 module M (
-  output [31:0] x = 1, y = 2
+  output reg [31:0] x = 1, y = 2
 );
 
   `define check(val, exp) \
