@@ -266,7 +266,8 @@ NetNet *elaborate_unpacked_array(Design *des, NetScope *scope, const LineInfo &l
 		       << endl;
 		  des->errors++;
 		  return nullptr;
-	    } else if (dynamic_cast<PEAssignPattern*> (expr)) {
+	    } else if (dynamic_cast<PEAssignPattern*> (expr) ||
+	               dynamic_cast<PEString*> (expr)) {
 		  auto net_expr = elaborate_rval_expr(des, scope, lval->array_type(), expr);
 		  if (! net_expr) return nullptr;
 		  expr_net = net_expr->synthesize(des, scope, net_expr);
