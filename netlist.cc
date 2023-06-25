@@ -2432,10 +2432,10 @@ NetESignal::NetESignal(NetNet*n, NetExpr*w)
       net_->incr_eref();
       set_line(*n);
 
-      // If it is an array we don't have a type for it yet. But for array
-      // elements the NetNet returns the element type.
       if (word_)
 	    set_net_type(net_->net_type());
+      else
+	    set_net_type(net_->array_type());
 }
 
 NetESignal::~NetESignal()
