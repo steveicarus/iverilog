@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2023 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -227,7 +227,7 @@ cell_list
 
 cell
   : '(' K_CELL celltype cell_instance
-      { sdf_select_instance($3, $4); /* find the instance in the design */}
+      { sdf_select_instance($3, $4, @4.first_line); /* find the instance in the design */}
     timing_spec_list_opt
     ')'
       { free($3);
@@ -296,7 +296,7 @@ del_def_list
 
 del_def
   : '(' K_IOPATH port_spec port_instance delval_list ')'
-      { sdf_iopath_delays($3.vpi_edge, $3.string_val, $4, &$5);
+      { sdf_iopath_delays($3.vpi_edge, $3.string_val, $4, &$5, @2.first_line);
 	free($3.string_val);
 	free($4);
       }

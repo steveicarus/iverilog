@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2023 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,6 +36,7 @@ static vpiHandle sdf_scope;
 static vpiHandle sdf_callh = 0;
   /* The cell in process. */
 static vpiHandle sdf_cur_cell;
+static char* sdf_fname = NULL;
 
 static vpiHandle find_scope(vpiHandle scope, const char*name)
 {
@@ -56,23 +57,29 @@ static vpiHandle find_scope(vpiHandle scope, const char*name)
       return 0;
 }
 
+void sdf_warn_file_line(const int sdf_lineno)
+{
+      vpi_printf("SDF WARNING: %s:%d: loaded from %s:%d: ",
+                 sdf_fname, sdf_lineno,
+                 vpi_get_str(vpiFile, sdf_callh),
+                 (int)vpi_get(vpiLineNo, sdf_callh));
+}
+
 /*
  * These functions are called by the SDF parser during parsing to
  * handling items discovered in the parse.
  */
 
-void sdf_select_instance(const char*celltype, const char*cellinst)
+void sdf_select_instance(const char*celltype, const char*cellinst, const int sdf_lineno)
 {
       char buffer[128];
 
 	/* Test for wildcard character */
       if (cellinst == NULL) {
-	  vpi_printf("SDF WARNING: %s:%d: ",
-	             vpi_get_str(vpiFile, sdf_callh),
-	             (int)vpi_get(vpiLineNo, sdf_callh));
-	  vpi_printf("Wildcard cell instance specification (*) currently not supported.\n");
-	  sdf_cur_cell = 0;
-	  return;
+	    sdf_warn_file_line(sdf_lineno);
+	    vpi_printf("Wildcard cell instance specification (*) currently not supported.\n");
+	    sdf_cur_cell = 0;
+	    return;
       }
 
 	/* First follow the hierarchical parts of the cellinst name to
@@ -89,9 +96,7 @@ void sdf_select_instance(const char*celltype, const char*cellinst)
 
 	    vpiHandle tmp_scope = find_scope(scope, buffer);
 	    if (tmp_scope == 0) {
-		  vpi_printf("SDF WARNING: %s:%d: ",
-		             vpi_get_str(vpiFile, sdf_callh),
-		             (int)vpi_get(vpiLineNo, sdf_callh));
+		  sdf_warn_file_line(sdf_lineno);
 		  vpi_printf("Cannot find %s in scope %s.\n",
 			     buffer, vpi_get_str(vpiFullName, scope));
 		  break;
@@ -108,8 +113,7 @@ void sdf_select_instance(const char*celltype, const char*cellinst)
       else
 	    sdf_cur_cell = find_scope(scope, src);
       if (sdf_cur_cell == 0) {
-	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
-	               (int)vpi_get(vpiLineNo, sdf_callh));
+	    sdf_warn_file_line(sdf_lineno);
 	    vpi_printf("Unable to find %s in scope %s.\n",
 		       src, vpi_get_str(vpiFullName, scope));
 	    return;
@@ -117,16 +121,14 @@ void sdf_select_instance(const char*celltype, const char*cellinst)
 
 	/* The scope that matches should be a module. */
       if (vpi_get(vpiType,sdf_cur_cell) != vpiModule) {
-	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
-	               (int)vpi_get(vpiLineNo, sdf_callh));
+	    sdf_warn_file_line(sdf_lineno);
 	    vpi_printf("Scope %s in %s is not a module.\n",
 		       src, vpi_get_str(vpiFullName, scope));
       }
 
 	/* The matching scope (a module) should have the expected type. */
       if (strcmp(celltype,vpi_get_str(vpiDefName,sdf_cur_cell)) != 0) {
-	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
-	               (int)vpi_get(vpiLineNo, sdf_callh));
+	    sdf_warn_file_line(sdf_lineno);
 	    vpi_printf("Module %s in %s is not a %s; it is a ", src,
 		       vpi_get_str(vpiFullName, scope), celltype);
 	    vpi_printf("%s\n", vpi_get_str(vpiDefName, sdf_cur_cell));
@@ -146,7 +148,8 @@ static const char*edge_str(int vpi_edge)
 }
 
 void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
-		       const struct sdf_delval_list_s*delval_list)
+                       const struct sdf_delval_list_s*delval_list,
+                       const int sdf_lineno)
 {
       vpiHandle iter, path;
       int match_count = 0;
@@ -211,8 +214,7 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
       }
 
       if (match_count == 0) {
-	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
-	               (int)vpi_get(vpiLineNo, sdf_callh));
+	    sdf_warn_file_line(sdf_lineno);
 	    vpi_printf("Unable to match ModPath %s%s -> %s in %s\n",
 		       edge_str(vpi_edge), src, dst,
 		       vpi_get_str(vpiFullName, sdf_cur_cell));
@@ -317,6 +319,7 @@ static PLI_INT32 sys_sdf_annotate_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    free(fname);
 	    return 0;
       }
+      sdf_fname = fname;
 
 	/* The optional second argument is the scope to annotate. */
       sdf_scope = vpi_scan(argv);
@@ -332,6 +335,7 @@ static PLI_INT32 sys_sdf_annotate_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       sdf_callh = 0;
 
       fclose(sdf_fd);
+      sdf_fname = NULL;
       free(fname);
       return 0;
 }

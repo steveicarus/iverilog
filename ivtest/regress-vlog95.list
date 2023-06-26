@@ -818,6 +818,7 @@ br1003c			normal,-g2009		ivltests gold=br1003c-vlog95.gold
 br1003d			normal,-g2009		ivltests gold=br1003d-vlog95.gold
 br1007			normal,-Wselect-range	ivltests gold=br1007-vlog95.gold
 br_gh230		RE			ivltests gold=br_gh230-vlog95.gold
+br_gh889		normal,-gspecify	ivltests gold=br_gh889-vlog95.gold
 eofmt_percent		normal			ivltests gold=eofmt_percent-vlog95.gold
 fatal_et_al		normal			ivltests gold=fatal_et_al-vlog95.gold
 fdisplay3		RE			ivltests gold=fdisplay3-vlog95.gold
