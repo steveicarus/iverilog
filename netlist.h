@@ -1,7 +1,7 @@
 #ifndef IVL_netlist_H
 #define IVL_netlist_H
 /*
- * Copyright (c) 1998-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2023 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -4204,7 +4204,7 @@ class NetEBAdd : public NetEBinary {
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
-      NetExpr  * eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
       NetECReal* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
@@ -4225,7 +4225,7 @@ class NetEBDiv : public NetEBinary {
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
-      NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
       NetExpr* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
@@ -4249,13 +4249,13 @@ class NetEBBits : public NetEBinary {
       NetEBBits(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
       ~NetEBBits();
 
-      virtual NetEBBits* dup_expr() const;
-      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
+      virtual NetEBBits* dup_expr() const override;
+      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root) override;
 
       ivl_variable_type_t expr_type() const override;
 
     private:
-      NetEConst* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      virtual NetEConst* eval_arguments_(const NetExpr*l, const NetExpr*r) const override;
 };
 
 /*
@@ -4287,7 +4287,7 @@ class NetEBComp : public NetEBinary {
     private:
       NetEConst* must_be_leeq_(const NetExpr*le, const verinum&rv, bool eq_flag) const;
 
-      NetEConst*eval_arguments_(const NetExpr*le, const NetExpr*re) const;
+      virtual NetEConst*eval_arguments_(const NetExpr*le, const NetExpr*re) const;
       NetEConst*eval_eqeq_(bool ne_flag, const NetExpr*le, const NetExpr*re) const;
       NetEConst*eval_eqeq_real_(bool ne_flag, const NetExpr*le, const NetExpr*re) const;
       NetEConst*eval_less_(const NetExpr*le, const NetExpr*re) const;
@@ -4312,13 +4312,13 @@ class NetEBLogic : public NetEBinary {
       NetEBLogic(char op, NetExpr*l, NetExpr*r);
       ~NetEBLogic();
 
-      virtual NetEBLogic* dup_expr() const;
-      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
+      virtual NetEBLogic* dup_expr() const override;
+      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root) override;
 
       ivl_variable_type_t expr_type() const override;
 
     private:
-      NetEConst* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      virtual NetEConst* eval_arguments_(const NetExpr*l, const NetExpr*r) const override;
 };
 
 /*
@@ -4337,7 +4337,7 @@ class NetEBMinMax : public NetEBinary {
       virtual ivl_variable_type_t expr_type() const;
 
     private:
-      NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
       NetExpr* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
@@ -4356,7 +4356,7 @@ class NetEBMult : public NetEBinary {
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
-      NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
       NetExpr* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
@@ -4375,7 +4375,7 @@ class NetEBPow : public NetEBinary {
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
-      NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
       NetExpr* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
@@ -4395,15 +4395,15 @@ class NetEBShift : public NetEBinary {
 
 	// A shift expression only needs the left expression to have a
 	// definite width to give the expression a definite width.
-      virtual bool has_width() const;
+      virtual bool has_width() const override;
 
-      virtual NetEBShift* dup_expr() const;
-      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
+      virtual NetEBShift* dup_expr() const override;
+      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root) override;
 
       ivl_variable_type_t expr_type() const override;
 
     private:
-      NetEConst* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      virtual NetEConst* eval_arguments_(const NetExpr*l, const NetExpr*r) const override;
 };
 
 
