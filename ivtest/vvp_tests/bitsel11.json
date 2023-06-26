@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "bitsel11.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
