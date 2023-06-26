@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for statements.
  *
- *  Copyright (C) 2008-2021  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2023  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1550,7 +1550,7 @@ int draw_casezx(vhdl_procedural *proc, stmt_container *container,
 }
 
 int draw_while(vhdl_procedural *proc, stmt_container *container,
-               ivl_statement_t stmt)
+               ivl_statement_t stmt, ivl_statement_t step=0)
 {
    // Generate the body inside a temporary container before
    // generating the test
@@ -1561,6 +1561,12 @@ int draw_while(vhdl_procedural *proc, stmt_container *container,
    int rc = draw_stmt(proc, &tmp_container, ivl_stmt_sub_stmt(stmt));
    if (rc != 0)
       return 1;
+   // When we are emitting a for as a while we need to add the step
+   if (step) {
+      rc = draw_assign(proc, &tmp_container, step);
+      if (rc != 0)
+         return rc;
+   }
 
    vhdl_expr *test = translate_expr(ivl_stmt_cond_expr(stmt));
    if (NULL == test)
@@ -1576,10 +1582,27 @@ int draw_while(vhdl_procedural *proc, stmt_container *container,
    vhdl_while_stmt *loop = new vhdl_while_stmt(test);
    draw_stmt(proc, loop->get_container(), ivl_stmt_sub_stmt(stmt));
 
+   // When we are emitting a for as a while we need to add the step
+   if (step) {
+      rc = draw_assign(proc, loop->get_container(), step);
+      if (rc != 0)
+         return rc;
+   }
+
    emit_wait_for_0(proc, loop->get_container(), stmt, test);
 
    container->add_stmt(loop);
    return 0;
+}
+
+int draw_for_loop(vhdl_procedural *proc, stmt_container *container,
+                  ivl_statement_t stmt)
+{
+   int rc = draw_assign(proc, container, ivl_stmt_init_stmt(stmt));
+   if (rc != 0)
+      return rc;
+
+   return draw_while(proc, container, stmt, ivl_stmt_step_stmt(stmt));
 }
 
 int draw_forever(vhdl_procedural *proc, stmt_container *container,
@@ -1668,6 +1691,8 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
       return draw_case(proc, container, stmt, is_last);
    case IVL_ST_WHILE:
       return draw_while(proc, container, stmt);
+   case IVL_ST_FORLOOP:
+      return draw_for_loop(proc, container, stmt);
    case IVL_ST_FOREVER:
       return draw_forever(proc, container, stmt);
    case IVL_ST_REPEAT:
