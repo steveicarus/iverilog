@@ -4289,10 +4289,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
       if (!name_tail.index.empty()) {
 	    const index_component_t&index_tail = name_tail.index.back();
-	      // Skip full array word net selects.
-	    if (!sr.net || (name_tail.index.size() > sr.net->unpacked_dimensions())) {
-		  use_sel = index_tail.sel;
-	    }
+	    use_sel = index_tail.sel;
       }
 
       unsigned use_width = UINT_MAX;
@@ -4380,13 +4377,12 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    }
       }
 
-      if (use_width != UINT_MAX) {
+      size_t use_depth = name_tail.index.size();
+      if (use_width != UINT_MAX && (!sr.net || use_depth > sr.net->unpacked_dimensions())) {
 	      // We have a bit/part select. Account for any remaining dimensions
 	      // beyond the indexed dimension.
-	    size_t use_depth = name_tail.index.size();
 	    if (sr.net) {
-		  if (use_depth >= sr.net->unpacked_dimensions())
-			use_depth -= sr.net->unpacked_dimensions();
+		  use_depth -= sr.net->unpacked_dimensions();
 		  use_width *= sr.net->slice_width(use_depth);
 	    }
 
@@ -4426,23 +4422,29 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 		  }
 	    }
 
-	    size_t use_depth = name_tail.index.size();
+	      // Unindexed indentifier
+	    if (use_width == UINT_MAX)
+		  use_width = 1;
 	      // Account for unpacked dimensions by assuming that the
 	      // unpacked dimensions are consumed first, so subtract
 	      // the unpacked dimensions from the dimension depth
 	      // useable for making the slice.
 	    if (use_depth >= sr.net->unpacked_dimensions()) {
 		  use_depth -= sr.net->unpacked_dimensions();
-
 	    } else {
-		    // In this case, we have a slice of an unpacked
-		    // array. This likely handled as an array instead
-		    // of a slice. Hmm...
+		    // In this case, we have an unpacked array or a slice of an
+		    // unpacked array. These expressions strictly speaking do
+		    // not have a width. But we use the value calculated here
+		    // for things $bits(), so return the full number of bits of
+		    // the expression.
+		  const auto &dims = sr.net->unpacked_dims();
+		  for (size_t idx = use_depth; idx < dims.size(); idx++)
+			use_width *= dims[idx].width();
 		  use_depth = 0;
 	    }
 
 	    expr_type_   = sr.net->data_type();
-	    expr_width_  = sr.net->slice_width(use_depth);
+	    expr_width_  = sr.net->slice_width(use_depth) * use_width;
 	    min_width_   = expr_width_;
 	    signed_flag_ = sr.net->get_signed();
 	    if (debug_elaborate) {
@@ -4646,6 +4648,10 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       result = elaborate_expr_(des, scope, expr_wid, flags);
       if (!result || !type_is_vectorable(expr_type_))
+	    return result;
+
+      auto net_type = result->net_type();
+      if (net_type && !net_type->packed())
 	    return result;
 
       return pad_to_width(result, expr_wid, signed_flag_, *this);

@@ -3,6 +3,7 @@
 # describes the test.
 
 array_packed_write_read		vvp_tests/array_packed_write_read.json
+bits4				vvp_tests/bits4.json
 bitsel11			vvp_tests/bitsel11.json
 br_gh13a			vvp_tests/br_gh13a.json
 br_gh13a-vlog95			vvp_tests/br_gh13a-vlog95.json
