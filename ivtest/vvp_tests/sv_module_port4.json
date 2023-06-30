@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_module_port4.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
