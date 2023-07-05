@@ -37,6 +37,7 @@ class PGate;
 class PGenerate;
 class PModport;
 class PSpecPath;
+class PTimingCheck;
 class PTask;
 class PFunction;
 class PWire;
@@ -136,7 +137,9 @@ class Module : public PScopeExtra, public PNamedItem {
            program blocks. */
       std::map<perm_string,PModport*> modports;
 
+	/* List for specify paths and timing checks */
       std::list<PSpecPath*> specify_paths;
+      std::list<PTimingCheck*> timing_checks;
 
 	// The mod_name() is the name of the module type.
       perm_string mod_name() const { return pscope_name(); }
@@ -170,6 +173,7 @@ class Module : public PScopeExtra, public PNamedItem {
 
     private:
       void dump_specparams_(std::ostream&out, unsigned indent) const;
+      void dump_timingchecks_(std::ostream&out, unsigned indent) const;
       std::list<PGate*> gates_;
 
     private: // Not implemented

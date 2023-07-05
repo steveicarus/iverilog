@@ -28,6 +28,7 @@
 # include  "pform.h"
 # include  "Statement.h"
 # include  "PSpec.h"
+# include  "PTimingCheck.h"
 # include  "PPackage.h"
 # include  <stack>
 # include  <cstring>
@@ -86,13 +87,6 @@ static pform_name_t* pform_create_super(void)
       res->push_back(name);
       return res;
 }
-
-/* This is used to keep track of the extra arguments after the notifier
- * in the $setuphold and $recrem timing checks. This allows us to print
- * a warning message that the delayed signals will not be created. We
- * need to do this since not driving these signals creates real
- * simulation issues. */
-static unsigned args_after_notifier;
 
 /* The rules sometimes push attributes into a global context where
    sub-rules may grab them. This makes parser rules a little easier to
@@ -530,6 +524,8 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
       PSpecPath* specpath;
       std::list<index_component_t> *dimensions;
 
+      PTimingCheck::event_t* timing_check_event;
+
       LexicalScope::lifetime_t lifetime;
 
       enum typedef_t::basic_type typedef_basic_type;
@@ -696,6 +692,9 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 %type <let_port_itm> let_port_item
 
 %type <pform_name> hierarchy_identifier implicit_class_handle class_hierarchy_identifier
+%type <pform_name> spec_notifier_opt spec_notifier spec_condition_opt
+%type <pform_name> spec_condition spec_delayed_opt spec_delayed
+%type <timing_check_event> spec_reference_event
 %type <expr>  assignment_pattern expression expr_mintypmax
 %type <expr>  expr_primary_or_typename expr_primary
 %type <expr>  class_new dynamic_array_new
@@ -5900,72 +5899,167 @@ specify_item
 	yyerrok;
       }
   | K_Sfullskew '(' spec_reference_event ',' spec_reference_event
-    ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
-      { delete $7;
-	delete $9;
+    ',' delay_value ',' delay_value spec_notifier_opt /* TODO event_based_flag remain_active_flag */ ')' ';'
+      {
+	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	delete $3; // spec_reference_event
+	delete $5; // spec_reference_event
+	delete $7; // delay_value
+	delete $9; // delay_value
+	if($10) delete $10; // spec_notifier_opt
       }
   | K_Shold '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
-      { delete $7;
+      {
+	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	delete $3; // spec_reference_event
+	delete $5; // spec_reference_event
+	delete $7; // delay_value
+	if($8) delete $8; // spec_notifier_opt
       }
   | K_Snochange '(' spec_reference_event ',' spec_reference_event
 	  ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
-      { delete $7;
-	delete $9;
+      {
+	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	delete $3; // spec_reference_event
+	delete $5; // spec_reference_event
+	delete $7; // delay_value
+	delete $9; // delay_value
+	if($10) delete $10; // spec_notifier_opt
       }
   | K_Speriod '(' spec_reference_event ',' delay_value
     spec_notifier_opt ')' ';'
-      { delete $5;
+      {
+	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	delete $3; // spec_reference_event
+	delete $5; // delay_value
+	if($6) delete $6; // spec_notifier_opt
       }
   | K_Srecovery '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
-      { delete $7;
+      {
+	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	delete $3; // spec_reference_event
+	delete $5; // spec_reference_event
+	delete $7; // delay_value
+	if($8) delete $8; // spec_notifier_opt
       }
   | K_Srecrem '(' spec_reference_event ',' spec_reference_event
-    ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
-      { delete $7;
-	 delete $9;
+    ',' expr_mintypmax ',' expr_mintypmax spec_notifier_opt spec_condition_opt
+    spec_condition_opt spec_delayed_opt spec_delayed_opt ')' ';'
+      {
+	cerr << @3 << ": warning: Timing checks are not supported. ";
+	if ($13 != nullptr || $14 != nullptr)
+	{
+		cerr << "Delayed reference and data signals become copies of the"
+		<< " original reference and data signals." << endl;
+	}
+	else
+	{
+		cerr << endl;
+	}
+
+	PRecRem*rec_rem = pform_make_rec_rem(@1, *$3, *$5, *$7, *$9, $10, $11, $12, $13, $14);
+	pform_module_timing_check((PTimingCheck*)rec_rem);
+
+	delete $3; // spec_reference_event
+	delete $5; // spec_reference_event
+	delete $7; // delay_value
+	delete $9; // delay_value
       }
   | K_Sremoval '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
-      { delete $7;
+      {
+	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	delete $3; // spec_reference_event
+	delete $5; // spec_reference_event
+	delete $7; // delay_value
+	if($8) delete $8; // spec_notifier_opt
       }
   | K_Ssetup '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
-      { delete $7;
+      {
+	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	delete $3; // spec_reference_event
+	delete $5; // spec_reference_event
+	delete $7; // delay_value
+	if($8) delete $8; // spec_notifier_opt
       }
   | K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
-    ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
-      { delete $7;
-	delete $9;
+    ',' expr_mintypmax ',' expr_mintypmax spec_notifier_opt spec_condition_opt
+    spec_condition_opt spec_delayed_opt spec_delayed_opt ')' ';'
+      {
+	cerr << @3 << ": warning: Timing checks are not supported. ";
+	if ($13 != nullptr || $14 != nullptr)
+	{
+		cerr << "Delayed reference and data signals become copies of the"
+		<< " original reference and data signals." << endl;
+	}
+	else
+	{
+		cerr << endl;
+	}
+
+	PSetupHold*setup_hold = pform_make_setup_hold(@1, *$3, *$5, *$7, *$9, $10, $11, $12, $13, $14);
+	pform_module_timing_check((PTimingCheck*)setup_hold);
+
+	delete $3; // spec_reference_event
+	delete $5; // spec_reference_event
+	delete $7; // delay_value
+	delete $9; // delay_value
       }
   | K_Sskew '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
-      { delete $7;
+      {
+	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	delete $3; // spec_reference_event
+	delete $5; // spec_reference_event
+	delete $7; // delay_value
+	if($8) delete $8; // spec_notifier_opt
       }
   | K_Stimeskew '(' spec_reference_event ',' spec_reference_event
-    ',' delay_value spec_notifier_opt ')' ';'
-      { delete $7;
+    ',' delay_value spec_notifier_opt /* TODO event_based_flag remain_active_flag */ ')' ';'
+      {
+	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	delete $3; // spec_reference_event
+	delete $5; // spec_reference_event
+	delete $7; // delay_value
+	if($8) delete $8; // spec_notifier_opt
       }
   | K_Swidth '(' spec_reference_event ',' delay_value ',' expression
     spec_notifier_opt ')' ';'
-      { delete $5;
-	delete $7;
+      {
+	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	delete $3; // spec_reference_event
+	delete $5; // delay_value
+	delete $7; // expression
+	if($8) delete $8;
       }
   | K_Swidth '(' spec_reference_event ',' delay_value ')' ';'
-      { delete $5;
+      {
+	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	delete $3; // spec_reference_event
+	delete $5; // delay_value
       }
   | K_pulsestyle_onevent specify_path_identifiers ';'
-      { delete $2;
+      {
+	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	delete $2; // specify_path_identifiers
       }
   | K_pulsestyle_ondetect specify_path_identifiers ';'
-      { delete $2;
+      {
+	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	delete $2; // specify_path_identifiers
       }
   | K_showcancelled specify_path_identifiers ';'
-      { delete $2;
+      {
+	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	delete $2; // specify_path_identifiers
       }
   | K_noshowcancelled specify_path_identifiers ';'
-      { delete $2;
+      {
+	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	delete $2; // specify_path_identifiers
       }
   ;
 
@@ -6110,47 +6204,8 @@ specify_path_identifiers
   ;
 
 specparam
-  : IDENTIFIER '=' expression
-      { PExpr*tmp = $3;
-	pform_set_specparam(@1, lex_strings.make($1), specparam_active_range, tmp);
-	delete[]$1;
-      }
-  | IDENTIFIER '=' expression ':' expression ':' expression
-      { PExpr*tmp = 0;
-	switch (min_typ_max_flag) {
-	    case MIN:
-	      tmp = $3;
-	      delete $5;
-	      delete $7;
-	      break;
-	    case TYP:
-	      delete $3;
-	      tmp = $5;
-	      delete $7;
-	      break;
-	    case MAX:
-	      delete $3;
-	      delete $5;
-	      tmp = $7;
-	      break;
-	}
-	if (min_typ_max_warn > 0) {
-	      cerr << tmp->get_fileline() << ": warning: Choosing ";
-	      switch (min_typ_max_flag) {
-	          case MIN:
-		    cerr << "min";
-		    break;
-		  case TYP:
-		    cerr << "typ";
-		    break;
-		  case MAX:
-		    cerr << "max";
-		    break;
-	      }
-	      cerr << " expression." << endl;
-	      min_typ_max_warn -= 1;
-	}
-	pform_set_specparam(@1, lex_strings.make($1), specparam_active_range, tmp);
+  : IDENTIFIER '=' expr_mintypmax
+      { pform_set_specparam(@1, lex_strings.make($1), specparam_active_range, $3);
 	delete[]$1;
       }
   | PATHPULSE_IDENTIFIER '=' expression
@@ -6183,31 +6238,82 @@ spec_polarity
   |      { $$ = 0;   }
   ;
 
+// TODO spec_controlled_reference_event
 spec_reference_event
-  : K_posedge expression
-      { delete $2; }
-  | K_negedge expression
-      { delete $2; }
-  | K_posedge expr_primary K_TAND expression
-      { delete $2;
-        delete $4;
+  : hierarchy_identifier
+      { PTimingCheck::event_t* event = new PTimingCheck::event_t;
+	event->name = *$1;
+	event->posedge = false;
+	event->negedge = false;
+	event->condition = nullptr;
+	delete $1;
+	$$ = event;
       }
-  | K_negedge expr_primary K_TAND expression
-      { delete $2;
-        delete $4;
+  | hierarchy_identifier K_TAND expression
+      { PTimingCheck::event_t* event = new PTimingCheck::event_t;
+	event->name = *$1;
+	event->posedge = false;
+	event->negedge = false;
+	event->condition = $3;
+	delete $1;
+	$$ = event;
       }
-  | K_edge '[' edge_descriptor_list ']' expr_primary
-      { delete $5; }
-  | K_edge '[' edge_descriptor_list ']' expr_primary K_TAND expression
-      { delete $5;
-        delete $7;
+  | K_posedge hierarchy_identifier
+      { PTimingCheck::event_t* event = new PTimingCheck::event_t;
+	event->name = *$2;
+	event->posedge = true;
+	event->negedge = false;
+	event->condition = nullptr;
+	delete $2;
+	$$ = event;
       }
-  | expr_primary K_TAND expression
-      { delete $1;
-        delete $3;
+  | K_negedge hierarchy_identifier
+      { PTimingCheck::event_t* event = new PTimingCheck::event_t;
+	event->name = *$2;
+	event->posedge = false;
+	event->negedge = true;
+	event->condition = nullptr;
+	delete $2;
+	$$ = event;
       }
-  | expr_primary
-      { delete $1; }
+  | K_posedge hierarchy_identifier K_TAND expression
+      { PTimingCheck::event_t* event = new PTimingCheck::event_t;
+	event->name = *$2;
+	event->posedge = true;
+	event->negedge = false;
+	event->condition = $4;
+	delete $2;
+	$$ = event;
+      }
+  | K_negedge hierarchy_identifier K_TAND expression
+      { PTimingCheck::event_t* event = new PTimingCheck::event_t;
+	event->name = *$2;
+	event->posedge = false;
+	event->negedge = true;
+	event->condition = $4;
+	delete $2;
+	$$ = event;
+      }
+  | K_edge '[' edge_descriptor_list ']' hierarchy_identifier
+      { PTimingCheck::event_t* event = new PTimingCheck::event_t;
+	event->name = *$5;
+	event->posedge = false;
+	event->negedge = false;
+	// TODO add edge descriptors
+	event->condition = nullptr;
+	delete $5;
+	$$ = event;
+      }
+  | K_edge '[' edge_descriptor_list ']' hierarchy_identifier K_TAND expression
+      { PTimingCheck::event_t* event = new PTimingCheck::event_t;
+	event->name = *$5;
+	event->posedge = false;
+	event->negedge = false;
+	// TODO add edge descriptors
+	event->condition = $7;
+	delete $5;
+	$$ = event;
+      }
   ;
 
   /* The edge_descriptor is detected by the lexor as the various
@@ -6221,29 +6327,44 @@ edge_descriptor_list
 
 spec_notifier_opt
   : /* empty */
-      {  }
+      { $$ = 0; }
   | spec_notifier
-      {  }
+      { $$ = $1; }
   ;
+
 spec_notifier
   : ','
-      { args_after_notifier = 0; }
+      { $$ = 0; }
   | ','  hierarchy_identifier
-      { args_after_notifier = 0; delete $2; }
-  | spec_notifier ','
-      {  args_after_notifier += 1; }
-  | spec_notifier ',' hierarchy_identifier
-      { args_after_notifier += 1;
-	if (args_after_notifier >= 3)  {
-              cerr << @3 << ": warning: Timing checks are not supported "
-		            "and delayed signal \"" << *$3
-		   << "\" will not be driven." << endl;
-	}
-        delete $3;
-      }
-  /* How do we match this path? */
-  | IDENTIFIER
-      { args_after_notifier = 0; delete[]$1; }
+      { $$ = $2; }
+  ;
+
+spec_condition_opt
+  : /* empty */
+      { $$ = 0; }
+  | spec_condition
+      { $$ = $1; }
+  ;
+
+spec_condition
+  : ','
+      { $$ = 0; }
+  | ','  hierarchy_identifier
+      { $$ = $2; }
+  ;
+
+spec_delayed_opt
+  : /* empty */
+      { $$ = 0; }
+  | spec_delayed
+      { $$ = $1; }
+  ;
+
+spec_delayed
+  : ','
+      { $$ = 0; }
+  | ','  hierarchy_identifier
+      { $$ = $2; }
   ;
 
 subroutine_call

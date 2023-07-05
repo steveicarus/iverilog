@@ -30,6 +30,7 @@
 # include  "PTask.h"
 # include  "PUdp.h"
 # include  "PWire.h"
+# include  "PTimingCheck.h"
 # include  "verinum.h"
 # include  "discipline.h"
 # include  <iostream>
@@ -428,6 +429,33 @@ extern PSpecPath*pform_make_specify_edge_path(const struct vlltype&li,
 extern PSpecPath*pform_assign_path_delay(PSpecPath*obj, std::list<PExpr*>*delays);
 
 extern void pform_module_specify_path(PSpecPath*obj);
+
+/*
+ * Functions related to timing checks.
+ */
+extern PRecRem* pform_make_rec_rem(const struct vlltype&li,
+			    PTimingCheck::event_t&reference_event,
+			    PTimingCheck::event_t&data_event,
+			    PExpr&setup_limit,
+			    PExpr&hold_limit,
+			    pform_name_t* notifier,
+			    pform_name_t* timestamp_cond,
+			    pform_name_t* timecheck_cond,
+			    pform_name_t* delayed_reference,
+			    pform_name_t* delayed_data
+			    );
+extern PSetupHold* pform_make_setup_hold(const struct vlltype&li,
+			    PTimingCheck::event_t&reference_event,
+			    PTimingCheck::event_t&data_event,
+			    PExpr&setup_limit,
+			    PExpr&hold_limit,
+			    pform_name_t* notifier,
+			    pform_name_t* timestamp_cond,
+			    pform_name_t* timecheck_cond,
+			    pform_name_t* delayed_reference,
+			    pform_name_t* delayed_data
+			    );
+extern void pform_module_timing_check(PTimingCheck*obj);
 
 /*
  * pform_make_behavior creates processes that are declared with always
