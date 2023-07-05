@@ -6320,7 +6320,7 @@ void PRecRem::elaborate(Design*des, NetScope*scope) const
       if (delayed_reference_ != nullptr)
       {
 	      if (debug_elaborate) {
-		    cerr << get_fileline() << ": PRecRem::elaborate: Assigning"
+		    cerr << get_fileline() << ": PRecRem::elaborate: Assigning "
 		       << reference_event_.name
 		       << " to " << *delayed_reference_ << endl;
 	      }
@@ -6349,9 +6349,9 @@ void PRecRem::elaborate(Design*des, NetScope*scope) const
       if (delayed_data_ != nullptr)
       {
 	      if (debug_elaborate) {
-		    cerr << get_fileline() << ": PRecRem::elaborate: Assigning"
-		       << reference_event_.name
-		       << " to " << *delayed_reference_ << endl;
+		    cerr << get_fileline() << ": PRecRem::elaborate: Assigning "
+		       << data_event_.name
+		       << " to " << *delayed_data_ << endl;
 	      }
 
 	      NetNet*sig = des->find_signal(scope, data_event_.name);
