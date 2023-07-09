@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2023 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -4882,6 +4882,29 @@ cerr << endl;
 		  cerr << get_fileline() << ": error: "
 			  "Failed to evaluate event expression '"
 		       << *expr_[idx] << "'." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
+	      // posedge, negedge and edge are not allowed on real expressions.
+	    if ((tmp->expr_type() == IVL_VT_REAL) &&
+	        (expr_[idx]->type() != PEEvent::ANYEDGE)) {
+		  cerr << get_fileline() << ": error: '";
+		  switch (expr_[idx]->type()) {
+		    case PEEvent::POSEDGE:
+			cerr << "posedge";
+			break;
+		    case PEEvent::NEGEDGE:
+			cerr << "negedge";
+			break;
+		    case PEEvent::EDGE:
+			cerr << "edge";
+			break;
+		    default:
+			ivl_assert(*this, 0);
+		  }
+		  cerr << "' cannot be used with real expressions '"
+		       << *expr_[idx]->expr() << "'." << endl;
 		  des->errors += 1;
 		  continue;
 	    }

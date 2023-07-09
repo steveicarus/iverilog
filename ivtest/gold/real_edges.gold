@@ -1,0 +1,4 @@
+./ivltests/real_edges.v:5: error: 'posedge' cannot be used with real expressions 'rval'.
+./ivltests/real_edges.v:6: error: 'negedge' cannot be used with real expressions 'rval'.
+./ivltests/real_edges.v:7: error: 'edge' cannot be used with real expressions 'rval'.
+3 error(s) during elaboration.
