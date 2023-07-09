@@ -1,0 +1,20 @@
+./ivltests/bitsel_real_idx.v:11: error: Index expression for in[+ridx] cannot be a real value.
+./ivltests/bitsel_real_idx.v:11: error: Unable to elaborate r-value: in[ridx]
+./ivltests/bitsel_real_idx.v:12: error: Index expression for in[0.500000] cannot be a real value.
+./ivltests/bitsel_real_idx.v:12: error: Unable to elaborate r-value: in[0.500000]
+./ivltests/bitsel_real_idx.v:13: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/bitsel_real_idx.v:13: error: Bit select expressions must be a constant integral value.
+./ivltests/bitsel_real_idx.v:13:      : This expression violates that rule: ridx
+./ivltests/bitsel_real_idx.v:14: error: Bit select expressions must be a constant integral value.
+./ivltests/bitsel_real_idx.v:14:      : This expression violates that rule: 0.500000
+./ivltests/bitsel_real_idx.v:20: error: Index expression for in[+ridx] cannot be a real value.
+./ivltests/bitsel_real_idx.v:21: error: Index expression for in[0.500000] cannot be a real value.
+./ivltests/bitsel_real_idx.v:22: error: Index expression for vlv[+ridx] cannot be a real value.
+./ivltests/bitsel_real_idx.v:23: error: Index expression for vlc[0.500000] cannot be a real value.
+./ivltests/bitsel_real_idx.v:24: error: Index expression for pval[+ridx] cannot be a real value.
+./ivltests/bitsel_real_idx.v:25: error: Index expression for pval[0.500000] cannot be a real value.
+./ivltests/bitsel_real_idx.v:26: error: Index expression for sval[+ridx] cannot be a real value.
+./ivltests/bitsel_real_idx.v:27: error: Index expression for sval[0.500000] cannot be a real value.
+./ivltests/bitsel_real_idx.v:28: error: Index expression for strv[+ridx] cannot be a real value.
+./ivltests/bitsel_real_idx.v:29: error: Index expression for strc[0.500000] cannot be a real value.
+17 error(s) during elaboration.

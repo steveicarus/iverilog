@@ -1,0 +1,99 @@
+./ivltests/partsel_real_idx.v:13: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:13: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:13:      : The msb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:13: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:13: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:13:      : The msb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:14: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:14:      : The msb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:14: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:14:      : The msb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:15: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:15: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:15:      : The lsb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:15: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:15: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:15:      : The lsb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:16: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:16:      : The lsb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:16: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:16:      : The lsb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:17: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:17: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:17:      : The msb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:18: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:18:      : The msb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:19: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:19: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:19:      : The lsb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:20: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:20:      : The lsb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:26: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:26: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:26:      : The msb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:26: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:26: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:26:      : The msb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:27: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:27:      : The msb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:27: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:27:      : The msb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:28: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:28: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:28:      : The lsb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:28: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:28: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:28:      : The lsb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:29: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:29:      : The lsb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:29: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:29:      : The lsb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:30: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:30: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:30:      : The msb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:31: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:31:      : The msb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:32: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:32: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:32:      : The lsb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:33: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:33:      : The lsb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:34: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:34: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:34:      : The msb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:34: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:34: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:34:      : The msb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:35: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:35:      : The msb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:35: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:35:      : The msb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:36: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:36: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:36:      : The lsb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:36: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:36: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:36:      : The lsb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:37: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:37:      : The lsb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:37: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:37:      : The lsb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:38: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:38: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:38:      : The msb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:38: error: Cannot take the part select of a string ('sval').
+./ivltests/partsel_real_idx.v:39: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:39:      : The msb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:39: error: Cannot take the part select of a string ('sval').
+./ivltests/partsel_real_idx.v:40: error: A reference to a net or variable (`ridx') is not allowed in a constant expression.
+./ivltests/partsel_real_idx.v:40: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:40:      : The lsb expression violates that rule: ridx
+./ivltests/partsel_real_idx.v:40: error: Cannot take the part select of a string ('sval').
+./ivltests/partsel_real_idx.v:41: error: Part select expressions must be constant integral values.
+./ivltests/partsel_real_idx.v:41:      : The lsb expression violates that rule: 0.500000
+./ivltests/partsel_real_idx.v:41: error: Cannot take the part select of a string ('sval').
+./ivltests/partsel_real_idx.v:42: error: Cannot part select assign to a string ('strvm').
+./ivltests/partsel_real_idx.v:43: error: Cannot part select assign to a string ('strcm').
+./ivltests/partsel_real_idx.v:44: error: Cannot part select assign to a string ('strvl').
+./ivltests/partsel_real_idx.v:45: error: Cannot part select assign to a string ('strcl').
+62 error(s) during elaboration.

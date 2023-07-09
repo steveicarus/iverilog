@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2023 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -508,6 +508,14 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
       NetExpr*mux = elab_and_eval(des, scope, index_tail.msb, -1);
       long lsb = 0;
 
+      if (mux && mux->expr_type() == IVL_VT_REAL) {
+           cerr << get_fileline() << ": error: Index expression for "
+                << reg->name() << "[" << *mux
+                << "] cannot be a real value." << endl;
+           des->errors += 1;
+           return false;
+      }
+
       if (NetEConst*index_con = dynamic_cast<NetEConst*> (mux)) {
 	      // The index has a constant defined value.
 	    if (index_con->value().is_defined()) {
@@ -685,6 +693,13 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 				       NetScope*scope,
 				       NetAssign_*lv) const
 {
+      if (lv->sig()->data_type() == IVL_VT_STRING) {
+           cerr << get_fileline() << ": error: Cannot part select assign to a string ('"
+                << lv->sig()->name() << "')." << endl;
+           des->errors += 1;
+           return false;
+      }
+
       list<long> prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, lv->sig(), prefix_indices);
       ivl_assert(*this, rc);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2023 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -4047,11 +4047,11 @@ bool PEIdent::calculate_bits_(Design*des, NetScope*scope,
       NetEConst*msb_c = dynamic_cast<NetEConst*>(msb_ex);
       if (msb_c == 0) {
 	    cerr << index_tail.msb->get_fileline() << ": error: "
-		  "Bit select expressions must be constant."
-		 << endl;
+	            "Bit select expressions must be a constant integral value."
+	         << endl;
 	    cerr << index_tail.msb->get_fileline() << ":      : "
-                  "This msb expression violates the rule: "
-                 << *index_tail.msb << endl;
+	            "This expression violates that rule: "
+	         << *index_tail.msb << endl;
 	    des->errors += 1;
               /* Attempt to recover from error. */
             msb = 0;
@@ -4089,11 +4089,11 @@ bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
       NetEConst*lsb_c = dynamic_cast<NetEConst*>(lsb_ex);
       if (lsb_c == 0) {
 	    cerr << index_tail.lsb->get_fileline() << ": error: "
-		  "Part select expressions must be constant."
-		 << endl;
+	            "Part select expressions must be constant integral values."
+	         << endl;
 	    cerr << index_tail.lsb->get_fileline() << ":      : "
-		  "This lsb expression violates the rule: "
-		 << *index_tail.lsb << endl;
+	            "The lsb expression violates that rule: "
+	         << *index_tail.lsb << endl;
 	    des->errors += 1;
               /* Attempt to recover from error. */
             lsb = 0;
@@ -4107,11 +4107,11 @@ bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
       NetEConst*msb_c = dynamic_cast<NetEConst*>(msb_ex);
       if (msb_c == 0) {
 	    cerr << index_tail.msb->get_fileline() << ": error: "
-		  "Part select expressions must be constant."
-		 << endl;
+	            "Part select expressions must be constant integral values."
+	         << endl;
 	    cerr << index_tail.msb->get_fileline() << ":      : "
-                  "This msb expression violates the rule: "
-                 << *index_tail.msb << endl;
+	            "The msb expression violates that rule: "
+	         << *index_tail.msb << endl;
 	    des->errors += 1;
               /* Attempt to recover from error. */
             msb = lsb;
@@ -4714,8 +4714,8 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 	// then create a NetESignal node to handle it.
       if (sr.net != 0) {
             if (NEED_CONST & flags) {
-                  cerr << get_fileline() << ": error: A reference to a wire "
-                          "or reg (`" << path_ << "') is not allowed in "
+                  cerr << get_fileline() << ": error: A reference to a net "
+                          "or variable (`" << path_ << "') is not allowed in "
                           "a constant expression." << endl;
 	          des->errors += 1;
                   return 0;
@@ -4723,7 +4723,7 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
             if (sr.net->scope()->type() == NetScope::MODULE) {
                   if (scope->need_const_func()) {
                         cerr << get_fileline() << ": error: A reference to a "
-                                "non-local wire or reg (`" << path_ << "') is "
+                                "non-local net or variable (`" << path_ << "') is "
                                 "not allowed in a constant function." << endl;
                         des->errors += 1;
                         return 0;
@@ -5141,12 +5141,20 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
       NetExpr*sel = elab_and_eval(des, scope, index_tail.msb, -1, need_const);
       if (sel == 0) return 0;
 
+      perm_string name = peek_tail_name(path_);
+
+      if (sel->expr_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: Index expression for "
+	         << name << "[" << *sel
+	         << "] cannot be a real value." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: Calculate bit select "
-		 << "[" << *sel << "] from range "
+		 << name << "[" << *sel << "] from range "
 		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
-
-      perm_string name = peek_tail_name(path_);
 
 	// Handle the special case that the selection is constant. In this
 	// case, just precalculate the entire constant result.
@@ -5767,6 +5775,13 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 				           NetESignal*net, NetScope*,
                                            unsigned expr_wid) const
 {
+      if (net->sig()->data_type() == IVL_VT_STRING) {
+	    cerr << get_fileline() << ": error: Cannot take the part select of a string ('"
+	         << net->name() << "')." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       list<long> prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
       if (!rc)
@@ -6191,6 +6206,14 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
       NetExpr*mux = elab_and_eval(des, scope, index_tail.msb, -1, need_const);
       if (!mux)
 	    return 0;
+
+      if (mux->expr_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: Index expression for "
+	         << net->sig()->name() << "[" << *mux
+	         << "] cannot be a real value." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       if (const netdarray_t*darray = net->sig()->darray_type()) {
 	      // Special case: This is a select of a dynamic

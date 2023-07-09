@@ -1,6 +1,6 @@
 ./ivltests/sv_queue_string_fail.v:4: error: queue bound must be positive (-1).
 ./ivltests/sv_queue_string_fail.v:5: error: queue bound must be defined.
-./ivltests/sv_queue_string_fail.v:6: error: A reference to a wire or reg (`bound') is not allowed in a constant expression.
+./ivltests/sv_queue_string_fail.v:6: error: A reference to a net or variable (`bound') is not allowed in a constant expression.
 ./ivltests/sv_queue_string_fail.v:6: error: queue bound must be constant.
 ./ivltests/sv_queue_string_fail.v:9: error: size() method takes no arguments
 ./ivltests/sv_queue_string_fail.v:10: error: pop_front() method takes no arguments
