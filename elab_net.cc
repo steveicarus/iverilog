@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2023 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -234,9 +234,11 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		NetExpr*tmp_ex = elab_and_eval(des, scope, index_tail.msb, -1, true);
 		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
 		if (!tmp) {
-		      cerr << get_fileline() << ": error: indexed part select of "
-		           << sig->name()
-		           << " must be a constant in this context." << endl;
+		      cerr << get_fileline() << ": error: Indexed part select "
+		              "base expression must be a constant integral value "
+			      "in this context." << endl;
+		      cerr << get_fileline() << ":      : This expression "
+			      "violates that rule: " << *index_tail.msb << endl;
 		      des->errors += 1;
 		      return 0;
 		}

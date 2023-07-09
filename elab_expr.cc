@@ -4146,10 +4146,10 @@ bool PEIdent::calculate_up_do_width_(Design*des, NetScope*scope,
       wid = wid_c ? wid_c->value().as_ulong() : 0;
       if (wid == 0) {
 	    cerr << index_tail.lsb->get_fileline() << ": error: "
-		  "Indexed part widths must be constant and greater than zero."
+		  "Indexed part select width must be an integral constants greater than zero."
 		 << endl;
 	    cerr << index_tail.lsb->get_fileline() << ":      : "
-		  "This part width expression violates the rule: "
+		  "This width expression violates that rule: "
 		 << *index_tail.lsb << endl;
 	    des->errors += 1;
 	    flag = false;
@@ -5365,12 +5365,20 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 	// Use the part select width already calculated by test_width().
       unsigned long wid = min_width_;
 
+      perm_string name = peek_tail_name(path_);
+
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: Calculate part select "
-		 << "[" << *base << "+:" << wid << "] from range "
+		 << name << "[" << *base << "+:" << wid << "] from range "
 		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
 
-      perm_string name = peek_tail_name(path_);
+      if (base->expr_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: Indexed part select base "
+	            "expression for " << name << "[" << *base << "+:" << wid
+	         << "] cannot be a real value." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
 	// Handle the special case that the base is constant. In this
 	// case, just precalculate the entire constant result.
@@ -5445,12 +5453,20 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 	// Use the part select width already calculated by test_width().
       unsigned long wid = min_width_;
 
+      perm_string name = peek_tail_name(path_);
+
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: Calculate part select "
-		 << "[" << *base << "-:" << wid << "] from range "
+		 << name << "[" << *base << "-:" << wid << "] from range "
 		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
 
-      perm_string name = peek_tail_name(path_);
+      if (base->expr_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: Indexed part select base "
+	            "expression for " << name << "[" << *base << "-:" << wid
+	         << "] cannot be a real value." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
 	// Handle the special case that the base is constant. In this
 	// case, just precalculate the entire constant result.
@@ -5931,6 +5947,13 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 				             NetESignal*net, NetScope*,
                                              bool need_const) const
 {
+      if (net->sig()->data_type() == IVL_VT_STRING) {
+	    cerr << get_fileline() << ": error: Cannot take the index part "
+	            "select of a string ('" << net->name() << "')." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       list<long>prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
       if (!rc)
@@ -5940,6 +5963,14 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 
 	// Use the part select width already calculated by test_width().
       unsigned long wid = min_width_;
+
+      if (base->expr_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: Indexed part select base "
+	            "expression for " << net->sig()->name() << "[" << *base
+	         << "+:" << wid << "] cannot be a real value." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
 	// Handle the special case that the base is constant as
 	// well. In this case it can be converted to a conventional
@@ -6063,6 +6094,13 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 					     NetESignal*net, NetScope*,
                                              bool need_const) const
 {
+      if (net->sig()->data_type() == IVL_VT_STRING) {
+	    cerr << get_fileline() << ": error: Cannot take the index part "
+	            "select of a string ('" << net->name() << "')." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       list<long>prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
       if (!rc)
@@ -6072,6 +6110,14 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 
 	// Use the part select width already calculated by test_width().
       unsigned long wid = min_width_;
+
+      if (base->expr_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: Indexed part select base "
+	            "expression for " << net->sig()->name() << "[" << *base
+	         << "-:" << wid << "] cannot be a real value." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
 	// Handle the special case that the base is constant as
 	// well. In this case it can be converted to a conventional

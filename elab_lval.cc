@@ -814,6 +814,13 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 				      index_component_t::ctype_t use_sel,
 				      bool need_const_idx) const
 {
+      if (lv->sig()->data_type() == IVL_VT_STRING) {
+           cerr << get_fileline() << ": error: Cannot index part select assign to a string ('"
+                << lv->sig()->name() << "')." << endl;
+           des->errors += 1;
+           return false;
+      }
+
       list<long>prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, lv->sig(), prefix_indices);
       ivl_assert(*this, rc);
@@ -832,6 +839,21 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       calculate_up_do_width_(des, scope, wid);
 
       NetExpr*base = elab_and_eval(des, scope, index_tail.msb, -1);
+
+      if (base && base->expr_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: Indexed part select base "
+	            "expression for ";
+	    cerr << lv->sig()->name() << "[" << *base;
+	    if (index_tail.sel == index_component_t::SEL_IDX_UP) {
+		  cerr << "+:";
+	    } else {
+		  cerr << "-:";
+	    }
+	    cerr << wid << "] cannot be a real value." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       ivl_select_type_t sel_type = IVL_SEL_OTHER;
 
 	// Handle the special case that the base is constant. For this
