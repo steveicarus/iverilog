@@ -84,9 +84,9 @@ module test;
     $timeskew(posedge sig1, negedge sig2 , 0:0:0 , notifier);
     $timeskew(edge[10, x0, 1x] sig1 , posedge sig2 , 0:0:0 , notifier);
     $timeskew(posedge sig1 , edge[10, x0, 1x] sig2 , 0:0:0 , notifier);
-    // TODO $timeskew(posedge sig1 , negedge sig2 , 0:0:0, notifier , 1'b0);
-    // TODO $timeskew(negedge sig1 , posedge sig2 , 0:0:0 , 1'b1 , 1'b0);
-    // TODO $timeskew(negedge sig1 , posedge sig2 , 0:0:0 , , 1'b1);
+    $timeskew(posedge sig1 , negedge sig2 , 0:0:0, notifier , 1'b0);
+    $timeskew(negedge sig1 , posedge sig2 , 0:0:0 , 1'b1 , 1'b0);
+    $timeskew(negedge sig1 , posedge sig2 , 0:0:0 , , 1'b1);
 
     $fullskew(posedge sig1 , negedge sig2 , 0:0:0 , 0:0:0);
     $fullskew(negedge sig1 , posedge sig2 , 0:0:0 , 0:0:0);
@@ -95,9 +95,9 @@ module test;
     $fullskew(posedge sig1, negedge sig2 , 0:0:0 , 0:0:0 , notifier);
     $fullskew(edge[10, x0, 1x] sig1 , posedge sig2 , 0:0:0 , 0:0:0 , notifier);
     $fullskew(posedge sig1 , edge[10, x0, 1x] sig2 , 0:0:0 , 0:0:0 , notifier);
-    // TODO $fullskew(posedge sig1 , negedge sig2 , 0:0:0, notifier , 1'b0);
-    // TODO $fullskew(negedge sig1 , posedge sig2 , 0:0:0 , 1'b1 , 1'b0);
-    // TODO $fullskew(negedge sig1 , posedge sig2 , 0:0:0 , , 1'b1);
+    $fullskew(posedge sig1 , negedge sig2 , 0:0:0, notifier , 1'b0);
+    $fullskew(negedge sig1 , posedge sig2 , 0:0:0 , 1'b1 , 1'b0);
+    $fullskew(negedge sig1 , posedge sig2 , 0:0:0 , , 1'b1);
 
     $width(posedge sig1 , 0:0:0 );
     $width(posedge sig1 &&& cond1 , 0:0:0 , 0 );

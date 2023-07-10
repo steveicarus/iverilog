@@ -20,9 +20,8 @@
  */
 
 # include  "LineInfo.h"
+# include  "PExpr.h"
 # include  "pform_types.h"
-
-// TODO cleanup in destructor and cleanup in Module!
 
 /*
 * The PTimingCheck is the base class for all timing checks
@@ -40,6 +39,17 @@ class PTimingCheck  : public LineInfo {
         PExpr* condition;
       };
 
+      // This struct is used to parse the optional arguments
+      struct optional_args_t {
+        pform_name_t* notifier          = nullptr;
+        pform_name_t* timestamp_cond    = nullptr;
+        pform_name_t* timecheck_cond    = nullptr;
+        pform_name_t* delayed_reference = nullptr;
+        pform_name_t* delayed_data      = nullptr;
+        PExpr* event_based_flag         = nullptr;
+        PExpr* remain_active_flag       = nullptr;
+      };
+
       PTimingCheck() { }
       virtual ~PTimingCheck() { }
 
@@ -54,10 +64,11 @@ class PTimingCheck  : public LineInfo {
 class PRecRem : public PTimingCheck {
 
     public:
+
       PRecRem(event_t reference_event,
                     event_t data_event,
-                    //PExpr setup_limit,
-                    //PExpr hold_limit,
+                    PExpr* setup_limit,
+                    PExpr* hold_limit,
                     pform_name_t* notifier,
                     pform_name_t* timestamp_cond,
                     pform_name_t* timecheck_cond,
@@ -70,12 +81,12 @@ class PRecRem : public PTimingCheck {
 
       void dump(std::ostream&out, unsigned ind) const override;
 
-    public: // TODO
+    private:
       event_t reference_event_; // hierarchy_identifier
       event_t data_event_;
 
-      //PExpr setup_limit;
-      //PExpr hold_limit;
+      PExpr* setup_limit_;
+      PExpr* hold_limit_;
 
       pform_name_t* notifier_;
 
@@ -94,8 +105,8 @@ class PSetupHold : public PTimingCheck {
     public:
       PSetupHold(event_t reference_event,
                     event_t data_event,
-                    //PExpr setup_limit,
-                    //PExpr hold_limit,
+                    PExpr* setup_limit,
+                    PExpr* hold_limit,
                     pform_name_t* notifier,
                     pform_name_t* timestamp_cond,
                     pform_name_t* timecheck_cond,
@@ -108,12 +119,12 @@ class PSetupHold : public PTimingCheck {
 
       void dump(std::ostream&out, unsigned ind) const override;
 
-    public: // TODO
+    private:
       event_t reference_event_; // hierarchy_identifier
       event_t data_event_;
 
-      //PExpr setup_limit;
-      //PExpr hold_limit;
+      PExpr* setup_limit_;
+      PExpr* hold_limit_;
 
       pform_name_t* notifier_;
 

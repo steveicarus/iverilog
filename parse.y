@@ -525,6 +525,7 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
       std::list<index_component_t> *dimensions;
 
       PTimingCheck::event_t* timing_check_event;
+      PTimingCheck::optional_args_t* spec_optional_args;
 
       LexicalScope::lifetime_t lifetime;
 
@@ -692,9 +693,15 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 %type <let_port_itm> let_port_item
 
 %type <pform_name> hierarchy_identifier implicit_class_handle class_hierarchy_identifier
-%type <pform_name> spec_notifier_opt spec_notifier spec_condition_opt
-%type <pform_name> spec_condition spec_delayed_opt spec_delayed
+%type <pform_name> spec_notifier_opt spec_notifier
 %type <timing_check_event> spec_reference_event
+%type <spec_optional_args> setuphold_opt_args recrem_opt_args setuphold_recrem_opt_notifier
+%type <spec_optional_args> setuphold_recrem_opt_timestamp_cond setuphold_recrem_opt_timecheck_cond
+%type <spec_optional_args> setuphold_recrem_opt_delayed_reference setuphold_recrem_opt_delayed_data
+%type <spec_optional_args> timeskew_opt_args fullskew_opt_args
+%type <spec_optional_args> timeskew_fullskew_opt_notifier timeskew_fullskew_opt_event_based_flag
+%type <spec_optional_args> timeskew_fullskew_opt_remain_active_flag
+
 %type <expr>  assignment_pattern expression expr_mintypmax
 %type <expr>  expr_primary_or_typename expr_primary
 %type <expr>  class_new dynamic_array_new
@@ -5899,14 +5906,19 @@ specify_item
 	yyerrok;
       }
   | K_Sfullskew '(' spec_reference_event ',' spec_reference_event
-    ',' delay_value ',' delay_value spec_notifier_opt /* TODO event_based_flag remain_active_flag */ ')' ';'
+    ',' delay_value ',' delay_value fullskew_opt_args ')' ';'
       {
 	cerr << @3 << ": warning: Timing checks are not supported." << endl;
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
 	delete $9; // delay_value
-	if($10) delete $10; // spec_notifier_opt
+
+	if ($10->notifier) delete $10->notifier;
+	if ($10->event_based_flag) delete $10->event_based_flag;
+	if ($10->remain_active_flag) delete $10->remain_active_flag;
+
+	delete $10; // fullskew_opt_args
       }
   | K_Shold '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
@@ -5945,11 +5957,10 @@ specify_item
 	if($8) delete $8; // spec_notifier_opt
       }
   | K_Srecrem '(' spec_reference_event ',' spec_reference_event
-    ',' expr_mintypmax ',' expr_mintypmax spec_notifier_opt spec_condition_opt
-    spec_condition_opt spec_delayed_opt spec_delayed_opt ')' ';'
+    ',' expr_mintypmax ',' expr_mintypmax recrem_opt_args ')' ';'
       {
 	cerr << @3 << ": warning: Timing checks are not supported. ";
-	if ($13 != nullptr || $14 != nullptr)
+	if ($10->delayed_reference != nullptr || $10->delayed_data != nullptr)
 	{
 		cerr << "Delayed reference and data signals become copies of the"
 		<< " original reference and data signals." << endl;
@@ -5959,13 +5970,12 @@ specify_item
 		cerr << endl;
 	}
 
-	PRecRem*rec_rem = pform_make_rec_rem(@1, *$3, *$5, *$7, *$9, $10, $11, $12, $13, $14);
-	pform_module_timing_check((PTimingCheck*)rec_rem);
+	PRecRem*recrem = pform_make_recrem(@1, *$3, *$5, $7, $9, $10);
+	pform_module_timing_check((PTimingCheck*)recrem);
 
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
-	delete $7; // delay_value
-	delete $9; // delay_value
+	delete $10; // setuphold_recrem_opt_notifier
       }
   | K_Sremoval '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
@@ -5986,11 +5996,10 @@ specify_item
 	if($8) delete $8; // spec_notifier_opt
       }
   | K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
-    ',' expr_mintypmax ',' expr_mintypmax spec_notifier_opt spec_condition_opt
-    spec_condition_opt spec_delayed_opt spec_delayed_opt ')' ';'
+    ',' expr_mintypmax ',' expr_mintypmax setuphold_opt_args ')' ';'
       {
 	cerr << @3 << ": warning: Timing checks are not supported. ";
-	if ($13 != nullptr || $14 != nullptr)
+	if ($10->delayed_reference != nullptr || $10->delayed_data != nullptr)
 	{
 		cerr << "Delayed reference and data signals become copies of the"
 		<< " original reference and data signals." << endl;
@@ -6000,13 +6009,12 @@ specify_item
 		cerr << endl;
 	}
 
-	PSetupHold*setup_hold = pform_make_setup_hold(@1, *$3, *$5, *$7, *$9, $10, $11, $12, $13, $14);
-	pform_module_timing_check((PTimingCheck*)setup_hold);
+	PSetupHold*setuphold = pform_make_setuphold(@1, *$3, *$5, $7, $9, $10);
+	pform_module_timing_check((PTimingCheck*)setuphold);
 
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
-	delete $7; // delay_value
-	delete $9; // delay_value
+	delete $10; // setuphold_recrem_opt_notifier
       }
   | K_Sskew '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
@@ -6018,13 +6026,18 @@ specify_item
 	if($8) delete $8; // spec_notifier_opt
       }
   | K_Stimeskew '(' spec_reference_event ',' spec_reference_event
-    ',' delay_value spec_notifier_opt /* TODO event_based_flag remain_active_flag */ ')' ';'
+    ',' delay_value timeskew_opt_args ')' ';'
       {
 	cerr << @3 << ": warning: Timing checks are not supported." << endl;
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
-	if($8) delete $8; // spec_notifier_opt
+
+	if ($8->notifier) delete $8->notifier;
+	if ($8->event_based_flag) delete $8->event_based_flag;
+	if ($8->remain_active_flag) delete $8->remain_active_flag;
+
+	delete $8; // timeskew_opt_args
       }
   | K_Swidth '(' spec_reference_event ',' delay_value ',' expression
     spec_notifier_opt ')' ';'
@@ -6325,6 +6338,192 @@ edge_descriptor_list
   | K_edge_descriptor
   ;
 
+setuphold_opt_args
+  : setuphold_recrem_opt_notifier
+    { $$ = $1; }
+  |
+    { $$ = new PTimingCheck::optional_args_t; }
+  ;
+
+recrem_opt_args
+  : setuphold_recrem_opt_notifier
+    { $$ = $1; }
+  |
+    { $$ = new PTimingCheck::optional_args_t; }
+  ;
+
+  /* The following rules are used for the optional arguments
+     in $recrem and $setuphold */
+setuphold_recrem_opt_notifier
+  : ',' // Empty and end of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        $$ = args;
+      }
+  | ',' hierarchy_identifier // End of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        args->notifier = $2;
+        $$ = args;
+      }
+  | ',' setuphold_recrem_opt_timestamp_cond // Empty
+      { $$ = $2; }
+  | ',' hierarchy_identifier setuphold_recrem_opt_timestamp_cond
+        {
+          $$ = $3;
+          $$->notifier = $2;
+        }
+  ;
+
+setuphold_recrem_opt_timestamp_cond
+  : ',' // Empty and end of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        $$ = args;
+      }
+  | ',' hierarchy_identifier // End of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        args->timestamp_cond = $2;
+        $$ = args;
+      }
+  | ',' setuphold_recrem_opt_timecheck_cond // Empty
+      { $$ = $2; }
+  | ',' hierarchy_identifier setuphold_recrem_opt_timecheck_cond
+        {
+          $$ = $3;
+          $$->timestamp_cond = $2;
+        }
+  ;
+
+setuphold_recrem_opt_timecheck_cond
+  : ',' // Empty and end of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        $$ = args;
+      }
+  | ',' hierarchy_identifier // End of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        args->timecheck_cond = $2;
+        $$ = args;
+      }
+  | ',' setuphold_recrem_opt_delayed_reference // Empty
+      { $$ = $2; }
+  | ',' hierarchy_identifier setuphold_recrem_opt_delayed_reference
+        {
+          $$ = $3;
+          $$->timecheck_cond = $2;
+        }
+  ;
+
+setuphold_recrem_opt_delayed_reference
+  : ',' // Empty and end of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        $$ = args;
+      }
+  | ',' hierarchy_identifier // End of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        args->delayed_reference = $2;
+        $$ = args;
+      }
+  | ',' setuphold_recrem_opt_delayed_data // Empty
+      { $$ = $2; }
+  | ',' hierarchy_identifier setuphold_recrem_opt_delayed_data
+        {
+          $$ = $3;
+          $$->delayed_reference = $2;
+        }
+  ;
+
+setuphold_recrem_opt_delayed_data
+  : ',' // Empty and end of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        $$ = args;
+      }
+  | ',' hierarchy_identifier // End of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        args->delayed_data = $2;
+        $$ = args;
+      }
+  ;
+
+timeskew_opt_args
+  : timeskew_fullskew_opt_notifier
+    { $$ = $1; }
+  |
+    { $$ = new PTimingCheck::optional_args_t; }
+  ;
+
+fullskew_opt_args
+  : timeskew_fullskew_opt_notifier
+    { $$ = $1; }
+  |
+    { $$ = new PTimingCheck::optional_args_t; }
+  ;
+
+  /* The following rules are used for the optional arguments
+     in $timeskew and $fullskew */
+timeskew_fullskew_opt_notifier
+  : ',' // Empty and end of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        $$ = args;
+      }
+  | ',' hierarchy_identifier // End of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        args->notifier = $2;
+        $$ = args;
+      }
+  | ',' timeskew_fullskew_opt_event_based_flag // Empty
+      { $$ = $2; }
+  | ',' hierarchy_identifier timeskew_fullskew_opt_event_based_flag
+        {
+          $$ = $3;
+          $$->notifier = $2;
+        }
+  ;
+
+timeskew_fullskew_opt_event_based_flag
+  : ',' // Empty and end of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        $$ = args;
+      }
+  | ',' expression // End of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        args->event_based_flag = $2;
+        $$ = args;
+      }
+  | ',' timeskew_fullskew_opt_remain_active_flag // Empty
+      { $$ = $2; }
+  | ',' expression timeskew_fullskew_opt_remain_active_flag
+        {
+          $$ = $3;
+          $$->event_based_flag = $2;
+        }
+  ;
+
+timeskew_fullskew_opt_remain_active_flag
+  : ',' // Empty and end of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        $$ = args;
+      }
+  | ',' expression // End of list
+      {
+        PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
+        args->remain_active_flag = $2;
+        $$ = args;
+      }
+  ;
+
 spec_notifier_opt
   : /* empty */
       { $$ = 0; }
@@ -6333,34 +6532,6 @@ spec_notifier_opt
   ;
 
 spec_notifier
-  : ','
-      { $$ = 0; }
-  | ','  hierarchy_identifier
-      { $$ = $2; }
-  ;
-
-spec_condition_opt
-  : /* empty */
-      { $$ = 0; }
-  | spec_condition
-      { $$ = $1; }
-  ;
-
-spec_condition
-  : ','
-      { $$ = 0; }
-  | ','  hierarchy_identifier
-      { $$ = $2; }
-  ;
-
-spec_delayed_opt
-  : /* empty */
-      { $$ = 0; }
-  | spec_delayed
-      { $$ = $1; }
-  ;
-
-spec_delayed
   : ','
       { $$ = 0; }
   | ','  hierarchy_identifier

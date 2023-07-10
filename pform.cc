@@ -3113,59 +3113,55 @@ extern void pform_module_specify_path(PSpecPath*obj)
 /*
  * Timing checks.
  */
- extern PRecRem* pform_make_rec_rem(const struct vlltype&li,
+ extern PRecRem* pform_make_recrem(const struct vlltype&li,
 			 PTimingCheck::event_t&reference_event,
 			 PTimingCheck::event_t&data_event,
-			 PExpr&setup_limit,
-			 PExpr&hold_limit,
-			 pform_name_t* notifier,
-			 pform_name_t* timestamp_cond,
-			 pform_name_t* timecheck_cond,
-			 pform_name_t* delayed_reference,
-			 pform_name_t* delayed_data)
+			 PExpr*setup_limit,
+			 PExpr*hold_limit,
+			 PTimingCheck::optional_args_t* args)
 {
-      PRecRem*rec_rem = new PRecRem(
+      ivl_assert(li, args);
+
+      PRecRem*recrem = new PRecRem(
 	      reference_event,
 	      data_event,
-	      //setup_limit,
-	      //hold_limit,
-	      notifier,
-	      timestamp_cond,
-	      timecheck_cond,
-	      delayed_reference,
-	      delayed_data
+	      setup_limit,
+	      hold_limit,
+	      args->notifier,
+	      args->timestamp_cond,
+	      args->timecheck_cond,
+	      args->delayed_reference,
+	      args->delayed_data
       );
 
-      FILE_NAME(rec_rem, li);
+      FILE_NAME(recrem, li);
 
-      return rec_rem;
+      return recrem;
 }
-extern PSetupHold* pform_make_setup_hold(const struct vlltype&li,
+extern PSetupHold* pform_make_setuphold(const struct vlltype&li,
 			 PTimingCheck::event_t&reference_event,
 			 PTimingCheck::event_t&data_event,
-			 PExpr&setup_limit,
-			 PExpr&hold_limit,
-			 pform_name_t* notifier,
-			 pform_name_t* timestamp_cond,
-			 pform_name_t* timecheck_cond,
-			 pform_name_t* delayed_reference,
-			 pform_name_t* delayed_data)
+			 PExpr*setup_limit,
+			 PExpr*hold_limit,
+			 PTimingCheck::optional_args_t* args)
 {
-      PSetupHold*setup_hold = new PSetupHold(
+      ivl_assert(li, args);
+
+      PSetupHold*setuphold = new PSetupHold(
 	      reference_event,
 	      data_event,
-	      //setup_limit,
-	      //hold_limit,
-	      notifier,
-	      timestamp_cond,
-	      timecheck_cond,
-	      delayed_reference,
-	      delayed_data
+	      setup_limit,
+	      hold_limit,
+	      args->notifier,
+	      args->timestamp_cond,
+	      args->timecheck_cond,
+	      args->delayed_reference,
+	      args->delayed_data
       );
 
-      FILE_NAME(setup_hold, li);
+      FILE_NAME(setuphold, li);
 
-      return setup_hold;
+      return setuphold;
 }
 
 extern void pform_module_timing_check(PTimingCheck*obj)

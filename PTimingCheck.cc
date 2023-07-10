@@ -20,29 +20,32 @@
 # include  "PTimingCheck.h"
 
 PRecRem::PRecRem(event_t reference_event,
-                    event_t data_event,
-                    //PExpr setup_limit,
-                    //PExpr hold_limit,
-                    pform_name_t* notifier,
-                    pform_name_t* timestamp_cond,
-                    pform_name_t* timecheck_cond,
-                    pform_name_t* delayed_reference,
-                    pform_name_t* delayed_data)
-                    :
-                    reference_event_ (reference_event),
-                    data_event_ (data_event),
-                    //setup_limit (setup_limit),
-                    //hold_limit (hold_limit),
-                    notifier_ (notifier),
-                    timestamp_cond_ (timestamp_cond),
-                    timecheck_cond_ (timecheck_cond),
-                    delayed_reference_ (delayed_reference),
-                    delayed_data_ (delayed_data)
+      event_t data_event,
+      PExpr* setup_limit,
+      PExpr* hold_limit,
+      pform_name_t* notifier,
+      pform_name_t* timestamp_cond,
+      pform_name_t* timecheck_cond,
+      pform_name_t* delayed_reference,
+      pform_name_t* delayed_data)
+      :
+      reference_event_ (reference_event),
+      data_event_ (data_event),
+      setup_limit_ (setup_limit),
+      hold_limit_ (hold_limit),
+      notifier_ (notifier),
+      timestamp_cond_ (timestamp_cond),
+      timecheck_cond_ (timecheck_cond),
+      delayed_reference_ (delayed_reference),
+      delayed_data_ (delayed_data)
 {
 }
 
 PRecRem::~PRecRem()
 {
+      delete setup_limit_;
+      delete hold_limit_;
+
       // Delete optional arguments
       if (reference_event_.condition) delete reference_event_.condition;
       if (data_event_.condition) delete data_event_.condition;
@@ -57,29 +60,32 @@ PRecRem::~PRecRem()
 }
 
 PSetupHold::PSetupHold(event_t reference_event,
-                    event_t data_event,
-                    //PExpr setup_limit,
-                    //PExpr hold_limit,
-                    pform_name_t* notifier,
-                    pform_name_t* timestamp_cond,
-                    pform_name_t* timecheck_cond,
-                    pform_name_t* delayed_reference,
-                    pform_name_t* delayed_data)
-                    :
-                    reference_event_ (reference_event),
-                    data_event_ (data_event),
-                    //setup_limit (setup_limit),
-                    //hold_limit (hold_limit),
-                    notifier_ (notifier),
-                    timestamp_cond_ (timestamp_cond),
-                    timecheck_cond_ (timecheck_cond),
-                    delayed_reference_ (delayed_reference),
-                    delayed_data_ (delayed_data)
+      event_t data_event,
+      PExpr* setup_limit,
+      PExpr* hold_limit,
+      pform_name_t* notifier,
+      pform_name_t* timestamp_cond,
+      pform_name_t* timecheck_cond,
+      pform_name_t* delayed_reference,
+      pform_name_t* delayed_data)
+      :
+      reference_event_ (reference_event),
+      data_event_ (data_event),
+      setup_limit_ (setup_limit),
+      hold_limit_ (hold_limit),
+      notifier_ (notifier),
+      timestamp_cond_ (timestamp_cond),
+      timecheck_cond_ (timecheck_cond),
+      delayed_reference_ (delayed_reference),
+      delayed_data_ (delayed_data)
 {
 }
 
 PSetupHold::~PSetupHold()
 {
+      delete setup_limit_;
+      delete hold_limit_;
+
       // Delete optional arguments
       if (reference_event_.condition) delete reference_event_.condition;
       if (data_event_.condition) delete data_event_.condition;
