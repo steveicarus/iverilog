@@ -114,12 +114,15 @@ NetEBAdd::~NetEBAdd()
 
 static ivl_variable_type_t arith_expr_type(const NetExpr *l, const NetExpr *r)
 {
-      if (l->expr_type() == IVL_VT_REAL ||
-          r->expr_type() == IVL_VT_REAL)
+      auto l_expr_type = l->expr_type();
+      auto r_expr_type = r->expr_type();
+
+      if (l_expr_type == IVL_VT_REAL ||
+          r_expr_type == IVL_VT_REAL)
 	    return IVL_VT_REAL;
 
-      if (l->expr_type() == IVL_VT_LOGIC ||
-          r->expr_type() == IVL_VT_LOGIC)
+      if (l_expr_type == IVL_VT_LOGIC ||
+          r_expr_type == IVL_VT_LOGIC)
 	    return IVL_VT_LOGIC;
 
       return IVL_VT_BOOL;
