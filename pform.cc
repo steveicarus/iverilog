@@ -3114,8 +3114,8 @@ extern void pform_module_specify_path(PSpecPath*obj)
  * Timing checks.
  */
  extern PRecRem* pform_make_recrem(const struct vlltype&li,
-			 PTimingCheck::event_t&reference_event,
-			 PTimingCheck::event_t&data_event,
+			 PTimingCheck::event_t*reference_event,
+			 PTimingCheck::event_t*data_event,
 			 PExpr*setup_limit,
 			 PExpr*hold_limit,
 			 PTimingCheck::optional_args_t* args)
@@ -3139,8 +3139,8 @@ extern void pform_module_specify_path(PSpecPath*obj)
       return recrem;
 }
 extern PSetupHold* pform_make_setuphold(const struct vlltype&li,
-			 PTimingCheck::event_t&reference_event,
-			 PTimingCheck::event_t&data_event,
+			 PTimingCheck::event_t*reference_event,
+			 PTimingCheck::event_t*data_event,
 			 PExpr*setup_limit,
 			 PExpr*hold_limit,
 			 PTimingCheck::optional_args_t* args)
@@ -3166,7 +3166,7 @@ extern PSetupHold* pform_make_setuphold(const struct vlltype&li,
 
 extern void pform_module_timing_check(PTimingCheck*obj)
 {
-      if (obj == 0)
+      if (!obj)
 	    return;
 
       pform_cur_module.front()->timing_checks.push_back(obj);

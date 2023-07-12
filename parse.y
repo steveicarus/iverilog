@@ -33,6 +33,7 @@
 # include  <stack>
 # include  <cstring>
 # include  <sstream>
+# include  <memory>
 
 using namespace std;
 
@@ -5970,11 +5971,9 @@ specify_item
 		cerr << endl;
 	}
 
-	PRecRem*recrem = pform_make_recrem(@1, *$3, *$5, $7, $9, $10);
-	pform_module_timing_check((PTimingCheck*)recrem);
+	PRecRem*recrem = pform_make_recrem(@1, $3, $5, $7, $9, $10);
+	pform_module_timing_check(recrem);
 
-	delete $3; // spec_reference_event
-	delete $5; // spec_reference_event
 	delete $10; // setuphold_recrem_opt_notifier
       }
   | K_Sremoval '(' spec_reference_event ',' spec_reference_event
@@ -6009,11 +6008,9 @@ specify_item
 		cerr << endl;
 	}
 
-	PSetupHold*setuphold = pform_make_setuphold(@1, *$3, *$5, $7, $9, $10);
-	pform_module_timing_check((PTimingCheck*)setuphold);
+	PSetupHold*setuphold = pform_make_setuphold(@1, $3, $5, $7, $9, $10);
+	pform_module_timing_check(setuphold);
 
-	delete $3; // spec_reference_event
-	delete $5; // spec_reference_event
 	delete $10; // setuphold_recrem_opt_notifier
       }
   | K_Sskew '(' spec_reference_event ',' spec_reference_event
@@ -6267,7 +6264,7 @@ spec_reference_event
 	event->name = *$1;
 	event->posedge = false;
 	event->negedge = false;
-	event->condition = $3;
+	event->condition = std::unique_ptr<PExpr>($3);
 	delete $1;
 	$$ = event;
       }
@@ -6294,7 +6291,7 @@ spec_reference_event
 	event->name = *$2;
 	event->posedge = true;
 	event->negedge = false;
-	event->condition = $4;
+	event->condition = std::unique_ptr<PExpr>($4);
 	delete $2;
 	$$ = event;
       }
@@ -6303,7 +6300,7 @@ spec_reference_event
 	event->name = *$2;
 	event->posedge = false;
 	event->negedge = true;
-	event->condition = $4;
+	event->condition = std::unique_ptr<PExpr>($4);
 	delete $2;
 	$$ = event;
       }
@@ -6323,7 +6320,7 @@ spec_reference_event
 	event->posedge = false;
 	event->negedge = false;
 	// TODO add edge descriptors
-	event->condition = $7;
+	event->condition = std::unique_ptr<PExpr>($7);
 	delete $5;
 	$$ = event;
       }
@@ -6526,14 +6523,14 @@ timeskew_fullskew_opt_remain_active_flag
 
 spec_notifier_opt
   : /* empty */
-      { $$ = 0; }
+      { $$ = nullptr; }
   | spec_notifier
       { $$ = $1; }
   ;
 
 spec_notifier
   : ','
-      { $$ = 0; }
+      { $$ = nullptr; }
   | ','  hierarchy_identifier
       { $$ = $2; }
   ;

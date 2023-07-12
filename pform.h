@@ -434,15 +434,15 @@ extern void pform_module_specify_path(PSpecPath*obj);
  * Functions related to timing checks.
  */
 extern PRecRem* pform_make_recrem(const struct vlltype&li,
-			    PTimingCheck::event_t&reference_event,
-			    PTimingCheck::event_t&data_event,
+			    PTimingCheck::event_t*reference_event,
+			    PTimingCheck::event_t*data_event,
 			    PExpr*setup_limit,
 			    PExpr*hold_limit,
 			    PTimingCheck::optional_args_t* args
 			    );
 extern PSetupHold* pform_make_setuphold(const struct vlltype&li,
-			    PTimingCheck::event_t&reference_event,
-			    PTimingCheck::event_t&data_event,
+			    PTimingCheck::event_t*reference_event,
+			    PTimingCheck::event_t*data_event,
 			    PExpr*setup_limit,
 			    PExpr*hold_limit,
 			    PTimingCheck::optional_args_t* args

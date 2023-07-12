@@ -1718,10 +1718,8 @@ void Module::dump_timingchecks_(ostream&out, unsigned indent) const
 {
       cout << "dump_timingchecks_" << endl;
 
-      typedef list<PTimingCheck*>::const_iterator tcheck_iter_t;
-      for (tcheck_iter_t cur = timing_checks.begin()
-		 ; cur != timing_checks.end() ; ++ cur ) {
-		 (*cur)->dump(out, indent);
+      for (const auto cur : timing_checks) {
+		cur->dump(out, indent);
       }
 }
 

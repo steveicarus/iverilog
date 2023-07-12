@@ -22,6 +22,7 @@
 # include  "LineInfo.h"
 # include  "PExpr.h"
 # include  "pform_types.h"
+# include  <memory>
 
 /*
 * The PTimingCheck is the base class for all timing checks
@@ -36,7 +37,7 @@ class PTimingCheck  : public LineInfo {
         bool posedge;
         bool negedge;
         std::vector<EdgeType> edges;
-        PExpr* condition;
+        std::unique_ptr<PExpr> condition;
       };
 
       // This struct is used to parse the optional arguments
@@ -65,8 +66,8 @@ class PRecRem : public PTimingCheck {
 
     public:
 
-      PRecRem(event_t reference_event,
-                    event_t data_event,
+      PRecRem(event_t* reference_event,
+                    event_t* data_event,
                     PExpr* setup_limit,
                     PExpr* hold_limit,
                     pform_name_t* notifier,
@@ -82,19 +83,19 @@ class PRecRem : public PTimingCheck {
       void dump(std::ostream&out, unsigned ind) const override;
 
     private:
-      event_t reference_event_; // hierarchy_identifier
-      event_t data_event_;
+      std::unique_ptr<event_t> reference_event_;
+      std::unique_ptr<event_t> data_event_;
 
-      PExpr* setup_limit_;
-      PExpr* hold_limit_;
+      std::unique_ptr<PExpr> setup_limit_;
+      std::unique_ptr<PExpr> hold_limit_;
 
-      pform_name_t* notifier_;
+      std::unique_ptr<pform_name_t> notifier_;
 
-      pform_name_t* timestamp_cond_;
-      pform_name_t* timecheck_cond_;
+      std::unique_ptr<pform_name_t> timestamp_cond_;
+      std::unique_ptr<pform_name_t> timecheck_cond_;
 
-      pform_name_t* delayed_reference_;
-      pform_name_t* delayed_data_;
+      std::unique_ptr<pform_name_t> delayed_reference_;
+      std::unique_ptr<pform_name_t> delayed_data_;
 };
 
 /*
@@ -103,8 +104,8 @@ class PRecRem : public PTimingCheck {
 class PSetupHold : public PTimingCheck {
 
     public:
-      PSetupHold(event_t reference_event,
-                    event_t data_event,
+      PSetupHold(event_t* reference_event,
+                    event_t* data_event,
                     PExpr* setup_limit,
                     PExpr* hold_limit,
                     pform_name_t* notifier,
@@ -120,19 +121,19 @@ class PSetupHold : public PTimingCheck {
       void dump(std::ostream&out, unsigned ind) const override;
 
     private:
-      event_t reference_event_; // hierarchy_identifier
-      event_t data_event_;
+      std::unique_ptr<event_t> reference_event_;
+      std::unique_ptr<event_t> data_event_;
 
-      PExpr* setup_limit_;
-      PExpr* hold_limit_;
+      std::unique_ptr<PExpr> setup_limit_;
+      std::unique_ptr<PExpr> hold_limit_;
 
-      pform_name_t* notifier_;
+      std::unique_ptr<pform_name_t> notifier_;
 
-      pform_name_t* timestamp_cond_;
-      pform_name_t* timecheck_cond_;
+      std::unique_ptr<pform_name_t> timestamp_cond_;
+      std::unique_ptr<pform_name_t> timecheck_cond_;
 
-      pform_name_t* delayed_reference_;
-      pform_name_t* delayed_data_;
+      std::unique_ptr<pform_name_t> delayed_reference_;
+      std::unique_ptr<pform_name_t> delayed_data_;
 };
 
 #endif /* IVL_PTimingCheck_H */

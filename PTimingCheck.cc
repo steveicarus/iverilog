@@ -19,8 +19,8 @@
 
 # include  "PTimingCheck.h"
 
-PRecRem::PRecRem(event_t reference_event,
-      event_t data_event,
+PRecRem::PRecRem(event_t* reference_event,
+      event_t* data_event,
       PExpr* setup_limit,
       PExpr* hold_limit,
       pform_name_t* notifier,
@@ -43,24 +43,10 @@ PRecRem::PRecRem(event_t reference_event,
 
 PRecRem::~PRecRem()
 {
-      delete setup_limit_;
-      delete hold_limit_;
-
-      // Delete optional arguments
-      if (reference_event_.condition) delete reference_event_.condition;
-      if (data_event_.condition) delete data_event_.condition;
-
-      if(notifier_) delete notifier_;
-
-      if(timestamp_cond_) delete timestamp_cond_;
-      if(timecheck_cond_) delete timecheck_cond_;
-
-      if(delayed_reference_) delete delayed_reference_;
-      if(delayed_data_) delete delayed_data_;
 }
 
-PSetupHold::PSetupHold(event_t reference_event,
-      event_t data_event,
+PSetupHold::PSetupHold(event_t* reference_event,
+      event_t* data_event,
       PExpr* setup_limit,
       PExpr* hold_limit,
       pform_name_t* notifier,
@@ -83,18 +69,4 @@ PSetupHold::PSetupHold(event_t reference_event,
 
 PSetupHold::~PSetupHold()
 {
-      delete setup_limit_;
-      delete hold_limit_;
-
-      // Delete optional arguments
-      if (reference_event_.condition) delete reference_event_.condition;
-      if (data_event_.condition) delete data_event_.condition;
-
-      if(notifier_) delete notifier_;
-
-      if(timestamp_cond_) delete timestamp_cond_;
-      if(timecheck_cond_) delete timecheck_cond_;
-
-      if(delayed_reference_) delete delayed_reference_;
-      if(delayed_data_) delete delayed_data_;
 }
