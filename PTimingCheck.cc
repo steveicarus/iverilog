@@ -24,8 +24,8 @@ PRecRem::PRecRem(event_t* reference_event,
       PExpr* setup_limit,
       PExpr* hold_limit,
       pform_name_t* notifier,
-      pform_name_t* timestamp_cond,
-      pform_name_t* timecheck_cond,
+      PExpr* timestamp_cond,
+      PExpr* timecheck_cond,
       pform_name_t* delayed_reference,
       pform_name_t* delayed_data)
       :
@@ -50,8 +50,8 @@ PSetupHold::PSetupHold(event_t* reference_event,
       PExpr* setup_limit,
       PExpr* hold_limit,
       pform_name_t* notifier,
-      pform_name_t* timestamp_cond,
-      pform_name_t* timecheck_cond,
+      PExpr* timestamp_cond,
+      PExpr* timecheck_cond,
       pform_name_t* delayed_reference,
       pform_name_t* delayed_data)
       :

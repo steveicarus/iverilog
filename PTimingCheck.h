@@ -43,8 +43,8 @@ class PTimingCheck  : public LineInfo {
       // This struct is used to parse the optional arguments
       struct optional_args_t {
         pform_name_t* notifier          = nullptr;
-        pform_name_t* timestamp_cond    = nullptr;
-        pform_name_t* timecheck_cond    = nullptr;
+        PExpr* timestamp_cond    = nullptr;
+        PExpr* timecheck_cond    = nullptr;
         pform_name_t* delayed_reference = nullptr;
         pform_name_t* delayed_data      = nullptr;
         PExpr* event_based_flag         = nullptr;
@@ -71,8 +71,8 @@ class PRecRem : public PTimingCheck {
                     PExpr* setup_limit,
                     PExpr* hold_limit,
                     pform_name_t* notifier,
-                    pform_name_t* timestamp_cond,
-                    pform_name_t* timecheck_cond,
+                    PExpr* timestamp_cond,
+                    PExpr* timecheck_cond,
                     pform_name_t* delayed_reference,
                     pform_name_t* delayed_data);
 
@@ -91,8 +91,8 @@ class PRecRem : public PTimingCheck {
 
       std::unique_ptr<pform_name_t> notifier_;
 
-      std::unique_ptr<pform_name_t> timestamp_cond_;
-      std::unique_ptr<pform_name_t> timecheck_cond_;
+      std::unique_ptr<PExpr> timestamp_cond_;
+      std::unique_ptr<PExpr> timecheck_cond_;
 
       std::unique_ptr<pform_name_t> delayed_reference_;
       std::unique_ptr<pform_name_t> delayed_data_;
@@ -109,8 +109,8 @@ class PSetupHold : public PTimingCheck {
                     PExpr* setup_limit,
                     PExpr* hold_limit,
                     pform_name_t* notifier,
-                    pform_name_t* timestamp_cond,
-                    pform_name_t* timecheck_cond,
+                    PExpr* timestamp_cond,
+                    PExpr* timecheck_cond,
                     pform_name_t* delayed_reference,
                     pform_name_t* delayed_data);
 
@@ -129,8 +129,8 @@ class PSetupHold : public PTimingCheck {
 
       std::unique_ptr<pform_name_t> notifier_;
 
-      std::unique_ptr<pform_name_t> timestamp_cond_;
-      std::unique_ptr<pform_name_t> timecheck_cond_;
+      std::unique_ptr<PExpr> timestamp_cond_;
+      std::unique_ptr<PExpr> timecheck_cond_;
 
       std::unique_ptr<pform_name_t> delayed_reference_;
       std::unique_ptr<pform_name_t> delayed_data_;

@@ -6378,7 +6378,7 @@ setuphold_recrem_opt_timestamp_cond
         PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
         $$ = args;
       }
-  | ',' hierarchy_identifier // End of list
+  | ',' expression // End of list
       {
         PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
         args->timestamp_cond = $2;
@@ -6386,7 +6386,7 @@ setuphold_recrem_opt_timestamp_cond
       }
   | ',' setuphold_recrem_opt_timecheck_cond // Empty
       { $$ = $2; }
-  | ',' hierarchy_identifier setuphold_recrem_opt_timecheck_cond
+  | ',' expression setuphold_recrem_opt_timecheck_cond
         {
           $$ = $3;
           $$->timestamp_cond = $2;
@@ -6399,7 +6399,7 @@ setuphold_recrem_opt_timecheck_cond
         PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
         $$ = args;
       }
-  | ',' hierarchy_identifier // End of list
+  | ',' expression // End of list
       {
         PTimingCheck::optional_args_t* args = new PTimingCheck::optional_args_t;
         args->timecheck_cond = $2;
@@ -6407,7 +6407,7 @@ setuphold_recrem_opt_timecheck_cond
       }
   | ',' setuphold_recrem_opt_delayed_reference // Empty
       { $$ = $2; }
-  | ',' hierarchy_identifier setuphold_recrem_opt_delayed_reference
+  | ',' expression setuphold_recrem_opt_delayed_reference
         {
           $$ = $3;
           $$->timecheck_cond = $2;
