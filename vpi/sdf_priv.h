@@ -48,6 +48,16 @@ struct sdf_delval_list_s {
       struct sdf_delay_s val[12];
 };
 
+struct port_with_edge_s {
+      int vpi_edge;
+      char*string_val;
+};
+
+struct interconnect_port_s {
+      char* name;
+      int index; // -1 for whole vector
+};
+
 extern void sdf_select_instance(const char*celltype, const char*inst,
                                 const int sdf_lineno);
 extern void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,

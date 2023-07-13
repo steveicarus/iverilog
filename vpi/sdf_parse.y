@@ -42,6 +42,7 @@ char sdf_use_hchar = '.';
       struct sdf_delay_s delay;
       struct port_with_edge_s port_with_edge;
       struct sdf_delval_list_s delval_list;
+      struct interconnect_port_s interconnect_port;
 };
 
 %token K_ABSOLUTE K_CELL K_CELLTYPE K_COND K_CONDELSE K_DATE K_DELAYFILE
@@ -63,7 +64,9 @@ char sdf_use_hchar = '.';
 %type <string_val> celltype
 %type <string_val> cell_instance
 %type <string_val> hierarchical_identifier
-%type <string_val> port port_instance port_interconnect
+%type <string_val> port port_instance
+
+%type <interconnect_port> port_interconnect
 
 %type <real_val> signed_real_number
 %type <delay> delval rvalue_opt rvalue rtriple signed_real_number_opt
@@ -338,8 +341,13 @@ del_def
       { if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
 					 "INTERCONNECT not supported.\n",
 					 sdf_parse_path, @2.first_line);
-	free($3);
-	free($4);
+
+	vpi_printf("SDF INFO: %s:%d: "
+		"port1 name = %s index = %d, port2 name = %s index = %d",
+		sdf_parse_path, @2.first_line, $3.name, $3.index, $4.name, $4.index);
+
+	free($3.name);
+	free($4.name);
       }
   | '(' K_INTERCONNECT error ')'
       { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed INTERCONNECT\n",
@@ -396,13 +404,13 @@ cond_edge_identifier
 
 timing_check_condition
   : port_interconnect
-      { free($1); }
+      { free($1.name); }
   | '~' port_interconnect
-      { free($2); }
+      { free($2.name); }
   | '!' port_interconnect
-      { free($2); }
+      { free($2.name); }
   | port_interconnect equality_operator scalar_constant
-      { free($1); }
+      { free($1.name); }
   ;
 
   /* This is not complete! */
@@ -458,9 +466,15 @@ port
   /* Since INTERCONNECT is ignored we can also ignore a vector bit. */
 port_interconnect
   : hierarchical_identifier
-      { $$ = $1; }
+      {
+	struct interconnect_port_s tmp = {$1, -1};
+	$$ = tmp;
+      }
   | hierarchical_identifier '[' INTEGER ']'
-      { $$ = $1;}
+      {
+	struct interconnect_port_s tmp = {$1, $3};
+	$$ = tmp;
+      }
   ;
 
 port_edge
