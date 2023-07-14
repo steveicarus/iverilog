@@ -5915,9 +5915,9 @@ specify_item
 	delete $7; // delay_value
 	delete $9; // delay_value
 
-	if ($10->notifier) delete $10->notifier;
-	if ($10->event_based_flag) delete $10->event_based_flag;
-	if ($10->remain_active_flag) delete $10->remain_active_flag;
+	delete $10->notifier;
+	delete $10->event_based_flag;
+	delete $10->remain_active_flag;
 
 	delete $10; // fullskew_opt_args
       }
@@ -5928,7 +5928,7 @@ specify_item
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
-	if($8) delete $8; // spec_notifier_opt
+	delete $8; // spec_notifier_opt
       }
   | K_Snochange '(' spec_reference_event ',' spec_reference_event
 	  ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
@@ -5938,7 +5938,7 @@ specify_item
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
 	delete $9; // delay_value
-	if($10) delete $10; // spec_notifier_opt
+	delete $10; // spec_notifier_opt
       }
   | K_Speriod '(' spec_reference_event ',' delay_value
     spec_notifier_opt ')' ';'
@@ -5946,7 +5946,7 @@ specify_item
 	cerr << @3 << ": warning: Timing checks are not supported." << endl;
 	delete $3; // spec_reference_event
 	delete $5; // delay_value
-	if($6) delete $6; // spec_notifier_opt
+	delete $6; // spec_notifier_opt
       }
   | K_Srecovery '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
@@ -5955,7 +5955,7 @@ specify_item
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
-	if($8) delete $8; // spec_notifier_opt
+	delete $8; // spec_notifier_opt
       }
   | K_Srecrem '(' spec_reference_event ',' spec_reference_event
     ',' expr_mintypmax ',' expr_mintypmax recrem_opt_args ')' ';'
@@ -5983,7 +5983,7 @@ specify_item
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
-	if($8) delete $8; // spec_notifier_opt
+	delete $8; // spec_notifier_opt
       }
   | K_Ssetup '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
@@ -5992,7 +5992,7 @@ specify_item
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
-	if($8) delete $8; // spec_notifier_opt
+	delete $8; // spec_notifier_opt
       }
   | K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
     ',' expr_mintypmax ',' expr_mintypmax setuphold_opt_args ')' ';'
@@ -6020,7 +6020,7 @@ specify_item
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
-	if($8) delete $8; // spec_notifier_opt
+	delete $8; // spec_notifier_opt
       }
   | K_Stimeskew '(' spec_reference_event ',' spec_reference_event
     ',' delay_value timeskew_opt_args ')' ';'
@@ -6030,9 +6030,9 @@ specify_item
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
 
-	if ($8->notifier) delete $8->notifier;
-	if ($8->event_based_flag) delete $8->event_based_flag;
-	if ($8->remain_active_flag) delete $8->remain_active_flag;
+	delete $8->notifier;
+	delete $8->event_based_flag;
+	delete $8->remain_active_flag;
 
 	delete $8; // timeskew_opt_args
       }
@@ -6043,7 +6043,7 @@ specify_item
 	delete $3; // spec_reference_event
 	delete $5; // delay_value
 	delete $7; // expression
-	if($8) delete $8;
+	delete $8;
       }
   | K_Swidth '(' spec_reference_event ',' delay_value ')' ';'
       {
