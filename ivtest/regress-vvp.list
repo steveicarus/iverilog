@@ -72,3 +72,5 @@ task_return1			vvp_tests/task_return1.json
 task_return2			vvp_tests/task_return2.json
 task_return_fail1		vvp_tests/task_return_fail1.json
 task_return_fail2		vvp_tests/task_return_fail2.json
+timing_check_syntax		vvp_tests/timing_check_syntax.json
+timing_check_delayed_signals	vvp_tests/timing_check_delayed_signals.json

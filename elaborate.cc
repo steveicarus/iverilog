@@ -41,6 +41,7 @@
 # include  "PPackage.h"
 # include  "PScope.h"
 # include  "PSpec.h"
+# include  "PTimingCheck.h"
 # include  "netlist.h"
 # include  "netenum.h"
 # include  "netvector.h"
@@ -6331,6 +6332,140 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       }
 }
 
+void PRecRem::elaborate(Design*des, NetScope*scope) const
+{
+      // At present, no timing checks are supported.
+      // Still, in order to get some models working
+      // assign the original reference and data signals to
+      // the delayed reference and data signals as per
+      // 15.5.4 Option behavior
+
+      if (delayed_reference_ != nullptr)
+      {
+	      if (debug_elaborate) {
+		    cerr << get_fileline() << ": PRecRem::elaborate: Assigning "
+		       << reference_event_->name
+		       << " to " << *delayed_reference_ << endl;
+	      }
+
+	      NetNet*sig = des->find_signal(scope, reference_event_->name);
+
+	      if (sig == nullptr) {
+		    cerr << get_fileline() << ": error: Cannot find: "
+		       << reference_event_->name << endl;
+		    des->errors += 1;
+		    return;
+	      }
+
+	      NetNet*sig_delayed = des->find_signal(scope, *delayed_reference_);
+
+	      if (sig_delayed == nullptr) {
+		    cerr << get_fileline() << ": error: Cannot find: "
+		       << *delayed_reference_ << endl;
+		    des->errors += 1;
+		    return;
+	      }
+
+	      connect(sig->pin(0), sig_delayed->pin(0));
+      }
+
+      if (delayed_data_ != nullptr)
+      {
+	      if (debug_elaborate) {
+		    cerr << get_fileline() << ": PRecRem::elaborate: Assigning "
+		       << data_event_->name
+		       << " to " << *delayed_data_ << endl;
+	      }
+
+	      NetNet*sig = des->find_signal(scope, data_event_->name);
+
+	      if (sig == nullptr) {
+		    cerr << get_fileline() << ": error: Cannot find: "
+		       << data_event_->name << endl;
+		    des->errors += 1;
+		    return;
+	      }
+
+	      NetNet*sig_delayed = des->find_signal(scope, *delayed_data_);
+
+	      if (sig_delayed == nullptr) {
+		    cerr << get_fileline() << ": error: Cannot find: "
+		       << *delayed_data_ << endl;
+		    des->errors += 1;
+		    return;
+	      }
+
+	      connect(sig->pin(0), sig_delayed->pin(0));
+      }
+}
+
+void PSetupHold::elaborate(Design*des, NetScope*scope) const
+{
+      // At present, no timing checks are supported.
+      // Still, in order to get some models working
+      // assign the original reference and data signals to
+      // the delayed reference and data signals as per
+      // 15.5.4 Option behavior
+
+      if (delayed_reference_ != nullptr)
+      {
+	      if (debug_elaborate) {
+		    cerr << get_fileline() << ": PSetupHold::elaborate: Assigning"
+		       << reference_event_->name
+		       << " to " << *delayed_reference_ << endl;
+	      }
+
+	      NetNet*sig = des->find_signal(scope, reference_event_->name);
+
+	      if (sig == nullptr) {
+		    cerr << get_fileline() << ": error: Cannot find: "
+		       << reference_event_->name << endl;
+		    des->errors += 1;
+		    return;
+	      }
+
+	      NetNet*sig_delayed = des->find_signal(scope, *delayed_reference_);
+
+	      if (sig_delayed == nullptr) {
+		    cerr << get_fileline() << ": error: Cannot find: "
+		       << *delayed_reference_ << endl;
+		    des->errors += 1;
+		    return;
+	      }
+
+	      connect(sig->pin(0), sig_delayed->pin(0));
+      }
+
+      if (delayed_data_ != nullptr)
+      {
+	      if (debug_elaborate) {
+		    cerr << get_fileline() << ": PSetupHold::elaborate: Assigning"
+		       << data_event_->name
+		       << " to " << *delayed_data_ << endl;
+	      }
+
+	      NetNet*sig = des->find_signal(scope, data_event_->name);
+
+	      if (sig == nullptr) {
+		    cerr << get_fileline() << ": error: Cannot find: "
+		       << data_event_->name << endl;
+		    des->errors += 1;
+		    return;
+	      }
+
+	      NetNet*sig_delayed = des->find_signal(scope, *delayed_data_);
+
+	      if (sig_delayed == nullptr) {
+		    cerr << get_fileline() << ": error: Cannot find: "
+		       << *delayed_data_ << endl;
+		    des->errors += 1;
+		    return;
+	      }
+
+	      connect(sig->pin(0), sig_delayed->pin(0));
+      }
+}
+
 static void elaborate_functions(Design*des, NetScope*scope,
 				const map<perm_string,PFunction*>&funcs)
 {
@@ -6406,10 +6541,8 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       bool result_flag = true;
 
 	// Elaborate within the generate blocks.
-      typedef list<PGenerate*>::const_iterator generate_it_t;
-      for (generate_it_t cur = generate_schemes.begin()
-		 ; cur != generate_schemes.end() ; ++ cur ) {
-	    (*cur)->elaborate(des, scope);
+      for (const auto cur : generate_schemes) {
+	    cur->elaborate(des, scope);
       }
 
 	// Elaborate functions.
@@ -6428,10 +6561,8 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	// complex.
       const list<PGate*>&gl = get_gates();
 
-      for (list<PGate*>::const_iterator gt = gl.begin()
-		 ; gt != gl.end() ; ++ gt ) {
-
-	    (*gt)->elaborate(des, scope);
+      for (const auto gt : gl) {
+	    gt->elaborate(des, scope);
       }
 
 	// Elaborate the variable initialization statements, making a
@@ -6444,17 +6575,18 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       result_flag &= elaborate_behaviors_(des, scope);
 
 	// Elaborate the specify paths of the module.
+      for (const auto sp : specify_paths) {
+	    sp->elaborate(des, scope);
+      }
 
-      for (list<PSpecPath*>::const_iterator sp = specify_paths.begin()
-		 ; sp != specify_paths.end() ; ++ sp ) {
-
-	    (*sp)->elaborate(des, scope);
+	// Elaborate the timing checks of the module.
+      for (const auto tc : timing_checks) {
+	    tc->elaborate(des, scope);
       }
 
 	// Elaborate the elaboration tasks.
-      for (list<PCallTask*>::const_iterator et = elab_tasks.begin()
-		 ; et != elab_tasks.end() ; ++ et ) {
-	    result_flag &= (*et)->elaborate_elab(des, scope);
+      for (const auto et : elab_tasks) {
+	    result_flag &= et->elaborate_elab(des, scope);
       }
 
       return result_flag;

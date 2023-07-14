@@ -32,6 +32,7 @@
 # include  "PGenerate.h"
 # include  "PModport.h"
 # include  "PSpec.h"
+# include  "PTimingCheck.h"
 # include  "discipline.h"
 # include  <list>
 # include  <map>
@@ -3107,6 +3108,68 @@ extern void pform_module_specify_path(PSpecPath*obj)
       if (obj == 0)
 	    return;
       pform_cur_module.front()->specify_paths.push_back(obj);
+}
+
+/*
+ * Timing checks.
+ */
+ extern PRecRem* pform_make_recrem(const struct vlltype&li,
+			 PTimingCheck::event_t*reference_event,
+			 PTimingCheck::event_t*data_event,
+			 PExpr*setup_limit,
+			 PExpr*hold_limit,
+			 PTimingCheck::optional_args_t* args)
+{
+      ivl_assert(li, args);
+
+      PRecRem*recrem = new PRecRem(
+	      reference_event,
+	      data_event,
+	      setup_limit,
+	      hold_limit,
+	      args->notifier,
+	      args->timestamp_cond,
+	      args->timecheck_cond,
+	      args->delayed_reference,
+	      args->delayed_data
+      );
+
+      FILE_NAME(recrem, li);
+
+      return recrem;
+}
+extern PSetupHold* pform_make_setuphold(const struct vlltype&li,
+			 PTimingCheck::event_t*reference_event,
+			 PTimingCheck::event_t*data_event,
+			 PExpr*setup_limit,
+			 PExpr*hold_limit,
+			 PTimingCheck::optional_args_t* args)
+{
+      ivl_assert(li, args);
+
+      PSetupHold*setuphold = new PSetupHold(
+	      reference_event,
+	      data_event,
+	      setup_limit,
+	      hold_limit,
+	      args->notifier,
+	      args->timestamp_cond,
+	      args->timecheck_cond,
+	      args->delayed_reference,
+	      args->delayed_data
+      );
+
+      FILE_NAME(setuphold, li);
+
+      return setuphold;
+}
+
+extern void pform_module_timing_check(PTimingCheck*obj)
+{
+      if (!obj)
+	    return;
+
+      pform_cur_module.front()->timing_checks.push_back(obj);
 }
 
 

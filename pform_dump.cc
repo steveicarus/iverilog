@@ -1442,6 +1442,16 @@ void PSpecPath::dump(std::ostream&out, unsigned ind) const
       out << ");" << endl;
 }
 
+void PRecRem::dump(std::ostream&out, unsigned ind) const
+{
+	    out << setw(ind) << "" << "recrem ";
+}
+
+void PSetupHold::dump(std::ostream&out, unsigned ind) const
+{
+	    out << setw(ind) << "" << "setuphold ";
+}
+
 void PGenerate::dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "generate(" << id_number << ")";
@@ -1704,6 +1714,15 @@ void Module::dump_specparams_(ostream&out, unsigned indent) const
       }
 }
 
+void Module::dump_timingchecks_(ostream&out, unsigned indent) const
+{
+      cout << "dump_timingchecks_" << endl;
+
+      for (const auto cur : timing_checks) {
+		cur->dump(out, indent);
+      }
+}
+
 void Module::dump(ostream&out) const
 {
       if (attributes.begin() != attributes.end()) {
@@ -1751,6 +1770,8 @@ void Module::dump(ostream&out) const
       dump_parameters_(out, 4);
 
       dump_specparams_(out, 4);
+
+      dump_timingchecks_(out, 4);
 
       dump_enumerations_(out, 4);
 
