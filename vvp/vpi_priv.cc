@@ -20,6 +20,7 @@
 # include  "version_base.h"
 # include  "vpi_priv.h"
 # include  "schedule.h"
+# include  "logic.h"
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
@@ -1553,6 +1554,159 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
       return out;
 }
 
+// Used to get intermodpath for two ports
+vpiHandle vpi_handle_multi(PLI_INT32 type,
+                           vpiHandle ref1,
+                           vpiHandle ref2)
+{
+      if (vpi_trace) {
+	      fprintf(vpi_trace, "vpi_handle_multi(%d, %p, %p) -->\n",
+		    type, ref1, ref2);
+      }
+
+      if (type != vpiInterModPath) {
+	      fprintf(stderr, "sorry: vpi_handle_multi currently supports"
+				      "only vpiInterModPath\n");
+	      return nullptr;
+      }
+
+      vpiPortInfo* port1 = dynamic_cast<vpiPortInfo*>(ref1);
+
+      if (!port1) {
+	      fprintf(stderr, "sorry: second argument of vpi_handle_multi"
+		      "must be a vpiPort\n");
+	      return nullptr;
+      }
+
+      vpiPortInfo* port2 = dynamic_cast<vpiPortInfo*>(ref2);
+
+      if (!port2) {
+	      fprintf(stderr, "sorry: third argument of vpi_handle_multi"
+		      "must be a vpiPort\n");
+	      return nullptr;
+      }
+
+      std::string port_name1(vpi_get_str(vpiName, ref1));
+      std::string port_name2(vpi_get_str(vpiName, ref2));
+
+      fprintf(stderr, "port_name1: %s\n", port_name1.c_str());
+      fprintf(stderr, "port_name2: %s\n", port_name2.c_str());
+
+      vpiHandle mod1 = vpi_handle(vpiModule, ref1);
+      vpiHandle mod2 = vpi_handle(vpiModule, ref2);
+
+      if (!mod1) fprintf(stderr, "Cannot access module of port1!\n");
+      if (!mod2) fprintf(stderr, "Cannot access module of port2!\n");
+
+      // Find net for port1
+      vpiHandle net_i = vpi_iterate(vpiNet, mod1);
+      vpiHandle net;
+      vpiHandle net_handle1 = nullptr;
+
+      while ((net=vpi_scan(net_i)) != nullptr)
+      {
+	      char *net_name = vpi_get_str(vpiName, net);
+
+	      fprintf(stderr, "Comparing %s and %s\n", net_name, port_name1.c_str());
+	      if (port_name1 == net_name)
+	      {
+		      if (net_handle1 != nullptr)
+		      {
+			      fprintf(stderr, "Found multiple matching nets for %s !\n", port_name1.c_str());
+		      }
+		      fprintf(stderr, "Found handle for net %s!\n", net_name);
+		      net_handle1 = net;
+	      }
+      }
+
+      // Find net for port2
+      net_i = vpi_iterate(vpiNet, mod2);
+      vpiHandle net_handle2 = nullptr;
+
+      while ((net=vpi_scan(net_i)) != nullptr)
+      {
+	      char *net_name = vpi_get_str(vpiName, net);
+
+	      fprintf(stderr, "Comparing %s and %s\n", net_name, port_name2.c_str());
+	      if (port_name2 == net_name)
+	      {
+		      if (net_handle2 != nullptr)
+		      {
+			      fprintf(stderr, "Found multiple matching nets for %s !\n", port_name2.c_str());
+		      }
+		      fprintf(stderr, "Found handle for net %s!\n", net_name);
+		      net_handle2 = net;
+	      }
+      }
+
+      // Try to access net/node behind it
+      struct __vpiSignal*node1 = dynamic_cast<__vpiSignal*>(net_handle1);
+      assert(node1);
+      struct __vpiSignal*node2 = dynamic_cast<__vpiSignal*>(net_handle2);
+      assert(node2);
+
+      vvp_net_t* net1 = node1->node;
+      vvp_net_t* net2 = node2->node;
+
+      // TODO don't just compare the nets, may be a problem for high fan-out nets
+      if (net1 == net2)
+      {
+	      fprintf(stderr, "Same net!\n");
+      }
+      else
+      {
+	      fprintf(stderr, "Different net!\n");
+	      return nullptr;
+      }
+
+      // Debug information
+
+      for (int i=0; i<4; i++)
+      {
+	      fprintf(stderr, "my_node1->port[%d].ptr() : %p\n", i, net1->port[i].ptr());
+	      fprintf(stderr, "my_node1->port[%d].port() : %d\n", i, net1->port[i].port());
+      }
+
+      fprintf(stderr, "my_node1->fun : %p\n", net1->fun);
+      fprintf(stderr, "my_node1->fil : %p\n", net1->fil);
+
+      fprintf(stderr, "my_node1->fil->filter_size() : %d\n", net1->fil->filter_size());
+
+      //fprintf(stderr, "my_node1->out_.ptr() : %p\n", net1->out_.ptr());   // vvp_net_t
+      //fprintf(stderr, "my_node1->out_.port() : %d\n", net1->out_.port()); // input 3-0
+
+
+      // TODO for now just replace vvp_fun_bufz with vvp_fun_intermodpath
+      if (dynamic_cast<vvp_fun_bufz*>(net1->fun))
+      {
+	      std::cout << "Replacing with vvp_fun_intermodpath!" << std::endl;
+
+	      int width = 1; // TODO
+
+	      vvp_fun_intermodpath*obj = new vvp_fun_intermodpath(net1, width);
+	      net1->fun = obj;
+
+	      __vpiInterModPath*intermodpath = vpip_make_intermodpath(net1, port1, port2);
+	      intermodpath->intermodpath = obj;
+
+	      // TODO add net to network
+
+	      /*vvp_net_t*net = new vvp_net_t;
+	      vvp_fun_intermodpath*obj = new vvp_fun_intermodpath(net, width, delay);
+	      net->fun = obj;
+
+	      __vpiInterModPath*intermodpath = vpip_make_intermodpath(net, ref1, ref2);
+	      intermodpath->intermodpath = obj;*/
+
+	      return intermodpath;
+      }
+      else
+      {
+            std::cout << "sorry: Could not insert intermodpath!" << std::endl;
+      }
+
+      return nullptr;
+}
 
 /*
   We increment the two vpi methods to enable the
@@ -1749,6 +1903,7 @@ vpip_routines_s vpi_routines = {
     .get_systf_info             = vpi_get_systf_info,
     .handle_by_name             = vpi_handle_by_name,
     .handle_by_index            = vpi_handle_by_index,
+    .handle_multi               = vpi_handle_multi,
     .handle                     = vpi_handle,
     .iterate                    = vpi_iterate,
     .scan                       = vpi_scan,

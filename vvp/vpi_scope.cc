@@ -82,6 +82,9 @@ static void delete_sub_scopes(__vpiScope *scope)
 		    /* The destination ModPath is cleaned up later. */
 		  delete item;
 		  break;
+		case vpiInterModPath:
+		  delete item;
+		  break;
 		case vpiNamedEvent:
 		  named_event_delete(item);
 		  break;
@@ -658,29 +661,6 @@ unsigned vpip_add_item_to_context(automatic_hooks_s*item,
       return 2 + idx;
 }
 
-
-class vpiPortInfo  : public __vpiHandle {
-    public:
-      vpiPortInfo( __vpiScope *parent,
-                    unsigned index,
-                    int vpi_direction,
-                    unsigned width,
-                    const char *name );
-      ~vpiPortInfo();
-
-      int get_type_code(void) const { return vpiPort; }
-
-      int vpi_get(int code);
-      char* vpi_get_str(int code);
-      vpiHandle vpi_handle(int code);
-
-    private:
-      __vpiScope *parent_;
-      unsigned  index_;
-      int       direction_;
-      unsigned  width_;
-      const char *name_;
-};
 
 vpiPortInfo::vpiPortInfo( __vpiScope *parent,
               unsigned index,

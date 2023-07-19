@@ -18,6 +18,7 @@ vpi_get_vlog_info
 vpi_handle
 vpi_handle_by_index
 vpi_handle_by_name
+vpi_handle_multi
 vpi_iterate
 vpi_mcd_close
 vpi_mcd_flush

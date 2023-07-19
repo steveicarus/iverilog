@@ -277,6 +277,7 @@ typedef struct t_vpi_delay  {
 #define vpiConstant     7
 #define vpiFunction    20
 #define vpiIntegerVar  25
+#define vpiInterModPath 26
 #define vpiIterator    27
 #define vpiMemory      29
 #define vpiMemoryWord  30
@@ -534,6 +535,7 @@ extern vpiHandle  vpi_iterate(PLI_INT32 type, vpiHandle ref);
 extern vpiHandle  vpi_scan(vpiHandle iter);
 extern vpiHandle  vpi_handle_by_index(vpiHandle ref, PLI_INT32 idx);
 extern vpiHandle  vpi_handle_by_name(const char*name, vpiHandle scope);
+extern vpiHandle  vpi_handle_multi(PLI_INT32 type, vpiHandle ref1, vpiHandle ref2);
 
 extern void  vpi_get_time(vpiHandle obj, s_vpi_time*t);
 extern PLI_INT32 vpi_get(int property, vpiHandle ref);

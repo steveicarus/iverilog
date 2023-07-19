@@ -432,6 +432,30 @@ struct __vpiBit {
       int get_index(void) const;
 };
 
+
+class vpiPortInfo  : public __vpiHandle {
+    public:
+      vpiPortInfo( __vpiScope *parent,
+                    unsigned index,
+                    int vpi_direction,
+                    unsigned width,
+                    const char *name );
+      ~vpiPortInfo();
+
+      int get_type_code(void) const { return vpiPort; }
+
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      vpiHandle vpi_handle(int code);
+
+    private:
+      __vpiScope *parent_;
+      unsigned  index_;
+      int       direction_;
+      unsigned  width_;
+      const char *name_;
+};
+
 /*
  * This is used by system calls to represent a bit/part select of
  * a simple variable or constant array word.
@@ -520,6 +544,43 @@ extern struct __vpiModPathSrc* vpip_make_modpath_src(struct __vpiModPath*path,
 
 extern struct __vpiModPath* vpip_make_modpath(vvp_net_t *net) ;
 
+/*
+ *
+ * The vpiInterModPath vpiHandle will define
+ * a vpiInterModPath of record .intermodpath as defined
+ * in the IEEE 1364
+ *
+ */
+
+struct __vpiInterModPath : public __vpiHandle {
+      __vpiInterModPath();
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_iterate(int code);
+      void vpi_get_delays(p_vpi_delay del);
+      void vpi_put_delays(p_vpi_delay del);
+      free_object_fun_t free_object_fun(void);
+
+      __vpiScope   *scope ;
+
+      class vvp_fun_intermodpath*intermodpath;
+
+      vvp_net_t *net;
+
+      vpiPortInfo* port1;
+      vpiPortInfo* port2;
+};
+
+
+/*
+ * The Function is used to create the vpiHandle
+ * for vpiInterModPath
+ */
+
+extern struct __vpiInterModPath* vpip_make_intermodpath(vvp_net_t *net, vpiPortInfo* port1, vpiPortInfo* port2);
 
 /*
  * These methods support the vpi creation of events. The name string

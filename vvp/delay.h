@@ -234,4 +234,34 @@ class vvp_fun_modpath_edge  : public vvp_fun_modpath_src {
       bool negedge_;
 };
 
+/*
+* The intermodpath is used to implement the SDF INTERCONNECT feature
+*/
+class vvp_fun_intermodpath  : public vvp_net_fun_t, private vvp_gen_event_s {
+
+    public:
+      vvp_fun_intermodpath(vvp_net_t*net, unsigned width);
+      ~vvp_fun_intermodpath();
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
+
+      void get_delay12(vvp_time64_t out[12]) const;
+      void put_delay12(const vvp_time64_t in[12]);
+
+    private:
+      virtual void run_run();
+
+    private:
+      vvp_net_t*net_;
+
+      vvp_vector4_t cur_vec4_;
+
+      vvp_time64_t delay_[12];
+
+    private: // not implemented
+      vvp_fun_intermodpath(const vvp_fun_intermodpath&);
+      vvp_fun_intermodpath& operator= (const vvp_fun_intermodpath&);
+};
+
 #endif /* IVL_delay_H */

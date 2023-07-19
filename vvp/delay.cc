@@ -1115,3 +1115,352 @@ struct __vpiModPathSrc* vpip_make_modpath_src(struct __vpiModPath*path,
 
       return obj;
 }
+
+vvp_fun_intermodpath::vvp_fun_intermodpath(vvp_net_t*net, unsigned width)
+: net_(net)
+{
+      for (unsigned idx = 0 ;  idx < 12 ;  idx += 1)
+	      delay_[idx] = 0;
+
+      cur_vec4_ = vvp_vector4_t(width, BIT4_X);
+      schedule_init_propagate(net_, cur_vec4_); // TODO is this needed?
+}
+
+vvp_fun_intermodpath::~vvp_fun_intermodpath()
+{
+}
+
+void vvp_fun_intermodpath::get_delay12(vvp_time64_t val[12]) const
+{
+      for (unsigned idx = 0 ;  idx < 12 ;  idx += 1)
+	    val[idx] = delay_[idx];
+}
+
+void vvp_fun_intermodpath::put_delay12(const vvp_time64_t val[12])
+{
+      for (unsigned idx = 0 ;  idx < 12 ;  idx += 1)
+	    delay_[idx] = val[idx];
+}
+
+/*
+ * FIXME: this implementation currently only uses the maximum delay
+ * from all the bit changes in the vectors. If there are multiple
+ * changes with different delays, then the results would be
+ * wrong. What should happen is that if there are multiple changes,
+ * multiple vectors approaching the result should be scheduled.
+ */
+void vvp_fun_intermodpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                              vvp_context_t)
+{
+	/* Only the first port is used. */
+      if (port.port() > 0)
+	    return;
+
+      if (cur_vec4_.eeq(bit))
+	    return;
+
+	/* Given the scheduled output time, create an output event. */
+      vvp_time64_t use_delay = delay_from_edge(cur_vec4_.value(0),
+					       bit.value(0),
+					       delay_);
+
+	/* FIXME: This bases the edge delay on only the least
+	   bit. This is WRONG! I need to find all the possible delays,
+	   and schedule an event for each partial change. Hard! */
+      for (unsigned idx = 1 ;  idx < bit.size() ;  idx += 1) {
+	    vvp_time64_t tmp = delay_from_edge(cur_vec4_.value(idx),
+					       bit.value(idx),
+					       delay_);
+	      /* If the current and new bit values match then no delay
+	       * is needed for this bit. */
+	    if (cur_vec4_.value(idx) == bit.value(idx)) continue;
+	    assert(tmp == use_delay);
+      }
+
+      cur_vec4_ = bit;
+      schedule_generic(this, use_delay, false);
+}
+
+void vvp_fun_intermodpath::run_run()
+{
+      net_->send_vec4(cur_vec4_, 0);
+}
+
+/*
+ * All the below routines that begin with
+ * intermodpath_* belong the internal function
+ * of an vpiInterModPath object. This is used to
+ * make some specific delays path operations
+ *
+ */
+static int intermodpath_get(int, vpiHandle ref)
+{
+      struct __vpiInterModPath*obj =dynamic_cast<__vpiInterModPath*>(ref);
+      assert(obj);
+      return 0;
+}
+
+static void intermodpath_get_value(vpiHandle ref, p_vpi_value)
+{
+      struct __vpiInterModPath* intermodpath = dynamic_cast<__vpiInterModPath*>(ref);
+      assert(intermodpath);
+      return;
+}
+
+static vpiHandle intermodpath_put_value(vpiHandle ref, s_vpi_value *, int )
+{
+      struct __vpiInterModPath* intermodpath = dynamic_cast<__vpiInterModPath*>(ref);
+      assert(intermodpath);
+      return 0;
+}
+
+static vpiHandle intermodpath_get_handle(int code, vpiHandle ref)
+{
+      struct __vpiInterModPath*rfp = dynamic_cast<__vpiInterModPath*>(ref);
+      assert(rfp);
+
+      switch (code) {
+
+	case vpiScope:
+	  return rfp->scope;
+
+	  case vpiModule:
+	      { __vpiScope*scope = rfp->scope;
+		while (scope && scope->get_type_code() != vpiModule)
+		      scope = scope->scope;
+		assert(scope);
+		return scope;
+	      }
+      }
+      return 0;
+}
+
+static vpiHandle intermodpath_iterate(int code, vpiHandle ref)
+{
+      struct __vpiInterModPath*rfp = dynamic_cast<__vpiInterModPath*>(ref);
+      assert(rfp);
+
+	// For now intermodpaths only support exactly two ports
+      switch (code) {
+	  case vpiPort: {
+	    vpiHandle*args = (vpiHandle*)calloc(2, sizeof(vpiHandle*));
+	    args[0] = rfp->port1;
+	    args[1] = rfp->port2;
+	    return vpip_make_iterator(2, args, true);
+	  }
+      }
+      return 0;
+}
+
+
+/*
+ * This routine will put specific dimension of delay[] values
+ * into a vpiHandle. In this case, we will put
+ * specific delays values in a vpiInterModPath object
+ * TODO code duplication
+ */
+static void intermodpath_put_delays (vpiHandle ref, p_vpi_delay delays)
+{
+      vvp_time64_t tmp[12];
+      int idx;
+      struct __vpiInterModPath * src = dynamic_cast<__vpiInterModPath*>(ref) ;
+      assert(src) ;
+
+      vvp_fun_intermodpath *fun = dynamic_cast<vvp_fun_intermodpath*>(src->net->fun);
+      assert( fun );
+
+      typedef unsigned char map_array_t[12];
+	// Only the first six entries are used for the less than twelve maps.
+      static const map_array_t map_1 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+      static const map_array_t map_2 = {0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0};
+      static const map_array_t map_3 = {0, 1, 2, 0, 2, 1, 0, 0, 0, 0, 0, 0};
+      static const map_array_t map_6 = {0, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0};
+      static const map_array_t map12 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+
+      const map_array_t*use_map = 0;
+      switch (delays->no_of_delays) {
+	  case 1:
+	    use_map = &map_1;
+	    break;
+	  case 2:
+	    use_map = &map_2;
+	    break;
+	  case 3:
+	    use_map = &map_3;
+	    break;
+	  case 6:
+	    use_map = &map_6;
+	    break;
+	  case 12:
+	    use_map = &map12;
+	    break;
+	  default:
+	    assert(0);
+	    break;
+      }
+
+      if (delays->time_type == vpiSimTime) {
+	    for (idx = 0 ; idx < 12 ; idx += 1) {
+		  tmp[idx] = vpip_timestruct_to_time(delays->da+use_map[0][idx]);
+	    }
+      } else {
+	      // You cannot create a modpath with a negative delay so set it
+	      // to zero per 1364-2005 section 14.3.1.
+	    for (idx = 0 ; idx < delays->no_of_delays ; idx += 1) {
+		  if (delays->da[idx].real < 0.0) delays->da[idx].real = 0.0;
+	    }
+	    for (idx = 0 ; idx < 12 ; idx += 1) {
+		  tmp[idx] = vpip_scaled_real_to_time64(delays->da[use_map[0][idx]].real,
+							src->scope);
+	    }
+      }
+
+      /* Now define the to-from-x delays if needed. */
+      if (delays->no_of_delays <= 6) {
+	      /* 0->x is the minimum of 0->z and 0->1. */
+	    tmp[DELAY_EDGE_0x] = tmp[DELAY_EDGE_0z] < tmp[DELAY_EDGE_01] ?
+	                           tmp[DELAY_EDGE_0z] : tmp[DELAY_EDGE_01];
+	      /* x->1 is the maximum of z->1 and 0->1. */
+	    tmp[DELAY_EDGE_x1] = tmp[DELAY_EDGE_z1] > tmp[DELAY_EDGE_01] ?
+	                           tmp[DELAY_EDGE_z1] : tmp[DELAY_EDGE_01];
+	      /* 1->x is the minimum of 1->z and 1->0. */
+	    tmp[DELAY_EDGE_1x] = tmp[DELAY_EDGE_1z] < tmp[DELAY_EDGE_10] ?
+	                           tmp[DELAY_EDGE_1z] : tmp[DELAY_EDGE_10];
+	      /* x->0 is the maximum of z->0 and 1->0. */
+	    tmp[DELAY_EDGE_x0] = tmp[DELAY_EDGE_z0] > tmp[DELAY_EDGE_10] ?
+	                           tmp[DELAY_EDGE_z0] : tmp[DELAY_EDGE_10];
+	      /* x->z is the maximum of 1->z and 0->z. */
+	    tmp[DELAY_EDGE_xz] = tmp[DELAY_EDGE_1z] > tmp[DELAY_EDGE_0z] ?
+	                           tmp[DELAY_EDGE_1z] : tmp[DELAY_EDGE_0z];
+	      /* z->x is the minimum of z->1 and z->0. */
+	    tmp[DELAY_EDGE_zx] = tmp[DELAY_EDGE_z1] < tmp[DELAY_EDGE_z0] ?
+	                           tmp[DELAY_EDGE_z1] : tmp[DELAY_EDGE_z0];
+      }
+
+      fun->put_delay12(tmp);
+}
+
+/*
+ * This routine will retrieve the delay[12] values
+ * of a vpiHandle. In this case, he will get an
+ * specific delays values from a vpiInterModPath
+ * object
+ *
+ */
+
+static void intermodpath_get_delays ( vpiHandle ref, p_vpi_delay delays )
+{
+      struct __vpiInterModPath*src = dynamic_cast<__vpiInterModPath*>(ref) ;
+      assert(src);
+
+      vvp_fun_intermodpath *fun = dynamic_cast<vvp_fun_intermodpath*>(src->net->fun);
+      assert(fun);
+
+      int idx;
+      vvp_time64_t tmp[12];
+      fun->get_delay12(tmp);
+
+      switch (delays->no_of_delays) {
+	  case 1:
+	  case 2:
+	  case 3:
+	  case 6:
+	  case 12:
+	    break;
+
+	  default:
+	    assert(0);
+	    break;
+      }
+
+      if (delays->time_type == vpiSimTime) {
+	    for (idx = 0; idx < delays->no_of_delays; idx += 1) {
+		  vpip_time_to_timestruct(delays->da+idx, tmp[idx]);
+	    }
+      } else {
+	    for (idx = 0; idx < delays->no_of_delays; idx += 1) {
+		  delays->da[idx].real = vpip_time_to_scaled_real(tmp[idx], src->scope);
+	    }
+      }
+}
+
+/*
+* The __vpiInterModPath class is what the VPI client sees as a
+* vpiInterModPath object.
+*/
+inline __vpiInterModPath::__vpiInterModPath()
+{ }
+
+int __vpiInterModPath::get_type_code(void) const
+{ return vpiInterModPath; }
+
+int __vpiInterModPath::vpi_get(int code)
+{ return intermodpath_get(code, this); }
+
+void __vpiInterModPath::vpi_get_value(p_vpi_value val)
+{ intermodpath_get_value(this, val); }
+
+vpiHandle __vpiInterModPath::vpi_put_value(p_vpi_value val, int flags)
+{ return intermodpath_put_value(this, val, flags); }
+
+vpiHandle __vpiInterModPath::vpi_handle(int code)
+{ return intermodpath_get_handle(code, this); }
+
+vpiHandle __vpiInterModPath::vpi_iterate(int code)
+{ return intermodpath_iterate(code, this); }
+
+void __vpiInterModPath::vpi_get_delays(p_vpi_delay del)
+{ intermodpath_get_delays(this, del); }
+
+void __vpiInterModPath::vpi_put_delays(p_vpi_delay del)
+{ intermodpath_put_delays(this, del); }
+
+static int intermodpath_free_object( vpiHandle ref )
+{
+      delete ref;
+      return 1 ;
+}
+
+__vpiHandle::free_object_fun_t __vpiInterModPath::free_object_fun(void)
+{ return &intermodpath_free_object; }
+
+/*
+ * This function will construct a vpiInterModPath Object.
+ * give a respective "net", and will point to his
+ * respective functor
+ */
+
+#ifdef CHECK_WITH_VALGRIND
+static struct __vpiInterModPath**imp_list = 0;
+static unsigned imp_count = 0;
+#endif
+
+struct __vpiInterModPath* vpip_make_intermodpath(vvp_net_t *net, vpiPortInfo* port1, vpiPortInfo* port2)
+{
+      struct __vpiInterModPath*obj = new __vpiInterModPath;
+      obj->scope = vpip_peek_current_scope ( );
+
+      obj->net = net;
+      obj->port1 = port1;
+      obj->port2 = port2;
+
+#ifdef CHECK_WITH_VALGRIND
+      imp_count += 1;
+      imp_list = (struct __vpiInterModPath **) realloc(imp_list,
+                imp_count*sizeof(struct __vpiInterModPath **));
+      imp_list[imp_count-1] = obj;
+#endif
+      return obj;
+}
+
+#ifdef CHECK_WITH_VALGRIND
+void intermodpath_delete()
+{
+      for (unsigned idx = 0; idx < mp_count; idx += 1) {
+	    delete imp_list[idx];
+      }
+      free(imp_list);
+      imp_list = 0;
+      imp_count = 0;
+}
+#endif

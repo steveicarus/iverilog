@@ -160,15 +160,15 @@ program_version
 hierarchy_divider
   : '(' K_DIVIDER '.' ')'
       { sdf_use_hchar = '.';
-					if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n", sdf_parse_path, @1.first_line, sdf_use_hchar);
+	if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n", sdf_parse_path, @1.first_line, sdf_use_hchar);
       }
   | '(' K_DIVIDER '/' ')'
       { sdf_use_hchar = '/';
-					if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n", sdf_parse_path, @1.first_line, sdf_use_hchar);
+	if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n", sdf_parse_path, @1.first_line, sdf_use_hchar);
       }
   | '(' K_DIVIDER HCHAR ')'
       { /* sdf_use_hchar no-change */
-					if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n", sdf_parse_path, @1.first_line, sdf_use_hchar);
+	if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n", sdf_parse_path, @1.first_line, sdf_use_hchar);
       }
   ;
 
@@ -198,9 +198,8 @@ process
 temperature
   : '(' K_TEMPERATURE rtriple ')'
       { /* The value must be defined. */
-      if (! $3.defined) {
-					vpi_printf("SDF ERROR: %s:%d: Chosen value not defined.\n", sdf_parse_path, @1.first_line);
-      }
+      if (! $3.defined) vpi_printf("SDF ERROR: %s:%d: Chosen value not defined.\n",
+					sdf_parse_path, @1.first_line);
       else if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Temperature: %f\n",
 					sdf_parse_path, @2.first_line, $3.value);
       }
@@ -342,9 +341,11 @@ del_def
 					 "INTERCONNECT not supported.\n",
 					 sdf_parse_path, @2.first_line);
 
-	vpi_printf("SDF INFO: %s:%d: "
-		"port1 name = %s index = %d, port2 name = %s index = %d",
-		sdf_parse_path, @2.first_line, $3.name, $3.index, $4.name, $4.index);
+	if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: INTERCONNECT with "
+				"port1 = %s index = %d, port2 = %s index = %d\n",
+				sdf_parse_path, @2.first_line, $3.name, $3.index, $4.name, $4.index);
+
+	sdf_interconnect_delays($3, $4, &$5, @2.first_line);
 
 	free($3.name);
 	free($4.name);
