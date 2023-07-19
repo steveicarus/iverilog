@@ -1,7 +1,7 @@
 %option prefix="yy"
 %{
 /*
- * Copyright (c) 1999-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2023 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -225,7 +225,7 @@ keywords (line|include|define|undef|ifdef|ifndef|else|elsif|endif)
  /* Recognize and handle the `line directive. Also pass it through to
   * the output so the main compiler is aware of the change.
   */
-^[ \t]?"`line"[ \t]+.+ { handle_line_directive(); ECHO; }
+^[ \t]*"`line"[ \t]+.+ { handle_line_directive(); ECHO; }
 
  /* Detect single line comments, passing them directly to the output.
   */

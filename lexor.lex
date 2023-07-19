@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2023 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -168,7 +168,7 @@ TU [munpf]
 
   /* Recognize the various line directives. */
 ^"#line"[ \t]+.+ { line_directive(); }
-^[ \t]?"`line"[ \t]+.+ { line_directive2(); }
+^[ \t]*"`line"[ \t]+.+ { line_directive2(); }
 
 [ \t\b\f\r] { ; }
 \n { yylloc.first_line += 1; }
@@ -1520,10 +1520,14 @@ static void line_directive2()
       assert(strncmp(cp, "`line", 5) == 0);
       cp += 5;
 
-	/* strtoul skips leading space. */
-      unsigned long lineno = strtoul(cp, &cpr, 10);
+	/* strtol skips leading space. */
+      long lineno = strtol(cp, &cpr, 10);
       if (cp == cpr) {
 	    VLerror(yylloc, "error: Invalid line number for `line directive.");
+	    return;
+      }
+      if (lineno < 1) {
+	    VLerror(yylloc, "error: Line number for `line directive most be greater than zero.");
 	    return;
       }
       lineno -= 1;
