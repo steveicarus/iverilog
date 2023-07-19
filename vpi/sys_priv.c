@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2023 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -254,6 +254,31 @@ unsigned is_string_obj(vpiHandle obj)
 	break;
     }
 
+    return rtn;
+}
+
+/*
+ * This routine returns 1 if the argument supports a valid string value,
+ * otherwise it returns 0.
+ */
+unsigned is_variable(vpiHandle obj)
+{
+    unsigned rtn = 0;
+
+    assert(obj);
+    switch(vpi_get(vpiType, obj)) {
+      case vpiIntegerVar:
+      case vpiBitVar:
+      case vpiByteVar:
+      case vpiShortIntVar:
+      case vpiIntVar:
+      case vpiLongIntVar:
+      case vpiReg:
+      case vpiTimeVar:
+      case vpiStringVar:
+	rtn = 1;
+	break;
+    }
     return rtn;
 }
 

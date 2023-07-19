@@ -1,7 +1,7 @@
 #ifndef IVL_sys_priv_H
 #define IVL_sys_priv_H
 /*
- * Copyright (c) 2002-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2023 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -58,6 +58,7 @@ extern struct timeformat_info_s timeformat_info;
 extern unsigned is_constant_obj(vpiHandle obj);
 extern unsigned is_numeric_obj(vpiHandle obj);
 extern unsigned is_string_obj(vpiHandle obj);
+extern unsigned is_variable(vpiHandle obj);
 
 extern unsigned is_valid_fd_mcd(PLI_UINT32 fd_mcd);
 extern unsigned get_fd_mcd_from_arg(PLI_UINT32 *fd_mcd, vpiHandle arg,

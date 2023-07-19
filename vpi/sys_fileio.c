@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2023 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -334,7 +334,7 @@ static PLI_INT32 sys_fgets_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 	/*
 	 * Check that there are two arguments and that the first is a
-	 * register and that the second is numeric.
+	 * variable and that the second is numeric.
 	 */
       if (argv == 0) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
@@ -345,10 +345,10 @@ static PLI_INT32 sys_fgets_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    return 0;
       }
 
-      if (vpi_get(vpiType, vpi_scan(argv)) != vpiReg) {
+      if (! is_variable(vpi_scan(argv))) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s's first argument must be a reg.\n", name);
+	    vpi_printf("%s's first argument must be a variable.\n", name);
 	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
@@ -377,21 +377,30 @@ static PLI_INT32 sys_fgets_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
+static void return_zero(vpiHandle callh)
+{
+      s_vpi_value val;
+      val.format = vpiIntVal;
+      val.value.integer = 0;
+      assert(callh);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
+}
+
 static PLI_INT32 sys_fgets_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle regh;
+      vpiHandle varh;
       vpiHandle arg;
       s_vpi_value val;
       PLI_UINT32 fd_mcd;
       FILE *fp;
-      PLI_INT32 reg_size;
+      PLI_INT32 var_size;
       char*text;
       errno = 0;
 
-	/* Get the register handle. */
-      regh = vpi_scan(argv);
+	/* Get the variable handle. */
+      varh = vpi_scan(argv);
 
 	/* Get the file/MCD descriptor. */
       arg = vpi_scan(argv);
@@ -414,17 +423,34 @@ static PLI_INT32 sys_fgets_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    return 0;
       }
 
-	/* Get the register size in bytes and allocate the buffer. */
-      reg_size = vpi_get(vpiSize, regh) / 8;
-      text = malloc(reg_size + 1);
+      if (vpi_get(vpiType, varh) == vpiStringVar) {
+	    PLI_INT32 base_size = 1024;
+	    size_t txt_len;
+	    var_size = 0;
+	    text = 0;
+	    do {
+		  var_size += base_size;
+		  text = realloc(text, var_size+1);
+		    /* Read in the bytes. Return 0 if there was an error.
+		     * Assume an error can only occur when reading the first group of bytes. */
+		  if ((fgets(text+var_size-base_size, base_size+1, fp) == 0) && (var_size == base_size)) {
+			return_zero(callh);
+			free(text);
+			return 0;
+		  }
+		  txt_len = strlen(text);
+	    } while (((PLI_INT32) txt_len == var_size) && (text[txt_len-1] != '\n'));
+      } else {
+	      /* Get the register size in bytes and allocate the buffer. */
+	    var_size = vpi_get(vpiSize, varh) / 8;
+	    text = malloc(var_size + 1);
 
-	/* Read in the bytes. Return 0 if there was an error. */
-      if (fgets(text, reg_size+1, fp) == 0) {
-	    val.format = vpiIntVal;
-	    val.value.integer = 0;
-	    vpi_put_value(callh, &val, 0, vpiNoDelay);
-	    free(text);
-	    return 0;
+	      /* Read in the bytes. Return 0 if there was an error. */
+	    if (fgets(text, var_size+1, fp) == 0) {
+		  return_zero(callh);
+		  free(text);
+		  return 0;
+	    }
       }
 
 	/* Return the number of character read. */
@@ -435,7 +461,7 @@ static PLI_INT32 sys_fgets_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	/* Return the characters to the register. */
       val.format = vpiStringVal;
       val.value.str = text;
-      vpi_put_value(regh, &val, 0, vpiNoDelay);
+      vpi_put_value(varh, &val, 0, vpiNoDelay);
       free(text);
 
       return 0;
@@ -970,7 +996,7 @@ static PLI_INT32 sys_ferror_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 
 	/*
 	 * Check that there are two arguments and that the first is
-	 * numeric and that the second is a 640 bit or larger register.
+	 * numeric and that the second is a 640 bit or larger variable.
 	 *
 	 * The parser requires that a function have at least one argument,
 	 * so argv should always be defined with one argument.
@@ -986,25 +1012,25 @@ static PLI_INT32 sys_ferror_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       }
 
 	/* Check that the second argument is given and that it is a 640 bit
-	 * or larger register. */
+	 * or larger variable. */
       arg = vpi_scan(argv);
       if (! arg) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s requires a second (register) argument.\n", name);
+	    vpi_printf("%s requires a second (variable) argument.\n", name);
 	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
-      if (vpi_get(vpiType, arg) != vpiReg) {
+      if (! is_variable(arg)) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s's second argument must be a reg (>=640 bits).\n",
+	    vpi_printf("%s's second argument must be a variable (>=640 bits).\n",
 	                name);
 	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
-      } else if (vpi_get(vpiSize, arg) < 640) {
+      } else if ((vpi_get(vpiSize, arg) < 640) && (vpi_get(vpiType, arg) != vpiStringVar)) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's second argument must have 640 bit or more.\n",
@@ -1023,7 +1049,7 @@ static PLI_INT32 sys_ferror_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle reg;
+      vpiHandle var;
       s_vpi_value val;
       char *msg;
       PLI_INT32 size;
@@ -1035,10 +1061,10 @@ static PLI_INT32 sys_ferror_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpi_get_value(vpi_scan(argv), &val);
       fd_mcd = val.value.integer;
 
-	/* Get the register to put the string result and figure out how many
+	/* Get the variable to put the string result and figure out how many
 	 * characters it will hold. */
-      reg = vpi_scan(argv);
-      size = vpi_get(vpiSize, reg);
+      var = vpi_scan(argv);
+      size = vpi_get(vpiSize, var);
       chars = size / 8;
       vpi_free_object(argv);
 
@@ -1061,14 +1087,19 @@ static PLI_INT32 sys_ferror_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       val.value.integer = errno;
       vpi_put_value(callh, &val, 0, vpiNoDelay);
 
-	/* Only return the number of characters that will fit in the reg. */
-      msg = (char *) malloc(chars);
-      if (errno != 0) strncpy(msg, strerror(errno), chars-1);
-      else strncpy(msg, "", chars-1);
-      msg[chars-1] = '\0';
+	/* Only return the number of characters that will fit in the variable. */
+      if (vpi_get(vpiType, var) == vpiStringVar) {
+	    if (errno != 0) msg = strdup(strerror(errno));
+	    else msg = strdup("");
+      } else {
+	    msg = (char *) malloc(chars);
+	    if (errno != 0) strncpy(msg, strerror(errno), chars-1);
+	    else strncpy(msg, "", chars-1);
+	    msg[chars-1] = '\0';
+      }
       val.format = vpiStringVal;
       val.value.str = msg;
-      vpi_put_value(reg, &val, 0, vpiNoDelay);
+      vpi_put_value(var, &val, 0, vpiNoDelay);
       free(msg);
 
       return 0;
