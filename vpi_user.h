@@ -699,6 +699,7 @@ typedef struct {
     void        (*get_systf_info)(vpiHandle, p_vpi_systf_data);
     vpiHandle   (*handle_by_name)(const char*, vpiHandle);
     vpiHandle   (*handle_by_index)(vpiHandle, PLI_INT32);
+    vpiHandle   (*handle_multi)(PLI_INT32, vpiHandle, vpiHandle);
     vpiHandle   (*handle)(PLI_INT32, vpiHandle);
     vpiHandle   (*iterate)(PLI_INT32, vpiHandle);
     vpiHandle   (*scan)(vpiHandle);
