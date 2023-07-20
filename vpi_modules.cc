@@ -46,6 +46,7 @@ void        vpi_get_systf_info(vpiHandle, p_vpi_systf_data) { }
 
 vpiHandle   vpi_handle_by_name(const char*, vpiHandle) { return 0; }
 vpiHandle   vpi_handle_by_index(vpiHandle, PLI_INT32) { return 0; }
+vpiHandle   vpi_handle_multi(PLI_INT32 type, vpiHandle ref1, vpiHandle ref2) { return 0; }
 
 // for traversing relationships
 
@@ -195,6 +196,7 @@ vpip_routines_s vpi_routines = {
     .get_systf_info             = vpi_get_systf_info,
     .handle_by_name             = vpi_handle_by_name,
     .handle_by_index            = vpi_handle_by_index,
+    .handle_multi               = vpi_handle_multi,
     .handle                     = vpi_handle,
     .iterate                    = vpi_iterate,
     .scan                       = vpi_scan,
