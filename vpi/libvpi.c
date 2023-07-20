@@ -60,6 +60,11 @@ vpiHandle vpi_handle_by_index(vpiHandle ref, PLI_INT32 idx)
       assert(vpip_routines);
       return vpip_routines->handle_by_index(ref, idx);
 }
+vpiHandle vpi_handle_multi(PLI_INT32 type, vpiHandle ref1, vpiHandle ref2)
+{
+      assert(vpip_routines);
+      return vpip_routines->handle_multi(type, ref1, ref2);
+}
 
 // for traversing relationships
 
