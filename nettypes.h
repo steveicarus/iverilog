@@ -149,7 +149,8 @@ class netrange_t {
 extern std::ostream&operator << (std::ostream&out, const std::list<netrange_t>&rlist);
 extern std::ostream&operator << (std::ostream&out, const std::vector<netrange_t>&rlist);
 
-extern unsigned long netrange_width(const std::vector<netrange_t>&dims);
+extern unsigned long netrange_width(const std::vector<netrange_t>&dims,
+				    unsigned int base_width = 1);
 extern bool netrange_equivalent(const std::vector<netrange_t> &a,
 			        const std::vector<netrange_t> &b);
 
