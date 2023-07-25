@@ -443,6 +443,7 @@ class vpiPortInfo  : public __vpiHandle {
       ~vpiPortInfo();
 
       int get_type_code(void) const { return vpiPort; }
+      int get_direction(void) { return direction_; }
 
       int vpi_get(int code);
       char* vpi_get_str(int code);

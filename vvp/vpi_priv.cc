@@ -33,6 +33,16 @@
 # include  <cmath>
 # include  <iostream>
 
+# include  "npmos.h"
+# include  "vvp_island.h"
+# include  "resolv.h"
+# include  "bufif.h"
+# include  "latch.h"
+# include  "dff.h"
+# include  "event.h"
+# include  "arith.h"
+# include  "part.h"
+
 using namespace std;
 vpi_mode_t vpi_mode_flag = VPI_MODE_NONE;
 FILE*vpi_trace = 0;
@@ -1554,6 +1564,84 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
       return out;
 }
 
+void print_net_type(vvp_net_t* net1)
+{
+      if (dynamic_cast<vvp_fun_delay*>(net1->fun)) std::cout << "vvp_fun_delay*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_modpath*>(net1->fun)) std::cout << "vvp_fun_modpath*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_modpath_src*>(net1->fun)) std::cout << "vvp_fun_modpath_src*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_part_pv*>(net1->fun)) std::cout << "vvp_fun_part_pv*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_part_var*>(net1->fun)) std::cout << "vvp_fun_part_var*!" << std::endl;
+      else if (dynamic_cast<vvp_arith_*>(net1->fun)) std::cout << "vvp_arith_*!" << std::endl;
+      else if (dynamic_cast<vvp_arith_abs*>(net1->fun)) std::cout << "vvp_arith_abs*!" << std::endl;
+      else if (dynamic_cast<vvp_arith_cast_int*>(net1->fun)) std::cout << "vvp_arith_cast_int*!" << std::endl;
+      else if (dynamic_cast<vvp_arith_cast_real*>(net1->fun)) std::cout << "vvp_arith_cast_real*!" << std::endl;
+      else if (dynamic_cast<vvp_arith_cast_vec2*>(net1->fun)) std::cout << "vvp_arith_cast_vec2*!" << std::endl;
+      else if (dynamic_cast<vvp_arith_real_*>(net1->fun)) std::cout << "vvp_arith_real_*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_edge*>(net1->fun)) std::cout << "vvp_fun_edge*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_anyedge*>(net1->fun)) std::cout << "vvp_fun_anyedge*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_event_or*>(net1->fun)) std::cout << "vvp_fun_event_or*!" << std::endl;
+      else if (dynamic_cast<vvp_named_event*>(net1->fun)) std::cout << "vvp_named_event*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_bufif*>(net1->fun)) std::cout << "vvp_fun_bufif*!" << std::endl;
+      else if (dynamic_cast<vvp_dff*>(net1->fun)) std::cout << "vvp_dff*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_boolean_*>(net1->fun)) std::cout << "vvp_fun_boolean_*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_buf*>(net1->fun)) std::cout << "vvp_fun_buf*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_bufz*>(net1->fun)) std::cout << "vvp_fun_bufz*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_muxz*>(net1->fun)) std::cout << "vvp_fun_muxz*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_muxr*>(net1->fun)) std::cout << "vvp_fun_muxr*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_not*>(net1->fun)) std::cout << "vvp_fun_not*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_concat*>(net1->fun)) std::cout << "vvp_fun_concat*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_concat8*>(net1->fun)) std::cout << "vvp_fun_concat8*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_force*>(net1->fun)) std::cout << "vvp_fun_force*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_repeat*>(net1->fun)) std::cout << "vvp_fun_repeat*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_drive*>(net1->fun)) std::cout << "vvp_fun_drive*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_extend_signed*>(net1->fun)) std::cout << "vvp_fun_extend_signed*!" << std::endl;
+      else if (dynamic_cast<vvp_wide_fun_core*>(net1->fun)) std::cout << "vvp_wide_fun_core*!" << std::endl;
+      else if (dynamic_cast<vvp_wide_fun_t*>(net1->fun)) std::cout << "vvp_wide_fun_t*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_signal_vec*>(net1->fun)) std::cout << "vvp_fun_signal_vec*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_signal_real*>(net1->fun)) std::cout << "vvp_fun_signal_real*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_signal_string*>(net1->fun)) std::cout << "vvp_fun_signal_string*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_signal_object*>(net1->fun)) std::cout << "vvp_fun_signal_object*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_signal_base*>(net1->fun)) std::cout << "vvp_fun_signal_base*!" << std::endl;
+      else if (dynamic_cast<resolv_core*>(net1->fun)) std::cout << "resolv_core*!" << std::endl;
+      else if (dynamic_cast<resolv_extend*>(net1->fun)) std::cout << "resolv_extend*!" << std::endl;
+      else if (dynamic_cast<vvp_latch*>(net1->fun)) std::cout << "vvp_latch*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_pmos_*>(net1->fun)) std::cout << "vvp_fun_pmos_*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_cmos_*>(net1->fun)) std::cout << "vvp_fun_cmos_*!" << std::endl;
+      else if (dynamic_cast<vvp_island_port*>(net1->fun)) std::cout << "vvp_island_port*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_intermodpath*>(net1->fun)) std::cout << "vvp_fun_intermodpath*!" << std::endl;
+
+      //else if (dynamic_cast<vvp_reduce_base*>(net1->fun)) std::cout << "vvp_reduce_base*!" << std::endl;
+      //else if (dynamic_cast<vvp_reduce_and*>(net1->fun)) std::cout << "vvp_reduce_and*!" << std::endl;
+      //else if (dynamic_cast<vvp_reduce_or*>(net1->fun)) std::cout << "vvp_reduce_or*!" << std::endl;
+      //else if (dynamic_cast<vvp_reduce_xor*>(net1->fun)) std::cout << "vvp_reduce_xor*!" << std::endl;
+      //else if (dynamic_cast<vvp_reduce_nand*>(net1->fun)) std::cout << "vvp_reduce_nand*!" << std::endl;
+      //else if (dynamic_cast<vvp_reduce_nor*>(net1->fun)) std::cout << "vvp_reduce_nor*!" << std::endl;
+      //else if (dynamic_cast<vvp_reduce_xnor*>(net1->fun)) std::cout << "vvp_reduce_xnor*!" << std::endl;
+
+      else if (dynamic_cast<vvp_fun_part*>(net1->fun)) std::cout << "vvp_fun_part*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_part_sa*>(net1->fun)) std::cout << "vvp_fun_part_sa*!" << std::endl;
+      else if (dynamic_cast<vvp_fun_part_aa*>(net1->fun)) std::cout << "vvp_fun_part_aa*!" << std::endl;
+
+      //else if (dynamic_cast<vvp_fun_substitute*>(net1->fun)) std::cout << "vvp_fun_substitute*!" << std::endl;
+      //else if (dynamic_cast<vvp_fun_arrayport*>(net1->fun)) std::cout << "vvp_fun_arrayport*!" << std::endl;
+      //else if (dynamic_cast<vvp_fun_arrayport_sa*>(net1->fun)) std::cout << "vvp_fun_arrayport_sa*!" << std::endl;
+      //else if (dynamic_cast<vvp_fun_arrayport_aa*>(net1->fun)) std::cout << "vvp_fun_arrayport_aa*!" << std::endl;
+
+      else std::cout << "unknown!" << std::endl;
+}
+
+void print_port_connections(vvp_net_ptr_t* net_ptr)
+{
+      vvp_net_t* next_net = net_ptr->ptr();
+      if (!next_net) return;
+
+      print_net_type(next_net);
+      vvp_net_ptr_t* next_net_ptr = &next_net->port[net_ptr->port()];
+
+      print_port_connections(next_net_ptr);
+}
+
+
 // Used to get intermodpath for two ports
 vpiHandle vpi_handle_multi(PLI_INT32 type,
                            vpiHandle ref1,
@@ -1585,6 +1673,18 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
 		      "must be a vpiPort\n");
 	      return nullptr;
       }
+
+      /*if (!(port1->get_direction() == vpiOutput || port1->get_direction() == vpiInout)) {
+	      fprintf(stderr, "ERROR: First vpiPort must be an output"
+				      " or bidirectional port\n");
+	      return nullptr;
+      }
+
+      if (!(port2->get_direction() == vpiInput || port2->get_direction() == vpiInout)) {
+	      fprintf(stderr, "ERROR: Second vpiPort must be an input"
+				      " or bidirectional port\n");
+	      return nullptr;
+      }*/
 
       std::string port_name1(vpi_get_str(vpiName, ref1));
       std::string port_name2(vpi_get_str(vpiName, ref2));
@@ -1648,63 +1748,113 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
       vvp_net_t* net1 = node1->node;
       vvp_net_t* net2 = node2->node;
 
-      // TODO don't just compare the nets, may be a problem for high fan-out nets
-      if (net1 == net2)
-      {
-	      fprintf(stderr, "Same net!\n");
-      }
-      else
-      {
-	      fprintf(stderr, "Different net!\n");
-	      return nullptr;
-      }
+      print_net_type(net1);
+      print_net_type(net2);
 
       // Debug information
 
       for (int i=0; i<4; i++)
       {
-	      fprintf(stderr, "my_node1->port[%d].ptr() : %p\n", i, net1->port[i].ptr());
-	      fprintf(stderr, "my_node1->port[%d].port() : %d\n", i, net1->port[i].port());
+	      fprintf(stderr, "net1->port[%d].ptr() : %p\n", i, net1->port[i].ptr());
+	      fprintf(stderr, "net1->port[%d].port() : %d\n", i, net1->port[i].port());
       }
 
-      fprintf(stderr, "my_node1->fun : %p\n", net1->fun);
-      fprintf(stderr, "my_node1->fil : %p\n", net1->fil);
+      fprintf(stderr, "net1->fun : %p\n", net1->fun);
+      fprintf(stderr, "net1->fil : %p\n", net1->fil);
 
-      fprintf(stderr, "my_node1->fil->filter_size() : %d\n", net1->fil->filter_size());
+      fprintf(stderr, "net1->fil->filter_size() : %d\n", net1->fil->filter_size());
 
-      //fprintf(stderr, "my_node1->out_.ptr() : %p\n", net1->out_.ptr());   // vvp_net_t
-      //fprintf(stderr, "my_node1->out_.port() : %d\n", net1->out_.port()); // input 3-0
+      //fprintf(stderr, "net1->out_.ptr() : %p\n", net1->out_.ptr());   // vvp_net_t
+      //fprintf(stderr, "net1->out_.port() : %d\n", net1->out_.port()); // input 3-0
 
-
-      // TODO for now just replace vvp_fun_bufz with vvp_fun_intermodpath
-      if (dynamic_cast<vvp_fun_bufz*>(net1->fun))
+      // TODO don't just compare the nets, may be a problem for high fan-out nets
+      if (net1 == net2)
       {
-	      std::cout << "Replacing with vvp_fun_intermodpath!" << std::endl;
+	      fprintf(stderr, "Same net!\n");
 
+	      vvp_net_ptr_t* next_ptr = &net1->out_;
+
+	      fprintf(stderr, "Port connections:\n");
+
+	      print_port_connections(next_ptr);
+
+	      fprintf(stderr, "End port connections:\n");
+
+	      std::cout << *next_ptr << std::endl;
+
+	      vvp_net_t* next_net = next_ptr->ptr();
+	      //assert(next_net);
+
+	      if (!next_net) return 0;
+
+	      print_net_type(next_net);
+
+	      for (int i=0; i<4; i++)
+	      {
+		      fprintf(stderr, "next_net->port[%d].ptr() : %p\n", i, next_net->port[i].ptr());
+		      fprintf(stderr, "next_net->port[%d].port() : %d\n", i, next_net->port[i].port());
+
+		      if (next_net->port[i].ptr()) print_net_type(next_net->port[i].ptr());
+            }
+
+
+	      // May be connected to both vvp_fun_modpath_src* and vvp_fun_bufz*!
+	      //if (next_net->port[next_ptr->port()].ptr() == nullptr)
+	      //{
+	      //fprintf(stderr, "next_net is the only thing connected to net1/net2!\n");
 	      int width = 1; // TODO
 
-	      vvp_fun_intermodpath*obj = new vvp_fun_intermodpath(net1, width);
-	      net1->fun = obj;
+	      vvp_net_t*new_net = new vvp_net_t;
+	      vvp_fun_intermodpath*obj = new vvp_fun_intermodpath(new_net, width);
+	      new_net->fun = obj;
 
-	      __vpiInterModPath*intermodpath = vpip_make_intermodpath(net1, port1, port2);
+	      new_net->out_= vvp_net_ptr_t(next_net,0); // point to port0 of net2
+
+	      net1->out_ = vvp_net_ptr_t(new_net,0); // point to port0 of new_net
+
+	      __vpiInterModPath*intermodpath = vpip_make_intermodpath(new_net, port1, port2);
 	      intermodpath->intermodpath = obj;
 
-	      // TODO add net to network
-
-	      /*vvp_net_t*net = new vvp_net_t;
-	      vvp_fun_intermodpath*obj = new vvp_fun_intermodpath(net, width, delay);
-	      net->fun = obj;
-
-	      __vpiInterModPath*intermodpath = vpip_make_intermodpath(net, ref1, ref2);
-	      intermodpath->intermodpath = obj;*/
+	      fprintf(stderr, "Inserted vvp_fun_intermodpath!\n");
 
 	      return intermodpath;
+	      //}
+
       }
       else
       {
-            std::cout << "sorry: Could not insert intermodpath!" << std::endl;
-      }
+	      fprintf(stderr, "Different net!\n");
 
+	      vvp_net_ptr_t* net1_ptr = &net1->out_;
+
+	      // TODO follow whole linked list
+	      if (net1_ptr->ptr() == net2)
+	      {
+		      fprintf(stderr, "But net1 connected to net2!\n");
+
+		      if (net2->port[net1_ptr->port()].ptr() == nullptr)
+		      {
+			      fprintf(stderr, "Net2 is the only thing connected to net1!\n");
+
+			      int width = 1; // TODO
+
+			      vvp_net_t*new_net = new vvp_net_t;
+			      vvp_fun_intermodpath*obj = new vvp_fun_intermodpath(new_net, width);
+			      new_net->fun = obj;
+
+			      new_net->out_= vvp_net_ptr_t(net2,0); // point to port0 of net2
+			      net1->out_ = vvp_net_ptr_t(new_net,0); // point to port0 of new_net
+
+			      __vpiInterModPath*intermodpath = vpip_make_intermodpath(new_net, port1, port2);
+			      intermodpath->intermodpath = obj;
+
+			      fprintf(stderr, "Inserted vvp_fun_intermodpath!\n");
+
+			      return intermodpath;
+		      }
+	      }
+      }
+      std::cout << "sorry: Could not insert intermodpath!" << std::endl;
       return nullptr;
 }
 
