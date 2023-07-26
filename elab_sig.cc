@@ -1204,5 +1204,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       for (unsigned idx = 0 ;  idx < nattrib ;  idx += 1)
 	    sig->attribute(attrib_list[idx].key, attrib_list[idx].val);
 
+      sig->set_const(is_const_);
+
       return sig;
 }

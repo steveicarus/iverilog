@@ -639,7 +639,7 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 %type <number>  number pos_neg_number
 %type <flag>    signing unsigned_signed_opt signed_unsigned_opt
 %type <flag>    import_export
-%type <flag>    K_genvar_opt K_static_opt K_virtual_opt
+%type <flag>    K_genvar_opt K_static_opt K_virtual_opt K_const_opt
 %type <flag>    udp_reg_opt edge_operator
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
@@ -1231,21 +1231,22 @@ constraint_set /* IEEE1800-2005 A.1.9 */
   ;
 
 data_declaration /* IEEE1800-2005: A.2.1.3 */
-  : attribute_list_opt data_type list_of_variable_decl_assignments ';'
-      { data_type_t*data_type = $2;
-	if (data_type == 0) {
+   : attribute_list_opt K_const_opt data_type list_of_variable_decl_assignments ';'
+      { data_type_t *data_type = $3;
+	if (!data_type) {
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
-	      FILE_NAME(data_type, @2);
+	      FILE_NAME(data_type, @3);
 	}
-	pform_makewire(@2, 0, str_strength, $3, NetNet::IMPLICIT_REG, data_type, $1);
+	pform_makewire(@3, 0, str_strength, $4, NetNet::IMPLICIT_REG, data_type,
+		       $1, $2);
       }
-  | attribute_list_opt K_var data_type_or_implicit list_of_variable_decl_assignments ';'
-      { data_type_t*data_type = $3;
-	if (data_type == 0) {
+  | attribute_list_opt K_const_opt K_var data_type_or_implicit list_of_variable_decl_assignments ';'
+      { data_type_t *data_type = $4;
+	if (!data_type) {
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
-	      FILE_NAME(data_type, @2);
+	      FILE_NAME(data_type, @3);
 	}
-	pform_make_var(@2, $4, data_type, $1);
+	pform_make_var(@3, $5, data_type, $1, $2);
       }
   | attribute_list_opt K_event event_variable_list ';'
       { if ($3) pform_make_events(@2, $3);
@@ -2731,24 +2732,24 @@ block_item_decl
   /* variable declarations. Note that data_type can be 0 if we are
      recovering from an error. */
 
-  : K_var variable_lifetime_opt data_type_or_implicit list_of_variable_decl_assignments ';'
-      { data_type_t*data_type = $3;
-	if (data_type == 0) {
+  : K_const_opt K_var variable_lifetime_opt data_type_or_implicit list_of_variable_decl_assignments ';'
+      { data_type_t *data_type = $4;
+	if (!data_type) {
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
-	      FILE_NAME(data_type, @1);
+	      FILE_NAME(data_type, @2);
 	}
-	pform_make_var(@1, $4, data_type, attributes_in_context);
+	pform_make_var(@2, $5, data_type, attributes_in_context);
 	var_lifetime = LexicalScope::INHERITED;
       }
 
-  | variable_lifetime_opt data_type list_of_variable_decl_assignments ';'
-      { if ($2) pform_make_var(@2, $3, $2, attributes_in_context);
+  | K_const_opt variable_lifetime_opt data_type list_of_variable_decl_assignments ';'
+      { if ($3) pform_make_var(@3, $4, $3, attributes_in_context, $1);
 	var_lifetime = LexicalScope::INHERITED;
       }
 
   /* The extra `reg` is not valid (System)Verilog, this is a iverilog extension. */
-  | variable_lifetime_opt K_reg data_type list_of_variable_decl_assignments ';'
-      { if ($3) pform_make_var(@3, $4, $3, attributes_in_context);
+  | K_const_opt variable_lifetime_opt K_reg data_type list_of_variable_decl_assignments ';'
+      { if ($4) pform_make_var(@4, $5, $4, attributes_in_context, $1);
 	var_lifetime = LexicalScope::INHERITED;
       }
 
@@ -2769,11 +2770,11 @@ block_item_decl
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
 
-  | K_var variable_lifetime_opt data_type_or_implicit error ';'
+  | K_const_opt K_var variable_lifetime_opt data_type_or_implicit error ';'
       { yyerror(@1, "error: Syntax error in variable list.");
 	yyerrok;
       }
-  | variable_lifetime_opt data_type error ';'
+  | K_const_opt variable_lifetime_opt data_type error ';'
       { yyerror(@1, "error: Syntax error in variable list.");
 	yyerrok;
       }
@@ -7307,6 +7308,11 @@ unique_priority
   /* Many keywords can be optional in the syntax, although their
      presence is significant. This is a fairly common pattern so
      collect those rules here. */
+
+K_const_opt
+ : K_const { $$ = true; }
+ |         { $$ = false; }
+ ;
 
 K_genvar_opt
  : K_genvar { $$ = true; }

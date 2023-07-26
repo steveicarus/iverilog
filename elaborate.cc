@@ -2378,7 +2378,7 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
 		 << "lval_ expr type = " << typeid(*lval_).name() << endl;
       }
 
-      return lval_->elaborate_lval(des, scope, false, false);
+      return lval_->elaborate_lval(des, scope, false, false, is_init_);
 }
 
 NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
