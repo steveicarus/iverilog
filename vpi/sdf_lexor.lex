@@ -45,8 +45,6 @@ static int yywrap(void)
 %}
 
 %x CCOMMENT
-%x COND_EDGE_ID
-%x EDGE_ID
 
 %%
 
@@ -64,16 +62,15 @@ static int yywrap(void)
   /* Count lines so that the parser can assign line numbers. */
 \n { sdflloc.first_line += 1; }
 
-  /* The other edge identifiers. */
-<COND_EDGE_ID,EDGE_ID>"01"    {return K_01; }
-<COND_EDGE_ID,EDGE_ID>"10"    {return K_10; }
-<COND_EDGE_ID,EDGE_ID>"0"[zZ] {return K_0Z; }
-<COND_EDGE_ID,EDGE_ID>[zZ]"1" {return K_Z1; }
-<COND_EDGE_ID,EDGE_ID>"1"[zZ] {return K_1Z; }
-<COND_EDGE_ID,EDGE_ID>[zZ]"0" {return K_Z0; }
-<COND_EDGE_ID,EDGE_ID>[pP][oO][sS][eE][dD][gG][eE] {return K_POSEDGE; }
-<COND_EDGE_ID,EDGE_ID>[nN][eE][gG][eE][dD][gG][eE] {return K_NEGEDGE; }
-<COND_EDGE_ID>[cC][oO][nN][dD] {return K_COND; }
+  /* The edge identifiers. */
+"posedge" { return K_POSEDGE; }
+"negedge" { return K_NEGEDGE; }
+"01" {return K_01; }
+"10" {return K_10; }
+"0z" {return K_0Z; }
+"z1" {return K_Z1; }
+"1z" {return K_1Z; }
+"z0" {return K_Z0; }
 
   /* Integer values */
 [0-9]+ {
@@ -164,17 +161,6 @@ static struct {
       { "WIDTH",        K_WIDTH },
       { 0, IDENTIFIER }
 };
-
-void start_edge_id(unsigned cond)
-{
-      if (cond) BEGIN(COND_EDGE_ID);
-      else BEGIN(EDGE_ID);
-}
-
-void stop_edge_id(void)
-{
-      BEGIN(0);
-}
 
 static int lookup_keyword(const char*text)
 {

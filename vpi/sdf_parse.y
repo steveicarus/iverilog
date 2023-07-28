@@ -43,6 +43,7 @@ char sdf_use_hchar = '.';
       struct port_with_edge_s port_with_edge;
       struct sdf_delval_list_s delval_list;
       struct interconnect_port_s interconnect_port;
+      struct port_tchk_s port_tchk;
 };
 
 %token K_ABSOLUTE K_CELL K_CELLTYPE K_COND K_CONDELSE K_DATE K_DELAYFILE
@@ -67,6 +68,8 @@ char sdf_use_hchar = '.';
 %type <string_val> port port_instance
 
 %type <interconnect_port> port_interconnect
+
+%type <port_tchk> port_tchk
 
 %type <real_val> signed_real_number
 %type <delay> delval rvalue_opt rvalue rtriple signed_real_number_opt
@@ -291,8 +294,6 @@ timing_spec
       { vpi_printf("SDF ERROR: %s:%d: Syntax error in CELL DELAY SPEC\n",
 	           sdf_parse_path, @2.first_line); }
   | '(' K_TIMINGCHECK tchk_def_list ')'
-      { vpi_printf("SDF WARNING: %s:%d: TIMINGCHECK not supported.\n",
-	           sdf_parse_path, @2.first_line); }
   | '(' K_TIMINGCHECK error ')'
       { vpi_printf("SDF ERROR: %s:%d: Syntax error in TIMINGCHECK SPEC\n",
 	           sdf_parse_path, @2.first_line); }
@@ -382,55 +383,61 @@ tchk_def_list
   /* Timing checks are ignored. */
 tchk_def
   : '(' K_SETUP port_tchk port_tchk rvalue ')'
+      { vpi_printf("SDF WARNING: %s:%d: TIMINGCHECK $setup not supported.\n",
+	           sdf_parse_path, @2.first_line); }
   | '(' K_HOLD port_tchk port_tchk rvalue ')'
+      { vpi_printf("SDF WARNING: %s:%d: TIMINGCHECK $hold not supported.\n",
+	           sdf_parse_path, @2.first_line); }
   | '(' K_SETUPHOLD port_tchk port_tchk rvalue rvalue ')'
+      { vpi_printf("SDF WARNING: %s:%d: TIMINGCHECK $setuphold not supported.\n",
+	           sdf_parse_path, @2.first_line); }
   | '(' K_RECOVERY port_tchk port_tchk rvalue ')'
+      { vpi_printf("SDF WARNING: %s:%d: TIMINGCHECK $recovery not supported.\n",
+	           sdf_parse_path, @2.first_line); }
   | '(' K_RECREM port_tchk port_tchk rvalue rvalue ')'
+      { vpi_printf("SDF WARNING: %s:%d: TIMINGCHECK $recrem not supported.\n",
+	           sdf_parse_path, @2.first_line); }
   | '(' K_REMOVAL port_tchk port_tchk rvalue ')'
-  | '(' K_WIDTH port_tchk rvalue ')'
+      { vpi_printf("SDF WARNING: %s:%d: TIMINGCHECK $removal not supported.\n",
+	           sdf_parse_path, @2.first_line); }
+  | '(' K_WIDTH port_tchk rvalue ')' // TODO
+      { if (sdf_flag_inform) {
+	      vpi_printf("SDF INFO: %s:%d: TIMINGCHECK $width with "
+	                 "ref_event = %d %s %s, value = %f\n",
+	                 sdf_parse_path, @2.first_line, $3.vpi_edge, $3.signal, $3.condition, $4.value);
+	}
+	sdf_tchk_width_limits($3, $4, @2.first_line);
+	free($3.signal);
+	free($3.condition);
+      }
   | '(' K_PERIOD port_tchk rvalue ')'
+      { vpi_printf("SDF WARNING: %s:%d: TIMINGCHECK $period not supported.\n",
+	           sdf_parse_path, @2.first_line); }
   ;
 
 port_tchk
-  : port_instance
-      { free($1); }
-  /* This must only be an edge. For now we just accept everything. */
-  | cond_edge_start port_instance ')'
-      { free($2); }
-  /* These must only be a cond. For now we just accept everything. */
-  | cond_edge_start timing_check_condition port_spec ')'
-      { free($3.string_val); }
-  | cond_edge_start QSTRING timing_check_condition port_spec ')'
-      { free($2);
-	free($4.string_val);
+  : port_spec
+      { $$.signal = $1.string_val;
+        $$.vpi_edge = $1.vpi_edge;
+        $$.condition = NULL;
+      }
+  | '(' K_COND timing_check_condition port_spec ')'
+      { vpi_printf("SDF WARNING: %s:%d: Conditions for timing checks not supported.\n",
+	           sdf_parse_path, @2.first_line);$$.signal = $4.string_val;
+        $$.vpi_edge = $4.vpi_edge;
+        $$.condition = NULL; // TODO pass condition
       }
   ;
 
-cond_edge_start
-  : '(' { start_edge_id(1); } cond_edge_identifier { stop_edge_id(); }
-  ;
-
-cond_edge_identifier
-  : K_POSEDGE
-  | K_NEGEDGE
-  | K_01
-  | K_10
-  | K_0Z
-  | K_Z1
-  | K_1Z
-  | K_Z0
-  | K_COND
-  ;
-
 timing_check_condition
-  : port_interconnect
-      { free($1.name); }
-  | '~' port_interconnect
-      { free($2.name); }
-  | '!' port_interconnect
-      { free($2.name); }
-  | port_interconnect equality_operator scalar_constant
-      { free($1.name); }
+  : hierarchical_identifier
+      { free($1); }
+  | '~' hierarchical_identifier
+      { free($2); }
+  | '!' hierarchical_identifier
+      { free($2); }
+  | hierarchical_identifier equality_operator scalar_constant
+      { free($1); }
   ;
 
   /* This is not complete! */
@@ -495,8 +502,8 @@ port_interconnect
   ;
 
 port_edge
-  : '(' {start_edge_id(0);} edge_identifier {stop_edge_id();} port_instance ')'
-      { $$.vpi_edge = $3; $$.string_val = $5; }
+  : '(' edge_identifier port_instance ')'
+      { $$.vpi_edge = $2; $$.string_val = $3; }
   ;
 
 edge_identifier

@@ -185,6 +185,19 @@ inline vvp_bit4_t operator & (vvp_bit4_t a, vvp_bit4_t b)
 extern vvp_bit4_t operator ^ (vvp_bit4_t a, vvp_bit4_t b);
 extern std::ostream& operator<< (std::ostream&o, vvp_bit4_t a);
 
+  /* Specifies edges in vvp */
+typedef unsigned short edge_t;
+
+static inline edge_t VVP_EDGE(vvp_bit4_t from, vvp_bit4_t to)
+{
+      return 1 << ((from << 2) | to);
+}
+
+extern const edge_t vvp_edge_edge;
+extern const edge_t vvp_edge_posedge;
+extern const edge_t vvp_edge_negedge;
+extern const edge_t vvp_edge_none;
+
   /* Return >0, ==0 or <0 if the from-to transition represents a
      posedge, no edge, or negedge. */
 extern int edge(vvp_bit4_t from, vvp_bit4_t to);

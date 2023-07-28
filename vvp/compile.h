@@ -484,6 +484,12 @@ extern void compile_scope_decl(char*typ, char*lab, char*nam, char*tnam,
 extern void compile_scope_recall(char*sym);
 
 /*
+ * The parser uses this function to compile .tchk_width statements.
+ */
+extern void compile_tchk_width(char* edge, struct symb_s ref, char* condition,
+                               double limit, double threshold, char* notifier, long file_idx, long lineno );
+
+/*
  * The parser uses this function to declare a thread. The start_sym is
  * the start instruction, and must already be defined.
  */

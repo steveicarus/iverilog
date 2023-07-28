@@ -358,6 +358,88 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
       }
 }
 
+void sdf_tchk_width_limits(struct port_tchk_s ref_event, struct sdf_delay_s limit, const int sdf_lineno)
+{
+      int num_annotated = 0;
+
+      if (!limit.defined) {
+	    vpi_printf("SDF ERROR: %s:%d: limit not defined\n",
+	               sdf_fname, sdf_lineno);
+	    return;
+      }
+
+      vpiHandle iter, vpi_tchk, vpi_refterm, vpi_ref;
+      iter = vpi_iterate(vpiTchk, sdf_scope);
+
+      if (!iter) {
+	    vpi_printf("SDF WARNING: %s:%d: no timing checks found\n",
+	               sdf_fname, sdf_lineno);
+	    return;
+      }
+
+      while ((vpi_tchk = vpi_scan(iter))) {
+
+	      // Wrong type, continue with next tchk
+	    if (vpi_get(vpiTchkType, vpi_tchk) != vpiWidth) continue;
+
+	      // Get the reference term
+	    vpi_refterm = vpi_handle(vpiTchkRefTerm, vpi_tchk);
+
+	    if (!vpi_refterm) {
+		  vpi_printf("SDF WARNING: %s:%d: could not access reference term\n",
+		             sdf_fname, sdf_lineno);
+              continue;
+	    }
+
+	      // There is an edge to test for
+	    if (ref_event.vpi_edge != vpiNoEdge) {
+		    // Wrong edge, continue with next tchk
+		  if (vpi_get(vpiEdge, vpi_refterm) != ref_event.vpi_edge) continue;
+	    }
+
+	      // TODO Once conditions are implemented, test here
+
+	      // Get the reference
+	    vpi_ref = vpi_handle(vpiExpr, vpi_refterm);
+
+	    if (!vpi_ref) {
+		  vpi_printf("SDF WARNING: %s:%d: could not access reference\n",
+		             sdf_fname, sdf_lineno);
+		  continue;
+	    }
+
+	    char* ref_name = vpi_get_str(vpiName, vpi_ref);
+
+	      // Compare names of reference signals
+	    if (strcmp(ref_event.signal, ref_name) == 0) {
+
+		    // Setup the delay structure
+		  s_vpi_delay delays;
+		  struct t_vpi_time delay_val = { .real = limit.value };
+		  delays.da = &delay_val;
+		  delays.no_of_delays = 1;
+		  delays.time_type = vpiScaledRealTime;
+		  delays.mtm_flag = 0;
+		  delays.append_flag = 0;
+		  delays.pulsere_flag = 0;
+
+		  if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Putting limit %f\n",
+		                                   sdf_fname, sdf_lineno, delay_val.real);
+
+		  vpi_put_delays(vpi_tchk, &delays);
+		  vpi_get_delays(vpi_tchk, &delays);
+		  vpi_printf("new limit: %f\n", delay_val.real);
+
+		  num_annotated++;
+	    }
+      }
+
+      if (num_annotated == 0) {
+	    vpi_printf("SDF WARNING: %s:%d: no timing checks match\n",
+	               sdf_fname, sdf_lineno);
+      }
+}
+
 static void check_command_line_args(void)
 {
       struct t_vpi_vlog_info vlog_info;

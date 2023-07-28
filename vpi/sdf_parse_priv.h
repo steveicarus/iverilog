@@ -30,7 +30,4 @@ extern const char*sdf_parse_path;
 /* Hierarchy separator character to use. */
 extern char sdf_use_hchar;
 
-extern void start_edge_id(unsigned cond);
-extern void stop_edge_id(void);
-
 #endif /* IVL_sdf_parse_priv_h */
