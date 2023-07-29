@@ -765,13 +765,13 @@ The .ufunc statements define a call to a user defined function.
 ::
 
 	<label> .ufunc/real <flabel>, <wid>,
-            <isymbols> ( <psymbols> ) <ssymbol>;
+            [<isymbols> ( <psymbols> )] <ssymbol>;
 
 	<label> .ufunc/vec4 <flabel>, <wid>,
-            <isymbols> ( <psymbols> ) <ssymbol>;
+            [<isymbols> ( <psymbols> )] <ssymbol>;
 
 	<label> .ufunc/e <flabel>, <wid>, <trigger>,
-            <isymbols> ( <psymbols> ) <ssymbol>;
+            [<isymbols> ( <psymbols> )] <ssymbol>;
 
 The first variant is used for functions that only need to be called
 when one of their inputs changes value. The second variant is used

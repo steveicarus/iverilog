@@ -261,11 +261,20 @@ statement
   | T_LABEL K_UFUNC_REAL T_SYMBOL ',' T_NUMBER ',' symbols '(' symbols ')' T_SYMBOL ';'
       { compile_ufunc_real($1, $3, $5, $7.cnt, $7.vect, $9.cnt, $9.vect, $11, 0); }
 
+  | T_LABEL K_UFUNC_REAL T_SYMBOL ',' T_NUMBER ',' T_SYMBOL ';'
+      { compile_ufunc_real($1, $3, $5, 0, 0, 0, 0, $7, 0); }
+
   | T_LABEL K_UFUNC_VEC4 T_SYMBOL ',' T_NUMBER ',' symbols '(' symbols ')' T_SYMBOL ';'
       { compile_ufunc_vec4($1, $3, $5, $7.cnt, $7.vect, $9.cnt, $9.vect, $11, 0); }
 
+  | T_LABEL K_UFUNC_VEC4 T_SYMBOL ',' T_NUMBER ',' T_SYMBOL ';'
+      { compile_ufunc_vec4($1, $3, $5, 0, 0, 0, 0, $7, 0); }
+
   | T_LABEL K_UFUNC_E T_SYMBOL ',' T_NUMBER ',' T_SYMBOL ',' symbols '(' symbols ')' T_SYMBOL ';'
       { compile_ufunc_vec4($1, $3, $5, $9.cnt, $9.vect, $11.cnt, $11.vect, $13, $7); }
+
+  | T_LABEL K_UFUNC_E T_SYMBOL ',' T_NUMBER ',' T_SYMBOL ',' T_SYMBOL ';'
+      { compile_ufunc_vec4($1, $3, $5, 0, 0, 0, 0, $7, 0); }
 
   /* Resolver statements are very much like functors. They are
      compiled to functors of a different mode. */
