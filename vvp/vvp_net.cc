@@ -1794,17 +1794,29 @@ void vvp_vector4_t::change_z2x()
       }
 }
 
-void vvp_vector4_t::set_to_x()
+void vvp_vector4_t::fill_bits(vvp_bit4_t bit)
 {
+	/* note: this relies on the bit encoding for the vvp_bit4_t. */
+      static const unsigned long init_atable[4] = {
+	    WORD_0_ABITS,
+	    WORD_1_ABITS,
+	    WORD_Z_ABITS,
+	    WORD_X_ABITS };
+      static const unsigned long init_btable[4] = {
+	    WORD_0_BBITS,
+	    WORD_1_BBITS,
+	    WORD_Z_BBITS,
+	    WORD_X_BBITS };
+
       if (size_ <= BITS_PER_WORD) {
-	    abits_val_ = vvp_vector4_t::WORD_X_ABITS;
-            bbits_val_ = vvp_vector4_t::WORD_X_BBITS;
+	    abits_val_ = init_atable[bit];
+	    bbits_val_ = init_btable[bit];
       } else {
-	    unsigned words = (size_+BITS_PER_WORD-1) / BITS_PER_WORD;
-	    for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
-		  abits_ptr_[idx] = vvp_vector4_t::WORD_X_ABITS;
-                  bbits_ptr_[idx] = vvp_vector4_t::WORD_X_BBITS;
-            }
+	    unsigned words = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
+	    for (unsigned idx = 0; idx < words; idx += 1) {
+		  abits_ptr_[idx] = init_atable[bit];
+		  bbits_ptr_[idx] = init_btable[bit];
+	    }
       }
 }
 

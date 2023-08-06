@@ -176,15 +176,18 @@ void compile_variable(char*label, char*name,
 
       vvp_net_t*net = new vvp_net_t;
 
+      vvp_bit4_t init;
+      if (vpi_type_code == vpiIntVar)
+	    init = BIT4_0;
+      else
+	    init = BIT4_X;
+
       if (vpip_peek_current_scope()->is_automatic()) {
-	    vvp_fun_signal4_aa*tmp = new vvp_fun_signal4_aa(wid);
+	    vvp_fun_signal4_aa*tmp = new vvp_fun_signal4_aa(wid, init);
 	    net->fil = tmp;
             net->fun = tmp;
-      } else if (vpi_type_code == vpiIntVar) {
-	    net->fil = new vvp_wire_vec4(wid, BIT4_0);
-            net->fun = new vvp_fun_signal4_sa(wid);
       } else {
-	    net->fil = new vvp_wire_vec4(wid, BIT4_X);
+	    net->fil = new vvp_wire_vec4(wid, init);
             net->fun = new vvp_fun_signal4_sa(wid);
       }
       vvp_signal_value*vfil = dynamic_cast<vvp_signal_value*>(net->fil);

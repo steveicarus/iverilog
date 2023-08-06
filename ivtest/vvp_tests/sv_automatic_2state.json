@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_automatic_2state.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

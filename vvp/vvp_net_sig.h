@@ -190,6 +190,7 @@ class vvp_fun_signal4_aa : public vvp_fun_signal_vec, public automatic_signal_ba
     private:
       unsigned context_idx_;
       unsigned size_;
+      vvp_bit4_t init_;
 };
 
 class vvp_fun_signal_real : public vvp_fun_signal_base {
