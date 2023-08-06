@@ -2738,7 +2738,7 @@ block_item_decl
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
 	      FILE_NAME(data_type, @2);
 	}
-	pform_make_var(@2, $5, data_type, attributes_in_context);
+	pform_make_var(@2, $5, data_type, attributes_in_context, $1);
 	var_lifetime = LexicalScope::INHERITED;
       }
 

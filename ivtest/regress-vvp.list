@@ -74,6 +74,7 @@ sv_const_fail5			vvp_tests/sv_const_fail5.json
 sv_const_fail6			vvp_tests/sv_const_fail6.json
 sv_const_fail7			vvp_tests/sv_const_fail7.json
 sv_const_fail8			vvp_tests/sv_const_fail8.json
+sv_const_fail9			vvp_tests/sv_const_fail9.json
 sv_foreach9			vvp_tests/sv_foreach9.json
 sv_foreach10			vvp_tests/sv_foreach10.json
 sv_module_port1			vvp_tests/sv_module_port1.json
