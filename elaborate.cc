@@ -3289,25 +3289,9 @@ NetProc* PChainConstructor::elaborate(Design*des, NetScope*scope) const
 	// going to pass this to the chained constructor.
       NetNet*var_this = scope->find_signal(perm_string::literal(THIS_TOKEN));
 
-	// If super.new is an implicit constructor, then there are no
-	// arguments (other than "this" to worry about, so make a
-	// NetEUFunc and there we go.
-      if (NetScope*new_scope = class_super->method_from_name(perm_string::literal("new@"))) {
-	    NetESignal*eres = new NetESignal(var_this);
-	    vector<NetExpr*> parms(1);
-	    parms[0] = eres;
-	    NetEUFunc*tmp = new NetEUFunc(scope, new_scope, eres, parms, true);
-	    tmp->set_line(*this);
-
-	    NetAssign_*lval_this = new NetAssign_(var_this);
-	    NetAssign*stmt = new NetAssign(lval_this, tmp);
-	    stmt->set_line(*this);
-	    return stmt;
-      }
-
 	// If super.new(...) is a user defined constructor, then call
 	// it. This is a bit more complicated because there may be arguments.
-      if (NetScope*new_scope = class_super->method_from_name(perm_string::literal("new"))) {
+      if (NetScope*new_scope = class_super->get_constructor()) {
 
 	    int missing_parms = 0;
 	    NetFuncDef*def = new_scope->func_def();

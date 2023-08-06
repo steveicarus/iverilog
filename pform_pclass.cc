@@ -147,8 +147,11 @@ void pform_end_class_declaration(const struct vlltype&loc)
       ivl_assert(loc, pform_cur_class);
 
 	// If there were initializer statements, then collect them
-	// into an implicit constructor function.
-      if (! pform_cur_class->type->initialize.empty()) {
+	// into an implicit constructor function. Also make sure that an
+	// explicit constructor exists if base class constructor arguments are
+	// specified, so that the base class constructor will be called.
+      if (!pform_cur_class->type->initialize.empty() ||
+          !pform_cur_class->type->base_args.empty()) {
 	    PFunction*func = pform_push_function_scope(loc, "new@", LexicalScope::AUTOMATIC);
 	    func->set_ports(0);
 	    pform_set_constructor_return(func);

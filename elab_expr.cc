@@ -6634,29 +6634,7 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 {
       ivl_assert(*this, ctype);
 
-	// If there is an initializer function, then pass the object
-	// through that function first. Note that the initializer
-	// function has no arguments other than the object itself.
-      if (NetScope*new1_scope = ctype->method_from_name(perm_string::literal("new@"))) {
-	    NetFuncDef*def1 = new1_scope->func_def();
-	    ivl_assert(*this, def1);
-	    ivl_assert(*this, def1->port_count()==1);
-	    vector<NetExpr*> parms1 (1);
-	    parms1[0] = obj;
-
-	      // The return value of the initializer is the "this"
-	      // variable, instead of the "new&" scope name.
-	    NetNet*res1 = new1_scope->find_signal(perm_string::literal(THIS_TOKEN));
-	    ivl_assert(*this, res1);
-
-	    NetESignal*eres = new NetESignal(res1);
-	    NetEUFunc*tmp = new NetEUFunc(scope, new1_scope, eres, parms1, true);
-	    tmp->set_line(*this);
-	    obj = tmp;
-      }
-
-
-      NetScope*new_scope = ctype->method_from_name(perm_string::literal("new"));
+      NetScope *new_scope = ctype->get_constructor();
       if (new_scope == 0) {
 	      // No constructor.
 	    if (parms_.size() > 0) {

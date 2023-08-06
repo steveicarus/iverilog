@@ -172,6 +172,22 @@ NetScope*netclass_t::method_from_name(perm_string name) const
 
 }
 
+NetScope* netclass_t::get_constructor() const
+{
+      auto task = class_scope_->child(hname_t(perm_string::literal("new")));
+      if (task)
+	    return task;
+
+      task = class_scope_->child(hname_t(perm_string::literal("new@")));
+      if (task)
+	    return task;
+
+      if (super_)
+	    return super_->get_constructor();
+
+      return nullptr;
+}
+
 NetNet* netclass_t::find_static_property(perm_string name) const
 {
       NetNet *net = class_scope_->find_signal(name);
