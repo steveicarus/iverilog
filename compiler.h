@@ -177,6 +177,11 @@ extern bool gn_icarus_misc_flag;
    is false, then skip elaboration of specify behavior. */
 extern bool gn_specify_blocks_flag;
 
+/* If this flag is true, then add input/output buffers to modules so that
+   VVP can insert intermodpaths inbetween. If this flag
+   is false, then no input/output buffers are inserted if not needed. */
+extern bool gn_interconnect_flag;
+
 /* If this flag is true, then elaborate supported assertion statements. If
    this flag is false, then stub out supported assertion statements. */
 extern bool gn_supported_assertions_flag;

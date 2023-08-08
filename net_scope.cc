@@ -572,8 +572,15 @@ void NetScope::add_module_port_info( unsigned idx, perm_string name, PortType::E
       info.name = name;
       info.type = ptype;
       info.width = width;
+      info.buffer = nullptr;
 }
 
+PortInfo* NetScope::get_module_port_info( unsigned idx )
+{
+      ivl_assert(*this, type_ == MODULE);
+      ivl_assert(*this, ports_.size() > idx);
+      return &ports_[idx];
+}
 
 unsigned NetScope::module_port_nets() const
 {
@@ -872,3 +879,4 @@ void NetScope::add_tie_lo(Design*des)
 	    connect(sig->pin(0), tie_lo_->pin(0));
       }
 }
+

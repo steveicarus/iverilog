@@ -992,6 +992,12 @@ extern "C" unsigned ivl_logic_width(ivl_net_logic_t net)
       return net->width_;
 }
 
+extern "C" unsigned ivl_logic_port_buffer(ivl_net_logic_t net)
+{
+      assert(net);
+      return net->is_port_buffer;
+}
+
 extern "C" int  ivl_udp_sequ(ivl_udp_t net)
 {
       assert(net);
@@ -2315,6 +2321,11 @@ extern "C" unsigned ivl_scope_mod_module_port_width(ivl_scope_t net, unsigned id
     return net->module_ports_info[idx].width;
 }
 
+extern "C" ivl_net_logic_t ivl_scope_mod_module_port_buffer(ivl_scope_t net, unsigned idx )
+{
+    assert(net);
+    return (ivl_net_logic_t)net->module_ports_info[idx].buffer;
+}
 
 extern "C" unsigned ivl_scope_ports(ivl_scope_t net)
 {

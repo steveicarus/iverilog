@@ -46,7 +46,7 @@ void        vpi_get_systf_info(vpiHandle, p_vpi_systf_data) { }
 
 vpiHandle   vpi_handle_by_name(const char*, vpiHandle) { return 0; }
 vpiHandle   vpi_handle_by_index(vpiHandle, PLI_INT32) { return 0; }
-vpiHandle   vpi_handle_multi(PLI_INT32 type, vpiHandle ref1, vpiHandle ref2) { return 0; }
+vpiHandle   vpi_handle_multi(PLI_INT32, vpiHandle, vpiHandle) { return 0; }
 
 // for traversing relationships
 

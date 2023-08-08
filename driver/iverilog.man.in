@@ -95,6 +95,14 @@ simulation, and in fact can hurt performance of the
 simulation. However, disabling specify blocks reduces accuracy of
 full-timing simulations.
 .TP 8
+.B -ginterconnect\fI|\fP-gno-interconnect
+Enable or disable (default) SDF interconnect support. When enabled,
+input and output buffers will be added to modules, so that VVP can
+add interconnection delays. This option is commonly not needed for RTL
+simulation, and in fact can hurt performance of the
+simulation. However, disabling interconnection delays reduces accuracy of
+full-timing simulations.
+.TP 8
 .B -gstd-include\fI|\fP-gno-std-include
 Enable (default) or disable the search of a standard installation
 include directory after all other explicit include directories. This

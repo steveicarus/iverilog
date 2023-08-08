@@ -1112,6 +1112,7 @@ extern ivl_drive_t ivl_logic_drive0(ivl_net_logic_t net);
 extern ivl_drive_t ivl_logic_drive1(ivl_net_logic_t net);
 extern unsigned    ivl_logic_width(ivl_net_logic_t net);
 extern unsigned    ivl_logic_is_cassign(ivl_net_logic_t net);
+extern unsigned    ivl_logic_port_buffer(ivl_net_logic_t net);
 
   /* DEPRECATED */
 extern const char* ivl_logic_attr(ivl_net_logic_t net, const char*key);
@@ -1897,6 +1898,7 @@ extern unsigned ivl_scope_mod_module_ports(ivl_scope_t net);
 extern const char *ivl_scope_mod_module_port_name(ivl_scope_t net, unsigned idx );
 extern ivl_signal_port_t ivl_scope_mod_module_port_type(ivl_scope_t net, unsigned idx );
 extern unsigned ivl_scope_mod_module_port_width(ivl_scope_t net, unsigned idx );
+extern ivl_net_logic_t ivl_scope_mod_module_port_buffer(ivl_scope_t net, unsigned idx );
 
 extern unsigned     ivl_scope_ports(ivl_scope_t net);
 extern ivl_signal_t ivl_scope_port(ivl_scope_t net, unsigned idx);
@@ -2432,3 +2434,4 @@ _END_DECL
 #undef ENUM_UNSIGNED_INT
 
 #endif /* IVL_ivl_target_H */
+

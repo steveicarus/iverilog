@@ -439,7 +439,8 @@ class vpiPortInfo  : public __vpiHandle {
                     unsigned index,
                     int vpi_direction,
                     unsigned width,
-                    const char *name );
+                    const char *name,
+                    char* buffer );
       ~vpiPortInfo();
 
       int get_type_code(void) const { return vpiPort; }
@@ -448,6 +449,7 @@ class vpiPortInfo  : public __vpiHandle {
       int vpi_get(int code);
       char* vpi_get_str(int code);
       vpiHandle vpi_handle(int code);
+      vvp_net_t* get_port(void) const { return ref_; }
 
     private:
       __vpiScope *parent_;
@@ -455,6 +457,7 @@ class vpiPortInfo  : public __vpiHandle {
       int       direction_;
       unsigned  width_;
       const char *name_;
+      vvp_net_t *ref_;
 };
 
 /*

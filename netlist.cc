@@ -1966,8 +1966,8 @@ unsigned NetSignExtend::width() const
       return width_;
 }
 
-NetBUFZ::NetBUFZ(NetScope*s, perm_string n, unsigned w, bool trans)
-: NetNode(s, n, 2), width_(w), transparent_(trans)
+NetBUFZ::NetBUFZ(NetScope*s, perm_string n, unsigned w, bool trans, int port_info_index)
+: NetNode(s, n, 2), width_(w), transparent_(trans), port_info_index_(port_info_index)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(1).set_dir(Link::INPUT);

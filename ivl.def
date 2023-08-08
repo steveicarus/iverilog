@@ -109,6 +109,7 @@ ivl_logic_scope
 ivl_logic_type
 ivl_logic_udp
 ivl_logic_width
+ivl_logic_port_buffer
 
 ivl_lpm_array
 ivl_lpm_aset_value
@@ -229,6 +230,7 @@ ivl_scope_mod_module_ports
 ivl_scope_mod_module_port_name
 ivl_scope_mod_module_port_type
 ivl_scope_mod_module_port_width
+ivl_scope_mod_module_port_buffer
 ivl_scope_mod_port
 ivl_scope_name
 ivl_scope_param

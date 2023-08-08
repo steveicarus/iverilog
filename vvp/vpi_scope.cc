@@ -666,13 +666,16 @@ vpiPortInfo::vpiPortInfo( __vpiScope *parent,
               unsigned index,
               int vpi_direction,
               unsigned width,
-              const char *name ) :
+              const char *name,
+              char* buffer) :
       parent_(parent),
       index_(index),
       direction_(vpi_direction),
       width_(width),
       name_(name)
 {
+      if (buffer != nullptr) functor_ref_lookup(&ref_, buffer);
+      else ref_ = nullptr;
 }
 
 vpiPortInfo::~vpiPortInfo()
@@ -737,9 +740,9 @@ vpiHandle vpiPortInfo::vpi_handle(int code)
  * code-generators etc.  There are no actual nets corresponding to instances of module ports
  * as elaboration directly connects nets connected through module ports.
  */
-void compile_port_info( unsigned index, int vpi_direction, unsigned width, const char *name )
+void compile_port_info( unsigned index, int vpi_direction, unsigned width, const char *name, char* buffer )
 {
     vpiHandle obj = new vpiPortInfo( vpip_peek_current_scope(),
-                                     index, vpi_direction, width, name );
+                                     index, vpi_direction, width, name, buffer );
     vpip_attach_to_current_scope(obj);
 }
