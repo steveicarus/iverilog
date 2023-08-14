@@ -199,8 +199,38 @@ vvp_net_t::vvp_net_t()
 void vvp_net_t::link(vvp_net_ptr_t port_to_link)
 {
       vvp_net_t*net = port_to_link.ptr();
-      net->port[port_to_link.port()] = out_;
-      out_ = port_to_link;
+
+      // Connect nodes with vvp_fun_modpath_src to the head of the
+      // linked list, so that vvp_fun_modpath_src are always evaluated
+      // before their respective vvp_fun_modpath
+      if (dynamic_cast<vvp_fun_modpath_src*>(net->fun))
+      {
+	      net->port[port_to_link.port()] = out_;
+	      out_ = port_to_link;
+      }
+      // All other nodes connect to the tail of the linked list
+      else
+      {
+	      // List is empty, just point to port_to_link
+	      if (out_.ptr() == nullptr)
+	      {
+		      out_ = port_to_link;
+		      net->port[port_to_link.port()] = vvp_net_ptr_t(nullptr,0);
+		      return;
+	      }
+
+	      vvp_net_ptr_t cur = out_;
+
+	      // Traverse through linked list
+	      while (cur.ptr()->port[cur.port()].ptr())
+	      {
+		      cur = cur.ptr()->port[cur.port()];
+	      }
+
+	      // Connect to the tail of list
+	      cur.ptr()->port[cur.port()] = port_to_link;
+	      net->port[port_to_link.port()] = vvp_net_ptr_t(nullptr,0);
+      }
 }
 
 /*
