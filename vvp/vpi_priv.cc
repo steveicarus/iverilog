@@ -1680,6 +1680,13 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
 	      return nullptr;
       }
 
+      bool is_output = false;
+      if (port1->get_direction() == vpiOutput && port2->get_direction() == vpiOutput)
+      {
+            std::cout << "OUTPUT!!!" << std::endl;
+            is_output = true;
+      }
+
       /*if (!(port1->get_direction() == vpiOutput || port1->get_direction() == vpiInout)) {
 	      fprintf(stderr, "ERROR: First vpiPort must be an output"
 				      " or bidirectional port\n");
@@ -1821,66 +1828,49 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
                   net_ptr = &next_net->port[net_ptr->port()];
             }
 
-            // Iterate over linked list until port2 is found
-            net_ptr = net1_ptr;
-            vvp_net_ptr_t previous_net_ptr = vvp_net_ptr_t(nullptr, 0);
-            vvp_net_t* previous_net = net1;
+            // Verify if port2 is connected to port1
+            vvp_net_t* current_net = net1_ptr->ptr();
 
-            while (net_ptr)
+            while (current_net)
             {
-                  vvp_net_t* next_net = net_ptr->ptr();
+                  if (!current_net) break; // End of list
 
-                  if (!next_net) break; // End of list
-                  if (next_net == net2) break; // Found net2
+                  if (current_net == net2)
+                  {
+                        std::cout << "Found net2!" << std::endl;
 
-                  previous_net_ptr = *net_ptr;
-                  net_ptr = &next_net->port[net_ptr->port()];
+                        // Ol switcheroo
+                        vvp_net_fun_t* net2_functor = net2->fun;
+
+                        int width = 1; // TODO
+                        vvp_fun_intermodpath*obj = new vvp_fun_intermodpath(net2, width);
+                        net2->fun = obj;
+
+                        vvp_net_t*new_net = new vvp_net_t;
+                        new_net->fun = net2_functor;
+                        //net2_functor->net = new_net;
+
+                        new_net->out_ = net2->out_;
+                        net2->out_ = vvp_net_ptr_t(new_net, 0);
+
+
+                        __vpiInterModPath*intermodpath = vpip_make_intermodpath(net2, port1, port2);
+	                  intermodpath->intermodpath = obj;
+
+	                  fprintf(stderr, "Inserted vvp_fun_intermodpath!\n");
+
+	                  fprintf(stderr, "Connected to port1:\n");
+	                  print_port_connections(net1_ptr);
+
+	                  fprintf(stderr, "Connected to port2:\n");
+	                  print_port_connections(net2_ptr);
+
+	                  return intermodpath;
+                  }
+                  current_net = current_net->port[0].ptr(); // BUFT has only one input, index 0
             }
 
-            if (!net_ptr->ptr()) return 0;
-
-	      fprintf(stderr, "Net2 connected to net1!\n");
-
-	      fprintf(stderr, "%p\n", previous_net);
-
-	      fprintf(stderr, "Inserting intermodpath...\n");
-
-	      int width = 1; // TODO get width of port, check port widths are equal
-
-	      vvp_net_t*new_net = new vvp_net_t;
-	      vvp_fun_intermodpath*obj = new vvp_fun_intermodpath(new_net, width);
-	      new_net->fun = obj;
-
-            // point to where net2 was pointing
-            new_net->port[0] = net_ptr->ptr()->port[net_ptr->port()];
-
-            // Directly connected to port1
-	      if (!previous_net_ptr.ptr())
-	      {
-                  net1->out_ = vvp_net_ptr_t(new_net,0);
-	      }
-            else
-            {
-                  // what pointed to net2 should point to new_net
-                  previous_net_ptr.ptr()->port[previous_net_ptr.port()] = vvp_net_ptr_t(new_net,0);
-            }
-
-            // out of new_net should point to net2
-	      new_net->out_= vvp_net_ptr_t(net2,0); // point to port0 of net2
-
-
-	      __vpiInterModPath*intermodpath = vpip_make_intermodpath(new_net, port1, port2);
-	      intermodpath->intermodpath = obj;
-
-	      fprintf(stderr, "Inserted vvp_fun_intermodpath!\n");
-
-	      fprintf(stderr, "Connected to port1:\n");
-	      print_port_connections(net1_ptr);
-
-	      fprintf(stderr, "Connected to port2:\n");
-	      print_port_connections(net2_ptr);
-
-	      return intermodpath;
+            std::cout << "Could not find net2!" << std::endl;
 
       }
       std::cout << "sorry: Could not insert intermodpath!" << std::endl;
