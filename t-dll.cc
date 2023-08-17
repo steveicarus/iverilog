@@ -893,13 +893,12 @@ bool dll_target::bufz(const NetBUFZ*net)
 
       scope_add_logic(scop, obj);
 
-      // Add bufz to the corresponding port_info entry,
-      // if it is an input / output buffer
-      // This is needed for the SDF interconnect feature
-      // to access the buffers directly from the port_info
-      if (obj->is_port_buffer)
-      {
-	      scop->module_ports_info[net->port_info_index()].buffer = obj;
+	// Add bufz to the corresponding port_info entry,
+	// if it is an input / output buffer
+	// This is needed for the SDF interconnect feature
+	// to access the buffers directly from the port_info
+      if (obj->is_port_buffer) {
+	    scop->module_ports_info[net->port_info_index()].buffer = obj;
       }
 
       return true;

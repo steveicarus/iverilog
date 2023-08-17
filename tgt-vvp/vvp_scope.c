@@ -308,7 +308,7 @@ int signal_is_return_value(ivl_signal_t sig)
  */
 int can_elide_bufz(ivl_net_logic_t net, ivl_nexus_ptr_t nptr)
 {
-      // If bufz is a module input/output buffer do not elide
+	// If bufz is a module input/output buffer do not elide
       if (ivl_logic_port_buffer(net)) return 0;
 
       ivl_nexus_t in_n, out_n;
@@ -2403,20 +2403,20 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
       if( ivl_scope_type(net) == IVL_SCT_MODULE ) {
 
-        // Port data for VPI: needed for vpiPorts property of vpiModule
-        for( idx = 0; idx < ivl_scope_mod_module_ports(net); ++idx ) {
-            const char *name =  ivl_scope_mod_module_port_name(net,idx);
-            ivl_signal_port_t ptype = ivl_scope_mod_module_port_type(net,idx);
-            unsigned width = ivl_scope_mod_module_port_width(net,idx);
-            ivl_net_logic_t buffer = ivl_scope_mod_module_port_buffer(net,idx);
-            if( name == 0 )
-                name = "";
-            fprintf( vvp_out, "    .port_info %u %s %u \"%s\"",
-                    idx, vvp_port_info_type_str(ptype), width,
-                    vvp_mangle_name(name) );
-            if (buffer) fprintf( vvp_out, " L_%p;\n", buffer);
-            else fprintf( vvp_out, ";\n");
-        }
+	      // Port data for VPI: needed for vpiPorts property of vpiModule
+	    for( idx = 0; idx < ivl_scope_mod_module_ports(net); ++idx ) {
+		  const char *name =  ivl_scope_mod_module_port_name(net,idx);
+		  ivl_signal_port_t ptype = ivl_scope_mod_module_port_type(net,idx);
+		  unsigned width = ivl_scope_mod_module_port_width(net,idx);
+		  ivl_net_logic_t buffer = ivl_scope_mod_module_port_buffer(net,idx);
+		  if( name == 0 )
+			name = "";
+		  fprintf( vvp_out, "    .port_info %u %s %u \"%s\"",
+		           idx, vvp_port_info_type_str(ptype), width,
+		           vvp_mangle_name(name) );
+		  if (buffer) fprintf( vvp_out, " L_%p;\n", buffer);
+		  else fprintf( vvp_out, ";\n");
+	    }
       }
 
       for (idx = 0 ;  idx < ivl_scope_params(net) ;  idx += 1) {

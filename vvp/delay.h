@@ -236,6 +236,8 @@ class vvp_fun_modpath_edge  : public vvp_fun_modpath_src {
 
 /*
 * The intermodpath is used to implement the SDF INTERCONNECT feature
+* Upon a (INTERCONNECT ...) statement an intermodpath will be inserted
+* between port1 and port2 and its delay can be annotated
 */
 class vvp_fun_intermodpath  : public vvp_net_fun_t, private vvp_gen_event_s {
 

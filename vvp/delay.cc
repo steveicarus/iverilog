@@ -1120,10 +1120,10 @@ vvp_fun_intermodpath::vvp_fun_intermodpath(vvp_net_t*net, unsigned width)
 : net_(net)
 {
       for (unsigned idx = 0 ;  idx < 12 ;  idx += 1)
-	      delay_[idx] = 0;
+	    delay_[idx] = 0;
 
       cur_vec4_ = vvp_vector4_t(width, BIT4_X);
-      schedule_init_propagate(net_, cur_vec4_); // TODO is this needed?
+      schedule_init_propagate(net_, cur_vec4_);
 }
 
 vvp_fun_intermodpath::~vvp_fun_intermodpath()
@@ -1252,12 +1252,11 @@ static vpiHandle intermodpath_iterate(int code, vpiHandle ref)
       return 0;
 }
 
-
 /*
  * This routine will put specific dimension of delay[] values
  * into a vpiHandle. In this case, we will put
  * specific delays values in a vpiInterModPath object
- * TODO code duplication
+ *
  */
 static void intermodpath_put_delays (vpiHandle ref, p_vpi_delay delays)
 {

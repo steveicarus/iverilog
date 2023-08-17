@@ -1600,23 +1600,23 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 		    // Add module input buffers if needed
 		  if (need_bufz_for_input_port(prts) || gn_interconnect_flag == true) {
-		      // FIXME improve this for multiple module instances
-		      NetScope* inner_scope = scope->instance_arrays[get_name()][0];
+			  // FIXME improve this for multiple module instances
+			NetScope* inner_scope = scope->instance_arrays[get_name()][0];
 
-		      NetBUFZ*tmp = new NetBUFZ(inner_scope, inner_scope->local_symbol(),
-						  sig->vector_width(), true, gn_interconnect_flag ? idx : -1);
-		      tmp->set_line(*this);
-		      des->add_node(tmp);
-		      connect(tmp->pin(1), sig->pin(0));
+			NetBUFZ*tmp = new NetBUFZ(inner_scope, inner_scope->local_symbol(),
+			                          sig->vector_width(), true, gn_interconnect_flag ? idx : -1);
+			tmp->set_line(*this);
+			des->add_node(tmp);
+			connect(tmp->pin(1), sig->pin(0));
 
-		      netvector_t*tmp2_vec = new netvector_t(sig->data_type(),
-							       sig->vector_width()-1,0);
-		      NetNet*tmp2 = new NetNet(inner_scope, inner_scope->local_symbol(),
-						 NetNet::WIRE, tmp2_vec);
-		      tmp2->local_flag(true);
-		      tmp2->set_line(*this);
-		      connect(tmp->pin(0), tmp2->pin(0));
-		      sig = tmp2;
+			netvector_t*tmp2_vec = new netvector_t(sig->data_type(),
+			                                       sig->vector_width()-1,0);
+			NetNet*tmp2 = new NetNet(inner_scope, inner_scope->local_symbol(),
+			                         NetNet::WIRE, tmp2_vec);
+			tmp2->local_flag(true);
+			tmp2->set_line(*this);
+			connect(tmp->pin(0), tmp2->pin(0));
+			sig = tmp2;
 		  }
 
 		    // If we have a real signal driving a bit/vector port
@@ -1938,12 +1938,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // the delay being applied to other drivers of
 		    // the external signal.
 		  if (prts[0]->delay_paths() > 0 || (gn_interconnect_flag == true && ptype == NetNet::POUTPUT)) {
-		      // FIXME improve this for multiple module instances
-		      NetScope* inner_scope = scope->instance_arrays[get_name()][0];
+			  // FIXME improve this for multiple module instances
+			NetScope* inner_scope = scope->instance_arrays[get_name()][0];
 
-		      isolate_and_connect(des, inner_scope, this, prts[0], sig, ptype, gn_interconnect_flag ? idx : -1);
+			isolate_and_connect(des, inner_scope, this, prts[0], sig, ptype, gn_interconnect_flag ? idx : -1);
 		  } else {
-		      connect(prts[0]->pin(0), sig->pin(0));
+			connect(prts[0]->pin(0), sig->pin(0));
 		  }
 
 	    } else if (sig->vector_width()==prts_vector_width/instance.size()

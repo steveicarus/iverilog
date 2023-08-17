@@ -1159,6 +1159,7 @@ class vvp_net_t {
     public: // Method to support $countdrivers
       void count_drivers(unsigned idx, unsigned counts[4]);
 
+    // This needs to be public so that SDF interconnects can be inserted
     public:
       vvp_net_ptr_t out_;
 

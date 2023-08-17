@@ -742,7 +742,7 @@ vpiHandle vpiPortInfo::vpi_handle(int code)
  */
 void compile_port_info( unsigned index, int vpi_direction, unsigned width, const char *name, char* buffer )
 {
-    vpiHandle obj = new vpiPortInfo( vpip_peek_current_scope(),
-                                     index, vpi_direction, width, name, buffer );
-    vpip_attach_to_current_scope(obj);
+      vpiHandle obj = new vpiPortInfo( vpip_peek_current_scope(),
+                                       index, vpi_direction, width, name, buffer );
+      vpip_attach_to_current_scope(obj);
 }

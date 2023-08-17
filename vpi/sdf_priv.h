@@ -60,13 +60,15 @@ struct interconnect_port_s {
 
 extern void sdf_select_instance(const char*celltype, const char*inst,
                                 const int sdf_lineno);
+
 extern void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
                               const struct sdf_delval_list_s*delval,
                               const int sdf_lineno);
 
-extern void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconnect_port_s port2,
-                             const struct sdf_delval_list_s*delval_list,
-                             const int sdf_lineno);
+extern void sdf_interconnect_delays(struct interconnect_port_s port1,
+                                    struct interconnect_port_s port2,
+                                    const struct sdf_delval_list_s*delval_list,
+                                    const int sdf_lineno);
 
 #endif /* IVL_sdf_priv_h */
 

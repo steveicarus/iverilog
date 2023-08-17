@@ -758,7 +758,7 @@ static int process_generation(const char*name)
       else if (strcmp(name,"no-specify") == 0)
 	    gen_specify = "no-specify";
 
-        else if (strcmp(name,"interconnect") == 0)
+      else if (strcmp(name,"interconnect") == 0)
 	    gen_interconnect = "interconnect";
 
       else if (strcmp(name,"no-interconnect") == 0)

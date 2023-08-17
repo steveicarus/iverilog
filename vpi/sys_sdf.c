@@ -76,9 +76,11 @@ void sdf_select_instance(const char*celltype, const char*cellinst, const int sdf
 
 	/* Test for wildcard character */
       if (cellinst == NULL) {
-	    if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: sorry: "
-					"Wildcard cell instance specification (*) currently not supported.\n",
-					sdf_fname, sdf_lineno);
+	    if (sdf_flag_warning) {
+		  vpi_printf("SDF WARNING: %s:%d: sorry: "
+		             "Wildcard cell instance specification (*) currently not supported.\n",
+		             sdf_fname, sdf_lineno);
+	    }
 	    sdf_cur_cell = 0;
 	    return;
       }
@@ -89,45 +91,45 @@ void sdf_select_instance(const char*celltype, const char*cellinst, const int sdf
       const char*src = cellinst;
       const char*dp;
       while ( (dp=strchr(src, '.')) ) {
-	      unsigned len = dp - src;
-	      assert(dp >= src);
-	      assert(len < sizeof buffer);
-	      strncpy(buffer, src, len);
-	      buffer[len] = 0;
+	    unsigned len = dp - src;
+	    assert(dp >= src);
+	    assert(len < sizeof buffer);
+	    strncpy(buffer, src, len);
+	    buffer[len] = 0;
 
-	      vpiHandle tmp_scope = find_scope(scope, buffer);
-	      if (tmp_scope == 0) {
-		      vpi_printf("SDF ERROR: %s:%d: Cannot find %s in scope %s.\n",
-			      sdf_fname, sdf_lineno, buffer, vpi_get_str(vpiFullName, scope));
-		      break;
-	      }
-	      assert(tmp_scope);
-	      scope = tmp_scope;
+	    vpiHandle tmp_scope = find_scope(scope, buffer);
+	    if (tmp_scope == 0) {
+		  vpi_printf("SDF ERROR: %s:%d: Cannot find %s in scope %s.\n",
+		             sdf_fname, sdf_lineno, buffer, vpi_get_str(vpiFullName, scope));
+		  break;
+	    }
+	    assert(tmp_scope);
+	    scope = tmp_scope;
 
-	      src = dp + 1;
+	    src = dp + 1;
       }
 
 	/* Now find the cell. */
       if (src[0] == 0)
-	      sdf_cur_cell = sdf_scope;
+	    sdf_cur_cell = sdf_scope;
       else
-	      sdf_cur_cell = find_scope(scope, src);
+	    sdf_cur_cell = find_scope(scope, src);
       if (sdf_cur_cell == 0) {
-	      vpi_printf("SDF ERROR: %s:%d: Unable to find %s in scope %s.\n",
-		      sdf_fname, sdf_lineno, src, vpi_get_str(vpiFullName, scope));
-	      return;
+	    vpi_printf("SDF ERROR: %s:%d: Unable to find %s in scope %s.\n",
+	               sdf_fname, sdf_lineno, src, vpi_get_str(vpiFullName, scope));
+	    return;
       }
 
 	/* The scope that matches should be a module. */
       if (vpi_get(vpiType,sdf_cur_cell) != vpiModule) {
 	    vpi_printf("SDF ERROR: %s:%d: Scope %s in %s is not a module.\n",
-		       sdf_fname, sdf_lineno, src, vpi_get_str(vpiFullName, scope));
+	               sdf_fname, sdf_lineno, src, vpi_get_str(vpiFullName, scope));
       }
 
 	/* The matching scope (a module) should have the expected type. */
       if (strcmp(celltype,vpi_get_str(vpiDefName,sdf_cur_cell)) != 0) {
 	    vpi_printf("SDF ERROR: %s:%d: Module %s in %s is not a %s; it is a ",
-		       sdf_fname, sdf_lineno, src, vpi_get_str(vpiFullName, scope), celltype);
+	               sdf_fname, sdf_lineno, src, vpi_get_str(vpiFullName, scope), celltype);
 	    vpi_printf("%s\n", vpi_get_str(vpiDefName, sdf_cur_cell));
       }
 
@@ -148,45 +150,40 @@ vpiHandle get_port_handle(char* port_name, const int sdf_lineno)
 {
       vpiHandle scope = sdf_cur_cell;
 
-      // Get occurences of '.' in the name
+	// Get occurences of '.' in the name
       int submodules = 0;
 
-      for (int i=0; port_name[i] != '\0'; i++)
-      {
-	      if (port_name[i] == '.') submodules++;
+      for (int i=0; port_name[i] != '\0'; i++) {
+	    if (port_name[i] == '.') submodules++;
       }
 
-      // Extract the first token
+	// Extract the first token
       char* token = strtok(port_name, ".");;
 
-      // Change scope into submodule
-      while (submodules--)
-      {
-	      scope = vpi_handle_by_name(token, scope);
+	// Change scope into submodule
+      while (submodules--) {
+	    scope = vpi_handle_by_name(token, scope);
 
-	      if (!scope) vpi_printf("SDF ERROR: %s:%d: Submodule %s in port path not found!\n", sdf_fname, sdf_lineno, token);
+	    if (!scope) vpi_printf("SDF ERROR: %s:%d: Submodule %s in port path not found!\n", sdf_fname, sdf_lineno, token);
 
 	      // Extract next token
-	      token = strtok(NULL, ".");
+	    token = strtok(NULL, ".");
       }
 
-      // Iterate over ports
+	// Iterate over ports
       vpiHandle port_i = vpi_iterate(vpiPort, scope) ;
       vpiHandle port;
       vpiHandle port_handle = NULL;
 
-      while ((port=vpi_scan(port_i)) != NULL)
-      {
-	      char *port_name_ = vpi_get_str(vpiName, port) ;
+      while ((port=vpi_scan(port_i)) != NULL) {
+	    char *port_name_ = vpi_get_str(vpiName, port) ;
 
-	      if (strcmp(port_name_, token) == 0)
-	      {
-		      if (port_handle != NULL)
-		      {
-			      if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: Found multiple matching ports for %s !\n", sdf_fname, sdf_lineno, token);
-		      }
-		      port_handle = port;
-	      }
+	    if (strcmp(port_name_, token) == 0) {
+		  if (port_handle != NULL) {
+			if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: Found multiple matching ports for %s !\n", sdf_fname, sdf_lineno, token);
+		  }
+		  port_handle = port;
+	    }
       }
 
       return port_handle;
@@ -198,52 +195,46 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
                              const int sdf_lineno)
 {
 
-      // Get handles for both ports
-      // After calling get_port_handle, the name is invalid
+	// Get handles for both ports
+	// After calling get_port_handle, the name is invalid
       vpiHandle port1_handle = get_port_handle(port1.name, sdf_lineno);
       vpiHandle port2_handle = get_port_handle(port2.name, sdf_lineno);
 
-      if (port1_handle && port2_handle)
-      {
+      if (port1_handle && port2_handle) {
 	      // Get interModPath for the two ports
-	      vpiHandle intermodpath = vpi_handle_multi(vpiInterModPath, port1_handle, port2_handle);
+	    vpiHandle intermodpath = vpi_handle_multi(vpiInterModPath, port1_handle, port2_handle);
 
-	      if (intermodpath)
-	      {
-		      if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Created a vpiInterModPath\n", sdf_fname, sdf_lineno);
+	    if (intermodpath) {
+		  if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Created a vpiInterModPath\n", sdf_fname, sdf_lineno);
 
-		      s_vpi_delay delays;
-		      struct t_vpi_time delay_vals[12];
+		  s_vpi_delay delays;
+		  struct t_vpi_time delay_vals[12];
 
-		      // Initialize delay structure
-		      delays.da = delay_vals;
-		      delays.no_of_delays = delval_list->count;
-		      delays.time_type = vpiScaledRealTime;
-		      delays.mtm_flag = 0;
-		      delays.append_flag = 0;
-		      delays.pulsere_flag = 0;
-		      vpi_get_delays(intermodpath, &delays);
+		    // Initialize delay structure
+		  delays.da = delay_vals;
+		  delays.no_of_delays = delval_list->count;
+		  delays.time_type = vpiScaledRealTime;
+		  delays.mtm_flag = 0;
+		  delays.append_flag = 0;
+		  delays.pulsere_flag = 0;
+		  vpi_get_delays(intermodpath, &delays);
 
-		      for (int idx = 0 ; idx < delval_list->count ; idx += 1) {
-			      delay_vals[idx].type = vpiScaledRealTime;
-			      if (delval_list->val[idx].defined) {
-				      if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Putting delay: %f for index %d\n",
-								      sdf_fname, sdf_lineno, delval_list->val[idx].value, idx);
-				      delay_vals[idx].real = delval_list->val[idx].value;
-			      }
-		      }
+		  for (int idx = 0 ; idx < delval_list->count ; idx += 1) {
+			delay_vals[idx].type = vpiScaledRealTime;
+			if (delval_list->val[idx].defined) {
+			      if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Putting delay: %f for index %d\n",
+			                                      sdf_fname, sdf_lineno, delval_list->val[idx].value, idx);
+			      delay_vals[idx].real = delval_list->val[idx].value;
+			}
+		  }
 
-		      // Put the new delays
-		      vpi_put_delays(intermodpath, &delays);
-	      }
-	      else
-	      {
-		      vpi_printf("SDF ERROR: %s:%d: Could not find intermodpath!\n", sdf_fname, sdf_lineno);
-	      }
-      }
-      else
-      {
-	      vpi_printf("SDF ERROR: %s:%d: Could not find handles for both ports!\n", sdf_fname, sdf_lineno);
+		    // Put the new delays
+		  vpi_put_delays(intermodpath, &delays);
+	    } else {
+		  vpi_printf("SDF ERROR: %s:%d: Could not find intermodpath!\n", sdf_fname, sdf_lineno);
+	    }
+      } else {
+	    vpi_printf("SDF ERROR: %s:%d: Could not find handles for both ports!\n", sdf_fname, sdf_lineno);
       }
 }
 
@@ -314,10 +305,10 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
       }
 
       if (match_count == 0) {
-	      vpi_printf("SDF ERROR: %s:%d: Unable to match ModPath %s%s -> %s in %s\n",
-		      sdf_fname, sdf_lineno,
-		      edge_str(vpi_edge), src, dst,
-		      vpi_get_str(vpiFullName, sdf_cur_cell));
+	    vpi_printf("SDF ERROR: %s:%d: Unable to match ModPath %s%s -> %s in %s\n",
+	               sdf_fname, sdf_lineno,
+	               edge_str(vpi_edge), src, dst,
+	               vpi_get_str(vpiFullName, sdf_cur_cell));
       }
 }
 
@@ -409,10 +400,12 @@ static PLI_INT32 sys_sdf_annotate_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    return 0;
       }
 
-      if (sdf_flag_inform) vpi_printf("SDF INFO: Loading %s from %s:%d\n",
-			      fname,
-			      vpi_get_str(vpiFile, callh),
-			      (int)vpi_get(vpiLineNo, callh));
+      if (sdf_flag_inform) {
+	    vpi_printf("SDF INFO: Loading %s from %s:%d\n",
+	               fname,
+	               vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+      }
 
       sdf_fd = fopen(fname, "r");
       if (sdf_fd == 0) {

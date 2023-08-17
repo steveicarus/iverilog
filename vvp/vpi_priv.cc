@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2008-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2023 Leo Moser (leo.moser@pm.me)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -32,16 +33,6 @@
 # include  <cstdlib>
 # include  <cmath>
 # include  <iostream>
-
-# include  "npmos.h"
-# include  "vvp_island.h"
-# include  "resolv.h"
-# include  "bufif.h"
-# include  "latch.h"
-# include  "dff.h"
-# include  "event.h"
-# include  "arith.h"
-# include  "part.h"
 
 using namespace std;
 vpi_mode_t vpi_mode_flag = VPI_MODE_NONE;
@@ -1570,144 +1561,132 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
                            vpiHandle ref2)
 {
       if (vpi_trace) {
-	      fprintf(vpi_trace, "vpi_handle_multi(%d, %p, %p) -->\n",
-		    type, ref1, ref2);
+	    fprintf(vpi_trace, "vpi_handle_multi(%d, %p, %p) -->\n",
+	            type, ref1, ref2);
       }
 
       if (type != vpiInterModPath) {
-	      fprintf(stderr, "sorry: vpi_handle_multi currently supports"
-		      "only vpiInterModPath\n");
-	      return nullptr;
+	    fprintf(stderr, "sorry: vpi_handle_multi currently supports"
+	            "only vpiInterModPath\n");
+	    return nullptr;
       }
 
       vpiPortInfo* port1 = dynamic_cast<vpiPortInfo*>(ref1);
 
       if (!port1) {
-	      fprintf(stderr, "sorry: second argument of vpi_handle_multi"
-		      "must be a vpiPort\n");
-	      return nullptr;
+	    fprintf(stderr, "sorry: second argument of vpi_handle_multi"
+		    "must be a vpiPort\n");
+	    return nullptr;
       }
 
       vpiPortInfo* port2 = dynamic_cast<vpiPortInfo*>(ref2);
 
       if (!port2) {
-	      fprintf(stderr, "sorry: third argument of vpi_handle_multi"
-		      "must be a vpiPort\n");
-	      return nullptr;
+	    fprintf(stderr, "sorry: third argument of vpi_handle_multi"
+		    "must be a vpiPort\n");
+	    return nullptr;
       }
 
-      // If both ports are vpiOutput, we have to reassign the __vpiSignal from port1
-      // to port2 because otherwise the non-delayed version of the signal is dumped
-      // even tho the intermodpath is correctly inserted
+	// If both ports are vpiOutput, we have to reassign the __vpiSignal from port1
+	// to port2 because otherwise the non-delayed version of the signal is dumped
+	// even tho the intermodpath is correctly inserted
       __vpiSignal* output_signal = nullptr;
 
-      if (port1->get_direction() == vpiOutput && port2->get_direction() == vpiOutput)
-      {
-	      vpiHandle scope_port2 = vpi_handle(vpiScope, ref2);
-	      assert(scope_port2);
-	      std::string port2_name(vpi_get_str(vpiName, ref2));
+      if (port1->get_direction() == vpiOutput && port2->get_direction() == vpiOutput) {
+	    vpiHandle scope_port2 = vpi_handle(vpiScope, ref2);
+	    assert(scope_port2);
+	    std::string port2_name(vpi_get_str(vpiName, ref2));
 
 	      // Iterate over nets in the scope of port2
-	      vpiHandle net_i = vpi_iterate(vpiNet, scope_port2) ;
-	      vpiHandle net;
+	    vpiHandle net_i = vpi_iterate(vpiNet, scope_port2) ;
+	    vpiHandle net;
 
-	      while ((net = vpi_scan(net_i)) != NULL)
-	      {
-		      std::string net_name(vpi_get_str(vpiName, net));
+	    while ((net = vpi_scan(net_i)) != NULL) {
+		  std::string net_name(vpi_get_str(vpiName, net));
 
-		      // Compare whether the net matches with the port name
-		      if (net_name == port2_name)
-		      {
-			      output_signal = dynamic_cast<__vpiSignal*>(net);
-		      }
-	      }
+		    // Compare whether the net matches with the port name
+		  if (net_name == port2_name) {
+			output_signal = dynamic_cast<__vpiSignal*>(net);
+		  }
+	    }
       }
 
       vvp_net_t* net1 = port1->get_port();
       vvp_net_t* net2 = port2->get_port();
 
-      if (net1 == nullptr || net2 == nullptr)
-      {
-	      fprintf(stderr, "Error: Could not find net. "
-		      "Did you run iverilog with '-ginterconnect'?\n");
-	      return nullptr;
+      if (net1 == nullptr || net2 == nullptr) {
+	    fprintf(stderr, "Error: Could not find net. "
+		    "Did you run iverilog with '-ginterconnect'?\n");
+	    return nullptr;
       }
 
-      if (net1 == net2)
-      {
-	      fprintf(stderr, "Error: Net for both ports is the same. "
-		      "Did you pass the same port twice?\n");
-	      return nullptr;
+      if (net1 == net2) {
+	    fprintf(stderr, "Error: Net for both ports is the same. "
+		    "Did you pass the same port twice?\n");
+	    return nullptr;
       }
 
-      if (!dynamic_cast<vvp_fun_buft*>(net1->fun))
-      {
-	      fprintf(stderr, "Error: functor of net1 must be"
-		      "vvp_fun_buft\n");
-	      return nullptr;
+      if (!dynamic_cast<vvp_fun_buft*>(net1->fun)) {
+	    fprintf(stderr, "Error: functor of net1 must be"
+		    "vvp_fun_buft\n");
+	    return nullptr;
       }
 
-      if (!dynamic_cast<vvp_fun_buft*>(net2->fun))
-      {
-	      fprintf(stderr, "Error: functor of net2 must be"
-		      "vvp_fun_buft\n");
-	      return nullptr;
+      if (!dynamic_cast<vvp_fun_buft*>(net2->fun)) {
+	    fprintf(stderr, "Error: functor of net2 must be"
+		    "vvp_fun_buft\n");
+	    return nullptr;
       }
 
-      // Iterate over all nodes connected to port1
+	// Iterate over all nodes connected to port1
       vvp_net_ptr_t cur = net1->out_;
       vvp_net_ptr_t prev = vvp_net_ptr_t(nullptr, 0);
 
-      while (cur.ptr())
-      {
+      while (cur.ptr()) {
 	      // Port2 is directly connected to port1
-	      if (cur.ptr() == net2)
-	      {
-		      vvp_net_t*new_net = new vvp_net_t;
+	    if (cur.ptr() == net2) {
+		  vvp_net_t*new_net = new vvp_net_t;
 
-		      int width = 1; // TODO
-		      vvp_fun_intermodpath*obj = new vvp_fun_intermodpath(new_net, width);
-		      new_net->fun = obj;
-		      new_net->out_ = cur; // TODO pointer to current net
+		    // Create new node with intermodpath and connect port2 to it
+		  int width = 1; // TODO
+		  vvp_fun_intermodpath*obj = new vvp_fun_intermodpath(new_net, width);
+		  new_net->fun = obj;
+		  new_net->out_ = cur;
 
-		      // Port2 is in the middle of the list
-		      // Insert intermodpath before port2 and keep everything else intact
-		      if (prev.ptr())
-		      {
-			      prev.ptr()->port[prev.port()] = vvp_net_ptr_t(new_net, 0); // Point to port 0 of vvp_fun_intermodpath
-			      new_net->port[0] = cur.ptr()->port[cur.port()]; // Connect the next net in list
-			      cur.ptr()->port[cur.port()] = vvp_net_ptr_t(nullptr, 0); // Only port2 is connected to intermodpath
-		      }
-		      // Port2 is first in list
-		      // Insert intermodpath before port2 and keep everything else intact
-		      else
-		      {
-			      net1->out_ = vvp_net_ptr_t(new_net, 0); // Point to port 0 of vvp_fun_intermodpath
-			      new_net->port[0] = cur.ptr()->port[cur.port()]; //  Connect the next net in list
-			      cur.ptr()->port[cur.port()] = vvp_net_ptr_t(nullptr, 0); // Only port2 is connected to intermodpath
-		      }
+		    // Port2 is in the middle of the list
+		    // Insert intermodpath before port2 and keep everything else intact
+		  if (prev.ptr()) {
+			prev.ptr()->port[prev.port()] = vvp_net_ptr_t(new_net, 0); // Point to port 0 of vvp_fun_intermodpath
+			new_net->port[0] = cur.ptr()->port[cur.port()]; // Connect the next net in list
+			cur.ptr()->port[cur.port()] = vvp_net_ptr_t(nullptr, 0); // Only port2 is connected to intermodpath
+		    // Port2 is first in list
+		    // Insert intermodpath before port2 and keep everything else intact
+		  } else {
+			net1->out_ = vvp_net_ptr_t(new_net, 0); // Point to port 0 of vvp_fun_intermodpath
+			new_net->port[0] = cur.ptr()->port[cur.port()]; //  Connect the next net in list
+			cur.ptr()->port[cur.port()] = vvp_net_ptr_t(nullptr, 0); // Only port2 is connected to intermodpath
+		  }
 
-		      // If both ports are vpiOutput, we have to reassign the __vpiSignal
-		      if (output_signal)
-		      {
-			      net2->fil = net1->fil;
-			      net1->fil = nullptr;
-			      output_signal->node = net2;
-		      }
+		    // If both ports are vpiOutput, we have to reassign the __vpiSignal
+		  if (output_signal) {
+			net2->fil = net1->fil;
+			net1->fil = nullptr;
+			output_signal->node = net2;
+		  }
 
-		      // Create the VPI intermodpath object
-		      __vpiInterModPath* intermodpath = vpip_make_intermodpath(new_net, port1, port2);
-		      intermodpath->intermodpath = obj;
+		    // Create the VPI intermodpath object
+		  __vpiInterModPath* intermodpath = vpip_make_intermodpath(new_net, port1, port2);
+		  intermodpath->intermodpath = obj;
 
-		      // Finally done, return the intermodpath object
-		      return intermodpath;
-	      }
+		    // Finally done, return the intermodpath object
+		  return intermodpath;
+	    }
 
-	      prev = cur;
-	      cur = cur.ptr()->port[cur.port()]; // Next net in linked list
+	    prev = cur;
+	    cur = cur.ptr()->port[cur.port()]; // Next net in linked list
       }
 
-      std::cout << "sorry: Could not insert intermodpath!" << std::endl;
+      fprintf(stderr, "VPI error: Could not insert intermodpath!\n");
       return nullptr;
 }
 
