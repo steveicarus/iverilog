@@ -337,10 +337,7 @@ del_def
 		   sdf_parse_path, @2.first_line); }
   /* | '(' K_INTERCONNECT port_instance port_instance delval_list ')' */
   | '(' K_INTERCONNECT port_interconnect port_interconnect delval_list ')'
-      { if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
-					 "INTERCONNECT not supported.\n",
-					 sdf_parse_path, @2.first_line);
-
+      {
 	if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: INTERCONNECT with "
 				"port1 = %s index = %d, port2 = %s index = %d\n",
 				sdf_parse_path, @2.first_line, $3.name, $3.index, $4.name, $4.index);

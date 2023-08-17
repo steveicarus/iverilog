@@ -185,7 +185,6 @@ vpiHandle get_port_handle(char* port_name, const int sdf_lineno)
 		      {
 			      if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: Found multiple matching ports for %s !\n", sdf_fname, sdf_lineno, token);
 		      }
-		      if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Found handle for port %s!\n", sdf_fname, sdf_lineno, token);
 		      port_handle = port;
 	      }
       }
@@ -211,7 +210,7 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 
 	      if (intermodpath)
 	      {
-		      if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Got an vpiInterModPath!\n", sdf_fname, sdf_lineno);
+		      if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Created a vpiInterModPath\n", sdf_fname, sdf_lineno);
 
 		      s_vpi_delay delays;
 		      struct t_vpi_time delay_vals[12];
