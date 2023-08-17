@@ -138,7 +138,7 @@ static void cmd_call(unsigned argc, char*argv[])
 		      case vpiTask:
 		      case vpiNamedBegin:
 		      case vpiNamedFork:
-			scope = dynamic_cast<__vpiScope*>(table[idx]);
+			scope = dynamic_cast<__vpiScope*>(table[tmp]);
 			if (strcmp(scope->scope_name(), argv[idx+1]) == 0)
 			      handle = table[tmp];
 			break;
