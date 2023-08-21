@@ -173,7 +173,7 @@ extern void pform_endmodule(const char*, bool inside_celldefine,
 extern void pform_start_class_declaration(const struct vlltype&loc,
 					  class_type_t*type,
 					  data_type_t*base_type,
-					  std::list<PExpr*>*base_exprs,
+					  std::list<named_pexpr_t> *base_args,
 					  bool virtual_class);
 extern void pform_class_property(const struct vlltype&loc,
 				 property_qualifier_t pq,
@@ -307,7 +307,7 @@ bool pform_error_in_generate(const vlltype&loc, const char *type);
 
 extern void pform_make_elab_task(const struct vlltype&li,
                                  perm_string name,
-                                 const std::list<PExpr*>&params);
+                                 const std::list<named_pexpr_t> &params);
 
 extern void pform_set_typedef(const struct vlltype&loc, perm_string name,
 			      data_type_t*data_type,
@@ -322,10 +322,10 @@ extern void pform_set_type_referenced(const struct vlltype&loc, const char*name)
  */
 extern PECallFunction* pform_make_call_function(const struct vlltype&loc,
 						const pform_name_t&name,
-						const std::list<PExpr*>&parms);
+						const std::list<named_pexpr_t> &parms);
 extern PCallTask* pform_make_call_task(const struct vlltype&loc,
 				       const pform_name_t&name,
-				       const std::list<PExpr*>&parms);
+				       const std::list<named_pexpr_t> &parms);
 
 extern void pform_make_foreach_declarations(const struct vlltype&loc,
 					    std::list<perm_string>*loop_vars);

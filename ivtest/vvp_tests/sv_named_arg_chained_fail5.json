@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_named_arg_chained_fail5.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

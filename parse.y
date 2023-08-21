@@ -172,9 +172,9 @@ template <class T> void append(vector<T>&out, const std::vector<T>&in)
  * The parser parses an empty argument list as an argument list with an single
  * empty argument. Fix this up here and replace it with an empty list.
  */
-static void argument_list_fixup(list<PExpr*>*lst)
+static void argument_list_fixup(list<named_pexpr_t> *lst)
 {
-      if (lst->size() == 1 && !lst->front())
+      if (lst->size() == 1 && lst->front().name.nil() && !lst->front().parm)
 	    lst->clear();
 }
 
@@ -184,22 +184,28 @@ static void argument_list_fixup(list<PExpr*>*lst)
  */
 static PECallFunction*make_call_function(perm_string tn, PExpr*arg)
 {
-      std::vector<PExpr*> parms(1);
-      parms[0] = arg;
+      std::vector<named_pexpr_t> parms(1);
+      parms[0].parm = arg;
+      parms[0].set_line(*arg);
       PECallFunction*tmp = new PECallFunction(tn, parms);
       return tmp;
 }
 
 static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 {
-      std::vector<PExpr*> parms(2);
-      parms[0] = arg1;
-      parms[1] = arg2;
+      std::vector<named_pexpr_t> parms(2);
+      parms[0].parm = arg1;
+      parms[0].set_line(*arg1);
+      parms[1].parm = arg2;
+      parms[1].set_line(*arg2);
       PECallFunction*tmp = new PECallFunction(tn, parms);
       return tmp;
 }
 
-static std::list<named_pexpr_t>* make_named_numbers(perm_string name, long first, long last, PExpr*val =0)
+static std::list<named_pexpr_t>* make_named_numbers(const struct vlltype &loc,
+						    perm_string name,
+						    long first, long last,
+						    PExpr *val = nullptr)
 {
       std::list<named_pexpr_t>*lst = new std::list<named_pexpr_t>;
       named_pexpr_t tmp;
@@ -210,6 +216,7 @@ static std::list<named_pexpr_t>* make_named_numbers(perm_string name, long first
 		  buf << name.str() << idx << ends;
 		  tmp.name = lex_strings.make(buf.str());
 		  tmp.parm = val;
+		  FILE_NAME(&tmp, loc);
 		  val = 0;
 		  lst->push_back(tmp);
 	    }
@@ -220,6 +227,7 @@ static std::list<named_pexpr_t>* make_named_numbers(perm_string name, long first
 		  buf << name.str() << idx << ends;
 		  tmp.name = lex_strings.make(buf.str());
 		  tmp.parm = val;
+		  FILE_NAME(&tmp, loc);
 		  val = 0;
 		  lst->push_back(tmp);
 	    }
@@ -227,12 +235,15 @@ static std::list<named_pexpr_t>* make_named_numbers(perm_string name, long first
       return lst;
 }
 
-static std::list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
+static std::list<named_pexpr_t>* make_named_number(const struct vlltype &loc,
+						   perm_string name,
+						   PExpr *val = nullptr)
 {
       std::list<named_pexpr_t>*lst = new std::list<named_pexpr_t>;
       named_pexpr_t tmp;
       tmp.name = name;
       tmp.parm = val;
+      FILE_NAME(&tmp, loc);
       lst->push_back(tmp);
       return lst;
 }
@@ -455,9 +466,6 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
       std::list<PLet::let_port_t*>*let_port_lst;
       PLet::let_port_t*let_port_itm;
 
-      named_number_t* named_number;
-      std::list<named_number_t>* named_numbers;
-
       named_pexpr_t*named_pexpr;
       std::list<named_pexpr_t>*named_pexprs;
       struct parmvalue_t*parmvalue;
@@ -505,7 +513,7 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 
       struct {
 	    data_type_t*type;
-	    std::list<PExpr*>*exprs;
+	    std::list<named_pexpr_t> *args;
       } class_declaration_extends;
 
       struct {
@@ -678,12 +686,16 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 %type <tf_ports> tf_port_declaration tf_port_item tf_port_item_list
 %type <tf_ports> tf_port_list tf_port_list_opt tf_port_list_parens_opt
 
-%type <named_pexpr> modport_simple_port port_name parameter_value_byname
+%type <named_pexpr> named_expression named_expression_opt port_name
 %type <named_pexprs> port_name_list parameter_value_byname_list
 %type <exprs> port_conn_expression_list_with_nuls
 
 %type <named_pexpr> attribute
 %type <named_pexprs> attribute_list attribute_instance_list attribute_list_opt
+
+%type <named_pexpr> argument
+%type <named_pexprs> argument_list
+%type <named_pexprs> argument_list_parens argument_list_parens_opt
 
 %type <citem>  case_item
 %type <citems> case_items
@@ -712,7 +724,6 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt delay_value_list
 %type <exprs> expression_list_with_nuls expression_list_proper
-%type <exprs> argument_list_parens argument_list_parens_opt
 %type <exprs> cont_assign cont_assign_list
 
 %type <decl_assignment> variable_decl_assignment
@@ -884,7 +895,7 @@ class_declaration /* IEEE1800-2005: A.1.2 */
 	class_type_t *class_type= new class_type_t(name);
 	FILE_NAME(class_type, @4);
 	pform_set_typedef(@4, name, class_type, nullptr);
-	pform_start_class_declaration(@2, class_type, $5.type, $5.exprs, $1);
+	pform_start_class_declaration(@2, class_type, $5.type, $5.args, $1);
       }
     class_items_opt K_endclass
       { // Process a class.
@@ -927,11 +938,12 @@ class_declaration_endlabel_opt
 
 class_declaration_extends_opt /* IEEE1800-2005: A.1.2 */
   : K_extends ps_type_identifier argument_list_parens_opt
-      { $$.type  = $2;
-	$$.exprs = $3;
+      { $$.type = $2;
+	$$.args = $3;
       }
   |
-      { $$.type = 0; $$.exprs = 0; }
+      { $$ = {nullptr, nullptr};
+      }
   ;
 
   /* The class_items_opt and class_items rules together implement the
@@ -1978,7 +1990,7 @@ modport_item
 modport_ports_list
   : modport_ports_declaration
   | modport_ports_list ',' modport_ports_declaration
-  | modport_ports_list ',' modport_simple_port
+  | modport_ports_list ',' named_expression
       { if (last_modport_port.type == MP_SIMPLE) {
 	      pform_add_modport_port(@3, last_modport_port.direction,
 				     $3->name, $3->parm);
@@ -2012,7 +2024,7 @@ modport_ports_declaration
 	delete[] $3;
 	delete $1;
       }
-  | attribute_list_opt port_direction modport_simple_port
+  | attribute_list_opt port_direction named_expression
       { last_modport_port.type = MP_SIMPLE;
 	last_modport_port.direction = $2;
 	pform_add_modport_port(@3, $2, $3->name, $3->parm);
@@ -2038,16 +2050,6 @@ modport_ports_declaration
 	yyerror(@3, "sorry: modport clocking declaration is not yet supported.");
 	delete[] $3;
 	delete $1;
-      }
-  ;
-
-modport_simple_port
-  : '.' IDENTIFIER '(' expression ')'
-      { named_pexpr_t*tmp = new named_pexpr_t;
-	tmp->name = lex_strings.make($2);
-	tmp->parm = $4;
-	delete[]$2;
-	$$ = tmp;
       }
   ;
 
@@ -2256,7 +2258,7 @@ simple_immediate_assertion_statement /* IEEE1800-2012 A.6.10 */
   : assert_or_assume '(' expression ')' statement_or_null %prec less_than_K_else
       {
 	if (gn_supported_assertions_flag) {
-	      std::list<PExpr*>arg_list;
+	      std::list<named_pexpr_t> arg_list;
 	      PCallTask*tmp1 = new PCallTask(lex_strings.make("$error"), arg_list);
 	      FILE_NAME(tmp1, @1);
 	      PCondit*tmp2 = new PCondit($3, $5, tmp1);
@@ -2713,6 +2715,7 @@ attribute_list
 attribute
   : IDENTIFIER initializer_opt
       { named_pexpr_t*tmp = new named_pexpr_t;
+	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($1);
 	tmp->parm = $2;
 	delete[]$1;
@@ -2907,19 +2910,19 @@ enum_name
   : IDENTIFIER initializer_opt
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
-	$$ = make_named_number(name, $2);
+	$$ = make_named_number(@$, name, $2);
       }
   | IDENTIFIER '[' pos_neg_number ']' initializer_opt
       { perm_string name = lex_strings.make($1);
 	long count = check_enum_seq_value(@1, $3, false);
-	$$ = make_named_numbers(name, 0, count-1, $5);
+	$$ = make_named_numbers(@$, name, 0, count-1, $5);
 	delete[]$1;
 	delete $3;
       }
   | IDENTIFIER '[' pos_neg_number ':' pos_neg_number ']' initializer_opt
       { perm_string name = lex_strings.make($1);
-	$$ = make_named_numbers(name, check_enum_seq_value(@1, $3, true),
-	                              check_enum_seq_value(@1, $5, true), $7);
+	$$ = make_named_numbers(@$, name, check_enum_seq_value(@1, $3, true),
+	                                  check_enum_seq_value(@1, $5, true), $7);
 	delete[]$1;
 	delete $3;
 	delete $5;
@@ -3718,12 +3721,45 @@ expression_list_with_nuls
       }
   ;
 
+argument
+  : expression
+      { named_pexpr_t *tmp = new named_pexpr_t;
+	FILE_NAME(tmp, @$);
+	tmp->name = perm_string();
+	tmp->parm = $1;
+	$$ = tmp;
+      }
+  | named_expression_opt
+      { $$ = $1;
+      }
+  |
+      { named_pexpr_t *tmp = new named_pexpr_t;
+	tmp->name = perm_string();
+	tmp->parm = nullptr;
+	$$ = tmp;
+      }
+  ;
+
+argument_list
+ : argument
+      { std::list<named_pexpr_t> *expr = new std::list<named_pexpr_t>;
+	expr->push_back(*$1);
+	delete $1;
+	$$ = expr;
+      }
+ | argument_list ',' argument
+      { $1->push_back(*$3);
+	delete $3;
+	$$ = $1;
+      }
+ ;
+
   /* An argument list enclosed in parenthesis. The parser will parse '()' as a
    * argument list with an single empty item. We fix this up once the list
    * parsing is done by replacing it with the empty list.
    */
 argument_list_parens
-  : '(' expression_list_with_nuls ')'
+  : '(' argument_list ')'
       { argument_list_fixup($2);
 	$$ = $2; }
   ;
@@ -3735,7 +3771,8 @@ argument_list_parens_opt
   : argument_list_parens
       { $$ = $1; }
   |
-      { $$ = new std::list<PExpr*>; }
+      { $$ = new std::list<named_pexpr_t>; }
+  ;
 
 expression_list_proper
   : expression_list_proper ',' expression
@@ -3878,12 +3915,14 @@ expr_primary
 	delete $2;
 	$$ = tmp;
       }
-  | SYSTEM_IDENTIFIER '(' expression_list_proper ')'
+  | SYSTEM_IDENTIFIER argument_list_parens
       { perm_string tn = lex_strings.make($1);
-	PECallFunction*tmp = new PECallFunction(tn, *$3);
+	PECallFunction *tmp = new PECallFunction(tn, *$2);
+	if ($2->empty())
+	      pform_requires_sv(@1, "Empty function argument list");
 	FILE_NAME(tmp, @1);
 	delete[]$1;
-	delete $3;
+	delete $2;
 	$$ = tmp;
       }
   | package_scope hierarchy_identifier { lex_in_package_scope(0); } argument_list_parens
@@ -3893,16 +3932,6 @@ expr_primary
 	delete $4;
 	$$ = tmp;
       }
-  | SYSTEM_IDENTIFIER '('  ')'
-      { perm_string tn = lex_strings.make($1);
-	const std::vector<PExpr*>empty;
-	PECallFunction*tmp = new PECallFunction(tn, empty);
-	FILE_NAME(tmp, @1);
-	delete[]$1;
-	$$ = tmp;
-	pform_requires_sv(@1, "Empty function argument list");
-      }
-
   | K_this
       { PEIdent*tmp = new PEIdent(perm_string::literal(THIS_TOKEN));
 	FILE_NAME(tmp,@1);
@@ -5553,16 +5582,21 @@ parameter_value_opt
       { $$ = 0; }
   ;
 
-parameter_value_byname
+named_expression
   : '.' IDENTIFIER '(' expression ')'
       { named_pexpr_t*tmp = new named_pexpr_t;
+	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($2);
 	tmp->parm = $4;
 	delete[]$2;
 	$$ = tmp;
       }
+
+named_expression_opt
+  : named_expression
   | '.' IDENTIFIER '(' ')'
       { named_pexpr_t*tmp = new named_pexpr_t;
+	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($2);
 	tmp->parm = 0;
 	delete[]$2;
@@ -5571,13 +5605,13 @@ parameter_value_byname
   ;
 
 parameter_value_byname_list
-  : parameter_value_byname
+  : named_expression_opt
       { std::list<named_pexpr_t>*tmp = new std::list<named_pexpr_t>;
 	tmp->push_back(*$1);
 	delete $1;
 	$$ = tmp;
       }
-  | parameter_value_byname_list ',' parameter_value_byname
+  | parameter_value_byname_list ',' named_expression_opt
       { std::list<named_pexpr_t>*tmp = $1;
 	tmp->push_back(*$3);
 	delete $3;
@@ -5646,25 +5680,14 @@ port_opt
      looking for the ports of a module declaration. */
 
 port_name
-  : attribute_list_opt '.' IDENTIFIER '(' expression ')'
-      { named_pexpr_t*tmp = new named_pexpr_t;
-	tmp->name = lex_strings.make($3);
-	tmp->parm = $5;
-	delete[]$3;
-	delete $1;
-	$$ = tmp;
+  : attribute_list_opt named_expression_opt
+      { delete $1;
+	$$ = $2;
       }
   | attribute_list_opt '.' IDENTIFIER '(' error ')'
       { yyerror(@3, "error: Invalid port connection expression.");
 	named_pexpr_t*tmp = new named_pexpr_t;
-	tmp->name = lex_strings.make($3);
-	tmp->parm = 0;
-	delete[]$3;
-	delete $1;
-	$$ = tmp;
-      }
-  | attribute_list_opt '.' IDENTIFIER '(' ')'
-      { named_pexpr_t*tmp = new named_pexpr_t;
+	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($3);
 	tmp->parm = 0;
 	delete[]$3;
@@ -5674,6 +5697,7 @@ port_name
   | attribute_list_opt '.' IDENTIFIER
       { pform_requires_sv(@3, "Implicit named port connections");
 	named_pexpr_t*tmp = new named_pexpr_t;
+	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($3);
 	tmp->parm = new PEIdent(lex_strings.make($3), true);
 	FILE_NAME(tmp->parm, @3);
@@ -5683,6 +5707,7 @@ port_name
       }
   | K_DOTSTAR
       { named_pexpr_t*tmp = new named_pexpr_t;
+	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make("*");
 	tmp->parm = 0;
 	$$ = tmp;
@@ -6559,7 +6584,7 @@ subroutine_call
       }
   | hierarchy_identifier '(' error ')'
       { yyerror(@3, "error: Syntax error in task arguments.");
-	list<PExpr*>pt;
+	std::list<named_pexpr_t> pt;
 	PCallTask*tmp = pform_make_call_task(@1, *$1, pt);
 	delete $1;
 	$$ = tmp;
@@ -6936,7 +6961,7 @@ statement_item /* This is roughly statement_item in the LRM */
 	} else {
 	      yyerror(@2, "error: Constraint block can only be applied to randomize method.");
 	}
-	list<PExpr*>pt;
+	list<named_pexpr_t> pt;
 	PCallTask*tmp = new PCallTask(*$1, pt);
 	FILE_NAME(tmp, @1);
 	delete $1;

@@ -63,7 +63,8 @@ class PTaskFunc : public PScope, public PNamedItem {
 	// default value expressions, if any.
       void elaborate_sig_ports_(Design*des, NetScope*scope,
 				std::vector<NetNet*>&ports,
-				std::vector<NetExpr*>&pdefs) const;
+				std::vector<NetExpr*> &pdefs,
+				std::vector<perm_string> &port_names) const;
 
       void dump_ports_(std::ostream&out, unsigned ind) const;
 

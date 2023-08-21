@@ -46,12 +46,12 @@ void pform_make_analog_behavior(const struct vlltype&loc, ivl_process_type_t pt,
 PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
 					  char*name, char*n1, char*n2)
 {
-      vector<PExpr*> parms (2);
-      parms[0] = new PEIdent(lex_strings.make(n1));
-      FILE_NAME(parms[0], loc);
+      vector<named_pexpr_t> parms (2);
+      parms[0].parm = new PEIdent(lex_strings.make(n1));
+      FILE_NAME(parms[0].parm, loc);
 
-      parms[1] = new PEIdent(lex_strings.make(n2));
-      FILE_NAME(parms[1], loc);
+      parms[1].parm = new PEIdent(lex_strings.make(n2));
+      FILE_NAME(parms[1].parm, loc);
 
       PECallFunction*res = new PECallFunction(lex_strings.make(name), parms);
       FILE_NAME(res, loc);
@@ -61,9 +61,9 @@ PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
 PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
 					  char*name, char*branch_name)
 {
-      vector<PExpr*> parms (1);
-      parms[0] = new PEIdent(lex_strings.make(branch_name));
-      FILE_NAME(parms[0], loc);
+      vector<named_pexpr_t> parms (1);
+      parms[0].parm = new PEIdent(lex_strings.make(branch_name));
+      FILE_NAME(parms[0].parm, loc);
 
       PECallFunction*res = new PECallFunction(lex_strings.make(name), parms);
       FILE_NAME(res, loc);

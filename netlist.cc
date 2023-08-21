@@ -579,16 +579,10 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 : NetObj(s, n, calculate_count(unpacked)),
     type_(t), port_type_(NOT_A_PORT),
     local_flag_(false), net_type_(use_net_type),
-    discipline_(0), unpacked_dims_(unpacked.size()),
+    discipline_(0), unpacked_dims_(unpacked.begin(), unpacked.end()),
     eref_count_(0), lref_count_(0)
 {
       calculate_slice_widths_from_packed_dims_();
-      size_t idx = 0;
-      for (list<netrange_t>::const_iterator cur = unpacked.begin()
-		 ; cur != unpacked.end() ; ++cur, idx += 1) {
-	    unpacked_dims_[idx] = *cur;
-      }
-      ivl_assert(*this, idx == unpacked_dims_.size());
 
       ivl_assert(*this, s);
       if (pin_count() == 0) {

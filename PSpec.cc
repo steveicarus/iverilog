@@ -19,10 +19,11 @@
 
 # include  "PSpec.h"
 
-PSpecPath::PSpecPath(unsigned src_cnt, unsigned dst_cnt, char polarity,
-                     bool full_flag)
+PSpecPath::PSpecPath(const std::list<perm_string> &src_list,
+		     const std::list<perm_string> &dst_list,
+		     char polarity, bool full_flag)
 : conditional(false), condition(0), edge(0),
-  src(src_cnt), dst(dst_cnt),
+  src(src_list.begin(), src_list.end()), dst(dst_list.begin(), dst_list.end()),
   data_source_expression(0)
 {
       full_flag_ = full_flag;

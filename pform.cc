@@ -927,7 +927,7 @@ typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
 
 PECallFunction* pform_make_call_function(const struct vlltype&loc,
 					 const pform_name_t&name,
-					 const list<PExpr*>&parms)
+					 const list<named_pexpr_t> &parms)
 {
       if (gn_system_verilog())
 	    check_potential_imports(loc, name.front().name, true);
@@ -939,7 +939,7 @@ PECallFunction* pform_make_call_function(const struct vlltype&loc,
 
 PCallTask* pform_make_call_task(const struct vlltype&loc,
 				const pform_name_t&name,
-				const list<PExpr*>&parms)
+				const list<named_pexpr_t> &parms)
 {
       if (gn_system_verilog())
 	    check_potential_imports(loc, name.front().name, true);
@@ -1732,7 +1732,7 @@ void pform_endgenerate(bool end_conditional)
 
 void pform_make_elab_task(const struct vlltype&li,
                           perm_string name,
-                          const list<PExpr*>&params)
+                          const list<named_pexpr_t> &params)
 {
       PCallTask*elab_task = new PCallTask(name, params);
       FILE_NAME(elab_task, li);
@@ -2278,13 +2278,10 @@ static void pform_make_modgate(perm_string type,
 
       if (overrides && overrides->by_name) {
 	    unsigned cnt = overrides->by_name->size();
-	    named<PExpr*>*byname = new named<PExpr*>[cnt];
+	    named_pexpr_t *byname = new named_pexpr_t[cnt];
 
-	    list<named_pexpr_t>::iterator by_name_cur = overrides->by_name->begin();
-	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1, ++ by_name_cur) {
-		  byname[idx].name = by_name_cur->name;
-		  byname[idx].parm = by_name_cur->parm;
-	    }
+	    std::copy(overrides->by_name->begin(), overrides->by_name->end(),
+		      byname);
 
 	    cur->set_parameters(byname, cnt);
 
@@ -2311,13 +2308,11 @@ static void pform_make_modgate(perm_string type,
 			       std::list<named_pexpr_t>*attr)
 {
       unsigned npins = bind->size();
-      named<PExpr*>*pins = new named<PExpr*>[npins];
-      list<named_pexpr_t>::iterator bind_cur = bind->begin();
-      for (unsigned idx = 0 ;  idx < npins ;  idx += 1,  ++bind_cur) {
-	    pins[idx].name = bind_cur->name;
-	    pins[idx].parm = bind_cur->parm;
-            pform_declare_implicit_nets(bind_cur->parm);
-      }
+      named_pexpr_t *pins = new named_pexpr_t[npins];
+      for (const auto &bind_cur : *bind)
+            pform_declare_implicit_nets(bind_cur.parm);
+
+      std::copy(bind->begin(), bind->end(), pins);
 
       PGModule*cur = new PGModule(type, name, pins, npins);
       cur->set_line(li);
@@ -2325,13 +2320,10 @@ static void pform_make_modgate(perm_string type,
 
       if (overrides && overrides->by_name) {
 	    unsigned cnt = overrides->by_name->size();
-	    named<PExpr*>*byname = new named<PExpr*>[cnt];
+	    named_pexpr_t *byname = new named_pexpr_t[cnt];
 
-	    list<named_pexpr_t>::iterator by_name_cur = overrides->by_name->begin();
-	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1,  ++by_name_cur) {
-		  byname[idx].name = by_name_cur->name;
-		  byname[idx].parm = by_name_cur->parm;
-	    }
+	    std::copy(overrides->by_name->begin(), overrides->by_name->end(),
+		      byname);
 
 	    cur->set_parameters(byname, cnt);
 
@@ -3053,23 +3045,10 @@ extern PSpecPath* pform_make_specify_path(const struct vlltype&li,
 					  list<perm_string>*src, char pol,
 					  bool full_flag, list<perm_string>*dst)
 {
-      PSpecPath*path = new PSpecPath(src->size(), dst->size(), pol, full_flag);
+      PSpecPath*path = new PSpecPath(*src, *dst, pol, full_flag);
       FILE_NAME(path, li);
 
-      unsigned idx;
-      list<perm_string>::const_iterator cur;
-
-      idx = 0;
-      for (idx = 0, cur = src->begin() ;  cur != src->end() ;  ++ idx, ++ cur) {
-	    path->src[idx] = *cur;
-      }
-      ivl_assert(li, idx == path->src.size());
       delete src;
-
-      for (idx = 0, cur = dst->begin() ;  cur != dst->end() ;  ++ idx, ++ cur) {
-	    path->dst[idx] = *cur;
-      }
-      ivl_assert(li, idx == path->dst.size());
       delete dst;
 
       return path;

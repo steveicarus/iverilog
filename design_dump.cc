@@ -206,6 +206,18 @@ ostream& operator << (ostream&fd, NetCaseCmp::kind_t that)
       return fd;
 }
 
+static std::ostream& operator << (std::ostream &out, const std::vector<NetExpr*> &exprs)
+{
+      for (size_t idx = 0; idx < exprs.size(); idx++) {
+	    if (idx != 0)
+		  out << ", ";
+	    if (exprs[idx])
+		  out << *exprs[idx];
+      }
+
+      return out;
+}
+
 ostream& ivl_type_s::debug_dump(ostream&o) const
 {
       o << typeid(*this).name();
@@ -1650,17 +1662,7 @@ void NetSTask::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "" << name_;
 
       if (! parms_.empty()) {
-	    o << "(";
-	    if (parms_[0])
-		  parms_[0]->dump(o);
-
-	    for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
-		  o << ", ";
-		  if (parms_[idx])
-			parms_[idx]->dump(o);
-	    }
-
-	    o << ")";
+	    o << "(" << parms_ << ")";
       }
       o << ";" << endl;
 }
@@ -1702,15 +1704,7 @@ void NetEAccess::dump(ostream&o) const
 
 void NetEArrayPattern::dump(ostream&fd) const
 {
-      fd << "'{";
-      if (items_.size() >= 1) {
-	    if (items_[0]) fd << *items_[0];
-      }
-      for (size_t idx = 1 ; idx < items_.size() ; idx += 1) {
-	    fd << ", ";
-	    if (items_[idx]) fd << *items_[idx];
-      }
-      fd << "}";
+      fd << "'{" << items_ << "}";
 }
 
 void NetEBinary::dump(ostream&o) const
@@ -1814,18 +1808,7 @@ void NetEConcat::dump(ostream&o) const
       if (repeat_ != 1)
             o << repeat_;
 
-      if (parms_[0])
-	    o << "{" << *parms_[0];
-      else
-	    o << "{";
-
-      for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
-	    if (parms_[idx])
-		  o << ", " << *parms_[idx];
-	    else
-		  o << ", ";
-      }
-      o << "}";
+      o << "{" << parms_ << "}";
 }
 
 void NetEConst::dump(ostream&o) const
@@ -1965,15 +1948,7 @@ void NetETernary::dump(ostream&o) const
 
 void NetEUFunc::dump(ostream&o) const
 {
-      o << scope_path(func_) << "(";
-      if (! parms_.empty()) {
-	    parms_[0]->dump(o);
-	    for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
-		  o << ", ";
-		  parms_[idx]->dump(o);
-	    }
-      }
-      o << ")";
+      o << scope_path(func_) << "(" << parms_ << ")";
 }
 
 void NetEUnary::dump(ostream&o) const

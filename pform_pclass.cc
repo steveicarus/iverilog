@@ -43,7 +43,7 @@ static PClass*pform_cur_class = 0;
 void pform_start_class_declaration(const struct vlltype&loc,
 				   class_type_t*type,
 				   data_type_t*base_type,
-				   list<PExpr*>*base_exprs,
+				   list<named_pexpr_t> *base_args,
 				   bool virtual_class)
 {
       PClass*class_scope = pform_push_class_scope(loc, type->name);
@@ -55,13 +55,12 @@ void pform_start_class_declaration(const struct vlltype&loc,
       type->base_type.reset(base_type);
       type->virtual_class = virtual_class;
 
+
       ivl_assert(loc, type->base_args.empty());
-      if (base_exprs) {
-	    for (list<PExpr*>::iterator cur = base_exprs->begin()
-		       ; cur != base_exprs->end() ; ++ cur) {
-		  type->base_args.push_back(*cur);
-	    }
-	    delete base_exprs;
+      if (base_args) {
+	    type->base_args.insert(type->base_args.begin(), base_args->begin(),
+			           base_args->end());
+	    delete base_args;
       }
 }
 

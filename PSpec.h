@@ -22,6 +22,7 @@
 # include  "LineInfo.h"
 # include  "StringHeap.h"
 # include  <vector>
+# include  <list>
 
 class PExpr;
 
@@ -56,8 +57,9 @@ class PExpr;
 class PSpecPath  : public LineInfo {
 
     public:
-      PSpecPath(unsigned src_cnt, unsigned dst_cnt, char polarity,
-                bool full_flag);
+      PSpecPath(const std::list<perm_string> &src_list,
+	        const std::list<perm_string> &dst_list,
+		char polarity, bool full_flag);
       ~PSpecPath();
 
       void elaborate(class Design*des, class NetScope*scope) const;

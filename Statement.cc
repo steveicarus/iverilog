@@ -166,37 +166,19 @@ PNamedItem::SymbolType PBlock::symbol_type() const
       return BLOCK;
 }
 
-PCallTask::PCallTask(const pform_name_t&n, const list<PExpr*>&p)
-: package_(0), path_(n), parms_(p.size())
+PCallTask::PCallTask(const pform_name_t &n, const list<named_pexpr_t> &p)
+: package_(0), path_(n), parms_(p.begin(), p.end())
 {
-      list<PExpr*>::const_iterator cur = p.begin();
-      for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
-	    parms_[idx] = *cur;
-	    ++cur;
-      }
-      ivl_assert(*this, cur == p.end());
 }
 
-PCallTask::PCallTask(PPackage*pkg, const pform_name_t&n, const list<PExpr*>&p)
-: package_(pkg), path_(n), parms_(p.size())
+PCallTask::PCallTask(PPackage *pkg, const pform_name_t &n, const list<named_pexpr_t> &p)
+: package_(pkg), path_(n), parms_(p.begin(), p.end())
 {
-      list<PExpr*>::const_iterator cur = p.begin();
-      for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
-	    parms_[idx] = *cur;
-	    ++cur;
-      }
-      ivl_assert(*this, cur == p.end());
 }
 
-PCallTask::PCallTask(perm_string n, const list<PExpr*>&p)
-: package_(0), parms_(p.size())
+PCallTask::PCallTask(perm_string n, const list<named_pexpr_t> &p)
+: package_(0), parms_(p.begin(), p.end())
 {
-      list<PExpr*>::const_iterator cur = p.begin();
-      for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
-	    parms_[idx] = *cur;
-	    ++cur;
-      }
-      ivl_assert(*this, cur == p.end());
       path_.push_back(name_component_t(n));
 }
 
@@ -234,15 +216,14 @@ PCAssign::~PCAssign()
       delete expr_;
 }
 
-PChainConstructor::PChainConstructor(const list<PExpr*>&parms)
-: parms_(parms.size())
+PChainConstructor::PChainConstructor(const list<named_pexpr_t> &parms)
+: parms_(parms.begin(), parms.end())
 {
-      list<PExpr*>::const_iterator cur = parms.begin();
-      for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
-	    parms_[idx] = *cur;
-	    ++cur;
-      }
-      ivl_assert(*this, cur == parms.end());
+}
+
+PChainConstructor::PChainConstructor(const vector<named_pexpr_t> &parms)
+: parms_(parms)
+{
 }
 
 PChainConstructor::~PChainConstructor()
@@ -350,12 +331,8 @@ PForce::~PForce()
 }
 
 PForeach::PForeach(perm_string av, const list<perm_string>&ix, Statement*s)
-: array_var_(av), index_vars_(ix.size()), statement_(s)
+: array_var_(av), index_vars_(ix.begin(), ix.end()), statement_(s)
 {
-      size_t idx = 0;
-      for (list<perm_string>::const_iterator cur = ix.begin()
-		 ; cur != ix.end() ; ++cur)
-	    index_vars_[idx++] = *cur;
 }
 
 PForeach::~PForeach()

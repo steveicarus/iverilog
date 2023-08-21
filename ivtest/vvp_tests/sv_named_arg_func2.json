@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_named_arg_func2.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
