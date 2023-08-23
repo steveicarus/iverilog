@@ -199,8 +199,44 @@ vvp_net_t::vvp_net_t()
 void vvp_net_t::link(vvp_net_ptr_t port_to_link)
 {
       vvp_net_t*net = port_to_link.ptr();
-      net->port[port_to_link.port()] = out_;
-      out_ = port_to_link;
+
+      // Connect nodes with vvp_fun_modpath_src to the head of the
+      // linked list, so that vvp_fun_modpath_src are always evaluated
+      // before their respective vvp_fun_modpath
+      if (dynamic_cast<vvp_fun_modpath_src*>(net->fun))
+      {
+	      net->port[port_to_link.port()] = out_;
+	      out_ = port_to_link;
+      }
+      // All other nodes connect after the last vvp_fun_modpath_src
+      else
+      {
+	      // List is empty or first node has no vvp_fun_modpath_src
+	      // then just insert the node into the head of linked list
+	      if (out_.ptr() == nullptr || ! dynamic_cast<vvp_fun_modpath_src*>(out_.ptr()->fun))
+	      {
+		      net->port[port_to_link.port()] = out_;
+		      out_ = port_to_link;
+		      return;
+	      }
+
+	      vvp_net_ptr_t cur = out_;
+	      vvp_net_ptr_t prev = vvp_net_ptr_t(nullptr,0);
+
+	      // Traverse through linked list
+	      while (dynamic_cast<vvp_fun_modpath_src*>(cur.ptr()->fun))
+	      {
+		      prev = cur;
+		      cur = cur.ptr()->port[cur.port()];
+		      if (!cur.ptr()) break; // End of list
+	      }
+
+	      assert(prev.ptr());
+
+	      // Insert after last vvp_fun_modpath_src (or end of list)
+	      net->port[port_to_link.port()] = cur;
+	      prev.ptr()->port[prev.port()] = port_to_link;
+      }
 }
 
 /*
