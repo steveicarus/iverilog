@@ -25,7 +25,7 @@ module top;
       pass = 1'b0;
     end
 
-    // A release of a currently unforced varaible should not change it.
+    // A release of a currently unforced variable should not change it.
     val = 4'b0110;
     release val;
     if (val !== 4'b0110) begin
@@ -52,7 +52,7 @@ module top;
       pass = 1'b0;
     end
 
-    // A release of a currently unforced varaible should not change it.
+    // A release of a currently unforced variable should not change it.
     pv_val = 4'b1001;
     release pv_val[1];
     if (pv_val !== 4'b1001) begin
@@ -79,7 +79,7 @@ module top;
       pass = 1'b0;
     end
 
-    // A release of a currently unforced varaible should not change it.
+    // A release of a currently unforced variable should not change it.
     rval = 1.0;
     release rval;
     if (rval != 1.0) begin

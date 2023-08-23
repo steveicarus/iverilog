@@ -1,4 +1,4 @@
-// Check that it is possible to have a `output reg` in a UDP defintion
+// Check that it is possible to have a `output reg` in a UDP definition
 
 module test;
 

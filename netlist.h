@@ -1035,7 +1035,7 @@ class NetScope : public Definitions, public Attrib {
       inline TYPE type() const { return type_; }
       void print_type(std::ostream&) const;
 
-	// This provides a link to the variable initialisation process
+	// This provides a link to the variable initialization process
 	// for use when evaluating a constant function. Note this is
 	// only used for static functions - the variable initialization
 	// for automatic functions is included in the function definition.
@@ -1221,7 +1221,7 @@ class NetScope : public Definitions, public Attrib {
 	    bool is_annotatable;
 	    // Is this a localparam?
 	    bool local_flag;
-	    // Can it be overriden?
+	    // Can it be overridden?
 	    bool overridable = false;
 	    // Is it a type parameter
 	    bool type_flag = false;
@@ -3311,7 +3311,7 @@ class NetDisable  : public NetProc {
     private:
       NetScope*target_;
        // If false all threads in the target_ scope are disabled. If true only
-       // the closest thread in thread hierachy of the target_ scope is
+       // the closest thread in thread hierarchy of the target_ scope is
        // disabled. The latter is used to implement flow control statements like
        // `return`.
       bool flow_control_;
