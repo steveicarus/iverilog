@@ -1,0 +1,58 @@
+(DELAYFILE
+  (SDFVERSION "3.0")
+  (DESIGN "test")
+  (DATE "Wed Mar 8 12:34:56 2023")
+  (VENDOR "No Vendor")
+  (PROGRAM "Human")
+  (VERSION "1.0.0")
+  (DIVIDER .)
+  (VOLTAGE 5.5:5.0:4.5)
+  (PROCESS "best=0.65:nom=1.0:worst=1.8")
+  (TEMPERATURE -25.0:25.0:85.0)
+  (TIMESCALE 1 ns)
+
+  (CELL
+    (CELLTYPE "my_design")
+    (INSTANCE)   
+    (DELAY
+      (ABSOLUTE
+        (INTERCONNECT a[0] buffer0.in  (0.000:0.020:0.000) (0.000:0.020:0.000))
+        (INTERCONNECT buffer0.out b[0] (0.000:0.020:0.000) (0.000:0.020:0.000))
+        (INTERCONNECT a[1] buffer1.in  (0.000:0.030:0.000) (0.000:0.030:0.000))
+        (INTERCONNECT buffer1.out b[1] (0.000:0.030:0.000) (0.000:0.030:0.000))
+        (INTERCONNECT a[2] buffer2.in  (0.000:0.050:0.000) (0.000:0.050:0.000))
+        (INTERCONNECT buffer2.out b[2] (0.000:0.050:0.000) (0.000:0.050:0.000))
+      )
+    )
+  )
+
+  (CELL
+    (CELLTYPE "buffer")
+    (INSTANCE buffer0)
+    (DELAY
+      (ABSOLUTE
+      (IOPATH in out (0.0:0.1:0.0) (0.0:0.1:0.0))
+      )
+    )
+  )
+  
+  (CELL
+    (CELLTYPE "buffer")
+    (INSTANCE buffer1)
+    (DELAY
+      (ABSOLUTE
+      (IOPATH in out (0.0:0.1:0.0) (0.0:0.1:0.0))
+      )
+    )
+  )
+  
+  (CELL
+    (CELLTYPE "buffer")
+    (INSTANCE buffer2)
+    (DELAY
+      (ABSOLUTE
+      (IOPATH in out (0.0:0.1:0.0) (0.0:0.1:0.0))
+      )
+    )
+  )
+)
