@@ -1,9 +1,6 @@
-SDF ERROR: ivltests/sdf_interconnect2.sdf:31: Unable to match ModPath in -> out in top.my_design_inst.buffer0
-SDF ERROR: ivltests/sdf_interconnect2.sdf:41: Unable to match ModPath in -> out in top.my_design_inst.buffer1
-SDF ERROR: ivltests/sdf_interconnect2.sdf:51: Unable to match ModPath in -> out in top.my_design_inst.buffer2
 time=0 a=x b=x
 time=5000 a=0 b=x
-time=5010 a=0 b=0
+time=5110 a=0 b=0
 time=15000 a=1 b=0
-time=15030 a=1 b=1
+time=15330 a=1 b=1
 ivltests/sdf_interconnect2.v:61: $finish called at 25000 (1ps)

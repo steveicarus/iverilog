@@ -38,7 +38,7 @@
     (INSTANCE buffer0)
     (DELAY
       (ABSOLUTE
-      (IOPATH in out (0.1:0.2:0.3) (0.1:0.2:0.3))
+      (IOPATH in out (0.0:0.1:0.0) (0.0:0.1:0.0))
       )
     )
   )
@@ -48,7 +48,7 @@
     (INSTANCE buffer1)
     (DELAY
       (ABSOLUTE
-      (IOPATH in out (0.1:0.2:0.3) (0.1:0.2:0.3))
+      (IOPATH in out (0.0:0.1:0.0) (0.0:0.1:0.0))
       )
     )
   )
@@ -58,7 +58,7 @@
     (INSTANCE buffer2)
     (DELAY
       (ABSOLUTE
-      (IOPATH in out (0.1:0.2:0.3) (0.1:0.2:0.3))
+      (IOPATH in out (0.0:0.1:0.0) (0.0:0.1:0.0))
       )
     )
   )
@@ -68,7 +68,51 @@
     (INSTANCE buffer3)
     (DELAY
       (ABSOLUTE
-      (IOPATH in out (0.1:0.2:0.3) (0.1:0.2:0.3))
+      (IOPATH in out (0.0:0.1:0.0) (0.0:0.1:0.0))
+      )
+    )
+  )
+  
+  (CELL
+    (CELLTYPE "my_xor")
+    (INSTANCE my_xor0)
+    (DELAY
+      (ABSOLUTE
+      (IOPATH a out (0.0:0.1:0.0) (0.0:0.1:0.0))
+      (IOPATH b out (0.0:0.1:0.0) (0.0:0.1:0.0))
+      )
+    )
+  )
+  
+  (CELL
+    (CELLTYPE "my_xor")
+    (INSTANCE my_xor1)
+    (DELAY
+      (ABSOLUTE
+      (IOPATH a out (0.0:0.1:0.0) (0.0:0.1:0.0))
+      (IOPATH b out (0.0:0.1:0.0) (0.0:0.1:0.0))
+      )
+    )
+  )
+  
+  (CELL
+    (CELLTYPE "my_xor")
+    (INSTANCE my_xor2)
+    (DELAY
+      (ABSOLUTE
+      (IOPATH a out (0.0:0.1:0.0) (0.0:0.1:0.0))
+      (IOPATH b out (0.0:0.1:0.0) (0.0:0.1:0.0))
+      )
+    )
+  )
+  
+  (CELL
+    (CELLTYPE "my_xor")
+    (INSTANCE my_xor3)
+    (DELAY
+      (ABSOLUTE
+      (IOPATH a out (0.0:0.1:0.0) (0.0:0.1:0.0))
+      (IOPATH b out (0.0:0.1:0.0) (0.0:0.1:0.0))
       )
     )
   )
