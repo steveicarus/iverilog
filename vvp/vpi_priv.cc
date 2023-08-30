@@ -22,6 +22,7 @@
 # include  "vpi_priv.h"
 # include  "schedule.h"
 # include  "logic.h"
+# include  "part.h"
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
@@ -1555,6 +1556,36 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
       return out;
 }
 
+// Check if net2 is connected to current_net through a net of vvp_fun_concat8s
+bool check_connected_to_concat8(vvp_net_t* current_net, vvp_net_t* net2)
+{
+      if (!dynamic_cast<vvp_fun_concat8*>(current_net->fun)) return false;
+
+      vvp_net_ptr_t cur = current_net->out_;
+
+	// For everything connected
+      while (cur.ptr()) {
+	      // Check if it's a concat8
+	    if (dynamic_cast<vvp_fun_concat8*>(cur.ptr()->fun)) {
+		    // Pass on the return value if found
+		  if (check_connected_to_concat8(cur.ptr(), net2)) {
+			return true;
+		  }
+	    }
+
+	      // net2 is connected
+	    if (cur.ptr() == net2) {
+		    return true;
+	    }
+
+	      // Next net in linked list
+	    cur = cur.ptr()->port[cur.port()];
+      }
+
+	// net2 is not connected to this concat8
+      return false;
+}
+
 // Used to get intermodpath for two ports
 vpiHandle vpi_handle_multi(PLI_INT32 type,
                            vpiHandle ref1,
@@ -1569,6 +1600,28 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
 	    fprintf(stderr, "sorry: vpi_handle_multi currently supports"
 	            "only vpiInterModPath\n");
 	    return nullptr;
+      }
+
+	// Indicates to which bit port1 refers to if it's a vpiPortBit
+      int port1_bit_index = -1; // -1 means the port is not a vector
+      vpiPortBitInfo* port1_bit = dynamic_cast<vpiPortBitInfo*>(ref1);
+
+      if (port1_bit) {
+	      // Get the bit index
+	    port1_bit_index = vpi_get(vpiBit, port1_bit);
+	      // Update the ref1 to point to the base port
+	    ref1 = vpi_handle(vpiParent, port1_bit);
+      }
+
+	// Indicates to which bit port2 refers to if it's a vpiPortBit
+      int port2_bit_index = -1; // -1 means the port is not a vector
+      vpiPortBitInfo* port2_bit = dynamic_cast<vpiPortBitInfo*>(ref2);
+
+      if (port2_bit) {
+	      // Get the bit index
+	    port2_bit_index = vpi_get(vpiBit, port2_bit);
+	      // Update the ref1 to point to the base port
+	    ref2 = vpi_handle(vpiParent, port2_bit);
       }
 
       vpiPortInfo* port1 = dynamic_cast<vpiPortInfo*>(ref1);
@@ -1638,13 +1691,43 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
 	    return nullptr;
       }
 
+	// If port1 is actually a port bit, we have to get to the correct vvp_fun_part
+	// after which we insert the intermodpath delay
+      if (port1_bit_index >= 0) {
+	    vvp_net_ptr_t* net1_ptr = &net1->out_;
+
+	      // Search for part selects connected to port1
+	    vvp_net_t* current_net = net1_ptr->ptr();
+
+	    while (current_net) {
+		  if (!current_net) break; // End of list
+
+		  vvp_fun_part* part = dynamic_cast<vvp_fun_part*>(current_net->fun);
+
+		    // Its a part select!
+		  if (part) {
+			  // Is it the correct part select?
+			if (part->get_base() == (unsigned)port1_bit_index) {
+			      assert(part->get_wid() == 1);
+			      net1 = current_net; // Replace net1 as this is our new start point
+			      break;
+			}
+		  }
+
+		  current_net = current_net->port[0].ptr(); // BUFT has only one input, index 0
+	    }
+      }
+
 	// Iterate over all nodes connected to port1
       vvp_net_ptr_t cur = net1->out_;
       vvp_net_ptr_t prev = vvp_net_ptr_t(nullptr, 0);
 
       while (cur.ptr()) {
-	      // Port2 is directly connected to port1
-	    if (cur.ptr() == net2) {
+	      // Either port2 is directly connected to port1
+	      // Or in the second case port2 is indirectly connected
+	      // to port1 through a net of concat8s
+	    if ( (port2_bit_index == -1 && cur.ptr() == net2) ||
+	         (port2_bit_index != -1 && check_connected_to_concat8(cur.ptr(), net2))) {
 		  vvp_net_t*new_net = new vvp_net_t;
 
 		    // Create new node with intermodpath and connect port2 to it
@@ -1667,8 +1750,10 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
 			cur.ptr()->port[cur.port()] = vvp_net_ptr_t(nullptr, 0); // Only port2 is connected to intermodpath
 		  }
 
-		    // If both ports are vpiOutput, we have to reassign the __vpiSignal
-		  if (output_signal) {
+		    // If both ports are vpiOutput and port2 is not a vector,
+		    // we have to reassign the __vpiSignal so that the delayed
+		    // values get dumped
+		  if (output_signal && port2_bit_index == -1) {
 			net2->fil = net1->fil;
 			net1->fil = nullptr;
 			output_signal->node = net2;

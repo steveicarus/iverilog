@@ -432,6 +432,7 @@ struct __vpiBit {
       int get_index(void) const;
 };
 
+class vpiPortBitInfo;
 
 class vpiPortInfo  : public __vpiHandle {
     public:
@@ -445,11 +446,17 @@ class vpiPortInfo  : public __vpiHandle {
 
       int get_type_code(void) const { return vpiPort; }
       int get_direction(void) { return direction_; }
+      unsigned get_index(void) { return index_; }
+      int get_width(void) { return width_; }
+      void add_port_bit(vpiPortBitInfo* port_bit) { port_bits_.push_back(port_bit); }
 
       int vpi_get(int code);
       char* vpi_get_str(int code);
       vpiHandle vpi_handle(int code);
       vvp_net_t* get_port(void) const { return ref_; }
+      vpiHandle vpi_iterate(int code);
+
+      std::vector<vpiPortBitInfo*> port_bits_;
 
     private:
       __vpiScope *parent_;
@@ -458,6 +465,23 @@ class vpiPortInfo  : public __vpiHandle {
       unsigned  width_;
       const char *name_;
       vvp_net_t *ref_;
+};
+
+class vpiPortBitInfo  : public __vpiHandle {
+    public:
+      vpiPortBitInfo(vpiPortInfo *parent,
+                     unsigned bit);
+      ~vpiPortBitInfo();
+
+      int get_type_code(void) const { return vpiPortBit; }
+      unsigned get_bit(void) const { return bit_; }
+
+      int vpi_get(int code);
+      vpiHandle vpi_handle(int code);
+
+    private:
+      vpiPortInfo *parent_;
+      unsigned bit_;
 };
 
 /*
