@@ -104,6 +104,8 @@ jobs:
           mingw-w64-${{ matrix.arch }}-toolchain
 
     - uses: actions/setup-python@v4
+      with:
+        python-version: '>=3.5'
 
     - name: Build and check
       run: |
@@ -117,7 +119,7 @@ jobs:
       run: |
         ./.github/test.sh
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.msystem }}-${{ matrix.arch }}
         path: msys2/*.zst
