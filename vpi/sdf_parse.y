@@ -469,16 +469,15 @@ port
     /* | hierarchical_identifier '[' INTEGER ']' */
   ;
 
-  /* Since INTERCONNECT is ignored we can also ignore a vector bit. */
 port_interconnect
   : hierarchical_identifier
       {
-	    struct interconnect_port_s tmp = {$1, -1};
+	    struct interconnect_port_s tmp = {$1, false, 0};
 	    $$ = tmp;
       }
   | hierarchical_identifier '[' INTEGER ']'
       {
-	    struct interconnect_port_s tmp = {$1, $3};
+	    struct interconnect_port_s tmp = {$1, true, $3};
 	    $$ = tmp;
       }
   ;

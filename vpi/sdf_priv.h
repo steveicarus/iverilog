@@ -20,6 +20,7 @@
  */
 
 # include  <stdio.h>
+# include  <stdbool.h>
 
 /*
  * Invoke the parser to parse the opened SDF file. The fd is the SDF
@@ -55,7 +56,8 @@ struct port_with_edge_s {
 
 struct interconnect_port_s {
       char* name;
-      int index; // -1 for whole vector
+      bool has_index;
+      int index; // invalid if has_index is false
 };
 
 extern void sdf_select_instance(const char*celltype, const char*inst,
