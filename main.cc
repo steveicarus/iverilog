@@ -106,6 +106,7 @@ generation_t generation_flag = GN_DEFAULT;
 bool gn_icarus_misc_flag = true;
 bool gn_cadence_types_flag = true;
 bool gn_specify_blocks_flag = true;
+bool gn_interconnect_flag = true;
 bool gn_supported_assertions_flag = true;
 bool gn_unsupported_assertions_flag = true;
 bool gn_io_range_error_flag = true;
@@ -333,6 +334,12 @@ static void process_generation_flag(const char*gen)
 
       } else if (strcmp(gen,"no-specify") == 0) {
 	    gn_specify_blocks_flag = false;
+
+      } else if (strcmp(gen,"interconnect") == 0) {
+	    gn_interconnect_flag = true;
+
+      } else if (strcmp(gen,"no-interconnect") == 0) {
+	    gn_interconnect_flag = false;
 
       } else if (strcmp(gen,"assertions") == 0) {
 	    gn_supported_assertions_flag = true;
@@ -1094,6 +1101,11 @@ int main(int argc, char*argv[])
 		  cout << ",specify";
 	    else
 		  cout << ",no-specify";
+
+	    if (gn_interconnect_flag)
+		  cout << ",interconnect";
+	    else
+		  cout << ",no-interconnect";
 
 	    if (gn_cadence_types_flag)
 		  cout << ",xtypes";

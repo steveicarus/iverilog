@@ -660,6 +660,7 @@ struct PortInfo
     PortType::Enum  type;
     unsigned long   width;
     perm_string     name;
+    ivl_net_logic_t buffer;
 };
 
 
@@ -1126,6 +1127,8 @@ class NetScope : public Definitions, public Attrib {
                             perm_string name,  // May be "" for undeclared port
                             PortType::Enum type,
                             unsigned long width );
+
+      PortInfo* get_module_port_info(unsigned idx);
 
       const std::vector<PortInfo> &module_port_info() const;
 
@@ -2359,11 +2362,12 @@ class NetSubstitute : public NetNode {
 class NetBUFZ  : public NetNode {
 
     public:
-      explicit NetBUFZ(NetScope*s, perm_string n, unsigned wid, bool transp);
+      explicit NetBUFZ(NetScope*s, perm_string n, unsigned wid, bool transp, int port_info_index = -1);
       ~NetBUFZ();
 
       unsigned width() const;
       bool transparent() const { return transparent_; }
+      int port_info_index() const { return port_info_index_; }
 
       virtual void dump_node(std::ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
@@ -2371,6 +2375,7 @@ class NetBUFZ  : public NetNode {
     private:
       unsigned width_;
       bool transparent_;
+      int port_info_index_;
 };
 
 /*

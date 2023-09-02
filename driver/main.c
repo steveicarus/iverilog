@@ -125,6 +125,7 @@ char depmode = 'a';
 
 const char*generation = "2005";
 const char*gen_specify = "no-specify";
+const char*gen_interconnect = "no-interconnect";
 const char*gen_assertions = "assertions";
 const char*gen_xtypes = "xtypes";
 const char*gen_icarus = "icarus-misc";
@@ -757,6 +758,12 @@ static int process_generation(const char*name)
       else if (strcmp(name,"no-specify") == 0)
 	    gen_specify = "no-specify";
 
+      else if (strcmp(name,"interconnect") == 0)
+	    gen_interconnect = "interconnect";
+
+      else if (strcmp(name,"no-interconnect") == 0)
+	    gen_interconnect = "no-interconnect";
+
       else if (strcmp(name,"assertions") == 0)
 	    gen_assertions = "assertions";
 
@@ -821,6 +828,7 @@ static int process_generation(const char*name)
 		            "Other generation flags:\n"
 		            "    assertions | supported-assertions | no-assertions\n"
 		            "    specify | no-specify\n"
+		            "    interconnect | no-interconnect\n"
 		            "    verilog-ams | no-verilog-ams\n"
 		            "    std-include | no-std-include\n"
 		            "    relative-include | no-relative-include\n"
@@ -1368,6 +1376,7 @@ int main(int argc, char **argv)
       if (mtm != 0) fprintf(iconfig_file, "-T:%s\n", mtm);
       fprintf(iconfig_file, "generation:%s\n", generation);
       fprintf(iconfig_file, "generation:%s\n", gen_specify);
+      fprintf(iconfig_file, "generation:%s\n", gen_interconnect);
       fprintf(iconfig_file, "generation:%s\n", gen_assertions);
       fprintf(iconfig_file, "generation:%s\n", gen_xtypes);
       fprintf(iconfig_file, "generation:%s\n", gen_io_range_error);

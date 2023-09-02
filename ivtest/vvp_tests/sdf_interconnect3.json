@@ -1,0 +1,6 @@
+{
+    "type"          : "normal",
+    "source"        : "sdf_interconnect3.v",
+    "iverilog-args" : [ "-Ttyp", "-ginterconnect", "-gspecify" ],
+    "gold"   : "sdf_interconnect3"
+}

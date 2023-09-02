@@ -42,6 +42,7 @@ char sdf_use_hchar = '.';
       struct sdf_delay_s delay;
       struct port_with_edge_s port_with_edge;
       struct sdf_delval_list_s delval_list;
+      struct interconnect_port_s interconnect_port;
 };
 
 %token K_ABSOLUTE K_CELL K_CELLTYPE K_COND K_CONDELSE K_DATE K_DELAYFILE
@@ -63,7 +64,9 @@ char sdf_use_hchar = '.';
 %type <string_val> celltype
 %type <string_val> cell_instance
 %type <string_val> hierarchical_identifier
-%type <string_val> port port_instance port_interconnect
+%type <string_val> port port_instance
+
+%type <interconnect_port> port_interconnect
 
 %type <real_val> signed_real_number
 %type <delay> delval rvalue_opt rvalue rtriple signed_real_number_opt
@@ -157,26 +160,31 @@ program_version
 hierarchy_divider
   : '(' K_DIVIDER '.' ')'
       { sdf_use_hchar = '.';
-					if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n", sdf_parse_path, @1.first_line, sdf_use_hchar);
+	    if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n",
+	                                    sdf_parse_path, @1.first_line, sdf_use_hchar);
       }
   | '(' K_DIVIDER '/' ')'
       { sdf_use_hchar = '/';
-					if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n", sdf_parse_path, @1.first_line, sdf_use_hchar);
+	    if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n",
+	                                    sdf_parse_path, @1.first_line, sdf_use_hchar);
       }
   | '(' K_DIVIDER HCHAR ')'
       { /* sdf_use_hchar no-change */
-					if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n", sdf_parse_path, @1.first_line, sdf_use_hchar);
+	    if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n",
+	                                    sdf_parse_path, @1.first_line, sdf_use_hchar);
       }
   ;
 
 voltage
   : '(' K_VOLTAGE rtriple ')'
       { /* The value must be defined. */
-      if (! $3.defined) {
-					vpi_printf("SDF ERROR: %s:%d: Chosen value not defined.\n", sdf_parse_path, @1.first_line);
-      }
-      else if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Voltage: %f\n",
-					sdf_parse_path, @2.first_line, $3.value);
+	    if (! $3.defined) {
+		  vpi_printf("SDF ERROR: %s:%d: Chosen value not defined.\n",
+		             sdf_parse_path, @1.first_line);
+	    } else if (sdf_flag_inform) {
+		  vpi_printf("SDF INFO: %s:%d: Voltage: %f\n",
+		             sdf_parse_path, @2.first_line, $3.value);
+	    }
       }
   | '(' K_VOLTAGE signed_real_number ')'
       { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Voltage: %f\n",
@@ -195,11 +203,10 @@ process
 temperature
   : '(' K_TEMPERATURE rtriple ')'
       { /* The value must be defined. */
-      if (! $3.defined) {
-					vpi_printf("SDF ERROR: %s:%d: Chosen value not defined.\n", sdf_parse_path, @1.first_line);
-      }
-      else if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Temperature: %f\n",
-					sdf_parse_path, @2.first_line, $3.value);
+	    if (! $3.defined) vpi_printf("SDF ERROR: %s:%d: Chosen value not defined.\n",
+	                                 sdf_parse_path, @1.first_line);
+	    else if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Temperature: %f\n",
+	                                         sdf_parse_path, @2.first_line, $3.value);
       }
   | '(' K_TEMPERATURE signed_real_number ')'
       { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Temperature: %f\n",
@@ -335,15 +342,22 @@ del_def
 		   sdf_parse_path, @2.first_line); }
   /* | '(' K_INTERCONNECT port_instance port_instance delval_list ')' */
   | '(' K_INTERCONNECT port_interconnect port_interconnect delval_list ')'
-      { if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
-					 "INTERCONNECT not supported.\n",
-					 sdf_parse_path, @2.first_line);
-	free($3);
-	free($4);
+      {
+	    if (sdf_flag_inform) {
+		  vpi_printf("SDF INFO: %s:%d: INTERCONNECT with "
+		             "port1 = %s index = %d, port2 = %s index = %d\n",
+		             sdf_parse_path, @2.first_line, $3.name, $3.index, $4.name, $4.index);
+	    }
+
+	    sdf_interconnect_delays($3, $4, &$5, @2.first_line);
+
+	    free($3.name);
+	    free($4.name);
       }
   | '(' K_INTERCONNECT error ')'
       { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed INTERCONNECT\n",
-		   sdf_parse_path, @2.first_line); }
+		   sdf_parse_path, @2.first_line);
+      }
   ;
 
 tchk_def_list
@@ -396,13 +410,13 @@ cond_edge_identifier
 
 timing_check_condition
   : port_interconnect
-      { free($1); }
+      { free($1.name); }
   | '~' port_interconnect
-      { free($2); }
+      { free($2.name); }
   | '!' port_interconnect
-      { free($2); }
+      { free($2.name); }
   | port_interconnect equality_operator scalar_constant
-      { free($1); }
+      { free($1.name); }
   ;
 
   /* This is not complete! */
@@ -455,12 +469,17 @@ port
     /* | hierarchical_identifier '[' INTEGER ']' */
   ;
 
-  /* Since INTERCONNECT is ignored we can also ignore a vector bit. */
 port_interconnect
   : hierarchical_identifier
-      { $$ = $1; }
+      {
+	    struct interconnect_port_s tmp = {$1, false, 0};
+	    $$ = tmp;
+      }
   | hierarchical_identifier '[' INTEGER ']'
-      { $$ = $1;}
+      {
+	    struct interconnect_port_s tmp = {$1, true, $3};
+	    $$ = tmp;
+      }
   ;
 
 port_edge

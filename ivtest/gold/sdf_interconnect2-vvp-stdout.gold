@@ -1,0 +1,6 @@
+time=0 a=x b=x
+time=5000 a=0 b=x
+time=5110 a=0 b=0
+time=15000 a=1 b=0
+time=15330 a=1 b=1
+ivltests/sdf_interconnect2.v:61: $finish called at 25000 (1ps)

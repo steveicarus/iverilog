@@ -530,6 +530,7 @@ struct ivl_net_logic_s {
       ivl_logic_t type_;
       unsigned width_;
       unsigned is_cassign;
+      unsigned is_port_buffer;
       ivl_udp_t udp;
 
       perm_string name_;

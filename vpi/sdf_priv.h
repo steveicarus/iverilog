@@ -20,6 +20,7 @@
  */
 
 # include  <stdio.h>
+# include  <stdbool.h>
 
 /*
  * Invoke the parser to parse the opened SDF file. The fd is the SDF
@@ -48,10 +49,28 @@ struct sdf_delval_list_s {
       struct sdf_delay_s val[12];
 };
 
+struct port_with_edge_s {
+      int vpi_edge;
+      char*string_val;
+};
+
+struct interconnect_port_s {
+      char* name;
+      bool has_index;
+      int index; // invalid if has_index is false
+};
+
 extern void sdf_select_instance(const char*celltype, const char*inst,
                                 const int sdf_lineno);
+
 extern void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
                               const struct sdf_delval_list_s*delval,
                               const int sdf_lineno);
 
+extern void sdf_interconnect_delays(struct interconnect_port_s port1,
+                                    struct interconnect_port_s port2,
+                                    const struct sdf_delval_list_s*delval_list,
+                                    const int sdf_lineno);
+
 #endif /* IVL_sdf_priv_h */
+

@@ -856,6 +856,7 @@ bool dll_target::bufz(const NetBUFZ*net)
       obj->type_ = net->transparent()? IVL_LO_BUFT : IVL_LO_BUFZ;
       obj->width_= net->width();
       obj->is_cassign = 0;
+      obj->is_port_buffer = net->port_info_index() >= 0;
       obj->npins_= 2;
       obj->pins_ = new ivl_nexus_t[2];
       FILE_NAME(obj, net);
@@ -891,6 +892,14 @@ bool dll_target::bufz(const NetBUFZ*net)
       make_logic_delays_(obj, net);
 
       scope_add_logic(scop, obj);
+
+	// Add bufz to the corresponding port_info entry,
+	// if it is an input / output buffer
+	// This is needed for the SDF interconnect feature
+	// to access the buffers directly from the port_info
+      if (obj->is_port_buffer) {
+	    scop->module_ports_info[net->port_info_index()].buffer = obj;
+      }
 
       return true;
 }
@@ -959,6 +968,7 @@ void dll_target::logic(const NetLogic*net)
       struct ivl_net_logic_s *obj = new struct ivl_net_logic_s;
 
       obj->width_ = net->width();
+      obj->is_port_buffer = 0;
 
       FILE_NAME(obj, net);
 
@@ -1427,6 +1437,7 @@ void dll_target::udp(const NetUDP*net)
       struct ivl_net_logic_s *obj = new struct ivl_net_logic_s;
 
       obj->type_ = IVL_LO_UDP;
+      obj->is_port_buffer = 0;
       FILE_NAME(obj, net);
 
 	/* The NetUDP class hasn't learned about width yet, so we

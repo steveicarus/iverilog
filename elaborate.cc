@@ -1159,13 +1159,13 @@ static void convert_net(Design*des, const LineInfo *line,
 }
 
 static void isolate_and_connect(Design*des, NetScope*scope, const PGModule*mod,
-				NetNet*port, NetNet*sig, NetNet::PortType ptype)
+				NetNet*port, NetNet*sig, NetNet::PortType ptype, int idx = -1)
 {
       switch (ptype) {
 	  case NetNet::POUTPUT:
 	    {
 		  NetBUFZ*tmp = new NetBUFZ(scope, scope->local_symbol(),
-					    sig->vector_width(), true);
+					    sig->vector_width(), true, idx);
 		  tmp->set_line(*mod);
 		  des->add_node(tmp);
 		  connect(tmp->pin(1), port->pin(0));
@@ -1598,17 +1598,21 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			}
 		  }
 
-		  if (need_bufz_for_input_port(prts)) {
-			NetBUFZ*tmp = new NetBUFZ(scope, scope->local_symbol(),
-						  sig->vector_width(), true);
+		    // Add module input buffers if needed
+		  if (need_bufz_for_input_port(prts) || gn_interconnect_flag == true) {
+			  // FIXME improve this for multiple module instances
+			NetScope* inner_scope = scope->instance_arrays[get_name()][0];
+
+			NetBUFZ*tmp = new NetBUFZ(inner_scope, inner_scope->local_symbol(),
+			                          sig->vector_width(), true, gn_interconnect_flag ? idx : -1);
 			tmp->set_line(*this);
 			des->add_node(tmp);
 			connect(tmp->pin(1), sig->pin(0));
 
 			netvector_t*tmp2_vec = new netvector_t(sig->data_type(),
-							       sig->vector_width()-1,0);
-			NetNet*tmp2 = new NetNet(scope, scope->local_symbol(),
-						 NetNet::WIRE, tmp2_vec);
+			                                       sig->vector_width()-1,0);
+			NetNet*tmp2 = new NetNet(inner_scope, inner_scope->local_symbol(),
+			                         NetNet::WIRE, tmp2_vec);
 			tmp2->local_flag(true);
 			tmp2->set_line(*this);
 			connect(tmp->pin(0), tmp2->pin(0));
@@ -1933,8 +1937,11 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // that are a delay path destination, to avoid
 		    // the delay being applied to other drivers of
 		    // the external signal.
-		  if (prts[0]->delay_paths() > 0) {
-			isolate_and_connect(des, scope, this, prts[0], sig, ptype);
+		  if (prts[0]->delay_paths() > 0 || (gn_interconnect_flag == true && ptype == NetNet::POUTPUT)) {
+			  // FIXME improve this for multiple module instances
+			NetScope* inner_scope = scope->instance_arrays[get_name()][0];
+
+			isolate_and_connect(des, inner_scope, this, prts[0], sig, ptype, gn_interconnect_flag ? idx : -1);
 		  } else {
 			connect(prts[0]->pin(0), sig->pin(0));
 		  }
@@ -3496,14 +3503,14 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 					    parm.parm);
       }
 
-	// Special case: Specify blocks are turned off, and this is an
-	// $sdf_annotate system task. There will be nothing for $sdf
-	// to annotate, and the user is intending to turn the behavior
+	// Special case: Specify blocks and interconnects are turned off,
+	// and this is an $sdf_annotate system task. There will be nothing for
+	// $sdf to annotate, and the user is intending to turn the behavior
 	// off anyhow, so replace the system task invocation with a no-op.
-      if (gn_specify_blocks_flag == false && name == "$sdf_annotate") {
+      if (gn_specify_blocks_flag == false && gn_interconnect_flag == false && name == "$sdf_annotate") {
 
 	    cerr << get_fileline() << ": warning: Omitting $sdf_annotate() "
-	         << "since specify blocks are being omitted." << endl;
+	         << "since specify blocks and interconnects are being omitted." << endl;
 	    NetBlock*noop = new NetBlock(NetBlock::SEQU, scope);
 	    noop->set_line(*this);
 	    return noop;
