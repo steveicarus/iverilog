@@ -34,6 +34,7 @@ static void output_init(void);
 #define YY_USER_INIT output_init()
 
 static void  handle_line_directive(void);
+static void  handle_pragma_directive(void);
 
 static void  def_start(void);
 static void  def_add_arg(void);
@@ -225,7 +226,12 @@ keywords (line|include|define|undef|ifdef|ifndef|else|elsif|endif)
  /* Recognize and handle the `line directive. Also pass it through to
   * the output so the main compiler is aware of the change.
   */
-^[ \t]*"`line"[ \t]+.+ { handle_line_directive(); ECHO; }
+^[ \t]*"`line".* { handle_line_directive(); ECHO; }
+
+ /* Recognize and handle the `pragma directive and pass it through to
+  * the main compiler.
+  */
+^[ \t]*"`pragma".* { handle_pragma_directive(); ECHO; }
 
  /* Detect single line comments, passing them directly to the output.
   */
@@ -824,6 +830,54 @@ static void handle_line_directive(void)
     strncpy(istack->path, fn_start, fn_end-fn_start);
     istack->path[fn_end-fn_start] = '\0';
     istack->lineno = lineno - 2;
+}
+
+/*
+ * Parse a `pragma directive to make sure it has a name.
+ */
+static void handle_pragma_directive(void)
+{
+    char *cpr;
+      /* Skip any leading space. */
+    char *cp = strchr(yytext, '`');
+      /* Skip the `pragma directive. */
+    assert(strncmp(cp, "`pragma", 7) == 0);
+    cp += 7;
+
+      /* Skip the space between the pragma directive and the name. */
+    cpr = cp;
+    cpr += strspn(cp, " \t");
+    if (cp == cpr) {
+        emit_pathline(istack);
+        fprintf(stderr, "error: Invalid `pragma directive (missing space "
+                        "between the directive and name).\n");
+        error_count += 1;
+        return;
+    }
+    cp = cpr;
+
+      /* Check that there is a pragma name. */
+    if (!(isalpha((int)*cp) || *cp == '_')) {
+        emit_pathline(istack);
+        fprintf(stderr, "error: Invalid `pragma directive (invalid or "
+                        "missing name).\n");
+        error_count += 1;
+        return;
+    }
+    ++cp;
+    while (isalnum((int)*cp) || *cp == '_' || *cp == '$') ++cp;
+
+      /* Verify that space, a comment or EOL is next. */
+    cpr = cp;
+    cpr += strspn(cp, " \t");
+    if (cp == cpr && strncmp(cp, "//", 2) != 0 &&
+        (size_t)(cp-yytext) != strlen(yytext)) {
+        emit_pathline(istack);
+        fprintf(stderr, "error: Invalid `pragma directive (invalid name or "
+                        "missing space between name and expression).\n");
+        error_count += 1;
+        return;
+    }
 }
 
  /* Defined macros are kept in this table for convenient lookup. As
