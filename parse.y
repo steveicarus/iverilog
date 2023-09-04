@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2023 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1577,7 +1577,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	pform_pop_scope();
 	current_function = 0;
 	if ($7 == 0) {
-	      pform_requires_sv(@4, "Empty parenthesis syntax");
+	      pform_requires_sv(@4, "Functions with no ports");
 	}
       }
     label_opt
