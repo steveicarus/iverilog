@@ -1640,6 +1640,9 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
 	    return nullptr;
       }
 
+	std::string port1_name(vpi_get_str(vpiName, ref1));
+	std::string port2_name(vpi_get_str(vpiName, ref2));
+
 	// If both ports are vpiOutput, we have to reassign the __vpiSignal from port1
 	// to port2 because otherwise the non-delayed version of the signal is dumped
 	// even tho the intermodpath is correctly inserted
@@ -1648,7 +1651,6 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
       if (port1->get_direction() == vpiOutput && port2->get_direction() == vpiOutput) {
 	    vpiHandle scope_port2 = vpi_handle(vpiScope, ref2);
 	    assert(scope_port2);
-	    std::string port2_name(vpi_get_str(vpiName, ref2));
 
 	      // Iterate over nets in the scope of port2
 	    vpiHandle net_i = vpi_iterate(vpiNet, scope_port2) ;
@@ -1771,7 +1773,7 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
 	    cur = cur.ptr()->port[cur.port()]; // Next net in linked list
       }
 
-      fprintf(stderr, "VPI error: Could not insert intermodpath!\n");
+      fprintf(stderr, "VPI error: Could not insert intermodpath! port1 = %s, port2 = %s\n", port1_name.c_str(), port2_name.c_str());
       return nullptr;
 }
 
