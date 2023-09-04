@@ -268,6 +268,7 @@ keywords (line|include|define|undef|ifdef|ifndef|else|elsif|endif)
 <PCOMENT>`[a-zA-Z][a-zA-Z0-9_$]* {
     if (macro_needs_args(yytext+1)) yy_push_state(MA_START); else do_expand(0);
 }
+<PCOMENT>`\"     { fputc('\"', yyout); }
 
  /* Strings do not contain preprocessor directives or macro expansions.
   */
