@@ -1451,7 +1451,7 @@ static void line_directive()
       cp += strspn(cp, " \t");
 
 	/* Find the starting " and skip it. */
-      char*fn_start = strchr(cp, '"');
+      char *fn_start = strchr(cp, '"');
       if (cp != fn_start) {
 	    VLerror(yylloc, "error: Invalid #line directive (file name start).");
 	    return;
@@ -1459,7 +1459,7 @@ static void line_directive()
       fn_start += 1;
 
 	/* Find the last ". */
-      char*fn_end = strrchr(fn_start, '"');
+      char *fn_end = strrchr(fn_start, '"');
       if (!fn_end) {
 	    VLerror(yylloc, "error: Invalid #line directive (file name end).");
 	    return;
@@ -1530,7 +1530,6 @@ static void line_directive2()
 	    VLerror(yylloc, "error: Line number for `line directive most be greater than zero.");
 	    return;
       }
-      lineno -= 1;
       cp = cpr;
 
 	/* Skip the space between the line number and the file name. */
@@ -1543,7 +1542,7 @@ static void line_directive2()
       cp = cpr;
 
 	/* Find the starting " and skip it. */
-      char*fn_start = strchr(cp, '"');
+      char *fn_start = strchr(cp, '"');
       if (cp != fn_start) {
 	    VLerror(yylloc, "error: Invalid `line directive (file name start).");
 	    return;
@@ -1590,7 +1589,7 @@ static void line_directive2()
       buf[fn_end-fn_start] = 0;
 
       yylloc.text = set_file_name(buf);
-      yylloc.first_line = lineno;
+      yylloc.first_line = lineno-1;
 }
 
 /*

@@ -728,21 +728,25 @@ keywords (line|include|define|undef|ifdef|ifndef|else|elsif|endif)
  */
 static void handle_line_directive(void)
 {
-    char *cp;
     char *cpr;
-    unsigned long lineno;
-    char*fn_start;
-    char*fn_end;
-
       /* Skip any leading space. */
-    cp = strchr(yytext, '`');
+    char *cp = strchr(yytext, '`');
       /* Skip the `line directive. */
     assert(strncmp(cp, "`line", 5) == 0);
     cp += 5;
 
-      /* strtoul skips leading space. */
-    lineno = strtoul(cp, &cpr, 10);
+      /* strtol skips leading space. */
+    long lineno = strtol(cp, &cpr, 10);
     if (cp == cpr || lineno == 0) {
+        emit_pathline(istack);
+        fprintf(stderr, "error: Invalid line number for `line directive.\n");
+        error_count += 1;
+        return;
+    }
+    if (lineno < 1) {
+        emit_pathline(istack);
+        fprintf(stderr, "error: Line number for `line directive most be greater than zero.\n");
+        error_count += 1;
         return;
     }
     cp = cpr;
@@ -750,20 +754,30 @@ static void handle_line_directive(void)
       /* Skip the space between the line number and the file name. */
     cpr += strspn(cp, " \t");
     if (cp == cpr) {
+        emit_pathline(istack);
+        fprintf(stderr, "error: Invalid `line directive (missing space "
+                        "after line number).\n");
+        error_count += 1;
         return;
     }
     cp = cpr;
 
       /* Find the starting " and skip it. */
-    fn_start = strchr(cp, '"');
+    char *fn_start = strchr(cp, '"');
     if (cp != fn_start) {
+        emit_pathline(istack);
+        fprintf(stderr, "error: Invalid `line directive (file name start).\n");
+        error_count += 1;
         return;
     }
     fn_start += 1;
 
       /* Find the last ". */
-    fn_end = strrchr(fn_start, '"');
+    char *fn_end = strrchr(fn_start, '"');
     if (!fn_end) {
+        emit_pathline(istack);
+        fprintf(stderr, "error: Invalid `line directive (file name end).\n");
+        error_count += 1;
         return;
     }
 
@@ -772,19 +786,31 @@ static void handle_line_directive(void)
     cpr = cp;
     cpr += strspn(cp, " \t");
     if (cp == cpr) {
+        emit_pathline(istack);
+        fprintf(stderr, "error: Invalid `line directive (missing space "
+                            "after file name).\n");
+        error_count += 1;
         return;
     }
     cp = cpr;
 
       /* Check that the level is correct, we do not need the level. */
     if (strspn(cp, "012") != 1) {
+        emit_pathline(istack);
+        fprintf(stderr, "error: Invalid level for `line directive\n");
+        error_count += 1;
         return;
     }
     cp += 1;
 
       /* Verify that only space is left. */
     cp += strspn(cp, " \t");
-    if ((size_t)(cp-yytext) != strlen(yytext)) {
+    if (strncmp(cp, "//", 2) != 0 &&
+        (size_t)(cp-yytext) != strlen(yytext)) {
+        emit_pathline(istack);
+        fprintf(stderr, "error: Invalid `line directive (extra garbage "
+                        "after level).\n");
+        error_count += 1;
         return;
     }
 
