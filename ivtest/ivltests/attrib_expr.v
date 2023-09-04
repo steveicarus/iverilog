@@ -74,9 +74,9 @@ endfunction
 
 (* attr = fn(10) *)     reg attr46;
 
-// Macro escaped
-`define A_MACRO(arg) (* attr = `"arg`" *)
-         `A_MACRO(test) reg attr47;
+// Macro escape only in a macro declaration
+`define MACRO(arg) (* attr = `"`\`"arg`\`"`" *)
+`MACRO(test) reg attr47;
 
 initial begin
   $display("PASSED");
