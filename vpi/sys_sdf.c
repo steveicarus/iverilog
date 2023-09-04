@@ -201,7 +201,7 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
       vpiHandle port2_handle = get_port_handle(port2.name, sdf_lineno);
 
 	// Check whether we have a single bit of a port for port1
-      if (port1.index >= 0) {
+      if (port1.has_index) {
 	    vpiHandle iter, vpi_port_bit;
 	    iter = vpi_iterate(vpiBit, port1_handle);
 
@@ -222,7 +222,7 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
       }
 
 	// Check whether we have a single bit of a port for port2
-      if (port2.index >= 0) {
+      if (port2.has_index) {
 	    vpiHandle iter, vpi_port_bit;
 	    iter = vpi_iterate(vpiBit, port2_handle);
 
