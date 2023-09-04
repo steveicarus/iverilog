@@ -1644,8 +1644,9 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
 	    return nullptr;
       }
 
-	std::string port1_name(vpi_get_str(vpiName, ref1));
-	std::string port2_name(vpi_get_str(vpiName, ref2));
+	// Get the names of both ports
+      std::string port1_name(vpi_get_str(vpiName, ref1));
+      std::string port2_name(vpi_get_str(vpiName, ref2));
 
 	// If both ports are vpiOutput, we have to reassign the __vpiSignal from port1
 	// to port2 because otherwise the non-delayed version of the signal is dumped

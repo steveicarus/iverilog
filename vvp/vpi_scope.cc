@@ -799,7 +799,7 @@ vpiHandle vpiPortBitInfo::vpi_handle(int code)
 int vpiPortBitInfo::vpi_get(int code)
 {
       switch( code ) {
-        case vpiBit : // TODO is this correct?
+        case vpiBit :
           return bit_;
         default :
           break;
