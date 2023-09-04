@@ -27,9 +27,9 @@ module test;
     */
 
   endspecify
-  
+
   initial begin
-  
+
       if (del_sig1 == 1'b0 && del_sig2 == 1'b1 && del_sig3 == 1'b0 && del_sig4 == 1'b1)
         $display("PASSED");
       else

@@ -49,7 +49,7 @@ module my_design (
         .b (c),
         .out (w2)
     );
-    
+
     my_xor my_xor1 (
         .a (w1),
         .b (b),
@@ -60,24 +60,24 @@ module my_design (
         .in (w2),
         .out (w4)
     );
-    
+
     my_xor my_xor2 (
         .a (w3),
         .b (w4),
         .out (w5)
     );
-    
+
     buffer buffer2 (
         .in (c),
         .out (w6)
     );
-    
+
     my_xor my_xor3 (
         .a (w5),
         .b (w6),
         .out (w7)
     );
-    
+
     buffer buffer3 (
         .in (w7),
         .out (d)
@@ -91,10 +91,10 @@ module top;
         $sdf_annotate("ivltests/sdf_interconnect3.sdf", my_design_inst);
         $monitor("time=%0t a=%h b=%h c=%h d=%h", $realtime, a, b, c, d);
     end
-  
+
     reg a, b, c;
     wire d;
-    
+
     initial begin
         #10;
         a <= 1'b0;
@@ -131,7 +131,7 @@ module top;
         #10;
         $finish;
     end
-  
+
     my_design my_design_inst (
         .a (a),
         .b (b),

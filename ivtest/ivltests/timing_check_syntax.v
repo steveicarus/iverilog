@@ -5,7 +5,7 @@ module test;
   initial begin
       $display("PASSED");
   end
-  
+
   wire sig1, sig2, del_sig1, del_sig2, notifier, cond1, cond2;
 
   specify

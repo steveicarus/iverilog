@@ -37,7 +37,7 @@ module my_design (
         .in (a),
         .out (w3)
     );
-    
+
     assign b = w1 & w2 & w3;
 
 endmodule
@@ -48,10 +48,10 @@ module top;
         $sdf_annotate("ivltests/sdf_interconnect2.sdf", my_design_inst);
         $monitor("time=%0t a=%h b=%h", $realtime, a, b);
     end
-  
+
     reg a;
     wire b;
-    
+
     initial begin
         #5;
         a <= 1'b0;
@@ -60,7 +60,7 @@ module top;
         #10;
         $finish;
     end
-  
+
     my_design my_design_inst (
         .a (a),
         .b (b)

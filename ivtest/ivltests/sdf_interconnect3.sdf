@@ -13,7 +13,7 @@
 
   (CELL
     (CELLTYPE "my_design")
-    (INSTANCE)   
+    (INSTANCE)
     (DELAY
       (ABSOLUTE
         (INTERCONNECT a             buffer0.in  (0.000:0.010:0.000) (0.000:0.010:0.000))
@@ -42,7 +42,7 @@
       )
     )
   )
-  
+
   (CELL
     (CELLTYPE "buffer")
     (INSTANCE buffer1)
@@ -52,7 +52,7 @@
       )
     )
   )
-  
+
   (CELL
     (CELLTYPE "buffer")
     (INSTANCE buffer2)
@@ -62,7 +62,7 @@
       )
     )
   )
-  
+
   (CELL
     (CELLTYPE "buffer")
     (INSTANCE buffer3)
@@ -72,7 +72,7 @@
       )
     )
   )
-  
+
   (CELL
     (CELLTYPE "my_xor")
     (INSTANCE my_xor0)
@@ -83,7 +83,7 @@
       )
     )
   )
-  
+
   (CELL
     (CELLTYPE "my_xor")
     (INSTANCE my_xor1)
@@ -94,7 +94,7 @@
       )
     )
   )
-  
+
   (CELL
     (CELLTYPE "my_xor")
     (INSTANCE my_xor2)
@@ -105,7 +105,7 @@
       )
     )
   )
-  
+
   (CELL
     (CELLTYPE "my_xor")
     (INSTANCE my_xor3)
