@@ -13,7 +13,7 @@
 
   (CELL
     (CELLTYPE "my_design")
-    (INSTANCE)   
+    (INSTANCE)
     (DELAY
       (ABSOLUTE
         (INTERCONNECT a[0] buffer0.in  (0.000:0.020:0.000) (0.000:0.020:0.000))
@@ -35,7 +35,7 @@
       )
     )
   )
-  
+
   (CELL
     (CELLTYPE "buffer")
     (INSTANCE buffer1)
@@ -45,7 +45,7 @@
       )
     )
   )
-  
+
   (CELL
     (CELLTYPE "buffer")
     (INSTANCE buffer2)
