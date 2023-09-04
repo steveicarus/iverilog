@@ -81,6 +81,7 @@ automatic_task2		CE			ivltests
 automatic_task3		CE			ivltests
 br942			CE			ivltests
 br_gh531		CE			ivltests
+br_gh979		CE			ivltests
 def_nettype		CE			ivltests
 func_empty_arg3		CE,-g2005-sv		ivltests
 func_init_var1		CE,-pallowsigned=1	ivltests
