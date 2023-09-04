@@ -56,6 +56,7 @@ sv_ap_uarray5			vvp_tests/sv_ap_uarray5.json
 sv_ap_uarray6			vvp_tests/sv_ap_uarray6.json
 sv_ap_uarray_fail1		vvp_tests/sv_ap_uarray_fail1.json
 sv_ap_uarray_fail2		vvp_tests/sv_ap_uarray_fail2.json
+sv_argumentless_func		vvp_tests/sv_argumentless_func.json
 sv_array_assign_fail1	vvp_tests/sv_array_assign_fail1.json
 sv_array_assign_fail2	vvp_tests/sv_array_assign_fail2.json
 sv_array_cassign6		vvp_tests/sv_array_cassign6.json

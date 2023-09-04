@@ -2080,11 +2080,14 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
             fprintf(vvp_out, "L_%p%s .ufunc%s TD_%s, %u", net, dly, type_string,
                     vvp_mangle_id(ivl_scope_name(def)),
                     ivl_lpm_width(net));
+	fprintf(vvp_out, ", ");
 
 	/* Print all the net signals that connect to the input of the
 	   function. */
       for (idx = 0 ;  idx < ninp ;  idx += 1) {
-	    fprintf(vvp_out, ", %s", input_strings[idx]);
+		fprintf(vvp_out, "%s", input_strings[idx]);
+		if (idx != ninp-1)
+			fprintf(vvp_out, ", ");
       }
       free(input_strings);
 
@@ -2104,7 +2107,8 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 	    fprintf(vvp_out, "v%p_0", psig);
       }
 
-      fprintf(vvp_out, ")");
+	if (ninp > 0)
+		fprintf(vvp_out, ")");
 #if 0
 	/* Now print the reference to the signal from which the
 	   result is collected. */
