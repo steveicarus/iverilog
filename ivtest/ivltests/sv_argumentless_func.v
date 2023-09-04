@@ -10,10 +10,10 @@ parameter test_parameter = test_func();
 logic [7:0] test_alwayscomb;
 always_comb test_alwayscomb = test_func();
 
-// logic [7:0] test_assign;
-// assign test_assign = test_func();
+logic [7:0] test_assign;
+assign test_assign = test_func();
 
-// wire [7:0] test_wire = test_func();
+wire [7:0] test_wire = test_func();
 
 logic [7:0] test_alwaysff;
 logic clk;
@@ -37,15 +37,15 @@ initial begin
         $finish;
     end
 
-    // if (test_assign !== test_func()) begin
-    //     $display("FAILED -- test_assign=%h, expect %h", test_assign, test_func());
-    //     $finish;
-    // end
+    if (test_assign !== test_func()) begin
+        $display("FAILED -- test_assign=%h, expect %h", test_assign, test_func());
+        $finish;
+    end
 
-    // if (test_wire !== test_func()) begin
-    //     $display("FAILED -- test_wire=%h, expect %h", test_wire, test_func());
-    //     $finish;
-    // end
+    if (test_wire !== test_func()) begin
+        $display("FAILED -- test_wire=%h, expect %h", test_wire, test_func());
+        $finish;
+    end
 
     clk = 0;
     #1;
@@ -57,7 +57,7 @@ initial begin
     end
 
     $display("PASSED");
-    $finish;
+    $finish(0);
 end
 
 endmodule

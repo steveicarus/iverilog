@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2023 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2072,22 +2072,20 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
       for (idx = 0 ;  idx < ninp ;  idx += 1)
 	    input_strings[idx] = draw_net_input(ivl_lpm_data(net, idx));
 
-      if (ivl_lpm_trigger(net))
-            fprintf(vvp_out, "L_%p%s .ufunc/e TD_%s, %u, E_%p", net, dly,
-                    vvp_mangle_id(ivl_scope_name(def)),
-                    ivl_lpm_width(net), ivl_lpm_trigger(net));
-      else
-            fprintf(vvp_out, "L_%p%s .ufunc%s TD_%s, %u", net, dly, type_string,
-                    vvp_mangle_id(ivl_scope_name(def)),
-                    ivl_lpm_width(net));
-	fprintf(vvp_out, ", ");
+      if (ivl_lpm_trigger(net)) {
+	    assert(ninp > 0);
+	    fprintf(vvp_out, "L_%p%s .ufunc/e TD_%s, %u, E_%p", net, dly,
+	            vvp_mangle_id(ivl_scope_name(def)),
+	            ivl_lpm_width(net), ivl_lpm_trigger(net));
+      } else
+	    fprintf(vvp_out, "L_%p%s .ufunc%s TD_%s, %u", net, dly, type_string,
+	            vvp_mangle_id(ivl_scope_name(def)),
+	            ivl_lpm_width(net));
 
 	/* Print all the net signals that connect to the input of the
 	   function. */
       for (idx = 0 ;  idx < ninp ;  idx += 1) {
-		fprintf(vvp_out, "%s", input_strings[idx]);
-		if (idx != ninp-1)
-			fprintf(vvp_out, ", ");
+	    fprintf(vvp_out, ", %s", input_strings[idx]);
       }
       free(input_strings);
 
@@ -2107,8 +2105,10 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 	    fprintf(vvp_out, "v%p_0", psig);
       }
 
-	if (ninp > 0)
-		fprintf(vvp_out, ")");
+      if (ninp == 0)
+	    fprintf(vvp_out, ",");
+      else
+	    fprintf(vvp_out, ")");
 #if 0
 	/* Now print the reference to the signal from which the
 	   result is collected. */
