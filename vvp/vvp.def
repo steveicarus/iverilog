@@ -32,6 +32,7 @@ vpi_put_userdata
 vpi_put_value
 vpi_register_cb
 vpi_register_systf
+vpi_release_handle
 vpi_remove_cb
 vpi_scan
 vpi_sim_control

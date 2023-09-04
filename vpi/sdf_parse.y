@@ -86,7 +86,7 @@ source_file
   : '(' K_DELAYFILE sdf_header_list cell_list ')'
   | '(' K_DELAYFILE error ')'
       { vpi_printf("SDF ERROR: %s:%d: Invalid DELAYFILE format\n",
-		   sdf_parse_path, @2.first_line);
+	           sdf_parse_path, @2.first_line);
       }
   ;
 
@@ -111,48 +111,60 @@ sdf_header_item
 
 sdfversion
   : '(' K_SDFVERSION QSTRING ')'
-      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Version: %s\n",
-					sdf_parse_path, @2.first_line, $3);
-        free($3);
+      { if (sdf_flag_inform) {
+	      vpi_printf("SDF INFO: %s:%d: Version: %s\n",
+	                 sdf_parse_path, @2.first_line, $3);
+	}
+	free($3);
       }
   ;
 
 design_name
   : '(' K_DESIGN QSTRING ')'
-      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Design: %s\n",
-					sdf_parse_path, @2.first_line, $3);
-        free($3);
+      { if (sdf_flag_inform) {
+	      vpi_printf("SDF INFO: %s:%d: Design: %s\n",
+	                 sdf_parse_path, @2.first_line, $3);
+	}
+	free($3);
       }
   ;
 
 date
   : '(' K_DATE QSTRING ')'
-      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Date: %s\n",
-					sdf_parse_path, @2.first_line, $3);
-        free($3);
+      { if (sdf_flag_inform) {
+	      vpi_printf("SDF INFO: %s:%d: Date: %s\n",
+	                 sdf_parse_path, @2.first_line, $3);
+	}
+	free($3);
       }
   ;
 
 vendor
   : '(' K_VENDOR QSTRING ')'
-      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Vendor: %s\n",
-					sdf_parse_path, @2.first_line, $3);
-        free($3);
+      { if (sdf_flag_inform) {
+	      vpi_printf("SDF INFO: %s:%d: Vendor: %s\n",
+	                 sdf_parse_path, @2.first_line, $3);
+	}
+	free($3);
       }
   ;
 
 program_name
   : '(' K_PROGRAM QSTRING ')'
-      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Program: %s\n",
-					sdf_parse_path, @2.first_line, $3);
-        free($3);
+      { if (sdf_flag_inform) {
+	      vpi_printf("SDF INFO: %s:%d: Program: %s\n",
+	                 sdf_parse_path, @2.first_line, $3);
+	}
+	free($3);
       }
   ;
 
 program_version
   : '(' K_VERSION QSTRING ')'
-      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Program Version: %s\n",
-					sdf_parse_path, @2.first_line, $3);
+      { if (sdf_flag_inform) {
+	      vpi_printf("SDF INFO: %s:%d: Program Version: %s\n",
+	                 sdf_parse_path, @2.first_line, $3);
+	}
 	free($3);
       }
   ;
@@ -160,42 +172,42 @@ program_version
 hierarchy_divider
   : '(' K_DIVIDER '.' ')'
       { sdf_use_hchar = '.';
-	    if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n",
-	                                    sdf_parse_path, @1.first_line, sdf_use_hchar);
+	if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n",
+	                                sdf_parse_path, @1.first_line, sdf_use_hchar);
       }
   | '(' K_DIVIDER '/' ')'
       { sdf_use_hchar = '/';
-	    if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n",
-	                                    sdf_parse_path, @1.first_line, sdf_use_hchar);
+	if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n",
+	                                sdf_parse_path, @1.first_line, sdf_use_hchar);
       }
   | '(' K_DIVIDER HCHAR ')'
       { /* sdf_use_hchar no-change */
-	    if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n",
-	                                    sdf_parse_path, @1.first_line, sdf_use_hchar);
+	if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Divider: \"%c\"\n",
+	                                sdf_parse_path, @1.first_line, sdf_use_hchar);
       }
   ;
 
 voltage
   : '(' K_VOLTAGE rtriple ')'
       { /* The value must be defined. */
-	    if (! $3.defined) {
-		  vpi_printf("SDF ERROR: %s:%d: Chosen value not defined.\n",
-		             sdf_parse_path, @1.first_line);
-	    } else if (sdf_flag_inform) {
-		  vpi_printf("SDF INFO: %s:%d: Voltage: %f\n",
-		             sdf_parse_path, @2.first_line, $3.value);
-	    }
+	if (! $3.defined) {
+	      vpi_printf("SDF ERROR: %s:%d: Chosen value not defined.\n",
+	                 sdf_parse_path, @1.first_line);
+	} else if (sdf_flag_inform) {
+	      vpi_printf("SDF INFO: %s:%d: Voltage: %f\n",
+	                 sdf_parse_path, @2.first_line, $3.value);
+	}
       }
   | '(' K_VOLTAGE signed_real_number ')'
       { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Voltage: %f\n",
-					sdf_parse_path, @2.first_line, $3);
+	                                sdf_parse_path, @2.first_line, $3);
       }
   ;
 
 process
   : '(' K_PROCESS QSTRING ')'
       { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Process: %s\n",
-					sdf_parse_path, @2.first_line, $3);
+	                                sdf_parse_path, @2.first_line, $3);
 	free($3);
       }
   ;
@@ -203,26 +215,31 @@ process
 temperature
   : '(' K_TEMPERATURE rtriple ')'
       { /* The value must be defined. */
-	    if (! $3.defined) vpi_printf("SDF ERROR: %s:%d: Chosen value not defined.\n",
-	                                 sdf_parse_path, @1.first_line);
-	    else if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Temperature: %f\n",
-	                                         sdf_parse_path, @2.first_line, $3.value);
+	if (! $3.defined) {
+	      vpi_printf("SDF ERROR: %s:%d: Chosen value not defined.\n",
+	                 sdf_parse_path, @1.first_line);
+	} else if (sdf_flag_inform) {
+	      vpi_printf("SDF INFO: %s:%d: Temperature: %f\n",
+	                 sdf_parse_path, @2.first_line, $3.value);
+	}
       }
   | '(' K_TEMPERATURE signed_real_number ')'
-      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Temperature: %f\n",
-					sdf_parse_path, @2.first_line, $3);
+      { if (sdf_flag_inform) {
+	      vpi_printf("SDF INFO: %s:%d: Temperature: %f\n",
+	                 sdf_parse_path, @2.first_line, $3);
+	}
       }
   ;
 
 time_scale
   : '(' K_TIMESCALE REAL_NUMBER IDENTIFIER ')'
       { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Timescale: %f%s\n",
-					sdf_parse_path, @2.first_line, $3, $4);
+	                                sdf_parse_path, @2.first_line, $3, $4);
 	free($4);
       }
   | '(' K_TIMESCALE INTEGER IDENTIFIER ')'
       { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Timescale: %lu%s\n",
-					sdf_parse_path, @2.first_line, $3, $4);
+	                                sdf_parse_path, @2.first_line, $3, $4);
 	free($4);
       }
   ;
@@ -272,13 +289,13 @@ timing_spec
   : '(' K_DELAY deltype_list ')'
   | '(' K_DELAY error ')'
       { vpi_printf("SDF ERROR: %s:%d: Syntax error in CELL DELAY SPEC\n",
-		   sdf_parse_path, @2.first_line); }
+	           sdf_parse_path, @2.first_line); }
   | '(' K_TIMINGCHECK tchk_def_list ')'
       { vpi_printf("SDF WARNING: %s:%d: TIMINGCHECK not supported.\n",
-		   sdf_parse_path, @2.first_line); }
+	           sdf_parse_path, @2.first_line); }
   | '(' K_TIMINGCHECK error ')'
       { vpi_printf("SDF ERROR: %s:%d: Syntax error in TIMINGCHECK SPEC\n",
-		   sdf_parse_path, @2.first_line); }
+	           sdf_parse_path, @2.first_line); }
   ;
 
 deltype_list
@@ -293,7 +310,7 @@ deltype
   | '(' K_INCREMENT del_def_list ')'
   | '(' error ')'
     { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed delay type\n",
-		 sdf_parse_path, @1.first_line); }
+	         sdf_parse_path, @1.first_line); }
   ;
 
 del_def_list
@@ -309,54 +326,51 @@ del_def
       }
   | '(' K_IOPATH error ')'
       { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed IOPATH\n",
-		   sdf_parse_path, @2.first_line); }
+	           sdf_parse_path, @2.first_line); }
   | '(' K_COND conditional_port_expr
     '(' K_IOPATH port_spec port_instance delval_list ')' ')'
       { if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
-					 "COND not supported.\n",
-					 sdf_parse_path, @2.first_line);
+	                                 "COND not supported.\n",
+	                                 sdf_parse_path, @2.first_line);
 	free($6.string_val);
 	free($7);
       }
   | '(' K_COND QSTRING conditional_port_expr
     '(' K_IOPATH port_spec port_instance delval_list ')' ')'
       { if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
-					 "COND not supported.\n",
-					 sdf_parse_path, @2.first_line);
+	                                 "COND not supported.\n",
+	                                 sdf_parse_path, @2.first_line);
 	free($3);
 	free($7.string_val);
 	free($8);
       }
   | '(' K_COND error ')'
       { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed COND\n",
-		   sdf_parse_path, @2.first_line); }
+	           sdf_parse_path, @2.first_line); }
   | '(' K_CONDELSE '(' K_IOPATH port_spec port_instance delval_list ')' ')'
       { if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
-					 "CONDELSE not supported.\n",
-					 sdf_parse_path, @2.first_line);
+	                                 "CONDELSE not supported.\n",
+	                                 sdf_parse_path, @2.first_line);
 	free($5.string_val);
 	free($6);
       }
   | '(' K_CONDELSE error ')'
       { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed CONDELSE\n",
-		   sdf_parse_path, @2.first_line); }
+	           sdf_parse_path, @2.first_line); }
   /* | '(' K_INTERCONNECT port_instance port_instance delval_list ')' */
   | '(' K_INTERCONNECT port_interconnect port_interconnect delval_list ')'
-      {
-	    if (sdf_flag_inform) {
-		  vpi_printf("SDF INFO: %s:%d: INTERCONNECT with "
-		             "port1 = %s index = %d, port2 = %s index = %d\n",
-		             sdf_parse_path, @2.first_line, $3.name, $3.index, $4.name, $4.index);
-	    }
-
-	    sdf_interconnect_delays($3, $4, &$5, @2.first_line);
-
-	    free($3.name);
-	    free($4.name);
+      { if (sdf_flag_inform) {
+	      vpi_printf("SDF INFO: %s:%d: INTERCONNECT with "
+	                 "port1 = %s index = %d, port2 = %s index = %d\n",
+	                 sdf_parse_path, @2.first_line, $3.name, $3.index, $4.name, $4.index);
+	}
+	sdf_interconnect_delays($3, $4, &$5, @2.first_line);
+	free($3.name);
+	free($4.name);
       }
   | '(' K_INTERCONNECT error ')'
       { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed INTERCONNECT\n",
-		   sdf_parse_path, @2.first_line);
+	           sdf_parse_path, @2.first_line);
       }
   ;
 
@@ -471,14 +485,12 @@ port
 
 port_interconnect
   : hierarchical_identifier
-      {
-	    struct interconnect_port_s tmp = {$1, false, 0};
-	    $$ = tmp;
+      { struct interconnect_port_s tmp = {$1, false, 0};
+	$$ = tmp;
       }
   | hierarchical_identifier '[' INTEGER ']'
-      {
-	    struct interconnect_port_s tmp = {$1, true, $3};
-	    $$ = tmp;
+      { struct interconnect_port_s tmp = {$1, true, $3};
+	$$ = tmp;
       }
   ;
 

@@ -98,3 +98,4 @@ timing_check_delayed_signals	vvp_tests/timing_check_delayed_signals.json
 sdf_interconnect1		vvp_tests/sdf_interconnect1.json
 sdf_interconnect2		vvp_tests/sdf_interconnect2.json
 sdf_interconnect3		vvp_tests/sdf_interconnect3.json
+sdf_interconnect4		vvp_tests/sdf_interconnect4.json

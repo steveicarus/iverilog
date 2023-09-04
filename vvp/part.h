@@ -34,6 +34,9 @@ class vvp_fun_part  : public vvp_net_fun_t {
       vvp_fun_part(unsigned base, unsigned wid);
       ~vvp_fun_part();
 
+      unsigned get_base() const { return base_; }
+      unsigned get_wid() const { return wid_; }
+
     protected:
       unsigned base_;
       unsigned wid_;

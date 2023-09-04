@@ -50,6 +50,7 @@ void vpip_make_root_iterator(__vpiHandle**&table, unsigned&ntable)
 
 #ifdef CHECK_WITH_VALGRIND
 void port_delete(__vpiHandle*handle);
+void port_bit_delete(__vpiHandle*handle);
 
 /* Class definitions need to be cleaned up at the end. */
 static class_type **class_list = 0;
@@ -109,6 +110,9 @@ static void delete_sub_scopes(__vpiScope *scope)
 		  break;
 		case vpiPort:
 		  port_delete(item);
+		  break;
+		case vpiPortBit:
+		  port_bit_delete(item);
 		  break;
 		case vpiStringVar:
 		  string_delete(item);
@@ -735,6 +739,74 @@ vpiHandle vpiPortInfo::vpi_handle(int code)
       return 0;
 }
 
+static vpiHandle portinfo_iterate(int code, vpiHandle ref)
+{
+      vpiPortInfo*rfp = dynamic_cast<vpiPortInfo*>(ref);
+      assert(rfp);
+      unsigned width = rfp->get_width();
+
+      switch (code) {
+	  case vpiBit: {
+	    vpiHandle*args = (vpiHandle*)calloc(width, sizeof(vpiHandle*));
+
+	    for (unsigned i = 0; i<rfp->port_bits_.size(); i++) {
+		  args[i] = rfp->port_bits_[i];
+	    }
+
+	    return vpip_make_iterator(width, args, true);
+	  }
+      }
+      return 0;
+}
+
+vpiHandle vpiPortInfo::vpi_iterate(int code)
+{
+      return portinfo_iterate(code, this);
+}
+
+
+vpiPortBitInfo::vpiPortBitInfo(vpiPortInfo *parent,
+                               unsigned bit) :
+      parent_(parent),
+      bit_(bit)
+{
+}
+
+vpiPortBitInfo::~vpiPortBitInfo()
+{
+}
+
+#ifdef CHECK_WITH_VALGRIND
+void port_bit_delete(__vpiHandle *handle)
+{
+      delete dynamic_cast<vpiPortBitInfo *>(handle);
+}
+#endif
+
+vpiHandle vpiPortBitInfo::vpi_handle(int code)
+{
+
+      switch (code) {
+          case vpiParent:
+            return parent_;
+          default :
+            break;
+      }
+
+      return 0;
+}
+
+int vpiPortBitInfo::vpi_get(int code)
+{
+      switch( code ) {
+        case vpiBit :
+          return bit_;
+        default :
+          break;
+      }
+
+      return 0;
+}
 
 /* Port info is meta-data to allow vpi queries of the port signature of modules for
  * code-generators etc.  There are no actual nets corresponding to instances of module ports
@@ -742,7 +814,14 @@ vpiHandle vpiPortInfo::vpi_handle(int code)
  */
 void compile_port_info( unsigned index, int vpi_direction, unsigned width, const char *name, char* buffer )
 {
-      vpiHandle obj = new vpiPortInfo( vpip_peek_current_scope(),
-                                       index, vpi_direction, width, name, buffer );
+      vpiPortInfo* obj = new vpiPortInfo( vpip_peek_current_scope(),
+                                          index, vpi_direction, width, name, buffer );
       vpip_attach_to_current_scope(obj);
+
+	// Create vpiPortBit objects
+      for (unsigned i=0; i<width; i++) {
+	    vpiPortBitInfo* obj_bit = new vpiPortBitInfo(obj, i);
+	    obj->add_port_bit(obj_bit);
+	    vpip_attach_to_current_scope(obj_bit);
+      }
 }

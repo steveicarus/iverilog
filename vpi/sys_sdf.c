@@ -200,6 +200,52 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
       vpiHandle port1_handle = get_port_handle(port1.name, sdf_lineno);
       vpiHandle port2_handle = get_port_handle(port2.name, sdf_lineno);
 
+	// Check whether we have a single bit of a port for port1
+      if (port1.has_index) {
+	    vpiHandle iter, vpi_port_bit;
+	    iter = vpi_iterate(vpiBit, port1_handle);
+
+	    if (!iter) {
+		  vpi_printf("SDF ERROR: %s:%d: Could not find vpiBit iterator for port1!\n", sdf_fname, sdf_lineno);
+		  return;
+	    }
+
+	    while ((vpi_port_bit = vpi_scan(iter))) {
+		  int bit = vpi_get(vpiBit, vpi_port_bit);
+
+		    // If we found the correct vpiPortBit, replace the port with it
+		  if (port1.index == bit) {
+			if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Substituting vpiPort with vpiPortBit for port1\n", sdf_fname, sdf_lineno);
+			port1_handle = vpi_port_bit;
+			vpi_release_handle(iter); // Free the iterator
+			break;
+		  }
+	    }
+      }
+
+	// Check whether we have a single bit of a port for port2
+      if (port2.has_index) {
+	    vpiHandle iter, vpi_port_bit;
+	    iter = vpi_iterate(vpiBit, port2_handle);
+
+	    if (!iter) {
+		  vpi_printf("SDF ERROR: %s:%d: Could not find vpiBit iterator for port2!\n", sdf_fname, sdf_lineno);
+		  return;
+	    }
+
+	    while ((vpi_port_bit = vpi_scan(iter))) {
+		  int bit = vpi_get(vpiBit, vpi_port_bit);
+
+		    // If we found the correct vpiPortBit, replace the port with it
+		  if (port2.index == bit) {
+			if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Substituting vpiPort with vpiPortBit for port2\n", sdf_fname, sdf_lineno);
+			port2_handle = vpi_port_bit;
+			vpi_release_handle(iter); // Free the iterator
+			break;
+		  }
+	    }
+      }
+
       if (port1_handle && port2_handle) {
 	      // Get interModPath for the two ports
 	    vpiHandle intermodpath = vpi_handle_multi(vpiInterModPath, port1_handle, port2_handle);
