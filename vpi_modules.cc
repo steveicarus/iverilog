@@ -96,6 +96,7 @@ PLI_INT32   vpi_vprintf(const char*, va_list) { return 0; }
 PLI_INT32   vpi_chk_error(p_vpi_error_info) { return 0; }
 PLI_INT32   vpi_compare_objects(vpiHandle, vpiHandle) { return 0; }
 PLI_INT32   vpi_free_object(vpiHandle) { return 0; }
+PLI_INT32   vpi_release_handle(vpiHandle) { return 0; }
 PLI_INT32   vpi_get_vlog_info(p_vpi_vlog_info info)
 {
     info->argc = 0;

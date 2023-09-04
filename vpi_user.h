@@ -567,6 +567,7 @@ extern vpiHandle vpi_put_value(vpiHandle obj, p_vpi_value value,
 			       p_vpi_time when, PLI_INT32 flags);
 
 extern PLI_INT32 vpi_free_object(vpiHandle ref);
+extern PLI_INT32 vpi_release_handle(vpiHandle ref);
 extern PLI_INT32 vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p);
 
 /*
@@ -724,6 +725,7 @@ typedef struct {
     PLI_INT32   (*chk_error)(p_vpi_error_info);
     PLI_INT32   (*compare_objects)(vpiHandle, vpiHandle);
     PLI_INT32   (*free_object)(vpiHandle);
+    PLI_INT32   (*release_handle)(vpiHandle);
     PLI_INT32   (*get_vlog_info)(p_vpi_vlog_info info) ;
     void        (*vcontrol)(PLI_INT32, va_list);
     PLI_INT32   (*fopen)(const char*, const char*);

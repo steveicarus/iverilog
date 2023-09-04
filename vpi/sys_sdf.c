@@ -207,6 +207,7 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 
 	    if (!iter) {
 		  vpi_printf("SDF ERROR: %s:%d: Could not find vpiBit iterator for port1!\n", sdf_fname, sdf_lineno);
+		  return;
 	    }
 
 	    while ((vpi_port_bit = vpi_scan(iter))) {
@@ -216,6 +217,7 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 		  if (port1.index == bit) {
 			if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Substituting vpiPort with vpiPortBit for port1\n", sdf_fname, sdf_lineno);
 			port1_handle = vpi_port_bit;
+			vpi_release_handle(iter); // Free the iterator
 			break;
 		  }
 	    }
@@ -228,6 +230,7 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 
 	    if (!iter) {
 		  vpi_printf("SDF ERROR: %s:%d: Could not find vpiBit iterator for port2!\n", sdf_fname, sdf_lineno);
+		  return;
 	    }
 
 	    while ((vpi_port_bit = vpi_scan(iter))) {
@@ -237,6 +240,7 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 		  if (port2.index == bit) {
 			if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Substituting vpiPort with vpiPortBit for port2\n", sdf_fname, sdf_lineno);
 			port2_handle = vpi_port_bit;
+			vpi_release_handle(iter); // Free the iterator
 			break;
 		  }
 	    }

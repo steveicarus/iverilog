@@ -291,6 +291,14 @@ PLI_INT32 vpi_free_object(vpiHandle ref)
       return rtn;
 }
 
+PLI_INT32 vpi_release_handle(vpiHandle ref)
+{
+	// Since SystemVerilog vpi_free_object() has been
+	// renamed vpi_release_handle(), and thus
+	// vpi_free_object() has been deprecated.
+      return vpi_free_object(ref);
+}
+
 static int vpip_get_global(int property)
 {
       switch (property) {
@@ -1575,7 +1583,7 @@ bool check_connected_to_concat8(vvp_net_t* current_net, vvp_net_t* net2)
 
 	      // net2 is connected
 	    if (cur.ptr() == net2) {
-		    return true;
+		  return true;
 	    }
 
 	      // Next net in linked list
@@ -2002,6 +2010,7 @@ vpip_routines_s vpi_routines = {
     .chk_error                  = vpi_chk_error,
     .compare_objects            = vpi_compare_objects,
     .free_object                = vpi_free_object,
+    .release_handle             = vpi_release_handle,
     .get_vlog_info              = vpi_get_vlog_info,
     .vcontrol                   = vpi_sim_vcontrol,
     .fopen                      = vpi_fopen,

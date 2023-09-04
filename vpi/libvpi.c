@@ -218,6 +218,11 @@ PLI_INT32 vpi_free_object(vpiHandle ref)
       assert(vpip_routines);
       return vpip_routines->free_object(ref);
 }
+PLI_INT32 vpi_release_handle(vpiHandle ref)
+{
+      assert(vpip_routines);
+      return vpip_routines->release_handle(ref);
+}
 PLI_INT32 vpi_get_vlog_info(p_vpi_vlog_info info)
 {
       assert(vpip_routines);
