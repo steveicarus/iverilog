@@ -518,32 +518,13 @@ void NetNet::initialize_dir_()
       }
 }
 
-static unsigned calculate_count(const list<netrange_t>&unpacked)
+static unsigned calculate_count(const netranges_t &unpacked)
 {
-      unsigned long sum = 1;
-      for (list<netrange_t>::const_iterator cur = unpacked.begin()
-		 ; cur != unpacked.end() ; ++cur) {
-	      // Special case: If there are any undefined dimensions,
-	      // then give up on trying to create pins for the net.
-	    if (! cur->defined())
-		  return 0;
-
-	    sum *= cur->width();
-      }
-
+      unsigned long sum = netrange_width(unpacked);
       if (sum >= UINT_MAX)
 	    return 0;
 
       return sum;
-}
-
-template <class T> static unsigned calculate_count(T*type)
-{
-      long wid = type->packed_width();
-      if (wid >= 0)
-	    return wid;
-      else
-	    return 1;
 }
 
 void NetNet::calculate_slice_widths_from_packed_dims_(void)
@@ -566,20 +547,18 @@ void NetNet::calculate_slice_widths_from_packed_dims_(void)
 
       ivl_assert(*this, ! slice_wids_.empty());
       slice_wids_[0] = netrange_width(slice_dims_);
-      vector<netrange_t>::const_iterator cur = slice_dims_.begin();
+      netranges_t::const_iterator cur = slice_dims_.begin();
       for (size_t idx = 1 ; idx < slice_wids_.size() ; idx += 1, ++cur) {
 	    slice_wids_[idx] = slice_wids_[idx-1] / cur->width();
       }
 }
 
-const list<netrange_t> NetNet::not_an_array;
-
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
-	       const list<netrange_t>&unpacked, ivl_type_t use_net_type)
+	       const netranges_t&unpacked, ivl_type_t use_net_type)
 : NetObj(s, n, calculate_count(unpacked)),
     type_(t), port_type_(NOT_A_PORT),
     local_flag_(false), net_type_(use_net_type),
-    discipline_(0), unpacked_dims_(unpacked.begin(), unpacked.end()),
+    discipline_(0), unpacked_dims_(unpacked),
     eref_count_(0), lref_count_(0)
 {
       calculate_slice_widths_from_packed_dims_();
@@ -786,7 +765,7 @@ long NetNet::sb_to_idx(const list<long>&indices, long sb) const
 {
       ivl_assert(*this, indices.size()+1 == packed_dims().size());
 
-      vector<netrange_t>::const_iterator pcur = packed_dims().end();
+      netranges_t::const_iterator pcur = packed_dims().end();
       -- pcur;
 
       long acc_off;
@@ -828,12 +807,7 @@ bool NetNet::sb_to_slice(const list<long>&indices, long sb, long&loff, unsigned 
 
 unsigned NetNet::unpacked_count() const
 {
-      unsigned c = 1;
-      for (size_t idx = 0 ; idx < unpacked_dims_.size() ; idx += 1) {
-	    c *= unpacked_dims_[idx].width();
-      }
-
-      return c;
+      return netrange_width(unpacked_dims_);
 }
 
 void NetNet::incr_eref()
@@ -2469,14 +2443,14 @@ NetNet* NetESignal::sig()
  */
 long NetESignal::lsi() const
 {
-      const vector<netrange_t>&packed = net_->packed_dims();
+      const netranges_t&packed = net_->packed_dims();
       ivl_assert(*this, packed.size() == 1);
       return packed.back().get_lsb();
 }
 
 long NetESignal::msi() const
 {
-      const vector<netrange_t>&packed = net_->packed_dims();
+      const netranges_t&packed = net_->packed_dims();
       ivl_assert(*this, packed.size() == 1);
       return packed.back().get_msb();
 }

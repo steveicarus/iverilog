@@ -759,7 +759,7 @@ struct ivl_signal_s {
 
 	/* These encode the declared packed dimensions for the
 	   signal, in case they are needed by the run-time */
-      std::vector<netrange_t> packed_dims;
+      netranges_t packed_dims;
 
       perm_string name_;
       ivl_scope_t scope_;

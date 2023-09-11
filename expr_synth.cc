@@ -846,7 +846,7 @@ NetNet *NetEArrayPattern::synthesize(Design *des, NetScope *scope, NetExpr *root
       if (dim > type_dims.size())
 	    return nullptr;
 
-      std::list<netrange_t> dims(type_dims.end() - dim, type_dims.end());
+      netranges_t dims(type_dims.end() - dim, type_dims.end());
 
       if (dims.front().width() != items_.size())
 	    return nullptr;

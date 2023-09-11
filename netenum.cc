@@ -56,7 +56,7 @@ long netenum_t::packed_width() const
 	return base_type_->packed_width();
 }
 
-vector<netrange_t> netenum_t::slice_dimensions() const
+netranges_t netenum_t::slice_dimensions() const
 {
       return base_type_->slice_dimensions();
 }

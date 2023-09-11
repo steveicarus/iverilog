@@ -409,18 +409,9 @@ static inline ostream&operator<<(ostream&out, const netrange_t&that)
       return out;
 }
 
-ostream&operator<<(ostream&out, const list<netrange_t>&rlist)
+ostream&operator<<(ostream&out, const netranges_t&rlist)
 {
-      for (list<netrange_t>::const_iterator cur = rlist.begin()
-		 ; cur != rlist.end() ; ++cur) {
-	    out << *cur;
-      }
-      return out;
-}
-
-ostream&operator<<(ostream&out, const vector<netrange_t>&rlist)
-{
-      for (vector<netrange_t>::const_iterator cur = rlist.begin()
+      for (netranges_t::const_iterator cur = rlist.begin()
 		 ; cur != rlist.end() ; ++cur) {
 	    out << *cur;
       }
@@ -1936,8 +1927,7 @@ void NetESignal::dump(ostream&o) const
 	    o << "+";
       o << name();
       if (word_) o << "[word=" << *word_ << "]";
-      vector<netrange_t>tmp = net_->net_type()->slice_dimensions();
-      o << tmp;
+      o << net_->net_type()->slice_dimensions();
 }
 
 void NetETernary::dump(ostream&o) const

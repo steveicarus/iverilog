@@ -168,7 +168,7 @@ ivl_type_t enum_type_t::elaborate_type_raw(Design *des, NetScope *scope) const
 
 ivl_type_t vector_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 {
-      vector<netrange_t> packed;
+      netranges_t packed;
       if (pdims.get())
 	    evaluate_ranges(des, scope, this, packed, *pdims);
 
@@ -198,7 +198,7 @@ ivl_type_t string_type_t::elaborate_type_raw(Design*, NetScope*) const
 
 ivl_type_t parray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 {
-      vector<netrange_t>packed;
+      netranges_t packed;
       if (dims.get())
 	    evaluate_ranges(des, scope, this, packed, *dims);
 
@@ -322,7 +322,7 @@ static ivl_type_t elaborate_queue_type(Design *des, NetScope *scope,
 // return the base type. Also check that we actually support the base type.
 static ivl_type_t elaborate_static_array_type(Design *des, const LineInfo &li,
 					      ivl_type_t base_type,
-					      std::vector<netrange_t> &dims)
+					      netranges_t &dims)
 {
       if (dims.empty())
 	    return base_type;
@@ -354,7 +354,7 @@ ivl_type_t elaborate_array_type(Design *des, NetScope *scope,
 			        const list<pform_range_t> &dims)
 {
       const long warn_dimension_size = 1 << 30;
-      std::vector<netrange_t> dimensions;
+      netranges_t dimensions;
       dimensions.reserve(dims.size());
 
       ivl_type_t type = base_type;

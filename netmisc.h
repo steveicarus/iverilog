@@ -220,9 +220,6 @@ extern bool calculate_part(const LineInfo*li, Design*des, NetScope*scope,
 extern NetExpr*normalize_variable_base(NetExpr *base, long msb, long lsb,
                                        unsigned long wid, bool is_up,
 				       long slice_off =0);
-extern NetExpr*normalize_variable_base(NetExpr *base,
-				       const std::list<netrange_t>&dims,
-				       unsigned long wid, bool is_up);
 
 /*
  * Calculate a canonicalizing expression for a bit select, when the
@@ -418,7 +415,7 @@ extern bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
                            long&index_l, long&index_r);
 
 extern bool evaluate_ranges(Design*des, NetScope*scope, const LineInfo*li,
-			    std::vector<netrange_t>&llist,
+			    netranges_t&llist,
 			    const std::list<pform_range_t>&rlist);
 /*
  * This procedure evaluates an expression and if the evaluation is

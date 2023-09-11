@@ -2197,12 +2197,12 @@ static bool get_array_info(const NetExpr*arg, long dim,
       if (dim > (pdims + updims)) return true;
 	/* Get the appropriate unpacked or packed dimension information. */
       if (dim > updims) {
-	    const vector<netrange_t>&dim_vals = sig->packed_dims();
+	    const netranges_t&dim_vals = sig->packed_dims();
 	    const netrange_t&range = dim_vals[dim-updims-1];
 	    left = range.get_msb();
 	    right = range.get_lsb();
       } else {
-	    const vector<netrange_t>&dim_vals = sig->unpacked_dims();
+	    const netranges_t&dim_vals = sig->unpacked_dims();
 	    const netrange_t&range = dim_vals[dim-1];
 	    left = range.get_msb();
 	    right = range.get_lsb();
