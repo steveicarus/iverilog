@@ -471,6 +471,7 @@ static simulator_callback*NextSimTime = 0;
 static simulator_callback*EndOfCompile = 0;
 static simulator_callback*StartOfSimulation = 0;
 static simulator_callback*EndOfSimulation = 0;
+static simulator_callback*TchkViolation = 0;
 
 #ifdef CHECK_WITH_VALGRIND
 /* This is really only needed if the simulator aborts before starting the
@@ -619,6 +620,49 @@ static simulator_callback* make_prepost(p_cb_data data)
       return obj;
 }
 
+/*
+ * Run all TchkViolation callbacks with cb_data.obj set to the tchk
+ */
+void vpiTchkViolation(vpiHandle tchk)
+{
+      simulator_callback *cur, *next, *prev;
+
+      assert(vpi_mode_flag == VPI_MODE_NONE);
+      vpi_mode_flag = VPI_MODE_RWSYNC;
+
+      cur = TchkViolation;
+      prev = nullptr;
+      while (cur) {
+	    next = dynamic_cast<simulator_callback*>(cur->next);
+	    cur->cb_data.obj = tchk;
+	    if (cur->cb_data.cb_rtn != 0) {
+		  (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    } else {
+		  if (!prev) {
+			TchkViolation = next;
+		  } else {
+			prev->next = next;
+		  }
+		  delete cur;
+	    }
+	    prev = cur;
+	    cur = next;
+      }
+
+      vpi_mode_flag = VPI_MODE_NONE;
+}
+
+static simulator_callback* make_tchk_violation(p_cb_data data)
+{
+      simulator_callback*obj = new simulator_callback(data);
+
+      // Insert at head of list
+      obj->next = TchkViolation;
+      TchkViolation = obj;
+
+      return obj;
+}
+
 vpiHandle vpi_register_cb(p_cb_data data)
 {
       struct __vpiCallback*obj = 0;
@@ -655,6 +699,10 @@ vpiHandle vpi_register_cb(p_cb_data data)
 	  case cbEndOfSimulation:
 	  case cbNextSimTime:
 	    obj = make_prepost(data);
+	    break;
+
+	  case cbTchkViolation:
+	    obj = make_tchk_violation(data);
 	    break;
 
 	  default:

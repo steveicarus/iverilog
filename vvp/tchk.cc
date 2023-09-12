@@ -27,6 +27,9 @@
 
 #include <iostream>
 
+// Trigger cbTchkViolation
+extern void vpiTchkViolation(vpiHandle tchk);
+
 vvp_fun_tchk_width::vvp_fun_tchk_width(edge_t start_edge, vvp_time64_t limit, vvp_time64_t threshold)
 : bit_(BIT4_X), start_edge_(start_edge), limit_(limit), threshold_(threshold), t1_(0), t2_(0), width_(0)
 {
@@ -136,4 +139,7 @@ void vvp_fun_tchk_width::violation()
 		  vvp_send_vec4(ptr, vvp_vector4_t(1, BIT4_0), nullptr);
 	    }
       }
+
+      // Trigger cbTchkViolation
+      vpiTchkViolation(vpi_tchk);
 }
