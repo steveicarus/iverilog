@@ -2,6 +2,35 @@
 
 Copyright 2000-2019 Stephen Williams
 
+<details>
+<summary><h2>Table of Contents</h2></summary>
+
+1. [What is ICARUS Verilog?](#what-is-icarus-verilog)
+2. [Building/Installing Icarus Verilog From Source](#buildinginstalling-icarus-verilog-from-source)
+	- [Compile Time Prerequisites](#compile-time-prerequisites)
+	- [Compilation](#compilation)
+	- [(Optional) Testing](#optional-testing)
+	- [Installation](#installation)
+3. [How Icarus Verilog Works](#how-icarus-verilog-works)
+	- [Preprocessing](#preprocessing)
+	- [Parse](#parse)
+	- [Elaboration](#elaboration)
+	- [Optimization](#optimization)
+	- [Code Generation](#code-generation)
+	- [Attributes](#attributes)
+4.	[Running iverilog](#running-iverilog)
+	- [Examples](#examples)
+5. [Unsupported Constructs](#unsupported-constructs)
+6. [Nonstandard Constructs or Behaviors](#nonstandard-constructs-or-behaviors)
+	- [Builtin system functions](#builtin-system-functions)
+	- [Preprocessing Library Modules](#preprocessing-library-modules)
+	- [Width in %t Time Formats](#width-in-t-time-formats)
+	- [vpiScope iterator on vpiScope objects](#vpiscope-iterator-on-vpiscope-objects)
+	- [Time 0 Race Resolution](#time-0-race-resolution)
+	- [Nets with Types](#nets-with-types)
+7. [Credits](#credits)
+
+</details>
 
 ## What is ICARUS Verilog?
 
@@ -29,6 +58,8 @@ not required, but helpful in case of problems.
 > If you are building on Windows, see the mingw.txt file.
 
 ### Compile Time Prerequisites
+
+You can use: `apt install -y autoconf gperf make gcc g++ bison flex`
 
 You need the following software to compile Icarus Verilog from source
 on a UNIX-like system:
@@ -77,6 +108,9 @@ on a UNIX-like system:
 
 ### Compilation
 
+<details>
+<summary><h4><a href="https://github.com/steveicarus/iverilog/releases">From Release</a></h4></summary>
+
 Unpack the tar-ball and cd into the `verilog-#########` directory
 (presumably, that is how you got to this README) and compile the source
 with the commands:
@@ -85,6 +119,10 @@ with the commands:
   ./configure
   make
 ```
+</details>
+
+<details>
+<summary><h4>From GitHub</h4></summary>
 
 If you are building from git, you have to run the command below before
 compiling the source. This will generate the "configure" file, which is
@@ -92,6 +130,8 @@ automatically done when building from tarball.
 
 ```
   sh autoconf.sh
+  ./configure
+  make
 ```
 
 Normally, this command automatically figures out everything it needs
@@ -126,6 +166,7 @@ configure script that modify its behaviour:
 				i686-w64-mingw32 for building 32-bit Windows executables
 			Both options require installing the required mingw-w64 packages.
 ```
+</details>
 
 ### (Optional) Testing
 
@@ -251,7 +292,7 @@ to generate actual output.
 The user selects the target code generator with the `-t` flag on the
 command line.
 
-### ATTRIBUTES
+### Attributes
 
 > NOTE: The $attribute syntax will soon be deprecated in favour of the Verilog-2001 attribute syntax, which is cleaner and standardized.
 
@@ -298,7 +339,7 @@ compiler (`ivl`) with the proper command line options to get the job
 done in a friendly way. See the `iverilog`(1) man page for usage details.
 
 
-## EXAMPLES
+### EXAMPLES
 
 Example: Compiling `"hello.vl"`
 
@@ -467,7 +508,7 @@ to specify a minimum width (i.e., `%5t`), then for that display
 Icarus Verilog will override the `$timeformat` minimum width and
 use the explicit minimum width.
 
-### vpiScope iterator on vpiScope objects.
+### vpiScope Iterator on vpiScope Objects
 
 In the VPI, the normal way to iterate over vpiScope objects
 contained within a vpiScope object, is the vpiInternalScope
@@ -477,7 +518,7 @@ the is contained in the current scope. This is useful in cases
 where one wants to iterate over all the objects in a scope
 without iterating over all the contained types explicitly.
 
-### time 0 race resolution.
+### Time 0 Race Resolution
 
 Combinational logic is routinely modelled using always
 blocks. However, this can lead to race conditions if the
@@ -504,7 +545,7 @@ are new keywords. Typical syntax is:
 flag to iverilog.
 
 
-## CREDITS
+## Credits
 
 Except where otherwise noted, Icarus Verilog, ivl and ivlpp are
 Copyright Stephen Williams. The proper notices are in the head of each
