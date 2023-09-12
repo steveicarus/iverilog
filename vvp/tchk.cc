@@ -73,7 +73,7 @@ void vvp_fun_tchk_width::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 void vvp_fun_tchk_width::violation()
 {
       vpiHandle scope = vpi_tchk->vpi_handle(vpiScope);
-      char* fullname = vpi_get_str(vpiFullName, scope);
+      std::string scope_fullname(vpi_get_str(vpiFullName, scope));
       std::string violation_message;
 
       assert(vpi_tchk->file_idx_ < file_names.size());
@@ -93,11 +93,11 @@ void vvp_fun_tchk_width::violation()
       violation_message += std::to_string(threshold_) + " " + time_unit + ", ";
       violation_message += vpi_get_str(vpiName, vpi_tchk->vpi_notifier_);
       violation_message += " );\n";
-      violation_message += "\tfile_idx = ";
+      violation_message += "\tfile = ";
       violation_message += file_names[vpi_tchk->file_idx_];
       violation_message += " line = " + std::to_string(vpi_tchk->lineno_) + "\n";
       violation_message += "\tScope: ";
-      violation_message += fullname;
+      violation_message += scope_fullname;
       violation_message += "\n";
       violation_message += "\tTime: ";
       violation_message += std::to_string(t2_);
