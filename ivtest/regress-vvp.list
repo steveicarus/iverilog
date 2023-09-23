@@ -48,6 +48,7 @@ pv_wr_fn_vec2			vvp_tests/pv_wr_fn_vec2.json
 pv_wr_fn_vec4			vvp_tests/pv_wr_fn_vec4.json
 struct_packed_write_read	vvp_tests/struct_packed_write_read.json
 struct_packed_write_read2	vvp_tests/struct_packed_write_read2.json
+sv_2state_array_init_prop	vvp_tests/sv_2state_array_init_prop.json
 sv_ap_uarray1			vvp_tests/sv_ap_uarray1.json
 sv_ap_uarray2			vvp_tests/sv_ap_uarray2.json
 sv_ap_uarray3			vvp_tests/sv_ap_uarray3.json
