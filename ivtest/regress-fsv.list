@@ -126,7 +126,6 @@ sv_darray_nest1			NI			ivltests
 sv_darray_nest2			NI			ivltests
 sv_darray_nest3			NI			ivltests
 sv_darray_nest4			NI			ivltests
-sv_darray_oob_vec2		NI			ivltests
 sv_deferred_assert1		NI			ivltests
 sv_deferred_assert2		NI			ivltests
 sv_deferred_assume1		NI			ivltests
@@ -135,4 +134,3 @@ sv_queue_nest1			NI			ivltests
 sv_queue_nest2			NI			ivltests
 sv_queue_nest3			NI			ivltests
 sv_queue_nest4			NI			ivltests
-sv_queue_oob_vec2		NI			ivltests
