@@ -664,6 +664,7 @@ sv_darray_decl_assign	normal,-g2009		ivltests
 sv_darray_function	normal,-g2009		ivltests
 sv_darray_oob_real	normal,-g2009		ivltests
 sv_darray_oob_string	normal,-g2009		ivltests
+sv_darray_oob_vec2	normal,-g2009		ivltests
 sv_darray_oob_vec4	normal,-g2009		ivltests
 sv_darray_signed	normal,-g2009		ivltests
 sv_darray_word_size	normal,-g2005-sv	ivltests
@@ -784,6 +785,7 @@ sv_queue_function1	normal,-g2009		ivltests
 sv_queue_function2	normal,-g2009		ivltests
 sv_queue_oob_real	normal,-g2009		ivltests
 sv_queue_oob_string	normal,-g2009		ivltests
+sv_queue_oob_vec2	normal,-g2009		ivltests
 sv_queue_oob_vec4	normal,-g2009		ivltests
 sv_queue_parray		normal,-g2009,-pfileline=1	ivltests gold=sv_queue_parray.gold
 sv_queue_parray_bounded	normal,-g2009,-pfileline=1	ivltests gold=sv_queue_parray_bounded.gold

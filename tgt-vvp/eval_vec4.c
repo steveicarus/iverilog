@@ -957,6 +957,8 @@ static void draw_select_vec4(ivl_expr_t expr)
 	    assert(base);
 	    draw_eval_expr_into_integer(base, 3);
 	    fprintf(vvp_out, "    %%load/dar/vec4 v%p_0;\n", sig);
+	    if (ivl_expr_value(expr) == IVL_VT_BOOL)
+		  fprintf(vvp_out, "    %%cast2;\n");
 
 	    return;
       }

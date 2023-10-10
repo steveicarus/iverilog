@@ -1,7 +1,7 @@
 module top;
-  int q_tst [$];
-  int q_tmp [$];
-  int elem;
+  integer q_tst [$];
+  integer q_tmp [$];
+  integer elem;
   integer idx;
   bit passed;
 
