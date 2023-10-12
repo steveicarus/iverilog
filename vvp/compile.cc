@@ -2080,13 +2080,8 @@ void compile_tchk_width(char* edge, struct symb_s ref, char* condition, double l
                                                                   vpip_scaled_real_to_time64(threshold, scope));
       my_tchk_width->fun = obj_tchk_width;
 
-	// Copy string because it is used twice for lookup
-	// TODO is there a better way?
-      char* ref_tmp = (char*)malloc(50);
-      strcpy(ref_tmp, ref.text);
-
 	// Connect reference signal to port 0 and create VPI object
-      input_connect(my_tchk_width, 0, ref_tmp);
+      input_connect(my_tchk_width, 0, strdup(ref.text));
       __vpiTchkWidth* obj = (__vpiTchkWidth*)vpip_make_tchk_width(file_idx, lineno, obj_tchk_width);
 
       // Add vpiHandles to object for later lookup
