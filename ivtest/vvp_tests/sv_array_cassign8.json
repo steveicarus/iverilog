@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_array_cassign8.v",
+    "iverilog-args" : [ "-g2009" ]
+}
