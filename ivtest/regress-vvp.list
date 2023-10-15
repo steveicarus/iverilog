@@ -62,6 +62,7 @@ sv_array_assign_fail1	vvp_tests/sv_array_assign_fail1.json
 sv_array_assign_fail2	vvp_tests/sv_array_assign_fail2.json
 sv_array_cassign6		vvp_tests/sv_array_cassign6.json
 sv_array_cassign7		vvp_tests/sv_array_cassign7.json
+sv_array_cassign8		vvp_tests/sv_array_cassign8.json
 sv_automatic_2state		vvp_tests/sv_automatic_2state.json
 sv_chained_constructor1		vvp_tests/sv_chained_constructor1.json
 sv_chained_constructor2		vvp_tests/sv_chained_constructor2.json
