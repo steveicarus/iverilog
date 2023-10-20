@@ -1259,7 +1259,8 @@ static void array_attach_port(vvp_array_t array, vvp_fun_arrayport*fun)
       assert(fun->next_ == 0);
       fun->next_ = array->ports_;
       array->ports_ = fun;
-      if (!array->get_scope()->is_automatic()) {
+      if (!array->get_scope()->is_automatic() &&
+          (array->vals4 || array->vals)) {
               /* propagate initial values for variable arrays */
             if (!vpi_array_is_real(array)) {
                   vvp_bit4_t init;
