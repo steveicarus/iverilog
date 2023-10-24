@@ -34,11 +34,11 @@ Copyright 2000-2019 Stephen Williams
 
 ## What is ICARUS Verilog?
 
-Icarus Verilog is intended to compile ALL of the Verilog HDL as
+Icarus Verilog is intended to compile ALL of the Verilog HDL, as
 described in the IEEE-1364 standard. Of course, it's not quite there
 yet. It does currently handle a mix of structural and behavioural
 constructs. For a view of the current state of Icarus Verilog, see its
-home page at http://iverilog.icarus.com/.
+home page at https://steveicarus.github.io/iverilog/.
 
 Icarus Verilog is not aimed at being a simulator in the traditional
 sense, but a compiler that generates code employed by back-end
@@ -47,7 +47,7 @@ tools.
 > For instructions on how to run Icarus Verilog, see the `iverilog` man page.
 
 
-## Building/Installing Icarus Verilog From Source
+## Building/Installing Icarus Verilog from Source
 
 If you are starting from the source, the build process is designed to be
 as simple as practical. Someone basically familiar with the target
@@ -396,7 +396,7 @@ constructs.
 
   - `trireg` is not supported. `tri0` and `tri1` are supported.
 
-  - tran primitives, i.e. `tran`, `tranif1`, `tranif0`, `rtran`, `rtranif1`
+  - tran primitives, i.e. `tran`, `tranif1`, `tranif0`, `rtran`, `rtranif1`,
     and `rtranif0` are not supported.
 
   - Net delays, of the form `wire #N foo;` do not work. Delays in
@@ -547,7 +547,7 @@ flag to iverilog.
 
 ## Credits
 
-Except where otherwise noted, Icarus Verilog, ivl and ivlpp are
+Except where otherwise noted, Icarus Verilog, ivl, and ivlpp are
 Copyright Stephen Williams. The proper notices are in the head of each
 file. However, I have early on received aid in the form of fixes,
 Verilog guidance, and especially testing from many people. Testers, in

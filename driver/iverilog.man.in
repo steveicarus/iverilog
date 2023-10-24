@@ -642,7 +642,7 @@ Steve Williams (steve@icarus.com)
 
 .SH SEE ALSO
 vvp(1),
-.BR "<http://iverilog.icarus.com/>"
+.BR "<https://steveicarus.github.io/iverilog/>"
 
 Tips on using, debugging, and developing the compiler can be found at
 .BR "<http://iverilog.wikia.com/>"

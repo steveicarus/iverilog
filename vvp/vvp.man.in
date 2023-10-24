@@ -192,7 +192,7 @@ Steve Williams (steve@icarus.com)
 .SH SEE ALSO
 iverilog(1),
 iverilog\-vpi(1),
-.BR "<http://iverilog.icarus.com/>"
+.BR "<https://steveicarus.github.io/iverilog/>"
 
 .SH COPYRIGHT
 .nf

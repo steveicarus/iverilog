@@ -5,7 +5,7 @@ pkgver=ci
 pkgrel=1
 pkgdesc="Icarus Verilog, a Verilog simulation and synthesis tool (mingw-w64)"
 arch=('any')
-url="http://iverilog.icarus.com/"
+url="https://steveicarus.github.io/iverilog/"
 license=('GPLv2+')
 depends=("${MINGW_PACKAGE_PREFIX}-readline"
          "${MINGW_PACKAGE_PREFIX}-gcc-libs")
