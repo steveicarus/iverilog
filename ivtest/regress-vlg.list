@@ -157,7 +157,6 @@ array_select_a		normal			ivltests
 array_word_check	normal			ivltests gold=array_word_check.gold
 array_word_width	normal			ivltests gold=array_word_width.gold
 array_word_width2	normal			ivltests
-array_slice_concat	normal			ivltests
 assign3.2A		normal			ivltests
 assign3.2B		normal			ivltests
 assign3.2C		normal			ivltests
