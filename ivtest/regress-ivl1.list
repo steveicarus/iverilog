@@ -134,7 +134,6 @@ pr1793749		normal			ivltests gold=pr1793749.gold
 pr1793749b		normal			ivltests gold=pr1793749b.gold
 pr1861212b		normal			ivltests gold=pr1861212.gold
 pr1864110c		normal			ivltests gold=pr1864110c.gold
-pr1864115		normal			ivltests gold=pr1864115.gold
 pr2806449		normal			ivltests
 pr2877555		normal			ivltests
 real4			normal			ivltests
@@ -220,15 +219,11 @@ pr1528093		normal			ivltests
 # wire real
 br_gh456		normal,-g2012		ivltests
 ca_64delay		normal			ivltests gold=ca_64delay.gold
-ca_time_real		normal			ivltests gold=ca_time_real.gold
 ca_var_delay		normal			ivltests
 cast_real_signed	normal			ivltests
 cast_real_unsigned	normal			ivltests
-delayed_sfunc		normal,-gspecify	ivltests gold=delayed_sfunc.gold
 module_port_shortreal	normal,-g2005-sv	ivltests # shortreal
 pr1861212c		normal			ivltests gold=pr1861212.gold
-pr1864110a		normal			ivltests gold=pr1864110a.gold
-pr1864110b		normal			ivltests gold=pr1864110b.gold
 pr1873372		normal			ivltests gold=pr1873372.gold
 pr1880003		normal			ivltests
 pr1898293		normal			ivltests

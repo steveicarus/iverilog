@@ -1,0 +1,5 @@
+{
+    "type"   : "normal-vlog95",
+    "source" : "localparam_type.v",
+    "gold"   : "parameter_type-vlog95"
+}

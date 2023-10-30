@@ -122,7 +122,6 @@ array_lval_select6	CE			ivltests  # Also net arrays
 br_gh156		CE			ivltests
 br_gh456		CE,-g2009,-pallowsigned=1	ivltests
 ca_64delay		CE			ivltests  # Also net arrays
-ca_time_real		CE			ivltests
 ca_var_delay		CE			ivltests
 cast_real		CE,-pallowsigned=1	ivltests
 cast_real_signed	CE,-pallowsigned=1	ivltests
@@ -132,7 +131,6 @@ sv_cast_integer2	normal,-g2005-sv,-pallowsigned=1	ivltests
 sv_cast_packed_struct	normal,-g2005-sv,-pallowsigned=1	ivltests
 sv_cast_string		CE			ivltests
 clog2			CE			ivltests  # Also big int
-delayed_sfunc		CE			ivltests
 implicit_cast4		CE,-g2009,-pallowsigned=1	ivltests
 implicit_cast5		CE,-g2009,-pallowsigned=1	ivltests
 implicit_cast6		CE,-g2009,-pallowsigned=1	ivltests
@@ -140,10 +138,7 @@ implicit_cast12		CE,-g2009,-pallowsigned=1	ivltests
 implicit_cast13		CE,-g2009,-pallowsigned=1	ivltests
 module_port_shortreal	CE,-g2005-sv		ivltests
 pr1861212c		CE			ivltests
-pr1864110a		CE			ivltests
-pr1864110b		CE			ivltests
 pr1864110c		CE			ivltests
-pr1864115		CE			ivltests
 pr1873372		CE			ivltests
 pr1880003		CE			ivltests
 pr1898293		CE			ivltests
@@ -334,10 +329,6 @@ br_gh164b		CE,-g2009,-pallowsigned=1	ivltests
 br_gh164c		CE,-g2009,-pallowsigned=1	ivltests
 br_gh164d		CE,-g2009,-pallowsigned=1	ivltests
 br_gh164e		CE,-g2009,-pallowsigned=1	ivltests
-br_gh383a		CE,-g2012,		ivltests
-br_gh383b		CE,-g2012,		ivltests
-br_gh383c		CE,-g2012,-pallowsigned=1	ivltests
-br_gh383d		CE,-g2012,-pallowsigned=1	ivltests
 br_gh460		CE,-g2012		ivltests
 br_ml20191221		CE,-g2009,-pallowsigned=1	ivltests
 sv_assign_pattern_cast	CE,-g2005-sv,-pallowsigned=1	ivltests
@@ -501,8 +492,6 @@ sv_var_init1		EF,-g2009		ivltests
 sv_var_init2		TE,-g2009		ivltests
 
 # No support for these SystemVerilog features
-always4A		CE,-g2009		ivltests  # join_any
-always4B		CE,-g2009		ivltests  # join_none
 br936			CE,-g2009,-pallowsigned=1	ivltests  # join_any
 br_gh165		CE,-g2009		ivltests  # join_*
 br_gh368		CE,-g2009		ivltests  # join_*
@@ -829,8 +818,6 @@ format			RE			ivltests gold=format-vlog95.gold
 fread-error		RE			ivltests gold=fread-error-vlog95.gold
 fscanf_u_warn		normal			ivltests gold=fscanf_u_warn-vlog95.gold
 fscanf_z_warn		normal			ivltests gold=fscanf_z_warn-vlog95.gold
-localparam_type		normal			ivltests gold=parameter_type-vlog95.gold
-parameter_type		normal			ivltests gold=parameter_type-vlog95.gold
 mem1			normal			ivltests gold=mem1-vlog95.gold
 pic			normal			contrib  gold=pic-vlog95.gold
 pr910			normal			ivltests gold=pr910-vlog95.gold

@@ -67,8 +67,6 @@
 # gold or diff commands.
 #
 
-always4A		CE,-g2005-sv		ivltests
-always4B		CE,-g2005-sv		ivltests
 always_comb		normal,-g2005-sv	ivltests
 always_comb_fail	CE,-g2005-sv		ivltests
 always_comb_fail3	CE,-g2005-sv		ivltests
@@ -979,10 +977,6 @@ pull371b		normal,-g2012		ivltests
 
 br_gh175		normal,-g2012		ivltests
 br_gh307		normal,-g2012		ivltests
-br_gh383a		normal,-g2012		ivltests gold=br_gh383a.gold
-br_gh383b		normal,-g2012		ivltests gold=br_gh383b.gold
-br_gh383c		normal,-g2012		ivltests gold=br_gh383c.gold
-br_gh383d		normal,-g2012		ivltests gold=br_gh383d.gold
 br_gh390a		CE,-g2012		ivltests
 br_gh390b		normal,-g2012		ivltests gold=br_gh390b.gold
 br_gh412		normal,-g2012		ivltests
