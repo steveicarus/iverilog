@@ -333,7 +333,7 @@ attributes. They have the same general meaning as with the $attribute
 syntax, but they are attached to objects by position instead of by
 name. Also, the key is a Verilog identifier instead of a string.
 
-## Running iverilog
+## Running `iverilog`
 
 The preferred way to invoke the compiler is with the `iverilog`(1)
 command. This program invokes the preprocessor (`ivlpp`) and the
@@ -341,23 +341,24 @@ compiler (`ivl`) with the proper command line options to get the job
 done in a friendly way. See the `iverilog`(1) man page for usage details.
 
 
-### EXAMPLES
+### EXAMPLE: Hello World
 
 Example: Compiling `"hello.vl"`
 
 ```verilog
------------------------- hello.vl ----------------------------
+// ------------------------ hello.vl ----------------------------
+
 module main();
 
 initial
   begin
-    $display("Hi there");
+    $display("Hello World");
     $finish ;
   end
 
 endmodule
 
---------------------------------------------------------------
+// --------------------------------------------------------------
 ```
 
 Ensure that `iverilog` is on your search path, and the vpi library
@@ -369,10 +370,10 @@ To compile the program:
 	iverilog hello.vl
 ```
 
-(The above presumes that /usr/local/include and /usr/local/lib are
-part of the compiler search path, which is usually the case for gcc.)
+(The above presumes that `/usr/local/include` and `/usr/local/lib` are
+part of the compiler search path, which is usually the case for `gcc`.)
 
-To run the program:
+To run the generated program:
 
 ```bash
 	./a.out
