@@ -59,7 +59,10 @@ not required, but helpful in case of problems.
 
 ### Compile Time Prerequisites
 
-You can use: `apt install -y autoconf gperf make gcc g++ bison flex`
+You can use:
+```bash
+apt install -y autoconf gperf make gcc g++ bison flex`
+```
 
 You need the following software to compile Icarus Verilog from source
 on a UNIX-like system:
@@ -109,26 +112,25 @@ on a UNIX-like system:
 ### Compilation
 
 <details>
-<summary><h4><a href="https://github.com/steveicarus/iverilog/releases">From Release</a></h4></summary>
+<summary><h4><a href="https://github.com/steveicarus/iverilog/releases">Compiling From Release</a></h4></summary>
 
-Unpack the tar-ball and cd into the `verilog-#########` directory
-(presumably, that is how you got to this README) and compile the source
-with the commands:
+Unpack the tar-ball, `cd` into the `verilog-#########` directory,
+and compile the source with the commands:
 
-```
+```bash
   ./configure
   make
 ```
 </details>
 
 <details>
-<summary><h4>From GitHub</h4></summary>
+<summary><h4>Compiling From GitHub</h4></summary>
 
 If you are building from git, you have to run the command below before
 compiling the source. This will generate the "configure" file, which is
 automatically done when building from tarball.
 
-```
+```bash
   sh autoconf.sh
   ./configure
   make
@@ -172,7 +174,7 @@ configure script that modify its behaviour:
 
 To run a simple test before installation, execute
 
-```
+```bash
   make check
 ```
 
@@ -187,7 +189,7 @@ default install in /usr/local unless you specify a different prefix
 with the `--prefix=<path>` flag to the configure command.) You may need
 to do this as root to gain access to installation directories.
 
-```
+```bash
 	make install
 ```
 
@@ -207,11 +209,11 @@ switches.
 
 ### Preprocessing
 
-There is a separate program, ivlpp, that does the preprocessing. This
+There is a separate program, `ivlpp`, that does the preprocessing. This
 program implements the `` `include `` and  `` `define `` directives producing
 output that is equivalent but without the directives. The output is a
 single file with line number directives, so that the actual compiler
-only sees a single input file. See ivlpp/ivlpp.txt for details.
+only sees a single input file. See `ivlpp/ivlpp.txt` for details.
 
 ### Parse
 
@@ -331,31 +333,32 @@ attributes. They have the same general meaning as with the $attribute
 syntax, but they are attached to objects by position instead of by
 name. Also, the key is a Verilog identifier instead of a string.
 
-## Running iverilog
+## Running `iverilog`
 
 The preferred way to invoke the compiler is with the `iverilog`(1)
-command. This program invokes the preprocessor (ivlpp) and the
+command. This program invokes the preprocessor (`ivlpp`) and the
 compiler (`ivl`) with the proper command line options to get the job
 done in a friendly way. See the `iverilog`(1) man page for usage details.
 
 
-### EXAMPLES
+### EXAMPLE: Hello World
 
 Example: Compiling `"hello.vl"`
 
-```
------------------------- hello.vl ----------------------------
+```verilog
+// ------------------------ hello.vl ----------------------------
+
 module main();
 
 initial
   begin
-    $display("Hi there");
+    $display("Hello World");
     $finish ;
   end
 
 endmodule
 
---------------------------------------------------------------
+// --------------------------------------------------------------
 ```
 
 Ensure that `iverilog` is on your search path, and the vpi library
@@ -363,16 +366,16 @@ is available.
 
 To compile the program:
 
-```
+```bash
 	iverilog hello.vl
 ```
 
-(The above presumes that /usr/local/include and /usr/local/lib are
-part of the compiler search path, which is usually the case for gcc.)
+(The above presumes that `/usr/local/include` and `/usr/local/lib` are
+part of the compiler search path, which is usually the case for `gcc`.)
 
-To run the program:
+To run the generated program:
 
-```
+```bash
 	./a.out
 ```
 
@@ -536,12 +539,12 @@ and regs to be explicitly typed. The currently supported types
 are logic, bool and real. This implies that `logic` and `bool`
 are new keywords. Typical syntax is:
 
-```
+```verilog
 	wire real foo = 1.0;
 	reg logic bar, bat;
 ```
 ... and so forth. The syntax can be turned off by using the
--g2 flag to iverilog, and turned on explicitly with the -g2x
+`-g2` flag to iverilog, and turned on explicitly with the `-g2x`
 flag to iverilog.
 
 
