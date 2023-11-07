@@ -17,6 +17,7 @@ static PLI_INT32 CompileTF(PLI_BYTE8 *x)
         vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
         vpiHandle scope = vpi_handle(vpiScope, callh);
 
+        get_type("\\esc.mod ", NULL);
         get_type("\\esc.port", scope);
         get_type("\\esc.port ", scope);
         get_type("\\esc.mod .\\esc.inm .\\esc.port", NULL);

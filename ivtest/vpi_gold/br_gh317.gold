@@ -1,5 +1,6 @@
 Compiling vpi/br_gh317.c...
 Making br_gh317.vpi from  br_gh317.o...
+Looking for "\esc.mod ": found "esc.mod"
 Looking for "\esc.port": found "esc.port"
 Looking for "\esc.port ": found "esc.port"
 Looking for "\esc.mod .\esc.inm .\esc.port": found "esc.port"

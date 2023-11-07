@@ -1473,16 +1473,6 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
 		  *(nm_base-1) = 0;
 	    }
 
-	    if (*nm_base == '\\') {
-		    // Skip the \ at the beginning
-		  ++nm_base;
-
-		    // Drop the space at the end if it exists
-		  if ((next = strchr(nm_base, ' '))) {
-			*next = 0;
-		  }
-	    }
-
 	// If there is no escaped identifier then just look for the last '.'
       } else {
 	    nm_base = strrchr(nm_path, '.');
@@ -1552,6 +1542,18 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
 		  tmp = find_scope(nm_path, hand, 0);
 	    }
 	    hand = tmp;
+      }
+
+	// find_name() expects escaped identifiers to be stripped
+      if (*nm_base == '\\') {
+	    // Skip the \ at the beginning
+	    ++nm_base;
+
+	    // Drop the space at the end if it exists
+	    char *next;
+	    if ((next = strchr(nm_base, ' '))) {
+		  *next = 0;
+	    }
       }
 
 	// Now we have the correct scope, look for the item.
