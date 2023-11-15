@@ -2486,14 +2486,32 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 
 	    } else if (const netenum_t*tmp_enum = dynamic_cast<const netenum_t*> (member_type)) {
 
-		    // If the element is an enum, then we don't have
-		    // anything special to do.
+		    // If the element is an enum, then we only need to check if
+		    // there is a part select for it
 		  if (debug_elaborate) {
 			cerr << li->get_fileline() << ": check_for_struct_members: "
 			     << "Tail element is an enum" << *tmp_enum
 			     << endl;
 		  }
 		  struct_type = 0;
+
+		  if (!member_comp.index.empty()) {
+
+			if (member_comp.index.size() > 1) {
+			      cerr << li->get_fileline() << ": error: "
+				   << "Too many index expressions for enum member." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+
+			long tail_off = 0;
+			unsigned long tail_wid = 0;
+			bool rc = calculate_part(li, des, scope, member_comp.index.back(), tail_off, tail_wid);
+			if (! rc) return 0;
+
+			off += tail_off;
+			use_width = tail_wid;
+		  }
 
 	    } else if (const netvector_t*mem_vec = dynamic_cast<const netvector_t*>(member_type)) {
 
