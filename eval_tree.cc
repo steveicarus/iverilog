@@ -2177,6 +2177,13 @@ static bool get_array_info(const NetExpr*arg, long dim,
 	    right = 0;
 	    return false;
       }
+      if (const NetESelect*select = dynamic_cast<const NetESelect*>(arg)) {
+	    const netranges_t&dim_vals = select->net_type()->slice_dimensions();
+	    const netrange_t&range = dim_vals[dim-1];
+	    left = range.get_msb();
+	    right = range.get_lsb();
+	    return false;
+      }
 	/* The argument must be a signal that has enough dimensions. */
       const NetESignal*esig = dynamic_cast<const NetESignal*>(arg);
       if (esig == 0) return true;
