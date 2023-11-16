@@ -2172,10 +2172,10 @@ static bool get_array_info(const NetExpr*arg, long dim,
                            long &left, long &right, bool&defer)
 {
       if (const NetEConstParam*param = dynamic_cast<const NetEConstParam*>(arg)) {
-	ivl_assert(*arg, dim == 1);
-	left = param->expr_width() - 1;
-	right = 0;
-	return false;
+	    ivl_assert(*arg, dim == 1);
+	    left = param->expr_width() - 1;
+	    right = 0;
+	    return false;
       }
 	/* The argument must be a signal that has enough dimensions. */
       const NetESignal*esig = dynamic_cast<const NetESignal*>(arg);
