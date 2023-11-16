@@ -1,0 +1,5 @@
+{
+    "type"   : "normal",
+    "source" : "struct_enum_partsel.v",
+    "iverilog-args" : [ "-g2009" ]
+}
