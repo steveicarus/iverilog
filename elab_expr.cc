@@ -5994,6 +5994,8 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 	    return 0;
 
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
+      if (!base)
+	    return nullptr;
 
 	// Use the part select width already calculated by test_width().
       unsigned long wid = min_width_;
@@ -6141,6 +6143,8 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 	    return 0;
 
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
+      if (!base)
+	    return nullptr;
 
 	// Use the part select width already calculated by test_width().
       unsigned long wid = min_width_;
