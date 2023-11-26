@@ -633,7 +633,6 @@ lh_varindx		normal			ivltests
 lh_varindx2		normal			ivltests
 lh_varindx4		normal			ivltests
 lh_varindx5		normal			ivltests
-localparam_type		normal			ivltests gold=parameter_type.gold
 long_div		normal			ivltests gold=long_div.gold
 macro2			normal			ivltests
 macro_args		CO,-yivltests			ivltests
@@ -749,7 +748,6 @@ param_test3		normal			ivltests gold=param_test3.gold # PR#293
 param_test4		normal			ivltests
 param_times		normal			ivltests # param has multiplication.
 parameter_1bit		normal			ivltests
-parameter_type		normal			ivltests gold=parameter_type.gold
 parameter_in_generate1	CE			ivltests
 parameter_no_default	CE			ivltests
 parameter_omit1		CE			ivltests
@@ -1014,7 +1012,6 @@ pr1699519		normal			ivltests gold=pr1699519.gold
 pr1701855		normal			ivltests gold=pr1701855.gold
 pr1701855b		normal			ivltests gold=pr1701855b.gold
 pr1701889		normal			ivltests gold=pr1701889.gold
-pr1701890		normal			ivltests gold=pr1701890.gold
 pr1701921		normal			ivltests
 pr1702593		normal			ivltests gold=pr1702593.gold
 pr1703120		normal			ivltests gold=pr1703120.gold

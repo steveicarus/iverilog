@@ -1,0 +1,5 @@
+{
+    "type"   : "normal",
+    "source" : "ca_time_real.v",
+    "gold"   : "ca_time_real"
+}

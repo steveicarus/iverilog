@@ -1,0 +1,5 @@
+{
+    "type"   : "CE",
+    "source" : "always4B.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

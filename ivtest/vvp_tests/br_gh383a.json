@@ -1,0 +1,6 @@
+{
+    "type"   : "normal",
+    "source" : "br_gh383a.v",
+    "iverilog-args" : [ "-g2012" ],
+    "gold"   : "br_gh383a"
+}

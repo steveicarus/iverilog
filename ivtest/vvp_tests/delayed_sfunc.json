@@ -1,0 +1,6 @@
+{
+    "type"   : "normal",
+    "source" : "delayed_sfunc.v",
+    "gold"   : "delayed_sfunc",
+    "iverilog-args" : [ "-gspecify" ]
+}

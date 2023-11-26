@@ -2,12 +2,19 @@
 # Test list files are a list of test names and the json that
 # describes the test.
 
+always4A			vvp_tests/always4A.json
+always4B			vvp_tests/always4B.json
 array_packed_write_read		vvp_tests/array_packed_write_read.json
 bits4				vvp_tests/bits4.json
 bitsel11			vvp_tests/bitsel11.json
 br_gh13a			vvp_tests/br_gh13a.json
 br_gh13a-vlog95			vvp_tests/br_gh13a-vlog95.json
+br_gh383a			vvp_tests/br_gh383a.json
+br_gh383b			vvp_tests/br_gh383b.json
+br_gh383c			vvp_tests/br_gh383c.json
+br_gh383d			vvp_tests/br_gh383d.json
 br_gh939			vvp_tests/br_gh939.json
+ca_time_real`			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json
 case2-S				vvp_tests/case2-S.json
@@ -18,6 +25,7 @@ constfunc17			vvp_tests/constfunc17.json
 constfunc18			vvp_tests/constfunc18.json
 constfunc19			vvp_tests/constfunc19.json
 constfunc20			vvp_tests/constfunc20.json
+delayed_sfunc			vvp_tests/delayed_sfunc.json
 dffsynth			vvp_tests/dffsynth.json
 dffsynth-S			vvp_tests/dffsynth-S.json
 dffsynth2			vvp_tests/dffsynth2.json
@@ -32,6 +40,8 @@ dffsynth10			vvp_tests/dffsynth10.json
 dffsynth11			vvp_tests/dffsynth11.json
 dumpfile			vvp_tests/dumpfile.json
 final3				vvp_tests/final3.json
+localparam_type			vvp_tests/localparam_type.json
+localparam_type-vlog95		vvp_tests/localparam_type-vlog95.json
 macro_str_esc			vvp_tests/macro_str_esc.json
 memsynth1			vvp_tests/memsynth1.json
 module_ordered_list1		vvp_tests/module_ordered_list1.json
@@ -40,8 +50,14 @@ module_port_array1		vvp_tests/module_port_array1.json
 module_port_array_init1		vvp_tests/module_port_array_init1.json
 param-width			vvp_tests/param-width.json
 param-width-vlog95		vvp_tests/param-width-vlog95.json
+parameter_type			vvp_tests/parameter_type.json
+parameter_type-vlog95		vvp_tests/parameter_type-vlog95.json
 pr1388974			vvp_tests/pr1388974.json
 pr1388974-vlog95		vvp_tests/pr1388974-vlog95.json
+pr1701890			vvp_tests/pr1701890.json
+pr1864110a			vvp_tests/pr1864110a.json
+pr1864110b			vvp_tests/pr1864110b.json
+pr1864115			vvp_tests/pr1864115.json
 pr903				vvp_tests/pr903.json
 pr903-vlog95			vvp_tests/pr903-vlog95.json
 pv_wr_fn_vec2			vvp_tests/pv_wr_fn_vec2.json
