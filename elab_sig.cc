@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2023 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1189,7 +1189,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    cerr << get_fileline() << ": debug: Create signal " << wtype;
 	    if (set_data_type_)
 		  cout << " " << *set_data_type_;
-	    cout << name_ << unpacked_dimensions << " in scope "
+	    cout << " " << name_ << unpacked_dimensions << " in scope "
 		 << scope_path(scope) << endl;
       }
 

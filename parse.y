@@ -3178,7 +3178,14 @@ delay_value_simple
 	if ($1 == 0 || !get_time_unit($1, unit))
 	      yyerror(@1, "internal error: time literal delay.");
 	else {
+#ifdef __FreeBSD__
+		// Using raw pow() in FreeBSD gives a value that is off by one and this causes
+		// rounding issues later, so for now use powl() to get the correct result.
+	      long double ldp = powl(10.0, (long double)(unit - pform_get_timeunit()));
+	      double p = (double) ldp;
+#else
 	      double p = pow(10.0, (double)(unit - pform_get_timeunit()));
+#endif
 	      double time = atof($1) * p;
 
 	      verireal *v = new verireal(time);
@@ -3825,7 +3832,14 @@ expr_primary
         if ($1 == 0 || !get_time_unit($1, unit))
               yyerror(@1, "internal error: time literal.");
         else {
+#ifdef __FreeBSD__
+                // Using raw pow() in FreeBSD gives a value that is off by one and this causes
+                // rounding issues below, so for now use powl() to get the correct result.
+              long double ldp = powl(10.0, (double)(unit - pform_get_timeunit()));
+              double p = (double) ldp;
+#else
               double p = pow(10.0, (double)(unit - pform_get_timeunit()));
+#endif
               double time = atof($1) * p;
               // The time value needs to be rounded at the correct digit
               // since this is a normal real value and not a delay that

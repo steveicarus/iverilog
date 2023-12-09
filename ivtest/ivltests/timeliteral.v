@@ -16,6 +16,8 @@ module same;
   timeunit 1ps;
   timeprecision 1ps;
 
+  logic passed;
+
   function logic check_time;
     realtime result;
 
@@ -45,11 +47,28 @@ module same;
       check_time = 1'b0;
     end
   endfunction
+
+  initial begin
+    passed = 1'b1;
+    #0.499ps;
+    if ($realtime() != 0.0) begin
+      $display("Failed: Expected a 0.499ps delay to scale to 0ps of delay, got %f", $realtime());
+      passed = 1'b0;
+    end
+
+    #0.5ps;
+    if ($realtime() != 1.0) begin
+      $display("Failed: Expected a 0.5ps delay to scale to 1ps of delay, got %f", $realtime());
+      passed = 1'b0;
+    end
+  end
 endmodule
 
 module max;
   timeunit 100s;
   timeprecision 1fs;
+
+  bit passed;
 
   function logic check_time;
     realtime result;
@@ -74,6 +93,21 @@ module max;
       check_time = 1'b0;
     end
   endfunction
+
+  initial begin
+    passed = 1'b1;
+    #0.499fs;
+    if ($realtime() != 0.0) begin
+      $display("Failed: Expected a 0.499fs delay to scale to 0s of delay, got %f", $realtime());
+      passed = 1'b0;
+    end
+
+    #0.5fs;
+    if ($realtime() != 1e-17) begin
+      $display("Failed: Expected a 0.5fs delay to scale to 1e-17s of delay, got %f", $realtime());
+      passed = 1'b0;
+    end
+  end
 endmodule
 
 module top;
@@ -119,6 +153,20 @@ module top;
     passed &= same.check_time();
     passed &= max.check_time();
 
-    if (passed) $display("PASSED");
+    #0.499ps;
+    if ($realtime() != 0.0) begin
+      $display("Failed: Expected a 0.499fs delay to scale to 0ns of delay, got %f", $realtime());
+      passed = 1'b0;
+    end
+
+    #0.5ps;
+    if ($realtime() != 0.001) begin
+      $display("Failed: Expected a 0.5fs delay to scale to 0.001ns of delay, got %f", $realtime());
+      passed = 1'b0;
+    end
+
+    #1; // Make sure all the delay tests have completed
+
+    if (passed && max.passed && same.passed) $display("PASSED");
   end
 endmodule
