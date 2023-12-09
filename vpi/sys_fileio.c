@@ -472,7 +472,6 @@ static PLI_INT32 sys_fread_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       vpiHandle arg;
-      PLI_INT32 type;
 
 	/* We must have at least two arguments. */
       if (argv == 0) {
@@ -484,12 +483,11 @@ static PLI_INT32 sys_fread_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    return 0;
       }
 
-	/* Check that the first required argument is a register or memory. */
-      type = vpi_get(vpiType, vpi_scan(argv));
-      if (type != vpiReg && type != vpiMemory) {
+	/* Check that the first required argument is an integral variable or memory. */
+      if (! is_int_var_or_mem(vpi_scan(argv))) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s's first argument must be a reg or memory.\n", name);
+	    vpi_printf("%s's first argument must be an integral variable or memory.\n", name);
 	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
@@ -612,7 +610,6 @@ static PLI_INT32 sys_fread_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 	/* Get the register/memory. */
       mem_reg = vpi_scan(argv);
-
 	/* Get the file descriptor. */
       arg = vpi_scan(argv);
       val.format = vpiIntVal;
@@ -635,8 +632,8 @@ static PLI_INT32 sys_fread_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
 	/* Are we reading into a memory? */
-      if (vpi_get(vpiType, mem_reg) == vpiReg) is_mem = 0;
-      else is_mem = 1;
+      if (vpi_get(vpiType, mem_reg) == vpiMemory) is_mem = 1;
+      else is_mem = 0;
 
 	/* We only need to get these for memories. */
       if (is_mem) {

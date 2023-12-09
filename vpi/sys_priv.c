@@ -256,6 +256,30 @@ unsigned is_string_obj(vpiHandle obj)
 
     return rtn;
 }
+/*
+ * This routine returns 1 if the argument is an integral value or is a memory,
+ * otherwise it returns 0.
+ */
+unsigned is_int_var_or_mem(vpiHandle obj)
+{
+    unsigned rtn = 0;
+
+    assert(obj);
+    switch(vpi_get(vpiType, obj)) {
+      case vpiIntegerVar:
+      case vpiBitVar:
+      case vpiByteVar:
+      case vpiShortIntVar:
+      case vpiIntVar:
+      case vpiLongIntVar:
+      case vpiReg:
+      case vpiTimeVar:
+      case vpiMemory:
+	rtn = 1;
+	break;
+    }
+    return rtn;
+}
 
 /*
  * This routine returns 1 if the argument supports a valid string value,

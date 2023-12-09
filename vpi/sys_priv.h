@@ -58,6 +58,7 @@ extern struct timeformat_info_s timeformat_info;
 extern unsigned is_constant_obj(vpiHandle obj);
 extern unsigned is_numeric_obj(vpiHandle obj);
 extern unsigned is_string_obj(vpiHandle obj);
+extern unsigned is_int_var_or_mem(vpiHandle obj);
 extern unsigned is_variable(vpiHandle obj);
 
 extern unsigned is_valid_fd_mcd(PLI_UINT32 fd_mcd);
