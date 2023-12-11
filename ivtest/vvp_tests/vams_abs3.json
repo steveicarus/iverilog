@@ -1,0 +1,6 @@
+
+{
+    "type" : "normal",
+    "source" : "vams_abs3.v",
+    "iverilog-args" : [ "-gverilog-ams" ]
+}

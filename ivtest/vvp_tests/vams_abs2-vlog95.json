@@ -1,0 +1,7 @@
+
+{
+    "__comment" : "The initial compiler works, but generates bad vlog95 code.",
+    "type" : "NI",
+    "source" : "vams_abs2.v",
+    "iverilog-args" : [ "-gverilog-ams", "-pallowsigned=1" ]
+}

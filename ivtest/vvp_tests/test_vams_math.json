@@ -1,0 +1,7 @@
+
+{
+    "type" : "normal",
+    "source" : "test_vams_math.v",
+    "iverilog-args" : [ "-gverilog-ams" ],
+    "gold" : "test_vams_math"
+}

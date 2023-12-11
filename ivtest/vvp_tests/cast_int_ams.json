@@ -1,0 +1,6 @@
+
+{
+    "type" : "normal",
+    "source" : "cast_int_ams.v",
+    "iverilog-args" : [ "-gverilog-ams" ]
+}

@@ -157,11 +157,8 @@ real_wire_array		CE			ivltests
 real_wire_force_rel	CE			ivltests
 tern8			CE			ivltests
 v2005_math		CE			ivltests
-vams_abs2		CE,-gverilog-ams,-pallowsigned=1	ivltests
-vams_abs3		CE,-gverilog-ams,-pallowsigned=1	ivltests
 vhdl_real		CE,-g2009,ivltests/vhdl_real.vhd	ivltests
 vhdl_unbounded		CE,-g2009,ivltests/vhdl_unbounded.vhd	ivltests
-wreal			CE			ivltests
 
 # Real modulus is an Icarus extension.
 pr1528093		CE			ivltests
@@ -860,7 +857,6 @@ br943_944		normal,-g2009,-pallowsigned=1,ivltests/br943_944.vhd	ivltests
 br985			normal,-g2009,-pallowsigned=1,ivltests/br985.vhd	ivltests
 br1025			normal,-g2009,-pallowsigned=1	ivltests
 br_gh8			normal,-pallowsigned=1	ivltests
-br_gh99c		normal,-gverilog-ams,-pallowsigned=1	ivltests
 br_gh99r		normal,-pallowsigned=1	ivltests
 br_gh112e		normal,-g2009,-pallowsigned=1	ivltests
 br_gh112f		normal,-g2009,-pallowsigned=1	ivltests
@@ -884,12 +880,9 @@ br_gh801		normal,-g2009,-pallowsigned=1	ivltests
 br_gh801b		normal,-g2009,-pallowsigned=1	ivltests
 ca_mult			normal,-pallowsigned=1	ivltests gold=ca_mult.gold
 cast_int		normal,-pallowsigned=1	ivltests
-cast_int_ams		normal,-gverilog-ams,-pallowsigned=1	ivltests
 cfunc_assign_op_vec	normal,-g2009,-pallowsigned=1	ivltests
 constfunc4		normal,-pallowsigned=1	ivltests
-constfunc4_ams		normal,-gverilog-ams,-pallowsigned=1	ivltests
 constfunc6		normal,-pallowsigned=1	ivltests
-constfunc6_ams		normal,-pallowsigned=1	ivltests
 constfunc7		normal,-pallowsigned=1	ivltests
 constfunc13		normal,-pallowsigned=1	ivltests
 constfunc14		normal,-pallowsigned=1	ivltests
@@ -1030,7 +1023,6 @@ vhdl_test8		normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_test8.vhd	ivltests
 vhdl_test9		normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_test9.vhd	ivltests
 two_state_display	normal,-g2009,-pallowsigned=1	ivltests gold=two_state_display.gold
 undefined_shift		normal,-pallowsigned=1	ivltests
-vams_abs1		normal,-gverilog-ams,-pallowsigned=1	ivltests
 vhdl_concurrent_assert	normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_concurrent_assert.vhd	ivltests gold=vhdl_concurrent_assert.gold
 vhdl_const_record	normal,-g2005-sv,-pallowsigned=1,ivltests/vhdl_const_record.vhd	ivltests
 vhdl_delay_assign	normal,-g2005-sv,-pallowsigned=1,-fivltests/vhdl_timescale_1ns.cfg,ivltests/vhdl_delay_assign.vhd	ivltests

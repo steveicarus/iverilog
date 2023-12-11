@@ -1,0 +1,6 @@
+
+{
+    "type" : "normal",
+    "source" : "constfunc4_ams.v",
+    "iverilog-args" : [ "-gverilog-ams" ]
+}

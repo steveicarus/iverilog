@@ -1,0 +1,6 @@
+
+{
+    "type" : "normal",
+    "source" : "value_range1.v",
+    "iverilog-args" : [ "-gverilog-ams" ]
+}

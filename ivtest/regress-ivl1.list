@@ -91,13 +91,6 @@ pr2002443		CO,-E			ivltests
 # Icarus language extensions
 #------------------------------------------------------------------------------
 
-# $abs, $min and $max to match VAMS abs, min and max
-constfunc6_ams		normal			ivltests
-non-polymorphic-abs	normal			ivltests
-pr3270320_ams		CE			ivltests
-test_va_math		normal,-mva_math	ivltests gold=test_va_math.gold
-va_math			normal			ivltests
-
 # $abstime from VAMS
 abstime			normal			ivltests
 pr2590274a		normal			ivltests gold=pr2590274.gold
