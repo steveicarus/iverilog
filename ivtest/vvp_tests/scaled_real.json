@@ -1,0 +1,6 @@
+
+{
+    "type" : "normal",
+    "source" : "scaled_real.v",
+    "iverilog-args" : [ "-gverilog-ams" ]
+}

@@ -1,0 +1,6 @@
+
+{
+    "type" : "normal-vlog95",
+    "source" : "vams_abs1.v",
+    "iverilog-args" : [ "-gverilog-ams", "-pallowsigned=1" ]
+}

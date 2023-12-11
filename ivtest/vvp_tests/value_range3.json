@@ -1,0 +1,6 @@
+
+{
+    "type" : "CE",
+    "source" : "value_range3.v",
+    "iverilog-args" : [ "-gverilog-ams" ]
+}

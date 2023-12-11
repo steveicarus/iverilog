@@ -1,0 +1,7 @@
+
+{
+    "type" : "normal",
+    "source" : "test_va_math.v",
+    "iverilog-args" : [ "-mva_math" ],
+    "gold" : "test_va_math"
+}

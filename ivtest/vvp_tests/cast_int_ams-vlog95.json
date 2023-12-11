@@ -1,0 +1,6 @@
+
+{
+    "type" : "normal-vlog95",
+    "source" : "cast_int_ams.v",
+    "iverilog-args" : [ "-gverilog-ams", "-pallowsigned=1" ]
+}
