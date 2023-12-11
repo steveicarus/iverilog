@@ -1,0 +1,7 @@
+
+{
+    "__comment__" : "This example doesn't work, so this tests is a placeholder.",
+    "type" : "NI",
+    "source" : "analog2.v",
+    "iverilog-args" : [ "-gverilog-ams" ]
+}

@@ -4,6 +4,8 @@
 
 always4A			vvp_tests/always4A.json
 always4B			vvp_tests/always4B.json
+analog1				vvp_tests/analog1.json
+analog2				vvp_tests/analog2.json
 array_packed_write_read		vvp_tests/array_packed_write_read.json
 bits4				vvp_tests/bits4.json
 bitsel11			vvp_tests/bitsel11.json
