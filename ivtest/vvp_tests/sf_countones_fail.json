@@ -1,0 +1,6 @@
+{
+    "type" : "EF",
+    "source" : "sf_countones_fail.v",
+    "iverilog-args" : [ "-g2009" ],
+    "gold" : "sf_countones_fail"
+}

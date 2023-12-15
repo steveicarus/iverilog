@@ -1,1 +1,0 @@
-ERROR: ./ivltests/fdisplay3.v:28: $fdisplay's file descriptor/MCD must be numeric.

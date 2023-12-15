@@ -193,9 +193,6 @@ automatic_error7	CE			ivltests
 automatic_error8	CE			ivltests
 automatic_error9	CE			ivltests
 automatic_error10	CE			ivltests
-automatic_error11	RE			ivltests gold=automatic_error11.gold
-automatic_error12	RE			ivltests gold=automatic_error12.gold
-automatic_error13	RE			ivltests gold=automatic_error13.gold
 automatic_events	normal			ivltests gold=automatic_events.gold
 automatic_events2	normal			ivltests gold=automatic_events.gold
 automatic_events3	normal			ivltests gold=automatic_events3.gold
@@ -317,7 +314,6 @@ br_gh198		normal			ivltests gold=br_gh198.gold
 br_gh199a		normal			ivltests
 br_gh199b		normal			ivltests
 br_gh209		normal			ivltests diff=work/br_gh209.dat:gold/br_gh209.dat
-br_gh230		RE			ivltests gold=br_gh230.gold
 br_gh244a		normal			ivltests
 br_gh244b		normal			ivltests
 br_gh277a		normal			ivltests
@@ -408,7 +404,6 @@ check_constant_18	CE			ivltests
 check_constant_19	CE			ivltests
 check_constant_20	CE			ivltests
 cmos			normal			ivltests gold=cmos.gold
-comment1		CE			ivltests # PR410/411
 comp1000		normal			ivltests gold=comp1000.gold
 comp1001		normal			ivltests gold=comp1001.gold
 comp1001_fail3		normal			ivltests
@@ -523,7 +518,6 @@ event_list3		normal			ivltests gold=event_list3.gold
 extend			normal			ivltests
 fdisplay1		normal			ivltests gold=fdisplay1.gold
 fdisplay2		normal			ivltests diff=work/fdisplay2.out:gold/fdisplay2.out
-fdisplay3		RE			ivltests gold=fdisplay3.gold
 fdisplay_fail_fd	normal			ivltests gold=fdisplay_fail_fd.gold
 fdisplay_fail_mcd	normal			ivltests gold=fdisplay_fail_mcd.gold
 fifo			normal			contrib
@@ -545,7 +539,6 @@ fork3.19B		normal			ivltests
 format			normal			ivltests gold=format.gold
 fr47			normal			ivltests
 fread			normal			ivltests
-fread-error		RE			ivltests gold=fread-error.gold
 fscanf_u		normal			ivltests
 fscanf_u_warn		normal			ivltests gold=fscanf_u_warn.gold
 fscanf_z		normal			ivltests
@@ -744,7 +737,6 @@ param_tern		normal			ivltests
 param_tern2		normal			ivltests
 param_test1		normal			ivltests gold=param_test1.gold
 param_test2		normal			ivltests gold=param_test2.gold
-param_test3		normal			ivltests gold=param_test3.gold # PR#293
 param_test4		normal			ivltests
 param_times		normal			ivltests # param has multiplication.
 parameter_1bit		normal			ivltests
@@ -1120,7 +1112,6 @@ pr1913918b		normal			ivltests
 pr1913918c		normal			ivltests
 pr1913937		normal			ivltests
 pr1916261		normal			ivltests
-pr1916261a		CE			ivltests
 pr1921332		CO			ivltests
 pr1924845		normal			ivltests
 pr1925356		normal			ivltests
@@ -1314,7 +1305,6 @@ pr2792897		normal			ivltests
 pr2792897		normal			ivltests
 pr2794144		CE			ivltests gold=pr2794144.gold
 pr2800985a		normal			ivltests
-pr2800985b		RE			ivltests gold=pr2800985b.gold
 pr2801134		normal			ivltests
 pr2801662		normal			ivltests
 pr2809288		CE			ivltests gold=pr2809288.gold
@@ -1477,12 +1467,10 @@ qmark3			normal			ivltests
 qmark5			normal			ivltests
 qmark6			normal			ivltests
 queue			normal			ivltests
-queue_fail		RE			ivltests gold=queue_fail.gold
 queue_stat		normal			ivltests gold=queue_stat.gold
 ram16x1			normal			ivltests # Sitting here for a long time?
 random			normal			ivltests gold=random.gold
 readmem-error		normal			ivltests gold=readmem-error.gold
-readmem-invalid		RE			ivltests gold=readmem-invalid.gold
 readmemb1		normal			ivltests # basic $readmemb - uses readmemh1.dat
 readmemb2		normal			ivltests # $readmemb w/ short data file - readmemh2.dat
 readmemb3		normal			ivltests # $readmemb 0-3 with long dfile - readmemh1.dat
@@ -1536,7 +1524,6 @@ rptconcat		normal			ivltests # Repeat concatenation operation.
 rtran			normal			ivltests gold=rtran.gold
 rtranif0		normal			ivltests gold=rtranif0.gold
 rtranif1		normal			ivltests gold=rtranif1.gold
-scan-invalid		RE			ivltests gold=scan-invalid.gold
 scanf			normal			ivltests
 scanf2			normal			ivltests
 scanf3			normal			ivltests
@@ -1805,7 +1792,6 @@ vvp_scalar_value	normal			ivltests
 wait1			normal			ivltests
 wait2			normal			ivltests
 wait3			normal			ivltests gold=wait3.gold
-warn_opt_sys_tf		RE			ivltests gold=warn_opt_sys_tf.gold
 wildsense		normal			ivltests # Wildcard sensitivity list.
 wildsense2		normal			ivltests # Wildcard sensitivity list.
 wireadd1		normal			ivltests
@@ -1820,7 +1806,6 @@ wiresr			normal			ivltests
 wiresub1		normal			ivltests
 wirexor1		normal			ivltests
 writemem-error		normal			ivltests gold=writemem-error.gold
-writemem-invalid	RE			ivltests gold=writemem-invalid.gold
 writememb1		normal			ivltests # pr#400
 writememb2		normal			ivltests # pr#400
 writememh1		normal			ivltests # pr#334

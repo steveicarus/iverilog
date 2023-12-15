@@ -1,0 +1,6 @@
+{
+    "type" : "normal",
+    "source" : "line_directive.v",
+    "iverilog-args" : [ "-g2009", "-I./ivltests" ],
+    "gold" : "line_directive"
+}

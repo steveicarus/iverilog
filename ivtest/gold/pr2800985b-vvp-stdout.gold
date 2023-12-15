@@ -1,0 +1,6 @@
+ERROR: ivltests/pr2800985b.v:11: $ferror's fd (first) argument must be numeric.
+ERROR: ivltests/pr2800985b.v:12: $ferror requires a second (variable) argument.
+ERROR: ivltests/pr2800985b.v:13: $ferror's second argument must be a variable (>=640 bits).
+ERROR: ivltests/pr2800985b.v:14: $ferror's second argument must have 640 bit or more.
+ERROR: ivltests/pr2800985b.v:15: $ferror takes two arguments.
+                                 Found 1 extra argument.

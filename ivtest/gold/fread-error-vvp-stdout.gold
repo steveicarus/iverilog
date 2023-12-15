@@ -1,0 +1,7 @@
+ERROR: ivltests/fread-error.v:8: $fread's first argument must be an integral variable or memory.
+ERROR: ivltests/fread-error.v:9: $fread requires a second (file descriptor) argument.
+ERROR: ivltests/fread-error.v:10: $fread's second argument must be numeric.
+ERROR: ivltests/fread-error.v:11: $fread's third argument must be numeric.
+ERROR: ivltests/fread-error.v:12: $fread's fourth argument must be numeric.
+ERROR: ivltests/fread-error.v:13: $fread takes at most four arguments.
+                                  Found 1 extra argument.

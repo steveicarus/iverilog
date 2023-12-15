@@ -99,13 +99,6 @@ br_gh306b			normal			ivltests
 case5-syn-fail			normal			ivltests
 casesynth7			normal			ivltests
 casesynth8			normal			ivltests
-memsynth2			normal			ivltests
-memsynth3			normal			ivltests
-memsynth5			normal			ivltests
-memsynth6			normal			ivltests
-memsynth7			normal			ivltests
-memsynth9			normal			ivltests
-mix_reset			normal			ivltests
 
 # These use $abstime() and produce different results when run
 # using SytemVerilog

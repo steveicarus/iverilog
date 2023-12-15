@@ -70,9 +70,6 @@
 # Verilog 95 does not support automatic tasks or functions.
 always_comb_rfunc	CE			ivltests
 always_comb_void_func	CE			ivltests
-automatic_error11	CE			ivltests
-automatic_error12	CE			ivltests
-automatic_error13	CE			ivltests
 automatic_events	CE			ivltests
 automatic_events2	CE			ivltests
 automatic_events3	CE			ivltests
@@ -188,15 +185,10 @@ vhdl_pow_rem		CE,-g2005-sv,-pallowsigned=1,ivltests/vhdl_pow_rem.vhd	ivltests
 
 # IEEE 1364-1995 does not support these SV functions
 sf_countbits		RE,-g2012		ivltests
-sf_countbits_fail	RE,-g2012		ivltests
 sf_countones		RE,-g2009		ivltests
-sf_countones_fail	RE,-g2009		ivltests
 sf_isunknown		RE,-g2005-sv		ivltests
-sf_isunknown_fail	RE,-g2005-sv		ivltests
 sf_onehot		RE,-g2005-sv		ivltests
-sf_onehot_fail		RE,-g2005-sv		ivltests
 sf_onehot0		RE,-g2005-sv		ivltests
-sf_onehot0_fail		RE,-g2005-sv		ivltests
 
 # IEEE 1364-1995 only supports register arrays.
 array_lval_select1	normal,-DVLOG95		ivltests
@@ -220,7 +212,6 @@ br_gh661b		CE			ivltests
 br_ml20171017		CE			ivltests
 genvar_scopes		CE			ivltests
 meminit2		CE			ivltests
-memsynth4		CE,-S			ivltests  # Synthesized net array
 module_port_typedef_array1 CE,-g2005-sv		ivltests  # Module port array
 negative_genvar		CE			ivltests
 pr1565544		CE			ivltests
@@ -249,7 +240,6 @@ real_array		CE			ivltests
 real_array_nb		CE,-pallowsigned=1	ivltests
 real_array_multi_dim	CE,-pallowsigned=1	ivltests
 real_array_store_after_cmp CE			ivltests
-scan-invalid		CE			ivltests
 sel_rval_bit_ob		CE			ivltests
 sel_rval_part_ob	CE			ivltests
 signed_net_display	CE,-pallowsigned=1	ivltests
@@ -275,9 +265,7 @@ final			CE,-g2009		ivltests
 final2			CE,-g2009		ivltests
 program_hello		CE,-g2009		ivltests
 program2		CE,-g2009,-pallowsigned=1	ivltests
-program2b		CE,-g2009,-pallowsigned=1	ivltests
 program3		CE,-g2009		ivltests
-program3a		CE,-g2009		ivltests
 program4		CE,-g2009		ivltests
 
 # No support for the SystemVerilog string data type.
@@ -804,15 +792,11 @@ br1003b			normal,-g2009		ivltests gold=br1003b-vlog95.gold
 br1003c			normal,-g2009		ivltests gold=br1003c-vlog95.gold
 br1003d			normal,-g2009		ivltests gold=br1003d-vlog95.gold
 br1007			normal,-Wselect-range	ivltests gold=br1007-vlog95.gold
-br_gh230		RE			ivltests gold=br_gh230-vlog95.gold
 br_gh889		normal,-gspecify	ivltests gold=br_gh889-vlog95.gold
-eofmt_percent		normal			ivltests gold=eofmt_percent-vlog95.gold
 fatal_et_al		normal			ivltests gold=fatal_et_al-vlog95.gold
-fdisplay3		RE			ivltests gold=fdisplay3-vlog95.gold
 fdisplay_fail_fd	normal			ivltests gold=fdisplay_fail_fd-vlog95.gold
 fdisplay_fail_mcd	normal			ivltests gold=fdisplay_fail_mcd-vlog95.gold
 format			RE			ivltests gold=format-vlog95.gold
-fread-error		RE			ivltests gold=fread-error-vlog95.gold
 fscanf_u_warn		normal			ivltests gold=fscanf_u_warn-vlog95.gold
 fscanf_z_warn		normal			ivltests gold=fscanf_z_warn-vlog95.gold
 mem1			normal			ivltests gold=mem1-vlog95.gold
@@ -822,9 +806,6 @@ pr1698820		normal			ivltests gold=pr1698820-vlog95.gold
 pr1819452		normal			ivltests gold=pr1819452-vlog95.gold
 pr2509349a		normal			ivltests gold=pr2509349a-vlog95.gold
 pr2509349b		normal			ivltests gold=pr2509349b-vlog95.gold
-pr2800985b		RE			ivltests gold=pr2800985b-vlog95.gold
-queue_fail		RE			ivltests gold=queue_fail-vlog95.gold
-readmem-invalid		RE			ivltests gold=readmem-invalid-vlog95.gold
 # Because the lower module has a parameter it is given a unique name that
 # does not match what the code is looking for. If we can verify that there
 # is only a single instance or that the instance has the original or at
@@ -837,9 +818,7 @@ swrite			normal			ivltests gold=swrite-vlog95.gold
 sys_func_task_error	RE			ivltests gold=sys_func_task_error-vlog95.gold
 # In Verilog 95 a system function cannot be called as a task.
 sys_func_as_task	RE,-g2009		ivltests
-warn_opt_sys_tf		RE			ivltests gold=warn_opt_sys_tf-vlog95.gold
 writemem-error		normal			ivltests gold=writemem-error-vlog95.gold
-writemem-invalid	RE			ivltests gold=writemem-invalid-vlog95.gold
 
 # For Verilog 95 signed is supported as an option (-pallowsigned=1).
 array6			normal,-pallowsigned=1	ivltests

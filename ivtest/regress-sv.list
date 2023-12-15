@@ -205,7 +205,6 @@ br_gh411		normal,-g2009		ivltests
 br_gh418		normal,-g2009		ivltests
 br_gh433		normal,-g2009		ivltests gold=br_gh433.gold
 br_gh437		normal,-g2009		ivltests
-br_gh440		CE,-g2009		ivltests gold=br_gh440.gold
 br_gh443		normal,-g2009		ivltests
 br_gh445		normal,-g2009		ivltests
 br_gh461		normal,-g2009		ivltests
@@ -374,7 +373,6 @@ l_impl			normal,-g2005-sv	ivltests
 l_equiv			normal,-g2005-sv	ivltests
 l_equiv_ca		normal,-g2005-sv	ivltests
 l_equiv_const		normal,-g2005-sv	ivltests
-line_directive		normal,-g2009,-I./ivltests	ivltests gold=line_directive.gold
 localparam_implicit	normal,-g2005-sv	ivltests
 localparam_implicit2	CE,-g2005-sv	ivltests
 localparam_implicit3	CE,-g2005-sv	ivltests
@@ -446,9 +444,7 @@ pr3515542		CE,-g2005-sv		ivltests gold=pr3515542.gold
 pr3534333		normal,-g2005-sv	ivltests
 pr3576165		normal,-g2009		ivltests
 program2		normal,-g2009		ivltests
-program2b		normal,-g2009		ivltests
 program3		normal,-g2009		ivltests
-program3a		normal,-g2009		ivltests
 program3b		CE,-g2009		ivltests
 program4		normal,-g2009		ivltests
 program5a		CE,-g2009		ivltests
@@ -466,15 +462,10 @@ recursive_func_const2	normal,-g2005-sv	ivltests gold=recursive_func_const.gold
 sbyte_test		normal,-g2005-sv	ivltests
 scalar_vector		normal,-g2005-sv	ivltests
 sf_countbits		normal,-g2012		ivltests
-sf_countbits_fail	RE,-g2012		ivltests gold=sf_countbits_fail.gold
 sf_countones		normal,-g2009		ivltests
-sf_countones_fail	RE,-g2009		ivltests gold=sf_countones_fail.gold
 sf_isunknown		normal,-g2005-sv	ivltests
-sf_isunknown_fail	RE,-g2005-sv	ivltests gold=sf_isunknown_fail.gold
 sf_onehot		normal,-g2005-sv	ivltests
-sf_onehot_fail		RE,-g2005-sv	ivltests gold=sf_onehot_fail.gold
 sf_onehot0		normal,-g2005-sv	ivltests
-sf_onehot0_fail		RE,-g2005-sv	ivltests gold=sf_onehot0_fail.gold
 sformatf		normal,-g2009		ivltests
 simple_byte		normal,-g2005-sv	ivltests
 simple_int		normal,-g2005-sv	ivltests
@@ -666,9 +657,6 @@ sv_darray_oob_vec2	normal,-g2009		ivltests
 sv_darray_oob_vec4	normal,-g2009		ivltests
 sv_darray_signed	normal,-g2009		ivltests
 sv_darray_word_size	normal,-g2005-sv	ivltests
-sv_default_port_value1	normal,-g2009		ivltests
-sv_default_port_value2	normal,-g2009		ivltests
-sv_default_port_value3	CE,-g2009		ivltests gold=sv_default_port_value3.gold
 sv_deferred_assert1	normal,-g2009		ivltests gold=sv_deferred_assert1.gold
 sv_deferred_assert2	normal,-g2009		ivltests gold=sv_deferred_assert2.gold
 sv_deferred_assume1	normal,-g2009		ivltests gold=sv_deferred_assume1.gold

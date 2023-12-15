@@ -1,0 +1,13 @@
+ivltests/br_gh440.v:4: Error: Class/null r-value not allowed in this context.
+ivltests/br_gh440.v:30: Error: Class/null r-value not allowed in this context.
+ivltests/br_gh440.v:43: error: Both arguments (logic, class) must be class/null for '==' operator.
+ivltests/br_gh440.v:44: error: Class/null is not allowed with the '|' operator.
+ivltests/br_gh440.v:45: error: Class/null is not allowed with the '<<(<)' operator.
+ivltests/br_gh440.v:46: error: Class/null is not allowed with the '<<(<)' operator.
+ivltests/br_gh440.v:46: Error: Class/null r-value not allowed in this context.
+ivltests/br_gh440.v:48: error: Class/null is not allowed with the '<=' operator.
+ivltests/br_gh440.v:49: error: Class/null is not allowed with the '<=' operator.
+ivltests/br_gh440.v:50: error: Class/null is not allowed with the '!' operator.
+ivltests/br_gh440.v:51: Error: Class/null r-value not allowed in this context.
+ivltests/br_gh440.v:52: Error: Class/null r-value not allowed in this context.
+12 error(s) during elaboration.

@@ -1,0 +1,6 @@
+ivltests/sf_countbits_fail.v:6: error: constant function $countbits() does not support a single argument.
+ivltests/sf_countbits_fail.v:7: error: constant function $countbits() does not support a single argument.
+ivltests/sf_countbits_fail.v:8: error: constant function $countbits() does not support a single argument.
+ivltests/sf_countbits_fail.v:9: error: constant function $countbits() does not support a string argument (1).
+ivltests/sf_countbits_fail.v:10: error: constant function $countbits() does not support a string argument (2).
+ivltests/sf_countbits_fail.v:11: error: constant function $countbits() does not support a string argument (3).

@@ -1,0 +1,4 @@
+ERROR: ivltests/sf_onehot_fail.v:6: $onehot's argument must be numeric.
+ERROR: ivltests/sf_onehot_fail.v:7: $onehot's argument must be numeric.
+ERROR: ivltests/sf_onehot_fail.v:8: $onehot takes a single numeric argument.
+                                    Found 1 extra argument.

@@ -1,0 +1,6 @@
+{
+    "type" : "EF",
+    "source" : "sf_countbits_fail.v",
+    "iverilog-args" : [ "-g2012" ],
+    "gold" : "sf_countbits_fail"
+}

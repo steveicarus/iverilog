@@ -1,0 +1,12 @@
+ERROR: ivltests/scan-invalid.v:10: $sscanf requires at least three argument.
+ERROR: ivltests/scan-invalid.v:11: $sscanf's first argument must be a register or a string.
+ERROR: ivltests/scan-invalid.v:12: $sscanf requires at least three argument.
+ERROR: ivltests/scan-invalid.v:13: $sscanf argument 3 (a vpiModule) is not assignable.
+ERROR: ivltests/scan-invalid.v:14: $sscanf argument 3 (a vpiNet) is not assignable.
+ERROR: ivltests/scan-invalid.v:15: $sscanf argument 4 (a vpiNet) is not assignable.
+ERROR: ivltests/scan-invalid.v:20: $fscanf requires at least three argument.
+ERROR: ivltests/scan-invalid.v:21: $fscanf's first argument (fd) must be numeric.
+ERROR: ivltests/scan-invalid.v:22: $fscanf requires at least three argument.
+ERROR: ivltests/scan-invalid.v:23: $fscanf argument 3 (a vpiModule) is not assignable.
+ERROR: ivltests/scan-invalid.v:24: $fscanf argument 3 (a vpiNet) is not assignable.
+ERROR: ivltests/scan-invalid.v:25: $fscanf argument 4 (a vpiNet) is not assignable.

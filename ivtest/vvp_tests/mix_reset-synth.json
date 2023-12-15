@@ -1,0 +1,6 @@
+{
+    "__comment" : "Synthesis not implemented for this yet.",
+    "type" : "NI",
+    "source" : "mix_reset.v",
+    "iverilog-args" : [ "-S" ]
+}

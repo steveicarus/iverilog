@@ -1,0 +1,5 @@
+{
+    "type" : "EF",
+    "source" : "fread-error.v",
+    "gold" : "fread-error"
+}
