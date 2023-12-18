@@ -1,0 +1,6 @@
+{
+    "__comment" : "This doesn't actually work for vlog95 conversion. Fix this?",
+    "type" : "NI",
+    "source" : "program2b.v",
+    "iverilog-args" : [ "-g2009", "-tvlog95", "-pallowsigned=1" ]
+}

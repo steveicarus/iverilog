@@ -1,0 +1,5 @@
+{
+    "type" : "normal",
+    "source" : "param_test3.v",
+    "gold" : "param_test3"
+}

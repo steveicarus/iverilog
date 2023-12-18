@@ -1,0 +1,8 @@
+ERROR: ivltests/sf_countbits_fail.v:6: The first argument to $countbits() must be numeric.
+ERROR: ivltests/sf_countbits_fail.v:6: $countbits() requires at least one control bit argument.
+ERROR: ivltests/sf_countbits_fail.v:7: The first argument to $countbits() must be numeric.
+ERROR: ivltests/sf_countbits_fail.v:7: $countbits() requires at least one control bit argument.
+ERROR: ivltests/sf_countbits_fail.v:8: $countbits() requires at least one control bit argument.
+ERROR: ivltests/sf_countbits_fail.v:9: The first argument to $countbits() must be numeric.
+ERROR: ivltests/sf_countbits_fail.v:10: Control bit argument 1 to $countbits() must be numeric.
+ERROR: ivltests/sf_countbits_fail.v:11: Control bit argument 2 to $countbits() must be numeric.

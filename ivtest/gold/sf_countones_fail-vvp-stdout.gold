@@ -1,0 +1,4 @@
+ERROR: ivltests/sf_countones_fail.v:6: $countones's argument must be numeric.
+ERROR: ivltests/sf_countones_fail.v:7: $countones's argument must be numeric.
+ERROR: ivltests/sf_countones_fail.v:8: $countones takes a single numeric argument.
+                                       Found 1 extra argument.

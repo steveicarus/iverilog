@@ -1,0 +1,4 @@
+ERROR: ivltests/sf_isunknown_fail.v:6: $isunknown's argument must be numeric.
+ERROR: ivltests/sf_isunknown_fail.v:7: $isunknown's argument must be numeric.
+ERROR: ivltests/sf_isunknown_fail.v:8: $isunknown takes a single numeric argument.
+                                       Found 1 extra argument.

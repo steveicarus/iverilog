@@ -1,0 +1,1 @@
+ERROR: ivltests/br_gh230.v:6: $dumpvars cannot dump a vpiPartSelect.

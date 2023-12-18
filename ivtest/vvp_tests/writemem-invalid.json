@@ -1,0 +1,5 @@
+{
+    "type" : "EF",
+    "source" : "writemem-invalid.v",
+    "gold" : "writemem-invalid"
+}

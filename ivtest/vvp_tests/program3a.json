@@ -1,0 +1,5 @@
+{
+    "type" : "normal",
+    "source" : "program3a.v",
+    "iverilog-args" : [ "-g2009" ]
+}

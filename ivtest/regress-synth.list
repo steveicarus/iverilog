@@ -123,15 +123,7 @@ inside_synth2		normal			ivltests
 inside_synth3		normal			ivltests
 land5			normal			ivltests
 lcatsynth		normal			ivltests
-memsynth2		normal			ivltests
-memsynth3		normal			ivltests
-memsynth4		normal			ivltests
-memsynth5		normal			ivltests
-memsynth6		normal			ivltests
-memsynth7		normal			ivltests
 memsynth8		normal			ivltests
-memsynth9		normal			ivltests
-mix_reset		normal			ivltests
 multireg		normal			ivltests
 not_a_latch1		normal			ivltests
 not_a_latch2		normal			ivltests

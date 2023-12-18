@@ -1,0 +1,1 @@
+ERROR: ivltests/automatic_error13.v:10: $fstrobe argument "local" is an automatic variable.

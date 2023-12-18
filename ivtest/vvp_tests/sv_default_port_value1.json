@@ -1,0 +1,5 @@
+{
+    "type" : "normal",
+    "source" : "sv_default_port_value1.v",
+    "iverilog-args" : [ "-g2009" ]
+}

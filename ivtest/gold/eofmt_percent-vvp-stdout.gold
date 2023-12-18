@@ -1,0 +1,2 @@
+WARNING: ivltests/eofmt_percent.v:2: a single % at the end of format string $display<%> will be displayed as '%'.
+The following should be a single percent: %

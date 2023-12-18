@@ -1,0 +1,5 @@
+{
+    "type" : "EF",
+    "source" : "warn_opt_sys_tf.v",
+    "gold" : "warn_opt_sys_tf"
+}

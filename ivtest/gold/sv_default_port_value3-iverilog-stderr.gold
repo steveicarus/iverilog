@@ -1,0 +1,3 @@
+ivltests/sv_default_port_value3.v:3: error: A reference to a net or variable (`v') is not allowed in a constant expression.
+ivltests/sv_default_port_value3.v:3: error: Failed to elaborate port default value.
+2 error(s) during elaboration.

@@ -1,0 +1,70 @@
+ERROR: ivltests/queue_fail.v:7: $q_initialize requires four arguments.
+ERROR: ivltests/queue_fail.v:8: $q_initialize requires a second (<= 32 bit numeric) argument.
+ERROR: ivltests/queue_fail.v:9: $q_initialize requires a second (<= 32 bit numeric) argument.
+ERROR: ivltests/queue_fail.v:10: $q_initialize's first argument must be numeric (<= 32 bits).
+ERROR: ivltests/queue_fail.v:10: $q_initialize requires a second (<= 32 bit numeric) argument.
+ERROR: ivltests/queue_fail.v:11: $q_initialize requires a third (<= 32 bit numeric) argument.
+ERROR: ivltests/queue_fail.v:12: $q_initialize requires a third (<= 32 bit numeric) argument.
+ERROR: ivltests/queue_fail.v:13: $q_initialize's second argument must be numeric (<= 32 bits).
+ERROR: ivltests/queue_fail.v:13: $q_initialize requires a third (<= 32 bit numeric) argument.
+ERROR: ivltests/queue_fail.v:14: $q_initialize requires a fourth (variable) argument.
+ERROR: ivltests/queue_fail.v:15: $q_initialize's third argument must be numeric (<= 32 bits).
+ERROR: ivltests/queue_fail.v:15: $q_initialize requires a fourth (variable) argument.
+ERROR: ivltests/queue_fail.v:16: $q_initialize's fourth argument must be a 32 bit variable.
+ERROR: ivltests/queue_fail.v:17: $q_initialize's fourth (variable) argument must be 32 bits.
+ERROR: ivltests/queue_fail.v:18: $q_initialize takes four arguments.
+                                 Found 1 extra argument.
+ERROR: ivltests/queue_fail.v:20: $q_add requires four arguments.
+ERROR: ivltests/queue_fail.v:21: $q_add requires a second (<= 32 bit numeric) argument.
+ERROR: ivltests/queue_fail.v:22: $q_add requires a second (<= 32 bit numeric) argument.
+ERROR: ivltests/queue_fail.v:23: $q_add's first argument must be numeric (<= 32 bits).
+ERROR: ivltests/queue_fail.v:23: $q_add requires a second (<= 32 bit numeric) argument.
+ERROR: ivltests/queue_fail.v:24: $q_add requires a third (<= 32 bit numeric) argument.
+ERROR: ivltests/queue_fail.v:25: $q_add's second argument must be numeric (<= 32 bits).
+ERROR: ivltests/queue_fail.v:25: $q_add requires a third (<= 32 bit numeric) argument.
+ERROR: ivltests/queue_fail.v:26: $q_add requires a fourth (variable) argument.
+ERROR: ivltests/queue_fail.v:27: $q_add's third argument must be numeric (<= 32 bits).
+ERROR: ivltests/queue_fail.v:27: $q_add requires a fourth (variable) argument.
+ERROR: ivltests/queue_fail.v:28: $q_add's fourth (variable) argument must be 32 bits.
+ERROR: ivltests/queue_fail.v:29: $q_add takes four arguments.
+                                 Found 1 extra argument.
+ERROR: ivltests/queue_fail.v:31: $q_remove requires four arguments.
+ERROR: ivltests/queue_fail.v:32: $q_remove requires a second (variable) argument.
+ERROR: ivltests/queue_fail.v:33: $q_remove requires a second (variable) argument.
+ERROR: ivltests/queue_fail.v:34: $q_remove's first argument must be numeric (<= 32 bits).
+ERROR: ivltests/queue_fail.v:34: $q_remove requires a second (variable) argument.
+ERROR: ivltests/queue_fail.v:35: $q_remove requires a third (variable) argument.
+ERROR: ivltests/queue_fail.v:36: $q_remove's second argument must be a 32 bit variable.
+ERROR: ivltests/queue_fail.v:36: $q_remove requires a third (variable) argument.
+ERROR: ivltests/queue_fail.v:37: $q_remove requires a fourth (variable) argument.
+ERROR: ivltests/queue_fail.v:38: $q_remove's third argument must be a 32 bit variable.
+ERROR: ivltests/queue_fail.v:38: $q_remove requires a fourth (variable) argument.
+ERROR: ivltests/queue_fail.v:39: $q_remove's fourth (variable) argument must be 32 bits.
+ERROR: ivltests/queue_fail.v:40: $q_remove's second (variable) argument must be 32 bits.
+ERROR: ivltests/queue_fail.v:40: $q_remove's third (variable) argument must be 32 bits.
+ERROR: ivltests/queue_fail.v:41: $q_remove takes four arguments.
+                                 Found 1 extra argument.
+ERROR: ivltests/queue_fail.v:43: $q_full requires a second (variable) argument.
+ERROR: ivltests/queue_fail.v:44: $q_full requires a second (variable) argument.
+ERROR: ivltests/queue_fail.v:45: $q_full's first argument must be numeric (<= 32 bits).
+ERROR: ivltests/queue_fail.v:45: $q_full requires a second (variable) argument.
+ERROR: ivltests/queue_fail.v:46: $q_full's second (variable) argument must be 32 bits.
+ERROR: ivltests/queue_fail.v:47: $q_full takes two arguments.
+                                 Found 1 extra argument.
+ERROR: ivltests/queue_fail.v:49: $q_exam requires four arguments.
+ERROR: ivltests/queue_fail.v:50: $q_exam requires a second (<= 32 bit numeric) argument.
+ERROR: ivltests/queue_fail.v:51: $q_exam requires a second (<= 32 bit numeric) argument.
+ERROR: ivltests/queue_fail.v:52: $q_exam's first argument must be numeric (<= 32 bits).
+ERROR: ivltests/queue_fail.v:52: $q_exam requires a second (<= 32 bit numeric) argument.
+ERROR: ivltests/queue_fail.v:53: $q_exam requires a third (variable) argument.
+ERROR: ivltests/queue_fail.v:54: $q_exam requires a third (variable) argument.
+ERROR: ivltests/queue_fail.v:55: $q_exam's second argument must be numeric (<= 32 bits).
+ERROR: ivltests/queue_fail.v:55: $q_exam requires a third (variable) argument.
+ERROR: ivltests/queue_fail.v:56: $q_exam requires a fourth (variable) argument.
+ERROR: ivltests/queue_fail.v:57: $q_exam's third (variable) argument must have at least 32 bits.
+ERROR: ivltests/queue_fail.v:57: $q_exam requires a fourth (variable) argument.
+ERROR: ivltests/queue_fail.v:58: $q_exam's third argument must be a variable.
+ERROR: ivltests/queue_fail.v:58: $q_exam requires a fourth (variable) argument.
+ERROR: ivltests/queue_fail.v:59: $q_exam's fourth (variable) argument must be 32 bits.
+ERROR: ivltests/queue_fail.v:60: $q_exam takes two arguments.
+                                 Found 1 extra argument.

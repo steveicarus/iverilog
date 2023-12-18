@@ -1,0 +1,1 @@
+ERROR: ivltests/automatic_error11.v:9: $monitor argument "local" is an automatic variable.

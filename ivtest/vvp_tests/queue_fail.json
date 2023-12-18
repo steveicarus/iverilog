@@ -1,0 +1,6 @@
+{
+    "type" : "EF",
+    "source" : "queue_fail.v",
+    "iverilog-args" : [ "-g2009" ],
+    "gold" : "queue_fail"
+}

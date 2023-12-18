@@ -249,9 +249,6 @@ sv-2val-nets		normal,-g2009		ivltests
 # Left aligned formats
 pr2476430		normal			ivltests
 
-# A % at the end of the format string is displayed a a %
-eofmt_percent		normal			ivltests gold=eofmt_percent.gold
-
 # Command line parameters
 br_gh377		normal,-Ptest.name=	ivltests gold=br_gh377.gold
 cmdline_parm1		normal,-Pmain.foo=2	ivltests

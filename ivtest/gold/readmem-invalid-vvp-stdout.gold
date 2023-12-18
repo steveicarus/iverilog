@@ -1,0 +1,18 @@
+ERROR: ivltests/readmem-invalid.v:5: $readmemb requires two arguments.
+ERROR: ivltests/readmem-invalid.v:6: $readmemb's first argument must be a file name (string).
+ERROR: ivltests/readmem-invalid.v:6: $readmemb requires a second (memory) argument.
+ERROR: ivltests/readmem-invalid.v:7: $readmemb requires a second (memory) argument.
+ERROR: ivltests/readmem-invalid.v:8: $readmemb's second argument must be a memory.
+ERROR: ivltests/readmem-invalid.v:9: $readmemb's third argument must be a start address (numeric).
+ERROR: ivltests/readmem-invalid.v:10: $readmemb's fourth argument must be a finish address (numeric).
+ERROR: ivltests/readmem-invalid.v:11: $readmemb takes at most four arguments.
+                                      Found 1 extra argument.
+ERROR: ivltests/readmem-invalid.v:13: $readmemh requires two arguments.
+ERROR: ivltests/readmem-invalid.v:14: $readmemh's first argument must be a file name (string).
+ERROR: ivltests/readmem-invalid.v:14: $readmemh requires a second (memory) argument.
+ERROR: ivltests/readmem-invalid.v:15: $readmemh requires a second (memory) argument.
+ERROR: ivltests/readmem-invalid.v:16: $readmemh's second argument must be a memory.
+ERROR: ivltests/readmem-invalid.v:17: $readmemh's third argument must be a start address (numeric).
+ERROR: ivltests/readmem-invalid.v:18: $readmemh's fourth argument must be a finish address (numeric).
+ERROR: ivltests/readmem-invalid.v:19: $readmemh takes at most four arguments.
+                                      Found 1 extra argument.

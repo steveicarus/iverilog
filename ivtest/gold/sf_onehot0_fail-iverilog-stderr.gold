@@ -1,0 +1,2 @@
+ivltests/sf_onehot0_fail.v:7: error: constant function $onehot0() does not support a string argument (1).
+ivltests/sf_onehot0_fail.v:8: error: constant function $onehot0() does not support two arguments.

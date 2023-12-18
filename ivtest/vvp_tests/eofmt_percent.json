@@ -1,0 +1,5 @@
+{
+    "type" : "normal",
+    "source" : "eofmt_percent.v",
+    "gold" : "eofmt_percent"
+}

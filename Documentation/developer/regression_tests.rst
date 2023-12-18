@@ -62,9 +62,11 @@ This describes the kind of test to run. The valid values are:
 * **NI** - Mark the test as not implemented. The test will be skipped without
   running or reporting an error.
 
-* **CE** - Compile, but expect the compiler to fail
+* **CE** - Compile, but expect the compiler to fail. This means the compiler
+  command process must return an error exit.
 
-* **EF** - Compile and run, burt expect the run time to fail.
+* **EF** - Compile and run, but expect the run time to fail. This means the
+  run time program must return an error exit.
 
 gold (optional)
 ^^^^^^^^^^^^^^^
@@ -76,6 +78,31 @@ basename of the gold files, with separate actual gold files for the iverilog
 and vvp stderr and stdout. For example, if a "normal" test includes a gold
 file, then the program is compiled and run, and the outputs are compared with
 the gold file to make sure it ran properly.
+
+The way the regression suite works, there are 4 log files created for each
+test:
+
+* foo-iverilog-stdout.log
+* foo-iverilog-stderr.log
+* foo-vvp-stdout.log
+* foo-vvp-stderr.log
+
+The "gold" value is the name of the gold file set. If the gold value is "foo",
+Then the actual gold files are called:
+
+* gold/foo-iverilog-stdout.gold
+* gold/foo-iverilog-stderr.gold
+* gold/foo-vvp-stdout.gold
+* gold/foo/vvp-stderr.gold
+
+If any of those files is empty, then the gold file doesn't need to be
+present at all. The log files and the gold files are compared byte for
+byte, so if the output you are getting is correct, then copy the log to
+the corresponding gold, and you're done.
+
+If the run type is "CE" or "RE", then the gold files still work, and can
+be used to check that the error message is correct. If the gold file setting
+is present, the error return is required, and also the gold files must match.
 
 iverilog-args (optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^

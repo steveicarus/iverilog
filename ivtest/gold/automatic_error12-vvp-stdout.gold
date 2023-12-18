@@ -1,0 +1,1 @@
+ERROR: ivltests/automatic_error12.v:10: $strobe argument "local" is an automatic variable.

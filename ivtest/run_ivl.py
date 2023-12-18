@@ -151,7 +151,7 @@ def run_CE(options : dict) -> list:
     else:
         return [0, "Passed - CE"]
 
-def check_run_outputs(options : dict, expected_fail : bool, it_stdout : str, log_list : list) -> list:
+def check_run_outputs(options : dict, it_stdout : str, log_list : list) -> list:
     '''Check the output files, and return success for failed.
 
     This function takes an options dictionary that describes the settings, and
@@ -166,16 +166,10 @@ def check_run_outputs(options : dict, expected_fail : bool, it_stdout : str, log
     if it_gold is not None:
         compared = check_gold(it_key, it_gold, log_list)
 
-        if expected_fail:
-            if compared:
-                return [1, "Failed = Passed, but expected failure"]
-            else:
-                return [0, "Passed - Expected fail"]
+        if compared:
+            return [0, "Passed"]
         else:
-            if compared:
-                return [0, "Passed"]
-            else:
-                return [1, "Failed - Gold output doesn't match actual output."]
+            return [1, "Failed - Gold output doesn't match actual output."]
 
     # If there is a diff description, then compare named files instead of
     # the log and a gold file.
@@ -209,10 +203,7 @@ def check_run_outputs(options : dict, expected_fail : bool, it_stdout : str, log
     # Otherwise, look for the PASSED output string in stdout.
     for line in it_stdout.splitlines():
         if line == "PASSED":
-            if expected_fail:
-                return [1, "Failed - Passed, but expected failure"]
-            else:
-                return [0, "Passed"]
+            return [0, "Passed"]
 
     # If there is no PASSED output, and nothing else to check, then
     # assume a failure.
@@ -267,7 +258,7 @@ def do_run_normal_vlog95(options : dict, expected_fail : bool) -> list:
                 "iverilog-vlog95-stdout", "iverilog-vlog95-stderr",
                 "vvp-stdout", "vvp-stderr"]
 
-    return check_run_outputs(options, expected_fail, it_stdout, log_list)
+    return check_run_outputs(options, it_stdout, log_list)
 
 
 def do_run_normal(options : dict, expected_fail : bool) -> list:
@@ -298,14 +289,18 @@ def do_run_normal(options : dict, expected_fail : bool) -> list:
     vvp_res = run_cmd(vvp_cmd)
     log_results(it_key, "vvp", vvp_res);
 
-    if vvp_res.returncode != 0:
-        return [1, "Failed - Vvp execution failed"]
+    if vvp_res.returncode == 0 and expected_fail:
+        return [1, "Failed - Vvp execution did not fail, but was expted to fail."]
+    if vvp_res.returncode >= 256:
+        return [1, "Failed - Vvp execution error"]
+    if vvp_res.returncode > 0 and vvp_res.returncode < 256 and not expected_fail:
+        return [1, "Failed - Vvp error, but expected to succeed"]
 
     it_stdout = vvp_res.stdout.decode('ascii')
     log_list = ["iverilog-stdout", "iverilog-stderr",
                 "vvp-stdout", "vvp-stderr"]
 
-    return check_run_outputs(options, expected_fail, it_stdout, log_list)
+    return check_run_outputs(options, it_stdout, log_list)
 
 def run_normal(options : dict) -> list:
     return do_run_normal(options, False)

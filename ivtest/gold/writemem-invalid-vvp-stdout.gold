@@ -1,0 +1,18 @@
+ERROR: ivltests/writemem-invalid.v:5: $writememb requires two arguments.
+ERROR: ivltests/writemem-invalid.v:6: $writememb's first argument must be a file name (string).
+ERROR: ivltests/writemem-invalid.v:6: $writememb requires a second (memory) argument.
+ERROR: ivltests/writemem-invalid.v:7: $writememb requires a second (memory) argument.
+ERROR: ivltests/writemem-invalid.v:8: $writememb's second argument must be a memory.
+ERROR: ivltests/writemem-invalid.v:9: $writememb's third argument must be a start address (numeric).
+ERROR: ivltests/writemem-invalid.v:10: $writememb's fourth argument must be a finish address (numeric).
+ERROR: ivltests/writemem-invalid.v:11: $writememb takes at most four arguments.
+                                       Found 1 extra argument.
+ERROR: ivltests/writemem-invalid.v:13: $writememh requires two arguments.
+ERROR: ivltests/writemem-invalid.v:14: $writememh's first argument must be a file name (string).
+ERROR: ivltests/writemem-invalid.v:14: $writememh requires a second (memory) argument.
+ERROR: ivltests/writemem-invalid.v:15: $writememh requires a second (memory) argument.
+ERROR: ivltests/writemem-invalid.v:16: $writememh's second argument must be a memory.
+ERROR: ivltests/writemem-invalid.v:17: $writememh's third argument must be a start address (numeric).
+ERROR: ivltests/writemem-invalid.v:18: $writememh's fourth argument must be a finish address (numeric).
+ERROR: ivltests/writemem-invalid.v:19: $writememh takes at most four arguments.
+                                       Found 1 extra argument.

@@ -1,0 +1,16 @@
+SORRY: ivltests/warn_opt_sys_tf.v:7: $getpattern() is not available in Icarus Verilog.
+SORRY: ivltests/warn_opt_sys_tf.v:8: $input() is not available in Icarus Verilog.
+SORRY: ivltests/warn_opt_sys_tf.v:9: $key() is not available in Icarus Verilog.
+SORRY: ivltests/warn_opt_sys_tf.v:10: $nokey() is not available in Icarus Verilog.
+SORRY: ivltests/warn_opt_sys_tf.v:11: $list() is not available in Icarus Verilog.
+SORRY: ivltests/warn_opt_sys_tf.v:12: $log() is not available in Icarus Verilog.
+SORRY: ivltests/warn_opt_sys_tf.v:13: $nolog() is not available in Icarus Verilog.
+SORRY: ivltests/warn_opt_sys_tf.v:14: $save() is not available in Icarus Verilog.
+SORRY: ivltests/warn_opt_sys_tf.v:15: $restart() is not available in Icarus Verilog.
+SORRY: ivltests/warn_opt_sys_tf.v:16: $incsave() is not available in Icarus Verilog.
+SORRY: ivltests/warn_opt_sys_tf.v:17: $scale() is not available in Icarus Verilog.
+SORRY: ivltests/warn_opt_sys_tf.v:18: $scope() is not available in Icarus Verilog.
+SORRY: ivltests/warn_opt_sys_tf.v:19: $showscopes() is not available in Icarus Verilog.
+SORRY: ivltests/warn_opt_sys_tf.v:20: $showvars() is not available in Icarus Verilog.
+SORRY: ivltests/warn_opt_sys_tf.v:21: $sreadmemb() is not available in Icarus Verilog.
+SORRY: ivltests/warn_opt_sys_tf.v:22: $sreadmemh() is not available in Icarus Verilog.

@@ -51,7 +51,6 @@ if ($#ARGV != -1) {
     if ($force_sv) {
         &read_regression_list("regress-fsv.list", $ver, $force_sv, "");
     }
-    &read_regression_list("regress-v$ver.list", $ver, $force_sv, "");
     &read_regression_list("regress-ivl1.list", $ver, $force_sv, "");
     &read_regression_list("regress-vlg.list",  $ver, $force_sv, "");
     if ($ver >= 10) {
