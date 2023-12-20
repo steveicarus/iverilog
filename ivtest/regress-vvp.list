@@ -7,6 +7,7 @@ always4B			vvp_tests/always4B.json
 analog1				vvp_tests/analog1.json
 analog2				vvp_tests/analog2.json
 array_packed_write_read		vvp_tests/array_packed_write_read.json
+array_slice_concat		vvp_tests/array_slice_concat.json
 automatic_error11		vvp_tests/automatic_error11.json
 automatic_error12		vvp_tests/automatic_error12.json
 automatic_error13		vvp_tests/automatic_error13.json
