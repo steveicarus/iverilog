@@ -18,7 +18,7 @@
  */
 
 # include  "compile.h"
-# include  "vvp_net.h"
+# include  "concat.h"
 # include  <cstdlib>
 # include  <iostream>
 # include  <cassert>
@@ -64,7 +64,18 @@ void vvp_fun_concat::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       if (!val_.set_vec(off, bit))
 	    return;
 
-      port.ptr()->send_vec4(val_, 0);
+      if (net_)
+	    return;
+
+      net_ = port.ptr();
+      schedule_functor(this);
+}
+
+void vvp_fun_concat::run_run()
+{
+      vvp_net_t *ptr = net_;
+      net_ = nullptr;
+      ptr->send_vec4(val_, 0);
 }
 
 void compile_concat(char*label, unsigned w0, unsigned w1,
@@ -135,7 +146,18 @@ void vvp_fun_concat8::recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
 
       val_.set_vec(off, bit);
 
-      port.ptr()->send_vec8(val_);
+      if (net_)
+	    return;
+
+      net_ = port.ptr();
+      schedule_functor(this);
+}
+
+void vvp_fun_concat8::run_run()
+{
+      vvp_net_t *ptr = net_;
+      net_ = nullptr;
+      ptr->send_vec8(val_);
 }
 
 void compile_concat8(char*label, unsigned w0, unsigned w1,
