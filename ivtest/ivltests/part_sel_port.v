@@ -33,6 +33,7 @@ mod_test dut(test_string[1:8]);
 mod_test2 dut2(test_string[9:16]);
 
 initial begin
+    #0
     if(test_string !== "testTESTabcdefgh") begin
         $display("FAILED");
         $finish();
