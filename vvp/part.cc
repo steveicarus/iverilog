@@ -29,10 +29,9 @@
 using namespace std;
 
 struct vvp_fun_part_state_s {
-      vvp_fun_part_state_s() : bitsr(0.0) {}
+      vvp_fun_part_state_s() {}
 
       vvp_vector4_t bits;
-      double bitsr;
 };
 
 vvp_fun_part::vvp_fun_part(unsigned base, unsigned wid)
