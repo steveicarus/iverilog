@@ -2313,30 +2313,6 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
       return sys_expr;
 }
 
-/*
- * If the method matches a structure member then return the member otherwise
- * return 0. Also return the offset of the member.
- */
-static const netstruct_t::member_t*get_struct_member(const LineInfo*li,
-                                                     Design*des, NetScope*,
-                                                     NetNet*net,
-                                                     perm_string method_name,
-                                                     unsigned long&off)
-{
-      const netstruct_t*type = net->struct_type();
-      ivl_assert(*li, type);
-
-      if (! type->packed()) {
-	    cerr << li->get_fileline()
-	         << ": sorry: unpacked structures not supported here. "
-		 << "Method=" << method_name << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
-      return type->packed_member(method_name, off);
-}
-
 bool calculate_part(const LineInfo*li, Design*des, NetScope*scope,
 		    const index_component_t&index, long&off, unsigned long&wid)
 {
@@ -4212,73 +4188,6 @@ NetExpr* PEIdent::calculate_up_do_base_(Design*des, NetScope*scope,
       return tmp;
 }
 
-unsigned PEIdent::test_width_method_(const symbol_search_results &sr)
-{
-      if (!gn_system_verilog())
-	    return 0;
-      if (path_.size() < 2)
-	    return 0;
-
-      pform_name_t use_path = path_.name;
-      perm_string member_name = peek_tail_name(path_);
-      use_path.pop_back();
-
-      if (debug_elaborate) {
-	    cerr << get_fileline() << ": PEIdent::test_width_method_: "
-		 << "Try to find method=" << member_name
-		 << " of signal " << use_path << endl;
-      }
-
-      NetNet *net = sr.net;
-      if (net == 0) {
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": PEIdent::test_width_method_: "
-		       << "Only nets can have methods, so give up here." << endl;
-	    return 0;
-      }
-
-      if (/*const netdarray_t*dtype =*/ net->darray_type()) {
-	    if (member_name == "size") {
-		  expr_type_  = IVL_VT_BOOL;
-		  expr_width_ = 32;
-		  min_width_  = 32;
-		  signed_flag_= true;
-		  return 32;
-	    }
-      }
-
-      if (const class netqueue_t *queue = net->queue_type()) {
-	    if (member_name == "pop_back" || member_name == "pop_front") {
-		  expr_type_ = queue->element_base_type();
-		  expr_width_ = queue->element_width();
-		  min_width_ = expr_width_;
-		  signed_flag_ = queue->get_signed();
-		  return expr_width_;
-	    }
-      }
-
-	// Look for the enumeration attributes.
-      if (const netenum_t*netenum = net->enumeration()) {
-	    if (member_name == "num") {
-		  expr_type_  = IVL_VT_BOOL;
-		  expr_width_ = 32;
-		  min_width_  = 32;
-		  signed_flag_= true;
-		  return 32;
-	    }
-	    if ((member_name == "first") || (member_name == "last") ||
-	        (member_name == "next") || (member_name == "prev")) {
-		  expr_type_  = netenum->base_type();
-		  expr_width_ = netenum->packed_width();;
-		  min_width_ = expr_width_;
-		  signed_flag_ = netenum->get_signed();
-		  return expr_width_;
-	    }
-      }
-
-      return 0;
-}
-
 unsigned PEIdent::test_width_parameter_(const NetExpr *par, width_mode_t&mode)
 {
 	// The width of an enumeration literal is the width of the
@@ -4306,14 +4215,126 @@ unsigned PEIdent::test_width_parameter_(const NetExpr *par, width_mode_t&mode)
       return expr_width_;
 }
 
+ivl_type_t PEIdent::resolve_type_(Design *des, const symbol_search_results &sr,
+				  unsigned int &index_depth) const
+{
+      ivl_type_t type;
+      if (sr.net && sr.net->unpacked_dimensions())
+	    type = sr.net->array_type();
+      else
+	    type = sr.type;
+
+      auto path = sr.path_tail.cbegin();
+
+      ivl_assert(*this, !sr.path_head.empty());
+
+      // Start with processing the indices of the path head
+      auto indices = &sr.path_head.back().index;
+
+      while (type) {
+	    auto index = indices->cbegin();
+	    index_depth = indices->size();
+
+	    // First process all indices
+	    while (index_depth) {
+		  if (type == &netstring_t::type_string) {
+			index++;
+			index_depth--;
+			type = &netvector_t::atom2u8;
+		  } else if (auto array = dynamic_cast<const netsarray_t*>(type)) {
+			auto array_size = array->static_dimensions().size();
+
+			// Not enough indices to consume the array
+			if (index_depth < array_size)
+			      return type;
+
+			index_depth -= array_size;
+			while (array_size--)
+			      index++;
+
+			type = array->element_type();
+		  } else if (auto darray = dynamic_cast<const netdarray_t*>(type)) {
+			index++;
+			index_depth--;
+			type = darray->element_type();
+		  } else {
+			return type;
+		  }
+	    }
+
+	    if (path == sr.path_tail.cend())
+		  return type;
+
+	    // Next look up the next path element based on name
+
+	    const auto &name = path->name;
+
+	    if (auto class_type = dynamic_cast<const netclass_t*>(type)) {
+		  // If the type is an object, the next path member may be a
+		  // class property.
+		  ivl_type_t par_type;
+		  if (class_type->get_parameter(des, name, par_type)) {
+			type = par_type;
+		  } else {
+			int pidx = class_type->property_idx_from_name(name);
+			if (pidx < 0)
+			      return nullptr;
+
+			type = class_type->get_prop_type(pidx);
+		  }
+	    } else if (auto struct_type = dynamic_cast<const netstruct_t*>(type)) {
+		  // If this net is a struct, the next path element may be a
+		  // struct member. If it is, then we know the type of this
+		  // identifier by knowing the type of the member.
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": debug: PEIdent::test_width: "
+			     << "Element is a struct, "
+			     << "checking width of member " << name << endl;
+		  }
+
+		  unsigned long unused;
+		  auto mem = struct_type->packed_member(name, unused);
+		  if (!mem)
+			return nullptr;
+
+		  type = mem->net_type;
+	    } else if (auto queue = dynamic_cast<const netqueue_t*>(type)) {
+		  if (name == "size")
+			type = &netvector_t::atom2s32;
+		  else if (name == "pop_back" || name == "pop_front")
+			type = queue->element_type();
+		  else
+			return nullptr;
+	    } else if (dynamic_cast<const netdarray_t*>(type)) {
+		  if (name == "size")
+			type = &netvector_t::atom2s32;
+		  else
+			return nullptr;
+	    } else if (auto netenum = dynamic_cast<const netenum_t*>(type)) {
+		  if (name == "num")
+			type = &netvector_t::atom2s32;
+		  else if ((name == "first") || (name == "last") ||
+			   (name == "next") || (name == "prev"))
+			type = netenum;
+		  else
+			return nullptr;
+	    } else {
+		  // Type has no members, properties or functions. Path is
+		  // invalid.
+		  return nullptr;
+	    }
+
+	    indices = &path->index;
+	    path++;
+      }
+
+      return type;
+}
+
 unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
       symbol_search_results sr;
-      symbol_search(this, des, scope, path_, &sr);
-
-      if (unsigned tmp = test_width_method_(sr)) {
-	    return tmp;
-      }
+      bool found_symbol = symbol_search(this, des, scope, path_, &sr);
 
 	// If there is a part/bit select expression, then process it
 	// here. This constrains the results no matter what kind the
@@ -4364,60 +4385,19 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    ivl_assert(*this, 0);
       }
 
-      if (const netdarray_t*darray = sr.net ? sr.net->darray_type() : NULL) {
-	    switch (use_sel) {
-		case index_component_t::SEL_BIT:
-		case index_component_t::SEL_BIT_LAST:
-		  expr_type_   = darray->element_base_type();
-		  expr_width_  = darray->element_width();
-		  min_width_   = expr_width_;
-		  signed_flag_ = sr.net->get_signed();
-		  break;
-		default:
-		  expr_type_   = sr.net->data_type();
-		  expr_width_  = sr.net->vector_width();
-		  min_width_   = expr_width_;
-		  signed_flag_ = sr.net->get_signed();
-		  break;
-	    }
-	    return expr_width_;
-      }
+      unsigned int use_depth = path_.back().index.size();
+      ivl_type_t type = nullptr;
 
-      if (sr.net) {
-	      // Similarly, if this net is an object, the path tail may
-	      // be a class property.
-	    const netclass_t *class_type = dynamic_cast<const netclass_t*>(sr.type);
-	    if (class_type && !sr.path_tail.empty()) {
-		  perm_string pname = peek_tail_name(sr.path_tail);
-		  ivl_type_t par_type;
-		  const NetExpr *par = class_type->get_parameter(des, pname, par_type);
-		  if (par)
-			return test_width_parameter_(par, mode);
+      if (found_symbol)
+	    type = resolve_type_(des, sr, use_depth);
 
-		  int pidx = class_type->property_idx_from_name(pname);
-		  if (pidx >= 0) {
-			const name_component_t member_comp = sr.path_tail.front();
-			ivl_type_t ptype = class_type->get_prop_type(pidx);
-			if (!member_comp.index.empty()) {
-			      const netuarray_t*tmp_ua = dynamic_cast<const netuarray_t*>(ptype);
-			      if (tmp_ua) ptype = tmp_ua->element_type();
-			}
-			expr_type_   = ptype->base_type();
-			expr_width_  = ptype->packed_width();
-			min_width_   = expr_width_;
-			signed_flag_ = ptype->get_signed();
-			return expr_width_;
-		  }
-	    }
-      }
-
-      size_t use_depth = name_tail.index.size();
-      if (use_width != UINT_MAX && (!sr.net || use_depth > sr.net->unpacked_dimensions())) {
+      if (use_width != UINT_MAX && (!type || (use_depth != 0 && type->packed()))) {
 	      // We have a bit/part select. Account for any remaining dimensions
 	      // beyond the indexed dimension.
-	    if (sr.net) {
-		  use_depth -= sr.net->unpacked_dimensions();
-		  use_width *= sr.net->slice_width(use_depth);
+	    if (type) {
+		  const auto &slice_dims = type->slice_dimensions();
+		  for ( ; use_depth < slice_dims.size(); use_depth++)
+			use_width *= slice_dims[use_depth].width();
 	    }
 
 	    expr_type_   = IVL_VT_LOGIC; // Assume bit/parts selects are logic
@@ -4428,77 +4408,51 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    return expr_width_;
       }
 
-	// The width of a signal expression is the width of the signal.
-      if (sr.net != 0) {
-	      // If this net is a struct, the path tail may be
-	      // a struct member. If it is, then we know the
-	      // width of this identifier by knowing the width
-	      // of the member. We don't even need to know
-	      // anything about positions in containing arrays.
-	    if (sr.net->struct_type() != 0 && !sr.path_tail.empty()) {
+      // The width of a parameter is the width of the parameter value
+      // (as evaluated earlier).
+      if (sr.par_val != 0)
+	    return test_width_parameter_(sr.par_val, mode);
 
-		  if (debug_elaborate) {
-			cerr << get_fileline() << ": debug: PEIdent::test_width: "
-			     << "Net " << sr.path_head << " is a struct, "
-			     << "checking width of member " << sr.path_tail << endl;
-		  }
-
-		  const netstruct_t::member_t*mem;
-		  unsigned long unused;
-		  mem = get_struct_member(this, des, scope, sr.net,
-					  peek_tail_name(sr.path_tail), unused);
-		  if (mem) {
-			expr_type_   = mem->data_type();
-			expr_width_  = mem->net_type->packed_width();
-			min_width_   = expr_width_;
-			signed_flag_ = mem->get_signed();
-			return expr_width_;
-		  }
-	    }
-
+      // If the identifier has a type take the information from the type
+      if (type) {
 	      // Unindexed indentifier
 	    if (use_width == UINT_MAX)
 		  use_width = 1;
-	      // Account for unpacked dimensions by assuming that the
-	      // unpacked dimensions are consumed first, so subtract
-	      // the unpacked dimensions from the dimension depth
-	      // useable for making the slice.
-	    if (use_depth >= sr.net->unpacked_dimensions()) {
-		  use_depth -= sr.net->unpacked_dimensions();
-	    } else {
-		    // In this case, we have an unpacked array or a slice of an
-		    // unpacked array. These expressions strictly speaking do
-		    // not have a width. But we use the value calculated here
-		    // for things $bits(), so return the full number of bits of
-		    // the expression.
-		  const auto &dims = sr.net->unpacked_dims();
-		  for (size_t idx = use_depth; idx < dims.size(); idx++)
-			use_width *= dims[idx].width();
+
+	    // In this case, we have an unpacked array or a slice of an
+	    // unpacked array. These expressions strictly speaking do
+	    // not have a width. But we use the value calculated here
+	    // for things $bits(), so return the full number of bits of
+	    // the expression.
+	    while (auto uarray = dynamic_cast<const netuarray_t *>(type)) {
+		  const auto &dims = uarray->static_dimensions();
+		  for ( ; use_depth < dims.size(); use_depth++)
+			use_width *= dims[use_depth].width();
+
+		  type = uarray->element_type();
 		  use_depth = 0;
 	    }
 
-	    expr_type_   = sr.net->data_type();
-	    expr_width_  = sr.net->slice_width(use_depth) * use_width;
+	    const auto &slice_dims = type->slice_dimensions();
+	    for ( ; use_depth < slice_dims.size(); use_depth++)
+		  use_width *= slice_dims[use_depth].width();
+
+	    expr_type_   = type->base_type();
+	    expr_width_  = use_width;
 	    min_width_   = expr_width_;
-	    signed_flag_ = sr.net->get_signed();
+	    signed_flag_ = type->get_signed();
+
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": PEIdent::test_width: "
-		       << sr.net->name() << " is a net, "
-		       << "type=" << expr_type_
+		       << path_
+		       << ", type=" << expr_type_
 		       << ", width=" << expr_width_
 		       << ", signed_=" << (signed_flag_ ? "true" : "false")
 		       << ", use_depth=" << use_depth
-		       << ", packed_dimensions=" << sr.net->packed_dimensions()
-		       << ", unpacked_dimensions=" << sr.net->unpacked_dimensions()
 		       << endl;
 	    }
 	    return expr_width_;
       }
-
-	// The width of a parameter is the width of the parameter value
-        // (as evaluated earlier).
-      if (sr.par_val != 0)
-	    return test_width_parameter_(sr.par_val, mode);
 
       if (path_.size() == 1
 	  && scope->genvar_tmp.str()

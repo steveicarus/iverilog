@@ -530,10 +530,10 @@ class PEIdent : public PExpr {
 					   unsigned expr_wid,
 					   unsigned flags) const;
 
-      unsigned test_width_method_(const symbol_search_results &sr);
-
-
       unsigned test_width_parameter_(const NetExpr *par, width_mode_t&mode);
+
+      ivl_type_t resolve_type_(Design *des, const symbol_search_results &sr,
+			       unsigned int &index_depth) const;
 
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
