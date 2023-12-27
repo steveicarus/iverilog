@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,7 +28,6 @@ static void show_prop_type_vector(ivl_type_t ptype)
 {
       ivl_variable_type_t data_type = ivl_type_base(ptype);
       unsigned packed_dimensions = ivl_type_packed_dimensions(ptype);
-      assert(packed_dimensions < 2);
 
       const char*signed_flag = ivl_type_signed(ptype)? "s" : "";
       char code = data_type==IVL_VT_BOOL? 'b' : 'L';
@@ -37,12 +36,8 @@ static void show_prop_type_vector(ivl_type_t ptype)
 	    fprintf(vvp_out, "\"%s%c1\"", signed_flag, code);
 
       } else {
-	    assert(packed_dimensions == 1);
-	    assert(ivl_type_packed_lsb(ptype,0) == 0);
-	    assert(ivl_type_packed_msb(ptype,0) >= 0);
-
 	    fprintf(vvp_out, "\"%s%c%d\"", signed_flag, code,
-		    ivl_type_packed_msb(ptype,0)+1);
+		    ivl_type_packed_width(ptype));
       }
 }
 
