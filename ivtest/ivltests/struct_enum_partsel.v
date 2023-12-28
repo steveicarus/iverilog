@@ -3,7 +3,7 @@ module main;
    typedef enum logic [2:0] {
       ENUM_VAL = 3'b110
    } enumtype;
-   
+
    typedef struct packed {
       enumtype e;
    } structtype;
