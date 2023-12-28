@@ -14,6 +14,8 @@ bits4				vvp_tests/bits4.json
 bitsel11			vvp_tests/bitsel11.json
 br_gh13a			vvp_tests/br_gh13a.json
 br_gh13a-vlog95			vvp_tests/br_gh13a-vlog95.json
+br_gh99c			vvp_tests/br_gh99c.json
+br_gh99c-vlog95			vvp_tests/br_gh99c-vlog95.json
 br_gh230			vvp_tests/br_gh230.json
 br_gh383a			vvp_tests/br_gh383a.json
 br_gh383b			vvp_tests/br_gh383b.json
@@ -21,8 +23,7 @@ br_gh383c			vvp_tests/br_gh383c.json
 br_gh383d			vvp_tests/br_gh383d.json
 br_gh440			vvp_tests/br_gh440.json
 br_gh939			vvp_tests/br_gh939.json
-br_gh99c			vvp_tests/br_gh99c.json
-br_gh99c-vlog95			vvp_tests/br_gh99c-vlog95.json
+br_gh1018			vvp_tests/br_gh1018.json
 ca_time_real`			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json
