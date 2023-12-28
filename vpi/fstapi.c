@@ -193,6 +193,16 @@ void **JenkinsIns(void *base_i, const unsigned char *mem, uint32_t length, uint3
 
 
 /*
+ * report abort messages
+ */
+static void chk_report_abort(const char *s)
+{
+fprintf(stderr,"Triggered %s security check, exiting.\n", s);
+abort();
+}
+
+
+/*
  * prevent old file overwrite when currently being read
  */
 static FILE *unlink_fopen(const char *nam, const char *mode)
@@ -550,7 +560,8 @@ return(rc);
 
 static uint32_t fstReaderVarint32(FILE *f)
 {
-unsigned char buf[5];
+int chk_len = 5; /* TALOS-2023-1783 */
+unsigned char buf[chk_len];
 unsigned char *mem = buf;
 uint32_t rc = 0;
 int ch;
@@ -559,7 +570,9 @@ do
         {
         ch = fgetc(f);
         *(mem++) = ch;
-        } while(ch & 0x80);
+        } while((ch & 0x80) && (--chk_len));
+
+if(ch & 0x80) chk_report_abort("TALOS-2023-1783");
 mem--;
 
 for(;;)
@@ -579,7 +592,8 @@ return(rc);
 
 static uint32_t fstReaderVarint32WithSkip(FILE *f, uint32_t *skiplen)
 {
-unsigned char buf[5];
+int chk_len = 5; /* TALOS-2023-1783 */
+unsigned char buf[chk_len];
 unsigned char *mem = buf;
 uint32_t rc = 0;
 int ch;
@@ -588,7 +602,9 @@ do
         {
         ch = fgetc(f);
         *(mem++) = ch;
-        } while(ch & 0x80);
+        } while((ch & 0x80) && (--chk_len));
+
+if(ch & 0x80) chk_report_abort("TALOS-2023-1783");
 *skiplen = mem - buf;
 mem--;
 
@@ -609,7 +625,8 @@ return(rc);
 
 static uint64_t fstReaderVarint64(FILE *f)
 {
-unsigned char buf[16];
+int chk_len = 16; /* TALOS-2023-1783 */
+unsigned char buf[chk_len];
 unsigned char *mem = buf;
 uint64_t rc = 0;
 int ch;
@@ -618,8 +635,11 @@ do
         {
         ch = fgetc(f);
         *(mem++) = ch;
-        } while(ch & 0x80);
+        } while((ch & 0x80) && (--chk_len));
+
+if(ch & 0x80) chk_report_abort("TALOS-2023-1783");
 mem--;
+
 
 for(;;)
         {
@@ -1837,6 +1857,14 @@ if(xc->parallel_enabled)
 
         xc->xc_parent = xc;
         memcpy(xc2, xc, sizeof(struct fstWriterContext));
+
+	if(sizeof(size_t) < sizeof(uint64_t))
+		{
+		/* TALOS-2023-1777 for 32b overflow */
+		uint64_t chk_64 = xc->maxhandle * 4 * sizeof(uint32_t);
+		size_t   chk_32 = xc->maxhandle * 4 * sizeof(uint32_t);
+		if(chk_64 != chk_32) chk_report_abort("TALOS-2023-1777");
+		}
 
         xc2->valpos_mem = (uint32_t *)malloc(xc->maxhandle * 4 * sizeof(uint32_t));
         memcpy(xc2->valpos_mem, xc->valpos_mem, xc->maxhandle * 4 * sizeof(uint32_t));
@@ -3434,7 +3462,7 @@ return(rc);
 
 
 #ifndef FST_WRITEX_DISABLE
-static void fstWritex(struct fstReaderContext *xc, void *v, int len)
+static void fstWritex(struct fstReaderContext *xc, void *v, uint32_t len) /* TALOS-2023-1793: change len to unsigned */
 {
 unsigned char *s = (unsigned char *)v;
 
@@ -5060,6 +5088,7 @@ if(fv)
 for(;;)
         {
         uint32_t *tc_head = NULL;
+	uint32_t tc_head_items = 0;
         traversal_mem_offs = 0;
 
         fstReaderFseeko(xc, xc->f, blkpos, SEEK_SET);
@@ -5103,12 +5132,12 @@ for(;;)
                 }
 
 
-        mem_required_for_traversal = fstReaderUint64(xc->f);
-        mem_for_traversal = (unsigned char *)malloc(mem_required_for_traversal + 66); /* add in potential fastlz overhead */
+        mem_required_for_traversal = fstReaderUint64(xc->f) + 66; /* add in potential fastlz overhead */
+        mem_for_traversal = (unsigned char *)malloc(mem_required_for_traversal);
 #ifdef FST_DEBUG
         fprintf(stderr, FST_APIMESS "sec: %u seclen: %d begtim: %d endtim: %d\n",
                 secnum, (int)seclen, (int)beg_tim, (int)end_tim);
-        fprintf(stderr, FST_APIMESS "mem_required_for_traversal: %d\n", (int)mem_required_for_traversal);
+        fprintf(stderr, FST_APIMESS "mem_required_for_traversal: %d\n", (int)mem_required_for_traversal-66);
 #endif
         /* process time block */
         {
@@ -5158,6 +5187,22 @@ for(;;)
                 }
 
         free(time_table);
+
+	if(sizeof(size_t) < sizeof(uint64_t))
+		{
+		/* TALOS-2023-1792 for 32b overflow */
+		uint64_t chk_64 = tsec_nitems * sizeof(uint64_t);
+		size_t   chk_32 = ((size_t)tsec_nitems) * sizeof(uint64_t);
+		if(chk_64 != chk_32) chk_report_abort("TALOS-2023-1792");
+		}
+	else
+		{
+		uint64_t chk_64 = tsec_nitems * sizeof(uint64_t);
+		if((chk_64/sizeof(uint64_t)) != tsec_nitems)
+			{
+			chk_report_abort("TALOS-2023-1792");
+			}
+		}
         time_table = (uint64_t *)calloc(tsec_nitems, sizeof(uint64_t));
         tpnt = ucdata;
         tpval = 0;
@@ -5169,7 +5214,23 @@ for(;;)
                 tpnt += skiplen;
                 }
 
-        tc_head = (uint32_t *)calloc(tsec_nitems /* scan-build */ ? tsec_nitems : 1, sizeof(uint32_t));
+	tc_head_items = tsec_nitems /* scan-build */ ? tsec_nitems : 1;
+	if(sizeof(size_t) < sizeof(uint64_t))
+		{
+		/* TALOS-2023-1792 for 32b overflow */
+		uint64_t chk_64 = tc_head_items * sizeof(uint32_t);
+		size_t   chk_32 = ((size_t)tc_head_items) * sizeof(uint32_t);
+		if(chk_64 != chk_32) chk_report_abort("TALOS-2023-1792");
+		}
+	else
+		{
+		uint64_t chk_64 = tc_head_items * sizeof(uint32_t);
+		if((chk_64/sizeof(uint32_t)) != tc_head_items)
+			{
+			chk_report_abort("TALOS-2023-1792");
+			}
+		}
+        tc_head = (uint32_t *)calloc(tc_head_items, sizeof(uint32_t));
         free(ucdata);
         }
 
@@ -5273,6 +5334,10 @@ for(;;)
                                                         {
                                                         if(value_change_callback)
                                                                 {
+								if(xc->signal_lens[idx] > xc->longest_signal_value_len)
+									{
+									chk_report_abort("TALOS-2023-1797");
+									}
                                                                 memcpy(xc->temp_signal_value_buf, mu+sig_offs, xc->signal_lens[idx]);
                                                                 xc->temp_signal_value_buf[xc->signal_lens[idx]] = 0;
                                                                 value_change_callback(user_callback_data_pointer, beg_tim, idx+1, xc->temp_signal_value_buf);
@@ -5286,6 +5351,10 @@ for(;;)
 
                                                                         vcd_id[0] = (xc->signal_typs[idx] != FST_VT_VCD_PORT) ? 'b' : 'p';
                                                                         fstWritex(xc, vcd_id, 1);
+									if((sig_offs + xc->signal_lens[idx]) > frame_uclen)
+										{
+										chk_report_abort("TALOS-2023-1793");
+										}
                                                                         fstWritex(xc,mu+sig_offs, xc->signal_lens[idx]);
 
                                                                         vcd_id[0] = ' '; /* collapse 3 writes into one I/O call */
@@ -5410,7 +5479,44 @@ for(;;)
                 free(chain_table_lengths);
 
                 vc_maxhandle_largest = vc_maxhandle;
+
+		if(!(vc_maxhandle+1))
+			{
+			chk_report_abort("TALOS-2023-1798");
+			}
+
+		if(sizeof(size_t) < sizeof(uint64_t))
+			{
+			/* TALOS-2023-1798 for 32b overflow */
+			uint64_t chk_64 = (vc_maxhandle+1) * sizeof(fst_off_t);
+			size_t   chk_32 = ((size_t)(vc_maxhandle+1)) * sizeof(fst_off_t);
+			if(chk_64 != chk_32) chk_report_abort("TALOS-2023-1798");
+			}
+		else
+			{
+			uint64_t chk_64 = (vc_maxhandle+1) * sizeof(fst_off_t);
+				if((chk_64/sizeof(fst_off_t)) != (vc_maxhandle+1))
+				{
+				chk_report_abort("TALOS-2023-1798");
+				}
+			}
                 chain_table = (fst_off_t *)calloc((vc_maxhandle+1), sizeof(fst_off_t));
+
+		if(sizeof(size_t) < sizeof(uint64_t))
+			{
+			/* TALOS-2023-1798 for 32b overflow */
+			uint64_t chk_64 = (vc_maxhandle+1) * sizeof(uint32_t);
+			size_t   chk_32 = ((size_t)(vc_maxhandle+1)) * sizeof(uint32_t);
+			if(chk_64 != chk_32) chk_report_abort("TALOS-2023-1798");
+			}
+		else
+			{
+			uint64_t chk_64 = (vc_maxhandle+1) * sizeof(uint32_t);
+				if((chk_64/sizeof(uint32_t)) != (vc_maxhandle+1))
+				{
+				chk_report_abort("TALOS-2023-1798");
+				}
+			}
                 chain_table_lengths = (uint32_t *)calloc((vc_maxhandle+1), sizeof(uint32_t));
                 }
 
@@ -5454,6 +5560,11 @@ for(;;)
                                 uint64_t val = fstGetVarint32(pnt, &skiplen);
 
                                 fstHandle loopcnt = val >> 1;
+				if((idx+loopcnt-1) > vc_maxhandle) /* TALOS-2023-1789 */
+					{
+					chk_report_abort("TALOS-2023-1789");
+					}
+
                                 for(i=0;i<loopcnt;i++)
                                         {
                                         chain_table[idx++] = 0;
@@ -5487,6 +5598,12 @@ for(;;)
                         else
                                 {
                                 fstHandle loopcnt = val >> 1;
+
+				if((idx+loopcnt-1) > vc_maxhandle) /* TALOS-2023-1789 */
+					{
+					chk_report_abort("TALOS-2023-1789");
+					}
+
                                 for(i=0;i<loopcnt;i++)
                                         {
                                         chain_table[idx++] = 0;
@@ -5547,6 +5664,11 @@ for(;;)
                                         unsigned long destlen = val;
                                         unsigned long sourcelen = chain_table_lengths[i];
 
+					if(traversal_mem_offs >= mem_required_for_traversal)
+						{
+						chk_report_abort("TALOS-2023-1785");
+						}
+
                                         if(mc_mem_len < chain_table_lengths[i])
                                                 {
                                                 free(mc_mem);
@@ -5575,6 +5697,12 @@ for(;;)
                                         {
                                         int destlen = chain_table_lengths[i] - skiplen;
                                         unsigned char *mu = mem_for_traversal + traversal_mem_offs;
+
+					if(traversal_mem_offs >= mem_required_for_traversal)
+						{
+						chk_report_abort("TALOS-2023-1785");
+						}
+
                                         fstFread(mu, destlen, 1, xc->f);
                                         /* data to process is for(j=0;j<destlen;j++) in mu[j] */
                                         headptr[i] = traversal_mem_offs;
@@ -5599,6 +5727,11 @@ for(;;)
                                         uint32_t vli = fstGetVarint32NoSkip(mem_for_traversal + headptr[i]);
                                         tdelta = vli >> 1;
                                         }
+
+				if(tdelta >= tc_head_items)
+					{
+					chk_report_abort("TALOS-2023-1791");
+					}
 
                                 scatterptr[i] = tc_head[tdelta];
                                 tc_head[tdelta] = i+1;
@@ -5698,6 +5831,11 @@ for(;;)
                                                 shamt = 2 << (vli & 1);
                                                 tdelta = vli >> shamt;
 
+						if((tdelta+i) >= tc_head_items)
+							{
+							chk_report_abort("TALOS-2023-1791");
+							}
+
                                                 scatterptr[idx] = tc_head[i+tdelta];
                                                 tc_head[i+tdelta] = idx+1;
                                                 }
@@ -5731,6 +5869,14 @@ for(;;)
 
                                                                 vcdid_len = fstVcdIDForFwrite(vcd_id+1, idx+1);
                                                                 {
+								if(sizeof(size_t) < sizeof(uint64_t))
+                							{
+                							/* TALOS-2023-1790 for 32b overflow */
+                							uint64_t chk_64 = len*4 + 1;
+                							size_t   chk_32 = len*4 + 1;
+                							if(chk_64 != chk_32) chk_report_abort("TALOS-2023-1790");
+                							}
+
                                                                 unsigned char *vesc = (unsigned char *)malloc(len*4 + 1);
                                                                 int vlen = fstUtilityBinToEsc(vesc, vdata, len);
                                                                 fstWritex(xc, vesc, vlen);
@@ -5756,6 +5902,11 @@ for(;;)
                                                 vli = fstGetVarint32NoSkip(mem_for_traversal + headptr[idx]);
                                                 tdelta = vli >> 1;
 
+						if((tdelta+i) >= tc_head_items)
+							{
+							chk_report_abort("TALOS-2023-1791");
+							}
+
                                                 scatterptr[idx] = tc_head[i+tdelta];
                                                 tc_head[i+tdelta] = idx+1;
                                                 }
@@ -5772,6 +5923,11 @@ for(;;)
 
                                 if(xc->signal_typs[idx] != FST_VT_VCD_REAL)
                                         {
+					if(len > xc->longest_signal_value_len)
+						{
+						chk_report_abort("TALOS-2023-1797");
+						}
+
                                         if(!(vli & 1))
                                                 {
                                                 int byte = 0;
@@ -5819,6 +5975,10 @@ for(;;)
                                                                 unsigned char ch_bp =  (xc->signal_typs[idx] != FST_VT_VCD_PORT) ? 'b' : 'p';
 
                                                                 fstWritex(xc, &ch_bp, 1);
+								if((vdata - mem_for_traversal + len) > mem_required_for_traversal)
+									{
+									chk_report_abort("TALOS-2023-1793");
+									}
                                                                 fstWritex(xc, vdata, len);
                                                                 }
                                                         }
@@ -5940,6 +6100,11 @@ for(;;)
                                         {
                                         vli = fstGetVarint32NoSkip(mem_for_traversal + headptr[idx]);
                                         tdelta = vli >> 1;
+
+					if((tdelta+i) >= tc_head_items)
+						{
+						chk_report_abort("TALOS-2023-1791");
+						}
 
                                         scatterptr[idx] = tc_head[i+tdelta];
                                         tc_head[i+tdelta] = idx+1;
