@@ -6821,26 +6821,29 @@ bool PGenerate::elaborate_direct_(Design*des, NetScope*container) const
 
 bool PGenerate::elaborate_(Design*des, NetScope*scope) const
 {
-      elaborate_functions(des, scope, funcs);
-      elaborate_tasks(des, scope, tasks);
-
-      typedef list<PGate*>::const_iterator gates_it_t;
-      for (gates_it_t cur = gates.begin() ; cur != gates.end() ; ++ cur )
-	    (*cur)->elaborate(des, scope);
-
-      elaborate_var_inits_(des, scope);
-
-      typedef list<PProcess*>::const_iterator proc_it_t;
-      for (proc_it_t cur = behaviors.begin(); cur != behaviors.end(); ++ cur )
-	    (*cur)->elaborate(des, scope);
-
-      typedef list<PGenerate*>::const_iterator generate_it_t;
-      for (generate_it_t cur = generate_schemes.begin()
-		 ; cur != generate_schemes.end() ; ++ cur ) {
-	    (*cur)->elaborate(des, scope);
+	// Elaborate the elaboration tasks.
+      bool result_flag = true;
+      for (const auto et : elab_tasks) {
+	    result_flag &= et->elaborate_elab(des, scope);
+	      // Only elaborate until a fatal elab task.
+	    if (!result_flag) break;
       }
 
-      return true;
+	// If there are no fatal elab tasks then elaborate the rest.
+      if (result_flag) {
+	    elaborate_functions(des, scope, funcs);
+	    elaborate_tasks(des, scope, tasks);
+
+	    for (const auto gt : gates) gt->elaborate(des, scope);
+
+	    elaborate_var_inits_(des, scope);
+
+	    for (const auto bh : behaviors) bh->elaborate(des, scope);
+
+	    for (const auto gs : generate_schemes) gs->elaborate(des, scope);
+      }
+
+      return result_flag;
 }
 
 bool PScope::elaborate_behaviors_(Design*des, NetScope*scope) const

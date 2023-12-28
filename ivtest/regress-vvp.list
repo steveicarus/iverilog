@@ -24,6 +24,7 @@ br_gh383d			vvp_tests/br_gh383d.json
 br_gh440			vvp_tests/br_gh440.json
 br_gh939			vvp_tests/br_gh939.json
 br_gh1018			vvp_tests/br_gh1018.json
+br_gh1029			vvp_tests/br_gh1029.json
 ca_time_real`			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json

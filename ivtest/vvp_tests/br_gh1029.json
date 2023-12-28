@@ -1,0 +1,5 @@
+{
+    "type"   : "CE",
+    "source" : "br_gh1029.v",
+    "iverilog-args" : [ "-g2009" ]
+}
