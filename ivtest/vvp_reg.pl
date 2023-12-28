@@ -4,7 +4,7 @@
 #
 # This script is based on code with the following Copyright.
 #
-# Copyright (c) 1999-2021 Guy Hutchison (ghutchis@pacbell.net)
+# Copyright (c) 1999-2023 Guy Hutchison (ghutchis@pacbell.net)
 #
 #    This source code is free software; you can redistribute it
 #    and/or modify it in source code form under the terms of the GNU
@@ -53,11 +53,9 @@ if ($#ARGV != -1) {
     }
     &read_regression_list("regress-ivl1.list", $ver, $force_sv, "");
     &read_regression_list("regress-vlg.list",  $ver, $force_sv, "");
-    if ($ver >= 10) {
-        &read_regression_list("regress-sv.list",   $ver, $force_sv, "");
-        &read_regression_list("regress-vhdl.list", $ver, $force_sv, "");
-    }
-    if ($ver == 0.9 or $force_sv) {
+    &read_regression_list("regress-sv.list",   $ver, $force_sv, "");
+    &read_regression_list("regress-vhdl.list", $ver, $force_sv, "");
+    if ($force_sv) {
         &read_regression_list("regress-synth.list", $ver, $force_sv, "");
     } else {
         &read_regression_list("regress-synth.list", $ver, $force_sv, "-S");

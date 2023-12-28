@@ -51,9 +51,7 @@ or if perl is located in /usr/bin
 
 ./vpi_reg.pl
 
-All these tests should pass for V11.devel. There are
-some expected failures for V10, which are flagged as
-Not Implemented
+All these tests should pass.
 
 The individual test results are found in the vpi_log
 directory and the gold files are in the vpi_gold
@@ -81,9 +79,7 @@ or if perl is located in /usr/bin
 
 ./vhdl_reg.pl
 
-The expected output for V0.10.devel and V0.9 is located
-in the vhdl_regression_report-devel.txt file. V0.8 does
-not support converting Verilog to VHDL.
+The tests are expected to pass except for the tri* tests.
 
 This script also takes the --suffix=<suffix> and the
 --with-valgrind flags described above.

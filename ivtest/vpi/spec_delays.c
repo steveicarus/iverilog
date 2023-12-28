@@ -80,11 +80,7 @@ static PLI_INT32 dump_specify_calltf(PLI_BYTE8*name)
 		  delays.time_type = vpiSimTime;
 		  delays.mtm_flag = 0;
 		  delays.append_flag = 0;
-#ifdef IVERILOG_V10
-		  delays.plusere_flag = 0;
-#else
 		  delays.pulsere_flag = 0;
-#endif
 		  vpi_get_delays(item, &delays);
 		  vpi_printf("**        (%d,%d,%d, %d,%d,%d, %d,%d,%d, %d,%d,%d)\n",
 			     (int)delay_times[0].low,
@@ -105,11 +101,7 @@ static PLI_INT32 dump_specify_calltf(PLI_BYTE8*name)
 		  delays.time_type = vpiScaledRealTime;
 		  delays.mtm_flag = 0;
 		  delays.append_flag = 0;
-#ifdef IVERILOG_V10
-		  delays.plusere_flag = 0;
-#else
 		  delays.pulsere_flag = 0;
-#endif
 		  vpi_get_delays(item, &delays);
 		  vpi_printf("**        (%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f)\n",
 			     delay_times[0].real,
@@ -145,11 +137,7 @@ static PLI_INT32 dump_specify_calltf(PLI_BYTE8*name)
 		  delays.time_type = vpiScaledRealTime;
 		  delays.mtm_flag = 0;
 		  delays.append_flag = 0;
-#ifdef IVERILOG_V10
-		  delays.plusere_flag = 0;
-#else
 		  delays.pulsere_flag = 0;
-#endif
 		  vpi_get_delays(item, &delays);
 		  vpi_printf("**        (%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f)\n",
 			     delay_times[0].real,

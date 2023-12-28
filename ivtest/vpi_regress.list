@@ -55,23 +55,6 @@ msys2:pr723		NI			pr723.c			pr723.log
 
 
 #==========
-# V10 exceptions
-#==========
-
-# V10 exceptions
-v10:br_gh117		NI			br_gh117.c		br_gh117.gold
-v10:br_ml20191013	NI			br_ml20191013.c		br_ml20191013.gold
-v10:by_index		NI			by_index.c		by_index.gold
-v10:pr723		normal			pr723.c			pr723-v10.log
-v10:spec_delays		normal,-gspecify	spec_delays.c		spec_delays.log -DIVERILOG_V10
-
-
-#==========
-# V11 exceptions
-#==========
-
-
-#==========
 # The default case.
 #==========
 
