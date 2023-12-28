@@ -380,11 +380,10 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		      // Make this work by finding the indexed slices and
 		      // creating a generated slice that spans the whole
 		      // range.
-		      long loff, moff;
 		      unsigned long lwid, mwid;
 		      bool lrc, mrc;
-		      lrc = sig->sb_to_slice(prefix_indices, lsb, loff, lwid);
-		      mrc = sig->sb_to_slice(prefix_indices, msb, moff, mwid);
+		      lrc = sig->sb_to_slice(prefix_indices, lsb, lidx, lwid);
+		      mrc = sig->sb_to_slice(prefix_indices, msb, midx, mwid);
 		      if (!mrc || !lrc) {
 			    cerr << get_fileline() << ": error: ";
 			    cerr << "Part-select [" << msb << ":" << lsb;
@@ -396,49 +395,39 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 			    return 0;
 		      }
 		      ivl_assert(*this, lwid == mwid);
-
-		      if (moff > loff) {
-			    lidx = loff;
-			    midx = moff + mwid - 1;
-		      } else {
-			    lidx = moff;
-			    midx = loff + lwid - 1;
-		      }
+		      midx += mwid - 1;
 		} else {
-		      long lidx_tmp = sig->sb_to_idx(prefix_indices, lsb);
-		      long midx_tmp = sig->sb_to_idx(prefix_indices, msb);
+		      lidx = sig->sb_to_idx(prefix_indices, lsb);
+		      midx = sig->sb_to_idx(prefix_indices, msb);
+	        }
 
-		        /* Detect reversed indices of a part select. */
-		      if (lidx_tmp > midx_tmp) {
-			    cerr << get_fileline() << ": error: Part select "
-			        << sig->name() << "[" << msb << ":"
-			        << lsb << "] indices reversed." << endl;
-			    cerr << get_fileline() << ":      : Did you mean "
-			        << sig->name() << "[" << lsb << ":"
-			        << msb << "]?" << endl;
-			    long tmp = midx_tmp;
-			    midx_tmp = lidx_tmp;
-			    lidx_tmp = tmp;
-			    des->errors += 1;
-		      }
+		  /* Detect reversed indices of a part select. */
+		if (lidx > midx) {
+		      cerr << get_fileline() << ": error: Part select "
+			  << sig->name() << "[" << msb << ":"
+			  << lsb << "] indices reversed." << endl;
+		      cerr << get_fileline() << ":      : Did you mean "
+			  << sig->name() << "[" << lsb << ":"
+			  << msb << "]?" << endl;
+		      des->errors += 1;
 
-		        /* Warn about a part select that is out of range. */
-		      if (midx_tmp >= (long)sig->vector_width() || lidx_tmp < 0) {
-			    cerr << get_fileline() << ": warning: Part select "
-			         << sig->name();
-			    if (sig->unpacked_dimensions() > 0) {
-				cerr << "[]";
-			    }
-			    cerr << "[" << msb << ":" << lsb
-			         << "] is out of range." << endl;
+		      std::swap(lidx, midx);
 		}
-		        /* This is completely out side the signal so just skip it. */
-		      if (lidx_tmp >= (long)sig->vector_width() || midx_tmp < 0) {
-			    return false;
-		      }
 
-		      midx = midx_tmp;
-		      lidx = lidx_tmp;
+		  /* Warn about a part select that is out of range. */
+		if (midx >= (long)sig->vector_width() || lidx < 0) {
+		      cerr << get_fileline() << ": warning: Part select "
+			   << sig->name();
+		      if (sig->unpacked_dimensions() > 0) {
+			  cerr << "[]";
+		      }
+		      cerr << "[" << msb << ":" << lsb
+			   << "] is out of range." << endl;
+		}
+
+		  /* This is completely out side the signal so just skip it. */
+		if (lidx >= (long)sig->vector_width() || midx < 0) {
+		      return false;
 		}
 		break;
 	  }

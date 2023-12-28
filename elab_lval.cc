@@ -752,15 +752,14 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
       const netranges_t&packed = reg->packed_dims();
 
       long loff, moff;
-      long wid;
       if (prefix_indices.size()+1 < packed.size()) {
 	      // If there are fewer indices then there are packed
 	      // dimensions, then this is a range of slices. Calculate
 	      // it into a big slice.
 	    bool lrc, mrc;
-	    unsigned long tmp_lwid, tmp_mwid;
-	    lrc = reg->sb_to_slice(prefix_indices, lsb, loff, tmp_lwid);
-	    mrc = reg->sb_to_slice(prefix_indices, msb, moff, tmp_mwid);
+	    unsigned long lwid, mwid;
+	    lrc = reg->sb_to_slice(prefix_indices, lsb, loff, lwid);
+	    mrc = reg->sb_to_slice(prefix_indices, msb, moff, mwid);
 	    if (!mrc || !lrc) {
 		  cerr << get_fileline() << ": error: ";
 		  cerr << "Part-select [" << msb << ":" << lsb;
@@ -771,33 +770,26 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 		  des->errors += 1;
 		  return 0;
 	    }
-
-	    if (loff < moff) {
-		  moff = moff + tmp_mwid - 1;
-	    } else {
-		  long ltmp = moff;
-		  moff = loff + tmp_lwid - 1;
-		  loff = ltmp;
-	    }
-	    wid = moff - loff + 1;
-
+	    assert(lwid == mwid);
+	    moff += mwid - 1;
       } else {
 	    loff = reg->sb_to_idx(prefix_indices,lsb);
 	    moff = reg->sb_to_idx(prefix_indices,msb);
-	    wid = moff - loff + 1;
-
-	    if (moff < loff) {
-		  cerr << get_fileline() << ": error: part select "
-		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
-		       << " is reversed." << endl;
-		  des->errors += 1;
-		  return false;
-	    }
       }
+
+      if (moff < loff) {
+	    cerr << get_fileline() << ": error: part select "
+		 << reg->name() << "[" << msb<<":"<<lsb<<"]"
+		 << " is reversed." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      unsigned long wid = moff - loff + 1;
 
 	// Special case: The range winds up selecting the entire
 	// vector. Treat this as no part select at all.
-      if (loff == 0 && moff == (long)(reg->vector_width()-1)) {
+      if (loff == 0 && wid == reg->vector_width()) {
 	    return true;
       }
 
