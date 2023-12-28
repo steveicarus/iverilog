@@ -6602,53 +6602,50 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 {
       bool result_flag = true;
 
-	// Elaborate within the generate blocks.
-      for (const auto cur : generate_schemes) {
-	    cur->elaborate(des, scope);
-      }
-
-	// Elaborate functions.
-      elaborate_functions(des, scope, funcs);
-
-	// Elaborate the task definitions. This is done before the
-	// behaviors so that task calls may reference these, and after
-	// the signals so that the tasks can reference them.
-      elaborate_tasks(des, scope, tasks);
-
-	// Elaborate class definitions.
-      elaborate_classes(des, scope, classes);
-
-	// Get all the gates of the module and elaborate them by
-	// connecting them to the signals. The gate may be simple or
-	// complex.
-      const list<PGate*>&gl = get_gates();
-
-      for (const auto gt : gl) {
-	    gt->elaborate(des, scope);
-      }
-
-	// Elaborate the variable initialization statements, making a
-	// single initial process out of them.
-      result_flag &= elaborate_var_inits_(des, scope);
-
-	// Elaborate the behaviors, making processes out of them. This
-	// involves scanning the PProcess* list, creating a NetProcTop
-	// for each process.
-      result_flag &= elaborate_behaviors_(des, scope);
-
-	// Elaborate the specify paths of the module.
-      for (const auto sp : specify_paths) {
-	    sp->elaborate(des, scope);
-      }
-
-	// Elaborate the timing checks of the module.
-      for (const auto tc : timing_checks) {
-	    tc->elaborate(des, scope);
-      }
-
 	// Elaborate the elaboration tasks.
       for (const auto et : elab_tasks) {
 	    result_flag &= et->elaborate_elab(des, scope);
+	      // Only elaborate until a fatal elab task.
+	    if (!result_flag) break;
+      }
+
+	// If there are no fatal elab tasks then elaborate the rest.
+      if (result_flag) {
+	      // Elaborate within the generate blocks.
+	    for (const auto cur : generate_schemes) cur->elaborate(des, scope);
+
+	      // Elaborate functions.
+	    elaborate_functions(des, scope, funcs);
+
+	      // Elaborate the task definitions. This is done before the
+	      // behaviors so that task calls may reference these, and after
+	      // the signals so that the tasks can reference them.
+	    elaborate_tasks(des, scope, tasks);
+
+	      // Elaborate class definitions.
+	    elaborate_classes(des, scope, classes);
+
+	      // Get all the gates of the module and elaborate them by
+	      // connecting them to the signals. The gate may be simple or
+	      // complex.
+	    const list<PGate*>&gl = get_gates();
+
+	    for (const auto gt : gl) gt->elaborate(des, scope);
+
+	      // Elaborate the variable initialization statements, making a
+	      // single initial process out of them.
+	    result_flag &= elaborate_var_inits_(des, scope);
+
+	      // Elaborate the behaviors, making processes out of them. This
+	      // involves scanning the PProcess* list, creating a NetProcTop
+	      // for each process.
+	    result_flag &= elaborate_behaviors_(des, scope);
+
+	      // Elaborate the specify paths of the module.
+	    for (const auto sp : specify_paths) sp->elaborate(des, scope);
+
+	      // Elaborate the timing checks of the module.
+	    for (const auto tc : timing_checks) tc->elaborate(des, scope);
       }
 
       return result_flag;
@@ -6821,8 +6818,9 @@ bool PGenerate::elaborate_direct_(Design*des, NetScope*container) const
 
 bool PGenerate::elaborate_(Design*des, NetScope*scope) const
 {
-	// Elaborate the elaboration tasks.
       bool result_flag = true;
+
+	// Elaborate the elaboration tasks.
       for (const auto et : elab_tasks) {
 	    result_flag &= et->elaborate_elab(des, scope);
 	      // Only elaborate until a fatal elab task.
@@ -6836,7 +6834,7 @@ bool PGenerate::elaborate_(Design*des, NetScope*scope) const
 
 	    for (const auto gt : gates) gt->elaborate(des, scope);
 
-	    elaborate_var_inits_(des, scope);
+	    result_flag &= elaborate_var_inits_(des, scope);
 
 	    for (const auto bh : behaviors) bh->elaborate(des, scope);
 
