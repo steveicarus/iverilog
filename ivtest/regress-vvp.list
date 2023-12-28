@@ -87,6 +87,12 @@ module_ordered_list2		vvp_tests/module_ordered_list2.json
 module_port_array1		vvp_tests/module_port_array1.json
 module_port_array_init1		vvp_tests/module_port_array_init1.json
 non-polymorphic-abs		vvp_tests/non-polymorphic-abs.json
+partsel_invalid_idx1		vvp_tests/partsel_invalid_idx1.json
+partsel_invalid_idx2		vvp_tests/partsel_invalid_idx2.json
+partsel_invalid_idx3		vvp_tests/partsel_invalid_idx3.json
+partsel_invalid_idx4		vvp_tests/partsel_invalid_idx4.json
+partsel_invalid_idx5		vvp_tests/partsel_invalid_idx5.json
+partsel_invalid_idx6		vvp_tests/partsel_invalid_idx6.json
 param_test3			vvp_tests/param_test3.json
 param-width			vvp_tests/param-width.json
 param-width-vlog95		vvp_tests/param-width-vlog95.json
