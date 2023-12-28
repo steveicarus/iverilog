@@ -188,16 +188,10 @@ def check_run_outputs(options : dict, it_stdout : str, log_list : list) -> list:
                 fd.readline()
             diff_data2 = fd.read()
 
-        if expected_fail:
-            if diff_data1 == diff_data2:
-                return [1, "Failed - Passed, but expected failure"]
-            else:
-                return [0, "Passed"]
+        if diff_data1 == diff_data2:
+            return [0, "Passed"]
         else:
-            if diff_data1 == diff_data2:
-                return [0, "Passed"]
-            else:
-                return [1, "Failed - Files {name1} and {name2} differ.".format(name1=diff_name1, name2=diff_name2)]
+            return [1, "Failed - Files {name1} and {name2} differ.".format(name1=diff_name1, name2=diff_name2)]
 
 
     # Otherwise, look for the PASSED output string in stdout.
@@ -207,10 +201,7 @@ def check_run_outputs(options : dict, it_stdout : str, log_list : list) -> list:
 
     # If there is no PASSED output, and nothing else to check, then
     # assume a failure.
-    if expected_fail:
-        return [0, "Passed"]
-    else:
-        return [1, "Failed - No PASSED output, and no gold file"]
+    return [1, "Failed - No PASSED output, and no gold file"]
 
 
 def do_run_normal_vlog95(options : dict, expected_fail : bool) -> list:
