@@ -39,11 +39,7 @@ static PLI_INT32 watchreal_cb(p_cb_data cb)
       return 0;
 }
 
-#ifdef IVERILOG_V0_8
-static PLI_INT32 my_watchreal_calltf(char *xx)
-#else
 static PLI_INT32 my_watchreal_calltf(PLI_BYTE8 *xx)
-#endif
 {
       struct t_cb_data cb;
       struct t_vpi_time timerec;

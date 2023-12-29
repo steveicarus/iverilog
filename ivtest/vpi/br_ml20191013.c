@@ -25,15 +25,9 @@
 #endif
 
 /* prototypes of PLI application routine names */
-#ifdef IVERILOG_V0_8
-static PLI_INT32 PLIbook_PowSizetf(char *user_data);
-static PLI_INT32 PLIbook_PowCalltf(char *user_data);
-static PLI_INT32 PLIbook_PowCompiletf(char *user_data);
-#else
 static PLI_INT32 PLIbook_PowSizetf(PLI_BYTE8 *user_data);
 static PLI_INT32 PLIbook_PowCalltf(PLI_BYTE8 *user_data);
 static PLI_INT32 PLIbook_PowCompiletf(PLI_BYTE8 *user_data);
-#endif
 static PLI_INT32 PLIbook_PowStartOfSim(s_cb_data *callback_data);
 
 /**********************************************************************
@@ -68,11 +62,7 @@ void PLIbook_pow_register(void)
 /**********************************************************************
  * Sizetf application
  *********************************************************************/
-#ifdef IVERILOG_V0_8
-static PLI_INT32 PLIbook_PowSizetf(char *user_data)
-#else
 static PLI_INT32 PLIbook_PowSizetf(PLI_BYTE8 *user_data)
-#endif
 {
   (void)user_data;  /* Parameter is not used. */
   //vpi_printf("\n$pow PLI sizetf function.\n\n");
@@ -82,11 +72,7 @@ static PLI_INT32 PLIbook_PowSizetf(PLI_BYTE8 *user_data)
 /**********************************************************************
  * compiletf application to verify valid systf args.
  *********************************************************************/
-#ifdef IVERILOG_V0_8
-static PLI_INT32 PLIbook_PowCompiletf(char *user_data)
-#else
 static PLI_INT32 PLIbook_PowCompiletf(PLI_BYTE8 *user_data)
-#endif
 {
   vpiHandle systf_handle, arg_itr, arg_handle;
   PLI_INT32 tfarg_type;
@@ -145,11 +131,7 @@ static PLI_INT32 PLIbook_PowCompiletf(PLI_BYTE8 *user_data)
  * calltf to calculate base to power of exponent and return result.
  *********************************************************************/
 #include <math.h>
-#ifdef IVERILOG_V0_8
-static PLI_INT32 PLIbook_PowCalltf(char *user_data)
-#else
 static PLI_INT32 PLIbook_PowCalltf(PLI_BYTE8 *user_data)
-#endif
 {
   s_vpi_value value_s;
   vpiHandle   systf_handle, arg_itr, arg_handle;

@@ -33,11 +33,7 @@ static struct str_s {
     {vpiHexStrVal, "x4"}
 };
 
-#ifdef IVERILOG_V0_8
-extern "C" PLI_INT32 RegPeek(char *)
-#else
 extern "C" PLI_INT32 RegPeek(PLI_BYTE8 *)
-#endif
 {
     vpiHandle	mod_h, iterate, handle;
     vpiHandle	reg_h[5];
@@ -93,11 +89,7 @@ extern "C" PLI_INT32 RegPeek(PLI_BYTE8 *)
     return 0;
 }
 
-#ifdef IVERILOG_V0_8
-extern "C" PLI_INT32 RegPoke(char *)
-#else
 extern "C" PLI_INT32 RegPoke(PLI_BYTE8 *)
-#endif
 {
     vpiHandle	mod_h, iterate, handle;
     vpiHandle	reg_h[5];

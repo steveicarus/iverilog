@@ -20,11 +20,7 @@
 # include  <vpi_user.h>
 # include  <veriuser.h>
 
-#ifdef IVERILOG_V0_8
-static PLI_INT32 my_hello_calltf(char *xx)
-#else
 static PLI_INT32 my_hello_calltf(PLI_BYTE8 *xx)
-#endif
 {
       (void)xx;  /* Parameter is not used. */
       io_printf("Hello World, from VPI.\n");

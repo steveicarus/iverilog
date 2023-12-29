@@ -1,10 +1,6 @@
 #include "vpi_user.h"
 
-#ifdef IVERILOG_V0_8
-static PLI_INT32 number_compiletf(char *x)
-#else
 static PLI_INT32 number_compiletf(PLI_BYTE8 *x)
-#endif
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);

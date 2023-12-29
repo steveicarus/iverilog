@@ -64,11 +64,7 @@ static void FindHandleByName(void)
     }
 }
 
-#ifdef IVERILOG_V0_8
-static PLI_INT32 CompileTF(char *x)
-#else
 static PLI_INT32 CompileTF(PLI_BYTE8 *x)
-#endif
 {
 	(void)x;  /* Parameter is not used. */
 	FindHandleByName();

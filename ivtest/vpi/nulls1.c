@@ -34,11 +34,7 @@ ValueChange(p_cb_data cb_data)
 	return(0);
 }
 
-#ifdef IVERILOG_V0_8
-PLI_INT32 CompileTF(char *user_data)
-#else
 PLI_INT32 CompileTF(PLI_BYTE8 *user_data)
-#endif
 {
 	s_cb_data cb_data;
 	vpiHandle call_h=vpi_handle(vpiSysTfCall,NULL);

@@ -1,11 +1,7 @@
 #include <assert.h>
 #include "vpi_user.h"
 
-#ifdef IVERILOG_V0_8
-static PLI_INT32 calltf(char *data)
-#else
 static PLI_INT32 calltf(PLI_BYTE8 *data)
-#endif
 {
     int i;
 

@@ -22,11 +22,7 @@
 #include <string.h>
 #include "vpi_user.h"
 
-#ifdef IVERILOG_V0_8
-extern "C" PLI_INT32 MemPeek(char *)
-#else
 extern "C" PLI_INT32 MemPeek(PLI_BYTE8 *)
-#endif
 {
     vpiHandle	mod_h, mem_h, iterate, handle;
     s_vpi_value	value;
@@ -79,11 +75,7 @@ extern "C" PLI_INT32 MemPeek(PLI_BYTE8 *)
 #define REP4(x) \
     (((x) & 0xff) << 24 | ((x) & 0xff) << 16 | ((x) & 0xff) << 8 | ((x) & 0xff))
 
-#ifdef IVERILOG_V0_8
-extern "C" PLI_INT32 MemPoke(char *)
-#else
 extern "C" PLI_INT32 MemPoke(PLI_BYTE8 *)
-#endif
 {
     vpiHandle	mod_h, mem_h, iterate, handle;
     s_vpi_value	value;

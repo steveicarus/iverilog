@@ -26,11 +26,7 @@
 
 static int num;
 
-#ifdef IVERILOG_V0_8
-static PLI_INT32 CompileTF(char *x)
-#else
 static PLI_INT32 CompileTF(PLI_BYTE8 *x)
-#endif
 {
 	vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
 	vpiHandle argv = vpi_iterate(vpiArgument, sys);

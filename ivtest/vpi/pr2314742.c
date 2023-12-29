@@ -23,11 +23,7 @@ static int chkvpierr(void)
   return level;
 }
 
-#ifdef IVERILOG_V0_8
-static PLI_INT32 xxx_compiletf(char *user_data)
-#else
 static PLI_INT32 xxx_compiletf(PLI_BYTE8 *user_data)
-#endif
 {
   (void)user_data;  /* Parameter is not used. */
   return 0;
@@ -35,11 +31,7 @@ static PLI_INT32 xxx_compiletf(PLI_BYTE8 *user_data)
 
 char		charbuf[100];
 
-#ifdef IVERILOG_V0_8
-static PLI_INT32 xxx_calltf(char *user_data)
-#else
 static PLI_INT32 xxx_calltf(PLI_BYTE8 *user_data)
-#endif
 {
   vpiHandle             systf_h;
   s_vpi_value		vpival; /* get/set register values */

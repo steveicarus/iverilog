@@ -38,21 +38,13 @@ static PLI_INT32 next_sim_time_callback(struct t_cb_data*cb)
       return 0;
 }
 
-#ifdef IVERILOG_V0_8
-static PLI_INT32 test_next_compiletf(char *name)
-#else
 static PLI_INT32 test_next_compiletf(PLI_BYTE8 *name)
-#endif
 {
       (void)name;  /* Parameter is not used. */
       return 0;
 }
 
-#ifdef IVERILOG_V0_8
-static PLI_INT32 test_next_calltf(char *name)
-#else
 static PLI_INT32 test_next_calltf(PLI_BYTE8 *name)
-#endif
 {
       vpiHandle sys, argv, value;
 

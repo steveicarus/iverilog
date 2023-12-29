@@ -31,11 +31,7 @@ const char *str[4] = {
  "1111000000001100101011111010101110101011111011011110101010111011111011101111"
 };
 
-#ifdef IVERILOG_V0_8
-extern "C" PLI_INT32 MemPeek(char *)
-#else
 extern "C" PLI_INT32 MemPeek(PLI_BYTE8 *)
-#endif
 {
     vpiHandle	mod_h, mem_h, iterate, handle;
     s_vpi_value	value;
@@ -101,11 +97,7 @@ extern "C" PLI_INT32 MemPeek(PLI_BYTE8 *)
     return 0;
 }
 
-#ifdef IVERILOG_V0_8
-extern "C" PLI_INT32 MemPoke(char *)
-#else
 extern "C" PLI_INT32 MemPoke(PLI_BYTE8 *)
-#endif
 {
     vpiHandle	mod_h, mem_h, iterate, handle;
     s_vpi_value	value;

@@ -4,11 +4,7 @@
 # include  <assert.h>
 
 
-#ifdef IVERILOG_V0_8
-static PLI_INT32 dump_specify_compiletf(char*name)
-#else
 static PLI_INT32 dump_specify_compiletf(PLI_BYTE8*name)
-#endif
 {
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -37,11 +33,7 @@ static PLI_INT32 dump_specify_compiletf(PLI_BYTE8*name)
       return 0;
 }
 
-#ifdef IVERILOG_V0_8
-static PLI_INT32 dump_specify_calltf(char*name)
-#else
 static PLI_INT32 dump_specify_calltf(PLI_BYTE8*name)
-#endif
 {
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);

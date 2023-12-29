@@ -21,11 +21,7 @@
 # include  <vpi_user.h>
 # include  <assert.h>
 
-#ifdef IVERILOG_V0_8
-static PLI_INT32 my_hello_calltf(char *xx)
-#else
 static PLI_INT32 my_hello_calltf(PLI_BYTE8 *xx)
-#endif
 {
       s_vpi_value value;
 
