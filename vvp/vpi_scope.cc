@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2023 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -180,10 +180,15 @@ static void construct_scope_fullname(__vpiScope*ref, char*buf)
 {
       if (ref->scope) {
 	    construct_scope_fullname(ref->scope, buf);
-	    strcat(buf, ".");
+	      // Add a "." separator, unless this is for a package
+	    if (ref->scope->get_type_code() != vpiPackage) {
+		  strcat(buf, ".");
+	    }
       }
 
       strcat(buf, ref->scope_name());
+	// For a package, add a "::" to the end
+      if (ref->get_type_code() == vpiPackage) strcat(buf, "::");
 }
 
 static const char* scope_get_type(int code)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2023 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -104,9 +104,13 @@ char *generic_get_str(int code, vpiHandle ref, const char *name, const char *ind
 {
       size_t len = strlen(name) + 1;  /* include space for null termination */
       char *bn = NULL;
+      bool is_bn_a_pkg = false;
       if (code == vpiFullName) {
 	    bn = strdup(vpi_get_str(code,ref));
-	    len += strlen(bn) + 1;  /* include space for "." separator */
+	    size_t bn_len = strlen(bn);
+	    is_bn_a_pkg = bn[bn_len-1] == ':' && bn[bn_len-2] == ':';
+	    len += bn_len;
+	    if (! is_bn_a_pkg) len += 1; // include space for "." separator
       }
       if (index != NULL) len += strlen(index) + 2;  /* include space for brackets */
 
@@ -120,7 +124,8 @@ char *generic_get_str(int code, vpiHandle ref, const char *name, const char *ind
 	/* if this works, I can make it more efficient later */
       if (bn != NULL) {
 	    strcat(res, bn);
-	    strcat(res, ".");
+	      // A package already has the "::" separator in the name
+	    if (! is_bn_a_pkg) strcat(res, ".");
 	    free(bn);
       }
       strcat(res, name);

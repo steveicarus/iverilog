@@ -1,0 +1,9 @@
+Compiling vpi/br_gh1037.c...
+Making br_gh1037.vpi from  br_gh1037.o...
+Found an item named $unit:: of type vpiPackage
+ - Has a variable named $unit::top_var of type vpiIntVar and a value of 1
+Found an item named top:: of type vpiPackage
+ - Has a variable named top::val of type vpiIntVar and a value of 3
+Found an item named top of type vpiModule
+ - Has a variable named top.val of type vpiIntVar and a value of 2
+All done with items
