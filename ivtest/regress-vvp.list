@@ -132,6 +132,7 @@ sf_onehot_fail			vvp_tests/sf_onehot_fail.json
 sf_onehot0_fail			vvp_tests/sf_onehot0_fail.json
 struct_enum_partsel		vvp_tests/struct_enum_partsel.json
 struct_field_left_right		vvp_tests/struct_field_left_right.json
+struct_nested1			vvp_tests/struct_nested1.json
 struct_packed_write_read	vvp_tests/struct_packed_write_read.json
 struct_packed_write_read2	vvp_tests/struct_packed_write_read2.json
 sv_2state_array_init_prop	vvp_tests/sv_2state_array_init_prop.json
