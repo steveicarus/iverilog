@@ -26,6 +26,7 @@ module top;
   initial begin
      a = {32'h44444444, 32'h33333333, 32'h22222222, 32'h11111111};
      start = 1;
+     #1;
      if (out !== 96'h444444443333333322222222) begin
 	 $display("FAILED");
 	 $finish;
