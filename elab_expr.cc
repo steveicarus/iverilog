@@ -5843,11 +5843,6 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
       if (!flag)
 	    return 0;
 
-	/* The indices of part selects are signed integers, so allow
-	   negative values. However, the width that they represent is
-	   unsigned. Remember that any order is possible,
-	   i.e., [1:0], [-4:6], etc. */
-      unsigned long wid = 1 + labs(msv-lsv);
 	/* But wait... if the part select expressions are not fully
 	   defined, then fall back on the tested width. */
       if (!parts_defined_flag) {
@@ -5878,11 +5873,10 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	      // Make this work by finding the indexed slices and
 	      // creating a generated slice that spans the whole
 	      // range.
-	    long loff, moff;
 	    unsigned long lwid, mwid;
 	    bool lrc, mrc;
-	    lrc = net->sig()->sb_to_slice(prefix_indices, lsv, loff, lwid);
-	    mrc = net->sig()->sb_to_slice(prefix_indices, msv, moff, mwid);
+	    lrc = net->sig()->sb_to_slice(prefix_indices, lsv, sb_lsb, lwid);
+	    mrc = net->sig()->sb_to_slice(prefix_indices, msv, sb_msb, mwid);
 	    if (!mrc || !lrc) {
 		  cerr << get_fileline() << ": error: ";
 		  cerr << "Part-select [" << msv << ":" << lsv;
@@ -5894,15 +5888,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 		  return 0;
 	    }
 	    ivl_assert(*this, lwid == mwid);
-
-	    if (moff > loff) {
-		  sb_lsb = loff;
-		  sb_msb = moff + mwid - 1;
-	    } else {
-		  sb_lsb = moff;
-		  sb_msb = loff + lwid - 1;
-	    }
-	    wid = sb_msb - sb_lsb + 1;
+	    sb_msb += mwid - 1;
       } else {
 	      // This case, the prefix indices are enough to index
 	      // down to a single bit/slice.
@@ -5950,6 +5936,8 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 		          "Replacing the out of bound bits with 'bx." << endl;
 	    }
       }
+
+      unsigned long wid = sb_msb - sb_lsb + 1;
 
 	// If the part select covers exactly the entire
 	// vector, then do not bother with it. Return the

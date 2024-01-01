@@ -95,6 +95,12 @@ partsel_invalid_idx3		vvp_tests/partsel_invalid_idx3.json
 partsel_invalid_idx4		vvp_tests/partsel_invalid_idx4.json
 partsel_invalid_idx5		vvp_tests/partsel_invalid_idx5.json
 partsel_invalid_idx6		vvp_tests/partsel_invalid_idx6.json
+partsel_reversed_idx1		vvp_tests/partsel_reversed_idx1.json
+partsel_reversed_idx2		vvp_tests/partsel_reversed_idx2.json
+partsel_reversed_idx3		vvp_tests/partsel_reversed_idx3.json
+partsel_reversed_idx4		vvp_tests/partsel_reversed_idx4.json
+partsel_reversed_idx5		vvp_tests/partsel_reversed_idx5.json
+partsel_reversed_idx6		vvp_tests/partsel_reversed_idx6.json
 param_test3			vvp_tests/param_test3.json
 param-width			vvp_tests/param-width.json
 param-width-vlog95		vvp_tests/param-width-vlog95.json
