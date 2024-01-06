@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -891,9 +891,20 @@ void compile_vpi_time_precision(long pre)
  *
  * The real value is sign * (mant ** exp).
  */
+static bool crstring_header_test(const char*str)
+{
+      if ((str[0] != 'C') && (str[0] != 'c'))
+	    return false;
+      if ((str[1] != 'r') || (str[2] != '<'))
+	    return false;
+
+      return true;
+}
+
 bool crstring_test(const char*str)
 {
-      if (strncmp(str, "Cr<", 3) != 0) return false;
+      if (!crstring_header_test(str))
+	    return false;
       const char*tp = strchr(str, '>');
       if (tp == 0) return false;
       if (tp[1] != 0) return false;
@@ -906,6 +917,8 @@ bool crstring_test(const char*str)
 
 double crstring_to_double(const char*label)
 {
+      assert(crstring_header_test(label));
+
       const char*cp = label+3;
       assert(*cp == 'm');
       cp += 1;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -651,18 +651,20 @@ static void draw_net_input_x(ivl_nexus_t nex,
       nex_data->flags |= nex_flags;
 
 	/* If the nexus has no drivers, then send a constant HiZ or
-	   0.0 into the net. */
+	   0.0 into the net. Use a lower case 'c' prefix for the
+	   constant to inform vvp that this is an undriven value. */
       if (ndrivers == 0) {
 	    unsigned wid = width_of_nexus(nex);
 	    int pull = (res == IVL_SIT_TRI0) || (res == IVL_SIT_TRI1);
 	      /* For real nets put 0.0. */
 	    if (signal_data_type_of_nexus(nex) == IVL_VT_REAL) {
 		  nex_private = draw_Cr_to_string(0.0);
+		  nex_private[0] = 'c';
 	    } else {
 		  unsigned jdx;
 		  char*tmp = malloc((pull ? 3 : 1) * wid + 5);
 		  nex_private = tmp;
-		  strcpy(tmp, pull ? "C8<" : "C4<");
+		  strcpy(tmp, pull ? "c8<" : "c4<");
 		  tmp += strlen(tmp);
 		  switch (res) {
 		      case IVL_SIT_TRI:

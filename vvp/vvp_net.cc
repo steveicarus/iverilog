@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2999,9 +2999,18 @@ vvp_vector4_t vector2_to_vector4(const vvp_vector2_t&that, unsigned wid)
       return res;
 }
 
+static bool c4string_header_test(const char*str)
+{
+      if ((str[0] != 'C') && (str[0] != 'c'))
+	    return false;
+      if ((str[1] != '4') || (str[2] != '<'))
+	    return false;
+      return true;
+}
+
 bool c4string_test(const char*str)
 {
-      if (strncmp(str, "C4<", 3) != 0)
+      if (!c4string_header_test(str))
 	    return false;
       size_t value_size = strspn(str+3, "01xz");
       if (str[3+value_size] != '>')
@@ -3014,7 +3023,7 @@ bool c4string_test(const char*str)
 
 vvp_vector4_t c4string_to_vector4(const char*str)
 {
-      assert((str[0]=='C') && (str[1]=='4') && (str[2]=='<'));
+      assert(c4string_header_test(str));
 
       str += 3;
       const char*tp = str + strspn(str,"01xz");
@@ -3186,14 +3195,21 @@ vvp_vector8_t part_expand(const vvp_vector8_t&that, unsigned wid, unsigned off)
       return tmp;
 }
 
+static bool c8string_header_test(const char*str)
+{
+      if ((str[0] != 'C') && (str[0] != 'c'))
+	    return false;
+      if ((str[1] != '8') || (str[2] != '<'))
+	    return false;
+      return true;
+}
+
 bool c8string_test(const char*str)
 {
-      const char*cp;
-      if (str[0] != 'C') return false;
-      if (str[1] != '8') return false;
-      if (str[2] != '<') return false;
+      if (!c8string_header_test(str))
+	    return false;
 
-      cp = str+3;
+      const char*cp = str+3;
       for (;; cp += 1) {
 	    if (cp[0] == '>' && cp[1] == 0) return true;
 	    if (cp[0] >= '0' && cp[0] <= '9') continue;
@@ -3210,6 +3226,8 @@ bool c8string_test(const char*str)
  */
 vvp_vector8_t c8string_to_vector8(const char*str)
 {
+      assert(c8string_header_test(str));
+
       size_t vsize = strlen(str)-4;
       assert(vsize%3 == 0);
       vsize /= 3;
