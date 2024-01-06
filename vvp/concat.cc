@@ -234,6 +234,13 @@ void vvp_fun_repeat::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       port.ptr()->send_vec4(val, 0);
 }
 
+void vvp_fun_repeat::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t &bit,
+			          unsigned base, unsigned vwid,
+				  vvp_context_t context)
+{
+      recv_vec4_pv_(port, bit, base, vwid, context);
+}
+
 void compile_repeat(char*label, long width, long repeat, struct symb_s arg)
 {
       vvp_fun_repeat*fun = new vvp_fun_repeat(width, repeat);
