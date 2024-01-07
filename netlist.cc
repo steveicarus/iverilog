@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -3269,6 +3269,17 @@ static void check_for_bin_synth(const NetExpr*left,const NetExpr*right,
 {
       const NetESignal*lsig = dynamic_cast<const NetESignal*>(left);
       const NetESignal*rsig = dynamic_cast<const NetESignal*>(right);
+
+      if (!lsig) {
+            const NetESelect*lsel = dynamic_cast<const NetESelect*>(left);
+            if (lsel && (lsel->expr_width() >= lsel->sub_expr()->expr_width()))
+                  lsig = dynamic_cast<const NetESignal*>(lsel->sub_expr());
+      }
+      if (!rsig) {
+            const NetESelect*rsel = dynamic_cast<const NetESelect*>(right);
+            if (rsel && (rsel->expr_width() >= rsel->sub_expr()->expr_width()))
+                  rsig = dynamic_cast<const NetESignal*>(rsel->sub_expr());
+      }
 
       if (lsig && (lsig->sig() == index)) {
 	    check_for_const_synth(right, proc, str, pr_type);
