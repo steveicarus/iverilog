@@ -776,23 +776,24 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    return 0;
       }
 
-	/* Make a NetNet object to carry the output vector. */
-      perm_string path = scope->local_symbol();
-      netvector_t*osig_vec = new netvector_t(data_type, expr_width()-1, 0);
-      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, osig_vec);
-      osig->set_line(*this);
-      osig->local_flag(true);
+      NetNet *osig = nullptr;
 
-      NetConcat*cncat = new NetConcat(scope, scope->local_symbol(),
-				       osig->vector_width(),
-				       num_parms * repeat());
-      cncat->set_line(*this);
-      des->add_node(cncat);
-      connect(cncat->pin(0), osig->pin(0));
+      if (num_parms != 1) {
+	      /* Make a NetNet object to carry the output vector. */
+	    auto osig_vec = new netvector_t(data_type, expr_width() / repeat() - 1, 0);
+	    osig = new NetNet(scope, scope->local_symbol(), NetNet::IMPLICIT,
+			      osig_vec);
+	    osig->set_line(*this);
+	    osig->local_flag(true);
 
-      unsigned count_input_width = 0;
-      unsigned cur_pin = 1;
-      for (unsigned rpt = 0; rpt < repeat(); rpt += 1) {
+	    auto cncat = new NetConcat(scope, scope->local_symbol(),
+				       osig->vector_width(), num_parms);
+	    cncat->set_line(*this);
+	    des->add_node(cncat);
+	    connect(cncat->pin(0), osig->pin(0));
+
+	    unsigned count_input_width = 0;
+	    unsigned cur_pin = 1;
 	    for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
 		  unsigned concat_item = parms_.size()-idx-1;
 		  if (tmp[concat_item] == 0) continue;
@@ -800,14 +801,38 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
 		  cur_pin += 1;
 		  count_input_width += tmp[concat_item]->vector_width();
 	    }
+
+	    if (count_input_width != osig->vector_width()) {
+		  cerr << get_fileline() << ": internal error: "
+		       << "NetEConcat input width = " << count_input_width
+		       << ", expecting " << osig->vector_width()
+		       << endl;
+		  des->errors += 1;
+	    }
+      } else {
+	    /* There is exactly one input signal */
+	    for (unsigned idx = 0; idx < parms_.size(); idx++) {
+		  if (tmp[idx]) {
+			osig = tmp[idx];
+			break;
+		  }
+	    }
+	    ivl_assert(*this, osig);
       }
 
-      if (count_input_width != osig->vector_width()) {
-	    cerr << get_fileline() << ": internal error: "
-		 << "NetEConcat input width = " << count_input_width
-		 << ", expecting " << osig->vector_width()
-		 << " (repeat=" << repeat() << ")" << endl;
-	    des->errors += 1;
+      if (repeat() != 1) {
+	    auto rep = new NetReplicate(scope, scope->local_symbol(),
+					expr_width(), repeat());
+	    rep->set_line(*this);
+	    des->add_node(rep);
+	    connect(rep->pin(1), osig->pin(0));
+
+	    auto osig_vec = new netvector_t(data_type, expr_width() - 1, 0);
+	    osig = new NetNet(scope, scope->local_symbol(), NetNet::IMPLICIT,
+			      osig_vec);
+	    osig->set_line(*this);
+	    osig->local_flag(true);
+	    connect(rep->pin(0), osig->pin(0));
       }
 
       delete[]tmp;
