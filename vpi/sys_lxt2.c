@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -561,6 +561,23 @@ static PLI_INT32 sys_dumplimit_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 
 static void scan_item(unsigned depth, vpiHandle item, int skip)
 {
+      static int dumpable_types[] = {
+            /* Value */
+            /* vpiNamedEvent, */
+            vpiNet,
+            /* vpiParameter, */
+            vpiReg,
+            vpiVariables,
+            /* Scope */
+            vpiFunction,
+            vpiGenScope,
+            vpiModule,
+            vpiNamedBegin,
+            vpiNamedFork,
+            vpiTask,
+            -1
+      };
+
       struct t_cb_data cb;
       struct vcd_info* info;
 
@@ -681,23 +698,6 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	    if (depth > 0) {
 		  const char* fullname = vpi_get_str(vpiFullName, item);
-		  /* list of types to iterate upon */
-		  static int types[] = {
-			/* Value */
-			/* vpiNamedEvent, */
-			vpiNet,
-			/* vpiParameter, */
-			vpiReg,
-			vpiVariables,
-			/* Scope */
-			vpiFunction,
-			vpiGenScope,
-			vpiModule,
-			vpiNamedBegin,
-			vpiNamedFork,
-			vpiTask,
-			-1
-		  };
 		  int i;
 		  int nskip = vcd_scope_names_test(fullname);
 
@@ -717,9 +717,9 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
                   push_scope(name);
 
-		  for (i=0; types[i]>0; i++) {
+		  for (i=0; dumpable_types[i]>0; i++) {
 			vpiHandle hand;
-			vpiHandle argv = vpi_iterate(types[i], item);
+			vpiHandle argv = vpi_iterate(dumpable_types[i], item);
 			while (argv && (hand = vpi_scan(argv))) {
 			      scan_item(depth-1, hand, nskip);
 			}
@@ -730,8 +730,10 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    break;
 
 	  case vpiPackage:
-	    vpi_printf("LXT2 warning: $dumpvars: Package (%s) is not dumpable "
-	               "with LXT2.\n", vpi_get_str(vpiFullName, item));
+	      // Don't print a warning for empty packages.
+	    if (vcd_instance_contains_dumpable_items(dumpable_types, item))
+		  vpi_printf("LXT2 warning: $dumpvars: Package (%s) is not dumpable "
+			     "with LXT2.\n", vpi_get_str(vpiFullName, item));
 	    break;
 
 	  default:

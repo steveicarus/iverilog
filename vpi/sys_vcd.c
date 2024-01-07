@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -485,6 +485,23 @@ static PLI_INT32 sys_dumplimit_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 
 static void scan_item(unsigned depth, vpiHandle item, int skip)
 {
+      static int dumpable_types[] = {
+            /* Value */
+            vpiNamedEvent,
+            vpiNet,
+            vpiParameter,
+            vpiReg,
+            vpiVariables,
+            /* Scope */
+            vpiFunction,
+            vpiGenScope,
+            vpiModule,
+            vpiNamedBegin,
+            vpiNamedFork,
+            vpiTask,
+            -1
+      };
+
       struct t_cb_data cb;
       struct vcd_info* info;
 
@@ -694,23 +711,6 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	  case vpiNamedFork:
 
 	    if (depth > 0) {
-		/* list of types to iterate upon */
-		  static int types[] = {
-			/* Value */
-			vpiNamedEvent,
-			vpiNet,
-			vpiParameter,
-			vpiReg,
-			vpiVariables,
-			/* Scope */
-			vpiFunction,
-			vpiGenScope,
-			vpiModule,
-			vpiNamedBegin,
-			vpiNamedFork,
-			vpiTask,
-			-1
-		  };
 		  int i;
 		  int nskip = (vcd_names_search(&vcd_tab, fullname) != 0);
 
@@ -726,9 +726,9 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  name = vpi_get_str(vpiName, item);
 		  fprintf(dump_file, "$scope %s %s $end\n", type, name);
 
-		  for (i=0; types[i]>0; i++) {
+		  for (i=0; dumpable_types[i]>0; i++) {
 			vpiHandle hand;
-			vpiHandle argv = vpi_iterate(types[i], item);
+			vpiHandle argv = vpi_iterate(dumpable_types[i], item);
 			while (argv && (hand = vpi_scan(argv))) {
 			      scan_item(depth-1, hand, nskip);
 			}
@@ -740,8 +740,10 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    break;
 
 	  case vpiPackage:
-	    vpi_printf("VCD warning: $dumpvars: Package (%s) is not dumpable "
-	               "with VCD.\n", vpi_get_str(vpiFullName, item));
+	      // Don't print a warning for empty packages.
+	    if (vcd_instance_contains_dumpable_items(dumpable_types, item))
+		  vpi_printf("VCD warning: $dumpvars: Package (%s) is not dumpable "
+			     "with VCD.\n", vpi_get_str(vpiFullName, item));
 	    break;
       }
 }

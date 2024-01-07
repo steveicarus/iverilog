@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -49,6 +49,16 @@ int is_escaped_id(const char *name)
 	    return 0;
       }
       return 1;
+}
+
+int vcd_instance_contains_dumpable_items(int dumpable_types[], vpiHandle item)
+{
+      int i;
+      for (i = 0; dumpable_types[i] > 0; i++) {
+            if (vpi_iterate(dumpable_types[i], item))
+                  return 1;
+      }
+      return 0;
 }
 
 struct stringheap_s name_heap = {0, 0};
