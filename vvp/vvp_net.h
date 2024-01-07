@@ -1385,10 +1385,10 @@ class vvp_fun_concat  : public vvp_net_fun_t {
       ~vvp_fun_concat();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) final;
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t) final;
     private:
       unsigned wid_[4];
       vvp_vector4_t val_;
@@ -1402,13 +1402,13 @@ class vvp_fun_concat8  : public vvp_net_fun_t {
       ~vvp_fun_concat8();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
-      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
+                     vvp_context_t context) final;
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit) final;
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t) final;
       void recv_vec8_pv(vvp_net_ptr_t p, const vvp_vector8_t&bit,
-			unsigned base, unsigned vwid);
+			unsigned base, unsigned vwid) final;
 
     private:
       unsigned wid_[4];

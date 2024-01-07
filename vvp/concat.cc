@@ -43,26 +43,9 @@ vvp_fun_concat::~vvp_fun_concat()
 }
 
 void vvp_fun_concat::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                               vvp_context_t)
+                               vvp_context_t context)
 {
-      unsigned pdx = port.port();
-
-      if (bit.size() != wid_[pdx]) {
-	    cerr << "internal error: port " << pdx
-		 << " expects wid=" << wid_[pdx]
-		 << ", got wid=" << bit.size() << endl;
-	    assert(0);
-      }
-
-      unsigned off = 0;
-      for (unsigned idx = 0 ;  idx < pdx ;  idx += 1)
-	    off += wid_[idx];
-
-      for (unsigned idx = 0 ;  idx < wid_[pdx] ;  idx += 1) {
-	    val_.set_bit(off+idx, bit.value(idx));
-      }
-
-      port.ptr()->send_vec4(val_, 0);
+      recv_vec4_pv(port, bit, 0, bit.size(), context);
 }
 
 void vvp_fun_concat::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
@@ -131,7 +114,7 @@ void vvp_fun_concat8::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 				vvp_context_t)
 {
       vvp_vector8_t bit8 (bit, 6, 6);
-      recv_vec8(port, bit8);
+      recv_vec8_pv(port, bit8, 0, bit8.size());
 }
 
 void vvp_fun_concat8::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
@@ -143,24 +126,7 @@ void vvp_fun_concat8::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 
 void vvp_fun_concat8::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 {
-      unsigned pdx = port.port();
-
-      if (bit.size() != wid_[pdx]) {
-	    cerr << "internal error: port " << pdx
-		 << " expects wid=" << wid_[pdx]
-		 << ", got wid=" << bit.size() << endl;
-	    assert(0);
-      }
-
-      unsigned off = 0;
-      for (unsigned idx = 0 ;  idx < pdx ;  idx += 1)
-	    off += wid_[idx];
-
-      for (unsigned idx = 0 ;  idx < wid_[pdx] ;  idx += 1) {
-	    val_.set_bit(off+idx, bit.value(idx));
-      }
-
-      port.ptr()->send_vec8(val_);
+      recv_vec8_pv(port, bit, 0, bit.size());
 }
 
 void vvp_fun_concat8::recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
