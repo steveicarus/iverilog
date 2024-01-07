@@ -969,14 +969,21 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 
 	    vvp_vector4_t tmp = c4string_to_vector4(label);
 
-	      // Inputs that are constants are schedule to execute as
+	      // Inputs that are constants are scheduled to execute as
 	      // soon at the simulation starts. In Verilog, constants
 	      // start propagating when the simulation starts, just
 	      // like any other signal value. But letting the
 	      // scheduler distribute the constant value has the
 	      // additional advantage that the constant is not
 	      // propagated until the network is fully linked.
-	    schedule_set_vector(ifdx, tmp);
+	      // For constants that initialise an undriven net, we
+	      // schedule execution before time 0, to make sure it
+	      // occurs before any sensitive processes are started
+	      // or VPI callbacks are executed.
+	    if (label[0] == 'c')
+		  schedule_init_vector(ifdx, tmp);
+	    else
+		  schedule_set_vector(ifdx, tmp);
 
 	    free(label);
 	    return;
@@ -986,7 +993,10 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
       if (c8string_test(label)) {
 
 	    vvp_vector8_t tmp = c8string_to_vector8(label);
-	    schedule_set_vector(ifdx, tmp);
+	    if (label[0] == 'c')
+		  schedule_init_vector(ifdx, tmp);
+	    else
+		  schedule_set_vector(ifdx, tmp);
 
 	    free(label);
 	    return;
@@ -998,7 +1008,10 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 
 	    double tmp = crstring_to_double(label);
 
-	    schedule_set_vector(ifdx, tmp);
+	    if (label[0] == 'c')
+		  schedule_init_vector(ifdx, tmp);
+	    else
+		  schedule_set_vector(ifdx, tmp);
 	    free(label);
 	    return;
       }
