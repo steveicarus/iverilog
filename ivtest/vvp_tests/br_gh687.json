@@ -1,0 +1,6 @@
+{
+    "type"   : "normal",
+    "source" : "br_gh687.v",
+    "gold"   : "br_gh687",
+    "iverilog-args" : [ "-g2009" ]
+}
