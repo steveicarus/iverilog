@@ -1,0 +1,7 @@
+{
+    "type"   : "normal",
+    "source" : "br_gh710.v",
+    "gold"   : "br_gh710b",
+    "iverilog-args" : [ "-g2009" ],
+    "vvp-args-extended" : [ "-lxt" ]
+}
