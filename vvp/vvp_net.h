@@ -1055,7 +1055,7 @@ template <class T> class vvp_sub_pointer_t {
 	    bits_ |= port__;
       }
 
-      ~vvp_sub_pointer_t() { }
+      ~vvp_sub_pointer_t() = default;
 
       T* ptr()
       { return reinterpret_cast<T*> (bits_ & ~UINTPTR_C(3)); }
