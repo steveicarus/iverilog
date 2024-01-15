@@ -84,7 +84,6 @@ parameter_no_default		normal			ivltests
 parameter_omit1			normal			ivltests
 parameter_omit2			normal			ivltests
 parameter_omit3			normal			ivltests
-pr1963962			normal			ivltests gold=pr1963962-fsv.gold
 pr3015421			CE			ivltests gold=pr3015421-fsv.gold
 resetall			normal,-Wtimescale	ivltests gold=resetall-fsv.gold
 scope2b				normal			ivltests
