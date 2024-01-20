@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -263,17 +263,17 @@ static char* strdupnew(char const *str)
 
   /* Handle some specialized constant/literals as symbols. */
 
-"C4<"[01xz]*">" {
+[Cc]"4<"[01xz]*">" {
       yylval.text = strdup(yytext);
       assert(yylval.text);
       return T_SYMBOL; }
 
-"C8<"[01234567xz]*">" {
+[Cc]"8<"[01234567xz]*">" {
       yylval.text = strdup(yytext);
       assert(yylval.text);
       return T_SYMBOL; }
 
-"Cr<m"[a-f0-9]*"g"[a-f0-9]*">" {
+[Cc]"r<m"[a-f0-9]*"g"[a-f0-9]*">" {
       yylval.text = strdup(yytext);
       assert(yylval.text);
       return T_SYMBOL; }

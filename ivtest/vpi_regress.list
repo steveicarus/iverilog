@@ -71,6 +71,8 @@ br_gh308		normal			br_gh308.c		br_gh308.gold
 br_gh317		normal			br_gh317.c		br_gh317.gold
 br_gh496		normal,-g2009		br_gh496.c		br_gh496.gold
 br_gh1037		normal,-g2009		br_gh1037.c		br_gh1037.gold
+br_gh1041		normal			br_gh1041.c		br_gh1041.gold
+br_gh1041b		normal			br_gh1041b.c		br_gh1041b.gold
 br_ml20191013		normal			br_ml20191013.c		br_ml20191013.gold
 by_index		normal			by_index.c		by_index.gold
 by_name			normal			by_name.c		by_name.log

@@ -1,0 +1,10 @@
+Compiling vpi/br_gh1041b.c...
+Making br_gh1041b.vpi from  br_gh1041b.o...
+Got handle for test.w
+                   0: Wire a is now 1
+                   2: Wire a is now 0
+                   4: Wire a is now 1
+                   6: Wire a is now 0
+                   8: Wire a is now 1
+                  10: Wire a is now 0
+vpi/br_gh1041b.v:7: $finish called at 11 (1s)

@@ -1147,14 +1147,14 @@ void schedule_simulate(void)
 	    delete cur;
       }
 
+      sim_started = true;
+
       if (verbose_flag) {
 	    vpi_mcd_printf(1, " ...execute StartOfSim callbacks\n");
       }
 
       // Execute start of simulation callbacks
       vpiStartOfSim();
-
-      sim_started = true;
 
       signals_capture();
 

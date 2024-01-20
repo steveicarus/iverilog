@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -891,9 +891,20 @@ void compile_vpi_time_precision(long pre)
  *
  * The real value is sign * (mant ** exp).
  */
+static bool crstring_header_test(const char*str)
+{
+      if ((str[0] != 'C') && (str[0] != 'c'))
+	    return false;
+      if ((str[1] != 'r') || (str[2] != '<'))
+	    return false;
+
+      return true;
+}
+
 bool crstring_test(const char*str)
 {
-      if (strncmp(str, "Cr<", 3) != 0) return false;
+      if (!crstring_header_test(str))
+	    return false;
       const char*tp = strchr(str, '>');
       if (tp == 0) return false;
       if (tp[1] != 0) return false;
@@ -906,6 +917,8 @@ bool crstring_test(const char*str)
 
 double crstring_to_double(const char*label)
 {
+      assert(crstring_header_test(label));
+
       const char*cp = label+3;
       assert(*cp == 'm');
       cp += 1;
@@ -956,14 +969,21 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 
 	    vvp_vector4_t tmp = c4string_to_vector4(label);
 
-	      // Inputs that are constants are schedule to execute as
+	      // Inputs that are constants are scheduled to execute as
 	      // soon at the simulation starts. In Verilog, constants
 	      // start propagating when the simulation starts, just
 	      // like any other signal value. But letting the
 	      // scheduler distribute the constant value has the
 	      // additional advantage that the constant is not
 	      // propagated until the network is fully linked.
-	    schedule_set_vector(ifdx, tmp);
+	      // For constants that initialise an undriven net, we
+	      // schedule execution before time 0, to make sure it
+	      // occurs before any sensitive processes are started
+	      // or VPI callbacks are executed.
+	    if (label[0] == 'c')
+		  schedule_init_vector(ifdx, tmp);
+	    else
+		  schedule_set_vector(ifdx, tmp);
 
 	    free(label);
 	    return;
@@ -973,7 +993,10 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
       if (c8string_test(label)) {
 
 	    vvp_vector8_t tmp = c8string_to_vector8(label);
-	    schedule_set_vector(ifdx, tmp);
+	    if (label[0] == 'c')
+		  schedule_init_vector(ifdx, tmp);
+	    else
+		  schedule_set_vector(ifdx, tmp);
 
 	    free(label);
 	    return;
@@ -985,7 +1008,10 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 
 	    double tmp = crstring_to_double(label);
 
-	    schedule_set_vector(ifdx, tmp);
+	    if (label[0] == 'c')
+		  schedule_init_vector(ifdx, tmp);
+	    else
+		  schedule_set_vector(ifdx, tmp);
 	    free(label);
 	    return;
       }
