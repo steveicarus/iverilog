@@ -33,7 +33,7 @@ def get_ivl_version () -> list:
 
     # Get the output from the "iverilog -V" command for the version string.
     text = subprocess.check_output(["iverilog", "-V"])
-    match = re.search(b'Icarus Verilog version ([0-9]+)\.([0-9]+)', text)
+    match = re.search(b'Icarus Verilog version ([0-9]+)\\.([0-9]+)', text)
     if not match:
         return None
 
