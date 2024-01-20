@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -120,7 +120,7 @@ int show_stmt_forloop(ivl_statement_t net, ivl_scope_t scope)
 	    rc += show_statement(ivl_stmt_init_stmt(net), scope);
 
       /* Top of the loop, draw the condition test. */
-      fprintf(vvp_out, "T_%u.%u ; Top of for-loop \n", thread_count, top_label);
+      fprintf(vvp_out, "T_%u.%u ; Top of for-loop\n", thread_count, top_label);
       int use_flag = draw_eval_condition(ivl_stmt_cond_expr(net));
       fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, %d;\n",
 	      thread_count, out_label, use_flag);

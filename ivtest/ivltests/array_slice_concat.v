@@ -20,9 +20,9 @@ module top;
   reg [159:0] a;
   reg start;
   wire [95:0] out;
-  
+
   ArraySliceWithNarrowStart dut(.a(a), .start(start), .out(out));
-   
+
   initial begin
      a = {32'h44444444, 32'h33333333, 32'h22222222, 32'h11111111};
      start = 1;
@@ -32,5 +32,5 @@ module top;
 	 $finish;
      end
      $display("PASSED");
-  end   
+  end
 endmodule
