@@ -546,7 +546,7 @@ static void display_multi_driver_error(ivl_nexus_t nex, unsigned ndrivers,
 static ivl_nexus_ptr_t *drivers = 0x0;
 static unsigned adrivers = 0;
 
-void EOC_cleanup_drivers()
+void EOC_cleanup_drivers(void)
 {
       free(drivers);
       drivers = NULL;

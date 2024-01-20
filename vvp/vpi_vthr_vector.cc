@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -218,7 +218,7 @@ void thread_word_delete(vpiHandle item)
 
 static void thread_word_delete_real(vpiHandle item)
 {
-      struct __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(item);
+      class __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(item);
       delete obj;
 }
 #endif
