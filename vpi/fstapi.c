@@ -34,7 +34,6 @@
  * FST_DEBUG : not for production use, only enable for development
  * FST_REMOVE_DUPLICATE_VC : glitch removal (has writer performance impact)
  * HAVE_LIBPTHREAD -> FST_WRITER_PARALLEL : enables inclusion of parallel writer code
- * FST_DO_MISALIGNED_OPS (defined automatically for x86 and some others) : CPU architecture can handle misaligned loads/stores
  * _WAVE_HAVE_JUDY : use Judy arrays instead of Jenkins (undefine if LGPL is not acceptable)
  *
  */
@@ -131,10 +130,6 @@ void **JenkinsIns(void *base_i, const unsigned char *mem, uint32_t length, uint3
 #define FST_HDR_TIMEZERO_SIZE           (8)
 #define FST_GZIO_LEN                    (32768)
 #define FST_HDR_FOURPACK_DUO_SIZE       (4*1024*1024)
-
-#if defined(__i386__) || defined(__x86_64__) || defined(_AIX) || defined(__aarch64__)
-#define FST_DO_MISALIGNED_OPS
-#endif
 
 #if defined(__APPLE__) && defined(__MACH__)
 #define FST_MACOSX
@@ -377,22 +372,15 @@ return ptr;
 /*
  * regular and variable-length integer access functions
  */
-#ifdef FST_DO_MISALIGNED_OPS
-#define fstGetUint32(x) (*(uint32_t *)(x))
-#else
 static uint32_t fstGetUint32(unsigned char *mem)
 {
 uint32_t u32;
 unsigned char *buf = (unsigned char *)(&u32);
 
-buf[0] = mem[0];
-buf[1] = mem[1];
-buf[2] = mem[2];
-buf[3] = mem[3];
+memcpy(buf, mem, sizeof(uint32_t));
 
 return(*(uint32_t *)buf);
 }
-#endif
 
 
 static int fstWriterUint64(FILE *handle, uint64_t v)
@@ -871,11 +859,7 @@ unsigned char *pnt = buf;
 uint32_t nxt;
 uint32_t len;
 
-#ifdef FST_DO_MISALIGNED_OPS
-(*(uint32_t *)(pnt)) = (*(uint32_t *)(u));
-#else
 memcpy(pnt, u, sizeof(uint32_t));
-#endif
 pnt += 4;
 
 while((nxt = v>>7))
@@ -898,11 +882,7 @@ unsigned char *pnt = buf;
 uint32_t nxt;
 uint32_t len;
 
-#ifdef FST_DO_MISALIGNED_OPS
-(*(uint32_t *)(pnt)) = (*(uint32_t *)(u));
-#else
 memcpy(pnt, u, sizeof(uint32_t));
-#endif
 pnt += 4;
 
 while((nxt = v>>7))
@@ -1562,7 +1542,7 @@ for(i=0;i<xc->maxhandle;i++)
                                         dmem = packmem = (unsigned char *)malloc(packmemlen = (wrlen * 2) + 2);
                                         }
 
-                                rc = (xc->fourpack) ? LZ4_compress((char *)scratchpnt, (char *)dmem, wrlen) : fastlz_compress(scratchpnt, wrlen, dmem);
+                                rc = (xc->fourpack) ? LZ4_compress_default((char *)scratchpnt, (char *)dmem, wrlen, packmemlen) : fastlz_compress(scratchpnt, wrlen, dmem);
                                 if(rc < destlen)
                                         {
 #ifndef FST_DYNAMIC_ALIAS_DISABLE
@@ -2129,7 +2109,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 				{
 	                        fstWriterMmapSanity(hmem = (unsigned char *)fstMmap(NULL, xc->hier_file_len, PROT_READ|PROT_WRITE, MAP_SHARED, fileno(xc->hier_handle), 0), __FILE__, __LINE__, "hmem");
 				}
-                        packed_len = LZ4_compress((char *)hmem, (char *)mem, xc->hier_file_len);
+                        packed_len = LZ4_compress_default((char *)hmem, (char *)mem, xc->hier_file_len, lz4_maxlen);
                         fstMunmap(hmem, xc->hier_file_len);
 
                         fourpack_duo = (!xc->repack_on_close) && (xc->hier_file_len > FST_HDR_FOURPACK_DUO_SIZE); /* double pack when hierarchy is large */
@@ -2142,7 +2122,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 
                                 lz4_maxlen_duo = LZ4_compressBound(packed_len);
                                 mem_duo = (unsigned char *)malloc(lz4_maxlen_duo);
-                                packed_len_duo = LZ4_compress((char *)mem, (char *)mem_duo, packed_len);
+                                packed_len_duo = LZ4_compress_default((char *)mem, (char *)mem_duo, packed_len, lz4_maxlen_duo);
 
                                 fstWriterVarint(xc->handle, packed_len); /* 1st round compressed length */
                                 fstFwrite(mem_duo, packed_len_duo, 1, xc->handle);
