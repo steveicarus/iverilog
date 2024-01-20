@@ -23,6 +23,7 @@
 # include  "schedule.h"
 # include  "logic.h"
 # include  "part.h"
+# include  "concat.h"
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif

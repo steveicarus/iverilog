@@ -25,6 +25,7 @@ assign array6[2:1] = 8'h32;
 reg failed = 0;
 
 initial begin
+  #0
   $display("%h", array1);
   if (array1 !== 16'h4321) failed = 1;
   $display("%h", array2);
