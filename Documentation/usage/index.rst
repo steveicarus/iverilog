@@ -20,4 +20,5 @@ Icarus Verilog.
    vhdlpp_flags
    gtkwave
    vpi
+   icarus_verilog_quirks
    reporting_issues

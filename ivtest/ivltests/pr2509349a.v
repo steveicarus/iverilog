@@ -7,7 +7,8 @@ module top;
     pass = 1'b1;
 
     // Neither no_dir or no_dir2 should exist and vsim should be a file.
-    $readmempath("/tmp:/no_dir:no_dir2:vsim:ivltests");
+    // The ivltests directory should exist.
+    $readmempath("/no_dir:no_dir2:vsim:ivltests");
 
     $readmemh("pr2509349.txt", mem);
 

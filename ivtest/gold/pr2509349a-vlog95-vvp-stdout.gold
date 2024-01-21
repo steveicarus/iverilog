@@ -1,0 +1,4 @@
+WARNING: work/a.out.v:17: $readmempath could not find directory "/no_dir"!
+WARNING: work/a.out.v:17: $readmempath could not find directory "no_dir2"!
+WARNING: work/a.out.v:17: $readmempath could not find directory "vsim"!
+PASSED
