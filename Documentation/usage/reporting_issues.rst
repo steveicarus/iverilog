@@ -64,7 +64,7 @@ detailed instructions -- :doc:`Getting Started as a Contributer <getting_started
 
 COPYRIGHT ISSUES
 
-Icarus Verilog is Copyright (c) 1998-2018 Stephen Williams except
+Icarus Verilog is Copyright (c) 1998-2024 Stephen Williams except
 where otherwise noted. Minor patches are covered as derivative works
 (or editorial comment or whatever the appropriate legal term is) and
 folded into the rest of ivl. However, if a submission can reasonably

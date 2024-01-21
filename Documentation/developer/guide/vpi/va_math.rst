@@ -8,7 +8,7 @@ License.
   Verilog-A math library built for Icarus Verilog
   https://github.com/steveicarus/iverilog/
 
-  Copyright (C) 2007-2010  Cary R. (cygcary@yahoo.com)
+  Copyright (C) 2007-2024  Cary R. (cygcary@yahoo.com)
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

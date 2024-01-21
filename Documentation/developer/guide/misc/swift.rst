@@ -2,7 +2,7 @@
 Swift Model Support (Preliminary)
 =================================
 
-    Copyright 2003 Stephen Williams
+    Copyright 2003-2024 Stephen Williams
 
   NOTE: SWIFT support does not work yet, these are provisional
   instructions, intended to show what's supposed to happen when I get

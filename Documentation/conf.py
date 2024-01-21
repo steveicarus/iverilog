@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Icarus Verilog'
-copyright = '2023, Stephen Williams'
+copyright = '2024, Stephen Williams'
 author = 'Stephen Williams'
 
 # The short X.Y version
