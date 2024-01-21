@@ -1,4 +1,4 @@
-.TH iverilog 1 "Jan 14th, 2021" "" "Version %M.%n%E"
+.TH iverilog 1 "Jan 20th, 2024" "" "Version %M.%n%E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -649,7 +649,7 @@ Tips on using, debugging, and developing the compiler can be found at
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002\-2021 Stephen Williams
+Copyright \(co  2002\-2024 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0
