@@ -5953,9 +5953,10 @@ for(;;)
                                                         if(fv)
                                                                 {
                                                                 unsigned char ch_bp =  (xc->signal_typs[idx] != FST_VT_VCD_PORT) ? 'b' : 'p';
+								uint64_t mem_required_for_traversal_chk = vdata - mem_for_traversal + len;
 
                                                                 fstWritex(xc, &ch_bp, 1);
-								if((vdata - mem_for_traversal + len) > mem_required_for_traversal)
+								if(mem_required_for_traversal_chk > mem_required_for_traversal)
 									{
 									chk_report_abort("TALOS-2023-1793");
 									}
