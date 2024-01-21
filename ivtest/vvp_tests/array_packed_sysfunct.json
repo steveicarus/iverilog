@@ -1,0 +1,5 @@
+{
+    "type" : "NI",
+    "source" : "array_packed_sysfunct.v",
+    "iverilog-args" : [ "-g2012" ]
+}

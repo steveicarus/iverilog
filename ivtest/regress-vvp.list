@@ -6,6 +6,8 @@ always4A			vvp_tests/always4A.json
 always4B			vvp_tests/always4B.json
 analog1				vvp_tests/analog1.json
 analog2				vvp_tests/analog2.json
+array_packed_sysfunct		vvp_tests/array_packed_sysfunct.json
+array_packed_value_list		vvp_tests/array_packed_value_list.json
 array_packed_write_read		vvp_tests/array_packed_write_read.json
 array_slice_concat		vvp_tests/array_slice_concat.json
 automatic_error11		vvp_tests/automatic_error11.json
@@ -144,6 +146,7 @@ sf_onehot0_fail			vvp_tests/sf_onehot0_fail.json
 struct_enum_partsel		vvp_tests/struct_enum_partsel.json
 struct_field_left_right		vvp_tests/struct_field_left_right.json
 struct_nested1			vvp_tests/struct_nested1.json
+struct_packed_value_list	vvp_tests/struct_packed_value_list.json
 struct_packed_write_read	vvp_tests/struct_packed_write_read.json
 struct_packed_write_read2	vvp_tests/struct_packed_write_read2.json
 sv_2state_array_init_prop	vvp_tests/sv_2state_array_init_prop.json
@@ -186,10 +189,13 @@ sv_default_port_value2		vvp_tests/sv_default_port_value2.json
 sv_default_port_value3		vvp_tests/sv_default_port_value3.json
 sv_foreach9			vvp_tests/sv_foreach9.json
 sv_foreach10			vvp_tests/sv_foreach10.json
+sv_interface			vvp_tests/sv_interface.json
+sv_literals			vvp_tests/sv_literals.json
 sv_module_port1			vvp_tests/sv_module_port1.json
 sv_module_port2			vvp_tests/sv_module_port2.json
 sv_module_port3			vvp_tests/sv_module_port3.json
 sv_module_port4			vvp_tests/sv_module_port4.json
+sv_parameter_type		vvp_tests/sv_parameter_type.json
 sv_wildcard_import8		vvp_tests/sv_wildcard_import8.json
 sdf_header			vvp_tests/sdf_header.json
 task_return1			vvp_tests/task_return1.json

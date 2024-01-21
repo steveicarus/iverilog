@@ -1,0 +1,5 @@
+{
+    "type" : "NI",
+    "source" : "sv_interface.v",
+    "iverilog-args" : [ "-g2012" ]
+}
