@@ -1,0 +1,5 @@
+{
+    "type" : "NI",
+    "source" : "array_packed_value_list.v",
+    "iverilog-args" : [ "-g2012" ]
+}
