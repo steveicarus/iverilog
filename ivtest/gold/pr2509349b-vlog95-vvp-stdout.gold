@@ -1,0 +1,3 @@
+WARNING: work/a.out.v:14: $readmempath's argument (vpiReg) is not a valid string.
+WARNING: work/a.out.v:17: $readmempath's argument contains non-printable characters.
+                          "tes\002"

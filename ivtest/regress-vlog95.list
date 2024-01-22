@@ -804,8 +804,6 @@ pic			normal			contrib  gold=pic-vlog95.gold
 pr910			normal			ivltests gold=pr910-vlog95.gold
 pr1698820		normal			ivltests gold=pr1698820-vlog95.gold
 pr1819452		normal			ivltests gold=pr1819452-vlog95.gold
-pr2509349a		normal			ivltests gold=pr2509349a-vlog95.gold
-pr2509349b		normal			ivltests gold=pr2509349b-vlog95.gold
 # Because the lower module has a parameter it is given a unique name that
 # does not match what the code is looking for. If we can verify that there
 # is only a single instance or that the instance has the original or at

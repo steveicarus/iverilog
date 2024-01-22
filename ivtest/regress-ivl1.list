@@ -163,10 +163,6 @@ sv_cast_darray		normal,-g2005-sv	ivltests
 br978			normal			ivltests
 br_ml20150424		normal			ivltests
 
-# $readmempath
-pr2509349a		normal			ivltests gold=pr2509349a.gold
-pr2509349b		normal			ivltests gold=pr2509349b.gold
-
 # $simparam
 simparam		normal			ivltests
 

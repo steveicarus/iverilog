@@ -120,6 +120,10 @@ pr1864110b			vvp_tests/pr1864110b.json
 pr1864115			vvp_tests/pr1864115.json
 pr1916261a			vvp_tests/pr1916261a.json
 pr1916261a			vvp_tests/pr1916261a.json
+pr2509349a			vvp_tests/pr2509349a.json
+pr2509349a-vlog95		vvp_tests/pr2509349a-vlog95.json
+pr2509349b			vvp_tests/pr2509349b.json
+pr2509349b-vlog95		vvp_tests/pr2509349b-vlog95.json
 pr2800985b			vvp_tests/pr2800985b.json
 pr3270320_ams			vvp_tests/pr3270320_ams.json
 pr903				vvp_tests/pr903.json

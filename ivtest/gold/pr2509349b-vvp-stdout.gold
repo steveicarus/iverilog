@@ -1,0 +1,3 @@
+WARNING: ivltests/pr2509349b.v:5: $readmempath's argument (vpiReg) is not a valid string.
+WARNING: ivltests/pr2509349b.v:8: $readmempath's argument contains non-printable characters.
+                                  "tes\002"
