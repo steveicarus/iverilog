@@ -17,6 +17,7 @@ Icarus Verilog.
    ivlpp_flags
    vvp_flags
    vvp_debug
+   vvp_library
    vhdlpp_flags
    gtkwave
    vpi

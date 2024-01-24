@@ -99,7 +99,13 @@ time). ::
 
 This option adds extra memory cleanup code and pool management code to allow
 better memory leak checking when valgrind is available. This option is not
-need when checking for basic errors with valgrind.
+need when checking for basic errors with valgrind. ::
+
+  --enable-libvvp
+
+The vvp progam is built as a small stub linked to a shared library,
+libvvp.so, that may be linked with other programs so that they can host
+a vvp simulation.
 
 Compiling on Linux/Unix
 -----------------------

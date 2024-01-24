@@ -70,7 +70,8 @@ VPI = vpi_modules.o vpi_bit.o vpi_callback.o vpi_cobject.o vpi_const.o vpi_darra
       vpi_vthr_vector.o vpip_bin.o vpip_hex.o vpip_oct.o \
       vpip_to_dec.o vpip_format.o vvp_vpi.o
 
-O = main.o parse.o parse_misc.o lexor.o arith.o array_common.o array.o bufif.o compile.o \
+O = lib_main.o \
+    parse.o parse_misc.o lexor.o arith.o array_common.o array.o bufif.o compile.o \
     concat.o dff.o class_type.o enum_type.o extend.o file_line.o latch.o npmos.o part.o \
     permaheap.o reduce.o resolv.o \
     sfunc.o stop.o \
@@ -98,7 +99,7 @@ else
 endif
 
 clean:
-	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc
+	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc libvvp.so
 	rm -rf dep vvp@EXEEXT@ parse.output vvp.man vvp.ps vvp.pdf vvp.exp
 
 distclean: clean
@@ -121,20 +122,44 @@ dep:
 	mkdir dep
 
 ifeq (@WIN32@,yes)
+ifeq (@LIBVVP@,yes)
+
+CPPFLAGS+= -fpic
+SLEXT=DLL
+
+vvp@EXEEXT@: main.o $(srcdir)/vvp.def libvvp.DLL
+	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o -L. $(LDFLAGS) -lvvp $(LIBS)
+
+libvvp.DLL: $O
+	$(CXX) -shared $(LDFLAGS) -o libvvp.DLL $O $(LIBS) $(dllib)
+else
 # To support cocotb, we export the VPI functions directly. This allows
 # cocotb to build VPI modules without using our vpi_user.h and libvpi.a.
 # This requires making the vvp.exe in two steps. The first step makes
 # a vvp.exe that dlltool can use to make an export library, and the
 # second step makes a vvp.exe that really exports those things.
-vvp@EXEEXT@: $O $(srcdir)/vvp.def
-	$(CXX) -o vvp$(suffix)@EXEEXT@ $(LDFLAGS) $O $(dllib) $(LIBS)
+vvp@EXEEXT@: main.o $O $(srcdir)/vvp.def
+	$(CXX) -o vvp$(suffix)@EXEEXT@ $(LDFLAGS) main.o $O $(dllib) $(LIBS)
 	$(DLLTOOL) --dllname vvp$(suffix)@EXEEXT@ --def $(srcdir)/vvp.def \
 		--output-exp vvp.exp
 	rm -f vvp$(suffix)@EXEEXT@
-	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ vvp.exp $(LDFLAGS) $O $(dllib) $(LIBS)
+	$(CXX) $(LDFLAGS) -o vvp$(suffix)@EXEEXT@ vvp.exp $(LDFLAGS) main.o $O $(dllib) $(LIBS)
+endif
+else ifeq (@LIBVVP@,yes)
+
+CPPFLAGS+= -fpic
+SLEXT=so
+
+# To avoid setting LD_LIBRARY_PATH when running vvp from the build tree,
+# add option -Wl,-rpath=`pwd` to the CXX command below.
+vvp@EXEEXT@: main.o libvvp.so
+	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o -L. -lvvp $(LIBS)
+
+libvvp.so: $O
+	$(CXX) -shared $(LDFLAGS) -o libvvp.so $O $(LIBS) $(dllib)
 else
-vvp@EXEEXT@: $O
-	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $O $(LIBS) $(dllib)
+vvp@EXEEXT@: $O main.o
+	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o $O $(LIBS) $(dllib)
 endif
 
 %.o: %.cc config.h
@@ -207,6 +232,9 @@ installpdf: vvp.pdf installdirs
 
 installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
+ifeq (@LIBVVP@,yes)
+	$(INSTALL_PROGRAM) ./libvvp.$(SLEXT) "$(DESTDIR)$(libdir)/libvvp$(suffix).$(SLEXT)"
+endif
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" "$(DESTDIR)$(INSTALL_DOCDIR)"
@@ -215,5 +243,8 @@ installdirs: $(srcdir)/../mkinstalldirs
 uninstall: $(UNINSTALL32)
 	rm -f "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
 	rm -f "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1" "$(DESTDIR)$(prefix)/vvp$(suffix).pdf"
+ifeq (@LIBVVP@,yes)
+	rm -f "$(DESTDIR)$(libdir)/libvvp$(suffix).$(SLEXT)"
+endif
 
 -include $(patsubst %.o, dep/%.d, $O)
