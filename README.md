@@ -61,7 +61,7 @@ not required, but helpful in case of problems.
 
 You can use:
 ```bash
-apt install -y autoconf gperf make gcc g++ bison flex`
+apt install -y autoconf gperf make gcc g++ bison flex
 ```
 
 You need the following software to compile Icarus Verilog from source
