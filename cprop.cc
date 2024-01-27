@@ -251,7 +251,12 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
 	    obj_set.push_back(cur_obj);
       }
 
-      if (obj_set.size() < 2)
+	// When driving a 4-state signal, we only want to create a
+	// concatenation if we have more than one part select. But
+	// when driving a 2-state signal, create a concatenation
+	// even if there's only one part select, which forces the
+	// undriven bits to zero without needing an explicit cast.
+      if ((obj_set.size() == 0) || ((obj_set.size() == 1) && !output_2_state))
 	    return;
 
       if (debug_optimizer)
