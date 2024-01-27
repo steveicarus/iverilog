@@ -1,7 +1,7 @@
 #ifndef IVL_netmisc_H
 #define IVL_netmisc_H
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -330,8 +330,9 @@ extern NetEConst*make_const_val(unsigned long val);
 extern NetEConst*make_const_val_s(long val);
 
 /*
- * Make A const net
+ * Make a const net.
  */
+extern NetNet* make_const_0(Design*des, NetScope*scope, unsigned long wid);
 extern NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid);
 extern NetNet* make_const_z(Design*des, NetScope*scope, unsigned long wid);
 

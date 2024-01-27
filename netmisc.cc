@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -765,13 +765,12 @@ NetEConst* make_const_val_s(long value)
       return res;
 }
 
-NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid)
+static NetNet* make_const_net(Design*des, NetScope*scope, verinum val)
 {
-      verinum xxx (verinum::Vx, wid);
-      NetConst*res = new NetConst(scope, scope->local_symbol(), xxx);
+      NetConst*res = new NetConst(scope, scope->local_symbol(), val);
       des->add_node(res);
 
-      netvector_t*sig_vec = new netvector_t(IVL_VT_LOGIC, wid-1, 0);
+      netvector_t*sig_vec = new netvector_t(IVL_VT_LOGIC, val.len() - 1, 0);
       NetNet*sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, sig_vec);
       sig->local_flag(true);
 
@@ -779,18 +778,19 @@ NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid)
       return sig;
 }
 
+NetNet* make_const_0(Design*des, NetScope*scope, unsigned long wid)
+{
+      return make_const_net(des, scope, verinum(verinum::V0, wid));
+}
+
+NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid)
+{
+      return make_const_net(des, scope, verinum(verinum::Vx, wid));
+}
+
 NetNet* make_const_z(Design*des, NetScope*scope, unsigned long wid)
 {
-      verinum xxx (verinum::Vz, wid);
-      NetConst*res = new NetConst(scope, scope->local_symbol(), xxx);
-      des->add_node(res);
-
-      netvector_t*sig_vec = new netvector_t(IVL_VT_LOGIC, wid-1, 0);
-      NetNet*sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, sig_vec);
-      sig->local_flag(true);
-
-      connect(sig->pin(0), res->pin(0));
-      return sig;
+      return make_const_net(des, scope, verinum(verinum::Vz, wid));
 }
 
 NetExpr* condition_reduce(NetExpr*expr)
