@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -219,7 +219,16 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
       Nexus*nex = obj->pin(1).nexus();
       vector<NetPartSelect*> obj_set;
 
+      bool output_2_state = false;
+
       for (Link*cur = nex->first_nlink() ; cur ; cur = cur->next_nlink()) {
+
+	    NetPins*tmp_obj = cur->get_obj();
+
+	      // Record if we are driving a 2-state net.
+	    NetNet*net_obj = dynamic_cast<NetNet*> (tmp_obj);
+	    if (net_obj && (net_obj->data_type() == IVL_VT_BOOL))
+		  output_2_state = true;
 
 	      // If this is an input (or passive) then ignore it.
 	    if (cur->get_dir() != Link::OUTPUT)
@@ -227,7 +236,6 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
 
 	      // Check to see if this is the output of a
 	      // NetPartSelect::PV. If not, then give up on the blend.
-	    NetPins*tmp_obj = cur->get_obj();
 	    unsigned tmp_pin = cur->get_pin();
 
 	    NetPartSelect*cur_obj = dynamic_cast<NetPartSelect*> (tmp_obj);
@@ -307,8 +315,10 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
       for (size_t idx = 0 ; idx < obj_set.size() ; idx += 1) {
 	    NetPartSelect*cobj = obj_set[idx];
 	    if (cobj->base() > off) {
-		  NetNet*zzz = make_const_z(des, scope, cobj->base()-off);
-		  connect(cncat->pin(concat_pin), zzz->pin(0));
+		  NetNet*val = output_2_state
+                             ? make_const_0(des, scope, cobj->base()-off)
+                             : make_const_z(des, scope, cobj->base()-off);
+		  connect(cncat->pin(concat_pin), val->pin(0));
 		  concat_pin += 1;
 		  off = cobj->base();
 	    }
@@ -317,8 +327,10 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
 	    off += cobj->width();
       }
       if (off < sig_width) {
-	    NetNet*zzz = make_const_z(des, scope, sig_width-off);
-	    connect(cncat->pin(concat_pin), zzz->pin(0));
+	    NetNet*val = output_2_state
+                       ? make_const_0(des, scope, sig_width-off)
+                       : make_const_z(des, scope, sig_width-off);
+	    connect(cncat->pin(concat_pin), val->pin(0));
 	    concat_pin += 1;
       }
       ivl_assert(*obj, concat_pin == cncat->pin_count());
