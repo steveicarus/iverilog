@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2024 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -306,7 +306,7 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
       bool need_const_idx = is_cassign || is_force || (reg->type()==NetNet::UNRESOLVED_WIRE);
 
       if (reg->unpacked_dimensions() > 0)
-	    return elaborate_lval_net_word_(des, scope, reg, need_const_idx);
+	    return elaborate_lval_net_word_(des, scope, reg, need_const_idx, is_force);
 
 	// This must be after the array word elaboration above!
       if (reg->get_scalar() &&
@@ -366,7 +366,8 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 					      NetScope*scope,
 					      NetNet*reg,
-					      bool need_const_idx) const
+					      bool need_const_idx,
+					      bool is_force) const
 {
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
@@ -448,7 +449,7 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 		 << "canon_index=" << *canon_index << endl;
       }
 
-      if (reg->type()==NetNet::UNRESOLVED_WIRE) {
+      if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
 	    cerr << get_fileline() << ": error: "
 		 << "Unable to assign words of unresolved wire array." << endl;
 	    des->errors += 1;

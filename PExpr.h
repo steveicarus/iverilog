@@ -1,7 +1,7 @@
 #ifndef IVL_PExpr_H
 #define IVL_PExpr_H
 /*
- * Copyright (c) 1998-2021 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2024 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -428,7 +428,7 @@ class PEIdent : public PExpr {
 				      NetNet *reg, ivl_type_t data_type,
 				      pform_name_t tail_path) const;
       NetAssign_*elaborate_lval_net_word_(Design*, NetScope*, NetNet*,
-					  bool need_const_idx) const;
+					  bool need_const_idx, bool is_force) const;
       bool elaborate_lval_net_bit_(Design*, NetScope*, NetAssign_*,
 				   bool need_const_idx) const;
       bool elaborate_lval_net_part_(Design*, NetScope*, NetAssign_*) const;
