@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -3366,6 +3366,12 @@ void pform_check_net_data_type(const struct vlltype&loc, NetNet::Type net_type,
 
       const vector_type_t*vec_type = dynamic_cast<const vector_type_t*>(data_type);
       if (vec_type && vec_type->implicit_flag)
+	    return;
+
+      if (!gn_cadence_types_flag)
+	    VLerror(loc, "Net data type requires SystemVerilog or -gxtypes.");
+
+      if (vec_type)
 	    return;
 
       const real_type_t*rtype = dynamic_cast<const real_type_t*>(data_type);
