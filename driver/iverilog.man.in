@@ -16,9 +16,7 @@ sourcefile
 .PP
 \fIiverilog\fP is a compiler that translates Verilog source code into
 executable programs for simulation, or other netlist formats for
-further processing. The currently supported targets are \fIvvp\fP for
-simulation, and \fIfpga\fP for synthesis. Other target
-types are added as code generators are implemented.
+further processing. The main target is \fIvvp\fP for simulation.
 
 .SH OPTIONS
 \fIiverilog\fP accepts the following options:
@@ -323,7 +321,7 @@ library or in the main design.
 
 The Icarus Verilog compiler supports a variety of targets, for
 different purposes, and the \fB\-t\fP switch is used to select the
-desired target.
+desired target. The two fully supported targets are:
 
 .TP 8
 .B null
@@ -339,19 +337,10 @@ generated code. These opcodes are also used to generate file and
 line information for procedural warning/error messages. To enable
 the debug command tracing us the trace command (trace on) from
 the vvp interactive prompt.
-.TP 8
-.B fpga
-This is a synthesis target that supports a variety of fpga devices,
-mostly by EDIF format output. The Icarus Verilog fpga code generator
-can generate complete designs or EDIF macros that can in turn be
-imported into larger designs by other tools. The \fBfpga\fP target
-implies the synthesis \fB\-S\fP flag.
-.TP 8
-.B vhdl
-This target produces a VHDL translation of the Verilog netlist. The
-output is a single file containing VHDL entities corresponding to
-the modules in the Verilog source code. Note that only a subset of
-the Verilog language is supported.  See the wiki for more information.
+
+.PP
+For other available targets, see
+.BR "<https://steveicarus.github.io/iverilog/targets>"
 
 .SH "WARNING TYPES"
 These are the types of warnings that can be selected by the \fB\-W\fP
