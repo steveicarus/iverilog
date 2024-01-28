@@ -161,6 +161,12 @@ of entering an infinite loop caused by each process triggering all other
 processes that use the same variable. For strict compliance with the
 standards, this behaviour should be disabled.
 .TP 8
+.B -gicarus-misc\fI|\fP-gno-icarus-misc
+Enable (default) or disable support for miscellaneous Icarus Verilog
+extensions. This includes the binary bitwise NAND and NOR operators
+and allowing the binary arithmetic modulus operator to operate on real
+operands.
+.TP 8
 .B -I\fIincludedir\fP
 Append directory \fIincludedir\fP to list of directories searched
 for Verilog include files. The \fB\-I\fP switch may be used many times
