@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -971,7 +971,8 @@ verinum*make_unsized_binary(const char*txt)
       if ((based_size > 0) && (size > based_size)) VLwarn(yylloc,
           "warning: Extra digits given for sized binary constant.");
 
-      verinum::V*bits = new verinum::V[size];
+	// Allocate one extra bit in case we need to zero-extend.
+      verinum::V*bits = new verinum::V[size+1];
 
       unsigned idx = size;
       while (*ptr) {
@@ -999,6 +1000,9 @@ verinum*make_unsized_binary(const char*txt)
 
       if (gn_strict_expr_width_flag && (based_size == 0))
 	    size = truncate_to_integer_width(bits, size);
+
+      if (sign_flag && (size < integer_width) && (bits[size-1] == verinum::V1))
+	    bits[size++] = verinum::V0;
 
       verinum*out = new verinum(bits, size, false);
       out->has_sign(sign_flag);
@@ -1037,7 +1041,8 @@ verinum*make_unsized_octal(const char*txt)
 	        "warning: Extra digits given for sized octal constant.");
       }
 
-      verinum::V*bits = new verinum::V[size];
+	// Allocate one extra bit in case we need to zero-extend.
+      verinum::V*bits = new verinum::V[size+1];
 
       unsigned idx = size;
       while (*ptr) {
@@ -1070,6 +1075,9 @@ verinum*make_unsized_octal(const char*txt)
 
       if (gn_strict_expr_width_flag && (based_size == 0))
 	    size = truncate_to_integer_width(bits, size);
+
+      if (sign_flag && (size < integer_width) && (bits[size-1] == verinum::V1))
+	    bits[size++] = verinum::V0;
 
       verinum*out = new verinum(bits, size, false);
       out->has_sign(sign_flag);
@@ -1106,7 +1114,8 @@ verinum*make_unsized_hex(const char*txt)
 	        "warning: Extra digits given for sized hex constant.");
       }
 
-      verinum::V*bits = new verinum::V[size];
+	// Allocate one extra bit in case we need to zero-extend.
+      verinum::V*bits = new verinum::V[size+1];
 
       unsigned idx = size;
       while (*ptr) {
@@ -1150,6 +1159,9 @@ verinum*make_unsized_hex(const char*txt)
 
       if (gn_strict_expr_width_flag && (based_size == 0))
 	    size = truncate_to_integer_width(bits, size);
+
+      if (sign_flag && (size < integer_width) && (bits[size-1] == verinum::V1))
+	    bits[size++] = verinum::V0;
 
       verinum*out = new verinum(bits, size, false);
       out->has_sign(sign_flag);
