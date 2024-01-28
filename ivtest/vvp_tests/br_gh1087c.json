@@ -1,0 +1,6 @@
+{
+    "type"   : "CE",
+    "source" : "br_gh1087c.v",
+    "gold"   : "br_gh1087c",
+    "iverilog-args" : [ "-g2009", "-gno-xtypes" ]
+}

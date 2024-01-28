@@ -34,6 +34,11 @@ br_gh1018			vvp_tests/br_gh1018.json
 br_gh1029			vvp_tests/br_gh1029.json
 br_gh1075a			vvp_tests/br_gh1074a.json
 br_gh1075b			vvp_tests/br_gh1074b.json
+br_gh1087a1			vvp_tests/br_gh1087a1.json
+br_gh1087a2			vvp_tests/br_gh1087a2.json
+br_gh1087a3			vvp_tests/br_gh1087a3.json
+br_gh1087b			vvp_tests/br_gh1087b.json
+br_gh1087c			vvp_tests/br_gh1087c.json
 ca_time_real`			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json

@@ -1,0 +1,6 @@
+{
+    "type"   : "CE",
+    "source" : "br_gh1087a.v",
+    "gold"   : "br_gh1087a2",
+    "iverilog-args" : [ "-gxtypes" ]
+}

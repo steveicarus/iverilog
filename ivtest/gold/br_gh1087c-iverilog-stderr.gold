@@ -1,0 +1,2 @@
+ivltests/br_gh1087c.v:3: error: Net `b` can not be of type `bool`.
+1 error(s) during elaboration.

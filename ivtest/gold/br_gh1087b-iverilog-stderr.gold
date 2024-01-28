@@ -1,0 +1,2 @@
+ivltests/br_gh1087b.v:6: error: Unresolved net/uwire b cannot have multiple drivers.
+1 error(s) during elaboration.
