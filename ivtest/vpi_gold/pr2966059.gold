@@ -24,7 +24,7 @@ vpi_get_value (rlval):
 vpi_get_value (<N/A>):
   format = 7
    value = 0
-vpi_get_value (wreal):
+vpi_get_value (wrval):
   format = 7
    value = 0
 vpi_get_value (<N/A>):

@@ -4,7 +4,7 @@ module top;
   parameter sp = "\003";
 
   real rlval;
-  wire real wreal;
+  wire real wrval;
   reg [3:0] rval;
   wire [3:0] wval;
   assign wval = 2;
@@ -21,8 +21,8 @@ module top;
 
     $check_number(rlval);
     $check_number(rlval+1);
-    $check_number(wreal);
-    $check_number(wreal+1);
+    $check_number(wrval);
+    $check_number(wrval+1);
     $check_number(rval);
     $check_number(rval+1);
     $check_number(wval);

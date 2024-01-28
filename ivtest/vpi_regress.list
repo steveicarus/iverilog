@@ -114,7 +114,7 @@ pr723			normal			pr723.c			pr723.log
 pr1693971		normal			pr1693971.c		pr1693971.log
 pr2048463		normal			pr2048463.c		pr2048463.log
 pr2314742		normal			pr2314742.c		pr2314742.gold
-pr2966059		normal,-gno-xtypes	pr2966059.c		pr2966059.gold
+pr2966059		normal			pr2966059.c		pr2966059.gold
 pr2971220		normal			pr2971220.c		pr2971220.gold
 putp			normal			putp.c			putp.log
 putp2			normal			putp2.c			putp2.log
