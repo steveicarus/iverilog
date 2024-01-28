@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -3548,14 +3548,28 @@ expression
 	$$ = tmp;
       }
   | expression K_NAND attribute_list_opt expression
-      { PEBinary*tmp = new PEBinary('A', $1, $4);
-	FILE_NAME(tmp, @2);
-	$$ = tmp;
+      { if (gn_icarus_misc_flag) {
+	      PEBinary*tmp = new PEBinary('A', $1, $4);
+	      FILE_NAME(tmp, @2);
+	      $$ = tmp;
+	} else {
+	      yyerror(@2, "error: The binary NAND operator "
+			  "is an Icarus Verilog extension. "
+			  "Use -gicarus-misc to enable it.");
+	      $$ = 0;
+	}
       }
   | expression K_NOR attribute_list_opt expression
-      { PEBinary*tmp = new PEBinary('O', $1, $4);
-	FILE_NAME(tmp, @2);
-	$$ = tmp;
+      { if (gn_icarus_misc_flag) {
+	      PEBinary*tmp = new PEBinary('O', $1, $4);
+	      FILE_NAME(tmp, @2);
+	      $$ = tmp;
+	} else {
+	      yyerror(@2, "error: The binary NOR operator "
+			  "is an Icarus Verilog extension. "
+			  "Use -gicarus-misc to enable it.");
+	      $$ = 0;
+	}
       }
   | expression K_NXOR attribute_list_opt expression
       { PEBinary*tmp = new PEBinary('X', $1, $4);
