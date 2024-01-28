@@ -1,0 +1,2 @@
+ivltests/br_gh552.v:8: error: The binary NAND operator is an Icarus Verilog extension. Use -gicarus-misc to enable it.
+ivltests/br_gh552.v:9: error: The binary NOR operator is an Icarus Verilog extension. Use -gicarus-misc to enable it.

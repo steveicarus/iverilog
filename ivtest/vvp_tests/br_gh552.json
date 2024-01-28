@@ -1,0 +1,6 @@
+{
+    "type"   : "CE",
+    "source" : "br_gh552.v",
+    "gold"   : "br_gh552",
+    "iverilog-args" : [ "-gno-icarus-misc" ]
+}
