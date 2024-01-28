@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2024 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -97,6 +97,17 @@ static void sig_check_data_type(Design*des, NetScope*scope,
 
       if (!type)
 	    return;
+
+      if ((sig->type() == NetNet::WIRE) && (sig->data_type() != IVL_VT_LOGIC)) {
+	    if (gn_cadence_types_flag) {
+		  sig->type(NetNet::UNRESOLVED_WIRE);
+	    } else {
+		  cerr << wire->get_fileline() << ": error: Net `"
+		       << wire->basename() << "` can not be of type `"
+		       << sig->data_type() << "`." << endl;
+		  des->errors++;
+	    }
+      }
 
       if (type->packed()) {
 	    switch (type->base_type()) {
