@@ -2,8 +2,7 @@
 Icarus Verilog Usage
 ====================
 
-This section contains documents to help support developers who contribute to
-Icarus Verilog.
+This section contains documents to help support Icarus Verilog users.
 
 .. toctree::
    :maxdepth: 1
@@ -20,5 +19,6 @@ Icarus Verilog.
    vhdlpp_flags
    gtkwave
    vpi
+   icarus_verilog_extensions
    icarus_verilog_quirks
    reporting_issues
