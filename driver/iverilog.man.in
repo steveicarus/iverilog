@@ -636,11 +636,10 @@ To compile and run explicitly using the vvp runtime:
 Steve Williams (steve@icarus.com)
 
 .SH SEE ALSO
-vvp(1),
-.BR "<https://steveicarus.github.io/iverilog/>"
+vvp(1)
 
 Tips on using, debugging, and developing the compiler can be found at
-.BR "<http://iverilog.wikia.com/>"
+.BR "<https://steveicarus.github.io/iverilog/>"
 
 .SH COPYRIGHT
 .nf
