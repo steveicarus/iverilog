@@ -31,6 +31,7 @@ br_gh710a			vvp_tests/br_gh710a.json
 br_gh710b			vvp_tests/br_gh710b.json
 br_gh710c			vvp_tests/br_gh710c.json
 br_gh939			vvp_tests/br_gh939.json
+br_gh1001			vvp_tests/br_gh1001.json
 br_gh1018			vvp_tests/br_gh1018.json
 br_gh1029			vvp_tests/br_gh1029.json
 br_gh1075a			vvp_tests/br_gh1074a.json

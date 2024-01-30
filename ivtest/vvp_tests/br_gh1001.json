@@ -1,0 +1,5 @@
+{
+    "type"   : "normal",
+    "source" : "br_gh1001.v",
+    "iverilog-args" : [ "-g2009" ]
+}
