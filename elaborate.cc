@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1206,9 +1206,24 @@ void elaborate_unpacked_port(Design *des, NetScope *scope, NetNet *port_net,
       }
 
       ivl_assert(*port_net, expr_net->pin_count() == port_net->pin_count());
-      if (port_type == NetNet::POUTPUT)
+      if (port_type == NetNet::POUTPUT) {
+	    // elaborate_unpacked_array normally elaborates a RHS expression
+	    // so does not perform this check.
+	    if (gn_var_can_be_uwire() && (expr_net->type() == NetNet::REG)) {
+		  if (expr_net->peek_lref() > 0) {
+			perm_string port_name = mod->get_port_name(port_idx);
+			cerr << expr->get_fileline() << ": error: "
+				"Cannot connect port '" << port_name
+			     << "' to variable '" << expr_net->name()
+			     << "'. This conflicts with a procedural "
+				"assignment." << endl;
+			des->errors += 1;
+			return;
+		  }
+		  expr_net->type(NetNet::UNRESOLVED_WIRE);
+	    }
 	    assign_unpacked_with_bufz(des, scope, port_net, expr_net, port_net);
-      else
+      } else
 	    assign_unpacked_with_bufz(des, scope, port_net, port_net, expr_net);
 }
 
