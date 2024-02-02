@@ -250,21 +250,7 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 	// slice. Detect the situation by noting if the index count
 	// is less than the array dimensions (unpacked).
       if (reg->unpacked_dimensions() > name_tail.index.size()) {
-	    if (gn_system_verilog()) {
-		  if (name_tail.index.empty()) {
-			NetAssign_*lv = new NetAssign_(reg);
-			return lv;
-		  }
-		  cerr << get_fileline() << ": sorry: Assignment to an "
-		        " array slice is not yet supported."
-		       << endl;
-	    } else {
-		  cerr << get_fileline() << ": error: Assignment to an entire"
-		        " array or to an array slice requires SystemVerilog."
-		       << endl;
-	    }
-	    des->errors += 1;
-	    return 0;
+	    return elaborate_lval_array_(des, scope, is_force, reg);
       }
 
 	/* Get the signal referenced by the identifier, and make sure
@@ -361,6 +347,30 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
       lv->set_signed(reg->get_signed());
 
       return lv;
+}
+
+NetAssign_*PEIdent::elaborate_lval_array_(Design *des, NetScope *,
+				          bool is_force, NetNet *reg) const
+{
+      if (!gn_system_verilog()) {
+	    cerr << get_fileline() << ": error: Assignment to an entire"
+		  " array or to an array slice requires SystemVerilog."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      const name_component_t&name_tail = path_.back();
+      if (name_tail.index.empty()) {
+	    NetAssign_*lv = new NetAssign_(reg);
+	    return lv;
+      }
+
+      cerr << get_fileline() << ": sorry: Assignment to an "
+	    " array slice is not yet supported."
+	   << endl;
+      des->errors += 1;
+      return 0;
 }
 
 NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,

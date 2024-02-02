@@ -423,6 +423,8 @@ class PEIdent : public PExpr {
 
     private:
 
+      NetAssign_ *elaborate_lval_array_(Design *des, NetScope *scope,
+				        bool is_force, NetNet *reg) const;
       NetAssign_ *elaborate_lval_var_(Design *des, NetScope *scope,
 				      bool is_force, bool is_cassign,
 				      NetNet *reg, ivl_type_t data_type,
