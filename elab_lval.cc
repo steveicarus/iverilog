@@ -332,9 +332,10 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
       ivl_assert(*this, use_sel == index_component_t::SEL_NONE);
 
       if (reg->type()==NetNet::UNRESOLVED_WIRE && !is_force) {
-	    cerr << get_fileline() << ": error: "
-		 << path_ << " Unable to assign to unresolved wires."
-		 << endl;
+	    ivl_assert(*this, reg->coerced_to_uwire());
+	    cerr << get_fileline() << ": error: Cannot perform "
+		    "procedural assignment to '" << reg->name()
+		 << "' because it is also continuously assigned." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -466,8 +467,10 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       }
 
       if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
-	    cerr << get_fileline() << ": error: "
-		 << "Unable to assign words of unresolved wire array." << endl;
+	    ivl_assert(*this, reg->coerced_to_uwire());
+	    cerr << get_fileline() << ": error: Cannot perform "
+		    "procedural assignment to word in array '" << reg->name()
+	         << "' because it is also continuously assigned." << endl;
 	    des->errors += 1;
 	    return 0;
       }
