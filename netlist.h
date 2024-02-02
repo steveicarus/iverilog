@@ -1,7 +1,7 @@
 #ifndef IVL_netlist_H
 #define IVL_netlist_H
 /*
- * Copyright (c) 1998-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -687,6 +687,11 @@ class NetNet  : public NetObj, public PortType {
       Type type() const;
       void type(Type t);
 
+        // This method returns true if we have changed the net type from being
+        // a variable to being an unresolved wire. This happens in SystemVerilog
+        // when we find a continuous assignment to a variable.
+      bool coerced_to_uwire() { return coerced_to_uwire_; }
+
       PortType port_type() const;
       void port_type(PortType t);
 
@@ -805,6 +810,7 @@ class NetNet  : public NetObj, public PortType {
     private:
       Type   type_    : 5;
       PortType port_type_ : 3;
+      bool coerced_to_uwire_: 1;
       bool local_flag_: 1;
       ivl_type_t net_type_;
       netuarray_t *array_type_ = nullptr;
