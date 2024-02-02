@@ -362,6 +362,17 @@ NetAssign_*PEIdent::elaborate_lval_array_(Design *des, NetScope *,
 
       const name_component_t&name_tail = path_.back();
       if (name_tail.index.empty()) {
+	    if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
+		  cerr << get_fileline() << ": error: Cannot perform "
+			  "procedural assign to array '" << reg->name();
+		  if (reg->coerced_to_uwire())
+			cerr << "' because it is continuously assigned.";
+		  else
+			cerr << "' because it is an unresolved wire.";
+		  cerr << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
 	    NetAssign_*lv = new NetAssign_(reg);
 	    return lv;
       }
