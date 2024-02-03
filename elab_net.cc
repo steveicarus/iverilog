@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2024 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -870,18 +870,25 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       unsigned subnet_wid = midx-lidx+1;
 
 	/* Check if the l-value bits are double-driven. */
-      if (sig->type() == NetNet::UNRESOLVED_WIRE && sig->test_and_set_part_driver(midx,lidx, widx_flag? widx : 0)) {
-	    cerr << get_fileline() << ": error: Unresolved net/uwire "
-	         << sig->name() << " cannot have multiple drivers." << endl;
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ":      : Overlap in "
-		       << "[" << midx << ":" << lidx << "] (canonical)"
-		       << ", widx=" << (widx_flag? widx : 0)
-		       << ", vector width=" << sig->vector_width()
-		       << endl;
+
+      if (sig->type() == NetNet::UNRESOLVED_WIRE) {
+	    ivl_assert(*this, widx_flag || (widx == 0));
+	    long wcount = widx_flag ? 1 : sig->pin_count();
+	    for (long idx = 0; idx < wcount; idx += 1) {
+		  if (sig->test_and_set_part_driver(midx, lidx, widx + idx)) {
+			cerr << get_fileline() << ": error: Unresolved net/uwire "
+			     << sig->name() << " cannot have multiple drivers." << endl;
+			if (debug_elaborate) {
+			      cerr << get_fileline() << ":	: Overlap in "
+				   << "[" << midx << ":" << lidx << "] (canonical)"
+				   << ", widx=" << (widx_flag? widx : 0)
+				   << ", vector width=" << sig->vector_width()
+				   << endl;
+			}
+			des->errors += 1;
+			return 0;
+		  }
 	    }
-	    des->errors += 1;
-	    return 0;
       }
 
       if (sig->pin_count() > 1 && widx_flag) {
