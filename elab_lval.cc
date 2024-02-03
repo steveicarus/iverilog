@@ -293,7 +293,7 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 	// XXXX ivl_assert(*this, method_name.nil());
       ivl_assert(*this, tail_path.empty());
 
-      bool need_const_idx = is_cassign || is_force || (reg->type()==NetNet::UNRESOLVED_WIRE);
+      bool need_const_idx = is_cassign || is_force;
 
       if (reg->unpacked_dimensions() > 0)
 	    return elaborate_lval_net_word_(des, scope, reg, need_const_idx, is_force);
@@ -587,16 +587,9 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 
       if (debug_elaborate && (reg->type()==NetNet::UNRESOLVED_WIRE)) {
 	    cerr << get_fileline() << ": PEIdent::elaborate_lval_net_bit_: "
-		 << "Try to assign bits of unresolved wire."
+		 << "Try to assign bits of variable which is also continuously assigned."
 		 << endl;
       }
-
-	// Notice that we might be assigning to an unresolved wire. This
-	// can happen if we are actually assigning to a variable that
-	// has a partial continuous assignment to it. If that is the
-	// case, then the bit select must be constant.
-      ivl_assert(*this, need_const_idx || (reg->type()!=NetNet::UNRESOLVED_WIRE));
-
 
       if (prefix_indices.size()+2 <= reg->packed_dims().size()) {
 	      // Special case: this is a slice of a multi-dimensional
@@ -624,10 +617,17 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 		  lv->set_part(new NetEConst(verinum(loff)), lwid);
 
 	    } else {
-		  ivl_assert(*this, reg->type()!=NetNet::UNRESOLVED_WIRE);
 		  unsigned long lwid;
 		  mux = normalize_variable_slice_base(prefix_indices, mux,
 						      reg, lwid);
+
+		  if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
+			ivl_assert(*this, reg->coerced_to_uwire());
+			report_mixed_assignment_conflict_("slice");
+			des->errors += 1;
+			return false;
+		  }
+
 		  lv->set_part(mux, lwid);
 	    }
 
@@ -648,8 +648,6 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 	    lv->set_part(mux, &netvector_t::atom2s8);
 
       } else if (mux) {
-	    ivl_assert(*this, reg->type()!=NetNet::UNRESOLVED_WIRE);
-
 	      // Non-constant bit mux. Correct the mux for the range
 	      // of the vector, then set the l-value part select
 	      // expression.
@@ -661,15 +659,26 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 		  return false;
 	    }
 	    mux = normalize_variable_bit_base(prefix_indices, mux, reg);
+
+	    if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
+		  ivl_assert(*this, reg->coerced_to_uwire());
+		  report_mixed_assignment_conflict_("bit select");
+		  des->errors += 1;
+		  return false;
+	    }
+
 	    lv->set_part(mux, 1);
 
       } else if (reg->vector_width() == 1 && reg->sb_is_valid(prefix_indices,lsb)) {
 	      // Constant bit mux that happens to select the only bit
 	      // of the l-value. Don't bother with any select at all.
-
-	      // NOTE: Don't know what to do about unresolved wires
-	      // here, but they are probably wrong.
-	    ivl_assert(*this, reg->type()!=NetNet::UNRESOLVED_WIRE);
+	      // If there's a continuous assignment, it must be a conflict.
+	    if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
+		  ivl_assert(*this, reg->coerced_to_uwire());
+		  report_mixed_assignment_conflict_("bit select");
+		  des->errors += 1;
+		  return false;
+	    }
 
       } else {
 	      // Constant bit select that does something useful.
