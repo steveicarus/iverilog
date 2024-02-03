@@ -432,20 +432,21 @@ class PEIdent : public PExpr {
       NetAssign_*elaborate_lval_net_word_(Design*, NetScope*, NetNet*,
 					  bool need_const_idx, bool is_force) const;
       bool elaborate_lval_net_bit_(Design*, NetScope*, NetAssign_*,
-				   bool need_const_idx) const;
-      bool elaborate_lval_net_part_(Design*, NetScope*, NetAssign_*) const;
+				   bool need_const_idx, bool is_force) const;
+      bool elaborate_lval_net_part_(Design*, NetScope*, NetAssign_*,
+				    bool is_force) const;
       bool elaborate_lval_net_idx_(Design*, NetScope*, NetAssign_*,
                                    index_component_t::ctype_t,
-				   bool need_const_idx) const;
+				   bool need_const_idx, bool is_force) const;
       NetAssign_*elaborate_lval_net_class_member_(Design*, NetScope*,
 						   const netclass_t *class_type,
 						   NetNet*,
 						   pform_name_t) const;
       bool elaborate_lval_net_packed_member_(Design*, NetScope*,
 					     NetAssign_*,
-					     pform_name_t member_path) const;
+					     pform_name_t member_path, bool is_force) const;
       bool elaborate_lval_darray_bit_(Design*, NetScope*,
-				       NetAssign_*) const;
+				      NetAssign_*, bool is_force) const;
 
     private:
       NetExpr* elaborate_expr_(Design *des, NetScope *scope,

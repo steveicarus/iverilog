@@ -271,7 +271,7 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 	// then we can handled it with the net_packed_member_ method.
       if (reg->struct_type() && !tail_path.empty()) {
 	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_packed_member_(des, scope, lv, tail_path);
+	    elaborate_lval_net_packed_member_(des, scope, lv, tail_path, is_force);
 	    return lv;
       }
 
@@ -305,14 +305,14 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 
       if (use_sel == index_component_t::SEL_PART) {
 	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_part_(des, scope, lv);
+	    elaborate_lval_net_part_(des, scope, lv, is_force);
 	    return lv;
       }
 
       if (use_sel == index_component_t::SEL_IDX_UP ||
           use_sel == index_component_t::SEL_IDX_DO) {
 	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_idx_(des, scope, lv, use_sel, need_const_idx);
+	    elaborate_lval_net_idx_(des, scope, lv, use_sel, need_const_idx, is_force);
 	    return lv;
       }
 
@@ -320,11 +320,11 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
       if (use_sel == index_component_t::SEL_BIT) {
 	    if (reg->darray_type()) {
 		  NetAssign_*lv = new NetAssign_(reg);
-		  elaborate_lval_darray_bit_(des, scope, lv);
+		  elaborate_lval_darray_bit_(des, scope, lv, is_force);
 		  return lv;
 	    } else {
 		  NetAssign_*lv = new NetAssign_(reg);
-		  elaborate_lval_net_bit_(des, scope, lv, need_const_idx);
+		  elaborate_lval_net_bit_(des, scope, lv, need_const_idx, is_force);
 		  return lv;
 	    }
       }
@@ -504,14 +504,15 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       }
 
       if (use_sel == index_component_t::SEL_BIT)
-	    elaborate_lval_net_bit_(des, scope, lv, need_const_idx);
+	    elaborate_lval_net_bit_(des, scope, lv, need_const_idx, is_force);
 
       if (use_sel == index_component_t::SEL_PART)
-	    elaborate_lval_net_part_(des, scope, lv);
+	    elaborate_lval_net_part_(des, scope, lv, is_force);
 
       if (use_sel == index_component_t::SEL_IDX_UP ||
           use_sel == index_component_t::SEL_IDX_DO)
-	    elaborate_lval_net_idx_(des, scope, lv, use_sel, need_const_idx);
+	    elaborate_lval_net_idx_(des, scope, lv, use_sel,
+				    need_const_idx, is_force);
 
       return lv;
 }
@@ -519,7 +520,8 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 bool PEIdent::elaborate_lval_net_bit_(Design*des,
 				      NetScope*scope,
 				      NetAssign_*lv,
-				      bool need_const_idx) const
+				      bool need_const_idx,
+				      bool is_force) const
 {
       list<long>prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, lv->sig(), prefix_indices);
@@ -610,7 +612,7 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 		  bool rcl = reg->sb_to_slice(prefix_indices, lsb, loff, lwid);
 		  ivl_assert(*this, rcl);
 
-		  if (reg->type()==NetNet::UNRESOLVED_WIRE) {
+		  if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
 			bool rct = reg->test_and_set_part_driver(loff+lwid-1, loff);
 			if (rct) {
 			      cerr << get_fileline() << ": error: "
@@ -679,7 +681,7 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 		       << " is out of range." << endl;
 	    }
 
-	    if (reg->type()==NetNet::UNRESOLVED_WIRE) {
+	    if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
 		  bool rct = reg->test_and_set_part_driver(loff, loff);
 		  if (rct) {
 			cerr << get_fileline() << ": error: "
@@ -694,7 +696,10 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
       return true;
 }
 
-bool PEIdent::elaborate_lval_darray_bit_(Design*des, NetScope*scope, NetAssign_*lv)const
+bool PEIdent::elaborate_lval_darray_bit_(Design*des,
+					 NetScope*scope,
+					 NetAssign_*lv,
+					 bool is_force) const
 {
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
@@ -702,7 +707,7 @@ bool PEIdent::elaborate_lval_darray_bit_(Design*des, NetScope*scope, NetAssign_*
 	// For now, only support single-dimension dynamic arrays.
       ivl_assert(*this, name_tail.index.size() == 1);
 
-      if (lv->sig()->type()==NetNet::UNRESOLVED_WIRE) {
+      if ((lv->sig()->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
 	    cerr << get_fileline() << ": error: "
 		 << path_ << " Unable to darray word select unresolved wires."
 		 << endl;
@@ -724,7 +729,8 @@ bool PEIdent::elaborate_lval_darray_bit_(Design*des, NetScope*scope, NetAssign_*
 
 bool PEIdent::elaborate_lval_net_part_(Design*des,
 				       NetScope*scope,
-				       NetAssign_*lv) const
+				       NetAssign_*lv,
+				       bool is_force) const
 {
       if (lv->sig()->data_type() == IVL_VT_STRING) {
            cerr << get_fileline() << ": error: Cannot part select assign to a string ('"
@@ -762,7 +768,7 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 	    return true;
       }
 
-      if (reg->type()==NetNet::UNRESOLVED_WIRE) {
+      if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
 	    bool rct = reg->test_and_set_part_driver(msb, lsb);
 	    if (rct) {
 		  cerr << get_fileline() << ": error: "
@@ -837,7 +843,8 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 				      NetScope*scope,
 				      NetAssign_*lv,
 				      index_component_t::ctype_t use_sel,
-				      bool need_const_idx) const
+				      bool need_const_idx,
+				      bool /*is_force*/) const
 {
       if (lv->sig()->data_type() == IVL_VT_STRING) {
            cerr << get_fileline() << ": error: Cannot index part select assign to a string ('"
@@ -1178,7 +1185,8 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
  */
 bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 						NetAssign_*lv,
-						pform_name_t member_path) const
+						pform_name_t member_path,
+						bool is_force) const
 {
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PEIdent::elaborate_lval_net_packed_member_: "
@@ -1535,7 +1543,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 	    packed_base = 0;
       }
 
-      if (reg->type()==NetNet::UNRESOLVED_WIRE) {
+      if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
 	    cerr << get_fileline() << ": error: "
 		 << path_ << " Unable to member-select unresolved wires."
 		 << endl;
