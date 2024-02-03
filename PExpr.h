@@ -423,6 +423,8 @@ class PEIdent : public PExpr {
 
     private:
 
+      void report_mixed_assignment_conflict_(const char*category) const;
+
       NetAssign_ *elaborate_lval_array_(Design *des, NetScope *scope,
 				        bool is_force, NetNet *reg) const;
       NetAssign_ *elaborate_lval_var_(Design *des, NetScope *scope,

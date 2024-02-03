@@ -70,6 +70,12 @@ using namespace std;
  * elaboration makes a single NetAssign_ and connects it up properly.
  */
 
+void PEIdent::report_mixed_assignment_conflict_(const char*category) const
+{
+      cerr << get_fileline() << ": error: Cannot perform procedural "
+              "assignment to " << category << " '" << path_
+           << "' because it is also continuously assigned." << endl;
+}
 
 /*
  * The default interpretation of an l-value to a procedural assignment
@@ -333,9 +339,7 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 
       if (reg->type()==NetNet::UNRESOLVED_WIRE && !is_force) {
 	    ivl_assert(*this, reg->coerced_to_uwire());
-	    cerr << get_fileline() << ": error: Cannot perform "
-		    "procedural assignment to '" << reg->name()
-		 << "' because it is also continuously assigned." << endl;
+	    report_mixed_assignment_conflict_("variable");
 	    des->errors += 1;
 	    return 0;
       }
@@ -363,9 +367,7 @@ NetAssign_*PEIdent::elaborate_lval_array_(Design *des, NetScope *,
       if (name_tail.index.empty()) {
 	    if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
 		  ivl_assert(*this, reg->coerced_to_uwire());
-		  cerr << get_fileline() << ": error: Cannot perform "
-			  "procedural assignment to array '" << reg->name()
-		       << "' because it is also continuously assigned." << endl;
+		  report_mixed_assignment_conflict_("array");
 		  des->errors += 1;
 		  return 0;
 	    }
@@ -471,9 +473,7 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 	    NetEConst*canon_const = dynamic_cast<NetEConst*>(canon_index);
 	    if (!canon_const || reg->test_part_driven(reg->vector_width() - 1, 0,
 						      canon_const->value().as_long())) {
-		  cerr << get_fileline() << ": error: Cannot perform "
-			  "procedural assignment to word in array '" << reg->name()
-		       << "' because it is also continuously assigned." << endl;
+		  report_mixed_assignment_conflict_("array word");
 		  des->errors += 1;
 		  return 0;
 	     }
@@ -613,11 +613,12 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 		  ivl_assert(*this, rcl);
 
 		  if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
+			ivl_assert(*this, reg->coerced_to_uwire());
 			bool rct = reg->test_and_set_part_driver(loff+lwid-1, loff);
 			if (rct) {
-			      cerr << get_fileline() << ": error: "
-				   << "These bits are already driven." << endl;
+			      report_mixed_assignment_conflict_("slice");
 			      des->errors += 1;
+			      return false;
 			}
 		  }
 
@@ -682,11 +683,12 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 	    }
 
 	    if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
+		  ivl_assert(*this, reg->coerced_to_uwire());
 		  bool rct = reg->test_and_set_part_driver(loff, loff);
 		  if (rct) {
-			cerr << get_fileline() << ": error: "
-			     << "Bit " << loff << " is already driven." << endl;
+			report_mixed_assignment_conflict_("bit select");
 			des->errors += 1;
+			return false;
 		  }
 	    }
 
@@ -708,9 +710,8 @@ bool PEIdent::elaborate_lval_darray_bit_(Design*des,
       ivl_assert(*this, name_tail.index.size() == 1);
 
       if ((lv->sig()->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
-	    cerr << get_fileline() << ": error: "
-		 << path_ << " Unable to darray word select unresolved wires."
-		 << endl;
+	    ivl_assert(*this, lv->sig()->coerced_to_uwire());
+	    report_mixed_assignment_conflict_("darray word");
 	    des->errors += 1;
 	    return false;
       }
@@ -769,11 +770,10 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
       }
 
       if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
+	    ivl_assert(*this, reg->coerced_to_uwire());
 	    bool rct = reg->test_and_set_part_driver(msb, lsb);
 	    if (rct) {
-		  cerr << get_fileline() << ": error: "
-		       << path_ << "Part select is double-driving unresolved wire."
-		       << endl;
+		  report_mixed_assignment_conflict_("part select");
 		  des->errors += 1;
 		  return false;
 	    }
@@ -1544,9 +1544,8 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
       }
 
       if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
-	    cerr << get_fileline() << ": error: "
-		 << path_ << " Unable to member-select unresolved wires."
-		 << endl;
+	    ivl_assert(*this, reg->coerced_to_uwire());
+	    report_mixed_assignment_conflict_("variable");
 	    des->errors += 1;
 	    return false;
       }
