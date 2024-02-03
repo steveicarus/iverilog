@@ -222,6 +222,20 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    return nullptr;
       }
 
+	/* We are elaborating procedural assignments. Wires are not allowed
+	   unless this is the l-value of a force. */
+      if ((reg->type() != NetNet::REG)
+	  && ((reg->type() != NetNet::UNRESOLVED_WIRE) || !reg->coerced_to_uwire())
+	  && !is_force) {
+	    cerr << get_fileline() << ": error: '" << path_
+		 << "' is not a valid l-value for a procedural assignment."
+		 << endl;
+	    cerr << reg->get_fileline() << ":      : '" << path_ <<
+		  "' is declared here as a " << reg->type() << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       return elaborate_lval_var_(des, scope, is_force, is_cassign, reg,
 			         sr.type, member_path);
 }
@@ -252,22 +266,6 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
       if (reg->unpacked_dimensions() > name_tail.index.size()) {
 	    return elaborate_lval_array_(des, scope, is_force, reg);
       }
-
-	/* Get the signal referenced by the identifier, and make sure
-	   it is a register. Wires are not allowed in this context,
-	   unless this is the l-value of a force. */
-      if ((reg->type() != NetNet::REG)
-	  && (reg->type() != NetNet::UNRESOLVED_WIRE)
-	  && !is_force) {
-	    cerr << get_fileline() << ": error: " << path_ <<
-		  " is not a valid l-value in " << scope_path(scope) <<
-		  "." << endl;
-	    cerr << reg->get_fileline() << ":      : " << path_ <<
-		  " is declared here as " << reg->type() << "." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
 
 	// If we find that the matched variable is a packed struct,
 	// then we can handled it with the net_packed_member_ method.
@@ -363,13 +361,10 @@ NetAssign_*PEIdent::elaborate_lval_array_(Design *des, NetScope *,
       const name_component_t&name_tail = path_.back();
       if (name_tail.index.empty()) {
 	    if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
+		  ivl_assert(*this, reg->coerced_to_uwire());
 		  cerr << get_fileline() << ": error: Cannot perform "
-			  "procedural assign to array '" << reg->name();
-		  if (reg->coerced_to_uwire())
-			cerr << "' because it is continuously assigned.";
-		  else
-			cerr << "' because it is an unresolved wire.";
-		  cerr << endl;
+			  "procedural assignment to array '" << reg->name()
+		       << "' because it is also continuously assigned." << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
