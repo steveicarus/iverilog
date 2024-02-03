@@ -830,6 +830,30 @@ unsigned NetNet::peek_eref() const
 }
 
 /*
+ * Test each of the bits in the range. If any bits are set then return true.
+ */
+bool NetNet::test_part_driven(unsigned pmsb, unsigned plsb, int widx)
+{
+      if (lref_mask_.empty())
+           return false;
+
+       // If indexing a word that doesn't exist, then pretend this is
+       // never driven.
+      if (widx < 0)
+           return false;
+      if (widx >= (int)pin_count())
+           return false;
+
+      unsigned word_base = vector_width() * widx;
+      for (unsigned idx = plsb ; idx <= pmsb ; idx += 1) {
+           if (lref_mask_[idx+word_base])
+                 return true;
+      }
+
+      return false;
+}
+
+/*
  * Test each of the bits in the range, and set them. If any bits are
  * already set then return true.
  */
