@@ -614,8 +614,7 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 
 		  if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
 			ivl_assert(*this, reg->coerced_to_uwire());
-			bool rct = reg->test_and_set_part_driver(loff+lwid-1, loff);
-			if (rct) {
+			if (reg->test_part_driven(loff+lwid-1, loff)) {
 			      report_mixed_assignment_conflict_("slice");
 			      des->errors += 1;
 			      return false;
@@ -684,8 +683,7 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 
 	    if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
 		  ivl_assert(*this, reg->coerced_to_uwire());
-		  bool rct = reg->test_and_set_part_driver(loff, loff);
-		  if (rct) {
+		  if (reg->test_part_driven(loff, loff)) {
 			report_mixed_assignment_conflict_("bit select");
 			des->errors += 1;
 			return false;
@@ -771,8 +769,7 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 
       if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
 	    ivl_assert(*this, reg->coerced_to_uwire());
-	    bool rct = reg->test_and_set_part_driver(msb, lsb);
-	    if (rct) {
+	    if (reg->test_part_driven(msb, lsb)) {
 		  report_mixed_assignment_conflict_("part select");
 		  des->errors += 1;
 		  return false;
