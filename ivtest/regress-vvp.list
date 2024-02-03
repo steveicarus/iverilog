@@ -204,6 +204,12 @@ sv_foreach9			vvp_tests/sv_foreach9.json
 sv_foreach10			vvp_tests/sv_foreach10.json
 sv_interface			vvp_tests/sv_interface.json
 sv_literals			vvp_tests/sv_literals.json
+sv_mixed_assign1		vvp_tests/sv_mixed_assign1.json
+sv_mixed_assign2		vvp_tests/sv_mixed_assign2.json
+sv_mixed_assign_error1		vvp_tests/sv_mixed_assign_error1.json
+sv_mixed_assign_error2		vvp_tests/sv_mixed_assign_error2.json
+sv_mixed_assign_error3		vvp_tests/sv_mixed_assign_error3.json
+sv_mixed_assign_error4		vvp_tests/sv_mixed_assign_error4.json
 sv_module_port1			vvp_tests/sv_module_port1.json
 sv_module_port2			vvp_tests/sv_module_port2.json
 sv_module_port3			vvp_tests/sv_module_port3.json

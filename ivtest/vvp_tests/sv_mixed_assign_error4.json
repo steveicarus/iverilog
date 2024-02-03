@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_mixed_assign_error1.v",
+    "gold"          : "sv_mixed_assign_error1",
+    "iverilog-args" : [ "-g2009" ]
+}

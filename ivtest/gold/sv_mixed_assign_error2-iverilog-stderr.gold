@@ -1,0 +1,5 @@
+ivltests/sv_mixed_assign_error2.v:15: error: Cannot perform procedural assignment to array word 'p['sd1]' because it is also continuously assigned.
+ivltests/sv_mixed_assign_error2.v:16: error: Cannot perform procedural assignment to array word 'p[i]' because it is also continuously assigned.
+ivltests/sv_mixed_assign_error2.v:17: error: Cannot perform procedural assignment to array word 'q['sd0]' because it is also continuously assigned.
+ivltests/sv_mixed_assign_error2.v:18: error: Cannot perform procedural assignment to array word 'q['sd1]' because it is also continuously assigned.
+4 error(s) during elaboration.

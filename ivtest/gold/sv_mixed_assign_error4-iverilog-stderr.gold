@@ -1,0 +1,11 @@
+ivltests/sv_mixed_assign_error4.v:13: error: Cannot perform procedural assignment to part select 'v['sd3:'sd2]' because it is also continuously assigned.
+ivltests/sv_mixed_assign_error4.v:14: error: Cannot perform procedural assignment to part select 'v['sd5:'sd4]' because it is also continuously assigned.
+ivltests/sv_mixed_assign_error4.v:18: error: Cannot perform procedural assignment to part select 'v['sd2+:'sd2]' because it is also continuously assigned.
+ivltests/sv_mixed_assign_error4.v:19: error: Cannot perform procedural assignment to part select 'v['sd5-:'sd2]' because it is also continuously assigned.
+ivltests/sv_mixed_assign_error4.v:22: error: Cannot perform procedural assignment to part select 'v[lsb+:'sd2]' because it is also continuously assigned.
+ivltests/sv_mixed_assign_error4.v:23: error: Cannot perform procedural assignment to part select 'v[msb-:'sd2]' because it is also continuously assigned.
+ivltests/sv_mixed_assign_error4.v:26: error: Cannot perform procedural assignment to bit select 'v['sd2]' because it is also continuously assigned.
+ivltests/sv_mixed_assign_error4.v:27: error: Cannot perform procedural assignment to bit select 'v['sd4]' because it is also continuously assigned.
+ivltests/sv_mixed_assign_error4.v:30: error: Cannot perform procedural assignment to bit select 'v[lsb]' because it is also continuously assigned.
+ivltests/sv_mixed_assign_error4.v:31: error: Cannot perform procedural assignment to bit select 'v[msb]' because it is also continuously assigned.
+10 error(s) during elaboration.

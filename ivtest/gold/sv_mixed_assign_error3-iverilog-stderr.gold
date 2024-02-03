@@ -1,0 +1,2 @@
+ivltests/sv_mixed_assign_error3.v:10: error: Cannot perform procedural assignment to variable 'q' because it is also continuously assigned.
+Elaboration failed
