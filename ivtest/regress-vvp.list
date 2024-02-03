@@ -219,6 +219,8 @@ test_va_math			vvp_tests/test_va_math.json
 test_vams_math			vvp_tests/test_vams_math.json
 timing_check_syntax		vvp_tests/timing_check_syntax.json
 timing_check_delayed_signals	vvp_tests/timing_check_delayed_signals.json
+uwire_fail2			vvp_tests/uwire_fail2.json
+uwire_fail3			vvp_tests/uwire_fail3.json
 value_range1			vvp_tests/value_range1.json
 value_range2			vvp_tests/value_range2.json
 value_range3			vvp_tests/value_range3.json

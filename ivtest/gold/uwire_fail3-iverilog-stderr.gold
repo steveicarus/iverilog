@@ -1,0 +1,3 @@
+ivltests/uwire_fail3.v:9: error: Unresolved wire 'w' cannot have multiple drivers.
+ivltests/uwire_fail3.v:10: error: Unresolved wire 'w' cannot have multiple drivers.
+2 error(s) during elaboration.
