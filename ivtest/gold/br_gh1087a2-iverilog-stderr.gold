@@ -1,2 +1,2 @@
-ivltests/br_gh1087a.v:6: error: Unresolved net/uwire r cannot have multiple drivers.
+ivltests/br_gh1087a.v:6: error: Unresolved wire 'r' cannot have multiple drivers.
 1 error(s) during elaboration.

@@ -876,8 +876,12 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    long wcount = widx_flag ? 1 : sig->pin_count();
 	    for (long idx = 0; idx < wcount; idx += 1) {
 		  if (sig->test_and_set_part_driver(midx, lidx, widx + idx)) {
-			cerr << get_fileline() << ": error: Unresolved net/uwire "
-			     << sig->name() << " cannot have multiple drivers." << endl;
+			cerr << get_fileline() << ": error: ";
+			if (sig->coerced_to_uwire())
+			      cerr << "Variable '";
+			else
+			      cerr << "Unresolved wire '";
+			cerr << sig->name() << "' cannot have multiple drivers." << endl;
 			if (debug_elaborate) {
 			      cerr << get_fileline() << ":	: Overlap in "
 				   << "[" << midx << ":" << lidx << "] (canonical)"
