@@ -841,7 +841,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 				      NetAssign_*lv,
 				      index_component_t::ctype_t use_sel,
 				      bool need_const_idx,
-				      bool /*is_force*/) const
+				      bool is_force) const
 {
       if (lv->sig()->data_type() == IVL_VT_STRING) {
            cerr << get_fileline() << ": error: Cannot index part select assign to a string ('"
@@ -944,6 +944,14 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 			rel_base = reg->sb_to_idx(prefix_indices,lsv) + offset;
 		  }
 		  delete base;
+		  if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
+			ivl_assert(*this, reg->coerced_to_uwire());
+			if (reg->test_part_driven(rel_base+wid-1, rel_base)) {
+			      report_mixed_assignment_conflict_("part select");
+			      des->errors += 1;
+			      return false;
+			}
+		  }
 		    /* If we cover the entire lvalue just skip the select. */
 		  if (rel_base == 0 && wid == reg->vector_width()) return true;
 		  base = new NetEConst(verinum(rel_base));
@@ -982,6 +990,12 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 		  cerr << get_fileline() << ": error: '" << reg->name()
 		       << "' base index must be a constant in this context."
 		       << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+	    if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
+		  ivl_assert(*this, reg->coerced_to_uwire());
+		  report_mixed_assignment_conflict_("part select");
 		  des->errors += 1;
 		  return false;
 	    }
