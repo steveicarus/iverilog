@@ -516,7 +516,7 @@ void vpiEndOfCompile(void) {
 	    cur = EndOfCompile;
 	    EndOfCompile = dynamic_cast<simulator_callback*>(cur->next);
 	    if (cur->cb_data.cb_rtn != 0) {
-	        (cur->cb_data.cb_rtn)(&cur->cb_data);
+		  (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    }
 	    delete cur;
       }
@@ -538,7 +538,7 @@ void vpiStartOfSim(void) {
 	    cur = StartOfSimulation;
 	    StartOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
 	    if (cur->cb_data.cb_rtn != 0) {
-	        (cur->cb_data.cb_rtn)(&cur->cb_data);
+		  (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    }
 	    delete cur;
       }
@@ -559,10 +559,10 @@ void vpiPostsim(void) {
 	    cur = EndOfSimulation;
 	    EndOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
 	    if (cur->cb_data.cb_rtn != 0) {
-	        /* Only set the time if it is not NULL. */
-	        if (cur->cb_data.time)
-	            vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
-	        (cur->cb_data.cb_rtn)(&cur->cb_data);
+		  /* Only set the time if it is not NULL. */
+		  if (cur->cb_data.time)
+			vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
+		  (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    }
 	    delete cur;
       }
@@ -583,7 +583,7 @@ void vpiNextSimTime(void)
       vpi_mode_flag = VPI_MODE_RWSYNC;
 
       /* Find the last event currently in the list. Remember this callback so
-       * we don't call additional NextSimTime CB's generated during this timestep. 
+       * we don't call additional NextSimTime CB's generated during this timestep.
        */
       while (last_cb && last_cb->next) {
             last_cb = dynamic_cast<simulator_callback*>(last_cb->next);
@@ -612,37 +612,37 @@ static simulator_callback* make_prepost(p_cb_data data)
 
       /* Insert at head of list */
       switch (data->reason) {
-            case cbEndOfCompile:
-                  obj->next = EndOfCompile;
-                  EndOfCompile = obj;
-                  break;
-            case cbStartOfSimulation:
-                  obj->next = StartOfSimulation;
-                  StartOfSimulation = obj;
-                  break;
-            case cbEndOfSimulation:
-                  obj->next = EndOfSimulation;
-                  EndOfSimulation = obj;
-                  break;
-            case cbNextSimTime:
-                  if (!data->time) {
-                        vpi_printf("ERROR: VPI: cbNextSimTime time pointer must be valid.\n");
-                        vpi_control(vpiFinish, 1);
-                        break;
-                  }
-                  if (data->time->type == vpiSuppressTime) {
-                        vpi_printf("ERROR: VPI: cbNextSimTime time type cannot be vpiSuppressTime.\n");
-                        vpi_control(vpiFinish, 1);
-                        break;
-                  }
-                  if (data->time->type == vpiScaledRealTime) {
-                        vpi_printf("ERROR: VPI: cbNextSimTime time type vpiScaledRealTime is not implemented.\n");
-                        vpi_control(vpiFinish, 1);
-                        break;
-                  }
-                  obj->next = NextSimTime;
-                  NextSimTime = obj;
-                  break;
+	  case cbEndOfCompile:
+	    obj->next = EndOfCompile;
+	    EndOfCompile = obj;
+	    break;
+	  case cbStartOfSimulation:
+	    obj->next = StartOfSimulation;
+	    StartOfSimulation = obj;
+	    break;
+	  case cbEndOfSimulation:
+	    obj->next = EndOfSimulation;
+	    EndOfSimulation = obj;
+	    break;
+	  case cbNextSimTime:
+	    if (!data->time) {
+		  vpi_printf("ERROR: VPI: cbNextSimTime time pointer must be valid.\n");
+		  vpi_control(vpiFinish, 1);
+		  break;
+	    }
+	    if (data->time->type == vpiSuppressTime) {
+		  vpi_printf("ERROR: VPI: cbNextSimTime time type cannot be vpiSuppressTime.\n");
+		  vpi_control(vpiFinish, 1);
+		  break;
+	    }
+	    if (data->time->type == vpiScaledRealTime) {
+		  vpi_printf("ERROR: VPI: cbNextSimTime time type vpiScaledRealTime is not implemented.\n");
+		  vpi_control(vpiFinish, 1);
+		  break;
+	    }
+	    obj->next = NextSimTime;
+	    NextSimTime = obj;
+	    break;
       }
 
       return obj;
