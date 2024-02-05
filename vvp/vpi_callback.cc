@@ -51,9 +51,7 @@ static void set_callback_time(p_cb_data data)
 	    vpip_time_to_timestruct(data->time, schedule_simtime());
 	    break;
 	  case vpiScaledRealTime:
-	    data->time->real =
-	         vpip_time_to_scaled_real(schedule_simtime(),
-	             data->obj ? static_cast<__vpiScope *>(vpi_handle(vpiScope, data->obj)) : 0);
+	    data->time->real = vpip_scaled_time_from_handle(schedule_simtime(), data->obj);
 	    break;
 	  case vpiSuppressTime:
 	    break;
