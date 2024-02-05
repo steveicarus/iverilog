@@ -61,7 +61,7 @@ distclean: clean
 	rm -f stamp-pcb_config-h pcb_config.h
 
 cppcheck: $(O:.o=.cc)
-	cppcheck --enable=all --std=c99 --std=c++03 -f \
+	cppcheck --enable=all --std=c99 --std=c++11 -f \
 	         --suppressions-list=$(srcdir)/cppcheck.sup \
 	         -UYY_USER_INIT \
 	         -UYYPARSE_PARAM -UYYPRINT -Ushort -Usize_t -Uyyoverflow \
