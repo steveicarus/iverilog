@@ -1,1 +1,1 @@
-`include "vpi/nextsimtime_fill_time.v"
+`include "vpi/nextsimtime_common.v"

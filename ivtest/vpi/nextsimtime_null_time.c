@@ -1,2 +1,2 @@
-#define TEST_NULL
-#include "nextsimtime_errors.c"
+#define TEST_NULL_TIME
+#include "nextsimtime_common.c"
