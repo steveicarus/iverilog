@@ -589,30 +589,21 @@ void vpiPostsim(void) {
 void vpiNextSimTime(void)
 {
       simulator_callback* cur;
-      simulator_callback* last_cb = NextSimTime;
+      simulator_callback* next = NextSimTime;
+      NextSimTime = 0;
 
       assert(vpi_mode_flag == VPI_MODE_NONE);
       vpi_mode_flag = VPI_MODE_RWSYNC;
 
-      /* Find the last event currently in the list. Remember this callback so
-       * we don't call additional NextSimTime CB's generated during this timestep.
-       */
-      while (last_cb && last_cb->next) {
-            last_cb = dynamic_cast<simulator_callback*>(last_cb->next);
-      }
-
-      while (NextSimTime) {
-            cur = NextSimTime;
-            NextSimTime = dynamic_cast<simulator_callback*>(cur->next);
+      while (next) {
+            cur = next;
+            next = dynamic_cast<simulator_callback*>(cur->next);
             if (cur->cb_data.cb_rtn != 0) {
                   // only vpiSimTime implemented right now
                   vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
                   (cur->cb_data.cb_rtn)(&cur->cb_data);
             }
             delete cur;
-            if (cur == last_cb) {
-                  break;
-            }
       }
 
       vpi_mode_flag = VPI_MODE_NONE;
