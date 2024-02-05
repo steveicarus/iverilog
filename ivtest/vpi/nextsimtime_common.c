@@ -42,7 +42,7 @@ static PLI_INT32 nextsimtime_cb(struct t_cb_data* cb) {
 #else
       timerec.type = vpiSimTime;
 #endif
-      vpi_get_time(NULL, &timerec);
+      vpi_get_time(vpi_handle_by_name("main", NULL), &timerec);
 #ifdef TEST_SCALED_TIME
       vpi_printf("nextsimtime: %f vpi_get_time: %f\n",
             cb->time->real, timerec.real);

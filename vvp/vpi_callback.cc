@@ -40,6 +40,29 @@
 
 using namespace std;
 
+static void set_callback_time(p_cb_data data)
+{
+      assert(data && data->time);
+      data->time->low  = 0;
+      data->time->high = 0;
+      data->time->real = 0.0;
+      switch (data->time->type) {
+	  case vpiSimTime:
+	    vpip_time_to_timestruct(data->time, schedule_simtime());
+	    break;
+	  case vpiScaledRealTime:
+	    data->time->real =
+	         vpip_time_to_scaled_real(schedule_simtime(),
+	             data->obj ? static_cast<__vpiScope *>(vpi_handle(vpiScope, data->obj)) : 0);
+	    break;
+	  case vpiSuppressTime:
+	    break;
+	  default:
+	    assert(0);
+	    break;
+      }
+}
+
 /*
  * Callback handles are created when the VPI function registers a
  * callback. The handle is stored by the run time, and it triggered
@@ -314,13 +337,12 @@ void sync_cb::run_run()
 	    return;
 
       sync_callback*cur = handle;
-      cur->cb_data.time->type = vpiSimTime;
-      vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
 
 	/* Run the callback. If the cb_rtn function pointer is set to
 	   null, then just skip the whole thing and free it. This is
 	   the usual way to cancel one-time callbacks of this sort. */
       if (cur->cb_data.cb_rtn != 0) {
+	    set_callback_time(&cur->cb_data);
 	    assert(vpi_mode_flag == VPI_MODE_NONE);
 	    vpi_mode_flag = sync_flag? VPI_MODE_ROSYNC : VPI_MODE_RWSYNC;
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
@@ -572,8 +594,7 @@ void vpiPostsim(void) {
 	    cur = EndOfSimulation;
 	    EndOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
 	    if (cur->cb_data.cb_rtn != 0) {
-		  assert(cur->cb_data.time);
-		  vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
+		  set_callback_time(&cur->cb_data);
 		  (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    }
 	    delete cur;
@@ -599,8 +620,7 @@ void vpiNextSimTime(void)
             cur = next;
             next = dynamic_cast<simulator_callback*>(cur->next);
             if (cur->cb_data.cb_rtn != 0) {
-                  // only vpiSimTime implemented right now
-                  vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
+                  set_callback_time(&cur->cb_data);
                   (cur->cb_data.cb_rtn)(&cur->cb_data);
             }
             delete cur;
@@ -635,11 +655,6 @@ static simulator_callback* make_prepost(p_cb_data data)
 	    }
 	    if (data->time->type == vpiSuppressTime) {
 		  vpi_printf("ERROR: VPI: cbNextSimTime time type cannot be vpiSuppressTime.\n");
-		  vpi_control(vpiFinish, 1);
-		  break;
-	    }
-	    if (data->time->type == vpiScaledRealTime) {
-		  vpi_printf("ERROR: VPI: cbNextSimTime time type vpiScaledRealTime is not implemented.\n");
 		  vpi_control(vpiFinish, 1);
 		  break;
 	    }
@@ -719,25 +734,7 @@ void callback_execute(struct __vpiCallback*cur)
       vpi_mode_flag = VPI_MODE_RWSYNC;
 
       assert(cur->cb_data.cb_rtn);
-      switch (cur->cb_data.time->type) {
-	  case vpiSimTime:
-	    vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
-	    break;
-	  case vpiScaledRealTime: {
-	    cur->cb_data.time->real =
-	         vpip_time_to_scaled_real(schedule_simtime(),
-	             static_cast<__vpiScope *>(vpi_handle(vpiScope,
-	                                                  cur->cb_data.obj)));
-	    break;
-	  }
-	  case vpiSuppressTime:
-	    break;
-	  default:
-	    fprintf(stderr, "Unsupported time format %d.\n",
-	            (int)cur->cb_data.time->type);
-	    assert(0);
-	    break;
-      }
+      set_callback_time(&cur->cb_data);
       (cur->cb_data.cb_rtn)(&cur->cb_data);
 
       vpi_mode_flag = save_mode;

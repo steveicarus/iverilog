@@ -1,3 +1,8 @@
 Compiling vpi/nextsimtime_scaled_time.c...
 Making nextsimtime_scaled_time.vpi from  nextsimtime_scaled_time.o...
-ERROR: VPI: cbNextSimTime time type vpiScaledRealTime is not implemented.
+time 0: 0
+nextsimtime: 1.000000 vpi_get_time: 1.000000
+time 1: 1
+nextsimtime: 4.000000 vpi_get_time: 4.000000
+time 4: 4
+nextsimtime: 5.000000 vpi_get_time: 5.000000
