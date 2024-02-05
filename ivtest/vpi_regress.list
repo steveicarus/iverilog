@@ -135,6 +135,8 @@ scopes			normal			scopes.c		scopes.log
 spec_delays		normal,-gspecify	spec_delays.c		spec_delays.log
 start_of_simtime1	normal			start_of_simtime1.c	start_of_simtime1.log
 timescale		normal			timescale.c		timescale.log
+value_change1		normal,-g2009		value_change1.c		value_change1.gold
+value_change2		normal,-g2009		value_change2.c		value_change2.gold
 
 # Add new tests in alphabetic/numeric order. If the test needs
 # a compile option or a different log file to run with an older
