@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2024 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2023 Leo Moser (leo.moser@pm.me)
  *
  *    This source code is free software; you can redistribute it
@@ -495,74 +495,75 @@ char* vpi_get_str(PLI_INT32 property, vpiHandle ref)
       return res;
 }
 
-int vpip_time_units_from_handle(vpiHandle obj)
+static __vpiScope*vpip_timescale_scope_from_handle(vpiHandle obj)
 {
       struct __vpiSysTaskCall*task;
-      __vpiScope*scope;
       struct __vpiSignal*signal;
+      struct __vpiRealVar*real;
       __vpiNamedEvent*event;
-
-      if (obj == 0)
-	    return vpip_get_time_precision();
 
       switch (obj->get_type_code()) {
 	  case vpiSysTaskCall:
 	    task = dynamic_cast<__vpiSysTaskCall*>(obj);
-	    return task->scope->time_units;
+	    return task->scope;
 
 	  case vpiModule:
-	    scope = dynamic_cast<__vpiScope*>(obj);
-	    return scope->time_units;
+	    return dynamic_cast<__vpiScope*>(obj);
 
 	  case vpiNet:
 	  case vpiReg:
+	  case vpiIntegerVar:
+	  case vpiBitVar:
+	  case vpiByteVar:
+	  case vpiShortIntVar:
+	  case vpiIntVar:
+	  case vpiLongIntVar:
 	    signal = dynamic_cast<__vpiSignal*>(obj);
-	    scope = vpip_scope(signal);
-	    return scope->time_units;
+	    return vpip_scope(signal);
+
+	  case vpiRealVar:
+	    real = dynamic_cast<__vpiRealVar*>(obj);
+	    return vpip_scope(real);
 
 	  case vpiNamedEvent:
 	    event = dynamic_cast<__vpiNamedEvent*>(obj);
-	    scope = event->get_scope();
-	    return scope->time_units;
+	    return event->get_scope();
+
+	  case vpiMemory:
+	  case vpiMemoryWord:
+	  case vpiPartSelect:
+	    return dynamic_cast<__vpiScope*>(obj->vpi_handle(vpiScope));
 
 	  default:
-	    fprintf(stderr, "ERROR: vpip_time_units_from_handle called with "
+	    fprintf(stderr, "ERROR: vpip_scope_from_handle called with "
 		    "object handle type=%d\n", obj->get_type_code());
 	    assert(0);
 	    return 0;
       }
 }
 
-int vpip_time_precision_from_handle(vpiHandle obj)
+int vpip_time_units_from_handle(vpiHandle obj)
 {
-      struct __vpiSysTaskCall*task;
-      __vpiScope*scope;
-      struct __vpiSignal*signal;
-
       if (obj == 0)
 	    return vpip_get_time_precision();
 
-      switch (obj->get_type_code()) {
-	  case vpiSysTaskCall:
-	    task = dynamic_cast<__vpiSysTaskCall*>(obj);
-	    return task->scope->time_precision;
+      __vpiScope*scope = vpip_timescale_scope_from_handle(obj);
+      if (scope == 0)
+	    return vpip_get_time_precision();
 
-	  case vpiModule:
-	    scope = dynamic_cast<__vpiScope*>(obj);
-	    return scope->time_precision;
+      return scope->time_units;
+}
 
-	  case vpiNet:
-	  case vpiReg:
-	    signal = dynamic_cast<__vpiSignal*>(obj);
-	    scope = vpip_scope(signal);
-	    return scope->time_precision;
+int vpip_time_precision_from_handle(vpiHandle obj)
+{
+      if (obj == 0)
+	    return vpip_get_time_precision();
 
-	  default:
-	    fprintf(stderr, "ERROR: vpip_time_precision_from_handle called "
-		    "with object handle type=%d\n", obj->get_type_code());
-	    assert(0);
-	    return 0;
-      }
+      __vpiScope*scope = vpip_timescale_scope_from_handle(obj);
+      if (scope == 0)
+	    return vpip_get_time_precision();
+
+      return scope->time_precision;
 }
 
 double vpip_scaled_time_from_handle(vvp_time64_t time, vpiHandle obj)
