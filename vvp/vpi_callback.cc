@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -461,11 +461,24 @@ static struct __vpiCallback* make_at_end_of_sim_time(p_cb_data data)
 
 class simulator_callback : public __vpiCallback {
     public:
-      inline explicit simulator_callback(const struct t_cb_data*data)
-      { cb_data = *data; }
+      explicit simulator_callback(const struct t_cb_data*data);
 
     public:
+      struct t_vpi_time cb_time;
 };
+
+inline simulator_callback::simulator_callback(const struct t_cb_data*data)
+{
+      cb_data = *data;
+      if ((data->reason == cbNextSimTime) && data->time) {
+	    cb_time = *(data->time);
+      } else if (data->reason == cbEndOfSimulation) {
+	    cb_time.type = vpiSimTime;
+      } else {
+	    cb_time.type = vpiSuppressTime;
+      }
+      cb_data.time = &cb_time;
+}
 
 static simulator_callback*NextSimTime = 0;
 static simulator_callback*EndOfCompile = 0;
@@ -559,9 +572,8 @@ void vpiPostsim(void) {
 	    cur = EndOfSimulation;
 	    EndOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
 	    if (cur->cb_data.cb_rtn != 0) {
-		  /* Only set the time if it is not NULL. */
-		  if (cur->cb_data.time)
-			vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
+		  assert(cur->cb_data.time);
+		  vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
 		  (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    }
 	    delete cur;
