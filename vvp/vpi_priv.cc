@@ -565,9 +565,18 @@ int vpip_time_precision_from_handle(vpiHandle obj)
       }
 }
 
+double vpip_scaled_time_from_handle(vvp_time64_t time, vpiHandle obj)
+{
+      int scale = vpip_get_time_precision() -
+	          vpip_time_units_from_handle(obj);
+      if (scale >= 0)
+	    return (double)time * pow(10.0, scale);
+      else
+	    return (double)time / pow(10.0, -scale);
+}
+
 void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
 {
-      int scale;
       vvp_time64_t time;
 
       assert(vp);
@@ -581,10 +590,7 @@ void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
 	    break;
 
           case vpiScaledRealTime:
-	    scale = vpip_get_time_precision() -
-	            vpip_time_units_from_handle(obj);
-	    if (scale >= 0) vp->real = (double)time * pow(10.0, scale);
-	    else vp->real = (double)time / pow(10.0, -scale);
+	    vp->real = vpip_scaled_time_from_handle(time, obj);
 	    break;
 
           default:

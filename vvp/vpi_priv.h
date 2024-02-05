@@ -1079,6 +1079,8 @@ extern void vpip_set_time_precision(int pres);
 extern int vpip_time_units_from_handle(vpiHandle obj);
 extern int vpip_time_precision_from_handle(vpiHandle obj);
 
+extern double vpip_scaled_time_from_handle(vvp_time64_t time, vpiHandle obj);
+
 extern void vpip_time_to_timestruct(struct t_vpi_time*ts, vvp_time64_t ti);
 extern vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts);
 
