@@ -19,9 +19,7 @@ event       e;
 logic [3:0] p4;
 
 logic [3:0] a4[3:0];
-// this causes a segfault - to be investigated
-//bit [3:0] a2[3:0];
-logic [3:0] a2[3:0];
+bit   [3:0] a2[3:0];
 
 assign w4 = v4;
 
