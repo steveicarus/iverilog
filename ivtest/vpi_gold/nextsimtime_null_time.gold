@@ -1,3 +1,8 @@
 Compiling vpi/nextsimtime_null_time.c...
 Making nextsimtime_null_time.vpi from  nextsimtime_null_time.o...
-ERROR: VPI: cbNextSimTime time pointer must be valid.
+time 0: 0
+nextsimtime: 1000
+time 1: 1
+nextsimtime: 4000
+time 4: 4
+nextsimtime: 5000

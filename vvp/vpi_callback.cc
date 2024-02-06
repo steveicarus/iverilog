@@ -646,16 +646,6 @@ static simulator_callback* make_prepost(p_cb_data data)
 	    EndOfSimulation = obj;
 	    break;
 	  case cbNextSimTime:
-	    if (!data->time) {
-		  vpi_printf("ERROR: VPI: cbNextSimTime time pointer must be valid.\n");
-		  vpi_control(vpiFinish, 1);
-		  break;
-	    }
-	    if (data->time->type == vpiSuppressTime) {
-		  vpi_printf("ERROR: VPI: cbNextSimTime time type cannot be vpiSuppressTime.\n");
-		  vpi_control(vpiFinish, 1);
-		  break;
-	    }
 	    obj->next = NextSimTime;
 	    NextSimTime = obj;
 	    break;

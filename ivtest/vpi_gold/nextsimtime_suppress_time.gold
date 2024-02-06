@@ -1,3 +1,8 @@
 Compiling vpi/nextsimtime_suppress_time.c...
 Making nextsimtime_suppress_time.vpi from  nextsimtime_suppress_time.o...
-ERROR: VPI: cbNextSimTime time type cannot be vpiSuppressTime.
+time 0: 0
+nextsimtime: 1000
+time 1: 1
+nextsimtime: 4000
+time 4: 4
+nextsimtime: 5000

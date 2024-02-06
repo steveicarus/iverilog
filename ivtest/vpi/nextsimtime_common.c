@@ -37,20 +37,26 @@ static PLI_INT32 register_nextsimtime(struct t_cb_data* cb);
 
 static PLI_INT32 nextsimtime_cb(struct t_cb_data* cb) {
       s_vpi_time timerec;
-#ifdef TEST_SCALED_TIME
-      timerec.type = vpiScaledRealTime;
+
+#ifdef TEST_NULL_TIME
+      (void)cb;
+#else
+      assert(cb->time && (cb->time->type == TIME_TYPE));
+#endif
+
+#if defined(TEST_SCALED_TIME) || defined(TEST_SIM_TIME)
+      timerec = *(cb->time);
 #else
       timerec.type = vpiSimTime;
+      vpi_get_time(NULL, &timerec);
 #endif
-      vpi_get_time(vpi_handle_by_name("main", NULL), &timerec);
+
+
 #ifdef TEST_SCALED_TIME
-      vpi_printf("nextsimtime: %f vpi_get_time: %f\n",
-            cb->time->real, timerec.real);
+      vpi_printf("nextsimtime: %f\n", timerec.real);
 #else
-      uint64_t nextsimtime = ((uint64_t)cb->time->high << 32) | cb->time->low;
       uint64_t time = ((uint64_t)timerec.high << 32) | timerec.low;
-      vpi_printf("nextsimtime: %" PLI_UINT64_FMT " vpi_get_time: %" PLI_UINT64_FMT "\n",
-            nextsimtime, time);
+      vpi_printf("nextsimtime: %" PLI_UINT64_FMT "\n", time);
 #endif
       register_nextsimtime(NULL);
       return 0;
