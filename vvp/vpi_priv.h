@@ -1076,6 +1076,8 @@ vpiHandle vpip_sim_realtime(__vpiScope*scope);
 extern int vpip_get_time_precision(void);
 extern void vpip_set_time_precision(int pres);
 
+extern __vpiScope*vpip_timescale_scope_from_handle(vpiHandle obj);
+
 extern int vpip_time_units_from_handle(vpiHandle obj);
 extern int vpip_time_precision_from_handle(vpiHandle obj);
 

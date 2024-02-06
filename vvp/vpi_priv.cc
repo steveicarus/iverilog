@@ -495,7 +495,7 @@ char* vpi_get_str(PLI_INT32 property, vpiHandle ref)
       return res;
 }
 
-static __vpiScope*vpip_timescale_scope_from_handle(vpiHandle obj)
+__vpiScope*vpip_timescale_scope_from_handle(vpiHandle obj)
 {
       struct __vpiSysTaskCall*task;
       struct __vpiSignal*signal;
