@@ -132,6 +132,8 @@ scanmem			normal			scanmem.cc		scanmem.log
 scanmem2		normal			scanmem2.cc		scanmem2.log
 scanmem3		normal			scanmem3.cc		scanmem3.log
 scopes			normal			scopes.c		scopes.log
+sim_time_cb1		normal			sim_time_cb1.c		sim_time_cb1.gold
+sim_time_cb2		normal			sim_time_cb2.c		sim_time_cb2.gold
 spec_delays		normal,-gspecify	spec_delays.c		spec_delays.log
 start_of_simtime1	normal			start_of_simtime1.c	start_of_simtime1.log
 timescale		normal			timescale.c		timescale.log
