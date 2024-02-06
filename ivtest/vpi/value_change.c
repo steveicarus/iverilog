@@ -1,7 +1,9 @@
-#ifdef TEST_SCALED_TIME
+#if     defined(TEST_SCALED_TIME)
 #define TIME_TYPE vpiScaledRealTime
-#else
+#elif   defined(TEST_SIM_TIME)
 #define TIME_TYPE vpiSimTime
+#else
+#define TIME_TYPE vpiSuppressTime
 #endif
 
 # include  <sv_vpi_user.h>
@@ -12,29 +14,40 @@ static PLI_INT32 report_change(p_cb_data cb)
 {
     vpiHandle handle = (vpiHandle)(cb->user_data);
 
+    s_vpi_time time;
+
+#ifndef TEST_NULL_TIME
     assert(cb->time && (cb->time->type == TIME_TYPE));
+#endif
     assert(cb->value);
+
+#if defined(TEST_SCALED_TIME) || defined(TEST_SIM_TIME)
+    time = *(cb->time);
+#else
+    time.type = vpiSimTime;
+    vpi_get_time(NULL, &time);
+#endif
 
     switch (cb->value->format) {
       case vpiIntVal:
-#ifdef TEST_SCALED_TIME
-        vpi_printf("At time %f %s = %d\n", cb->time->real, vpi_get_str(vpiName, handle), cb->value->value.integer);
+#if     defined(TEST_SCALED_TIME)
+        vpi_printf("At time %f %s = %d\n", time.real, vpi_get_str(vpiName, handle), cb->value->value.integer);
 #else
-        vpi_printf("At time %d %s = %d\n", cb->time->low,  vpi_get_str(vpiName, handle), cb->value->value.integer);
+        vpi_printf("At time %d %s = %d\n", time.low,  vpi_get_str(vpiName, handle), cb->value->value.integer);
 #endif
         break;
       case vpiRealVal:
 #ifdef TEST_SCALED_TIME
-        vpi_printf("At time %f %s = %f\n", cb->time->real, vpi_get_str(vpiName, handle), cb->value->value.real);
+        vpi_printf("At time %f %s = %f\n", time.real, vpi_get_str(vpiName, handle), cb->value->value.real);
 #else
-        vpi_printf("At time %d %s = %f\n", cb->time->low,  vpi_get_str(vpiName, handle), cb->value->value.real);
+        vpi_printf("At time %d %s = %f\n", time.low,  vpi_get_str(vpiName, handle), cb->value->value.real);
 #endif
         break;
       case vpiSuppressVal:
 #ifdef TEST_SCALED_TIME
-        vpi_printf("At time %f %s changed\n", cb->time->real, vpi_get_str(vpiName, handle));
+        vpi_printf("At time %f %s changed\n", time.real, vpi_get_str(vpiName, handle));
 #else
-        vpi_printf("At time %d %s changed\n", cb->time->low,  vpi_get_str(vpiName, handle));
+        vpi_printf("At time %d %s changed\n", time.low,  vpi_get_str(vpiName, handle));
 #endif
         break;
       default:
