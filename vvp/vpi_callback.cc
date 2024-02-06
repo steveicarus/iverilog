@@ -40,6 +40,98 @@
 
 using namespace std;
 
+static const char*cb_reason_name(PLI_INT32 reason)
+{
+      switch (reason) {
+	  case cbValueChange:
+	    return "cbValueChange";
+	  case cbStmt:
+	    return "cbStmt";
+	  case cbForce:
+	    return "cbForce";
+	  case cbRelease:
+	    return "cbRelease";
+	  case cbAtStartOfSimTime:
+	    return "cbAtStartOfSimTime";
+	  case cbReadWriteSynch:
+	    return "cbReadWriteSynch";
+	  case cbReadOnlySynch:
+	    return "cbReadOnlySynch";
+	  case cbNextSimTime:
+	    return "cbNextSimTime";
+	  case cbAfterDelay:
+	    return "cbAfterDelay";
+	  case cbEndOfCompile:
+	    return "cbEndOfCompile";
+	  case cbStartOfSimulation:
+	    return "cbStartOfSimulation";
+	  case cbEndOfSimulation:
+	    return "cbEndOfSimulation";
+	  case cbError:
+	    return "cbError";
+	  case cbTchkViolation:
+	    return "cbTchkViolation";
+	  case cbStartOfSave:
+	    return "cbStartOfSave";
+	  case cbEndOfSave:
+	    return "cbEndOfSave";
+	  case cbStartOfRestart:
+	    return "cbStartOfRestart";
+	  case cbEndOfRestart:
+	    return "cbEndOfRestart";
+	  case cbStartOfReset:
+	    return "cbStartOfReset";
+	  case cbEndOfReset:
+	    return "cbEndOfReset";
+	  case cbEnterInteractive:
+	    return "cbEnterInteractive";
+	  case cbExitInteractive:
+	    return "cbExitInteractive";
+	  case cbInteractiveScopeChange:
+	    return "cbInteractiveScopeChange";
+	  case cbUnresolvedSystf:
+	    return "cbUnresolvedSystf";
+	  case cbAtEndOfSimTime:
+	    return "cbAtEndOfSimTime";
+	  default:
+	    return "unrecognised";
+      }
+}
+
+static bool check_callback_time(p_cb_data data, bool allow_suppress)
+{
+      assert(data);
+      if (!data->time) {
+	    if (!allow_suppress) {
+		  fprintf(stderr, "VPI error: null value passed in cb_data.time "
+				  "when registering %s callback\n.",
+				  cb_reason_name(data->reason));
+		  return false;
+	    }
+	    return true;
+      }
+      switch (data->time->type) {
+	  case vpiSimTime:
+	    break;
+	  case vpiScaledRealTime:
+	    break;
+	  case vpiSuppressTime:
+	    if (!allow_suppress) {
+		  fprintf(stderr, "VPI error: vpiSuppressTime is not valid "
+				  "when registering %s callback\n.",
+				  cb_reason_name(data->reason));
+		  return false;
+	    }
+	    break;
+	  default:
+	    fprintf(stderr, "VPI error: invalid type passed in cb_data time "
+			    "structure when registering %s callback\n.",
+			    cb_reason_name(data->reason));
+	    return false;
+      }
+      return true;
+}
+
 static void set_callback_time(p_cb_data data)
 {
       assert(data && data->time);
@@ -224,6 +316,9 @@ static value_callback*make_value_change_part(p_cb_data data)
  */
 static value_callback* make_value_change(p_cb_data data)
 {
+      if (!check_callback_time(data, true))
+	    return 0;
+
       if (vpi_get(vpiAutomatic, data->obj)) {
             fprintf(stderr, "vpi error: cannot place value change "
                             "callback on automatically allocated "
@@ -352,6 +447,9 @@ void sync_cb::run_run()
 
 static sync_callback* make_sync(p_cb_data data, bool readonly_flag)
 {
+      if (!check_callback_time(data, false))
+	    return 0;
+
       sync_callback*obj = new sync_callback(data);
 
       struct sync_cb*cb = new sync_cb;
@@ -361,9 +459,6 @@ static sync_callback* make_sync(p_cb_data data, bool readonly_flag)
 
       vvp_time64_t tv = 0;
       switch (obj->cb_time.type) {
-	  case vpiSuppressTime:
-	    break;
-
 	  case vpiSimTime:
 	    tv = vpip_timestruct_to_time(&obj->cb_time);
 	    break;
@@ -375,11 +470,15 @@ static sync_callback* make_sync(p_cb_data data, bool readonly_flag)
 	    break;
       }
       schedule_generic(cb, tv, true, readonly_flag);
+
       return obj;
 }
 
 static struct __vpiCallback* make_afterdelay(p_cb_data data)
 {
+      if (!check_callback_time(data, false))
+	    return 0;
+
       sync_callback*obj = new sync_callback(data);
       struct sync_cb*cb = new sync_cb;
       cb->sync_flag = false;
@@ -398,7 +497,6 @@ static struct __vpiCallback* make_afterdelay(p_cb_data data)
 	    assert(0);
 	    break;
       }
-
       schedule_generic(cb, tv, false);
 
       return obj;
@@ -406,6 +504,9 @@ static struct __vpiCallback* make_afterdelay(p_cb_data data)
 
 static struct __vpiCallback* make_at_start_of_sim_time(p_cb_data data)
 {
+      if (!check_callback_time(data, false))
+	    return 0;
+
       sync_callback*obj = new sync_callback(data);
       struct sync_cb*cb = new sync_cb;
       cb->sync_flag = false;
@@ -441,6 +542,9 @@ static struct __vpiCallback* make_at_start_of_sim_time(p_cb_data data)
 
 static struct __vpiCallback* make_at_end_of_sim_time(p_cb_data data)
 {
+      if (!check_callback_time(data, false))
+	    return 0;
+
       sync_callback*obj = new sync_callback(data);
       struct sync_cb*cb = new sync_cb;
       cb->sync_flag = false;
@@ -629,6 +733,9 @@ void vpiNextSimTime(void)
 
 static simulator_callback* make_prepost(p_cb_data data)
 {
+      if ((data->reason == cbNextSimTime) && !check_callback_time(data, true))
+	    return 0;
+
       simulator_callback*obj = new simulator_callback(data);
 
       /* Insert at head of list */
