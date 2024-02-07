@@ -6,9 +6,9 @@
 #define TIME_TYPE vpiSuppressTime
 #endif
 
-# include  <sv_vpi_user.h>
-# include  <assert.h>
-# include  <string.h>
+#include <sv_vpi_user.h>
+#include <assert.h>
+#include <string.h>
 
 static PLI_INT32 report_change(p_cb_data cb)
 {

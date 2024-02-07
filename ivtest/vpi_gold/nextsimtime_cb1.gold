@@ -1,0 +1,8 @@
+Compiling vpi/nextsimtime_cb1.c...
+Making nextsimtime_cb1.vpi from  nextsimtime_cb1.o...
+time 0: 0
+nextsimtime: 1000
+time 1: 1
+nextsimtime: 4000
+time 4: 4
+nextsimtime: 5000
