@@ -57,6 +57,7 @@ extern "C" const char*optarg;
 
 bool verbose_flag = false;
 static int vvp_return_value = 0;
+static int vvp_used = 0;
 
 void vvp_set_stop_is_finish(bool flag)
 {
@@ -265,11 +266,22 @@ static void final_cleanup()
 extern void vpip_mcd_init(FILE *log);
 extern void vvp_vpi_init(void);
 
+static void report_used(void)
+{
+  fprintf(stderr,
+	  "This VVP simulation has already run and can not be reused\n");
+}
+
 void vvp_init(const char *logfile_name, int argc, char*argv[])
 {
       struct rusage cycle;
       FILE *logfile = 0x0;
       extern void vpi_set_vlog_info(int, char**);
+
+      if (vvp_used++) {
+          report_used();
+          return;
+      }
 
       if( ::getenv("VVP_WAIT_FOR_DEBUGGER") != 0 ) {
           fprintf( stderr, "Waiting for debugger...\n");
@@ -327,8 +339,18 @@ void vvp_init(const char *logfile_name, int argc, char*argv[])
 int vvp_run(const char *design_path)
 {
       struct rusage cycles[3];
-      int ret_cd = compile_design(design_path);
+      int ret_cd;
 
+      if (vvp_used++ != 1) {
+          if (vvp_used == 1)
+              fprintf(stderr, "vvp_init() has not been called\n");
+          else
+              report_used();
+          return 1;
+      }
+      ++vvp_used;
+
+      ret_cd = compile_design(design_path);
       destroy_lexor();
       print_vpi_call_errors();
       if (ret_cd) return ret_cd;
