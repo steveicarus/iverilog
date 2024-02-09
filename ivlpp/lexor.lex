@@ -1,7 +1,7 @@
 %option prefix="yy"
 %{
 /*
- * Copyright (c) 1999-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1407,14 +1407,16 @@ static void do_define(void)
             added_cnt += 2 - argl;
 
             if (added_cnt > 0) {
-                char* base = define_text;
+                size_t head_idx = head - define_text;
+                size_t tail_idx = tail - define_text;
+                size_t cp_idx   = cp   - define_text;
 
                 define_cnt += added_cnt;
                 define_text = realloc(define_text, define_cnt + 1);
 
-                head = &define_text[head - base];
-                tail = &define_text[tail - base];
-                cp   = &define_text[cp   - base];
+                head = &define_text[head_idx];
+                tail = &define_text[tail_idx];
+                cp   = &define_text[cp_idx];
 
                 added_cnt = 0;
             }
