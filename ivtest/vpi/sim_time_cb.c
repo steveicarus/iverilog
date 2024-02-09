@@ -6,6 +6,7 @@
 
 #include <vpi_user.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
 static PLI_INT32 monitor_cb(p_cb_data cb_data)
@@ -16,12 +17,14 @@ static PLI_INT32 monitor_cb(p_cb_data cb_data)
     s_vpi_value value;
     PLI_INT32   index;
 
-    time.type = TIME_TYPE;
-    vpi_get_time(var_list[0], &time);
-#ifdef TEST_SCALED_TIME
-    vpi_printf(" @ %1.1f :", time.real);
-#else
+    time.type = vpiSimTime;
+    vpi_get_time(NULL, &time);
     vpi_printf(" @ %04d :", time.low);
+
+#ifdef TEST_SCALED_TIME
+    vpi_printf(" cb_data.time = %1.1f :", cb_data->time->real);
+#else
+    vpi_printf(" cb_data.time = %04d :", cb_data->time->low);
 #endif
 
     value.format = vpiIntVal;
@@ -124,15 +127,19 @@ static PLI_INT32 monitor_calltf(char*xx)
     time.low += delay.low;
 #endif
 
+    memset(&cb_data, 0, sizeof(cb_data));
+
     cb_data.reason    = cbAtStartOfSimTime;
     cb_data.cb_rtn    = monitor_cb_start;
     cb_data.user_data = (char*)var_list;
+    cb_data.obj       = var_list[0];
     cb_data.time      = &time;
     vpi_register_cb(&cb_data);
 
     cb_data.reason    = cbAfterDelay;
     cb_data.cb_rtn    = monitor_cb_delay;
     cb_data.user_data = (char*)var_list;
+    cb_data.obj       = var_list[0];
     cb_data.time      = &delay;
     vpi_register_cb(&cb_data);
 
@@ -141,14 +148,19 @@ static PLI_INT32 monitor_calltf(char*xx)
     cb_data.reason    = cbReadWriteSynch;
     cb_data.cb_rtn    = monitor_cb_synch;
     cb_data.user_data = (char*)var_list;
+    cb_data.obj       = var_list[0];
     cb_data.time      = &delay;
     vpi_register_cb(&cb_data);
 
     cb_data.reason    = cbAtEndOfSimTime;
     cb_data.cb_rtn    = monitor_cb_end;
     cb_data.user_data = (char*)var_list;
+    cb_data.obj       = var_list[0];
     cb_data.time      = &time;
     vpi_register_cb(&cb_data);
+
+    memset(&cb_data, 0, sizeof(cb_data));
+    memset(&time   , 0, sizeof(time));
 
     return 0;
 }
