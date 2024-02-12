@@ -91,7 +91,7 @@ class PWire : public PNamedItem {
 	// Write myself to the specified stream.
       void dump(std::ostream&out, unsigned ind=4) const;
 
-      NetNet* elaborate_sig(Design*, NetScope*scope) const;
+      NetNet* elaborate_sig(Design*, NetScope*scope);
 
       SymbolType symbol_type() const;
 
@@ -109,6 +109,8 @@ class PWire : public PNamedItem {
 
         // Whether the wire is variable declared with the const keyword.
       bool is_const_ = false;
+
+      bool is_elaborating_ = false;
 
 	// These members hold expressions for the bit width of the
 	// wire. If they do not exist, the wire is 1 bit wide. If they

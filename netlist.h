@@ -81,6 +81,7 @@ class PExpr;
 class PFunction;
 class PPackage;
 class PTaskFunc;
+class PWire;
 class data_type_t;
 struct enum_type_t;
 class netclass_t;
@@ -1013,6 +1014,15 @@ class NetScope : public Definitions, public Attrib {
       void add_genvar(perm_string name, LineInfo *li);
       LineInfo* find_genvar(perm_string name);
 
+	/* These methods manage unelaborated signals. These are added to
+	   the scope as placeholders during the scope elaboration phase,
+	   to allow signal declarations to refer to other signals (e.g.
+	   when using $bits in a range definition), regardless of the
+	   order in which the signals are elaborated. */
+      void add_signal_placeholder(PWire*);
+      void rem_signal_placeholder(PWire*);
+      PWire* find_signal_placeholder(perm_string name);
+
 	/* These methods manage signals. The add_ and rem_signal
 	   methods are used by the NetNet objects to make themselves
 	   available to the scope, and the find_signal method can be
@@ -1313,6 +1323,8 @@ class NetScope : public Definitions, public Attrib {
       NetEvent *events_;
 
       std::map<perm_string,LineInfo*> genvars_;
+
+      std::map<perm_string,PWire*> signal_placeholders_;
 
       typedef std::map<perm_string,NetNet*>::const_iterator signals_map_iter_t;
       std::map <perm_string,NetNet*> signals_map_;

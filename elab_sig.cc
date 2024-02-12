@@ -1011,12 +1011,26 @@ ivl_type_t PWire::elaborate_type(Design*des, NetScope*scope,
  * elaboration this creates an object in the design that represents the
  * defined item.
  */
-NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
+NetNet* PWire::elaborate_sig(Design*des, NetScope*scope)
 {
 	// This sets the vector or array dimension size that will
 	// cause a warning. For now, these warnings are permanently
 	// enabled.
       const long warn_dimension_size = 1 << 30;
+
+	// Check if we elaborated this signal earlier because it was
+	// used in another declaration.
+      if (NetNet*sig = scope->find_signal(name_))
+            return sig;
+
+      if (is_elaborating_) {
+	    cerr << get_fileline() << ": error: Circular dependency "
+		    "detected in declaration of '" << name_ << "'."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+      is_elaborating_ = true;
 
       NetNet::Type wtype = type_;
       if (wtype == NetNet::IMPLICIT)
@@ -1222,6 +1236,9 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    sig->attribute(attrib_list[idx].key, attrib_list[idx].val);
 
       sig->set_const(is_const_);
+
+      scope->rem_signal_placeholder(this);
+      is_elaborating_ = false;
 
       return sig;
 }

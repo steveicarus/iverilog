@@ -160,6 +160,22 @@ static void collect_scope_specparams(Design*des, NetScope*scope,
       }
 }
 
+static void collect_scope_signals(NetScope*scope,
+      const map<perm_string,PWire*>&wires)
+{
+      for (map<perm_string,PWire*>::const_iterator cur = wires.begin()
+		 ; cur != wires.end() ; ++ cur ) {
+
+	    PWire*wire = (*cur).second;
+	    if (debug_scopes) {
+		  cerr << wire->get_fileline() << ": " << __func__ << ": "
+		       << "adding placeholder for signal '" << wire->basename()
+		       << "' in scope '" << scope_path(scope) << "'." << endl;
+	    }
+	    scope->add_signal_placeholder(wire);
+      }
+}
+
 /*
  * Elaborate the enumeration into the given scope.
  */
@@ -498,6 +514,8 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
       collect_scope_parameters(des, class_scope, pclass->parameters);
 
+      collect_scope_signals(class_scope, pclass->wires);
+
 	// Elaborate enum types declared in the class. We need these
 	// now because enumeration constants can be used during scope
 	// elaboration.
@@ -725,6 +743,8 @@ bool PPackage::elaborate_scope(Design*des, NetScope*scope)
 
       collect_scope_parameters(des, scope, parameters);
 
+      collect_scope_signals(scope, wires);
+
       if (debug_scopes) {
 	    cerr << get_fileline() << ": PPackage::elaborate_scope: "
 		 << "Elaborate " << enum_sets.size() << " enumerations"
@@ -764,6 +784,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       collect_scope_parameters(des, scope, parameters);
 
       collect_scope_specparams(des, scope, specparams);
+
+      collect_scope_signals(scope, wires);
 
 	// Run parameter replacements that were collected from the
 	// containing scope and meant for me.
@@ -1239,6 +1261,8 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 	// module have been done.
       collect_scope_parameters(des, scope, parameters);
 
+      collect_scope_signals(scope, wires);
+
 	// Run through the defparams for this scope and save the result
 	// in a table for later final override.
 
@@ -1577,6 +1601,8 @@ void PFunction::elaborate_scope(Design*des, NetScope*scope) const
 
       collect_scope_parameters(des, scope, parameters);
 
+      collect_scope_signals(scope, wires);
+
 	// Scan through all the named events in this scope.
       elaborate_scope_events_(des, scope, events);
 
@@ -1594,6 +1620,8 @@ void PTask::elaborate_scope(Design*des, NetScope*scope) const
         // needed to evaluate the parameter expressions.
 
       collect_scope_parameters(des, scope, parameters);
+
+      collect_scope_signals(scope, wires);
 
 	// Scan through all the named events in this scope.
       elaborate_scope_events_(des, scope, events);
@@ -1642,6 +1670,8 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 	      // needed to evaluate the parameter expressions.
 
             collect_scope_parameters(des, my_scope, parameters);
+
+	    collect_scope_signals(my_scope, wires);
 
               // Scan through all the named events in this scope.
             elaborate_scope_events_(des, my_scope, events);

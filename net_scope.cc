@@ -27,6 +27,7 @@
 # include  "netvector.h"
 # include  "PExpr.h"
 # include  "PPackage.h"
+# include  "PWire.h"
 # include  <cstring>
 # include  <cstdlib>
 # include  <sstream>
@@ -700,6 +701,24 @@ LineInfo* NetScope::find_genvar(perm_string name)
 	    return genvars_[name];
       else
             return 0;
+}
+
+void NetScope::add_signal_placeholder(PWire*wire)
+{
+      signal_placeholders_[wire->basename()] = wire;
+}
+
+void NetScope::rem_signal_placeholder(PWire*wire)
+{
+      signal_placeholders_.erase(wire->basename());
+}
+
+PWire* NetScope::find_signal_placeholder(perm_string name)
+{
+      if (signal_placeholders_.find(name) != signal_placeholders_.end())
+	    return signal_placeholders_[name];
+      else
+	    return 0;
 }
 
 void NetScope::add_signal(NetNet*net)

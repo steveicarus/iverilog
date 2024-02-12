@@ -24,6 +24,7 @@
 # include  "netmisc.h"
 # include  "compiler.h"
 # include  "PPackage.h"
+# include  "PWire.h"
 # include  "ivl_assert.h"
 
 using namespace std;
@@ -216,6 +217,22 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			      res->path_head.push_back(name_component_t(perm_string::literal(THIS_TOKEN)));
 			      res->path_tail.push_front(path_tail);
 			      res->type = clsnet;
+			      return true;
+			}
+		  }
+
+		    // Finally check the rare case of a signal that hasn't
+		    // been elaborated yet.
+		  if (PWire*wire = scope->find_signal_placeholder(path_tail.name)) {
+			if (prefix_scope || (wire->lexical_pos() <= lexical_pos)) {
+			      NetNet*net = wire->elaborate_sig(des, scope);
+			      if (!net)
+				    return false;
+			      path.push_back(path_tail);
+			      res->scope = scope;
+			      res->net = net;
+			      res->type = net->net_type();
+			      res->path_head = path;
 			      return true;
 			}
 		  }
