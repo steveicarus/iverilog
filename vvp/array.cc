@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1319,11 +1319,29 @@ void __vpiArray::word_change(unsigned long addr)
 				    if (addr < vals->get_size())
 					  vals->get_word(addr, val);
 				    vpip_real_get_value(val, cur->cb_data.value);
-			      } else {
+			      } else if (vals4) {
 				    vpip_vec4_get_value(vals4->get_word(addr),
 							vals_width,
 							signed_flag,
 							cur->cb_data.value);
+			      } else if (dynamic_cast<vvp_darray_atom<int8_t>*>(vals)
+				      || dynamic_cast<vvp_darray_atom<int16_t>*>(vals)
+				      || dynamic_cast<vvp_darray_atom<int32_t>*>(vals)
+				      || dynamic_cast<vvp_darray_atom<int64_t>*>(vals)
+				      || dynamic_cast<vvp_darray_atom<uint8_t>*>(vals)
+				      || dynamic_cast<vvp_darray_atom<uint16_t>*>(vals)
+				      || dynamic_cast<vvp_darray_atom<uint32_t>*>(vals)
+				      || dynamic_cast<vvp_darray_atom<uint64_t>*>(vals)
+				      || dynamic_cast<vvp_darray_vec2*>(vals)) {
+				    vvp_vector4_t val;
+				    if (addr < vals->get_size())
+					  vals->get_word(addr, val);
+				    vpip_vec4_get_value(val,
+							vals_width,
+							signed_flag,
+							cur->cb_data.value);
+			      } else {
+			            assert(0);
 			      }
 			}
 

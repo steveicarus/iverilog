@@ -385,9 +385,7 @@ PLI_INT32 tf_isynchronize(void*obj)
       vpiHandle sys = (vpiHandle)obj;
       p_pli_data pli = vpi_get_userdata(sys);
       s_cb_data cb;
-      s_vpi_time ti;
-
-      ti.type = vpiSuppressTime;
+      s_vpi_time ti = {vpiSimTime, 0, 0, 0.0};
 
       cb.reason = cbReadWriteSynch;
       cb.cb_rtn = callback;
@@ -414,7 +412,7 @@ PLI_INT32 tf_irosynchronize(void*obj)
       vpiHandle sys = (vpiHandle)obj;
       p_pli_data pli = vpi_get_userdata(sys);
       s_cb_data cb;
-      s_vpi_time ti = {vpiSuppressTime, 0, 0, 0.0};
+      s_vpi_time ti = {vpiSimTime, 0, 0, 0.0};
 
       cb.reason = cbReadOnlySynch;
       cb.cb_rtn = callback;

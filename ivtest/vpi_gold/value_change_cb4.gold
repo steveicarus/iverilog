@@ -1,0 +1,16 @@
+Compiling vpi/value_change_cb4.c...
+Making value_change_cb4.vpi from  value_change_cb4.o...
+At time 1000 v4 = 1
+At time 1000 w4 = 1
+At time 2000 i4 = 2
+At time 3000 v2 = 3
+At time 4000 b2 = 4
+At time 5000 s2 = 5
+At time 6000 i2 = 6
+At time 7000 l2 = 7
+At time 8000 r = 8.000000
+At time 9000 e changed
+At time 10000 p4[1:0] = 10
+At time 11000 a4 = 11
+At time 12000 a4 = 12
+At time 14000 a2[1] = 14

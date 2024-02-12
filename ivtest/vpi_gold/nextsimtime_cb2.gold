@@ -1,0 +1,8 @@
+Compiling vpi/nextsimtime_cb2.c...
+Making nextsimtime_cb2.vpi from  nextsimtime_cb2.o...
+time 0: 0
+nextsimtime: 1.000000
+time 1: 1
+nextsimtime: 4.000000
+time 4: 4
+nextsimtime: 5.000000

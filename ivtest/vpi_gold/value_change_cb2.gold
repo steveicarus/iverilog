@@ -1,0 +1,16 @@
+Compiling vpi/value_change_cb2.c...
+Making value_change_cb2.vpi from  value_change_cb2.o...
+At time 1.000000 v4 = 1
+At time 1.000000 w4 = 1
+At time 2.000000 i4 = 2
+At time 3.000000 v2 = 3
+At time 4.000000 b2 = 4
+At time 5.000000 s2 = 5
+At time 6.000000 i2 = 6
+At time 7.000000 l2 = 7
+At time 8.000000 r = 8.000000
+At time 9.000000 e changed
+At time 10.000000 p4[1:0] = 10
+At time 11.000000 a4 = 11
+At time 12.000000 a4 = 12
+At time 14.000000 a2[1] = 14

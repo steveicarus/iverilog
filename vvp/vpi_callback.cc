@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -39,6 +39,119 @@
 # include  <cstdlib>
 
 using namespace std;
+
+static const char*cb_reason_name(PLI_INT32 reason)
+{
+      switch (reason) {
+	  case cbValueChange:
+	    return "cbValueChange";
+	  case cbStmt:
+	    return "cbStmt";
+	  case cbForce:
+	    return "cbForce";
+	  case cbRelease:
+	    return "cbRelease";
+	  case cbAtStartOfSimTime:
+	    return "cbAtStartOfSimTime";
+	  case cbReadWriteSynch:
+	    return "cbReadWriteSynch";
+	  case cbReadOnlySynch:
+	    return "cbReadOnlySynch";
+	  case cbNextSimTime:
+	    return "cbNextSimTime";
+	  case cbAfterDelay:
+	    return "cbAfterDelay";
+	  case cbEndOfCompile:
+	    return "cbEndOfCompile";
+	  case cbStartOfSimulation:
+	    return "cbStartOfSimulation";
+	  case cbEndOfSimulation:
+	    return "cbEndOfSimulation";
+	  case cbError:
+	    return "cbError";
+	  case cbTchkViolation:
+	    return "cbTchkViolation";
+	  case cbStartOfSave:
+	    return "cbStartOfSave";
+	  case cbEndOfSave:
+	    return "cbEndOfSave";
+	  case cbStartOfRestart:
+	    return "cbStartOfRestart";
+	  case cbEndOfRestart:
+	    return "cbEndOfRestart";
+	  case cbStartOfReset:
+	    return "cbStartOfReset";
+	  case cbEndOfReset:
+	    return "cbEndOfReset";
+	  case cbEnterInteractive:
+	    return "cbEnterInteractive";
+	  case cbExitInteractive:
+	    return "cbExitInteractive";
+	  case cbInteractiveScopeChange:
+	    return "cbInteractiveScopeChange";
+	  case cbUnresolvedSystf:
+	    return "cbUnresolvedSystf";
+	  case cbAtEndOfSimTime:
+	    return "cbAtEndOfSimTime";
+	  default:
+	    return "unrecognised";
+      }
+}
+
+static bool check_callback_time(p_cb_data data, bool allow_suppress)
+{
+      assert(data);
+      if (!data->time) {
+	    if (!allow_suppress) {
+		  fprintf(stderr, "VPI error: null value passed in cb_data.time "
+				  "when registering %s callback\n.",
+				  cb_reason_name(data->reason));
+		  return false;
+	    }
+	    return true;
+      }
+      switch (data->time->type) {
+	  case vpiSimTime:
+	    break;
+	  case vpiScaledRealTime:
+	    break;
+	  case vpiSuppressTime:
+	    if (!allow_suppress) {
+		  fprintf(stderr, "VPI error: vpiSuppressTime is not valid "
+				  "when registering %s callback\n.",
+				  cb_reason_name(data->reason));
+		  return false;
+	    }
+	    break;
+	  default:
+	    fprintf(stderr, "VPI error: invalid type passed in cb_data time "
+			    "structure when registering %s callback\n.",
+			    cb_reason_name(data->reason));
+	    return false;
+      }
+      return true;
+}
+
+static void set_callback_time(p_cb_data data)
+{
+      assert(data && data->time);
+      data->time->low  = 0;
+      data->time->high = 0;
+      data->time->real = 0.0;
+      switch (data->time->type) {
+	  case vpiSimTime:
+	    vpip_time_to_timestruct(data->time, schedule_simtime());
+	    break;
+	  case vpiScaledRealTime:
+	    data->time->real = vpip_scaled_time_from_handle(schedule_simtime(), data->obj);
+	    break;
+	  case vpiSuppressTime:
+	    break;
+	  default:
+	    assert(0);
+	    break;
+      }
+}
 
 /*
  * Callback handles are created when the VPI function registers a
@@ -203,6 +316,9 @@ static value_callback*make_value_change_part(p_cb_data data)
  */
 static value_callback* make_value_change(p_cb_data data)
 {
+      if (!check_callback_time(data, true))
+	    return 0;
+
       if (vpi_get(vpiAutomatic, data->obj)) {
             fprintf(stderr, "vpi error: cannot place value change "
                             "callback on automatically allocated "
@@ -314,13 +430,12 @@ void sync_cb::run_run()
 	    return;
 
       sync_callback*cur = handle;
-      cur->cb_data.time->type = vpiSimTime;
-      vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
 
 	/* Run the callback. If the cb_rtn function pointer is set to
 	   null, then just skip the whole thing and free it. This is
 	   the usual way to cancel one-time callbacks of this sort. */
       if (cur->cb_data.cb_rtn != 0) {
+	    set_callback_time(&cur->cb_data);
 	    assert(vpi_mode_flag == VPI_MODE_NONE);
 	    vpi_mode_flag = sync_flag? VPI_MODE_ROSYNC : VPI_MODE_RWSYNC;
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
@@ -330,8 +445,33 @@ void sync_cb::run_run()
       delete cur;
 }
 
+static vvp_time64_t get_sync_cb_time(sync_callback*obj)
+{
+      vvp_time64_t tv = 0;
+      switch (obj->cb_time.type) {
+	  case vpiSimTime:
+	    tv = vpip_timestruct_to_time(&obj->cb_time);
+	    break;
+
+	  case vpiScaledRealTime:
+	    tv = vpip_scaled_real_to_time64(obj->cb_time.real,
+		     vpip_timescale_scope_from_handle(obj->cb_data.obj));
+	    break;
+
+	  default:
+	    fprintf(stderr, "get_sync_cb_time: Unsupported time type %d.\n",
+	            (int)obj->cb_time.type);
+	    assert(0);
+	    break;
+      }
+      return tv;
+}
+
 static sync_callback* make_sync(p_cb_data data, bool readonly_flag)
 {
+      if (!check_callback_time(data, false))
+	    return 0;
+
       sync_callback*obj = new sync_callback(data);
 
       struct sync_cb*cb = new sync_cb;
@@ -339,46 +479,24 @@ static sync_callback* make_sync(p_cb_data data, bool readonly_flag)
       cb->handle = obj;
       obj->cb_sync = cb;
 
-      vvp_time64_t tv = 0;
-      switch (obj->cb_time.type) {
-	  case vpiSuppressTime:
-	    break;
-
-	  case vpiSimTime:
-	    tv = vpip_timestruct_to_time(&obj->cb_time);
-	    break;
-
-	  default:
-	    fprintf(stderr, "Unsupported time type %d.\n",
-	            (int)obj->cb_time.type);
-	    assert(0);
-	    break;
-      }
+      vvp_time64_t tv = get_sync_cb_time(obj);
       schedule_generic(cb, tv, true, readonly_flag);
+
       return obj;
 }
 
 static struct __vpiCallback* make_afterdelay(p_cb_data data)
 {
+      if (!check_callback_time(data, false))
+	    return 0;
+
       sync_callback*obj = new sync_callback(data);
       struct sync_cb*cb = new sync_cb;
       cb->sync_flag = false;
       cb->handle = obj;
       obj->cb_sync = cb;
 
-      vvp_time64_t tv = 0;
-      switch (obj->cb_time.type) {
-	  case vpiSimTime:
-	    tv = vpip_timestruct_to_time(&obj->cb_time);
-	    break;
-
-	  default:
-	    fprintf(stderr, "Unsupported time type %d.\n",
-	            (int)obj->cb_time.type);
-	    assert(0);
-	    break;
-      }
-
+      vvp_time64_t tv = get_sync_cb_time(obj);
       schedule_generic(cb, tv, false);
 
       return obj;
@@ -386,25 +504,16 @@ static struct __vpiCallback* make_afterdelay(p_cb_data data)
 
 static struct __vpiCallback* make_at_start_of_sim_time(p_cb_data data)
 {
+      if (!check_callback_time(data, false))
+	    return 0;
+
       sync_callback*obj = new sync_callback(data);
       struct sync_cb*cb = new sync_cb;
       cb->sync_flag = false;
       cb->handle = obj;
       obj->cb_sync = cb;
 
-      vvp_time64_t tv = 0;
-      switch (obj->cb_time.type) {
-	  case vpiSimTime:
-	    tv = vpip_timestruct_to_time(&obj->cb_time);
-	    break;
-
-	  default:
-	    fprintf(stderr, "Unsupported time type %d.\n",
-	            (int)obj->cb_time.type);
-	    assert(0);
-	    break;
-      }
-
+      vvp_time64_t tv = get_sync_cb_time(obj);
       vvp_time64_t cur = schedule_simtime();
       if (cur > tv) {
 	    tv = 0;
@@ -421,25 +530,16 @@ static struct __vpiCallback* make_at_start_of_sim_time(p_cb_data data)
 
 static struct __vpiCallback* make_at_end_of_sim_time(p_cb_data data)
 {
+      if (!check_callback_time(data, false))
+	    return 0;
+
       sync_callback*obj = new sync_callback(data);
       struct sync_cb*cb = new sync_cb;
       cb->sync_flag = false;
       cb->handle = obj;
       obj->cb_sync = cb;
 
-      vvp_time64_t tv = 0;
-      switch (obj->cb_time.type) {
-	  case vpiSimTime:
-	    tv = vpip_timestruct_to_time(&obj->cb_time);
-	    break;
-
-	  default:
-	    fprintf(stderr, "Unsupported time type %d.\n",
-	            (int)obj->cb_time.type);
-	    assert(0);
-	    break;
-      }
-
+      vvp_time64_t tv = get_sync_cb_time(obj);
       vvp_time64_t cur = schedule_simtime();
       if (cur > tv) {
 	    tv = 0;
@@ -461,11 +561,24 @@ static struct __vpiCallback* make_at_end_of_sim_time(p_cb_data data)
 
 class simulator_callback : public __vpiCallback {
     public:
-      inline explicit simulator_callback(const struct t_cb_data*data)
-      { cb_data = *data; }
+      explicit simulator_callback(const struct t_cb_data*data);
 
     public:
+      struct t_vpi_time cb_time;
 };
+
+inline simulator_callback::simulator_callback(const struct t_cb_data*data)
+{
+      cb_data = *data;
+      if ((data->reason == cbNextSimTime) && data->time) {
+	    cb_time = *(data->time);
+      } else if (data->reason == cbEndOfSimulation) {
+	    cb_time.type = vpiSimTime;
+      } else {
+	    cb_time.type = vpiSuppressTime;
+      }
+      cb_data.time = &cb_time;
+}
 
 static simulator_callback*NextSimTime = 0;
 static simulator_callback*EndOfCompile = 0;
@@ -516,7 +629,7 @@ void vpiEndOfCompile(void) {
 	    cur = EndOfCompile;
 	    EndOfCompile = dynamic_cast<simulator_callback*>(cur->next);
 	    if (cur->cb_data.cb_rtn != 0) {
-	        (cur->cb_data.cb_rtn)(&cur->cb_data);
+		  (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    }
 	    delete cur;
       }
@@ -538,7 +651,7 @@ void vpiStartOfSim(void) {
 	    cur = StartOfSimulation;
 	    StartOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
 	    if (cur->cb_data.cb_rtn != 0) {
-	        (cur->cb_data.cb_rtn)(&cur->cb_data);
+		  (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    }
 	    delete cur;
       }
@@ -559,10 +672,8 @@ void vpiPostsim(void) {
 	    cur = EndOfSimulation;
 	    EndOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
 	    if (cur->cb_data.cb_rtn != 0) {
-	        /* Only set the time if it is not NULL. */
-	        if (cur->cb_data.time)
-	            vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
-	        (cur->cb_data.cb_rtn)(&cur->cb_data);
+		  set_callback_time(&cur->cb_data);
+		  (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    }
 	    delete cur;
       }
@@ -577,17 +688,20 @@ void vpiPostsim(void) {
 void vpiNextSimTime(void)
 {
       simulator_callback* cur;
+      simulator_callback* next = NextSimTime;
+      NextSimTime = 0;
 
       assert(vpi_mode_flag == VPI_MODE_NONE);
       vpi_mode_flag = VPI_MODE_RWSYNC;
 
-      while (NextSimTime) {
-	    cur = NextSimTime;
-	    NextSimTime = dynamic_cast<simulator_callback*>(cur->next);
-	    if (cur->cb_data.cb_rtn != 0) {
-	        (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    }
-	    delete cur;
+      while (next) {
+            cur = next;
+            next = dynamic_cast<simulator_callback*>(cur->next);
+            if (cur->cb_data.cb_rtn != 0) {
+                  set_callback_time(&cur->cb_data);
+                  (cur->cb_data.cb_rtn)(&cur->cb_data);
+            }
+            delete cur;
       }
 
       vpi_mode_flag = VPI_MODE_NONE;
@@ -595,6 +709,9 @@ void vpiNextSimTime(void)
 
 static simulator_callback* make_prepost(p_cb_data data)
 {
+      if ((data->reason == cbNextSimTime) && !check_callback_time(data, true))
+	    return 0;
+
       simulator_callback*obj = new simulator_callback(data);
 
       /* Insert at head of list */
@@ -614,6 +731,7 @@ static simulator_callback* make_prepost(p_cb_data data)
 	  case cbNextSimTime:
 	    obj->next = NextSimTime;
 	    NextSimTime = obj;
+	    break;
       }
 
       return obj;
@@ -687,25 +805,7 @@ void callback_execute(struct __vpiCallback*cur)
       vpi_mode_flag = VPI_MODE_RWSYNC;
 
       assert(cur->cb_data.cb_rtn);
-      switch (cur->cb_data.time->type) {
-	  case vpiSimTime:
-	    vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
-	    break;
-	  case vpiScaledRealTime: {
-	    cur->cb_data.time->real =
-	         vpip_time_to_scaled_real(schedule_simtime(),
-	             static_cast<__vpiScope *>(vpi_handle(vpiScope,
-	                                                  cur->cb_data.obj)));
-	    break;
-	  }
-	  case vpiSuppressTime:
-	    break;
-	  default:
-	    fprintf(stderr, "Unsupported time format %d.\n",
-	            (int)cur->cb_data.time->type);
-	    assert(0);
-	    break;
-      }
+      set_callback_time(&cur->cb_data);
       (cur->cb_data.cb_rtn)(&cur->cb_data);
 
       vpi_mode_flag = save_mode;

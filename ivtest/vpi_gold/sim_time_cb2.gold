@@ -1,0 +1,10 @@
+Compiling vpi/sim_time_cb2.c...
+Making sim_time_cb2.vpi from  sim_time_cb2.o...
+cbStartOfSimTime @ 2000 : cb_data.time = 2.0 : a = 1 b = 1
+cbAfterDelay     @ 2000 : cb_data.time = 2.0 : a = 1 b = 1
+cbReadWriteSynch @ 2000 : cb_data.time = 2.0 : a = 2 b = 2
+cbEndOfSimTime   @ 2000 : cb_data.time = 2.0 : a = 2 b = 2
+cbStartOfSimTime @ 5000 : cb_data.time = 5.0 : a = 4 b = 4
+cbAfterDelay     @ 5000 : cb_data.time = 5.0 : a = 4 b = 4
+cbReadWriteSynch @ 5000 : cb_data.time = 5.0 : a = 5 b = 5
+cbEndOfSimTime   @ 5000 : cb_data.time = 5.0 : a = 5 b = 5
