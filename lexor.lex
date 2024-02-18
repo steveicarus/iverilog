@@ -26,6 +26,7 @@
 
       //# define YYSTYPE lexval
 
+# include  <climits>
 # include  <cstdarg>
 # include  <iostream>
 # include  "compiler.h"
@@ -40,7 +41,7 @@
 
 using namespace std;
 
-# define YY_USER_INIT reset_lexor();
+# define YY_USER_INIT do { reset_lexor(); yylloc.lexical_pos = 0; } while (0);
 # define yylval VLlval
 
 # define YY_NO_INPUT
@@ -338,6 +339,8 @@ TU [munpf]
       int rc = lexor_keyword_code(yytext, yyleng);
       switch (rc) {
 	  case IDENTIFIER:
+	    assert(yylloc.lexical_pos != UINT_MAX);
+	    yylloc.lexical_pos += 1;
 	    yylval.text = strdupnew(yytext);
 	    if (strncmp(yylval.text,"PATHPULSE$", 10) == 0)
 		  rc = PATHPULSE_IDENTIFIER;
@@ -429,6 +432,8 @@ TU [munpf]
 
 
 \\[^ \t\b\f\r\n]+         {
+      assert(yylloc.lexical_pos != UINT_MAX);
+      yylloc.lexical_pos += 1;
       yylval.text = strdupnew(yytext+1);
       if (gn_system_verilog()) {
 	    if (PPackage*pkg = pform_test_package_identifier(yylval.text)) {

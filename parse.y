@@ -115,12 +115,14 @@ static std::list<named_pexpr_t>*attributes_in_context = 0;
 	    (Current).first_column = YYRHSLOC (Rhs, 1).first_column;	\
 	    (Current).last_line    = YYRHSLOC (Rhs, N).last_line;	\
 	    (Current).last_column  = YYRHSLOC (Rhs, N).last_column;	\
+	    (Current).lexical_pos  = YYRHSLOC (Rhs, 1).lexical_pos;	\
 	    (Current).text         = YYRHSLOC (Rhs, 1).text;		\
       } else {								\
 	    (Current).first_line   = YYRHSLOC (Rhs, 0).last_line;	\
 	    (Current).first_column = YYRHSLOC (Rhs, 0).last_column;	\
 	    (Current).last_line    = YYRHSLOC (Rhs, 0).last_line;	\
 	    (Current).last_column  = YYRHSLOC (Rhs, 0).last_column;	\
+	    (Current).lexical_pos  = YYRHSLOC (Rhs, 0).lexical_pos;	\
 	    (Current).text         = YYRHSLOC (Rhs, 0).text;		\
       }									\
    } while (0)
