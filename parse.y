@@ -22,6 +22,7 @@
 
 # include "config.h"
 
+# include  <climits>
 # include  <cstdarg>
 # include  "parse_misc.h"
 # include  "compiler.h"
@@ -1084,7 +1085,7 @@ class_new /* IEEE1800-2005 A.2.4 */
 	$$ = new_expr;
       }
   | K_new hierarchy_identifier
-      { PEIdent*tmpi = new PEIdent(*$2);
+      { PEIdent*tmpi = new PEIdent(*$2, @2.lexical_pos);
 	FILE_NAME(tmpi, @2);
 	PENewCopy*tmp = new PENewCopy(tmpi);
 	FILE_NAME(tmp, @1);
@@ -3167,7 +3168,7 @@ delay_value_simple
 	}
       }
   | IDENTIFIER
-      { PEIdent*tmp = new PEIdent(lex_strings.make($1));
+      { PEIdent*tmp = new PEIdent(lex_strings.make($1), @1.lexical_pos);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete[]$1;
@@ -3963,13 +3964,13 @@ expr_primary
 	$$ = tmp;
       }
   | K_this
-      { PEIdent*tmp = new PEIdent(perm_string::literal(THIS_TOKEN));
+      { PEIdent*tmp = new PEIdent(perm_string::literal(THIS_TOKEN), UINT_MAX);
 	FILE_NAME(tmp,@1);
 	$$ = tmp;
       }
 
   | class_hierarchy_identifier
-      { PEIdent*tmp = new PEIdent(*$1);
+      { PEIdent*tmp = new PEIdent(*$1, @1.lexical_pos);
 	FILE_NAME(tmp, @1);
 	delete $1;
 	$$ = tmp;
@@ -4633,7 +4634,7 @@ lpvalue
       }
 
   | class_hierarchy_identifier
-      { PEIdent*tmp = new PEIdent(*$1);
+      { PEIdent*tmp = new PEIdent(*$1, @1.lexical_pos);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete $1;
@@ -5729,7 +5730,7 @@ port_name
 	named_pexpr_t*tmp = new named_pexpr_t;
 	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($3);
-	tmp->parm = new PEIdent(lex_strings.make($3), true);
+	tmp->parm = new PEIdent(lex_strings.make($3), @3.lexical_pos, true);
 	FILE_NAME(tmp->parm, @3);
 	delete[]$3;
 	delete $1;
@@ -5814,7 +5815,7 @@ port_reference
 	pform_name_t pname;
 	pname.push_back(ntmp);
 
-	PEIdent*wtmp = new PEIdent(pname);
+	PEIdent*wtmp = new PEIdent(pname, @1.lexical_pos);
 	FILE_NAME(wtmp, @1);
 
 	Module::port_t*ptmp = new Module::port_t;
@@ -5837,7 +5838,7 @@ port_reference
 	pform_name_t pname;
 	pname.push_back(ntmp);
 
-	PEIdent*tmp = new PEIdent(pname);
+	PEIdent*tmp = new PEIdent(pname, @1.lexical_pos);
 	FILE_NAME(tmp, @1);
 
 	Module::port_t*ptmp = new Module::port_t;
@@ -5850,7 +5851,7 @@ port_reference
   | IDENTIFIER '[' error ']'
       { yyerror(@1, "error: Invalid port bit select");
 	Module::port_t*ptmp = new Module::port_t;
-	PEIdent*wtmp = new PEIdent(lex_strings.make($1));
+	PEIdent*wtmp = new PEIdent(lex_strings.make($1), @1.lexical_pos);
 	FILE_NAME(wtmp, @1);
 	ptmp->name = lex_strings.make($1);
 	ptmp->expr.push_back(wtmp);
@@ -7168,7 +7169,7 @@ udp_sequ_entry
 udp_initial
   : K_initial IDENTIFIER '=' number ';'
       { PExpr*etmp = new PENumber($4);
-	PEIdent*itmp = new PEIdent(lex_strings.make($2));
+	PEIdent*itmp = new PEIdent(lex_strings.make($2), @2.lexical_pos);
 	PAssign*atmp = new PAssign(itmp, etmp);
 	FILE_NAME(atmp, @2);
 	delete[]$2;

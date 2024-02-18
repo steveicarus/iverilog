@@ -29,6 +29,7 @@
 
 # include  <algorithm>
 # include  <typeinfo>
+# include  <climits>
 # include  <cstdlib>
 # include  <cstring>
 # include  <iostream>
@@ -1272,7 +1273,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 				    symbol_search_results sr;
 				    symbol_search(this, des, scope, path_, &sr);
 				    if (sr.net != 0) {
-					  pins[j] = new PEIdent(rmod->ports[j]->name, true);
+					  pins[j] = new PEIdent(rmod->ports[j]->name, UINT_MAX, true);
 					  pins[j]->set_lineno(get_lineno());
 					  pins[j]->set_file(get_file());
 				    }

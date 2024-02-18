@@ -708,7 +708,7 @@ PEIdent* pform_new_ident(const struct vlltype&loc, const pform_name_t&name)
       if (gn_system_verilog())
 	    check_potential_imports(loc, name.front().name, false);
 
-      return new PEIdent(name);
+      return new PEIdent(name, loc.lexical_pos);
 }
 
 PTrigger* pform_new_trigger(const struct vlltype&loc, PPackage*pkg,
@@ -1376,7 +1376,7 @@ Module::port_t* pform_module_port_reference(const struct vlltype&loc,
 					    perm_string name)
 {
       Module::port_t*ptmp = new Module::port_t;
-      PEIdent*tmp = new PEIdent(name);
+      PEIdent*tmp = new PEIdent(name, loc.lexical_pos);
       FILE_NAME(tmp, loc);
       ptmp->name = name;
       ptmp->expr.push_back(tmp);
@@ -2486,7 +2486,7 @@ void pform_make_var_init(const struct vlltype&li,
 	    return;
       }
 
-      PEIdent*lval = new PEIdent(name);
+      PEIdent*lval = new PEIdent(name, li.lexical_pos);
       FILE_NAME(lval, li);
       PAssign*ass = new PAssign(lval, expr, !gn_system_verilog(), true);
       FILE_NAME(ass, li);
@@ -2666,7 +2666,7 @@ void pform_makewire(const struct vlltype&li,
                   if (type == NetNet::REG || type == NetNet::IMPLICIT_REG) {
                         pform_make_var_init(li, first->name, expr);
                   } else {
-		        PEIdent*lval = new PEIdent(first->name);
+		        PEIdent*lval = new PEIdent(first->name, li.lexical_pos);
 		        FILE_NAME(lval, li);
 		        PGAssign*ass = pform_make_pgassign(lval, expr, delay, str);
 		        FILE_NAME(ass, li);
@@ -2797,7 +2797,7 @@ PExpr* pform_genvar_inc_dec(const struct vlltype&loc, const char*name, bool inc_
 {
       pform_requires_sv(loc, "Increment/decrement operator");
 
-      PExpr*lval = new PEIdent(lex_strings.make(name));
+      PExpr*lval = new PEIdent(lex_strings.make(name), loc.lexical_pos);
       PExpr*rval = new PENumber(new verinum(1));
       FILE_NAME(lval, loc);
       FILE_NAME(rval, loc);
@@ -2813,7 +2813,7 @@ PExpr* pform_genvar_compressed(const struct vlltype &loc, const char *name,
 {
       pform_requires_sv(loc, "Compressed assignment operator");
 
-      PExpr *lval = new PEIdent(lex_strings.make(name));
+      PExpr *lval = new PEIdent(lex_strings.make(name), loc.lexical_pos);
       FILE_NAME(lval, loc);
 
       PExpr *expr;

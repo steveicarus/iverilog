@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -91,7 +91,7 @@ void pform_class_property(const struct vlltype&loc,
 	    FILE_NAME(&pform_cur_class->type->properties[curp->name], loc);
 
 	    if (PExpr*rval = curp->expr.release()) {
-		  PExpr*lval = new PEIdent(curp->name);
+		  PExpr*lval = new PEIdent(curp->name, loc.lexical_pos);
 		  FILE_NAME(lval, loc);
 		  PAssign*tmp = new PAssign(lval, rval);
 		  FILE_NAME(tmp, loc);
