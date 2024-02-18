@@ -16,6 +16,7 @@ This section contains documents to help support Icarus Verilog users.
    ivlpp_flags
    vvp_flags
    vvp_debug
+   vvp_library
    vhdlpp_flags
    gtkwave
    vpi

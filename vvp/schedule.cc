@@ -581,6 +581,7 @@ static struct event_s* schedule_final_list = 0;
 static bool schedule_runnable = true;
 static bool schedule_stopped_flag  = false;
 static bool schedule_single_step_flag = false;
+static bool no_signals_flag = false;
 
 void schedule_finish(int)
 {
@@ -607,6 +608,11 @@ bool schedule_stopped(void)
       return schedule_stopped_flag;
 }
 
+extern "C" void vvp_no_signals(void)
+{
+      no_signals_flag = true;
+}
+
 /*
  * These are the signal handling infrastructure. The SIGINT signal
  * leads to an implicit $stop. The SIGHUP and SIGTERM signals lead
@@ -629,6 +635,8 @@ extern "C" void signals_handler(int signum)
 
 static void signals_capture(void)
 {
+      if (no_signals_flag)
+	   return;
 #ifndef __MINGW32__
       signal(SIGHUP,  &signals_handler);
 #endif
@@ -638,6 +646,8 @@ static void signals_capture(void)
 
 static void signals_revert(void)
 {
+      if (no_signals_flag)
+	   return;
 #ifndef __MINGW32__
       signal(SIGHUP,  SIG_DFL);
 #endif

@@ -1022,11 +1022,11 @@ vpiHandle vpip_make_vthr_APV(char*label, unsigned index, unsigned bit, unsigned 
  * contained functions before compilation commences. It is called only
  * once per module.
  */
-extern void vpip_load_module(const char*name);
+extern "C" void vpip_load_module(const char*name);
 
-extern void vpip_clear_module_paths();
-extern void vpip_add_module_path(const char *path);
-extern void vpip_add_env_and_default_module_paths();
+extern "C" void vpip_clear_module_paths();
+extern "C" void vpip_add_module_path(const char *path);
+extern "C" void vpip_add_env_and_default_module_paths();
 
 /*
  * The vpip_build_vpi_call function creates a __vpiSysTaskCall object

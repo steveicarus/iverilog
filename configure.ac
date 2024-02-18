@@ -170,6 +170,14 @@ AC_SUBST(HAVE_LIBBZ2)
 AC_FUNC_ALLOCA
 AC_FUNC_FSEEKO
 
+# Package Options
+# ---------------
+
+# Build VVP as a library and stub
+AC_ARG_ENABLE([libvvp],
+    [AS_HELP_STRING([--enable-libvvp], [build VVP as a shared library])],
+    [AC_SUBST(LIBVVP, yes)],[])
+
 # valgrind checks
 AC_ARG_WITH([valgrind], [AS_HELP_STRING([--with-valgrind],[Add valgrind hooks])],
             [], [check_valgrind=yes])
