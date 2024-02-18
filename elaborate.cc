@@ -1267,14 +1267,11 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			for (unsigned j = 0 ; j < nexp ; j += 1) {
 			      if (rmod->ports[j] && !pins[j] && !pins_is_explicitly_not_connected[j]) {
 				    pins_fromwc[j] = true;
-				    NetNet*       net = 0;
-				    const NetExpr*par = 0;
-				    NetEvent*     eve = 0;
 				    pform_name_t path_;
 				    path_.push_back(name_component_t(rmod->ports[j]->name));
-				    symbol_search(this, des, scope,
-						  path_, net, par, eve);
-				    if (net != 0) {
+				    symbol_search_results sr;
+				    symbol_search(this, des, scope, path_, &sr);
+				    if (sr.net != 0) {
 					  pins[j] = new PEIdent(rmod->ports[j]->name, true);
 					  pins[j]->set_lineno(get_lineno());
 					  pins[j]->set_file(get_file());
@@ -3805,11 +3802,6 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
       perm_string method_name = peek_tail_name(use_path);
       use_path.pop_back();
 
-      NetNet *net;
-      const NetExpr *par;
-      ivl_type_t par_type = 0;
-      NetEvent *eve;
-
 	/* Add the implicit this reference when requested. */
       if (add_this_flag) {
 	    ivl_assert(*this, use_path.empty());
@@ -3831,8 +3823,10 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	// resolve to a class object. Note that the "this" symbol
 	// (internally represented as "@") is handled by there being a
 	// "this" object in the instance scope.
-      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
+      symbol_search_results sr;
+      symbol_search(this, des, scope, use_path, &sr);
 
+      NetNet*net = sr.net;
       if (net == 0)
 	    return 0;
 
@@ -3976,7 +3970,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	    }
       }
 
-      if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(par_type)) {
+      if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(sr.type)) {
 	    NetScope*task = class_type->method_from_name(method_name);
 	    if (task == 0) {
 		    // If an implicit this was added it is not an error if we
@@ -6066,21 +6060,15 @@ NetProc* PNBTrigger::elaborate(Design*des, NetScope*scope) const
 {
       ivl_assert(*this, scope);
 
-      NetNet*       sig = 0;
-      const NetExpr*par = 0;
-      NetEvent*     eve = 0;
-
-      NetScope*found_in = symbol_search(this, des, scope, event_,
-					sig, par, eve);
-
-      if (found_in == 0) {
+      symbol_search_results sr;
+      if (!symbol_search(this, des, scope, event_, &sr)) {
 	    cerr << get_fileline() << ": error: event <" << event_ << ">"
 		 << " not found." << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
-      if (eve == 0) {
+      if (sr.eve == 0) {
 	    cerr << get_fileline() << ": error:  <" << event_ << ">"
 		 << " is not a named event." << endl;
 	    des->errors += 1;
@@ -6089,7 +6077,7 @@ NetProc* PNBTrigger::elaborate(Design*des, NetScope*scope) const
 
       NetExpr*dly = 0;
       if (dly_) dly = elab_and_eval(des, scope, dly_, -1);
-      NetEvNBTrig*trig = new NetEvNBTrig(eve, dly);
+      NetEvNBTrig*trig = new NetEvNBTrig(sr.eve, dly);
       trig->set_line(*this);
       return trig;
 }

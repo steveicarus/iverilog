@@ -114,43 +114,6 @@ extern bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 			  struct symbol_search_results*res);
 
 /*
- * Search for a symbol using the "start" scope as the starting
- * point. If the path includes a scope part, then locate the
- * scope first.
- *
- * The return value is the scope where the symbol was found.
- * If the symbol was not found, return 0. The output arguments
- * get 0 except for the pointer to the object that represents
- * the located symbol.
- *
- * The ex1 and ex2 output arguments are extended results. If the
- * symbol is a parameter (par!=0) then ex1 is the msb expression and
- * ex2 is the lsb expression for the range. If there is no range, then
- * these values are set to 0.
- */
-extern NetScope* symbol_search(const LineInfo*li,
-                               Design*des,
-			       NetScope*start,
-                               const pform_name_t&path,
-			       NetNet*&net,       /* net/reg */
-			       const NetExpr*&par,/* parameter/expr */
-			       NetEvent*&eve,     /* named event */
-			       ivl_type_t&par_type);
-
-inline NetScope* symbol_search(const LineInfo*li,
-                               Design*des,
-			       NetScope*start,
-                               const pform_name_t&path,
-			       NetNet*&net,       /* net/reg */
-			       const NetExpr*&par,/* parameter/expr */
-			       NetEvent*&eve      /* named event */)
-{
-      ivl_type_t par_type;
-      return symbol_search(li, des, start, path, net, par, eve,
-                           par_type);
-}
-
-/*
  * This function transforms an expression by either zero or sign extending
  * the high bits until the expression has the desired width. This may mean
  * not transforming the expression at all, if it is already wide enough.

@@ -502,13 +502,10 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 {
       ivl_assert(*this, scope);
 
-      NetNet*       sig = 0;
-      const NetExpr*par = 0;
-      NetEvent*     eve = 0;
+      symbol_search_results sr;
+      symbol_search(this, des, scope, path_.name, &sr);
 
-      symbol_search(this, des, scope, path_.name, sig, par, eve);
-
-      if (eve != 0) {
+      if (sr.eve != 0) {
 	    cerr << get_fileline() << ": error: named events (" << path_
 		 << ") cannot be l-values in continuous "
 		 << "assignments." << endl;
@@ -516,17 +513,9 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      pform_name_t base_path = path_.name;
-      pform_name_t member_path;
-      while (sig == 0 && !base_path.empty()) {
-	    symbol_search(this, des, scope, base_path, sig, par, eve);
-	    // Found it!
-	    if (sig != 0) break;
-	    // Not found. Try to pop another name off the base_path
-	    // and push it to the front of the member_path.
-	    member_path.push_front( base_path.back() );
-	    base_path.pop_back();
-      }
+      NetNet*sig = sr.net;
+      pform_name_t base_path = sr.path_head;
+      pform_name_t member_path = sr.path_tail;
 
       if (sig == 0) {
 	    cerr << get_fileline() << ": error: Net " << path_
@@ -1148,14 +1137,13 @@ bool PEIdent::is_collapsible_net(Design*des, NetScope*scope,
 {
       ivl_assert(*this, scope);
 
-      NetNet*       sig = 0;
-      const NetExpr*par = 0;
-      NetEvent*     eve = 0;
+      symbol_search_results sr;
+      symbol_search(this, des, scope, path_.name, &sr);
 
-      symbol_search(this, des, scope, path_.name, sig, par, eve);
-
-      if (eve != 0)
+      if (sr.eve != 0)
             return false;
+
+      NetNet*sig = sr.net;
 
       if (sig == 0)
             return false;
