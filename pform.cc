@@ -2056,7 +2056,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
       std::vector<PWire*> pins(parms->size() + 1);
 
 	/* Make the PWire for the output port. */
-      pins[0] = new PWire(out_name,
+      pins[0] = new PWire(out_name, loc.lexical_pos,
 			  synchronous_flag? NetNet::REG : NetNet::WIRE,
 			  NetNet::POUTPUT);
       FILE_NAME(pins[0], loc);
@@ -2068,7 +2068,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 		   ;  cur != parms->end()
 		   ;  idx += 1, ++ cur) {
 	      ivl_assert(loc, idx < pins.size());
-	      pins[idx] = new PWire(*cur, NetNet::WIRE,
+	      pins[idx] = new PWire(*cur, loc.lexical_pos, NetNet::WIRE,
 				    NetNet::PINPUT);
 	      FILE_NAME(pins[idx], loc);
 	}
@@ -2153,7 +2153,7 @@ static void pform_set_net_range(PWire *wire,
  */
 static void pform_make_event(const struct vlltype&loc, perm_string name)
 {
-      PEvent*event = new PEvent(name);
+      PEvent*event = new PEvent(name, loc.lexical_pos);
       FILE_NAME(event, loc);
 
       add_local_symbol(lexical_scope, name, event);
@@ -2547,7 +2547,7 @@ static PWire* pform_get_or_make_wire(const struct vlltype&li, perm_string name,
 	// to the scope. Do not delete the old wire - it will
 	// remain in the local symbol map.
 
-      cur = new PWire(name, type, ptype, rt);
+      cur = new PWire(name, li.lexical_pos, type, ptype, rt);
       FILE_NAME(cur, li);
 
       pform_put_wire_in_scope(name, cur);
@@ -3243,7 +3243,7 @@ vector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
-	    PWire*pp = new PWire(txt,
+	    PWire*pp = new PWire(txt, /* FIXME */ 0,
 				 NetNet::IMPLICIT,
 				 NetNet::PINPUT);
 	    (*out)[idx] = pp;

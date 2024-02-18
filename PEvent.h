@@ -1,7 +1,7 @@
 #ifndef IVL_PEvent_H
 #define IVL_PEvent_H
 /*
- * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,10 +36,12 @@ class PEvent : public PNamedItem {
     public:
 	// The name is a perm-allocated string. It is the simple name
 	// of the event, without any scope.
-      explicit PEvent(perm_string name);
+      explicit PEvent(perm_string name, unsigned lexical_pos);
       ~PEvent();
 
       perm_string name() const;
+
+      unsigned lexical_pos() const { return lexical_pos_; }
 
       void elaborate_scope(Design*des, NetScope*scope) const;
 
@@ -47,6 +49,7 @@ class PEvent : public PNamedItem {
 
     private:
       perm_string name_;
+      unsigned lexical_pos_;
 
     private: // not implemented
       PEvent(const PEvent&);
