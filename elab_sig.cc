@@ -1209,6 +1209,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       if (wtype == NetNet::WIRE) sig->devirtualize_pins();
       sig->set_line(*this);
       sig->port_type(port_type_);
+      sig->lexical_pos(lexical_pos_);
 
       if (ivl_discipline_t dis = get_discipline()) {
 	    sig->set_discipline(dis);
