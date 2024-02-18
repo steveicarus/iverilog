@@ -135,32 +135,39 @@ static std::list<named_pexpr_t>*attributes_in_context = 0;
 static const struct str_pair_t pull_strength = { IVL_DR_PULL,  IVL_DR_PULL };
 static const struct str_pair_t str_strength = { IVL_DR_STRONG, IVL_DR_STRONG };
 
-static std::list<pform_port_t>* make_port_list(char*id, std::list<pform_range_t>*udims, PExpr*expr)
+static std::list<pform_port_t>* make_port_list(char*id, unsigned idn,
+					       std::list<pform_range_t>*udims,
+					       PExpr*expr)
 {
       std::list<pform_port_t>*tmp = new std::list<pform_port_t>;
-      tmp->push_back(pform_port_t(lex_strings.make(id), udims, expr));
+      pform_ident_t tmp_name = { lex_strings.make(id), idn };
+      tmp->push_back(pform_port_t(tmp_name, udims, expr));
       delete[]id;
       return tmp;
 }
 static std::list<pform_port_t>* make_port_list(list<pform_port_t>*tmp,
-                                          char*id, std::list<pform_range_t>*udims, PExpr*expr)
+					       char*id, unsigned idn,
+					       std::list<pform_range_t>*udims,
+					       PExpr*expr)
 {
-      tmp->push_back(pform_port_t(lex_strings.make(id), udims, expr));
+      pform_ident_t tmp_name = { lex_strings.make(id), idn };
+      tmp->push_back(pform_port_t(tmp_name, udims, expr));
       delete[]id;
       return tmp;
 }
 
-static std::list<perm_string>* list_from_identifier(char*id)
+static std::list<pform_ident_t>* list_from_identifier(char*id, unsigned idn)
 {
-      std::list<perm_string>*tmp = new std::list<perm_string>;
-      tmp->push_back(lex_strings.make(id));
+      std::list<pform_ident_t>*tmp = new std::list<pform_ident_t>;
+      tmp->push_back({ lex_strings.make(id), idn });
       delete[]id;
       return tmp;
 }
 
-static std::list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
+static std::list<pform_ident_t>* list_from_identifier(list<pform_ident_t>*tmp,
+                                                      char*id, unsigned idn)
 {
-      tmp->push_back(lex_strings.make(id));
+      tmp->push_back({ lex_strings.make(id), idn });
       delete[]id;
       return tmp;
 }
@@ -376,10 +383,10 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 				    PExpr *default_value,
 				    std::list<named_pexpr_t> *attributes)
 {
-      perm_string name = lex_strings.make(id);
+      pform_ident_t name = { lex_strings.make(id), loc.lexical_pos };
       delete[] id;
 
-      Module::port_t *port = pform_module_port_reference(loc, name);
+      Module::port_t *port = pform_module_port_reference(loc, name.first);
 
       switch (port_type) {
 	  case NetNet::PINOUT:
@@ -441,6 +448,8 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 	   strdup. They can be put into lists with the texts type. */
       char*text;
       std::list<perm_string>*perm_strings;
+
+      std::list<pform_ident_t>*identifiers;
 
       std::list<pform_port_t>*port_list;
 
@@ -655,10 +664,10 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
 %type <text>    udp_input_list udp_sequ_entry udp_comb_entry
-%type <perm_strings> udp_input_declaration_list
+%type <identifiers> udp_input_declaration_list
 %type <strings> udp_entry_list udp_comb_entry_list udp_sequ_entry_list
 %type <strings> udp_body
-%type <perm_strings> udp_port_list
+%type <identifiers> udp_port_list
 %type <wires>   udp_port_decl udp_port_decls
 %type <statement> udp_initial udp_init_opt
 
@@ -668,8 +677,9 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 %type <text> event_variable label_opt class_declaration_endlabel_opt
 %type <text> block_identifier_opt
 %type <text> identifier_name
-%type <perm_strings> event_variable_list
-%type <perm_strings> list_of_identifiers loop_variables
+%type <identifiers> event_variable_list
+%type <identifiers> list_of_identifiers
+%type <perm_strings> loop_variables
 %type <port_list> list_of_port_identifiers list_of_variable_port_identifiers
 
 %type <decl_assignments> net_decl_assigns
@@ -1773,7 +1783,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 
 	list<decl_assignment_t*>assign_list;
 	decl_assignment_t*tmp_assign = new decl_assignment_t;
-	tmp_assign->name = lex_strings.make($5);
+	tmp_assign->name = { lex_strings.make($5), @5.lexical_pos };
 	assign_list.push_back(tmp_assign);
 	pform_make_var(@5, &assign_list, $4);
       }
@@ -1916,7 +1926,7 @@ variable_decl_assignment /* IEEE1800-2005 A.2.3 */
 	}
 
 	decl_assignment_t*tmp = new decl_assignment_t;
-	tmp->name = lex_strings.make($1);
+	tmp->name = { lex_strings.make($1), @1.lexical_pos };
 	if ($2) {
 	      tmp->index = *$2;
 	      delete $2;
@@ -2500,7 +2510,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	NetNet::PortType use_port_type = $1;
         if ((use_port_type == NetNet::PIMPLICIT) && (gn_system_verilog() || ($3 == 0)))
               use_port_type = port_declaration_context.port_type;
-	list<pform_port_t>* port_list = make_port_list($4, $5, 0);
+	list<pform_port_t>* port_list = make_port_list($4, @4.lexical_pos, $5, 0);
 
 	if (use_port_type == NetNet::PIMPLICIT) {
 	      yyerror(@1, "error: Missing task/function port direction.");
@@ -4486,23 +4496,23 @@ hierarchy_identifier
      non-hierarchical names separated by ',' characters. */
 list_of_identifiers
   : IDENTIFIER
-      { $$ = list_from_identifier($1); }
+      { $$ = list_from_identifier($1, @1.lexical_pos); }
   | list_of_identifiers ',' IDENTIFIER
-      { $$ = list_from_identifier($1, $3); }
+      { $$ = list_from_identifier($1, $3, @3.lexical_pos); }
   ;
 
 list_of_port_identifiers
   : IDENTIFIER dimensions_opt
-      { $$ = make_port_list($1, $2, 0); }
+      { $$ = make_port_list($1, @1.lexical_pos, $2, 0); }
   | list_of_port_identifiers ',' IDENTIFIER dimensions_opt
-      { $$ = make_port_list($1, $3, $4, 0); }
+      { $$ = make_port_list($1, $3, @3.lexical_pos, $4, 0); }
   ;
 
 list_of_variable_port_identifiers
   : IDENTIFIER dimensions_opt initializer_opt
-      { $$ = make_port_list($1, $2, $3); }
+      { $$ = make_port_list($1, @1.lexical_pos, $2, $3); }
   | list_of_variable_port_identifiers ',' IDENTIFIER dimensions_opt initializer_opt
-      { $$ = make_port_list($1, $3, $4, $5); }
+      { $$ = make_port_list($1, $3, @3.lexical_pos, $4, $5); }
   ;
 
 
@@ -5421,7 +5431,7 @@ generate_block
 net_decl_assign
   : IDENTIFIER '=' expression
       { decl_assignment_t*tmp = new decl_assignment_t;
-	tmp->name = lex_strings.make($1);
+	tmp->name = { lex_strings.make($1), @1.lexical_pos };
 	tmp->expr.reset($3);
 	delete[]$1;
 	$$ = tmp;
@@ -5894,7 +5904,7 @@ dimensions
 
 net_variable
   : IDENTIFIER dimensions_opt
-      { perm_string name = lex_strings.make($1);
+      { pform_ident_t name = { lex_strings.make($1), @1.lexical_pos };
 	$$ = pform_makewire(@1, name, NetNet::IMPLICIT, $2);
 	delete [] $1;
       }
@@ -5924,9 +5934,9 @@ event_variable
 
 event_variable_list
   : event_variable
-      { $$ = list_from_identifier($1); }
+      { $$ = list_from_identifier($1, @1.lexical_pos); }
   | event_variable_list ',' event_variable
-      { $$ = list_from_identifier($1, $3); }
+      { $$ = list_from_identifier($1, $3, @3.lexical_pos); }
   ;
 
 specify_item
@@ -7289,17 +7299,9 @@ udp_port_decls
 
 udp_port_list
   : IDENTIFIER
-      { std::list<perm_string>*tmp = new std::list<perm_string>;
-	tmp->push_back(lex_strings.make($1));
-	delete[]$1;
-	$$ = tmp;
-      }
+      { $$ = list_from_identifier($1, @1.lexical_pos); }
   | udp_port_list ',' IDENTIFIER
-      { std::list<perm_string>*tmp = $1;
-	tmp->push_back(lex_strings.make($3));
-	delete[]$3;
-	$$ = tmp;
-      }
+      { $$ = list_from_identifier($1, $3, @3.lexical_pos); }
   ;
 
 udp_reg_opt
@@ -7308,17 +7310,9 @@ udp_reg_opt
 
 udp_input_declaration_list
   : K_input IDENTIFIER
-      { std::list<perm_string>*tmp = new std::list<perm_string>;
-	tmp->push_back(lex_strings.make($2));
-	$$ = tmp;
-	delete[]$2;
-      }
+      { $$ = list_from_identifier($2, @2.lexical_pos); }
   | udp_input_declaration_list ',' K_input IDENTIFIER
-      { std::list<perm_string>*tmp = $1;
-	tmp->push_back(lex_strings.make($4));
-	$$ = tmp;
-	delete[]$4;
-      }
+      { $$ = list_from_identifier($1, $4, @4.lexical_pos); }
   ;
 
 udp_primitive
@@ -7346,7 +7340,7 @@ udp_primitive
     udp_body
     K_endprimitive label_opt
       { perm_string tmp2 = lex_strings.make($2);
-	perm_string tmp6 = lex_strings.make($6);
+	pform_ident_t tmp6 = { lex_strings.make($6) , @6.lexical_pos };
 	pform_make_udp(@2, tmp2, $5, tmp6, $7, $9, $12);
 	check_end_label(@14, "primitive", $2, $14);
 	delete[]$2;
