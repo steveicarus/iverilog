@@ -1,0 +1,2 @@
+ivltests/decl_before_use5.v:4: error: Unable to bind wire/reg/memory `w' in `test'
+1 error(s) during elaboration.

@@ -1,0 +1,3 @@
+ivltests/decl_before_use2.v:3: error: Net w is not defined in this context.
+ivltests/decl_before_use2.v:6: error: Unable to bind wire/reg/memory `w' in `test'
+2 error(s) during elaboration.

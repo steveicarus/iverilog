@@ -1,0 +1,3 @@
+ivltests/decl_before_use4.v:4: error: Unable to bind wire/reg/memory `e' in `test'
+ivltests/decl_before_use4.v:4: error: Failed to evaluate event expression 'e'.
+2 error(s) during elaboration.

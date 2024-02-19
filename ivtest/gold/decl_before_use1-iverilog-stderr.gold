@@ -1,0 +1,3 @@
+ivltests/decl_before_use1.v:4: error: Could not find variable ``v'' in ``test''
+ivltests/decl_before_use1.v:5: error: Unable to bind wire/reg/memory `v' in `test'
+2 error(s) during elaboration.

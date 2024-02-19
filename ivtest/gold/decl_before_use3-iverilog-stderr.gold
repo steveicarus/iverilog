@@ -1,0 +1,2 @@
+ivltests/decl_before_use3.v:4: error: event <e> not found.
+1 error(s) during elaboration.
