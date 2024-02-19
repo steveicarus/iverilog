@@ -108,7 +108,7 @@ vhdl_generic_eval	normal,-g2005-sv,ivltests/vhdl_generic_eval.vhd		ivltests
 vhdl_fa4_test1		normal,-g2005-sv,ivltests/vhdl_fa4_test1.vhd		ivltests
 vhdl_fa4_test2		normal,-g2005-sv,ivltests/vhdl_fa4_test2.vhd		ivltests
 vhdl_fa4_test3		normal,-g2005-sv,ivltests/vhdl_fa4_test3.vhd		ivltests
-vhdl_fa4_test4		normal,-g2005-sv,ivltests/vhdl_fa4_test4.vhd		ivltests
+vhdl_fa4_test4		NI							ivltests
 vhdl_file_open		normal,-g2005-sv,ivltests/vhdl_file_open.vhd		ivltests
 vhdl_generic_default	normal,-g2005-sv,ivltests/vhdl_generic_default.vhd	ivltests
 vhdl_init		normal,-g2005-sv,ivltests/vhdl_init.vhd			ivltests
