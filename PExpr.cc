@@ -440,7 +440,7 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 bool PEIdent::has_aa_term(Design*des, NetScope*scope) const
 {
       symbol_search_results sr;
-      if (!symbol_search(this, des, scope, path_, &sr))
+      if (!symbol_search(this, des, scope, path_, lexical_pos_, &sr))
 	    return false;
 
       // Class properties are not considered automatic since a non-blocking

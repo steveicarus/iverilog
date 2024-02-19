@@ -1271,7 +1271,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 				    pform_name_t path_;
 				    path_.push_back(name_component_t(rmod->ports[j]->name));
 				    symbol_search_results sr;
-				    symbol_search(this, des, scope, path_, &sr);
+				    symbol_search(this, des, scope, path_, UINT_MAX, &sr);
 				    if (sr.net != 0) {
 					  pins[j] = new PEIdent(rmod->ports[j]->name, UINT_MAX, true);
 					  pins[j]->set_lineno(get_lineno());
@@ -3825,7 +3825,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	// (internally represented as "@") is handled by there being a
 	// "this" object in the instance scope.
       symbol_search_results sr;
-      symbol_search(this, des, scope, use_path, &sr);
+      symbol_search(this, des, scope, use_path, UINT_MAX, &sr);
 
       NetNet*net = sr.net;
       if (net == 0)
@@ -4908,7 +4908,7 @@ cerr << endl;
 
 	    if (PEIdent*id = dynamic_cast<PEIdent*>(expr_[idx]->expr())) {
 		  symbol_search_results sr;
-		  symbol_search(this, des, scope, id->path(), &sr);
+		  symbol_search(this, des, scope, id->path(), id->lexical_pos(), &sr);
 
 		  if (sr.scope && sr.eve) {
 			wa->add_event(sr.eve);
@@ -6038,7 +6038,7 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
       ivl_assert(*this, scope);
 
       symbol_search_results sr;
-      if (!symbol_search(this, des, scope, event_, &sr)) {
+      if (!symbol_search(this, des, scope, event_, UINT_MAX, &sr)) {
 	    cerr << get_fileline() << ": error: event <" << event_ << ">"
 		 << " not found." << endl;
 	    des->errors += 1;
@@ -6062,7 +6062,7 @@ NetProc* PNBTrigger::elaborate(Design*des, NetScope*scope) const
       ivl_assert(*this, scope);
 
       symbol_search_results sr;
-      if (!symbol_search(this, des, scope, event_, &sr)) {
+      if (!symbol_search(this, des, scope, event_, UINT_MAX, &sr)) {
 	    cerr << get_fileline() << ": error: event <" << event_ << ">"
 		 << " not found." << endl;
 	    des->errors += 1;

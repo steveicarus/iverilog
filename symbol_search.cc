@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2024 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -38,7 +38,8 @@ using namespace std;
  */
 
 bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
-		   pform_name_t path, struct symbol_search_results*res,
+		   pform_name_t path, unsigned lexical_pos,
+		   struct symbol_search_results*res,
 		   NetScope*start_scope, bool prefix_scope)
 {
       assert(scope);
@@ -68,8 +69,8 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       // recursively. Ideally, the result is a scope that we search
       // for the tail key, but there are other special cases as well.
       if (! path.empty()) {
-	    bool flag = symbol_search(li, des, scope, path, res, start_scope,
-				      prefix_scope);
+	    bool flag = symbol_search(li, des, scope, path, lexical_pos,
+				      res, start_scope, prefix_scope);
 	    if (! flag)
 		  return false;
 
@@ -162,20 +163,24 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 
 		  if (NetNet*net = scope->find_signal(path_tail.name)) {
-			path.push_back(path_tail);
-			res->scope = scope;
-			res->net = net;
-			res->type = net->net_type();
-			res->path_head = path;
-			return true;
+			if (prefix_scope || (net->lexical_pos() <= lexical_pos)) {
+			      path.push_back(path_tail);
+			      res->scope = scope;
+			      res->net = net;
+			      res->type = net->net_type();
+			      res->path_head = path;
+			      return true;
+			}
 		  }
 
 		  if (NetEvent*eve = scope->find_event(path_tail.name)) {
-			path.push_back(path_tail);
-			res->scope = scope;
-			res->eve = eve;
-			res->path_head = path;
-			return true;
+			if (prefix_scope || (eve->lexical_pos() <= lexical_pos)) {
+			      path.push_back(path_tail);
+			      res->scope = scope;
+			      res->eve = eve;
+			      res->path_head = path;
+			      return true;
+			}
 		  }
 
 		  if (const NetExpr*par = scope->get_parameter(des, path_tail.name, res->type)) {
@@ -310,7 +315,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 }
 
 bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
-		   const pform_scoped_name_t &path,
+		   const pform_scoped_name_t &path, unsigned lexical_pos,
 		   struct symbol_search_results *res)
 {
       NetScope *search_scope = scope;
@@ -323,6 +328,6 @@ bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 	    prefix_scope = true;
       }
 
-      return symbol_search(li, des, search_scope, path.name, res, search_scope,
-			   prefix_scope);
+      return symbol_search(li, des, search_scope, path.name, lexical_pos,
+			   res, search_scope, prefix_scope);
 }
