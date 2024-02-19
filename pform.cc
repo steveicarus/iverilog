@@ -712,19 +712,20 @@ PEIdent* pform_new_ident(const struct vlltype&loc, const pform_name_t&name)
 }
 
 PTrigger* pform_new_trigger(const struct vlltype&loc, PPackage*pkg,
-			    const pform_name_t&name)
+			    const pform_name_t&name, unsigned lexical_pos)
 {
       if (gn_system_verilog())
 	    check_potential_imports(loc, name.front().name, false);
 
-      PTrigger*tmp = new PTrigger(pkg, name);
+      PTrigger*tmp = new PTrigger(pkg, name, lexical_pos);
       FILE_NAME(tmp, loc);
       return tmp;
 }
 
 PNBTrigger* pform_new_nb_trigger(const struct vlltype&loc,
 			         const list<PExpr*>*dly,
-			         const pform_name_t&name)
+			         const pform_name_t&name,
+			         unsigned lexical_pos)
 {
       if (gn_system_verilog())
 	    check_potential_imports(loc, name.front().name, false);
@@ -735,7 +736,7 @@ PNBTrigger* pform_new_nb_trigger(const struct vlltype&loc,
 	    tmp_dly = dly->front();
       }
 
-      PNBTrigger*tmp = new PNBTrigger(name, tmp_dly);
+      PNBTrigger*tmp = new PNBTrigger(name, lexical_pos, tmp_dly);
       FILE_NAME(tmp, loc);
       return tmp;
 }

@@ -6766,35 +6766,35 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
   | K_TRIGGER hierarchy_identifier ';'
-      { PTrigger*tmp = pform_new_trigger(@2, 0, *$2);
+      { PTrigger*tmp = pform_new_trigger(@2, 0, *$2, @2.lexical_pos);
 	delete $2;
 	$$ = tmp;
       }
   | K_TRIGGER package_scope hierarchy_identifier
       { lex_in_package_scope(0);
-	PTrigger*tmp = pform_new_trigger(@3, $2, *$3);
+	PTrigger*tmp = pform_new_trigger(@3, $2, *$3, @3.lexical_pos);
 	delete $3;
 	$$ = tmp;
       }
     /* FIXME: Does this need support for package resolution like above? */
   | K_NB_TRIGGER hierarchy_identifier ';'
-      { PNBTrigger*tmp = pform_new_nb_trigger(@2, 0, *$2);
+      { PNBTrigger*tmp = pform_new_nb_trigger(@2, 0, *$2, @2.lexical_pos);
 	delete $2;
 	$$ = tmp;
       }
   | K_NB_TRIGGER delay1 hierarchy_identifier ';'
-      { PNBTrigger*tmp = pform_new_nb_trigger(@3, $2, *$3);
+      { PNBTrigger*tmp = pform_new_nb_trigger(@3, $2, *$3, @3.lexical_pos);
 	delete $3;
 	$$ = tmp;
       }
   | K_NB_TRIGGER event_control hierarchy_identifier ';'
-      { PNBTrigger*tmp = pform_new_nb_trigger(@3, 0, *$3);
+      { PNBTrigger*tmp = pform_new_nb_trigger(@3, 0, *$3, @3.lexical_pos);
 	delete $3;
 	$$ = tmp;
         yywarn(@1, "sorry: ->> with event control is not currently supported.");
       }
   | K_NB_TRIGGER K_repeat '(' expression ')' event_control hierarchy_identifier ';'
-      { PNBTrigger*tmp = pform_new_nb_trigger(@7, 0, *$7);
+      { PNBTrigger*tmp = pform_new_nb_trigger(@7, 0, *$7, @7.lexical_pos);
 	delete $7;
 	$$ = tmp;
         yywarn(@1, "sorry: ->> with repeat event control is not currently supported.");

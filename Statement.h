@@ -1,7 +1,7 @@
 #ifndef IVL_Statement_H
 #define IVL_Statement_H
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -599,7 +599,7 @@ class PReturn  : public Statement {
 class PTrigger  : public Statement {
 
     public:
-      explicit PTrigger(PPackage*pkg, const pform_name_t&ev);
+      explicit PTrigger(PPackage*pkg, const pform_name_t&ev, unsigned lexical_pos);
       ~PTrigger();
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
@@ -607,11 +607,12 @@ class PTrigger  : public Statement {
 
     private:
       pform_scoped_name_t event_;
+      unsigned lexical_pos_;
 };
 
 class PNBTrigger  : public Statement {
     public:
-      explicit PNBTrigger(const pform_name_t&ev, PExpr*dly);
+      explicit PNBTrigger(const pform_name_t&ev, unsigned lexical_pos, PExpr*dly);
       ~PNBTrigger();
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
@@ -619,6 +620,7 @@ class PNBTrigger  : public Statement {
 
     private:
       pform_name_t event_;
+      unsigned lexical_pos_;
       PExpr*dly_;
 };
 

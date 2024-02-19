@@ -6038,7 +6038,7 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
       ivl_assert(*this, scope);
 
       symbol_search_results sr;
-      if (!symbol_search(this, des, scope, event_, UINT_MAX, &sr)) {
+      if (!symbol_search(this, des, scope, event_, lexical_pos_, &sr)) {
 	    cerr << get_fileline() << ": error: event <" << event_ << ">"
 		 << " not found." << endl;
 	    des->errors += 1;
@@ -6062,7 +6062,7 @@ NetProc* PNBTrigger::elaborate(Design*des, NetScope*scope) const
       ivl_assert(*this, scope);
 
       symbol_search_results sr;
-      if (!symbol_search(this, des, scope, event_, UINT_MAX, &sr)) {
+      if (!symbol_search(this, des, scope, event_, lexical_pos_, &sr)) {
 	    cerr << get_fileline() << ": error: event <" << event_ << ">"
 		 << " not found." << endl;
 	    des->errors += 1;
