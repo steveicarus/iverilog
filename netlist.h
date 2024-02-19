@@ -1243,6 +1243,8 @@ class NetScope : public Definitions, public Attrib {
 	    bool overridable = false;
 	    // Is it a type parameter
 	    bool type_flag = false;
+	    // The lexical position of the declaration
+	    unsigned lexical_pos = 0;
 	    // range constraints
 	    struct range_t*range;
 
@@ -1260,6 +1262,8 @@ class NetScope : public Definitions, public Attrib {
       typedef std::map<perm_string,param_expr_t>::iterator param_ref_t;
 
       LineInfo get_parameter_line_info(perm_string name) const;
+
+      unsigned get_parameter_lexical_pos(perm_string name) const;
 
 	/* Module instance arrays are collected here for access during
 	   the multiple elaboration passes. */

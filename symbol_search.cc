@@ -184,11 +184,13 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 
 		  if (const NetExpr*par = scope->get_parameter(des, path_tail.name, res->type)) {
-		    path.push_back(path_tail);
-		    res->scope = scope;
-		    res->par_val = par;
-		    res->path_head = path;
-		    return true;
+			if (prefix_scope || (scope->get_parameter_lexical_pos(path_tail.name) <= lexical_pos)) {
+			      path.push_back(path_tail);
+			      res->scope = scope;
+			      res->par_val = par;
+			      res->path_head = path;
+			      return true;
+			}
 		  }
 
 		    // Static items are just normal signals and are found above.

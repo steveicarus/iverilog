@@ -2953,6 +2953,7 @@ void pform_set_parameter(const struct vlltype&loc,
       parm->local_flag = is_local;
       parm->overridable = overridable;
       parm->type_flag = is_type;
+      parm->lexical_pos = loc.lexical_pos;
 
       scope->parameters[name] = parm;
 
