@@ -43,6 +43,7 @@ br_gh1087a3			vvp_tests/br_gh1087a3.json
 br_gh1087b			vvp_tests/br_gh1087b.json
 br_gh1087c			vvp_tests/br_gh1087c.json
 br_gh1099			vvp_tests/br_gh1099.json
+br_gh1104			vvp_tests/br_gh1104.json
 ca_time_real`			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json
