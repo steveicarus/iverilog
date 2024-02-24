@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -818,6 +818,17 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
 		  }
 	    }
 	    ivl_assert(*this, osig);
+	    if (osig->get_signed()) {
+		    // A concatenation is always unsigned, so make a new signal to
+		    // reflect this.
+		  NetNet*isig = osig;
+		  auto osig_vec = new netvector_t(data_type, isig->vector_width() - 1, 0);
+		  osig = new NetNet(scope, scope->local_symbol(), NetNet::IMPLICIT,
+				    osig_vec);
+		  osig->set_line(*this);
+		  osig->local_flag(true);
+		  connect(isig->pin(0), osig->pin(0));
+	    }
       }
 
       if (repeat() != 1) {
