@@ -1015,13 +1015,19 @@ static /* inline */ char* def_argv(int arg)
     return def_buf + def_argo[arg];
 }
 
+static void early_exit(void)
+{
+    fprintf(yyout, "// Icarus preprocessor had (%u) errors.\n", error_count);
+    exit(1);
+}
+
 static void check_for_max_args(void)
 {
     if (def_argc == MAX_DEF_ARG) {
         emit_pathline(istack);
         fprintf(stderr, "error: too many macro arguments - aborting\n");
         error_count += 1;
-        exit(1);
+        early_exit();
     }
 }
 
@@ -1930,7 +1936,7 @@ static void include_filename(int macro_str)
         fprintf(stderr,
                 "error: malformed `include directive. Extra junk on line?\n");
         error_count += 1;
-        exit(1);
+        early_exit();
     }
 
     standby = malloc(sizeof(struct include_stack_t));
@@ -1987,7 +1993,8 @@ static void do_include(void)
 
     emit_pathline(istack);
     fprintf(stderr, "Include file %s not found\n", standby->path);
-    exit(1);
+    error_count += 1;
+    early_exit();
 
 code_that_switches_buffers:
 
@@ -2366,7 +2373,8 @@ void reset_lexor(FILE* out, char* paths[])
 
     if (isp->file == 0) {
         perror(paths[0]);
-        exit(1);
+        error_count += 1;
+        early_exit();
     }
 
     if (depend_file) {
