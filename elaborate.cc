@@ -6041,6 +6041,11 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
       if (!symbol_search(this, des, scope, event_, lexical_pos_, &sr)) {
 	    cerr << get_fileline() << ": error: event <" << event_ << ">"
 		 << " not found." << endl;
+	    if (sr.decl_after_use) {
+		  cerr << sr.decl_after_use->get_fileline() << ":      : "
+			  "A symbol with that name was declared here. "
+			  "Check for declaration after use." << endl;
+	    }
 	    des->errors += 1;
 	    return 0;
       }
@@ -6065,6 +6070,11 @@ NetProc* PNBTrigger::elaborate(Design*des, NetScope*scope) const
       if (!symbol_search(this, des, scope, event_, lexical_pos_, &sr)) {
 	    cerr << get_fileline() << ": error: event <" << event_ << ">"
 		 << " not found." << endl;
+	    if (sr.decl_after_use) {
+		  cerr << sr.decl_after_use->get_fileline() << ":      : "
+			  "A symbol with that name was declared here. "
+			  "Check for declaration after use." << endl;
+	    }
 	    des->errors += 1;
 	    return 0;
       }

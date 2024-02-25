@@ -520,6 +520,11 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       if (sig == 0) {
 	    cerr << get_fileline() << ": error: Net " << path_
 		 << " is not defined in this context." << endl;
+	    if (sr.decl_after_use) {
+		  cerr << sr.decl_after_use->get_fileline() << ":      : "
+			  "A symbol with that name was declared here. "
+			  "Check for declaration after use." << endl;
+	    }
 	    des->errors += 1;
 	    return 0;
       }
@@ -1117,6 +1122,11 @@ NetNet*PEIdent::elaborate_unpacked_net(Design*des, NetScope*scope) const
       if (!sr.net) {
 	    cerr << get_fileline() << ": error: Net " << path_
 		 << " is not defined in this context." << endl;
+	    if (sr.decl_after_use) {
+		  cerr << sr.decl_after_use->get_fileline() << ":      : "
+			  "A symbol with that name was declared here. "
+			  "Check for declaration after use." << endl;
+	    }
 	    des->errors += 1;
 	    return nullptr;
       }

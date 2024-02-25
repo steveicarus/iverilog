@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2024 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -4495,6 +4495,11 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       if (!sr.net) {
             cerr << get_fileline() << ": error: Unable to bind variable `"
 	         << path_ << "' in `" << scope_path(scope) << "'" << endl;
+	    if (sr.decl_after_use) {
+		  cerr << sr.decl_after_use->get_fileline() << ":      : "
+			  "A symbol with that name was declared here. "
+			  "Check for declaration after use." << endl;
+	    }
 	    des->errors++;
 	    return nullptr;
       }
@@ -5016,6 +5021,11 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
                        << "' is being used as a constant function, so may "
                           "only reference local variables." << endl;
             }
+	    if (sr.decl_after_use) {
+		  cerr << sr.decl_after_use->get_fileline() << ":      : "
+			  "A symbol with that name was declared here. "
+			  "Check for declaration after use." << endl;
+	    }
 	    des->errors += 1;
 	    return 0;
       }

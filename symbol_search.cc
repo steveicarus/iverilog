@@ -170,6 +170,8 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			      res->type = net->net_type();
 			      res->path_head = path;
 			      return true;
+			} else if (!res->decl_after_use) {
+			      res->decl_after_use = net;
 			}
 		  }
 
@@ -180,6 +182,8 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			      res->eve = eve;
 			      res->path_head = path;
 			      return true;
+			} else if (!res->decl_after_use) {
+			      res->decl_after_use = eve;
 			}
 		  }
 
@@ -190,6 +194,8 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			      res->par_val = par;
 			      res->path_head = path;
 			      return true;
+			} else if (!res->decl_after_use) {
+			      res->decl_after_use = par;
 			}
 		  }
 
